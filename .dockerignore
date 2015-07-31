@@ -1,0 +1,3 @@
+*/*
+!target/pay-*-allinone.jar
+!target/*.yaml
