@@ -35,7 +35,11 @@ public class PostgresContainer {
         docker.pull(POSTGRES);
 
         final HostConfig hostConfig = HostConfig.builder().publishAllPorts(true).build();
-        ContainerConfig containerConfig = ContainerConfig.builder().image(POSTGRES).hostConfig(hostConfig).env("POSTGRES_USER=" + DB_USERNAME, "POSTGRES_PASSWORD=" + DB_PASSWORD).build();
+        ContainerConfig containerConfig = ContainerConfig.builder()
+                .image(POSTGRES)
+                .hostConfig(hostConfig)
+                .env("POSTGRES_USER=" + DB_USERNAME, "POSTGRES_PASSWORD=" + DB_PASSWORD)
+                .build();
         containerId = docker.createContainer(containerConfig).id();
         docker.startContainer(containerId);
         port = hostPortNumber(docker.inspectContainer(containerId));
