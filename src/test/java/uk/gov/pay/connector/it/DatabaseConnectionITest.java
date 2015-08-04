@@ -34,4 +34,13 @@ public class DatabaseConnectionITest {
                 .then()
                 .body("database.healthy", is(true));
     }
+
+    @Test
+    public void testDatabaseHealthcheckWhenDatabaseIsDown() {
+        postgres.stop();
+        given().port(app.getAdminPort())
+                .get("/healthcheck")
+                .then()
+                .body("database.healthy", is(false));
+    }
 }

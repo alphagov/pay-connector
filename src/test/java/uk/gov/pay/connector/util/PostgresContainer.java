@@ -63,17 +63,7 @@ public class PostgresContainer {
     }
 
     private void registerShutdownHook() {
-        Runtime.getRuntime().addShutdownHook(new Thread(() -> {
-            try {
-                System.err.println("Killing postgres container with ID: " + containerId);
-                LogStream logs = docker.logs(containerId, DockerClient.LogsParameter.STDOUT, DockerClient.LogsParameter.STDERR);
-                System.err.println("Killed container logs:\n" + logs.readFully());
-                docker.stopContainer(containerId, 5);
-                docker.removeContainer(containerId);
-            } catch (DockerException | InterruptedException e) {
-                System.err.println("Could not shutdown " + containerId);
-            }
-        }));
+        Runtime.getRuntime().addShutdownHook(new Thread(this::stop));
     }
 
     private void waitForPostgresToStart() throws DockerException, InterruptedException, IOException {
@@ -102,4 +92,17 @@ public class PostgresContainer {
         }
     }
 
+    public void stop() {
+        try {
+            System.err.println("Killing postgres container with ID: " + containerId);
+            LogStream logs = docker.logs(containerId, DockerClient.LogsParameter.STDOUT, DockerClient.LogsParameter.STDERR);
+            System.err.println("Killed container logs:\n");
+            logs.attach(System.err, System.err);
+            docker.stopContainer(containerId, 5);
+            docker.removeContainer(containerId);
+        } catch (DockerException | InterruptedException | IOException e) {
+            System.err.println("Could not shutdown " + containerId);
+            e.printStackTrace();
+        }
+    }
 }

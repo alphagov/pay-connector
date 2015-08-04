@@ -53,4 +53,9 @@ public class PostgresDockerRule implements TestRule {
     public String getPassword() {
         return container.getPassword();
     }
+
+    public void stop() {
+        container.stop();
+        container = null;
+    }
 }
