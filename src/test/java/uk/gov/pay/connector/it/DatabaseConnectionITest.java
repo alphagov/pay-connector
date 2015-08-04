@@ -20,17 +20,18 @@ public class DatabaseConnectionITest {
     private DropwizardAppRule<ConnectorConfiguration> app = new DropwizardAppRule<>(
             ConnectorApp.class,
             resourceFilePath("config/test-it-config.yaml"),
-            config("database.url", postgres.getConnectionDetails()));
+            config("database.url", postgres.getConnectionUrl()),
+            config("database.user", postgres.getUsername()),
+            config("database.password", postgres.getPassword()));
 
     @Rule
     public RuleChain rules = RuleChain.outerRule(postgres).around(app);
 
     @Test
-    public void testDatabaseHealthcheck() {
+    public void testDatabaseHealthcheckWhenDatabaseIsUp() {
         given().port(app.getAdminPort())
                 .get("/healthcheck")
                 .then()
                 .body("database.healthy", is(true));
     }
-
 }
