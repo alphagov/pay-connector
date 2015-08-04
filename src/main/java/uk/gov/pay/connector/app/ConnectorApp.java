@@ -1,7 +1,6 @@
 package uk.gov.pay.connector.app;
 
 import io.dropwizard.Application;
-import io.dropwizard.Configuration;
 import io.dropwizard.configuration.EnvironmentVariableSubstitutor;
 import io.dropwizard.configuration.SubstitutingSourceProvider;
 import io.dropwizard.jdbi.DBIFactory;
@@ -11,8 +10,6 @@ import io.dropwizard.setup.Environment;
 import org.skife.jdbi.v2.DBI;
 import uk.gov.pay.connector.healthcheck.DatabaseHealthCheck;
 import uk.gov.pay.connector.healthcheck.Ping;
-
-import java.util.function.Supplier;
 
 public class ConnectorApp extends Application<ConnectorConfiguration> {
 

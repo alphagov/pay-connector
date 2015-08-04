@@ -1,22 +1,38 @@
 package uk.gov.pay.connector.util;
 
-import com.spotify.docker.client.*;
+import com.spotify.docker.client.DefaultDockerClient;
+import com.spotify.docker.client.DockerCertificateException;
+import com.spotify.docker.client.DockerClient;
+import com.spotify.docker.client.DockerException;
 import org.junit.rules.TestRule;
 import org.junit.runner.Description;
 import org.junit.runners.model.Statement;
 
 import java.io.IOException;
-import java.net.*;
+import java.net.URI;
+import java.net.URISyntaxException;
 import java.util.Optional;
+
+import static org.junit.Assert.assertNotNull;
 
 public class PostgresDockerRule implements TestRule {
 
     private static String host;
     private static PostgresContainer container;
 
+    private static final String DOCKER_HOST = "DOCKER_HOST";
+    private static final String DOCKER_CERT_PATH = "DOCKER_CERT_PATH";
+
     static {
         try {
-            host = Optional.ofNullable(new URI(System.getenv("DOCKER_HOST")).getHost()).orElse("localhost");
+            String dockerHost = Optional.ofNullable(System.getenv(DOCKER_HOST)).
+                    orElseThrow(() -> new RuntimeException(DOCKER_HOST + " environment variable not set. It has to be set to the docker daemon location."));
+            URI dockerHostURI = new URI(dockerHost);
+            boolean isDockerDaemonLocal = "unix".equals(dockerHostURI.getScheme());
+            if(!isDockerDaemonLocal) {
+                assertNotNull(DOCKER_CERT_PATH + " environment variable not set.", System.getenv(DOCKER_CERT_PATH));
+            }
+            host = isDockerDaemonLocal ? "localhost" : dockerHostURI.getHost();
         } catch (URISyntaxException e) {
             throw new RuntimeException(e);
         }
