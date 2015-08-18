@@ -10,11 +10,11 @@ import io.dropwizard.migrations.MigrationsBundle;
 import io.dropwizard.setup.Bootstrap;
 import io.dropwizard.setup.Environment;
 import org.skife.jdbi.v2.DBI;
-import uk.gov.pay.connector.dao.PaymentDao;
+import uk.gov.pay.connector.dao.ChargeDao;
 import uk.gov.pay.connector.healthcheck.DatabaseHealthCheck;
 import uk.gov.pay.connector.healthcheck.Ping;
-import uk.gov.pay.connector.resources.PaymentInfo;
-import uk.gov.pay.connector.resources.PaymentRequest;
+import uk.gov.pay.connector.resources.ChargeInfo;
+import uk.gov.pay.connector.resources.ChargeRequest;
 import uk.gov.pay.connector.util.DbConnectionChecker;
 
 public class ConnectorApp extends Application<ConnectorConfiguration> {
@@ -53,10 +53,10 @@ public class ConnectorApp extends Application<ConnectorConfiguration> {
         jdbi = new DBIFactory()
                 .build(environment, dataSourceFactory, "postgresql");
 
-        PaymentDao paymentDao = new PaymentDao(jdbi);
+        ChargeDao chargeDao = new ChargeDao(jdbi);
 
-        environment.jersey().register(new PaymentRequest(paymentDao));
-        environment.jersey().register(new PaymentInfo(paymentDao));
+        environment.jersey().register(new ChargeRequest(chargeDao));
+        environment.jersey().register(new ChargeInfo(chargeDao));
 
         environment.healthChecks().register("database", new DatabaseHealthCheck(jdbi, dataSourceFactory.getValidationQuery()));
     }

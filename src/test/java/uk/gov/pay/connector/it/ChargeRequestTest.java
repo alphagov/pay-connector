@@ -11,26 +11,26 @@ import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.containsString;
 import static org.hamcrest.Matchers.is;
 
-public class PaymentRequestTest {
+public class ChargeRequestTest {
 
     @Rule
     public DropwizardAppWithPostgresRule app = new DropwizardAppWithPostgresRule();
 
     @Test
-    public void makePaymentAndRetrieveAmount() throws Exception {
+    public void makeChargeAndRetrieveAmount() throws Exception {
         int expectedAmount = 2113;
         ValidatableResponse response = given().port(app.getLocalPort())
                 .contentType(ContentType.JSON)
                 .body(String.format("{\"amount\":%d}", expectedAmount))
-                .post("/v1/api/payment")
+                .post("/v1/api/charge")
                 .then()
                 .statusCode(201);
-        String payId = response.extract().path("pay_id");
+        String chargeId = response.extract().path("charge_id");
 
-        response.header("location", containsString("frontend/payment/" + payId));
+        response.header("location", containsString("frontend/charge/" + chargeId));
 
         int amount = given().port(app.getLocalPort())
-                .get("/v1/frontend/payment/" + payId)
+                .get("/v1/frontend/charge/" + chargeId)
                 .then()
                 .statusCode(200)
                 .extract()

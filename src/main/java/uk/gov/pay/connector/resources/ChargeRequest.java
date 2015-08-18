@@ -3,7 +3,7 @@ package uk.gov.pay.connector.resources;
 import com.fasterxml.jackson.databind.JsonNode;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import uk.gov.pay.connector.dao.PaymentDao;
+import uk.gov.pay.connector.dao.ChargeDao;
 
 import javax.ws.rs.*;
 import javax.ws.rs.core.Context;
@@ -14,30 +14,30 @@ import java.net.URI;
 import static java.lang.String.format;
 import static javax.ws.rs.core.MediaType.APPLICATION_JSON;
 
-@Path("/v1/api/payment")
-public class PaymentRequest {
-    private PaymentDao paymentDao;
-    private Logger logger = LoggerFactory.getLogger(PaymentRequest.class);
+@Path("/v1/api/charge")
+public class ChargeRequest {
+    private ChargeDao chargeDao;
+    private Logger logger = LoggerFactory.getLogger(ChargeRequest.class);
 
-    public PaymentRequest(PaymentDao paymentDao) {
-        this.paymentDao = paymentDao;
+    public ChargeRequest(ChargeDao chargeDao) {
+        this.chargeDao = chargeDao;
     }
 
     @POST
     @Consumes(APPLICATION_JSON)
     @Produces(APPLICATION_JSON)
-    public Response createNewPayment(JsonNode node, @Context UriInfo uriInfo) {
+    public Response createNewCharge(JsonNode node, @Context UriInfo uriInfo) {
         long amount = node.get("amount").asLong();
 
-        long payId = paymentDao.insertAmountAndReturnNewId(amount);
+        long chargeId = chargeDao.insertAmountAndReturnNewId(amount);
 
-        String response = format("{\"pay_id\":\"%s\"}", payId);
+        String response = format("{\"charge_id\":\"%s\"}", chargeId);
 
         logger.info("Test.");
 
         URI newLocation = uriInfo.
                 getBaseUriBuilder().
-                path(PaymentInfo.getPaymentRoute).build(payId);
+                path(ChargeInfo.getChargeRoute).build(chargeId);
 
         return Response.created(newLocation).entity(response).build();
 

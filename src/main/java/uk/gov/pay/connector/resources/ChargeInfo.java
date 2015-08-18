@@ -1,6 +1,6 @@
 package uk.gov.pay.connector.resources;
 
-import uk.gov.pay.connector.dao.PaymentDao;
+import uk.gov.pay.connector.dao.ChargeDao;
 
 import javax.ws.rs.GET;
 import javax.ws.rs.Path;
@@ -13,20 +13,20 @@ import static javax.ws.rs.core.MediaType.APPLICATION_JSON;
 import static javax.ws.rs.core.Response.ok;
 
 @Path("/")
-public class PaymentInfo {
-    public static final String getPaymentRoute = "/v1/frontend/payment/{payId}";
+public class ChargeInfo {
+    public static final String getChargeRoute = "/v1/frontend/charge/{chargeId}";
 
-    private PaymentDao paymentDao;
+    private ChargeDao chargeDao;
 
-    public PaymentInfo(PaymentDao paymentDao) {
-        this.paymentDao = paymentDao;
+    public ChargeInfo(ChargeDao chargeDao) {
+        this.chargeDao = chargeDao;
     }
 
     @GET
-    @Path(getPaymentRoute)
+    @Path(getChargeRoute)
     @Produces(APPLICATION_JSON)
-    public Response getPayment(@PathParam("payId") long payId) {
-        long amount = paymentDao.getAmountById(payId);
+    public Response getCharge(@PathParam("chargeId") long chargeId) {
+        long amount = chargeDao.getAmountById(chargeId);
 
         String response = format("{\"amount\": %d}", amount);
 
