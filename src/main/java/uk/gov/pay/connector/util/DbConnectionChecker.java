@@ -44,9 +44,9 @@ public class DbConnectionChecker {
         }
     }
 
-    private void sleep(int seconds) {
+    private void sleep(int milliseconds) {
         try {
-            Thread.sleep(seconds);
+            Thread.sleep(milliseconds);
         } catch (InterruptedException e) {
             throw new RuntimeException(e);
         }
