@@ -12,8 +12,10 @@ import static java.lang.String.format;
 import static javax.ws.rs.core.MediaType.APPLICATION_JSON;
 import static javax.ws.rs.core.Response.ok;
 
-@Path("/frontend/payment")
+@Path("/")
 public class PaymentInfo {
+    public static final String getPaymentRoute = "/frontend/payment/{payId}";
+
     private PaymentDao paymentDao;
 
     public PaymentInfo(PaymentDao paymentDao) {
@@ -21,7 +23,7 @@ public class PaymentInfo {
     }
 
     @GET
-    @Path("/{payId}")
+    @Path(getPaymentRoute)
     @Produces(APPLICATION_JSON)
     public Response getPayment(@PathParam("payId") long payId) {
         long amount = paymentDao.getAmountById(payId);
