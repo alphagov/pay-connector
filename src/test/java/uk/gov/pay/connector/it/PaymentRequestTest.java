@@ -1,5 +1,6 @@
 package uk.gov.pay.connector.it;
 
+import com.jayway.restassured.http.ContentType;
 import io.dropwizard.testing.junit.DropwizardAppRule;
 import org.junit.Rule;
 import org.junit.Test;
@@ -35,7 +36,7 @@ public class PaymentRequestTest {
 
         int expectedAmount = 2113;
         String payId = given().port(app.getLocalPort())
-                .contentType("application/json")
+                .contentType(ContentType.JSON)
                 .body(String.format("{\"amount\":%d}", expectedAmount))
                 .post("/api/payment")
                 .then()
