@@ -22,7 +22,7 @@ public class PaymentRequestTest {
         ValidatableResponse response = given().port(app.getLocalPort())
                 .contentType(ContentType.JSON)
                 .body(String.format("{\"amount\":%d}", expectedAmount))
-                .post("/api/payment")
+                .post("/v1/api/payment")
                 .then()
                 .statusCode(201);
         String payId = response.extract().path("pay_id");
@@ -30,7 +30,7 @@ public class PaymentRequestTest {
         response.header("location", containsString("frontend/payment/" + payId));
 
         int amount = given().port(app.getLocalPort())
-                .get("/frontend/payment/" + payId)
+                .get("/v1/frontend/payment/" + payId)
                 .then()
                 .statusCode(200)
                 .extract()

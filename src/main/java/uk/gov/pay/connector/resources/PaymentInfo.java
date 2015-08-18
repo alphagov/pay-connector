@@ -14,7 +14,7 @@ import static javax.ws.rs.core.Response.ok;
 
 @Path("/")
 public class PaymentInfo {
-    public static final String getPaymentRoute = "/frontend/payment/{payId}";
+    public static final String getPaymentRoute = "/v1/frontend/payment/{payId}";
 
     private PaymentDao paymentDao;
 

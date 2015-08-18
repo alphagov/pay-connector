@@ -14,7 +14,7 @@ import java.net.URI;
 import static java.lang.String.format;
 import static javax.ws.rs.core.MediaType.APPLICATION_JSON;
 
-@Path("/api/payment")
+@Path("/v1/api/payment")
 public class PaymentRequest {
     private PaymentDao paymentDao;
     private Logger logger = LoggerFactory.getLogger(PaymentRequest.class);
