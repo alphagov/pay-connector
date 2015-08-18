@@ -29,11 +29,14 @@ database:
   # the timeout before a connection validation queries fail
   validationQueryTimeout: 3s
 
+  # The initial size of the connection pool
+  initialSize: 4
+
   # the minimum number of connections to keep open
-  minSize: 8
+  minSize: 4
 
   # the maximum number of connections to keep open
-  maxSize: 32
+  maxSize: 8
 
   # whether or not idle connections should be validated
   checkConnectionWhileIdle: false

@@ -30,6 +30,9 @@ database:
   # the timeout before a connection validation queries fail
   validationQueryTimeout: 3s
 
+  # The initial size of the connection pool
+  initialSize: 4
+
   # the minimum number of connections to keep open
   minSize: 4
 
