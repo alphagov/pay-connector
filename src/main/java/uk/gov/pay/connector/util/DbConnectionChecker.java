@@ -1,6 +1,8 @@
 package uk.gov.pay.connector.util;
 
 import com.google.common.base.Stopwatch;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import java.io.IOException;
 import java.sql.Connection;
@@ -9,6 +11,9 @@ import java.util.Properties;
 import java.util.concurrent.TimeUnit;
 
 public class DbConnectionChecker {
+
+    private final Logger logger = LoggerFactory.getLogger(DbConnectionChecker.class);
+
     private final String dbUrl;
     private final String user;
     private final String password;
@@ -29,7 +34,7 @@ public class DbConnectionChecker {
         if (!succeeded) {
             throw new RuntimeException("Postgres did not start in 10 seconds.");
         }
-        System.out.println("Postgres docker container started in " + timer.elapsed(TimeUnit.MILLISECONDS));
+        logger.info("Postgres docker container started in {}", timer.elapsed(TimeUnit.MILLISECONDS));
     }
 
     private boolean checkPostgresConnection() {
