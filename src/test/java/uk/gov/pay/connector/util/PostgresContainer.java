@@ -1,10 +1,14 @@
 package uk.gov.pay.connector.util;
 
+import com.google.common.base.Joiner;
 import com.google.common.base.Stopwatch;
 import com.spotify.docker.client.DockerClient;
 import com.spotify.docker.client.DockerException;
 import com.spotify.docker.client.LogStream;
 import com.spotify.docker.client.messages.*;
+import org.assertj.core.condition.Join;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import java.io.IOException;
 import java.sql.Connection;
@@ -12,10 +16,14 @@ import java.sql.DriverManager;
 import java.util.List;
 import java.util.Properties;
 import java.util.concurrent.TimeUnit;
+import java.util.stream.Collectors;
 
 import static java.lang.Integer.parseInt;
+import static java.util.stream.Collectors.joining;
 
 public class PostgresContainer {
+
+    private static final Logger logger = LoggerFactory.getLogger(PostgresContainer.class);
 
     private final String containerId;
     private final int port;
@@ -60,9 +68,8 @@ public class PostgresContainer {
     }
 
     private static int hostPortNumber(ContainerInfo containerInfo) {
-        System.out.println("Postgres host port:");
         List<PortBinding> portBindings = containerInfo.networkSettings().ports().get(INTERNAL_PORT + "/tcp");
-        portBindings.stream().forEach(p -> System.out.println(p.hostPort()));
+        logger.info("Postgres host port: {}", portBindings.stream().map(PortBinding::hostPort).collect(joining(", ")));
         return parseInt(portBindings.get(0).hostPort());
     }
 
@@ -80,7 +87,7 @@ public class PostgresContainer {
         if (!succeeded) {
             throw new RuntimeException("Postgres did not start in 10 seconds.");
         }
-        System.out.println("Postgres docker container started in " + timer.elapsed(TimeUnit.MILLISECONDS));
+        logger.info("Postgres docker container started in {}.", timer.elapsed(TimeUnit.MILLISECONDS));
     }
 
     private boolean checkPostgresConnection() throws IOException {
