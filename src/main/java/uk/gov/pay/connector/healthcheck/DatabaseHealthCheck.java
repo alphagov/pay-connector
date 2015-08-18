@@ -15,8 +15,9 @@ public class DatabaseHealthCheck extends HealthCheck {
 
     @Override
     protected Result check() throws Exception {
-        Handle h = database.open();
-        h.createQuery(validationQuery).first();
-        return Result.healthy();
+        return database.withHandle(h -> {
+            h.createQuery(validationQuery).first();
+            return Result.healthy();
+        });
     }
 }
