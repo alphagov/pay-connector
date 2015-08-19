@@ -6,6 +6,5 @@ else
     COMMIT=$ghprbActualCommit
 fi
 
-IMAGE="govukpay/connector:$COMMIT"
-mvn clean package && docker build -t $IMAGE . && docker push $IMAGE
+echo COMMIT=$COMMIT
 
