@@ -29,6 +29,7 @@ public class PostgresContainer {
     private final int port;
     private DockerClient docker;
     private String host;
+    private volatile boolean stopped = false;
 
     public static final String DB_PASSWORD = "mysecretpassword";
     public static final String DB_USERNAME = "postgres";
@@ -104,7 +105,11 @@ public class PostgresContainer {
     }
 
     public void stop() {
+        if (stopped) {
+            return;
+        }
         try {
+            stopped = true;
             System.err.println("Killing postgres container with ID: " + containerId);
             LogStream logs = docker.logs(containerId, DockerClient.LogsParameter.STDOUT, DockerClient.LogsParameter.STDERR);
             System.err.println("Killed container logs:\n");
