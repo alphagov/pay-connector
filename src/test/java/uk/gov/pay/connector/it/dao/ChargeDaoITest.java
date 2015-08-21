@@ -6,6 +6,8 @@ import org.junit.Test;
 import uk.gov.pay.connector.dao.ChargeDao;
 import uk.gov.pay.connector.util.DropwizardAppWithPostgresRule;
 
+import java.util.UUID;
+
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.is;
 
@@ -30,7 +32,7 @@ public class ChargeDaoITest {
     @Test
     public void insertAmountAndThenGetAmountById() throws Exception {
         long expectedAmount = 101;
-        String chargeId = chargeDao.insertAmountAndReturnNewId(expectedAmount);
+        UUID chargeId = chargeDao.insertAmountAndReturnNewId(expectedAmount);
 
         long actualAmount = chargeDao.getAmountById(chargeId);
 

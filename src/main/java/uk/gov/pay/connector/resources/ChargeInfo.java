@@ -8,6 +8,8 @@ import javax.ws.rs.PathParam;
 import javax.ws.rs.Produces;
 import javax.ws.rs.core.Response;
 
+import java.util.UUID;
+
 import static java.lang.String.format;
 import static javax.ws.rs.core.MediaType.APPLICATION_JSON;
 import static javax.ws.rs.core.Response.ok;
@@ -25,7 +27,7 @@ public class ChargeInfo {
     @GET
     @Path(getChargeRoute)
     @Produces(APPLICATION_JSON)
-    public Response getCharge(@PathParam("chargeId") String chargeId) {
+    public Response getCharge(@PathParam("chargeId") UUID chargeId) {
         long amount = chargeDao.getAmountById(chargeId);
 
         String response = format("{\"amount\": %s}", amount);

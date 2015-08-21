@@ -10,6 +10,7 @@ import javax.ws.rs.core.Context;
 import javax.ws.rs.core.Response;
 import javax.ws.rs.core.UriInfo;
 import java.net.URI;
+import java.util.UUID;
 
 import static java.lang.String.format;
 import static javax.ws.rs.core.MediaType.APPLICATION_JSON;
@@ -30,7 +31,7 @@ public class ChargeRequest {
         long amount = node.get("amount").asLong();
 
         logger.info("Creating new charge of {}.", amount);
-        String chargeId = chargeDao.insertAmountAndReturnNewId(amount);
+        UUID chargeId = chargeDao.insertAmountAndReturnNewId(amount);
 
         String response = format("{\"charge_id\":\"%s\"}", chargeId);
 
