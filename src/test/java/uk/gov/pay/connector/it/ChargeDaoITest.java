@@ -24,14 +24,13 @@ public class ChargeDaoITest {
     @Test
     public void insertANewChargeAndReturnTheId() throws Exception {
         long amount = 100;
-        long chargeId = chargeDao.insertAmountAndReturnNewId(amount);
-        assertThat(chargeId, is(1L));
+        chargeDao.insertAmountAndReturnNewId(amount);
     }
 
     @Test
     public void insertAmountAndThenGetAmountById() throws Exception {
         long expectedAmount = 101;
-        long chargeId = chargeDao.insertAmountAndReturnNewId(expectedAmount);
+        String chargeId = chargeDao.insertAmountAndReturnNewId(expectedAmount);
 
         long actualAmount = chargeDao.getAmountById(chargeId);
 

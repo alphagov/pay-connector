@@ -29,18 +29,15 @@ public class ChargeRequest {
     public Response createNewCharge(JsonNode node, @Context UriInfo uriInfo) {
         long amount = node.get("amount").asLong();
 
-        long chargeId = chargeDao.insertAmountAndReturnNewId(amount);
+        logger.info("Creating new charge of {}.", amount);
+        String chargeId = chargeDao.insertAmountAndReturnNewId(amount);
 
         String response = format("{\"charge_id\":\"%s\"}", chargeId);
-
-        logger.info("Test.");
 
         URI newLocation = uriInfo.
                 getBaseUriBuilder().
                 path(ChargeInfo.getChargeRoute).build(chargeId);
 
         return Response.created(newLocation).entity(response).build();
-
-
     }
 }

@@ -33,7 +33,7 @@ public class PostgresContainer {
 
     public static final String DB_PASSWORD = "mysecretpassword";
     public static final String DB_USERNAME = "postgres";
-    public static final String POSTGRES = "postgres:9.4.4";
+    public static final String POSTGRES = "jamesbrink/postgres:1.2.2";   // postgres 9.4 with the uuid-oosp extension.
     public static final String INTERNAL_PORT = "5432";
 
     public PostgresContainer(DockerClient docker, String host) throws DockerException, InterruptedException, IOException, ClassNotFoundException {
@@ -47,7 +47,7 @@ public class PostgresContainer {
         ContainerConfig containerConfig = ContainerConfig.builder()
                 .image(POSTGRES)
                 .hostConfig(hostConfig)
-                .env("POSTGRES_USER=" + DB_USERNAME, "POSTGRES_PASSWORD=" + DB_PASSWORD)
+                .env("USER=" + DB_USERNAME, "PASSWORD=" + DB_PASSWORD)
                 .build();
         containerId = docker.createContainer(containerConfig).id();
         docker.startContainer(containerId);

@@ -25,10 +25,10 @@ public class ChargeInfo {
     @GET
     @Path(getChargeRoute)
     @Produces(APPLICATION_JSON)
-    public Response getCharge(@PathParam("chargeId") long chargeId) {
+    public Response getCharge(@PathParam("chargeId") String chargeId) {
         long amount = chargeDao.getAmountById(chargeId);
 
-        String response = format("{\"amount\": %d}", amount);
+        String response = format("{\"amount\": %s}", amount);
 
         return ok(response).build();
     }

@@ -2,6 +2,7 @@ package uk.gov.pay.connector.dao;
 
 import org.skife.jdbi.v2.DBI;
 import org.skife.jdbi.v2.util.LongMapper;
+import org.skife.jdbi.v2.util.StringMapper;
 
 public class ChargeDao {
     private DBI jdbi;
@@ -10,20 +11,20 @@ public class ChargeDao {
         this.jdbi = jdbi;
     }
 
-    public long insertAmountAndReturnNewId(long amount) {
+    public String insertAmountAndReturnNewId(long amount) {
         return jdbi.withHandle(handle ->
                         handle
                                 .createStatement("INSERT INTO charges(amount) VALUES (:amount)")
                                 .bind("amount", amount)
-                                .executeAndReturnGeneratedKeys(LongMapper.FIRST)
+                                .executeAndReturnGeneratedKeys(StringMapper.FIRST)
                                 .first()
         );
     }
 
-    public long getAmountById(long chargeId) {
+    public long getAmountById(String chargeId) {
         return jdbi.withHandle(handle ->
                         handle
-                                .createQuery("SELECT amount FROM charges WHERE charge_id=:charge_id")
+                                .createQuery("SELECT amount FROM charges WHERE charge_id=(:charge_id)\\:\\:uuid")
                                 .bind("charge_id", chargeId)
                                 .map(LongMapper.FIRST)
                                 .first()
