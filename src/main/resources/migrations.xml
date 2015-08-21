@@ -22,4 +22,16 @@
             </column>
         </createTable>
     </changeSet>
+
+    <changeSet id="build gateway table" author="">
+        <createTable tableName="gateway_accounts">
+            <column name="account_id" type="uuid" defaultValueComputed="uuid_generate_v4()">
+                <constraints primaryKey="true" nullable="false"/>
+            </column>
+            <column name="name" type="varchar(255)">
+                <constraints nullable="false"/>
+            </column>
+        </createTable>
+    </changeSet>
+
 </databaseChangeLog>

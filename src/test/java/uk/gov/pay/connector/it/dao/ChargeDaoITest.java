@@ -1,4 +1,4 @@
-package uk.gov.pay.connector.it;
+package uk.gov.pay.connector.it.dao;
 
 import org.junit.Before;
 import org.junit.Rule;
