@@ -30,6 +30,7 @@ public class DropwizardAppWithPostgresRule implements TestRule {
             config("database.password", postgres.getPassword()));
 
     private RuleChain rules = RuleChain.outerRule(postgres).around(app);
+    private DatabaseTestHelper databaseTestHelper;
 
     @Override
     public Statement apply(Statement base, Description description) {
@@ -41,6 +42,8 @@ public class DropwizardAppWithPostgresRule implements TestRule {
                 app.getApplication().run("db", "migrate", configFilePath);
 
                 restoreDropwizardsLogging();
+
+                databaseTestHelper = new DatabaseTestHelper(getJdbi());
 
                 base.evaluate();
             }
@@ -56,9 +59,12 @@ public class DropwizardAppWithPostgresRule implements TestRule {
         return app.getLocalPort();
     }
 
+    public DatabaseTestHelper getDatabaseTestHelper() {
+        return databaseTestHelper;
+    }
+
     private void restoreDropwizardsLogging() {
         app.getConfiguration().getLoggingFactory().configure(app.getEnvironment().metrics(),
                 app.getApplication().getName());
     }
-
 }

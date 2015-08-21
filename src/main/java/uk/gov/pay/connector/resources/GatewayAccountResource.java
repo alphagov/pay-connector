@@ -15,13 +15,13 @@ import static java.lang.String.format;
 import static javax.ws.rs.core.MediaType.APPLICATION_JSON;
 
 @Path("/v1/api/gateway")
-public class GatewayAccount {
+public class GatewayAccountResource {
 
-    private static final Logger logger = LoggerFactory.getLogger(GatewayAccount.class);
+    private static final Logger logger = LoggerFactory.getLogger(GatewayAccountResource.class);
 
     private final GatewayAccountDao gatewayDao;
 
-    public GatewayAccount(GatewayAccountDao gatewayDao) {
+    public GatewayAccountResource(GatewayAccountDao gatewayDao) {
         this.gatewayDao = gatewayDao;
     }
 

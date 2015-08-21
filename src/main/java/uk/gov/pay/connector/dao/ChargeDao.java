@@ -1,12 +1,11 @@
 package uk.gov.pay.connector.dao;
 
 import org.skife.jdbi.v2.DBI;
-import org.skife.jdbi.v2.sqlobject.customizers.Mapper;
-import org.skife.jdbi.v2.tweak.Argument;
+import org.skife.jdbi.v2.DefaultMapper;
 import org.skife.jdbi.v2.util.LongMapper;
-import org.skife.jdbi.v2.util.StringMapper;
 import uk.gov.pay.connector.util.jdbi.UuidMapper;
 
+import java.util.Map;
 import java.util.UUID;
 
 public class ChargeDao {
@@ -16,22 +15,22 @@ public class ChargeDao {
         this.jdbi = jdbi;
     }
 
-    public UUID insertAmountAndReturnNewId(long amount) {
+    public long saveNewCharge(Map<String, Object> charge) {
         return jdbi.withHandle(handle ->
                         handle
-                                .createStatement("INSERT INTO charges(amount) VALUES (:amount)")
-                                .bind("amount", amount)
-                                .executeAndReturnGeneratedKeys(UuidMapper.FIRST)
+                                .createStatement("INSERT INTO charges(amount, gateway_account_id, status) VALUES (:amount, :gateway_account, 'CREATED')")
+                                .bindFromMap(charge)
+                                .executeAndReturnGeneratedKeys(LongMapper.FIRST)
                                 .first()
         );
     }
 
-    public long getAmountById(UUID chargeId) {
+    public Map<String, Object> findById(long chargeId) {
         return jdbi.withHandle(handle ->
                         handle
-                                .createQuery("SELECT amount FROM charges WHERE charge_id=(:charge_id)")
+                                .createQuery("SELECT amount, gateway_account_id, status FROM charges WHERE charge_id=:charge_id")
                                 .bind("charge_id", chargeId)
-                                .map(LongMapper.FIRST)
+                                .map(new DefaultMapper())
                                 .first()
         );
     }

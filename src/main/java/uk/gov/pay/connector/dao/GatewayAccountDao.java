@@ -1,7 +1,6 @@
 package uk.gov.pay.connector.dao;
 
 import org.skife.jdbi.v2.DBI;
-import org.skife.jdbi.v2.util.LongMapper;
 import org.skife.jdbi.v2.util.StringMapper;
 
 public class GatewayAccountDao {
