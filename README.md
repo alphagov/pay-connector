@@ -21,7 +21,7 @@ The command to run the integration tests is:
 | ----------------------------- | ----------------- | ---------------------------------- |
 |[```/v1/api/accounts```](#post-v1apiaccounts)              | POST    |  Create a new account to associate charges with.            |
 |[```/v1/api/charges```](#post-v1apicharges)                                  | POST    |  Create a new charge.            |
-|[```/v1/api/charges/{chargeId}```](#get-v1apichargeschargeId)                                  | GET |  Find out the status of a charge.            |
+|[```/v1/api/charges/{chargeId}```](#get-v1apichargeschargeid)                                  | GET |  Find out the status of a charge.            |
 
 
 ### POST /v1/api/accounts
