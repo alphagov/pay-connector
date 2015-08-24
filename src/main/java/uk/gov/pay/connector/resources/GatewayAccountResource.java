@@ -33,7 +33,7 @@ public class GatewayAccountResource {
         String name = node.get("name").textValue();
 
         logger.info("Creating new gateway account called {}", name);
-        String accountId = gatewayDao.insertNameAndReturnNewId(name);
+        Long accountId = gatewayDao.insertNameAndReturnNewId(name);
 
         String response = format("{\"account_id\":\"%s\"}", accountId);
 

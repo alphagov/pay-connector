@@ -4,7 +4,6 @@ import com.jayway.restassured.response.ValidatableResponse;
 import org.junit.Before;
 import org.junit.Rule;
 import org.junit.Test;
-import org.junit.rules.ExpectedException;
 import uk.gov.pay.connector.util.DropwizardAppWithPostgresRule;
 
 import static com.jayway.restassured.RestAssured.given;
@@ -48,4 +47,20 @@ public class ChargeRequestResourceITest {
                 .body("status", is("CREATED"))
                 ;
     }
+
+    @Test
+    public void cannotMakeChargeForMissingGatewayAccount() throws Exception {
+        Long missingGatewayAccount = 1L;
+        given().port(app.getLocalPort())
+                .contentType(JSON)
+                .body(String.format("{\"amount\":2113, \"gateway_account\": %s}", missingGatewayAccount))
+                .post("/v1/api/charge")
+                .then()
+                .statusCode(400)
+                .contentType(JSON)
+                .header("Location", is(nullValue()))
+                .body("charge_id", is(nullValue()))
+                .body("message", is("Unknown gateway account: 1"));
+    }
+
 }
