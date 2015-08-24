@@ -10,6 +10,7 @@ import javax.ws.rs.core.Context;
 import javax.ws.rs.core.Response;
 import javax.ws.rs.core.UriInfo;
 import java.net.URI;
+import java.util.UUID;
 
 import static java.lang.String.format;
 import static javax.ws.rs.core.MediaType.APPLICATION_JSON;
@@ -29,18 +30,15 @@ public class ChargeRequest {
     public Response createNewCharge(JsonNode node, @Context UriInfo uriInfo) {
         long amount = node.get("amount").asLong();
 
-        long chargeId = chargeDao.insertAmountAndReturnNewId(amount);
+        logger.info("Creating new charge of {}.", amount);
+        UUID chargeId = chargeDao.insertAmountAndReturnNewId(amount);
 
         String response = format("{\"charge_id\":\"%s\"}", chargeId);
-
-        logger.info("Test.");
 
         URI newLocation = uriInfo.
                 getBaseUriBuilder().
                 path(ChargeInfo.getChargeRoute).build(chargeId);
 
         return Response.created(newLocation).entity(response).build();
-
-
     }
 }

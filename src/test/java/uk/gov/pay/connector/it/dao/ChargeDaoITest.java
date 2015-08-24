@@ -1,10 +1,12 @@
-package uk.gov.pay.connector.it;
+package uk.gov.pay.connector.it.dao;
 
 import org.junit.Before;
 import org.junit.Rule;
 import org.junit.Test;
 import uk.gov.pay.connector.dao.ChargeDao;
 import uk.gov.pay.connector.util.DropwizardAppWithPostgresRule;
+
+import java.util.UUID;
 
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.is;
@@ -24,14 +26,13 @@ public class ChargeDaoITest {
     @Test
     public void insertANewChargeAndReturnTheId() throws Exception {
         long amount = 100;
-        long chargeId = chargeDao.insertAmountAndReturnNewId(amount);
-        assertThat(chargeId, is(1L));
+        chargeDao.insertAmountAndReturnNewId(amount);
     }
 
     @Test
     public void insertAmountAndThenGetAmountById() throws Exception {
         long expectedAmount = 101;
-        long chargeId = chargeDao.insertAmountAndReturnNewId(expectedAmount);
+        UUID chargeId = chargeDao.insertAmountAndReturnNewId(expectedAmount);
 
         long actualAmount = chargeDao.getAmountById(chargeId);
 

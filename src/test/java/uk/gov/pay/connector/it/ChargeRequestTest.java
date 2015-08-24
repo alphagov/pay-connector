@@ -28,7 +28,7 @@ public class ChargeRequestTest {
                 .contentType(JSON);
         String chargeId = response.extract().path("charge_id");
 
-        response.header("location", containsString("frontend/charge/" + chargeId));
+        response.header("Location", containsString("frontend/charge/" + chargeId));
 
         int amount = given().port(app.getLocalPort())
                 .get("/v1/frontend/charge/" + chargeId)

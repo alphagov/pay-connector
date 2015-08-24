@@ -1,12 +1,10 @@
 package uk.gov.pay.connector.util;
 
-import com.google.common.base.Joiner;
 import com.google.common.base.Stopwatch;
 import com.spotify.docker.client.DockerClient;
 import com.spotify.docker.client.DockerException;
 import com.spotify.docker.client.LogStream;
 import com.spotify.docker.client.messages.*;
-import org.assertj.core.condition.Join;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -16,7 +14,6 @@ import java.sql.DriverManager;
 import java.util.List;
 import java.util.Properties;
 import java.util.concurrent.TimeUnit;
-import java.util.stream.Collectors;
 
 import static java.lang.Integer.parseInt;
 import static java.util.stream.Collectors.joining;
@@ -29,10 +26,11 @@ public class PostgresContainer {
     private final int port;
     private DockerClient docker;
     private String host;
+    private volatile boolean stopped = false;
 
     public static final String DB_PASSWORD = "mysecretpassword";
     public static final String DB_USERNAME = "postgres";
-    public static final String POSTGRES = "postgres:9.4.4";
+    public static final String POSTGRES = "jamesbrink/postgres:1.2.2";   // postgres 9.4 with the uuid-ossp extension.
     public static final String INTERNAL_PORT = "5432";
 
     public PostgresContainer(DockerClient docker, String host) throws DockerException, InterruptedException, IOException, ClassNotFoundException {
@@ -46,7 +44,7 @@ public class PostgresContainer {
         ContainerConfig containerConfig = ContainerConfig.builder()
                 .image(POSTGRES)
                 .hostConfig(hostConfig)
-                .env("POSTGRES_USER=" + DB_USERNAME, "POSTGRES_PASSWORD=" + DB_PASSWORD)
+                .env("USER=" + DB_USERNAME, "PASSWORD=" + DB_PASSWORD)
                 .build();
         containerId = docker.createContainer(containerConfig).id();
         docker.startContainer(containerId);
@@ -104,7 +102,11 @@ public class PostgresContainer {
     }
 
     public void stop() {
+        if (stopped) {
+            return;
+        }
         try {
+            stopped = true;
             System.err.println("Killing postgres container with ID: " + containerId);
             LogStream logs = docker.logs(containerId, DockerClient.LogsParameter.STDOUT, DockerClient.LogsParameter.STDERR);
             System.err.println("Killed container logs:\n");
