@@ -1,6 +1,8 @@
 package uk.gov.pay.connector.resources;
 
+import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableMap;
+import com.google.common.collect.Maps;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import uk.gov.pay.connector.dao.ChargeDao;
@@ -11,6 +13,7 @@ import javax.ws.rs.core.Context;
 import javax.ws.rs.core.Response;
 import javax.ws.rs.core.UriInfo;
 import java.net.URI;
+import java.util.List;
 import java.util.Map;
 
 import static java.lang.String.format;
@@ -41,16 +44,25 @@ public class ChargeRequestResource {
         logger.info("Creating new charge of {}.", chargeRequest);
         long chargeId = chargeDao.saveNewCharge(chargeRequest);
 
-        String response = format("{\"charge_id\":\"%s\"}", chargeId);
-
         URI newLocation = uriInfo.
                 getBaseUriBuilder().
                 path(ChargeInfoResource.FIND_CHARGE_BY_ID).build(chargeId);
 
-        return Response.created(newLocation).entity(response).build();
+        Map<String, Object> account = Maps.newHashMap();
+        account.put("charge_id", "" + chargeId);
+        addSelfLink(newLocation, account);
+
+        return Response.created(newLocation).entity(account).build();
     }
 
     private Response badGatewayAccount(Long gatewayAccountId) {
         return Response.status(BAD_REQUEST).entity(ImmutableMap.of("message", "Unknown gateway account: " + gatewayAccountId)).build();
     }
+
+    private Map<String, Object> addSelfLink(URI chargeId, Map<String, Object> charge) {
+        List<Map<String, Object>> links = ImmutableList.of(ImmutableMap.of("href", chargeId, "rel", "self", "method", "GET"));
+        charge.put("links", links);
+        return charge;
+    }
+
 }

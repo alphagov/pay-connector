@@ -36,7 +36,11 @@ public class ChargeRequestResourceITest {
                 .contentType(JSON);
         String chargeId = response.extract().path("charge_id");
 
-        response.header("Location", containsString("frontend/charges/" + chargeId));
+        String urlSlug = "frontend/charges/" + chargeId;
+        response.header("Location", containsString(urlSlug))
+                .body("links[0].href", containsString(urlSlug))
+                .body("links[0].rel", is("self"))
+                .body("links[0].method", is("GET"));
 
         given().port(app.getLocalPort())
                 .get("/v1/frontend/charges/" + chargeId)
@@ -45,7 +49,9 @@ public class ChargeRequestResourceITest {
                 .contentType(JSON)
                 .body("amount", is(expectedAmount))
                 .body("status", is("CREATED"))
-                ;
+                .body("links[0].href", containsString(urlSlug))
+                .body("links[0].rel", is("self"))
+                .body("links[0].method", is("GET"));
     }
 
     @Test
