@@ -15,7 +15,7 @@ import static javax.ws.rs.core.Response.ok;
 
 @Path("/")
 public class ChargeInfoResource {
-    public static final String getChargeRoute = "/v1/frontend/charge/{chargeId}";
+    public static final String getChargeRoute = "/v1/frontend/charges/{chargeId}";
 
     private ChargeDao chargeDao;
 

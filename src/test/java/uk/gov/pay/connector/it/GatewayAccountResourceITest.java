@@ -20,7 +20,7 @@ public class GatewayAccountResourceITest {
         ValidatableResponse response = given().port(app.getLocalPort())
                 .contentType(JSON)
                 .body(String.format("{\"name\":\"%s\"}", testName))
-                .post("/v1/api/gateway")
+                .post("/v1/api/accounts")
                 .then()
                 .statusCode(201)
                 .contentType(JSON);

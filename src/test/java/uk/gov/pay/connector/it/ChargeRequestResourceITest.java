@@ -30,16 +30,16 @@ public class ChargeRequestResourceITest {
         ValidatableResponse response = given().port(app.getLocalPort())
                 .contentType(JSON)
                 .body(String.format("{\"amount\":%d, \"gateway_account\": %s}", expectedAmount, accountId))
-                .post("/v1/api/charge")
+                .post("/v1/api/charges")
                 .then()
                 .statusCode(201)
                 .contentType(JSON);
         String chargeId = response.extract().path("charge_id");
 
-        response.header("Location", containsString("frontend/charge/" + chargeId));
+        response.header("Location", containsString("frontend/charges/" + chargeId));
 
         given().port(app.getLocalPort())
-                .get("/v1/frontend/charge/" + chargeId)
+                .get("/v1/frontend/charges/" + chargeId)
                 .then()
                 .statusCode(200)
                 .contentType(JSON)
@@ -54,7 +54,7 @@ public class ChargeRequestResourceITest {
         given().port(app.getLocalPort())
                 .contentType(JSON)
                 .body(String.format("{\"amount\":2113, \"gateway_account\": %s}", missingGatewayAccount))
-                .post("/v1/api/charge")
+                .post("/v1/api/charges")
                 .then()
                 .statusCode(400)
                 .contentType(JSON)

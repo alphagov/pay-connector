@@ -14,7 +14,7 @@ import java.net.URI;
 import static java.lang.String.format;
 import static javax.ws.rs.core.MediaType.APPLICATION_JSON;
 
-@Path("/v1/api/gateway")
+@Path("/v1/api/accounts")
 public class GatewayAccountResource {
 
     private static final Logger logger = LoggerFactory.getLogger(GatewayAccountResource.class);
