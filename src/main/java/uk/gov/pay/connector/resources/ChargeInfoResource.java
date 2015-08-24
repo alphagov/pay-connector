@@ -3,19 +3,15 @@ package uk.gov.pay.connector.resources;
 import uk.gov.pay.connector.dao.ChargeDao;
 
 import javax.ws.rs.*;
-import javax.ws.rs.core.Context;
 import javax.ws.rs.core.Response;
-import javax.ws.rs.core.UriInfo;
-import java.net.URI;
 import java.util.Map;
-import java.util.UUID;
 
 import static javax.ws.rs.core.MediaType.APPLICATION_JSON;
 import static javax.ws.rs.core.Response.ok;
 
 @Path("/")
 public class ChargeInfoResource {
-    public static final String getChargeRoute = "/v1/frontend/charges/{chargeId}";
+    public static final String FIND_CHARGE_BY_ID = "/v1/frontend/charges/{chargeId}";
 
     private ChargeDao chargeDao;
 
@@ -24,7 +20,7 @@ public class ChargeInfoResource {
     }
 
     @GET
-    @Path(getChargeRoute)
+    @Path(FIND_CHARGE_BY_ID)
     @Produces(APPLICATION_JSON)
     public Response getCharge(@PathParam("chargeId") long chargeId) {
         Map<String, Object> charge = chargeDao.findById(chargeId);

@@ -45,7 +45,7 @@ public class ChargeRequestResource {
 
         URI newLocation = uriInfo.
                 getBaseUriBuilder().
-                path(ChargeInfoResource.getChargeRoute).build(chargeId);
+                path(ChargeInfoResource.FIND_CHARGE_BY_ID).build(chargeId);
 
         return Response.created(newLocation).entity(response).build();
     }
