@@ -48,7 +48,7 @@ Content-Type: application/json
 ```
 200 OK
 Content-Type: application/json
-Location: http://connector.service:9000/v1/api/accounts/1
+Location: http://connector.service/v1/api/accounts/1
 
 {
     "name": "Service Number 1",
@@ -90,7 +90,7 @@ Content-Type: application/json
 ```
 200 OK
 Content-Type: application/json
-Location: http://connector.service:9000/v1/api/charges/1
+Location: http://connector.service/v1/api/charges/1
 
 {
     "charge_id": 1,
