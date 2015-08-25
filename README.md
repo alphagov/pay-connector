@@ -77,7 +77,7 @@ Content-Type: application/json
 
 {
     "amount": 5000,
-    "gateway_account": 1
+    "gateway_account": "1"
 }
 ```
 
@@ -93,7 +93,7 @@ Content-Type: application/json
 Location: http://connector.service/v1/api/charges/1
 
 {
-    "charge_id": 1,
+    "charge_id": "1",
     "links": [{
         "href": "http://connector.service/v1/api/charges/1",
         "rel" : "self",
