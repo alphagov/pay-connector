@@ -7,6 +7,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import uk.gov.pay.connector.dao.ChargeDao;
 import uk.gov.pay.connector.dao.GatewayAccountDao;
+import uk.gov.pay.connector.util.ResponseUtil;
 
 import javax.ws.rs.*;
 import javax.ws.rs.core.Context;
@@ -16,9 +17,7 @@ import java.net.URI;
 import java.util.List;
 import java.util.Map;
 
-import static java.lang.String.format;
 import static javax.ws.rs.core.MediaType.APPLICATION_JSON;
-import static javax.ws.rs.core.Response.Status.BAD_REQUEST;
 
 @Path("/v1/api/charges")
 public class ChargeRequestResource {
@@ -38,7 +37,7 @@ public class ChargeRequestResource {
 
         Long gatewayAccountId = Long.valueOf(chargeRequest.get("gateway_account").toString());
         if (!gatewayAccountDao.findNameById(gatewayAccountId).isPresent()) {
-            return badGatewayAccount(gatewayAccountId);
+            return ResponseUtil.badResponse("Unknown gateway account: " + gatewayAccountId);
         }
 
         logger.info("Creating new charge of {}.", chargeRequest);
@@ -53,10 +52,6 @@ public class ChargeRequestResource {
         addSelfLink(newLocation, account);
 
         return Response.created(newLocation).entity(account).build();
-    }
-
-    private Response badGatewayAccount(Long gatewayAccountId) {
-        return Response.status(BAD_REQUEST).entity(ImmutableMap.of("message", "Unknown gateway account: " + gatewayAccountId)).build();
     }
 
     private Map<String, Object> addSelfLink(URI chargeId, Map<String, Object> charge) {

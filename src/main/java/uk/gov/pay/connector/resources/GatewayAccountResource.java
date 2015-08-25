@@ -7,6 +7,7 @@ import com.google.common.collect.Maps;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import uk.gov.pay.connector.dao.GatewayAccountDao;
+import uk.gov.pay.connector.util.ResponseUtil;
 
 import javax.ws.rs.*;
 import javax.ws.rs.core.Context;
@@ -16,13 +17,13 @@ import java.net.URI;
 import java.util.List;
 import java.util.Map;
 
-import static java.lang.String.format;
 import static javax.ws.rs.core.MediaType.APPLICATION_JSON;
 
 @Path("/v1/api/accounts")
 public class GatewayAccountResource {
 
     private static final Logger logger = LoggerFactory.getLogger(GatewayAccountResource.class);
+    public static final String ACCOUNT_NAME = "name";
 
     private final GatewayAccountDao gatewayDao;
 
@@ -35,6 +36,10 @@ public class GatewayAccountResource {
     @Produces(APPLICATION_JSON)
     public Response createNewGatewayAccount(JsonNode node, @Context UriInfo uriInfo) {
         logger.error("Testing logging");
+        if (!node.has(ACCOUNT_NAME)) {
+            return ResponseUtil.badResponse("Missing fields: name");
+        }
+
         String name = node.get("name").textValue();
 
         logger.info("Creating new gateway account called {}", name);

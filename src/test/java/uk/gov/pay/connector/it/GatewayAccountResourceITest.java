@@ -34,4 +34,16 @@ public class GatewayAccountResourceITest {
                 .body("links[0].rel", is("self"))
                 .body("links[0].method", is("GET"));
     }
+
+    @Test
+    public void createGatewayAccountWithMissingNameFails() throws Exception {
+        given().port(app.getLocalPort())
+                .contentType(JSON)
+                .body("{}")
+                .post("/v1/api/accounts")
+                .then()
+                .statusCode(400)
+                .contentType(JSON)
+                .body("message", is("Missing fields: name"));
+    }
 }
