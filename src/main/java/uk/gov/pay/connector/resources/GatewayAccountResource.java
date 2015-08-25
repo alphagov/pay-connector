@@ -40,7 +40,7 @@ public class GatewayAccountResource {
             return ResponseUtil.badResponse("Missing fields: name");
         }
 
-        String name = node.get("name").textValue();
+        String name = node.get(ACCOUNT_NAME).textValue();
 
         logger.info("Creating new gateway account called {}", name);
         Long accountId = gatewayDao.insertNameAndReturnNewId(name);
