@@ -48,10 +48,16 @@ Content-Type: application/json
 ```
 200 OK
 Content-Type: application/json
-Location: http://localhost:9000/v1/api/accounts/1
+Location: http://connector.service:9000/v1/api/accounts/1
 
 {
-    "name": "Service Number 1"
+    "name": "Service Number 1",
+    "links": [{
+        "href": "http://connector.service/v1/api/accounts/1",
+        "rel" : "self",
+        "method" : "GET"
+        }
+      ]
 }
 ```
 
@@ -84,10 +90,16 @@ Content-Type: application/json
 ```
 200 OK
 Content-Type: application/json
-Location: http://localhost:9000/v1/api/charges/1
+Location: http://connector.service:9000/v1/api/charges/1
 
 {
-    "charge_id": 1
+    "charge_id": 1,
+    "links": [{
+        "href": "http://connector.service/v1/api/charges/1",
+        "rel" : "self",
+        "method" : "GET"
+        }
+      ]
 }
 ```
 
@@ -113,7 +125,14 @@ Content-Type: application/json
 
 {
     "amount": 5000,
-    "status": "CREATED"
+    "status": "CREATED",
+    "links": [{
+        "href": "http://connector.service/v1/api/charges/1",
+        "rel" : "self",
+        "method" : "GET"
+        }
+      ]
+
 }
 ```
 
