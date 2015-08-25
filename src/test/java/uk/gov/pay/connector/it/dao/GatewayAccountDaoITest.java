@@ -29,17 +29,14 @@ public class GatewayAccountDaoITest {
     }
 
     @Test
-    public void findByIdForMissingAccount() throws Exception {
-        Optional<String> result = gatewayAccountDao.findNameById(1L);
-        assertThat(result, is(Optional.empty()));
+    public void idIsMissingForMissingAccount() throws Exception {
+        assertThat(gatewayAccountDao.idIsMissing(1L), is(true));
     }
 
     @Test
     public void findByIdForAccount() throws Exception {
         String name = "test account";
         Long id = gatewayAccountDao.insertNameAndReturnNewId(name);
-
-        Optional<String> result = gatewayAccountDao.findNameById(id);
-        assertThat(result, is(Optional.of(name)));
+        assertThat(gatewayAccountDao.idIsMissing(id), is(false));
     }
 }

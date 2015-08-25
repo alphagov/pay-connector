@@ -36,7 +36,7 @@ public class ChargeRequestResource {
     public Response createNewCharge(Map<String, Object> chargeRequest, @Context UriInfo uriInfo) {
 
         Long gatewayAccountId = Long.valueOf(chargeRequest.get("gateway_account").toString());
-        if (!gatewayAccountDao.findNameById(gatewayAccountId).isPresent()) {
+        if (gatewayAccountDao.idIsMissing(gatewayAccountId)) {
             return ResponseUtil.badResponse("Unknown gateway account: " + gatewayAccountId);
         }
 
