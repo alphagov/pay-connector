@@ -24,33 +24,32 @@ public class CardDetailsResourceITest {
     }
 
     @Test
-    public void authoriseChargeForCardDetails() throws Exception {
-        String uniqueChargeId = "98234732938487";
-
-        app.getDatabaseTestHelper().addCharge(accountId, uniqueChargeId, 500, CREATED);
+    public void shouldAuthoriseChargeForValidCardDetails() throws Exception {
+        String uniqueChargeId = "983794837598475";
+        setupCharge(uniqueChargeId);
 
         given().port(app.getLocalPort())
                 .contentType(JSON)
                 .body(validCardDetails)
                 .post("/v1/frontend/charges/" + uniqueChargeId + "/card")
                 .then()
-                .statusCode(201);
+                .statusCode(200);
 
         assertChargeStatusIs(uniqueChargeId, "AUTHORIZATION SUCCESS");
     }
 
     @Test
-    public void returnErrorIfCardDetailsHaveAlreadyBeenSubmitted() throws Exception {
+    public void returnErrorAndDoNotUpdateChargeStatusIfSomeCardDetailsHaveAlreadyBeenSubmitted() throws Exception {
 
         String chargeId = "12345669385794877";
-        app.getDatabaseTestHelper().addCharge(accountId, chargeId, 500, CREATED);
+        setupCharge(chargeId);
 
         given().port(app.getLocalPort())
                 .contentType(JSON)
                 .body(validCardDetails)
                 .post("/v1/frontend/charges/" + chargeId + "/card")
                 .then()
-                .statusCode(201);
+                .statusCode(200);
 
         String originalStatus = "AUTHORIZATION SUCCESS";
         assertChargeStatusIs(chargeId, originalStatus);
@@ -65,6 +64,31 @@ public class CardDetailsResourceITest {
                 .body("message", is(String.format("Card already processed for charge with id %s.", chargeId)));
 
         assertChargeStatusIs(chargeId, originalStatus);
+    }
+
+    @Test
+    public void returnErrorAndDoNotUpdateChargeStatusIfCardDetailsAreInvalid() throws Exception {
+
+        String chargeId = "8172643872964549";
+        setupCharge(chargeId);
+
+        StringBuilder cardWithInvalidExpiryDateFormat = new StringBuilder();
+        cardWithInvalidExpiryDateFormat.append("{");
+        cardWithInvalidExpiryDateFormat.append("\"card_number\":\"4242424242424242\",");
+        cardWithInvalidExpiryDateFormat.append("\"cvc\":\"123\",");
+        cardWithInvalidExpiryDateFormat.append("\"expiry_date\":\"1299\"");
+        cardWithInvalidExpiryDateFormat.append("}");
+
+        given().port(app.getLocalPort())
+                .contentType(JSON)
+                .body(cardWithInvalidExpiryDateFormat.toString())
+                .post("/v1/frontend/charges/" + chargeId + "/card")
+                .then()
+                .statusCode(400)
+                .contentType(JSON)
+                .body("message", is(String.format("Values do not match expected format/length.")));
+
+        assertChargeStatusIs(chargeId, "CREATED");
     }
 
     @Test
@@ -85,8 +109,8 @@ public class CardDetailsResourceITest {
     private String validCardDetails() {
         StringBuilder cardBody = new StringBuilder();
         cardBody.append("{");
-        cardBody.append("\"card_number\":\"1234567890123456\",");
-        cardBody.append("\"cvv\":\"123\",");
+        cardBody.append("\"card_number\":\"4242424242424242\",");
+        cardBody.append("\"cvc\":\"123\",");
         cardBody.append("\"expiry_date\":\"12/99\"");
         cardBody.append("}");
         return cardBody.toString();
@@ -97,5 +121,9 @@ public class CardDetailsResourceITest {
                 .get("/v1/frontend/charges/" + uniqueChargeId)
                 .then()
                 .body("status", is(status));
+    }
+
+    private void setupCharge(String chargeId) {
+        app.getDatabaseTestHelper().addCharge(accountId, chargeId, 500, CREATED);
     }
 }
