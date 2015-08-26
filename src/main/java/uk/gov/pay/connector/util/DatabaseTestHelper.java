@@ -2,8 +2,6 @@ package uk.gov.pay.connector.util;
 
 import org.skife.jdbi.v2.DBI;
 
-import java.util.UUID;
-
 public class DatabaseTestHelper {
     private DBI jdbi;
 
@@ -12,9 +10,9 @@ public class DatabaseTestHelper {
         this.jdbi = jdbi;
     }
 
-    public void addGatewayAccount(long accountId, String name) {
+    public void addGatewayAccount(String accountId, String name) {
         jdbi.withHandle(h ->
-                h.update("INSERT INTO gateway_accounts(account_id, name) VALUES(?, ?)", accountId, name)
+                        h.update("INSERT INTO gateway_accounts(account_id, name) VALUES(?, ?)", Long.valueOf(accountId), name)
         );
     }
 }

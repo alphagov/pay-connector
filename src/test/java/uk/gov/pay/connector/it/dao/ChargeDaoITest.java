@@ -8,7 +8,6 @@ import uk.gov.pay.connector.dao.ChargeDao;
 import uk.gov.pay.connector.util.DropwizardAppWithPostgresRule;
 
 import java.util.Map;
-import java.util.UUID;
 
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.is;
@@ -20,7 +19,7 @@ public class ChargeDaoITest {
     public DropwizardAppWithPostgresRule app = new DropwizardAppWithPostgresRule();
 
     private ChargeDao chargeDao;
-    private long gateway_account = 564532435;
+    private String gateway_account = "564532435";
 
     @Before
     public void setUp() throws Exception {

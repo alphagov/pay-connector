@@ -3,10 +3,10 @@ package uk.gov.pay.connector.dao;
 import org.skife.jdbi.v2.DBI;
 import org.skife.jdbi.v2.DefaultMapper;
 import org.skife.jdbi.v2.util.LongMapper;
-import uk.gov.pay.connector.util.jdbi.UuidMapper;
 
 import java.util.Map;
-import java.util.UUID;
+
+import static com.google.common.collect.Maps.newHashMap;
 
 public class ChargeDao {
     private DBI jdbi;
@@ -16,10 +16,11 @@ public class ChargeDao {
     }
 
     public long saveNewCharge(Map<String, Object> charge) {
+        Map<String, Object> fixedCharge = copyAndConvertFieldToLong(charge, "gateway_account");
         return jdbi.withHandle(handle ->
                         handle
                                 .createStatement("INSERT INTO charges(amount, gateway_account_id, status) VALUES (:amount, :gateway_account, 'CREATED')")
-                                .bindFromMap(charge)
+                                .bindFromMap(fixedCharge)
                                 .executeAndReturnGeneratedKeys(LongMapper.FIRST)
                                 .first()
         );
@@ -34,4 +35,12 @@ public class ChargeDao {
                                 .first()
         );
     }
+
+    private Map<String, Object> copyAndConvertFieldToLong(Map<String, Object> charge, String field) {
+        Map<String, Object> copy = newHashMap(charge);
+        Long fieldAsLong = Long.valueOf(copy.remove(field).toString());
+        copy.put(field, fieldAsLong);
+        return copy;
+    }
+
 }

@@ -17,7 +17,7 @@ public class ChargeRequestResourceITest {
     @Rule
     public DropwizardAppWithPostgresRule app = new DropwizardAppWithPostgresRule();
 
-    private long accountId = 72332423443245l;
+    private String accountId = "72332423443245";
 
     @Before
     public void setupGatewayAccount() {
@@ -29,7 +29,7 @@ public class ChargeRequestResourceITest {
         int expectedAmount = 2113;
         ValidatableResponse response = given().port(app.getLocalPort())
                 .contentType(JSON)
-                .body(String.format("{\"amount\":%d, \"gateway_account\": %s}", expectedAmount, accountId))
+                .body(String.format("{\"amount\":%d, \"gateway_account\": \"%s\"}", expectedAmount, accountId))
                 .post("/v1/api/charges")
                 .then()
                 .statusCode(201)
@@ -59,7 +59,7 @@ public class ChargeRequestResourceITest {
         Long missingGatewayAccount = 1L;
         given().port(app.getLocalPort())
                 .contentType(JSON)
-                .body(String.format("{\"amount\":2113, \"gateway_account\": %s}", missingGatewayAccount))
+                .body(String.format("{\"amount\":2113, \"gateway_account\": \"%s\"}", missingGatewayAccount))
                 .post("/v1/api/charges")
                 .then()
                 .statusCode(400)
