@@ -8,7 +8,6 @@ import uk.gov.pay.connector.util.DropwizardAppWithPostgresRule;
 import static com.jayway.restassured.RestAssured.given;
 import static com.jayway.restassured.http.ContentType.JSON;
 import static org.hamcrest.Matchers.is;
-import static uk.gov.pay.connector.model.ChargeStatus.AUTHORIZATION_SUBMITTED;
 import static uk.gov.pay.connector.model.ChargeStatus.CREATED;
 
 public class CardDetailsResourceITest {
@@ -36,23 +35,36 @@ public class CardDetailsResourceITest {
                 .post("/v1/frontend/charges/" + uniqueChargeId + "/card")
                 .then()
                 .statusCode(201);
-        //.contentType(JSON);
+
+        assertChargeStatusIs(uniqueChargeId, "AUTHORIZATION SUCCESS");
     }
 
     @Test
     public void returnErrorIfCardDetailsHaveAlreadyBeenSubmitted() throws Exception {
 
-        String processedId = "12345669385794877";
-        app.getDatabaseTestHelper().addCharge(accountId, processedId, 500, AUTHORIZATION_SUBMITTED);
+        String chargeId = "12345669385794877";
+        app.getDatabaseTestHelper().addCharge(accountId, chargeId, 500, CREATED);
 
         given().port(app.getLocalPort())
                 .contentType(JSON)
                 .body(validCardDetails)
-                .post("/v1/frontend/charges/" + processedId + "/card")
+                .post("/v1/frontend/charges/" + chargeId + "/card")
+                .then()
+                .statusCode(201);
+
+        String originalStatus = "AUTHORIZATION SUCCESS";
+        assertChargeStatusIs(chargeId, originalStatus);
+
+        given().port(app.getLocalPort())
+                .contentType(JSON)
+                .body(validCardDetails)
+                .post("/v1/frontend/charges/" + chargeId + "/card")
                 .then()
                 .statusCode(400)
                 .contentType(JSON)
-                .body("message", is(String.format("Card already processed for charge with id %s.", processedId)));
+                .body("message", is(String.format("Card already processed for charge with id %s.", chargeId)));
+
+        assertChargeStatusIs(chargeId, originalStatus);
     }
 
     @Test
@@ -78,5 +90,12 @@ public class CardDetailsResourceITest {
         cardBody.append("\"expiry_date\":\"12/99\"");
         cardBody.append("}");
         return cardBody.toString();
+    }
+
+    private void assertChargeStatusIs(String uniqueChargeId, String status) {
+        given().port(app.getLocalPort())
+                .get("/v1/frontend/charges/" + uniqueChargeId)
+                .then()
+                .body("status", is(status));
     }
 }

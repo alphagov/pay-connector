@@ -4,7 +4,10 @@ import com.google.common.collect.ImmutableMap;
 import org.junit.Before;
 import org.junit.Rule;
 import org.junit.Test;
+import org.junit.rules.ExpectedException;
 import uk.gov.pay.connector.dao.ChargeDao;
+import uk.gov.pay.connector.dao.PayDBIException;
+import uk.gov.pay.connector.model.ChargeStatus;
 import uk.gov.pay.connector.util.DropwizardAppWithPostgresRule;
 
 import java.util.Map;
@@ -12,11 +15,16 @@ import java.util.Map;
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.is;
 import static org.hamcrest.Matchers.nullValue;
+import static uk.gov.pay.connector.model.ChargeStatus.AUTHORIZATION_SUBMITTED;
+import static uk.gov.pay.connector.model.ChargeStatus.AUTHORIZATION_SUCCESS;
 
 public class ChargeDaoITest {
 
     @Rule
     public DropwizardAppWithPostgresRule app = new DropwizardAppWithPostgresRule();
+
+    @Rule
+    public ExpectedException expectedEx = ExpectedException.none();
 
     private ChargeDao chargeDao;
     private String gateway_account = "564532435";
@@ -48,6 +56,32 @@ public class ChargeDaoITest {
         assertThat(charge.get("gateway_account"), is(nullValue()));
     }
 
+    @Test
+    public void insertChargeAndThenUpdateStatus() throws Exception {
+        long amount = 101;
+        long chargeId = chargeDao.saveNewCharge(newCharge(amount));
+
+        chargeDao.updateStatus(chargeId, AUTHORIZATION_SUBMITTED);
+
+        Map<String, Object> charge = chargeDao.findById(chargeId);
+
+        assertThat(charge.get("amount"), is(amount));
+        assertThat(charge.get("status"), is("AUTHORIZATION SUBMITTED"));
+        assertThat(charge.get("gateway_account"), is(nullValue()));
+    }
+
+    @Test
+    public void throwDBIExceptionIfStatusNotUpdateForMissingCharge() throws Exception {
+
+        long unknownId = 128457938450746L;
+        ChargeStatus status = AUTHORIZATION_SUCCESS;
+
+        expectedEx.expect(PayDBIException.class);
+        expectedEx.expectMessage("Could not update charge '" + unknownId + "' with status " + status.toString());
+
+        chargeDao.updateStatus(unknownId, status);
+
+    }
 
     private ImmutableMap<String, Object> newCharge(long amount) {
         return ImmutableMap.of(
