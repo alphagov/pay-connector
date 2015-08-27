@@ -21,7 +21,8 @@ The command to run the integration tests is:
 | ----------------------------- | ----------------- | ---------------------------------- |
 |[```/v1/api/accounts```](#post-v1apiaccounts)              | POST    |  Create a new account to associate charges with.            |
 |[```/v1/api/charges```](#post-v1apicharges)                                  | POST    |  Create a new charge.            |
-|[```/v1/api/charges/{chargeId}```](#get-v1apichargeschargeid)                                  | GET |  Find out the status of a charge.            |
+|[```/v1/frontend/charges/{chargeId}```](#get-v1frontendchargeschargeid)                                  | GET |  Find out the status of a charge.            |
+|[```/v1/frontend/charges/{chargeId}/cards```](#post-v1frontendchargeschargeidcards)                      | POST |  Authorise the charge with the card details.            |
 
 
 ### POST /v1/api/accounts
@@ -90,12 +91,12 @@ Content-Type: application/json
 ```
 200 OK
 Content-Type: application/json
-Location: http://connector.service/v1/api/charges/1
+Location: http://connector.service/v1/frontend/charges/1
 
 {
     "charge_id": "1",
     "links": [{
-        "href": "http://connector.service/v1/api/charges/1",
+        "href": "http://connector.service/v1/frontend/charges/1",
         "rel" : "self",
         "method" : "GET"
         }
@@ -106,14 +107,14 @@ Location: http://connector.service/v1/api/charges/1
 ##### Response field description
 ```charge_id``` (always present) The unique identifier for this charge.
 
-### GET /v1/api/charges/{chargeId}
+### GET /v1/frontend/charges/{chargeId}
 
 Find a charge by ID.
 
 #### Request example
 
 ```
-GET /v1/api/charges/1
+GET /v1/frontend/charges/1
 
 ```
 
@@ -127,7 +128,7 @@ Content-Type: application/json
     "amount": 5000,
     "status": "CREATED",
     "links": [{
-        "href": "http://connector.service/v1/api/charges/1",
+        "href": "http://connector.service/v1/frontend/charges/1",
         "rel" : "self",
         "method" : "GET"
         }
@@ -139,3 +140,42 @@ Content-Type: application/json
 ##### Response field description
 ```amount``` (always present) The amount (in minor units) of the charge.
 ```status``` (always present) The current status of the charge.
+
+### POST /v1/frontend/charges/{chargeId}/cards
+
+This endpoint takes card details and authorises them for the specified charge.
+
+#### Request example
+
+```
+POST /v1/frontend/charges/1/cards
+Content-Type: application/json
+
+{
+    "card_number": "4242424242424242",
+    "cvc": "123",
+    "expiry_date": "11/17"
+}
+```
+
+##### Request body description
+
+```card_number``` (mandatory) The card number (16 digits).
+```cvc``` (mandatory) The cvc of the card (3 digits).
+```expiry_date``` (mandatory) The expiry date (no validation other than format being mm/yy).
+
+#### Response example
+
+```
+204 No content
+Content-Type: application/json
+```
+
+```
+400 Bad Request
+Content-Type: application/json
+
+{
+    "message": "Values do not match expected format/length."
+}
+```

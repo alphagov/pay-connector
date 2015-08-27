@@ -27,7 +27,7 @@ public class CardDetailsResource {
     }
 
     @POST
-    @Path("/v1/frontend/charges/{chargeId}/card")
+    @Path("/v1/frontend/charges/{chargeId}/cards")
     @Consumes(APPLICATION_JSON)
     @Produces(APPLICATION_JSON)
     public Response addCardDetailsForCharge(@PathParam("chargeId") long chargeId, Map<String, Object> cardDetails) throws PayDBIException {
@@ -49,7 +49,7 @@ public class CardDetailsResource {
 
         chargeDao.updateStatus(chargeId, ChargeStatus.AUTHORIZATION_SUCCESS);
 
-        return Response.ok().build();
+        return Response.noContent().build();
 
     }
 

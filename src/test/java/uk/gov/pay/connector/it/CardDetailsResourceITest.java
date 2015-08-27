@@ -31,9 +31,9 @@ public class CardDetailsResourceITest {
         given().port(app.getLocalPort())
                 .contentType(JSON)
                 .body(validCardDetails)
-                .post("/v1/frontend/charges/" + uniqueChargeId + "/card")
+                .post(cardUrlForChargeId(uniqueChargeId))
                 .then()
-                .statusCode(200);
+                .statusCode(204);
 
         assertChargeStatusIs(uniqueChargeId, "AUTHORIZATION SUCCESS");
     }
@@ -47,9 +47,9 @@ public class CardDetailsResourceITest {
         given().port(app.getLocalPort())
                 .contentType(JSON)
                 .body(validCardDetails)
-                .post("/v1/frontend/charges/" + chargeId + "/card")
+                .post(cardUrlForChargeId(chargeId))
                 .then()
-                .statusCode(200);
+                .statusCode(204);
 
         String originalStatus = "AUTHORIZATION SUCCESS";
         assertChargeStatusIs(chargeId, originalStatus);
@@ -57,7 +57,7 @@ public class CardDetailsResourceITest {
         given().port(app.getLocalPort())
                 .contentType(JSON)
                 .body(validCardDetails)
-                .post("/v1/frontend/charges/" + chargeId + "/card")
+                .post(cardUrlForChargeId(chargeId))
                 .then()
                 .statusCode(400)
                 .contentType(JSON)
@@ -82,7 +82,7 @@ public class CardDetailsResourceITest {
         given().port(app.getLocalPort())
                 .contentType(JSON)
                 .body(cardWithInvalidExpiryDateFormat.toString())
-                .post("/v1/frontend/charges/" + chargeId + "/card")
+                .post(cardUrlForChargeId(chargeId))
                 .then()
                 .statusCode(400)
                 .contentType(JSON)
@@ -99,7 +99,7 @@ public class CardDetailsResourceITest {
         given().port(app.getLocalPort())
                 .contentType(JSON)
                 .body(validCardDetails)
-                .post("/v1/frontend/charges/" + unknownId + "/card")
+                .post(cardUrlForChargeId(unknownId))
                 .then()
                 .statusCode(404)
                 .contentType(JSON)
@@ -114,6 +114,10 @@ public class CardDetailsResourceITest {
         cardBody.append("\"expiry_date\":\"12/99\"");
         cardBody.append("}");
         return cardBody.toString();
+    }
+
+    private String cardUrlForChargeId(String id) {
+        return "/v1/frontend/charges/" + id + "/cards";
     }
 
     private void assertChargeStatusIs(String uniqueChargeId, String status) {
