@@ -1,5 +1,7 @@
 package uk.gov.pay.connector.it;
 
+import com.jayway.restassured.specification.RequestSpecification;
+import org.apache.commons.lang.math.RandomUtils;
 import org.junit.Before;
 import org.junit.Rule;
 import org.junit.Test;
@@ -7,13 +9,18 @@ import uk.gov.pay.connector.util.DropwizardAppWithPostgresRule;
 
 import static com.jayway.restassured.RestAssured.given;
 import static com.jayway.restassured.http.ContentType.JSON;
+import static java.lang.String.format;
 import static org.hamcrest.Matchers.is;
 import static uk.gov.pay.connector.model.ChargeStatus.CREATED;
 
 public class CardDetailsResourceITest {
 
     private String accountId = "666";
-    private String validCardDetails = validCardDetails();
+    private String validCardDetails = buildJsonCardDetailsFor("4242424242424242");
+
+    private String cardUrlFor(String id) {
+        return "/v1/frontend/charges/" + id + "/cards";
+    }
 
     @Rule
     public DropwizardAppWithPostgresRule app = new DropwizardAppWithPostgresRule();
@@ -25,99 +32,82 @@ public class CardDetailsResourceITest {
 
     @Test
     public void shouldAuthoriseChargeForValidCardDetails() throws Exception {
-        String uniqueChargeId = "983794837598475";
-        setupCharge(uniqueChargeId);
+        String chargeId = createNewCharge();
 
-        given().port(app.getLocalPort())
-                .contentType(JSON)
+        givenSetup()
                 .body(validCardDetails)
-                .post(cardUrlForChargeId(uniqueChargeId))
+                .post(cardUrlFor(chargeId))
                 .then()
                 .statusCode(204);
 
-        assertChargeStatusIs(uniqueChargeId, "AUTHORIZATION SUCCESS");
+        assertChargeStatusIs(chargeId, "AUTHORIZATION SUCCESS");
     }
 
     @Test
-    public void returnErrorAndDoNotUpdateChargeStatusIfSomeCardDetailsHaveAlreadyBeenSubmitted() throws Exception {
+    public void shouldReturnErrorAndDoNotUpdateChargeStatusIfCardDetailsAreInvalid() throws Exception {
+        String chargeId = createNewCharge();
+        String detailsWithInvalidExpiryDate = buildJsonCardDetailsFor("4242424242424242", "123", "1299");
 
-        String chargeId = "12345669385794877";
-        setupCharge(chargeId);
-
-        given().port(app.getLocalPort())
+        givenSetup()
+                .body(detailsWithInvalidExpiryDate)
+                .post(cardUrlFor(chargeId))
+                .then()
+                .statusCode(400)
                 .contentType(JSON)
+                .body("message", is("Values do not match expected format/length."));
+
+        assertChargeStatusIs(chargeId, "CREATED");
+    }
+
+    @Test
+    public void shouldReturnErrorAndDoNotUpdateChargeStatusIfSomeCardDetailsHaveAlreadyBeenSubmitted() throws Exception {
+        String chargeId = createNewCharge();
+
+        givenSetup()
                 .body(validCardDetails)
-                .post(cardUrlForChargeId(chargeId))
+                .post(cardUrlFor(chargeId))
                 .then()
                 .statusCode(204);
 
         String originalStatus = "AUTHORIZATION SUCCESS";
         assertChargeStatusIs(chargeId, originalStatus);
 
-        given().port(app.getLocalPort())
-                .contentType(JSON)
+        givenSetup()
                 .body(validCardDetails)
-                .post(cardUrlForChargeId(chargeId))
+                .post(cardUrlFor(chargeId))
                 .then()
                 .statusCode(400)
                 .contentType(JSON)
-                .body("message", is(String.format("Card already processed for charge with id %s.", chargeId)));
+                .body("message", is(format("Card already processed for charge with id %s.", chargeId)));
 
         assertChargeStatusIs(chargeId, originalStatus);
     }
 
     @Test
-    public void returnErrorAndDoNotUpdateChargeStatusIfCardDetailsAreInvalid() throws Exception {
-
-        String chargeId = "8172643872964549";
-        setupCharge(chargeId);
-
-        StringBuilder cardWithInvalidExpiryDateFormat = new StringBuilder();
-        cardWithInvalidExpiryDateFormat.append("{");
-        cardWithInvalidExpiryDateFormat.append("\"card_number\":\"4242424242424242\",");
-        cardWithInvalidExpiryDateFormat.append("\"cvc\":\"123\",");
-        cardWithInvalidExpiryDateFormat.append("\"expiry_date\":\"1299\"");
-        cardWithInvalidExpiryDateFormat.append("}");
-
-        given().port(app.getLocalPort())
-                .contentType(JSON)
-                .body(cardWithInvalidExpiryDateFormat.toString())
-                .post(cardUrlForChargeId(chargeId))
-                .then()
-                .statusCode(400)
-                .contentType(JSON)
-                .body("message", is(String.format("Values do not match expected format/length.")));
-
-        assertChargeStatusIs(chargeId, "CREATED");
-    }
-
-    @Test
-    public void return404IfChargeDoesNotExist() throws Exception {
-
+    public void shouldReturn404IfChargeDoesNotExist() throws Exception {
         String unknownId = "61234569847520367";
 
-        given().port(app.getLocalPort())
-                .contentType(JSON)
+        givenSetup()
                 .body(validCardDetails)
-                .post(cardUrlForChargeId(unknownId))
+                .post(cardUrlFor(unknownId))
                 .then()
                 .statusCode(404)
                 .contentType(JSON)
-                .body("message", is(String.format("Parent charge with id %s not found.", unknownId)));
+                .body("message", is(format("Parent charge with id %s not found.", unknownId)));
     }
 
-    private String validCardDetails() {
+    private String buildJsonCardDetailsFor(String cardNumber) {
+        return buildJsonCardDetailsFor(cardNumber, "123", "11/99");
+    }
+
+    private String buildJsonCardDetailsFor(String cardNumber, String cvc, String expiryDate) {
         StringBuilder cardBody = new StringBuilder();
         cardBody.append("{");
-        cardBody.append("\"card_number\":\"4242424242424242\",");
-        cardBody.append("\"cvc\":\"123\",");
-        cardBody.append("\"expiry_date\":\"12/99\"");
+        cardBody.append("\"card_number\":\"" + cardNumber + "\",");
+        cardBody.append("\"cvc\":\"" + cvc + "\",");
+        cardBody.append("\"expiry_date\":\"" + expiryDate + "\"");
         cardBody.append("}");
         return cardBody.toString();
-    }
-
-    private String cardUrlForChargeId(String id) {
-        return "/v1/frontend/charges/" + id + "/cards";
     }
 
     private void assertChargeStatusIs(String uniqueChargeId, String status) {
@@ -127,7 +117,14 @@ public class CardDetailsResourceITest {
                 .body("status", is(status));
     }
 
-    private void setupCharge(String chargeId) {
+    private String createNewCharge() {
+        String chargeId = ((Integer) RandomUtils.nextInt(99999999)).toString();
         app.getDatabaseTestHelper().addCharge(accountId, chargeId, 500, CREATED);
+        return chargeId;
+    }
+
+    private RequestSpecification givenSetup() {
+        return given().port(app.getLocalPort())
+                .contentType(JSON);
     }
 }
