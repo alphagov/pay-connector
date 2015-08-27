@@ -166,6 +166,20 @@ Content-Type: application/json
 
 ```expiry_date``` (mandatory) The expiry date (no validation other than format being mm/yy).
 
+
+#### Valid card numbers (inspired from Stripe)
+
+| Card Number                          | Return Type | Message                        |
+| ----------------------------- | ----------------- | ---------------------------------- |
+|```4242424242424242```|Auth success|-|
+|```5105105105105100```|Auth success|-|
+|```4000000000000002```|Auth failure|This transaction was declined.|
+|```4000000000000069```|Auth failure|The card is expired.|
+|```4000000000000127```|Auth failure|The CVC code is incorrect.|
+|```4000000000000119```|System error|This transaction could be not be processed.|
+
+
+
 #### Response example
 
 ##### Authorization success
@@ -180,6 +194,6 @@ Content-Type: application/json
 Content-Type: application/json
 
 {
-    "message": "Values do not match expected format/length."
+    "message": "This transaction was declined."
 }
 ```
