@@ -166,7 +166,6 @@ Content-Type: application/json
 
 ```expiry_date``` (mandatory) The expiry date (no validation other than format being mm/yy).
 
-
 #### Valid card numbers (inspired from Stripe)
 
 | Card Number                          | Return Type | Message                        |
@@ -177,8 +176,6 @@ Content-Type: application/json
 |```4000000000000069```|Auth failure|The card is expired.|
 |```4000000000000127```|Auth failure|The CVC code is incorrect.|
 |```4000000000000119```|System error|This transaction could be not be processed.|
-
-
 
 #### Response example
 
