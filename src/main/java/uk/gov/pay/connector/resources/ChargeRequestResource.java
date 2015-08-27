@@ -38,7 +38,7 @@ public class ChargeRequestResource {
     @Produces(APPLICATION_JSON)
     public Response createNewCharge(Map<String, Object> chargeRequest, @Context UriInfo uriInfo) {
 
-        String gatewayAccountId = chargeRequest.get("gateway_account").toString();
+        String gatewayAccountId = chargeRequest.get("gateway_account_id").toString();
         if (gatewayAccountDao.idIsMissing(gatewayAccountId)) {
             return ResponseUtil.badResponse("Unknown gateway account: " + gatewayAccountId);
         }
@@ -62,5 +62,4 @@ public class ChargeRequestResource {
         charge.put("links", links);
         return charge;
     }
-
 }

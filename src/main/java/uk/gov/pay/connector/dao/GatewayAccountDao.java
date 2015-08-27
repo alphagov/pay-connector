@@ -22,8 +22,8 @@ public class GatewayAccountDao {
 
     public boolean idIsMissing(String gatewayAccountId) {
         return jdbi.withHandle(handle -> handle
-                .createQuery("SELECT NOT EXISTS(SELECT 1 from gateway_accounts where account_id=:id)")
-                .bind("id", gatewayAccountId)
+                .createQuery("SELECT NOT EXISTS(SELECT 1 from gateway_accounts where gateway_account_id=:id)")
+                .bind("id", Long.valueOf(gatewayAccountId))
                 .map(BooleanMapper.FIRST)
                 .first());
 

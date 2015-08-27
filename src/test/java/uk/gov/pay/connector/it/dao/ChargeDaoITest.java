@@ -27,12 +27,12 @@ public class ChargeDaoITest {
     public ExpectedException expectedEx = ExpectedException.none();
 
     private ChargeDao chargeDao;
-    private String gateway_account_id = "564532435";
+    private String gatewayAccountId = "564532435";
 
     @Before
     public void setUp() throws Exception {
         chargeDao = new ChargeDao(app.getJdbi());
-        app.getDatabaseTestHelper().addGatewayAccount(gateway_account_id, "test_account");
+        app.getDatabaseTestHelper().addGatewayAccount(gatewayAccountId, "test_account");
     }
 
     @Test
@@ -86,7 +86,7 @@ public class ChargeDaoITest {
     private ImmutableMap<String, Object> newCharge(long amount) {
         return ImmutableMap.of(
                 "amount", amount,
-                "gateway_account_id", gateway_account_id);
+                "gateway_account_id", gatewayAccountId);
     }
 
 }

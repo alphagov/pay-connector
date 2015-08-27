@@ -1,6 +1,5 @@
 package uk.gov.pay.connector.resources;
 
-import com.google.common.base.Optional;
 import uk.gov.pay.connector.dao.ChargeDao;
 import uk.gov.pay.connector.dao.PayDBIException;
 import uk.gov.pay.connector.model.ChargeStatus;
@@ -13,6 +12,7 @@ import javax.ws.rs.PathParam;
 import javax.ws.rs.Produces;
 import javax.ws.rs.core.Response;
 import java.util.Map;
+import java.util.Optional;
 
 import static javax.ws.rs.core.MediaType.APPLICATION_JSON;
 import static uk.gov.pay.connector.resources.CardDetailsValidator.isValidCardDetails;
@@ -32,7 +32,7 @@ public class CardDetailsResource {
     @Produces(APPLICATION_JSON)
     public Response addCardDetailsForCharge(@PathParam("chargeId") String chargeId, Map<String, Object> cardDetails) throws PayDBIException {
 
-        Optional<Map<String, Object>> maybeCharge = Optional.fromNullable(chargeDao.findById(chargeId));
+        Optional<Map<String, Object>> maybeCharge = Optional.ofNullable(chargeDao.findById(chargeId));
         if (!maybeCharge.isPresent()) {
             return responseWithChargeNotFound(chargeId);
         } else if (!hasStatusCreated(maybeCharge.get())) {

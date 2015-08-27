@@ -20,7 +20,7 @@ public class ChargeDao {
         Map<String, Object> fixedCharge = copyAndConvertFieldToLong(charge, "gateway_account_id");
         return jdbi.withHandle(handle ->
                         handle
-                                .createStatement("INSERT INTO charges(amount, gateway_account_id, status) VALUES (:amount, :gateway_account, :status)")
+                                .createStatement("INSERT INTO charges(amount, gateway_account_id, status) VALUES (:amount, :gateway_account_id, :status)")
                                 .bindFromMap(fixedCharge)
                                 .bind("status", ChargeStatus.CREATED.getValue())
                                 .executeAndReturnGeneratedKeys(StringMapper.FIRST)
@@ -29,13 +29,18 @@ public class ChargeDao {
     }
 
     public Map<String, Object> findById(String chargeId) {
-        return jdbi.withHandle(handle ->
+        Map<String, Object> data = jdbi.withHandle(handle ->
                         handle
-                                .createQuery("SELECT amount, gateway_account_id, status FROM charges WHERE charge_id=:charge_id")
+                                .createQuery("SELECT charge_id, amount, gateway_account_id, status FROM charges WHERE charge_id=:charge_id")
                                 .bind("charge_id", Long.valueOf(chargeId))
                                 .map(new DefaultMapper())
                                 .first()
         );
+
+        if (data != null) {
+            data = copyAndConvertFieldToString(data, "charge_id");
+        }
+        return data;
     }
 
     public void updateStatus(String chargeId, ChargeStatus newStatus) throws PayDBIException {
@@ -56,6 +61,12 @@ public class ChargeDao {
         Map<String, Object> copy = newHashMap(charge);
         Long fieldAsLong = Long.valueOf(copy.remove(field).toString());
         copy.put(field, fieldAsLong);
+        return copy;
+    }
+
+    private Map<String, Object> copyAndConvertFieldToString(Map<String, Object> data, String field) {
+        Map<String, Object> copy = newHashMap(data);
+        copy.put(field, String.valueOf(copy.remove(field)));
         return copy;
     }
 }
