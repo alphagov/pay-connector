@@ -18,7 +18,7 @@ public class CardDetailsValidatorTest {
     @Test
     public void validationSucceedForCorrectCardDetails() {
         Map<String, Object> cardDetails = buildCardDetails(validCardNumber, validCVC, validExpiryDate);
-        assertTrue(CardDetailsValidator.isValidCardDetails(cardDetails));
+        assertTrue(CardDetailsValidator.isWellFormattedCardDetails(cardDetails));
     }
 
     @Test
@@ -27,7 +27,7 @@ public class CardDetailsValidatorTest {
         wrongCardDetails.put("card_number", validCardNumber);
         wrongCardDetails.put("expiry_date", validExpiryDate);
 
-        assertFalse(CardDetailsValidator.isValidCardDetails(wrongCardDetails));
+        assertFalse(CardDetailsValidator.isWellFormattedCardDetails(wrongCardDetails));
     }
 
     @Test
@@ -36,7 +36,7 @@ public class CardDetailsValidatorTest {
         wrongCardDetails.put("cvc", validCVC);
         wrongCardDetails.put("expiry_date", validExpiryDate);
 
-        assertFalse(CardDetailsValidator.isValidCardDetails(wrongCardDetails));
+        assertFalse(CardDetailsValidator.isWellFormattedCardDetails(wrongCardDetails));
     }
 
     @Test
@@ -45,43 +45,43 @@ public class CardDetailsValidatorTest {
         wrongCardDetails.put("cvc", validCVC);
         wrongCardDetails.put("card_number", validCardNumber);
 
-        assertFalse(CardDetailsValidator.isValidCardDetails(wrongCardDetails));
+        assertFalse(CardDetailsValidator.isWellFormattedCardDetails(wrongCardDetails));
     }
 
     @Test
     public void validationFailsForEmptyFields() {
         Map<String, Object> wrongCardDetails = buildCardDetails("", "", "");
-        assertFalse(CardDetailsValidator.isValidCardDetails(wrongCardDetails));
+        assertFalse(CardDetailsValidator.isWellFormattedCardDetails(wrongCardDetails));
     }
 
     @Test
     public void validationFailsFor15digitsCardNumber() {
         Map<String, Object> cardDetails = buildCardDetails("123456789012345", validCVC, validExpiryDate);
-        assertFalse(CardDetailsValidator.isValidCardDetails(cardDetails));
+        assertFalse(CardDetailsValidator.isWellFormattedCardDetails(cardDetails));
     }
 
     @Test
     public void validationFailsForCardNumberWithNonDigits() {
         Map<String, Object> cardDetails = buildCardDetails("123456789012345A", validCVC, validExpiryDate);
-        assertFalse(CardDetailsValidator.isValidCardDetails(cardDetails));
+        assertFalse(CardDetailsValidator.isWellFormattedCardDetails(cardDetails));
     }
 
     @Test
     public void validationFailsForCVCwithNonDigits() {
         Map<String, Object> cardDetails = buildCardDetails(validCardNumber, "45A", validExpiryDate);
-        assertFalse(CardDetailsValidator.isValidCardDetails(cardDetails));
+        assertFalse(CardDetailsValidator.isWellFormattedCardDetails(cardDetails));
     }
 
     @Test
     public void validationFailsForCVCwithMoreThan3Digits() {
         Map<String, Object> cardDetails = buildCardDetails(validCardNumber, "4444", validExpiryDate);
-        assertFalse(CardDetailsValidator.isValidCardDetails(cardDetails));
+        assertFalse(CardDetailsValidator.isWellFormattedCardDetails(cardDetails));
     }
 
     @Test
     public void validationFailsForExpiryDateWithWrongFormat() {
         Map<String, Object> cardDetails = buildCardDetails(validCardNumber, validCVC, "1290");
-        assertFalse(CardDetailsValidator.isValidCardDetails(cardDetails));
+        assertFalse(CardDetailsValidator.isWellFormattedCardDetails(cardDetails));
     }
 
     private Map<String, Object> buildCardDetails(String cardNumber, String cvc, String expiryDate) {

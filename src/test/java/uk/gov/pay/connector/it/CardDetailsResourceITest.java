@@ -31,11 +31,21 @@ public class CardDetailsResourceITest {
     }
 
     @Test
-    public void shouldAuthoriseChargeForValidCardDetails() throws Exception {
+    public void shouldAuthoriseChargeForValidCardDetails1() throws Exception {
+        shouldAuthoriseChargeFor(validCardDetails);
+    }
+
+    @Test
+    public void shouldAuthoriseChargeForValidCardDetails2() throws Exception {
+        String otherValidCardDetails = buildJsonCardDetailsFor("5105105105105100");
+        shouldAuthoriseChargeFor(otherValidCardDetails);
+    }
+
+    private void shouldAuthoriseChargeFor(String cardDetails) throws Exception {
         String chargeId = createNewCharge();
 
         givenSetup()
-                .body(validCardDetails)
+                .body(cardDetails)
                 .post(cardUrlFor(chargeId))
                 .then()
                 .statusCode(204);
@@ -43,6 +53,22 @@ public class CardDetailsResourceITest {
         assertChargeStatusIs(chargeId, "AUTHORIZATION SUCCESS");
     }
 
+    @Test
+    public void shouldRejectRandomCardNumberAndNotUpdateChargeStatus() throws Exception {
+        String chargeId = createNewCharge();
+        String randomCardNumber = buildJsonCardDetailsFor("1111111111111119");
+
+        givenSetup()
+                .body(randomCardNumber)
+                .post(cardUrlFor(chargeId))
+                .then()
+                .statusCode(400)
+                .contentType(JSON)
+                .body("message", is("Unsupported card details."));
+
+        assertChargeStatusIs(chargeId, "CREATED");
+    }
+    
     @Test
     public void shouldReturnErrorAndDoNotUpdateChargeStatusIfCardDetailsAreInvalid() throws Exception {
         String chargeId = createNewCharge();
@@ -94,6 +120,56 @@ public class CardDetailsResourceITest {
                 .statusCode(404)
                 .contentType(JSON)
                 .body("message", is(format("Parent charge with id %s not found.", unknownId)));
+    }
+
+    @Test
+    public void shouldReturnNotAuthorisedForTheSpecificCardNumber1() throws Exception {
+        String cardDetailsToReject = buildJsonCardDetailsFor("4000000000000002");
+
+        String expectedErrorMessage = "This transaction was declined.";
+        String expectedChargeStatus = "AUTHORIZATION REJECTED";
+        shouldReturnErrorForCardDetailsWithMessage(cardDetailsToReject, expectedErrorMessage, expectedChargeStatus);
+    }
+
+    @Test
+    public void shouldReturnNotAuthorisedForTheSpecificCardNumber2() throws Exception {
+        String cardDetailsToReject = buildJsonCardDetailsFor("4000000000000069");
+
+        String expectedErrorMessage = "The card is expired.";
+        String expectedChargeStatus = "AUTHORIZATION REJECTED";
+        shouldReturnErrorForCardDetailsWithMessage(cardDetailsToReject, expectedErrorMessage, expectedChargeStatus);
+    }
+
+    @Test
+    public void shouldReturnNotAuthorisedForTheSpecificCardNumber3() throws Exception {
+        String cardDetailsToReject = buildJsonCardDetailsFor("4000000000000127");
+
+        String expectedErrorMessage = "The CVC code is incorrect.";
+        String expectedChargeStatus = "AUTHORIZATION REJECTED";
+        shouldReturnErrorForCardDetailsWithMessage(cardDetailsToReject, expectedErrorMessage, expectedChargeStatus);
+    }
+
+    @Test
+    public void shouldReturnNotAuthorisedForTheSpecificCardNumber4() throws Exception {
+        String cardDetailsToReject = buildJsonCardDetailsFor("4000000000000119");
+
+        String expectedErrorMessage = "This transaction could be not be processed.";
+        String expectedChargeStatus = "SYSTEM ERROR";
+        shouldReturnErrorForCardDetailsWithMessage(cardDetailsToReject, expectedErrorMessage, expectedChargeStatus);
+    }
+
+    private void shouldReturnErrorForCardDetailsWithMessage(String cardDetails, String errorMessage, String status) throws Exception {
+        String chargeId = createNewCharge();
+
+        givenSetup()
+                .body(cardDetails)
+                .post(cardUrlFor(chargeId))
+                .then()
+                .statusCode(400)
+                .contentType(JSON)
+                .body("message", is(errorMessage));
+
+        assertChargeStatusIs(chargeId, status);
     }
 
     private String buildJsonCardDetailsFor(String cardNumber) {
