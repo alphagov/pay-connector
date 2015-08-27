@@ -168,13 +168,13 @@ Content-Type: application/json
 
 #### Valid card numbers (inspired from Stripe)
 
-| Card Number                          | Return Type | Message                        |
+| Card Number                          |  Status | Message                        |
 | ----------------------------- | ----------------- | ---------------------------------- |
 |```4242424242424242```|Auth success|-|
 |```5105105105105100```|Auth success|-|
-|```4000000000000002```|Auth failure|This transaction was declined.|
-|```4000000000000069```|Auth failure|The card is expired.|
-|```4000000000000127```|Auth failure|The CVC code is incorrect.|
+|```4000000000000002```|Auth rejected|This transaction was declined.|
+|```4000000000000069```|Auth rejected|The card is expired.|
+|```4000000000000127```|Auth rejected|The CVC code is incorrect.|
 |```4000000000000119```|System error|This transaction could be not be processed.|
 
 #### Response example
