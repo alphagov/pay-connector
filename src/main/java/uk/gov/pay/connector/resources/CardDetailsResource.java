@@ -58,7 +58,7 @@ public class CardDetailsResource {
     }
 
     private Response responseWithInvalidCardDetails() {
-        return ResponseUtil.badResponse(String.format("Values do not match expected format/length."));
+        return ResponseUtil.badResponse("Values do not match expected format/length.");
     }
 
     private Response responseWithCardAlreadyProcessed(long chargeId) {
