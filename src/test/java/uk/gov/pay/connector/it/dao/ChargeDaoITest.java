@@ -41,7 +41,7 @@ public class ChargeDaoITest {
         Map<String, Object> newCharge = newCharge(amount);
 
         String chargeId = chargeDao.saveNewCharge(newCharge);
-        assertThat(chargeId, is(1L));
+        assertThat(chargeId, is("1"));
     }
 
     @Test
@@ -51,9 +51,10 @@ public class ChargeDaoITest {
 
         Map<String, Object> charge = chargeDao.findById(chargeId);
 
+        assertThat(charge.get("charge_id"), is(chargeId));
         assertThat(charge.get("amount"), is(expectedAmount));
         assertThat(charge.get("status"), is("CREATED"));
-        assertThat(charge.get("gateway_account_id"), is(nullValue()));
+        assertThat(charge.get("gateway_account_id"), is(gatewayAccountId));
     }
 
     @Test
@@ -65,9 +66,10 @@ public class ChargeDaoITest {
 
         Map<String, Object> charge = chargeDao.findById(chargeId);
 
+        assertThat(charge.get("charge_id"), is(chargeId));
         assertThat(charge.get("amount"), is(amount));
         assertThat(charge.get("status"), is("AUTHORIZATION SUBMITTED"));
-        assertThat(charge.get("gateway_account_id"), is(nullValue()));
+        assertThat(charge.get("gateway_account_id"), is(gatewayAccountId));
     }
 
     @Test

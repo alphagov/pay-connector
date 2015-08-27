@@ -117,7 +117,14 @@ public class CardDetailsResourceITest {
                 .body("status", is(status));
     }
 
-    private void setupCharge(String chargeId) {
-        app.getDatabaseTestHelper().addCharge(accountId, chargeId, 500, CREATED);
+    private String createNewCharge() {
+        String chargeId = ((Integer) RandomUtils.nextInt(99999999)).toString();
+        app.getDatabaseTestHelper().addCharge(chargeId, accountId, 500, CREATED);
+        return chargeId;
+    }
+
+    private RequestSpecification givenSetup() {
+        return given().port(app.getLocalPort())
+                .contentType(JSON);
     }
 }

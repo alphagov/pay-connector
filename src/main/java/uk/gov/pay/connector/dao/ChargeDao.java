@@ -38,7 +38,7 @@ public class ChargeDao {
         );
 
         if (data != null) {
-            data = copyAndConvertFieldToString(data, "charge_id");
+            data = copyAndConvertFieldsToString(data, "charge_id", "gateway_account_id");
         }
         return data;
     }
@@ -64,9 +64,11 @@ public class ChargeDao {
         return copy;
     }
 
-    private Map<String, Object> copyAndConvertFieldToString(Map<String, Object> data, String field) {
+    private Map<String, Object> copyAndConvertFieldsToString(Map<String, Object> data, String... fields) {
         Map<String, Object> copy = newHashMap(data);
-        copy.put(field, String.valueOf(copy.remove(field)));
+        for (String field : fields) {
+            copy.put(field, String.valueOf(copy.remove(field)));
+        }
         return copy;
     }
 }
