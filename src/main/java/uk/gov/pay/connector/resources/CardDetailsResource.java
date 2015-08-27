@@ -54,7 +54,7 @@ public class CardDetailsResource {
     }
 
     private boolean hasStatusCreated(Map<String, Object> charge) {
-        return ChargeStatus.CREATED.toString().equals(charge.get("status"));
+        return ChargeStatus.CREATED.getValue().equals(charge.get("status"));
     }
 
     private Response responseWithInvalidCardDetails() {

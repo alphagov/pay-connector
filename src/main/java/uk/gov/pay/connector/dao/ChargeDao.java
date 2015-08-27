@@ -22,7 +22,7 @@ public class ChargeDao {
                         handle
                                 .createStatement("INSERT INTO charges(amount, gateway_account_id, status) VALUES (:amount, :gateway_account, :status)")
                                 .bindFromMap(fixedCharge)
-                                .bind("status", ChargeStatus.CREATED)
+                                .bind("status", ChargeStatus.CREATED.getValue())
                                 .executeAndReturnGeneratedKeys(LongMapper.FIRST)
                                 .first()
         );

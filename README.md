@@ -161,16 +161,20 @@ Content-Type: application/json
 ##### Request body description
 
 ```card_number``` (mandatory) The card number (16 digits).
+
 ```cvc``` (mandatory) The cvc of the card (3 digits).
+
 ```expiry_date``` (mandatory) The expiry date (no validation other than format being mm/yy).
 
 #### Response example
+
+##### Authorization success
 
 ```
 204 No content
 Content-Type: application/json
 ```
-
+##### Error
 ```
 400 Bad Request
 Content-Type: application/json
