@@ -27,12 +27,12 @@ public class ChargeDaoITest {
     public ExpectedException expectedEx = ExpectedException.none();
 
     private ChargeDao chargeDao;
-    private String gateway_account = "564532435";
+    private String gateway_account_id = "564532435";
 
     @Before
     public void setUp() throws Exception {
         chargeDao = new ChargeDao(app.getJdbi());
-        app.getDatabaseTestHelper().addGatewayAccount(gateway_account, "test_account");
+        app.getDatabaseTestHelper().addGatewayAccount(gateway_account_id, "test_account");
     }
 
     @Test
@@ -40,26 +40,26 @@ public class ChargeDaoITest {
         long amount = 100;
         Map<String, Object> newCharge = newCharge(amount);
 
-        long chargeId = chargeDao.saveNewCharge(newCharge);
+        String chargeId = chargeDao.saveNewCharge(newCharge);
         assertThat(chargeId, is(1L));
     }
 
     @Test
     public void insertAmountAndThenGetAmountById() throws Exception {
         long expectedAmount = 101;
-        long chargeId = chargeDao.saveNewCharge(newCharge(expectedAmount));
+        String chargeId = chargeDao.saveNewCharge(newCharge(expectedAmount));
 
         Map<String, Object> charge = chargeDao.findById(chargeId);
 
         assertThat(charge.get("amount"), is(expectedAmount));
         assertThat(charge.get("status"), is("CREATED"));
-        assertThat(charge.get("gateway_account"), is(nullValue()));
+        assertThat(charge.get("gateway_account_id"), is(nullValue()));
     }
 
     @Test
     public void insertChargeAndThenUpdateStatus() throws Exception {
         long amount = 101;
-        long chargeId = chargeDao.saveNewCharge(newCharge(amount));
+        String chargeId = chargeDao.saveNewCharge(newCharge(amount));
 
         chargeDao.updateStatus(chargeId, AUTHORIZATION_SUBMITTED);
 
@@ -67,13 +67,13 @@ public class ChargeDaoITest {
 
         assertThat(charge.get("amount"), is(amount));
         assertThat(charge.get("status"), is("AUTHORIZATION SUBMITTED"));
-        assertThat(charge.get("gateway_account"), is(nullValue()));
+        assertThat(charge.get("gateway_account_id"), is(nullValue()));
     }
 
     @Test
     public void throwDBIExceptionIfStatusNotUpdateForMissingCharge() throws Exception {
 
-        long unknownId = 128457938450746L;
+        String unknownId = "128457938450746";
         ChargeStatus status = AUTHORIZATION_SUCCESS;
 
         expectedEx.expect(PayDBIException.class);
@@ -86,7 +86,7 @@ public class ChargeDaoITest {
     private ImmutableMap<String, Object> newCharge(long amount) {
         return ImmutableMap.of(
                 "amount", amount,
-                "gateway_account", gateway_account);
+                "gateway_account_id", gateway_account_id);
     }
 
 }

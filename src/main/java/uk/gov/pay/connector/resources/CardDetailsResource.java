@@ -30,7 +30,7 @@ public class CardDetailsResource {
     @Path("/v1/frontend/charges/{chargeId}/cards")
     @Consumes(APPLICATION_JSON)
     @Produces(APPLICATION_JSON)
-    public Response addCardDetailsForCharge(@PathParam("chargeId") long chargeId, Map<String, Object> cardDetails) throws PayDBIException {
+    public Response addCardDetailsForCharge(@PathParam("chargeId") String chargeId, Map<String, Object> cardDetails) throws PayDBIException {
 
         Optional<Map<String, Object>> maybeCharge = Optional.fromNullable(chargeDao.findById(chargeId));
         if (!maybeCharge.isPresent()) {
@@ -61,11 +61,11 @@ public class CardDetailsResource {
         return ResponseUtil.badResponse("Values do not match expected format/length.");
     }
 
-    private Response responseWithCardAlreadyProcessed(long chargeId) {
+    private Response responseWithCardAlreadyProcessed(String chargeId) {
         return ResponseUtil.badResponse(String.format("Card already processed for charge with id %s.", chargeId));
     }
 
-    private Response responseWithChargeNotFound(long chargeId) {
+    private Response responseWithChargeNotFound(String chargeId) {
         return ResponseUtil.notFoundResponse(String.format("Parent charge with id %s not found.", chargeId));
     }
 }

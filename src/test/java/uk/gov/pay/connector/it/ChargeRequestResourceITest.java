@@ -26,10 +26,10 @@ public class ChargeRequestResourceITest {
 
     @Test
     public void makeChargeAndRetrieveAmount() throws Exception {
-        int expectedAmount = 2113;
+        long expectedAmount = 2113l;
         ValidatableResponse response = given().port(app.getLocalPort())
                 .contentType(JSON)
-                .body(String.format("{\"amount\":%d, \"gateway_account\": \"%s\"}", expectedAmount, accountId))
+                .body(String.format("{\"amount\":%d, \"gateway_account_id\": \"%s\"}", expectedAmount, accountId))
                 .post("/v1/api/charges")
                 .then()
                 .statusCode(201)
@@ -56,17 +56,17 @@ public class ChargeRequestResourceITest {
 
     @Test
     public void cannotMakeChargeForMissingGatewayAccount() throws Exception {
-        Long missingGatewayAccount = 1L;
+        String missingGatewayAccount = "1234123";
         given().port(app.getLocalPort())
                 .contentType(JSON)
-                .body(String.format("{\"amount\":2113, \"gateway_account\": \"%s\"}", missingGatewayAccount))
+                .body(String.format("{\"amount\":2113, \"gateway_account_id\": \"%s\"}", missingGatewayAccount))
                 .post("/v1/api/charges")
                 .then()
                 .statusCode(400)
                 .contentType(JSON)
                 .header("Location", is(nullValue()))
                 .body("charge_id", is(nullValue()))
-                .body("message", is("Unknown gateway account: 1"));
+                .body("message", is("Unknown gateway account: " + missingGatewayAccount));
     }
 
 }

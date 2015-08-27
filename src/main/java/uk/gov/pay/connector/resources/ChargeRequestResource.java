@@ -9,7 +9,10 @@ import uk.gov.pay.connector.dao.ChargeDao;
 import uk.gov.pay.connector.dao.GatewayAccountDao;
 import uk.gov.pay.connector.util.ResponseUtil;
 
-import javax.ws.rs.*;
+import javax.ws.rs.Consumes;
+import javax.ws.rs.POST;
+import javax.ws.rs.Path;
+import javax.ws.rs.Produces;
 import javax.ws.rs.core.Context;
 import javax.ws.rs.core.Response;
 import javax.ws.rs.core.UriInfo;
@@ -35,13 +38,13 @@ public class ChargeRequestResource {
     @Produces(APPLICATION_JSON)
     public Response createNewCharge(Map<String, Object> chargeRequest, @Context UriInfo uriInfo) {
 
-        Long gatewayAccountId = Long.valueOf(chargeRequest.get("gateway_account").toString());
+        String gatewayAccountId = chargeRequest.get("gateway_account").toString();
         if (gatewayAccountDao.idIsMissing(gatewayAccountId)) {
             return ResponseUtil.badResponse("Unknown gateway account: " + gatewayAccountId);
         }
 
         logger.info("Creating new charge of {}.", chargeRequest);
-        long chargeId = chargeDao.saveNewCharge(chargeRequest);
+        String chargeId = chargeDao.saveNewCharge(chargeRequest);
 
         URI newLocation = uriInfo.
                 getBaseUriBuilder().

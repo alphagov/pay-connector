@@ -28,12 +28,12 @@ public class ChargeInfoResource {
     @GET
     @Path(FIND_CHARGE_BY_ID)
     @Produces(APPLICATION_JSON)
-    public Response getCharge(@PathParam("chargeId") long chargeId, @Context UriInfo uriInfo) {
+    public Response getCharge(@PathParam("chargeId") String chargeId, @Context UriInfo uriInfo) {
         Map<String, Object> charge = chargeDao.findById(chargeId);
         return ok(addSelfLink(uriInfo, chargeId, removeGatewayAccount(charge))).build();
     }
 
-    private Map<String, Object> addSelfLink(UriInfo uriInfo, long chargeId, Map<String, Object> charge) {
+    private Map<String, Object> addSelfLink(UriInfo uriInfo, String chargeId, Map<String, Object> charge) {
         URI selfUri = uriInfo.getAbsolutePathBuilder().build(chargeId);
         List<Map<String, Object>> links = ImmutableList.of(ImmutableMap.of("href", selfUri, "rel", "self", "method", "GET"));
         charge.put("links", links);
