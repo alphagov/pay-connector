@@ -78,13 +78,14 @@ Content-Type: application/json
 
 {
     "amount": 5000,
-    "gateway_account": "1"
+    "gateway_account_id": "1"
 }
 ```
 
 ##### Request body description
 
 ```amount``` (mandatory) The amount (in minor units) of the charge.
+```gateway_account_id``` (mandatory) The gateway account to use for this charge.
 
 #### Response example
 
