@@ -71,4 +71,18 @@ public class ChargeRequestResourceITest {
                 .body("charge_id", is(nullValue()))
                 .body("message", is("Unknown gateway account: " + missingGatewayAccount));
     }
+
+    @Test
+    public void cannotMakeChargeForMissingFields() throws Exception {
+        given().port(app.getLocalPort())
+                .contentType(JSON)
+                .body("{}")
+                .post("/v1/api/charges")
+                .then()
+                .statusCode(400)
+                .contentType(JSON)
+                .header("Location", is(nullValue()))
+                .body("charge_id", is(nullValue()))
+                .body("message", is("Field(s) missing: [amount, gateway_account_id]"));
+    }
 }
