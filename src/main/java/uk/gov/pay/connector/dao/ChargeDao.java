@@ -6,6 +6,7 @@ import org.skife.jdbi.v2.util.StringMapper;
 import uk.gov.pay.connector.model.ChargeStatus;
 
 import java.util.Map;
+import java.util.Optional;
 
 import static com.google.common.collect.Maps.newHashMap;
 
@@ -28,7 +29,7 @@ public class ChargeDao {
         );
     }
 
-    public Map<String, Object> findById(String chargeId) {
+    public Optional<Map<String, Object>> findById(String chargeId) {
         Map<String, Object> data = jdbi.withHandle(handle ->
                         handle
                                 .createQuery("SELECT charge_id, amount, gateway_account_id, status FROM charges WHERE charge_id=:charge_id")
@@ -40,7 +41,7 @@ public class ChargeDao {
         if (data != null) {
             data = copyAndConvertFieldsToString(data, "charge_id", "gateway_account_id");
         }
-        return data;
+        return Optional.ofNullable(data);
     }
 
     public void updateStatus(String chargeId, ChargeStatus newStatus) throws PayDBIException {

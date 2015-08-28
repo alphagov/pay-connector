@@ -1,9 +1,10 @@
 package uk.gov.pay.connector.resources;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import uk.gov.pay.connector.dao.ChargeDao;
 import uk.gov.pay.connector.dao.PayDBIException;
 import uk.gov.pay.connector.model.ChargeStatus;
-import uk.gov.pay.connector.util.ResponseUtil;
 
 import javax.ws.rs.Consumes;
 import javax.ws.rs.POST;
@@ -14,13 +15,16 @@ import javax.ws.rs.core.Response;
 import java.util.Map;
 import java.util.Optional;
 
+import static java.lang.String.format;
 import static javax.ws.rs.core.MediaType.APPLICATION_JSON;
 import static uk.gov.pay.connector.resources.CardDetailsValidator.isValidCardDetails;
+import static uk.gov.pay.connector.util.ResponseUtil.badResponse;
+import static uk.gov.pay.connector.util.ResponseUtil.responseWithChargeNotFound;
 
 @Path("/")
 public class CardDetailsResource {
-
-    private ChargeDao chargeDao;
+    private final Logger logger = LoggerFactory.getLogger(CardDetailsResource.class);
+    private final ChargeDao chargeDao;
 
     public CardDetailsResource(ChargeDao chargeDao) {
         this.chargeDao = chargeDao;
@@ -32,9 +36,9 @@ public class CardDetailsResource {
     @Produces(APPLICATION_JSON)
     public Response addCardDetailsForCharge(@PathParam("chargeId") String chargeId, Map<String, Object> cardDetails) throws PayDBIException {
 
-        Optional<Map<String, Object>> maybeCharge = Optional.ofNullable(chargeDao.findById(chargeId));
+        Optional<Map<String, Object>> maybeCharge = chargeDao.findById(chargeId);
         if (!maybeCharge.isPresent()) {
-            return responseWithChargeNotFound(chargeId);
+            return responseWithChargeNotFound(logger, chargeId);
         } else if (!hasStatusCreated(maybeCharge.get())) {
             return responseWithCardAlreadyProcessed(chargeId);
         }
@@ -58,14 +62,11 @@ public class CardDetailsResource {
     }
 
     private Response responseWithInvalidCardDetails() {
-        return ResponseUtil.badResponse("Values do not match expected format/length.");
+        return badResponse(logger, "Values do not match expected format/length.");
     }
 
     private Response responseWithCardAlreadyProcessed(String chargeId) {
-        return ResponseUtil.badResponse(String.format("Card already processed for charge with id %s.", chargeId));
+        return badResponse(logger, format("Card already processed for charge with id %s.", chargeId));
     }
 
-    private Response responseWithChargeNotFound(String chargeId) {
-        return ResponseUtil.notFoundResponse(String.format("Parent charge with id %s not found.", chargeId));
-    }
 }

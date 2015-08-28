@@ -93,7 +93,7 @@ public class CardDetailsResourceITest {
                 .then()
                 .statusCode(404)
                 .contentType(JSON)
-                .body("message", is(format("Parent charge with id %s not found.", unknownId)));
+                .body("message", is(format("Charge with id [%s] not found.", unknownId)));
     }
 
     private String buildJsonCardDetailsFor(String cardNumber) {

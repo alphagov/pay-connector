@@ -7,7 +7,6 @@ import com.google.common.collect.Maps;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import uk.gov.pay.connector.dao.GatewayAccountDao;
-import uk.gov.pay.connector.util.ResponseUtil;
 
 import javax.ws.rs.Consumes;
 import javax.ws.rs.POST;
@@ -21,6 +20,7 @@ import java.util.List;
 import java.util.Map;
 
 import static javax.ws.rs.core.MediaType.APPLICATION_JSON;
+import static uk.gov.pay.connector.util.ResponseUtil.badResponse;
 
 @Path("/v1/api/accounts")
 public class GatewayAccountResource {
@@ -38,9 +38,8 @@ public class GatewayAccountResource {
     @Consumes(APPLICATION_JSON)
     @Produces(APPLICATION_JSON)
     public Response createNewGatewayAccount(JsonNode node, @Context UriInfo uriInfo) {
-        logger.error("Testing logging");
         if (!node.has(ACCOUNT_NAME)) {
-            return ResponseUtil.badResponse("Missing fields: name");
+            return badResponse(logger, "Missing fields: name");
         }
 
         String name = node.get(ACCOUNT_NAME).textValue();
