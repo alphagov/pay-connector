@@ -19,11 +19,11 @@ The command to run the integration tests is:
 
 | Path                          | Supported Methods | Description                        |
 | ----------------------------- | ----------------- | ---------------------------------- |
-|[```/v1/api/accounts```](#post-v1apiaccounts)              | POST    |  Create a new account to associate charges with.            |
-|[```/v1/api/charges/{chargeId}```](#get-v1apichargeschargeid)                 | GET    |  Returns the charge with `chargeId`.            |
-|[```/v1/api/charges```](#post-v1apicharges)                                  | POST    |  Create a new charge.            |
-|[```/v1/frontend/charges/{chargeId}```](#get-v1frontendchargeschargeid)                                  | GET |  Find out the status of a charge.            |
-|[```/v1/frontend/charges/{chargeId}/cards```](#post-v1frontendchargeschargeidcards)                      | POST |  Authorise the charge with the card details.            |
+|[```/v1/api/accounts```](#post-v1apiaccounts)              | POST    |  Create a new account to associate charges with            |
+|[```/v1/api/charges/{chargeId}```](#get-v1apichargeschargeid)                 | GET    |  Returns the charge with `chargeId`            |
+|[```/v1/api/charges```](#post-v1apicharges)                                  | POST    |  Create a new charge            |
+|[```/v1/frontend/charges/{chargeId}```](#get-v1frontendchargeschargeid)                                  | GET |  Find out the status of a charge            |
+|[```/v1/frontend/charges/{chargeId}/cards```](#post-v1frontendchargeschargeidcards)                      | POST |  Authorise the charge with the card details            |
 |[```/v1/frontend/charges/{chargeId}/capture```](#post-v1frontendchargeschargeidcapture)                      | POST |  Confirm a card charge that was previously authorised successfully.            |
 
 
@@ -44,7 +44,9 @@ Content-Type: application/json
 
 ##### Request body description
 
-```name``` (mandatory) The human friendly name of the account.
+| Field                    | required | Description                               |
+| ------------------------ |:--------:| ----------------------------------------- |
+| `name`                 | X | The human friendly name of the account       |
 
 #### Response example
 
@@ -65,7 +67,10 @@ Location: http://connector.service/v1/api/accounts/1
 ```
 
 ##### Response field description
-```service-name``` (always present) The account name.
+
+| Field                    | always present | Description                               |
+| ------------------------ |:--------:| ----------------------------------------- |
+| `name`                 | X | The account name       |
 
 -----------------------------------------------------------------------------------------------------------
 
@@ -102,9 +107,12 @@ Content-Type: application/json
 ```
 
 ##### Response field description
-```amount``` (always present) The amount (in minor units) of the charge.
-```gateway_account_id``` (always present) The ID of the gateway account to use with this charge.
-```status``` (always present) The current external status of the charge.
+
+| Field                    | always present | Description                               |
+| ------------------------ |:--------:| ----------------------------------------- |
+| `amount`                 | X | The unique identifier for this charge       |
+| `gateway_account_id`     | X | The ID of the gateway account to use with this charge       |
+| `status`                 | X | The current external status of the charge       |
 
 -----------------------------------------------------------------------------------------------------------
 
@@ -126,8 +134,10 @@ Content-Type: application/json
 
 ##### Request body description
 
-```amount``` (mandatory) The amount (in minor units) of the charge.
-```gateway_account_id``` (mandatory) The gateway account to use for this charge.
+| Field                    | required | Description                               |
+| ------------------------ |:--------:| ----------------------------------------- |
+| `amount`                 | X | The amount (in minor units) of the charge       |
+| `gateway_account_id`     | X | The gateway account to use for this charge |
 
 #### Response example
 
@@ -148,7 +158,10 @@ Location: http://connector.service/v1/frontend/charges/1
 ```
 
 ##### Response field description
-```charge_id``` (always present) The unique identifier for this charge.
+
+| Field                    | always present | Description                               |
+| ------------------------ |:--------:| ----------------------------------------- |
+| `charge_id`                 | X | The unique identifier for this charge       |
 
 -----------------------------------------------------------------------------------------------------------
 
@@ -183,8 +196,11 @@ Content-Type: application/json
 ```
 
 ##### Response field description
-```amount``` (always present) The amount (in minor units) of the charge.
-```status``` (always present) The current status of the charge.
+
+| Field                    | always present | Description                         |
+| ------------------------ |:--------:| ----------------------------------------- |
+| `amount`                 | X | The amount (in minor units) of the charge       |
+| `status`                 | X | The current (internal) status of the charge |
 
 -----------------------------------------------------------------------------------------------------------
 
@@ -207,11 +223,11 @@ Content-Type: application/json
 
 ##### Request body description
 
-```card_number``` (mandatory) The card number (16 digits).
-
-```cvc``` (mandatory) The cvc of the card (3 digits).
-
-```expiry_date``` (mandatory) The expiry date (no validation other than format being mm/yy).
+| Field                    | required | Description                               |
+| ------------------------ |:--------:| ----------------------------------------- |
+| `card_number`                 | X | The card number (16 digits)       |
+| `card_number`     | X | The cvc of the card (3 digits) |
+| `expiry_date`     | X | The expiry date (no validation other than format being mm/yy) |
 
 #### Valid card numbers (inspired from Stripe)
 
