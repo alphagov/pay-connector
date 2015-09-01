@@ -1,6 +1,7 @@
 package uk.gov.pay.connector.it;
 
 import com.jayway.restassured.response.ValidatableResponse;
+import org.apache.commons.lang.math.RandomUtils;
 import org.junit.Before;
 import org.junit.Rule;
 import org.junit.Test;
@@ -11,6 +12,7 @@ import static com.jayway.restassured.http.ContentType.JSON;
 import static java.lang.String.format;
 import static org.hamcrest.Matchers.is;
 import static org.hamcrest.Matchers.nullValue;
+import static uk.gov.pay.connector.model.ChargeStatus.AUTHORIZATION_SUCCESS;
 import static uk.gov.pay.connector.util.LinksAssert.assertSelfLink;
 import static uk.gov.pay.connector.util.NumberMatcher.isNumber;
 
@@ -49,6 +51,18 @@ public class ChargesApiResourceITest {
                 .body("status", is("CREATED"));
 
         assertSelfLink(getChargeResponse, documentLocation);
+    }
+
+    @Test
+    public void shouldFilterChargeStatusToReturnInProgressIfInternalStatusIsAuthorised() throws Exception {
+        String chargeId = ((Integer) RandomUtils.nextInt(99999999)).toString();
+        app.getDatabaseTestHelper().addCharge(chargeId, accountId, 500, AUTHORIZATION_SUCCESS);
+
+        getChargeResponseFor(chargeId)
+                .statusCode(200)
+                .contentType(JSON)
+                .body("charge_id", is(chargeId))
+                .body("status", is("IN PROGRESS"));
     }
 
     @Test
