@@ -119,7 +119,7 @@ public class CardDetailsResourceITest {
                 .then()
                 .statusCode(404)
                 .contentType(JSON)
-                .body("message", is(format("Parent charge with id %s not found.", unknownId)));
+                .body("message", is(format("Charge with id [%s] not found.", unknownId)));
     }
 
     @Test
@@ -195,7 +195,7 @@ public class CardDetailsResourceITest {
 
     private String createNewCharge() {
         String chargeId = ((Integer) RandomUtils.nextInt(99999999)).toString();
-        app.getDatabaseTestHelper().addCharge(accountId, chargeId, 500, CREATED);
+        app.getDatabaseTestHelper().addCharge(chargeId, accountId, 500, CREATED);
         return chargeId;
     }
 

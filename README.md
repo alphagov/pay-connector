@@ -20,6 +20,7 @@ The command to run the integration tests is:
 | Path                          | Supported Methods | Description                        |
 | ----------------------------- | ----------------- | ---------------------------------- |
 |[```/v1/api/accounts```](#post-v1apiaccounts)              | POST    |  Create a new account to associate charges with.            |
+|[```/v1/api/charges/{chargeId}```](#get-v1apicharges)                 | GET    |  Returns the charge with `chargeId`.            |
 |[```/v1/api/charges```](#post-v1apicharges)                                  | POST    |  Create a new charge.            |
 |[```/v1/frontend/charges/{chargeId}```](#get-v1frontendchargeschargeid)                                  | GET |  Find out the status of a charge.            |
 |[```/v1/frontend/charges/{chargeId}/cards```](#post-v1frontendchargeschargeidcards)                      | POST |  Authorise the charge with the card details.            |
@@ -65,6 +66,46 @@ Location: http://connector.service/v1/api/accounts/1
 ##### Response field description
 ```service-name``` (always present) The account name.
 
+-----------------------------------------------------------------------------------------------------------
+
+### GET /v1/api/charges/{chargeId}
+
+Find a charge by ID. This endpoint is very similar to [```/v1/frontend/charges/{chargeId}```](#get-v1frontendchargeschargeid)
+except it translates the status of the charge to an external representation (see [Payment States](https://sites.google.com/a/digital.cabinet-office.gov.uk/payments-platform/payment-states---evolving-diagram)).
+
+#### Request example
+
+```
+GET /v1/api/charges/1
+```
+
+#### Response example
+
+```
+HTTP/1.1 200 OK
+Content-Type: application/json
+
+{
+    "charge_id": "1",
+    "amount": 5000,
+    "gateway_account_id": "10",
+    "status": "CREATED"
+    "links": [
+        {
+            "href": "http://connector.service/v1/api/charges/1",
+            "rel": "self",
+            "method": "GET"
+        }
+    ],
+}
+```
+
+##### Response field description
+```amount``` (always present) The amount (in minor units) of the charge.
+```gateway_account_id``` (always present) The ID of the gateway account to use with this charge.
+```status``` (always present) The current external status of the charge.
+
+-----------------------------------------------------------------------------------------------------------
 
 ### POST /v1/api/charges
 
@@ -78,13 +119,14 @@ Content-Type: application/json
 
 {
     "amount": 5000,
-    "gateway_account": "1"
+    "gateway_account_id": "10"
 }
 ```
 
 ##### Request body description
 
 ```amount``` (mandatory) The amount (in minor units) of the charge.
+```gateway_account_id``` (mandatory) The gateway account to use for this charge.
 
 #### Response example
 
@@ -106,6 +148,8 @@ Location: http://connector.service/v1/frontend/charges/1
 
 ##### Response field description
 ```charge_id``` (always present) The unique identifier for this charge.
+
+-----------------------------------------------------------------------------------------------------------
 
 ### GET /v1/frontend/charges/{chargeId}
 
@@ -140,6 +184,8 @@ Content-Type: application/json
 ##### Response field description
 ```amount``` (always present) The amount (in minor units) of the charge.
 ```status``` (always present) The current status of the charge.
+
+-----------------------------------------------------------------------------------------------------------
 
 ### POST /v1/frontend/charges/{chargeId}/cards
 

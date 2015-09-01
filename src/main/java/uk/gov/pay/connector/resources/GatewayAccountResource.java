@@ -7,9 +7,11 @@ import com.google.common.collect.Maps;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import uk.gov.pay.connector.dao.GatewayAccountDao;
-import uk.gov.pay.connector.util.ResponseUtil;
 
-import javax.ws.rs.*;
+import javax.ws.rs.Consumes;
+import javax.ws.rs.POST;
+import javax.ws.rs.Path;
+import javax.ws.rs.Produces;
 import javax.ws.rs.core.Context;
 import javax.ws.rs.core.Response;
 import javax.ws.rs.core.UriInfo;
@@ -18,12 +20,13 @@ import java.util.List;
 import java.util.Map;
 
 import static javax.ws.rs.core.MediaType.APPLICATION_JSON;
+import static uk.gov.pay.connector.util.ResponseUtil.badResponse;
 
 @Path("/v1/api/accounts")
 public class GatewayAccountResource {
 
     private static final Logger logger = LoggerFactory.getLogger(GatewayAccountResource.class);
-    public static final String ACCOUNT_NAME = "name";
+    private static final String ACCOUNT_NAME = "name";
 
     private final GatewayAccountDao gatewayDao;
 
@@ -35,22 +38,21 @@ public class GatewayAccountResource {
     @Consumes(APPLICATION_JSON)
     @Produces(APPLICATION_JSON)
     public Response createNewGatewayAccount(JsonNode node, @Context UriInfo uriInfo) {
-        logger.error("Testing logging");
         if (!node.has(ACCOUNT_NAME)) {
-            return ResponseUtil.badResponse("Missing fields: name");
+            return badResponse(logger, "Missing fields: name");
         }
 
         String name = node.get(ACCOUNT_NAME).textValue();
 
         logger.info("Creating new gateway account called {}", name);
-        Long accountId = gatewayDao.insertNameAndReturnNewId(name);
+        String gatewayAccountId = gatewayDao.insertNameAndReturnNewId(name);
 
         URI newLocation = uriInfo.
                 getBaseUriBuilder().
-                path("/api/gateway/{accountId}").build(accountId);
+                path("/api/gateway/{accountId}").build(gatewayAccountId);
 
         Map<String, Object> account = Maps.newHashMap();
-        account.put("account_id", "" + accountId);
+        account.put("gateway_account_id", gatewayAccountId);
         addSelfLink(newLocation, account);
 
         return Response.created(newLocation).entity(account).build();
