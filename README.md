@@ -225,7 +225,7 @@ Content-Type: application/json
 | Field                    | required | Description                               |
 | ------------------------ |:--------:| ----------------------------------------- |
 | `card_number`                 | X | The card number (16 digits)       |
-| `card_number`     | X | The cvc of the card (3 digits) |
+| `cvc`     | X | The cvc of the card (3 digits) |
 | `expiry_date`     | X | The expiry date (no validation other than format being mm/yy) |
 
 #### Valid card numbers (inspired from Stripe)
