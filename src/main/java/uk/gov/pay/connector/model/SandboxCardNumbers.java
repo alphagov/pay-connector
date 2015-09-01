@@ -16,7 +16,7 @@ public class SandboxCardNumbers {
     }
 
     public static boolean isInvalidCard(String cardNumber) {
-        return (ERROR_CARDS.containsKey(cardNumber));
+        return ERROR_CARDS.containsKey(cardNumber);
     }
 
     public static CardError cardErrorFor(String cardNumber) {
