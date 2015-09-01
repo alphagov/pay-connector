@@ -54,10 +54,10 @@ public class CardDetailsResource {
 
         String cardNumber = (String) cardDetails.get(CARD_NUMBER_FIELD);
 
-        return responseForCorrespondingSanboxCard(chargeId, cardNumber);
+        return responseForCorrespondingSandboxCard(chargeId, cardNumber);
     }
 
-    private Response responseForCorrespondingSanboxCard(String chargeId, String cardNumber) throws PayDBIException {
+    private Response responseForCorrespondingSandboxCard(String chargeId, String cardNumber) throws PayDBIException {
 
         if (ERROR_CARDS.containsKey(cardNumber)) {
             CardError errorInfo = ERROR_CARDS.get(cardNumber);
