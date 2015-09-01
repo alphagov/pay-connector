@@ -8,7 +8,7 @@
 
     <changeSet id="build gateway table" author="">
         <createTable tableName="gateway_accounts">
-            <column name="account_id" type="bigserial" autoIncrement="true">
+            <column name="gateway_account_id" type="bigserial" autoIncrement="true">
                 <constraints primaryKey="true" nullable="false"/>
             </column>
             <column name="name" type="varchar(255)">
@@ -29,7 +29,7 @@
                 <constraints nullable="false" />
             </column>
             <column name="gateway_account_id" type="bigserial">
-                <constraints foreignKeyName="fk__charges_gateway_accounts" referencedTableName="gateway_accounts" referencedColumnNames="account_id"  nullable="false"/>
+                <constraints foreignKeyName="fk__charges_gateway_accounts" referencedTableName="gateway_accounts" referencedColumnNames="gateway_account_id"  nullable="false"/>
             </column>
         </createTable>
     </changeSet>

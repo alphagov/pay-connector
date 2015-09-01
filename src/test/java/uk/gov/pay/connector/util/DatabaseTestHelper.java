@@ -13,15 +13,15 @@ public class DatabaseTestHelper {
 
     public void addGatewayAccount(String accountId, String name) {
         jdbi.withHandle(h ->
-                        h.update("INSERT INTO gateway_accounts(account_id, name) VALUES(?, ?)",
+                        h.update("INSERT INTO gateway_accounts(gateway_account_id, name) VALUES(?, ?)",
                                 Long.valueOf(accountId), name)
         );
     }
 
-    public void addCharge(String accountId, String chargeId, int amount, ChargeStatus status) {
+    public void addCharge(String chargeId, String gatewayAccountId, long amount, ChargeStatus status) {
         jdbi.withHandle(h ->
                         h.update("INSERT INTO charges(charge_id, amount, status, gateway_account_id) VALUES(?, ?, ?, ?)",
-                                Long.valueOf(chargeId), amount, status.getValue(), Long.valueOf(accountId))
+                                Long.valueOf(chargeId), amount, status.getValue(), Long.valueOf(gatewayAccountId))
         );
     }
 }

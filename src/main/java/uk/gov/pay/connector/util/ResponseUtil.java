@@ -1,19 +1,36 @@
 package uk.gov.pay.connector.util;
 
+import com.google.common.base.Joiner;
 import com.google.common.collect.ImmutableMap;
+import org.slf4j.Logger;
 
 import javax.ws.rs.core.Response;
+import java.util.List;
 
+import static java.lang.String.format;
 import static javax.ws.rs.core.Response.Status.BAD_REQUEST;
 import static javax.ws.rs.core.Response.Status.NOT_FOUND;
 
 public class ResponseUtil {
+    public static final Joiner COMMA_JOINER = Joiner.on(", ");
 
-    public static Response badResponse(String message) {
+    public static Response fieldsMissingResponse(Logger logger, List<String> missingFields) {
+        String message = format("Field(s) missing: [%s]", COMMA_JOINER.join(missingFields));
+        return badResponse(logger, message);
+    }
+
+    public static Response responseWithChargeNotFound(Logger logger, String chargeId) {
+        String message = format("Charge with id [%s] not found.", chargeId);
+        return notFoundResponse(logger, message);
+    }
+
+    public static Response badResponse(Logger logger, String message) {
+        logger.error(message);
         return responseWithMessage(BAD_REQUEST, message);
     }
 
-    public static Response notFoundResponse(String message) {
+    public static Response notFoundResponse(Logger logger, String message) {
+        logger.error(message);
         return responseWithMessage(NOT_FOUND, message);
     }
 

@@ -26,7 +26,7 @@ public class GatewayAccountResourceITest {
                 .statusCode(201)
                 .contentType(JSON);
 
-        String accountId = response.extract().path("account_id");
+        String accountId = response.extract().path("gateway_account_id");
         String urlSlug = "api/gateway/" + accountId;
 
         response.header("Location", containsString(urlSlug))
