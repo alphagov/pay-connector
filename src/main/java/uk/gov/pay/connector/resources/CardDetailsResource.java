@@ -18,8 +18,9 @@ import java.util.Optional;
 
 import static javax.ws.rs.core.MediaType.APPLICATION_JSON;
 import static uk.gov.pay.connector.model.ChargeStatus.AUTHORIZATION_SUCCESS;
-import static uk.gov.pay.connector.model.SandboxCardNumbers.ERROR_CARDS;
-import static uk.gov.pay.connector.model.SandboxCardNumbers.GOOD_CARDS;
+import static uk.gov.pay.connector.model.SandboxCardNumbers.cardErrorFor;
+import static uk.gov.pay.connector.model.SandboxCardNumbers.isInvalidCard;
+import static uk.gov.pay.connector.model.SandboxCardNumbers.isValidCard;
 import static uk.gov.pay.connector.resources.CardDetailsValidator.CARD_NUMBER_FIELD;
 import static uk.gov.pay.connector.resources.CardDetailsValidator.isWellFormattedCardDetails;
 import static uk.gov.pay.connector.util.ResponseUtil.badResponse;
@@ -59,13 +60,13 @@ public class CardDetailsResource {
 
     private Response responseForCorrespondingSandboxCard(String chargeId, String cardNumber) throws PayDBIException {
 
-        if (ERROR_CARDS.containsKey(cardNumber)) {
-            CardError errorInfo = ERROR_CARDS.get(cardNumber);
+        if (isInvalidCard(cardNumber)) {
+            CardError errorInfo = cardErrorFor(cardNumber);
             chargeDao.updateStatus(chargeId, errorInfo.getNewErrorStatus());
             return responseWithError(errorInfo.getErrorMessage());
         }
 
-        if (GOOD_CARDS.contains(cardNumber)) {
+        if (isValidCard(cardNumber)) {
             chargeDao.updateStatus(chargeId, AUTHORIZATION_SUCCESS);
             return Response.noContent().build();
         }
