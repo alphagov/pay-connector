@@ -7,6 +7,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import uk.gov.pay.connector.dao.ChargeDao;
 import uk.gov.pay.connector.dao.GatewayAccountDao;
+import uk.gov.pay.connector.model.ChargeStatus;
 import uk.gov.pay.connector.model.api.ExternalChargeStatus;
 import uk.gov.pay.connector.util.ResponseUtil;
 
@@ -94,13 +95,18 @@ public class ChargesApiResource {
         logger.info("Creating new charge of {}.", chargeRequest);
         String chargeId = chargeDao.saveNewCharge(chargeRequest);
 
-        URI newLocation = chargeLocationFor(uriInfo, chargeId);
+        Optional<Map<String, Object>> maybeCharge = chargeDao.findById(chargeId);
+        return maybeCharge
+                .map(charge -> {
+                    URI newLocation = chargeLocationFor(uriInfo, chargeId);
+                    Map<String, Object> responseData = chargeResponseData(charge, newLocation);
 
-        Map<String, Object> responseData = Maps.newHashMap();
-        responseData.put("charge_id", "" + chargeId);
-        addSelfLink(newLocation, responseData);
+                    logger.info("charge = {}", charge);
+                    logger.info("responseData = {}", responseData);
 
-        return Response.created(newLocation).entity(responseData).build();
+                    return Response.created(newLocation).entity(responseData).build();
+                })
+                .orElse(ResponseUtil.responseWithChargeNotFound(logger, chargeId));
     }
 
     private URI chargeLocationFor(UriInfo uriInfo, String chargeId) {

@@ -11,6 +11,7 @@ import static com.jayway.restassured.RestAssured.given;
 import static com.jayway.restassured.http.ContentType.JSON;
 import static java.lang.String.format;
 import static org.hamcrest.Matchers.is;
+import static org.hamcrest.Matchers.notNullValue;
 import static org.hamcrest.Matchers.nullValue;
 import static uk.gov.pay.connector.model.ChargeStatus.AUTHORIZATION_SUCCESS;
 import static uk.gov.pay.connector.util.LinksAssert.assertSelfLink;
@@ -35,6 +36,8 @@ public class ChargesApiResourceITest {
         String postBody = format("{\"amount\":%d, \"gateway_account_id\": \"%s\"}", expectedAmount, accountId);
         ValidatableResponse response = postCreateChargeResponse(postBody)
                 .statusCode(201)
+                .body("charge_id", is(notNullValue()))
+                .body("amount", isNumber(expectedAmount))
                 .contentType(JSON);
 
         String chargeId = response.extract().path("charge_id");
