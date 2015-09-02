@@ -20,10 +20,11 @@ The command to run the integration tests is:
 | Path                          | Supported Methods | Description                        |
 | ----------------------------- | ----------------- | ---------------------------------- |
 |[```/v1/api/accounts```](#post-v1apiaccounts)              | POST    |  Create a new account to associate charges with.            |
-|[```/v1/api/charges/{chargeId}```](#get-v1apicharges)                 | GET    |  Returns the charge with `chargeId`.            |
+|[```/v1/api/charges/{chargeId}```](#get-v1apichargeschargeid)                 | GET    |  Returns the charge with `chargeId`.            |
 |[```/v1/api/charges```](#post-v1apicharges)                                  | POST    |  Create a new charge.            |
 |[```/v1/frontend/charges/{chargeId}```](#get-v1frontendchargeschargeid)                                  | GET |  Find out the status of a charge.            |
 |[```/v1/frontend/charges/{chargeId}/cards```](#post-v1frontendchargeschargeidcards)                      | POST |  Authorise the charge with the card details.            |
+|[```/v1/frontend/charges/{chargeId}/capture```](#post-v1frontendchargeschargeidcapture)                      | POST |  Confirm a card charge that was previously authorised successfully.            |
 
 
 ### POST /v1/api/accounts
@@ -238,5 +239,38 @@ Content-Type: application/json
 
 {
     "message": "This transaction was declined."
+}
+```
+-----------------------------------------------------------------------------------------------------------
+
+### POST /v1/frontend/charges/{chargeId}/capture
+
+This endpoint proceeds to the capture of the card for the specified charge. The charge needs to have been previously authorised for this call to succeed.
+
+#### Request example
+
+```
+POST /v1/frontend/charges/1/capture
+Content-Type: application/json
+```
+
+##### The request body is empty
+
+
+#### Response example
+
+##### Authorization success
+
+```
+204 No content
+Content-Type: application/json
+```
+##### Error
+```
+400 Bad Request
+Content-Type: application/json
+
+{
+    "message": "Cannot capture a charge with status AUTHORIZATION REJECTED."
 }
 ```

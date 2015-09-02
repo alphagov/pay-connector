@@ -15,6 +15,7 @@ import uk.gov.pay.connector.dao.GatewayAccountDao;
 import uk.gov.pay.connector.healthcheck.DatabaseHealthCheck;
 import uk.gov.pay.connector.healthcheck.Ping;
 import uk.gov.pay.connector.resources.CardDetailsResource;
+import uk.gov.pay.connector.resources.ChargeCaptureResource;
 import uk.gov.pay.connector.resources.ChargesApiResource;
 import uk.gov.pay.connector.resources.ChargesFrontendResource;
 import uk.gov.pay.connector.resources.GatewayAccountResource;
@@ -62,6 +63,7 @@ public class ConnectorApp extends Application<ConnectorConfiguration> {
         environment.jersey().register(new ChargesApiResource(chargeDao, gatewayAccountDao));
         environment.jersey().register(new ChargesFrontendResource(chargeDao));
         environment.jersey().register(new CardDetailsResource(chargeDao));
+        environment.jersey().register(new ChargeCaptureResource(chargeDao));
         environment.jersey().register(new GatewayAccountResource(gatewayAccountDao));
 
         environment.healthChecks().register("database", new DatabaseHealthCheck(jdbi, dataSourceFactory.getValidationQuery()));

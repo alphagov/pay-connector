@@ -5,12 +5,14 @@ import uk.gov.pay.connector.model.ChargeStatus;
 import static org.apache.commons.lang3.ArrayUtils.contains;
 import static uk.gov.pay.connector.model.ChargeStatus.AUTHORIZATION_SUBMITTED;
 import static uk.gov.pay.connector.model.ChargeStatus.AUTHORIZATION_SUCCESS;
+import static uk.gov.pay.connector.model.ChargeStatus.CAPTURED;
 import static uk.gov.pay.connector.model.ChargeStatus.CREATED;
 import static uk.gov.pay.connector.model.ChargeStatus.chargeStatusFrom;
 
 public enum ExternalChargeStatus {
     EXT_CREATED("CREATED", CREATED),
-    EXT_IN_PROGRESS("IN PROGRESS", AUTHORIZATION_SUBMITTED, AUTHORIZATION_SUCCESS);
+    EXT_IN_PROGRESS("IN PROGRESS", AUTHORIZATION_SUBMITTED, AUTHORIZATION_SUCCESS),
+    EXT_SUCCEEDED("SUCCEEDED", CAPTURED);
 
     private final String value;
     private final ChargeStatus[] innerStates;
