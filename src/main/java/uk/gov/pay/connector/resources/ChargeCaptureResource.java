@@ -18,6 +18,7 @@ import static java.lang.String.format;
 import static javax.ws.rs.core.MediaType.APPLICATION_JSON;
 import static uk.gov.pay.connector.model.ChargeStatus.AUTHORIZATION_SUCCESS;
 import static uk.gov.pay.connector.model.ChargeStatus.CAPTURED;
+import static uk.gov.pay.connector.model.ChargeStatus.STATUS_KEY;
 import static uk.gov.pay.connector.util.ResponseUtil.badResponse;
 import static uk.gov.pay.connector.util.ResponseUtil.responseWithChargeNotFound;
 
@@ -26,7 +27,6 @@ public class ChargeCaptureResource {
 
     private ChargeDao chargeDao;
     private final Logger logger = LoggerFactory.getLogger(ChargeCaptureResource.class);
-    private static final String STATUS_KEY = "status";
 
     public ChargeCaptureResource(ChargeDao chargeDao) {
         this.chargeDao = chargeDao;

@@ -10,6 +10,8 @@ public enum ChargeStatus {
     SYSTEM_ERROR("SYSTEM ERROR"),
     CAPTURED("CAPTURED");
 
+    public static final String STATUS_KEY = "status";
+
     private String value;
 
     ChargeStatus(String value) {

@@ -18,6 +18,7 @@ import java.util.Optional;
 
 import static javax.ws.rs.core.MediaType.APPLICATION_JSON;
 import static uk.gov.pay.connector.model.ChargeStatus.AUTHORIZATION_SUCCESS;
+import static uk.gov.pay.connector.model.ChargeStatus.STATUS_KEY;
 import static uk.gov.pay.connector.model.SandboxCardNumbers.cardErrorFor;
 import static uk.gov.pay.connector.model.SandboxCardNumbers.isInvalidCard;
 import static uk.gov.pay.connector.model.SandboxCardNumbers.isValidCard;
@@ -75,7 +76,7 @@ public class CardDetailsResource {
     }
 
     private boolean hasStatusCreated(Map<String, Object> charge) {
-        return ChargeStatus.CREATED.getValue().equals(charge.get("status"));
+        return ChargeStatus.CREATED.getValue().equals(charge.get(STATUS_KEY));
     }
 
     private Response responseWithError(String msg) {
