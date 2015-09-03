@@ -14,6 +14,7 @@ import static org.hamcrest.Matchers.is;
 import static org.hamcrest.Matchers.notNullValue;
 import static org.hamcrest.Matchers.nullValue;
 import static uk.gov.pay.connector.model.ChargeStatus.AUTHORIZATION_SUCCESS;
+import static uk.gov.pay.connector.util.LinksAssert.assertCardAuthLink;
 import static uk.gov.pay.connector.util.LinksAssert.assertSelfLink;
 import static uk.gov.pay.connector.util.NumberMatcher.isNumber;
 
@@ -54,6 +55,9 @@ public class ChargesApiResourceITest {
                 .body("status", is("CREATED"));
 
         assertSelfLink(getChargeResponse, documentLocation);
+
+        String cardAuthUrl = expectedCardAuthUrlFor(chargeId);
+        assertCardAuthLink(getChargeResponse, cardAuthUrl);
     }
 
     @Test
@@ -114,5 +118,9 @@ public class ChargesApiResourceITest {
 
     private String expectedChargeLocationFor(String chargeId) {
         return "http://localhost:" + app.getLocalPort() + CHARGES_API_PATH + chargeId;
+    }
+
+    private String expectedCardAuthUrlFor(String chargeId) {
+        return "http://localhost:" + app.getLocalPort() + "/v1/frontend/charges/" + chargeId + "/cards";
     }
 }

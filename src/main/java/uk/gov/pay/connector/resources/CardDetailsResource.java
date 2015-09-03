@@ -29,6 +29,8 @@ import static uk.gov.pay.connector.util.ResponseUtil.responseWithChargeNotFound;
 
 @Path("/")
 public class CardDetailsResource {
+    public static final String CARD_AUTH_FRONTEND_PATH = "/v1/frontend/charges/{chargeId}/cards";
+
     private final Logger logger = LoggerFactory.getLogger(CardDetailsResource.class);
     private final ChargeDao chargeDao;
 
@@ -37,7 +39,7 @@ public class CardDetailsResource {
     }
 
     @POST
-    @Path("/v1/frontend/charges/{chargeId}/cards")
+    @Path(CARD_AUTH_FRONTEND_PATH)
     @Consumes(APPLICATION_JSON)
     @Produces(APPLICATION_JSON)
     public Response addCardDetailsForCharge(@PathParam("chargeId") String chargeId, Map<String, Object> cardDetails) throws PayDBIException {

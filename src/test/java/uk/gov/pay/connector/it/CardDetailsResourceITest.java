@@ -68,7 +68,7 @@ public class CardDetailsResourceITest {
 
         assertChargeStatusIs(chargeId, "CREATED");
     }
-    
+
     @Test
     public void shouldReturnErrorAndDoNotUpdateChargeStatusIfCardDetailsAreInvalid() throws Exception {
         String chargeId = createNewCharge();
