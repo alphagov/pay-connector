@@ -62,7 +62,7 @@ public class ChargesApiResource {
                     Map<String, Object> responseData = chargeResponseData(charge, documentLocation);
                     return Response.ok(responseData).build();
                 })
-                .orElse(ResponseUtil.responseWithChargeNotFound(logger, chargeId));
+                .orElseGet(() -> ResponseUtil.responseWithChargeNotFound(logger, chargeId));
     }
 
     private Map<String, Object> chargeResponseData(Map<String, Object> charge, URI documentLocation) {
@@ -96,6 +96,7 @@ public class ChargesApiResource {
         String chargeId = chargeDao.saveNewCharge(chargeRequest);
 
         Optional<Map<String, Object>> maybeCharge = chargeDao.findById(chargeId);
+
         return maybeCharge
                 .map(charge -> {
                     URI newLocation = chargeLocationFor(uriInfo, chargeId);
@@ -104,9 +105,10 @@ public class ChargesApiResource {
                     logger.info("charge = {}", charge);
                     logger.info("responseData = {}", responseData);
 
+
                     return Response.created(newLocation).entity(responseData).build();
                 })
-                .orElse(ResponseUtil.responseWithChargeNotFound(logger, chargeId));
+                .orElseGet(() -> ResponseUtil.responseWithChargeNotFound(logger, chargeId));
     }
 
     private URI chargeLocationFor(UriInfo uriInfo, String chargeId) {
