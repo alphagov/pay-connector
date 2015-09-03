@@ -98,9 +98,14 @@ Content-Type: application/json
     "status": "CREATED"
     "links": [
         {
-            "href": "http://connector.service/v1/api/charges/1",
             "rel": "self",
-            "method": "GET"
+            "method": "GET",
+            "href": "http://connector.service/v1/api/charges/1"
+        },
+        {
+            "rel": "cardAuth",
+            "method": "POST",
+            "href": "http://connector.service/v1/frontend/charges/1/cards"
         }
     ],
 }
