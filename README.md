@@ -1,5 +1,5 @@
 # pay-connector
-The Charges Connector in Java (Dropwizard)
+The Pay Connector in Java (Dropwizard)
 
 ## Integration tests
 
