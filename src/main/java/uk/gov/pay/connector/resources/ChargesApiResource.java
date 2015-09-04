@@ -7,6 +7,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import uk.gov.pay.connector.dao.ChargeDao;
 import uk.gov.pay.connector.dao.GatewayAccountDao;
+import uk.gov.pay.connector.model.ChargeStatus;
 import uk.gov.pay.connector.model.api.ExternalChargeStatus;
 import uk.gov.pay.connector.util.ResponseUtil;
 
@@ -61,7 +62,7 @@ public class ChargesApiResource {
                     Map<String, Object> responseData = chargeResponseData(charge, documentLocation);
                     return Response.ok(responseData).build();
                 })
-                .orElse(ResponseUtil.responseWithChargeNotFound(logger, chargeId));
+                .orElseGet(() -> ResponseUtil.responseWithChargeNotFound(logger, chargeId));
     }
 
     private Map<String, Object> chargeResponseData(Map<String, Object> charge, URI documentLocation) {
@@ -94,13 +95,20 @@ public class ChargesApiResource {
         logger.info("Creating new charge of {}.", chargeRequest);
         String chargeId = chargeDao.saveNewCharge(chargeRequest);
 
-        URI newLocation = chargeLocationFor(uriInfo, chargeId);
+        Optional<Map<String, Object>> maybeCharge = chargeDao.findById(chargeId);
 
-        Map<String, Object> responseData = Maps.newHashMap();
-        responseData.put("charge_id", "" + chargeId);
-        addSelfLink(newLocation, responseData);
+        return maybeCharge
+                .map(charge -> {
+                    URI newLocation = chargeLocationFor(uriInfo, chargeId);
+                    Map<String, Object> responseData = chargeResponseData(charge, newLocation);
 
-        return Response.created(newLocation).entity(responseData).build();
+                    logger.info("charge = {}", charge);
+                    logger.info("responseData = {}", responseData);
+
+
+                    return Response.created(newLocation).entity(responseData).build();
+                })
+                .orElseGet(() -> ResponseUtil.responseWithChargeNotFound(logger, chargeId));
     }
 
     private URI chargeLocationFor(UriInfo uriInfo, String chargeId) {

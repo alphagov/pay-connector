@@ -40,7 +40,7 @@ public class ChargesFrontendResource {
         Optional<Map<String, Object>> maybeCharge = chargeDao.findById(chargeId);
         return maybeCharge
                 .map(charge -> ok(addSelfLink(uriInfo, chargeId, removeGatewayAccount(charge))).build())
-                .orElse(responseWithChargeNotFound(logger, chargeId));
+                .orElseGet(() -> responseWithChargeNotFound(logger, chargeId));
     }
 
     private Map<String, Object> addSelfLink(UriInfo uriInfo, String chargeId, Map<String, Object> charge) {
