@@ -3,10 +3,12 @@ The Pay Connector in Java (Dropwizard)
 
 ## Integration tests
 
-To run the integration tests, the `DOCKER_HOST` and `DOCKER_CERT_PATH` environment variables must be set up correctly. On OS X, with boot2docker, this can be done like this:
+To run the integration tests, the `DOCKER_HOST` and `DOCKER_CERT_PATH` environment variables must be set up correctly. On OS X the environment can be set up with:
 
 ```
     eval $(boot2docker shellinit)
+    eval $(docker-machine env <virtual-machine-name>)
+
 ```
 
 The command to run the integration tests is:
@@ -101,11 +103,6 @@ Content-Type: application/json
             "rel": "self",
             "method": "GET",
             "href": "http://connector.service/v1/api/charges/1"
-        },
-        {
-            "rel": "cardAuth",
-            "method": "POST",
-            "href": "http://connector.service/v1/frontend/charges/1/cards"
         }
     ],
 }
@@ -147,14 +144,14 @@ Content-Type: application/json
 #### Response example
 
 ```
-200 OK
+201 Created
 Content-Type: application/json
-Location: http://connector.service/v1/frontend/charges/1
+Location: http://connector.service/v1/api/charges/1
 
 {
     "charge_id": "1",
     "links": [{
-        "href": "http://connector.service/v1/frontend/charges/1",
+        "href": "http://connector.service/v1/api/charges/1",
         "rel" : "self",
         "method" : "GET"
         }
@@ -191,12 +188,15 @@ Content-Type: application/json
     "amount": 5000,
     "status": "CREATED",
     "links": [{
-        "href": "http://connector.service/v1/frontend/charges/1",
-        "rel" : "self",
-        "method" : "GET"
-        }
-      ]
-
+                "href": "http://connector.service/v1/frontend/charges/1",
+                "rel" : "self",
+                "method" : "GET"
+            },
+            {
+                "rel": "cardAuth",
+                "method": "POST",
+                "href": "http://connector.service/v1/frontend/charges/1/cards"
+            }],
 }
 ```
 

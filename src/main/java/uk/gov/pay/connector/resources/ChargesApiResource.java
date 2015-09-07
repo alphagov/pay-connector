@@ -10,7 +10,6 @@ import uk.gov.pay.connector.util.ResponseUtil;
 
 import javax.ws.rs.Consumes;
 import javax.ws.rs.GET;
-import javax.ws.rs.HttpMethod;
 import javax.ws.rs.POST;
 import javax.ws.rs.Path;
 import javax.ws.rs.PathParam;
@@ -27,7 +26,6 @@ import java.util.Optional;
 import static javax.ws.rs.core.MediaType.APPLICATION_JSON;
 import static javax.ws.rs.core.Response.ok;
 import static uk.gov.pay.connector.model.api.ExternalChargeStatus.mapFromStatus;
-import static uk.gov.pay.connector.resources.CardDetailsResource.CARD_AUTH_FRONTEND_PATH;
 import static uk.gov.pay.connector.util.LinksBuilder.linksBuilder;
 import static uk.gov.pay.connector.util.ResponseUtil.badResponse;
 import static uk.gov.pay.connector.util.ResponseUtil.fieldsMissingResponse;
@@ -63,25 +61,6 @@ public class ChargesApiResource {
                 .orElseGet(() -> ResponseUtil.responseWithChargeNotFound(logger, chargeId));
     }
 
-    private Map<String, Object> chargeResponseData(Map<String, Object> charge, UriInfo uriInfo) {
-        Map<String, Object> externalData = Maps.newHashMap(charge);
-        externalData = convertStatusToExternalStatus(externalData);
-
-        String chargeId = charge.get(CHARGE_ID_KEY).toString();
-        URI documentLocation = chargeLocationFor(uriInfo, chargeId);
-        URI cardAuthUrl = cardAuthUrlFor(uriInfo, chargeId);
-
-        return linksBuilder(documentLocation)
-                .addLink("cardAuth", HttpMethod.POST, cardAuthUrl)
-                .appendLinksTo(externalData);
-    }
-
-    private Map<String, Object> convertStatusToExternalStatus(Map<String, Object> data) {
-        ExternalChargeStatus externalState = mapFromStatus(data.get(STATUS_KEY).toString());
-        data.put(STATUS_KEY, externalState.getValue());
-        return data;
-    }
-
     @POST
     @Path(CHARGES_API_PATH)
     @Consumes(APPLICATION_JSON)
@@ -109,20 +88,32 @@ public class ChargesApiResource {
                     logger.info("charge = {}", charge);
                     logger.info("responseData = {}", responseData);
 
-                    URI newLocation = chargeLocationFor(uriInfo, chargeId);
-                    return Response.created(newLocation).entity(responseData).build();
+                    URI chargeLocation = chargeLocationFor(uriInfo, chargeId);
+                    return Response.created(chargeLocation).entity(responseData).build();
                 })
                 .orElseGet(() -> ResponseUtil.responseWithChargeNotFound(logger, chargeId));
+    }
+
+    private Map<String, Object> chargeResponseData(Map<String, Object> charge, UriInfo uriInfo) {
+        Map<String, Object> externalData = Maps.newHashMap(charge);
+        externalData = convertStatusToExternalStatus(externalData);
+
+        String chargeId = charge.get(CHARGE_ID_KEY).toString();
+        URI chargeLocation = chargeLocationFor(uriInfo, chargeId);
+
+        return linksBuilder(chargeLocation)
+                .appendLinksTo(externalData);
+    }
+
+    private Map<String, Object> convertStatusToExternalStatus(Map<String, Object> data) {
+        ExternalChargeStatus externalState = mapFromStatus(data.get(STATUS_KEY).toString());
+        data.put(STATUS_KEY, externalState.getValue());
+        return data;
     }
 
     private URI chargeLocationFor(UriInfo uriInfo, String chargeId) {
         return uriInfo.getBaseUriBuilder()
                 .path(GET_CHARGE_API_PATH).build(chargeId);
-    }
-
-    private URI cardAuthUrlFor(UriInfo uriInfo, String chargeId) {
-        return uriInfo.getBaseUriBuilder()
-                .path(CARD_AUTH_FRONTEND_PATH).build(chargeId);
     }
 
     private Optional<List<String>> checkMissingFields(Map<String, Object> inputData) {
