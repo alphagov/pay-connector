@@ -1,13 +1,10 @@
 package uk.gov.pay.connector.resources;
 
-import com.google.common.collect.ImmutableList;
-import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.Maps;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import uk.gov.pay.connector.dao.ChargeDao;
 import uk.gov.pay.connector.dao.GatewayAccountDao;
-import uk.gov.pay.connector.model.ChargeStatus;
 import uk.gov.pay.connector.model.api.ExternalChargeStatus;
 import uk.gov.pay.connector.util.ResponseUtil;
 
@@ -27,7 +24,9 @@ import java.util.Map;
 import java.util.Optional;
 
 import static javax.ws.rs.core.MediaType.APPLICATION_JSON;
+import static javax.ws.rs.core.Response.ok;
 import static uk.gov.pay.connector.model.api.ExternalChargeStatus.mapFromStatus;
+import static uk.gov.pay.connector.util.LinksBuilder.linksBuilder;
 import static uk.gov.pay.connector.util.ResponseUtil.badResponse;
 import static uk.gov.pay.connector.util.ResponseUtil.fieldsMissingResponse;
 
@@ -41,6 +40,7 @@ public class ChargesApiResource {
     private static final String[] REQUIRED_FIELDS = {AMOUNT_KEY, GATEWAY_ACCOUNT_KEY};
 
     private static final String STATUS_KEY = "status";
+    private static final String CHARGE_ID_KEY = "charge_id";
 
     private ChargeDao chargeDao;
     private GatewayAccountDao gatewayAccountDao;
@@ -57,24 +57,8 @@ public class ChargesApiResource {
     public Response getCharge(@PathParam("chargeId") String chargeId, @Context UriInfo uriInfo) {
         Optional<Map<String, Object>> maybeCharge = chargeDao.findById(chargeId);
         return maybeCharge
-                .map(charge -> {
-                    URI documentLocation = chargeLocationFor(uriInfo, chargeId);
-                    Map<String, Object> responseData = chargeResponseData(charge, documentLocation);
-                    return Response.ok(responseData).build();
-                })
+                .map(charge -> ok(chargeResponseData(charge, uriInfo)).build())
                 .orElseGet(() -> ResponseUtil.responseWithChargeNotFound(logger, chargeId));
-    }
-
-    private Map<String, Object> chargeResponseData(Map<String, Object> charge, URI documentLocation) {
-        Map<String, Object> externalData = Maps.newHashMap(charge);
-        externalData = convertStatusToExternalStatus(externalData);
-        return addSelfLink(documentLocation, externalData);
-    }
-
-    private Map<String, Object> convertStatusToExternalStatus(Map<String, Object> data) {
-        ExternalChargeStatus externalState = mapFromStatus(data.get(STATUS_KEY).toString());
-        data.put(STATUS_KEY, externalState.getValue());
-        return data;
     }
 
     @POST
@@ -99,22 +83,37 @@ public class ChargesApiResource {
 
         return maybeCharge
                 .map(charge -> {
-                    URI newLocation = chargeLocationFor(uriInfo, chargeId);
-                    Map<String, Object> responseData = chargeResponseData(charge, newLocation);
+                    Map<String, Object> responseData = chargeResponseData(charge, uriInfo);
 
                     logger.info("charge = {}", charge);
                     logger.info("responseData = {}", responseData);
 
-
-                    return Response.created(newLocation).entity(responseData).build();
+                    URI chargeLocation = chargeLocationFor(uriInfo, chargeId);
+                    return Response.created(chargeLocation).entity(responseData).build();
                 })
                 .orElseGet(() -> ResponseUtil.responseWithChargeNotFound(logger, chargeId));
     }
 
+    private Map<String, Object> chargeResponseData(Map<String, Object> charge, UriInfo uriInfo) {
+        Map<String, Object> externalData = Maps.newHashMap(charge);
+        externalData = convertStatusToExternalStatus(externalData);
+
+        String chargeId = charge.get(CHARGE_ID_KEY).toString();
+        URI chargeLocation = chargeLocationFor(uriInfo, chargeId);
+
+        return linksBuilder(chargeLocation)
+                .appendLinksTo(externalData);
+    }
+
+    private Map<String, Object> convertStatusToExternalStatus(Map<String, Object> data) {
+        ExternalChargeStatus externalState = mapFromStatus(data.get(STATUS_KEY).toString());
+        data.put(STATUS_KEY, externalState.getValue());
+        return data;
+    }
+
     private URI chargeLocationFor(UriInfo uriInfo, String chargeId) {
-        return uriInfo.
-                getBaseUriBuilder().
-                path(GET_CHARGE_API_PATH).build(chargeId);
+        return uriInfo.getBaseUriBuilder()
+                .path(GET_CHARGE_API_PATH).build(chargeId);
     }
 
     private Optional<List<String>> checkMissingFields(Map<String, Object> inputData) {
@@ -127,11 +126,5 @@ public class ChargesApiResource {
         return missing.isEmpty()
                 ? Optional.<List<String>>empty()
                 : Optional.of(missing);
-    }
-
-    private Map<String, Object> addSelfLink(URI href, Map<String, Object> charge) {
-        List<Map<String, Object>> links = ImmutableList.of(ImmutableMap.of("href", href, "rel", "self", "method", "GET"));
-        charge.put("links", links);
-        return charge;
     }
 }

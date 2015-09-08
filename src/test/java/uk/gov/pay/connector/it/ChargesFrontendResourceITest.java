@@ -12,14 +12,16 @@ import static com.jayway.restassured.http.ContentType.JSON;
 import static java.lang.String.format;
 import static org.hamcrest.Matchers.is;
 import static org.hamcrest.Matchers.notNullValue;
-import static org.hamcrest.Matchers.nullValue;
 import static uk.gov.pay.connector.model.ChargeStatus.AUTHORIZATION_SUCCESS;
+import static uk.gov.pay.connector.util.LinksAssert.assertCardAuthLink;
 import static uk.gov.pay.connector.util.LinksAssert.assertSelfLink;
 import static uk.gov.pay.connector.util.NumberMatcher.isNumber;
 
-public class ChargesApiResourceITest {
+public class ChargesFrontendResourceITest {
 
     public static final String CHARGES_API_PATH = "/v1/api/charges/";
+    public static final String CHARGES_FRONTEND_PATH = "/v1/frontend/charges/";
+
     @Rule
     public DropwizardAppWithPostgresRule app = new DropwizardAppWithPostgresRule();
 
@@ -31,7 +33,7 @@ public class ChargesApiResourceITest {
     }
 
     @Test
-    public void makeChargeAndRetrieveAmount() throws Exception {
+    public void getChargeShouldIncludeCardAuthLinkButNotGatewayAccountId() throws Exception {
         long expectedAmount = 2113l;
         String postBody = format("{\"amount\":%d, \"gateway_account_id\": \"%s\"}", expectedAmount, accountId);
         ValidatableResponse response = postCreateChargeResponse(postBody)
@@ -41,24 +43,23 @@ public class ChargesApiResourceITest {
                 .contentType(JSON);
 
         String chargeId = response.extract().path("charge_id");
-        String documentLocation = expectedChargeLocationFor(chargeId);
-
-        response.header("Location", is(documentLocation));
-        assertSelfLink(response, documentLocation);
 
         ValidatableResponse getChargeResponse = getChargeResponseFor(chargeId)
                 .statusCode(200)
                 .contentType(JSON)
                 .body("charge_id", is(chargeId))
                 .body("amount", isNumber(expectedAmount))
+                .body("containsKey('gateway_account_id')", is(false))
                 .body("status", is("CREATED"));
 
+        String documentLocation = expectedChargeLocationFor(chargeId);
+        String cardAuthUrl = expectedCardAuthUrlFor(chargeId);
         assertSelfLink(getChargeResponse, documentLocation);
-
+        assertCardAuthLink(getChargeResponse, cardAuthUrl);
     }
 
     @Test
-    public void shouldFilterChargeStatusToReturnInProgressIfInternalStatusIsAuthorised() throws Exception {
+    public void shouldReturnInternalChargeStatusIfInternalStatusIsAuthorised() throws Exception {
         String chargeId = ((Integer) RandomUtils.nextInt(99999999)).toString();
         app.getDatabaseTestHelper().addCharge(chargeId, accountId, 500, AUTHORIZATION_SUCCESS);
 
@@ -66,28 +67,7 @@ public class ChargesApiResourceITest {
                 .statusCode(200)
                 .contentType(JSON)
                 .body("charge_id", is(chargeId))
-                .body("status", is("IN PROGRESS"));
-    }
-
-    @Test
-    public void cannotMakeChargeForMissingGatewayAccount() throws Exception {
-        String missingGatewayAccount = "1234123";
-        postCreateChargeResponse(format("{\"amount\":2113, \"gateway_account_id\": \"%s\"}", missingGatewayAccount))
-                .statusCode(400)
-                .contentType(JSON)
-                .header("Location", is(nullValue()))
-                .body("charge_id", is(nullValue()))
-                .body("message", is("Unknown gateway account: " + missingGatewayAccount));
-    }
-
-    @Test
-    public void cannotMakeChargeForMissingFields() throws Exception {
-        postCreateChargeResponse("{}")
-                .statusCode(400)
-                .contentType(JSON)
-                .header("Location", is(nullValue()))
-                .body("charge_id", is(nullValue()))
-                .body("message", is("Field(s) missing: [amount, gateway_account_id]"));
+                .body("status", is("AUTHORIZATION SUCCESS"));
     }
 
     @Test
@@ -101,7 +81,7 @@ public class ChargesApiResourceITest {
 
     private ValidatableResponse getChargeResponseFor(String chargeId) {
         return given().port(app.getLocalPort())
-                .get(CHARGES_API_PATH + chargeId)
+                .get(CHARGES_FRONTEND_PATH + chargeId)
                 .then();
     }
 
@@ -114,7 +94,10 @@ public class ChargesApiResourceITest {
     }
 
     private String expectedChargeLocationFor(String chargeId) {
-        return "http://localhost:" + app.getLocalPort() + CHARGES_API_PATH + chargeId;
+        return "http://localhost:" + app.getLocalPort() + CHARGES_FRONTEND_PATH + chargeId;
     }
 
+    private String expectedCardAuthUrlFor(String chargeId) {
+        return "http://localhost:" + app.getLocalPort() + CHARGES_FRONTEND_PATH + chargeId + "/cards";
+    }
 }
