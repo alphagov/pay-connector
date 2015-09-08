@@ -3,6 +3,7 @@ package uk.gov.pay.connector.resources;
 import com.google.common.collect.Maps;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import uk.gov.pay.connector.app.LinksConfig;
 import uk.gov.pay.connector.dao.ChargeDao;
 import uk.gov.pay.connector.dao.GatewayAccountDao;
 import uk.gov.pay.connector.model.api.ExternalChargeStatus;
@@ -23,10 +24,10 @@ import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 
+import static com.google.common.collect.Lists.newArrayList;
 import static javax.ws.rs.core.MediaType.APPLICATION_JSON;
-import static javax.ws.rs.core.Response.ok;
 import static uk.gov.pay.connector.model.api.ExternalChargeStatus.mapFromStatus;
-import static uk.gov.pay.connector.util.LinksBuilder.linksBuilder;
+import static uk.gov.pay.connector.model.api.Link.aLink;
 import static uk.gov.pay.connector.util.ResponseUtil.badResponse;
 import static uk.gov.pay.connector.util.ResponseUtil.fieldsMissingResponse;
 
@@ -40,15 +41,16 @@ public class ChargesApiResource {
     private static final String[] REQUIRED_FIELDS = {AMOUNT_KEY, GATEWAY_ACCOUNT_KEY};
 
     private static final String STATUS_KEY = "status";
-    private static final String CHARGE_ID_KEY = "charge_id";
 
     private ChargeDao chargeDao;
     private GatewayAccountDao gatewayAccountDao;
+    private LinksConfig linksConfig;
     private Logger logger = LoggerFactory.getLogger(ChargesApiResource.class);
 
-    public ChargesApiResource(ChargeDao chargeDao, GatewayAccountDao gatewayAccountDao) {
+    public ChargesApiResource(ChargeDao chargeDao, GatewayAccountDao gatewayAccountDao, LinksConfig linksConfig) {
         this.chargeDao = chargeDao;
         this.gatewayAccountDao = gatewayAccountDao;
+        this.linksConfig = linksConfig;
     }
 
     @GET
@@ -57,7 +59,11 @@ public class ChargesApiResource {
     public Response getCharge(@PathParam("chargeId") String chargeId, @Context UriInfo uriInfo) {
         Optional<Map<String, Object>> maybeCharge = chargeDao.findById(chargeId);
         return maybeCharge
-                .map(charge -> ok(chargeResponseData(charge, uriInfo)).build())
+                .map(charge -> {
+                    URI documentLocation = chargeLocationFor(uriInfo, chargeId);
+                    Map<String, Object> responseData = chargeResponseData(charge, documentLocation.toString(), chargeId);
+                    return Response.ok(responseData).build();
+                })
                 .orElseGet(() -> ResponseUtil.responseWithChargeNotFound(logger, chargeId));
     }
 
@@ -83,7 +89,8 @@ public class ChargesApiResource {
 
         return maybeCharge
                 .map(charge -> {
-                    Map<String, Object> responseData = chargeResponseData(charge, uriInfo);
+                    URI newLocation = chargeLocationFor(uriInfo, chargeId);
+                    Map<String, Object> responseData = chargeResponseData(charge, newLocation.toString(), chargeId);
 
                     logger.info("charge = {}", charge);
                     logger.info("responseData = {}", responseData);
@@ -94,15 +101,10 @@ public class ChargesApiResource {
                 .orElseGet(() -> ResponseUtil.responseWithChargeNotFound(logger, chargeId));
     }
 
-    private Map<String, Object> chargeResponseData(Map<String, Object> charge, UriInfo uriInfo) {
+    private Map<String, Object> chargeResponseData(Map<String, Object> charge, String selfUrl, String chargeId) {
         Map<String, Object> externalData = Maps.newHashMap(charge);
         externalData = convertStatusToExternalStatus(externalData);
-
-        String chargeId = charge.get(CHARGE_ID_KEY).toString();
-        URI chargeLocation = chargeLocationFor(uriInfo, chargeId);
-
-        return linksBuilder(chargeLocation)
-                .appendLinksTo(externalData);
+        return addLinks(externalData, selfUrl, chargeId);
     }
 
     private Map<String, Object> convertStatusToExternalStatus(Map<String, Object> data) {
@@ -126,5 +128,15 @@ public class ChargesApiResource {
         return missing.isEmpty()
                 ? Optional.<List<String>>empty()
                 : Optional.of(missing);
+    }
+
+    private Map<String, Object> addLinks(Map<String, Object> charge, String selfUrl, String chargeId) {
+        List<Map<String, String>> links = newArrayList(
+                aLink(selfUrl, "self", "GET").toMap(),
+                aLink(linksConfig.getCardDetailsUrl().replace("{chargeId}", chargeId), "next_url", "GET").toMap()
+        );
+
+        charge.put("links", links);
+        return charge;
     }
 }

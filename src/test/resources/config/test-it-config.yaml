@@ -15,11 +15,15 @@ logging:
         target: stdout
         logFormat: "[%thread] %highlight(%-5level) %cyan(%logger{15}) - %msg %n"
 
+links:
+    cardDetailsUrl: http://Frontend/charge/{chargeId}
+
 database:
   driverClass: org.postgresql.Driver
   user: postgres
   password: mysecretpassword
   url:
+
   # the maximum amount of time to wait on an empty pool before throwing an exception
   maxWaitForConnection: 1s
 
@@ -43,3 +47,4 @@ database:
 
   # the minimum amount of time an connection must sit idle in the pool before it is eligible for eviction
   minIdleTime: 1 minute
+
