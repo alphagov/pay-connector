@@ -16,7 +16,7 @@ public class DatabaseTestHelper {
 
     public void addGatewayAccount(String accountId, String name) {
         jdbi.withHandle(h ->
-                        h.update("INSERT INTO gateway_accounts(gateway_account_id, name) VALUES(?, ?)",
+                        h.update("INSERT INTO gateway_accounts(gateway_account_id, payment_provider) VALUES(?, ?)",
                                 Long.valueOf(accountId), name)
         );
     }

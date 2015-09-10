@@ -11,7 +11,7 @@
             <column name="gateway_account_id" type="bigserial" autoIncrement="true">
                 <constraints primaryKey="true" nullable="false"/>
             </column>
-            <column name="name" type="varchar(255)">
+            <column name="payment_provider" type="varchar(255)">
                 <constraints nullable="false"/>
             </column>
         </createTable>
