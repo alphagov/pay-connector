@@ -60,7 +60,7 @@ public class ConnectorApp extends Application<ConnectorConfiguration> {
         ChargeDao chargeDao = new ChargeDao(jdbi);
         GatewayAccountDao gatewayAccountDao = new GatewayAccountDao(jdbi);
 
-        environment.jersey().register(new ChargesApiResource(chargeDao, gatewayAccountDao));
+        environment.jersey().register(new ChargesApiResource(chargeDao, gatewayAccountDao, conf.getLinks()));
         environment.jersey().register(new ChargesFrontendResource(chargeDao));
         environment.jersey().register(new CardDetailsResource(chargeDao));
         environment.jersey().register(new ChargeCaptureResource(chargeDao));

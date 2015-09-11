@@ -13,8 +13,16 @@ public class ConnectorConfiguration extends Configuration {
     @NotNull
     private DataSourceFactory dataSourceFactory = new DataSourceFactory();
 
+    @Valid
+    @NotNull
+    private LinksConfig links = new LinksConfig();
+
     @JsonProperty("database")
     public DataSourceFactory getDataSourceFactory() {
         return dataSourceFactory;
+    }
+
+    public LinksConfig getLinks() {
+        return links;
     }
 }

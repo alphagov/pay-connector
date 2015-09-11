@@ -11,6 +11,10 @@ public class LinksAssert {
         assertLink(response, "self", GET, selfHref);
     }
 
+    public static void assertNextUrlLink(ValidatableResponse response, String selfHref) {
+        assertLink(response, "next_url", GET, selfHref);
+    }
+
     public static void assertCardAuthLink(ValidatableResponse response, String href) {
         assertLink(response, "cardAuth", POST, href);
     }

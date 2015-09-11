@@ -14,12 +14,15 @@ import static org.hamcrest.Matchers.is;
 import static org.hamcrest.Matchers.notNullValue;
 import static org.hamcrest.Matchers.nullValue;
 import static uk.gov.pay.connector.model.ChargeStatus.AUTHORIZATION_SUCCESS;
+import static uk.gov.pay.connector.util.LinksAssert.assertNextUrlLink;
 import static uk.gov.pay.connector.util.LinksAssert.assertSelfLink;
 import static uk.gov.pay.connector.util.NumberMatcher.isNumber;
 
 public class ChargesApiResourceITest {
 
     public static final String CHARGES_API_PATH = "/v1/api/charges/";
+    public static final String FRONTEND_CARD_DETAILS_URL = "/charge/";
+
     @Rule
     public DropwizardAppWithPostgresRule app = new DropwizardAppWithPostgresRule();
 
@@ -45,6 +48,7 @@ public class ChargesApiResourceITest {
 
         response.header("Location", is(documentLocation));
         assertSelfLink(response, documentLocation);
+        assertNextUrlLink(response, cardDetailsLocationFor(chargeId));
 
         ValidatableResponse getChargeResponse = getChargeResponseFor(chargeId)
                 .statusCode(200)
@@ -54,7 +58,6 @@ public class ChargesApiResourceITest {
                 .body("status", is("CREATED"));
 
         assertSelfLink(getChargeResponse, documentLocation);
-
     }
 
     @Test
@@ -117,4 +120,7 @@ public class ChargesApiResourceITest {
         return "http://localhost:" + app.getLocalPort() + CHARGES_API_PATH + chargeId;
     }
 
+    private String cardDetailsLocationFor(String chargeId) {
+        return "http://Frontend" + FRONTEND_CARD_DETAILS_URL + chargeId;
+    }
 }
