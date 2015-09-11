@@ -1,21 +1,13 @@
 package uk.gov.pay.connector.it;
 
-import com.google.gson.JsonObject;
-import com.jayway.restassured.specification.RequestSpecification;
-import org.apache.commons.lang.math.RandomUtils;
-import org.junit.Before;
-import org.junit.Rule;
 import org.junit.Test;
-import uk.gov.pay.connector.util.DropwizardAppWithPostgresRule;
 
-import static com.jayway.restassured.RestAssured.given;
 import static com.jayway.restassured.http.ContentType.JSON;
 import static java.lang.String.format;
 import static org.hamcrest.Matchers.is;
-import static uk.gov.pay.connector.model.ChargeStatus.CREATED;
-import static uk.gov.pay.connector.util.JsonEncoder.toJson;
 
-public class CardDetailsResourceITest {
+public class SandboxCardDetailsResourceITest extends BaseCardDetailsResourceITest {
+
     private static final String[] VALID_CARD_NO_LIST = new String[]{
             "4242424242424242",
             "5105105105105100",
@@ -28,25 +20,15 @@ public class CardDetailsResourceITest {
             "6763376639165982",
             "36375928148471"
     };
-
-    private String accountId = "666";
     private String validCardDetails = buildJsonCardDetailsFor(VALID_CARD_NO_LIST[0]);
 
-    private String cardUrlFor(String id) {
-        return "/v1/frontend/charges/" + id + "/cards";
-    }
-
-    @Rule
-    public DropwizardAppWithPostgresRule app = new DropwizardAppWithPostgresRule();
-
-    @Before
-    public void setupGatewayAccount() {
-        app.getDatabaseTestHelper().addGatewayAccount(accountId, "test gateway");
+    public SandboxCardDetailsResourceITest() {
+        super("sandbox");
     }
 
     @Test
     public void shouldAuthoriseCharge_ForValidCards() throws Exception {
-        for(String cardNo: VALID_CARD_NO_LIST){
+        for (String cardNo : VALID_CARD_NO_LIST) {
             shouldAuthoriseChargeFor(buildJsonCardDetailsFor(cardNo));
         }
     }
@@ -186,64 +168,5 @@ public class CardDetailsResourceITest {
                 .body("message", is(errorMessage));
 
         assertChargeStatusIs(chargeId, status);
-    }
-
-    private String buildJsonCardDetailsFor(String cardNumber) {
-        return buildJsonCardDetailsFor(cardNumber, "123", "11/99");
-    }
-
-    private String buildJsonCardDetailsFor(String cardNumber, String cvc, String expiryDate) {
-        return buildJsonCardDetailsFor(cardNumber, cvc, expiryDate, null, null, null, null);
-    }
-
-    private String buildJsonCardDetailsFor(String cardNumber, String cvc, String expiryDate, String line2, String line3, String city, String county) {
-        JsonObject addressObject = new JsonObject();
-
-        addressObject.addProperty("line1", "The Money Pool");
-        addressObject.addProperty("line2", line2);
-        addressObject.addProperty("line3", line3);
-        addressObject.addProperty("city", city);
-        addressObject.addProperty("county", county);
-        addressObject.addProperty("postcode", "DO11 4RS");
-        addressObject.addProperty("country", "GB");
-
-        JsonObject cardDetails = new JsonObject();
-        cardDetails.addProperty("card_number", cardNumber);
-        cardDetails.addProperty("cvc", cvc);
-        cardDetails.addProperty("expiry_date", expiryDate);
-        cardDetails.addProperty("cardholder_name", "Scrooge McDuck");
-        cardDetails.add("address", addressObject);
-        return toJson(cardDetails);
-    }
-
-    private String buildJsonCardDetailsWithFullAddress() {
-        return buildJsonCardDetailsFor(
-                "4242424242424242",
-                "123",
-                "11/99",
-                "Moneybags Avenue",
-                "Some borough",
-                "London",
-                "Greater London"
-        );
-    }
-
-    private void assertChargeStatusIs(String uniqueChargeId, String status) {
-        given().port(app.getLocalPort())
-                .get("/v1/frontend/charges/" + uniqueChargeId)
-                .then()
-                .body("status", is(status));
-    }
-
-    private String createNewCharge() {
-        String chargeId = ((Integer) RandomUtils.nextInt(99999999)).toString();
-        app.getDatabaseTestHelper().addCharge(chargeId, accountId, 500, CREATED, "http://whatever.com");
-        app.getDatabaseTestHelper().addToken(chargeId, "tokenId");
-        return chargeId;
-    }
-
-    private RequestSpecification givenSetup() {
-        return given().port(app.getLocalPort())
-                .contentType(JSON);
     }
 }

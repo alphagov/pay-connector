@@ -1,0 +1,38 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE paymentService PUBLIC "-//WorldPay//DTD WorldPay PaymentService v1//EN"
+        "http://dtd.worldpay.com/paymentService_v1.dtd">
+<paymentService version="1.4" merchantCode="${merchantCode}">
+    <submit>
+        <order orderCode="${transactionId}">
+            <description>${description}</description>
+            <amount currencyCode="${amount.currencyCode}" exponent="${amount.exponent}" value="${amount.value}"/>
+            <paymentDetails>
+                <VISA-SSL>
+                    <cardNumber>${card.cardNo}</cardNumber>
+                    <expiryDate>
+                        <date month="${card.endDate?split('/')?first}" year="20${card.endDate?split('/')?last}"/>
+                    </expiryDate>
+                    <cardHolderName>${card.cardHolder}</cardHolderName>
+                    <cvc>${card.cvc}</cvc>
+                    <cardAddress>
+                        <address>
+                            <address1>${card.addressLine1}</address1>
+                            <address2>${card.addressLine2}</address2>
+                            <postalCode>${card.addressZip}</postalCode>
+                            <city>${card.addressCity}</city>
+                            <state>${card.addressState}</state>
+                            <countryCode>${card.addressCountry}</countryCode>
+                        </address>
+                    </cardAddress>
+                </VISA-SSL>
+                <session shopperIPAddress="${session.shopperIPAddress}" id="${session.id}"/>
+            </paymentDetails>
+            <shopper>
+                <browser>
+                    <acceptHeader>${browser.acceptHeader}</acceptHeader>
+                    <userAgentHeader>${browser.userAgentHeader}</userAgentHeader>
+                </browser>
+            </shopper>
+        </order>
+    </submit>
+</paymentService>
