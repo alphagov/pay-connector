@@ -1,6 +1,6 @@
 package uk.gov.pay.connector.model;
 
-public class CardAuthorizationRequest {
+public class CardAuthorisationRequest {
     private Card card;
     private Session session;
     private Browser browser;
@@ -9,7 +9,7 @@ public class CardAuthorizationRequest {
     private String transactionId;
     private String description;
 
-    public CardAuthorizationRequest(Card card, Session session, Browser browser, Amount amount, String transactionId, String description) {
+    public CardAuthorisationRequest(Card card, Session session, Browser browser, Amount amount, String transactionId, String description) {
         this.card = card;
         this.session = session;
         this.browser = browser;

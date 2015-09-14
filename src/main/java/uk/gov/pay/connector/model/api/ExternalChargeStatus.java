@@ -3,19 +3,19 @@ package uk.gov.pay.connector.model.api;
 import uk.gov.pay.connector.model.ChargeStatus;
 
 import static org.apache.commons.lang3.ArrayUtils.contains;
-import static uk.gov.pay.connector.model.ChargeStatus.AUTHORIZATION_REJECTED;
-import static uk.gov.pay.connector.model.ChargeStatus.AUTHORIZATION_SUBMITTED;
-import static uk.gov.pay.connector.model.ChargeStatus.AUTHORIZATION_SUCCESS;
+import static uk.gov.pay.connector.model.ChargeStatus.AUTHORISATION_REJECTED;
+import static uk.gov.pay.connector.model.ChargeStatus.AUTHORISTION_SUBMITTED;
+import static uk.gov.pay.connector.model.ChargeStatus.AUTHORISATION_SUCCESS;
+import static uk.gov.pay.connector.model.ChargeStatus.SYSTEM_CANCELLED;
 import static uk.gov.pay.connector.model.ChargeStatus.CAPTURED;
 import static uk.gov.pay.connector.model.ChargeStatus.CREATED;
-import static uk.gov.pay.connector.model.ChargeStatus.SYSTEM_CANCELLED;
 import static uk.gov.pay.connector.model.ChargeStatus.chargeStatusFrom;
 
 public enum ExternalChargeStatus {
     EXT_CREATED("CREATED", CREATED),
-    EXT_IN_PROGRESS("IN PROGRESS", AUTHORIZATION_SUBMITTED, AUTHORIZATION_SUCCESS),
+    EXT_IN_PROGRESS("IN PROGRESS", AUTHORISTION_SUBMITTED, AUTHORISATION_SUCCESS),
     EXT_SUCCEEDED("SUCCEEDED", CAPTURED),
-    EXT_FAILED("FAILED", AUTHORIZATION_REJECTED),
+    EXT_FAILED("FAILED", AUTHORISATION_REJECTED),
     EXT_SYSTEM_CANCELLED("SYSTEM CANCELLED", SYSTEM_CANCELLED);
 
     private final String value;

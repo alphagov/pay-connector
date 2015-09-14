@@ -11,8 +11,8 @@ import uk.gov.pay.connector.util.DropwizardAppWithPostgresRule;
 import static com.jayway.restassured.RestAssured.given;
 import static com.jayway.restassured.http.ContentType.JSON;
 import static org.hamcrest.Matchers.is;
-import static uk.gov.pay.connector.model.ChargeStatus.AUTHORIZATION_SUBMITTED;
-import static uk.gov.pay.connector.model.ChargeStatus.AUTHORIZATION_SUCCESS;
+import static uk.gov.pay.connector.model.ChargeStatus.AUTHORISTION_SUBMITTED;
+import static uk.gov.pay.connector.model.ChargeStatus.AUTHORISATION_SUCCESS;
 
 public class ChargeCaptureResourceITest {
 
@@ -45,16 +45,16 @@ public class ChargeCaptureResourceITest {
 
     @Test
     public void shouldReturnErrorWithoutChangingChargeState_IfOriginalStateIsNotAuthSuccess() {
-        String chargeIdNotAuthorized = createNewChargeWithStatus(AUTHORIZATION_SUBMITTED);
+        String chargeIdNotAuthorised = createNewChargeWithStatus(AUTHORISTION_SUBMITTED);
 
         givenSetup()
-                .post(chargeCaptureUrlFor(chargeIdNotAuthorized))
+                .post(chargeCaptureUrlFor(chargeIdNotAuthorised))
                 .then()
                 .statusCode(400)
                 .contentType(JSON)
-                .body("message", is("Cannot capture a charge with status " + AUTHORIZATION_SUBMITTED.getValue() + "."));
+                .body("message", is("Cannot capture a charge with status " + AUTHORISTION_SUBMITTED.getValue() + "."));
 
-        assertFrontendChargeStatusIs(chargeIdNotAuthorized, "AUTHORIZATION SUBMITTED");
+        assertFrontendChargeStatusIs(chargeIdNotAuthorised, "AUTHORISATION SUBMITTED");
     }
 
     @Test
@@ -68,7 +68,7 @@ public class ChargeCaptureResourceITest {
     }
 
     private String authoriseNewCharge() {
-        return createNewChargeWithStatus(AUTHORIZATION_SUCCESS);
+        return createNewChargeWithStatus(AUTHORISATION_SUCCESS);
     }
 
     private String createNewChargeWithStatus(ChargeStatus status) {

@@ -5,10 +5,11 @@ import org.junit.Test;
 import uk.gov.pay.connector.model.Amount;
 import uk.gov.pay.connector.model.Browser;
 import uk.gov.pay.connector.model.Card;
-import uk.gov.pay.connector.model.CardAuthorizationRequest;
+import uk.gov.pay.connector.model.CardAuthorisationRequest;
+import uk.gov.pay.connector.model.CardAuthorisationResponse;
 import uk.gov.pay.connector.model.GatewayAccount;
 import uk.gov.pay.connector.model.Session;
-import uk.gov.pay.connector.worldpay.WorldpayConnector;
+import uk.gov.pay.connector.service.worldpay.WorldpayPaymentProvider;
 
 import javax.ws.rs.client.Client;
 import javax.ws.rs.client.Entity;
@@ -17,8 +18,7 @@ import javax.ws.rs.client.WebTarget;
 import javax.ws.rs.core.MediaType;
 import javax.ws.rs.core.Response;
 
-import static org.hamcrest.core.Is.is;
-import static org.junit.Assert.assertThat;
+import static org.junit.Assert.assertTrue;
 import static org.mockito.Matchers.any;
 import static org.mockito.Matchers.anyObject;
 import static org.mockito.Matchers.anyString;
@@ -27,7 +27,7 @@ import static org.mockito.Mockito.when;
 import static uk.gov.pay.connector.model.Card.aCard;
 
 
-public class WorldpayConnectorTest {
+public class WorldpayPaymentProviderTest {
 
     private Client client = mock(Client.class);
 
@@ -35,14 +35,14 @@ public class WorldpayConnectorTest {
     public void shouldSendSuccessfullyAOrderForMerchant() throws Exception {
         mockWorldpaySuccessfulOrderSubmitResponse();
 
-        WorldpayConnector connector = new WorldpayConnector(client);
-        CardAuthorizationRequest request = getCardAuthorizationRequest();
-        Response response = connector.authorize(new GatewayAccount(), request);
+        WorldpayPaymentProvider connector = new WorldpayPaymentProvider(client);
+        CardAuthorisationRequest request = getCardAuthorisationRequest();
+        CardAuthorisationResponse response = connector.authorise(new GatewayAccount(), request);
 
-        assertThat(response.getStatus(), is(200));
+        assertTrue(response.isSuccessful());
     }
 
-    private CardAuthorizationRequest getCardAuthorizationRequest() {
+    private CardAuthorisationRequest getCardAuthorisationRequest() {
         String userAgentHeader = "Mozilla/5.0 (Windows; U; Windows NT 5.1;en-GB; rv:1.9.1.5) Gecko/20091102 Firefox/3.5.5 (.NET CLR 3.5.30729)";
         String acceptHeader = "text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8";
 
@@ -53,7 +53,7 @@ public class WorldpayConnectorTest {
 
         String transactionId = "MyUniqueTransactionId!";
         String description = "This is mandatory";
-        return new CardAuthorizationRequest(card, session, browser, amount, transactionId, description);
+        return new CardAuthorisationRequest(card, session, browser, amount, transactionId, description);
     }
 
     private void mockWorldpaySuccessfulOrderSubmitResponse() {

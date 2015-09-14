@@ -48,7 +48,7 @@ public class SandboxCardDetailsResourceITest extends BaseCardDetailsResourceITes
                 .then()
                 .statusCode(204);
 
-        assertChargeStatusIs(chargeId, "AUTHORIZATION SUCCESS");
+        assertChargeStatusIs(chargeId, "AUTHORISATION SUCCESS");
     }
 
     @Test
@@ -93,7 +93,7 @@ public class SandboxCardDetailsResourceITest extends BaseCardDetailsResourceITes
                 .then()
                 .statusCode(204);
 
-        String originalStatus = "AUTHORIZATION SUCCESS";
+        String originalStatus = "AUTHORISATION SUCCESS";
         assertChargeStatusIs(chargeId, originalStatus);
 
         givenSetup()
@@ -125,7 +125,7 @@ public class SandboxCardDetailsResourceITest extends BaseCardDetailsResourceITes
         String cardDetailsToReject = buildJsonCardDetailsFor("4000000000000002");
 
         String expectedErrorMessage = "This transaction was declined.";
-        String expectedChargeStatus = "AUTHORIZATION REJECTED";
+        String expectedChargeStatus = "AUTHORISATION REJECTED";
         shouldReturnErrorForCardDetailsWithMessage(cardDetailsToReject, expectedErrorMessage, expectedChargeStatus);
     }
 
@@ -134,7 +134,7 @@ public class SandboxCardDetailsResourceITest extends BaseCardDetailsResourceITes
         String cardDetailsToReject = buildJsonCardDetailsFor("4000000000000069");
 
         String expectedErrorMessage = "The card is expired.";
-        String expectedChargeStatus = "AUTHORIZATION REJECTED";
+        String expectedChargeStatus = "AUTHORISATION REJECTED";
         shouldReturnErrorForCardDetailsWithMessage(cardDetailsToReject, expectedErrorMessage, expectedChargeStatus);
     }
 
@@ -143,7 +143,7 @@ public class SandboxCardDetailsResourceITest extends BaseCardDetailsResourceITes
         String cardDetailsToReject = buildJsonCardDetailsFor("4000000000000127");
 
         String expectedErrorMessage = "The CVC code is incorrect.";
-        String expectedChargeStatus = "AUTHORIZATION REJECTED";
+        String expectedChargeStatus = "AUTHORISATION REJECTED";
         shouldReturnErrorForCardDetailsWithMessage(cardDetailsToReject, expectedErrorMessage, expectedChargeStatus);
     }
 

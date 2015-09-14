@@ -305,7 +305,7 @@ Content-Type: application/json
 
 #### Response example
 
-##### Authorization success
+##### Authorisation success
 
 ```
 204 No content
@@ -338,7 +338,7 @@ Content-Type: application/json
 
 #### Response example
 
-##### Authorization success
+##### Authorisation success
 
 ```
 204 No content
@@ -350,7 +350,7 @@ Content-Type: application/json
 Content-Type: application/json
 
 {
-    "message": "Cannot capture a charge with status AUTHORIZATION REJECTED."
+    "message": "Cannot capture a charge with status AUTHORISATION REJECTED."
 }
 ```
 -----------------------------------------------------------------------------------------------------------

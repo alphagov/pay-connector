@@ -15,7 +15,7 @@ import java.util.Optional;
 
 import static java.lang.String.format;
 import static javax.ws.rs.core.MediaType.APPLICATION_JSON;
-import static uk.gov.pay.connector.model.ChargeStatus.AUTHORIZATION_SUCCESS;
+import static uk.gov.pay.connector.model.ChargeStatus.AUTHORISATION_SUCCESS;
 import static uk.gov.pay.connector.model.ChargeStatus.CAPTURED;
 import static uk.gov.pay.connector.model.ChargeStatus.STATUS_KEY;
 import static uk.gov.pay.connector.util.ResponseUtil.badRequestResponse;
@@ -43,7 +43,7 @@ public class ChargeCaptureResource {
         }
 
         Map<String, Object> charge = maybeCharge.get();
-        if (!isAuthorized(charge)) {
+        if (!isAuthorised(charge)) {
             return responseWithChargeStatusIncorrect((String) charge.get(STATUS_KEY));
         }
 
@@ -55,7 +55,7 @@ public class ChargeCaptureResource {
         return badRequestResponse(logger, format("Cannot capture a charge with status %s.", status));
     }
 
-    private static boolean isAuthorized(Map<String, Object> charge) {
-        return AUTHORIZATION_SUCCESS.getValue().equals(charge.get(STATUS_KEY));
+    private static boolean isAuthorised(Map<String, Object> charge) {
+        return AUTHORISATION_SUCCESS.getValue().equals(charge.get(STATUS_KEY));
     }
 }

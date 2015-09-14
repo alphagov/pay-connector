@@ -1,6 +1,5 @@
 package uk.gov.pay.connector.it;
 
-import org.junit.Ignore;
 import org.junit.Test;
 
 public class WorldpayCardDetailsResourceITest extends BaseCardDetailsResourceITest {
@@ -11,7 +10,6 @@ public class WorldpayCardDetailsResourceITest extends BaseCardDetailsResourceITe
         super("worldpay");
     }
 
-    @Ignore
     @Test
     public void shouldAuthoriseChargeForValidCardDetails() throws Exception {
 
@@ -23,7 +21,7 @@ public class WorldpayCardDetailsResourceITest extends BaseCardDetailsResourceITe
                 .then()
                 .statusCode(204);
 
-        assertChargeStatusIs(chargeId, "AUTHORIZATION SUCCESS");
+        assertChargeStatusIs(chargeId, "AUTHORISATION SUCCESS");
     }
 //
 //    @Test
@@ -68,7 +66,7 @@ public class WorldpayCardDetailsResourceITest extends BaseCardDetailsResourceITe
 //                .then()
 //                .statusCode(204);
 //
-//        String originalStatus = "AUTHORIZATION SUCCESS";
+//        String originalStatus = "AUTHORISATION SUCCESS";
 //        assertChargeStatusIs(chargeId, originalStatus);
 //
 //        givenSetup()
@@ -100,7 +98,7 @@ public class WorldpayCardDetailsResourceITest extends BaseCardDetailsResourceITe
 //        String cardDetailsToReject = buildJsonCardDetailsFor("4000000000000002");
 //
 //        String expectedErrorMessage = "This transaction was declined.";
-//        String expectedChargeStatus = "AUTHORIZATION REJECTED";
+//        String expectedChargeStatus = "AUTHORISATION REJECTED";
 //        shouldReturnErrorForCardDetailsWithMessage(cardDetailsToReject, expectedErrorMessage, expectedChargeStatus);
 //    }
 //
@@ -109,7 +107,7 @@ public class WorldpayCardDetailsResourceITest extends BaseCardDetailsResourceITe
 //        String cardDetailsToReject = buildJsonCardDetailsFor("4000000000000069");
 //
 //        String expectedErrorMessage = "The card is expired.";
-//        String expectedChargeStatus = "AUTHORIZATION REJECTED";
+//        String expectedChargeStatus = "AUTHORISATION REJECTED";
 //        shouldReturnErrorForCardDetailsWithMessage(cardDetailsToReject, expectedErrorMessage, expectedChargeStatus);
 //    }
 //
@@ -118,7 +116,7 @@ public class WorldpayCardDetailsResourceITest extends BaseCardDetailsResourceITe
 //        String cardDetailsToReject = buildJsonCardDetailsFor("4000000000000127");
 //
 //        String expectedErrorMessage = "The CVC code is incorrect.";
-//        String expectedChargeStatus = "AUTHORIZATION REJECTED";
+//        String expectedChargeStatus = "AUTHORISATION REJECTED";
 //        shouldReturnErrorForCardDetailsWithMessage(cardDetailsToReject, expectedErrorMessage, expectedChargeStatus);
 //    }
 //
