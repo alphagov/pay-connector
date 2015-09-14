@@ -16,9 +16,21 @@ import static uk.gov.pay.connector.model.ChargeStatus.CREATED;
 import static uk.gov.pay.connector.util.JsonEncoder.toJson;
 
 public class CardDetailsResourceITest {
+    private static final String[] VALID_CARD_NO_LIST = new String[]{
+            "4242424242424242",
+            "5105105105105100",
+            "348560871512574",
+            "4485197542476643",
+            "5582575229987470",
+            "4917902691983168",
+            "3528373272496082",
+            "6011188510795021",
+            "6763376639165982",
+            "36375928148471"
+    };
 
     private String accountId = "666";
-    private String validCardDetails = buildJsonCardDetailsFor("4242424242424242");
+    private String validCardDetails = buildJsonCardDetailsFor(VALID_CARD_NO_LIST[0]);
 
     private String cardUrlFor(String id) {
         return "/v1/frontend/charges/" + id + "/cards";
@@ -33,14 +45,10 @@ public class CardDetailsResourceITest {
     }
 
     @Test
-    public void shouldAuthoriseChargeForValidCardDetails1() throws Exception {
-        shouldAuthoriseChargeFor(validCardDetails);
-    }
-
-    @Test
-    public void shouldAuthoriseChargeForValidCardDetails2() throws Exception {
-        String validCardDetails = buildJsonCardDetailsFor("5105105105105100");
-        shouldAuthoriseChargeFor(validCardDetails);
+    public void shouldAuthoriseCharge_ForValidCards() throws Exception {
+        for(String cardNo: VALID_CARD_NO_LIST){
+            shouldAuthoriseChargeFor(buildJsonCardDetailsFor(cardNo));
+        }
     }
 
     @Test
