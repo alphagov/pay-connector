@@ -1,5 +1,6 @@
 package uk.gov.pay.connector.it;
 
+import com.google.common.collect.ImmutableMap;
 import com.jayway.restassured.specification.RequestSpecification;
 import org.apache.commons.lang.math.RandomUtils;
 import org.junit.Before;
@@ -7,11 +8,14 @@ import org.junit.Rule;
 import org.junit.Test;
 import uk.gov.pay.connector.util.DropwizardAppWithPostgresRule;
 
+import java.util.Map;
+
 import static com.jayway.restassured.RestAssured.given;
 import static com.jayway.restassured.http.ContentType.JSON;
 import static java.lang.String.format;
 import static org.hamcrest.Matchers.is;
 import static uk.gov.pay.connector.model.ChargeStatus.CREATED;
+import static uk.gov.pay.connector.util.JsonEncoder.toJson;
 
 public class CardDetailsResourceITest {
 
@@ -37,8 +41,8 @@ public class CardDetailsResourceITest {
 
     @Test
     public void shouldAuthoriseChargeForValidCardDetails2() throws Exception {
-        String otherValidCardDetails = buildJsonCardDetailsFor("5105105105105100");
-        shouldAuthoriseChargeFor(otherValidCardDetails);
+        String validCardDetails = buildJsonCardDetailsFor("5105105105105100");
+        shouldAuthoriseChargeFor(validCardDetails);
     }
 
     private void shouldAuthoriseChargeFor(String cardDetails) throws Exception {
@@ -177,13 +181,11 @@ public class CardDetailsResourceITest {
     }
 
     private String buildJsonCardDetailsFor(String cardNumber, String cvc, String expiryDate) {
-        StringBuilder cardBody = new StringBuilder();
-        cardBody.append("{");
-        cardBody.append("\"card_number\":\"" + cardNumber + "\",");
-        cardBody.append("\"cvc\":\"" + cvc + "\",");
-        cardBody.append("\"expiry_date\":\"" + expiryDate + "\"");
-        cardBody.append("}");
-        return cardBody.toString();
+        Map<String, Object> cardDetails = ImmutableMap.of(
+                "card_number", cardNumber,
+                "cvc", cvc,
+                "expiry_date", expiryDate);
+        return toJson(cardDetails);
     }
 
     private void assertChargeStatusIs(String uniqueChargeId, String status) {

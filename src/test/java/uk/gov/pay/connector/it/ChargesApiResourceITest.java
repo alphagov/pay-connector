@@ -1,5 +1,6 @@
 package uk.gov.pay.connector.it;
 
+import com.google.common.collect.ImmutableMap;
 import com.jayway.restassured.response.ValidatableResponse;
 import org.apache.commons.lang.math.RandomUtils;
 import org.junit.Before;
@@ -14,6 +15,7 @@ import static org.hamcrest.Matchers.is;
 import static org.hamcrest.Matchers.notNullValue;
 import static org.hamcrest.Matchers.nullValue;
 import static uk.gov.pay.connector.model.ChargeStatus.AUTHORIZATION_SUCCESS;
+import static uk.gov.pay.connector.util.JsonEncoder.toJson;
 import static uk.gov.pay.connector.util.LinksAssert.assertNextUrlLink;
 import static uk.gov.pay.connector.util.LinksAssert.assertSelfLink;
 import static uk.gov.pay.connector.util.NumberMatcher.isNumber;
@@ -36,7 +38,9 @@ public class ChargesApiResourceITest {
     @Test
     public void makeChargeAndRetrieveAmount() throws Exception {
         long expectedAmount = 2113l;
-        String postBody = format("{\"amount\":%d, \"gateway_account_id\": \"%s\"}", expectedAmount, accountId);
+        String postBody = toJson(ImmutableMap.of(
+                "amount", expectedAmount,
+                "gateway_account_id", accountId));
         ValidatableResponse response = postCreateChargeResponse(postBody)
                 .statusCode(201)
                 .body("charge_id", is(notNullValue()))
@@ -75,7 +79,8 @@ public class ChargesApiResourceITest {
     @Test
     public void cannotMakeChargeForMissingGatewayAccount() throws Exception {
         String missingGatewayAccount = "1234123";
-        postCreateChargeResponse(format("{\"amount\":2113, \"gateway_account_id\": \"%s\"}", missingGatewayAccount))
+        String postBody = toJson(ImmutableMap.of("amount", 2113, "gateway_account_id", missingGatewayAccount));
+        postCreateChargeResponse(postBody)
                 .statusCode(400)
                 .contentType(JSON)
                 .header("Location", is(nullValue()))
