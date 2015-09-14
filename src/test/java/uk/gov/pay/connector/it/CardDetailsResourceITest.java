@@ -1,14 +1,12 @@
 package uk.gov.pay.connector.it;
 
-import com.google.common.collect.ImmutableMap;
+import com.google.gson.JsonObject;
 import com.jayway.restassured.specification.RequestSpecification;
 import org.apache.commons.lang.math.RandomUtils;
 import org.junit.Before;
 import org.junit.Rule;
 import org.junit.Test;
 import uk.gov.pay.connector.util.DropwizardAppWithPostgresRule;
-
-import java.util.Map;
 
 import static com.jayway.restassured.RestAssured.given;
 import static com.jayway.restassured.http.ContentType.JSON;
@@ -42,6 +40,12 @@ public class CardDetailsResourceITest {
     @Test
     public void shouldAuthoriseChargeForValidCardDetails2() throws Exception {
         String validCardDetails = buildJsonCardDetailsFor("5105105105105100");
+        shouldAuthoriseChargeFor(validCardDetails);
+    }
+
+    @Test
+    public void shouldAuthoriseChargeForValidCardWithFullAddress() throws Exception {
+        String validCardDetails = buildJsonCardDetailsWithFullAddress();
         shouldAuthoriseChargeFor(validCardDetails);
     }
 
@@ -181,11 +185,39 @@ public class CardDetailsResourceITest {
     }
 
     private String buildJsonCardDetailsFor(String cardNumber, String cvc, String expiryDate) {
-        Map<String, Object> cardDetails = ImmutableMap.of(
-                "card_number", cardNumber,
-                "cvc", cvc,
-                "expiry_date", expiryDate);
+        return buildJsonCardDetailsFor(cardNumber, cvc, expiryDate, null, null, null, null);
+    }
+
+    private String buildJsonCardDetailsFor(String cardNumber, String cvc, String expiryDate, String line2, String line3, String city, String county) {
+        JsonObject addressObject = new JsonObject();
+
+        addressObject.addProperty("line1", "The Money Pool");
+        addressObject.addProperty("line2", line2);
+        addressObject.addProperty("line3", line3);
+        addressObject.addProperty("city", city);
+        addressObject.addProperty("county", county);
+        addressObject.addProperty("postcode", "DO11 4RS");
+        addressObject.addProperty("country", "GB");
+
+        JsonObject cardDetails = new JsonObject();
+        cardDetails.addProperty("card_number", cardNumber);
+        cardDetails.addProperty("cvc", cvc);
+        cardDetails.addProperty("expiry_date", expiryDate);
+        cardDetails.addProperty("cardholder_name", "Scrooge McDuck");
+        cardDetails.add("address", addressObject);
         return toJson(cardDetails);
+    }
+
+    private String buildJsonCardDetailsWithFullAddress() {
+        return buildJsonCardDetailsFor(
+                "4242424242424242",
+                "123",
+                "11/99",
+                "Moneybags Avenue",
+                "Some borough",
+                "London",
+                "Greater London"
+        );
     }
 
     private void assertChargeStatusIs(String uniqueChargeId, String status) {
