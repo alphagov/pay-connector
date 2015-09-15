@@ -1,5 +1,6 @@
 package uk.gov.pay.connector.it;
 
+import com.google.common.collect.ImmutableMap;
 import com.jayway.restassured.response.ValidatableResponse;
 import org.apache.commons.lang.math.RandomUtils;
 import org.junit.Before;
@@ -13,6 +14,7 @@ import static java.lang.String.format;
 import static org.hamcrest.Matchers.is;
 import static org.hamcrest.Matchers.notNullValue;
 import static uk.gov.pay.connector.model.ChargeStatus.AUTHORIZATION_SUCCESS;
+import static uk.gov.pay.connector.util.JsonEncoder.toJson;
 import static uk.gov.pay.connector.util.LinksAssert.assertCardAuthLink;
 import static uk.gov.pay.connector.util.LinksAssert.assertSelfLink;
 import static uk.gov.pay.connector.util.NumberMatcher.isNumber;
@@ -35,7 +37,7 @@ public class ChargesFrontendResourceITest {
     @Test
     public void getChargeShouldIncludeCardAuthLinkButNotGatewayAccountId() throws Exception {
         long expectedAmount = 2113l;
-        String postBody = format("{\"amount\":%d, \"gateway_account_id\": \"%s\"}", expectedAmount, accountId);
+        String postBody = toJson(ImmutableMap.of("amount", expectedAmount, "gateway_account_id", accountId));
         ValidatableResponse response = postCreateChargeResponse(postBody)
                 .statusCode(201)
                 .body("charge_id", is(notNullValue()))

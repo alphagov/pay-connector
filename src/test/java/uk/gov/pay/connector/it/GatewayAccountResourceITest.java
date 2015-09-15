@@ -1,5 +1,6 @@
 package uk.gov.pay.connector.it;
 
+import com.google.common.collect.ImmutableMap;
 import com.jayway.restassured.response.ValidatableResponse;
 import org.junit.Rule;
 import org.junit.Test;
@@ -9,6 +10,7 @@ import static com.jayway.restassured.RestAssured.given;
 import static com.jayway.restassured.http.ContentType.JSON;
 import static org.hamcrest.Matchers.containsString;
 import static org.hamcrest.Matchers.is;
+import static uk.gov.pay.connector.util.JsonEncoder.toJson;
 
 public class GatewayAccountResourceITest {
 
@@ -20,7 +22,7 @@ public class GatewayAccountResourceITest {
         String testName = "test account";
         ValidatableResponse response = given().port(app.getLocalPort())
                 .contentType(JSON)
-                .body(String.format("{\"name\":\"%s\"}", testName))
+                .body(toJson(ImmutableMap.of("name", testName)))
                 .post("/v1/api/accounts")
                 .then()
                 .statusCode(201)

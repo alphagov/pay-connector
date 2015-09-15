@@ -22,6 +22,13 @@ public class CardDetailsValidatorTest {
     }
 
     @Test
+    public void validationSucceedFor14digitsCardNumber() {
+        Map<String, Object> cardDetails = buildCardDetails("12345678901234", validCVC, validExpiryDate);
+        assertTrue(CardDetailsValidator.isWellFormattedCardDetails(cardDetails));
+    }
+
+
+    @Test
     public void validationFailsForMissingCVC() {
         Map<String, Object> wrongCardDetails = new HashMap<>();
         wrongCardDetails.put("card_number", validCardNumber);
@@ -55,8 +62,8 @@ public class CardDetailsValidatorTest {
     }
 
     @Test
-    public void validationFailsFor15digitsCardNumber() {
-        Map<String, Object> cardDetails = buildCardDetails("123456789012345", validCVC, validExpiryDate);
+    public void validationFailsFor13digitsCardNumber() {
+        Map<String, Object> cardDetails = buildCardDetails("1234567890123", validCVC, validExpiryDate);
         assertFalse(CardDetailsValidator.isWellFormattedCardDetails(cardDetails));
     }
 

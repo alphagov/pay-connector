@@ -1,5 +1,6 @@
 package uk.gov.pay.connector.it;
 
+import com.google.gson.JsonObject;
 import com.jayway.restassured.specification.RequestSpecification;
 import org.apache.commons.lang.math.RandomUtils;
 import org.junit.Before;
@@ -12,11 +13,24 @@ import static com.jayway.restassured.http.ContentType.JSON;
 import static java.lang.String.format;
 import static org.hamcrest.Matchers.is;
 import static uk.gov.pay.connector.model.ChargeStatus.CREATED;
+import static uk.gov.pay.connector.util.JsonEncoder.toJson;
 
 public class CardDetailsResourceITest {
+    private static final String[] VALID_CARD_NO_LIST = new String[]{
+            "4242424242424242",
+            "5105105105105100",
+            "348560871512574",
+            "4485197542476643",
+            "5582575229987470",
+            "4917902691983168",
+            "3528373272496082",
+            "6011188510795021",
+            "6763376639165982",
+            "36375928148471"
+    };
 
     private String accountId = "666";
-    private String validCardDetails = buildJsonCardDetailsFor("4242424242424242");
+    private String validCardDetails = buildJsonCardDetailsFor(VALID_CARD_NO_LIST[0]);
 
     private String cardUrlFor(String id) {
         return "/v1/frontend/charges/" + id + "/cards";
@@ -31,14 +45,16 @@ public class CardDetailsResourceITest {
     }
 
     @Test
-    public void shouldAuthoriseChargeForValidCardDetails1() throws Exception {
-        shouldAuthoriseChargeFor(validCardDetails);
+    public void shouldAuthoriseCharge_ForValidCards() throws Exception {
+        for(String cardNo: VALID_CARD_NO_LIST){
+            shouldAuthoriseChargeFor(buildJsonCardDetailsFor(cardNo));
+        }
     }
 
     @Test
-    public void shouldAuthoriseChargeForValidCardDetails2() throws Exception {
-        String otherValidCardDetails = buildJsonCardDetailsFor("5105105105105100");
-        shouldAuthoriseChargeFor(otherValidCardDetails);
+    public void shouldAuthoriseChargeForValidCardWithFullAddress() throws Exception {
+        String validCardDetails = buildJsonCardDetailsWithFullAddress();
+        shouldAuthoriseChargeFor(validCardDetails);
     }
 
     private void shouldAuthoriseChargeFor(String cardDetails) throws Exception {
@@ -177,13 +193,39 @@ public class CardDetailsResourceITest {
     }
 
     private String buildJsonCardDetailsFor(String cardNumber, String cvc, String expiryDate) {
-        StringBuilder cardBody = new StringBuilder();
-        cardBody.append("{");
-        cardBody.append("\"card_number\":\"" + cardNumber + "\",");
-        cardBody.append("\"cvc\":\"" + cvc + "\",");
-        cardBody.append("\"expiry_date\":\"" + expiryDate + "\"");
-        cardBody.append("}");
-        return cardBody.toString();
+        return buildJsonCardDetailsFor(cardNumber, cvc, expiryDate, null, null, null, null);
+    }
+
+    private String buildJsonCardDetailsFor(String cardNumber, String cvc, String expiryDate, String line2, String line3, String city, String county) {
+        JsonObject addressObject = new JsonObject();
+
+        addressObject.addProperty("line1", "The Money Pool");
+        addressObject.addProperty("line2", line2);
+        addressObject.addProperty("line3", line3);
+        addressObject.addProperty("city", city);
+        addressObject.addProperty("county", county);
+        addressObject.addProperty("postcode", "DO11 4RS");
+        addressObject.addProperty("country", "GB");
+
+        JsonObject cardDetails = new JsonObject();
+        cardDetails.addProperty("card_number", cardNumber);
+        cardDetails.addProperty("cvc", cvc);
+        cardDetails.addProperty("expiry_date", expiryDate);
+        cardDetails.addProperty("cardholder_name", "Scrooge McDuck");
+        cardDetails.add("address", addressObject);
+        return toJson(cardDetails);
+    }
+
+    private String buildJsonCardDetailsWithFullAddress() {
+        return buildJsonCardDetailsFor(
+                "4242424242424242",
+                "123",
+                "11/99",
+                "Moneybags Avenue",
+                "Some borough",
+                "London",
+                "Greater London"
+        );
     }
 
     private void assertChargeStatusIs(String uniqueChargeId, String status) {

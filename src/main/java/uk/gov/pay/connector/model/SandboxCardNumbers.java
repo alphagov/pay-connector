@@ -23,10 +23,17 @@ public class SandboxCardNumbers {
         return ERROR_CARDS.get(cardNumber);
     }
 
-    private static final String GOOD_CARD_NUMBER_1 = "4242424242424242";
-    private static final String GOOD_CARD_NUMBER_2 = "5105105105105100";
-
-    private static final List GOOD_CARDS = ImmutableList.of(GOOD_CARD_NUMBER_1, GOOD_CARD_NUMBER_2);
+    private static final List GOOD_CARDS = ImmutableList.of(
+            "4242424242424242",
+            "5105105105105100",
+            "348560871512574",
+            "4485197542476643",
+            "5582575229987470",
+            "4917902691983168",
+            "3528373272496082",
+            "6011188510795021",
+            "6763376639165982",
+            "36375928148471");
 
     private static final String DECLINED_CARD_NUMBER = "4000000000000002";
     private static final String CVC_ERROR_CARD_NUMBER = "4000000000000127";
