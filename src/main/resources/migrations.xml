@@ -17,6 +17,20 @@
         </createTable>
     </changeSet>
 
+    <changeSet id="build tokens table" author="">
+        <createTable tableName="tokens">
+            <column name="id" type="bigserial" autoIncrement="true">
+                <constraints primaryKey="true" nullable="false"/>
+            </column>
+            <column name="charge_id" type="bigserial">
+                <constraints nullable="false"/>
+            </column>
+            <column name="token_id" type="varchar(255)">
+                <constraints nullable="false"/>
+            </column>
+        </createTable>
+    </changeSet>
+
     <changeSet id="build charge table" author="">
         <createTable tableName="charges">
             <column name="charge_id" type="bigserial" autoIncrement="true">
