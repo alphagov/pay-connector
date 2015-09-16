@@ -11,6 +11,7 @@ import java.util.Optional;
 import java.util.UUID;
 
 import static com.google.common.collect.Maps.newHashMap;
+import static java.lang.String.format;
 
 public class TokenDao {
     private DBI jdbi;
@@ -45,8 +46,30 @@ public class TokenDao {
             throw new RuntimeException("Unexpected: tokenId was not found for chargeId=" + chargeId);
         }
 
-        System.out.println("tokenId = " + tokenId);
-
         return tokenId;
+    }
+
+    public Optional<String> findChargeByTokenId(String chargeTokenId) {
+        String chargeId = jdbi.withHandle(handle ->
+                        handle
+                                .createQuery("SELECT charge_id FROM tokens WHERE token_id=:token_id")
+                                .bind("token_id", chargeTokenId)
+                                .map(StringMapper.FIRST)
+                                .first()
+        );
+
+        return Optional.ofNullable(chargeId);
+    }
+
+    public void deleteByTokenId(String tokenId) {
+        int rowsDeleted = jdbi.withHandle(handle ->
+                        handle
+                                .createStatement("DELETE from tokens where token_id = :token_id")
+                                .bind("token_id", tokenId)
+                                .execute()
+        );
+        if (rowsDeleted != 1) {
+            throw new RuntimeException(format("Unexpected: Failed to delete chargeTokenId='%s' from tokens table", tokenId));
+        }
     }
 }
