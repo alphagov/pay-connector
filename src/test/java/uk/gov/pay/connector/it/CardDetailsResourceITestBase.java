@@ -3,6 +3,7 @@ package uk.gov.pay.connector.it;
 import com.google.gson.JsonObject;
 import com.jayway.restassured.specification.RequestSpecification;
 import org.apache.commons.lang.math.RandomUtils;
+import org.junit.Assume;
 import org.junit.Before;
 import org.junit.Rule;
 import uk.gov.pay.connector.util.DropwizardAppWithPostgresRule;
@@ -13,13 +14,13 @@ import static org.hamcrest.Matchers.is;
 import static uk.gov.pay.connector.model.ChargeStatus.CREATED;
 import static uk.gov.pay.connector.util.JsonEncoder.toJson;
 
-public class BaseCardDetailsResourceITest {
+public class CardDetailsResourceITestBase {
     @Rule
     public DropwizardAppWithPostgresRule app = new DropwizardAppWithPostgresRule();
     protected final String accountId;
     private final String paymentProvider;
 
-    public BaseCardDetailsResourceITest(String paymentProvider) {
+    public CardDetailsResourceITestBase(String paymentProvider) {
         this.paymentProvider = paymentProvider;
         accountId = String.valueOf(RandomUtils.nextInt(99999));
     }
@@ -37,8 +38,12 @@ public class BaseCardDetailsResourceITest {
         return buildJsonCardDetailsFor(cardNumber, "123", "11/99");
     }
 
+    protected String buildJsonCardDetailsFor(String cardHolderName, String cardNumber) {
+        return buildJsonCardDetailsFor(cardHolderName, cardNumber, "123", "11/99", null, null, "London", null);
+    }
+
     protected String buildJsonCardDetailsFor(String cardNumber, String cvc, String expiryDate) {
-        return buildJsonCardDetailsFor(cardNumber, cvc, expiryDate, null, null, null, null);
+        return buildJsonCardDetailsFor("Mr. Payment", cardNumber, cvc, expiryDate, null, null, "London", null);
     }
 
     protected void assertChargeStatusIs(String uniqueChargeId, String status) {
@@ -61,6 +66,7 @@ public class BaseCardDetailsResourceITest {
 
     protected String buildJsonCardDetailsWithFullAddress() {
         return buildJsonCardDetailsFor(
+                "Scrooge McDuck",
                 "4242424242424242",
                 "123",
                 "11/99",
@@ -71,7 +77,7 @@ public class BaseCardDetailsResourceITest {
         );
     }
 
-    private String buildJsonCardDetailsFor(String cardNumber, String cvc, String expiryDate, String line2, String line3, String city, String county) {
+    private String buildJsonCardDetailsFor(String cardHolderName, String cardNumber, String cvc, String expiryDate, String line2, String line3, String city, String county) {
         JsonObject addressObject = new JsonObject();
 
         addressObject.addProperty("line1", "The Money Pool");
@@ -86,8 +92,22 @@ public class BaseCardDetailsResourceITest {
         cardDetails.addProperty("card_number", cardNumber);
         cardDetails.addProperty("cvc", cvc);
         cardDetails.addProperty("expiry_date", expiryDate);
-        cardDetails.addProperty("cardholder_name", "Scrooge McDuck");
+        cardDetails.addProperty("cardholder_name", cardHolderName);
         cardDetails.add("address", addressObject);
         return toJson(cardDetails);
+    }
+
+    protected void shouldReturnErrorForCardDetailsWithMessage(String cardDetails, String errorMessage, String status) throws Exception {
+        String chargeId = createNewCharge();
+
+        givenSetup()
+                .body(cardDetails)
+                .post(cardUrlFor(chargeId))
+                .then()
+                .statusCode(400)
+                .contentType(JSON)
+                .body("message", is(errorMessage));
+
+        assertChargeStatusIs(chargeId, status);
     }
 }

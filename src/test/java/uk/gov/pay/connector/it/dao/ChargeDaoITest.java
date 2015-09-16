@@ -14,7 +14,7 @@ import java.util.Map;
 
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.is;
-import static uk.gov.pay.connector.model.ChargeStatus.AUTHORISTION_SUBMITTED;
+import static uk.gov.pay.connector.model.ChargeStatus.AUTHORISATION_SUBMITTED;
 import static uk.gov.pay.connector.model.ChargeStatus.AUTHORISATION_SUCCESS;
 
 public class ChargeDaoITest {
@@ -63,7 +63,7 @@ public class ChargeDaoITest {
         long amount = 101;
         String chargeId = chargeDao.saveNewCharge(newCharge(amount));
 
-        chargeDao.updateStatus(chargeId, AUTHORISTION_SUBMITTED);
+        chargeDao.updateStatus(chargeId, AUTHORISATION_SUBMITTED);
 
         Map<String, Object> charge = chargeDao.findById(chargeId).get();
 

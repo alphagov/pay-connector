@@ -2,16 +2,17 @@ package uk.gov.pay.connector.resources;
 
 import java.util.Map;
 
+import static uk.gov.pay.connector.resources.CardDetailsResource.CardDetailsResourceKeys.FIELD_CARD_NUMBER;
+import static uk.gov.pay.connector.resources.CardDetailsResource.CardDetailsResourceKeys.FIELD_CVC;
+import static uk.gov.pay.connector.resources.CardDetailsResource.CardDetailsResourceKeys.FIELD_EXPIRY_DATE;
+
 public class CardDetailsValidator {
 
-    public static final String CARD_NUMBER_FIELD = "card_number";
-    public static final String CVC_FIELD = "cvc";
-    public static final String EXPIRY_DATE_FIELD = "expiry_date";
 
     public static boolean isWellFormattedCardDetails(Map<String, Object> cardDetails) {
-        return cardDetails.containsKey(CARD_NUMBER_FIELD) && isValidCardNumberLength(cardDetails.get(CARD_NUMBER_FIELD)) &&
-                cardDetails.containsKey(CVC_FIELD) && is3Digits(cardDetails.get(CVC_FIELD)) &&
-                cardDetails.containsKey(EXPIRY_DATE_FIELD) && hasExpiryDateFormat(cardDetails.get(EXPIRY_DATE_FIELD));
+        return cardDetails.containsKey(FIELD_CARD_NUMBER) && isValidCardNumberLength(cardDetails.get(FIELD_CARD_NUMBER)) &&
+                cardDetails.containsKey(FIELD_CVC) && is3Digits(cardDetails.get(FIELD_CVC)) &&
+                cardDetails.containsKey(FIELD_EXPIRY_DATE) && hasExpiryDateFormat(cardDetails.get(FIELD_EXPIRY_DATE));
     }
 
     private static boolean hasExpiryDateFormat(Object date) {

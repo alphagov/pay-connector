@@ -6,11 +6,14 @@ public class CardAuthorisationResponse {
     private final String errorMessage;
     private final ChargeStatus status;
 
-
     public CardAuthorisationResponse(Boolean successful, String errorMessage, ChargeStatus status) {
         this.successful = successful;
         this.errorMessage = errorMessage;
         this.status = status;
+    }
+
+    public static CardAuthorisationResponse anErrorResponse(String errorMessage) {
+        return new CardAuthorisationResponse(false, errorMessage, null);
     }
 
     public Boolean isSuccessful() {

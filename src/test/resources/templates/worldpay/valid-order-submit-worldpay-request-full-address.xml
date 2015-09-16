@@ -1,0 +1,39 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE paymentService PUBLIC "-//WorldPay//DTD WorldPay PaymentService v1//EN"
+        "http://dtd.worldpay.com/paymentService_v1.dtd">
+<paymentService version="1.4" merchantCode="MERCHANTCODE">
+    <submit>
+        <order orderCode="MyUniqueTransactionId!">
+            <description>This is mandatory</description>
+            <amount currencyCode="GBP" exponent="2" value="500"/>
+            <paymentDetails>
+                <VISA-SSL>
+                    <cardNumber>4111111111111111</cardNumber>
+                    <expiryDate>
+                        <date month="12" year="2015"/>
+                    </expiryDate>
+                    <cardHolderName>Mr. Payment</cardHolderName>
+                    <cvc>123</cvc>
+                    <cardAddress>
+                        <address>
+                            <address1>123 My Street</address1>
+                            <address2>This road</address2>
+                            <address3>Line 3</address3>
+                            <postalCode>SW8URR</postalCode>
+                            <city>London</city>
+                            <state>London county</state>
+                            <countryCode>GB</countryCode>
+                        </address>
+                    </cardAddress>
+                </VISA-SSL>
+                <session shopperIPAddress="123.123.123.123" id="0215ui8ib1"/>
+            </paymentDetails>
+            <shopper>
+                <browser>
+                    <acceptHeader>text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8</acceptHeader>
+                    <userAgentHeader>Mozilla/5.0 (Windows; U; Windows NT 5.1;en-GB; rv:1.9.1.5) Gecko/20091102 Firefox/3.5.5 (.NET CLR 3.5.30729)</userAgentHeader>
+                </browser>
+            </shopper>
+        </order>
+    </submit>
+</paymentService>

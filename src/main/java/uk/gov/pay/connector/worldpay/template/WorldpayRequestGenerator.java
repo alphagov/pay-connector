@@ -48,4 +48,8 @@ public class WorldpayRequestGenerator {
     public static WorldpayOrderSubmitRequestGenerator anOrderSubmitRequest() {
         return new WorldpayOrderSubmitRequestGenerator();
     }
+
+    public static WorldpayOrderCaptureRequestGenerator anOrderCaptureRequest() {
+        return new WorldpayOrderCaptureRequestGenerator();
+    }
 }

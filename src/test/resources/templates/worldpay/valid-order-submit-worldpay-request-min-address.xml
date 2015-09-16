@@ -17,10 +17,8 @@
                     <cardAddress>
                         <address>
                             <address1>123 My Street</address1>
-                            <address2>This road</address2>
                             <postalCode>SW8URR</postalCode>
                             <city>London</city>
-                            <state>London state</state>
                             <countryCode>GB</countryCode>
                         </address>
                     </cardAddress>

@@ -16,12 +16,19 @@
                     <cvc>${card.cvc}</cvc>
                     <cardAddress>
                         <address>
-                            <address1>${card.addressLine1}</address1>
-                            <address2>${card.addressLine2}</address2>
-                            <postalCode>${card.addressZip}</postalCode>
-                            <city>${card.addressCity}</city>
-                            <state>${card.addressState}</state>
-                            <countryCode>${card.addressCountry}</countryCode>
+                            <address1>${card.address.line1}</address1>
+                            <#if card.address.line2??>
+                            <address2>${card.address.line2}</address2>
+                            </#if>
+                            <#if card.address.line3??>
+                            <address3>${card.address.line3}</address3>
+                            </#if>
+                            <postalCode>${card.address.postcode}</postalCode>
+                            <city>${card.address.city}</city>
+                            <#if card.address.county??>
+                            <state>${card.address.county}</state>
+                            </#if>
+                            <countryCode>${card.address.country}</countryCode>
                         </address>
                     </cardAddress>
                 </VISA-SSL>

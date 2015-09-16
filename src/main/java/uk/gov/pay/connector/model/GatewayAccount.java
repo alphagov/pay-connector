@@ -2,30 +2,24 @@ package uk.gov.pay.connector.model;
 
 public class GatewayAccount {
     private static final String MERCHANT_CODE = "MERCHANTCODE";
-    private static final String XML_USERNAME = "MERCHANTCODE";
-    private static final String XML_PASSWORD = "***";
-    private String principal;
-    private String credential;
+    private String username;
+    private String password;
 
-    public GatewayAccount() {
-        this(XML_USERNAME, XML_PASSWORD);
-    }
+    public GatewayAccount(String username, String password) {
 
-    public GatewayAccount(String principal, String credential) {
-
-        this.principal = principal;
-        this.credential = credential;
+        this.username = username;
+        this.password = password;
     }
 
     public String getMerchantId() {
         return MERCHANT_CODE;
     }
 
-    public String getGatewayPrincipal() {
-        return principal;
+    public String getUsername() {
+        return username;
     }
 
-    public String getGatewayPassword() {
-        return credential;
+    public String getPassword() {
+        return password;
     }
 }

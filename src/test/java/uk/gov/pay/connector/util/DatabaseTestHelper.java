@@ -14,10 +14,10 @@ public class DatabaseTestHelper {
         this.tokenDao = new TokenDao(jdbi);
     }
 
-    public void addGatewayAccount(String accountId, String name) {
+    public void addGatewayAccount(String accountId, String paymentProvider) {
         jdbi.withHandle(h ->
                         h.update("INSERT INTO gateway_accounts(gateway_account_id, payment_provider) VALUES(?, ?)",
-                                Long.valueOf(accountId), name)
+                                Long.valueOf(accountId), paymentProvider)
         );
     }
 

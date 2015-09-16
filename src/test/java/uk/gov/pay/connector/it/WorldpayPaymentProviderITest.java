@@ -1,6 +1,9 @@
 package uk.gov.pay.connector.it;
 
+import org.junit.Assume;
+import org.junit.Before;
 import org.junit.Test;
+import uk.gov.pay.connector.model.Address;
 import uk.gov.pay.connector.model.Amount;
 import uk.gov.pay.connector.model.Browser;
 import uk.gov.pay.connector.model.Card;
@@ -12,29 +15,41 @@ import uk.gov.pay.connector.service.worldpay.WorldpayPaymentProvider;
 
 import javax.ws.rs.client.ClientBuilder;
 
+import static java.util.UUID.randomUUID;
+import static org.apache.commons.lang3.StringUtils.isNotBlank;
 import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertTrue;
+import static uk.gov.pay.connector.model.Address.anAddress;
 import static uk.gov.pay.connector.model.Card.aCard;
+import static uk.gov.pay.connector.utils.EnvironmentUtils.getWorldpayPassword;
+import static uk.gov.pay.connector.utils.EnvironmentUtils.getWorldpayUser;
 
 
 public class WorldpayPaymentProviderITest {
 
+    @Before
+    public void before() throws Exception {
+        Assume.assumeTrue(worldPayEnvironmentInitialized());
+    }
+
     @Test
     public void shouldSendSuccessfullyAOrderForMerchant() throws Exception {
 
-        WorldpayPaymentProvider connector = new WorldpayPaymentProvider(ClientBuilder.newClient());
+        WorldpayPaymentProvider connector = new WorldpayPaymentProvider();
         CardAuthorisationRequest request = getCardAuthorisationRequest();
-        CardAuthorisationResponse response = connector.authorise(new GatewayAccount(), request);
+        CardAuthorisationResponse response = connector.authorise(request);
 
         assertTrue(response.isSuccessful());
     }
 
     @Test
     public void shouldFailRequestAuthorisationIfCredentialsAreNotCorrect() throws Exception {
+        GatewayAccount gatewayAccount = new GatewayAccount("wrongUsername", "wrongPassword");
 
-        WorldpayPaymentProvider connector = new WorldpayPaymentProvider(ClientBuilder.newClient());
+        WorldpayPaymentProvider connector = new WorldpayPaymentProvider(ClientBuilder.newClient(), gatewayAccount);
+
         CardAuthorisationRequest request = getCardAuthorisationRequest();
-        CardAuthorisationResponse response = connector.authorise(new GatewayAccount("wrongUsername", "wrongPassword"), request);
+        CardAuthorisationResponse response = connector.authorise(request);
 
         assertFalse(response.isSuccessful());
     }
@@ -47,20 +62,25 @@ public class WorldpayPaymentProviderITest {
         Session session = new Session("123.123.123.123", "0215ui8ib1");
         Browser browser = new Browser(acceptHeader, userAgentHeader);
         Amount amount = new Amount("500");
-
-        String transactionId = "MyUniqueTransactionId!";
+        String transactionId = randomUUID().toString();
         String description = "This is mandatory";
         return new CardAuthorisationRequest(card, session, browser, amount, transactionId, description);
     }
 
     private Card getValidTestCard() {
+        Address address = anAddress()
+                .withLine1("123 My Street")
+                .withLine2("This road")
+                .withZip("SW8URR")
+                .withCity("London")
+                .withCountry("GB");
+
         return aCard()
                 .withCardDetails("Mr. Payment", "4111111111111111", "123", "12/15")
-                .withAddressLine1("123 My Street")
-                .withAddressLine2("This road")
-                .withAddressZip("SW8URR")
-                .withAddressCity("London")
-                .withAddressState("London state");
+                .withAddress(address);
     }
 
+    private boolean worldPayEnvironmentInitialized() {
+        return isNotBlank(getWorldpayUser()) && isNotBlank(getWorldpayPassword());
+    }
 }

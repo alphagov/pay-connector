@@ -19,7 +19,7 @@ import java.util.Optional;
 import static java.lang.String.format;
 import static javax.ws.rs.core.MediaType.APPLICATION_JSON;
 import static org.apache.commons.lang3.StringUtils.equalsIgnoreCase;
-import static uk.gov.pay.connector.model.ChargeStatus.AUTHORISTION_SUBMITTED;
+import static uk.gov.pay.connector.model.ChargeStatus.AUTHORISATION_SUBMITTED;
 import static uk.gov.pay.connector.model.ChargeStatus.AUTHORISATION_SUCCESS;
 import static uk.gov.pay.connector.model.ChargeStatus.CREATED;
 import static uk.gov.pay.connector.model.ChargeStatus.ENTERING_CARD_DETAILS;
@@ -32,7 +32,7 @@ import static uk.gov.pay.connector.util.ResponseUtil.responseWithChargeNotFound;
 @Path("/")
 public class ChargeCancelResource {
     private static final List<ChargeStatus> CANCELLABLE_STATES = ImmutableList.of(
-            CREATED, ENTERING_CARD_DETAILS, AUTHORISATION_SUCCESS, AUTHORISTION_SUBMITTED, READY_FOR_CAPTURE
+            CREATED, ENTERING_CARD_DETAILS, AUTHORISATION_SUCCESS, AUTHORISATION_SUBMITTED, READY_FOR_CAPTURE
     );
 
     private ChargeDao chargeDao;

@@ -6,7 +6,7 @@ import static com.jayway.restassured.http.ContentType.JSON;
 import static java.lang.String.format;
 import static org.hamcrest.Matchers.is;
 
-public class SandboxCardDetailsResourceITest extends BaseCardDetailsResourceITest {
+public class SandboxCardDetailsResourceITest extends CardDetailsResourceITestBase {
 
     private static final String[] VALID_CARD_NO_LIST = new String[]{
             "4242424242424242",
@@ -154,19 +154,5 @@ public class SandboxCardDetailsResourceITest extends BaseCardDetailsResourceITes
         String expectedErrorMessage = "This transaction could be not be processed.";
         String expectedChargeStatus = "SYSTEM ERROR";
         shouldReturnErrorForCardDetailsWithMessage(cardDetailsToReject, expectedErrorMessage, expectedChargeStatus);
-    }
-
-    private void shouldReturnErrorForCardDetailsWithMessage(String cardDetails, String errorMessage, String status) throws Exception {
-        String chargeId = createNewCharge();
-
-        givenSetup()
-                .body(cardDetails)
-                .post(cardUrlFor(chargeId))
-                .then()
-                .statusCode(400)
-                .contentType(JSON)
-                .body("message", is(errorMessage));
-
-        assertChargeStatusIs(chargeId, status);
     }
 }
