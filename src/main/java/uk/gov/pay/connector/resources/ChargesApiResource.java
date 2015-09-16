@@ -38,7 +38,8 @@ public class ChargesApiResource {
 
     private static final String AMOUNT_KEY = "amount";
     private static final String GATEWAY_ACCOUNT_KEY = "gateway_account_id";
-    private static final String[] REQUIRED_FIELDS = {AMOUNT_KEY, GATEWAY_ACCOUNT_KEY};
+    private static final String RETURN_URL_KEY = "return_url";
+    private static final String[] REQUIRED_FIELDS = {AMOUNT_KEY, GATEWAY_ACCOUNT_KEY, RETURN_URL_KEY};
 
     private static final String STATUS_KEY = "status";
 

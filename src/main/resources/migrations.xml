@@ -34,4 +34,12 @@
         </createTable>
     </changeSet>
 
+    <changeSet id="add field 'return_url' to charge table" author="">
+        <addColumn tableName="charges">
+            <column name="return_url" type="text">
+                <constraints nullable="false" />
+            </column>
+        </addColumn>
+    </changeSet>
+
 </databaseChangeLog>

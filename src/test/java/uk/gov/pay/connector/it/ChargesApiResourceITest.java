@@ -22,13 +22,21 @@ import static uk.gov.pay.connector.util.NumberMatcher.isNumber;
 
 public class ChargesApiResourceITest {
 
-    public static final String CHARGES_API_PATH = "/v1/api/charges/";
-    public static final String FRONTEND_CARD_DETAILS_URL = "/charge/";
+    private static final String CHARGES_API_PATH = "/v1/api/charges/";
+    private static final String FRONTEND_CARD_DETAILS_URL = "/charge/";
+
+    private static final String JSON_AMOUNT_KEY = "amount";
+    private static final String JSON_GATEWAY_ACC_KEY = "gateway_account_id";
+    private static final String JSON_RETURN_URL_KEY = "return_url";
+    private static final String JSON_CHARGE_KEY = "charge_id";
+    private static final String JSON_STATUS_KEY = "status";
+    private static final String JSON_MESSAGE_KEY = "message";
 
     @Rule
     public DropwizardAppWithPostgresRule app = new DropwizardAppWithPostgresRule();
 
     private String accountId = "72332423443245";
+    private String returnUrl = "http://service.url/success-page/";
 
     @Before
     public void setupGatewayAccount() {
@@ -39,15 +47,17 @@ public class ChargesApiResourceITest {
     public void makeChargeAndRetrieveAmount() throws Exception {
         long expectedAmount = 2113l;
         String postBody = toJson(ImmutableMap.of(
-                "amount", expectedAmount,
-                "gateway_account_id", accountId));
+                JSON_AMOUNT_KEY, expectedAmount,
+                JSON_GATEWAY_ACC_KEY, accountId,
+                JSON_RETURN_URL_KEY, returnUrl));
         ValidatableResponse response = postCreateChargeResponse(postBody)
                 .statusCode(201)
-                .body("charge_id", is(notNullValue()))
-                .body("amount", isNumber(expectedAmount))
+                .body(JSON_CHARGE_KEY, is(notNullValue()))
+                .body(JSON_AMOUNT_KEY, isNumber(expectedAmount))
+                .body(JSON_RETURN_URL_KEY, is(returnUrl))
                 .contentType(JSON);
 
-        String chargeId = response.extract().path("charge_id");
+        String chargeId = response.extract().path(JSON_CHARGE_KEY);
         String documentLocation = expectedChargeLocationFor(chargeId);
 
         response.header("Location", is(documentLocation));
@@ -57,9 +67,10 @@ public class ChargesApiResourceITest {
         ValidatableResponse getChargeResponse = getChargeResponseFor(chargeId)
                 .statusCode(200)
                 .contentType(JSON)
-                .body("charge_id", is(chargeId))
-                .body("amount", isNumber(expectedAmount))
-                .body("status", is("CREATED"));
+                .body(JSON_CHARGE_KEY, is(chargeId))
+                .body(JSON_AMOUNT_KEY, isNumber(expectedAmount))
+                .body(JSON_STATUS_KEY, is("CREATED"))
+                .body(JSON_RETURN_URL_KEY, is(returnUrl));
 
         assertSelfLink(getChargeResponse, documentLocation);
     }
@@ -67,25 +78,28 @@ public class ChargesApiResourceITest {
     @Test
     public void shouldFilterChargeStatusToReturnInProgressIfInternalStatusIsAuthorised() throws Exception {
         String chargeId = ((Integer) RandomUtils.nextInt(99999999)).toString();
-        app.getDatabaseTestHelper().addCharge(chargeId, accountId, 500, AUTHORIZATION_SUCCESS);
+        app.getDatabaseTestHelper().addCharge(chargeId, accountId, 500, AUTHORIZATION_SUCCESS, returnUrl);
 
         getChargeResponseFor(chargeId)
                 .statusCode(200)
                 .contentType(JSON)
-                .body("charge_id", is(chargeId))
-                .body("status", is("IN PROGRESS"));
+                .body(JSON_CHARGE_KEY, is(chargeId))
+                .body(JSON_STATUS_KEY, is("IN PROGRESS"));
     }
 
     @Test
     public void cannotMakeChargeForMissingGatewayAccount() throws Exception {
         String missingGatewayAccount = "1234123";
-        String postBody = toJson(ImmutableMap.of("amount", 2113, "gateway_account_id", missingGatewayAccount));
+        String postBody = toJson(ImmutableMap.of(
+                JSON_AMOUNT_KEY, 2113,
+                JSON_GATEWAY_ACC_KEY, missingGatewayAccount,
+                JSON_RETURN_URL_KEY, returnUrl));
         postCreateChargeResponse(postBody)
                 .statusCode(400)
                 .contentType(JSON)
                 .header("Location", is(nullValue()))
-                .body("charge_id", is(nullValue()))
-                .body("message", is("Unknown gateway account: " + missingGatewayAccount));
+                .body(JSON_CHARGE_KEY, is(nullValue()))
+                .body(JSON_MESSAGE_KEY, is("Unknown gateway account: " + missingGatewayAccount));
     }
 
     @Test
@@ -94,8 +108,8 @@ public class ChargesApiResourceITest {
                 .statusCode(400)
                 .contentType(JSON)
                 .header("Location", is(nullValue()))
-                .body("charge_id", is(nullValue()))
-                .body("message", is("Field(s) missing: [amount, gateway_account_id]"));
+                .body(JSON_CHARGE_KEY, is(nullValue()))
+                .body(JSON_MESSAGE_KEY, is("Field(s) missing: [amount, gateway_account_id, return_url]"));
     }
 
     @Test
@@ -104,7 +118,7 @@ public class ChargesApiResourceITest {
         getChargeResponseFor(chargeId)
                 .statusCode(404)
                 .contentType(JSON)
-                .body("message", is(format("Charge with id [%s] not found.", chargeId)));
+                .body(JSON_MESSAGE_KEY, is(format("Charge with id [%s] not found.", chargeId)));
     }
 
     private ValidatableResponse getChargeResponseFor(String chargeId) {

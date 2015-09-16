@@ -28,6 +28,7 @@ public class ChargesFrontendResourceITest {
     public DropwizardAppWithPostgresRule app = new DropwizardAppWithPostgresRule();
 
     private String accountId = "72332423443245";
+    private String returnUrl = "http://whatever.com";
 
     @Before
     public void setupGatewayAccount() {
@@ -37,11 +38,15 @@ public class ChargesFrontendResourceITest {
     @Test
     public void getChargeShouldIncludeCardAuthLinkButNotGatewayAccountId() throws Exception {
         long expectedAmount = 2113l;
-        String postBody = toJson(ImmutableMap.of("amount", expectedAmount, "gateway_account_id", accountId));
+        String postBody = toJson(ImmutableMap.of(
+                "amount", expectedAmount,
+                "gateway_account_id", accountId,
+                "return_url", returnUrl));
         ValidatableResponse response = postCreateChargeResponse(postBody)
                 .statusCode(201)
                 .body("charge_id", is(notNullValue()))
                 .body("amount", isNumber(expectedAmount))
+                .body("return_url", is(returnUrl))
                 .contentType(JSON);
 
         String chargeId = response.extract().path("charge_id");
@@ -52,7 +57,8 @@ public class ChargesFrontendResourceITest {
                 .body("charge_id", is(chargeId))
                 .body("amount", isNumber(expectedAmount))
                 .body("containsKey('gateway_account_id')", is(false))
-                .body("status", is("CREATED"));
+                .body("status", is("CREATED"))
+                .body("return_url", is(returnUrl));
 
         String documentLocation = expectedChargeLocationFor(chargeId);
         String cardAuthUrl = expectedCardAuthUrlFor(chargeId);
@@ -63,7 +69,7 @@ public class ChargesFrontendResourceITest {
     @Test
     public void shouldReturnInternalChargeStatusIfInternalStatusIsAuthorised() throws Exception {
         String chargeId = ((Integer) RandomUtils.nextInt(99999999)).toString();
-        app.getDatabaseTestHelper().addCharge(chargeId, accountId, 500, AUTHORIZATION_SUCCESS);
+        app.getDatabaseTestHelper().addCharge(chargeId, accountId, 500, AUTHORIZATION_SUCCESS, returnUrl);
 
         getChargeResponseFor(chargeId)
                 .statusCode(200)
