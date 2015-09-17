@@ -68,19 +68,29 @@ public class WorldpayPaymentProviderITest {
     }
 
     private Card getValidTestCard() {
-        Address address = anAddress()
-                .withLine1("123 My Street")
-                .withLine2("This road")
-                .withZip("SW8URR")
-                .withCity("London")
-                .withCountry("GB");
+        Address address = anAddress();
+        address.setLine1("123 My Street");
+        address.setLine2("This road");
+        address.setPostcode("SW8URR");
+        address.setCity("London");
+        address.setCountry("GB");
 
-        return aCard()
-                .withCardDetails("Mr. Payment", "4111111111111111", "123", "12/15")
-                .withAddress(address);
+        Card cardDetails = withCardDetails("Mr. Payment", "4111111111111111", "123", "12/15");
+        cardDetails.setAddress(address);
+        return cardDetails;
     }
 
     private boolean worldPayEnvironmentInitialized() {
         return isNotBlank(getWorldpayUser()) && isNotBlank(getWorldpayPassword());
     }
+
+    public Card withCardDetails(String cardHolder, String cardNo, String cvc, String endDate) {
+        Card card = aCard();
+        card.setCardHolder(cardHolder);
+        card.setCardNo(cardNo);
+        card.setCvc(cvc);
+        card.setEndDate(endDate);
+        return card;
+    }
+
 }

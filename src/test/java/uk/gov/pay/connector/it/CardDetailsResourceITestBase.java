@@ -3,7 +3,6 @@ package uk.gov.pay.connector.it;
 import com.google.gson.JsonObject;
 import com.jayway.restassured.specification.RequestSpecification;
 import org.apache.commons.lang.math.RandomUtils;
-import org.junit.Assume;
 import org.junit.Before;
 import org.junit.Rule;
 import uk.gov.pay.connector.util.DropwizardAppWithPostgresRule;
@@ -32,6 +31,23 @@ public class CardDetailsResourceITestBase {
 
     protected String cardUrlFor(String id) {
         return "/v1/frontend/charges/" + id + "/cards";
+    }
+
+    protected String cardDetailsWithMinimalAddress(String cardNumber) {
+        JsonObject addressObject = new JsonObject();
+
+        addressObject.addProperty("line1", "The Money Pool");
+        addressObject.addProperty("city", "London");
+        addressObject.addProperty("postcode", "DO11 4RS");
+        addressObject.addProperty("country", "GB");
+
+        JsonObject cardDetails = new JsonObject();
+        cardDetails.addProperty("card_number", cardNumber);
+        cardDetails.addProperty("cvc", "123");
+        cardDetails.addProperty("expiry_date", "12/21");
+        cardDetails.addProperty("cardholder_name", "Mr. Payment");
+        cardDetails.add("address", addressObject);
+        return toJson(cardDetails);
     }
 
     protected String buildJsonCardDetailsFor(String cardNumber) {

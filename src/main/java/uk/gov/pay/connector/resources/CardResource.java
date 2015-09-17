@@ -55,9 +55,8 @@ public class CardResource {
     @Path("/v1/frontend/charges/{chargeId}/cards")
     @Consumes(APPLICATION_JSON)
     @Produces(APPLICATION_JSON)
-    public Response authoriseCharge(@PathParam("chargeId") String chargeId, Map<String, Object> cardDetailsMap) throws PayDBIException {
+    public Response authoriseCharge(@PathParam("chargeId") String chargeId, Card cardDetails) throws PayDBIException {
 
-        Card cardDetails = Card.getCardFromDetails(cardDetailsMap);
         if (!isWellFormattedCardDetails(cardDetails)) {
             return responseWithError("Values do not match expected format/length.");
         }
@@ -95,9 +94,10 @@ public class CardResource {
     }
 
     private Response capture(String chargeId, Map<String, Object> charge) throws PayDBIException {
-        String amount = String.valueOf(charge.get("amount"));
+
         PaymentProvider paymentProvider = resolvePaymentProviderFor(charge);
-        CaptureRequest request = new CaptureRequest(new Amount(amount), chargeId);
+
+        CaptureRequest request = new CaptureRequest(new Amount(String.valueOf(charge.get("amount"))), chargeId);
         CaptureResponse captureResponse = paymentProvider.capture(request);
 
         if (captureResponse.isSuccessful()) {
@@ -113,7 +113,6 @@ public class CardResource {
         PaymentProvider paymentProvider = resolvePaymentProviderFor(charge);
 
         String transactionId = randomUUID().toString(); //TODO: which transationId
-
         CardAuthorisationRequest authorisationRequest = getCardAuthorisationRequest(String.valueOf(charge.get("amount")), cardDetails, transactionId);
 
         CardAuthorisationResponse authorise = paymentProvider.authorise(authorisationRequest);

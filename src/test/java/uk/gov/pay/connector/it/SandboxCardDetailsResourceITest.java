@@ -34,6 +34,12 @@ public class SandboxCardDetailsResourceITest extends CardDetailsResourceITestBas
     }
 
     @Test
+    public void shouldAuthoriseCharge_WithMinimalAddress() throws Exception {
+        String cardDetails = cardDetailsWithMinimalAddress(VALID_CARD_NO_LIST[0]);
+        shouldAuthoriseChargeFor(cardDetails);
+    }
+
+    @Test
     public void shouldAuthoriseChargeForValidCardWithFullAddress() throws Exception {
         String validCardDetails = buildJsonCardDetailsWithFullAddress();
         shouldAuthoriseChargeFor(validCardDetails);
@@ -155,4 +161,5 @@ public class SandboxCardDetailsResourceITest extends CardDetailsResourceITestBas
         String expectedChargeStatus = "SYSTEM ERROR";
         shouldReturnErrorForCardDetailsWithMessage(cardDetailsToReject, expectedErrorMessage, expectedChargeStatus);
     }
+
 }

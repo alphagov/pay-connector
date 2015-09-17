@@ -24,11 +24,14 @@ public class WorldpayRequestGeneratorTest {
 
     @Test
     public void shouldGenerateValidOrderSubmitPayloadForAddressWithMinimumFields() throws Exception {
-        Card card = getValidTestCard(anAddress()
-                .withLine1("123 My Street")
-                .withZip("SW8URR")
-                .withCity("London")
-                .withCountry("GB"));
+
+        Address minAddress = anAddress();
+        minAddress.setLine1("123 My Street");
+        minAddress.setPostcode("SW8URR");
+        minAddress.setCity("London");
+        minAddress.setCountry("GB");
+
+        Card card = getValidTestCard(minAddress);
 
         Session session = new Session("123.123.123.123", "0215ui8ib1");
         Browser browser = new Browser(acceptHeader, userAgentHeader);
@@ -50,14 +53,16 @@ public class WorldpayRequestGeneratorTest {
     @Test
     public void shouldGenerateValidOrderSubmitPayloadForAddressWithAllFields() throws Exception {
 
-        Card card = getValidTestCard(anAddress()
-                .withLine1("123 My Street")
-                .withLine2("This road")
-                .withLine3("Line 3")
-                .withZip("SW8URR")
-                .withCity("London")
-                .withCounty("London county")
-                .withCountry("GB"));
+        Address fullAddress = anAddress();
+        fullAddress.setLine1("123 My Street");
+        fullAddress.setLine2("This road");
+        fullAddress.setLine3("Line 3");
+        fullAddress.setPostcode("SW8URR");
+        fullAddress.setCity("London");
+        fullAddress.setCounty("London county");
+        fullAddress.setCountry("GB");
+
+        Card card = getValidTestCard(fullAddress);
         Session session = new Session("123.123.123.123", "0215ui8ib1");
         Browser browser = new Browser(acceptHeader, userAgentHeader);
         Amount amount = new Amount("500");
@@ -77,11 +82,18 @@ public class WorldpayRequestGeneratorTest {
     }
 
     private Card getValidTestCard(Address address) {
+        Card card = withCardDetails("Mr. Payment", "4111111111111111", "123", "12/15");
+        card.setAddress(address);
+        return card;
+    }
 
-        return aCard()
-                .withCardDetails("Mr. Payment", "4111111111111111", "123", "12/15")
-                .withAddress(address);
-
+    public Card withCardDetails(String cardHolder, String cardNo, String cvc, String endDate) {
+        Card card = aCard();
+        card.setCardHolder(cardHolder);
+        card.setCardNo(cardNo);
+        card.setCvc(cvc);
+        card.setEndDate(endDate);
+        return card;
     }
 
     private String expectedOrderSubmitPayload(final String expectedTemplate) throws IOException {

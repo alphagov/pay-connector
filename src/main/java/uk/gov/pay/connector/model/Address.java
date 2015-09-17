@@ -1,6 +1,9 @@
 package uk.gov.pay.connector.model;
 
+import com.fasterxml.jackson.annotation.JsonProperty;
+
 public class Address {
+
     private String line1;
     private String line2;
     private String line3;
@@ -8,44 +11,44 @@ public class Address {
     private String city;
     private String county;
     private String country;
-    
-    public static Address anAddress(){
+
+    public static Address anAddress() {
         return new Address();
     }
 
-    public Address withLine1(String addressLine1) {
-        this.line1 = addressLine1;
-        return this;
+    @JsonProperty("line1")
+    public void setLine1(String line1) {
+        this.line1 = line1;
     }
 
-    public Address withLine2(String addressLine2) {
-        this.line2 = addressLine2;
-        return this;
+    @JsonProperty("line2")
+    public void setLine2(String line2) {
+        this.line2 = line2;
     }
 
-    public Address withLine3(String addressLine3) {
-        this.line3 = addressLine3;
-        return this;
+    @JsonProperty("line3")
+    public void setLine3(String line3) {
+        this.line3 = line3;
     }
 
-    public Address withZip(String addressZip) {
-        this.postcode = addressZip;
-        return this;
+    @JsonProperty("postcode")
+    public void setPostcode(String postcode) {
+        this.postcode = postcode;
     }
 
-    public Address withCity(String addressCity) {
-        this.city = addressCity;
-        return this;
+    @JsonProperty("city")
+    public void setCity(String city) {
+        this.city = city;
     }
 
-    public Address withCountry(String country) {
-        this.country = country;
-        return this;
-    }
-
-    public Address withCounty(String county) {
+    @JsonProperty("county")
+    public void setCounty(String county) {
         this.county = county;
-        return this;
+    }
+
+    @JsonProperty("country")
+    public void setCountry(String country) {
+        this.country = country;
     }
 
     public String getCountry() {

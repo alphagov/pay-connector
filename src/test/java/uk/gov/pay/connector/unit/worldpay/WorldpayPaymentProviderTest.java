@@ -190,15 +190,25 @@ public class WorldpayPaymentProviderTest {
 
     private Card getValidTestCard() {
         Address address = anAddress();
-        address.withLine1("123 My Street")
-                .withLine2("This road")
-                .withZip("SW8URR")
-                .withCity("London")
-                .withCounty("London state")
-                .withCountry("GB");
+        address.setLine1("123 My Street");
+        address.setLine2("This road");
+        address.setPostcode("SW8URR");
+        address.setCity("London");
+        address.setCounty("London state");
+        address.setCountry("GB");
 
-        return aCard()
-                .withCardDetails("Mr. Payment", "4111111111111111", "123", "12/15")
-                .withAddress(address);
+        Card card = withCardDetails("Mr. Payment", "4111111111111111", "123", "12/15");
+        card.setAddress(address);
+
+        return card;
+    }
+
+    public Card withCardDetails(String cardHolder, String cardNo, String cvc, String endDate) {
+        Card card = aCard();
+        card.setCardHolder(cardHolder);
+        card.setCardNo(cardNo);
+        card.setCvc(cvc);
+        card.setEndDate(endDate);
+        return card;
     }
 }
