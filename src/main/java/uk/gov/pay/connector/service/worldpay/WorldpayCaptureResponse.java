@@ -25,10 +25,6 @@ public class WorldpayCaptureResponse {
         return isNotBlank(transationIdForOk);
     }
 
-    public boolean isError() {
-        return isNotBlank(errorCode) || isNotBlank(errorMessage);
-    }
-
     public String getErrorCode() {
         return errorCode;
     }

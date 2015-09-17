@@ -22,7 +22,6 @@ public class WorldpayXMLUnmarshallerTest {
         String successPayload = readPayload("templates/worldpay/capture-success-response.xml");
         WorldpayCaptureResponse response = WorldpayXMLUnmarshaller.unmarshall(successPayload, WorldpayCaptureResponse.class);
         assertThat(response.isCaptured(), is(true));
-        assertThat(response.isError(), is(false));
     }
 
 

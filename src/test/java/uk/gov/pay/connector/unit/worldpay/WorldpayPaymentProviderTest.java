@@ -5,6 +5,8 @@ import org.junit.Test;
 import uk.gov.pay.connector.model.Address;
 import uk.gov.pay.connector.model.Amount;
 import uk.gov.pay.connector.model.Browser;
+import uk.gov.pay.connector.model.CaptureRequest;
+import uk.gov.pay.connector.model.CaptureResponse;
 import uk.gov.pay.connector.model.Card;
 import uk.gov.pay.connector.model.CardAuthorisationRequest;
 import uk.gov.pay.connector.model.CardAuthorisationResponse;
@@ -19,6 +21,9 @@ import javax.ws.rs.client.WebTarget;
 import javax.ws.rs.core.MediaType;
 import javax.ws.rs.core.Response;
 
+import static java.util.UUID.randomUUID;
+import static org.hamcrest.MatcherAssert.assertThat;
+import static org.hamcrest.core.Is.is;
 import static org.junit.Assert.assertTrue;
 import static org.mockito.Matchers.any;
 import static org.mockito.Matchers.anyObject;
@@ -29,20 +34,52 @@ import static uk.gov.pay.connector.model.Address.anAddress;
 import static uk.gov.pay.connector.model.Card.aCard;
 
 
-
 public class WorldpayPaymentProviderTest {
 
-    private Client client = mock(Client.class);
+    private final Client client = mock(Client.class);
+    private final WorldpayPaymentProvider connector = new WorldpayPaymentProvider(client, new GatewayAccount("MERCHANTCODE", "password"));
 
     @Test
     public void shouldSendSuccessfullyAOrderForMerchant() throws Exception {
         mockWorldpaySuccessfulOrderSubmitResponse();
 
-        WorldpayPaymentProvider connector = new WorldpayPaymentProvider(client, new GatewayAccount("MERCHANTCODE","password"));
-        CardAuthorisationRequest request = getCardAuthorisationRequest();
-        CardAuthorisationResponse response = connector.authorise(request);
-
+        CardAuthorisationResponse response = connector.authorise(getCardAuthorisationRequest());
         assertTrue(response.isSuccessful());
+    }
+
+    @Test
+    public void shouldCaptureAPaymentSuccessfully() throws Exception {
+        mockWorldpaySuccessfulCaptureResponse();
+
+        CaptureResponse response = connector.capture(getCaptureRequest());
+        assertTrue(response.isSuccessful());
+    }
+
+    @Test
+    public void shouldErrorIfAuthorisationIsUnsuccessful() {
+        mockWorldpayErrorResponse(401);
+        CardAuthorisationResponse response = connector.authorise(getCardAuthorisationRequest());
+
+        assertThat(response.isSuccessful(), is(false));
+        assertThat(response.getErrorMessage(), is("Error processing authorisation request"));
+    }
+
+    @Test
+    public void shouldErrorIfOrderReferenceNotKnownInCapture() {
+        mockWorldpayErrorResponse(200);
+        CaptureResponse response = connector.capture(getCaptureRequest());
+
+        assertThat(response.isSuccessful(), is(false));
+        assertThat(response.getErrorMessage(), is("Order has already been paid"));
+    }
+
+    @Test
+    public void shouldErrorIfWorldpayResponseIsNot200() {
+        mockWorldpayErrorResponse(400);
+        CaptureResponse response = connector.capture(getCaptureRequest());
+
+        assertThat(response.isSuccessful(), is(false));
+        assertThat(response.getErrorMessage(), is("Error processing capture request"));
     }
 
     private CardAuthorisationRequest getCardAuthorisationRequest() {
@@ -59,7 +96,23 @@ public class WorldpayPaymentProviderTest {
         return new CardAuthorisationRequest(card, session, browser, amount, transactionId, description);
     }
 
+    private CaptureRequest getCaptureRequest() {
+        return new CaptureRequest(new Amount("500"), randomUUID().toString());
+    }
+
+    private void mockWorldpayErrorResponse(int httpStatus) {
+        mockWorldpayResponse(httpStatus, errorResponse());
+    }
+
+    private void mockWorldpaySuccessfulCaptureResponse() {
+        mockWorldpayResponse(200, successCaptureResponse());
+    }
+
     private void mockWorldpaySuccessfulOrderSubmitResponse() {
+        mockWorldpayResponse(200, successAuthoriseResponse());
+    }
+
+    private void mockWorldpayResponse(int httpStatus, String responsePayload) {
         WebTarget mockTarget = mock(WebTarget.class);
         when(client.target(anyString())).thenReturn(mockTarget);
         Invocation.Builder mockBuilder = mock(Invocation.Builder.class);
@@ -67,12 +120,40 @@ public class WorldpayPaymentProviderTest {
         when(mockBuilder.header(anyString(), anyObject())).thenReturn(mockBuilder);
         Response response = mock(Response.class);
 
-        when(response.readEntity(String.class)).thenReturn(successResponse());
-        when(response.getStatus()).thenReturn(200);
+        when(response.readEntity(String.class)).thenReturn(responsePayload);
+        when(response.getStatus()).thenReturn(httpStatus);
         when(mockBuilder.post(any(Entity.class))).thenReturn(response);
     }
 
-    private String successResponse() {
+    private String successCaptureResponse() {
+        return "<?xml version=\"1.0\" encoding=\"UTF-8\"?>\n" +
+                "<!DOCTYPE paymentService PUBLIC \"-//WorldPay//DTD WorldPay PaymentService v1//EN\"\n" +
+                "        \"http://dtd.worldpay.com/paymentService_v1.dtd\">\n" +
+                "<paymentService version=\"1.4\" merchantCode=\"MERCHANTCODE\">\n" +
+                "    <reply>\n" +
+                "        <ok>\n" +
+                "            <captureReceived orderCode=\"MyUniqueTransactionId!\">\n" +
+                "                <amount value=\"500\" currencyCode=\"GBP\" exponent=\"2\" debitCreditIndicator=\"credit\"/>\n" +
+                "            </captureReceived>\n" +
+                "        </ok>\n" +
+                "    </reply>\n" +
+                "</paymentService>";
+    }
+
+    private String errorResponse() {
+        return "<?xml version=\"1.0\" encoding=\"UTF-8\"?>\n" +
+                "<!DOCTYPE paymentService PUBLIC \"-//WorldPay//DTD WorldPay PaymentService v1//EN\"\n" +
+                "        \"http://dtd.worldpay.com/paymentService_v1.dtd\">\n" +
+                "<paymentService version=\"1.4\" merchantCode=\"MERCHANTCODE\">\n" +
+                "    <reply>\n" +
+                "        <error code=\"5\">\n" +
+                "            <![CDATA[Order has already been paid]]>\n" +
+                "        </error>\n" +
+                "    </reply>\n" +
+                "</paymentService>";
+    }
+
+    private String successAuthoriseResponse() {
         return "<?xml version=\"1.0\" encoding=\"UTF-8\"?>\n" +
                 "<!DOCTYPE paymentService PUBLIC \"-//WorldPay//DTD WorldPay PaymentService v1//EN\"\n" +
                 "        \"http://dtd.worldpay.com/paymentService_v1.dtd\">\n" +

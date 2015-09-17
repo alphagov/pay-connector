@@ -24,6 +24,7 @@ import static java.lang.String.format;
 import static javax.ws.rs.core.MediaType.APPLICATION_XML;
 import static uk.gov.pay.connector.model.CaptureResponse.aSuccessfulResponse;
 import static uk.gov.pay.connector.model.CardAuthorisationResponse.anErrorResponse;
+import static uk.gov.pay.connector.model.CardAuthorisationResponse.successfulAuthorisation;
 import static uk.gov.pay.connector.model.ChargeStatus.AUTHORISATION_REJECTED;
 import static uk.gov.pay.connector.model.ChargeStatus.AUTHORISATION_SUCCESS;
 import static uk.gov.pay.connector.utils.EnvironmentUtils.getWorldpayPassword;
@@ -68,7 +69,7 @@ public class WorldpayPaymentProvider implements PaymentProvider {
             return anErrorResponse("Error processing authorisation request");
         }
 
-        return mapToCardAuthorisationResponse(response);
+        return mapToCardAuthorisationResponse(response, account.getMerchantId());
     }
 
     @Override
@@ -84,19 +85,19 @@ public class WorldpayPaymentProvider implements PaymentProvider {
         Response response = xmlRequest(account, orderSubmitRequest);
         if (response.getStatus() != 200) {
             logger.error(format("Error code received from Worldpay %s.", response.getStatus()));
-            return new CaptureResponse(false, "Error processing authorisation request");
+            return new CaptureResponse(false, "Error processing capture request");
         }
         return mapToCaptureResponse(response);
     }
 
-    private CardAuthorisationResponse mapToCardAuthorisationResponse(Response response) {
+    private CardAuthorisationResponse mapToCardAuthorisationResponse(Response response, String gatewayId) {
         String payload = response.readEntity(String.class);
         try {
             WorldpayAuthorisationResponse wResponse = WorldpayXMLUnmarshaller.unmarshall(payload, WorldpayAuthorisationResponse.class);
             if (wResponse.isError()) {
                 return anErrorResponse(wResponse.getErrorMessage());
             }
-            return wResponse.isAuthorised() ? authorisedResponse() : unauthorisedResponse("This transaction was declined.");
+            return wResponse.isAuthorised() ? successfulAuthorisation(AUTHORISATION_SUCCESS) : unauthorisedResponse(gatewayId);
         } catch (JAXBException e) {
             logger.error(format("Could not unmarshall worldpay response %s.", payload), e);
             return anErrorResponse("Error processing authorisation request");
@@ -107,25 +108,22 @@ public class WorldpayPaymentProvider implements PaymentProvider {
         String payload = response.readEntity(String.class);
         try {
             WorldpayCaptureResponse wResponse = WorldpayXMLUnmarshaller.unmarshall(payload, WorldpayCaptureResponse.class);
-            if (wResponse.isError()) {
-                return new CaptureResponse(false, wResponse.getErrorMessage());
-            }
-            return wResponse.isCaptured() ? aSuccessfulResponse() : new CaptureResponse(false, "OUPT");
+            return wResponse.isCaptured() ? aSuccessfulResponse() : new CaptureResponse(false, wResponse.getErrorMessage());
         } catch (JAXBException e) {
-            logger.error(format("Could not unmarshall worldpay response %s.", payload), e);
-            return new CaptureResponse(false, "OUPT");
+            return handleJAXBException(payload, e);
         }
     }
 
-    private CardAuthorisationResponse unauthorisedResponse(String errorMessage) {
-        //TODO: add logging for error message
-        return new CardAuthorisationResponse(false, errorMessage, AUTHORISATION_REJECTED);
+    private CaptureResponse handleJAXBException(String payload, JAXBException e) {
+        String error = format("Could not unmarshall worldpay response %s.", payload);
+        logger.error(error, e);
+        throw new RuntimeException(error, e);
     }
 
-    private CardAuthorisationResponse authorisedResponse() {
-        return new CardAuthorisationResponse(true, "", AUTHORISATION_SUCCESS);
+    private CardAuthorisationResponse unauthorisedResponse(String gatewayId) {
+        logger.warn(format("Gateway credentials are invalid for %s.", gatewayId));
+        return new CardAuthorisationResponse(false, "This transaction was declined.", AUTHORISATION_REJECTED);
     }
-
 
     private Response xmlRequest(GatewayAccount account, String request) {
 

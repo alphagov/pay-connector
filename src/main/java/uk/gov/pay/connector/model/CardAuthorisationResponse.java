@@ -12,6 +12,10 @@ public class CardAuthorisationResponse {
         this.status = status;
     }
 
+    public static CardAuthorisationResponse successfulAuthorisation(ChargeStatus status) {
+        return new CardAuthorisationResponse(true, "", status);
+    }
+
     public static CardAuthorisationResponse anErrorResponse(String errorMessage) {
         return new CardAuthorisationResponse(false, errorMessage, null);
     }
