@@ -2,15 +2,10 @@ package uk.gov.pay.connector.dao;
 
 import org.apache.commons.lang3.StringUtils;
 import org.skife.jdbi.v2.DBI;
-import org.skife.jdbi.v2.DefaultMapper;
 import org.skife.jdbi.v2.util.StringMapper;
-import uk.gov.pay.connector.model.ChargeStatus;
 
-import java.util.Map;
 import java.util.Optional;
-import java.util.UUID;
 
-import static com.google.common.collect.Maps.newHashMap;
 import static java.lang.String.format;
 
 public class TokenDao {
