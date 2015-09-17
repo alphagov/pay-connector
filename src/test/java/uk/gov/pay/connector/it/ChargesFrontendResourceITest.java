@@ -11,12 +11,13 @@ import uk.gov.pay.connector.util.DropwizardAppWithPostgresRule;
 import static com.jayway.restassured.RestAssured.given;
 import static com.jayway.restassured.http.ContentType.JSON;
 import static java.lang.String.format;
+import static javax.ws.rs.HttpMethod.POST;
 import static org.hamcrest.Matchers.is;
 import static org.hamcrest.Matchers.notNullValue;
 import static uk.gov.pay.connector.model.domain.ChargeStatus.AUTHORISATION_SUCCESS;
 import static uk.gov.pay.connector.util.JsonEncoder.toJson;
 
-import static uk.gov.pay.connector.util.LinksAssert.assertCardAuthLink;
+import static uk.gov.pay.connector.util.LinksAssert.assertLink;
 import static uk.gov.pay.connector.util.LinksAssert.assertSelfLink;
 import static uk.gov.pay.connector.util.NumberMatcher.isNumber;
 
@@ -37,7 +38,7 @@ public class ChargesFrontendResourceITest {
     }
 
     @Test
-    public void getChargeShouldIncludeCardAuthLinkButNotGatewayAccountId() throws Exception {
+    public void getChargeShouldIncludeCardAuthAndCardCaptureLinkButNotGatewayAccountId() throws Exception {
         long expectedAmount = 2113l;
         String postBody = toJson(ImmutableMap.of(
                 "amount", expectedAmount,
@@ -62,9 +63,13 @@ public class ChargesFrontendResourceITest {
                 .body("return_url", is(returnUrl));
 
         String documentLocation = expectedChargeLocationFor(chargeId);
-        String cardAuthUrl = expectedCardAuthUrlFor(chargeId);
         assertSelfLink(getChargeResponse, documentLocation);
-        assertCardAuthLink(getChargeResponse, cardAuthUrl);
+
+        String cardAuthUrl = expectedCardAuthUrlFor(chargeId);
+        assertLink(getChargeResponse, "cardAuth", POST, cardAuthUrl);
+
+        String cardCaptureUrl = expectedCardCaptureUrlFor(chargeId);
+        assertLink(getChargeResponse, "cardCapture", POST, cardCaptureUrl);
     }
 
     @Test
@@ -108,5 +113,9 @@ public class ChargesFrontendResourceITest {
 
     private String expectedCardAuthUrlFor(String chargeId) {
         return "http://localhost:" + app.getLocalPort() + CHARGES_FRONTEND_PATH + chargeId + "/cards";
+    }
+
+    private String expectedCardCaptureUrlFor(String chargeId) {
+        return "http://localhost:" + app.getLocalPort() + CHARGES_FRONTEND_PATH + chargeId + "/capture";
     }
 }

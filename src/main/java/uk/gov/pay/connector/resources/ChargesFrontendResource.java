@@ -14,6 +14,8 @@ import java.util.Optional;
 
 import static javax.ws.rs.core.MediaType.APPLICATION_JSON;
 import static javax.ws.rs.core.Response.ok;
+import static uk.gov.pay.connector.resources.CardResource.AUTHORIZATION_FRONTEND_RESOURCE_PATH;
+import static uk.gov.pay.connector.resources.CardResource.CAPTURE_FRONTEND_RESOURCE_PATH;
 import static uk.gov.pay.connector.util.LinksBuilder.linksBuilder;
 import static uk.gov.pay.connector.util.ResponseUtil.responseWithChargeNotFound;
 
@@ -22,7 +24,6 @@ public class ChargesFrontendResource {
 
     private static final String CHARGES_FRONTEND_PATH = "/v1/frontend/charges/";
     private static final String GET_CHARGE_FRONTEND_PATH = CHARGES_FRONTEND_PATH + "{chargeId}";
-    private static final String CARD_AUTH_FRONTEND_PATH = GET_CHARGE_FRONTEND_PATH + "/cards";
 
     private final Logger logger = LoggerFactory.getLogger(ChargesFrontendResource.class);
     private final ChargeDao chargeDao;
@@ -38,11 +39,11 @@ public class ChargesFrontendResource {
         Optional<Map<String, Object>> maybeCharge = chargeDao.findById(chargeId);
         return maybeCharge
                 .map(charge -> {
-                    URI chargeLocation = chargeLocationFor(uriInfo, chargeId);
-                    URI cardAuthUrl = cardAuthUrlFor(uriInfo, chargeId);
+                    URI chargeLocation = locationUriFor(GET_CHARGE_FRONTEND_PATH, uriInfo, chargeId);
 
                     Map<String, Object> responseData = linksBuilder(chargeLocation)
-                            .addLink("cardAuth", HttpMethod.POST, cardAuthUrl)
+                            .addLink("cardAuth", HttpMethod.POST, locationUriFor(AUTHORIZATION_FRONTEND_RESOURCE_PATH, uriInfo, chargeId))
+                            .addLink("cardCapture", HttpMethod.POST, locationUriFor(CAPTURE_FRONTEND_RESOURCE_PATH, uriInfo, chargeId))
                             .appendLinksTo(removeGatewayAccount(charge));
 
                     return ok(responseData).build();
@@ -55,13 +56,9 @@ public class ChargesFrontendResource {
         return charge;
     }
 
-    private URI chargeLocationFor(UriInfo uriInfo, String chargeId) {
+    private URI locationUriFor(String path, UriInfo uriInfo, String chargeId) {
         return uriInfo.getBaseUriBuilder()
-                .path(GET_CHARGE_FRONTEND_PATH).build(chargeId);
+                .path(path).build(chargeId);
     }
 
-    private URI cardAuthUrlFor(UriInfo uriInfo, String chargeId) {
-        return uriInfo.getBaseUriBuilder()
-                .path(CARD_AUTH_FRONTEND_PATH).build(chargeId);
-    }
 }

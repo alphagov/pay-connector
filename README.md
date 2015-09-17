@@ -300,6 +300,11 @@ Content-Type: application/json
                 "rel": "cardAuth",
                 "method": "POST",
                 "href": "http://connector.service/v1/frontend/charges/1/cards"
+            },
+            {
+                "rel": "cardCapture",
+                "method": "POST",
+                "href": "http://connector.service/v1/frontend/charges/1/capture"
             }],
 }
 ```
