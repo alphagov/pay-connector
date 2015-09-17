@@ -24,7 +24,7 @@ import static uk.gov.pay.connector.model.SandboxCardNumbers.isInvalidCard;
 import static uk.gov.pay.connector.model.SandboxCardNumbers.isValidCard;
 import static uk.gov.pay.connector.resources.CardDetailsValidator.CARD_NUMBER_FIELD;
 import static uk.gov.pay.connector.resources.CardDetailsValidator.isWellFormattedCardDetails;
-import static uk.gov.pay.connector.util.ResponseUtil.badResponse;
+import static uk.gov.pay.connector.util.ResponseUtil.badRequestResponse;
 import static uk.gov.pay.connector.util.ResponseUtil.responseWithChargeNotFound;
 
 @Path("/")
@@ -82,7 +82,7 @@ public class CardDetailsResource {
     }
 
     private Response responseWithError(String msg) {
-        return badResponse(logger, msg);
+        return badRequestResponse(logger, msg);
     }
 
     private Response responseWithCardAlreadyProcessed(String chargeId) {

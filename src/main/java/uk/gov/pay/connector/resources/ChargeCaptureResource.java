@@ -19,7 +19,7 @@ import static javax.ws.rs.core.MediaType.APPLICATION_JSON;
 import static uk.gov.pay.connector.model.ChargeStatus.AUTHORIZATION_SUCCESS;
 import static uk.gov.pay.connector.model.ChargeStatus.CAPTURED;
 import static uk.gov.pay.connector.model.ChargeStatus.STATUS_KEY;
-import static uk.gov.pay.connector.util.ResponseUtil.badResponse;
+import static uk.gov.pay.connector.util.ResponseUtil.badRequestResponse;
 import static uk.gov.pay.connector.util.ResponseUtil.responseWithChargeNotFound;
 
 @Path("/")
@@ -53,7 +53,7 @@ public class ChargeCaptureResource {
     }
 
     private Response responseWithChargeStatusIncorrect(String status) {
-        return badResponse(logger, format("Cannot capture a charge with status %s.", status));
+        return badRequestResponse(logger, format("Cannot capture a charge with status %s.", status));
     }
 
     private static boolean isAuthorized(Map<String, Object> charge) {

@@ -5,11 +5,8 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import uk.gov.pay.connector.dao.PayDBIException;
 import uk.gov.pay.connector.dao.TokenDao;
-import uk.gov.pay.connector.model.CardError;
-import uk.gov.pay.connector.model.ChargeStatus;
 import uk.gov.pay.connector.util.ResponseUtil;
 
-import javax.ws.rs.Consumes;
 import javax.ws.rs.DELETE;
 import javax.ws.rs.GET;
 import javax.ws.rs.Path;
@@ -17,17 +14,10 @@ import javax.ws.rs.PathParam;
 import javax.ws.rs.Produces;
 import javax.ws.rs.core.Response;
 import java.util.Map;
-import java.util.Optional;
 
 import static com.google.common.collect.Maps.newHashMap;
 import static java.lang.String.format;
 import static javax.ws.rs.core.MediaType.APPLICATION_JSON;
-import static uk.gov.pay.connector.model.ChargeStatus.AUTHORIZATION_SUCCESS;
-import static uk.gov.pay.connector.model.ChargeStatus.STATUS_KEY;
-import static uk.gov.pay.connector.model.SandboxCardNumbers.cardErrorFor;
-import static uk.gov.pay.connector.model.SandboxCardNumbers.isInvalidCard;
-import static uk.gov.pay.connector.model.SandboxCardNumbers.isValidCard;
-import static uk.gov.pay.connector.util.ResponseUtil.badResponse;
 
 @Path("/")
 public class SecurityTokensResource {

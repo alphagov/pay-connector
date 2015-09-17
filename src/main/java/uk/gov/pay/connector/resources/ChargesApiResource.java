@@ -31,7 +31,7 @@ import static com.google.common.collect.Lists.newArrayList;
 import static javax.ws.rs.core.MediaType.APPLICATION_JSON;
 import static uk.gov.pay.connector.model.api.ExternalChargeStatus.mapFromStatus;
 import static uk.gov.pay.connector.model.api.Link.aLink;
-import static uk.gov.pay.connector.util.ResponseUtil.badResponse;
+import static uk.gov.pay.connector.util.ResponseUtil.badRequestResponse;
 import static uk.gov.pay.connector.util.ResponseUtil.fieldsMissingResponse;
 
 @Path("/")
@@ -88,7 +88,7 @@ public class ChargesApiResource {
 
         String gatewayAccountId = chargeRequest.get("gateway_account_id").toString();
         if (gatewayAccountDao.idIsMissing(gatewayAccountId)) {
-            return badResponse(logger, "Unknown gateway account: " + gatewayAccountId);
+            return badRequestResponse(logger, "Unknown gateway account: " + gatewayAccountId);
         }
 
         logger.info("Creating new charge of {}.", chargeRequest);

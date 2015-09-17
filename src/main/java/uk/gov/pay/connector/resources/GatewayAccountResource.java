@@ -20,7 +20,7 @@ import java.util.List;
 import java.util.Map;
 
 import static javax.ws.rs.core.MediaType.APPLICATION_JSON;
-import static uk.gov.pay.connector.util.ResponseUtil.badResponse;
+import static uk.gov.pay.connector.util.ResponseUtil.badRequestResponse;
 
 @Path("/v1/api/accounts")
 public class GatewayAccountResource {
@@ -39,7 +39,7 @@ public class GatewayAccountResource {
     @Produces(APPLICATION_JSON)
     public Response createNewGatewayAccount(JsonNode node, @Context UriInfo uriInfo) {
         if (!node.has(ACCOUNT_NAME)) {
-            return badResponse(logger, "Missing fields: name");
+            return badRequestResponse(logger, "Missing fields: name");
         }
 
         String name = node.get(ACCOUNT_NAME).textValue();
