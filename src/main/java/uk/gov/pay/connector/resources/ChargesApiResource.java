@@ -19,10 +19,11 @@ import javax.ws.rs.core.Context;
 import javax.ws.rs.core.Response;
 import javax.ws.rs.core.UriInfo;
 import java.net.URI;
-import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
+import java.util.stream.Collectors;
 
 import static com.google.common.collect.Lists.newArrayList;
 import static javax.ws.rs.core.MediaType.APPLICATION_JSON;
@@ -120,12 +121,10 @@ public class ChargesApiResource {
     }
 
     private Optional<List<String>> checkMissingFields(Map<String, Object> inputData) {
-        List<String> missing = new ArrayList<>();
-        for (String field : REQUIRED_FIELDS) {
-            if (!inputData.containsKey(field)) {
-                missing.add(field);
-            }
-        }
+        List<String> missing = Arrays.stream(REQUIRED_FIELDS)
+                .filter(field -> !inputData.containsKey(field))
+                .collect(Collectors.toList());
+
         return missing.isEmpty()
                 ? Optional.<List<String>>empty()
                 : Optional.of(missing);
