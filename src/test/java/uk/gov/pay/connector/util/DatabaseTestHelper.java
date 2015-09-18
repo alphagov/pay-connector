@@ -11,7 +11,7 @@ public class DatabaseTestHelper {
 
     public DatabaseTestHelper(DBI jdbi) {
         this.jdbi = jdbi;
-        tokenDao = new TokenDao(jdbi);
+        this.tokenDao = new TokenDao(jdbi);
     }
 
     public void addGatewayAccount(String accountId, String name) {
