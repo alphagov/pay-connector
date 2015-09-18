@@ -97,12 +97,18 @@ Content-Type: application/json
     "charge_id": "1",
     "amount": 5000,
     "gateway_account_id": "10",
-    "status": "CREATED"
+    "status": "CREATED",
+    "return_url": "http://example.service/return_from_payments" 
     "links": [
         {
             "rel": "self",
             "method": "GET",
             "href": "http://connector.service/v1/api/charges/1"
+        },
+        {
+            "rel": "next_url",
+            "method": "GET",
+            "href": "http://frontend/charges/1"
         }
     ],
 }
@@ -130,7 +136,8 @@ Content-Type: application/json
 
 {
     "amount": 5000,
-    "gateway_account_id": "10"
+    "gateway_account_id": "10",
+    "return_url": "http://example.service/return_from_payments"
 }
 ```
 
@@ -140,6 +147,7 @@ Content-Type: application/json
 | ------------------------ |:--------:| ----------------------------------------- |
 | `amount`                 | X | The amount (in minor units) of the charge       |
 | `gateway_account_id`     | X | The gateway account to use for this charge |
+| `return_url`             | X | The url to return the user to after the payment process has completed.|
 
 #### Response example
 
@@ -151,9 +159,14 @@ Location: http://connector.service/v1/api/charges/1
 {
     "charge_id": "1",
     "links": [{
-        "href": "http://connector.service/v1/api/charges/1",
-        "rel" : "self",
-        "method" : "GET"
+            "href": "http://connector.service/v1/api/charges/1",
+            "rel" : "self",
+            "method" : "GET"
+        }, 
+        {
+            "href": "http://frontend/charges/1",
+            "rel" : "next_url",
+            "method" : "GET"
         }
       ]
 }
