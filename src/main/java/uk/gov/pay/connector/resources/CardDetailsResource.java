@@ -3,7 +3,6 @@ package uk.gov.pay.connector.resources;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import uk.gov.pay.connector.dao.ChargeDao;
-import uk.gov.pay.connector.dao.PayDBIException;
 import uk.gov.pay.connector.model.CardError;
 import uk.gov.pay.connector.model.ChargeStatus;
 
@@ -42,7 +41,7 @@ public class CardDetailsResource {
     @Path(CARD_AUTH_FRONTEND_PATH)
     @Consumes(APPLICATION_JSON)
     @Produces(APPLICATION_JSON)
-    public Response addCardDetailsForCharge(@PathParam("chargeId") String chargeId, Map<String, Object> cardDetails) throws PayDBIException {
+    public Response addCardDetailsForCharge(@PathParam("chargeId") String chargeId, Map<String, Object> cardDetails) {
 
         if (!isWellFormattedCardDetails(cardDetails)) {
             return responseWithError("Values do not match expected format/length.");
@@ -61,7 +60,7 @@ public class CardDetailsResource {
         return responseForCorrespondingSandboxCard(chargeId, cardNumber);
     }
 
-    private Response responseForCorrespondingSandboxCard(String chargeId, String cardNumber) throws PayDBIException {
+    private Response responseForCorrespondingSandboxCard(String chargeId, String cardNumber) {
 
         if (isInvalidCard(cardNumber)) {
             CardError errorInfo = cardErrorFor(cardNumber);

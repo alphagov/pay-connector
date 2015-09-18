@@ -3,7 +3,6 @@ package uk.gov.pay.connector.resources;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import uk.gov.pay.connector.dao.ChargeDao;
-import uk.gov.pay.connector.dao.PayDBIException;
 
 import javax.ws.rs.Consumes;
 import javax.ws.rs.POST;
@@ -36,7 +35,7 @@ public class ChargeCaptureResource {
     @Path("/v1/frontend/charges/{chargeId}/capture")
     @Consumes(APPLICATION_JSON)
     @Produces(APPLICATION_JSON)
-    public Response addCardDetailsForCharge(@PathParam("chargeId") String chargeId) throws PayDBIException {
+    public Response addCardDetailsForCharge(@PathParam("chargeId") String chargeId) {
 
         Optional<Map<String, Object>> maybeCharge = chargeDao.findById(chargeId);
         if (!maybeCharge.isPresent()) {

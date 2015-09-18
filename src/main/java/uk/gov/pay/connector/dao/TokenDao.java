@@ -2,6 +2,7 @@ package uk.gov.pay.connector.dao;
 
 import org.apache.commons.lang3.StringUtils;
 import org.skife.jdbi.v2.DBI;
+import org.skife.jdbi.v2.exceptions.DBIException;
 import org.skife.jdbi.v2.util.StringMapper;
 
 import java.util.Optional;
@@ -24,7 +25,7 @@ public class TokenDao {
                                 .execute()
         );
         if (rowsInserted != 1) {
-            throw new RuntimeException("Unexpected: Failed to insert new chargeTokenId into tokens table");
+            throw new PayDBIException(format("Unexpected: Failed to insert new chargeTokenId = '%s' into tokens table", tokenId));
         }
     }
 
@@ -38,17 +39,17 @@ public class TokenDao {
         );
 
         if(StringUtils.isEmpty(tokenId)) {
-            throw new RuntimeException("Unexpected: tokenId was not found for chargeId=" + chargeId);
+            throw new PayDBIException(format("Unexpected: tokenId was not found for chargeId = '%s'", chargeId));
         }
 
         return tokenId;
     }
 
-    public Optional<String> findChargeByTokenId(String chargeTokenId) {
+    public Optional<String> findChargeByTokenId(String tokenId) {
         String chargeId = jdbi.withHandle(handle ->
                         handle
                                 .createQuery("SELECT charge_id FROM tokens WHERE token_id=:token_id")
-                                .bind("token_id", chargeTokenId)
+                                .bind("token_id", tokenId)
                                 .map(StringMapper.FIRST)
                                 .first()
         );
@@ -64,7 +65,7 @@ public class TokenDao {
                                 .execute()
         );
         if (rowsDeleted != 1) {
-            throw new RuntimeException(format("Unexpected: Failed to delete chargeTokenId='%s' from tokens table", tokenId));
+            throw new PayDBIException(format("Unexpected: Failed to delete chargeTokenId = '%s' from tokens table", tokenId));
         }
     }
 }
