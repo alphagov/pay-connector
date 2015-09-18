@@ -19,9 +19,9 @@ public class TokenDao {
     public void insertNewToken(String chargeId, String tokenId) {
         int rowsInserted = jdbi.withHandle(handle ->
                         handle
-                                .createStatement("INSERT INTO tokens(charge_id, token_id) VALUES (:charge_id, :token_id)")
+                                .createStatement("INSERT INTO tokens(charge_id, secure_redirect_token) VALUES (:charge_id, :secure_redirect_token)")
                                 .bind("charge_id", Long.valueOf(chargeId))
-                                .bind("token_id", tokenId)
+                                .bind("secure_redirect_token", tokenId)
                                 .execute()
         );
         if (rowsInserted != 1) {
@@ -32,7 +32,7 @@ public class TokenDao {
     public String findByChargeId(String chargeId) {
         String tokenId = jdbi.withHandle(handle ->
                         handle
-                                .createQuery("SELECT token_id FROM tokens WHERE charge_id=:charge_id")
+                                .createQuery("SELECT secure_redirect_token FROM tokens WHERE charge_id=:charge_id")
                                 .bind("charge_id", Long.valueOf(chargeId))
                                 .map(StringMapper.FIRST)
                                 .first()
@@ -48,8 +48,8 @@ public class TokenDao {
     public Optional<String> findChargeByTokenId(String tokenId) {
         String chargeId = jdbi.withHandle(handle ->
                         handle
-                                .createQuery("SELECT charge_id FROM tokens WHERE token_id=:token_id")
-                                .bind("token_id", tokenId)
+                                .createQuery("SELECT charge_id FROM tokens WHERE secure_redirect_token = :secure_redirect_token")
+                                .bind("secure_redirect_token", tokenId)
                                 .map(StringMapper.FIRST)
                                 .first()
         );
@@ -60,8 +60,8 @@ public class TokenDao {
     public void deleteByTokenId(String tokenId) {
         int rowsDeleted = jdbi.withHandle(handle ->
                         handle
-                                .createStatement("DELETE from tokens where token_id = :token_id")
-                                .bind("token_id", tokenId)
+                                .createStatement("DELETE from tokens where secure_redirect_token = :secure_redirect_token")
+                                .bind("secure_redirect_token", tokenId)
                                 .execute()
         );
         if (rowsDeleted != 1) {
