@@ -1,4 +1,4 @@
-package uk.gov.pay.connector.model;
+package uk.gov.pay.connector.model.domain;
 
 import org.apache.commons.lang3.StringUtils;
 

@@ -32,14 +32,7 @@
                         </address>
                     </cardAddress>
                 </VISA-SSL>
-                <session shopperIPAddress="${session.shopperIPAddress}" id="${session.id}"/>
             </paymentDetails>
-            <shopper>
-                <browser>
-                    <acceptHeader>${browser.acceptHeader}</acceptHeader>
-                    <userAgentHeader>${browser.userAgentHeader}</userAgentHeader>
-                </browser>
-            </shopper>
         </order>
     </submit>
 </paymentService>

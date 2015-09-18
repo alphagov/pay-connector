@@ -1,8 +1,8 @@
 package uk.gov.pay.connector.unit.resources;
 
 import org.junit.Test;
-import uk.gov.pay.connector.model.Address;
-import uk.gov.pay.connector.model.Card;
+import uk.gov.pay.connector.model.domain.Address;
+import uk.gov.pay.connector.model.domain.Card;
 import uk.gov.pay.connector.resources.CardDetailsValidator;
 
 import static org.junit.Assert.assertFalse;

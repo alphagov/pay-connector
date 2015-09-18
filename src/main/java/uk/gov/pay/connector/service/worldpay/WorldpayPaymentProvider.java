@@ -5,11 +5,12 @@ import org.glassfish.jersey.internal.util.Base64;
 import org.joda.time.DateTime;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import uk.gov.pay.connector.model.AuthorisationRequest;
+import uk.gov.pay.connector.model.AuthorisationResponse;
 import uk.gov.pay.connector.model.CaptureRequest;
 import uk.gov.pay.connector.model.CaptureResponse;
-import uk.gov.pay.connector.model.CardAuthorisationRequest;
-import uk.gov.pay.connector.model.CardAuthorisationResponse;
-import uk.gov.pay.connector.model.GatewayAccount;
+import uk.gov.pay.connector.model.GatewayError;
+import uk.gov.pay.connector.model.domain.GatewayAccount;
 import uk.gov.pay.connector.service.PaymentProvider;
 
 import javax.ws.rs.client.Client;
@@ -22,11 +23,12 @@ import javax.xml.bind.JAXBException;
 import static com.google.common.net.HttpHeaders.CONTENT_TYPE;
 import static java.lang.String.format;
 import static javax.ws.rs.core.MediaType.APPLICATION_XML;
-import static uk.gov.pay.connector.model.CaptureResponse.aSuccessfulResponse;
-import static uk.gov.pay.connector.model.CardAuthorisationResponse.anErrorResponse;
-import static uk.gov.pay.connector.model.CardAuthorisationResponse.successfulAuthorisation;
-import static uk.gov.pay.connector.model.ChargeStatus.AUTHORISATION_REJECTED;
-import static uk.gov.pay.connector.model.ChargeStatus.AUTHORISATION_SUCCESS;
+import static uk.gov.pay.connector.model.AuthorisationResponse.anErrorResponse;
+import static uk.gov.pay.connector.model.AuthorisationResponse.successfulAuthorisation;
+import static uk.gov.pay.connector.model.CaptureResponse.aSuccessfulCaptureResponse;
+import static uk.gov.pay.connector.model.GatewayErrorType.BaseGatewayError;
+import static uk.gov.pay.connector.model.domain.ChargeStatus.AUTHORISATION_REJECTED;
+import static uk.gov.pay.connector.model.domain.ChargeStatus.AUTHORISATION_SUCCESS;
 import static uk.gov.pay.connector.utils.EnvironmentUtils.getWorldpayPassword;
 import static uk.gov.pay.connector.utils.EnvironmentUtils.getWorldpayUser;
 import static uk.gov.pay.connector.worldpay.template.WorldpayRequestGenerator.anOrderCaptureRequest;
@@ -51,22 +53,20 @@ public class WorldpayPaymentProvider implements PaymentProvider {
     }
 
     @Override
-    public CardAuthorisationResponse authorise(CardAuthorisationRequest request) {
+    public AuthorisationResponse authorise(AuthorisationRequest request) {
 
         String orderSubmitRequest = anOrderSubmitRequest()
                 .withMerchantCode(account.getMerchantId())
                 .withTransactionId(request.getTransactionId())
                 .withDescription(request.getDescription())
                 .withAmount(request.getAmount())
-                .withSession(request.getSession())
                 .withCard(request.getCard())
-                .withBrowser(request.getBrowser())
                 .build();
 
         Response response = xmlRequest(account, orderSubmitRequest);
         if (response.getStatus() != 200) {
             logger.error(format("Error code received from Worldpay %s.", response.getStatus()));
-            return anErrorResponse("Error processing authorisation request");
+            return anErrorResponse(new GatewayError("Error processing authorisation request", BaseGatewayError));
         }
 
         return mapToCardAuthorisationResponse(response, account.getMerchantId());
@@ -85,22 +85,22 @@ public class WorldpayPaymentProvider implements PaymentProvider {
         Response response = xmlRequest(account, orderSubmitRequest);
         if (response.getStatus() != 200) {
             logger.error(format("Error code received from Worldpay %s.", response.getStatus()));
-            return new CaptureResponse(false, "Error processing capture request");
+            return new CaptureResponse(false, new GatewayError("Error processing capture request", BaseGatewayError));
         }
         return mapToCaptureResponse(response);
     }
 
-    private CardAuthorisationResponse mapToCardAuthorisationResponse(Response response, String gatewayId) {
+    private AuthorisationResponse mapToCardAuthorisationResponse(Response response, String gatewayId) {
         String payload = response.readEntity(String.class);
         try {
             WorldpayAuthorisationResponse wResponse = WorldpayXMLUnmarshaller.unmarshall(payload, WorldpayAuthorisationResponse.class);
             if (wResponse.isError()) {
-                return anErrorResponse(wResponse.getErrorMessage());
+                return anErrorResponse(new GatewayError(wResponse.getErrorMessage(), BaseGatewayError));
             }
             return wResponse.isAuthorised() ? successfulAuthorisation(AUTHORISATION_SUCCESS) : unauthorisedResponse(gatewayId);
         } catch (JAXBException e) {
             logger.error(format("Could not unmarshall worldpay response %s.", payload), e);
-            return anErrorResponse("Error processing authorisation request");
+            return anErrorResponse(new GatewayError("Error processing authorisation request", BaseGatewayError));
         }
     }
 
@@ -108,7 +108,7 @@ public class WorldpayPaymentProvider implements PaymentProvider {
         String payload = response.readEntity(String.class);
         try {
             WorldpayCaptureResponse wResponse = WorldpayXMLUnmarshaller.unmarshall(payload, WorldpayCaptureResponse.class);
-            return wResponse.isCaptured() ? aSuccessfulResponse() : new CaptureResponse(false, wResponse.getErrorMessage());
+            return wResponse.isCaptured() ? aSuccessfulCaptureResponse() : new CaptureResponse(false, new GatewayError(wResponse.getErrorMessage(), BaseGatewayError));
         } catch (JAXBException e) {
             return handleJAXBException(payload, e);
         }
@@ -120,9 +120,9 @@ public class WorldpayPaymentProvider implements PaymentProvider {
         throw new RuntimeException(error, e);
     }
 
-    private CardAuthorisationResponse unauthorisedResponse(String gatewayId) {
+    private AuthorisationResponse unauthorisedResponse(String gatewayId) {
         logger.warn(format("Gateway credentials are invalid for %s.", gatewayId));
-        return new CardAuthorisationResponse(false, "This transaction was declined.", AUTHORISATION_REJECTED);
+        return new AuthorisationResponse(false, new GatewayError("This transaction was declined.", BaseGatewayError), AUTHORISATION_REJECTED);
     }
 
     private Response xmlRequest(GatewayAccount account, String request) {

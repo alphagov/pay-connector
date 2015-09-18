@@ -1,4 +1,4 @@
-package uk.gov.pay.connector.model;
+package uk.gov.pay.connector.service.sandbox;
 
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableMap;
@@ -6,8 +6,8 @@ import com.google.common.collect.ImmutableMap;
 import java.util.List;
 import java.util.Map;
 
-import static uk.gov.pay.connector.model.ChargeStatus.AUTHORISATION_REJECTED;
-import static uk.gov.pay.connector.model.ChargeStatus.SYSTEM_ERROR;
+import static uk.gov.pay.connector.model.domain.ChargeStatus.AUTHORISATION_REJECTED;
+import static uk.gov.pay.connector.model.domain.ChargeStatus.SYSTEM_ERROR;
 
 public class SandboxCardNumbers {
 

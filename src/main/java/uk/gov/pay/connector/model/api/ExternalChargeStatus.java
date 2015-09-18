@@ -1,8 +1,9 @@
 package uk.gov.pay.connector.model.api;
 
-import uk.gov.pay.connector.model.ChargeStatus;
+import uk.gov.pay.connector.model.domain.ChargeStatus;
 
 import static org.apache.commons.lang3.ArrayUtils.contains;
+<<<<<<< HEAD
 import static uk.gov.pay.connector.model.ChargeStatus.AUTHORISATION_SUBMITTED;
 import static uk.gov.pay.connector.model.ChargeStatus.AUTHORISATION_REJECTED;
 import static uk.gov.pay.connector.model.ChargeStatus.AUTHORISATION_SUCCESS;
@@ -10,6 +11,14 @@ import static uk.gov.pay.connector.model.ChargeStatus.SYSTEM_CANCELLED;
 import static uk.gov.pay.connector.model.ChargeStatus.CAPTURED;
 import static uk.gov.pay.connector.model.ChargeStatus.CREATED;
 import static uk.gov.pay.connector.model.ChargeStatus.chargeStatusFrom;
+=======
+import static uk.gov.pay.connector.model.domain.ChargeStatus.AUTHORISATION_SUBMITTED;
+import static uk.gov.pay.connector.model.domain.ChargeStatus.AUTHORISATION_SUCCESS;
+import static uk.gov.pay.connector.model.domain.ChargeStatus.SYSTEM_CANCELLED;
+import static uk.gov.pay.connector.model.domain.ChargeStatus.CAPTURED;
+import static uk.gov.pay.connector.model.domain.ChargeStatus.CREATED;
+import static uk.gov.pay.connector.model.domain.ChargeStatus.chargeStatusFrom;
+>>>>>>> PP-121 @kakumara @chaphilippe Refactoring domain model and card service
 
 public enum ExternalChargeStatus {
     EXT_CREATED("CREATED", CREATED),

@@ -2,16 +2,16 @@ package uk.gov.pay.connector.unit.worldpay;
 
 
 import org.junit.Test;
-import uk.gov.pay.connector.model.Address;
-import uk.gov.pay.connector.model.Amount;
-import uk.gov.pay.connector.model.Browser;
 import uk.gov.pay.connector.model.CaptureRequest;
 import uk.gov.pay.connector.model.CaptureResponse;
-import uk.gov.pay.connector.model.Card;
-import uk.gov.pay.connector.model.CardAuthorisationRequest;
-import uk.gov.pay.connector.model.CardAuthorisationResponse;
-import uk.gov.pay.connector.model.GatewayAccount;
-import uk.gov.pay.connector.model.Session;
+import uk.gov.pay.connector.model.AuthorisationRequest;
+import uk.gov.pay.connector.model.AuthorisationResponse;
+import uk.gov.pay.connector.model.GatewayError;
+import uk.gov.pay.connector.model.GatewayErrorType;
+import uk.gov.pay.connector.model.domain.GatewayAccount;
+import uk.gov.pay.connector.model.domain.Address;
+import uk.gov.pay.connector.model.domain.Amount;
+import uk.gov.pay.connector.model.domain.Card;
 import uk.gov.pay.connector.service.worldpay.WorldpayPaymentProvider;
 
 import javax.ws.rs.client.Client;
@@ -30,8 +30,9 @@ import static org.mockito.Matchers.anyObject;
 import static org.mockito.Matchers.anyString;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
-import static uk.gov.pay.connector.model.Address.anAddress;
-import static uk.gov.pay.connector.model.Card.aCard;
+import static uk.gov.pay.connector.model.GatewayErrorType.BaseGatewayError;
+import static uk.gov.pay.connector.model.domain.Address.anAddress;
+import static uk.gov.pay.connector.model.domain.Card.aCard;
 
 
 public class WorldpayPaymentProviderTest {
@@ -43,7 +44,7 @@ public class WorldpayPaymentProviderTest {
     public void shouldSendSuccessfullyAOrderForMerchant() throws Exception {
         mockWorldpaySuccessfulOrderSubmitResponse();
 
-        CardAuthorisationResponse response = connector.authorise(getCardAuthorisationRequest());
+        AuthorisationResponse response = connector.authorise(getCardAuthorisationRequest());
         assertTrue(response.isSuccessful());
     }
 
@@ -58,10 +59,10 @@ public class WorldpayPaymentProviderTest {
     @Test
     public void shouldErrorIfAuthorisationIsUnsuccessful() {
         mockWorldpayErrorResponse(401);
-        CardAuthorisationResponse response = connector.authorise(getCardAuthorisationRequest());
+        AuthorisationResponse response = connector.authorise(getCardAuthorisationRequest());
 
         assertThat(response.isSuccessful(), is(false));
-        assertThat(response.getErrorMessage(), is("Error processing authorisation request"));
+        assertThat(response.getError(), is(new GatewayError("Error processing authorisation request", BaseGatewayError)));
     }
 
     @Test
@@ -70,7 +71,7 @@ public class WorldpayPaymentProviderTest {
         CaptureResponse response = connector.capture(getCaptureRequest());
 
         assertThat(response.isSuccessful(), is(false));
-        assertThat(response.getErrorMessage(), is("Order has already been paid"));
+        assertThat(response.getError(), is(new GatewayError("Order has already been paid", BaseGatewayError)));
     }
 
     @Test
@@ -79,21 +80,16 @@ public class WorldpayPaymentProviderTest {
         CaptureResponse response = connector.capture(getCaptureRequest());
 
         assertThat(response.isSuccessful(), is(false));
-        assertThat(response.getErrorMessage(), is("Error processing capture request"));
+        assertThat(response.getError(), is(new GatewayError("Error processing capture request", BaseGatewayError)));
     }
 
-    private CardAuthorisationRequest getCardAuthorisationRequest() {
-        String userAgentHeader = "Mozilla/5.0 (Windows; U; Windows NT 5.1;en-GB; rv:1.9.1.5) Gecko/20091102 Firefox/3.5.5 (.NET CLR 3.5.30729)";
-        String acceptHeader = "text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8";
-
+    private AuthorisationRequest getCardAuthorisationRequest() {
         Card card = getValidTestCard();
-        Session session = new Session("123.123.123.123", "0215ui8ib1");
-        Browser browser = new Browser(acceptHeader, userAgentHeader);
         Amount amount = new Amount("500");
 
         String transactionId = "MyUniqueTransactionId!";
         String description = "This is mandatory";
-        return new CardAuthorisationRequest(card, session, browser, amount, transactionId, description);
+        return new AuthorisationRequest(card, amount, transactionId, description);
     }
 
     private CaptureRequest getCaptureRequest() {

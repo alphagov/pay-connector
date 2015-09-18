@@ -1,10 +1,8 @@
 package uk.gov.pay.connector.worldpay.template;
 
 
-import uk.gov.pay.connector.model.Amount;
-import uk.gov.pay.connector.model.Browser;
-import uk.gov.pay.connector.model.Card;
-import uk.gov.pay.connector.model.Session;
+import uk.gov.pay.connector.model.domain.Amount;
+import uk.gov.pay.connector.model.domain.Card;
 
 import java.util.Map;
 
@@ -14,11 +12,9 @@ public class WorldpayOrderSubmitRequestGenerator extends WorldpayRequestGenerato
 
     private String merchantCode;
     private String transactionId;
-    private Session session;
     private String description;
     private Card card;
     private Amount amount;
-    private Browser browser;
 
     public WorldpayOrderSubmitRequestGenerator() {
         super("WorldpayOrderSubmitTemplate.xml");
@@ -31,11 +27,6 @@ public class WorldpayOrderSubmitRequestGenerator extends WorldpayRequestGenerato
 
     public WorldpayOrderSubmitRequestGenerator withTransactionId(String transactionId) {
         this.transactionId = transactionId;
-        return this;
-    }
-
-    public WorldpayOrderSubmitRequestGenerator withSession(Session session) {
-        this.session = session;
         return this;
     }
 
@@ -54,11 +45,6 @@ public class WorldpayOrderSubmitRequestGenerator extends WorldpayRequestGenerato
         return this;
     }
 
-    public WorldpayOrderSubmitRequestGenerator withBrowser(Browser browser) {
-        this.browser = browser;
-        return this;
-    }
-
     public String build() {
         Map<String, Object> templateData = newHashMap();
         templateData.put("merchantCode", merchantCode);
@@ -66,8 +52,6 @@ public class WorldpayOrderSubmitRequestGenerator extends WorldpayRequestGenerato
         templateData.put("description", description);
         templateData.put("amount", amount);
         templateData.put("card", card);
-        templateData.put("session", session);
-        templateData.put("browser", browser);
 
         return buildWith(templateData);
     }

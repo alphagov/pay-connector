@@ -20,6 +20,7 @@ import uk.gov.pay.connector.resources.ChargeCancelResource;
 import uk.gov.pay.connector.resources.ChargesApiResource;
 import uk.gov.pay.connector.resources.ChargesFrontendResource;
 import uk.gov.pay.connector.resources.GatewayAccountResource;
+import uk.gov.pay.connector.service.CardProcessor;
 import uk.gov.pay.connector.resources.SecurityTokensResource;
 import uk.gov.pay.connector.util.DbConnectionChecker;
 
@@ -62,14 +63,14 @@ public class ConnectorApp extends Application<ConnectorConfiguration> {
         ChargeDao chargeDao = new ChargeDao(jdbi);
         TokenDao tokenDao = new TokenDao(jdbi);
         GatewayAccountDao gatewayAccountDao = new GatewayAccountDao(jdbi);
+        CardProcessor cardProcessor = new CardProcessor(gatewayAccountDao, chargeDao);
 
         environment.jersey().register(new SecurityTokensResource(tokenDao));
         environment.jersey().register(new ChargesApiResource(chargeDao, tokenDao, gatewayAccountDao, conf.getLinks()));
         environment.jersey().register(new ChargesFrontendResource(chargeDao));
-        environment.jersey().register(new CardResource(chargeDao, gatewayAccountDao));
+        environment.jersey().register(new CardResource(cardProcessor));
         environment.jersey().register(new ChargeCancelResource(chargeDao));
         environment.jersey().register(new GatewayAccountResource(gatewayAccountDao));
-        
 
         environment.healthChecks().register("database", new DatabaseHealthCheck(jdbi, dataSourceFactory.getValidationQuery()));
     }

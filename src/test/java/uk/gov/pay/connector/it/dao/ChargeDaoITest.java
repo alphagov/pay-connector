@@ -7,15 +7,15 @@ import org.junit.Test;
 import org.junit.rules.ExpectedException;
 import uk.gov.pay.connector.dao.ChargeDao;
 import uk.gov.pay.connector.dao.PayDBIException;
-import uk.gov.pay.connector.model.ChargeStatus;
+import uk.gov.pay.connector.model.domain.ChargeStatus;
 import uk.gov.pay.connector.util.DropwizardAppWithPostgresRule;
 
 import java.util.Map;
 
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.is;
-import static uk.gov.pay.connector.model.ChargeStatus.AUTHORISATION_SUBMITTED;
-import static uk.gov.pay.connector.model.ChargeStatus.AUTHORISATION_SUCCESS;
+import static uk.gov.pay.connector.model.domain.ChargeStatus.AUTHORISATION_SUBMITTED;
+import static uk.gov.pay.connector.model.domain.ChargeStatus.AUTHORISATION_SUCCESS;
 
 public class ChargeDaoITest {
 

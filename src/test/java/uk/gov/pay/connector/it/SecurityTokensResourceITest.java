@@ -1,7 +1,6 @@
 package uk.gov.pay.connector.it;
 
 import com.jayway.restassured.specification.RequestSpecification;
-import org.apache.commons.lang.math.RandomUtils;
 import org.junit.Before;
 import org.junit.Rule;
 import org.junit.Test;
@@ -11,7 +10,7 @@ import static com.jayway.restassured.RestAssured.given;
 import static com.jayway.restassured.http.ContentType.JSON;
 import static org.hamcrest.Matchers.is;
 import static org.hamcrest.Matchers.isEmptyOrNullString;
-import static uk.gov.pay.connector.model.ChargeStatus.CREATED;
+import static uk.gov.pay.connector.model.domain.ChargeStatus.CREATED;
 
 public class SecurityTokensResourceITest {
     private static final String TOKEN_ID = "tokenId";

@@ -23,14 +23,7 @@
                         </address>
                     </cardAddress>
                 </VISA-SSL>
-                <session shopperIPAddress="123.123.123.123" id="0215ui8ib1"/>
             </paymentDetails>
-            <shopper>
-                <browser>
-                    <acceptHeader>text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8</acceptHeader>
-                    <userAgentHeader>Mozilla/5.0 (Windows; U; Windows NT 5.1;en-GB; rv:1.9.1.5) Gecko/20091102 Firefox/3.5.5 (.NET CLR 3.5.30729)</userAgentHeader>
-                </browser>
-            </shopper>
         </order>
     </submit>
 </paymentService>

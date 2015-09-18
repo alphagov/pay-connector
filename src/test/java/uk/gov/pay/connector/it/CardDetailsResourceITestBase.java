@@ -10,7 +10,7 @@ import uk.gov.pay.connector.util.DropwizardAppWithPostgresRule;
 import static com.jayway.restassured.RestAssured.given;
 import static com.jayway.restassured.http.ContentType.JSON;
 import static org.hamcrest.Matchers.is;
-import static uk.gov.pay.connector.model.ChargeStatus.CREATED;
+import static uk.gov.pay.connector.model.domain.ChargeStatus.CREATED;
 import static uk.gov.pay.connector.util.JsonEncoder.toJson;
 
 public class CardDetailsResourceITestBase {

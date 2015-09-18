@@ -4,7 +4,7 @@ import org.junit.Test;
 
 import static com.jayway.restassured.http.ContentType.JSON;
 import static org.hamcrest.Matchers.is;
-import static uk.gov.pay.connector.model.ChargeStatus.AUTHORISATION_SUBMITTED;
+import static uk.gov.pay.connector.model.domain.ChargeStatus.AUTHORISATION_SUBMITTED;
 
 public class ChargeCaptureResourceITest extends ChargeCaptureResourceITestBase {
 

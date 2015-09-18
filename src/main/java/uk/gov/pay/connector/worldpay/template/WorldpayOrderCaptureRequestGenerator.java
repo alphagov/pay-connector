@@ -2,7 +2,7 @@ package uk.gov.pay.connector.worldpay.template;
 
 
 import org.joda.time.DateTime;
-import uk.gov.pay.connector.model.Amount;
+import uk.gov.pay.connector.model.domain.Amount;
 
 import java.util.Map;
 

@@ -3,7 +3,7 @@ package uk.gov.pay.connector.unit.worldpay.template;
 import com.google.common.io.Resources;
 import org.joda.time.DateTime;
 import org.junit.Test;
-import uk.gov.pay.connector.model.Amount;
+import uk.gov.pay.connector.model.domain.Amount;
 import uk.gov.pay.connector.worldpay.template.WorldpayRequestGenerator;
 
 import java.io.IOException;

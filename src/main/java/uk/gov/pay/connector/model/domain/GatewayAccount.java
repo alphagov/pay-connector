@@ -1,4 +1,4 @@
-package uk.gov.pay.connector.model;
+package uk.gov.pay.connector.model.domain;
 
 public class GatewayAccount {
     private static final String MERCHANT_CODE = "MERCHANTCODE";

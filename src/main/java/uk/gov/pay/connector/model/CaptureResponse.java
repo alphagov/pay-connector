@@ -1,24 +1,33 @@
 package uk.gov.pay.connector.model;
 
-public class CaptureResponse {
-    private boolean successful = true;
+import uk.gov.pay.connector.model.domain.ChargeStatus;
 
-    private String errorMessage;
+import static uk.gov.pay.connector.model.domain.ChargeStatus.CAPTURED;
 
-    public CaptureResponse(boolean successful, String errorMessage) {
+public class CaptureResponse implements GatewayResponse {
+
+    private final Boolean successful;
+    private final GatewayError error;
+
+
+    public CaptureResponse(boolean successful, GatewayError errorMessage) {
         this.successful = successful;
-        this.errorMessage = errorMessage;
+        this.error = errorMessage;
     }
 
-    public boolean isSuccessful() {
+    public Boolean isSuccessful() {
         return successful;
     }
 
-    public String getErrorMessage() {
-        return errorMessage;
+    public GatewayError getError() {
+        return error;
     }
 
-    public static CaptureResponse aSuccessfulResponse(){
+    public static CaptureResponse aSuccessfulCaptureResponse() {
         return new CaptureResponse(true, null);
+    }
+
+    public ChargeStatus getNewChargeStatus() {
+        return successful ? CAPTURED : null;
     }
 }

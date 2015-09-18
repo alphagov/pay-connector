@@ -1,4 +1,4 @@
-package uk.gov.pay.connector.model;
+package uk.gov.pay.connector.model.domain;
 
 public class Amount {
     private static final String DEFAULT_CURRENCY_CODE = "GBP";

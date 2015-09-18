@@ -4,13 +4,13 @@ import com.jayway.restassured.specification.RequestSpecification;
 import org.apache.commons.lang.math.RandomUtils;
 import org.junit.Before;
 import org.junit.Rule;
-import uk.gov.pay.connector.model.ChargeStatus;
+import uk.gov.pay.connector.model.domain.ChargeStatus;
 import uk.gov.pay.connector.util.DropwizardAppWithPostgresRule;
 
 import static com.jayway.restassured.RestAssured.given;
 import static com.jayway.restassured.http.ContentType.JSON;
 import static org.hamcrest.Matchers.is;
-import static uk.gov.pay.connector.model.ChargeStatus.AUTHORISATION_SUCCESS;
+import static uk.gov.pay.connector.model.domain.ChargeStatus.AUTHORISATION_SUCCESS;
 
 public class ChargeCaptureResourceITestBase {
     private final String paymentProvider;

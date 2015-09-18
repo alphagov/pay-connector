@@ -3,7 +3,7 @@ package uk.gov.pay.connector.dao;
 import org.skife.jdbi.v2.DBI;
 import org.skife.jdbi.v2.DefaultMapper;
 import org.skife.jdbi.v2.util.StringMapper;
-import uk.gov.pay.connector.model.ChargeStatus;
+import uk.gov.pay.connector.model.domain.ChargeStatus;
 
 import java.util.Map;
 import java.util.Optional;
