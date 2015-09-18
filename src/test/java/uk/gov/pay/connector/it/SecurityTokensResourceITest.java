@@ -42,13 +42,8 @@ public class SecurityTokensResourceITest {
     }
 
     @Test
-    public void shouldFailValidationWhenTokenNotFound() throws Exception {
-        givenSetup()
-                .get(tokensUrlFor(TOKEN_ID))
-                .then()
-                .statusCode(404)
-                .contentType(JSON)
-                .body("message", is("Token has expired!"));
+    public void shouldReturn404WhenTokenNotFound() throws Exception {
+        deleteTokenThatHasExpiredShouldReturn404();
     }
 
     @Test
@@ -59,12 +54,21 @@ public class SecurityTokensResourceITest {
                 .then()
                 .statusCode(204)
                 .body(isEmptyOrNullString());
+        deleteTokenThatHasExpiredShouldReturn404();
     }
 
-    private String createNewCharge(String chargeId, String tokenId) {
+    private void deleteTokenThatHasExpiredShouldReturn404() {
+        givenSetup()
+                .get(tokensUrlFor(TOKEN_ID))
+                .then()
+                .statusCode(404)
+                .contentType(JSON)
+                .body("message", is("Token has expired!"));
+    }
+
+    private void createNewCharge(String chargeId, String tokenId) {
         app.getDatabaseTestHelper().addCharge(chargeId, ACCOUNT_ID, 500, CREATED, "return_url");
         app.getDatabaseTestHelper().addToken(chargeId, tokenId);
-        return chargeId;
     }
 
     private RequestSpecification givenSetup() {
