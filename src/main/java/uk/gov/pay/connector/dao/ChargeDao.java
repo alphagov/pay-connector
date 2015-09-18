@@ -1,14 +1,20 @@
 package uk.gov.pay.connector.dao;
 
+import org.apache.commons.lang3.StringUtils;
 import org.skife.jdbi.v2.DBI;
 import org.skife.jdbi.v2.DefaultMapper;
 import org.skife.jdbi.v2.util.StringMapper;
 import uk.gov.pay.connector.model.ChargeStatus;
 
+import java.util.List;
 import java.util.Map;
 import java.util.Optional;
+import java.util.stream.Collectors;
 
+import static com.google.common.collect.Lists.newArrayList;
 import static com.google.common.collect.Maps.newHashMap;
+import static java.lang.String.format;
+import static org.apache.commons.lang3.BooleanUtils.negate;
 
 public class ChargeDao {
     private DBI jdbi;
@@ -17,11 +23,12 @@ public class ChargeDao {
         this.jdbi = jdbi;
     }
 
-    public String saveNewCharge(Map<String, Object> charge) {
+    public String saveNewCharge(Map<String, Object> charge) throws PayDBIException {
         Map<String, Object> fixedCharge = copyAndConvertFieldToLong(charge, "gateway_account_id");
         return jdbi.withHandle(handle ->
                         handle
-                                .createStatement("INSERT INTO charges(amount, gateway_account_id, status) VALUES (:amount, :gateway_account_id, :status)")
+                                .createStatement("INSERT INTO charges(amount, gateway_account_id, status, return_url) " +
+                                        "VALUES (:amount, :gateway_account_id, :status, :return_url)")
                                 .bindFromMap(fixedCharge)
                                 .bind("status", ChargeStatus.CREATED.getValue())
                                 .executeAndReturnGeneratedKeys(StringMapper.FIRST)
@@ -32,7 +39,8 @@ public class ChargeDao {
     public Optional<Map<String, Object>> findById(String chargeId) {
         Map<String, Object> data = jdbi.withHandle(handle ->
                         handle
-                                .createQuery("SELECT charge_id, amount, gateway_account_id, status FROM charges WHERE charge_id=:charge_id")
+                                .createQuery("SELECT charge_id, amount, gateway_account_id, status, return_url " +
+                                        "FROM charges WHERE charge_id=:charge_id")
                                 .bind("charge_id", Long.valueOf(chargeId))
                                 .map(new DefaultMapper())
                                 .first()
@@ -54,7 +62,7 @@ public class ChargeDao {
         );
 
         if (numberOfUpdates != 1) {
-            throw new PayDBIException(String.format("Could not update charge '%s' with status %s", chargeId, newStatus));
+            throw new PayDBIException(format("Could not update charge '%s' with status %s", chargeId, newStatus));
         }
     }
 

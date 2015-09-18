@@ -74,7 +74,7 @@ public class ChargeCaptureResourceITest {
     private String createNewChargeWithStatus(ChargeStatus status) {
         String chargeId = ((Integer) RandomUtils.nextInt(99999999)).toString();
 
-        app.getDatabaseTestHelper().addCharge(chargeId, accountId, 500, status);
+        app.getDatabaseTestHelper().addCharge(chargeId, accountId, 500, status, "http://whatever.com");
         return chargeId;
     }
 
