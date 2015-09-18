@@ -87,14 +87,6 @@ public class ChargeDaoITest {
 
     }
 
-    @Test
-    public void throwsException_WhenMissingFields() throws Exception {
-        expectedEx.expect(PayDBIException.class);
-        expectedEx.expectMessage("Field(s) missing: amount, gateway_account_id, return_url");
-
-        chargeDao.saveNewCharge(ImmutableMap.of());
-    }
-
     private ImmutableMap<String, Object> newCharge(long amount) {
         return ImmutableMap.of(
                 "amount", amount,

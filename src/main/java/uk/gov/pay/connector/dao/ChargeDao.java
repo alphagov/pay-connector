@@ -17,7 +17,6 @@ import static java.lang.String.format;
 import static org.apache.commons.lang3.BooleanUtils.negate;
 
 public class ChargeDao {
-    private static final List<String> REQUIRED_FIELDS = newArrayList("amount", "gateway_account_id", "return_url");
     private DBI jdbi;
 
     public ChargeDao(DBI jdbi) {
@@ -25,8 +24,6 @@ public class ChargeDao {
     }
 
     public String saveNewCharge(Map<String, Object> charge) throws PayDBIException {
-        checkForMissingFields(charge);
-
         Map<String, Object> fixedCharge = copyAndConvertFieldToLong(charge, "gateway_account_id");
         return jdbi.withHandle(handle ->
                         handle
@@ -82,15 +79,5 @@ public class ChargeDao {
             copy.put(field, String.valueOf(copy.remove(field)));
         }
         return copy;
-    }
-
-    private void checkForMissingFields(Map<String, Object> charge) throws PayDBIException {
-        String fieldsMissing = REQUIRED_FIELDS.stream()
-                .filter(requiredKey -> negate(charge.containsKey(requiredKey)))
-                .collect(Collectors.joining(", "));
-
-        if (StringUtils.isNotBlank(fieldsMissing)) {
-            throw new PayDBIException(format("Field(s) missing: %s", fieldsMissing));
-        }
     }
 }
