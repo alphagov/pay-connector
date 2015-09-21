@@ -3,10 +3,9 @@ package uk.gov.pay.connector.it;
 import org.junit.Assume;
 import org.junit.Before;
 import org.junit.Test;
+import uk.gov.pay.connector.app.WorldpayConfig;
 
 import static org.apache.commons.lang3.StringUtils.isNotBlank;
-import static uk.gov.pay.connector.utils.EnvironmentUtils.getWorldpayPassword;
-import static uk.gov.pay.connector.utils.EnvironmentUtils.getWorldpayUser;
 
 public class WorldpayChargeCaptureResourceITest extends ChargeCaptureResourceITestBase {
 
@@ -33,6 +32,7 @@ public class WorldpayChargeCaptureResourceITest extends ChargeCaptureResourceITe
     }
 
     private boolean worldPayEnvironmentInitialized() {
-        return isNotBlank(getWorldpayUser()) && isNotBlank(getWorldpayPassword());
+        WorldpayConfig worldpayConfig = app.getConf().getWorldpayConfig();
+        return isNotBlank(worldpayConfig.getUsername()) && isNotBlank(worldpayConfig.getPassword());
     }
 }

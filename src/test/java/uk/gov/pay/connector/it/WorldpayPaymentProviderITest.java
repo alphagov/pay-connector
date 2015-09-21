@@ -2,28 +2,28 @@ package uk.gov.pay.connector.it;
 
 import org.junit.Assume;
 import org.junit.Before;
+import org.junit.Rule;
 import org.junit.Test;
+import uk.gov.pay.connector.app.WorldpayConfig;
 import uk.gov.pay.connector.model.AuthorisationRequest;
 import uk.gov.pay.connector.model.AuthorisationResponse;
-import uk.gov.pay.connector.model.domain.GatewayAccount;
-import uk.gov.pay.connector.model.domain.Address;
 import uk.gov.pay.connector.model.domain.Amount;
 import uk.gov.pay.connector.model.domain.Card;
+import uk.gov.pay.connector.model.domain.GatewayAccount;
 import uk.gov.pay.connector.service.worldpay.WorldpayPaymentProvider;
+import uk.gov.pay.connector.util.DropwizardAppWithPostgresRule;
 
 import javax.ws.rs.client.ClientBuilder;
 
-import static java.util.UUID.randomUUID;
 import static org.apache.commons.lang3.StringUtils.isNotBlank;
 import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertTrue;
-import static uk.gov.pay.connector.model.domain.Address.anAddress;
-import static uk.gov.pay.connector.model.domain.Card.aCard;
-import static uk.gov.pay.connector.utils.EnvironmentUtils.getWorldpayPassword;
-import static uk.gov.pay.connector.utils.EnvironmentUtils.getWorldpayUser;
-
+import static uk.gov.pay.connector.util.CardUtils.aValidCard;
 
 public class WorldpayPaymentProviderITest {
+
+    @Rule
+    public DropwizardAppWithPostgresRule app = new DropwizardAppWithPostgresRule();
 
     @Before
     public void before() throws Exception {
@@ -33,7 +33,7 @@ public class WorldpayPaymentProviderITest {
     @Test
     public void shouldSendSuccessfullyAOrderForMerchant() throws Exception {
 
-        WorldpayPaymentProvider connector = new WorldpayPaymentProvider();
+        WorldpayPaymentProvider connector = new WorldpayPaymentProvider(getWorldpayConfig());
         AuthorisationRequest request = getCardAuthorisationRequest();
         AuthorisationResponse response = connector.authorise(request);
 
@@ -43,8 +43,12 @@ public class WorldpayPaymentProviderITest {
     @Test
     public void shouldFailRequestAuthorisationIfCredentialsAreNotCorrect() throws Exception {
         GatewayAccount gatewayAccount = new GatewayAccount("wrongUsername", "wrongPassword");
+        String worldpayUrl = getWorldpayConfig().getUrl();
 
-        WorldpayPaymentProvider connector = new WorldpayPaymentProvider(ClientBuilder.newClient(), gatewayAccount);
+        WorldpayPaymentProvider connector = new WorldpayPaymentProvider(
+                ClientBuilder.newClient(),
+                gatewayAccount,
+                worldpayUrl);
 
         AuthorisationRequest request = getCardAuthorisationRequest();
         AuthorisationResponse response = connector.authorise(request);
@@ -53,37 +57,18 @@ public class WorldpayPaymentProviderITest {
     }
 
     private AuthorisationRequest getCardAuthorisationRequest() {
-        Card card = getValidTestCard();
+        Card card = aValidCard();
         Amount amount = new Amount("500");
-        String transactionId = randomUUID().toString();
-        String description = "This is mandatory";
-        return new AuthorisationRequest(card, amount, transactionId, description);
-    }
-
-    private Card getValidTestCard() {
-        Address address = anAddress();
-        address.setLine1("123 My Street");
-        address.setLine2("This road");
-        address.setPostcode("SW8URR");
-        address.setCity("London");
-        address.setCountry("GB");
-
-        Card cardDetails = withCardDetails("Mr. Payment", "4111111111111111", "123", "12/15");
-        cardDetails.setAddress(address);
-        return cardDetails;
+        String description = "This is the description";
+        return new AuthorisationRequest(card, amount, description);
     }
 
     private boolean worldPayEnvironmentInitialized() {
-        return isNotBlank(getWorldpayUser()) && isNotBlank(getWorldpayPassword());
+        WorldpayConfig worldpayConfig = getWorldpayConfig();
+        return isNotBlank(worldpayConfig.getUsername()) && isNotBlank(worldpayConfig.getPassword());
     }
 
-    public Card withCardDetails(String cardHolder, String cardNo, String cvc, String endDate) {
-        Card card = aCard();
-        card.setCardHolder(cardHolder);
-        card.setCardNo(cardNo);
-        card.setCvc(cvc);
-        card.setEndDate(endDate);
-        return card;
+    private WorldpayConfig getWorldpayConfig() {
+        return app.getConf().getWorldpayConfig();
     }
-
 }

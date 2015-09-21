@@ -4,7 +4,7 @@
 <paymentService version="1.4" merchantCode="MERCHANTCODE">
     <submit>
         <order orderCode="MyUniqueTransactionId!">
-            <description>This is mandatory</description>
+            <description>This is the description</description>
             <amount currencyCode="GBP" exponent="2" value="500"/>
             <paymentDetails>
                 <VISA-SSL>

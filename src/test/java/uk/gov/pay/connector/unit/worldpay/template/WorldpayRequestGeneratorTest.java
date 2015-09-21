@@ -12,7 +12,7 @@ import java.nio.charset.Charset;
 import static com.google.common.io.Resources.getResource;
 import static org.custommonkey.xmlunit.XMLAssert.assertXMLEqual;
 import static uk.gov.pay.connector.model.domain.Address.anAddress;
-import static uk.gov.pay.connector.model.domain.Card.aCard;
+import static uk.gov.pay.connector.util.CardUtils.buildCardDetails;
 import static uk.gov.pay.connector.worldpay.template.WorldpayRequestGenerator.anOrderSubmitRequest;
 
 public class WorldpayRequestGeneratorTest {
@@ -31,7 +31,7 @@ public class WorldpayRequestGeneratorTest {
         String actualRequest = anOrderSubmitRequest()
                 .withMerchantCode("MERCHANTCODE")
                 .withTransactionId("MyUniqueTransactionId!")
-                .withDescription("This is mandatory")
+                .withDescription("This is the description")
                 .withAmount(amount)
                 .withCard(card)
                 .build();
@@ -57,7 +57,7 @@ public class WorldpayRequestGeneratorTest {
         String actualRequest = anOrderSubmitRequest()
                 .withMerchantCode("MERCHANTCODE")
                 .withTransactionId("MyUniqueTransactionId!")
-                .withDescription("This is mandatory")
+                .withDescription("This is the description")
                 .withAmount(amount)
                 .withCard(card)
                 .build();
@@ -67,18 +67,7 @@ public class WorldpayRequestGeneratorTest {
     }
 
     private Card getValidTestCard(Address address) {
-        Card card = withCardDetails("Mr. Payment", "4111111111111111", "123", "12/15");
-        card.setAddress(address);
-        return card;
-    }
-
-    public Card withCardDetails(String cardHolder, String cardNo, String cvc, String endDate) {
-        Card card = aCard();
-        card.setCardHolder(cardHolder);
-        card.setCardNo(cardNo);
-        card.setCvc(cvc);
-        card.setEndDate(endDate);
-        return card;
+        return buildCardDetails("Mr. Payment", "4111111111111111", "123", "12/15", address);
     }
 
     private String expectedOrderSubmitPayload(final String expectedTemplate) throws IOException {

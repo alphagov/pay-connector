@@ -7,7 +7,7 @@ import uk.gov.pay.connector.dao.PayDBIException;
 import uk.gov.pay.connector.model.GatewayError;
 import uk.gov.pay.connector.model.GatewayResponse;
 import uk.gov.pay.connector.model.domain.Card;
-import uk.gov.pay.connector.service.CardProcessor;
+import uk.gov.pay.connector.service.CardService;
 
 import javax.ws.rs.Consumes;
 import javax.ws.rs.POST;
@@ -26,11 +26,11 @@ import static uk.gov.pay.connector.util.ResponseUtil.notFoundResponse;
 @Path("/")
 public class CardResource {
 
-    private final CardProcessor cardProcessor;
+    private final CardService cardService;
     private final Logger logger = LoggerFactory.getLogger(CardResource.class);
 
-    public CardResource(CardProcessor cardProcessor) {
-        this.cardProcessor = cardProcessor;
+    public CardResource(CardService cardService) {
+        this.cardService = cardService;
     }
 
     @POST
@@ -43,7 +43,7 @@ public class CardResource {
             return badRequestResponse(logger, "Values do not match expected format/length.");
         }
 
-        return reduce(cardProcessor.doAuthorise(chargeId, cardDetails)
+        return reduce(cardService.doAuthorise(chargeId, cardDetails)
                 .bimap(handleWorldpayResponse, handleError));
     }
 
@@ -53,13 +53,15 @@ public class CardResource {
     @Produces(APPLICATION_JSON)
     public Response captureCharge(@PathParam("chargeId") String chargeId) throws PayDBIException {
 
-        return reduce(cardProcessor.doCapture(chargeId)
+        return reduce(cardService.doCapture(chargeId)
                 .bimap(handleWorldpayResponse, handleError));
     }
 
 
     private F<GatewayError, Response> handleError =
-            error -> ChargeNotFound.equals(error.getErrorType()) ? notFoundResponse(logger, error.getMessage()) : badRequestResponse(logger, error.getMessage());
+            error -> ChargeNotFound.equals(error.getErrorType()) ?
+                    notFoundResponse(logger, error.getMessage()) :
+                    badRequestResponse(logger, error.getMessage());
 
     private F<GatewayResponse, Response> handleWorldpayResponse =
             response -> response.isSuccessful() ?

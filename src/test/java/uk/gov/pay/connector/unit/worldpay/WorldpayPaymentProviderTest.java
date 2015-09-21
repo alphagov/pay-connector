@@ -2,16 +2,15 @@ package uk.gov.pay.connector.unit.worldpay;
 
 
 import org.junit.Test;
-import uk.gov.pay.connector.model.CaptureRequest;
-import uk.gov.pay.connector.model.CaptureResponse;
 import uk.gov.pay.connector.model.AuthorisationRequest;
 import uk.gov.pay.connector.model.AuthorisationResponse;
+import uk.gov.pay.connector.model.CaptureRequest;
+import uk.gov.pay.connector.model.CaptureResponse;
 import uk.gov.pay.connector.model.GatewayError;
-import uk.gov.pay.connector.model.GatewayErrorType;
-import uk.gov.pay.connector.model.domain.GatewayAccount;
 import uk.gov.pay.connector.model.domain.Address;
 import uk.gov.pay.connector.model.domain.Amount;
 import uk.gov.pay.connector.model.domain.Card;
+import uk.gov.pay.connector.model.domain.GatewayAccount;
 import uk.gov.pay.connector.service.worldpay.WorldpayPaymentProvider;
 
 import javax.ws.rs.client.Client;
@@ -32,13 +31,13 @@ import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
 import static uk.gov.pay.connector.model.GatewayErrorType.BaseGatewayError;
 import static uk.gov.pay.connector.model.domain.Address.anAddress;
-import static uk.gov.pay.connector.model.domain.Card.aCard;
+import static uk.gov.pay.connector.util.CardUtils.buildCardDetails;
 
 
 public class WorldpayPaymentProviderTest {
 
     private final Client client = mock(Client.class);
-    private final WorldpayPaymentProvider connector = new WorldpayPaymentProvider(client, new GatewayAccount("MERCHANTCODE", "password"));
+    private final WorldpayPaymentProvider connector = new WorldpayPaymentProvider(client, new GatewayAccount("MERCHANTCODE", "password"), "http://worldpay.url");
 
     @Test
     public void shouldSendSuccessfullyAOrderForMerchant() throws Exception {
@@ -87,9 +86,8 @@ public class WorldpayPaymentProviderTest {
         Card card = getValidTestCard();
         Amount amount = new Amount("500");
 
-        String transactionId = "MyUniqueTransactionId!";
-        String description = "This is mandatory";
-        return new AuthorisationRequest(card, amount, transactionId, description);
+        String description = "This is the description";
+        return new AuthorisationRequest(card, amount, description);
     }
 
     private CaptureRequest getCaptureRequest() {
@@ -193,18 +191,7 @@ public class WorldpayPaymentProviderTest {
         address.setCounty("London state");
         address.setCountry("GB");
 
-        Card card = withCardDetails("Mr. Payment", "4111111111111111", "123", "12/15");
-        card.setAddress(address);
-
-        return card;
+        return buildCardDetails("Mr. Payment", "4111111111111111", "123", "12/15", address);
     }
 
-    public Card withCardDetails(String cardHolder, String cardNo, String cvc, String endDate) {
-        Card card = aCard();
-        card.setCardHolder(cardHolder);
-        card.setCardNo(cardNo);
-        card.setCvc(cvc);
-        card.setEndDate(endDate);
-        return card;
-    }
 }

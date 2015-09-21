@@ -11,6 +11,7 @@ import uk.gov.pay.connector.model.domain.ChargeStatus;
 import uk.gov.pay.connector.util.DropwizardAppWithPostgresRule;
 
 import java.util.Map;
+import java.util.UUID;
 
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.is;
@@ -72,6 +73,18 @@ public class ChargeDaoITest {
         assertThat(charge.get("status"), is("AUTHORISATION SUBMITTED"));
         assertThat(charge.get("gateway_account_id"), is(gatewayAccountId));
         assertThat(charge.get("return_url"), is(returnUrl));
+    }
+
+    @Test
+    public void insertChargeAndThenUpdateGatewayTransactionId() throws Exception {
+        long amount = 101;
+        String chargeId = chargeDao.saveNewCharge(newCharge(amount));
+
+        String transactionId = UUID.randomUUID().toString();
+        chargeDao.updateGatewayTransactionId(chargeId, transactionId);
+
+        Map<String, Object> charge = chargeDao.findById(chargeId).get();
+        assertThat(charge.get("gateway_transaction_id"), is(transactionId));
     }
 
     @Test

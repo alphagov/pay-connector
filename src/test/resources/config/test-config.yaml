@@ -18,6 +18,11 @@ logging:
 links:
   cardDetailsUrl: http://Frontend/charge/{chargeId}?chargeTokenId={chargeTokenId}
 
+worldpay:
+  url: http://dummy.com
+  username: myUsernameDummy
+  password: myPasswordDummy
+
 database:
   driverClass: org.postgresql.Driver
   user: postgres

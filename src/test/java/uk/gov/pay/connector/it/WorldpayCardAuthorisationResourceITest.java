@@ -3,25 +3,24 @@ package uk.gov.pay.connector.it;
 import org.junit.Assume;
 import org.junit.Before;
 import org.junit.Test;
+import uk.gov.pay.connector.app.WorldpayConfig;
 
 import static java.lang.String.format;
 import static javax.ws.rs.core.MediaType.APPLICATION_JSON;
 import static org.apache.commons.lang3.StringUtils.isNotBlank;
 import static org.hamcrest.core.Is.is;
-import static uk.gov.pay.connector.utils.EnvironmentUtils.getWorldpayPassword;
-import static uk.gov.pay.connector.utils.EnvironmentUtils.getWorldpayUser;
 
 public class WorldpayCardAuthorisationResourceITest extends CardDetailsResourceITestBase {
 
     private String validCardDetails = buildJsonCardDetailsFor("4444333322221111");
 
+    public WorldpayCardAuthorisationResourceITest() {
+        super("worldpay");
+    }
+
     @Before
     public void before() throws Exception {
         Assume.assumeTrue(worldPayEnvironmentInitialized());
-    }
-
-    public WorldpayCardAuthorisationResourceITest() {
-        super("worldpay");
     }
 
     @Test
@@ -36,10 +35,6 @@ public class WorldpayCardAuthorisationResourceITest extends CardDetailsResourceI
                 .statusCode(204);
 
         assertChargeStatusIs(chargeId, "AUTHORISATION SUCCESS");
-    }
-
-    private boolean worldPayEnvironmentInitialized() {
-        return isNotBlank(getWorldpayUser()) && isNotBlank(getWorldpayPassword());
     }
 
     @Test
@@ -75,5 +70,8 @@ public class WorldpayCardAuthorisationResourceITest extends CardDetailsResourceI
         shouldReturnErrorForCardDetailsWithMessage(cardDetailsToReject, expectedErrorMessage, expectedChargeStatus);
     }
 
-
+    private boolean worldPayEnvironmentInitialized() {
+        WorldpayConfig worldpayConfig = app.getConf().getWorldpayConfig();
+        return isNotBlank(worldpayConfig.getUsername()) && isNotBlank(worldpayConfig.getPassword());
+    }
 }

@@ -40,20 +40,18 @@
                 <constraints nullable="false"/>
             </column>
             <column name="status" type="text">
-                <constraints nullable="false" />
+                <constraints nullable="false"/>
+            </column>
+            <column name="gateway_transaction_id" type="text">
+                <constraints nullable="true"/>
+            </column>
+            <column name="return_url" type="text">
+                <constraints nullable="false"/>
             </column>
             <column name="gateway_account_id" type="bigserial">
-                <constraints foreignKeyName="fk__charges_gateway_accounts" referencedTableName="gateway_accounts" referencedColumnNames="gateway_account_id"  nullable="false"/>
+                <constraints foreignKeyName="fk__charges_gateway_accounts" referencedTableName="gateway_accounts"
+                             referencedColumnNames="gateway_account_id" nullable="false"/>
             </column>
         </createTable>
     </changeSet>
-
-    <changeSet id="add field 'return_url' to charge table" author="">
-        <addColumn tableName="charges">
-            <column name="return_url" type="text">
-                <constraints nullable="false" />
-            </column>
-        </addColumn>
-    </changeSet>
-
 </databaseChangeLog>
