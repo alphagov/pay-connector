@@ -24,6 +24,7 @@ The command to run the integration tests is:
 |[```/v1/api/accounts```](#post-v1apiaccounts)              | POST    |  Create a new account to associate charges with            |
 |[```/v1/api/charges/{chargeId}```](#get-v1apichargeschargeid)                 | GET    |  Returns the charge with `chargeId`            |
 |[```/v1/api/charges```](#post-v1apicharges)                                  | POST    |  Create a new charge            |
+|[```/v1/api/charges/{chargeId}/cancel```](#post-v1apichargeschargeidcancel)  | POST    |  Cancels the charge with `chargeId`            |
 |[```/v1/frontend/charges/{chargeId}```](#get-v1frontendchargeschargeid)                                  | GET |  Find out the status of a charge            |
 |[```/v1/frontend/charges/{chargeId}/cards```](#post-v1frontendchargeschargeidcards)                      | POST |  Authorise the charge with the card details            |
 |[```/v1/frontend/charges/{chargeId}/capture```](#post-v1frontendchargeschargeidcapture)                      | POST |  Confirm a card charge that was previously authorised successfully.            |
@@ -179,6 +180,48 @@ Location: http://connector.service/v1/api/charges/1
 | Field                    | always present | Description                               |
 | ------------------------ |:--------:| ----------------------------------------- |
 | `charge_id`                 | X | The unique identifier for this charge       |
+
+-----------------------------------------------------------------------------------------------------------
+
+### POST /v1/api/charges/{chargeId}/cancel
+
+This endpoint cancels a charge.
+
+#### Request example
+
+```
+POST /v1/api/charges/123456/cancel
+```
+
+#### Response when cancellation successful
+
+```
+204 No Content
+```
+
+#### Response when cancellation unsuccessful due to invalid state
+
+```
+HTTP/1.1 400 Bad Request
+Content-Type: application/json
+Content-Length: 72
+
+{
+    "message": "Cannot cancel a charge with status AUTHORIZATION REJECTED."
+}
+```
+
+#### Response when the payment does not exist
+
+```
+HTTP/1.1 404 Not Found
+Content-Type: application/json
+Content-Length: 52
+
+{
+    "message": "Charge with id [123456] not found."
+}
+```
 
 -----------------------------------------------------------------------------------------------------------
 
