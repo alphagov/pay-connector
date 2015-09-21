@@ -6,10 +6,7 @@ import org.junit.Test;
 import uk.gov.pay.connector.app.WorldpayConfig;
 import uk.gov.pay.connector.it.base.CardResourceITestBase;
 
-import static java.lang.String.format;
-import static javax.ws.rs.core.MediaType.APPLICATION_JSON;
 import static org.apache.commons.lang3.StringUtils.isNotBlank;
-import static org.hamcrest.core.Is.is;
 
 public class WorldpayCardResourceITest extends CardResourceITestBase {
 
@@ -25,7 +22,7 @@ public class WorldpayCardResourceITest extends CardResourceITestBase {
     }
 
     @Test
-    public void shouldAuthoriseChargeForValidCardDetails() throws Exception {
+    public void shouldAuthoriseCharge_ForValidCardDetails() throws Exception {
 
         String chargeId = createNewCharge();
 
@@ -39,40 +36,16 @@ public class WorldpayCardResourceITest extends CardResourceITestBase {
     }
 
     @Test
-    public void shouldReturnErrorAndDoNotUpdateChargeStatusIfSomeCardDetailsHaveAlreadyBeenSubmitted() throws Exception {
-        String chargeId = createNewCharge();
-
-        givenSetup()
-                .body(validCardDetails)
-                .post(cardUrlFor(chargeId))
-                .then()
-                .statusCode(204);
-
-        String originalStatus = "AUTHORISATION SUCCESS";
-        assertFrontendChargeStatusIs(chargeId, originalStatus);
-
-        givenSetup()
-                .body(validCardDetails)
-                .post(cardUrlFor(chargeId))
-                .then()
-                .statusCode(400)    // Maybe this could be 409?
-                .contentType(APPLICATION_JSON)
-                .body("message", is(format("Card already processed for charge with id %s.", chargeId)));
-
-        assertFrontendChargeStatusIs(chargeId, originalStatus);
-    }
-
-    @Test
-    public void shouldReturnNotAuthorisedForWorldpayErrorCard() throws Exception {
-        String cardDetailsToReject = buildJsonCardDetailsFor("REFUSED", "4444333322221111");
+    public void shouldNotAuthorise_AWorldpayErrorCard() throws Exception {
+        String cardDetailsRejectedByWorldpay = buildJsonCardDetailsFor("REFUSED", "4444333322221111");
 
         String expectedErrorMessage = "This transaction was declined.";
         String expectedChargeStatus = "AUTHORISATION REJECTED";
-        shouldReturnErrorForCardDetailsWithMessage(cardDetailsToReject, expectedErrorMessage, expectedChargeStatus);
+        shouldReturnErrorForCardDetailsWithMessage(cardDetailsRejectedByWorldpay, expectedErrorMessage, expectedChargeStatus);
     }
 
     @Test
-    public void shouldConfirmCardPaymentIfChargeWasAuthorised() {
+    public void shouldCaptureCardPayment_IfChargeWasPreviouslyAuthorised() {
         String chargeId = authoriseNewCharge();
 
         givenSetup()
