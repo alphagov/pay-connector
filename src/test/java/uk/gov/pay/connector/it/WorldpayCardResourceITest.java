@@ -4,17 +4,18 @@ import org.junit.Assume;
 import org.junit.Before;
 import org.junit.Test;
 import uk.gov.pay.connector.app.WorldpayConfig;
+import uk.gov.pay.connector.it.base.CardResourceITestBase;
 
 import static java.lang.String.format;
 import static javax.ws.rs.core.MediaType.APPLICATION_JSON;
 import static org.apache.commons.lang3.StringUtils.isNotBlank;
 import static org.hamcrest.core.Is.is;
 
-public class WorldpayCardAuthorisationResourceITest extends CardDetailsResourceITestBase {
+public class WorldpayCardResourceITest extends CardResourceITestBase {
 
     private String validCardDetails = buildJsonCardDetailsFor("4444333322221111");
 
-    public WorldpayCardAuthorisationResourceITest() {
+    public WorldpayCardResourceITest() {
         super("worldpay");
     }
 
@@ -34,7 +35,7 @@ public class WorldpayCardAuthorisationResourceITest extends CardDetailsResourceI
                 .then()
                 .statusCode(204);
 
-        assertChargeStatusIs(chargeId, "AUTHORISATION SUCCESS");
+        assertFrontendChargeStatusIs(chargeId, "AUTHORISATION SUCCESS");
     }
 
     @Test
@@ -48,7 +49,7 @@ public class WorldpayCardAuthorisationResourceITest extends CardDetailsResourceI
                 .statusCode(204);
 
         String originalStatus = "AUTHORISATION SUCCESS";
-        assertChargeStatusIs(chargeId, originalStatus);
+        assertFrontendChargeStatusIs(chargeId, originalStatus);
 
         givenSetup()
                 .body(validCardDetails)
@@ -58,7 +59,7 @@ public class WorldpayCardAuthorisationResourceITest extends CardDetailsResourceI
                 .contentType(APPLICATION_JSON)
                 .body("message", is(format("Card already processed for charge with id %s.", chargeId)));
 
-        assertChargeStatusIs(chargeId, originalStatus);
+        assertFrontendChargeStatusIs(chargeId, originalStatus);
     }
 
     @Test
@@ -68,6 +69,19 @@ public class WorldpayCardAuthorisationResourceITest extends CardDetailsResourceI
         String expectedErrorMessage = "This transaction was declined.";
         String expectedChargeStatus = "AUTHORISATION REJECTED";
         shouldReturnErrorForCardDetailsWithMessage(cardDetailsToReject, expectedErrorMessage, expectedChargeStatus);
+    }
+
+    @Test
+    public void shouldConfirmCardPaymentIfChargeWasAuthorised() {
+        String chargeId = authoriseNewCharge();
+
+        givenSetup()
+                .post(chargeCaptureUrlFor(chargeId))
+                .then()
+                .statusCode(204);
+
+        assertFrontendChargeStatusIs(chargeId, "CAPTURED");
+        assertApiStatusIs(chargeId, "SUCCEEDED");
     }
 
     private boolean worldPayEnvironmentInitialized() {

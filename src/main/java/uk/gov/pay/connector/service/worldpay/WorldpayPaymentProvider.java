@@ -32,6 +32,7 @@ import static uk.gov.pay.connector.model.CaptureResponse.aSuccessfulCaptureRespo
 import static uk.gov.pay.connector.model.GatewayError.baseGatewayError;
 import static uk.gov.pay.connector.model.domain.ChargeStatus.AUTHORISATION_REJECTED;
 import static uk.gov.pay.connector.model.domain.ChargeStatus.AUTHORISATION_SUCCESS;
+import static uk.gov.pay.connector.model.domain.GatewayAccount.gatewayAccountFor;
 import static uk.gov.pay.connector.worldpay.template.WorldpayRequestGenerator.anOrderCaptureRequest;
 import static uk.gov.pay.connector.worldpay.template.WorldpayRequestGenerator.anOrderSubmitRequest;
 
@@ -45,7 +46,7 @@ public class WorldpayPaymentProvider implements PaymentProvider {
 
     public WorldpayPaymentProvider(WorldpayConfig worldpayConfig) {
         this(ClientBuilder.newClient(),
-                new GatewayAccount(worldpayConfig.getUsername(), worldpayConfig.getPassword()),
+                gatewayAccountFor(worldpayConfig.getUsername(), worldpayConfig.getPassword()),
                 worldpayConfig.getUrl());
     }
 

@@ -1,25 +1,28 @@
-package uk.gov.pay.connector.it;
+package uk.gov.pay.connector.it.base;
 
 import com.google.gson.JsonObject;
 import com.jayway.restassured.specification.RequestSpecification;
 import org.apache.commons.lang.math.RandomUtils;
 import org.junit.Before;
 import org.junit.Rule;
+import uk.gov.pay.connector.model.domain.ChargeStatus;
 import uk.gov.pay.connector.util.DropwizardAppWithPostgresRule;
 
 import static com.jayway.restassured.RestAssured.given;
 import static com.jayway.restassured.http.ContentType.JSON;
 import static org.hamcrest.Matchers.is;
+import static uk.gov.pay.connector.model.domain.ChargeStatus.AUTHORISATION_SUCCESS;
 import static uk.gov.pay.connector.model.domain.ChargeStatus.CREATED;
 import static uk.gov.pay.connector.util.JsonEncoder.toJson;
 
-public class CardDetailsResourceITestBase {
+public class CardResourceITestBase {
+
     @Rule
     public DropwizardAppWithPostgresRule app = new DropwizardAppWithPostgresRule();
     protected final String accountId;
     private final String paymentProvider;
 
-    public CardDetailsResourceITestBase(String paymentProvider) {
+    public CardResourceITestBase(String paymentProvider) {
         this.paymentProvider = paymentProvider;
         accountId = String.valueOf(RandomUtils.nextInt(99999));
     }
@@ -27,10 +30,6 @@ public class CardDetailsResourceITestBase {
     @Before
     public void setupGatewayAccount() {
         app.getDatabaseTestHelper().addGatewayAccount(accountId, paymentProvider);
-    }
-
-    protected String cardUrlFor(String id) {
-        return "/v1/frontend/charges/" + id + "/cards";
     }
 
     protected String cardDetailsWithMinimalAddress(String cardNumber) {
@@ -62,16 +61,34 @@ public class CardDetailsResourceITestBase {
         return buildJsonCardDetailsFor("Mr. Payment", cardNumber, cvc, expiryDate, null, null, "London", null);
     }
 
-    protected void assertChargeStatusIs(String uniqueChargeId, String status) {
+    protected void assertFrontendChargeStatusIs(String chargeId, String status) {
+        assertStatusIs("/v1/frontend/charges/" + chargeId, status);
+    }
+
+    protected void assertApiStatusIs(String chargeId, String status) {
+        assertStatusIs("/v1/api/charges/" + chargeId, status);
+    }
+
+    private void assertStatusIs(String url, String status) {
         given().port(app.getLocalPort())
-                .get("/v1/frontend/charges/" + uniqueChargeId)
+                .get(url)
                 .then()
                 .body("status", is(status));
     }
 
+    protected String authoriseNewCharge() {
+        return createNewChargeWithStatus(AUTHORISATION_SUCCESS);
+    }
+
+
     protected String createNewCharge() {
-        String chargeId = String.valueOf(RandomUtils.nextInt(99999999));
-        app.getDatabaseTestHelper().addCharge(chargeId, accountId, 500, CREATED, "returnUrl");
+        return createNewChargeWithStatus(CREATED);
+    }
+
+    protected String createNewChargeWithStatus(ChargeStatus status) {
+        String chargeId = ((Integer) RandomUtils.nextInt(99999999)).toString();
+
+        app.getDatabaseTestHelper().addCharge(chargeId, accountId, 500, status, "returnUrl");
         return chargeId;
     }
 
@@ -124,6 +141,14 @@ public class CardDetailsResourceITestBase {
                 .contentType(JSON)
                 .body("message", is(errorMessage));
 
-        assertChargeStatusIs(chargeId, status);
+        assertFrontendChargeStatusIs(chargeId, status);
+    }
+
+    protected String cardUrlFor(String id) {
+        return "/v1/frontend/charges/" + id + "/cards";
+    }
+
+    protected String chargeCaptureUrlFor(String unknownChargeId) {
+        return "/v1/frontend/charges/" + unknownChargeId + "/capture";
     }
 }

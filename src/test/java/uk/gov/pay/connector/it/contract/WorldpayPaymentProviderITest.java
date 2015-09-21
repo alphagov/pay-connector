@@ -1,4 +1,4 @@
-package uk.gov.pay.connector.it;
+package uk.gov.pay.connector.it.contract;
 
 import org.junit.Assume;
 import org.junit.Before;
@@ -9,7 +9,6 @@ import uk.gov.pay.connector.model.AuthorisationRequest;
 import uk.gov.pay.connector.model.AuthorisationResponse;
 import uk.gov.pay.connector.model.domain.Amount;
 import uk.gov.pay.connector.model.domain.Card;
-import uk.gov.pay.connector.model.domain.GatewayAccount;
 import uk.gov.pay.connector.service.worldpay.WorldpayPaymentProvider;
 import uk.gov.pay.connector.util.DropwizardAppWithPostgresRule;
 
@@ -18,6 +17,7 @@ import javax.ws.rs.client.ClientBuilder;
 import static org.apache.commons.lang3.StringUtils.isNotBlank;
 import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertTrue;
+import static uk.gov.pay.connector.model.domain.GatewayAccount.gatewayAccountFor;
 import static uk.gov.pay.connector.util.CardUtils.aValidCard;
 
 public class WorldpayPaymentProviderITest {
@@ -31,7 +31,7 @@ public class WorldpayPaymentProviderITest {
     }
 
     @Test
-    public void shouldSendSuccessfullyAOrderForMerchant() throws Exception {
+    public void shouldSendSuccessfullyAnOrderForMerchant() throws Exception {
 
         WorldpayPaymentProvider connector = new WorldpayPaymentProvider(getWorldpayConfig());
         AuthorisationRequest request = getCardAuthorisationRequest();
@@ -42,12 +42,11 @@ public class WorldpayPaymentProviderITest {
 
     @Test
     public void shouldFailRequestAuthorisationIfCredentialsAreNotCorrect() throws Exception {
-        GatewayAccount gatewayAccount = new GatewayAccount("wrongUsername", "wrongPassword");
         String worldpayUrl = getWorldpayConfig().getUrl();
 
         WorldpayPaymentProvider connector = new WorldpayPaymentProvider(
                 ClientBuilder.newClient(),
-                gatewayAccount,
+                gatewayAccountFor("wrongUsername", "wrongPassword"),
                 worldpayUrl);
 
         AuthorisationRequest request = getCardAuthorisationRequest();

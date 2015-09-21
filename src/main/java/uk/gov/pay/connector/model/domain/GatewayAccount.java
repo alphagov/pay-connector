@@ -5,10 +5,13 @@ public class GatewayAccount {
     private String username;
     private String password;
 
-    public GatewayAccount(String username, String password) {
-
+    private GatewayAccount(String username, String password) {
         this.username = username;
         this.password = password;
+    }
+
+    public static GatewayAccount gatewayAccountFor(String username, String password) {
+        return new GatewayAccount(username, password);
     }
 
     public String getMerchantId() {

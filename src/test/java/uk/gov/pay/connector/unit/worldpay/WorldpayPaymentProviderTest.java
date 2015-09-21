@@ -10,7 +10,6 @@ import uk.gov.pay.connector.model.GatewayError;
 import uk.gov.pay.connector.model.domain.Address;
 import uk.gov.pay.connector.model.domain.Amount;
 import uk.gov.pay.connector.model.domain.Card;
-import uk.gov.pay.connector.model.domain.GatewayAccount;
 import uk.gov.pay.connector.service.worldpay.WorldpayPaymentProvider;
 
 import javax.ws.rs.client.Client;
@@ -31,13 +30,14 @@ import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
 import static uk.gov.pay.connector.model.GatewayErrorType.BaseGatewayError;
 import static uk.gov.pay.connector.model.domain.Address.anAddress;
+import static uk.gov.pay.connector.model.domain.GatewayAccount.gatewayAccountFor;
 import static uk.gov.pay.connector.util.CardUtils.buildCardDetails;
 
 
 public class WorldpayPaymentProviderTest {
 
     private final Client client = mock(Client.class);
-    private final WorldpayPaymentProvider connector = new WorldpayPaymentProvider(client, new GatewayAccount("MERCHANTCODE", "password"), "http://worldpay.url");
+    private final WorldpayPaymentProvider connector = new WorldpayPaymentProvider(client, gatewayAccountFor("theUsername", "thePassword"), "http://worldpay.url");
 
     @Test
     public void shouldSendSuccessfullyAOrderForMerchant() throws Exception {

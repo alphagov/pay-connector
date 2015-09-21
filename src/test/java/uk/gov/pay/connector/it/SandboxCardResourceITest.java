@@ -1,12 +1,14 @@
 package uk.gov.pay.connector.it;
 
 import org.junit.Test;
+import uk.gov.pay.connector.it.base.CardResourceITestBase;
 
 import static com.jayway.restassured.http.ContentType.JSON;
 import static java.lang.String.format;
 import static org.hamcrest.Matchers.is;
+import static uk.gov.pay.connector.model.domain.ChargeStatus.AUTHORISATION_SUBMITTED;
 
-public class SandboxCardDetailsResourceITest extends CardDetailsResourceITestBase {
+public class SandboxCardResourceITest extends CardResourceITestBase {
 
     private static final String[] VALID_CARD_NO_LIST = new String[]{
             "4242424242424242",
@@ -22,7 +24,7 @@ public class SandboxCardDetailsResourceITest extends CardDetailsResourceITestBas
     };
     private String validCardDetails = buildJsonCardDetailsFor(VALID_CARD_NO_LIST[0]);
 
-    public SandboxCardDetailsResourceITest() {
+    public SandboxCardResourceITest() {
         super("sandbox");
     }
 
@@ -54,7 +56,7 @@ public class SandboxCardDetailsResourceITest extends CardDetailsResourceITestBas
                 .then()
                 .statusCode(204);
 
-        assertChargeStatusIs(chargeId, "AUTHORISATION SUCCESS");
+        assertFrontendChargeStatusIs(chargeId, "AUTHORISATION SUCCESS");
     }
 
     @Test
@@ -70,7 +72,7 @@ public class SandboxCardDetailsResourceITest extends CardDetailsResourceITestBas
                 .contentType(JSON)
                 .body("message", is("Unsupported card details."));
 
-        assertChargeStatusIs(chargeId, "CREATED");
+        assertFrontendChargeStatusIs(chargeId, "CREATED");
     }
 
     @Test
@@ -86,7 +88,7 @@ public class SandboxCardDetailsResourceITest extends CardDetailsResourceITestBas
                 .contentType(JSON)
                 .body("message", is("Values do not match expected format/length."));
 
-        assertChargeStatusIs(chargeId, "CREATED");
+        assertFrontendChargeStatusIs(chargeId, "CREATED");
     }
 
     @Test
@@ -100,7 +102,7 @@ public class SandboxCardDetailsResourceITest extends CardDetailsResourceITestBas
                 .statusCode(204);
 
         String originalStatus = "AUTHORISATION SUCCESS";
-        assertChargeStatusIs(chargeId, originalStatus);
+        assertFrontendChargeStatusIs(chargeId, originalStatus);
 
         givenSetup()
                 .body(validCardDetails)
@@ -110,7 +112,7 @@ public class SandboxCardDetailsResourceITest extends CardDetailsResourceITestBas
                 .contentType(JSON)
                 .body("message", is(format("Card already processed for charge with id %s.", chargeId)));
 
-        assertChargeStatusIs(chargeId, originalStatus);
+        assertFrontendChargeStatusIs(chargeId, originalStatus);
     }
 
     @Test
@@ -162,4 +164,40 @@ public class SandboxCardDetailsResourceITest extends CardDetailsResourceITestBas
         shouldReturnErrorForCardDetailsWithMessage(cardDetailsToReject, expectedErrorMessage, expectedChargeStatus);
     }
 
+    @Test
+    public void shouldConfirmCardPaymentIfChargeWasAuthorised() {
+        String chargeId = authoriseNewCharge();
+
+        givenSetup()
+                .post(chargeCaptureUrlFor(chargeId))
+                .then()
+                .statusCode(204);
+
+        assertFrontendChargeStatusIs(chargeId, "CAPTURED");
+        assertApiStatusIs(chargeId, "SUCCEEDED");
+    }
+
+    @Test
+    public void shouldReturnErrorWithoutChangingChargeState_IfOriginalStateIsNotAuthSuccess() {
+        String chargeIdNotAuthorised = createNewChargeWithStatus(AUTHORISATION_SUBMITTED);
+
+        givenSetup()
+                .post(chargeCaptureUrlFor(chargeIdNotAuthorised))
+                .then()
+                .statusCode(400)
+                .contentType(JSON)
+                .body("message", is("Cannot capture a charge with status " + AUTHORISATION_SUBMITTED.getValue() + "."));
+
+        assertFrontendChargeStatusIs(chargeIdNotAuthorised, "AUTHORISATION SUBMITTED");
+    }
+
+    @Test
+    public void shouldReturn404iftheChargeCannotBeFound() {
+        String unknownChargeId = "398579438759438";
+
+        givenSetup()
+                .post(chargeCaptureUrlFor(unknownChargeId))
+                .then()
+                .statusCode(404);
+    }
 }
