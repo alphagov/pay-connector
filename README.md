@@ -43,15 +43,15 @@ POST /v1/api/accounts
 Content-Type: application/json
 
 {
-    "name": "Service Number 1"
+    "payment_provider": "sandbox"
 }
 ```
 
 ##### Request body description
 
-| Field                    | required | Description                               |
-| ------------------------ |:--------:| ----------------------------------------- |
-| `name`                 | X | The human friendly name of the account       |
+| Field                    | required | Description                               | Supported Values     |
+| ------------------------ |:--------:| ----------------------------------------- |----------------------|
+| `payment_provider`                 | X | The payment provider for which this account is created.       | sandbox, worldpay |
 
 #### Response example
 
@@ -61,7 +61,7 @@ Content-Type: application/json
 Location: http://connector.service/v1/api/accounts/1
 
 {
-    "name": "Service Number 1",
+    "payment_provider": "sandbox",
     "links": [{
         "href": "http://connector.service/v1/api/accounts/1",
         "rel" : "self",
@@ -75,7 +75,7 @@ Location: http://connector.service/v1/api/accounts/1
 
 | Field                    | always present | Description                               |
 | ------------------------ |:--------:| ----------------------------------------- |
-| `name`                 | X | The account name       |
+| `payment_provider`                 | X | The payment provider for which this account is created.       |
 
 -----------------------------------------------------------------------------------------------------------
 
