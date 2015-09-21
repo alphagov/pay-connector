@@ -38,10 +38,6 @@ public class TokenDao {
                                 .first()
         );
 
-        if(StringUtils.isEmpty(tokenId)) {
-            throw new PayDBIException(format("Unexpected: tokenId was not found for chargeId = '%s'", chargeId));
-        }
-
         return tokenId;
     }
 

@@ -29,6 +29,7 @@ import java.util.UUID;
 
 import static com.google.common.collect.Lists.newArrayList;
 import static javax.ws.rs.core.MediaType.APPLICATION_JSON;
+import static org.apache.commons.lang3.StringUtils.isEmpty;
 import static uk.gov.pay.connector.model.api.ExternalChargeStatus.mapFromStatus;
 import static uk.gov.pay.connector.model.api.Link.aLink;
 import static uk.gov.pay.connector.util.ResponseUtil.badRequestResponse;
@@ -145,9 +146,14 @@ public class ChargesApiResource {
 
     private Map<String, Object> addLinks(Map<String, Object> charge, String selfUrl, String chargeId, String tokenId) {
         List<Map<String, String>> links = newArrayList(
-                aLink(selfUrl, "self", "GET").toMap(),
-                aLink(linksConfig.getCardDetailsUrl().replace("{chargeId}", chargeId).replace("{chargeTokenId}", tokenId), "next_url", "GET").toMap()
+                aLink(selfUrl, "self", "GET").toMap()
         );
+
+        if(!isEmpty(tokenId)) {
+            links.add(
+                aLink(linksConfig.getCardDetailsUrl().replace("{chargeId}", chargeId).replace("{chargeTokenId}", tokenId), "next_url", "GET").toMap()
+            );
+        }
 
         charge.put("links", links);
         return charge;
