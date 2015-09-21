@@ -12,6 +12,7 @@ import static com.jayway.restassured.http.ContentType.JSON;
 import static java.lang.String.format;
 import static org.hamcrest.Matchers.containsString;
 import static org.hamcrest.Matchers.is;
+import static org.hamcrest.Matchers.notNullValue;
 import static uk.gov.pay.connector.util.JsonEncoder.toJson;
 
 public class GatewayAccountResourceITest {
@@ -92,7 +93,8 @@ public class GatewayAccountResourceITest {
                 .then()
                 .statusCode(200)
                 .contentType(JSON)
-                .body("payment_provider", is(providerName));
+                .body("payment_provider", is(providerName))
+                .body("gateway_account_id", is(notNullValue()));
     }
 
     private void assertCorrectAccountLocationIn(ValidatableResponse response) {
@@ -100,6 +102,7 @@ public class GatewayAccountResourceITest {
         String urlSlug = "api/accounts/" + accountId;
 
         response.header("Location", containsString(urlSlug))
+                .body("gateway_account_id", containsString(accountId))
                 .body("links[0].href", containsString(urlSlug))
                 .body("links[0].rel", is("self"))
                 .body("links[0].method", is("GET"));
