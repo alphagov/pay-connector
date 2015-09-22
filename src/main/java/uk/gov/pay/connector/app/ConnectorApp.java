@@ -12,6 +12,7 @@ import io.dropwizard.setup.Environment;
 import org.skife.jdbi.v2.DBI;
 import uk.gov.pay.connector.dao.ChargeDao;
 import uk.gov.pay.connector.dao.GatewayAccountDao;
+import uk.gov.pay.connector.dao.TokenDao;
 import uk.gov.pay.connector.healthcheck.DatabaseHealthCheck;
 import uk.gov.pay.connector.healthcheck.Ping;
 import uk.gov.pay.connector.resources.CardDetailsResource;
@@ -19,6 +20,7 @@ import uk.gov.pay.connector.resources.ChargeCaptureResource;
 import uk.gov.pay.connector.resources.ChargesApiResource;
 import uk.gov.pay.connector.resources.ChargesFrontendResource;
 import uk.gov.pay.connector.resources.GatewayAccountResource;
+import uk.gov.pay.connector.resources.SecurityTokensResource;
 import uk.gov.pay.connector.util.DbConnectionChecker;
 
 public class ConnectorApp extends Application<ConnectorConfiguration> {
@@ -58,9 +60,11 @@ public class ConnectorApp extends Application<ConnectorConfiguration> {
                 .build(environment, dataSourceFactory, "postgresql");
 
         ChargeDao chargeDao = new ChargeDao(jdbi);
+        TokenDao tokenDao = new TokenDao(jdbi);
         GatewayAccountDao gatewayAccountDao = new GatewayAccountDao(jdbi);
 
-        environment.jersey().register(new ChargesApiResource(chargeDao, gatewayAccountDao, conf.getLinks()));
+        environment.jersey().register(new SecurityTokensResource(tokenDao));
+        environment.jersey().register(new ChargesApiResource(chargeDao, tokenDao, gatewayAccountDao, conf.getLinks()));
         environment.jersey().register(new ChargesFrontendResource(chargeDao));
         environment.jersey().register(new CardDetailsResource(chargeDao));
         environment.jersey().register(new ChargeCaptureResource(chargeDao));

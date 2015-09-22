@@ -16,7 +16,7 @@ public class ResponseUtil {
 
     public static Response fieldsMissingResponse(Logger logger, List<String> missingFields) {
         String message = format("Field(s) missing: [%s]", COMMA_JOINER.join(missingFields));
-        return badResponse(logger, message);
+        return badRequestResponse(logger, message);
     }
 
     public static Response responseWithChargeNotFound(Logger logger, String chargeId) {
@@ -24,7 +24,7 @@ public class ResponseUtil {
         return notFoundResponse(logger, message);
     }
 
-    public static Response badResponse(Logger logger, String message) {
+    public static Response badRequestResponse(Logger logger, String message) {
         logger.error(message);
         return responseWithMessage(BAD_REQUEST, message);
     }

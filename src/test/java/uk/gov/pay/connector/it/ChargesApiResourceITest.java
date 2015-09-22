@@ -79,6 +79,7 @@ public class ChargesApiResourceITest {
     public void shouldFilterChargeStatusToReturnInProgressIfInternalStatusIsAuthorised() throws Exception {
         String chargeId = ((Integer) RandomUtils.nextInt(99999999)).toString();
         app.getDatabaseTestHelper().addCharge(chargeId, accountId, 500, AUTHORIZATION_SUCCESS, returnUrl);
+        app.getDatabaseTestHelper().addToken(chargeId, "tokenId");
 
         getChargeResponseFor(chargeId)
                 .statusCode(200)
@@ -140,6 +141,7 @@ public class ChargesApiResourceITest {
     }
 
     private String cardDetailsLocationFor(String chargeId) {
-        return "http://Frontend" + FRONTEND_CARD_DETAILS_URL + chargeId;
+        String chargeTokenId = app.getDatabaseTestHelper().getChargeTokenId(chargeId);
+        return "http://Frontend" + FRONTEND_CARD_DETAILS_URL + chargeId + "?chargeTokenId=" + chargeTokenId;
     }
 }

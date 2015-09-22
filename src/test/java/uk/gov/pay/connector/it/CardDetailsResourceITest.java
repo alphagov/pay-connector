@@ -238,6 +238,7 @@ public class CardDetailsResourceITest {
     private String createNewCharge() {
         String chargeId = ((Integer) RandomUtils.nextInt(99999999)).toString();
         app.getDatabaseTestHelper().addCharge(chargeId, accountId, 500, CREATED, "http://whatever.com");
+        app.getDatabaseTestHelper().addToken(chargeId, "tokenId");
         return chargeId;
     }
 

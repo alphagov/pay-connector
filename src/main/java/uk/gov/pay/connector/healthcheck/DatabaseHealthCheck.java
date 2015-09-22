@@ -2,7 +2,6 @@ package uk.gov.pay.connector.healthcheck;
 
 import com.codahale.metrics.health.HealthCheck;
 import org.skife.jdbi.v2.DBI;
-import org.skife.jdbi.v2.Handle;
 
 public class DatabaseHealthCheck extends HealthCheck {
     private final DBI database;

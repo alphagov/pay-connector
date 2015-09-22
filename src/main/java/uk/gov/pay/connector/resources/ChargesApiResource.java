@@ -6,6 +6,7 @@ import org.slf4j.LoggerFactory;
 import uk.gov.pay.connector.app.LinksConfig;
 import uk.gov.pay.connector.dao.ChargeDao;
 import uk.gov.pay.connector.dao.GatewayAccountDao;
+import uk.gov.pay.connector.dao.TokenDao;
 import uk.gov.pay.connector.model.api.ExternalChargeStatus;
 import uk.gov.pay.connector.util.ResponseUtil;
 
@@ -24,12 +25,14 @@ import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 import java.util.stream.Collectors;
+import java.util.UUID;
 
 import static com.google.common.collect.Lists.newArrayList;
 import static javax.ws.rs.core.MediaType.APPLICATION_JSON;
+import static org.apache.commons.lang3.StringUtils.isEmpty;
 import static uk.gov.pay.connector.model.api.ExternalChargeStatus.mapFromStatus;
 import static uk.gov.pay.connector.model.api.Link.aLink;
-import static uk.gov.pay.connector.util.ResponseUtil.badResponse;
+import static uk.gov.pay.connector.util.ResponseUtil.badRequestResponse;
 import static uk.gov.pay.connector.util.ResponseUtil.fieldsMissingResponse;
 
 @Path("/")
@@ -43,14 +46,17 @@ public class ChargesApiResource {
     private static final String[] REQUIRED_FIELDS = {AMOUNT_KEY, GATEWAY_ACCOUNT_KEY, RETURN_URL_KEY};
 
     private static final String STATUS_KEY = "status";
+    private static final String SECURE_REDIRECT_TOKEN = "secure_redirect_token";
 
     private ChargeDao chargeDao;
+    private TokenDao tokenDao;
     private GatewayAccountDao gatewayAccountDao;
     private LinksConfig linksConfig;
     private Logger logger = LoggerFactory.getLogger(ChargesApiResource.class);
 
-    public ChargesApiResource(ChargeDao chargeDao, GatewayAccountDao gatewayAccountDao, LinksConfig linksConfig) {
+    public ChargesApiResource(ChargeDao chargeDao, TokenDao tokenDao, GatewayAccountDao gatewayAccountDao, LinksConfig linksConfig) {
         this.chargeDao = chargeDao;
+        this.tokenDao = tokenDao;
         this.gatewayAccountDao = gatewayAccountDao;
         this.linksConfig = linksConfig;
     }
@@ -60,9 +66,12 @@ public class ChargesApiResource {
     @Produces(APPLICATION_JSON)
     public Response getCharge(@PathParam("chargeId") String chargeId, @Context UriInfo uriInfo) {
         Optional<Map<String, Object>> maybeCharge = chargeDao.findById(chargeId);
+
         return maybeCharge
                 .map(charge -> {
                     URI documentLocation = chargeLocationFor(uriInfo, chargeId);
+                    String tokenId = tokenDao.findByChargeId(chargeId);
+                    charge.put(SECURE_REDIRECT_TOKEN, tokenId);
                     Map<String, Object> responseData = chargeResponseData(charge, documentLocation.toString(), chargeId);
                     return Response.ok(responseData).build();
                 })
@@ -81,17 +90,21 @@ public class ChargesApiResource {
 
         String gatewayAccountId = chargeRequest.get("gateway_account_id").toString();
         if (gatewayAccountDao.idIsMissing(gatewayAccountId)) {
-            return badResponse(logger, "Unknown gateway account: " + gatewayAccountId);
+            return badRequestResponse(logger, "Unknown gateway account: " + gatewayAccountId);
         }
 
         logger.info("Creating new charge of {}.", chargeRequest);
         String chargeId = chargeDao.saveNewCharge(chargeRequest);
+        String tokenId = UUID.randomUUID().toString();
+        tokenDao.insertNewToken(chargeId, tokenId);
 
         Optional<Map<String, Object>> maybeCharge = chargeDao.findById(chargeId);
 
         return maybeCharge
                 .map(charge -> {
                     URI newLocation = chargeLocationFor(uriInfo, chargeId);
+
+                    charge.put(SECURE_REDIRECT_TOKEN, tokenId);
                     Map<String, Object> responseData = chargeResponseData(charge, newLocation.toString(), chargeId);
 
                     logger.info("charge = {}", charge);
@@ -106,7 +119,8 @@ public class ChargesApiResource {
     private Map<String, Object> chargeResponseData(Map<String, Object> charge, String selfUrl, String chargeId) {
         Map<String, Object> externalData = Maps.newHashMap(charge);
         externalData = convertStatusToExternalStatus(externalData);
-        return addLinks(externalData, selfUrl, chargeId);
+        String tokenId = (String)charge.remove(SECURE_REDIRECT_TOKEN);
+        return addLinks(externalData, selfUrl, chargeId, tokenId);
     }
 
     private Map<String, Object> convertStatusToExternalStatus(Map<String, Object> data) {
@@ -130,11 +144,16 @@ public class ChargesApiResource {
                 : Optional.of(missing);
     }
 
-    private Map<String, Object> addLinks(Map<String, Object> charge, String selfUrl, String chargeId) {
+    private Map<String, Object> addLinks(Map<String, Object> charge, String selfUrl, String chargeId, String tokenId) {
         List<Map<String, String>> links = newArrayList(
-                aLink(selfUrl, "self", "GET").toMap(),
-                aLink(linksConfig.getCardDetailsUrl().replace("{chargeId}", chargeId), "next_url", "GET").toMap()
+                aLink(selfUrl, "self", "GET").toMap()
         );
+
+        if(!isEmpty(tokenId)) {
+            links.add(
+                aLink(linksConfig.getCardDetailsUrl().replace("{chargeId}", chargeId).replace("{chargeTokenId}", tokenId), "next_url", "GET").toMap()
+            );
+        }
 
         charge.put("links", links);
         return charge;

@@ -1,20 +1,15 @@
 package uk.gov.pay.connector.dao;
 
-import org.apache.commons.lang3.StringUtils;
 import org.skife.jdbi.v2.DBI;
 import org.skife.jdbi.v2.DefaultMapper;
 import org.skife.jdbi.v2.util.StringMapper;
 import uk.gov.pay.connector.model.ChargeStatus;
 
-import java.util.List;
 import java.util.Map;
 import java.util.Optional;
-import java.util.stream.Collectors;
 
-import static com.google.common.collect.Lists.newArrayList;
 import static com.google.common.collect.Maps.newHashMap;
 import static java.lang.String.format;
-import static org.apache.commons.lang3.BooleanUtils.negate;
 
 public class ChargeDao {
     private DBI jdbi;
@@ -52,7 +47,7 @@ public class ChargeDao {
         return Optional.ofNullable(data);
     }
 
-    public void updateStatus(String chargeId, ChargeStatus newStatus) throws PayDBIException {
+    public void updateStatus(String chargeId, ChargeStatus newStatus) {
         Integer numberOfUpdates = jdbi.withHandle(handle ->
                         handle
                                 .createStatement("UPDATE charges SET status=:status WHERE charge_id=:charge_id")
