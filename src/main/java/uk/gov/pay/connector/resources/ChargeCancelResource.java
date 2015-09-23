@@ -26,7 +26,7 @@ import static uk.gov.pay.connector.model.ChargeStatus.ENTERING_CARD_DETAILS;
 import static uk.gov.pay.connector.model.ChargeStatus.READY_FOR_CAPTURE;
 import static uk.gov.pay.connector.model.ChargeStatus.STATUS_KEY;
 import static uk.gov.pay.connector.model.ChargeStatus.SYSTEM_CANCELLED;
-import static uk.gov.pay.connector.util.ResponseUtil.badResponse;
+import static uk.gov.pay.connector.util.ResponseUtil.badRequestResponse;
 import static uk.gov.pay.connector.util.ResponseUtil.responseWithChargeNotFound;
 
 @Path("/")
@@ -62,7 +62,7 @@ public class ChargeCancelResource {
     }
 
     private Response responseWithChargeStatusIncorrect(String status) {
-        return badResponse(logger, format("Cannot cancel a charge with status %s.", status));
+        return badRequestResponse(logger, format("Cannot cancel a charge with status %s.", status));
     }
 
     private static boolean isCancellable(Map<String, Object> charge) {
