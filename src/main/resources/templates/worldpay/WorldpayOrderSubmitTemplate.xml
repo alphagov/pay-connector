@@ -5,7 +5,7 @@
     <submit>
         <order orderCode="${transactionId}">
             <description>${description}</description>
-            <amount currencyCode="${amount.currencyCode}" exponent="${amount.exponent}" value="${amount.value}"/>
+            <amount currencyCode="GBP" exponent="2" value="${amount}"/>
             <paymentDetails>
                 <VISA-SSL>
                     <cardNumber>${card.cardNo}</cardNumber>

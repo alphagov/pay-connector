@@ -15,7 +15,6 @@ import javax.ws.rs.core.UriInfo;
 import java.net.URI;
 import java.util.List;
 import java.util.Map;
-import java.util.Optional;
 
 import static java.lang.String.format;
 import static javax.ws.rs.core.MediaType.APPLICATION_JSON;
@@ -42,11 +41,10 @@ public class GatewayAccountResource {
 
         logger.info("Getting gateway account for account id {}", accountId);
 
-        Optional<Map<String, Object>> accountMaybe = gatewayDao.findById(accountId);
-        if (!accountMaybe.isPresent()) {
-            return notFoundResponse(logger, format("Account with id %s not found.", accountId));
-        }
-        return Response.ok().entity(accountMaybe.get()).build();
+        return gatewayDao.findById(accountId)
+                .map(account -> Response.ok().entity(account).build())
+                .orElseGet(() -> notFoundResponse(logger, format("Account with id %s not found.", accountId)));
+
     }
 
     @POST

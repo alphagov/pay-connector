@@ -16,37 +16,37 @@ public class Address {
         return new Address();
     }
 
-    @JsonProperty("line1")
+    @JsonProperty
     public void setLine1(String line1) {
         this.line1 = line1;
     }
 
-    @JsonProperty("line2")
+    @JsonProperty
     public void setLine2(String line2) {
         this.line2 = line2;
     }
 
-    @JsonProperty("line3")
+    @JsonProperty
     public void setLine3(String line3) {
         this.line3 = line3;
     }
 
-    @JsonProperty("postcode")
+    @JsonProperty
     public void setPostcode(String postcode) {
         this.postcode = postcode;
     }
 
-    @JsonProperty("city")
+    @JsonProperty
     public void setCity(String city) {
         this.city = city;
     }
 
-    @JsonProperty("county")
+    @JsonProperty
     public void setCounty(String county) {
         this.county = county;
     }
 
-    @JsonProperty("country")
+    @JsonProperty
     public void setCountry(String country) {
         this.country = country;
     }

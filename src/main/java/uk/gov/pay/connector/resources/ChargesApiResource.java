@@ -10,22 +10,13 @@ import uk.gov.pay.connector.dao.TokenDao;
 import uk.gov.pay.connector.model.api.ExternalChargeStatus;
 import uk.gov.pay.connector.util.ResponseUtil;
 
-import javax.ws.rs.Consumes;
-import javax.ws.rs.GET;
-import javax.ws.rs.POST;
-import javax.ws.rs.Path;
-import javax.ws.rs.PathParam;
-import javax.ws.rs.Produces;
+import javax.ws.rs.*;
 import javax.ws.rs.core.Context;
 import javax.ws.rs.core.Response;
 import javax.ws.rs.core.UriInfo;
 import java.net.URI;
-import java.util.Arrays;
-import java.util.List;
-import java.util.Map;
-import java.util.Optional;
+import java.util.*;
 import java.util.stream.Collectors;
-import java.util.UUID;
 
 import static com.google.common.collect.Lists.newArrayList;
 import static javax.ws.rs.core.MediaType.APPLICATION_JSON;

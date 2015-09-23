@@ -3,7 +3,6 @@ package uk.gov.pay.connector.unit.worldpay.template;
 import com.google.common.io.Resources;
 import org.junit.Test;
 import uk.gov.pay.connector.model.domain.Address;
-import uk.gov.pay.connector.model.domain.Amount;
 import uk.gov.pay.connector.model.domain.Card;
 
 import java.io.IOException;
@@ -13,9 +12,9 @@ import static com.google.common.io.Resources.getResource;
 import static org.custommonkey.xmlunit.XMLAssert.assertXMLEqual;
 import static uk.gov.pay.connector.model.domain.Address.anAddress;
 import static uk.gov.pay.connector.util.CardUtils.buildCardDetails;
-import static uk.gov.pay.connector.worldpay.template.WorldpayRequestGenerator.anOrderSubmitRequest;
+import static uk.gov.pay.connector.worldpay.template.WorldpayOrderSubmitRequestBuilder.anOrderSubmitRequest;
 
-public class WorldpayRequestGeneratorTest {
+public class WorldpayRequestBuilderTest {
     @Test
     public void shouldGenerateValidOrderSubmitPayloadForAddressWithMinimumFields() throws Exception {
 
@@ -26,13 +25,12 @@ public class WorldpayRequestGeneratorTest {
         minAddress.setCountry("GB");
 
         Card card = getValidTestCard(minAddress);
-        Amount amount = new Amount("500");
 
         String actualRequest = anOrderSubmitRequest()
                 .withMerchantCode("MERCHANTCODE")
                 .withTransactionId("MyUniqueTransactionId!")
                 .withDescription("This is the description")
-                .withAmount(amount)
+                .withAmount("500")
                 .withCard(card)
                 .build();
 
@@ -52,13 +50,12 @@ public class WorldpayRequestGeneratorTest {
         fullAddress.setCountry("GB");
 
         Card card = getValidTestCard(fullAddress);
-        Amount amount = new Amount("500");
 
         String actualRequest = anOrderSubmitRequest()
                 .withMerchantCode("MERCHANTCODE")
                 .withTransactionId("MyUniqueTransactionId!")
                 .withDescription("This is the description")
-                .withAmount(amount)
+                .withAmount("500")
                 .withCard(card)
                 .build();
 

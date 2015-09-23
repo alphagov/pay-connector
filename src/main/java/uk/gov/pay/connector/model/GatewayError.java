@@ -1,6 +1,6 @@
 package uk.gov.pay.connector.model;
 
-import static uk.gov.pay.connector.model.GatewayErrorType.BaseGatewayError;
+import static uk.gov.pay.connector.model.GatewayErrorType.GenericGatewayError;
 
 public class GatewayError {
     private String message;
@@ -12,7 +12,7 @@ public class GatewayError {
     }
 
     public static GatewayError baseGatewayError(String msg) {
-        return new GatewayError(msg, BaseGatewayError);
+        return new GatewayError(msg, GenericGatewayError);
     }
 
     public String getMessage() {

@@ -2,40 +2,44 @@ package uk.gov.pay.connector.worldpay.template;
 
 
 import org.joda.time.DateTime;
-import uk.gov.pay.connector.model.domain.Amount;
 
 import java.util.Map;
 
 import static com.google.common.collect.Maps.newHashMap;
 
-public class WorldpayOrderCaptureRequestGenerator extends WorldpayRequestGenerator {
+public class WorldpayOrderCaptureRequestBuilder {
 
+    private final WorldpayRequestBuilder requestBuilder;
     private String merchantCode;
     private String transactionId;
-    private Amount amount;
+    private String amount;
     private DateTime date;
 
-    public WorldpayOrderCaptureRequestGenerator() {
-        super("WorldpayOrderCaptureTemplate.xml");
+    public static WorldpayOrderCaptureRequestBuilder anOrderCaptureRequest() {
+        return new WorldpayOrderCaptureRequestBuilder();
     }
 
-    public WorldpayOrderCaptureRequestGenerator withMerchantCode(String merchantCode) {
+    public WorldpayOrderCaptureRequestBuilder() {
+        this.requestBuilder = new WorldpayRequestBuilder("WorldpayOrderCaptureTemplate.xml");
+    }
+
+    public WorldpayOrderCaptureRequestBuilder withMerchantCode(String merchantCode) {
         this.merchantCode = merchantCode;
 
         return this;
     }
 
-    public WorldpayOrderCaptureRequestGenerator withTransactionId(String transactionId) {
+    public WorldpayOrderCaptureRequestBuilder withTransactionId(String transactionId) {
         this.transactionId = transactionId;
         return this;
     }
 
-    public WorldpayOrderCaptureRequestGenerator withAmount(Amount amount) {
+    public WorldpayOrderCaptureRequestBuilder withAmount(String amount) {
         this.amount = amount;
         return this;
     }
 
-    public WorldpayOrderCaptureRequestGenerator withDate(DateTime date) {
+    public WorldpayOrderCaptureRequestBuilder withDate(DateTime date) {
         this.date = date;
         return this;
     }
@@ -46,6 +50,6 @@ public class WorldpayOrderCaptureRequestGenerator extends WorldpayRequestGenerat
         templateData.put("transactionId", transactionId);
         templateData.put("captureDate", date);
         templateData.put("amount", amount);
-        return buildWith(templateData);
+        return requestBuilder.buildWith(templateData);
     }
 }

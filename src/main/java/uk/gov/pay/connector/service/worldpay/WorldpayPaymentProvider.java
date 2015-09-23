@@ -33,8 +33,8 @@ import static uk.gov.pay.connector.model.GatewayError.baseGatewayError;
 import static uk.gov.pay.connector.model.domain.ChargeStatus.AUTHORISATION_REJECTED;
 import static uk.gov.pay.connector.model.domain.ChargeStatus.AUTHORISATION_SUCCESS;
 import static uk.gov.pay.connector.model.domain.GatewayAccount.gatewayAccountFor;
-import static uk.gov.pay.connector.worldpay.template.WorldpayRequestGenerator.anOrderCaptureRequest;
-import static uk.gov.pay.connector.worldpay.template.WorldpayRequestGenerator.anOrderSubmitRequest;
+import static uk.gov.pay.connector.worldpay.template.WorldpayOrderCaptureRequestBuilder.anOrderCaptureRequest;
+import static uk.gov.pay.connector.worldpay.template.WorldpayOrderSubmitRequestBuilder.anOrderSubmitRequest;
 
 public class WorldpayPaymentProvider implements PaymentProvider {
     private final Logger logger = LoggerFactory.getLogger(WorldpayPaymentProvider.class);
@@ -63,7 +63,7 @@ public class WorldpayPaymentProvider implements PaymentProvider {
 
         Response response = postRequestFor(gatewayAccount, buildOrderSubmitFor(request, gatewayTransactionId));
         return response.getStatus() == OK.getStatusCode() ?
-                mapToCardAuthorisationResponse(response, gatewayAccount.getMerchantId(), gatewayTransactionId) :
+                mapToCardAuthorisationResponse(response, gatewayAccount.getUsername(), gatewayTransactionId) :
                 handleAuthoriseError(gatewayTransactionId, response);
     }
 
@@ -78,7 +78,7 @@ public class WorldpayPaymentProvider implements PaymentProvider {
 
     private String buildOrderCaptureFor(CaptureRequest request) {
         return anOrderCaptureRequest()
-                .withMerchantCode(gatewayAccount.getMerchantId())
+                .withMerchantCode(gatewayAccount.getUsername())
                 .withTransactionId(request.getTransactionId())
                 .withAmount(request.getAmount())
                 .withDate(DateTime.now(DateTimeZone.UTC))
@@ -87,7 +87,7 @@ public class WorldpayPaymentProvider implements PaymentProvider {
 
     private String buildOrderSubmitFor(AuthorisationRequest request, String gatewayTransactionId) {
         return anOrderSubmitRequest()
-                .withMerchantCode(gatewayAccount.getMerchantId())
+                .withMerchantCode(gatewayAccount.getUsername())
                 .withTransactionId(gatewayTransactionId)
                 .withDescription(request.getDescription())
                 .withAmount(request.getAmount())

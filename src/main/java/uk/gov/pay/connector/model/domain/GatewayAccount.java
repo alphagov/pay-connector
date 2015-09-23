@@ -1,7 +1,6 @@
 package uk.gov.pay.connector.model.domain;
 
 public class GatewayAccount {
-    private static final String MERCHANT_CODE = "MERCHANTCODE";
     private String username;
     private String password;
 
@@ -12,10 +11,6 @@ public class GatewayAccount {
 
     public static GatewayAccount gatewayAccountFor(String username, String password) {
         return new GatewayAccount(username, password);
-    }
-
-    public String getMerchantId() {
-        return MERCHANT_CODE;
     }
 
     public String getUsername() {

@@ -9,23 +9,20 @@ import uk.gov.pay.connector.model.GatewayResponse;
 import uk.gov.pay.connector.model.domain.Card;
 import uk.gov.pay.connector.service.CardService;
 
-import javax.ws.rs.Consumes;
-import javax.ws.rs.POST;
-import javax.ws.rs.Path;
-import javax.ws.rs.PathParam;
-import javax.ws.rs.Produces;
+import javax.ws.rs.*;
 import javax.ws.rs.core.Response;
 
 import static fj.data.Either.reduce;
 import static javax.ws.rs.core.MediaType.APPLICATION_JSON;
 import static uk.gov.pay.connector.model.GatewayErrorType.ChargeNotFound;
 import static uk.gov.pay.connector.resources.CardDetailsValidator.isWellFormattedCardDetails;
-import static uk.gov.pay.connector.util.ResponseUtil.badRequestResponse;
-import static uk.gov.pay.connector.util.ResponseUtil.notFoundResponse;
+import static uk.gov.pay.connector.util.ResponseUtil.*;
 
 @Path("/")
 public class CardResource {
 
+    public static final String AUTHORIZATION_FRONTEND_RESOURCE_PATH = "/v1/frontend/charges/{chargeId}/cards";
+    public static final String CAPTURE_FRONTEND_RESOURCE_PATH = "/v1/frontend/charges/{chargeId}/capture";
     private final CardService cardService;
     private final Logger logger = LoggerFactory.getLogger(CardResource.class);
 
@@ -34,7 +31,7 @@ public class CardResource {
     }
 
     @POST
-    @Path("/v1/frontend/charges/{chargeId}/cards")
+    @Path(AUTHORIZATION_FRONTEND_RESOURCE_PATH)
     @Consumes(APPLICATION_JSON)
     @Produces(APPLICATION_JSON)
     public Response authoriseCharge(@PathParam("chargeId") String chargeId, Card cardDetails) {
@@ -44,17 +41,17 @@ public class CardResource {
         }
 
         return reduce(cardService.doAuthorise(chargeId, cardDetails)
-                .bimap(handleWorldpayResponse, handleError));
+                .bimap(handleError, handleGatewayResponse));
     }
 
     @POST
-    @Path("/v1/frontend/charges/{chargeId}/capture")
+    @Path(CAPTURE_FRONTEND_RESOURCE_PATH)
     @Consumes(APPLICATION_JSON)
     @Produces(APPLICATION_JSON)
     public Response captureCharge(@PathParam("chargeId") String chargeId) throws PayDBIException {
 
         return reduce(cardService.doCapture(chargeId)
-                .bimap(handleWorldpayResponse, handleError));
+                .bimap(handleError, handleGatewayResponse));
     }
 
 
@@ -63,9 +60,9 @@ public class CardResource {
                     notFoundResponse(logger, error.getMessage()) :
                     badRequestResponse(logger, error.getMessage());
 
-    private F<GatewayResponse, Response> handleWorldpayResponse =
+    private F<GatewayResponse, Response> handleGatewayResponse =
             response -> response.isSuccessful() ?
-                    Response.noContent().build() :
+                    notContentResponse() :
                     handleError.f(response.getError());
 
 }

@@ -34,6 +34,10 @@ public class ResponseUtil {
         return responseWithMessage(NOT_FOUND, message);
     }
 
+    public static Response notContentResponse() {
+        return Response.noContent().build();
+    }
+
     private static Response responseWithMessage(Response.Status status, String message) {
         return Response.status(status).entity(ImmutableMap.of("message", message)).build();
     }

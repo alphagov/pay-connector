@@ -1,8 +1,6 @@
 package uk.gov.pay.connector.dao;
 
-import org.apache.commons.lang3.StringUtils;
 import org.skife.jdbi.v2.DBI;
-import org.skife.jdbi.v2.exceptions.DBIException;
 import org.skife.jdbi.v2.util.StringMapper;
 
 import java.util.Optional;

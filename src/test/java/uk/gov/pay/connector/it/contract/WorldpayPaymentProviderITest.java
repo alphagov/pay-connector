@@ -7,7 +7,6 @@ import org.junit.Test;
 import uk.gov.pay.connector.app.WorldpayConfig;
 import uk.gov.pay.connector.model.AuthorisationRequest;
 import uk.gov.pay.connector.model.AuthorisationResponse;
-import uk.gov.pay.connector.model.domain.Amount;
 import uk.gov.pay.connector.model.domain.Card;
 import uk.gov.pay.connector.service.worldpay.WorldpayPaymentProvider;
 import uk.gov.pay.connector.util.DropwizardAppWithPostgresRule;
@@ -57,7 +56,7 @@ public class WorldpayPaymentProviderITest {
 
     private AuthorisationRequest getCardAuthorisationRequest() {
         Card card = aValidCard();
-        Amount amount = new Amount("500");
+        String amount = "500";
         String description = "This is the description";
         return new AuthorisationRequest(card, amount, description);
     }

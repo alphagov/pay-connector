@@ -1,46 +1,50 @@
 package uk.gov.pay.connector.worldpay.template;
 
 
-import uk.gov.pay.connector.model.domain.Amount;
 import uk.gov.pay.connector.model.domain.Card;
 
 import java.util.Map;
 
 import static com.google.common.collect.Maps.newHashMap;
 
-public class WorldpayOrderSubmitRequestGenerator extends WorldpayRequestGenerator {
+public class WorldpayOrderSubmitRequestBuilder {
 
+    private final WorldpayRequestBuilder requestBuilder;
     private String merchantCode;
     private String transactionId;
     private String description;
     private Card card;
-    private Amount amount;
+    private String amount;
 
-    public WorldpayOrderSubmitRequestGenerator() {
-        super("WorldpayOrderSubmitTemplate.xml");
+    public static WorldpayOrderSubmitRequestBuilder anOrderSubmitRequest() {
+        return new WorldpayOrderSubmitRequestBuilder();
     }
 
-    public WorldpayOrderSubmitRequestGenerator withMerchantCode(String merchantCode) {
+    public WorldpayOrderSubmitRequestBuilder() {
+        requestBuilder = new WorldpayRequestBuilder("WorldpayOrderSubmitTemplate.xml");
+    }
+
+    public WorldpayOrderSubmitRequestBuilder withMerchantCode(String merchantCode) {
         this.merchantCode = merchantCode;
         return this;
     }
 
-    public WorldpayOrderSubmitRequestGenerator withTransactionId(String transactionId) {
+    public WorldpayOrderSubmitRequestBuilder withTransactionId(String transactionId) {
         this.transactionId = transactionId;
         return this;
     }
 
-    public WorldpayOrderSubmitRequestGenerator withDescription(String description) {
+    public WorldpayOrderSubmitRequestBuilder withDescription(String description) {
         this.description = description;
         return this;
     }
 
-    public WorldpayOrderSubmitRequestGenerator withCard(Card card) {
+    public WorldpayOrderSubmitRequestBuilder withCard(Card card) {
         this.card = card;
         return this;
     }
 
-    public WorldpayOrderSubmitRequestGenerator withAmount(Amount amount) {
+    public WorldpayOrderSubmitRequestBuilder withAmount(String amount) {
         this.amount = amount;
         return this;
     }
@@ -53,6 +57,6 @@ public class WorldpayOrderSubmitRequestGenerator extends WorldpayRequestGenerato
         templateData.put("amount", amount);
         templateData.put("card", card);
 
-        return buildWith(templateData);
+        return requestBuilder.buildWith(templateData);
     }
 }

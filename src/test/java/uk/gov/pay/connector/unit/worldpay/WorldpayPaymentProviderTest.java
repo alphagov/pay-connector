@@ -8,7 +8,6 @@ import uk.gov.pay.connector.model.CaptureRequest;
 import uk.gov.pay.connector.model.CaptureResponse;
 import uk.gov.pay.connector.model.GatewayError;
 import uk.gov.pay.connector.model.domain.Address;
-import uk.gov.pay.connector.model.domain.Amount;
 import uk.gov.pay.connector.model.domain.Card;
 import uk.gov.pay.connector.service.worldpay.WorldpayPaymentProvider;
 
@@ -28,7 +27,7 @@ import static org.mockito.Matchers.anyObject;
 import static org.mockito.Matchers.anyString;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
-import static uk.gov.pay.connector.model.GatewayErrorType.BaseGatewayError;
+import static uk.gov.pay.connector.model.GatewayErrorType.GenericGatewayError;
 import static uk.gov.pay.connector.model.domain.Address.anAddress;
 import static uk.gov.pay.connector.model.domain.GatewayAccount.gatewayAccountFor;
 import static uk.gov.pay.connector.util.CardUtils.buildCardDetails;
@@ -61,7 +60,7 @@ public class WorldpayPaymentProviderTest {
         AuthorisationResponse response = connector.authorise(getCardAuthorisationRequest());
 
         assertThat(response.isSuccessful(), is(false));
-        assertThat(response.getError(), is(new GatewayError("Error processing authorisation request", BaseGatewayError)));
+        assertThat(response.getError(), is(new GatewayError("Error processing authorisation request", GenericGatewayError)));
     }
 
     @Test
@@ -70,7 +69,7 @@ public class WorldpayPaymentProviderTest {
         CaptureResponse response = connector.capture(getCaptureRequest());
 
         assertThat(response.isSuccessful(), is(false));
-        assertThat(response.getError(), is(new GatewayError("Order has already been paid", BaseGatewayError)));
+        assertThat(response.getError(), is(new GatewayError("Order has already been paid", GenericGatewayError)));
     }
 
     @Test
@@ -79,19 +78,19 @@ public class WorldpayPaymentProviderTest {
         CaptureResponse response = connector.capture(getCaptureRequest());
 
         assertThat(response.isSuccessful(), is(false));
-        assertThat(response.getError(), is(new GatewayError("Error processing capture request", BaseGatewayError)));
+        assertThat(response.getError(), is(new GatewayError("Error processing capture request", GenericGatewayError)));
     }
 
     private AuthorisationRequest getCardAuthorisationRequest() {
         Card card = getValidTestCard();
-        Amount amount = new Amount("500");
+        String amount =  "500";
 
         String description = "This is the description";
         return new AuthorisationRequest(card, amount, description);
     }
 
     private CaptureRequest getCaptureRequest() {
-        return new CaptureRequest(new Amount("500"), randomUUID().toString());
+        return new CaptureRequest("500", randomUUID().toString());
     }
 
     private void mockWorldpayErrorResponse(int httpStatus) {

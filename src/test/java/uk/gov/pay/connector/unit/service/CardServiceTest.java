@@ -53,10 +53,10 @@ public class CardServiceTest {
 
         mockSuccessfulAuthorisation(chargeId, gatewayTxId);
         Card cardDetails = CardUtils.aValidCard();
-        Either<GatewayResponse, GatewayError> response = cardService.doAuthorise(chargeId, cardDetails);
+        Either<GatewayError, GatewayResponse> response = cardService.doAuthorise(chargeId, cardDetails);
 
-        assertTrue(response.isLeft());
-        assertThat(response.left().value(), is(aSuccessfulResponse()));
+        assertTrue(response.isRight());
+        assertThat(response.right().value(), is(aSuccessfulResponse()));
         verify(chargeDao, times(1)).updateStatus(chargeId, ChargeStatus.AUTHORISATION_SUCCESS);
         verify(chargeDao, times(1)).updateGatewayTransactionId(eq(chargeId), any(String.class));
     }
@@ -68,10 +68,10 @@ public class CardServiceTest {
         String gatewayTxId = "theTxId";
         mockSuccessfulCapture(chargeId, gatewayTxId);
 
-        Either<GatewayResponse, GatewayError> response = cardService.doCapture(chargeId);
+        Either<GatewayError, GatewayResponse> response = cardService.doCapture(chargeId);
 
-        assertTrue(response.isLeft());
-        assertThat(response.left().value(), is(aSuccessfulResponse()));
+        assertTrue(response.isRight());
+        assertThat(response.right().value(), is(aSuccessfulResponse()));
         verify(chargeDao, times(1)).updateStatus(chargeId, ChargeStatus.CAPTURED);
 
         ArgumentCaptor<CaptureRequest> request = ArgumentCaptor.forClass(CaptureRequest.class);

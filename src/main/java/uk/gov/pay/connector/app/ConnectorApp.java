@@ -15,14 +15,9 @@ import uk.gov.pay.connector.dao.GatewayAccountDao;
 import uk.gov.pay.connector.dao.TokenDao;
 import uk.gov.pay.connector.healthcheck.DatabaseHealthCheck;
 import uk.gov.pay.connector.healthcheck.Ping;
-import uk.gov.pay.connector.resources.CardResource;
-import uk.gov.pay.connector.resources.ChargeCancelResource;
-import uk.gov.pay.connector.resources.ChargesApiResource;
-import uk.gov.pay.connector.resources.ChargesFrontendResource;
-import uk.gov.pay.connector.resources.GatewayAccountResource;
+import uk.gov.pay.connector.resources.*;
 import uk.gov.pay.connector.service.CardService;
 import uk.gov.pay.connector.service.PaymentProviders;
-import uk.gov.pay.connector.resources.SecurityTokensResource;
 import uk.gov.pay.connector.util.DbConnectionChecker;
 
 public class ConnectorApp extends Application<ConnectorConfiguration> {

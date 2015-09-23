@@ -1,9 +1,21 @@
 # pay-connector
 The Pay Connector in Java (Dropwizard)
 
+## Config
+
+Important configurations.
+  
+  ```
+     worldpay:
+        url: <HTTP endpoint for worldpay payments>
+        username: <Worldpay merchantID | this will be removed when gateway accounts have the capability to store username/passwords >
+        password: <Worldpay merchat password for integration | this will be removed when gateway accounts have the capability to store username/passwords>
+  ```
+
 ## Integration tests
 
 To run the integration tests, the `DOCKER_HOST` and `DOCKER_CERT_PATH` environment variables must be set up correctly. On OS X the environment can be set up with:
+Also `$GDS_CONNECTOR_WORLDPAY_PASSWORD` and`$GDS_CONNECTOR_WORLDPAY_PASSWORD` environment variable must be set for Worlpay integration tests.
 
 ```
     eval $(boot2docker shellinit)

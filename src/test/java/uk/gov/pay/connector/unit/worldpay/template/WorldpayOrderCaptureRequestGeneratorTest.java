@@ -3,14 +3,13 @@ package uk.gov.pay.connector.unit.worldpay.template;
 import com.google.common.io.Resources;
 import org.joda.time.DateTime;
 import org.junit.Test;
-import uk.gov.pay.connector.model.domain.Amount;
-import uk.gov.pay.connector.worldpay.template.WorldpayRequestGenerator;
 
 import java.io.IOException;
 import java.nio.charset.Charset;
 
 import static com.google.common.io.Resources.getResource;
 import static org.custommonkey.xmlunit.XMLAssert.assertXMLEqual;
+import static uk.gov.pay.connector.worldpay.template.WorldpayOrderCaptureRequestBuilder.anOrderCaptureRequest;
 
 public class WorldpayOrderCaptureRequestGeneratorTest {
 
@@ -18,13 +17,12 @@ public class WorldpayOrderCaptureRequestGeneratorTest {
     public void shouldGenerateValidOrderCapturePayload() throws Exception {
 
 
-        Amount amount = new Amount("500");
         DateTime date = new DateTime(2013, 2, 23, 0, 0);
 
-        String actualRequest = WorldpayRequestGenerator.anOrderCaptureRequest()
+        String actualRequest = anOrderCaptureRequest()
                 .withMerchantCode("MERCHANTCODE")
                 .withTransactionId("MyUniqueTransactionId!")
-                .withAmount(amount)
+                .withAmount("500")
                 .withDate(date)
                 .build();
 

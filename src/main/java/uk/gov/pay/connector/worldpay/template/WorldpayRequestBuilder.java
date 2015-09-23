@@ -13,11 +13,11 @@ import java.util.Map;
 
 import static freemarker.template.Configuration.VERSION_2_3_20;
 
-public class WorldpayRequestGenerator {
+public class WorldpayRequestBuilder {
 
     private Template template;
 
-    protected WorldpayRequestGenerator(String templateName) {
+    protected WorldpayRequestBuilder(String templateName) {
         templateSetup("/templates/worldpay", templateName);
     }
 
@@ -36,7 +36,7 @@ public class WorldpayRequestGenerator {
         cfg.setDefaultEncoding("UTF-8");
         cfg.setLocale(Locale.ENGLISH);
         cfg.setTemplateExceptionHandler(TemplateExceptionHandler.RETHROW_HANDLER);
-        cfg.setClassForTemplateLoading(WorldpayRequestGenerator.class, templateDir);
+        cfg.setClassForTemplateLoading(WorldpayRequestBuilder.class, templateDir);
 
         try {
             template = cfg.getTemplate(templateName);
@@ -45,11 +45,4 @@ public class WorldpayRequestGenerator {
         }
     }
 
-    public static WorldpayOrderSubmitRequestGenerator anOrderSubmitRequest() {
-        return new WorldpayOrderSubmitRequestGenerator();
-    }
-
-    public static WorldpayOrderCaptureRequestGenerator anOrderCaptureRequest() {
-        return new WorldpayOrderCaptureRequestGenerator();
-    }
 }
