@@ -1,4 +1,4 @@
-package uk.gov.pay.connector.model;
+package uk.gov.pay.connector.service.sandbox;
 
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableMap;
@@ -6,8 +6,8 @@ import com.google.common.collect.ImmutableMap;
 import java.util.List;
 import java.util.Map;
 
-import static uk.gov.pay.connector.model.ChargeStatus.AUTHORIZATION_REJECTED;
-import static uk.gov.pay.connector.model.ChargeStatus.SYSTEM_ERROR;
+import static uk.gov.pay.connector.model.domain.ChargeStatus.AUTHORISATION_REJECTED;
+import static uk.gov.pay.connector.model.domain.ChargeStatus.SYSTEM_ERROR;
 
 public class SandboxCardNumbers {
 
@@ -41,8 +41,8 @@ public class SandboxCardNumbers {
     private static final String PROCESSING_ERROR_CARD_NUMBER = "4000000000000119";
 
     private static final Map<String, CardError> ERROR_CARDS = ImmutableMap.of(
-            DECLINED_CARD_NUMBER, new CardError(AUTHORIZATION_REJECTED, "This transaction was declined."),
+            DECLINED_CARD_NUMBER, new CardError(AUTHORISATION_REJECTED, "This transaction was declined."),
             PROCESSING_ERROR_CARD_NUMBER, new CardError(SYSTEM_ERROR, "This transaction could be not be processed."),
-            EXPIRED_CARD_NUMBER, new CardError(AUTHORIZATION_REJECTED, "The card is expired."),
-            CVC_ERROR_CARD_NUMBER, new CardError(AUTHORIZATION_REJECTED, "The CVC code is incorrect."));
+            EXPIRED_CARD_NUMBER, new CardError(AUTHORISATION_REJECTED, "The card is expired."),
+            CVC_ERROR_CARD_NUMBER, new CardError(AUTHORISATION_REJECTED, "The CVC code is incorrect."));
 }

@@ -5,7 +5,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import uk.gov.pay.connector.dao.ChargeDao;
 import uk.gov.pay.connector.dao.PayDBIException;
-import uk.gov.pay.connector.model.ChargeStatus;
+import uk.gov.pay.connector.model.domain.ChargeStatus;
 
 import javax.ws.rs.POST;
 import javax.ws.rs.Path;
@@ -19,20 +19,20 @@ import java.util.Optional;
 import static java.lang.String.format;
 import static javax.ws.rs.core.MediaType.APPLICATION_JSON;
 import static org.apache.commons.lang3.StringUtils.equalsIgnoreCase;
-import static uk.gov.pay.connector.model.ChargeStatus.AUTHORIZATION_SUBMITTED;
-import static uk.gov.pay.connector.model.ChargeStatus.AUTHORIZATION_SUCCESS;
-import static uk.gov.pay.connector.model.ChargeStatus.CREATED;
-import static uk.gov.pay.connector.model.ChargeStatus.ENTERING_CARD_DETAILS;
-import static uk.gov.pay.connector.model.ChargeStatus.READY_FOR_CAPTURE;
-import static uk.gov.pay.connector.model.ChargeStatus.STATUS_KEY;
-import static uk.gov.pay.connector.model.ChargeStatus.SYSTEM_CANCELLED;
+import static uk.gov.pay.connector.model.domain.ChargeStatus.AUTHORISATION_SUBMITTED;
+import static uk.gov.pay.connector.model.domain.ChargeStatus.AUTHORISATION_SUCCESS;
+import static uk.gov.pay.connector.model.domain.ChargeStatus.CREATED;
+import static uk.gov.pay.connector.model.domain.ChargeStatus.ENTERING_CARD_DETAILS;
+import static uk.gov.pay.connector.model.domain.ChargeStatus.READY_FOR_CAPTURE;
+import static uk.gov.pay.connector.model.domain.ChargeStatus.STATUS_KEY;
+import static uk.gov.pay.connector.model.domain.ChargeStatus.SYSTEM_CANCELLED;
 import static uk.gov.pay.connector.util.ResponseUtil.badRequestResponse;
 import static uk.gov.pay.connector.util.ResponseUtil.responseWithChargeNotFound;
 
 @Path("/")
 public class ChargeCancelResource {
     private static final List<ChargeStatus> CANCELLABLE_STATES = ImmutableList.of(
-            CREATED, ENTERING_CARD_DETAILS, AUTHORIZATION_SUCCESS, AUTHORIZATION_SUBMITTED, READY_FOR_CAPTURE
+            CREATED, ENTERING_CARD_DETAILS, AUTHORISATION_SUCCESS, AUTHORISATION_SUBMITTED, READY_FOR_CAPTURE
     );
 
     private ChargeDao chargeDao;

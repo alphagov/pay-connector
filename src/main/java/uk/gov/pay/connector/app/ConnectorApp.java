@@ -15,13 +15,9 @@ import uk.gov.pay.connector.dao.GatewayAccountDao;
 import uk.gov.pay.connector.dao.TokenDao;
 import uk.gov.pay.connector.healthcheck.DatabaseHealthCheck;
 import uk.gov.pay.connector.healthcheck.Ping;
-import uk.gov.pay.connector.resources.CardDetailsResource;
-import uk.gov.pay.connector.resources.ChargeCancelResource;
-import uk.gov.pay.connector.resources.ChargeCaptureResource;
-import uk.gov.pay.connector.resources.ChargesApiResource;
-import uk.gov.pay.connector.resources.ChargesFrontendResource;
-import uk.gov.pay.connector.resources.GatewayAccountResource;
-import uk.gov.pay.connector.resources.SecurityTokensResource;
+import uk.gov.pay.connector.resources.*;
+import uk.gov.pay.connector.service.CardService;
+import uk.gov.pay.connector.service.PaymentProviders;
 import uk.gov.pay.connector.util.DbConnectionChecker;
 
 public class ConnectorApp extends Application<ConnectorConfiguration> {
@@ -63,12 +59,13 @@ public class ConnectorApp extends Application<ConnectorConfiguration> {
         ChargeDao chargeDao = new ChargeDao(jdbi);
         TokenDao tokenDao = new TokenDao(jdbi);
         GatewayAccountDao gatewayAccountDao = new GatewayAccountDao(jdbi);
+        PaymentProviders providers = new PaymentProviders(conf.getWorldpayConfig());
+        CardService cardService = new CardService(gatewayAccountDao, chargeDao, providers);
 
         environment.jersey().register(new SecurityTokensResource(tokenDao));
         environment.jersey().register(new ChargesApiResource(chargeDao, tokenDao, gatewayAccountDao, conf.getLinks()));
         environment.jersey().register(new ChargesFrontendResource(chargeDao));
-        environment.jersey().register(new CardDetailsResource(chargeDao));
-        environment.jersey().register(new ChargeCaptureResource(chargeDao));
+        environment.jersey().register(new CardResource(cardService));
         environment.jersey().register(new ChargeCancelResource(chargeDao));
         environment.jersey().register(new GatewayAccountResource(gatewayAccountDao));
 

@@ -50,6 +50,10 @@ public class DropwizardAppWithPostgresRule implements TestRule {
         }, description);
     }
 
+    public ConnectorConfiguration getConf() {
+        return app.getConfiguration();
+    }
+
     public DBI getJdbi() {
         ConnectorApp dropwizard = app.getApplication();
         return dropwizard.getJdbi();

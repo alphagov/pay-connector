@@ -13,8 +13,9 @@ import static com.jayway.restassured.http.ContentType.JSON;
 import static java.lang.String.format;
 import static org.hamcrest.Matchers.is;
 import static org.hamcrest.Matchers.notNullValue;
-import static uk.gov.pay.connector.model.ChargeStatus.AUTHORIZATION_SUCCESS;
+import static uk.gov.pay.connector.model.domain.ChargeStatus.AUTHORISATION_SUCCESS;
 import static uk.gov.pay.connector.util.JsonEncoder.toJson;
+
 import static uk.gov.pay.connector.util.LinksAssert.assertCardAuthLink;
 import static uk.gov.pay.connector.util.LinksAssert.assertSelfLink;
 import static uk.gov.pay.connector.util.NumberMatcher.isNumber;
@@ -69,13 +70,13 @@ public class ChargesFrontendResourceITest {
     @Test
     public void shouldReturnInternalChargeStatusIfInternalStatusIsAuthorised() throws Exception {
         String chargeId = ((Integer) RandomUtils.nextInt(99999999)).toString();
-        app.getDatabaseTestHelper().addCharge(chargeId, accountId, 500, AUTHORIZATION_SUCCESS, returnUrl);
+        app.getDatabaseTestHelper().addCharge(chargeId, accountId, 500, AUTHORISATION_SUCCESS, returnUrl);
 
         getChargeResponseFor(chargeId)
                 .statusCode(200)
                 .contentType(JSON)
                 .body("charge_id", is(chargeId))
-                .body("status", is("AUTHORIZATION SUCCESS"));
+                .body("status", is("AUTHORISATION SUCCESS"));
     }
 
     @Test

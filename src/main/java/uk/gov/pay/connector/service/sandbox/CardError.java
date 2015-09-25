@@ -1,4 +1,6 @@
-package uk.gov.pay.connector.model;
+package uk.gov.pay.connector.service.sandbox;
+
+import uk.gov.pay.connector.model.domain.ChargeStatus;
 
 public class CardError {
     private ChargeStatus newChargeStatus;

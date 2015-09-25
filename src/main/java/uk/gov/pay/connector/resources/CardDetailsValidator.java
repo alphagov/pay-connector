@@ -1,17 +1,26 @@
 package uk.gov.pay.connector.resources;
 
-import java.util.Map;
+import uk.gov.pay.connector.model.domain.Address;
+import uk.gov.pay.connector.model.domain.Card;
+
+import static org.apache.commons.lang3.StringUtils.isNotBlank;
 
 public class CardDetailsValidator {
 
-    public static final String CARD_NUMBER_FIELD = "card_number";
-    public static final String CVC_FIELD = "cvc";
-    public static final String EXPIRY_DATE_FIELD = "expiry_date";
 
-    public static boolean isWellFormattedCardDetails(Map<String, Object> cardDetails) {
-        return cardDetails.containsKey(CARD_NUMBER_FIELD) && isValidCardNumberLength(cardDetails.get(CARD_NUMBER_FIELD)) &&
-                cardDetails.containsKey(CVC_FIELD) && is3Digits(cardDetails.get(CVC_FIELD)) &&
-                cardDetails.containsKey(EXPIRY_DATE_FIELD) && hasExpiryDateFormat(cardDetails.get(EXPIRY_DATE_FIELD));
+    public static boolean isWellFormattedCardDetails(Card cardDetails) {
+        return isValidCardNumberLength(cardDetails.getCardNo()) &&
+                is3Digits(cardDetails.getCvc()) &&
+                hasExpiryDateFormat(cardDetails.getEndDate()) &&
+                hasAddress(cardDetails.getAddress());
+    }
+
+    private static boolean hasAddress(Address address) {
+        return address != null &&
+                isNotBlank(address.getCity()) &&
+                isNotBlank(address.getLine1()) &&
+                isNotBlank(address.getPostcode()) &&
+                isNotBlank(address.getCountry());
     }
 
     private static boolean hasExpiryDateFormat(Object date) {

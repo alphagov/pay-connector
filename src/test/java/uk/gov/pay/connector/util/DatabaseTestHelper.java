@@ -3,7 +3,7 @@ package uk.gov.pay.connector.util;
 import org.skife.jdbi.v2.DBI;
 import org.skife.jdbi.v2.util.StringMapper;
 import uk.gov.pay.connector.dao.TokenDao;
-import uk.gov.pay.connector.model.ChargeStatus;
+import uk.gov.pay.connector.model.domain.ChargeStatus;
 
 public class DatabaseTestHelper {
     private DBI jdbi;
@@ -14,10 +14,10 @@ public class DatabaseTestHelper {
         this.tokenDao = new TokenDao(jdbi);
     }
 
-    public void addGatewayAccount(String accountId, String name) {
+    public void addGatewayAccount(String accountId, String paymentProvider) {
         jdbi.withHandle(h ->
-                        h.update("INSERT INTO gateway_accounts(gateway_account_id, name) VALUES(?, ?)",
-                                Long.valueOf(accountId), name)
+                        h.update("INSERT INTO gateway_accounts(gateway_account_id, payment_provider) VALUES(?, ?)",
+                                Long.valueOf(accountId), paymentProvider)
         );
     }
 

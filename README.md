@@ -1,9 +1,21 @@
 # pay-connector
 The Pay Connector in Java (Dropwizard)
 
+## Config
+
+Important configurations.
+  
+  ```
+     worldpay:
+        url: <HTTP endpoint for worldpay payments>
+        username: <Worldpay merchantID | this will be removed when gateway accounts have the capability to store username/passwords >
+        password: <Worldpay merchat password for integration | this will be removed when gateway accounts have the capability to store username/passwords>
+  ```
+
 ## Integration tests
 
 To run the integration tests, the `DOCKER_HOST` and `DOCKER_CERT_PATH` environment variables must be set up correctly. On OS X the environment can be set up with:
+Also `$GDS_CONNECTOR_WORLDPAY_PASSWORD` and`$GDS_CONNECTOR_WORLDPAY_PASSWORD` environment variable must be set for Worlpay integration tests.
 
 ```
     eval $(boot2docker shellinit)
@@ -22,6 +34,7 @@ The command to run the integration tests is:
 | Path                          | Supported Methods | Description                        |
 | ----------------------------- | ----------------- | ---------------------------------- |
 |[```/v1/api/accounts```](#post-v1apiaccounts)              | POST    |  Create a new account to associate charges with            |
+|[```/v1/api/accounts/{gatewayAccountId}```](#get-v1apiaccountsaccountsid)     | GET    |  Retrieves an existing account  |
 |[```/v1/api/charges/{chargeId}```](#get-v1apichargeschargeid)                 | GET    |  Returns the charge with `chargeId`            |
 |[```/v1/api/charges```](#post-v1apicharges)                                  | POST    |  Create a new charge            |
 |[```/v1/api/charges/{chargeId}/cancel```](#post-v1apichargeschargeidcancel)  | POST    |  Cancels the charge with `chargeId`            |
@@ -43,25 +56,26 @@ POST /v1/api/accounts
 Content-Type: application/json
 
 {
-    "name": "Service Number 1"
+    "payment_provider": "sandbox"
 }
 ```
 
 ##### Request body description
 
-| Field                    | required | Description                               |
-| ------------------------ |:--------:| ----------------------------------------- |
-| `name`                 | X | The human friendly name of the account       |
+| Field                    | required | Description                               | Supported Values     |
+| ------------------------ |:--------:| ----------------------------------------- |----------------------|
+| `payment_provider`                 | X | The payment provider for which this account is created.       | sandbox, worldpay |
 
 #### Response example
 
 ```
-200 OK
+201 OK
 Content-Type: application/json
 Location: http://connector.service/v1/api/accounts/1
 
 {
-    "name": "Service Number 1",
+    "payment_provider": "sandbox",
+    "gateway_account_id": "1" 
     "links": [{
         "href": "http://connector.service/v1/api/accounts/1",
         "rel" : "self",
@@ -75,7 +89,39 @@ Location: http://connector.service/v1/api/accounts/1
 
 | Field                    | always present | Description                               |
 | ------------------------ |:--------:| ----------------------------------------- |
-| `name`                 | X | The account name       |
+| `gateway_account_id`                 | X | The account Id created by the connector       |
+| `payment_provider`                 | X | The payment provider for which this account is created.       |
+| `links`                 | X | HTTP self link containing resource reference to the account.       |
+
+-----------------------------------------------------------------------------------------------------------
+
+### GET /v1/api/accounts/{accountsId}
+
+Retrieves an existing gateway account.
+
+#### Request example
+
+```
+GET /v1/api/accounts/1
+```
+
+
+#### Response example
+
+```
+200 OK
+Content-Type: application/json
+{
+    "payment_provider": "sandbox",
+    "gateway_account_id": "1" 
+}
+
+##### Response field description
+
+| Field                    | always present | Description                               |
+| ------------------------ |:--------:| ----------------------------------------- |
+| `gateway_account_id`                 | X | The account Id        |
+| `payment_provider`                 | X | The payment provider for which this account is created.       |
 
 -----------------------------------------------------------------------------------------------------------
 
@@ -281,6 +327,13 @@ Content-Type: application/json
     "card_number": "4242424242424242",
     "cvc": "123",
     "expiry_date": "11/17"
+    "address" : 
+    {
+        "line1": "The street",
+        "city": "The city",
+        "postcode": "W1 2CP",
+        "country": "GB",
+    }
 }
 ```
 
@@ -291,6 +344,7 @@ Content-Type: application/json
 | `card_number`                 | X | The card number (16 digits)       |
 | `cvc`     | X | The cvc of the card (3 digits) |
 | `expiry_date`     | X | The expiry date (no validation other than format being mm/yy) |
+| `address`     | X | The billing address associated to this charge. Mandatory Address fields are `line1, city, postcode, country`. Optional Address fields are `line2, line3, county`  |
 
 #### Valid card numbers (inspired from Stripe)
 
@@ -305,7 +359,7 @@ Content-Type: application/json
 
 #### Response example
 
-##### Authorization success
+##### Authorisation success
 
 ```
 204 No content
@@ -338,7 +392,7 @@ Content-Type: application/json
 
 #### Response example
 
-##### Authorization success
+##### Authorisation success
 
 ```
 204 No content
@@ -350,7 +404,7 @@ Content-Type: application/json
 Content-Type: application/json
 
 {
-    "message": "Cannot capture a charge with status AUTHORIZATION REJECTED."
+    "message": "Cannot capture a charge with status AUTHORISATION REJECTED."
 }
 ```
 -----------------------------------------------------------------------------------------------------------

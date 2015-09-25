@@ -1,13 +1,15 @@
 package uk.gov.pay.connector.unit.resources;
 
 import org.junit.Test;
+import uk.gov.pay.connector.model.domain.Address;
+import uk.gov.pay.connector.model.domain.Card;
 import uk.gov.pay.connector.resources.CardDetailsValidator;
-
-import java.util.HashMap;
-import java.util.Map;
 
 import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertTrue;
+import static uk.gov.pay.connector.util.CardUtils.addressFor;
+import static uk.gov.pay.connector.util.CardUtils.buildCardDetails;
+import static uk.gov.pay.connector.util.CardUtils.goodAddress;
 
 public class CardDetailsValidatorTest {
 
@@ -17,85 +19,112 @@ public class CardDetailsValidatorTest {
 
     @Test
     public void validationSucceedForCorrectCardDetails() {
-        Map<String, Object> cardDetails = buildCardDetails(validCardNumber, validCVC, validExpiryDate);
+        Card cardDetails = buildCardDetailsFor(validCardNumber, validCVC, validExpiryDate);
         assertTrue(CardDetailsValidator.isWellFormattedCardDetails(cardDetails));
     }
 
     @Test
     public void validationSucceedFor14digitsCardNumber() {
-        Map<String, Object> cardDetails = buildCardDetails("12345678901234", validCVC, validExpiryDate);
+        Card cardDetails = buildCardDetailsFor("12345678901234", validCVC, validExpiryDate);
         assertTrue(CardDetailsValidator.isWellFormattedCardDetails(cardDetails));
     }
 
 
     @Test
     public void validationFailsForMissingCVC() {
-        Map<String, Object> wrongCardDetails = new HashMap<>();
-        wrongCardDetails.put("card_number", validCardNumber);
-        wrongCardDetails.put("expiry_date", validExpiryDate);
-
+        Card wrongCardDetails = buildCardDetailsFor(validCardNumber, null, validExpiryDate);
         assertFalse(CardDetailsValidator.isWellFormattedCardDetails(wrongCardDetails));
     }
 
     @Test
     public void validationFailsForMissingCardNumber() {
-        Map<String, Object> wrongCardDetails = new HashMap<>();
-        wrongCardDetails.put("cvc", validCVC);
-        wrongCardDetails.put("expiry_date", validExpiryDate);
-
+        Card wrongCardDetails = buildCardDetailsFor(null, validCVC, validExpiryDate);
         assertFalse(CardDetailsValidator.isWellFormattedCardDetails(wrongCardDetails));
     }
 
     @Test
     public void validationFailsForMissingExpiryDate() {
-        Map<String, Object> wrongCardDetails = new HashMap<>();
-        wrongCardDetails.put("cvc", validCVC);
-        wrongCardDetails.put("card_number", validCardNumber);
-
+        Card wrongCardDetails = buildCardDetailsFor(validCardNumber, validCVC, null);
         assertFalse(CardDetailsValidator.isWellFormattedCardDetails(wrongCardDetails));
     }
 
     @Test
     public void validationFailsForEmptyFields() {
-        Map<String, Object> wrongCardDetails = buildCardDetails("", "", "");
+        Card wrongCardDetails = buildCardDetailsFor("", "", "");
         assertFalse(CardDetailsValidator.isWellFormattedCardDetails(wrongCardDetails));
     }
 
     @Test
     public void validationFailsFor13digitsCardNumber() {
-        Map<String, Object> cardDetails = buildCardDetails("1234567890123", validCVC, validExpiryDate);
+        Card cardDetails = buildCardDetailsFor("1234567890123", validCVC, validExpiryDate);
         assertFalse(CardDetailsValidator.isWellFormattedCardDetails(cardDetails));
     }
 
     @Test
     public void validationFailsForCardNumberWithNonDigits() {
-        Map<String, Object> cardDetails = buildCardDetails("123456789012345A", validCVC, validExpiryDate);
+        Card cardDetails = buildCardDetailsFor("123456789012345A", validCVC, validExpiryDate);
         assertFalse(CardDetailsValidator.isWellFormattedCardDetails(cardDetails));
     }
 
     @Test
     public void validationFailsForCVCwithNonDigits() {
-        Map<String, Object> cardDetails = buildCardDetails(validCardNumber, "45A", validExpiryDate);
+        Card cardDetails = buildCardDetailsFor(validCardNumber, "45A", validExpiryDate);
         assertFalse(CardDetailsValidator.isWellFormattedCardDetails(cardDetails));
     }
 
     @Test
     public void validationFailsForCVCwithMoreThan3Digits() {
-        Map<String, Object> cardDetails = buildCardDetails(validCardNumber, "4444", validExpiryDate);
+        Card cardDetails = buildCardDetailsFor(validCardNumber, "4444", validExpiryDate);
         assertFalse(CardDetailsValidator.isWellFormattedCardDetails(cardDetails));
     }
 
     @Test
     public void validationFailsForExpiryDateWithWrongFormat() {
-        Map<String, Object> cardDetails = buildCardDetails(validCardNumber, validCVC, "1290");
+        Card cardDetails = buildCardDetailsFor(validCardNumber, validCVC, "1290");
         assertFalse(CardDetailsValidator.isWellFormattedCardDetails(cardDetails));
     }
 
-    private Map<String, Object> buildCardDetails(String cardNumber, String cvc, String expiryDate) {
-        Map<String, Object> cardDetails = new HashMap<>();
-        cardDetails.put("card_number", cardNumber);
-        cardDetails.put("cvc", cvc);
-        cardDetails.put("expiry_date", expiryDate);
-        return cardDetails;
+
+    @Test
+    public void validationFailsForMissingAddress() {
+        Card cardDetails = buildCardDetailsFor(validCardNumber, validCVC, "1290", null);
+        assertFalse(CardDetailsValidator.isWellFormattedCardDetails(cardDetails));
+    }
+
+
+    @Test
+    public void validationFailsForMissingCityAddress() {
+        Address address = addressFor("L1", null, "WJWHE", "GB");
+        Card cardDetails = buildCardDetailsFor(validCardNumber, validCVC, "1290", address);
+        assertFalse(CardDetailsValidator.isWellFormattedCardDetails(cardDetails));
+    }
+
+    @Test
+    public void validationFailsForMissingLine1Address() {
+        Address address = addressFor(null, "London", "WJWHE", "GB");
+        Card cardDetails = buildCardDetailsFor(validCardNumber, validCVC, "1290", address);
+        assertFalse(CardDetailsValidator.isWellFormattedCardDetails(cardDetails));
+    }
+
+    @Test
+    public void validationFailsForMissingCountryAddress() {
+        Address address = addressFor("L1", "London", "WJWHE", null);
+        Card cardDetails = buildCardDetailsFor(validCardNumber, validCVC, "1290", address);
+        assertFalse(CardDetailsValidator.isWellFormattedCardDetails(cardDetails));
+    }
+
+    @Test
+    public void validationFailsForMissingPostcodeAddress() {
+        Address address = addressFor("L1", "London", null, "GB");
+        Card cardDetails = buildCardDetailsFor(validCardNumber, validCVC, "1290", address);
+        assertFalse(CardDetailsValidator.isWellFormattedCardDetails(cardDetails));
+    }
+
+    private Card buildCardDetailsFor(String cardNo, String cvc, String expiry) {
+        return buildCardDetailsFor(cardNo, cvc, expiry, goodAddress());
+    }
+
+    private Card buildCardDetailsFor(String cardNo, String cvc, String expiry, Address address) {
+        return buildCardDetails("Mr. Payment", cardNo, cvc, expiry, address);
     }
 }

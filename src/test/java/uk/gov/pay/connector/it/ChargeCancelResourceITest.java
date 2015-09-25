@@ -6,7 +6,7 @@ import org.apache.commons.lang.math.RandomUtils;
 import org.junit.Before;
 import org.junit.Rule;
 import org.junit.Test;
-import uk.gov.pay.connector.model.ChargeStatus;
+import uk.gov.pay.connector.model.domain.ChargeStatus;
 import uk.gov.pay.connector.util.DropwizardAppWithPostgresRule;
 
 import java.util.Arrays;
@@ -16,18 +16,18 @@ import static com.jayway.restassured.RestAssured.given;
 import static com.jayway.restassured.http.ContentType.JSON;
 import static org.apache.commons.lang3.BooleanUtils.negate;
 import static org.hamcrest.Matchers.is;
-import static uk.gov.pay.connector.model.ChargeStatus.AUTHORIZATION_SUBMITTED;
-import static uk.gov.pay.connector.model.ChargeStatus.AUTHORIZATION_SUCCESS;
-import static uk.gov.pay.connector.model.ChargeStatus.CREATED;
-import static uk.gov.pay.connector.model.ChargeStatus.ENTERING_CARD_DETAILS;
-import static uk.gov.pay.connector.model.ChargeStatus.READY_FOR_CAPTURE;
-import static uk.gov.pay.connector.model.ChargeStatus.SYSTEM_CANCELLED;
+import static uk.gov.pay.connector.model.domain.ChargeStatus.AUTHORISATION_SUBMITTED;
+import static uk.gov.pay.connector.model.domain.ChargeStatus.AUTHORISATION_SUCCESS;
+import static uk.gov.pay.connector.model.domain.ChargeStatus.CREATED;
+import static uk.gov.pay.connector.model.domain.ChargeStatus.ENTERING_CARD_DETAILS;
+import static uk.gov.pay.connector.model.domain.ChargeStatus.READY_FOR_CAPTURE;
+import static uk.gov.pay.connector.model.domain.ChargeStatus.SYSTEM_CANCELLED;
 import static uk.gov.pay.connector.model.api.ExternalChargeStatus.EXT_SYSTEM_CANCELLED;
 
 public class ChargeCancelResourceITest {
 
     private static final List<ChargeStatus> CANCELLABLE_STATES = ImmutableList.of(
-            CREATED, ENTERING_CARD_DETAILS, AUTHORIZATION_SUCCESS, AUTHORIZATION_SUBMITTED, READY_FOR_CAPTURE
+            CREATED, ENTERING_CARD_DETAILS, AUTHORISATION_SUCCESS, AUTHORISATION_SUBMITTED, READY_FOR_CAPTURE
     );
 
     private String accountId = "66757943593456";
