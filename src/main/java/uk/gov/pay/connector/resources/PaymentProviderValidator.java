@@ -12,8 +12,14 @@ public class PaymentProviderValidator {
 
     public static final String WORLDPAY_PROVIDER = "worldpay";
 
+    public static final String SMARTPAY_PROVIDER = "smartpay";
+
     public static boolean isValidProvider(String provider) {
         return VALID_PROVIDERS.contains(provider);
     }
-    private static final List<String> VALID_PROVIDERS = asList(DEFAULT_PROVIDER, WORLDPAY_PROVIDER);
+    private static final List<String> VALID_PROVIDERS = asList(
+            DEFAULT_PROVIDER,
+            WORLDPAY_PROVIDER,
+            SMARTPAY_PROVIDER
+    );
 }

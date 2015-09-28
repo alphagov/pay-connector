@@ -74,6 +74,12 @@ public class GatewayAccountResourceITest {
         createAGatewayAccountFor("worldpay");
     }
 
+    @Test
+    public void createAGatewayAccountForSmartpay() throws Exception {
+
+        createAGatewayAccountFor("smartpay");
+    }
+
     private void createAGatewayAccountFor(String testProvider) {
         ValidatableResponse response = givenSetup()
                 .body(toJson(ImmutableMap.of("payment_provider", testProvider)))

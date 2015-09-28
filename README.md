@@ -64,7 +64,7 @@ Content-Type: application/json
 
 | Field                    | required | Description                               | Supported Values     |
 | ------------------------ |:--------:| ----------------------------------------- |----------------------|
-| `payment_provider`                 | X | The payment provider for which this account is created.       | sandbox, worldpay |
+| `payment_provider`                 | X | The payment provider for which this account is created.       | sandbox, worldpay, smartpay |
 
 #### Response example
 
@@ -115,6 +115,7 @@ Content-Type: application/json
     "payment_provider": "sandbox",
     "gateway_account_id": "1" 
 }
+```
 
 ##### Response field description
 
