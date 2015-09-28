@@ -60,7 +60,7 @@ public class WorldpayPaymentProviderTest {
         AuthorisationResponse response = connector.authorise(getCardAuthorisationRequest());
 
         assertThat(response.isSuccessful(), is(false));
-        assertThat(response.getError(), is(new GatewayError("Error processing authorisation request", GenericGatewayError)));
+        assertThat(response.getError(), is(new GatewayError("Error processing request", GenericGatewayError)));
     }
 
     @Test

@@ -23,6 +23,11 @@ worldpay:
   username: ${GDS_CONNECTOR_WORLDPAY_USER}
   password: ${GDS_CONNECTOR_WORLDPAY_PASSWORD}
 
+smartpay:
+  url: ${GDS_CONNECTOR_SMARTPAY_URL}
+  username: ${GDS_CONNECTOR_SMARTPAY_USER}
+  password: ${GDS_CONNECTOR_SMARTPAY_PASSWORD}
+
 database:
   driverClass: org.postgresql.Driver
   user: ${DB_USER}

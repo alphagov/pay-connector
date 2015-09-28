@@ -15,6 +15,10 @@ public class ConnectorConfiguration extends Configuration {
 
     @Valid
     @NotNull
+    private SmartpayConfig smartpayConfig = new SmartpayConfig();
+
+    @Valid
+    @NotNull
     private DataSourceFactory dataSourceFactory = new DataSourceFactory();
 
     @Valid
@@ -33,5 +37,10 @@ public class ConnectorConfiguration extends Configuration {
     @JsonProperty("worldpay")
     public WorldpayConfig getWorldpayConfig() {
         return worldpayConfig;
+    }
+
+    @JsonProperty("smartpay")
+    public SmartpayConfig getSmartpayConfig() {
+        return smartpayConfig;
     }
 }

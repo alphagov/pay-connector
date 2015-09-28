@@ -38,5 +38,4 @@ public class CardUtils {
         address.setCountry(country);
         return address;
     }
-
 }

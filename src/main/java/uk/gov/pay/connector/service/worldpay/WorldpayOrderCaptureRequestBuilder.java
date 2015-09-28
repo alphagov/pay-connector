@@ -1,7 +1,8 @@
-package uk.gov.pay.connector.worldpay.template;
+package uk.gov.pay.connector.service.worldpay;
 
 
 import org.joda.time.DateTime;
+import uk.gov.pay.connector.util.templates.TemplateStringBuilder;
 
 import java.util.Map;
 
@@ -9,7 +10,7 @@ import static com.google.common.collect.Maps.newHashMap;
 
 public class WorldpayOrderCaptureRequestBuilder {
 
-    private final WorldpayRequestBuilder requestBuilder;
+    private final TemplateStringBuilder templateStringBuilder;
     private String merchantCode;
     private String transactionId;
     private String amount;
@@ -20,7 +21,7 @@ public class WorldpayOrderCaptureRequestBuilder {
     }
 
     public WorldpayOrderCaptureRequestBuilder() {
-        this.requestBuilder = new WorldpayRequestBuilder("WorldpayOrderCaptureTemplate.xml");
+        this.templateStringBuilder = new TemplateStringBuilder("/worldpay/WorldpayOrderCaptureTemplate.xml");
     }
 
     public WorldpayOrderCaptureRequestBuilder withMerchantCode(String merchantCode) {
@@ -50,6 +51,6 @@ public class WorldpayOrderCaptureRequestBuilder {
         templateData.put("transactionId", transactionId);
         templateData.put("captureDate", date);
         templateData.put("amount", amount);
-        return requestBuilder.buildWith(templateData);
+        return templateStringBuilder.buildWith(templateData);
     }
 }

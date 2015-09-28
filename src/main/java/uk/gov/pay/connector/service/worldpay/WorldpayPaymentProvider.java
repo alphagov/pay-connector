@@ -13,6 +13,7 @@ import uk.gov.pay.connector.model.CaptureRequest;
 import uk.gov.pay.connector.model.CaptureResponse;
 import uk.gov.pay.connector.model.domain.GatewayAccount;
 import uk.gov.pay.connector.service.PaymentProvider;
+import uk.gov.pay.connector.util.XMLUnmarshaller;
 
 import javax.ws.rs.client.Client;
 import javax.ws.rs.client.ClientBuilder;
@@ -26,15 +27,13 @@ import static java.util.UUID.randomUUID;
 import static javax.ws.rs.core.HttpHeaders.AUTHORIZATION;
 import static javax.ws.rs.core.MediaType.APPLICATION_XML;
 import static javax.ws.rs.core.Response.Status.OK;
-import static uk.gov.pay.connector.model.AuthorisationResponse.anErrorResponse;
-import static uk.gov.pay.connector.model.AuthorisationResponse.successfulAuthorisation;
+import static uk.gov.pay.connector.model.AuthorisationResponse.*;
 import static uk.gov.pay.connector.model.CaptureResponse.aSuccessfulCaptureResponse;
 import static uk.gov.pay.connector.model.GatewayError.baseGatewayError;
-import static uk.gov.pay.connector.model.domain.ChargeStatus.AUTHORISATION_REJECTED;
 import static uk.gov.pay.connector.model.domain.ChargeStatus.AUTHORISATION_SUCCESS;
 import static uk.gov.pay.connector.model.domain.GatewayAccount.gatewayAccountFor;
-import static uk.gov.pay.connector.worldpay.template.WorldpayOrderCaptureRequestBuilder.anOrderCaptureRequest;
-import static uk.gov.pay.connector.worldpay.template.WorldpayOrderSubmitRequestBuilder.anOrderSubmitRequest;
+import static uk.gov.pay.connector.service.worldpay.WorldpayOrderCaptureRequestBuilder.anOrderCaptureRequest;
+import static uk.gov.pay.connector.service.OrderSubmitRequestBuilder.aWorldpayOrderSubmitRequest;
 
 public class WorldpayPaymentProvider implements PaymentProvider {
     private final Logger logger = LoggerFactory.getLogger(WorldpayPaymentProvider.class);
@@ -63,8 +62,8 @@ public class WorldpayPaymentProvider implements PaymentProvider {
 
         Response response = postRequestFor(gatewayAccount, buildOrderSubmitFor(request, gatewayTransactionId));
         return response.getStatus() == OK.getStatusCode() ?
-                mapToCardAuthorisationResponse(response, gatewayAccount.getUsername(), gatewayTransactionId) :
-                handleAuthoriseError(gatewayTransactionId, response);
+                mapToCardAuthorisationResponse(response, gatewayTransactionId) :
+                errorResponse(logger, response);
     }
 
     @Override
@@ -86,7 +85,7 @@ public class WorldpayPaymentProvider implements PaymentProvider {
     }
 
     private String buildOrderSubmitFor(AuthorisationRequest request, String gatewayTransactionId) {
-        return anOrderSubmitRequest()
+        return aWorldpayOrderSubmitRequest()
                 .withMerchantCode(gatewayAccount.getUsername())
                 .withTransactionId(gatewayTransactionId)
                 .withDescription(request.getDescription())
@@ -95,14 +94,14 @@ public class WorldpayPaymentProvider implements PaymentProvider {
                 .build();
     }
 
-    private AuthorisationResponse mapToCardAuthorisationResponse(Response response, String merchantId, String gatewayTransactionId) {
+    private AuthorisationResponse mapToCardAuthorisationResponse(Response response, String gatewayTransactionId) {
         String payload = response.readEntity(String.class);
         try {
-            WorldpayAuthorisationResponse wResponse = WorldpayXMLUnmarshaller.unmarshall(payload, WorldpayAuthorisationResponse.class);
+            WorldpayAuthorisationResponse wResponse = XMLUnmarshaller.unmarshall(payload, WorldpayAuthorisationResponse.class);
             if (wResponse.isError()) {
-                return anErrorResponse(baseGatewayError(wResponse.getErrorMessage()), gatewayTransactionId);
+                return authorisationFailureNotUpdateResponse(logger, gatewayTransactionId, wResponse.getErrorMessage());
             }
-            return wResponse.isAuthorised() ? successfulAuthorisation(AUTHORISATION_SUCCESS, gatewayTransactionId) : unauthorisedResponse(merchantId);
+            return wResponse.isAuthorised() ? successfulAuthorisation(AUTHORISATION_SUCCESS, gatewayTransactionId) : authorisationFailureResponse(logger, gatewayTransactionId);
         } catch (JAXBException e) {
             throw unmarshallException(payload, e);
         }
@@ -111,7 +110,7 @@ public class WorldpayPaymentProvider implements PaymentProvider {
     private CaptureResponse mapToCaptureResponse(Response response) {
         String payload = response.readEntity(String.class);
         try {
-            WorldpayCaptureResponse wResponse = WorldpayXMLUnmarshaller.unmarshall(payload, WorldpayCaptureResponse.class);
+            WorldpayCaptureResponse wResponse = XMLUnmarshaller.unmarshall(payload, WorldpayCaptureResponse.class);
             return wResponse.isCaptured() ? aSuccessfulCaptureResponse() : new CaptureResponse(false, baseGatewayError(wResponse.getErrorMessage()));
         } catch (JAXBException e) {
             throw unmarshallException(payload, e);
@@ -133,19 +132,9 @@ public class WorldpayPaymentProvider implements PaymentProvider {
         return new RuntimeException(error, e);
     }
 
-    private AuthorisationResponse unauthorisedResponse(String gatewayId) {
-        logger.warn(format("Gateway credentials are invalid for %s.", gatewayId));
-        return new AuthorisationResponse(false, baseGatewayError("This transaction was declined."), AUTHORISATION_REJECTED, null);
-    }
-
     private CaptureResponse handleCaptureError(Response response) {
         logger.error(format("Error code received from Worldpay %s.", response.getStatus()));
         return new CaptureResponse(false, baseGatewayError("Error processing capture request"));
-    }
-
-    private AuthorisationResponse handleAuthoriseError(String gatewayTransactionId, Response response) {
-        logger.error(format("Error code received from Worldpay %s.", response.getStatus()));
-        return anErrorResponse(baseGatewayError("Error processing authorisation request"), gatewayTransactionId);
     }
 
     private static String encode(String username, String password) {

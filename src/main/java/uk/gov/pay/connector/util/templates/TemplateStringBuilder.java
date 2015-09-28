@@ -1,4 +1,4 @@
-package uk.gov.pay.connector.worldpay.template;
+package uk.gov.pay.connector.util.templates;
 
 import freemarker.template.Configuration;
 import freemarker.template.Template;
@@ -13,15 +13,14 @@ import java.util.Map;
 
 import static freemarker.template.Configuration.VERSION_2_3_20;
 
-public class WorldpayRequestBuilder {
-
+public class TemplateStringBuilder {
     private Template template;
 
-    protected WorldpayRequestBuilder(String templateName) {
-        templateSetup("/templates/worldpay", templateName);
+    public TemplateStringBuilder(String templatePath) {
+        templateSetup("/templates", templatePath);
     }
 
-    protected String buildWith(Map<String, Object> input) {
+    public String buildWith(Map<String, Object> input) {
         Writer responseWriter = new StringWriter();
         try {
             template.process(input, responseWriter);
@@ -36,7 +35,7 @@ public class WorldpayRequestBuilder {
         cfg.setDefaultEncoding("UTF-8");
         cfg.setLocale(Locale.ENGLISH);
         cfg.setTemplateExceptionHandler(TemplateExceptionHandler.RETHROW_HANDLER);
-        cfg.setClassForTemplateLoading(WorldpayRequestBuilder.class, templateDir);
+        cfg.setClassForTemplateLoading(TemplateStringBuilder.class, templateDir);
 
         try {
             template = cfg.getTemplate(templateName);

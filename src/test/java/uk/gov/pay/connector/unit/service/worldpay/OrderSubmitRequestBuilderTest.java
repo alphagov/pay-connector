@@ -1,4 +1,4 @@
-package uk.gov.pay.connector.unit.worldpay.template;
+package uk.gov.pay.connector.unit.service.worldpay;
 
 import com.google.common.io.Resources;
 import org.junit.Test;
@@ -12,9 +12,9 @@ import static com.google.common.io.Resources.getResource;
 import static org.custommonkey.xmlunit.XMLAssert.assertXMLEqual;
 import static uk.gov.pay.connector.model.domain.Address.anAddress;
 import static uk.gov.pay.connector.util.CardUtils.buildCardDetails;
-import static uk.gov.pay.connector.worldpay.template.WorldpayOrderSubmitRequestBuilder.anOrderSubmitRequest;
+import static uk.gov.pay.connector.service.OrderSubmitRequestBuilder.aWorldpayOrderSubmitRequest;
 
-public class WorldpayRequestBuilderTest {
+public class OrderSubmitRequestBuilderTest {
     @Test
     public void shouldGenerateValidOrderSubmitPayloadForAddressWithMinimumFields() throws Exception {
 
@@ -26,7 +26,7 @@ public class WorldpayRequestBuilderTest {
 
         Card card = getValidTestCard(minAddress);
 
-        String actualRequest = anOrderSubmitRequest()
+        String actualRequest = aWorldpayOrderSubmitRequest()
                 .withMerchantCode("MERCHANTCODE")
                 .withTransactionId("MyUniqueTransactionId!")
                 .withDescription("This is the description")
@@ -51,7 +51,7 @@ public class WorldpayRequestBuilderTest {
 
         Card card = getValidTestCard(fullAddress);
 
-        String actualRequest = anOrderSubmitRequest()
+        String actualRequest = aWorldpayOrderSubmitRequest()
                 .withMerchantCode("MERCHANTCODE")
                 .withTransactionId("MyUniqueTransactionId!")
                 .withDescription("This is the description")

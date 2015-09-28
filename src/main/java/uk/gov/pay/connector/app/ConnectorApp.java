@@ -59,7 +59,7 @@ public class ConnectorApp extends Application<ConnectorConfiguration> {
         ChargeDao chargeDao = new ChargeDao(jdbi);
         TokenDao tokenDao = new TokenDao(jdbi);
         GatewayAccountDao gatewayAccountDao = new GatewayAccountDao(jdbi);
-        PaymentProviders providers = new PaymentProviders(conf.getWorldpayConfig());
+        PaymentProviders providers = new PaymentProviders(conf);
         CardService cardService = new CardService(gatewayAccountDao, chargeDao, providers);
 
         environment.jersey().register(new SecurityTokensResource(tokenDao));
