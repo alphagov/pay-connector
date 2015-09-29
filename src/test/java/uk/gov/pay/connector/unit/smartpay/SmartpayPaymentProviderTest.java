@@ -1,43 +1,47 @@
 package uk.gov.pay.connector.unit.smartpay;
 
-
+import org.junit.Before;
 import org.junit.Test;
-import uk.gov.pay.connector.model.*;
+import uk.gov.pay.connector.model.AuthorisationRequest;
+import uk.gov.pay.connector.model.AuthorisationResponse;
 import uk.gov.pay.connector.model.domain.Address;
 import uk.gov.pay.connector.model.domain.Card;
+import uk.gov.pay.connector.service.GatewayClient;
 import uk.gov.pay.connector.service.smartpay.SmartpayPaymentProvider;
-import uk.gov.pay.connector.service.worldpay.WorldpayPaymentProvider;
 
 import javax.ws.rs.client.Client;
 import javax.ws.rs.client.Entity;
 import javax.ws.rs.client.Invocation;
 import javax.ws.rs.client.WebTarget;
-import javax.ws.rs.core.MediaType;
 import javax.ws.rs.core.Response;
 
-import static java.util.UUID.randomUUID;
+import static javax.ws.rs.core.MediaType.APPLICATION_XML;
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.core.Is.is;
 import static org.junit.Assert.assertTrue;
 import static org.mockito.Matchers.*;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
-import static uk.gov.pay.connector.model.GatewayErrorType.GenericGatewayError;
 import static uk.gov.pay.connector.model.domain.Address.anAddress;
 import static uk.gov.pay.connector.model.domain.GatewayAccount.gatewayAccountFor;
 import static uk.gov.pay.connector.util.CardUtils.buildCardDetails;
 
-
 public class SmartpayPaymentProviderTest {
-
-    private final Client client = mock(Client.class);
-    private final SmartpayPaymentProvider connector = new SmartpayPaymentProvider(client, gatewayAccountFor("theUsername", "thePassword"), "http://smartpay.url");
+    private Client client;
+    private SmartpayPaymentProvider connector;
 
     private String pcpReference = "12345678";
+
+    @Before
+    public void setup() throws Exception {
+        client = mock(Client.class);
+        mockSmartpaySuccessfulOrderSubmitResponse();
+
+        connector = new SmartpayPaymentProvider(new GatewayClient(client, "http://smartpay.url"), gatewayAccountFor("theUsername", "thePassword"));
+    }
+
     @Test
     public void shouldSendSuccessfullyAOrderForMerchant() throws Exception {
-        mockWorldpaySuccessfulOrderSubmitResponse();
-
         AuthorisationResponse response = connector.authorise(getCardAuthorisationRequest());
         assertTrue(response.isSuccessful());
         assertThat(response.getTransactionId(), is(pcpReference));
@@ -45,13 +49,13 @@ public class SmartpayPaymentProviderTest {
 
     private AuthorisationRequest getCardAuthorisationRequest() {
         Card card = getValidTestCard();
-        String amount =  "222";
+        String amount = "222";
 
         String description = "This is the description";
         return new AuthorisationRequest(card, amount, description);
     }
 
-    private void mockWorldpaySuccessfulOrderSubmitResponse() {
+    private void mockSmartpaySuccessfulOrderSubmitResponse() {
         mockWorldpayResponse(200, successAuthoriseResponse());
     }
 
@@ -59,13 +63,14 @@ public class SmartpayPaymentProviderTest {
         WebTarget mockTarget = mock(WebTarget.class);
         when(client.target(anyString())).thenReturn(mockTarget);
         Invocation.Builder mockBuilder = mock(Invocation.Builder.class);
-        when(mockTarget.request(MediaType.APPLICATION_XML)).thenReturn(mockBuilder);
+        when(mockTarget.request(APPLICATION_XML)).thenReturn(mockBuilder);
         when(mockBuilder.header(anyString(), anyObject())).thenReturn(mockBuilder);
-        Response response = mock(Response.class);
 
+        Response response = mock(Response.class);
         when(response.readEntity(String.class)).thenReturn(responsePayload);
-        when(response.getStatus()).thenReturn(httpStatus);
         when(mockBuilder.post(any(Entity.class))).thenReturn(response);
+
+        when(response.getStatus()).thenReturn(httpStatus);
     }
 
 
@@ -83,7 +88,7 @@ public class SmartpayPaymentProviderTest {
                 "                <issuerUrl xmlns=\"http://payment.services.adyen.com\" xsi:nil=\"true\"/>\n" +
                 "                <md xmlns=\"http://payment.services.adyen.com\" xsi:nil=\"true\"/>\n" +
                 "                <paRequest xmlns=\"http://payment.services.adyen.com\" xsi:nil=\"true\"/>\n" +
-                "                <pspReference xmlns=\"http://payment.services.adyen.com\">"+pcpReference+"</pspReference>\n" +
+                "                <pspReference xmlns=\"http://payment.services.adyen.com\">" + pcpReference + "</pspReference>\n" +
                 "                <refusalReason xmlns=\"http://payment.services.adyen.com\" xsi:nil=\"true\"/>\n" +
                 "                <resultCode xmlns=\"http://payment.services.adyen.com\">Authorised</resultCode>\n" +
                 "            </ns1:paymentResult>\n" +

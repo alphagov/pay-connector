@@ -1,25 +1,28 @@
 package uk.gov.pay.connector.unit.worldpay;
 
-
+import org.junit.Before;
 import org.junit.Test;
 import uk.gov.pay.connector.model.*;
 import uk.gov.pay.connector.model.domain.Address;
 import uk.gov.pay.connector.model.domain.Card;
+import uk.gov.pay.connector.service.GatewayClient;
 import uk.gov.pay.connector.service.worldpay.WorldpayPaymentProvider;
 
 import javax.ws.rs.client.Client;
 import javax.ws.rs.client.Entity;
 import javax.ws.rs.client.Invocation;
 import javax.ws.rs.client.WebTarget;
-import javax.ws.rs.core.MediaType;
 import javax.ws.rs.core.Response;
 
 import static java.util.UUID.randomUUID;
+import static javax.ws.rs.core.MediaType.APPLICATION_XML;
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.core.Is.is;
 import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertTrue;
-import static org.mockito.Matchers.*;
+import static org.mockito.Matchers.any;
+import static org.mockito.Matchers.anyObject;
+import static org.mockito.Matchers.anyString;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
 import static uk.gov.pay.connector.model.GatewayErrorType.GenericGatewayError;
@@ -27,11 +30,17 @@ import static uk.gov.pay.connector.model.domain.Address.anAddress;
 import static uk.gov.pay.connector.model.domain.GatewayAccount.gatewayAccountFor;
 import static uk.gov.pay.connector.util.CardUtils.buildCardDetails;
 
-
 public class WorldpayPaymentProviderTest {
+    private WorldpayPaymentProvider connector;
+    private Client client;
 
-    private final Client client = mock(Client.class);
-    private final WorldpayPaymentProvider connector = new WorldpayPaymentProvider(client, gatewayAccountFor("theUsername", "thePassword"), "http://worldpay.url");
+    @Before
+    public void setup() throws Exception {
+        client = mock(Client.class);
+        mockWorldpaySuccessfulOrderSubmitResponse();
+
+        connector = new WorldpayPaymentProvider(new GatewayClient(client, "http://smartpay.url"), gatewayAccountFor("theUsername", "thePassword"));
+    }
 
     @Test
     public void shouldSendSuccessfullyAOrderForMerchant() throws Exception {
@@ -111,13 +120,14 @@ public class WorldpayPaymentProviderTest {
         WebTarget mockTarget = mock(WebTarget.class);
         when(client.target(anyString())).thenReturn(mockTarget);
         Invocation.Builder mockBuilder = mock(Invocation.Builder.class);
-        when(mockTarget.request(MediaType.APPLICATION_XML)).thenReturn(mockBuilder);
+        when(mockTarget.request(APPLICATION_XML)).thenReturn(mockBuilder);
         when(mockBuilder.header(anyString(), anyObject())).thenReturn(mockBuilder);
-        Response response = mock(Response.class);
 
+        Response response = mock(Response.class);
         when(response.readEntity(String.class)).thenReturn(responsePayload);
-        when(response.getStatus()).thenReturn(httpStatus);
         when(mockBuilder.post(any(Entity.class))).thenReturn(response);
+
+        when(response.getStatus()).thenReturn(httpStatus);
     }
 
     private String successCaptureResponse() {

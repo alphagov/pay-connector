@@ -8,6 +8,7 @@ import uk.gov.pay.connector.app.WorldpayConfig;
 import uk.gov.pay.connector.model.AuthorisationRequest;
 import uk.gov.pay.connector.model.AuthorisationResponse;
 import uk.gov.pay.connector.model.domain.Card;
+import uk.gov.pay.connector.service.GatewayClient;
 import uk.gov.pay.connector.service.worldpay.WorldpayPaymentProvider;
 import uk.gov.pay.connector.util.DropwizardAppWithPostgresRule;
 
@@ -20,7 +21,6 @@ import static uk.gov.pay.connector.model.domain.GatewayAccount.gatewayAccountFor
 import static uk.gov.pay.connector.util.CardUtils.aValidCard;
 
 public class WorldpayPaymentProviderITest {
-
     @Rule
     public DropwizardAppWithPostgresRule app = new DropwizardAppWithPostgresRule();
 
@@ -31,8 +31,14 @@ public class WorldpayPaymentProviderITest {
 
     @Test
     public void shouldSendSuccessfullyAnOrderForMerchant() throws Exception {
-
-        WorldpayPaymentProvider connector = new WorldpayPaymentProvider(getWorldpayConfig());
+        WorldpayConfig config = getWorldpayConfig();
+        WorldpayPaymentProvider connector = new WorldpayPaymentProvider(
+                new GatewayClient(
+                        ClientBuilder.newClient(),
+                        config.getUrl()
+                ),
+                gatewayAccountFor(config.getUsername(), config.getPassword())
+        );
         AuthorisationRequest request = getCardAuthorisationRequest();
         AuthorisationResponse response = connector.authorise(request);
 
@@ -44,9 +50,8 @@ public class WorldpayPaymentProviderITest {
         String worldpayUrl = getWorldpayConfig().getUrl();
 
         WorldpayPaymentProvider connector = new WorldpayPaymentProvider(
-                ClientBuilder.newClient(),
-                gatewayAccountFor("wrongUsername", "wrongPassword"),
-                worldpayUrl);
+                new GatewayClient(ClientBuilder.newClient(), worldpayUrl),
+                gatewayAccountFor("wrongUsername", "wrongPassword"));
 
         AuthorisationRequest request = getCardAuthorisationRequest();
         AuthorisationResponse response = connector.authorise(request);

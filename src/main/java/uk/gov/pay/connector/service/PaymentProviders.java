@@ -1,6 +1,5 @@
 package uk.gov.pay.connector.service;
 
-
 import uk.gov.pay.connector.app.ConnectorConfiguration;
 import uk.gov.pay.connector.app.SmartpayConfig;
 import uk.gov.pay.connector.app.WorldpayConfig;
@@ -15,10 +14,7 @@ import java.util.Optional;
 import java.util.function.Supplier;
 
 import static uk.gov.pay.connector.model.domain.GatewayAccount.gatewayAccountFor;
-import static uk.gov.pay.connector.resources.PaymentProviderValidator.DEFAULT_PROVIDER;
-import static uk.gov.pay.connector.resources.PaymentProviderValidator.SMARTPAY_PROVIDER;
-import static uk.gov.pay.connector.resources.PaymentProviderValidator.WORLDPAY_PROVIDER;
-
+import static uk.gov.pay.connector.resources.PaymentProviderValidator.*;
 
 public class PaymentProviders {
 
@@ -26,17 +22,22 @@ public class PaymentProviders {
 
     public PaymentProviders(ConnectorConfiguration config) {
         providers = new HashMap<String, PaymentProvider>() {{
-            put(WORLDPAY_PROVIDER, new WorldpayPaymentProvider(config.getWorldpayConfig()));
+            put(WORLDPAY_PROVIDER, createWorldpayProvider(config.getWorldpayConfig()));
             put(SMARTPAY_PROVIDER, createSmartPayProvider(config.getSmartpayConfig()));
             put(DEFAULT_PROVIDER, new SandboxPaymentProvider());
         }};
     }
 
+    private WorldpayPaymentProvider createWorldpayProvider(WorldpayConfig config) {
+        return new WorldpayPaymentProvider(
+                new GatewayClient(ClientBuilder.newClient(), config.getUrl()),
+                gatewayAccountFor(config.getUsername(), config.getPassword()));
+    }
+
     public static PaymentProvider createSmartPayProvider(SmartpayConfig config) {
         return new SmartpayPaymentProvider(
-                ClientBuilder.newClient(),
-                gatewayAccountFor(config.getUsername(), config.getPassword()),
-                config.getUrl()
+                new GatewayClient(ClientBuilder.newClient(), config.getUrl()),
+                gatewayAccountFor(config.getUsername(), config.getPassword())
         );
     }
 
