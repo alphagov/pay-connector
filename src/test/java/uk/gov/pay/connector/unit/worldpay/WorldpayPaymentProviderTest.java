@@ -2,11 +2,7 @@ package uk.gov.pay.connector.unit.worldpay;
 
 
 import org.junit.Test;
-import uk.gov.pay.connector.model.AuthorisationRequest;
-import uk.gov.pay.connector.model.AuthorisationResponse;
-import uk.gov.pay.connector.model.CaptureRequest;
-import uk.gov.pay.connector.model.CaptureResponse;
-import uk.gov.pay.connector.model.GatewayError;
+import uk.gov.pay.connector.model.*;
 import uk.gov.pay.connector.model.domain.Address;
 import uk.gov.pay.connector.model.domain.Card;
 import uk.gov.pay.connector.service.worldpay.WorldpayPaymentProvider;
@@ -21,10 +17,9 @@ import javax.ws.rs.core.Response;
 import static java.util.UUID.randomUUID;
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.core.Is.is;
+import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertTrue;
-import static org.mockito.Matchers.any;
-import static org.mockito.Matchers.anyObject;
-import static org.mockito.Matchers.anyString;
+import static org.mockito.Matchers.*;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
 import static uk.gov.pay.connector.model.GatewayErrorType.GenericGatewayError;
@@ -60,7 +55,7 @@ public class WorldpayPaymentProviderTest {
         AuthorisationResponse response = connector.authorise(getCardAuthorisationRequest());
 
         assertThat(response.isSuccessful(), is(false));
-        assertThat(response.getError(), is(new GatewayError("Error processing request", GenericGatewayError)));
+        assertEquals(response.getError(), new GatewayError("Error processing request", GenericGatewayError));
     }
 
     @Test
@@ -69,7 +64,7 @@ public class WorldpayPaymentProviderTest {
         CaptureResponse response = connector.capture(getCaptureRequest());
 
         assertThat(response.isSuccessful(), is(false));
-        assertThat(response.getError(), is(new GatewayError("Order has already been paid", GenericGatewayError)));
+        assertEquals(response.getError(), new GatewayError("Order has already been paid", GenericGatewayError));
     }
 
     @Test
@@ -78,15 +73,22 @@ public class WorldpayPaymentProviderTest {
         CaptureResponse response = connector.capture(getCaptureRequest());
 
         assertThat(response.isSuccessful(), is(false));
-        assertThat(response.getError(), is(new GatewayError("Error processing capture request", GenericGatewayError)));
+        assertEquals(response.getError(), new GatewayError("Error processing capture request", GenericGatewayError));
     }
 
     private AuthorisationRequest getCardAuthorisationRequest() {
         Card card = getValidTestCard();
-        String amount =  "500";
+        String amount = "500";
 
         String description = "This is the description";
         return new AuthorisationRequest(card, amount, description);
+    }
+
+    private void assertEquals(GatewayError actual, GatewayError expected) {
+        assertNotNull(actual);
+        assertThat(actual.getMessage(), is(expected.getMessage()));
+        assertThat(actual.getErrorType(), is(expected.getErrorType()));
+
     }
 
     private CaptureRequest getCaptureRequest() {

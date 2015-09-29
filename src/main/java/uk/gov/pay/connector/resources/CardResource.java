@@ -54,7 +54,6 @@ public class CardResource {
                 .bimap(handleError, handleGatewayResponse));
     }
 
-
     private F<GatewayError, Response> handleError =
             error -> ChargeNotFound.equals(error.getErrorType()) ?
                     notFoundResponse(logger, error.getMessage()) :
