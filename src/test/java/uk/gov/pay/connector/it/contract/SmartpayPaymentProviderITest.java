@@ -1,6 +1,5 @@
 package uk.gov.pay.connector.it.contract;
 
-import org.junit.Before;
 import org.junit.Rule;
 import org.junit.Test;
 import uk.gov.pay.connector.model.AuthorisationRequest;
@@ -9,22 +8,14 @@ import uk.gov.pay.connector.model.domain.Address;
 import uk.gov.pay.connector.model.domain.Card;
 import uk.gov.pay.connector.service.PaymentProvider;
 import uk.gov.pay.connector.service.PaymentProviders;
-import uk.gov.pay.connector.service.smartpay.SmartpayPaymentProvider;
 import uk.gov.pay.connector.util.DropwizardAppWithPostgresRule;
 
-import static org.junit.Assert.assertThat;
 import static org.junit.Assert.assertTrue;
 import static uk.gov.pay.connector.util.CardUtils.buildCardDetails;
 
 public class SmartpayPaymentProviderITest {
-
     @Rule
     public DropwizardAppWithPostgresRule app = new DropwizardAppWithPostgresRule();
-
-    @Before
-    public void before() throws Exception {
-//        Assume.assumeTrue(worldPayEnvironmentInitialized());
-    }
 
     @Test
     public void shouldSendSuccessfullyAnOrderForMerchant() throws Exception {
