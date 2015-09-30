@@ -80,7 +80,9 @@ public class WorldpayPaymentProvider implements PaymentProvider {
         if (wResponse.isError()) {
             return authorisationFailureNotUpdateResponse(logger, gatewayTransactionId, wResponse.getErrorMessage());
         }
-        return wResponse.isAuthorised() ? successfulAuthorisation(AUTHORISATION_SUCCESS, gatewayTransactionId) : authorisationFailureResponse(logger, gatewayTransactionId);
+        return wResponse.isAuthorised() ?
+                successfulAuthorisation(AUTHORISATION_SUCCESS, gatewayTransactionId) :
+                authorisationFailureResponse(logger, gatewayTransactionId, "Unauthorised");
     }
 
     private CaptureResponse mapToCaptureResponse(Response response) {

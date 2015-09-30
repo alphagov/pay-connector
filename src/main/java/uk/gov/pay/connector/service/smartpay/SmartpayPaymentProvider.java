@@ -52,7 +52,7 @@ public class SmartpayPaymentProvider implements PaymentProvider {
 
         return sResponse.isAuthorised() ?
                 successfulAuthorisation(AUTHORISATION_SUCCESS, sResponse.getPspReference()) :
-                authorisationFailureResponse(logger, sResponse.getPspReference());
+                authorisationFailureResponse(logger, sResponse.getPspReference(), sResponse.getErrorMessage());
     }
 
     private String buildOrderSubmitFor(AuthorisationRequest request) {

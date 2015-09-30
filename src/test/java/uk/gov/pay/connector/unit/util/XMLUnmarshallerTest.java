@@ -33,6 +33,13 @@ public class XMLUnmarshallerTest {
         assertThat(response.getPspReference(), is("7914435254138158"));
     }
 
+    @Test
+    public void shouldUnmarshallAnError_ForSmartpayAuthoriseResponse() throws Exception {
+        String successPayload = readPayload("templates/smartpay/authorisation-refused-response.xml");
+        SmartpayAuthorisationResponse response = XMLUnmarshaller.unmarshall(successPayload, SmartpayAuthorisationResponse.class);
+        assertThat(response.getPspReference(), is("8814436101583280"));
+        assertThat(response.getErrorMessage(), is("CVC Declined"));
+    }
 
     @Test
     public void shouldUnmarshallAnError_ForWorldpayCaptureResponse() throws Exception {

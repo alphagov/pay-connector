@@ -16,11 +16,18 @@ public class SmartpayAuthorisationResponse {
     @XmlPath("soap:Body/ns1:authoriseResponse/ns1:paymentResult/ns1:pspReference/text()")
     private String pspReference;
 
+    @XmlPath("soap:Body/ns1:authoriseResponse/ns1:paymentResult/ns1:refusalReason/text()")
+    private String errorMessage;
+
     public String getPspReference() {
         return pspReference;
     }
 
     public boolean isAuthorised() {
         return AUTHORISED.equals(result);
+    }
+
+    public String getErrorMessage() {
+        return errorMessage;
     }
 }
