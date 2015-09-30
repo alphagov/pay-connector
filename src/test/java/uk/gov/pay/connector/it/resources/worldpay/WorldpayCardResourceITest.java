@@ -1,12 +1,7 @@
-package uk.gov.pay.connector.it;
+package uk.gov.pay.connector.it.resources.worldpay;
 
-import org.junit.Assume;
-import org.junit.Before;
 import org.junit.Test;
-import uk.gov.pay.connector.app.WorldpayConfig;
 import uk.gov.pay.connector.it.base.CardResourceITestBase;
-
-import static org.apache.commons.lang3.StringUtils.isNotBlank;
 
 public class WorldpayCardResourceITest extends CardResourceITestBase {
 
@@ -14,11 +9,6 @@ public class WorldpayCardResourceITest extends CardResourceITestBase {
 
     public WorldpayCardResourceITest() {
         super("worldpay");
-    }
-
-    @Before
-    public void before() throws Exception {
-        Assume.assumeTrue(worldPayEnvironmentInitialized());
     }
 
     @Test
@@ -55,10 +45,5 @@ public class WorldpayCardResourceITest extends CardResourceITestBase {
 
         assertFrontendChargeStatusIs(chargeId, "CAPTURED");
         assertApiStatusIs(chargeId, "SUCCEEDED");
-    }
-
-    private boolean worldPayEnvironmentInitialized() {
-        WorldpayConfig worldpayConfig = app.getConf().getWorldpayConfig();
-        return isNotBlank(worldpayConfig.getUsername()) && isNotBlank(worldpayConfig.getPassword());
     }
 }

@@ -1,4 +1,4 @@
-package uk.gov.pay.connector.it;
+package uk.gov.pay.connector.it.resources;
 
 import io.dropwizard.testing.junit.DropwizardAppRule;
 import org.junit.Rule;
