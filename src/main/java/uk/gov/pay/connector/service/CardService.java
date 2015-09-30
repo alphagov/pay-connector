@@ -7,6 +7,7 @@ import uk.gov.pay.connector.model.*;
 import uk.gov.pay.connector.model.domain.Card;
 import uk.gov.pay.connector.model.domain.ChargeStatus;
 
+import java.util.Arrays;
 import java.util.Map;
 import java.util.Optional;
 import java.util.function.Function;
@@ -15,16 +16,22 @@ import java.util.function.Supplier;
 import static fj.data.Either.left;
 import static fj.data.Either.right;
 import static java.lang.String.format;
+import static org.apache.commons.lang3.StringUtils.equalsIgnoreCase;
+import static uk.gov.pay.connector.model.CancelRequest.cancelRequest;
 import static uk.gov.pay.connector.model.CaptureRequest.captureRequest;
 import static uk.gov.pay.connector.model.GatewayError.baseGatewayError;
 import static uk.gov.pay.connector.model.GatewayErrorType.ChargeNotFound;
 import static uk.gov.pay.connector.model.domain.ChargeStatus.*;
 
 public class CardService {
-    public static final String GATEWAY_ACCOUNT_ID_KEY = "gateway_account_id";
-    public static final String PAYMENT_PROVIDER_KEY = "payment_provider";
-    public static final String GATEWAY_TRANSACTION_ID_KEY = "gateway_transaction_id";
-    public static final String AMOUNT_KEY = "amount";
+    private static final String GATEWAY_ACCOUNT_ID_KEY = "gateway_account_id";
+    private static final String PAYMENT_PROVIDER_KEY = "payment_provider";
+    private static final String GATEWAY_TRANSACTION_ID_KEY = "gateway_transaction_id";
+    private static final String AMOUNT_KEY = "amount";
+
+    private static final ChargeStatus[] CANCELLABLE_STATES = new ChargeStatus[]{
+            CREATED, ENTERING_CARD_DETAILS, AUTHORISATION_SUCCESS, AUTHORISATION_SUBMITTED, READY_FOR_CAPTURE
+    };
 
     private final GatewayAccountDao accountDao;
     private final ChargeDao chargeDao;
@@ -50,16 +57,29 @@ public class CardService {
                 .orElseGet(chargeNotFound(chargeId));
     }
 
+    public Either<GatewayError, GatewayResponse> doCancel(String chargeId) {
+        return chargeDao
+                .findById(chargeId)
+                .map(cancelFor(chargeId))
+                .orElseGet(chargeNotFound(chargeId));
+    }
+
     private Function<Map<String, Object>, Either<GatewayError, GatewayResponse>> captureFor(String chargeId) {
         return charge -> hasStatus(charge, AUTHORISATION_SUCCESS) ?
                 right(captureFor(chargeId, charge)) :
                 left(captureErrorMessageFor((String) charge.get(STATUS_KEY)));
     }
 
-    private Function<Map<String, Object>, Either<GatewayError,GatewayResponse>> authoriseFor(String chargeId, Card cardDetails) {
+    private Function<Map<String, Object>, Either<GatewayError, GatewayResponse>> authoriseFor(String chargeId, Card cardDetails) {
         return charge -> hasStatus(charge, CREATED) ?
                 right(authoriseFor(chargeId, cardDetails, charge)) :
                 left(authoriseErrorMessageFor(chargeId));
+    }
+
+    private Function<Map<String, Object>, Either<GatewayError, GatewayResponse>> cancelFor(String chargeId) {
+        return charge -> hasStatus(charge, CANCELLABLE_STATES) ?
+                right(cancelFor(chargeId, charge)) :
+                left(cancelErrorMessageFor(chargeId, (String) charge.get(STATUS_KEY)));
     }
 
     private GatewayResponse captureFor(String chargeId, Map<String, Object> charge) {
@@ -88,6 +108,16 @@ public class CardService {
         return response;
     }
 
+    private GatewayResponse cancelFor(String chargeId, Map<String, Object> charge) {
+        CancelRequest request = cancelRequest(String.valueOf(charge.get(GATEWAY_TRANSACTION_ID_KEY)));
+        CancelResponse response = paymentProviderFor(charge).cancel(request);
+
+        if (response.isSuccessful()) {
+            chargeDao.updateStatus(chargeId, SYSTEM_CANCELLED);
+        }
+        return response;
+    }
+
     private PaymentProvider paymentProviderFor(Map<String, Object> charge) {
         Optional<Map<String, Object>> maybeAccount = accountDao.findById((String) charge.get(GATEWAY_ACCOUNT_ID_KEY));
         String paymentProviderName = String.valueOf(maybeAccount.get().get(PAYMENT_PROVIDER_KEY));
@@ -98,8 +128,10 @@ public class CardService {
         return new AuthorisationRequest(card, amountValue, "This is the description");
     }
 
-    private boolean hasStatus(Map<String, Object> charge, ChargeStatus status) {
-        return status.getValue().equals(charge.get(STATUS_KEY));
+    private boolean hasStatus(Map<String, Object> charge, ChargeStatus... states) {
+        Object currentStatus = charge.get(STATUS_KEY);
+        return Arrays.stream(states)
+                .anyMatch(status -> equalsIgnoreCase(status.getValue(), currentStatus.toString()));
     }
 
     private GatewayError captureErrorMessageFor(String currentStatus) {
@@ -108,6 +140,10 @@ public class CardService {
 
     private GatewayError authoriseErrorMessageFor(String chargeId) {
         return baseGatewayError(formattedError("Card already processed for charge with id %s.", chargeId));
+    }
+
+    private GatewayError cancelErrorMessageFor(String chargeId, String status) {
+        return baseGatewayError(formattedError("Cannot cancel a charge id [%s]: status is [%s].", chargeId, status));
     }
 
     private Supplier<Either<GatewayError, GatewayResponse>> chargeNotFound(String chargeId) {

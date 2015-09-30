@@ -5,6 +5,7 @@ import uk.gov.pay.connector.service.PaymentProvider;
 
 import java.util.UUID;
 
+import static uk.gov.pay.connector.model.CancelResponse.aSuccessfulCancelResponse;
 import static uk.gov.pay.connector.model.CaptureResponse.aSuccessfulCaptureResponse;
 import static uk.gov.pay.connector.model.GatewayErrorType.GenericGatewayError;
 import static uk.gov.pay.connector.model.domain.ChargeStatus.AUTHORISATION_SUCCESS;
@@ -32,5 +33,10 @@ public class SandboxPaymentProvider implements PaymentProvider {
     @Override
     public CaptureResponse capture(CaptureRequest request) {
         return aSuccessfulCaptureResponse();
+    }
+
+    @Override
+    public CancelResponse cancel(CancelRequest request) {
+        return aSuccessfulCancelResponse();
     }
 }

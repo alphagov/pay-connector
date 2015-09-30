@@ -4,6 +4,8 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import uk.gov.pay.connector.model.AuthorisationRequest;
 import uk.gov.pay.connector.model.AuthorisationResponse;
+import uk.gov.pay.connector.model.CancelRequest;
+import uk.gov.pay.connector.model.CancelResponse;
 import uk.gov.pay.connector.model.CaptureRequest;
 import uk.gov.pay.connector.model.CaptureResponse;
 import uk.gov.pay.connector.model.domain.GatewayAccount;
@@ -45,6 +47,11 @@ public class SmartpayPaymentProvider implements PaymentProvider {
     @Override
     public CaptureResponse capture(CaptureRequest request) {
         return null;
+    }
+
+    @Override
+    public CancelResponse cancel(CancelRequest request) {
+        throw new IllegalStateException("not yet implemented");
     }
 
     private AuthorisationResponse mapToCardAuthorisationResponse(Response response) {
