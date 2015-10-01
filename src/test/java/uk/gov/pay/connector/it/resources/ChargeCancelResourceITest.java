@@ -16,13 +16,13 @@ import static com.jayway.restassured.RestAssured.given;
 import static com.jayway.restassured.http.ContentType.JSON;
 import static org.apache.commons.lang3.BooleanUtils.negate;
 import static org.hamcrest.Matchers.is;
+import static uk.gov.pay.connector.model.api.ExternalChargeStatus.EXT_SYSTEM_CANCELLED;
 import static uk.gov.pay.connector.model.domain.ChargeStatus.AUTHORISATION_SUBMITTED;
 import static uk.gov.pay.connector.model.domain.ChargeStatus.AUTHORISATION_SUCCESS;
 import static uk.gov.pay.connector.model.domain.ChargeStatus.CREATED;
 import static uk.gov.pay.connector.model.domain.ChargeStatus.ENTERING_CARD_DETAILS;
 import static uk.gov.pay.connector.model.domain.ChargeStatus.READY_FOR_CAPTURE;
 import static uk.gov.pay.connector.model.domain.ChargeStatus.SYSTEM_CANCELLED;
-import static uk.gov.pay.connector.model.api.ExternalChargeStatus.EXT_SYSTEM_CANCELLED;
 
 public class ChargeCancelResourceITest {
 
@@ -41,7 +41,7 @@ public class ChargeCancelResourceITest {
 
     @Before
     public void setupGatewayAccount() {
-        app.getDatabaseTestHelper().addGatewayAccount(accountId, "test gateway for cancellation");
+        app.getDatabaseTestHelper().addGatewayAccount(accountId, "sandbox");
     }
 
     @Test
@@ -61,10 +61,13 @@ public class ChargeCancelResourceITest {
                 .filter(status -> negate(CANCELLABLE_STATES.contains(status)))
                 .forEach(notCancellableState -> {
                     String chargeId = createNewChargeWithStatus(notCancellableState);
+                    String expectedMessage = "Cannot cancel a charge id [" + chargeId
+                            + "]: status is [" + notCancellableState.getValue() + "].";
+
                     assertPostCancelHasStatus(chargeId, 400)
                             .and()
                             .contentType(JSON)
-                            .body("message", is("Cannot cancel a charge with status " + notCancellableState.getValue() + "."));
+                            .body("message", is(expectedMessage));
                 });
     }
 
