@@ -7,26 +7,26 @@ import java.util.Map;
 
 import static com.google.common.collect.Maps.newHashMap;
 
-public class WorldpayCancelOrderRequestBuilder {
+public class WorldpayOrderCancelRequestBuilder {
 
     private final TemplateStringBuilder templateStringBuilder;
     private String merchantCode;
     private String transactionId;
 
-    public static WorldpayCancelOrderRequestBuilder aCancelOrderRequest() {
-        return new WorldpayCancelOrderRequestBuilder();
+    public static WorldpayOrderCancelRequestBuilder aWorldpayOrderCancelRequest() {
+        return new WorldpayOrderCancelRequestBuilder();
     }
 
-    private WorldpayCancelOrderRequestBuilder() {
+    private WorldpayOrderCancelRequestBuilder() {
         this.templateStringBuilder = new TemplateStringBuilder("/worldpay/WorldpayOrderCancelTemplate.xml");
     }
 
-    public WorldpayCancelOrderRequestBuilder withMerchantCode(String merchantCode) {
+    public WorldpayOrderCancelRequestBuilder withMerchantCode(String merchantCode) {
         this.merchantCode = merchantCode;
         return this;
     }
 
-    public WorldpayCancelOrderRequestBuilder withTransactionId(String transactionId) {
+    public WorldpayOrderCancelRequestBuilder withTransactionId(String transactionId) {
         this.transactionId = transactionId;
         return this;
     }

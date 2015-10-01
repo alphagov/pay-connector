@@ -17,8 +17,11 @@ import javax.ws.rs.core.Response;
 import static java.util.UUID.randomUUID;
 import static javax.ws.rs.core.Response.Status.OK;
 import static uk.gov.pay.connector.model.AuthorisationResponse.*;
+import static uk.gov.pay.connector.model.CancelResponse.*;
+import static uk.gov.pay.connector.model.GatewayError.baseGatewayError;
 import static uk.gov.pay.connector.model.domain.ChargeStatus.AUTHORISATION_SUCCESS;
 import static uk.gov.pay.connector.service.OrderSubmitRequestBuilder.aSmartpayOrderSubmitRequest;
+import static uk.gov.pay.connector.service.smartpay.SmartpayOrderCancelRequestBuilder.aSmartpayOrderCancelRequest;
 
 public class SmartpayPaymentProvider implements PaymentProvider {
 
@@ -51,7 +54,10 @@ public class SmartpayPaymentProvider implements PaymentProvider {
 
     @Override
     public CancelResponse cancel(CancelRequest request) {
-        throw new IllegalStateException("not yet implemented");
+        Response response = client.postXMLRequestFor(gatewayAccount, buildCancelOrderFor(request));
+        return response.getStatus() == OK.getStatusCode() ?
+                mapToCancelResponse(response) :
+                errorCancelResponse(logger, response);
     }
 
     private AuthorisationResponse mapToCardAuthorisationResponse(Response response) {
@@ -62,6 +68,11 @@ public class SmartpayPaymentProvider implements PaymentProvider {
                 authorisationFailureResponse(logger, sResponse.getPspReference(), sResponse.getErrorMessage());
     }
 
+    private CancelResponse mapToCancelResponse(Response response) {
+        SmartpayCancelResponse spResponse = client.unmarshallResponse(response, SmartpayCancelResponse.class);
+        return spResponse.isCancelled() ? aSuccessfulCancelResponse() : new CancelResponse(false, baseGatewayError(spResponse.getErrorMessage()));
+    }
+
     private String buildOrderSubmitFor(AuthorisationRequest request) {
         return aSmartpayOrderSubmitRequest()
                 .withMerchantCode(MERCHANT_CODE)
@@ -69,6 +80,13 @@ public class SmartpayPaymentProvider implements PaymentProvider {
                 .withDescription(request.getDescription())
                 .withAmount(request.getAmount())
                 .withCard(request.getCard())
+                .build();
+    }
+
+    private String buildCancelOrderFor(CancelRequest request) {
+        return aSmartpayOrderCancelRequest()
+                .withMerchantCode(MERCHANT_CODE)
+                .withTransactionId(request.getTransactionId())
                 .build();
     }
 

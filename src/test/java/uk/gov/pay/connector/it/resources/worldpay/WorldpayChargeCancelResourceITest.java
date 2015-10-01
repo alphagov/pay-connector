@@ -11,26 +11,12 @@ public class WorldpayChargeCancelResourceITest extends CardResourceITestBase {
         super("worldpay");
     }
 
-    private String cancelChargePath(String chargeId) {
-        return "/v1/api/charges/" + chargeId + "/cancel";
-    }
-
     @Test
     public void cancelCharge_inWorldpaySystem() {
-        String chargeId = createAndAuthoriseCharge();
+        String chargeId = createAndAuthoriseCharge(validCardDetails);
         givenSetup()
                 .post(cancelChargePath(chargeId))
                 .then()
                 .statusCode(204);
-    }
-
-    private String createAndAuthoriseCharge() {
-        String chargeId = createNewCharge();
-        givenSetup()
-                .body(validCardDetails)
-                .post(cardUrlFor(chargeId))
-                .then()
-                .statusCode(204);
-        return chargeId;
     }
 }
