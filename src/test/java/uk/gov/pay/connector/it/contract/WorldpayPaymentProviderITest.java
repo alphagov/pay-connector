@@ -2,7 +2,7 @@ package uk.gov.pay.connector.it.contract;
 
 import org.junit.Rule;
 import org.junit.Test;
-import uk.gov.pay.connector.app.WorldpayConfig;
+import uk.gov.pay.connector.app.GatewayCredentialsConfig;
 import uk.gov.pay.connector.model.AuthorisationRequest;
 import uk.gov.pay.connector.model.AuthorisationResponse;
 import uk.gov.pay.connector.model.domain.Card;
@@ -23,7 +23,7 @@ public class WorldpayPaymentProviderITest {
 
     @Test
     public void shouldSendSuccessfullyAnOrderForMerchant() throws Exception {
-        WorldpayConfig config = getWorldpayConfig();
+        GatewayCredentialsConfig config = getWorldpayConfig();
         WorldpayPaymentProvider connector = new WorldpayPaymentProvider(
                 new GatewayClient(
                         ClientBuilder.newClient(),
@@ -58,7 +58,7 @@ public class WorldpayPaymentProviderITest {
         return new AuthorisationRequest(card, amount, description);
     }
 
-    private WorldpayConfig getWorldpayConfig() {
+    private GatewayCredentialsConfig getWorldpayConfig() {
         return app.getConf().getWorldpayConfig();
     }
 }

@@ -5,8 +5,7 @@ import org.junit.Rule;
 import org.junit.Test;
 import org.junit.rules.ExpectedException;
 import uk.gov.pay.connector.app.ConnectorConfiguration;
-import uk.gov.pay.connector.app.SmartpayConfig;
-import uk.gov.pay.connector.app.WorldpayConfig;
+import uk.gov.pay.connector.app.GatewayCredentialsConfig;
 import uk.gov.pay.connector.service.PaymentProvider;
 import uk.gov.pay.connector.service.PaymentProviders;
 import uk.gov.pay.connector.service.sandbox.SandboxPaymentProvider;
@@ -29,8 +28,8 @@ public class PaymentProvidersTest {
     @Before
     public void setup(){
         ConnectorConfiguration config = mock(ConnectorConfiguration.class);
-        when(config.getSmartpayConfig()).thenReturn(mock(SmartpayConfig.class));
-        when(config.getWorldpayConfig()).thenReturn(mock(WorldpayConfig.class));
+        when(config.getSmartpayConfig()).thenReturn(mock(GatewayCredentialsConfig.class));
+        when(config.getWorldpayConfig()).thenReturn(mock(GatewayCredentialsConfig.class));
 
         providers = new PaymentProviders(config);
     }

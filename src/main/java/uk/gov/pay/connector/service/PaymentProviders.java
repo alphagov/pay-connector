@@ -1,8 +1,7 @@
 package uk.gov.pay.connector.service;
 
 import uk.gov.pay.connector.app.ConnectorConfiguration;
-import uk.gov.pay.connector.app.SmartpayConfig;
-import uk.gov.pay.connector.app.WorldpayConfig;
+import uk.gov.pay.connector.app.GatewayCredentialsConfig;
 import uk.gov.pay.connector.service.sandbox.SandboxPaymentProvider;
 import uk.gov.pay.connector.service.smartpay.SmartpayPaymentProvider;
 import uk.gov.pay.connector.service.worldpay.WorldpayPaymentProvider;
@@ -28,13 +27,13 @@ public class PaymentProviders {
         }};
     }
 
-    private WorldpayPaymentProvider createWorldpayProvider(WorldpayConfig config) {
+    private PaymentProvider createWorldpayProvider(GatewayCredentialsConfig config) {
         return new WorldpayPaymentProvider(
                 new GatewayClient(ClientBuilder.newClient(), config.getUrl()),
                 gatewayAccountFor(config.getUsername(), config.getPassword()));
     }
 
-    public static PaymentProvider createSmartPayProvider(SmartpayConfig config) {
+    private PaymentProvider createSmartPayProvider(GatewayCredentialsConfig config) {
         return new SmartpayPaymentProvider(
                 new GatewayClient(ClientBuilder.newClient(), config.getUrl()),
                 gatewayAccountFor(config.getUsername(), config.getPassword())
