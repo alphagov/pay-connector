@@ -37,7 +37,6 @@ public class ChargesApiResource {
     private static final String[] REQUIRED_FIELDS = {AMOUNT_KEY, GATEWAY_ACCOUNT_KEY, RETURN_URL_KEY};
 
     private static final String STATUS_KEY = "status";
-    private static final String SECURE_REDIRECT_TOKEN = "secure_redirect_token";
 
     private ChargeDao chargeDao;
     private TokenDao tokenDao;
@@ -62,8 +61,7 @@ public class ChargesApiResource {
                 .map(charge -> {
                     URI documentLocation = chargeLocationFor(uriInfo, chargeId);
                     String tokenId = tokenDao.findByChargeId(chargeId);
-                    charge.put(SECURE_REDIRECT_TOKEN, tokenId);
-                    Map<String, Object> responseData = chargeResponseData(charge, documentLocation.toString(), chargeId);
+                    Map<String, Object> responseData = chargeResponseData(charge, documentLocation.toString(), chargeId, tokenId);
                     return Response.ok(responseData).build();
                 })
                 .orElseGet(() -> ResponseUtil.responseWithChargeNotFound(logger, chargeId));
@@ -95,8 +93,7 @@ public class ChargesApiResource {
                 .map(charge -> {
                     URI newLocation = chargeLocationFor(uriInfo, chargeId);
 
-                    charge.put(SECURE_REDIRECT_TOKEN, tokenId);
-                    Map<String, Object> responseData = chargeResponseData(charge, newLocation.toString(), chargeId);
+                    Map<String, Object> responseData = chargeResponseData(charge, newLocation.toString(), chargeId, tokenId);
 
                     logger.info("charge = {}", charge);
                     logger.info("responseData = {}", responseData);
@@ -107,10 +104,9 @@ public class ChargesApiResource {
                 .orElseGet(() -> ResponseUtil.responseWithChargeNotFound(logger, chargeId));
     }
 
-    private Map<String, Object> chargeResponseData(Map<String, Object> charge, String selfUrl, String chargeId) {
+    private Map<String, Object> chargeResponseData(Map<String, Object> charge, String selfUrl, String chargeId, String tokenId) {
         Map<String, Object> externalData = Maps.newHashMap(charge);
         externalData = convertStatusToExternalStatus(externalData);
-        String tokenId = (String)charge.remove(SECURE_REDIRECT_TOKEN);
         return addLinks(externalData, selfUrl, chargeId, tokenId);
     }
 
