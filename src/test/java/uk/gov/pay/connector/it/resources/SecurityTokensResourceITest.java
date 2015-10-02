@@ -1,4 +1,4 @@
-package uk.gov.pay.connector.it;
+package uk.gov.pay.connector.it.resources;
 
 import com.jayway.restassured.specification.RequestSpecification;
 import org.junit.Before;

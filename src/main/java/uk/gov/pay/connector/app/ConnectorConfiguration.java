@@ -11,7 +11,11 @@ public class ConnectorConfiguration extends Configuration {
 
     @Valid
     @NotNull
-    private WorldpayConfig worldpayConfig = new WorldpayConfig();
+    private GatewayCredentialsConfig worldpayConfig = new GatewayCredentialsConfig();
+
+    @Valid
+    @NotNull
+    private GatewayCredentialsConfig smartpayConfig = new GatewayCredentialsConfig();
 
     @Valid
     @NotNull
@@ -31,7 +35,12 @@ public class ConnectorConfiguration extends Configuration {
     }
 
     @JsonProperty("worldpay")
-    public WorldpayConfig getWorldpayConfig() {
+    public GatewayCredentialsConfig getWorldpayConfig() {
         return worldpayConfig;
+    }
+
+    @JsonProperty("smartpay")
+    public GatewayCredentialsConfig getSmartpayConfig() {
+        return smartpayConfig;
     }
 }

@@ -5,7 +5,7 @@ import io.dropwizard.Configuration;
 import javax.validation.Valid;
 import javax.validation.constraints.NotNull;
 
-public class WorldpayConfig extends Configuration {
+public class GatewayCredentialsConfig extends Configuration {
 
     @Valid
     @NotNull

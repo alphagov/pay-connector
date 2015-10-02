@@ -1,4 +1,4 @@
-package uk.gov.pay.connector.it;
+package uk.gov.pay.connector.it.resources;
 
 import com.google.common.collect.ImmutableList;
 import com.jayway.restassured.response.ValidatableResponse;

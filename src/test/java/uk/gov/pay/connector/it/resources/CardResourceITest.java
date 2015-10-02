@@ -1,4 +1,4 @@
-package uk.gov.pay.connector.it;
+package uk.gov.pay.connector.it.resources;
 
 import org.junit.Test;
 import uk.gov.pay.connector.it.base.CardResourceITestBase;

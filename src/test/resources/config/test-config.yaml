@@ -23,6 +23,11 @@ worldpay:
   username: myUsernameDummy
   password: myPasswordDummy
 
+smartpay:
+  url: http://testsmartpay.com
+  username: aSmartpayUser
+  password: aSmartpayPassword
+
 database:
   driverClass: org.postgresql.Driver
   user: postgres

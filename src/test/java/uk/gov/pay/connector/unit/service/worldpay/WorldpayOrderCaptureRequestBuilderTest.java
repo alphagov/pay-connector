@@ -1,4 +1,4 @@
-package uk.gov.pay.connector.unit.worldpay.template;
+package uk.gov.pay.connector.unit.service.worldpay;
 
 import com.google.common.io.Resources;
 import org.joda.time.DateTime;
@@ -9,9 +9,9 @@ import java.nio.charset.Charset;
 
 import static com.google.common.io.Resources.getResource;
 import static org.custommonkey.xmlunit.XMLAssert.assertXMLEqual;
-import static uk.gov.pay.connector.worldpay.template.WorldpayOrderCaptureRequestBuilder.anOrderCaptureRequest;
+import static uk.gov.pay.connector.service.worldpay.WorldpayOrderCaptureRequestBuilder.anOrderCaptureRequest;
 
-public class WorldpayOrderCaptureRequestGeneratorTest {
+public class WorldpayOrderCaptureRequestBuilderTest {
 
     @Test
     public void shouldGenerateValidOrderCapturePayload() throws Exception {

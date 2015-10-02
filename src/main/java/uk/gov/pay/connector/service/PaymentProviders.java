@@ -1,35 +1,51 @@
 package uk.gov.pay.connector.service;
 
-
-import uk.gov.pay.connector.app.WorldpayConfig;
+import uk.gov.pay.connector.app.ConnectorConfiguration;
+import uk.gov.pay.connector.app.GatewayCredentialsConfig;
 import uk.gov.pay.connector.service.sandbox.SandboxPaymentProvider;
+import uk.gov.pay.connector.service.smartpay.SmartpayPaymentProvider;
 import uk.gov.pay.connector.service.worldpay.WorldpayPaymentProvider;
 
-import java.util.HashMap;
-import java.util.Map;
-import java.util.Optional;
-import java.util.function.Supplier;
+import javax.ws.rs.client.ClientBuilder;
 
-import static uk.gov.pay.connector.resources.PaymentProviderValidator.DEFAULT_PROVIDER;
-import static uk.gov.pay.connector.resources.PaymentProviderValidator.WORLDPAY_PROVIDER;
-
+import static java.lang.String.format;
+import static uk.gov.pay.connector.model.domain.GatewayAccount.gatewayAccountFor;
+import static uk.gov.pay.connector.resources.PaymentProviderValidator.*;
 
 public class PaymentProviders {
+    private final PaymentProvider worldpayProvider;
+    private final PaymentProvider smartpayProvider;
+    private final PaymentProvider sandboxProvider;
 
-    private final Map<String, PaymentProvider> providers;
+    public PaymentProviders(ConnectorConfiguration config) {
+        worldpayProvider = createWorldpayProvider(config.getWorldpayConfig());
+        smartpayProvider = createSmartPayProvider(config.getSmartpayConfig());
+        sandboxProvider = new SandboxPaymentProvider();
+    }
 
-    public PaymentProviders(WorldpayConfig config) {
-        providers = new HashMap<String, PaymentProvider>() {{
-            put(WORLDPAY_PROVIDER, new WorldpayPaymentProvider(config));
-            put(DEFAULT_PROVIDER, new SandboxPaymentProvider());
-        }};
+    private PaymentProvider createWorldpayProvider(GatewayCredentialsConfig config) {
+        return new WorldpayPaymentProvider(
+                new GatewayClient(ClientBuilder.newClient(), config.getUrl()),
+                gatewayAccountFor(config.getUsername(), config.getPassword()));
+    }
+
+    private PaymentProvider createSmartPayProvider(GatewayCredentialsConfig config) {
+        return new SmartpayPaymentProvider(
+                new GatewayClient(ClientBuilder.newClient(), config.getUrl()),
+                gatewayAccountFor(config.getUsername(), config.getPassword())
+        );
     }
 
     public PaymentProvider resolve(String paymentProviderName) {
-        return Optional.ofNullable(providers.get(paymentProviderName)).orElseThrow(unsupportedProvider(paymentProviderName));
-    }
-
-    private Supplier<RuntimeException> unsupportedProvider(String paymentProviderName) {
-        return () -> new RuntimeException("Unsupported PaymentProvider " + paymentProviderName);
+        switch (paymentProviderName) {
+            case WORLDPAY_PROVIDER:
+                return worldpayProvider;
+            case SMARTPAY_PROVIDER:
+                return smartpayProvider;
+            case DEFAULT_PROVIDER:
+                return sandboxProvider;
+            default:
+                throw new RuntimeException(format("Unsupported PaymentProvider %s", paymentProviderName));
+        }
     }
 }
