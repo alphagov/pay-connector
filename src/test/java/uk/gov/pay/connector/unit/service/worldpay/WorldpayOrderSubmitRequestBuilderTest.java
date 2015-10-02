@@ -14,7 +14,7 @@ import static uk.gov.pay.connector.model.domain.Address.anAddress;
 import static uk.gov.pay.connector.util.CardUtils.buildCardDetails;
 import static uk.gov.pay.connector.service.OrderSubmitRequestBuilder.aWorldpayOrderSubmitRequest;
 
-public class OrderSubmitRequestBuilderTest {
+public class WorldpayOrderSubmitRequestBuilderTest {
     @Test
     public void shouldGenerateValidOrderSubmitPayloadForAddressWithMinimumFields() throws Exception {
 

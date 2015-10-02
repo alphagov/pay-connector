@@ -38,7 +38,7 @@ public class CardServiceTest {
 
     private final String gatewayAccountId = "theAccountId";
     private final String providerName = "theProvider";
-    private final PaymentProvider theProvider = mock(PaymentProvider.class);
+    private final PaymentProvider theMockProvider = mock(PaymentProvider.class);
 
     private GatewayAccountDao accountDao = mock(GatewayAccountDao.class);
     private ChargeDao chargeDao = mock(ChargeDao.class);
@@ -72,10 +72,10 @@ public class CardServiceTest {
 
         assertTrue(response.isRight());
         assertThat(response.right().value(), is(aSuccessfulResponse()));
-        verify(chargeDao, times(1)).updateStatus(chargeId, ChargeStatus.CAPTURED);
+        verify(chargeDao, times(1)).updateStatus(chargeId, ChargeStatus.CAPTURE_SUBMITTED);
 
         ArgumentCaptor<CaptureRequest> request = ArgumentCaptor.forClass(CaptureRequest.class);
-        verify(theProvider, times(1)).capture(request.capture());
+        verify(theMockProvider, times(1)).capture(request.capture());
         assertThat(request.getValue().getTransactionId(), is(gatewayTxId));
 
     }
@@ -86,9 +86,9 @@ public class CardServiceTest {
 
         when(chargeDao.findById(chargeId)).thenReturn(Optional.of(charge));
         when(accountDao.findById(gatewayAccountId)).thenReturn(Optional.of(theAccount()));
-        when(providers.resolve(providerName)).thenReturn(theProvider);
+        when(providers.resolve(providerName)).thenReturn(theMockProvider);
         CaptureResponse response = new CaptureResponse(true, null);
-        when(theProvider.capture(any())).thenReturn(response);
+        when(theMockProvider.capture(any())).thenReturn(response);
     }
 
     private void mockSuccessfulAuthorisation(String chargeId, String transactionId) {
@@ -96,9 +96,9 @@ public class CardServiceTest {
 
         when(chargeDao.findById(chargeId)).thenReturn(Optional.of(charge));
         when(accountDao.findById(gatewayAccountId)).thenReturn(Optional.of(theAccount()));
-        when(providers.resolve(providerName)).thenReturn(theProvider);
+        when(providers.resolve(providerName)).thenReturn(theMockProvider);
         AuthorisationResponse resp = new AuthorisationResponse(true, null, ChargeStatus.AUTHORISATION_SUCCESS, transactionId);
-        when(theProvider.authorise(any())).thenReturn(resp);
+        when(theMockProvider.authorise(any())).thenReturn(resp);
     }
 
     private Map<String, Object> theAccount() {

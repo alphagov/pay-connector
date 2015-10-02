@@ -154,8 +154,8 @@ public class CardResourceITest extends CardResourceITestBase {
                 .then()
                 .statusCode(204);
 
-        assertFrontendChargeStatusIs(chargeId, "CAPTURED");
-        assertApiStatusIs(chargeId, "SUCCEEDED");
+        assertFrontendChargeStatusIs(chargeId, "CAPTURE SUBMITTED");
+        assertApiStatusIs(chargeId, "IN PROGRESS");
     }
 
     @Test

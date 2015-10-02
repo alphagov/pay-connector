@@ -4,6 +4,8 @@ import org.junit.Before;
 import org.junit.Test;
 import uk.gov.pay.connector.model.AuthorisationRequest;
 import uk.gov.pay.connector.model.AuthorisationResponse;
+import uk.gov.pay.connector.model.CaptureRequest;
+import uk.gov.pay.connector.model.CaptureResponse;
 import uk.gov.pay.connector.model.domain.Address;
 import uk.gov.pay.connector.model.domain.Card;
 import uk.gov.pay.connector.service.GatewayClient;
@@ -28,7 +30,7 @@ import static uk.gov.pay.connector.util.CardUtils.buildCardDetails;
 
 public class SmartpayPaymentProviderTest {
     private Client client;
-    private SmartpayPaymentProvider connector;
+    private SmartpayPaymentProvider provider;
 
     private String pcpReference = "12345678";
 
@@ -36,15 +38,21 @@ public class SmartpayPaymentProviderTest {
     public void setup() throws Exception {
         client = mock(Client.class);
         mockSmartpaySuccessfulOrderSubmitResponse();
-
-        connector = new SmartpayPaymentProvider(new GatewayClient(client, "http://smartpay.url"), gatewayAccountFor("theUsername", "thePassword"));
+        provider = new SmartpayPaymentProvider(new GatewayClient(client, "http://smartpay.url"), gatewayAccountFor("theUsername", "thePassword"));
     }
 
     @Test
     public void shouldSendSuccessfullyAOrderForMerchant() throws Exception {
-        AuthorisationResponse response = connector.authorise(getCardAuthorisationRequest());
+        AuthorisationResponse response = provider.authorise(getCardAuthorisationRequest());
         assertTrue(response.isSuccessful());
         assertThat(response.getTransactionId(), is(pcpReference));
+    }
+
+    @Test
+    public void shouldCaptureAPaymentSuccessfully() throws Exception {
+        mockSmartpaySuccessfulCaptureResponse();
+        CaptureResponse response = provider.capture(new CaptureRequest("5000", null));
+        assertTrue(response.isSuccessful());
     }
 
     private AuthorisationRequest getCardAuthorisationRequest() {
@@ -56,10 +64,14 @@ public class SmartpayPaymentProviderTest {
     }
 
     private void mockSmartpaySuccessfulOrderSubmitResponse() {
-        mockWorldpayResponse(200, successAuthoriseResponse());
+        mockSmartpayResponse(200, successAuthoriseResponse());
     }
 
-    private void mockWorldpayResponse(int httpStatus, String responsePayload) {
+    private void mockSmartpaySuccessfulCaptureResponse() {
+        mockSmartpayResponse(200, successCaptureResponse());
+    }
+
+    private void mockSmartpayResponse(int httpStatus, String responsePayload) {
         WebTarget mockTarget = mock(WebTarget.class);
         when(client.target(anyString())).thenReturn(mockTarget);
         Invocation.Builder mockBuilder = mock(Invocation.Builder.class);
@@ -72,7 +84,6 @@ public class SmartpayPaymentProviderTest {
 
         when(response.getStatus()).thenReturn(httpStatus);
     }
-
 
     private String successAuthoriseResponse() {
         return "<soap:Envelope xmlns:soap=\"http://schemas.xmlsoap.org/soap/envelope/\"\n" +
@@ -95,6 +106,20 @@ public class SmartpayPaymentProviderTest {
                 "        </ns1:authoriseResponse>\n" +
                 "    </soap:Body>\n" +
                 "</soap:Envelope>";
+    }
+
+    private String successCaptureResponse() {
+        return "<ns0:Envelope xmlns:ns0=\"http://schemas.xmlsoap.org/soap/envelope/\" xmlns:ns1=\"http://payment.services.adyen.com\" xmlns:xsi=\"http://www.w3.org/2001/XMLSchema-instance\">\n" +
+                "    <ns0:Body>\n" +
+                "        <ns1:captureResponse>\n" +
+                "            <ns1:captureResult>\n" +
+                "                <ns1:additionalData xsi:nil=\"true\" />\n" +
+                "                <ns1:pspReference>8614440510830227</ns1:pspReference>\n" +
+                "                <ns1:response>[capture-received]</ns1:response>\n" +
+                "            </ns1:captureResult>\n" +
+                "        </ns1:captureResponse>\n" +
+                "    </ns0:Body>\n" +
+                "</ns0:Envelope>";
     }
 
     private Card getValidTestCard() {

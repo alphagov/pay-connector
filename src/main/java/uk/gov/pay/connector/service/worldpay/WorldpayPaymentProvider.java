@@ -5,12 +5,7 @@ import org.joda.time.DateTime;
 import org.joda.time.DateTimeZone;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import uk.gov.pay.connector.model.AuthorisationRequest;
-import uk.gov.pay.connector.model.AuthorisationResponse;
-import uk.gov.pay.connector.model.CancelRequest;
-import uk.gov.pay.connector.model.CancelResponse;
-import uk.gov.pay.connector.model.CaptureRequest;
-import uk.gov.pay.connector.model.CaptureResponse;
+import uk.gov.pay.connector.model.*;
 import uk.gov.pay.connector.model.domain.GatewayAccount;
 import uk.gov.pay.connector.service.GatewayClient;
 import uk.gov.pay.connector.service.PaymentProvider;
@@ -21,13 +16,14 @@ import static java.lang.String.format;
 import static java.util.UUID.randomUUID;
 import static javax.ws.rs.core.Response.Status.OK;
 import static uk.gov.pay.connector.model.AuthorisationResponse.*;
-import static uk.gov.pay.connector.model.CancelResponse.*;
+import static uk.gov.pay.connector.model.CancelResponse.aSuccessfulCancelResponse;
+import static uk.gov.pay.connector.model.CancelResponse.errorCancelResponse;
 import static uk.gov.pay.connector.model.CaptureResponse.aSuccessfulCaptureResponse;
 import static uk.gov.pay.connector.model.GatewayError.baseGatewayError;
 import static uk.gov.pay.connector.model.domain.ChargeStatus.AUTHORISATION_SUCCESS;
+import static uk.gov.pay.connector.service.OrderCaptureRequestBuilder.aWorldpayOrderCaptureRequest;
 import static uk.gov.pay.connector.service.OrderSubmitRequestBuilder.aWorldpayOrderSubmitRequest;
 import static uk.gov.pay.connector.service.worldpay.WorldpayOrderCancelRequestBuilder.aWorldpayOrderCancelRequest;
-import static uk.gov.pay.connector.service.worldpay.WorldpayOrderCaptureRequestBuilder.anOrderCaptureRequest;
 
 public class WorldpayPaymentProvider implements PaymentProvider {
     private final Logger logger = LoggerFactory.getLogger(WorldpayPaymentProvider.class);
@@ -53,7 +49,6 @@ public class WorldpayPaymentProvider implements PaymentProvider {
 
     @Override
     public CaptureResponse capture(CaptureRequest request) {
-
         Response response = client.postXMLRequestFor(gatewayAccount, buildOrderCaptureFor(request));
         return response.getStatus() == OK.getStatusCode() ?
                 mapToCaptureResponse(response) :
@@ -69,7 +64,7 @@ public class WorldpayPaymentProvider implements PaymentProvider {
     }
 
     private String buildOrderCaptureFor(CaptureRequest request) {
-        return anOrderCaptureRequest()
+        return aWorldpayOrderCaptureRequest()
                 .withMerchantCode(gatewayAccount.getUsername())
                 .withTransactionId(request.getTransactionId())
                 .withAmount(request.getAmount())

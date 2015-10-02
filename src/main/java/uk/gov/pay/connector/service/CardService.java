@@ -90,7 +90,7 @@ public class CardService {
         CaptureResponse response = paymentProviderFor(charge).capture(request);
 
         if (response.isSuccessful()) {
-            chargeDao.updateStatus(chargeId, CAPTURED);
+            chargeDao.updateStatus(chargeId, CAPTURE_SUBMITTED);
         }
         return response;
     }
