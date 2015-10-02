@@ -7,24 +7,20 @@ import uk.gov.pay.connector.service.smartpay.SmartpayPaymentProvider;
 import uk.gov.pay.connector.service.worldpay.WorldpayPaymentProvider;
 
 import javax.ws.rs.client.ClientBuilder;
-import java.util.HashMap;
-import java.util.Map;
-import java.util.Optional;
-import java.util.function.Supplier;
 
+import static java.lang.String.format;
 import static uk.gov.pay.connector.model.domain.GatewayAccount.gatewayAccountFor;
 import static uk.gov.pay.connector.resources.PaymentProviderValidator.*;
 
 public class PaymentProviders {
-
-    private final Map<String, PaymentProvider> providers;
+    private final PaymentProvider worldpayProvider;
+    private final PaymentProvider smartpayProvider;
+    private final PaymentProvider sandboxProvider;
 
     public PaymentProviders(ConnectorConfiguration config) {
-        providers = new HashMap<String, PaymentProvider>() {{
-            put(WORLDPAY_PROVIDER, createWorldpayProvider(config.getWorldpayConfig()));
-            put(SMARTPAY_PROVIDER, createSmartPayProvider(config.getSmartpayConfig()));
-            put(DEFAULT_PROVIDER, new SandboxPaymentProvider());
-        }};
+        worldpayProvider = createWorldpayProvider(config.getWorldpayConfig());
+        smartpayProvider = createSmartPayProvider(config.getSmartpayConfig());
+        sandboxProvider = new SandboxPaymentProvider();
     }
 
     private PaymentProvider createWorldpayProvider(GatewayCredentialsConfig config) {
@@ -41,10 +37,15 @@ public class PaymentProviders {
     }
 
     public PaymentProvider resolve(String paymentProviderName) {
-        return Optional.ofNullable(providers.get(paymentProviderName)).orElseThrow(unsupportedProvider(paymentProviderName));
-    }
-
-    private Supplier<RuntimeException> unsupportedProvider(String paymentProviderName) {
-        return () -> new RuntimeException("Unsupported PaymentProvider " + paymentProviderName);
+        switch (paymentProviderName) {
+            case WORLDPAY_PROVIDER:
+                return worldpayProvider;
+            case SMARTPAY_PROVIDER:
+                return smartpayProvider;
+            case DEFAULT_PROVIDER:
+                return sandboxProvider;
+            default:
+                throw new RuntimeException(format("Unsupported PaymentProvider %s", paymentProviderName));
+        }
     }
 }
