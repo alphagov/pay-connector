@@ -23,6 +23,7 @@ public class CardResource {
 
     public static final String AUTHORIZATION_FRONTEND_RESOURCE_PATH = "/v1/frontend/charges/{chargeId}/cards";
     public static final String CAPTURE_FRONTEND_RESOURCE_PATH = "/v1/frontend/charges/{chargeId}/capture";
+    private static final String CANCEL_CHARGE_PATH = "/v1/api/charges/{chargeId}/cancel";
     private final CardService cardService;
     private final Logger logger = LoggerFactory.getLogger(CardResource.class);
 
@@ -51,6 +52,14 @@ public class CardResource {
     public Response captureCharge(@PathParam("chargeId") String chargeId) throws PayDBIException {
 
         return reduce(cardService.doCapture(chargeId)
+                .bimap(handleError, handleGatewayResponse));
+    }
+
+    @POST
+    @Path(CANCEL_CHARGE_PATH)
+    @Produces(APPLICATION_JSON)
+    public Response cancelCharge(@PathParam("chargeId") String chargeId) {
+        return reduce(cardService.doCancel(chargeId)
                 .bimap(handleError, handleGatewayResponse));
     }
 

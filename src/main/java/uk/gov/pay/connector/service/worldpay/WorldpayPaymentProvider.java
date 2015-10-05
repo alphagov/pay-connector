@@ -7,6 +7,8 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import uk.gov.pay.connector.model.AuthorisationRequest;
 import uk.gov.pay.connector.model.AuthorisationResponse;
+import uk.gov.pay.connector.model.CancelRequest;
+import uk.gov.pay.connector.model.CancelResponse;
 import uk.gov.pay.connector.model.CaptureRequest;
 import uk.gov.pay.connector.model.CaptureResponse;
 import uk.gov.pay.connector.model.domain.GatewayAccount;
@@ -19,10 +21,12 @@ import static java.lang.String.format;
 import static java.util.UUID.randomUUID;
 import static javax.ws.rs.core.Response.Status.OK;
 import static uk.gov.pay.connector.model.AuthorisationResponse.*;
+import static uk.gov.pay.connector.model.CancelResponse.*;
 import static uk.gov.pay.connector.model.CaptureResponse.aSuccessfulCaptureResponse;
 import static uk.gov.pay.connector.model.GatewayError.baseGatewayError;
 import static uk.gov.pay.connector.model.domain.ChargeStatus.AUTHORISATION_SUCCESS;
 import static uk.gov.pay.connector.service.OrderSubmitRequestBuilder.aWorldpayOrderSubmitRequest;
+import static uk.gov.pay.connector.service.worldpay.WorldpayCancelOrderRequestBuilder.aCancelOrderRequest;
 import static uk.gov.pay.connector.service.worldpay.WorldpayOrderCaptureRequestBuilder.anOrderCaptureRequest;
 
 public class WorldpayPaymentProvider implements PaymentProvider {
@@ -56,6 +60,14 @@ public class WorldpayPaymentProvider implements PaymentProvider {
                 handleCaptureError(response);
     }
 
+    @Override
+    public CancelResponse cancel(CancelRequest request) {
+        Response response = client.postXMLRequestFor(gatewayAccount, buildCancelOrderFor(request));
+        return response.getStatus() == OK.getStatusCode() ?
+                mapToCancelResponse(response) :
+                errorCancelResponse(logger, response);
+    }
+
     private String buildOrderCaptureFor(CaptureRequest request) {
         return anOrderCaptureRequest()
                 .withMerchantCode(gatewayAccount.getUsername())
@@ -75,6 +87,13 @@ public class WorldpayPaymentProvider implements PaymentProvider {
                 .build();
     }
 
+    private String buildCancelOrderFor(CancelRequest request) {
+        return aCancelOrderRequest()
+                .withMerchantCode(gatewayAccount.getUsername())
+                .withTransactionId(request.getTransactionId())
+                .build();
+    }
+
     private AuthorisationResponse mapToCardAuthorisationResponse(Response response, String gatewayTransactionId) {
         WorldpayAuthorisationResponse wResponse = client.unmarshallResponse(response, WorldpayAuthorisationResponse.class);
         if (wResponse.isError()) {
@@ -90,6 +109,10 @@ public class WorldpayPaymentProvider implements PaymentProvider {
         return wResponse.isCaptured() ? aSuccessfulCaptureResponse() : new CaptureResponse(false, baseGatewayError(wResponse.getErrorMessage()));
     }
 
+    private CancelResponse mapToCancelResponse(Response response) {
+        WorldpayCancelResponse wResponse = client.unmarshallResponse(response, WorldpayCancelResponse.class);
+        return wResponse.isCancelled() ? aSuccessfulCancelResponse() : new CancelResponse(false, baseGatewayError(wResponse.getErrorMessage()));
+    }
 
     private CaptureResponse handleCaptureError(Response response) {
         logger.error(format("Error code received from Worldpay %s.", response.getStatus()));

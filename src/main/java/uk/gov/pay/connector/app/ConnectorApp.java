@@ -66,7 +66,6 @@ public class ConnectorApp extends Application<ConnectorConfiguration> {
         environment.jersey().register(new ChargesApiResource(chargeDao, tokenDao, gatewayAccountDao, conf.getLinks()));
         environment.jersey().register(new ChargesFrontendResource(chargeDao));
         environment.jersey().register(new CardResource(cardService));
-        environment.jersey().register(new ChargeCancelResource(chargeDao));
         environment.jersey().register(new GatewayAccountResource(gatewayAccountDao));
 
         environment.healthChecks().register("database", new DatabaseHealthCheck(jdbi, dataSourceFactory.getValidationQuery()));
