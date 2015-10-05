@@ -81,7 +81,7 @@ public class ChargesFrontendResourceITest {
                 .statusCode(200)
                 .contentType(JSON)
                 .body("charge_id", is(chargeId))
-                .body("status", is("AUTHORISATION SUCCESS"));
+                .body("status", is(AUTHORISATION_SUCCESS.getValue()));
     }
 
     @Test

@@ -14,6 +14,7 @@ import static java.lang.String.format;
 import static org.hamcrest.Matchers.is;
 import static org.hamcrest.Matchers.notNullValue;
 import static org.hamcrest.Matchers.nullValue;
+import static uk.gov.pay.connector.model.api.ExternalChargeStatus.EXT_IN_PROGRESS;
 import static uk.gov.pay.connector.model.domain.ChargeStatus.AUTHORISATION_SUCCESS;
 import static uk.gov.pay.connector.util.JsonEncoder.toJson;
 import static uk.gov.pay.connector.util.LinksAssert.assertNextUrlLink;
@@ -85,7 +86,7 @@ public class ChargesApiResourceITest {
                 .statusCode(200)
                 .contentType(JSON)
                 .body(JSON_CHARGE_KEY, is(chargeId))
-                .body(JSON_STATUS_KEY, is("IN PROGRESS"));
+                .body(JSON_STATUS_KEY, is(EXT_IN_PROGRESS.getValue()));
     }
 
     @Test
