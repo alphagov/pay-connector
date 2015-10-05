@@ -7,26 +7,23 @@ import javax.xml.bind.annotation.XmlRootElement;
 import static org.apache.commons.lang3.StringUtils.isNotBlank;
 import static org.apache.commons.lang3.StringUtils.trim;
 
-@XmlRootElement(name = "paymentService")
+@XmlRootElement(name = "Envelope", namespace = "http://schemas.xmlsoap.org/soap/envelope/")
 public class SmartpayCaptureResponse {
+    @XmlPath("soap:Body/ns1:captureResponse/ns1:captureResult/ns1:pspReference/text()")
+    private String captureTransactionId;
 
+    @XmlPath("soap:Body/ns1:captureResponse/ns1:captureResult/ns1:response/text()")
+    private String captureResponse;
 
-    @XmlPath("reply/ok/captureReceived/@orderCode")
-    private String transationIdForOk;
-
-    @XmlPath("reply/error/@code")
-    private String errorCode;
-
-    @XmlPath("reply/error/text()")
+    @XmlPath("soap:Body/soap:Fault/faultstring/text()")
     private String errorMessage;
 
-    //TODO: what define a capture failure response?
     public boolean isCaptured() {
-        return isNotBlank(transationIdForOk);
+        return isNotBlank(captureTransactionId) && "[capture-received]".equalsIgnoreCase(captureResponse);
     }
 
-    public String getErrorCode() {
-        return errorCode;
+    public String getPspRefrence() {
+        return captureTransactionId;
     }
 
     public String getErrorMessage() {

@@ -3,6 +3,8 @@ package uk.gov.pay.connector.it.resources.worldpay;
 import org.junit.Test;
 import uk.gov.pay.connector.it.base.CardResourceITestBase;
 
+import static uk.gov.pay.connector.model.domain.ChargeStatus.CAPTURE_SUBMITTED;
+
 public class WorldpayCardResourceITest extends CardResourceITestBase {
 
     private String validCardDetails = buildJsonCardDetailsFor("4444333322221111");
@@ -43,7 +45,7 @@ public class WorldpayCardResourceITest extends CardResourceITestBase {
                 .then()
                 .statusCode(204);
 
-        assertFrontendChargeStatusIs(chargeId, "CAPTURE SUBMITTED");
+        assertFrontendChargeStatusIs(chargeId, CAPTURE_SUBMITTED.getValue());
         assertApiStatusIs(chargeId, "IN PROGRESS");
     }
 }

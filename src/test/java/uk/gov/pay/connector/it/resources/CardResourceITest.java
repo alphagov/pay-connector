@@ -7,6 +7,7 @@ import static com.jayway.restassured.http.ContentType.JSON;
 import static java.lang.String.format;
 import static org.hamcrest.Matchers.is;
 import static uk.gov.pay.connector.model.domain.ChargeStatus.AUTHORISATION_SUBMITTED;
+import static uk.gov.pay.connector.model.domain.ChargeStatus.CAPTURE_SUBMITTED;
 
 public class CardResourceITest extends CardResourceITestBase {
 
@@ -147,14 +148,14 @@ public class CardResourceITest extends CardResourceITestBase {
     }
 
     @Test
-    public void shouldCaptureCardPayment_IfChargeWasPreviouslyAuthorised() {
+    public void shouldSubmitForCaptureTheCardPayment_IfChargeWasPreviouslyAuthorised() {
         String chargeId = authoriseNewCharge();
         givenSetup()
                 .post(chargeCaptureUrlFor(chargeId))
                 .then()
                 .statusCode(204);
 
-        assertFrontendChargeStatusIs(chargeId, "CAPTURE SUBMITTED");
+        assertFrontendChargeStatusIs(chargeId, CAPTURE_SUBMITTED.getValue());
         assertApiStatusIs(chargeId, "IN PROGRESS");
     }
 

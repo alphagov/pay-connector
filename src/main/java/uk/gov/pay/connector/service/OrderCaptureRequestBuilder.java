@@ -53,7 +53,7 @@ public class OrderCaptureRequestBuilder {
         Map<String, Object> templateData = newHashMap();
         templateData.put("merchantCode", merchantCode);
         templateData.put("transactionId", transactionId);
-        templateData.put("captureDate", date);
+        templateData.put("captureDate", date); //not used for smartpay
         templateData.put("amount", amount);
         return templateStringBuilder.buildWith(templateData);
     }

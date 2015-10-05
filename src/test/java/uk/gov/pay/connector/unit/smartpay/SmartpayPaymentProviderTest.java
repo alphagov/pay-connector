@@ -51,7 +51,7 @@ public class SmartpayPaymentProviderTest {
     @Test
     public void shouldCaptureAPaymentSuccessfully() throws Exception {
         mockSmartpaySuccessfulCaptureResponse();
-        CaptureResponse response = provider.capture(new CaptureRequest("5000", null));
+        CaptureResponse response = provider.capture(new CaptureRequest("5000", "transaction-id"));
         assertTrue(response.isSuccessful());
     }
 
@@ -133,5 +133,4 @@ public class SmartpayPaymentProviderTest {
 
         return buildCardDetails("Mr. Payment", "4111111111111111", "123", "12/15", address);
     }
-
 }

@@ -35,6 +35,7 @@ public class GatewayClient {
 
     public <T> T unmarshallResponse(Response response, Class<T> clazz) {
         String payload = response.readEntity(String.class);
+        logger.debug("response payload=" + payload);
         try {
             return XMLUnmarshaller.unmarshall(payload, clazz);
         } catch (JAXBException e) {

@@ -16,6 +16,7 @@ import static uk.gov.pay.connector.model.AuthorisationResponse.*;
 import static uk.gov.pay.connector.model.CancelResponse.aSuccessfulCancelResponse;
 import static uk.gov.pay.connector.model.CancelResponse.errorCancelResponse;
 import static uk.gov.pay.connector.model.CaptureResponse.aSuccessfulCaptureResponse;
+import static uk.gov.pay.connector.model.CaptureResponse.captureFailureResponse;
 import static uk.gov.pay.connector.model.GatewayError.baseGatewayError;
 import static uk.gov.pay.connector.model.domain.ChargeStatus.AUTHORISATION_SUCCESS;
 import static uk.gov.pay.connector.service.OrderCaptureRequestBuilder.aSmartpayOrderCaptureRequest;
@@ -48,7 +49,9 @@ public class SmartpayPaymentProvider implements PaymentProvider {
 
     @Override
     public CaptureResponse capture(CaptureRequest request) {
-        Response response = client.postXMLRequestFor(gatewayAccount, buildOrderCaptureFor(request));
+        String captureRequestString = buildOrderCaptureFor(request);
+        logger.debug("captureRequestString = " + captureRequestString);
+        Response response = client.postXMLRequestFor(gatewayAccount, captureRequestString);
         return response.getStatus() == OK.getStatusCode() ?
                 mapToCaptureResponse(response) :
                 handleCaptureError(response);
@@ -105,12 +108,14 @@ public class SmartpayPaymentProvider implements PaymentProvider {
     }
 
     private CaptureResponse mapToCaptureResponse(Response response) {
-        SmartpayCaptureResponse wResponse = client.unmarshallResponse(response, SmartpayCaptureResponse.class);
-        return wResponse.isCaptured() ? aSuccessfulCaptureResponse() : new CaptureResponse(false, baseGatewayError(wResponse.getErrorMessage()));
+        SmartpayCaptureResponse sResponse = client.unmarshallResponse(response, SmartpayCaptureResponse.class);
+        return sResponse.isCaptured() ?
+                aSuccessfulCaptureResponse() :
+                captureFailureResponse(logger, sResponse.getErrorMessage(), sResponse.getPspRefrence());
     }
 
     private CaptureResponse handleCaptureError(Response response) {
-        logger.error(format("Error code received from Worldpay %s.", response.getStatus()));
+        logger.error(format("Error code received from provider: response status = %s.", response.getStatus()));
         return new CaptureResponse(false, baseGatewayError("Error processing capture request"));
     }
 }

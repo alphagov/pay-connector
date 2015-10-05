@@ -38,7 +38,7 @@ public class AuthorisationResponse implements GatewayResponse {
     }
 
     public static AuthorisationResponse authorisationFailureResponse(Logger logger, String transactionId, String errorMessage) {
-        logger.warn(format("Failed to authorise transaction with id %s: %s", transactionId, errorMessage));
+        logger.error(format("Failed to authorise transaction with id %s: %s", transactionId, errorMessage));
         return new AuthorisationResponse(false, baseGatewayError("This transaction was declined."), AUTHORISATION_REJECTED, transactionId);
     }
 
