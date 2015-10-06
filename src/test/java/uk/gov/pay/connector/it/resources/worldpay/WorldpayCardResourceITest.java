@@ -2,13 +2,9 @@ package uk.gov.pay.connector.it.resources.worldpay;
 
 import org.junit.Test;
 import uk.gov.pay.connector.it.base.CardResourceITestBase;
-import uk.gov.pay.connector.model.api.ExternalChargeStatus;
-import uk.gov.pay.connector.model.domain.ChargeStatus;
 
 import static uk.gov.pay.connector.model.api.ExternalChargeStatus.EXT_IN_PROGRESS;
-import static uk.gov.pay.connector.model.domain.ChargeStatus.AUTHORISATION_REJECTED;
-import static uk.gov.pay.connector.model.domain.ChargeStatus.AUTHORISATION_SUCCESS;
-import static uk.gov.pay.connector.model.domain.ChargeStatus.CAPTURE_SUBMITTED;
+import static uk.gov.pay.connector.model.domain.ChargeStatus.*;
 
 public class WorldpayCardResourceITest extends CardResourceITestBase {
 
