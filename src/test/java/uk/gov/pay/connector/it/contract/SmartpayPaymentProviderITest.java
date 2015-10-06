@@ -23,37 +23,37 @@ import static uk.gov.pay.connector.model.domain.GatewayAccount.gatewayAccountFor
 import static uk.gov.pay.connector.util.CardUtils.buildCardDetails;
 
 public class SmartpayPaymentProviderITest {
-    public static final String CHARGE_AMOUNT = "500";
-
     @Rule
     public DropwizardAppWithPostgresRule app = new DropwizardAppWithPostgresRule();
-    private SmartpayPaymentProvider paymentProvider;
+
+    private static final String CHARGE_AMOUNT = "500";
+    private GatewayCredentialsConfig config;
 
     @Before
-    public void setup() throws Exception {
-        GatewayCredentialsConfig config = app.getConf().getSmartpayConfig();
-        GatewayClient gatewayClient = new GatewayClient(ClientBuilder.newClient(), config.getUrl());
-        GatewayAccount gatewayAccount = gatewayAccountFor(config.getUsername(), config.getPassword());
-
-        paymentProvider = new SmartpayPaymentProvider(gatewayClient, gatewayAccount);
+    public void setUp(){
+         config = app.getConf().getSmartpayConfig();
     }
 
     @Test
     public void shouldSendSuccessfullyAnOrderForMerchant() throws Exception {
-        testCardAuthorisation();
+        PaymentProvider paymentProvider = getSmartpayPaymentProvider(config.getUsername(), config.getPassword());
+        testCardAuthorisation(paymentProvider);
     }
 
-    private AuthorisationResponse testCardAuthorisation() {
+    @Test
+    public void shouldFailRequestAuthorisationIfCredentialsAreNotCorrect() throws Exception {
+        PaymentProvider paymentProvider = getSmartpayPaymentProvider("junk-user", "password");
         AuthorisationRequest request = getCardAuthorisationRequest();
         AuthorisationResponse response = paymentProvider.authorise(request);
-        assertTrue(response.isSuccessful());
 
-        return response;
+        assertFalse(response.isSuccessful());
+        assertNotNull(response.getError());
     }
 
     @Test
     public void shouldSendSuccessfullyACaptureRequest() throws Exception {
-        AuthorisationResponse response = testCardAuthorisation();
+        PaymentProvider paymentProvider = getSmartpayPaymentProvider(config.getUsername(), config.getPassword());
+        AuthorisationResponse response = testCardAuthorisation(paymentProvider);
 
         CaptureRequest captureRequest = new CaptureRequest(CHARGE_AMOUNT, response.getTransactionId());
         CaptureResponse captureResponse = paymentProvider.capture(captureRequest);
@@ -61,19 +61,12 @@ public class SmartpayPaymentProviderITest {
         assertNull(captureResponse.getError());
     }
 
-    @Test
-    public void shouldFailRequestAuthorisationIfCredentialsAreNotCorrect() throws Exception {
-        GatewayCredentialsConfig config = app.getConf().getSmartpayConfig();
-        GatewayClient gatewayClient = new GatewayClient(ClientBuilder.newClient(), config.getUrl());
-        GatewayAccount gatewayAccount = gatewayAccountFor("junk-user", "junk-pass");
-
-        PaymentProvider connector = new SmartpayPaymentProvider(gatewayClient, gatewayAccount);
-
+    private AuthorisationResponse testCardAuthorisation(PaymentProvider paymentProvider) {
         AuthorisationRequest request = getCardAuthorisationRequest();
-        AuthorisationResponse response = connector.authorise(request);
+        AuthorisationResponse response = paymentProvider.authorise(request);
+        assertTrue(response.isSuccessful());
 
-        assertFalse(response.isSuccessful());
-        assertNotNull(response.getError());
+        return response;
     }
 
     private AuthorisationRequest getCardAuthorisationRequest() {
@@ -96,5 +89,11 @@ public class SmartpayPaymentProviderITest {
     private Card aValidSmartpayCard() {
         String validSandboxCard = "5555444433331111";
         return buildCardDetails(validSandboxCard, "737", "08/18");
+    }
+
+    private PaymentProvider getSmartpayPaymentProvider(String username, String password) throws Exception {
+        GatewayClient gatewayClient = new GatewayClient(ClientBuilder.newClient(), config.getUrl());
+        GatewayAccount gatewayAccount = gatewayAccountFor(username, password);
+        return new SmartpayPaymentProvider(gatewayClient, gatewayAccount);
     }
 }
