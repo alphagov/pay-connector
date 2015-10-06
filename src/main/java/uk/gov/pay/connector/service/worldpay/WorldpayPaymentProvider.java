@@ -5,6 +5,7 @@ import org.joda.time.DateTime;
 import org.joda.time.DateTimeZone;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+
 import uk.gov.pay.connector.model.*;
 import uk.gov.pay.connector.model.domain.GatewayAccount;
 import uk.gov.pay.connector.service.GatewayClient;
@@ -24,6 +25,7 @@ import static uk.gov.pay.connector.model.domain.ChargeStatus.AUTHORISATION_SUCCE
 import static uk.gov.pay.connector.service.OrderCaptureRequestBuilder.aWorldpayOrderCaptureRequest;
 import static uk.gov.pay.connector.service.OrderSubmitRequestBuilder.aWorldpayOrderSubmitRequest;
 import static uk.gov.pay.connector.service.worldpay.WorldpayOrderCancelRequestBuilder.aWorldpayOrderCancelRequest;
+import static uk.gov.pay.connector.service.worldpay.OrderInquiryRequestBuilder.anOrderInquiryRequest;
 
 public class WorldpayPaymentProvider implements PaymentProvider {
     private final Logger logger = LoggerFactory.getLogger(WorldpayPaymentProvider.class);
@@ -53,6 +55,13 @@ public class WorldpayPaymentProvider implements PaymentProvider {
         return response.getStatus() == OK.getStatusCode() ?
                 mapToCaptureResponse(response) :
                 handleCaptureError(response);
+    }
+
+    @Override
+    public StatusResponse enquire(ChargeStatusRequest request) {
+
+        Response response = client.postXMLRequestFor(gatewayAccount, buildOrderEnquiryFor(request));
+        return mapToStatusResponse(response);
     }
 
     @Override
@@ -89,8 +98,21 @@ public class WorldpayPaymentProvider implements PaymentProvider {
                 .build();
     }
 
+    private String buildOrderEnquiryFor(ChargeStatusRequest request) {
+        return anOrderInquiryRequest()
+                .withMerchantCode(gatewayAccount.getUsername()) //TODO: map to the merchant code, not the username!
+                .withTransactionId(request.getTransactionId())
+                .build();
+    }
+
+    private StatusResponse mapToStatusResponse(Response response) {
+        WorldpayOrderStatusResponse wResponse = client.unmarshallResponse(response, WorldpayOrderStatusResponse.class);
+        StatusResponse statusResponse = new StatusResponse(wResponse.getTransactionId(), wResponse.getLastEvent());
+        return statusResponse;
+    }
+
     private AuthorisationResponse mapToCardAuthorisationResponse(Response response, String gatewayTransactionId) {
-        WorldpayAuthorisationResponse wResponse = client.unmarshallResponse(response, WorldpayAuthorisationResponse.class);
+        WorldpayOrderStatusResponse wResponse = client.unmarshallResponse(response, WorldpayOrderStatusResponse.class);
         if (wResponse.isError()) {
             return authorisationFailureNotUpdateResponse(logger, gatewayTransactionId, wResponse.getErrorMessage());
         }

@@ -39,4 +39,9 @@ public class SandboxPaymentProvider implements PaymentProvider {
     public CancelResponse cancel(CancelRequest request) {
         return aSuccessfulCancelResponse();
     }
+
+    @Override
+    public StatusResponse enquire(ChargeStatusRequest request) {
+        return null;
+    }
 }

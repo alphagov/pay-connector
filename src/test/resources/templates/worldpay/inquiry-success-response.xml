@@ -1,0 +1,29 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE paymentService PUBLIC "-//WorldPay//DTD WorldPay PaymentService v1//EN"
+        "http://dtd.worldpay.com/paymentService_v1.dtd">
+<paymentService version="1.4" merchantCode="MERCHANTCODE">
+    <reply>
+        <orderStatus orderCode="MyUniqueTransactionId!">
+            <payment>
+                <paymentMethod>VISA-SSL</paymentMethod>
+                <paymentMethodDetail>
+                    <card type="creditcard"/>
+                </paymentMethodDetail>
+                <amount value="500" currencyCode="GBP" exponent="2" debitCreditIndicator="credit"/>
+                <lastEvent>CAPTURED</lastEvent>
+                <AuthorisationId id="666"/>
+                <CVCResultCode description="NOT SENT TO ACQUIRER"/>
+                <AVSResultCode description="NOT SENT TO ACQUIRER"/>
+                <cardHolderName>
+                    <![CDATA[Mr. Payment]]>
+                </cardHolderName>
+                <issuerCountryCode>N/A</issuerCountryCode>
+                <balance accountType="IN_PROCESS_CAPTURED">
+                    <amount value="500" currencyCode="GBP" exponent="2" debitCreditIndicator="credit"/>
+                </balance>
+                <riskScore value="51"/>
+            </payment>
+            <date dayOfMonth="05" month="10" year="2015" hour="12" minute="16" second="0"/>
+        </orderStatus>
+    </reply>
+</paymentService>

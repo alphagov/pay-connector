@@ -66,7 +66,7 @@ public class SecurityTokensResourceITest {
     }
 
     private void createNewCharge(String chargeId, String tokenId) {
-        app.getDatabaseTestHelper().addCharge(chargeId, ACCOUNT_ID, 500, CREATED, "return_url");
+        app.getDatabaseTestHelper().addCharge(chargeId, ACCOUNT_ID, 500, CREATED, "return_url", null);
         app.getDatabaseTestHelper().addToken(chargeId, tokenId);
     }
 

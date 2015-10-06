@@ -77,7 +77,7 @@ public class ChargesApiResourceITest {
     @Test
     public void shouldFilterChargeStatusToReturnInProgressIfInternalStatusIsAuthorised() throws Exception {
         String chargeId = ((Integer) RandomUtils.nextInt(99999999)).toString();
-        app.getDatabaseTestHelper().addCharge(chargeId, accountId, 500, AUTHORISATION_SUCCESS, returnUrl);
+        app.getDatabaseTestHelper().addCharge(chargeId, accountId, 500, AUTHORISATION_SUCCESS, returnUrl, null);
         app.getDatabaseTestHelper().addToken(chargeId, "tokenId");
         
         getChargeResponseFor(chargeId)

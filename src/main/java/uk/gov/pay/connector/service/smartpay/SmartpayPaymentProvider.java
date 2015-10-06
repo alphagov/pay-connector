@@ -58,6 +58,11 @@ public class SmartpayPaymentProvider implements PaymentProvider {
     }
 
     @Override
+    public StatusResponse enquire(ChargeStatusRequest request) {
+        throw new UnsupportedOperationException("Not implemented yet!");
+    }
+    
+    @Override
     public CancelResponse cancel(CancelRequest request) {
         Response response = client.postXMLRequestFor(gatewayAccount, buildCancelOrderFor(request));
         return response.getStatus() == OK.getStatusCode() ?

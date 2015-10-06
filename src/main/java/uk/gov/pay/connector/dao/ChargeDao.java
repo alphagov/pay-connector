@@ -47,6 +47,21 @@ public class ChargeDao {
         return Optional.ofNullable(data);
     }
 
+    //TODO: add merchantId check!
+    public void updateStatusWithGatewayInfo(String gatewayTransactionId, ChargeStatus newStatus) {
+        Integer numberOfUpdates = jdbi.withHandle(handle ->
+                        handle
+                                .createStatement("UPDATE charges SET status=:status WHERE gateway_transaction_id=:gateway_transaction_id")
+                                .bind("gateway_transaction_id", gatewayTransactionId)
+                                .bind("status", newStatus.getValue())
+                                .execute()
+        );
+
+        if (numberOfUpdates != 1) {
+            throw new PayDBIException(format("Could not update charge (gateway_transaction_id: %s) with status %s", gatewayTransactionId, newStatus));
+        }
+    }
+
     public void updateStatus(String chargeId, ChargeStatus newStatus) {
         Integer numberOfUpdates = jdbi.withHandle(handle ->
                         handle

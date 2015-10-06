@@ -84,7 +84,7 @@ public class ChargeCancelResourceITest {
 
     private String createNewChargeWithStatus(ChargeStatus status) {
         String chargeId = ((Integer) RandomUtils.nextInt(99999999)).toString();
-        app.getDatabaseTestHelper().addCharge(chargeId, accountId, 500, status, "http://not.relevant");
+        app.getDatabaseTestHelper().addCharge(chargeId, accountId, 500, status, "http://not.relevant", null);
         return chargeId;
     }
 

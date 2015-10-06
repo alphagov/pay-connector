@@ -3,8 +3,9 @@ package uk.gov.pay.connector.unit.util;
 import com.google.common.io.Resources;
 import org.junit.Test;
 import uk.gov.pay.connector.service.smartpay.SmartpayAuthorisationResponse;
-import uk.gov.pay.connector.service.worldpay.WorldpayAuthorisationResponse;
+import uk.gov.pay.connector.service.worldpay.WorldpayOrderStatusResponse;
 import uk.gov.pay.connector.service.worldpay.WorldpayCaptureResponse;
+import uk.gov.pay.connector.service.worldpay.WorldpayNotification;
 import uk.gov.pay.connector.util.XMLUnmarshaller;
 
 import java.io.IOException;
@@ -14,6 +15,32 @@ import static org.hamcrest.core.Is.is;
 import static org.junit.Assert.*;
 
 public class XMLUnmarshallerTest {
+
+    @Test
+    public void shouldUnmarshallA_WorldpayNotification() throws Exception {
+        String successPayload = readPayload("templates/worldpay/notification.xml");
+        WorldpayNotification response = XMLUnmarshaller.unmarshall(successPayload, WorldpayNotification.class);
+        assertThat(response.getStatus(), is("CAPTURED"));
+        assertThat(response.getTransactionId(), is("MyUniqueTransactionId!"));
+        assertThat(response.getMerchantCode(), is("MERCHANTCODE"));
+    }
+
+    @Test
+    public void shouldUnmarshallA_WorldpayEnquiryResponse() throws Exception {
+        String successPayload = readPayload("templates/worldpay/inquiry-success-response.xml");
+        WorldpayOrderStatusResponse response = XMLUnmarshaller.unmarshall(successPayload, WorldpayOrderStatusResponse.class);
+        assertFalse(response.isError());
+        assertThat(response.getLastEvent(), is("CAPTURED"));
+        assertThat(response.getTransactionId(), is("MyUniqueTransactionId!"));
+    }
+
+//    @Test
+//    public void shouldUnmarshallA_WorldpayEnquiryNotFoundResponse() throws Exception {
+//        String successPayload = readPayload("templates/worldpay/inquiry-order-not-found-response.xml");
+//        WorldpayOrderStatusResponse response = XMLUnmarshaller.unmarshall(successPayload, WorldpayOrderStatusResponse.class);
+//        assertTrue(response.isError());
+//        assertThat(response.getErrorMessage(), is("Could not find payment for order"));
+//    }
 
     @Test
     public void shouldUnmarshallASuccessful_WorldpayCaptureResponse() throws Exception {
@@ -50,7 +77,7 @@ public class XMLUnmarshallerTest {
     @Test
     public void shouldUnmarshallASuccessful_WorldpayAuthorisationResponse() throws Exception {
         String successPayload = readPayload("templates/worldpay/authorisation-success-response.xml");
-        WorldpayAuthorisationResponse response = XMLUnmarshaller.unmarshall(successPayload, WorldpayAuthorisationResponse.class);
+        WorldpayOrderStatusResponse response = XMLUnmarshaller.unmarshall(successPayload, WorldpayOrderStatusResponse.class);
         assertThat(response.getLastEvent(), is("AUTHORISED"));
         assertNull(response.getRefusedReturnCode());
         assertNull(response.getRefusedReturnCodeDescription());
@@ -60,7 +87,7 @@ public class XMLUnmarshallerTest {
     @Test
     public void shouldUnmarshallAFailed_WorldpayAuthorisationResponse() throws Exception {
         String successPayload = readPayload("templates/worldpay/authorisation-failed-response.xml");
-        WorldpayAuthorisationResponse response = XMLUnmarshaller.unmarshall(successPayload, WorldpayAuthorisationResponse.class);
+        WorldpayOrderStatusResponse response = XMLUnmarshaller.unmarshall(successPayload, WorldpayOrderStatusResponse.class);
         assertThat(response.getLastEvent(), is("REFUSED"));
         assertThat(response.getRefusedReturnCode(), is("5"));
         assertThat(response.getRefusedReturnCodeDescription(), is("REFUSED"));
@@ -70,7 +97,7 @@ public class XMLUnmarshallerTest {
     @Test
     public void shouldUnmarshallAnError_ForWorldpayAuthorisationResponse() throws Exception {
         String successPayload = readPayload("templates/worldpay/error-response.xml");
-        WorldpayAuthorisationResponse response = XMLUnmarshaller.unmarshall(successPayload, WorldpayAuthorisationResponse.class);
+        WorldpayOrderStatusResponse response = XMLUnmarshaller.unmarshall(successPayload, WorldpayOrderStatusResponse.class);
         assertThat(response.getErrorCode(), is("5"));
         assertThat(response.getErrorMessage(), is("Order has already been paid"));
     }

@@ -1,0 +1,35 @@
+<!DOCTYPE paymentService PUBLIC "-//WorldPay//DTD WorldPay PaymentService v1//EN"
+        "http://dtd.worldpay.com/paymentService_v1.dtd">
+<paymentService version="1.4" merchantCode="MERCHANTCODE">
+    <notify>
+        <orderStatusEvent orderCode="MyUniqueTransactionId!">
+            <payment>
+                <paymentMethod>VISA-SSL</paymentMethod>
+                <paymentMethodDetail>
+                    <card type="creditcard"/>
+                </paymentMethodDetail>
+                <amount value="5000" currencyCode="GBP" exponent="2" debitCreditIndicator="credit"/>
+                <lastEvent>CAPTURED</lastEvent>
+                <CVCResultCode description="NOT SENT TO ACQUIRER"/>
+                <AVSResultCode description="NOT SENT TO ACQUIRER"/>
+                <cardHolderName><![CDATA[J. Shopper]]></cardHolderName>
+                <issuerCountryCode>N/A</issuerCountryCode>
+                <balance accountType="IN_PROCESS_CAPTURED">
+                    <amount value="5000" currencyCode="GBP" exponent="2" debitCreditIndicator="credit"/>
+                </balance>
+                <riskScore value="66"/>
+            </payment>
+            <journal journalType="CAPTURED">
+                <bookingDate>
+                    <date dayOfMonth="02" month="10" year="2015"/>
+                </bookingDate>
+                <accountTx accountType="IN_PROCESS_AUTHORISED" batchId="23">
+                    <amount value="5000" currencyCode="GBP" exponent="2" debitCreditIndicator="debit"/>
+                </accountTx>
+                <accountTx accountType="IN_PROCESS_CAPTURED" batchId="25">
+                    <amount value="5000" currencyCode="GBP" exponent="2" debitCreditIndicator="credit"/>
+                </accountTx>
+            </journal>
+        </orderStatusEvent>
+    </notify>
+</paymentService>

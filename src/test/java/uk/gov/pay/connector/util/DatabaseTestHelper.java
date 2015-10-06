@@ -21,10 +21,10 @@ public class DatabaseTestHelper {
         );
     }
 
-    public void addCharge(String chargeId, String gatewayAccountId, long amount, ChargeStatus status, String returnUrl) {
+    public void addCharge(String chargeId, String gatewayAccountId, long amount, ChargeStatus status, String returnUrl, String gatewayTransactionId) {
         jdbi.withHandle(h ->
-                        h.update("INSERT INTO charges(charge_id, amount, status, gateway_account_id, return_url) VALUES(?, ?, ?, ?, ?)",
-                                Long.valueOf(chargeId), amount, status.getValue(), Long.valueOf(gatewayAccountId), returnUrl)
+                        h.update("INSERT INTO charges(charge_id, amount, status, gateway_account_id, return_url, gateway_transaction_id) VALUES(?, ?, ?, ?, ?, ?)",
+                                Long.valueOf(chargeId), amount, status.getValue(), Long.valueOf(gatewayAccountId), returnUrl, gatewayTransactionId)
         );
     }
 
@@ -34,6 +34,15 @@ public class DatabaseTestHelper {
                         .bind("charge_id", Long.valueOf(chargeId))
                         .map(StringMapper.FIRST)
                         .first()
+        );
+    }
+
+    public String getChargeGatewayTransactionId(String chargeId) {
+        return jdbi.withHandle(h ->
+                        h.createQuery("SELECT gateway_transaction_id from charges WHERE charge_id = :charge_id")
+                                .bind("charge_id", Long.valueOf(chargeId))
+                                .map(StringMapper.FIRST)
+                                .first()
         );
     }
 

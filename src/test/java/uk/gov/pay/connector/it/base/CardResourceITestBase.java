@@ -88,7 +88,7 @@ public class CardResourceITestBase {
     protected String createNewChargeWithStatus(ChargeStatus status) {
         String chargeId = ((Integer) RandomUtils.nextInt(99999999)).toString();
 
-        app.getDatabaseTestHelper().addCharge(chargeId, accountId, 500, status, "returnUrl");
+        app.getDatabaseTestHelper().addCharge(chargeId, accountId, 500, status, "returnUrl", null);
         return chargeId;
     }
 

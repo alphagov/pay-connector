@@ -74,7 +74,7 @@ public class ChargesFrontendResourceITest {
     @Test
     public void shouldReturnInternalChargeStatusIfInternalStatusIsAuthorised() throws Exception {
         String chargeId = ((Integer) RandomUtils.nextInt(99999999)).toString();
-        app.getDatabaseTestHelper().addCharge(chargeId, accountId, 500, AUTHORISATION_SUCCESS, returnUrl);
+        app.getDatabaseTestHelper().addCharge(chargeId, accountId, 500, AUTHORISATION_SUCCESS, returnUrl, null);
 
         getChargeResponseFor(chargeId)
                 .statusCode(200)
