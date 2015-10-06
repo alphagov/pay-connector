@@ -15,6 +15,7 @@ import java.util.UUID;
 
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.is;
+import static uk.gov.pay.connector.model.api.ExternalChargeStatus.EXT_CREATED;
 import static uk.gov.pay.connector.model.domain.ChargeStatus.AUTHORISATION_SUBMITTED;
 import static uk.gov.pay.connector.model.domain.ChargeStatus.AUTHORISATION_SUCCESS;
 
@@ -54,7 +55,7 @@ public class ChargeDaoITest {
 
         assertThat(charge.get("charge_id"), is(chargeId));
         assertThat(charge.get("amount"), is(expectedAmount));
-        assertThat(charge.get("status"), is("CREATED"));
+        assertThat(charge.get("status"), is(EXT_CREATED.getValue()));
         assertThat(charge.get("gateway_account_id"), is(gatewayAccountId));
         assertThat(charge.get("return_url"), is(returnUrl));
     }
@@ -70,7 +71,7 @@ public class ChargeDaoITest {
 
         assertThat(charge.get("charge_id"), is(chargeId));
         assertThat(charge.get("amount"), is(amount));
-        assertThat(charge.get("status"), is("AUTHORISATION SUBMITTED"));
+        assertThat(charge.get("status"), is(AUTHORISATION_SUBMITTED.getValue()));
         assertThat(charge.get("gateway_account_id"), is(gatewayAccountId));
         assertThat(charge.get("return_url"), is(returnUrl));
     }

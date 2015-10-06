@@ -3,7 +3,8 @@ package uk.gov.pay.connector.unit.resources;
 import org.junit.Test;
 import uk.gov.pay.connector.resources.PaymentProviderValidator;
 
-import static org.junit.Assert.*;
+import static org.junit.Assert.assertFalse;
+import static org.junit.Assert.assertTrue;
 
 public class PaymentProviderValidatorTest {
 

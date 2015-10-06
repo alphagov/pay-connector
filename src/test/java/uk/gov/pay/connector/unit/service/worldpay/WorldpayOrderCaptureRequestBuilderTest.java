@@ -9,7 +9,7 @@ import java.nio.charset.Charset;
 
 import static com.google.common.io.Resources.getResource;
 import static org.custommonkey.xmlunit.XMLAssert.assertXMLEqual;
-import static uk.gov.pay.connector.service.worldpay.WorldpayOrderCaptureRequestBuilder.anOrderCaptureRequest;
+import static uk.gov.pay.connector.service.OrderCaptureRequestBuilder.aWorldpayOrderCaptureRequest;
 
 public class WorldpayOrderCaptureRequestBuilderTest {
 
@@ -19,7 +19,7 @@ public class WorldpayOrderCaptureRequestBuilderTest {
 
         DateTime date = new DateTime(2013, 2, 23, 0, 0);
 
-        String actualRequest = anOrderCaptureRequest()
+        String actualRequest = aWorldpayOrderCaptureRequest()
                 .withMerchantCode("MERCHANTCODE")
                 .withTransactionId("MyUniqueTransactionId!")
                 .withAmount("500")

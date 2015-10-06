@@ -3,6 +3,9 @@ package uk.gov.pay.connector.it.resources.worldpay;
 import org.junit.Test;
 import uk.gov.pay.connector.it.base.CardResourceITestBase;
 
+import static uk.gov.pay.connector.model.api.ExternalChargeStatus.EXT_IN_PROGRESS;
+import static uk.gov.pay.connector.model.domain.ChargeStatus.*;
+
 public class WorldpayCardResourceITest extends CardResourceITestBase {
 
     private String validCardDetails = buildJsonCardDetailsFor("4444333322221111");
@@ -22,7 +25,7 @@ public class WorldpayCardResourceITest extends CardResourceITestBase {
                 .then()
                 .statusCode(204);
 
-        assertFrontendChargeStatusIs(chargeId, "AUTHORISATION SUCCESS");
+        assertFrontendChargeStatusIs(chargeId, AUTHORISATION_SUCCESS.getValue());
     }
 
     @Test
@@ -30,7 +33,7 @@ public class WorldpayCardResourceITest extends CardResourceITestBase {
         String cardDetailsRejectedByWorldpay = buildJsonCardDetailsFor("REFUSED", "4444333322221111");
 
         String expectedErrorMessage = "This transaction was declined.";
-        String expectedChargeStatus = "AUTHORISATION REJECTED";
+        String expectedChargeStatus = AUTHORISATION_REJECTED.getValue();
         shouldReturnErrorForCardDetailsWithMessage(cardDetailsRejectedByWorldpay, expectedErrorMessage, expectedChargeStatus);
     }
 
@@ -43,7 +46,7 @@ public class WorldpayCardResourceITest extends CardResourceITestBase {
                 .then()
                 .statusCode(204);
 
-        assertFrontendChargeStatusIs(chargeId, "CAPTURED");
-        assertApiStatusIs(chargeId, "SUCCEEDED");
+        assertFrontendChargeStatusIs(chargeId, CAPTURE_SUBMITTED.getValue());
+        assertApiStatusIs(chargeId, EXT_IN_PROGRESS.getValue());
     }
 }

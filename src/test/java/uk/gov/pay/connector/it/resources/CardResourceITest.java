@@ -6,7 +6,8 @@ import uk.gov.pay.connector.it.base.CardResourceITestBase;
 import static com.jayway.restassured.http.ContentType.JSON;
 import static java.lang.String.format;
 import static org.hamcrest.Matchers.is;
-import static uk.gov.pay.connector.model.domain.ChargeStatus.AUTHORISATION_SUBMITTED;
+import static uk.gov.pay.connector.model.api.ExternalChargeStatus.EXT_IN_PROGRESS;
+import static uk.gov.pay.connector.model.domain.ChargeStatus.*;
 
 public class CardResourceITest extends CardResourceITestBase {
 
@@ -41,7 +42,7 @@ public class CardResourceITest extends CardResourceITestBase {
         String cardDetailsToReject = buildJsonCardDetailsFor("4000000000000002");
 
         String expectedErrorMessage = "This transaction was declined.";
-        String expectedChargeStatus = "AUTHORISATION REJECTED";
+        String expectedChargeStatus = AUTHORISATION_REJECTED.getValue();
         shouldReturnErrorForCardDetailsWithMessage(cardDetailsToReject, expectedErrorMessage, expectedChargeStatus);
     }
 
@@ -50,7 +51,7 @@ public class CardResourceITest extends CardResourceITestBase {
         String cardDetailsToReject = buildJsonCardDetailsFor("4000000000000069");
 
         String expectedErrorMessage = "The card is expired.";
-        String expectedChargeStatus = "AUTHORISATION REJECTED";
+        String expectedChargeStatus = AUTHORISATION_REJECTED.getValue();
         shouldReturnErrorForCardDetailsWithMessage(cardDetailsToReject, expectedErrorMessage, expectedChargeStatus);
     }
 
@@ -59,7 +60,7 @@ public class CardResourceITest extends CardResourceITestBase {
         String cardDetailsToReject = buildJsonCardDetailsFor("4000000000000127");
 
         String expectedErrorMessage = "The CVC code is incorrect.";
-        String expectedChargeStatus = "AUTHORISATION REJECTED";
+        String expectedChargeStatus = AUTHORISATION_REJECTED.getValue();
         shouldReturnErrorForCardDetailsWithMessage(cardDetailsToReject, expectedErrorMessage, expectedChargeStatus);
     }
 
@@ -68,7 +69,7 @@ public class CardResourceITest extends CardResourceITestBase {
         String cardDetailsToReject = buildJsonCardDetailsFor("4000000000000119");
 
         String expectedErrorMessage = "This transaction could be not be processed.";
-        String expectedChargeStatus = "SYSTEM ERROR";
+        String expectedChargeStatus = SYSTEM_ERROR.getValue();
         shouldReturnErrorForCardDetailsWithMessage(cardDetailsToReject, expectedErrorMessage, expectedChargeStatus);
     }
 
@@ -91,7 +92,7 @@ public class CardResourceITest extends CardResourceITestBase {
 
         shouldReturnErrorFor(chargeId, randomCardNumberDetails, "Unsupported card details.");
 
-        assertFrontendChargeStatusIs(chargeId, "CREATED");
+        assertFrontendChargeStatusIs(chargeId, CREATED.getValue());
     }
 
     @Test
@@ -101,7 +102,7 @@ public class CardResourceITest extends CardResourceITestBase {
 
         shouldReturnErrorFor(chargeId, detailsWithInvalidExpiryDate, "Values do not match expected format/length.");
 
-        assertFrontendChargeStatusIs(chargeId, "CREATED");
+        assertFrontendChargeStatusIs(chargeId, CREATED.getValue());
     }
 
     @Test
@@ -113,7 +114,7 @@ public class CardResourceITest extends CardResourceITestBase {
                 .then()
                 .statusCode(204);
 
-        String originalStatus = "AUTHORISATION SUCCESS";
+        String originalStatus = AUTHORISATION_SUCCESS.getValue();
         assertFrontendChargeStatusIs(chargeId, originalStatus);
 
         shouldReturnErrorFor(chargeId, validCardDetails, format("Card already processed for charge with id %s.", chargeId));
@@ -147,15 +148,15 @@ public class CardResourceITest extends CardResourceITestBase {
     }
 
     @Test
-    public void shouldCaptureCardPayment_IfChargeWasPreviouslyAuthorised() {
+    public void shouldSubmitForCaptureTheCardPayment_IfChargeWasPreviouslyAuthorised() {
         String chargeId = authoriseNewCharge();
         givenSetup()
                 .post(chargeCaptureUrlFor(chargeId))
                 .then()
                 .statusCode(204);
 
-        assertFrontendChargeStatusIs(chargeId, "CAPTURED");
-        assertApiStatusIs(chargeId, "SUCCEEDED");
+        assertFrontendChargeStatusIs(chargeId, CAPTURE_SUBMITTED.getValue());
+        assertApiStatusIs(chargeId, EXT_IN_PROGRESS.getValue());
     }
 
     @Test
@@ -169,7 +170,7 @@ public class CardResourceITest extends CardResourceITestBase {
                 .contentType(JSON)
                 .body("message", is("Cannot capture a charge with status " + AUTHORISATION_SUBMITTED.getValue() + "."));
 
-        assertFrontendChargeStatusIs(chargeIdNotAuthorised, "AUTHORISATION SUBMITTED");
+        assertFrontendChargeStatusIs(chargeIdNotAuthorised, AUTHORISATION_SUBMITTED.getValue());
     }
 
     private void shouldAuthoriseChargeFor(String cardDetails) throws Exception {
@@ -181,7 +182,7 @@ public class CardResourceITest extends CardResourceITestBase {
                 .then()
                 .statusCode(204);
 
-        assertFrontendChargeStatusIs(chargeId, "AUTHORISATION SUCCESS");
+        assertFrontendChargeStatusIs(chargeId, AUTHORISATION_SUCCESS.getValue());
     }
 
     private void shouldReturnErrorFor(String chargeId, String randomCardNumber, String expectedMessage) {

@@ -2,24 +2,24 @@ package uk.gov.pay.connector.service.smartpay;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import uk.gov.pay.connector.model.AuthorisationRequest;
-import uk.gov.pay.connector.model.AuthorisationResponse;
-import uk.gov.pay.connector.model.CancelRequest;
-import uk.gov.pay.connector.model.CancelResponse;
-import uk.gov.pay.connector.model.CaptureRequest;
-import uk.gov.pay.connector.model.CaptureResponse;
+import uk.gov.pay.connector.model.*;
 import uk.gov.pay.connector.model.domain.GatewayAccount;
 import uk.gov.pay.connector.service.GatewayClient;
 import uk.gov.pay.connector.service.PaymentProvider;
 
 import javax.ws.rs.core.Response;
 
+import static java.lang.String.format;
 import static java.util.UUID.randomUUID;
 import static javax.ws.rs.core.Response.Status.OK;
 import static uk.gov.pay.connector.model.AuthorisationResponse.*;
-import static uk.gov.pay.connector.model.CancelResponse.*;
+import static uk.gov.pay.connector.model.CancelResponse.aSuccessfulCancelResponse;
+import static uk.gov.pay.connector.model.CancelResponse.errorCancelResponse;
+import static uk.gov.pay.connector.model.CaptureResponse.aSuccessfulCaptureResponse;
+import static uk.gov.pay.connector.model.CaptureResponse.captureFailureResponse;
 import static uk.gov.pay.connector.model.GatewayError.baseGatewayError;
 import static uk.gov.pay.connector.model.domain.ChargeStatus.AUTHORISATION_SUCCESS;
+import static uk.gov.pay.connector.service.OrderCaptureRequestBuilder.aSmartpayOrderCaptureRequest;
 import static uk.gov.pay.connector.service.OrderSubmitRequestBuilder.aSmartpayOrderSubmitRequest;
 import static uk.gov.pay.connector.service.smartpay.SmartpayOrderCancelRequestBuilder.aSmartpayOrderCancelRequest;
 
@@ -49,7 +49,12 @@ public class SmartpayPaymentProvider implements PaymentProvider {
 
     @Override
     public CaptureResponse capture(CaptureRequest request) {
-        return null;
+        String captureRequestString = buildOrderCaptureFor(request);
+        logger.debug("captureRequestString = " + captureRequestString);
+        Response response = client.postXMLRequestFor(gatewayAccount, captureRequestString);
+        return response.getStatus() == OK.getStatusCode() ?
+                mapToCaptureResponse(response) :
+                handleCaptureError(response);
     }
 
     @Override
@@ -90,7 +95,27 @@ public class SmartpayPaymentProvider implements PaymentProvider {
                 .build();
     }
 
+    private String buildOrderCaptureFor(CaptureRequest request) {
+        return aSmartpayOrderCaptureRequest()
+                .withMerchantCode(MERCHANT_CODE)
+                .withTransactionId(request.getTransactionId())
+                .withAmount(request.getAmount())
+                .build();
+    }
+
     private String generateReference() {
         return randomUUID().toString();
+    }
+
+    private CaptureResponse mapToCaptureResponse(Response response) {
+        SmartpayCaptureResponse sResponse = client.unmarshallResponse(response, SmartpayCaptureResponse.class);
+        return sResponse.isCaptured() ?
+                aSuccessfulCaptureResponse() :
+                captureFailureResponse(logger, sResponse.getErrorMessage(), sResponse.getPspReference());
+    }
+
+    private CaptureResponse handleCaptureError(Response response) {
+        logger.error(format("Error code received from provider: response status = %s.", response.getStatus()));
+        return new CaptureResponse(false, baseGatewayError("Error processing capture request"));
     }
 }

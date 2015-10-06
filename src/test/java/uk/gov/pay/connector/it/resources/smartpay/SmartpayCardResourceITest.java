@@ -3,6 +3,9 @@ package uk.gov.pay.connector.it.resources.smartpay;
 import org.junit.Test;
 import uk.gov.pay.connector.it.base.CardResourceITestBase;
 
+import static uk.gov.pay.connector.model.domain.ChargeStatus.AUTHORISATION_REJECTED;
+import static uk.gov.pay.connector.model.domain.ChargeStatus.AUTHORISATION_SUCCESS;
+
 public class SmartpayCardResourceITest extends CardResourceITestBase {
 
     private String validCardDetails = buildCardDetailsWith("737");
@@ -22,7 +25,7 @@ public class SmartpayCardResourceITest extends CardResourceITestBase {
                 .then()
                 .statusCode(204);
 
-        assertFrontendChargeStatusIs(chargeId, "AUTHORISATION SUCCESS");
+        assertFrontendChargeStatusIs(chargeId, AUTHORISATION_SUCCESS.getValue());
     }
 
     @Test
@@ -30,7 +33,7 @@ public class SmartpayCardResourceITest extends CardResourceITestBase {
         String cardWithWrongCVC = buildCardDetailsWith("999");
 
         String expectedErrorMessage = "This transaction was declined.";
-        String expectedChargeStatus = "AUTHORISATION REJECTED";
+        String expectedChargeStatus = AUTHORISATION_REJECTED.getValue();
         shouldReturnErrorForCardDetailsWithMessage(cardWithWrongCVC, expectedErrorMessage, expectedChargeStatus);
     }
 

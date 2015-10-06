@@ -7,9 +7,7 @@ import uk.gov.pay.connector.resources.CardDetailsValidator;
 
 import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertTrue;
-import static uk.gov.pay.connector.util.CardUtils.addressFor;
-import static uk.gov.pay.connector.util.CardUtils.buildCardDetails;
-import static uk.gov.pay.connector.util.CardUtils.goodAddress;
+import static uk.gov.pay.connector.util.CardUtils.*;
 
 public class CardDetailsValidatorTest {
 

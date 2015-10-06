@@ -1,4 +1,4 @@
-package uk.gov.pay.connector.service.worldpay;
+package uk.gov.pay.connector.service;
 
 
 import org.joda.time.DateTime;
@@ -8,7 +8,7 @@ import java.util.Map;
 
 import static com.google.common.collect.Maps.newHashMap;
 
-public class WorldpayOrderCaptureRequestBuilder {
+public class OrderCaptureRequestBuilder {
 
     private final TemplateStringBuilder templateStringBuilder;
     private String merchantCode;
@@ -16,31 +16,35 @@ public class WorldpayOrderCaptureRequestBuilder {
     private String amount;
     private DateTime date;
 
-    public static WorldpayOrderCaptureRequestBuilder anOrderCaptureRequest() {
-        return new WorldpayOrderCaptureRequestBuilder();
+    public static OrderCaptureRequestBuilder aWorldpayOrderCaptureRequest() {
+        return new OrderCaptureRequestBuilder("/worldpay/WorldpayOrderCaptureTemplate.xml");
     }
 
-    public WorldpayOrderCaptureRequestBuilder() {
-        this.templateStringBuilder = new TemplateStringBuilder("/worldpay/WorldpayOrderCaptureTemplate.xml");
+    public static OrderCaptureRequestBuilder aSmartpayOrderCaptureRequest() {
+        return new OrderCaptureRequestBuilder("/smartpay/SmartpayOrderCaptureTemplate.xml");
     }
 
-    public WorldpayOrderCaptureRequestBuilder withMerchantCode(String merchantCode) {
+    public OrderCaptureRequestBuilder(String templatePath) {
+        this.templateStringBuilder = new TemplateStringBuilder(templatePath);
+    }
+
+    public OrderCaptureRequestBuilder withMerchantCode(String merchantCode) {
         this.merchantCode = merchantCode;
 
         return this;
     }
 
-    public WorldpayOrderCaptureRequestBuilder withTransactionId(String transactionId) {
+    public OrderCaptureRequestBuilder withTransactionId(String transactionId) {
         this.transactionId = transactionId;
         return this;
     }
 
-    public WorldpayOrderCaptureRequestBuilder withAmount(String amount) {
+    public OrderCaptureRequestBuilder withAmount(String amount) {
         this.amount = amount;
         return this;
     }
 
-    public WorldpayOrderCaptureRequestBuilder withDate(DateTime date) {
+    public OrderCaptureRequestBuilder withDate(DateTime date) {
         this.date = date;
         return this;
     }
@@ -49,7 +53,7 @@ public class WorldpayOrderCaptureRequestBuilder {
         Map<String, Object> templateData = newHashMap();
         templateData.put("merchantCode", merchantCode);
         templateData.put("transactionId", transactionId);
-        templateData.put("captureDate", date);
+        templateData.put("captureDate", date); //not used for smartpay
         templateData.put("amount", amount);
         return templateStringBuilder.buildWith(templateData);
     }
