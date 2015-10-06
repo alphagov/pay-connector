@@ -130,6 +130,16 @@ public class CardResourceITestBase {
         return toJson(cardDetails);
     }
 
+    protected String createAndAuthoriseCharge(String cardDetails) {
+        String chargeId = createNewCharge();
+        givenSetup()
+                .body(cardDetails)
+                .post(cardUrlFor(chargeId))
+                .then()
+                .statusCode(204);
+        return chargeId;
+    }
+
     protected void shouldReturnErrorForCardDetailsWithMessage(String cardDetails, String errorMessage, String status) throws Exception {
         String chargeId = createNewCharge();
 
@@ -150,5 +160,9 @@ public class CardResourceITestBase {
 
     protected String chargeCaptureUrlFor(String unknownChargeId) {
         return "/v1/frontend/charges/" + unknownChargeId + "/capture";
+    }
+
+    protected String cancelChargePath(String chargeId) {
+        return "/v1/api/charges/" + chargeId + "/cancel";
     }
 }

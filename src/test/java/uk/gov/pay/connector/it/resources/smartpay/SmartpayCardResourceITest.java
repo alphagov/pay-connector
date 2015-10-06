@@ -34,6 +34,15 @@ public class SmartpayCardResourceITest extends CardResourceITestBase {
         shouldReturnErrorForCardDetailsWithMessage(cardWithWrongCVC, expectedErrorMessage, expectedChargeStatus);
     }
 
+    @Test
+    public void shouldCancelCharge() {
+        String chargeId = createAndAuthoriseCharge(validCardDetails);
+        givenSetup()
+                .post(cancelChargePath(chargeId))
+                .then()
+                .statusCode(204);
+    }
+
     private String buildCardDetailsWith(String cvc) {
 
         return buildJsonCardDetailsFor(

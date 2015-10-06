@@ -26,7 +26,7 @@ import static uk.gov.pay.connector.model.CaptureResponse.aSuccessfulCaptureRespo
 import static uk.gov.pay.connector.model.GatewayError.baseGatewayError;
 import static uk.gov.pay.connector.model.domain.ChargeStatus.AUTHORISATION_SUCCESS;
 import static uk.gov.pay.connector.service.OrderSubmitRequestBuilder.aWorldpayOrderSubmitRequest;
-import static uk.gov.pay.connector.service.worldpay.WorldpayCancelOrderRequestBuilder.aCancelOrderRequest;
+import static uk.gov.pay.connector.service.worldpay.WorldpayOrderCancelRequestBuilder.aWorldpayOrderCancelRequest;
 import static uk.gov.pay.connector.service.worldpay.WorldpayOrderCaptureRequestBuilder.anOrderCaptureRequest;
 
 public class WorldpayPaymentProvider implements PaymentProvider {
@@ -88,7 +88,7 @@ public class WorldpayPaymentProvider implements PaymentProvider {
     }
 
     private String buildCancelOrderFor(CancelRequest request) {
-        return aCancelOrderRequest()
+        return aWorldpayOrderCancelRequest()
                 .withMerchantCode(gatewayAccount.getUsername())
                 .withTransactionId(request.getTransactionId())
                 .build();
