@@ -22,7 +22,7 @@ public class SmartpayCaptureResponse {
         return isNotBlank(captureTransactionId) && "[capture-received]".equalsIgnoreCase(captureResponse);
     }
 
-    public String getPspRefrence() {
+    public String getPspReference() {
         return captureTransactionId;
     }
 

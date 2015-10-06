@@ -111,7 +111,7 @@ public class SmartpayPaymentProvider implements PaymentProvider {
         SmartpayCaptureResponse sResponse = client.unmarshallResponse(response, SmartpayCaptureResponse.class);
         return sResponse.isCaptured() ?
                 aSuccessfulCaptureResponse() :
-                captureFailureResponse(logger, sResponse.getErrorMessage(), sResponse.getPspRefrence());
+                captureFailureResponse(logger, sResponse.getErrorMessage(), sResponse.getPspReference());
     }
 
     private CaptureResponse handleCaptureError(Response response) {
