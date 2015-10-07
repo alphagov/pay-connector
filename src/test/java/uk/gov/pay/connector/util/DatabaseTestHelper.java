@@ -35,7 +35,7 @@ public class DatabaseTestHelper {
     ) {
         jdbi.withHandle(h ->
                         h.update(
-                                "INSERT INTO\n" +
+                                "INSERT INTO" +
                                         "    charges(\n" +
                                         "        charge_id,\n" +
                                         "        amount,\n" +
@@ -50,8 +50,7 @@ public class DatabaseTestHelper {
                                 status.getValue(),
                                 Long.valueOf(gatewayAccountId),
                                 returnUrl,
-                                Long.valueOf(transactionId)
-                        )
+                                transactionId)
         );
     }
 

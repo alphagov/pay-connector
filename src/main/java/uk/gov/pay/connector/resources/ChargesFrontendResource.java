@@ -1,5 +1,6 @@
 package uk.gov.pay.connector.resources;
 
+import com.google.common.collect.ImmutableMap;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import uk.gov.pay.connector.dao.ChargeDao;
@@ -9,6 +10,7 @@ import javax.ws.rs.core.Context;
 import javax.ws.rs.core.Response;
 import javax.ws.rs.core.UriInfo;
 import java.net.URI;
+import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 
@@ -49,6 +51,14 @@ public class ChargesFrontendResource {
                     return ok(responseData).build();
                 })
                 .orElseGet(() -> responseWithChargeNotFound(logger, chargeId));
+    }
+
+    @GET
+    @Path(CHARGES_FRONTEND_PATH)
+    @Produces(APPLICATION_JSON)
+    public Response getCharges(@QueryParam("gatewayAccountId") String gatewayAccountId, @Context UriInfo uriInfo) {
+        List<Map<String, Object>> charges = chargeDao.findAllBy(gatewayAccountId);
+        return ok(ImmutableMap.of("results", charges)).build();
     }
 
     private Map<String, Object> removeGatewayAccount(Map<String, Object> charge) {
