@@ -2,7 +2,7 @@
         "http://dtd.worldpay.com/paymentService_v1.dtd">
 <paymentService version="1.4" merchantCode="MERCHANTCODE">
     <notify>
-        <orderStatusEvent orderCode="MyUniqueTransactionId!">
+        <orderStatusEvent orderCode="{{transactionId}}">
             <payment>
                 <paymentMethod>VISA-SSL</paymentMethod>
                 <paymentMethodDetail>

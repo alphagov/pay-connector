@@ -6,7 +6,7 @@ import org.junit.Test;
 import org.junit.rules.RuleChain;
 import uk.gov.pay.connector.app.ConnectorApp;
 import uk.gov.pay.connector.app.ConnectorConfiguration;
-import uk.gov.pay.connector.util.PostgresDockerRule;
+import uk.gov.pay.connector.rules.PostgresDockerRule;
 
 import static com.jayway.restassured.RestAssured.given;
 import static io.dropwizard.testing.ConfigOverride.config;

@@ -3,9 +3,10 @@ package uk.gov.pay.connector.unit.util;
 import com.google.common.io.Resources;
 import org.junit.Test;
 import uk.gov.pay.connector.service.smartpay.SmartpayAuthorisationResponse;
-import uk.gov.pay.connector.service.worldpay.WorldpayOrderStatusResponse;
+import uk.gov.pay.connector.service.worldpay.WorldpayCancelResponse;
 import uk.gov.pay.connector.service.worldpay.WorldpayCaptureResponse;
 import uk.gov.pay.connector.service.worldpay.WorldpayNotification;
+import uk.gov.pay.connector.service.worldpay.WorldpayOrderStatusResponse;
 import uk.gov.pay.connector.util.XMLUnmarshaller;
 
 import java.io.IOException;
@@ -17,30 +18,54 @@ import static org.junit.Assert.*;
 public class XMLUnmarshallerTest {
 
     @Test
+    public void shouldUnmarshallA_WorldpayCancelResponse() throws Exception {
+        String successPayload = readPayload("templates/worldpay/cancel-success-response.xml")
+                .replace("{{transactionId}}", "MyUniqueTransactionId!");
+
+        WorldpayCancelResponse response = XMLUnmarshaller.unmarshall(successPayload, WorldpayCancelResponse.class);
+        assertTrue(response.isCancelled());
+    }
+
+
+    @Test
+    public void shouldUnmarshallA_WorldpayCancelFailureResponse() throws Exception {
+        String failurePayload = readPayload("templates/worldpay/cancel-failed-response.xml");
+
+        WorldpayCancelResponse response = XMLUnmarshaller.unmarshall(failurePayload, WorldpayCancelResponse.class);
+        assertFalse(response.isCancelled());
+        assertThat(response.getErrorMessage(), is("Something went wrong."));
+    }
+
+    @Test
     public void shouldUnmarshallA_WorldpayNotification() throws Exception {
-        String successPayload = readPayload("templates/worldpay/notification.xml");
+        String transactionId = "MyUniqueTransactionId!";
+        String status = "CAPTURED";
+        String successPayload = readPayload("templates/worldpay/notification.xml")
+                .replace("{{transactionId}}", transactionId)
+                .replace("{{status}}", status);
+
         WorldpayNotification response = XMLUnmarshaller.unmarshall(successPayload, WorldpayNotification.class);
-        assertThat(response.getStatus(), is("CAPTURED"));
-        assertThat(response.getTransactionId(), is("MyUniqueTransactionId!"));
+        assertThat(response.getStatus(), is(status));
+        assertThat(response.getTransactionId(), is(transactionId));
         assertThat(response.getMerchantCode(), is("MERCHANTCODE"));
     }
 
     @Test
     public void shouldUnmarshallA_WorldpayEnquiryResponse() throws Exception {
-        String successPayload = readPayload("templates/worldpay/inquiry-success-response.xml");
+        String transactionId = "MyUniqueTransactionId!";
+        String status = "CAPTURED";
+
+        String successPayload = readPayload("templates/worldpay/inquiry-success-response.xml")
+                .replace("{{transactionId}}", transactionId)
+                .replace("{{status}}", status);
+
         WorldpayOrderStatusResponse response = XMLUnmarshaller.unmarshall(successPayload, WorldpayOrderStatusResponse.class);
         assertFalse(response.isError());
-        assertThat(response.getLastEvent(), is("CAPTURED"));
-        assertThat(response.getTransactionId(), is("MyUniqueTransactionId!"));
+        assertThat(response.getLastEvent(), is(status));
+        assertThat(response.getTransactionId(), is(transactionId));
     }
 
-//    @Test
-//    public void shouldUnmarshallA_WorldpayEnquiryNotFoundResponse() throws Exception {
-//        String successPayload = readPayload("templates/worldpay/inquiry-order-not-found-response.xml");
-//        WorldpayOrderStatusResponse response = XMLUnmarshaller.unmarshall(successPayload, WorldpayOrderStatusResponse.class);
-//        assertTrue(response.isError());
-//        assertThat(response.getErrorMessage(), is("Could not find payment for order"));
-//    }
+// TODO shouldUnmarshallA_WorldpayEnquiryNotFoundResponse
 
     @Test
     public void shouldUnmarshallASuccessful_WorldpayCaptureResponse() throws Exception {

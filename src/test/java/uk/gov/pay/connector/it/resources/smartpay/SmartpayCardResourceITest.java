@@ -14,6 +14,13 @@ public class SmartpayCardResourceITest extends CardResourceITestBase {
         super("smartpay");
     }
 
+    @Override
+    public void setup() {
+        System.clearProperty("javax.net.ssl.trustStore");
+        System.clearProperty("javax.net.ssl.trustStorePassword");
+        setupGatewayAccount();
+    }
+
     @Test
     public void shouldAuthoriseCharge_ForValidCardDetails() throws Exception {
 

@@ -30,9 +30,8 @@ public class StatusInquiryService {
         PaymentProvider worldpayProvider = providers.resolve(WORLDPAY_PROVIDER);
         StatusResponse statusResponse = worldpayProvider.enquire(chargeNotification);
 
-        System.out.println("chargeNotification.getStatus() = " + chargeNotification.getStatus());
-        ChargeStatus newChargeStatus = WorldpayStatusesMapper.getChargeStatus(chargeNotification.getStatus());
-        chargeDao.updateStatusWithGatewayInfo(chargeNotification.getTransactionId(), newChargeStatus);
+        ChargeStatus newChargeStatus = WorldpayStatusesMapper.getChargeStatus(statusResponse.getStatus());
+        chargeDao.updateStatusWithGatewayInfo(statusResponse.getTransactionId(), newChargeStatus);
         return statusResponse.getStatus() != null;
     }
 }

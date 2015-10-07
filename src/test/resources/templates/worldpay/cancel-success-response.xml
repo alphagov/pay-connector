@@ -4,9 +4,7 @@
 <paymentService version="1.4" merchantCode="MERCHANTCODE">
     <reply>
         <ok>
-            <captureReceived orderCode="{{transactionId}}">
-                <amount value="500" currencyCode="GBP" exponent="2" debitCreditIndicator="credit"/>
-            </captureReceived>
+            <cancelReceived orderCode="{{transactionId}}"/>
         </ok>
     </reply>
 </paymentService>

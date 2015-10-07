@@ -8,7 +8,7 @@ import org.junit.rules.ExpectedException;
 import uk.gov.pay.connector.dao.ChargeDao;
 import uk.gov.pay.connector.dao.PayDBIException;
 import uk.gov.pay.connector.model.domain.ChargeStatus;
-import uk.gov.pay.connector.util.DropwizardAppWithPostgresRule;
+import uk.gov.pay.connector.rules.DropwizardAppWithPostgresRule;
 
 import java.util.Map;
 import java.util.UUID;
@@ -86,6 +86,19 @@ public class ChargeDaoITest {
 
         Map<String, Object> charge = chargeDao.findById(chargeId).get();
         assertThat(charge.get("gateway_transaction_id"), is(transactionId));
+    }
+
+    @Test
+    public void insertChargeAndThenUpdateStatusPerGatewayTransactionId() throws Exception {
+
+        String chargeId = chargeDao.saveNewCharge(newCharge((long) 101));
+        String gatewayTransactionId = UUID.randomUUID().toString();
+
+        chargeDao.updateGatewayTransactionId(chargeId, gatewayTransactionId);
+        chargeDao.updateStatusWithGatewayInfo(gatewayTransactionId, AUTHORISATION_SUBMITTED);
+
+        Map<String, Object> charge = chargeDao.findById(chargeId).get();
+        assertThat(charge.get("status"), is("AUTHORISATION SUBMITTED"));
     }
 
     @Test

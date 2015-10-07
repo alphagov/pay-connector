@@ -9,9 +9,8 @@ import uk.gov.pay.connector.model.ChargeStatusRequest;
 import uk.gov.pay.connector.model.StatusResponse;
 import uk.gov.pay.connector.model.domain.Card;
 import uk.gov.pay.connector.service.GatewayClient;
-import uk.gov.pay.connector.service.worldpay.WorldpayNotification;
 import uk.gov.pay.connector.service.worldpay.WorldpayPaymentProvider;
-import uk.gov.pay.connector.util.DropwizardAppWithPostgresRule;
+import uk.gov.pay.connector.rules.DropwizardAppWithPostgresRule;
 
 import javax.ws.rs.client.ClientBuilder;
 
@@ -24,7 +23,7 @@ import static uk.gov.pay.connector.util.CardUtils.aValidCard;
 
 public class WorldpayPaymentProviderITest {
     @Rule
-    public DropwizardAppWithPostgresRule app = new DropwizardAppWithPostgresRule();
+    public DropwizardAppWithPostgresRule app = new DropwizardAppWithPostgresRule("config/test-contract-config.yaml");
 
     @Test
     public void shouldBeAbleToSendAuthorisationRequestForMerchant() throws Exception {

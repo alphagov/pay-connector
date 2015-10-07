@@ -6,20 +6,22 @@ import org.junit.Test;
 import uk.gov.pay.connector.it.base.CardResourceITestBase;
 
 import java.io.IOException;
+import java.net.URL;
 import java.nio.charset.Charset;
+import java.util.UUID;
 
 import static com.google.common.io.Resources.getResource;
 import static com.jayway.restassured.RestAssured.given;
-import static com.jayway.restassured.http.ContentType.JSON;
 import static javax.ws.rs.core.MediaType.TEXT_XML;
 import static org.hamcrest.Matchers.is;
 import static org.junit.Assert.assertThat;
+import static uk.gov.pay.connector.model.domain.ChargeStatus.AUTHORISATION_SUCCESS;
 import static uk.gov.pay.connector.resources.PaymentProviderValidator.WORLDPAY_PROVIDER;
 
 public class NotificationResourceITest extends CardResourceITestBase {
 
-    public static final String RESPONSE_EXPECTED_BY_WORLDPAY = "[OK]";
-    private String NOTIFICATION_PATH = "/v1/api/notifications/worldpay";
+    private static final String RESPONSE_EXPECTED_BY_WORLDPAY = "[OK]";
+    private static final String NOTIFICATION_PATH = "/v1/api/notifications/worldpay";
 
     public NotificationResourceITest() {
         super(WORLDPAY_PROVIDER);
@@ -28,58 +30,26 @@ public class NotificationResourceITest extends CardResourceITestBase {
     @Test
     public void shouldHandleAWorldpayNotification() throws Exception {
 
-        String chargeId = sentAuthorisationRequestToWorldpay();
+        String transactionId = UUID.randomUUID().toString();
+        String chargeId = createNewChargeWith(AUTHORISATION_SUCCESS, transactionId);
 
-        assertFrontendChargeStatusIs(chargeId, "AUTHORISATION SUCCESS");
-
-        String transactionId = readChargeTransactionId(chargeId);
-
-        String worldpayNotification = readFromResources("worldpay/notification.xml")
-                .replace("MyUniqueTransactionId!", transactionId);
+        worldpay.mockInquiryResponse(transactionId, "REFUSED");
 
         ResponseBodyExtractionOptions body = given().port(app.getLocalPort())
-                .body(worldpayNotification)
+                .body(notificationPayloadForTransaction(transactionId))
                 .contentType(TEXT_XML)
                 .post(NOTIFICATION_PATH)
                 .then()
                 .statusCode(200)
-                .extract()
-                .body();
+                .extract().body();
 
         assertThat(body.asString(), is(RESPONSE_EXPECTED_BY_WORLDPAY));
 
-//        assertFrontendChargeStatusIs(chargeId, "CAPTURED");
+        assertFrontendChargeStatusIs(chargeId, "AUTHORISATION REJECTED");
     }
 
-    private String readChargeTransactionId(String chargeId) {
-        return app.getDatabaseTestHelper().getChargeGatewayTransactionId(chargeId);
-    }
-
-    protected String sentAuthorisationRequestToWorldpay() {
-        String chargeId = createNewCharge();
-
-        given().port(app.getLocalPort())
-                .contentType(JSON)
-                .body(buildJsonCardDetailsFor("4444333322221111"))
-                .post(cardUrlFor(chargeId))
-                .then()
-                .statusCode(204);
-
-        return chargeId;
-    }
-
-    protected void assertFrontendChargeStatusIs(String chargeId, String status) {
-        assertStatusIs("/v1/frontend/charges/" + chargeId, status);
-    }
-
-    private void assertStatusIs(String url, String status) {
-        given().port(app.getLocalPort())
-                .get(url)
-                .then()
-                .body("status", is(status));
-    }
-
-    private String readFromResources(String filePath) throws IOException {
-        return Resources.toString(getResource("templates/" + filePath), Charset.defaultCharset());
+    private String notificationPayloadForTransaction(String transactionId) throws IOException {
+        URL resource = getResource("templates/worldpay/notification.xml");
+        return Resources.toString(resource, Charset.defaultCharset()).replace("{{transactionId}}", transactionId);
     }
 }

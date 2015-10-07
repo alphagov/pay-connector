@@ -14,7 +14,7 @@ import uk.gov.pay.connector.model.domain.GatewayAccount;
 import uk.gov.pay.connector.service.GatewayClient;
 import uk.gov.pay.connector.service.PaymentProvider;
 import uk.gov.pay.connector.service.smartpay.SmartpayPaymentProvider;
-import uk.gov.pay.connector.util.DropwizardAppWithPostgresRule;
+import uk.gov.pay.connector.rules.DropwizardAppWithPostgresRule;
 
 import javax.ws.rs.client.ClientBuilder;
 
@@ -24,7 +24,7 @@ import static uk.gov.pay.connector.util.CardUtils.buildCardDetails;
 
 public class SmartpayPaymentProviderITest {
     @Rule
-    public DropwizardAppWithPostgresRule app = new DropwizardAppWithPostgresRule();
+    public DropwizardAppWithPostgresRule app = new DropwizardAppWithPostgresRule("config/test-contract-config.yaml");
 
     private static final String CHARGE_AMOUNT = "500";
     private GatewayCredentialsConfig config;

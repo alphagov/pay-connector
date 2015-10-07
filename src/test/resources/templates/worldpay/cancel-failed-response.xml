@@ -3,10 +3,8 @@
         "http://dtd.worldpay.com/paymentService_v1.dtd">
 <paymentService version="1.4" merchantCode="MERCHANTCODE">
     <reply>
-        <ok>
-            <captureReceived orderCode="{{transactionId}}">
-                <amount value="500" currencyCode="GBP" exponent="2" debitCreditIndicator="credit"/>
-            </captureReceived>
-        </ok>
+        <error code="2">
+            <![CDATA[Something went wrong.]]>
+        </error>
     </reply>
 </paymentService>

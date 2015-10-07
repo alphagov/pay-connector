@@ -1,4 +1,4 @@
-package uk.gov.pay.connector.util;
+package uk.gov.pay.connector.rules;
 
 import com.spotify.docker.client.DefaultDockerClient;
 import com.spotify.docker.client.DockerCertificateException;
@@ -7,6 +7,7 @@ import com.spotify.docker.client.DockerException;
 import org.junit.rules.TestRule;
 import org.junit.runner.Description;
 import org.junit.runners.model.Statement;
+import uk.gov.pay.connector.util.PostgresContainer;
 
 import java.io.IOException;
 import java.net.URI;

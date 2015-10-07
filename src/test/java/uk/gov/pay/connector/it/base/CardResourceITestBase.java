@@ -6,7 +6,10 @@ import org.apache.commons.lang.math.RandomUtils;
 import org.junit.Before;
 import org.junit.Rule;
 import uk.gov.pay.connector.model.domain.ChargeStatus;
-import uk.gov.pay.connector.util.DropwizardAppWithPostgresRule;
+import uk.gov.pay.connector.rules.DropwizardAppWithPostgresRule;
+import uk.gov.pay.connector.rules.WorldpayMockRule;
+
+import java.io.IOException;
 
 import static com.jayway.restassured.RestAssured.given;
 import static com.jayway.restassured.http.ContentType.JSON;
@@ -14,11 +17,17 @@ import static org.hamcrest.Matchers.is;
 import static uk.gov.pay.connector.model.domain.ChargeStatus.AUTHORISATION_SUCCESS;
 import static uk.gov.pay.connector.model.domain.ChargeStatus.CREATED;
 import static uk.gov.pay.connector.util.JsonEncoder.toJson;
+import static uk.gov.pay.connector.util.WorldpayTestUtil.setupSSL;
 
 public class CardResourceITestBase {
 
     @Rule
+    public WorldpayMockRule worldpay = new WorldpayMockRule();
+
+    @Rule
     public DropwizardAppWithPostgresRule app = new DropwizardAppWithPostgresRule();
+
+
     protected final String accountId;
     private final String paymentProvider;
 
@@ -28,7 +37,12 @@ public class CardResourceITestBase {
     }
 
     @Before
-    public void setupGatewayAccount() {
+    public void setup()  throws IOException {
+        setupSSL();
+        setupGatewayAccount();
+    }
+
+    public void setupGatewayAccount(){
         app.getDatabaseTestHelper().addGatewayAccount(accountId, paymentProvider);
     }
 
@@ -77,18 +91,18 @@ public class CardResourceITestBase {
     }
 
     protected String authoriseNewCharge() {
-        return createNewChargeWithStatus(AUTHORISATION_SUCCESS);
+        return createNewChargeWith(AUTHORISATION_SUCCESS, null);
     }
 
 
     protected String createNewCharge() {
-        return createNewChargeWithStatus(CREATED);
+        return createNewChargeWith(CREATED, null);
     }
 
-    protected String createNewChargeWithStatus(ChargeStatus status) {
+    protected String createNewChargeWith(ChargeStatus status, String gatewayTransactionId) {
         String chargeId = ((Integer) RandomUtils.nextInt(99999999)).toString();
 
-        app.getDatabaseTestHelper().addCharge(chargeId, accountId, 500, status, "returnUrl", null);
+        app.getDatabaseTestHelper().addCharge(chargeId, accountId, 500, status, "returnUrl", gatewayTransactionId);
         return chargeId;
     }
 
