@@ -37,7 +37,6 @@ public class WorldpayMockRule extends MocoHttpsTestRule {
         String gatewayTransactionId = UUID.randomUUID().toString();
         String authoriseResponse = loadFromTemplate("authorisation-failed-response.xml", gatewayTransactionId);
         paymentServiceResponse(authoriseResponse);
-
     }
 
     public void mockCaptureResponse() {
@@ -49,6 +48,11 @@ public class WorldpayMockRule extends MocoHttpsTestRule {
     public void mockCancelResponse(String gatewayTransactionId) {
         String cancelResponse = loadFromTemplate("cancel-success-response.xml", gatewayTransactionId);
         paymentServiceResponse(cancelResponse);
+    }
+
+    public void mockErrorResponse() {
+        String errorResponse = loadFromTemplate("error-response.xml", "");
+        paymentServiceResponse(errorResponse);
     }
 
     private void paymentServiceResponse(String response) {

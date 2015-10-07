@@ -48,6 +48,43 @@ public class NotificationResourceITest extends CardResourceITestBase {
         assertFrontendChargeStatusIs(chargeId, "AUTHORISATION REJECTED");
     }
 
+    @Test
+    public void shouldNotAddUnknownStatusToDatabase() throws Exception {
+        String transactionId = UUID.randomUUID().toString();
+        String chargeId = createNewChargeWith(AUTHORISATION_SUCCESS, transactionId);
+
+        worldpay.mockInquiryResponse(transactionId, "PAID IN FULL WITH CABBAGES");
+
+        ResponseBodyExtractionOptions body = given().port(app.getLocalPort())
+                .body(notificationPayloadForTransaction(transactionId))
+                .contentType(TEXT_XML)
+                .post(NOTIFICATION_PATH)
+                .then()
+                .statusCode(200)
+                .extract().body();
+
+        assertThat(body.asString(), is(RESPONSE_EXPECTED_BY_WORLDPAY));
+
+        assertFrontendChargeStatusIs(chargeId, "AUTHORISATION SUCCESS");
+    }
+
+    @Test
+    public void shouldReturnErrorIfInquiryForChargeStatusFailed() throws Exception {
+        String transactionId = UUID.randomUUID().toString();
+        String chargeId = createNewChargeWith(AUTHORISATION_SUCCESS, transactionId);
+
+        worldpay.mockErrorResponse();
+
+        given().port(app.getLocalPort())
+                .body(notificationPayloadForTransaction(transactionId))
+                .contentType(TEXT_XML)
+                .post(NOTIFICATION_PATH)
+                .then()
+                .statusCode(500);
+
+        assertFrontendChargeStatusIs(chargeId, "AUTHORISATION SUCCESS");
+    }
+
     private String notificationPayloadForTransaction(String transactionId) throws IOException {
         URL resource = getResource("templates/worldpay/notification.xml");
         return Resources.toString(resource, Charset.defaultCharset()).replace("{{transactionId}}", transactionId);

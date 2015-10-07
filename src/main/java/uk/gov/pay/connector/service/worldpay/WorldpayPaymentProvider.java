@@ -59,7 +59,6 @@ public class WorldpayPaymentProvider implements PaymentProvider {
 
     @Override
     public StatusResponse enquire(ChargeStatusRequest request) {
-
         Response response = client.postXMLRequestFor(gatewayAccount, buildOrderEnquiryFor(request));
         return mapToStatusResponse(response);
     }

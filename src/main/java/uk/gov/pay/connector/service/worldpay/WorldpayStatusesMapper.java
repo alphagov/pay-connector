@@ -43,11 +43,8 @@ public class WorldpayStatusesMapper {
 //    "REVOKE_FAILED"
 //    "REVOKED"
 
-    public static ChargeStatus getChargeStatus(String worldpayStatus) {
-        System.out.println("worldpayStatus = " + worldpayStatus);
-        ChargeStatus chargeStatus = worldpayStatuses.get(worldpayStatus);
-        System.out.println("chargeStatus = " + chargeStatus);
-        return chargeStatus;
+    public static ChargeStatus mapToChargeStatus(String worldpayStatus) {
+        return worldpayStatuses.get(worldpayStatus);
     }
 
 
