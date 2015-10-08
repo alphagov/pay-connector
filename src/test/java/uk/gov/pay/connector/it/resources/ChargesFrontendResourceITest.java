@@ -110,6 +110,7 @@ public class ChargesFrontendResourceITest {
 
         response.statusCode(200)
                 .contentType(JSON)
+                .log().all()
                 .body("results", hasSize(2));
         assertTransactionEntry(response, 0, chargeId2, null, amount2, AUTHORISATION_REJECTED.getValue());
         assertTransactionEntry(response, 1, chargeId1, gatewayTransactionId1, amount1, AUTHORISATION_SUCCESS.getValue());

@@ -41,6 +41,7 @@ The command to run the integration tests is:
 |[```/v1/frontend/charges/{chargeId}```](#get-v1frontendchargeschargeid)                                  | GET |  Find out the status of a charge            |
 |[```/v1/frontend/charges/{chargeId}/cards```](#post-v1frontendchargeschargeidcards)                      | POST |  Authorise the charge with the card details            |
 |[```/v1/frontend/charges/{chargeId}/capture```](#post-v1frontendchargeschargeidcapture)                      | POST |  Confirm a card charge that was previously authorised successfully.            |
+|[```/v1/frontend/charges?gatewayAccountId={gatewayAccountId}```](#get-v1frontendchargesgatewayAccountIdgatewayAccountId)    | GET |  List all transactions for a gateway account     |
 |[```/v1/frontend/tokens/{chargeTokenId}```](#get-v1frontendtokenschargetokenid)                                  | GET |  Retrieve information about a secure redirect token.            |
 |[```/v1/frontend/tokens/{chargeTokenId}```](#delete-v1frontendtokenschargetokenid)                                  | DELETE |  Delete the secure redirect token.            |
 
@@ -413,6 +414,69 @@ Content-Type: application/json
     "message": "Cannot capture a charge with status AUTHORISATION REJECTED."
 }
 ```
+-----------------------------------------------------------------------------------------------------------
+### GET /v1/frontend/charges?gatewayAccountId={gatewayAccountId}
+
+List all the transactions for a given gateway account
+
+#### Request example
+
+```
+GET /v1/frontend/charges?gatewayAccountId=1223445
+```
+
+#### Response for the success path
+
+```
+HTTP/1.1 200 OK
+Content-Type: application/json
+
+{
+    "results": [
+        {
+            "amount": 500,            
+            "charge_id": "10002",
+            "gateway_transaction_id": null,
+            "status": "AUTHORISATION REJECTED"
+        },
+        {
+            "amount": 100,            
+            "charge_id": "10001",
+            "gateway_transaction_id": "transaction-id-1",
+            "status": "AUTHORISATION SUCCESS"
+        }
+    ]
+}
+```
+
+#### Response for the failure path
+
+```
+HTTP/1.1 400 Bad Request
+Content-Type: application/json
+
+{
+    "message": "invalid gateway account reference f7h4f7hg4"
+}
+```
+
+##### Request query param description
+| Field                    | always present | Description                               |
+| ------------------------ |:--------:| ----------------------------------------- |
+| `gatewayAccountId`               | X | Gateway Account Id of which the transactions must be received.    |
+
+
+##### Response field description
+
+| Field                    | always present | Description                               |
+| ------------------------ |:--------:| ----------------------------------------- |
+| `result`               | X | JSON Array of which each element represents a transaction row.       |
+|                        |   | Element structure:                         |
+|                        |   | `amount`: Transaction amount in pence      |
+|                        |   | `charge_id`: GDS charge reference          |
+|                        |   | `gateway_transaction_id`: payment gateway reference for this charge          |
+|                        |   | `status`: Current status of the charge          |
+
 -----------------------------------------------------------------------------------------------------------
 ### GET /v1/frontend/tokens/{chargeTokenId}
 
