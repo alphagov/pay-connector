@@ -106,15 +106,50 @@ public class ChargesFrontendResourceITest {
         app.getDatabaseTestHelper().addGatewayAccount(anotherAccountId, "another test gateway");
         app.getDatabaseTestHelper().addCharge(chargeId3, anotherAccountId, 200, AUTHORISATION_SUBMITTED, returnUrl, "transaction-id-2");
 
-        ValidatableResponse response = given().port(app.getLocalPort())
-                .get(CHARGES_FRONTEND_PATH + "?gatewayAccountId=" + accountId)
-                .then();
+        ValidatableResponse response = listTransactionsFor(accountId);
 
         response.statusCode(200)
                 .contentType(JSON)
                 .body("results", hasSize(2));
         assertTransactionEntry(response, 0, chargeId2, null, amount2, AUTHORISATION_REJECTED.getValue());
         assertTransactionEntry(response, 1, chargeId1, gatewayTransactionId1, amount1, AUTHORISATION_SUCCESS.getValue());
+    }
+
+    @Test
+    public void shouldReturn400IfGatewayAccountIsMissingWhenListingTransactions() {
+        ValidatableResponse response = listTransactionsFor("");
+
+        response.statusCode(400)
+                .contentType(JSON)
+                .body("message", is("missing gateway account reference"));
+
+    }
+
+    @Test
+    public void shouldReturn400IfGatewayAccountIsNotANumberWhenListingTransactions() {
+        String invalidAccRef = "XYZ";
+        ValidatableResponse response = listTransactionsFor(invalidAccRef);
+
+        response.statusCode(400)
+                .contentType(JSON)
+                .body("message", is(format("invalid gateway account reference %s", invalidAccRef)));
+
+    }
+
+    @Test
+    public void shouldReturnEmptyResultIfGatewayAccountNotExist() {
+        String invalidAccRef = "11111";
+        ValidatableResponse response = listTransactionsFor(invalidAccRef);
+
+        response.statusCode(200)
+                .contentType(JSON)
+                .body("results", hasSize(0));
+    }
+
+    private ValidatableResponse listTransactionsFor(String accountId) {
+        return given().port(app.getLocalPort())
+                .get(CHARGES_FRONTEND_PATH + "?gatewayAccountId=" + accountId)
+                .then();
     }
 
     private void assertTransactionEntry(ValidatableResponse response, int ix, String chargeId, String gatewayTransactionId, int amount, String chargeStatus) {

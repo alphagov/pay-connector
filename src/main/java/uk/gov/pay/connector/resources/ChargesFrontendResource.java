@@ -1,6 +1,10 @@
 package uk.gov.pay.connector.resources;
 
 import com.google.common.collect.ImmutableMap;
+import fj.F;
+import fj.data.Either;
+import org.apache.commons.lang3.StringUtils;
+import org.apache.commons.lang3.math.NumberUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import uk.gov.pay.connector.dao.ChargeDao;
@@ -14,11 +18,16 @@ import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 
+import static fj.data.Either.left;
+import static fj.data.Either.reduce;
+import static fj.data.Either.right;
+import static java.lang.String.format;
 import static javax.ws.rs.core.MediaType.APPLICATION_JSON;
 import static javax.ws.rs.core.Response.ok;
 import static uk.gov.pay.connector.resources.CardResource.AUTHORIZATION_FRONTEND_RESOURCE_PATH;
 import static uk.gov.pay.connector.resources.CardResource.CAPTURE_FRONTEND_RESOURCE_PATH;
 import static uk.gov.pay.connector.util.LinksBuilder.linksBuilder;
+import static uk.gov.pay.connector.util.ResponseUtil.badRequestResponse;
 import static uk.gov.pay.connector.util.ResponseUtil.responseWithChargeNotFound;
 
 @Path("/")
@@ -57,8 +66,31 @@ public class ChargesFrontendResource {
     @Path(CHARGES_FRONTEND_PATH)
     @Produces(APPLICATION_JSON)
     public Response getCharges(@QueryParam("gatewayAccountId") String gatewayAccountId, @Context UriInfo uriInfo) {
-        List<Map<String, Object>> charges = chargeDao.findAllBy(gatewayAccountId);
-        return ok(ImmutableMap.of("results", charges)).build();
+
+        return reduce(validateGatewayAccountReference(gatewayAccountId)
+                .bimap(handleError, listTransactions(gatewayAccountId)));
+
+    }
+
+    private F<Boolean, Response> listTransactions(final String gatewayAccountId) {
+        return success -> {
+            List<Map<String, Object>> charges = chargeDao.findAllBy(gatewayAccountId);
+            return ok(ImmutableMap.of("results", charges)).build();
+
+        };
+    }
+
+    private F<String, Response> handleError =
+            errorMessage -> badRequestResponse(logger, errorMessage);
+
+
+    private Either<String, Boolean> validateGatewayAccountReference(String gatewayAccountId) {
+        if (StringUtils.isBlank(gatewayAccountId)) {
+            return left("missing gateway account reference");
+        } else if (!NumberUtils.isNumber(gatewayAccountId)) {
+            return left(format("invalid gateway account reference %s", gatewayAccountId));
+        }
+        return right(true);
     }
 
     private Map<String, Object> removeGatewayAccount(Map<String, Object> charge) {
