@@ -1,7 +1,8 @@
-package uk.gov.pay.connector.it.resources;
+package uk.gov.pay.connector.it.resources.worldpay;
 
 import com.google.common.io.Resources;
 import com.jayway.restassured.response.ResponseBodyExtractionOptions;
+import com.jayway.restassured.response.ValidatableResponse;
 import org.junit.Test;
 import uk.gov.pay.connector.it.base.CardResourceITestBase;
 
@@ -18,12 +19,12 @@ import static org.junit.Assert.assertThat;
 import static uk.gov.pay.connector.model.domain.ChargeStatus.AUTHORISATION_SUCCESS;
 import static uk.gov.pay.connector.resources.PaymentProviderValidator.WORLDPAY_PROVIDER;
 
-public class NotificationResourceITest extends CardResourceITestBase {
+public class WorldpayNotificationResourceITest extends CardResourceITestBase {
 
     private static final String RESPONSE_EXPECTED_BY_WORLDPAY = "[OK]";
     private static final String NOTIFICATION_PATH = "/v1/api/notifications/worldpay";
 
-    public NotificationResourceITest() {
+    public WorldpayNotificationResourceITest() {
         super(WORLDPAY_PROVIDER);
     }
 
@@ -35,15 +36,12 @@ public class NotificationResourceITest extends CardResourceITestBase {
 
         worldpay.mockInquiryResponse(transactionId, "REFUSED");
 
-        ResponseBodyExtractionOptions body = given().port(app.getLocalPort())
-                .body(notificationPayloadForTransaction(transactionId))
-                .contentType(TEXT_XML)
-                .post(NOTIFICATION_PATH)
-                .then()
+        String response = notifyConnector(transactionId)
                 .statusCode(200)
-                .extract().body();
+                .extract().body()
+                .asString();
 
-        assertThat(body.asString(), is(RESPONSE_EXPECTED_BY_WORLDPAY));
+        assertThat(response, is(RESPONSE_EXPECTED_BY_WORLDPAY));
 
         assertFrontendChargeStatusIs(chargeId, "AUTHORISATION REJECTED");
     }
@@ -55,34 +53,35 @@ public class NotificationResourceITest extends CardResourceITestBase {
 
         worldpay.mockInquiryResponse(transactionId, "PAID IN FULL WITH CABBAGES");
 
-        ResponseBodyExtractionOptions body = given().port(app.getLocalPort())
-                .body(notificationPayloadForTransaction(transactionId))
-                .contentType(TEXT_XML)
-                .post(NOTIFICATION_PATH)
-                .then()
+        String response = notifyConnector(transactionId)
                 .statusCode(200)
-                .extract().body();
+                .extract().body()
+                .asString();
 
-        assertThat(body.asString(), is(RESPONSE_EXPECTED_BY_WORLDPAY));
+        assertThat(response, is(RESPONSE_EXPECTED_BY_WORLDPAY));
 
         assertFrontendChargeStatusIs(chargeId, "AUTHORISATION SUCCESS");
     }
 
     @Test
-    public void shouldReturnErrorIfInquiryForChargeStatusFailed() throws Exception {
+    public void shouldReturnErrorIfInquiryForChargeStatusFails() throws Exception {
         String transactionId = UUID.randomUUID().toString();
         String chargeId = createNewChargeWith(AUTHORISATION_SUCCESS, transactionId);
 
         worldpay.mockErrorResponse();
 
-        given().port(app.getLocalPort())
-                .body(notificationPayloadForTransaction(transactionId))
-                .contentType(TEXT_XML)
-                .post(NOTIFICATION_PATH)
-                .then()
+        notifyConnector(transactionId)
                 .statusCode(500);
 
         assertFrontendChargeStatusIs(chargeId, "AUTHORISATION SUCCESS");
+    }
+
+    private ValidatableResponse notifyConnector(String transactionId) throws IOException {
+        return given().port(app.getLocalPort())
+                .body(notificationPayloadForTransaction(transactionId))
+                .contentType(TEXT_XML)
+                .post(NOTIFICATION_PATH)
+                .then();
     }
 
     private String notificationPayloadForTransaction(String transactionId) throws IOException {

@@ -1,14 +1,20 @@
 package uk.gov.pay.connector.service;
 
+import com.fasterxml.jackson.databind.ObjectMapper;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import uk.gov.pay.connector.dao.ChargeDao;
 import uk.gov.pay.connector.dao.GatewayAccountDao;
 import uk.gov.pay.connector.model.StatusResponse;
 import uk.gov.pay.connector.model.domain.ChargeStatus;
+import uk.gov.pay.connector.service.smartpay.SmartpayNotification;
+import uk.gov.pay.connector.service.smartpay.SmartpayNotificationList;
 import uk.gov.pay.connector.service.worldpay.WorldpayNotification;
 
 import javax.xml.bind.JAXBException;
+
+import java.io.IOException;
+import java.util.List;
 
 import static java.lang.String.format;
 import static uk.gov.pay.connector.resources.PaymentProviderValidator.WORLDPAY_PROVIDER;
@@ -27,6 +33,17 @@ public class StatusInquiryService {
         this.accountDao = accountDao;
         this.chargeDao = chargeDao;
         this.providers = providers;
+    }
+
+    public void handleSmartpayNotification(String notification) {
+        try {
+            ObjectMapper mapper = new ObjectMapper();
+            SmartpayNotificationList smartpayNotificationList = mapper.readValue(notification, SmartpayNotificationList.class);
+            System.out.println("event code = " + smartpayNotificationList.getNotifications().get(0).getEventCode());
+            //TODO: inquire the charge status to smartpay
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
     }
 
     public boolean handleWorldpayNotification(String notification) {

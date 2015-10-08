@@ -43,6 +43,9 @@ The command to run the integration tests is:
 |[```/v1/frontend/charges/{chargeId}/capture```](#post-v1frontendchargeschargeidcapture)                      | POST |  Confirm a card charge that was previously authorised successfully.            |
 |[```/v1/frontend/tokens/{chargeTokenId}```](#get-v1frontendtokenschargetokenid)                                  | GET |  Retrieve information about a secure redirect token.            |
 |[```/v1/frontend/tokens/{chargeTokenId}```](#delete-v1frontendtokenschargetokenid)                                  | DELETE |  Delete the secure redirect token.            |
+|[```/v1/api/notifications/worldpay```](#post-v1apinotificationworldpay)                                  | POST |  Handle charge update notifications from Worldpay.            |
+|[```/v1/api/notifications/smartpay```](#post-v1apinotificationsmartpay)                                  | POST |  Handle charge update notifications from Smartpay.            |
+
 
 
 ### POST /v1/api/accounts
@@ -471,3 +474,46 @@ GET /v1/frontend/tokens/32344
 HTTP/1.1 204 No Content
 ```
 -----------------------------------------------------------------------------------------------------------
+
+### POST /v1/api/notifications/worldpay
+
+This endpoint handles a notification from worldpays Order Notification mechanism as descrbied in the [Order Notifications - Reporting Payment Statuses Guide](http://support.worldpay.com/support/kb/gg/ordernotifications/on0000.html)
+
+#### Request example
+
+```
+POST /v1/api/notifications/worldpay
+Content-Type: text/xml
+
+See [src/test/resources/templates/worldpay/notification.xml](src/test/resources/templates/worldpay/notification.xml) for an example notification.
+```
+
+##### Request body description
+
+See [Interpreting Order Notifications > General Structure XML Order Notifications](http://support.worldpay.com/support/kb/gg/ordernotifications/on0000.html)
+
+#### Response example
+
+```
+200 OK
+Content-Type: text/plain
+
+[OK]
+```
+
+### POST /v1/api/notifications/smartpay
+
+This endpoint handles a notification from Barclays Smartpay's Notification mechanism as descrbied in the [Barclaycard SmartPay Notifications Guide](http://www.barclaycard.co.uk/business/files/SmartPay_Notifications_Guide.pdf)
+
+#### Request example
+
+```
+POST /v1/api/notifications/smartpay
+```
+
+##### Request body description
+
+#### Response example
+
+```
+```

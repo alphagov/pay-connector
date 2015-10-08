@@ -1,18 +1,26 @@
 package uk.gov.pay.connector.resources;
 
+import com.fasterxml.jackson.core.JsonParseException;
+import com.fasterxml.jackson.databind.ObjectMapper;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import uk.gov.pay.connector.service.StatusInquiryService;
+import uk.gov.pay.connector.service.smartpay.SmartpayNotification;
+import uk.gov.pay.connector.service.smartpay.SmartpayNotificationList;
 
 import javax.ws.rs.Consumes;
 import javax.ws.rs.POST;
 import javax.ws.rs.Path;
 import javax.ws.rs.core.Response;
 
+import java.io.IOException;
+import java.util.List;
+
+import static javax.ws.rs.core.MediaType.APPLICATION_JSON;
 import static javax.ws.rs.core.MediaType.TEXT_XML;
 
 
-@Path("/v1/api/notifications/worldpay")
+@Path("/")
 public class NotificationResource {
 
     private static final Logger logger = LoggerFactory.getLogger(NotificationResource.class);
@@ -22,16 +30,29 @@ public class NotificationResource {
         this.service = service;
     }
 
+
+    @POST
+    @Consumes(APPLICATION_JSON)
+    @Path("v1/api/notifications/smartpay")
+    public Response handleSmartpayNotification(String notification) throws IOException {
+
+        logger.info("Received notification from smartpay: " + notification);
+
+        service.handleSmartpayNotification(notification);
+
+        return Response.ok("[accepted]").build();
+    }
+
     @POST
     @Consumes(TEXT_XML)
-    public Response handleNotification(String notification) {
+    @Path("v1/api/notifications/worldpay")
+    public Response handleWorldpayNotification(String notification) {
 
         logger.info("Received notification from worldpay: " + notification);
 
         boolean handledNotification = service.handleWorldpayNotification(notification);
 
-
-            return handledNotification ? Response.ok("[OK]").build() : errorResponse();
+        return handledNotification ? Response.ok("[OK]").build() : errorResponse();
     }
 
     private Response errorResponse() {

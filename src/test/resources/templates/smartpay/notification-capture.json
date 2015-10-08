@@ -1,0 +1,21 @@
+{
+  "live": "false",
+  "notificationItems": [
+    {
+      "NotificationRequestItem": {
+        "amount": {
+          "currency": "GBP",
+          "value": 1051
+        },
+        "eventCode": "CAPTURE",
+        "eventDate": "2015-10-08T13:48:30+02:00",
+        "merchantAccountCode": "MerchantAccount",
+        "merchantReference": "906fe48f-ca4c-49b2-b2d8-e3a3f577289e",
+        "originalReference": "{{transactionId}}",
+        "paymentMethod": "visa",
+        "pspReference": "8614443049106309",
+        "success": "true"
+      }
+    }
+  ]
+}
