@@ -83,7 +83,6 @@ public class CardService {
     }
 
     private GatewayResponse captureFor(String chargeId, Map<String, Object> charge) {
-
         String transactionId = String.valueOf(charge.get(GATEWAY_TRANSACTION_ID_KEY));
 
         CaptureRequest request = captureRequest(transactionId, String.valueOf(charge.get(AMOUNT_KEY)));
@@ -91,12 +90,13 @@ public class CardService {
 
         if (response.isSuccessful()) {
             chargeDao.updateStatus(chargeId, CAPTURE_SUBMITTED);
+        } else {
+            chargeDao.updateStatus(chargeId, CAPTURE_UNKNOWN);
         }
         return response;
     }
 
     private GatewayResponse authoriseFor(String chargeId, Card cardDetails, Map<String, Object> charge) {
-
         AuthorisationRequest request = authorisationRequest(String.valueOf(charge.get(AMOUNT_KEY)), cardDetails);
         AuthorisationResponse response = paymentProviderFor(charge).authorise(request);
 

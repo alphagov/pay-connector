@@ -18,6 +18,7 @@ import static uk.gov.pay.connector.model.CancelResponse.errorCancelResponse;
 import static uk.gov.pay.connector.model.CaptureResponse.aSuccessfulCaptureResponse;
 import static uk.gov.pay.connector.model.CaptureResponse.captureFailureResponse;
 import static uk.gov.pay.connector.model.GatewayError.baseGatewayError;
+import static uk.gov.pay.connector.model.GatewayError.unexpectedStatusCodeFromGateway;
 import static uk.gov.pay.connector.model.domain.ChargeStatus.AUTHORISATION_SUCCESS;
 import static uk.gov.pay.connector.service.OrderCaptureRequestBuilder.aSmartpayOrderCaptureRequest;
 import static uk.gov.pay.connector.service.OrderSubmitRequestBuilder.aSmartpayOrderSubmitRequest;
@@ -116,6 +117,6 @@ public class SmartpayPaymentProvider implements PaymentProvider {
 
     private CaptureResponse handleCaptureError(Response response) {
         logger.error(format("Error code received from provider: response status = %s.", response.getStatus()));
-        return new CaptureResponse(false, baseGatewayError("Error processing capture request"));
+        return new CaptureResponse(false, unexpectedStatusCodeFromGateway("Error processing capture request"));
     }
 }

@@ -50,23 +50,34 @@ public class CardResource {
     @Consumes(APPLICATION_JSON)
     @Produces(APPLICATION_JSON)
     public Response captureCharge(@PathParam("chargeId") String chargeId) throws PayDBIException {
-
-        return reduce(cardService.doCapture(chargeId)
-                .bimap(handleError, handleGatewayResponse));
+        return reduce(
+                cardService
+                        .doCapture(chargeId)
+                        .bimap(handleError, handleGatewayResponse)
+        );
     }
 
     @POST
     @Path(CANCEL_CHARGE_PATH)
     @Produces(APPLICATION_JSON)
     public Response cancelCharge(@PathParam("chargeId") String chargeId) {
-        return reduce(cardService.doCancel(chargeId)
-                .bimap(handleError, handleGatewayResponse));
+        return reduce(
+                cardService
+                        .doCancel(chargeId)
+                        .bimap(handleError, handleGatewayResponse)
+        );
     }
 
     private F<GatewayError, Response> handleError =
-            error -> ChargeNotFound.equals(error.getErrorType()) ?
-                    notFoundResponse(logger, error.getMessage()) :
-                    badRequestResponse(logger, error.getMessage());
+            (error) -> {
+                switch (error.getErrorType()) {
+                    case ChargeNotFound:
+                        return notFoundResponse(logger, error.getMessage());
+                    case UnexpectedStatusCodeFromGateway:
+                        return serviceErrorResponse(logger, "Unexpected Response Code From Gateway");
+                }
+                return badRequestResponse(logger, error.getMessage());
+            };
 
     private F<GatewayResponse, Response> handleGatewayResponse =
             response -> response.isSuccessful() ?
