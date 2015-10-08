@@ -23,7 +23,7 @@ public class CardResource {
 
     public static final String AUTHORIZATION_FRONTEND_RESOURCE_PATH = "/v1/frontend/charges/{chargeId}/cards";
     public static final String CAPTURE_FRONTEND_RESOURCE_PATH = "/v1/frontend/charges/{chargeId}/capture";
-    private static final String CANCEL_CHARGE_PATH = "/v1/api/charges/{chargeId}/cancel";
+    public static final String CANCEL_CHARGE_PATH = "/v1/api/charges/{chargeId}/cancel";
     private final CardService cardService;
     private final Logger logger = LoggerFactory.getLogger(CardResource.class);
 

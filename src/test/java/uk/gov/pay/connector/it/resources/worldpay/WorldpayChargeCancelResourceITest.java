@@ -15,7 +15,7 @@ public class WorldpayChargeCancelResourceITest extends CardResourceITestBase {
     public void cancelCharge_inWorldpaySystem() {
         String chargeId = createAndAuthoriseCharge(validCardDetails);
         givenSetup()
-                .post(cancelChargePath(chargeId))
+                .post(cancelChargeUrlFor(chargeId))
                 .then()
                 .statusCode(204);
     }

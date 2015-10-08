@@ -110,7 +110,7 @@ public class CardResourceITest extends CardResourceITestBase {
         String chargeId = createNewCharge();
         givenSetup()
                 .body(validCardDetails)
-                .post(cardUrlFor(chargeId))
+                .post(authoriseChargeUrlFor(chargeId))
                 .then()
                 .statusCode(204);
 
@@ -127,7 +127,7 @@ public class CardResourceITest extends CardResourceITestBase {
         String unknownId = "61234569847520367";
         givenSetup()
                 .body(validCardDetails)
-                .post(cardUrlFor(unknownId))
+                .post(authoriseChargeUrlFor(unknownId))
                 .then()
                 .statusCode(404)
                 .contentType(JSON)
@@ -140,7 +140,7 @@ public class CardResourceITest extends CardResourceITestBase {
         String unknownId = "398579438759438";
 
         givenSetup()
-                .post(chargeCaptureUrlFor(unknownId))
+                .post(captureChargeUrlFor(unknownId))
                 .then()
                 .statusCode(404)
                 .contentType(JSON)
@@ -151,7 +151,7 @@ public class CardResourceITest extends CardResourceITestBase {
     public void shouldSubmitForCaptureTheCardPayment_IfChargeWasPreviouslyAuthorised() {
         String chargeId = authoriseNewCharge();
         givenSetup()
-                .post(chargeCaptureUrlFor(chargeId))
+                .post(captureChargeUrlFor(chargeId))
                 .then()
                 .statusCode(204);
 
@@ -164,7 +164,7 @@ public class CardResourceITest extends CardResourceITestBase {
         String chargeIdNotAuthorised = createNewChargeWithStatus(AUTHORISATION_SUBMITTED);
 
         givenSetup()
-                .post(chargeCaptureUrlFor(chargeIdNotAuthorised))
+                .post(captureChargeUrlFor(chargeIdNotAuthorised))
                 .then()
                 .statusCode(400)
                 .contentType(JSON)
@@ -178,7 +178,7 @@ public class CardResourceITest extends CardResourceITestBase {
 
         givenSetup()
                 .body(cardDetails)
-                .post(cardUrlFor(chargeId))
+                .post(authoriseChargeUrlFor(chargeId))
                 .then()
                 .statusCode(204);
 
@@ -188,7 +188,7 @@ public class CardResourceITest extends CardResourceITestBase {
     private void shouldReturnErrorFor(String chargeId, String randomCardNumber, String expectedMessage) {
         givenSetup()
                 .body(randomCardNumber)
-                .post(cardUrlFor(chargeId))
+                .post(authoriseChargeUrlFor(chargeId))
                 .then()
                 .statusCode(400)
                 .contentType(JSON)
