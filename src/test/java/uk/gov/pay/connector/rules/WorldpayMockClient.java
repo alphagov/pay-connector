@@ -1,24 +1,23 @@
 package uk.gov.pay.connector.rules;
 
 import com.google.common.io.Resources;
+import org.mockserver.client.server.MockServerClient;
 
 import java.io.IOException;
 import java.nio.charset.Charset;
 import java.util.UUID;
 
-import static com.github.dreamhead.moco.Moco.by;
-import static com.github.dreamhead.moco.Moco.header;
-import static com.github.dreamhead.moco.Moco.status;
-import static com.github.dreamhead.moco.Moco.uri;
-import static com.github.dreamhead.moco.Moco.with;
+import static javax.ws.rs.HttpMethod.POST;
 import static javax.ws.rs.core.MediaType.TEXT_XML;
+import static org.mockserver.model.HttpRequest.request;
+import static org.mockserver.model.HttpResponse.response;
 
-public class WorldpayMockRule extends MocoHttpsTestRule {
+public class WorldpayMockClient {
 
-    public static final int port = 10107;
+    private final MockServerClient mockClient;
 
-    public WorldpayMockRule() {
-        super(port);
+    public WorldpayMockClient(int mockServerPort) {
+        this.mockClient = new MockServerClient("localhost", mockServerPort);
     }
 
     public void mockInquiryResponse(String gatewayTransactionId, String status) {
@@ -55,14 +54,14 @@ public class WorldpayMockRule extends MocoHttpsTestRule {
         paymentServiceResponse(errorResponse);
     }
 
-    private void paymentServiceResponse(String response) {
-        httpServer
-                .post(by(uri("/jsp/merchant/xml/paymentService.jsp")))
-                .response(
-                        status(200),
-                        with(response),
-                        header("Content-Type", TEXT_XML)
-                );
+    private void paymentServiceResponse(String responseBody) {
+        mockClient.when(request()
+                        .withMethod(POST)
+                        .withPath("/jsp/merchant/xml/paymentService.jsp")
+        ).respond(response()
+                .withStatusCode(200)
+                .withBody(responseBody)
+                .withHeader("Content-Type", TEXT_XML));
     }
 
     private String loadFromTemplate(String fileName, String gatewayTransactionId) {

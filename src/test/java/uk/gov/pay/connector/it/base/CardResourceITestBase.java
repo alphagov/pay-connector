@@ -5,9 +5,11 @@ import com.jayway.restassured.specification.RequestSpecification;
 import org.apache.commons.lang.math.RandomUtils;
 import org.junit.Before;
 import org.junit.Rule;
+import org.mockserver.junit.MockServerRule;
 import uk.gov.pay.connector.model.domain.ChargeStatus;
 import uk.gov.pay.connector.rules.DropwizardAppWithPostgresRule;
-import uk.gov.pay.connector.rules.WorldpayMockRule;
+import uk.gov.pay.connector.rules.SmartpayMockClient;
+import uk.gov.pay.connector.rules.WorldpayMockClient;
 
 import java.io.IOException;
 
@@ -17,16 +19,21 @@ import static org.hamcrest.Matchers.is;
 import static uk.gov.pay.connector.model.domain.ChargeStatus.AUTHORISATION_SUCCESS;
 import static uk.gov.pay.connector.model.domain.ChargeStatus.CREATED;
 import static uk.gov.pay.connector.util.JsonEncoder.toJson;
-import static uk.gov.pay.connector.util.WorldpayTestUtil.setupSSL;
 
 public class CardResourceITestBase {
 
     @Rule
-    public WorldpayMockRule worldpay = new WorldpayMockRule();
-
-    @Rule
     public DropwizardAppWithPostgresRule app = new DropwizardAppWithPostgresRule();
 
+    @Rule
+    public MockServerRule worldpayMockRule = new MockServerRule(10107, this);
+
+    @Rule
+    public MockServerRule smartpayMockRule = new MockServerRule(10106, this);
+
+    protected WorldpayMockClient worldpay;
+
+    protected SmartpayMockClient smartpay;
 
     protected final String accountId;
     private final String paymentProvider;
@@ -37,12 +44,11 @@ public class CardResourceITestBase {
     }
 
     @Before
-    public void setup()  throws IOException {
-        setupSSL();
-        setupGatewayAccount();
-    }
+    public void setup() throws IOException {
 
-    public void setupGatewayAccount(){
+        worldpay = new WorldpayMockClient(worldpayMockRule.getHttpPort());
+        smartpay = new SmartpayMockClient(smartpayMockRule.getHttpPort());
+
         app.getDatabaseTestHelper().addGatewayAccount(accountId, paymentProvider);
     }
 
@@ -142,16 +148,6 @@ public class CardResourceITestBase {
         cardDetails.addProperty("cardholder_name", cardHolderName);
         cardDetails.add("address", addressObject);
         return toJson(cardDetails);
-    }
-
-    protected String createAndAuthoriseCharge(String cardDetails) {
-        String chargeId = createNewCharge();
-        givenSetup()
-                .body(cardDetails)
-                .post(cardUrlFor(chargeId))
-                .then()
-                .statusCode(204);
-        return chargeId;
     }
 
     protected void shouldReturnErrorForCardDetailsWithMessage(String cardDetails, String errorMessage, String status) throws Exception {

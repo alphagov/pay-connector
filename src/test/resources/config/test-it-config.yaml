@@ -19,14 +19,14 @@ links:
   cardDetailsUrl: http://Frontend/charge/{chargeId}?chargeTokenId={chargeTokenId}
 
 worldpay:
-  url: https://localhost:10107/jsp/merchant/xml/paymentService.jsp
+  url: http://localhost:10107/jsp/merchant/xml/paymentService.jsp
   username: theUsername
   password: thePassword
 
 smartpay:
-  url: https://pal-test.barclaycardsmartpay.com/pal/servlet/soap/Payment
-  username: ${GDS_CONNECTOR_SMARTPAY_USER}
-  password: ${GDS_CONNECTOR_SMARTPAY_PASSWORD}
+  url: http://localhost:10106/pal/servlet/soap/Payment
+  username: theUsername
+  password: thePassword
 
 database:
   driverClass: org.postgresql.Driver

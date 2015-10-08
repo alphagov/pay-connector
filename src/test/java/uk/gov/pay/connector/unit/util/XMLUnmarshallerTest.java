@@ -84,7 +84,7 @@ public class XMLUnmarshallerTest {
 
     @Test
     public void shouldUnmarshallAnError_ForSmartpayAuthoriseResponse() throws Exception {
-        String successPayload = readPayload("templates/smartpay/authorisation-refused-response.xml");
+        String successPayload = readPayload("templates/smartpay/authorisation-failed-response.xml");
         SmartpayAuthorisationResponse response = XMLUnmarshaller.unmarshall(successPayload, SmartpayAuthorisationResponse.class);
         assertThat(response.getPspReference(), is("8814436101583280"));
         assertThat(response.getErrorMessage(), is("CVC Declined"));
