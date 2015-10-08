@@ -42,6 +42,10 @@ public class AuthorisationResponse implements GatewayResponse {
         return new AuthorisationResponse(false, baseGatewayError("This transaction was declined."), AUTHORISATION_REJECTED, transactionId);
     }
 
+    public static AuthorisationResponse authorisationFailureResponse(GatewayError gatewayError) {
+        return new AuthorisationResponse(false, gatewayError, null, null);
+    }
+
     public Boolean isSuccessful() {
         return successful;
     }

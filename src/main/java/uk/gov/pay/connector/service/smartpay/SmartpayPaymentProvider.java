@@ -9,16 +9,12 @@ import uk.gov.pay.connector.service.PaymentProvider;
 
 import javax.ws.rs.core.Response;
 
-import static java.lang.String.format;
+import static fj.data.Either.reduce;
 import static java.util.UUID.randomUUID;
 import static javax.ws.rs.core.Response.Status.OK;
 import static uk.gov.pay.connector.model.AuthorisationResponse.*;
-import static uk.gov.pay.connector.model.CancelResponse.aSuccessfulCancelResponse;
-import static uk.gov.pay.connector.model.CancelResponse.errorCancelResponse;
-import static uk.gov.pay.connector.model.CaptureResponse.aSuccessfulCaptureResponse;
-import static uk.gov.pay.connector.model.CaptureResponse.captureFailureResponse;
-import static uk.gov.pay.connector.model.GatewayError.baseGatewayError;
-import static uk.gov.pay.connector.model.GatewayError.unexpectedStatusCodeFromGateway;
+import static uk.gov.pay.connector.model.CancelResponse.*;
+import static uk.gov.pay.connector.model.CaptureResponse.*;
 import static uk.gov.pay.connector.model.domain.ChargeStatus.AUTHORISATION_SUCCESS;
 import static uk.gov.pay.connector.service.OrderCaptureRequestBuilder.aSmartpayOrderCaptureRequest;
 import static uk.gov.pay.connector.service.OrderSubmitRequestBuilder.aSmartpayOrderSubmitRequest;
@@ -55,7 +51,7 @@ public class SmartpayPaymentProvider implements PaymentProvider {
         Response response = client.postXMLRequestFor(gatewayAccount, captureRequestString);
         return response.getStatus() == OK.getStatusCode() ?
                 mapToCaptureResponse(response) :
-                handleCaptureError(response);
+                errorCaptureResponse(logger, response);
     }
 
     @Override
@@ -67,16 +63,39 @@ public class SmartpayPaymentProvider implements PaymentProvider {
     }
 
     private AuthorisationResponse mapToCardAuthorisationResponse(Response response) {
-        SmartpayAuthorisationResponse sResponse = client.unmarshallResponse(response, SmartpayAuthorisationResponse.class);
+        return reduce(
+                client.unmarshallResponse(response, SmartpayAuthorisationResponse.class)
+                        .bimap(
+                                AuthorisationResponse::authorisationFailureResponse,
+                                (sResponse) -> sResponse.isAuthorised() ?
+                                        successfulAuthorisation(AUTHORISATION_SUCCESS, sResponse.getPspReference()) :
+                                        authorisationFailureResponse(logger, sResponse.getPspReference(), sResponse.getErrorMessage())
+                        )
+        );
+    }
 
-        return sResponse.isAuthorised() ?
-                successfulAuthorisation(AUTHORISATION_SUCCESS, sResponse.getPspReference()) :
-                authorisationFailureResponse(logger, sResponse.getPspReference(), sResponse.getErrorMessage());
+    private CaptureResponse mapToCaptureResponse(Response response) {
+        return reduce(
+                client.unmarshallResponse(response, SmartpayCaptureResponse.class)
+                        .bimap(
+                                CaptureResponse::captureFailureResponse,
+                                (sResponse) -> sResponse.isCaptured() ?
+                                        aSuccessfulCaptureResponse() :
+                                        captureFailureResponse(logger, sResponse.getErrorMessage(), sResponse.getPspReference())
+                        )
+        );
     }
 
     private CancelResponse mapToCancelResponse(Response response) {
-        SmartpayCancelResponse spResponse = client.unmarshallResponse(response, SmartpayCancelResponse.class);
-        return spResponse.isCancelled() ? aSuccessfulCancelResponse() : new CancelResponse(false, baseGatewayError(spResponse.getErrorMessage()));
+        return reduce(
+                client.unmarshallResponse(response, SmartpayCancelResponse.class)
+                        .bimap(
+                                CancelResponse::cancelFailureResponse,
+                                (sResponse) -> sResponse.isCancelled() ?
+                                        aSuccessfulCancelResponse() :
+                                        cancelFailureResponse(logger, sResponse.getErrorMessage())
+                        )
+        );
     }
 
     private String buildOrderSubmitFor(AuthorisationRequest request) {
@@ -106,17 +125,5 @@ public class SmartpayPaymentProvider implements PaymentProvider {
 
     private String generateReference() {
         return randomUUID().toString();
-    }
-
-    private CaptureResponse mapToCaptureResponse(Response response) {
-        SmartpayCaptureResponse sResponse = client.unmarshallResponse(response, SmartpayCaptureResponse.class);
-        return sResponse.isCaptured() ?
-                aSuccessfulCaptureResponse() :
-                captureFailureResponse(logger, sResponse.getErrorMessage(), sResponse.getPspReference());
-    }
-
-    private CaptureResponse handleCaptureError(Response response) {
-        logger.error(format("Error code received from provider: response status = %s.", response.getStatus()));
-        return new CaptureResponse(false, unexpectedStatusCodeFromGateway("Error processing capture request"));
     }
 }

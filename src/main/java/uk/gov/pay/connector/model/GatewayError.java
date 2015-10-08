@@ -1,7 +1,6 @@
 package uk.gov.pay.connector.model;
 
-import static uk.gov.pay.connector.model.GatewayErrorType.GenericGatewayError;
-import static uk.gov.pay.connector.model.GatewayErrorType.UnexpectedStatusCodeFromGateway;
+import static uk.gov.pay.connector.model.GatewayErrorType.*;
 
 public class GatewayError {
     private String message;
@@ -18,6 +17,10 @@ public class GatewayError {
 
     public static GatewayError unexpectedStatusCodeFromGateway(String msg) {
         return new GatewayError(msg, UnexpectedStatusCodeFromGateway);
+    }
+
+    public static GatewayError malformedResponseReceivedFromGateway(String msg) {
+        return new GatewayError(msg, MalformedResponseReceivedFromGateway);
     }
 
     public String getMessage() {

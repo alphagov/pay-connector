@@ -14,7 +14,6 @@ import javax.ws.rs.core.Response;
 
 import static fj.data.Either.reduce;
 import static javax.ws.rs.core.MediaType.APPLICATION_JSON;
-import static uk.gov.pay.connector.model.GatewayErrorType.ChargeNotFound;
 import static uk.gov.pay.connector.resources.CardDetailsValidator.isWellFormattedCardDetails;
 import static uk.gov.pay.connector.util.ResponseUtil.*;
 
@@ -36,13 +35,14 @@ public class CardResource {
     @Consumes(APPLICATION_JSON)
     @Produces(APPLICATION_JSON)
     public Response authoriseCharge(@PathParam("chargeId") String chargeId, Card cardDetails) {
-
         if (!isWellFormattedCardDetails(cardDetails)) {
             return badRequestResponse(logger, "Values do not match expected format/length.");
         }
 
-        return reduce(cardService.doAuthorise(chargeId, cardDetails)
-                .bimap(handleError, handleGatewayResponse));
+        return reduce(
+                cardService
+                        .doAuthorise(chargeId, cardDetails)
+                        .bimap(handleError, handleGatewayResponse));
     }
 
     @POST
@@ -75,6 +75,8 @@ public class CardResource {
                         return notFoundResponse(logger, error.getMessage());
                     case UnexpectedStatusCodeFromGateway:
                         return serviceErrorResponse(logger, "Unexpected Response Code From Gateway");
+                    case MalformedResponseReceivedFromGateway:
+                        return serviceErrorResponse(logger, error.getMessage());
                 }
                 return badRequestResponse(logger, error.getMessage());
             };

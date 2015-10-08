@@ -1,8 +1,10 @@
 package uk.gov.pay.connector.service;
 
+import fj.data.Either;
 import org.glassfish.jersey.internal.util.Base64;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import uk.gov.pay.connector.model.GatewayError;
 import uk.gov.pay.connector.model.domain.GatewayAccount;
 import uk.gov.pay.connector.util.XMLUnmarshaller;
 
@@ -11,9 +13,12 @@ import javax.ws.rs.client.Entity;
 import javax.ws.rs.core.Response;
 import javax.xml.bind.JAXBException;
 
+import static fj.data.Either.left;
+import static fj.data.Either.right;
 import static java.lang.String.format;
 import static javax.ws.rs.core.HttpHeaders.AUTHORIZATION;
 import static javax.ws.rs.core.MediaType.APPLICATION_XML;
+import static uk.gov.pay.connector.model.GatewayError.malformedResponseReceivedFromGateway;
 
 public class GatewayClient {
     private final Logger logger = LoggerFactory.getLogger(GatewayClient.class);
@@ -33,20 +38,16 @@ public class GatewayClient {
                 .post(Entity.xml(request));
     }
 
-    public <T> T unmarshallResponse(Response response, Class<T> clazz) {
+    public <T> Either<GatewayError, T> unmarshallResponse(Response response, Class<T> clazz) {
         String payload = response.readEntity(String.class);
         logger.debug("response payload=" + payload);
         try {
-            return XMLUnmarshaller.unmarshall(payload, clazz);
+            return right(XMLUnmarshaller.unmarshall(payload, clazz));
         } catch (JAXBException e) {
-            throw unmarshallException(payload, e);
+            String error = format("Could not unmarshall response %s.", payload);
+            logger.error(error, e);
+            return left(malformedResponseReceivedFromGateway("Invalid Response Received From Gateway"));
         }
-    }
-
-    private RuntimeException unmarshallException(String payload, JAXBException e) {
-        String error = format("Could not unmarshall response %s.", payload);
-        logger.error(error, e);
-        return new RuntimeException(error, e);
     }
 
     private static String encode(String username, String password) {

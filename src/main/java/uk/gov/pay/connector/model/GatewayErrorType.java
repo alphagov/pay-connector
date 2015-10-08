@@ -4,5 +4,6 @@ public enum GatewayErrorType {
     ChargeNotFound,
     GenericGatewayError,
     UnexpectedStatusCodeFromGateway,
+    MalformedResponseReceivedFromGateway,
     ;
 }

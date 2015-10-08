@@ -86,13 +86,16 @@ public class CardService {
         String transactionId = String.valueOf(charge.get(GATEWAY_TRANSACTION_ID_KEY));
 
         CaptureRequest request = captureRequest(transactionId, String.valueOf(charge.get(AMOUNT_KEY)));
-        CaptureResponse response = paymentProviderFor(charge).capture(request);
+        CaptureResponse response = paymentProviderFor(charge)
+                .capture(request);
 
-        if (response.isSuccessful()) {
-            chargeDao.updateStatus(chargeId, CAPTURE_SUBMITTED);
-        } else {
-            chargeDao.updateStatus(chargeId, CAPTURE_UNKNOWN);
-        }
+        ChargeStatus newStatus =
+                response.isSuccessful() ?
+                        CAPTURE_SUBMITTED :
+                        CAPTURE_UNKNOWN;
+
+        chargeDao.updateStatus(chargeId, newStatus);
+
         return response;
     }
 
