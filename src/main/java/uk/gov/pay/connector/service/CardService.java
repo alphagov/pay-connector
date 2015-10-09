@@ -27,6 +27,7 @@ public class CardService {
     private static final String GATEWAY_ACCOUNT_ID_KEY = "gateway_account_id";
     private static final String PAYMENT_PROVIDER_KEY = "payment_provider";
     private static final String GATEWAY_TRANSACTION_ID_KEY = "gateway_transaction_id";
+    private static final String CHARGE_ID_KEY = "charge_id";
     private static final String AMOUNT_KEY = "amount";
 
     private static final ChargeStatus[] CANCELLABLE_STATES = new ChargeStatus[]{
@@ -97,7 +98,7 @@ public class CardService {
 
     private GatewayResponse authoriseFor(String chargeId, Card cardDetails, Map<String, Object> charge) {
 
-        AuthorisationRequest request = authorisationRequest(String.valueOf(charge.get(AMOUNT_KEY)), cardDetails);
+        AuthorisationRequest request = authorisationRequest(String.valueOf(charge.get(CHARGE_ID_KEY)), String.valueOf(charge.get(AMOUNT_KEY)), cardDetails);
         AuthorisationResponse response = paymentProviderFor(charge).authorise(request);
 
         if (response.getNewChargeStatus() != null) {
@@ -124,8 +125,8 @@ public class CardService {
         return providers.resolve(paymentProviderName);
     }
 
-    private AuthorisationRequest authorisationRequest(String amountValue, Card card) {
-        return new AuthorisationRequest(card, amountValue, "This is the description");
+    private AuthorisationRequest authorisationRequest(String chargeId, String amountValue, Card card) {
+        return new AuthorisationRequest(chargeId, card, amountValue, "This is the description");
     }
 
     private boolean hasStatus(Map<String, Object> charge, ChargeStatus... states) {

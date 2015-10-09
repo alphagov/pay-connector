@@ -9,16 +9,17 @@ import uk.gov.pay.connector.model.StatusResponse;
 import uk.gov.pay.connector.model.domain.ChargeStatus;
 import uk.gov.pay.connector.service.smartpay.SmartpayNotification;
 import uk.gov.pay.connector.service.smartpay.SmartpayNotificationList;
+import uk.gov.pay.connector.service.smartpay.SmartpayStatusMapper;
 import uk.gov.pay.connector.service.worldpay.WorldpayNotification;
+import uk.gov.pay.connector.service.worldpay.WorldpayStatusesMapper;
 
 import javax.xml.bind.JAXBException;
-
 import java.io.IOException;
+import java.util.Collections;
 import java.util.List;
 
 import static java.lang.String.format;
 import static uk.gov.pay.connector.resources.PaymentProviderValidator.WORLDPAY_PROVIDER;
-import static uk.gov.pay.connector.service.worldpay.WorldpayStatusesMapper.mapToChargeStatus;
 import static uk.gov.pay.connector.util.XMLUnmarshaller.unmarshall;
 
 public class StatusInquiryService {
@@ -37,12 +38,23 @@ public class StatusInquiryService {
 
     public void handleSmartpayNotification(String notification) {
         try {
-            ObjectMapper mapper = new ObjectMapper();
-            SmartpayNotificationList smartpayNotificationList = mapper.readValue(notification, SmartpayNotificationList.class);
-            System.out.println("event code = " + smartpayNotificationList.getNotifications().get(0).getEventCode());
-            //TODO: inquire the charge status to smartpay
+            List<SmartpayNotification> notifications = new ObjectMapper().readValue(notification, SmartpayNotificationList.class).getNotifications();
+            Collections.sort(notifications);
+            System.out.println(notifications);
+            notifications.forEach(this::handleNotification);
         } catch (IOException e) {
             e.printStackTrace();
+        }
+    }
+
+    private void handleNotification(SmartpayNotification smartpaysNotification) {
+
+        String smartpayStatus = smartpaysNotification.getEventCode();
+        ChargeStatus newChargeStatus = SmartpayStatusMapper.mapToChargeStatus(smartpayStatus, smartpaysNotification.isSuccessFull());
+        if (newChargeStatus != null) {
+            chargeDao.updateStatusWithGatewayInfo(smartpaysNotification.getMerchantReference(), newChargeStatus);
+        } else {
+            logger.error(format("Could not map smartpaystatus %s to our internal status.", smartpaysNotification.getEventCode()));
         }
     }
 
@@ -59,10 +71,9 @@ public class StatusInquiryService {
         }
     }
 
-    //TODO: we should play different stories to check the initial status and the new one and act accordingly
     private boolean updateChargeStatus(StatusResponse statusResponse) {
         String worldpayStatus = statusResponse.getStatus();
-        ChargeStatus newChargeStatus = mapToChargeStatus(worldpayStatus);
+        ChargeStatus newChargeStatus = WorldpayStatusesMapper.mapToChargeStatus(worldpayStatus);
         if (newChargeStatus != null) {
             chargeDao.updateStatusWithGatewayInfo(statusResponse.getTransactionId(), newChargeStatus);
             return true;

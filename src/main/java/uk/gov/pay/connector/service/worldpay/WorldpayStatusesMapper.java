@@ -1,16 +1,11 @@
 package uk.gov.pay.connector.service.worldpay;
 
-import com.google.common.collect.Maps;
 import uk.gov.pay.connector.model.domain.ChargeStatus;
 
 import java.util.HashMap;
 import java.util.Map;
 
-import static uk.gov.pay.connector.model.domain.ChargeStatus.AUTHORISATION_REJECTED;
-import static uk.gov.pay.connector.model.domain.ChargeStatus.AUTHORISATION_SUBMITTED;
-import static uk.gov.pay.connector.model.domain.ChargeStatus.AUTHORISATION_SUCCESS;
-import static uk.gov.pay.connector.model.domain.ChargeStatus.CAPTURED;
-import static uk.gov.pay.connector.model.domain.ChargeStatus.SYSTEM_CANCELLED;
+import static uk.gov.pay.connector.model.domain.ChargeStatus.*;
 
 public class WorldpayStatusesMapper {
 

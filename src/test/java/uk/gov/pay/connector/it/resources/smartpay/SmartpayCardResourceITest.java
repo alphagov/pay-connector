@@ -3,11 +3,10 @@ package uk.gov.pay.connector.it.resources.smartpay;
 import org.junit.Test;
 import uk.gov.pay.connector.it.base.CardResourceITestBase;
 
-import java.util.UUID;
-
 import static org.hamcrest.Matchers.is;
 import static uk.gov.pay.connector.model.api.ExternalChargeStatus.EXT_IN_PROGRESS;
 import static uk.gov.pay.connector.model.domain.ChargeStatus.*;
+import static uk.gov.pay.connector.util.TransactionId.randomId;
 
 public class SmartpayCardResourceITest extends CardResourceITestBase {
 
@@ -83,10 +82,6 @@ public class SmartpayCardResourceITest extends CardResourceITestBase {
                 .then()
                 .statusCode(400)
                 .body("message", is("A problem occurred."));
-    }
-
-    private String randomId() {
-        return UUID.randomUUID().toString();
     }
 
     private String buildCardDetailsWith(String cvc) {

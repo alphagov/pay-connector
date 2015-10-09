@@ -88,7 +88,7 @@ public class WorldpayPaymentProviderTest {
         String amount = "500";
 
         String description = "This is the description";
-        return new AuthorisationRequest(card, amount, description);
+        return new AuthorisationRequest("chargeId", card, amount, description);
     }
 
     private void assertEquals(GatewayError actual, GatewayError expected) {

@@ -18,10 +18,13 @@ import javax.ws.rs.client.WebTarget;
 import javax.ws.rs.core.Response;
 
 import static javax.ws.rs.core.MediaType.APPLICATION_XML;
+import static org.hamcrest.CoreMatchers.notNullValue;
 import static org.hamcrest.MatcherAssert.assertThat;
-import static org.hamcrest.core.Is.is;
 import static org.junit.Assert.assertTrue;
-import static org.mockito.Matchers.*;
+import static org.hamcrest.core.Is.is;
+import static org.mockito.Matchers.any;
+import static org.mockito.Matchers.anyObject;
+import static org.mockito.Matchers.anyString;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
 import static uk.gov.pay.connector.model.domain.Address.anAddress;
@@ -45,7 +48,7 @@ public class SmartpayPaymentProviderTest {
     public void shouldSendSuccessfullyAOrderForMerchant() throws Exception {
         AuthorisationResponse response = provider.authorise(getCardAuthorisationRequest());
         assertTrue(response.isSuccessful());
-        assertThat(response.getTransactionId(), is(pcpReference));
+        assertThat(response.getTransactionId(), is(notNullValue()));
     }
 
     @Test
@@ -60,7 +63,7 @@ public class SmartpayPaymentProviderTest {
         String amount = "222";
 
         String description = "This is the description";
-        return new AuthorisationRequest(card, amount, description);
+        return new AuthorisationRequest("chargeId", card, amount, description);
     }
 
     private void mockSmartpaySuccessfulOrderSubmitResponse() {

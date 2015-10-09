@@ -15,7 +15,7 @@
         "eventCode": "AUTHORISATION",
         "eventDate": "2015-10-08T13:48:28+02:00",
         "merchantAccountCode": "MerchantAccount",
-        "merchantReference": "906fe48f-ca4c-49b2-b2d8-e3a3f577289e",
+        "merchantReference": "{{transactionId}}",
         "operations": [
           "CANCEL",
           "CAPTURE",
@@ -24,7 +24,7 @@
         "paymentMethod": "visa",
         "pspReference": "8814443049083290",
         "reason": "96968:1111:8/2018",
-        "success": "true"
+        "success": "false"
       }
     }
   ]

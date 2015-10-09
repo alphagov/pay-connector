@@ -11,13 +11,13 @@ import uk.gov.pay.connector.model.domain.ChargeStatus;
 import uk.gov.pay.connector.rules.DropwizardAppWithPostgresRule;
 
 import java.util.Map;
-import java.util.UUID;
 
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.is;
 import static uk.gov.pay.connector.model.api.ExternalChargeStatus.EXT_CREATED;
 import static uk.gov.pay.connector.model.domain.ChargeStatus.AUTHORISATION_SUBMITTED;
 import static uk.gov.pay.connector.model.domain.ChargeStatus.AUTHORISATION_SUCCESS;
+import static uk.gov.pay.connector.util.TransactionId.randomId;
 
 public class ChargeDaoITest {
 
@@ -81,7 +81,7 @@ public class ChargeDaoITest {
         long amount = 101;
         String chargeId = chargeDao.saveNewCharge(newCharge(amount));
 
-        String transactionId = UUID.randomUUID().toString();
+        String transactionId = randomId();
         chargeDao.updateGatewayTransactionId(chargeId, transactionId);
 
         Map<String, Object> charge = chargeDao.findById(chargeId).get();
@@ -92,7 +92,7 @@ public class ChargeDaoITest {
     public void insertChargeAndThenUpdateStatusPerGatewayTransactionId() throws Exception {
 
         String chargeId = chargeDao.saveNewCharge(newCharge((long) 101));
-        String gatewayTransactionId = UUID.randomUUID().toString();
+        String gatewayTransactionId = randomId();
 
         chargeDao.updateGatewayTransactionId(chargeId, gatewayTransactionId);
         chargeDao.updateStatusWithGatewayInfo(gatewayTransactionId, AUTHORISATION_SUBMITTED);

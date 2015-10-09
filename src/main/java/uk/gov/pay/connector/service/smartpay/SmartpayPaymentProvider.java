@@ -10,7 +10,6 @@ import uk.gov.pay.connector.service.PaymentProvider;
 import javax.ws.rs.core.Response;
 
 import static java.lang.String.format;
-import static java.util.UUID.randomUUID;
 import static javax.ws.rs.core.Response.Status.OK;
 import static uk.gov.pay.connector.model.AuthorisationResponse.*;
 import static uk.gov.pay.connector.model.CancelResponse.aSuccessfulCancelResponse;
@@ -38,10 +37,8 @@ public class SmartpayPaymentProvider implements PaymentProvider {
 
     @Override
     public AuthorisationResponse authorise(AuthorisationRequest request) {
-        String requestString = buildOrderSubmitFor(request);
-
+        String requestString = buildOrderSubmitFor(request, request.getChargeId());
         Response response = client.postXMLRequestFor(gatewayAccount, requestString);
-
         return response.getStatus() == OK.getStatusCode() ?
                 mapToCardAuthorisationResponse(response) :
                 errorResponse(logger, response);
@@ -59,9 +56,9 @@ public class SmartpayPaymentProvider implements PaymentProvider {
 
     @Override
     public StatusResponse enquire(ChargeStatusRequest request) {
-        throw new UnsupportedOperationException("Not implemented yet!");
+        throw new UnsupportedOperationException("Smartpay does not have an enquiry API.");
     }
-    
+
     @Override
     public CancelResponse cancel(CancelRequest request) {
         Response response = client.postXMLRequestFor(gatewayAccount, buildCancelOrderFor(request));
@@ -83,10 +80,10 @@ public class SmartpayPaymentProvider implements PaymentProvider {
         return spResponse.isCancelled() ? aSuccessfulCancelResponse() : new CancelResponse(false, baseGatewayError(spResponse.getErrorMessage()));
     }
 
-    private String buildOrderSubmitFor(AuthorisationRequest request) {
+    private String buildOrderSubmitFor(AuthorisationRequest request, String transactionId) {
         return aSmartpayOrderSubmitRequest()
                 .withMerchantCode(MERCHANT_CODE)
-                .withTransactionId(generateReference())
+                .withTransactionId(transactionId)
                 .withDescription(request.getDescription())
                 .withAmount(request.getAmount())
                 .withCard(request.getCard())
@@ -108,10 +105,6 @@ public class SmartpayPaymentProvider implements PaymentProvider {
                 .build();
     }
 
-    private String generateReference() {
-        return randomUUID().toString();
-    }
-
     private CaptureResponse mapToCaptureResponse(Response response) {
         SmartpayCaptureResponse sResponse = client.unmarshallResponse(response, SmartpayCaptureResponse.class);
         return sResponse.isCaptured() ?
@@ -120,7 +113,7 @@ public class SmartpayPaymentProvider implements PaymentProvider {
     }
 
     private CaptureResponse handleCaptureError(Response response) {
-        logger.error(format("Error code received from provider: response status = %s.", response.getStatus()));
+        logger.error(format("Error code received from provider: response status = %s, body = %s.", response.getStatus(), response.readEntity(String.class)));
         return new CaptureResponse(false, baseGatewayError("Error processing capture request"));
     }
 }

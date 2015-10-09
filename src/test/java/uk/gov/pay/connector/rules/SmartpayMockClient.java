@@ -5,12 +5,12 @@ import org.mockserver.client.server.MockServerClient;
 
 import java.io.IOException;
 import java.nio.charset.Charset;
-import java.util.UUID;
 
 import static javax.ws.rs.HttpMethod.POST;
 import static javax.ws.rs.core.MediaType.TEXT_XML;
 import static org.mockserver.model.HttpRequest.request;
 import static org.mockserver.model.HttpResponse.response;
+import static uk.gov.pay.connector.util.TransactionId.randomId;
 
 public class SmartpayMockClient {
 
@@ -21,19 +21,19 @@ public class SmartpayMockClient {
     }
 
     public void mockAuthorisationSuccess() {
-        String gatewayTransactionId = UUID.randomUUID().toString();
+        String gatewayTransactionId = randomId();
         String authoriseResponse = loadFromTemplate("authorisation-success-response.xml", gatewayTransactionId);
         paymentServiceResponse(authoriseResponse);
     }
 
     public void mockAuthorisationFailure() {
-        String gatewayTransactionId = UUID.randomUUID().toString();
+        String gatewayTransactionId = randomId();
         String authoriseResponse = loadFromTemplate("authorisation-failed-response.xml", gatewayTransactionId);
         paymentServiceResponse(authoriseResponse);
     }
 
     public void mockCaptureResponse() {
-        String gatewayTransactionId = UUID.randomUUID().toString();
+        String gatewayTransactionId = randomId();
         String captureResponse = loadFromTemplate("capture-success-response.xml", gatewayTransactionId);
         paymentServiceResponse(captureResponse);
     }

@@ -1,6 +1,7 @@
 package uk.gov.pay.connector.it.contract;
 
-import org.junit.Rule;
+import org.junit.Assume;
+import org.junit.Before;
 import org.junit.Test;
 import uk.gov.pay.connector.app.GatewayCredentialsConfig;
 import uk.gov.pay.connector.model.AuthorisationRequest;
@@ -10,9 +11,11 @@ import uk.gov.pay.connector.model.StatusResponse;
 import uk.gov.pay.connector.model.domain.Card;
 import uk.gov.pay.connector.service.GatewayClient;
 import uk.gov.pay.connector.service.worldpay.WorldpayPaymentProvider;
-import uk.gov.pay.connector.rules.DropwizardAppWithPostgresRule;
 
 import javax.ws.rs.client.ClientBuilder;
+
+import java.io.IOException;
+import java.net.URL;
 
 import static org.hamcrest.core.Is.is;
 import static org.junit.Assert.assertFalse;
@@ -20,10 +23,18 @@ import static org.junit.Assert.assertThat;
 import static org.junit.Assert.assertTrue;
 import static uk.gov.pay.connector.model.domain.GatewayAccount.gatewayAccountFor;
 import static uk.gov.pay.connector.util.CardUtils.aValidCard;
+import static uk.gov.pay.connector.util.SystemUtils.envOrThrow;
 
-public class WorldpayPaymentProviderITest {
-    @Rule
-    public DropwizardAppWithPostgresRule app = new DropwizardAppWithPostgresRule("config/test-contract-config.yaml");
+public class WorldpayPaymentProviderTest {
+
+    @Before
+    public void checkThatWorldpayIsUp(){
+        try {
+            new URL(getWorldpayConfig().getUrl()).openConnection().connect();
+        } catch(IOException ex) {
+            Assume.assumeTrue(false);
+        }
+    }
 
     @Test
     public void shouldBeAbleToSendAuthorisationRequestForMerchant() throws Exception {
@@ -75,7 +86,7 @@ public class WorldpayPaymentProviderITest {
         Card card = aValidCard();
         String amount = "500";
         String description = "This is the description";
-        return new AuthorisationRequest(card, amount, description);
+        return new AuthorisationRequest("chargeId", card, amount, description);
     }
 
 
@@ -84,6 +95,24 @@ public class WorldpayPaymentProviderITest {
     }
 
     private GatewayCredentialsConfig getWorldpayConfig() {
-        return app.getConf().getWorldpayConfig();
+        return WORLDPAY_CREDENTIALS;
     }
+
+    private static final GatewayCredentialsConfig WORLDPAY_CREDENTIALS = new GatewayCredentialsConfig() {
+        @Override
+        public String getUrl() {
+            return "https://secure-test.worldpay.com/jsp/merchant/xml/paymentService.jsp";
+        }
+
+        @Override
+        public String getUsername() {
+            return "MERCHANTCODE";
+        }
+
+        @Override
+        public String getPassword() {
+            return envOrThrow("GDS_CONNECTOR_WORLDPAY_PASSWORD");
+        }
+    };
+
 }
