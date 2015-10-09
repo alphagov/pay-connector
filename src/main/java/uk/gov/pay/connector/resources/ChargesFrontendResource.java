@@ -7,6 +7,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import uk.gov.pay.connector.dao.ChargeDao;
 import uk.gov.pay.connector.dao.GatewayAccountDao;
+import uk.gov.pay.connector.model.domain.ChargeStatus;
 
 import javax.ws.rs.*;
 import javax.ws.rs.core.Context;
@@ -33,6 +34,7 @@ public class ChargesFrontendResource {
 
     private static final String CHARGES_FRONTEND_PATH = "/v1/frontend/charges/";
     private static final String GET_CHARGE_FRONTEND_PATH = CHARGES_FRONTEND_PATH + "{chargeId}";
+    private static final String PUT_CHARGE_STATUS_FRONTEND_PATH = CHARGES_FRONTEND_PATH + "{chargeId}/status/{newStatus}";
 
     private static final Logger logger = LoggerFactory.getLogger(ChargesFrontendResource.class);
     private final ChargeDao chargeDao;
@@ -49,16 +51,17 @@ public class ChargesFrontendResource {
     public Response getCharge(@PathParam("chargeId") String chargeId, @Context UriInfo uriInfo) {
         Optional<Map<String, Object>> maybeCharge = chargeDao.findById(chargeId);
         return maybeCharge
-                .map(charge -> {
-                    URI chargeLocation = locationUriFor(GET_CHARGE_FRONTEND_PATH, uriInfo, chargeId);
+                .map(charge -> buildOkResponse(chargeId, uriInfo, charge))
+                .orElseGet(() -> responseWithChargeNotFound(logger, chargeId));
+    }
 
-                    Map<String, Object> responseData = linksBuilder(chargeLocation)
-                            .addLink("cardAuth", HttpMethod.POST, locationUriFor(AUTHORIZATION_FRONTEND_RESOURCE_PATH, uriInfo, chargeId))
-                            .addLink("cardCapture", HttpMethod.POST, locationUriFor(CAPTURE_FRONTEND_RESOURCE_PATH, uriInfo, chargeId))
-                            .appendLinksTo(removeGatewayAccount(charge));
-
-                    return ok(responseData).build();
-                })
+    @PUT
+    @Path(PUT_CHARGE_STATUS_FRONTEND_PATH)
+    @Produces(APPLICATION_JSON)
+    public Response updateChargeStatus(@PathParam("chargeId") String chargeId, @PathParam("newStatus") String newStatus, @Context UriInfo uriInfo) {
+        Optional<Map<String, Object>> maybeCharge = chargeDao.findById(chargeId);
+        return maybeCharge
+                .map(charge -> updateStatus(charge, ChargeStatus.chargeStatusFrom(newStatus)))
                 .orElseGet(() -> responseWithChargeNotFound(logger, chargeId));
     }
 
@@ -66,10 +69,23 @@ public class ChargesFrontendResource {
     @Path(CHARGES_FRONTEND_PATH)
     @Produces(APPLICATION_JSON)
     public Response getCharges(@QueryParam("gatewayAccountId") String gatewayAccountId, @Context UriInfo uriInfo) {
-
         return reduce(validateGatewayAccountReference(gatewayAccountId)
                 .bimap(handleError, listTransactions(gatewayAccountId)));
+    }
 
+    private Response updateStatus(Map<String, Object> charge, ChargeStatus chargeStatus) {
+        chargeDao.updateStatus(charge.get("charge_id").toString(), chargeStatus);
+        return noContentResponse();
+    }
+
+    private Response buildOkResponse(@PathParam("chargeId") String chargeId, @Context UriInfo uriInfo, Map<String, Object> charge) {
+        URI chargeLocation = locationUriFor(GET_CHARGE_FRONTEND_PATH, uriInfo, chargeId);
+        Map<String, Object> responseData = linksBuilder(chargeLocation)
+                .addLink("cardAuth", HttpMethod.POST, locationUriFor(AUTHORIZATION_FRONTEND_RESOURCE_PATH, uriInfo, chargeId))
+                .addLink("cardCapture", HttpMethod.POST, locationUriFor(CAPTURE_FRONTEND_RESOURCE_PATH, uriInfo, chargeId))
+                .appendLinksTo(removeGatewayAccount(charge));
+
+        return ok(responseData).build();
     }
 
     private F<Boolean, Response> listTransactions(final String gatewayAccountId) {
@@ -77,7 +93,7 @@ public class ChargesFrontendResource {
             List<Map<String, Object>> charges = chargeDao.findAllBy(gatewayAccountId);
             if (charges.isEmpty()) {
                 return accountDao.findById(gatewayAccountId)
-                        .map( x -> okResultsResponseFrom(charges))
+                        .map(x -> okResultsResponseFrom(charges))
                         .orElseGet(() -> notFoundResponse(logger, format("account with id %s not found", gatewayAccountId)));
             }
             return okResultsResponseFrom(charges);

@@ -6,6 +6,7 @@ import org.apache.commons.lang.math.RandomUtils;
 import org.junit.Before;
 import org.junit.Rule;
 import org.junit.Test;
+import uk.gov.pay.connector.model.domain.ChargeStatus;
 import uk.gov.pay.connector.rules.DropwizardAppWithPostgresRule;
 
 import static com.jayway.restassured.RestAssured.given;
@@ -13,6 +14,9 @@ import static com.jayway.restassured.http.ContentType.JSON;
 import static java.lang.String.format;
 import static java.util.UUID.randomUUID;
 import static javax.ws.rs.HttpMethod.POST;
+import static javax.ws.rs.core.Response.Status;
+import static javax.ws.rs.core.Response.Status.NO_CONTENT;
+import static javax.ws.rs.core.Response.Status.OK;
 import static org.hamcrest.Matchers.*;
 import static uk.gov.pay.connector.model.domain.ChargeStatus.*;
 import static uk.gov.pay.connector.util.JsonEncoder.toJson;
@@ -39,35 +43,16 @@ public class ChargesFrontendResourceITest {
     @Test
     public void getChargeShouldIncludeCardAuthAndCardCaptureLinkButNotGatewayAccountId() throws Exception {
         long expectedAmount = 2113l;
-        String postBody = toJson(ImmutableMap.of(
-                "amount", expectedAmount,
-                "gateway_account_id", accountId,
-                "return_url", returnUrl));
-        ValidatableResponse response = postCreateChargeResponse(postBody)
-                .statusCode(201)
-                .body("charge_id", is(notNullValue()))
-                .body("amount", isNumber(expectedAmount))
-                .body("return_url", is(returnUrl))
-                .contentType(JSON);
+        String chargeId = postToCreateACharge(expectedAmount);
+        ValidatableResponse getChargeResponse = validateGetCharge(expectedAmount, chargeId, CREATED);
 
-        String chargeId = response.extract().path("charge_id");
-
-        ValidatableResponse getChargeResponse = getChargeResponseFor(chargeId)
-                .statusCode(200)
-                .contentType(JSON)
-                .body("charge_id", is(chargeId))
-                .body("amount", isNumber(expectedAmount))
-                .body("containsKey('gateway_account_id')", is(false))
-                .body("status", is("CREATED"))
-                .body("return_url", is(returnUrl));
-
-        String documentLocation = expectedChargeLocationFor(chargeId);
+        String documentLocation = expectedChargeUrl(chargeId, "");
         assertSelfLink(getChargeResponse, documentLocation);
 
-        String cardAuthUrl = expectedCardAuthUrlFor(chargeId);
+        String cardAuthUrl = expectedChargeUrl(chargeId, "/cards");
         assertLink(getChargeResponse, "cardAuth", POST, cardAuthUrl);
 
-        String cardCaptureUrl = expectedCardCaptureUrlFor(chargeId);
+        String cardCaptureUrl = expectedChargeUrl(chargeId, "/capture");
         assertLink(getChargeResponse, "cardCapture", POST, cardCaptureUrl);
     }
 
@@ -76,11 +61,18 @@ public class ChargesFrontendResourceITest {
         String chargeId = ((Integer) RandomUtils.nextInt(99999999)).toString();
         app.getDatabaseTestHelper().addCharge(chargeId, accountId, 500, AUTHORISATION_SUCCESS, returnUrl, null);
 
-        getChargeResponseFor(chargeId)
-                .statusCode(200)
-                .contentType(JSON)
-                .body("charge_id", is(chargeId))
-                .body("status", is(AUTHORISATION_SUCCESS.getValue()));
+        validateGetCharge(500, chargeId, AUTHORISATION_SUCCESS);
+    }
+
+    @Test
+    public void shouldUpdateChargeStatusToEnteringCardDetails() {
+        long expectedAmount = 2113l;
+        String chargeId = postToCreateACharge(expectedAmount);
+        putChargeStatus(chargeId)
+                .statusCode(NO_CONTENT.getStatusCode())
+                .body(isEmptyOrNullString());
+
+        validateGetCharge(expectedAmount, chargeId, ENTERING_CARD_DETAILS);
     }
 
     @Test
@@ -99,7 +91,7 @@ public class ChargesFrontendResourceITest {
         int amount1 = 100;
         int amount2 = 500;
         String gatewayTransactionId1 = "transaction-id-1";
-        app.getDatabaseTestHelper().addCharge(chargeId1, accountId, amount1, AUTHORISATION_SUCCESS, returnUrl,  gatewayTransactionId1);
+        app.getDatabaseTestHelper().addCharge(chargeId1, accountId, amount1, AUTHORISATION_SUCCESS, returnUrl, gatewayTransactionId1);
         app.getDatabaseTestHelper().addCharge(chargeId2, accountId, amount2, AUTHORISATION_REJECTED, returnUrl, null);
 
         String anotherAccountId = "5454545";
@@ -189,29 +181,58 @@ public class ChargesFrontendResourceITest {
                 .body("results[" + index + "].status", is(chargeStatus));
     }
 
+    private String postToCreateACharge(long expectedAmount) {
+        String postBody = toJson(ImmutableMap.of(
+                "amount", expectedAmount,
+                "gateway_account_id", accountId,
+                "return_url", returnUrl));
+
+        ValidatableResponse response = postCreateChargeResponse(postBody)
+                .statusCode(Status.CREATED.getStatusCode())
+                .body("charge_id", is(notNullValue()))
+                .body("amount", isNumber(expectedAmount))
+                .body("return_url", is(returnUrl))
+                .contentType(JSON);
+
+        return response.extract().path("charge_id");
+    }
+
+    private ValidatableResponse validateGetCharge(long expectedAmount, String chargeId, ChargeStatus chargeStatus) {
+        return getChargeResponseFor(chargeId)
+                .statusCode(OK.getStatusCode())
+                .contentType(JSON)
+                .body("charge_id", is(chargeId))
+                .body("amount", isNumber(expectedAmount))
+                .body("containsKey('gateway_account_id')", is(false))
+                .body("status", is(chargeStatus.getValue()))
+                .body("return_url", is(returnUrl));
+    }
+
     private ValidatableResponse getChargeResponseFor(String chargeId) {
-        return given().port(app.getLocalPort())
+        return given()
+                .port(app.getLocalPort())
                 .get(CHARGES_FRONTEND_PATH + chargeId)
                 .then();
     }
 
     private ValidatableResponse postCreateChargeResponse(String postBody) {
-        return given().port(app.getLocalPort())
+        return given()
+                .port(app.getLocalPort())
                 .contentType(JSON)
                 .body(postBody)
                 .post(CHARGES_API_PATH)
                 .then();
     }
 
-    private String expectedChargeLocationFor(String chargeId) {
-        return "http://localhost:" + app.getLocalPort() + CHARGES_FRONTEND_PATH + chargeId;
+    private ValidatableResponse putChargeStatus(String chargeId) {
+        return given()
+                .port(app.getLocalPort())
+                .contentType(JSON)
+                .put(CHARGES_FRONTEND_PATH + chargeId + "/status/" + ENTERING_CARD_DETAILS.getValue())
+                .then();
     }
 
-    private String expectedCardAuthUrlFor(String chargeId) {
-        return "http://localhost:" + app.getLocalPort() + CHARGES_FRONTEND_PATH + chargeId + "/cards";
-    }
-
-    private String expectedCardCaptureUrlFor(String chargeId) {
-        return "http://localhost:" + app.getLocalPort() + CHARGES_FRONTEND_PATH + chargeId + "/capture";
+    private String expectedChargeUrl(String chargeId, String path) {
+        return "http://localhost:" + app.getLocalPort() + CHARGES_FRONTEND_PATH + chargeId + path;
     }
 }

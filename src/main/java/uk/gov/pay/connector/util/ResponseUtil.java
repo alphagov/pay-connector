@@ -38,7 +38,7 @@ public class ResponseUtil {
         return responseWithMessage(INTERNAL_SERVER_ERROR, message);
     }
 
-    public static Response notContentResponse() {
+    public static Response noContentResponse() {
         return Response.noContent().build();
     }
 

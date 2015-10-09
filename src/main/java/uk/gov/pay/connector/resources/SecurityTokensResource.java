@@ -11,6 +11,7 @@ import javax.ws.rs.core.Response;
 import java.util.Map;
 
 import static javax.ws.rs.core.MediaType.APPLICATION_JSON;
+import static uk.gov.pay.connector.util.ResponseUtil.*;
 
 @Path("/")
 public class SecurityTokensResource {
@@ -35,7 +36,7 @@ public class SecurityTokensResource {
                     Map<Object, Object> tokenResource = ImmutableMap.builder().put("chargeId", chargeId).build();
                     return Response.ok().entity(tokenResource).build();
                 }).orElseGet(() ->
-                        ResponseUtil.notFoundResponse(logger, "Token has expired!"));
+                        notFoundResponse(logger, "Token has expired!"));
     }
 
     @DELETE
@@ -44,6 +45,6 @@ public class SecurityTokensResource {
         logger.debug("delete({})", chargeTokenId);
         tokenDao.deleteByTokenId(chargeTokenId);
 
-        return Response.noContent().build();
+        return noContentResponse();
     }
 }
