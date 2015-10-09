@@ -27,6 +27,9 @@ smartpay:
   url: https://pal-test.barclaycardsmartpay.com/pal/servlet/soap/Payment
   username: ${GDS_CONNECTOR_SMARTPAY_USER}
   password: ${GDS_CONNECTOR_SMARTPAY_PASSWORD}
+  notification:
+    username: not-contract-tested
+    password: not-contract-tested
 
 database:
   driverClass: org.postgresql.Driver

@@ -11,15 +11,15 @@ public class ConnectorConfiguration extends Configuration {
 
     @Valid
     @NotNull
-    private GatewayCredentialsConfig worldpayConfig = new GatewayCredentialsConfig();
+    private GatewayCredentialsConfig worldpayConfig;
 
     @Valid
     @NotNull
-    private GatewayCredentialsConfig smartpayConfig = new GatewayCredentialsConfig();
+    private SmartpayCredentialsConfig smartpayConfig;
 
     @Valid
     @NotNull
-    private DataSourceFactory dataSourceFactory = new DataSourceFactory();
+    private DataSourceFactory dataSourceFactory;
 
     @Valid
     @NotNull
@@ -40,7 +40,7 @@ public class ConnectorConfiguration extends Configuration {
     }
 
     @JsonProperty("smartpay")
-    public GatewayCredentialsConfig getSmartpayConfig() {
+    public SmartpayCredentialsConfig getSmartpayConfig() {
         return smartpayConfig;
     }
 }

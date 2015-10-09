@@ -27,12 +27,11 @@ public class SmartpayNotificationResourceITest extends CardResourceITestBase {
         super(SMARTPAY_PROVIDER);
     }
 
-
     @Test
     public void shouldHandleASmartpayNotification() throws Exception {
 
         String transactionId = UUID.randomUUID().toString();
-        String chargeId = createNewChargeWith(AUTHORISATION_SUCCESS, transactionId);
+        createNewChargeWith(AUTHORISATION_SUCCESS, transactionId);
 
         String response = notifyCaptureToConnector(transactionId)
                 .then()
@@ -40,13 +39,27 @@ public class SmartpayNotificationResourceITest extends CardResourceITestBase {
                 .extract().body().asString();
 
         assertThat(response, is(RESPONSE_EXPECTED_BY_SMARTPAY));
-
-//        assertFrontendChargeStatusIs(chargeId, "CAPTURED");
     }
+
+    @Test
+    public void shouldIgnoreASmartpayNotificationWithoutAuth() throws Exception {
+        String transactionId = UUID.randomUUID().toString();
+        createNewChargeWith(AUTHORISATION_SUCCESS, transactionId);
+
+        given()
+                .port(app.getLocalPort())
+                .body(notificationPayloadForTransaction(transactionId))
+                .contentType(APPLICATION_JSON)
+                .post(NOTIFICATION_PATH)
+                .then()
+                .statusCode(401);
+    }
+
 
     private Response notifyCaptureToConnector(String transactionId) throws IOException {
         return given()
                 .port(app.getLocalPort())
+                .auth().basic("smartpay_test_username", "smartpay_test_password")
                 .body(notificationPayloadForTransaction(transactionId))
                 .contentType(APPLICATION_JSON)
                 .post(NOTIFICATION_PATH);

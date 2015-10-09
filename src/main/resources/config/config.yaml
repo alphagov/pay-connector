@@ -27,6 +27,9 @@ smartpay:
   url: ${GDS_CONNECTOR_SMARTPAY_URL}
   username: ${GDS_CONNECTOR_SMARTPAY_USER}
   password: ${GDS_CONNECTOR_SMARTPAY_PASSWORD}
+  notification:
+    username: ${GDS_CONNECTOR_SMARTPAY_NOTIFICATION_USERNAME}
+    password: ${GDS_CONNECTOR_SMARTPAY_NOTIFICATION_PASSWORD}
 
 database:
   driverClass: org.postgresql.Driver

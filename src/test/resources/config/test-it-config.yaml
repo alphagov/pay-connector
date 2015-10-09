@@ -27,6 +27,9 @@ smartpay:
   url: http://localhost:10106/pal/servlet/soap/Payment
   username: theUsername
   password: thePassword
+  notification:
+    username: smartpay_test_username
+    password: smartpay_test_password
 
 database:
   driverClass: org.postgresql.Driver

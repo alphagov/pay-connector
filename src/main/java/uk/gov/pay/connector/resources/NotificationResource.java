@@ -1,20 +1,15 @@
 package uk.gov.pay.connector.resources;
 
-import com.fasterxml.jackson.core.JsonParseException;
-import com.fasterxml.jackson.databind.ObjectMapper;
+import io.dropwizard.auth.Auth;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import uk.gov.pay.connector.service.StatusInquiryService;
-import uk.gov.pay.connector.service.smartpay.SmartpayNotification;
-import uk.gov.pay.connector.service.smartpay.SmartpayNotificationList;
 
 import javax.ws.rs.Consumes;
 import javax.ws.rs.POST;
 import javax.ws.rs.Path;
 import javax.ws.rs.core.Response;
-
 import java.io.IOException;
-import java.util.List;
 
 import static javax.ws.rs.core.MediaType.APPLICATION_JSON;
 import static javax.ws.rs.core.MediaType.TEXT_XML;
@@ -34,7 +29,7 @@ public class NotificationResource {
     @POST
     @Consumes(APPLICATION_JSON)
     @Path("v1/api/notifications/smartpay")
-    public Response handleSmartpayNotification(String notification) throws IOException {
+    public Response handleSmartpayNotification(@Auth String username, String notification) throws IOException {
 
         logger.info("Received notification from smartpay: " + notification);
 
