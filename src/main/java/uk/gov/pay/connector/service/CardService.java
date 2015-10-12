@@ -154,7 +154,7 @@ public class CardService {
     }
 
 
-    private String formattedError(String messageTemplate, String... params) {
+    private String formattedError(String messageTemplate, Object... params) {
         return format(messageTemplate, params);
     }
 }

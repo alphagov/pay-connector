@@ -1,6 +1,5 @@
 package uk.gov.pay.connector.it.contract;
 
-import org.eclipse.jetty.http.HttpStatus;
 import org.mockserver.client.server.ForwardChainExpectation;
 import org.mockserver.client.server.MockServerClient;
 import org.mockserver.model.HttpResponse;
@@ -9,9 +8,7 @@ import static java.lang.String.format;
 import static javax.ws.rs.HttpMethod.POST;
 import static javax.ws.rs.core.HttpHeaders.CONTENT_TYPE;
 import static javax.ws.rs.core.MediaType.TEXT_XML;
-import static org.eclipse.jetty.http.HttpStatus.MAX_CODE;
 import static org.eclipse.jetty.http.HttpStatus.OK_200;
-import static org.eclipse.jetty.http.HttpStatus.PROCESSING_102;
 import static org.mockserver.model.HttpRequest.request;
 import static org.mockserver.model.HttpResponse.response;
 import static org.mockserver.model.XPathBody.xpath;
@@ -33,18 +30,18 @@ public class SmartpayMockClient {
             "    </ns0:Body>\n" +
             "</ns0:Envelope>";
 
-    public SmartpayMockClient(int port) {
+    public static int UNKNOWN_STATUS_CODE = 3457;
+
+    private final String transactionId;
+
+    public SmartpayMockClient(int port, String transactionId) {
+        this.transactionId = transactionId;
         this.mockClient = new MockServerClient("localhost", port);
     }
 
-    public void respondSuccess_WhenCapture(String transactionId) {
+    public void respondWithStatusCodeAndPayloadWhenCapture(int statusCode, String payload) {
         whenCapture(transactionId)
-                .respond(withStatusAndBody(OK_200, CAPTURE_SUCCESS_PAYLOAD));
-    }
-
-    public void respondWithUnknownStatusCode_WhenCapture(String transactionId) {
-        whenCapture(transactionId)
-                .respond(withStatusAndBody(PROCESSING_102, CAPTURE_SUCCESS_PAYLOAD));
+                .respond(withStatusAndBody(statusCode, payload));
     }
 
     public void respondWithMalformedBody_WhenCapture(String transactionId) {

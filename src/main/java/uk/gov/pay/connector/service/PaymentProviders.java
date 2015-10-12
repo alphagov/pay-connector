@@ -1,16 +1,21 @@
 package uk.gov.pay.connector.service;
 
+import org.glassfish.jersey.apache.connector.ApacheConnectorProvider;
+import org.glassfish.jersey.client.ClientConfig;
+import org.glassfish.jersey.client.spi.ConnectorProvider;
 import uk.gov.pay.connector.app.ConnectorConfiguration;
 import uk.gov.pay.connector.app.GatewayCredentialsConfig;
 import uk.gov.pay.connector.service.sandbox.SandboxPaymentProvider;
 import uk.gov.pay.connector.service.smartpay.SmartpayPaymentProvider;
 import uk.gov.pay.connector.service.worldpay.WorldpayPaymentProvider;
 
+import javax.ws.rs.client.Client;
 import javax.ws.rs.client.ClientBuilder;
 
 import static java.lang.String.format;
 import static uk.gov.pay.connector.model.domain.GatewayAccount.gatewayAccountFor;
 import static uk.gov.pay.connector.resources.PaymentProviderValidator.*;
+import static uk.gov.pay.connector.service.GatewayClient.createGatewayClient;
 
 public class PaymentProviders {
     private final PaymentProvider worldpayProvider;
@@ -25,13 +30,13 @@ public class PaymentProviders {
 
     private PaymentProvider createWorldpayProvider(GatewayCredentialsConfig config) {
         return new WorldpayPaymentProvider(
-                new GatewayClient(ClientBuilder.newClient(), config.getUrl()),
+                createGatewayClient(config.getUrl()),
                 gatewayAccountFor(config.getUsername(), config.getPassword()));
     }
 
     private PaymentProvider createSmartPayProvider(GatewayCredentialsConfig config) {
         return new SmartpayPaymentProvider(
-                new GatewayClient(ClientBuilder.newClient(), config.getUrl()),
+                createGatewayClient(config.getUrl()),
                 gatewayAccountFor(config.getUsername(), config.getPassword())
         );
     }

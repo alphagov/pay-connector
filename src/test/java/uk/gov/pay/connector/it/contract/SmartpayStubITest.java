@@ -14,17 +14,19 @@ import uk.gov.pay.connector.service.smartpay.SmartpayPaymentProvider;
 import uk.gov.pay.connector.util.DatabaseTestHelper;
 import uk.gov.pay.connector.util.DropwizardAppWithPostgresRule;
 
-import javax.ws.rs.client.ClientBuilder;
-
 import static com.jayway.restassured.RestAssured.given;
 import static com.jayway.restassured.http.ContentType.JSON;
 import static io.dropwizard.testing.ConfigOverride.config;
+import static org.eclipse.jetty.http.HttpStatus.OK_200;
 import static org.hamcrest.Matchers.is;
 import static org.junit.Assert.*;
+import static uk.gov.pay.connector.it.contract.SmartpayMockClient.CAPTURE_SUCCESS_PAYLOAD;
+import static uk.gov.pay.connector.it.contract.SmartpayMockClient.UNKNOWN_STATUS_CODE;
 import static uk.gov.pay.connector.model.domain.ChargeStatus.*;
 import static uk.gov.pay.connector.model.domain.GatewayAccount.gatewayAccountFor;
 import static uk.gov.pay.connector.resources.CardResource.CAPTURE_FRONTEND_RESOURCE_PATH;
 import static uk.gov.pay.connector.resources.PaymentProviderValidator.SMARTPAY_PROVIDER;
+import static uk.gov.pay.connector.service.GatewayClient.createGatewayClient;
 
 public class SmartpayStubITest {
     private static final String ACCOUNT_ID = "12341234";
@@ -45,7 +47,7 @@ public class SmartpayStubITest {
 
     @Before
     public void setup() {
-        smartpayMock = new SmartpayMockClient(smartpayMockRule.getHttpPort());
+        smartpayMock = new SmartpayMockClient(smartpayMockRule.getHttpPort(), TRANSACTION_ID);
         config = app.getConf().getSmartpayConfig();
         db = app.getDatabaseTestHelper();
     }
@@ -54,7 +56,10 @@ public class SmartpayStubITest {
     public void failedCapture_UnexpectedResponseCodeFromGateway() throws Exception {
         setupForCapture();
 
-        smartpayMock.respondWithUnknownStatusCode_WhenCapture(TRANSACTION_ID);
+        smartpayMock.respondWithStatusCodeAndPayloadWhenCapture(
+                UNKNOWN_STATUS_CODE,
+                CAPTURE_SUCCESS_PAYLOAD
+        );
 
         String errorMessage = "Unexpected Response Code From Gateway";
         String captureUrl = CAPTURE_FRONTEND_RESOURCE_PATH.replace("{chargeId}", CHARGE_ID);
@@ -68,7 +73,6 @@ public class SmartpayStubITest {
                 .statusCode(500)
                 .contentType(JSON)
                 .body("message", is(errorMessage));
-        ;
 
         assertThat(db.getChargeStatus(CHARGE_ID), is(CAPTURE_UNKNOWN.getValue()));
     }
@@ -91,7 +95,6 @@ public class SmartpayStubITest {
                 .statusCode(500)
                 .contentType(JSON)
                 .body("message", is(errorMessage));
-        ;
 
         assertThat(db.getChargeStatus(CHARGE_ID), is(CAPTURE_UNKNOWN.getValue()));
     }
@@ -100,7 +103,10 @@ public class SmartpayStubITest {
     public void successCapture_ResourceTest() throws Exception {
         setupForCapture();
 
-        smartpayMock.respondSuccess_WhenCapture(TRANSACTION_ID);
+        smartpayMock.respondWithStatusCodeAndPayloadWhenCapture(
+                OK_200,
+                CAPTURE_SUCCESS_PAYLOAD
+        );
 
         String captureUrl = CAPTURE_FRONTEND_RESOURCE_PATH.replace("{chargeId}", CHARGE_ID);
 
@@ -120,7 +126,10 @@ public class SmartpayStubITest {
     public void smartpaySucessfulCapture() throws Exception {
         String amount = "5000000";
 
-        smartpayMock.respondSuccess_WhenCapture(TRANSACTION_ID);
+        smartpayMock.respondWithStatusCodeAndPayloadWhenCapture(
+                OK_200,
+                CAPTURE_SUCCESS_PAYLOAD
+        );
 
         PaymentProvider paymentProvider = getSmartpayPaymentProvider(config.getUsername(), config.getPassword());
 
@@ -138,7 +147,7 @@ public class SmartpayStubITest {
 
     private PaymentProvider getSmartpayPaymentProvider(String username, String password) throws Exception {
         String smartpayUrl = config.getUrl();
-        GatewayClient gatewayClient = new GatewayClient(ClientBuilder.newClient(), smartpayUrl);
+        GatewayClient gatewayClient = createGatewayClient(smartpayUrl);
         GatewayAccount gatewayAccount = gatewayAccountFor(username, password);
         return new SmartpayPaymentProvider(gatewayClient, gatewayAccount);
     }

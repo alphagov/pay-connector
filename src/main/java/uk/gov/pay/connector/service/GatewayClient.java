@@ -1,6 +1,9 @@
 package uk.gov.pay.connector.service;
 
 import fj.data.Either;
+import org.glassfish.jersey.apache.connector.ApacheConnectorProvider;
+import org.glassfish.jersey.client.ClientConfig;
+import org.glassfish.jersey.client.spi.ConnectorProvider;
 import org.glassfish.jersey.internal.util.Base64;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -9,6 +12,7 @@ import uk.gov.pay.connector.model.domain.GatewayAccount;
 import uk.gov.pay.connector.util.XMLUnmarshaller;
 
 import javax.ws.rs.client.Client;
+import javax.ws.rs.client.ClientBuilder;
 import javax.ws.rs.client.Entity;
 import javax.ws.rs.core.Response;
 import javax.xml.bind.JAXBException;
@@ -26,9 +30,24 @@ public class GatewayClient {
     private final Client client;
     private final String gatewayUrl;
 
-    public GatewayClient(Client client, String gatewayUrl) {
+    private GatewayClient(Client client, String gatewayUrl) {
         this.gatewayUrl = gatewayUrl;
         this.client = client;
+    }
+
+    public static GatewayClient createGatewayClient(String gatewayUrl) {
+        ClientConfig clientConfig = new ClientConfig();
+        ConnectorProvider provider = new ApacheConnectorProvider();
+        clientConfig.connectorProvider(provider);
+        Client client = ClientBuilder
+                .newBuilder()
+                .withConfig(clientConfig)
+                .build();
+        return createGatewayClient(client, gatewayUrl);
+    }
+
+    public static GatewayClient createGatewayClient(Client client, String gatewayUrl) {
+        return new GatewayClient(client, gatewayUrl);
     }
 
     public Response postXMLRequestFor(GatewayAccount account, String request) {

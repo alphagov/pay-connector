@@ -26,6 +26,7 @@ import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
 import static uk.gov.pay.connector.model.domain.Address.anAddress;
 import static uk.gov.pay.connector.model.domain.GatewayAccount.gatewayAccountFor;
+import static uk.gov.pay.connector.service.GatewayClient.createGatewayClient;
 import static uk.gov.pay.connector.util.CardUtils.buildCardDetails;
 
 public class SmartpayPaymentProviderTest {
@@ -38,7 +39,10 @@ public class SmartpayPaymentProviderTest {
     public void setup() throws Exception {
         client = mock(Client.class);
         mockSmartpaySuccessfulOrderSubmitResponse();
-        provider = new SmartpayPaymentProvider(new GatewayClient(client, "http://smartpay.url"), gatewayAccountFor("theUsername", "thePassword"));
+        provider = new SmartpayPaymentProvider(
+                createGatewayClient(client, "http://smartpay.url"),
+                gatewayAccountFor("theUsername", "thePassword")
+        );
     }
 
     @Test

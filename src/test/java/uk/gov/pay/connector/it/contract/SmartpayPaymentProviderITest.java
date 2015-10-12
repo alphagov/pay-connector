@@ -16,10 +16,9 @@ import uk.gov.pay.connector.service.PaymentProvider;
 import uk.gov.pay.connector.service.smartpay.SmartpayPaymentProvider;
 import uk.gov.pay.connector.util.DropwizardAppWithPostgresRule;
 
-import javax.ws.rs.client.ClientBuilder;
-
 import static org.junit.Assert.*;
 import static uk.gov.pay.connector.model.domain.GatewayAccount.gatewayAccountFor;
+import static uk.gov.pay.connector.service.GatewayClient.createGatewayClient;
 import static uk.gov.pay.connector.util.CardUtils.buildCardDetails;
 
 public class SmartpayPaymentProviderITest {
@@ -92,7 +91,7 @@ public class SmartpayPaymentProviderITest {
     }
 
     private PaymentProvider getSmartpayPaymentProvider(String username, String password) throws Exception {
-        GatewayClient gatewayClient = new GatewayClient(ClientBuilder.newClient(), config.getUrl());
+        GatewayClient gatewayClient = createGatewayClient(config.getUrl());
         GatewayAccount gatewayAccount = gatewayAccountFor(username, password);
         return new SmartpayPaymentProvider(gatewayClient, gatewayAccount);
     }
