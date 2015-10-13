@@ -1,5 +1,6 @@
 package uk.gov.pay.connector.unit.smartpay;
 
+import com.fasterxml.jackson.databind.ObjectMapper;
 import org.junit.Before;
 import org.junit.Test;
 import uk.gov.pay.connector.model.AuthorisationRequest;
@@ -35,13 +36,13 @@ public class SmartpayPaymentProviderTest {
     private Client client;
     private SmartpayPaymentProvider provider;
 
-    private String pcpReference = "12345678";
+    private String pspReference = "12345678";
 
     @Before
     public void setup() throws Exception {
         client = mock(Client.class);
         mockSmartpaySuccessfulOrderSubmitResponse();
-        provider = new SmartpayPaymentProvider(new GatewayClient(client, "http://smartpay.url"), gatewayAccountFor("theUsername", "thePassword"));
+        provider = new SmartpayPaymentProvider(new GatewayClient(client, "http://smartpay.url"), gatewayAccountFor("theUsername", "thePassword"), new ObjectMapper());
     }
 
     @Test
@@ -102,7 +103,7 @@ public class SmartpayPaymentProviderTest {
                 "                <issuerUrl xmlns=\"http://payment.services.adyen.com\" xsi:nil=\"true\"/>\n" +
                 "                <md xmlns=\"http://payment.services.adyen.com\" xsi:nil=\"true\"/>\n" +
                 "                <paRequest xmlns=\"http://payment.services.adyen.com\" xsi:nil=\"true\"/>\n" +
-                "                <pspReference xmlns=\"http://payment.services.adyen.com\">" + pcpReference + "</pspReference>\n" +
+                "                <pspReference xmlns=\"http://payment.services.adyen.com\">" + pspReference + "</pspReference>\n" +
                 "                <refusalReason xmlns=\"http://payment.services.adyen.com\" xsi:nil=\"true\"/>\n" +
                 "                <resultCode xmlns=\"http://payment.services.adyen.com\">Authorised</resultCode>\n" +
                 "            </ns1:paymentResult>\n" +

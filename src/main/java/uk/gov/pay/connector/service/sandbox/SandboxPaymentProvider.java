@@ -41,7 +41,7 @@ public class SandboxPaymentProvider implements PaymentProvider {
     }
 
     @Override
-    public StatusResponse enquire(ChargeStatusRequest request) {
-        return null;
+    public StatusUpdates newStatusFromNotification(String notification) {
+        return StatusUpdates.noUpdate("✓");
     }
 }

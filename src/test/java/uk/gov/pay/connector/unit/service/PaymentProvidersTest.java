@@ -1,5 +1,6 @@
 package uk.gov.pay.connector.unit.service;
 
+import com.fasterxml.jackson.databind.ObjectMapper;
 import org.junit.Before;
 import org.junit.Rule;
 import org.junit.Test;
@@ -32,7 +33,7 @@ public class PaymentProvidersTest {
         when(config.getSmartpayConfig()).thenReturn(mock(SmartpayCredentialsConfig.class));
         when(config.getWorldpayConfig()).thenReturn(mock(GatewayCredentialsConfig.class));
 
-        providers = new PaymentProviders(config);
+        providers = new PaymentProviders(config, new ObjectMapper());
     }
 
     @Test

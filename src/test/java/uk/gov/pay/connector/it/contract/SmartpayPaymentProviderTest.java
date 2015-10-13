@@ -1,5 +1,6 @@
 package uk.gov.pay.connector.it.contract;
 
+import com.fasterxml.jackson.databind.ObjectMapper;
 import org.junit.Assume;
 import org.junit.Before;
 import org.junit.Test;
@@ -100,6 +101,6 @@ public class SmartpayPaymentProviderTest {
     private PaymentProvider getSmartpayPaymentProvider(String username, String password) throws Exception {
         GatewayClient gatewayClient = new GatewayClient(ClientBuilder.newClient(), url);
         GatewayAccount gatewayAccount = gatewayAccountFor(username, password);
-        return new SmartpayPaymentProvider(gatewayClient, gatewayAccount);
+        return new SmartpayPaymentProvider(gatewayClient, gatewayAccount, new ObjectMapper());
     }
 }

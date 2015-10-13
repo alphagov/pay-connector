@@ -1,7 +1,9 @@
 package uk.gov.pay.connector.service;
 
+import com.fasterxml.jackson.databind.ObjectMapper;
 import uk.gov.pay.connector.app.ConnectorConfiguration;
 import uk.gov.pay.connector.app.GatewayCredentialsConfig;
+import uk.gov.pay.connector.dao.ChargeDao;
 import uk.gov.pay.connector.service.sandbox.SandboxPaymentProvider;
 import uk.gov.pay.connector.service.smartpay.SmartpayPaymentProvider;
 import uk.gov.pay.connector.service.worldpay.WorldpayPaymentProvider;
@@ -17,10 +19,10 @@ public class PaymentProviders {
     private final PaymentProvider smartpayProvider;
     private final PaymentProvider sandboxProvider;
 
-    public PaymentProviders(ConnectorConfiguration config) {
-        worldpayProvider = createWorldpayProvider(config.getWorldpayConfig());
-        smartpayProvider = createSmartPayProvider(config.getSmartpayConfig());
-        sandboxProvider = new SandboxPaymentProvider();
+    public PaymentProviders(ConnectorConfiguration config, ObjectMapper objectMapper) {
+        this.worldpayProvider = createWorldpayProvider(config.getWorldpayConfig());
+        this.smartpayProvider = createSmartPayProvider(config.getSmartpayConfig(), objectMapper);
+        this.sandboxProvider = new SandboxPaymentProvider();
     }
 
     private PaymentProvider createWorldpayProvider(GatewayCredentialsConfig config) {
@@ -29,10 +31,11 @@ public class PaymentProviders {
                 gatewayAccountFor(config.getUsername(), config.getPassword()));
     }
 
-    private PaymentProvider createSmartPayProvider(GatewayCredentialsConfig config) {
+    private PaymentProvider createSmartPayProvider(GatewayCredentialsConfig config, ObjectMapper objectMapper) {
         return new SmartpayPaymentProvider(
                 new GatewayClient(ClientBuilder.newClient(), config.getUrl()),
-                gatewayAccountFor(config.getUsername(), config.getPassword())
+                gatewayAccountFor(config.getUsername(), config.getPassword()),
+                objectMapper
         );
     }
 

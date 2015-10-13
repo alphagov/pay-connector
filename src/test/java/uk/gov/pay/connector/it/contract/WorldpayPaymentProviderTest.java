@@ -1,13 +1,11 @@
 package uk.gov.pay.connector.it.contract;
 
+import com.google.common.io.Resources;
 import org.junit.Assume;
 import org.junit.Before;
 import org.junit.Test;
 import uk.gov.pay.connector.app.GatewayCredentialsConfig;
-import uk.gov.pay.connector.model.AuthorisationRequest;
-import uk.gov.pay.connector.model.AuthorisationResponse;
-import uk.gov.pay.connector.model.ChargeStatusRequest;
-import uk.gov.pay.connector.model.StatusResponse;
+import uk.gov.pay.connector.model.*;
 import uk.gov.pay.connector.model.domain.Card;
 import uk.gov.pay.connector.service.GatewayClient;
 import uk.gov.pay.connector.service.worldpay.WorldpayPaymentProvider;
@@ -16,11 +14,12 @@ import javax.ws.rs.client.ClientBuilder;
 
 import java.io.IOException;
 import java.net.URL;
+import java.nio.charset.Charset;
 
+import static com.google.common.io.Resources.getResource;
 import static org.hamcrest.core.Is.is;
-import static org.junit.Assert.assertFalse;
-import static org.junit.Assert.assertThat;
-import static org.junit.Assert.assertTrue;
+import static org.junit.Assert.*;
+import static uk.gov.pay.connector.model.domain.ChargeStatus.CAPTURED;
 import static uk.gov.pay.connector.model.domain.GatewayAccount.gatewayAccountFor;
 import static uk.gov.pay.connector.util.CardUtils.aValidCard;
 import static uk.gov.pay.connector.util.SystemUtils.envOrThrow;
@@ -53,7 +52,7 @@ public class WorldpayPaymentProviderTest {
     }
 
     @Test
-    public void shouldBeAbleToSendOrderInquiryRequest() throws Exception {
+    public void shouldBeAbleToSendOrderInquiryRequestWhenStatusNotificationComesIn() throws Exception {
         GatewayCredentialsConfig config = getWorldpayConfig();
         WorldpayPaymentProvider connector = new WorldpayPaymentProvider(
                 new GatewayClient(
@@ -62,10 +61,20 @@ public class WorldpayPaymentProviderTest {
                 ),
                 gatewayAccountFor(config.getUsername(), config.getPassword())
         );
-        ChargeStatusRequest request = getChargeStatusRequest();
-        StatusResponse statusResponse = connector.enquire(request);
 
-        assertThat(statusResponse.getStatus(), is("CAPTURED"));
+        String transactionId = "c15b9283-5205-45e0-8019-883c3319e838";
+        StatusUpdates statusResponse = connector.newStatusFromNotification(notificationPayloadForTransaction(transactionId));
+
+        try {
+            statusResponse.forEachStatusUpdate((id, newStatus) -> {
+                assertThat(transactionId, is(transactionId));
+                assertThat(newStatus, is(CAPTURED));
+                throw new TestPassedException();
+            });
+            fail("Expected a status update.");
+        } catch (TestPassedException e) {
+            // Yay!
+        }
     }
 
     @Test
@@ -114,5 +123,13 @@ public class WorldpayPaymentProviderTest {
             return envOrThrow("GDS_CONNECTOR_WORLDPAY_PASSWORD");
         }
     };
+
+    private String notificationPayloadForTransaction(String transactionId) throws IOException {
+        URL resource = getResource("templates/worldpay/notification.xml");
+        return Resources.toString(resource, Charset.defaultCharset()).replace("{{transactionId}}", transactionId);
+    }
+
+
+    private static final class TestPassedException extends RuntimeException {}
 
 }

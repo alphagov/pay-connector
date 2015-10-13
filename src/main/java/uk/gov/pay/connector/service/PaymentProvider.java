@@ -10,5 +10,5 @@ public interface PaymentProvider {
 
     CancelResponse cancel(CancelRequest request);
 
-    StatusResponse enquire(ChargeStatusRequest request);
+    StatusUpdates newStatusFromNotification(String notification);
 }

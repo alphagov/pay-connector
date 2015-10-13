@@ -1,5 +1,6 @@
 package uk.gov.pay.connector.service.worldpay;
 
+import com.google.common.collect.ImmutableMap;
 import uk.gov.pay.connector.model.domain.ChargeStatus;
 
 import java.util.HashMap;
@@ -9,15 +10,13 @@ import static uk.gov.pay.connector.model.domain.ChargeStatus.*;
 
 public class WorldpayStatusesMapper {
 
-    //TODO: immutable
-    private static final Map<String, ChargeStatus> worldpayStatuses = new HashMap<String, ChargeStatus>() {{
-                put("SENT_FOR_AUTHORISATION", AUTHORISATION_SUBMITTED);
-                put("AUTHORISED", AUTHORISATION_SUCCESS);
-                put("CANCELLED", SYSTEM_CANCELLED); //???
-                put("CAPTURED", CAPTURED);
-                put("REFUSED", AUTHORISATION_REJECTED);
-                put("REFUSED_BY_BANK", AUTHORISATION_REJECTED);
-            }};
+    private static final Map<String, ChargeStatus> worldpayStatuses = ImmutableMap.<String, ChargeStatus>builder()
+                .put("SENT_FOR_AUTHORISATION", AUTHORISATION_SUBMITTED)
+                .put("AUTHORISED", AUTHORISATION_SUCCESS)
+                .put("CANCELLED", SYSTEM_CANCELLED)
+                .put("CAPTURED", CAPTURED)
+                .put("REFUSED", AUTHORISATION_REJECTED)
+                .put("REFUSED_BY_BANK", AUTHORISATION_REJECTED).build();
 
 //    "SIGNED_FORM_RECEIVED"
 //    "CAPTURED_FAILED"

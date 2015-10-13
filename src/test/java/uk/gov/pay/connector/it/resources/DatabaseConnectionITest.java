@@ -32,6 +32,7 @@ public class DatabaseConnectionITest {
         given().port(app.getAdminPort())
                 .get("/healthcheck")
                 .then()
+                .statusCode(200)
                 .body("database.healthy", is(true));
     }
 
@@ -41,6 +42,7 @@ public class DatabaseConnectionITest {
         given().port(app.getAdminPort())
                 .get("/healthcheck")
                 .then()
+                .statusCode(500)
                 .body("database.healthy", is(false));
     }
 }

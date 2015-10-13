@@ -47,7 +47,6 @@ public class ChargeDao {
         return Optional.ofNullable(data);
     }
 
-    //TODO: add merchantId check!
     public void updateStatusWithGatewayInfo(String gatewayTransactionId, ChargeStatus newStatus) {
         Integer numberOfUpdates = jdbi.withHandle(handle ->
                         handle

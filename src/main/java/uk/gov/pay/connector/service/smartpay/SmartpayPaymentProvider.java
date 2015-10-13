@@ -1,13 +1,20 @@
 package uk.gov.pay.connector.service.smartpay;
 
+import com.fasterxml.jackson.databind.ObjectMapper;
+import javafx.util.Pair;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import uk.gov.pay.connector.model.*;
+import uk.gov.pay.connector.model.domain.ChargeStatus;
 import uk.gov.pay.connector.model.domain.GatewayAccount;
 import uk.gov.pay.connector.service.GatewayClient;
 import uk.gov.pay.connector.service.PaymentProvider;
 
 import javax.ws.rs.core.Response;
+import java.io.IOException;
+import java.util.Collections;
+import java.util.List;
+import java.util.stream.Collectors;
 
 import static java.lang.String.format;
 import static javax.ws.rs.core.Response.Status.OK;
@@ -25,14 +32,17 @@ import static uk.gov.pay.connector.service.smartpay.SmartpayOrderCancelRequestBu
 public class SmartpayPaymentProvider implements PaymentProvider {
 
     private static final String MERCHANT_CODE = "MerchantAccount";
+    public static final String ACCEPTED = "[accepted]";
     private final Logger logger = LoggerFactory.getLogger(SmartpayPaymentProvider.class);
 
     private final GatewayClient client;
     private final GatewayAccount gatewayAccount;
+    private ObjectMapper objectMapper;
 
-    public SmartpayPaymentProvider(GatewayClient client, GatewayAccount gatewayAccount) {
+    public SmartpayPaymentProvider(GatewayClient client, GatewayAccount gatewayAccount, ObjectMapper objectMapper) {
         this.client = client;
         this.gatewayAccount = gatewayAccount;
+        this.objectMapper = objectMapper;
     }
 
     @Override
@@ -55,8 +65,36 @@ public class SmartpayPaymentProvider implements PaymentProvider {
     }
 
     @Override
-    public StatusResponse enquire(ChargeStatusRequest request) {
-        throw new UnsupportedOperationException("Smartpay does not have an enquiry API.");
+    public StatusUpdates newStatusFromNotification(String notification) {
+        try {
+            List<SmartpayNotification> notifications = objectMapper.readValue(notification, SmartpayNotificationList.class).getNotifications();
+            Collections.sort(notifications);
+
+            List<Pair<String, ChargeStatus>> updates = notifications.stream()
+                    .filter(this::definedStatuses)
+                    .map(this::toInternalStatus)
+                    .collect(Collectors.toList());
+
+            return StatusUpdates.withUpdate(ACCEPTED, updates);
+        } catch (IllegalArgumentException | IOException e) {
+            logger.error(String.format("Could not deserialise smartpay notification:\n %s", notification), e);
+        }
+        return StatusUpdates.noUpdate(ACCEPTED);
+    }
+
+    private boolean definedStatuses(SmartpayNotification notification) {
+        String smartpayStatus = notification.getEventCode();
+        ChargeStatus newChargeStatus = SmartpayStatusMapper.mapToChargeStatus(smartpayStatus, notification.isSuccessFull());
+        if (newChargeStatus == null) {
+            logger.error(format("Could not map Smartpay status %s to our internal status.", notification.getEventCode()));
+        }
+        return newChargeStatus != null;
+    }
+
+    private Pair<String, ChargeStatus> toInternalStatus(SmartpayNotification notification) {
+        String smartpayStatus = notification.getEventCode();
+        ChargeStatus newChargeStatus = SmartpayStatusMapper.mapToChargeStatus(smartpayStatus, notification.isSuccessFull());
+        return new Pair<>(notification.getTransactionId(), newChargeStatus);
     }
 
     @Override

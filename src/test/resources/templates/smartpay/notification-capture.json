@@ -10,8 +10,8 @@
         "eventCode": "CAPTURE",
         "eventDate": "2015-10-08T13:48:30+02:00",
         "merchantAccountCode": "MerchantAccount",
-        "merchantReference": "{{transactionId}}",
-        "originalReference": "9614443049106310",
+        "merchantReference": "{{transactionId}}-merchant",
+        "originalReference": "{{transactionId}}",
         "paymentMethod": "visa",
         "pspReference": "8614443049106309",
         "success": "true"

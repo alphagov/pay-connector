@@ -1,21 +1,24 @@
 package uk.gov.pay.connector.service.worldpay;
 
 
+import com.google.common.collect.ImmutableList;
+import javafx.util.Pair;
 import org.joda.time.DateTime;
 import org.joda.time.DateTimeZone;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import uk.gov.pay.connector.model.*;
+import uk.gov.pay.connector.model.domain.ChargeStatus;
 import uk.gov.pay.connector.model.domain.GatewayAccount;
 import uk.gov.pay.connector.service.GatewayClient;
 import uk.gov.pay.connector.service.PaymentProvider;
 
 import javax.ws.rs.core.Response;
+import javax.xml.bind.JAXBException;
 
 import static java.lang.String.format;
 import static java.util.UUID.randomUUID;
-import static javax.ws.rs.core.Response.Status.OK;
 import static uk.gov.pay.connector.model.AuthorisationResponse.*;
 import static uk.gov.pay.connector.model.CancelResponse.aSuccessfulCancelResponse;
 import static uk.gov.pay.connector.model.CancelResponse.errorCancelResponse;
@@ -26,8 +29,10 @@ import static uk.gov.pay.connector.service.OrderCaptureRequestBuilder.aWorldpayO
 import static uk.gov.pay.connector.service.OrderSubmitRequestBuilder.aWorldpayOrderSubmitRequest;
 import static uk.gov.pay.connector.service.worldpay.WorldpayOrderCancelRequestBuilder.aWorldpayOrderCancelRequest;
 import static uk.gov.pay.connector.service.worldpay.OrderInquiryRequestBuilder.anOrderInquiryRequest;
+import static uk.gov.pay.connector.util.XMLUnmarshaller.unmarshall;
 
 public class WorldpayPaymentProvider implements PaymentProvider {
+    public static final String OK = "[OK]";
     private final Logger logger = LoggerFactory.getLogger(WorldpayPaymentProvider.class);
 
     private final GatewayClient client;
@@ -44,7 +49,7 @@ public class WorldpayPaymentProvider implements PaymentProvider {
         String gatewayTransactionId = generateTransactionId();
 
         Response response = client.postXMLRequestFor(gatewayAccount, buildOrderSubmitFor(request, gatewayTransactionId));
-        return response.getStatus() == OK.getStatusCode() ?
+        return response.getStatus() == Response.Status.OK.getStatusCode() ?
                 mapToCardAuthorisationResponse(response, gatewayTransactionId) :
                 errorResponse(logger, response);
     }
@@ -52,24 +57,45 @@ public class WorldpayPaymentProvider implements PaymentProvider {
     @Override
     public CaptureResponse capture(CaptureRequest request) {
         Response response = client.postXMLRequestFor(gatewayAccount, buildOrderCaptureFor(request));
-        return response.getStatus() == OK.getStatusCode() ?
+        return response.getStatus() == Response.Status.OK.getStatusCode() ?
                 mapToCaptureResponse(response) :
                 handleCaptureError(response);
     }
 
     @Override
-    public StatusResponse enquire(ChargeStatusRequest request) {
+    public CancelResponse cancel(CancelRequest request) {
+        Response response = client.postXMLRequestFor(gatewayAccount, buildCancelOrderFor(request));
+        return response.getStatus() == Response.Status.OK.getStatusCode() ?
+                mapToCancelResponse(response) :
+                errorCancelResponse(logger, response);
+    }
+
+    @Override
+    public StatusUpdates newStatusFromNotification(String notification) {
+        try {
+            WorldpayNotification chargeNotification = unmarshall(notification, WorldpayNotification.class);
+            StatusResponse statusResponse = enquire(chargeNotification);
+
+            String worldpayStatus = statusResponse.getStatus();
+            ChargeStatus newChargeStatus = WorldpayStatusesMapper.mapToChargeStatus(worldpayStatus);
+            if (newChargeStatus == null && statusResponse.getStatus() != null) {
+                logger.error(format("Could not map worldpay status %s to our internal status.", worldpayStatus));
+                return StatusUpdates.noUpdate(OK);
+            } else {
+                Pair<String, ChargeStatus> update = new Pair<>(statusResponse.getTransactionId(), newChargeStatus);
+                return StatusUpdates.withUpdate(OK, ImmutableList.of(update));
+            }
+        } catch (JAXBException e) {
+            logger.error(format("Could not deserialise worldpay response %s", notification), e);
+            return StatusUpdates.noUpdate("");
+        }
+    }
+
+    private StatusResponse enquire(ChargeStatusRequest request) {
         Response response = client.postXMLRequestFor(gatewayAccount, buildOrderEnquiryFor(request));
         return mapToStatusResponse(response);
     }
 
-    @Override
-    public CancelResponse cancel(CancelRequest request) {
-        Response response = client.postXMLRequestFor(gatewayAccount, buildCancelOrderFor(request));
-        return response.getStatus() == OK.getStatusCode() ?
-                mapToCancelResponse(response) :
-                errorCancelResponse(logger, response);
-    }
 
     private String buildOrderCaptureFor(CaptureRequest request) {
         return aWorldpayOrderCaptureRequest()

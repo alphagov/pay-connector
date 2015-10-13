@@ -21,7 +21,6 @@ import uk.gov.pay.connector.healthcheck.Ping;
 import uk.gov.pay.connector.resources.*;
 import uk.gov.pay.connector.service.CardService;
 import uk.gov.pay.connector.service.PaymentProviders;
-import uk.gov.pay.connector.service.StatusInquiryService;
 import uk.gov.pay.connector.util.DbConnectionChecker;
 
 public class ConnectorApp extends Application<ConnectorConfiguration> {
@@ -63,12 +62,11 @@ public class ConnectorApp extends Application<ConnectorConfiguration> {
         ChargeDao chargeDao = new ChargeDao(jdbi);
         TokenDao tokenDao = new TokenDao(jdbi);
         GatewayAccountDao gatewayAccountDao = new GatewayAccountDao(jdbi);
-        PaymentProviders providers = new PaymentProviders(conf);
+        PaymentProviders providers = new PaymentProviders(conf, environment.getObjectMapper());
         CardService cardService = new CardService(gatewayAccountDao, chargeDao, providers);
-        StatusInquiryService inquiryService = new StatusInquiryService(gatewayAccountDao, chargeDao, providers);
 
         environment.jersey().register(new SecurityTokensResource(tokenDao));
-        environment.jersey().register(new NotificationResource(inquiryService));
+        environment.jersey().register(new NotificationResource(providers, chargeDao));
         environment.jersey().register(new ChargesApiResource(chargeDao, tokenDao, gatewayAccountDao, conf.getLinks()));
         environment.jersey().register(new ChargesFrontendResource(chargeDao));
         environment.jersey().register(new CardResource(cardService));
