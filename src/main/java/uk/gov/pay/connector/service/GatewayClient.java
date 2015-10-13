@@ -11,18 +11,23 @@ import uk.gov.pay.connector.model.GatewayError;
 import uk.gov.pay.connector.model.domain.GatewayAccount;
 import uk.gov.pay.connector.util.XMLUnmarshaller;
 
+import javax.ws.rs.ProcessingException;
 import javax.ws.rs.client.Client;
 import javax.ws.rs.client.ClientBuilder;
 import javax.ws.rs.client.Entity;
 import javax.ws.rs.core.Response;
 import javax.xml.bind.JAXBException;
 
+import java.net.UnknownHostException;
+
 import static fj.data.Either.left;
 import static fj.data.Either.right;
 import static java.lang.String.format;
 import static javax.ws.rs.core.HttpHeaders.AUTHORIZATION;
 import static javax.ws.rs.core.MediaType.APPLICATION_XML;
+import static uk.gov.pay.connector.model.GatewayError.baseGatewayError;
 import static uk.gov.pay.connector.model.GatewayError.malformedResponseReceivedFromGateway;
+import static uk.gov.pay.connector.model.GatewayError.unknownHostException;
 
 public class GatewayClient {
     private final Logger logger = LoggerFactory.getLogger(GatewayClient.class);
@@ -50,11 +55,21 @@ public class GatewayClient {
         return new GatewayClient(client, gatewayUrl);
     }
 
-    public Response postXMLRequestFor(GatewayAccount account, String request) {
-        return client.target(gatewayUrl)
-                .request(APPLICATION_XML)
-                .header(AUTHORIZATION, encode(account.getUsername(), account.getPassword()))
-                .post(Entity.xml(request));
+    public Either<GatewayError, Response> postXMLRequestFor(GatewayAccount account, String request) {
+        try {
+            return right(
+                    client.target(gatewayUrl)
+                            .request(APPLICATION_XML)
+                            .header(AUTHORIZATION, encode(account.getUsername(), account.getPassword()))
+                            .post(Entity.xml(request))
+            );
+        } catch (ProcessingException pe) {
+            if (pe.getCause() != null && pe.getCause() instanceof UnknownHostException) {
+                logger.error(format("DNS resolution error for gateway url=%s", gatewayUrl), pe);
+                return left(unknownHostException("Gateway Url DNS resolution error"));
+            }
+            return left(baseGatewayError(pe.getMessage()));
+        }
     }
 
     public <T> Either<GatewayError, T> unmarshallResponse(Response response, Class<T> clazz) {

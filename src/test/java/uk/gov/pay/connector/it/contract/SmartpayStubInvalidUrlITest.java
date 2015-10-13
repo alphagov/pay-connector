@@ -4,13 +4,6 @@ import org.junit.Before;
 import org.junit.Rule;
 import org.junit.Test;
 import org.mockserver.junit.MockServerRule;
-import uk.gov.pay.connector.app.GatewayCredentialsConfig;
-import uk.gov.pay.connector.model.CaptureRequest;
-import uk.gov.pay.connector.model.CaptureResponse;
-import uk.gov.pay.connector.model.domain.GatewayAccount;
-import uk.gov.pay.connector.service.GatewayClient;
-import uk.gov.pay.connector.service.PaymentProvider;
-import uk.gov.pay.connector.service.smartpay.SmartpayPaymentProvider;
 import uk.gov.pay.connector.util.DatabaseTestHelper;
 import uk.gov.pay.connector.util.DropwizardAppWithPostgresRule;
 
@@ -19,16 +12,14 @@ import static com.jayway.restassured.http.ContentType.JSON;
 import static io.dropwizard.testing.ConfigOverride.config;
 import static org.eclipse.jetty.http.HttpStatus.OK_200;
 import static org.hamcrest.Matchers.is;
-import static org.junit.Assert.*;
+import static org.junit.Assert.assertThat;
 import static uk.gov.pay.connector.it.contract.SmartpayMockClient.CAPTURE_SUCCESS_PAYLOAD;
 import static uk.gov.pay.connector.it.contract.SmartpayMockClient.UNKNOWN_STATUS_CODE;
 import static uk.gov.pay.connector.model.domain.ChargeStatus.*;
-import static uk.gov.pay.connector.model.domain.GatewayAccount.gatewayAccountFor;
 import static uk.gov.pay.connector.resources.CardResource.CAPTURE_FRONTEND_RESOURCE_PATH;
 import static uk.gov.pay.connector.resources.PaymentProviderValidator.SMARTPAY_PROVIDER;
-import static uk.gov.pay.connector.service.GatewayClient.createGatewayClient;
 
-public class SmartpayStubITest {
+public class SmartpayStubInvalidUrlITest {
     private static final String ACCOUNT_ID = "12341234";
     private static final String CHARGE_ID = "111";
     private static final String TRANSACTION_ID = "7914440428682669";
@@ -38,11 +29,10 @@ public class SmartpayStubITest {
 
     @Rule
     public DropwizardAppWithPostgresRule app = new DropwizardAppWithPostgresRule(
-            config("smartpay.url", "http://localhost:" + smartpayMockRule.getHttpPort())
+            config("smartpay.url", "http://gobbledygook.invalid.url")
     );
 
     private SmartpayMockClient smartpayMock;
-    private GatewayCredentialsConfig config;
     private DatabaseTestHelper db;
 
     @Before
@@ -52,7 +42,7 @@ public class SmartpayStubITest {
     }
 
     @Test
-    public void failedCapture_UnexpectedResponseCodeFromGateway() throws Exception {
+    public void failedCapture_InvalidConnectorUrl() throws Exception {
         setupForCapture();
 
         smartpayMock.respondWithStatusCodeAndPayloadWhenCapture(
@@ -60,7 +50,7 @@ public class SmartpayStubITest {
                 CAPTURE_SUCCESS_PAYLOAD
         );
 
-        String errorMessage = "Unexpected Response Code From Gateway";
+        String errorMessage = "Gateway Url DNS resolution error";
         String captureUrl = CAPTURE_FRONTEND_RESOURCE_PATH.replace("{chargeId}", CHARGE_ID);
 
         given()
@@ -74,51 +64,6 @@ public class SmartpayStubITest {
                 .body("message", is(errorMessage));
 
         assertThat(db.getChargeStatus(CHARGE_ID), is(CAPTURE_UNKNOWN.getValue()));
-    }
-
-    @Test
-    public void failedCapture_MalformedResponseFromGateway() throws Exception {
-        setupForCapture();
-
-        smartpayMock.respondWithMalformedBody_WhenCapture(TRANSACTION_ID);
-
-        String errorMessage = "Invalid Response Received From Gateway";
-        String captureUrl = CAPTURE_FRONTEND_RESOURCE_PATH.replace("{chargeId}", CHARGE_ID);
-
-        given()
-                .port(app.getLocalPort())
-                .contentType(JSON)
-                .when()
-                .post(captureUrl)
-                .then()
-                .statusCode(500)
-                .contentType(JSON)
-                .body("message", is(errorMessage));
-
-        assertThat(db.getChargeStatus(CHARGE_ID), is(CAPTURE_UNKNOWN.getValue()));
-    }
-
-    @Test
-    public void successCapture_ResourceTest() throws Exception {
-        setupForCapture();
-
-        smartpayMock.respondWithStatusCodeAndPayloadWhenCapture(
-                OK_200,
-                CAPTURE_SUCCESS_PAYLOAD
-        );
-
-        String captureUrl = CAPTURE_FRONTEND_RESOURCE_PATH.replace("{chargeId}", CHARGE_ID);
-
-        given()
-                .port(app.getLocalPort())
-                .contentType(JSON)
-                .when()
-                .post(captureUrl)
-                .then()
-                .statusCode(204)
-        ;
-
-        assertThat(db.getChargeStatus(CHARGE_ID), is(CAPTURE_SUBMITTED.getValue()));
     }
 
     private void setupForCapture() {

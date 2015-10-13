@@ -76,6 +76,7 @@ public class CardResource {
                     case UnexpectedStatusCodeFromGateway:
                         return serviceErrorResponse(logger, "Unexpected Response Code From Gateway");
                     case MalformedResponseReceivedFromGateway:
+                    case UnknownHostException:
                         return serviceErrorResponse(logger, error.getMessage());
                 }
                 return badRequestResponse(logger, error.getMessage());

@@ -39,29 +39,47 @@ public class WorldpayPaymentProvider implements PaymentProvider {
 
     @Override
     public AuthorisationResponse authorise(AuthorisationRequest request) {
-
         String gatewayTransactionId = generateTransactionId();
-
-        Response response = client.postXMLRequestFor(gatewayAccount, buildOrderSubmitFor(request, gatewayTransactionId));
-        return response.getStatus() == OK.getStatusCode() ?
-                mapToCardAuthorisationResponse(response, gatewayTransactionId) :
-                errorResponse(logger, response);
+        return reduce(
+                client
+                        .postXMLRequestFor(gatewayAccount, buildOrderSubmitFor(request, gatewayTransactionId))
+                        .bimap(
+                                AuthorisationResponse::authorisationFailureResponse,
+                                (response) -> response.getStatus() == OK.getStatusCode() ?
+                                        mapToCardAuthorisationResponse(response, gatewayTransactionId) :
+                                        errorResponse(logger, response)
+                        )
+        );
     }
 
     @Override
     public CaptureResponse capture(CaptureRequest request) {
-        Response response = client.postXMLRequestFor(gatewayAccount, buildOrderCaptureFor(request));
-        return response.getStatus() == OK.getStatusCode() ?
-                mapToCaptureResponse(response) :
-                handleCaptureError(response);
+        String requestString = buildOrderCaptureFor(request);
+        return reduce(
+                client
+                        .postXMLRequestFor(gatewayAccount, requestString)
+                        .bimap(
+                                CaptureResponse::captureFailureResponse,
+                                (response) -> response.getStatus() == OK.getStatusCode() ?
+                                        mapToCaptureResponse(response) :
+                                        handleCaptureError(response)
+                        )
+        );
     }
 
     @Override
     public CancelResponse cancel(CancelRequest request) {
-        Response response = client.postXMLRequestFor(gatewayAccount, buildCancelOrderFor(request));
-        return response.getStatus() == OK.getStatusCode() ?
-                mapToCancelResponse(response) :
-                errorCancelResponse(logger, response);
+        String requestString = buildCancelOrderFor(request);
+        return reduce(
+                client
+                        .postXMLRequestFor(gatewayAccount, requestString)
+                        .bimap(
+                                CancelResponse::cancelFailureResponse,
+                                (response) -> response.getStatus() == OK.getStatusCode() ?
+                                        mapToCancelResponse(response) :
+                                        errorCancelResponse(logger, response)
+                        )
+        );
     }
 
     private String buildOrderCaptureFor(CaptureRequest request) {

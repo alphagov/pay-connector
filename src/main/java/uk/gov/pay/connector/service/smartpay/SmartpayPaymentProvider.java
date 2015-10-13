@@ -37,29 +37,46 @@ public class SmartpayPaymentProvider implements PaymentProvider {
     public AuthorisationResponse authorise(AuthorisationRequest request) {
         String requestString = buildOrderSubmitFor(request);
 
-        Response response = client.postXMLRequestFor(gatewayAccount, requestString);
-
-        return response.getStatus() == OK.getStatusCode() ?
-                mapToCardAuthorisationResponse(response) :
-                errorResponse(logger, response);
+        return reduce(
+                client
+                        .postXMLRequestFor(gatewayAccount, requestString)
+                        .bimap(
+                                AuthorisationResponse::authorisationFailureResponse,
+                                (response) -> response.getStatus() == OK.getStatusCode() ?
+                                        mapToCardAuthorisationResponse(response) :
+                                        errorResponse(logger, response)
+                        )
+        );
     }
 
     @Override
     public CaptureResponse capture(CaptureRequest request) {
         String captureRequestString = buildOrderCaptureFor(request);
-        logger.debug("captureRequestString = " + captureRequestString);
-        Response response = client.postXMLRequestFor(gatewayAccount, captureRequestString);
-        return response.getStatus() == OK.getStatusCode() ?
-                mapToCaptureResponse(response) :
-                errorCaptureResponse(logger, response);
+
+        return reduce(
+                client
+                        .postXMLRequestFor(gatewayAccount, captureRequestString)
+                        .bimap(
+                                CaptureResponse::captureFailureResponse,
+                                (response) -> response.getStatus() == OK.getStatusCode() ?
+                                        mapToCaptureResponse(response) :
+                                        errorCaptureResponse(logger, response)
+                        )
+        );
     }
 
     @Override
     public CancelResponse cancel(CancelRequest request) {
-        Response response = client.postXMLRequestFor(gatewayAccount, buildCancelOrderFor(request));
-        return response.getStatus() == OK.getStatusCode() ?
-                mapToCancelResponse(response) :
-                errorCancelResponse(logger, response);
+        return reduce(
+                client
+                        .postXMLRequestFor(gatewayAccount, buildCancelOrderFor(request))
+                        .bimap(
+                                CancelResponse::cancelFailureResponse,
+                                (response) -> response.getStatus() == OK.getStatusCode() ?
+                                        mapToCancelResponse(response) :
+                                        errorCancelResponse(logger, response)
+                        )
+        );
     }
 
     private AuthorisationResponse mapToCardAuthorisationResponse(Response response) {

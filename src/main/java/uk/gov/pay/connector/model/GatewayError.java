@@ -23,6 +23,10 @@ public class GatewayError {
         return new GatewayError(msg, MalformedResponseReceivedFromGateway);
     }
 
+    public static GatewayError unknownHostException(String msg) {
+        return new GatewayError(msg, UnknownHostException);
+    }
+
     public String getMessage() {
         return message;
     }
