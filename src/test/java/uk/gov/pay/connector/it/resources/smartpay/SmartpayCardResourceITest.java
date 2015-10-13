@@ -2,6 +2,7 @@ package uk.gov.pay.connector.it.resources.smartpay;
 
 import org.junit.Test;
 import uk.gov.pay.connector.it.base.CardResourceITestBase;
+import uk.gov.pay.connector.model.domain.ChargeStatus;
 
 import static org.hamcrest.Matchers.is;
 import static uk.gov.pay.connector.model.api.ExternalChargeStatus.EXT_IN_PROGRESS;
@@ -19,7 +20,7 @@ public class SmartpayCardResourceITest extends CardResourceITestBase {
     @Test
     public void shouldAuthoriseCharge_ForValidCardDetails() throws Exception {
 
-        String chargeId = createNewCharge();
+        String chargeId = createNewChargeWith(ChargeStatus.ENTERING_CARD_DETAILS, null);
 
         smartpay.mockAuthorisationSuccess();
 

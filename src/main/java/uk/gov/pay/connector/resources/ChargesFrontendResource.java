@@ -8,12 +8,14 @@ import org.slf4j.LoggerFactory;
 import uk.gov.pay.connector.dao.ChargeDao;
 import uk.gov.pay.connector.dao.GatewayAccountDao;
 import uk.gov.pay.connector.model.domain.ChargeStatus;
+import uk.gov.pay.connector.util.ResponseUtil;
 
 import javax.ws.rs.*;
 import javax.ws.rs.core.Context;
 import javax.ws.rs.core.Response;
 import javax.ws.rs.core.UriInfo;
 import java.net.URI;
+import java.util.Arrays;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
@@ -22,8 +24,10 @@ import static fj.data.Either.*;
 import static java.lang.String.format;
 import static javax.ws.rs.core.MediaType.APPLICATION_JSON;
 import static javax.ws.rs.core.Response.ok;
+import static org.apache.commons.lang3.StringUtils.equalsIgnoreCase;
 import static org.apache.commons.lang3.StringUtils.isBlank;
 import static org.apache.commons.lang3.math.NumberUtils.isNumber;
+import static uk.gov.pay.connector.model.domain.ChargeStatus.*;
 import static uk.gov.pay.connector.resources.CardResource.AUTHORIZATION_FRONTEND_RESOURCE_PATH;
 import static uk.gov.pay.connector.resources.CardResource.CAPTURE_FRONTEND_RESOURCE_PATH;
 import static uk.gov.pay.connector.util.LinksBuilder.linksBuilder;
@@ -34,7 +38,7 @@ public class ChargesFrontendResource {
 
     private static final String CHARGES_FRONTEND_PATH = "/v1/frontend/charges/";
     private static final String GET_CHARGE_FRONTEND_PATH = CHARGES_FRONTEND_PATH + "{chargeId}";
-    private static final String PUT_CHARGE_STATUS_FRONTEND_PATH = CHARGES_FRONTEND_PATH + "{chargeId}/status/{newStatus}";
+    private static final String PUT_CHARGE_STATUS_FRONTEND_PATH = CHARGES_FRONTEND_PATH + "{chargeId}/status";
 
     private static final Logger logger = LoggerFactory.getLogger(ChargesFrontendResource.class);
     private final ChargeDao chargeDao;
@@ -50,6 +54,7 @@ public class ChargesFrontendResource {
     @Produces(APPLICATION_JSON)
     public Response getCharge(@PathParam("chargeId") String chargeId, @Context UriInfo uriInfo) {
         Optional<Map<String, Object>> maybeCharge = chargeDao.findById(chargeId);
+        logger.debug("charge from DB: " + maybeCharge);
         return maybeCharge
                 .map(charge -> buildOkResponse(chargeId, uriInfo, charge))
                 .orElseGet(() -> responseWithChargeNotFound(logger, chargeId));
@@ -58,10 +63,10 @@ public class ChargesFrontendResource {
     @PUT
     @Path(PUT_CHARGE_STATUS_FRONTEND_PATH)
     @Produces(APPLICATION_JSON)
-    public Response updateChargeStatus(@PathParam("chargeId") String chargeId, @PathParam("newStatus") String newStatus, @Context UriInfo uriInfo) {
+    public Response updateChargeStatus(@PathParam("chargeId") String chargeId, Map newStatusMap) {
         Optional<Map<String, Object>> maybeCharge = chargeDao.findById(chargeId);
         return maybeCharge
-                .map(charge -> updateStatus(charge, ChargeStatus.chargeStatusFrom(newStatus)))
+                .map(charge -> updateStatus(charge, ChargeStatus.chargeStatusFrom(newStatusMap.get("new_status").toString())))
                 .orElseGet(() -> responseWithChargeNotFound(logger, chargeId));
     }
 
@@ -74,8 +79,18 @@ public class ChargesFrontendResource {
     }
 
     private Response updateStatus(Map<String, Object> charge, ChargeStatus chargeStatus) {
-        chargeDao.updateStatus(charge.get("charge_id").toString(), chargeStatus);
+        String charge_id = charge.get("charge_id").toString();
+        if (!hasStatus(charge, CREATED, ENTERING_CARD_DETAILS)) {
+            return ResponseUtil.badRequestResponse(logger, "charge with id: " + charge_id + " cant be updated to the state: " + ENTERING_CARD_DETAILS.getValue());
+        }
+        chargeDao.updateStatus(charge_id, chargeStatus);
         return noContentResponse();
+    }
+
+    private boolean hasStatus(Map<String, Object> charge, ChargeStatus... states) {
+        Object currentStatus = charge.get(STATUS_KEY);
+        return Arrays.stream(states)
+                .anyMatch(status -> equalsIgnoreCase(status.getValue(), currentStatus.toString()));
     }
 
     private Response buildOkResponse(@PathParam("chargeId") String chargeId, @Context UriInfo uriInfo, Map<String, Object> charge) {

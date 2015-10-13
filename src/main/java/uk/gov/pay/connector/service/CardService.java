@@ -72,7 +72,7 @@ public class CardService {
     }
 
     private Function<Map<String, Object>, Either<GatewayError, GatewayResponse>> authoriseFor(String chargeId, Card cardDetails) {
-        return charge -> hasStatus(charge, CREATED) ?
+        return charge -> hasStatus(charge, ENTERING_CARD_DETAILS) ?
                 right(authoriseFor(chargeId, cardDetails, charge)) :
                 left(authoriseErrorMessageFor(chargeId));
     }
@@ -144,7 +144,7 @@ public class CardService {
     }
 
     private GatewayError authoriseErrorMessageFor(String chargeId) {
-        return baseGatewayError(format("Card already processed for charge with id %s.", chargeId));
+        return baseGatewayError(format("Charge not in correct state to be processed, %s", chargeId));
     }
 
     private GatewayError cancelErrorMessageFor(String chargeId, String status) {

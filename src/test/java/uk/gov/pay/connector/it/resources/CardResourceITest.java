@@ -87,12 +87,11 @@ public class CardResourceITest extends CardResourceITestBase {
 
     @Test
     public void shouldRejectRandomCardNumberAndNotUpdateChargeStatus() throws Exception {
-        String chargeId = createNewCharge();
+        String chargeId = createNewChargeWith(ENTERING_CARD_DETAILS, null);
         String randomCardNumberDetails = buildJsonCardDetailsFor("1111111111111119");
 
         shouldReturnErrorFor(chargeId, randomCardNumberDetails, "Unsupported card details.");
-
-        assertFrontendChargeStatusIs(chargeId, CREATED.getValue());
+        assertFrontendChargeStatusIs(chargeId, ENTERING_CARD_DETAILS.getValue());
     }
 
     @Test
@@ -107,7 +106,7 @@ public class CardResourceITest extends CardResourceITestBase {
 
     @Test
     public void shouldReturnErrorAndDoNotUpdateChargeStatus_IfCardDetailsAreAlreadySubmitted() throws Exception {
-        String chargeId = createNewCharge();
+        String chargeId = createNewChargeWith(ENTERING_CARD_DETAILS, null);
         givenSetup()
                 .body(validCardDetails)
                 .post(authoriseChargeUrlFor(chargeId))
@@ -117,7 +116,7 @@ public class CardResourceITest extends CardResourceITestBase {
         String originalStatus = AUTHORISATION_SUCCESS.getValue();
         assertFrontendChargeStatusIs(chargeId, originalStatus);
 
-        shouldReturnErrorFor(chargeId, validCardDetails, format("Card already processed for charge with id %s.", chargeId));
+        shouldReturnErrorFor(chargeId, validCardDetails, format("Charge not in correct state to be processed, %s", chargeId));
 
         assertFrontendChargeStatusIs(chargeId, originalStatus);
     }
@@ -174,7 +173,7 @@ public class CardResourceITest extends CardResourceITestBase {
     }
 
     private void shouldAuthoriseChargeFor(String cardDetails) throws Exception {
-        String chargeId = createNewCharge();
+        String chargeId = createNewChargeWith(ENTERING_CARD_DETAILS, null);
 
         givenSetup()
                 .body(cardDetails)

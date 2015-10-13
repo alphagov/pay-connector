@@ -68,7 +68,9 @@ public class ChargesFrontendResourceITest {
     public void shouldUpdateChargeStatusToEnteringCardDetails() {
         long expectedAmount = 2113l;
         String chargeId = postToCreateACharge(expectedAmount);
-        putChargeStatus(chargeId)
+        String putBody = toJson(ImmutableMap.of("new_status", ENTERING_CARD_DETAILS.getValue()));
+
+        putChargeStatus(chargeId, putBody)
                 .statusCode(NO_CONTENT.getStatusCode())
                 .body(isEmptyOrNullString());
 
@@ -224,11 +226,11 @@ public class ChargesFrontendResourceITest {
                 .then();
     }
 
-    private ValidatableResponse putChargeStatus(String chargeId) {
+    private ValidatableResponse putChargeStatus(String chargeId, String putBody) {
         return given()
                 .port(app.getLocalPort())
-                .contentType(JSON)
-                .put(CHARGES_FRONTEND_PATH + chargeId + "/status/" + ENTERING_CARD_DETAILS.getValue())
+                .contentType(JSON).body(putBody)
+                .put(CHARGES_FRONTEND_PATH + chargeId + "/status")
                 .then();
     }
 
