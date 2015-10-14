@@ -417,7 +417,7 @@ Content-Type: application/json
 -----------------------------------------------------------------------------------------------------------
 ### GET /v1/frontend/charges?gatewayAccountId={gatewayAccountId}
 
-List all the transactions for a given gateway account
+List all the transactions for a given gateway account sorted by ChargeID
 
 #### Request example
 

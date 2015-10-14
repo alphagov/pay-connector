@@ -11,6 +11,7 @@ import uk.gov.pay.connector.util.DropwizardAppWithPostgresRule;
 import static com.jayway.restassured.RestAssured.given;
 import static com.jayway.restassured.http.ContentType.JSON;
 import static java.lang.String.format;
+import static java.util.UUID.randomUUID;
 import static javax.ws.rs.HttpMethod.POST;
 import static org.hamcrest.Matchers.*;
 import static uk.gov.pay.connector.model.domain.ChargeStatus.*;
@@ -92,7 +93,7 @@ public class ChargesFrontendResourceITest {
     }
 
     @Test
-    public void shouldReturnAllTransactionsForAGatewayAccount() {
+    public void shouldReturnAllTransactionsForAGivenGatewayAccount() {
         String chargeId1 = "10001";
         String chargeId2 = "10002";
         int amount1 = 100;
@@ -102,18 +103,47 @@ public class ChargesFrontendResourceITest {
         app.getDatabaseTestHelper().addCharge(chargeId2, accountId, amount2, AUTHORISATION_REJECTED, returnUrl, null);
 
         String anotherAccountId = "5454545";
-        String chargeId3 = ((Integer) RandomUtils.nextInt(99999999)).toString();
         app.getDatabaseTestHelper().addGatewayAccount(anotherAccountId, "another test gateway");
-        app.getDatabaseTestHelper().addCharge(chargeId3, anotherAccountId, 200, AUTHORISATION_SUBMITTED, returnUrl, "transaction-id-2");
+        app.getDatabaseTestHelper().addCharge("5001", anotherAccountId, 200, AUTHORISATION_SUBMITTED, returnUrl, "transaction-id-2");
 
         ValidatableResponse response = listTransactionsFor(accountId);
 
         response.statusCode(200)
                 .contentType(JSON)
-                .log().all()
                 .body("results", hasSize(2));
         assertTransactionEntry(response, 0, chargeId2, null, amount2, AUTHORISATION_REJECTED.getValue());
         assertTransactionEntry(response, 1, chargeId1, gatewayTransactionId1, amount1, AUTHORISATION_SUCCESS.getValue());
+    }
+
+    @Test
+    public void shouldReturnTransactionsOnDescendingOrderOfChargeId() {
+
+        app.getDatabaseTestHelper().addCharge("101", accountId, 500, AUTHORISATION_SUCCESS, returnUrl, randomUUID().toString());
+        app.getDatabaseTestHelper().addCharge("102", accountId, 300, AUTHORISATION_REJECTED, returnUrl, null);
+        app.getDatabaseTestHelper().addCharge("103", accountId, 100, AUTHORISATION_SUBMITTED, returnUrl, randomUUID().toString());
+
+        ValidatableResponse response = listTransactionsFor(accountId);
+
+        response.statusCode(200)
+                .contentType(JSON)
+                .body("results", hasSize(3));
+
+        response.body("results[" + 0 + "].charge_id", is("103"));
+        response.body("results[" + 1 + "].charge_id", is("102"));
+        response.body("results[" + 2 + "].charge_id", is("101"));
+
+    }
+
+    @Test
+    public void shouldReturn404_IfNoAccountExistsForTheGivenAccountId() {
+
+        String nonExistentAccountId = "123456789";
+        ValidatableResponse response = listTransactionsFor(nonExistentAccountId);
+
+        response.statusCode(404)
+                .contentType(JSON)
+                .body("message", is(format("account with id %s not found", nonExistentAccountId)));
+
     }
 
     @Test
@@ -138,9 +168,8 @@ public class ChargesFrontendResourceITest {
     }
 
     @Test
-    public void shouldReturnEmptyResultIfGatewayAccountNotExist() {
-        String invalidAccRef = "11111";
-        ValidatableResponse response = listTransactionsFor(invalidAccRef);
+    public void shouldReturnEmptyResult_IfNoTransactionsExistForAccount() {
+        ValidatableResponse response = listTransactionsFor(accountId);
 
         response.statusCode(200)
                 .contentType(JSON)
@@ -153,11 +182,11 @@ public class ChargesFrontendResourceITest {
                 .then();
     }
 
-    private void assertTransactionEntry(ValidatableResponse response, int ix, String chargeId, String gatewayTransactionId, int amount, String chargeStatus) {
-        response.body("results[" + ix + "].charge_id", is(chargeId))
-                .body("results[" + ix + "].gateway_transaction_id", is(gatewayTransactionId))
-                .body("results[" + ix + "].amount", is(amount))
-                .body("results[" + ix + "].status", is(chargeStatus));
+    private void assertTransactionEntry(ValidatableResponse response, int index, String chargeId, String gatewayTransactionId, int amount, String chargeStatus) {
+        response.body("results[" + index + "].charge_id", is(chargeId))
+                .body("results[" + index + "].gateway_transaction_id", is(gatewayTransactionId))
+                .body("results[" + index + "].amount", is(amount))
+                .body("results[" + index + "].status", is(chargeStatus));
     }
 
     private ValidatableResponse getChargeResponseFor(String chargeId) {
