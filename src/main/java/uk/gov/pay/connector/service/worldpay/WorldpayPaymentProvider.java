@@ -12,6 +12,7 @@ import uk.gov.pay.connector.service.PaymentProvider;
 
 import javax.ws.rs.core.Response;
 
+import static fj.data.Either.reduce;
 import static java.lang.String.format;
 import static java.util.UUID.randomUUID;
 import static javax.ws.rs.core.Response.Status.OK;
@@ -38,29 +39,47 @@ public class WorldpayPaymentProvider implements PaymentProvider {
 
     @Override
     public AuthorisationResponse authorise(AuthorisationRequest request) {
-
         String gatewayTransactionId = generateTransactionId();
-
-        Response response = client.postXMLRequestFor(gatewayAccount, buildOrderSubmitFor(request, gatewayTransactionId));
-        return response.getStatus() == OK.getStatusCode() ?
-                mapToCardAuthorisationResponse(response, gatewayTransactionId) :
-                errorResponse(logger, response);
+        return reduce(
+                client
+                        .postXMLRequestFor(gatewayAccount, buildOrderSubmitFor(request, gatewayTransactionId))
+                        .bimap(
+                                AuthorisationResponse::authorisationFailureResponse,
+                                (response) -> response.getStatus() == OK.getStatusCode() ?
+                                        mapToCardAuthorisationResponse(response, gatewayTransactionId) :
+                                        errorResponse(logger, response)
+                        )
+        );
     }
 
     @Override
     public CaptureResponse capture(CaptureRequest request) {
-        Response response = client.postXMLRequestFor(gatewayAccount, buildOrderCaptureFor(request));
-        return response.getStatus() == OK.getStatusCode() ?
-                mapToCaptureResponse(response) :
-                handleCaptureError(response);
+        String requestString = buildOrderCaptureFor(request);
+        return reduce(
+                client
+                        .postXMLRequestFor(gatewayAccount, requestString)
+                        .bimap(
+                                CaptureResponse::captureFailureResponse,
+                                (response) -> response.getStatus() == OK.getStatusCode() ?
+                                        mapToCaptureResponse(response) :
+                                        handleCaptureError(response)
+                        )
+        );
     }
 
     @Override
     public CancelResponse cancel(CancelRequest request) {
-        Response response = client.postXMLRequestFor(gatewayAccount, buildCancelOrderFor(request));
-        return response.getStatus() == OK.getStatusCode() ?
-                mapToCancelResponse(response) :
-                errorCancelResponse(logger, response);
+        String requestString = buildCancelOrderFor(request);
+        return reduce(
+                client
+                        .postXMLRequestFor(gatewayAccount, requestString)
+                        .bimap(
+                                CancelResponse::cancelFailureResponse,
+                                (response) -> response.getStatus() == OK.getStatusCode() ?
+                                        mapToCancelResponse(response) :
+                                        errorCancelResponse(logger, response)
+                        )
+        );
     }
 
     private String buildOrderCaptureFor(CaptureRequest request) {
@@ -90,23 +109,44 @@ public class WorldpayPaymentProvider implements PaymentProvider {
     }
 
     private AuthorisationResponse mapToCardAuthorisationResponse(Response response, String gatewayTransactionId) {
-        WorldpayAuthorisationResponse wResponse = client.unmarshallResponse(response, WorldpayAuthorisationResponse.class);
-        if (wResponse.isError()) {
-            return authorisationFailureNotUpdateResponse(logger, gatewayTransactionId, wResponse.getErrorMessage());
-        }
-        return wResponse.isAuthorised() ?
-                successfulAuthorisation(AUTHORISATION_SUCCESS, gatewayTransactionId) :
-                authorisationFailureResponse(logger, gatewayTransactionId, "Unauthorised");
+        return reduce(
+                client.unmarshallResponse(response, WorldpayAuthorisationResponse.class)
+                        .bimap(
+                                AuthorisationResponse::authorisationFailureResponse,
+                                (wResponse) -> {
+                                    if (wResponse.isError()) {
+                                        return authorisationFailureNotUpdateResponse(logger, gatewayTransactionId, wResponse.getErrorMessage());
+                                    }
+                                    return wResponse.isAuthorised() ?
+                                            successfulAuthorisation(AUTHORISATION_SUCCESS, gatewayTransactionId) :
+                                            authorisationFailureResponse(logger, gatewayTransactionId, "Unauthorised");
+                                }
+                        )
+        );
     }
 
     private CaptureResponse mapToCaptureResponse(Response response) {
-        WorldpayCaptureResponse wResponse = client.unmarshallResponse(response, WorldpayCaptureResponse.class);
-        return wResponse.isCaptured() ? aSuccessfulCaptureResponse() : new CaptureResponse(false, baseGatewayError(wResponse.getErrorMessage()));
+        return reduce(
+                client.unmarshallResponse(response, WorldpayCaptureResponse.class)
+                        .bimap(
+                                CaptureResponse::captureFailureResponse,
+                                (wResponse) -> wResponse.isCaptured() ?
+                                        aSuccessfulCaptureResponse() :
+                                        new CaptureResponse(false, baseGatewayError(wResponse.getErrorMessage()))
+                        )
+        );
     }
 
     private CancelResponse mapToCancelResponse(Response response) {
-        WorldpayCancelResponse wResponse = client.unmarshallResponse(response, WorldpayCancelResponse.class);
-        return wResponse.isCancelled() ? aSuccessfulCancelResponse() : new CancelResponse(false, baseGatewayError(wResponse.getErrorMessage()));
+        return reduce(
+                client.unmarshallResponse(response, WorldpayCancelResponse.class)
+                        .bimap(
+                                CancelResponse::cancelFailureResponse,
+                                (wResponse) -> wResponse.isCancelled() ?
+                                        aSuccessfulCancelResponse() :
+                                        new CancelResponse(false, baseGatewayError(wResponse.getErrorMessage()))
+                        )
+        );
     }
 
     private CaptureResponse handleCaptureError(Response response) {
@@ -117,5 +157,4 @@ public class WorldpayPaymentProvider implements PaymentProvider {
     private String generateTransactionId() {
         return randomUUID().toString();
     }
-
 }

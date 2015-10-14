@@ -21,7 +21,7 @@ public class SmartpayCardResourceITest extends CardResourceITestBase {
 
         givenSetup()
                 .body(validCardDetails)
-                .post(cardUrlFor(chargeId))
+                .post(authoriseChargeUrlFor(chargeId))
                 .then()
                 .statusCode(204);
 
@@ -41,7 +41,7 @@ public class SmartpayCardResourceITest extends CardResourceITestBase {
     public void shouldCancelCharge() {
         String chargeId = createAndAuthoriseCharge(validCardDetails);
         givenSetup()
-                .post(cancelChargePath(chargeId))
+                .post(cancelChargeUrlFor(chargeId))
                 .then()
                 .statusCode(204);
     }

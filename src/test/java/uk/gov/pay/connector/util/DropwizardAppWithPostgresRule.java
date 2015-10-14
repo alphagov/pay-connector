@@ -1,5 +1,6 @@
 package uk.gov.pay.connector.util;
 
+import io.dropwizard.testing.ConfigOverride;
 import io.dropwizard.testing.junit.DropwizardAppRule;
 import org.junit.rules.RuleChain;
 import org.junit.rules.TestRule;
@@ -11,26 +12,38 @@ import org.slf4j.LoggerFactory;
 import uk.gov.pay.connector.app.ConnectorApp;
 import uk.gov.pay.connector.app.ConnectorConfiguration;
 
+import java.util.ArrayList;
+import java.util.List;
+
 import static io.dropwizard.testing.ConfigOverride.config;
 import static io.dropwizard.testing.ResourceHelpers.resourceFilePath;
+import static java.util.Arrays.asList;
 
 public class DropwizardAppWithPostgresRule implements TestRule {
-
     private static final Logger logger = LoggerFactory.getLogger(DropwizardAppWithPostgresRule.class);
 
-    private String configFilePath = resourceFilePath("config/test-it-config.yaml");
+    private final String configFilePath;
+    private final PostgresDockerRule postgres;
+    private final DropwizardAppRule<ConnectorConfiguration> app;
+    private final RuleChain rules;
 
-    private PostgresDockerRule postgres = new PostgresDockerRule();
-
-    private DropwizardAppRule<ConnectorConfiguration> app = new DropwizardAppRule<>(
-            ConnectorApp.class,
-            configFilePath,
-            config("database.url", postgres.getConnectionUrl()),
-            config("database.user", postgres.getUsername()),
-            config("database.password", postgres.getPassword()));
-
-    private RuleChain rules = RuleChain.outerRule(postgres).around(app);
     private DatabaseTestHelper databaseTestHelper;
+
+    public DropwizardAppWithPostgresRule(ConfigOverride... configOverrides) {
+        configFilePath = resourceFilePath("config/test-it-config.yaml");
+        postgres = new PostgresDockerRule();
+        List<ConfigOverride> cfgOverrideList = new ArrayList(asList(configOverrides));
+        cfgOverrideList.add(config("database.url", postgres.getConnectionUrl()));
+        cfgOverrideList.add(config("database.user", postgres.getUsername()));
+        cfgOverrideList.add(config("database.password", postgres.getPassword()));
+
+        app = new DropwizardAppRule<>(
+                ConnectorApp.class,
+                configFilePath,
+                cfgOverrideList.toArray(new ConfigOverride[cfgOverrideList.size()])
+        );
+        rules = RuleChain.outerRule(postgres).around(app);
+    }
 
     @Override
     public Statement apply(Statement base, Description description) {

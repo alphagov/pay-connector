@@ -5,7 +5,6 @@ import org.junit.Test;
 import uk.gov.pay.connector.model.*;
 import uk.gov.pay.connector.model.domain.Address;
 import uk.gov.pay.connector.model.domain.Card;
-import uk.gov.pay.connector.service.GatewayClient;
 import uk.gov.pay.connector.service.worldpay.WorldpayPaymentProvider;
 
 import javax.ws.rs.client.Client;
@@ -26,6 +25,7 @@ import static org.mockito.Mockito.when;
 import static uk.gov.pay.connector.model.GatewayErrorType.GenericGatewayError;
 import static uk.gov.pay.connector.model.domain.Address.anAddress;
 import static uk.gov.pay.connector.model.domain.GatewayAccount.gatewayAccountFor;
+import static uk.gov.pay.connector.service.GatewayClient.createGatewayClient;
 import static uk.gov.pay.connector.util.CardUtils.buildCardDetails;
 
 public class WorldpayPaymentProviderTest {
@@ -37,7 +37,10 @@ public class WorldpayPaymentProviderTest {
         client = mock(Client.class);
         mockWorldpaySuccessfulOrderSubmitResponse();
 
-        connector = new WorldpayPaymentProvider(new GatewayClient(client, "http://smartpay.url"), gatewayAccountFor("theUsername", "thePassword"));
+        connector = new WorldpayPaymentProvider(
+                createGatewayClient(client, "http://smartpay.url"),
+                gatewayAccountFor("theUsername", "thePassword")
+        );
     }
 
     @Test

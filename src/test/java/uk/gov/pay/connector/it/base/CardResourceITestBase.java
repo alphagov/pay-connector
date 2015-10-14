@@ -13,6 +13,9 @@ import static com.jayway.restassured.http.ContentType.JSON;
 import static org.hamcrest.Matchers.is;
 import static uk.gov.pay.connector.model.domain.ChargeStatus.AUTHORISATION_SUCCESS;
 import static uk.gov.pay.connector.model.domain.ChargeStatus.CREATED;
+import static uk.gov.pay.connector.resources.CardResource.AUTHORIZATION_FRONTEND_RESOURCE_PATH;
+import static uk.gov.pay.connector.resources.CardResource.CANCEL_CHARGE_PATH;
+import static uk.gov.pay.connector.resources.CardResource.CAPTURE_FRONTEND_RESOURCE_PATH;
 import static uk.gov.pay.connector.util.JsonEncoder.toJson;
 
 public class CardResourceITestBase {
@@ -134,7 +137,7 @@ public class CardResourceITestBase {
         String chargeId = createNewCharge();
         givenSetup()
                 .body(cardDetails)
-                .post(cardUrlFor(chargeId))
+                .post(authoriseChargeUrlFor(chargeId))
                 .then()
                 .statusCode(204);
         return chargeId;
@@ -145,7 +148,7 @@ public class CardResourceITestBase {
 
         givenSetup()
                 .body(cardDetails)
-                .post(cardUrlFor(chargeId))
+                .post(authoriseChargeUrlFor(chargeId))
                 .then()
                 .statusCode(400)
                 .contentType(JSON)
@@ -154,15 +157,15 @@ public class CardResourceITestBase {
         assertFrontendChargeStatusIs(chargeId, status);
     }
 
-    protected String cardUrlFor(String id) {
-        return "/v1/frontend/charges/" + id + "/cards";
+    protected String authoriseChargeUrlFor(String chargeId) {
+        return AUTHORIZATION_FRONTEND_RESOURCE_PATH.replace("{chargeId}", chargeId);
     }
 
-    protected String chargeCaptureUrlFor(String unknownChargeId) {
-        return "/v1/frontend/charges/" + unknownChargeId + "/capture";
+    protected String captureChargeUrlFor(String chargeId) {
+        return CAPTURE_FRONTEND_RESOURCE_PATH.replace("{chargeId}", chargeId);
     }
 
-    protected String cancelChargePath(String chargeId) {
-        return "/v1/api/charges/" + chargeId + "/cancel";
+    protected String cancelChargeUrlFor(String chargeId) {
+        return CANCEL_CHARGE_PATH.replace("{chargeId}", chargeId);
     }
 }

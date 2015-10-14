@@ -6,15 +6,13 @@ import uk.gov.pay.connector.app.GatewayCredentialsConfig;
 import uk.gov.pay.connector.model.AuthorisationRequest;
 import uk.gov.pay.connector.model.AuthorisationResponse;
 import uk.gov.pay.connector.model.domain.Card;
-import uk.gov.pay.connector.service.GatewayClient;
 import uk.gov.pay.connector.service.worldpay.WorldpayPaymentProvider;
 import uk.gov.pay.connector.util.DropwizardAppWithPostgresRule;
-
-import javax.ws.rs.client.ClientBuilder;
 
 import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertTrue;
 import static uk.gov.pay.connector.model.domain.GatewayAccount.gatewayAccountFor;
+import static uk.gov.pay.connector.service.GatewayClient.createGatewayClient;
 import static uk.gov.pay.connector.util.CardUtils.aValidCard;
 
 public class WorldpayPaymentProviderITest {
@@ -25,10 +23,7 @@ public class WorldpayPaymentProviderITest {
     public void shouldSendSuccessfullyAnOrderForMerchant() throws Exception {
         GatewayCredentialsConfig config = getWorldpayConfig();
         WorldpayPaymentProvider connector = new WorldpayPaymentProvider(
-                new GatewayClient(
-                        ClientBuilder.newClient(),
-                        config.getUrl()
-                ),
+                createGatewayClient(config.getUrl()),
                 gatewayAccountFor(config.getUsername(), config.getPassword())
         );
         AuthorisationRequest request = getCardAuthorisationRequest();
@@ -42,7 +37,7 @@ public class WorldpayPaymentProviderITest {
         String worldpayUrl = getWorldpayConfig().getUrl();
 
         WorldpayPaymentProvider connector = new WorldpayPaymentProvider(
-                new GatewayClient(ClientBuilder.newClient(), worldpayUrl),
+                createGatewayClient(worldpayUrl),
                 gatewayAccountFor("wrongUsername", "wrongPassword"));
 
         AuthorisationRequest request = getCardAuthorisationRequest();

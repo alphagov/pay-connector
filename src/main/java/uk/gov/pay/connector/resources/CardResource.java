@@ -14,7 +14,6 @@ import javax.ws.rs.core.Response;
 
 import static fj.data.Either.reduce;
 import static javax.ws.rs.core.MediaType.APPLICATION_JSON;
-import static uk.gov.pay.connector.model.GatewayErrorType.ChargeNotFound;
 import static uk.gov.pay.connector.resources.CardDetailsValidator.isWellFormattedCardDetails;
 import static uk.gov.pay.connector.util.ResponseUtil.*;
 
@@ -23,7 +22,7 @@ public class CardResource {
 
     public static final String AUTHORIZATION_FRONTEND_RESOURCE_PATH = "/v1/frontend/charges/{chargeId}/cards";
     public static final String CAPTURE_FRONTEND_RESOURCE_PATH = "/v1/frontend/charges/{chargeId}/capture";
-    private static final String CANCEL_CHARGE_PATH = "/v1/api/charges/{chargeId}/cancel";
+    public static final String CANCEL_CHARGE_PATH = "/v1/api/charges/{chargeId}/cancel";
     private final CardService cardService;
     private final Logger logger = LoggerFactory.getLogger(CardResource.class);
 
@@ -36,13 +35,14 @@ public class CardResource {
     @Consumes(APPLICATION_JSON)
     @Produces(APPLICATION_JSON)
     public Response authoriseCharge(@PathParam("chargeId") String chargeId, Card cardDetails) {
-
         if (!isWellFormattedCardDetails(cardDetails)) {
             return badRequestResponse(logger, "Values do not match expected format/length.");
         }
 
-        return reduce(cardService.doAuthorise(chargeId, cardDetails)
-                .bimap(handleError, handleGatewayResponse));
+        return reduce(
+                cardService
+                        .doAuthorise(chargeId, cardDetails)
+                        .bimap(handleError, handleGatewayResponse));
     }
 
     @POST
@@ -50,23 +50,37 @@ public class CardResource {
     @Consumes(APPLICATION_JSON)
     @Produces(APPLICATION_JSON)
     public Response captureCharge(@PathParam("chargeId") String chargeId) throws PayDBIException {
-
-        return reduce(cardService.doCapture(chargeId)
-                .bimap(handleError, handleGatewayResponse));
+        return reduce(
+                cardService
+                        .doCapture(chargeId)
+                        .bimap(handleError, handleGatewayResponse)
+        );
     }
 
     @POST
     @Path(CANCEL_CHARGE_PATH)
     @Produces(APPLICATION_JSON)
     public Response cancelCharge(@PathParam("chargeId") String chargeId) {
-        return reduce(cardService.doCancel(chargeId)
-                .bimap(handleError, handleGatewayResponse));
+        return reduce(
+                cardService
+                        .doCancel(chargeId)
+                        .bimap(handleError, handleGatewayResponse)
+        );
     }
 
     private F<GatewayError, Response> handleError =
-            error -> ChargeNotFound.equals(error.getErrorType()) ?
-                    notFoundResponse(logger, error.getMessage()) :
-                    badRequestResponse(logger, error.getMessage());
+            (error) -> {
+                switch (error.getErrorType()) {
+                    case ChargeNotFound:
+                        return notFoundResponse(logger, error.getMessage());
+                    case UnexpectedStatusCodeFromGateway:
+                        return serviceErrorResponse(logger, "Unexpected Response Code From Gateway");
+                    case MalformedResponseReceivedFromGateway:
+                    case GatewayUrlDnsError:
+                        return serviceErrorResponse(logger, error.getMessage());
+                }
+                return badRequestResponse(logger, error.getMessage());
+            };
 
     private F<GatewayResponse, Response> handleGatewayResponse =
             response -> response.isSuccessful() ?
