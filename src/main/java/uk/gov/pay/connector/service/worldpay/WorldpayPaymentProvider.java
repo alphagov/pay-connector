@@ -3,6 +3,7 @@ package uk.gov.pay.connector.service.worldpay;
 
 import com.google.common.collect.ImmutableList;
 import javafx.util.Pair;
+import org.apache.commons.lang3.StringUtils;
 import org.joda.time.DateTime;
 import org.joda.time.DateTimeZone;
 import org.slf4j.Logger;
@@ -14,8 +15,11 @@ import uk.gov.pay.connector.model.domain.GatewayAccount;
 import uk.gov.pay.connector.service.GatewayClient;
 import uk.gov.pay.connector.service.PaymentProvider;
 
+import javax.ws.rs.InternalServerErrorException;
 import javax.ws.rs.core.Response;
 import javax.xml.bind.JAXBException;
+
+import java.util.Optional;
 
 import static java.lang.String.format;
 import static java.util.UUID.randomUUID;
@@ -33,6 +37,8 @@ import static uk.gov.pay.connector.util.XMLUnmarshaller.unmarshall;
 
 public class WorldpayPaymentProvider implements PaymentProvider {
     public static final String OK = "[OK]";
+    public static final StatusUpdates NO_UPDATE = StatusUpdates.noUpdate(OK);
+    public static final StatusUpdates DO_NOT_ACKNOWLEDGE = StatusUpdates.noUpdate("");
     private final Logger logger = LoggerFactory.getLogger(WorldpayPaymentProvider.class);
 
     private final GatewayClient client;
@@ -77,17 +83,21 @@ public class WorldpayPaymentProvider implements PaymentProvider {
             StatusResponse statusResponse = enquire(chargeNotification);
 
             String worldpayStatus = statusResponse.getStatus();
-            ChargeStatus newChargeStatus = WorldpayStatusesMapper.mapToChargeStatus(worldpayStatus);
-            if (newChargeStatus == null && statusResponse.getStatus() != null) {
-                logger.error(format("Could not map worldpay status %s to our internal status.", worldpayStatus));
-                return StatusUpdates.noUpdate(OK);
-            } else {
-                Pair<String, ChargeStatus> update = new Pair<>(statusResponse.getTransactionId(), newChargeStatus);
-                return StatusUpdates.withUpdate(OK, ImmutableList.of(update));
+            if (StringUtils.isBlank(worldpayStatus)) {
+                logger.error("Could not look up status from worldpay for worldpay charge id " + chargeNotification.getTransactionId());
+                throw new InternalServerErrorException();
             }
+            Optional<ChargeStatus> newChargeStatus = WorldpayStatusesMapper.mapToChargeStatus(worldpayStatus);
+            if (!newChargeStatus.isPresent()) {
+                logger.error(format("Could not map worldpay status %s to our internal status.", worldpayStatus));
+                return NO_UPDATE;
+            }
+
+            Pair<String, ChargeStatus> update = new Pair<>(statusResponse.getTransactionId(), newChargeStatus.get());
+            return StatusUpdates.withUpdate(OK, ImmutableList.of(update));
         } catch (JAXBException e) {
             logger.error(format("Could not deserialise worldpay response %s", notification), e);
-            return StatusUpdates.noUpdate("");
+            return DO_NOT_ACKNOWLEDGE;
         }
     }
 

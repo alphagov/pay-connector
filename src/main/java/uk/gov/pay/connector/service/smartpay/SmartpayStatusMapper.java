@@ -5,7 +5,9 @@ import uk.gov.pay.connector.model.domain.ChargeStatus;
 
 import java.util.Collections;
 import java.util.Map;
+import java.util.Optional;
 
+import static java.util.Optional.ofNullable;
 import static uk.gov.pay.connector.model.domain.ChargeStatus.*;
 
 public class SmartpayStatusMapper {
@@ -22,8 +24,7 @@ public class SmartpayStatusMapper {
             put("REPORT_AVAILABLE", Collections.emptyMap()).
             build();
 
-    public static ChargeStatus mapToChargeStatus(String worldpayStatus, Boolean successFull) {
-
-        return worldpayStatuses.get(worldpayStatus).get(successFull);
+    public static Optional<ChargeStatus> mapToChargeStatus(String worldpayStatus, Boolean successFull) {
+        return ofNullable(worldpayStatuses.get(worldpayStatus)).flatMap(m -> ofNullable(m.get(successFull)));
     }
 }

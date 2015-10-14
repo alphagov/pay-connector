@@ -14,6 +14,7 @@ import javax.ws.rs.core.Response;
 import java.io.IOException;
 import java.util.Collections;
 import java.util.List;
+import java.util.Optional;
 import java.util.stream.Collectors;
 
 import static java.lang.String.format;
@@ -84,17 +85,17 @@ public class SmartpayPaymentProvider implements PaymentProvider {
 
     private boolean definedStatuses(SmartpayNotification notification) {
         String smartpayStatus = notification.getEventCode();
-        ChargeStatus newChargeStatus = SmartpayStatusMapper.mapToChargeStatus(smartpayStatus, notification.isSuccessFull());
-        if (newChargeStatus == null) {
+        Optional<ChargeStatus> newChargeStatus = SmartpayStatusMapper.mapToChargeStatus(smartpayStatus, notification.isSuccessFull());
+        if (!newChargeStatus.isPresent()) {
             logger.error(format("Could not map Smartpay status %s to our internal status.", notification.getEventCode()));
         }
-        return newChargeStatus != null;
+        return newChargeStatus.isPresent();
     }
 
     private Pair<String, ChargeStatus> toInternalStatus(SmartpayNotification notification) {
         String smartpayStatus = notification.getEventCode();
-        ChargeStatus newChargeStatus = SmartpayStatusMapper.mapToChargeStatus(smartpayStatus, notification.isSuccessFull());
-        return new Pair<>(notification.getTransactionId(), newChargeStatus);
+        Optional<ChargeStatus> newChargeStatus = SmartpayStatusMapper.mapToChargeStatus(smartpayStatus, notification.isSuccessFull());
+        return new Pair<>(notification.getTransactionId(), newChargeStatus.get());
     }
 
     @Override

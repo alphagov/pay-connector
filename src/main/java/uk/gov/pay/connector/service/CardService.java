@@ -136,23 +136,19 @@ public class CardService {
     }
 
     private GatewayError captureErrorMessageFor(String currentStatus) {
-        return baseGatewayError(formattedError("Cannot capture a charge with status %s.", currentStatus));
+        return baseGatewayError(format("Cannot capture a charge with status %s.", currentStatus));
     }
 
     private GatewayError authoriseErrorMessageFor(String chargeId) {
-        return baseGatewayError(formattedError("Card already processed for charge with id %s.", chargeId));
+        return baseGatewayError(format("Card already processed for charge with id %s.", chargeId));
     }
 
     private GatewayError cancelErrorMessageFor(String chargeId, String status) {
-        return baseGatewayError(formattedError("Cannot cancel a charge id [%s]: status is [%s].", chargeId, status));
+        return baseGatewayError(format("Cannot cancel a charge id [%s]: status is [%s].", chargeId, status));
     }
 
     private Supplier<Either<GatewayError, GatewayResponse>> chargeNotFound(String chargeId) {
-        return () -> left(new GatewayError(formattedError("Charge with id [%s] not found.", chargeId), ChargeNotFound));
+        return () -> left(new GatewayError(format("Charge with id [%s] not found.", chargeId), ChargeNotFound));
     }
 
-
-    private String formattedError(String messageTemplate, String... params) {
-        return format(messageTemplate, params);
-    }
 }

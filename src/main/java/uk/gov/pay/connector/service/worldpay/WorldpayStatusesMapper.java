@@ -5,7 +5,9 @@ import uk.gov.pay.connector.model.domain.ChargeStatus;
 
 import java.util.HashMap;
 import java.util.Map;
+import java.util.Optional;
 
+import static java.util.Optional.ofNullable;
 import static uk.gov.pay.connector.model.domain.ChargeStatus.*;
 
 public class WorldpayStatusesMapper {
@@ -37,8 +39,8 @@ public class WorldpayStatusesMapper {
 //    "REVOKE_FAILED"
 //    "REVOKED"
 
-    public static ChargeStatus mapToChargeStatus(String worldpayStatus) {
-        return worldpayStatuses.get(worldpayStatus);
+    public static Optional<ChargeStatus> mapToChargeStatus(String worldpayStatus) {
+        return ofNullable(worldpayStatuses.get(worldpayStatus));
     }
 
 
