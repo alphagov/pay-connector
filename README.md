@@ -250,7 +250,7 @@ PUT /v1/api/charges/{chargeId}/status
 Content-Type: application/json
 
 {
-    "new-status": "CREATED"
+    "new_status": "CREATED"
 }
 ```
 
