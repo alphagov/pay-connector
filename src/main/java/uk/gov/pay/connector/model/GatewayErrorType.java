@@ -5,6 +5,6 @@ public enum GatewayErrorType {
     GenericGatewayError,
     UnexpectedStatusCodeFromGateway,
     MalformedResponseReceivedFromGateway,
-    UnknownHostException,
+    GatewayUrlDnsError,
     ;
 }

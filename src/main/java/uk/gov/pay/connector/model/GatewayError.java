@@ -24,7 +24,7 @@ public class GatewayError {
     }
 
     public static GatewayError unknownHostException(String msg) {
-        return new GatewayError(msg, UnknownHostException);
+        return new GatewayError(msg, GatewayUrlDnsError);
     }
 
     public String getMessage() {
