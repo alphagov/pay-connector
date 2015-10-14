@@ -41,7 +41,7 @@ The command to run all the tests is:
 |[```/v1/api/accounts/{gatewayAccountId}```](#get-v1apiaccountsaccountsid)     | GET    |  Retrieves an existing account  |
 |[```/v1/api/charges/{chargeId}```](#get-v1apichargeschargeid)                 | GET    |  Returns the charge with `chargeId`            |
 |[```/v1/api/charges```](#post-v1apicharges)                                  | POST    |  Create a new charge            |
-|[```/v1/api/charges/{chargeId}/status```](#put-v1apichargeschargeid)         | PUT    |  Update status of the charge     |
+|[```/v1/api/charges/{chargeId}/status```](#put-v1apichargeschargeidstatus)         | PUT    |  Update status of the charge     |
 |[```/v1/api/charges/{chargeId}/cancel```](#post-v1apichargeschargeidcancel)  | POST    |  Cancels the charge with `chargeId`            |
 |[```/v1/frontend/charges/{chargeId}```](#get-v1frontendchargeschargeid)                                  | GET |  Find out the status of a charge            |
 |[```/v1/frontend/charges/{chargeId}/cards```](#post-v1frontendchargeschargeidcards)                      | POST |  Authorise the charge with the card details            |
