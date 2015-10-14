@@ -10,12 +10,12 @@ import static uk.gov.pay.connector.model.GatewayError.baseGatewayError;
 import static uk.gov.pay.connector.model.domain.ChargeStatus.AUTHORISATION_REJECTED;
 
 public class AuthorisationResponse implements GatewayResponse {
-    private Boolean successful;
+    private boolean successful;
     private GatewayError error;
     private ChargeStatus status;
     private String transactionId;
 
-    public AuthorisationResponse(Boolean successful, GatewayError error, ChargeStatus status, String transactionId) {
+    public AuthorisationResponse(boolean successful, GatewayError error, ChargeStatus status, String transactionId) {
         this.successful = successful;
         this.error = error;
         this.status = status;
