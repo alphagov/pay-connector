@@ -19,7 +19,7 @@ links:
   cardDetailsUrl: http://Frontend/charge/{chargeId}?chargeTokenId={chargeTokenId}
 
 worldpay:
-  url: http://localhost:3000/stub/worldpay #https://secure-test.worldpay.com/jsp/merchant/xml/paymentService.jsp
+  url: https://secure-test.worldpay.com/jsp/merchant/xml/paymentService.jsp
   username: MERCHANTCODE
   password: ${GDS_CONNECTOR_WORLDPAY_PASSWORD}
 
