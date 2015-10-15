@@ -51,7 +51,7 @@ public class XMLUnmarshallerTest {
     }
 
     @Test
-    public void shouldUnmarshallA_WorldpayEnquiryResponse() throws Exception {
+    public void shouldUnmarshallA_WorldpayInquiryResponse() throws Exception {
         String transactionId = "MyUniqueTransactionId!";
         String status = "CAPTURED";
 
@@ -65,7 +65,7 @@ public class XMLUnmarshallerTest {
         assertThat(response.getTransactionId(), is(transactionId));
     }
 
-// TODO shouldUnmarshallA_WorldpayEnquiryNotFoundResponse
+// TODO shouldUnmarshallA_WorldpayInquiryNotFoundResponse
 
     @Test
     public void shouldUnmarshallASuccessful_WorldpayCaptureResponse() throws Exception {

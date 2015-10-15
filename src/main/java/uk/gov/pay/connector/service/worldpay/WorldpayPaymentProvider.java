@@ -97,10 +97,10 @@ public class WorldpayPaymentProvider implements PaymentProvider {
     public StatusUpdates newStatusFromNotification(String notification) {
         try {
             WorldpayNotification chargeNotification = unmarshall(notification, WorldpayNotification.class);
-            EnquiryResponse enquiryResponse = enquire(chargeNotification);
+            InquiryResponse inquiryResponse = inquire(chargeNotification);
 
-            String worldpayStatus = enquiryResponse.getNewStatus();
-            if (!enquiryResponse.isSuccessful() || StringUtils.isBlank(worldpayStatus)) {
+            String worldpayStatus = inquiryResponse.getNewStatus();
+            if (!inquiryResponse.isSuccessful() || StringUtils.isBlank(worldpayStatus)) {
                 logger.error("Could not look up status from worldpay for worldpay charge id " + chargeNotification.getTransactionId());
                 return StatusUpdates.failed();
             }
@@ -111,7 +111,7 @@ public class WorldpayPaymentProvider implements PaymentProvider {
                 return NO_UPDATE;
             }
 
-            Pair<String, ChargeStatus> update = Pair.of(enquiryResponse.getTransactionId(), newChargeStatus.get());
+            Pair<String, ChargeStatus> update = Pair.of(inquiryResponse.getTransactionId(), newChargeStatus.get());
             return StatusUpdates.withUpdate(NOTIFICATION_ACKNOWLEDGED, ImmutableList.of(update));
         } catch (JAXBException e) {
             logger.error(format("Could not deserialise worldpay response %s", notification), e);
@@ -119,15 +119,15 @@ public class WorldpayPaymentProvider implements PaymentProvider {
         }
     }
 
-    private EnquiryResponse enquire(ChargeStatusRequest request) {
+    private InquiryResponse inquire(ChargeStatusRequest request) {
         return reduce(
                 client
-                        .postXMLRequestFor(gatewayAccount, buildOrderEnquiryFor(request))
+                        .postXMLRequestFor(gatewayAccount, buildOrderInquiryFor(request))
                         .bimap(
-                                EnquiryResponse::enquiryFailureResponse,
+                                InquiryResponse::inquiryFailureResponse,
                                 (response) -> response.getStatus() == OK.getStatusCode() ?
-                                        mapToEnquiryResponse(response) :
-                                        EnquiryResponse.errorEnquiryResponse(logger, response)
+                                        mapToInquiryResponse(response) :
+                                        InquiryResponse.errorInquiryResponse(logger, response)
                         )
         );
     }
@@ -161,7 +161,7 @@ public class WorldpayPaymentProvider implements PaymentProvider {
                 .build();
     }
 
-    private String buildOrderEnquiryFor(ChargeStatusRequest request) {
+    private String buildOrderInquiryFor(ChargeStatusRequest request) {
         return anOrderInquiryRequest()
                 .withMerchantCode(gatewayAccount.getUsername()) //TODO: map to the merchant code, not the username!
                 .withTransactionId(request.getTransactionId())
@@ -198,14 +198,14 @@ public class WorldpayPaymentProvider implements PaymentProvider {
     }
 
 
-    private EnquiryResponse mapToEnquiryResponse(Response response) {
+    private InquiryResponse mapToInquiryResponse(Response response) {
         return reduce(
                 client.unmarshallResponse(response, WorldpayOrderStatusResponse.class)
                         .bimap(
-                                EnquiryResponse::enquiryFailureResponse,
+                                InquiryResponse::inquiryFailureResponse,
                                 (wResponse) -> wResponse.isError() ?
-                                        EnquiryResponse.enquiryFailureResponse(baseGatewayError(wResponse.getErrorMessage())) :
-                                        EnquiryResponse.statusUpdate(wResponse.getTransactionId(), wResponse.getLastEvent())
+                                        InquiryResponse.inquiryFailureResponse(baseGatewayError(wResponse.getErrorMessage())) :
+                                        InquiryResponse.statusUpdate(wResponse.getTransactionId(), wResponse.getLastEvent())
 
                         )
         );

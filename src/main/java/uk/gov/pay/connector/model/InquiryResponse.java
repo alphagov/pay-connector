@@ -7,13 +7,13 @@ import javax.ws.rs.core.Response;
 import static java.lang.String.format;
 import static uk.gov.pay.connector.model.GatewayError.baseGatewayError;
 
-public class EnquiryResponse implements GatewayResponse {
+public class InquiryResponse implements GatewayResponse {
     private Boolean successful;
     private GatewayError error;
     private String transactionId;
     private String newStatus;
 
-    public EnquiryResponse(Boolean successful, GatewayError error, String transactionId, String newStatus) {
+    public InquiryResponse(Boolean successful, GatewayError error, String transactionId, String newStatus) {
         this.successful = successful;
         this.error = error;
         this.transactionId = transactionId;
@@ -38,16 +38,16 @@ public class EnquiryResponse implements GatewayResponse {
         return newStatus;
     }
 
-    public static EnquiryResponse enquiryFailureResponse(GatewayError gatewayError) {
-        return new EnquiryResponse(false, gatewayError, null, null);
+    public static InquiryResponse inquiryFailureResponse(GatewayError gatewayError) {
+        return new InquiryResponse(false, gatewayError, null, null);
     }
 
-    public static EnquiryResponse statusUpdate(String transactionId, String newStatus) {
-        return new EnquiryResponse(true, null, transactionId, newStatus);
+    public static InquiryResponse statusUpdate(String transactionId, String newStatus) {
+        return new InquiryResponse(true, null, transactionId, newStatus);
     }
 
-    public static EnquiryResponse errorEnquiryResponse(Logger logger, Response response) {
+    public static InquiryResponse errorInquiryResponse(Logger logger, Response response) {
         logger.error(format("Error code received from gateway: %s.", response.getStatus()));
-        return new EnquiryResponse(false, baseGatewayError("Error processing request"), null, null);
+        return new InquiryResponse(false, baseGatewayError("Error processing request"), null, null);
     }
 }
