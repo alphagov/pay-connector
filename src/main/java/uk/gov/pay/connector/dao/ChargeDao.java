@@ -57,7 +57,7 @@ public class ChargeDao {
         );
 
         if (numberOfUpdates != 1) {
-            throw new PayDBIException(format("Could not update charge (gateway_transaction_id: %s) with status %s", gatewayTransactionId, newStatus));
+            throw new PayDBIException(format("Could not update charge (gateway_transaction_id: %s) with status %s, updated %d rows.", gatewayTransactionId, newStatus, numberOfUpdates));
         }
     }
 
@@ -71,7 +71,7 @@ public class ChargeDao {
         );
 
         if (numberOfUpdates != 1) {
-            throw new PayDBIException(format("Could not update charge '%s' with status %s", chargeId, newStatus));
+            throw new PayDBIException(format("Could not update charge '%s' with status %s, updated %d rows.", chargeId, newStatus, numberOfUpdates));
         }
     }
 
@@ -100,7 +100,7 @@ public class ChargeDao {
         );
 
         if (numberOfUpdates != 1) {
-            throw new PayDBIException(String.format("Could not update charge '%s' with gateway transaction id %s", chargeId, transactionId));
+            throw new PayDBIException(String.format("Could not update charge '%s' with gateway transaction id %s, updated %d rows.", chargeId, transactionId, numberOfUpdates));
         }
     }
 }
