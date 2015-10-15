@@ -11,10 +11,10 @@ import uk.gov.pay.connector.util.DropwizardAppWithPostgresRule;
 import static com.jayway.restassured.RestAssured.given;
 import static com.jayway.restassured.http.ContentType.JSON;
 import static java.lang.String.format;
+import static java.util.UUID.randomUUID;
 import static javax.ws.rs.HttpMethod.POST;
-import static org.hamcrest.Matchers.is;
-import static org.hamcrest.Matchers.notNullValue;
-import static uk.gov.pay.connector.model.domain.ChargeStatus.AUTHORISATION_SUCCESS;
+import static org.hamcrest.Matchers.*;
+import static uk.gov.pay.connector.model.domain.ChargeStatus.*;
 import static uk.gov.pay.connector.util.JsonEncoder.toJson;
 import static uk.gov.pay.connector.util.LinksAssert.assertLink;
 import static uk.gov.pay.connector.util.LinksAssert.assertSelfLink;
@@ -90,6 +90,103 @@ public class ChargesFrontendResourceITest {
                 .statusCode(404)
                 .contentType(JSON)
                 .body("message", is(format("Charge with id [%s] not found.", chargeId)));
+    }
+
+    @Test
+    public void shouldReturnAllTransactionsForAGivenGatewayAccount() {
+        String chargeId1 = "10001";
+        String chargeId2 = "10002";
+        int amount1 = 100;
+        int amount2 = 500;
+        String gatewayTransactionId1 = "transaction-id-1";
+        app.getDatabaseTestHelper().addCharge(chargeId1, accountId, amount1, AUTHORISATION_SUCCESS, returnUrl,  gatewayTransactionId1);
+        app.getDatabaseTestHelper().addCharge(chargeId2, accountId, amount2, AUTHORISATION_REJECTED, returnUrl, null);
+
+        String anotherAccountId = "5454545";
+        app.getDatabaseTestHelper().addGatewayAccount(anotherAccountId, "another test gateway");
+        app.getDatabaseTestHelper().addCharge("5001", anotherAccountId, 200, AUTHORISATION_SUBMITTED, returnUrl, "transaction-id-2");
+
+        ValidatableResponse response = listTransactionsFor(accountId);
+
+        response.statusCode(200)
+                .contentType(JSON)
+                .body("results", hasSize(2));
+        assertTransactionEntry(response, 0, chargeId2, null, amount2, AUTHORISATION_REJECTED.getValue());
+        assertTransactionEntry(response, 1, chargeId1, gatewayTransactionId1, amount1, AUTHORISATION_SUCCESS.getValue());
+    }
+
+    @Test
+    public void shouldReturnTransactionsOnDescendingOrderOfChargeId() {
+
+        app.getDatabaseTestHelper().addCharge("101", accountId, 500, AUTHORISATION_SUCCESS, returnUrl, randomUUID().toString());
+        app.getDatabaseTestHelper().addCharge("102", accountId, 300, AUTHORISATION_REJECTED, returnUrl, null);
+        app.getDatabaseTestHelper().addCharge("103", accountId, 100, AUTHORISATION_SUBMITTED, returnUrl, randomUUID().toString());
+
+        ValidatableResponse response = listTransactionsFor(accountId);
+
+        response.statusCode(200)
+                .contentType(JSON)
+                .body("results", hasSize(3));
+
+        response.body("results[" + 0 + "].charge_id", is("103"));
+        response.body("results[" + 1 + "].charge_id", is("102"));
+        response.body("results[" + 2 + "].charge_id", is("101"));
+
+    }
+
+    @Test
+    public void shouldReturn404_IfNoAccountExistsForTheGivenAccountId() {
+
+        String nonExistentAccountId = "123456789";
+        ValidatableResponse response = listTransactionsFor(nonExistentAccountId);
+
+        response.statusCode(404)
+                .contentType(JSON)
+                .body("message", is(format("account with id %s not found", nonExistentAccountId)));
+
+    }
+
+    @Test
+    public void shouldReturn400IfGatewayAccountIsMissingWhenListingTransactions() {
+        ValidatableResponse response = listTransactionsFor("");
+
+        response.statusCode(400)
+                .contentType(JSON)
+                .body("message", is("missing gateway account reference"));
+
+    }
+
+    @Test
+    public void shouldReturn400IfGatewayAccountIsNotANumberWhenListingTransactions() {
+        String invalidAccRef = "XYZ";
+        ValidatableResponse response = listTransactionsFor(invalidAccRef);
+
+        response.statusCode(400)
+                .contentType(JSON)
+                .body("message", is(format("invalid gateway account reference %s", invalidAccRef)));
+
+    }
+
+    @Test
+    public void shouldReturnEmptyResult_IfNoTransactionsExistForAccount() {
+        ValidatableResponse response = listTransactionsFor(accountId);
+
+        response.statusCode(200)
+                .contentType(JSON)
+                .body("results", hasSize(0));
+    }
+
+    private ValidatableResponse listTransactionsFor(String accountId) {
+        return given().port(app.getLocalPort())
+                .get(CHARGES_FRONTEND_PATH + "?gatewayAccountId=" + accountId)
+                .then();
+    }
+
+    private void assertTransactionEntry(ValidatableResponse response, int index, String chargeId, String gatewayTransactionId, int amount, String chargeStatus) {
+        response.body("results[" + index + "].charge_id", is(chargeId))
+                .body("results[" + index + "].gateway_transaction_id", is(gatewayTransactionId))
+                .body("results[" + index + "].amount", is(amount))
+                .body("results[" + index + "].status", is(chargeStatus));
     }
 
     private ValidatableResponse getChargeResponseFor(String chargeId) {
