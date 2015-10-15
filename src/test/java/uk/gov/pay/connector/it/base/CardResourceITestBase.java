@@ -2,6 +2,7 @@ package uk.gov.pay.connector.it.base;
 
 import com.google.gson.JsonObject;
 import com.jayway.restassured.specification.RequestSpecification;
+import io.dropwizard.testing.ConfigOverride;
 import org.apache.commons.lang.math.RandomUtils;
 import org.junit.Before;
 import org.junit.Rule;
@@ -15,6 +16,7 @@ import java.io.IOException;
 
 import static com.jayway.restassured.RestAssured.given;
 import static com.jayway.restassured.http.ContentType.JSON;
+import static io.dropwizard.testing.ConfigOverride.config;
 import static org.hamcrest.Matchers.is;
 import static uk.gov.pay.connector.model.domain.ChargeStatus.AUTHORISATION_SUCCESS;
 import static uk.gov.pay.connector.model.domain.ChargeStatus.CREATED;
@@ -24,13 +26,13 @@ import static uk.gov.pay.connector.util.JsonEncoder.toJson;
 public class CardResourceITestBase {
 
     @Rule
-    public DropwizardAppWithPostgresRule app = new DropwizardAppWithPostgresRule();
+    public DropwizardAppWithPostgresRule app;
 
     @Rule
-    public MockServerRule worldpayMockRule = new MockServerRule(10107, this);
+    public MockServerRule worldpayMockRule = new MockServerRule(this);
 
     @Rule
-    public MockServerRule smartpayMockRule = new MockServerRule(10106, this);
+    public MockServerRule smartpayMockRule = new MockServerRule(this);
 
     protected WorldpayMockClient worldpay;
 
@@ -41,7 +43,11 @@ public class CardResourceITestBase {
 
     public CardResourceITestBase(String paymentProvider) {
         this.paymentProvider = paymentProvider;
-        accountId = String.valueOf(RandomUtils.nextInt(99999));
+        this.accountId = String.valueOf(RandomUtils.nextInt(99999));
+
+        app = new DropwizardAppWithPostgresRule(
+                config("worldpay.url", "http://localhost:" + worldpayMockRule.getHttpPort() + "/jsp/merchant/xml/paymentService.jsp"),
+                config("smartpay.url", "http://localhost:" + smartpayMockRule.getHttpPort() + "/pal/servlet/soap/Payment"));
     }
 
     @Before
