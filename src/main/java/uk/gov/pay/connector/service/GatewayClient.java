@@ -50,7 +50,6 @@ public class GatewayClient {
     }
 
     public static GatewayClient createGatewayClient(Client client, String gatewayUrl) {
-        client.register(new LoggingFilter());
         return new GatewayClient(client, gatewayUrl);
     }
 
