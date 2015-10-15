@@ -28,7 +28,7 @@
                     </ns1:billingAddress>
                 </ns1:card>
                 <ns1:merchantAccount>${merchantCode}</ns1:merchantAccount>
-                <ns1:reference>${transactionId}</ns1:reference>
+                <ns1:reference>${paymentPlatformReference}</ns1:reference>
                 <ns1:shopperReference>${description}</ns1:shopperReference>
             </ns1:paymentRequest>
         </ns1:authorise>

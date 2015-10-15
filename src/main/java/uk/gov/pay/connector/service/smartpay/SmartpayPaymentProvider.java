@@ -166,7 +166,7 @@ public class SmartpayPaymentProvider implements PaymentProvider {
     private String buildOrderSubmitFor(AuthorisationRequest request) {
         return aSmartpayOrderSubmitRequest()
                 .withMerchantCode(MERCHANT_CODE)
-                .withTransactionId(request.getChargeId())
+                .withPaymentPlatformReference(request.getChargeId())
                 .withDescription(request.getDescription())
                 .withAmount(request.getAmount())
                 .withCard(request.getCard())

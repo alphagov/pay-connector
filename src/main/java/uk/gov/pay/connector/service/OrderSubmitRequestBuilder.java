@@ -16,6 +16,7 @@ public class OrderSubmitRequestBuilder {
     private String description;
     private Card card;
     private String amount;
+    private String paymentPlatformReference;
 
     public static OrderSubmitRequestBuilder aWorldpayOrderSubmitRequest() {
         return new OrderSubmitRequestBuilder("/worldpay/WorldpayOrderSubmitTemplate.xml");
@@ -39,6 +40,12 @@ public class OrderSubmitRequestBuilder {
         return this;
     }
 
+    public OrderSubmitRequestBuilder withPaymentPlatformReference(String reference) {
+        this.paymentPlatformReference = reference;
+        return this;
+    }
+
+
     public OrderSubmitRequestBuilder withDescription(String description) {
         this.description = description;
         return this;
@@ -58,6 +65,7 @@ public class OrderSubmitRequestBuilder {
         Map<String, Object> templateData = newHashMap();
         templateData.put("merchantCode", merchantCode);
         templateData.put("transactionId", transactionId);
+        templateData.put("paymentPlatformReference", paymentPlatformReference);
         templateData.put("description", description);
         templateData.put("amount", amount);
         templateData.put("card", card);
