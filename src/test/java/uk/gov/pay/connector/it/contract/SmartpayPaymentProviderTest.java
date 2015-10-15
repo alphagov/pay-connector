@@ -15,7 +15,6 @@ import uk.gov.pay.connector.service.GatewayClient;
 import uk.gov.pay.connector.service.PaymentProvider;
 import uk.gov.pay.connector.service.smartpay.SmartpayPaymentProvider;
 
-import javax.ws.rs.client.ClientBuilder;
 import java.io.IOException;
 import java.net.URL;
 

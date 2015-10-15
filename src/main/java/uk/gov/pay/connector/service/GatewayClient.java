@@ -1,7 +1,6 @@
 package uk.gov.pay.connector.service;
 
 import fj.data.Either;
-import org.eclipse.jetty.security.authentication.BasicAuthenticator;
 import org.glassfish.jersey.apache.connector.ApacheConnectorProvider;
 import org.glassfish.jersey.client.ClientConfig;
 import org.glassfish.jersey.client.spi.ConnectorProvider;
@@ -17,7 +16,6 @@ import javax.ws.rs.ProcessingException;
 import javax.ws.rs.client.Client;
 import javax.ws.rs.client.ClientBuilder;
 import javax.ws.rs.client.Entity;
-import javax.ws.rs.core.HttpHeaders;
 import javax.ws.rs.core.Response;
 import javax.xml.bind.JAXBException;
 import java.net.UnknownHostException;
@@ -27,8 +25,6 @@ import static fj.data.Either.right;
 import static java.lang.String.format;
 import static javax.ws.rs.core.HttpHeaders.AUTHORIZATION;
 import static javax.ws.rs.core.MediaType.APPLICATION_XML;
-import static org.glassfish.jersey.client.authentication.HttpAuthenticationFeature.HTTP_AUTHENTICATION_BASIC_PASSWORD;
-import static org.glassfish.jersey.client.authentication.HttpAuthenticationFeature.HTTP_AUTHENTICATION_BASIC_USERNAME;
 import static uk.gov.pay.connector.model.GatewayError.*;
 
 public class GatewayClient {

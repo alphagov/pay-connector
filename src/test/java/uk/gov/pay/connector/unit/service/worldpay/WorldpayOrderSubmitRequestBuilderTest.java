@@ -11,9 +11,9 @@ import java.nio.charset.Charset;
 import static com.google.common.io.Resources.getResource;
 import static org.custommonkey.xmlunit.XMLAssert.assertXMLEqual;
 import static uk.gov.pay.connector.model.domain.Address.anAddress;
-import static uk.gov.pay.connector.service.worldpay.OrderInquiryRequestBuilder.*;
-import static uk.gov.pay.connector.util.CardUtils.buildCardDetails;
 import static uk.gov.pay.connector.service.OrderSubmitRequestBuilder.aWorldpayOrderSubmitRequest;
+import static uk.gov.pay.connector.service.worldpay.OrderInquiryRequestBuilder.anOrderInquiryRequest;
+import static uk.gov.pay.connector.util.CardUtils.buildCardDetails;
 
 public class WorldpayOrderSubmitRequestBuilderTest {
     @Test

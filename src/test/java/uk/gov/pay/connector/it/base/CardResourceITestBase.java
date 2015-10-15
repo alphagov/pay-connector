@@ -18,9 +18,7 @@ import static com.jayway.restassured.http.ContentType.JSON;
 import static org.hamcrest.Matchers.is;
 import static uk.gov.pay.connector.model.domain.ChargeStatus.AUTHORISATION_SUCCESS;
 import static uk.gov.pay.connector.model.domain.ChargeStatus.CREATED;
-import static uk.gov.pay.connector.resources.CardResource.AUTHORIZATION_FRONTEND_RESOURCE_PATH;
-import static uk.gov.pay.connector.resources.CardResource.CANCEL_CHARGE_PATH;
-import static uk.gov.pay.connector.resources.CardResource.CAPTURE_FRONTEND_RESOURCE_PATH;
+import static uk.gov.pay.connector.resources.CardResource.*;
 import static uk.gov.pay.connector.util.JsonEncoder.toJson;
 
 public class CardResourceITestBase {

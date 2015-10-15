@@ -3,7 +3,6 @@ package uk.gov.pay.connector.service.worldpay;
 import com.google.common.collect.ImmutableMap;
 import uk.gov.pay.connector.model.domain.ChargeStatus;
 
-import java.util.HashMap;
 import java.util.Map;
 import java.util.Optional;
 
