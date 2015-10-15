@@ -1,7 +1,7 @@
 package uk.gov.pay.connector.service.smartpay;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
-import javafx.util.Pair;
+import org.apache.commons.lang3.tuple.Pair;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import uk.gov.pay.connector.model.*;
@@ -110,7 +110,7 @@ public class SmartpayPaymentProvider implements PaymentProvider {
     private Pair<String, ChargeStatus> toInternalStatus(SmartpayNotification notification) {
         String smartpayStatus = notification.getEventCode();
         Optional<ChargeStatus> newChargeStatus = SmartpayStatusMapper.mapToChargeStatus(smartpayStatus, notification.isSuccessFull());
-        return new Pair<>(notification.getTransactionId(), newChargeStatus.get());
+        return Pair.of(notification.getTransactionId(), newChargeStatus.get());
     }
 
     @Override

@@ -2,8 +2,8 @@ package uk.gov.pay.connector.service.worldpay;
 
 
 import com.google.common.collect.ImmutableList;
-import javafx.util.Pair;
 import org.apache.commons.lang3.StringUtils;
+import org.apache.commons.lang3.tuple.Pair;
 import org.joda.time.DateTime;
 import org.joda.time.DateTimeZone;
 import org.slf4j.Logger;
@@ -111,7 +111,7 @@ public class WorldpayPaymentProvider implements PaymentProvider {
                 return NO_UPDATE;
             }
 
-            Pair<String, ChargeStatus> update = new Pair<>(enquiryResponse.getTransactionId(), newChargeStatus.get());
+            Pair<String, ChargeStatus> update = Pair.of(enquiryResponse.getTransactionId(), newChargeStatus.get());
             return StatusUpdates.withUpdate(NOTIFICATION_ACKNOWLEDGED, ImmutableList.of(update));
         } catch (JAXBException e) {
             logger.error(format("Could not deserialise worldpay response %s", notification), e);

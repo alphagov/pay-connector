@@ -1,6 +1,6 @@
 package uk.gov.pay.connector.model;
 
-import javafx.util.Pair;
+import org.apache.commons.lang3.tuple.Pair;
 import uk.gov.pay.connector.model.domain.ChargeStatus;
 
 import java.util.Collections;
