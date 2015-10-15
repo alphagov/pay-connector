@@ -24,7 +24,6 @@ public class AuthorisationResponse implements GatewayResponse {
 
     public AuthorisationResponse(GatewayError error) {
         this.error = error;
-        this.successful = false;
     }
 
     public static AuthorisationResponse successfulAuthorisation(ChargeStatus status, String transactionId) {
