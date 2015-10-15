@@ -42,6 +42,7 @@ public class SandboxPaymentProvider implements PaymentProvider {
 
     @Override
     public StatusUpdates newStatusFromNotification(String notification) {
-        return StatusUpdates.noUpdate("✓");
+        // No notifications for the sandbox.
+        return StatusUpdates.noUpdate("OK");
     }
 }
