@@ -15,7 +15,11 @@ Important configurations.
 ## Integration tests
 
 To run the integration tests, the `DOCKER_HOST` and `DOCKER_CERT_PATH` environment variables must be set up correctly. On OS X the environment can be set up with:
-Also `$GDS_CONNECTOR_WORLDPAY_PASSWORD` and`$GDS_CONNECTOR_WORLDPAY_PASSWORD` environment variable must be set for Worlpay integration tests.
+
+## Contract tests
+
+`$GDS_CONNECTOR_WORLDPAY_PASSWORD` and`$GDS_CONNECTOR_WORLDPAY_PASSWORD` environment variable must be set for Worldpay contract tests.
+`GDS_CONNECTOR_SMARTPAY_USER`, `GDS_CONNECTOR_SMARTPAY_PASSWORD` must be set for the smartpay contract tests. 
 
 ```
     eval $(boot2docker shellinit)
@@ -23,7 +27,7 @@ Also `$GDS_CONNECTOR_WORLDPAY_PASSWORD` and`$GDS_CONNECTOR_WORLDPAY_PASSWORD` en
 
 ```
 
-The command to run the integration tests is:
+The command to run all the tests is:
 
 ```
     mvn test
@@ -505,15 +509,25 @@ Content-Type: text/plain
 
 This endpoint handles a notification from Barclays Smartpay's Notification mechanism as descrbied in the [Barclaycard SmartPay Notifications Guide](http://www.barclaycard.co.uk/business/files/SmartPay_Notifications_Guide.pdf)
 
+At the moment, the basic auth username and password that have to be entered into smartpay's web management UI need to be provided to the app as environment variables:
+* GDS_CONNECTOR_SMARTPAY_NOTIFICATION_USERNAME for the username
+* GDS_CONNECTOR_SMARTPAY_NOTIFICATION_PASSWORD for the password
+
 #### Request example
 
 ```
 POST /v1/api/notifications/smartpay
-```
+Content-Type: application/json
+Authorization: Basic YWRtaW46cGFzc3dvcmQ=
 
-##### Request body description
+See [src/test/resources/templates/smartpay/notification-authorisation.json](src/test/resources/templates/smartpay/notification-authorisation.json) for an example notification.
+```
 
 #### Response example
 
 ```
+200 OK
+Content-Type: text/plain
+
+[accepted]
 ```
