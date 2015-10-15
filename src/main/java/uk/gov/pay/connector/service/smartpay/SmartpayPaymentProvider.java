@@ -89,6 +89,10 @@ public class SmartpayPaymentProvider implements PaymentProvider {
 
             return StatusUpdates.withUpdate(ACCEPTED, updates);
         } catch (IllegalArgumentException | IOException e) {
+            // If we've failed to parse the message, we don't want it to be resent - there's no reason to believe our
+            // deterministic computer code could successfully parse the same message if it arrived a second time.
+            // Barclays also mandate that acknowledging notifications should be unconditional.
+            // See http://www.barclaycard.co.uk/business/files/SmartPay_Notifications_Guide.pdf for further details.
             logger.error(String.format("Could not deserialise smartpay notification:\n %s", notification), e);
         }
         return StatusUpdates.noUpdate(ACCEPTED);
