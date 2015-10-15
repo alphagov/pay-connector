@@ -84,15 +84,19 @@ public class CardService {
     }
 
     private GatewayResponse captureFor(String chargeId, Map<String, Object> charge) {
-
         String transactionId = String.valueOf(charge.get(GATEWAY_TRANSACTION_ID_KEY));
 
         CaptureRequest request = captureRequest(transactionId, String.valueOf(charge.get(AMOUNT_KEY)));
-        CaptureResponse response = paymentProviderFor(charge).capture(request);
+        CaptureResponse response = paymentProviderFor(charge)
+                .capture(request);
 
-        if (response.isSuccessful()) {
-            chargeDao.updateStatus(chargeId, CAPTURE_SUBMITTED);
-        }
+        ChargeStatus newStatus =
+                response.isSuccessful() ?
+                        CAPTURE_SUBMITTED :
+                        CAPTURE_UNKNOWN;
+
+        chargeDao.updateStatus(chargeId, newStatus);
+
         return response;
     }
 
@@ -150,5 +154,4 @@ public class CardService {
     private Supplier<Either<GatewayError, GatewayResponse>> chargeNotFound(String chargeId) {
         return () -> left(new GatewayError(format("Charge with id [%s] not found.", chargeId), ChargeNotFound));
     }
-
 }

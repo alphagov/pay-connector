@@ -21,25 +21,43 @@ public class DatabaseTestHelper {
         );
     }
 
-    public void addCharge(String chargeId, String gatewayAccountId, long amount, ChargeStatus status, String returnUrl, String gatewayTransactionId) {
+    public void addCharge(String chargeId, String gatewayAccountId, long amount, ChargeStatus status, String returnUrl) {
+        addCharge(chargeId, gatewayAccountId, amount, status, returnUrl, "-1");
+    }
+
+    public void addCharge(
+            String chargeId,
+            String gatewayAccountId,
+            long amount,
+            ChargeStatus status,
+            String returnUrl,
+            String transactionId
+    ) {
         jdbi.withHandle(h ->
-                        h.update("INSERT INTO charges(charge_id, amount, status, gateway_account_id, return_url, gateway_transaction_id) VALUES(?, ?, ?, ?, ?, ?)",
-                                Long.valueOf(chargeId), amount, status.getValue(), Long.valueOf(gatewayAccountId), returnUrl, gatewayTransactionId)
+                        h.update(
+                                "INSERT INTO\n" +
+                                        "    charges(\n" +
+                                        "        charge_id,\n" +
+                                        "        amount,\n" +
+                                        "        status,\n" +
+                                        "        gateway_account_id,\n" +
+                                        "        return_url,\n" +
+                                        "        gateway_transaction_id\n" +
+                                        "    )\n" +
+                                        "   VALUES(?, ?, ?, ?, ?, ?)\n",
+                                Long.valueOf(chargeId),
+                                amount,
+                                status.getValue(),
+                                Long.valueOf(gatewayAccountId),
+                                returnUrl,
+                                transactionId
+                        )
         );
     }
 
     public String getChargeTokenId(String chargeId) {
         return jdbi.withHandle(h ->
                         h.createQuery("SELECT secure_redirect_token from tokens WHERE charge_id = :charge_id")
-                        .bind("charge_id", Long.valueOf(chargeId))
-                        .map(StringMapper.FIRST)
-                        .first()
-        );
-    }
-
-    public String getChargeGatewayTransactionId(String chargeId) {
-        return jdbi.withHandle(h ->
-                        h.createQuery("SELECT gateway_transaction_id from charges WHERE charge_id = :charge_id")
                                 .bind("charge_id", Long.valueOf(chargeId))
                                 .map(StringMapper.FIRST)
                                 .first()
@@ -48,5 +66,14 @@ public class DatabaseTestHelper {
 
     public void addToken(String chargeId, String tokenId) {
         tokenDao.insertNewToken(chargeId, tokenId);
+    }
+
+    public String getChargeStatus(String chargeId) {
+        return jdbi.withHandle(h ->
+                        h.createQuery("SELECT status from charges WHERE charge_id = :charge_id")
+                                .bind("charge_id", Long.valueOf(chargeId))
+                                .map(StringMapper.FIRST)
+                                .first()
+        );
     }
 }

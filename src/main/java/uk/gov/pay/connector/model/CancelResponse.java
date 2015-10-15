@@ -34,4 +34,13 @@ public class CancelResponse implements GatewayResponse {
         logger.error(format("Error code received from gateway: %s.", response.getStatus()));
         return new CancelResponse(false, baseGatewayError("Error processing request"));
     }
+
+    public static CancelResponse cancelFailureResponse(Logger logger, String errorMessage) {
+        logger.error(format("Failed to cancel charge: %s", errorMessage));
+        return new CancelResponse(false, baseGatewayError(errorMessage));
+    }
+
+    public static CancelResponse cancelFailureResponse(GatewayError gatewayError) {
+        return new CancelResponse(false, gatewayError);
+    }
 }

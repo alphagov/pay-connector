@@ -17,7 +17,7 @@ public class WorldpayChargeCancelResourceITest extends CardResourceITestBase {
 
         worldpay.mockCancelResponse(gatewayTransactionId);
         givenSetup()
-                .post(cancelChargePath(chargeId))
+                .post(cancelChargeUrlFor(chargeId))
                 .then()
                 .statusCode(204);
     }

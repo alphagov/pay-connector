@@ -22,7 +22,7 @@ public class WorldpayCardResourceITest extends CardResourceITestBase {
 
         givenSetup()
                 .body(validCardDetails)
-                .post(cardUrlFor(chargeId))
+                .post(authoriseChargeUrlFor(chargeId))
                 .then()
                 .statusCode(204);
 
@@ -47,7 +47,7 @@ public class WorldpayCardResourceITest extends CardResourceITestBase {
         worldpay.mockCaptureResponse();
 
         givenSetup()
-                .post(chargeCaptureUrlFor(chargeId))
+                .post(captureChargeUrlFor(chargeId))
                 .then()
                 .statusCode(204);
 

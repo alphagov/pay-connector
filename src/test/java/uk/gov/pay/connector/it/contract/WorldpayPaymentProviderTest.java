@@ -5,13 +5,14 @@ import org.junit.Assume;
 import org.junit.Before;
 import org.junit.Test;
 import uk.gov.pay.connector.app.GatewayCredentialsConfig;
-import uk.gov.pay.connector.model.*;
+import uk.gov.pay.connector.model.AuthorisationRequest;
+import uk.gov.pay.connector.model.AuthorisationResponse;
+import uk.gov.pay.connector.model.ChargeStatusRequest;
+import uk.gov.pay.connector.model.StatusUpdates;
 import uk.gov.pay.connector.model.domain.Card;
-import uk.gov.pay.connector.service.GatewayClient;
 import uk.gov.pay.connector.service.worldpay.WorldpayPaymentProvider;
 
 import javax.ws.rs.client.ClientBuilder;
-
 import java.io.IOException;
 import java.net.URL;
 import java.nio.charset.Charset;
@@ -21,6 +22,7 @@ import static org.hamcrest.core.Is.is;
 import static org.junit.Assert.*;
 import static uk.gov.pay.connector.model.domain.ChargeStatus.CAPTURED;
 import static uk.gov.pay.connector.model.domain.GatewayAccount.gatewayAccountFor;
+import static uk.gov.pay.connector.service.GatewayClient.createGatewayClient;
 import static uk.gov.pay.connector.util.CardUtils.aValidCard;
 import static uk.gov.pay.connector.util.SystemUtils.envOrThrow;
 
@@ -39,7 +41,7 @@ public class WorldpayPaymentProviderTest {
     public void shouldBeAbleToSendAuthorisationRequestForMerchant() throws Exception {
         GatewayCredentialsConfig config = getWorldpayConfig();
         WorldpayPaymentProvider connector = new WorldpayPaymentProvider(
-                new GatewayClient(
+                createGatewayClient(
                         ClientBuilder.newClient(),
                         config.getUrl()
                 ),
@@ -55,7 +57,7 @@ public class WorldpayPaymentProviderTest {
     public void shouldBeAbleToSendOrderInquiryRequestWhenStatusNotificationComesIn() throws Exception {
         GatewayCredentialsConfig config = getWorldpayConfig();
         WorldpayPaymentProvider connector = new WorldpayPaymentProvider(
-                new GatewayClient(
+                createGatewayClient(
                         ClientBuilder.newClient(),
                         config.getUrl()
                 ),
@@ -82,7 +84,7 @@ public class WorldpayPaymentProviderTest {
         String worldpayUrl = getWorldpayConfig().getUrl();
 
         WorldpayPaymentProvider connector = new WorldpayPaymentProvider(
-                new GatewayClient(ClientBuilder.newClient(), worldpayUrl),
+                createGatewayClient(ClientBuilder.newClient(), worldpayUrl),
                 gatewayAccountFor("wrongUsername", "wrongPassword"));
 
         AuthorisationRequest request = getCardAuthorisationRequest();

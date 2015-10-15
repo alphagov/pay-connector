@@ -13,6 +13,8 @@ import javax.ws.rs.PathParam;
 import javax.ws.rs.core.Response;
 import java.io.IOException;
 
+import static javax.ws.rs.core.Response.Status.BAD_GATEWAY;
+
 
 @Path("/")
 public class NotificationResource {
@@ -38,6 +40,10 @@ public class NotificationResource {
         logger.info("Received notification from " + provider + ": " + notification);
 
         StatusUpdates response = providers.resolve(provider).newStatusFromNotification(notification);
+
+        if (!response.successful()) {
+            return Response.status(BAD_GATEWAY).build();
+        }
 
         response.forEachStatusUpdate(chargeDao::updateStatusWithGatewayInfo);
 

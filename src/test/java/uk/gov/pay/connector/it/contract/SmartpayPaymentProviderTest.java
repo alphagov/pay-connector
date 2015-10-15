@@ -21,6 +21,7 @@ import java.net.URL;
 
 import static org.junit.Assert.*;
 import static uk.gov.pay.connector.model.domain.GatewayAccount.gatewayAccountFor;
+import static uk.gov.pay.connector.service.GatewayClient.createGatewayClient;
 import static uk.gov.pay.connector.util.CardUtils.buildCardDetails;
 import static uk.gov.pay.connector.util.SystemUtils.envOrThrow;
 
@@ -99,7 +100,7 @@ public class SmartpayPaymentProviderTest {
     }
 
     private PaymentProvider getSmartpayPaymentProvider(String username, String password) throws Exception {
-        GatewayClient gatewayClient = new GatewayClient(ClientBuilder.newClient(), url);
+        GatewayClient gatewayClient = createGatewayClient(url);
         GatewayAccount gatewayAccount = gatewayAccountFor(username, password);
         return new SmartpayPaymentProvider(gatewayClient, gatewayAccount, new ObjectMapper());
     }

@@ -70,7 +70,7 @@ public class WorldpayNotificationResourceITest extends CardResourceITestBase {
         worldpay.mockErrorResponse();
 
         notifyConnector(transactionId)
-                .statusCode(500);
+                .statusCode(502);
 
         assertFrontendChargeStatusIs(chargeId, "AUTHORISATION SUCCESS");
     }

@@ -10,17 +10,21 @@ import static uk.gov.pay.connector.model.GatewayError.baseGatewayError;
 import static uk.gov.pay.connector.model.domain.ChargeStatus.AUTHORISATION_REJECTED;
 
 public class AuthorisationResponse implements GatewayResponse {
-
-    private final Boolean successful;
-    private final GatewayError error;
-    private final ChargeStatus status;
+    private boolean successful;
+    private GatewayError error;
+    private ChargeStatus status;
     private String transactionId;
 
-    public AuthorisationResponse(Boolean successful, GatewayError error, ChargeStatus status, String transactionId) {
+    public AuthorisationResponse(boolean successful, GatewayError error, ChargeStatus status, String transactionId) {
         this.successful = successful;
         this.error = error;
         this.status = status;
         this.transactionId = transactionId;
+    }
+
+    public AuthorisationResponse(GatewayError error) {
+        this.error = error;
+        this.successful = false;
     }
 
     public static AuthorisationResponse successfulAuthorisation(ChargeStatus status, String transactionId) {
@@ -29,7 +33,7 @@ public class AuthorisationResponse implements GatewayResponse {
 
     public static AuthorisationResponse errorResponse(Logger logger, Response response) {
         logger.error(format("Error code received from gateway: %s.", response.getStatus()));
-        return new AuthorisationResponse(false, baseGatewayError("Error processing request"), null, null);
+        return new AuthorisationResponse(baseGatewayError("Error processing request"));
     }
 
     public static AuthorisationResponse authorisationFailureNotUpdateResponse(Logger logger, String transactionId, String errorMessage) {
@@ -40,6 +44,10 @@ public class AuthorisationResponse implements GatewayResponse {
     public static AuthorisationResponse authorisationFailureResponse(Logger logger, String transactionId, String errorMessage) {
         logger.error(format("Failed to authorise transaction with id %s: %s", transactionId, errorMessage));
         return new AuthorisationResponse(false, baseGatewayError("This transaction was declined."), AUTHORISATION_REJECTED, transactionId);
+    }
+
+    public static AuthorisationResponse authorisationFailureResponse(GatewayError gatewayError) {
+        return new AuthorisationResponse(gatewayError);
     }
 
     public Boolean isSuccessful() {

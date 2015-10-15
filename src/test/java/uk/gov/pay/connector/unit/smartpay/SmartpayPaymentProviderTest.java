@@ -9,7 +9,6 @@ import uk.gov.pay.connector.model.CaptureRequest;
 import uk.gov.pay.connector.model.CaptureResponse;
 import uk.gov.pay.connector.model.domain.Address;
 import uk.gov.pay.connector.model.domain.Card;
-import uk.gov.pay.connector.service.GatewayClient;
 import uk.gov.pay.connector.service.smartpay.SmartpayPaymentProvider;
 
 import javax.ws.rs.client.Client;
@@ -21,15 +20,14 @@ import javax.ws.rs.core.Response;
 import static javax.ws.rs.core.MediaType.APPLICATION_XML;
 import static org.hamcrest.CoreMatchers.notNullValue;
 import static org.hamcrest.MatcherAssert.assertThat;
-import static org.junit.Assert.assertTrue;
 import static org.hamcrest.core.Is.is;
-import static org.mockito.Matchers.any;
-import static org.mockito.Matchers.anyObject;
-import static org.mockito.Matchers.anyString;
+import static org.junit.Assert.assertTrue;
+import static org.mockito.Matchers.*;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
 import static uk.gov.pay.connector.model.domain.Address.anAddress;
 import static uk.gov.pay.connector.model.domain.GatewayAccount.gatewayAccountFor;
+import static uk.gov.pay.connector.service.GatewayClient.createGatewayClient;
 import static uk.gov.pay.connector.util.CardUtils.buildCardDetails;
 
 public class SmartpayPaymentProviderTest {
@@ -42,7 +40,7 @@ public class SmartpayPaymentProviderTest {
     public void setup() throws Exception {
         client = mock(Client.class);
         mockSmartpaySuccessfulOrderSubmitResponse();
-        provider = new SmartpayPaymentProvider(new GatewayClient(client, "http://smartpay.url"), gatewayAccountFor("theUsername", "thePassword"), new ObjectMapper());
+        provider = new SmartpayPaymentProvider(createGatewayClient(client, "http://smartpay.url"), gatewayAccountFor("theUsername", "thePassword"), new ObjectMapper());
     }
 
     @Test

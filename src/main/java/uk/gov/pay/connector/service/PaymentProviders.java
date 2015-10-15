@@ -3,16 +3,16 @@ package uk.gov.pay.connector.service;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import uk.gov.pay.connector.app.ConnectorConfiguration;
 import uk.gov.pay.connector.app.GatewayCredentialsConfig;
-import uk.gov.pay.connector.dao.ChargeDao;
 import uk.gov.pay.connector.service.sandbox.SandboxPaymentProvider;
 import uk.gov.pay.connector.service.smartpay.SmartpayPaymentProvider;
 import uk.gov.pay.connector.service.worldpay.WorldpayPaymentProvider;
 
-import javax.ws.rs.client.ClientBuilder;
+import javax.ws.rs.client.Client;
 
 import static java.lang.String.format;
 import static uk.gov.pay.connector.model.domain.GatewayAccount.gatewayAccountFor;
 import static uk.gov.pay.connector.resources.PaymentProviderValidator.*;
+import static uk.gov.pay.connector.service.GatewayClient.createGatewayClient;
 
 public class PaymentProviders {
     private final PaymentProvider worldpayProvider;
@@ -27,13 +27,14 @@ public class PaymentProviders {
 
     private PaymentProvider createWorldpayProvider(GatewayCredentialsConfig config) {
         return new WorldpayPaymentProvider(
-                new GatewayClient(ClientBuilder.newClient(), config.getUrl()),
+                createGatewayClient(config.getUrl()),
                 gatewayAccountFor(config.getUsername(), config.getPassword()));
     }
 
-    private PaymentProvider createSmartPayProvider(GatewayCredentialsConfig config, ObjectMapper objectMapper) {
+    private PaymentProvider createSmartPayProvider(GatewayCredentialsConfig config, 
+                                                   ObjectMapper objectMapper) {
         return new SmartpayPaymentProvider(
-                new GatewayClient(ClientBuilder.newClient(), config.getUrl()),
+                createGatewayClient(config.getUrl()),
                 gatewayAccountFor(config.getUsername(), config.getPassword()),
                 objectMapper
         );
