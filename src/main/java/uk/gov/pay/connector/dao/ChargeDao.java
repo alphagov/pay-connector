@@ -5,8 +5,10 @@ import org.skife.jdbi.v2.DefaultMapper;
 import org.skife.jdbi.v2.util.StringMapper;
 import uk.gov.pay.connector.model.domain.ChargeStatus;
 
+import java.util.List;
 import java.util.Map;
 import java.util.Optional;
+import java.util.stream.Collectors;
 
 import static com.google.common.collect.Maps.newHashMap;
 import static java.lang.String.format;
@@ -47,6 +49,20 @@ public class ChargeDao {
         return Optional.ofNullable(data);
     }
 
+    public void updateGatewayTransactionId(String chargeId, String transactionId) throws PayDBIException {
+        Integer numberOfUpdates = jdbi.withHandle(handle ->
+                        handle
+                                .createStatement("UPDATE charges SET gateway_transaction_id=:transactionId WHERE charge_id=:charge_id")
+                                .bind("charge_id", Long.valueOf(chargeId))
+                                .bind("transactionId", transactionId)
+                                .execute()
+        );
+
+        if (numberOfUpdates != 1) {
+            throw new PayDBIException(String.format("Could not update charge '%s' with gateway transaction id %s, updated %d rows.", chargeId, transactionId, numberOfUpdates));
+        }
+    }
+
     public void updateStatusWithGatewayInfo(String gatewayTransactionId, ChargeStatus newStatus) {
         Integer numberOfUpdates = jdbi.withHandle(handle ->
                         handle
@@ -60,7 +76,7 @@ public class ChargeDao {
             throw new PayDBIException(format("Could not update charge (gateway_transaction_id: %s) with status %s, updated %d rows.", gatewayTransactionId, newStatus, numberOfUpdates));
         }
     }
-
+    
     public void updateStatus(String chargeId, ChargeStatus newStatus) {
         Integer numberOfUpdates = jdbi.withHandle(handle ->
                         handle
@@ -73,6 +89,18 @@ public class ChargeDao {
         if (numberOfUpdates != 1) {
             throw new PayDBIException(format("Could not update charge '%s' with status %s, updated %d rows.", chargeId, newStatus, numberOfUpdates));
         }
+    }
+
+    public List<Map<String, Object>> findAllBy(String gatewayAccountId) {
+        List<Map<String, Object>> rawData = jdbi.withHandle(handle ->
+                handle.createQuery("SELECT charge_id, gateway_transaction_id, status, amount " +
+                        "FROM charges WHERE gateway_account_id=:gid " +
+                        "ORDER BY charge_id DESC")
+                        .bind("gid", Long.valueOf(gatewayAccountId))
+                        .map(new DefaultMapper())
+                        .list());
+
+        return copyAndConvertFieldsToString(rawData, "charge_id", "gateway_account_id");
     }
 
     private Map<String, Object> copyAndConvertFieldToLong(Map<String, Object> charge, String field) {
@@ -90,17 +118,9 @@ public class ChargeDao {
         return copy;
     }
 
-    public void updateGatewayTransactionId(String chargeId, String transactionId) throws PayDBIException {
-        Integer numberOfUpdates = jdbi.withHandle(handle ->
-                        handle
-                                .createStatement("UPDATE charges SET gateway_transaction_id=:transactionId WHERE charge_id=:charge_id")
-                                .bind("charge_id", Long.valueOf(chargeId))
-                                .bind("transactionId", transactionId)
-                                .execute()
-        );
-
-        if (numberOfUpdates != 1) {
-            throw new PayDBIException(String.format("Could not update charge '%s' with gateway transaction id %s, updated %d rows.", chargeId, transactionId, numberOfUpdates));
-        }
+    private List<Map<String, Object>> copyAndConvertFieldsToString(List<Map<String, Object>> data, final String... fields) {
+        return data.stream()
+                .map(charge -> copyAndConvertFieldsToString(charge, fields))
+                .collect(Collectors.toList());
     }
 }

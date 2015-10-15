@@ -35,7 +35,7 @@ public class DatabaseTestHelper {
     ) {
         jdbi.withHandle(h ->
                         h.update(
-                                "INSERT INTO\n" +
+                                "INSERT INTO" +
                                         "    charges(\n" +
                                         "        charge_id,\n" +
                                         "        amount,\n" +
