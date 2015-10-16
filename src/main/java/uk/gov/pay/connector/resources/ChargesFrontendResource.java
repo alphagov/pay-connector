@@ -1,5 +1,6 @@
 package uk.gov.pay.connector.resources;
 
+import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableMap;
 import fj.F;
 import fj.data.Either;
@@ -64,10 +65,22 @@ public class ChargesFrontendResource {
     @Path(PUT_CHARGE_STATUS_FRONTEND_PATH)
     @Produces(APPLICATION_JSON)
     public Response updateChargeStatus(@PathParam("chargeId") String chargeId, Map newStatusMap) {
+        if (invalidUpdateInput(newStatusMap)) {
+            return fieldsMissingResponse(logger, ImmutableList.of("new_status"));
+        }
         Optional<Map<String, Object>> maybeCharge = chargeDao.findById(chargeId);
-        return maybeCharge
-                .map(charge -> updateStatus(charge, ChargeStatus.chargeStatusFrom(newStatusMap.get("new_status").toString())))
-                .orElseGet(() -> responseWithChargeNotFound(logger, chargeId));
+        try {
+            return maybeCharge
+                    .map(charge -> updateStatus(charge, ChargeStatus.chargeStatusFrom(newStatusMap.get("new_status").toString())))
+                    .orElseGet(() -> responseWithChargeNotFound(logger, chargeId));
+        } catch (IllegalArgumentException e) {
+            logger.error(e.getMessage(), e);
+            return badRequestResponse(logger, e.getMessage());
+        }
+    }
+
+    private boolean invalidUpdateInput(Map newStatusMap) {
+        return newStatusMap == null || newStatusMap.get("new_status") == null;
     }
 
     @GET

@@ -15,10 +15,10 @@ import static java.lang.String.format;
 import static java.util.UUID.randomUUID;
 import static javax.ws.rs.HttpMethod.POST;
 import static javax.ws.rs.core.Response.Status;
-import static javax.ws.rs.core.Response.Status.NO_CONTENT;
-import static javax.ws.rs.core.Response.Status.OK;
+import static javax.ws.rs.core.Response.Status.*;
 import static org.hamcrest.Matchers.*;
 import static uk.gov.pay.connector.model.domain.ChargeStatus.*;
+import static uk.gov.pay.connector.model.domain.ChargeStatus.CREATED;
 import static uk.gov.pay.connector.util.JsonEncoder.toJson;
 import static uk.gov.pay.connector.util.LinksAssert.assertLink;
 import static uk.gov.pay.connector.util.LinksAssert.assertSelfLink;
@@ -75,6 +75,34 @@ public class ChargesFrontendResourceITest {
                 .body(isEmptyOrNullString());
 
         validateGetCharge(expectedAmount, chargeId, ENTERING_CARD_DETAILS);
+    }
+
+    @Test
+    public void shouldBeBadRequestForUpdateStatusWithEmptyBody() {
+        long expectedAmount = 2113l;
+        String chargeId = postToCreateACharge(expectedAmount);
+        String putBody = "";
+
+        putChargeStatus(chargeId, putBody)
+                .statusCode(BAD_REQUEST.getStatusCode())
+                .body(is("{\"message\":\"Field(s) missing: [new_status]\"}"));
+
+        //charge status should remain CREATED
+        validateGetCharge(expectedAmount, chargeId, CREATED);
+    }
+
+    @Test
+    public void shouldBeBadRequestForUpdateStatusForUnrecognisedStatus() {
+        long expectedAmount = 2113l;
+        String chargeId = postToCreateACharge(expectedAmount);
+        String putBody = toJson(ImmutableMap.of("new_status", "junk"));
+
+        putChargeStatus(chargeId, putBody)
+                .statusCode(BAD_REQUEST.getStatusCode())
+                .body(is("{\"message\":\"charge status not recognized: junk\"}"));
+
+        //charge status should remain CREATED
+        validateGetCharge(expectedAmount, chargeId, CREATED);
     }
 
     @Test
