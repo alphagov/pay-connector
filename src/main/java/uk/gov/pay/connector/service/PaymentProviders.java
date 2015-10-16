@@ -20,7 +20,7 @@ public class PaymentProviders {
     public PaymentProviders(ConnectorConfiguration config, ObjectMapper objectMapper) {
         this.worldpayProvider = createWorldpayProvider(config.getWorldpayConfig());
         this.smartpayProvider = createSmartPayProvider(config.getSmartpayConfig(), objectMapper);
-        this.sandboxProvider = new SandboxPaymentProvider();
+        this.sandboxProvider = new SandboxPaymentProvider(objectMapper);
     }
 
     private PaymentProvider createWorldpayProvider(GatewayCredentialsConfig config) {

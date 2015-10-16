@@ -45,7 +45,7 @@ public class NotificationResource {
             return Response.status(BAD_GATEWAY).build();
         }
 
-        response.forEachStatusUpdate(chargeDao::updateStatusWithGatewayInfo);
+        response.getStatusUpdates().forEach(update -> chargeDao.updateStatusWithGatewayInfo(update.getKey(), update.getRight()));
 
         return Response.ok(response.getResponseForProvider()).build();
     }

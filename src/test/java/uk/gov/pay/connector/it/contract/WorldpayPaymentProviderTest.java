@@ -1,6 +1,8 @@
 package uk.gov.pay.connector.it.contract;
 
 import com.google.common.io.Resources;
+import org.apache.commons.lang3.tuple.Pair;
+import org.hamcrest.CoreMatchers;
 import org.junit.Assume;
 import org.junit.Before;
 import org.junit.Test;
@@ -18,6 +20,7 @@ import java.net.URL;
 import java.nio.charset.Charset;
 
 import static com.google.common.io.Resources.getResource;
+import static org.hamcrest.CoreMatchers.hasItem;
 import static org.hamcrest.core.Is.is;
 import static org.junit.Assert.*;
 import static uk.gov.pay.connector.model.domain.ChargeStatus.CAPTURED;
@@ -67,16 +70,7 @@ public class WorldpayPaymentProviderTest {
         String transactionId = "c15b9283-5205-45e0-8019-883c3319e838";
         StatusUpdates statusResponse = connector.newStatusFromNotification(notificationPayloadForTransaction(transactionId));
 
-        try {
-            statusResponse.forEachStatusUpdate((id, newStatus) -> {
-                assertThat(transactionId, is(transactionId));
-                assertThat(newStatus, is(CAPTURED));
-                throw new TestPassedException();
-            });
-            fail("Expected a status update.");
-        } catch (TestPassedException e) {
-            // Yay!
-        }
+        assertThat(statusResponse.getStatusUpdates(), hasItem(Pair.of(transactionId, CAPTURED)));
     }
 
     @Test
@@ -100,10 +94,6 @@ public class WorldpayPaymentProviderTest {
         return new AuthorisationRequest("chargeId", card, amount, description);
     }
 
-
-    private ChargeStatusRequest getChargeStatusRequest() {
-        return () -> "c15b9283-5205-45e0-8019-883c3319e838";
-    }
 
     private GatewayCredentialsConfig getWorldpayConfig() {
         return WORLDPAY_CREDENTIALS;
@@ -130,8 +120,5 @@ public class WorldpayPaymentProviderTest {
         URL resource = getResource("templates/worldpay/notification.xml");
         return Resources.toString(resource, Charset.defaultCharset()).replace("{{transactionId}}", transactionId);
     }
-
-
-    private static final class TestPassedException extends RuntimeException {}
 
 }
