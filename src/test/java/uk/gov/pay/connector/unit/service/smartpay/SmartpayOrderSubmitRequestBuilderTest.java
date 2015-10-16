@@ -31,6 +31,7 @@ public class SmartpayOrderSubmitRequestBuilderTest {
                 .withMerchantCode("MerchantAccount")
                 .withTransactionId("MyTransactionId")
                 .withDescription("MyDescription")
+                .withPaymentPlatformReference("MyPlatformReference")
                 .withAmount("2000")
                 .withCard(card)
                 .build();

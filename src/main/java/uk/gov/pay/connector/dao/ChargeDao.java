@@ -59,10 +59,24 @@ public class ChargeDao {
         );
 
         if (numberOfUpdates != 1) {
-            throw new PayDBIException(String.format("Could not update charge '%s' with gateway transaction id %s", chargeId, transactionId));
+            throw new PayDBIException(String.format("Could not update charge '%s' with gateway transaction id %s, updated %d rows.", chargeId, transactionId, numberOfUpdates));
         }
     }
 
+    public void updateStatusWithGatewayInfo(String gatewayTransactionId, ChargeStatus newStatus) {
+        Integer numberOfUpdates = jdbi.withHandle(handle ->
+                        handle
+                                .createStatement("UPDATE charges SET status=:status WHERE gateway_transaction_id=:gateway_transaction_id")
+                                .bind("gateway_transaction_id", gatewayTransactionId)
+                                .bind("status", newStatus.getValue())
+                                .execute()
+        );
+
+        if (numberOfUpdates != 1) {
+            throw new PayDBIException(format("Could not update charge (gateway_transaction_id: %s) with status %s, updated %d rows.", gatewayTransactionId, newStatus, numberOfUpdates));
+        }
+    }
+    
     public void updateStatus(String chargeId, ChargeStatus newStatus) {
         Integer numberOfUpdates = jdbi.withHandle(handle ->
                         handle
@@ -73,7 +87,7 @@ public class ChargeDao {
         );
 
         if (numberOfUpdates != 1) {
-            throw new PayDBIException(format("Could not update charge '%s' with status %s", chargeId, newStatus));
+            throw new PayDBIException(format("Could not update charge '%s' with status %s, updated %d rows.", chargeId, newStatus, numberOfUpdates));
         }
     }
 

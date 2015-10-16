@@ -5,7 +5,7 @@ import org.junit.Before;
 import org.junit.Rule;
 import org.junit.Test;
 import uk.gov.pay.connector.dao.GatewayAccountDao;
-import uk.gov.pay.connector.util.DropwizardAppWithPostgresRule;
+import uk.gov.pay.connector.rules.DropwizardAppWithPostgresRule;
 
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.hasEntry;

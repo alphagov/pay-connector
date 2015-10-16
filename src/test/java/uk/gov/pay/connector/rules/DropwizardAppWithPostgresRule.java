@@ -1,4 +1,4 @@
-package uk.gov.pay.connector.util;
+package uk.gov.pay.connector.rules;
 
 import io.dropwizard.testing.ConfigOverride;
 import io.dropwizard.testing.junit.DropwizardAppRule;
@@ -11,13 +11,13 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import uk.gov.pay.connector.app.ConnectorApp;
 import uk.gov.pay.connector.app.ConnectorConfiguration;
+import uk.gov.pay.connector.util.DatabaseTestHelper;
 
-import java.util.ArrayList;
 import java.util.List;
 
+import static com.google.common.collect.Lists.newArrayList;
 import static io.dropwizard.testing.ConfigOverride.config;
 import static io.dropwizard.testing.ResourceHelpers.resourceFilePath;
-import static java.util.Arrays.asList;
 
 public class DropwizardAppWithPostgresRule implements TestRule {
     private static final Logger logger = LoggerFactory.getLogger(DropwizardAppWithPostgresRule.class);
@@ -28,11 +28,19 @@ public class DropwizardAppWithPostgresRule implements TestRule {
     private final RuleChain rules;
 
     private DatabaseTestHelper databaseTestHelper;
-
+    
+    public DropwizardAppWithPostgresRule() {
+        this("config/test-it-config.yaml");
+    }
+    
     public DropwizardAppWithPostgresRule(ConfigOverride... configOverrides) {
-        configFilePath = resourceFilePath("config/test-it-config.yaml");
+        this("config/test-it-config.yaml", configOverrides);
+    }
+
+    public DropwizardAppWithPostgresRule(String configPath, ConfigOverride... configOverrides) {
+        configFilePath = resourceFilePath(configPath);
         postgres = new PostgresDockerRule();
-        List<ConfigOverride> cfgOverrideList = new ArrayList(asList(configOverrides));
+        List<ConfigOverride> cfgOverrideList = newArrayList(configOverrides);
         cfgOverrideList.add(config("database.url", postgres.getConnectionUrl()));
         cfgOverrideList.add(config("database.user", postgres.getUsername()));
         cfgOverrideList.add(config("database.password", postgres.getPassword()));

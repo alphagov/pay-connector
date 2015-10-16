@@ -1,9 +1,9 @@
 package uk.gov.pay.connector.it.contract;
 
+import com.fasterxml.jackson.databind.ObjectMapper;
+import org.junit.Assume;
 import org.junit.Before;
-import org.junit.Rule;
 import org.junit.Test;
-import uk.gov.pay.connector.app.GatewayCredentialsConfig;
 import uk.gov.pay.connector.model.AuthorisationRequest;
 import uk.gov.pay.connector.model.AuthorisationResponse;
 import uk.gov.pay.connector.model.CaptureRequest;
@@ -14,28 +14,36 @@ import uk.gov.pay.connector.model.domain.GatewayAccount;
 import uk.gov.pay.connector.service.GatewayClient;
 import uk.gov.pay.connector.service.PaymentProvider;
 import uk.gov.pay.connector.service.smartpay.SmartpayPaymentProvider;
-import uk.gov.pay.connector.util.DropwizardAppWithPostgresRule;
+
+import java.io.IOException;
+import java.net.URL;
 
 import static org.junit.Assert.*;
 import static uk.gov.pay.connector.model.domain.GatewayAccount.gatewayAccountFor;
 import static uk.gov.pay.connector.service.GatewayClient.createGatewayClient;
 import static uk.gov.pay.connector.util.CardUtils.buildCardDetails;
+import static uk.gov.pay.connector.util.SystemUtils.envOrThrow;
 
-public class SmartpayPaymentProviderITest {
-    @Rule
-    public DropwizardAppWithPostgresRule app = new DropwizardAppWithPostgresRule();
+public class SmartpayPaymentProviderTest {
 
     private static final String CHARGE_AMOUNT = "500";
-    private GatewayCredentialsConfig config;
+
+    private String url = "https://pal-test.barclaycardsmartpay.com/pal/servlet/soap/Payment";
+    private String username = envOrThrow("GDS_CONNECTOR_SMARTPAY_USER");
+    private String password = envOrThrow("GDS_CONNECTOR_SMARTPAY_PASSWORD");
 
     @Before
-    public void setUp(){
-         config = app.getConf().getSmartpayConfig();
+    public void setUpAndCheckThatSmartpayIsUp() {
+        try {
+            new URL(url).openConnection().connect();
+        } catch (IOException ex) {
+            Assume.assumeTrue(false);
+        }
     }
 
     @Test
     public void shouldSendSuccessfullyAnOrderForMerchant() throws Exception {
-        PaymentProvider paymentProvider = getSmartpayPaymentProvider(config.getUsername(), config.getPassword());
+        PaymentProvider paymentProvider = getSmartpayPaymentProvider(username, password);
         testCardAuthorisation(paymentProvider);
     }
 
@@ -51,7 +59,7 @@ public class SmartpayPaymentProviderITest {
 
     @Test
     public void shouldSendSuccessfullyACaptureRequest() throws Exception {
-        PaymentProvider paymentProvider = getSmartpayPaymentProvider(config.getUsername(), config.getPassword());
+        PaymentProvider paymentProvider = getSmartpayPaymentProvider(username, password);
         AuthorisationResponse response = testCardAuthorisation(paymentProvider);
 
         CaptureRequest captureRequest = new CaptureRequest(CHARGE_AMOUNT, response.getTransactionId());
@@ -82,7 +90,7 @@ public class SmartpayPaymentProviderITest {
 
         String amount = CHARGE_AMOUNT;
         String description = "This is the description";
-        return new AuthorisationRequest(card, amount, description);
+        return new AuthorisationRequest("chargeId", card, amount, description);
     }
 
     private Card aValidSmartpayCard() {
@@ -91,8 +99,8 @@ public class SmartpayPaymentProviderITest {
     }
 
     private PaymentProvider getSmartpayPaymentProvider(String username, String password) throws Exception {
-        GatewayClient gatewayClient = createGatewayClient(config.getUrl());
+        GatewayClient gatewayClient = createGatewayClient(url);
         GatewayAccount gatewayAccount = gatewayAccountFor(username, password);
-        return new SmartpayPaymentProvider(gatewayClient, gatewayAccount);
+        return new SmartpayPaymentProvider(gatewayClient, gatewayAccount, new ObjectMapper());
     }
 }

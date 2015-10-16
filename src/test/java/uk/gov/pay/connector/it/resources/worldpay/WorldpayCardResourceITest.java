@@ -18,6 +18,7 @@ public class WorldpayCardResourceITest extends CardResourceITestBase {
     public void shouldAuthoriseCharge_ForValidCardDetails() throws Exception {
 
         String chargeId = createNewCharge();
+        worldpay.mockAuthorisationSuccess();
 
         givenSetup()
                 .body(validCardDetails)
@@ -32,6 +33,8 @@ public class WorldpayCardResourceITest extends CardResourceITestBase {
     public void shouldNotAuthorise_AWorldpayErrorCard() throws Exception {
         String cardDetailsRejectedByWorldpay = buildJsonCardDetailsFor("REFUSED", "4444333322221111");
 
+        worldpay.mockAuthorisationFailure();
+
         String expectedErrorMessage = "This transaction was declined.";
         String expectedChargeStatus = AUTHORISATION_REJECTED.getValue();
         shouldReturnErrorForCardDetailsWithMessage(cardDetailsRejectedByWorldpay, expectedErrorMessage, expectedChargeStatus);
@@ -40,6 +43,8 @@ public class WorldpayCardResourceITest extends CardResourceITestBase {
     @Test
     public void shouldCaptureCardPayment_IfChargeWasPreviouslyAuthorised() {
         String chargeId = authoriseNewCharge();
+
+        worldpay.mockCaptureResponse();
 
         givenSetup()
                 .post(captureChargeUrlFor(chargeId))

@@ -8,16 +8,16 @@ import org.junit.rules.ExpectedException;
 import uk.gov.pay.connector.dao.ChargeDao;
 import uk.gov.pay.connector.dao.PayDBIException;
 import uk.gov.pay.connector.model.domain.ChargeStatus;
-import uk.gov.pay.connector.util.DropwizardAppWithPostgresRule;
+import uk.gov.pay.connector.rules.DropwizardAppWithPostgresRule;
 
 import java.util.Map;
-import java.util.UUID;
 
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.is;
 import static uk.gov.pay.connector.model.domain.ChargeStatus.AUTHORISATION_SUBMITTED;
 import static uk.gov.pay.connector.model.domain.ChargeStatus.AUTHORISATION_SUCCESS;
 import static uk.gov.pay.connector.model.domain.ChargeStatus.CREATED;
+import static uk.gov.pay.connector.util.TransactionId.randomId;
 
 public class ChargeDaoITest {
 
@@ -81,11 +81,24 @@ public class ChargeDaoITest {
         long amount = 101;
         String chargeId = chargeDao.saveNewCharge(newCharge(amount));
 
-        String transactionId = UUID.randomUUID().toString();
+        String transactionId = randomId();
         chargeDao.updateGatewayTransactionId(chargeId, transactionId);
 
         Map<String, Object> charge = chargeDao.findById(chargeId).get();
         assertThat(charge.get("gateway_transaction_id"), is(transactionId));
+    }
+
+    @Test
+    public void insertChargeAndThenUpdateStatusPerGatewayTransactionId() throws Exception {
+
+        String chargeId = chargeDao.saveNewCharge(newCharge((long) 101));
+        String gatewayTransactionId = randomId();
+
+        chargeDao.updateGatewayTransactionId(chargeId, gatewayTransactionId);
+        chargeDao.updateStatusWithGatewayInfo(gatewayTransactionId, AUTHORISATION_SUBMITTED);
+
+        Map<String, Object> charge = chargeDao.findById(chargeId).get();
+        assertThat(charge.get("status"), is("AUTHORISATION SUBMITTED"));
     }
 
     @Test

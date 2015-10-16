@@ -17,7 +17,6 @@ import javax.ws.rs.client.ClientBuilder;
 import javax.ws.rs.client.Entity;
 import javax.ws.rs.core.Response;
 import javax.xml.bind.JAXBException;
-
 import java.net.UnknownHostException;
 
 import static fj.data.Either.left;
@@ -25,9 +24,7 @@ import static fj.data.Either.right;
 import static java.lang.String.format;
 import static javax.ws.rs.core.HttpHeaders.AUTHORIZATION;
 import static javax.ws.rs.core.MediaType.APPLICATION_XML;
-import static uk.gov.pay.connector.model.GatewayError.baseGatewayError;
-import static uk.gov.pay.connector.model.GatewayError.malformedResponseReceivedFromGateway;
-import static uk.gov.pay.connector.model.GatewayError.unknownHostException;
+import static uk.gov.pay.connector.model.GatewayError.*;
 
 public class GatewayClient {
     private final Logger logger = LoggerFactory.getLogger(GatewayClient.class);

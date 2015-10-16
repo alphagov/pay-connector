@@ -34,7 +34,7 @@ public class CaptureResponse implements GatewayResponse {
     public static CaptureResponse captureFailureResponse(Logger logger, String errorMessage, String transactionId) {
         logger.error(format("Failed to capture for transaction id %s: %s", transactionId, errorMessage));
 
-        return new CaptureResponse(false, baseGatewayError(errorMessage));
+        return new CaptureResponse(false, baseGatewayError("A problem occurred."));
     }
 
     public static CaptureResponse errorCaptureResponse(Logger logger, Response response) {

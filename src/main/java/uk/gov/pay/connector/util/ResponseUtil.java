@@ -8,9 +8,7 @@ import javax.ws.rs.core.Response;
 import java.util.List;
 
 import static java.lang.String.format;
-import static javax.ws.rs.core.Response.Status.BAD_REQUEST;
-import static javax.ws.rs.core.Response.Status.INTERNAL_SERVER_ERROR;
-import static javax.ws.rs.core.Response.Status.NOT_FOUND;
+import static javax.ws.rs.core.Response.Status.*;
 
 public class ResponseUtil {
     public static final Joiner COMMA_JOINER = Joiner.on(", ");

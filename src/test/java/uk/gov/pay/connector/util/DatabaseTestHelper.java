@@ -50,7 +50,8 @@ public class DatabaseTestHelper {
                                 status.getValue(),
                                 Long.valueOf(gatewayAccountId),
                                 returnUrl,
-                                transactionId)
+                                transactionId
+                        )
         );
     }
 

@@ -7,7 +7,7 @@ import org.junit.Before;
 import org.junit.Rule;
 import org.junit.Test;
 import uk.gov.pay.connector.model.domain.ChargeStatus;
-import uk.gov.pay.connector.util.DropwizardAppWithPostgresRule;
+import uk.gov.pay.connector.rules.DropwizardAppWithPostgresRule;
 
 import java.util.Arrays;
 import java.util.List;
@@ -84,7 +84,7 @@ public class ChargeCancelResourceITest {
 
     private String createNewChargeWithStatus(ChargeStatus status) {
         String chargeId = ((Integer) RandomUtils.nextInt(99999999)).toString();
-        app.getDatabaseTestHelper().addCharge(chargeId, accountId, 500, status, "http://not.relevant");
+        app.getDatabaseTestHelper().addCharge(chargeId, accountId, 500, status, "http://not.relevant", null);
         return chargeId;
     }
 

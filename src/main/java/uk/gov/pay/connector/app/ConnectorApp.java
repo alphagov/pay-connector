@@ -1,6 +1,8 @@
 package uk.gov.pay.connector.app;
 
 import io.dropwizard.Application;
+import io.dropwizard.auth.AuthFactory;
+import io.dropwizard.auth.basic.BasicAuthFactory;
 import io.dropwizard.configuration.EnvironmentVariableSubstitutor;
 import io.dropwizard.configuration.SubstitutingSourceProvider;
 import io.dropwizard.db.DataSourceFactory;
@@ -10,6 +12,7 @@ import io.dropwizard.migrations.MigrationsBundle;
 import io.dropwizard.setup.Bootstrap;
 import io.dropwizard.setup.Environment;
 import org.skife.jdbi.v2.DBI;
+import uk.gov.pay.connector.auth.SmartpayAuthenticator;
 import uk.gov.pay.connector.dao.ChargeDao;
 import uk.gov.pay.connector.dao.GatewayAccountDao;
 import uk.gov.pay.connector.dao.TokenDao;
@@ -59,14 +62,22 @@ public class ConnectorApp extends Application<ConnectorConfiguration> {
         ChargeDao chargeDao = new ChargeDao(jdbi);
         TokenDao tokenDao = new TokenDao(jdbi);
         GatewayAccountDao gatewayAccountDao = new GatewayAccountDao(jdbi);
-        PaymentProviders providers = new PaymentProviders(conf);
+        PaymentProviders providers = new PaymentProviders(conf, environment.getObjectMapper());
         CardService cardService = new CardService(gatewayAccountDao, chargeDao, providers);
 
         environment.jersey().register(new SecurityTokensResource(tokenDao));
+        environment.jersey().register(new NotificationResource(providers, chargeDao));
         environment.jersey().register(new ChargesApiResource(chargeDao, tokenDao, gatewayAccountDao, conf.getLinks()));
         environment.jersey().register(new ChargesFrontendResource(chargeDao, gatewayAccountDao));
         environment.jersey().register(new CardResource(cardService));
         environment.jersey().register(new GatewayAccountResource(gatewayAccountDao));
+
+        environment.jersey().register(AuthFactory.binder(
+                new BasicAuthFactory<>(
+                        new SmartpayAuthenticator(
+                                conf.getSmartpayConfig().getNotification()),
+                        "",
+                        String.class)));
 
         environment.healthChecks().register("database", new DatabaseHealthCheck(jdbi, dataSourceFactory.getValidationQuery()));
     }

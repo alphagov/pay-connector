@@ -9,4 +9,6 @@ public interface PaymentProvider {
     CaptureResponse capture(CaptureRequest request);
 
     CancelResponse cancel(CancelRequest request);
+
+    StatusUpdates newStatusFromNotification(String notification);
 }

@@ -1,16 +1,11 @@
 package uk.gov.pay.connector.service;
 
-import org.glassfish.jersey.apache.connector.ApacheConnectorProvider;
-import org.glassfish.jersey.client.ClientConfig;
-import org.glassfish.jersey.client.spi.ConnectorProvider;
+import com.fasterxml.jackson.databind.ObjectMapper;
 import uk.gov.pay.connector.app.ConnectorConfiguration;
 import uk.gov.pay.connector.app.GatewayCredentialsConfig;
 import uk.gov.pay.connector.service.sandbox.SandboxPaymentProvider;
 import uk.gov.pay.connector.service.smartpay.SmartpayPaymentProvider;
 import uk.gov.pay.connector.service.worldpay.WorldpayPaymentProvider;
-
-import javax.ws.rs.client.Client;
-import javax.ws.rs.client.ClientBuilder;
 
 import static java.lang.String.format;
 import static uk.gov.pay.connector.model.domain.GatewayAccount.gatewayAccountFor;
@@ -22,10 +17,10 @@ public class PaymentProviders {
     private final PaymentProvider smartpayProvider;
     private final PaymentProvider sandboxProvider;
 
-    public PaymentProviders(ConnectorConfiguration config) {
-        worldpayProvider = createWorldpayProvider(config.getWorldpayConfig());
-        smartpayProvider = createSmartPayProvider(config.getSmartpayConfig());
-        sandboxProvider = new SandboxPaymentProvider();
+    public PaymentProviders(ConnectorConfiguration config, ObjectMapper objectMapper) {
+        this.worldpayProvider = createWorldpayProvider(config.getWorldpayConfig());
+        this.smartpayProvider = createSmartPayProvider(config.getSmartpayConfig(), objectMapper);
+        this.sandboxProvider = new SandboxPaymentProvider();
     }
 
     private PaymentProvider createWorldpayProvider(GatewayCredentialsConfig config) {
@@ -34,10 +29,12 @@ public class PaymentProviders {
                 gatewayAccountFor(config.getUsername(), config.getPassword()));
     }
 
-    private PaymentProvider createSmartPayProvider(GatewayCredentialsConfig config) {
+    private PaymentProvider createSmartPayProvider(GatewayCredentialsConfig config, 
+                                                   ObjectMapper objectMapper) {
         return new SmartpayPaymentProvider(
                 createGatewayClient(config.getUrl()),
-                gatewayAccountFor(config.getUsername(), config.getPassword())
+                gatewayAccountFor(config.getUsername(), config.getPassword()),
+                objectMapper
         );
     }
 

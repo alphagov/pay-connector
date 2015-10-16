@@ -4,18 +4,18 @@ import org.junit.Before;
 import org.junit.Rule;
 import org.junit.Test;
 import org.mockserver.junit.MockServerRule;
+import uk.gov.pay.connector.rules.DropwizardAppWithPostgresRule;
 import uk.gov.pay.connector.util.DatabaseTestHelper;
-import uk.gov.pay.connector.util.DropwizardAppWithPostgresRule;
 
 import static com.jayway.restassured.RestAssured.given;
 import static com.jayway.restassured.http.ContentType.JSON;
 import static io.dropwizard.testing.ConfigOverride.config;
-import static org.eclipse.jetty.http.HttpStatus.OK_200;
 import static org.hamcrest.Matchers.is;
 import static org.junit.Assert.assertThat;
 import static uk.gov.pay.connector.it.contract.SmartpayMockClient.CAPTURE_SUCCESS_PAYLOAD;
 import static uk.gov.pay.connector.it.contract.SmartpayMockClient.UNKNOWN_STATUS_CODE;
-import static uk.gov.pay.connector.model.domain.ChargeStatus.*;
+import static uk.gov.pay.connector.model.domain.ChargeStatus.AUTHORISATION_SUCCESS;
+import static uk.gov.pay.connector.model.domain.ChargeStatus.CAPTURE_UNKNOWN;
 import static uk.gov.pay.connector.resources.CardResource.CAPTURE_FRONTEND_RESOURCE_PATH;
 import static uk.gov.pay.connector.resources.PaymentProviderValidator.SMARTPAY_PROVIDER;
 

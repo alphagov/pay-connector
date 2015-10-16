@@ -4,7 +4,7 @@ import com.jayway.restassured.specification.RequestSpecification;
 import org.junit.Before;
 import org.junit.Rule;
 import org.junit.Test;
-import uk.gov.pay.connector.util.DropwizardAppWithPostgresRule;
+import uk.gov.pay.connector.rules.DropwizardAppWithPostgresRule;
 
 import static com.jayway.restassured.RestAssured.given;
 import static com.jayway.restassured.http.ContentType.JSON;
@@ -66,7 +66,7 @@ public class SecurityTokensResourceITest {
     }
 
     private void createNewCharge(String chargeId, String tokenId) {
-        app.getDatabaseTestHelper().addCharge(chargeId, ACCOUNT_ID, 500, CREATED, "return_url");
+        app.getDatabaseTestHelper().addCharge(chargeId, ACCOUNT_ID, 500, CREATED, "return_url", null);
         app.getDatabaseTestHelper().addToken(chargeId, tokenId);
     }
 

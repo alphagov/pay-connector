@@ -1,5 +1,6 @@
 package uk.gov.pay.connector.unit.smartpay;
 
+import com.fasterxml.jackson.databind.ObjectMapper;
 import org.junit.Before;
 import org.junit.Test;
 import uk.gov.pay.connector.model.AuthorisationRequest;
@@ -8,7 +9,6 @@ import uk.gov.pay.connector.model.CaptureRequest;
 import uk.gov.pay.connector.model.CaptureResponse;
 import uk.gov.pay.connector.model.domain.Address;
 import uk.gov.pay.connector.model.domain.Card;
-import uk.gov.pay.connector.service.GatewayClient;
 import uk.gov.pay.connector.service.smartpay.SmartpayPaymentProvider;
 
 import javax.ws.rs.client.Client;
@@ -18,6 +18,7 @@ import javax.ws.rs.client.WebTarget;
 import javax.ws.rs.core.Response;
 
 import static javax.ws.rs.core.MediaType.APPLICATION_XML;
+import static org.hamcrest.CoreMatchers.notNullValue;
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.core.Is.is;
 import static org.junit.Assert.assertTrue;
@@ -33,23 +34,20 @@ public class SmartpayPaymentProviderTest {
     private Client client;
     private SmartpayPaymentProvider provider;
 
-    private String pcpReference = "12345678";
+    private String pspReference = "12345678";
 
     @Before
     public void setup() throws Exception {
         client = mock(Client.class);
         mockSmartpaySuccessfulOrderSubmitResponse();
-        provider = new SmartpayPaymentProvider(
-                createGatewayClient(client, "http://smartpay.url"),
-                gatewayAccountFor("theUsername", "thePassword")
-        );
+        provider = new SmartpayPaymentProvider(createGatewayClient(client, "http://smartpay.url"), gatewayAccountFor("theUsername", "thePassword"), new ObjectMapper());
     }
 
     @Test
     public void shouldSendSuccessfullyAOrderForMerchant() throws Exception {
         AuthorisationResponse response = provider.authorise(getCardAuthorisationRequest());
         assertTrue(response.isSuccessful());
-        assertThat(response.getTransactionId(), is(pcpReference));
+        assertThat(response.getTransactionId(), is(notNullValue()));
     }
 
     @Test
@@ -64,7 +62,7 @@ public class SmartpayPaymentProviderTest {
         String amount = "222";
 
         String description = "This is the description";
-        return new AuthorisationRequest(card, amount, description);
+        return new AuthorisationRequest("chargeId", card, amount, description);
     }
 
     private void mockSmartpaySuccessfulOrderSubmitResponse() {
@@ -103,7 +101,7 @@ public class SmartpayPaymentProviderTest {
                 "                <issuerUrl xmlns=\"http://payment.services.adyen.com\" xsi:nil=\"true\"/>\n" +
                 "                <md xmlns=\"http://payment.services.adyen.com\" xsi:nil=\"true\"/>\n" +
                 "                <paRequest xmlns=\"http://payment.services.adyen.com\" xsi:nil=\"true\"/>\n" +
-                "                <pspReference xmlns=\"http://payment.services.adyen.com\">" + pcpReference + "</pspReference>\n" +
+                "                <pspReference xmlns=\"http://payment.services.adyen.com\">" + pspReference + "</pspReference>\n" +
                 "                <refusalReason xmlns=\"http://payment.services.adyen.com\" xsi:nil=\"true\"/>\n" +
                 "                <resultCode xmlns=\"http://payment.services.adyen.com\">Authorised</resultCode>\n" +
                 "            </ns1:paymentResult>\n" +

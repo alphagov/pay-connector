@@ -161,7 +161,7 @@ public class CardResourceITest extends CardResourceITestBase {
 
     @Test
     public void shouldReturnErrorWithoutChangingChargeState_IfOriginalStateIsNotAuthorised() {
-        String chargeIdNotAuthorised = createNewChargeWithStatus(AUTHORISATION_SUBMITTED);
+        String chargeIdNotAuthorised = createNewChargeWith(AUTHORISATION_SUBMITTED, null);
 
         givenSetup()
                 .post(captureChargeUrlFor(chargeIdNotAuthorised))

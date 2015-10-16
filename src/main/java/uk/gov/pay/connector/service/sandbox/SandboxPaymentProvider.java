@@ -39,4 +39,10 @@ public class SandboxPaymentProvider implements PaymentProvider {
     public CancelResponse cancel(CancelRequest request) {
         return aSuccessfulCancelResponse();
     }
+
+    @Override
+    public StatusUpdates newStatusFromNotification(String notification) {
+        // No notifications for the sandbox.
+        return StatusUpdates.noUpdate("OK");
+    }
 }

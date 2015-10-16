@@ -15,7 +15,11 @@ Important configurations.
 ## Integration tests
 
 To run the integration tests, the `DOCKER_HOST` and `DOCKER_CERT_PATH` environment variables must be set up correctly. On OS X the environment can be set up with:
-Also `$GDS_CONNECTOR_WORLDPAY_PASSWORD` and`$GDS_CONNECTOR_WORLDPAY_PASSWORD` environment variable must be set for Worlpay integration tests.
+
+## Contract tests
+
+`$GDS_CONNECTOR_WORLDPAY_PASSWORD` and`$GDS_CONNECTOR_WORLDPAY_PASSWORD` environment variable must be set for Worldpay contract tests.
+`GDS_CONNECTOR_SMARTPAY_USER`, `GDS_CONNECTOR_SMARTPAY_PASSWORD` must be set for the smartpay contract tests. 
 
 ```
     eval $(boot2docker shellinit)
@@ -23,7 +27,7 @@ Also `$GDS_CONNECTOR_WORLDPAY_PASSWORD` and`$GDS_CONNECTOR_WORLDPAY_PASSWORD` en
 
 ```
 
-The command to run the integration tests is:
+The command to run all the tests is:
 
 ```
     mvn test
@@ -44,6 +48,9 @@ The command to run the integration tests is:
 |[```/v1/frontend/charges?gatewayAccountId={gatewayAccountId}```](#get-v1frontendchargesgatewayAccountIdgatewayAccountId)    | GET |  List all transactions for a gateway account     |
 |[```/v1/frontend/tokens/{chargeTokenId}```](#get-v1frontendtokenschargetokenid)                                  | GET |  Retrieve information about a secure redirect token.            |
 |[```/v1/frontend/tokens/{chargeTokenId}```](#delete-v1frontendtokenschargetokenid)                                  | DELETE |  Delete the secure redirect token.            |
+|[```/v1/api/notifications/worldpay```](#post-v1apinotificationworldpay)                                  | POST |  Handle charge update notifications from Worldpay.            |
+|[```/v1/api/notifications/smartpay```](#post-v1apinotificationsmartpay)                                  | POST |  Handle charge update notifications from Smartpay.            |
+
 
 
 ### POST /v1/api/accounts
@@ -535,3 +542,56 @@ GET /v1/frontend/tokens/32344
 HTTP/1.1 204 No Content
 ```
 -----------------------------------------------------------------------------------------------------------
+
+### POST /v1/api/notifications/worldpay
+
+This endpoint handles a notification from worldpays Order Notification mechanism as descrbied in the [Order Notifications - Reporting Payment Statuses Guide](http://support.worldpay.com/support/kb/gg/ordernotifications/on0000.html)
+
+#### Request example
+
+```
+POST /v1/api/notifications/worldpay
+Content-Type: text/xml
+
+See [src/test/resources/templates/worldpay/notification.xml](src/test/resources/templates/worldpay/notification.xml) for an example notification.
+```
+
+##### Request body description
+
+See [Interpreting Order Notifications > General Structure XML Order Notifications](http://support.worldpay.com/support/kb/gg/ordernotifications/on0000.html)
+
+#### Response example
+
+```
+200 OK
+Content-Type: text/plain
+
+[OK]
+```
+
+### POST /v1/api/notifications/smartpay
+
+This endpoint handles a notification from Barclays Smartpay's Notification mechanism as descrbied in the [Barclaycard SmartPay Notifications Guide](http://www.barclaycard.co.uk/business/files/SmartPay_Notifications_Guide.pdf)
+
+At the moment, the basic auth username and password that have to be entered into smartpay's web management UI need to be provided to the app as environment variables:
+* GDS_CONNECTOR_SMARTPAY_NOTIFICATION_USERNAME for the username
+* GDS_CONNECTOR_SMARTPAY_NOTIFICATION_PASSWORD for the password
+
+#### Request example
+
+```
+POST /v1/api/notifications/smartpay
+Content-Type: application/json
+Authorization: Basic YWRtaW46cGFzc3dvcmQ=
+
+See [src/test/resources/templates/smartpay/notification-authorisation.json](src/test/resources/templates/smartpay/notification-authorisation.json) for an example notification.
+```
+
+#### Response example
+
+```
+200 OK
+Content-Type: text/plain
+
+[accepted]
+```

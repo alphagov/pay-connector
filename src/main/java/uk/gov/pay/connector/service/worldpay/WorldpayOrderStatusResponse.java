@@ -8,9 +8,12 @@ import static org.apache.commons.lang3.StringUtils.isNotBlank;
 import static org.apache.commons.lang3.StringUtils.trim;
 
 @XmlRootElement(name = "paymentService")
-public class WorldpayAuthorisationResponse {
+public class WorldpayOrderStatusResponse {
 
     private static final String AUTHORISED = "AUTHORISED";
+
+    @XmlPath("reply/orderStatus/@orderCode")
+    private String transactionId;
 
     @XmlPath("reply/orderStatus/payment/lastEvent/text()")
     private String lastEvent;
@@ -55,5 +58,9 @@ public class WorldpayAuthorisationResponse {
 
     public String getErrorMessage() {
         return trim(errorMessage);
+    }
+
+    public String getTransactionId() {
+        return transactionId;
     }
 }

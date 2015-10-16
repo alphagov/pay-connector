@@ -12,6 +12,7 @@ import static com.google.common.io.Resources.getResource;
 import static org.custommonkey.xmlunit.XMLAssert.assertXMLEqual;
 import static uk.gov.pay.connector.model.domain.Address.anAddress;
 import static uk.gov.pay.connector.service.OrderSubmitRequestBuilder.aWorldpayOrderSubmitRequest;
+import static uk.gov.pay.connector.service.worldpay.OrderInquiryRequestBuilder.anOrderInquiryRequest;
 import static uk.gov.pay.connector.util.CardUtils.buildCardDetails;
 
 public class WorldpayOrderSubmitRequestBuilderTest {
@@ -60,6 +61,18 @@ public class WorldpayOrderSubmitRequestBuilderTest {
                 .build();
 
         assertXMLEqual(expectedOrderSubmitPayload("valid-order-submit-worldpay-request-full-address.xml"), actualRequest);
+
+    }
+
+    @Test
+    public void shouldGenerateValidOrderInquiryPayload() throws Exception {
+
+        String actualRequest = anOrderInquiryRequest()
+                .withMerchantCode("MERCHANTCODE")
+                .withTransactionId("MyUniqueTransactionId!")
+                .build();
+
+        assertXMLEqual(expectedOrderSubmitPayload("valid-order-inquiry.xml"), actualRequest);
 
     }
 

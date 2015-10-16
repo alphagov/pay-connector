@@ -2,36 +2,60 @@ package uk.gov.pay.connector.it.base;
 
 import com.google.gson.JsonObject;
 import com.jayway.restassured.specification.RequestSpecification;
+import io.dropwizard.testing.ConfigOverride;
 import org.apache.commons.lang.math.RandomUtils;
 import org.junit.Before;
 import org.junit.Rule;
+import org.mockserver.junit.MockServerRule;
 import uk.gov.pay.connector.model.domain.ChargeStatus;
-import uk.gov.pay.connector.util.DropwizardAppWithPostgresRule;
+import uk.gov.pay.connector.rules.DropwizardAppWithPostgresRule;
+import uk.gov.pay.connector.rules.SmartpayMockClient;
+import uk.gov.pay.connector.rules.WorldpayMockClient;
+
+import java.io.IOException;
 
 import static com.jayway.restassured.RestAssured.given;
 import static com.jayway.restassured.http.ContentType.JSON;
+import static io.dropwizard.testing.ConfigOverride.config;
 import static org.hamcrest.Matchers.is;
 import static uk.gov.pay.connector.model.domain.ChargeStatus.AUTHORISATION_SUCCESS;
 import static uk.gov.pay.connector.model.domain.ChargeStatus.CREATED;
-import static uk.gov.pay.connector.resources.CardResource.AUTHORIZATION_FRONTEND_RESOURCE_PATH;
-import static uk.gov.pay.connector.resources.CardResource.CANCEL_CHARGE_PATH;
-import static uk.gov.pay.connector.resources.CardResource.CAPTURE_FRONTEND_RESOURCE_PATH;
+import static uk.gov.pay.connector.resources.CardResource.*;
 import static uk.gov.pay.connector.util.JsonEncoder.toJson;
 
 public class CardResourceITestBase {
 
     @Rule
-    public DropwizardAppWithPostgresRule app = new DropwizardAppWithPostgresRule();
+    public DropwizardAppWithPostgresRule app;
+
+    @Rule
+    public MockServerRule worldpayMockRule = new MockServerRule(this);
+
+    @Rule
+    public MockServerRule smartpayMockRule = new MockServerRule(this);
+
+    protected WorldpayMockClient worldpay;
+
+    protected SmartpayMockClient smartpay;
+
     protected final String accountId;
     private final String paymentProvider;
 
     public CardResourceITestBase(String paymentProvider) {
         this.paymentProvider = paymentProvider;
-        accountId = String.valueOf(RandomUtils.nextInt(99999));
+        this.accountId = String.valueOf(RandomUtils.nextInt(99999));
+
+        app = new DropwizardAppWithPostgresRule(
+                config("worldpay.url", "http://localhost:" + worldpayMockRule.getHttpPort() + "/jsp/merchant/xml/paymentService.jsp"),
+                config("smartpay.url", "http://localhost:" + smartpayMockRule.getHttpPort() + "/pal/servlet/soap/Payment"));
     }
 
     @Before
-    public void setupGatewayAccount() {
+    public void setup() throws IOException {
+
+        worldpay = new WorldpayMockClient(worldpayMockRule.getHttpPort());
+        smartpay = new SmartpayMockClient(smartpayMockRule.getHttpPort());
+
         app.getDatabaseTestHelper().addGatewayAccount(accountId, paymentProvider);
     }
 
@@ -80,18 +104,18 @@ public class CardResourceITestBase {
     }
 
     protected String authoriseNewCharge() {
-        return createNewChargeWithStatus(AUTHORISATION_SUCCESS);
+        return createNewChargeWith(AUTHORISATION_SUCCESS, null);
     }
 
 
     protected String createNewCharge() {
-        return createNewChargeWithStatus(CREATED);
+        return createNewChargeWith(CREATED, null);
     }
 
-    protected String createNewChargeWithStatus(ChargeStatus status) {
+    protected String createNewChargeWith(ChargeStatus status, String gatewayTransactionId) {
         String chargeId = ((Integer) RandomUtils.nextInt(99999999)).toString();
 
-        app.getDatabaseTestHelper().addCharge(chargeId, accountId, 500, status, "returnUrl");
+        app.getDatabaseTestHelper().addCharge(chargeId, accountId, 500, status, "returnUrl", gatewayTransactionId);
         return chargeId;
     }
 
@@ -132,17 +156,7 @@ public class CardResourceITestBase {
         cardDetails.add("address", addressObject);
         return toJson(cardDetails);
     }
-
-    protected String createAndAuthoriseCharge(String cardDetails) {
-        String chargeId = createNewCharge();
-        givenSetup()
-                .body(cardDetails)
-                .post(authoriseChargeUrlFor(chargeId))
-                .then()
-                .statusCode(204);
-        return chargeId;
-    }
-
+    
     protected void shouldReturnErrorForCardDetailsWithMessage(String cardDetails, String errorMessage, String status) throws Exception {
         String chargeId = createNewCharge();
 

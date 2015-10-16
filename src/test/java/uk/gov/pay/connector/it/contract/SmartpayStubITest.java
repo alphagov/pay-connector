@@ -5,28 +5,20 @@ import org.junit.Rule;
 import org.junit.Test;
 import org.mockserver.junit.MockServerRule;
 import uk.gov.pay.connector.app.GatewayCredentialsConfig;
-import uk.gov.pay.connector.model.CaptureRequest;
-import uk.gov.pay.connector.model.CaptureResponse;
-import uk.gov.pay.connector.model.domain.GatewayAccount;
-import uk.gov.pay.connector.service.GatewayClient;
-import uk.gov.pay.connector.service.PaymentProvider;
-import uk.gov.pay.connector.service.smartpay.SmartpayPaymentProvider;
+import uk.gov.pay.connector.rules.DropwizardAppWithPostgresRule;
 import uk.gov.pay.connector.util.DatabaseTestHelper;
-import uk.gov.pay.connector.util.DropwizardAppWithPostgresRule;
 
 import static com.jayway.restassured.RestAssured.given;
 import static com.jayway.restassured.http.ContentType.JSON;
 import static io.dropwizard.testing.ConfigOverride.config;
 import static org.eclipse.jetty.http.HttpStatus.OK_200;
 import static org.hamcrest.Matchers.is;
-import static org.junit.Assert.*;
+import static org.junit.Assert.assertThat;
 import static uk.gov.pay.connector.it.contract.SmartpayMockClient.CAPTURE_SUCCESS_PAYLOAD;
 import static uk.gov.pay.connector.it.contract.SmartpayMockClient.UNKNOWN_STATUS_CODE;
 import static uk.gov.pay.connector.model.domain.ChargeStatus.*;
-import static uk.gov.pay.connector.model.domain.GatewayAccount.gatewayAccountFor;
 import static uk.gov.pay.connector.resources.CardResource.CAPTURE_FRONTEND_RESOURCE_PATH;
 import static uk.gov.pay.connector.resources.PaymentProviderValidator.SMARTPAY_PROVIDER;
-import static uk.gov.pay.connector.service.GatewayClient.createGatewayClient;
 
 public class SmartpayStubITest {
     private static final String ACCOUNT_ID = "12341234";
