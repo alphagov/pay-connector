@@ -618,3 +618,30 @@ Content-Type: text/plain
 
 [accepted]
 ```
+
+### POST /v1/api/notifications/sandbox
+
+This endpoint handles a notification from the sandbox.
+
+It is currently complete insecure.
+
+#### Request example
+
+```
+POST /v1/api/notifications/smartpay
+Content-Type: application/json
+
+{
+  "transaction_id": "transaction-id-1",
+  "status": "AUTHORISATION SUCCESS"
+}
+```
+
+#### Response example
+
+```
+200 OK
+Content-Type: text/plain
+
+OK
+```
