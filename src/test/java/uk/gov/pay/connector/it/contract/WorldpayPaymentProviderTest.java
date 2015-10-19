@@ -2,15 +2,11 @@ package uk.gov.pay.connector.it.contract;
 
 import com.google.common.io.Resources;
 import org.apache.commons.lang3.tuple.Pair;
-import org.hamcrest.CoreMatchers;
 import org.junit.Assume;
 import org.junit.Before;
 import org.junit.Test;
 import uk.gov.pay.connector.app.GatewayCredentialsConfig;
-import uk.gov.pay.connector.model.AuthorisationRequest;
-import uk.gov.pay.connector.model.AuthorisationResponse;
-import uk.gov.pay.connector.model.ChargeStatusRequest;
-import uk.gov.pay.connector.model.StatusUpdates;
+import uk.gov.pay.connector.model.*;
 import uk.gov.pay.connector.model.domain.Card;
 import uk.gov.pay.connector.service.worldpay.WorldpayPaymentProvider;
 
@@ -20,8 +16,8 @@ import java.net.URL;
 import java.nio.charset.Charset;
 
 import static com.google.common.io.Resources.getResource;
+import static java.util.UUID.randomUUID;
 import static org.hamcrest.CoreMatchers.hasItem;
-import static org.hamcrest.core.Is.is;
 import static org.junit.Assert.*;
 import static uk.gov.pay.connector.model.domain.ChargeStatus.CAPTURED;
 import static uk.gov.pay.connector.model.domain.GatewayAccount.gatewayAccountFor;
@@ -52,6 +48,26 @@ public class WorldpayPaymentProviderTest {
         );
         AuthorisationRequest request = getCardAuthorisationRequest();
         AuthorisationResponse response = connector.authorise(request);
+
+        assertTrue(response.isSuccessful());
+    }
+
+    /**
+     * Worldpay does not care about a successful authorization reference to make a capture request.
+     * It simply accepts anything as long as the request is well formed. (And ignores it silently)
+     */
+    @Test
+    public void shouldBeAbleToSendCaptureRequestForMerchant() throws Exception {
+        GatewayCredentialsConfig config = getWorldpayConfig();
+        WorldpayPaymentProvider connector = new WorldpayPaymentProvider(
+                createGatewayClient(
+                        ClientBuilder.newClient(),
+                        config.getUrl()
+                ),
+                gatewayAccountFor(config.getUsername(), config.getPassword())
+        );
+        CaptureRequest request = new CaptureRequest("500", randomUUID().toString());
+        CaptureResponse response = connector.capture(request);
 
         assertTrue(response.isSuccessful());
     }
