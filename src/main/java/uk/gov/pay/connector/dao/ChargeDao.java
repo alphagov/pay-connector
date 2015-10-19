@@ -61,7 +61,7 @@ public class ChargeDao {
         );
 
         if (numberOfUpdates != 1) {
-            throw new PayDBIException(String.format("Could not update charge '%s' with gateway transaction id %s, updated %d rows.", chargeId, transactionId, numberOfUpdates));
+            throw new PayDBIException(format("Could not update charge '%s' with gateway transaction id %s, updated %d rows.", chargeId, transactionId, numberOfUpdates));
         }
     }
 
@@ -96,7 +96,8 @@ public class ChargeDao {
     // updates the new status only if the charge is in one of the old statuses and returns num of rows affected
     // very specific transition happening here so check for a valid state before transitioning
     public int updateNewStatusWhereOldStatusIn(String chargeId, ChargeStatus newStatus, List<ChargeStatus> oldStatuses) {
-        String sql = "UPDATE charges SET status=:newStatus WHERE charge_id=:charge_id and status in(" + getStringFromStatusList(oldStatuses) + ")";
+        String sql = format("UPDATE charges SET status=:newStatus WHERE charge_id=:charge_id and status in (%s)", getStringFromStatusList(oldStatuses));
+
         return jdbi.withHandle(handle ->
                         handle.createStatement(sql)
                                 .bind("charge_id", Long.valueOf(chargeId))
