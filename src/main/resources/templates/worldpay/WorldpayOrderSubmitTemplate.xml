@@ -20,9 +20,6 @@
                             <#if card.address.line2??>
                             <address2>${card.address.line2}</address2>
                             </#if>
-                            <#if card.address.line3??>
-                            <address3>${card.address.line3}</address3>
-                            </#if>
                             <postalCode>${card.address.postcode}</postalCode>
                             <city>${card.address.city}</city>
                             <#if card.address.county??>

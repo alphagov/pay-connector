@@ -44,7 +44,6 @@ public class WorldpayOrderSubmitRequestBuilderTest {
         Address fullAddress = anAddress();
         fullAddress.setLine1("123 My Street");
         fullAddress.setLine2("This road");
-        fullAddress.setLine3("Line 3");
         fullAddress.setPostcode("SW8URR");
         fullAddress.setCity("London");
         fullAddress.setCounty("London county");

@@ -81,11 +81,11 @@ public class CardResourceITestBase {
     }
 
     protected String buildJsonCardDetailsFor(String cardHolderName, String cardNumber) {
-        return buildJsonCardDetailsFor(cardHolderName, cardNumber, "123", "11/99", null, null, "London", null);
+        return buildJsonCardDetailsFor(cardHolderName, cardNumber, "123", "11/99", null, "London", null);
     }
 
     protected String buildJsonCardDetailsFor(String cardNumber, String cvc, String expiryDate) {
-        return buildJsonCardDetailsFor("Mr. Payment", cardNumber, cvc, expiryDate, null, null, "London", null);
+        return buildJsonCardDetailsFor("Mr. Payment", cardNumber, cvc, expiryDate, null, "London", null);
     }
 
     protected void assertFrontendChargeStatusIs(String chargeId, String status) {
@@ -131,18 +131,16 @@ public class CardResourceITestBase {
                 "123",
                 "11/99",
                 "Moneybags Avenue",
-                "Some borough",
                 "London",
                 "Greater London"
         );
     }
 
-    protected String buildJsonCardDetailsFor(String cardHolderName, String cardNumber, String cvc, String expiryDate, String line2, String line3, String city, String county) {
+    protected String buildJsonCardDetailsFor(String cardHolderName, String cardNumber, String cvc, String expiryDate, String line2, String city, String county) {
         JsonObject addressObject = new JsonObject();
 
         addressObject.addProperty("line1", "The Money Pool");
         addressObject.addProperty("line2", line2);
-        addressObject.addProperty("line3", line3);
         addressObject.addProperty("city", city);
         addressObject.addProperty("county", county);
         addressObject.addProperty("postcode", "DO11 4RS");
