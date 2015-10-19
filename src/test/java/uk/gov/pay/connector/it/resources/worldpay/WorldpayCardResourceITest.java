@@ -17,7 +17,7 @@ public class WorldpayCardResourceITest extends CardResourceITestBase {
     @Test
     public void shouldAuthoriseCharge_ForValidCardDetails() throws Exception {
 
-        String chargeId = createNewCharge();
+        String chargeId = createNewChargeWith(ENTERING_CARD_DETAILS, null);
         worldpay.mockAuthorisationSuccess();
 
         givenSetup()

@@ -84,7 +84,7 @@ public class CardResource {
 
     private F<GatewayResponse, Response> handleGatewayResponse =
             response -> response.isSuccessful() ?
-                    notContentResponse() :
+                    noContentResponse() :
                     handleError.f(response.getError());
 
 }

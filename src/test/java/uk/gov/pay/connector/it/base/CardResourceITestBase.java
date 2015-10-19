@@ -2,7 +2,6 @@ package uk.gov.pay.connector.it.base;
 
 import com.google.gson.JsonObject;
 import com.jayway.restassured.specification.RequestSpecification;
-import io.dropwizard.testing.ConfigOverride;
 import org.apache.commons.lang.math.RandomUtils;
 import org.junit.Before;
 import org.junit.Rule;
@@ -18,8 +17,7 @@ import static com.jayway.restassured.RestAssured.given;
 import static com.jayway.restassured.http.ContentType.JSON;
 import static io.dropwizard.testing.ConfigOverride.config;
 import static org.hamcrest.Matchers.is;
-import static uk.gov.pay.connector.model.domain.ChargeStatus.AUTHORISATION_SUCCESS;
-import static uk.gov.pay.connector.model.domain.ChargeStatus.CREATED;
+import static uk.gov.pay.connector.model.domain.ChargeStatus.*;
 import static uk.gov.pay.connector.resources.CardResource.*;
 import static uk.gov.pay.connector.util.JsonEncoder.toJson;
 
@@ -156,9 +154,19 @@ public class CardResourceITestBase {
         cardDetails.add("address", addressObject);
         return toJson(cardDetails);
     }
-    
-    protected void shouldReturnErrorForCardDetailsWithMessage(String cardDetails, String errorMessage, String status) throws Exception {
+
+    protected String createAndAuthoriseCharge(String cardDetails) {
         String chargeId = createNewCharge();
+        givenSetup()
+                .body(cardDetails)
+                .post(authoriseChargeUrlFor(chargeId))
+                .then()
+                .statusCode(204);
+        return chargeId;
+    }
+
+    protected void shouldReturnErrorForCardDetailsWithMessage(String cardDetails, String errorMessage, String status) throws Exception {
+        String chargeId = createNewChargeWith(ENTERING_CARD_DETAILS, null);
 
         givenSetup()
                 .body(cardDetails)

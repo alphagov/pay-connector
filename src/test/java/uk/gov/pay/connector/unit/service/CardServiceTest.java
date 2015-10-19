@@ -26,6 +26,7 @@ import static org.junit.Assert.assertTrue;
 import static org.mockito.Matchers.any;
 import static org.mockito.Matchers.eq;
 import static org.mockito.Mockito.*;
+import static uk.gov.pay.connector.model.domain.ChargeStatus.*;
 
 public class CardServiceTest {
 
@@ -50,7 +51,7 @@ public class CardServiceTest {
 
         assertTrue(response.isRight());
         assertThat(response.right().value(), is(aSuccessfulResponse()));
-        verify(chargeDao, times(1)).updateStatus(chargeId, ChargeStatus.AUTHORISATION_SUCCESS);
+        verify(chargeDao, times(1)).updateStatus(chargeId, AUTHORISATION_SUCCESS);
         verify(chargeDao, times(1)).updateGatewayTransactionId(eq(chargeId), any(String.class));
     }
 
@@ -65,7 +66,7 @@ public class CardServiceTest {
 
         assertTrue(response.isRight());
         assertThat(response.right().value(), is(aSuccessfulResponse()));
-        verify(chargeDao, times(1)).updateStatus(chargeId, ChargeStatus.CAPTURE_SUBMITTED);
+        verify(chargeDao, times(1)).updateStatus(chargeId, CAPTURE_SUBMITTED);
 
         ArgumentCaptor<CaptureRequest> request = ArgumentCaptor.forClass(CaptureRequest.class);
         verify(theMockProvider, times(1)).capture(request.capture());
@@ -74,7 +75,7 @@ public class CardServiceTest {
     }
 
     private void mockSuccessfulCapture(String chargeId, String gatewayTransactionId) {
-        Map<String, Object> charge = theCharge(ChargeStatus.AUTHORISATION_SUCCESS);
+        Map<String, Object> charge = theCharge(AUTHORISATION_SUCCESS);
         charge.put("gateway_transaction_id", gatewayTransactionId);
 
         when(chargeDao.findById(chargeId)).thenReturn(Optional.of(charge));
@@ -85,12 +86,12 @@ public class CardServiceTest {
     }
 
     private void mockSuccessfulAuthorisation(String chargeId, String transactionId) {
-        Map<String, Object> charge = theCharge(ChargeStatus.CREATED);
+        Map<String, Object> charge = theCharge(ENTERING_CARD_DETAILS);
 
         when(chargeDao.findById(chargeId)).thenReturn(Optional.of(charge));
         when(accountDao.findById(gatewayAccountId)).thenReturn(Optional.of(theAccount()));
         when(providers.resolve(providerName)).thenReturn(theMockProvider);
-        AuthorisationResponse resp = new AuthorisationResponse(true, null, ChargeStatus.AUTHORISATION_SUCCESS, transactionId);
+        AuthorisationResponse resp = new AuthorisationResponse(true, null, AUTHORISATION_SUCCESS, transactionId);
         when(theMockProvider.authorise(any())).thenReturn(resp);
     }
 
