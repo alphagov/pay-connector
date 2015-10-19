@@ -84,8 +84,16 @@ public class DropwizardAppWithPostgresRule implements TestRule {
         return app.getLocalPort();
     }
 
+    public int getAdminPort() {
+        return app.getAdminPort();
+    }
+
     public DatabaseTestHelper getDatabaseTestHelper() {
         return databaseTestHelper;
+    }
+
+    public void stopPostgres() {
+        postgres.stop();
     }
 
     private void restoreDropwizardsLogging() {
