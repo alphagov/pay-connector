@@ -15,7 +15,6 @@ import javax.ws.rs.core.Context;
 import javax.ws.rs.core.Response;
 import javax.ws.rs.core.UriInfo;
 import java.net.URI;
-import java.util.Arrays;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
@@ -25,7 +24,6 @@ import static fj.data.Either.*;
 import static java.lang.String.format;
 import static javax.ws.rs.core.MediaType.APPLICATION_JSON;
 import static javax.ws.rs.core.Response.ok;
-import static org.apache.commons.lang3.StringUtils.equalsIgnoreCase;
 import static org.apache.commons.lang3.StringUtils.isBlank;
 import static org.apache.commons.lang3.math.NumberUtils.isNumber;
 import static uk.gov.pay.connector.model.domain.ChargeStatus.*;
@@ -68,11 +66,8 @@ public class ChargesFrontendResource {
         if (invalidInput(newStatusMap)) {
             return fieldsMissingResponse(logger, ImmutableList.of("new_status"));
         }
-        Optional<Map<String, Object>> maybeCharge = chargeDao.findById(chargeId);
         try {
-            return maybeCharge
-                    .map(charge -> updateStatus(charge, chargeStatusFrom(newStatusMap.get("new_status").toString())))
-                    .orElseGet(() -> responseWithChargeNotFound(logger, chargeId));
+            return updateStatus(chargeId, chargeStatusFrom(newStatusMap.get("new_status").toString()));
         } catch (IllegalArgumentException e) {
             logger.error(e.getMessage(), e);
             return badRequestResponse(logger, e.getMessage());
@@ -91,28 +86,21 @@ public class ChargesFrontendResource {
         return newStatusMap == null || newStatusMap.get("new_status") == null;
     }
 
-    private Response updateStatus(Map<String, Object> charge, ChargeStatus newChargeStatus) {
-        String charge_id = charge.get("charge_id").toString();
-        if (!isValidStateTransition(charge, newChargeStatus)) {
-            return badRequestResponse(logger, "charge with id: " + charge_id + " cant be updated to the new state: " + newChargeStatus.getValue());
+    private Response updateStatus(String chargeId, ChargeStatus newChargeStatus) {
+        if (!isValidStateTransition(newChargeStatus)) {
+            return badRequestResponse(logger, "charge with id: " + chargeId + " cant be updated to the new state: " + newChargeStatus.getValue());
         }
 
         List<ChargeStatus> oldStatuses = newArrayList(CREATED, ENTERING_CARD_DETAILS);
-        int rowsUpdated = chargeDao.updateNewStatusWhereOldStatusIn(charge_id, newChargeStatus, oldStatuses);
+        int rowsUpdated = chargeDao.updateNewStatusWhereOldStatusIn(chargeId, newChargeStatus, oldStatuses);
         if (rowsUpdated == 0) {
-            return badRequestResponse(logger, "charge with id: " + charge_id + " cant be updated to the new state: " + newChargeStatus.getValue());
+            return badRequestResponse(logger, "charge with id: " + chargeId + " cant be updated to the new state: " + newChargeStatus.getValue());
         }
         return noContentResponse();
     }
 
-    private boolean isValidStateTransition(Map<String, Object> charge, ChargeStatus newChargeStatus) {
-        return newChargeStatus.equals(ENTERING_CARD_DETAILS) && hasStatus(charge, CREATED, ENTERING_CARD_DETAILS);
-    }
-
-    private boolean hasStatus(Map<String, Object> charge, ChargeStatus... states) {
-        Object currentStatus = charge.get(STATUS_KEY);
-        return Arrays.stream(states)
-                .anyMatch(status -> equalsIgnoreCase(status.getValue(), currentStatus.toString()));
+    private boolean isValidStateTransition(ChargeStatus newChargeStatus) {
+        return newChargeStatus.equals(ENTERING_CARD_DETAILS);
     }
 
     private Response buildOkResponse(@PathParam("chargeId") String chargeId, @Context UriInfo uriInfo, Map<String, Object> charge) {
