@@ -10,13 +10,14 @@ import uk.gov.pay.connector.dao.PayDBIException;
 import uk.gov.pay.connector.model.domain.ChargeStatus;
 import uk.gov.pay.connector.rules.DropwizardAppWithPostgresRule;
 
+import java.util.List;
 import java.util.Map;
 
+import static com.google.common.collect.Lists.newArrayList;
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.is;
-import static uk.gov.pay.connector.model.domain.ChargeStatus.AUTHORISATION_SUBMITTED;
-import static uk.gov.pay.connector.model.domain.ChargeStatus.AUTHORISATION_SUCCESS;
-import static uk.gov.pay.connector.model.domain.ChargeStatus.CREATED;
+import static org.junit.Assert.assertEquals;
+import static uk.gov.pay.connector.model.domain.ChargeStatus.*;
 import static uk.gov.pay.connector.util.TransactionId.randomId;
 
 public class ChargeDaoITest {
@@ -121,4 +122,30 @@ public class ChargeDaoITest {
                 "return_url", returnUrl);
     }
 
+    @Test
+    public void updateStatusToEnteringCardDetailsFromCreated_shouldReturnOne() throws Exception {
+        long amount = 101;
+        String chargeId = chargeDao.saveNewCharge(newCharge(amount));
+        List<ChargeStatus> oldStatuses = newArrayList(CREATED, ENTERING_CARD_DETAILS);
+        int rowsUpdated = chargeDao.updateNewStatusWhereOldStatusIn(chargeId, ENTERING_CARD_DETAILS, oldStatuses);
+
+        assertEquals(1, rowsUpdated);
+        Map<String, Object> charge = chargeDao.findById(chargeId).get();
+        assertThat(charge.get("charge_id"), is(chargeId));
+        assertThat(charge.get("status"), is(ENTERING_CARD_DETAILS.getValue()));
+    }
+
+    @Test
+    public void updateStatusToEnteringCardDetailsFromCaptured_shouldReturnZero() throws Exception {
+        long amount = 101;
+        String chargeId = chargeDao.saveNewCharge(newCharge(amount));
+        chargeDao.updateStatus(chargeId, CAPTURE_SUBMITTED);
+        List<ChargeStatus> oldStatuses = newArrayList(CREATED, ENTERING_CARD_DETAILS);
+        int rowsUpdated = chargeDao.updateNewStatusWhereOldStatusIn(chargeId, ENTERING_CARD_DETAILS, oldStatuses);
+
+        assertEquals(0, rowsUpdated);
+        Map<String, Object> charge = chargeDao.findById(chargeId).get();
+        assertThat(charge.get("charge_id"), is(chargeId));
+        assertThat(charge.get("status"), is(CAPTURE_SUBMITTED.getValue()));
+    }
 }

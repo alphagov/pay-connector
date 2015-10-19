@@ -36,4 +36,8 @@ public enum ChargeStatus {
         }
         throw new IllegalArgumentException("charge status not recognized: " + status);
     }
+
+    public String toString() {
+        return this.getValue();
+    }
 }

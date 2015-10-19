@@ -9,7 +9,6 @@ import org.slf4j.LoggerFactory;
 import uk.gov.pay.connector.dao.ChargeDao;
 import uk.gov.pay.connector.dao.GatewayAccountDao;
 import uk.gov.pay.connector.model.domain.ChargeStatus;
-import uk.gov.pay.connector.util.ResponseUtil;
 
 import javax.ws.rs.*;
 import javax.ws.rs.core.Context;
@@ -21,6 +20,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 
+import static com.google.common.collect.Lists.newArrayList;
 import static fj.data.Either.*;
 import static java.lang.String.format;
 import static javax.ws.rs.core.MediaType.APPLICATION_JSON;
@@ -65,22 +65,18 @@ public class ChargesFrontendResource {
     @Path(PUT_CHARGE_STATUS_FRONTEND_PATH)
     @Produces(APPLICATION_JSON)
     public Response updateChargeStatus(@PathParam("chargeId") String chargeId, Map newStatusMap) {
-        if (invalidUpdateInput(newStatusMap)) {
+        if (invalidInput(newStatusMap)) {
             return fieldsMissingResponse(logger, ImmutableList.of("new_status"));
         }
         Optional<Map<String, Object>> maybeCharge = chargeDao.findById(chargeId);
         try {
             return maybeCharge
-                    .map(charge -> updateStatus(charge, ChargeStatus.chargeStatusFrom(newStatusMap.get("new_status").toString())))
+                    .map(charge -> updateStatus(charge, chargeStatusFrom(newStatusMap.get("new_status").toString())))
                     .orElseGet(() -> responseWithChargeNotFound(logger, chargeId));
         } catch (IllegalArgumentException e) {
             logger.error(e.getMessage(), e);
             return badRequestResponse(logger, e.getMessage());
         }
-    }
-
-    private boolean invalidUpdateInput(Map newStatusMap) {
-        return newStatusMap == null || newStatusMap.get("new_status") == null;
     }
 
     @GET
@@ -91,13 +87,26 @@ public class ChargesFrontendResource {
                 .bimap(handleError, listTransactions(gatewayAccountId)));
     }
 
-    private Response updateStatus(Map<String, Object> charge, ChargeStatus chargeStatus) {
+    private boolean invalidInput(Map newStatusMap) {
+        return newStatusMap == null || newStatusMap.get("new_status") == null;
+    }
+
+    private Response updateStatus(Map<String, Object> charge, ChargeStatus newChargeStatus) {
         String charge_id = charge.get("charge_id").toString();
-        if (!hasStatus(charge, CREATED, ENTERING_CARD_DETAILS)) {
-            return ResponseUtil.badRequestResponse(logger, "charge with id: " + charge_id + " cant be updated to the state: " + ENTERING_CARD_DETAILS.getValue());
+        if (!isValidStateTransition(charge, newChargeStatus)) {
+            return badRequestResponse(logger, "charge with id: " + charge_id + " cant be updated to the new state: " + newChargeStatus.getValue());
         }
-        chargeDao.updateStatus(charge_id, chargeStatus);
+
+        List<ChargeStatus> oldStatuses = newArrayList(CREATED, ENTERING_CARD_DETAILS);
+        int rowsUpdated = chargeDao.updateNewStatusWhereOldStatusIn(charge_id, newChargeStatus, oldStatuses);
+        if (rowsUpdated == 0) {
+            return badRequestResponse(logger, "charge with id: " + charge_id + " cant be updated to the new state: " + newChargeStatus.getValue());
+        }
         return noContentResponse();
+    }
+
+    private boolean isValidStateTransition(Map<String, Object> charge, ChargeStatus newChargeStatus) {
+        return newChargeStatus.equals(ENTERING_CARD_DETAILS) && hasStatus(charge, CREATED, ENTERING_CARD_DETAILS);
     }
 
     private boolean hasStatus(Map<String, Object> charge, ChargeStatus... states) {

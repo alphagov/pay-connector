@@ -12,6 +12,8 @@ import java.util.stream.Collectors;
 
 import static com.google.common.collect.Maps.newHashMap;
 import static java.lang.String.format;
+import static java.util.stream.Collectors.toList;
+import static uk.gov.pay.connector.model.domain.ChargeStatus.CREATED;
 
 public class ChargeDao {
     private DBI jdbi;
@@ -27,7 +29,7 @@ public class ChargeDao {
                                 .createStatement("INSERT INTO charges(amount, gateway_account_id, status, return_url) " +
                                         "VALUES (:amount, :gateway_account_id, :status, :return_url)")
                                 .bindFromMap(fixedCharge)
-                                .bind("status", ChargeStatus.CREATED.getValue())
+                                .bind("status", CREATED.getValue())
                                 .executeAndReturnGeneratedKeys(StringMapper.FIRST)
                                 .first()
         );
@@ -76,7 +78,7 @@ public class ChargeDao {
             throw new PayDBIException(format("Could not update charge (gateway_transaction_id: %s) with status %s, updated %d rows.", gatewayTransactionId, newStatus, numberOfUpdates));
         }
     }
-    
+
     public void updateStatus(String chargeId, ChargeStatus newStatus) {
         Integer numberOfUpdates = jdbi.withHandle(handle ->
                         handle
@@ -91,6 +93,18 @@ public class ChargeDao {
         }
     }
 
+    // updates the new status only if the charge is in one of the old statuses and returns num of rows affected
+    // very specific transition happening here so check for a valid state before transitioning
+    public int updateNewStatusWhereOldStatusIn(String chargeId, ChargeStatus newStatus, List<ChargeStatus> oldStatuses) {
+        String sql = "UPDATE charges SET status=:newStatus WHERE charge_id=:charge_id and status in(" + getStringFromStatusList(oldStatuses) + ")";
+        return jdbi.withHandle(handle ->
+                        handle.createStatement(sql)
+                                .bind("charge_id", Long.valueOf(chargeId))
+                                .bind("newStatus", newStatus.getValue())
+                                .execute()
+        );
+    }
+
     public List<Map<String, Object>> findAllBy(String gatewayAccountId) {
         List<Map<String, Object>> rawData = jdbi.withHandle(handle ->
                 handle.createQuery("SELECT charge_id, gateway_transaction_id, status, amount " +
@@ -101,6 +115,13 @@ public class ChargeDao {
                         .list());
 
         return copyAndConvertFieldsToString(rawData, "charge_id", "gateway_account_id");
+    }
+
+    private String getStringFromStatusList(List<ChargeStatus> oldStatuses) {
+        return oldStatuses
+                .stream()
+                .map(t -> "'" + t.getValue() + "'")
+                .collect(Collectors.joining(","));
     }
 
     private Map<String, Object> copyAndConvertFieldToLong(Map<String, Object> charge, String field) {
@@ -121,6 +142,6 @@ public class ChargeDao {
     private List<Map<String, Object>> copyAndConvertFieldsToString(List<Map<String, Object>> data, final String... fields) {
         return data.stream()
                 .map(charge -> copyAndConvertFieldsToString(charge, fields))
-                .collect(Collectors.toList());
+                .collect(toList());
     }
 }
