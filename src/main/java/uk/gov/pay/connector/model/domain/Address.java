@@ -6,7 +6,6 @@ public class Address {
 
     private String line1;
     private String line2;
-    private String line3;
     private String postcode;
     private String city;
     private String county;
@@ -24,11 +23,6 @@ public class Address {
     @JsonProperty
     public void setLine2(String line2) {
         this.line2 = line2;
-    }
-
-    @JsonProperty
-    public void setLine3(String line3) {
-        this.line3 = line3;
     }
 
     @JsonProperty
@@ -57,10 +51,6 @@ public class Address {
 
     public String getCounty() {
         return county;
-    }
-
-    public String getLine3() {
-        return line3;
     }
 
     public String getLine1() {

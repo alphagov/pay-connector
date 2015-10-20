@@ -93,7 +93,6 @@ public class SmartpayCardResourceITest extends CardResourceITestBase {
                 cvc,
                 "08/18",
                 "line 2",
-                "line 3",
                 "London",
                 null);
     }

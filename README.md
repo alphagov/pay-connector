@@ -381,7 +381,7 @@ Content-Type: application/json
 | `card_number`                 | X | The card number (16 digits)       |
 | `cvc`     | X | The cvc of the card (3 digits) |
 | `expiry_date`     | X | The expiry date (no validation other than format being mm/yy) |
-| `address`     | X | The billing address associated to this charge. Mandatory Address fields are `line1, city, postcode, country`. Optional Address fields are `line2, line3, county`  |
+| `address`     | X | The billing address associated to this charge. Mandatory Address fields are `line1, city, postcode, country`. Optional Address fields are `line2, county`  |
 
 #### Valid card numbers (inspired from Stripe)
 
