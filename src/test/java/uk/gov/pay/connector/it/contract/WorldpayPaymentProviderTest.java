@@ -73,6 +73,26 @@ public class WorldpayPaymentProviderTest {
     }
 
     @Test
+    public void shouldBeAbleToSendCancelRequestForMerchant() throws Exception {
+        GatewayCredentialsConfig config = getWorldpayConfig();
+        WorldpayPaymentProvider connector = new WorldpayPaymentProvider(
+                createGatewayClient(
+                        ClientBuilder.newClient(),
+                        config.getUrl()
+                ),
+                gatewayAccountFor(config.getUsername(), config.getPassword())
+        );
+        AuthorisationRequest request = getCardAuthorisationRequest();
+        AuthorisationResponse response = connector.authorise(request);
+
+        CancelRequest cancelRequest = CancelRequest.cancelRequest(response.getTransactionId());
+        CancelResponse cancelResponse = connector.cancel(cancelRequest);
+
+        assertTrue(cancelResponse.isSuccessful());
+        assertNull(cancelResponse.getError());
+    }
+
+    @Test
     public void shouldBeAbleToSendOrderInquiryRequestWhenStatusNotificationComesIn() throws Exception {
         GatewayCredentialsConfig config = getWorldpayConfig();
         WorldpayPaymentProvider connector = new WorldpayPaymentProvider(
