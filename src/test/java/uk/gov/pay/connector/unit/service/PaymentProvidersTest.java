@@ -14,6 +14,8 @@ import uk.gov.pay.connector.service.sandbox.SandboxPaymentProvider;
 import uk.gov.pay.connector.service.smartpay.SmartpayPaymentProvider;
 import uk.gov.pay.connector.service.worldpay.WorldpayPaymentProvider;
 
+import javax.ws.rs.client.Client;
+
 import static org.hamcrest.core.Is.is;
 import static org.hamcrest.core.IsInstanceOf.instanceOf;
 import static org.junit.Assert.assertThat;
@@ -30,10 +32,11 @@ public class PaymentProvidersTest {
     @Before
     public void setup(){
         ConnectorConfiguration config = mock(ConnectorConfiguration.class);
+        Client client = mock(Client.class);
         when(config.getSmartpayConfig()).thenReturn(mock(SmartpayCredentialsConfig.class));
         when(config.getWorldpayConfig()).thenReturn(mock(GatewayCredentialsConfig.class));
 
-        providers = new PaymentProviders(config, new ObjectMapper());
+        providers = new PaymentProviders(config, client, new ObjectMapper());
     }
 
     @Test

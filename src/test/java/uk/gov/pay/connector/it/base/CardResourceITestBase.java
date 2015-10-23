@@ -1,15 +1,16 @@
 package uk.gov.pay.connector.it.base;
 
+import com.github.tomakehurst.wiremock.junit.WireMockRule;
 import com.google.gson.JsonObject;
 import com.jayway.restassured.specification.RequestSpecification;
 import org.apache.commons.lang.math.RandomUtils;
 import org.junit.Before;
 import org.junit.Rule;
-import org.mockserver.junit.MockServerRule;
 import uk.gov.pay.connector.model.domain.ChargeStatus;
 import uk.gov.pay.connector.rules.DropwizardAppWithPostgresRule;
 import uk.gov.pay.connector.rules.SmartpayMockClient;
 import uk.gov.pay.connector.rules.WorldpayMockClient;
+import uk.gov.pay.connector.util.PortFactory;
 
 import java.io.IOException;
 
@@ -26,11 +27,10 @@ public class CardResourceITestBase {
     @Rule
     public DropwizardAppWithPostgresRule app;
 
-    @Rule
-    public MockServerRule worldpayMockRule = new MockServerRule(this);
+    private int port = PortFactory.findFreePort();
 
     @Rule
-    public MockServerRule smartpayMockRule = new MockServerRule(this);
+    public WireMockRule wireMockRule = new WireMockRule(port);
 
     protected WorldpayMockClient worldpay;
 
@@ -44,15 +44,14 @@ public class CardResourceITestBase {
         this.accountId = String.valueOf(RandomUtils.nextInt(99999));
 
         app = new DropwizardAppWithPostgresRule(
-                config("worldpay.url", "http://localhost:" + worldpayMockRule.getHttpPort() + "/jsp/merchant/xml/paymentService.jsp"),
-                config("smartpay.url", "http://localhost:" + smartpayMockRule.getHttpPort() + "/pal/servlet/soap/Payment"));
+                config("worldpay.url", "http://localhost:" + port + "/jsp/merchant/xml/paymentService.jsp"),
+                config("smartpay.url", "http://localhost:" + port + "/pal/servlet/soap/Payment"));
     }
 
     @Before
     public void setup() throws IOException {
-
-        worldpay = new WorldpayMockClient(worldpayMockRule.getHttpPort());
-        smartpay = new SmartpayMockClient(smartpayMockRule.getHttpPort());
+        worldpay = new WorldpayMockClient();
+        smartpay = new SmartpayMockClient();
 
         app.getDatabaseTestHelper().addGatewayAccount(accountId, paymentProvider);
     }

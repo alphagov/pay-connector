@@ -1,19 +1,18 @@
 package uk.gov.pay.connector.it.contract;
 
+import com.github.tomakehurst.wiremock.junit.WireMockRule;
 import org.junit.Before;
 import org.junit.Rule;
 import org.junit.Test;
-import org.mockserver.junit.MockServerRule;
 import uk.gov.pay.connector.rules.DropwizardAppWithPostgresRule;
 import uk.gov.pay.connector.util.DatabaseTestHelper;
+import uk.gov.pay.connector.util.PortFactory;
 
 import static com.jayway.restassured.RestAssured.given;
 import static com.jayway.restassured.http.ContentType.JSON;
 import static io.dropwizard.testing.ConfigOverride.config;
 import static org.hamcrest.Matchers.is;
 import static org.junit.Assert.assertThat;
-import static uk.gov.pay.connector.it.contract.SmartpayMockClient.CAPTURE_SUCCESS_PAYLOAD;
-import static uk.gov.pay.connector.it.contract.SmartpayMockClient.UNKNOWN_STATUS_CODE;
 import static uk.gov.pay.connector.model.domain.ChargeStatus.AUTHORISATION_SUCCESS;
 import static uk.gov.pay.connector.model.domain.ChargeStatus.CAPTURE_UNKNOWN;
 import static uk.gov.pay.connector.resources.CardResource.CAPTURE_FRONTEND_RESOURCE_PATH;
@@ -24,8 +23,10 @@ public class SmartpayStubInvalidUrlITest {
     private static final String CHARGE_ID = "111";
     private static final String TRANSACTION_ID = "7914440428682669";
 
+    private int port = PortFactory.findFreePort();
+
     @Rule
-    public MockServerRule smartpayMockRule = new MockServerRule(this);
+    public WireMockRule wireMockRule = new WireMockRule(port);
 
     @Rule
     public DropwizardAppWithPostgresRule app = new DropwizardAppWithPostgresRule(
@@ -37,7 +38,7 @@ public class SmartpayStubInvalidUrlITest {
 
     @Before
     public void setup() {
-        smartpayMock = new SmartpayMockClient(smartpayMockRule.getHttpPort(), TRANSACTION_ID);
+        smartpayMock = new SmartpayMockClient(TRANSACTION_ID);
         db = app.getDatabaseTestHelper();
     }
 
@@ -45,10 +46,7 @@ public class SmartpayStubInvalidUrlITest {
     public void failedCapture_InvalidConnectorUrl() throws Exception {
         setupForCapture();
 
-        smartpayMock.respondWithStatusCodeAndPayloadWhenCapture(
-                UNKNOWN_STATUS_CODE,
-                CAPTURE_SUCCESS_PAYLOAD
-        );
+        smartpayMock.respondWithUnexpectedResponseCodeWhenCapture();
 
         String errorMessage = "Gateway Url DNS resolution error";
         String captureUrl = CAPTURE_FRONTEND_RESOURCE_PATH.replace("{chargeId}", CHARGE_ID);

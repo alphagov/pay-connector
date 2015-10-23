@@ -31,6 +31,18 @@ smartpay:
     username: smartpay_test_username
     password: smartpay_test_password
 
+jerseyClient:
+  timeout: 500ms
+  connectionTimeout: 500ms
+  timeToLive: 1h
+  cookiesEnabled: false
+  maxConnections: 1024
+  maxConnectionsPerRoute: 1024
+  keepAlive: 0ms
+  retries: 0
+  userAgent: connector
+  gzipEnabledForRequests: false
+
 database:
   driverClass: org.postgresql.Driver
   user: postgres

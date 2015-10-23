@@ -1,21 +1,15 @@
 package uk.gov.pay.connector.it.contract;
 
-import org.mockserver.client.server.ForwardChainExpectation;
-import org.mockserver.client.server.MockServerClient;
-import org.mockserver.model.HttpResponse;
+import com.github.tomakehurst.wiremock.client.ResponseDefinitionBuilder;
 
+import static com.github.tomakehurst.wiremock.client.WireMock.*;
 import static java.lang.String.format;
-import static javax.ws.rs.HttpMethod.POST;
 import static javax.ws.rs.core.HttpHeaders.CONTENT_TYPE;
 import static javax.ws.rs.core.MediaType.TEXT_XML;
 import static org.eclipse.jetty.http.HttpStatus.OK_200;
-import static org.mockserver.model.HttpRequest.request;
-import static org.mockserver.model.HttpResponse.response;
-import static org.mockserver.model.XPathBody.xpath;
 
 public class SmartpayMockClient {
-    private final MockServerClient mockClient;
-    public static final String CAPTURE_SUCCESS_PAYLOAD = "<ns0:Envelope\n" +
+    private static final String CAPTURE_SUCCESS_PAYLOAD = "<ns0:Envelope\n" +
             "    xmlns:ns0=\"http://schemas.xmlsoap.org/soap/envelope/\"\n" +
             "    xmlns:ns1=\"http://payment.services.adyen.com\"\n" +
             "    xmlns:xsi=\"http://www.w3.org/2001/XMLSchema-instance\">\n" +
@@ -29,37 +23,52 @@ public class SmartpayMockClient {
             "        </ns1:captureResponse>\n" +
             "    </ns0:Body>\n" +
             "</ns0:Envelope>";
+    private static final String MALFORMED_XML_PAYLOAD = ">>>|<malformed xml/>|<<<";
 
-    public static int UNKNOWN_STATUS_CODE = 3457;
-
+    private static final int UNKNOWN_STATUS_CODE = 999;
     private final String transactionId;
 
-    public SmartpayMockClient(int port, String transactionId) {
+    public SmartpayMockClient(String transactionId) {
         this.transactionId = transactionId;
-        this.mockClient = new MockServerClient("localhost", port);
     }
 
     public void respondWithStatusCodeAndPayloadWhenCapture(int statusCode, String payload) {
-        whenCapture(transactionId)
-                .respond(withStatusAndBody(statusCode, payload));
+        respondWithStatusCodeAndPayloadWhenCapture(statusCode, payload, -1);
     }
 
-    public void respondWithMalformedBody_WhenCapture(String transactionId) {
-        whenCapture(transactionId)
-                .respond(withStatusAndBody(OK_200, ">>>|<malformed xml/>|<<<"));
-    }
+    public void respondWithStatusCodeAndPayloadWhenCapture(int statusCode, String payload, int timeout) {
+        ResponseDefinitionBuilder responseDefBuilder = aResponse()
+                .withHeader(CONTENT_TYPE, TEXT_XML)
+                .withStatus(statusCode)
+                .withBody(payload);
+        if(timeout >= 0) {
+            responseDefBuilder.withFixedDelay(timeout);
+        }
 
-    private ForwardChainExpectation whenCapture(String transactionId) {
-        return mockClient.when(request()
-                        .withMethod(POST)
-                        .withBody(xpath(format("//modificationRequest/originalReference[text() = '%s']", transactionId)))
+        stubFor(
+                post(urlPathEqualTo("/pal/servlet/soap/Payment"))
+                        .withRequestBody(
+                                matching(format(".*<.*originalReference.*>%s</originalReference>.*", transactionId))
+                        )
+                        .willReturn(
+                                responseDefBuilder
+                        )
         );
     }
 
-    private HttpResponse withStatusAndBody(int statusCode, String body) {
-        return response()
-                .withStatusCode(statusCode)
-                .withHeader(CONTENT_TYPE, TEXT_XML)
-                .withBody(body);
+    public void respondWithSuccessWhenCapture() {
+        respondWithStatusCodeAndPayloadWhenCapture(OK_200, CAPTURE_SUCCESS_PAYLOAD);
+    }
+
+    public void respondWithUnexpectedResponseCodeWhenCapture() {
+        respondWithStatusCodeAndPayloadWhenCapture(UNKNOWN_STATUS_CODE, CAPTURE_SUCCESS_PAYLOAD);
+    }
+
+    public void respondWithMalformedBody_WhenCapture() {
+        respondWithStatusCodeAndPayloadWhenCapture(OK_200, MALFORMED_XML_PAYLOAD);
+    }
+
+    public void respondWithTimeoutWhenCapture() {
+        respondWithStatusCodeAndPayloadWhenCapture(OK_200, CAPTURE_SUCCESS_PAYLOAD, 100000);
     }
 }
