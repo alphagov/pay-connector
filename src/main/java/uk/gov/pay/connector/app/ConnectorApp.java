@@ -4,6 +4,7 @@ import io.dropwizard.Application;
 import io.dropwizard.auth.AuthFactory;
 import io.dropwizard.auth.basic.BasicAuthFactory;
 import io.dropwizard.client.JerseyClientBuilder;
+import io.dropwizard.client.JerseyClientConfiguration;
 import io.dropwizard.configuration.EnvironmentVariableSubstitutor;
 import io.dropwizard.configuration.SubstitutingSourceProvider;
 import io.dropwizard.db.DataSourceFactory;
@@ -12,9 +13,9 @@ import io.dropwizard.jdbi.bundles.DBIExceptionsBundle;
 import io.dropwizard.migrations.MigrationsBundle;
 import io.dropwizard.setup.Bootstrap;
 import io.dropwizard.setup.Environment;
+import io.dropwizard.util.Duration;
 import org.glassfish.jersey.apache.connector.ApacheConnectorProvider;
-import org.glassfish.jersey.client.ClientConfig;
-import org.glassfish.jersey.client.spi.ConnectorProvider;
+import org.glassfish.jersey.client.ClientProperties;
 import org.skife.jdbi.v2.DBI;
 import uk.gov.pay.connector.auth.SmartpayAuthenticator;
 import uk.gov.pay.connector.dao.ChargeDao;
@@ -28,7 +29,6 @@ import uk.gov.pay.connector.service.PaymentProviders;
 import uk.gov.pay.connector.util.DbConnectionChecker;
 
 import javax.ws.rs.client.Client;
-import javax.ws.rs.client.ClientBuilder;
 
 public class ConnectorApp extends Application<ConnectorConfiguration> {
     private DBI jdbi;
@@ -70,10 +70,7 @@ public class ConnectorApp extends Application<ConnectorConfiguration> {
         TokenDao tokenDao = new TokenDao(jdbi);
         GatewayAccountDao gatewayAccountDao = new GatewayAccountDao(jdbi);
 
-        final Client client = new JerseyClientBuilder(environment)
-                .using(new ApacheConnectorProvider())
-                .using(conf.getClientConfiguration())
-                .build(getName());
+        Client client = createJerseyClient(environment, conf);
 
         PaymentProviders providers = new PaymentProviders(conf, client, environment.getObjectMapper());
         CardService cardService = new CardService(gatewayAccountDao, chargeDao, providers);
@@ -85,7 +82,9 @@ public class ConnectorApp extends Application<ConnectorConfiguration> {
         environment.jersey().register(new CardResource(cardService));
         environment.jersey().register(new GatewayAccountResource(gatewayAccountDao));
 
-        environment.jersey().register(AuthFactory.binder(
+        environment.jersey().register(
+
+                AuthFactory.binder(
                 new BasicAuthFactory<>(
                         new SmartpayAuthenticator(
                                 conf.getSmartpayConfig().getNotification()),
@@ -93,6 +92,20 @@ public class ConnectorApp extends Application<ConnectorConfiguration> {
                         String.class)));
 
         environment.healthChecks().register("database", new DatabaseHealthCheck(jdbi, dataSourceFactory.getValidationQuery()));
+    }
+
+    private Client createJerseyClient(Environment environment, ConnectorConfiguration conf) {
+        JerseyClientConfiguration clientConfiguration = conf.getClientConfiguration();
+        ApacheConnectorProvider connectorProvider = new ApacheConnectorProvider();
+
+        Duration readTimeout = conf.getCustomJerseyClient().getReadTimeout();
+        int readTimeoutInMillis = (int)(readTimeout.toMilliseconds());
+
+        return new JerseyClientBuilder(environment)
+                .using(connectorProvider)
+                .using(clientConfiguration)
+                .withProperty(ClientProperties.READ_TIMEOUT, readTimeoutInMillis)
+                .build(getName());
     }
 
     public DBI getJdbi() {

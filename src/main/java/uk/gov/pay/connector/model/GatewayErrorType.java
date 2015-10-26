@@ -6,5 +6,6 @@ public enum GatewayErrorType {
     UnexpectedStatusCodeFromGateway,
     MalformedResponseReceivedFromGateway,
     GatewayUrlDnsError,
+    GatewayConnectionTimeoutError,
     ;
 }

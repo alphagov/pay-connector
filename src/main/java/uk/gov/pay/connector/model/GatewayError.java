@@ -27,6 +27,10 @@ public class GatewayError {
         return new GatewayError(msg, GatewayUrlDnsError);
     }
 
+    public static GatewayError gatewayConnectionTimeoutException(String msg) {
+        return new GatewayError(msg, GatewayUrlDnsError);
+    }
+
     public String getMessage() {
         return message;
     }

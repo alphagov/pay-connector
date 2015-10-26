@@ -6,7 +6,7 @@
     <artifactId>pay-connector</artifactId>
 
     <properties>
-        <dropwizard.version>0.8.1</dropwizard.version>
+        <dropwizard.version>0.8.4</dropwizard.version>
         <mockserver.version>3.9.17</mockserver.version>
         <wiremock.version>1.57</wiremock.version>
     </properties>

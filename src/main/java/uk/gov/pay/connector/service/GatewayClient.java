@@ -17,6 +17,7 @@ import javax.ws.rs.client.ClientBuilder;
 import javax.ws.rs.client.Entity;
 import javax.ws.rs.core.Response;
 import javax.xml.bind.JAXBException;
+import java.net.SocketTimeoutException;
 import java.net.UnknownHostException;
 
 import static fj.data.Either.left;
@@ -53,8 +54,6 @@ public class GatewayClient {
     }
 
     public Either<GatewayError, Response> postXMLRequestFor(GatewayAccount account, String request) {
-        System.out.println("request = " + request);
-        System.out.println("gatewayUrl = " + gatewayUrl);
         try {
             return right(
                     client.target(gatewayUrl)
@@ -67,6 +66,10 @@ public class GatewayClient {
             if (pe.getCause() != null && pe.getCause() instanceof UnknownHostException) {
                 logger.error(format("DNS resolution error for gateway url=%s", gatewayUrl), pe);
                 return left(unknownHostException("Gateway Url DNS resolution error"));
+            }
+            if (pe.getCause() != null && pe.getCause() instanceof SocketTimeoutException) {
+                logger.error(format("Connection timed out error for gateway url=%s", gatewayUrl), pe);
+                return left(GatewayError.gatewayConnectionTimeoutException("Gateway connection timeout error"));
             }
             return left(baseGatewayError(pe.getMessage()));
         } catch(Exception e) {

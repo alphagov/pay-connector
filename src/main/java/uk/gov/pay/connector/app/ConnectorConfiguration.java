@@ -31,6 +31,11 @@ public class ConnectorConfiguration extends Configuration {
     @JsonProperty("jerseyClient")
     private JerseyClientConfiguration jerseyClientConfig;
 
+    @Valid
+    @NotNull
+    @JsonProperty("customJerseyClient")
+    private CustomJerseyClientConfiguration customJerseyClient;
+
     @JsonProperty("database")
     public DataSourceFactory getDataSourceFactory() {
         return dataSourceFactory;
@@ -52,5 +57,9 @@ public class ConnectorConfiguration extends Configuration {
 
     public JerseyClientConfiguration getClientConfiguration() {
         return jerseyClientConfig;
+    }
+
+    public CustomJerseyClientConfiguration getCustomJerseyClient() {
+        return customJerseyClient;
     }
 }

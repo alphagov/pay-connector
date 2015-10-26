@@ -43,6 +43,9 @@ jerseyClient:
   userAgent: connector
   gzipEnabledForRequests: false
 
+customJerseyClient:
+  readTimeout: 2000ms
+
 database:
   driverClass: org.postgresql.Driver
   user: postgres
