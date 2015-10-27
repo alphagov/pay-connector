@@ -31,6 +31,21 @@ smartpay:
     username: ${GDS_CONNECTOR_SMARTPAY_NOTIFICATION_USER}
     password: ${GDS_CONNECTOR_SMARTPAY_NOTIFICATION_PASSWORD}
 
+jerseyClient:
+  timeout: 500ms
+  connectionTimeout: 500ms
+  timeToLive: 1h
+  cookiesEnabled: false
+  maxConnections: 1024
+  maxConnectionsPerRoute: 1024
+  keepAlive: 0ms
+  retries: 0
+  userAgent: connector
+  gzipEnabledForRequests: true
+
+customJerseyClient:
+  readTimeout: 2000ms
+
 database:
   driverClass: org.postgresql.Driver
   user: ${DB_USER}

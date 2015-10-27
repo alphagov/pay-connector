@@ -1,5 +1,6 @@
 package uk.gov.pay.connector.unit.service;
 
+import com.github.tomakehurst.wiremock.client.WireMock;
 import com.github.tomakehurst.wiremock.http.Request;
 import com.github.tomakehurst.wiremock.junit.WireMockRule;
 import com.github.tomakehurst.wiremock.verification.LoggedRequest;
@@ -99,6 +100,45 @@ public class GatewayClientTest {
             gatewayClient.postXMLRequestFor(account, captureRequest);
         } catch (Exception e) {
             assertTrue(e instanceof ProcessingException);
+            assertTrue(e.getCause() instanceof SocketTimeoutException);
+        }
+    }
+
+    @Test
+    public void captureWithConnectionRefusedAgainstWireMockStub() throws Exception {
+        //prepare expectation
+        SmartpayMockClient smartpayMock = new SmartpayMockClient(TRANSACTION_ID);
+
+        smartpayMock.respondWithSuccessWhenCapture();
+        WireMock.shutdownServer();
+
+        //debug wiremock
+        List<Request> requests = new ArrayList<>();
+        wireMockRule.addMockServiceRequestListener(
+                (request, response) ->
+                        requests.add(LoggedRequest.createFrom(request))
+        );
+
+        //prepare invocation
+        String gatewayUrl = "http://localhost:" + port + "/pal/servlet/soap/Payment";
+
+        Client client = createClient();
+
+        GatewayClient gatewayClient = createGatewayClient(client, gatewayUrl);
+
+        String captureRequest = aSmartpayOrderCaptureRequest()
+                .withMerchantCode(MERCHANT_CODE)
+                .withTransactionId(TRANSACTION_ID)
+                .withAmount("1223")
+                .build();
+
+        GatewayAccount account = gatewayAccountFor("user", "pass");
+        try {
+            gatewayClient.postXMLRequestFor(account, captureRequest);
+        } catch (Exception e) {
+            e.printStackTrace();
+            assertTrue(e instanceof ProcessingException);
+            e.getCause().printStackTrace();
             assertTrue(e.getCause() instanceof SocketTimeoutException);
         }
     }

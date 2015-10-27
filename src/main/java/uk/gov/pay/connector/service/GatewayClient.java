@@ -17,6 +17,8 @@ import javax.ws.rs.client.ClientBuilder;
 import javax.ws.rs.client.Entity;
 import javax.ws.rs.core.Response;
 import javax.xml.bind.JAXBException;
+import java.net.ConnectException;
+import java.net.SocketException;
 import java.net.SocketTimeoutException;
 import java.net.UnknownHostException;
 
@@ -62,7 +64,6 @@ public class GatewayClient {
                             .post(Entity.xml(request))
             );
         } catch (ProcessingException pe) {
-            pe.printStackTrace();
             if (pe.getCause() != null && pe.getCause() instanceof UnknownHostException) {
                 logger.error(format("DNS resolution error for gateway url=%s", gatewayUrl), pe);
                 return left(unknownHostException("Gateway Url DNS resolution error"));
@@ -71,9 +72,14 @@ public class GatewayClient {
                 logger.error(format("Connection timed out error for gateway url=%s", gatewayUrl), pe);
                 return left(GatewayError.gatewayConnectionTimeoutException("Gateway connection timeout error"));
             }
+            if (pe.getCause() != null && pe.getCause() instanceof SocketException) {
+                logger.error(format("Socket Exception for gateway url=%s", gatewayUrl), pe);
+                return left(GatewayError.gatewayConnectionSocketException("Gateway connection socket error"));
+            }
             return left(baseGatewayError(pe.getMessage()));
-        } catch(Exception e) {
-            e.printStackTrace();
+        }
+        catch(Exception e) {
+            logger.error(format("Exception for gateway url=%s", gatewayUrl), e);
             return left(baseGatewayError(e.getMessage()));
         }
     }

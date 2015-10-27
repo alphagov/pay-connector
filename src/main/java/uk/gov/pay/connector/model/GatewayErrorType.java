@@ -7,5 +7,6 @@ public enum GatewayErrorType {
     MalformedResponseReceivedFromGateway,
     GatewayUrlDnsError,
     GatewayConnectionTimeoutError,
+    GatewayConnectionSocketError,
     ;
 }

@@ -77,6 +77,8 @@ public class CardResource {
                         return serviceErrorResponse(logger, "Unexpected Response Code From Gateway");
                     case MalformedResponseReceivedFromGateway:
                     case GatewayUrlDnsError:
+                    case GatewayConnectionTimeoutError:
+                    case GatewayConnectionSocketError:
                         return serviceErrorResponse(logger, error.getMessage());
                 }
                 return badRequestResponse(logger, error.getMessage());
