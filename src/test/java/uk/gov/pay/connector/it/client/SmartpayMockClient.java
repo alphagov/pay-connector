@@ -1,4 +1,4 @@
-package uk.gov.pay.connector.it.contract;
+package uk.gov.pay.connector.it.client;
 
 import com.github.tomakehurst.wiremock.client.ResponseDefinitionBuilder;
 

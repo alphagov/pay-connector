@@ -4,11 +4,11 @@ import fj.data.Either;
 import org.glassfish.jersey.apache.connector.ApacheConnectorProvider;
 import org.glassfish.jersey.client.ClientConfig;
 import org.glassfish.jersey.client.spi.ConnectorProvider;
-import org.glassfish.jersey.internal.util.Base64;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import uk.gov.pay.connector.model.GatewayError;
 import uk.gov.pay.connector.model.domain.GatewayAccount;
+import uk.gov.pay.connector.util.AuthUtil;
 import uk.gov.pay.connector.util.XMLUnmarshaller;
 
 import javax.ws.rs.ProcessingException;
@@ -17,7 +17,6 @@ import javax.ws.rs.client.ClientBuilder;
 import javax.ws.rs.client.Entity;
 import javax.ws.rs.core.Response;
 import javax.xml.bind.JAXBException;
-import java.net.ConnectException;
 import java.net.SocketException;
 import java.net.SocketTimeoutException;
 import java.net.UnknownHostException;
@@ -28,6 +27,7 @@ import static java.lang.String.format;
 import static javax.ws.rs.core.HttpHeaders.AUTHORIZATION;
 import static javax.ws.rs.core.MediaType.APPLICATION_XML;
 import static uk.gov.pay.connector.model.GatewayError.*;
+import static uk.gov.pay.connector.util.AuthUtil.encode;
 
 public class GatewayClient {
     private final Logger logger = LoggerFactory.getLogger(GatewayClient.class);
@@ -94,9 +94,5 @@ public class GatewayClient {
             logger.error(error, e);
             return left(malformedResponseReceivedFromGateway("Invalid Response Received From Gateway"));
         }
-    }
-
-    private static String encode(String username, String password) {
-        return "Basic " + Base64.encodeAsString(username + ":" + password);
     }
 }
