@@ -9,8 +9,11 @@ import java.sql.DriverManager;
 import java.util.Properties;
 import java.util.concurrent.TimeUnit;
 
+import static java.lang.String.format;
+
 public class DbConnectionChecker {
 
+    public static final int POSTGRES_STARTUP_TIMEOUT = 30;
     private final Logger logger = LoggerFactory.getLogger(DbConnectionChecker.class);
 
     private final String dbUrl;
@@ -26,12 +29,12 @@ public class DbConnectionChecker {
     public void waitForPostgresToStart() {
         Stopwatch timer = Stopwatch.createStarted();
         boolean succeeded = false;
-        while (!succeeded && timer.elapsed(TimeUnit.SECONDS) < 10) {
+        while (!succeeded && timer.elapsed(TimeUnit.SECONDS) < POSTGRES_STARTUP_TIMEOUT) {
             sleep(10);
             succeeded = checkPostgresConnection();
         }
         if (!succeeded) {
-            throw new RuntimeException("Postgres did not start in 10 seconds.");
+            throw new RuntimeException(format("Postgres did not start in %d seconds.", POSTGRES_STARTUP_TIMEOUT));
         }
         logger.info("Postgres docker container started in {}", timer.elapsed(TimeUnit.MILLISECONDS));
     }
