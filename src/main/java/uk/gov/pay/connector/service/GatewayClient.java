@@ -40,17 +40,6 @@ public class GatewayClient {
         this.client = client;
     }
 
-    public static GatewayClient createGatewayClient(String gatewayUrl) {
-        ClientConfig clientConfig = new ClientConfig();
-        ConnectorProvider provider = new ApacheConnectorProvider();
-        clientConfig.connectorProvider(provider);
-        Client client = ClientBuilder
-                .newBuilder()
-                .withConfig(clientConfig)
-                .build();
-        return createGatewayClient(client, gatewayUrl);
-    }
-
     public static GatewayClient createGatewayClient(Client client, String gatewayUrl) {
         return new GatewayClient(client, gatewayUrl);
     }

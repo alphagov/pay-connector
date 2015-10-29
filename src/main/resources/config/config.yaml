@@ -32,8 +32,8 @@ smartpay:
     password: ${GDS_CONNECTOR_SMARTPAY_NOTIFICATION_PASSWORD}
 
 jerseyClient:
-  timeout: 500ms
-  connectionTimeout: 500ms
+  timeout: 25500ms
+  connectionTimeout: 25500ms
   timeToLive: 1h
   cookiesEnabled: false
   maxConnections: 1024
@@ -41,10 +41,10 @@ jerseyClient:
   keepAlive: 0ms
   retries: 0
   userAgent: connector
-  gzipEnabledForRequests: true
+  gzipEnabledForRequests: false
 
 customJerseyClient:
-  readTimeout: 2000ms
+  readTimeout: 20000ms
 
 database:
   driverClass: org.postgresql.Driver

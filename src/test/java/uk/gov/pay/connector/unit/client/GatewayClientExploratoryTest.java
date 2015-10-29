@@ -3,10 +3,6 @@ package uk.gov.pay.connector.unit.client;
 import com.github.tomakehurst.wiremock.WireMockServer;
 import com.github.tomakehurst.wiremock.client.WireMock;
 import com.github.tomakehurst.wiremock.core.WireMockConfiguration;
-import org.glassfish.jersey.apache.connector.ApacheConnectorProvider;
-import org.glassfish.jersey.client.ClientConfig;
-import org.glassfish.jersey.client.ClientProperties;
-import org.glassfish.jersey.client.spi.ConnectorProvider;
 import org.junit.Test;
 import uk.gov.pay.connector.model.domain.GatewayAccount;
 import uk.gov.pay.connector.util.PortFactory;
@@ -27,6 +23,8 @@ import static org.hamcrest.core.Is.is;
 import static org.junit.Assert.*;
 import static uk.gov.pay.connector.model.domain.GatewayAccount.gatewayAccountFor;
 import static uk.gov.pay.connector.util.AuthUtil.encode;
+import static uk.gov.pay.connector.util.JerseyClientFactory.createClientWithApacheConnectorAndTimeout;
+import static uk.gov.pay.connector.util.JerseyClientFactory.createJerseyClient;
 
 public class GatewayClientExploratoryTest {
     private final static GatewayAccount GATEWAY_ACCOUNT = gatewayAccountFor("user", "pass");
@@ -47,7 +45,7 @@ public class GatewayClientExploratoryTest {
 
     @Test
     public void connectionToInvalidUrlUsingApacheConnectorProvider() {
-        Client client = createClientWithApacheConnectorAndTimeout(2000);
+        Client client = createJerseyClient();
 
         String gatewayUrl = "http://invalidone.invalid";
         try {
@@ -97,18 +95,5 @@ public class GatewayClientExploratoryTest {
                 .request(APPLICATION_XML)
                 .header(AUTHORIZATION, encode(GATEWAY_ACCOUNT.getUsername(), GATEWAY_ACCOUNT.getPassword()))
                 .post(Entity.xml(requestBody));
-    }
-
-    private Client createClientWithApacheConnectorAndTimeout(int readTimeout) {
-        ClientConfig clientConfig = new ClientConfig();
-        ConnectorProvider provider = new ApacheConnectorProvider();
-        clientConfig.connectorProvider(provider);
-        clientConfig.property(ClientProperties.READ_TIMEOUT, readTimeout);
-        Client client = ClientBuilder
-                .newBuilder()
-                .withConfig(clientConfig)
-                .build();
-
-        return client;
     }
 }
