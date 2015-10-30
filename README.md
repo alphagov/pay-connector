@@ -568,7 +568,7 @@ HTTP/1.1 204 No Content
 
 ### POST /v1/api/notifications/worldpay
 
-This endpoint handles a notification from worldpays Order Notification mechanism as descrbied in the [Order Notifications - Reporting Payment Statuses Guide](http://support.worldpay.com/support/kb/gg/ordernotifications/on0000.html)
+This endpoint handles a notification from worldpays Order Notification mechanism as described in the [Order Notifications - Reporting Payment Statuses Guide](http://support.worldpay.com/support/kb/gg/ordernotifications/on0000.html)
 
 #### Request example
 
@@ -576,8 +576,8 @@ This endpoint handles a notification from worldpays Order Notification mechanism
 POST /v1/api/notifications/worldpay
 Content-Type: text/xml
 
-See [src/test/resources/templates/worldpay/notification.xml](src/test/resources/templates/worldpay/notification.xml) for an example notification.
 ```
+See [src/test/resources/templates/worldpay/notification.xml](src/test/resources/templates/worldpay/notification.xml) for an example notification.
 
 ##### Request body description
 
@@ -645,3 +645,14 @@ Content-Type: text/plain
 
 OK
 ```
+
+
+## Securing notifications
+We try and validate the source of a notification in three ways:
+1. Shared provider specific credentials.
+    For smartpay, this takes the form of the service setting a set of basic auth credentials in their management console, and sharing them with the connector.
+2. Verifying the origin of the notification request.
+    This takes place externally to the connector, at the boundary of the system that it sits in, to avoid unverified requests reaching the connector at all.
+3. All notification requests into the platform must be https.
+
+The connector only deals with the first consideration.
