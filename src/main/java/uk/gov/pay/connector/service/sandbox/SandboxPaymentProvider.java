@@ -16,6 +16,7 @@ import static uk.gov.pay.connector.model.CancelResponse.aSuccessfulCancelRespons
 import static uk.gov.pay.connector.model.CaptureResponse.aSuccessfulCaptureResponse;
 import static uk.gov.pay.connector.model.GatewayErrorType.GenericGatewayError;
 import static uk.gov.pay.connector.model.domain.ChargeStatus.AUTHORISATION_SUCCESS;
+import static uk.gov.pay.connector.model.domain.ChargeStatus.chargeStatusFrom;
 import static uk.gov.pay.connector.service.sandbox.SandboxCardNumbers.*;
 
 public class SandboxPaymentProvider implements PaymentProvider {
@@ -64,7 +65,7 @@ public class SandboxPaymentProvider implements PaymentProvider {
             String transaction_id = node.get("transaction_id").textValue();
             String newStatus = node.get("status").textValue();
 
-            return StatusUpdates.withUpdate("OK", ImmutableList.of(Pair.of(transaction_id, ChargeStatus.valueOf(newStatus))));
+            return StatusUpdates.withUpdate("OK", ImmutableList.of(Pair.of(transaction_id, chargeStatusFrom(newStatus))));
         } catch (Exception e) {
             LOGGER.error("Error understanding sandbox notification: " + notification, e);
             return StatusUpdates.noUpdate("OK");

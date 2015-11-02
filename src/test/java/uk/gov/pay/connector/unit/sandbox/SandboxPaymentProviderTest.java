@@ -12,6 +12,7 @@ import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.empty;
 import static org.hamcrest.Matchers.hasItem;
 import static org.hamcrest.Matchers.is;
+import static uk.gov.pay.connector.model.domain.ChargeStatus.AUTHORISATION_REJECTED;
 import static uk.gov.pay.connector.util.JsonEncoder.toJson;
 
 public class SandboxPaymentProviderTest {
@@ -22,10 +23,10 @@ public class SandboxPaymentProviderTest {
     public void shouldSuccessfullyParseANotification() throws Exception {
         StatusUpdates statusUpdates = sandboxClient.newStatusFromNotification(toJson(ImmutableMap.of(
                 "transaction_id", "transaction",
-                "status", "AUTHORISATION_REJECTED")));
+                "status", AUTHORISATION_REJECTED.getValue())));
 
         assertThat(statusUpdates.successful(), is(true));
-        assertThat(statusUpdates.getStatusUpdates(), hasItem(Pair.of("transaction", ChargeStatus.AUTHORISATION_REJECTED)));
+        assertThat(statusUpdates.getStatusUpdates(), hasItem(Pair.of("transaction", AUTHORISATION_REJECTED)));
         assertThat(statusUpdates.getResponseForProvider(), is("OK"));
     }
 
