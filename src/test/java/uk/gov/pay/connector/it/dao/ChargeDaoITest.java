@@ -99,7 +99,7 @@ public class ChargeDaoITest {
         chargeDao.updateStatusWithGatewayInfo(gatewayTransactionId, AUTHORISATION_SUBMITTED);
 
         Map<String, Object> charge = chargeDao.findById(chargeId).get();
-        assertThat(charge.get("status"), is("AUTHORISATION SUBMITTED"));
+        assertThat(charge.get("status"), is(AUTHORISATION_SUBMITTED.getValue()));
     }
 
     @Test

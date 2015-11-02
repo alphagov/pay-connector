@@ -49,8 +49,8 @@ The command to run all the tests is:
 |[```/v1/frontend/charges?gatewayAccountId={gatewayAccountId}```](#get-v1frontendchargesgatewayAccountIdgatewayAccountId)    | GET |  List all transactions for a gateway account     |
 |[```/v1/frontend/tokens/{chargeTokenId}```](#get-v1frontendtokenschargetokenid)                                  | GET |  Retrieve information about a secure redirect token.            |
 |[```/v1/frontend/tokens/{chargeTokenId}```](#delete-v1frontendtokenschargetokenid)                                  | DELETE |  Delete the secure redirect token.            |
-|[```/v1/api/notifications/worldpay```](#post-v1apinotificationworldpay)                                  | POST |  Handle charge update notifications from Worldpay.            |
-|[```/v1/api/notifications/smartpay```](#post-v1apinotificationsmartpay)                                  | POST |  Handle charge update notifications from Smartpay.            |
+|[```/v1/api/notifications/worldpay```](#post-v1apinotificationsworldpay)                                  | POST |  Handle charge update notifications from Worldpay.            |
+|[```/v1/api/notifications/smartpay```](#post-v1apinotificationssmartpay)                                  | POST |  Handle charge update notifications from Smartpay.            |
 
 
 
@@ -568,7 +568,7 @@ HTTP/1.1 204 No Content
 
 ### POST /v1/api/notifications/worldpay
 
-This endpoint handles a notification from worldpays Order Notification mechanism as descrbied in the [Order Notifications - Reporting Payment Statuses Guide](http://support.worldpay.com/support/kb/gg/ordernotifications/on0000.html)
+This endpoint handles a notification from worldpays Order Notification mechanism as described in the [Order Notifications - Reporting Payment Statuses Guide](http://support.worldpay.com/support/kb/gg/ordernotifications/on0000.html)
 
 #### Request example
 
@@ -576,8 +576,8 @@ This endpoint handles a notification from worldpays Order Notification mechanism
 POST /v1/api/notifications/worldpay
 Content-Type: text/xml
 
-See [src/test/resources/templates/worldpay/notification.xml](src/test/resources/templates/worldpay/notification.xml) for an example notification.
 ```
+See [src/test/resources/templates/worldpay/notification.xml](src/test/resources/templates/worldpay/notification.xml) for an example notification.
 
 ##### Request body description
 
@@ -618,3 +618,41 @@ Content-Type: text/plain
 
 [accepted]
 ```
+
+### POST /v1/api/notifications/sandbox
+
+This endpoint handles a notification from the sandbox.
+
+It is currently complete insecure.
+
+#### Request example
+
+```
+POST /v1/api/notifications/smartpay
+Content-Type: application/json
+
+{
+  "transaction_id": "transaction-id-1",
+  "status": "AUTHORISATION SUCCESS"
+}
+```
+
+#### Response example
+
+```
+200 OK
+Content-Type: text/plain
+
+OK
+```
+
+
+## Securing notifications
+We try and validate the source of a notification in three ways:
+1. Shared provider specific credentials.
+    For smartpay, this takes the form of the service setting a set of basic auth credentials in their management console, and sharing them with the connector.
+2. Verifying the origin of the notification request.
+    This takes place externally to the connector, at the boundary of the system that it sits in, to avoid unverified requests reaching the connector at all.
+3. All notification requests into the platform must be https.
+
+The connector only deals with the first consideration.

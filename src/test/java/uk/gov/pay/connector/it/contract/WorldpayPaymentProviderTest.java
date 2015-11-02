@@ -1,14 +1,12 @@
 package uk.gov.pay.connector.it.contract;
 
 import com.google.common.io.Resources;
+import org.apache.commons.lang3.tuple.Pair;
 import org.junit.Assume;
 import org.junit.Before;
 import org.junit.Test;
 import uk.gov.pay.connector.app.GatewayCredentialsConfig;
-import uk.gov.pay.connector.model.AuthorisationRequest;
-import uk.gov.pay.connector.model.AuthorisationResponse;
-import uk.gov.pay.connector.model.ChargeStatusRequest;
-import uk.gov.pay.connector.model.StatusUpdates;
+import uk.gov.pay.connector.model.*;
 import uk.gov.pay.connector.model.domain.Card;
 import uk.gov.pay.connector.service.worldpay.WorldpayPaymentProvider;
 
@@ -18,7 +16,8 @@ import java.net.URL;
 import java.nio.charset.Charset;
 
 import static com.google.common.io.Resources.getResource;
-import static org.hamcrest.core.Is.is;
+import static java.util.UUID.randomUUID;
+import static org.hamcrest.CoreMatchers.hasItem;
 import static org.junit.Assert.*;
 import static uk.gov.pay.connector.model.domain.ChargeStatus.CAPTURED;
 import static uk.gov.pay.connector.model.domain.GatewayAccount.gatewayAccountFor;
@@ -53,6 +52,46 @@ public class WorldpayPaymentProviderTest {
         assertTrue(response.isSuccessful());
     }
 
+    /**
+     * Worldpay does not care about a successful authorization reference to make a capture request.
+     * It simply accepts anything as long as the request is well formed. (And ignores it silently)
+     */
+    @Test
+    public void shouldBeAbleToSendCaptureRequestForMerchant() throws Exception {
+        GatewayCredentialsConfig config = getWorldpayConfig();
+        WorldpayPaymentProvider connector = new WorldpayPaymentProvider(
+                createGatewayClient(
+                        ClientBuilder.newClient(),
+                        config.getUrl()
+                ),
+                gatewayAccountFor(config.getUsername(), config.getPassword())
+        );
+        CaptureRequest request = new CaptureRequest("500", randomUUID().toString());
+        CaptureResponse response = connector.capture(request);
+
+        assertTrue(response.isSuccessful());
+    }
+
+    @Test
+    public void shouldBeAbleToSendCancelRequestForMerchant() throws Exception {
+        GatewayCredentialsConfig config = getWorldpayConfig();
+        WorldpayPaymentProvider connector = new WorldpayPaymentProvider(
+                createGatewayClient(
+                        ClientBuilder.newClient(),
+                        config.getUrl()
+                ),
+                gatewayAccountFor(config.getUsername(), config.getPassword())
+        );
+        AuthorisationRequest request = getCardAuthorisationRequest();
+        AuthorisationResponse response = connector.authorise(request);
+
+        CancelRequest cancelRequest = CancelRequest.cancelRequest(response.getTransactionId());
+        CancelResponse cancelResponse = connector.cancel(cancelRequest);
+
+        assertTrue(cancelResponse.isSuccessful());
+        assertNull(cancelResponse.getError());
+    }
+
     @Test
     public void shouldBeAbleToSendOrderInquiryRequestWhenStatusNotificationComesIn() throws Exception {
         GatewayCredentialsConfig config = getWorldpayConfig();
@@ -67,16 +106,7 @@ public class WorldpayPaymentProviderTest {
         String transactionId = "c15b9283-5205-45e0-8019-883c3319e838";
         StatusUpdates statusResponse = connector.newStatusFromNotification(notificationPayloadForTransaction(transactionId));
 
-        try {
-            statusResponse.forEachStatusUpdate((id, newStatus) -> {
-                assertThat(transactionId, is(transactionId));
-                assertThat(newStatus, is(CAPTURED));
-                throw new TestPassedException();
-            });
-            fail("Expected a status update.");
-        } catch (TestPassedException e) {
-            // Yay!
-        }
+        assertThat(statusResponse.getStatusUpdates(), hasItem(Pair.of(transactionId, CAPTURED)));
     }
 
     @Test
@@ -100,10 +130,6 @@ public class WorldpayPaymentProviderTest {
         return new AuthorisationRequest("chargeId", card, amount, description);
     }
 
-
-    private ChargeStatusRequest getChargeStatusRequest() {
-        return () -> "c15b9283-5205-45e0-8019-883c3319e838";
-    }
 
     private GatewayCredentialsConfig getWorldpayConfig() {
         return WORLDPAY_CREDENTIALS;
@@ -130,8 +156,5 @@ public class WorldpayPaymentProviderTest {
         URL resource = getResource("templates/worldpay/notification.xml");
         return Resources.toString(resource, Charset.defaultCharset()).replace("{{transactionId}}", transactionId);
     }
-
-
-    private static final class TestPassedException extends RuntimeException {}
 
 }

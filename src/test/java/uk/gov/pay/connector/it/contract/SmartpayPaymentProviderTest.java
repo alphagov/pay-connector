@@ -4,10 +4,7 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import org.junit.Assume;
 import org.junit.Before;
 import org.junit.Test;
-import uk.gov.pay.connector.model.AuthorisationRequest;
-import uk.gov.pay.connector.model.AuthorisationResponse;
-import uk.gov.pay.connector.model.CaptureRequest;
-import uk.gov.pay.connector.model.CaptureResponse;
+import uk.gov.pay.connector.model.*;
 import uk.gov.pay.connector.model.domain.Address;
 import uk.gov.pay.connector.model.domain.Card;
 import uk.gov.pay.connector.model.domain.GatewayAccount;
@@ -19,6 +16,7 @@ import java.io.IOException;
 import java.net.URL;
 
 import static org.junit.Assert.*;
+import static uk.gov.pay.connector.model.CancelRequest.cancelRequest;
 import static uk.gov.pay.connector.model.domain.GatewayAccount.gatewayAccountFor;
 import static uk.gov.pay.connector.service.GatewayClient.createGatewayClient;
 import static uk.gov.pay.connector.util.CardUtils.buildCardDetails;
@@ -58,7 +56,7 @@ public class SmartpayPaymentProviderTest {
     }
 
     @Test
-    public void shouldSendSuccessfullyACaptureRequest() throws Exception {
+    public void shouldSuccessfullySendACaptureRequest() throws Exception {
         PaymentProvider paymentProvider = getSmartpayPaymentProvider(username, password);
         AuthorisationResponse response = testCardAuthorisation(paymentProvider);
 
@@ -66,6 +64,17 @@ public class SmartpayPaymentProviderTest {
         CaptureResponse captureResponse = paymentProvider.capture(captureRequest);
         assertTrue(captureResponse.isSuccessful());
         assertNull(captureResponse.getError());
+    }
+
+    @Test
+    public void shouldSuccessfullySendACancelRequest() throws Exception {
+        PaymentProvider paymentProvider = getSmartpayPaymentProvider(username, password);
+        AuthorisationResponse response = testCardAuthorisation(paymentProvider);
+
+        CancelResponse cancelResponse = paymentProvider.cancel(cancelRequest(response.getTransactionId()));
+        assertTrue(cancelResponse.isSuccessful());
+        assertNull(cancelResponse.getError());
+
     }
 
     private AuthorisationResponse testCardAuthorisation(PaymentProvider paymentProvider) {

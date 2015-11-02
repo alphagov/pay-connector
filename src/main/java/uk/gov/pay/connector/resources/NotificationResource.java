@@ -4,7 +4,9 @@ import io.dropwizard.auth.Auth;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import uk.gov.pay.connector.dao.ChargeDao;
+import uk.gov.pay.connector.dao.PayDBIException;
 import uk.gov.pay.connector.model.StatusUpdates;
+import uk.gov.pay.connector.model.domain.ChargeStatus;
 import uk.gov.pay.connector.service.PaymentProviders;
 
 import javax.ws.rs.POST;
@@ -12,6 +14,7 @@ import javax.ws.rs.Path;
 import javax.ws.rs.PathParam;
 import javax.ws.rs.core.Response;
 import java.io.IOException;
+import java.sql.SQLException;
 
 import static javax.ws.rs.core.Response.Status.BAD_GATEWAY;
 
@@ -45,8 +48,16 @@ public class NotificationResource {
             return Response.status(BAD_GATEWAY).build();
         }
 
-        response.forEachStatusUpdate(chargeDao::updateStatusWithGatewayInfo);
+        response.getStatusUpdates().forEach(update -> updateCharge(chargeDao, update.getKey(), update.getValue()));
 
         return Response.ok(response.getResponseForProvider()).build();
+    }
+
+    private static void updateCharge(ChargeDao chargeDao, String key, ChargeStatus value) {
+        try {
+            chargeDao.updateStatusWithGatewayInfo(key, value);
+        } catch (PayDBIException e) {
+            logger.error("Error when trying to update transaction id " + key + " to status " + value, e);
+        }
     }
 }

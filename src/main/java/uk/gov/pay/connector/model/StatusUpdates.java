@@ -5,7 +5,6 @@ import uk.gov.pay.connector.model.domain.ChargeStatus;
 
 import java.util.Collections;
 import java.util.List;
-import java.util.function.BiConsumer;
 
 import static java.util.Collections.emptyList;
 
@@ -40,7 +39,7 @@ public class StatusUpdates {
         return providerResponse;
     }
 
-    public void forEachStatusUpdate(BiConsumer<String, ChargeStatus> statusConsumer) {
-        newStatuses.forEach(p -> statusConsumer.accept(p.getKey(), p.getValue()));
+    public List<Pair<String, ChargeStatus>> getStatusUpdates() {
+        return newStatuses;
     }
 }

@@ -55,7 +55,7 @@ public class SmartpayNotificationResourceITest extends CardResourceITestBase {
 
         assertThat(response, is(RESPONSE_EXPECTED_BY_SMARTPAY));
 
-        assertFrontendChargeStatusIs(chargeId, "AUTHORISATION REJECTED");
+        assertFrontendChargeStatusIs(chargeId, AUTHORISATION_REJECTED.getValue());
     }
 
     @Test
@@ -73,8 +73,8 @@ public class SmartpayNotificationResourceITest extends CardResourceITestBase {
 
         assertThat(response, is(RESPONSE_EXPECTED_BY_SMARTPAY));
 
-        assertFrontendChargeStatusIs(chargeId, "CAPTURED");
-        assertFrontendChargeStatusIs(chargeId2, "AUTHORISATION SUCCESS");
+        assertFrontendChargeStatusIs(chargeId, CAPTURED.getValue());
+        assertFrontendChargeStatusIs(chargeId2, AUTHORISATION_SUCCESS.getValue());
     }
 
     @Test
@@ -89,7 +89,7 @@ public class SmartpayNotificationResourceITest extends CardResourceITestBase {
 
         assertThat(response, is(RESPONSE_EXPECTED_BY_SMARTPAY));
 
-        assertFrontendChargeStatusIs(chargeId, "CAPTURED");
+        assertFrontendChargeStatusIs(chargeId, CAPTURED.getValue());
     }
 
     @Test
