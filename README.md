@@ -49,8 +49,8 @@ The command to run all the tests is:
 |[```/v1/frontend/charges?gatewayAccountId={gatewayAccountId}```](#get-v1frontendchargesgatewayAccountIdgatewayAccountId)    | GET |  List all transactions for a gateway account     |
 |[```/v1/frontend/tokens/{chargeTokenId}```](#get-v1frontendtokenschargetokenid)                                  | GET |  Retrieve information about a secure redirect token.            |
 |[```/v1/frontend/tokens/{chargeTokenId}```](#delete-v1frontendtokenschargetokenid)                                  | DELETE |  Delete the secure redirect token.            |
-|[```/v1/api/notifications/worldpay```](#post-v1apinotificationworldpay)                                  | POST |  Handle charge update notifications from Worldpay.            |
-|[```/v1/api/notifications/smartpay```](#post-v1apinotificationsmartpay)                                  | POST |  Handle charge update notifications from Smartpay.            |
+|[```/v1/api/notifications/worldpay```](#post-v1apinotificationsworldpay)                                  | POST |  Handle charge update notifications from Worldpay.            |
+|[```/v1/api/notifications/smartpay```](#post-v1apinotificationssmartpay)                                  | POST |  Handle charge update notifications from Smartpay.            |
 
 
 
