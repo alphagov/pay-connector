@@ -4,6 +4,7 @@ import com.github.tomakehurst.wiremock.junit.WireMockRule;
 import org.junit.Before;
 import org.junit.Rule;
 import org.junit.Test;
+import uk.gov.pay.connector.resources.CardResource;
 import uk.gov.pay.connector.rules.DropwizardAppWithPostgresRule;
 import uk.gov.pay.connector.util.DatabaseTestHelper;
 import uk.gov.pay.connector.util.PortFactory;
@@ -16,11 +17,13 @@ import static org.junit.Assert.assertThat;
 import static uk.gov.pay.connector.model.domain.ChargeStatus.*;
 import static uk.gov.pay.connector.resources.CardResource.CAPTURE_FRONTEND_RESOURCE_PATH;
 import static uk.gov.pay.connector.resources.PaymentProviderValidator.SMARTPAY_PROVIDER;
+import static uk.gov.pay.connector.util.CardUtils.aValidCard;
 
 public class SmartpayStubITest {
     private static final String ACCOUNT_ID = "12341234";
     private static final String CHARGE_ID = "111";
     private static final String TRANSACTION_ID = "7914440428682669";
+    private static final long AMOUNT = 3333;
 
     private int port = PortFactory.findFreePort();
 
@@ -39,12 +42,36 @@ public class SmartpayStubITest {
     public void setup() {
         smartpayMock = new SmartpayMockClient(TRANSACTION_ID);
         db = app.getDatabaseTestHelper();
+
+        db.addGatewayAccount(ACCOUNT_ID, SMARTPAY_PROVIDER);
+    }
+
+    @Test
+    public void failedAuth_UnexpectedResponseCodeFromGateway() throws Exception {
+        setupForCardAuth();
+
+        smartpayMock.respondWithUnexpectedResponseCodeWhenCardAuth();
+
+        String errorMessage = "Unexpected Response Code From Gateway";
+        String cardAuthUrl = CardResource.AUTHORIZATION_FRONTEND_RESOURCE_PATH.replace("{chargeId}", CHARGE_ID);
+
+        given()
+                .port(app.getLocalPort())
+                .contentType(JSON)
+                .when()
+                .body(aValidCard())
+                .post(cardAuthUrl)
+                .then()
+                .statusCode(500)
+                .contentType(JSON)
+                .body("message", is(errorMessage));
+
+        assertThat(db.getChargeStatus(CHARGE_ID), is(ENTERING_CARD_DETAILS.getValue()));
     }
 
     @Test
     public void failedCapture_UnexpectedResponseCodeFromGateway() throws Exception {
         setupForCapture();
-
         smartpayMock.respondWithUnexpectedResponseCodeWhenCapture();
 
         String errorMessage = "Unexpected Response Code From Gateway";
@@ -104,8 +131,10 @@ public class SmartpayStubITest {
     }
 
     private void setupForCapture() {
-        db.addGatewayAccount(ACCOUNT_ID, SMARTPAY_PROVIDER);
-        long amount = 3333;
-        db.addCharge(CHARGE_ID, ACCOUNT_ID, amount, AUTHORISATION_SUCCESS, "return_url", TRANSACTION_ID);
+        db.addCharge(CHARGE_ID, ACCOUNT_ID, AMOUNT, AUTHORISATION_SUCCESS, "return_url", TRANSACTION_ID);
+    }
+
+    private void setupForCardAuth() {
+        db.addCharge(CHARGE_ID, ACCOUNT_ID, AMOUNT, ENTERING_CARD_DETAILS, "return_url", TRANSACTION_ID);
     }
 }

@@ -55,7 +55,7 @@ public class SmartpayPaymentProvider implements PaymentProvider {
                                 AuthorisationResponse::authorisationFailureResponse,
                                 (response) -> response.getStatus() == OK.getStatusCode() ?
                                         mapToCardAuthorisationResponse(response) :
-                                        errorResponse(logger, response)
+                                        errorCardAuthResponse(logger, response)
                         )
         );
     }

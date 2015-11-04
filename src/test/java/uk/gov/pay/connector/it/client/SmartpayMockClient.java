@@ -9,6 +9,7 @@ import static javax.ws.rs.core.MediaType.TEXT_XML;
 import static org.eclipse.jetty.http.HttpStatus.OK_200;
 
 public class SmartpayMockClient {
+    private static final String AUTH_SUCCESS_PAYLOAD = "<authorise success response/>";
     private static final String CAPTURE_SUCCESS_PAYLOAD = "<ns0:Envelope\n" +
             "    xmlns:ns0=\"http://schemas.xmlsoap.org/soap/envelope/\"\n" +
             "    xmlns:ns1=\"http://payment.services.adyen.com\"\n" +
@@ -41,7 +42,7 @@ public class SmartpayMockClient {
                 .withHeader(CONTENT_TYPE, TEXT_XML)
                 .withStatus(statusCode)
                 .withBody(payload);
-        if(timeout >= 0) {
+        if (timeout >= 0) {
             responseDefBuilder.withFixedDelay(timeout);
         }
 
@@ -56,12 +57,40 @@ public class SmartpayMockClient {
         );
     }
 
+    public void respondWithStatusCodeAndPayloadWhenCardAuth(int statusCode, String payload) {
+        respondWithStatusCodeAndPayloadWhenCardAuth(statusCode, payload, -1);
+    }
+
+    public void respondWithStatusCodeAndPayloadWhenCardAuth(int statusCode, String payload, int timeout) {
+        ResponseDefinitionBuilder responseDefBuilder = aResponse()
+                .withHeader(CONTENT_TYPE, TEXT_XML)
+                .withStatus(statusCode)
+                .withBody(payload);
+        if (timeout >= 0) {
+            responseDefBuilder.withFixedDelay(timeout);
+        }
+
+        stubFor(
+                post(urlPathEqualTo("/pal/servlet/soap/Payment"))
+                        .withRequestBody(
+                                matching(".*<.*authorise.*>.*</.*authorise>.*")
+                        )
+                        .willReturn(
+                                responseDefBuilder
+                        )
+        );
+    }
+
     public void respondWithSuccessWhenCapture() {
         respondWithStatusCodeAndPayloadWhenCapture(OK_200, CAPTURE_SUCCESS_PAYLOAD);
     }
 
     public void respondWithUnexpectedResponseCodeWhenCapture() {
         respondWithStatusCodeAndPayloadWhenCapture(UNKNOWN_STATUS_CODE, CAPTURE_SUCCESS_PAYLOAD);
+    }
+
+    public void respondWithUnexpectedResponseCodeWhenCardAuth() {
+        respondWithStatusCodeAndPayloadWhenCardAuth(UNKNOWN_STATUS_CODE, AUTH_SUCCESS_PAYLOAD);
     }
 
     public void respondWithMalformedBody_WhenCapture() {

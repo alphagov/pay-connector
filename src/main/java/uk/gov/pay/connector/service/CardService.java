@@ -103,7 +103,8 @@ public class CardService {
     private GatewayResponse authoriseFor(String chargeId, Card cardDetails, Map<String, Object> charge) {
 
         AuthorisationRequest request = authorisationRequest(String.valueOf(charge.get(CHARGE_ID_KEY)), String.valueOf(charge.get(AMOUNT_KEY)), cardDetails);
-        AuthorisationResponse response = paymentProviderFor(charge).authorise(request);
+        AuthorisationResponse response = paymentProviderFor(charge)
+                .authorise(request);
 
         if (response.getNewChargeStatus() != null) {
             chargeDao.updateStatus(chargeId, response.getNewChargeStatus());
