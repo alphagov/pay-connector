@@ -8,6 +8,7 @@ import org.junit.Test;
 import uk.gov.pay.connector.app.GatewayCredentialsConfig;
 import uk.gov.pay.connector.model.*;
 import uk.gov.pay.connector.model.domain.Card;
+import uk.gov.pay.connector.model.domain.ChargeStatus;
 import uk.gov.pay.connector.service.worldpay.WorldpayPaymentProvider;
 
 import javax.ws.rs.client.ClientBuilder;
@@ -19,6 +20,7 @@ import static com.google.common.io.Resources.getResource;
 import static java.util.UUID.randomUUID;
 import static org.hamcrest.CoreMatchers.hasItem;
 import static org.junit.Assert.*;
+import static uk.gov.pay.connector.model.domain.ChargeStatus.AUTHORISATION_SUCCESS;
 import static uk.gov.pay.connector.model.domain.ChargeStatus.CAPTURED;
 import static uk.gov.pay.connector.model.domain.GatewayAccount.gatewayAccountFor;
 import static uk.gov.pay.connector.service.GatewayClient.createGatewayClient;
@@ -26,7 +28,6 @@ import static uk.gov.pay.connector.util.CardUtils.aValidCard;
 import static uk.gov.pay.connector.util.SystemUtils.envOrThrow;
 
 public class WorldpayPaymentProviderTest {
-
     @Before
     public void checkThatWorldpayIsUp(){
         try {
@@ -38,18 +39,8 @@ public class WorldpayPaymentProviderTest {
 
     @Test
     public void shouldBeAbleToSendAuthorisationRequestForMerchant() throws Exception {
-        GatewayCredentialsConfig config = getWorldpayConfig();
-        WorldpayPaymentProvider connector = new WorldpayPaymentProvider(
-                createGatewayClient(
-                        ClientBuilder.newClient(),
-                        config.getUrl()
-                ),
-                gatewayAccountFor(config.getUsername(), config.getPassword())
-        );
-        AuthorisationRequest request = getCardAuthorisationRequest();
-        AuthorisationResponse response = connector.authorise(request);
-
-        assertTrue(response.isSuccessful());
+        WorldpayPaymentProvider connector = getValidWorldpayPaymentProvider();
+        successfulWorldpayCardAuth(connector);
     }
 
     /**
@@ -58,14 +49,7 @@ public class WorldpayPaymentProviderTest {
      */
     @Test
     public void shouldBeAbleToSendCaptureRequestForMerchant() throws Exception {
-        GatewayCredentialsConfig config = getWorldpayConfig();
-        WorldpayPaymentProvider connector = new WorldpayPaymentProvider(
-                createGatewayClient(
-                        ClientBuilder.newClient(),
-                        config.getUrl()
-                ),
-                gatewayAccountFor(config.getUsername(), config.getPassword())
-        );
+        WorldpayPaymentProvider connector = getValidWorldpayPaymentProvider();
         CaptureRequest request = new CaptureRequest("500", randomUUID().toString());
         CaptureResponse response = connector.capture(request);
 
@@ -74,16 +58,8 @@ public class WorldpayPaymentProviderTest {
 
     @Test
     public void shouldBeAbleToSendCancelRequestForMerchant() throws Exception {
-        GatewayCredentialsConfig config = getWorldpayConfig();
-        WorldpayPaymentProvider connector = new WorldpayPaymentProvider(
-                createGatewayClient(
-                        ClientBuilder.newClient(),
-                        config.getUrl()
-                ),
-                gatewayAccountFor(config.getUsername(), config.getPassword())
-        );
-        AuthorisationRequest request = getCardAuthorisationRequest();
-        AuthorisationResponse response = connector.authorise(request);
+        WorldpayPaymentProvider connector = getValidWorldpayPaymentProvider();
+        AuthorisationResponse response = successfulWorldpayCardAuth(connector);
 
         CancelRequest cancelRequest = CancelRequest.cancelRequest(response.getTransactionId());
         CancelResponse cancelResponse = connector.cancel(cancelRequest);
@@ -93,20 +69,14 @@ public class WorldpayPaymentProviderTest {
     }
 
     @Test
-    public void shouldBeAbleToSendOrderInquiryRequestWhenStatusNotificationComesIn() throws Exception {
-        GatewayCredentialsConfig config = getWorldpayConfig();
-        WorldpayPaymentProvider connector = new WorldpayPaymentProvider(
-                createGatewayClient(
-                        ClientBuilder.newClient(),
-                        config.getUrl()
-                ),
-                gatewayAccountFor(config.getUsername(), config.getPassword())
-        );
+    public void shouldBeAbleToQueryTheStatusOfAnExistingTransaction() throws Exception {
+        WorldpayPaymentProvider connector = getValidWorldpayPaymentProvider();
+        AuthorisationResponse response = successfulWorldpayCardAuth(connector);
 
-        String transactionId = "c15b9283-5205-45e0-8019-883c3319e838";
+        String transactionId = response.getTransactionId();
         StatusUpdates statusResponse = connector.newStatusFromNotification(notificationPayloadForTransaction(transactionId));
 
-        assertThat(statusResponse.getStatusUpdates(), hasItem(Pair.of(transactionId, CAPTURED)));
+        assertThat(statusResponse.getStatusUpdates(), hasItem(Pair.of(transactionId, AUTHORISATION_SUCCESS)));
     }
 
     @Test
@@ -130,6 +100,25 @@ public class WorldpayPaymentProviderTest {
         return new AuthorisationRequest("chargeId", card, amount, description);
     }
 
+    private AuthorisationResponse successfulWorldpayCardAuth(WorldpayPaymentProvider connector) {
+        AuthorisationRequest request = getCardAuthorisationRequest();
+        AuthorisationResponse response = connector.authorise(request);
+
+        assertTrue(response.isSuccessful());
+
+        return response;
+    }
+
+    private WorldpayPaymentProvider getValidWorldpayPaymentProvider() {
+        GatewayCredentialsConfig config = getWorldpayConfig();
+        return new WorldpayPaymentProvider(
+                createGatewayClient(
+                        ClientBuilder.newClient(),
+                        config.getUrl()
+                ),
+                gatewayAccountFor(config.getUsername(), config.getPassword())
+        );
+    }
 
     private GatewayCredentialsConfig getWorldpayConfig() {
         return WORLDPAY_CREDENTIALS;
@@ -156,5 +145,4 @@ public class WorldpayPaymentProviderTest {
         URL resource = getResource("templates/worldpay/notification.xml");
         return Resources.toString(resource, Charset.defaultCharset()).replace("{{transactionId}}", transactionId);
     }
-
 }
