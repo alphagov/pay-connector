@@ -20,6 +20,7 @@ import uk.gov.pay.connector.healthcheck.DatabaseHealthCheck;
 import uk.gov.pay.connector.healthcheck.Ping;
 import uk.gov.pay.connector.resources.*;
 import uk.gov.pay.connector.service.CardService;
+import uk.gov.pay.connector.service.ClientFactory;
 import uk.gov.pay.connector.service.PaymentProviders;
 import uk.gov.pay.connector.util.DbConnectionChecker;
 
@@ -62,7 +63,10 @@ public class ConnectorApp extends Application<ConnectorConfiguration> {
         ChargeDao chargeDao = new ChargeDao(jdbi);
         TokenDao tokenDao = new TokenDao(jdbi);
         GatewayAccountDao gatewayAccountDao = new GatewayAccountDao(jdbi);
-        PaymentProviders providers = new PaymentProviders(conf, environment.getObjectMapper());
+
+        ClientFactory clientFactory = new ClientFactory(environment, conf);
+
+        PaymentProviders providers = new PaymentProviders(conf, clientFactory, environment.getObjectMapper());
         CardService cardService = new CardService(gatewayAccountDao, chargeDao, providers);
 
         environment.jersey().register(new SecurityTokensResource(tokenDao));
@@ -72,12 +76,13 @@ public class ConnectorApp extends Application<ConnectorConfiguration> {
         environment.jersey().register(new CardResource(cardService));
         environment.jersey().register(new GatewayAccountResource(gatewayAccountDao));
 
-        environment.jersey().register(AuthFactory.binder(
-                new BasicAuthFactory<>(
-                        new SmartpayAuthenticator(
-                                conf.getSmartpayConfig().getNotification()),
-                        "",
-                        String.class)));
+        environment.jersey().register(
+                AuthFactory.binder(
+                        new BasicAuthFactory<>(
+                                new SmartpayAuthenticator(
+                                        conf.getSmartpayConfig().getNotification()),
+                                "",
+                                String.class)));
 
         environment.healthChecks().register("database", new DatabaseHealthCheck(jdbi, dataSourceFactory.getValidationQuery()));
     }

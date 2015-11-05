@@ -6,8 +6,8 @@
     <artifactId>pay-connector</artifactId>
 
     <properties>
-        <dropwizard.version>0.8.1</dropwizard.version>
-        <mockserver.version>3.9.17</mockserver.version>
+        <dropwizard.version>0.8.4</dropwizard.version>
+        <wiremock.version>1.57</wiremock.version>
     </properties>
     <dependencies>
         <dependency>
@@ -67,6 +67,12 @@
         </dependency>
         <!-- testing -->
         <dependency>
+            <groupId>com.github.tomakehurst</groupId>
+            <artifactId>wiremock</artifactId>
+            <version>${wiremock.version}</version>
+            <scope>test</scope>
+        </dependency>
+        <dependency>
             <groupId>io.dropwizard</groupId>
             <artifactId>dropwizard-testing</artifactId>
             <version>${dropwizard.version}</version>
@@ -106,18 +112,6 @@
             <groupId>com.google.code.gson</groupId>
             <artifactId>gson</artifactId>
             <version>2.3.1</version>
-            <scope>test</scope>
-        </dependency>
-        <dependency>
-            <groupId>org.mock-server</groupId>
-            <artifactId>mockserver-netty</artifactId>
-            <version>${mockserver.version}</version>
-            <scope>test</scope>
-        </dependency>
-        <dependency>
-            <groupId>org.mock-server</groupId>
-            <artifactId>mockserver-client-java</artifactId>
-            <version>${mockserver.version}</version>
             <scope>test</scope>
         </dependency>
     </dependencies>

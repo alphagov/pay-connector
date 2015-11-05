@@ -17,22 +17,24 @@ public class PaymentProviders {
     private final PaymentProvider smartpayProvider;
     private final PaymentProvider sandboxProvider;
 
-    public PaymentProviders(ConnectorConfiguration config, ObjectMapper objectMapper) {
-        this.worldpayProvider = createWorldpayProvider(config.getWorldpayConfig());
-        this.smartpayProvider = createSmartPayProvider(config.getSmartpayConfig(), objectMapper);
+    public PaymentProviders(ConnectorConfiguration config, ClientFactory clientFactory, ObjectMapper objectMapper) {
+        this.worldpayProvider = createWorldpayProvider(clientFactory, config.getWorldpayConfig());
+        this.smartpayProvider = createSmartPayProvider(clientFactory, config.getSmartpayConfig(), objectMapper);
         this.sandboxProvider = new SandboxPaymentProvider(objectMapper);
     }
 
-    private PaymentProvider createWorldpayProvider(GatewayCredentialsConfig config) {
+    private PaymentProvider createWorldpayProvider(ClientFactory clientFactory,
+                                                   GatewayCredentialsConfig config) {
         return new WorldpayPaymentProvider(
-                createGatewayClient(config.getUrl()),
+                createGatewayClient(clientFactory.createWithDropwizardClient("WORLD_PAY"), config.getUrl()),
                 gatewayAccountFor(config.getUsername(), config.getPassword()));
     }
 
-    private PaymentProvider createSmartPayProvider(GatewayCredentialsConfig config, 
+    private PaymentProvider createSmartPayProvider(ClientFactory clientFactory,
+                                                   GatewayCredentialsConfig config,
                                                    ObjectMapper objectMapper) {
         return new SmartpayPaymentProvider(
-                createGatewayClient(config.getUrl()),
+                createGatewayClient(clientFactory.createWithDropwizardClient("SMART_PAY"), config.getUrl()),
                 gatewayAccountFor(config.getUsername(), config.getPassword()),
                 objectMapper
         );

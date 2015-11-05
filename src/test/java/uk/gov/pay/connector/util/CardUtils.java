@@ -33,6 +33,7 @@ public class CardUtils {
     public static Address addressFor(String line1, String city, String postcode, String country) {
         Address address = Address.anAddress();
         address.setLine1(line1);
+        address.setLine2(line1);
         address.setCity(city);
         address.setPostcode(postcode);
         address.setCountry(country);

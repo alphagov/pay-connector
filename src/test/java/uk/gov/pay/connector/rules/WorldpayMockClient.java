@@ -1,23 +1,18 @@
 package uk.gov.pay.connector.rules;
 
 import com.google.common.io.Resources;
-import org.mockserver.client.server.MockServerClient;
 
 import java.io.IOException;
 import java.nio.charset.Charset;
 
-import static javax.ws.rs.HttpMethod.POST;
+import static com.github.tomakehurst.wiremock.client.WireMock.*;
+import static javax.ws.rs.core.HttpHeaders.CONTENT_TYPE;
 import static javax.ws.rs.core.MediaType.TEXT_XML;
-import static org.mockserver.model.HttpRequest.request;
-import static org.mockserver.model.HttpResponse.response;
 import static uk.gov.pay.connector.util.TransactionId.randomId;
 
 public class WorldpayMockClient {
 
-    private final MockServerClient mockClient;
-
-    public WorldpayMockClient(int mockServerPort) {
-        this.mockClient = new MockServerClient("localhost", mockServerPort);
+    public WorldpayMockClient() {
     }
 
     public void mockInquiryResponse(String gatewayTransactionId, String status) {
@@ -55,13 +50,15 @@ public class WorldpayMockClient {
     }
 
     private void paymentServiceResponse(String responseBody) {
-        mockClient.when(request()
-                        .withMethod(POST)
-                        .withPath("/jsp/merchant/xml/paymentService.jsp")
-        ).respond(response()
-                .withStatusCode(200)
-                .withBody(responseBody)
-                .withHeader("Content-Type", TEXT_XML));
+        stubFor(
+                post(urlPathEqualTo("/jsp/merchant/xml/paymentService.jsp"))
+                        .willReturn(
+                                aResponse()
+                                        .withHeader(CONTENT_TYPE, TEXT_XML)
+                                        .withStatus(200)
+                                        .withBody(responseBody)
+                        )
+        );
     }
 
     private String loadFromTemplate(String fileName, String gatewayTransactionId) {

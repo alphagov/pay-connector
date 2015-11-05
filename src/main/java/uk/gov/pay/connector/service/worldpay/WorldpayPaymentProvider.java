@@ -1,6 +1,5 @@
 package uk.gov.pay.connector.service.worldpay;
 
-
 import com.google.common.collect.ImmutableList;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.lang3.tuple.Pair;
@@ -24,9 +23,11 @@ import static java.util.UUID.randomUUID;
 import static javax.ws.rs.core.Response.Status.OK;
 import static uk.gov.pay.connector.model.AuthorisationResponse.*;
 import static uk.gov.pay.connector.model.CancelResponse.aSuccessfulCancelResponse;
-import static uk.gov.pay.connector.model.CancelResponse.errorCancelResponse;
+import static uk.gov.pay.connector.model.CancelResponse.cancelFailureResponse;
 import static uk.gov.pay.connector.model.CaptureResponse.aSuccessfulCaptureResponse;
+import static uk.gov.pay.connector.model.CaptureResponse.captureFailureResponse;
 import static uk.gov.pay.connector.model.GatewayError.baseGatewayError;
+import static uk.gov.pay.connector.model.InquiryResponse.*;
 import static uk.gov.pay.connector.model.domain.ChargeStatus.AUTHORISATION_SUCCESS;
 import static uk.gov.pay.connector.service.OrderCaptureRequestBuilder.aWorldpayOrderCaptureRequest;
 import static uk.gov.pay.connector.service.OrderSubmitRequestBuilder.aWorldpayOrderSubmitRequest;
@@ -37,7 +38,6 @@ import static uk.gov.pay.connector.util.XMLUnmarshaller.unmarshall;
 public class WorldpayPaymentProvider implements PaymentProvider {
     public static final String NOTIFICATION_ACKNOWLEDGED = "[OK]";
     public static final StatusUpdates NO_UPDATE = StatusUpdates.noUpdate(NOTIFICATION_ACKNOWLEDGED);
-    public static final StatusUpdates DO_NOT_ACKNOWLEDGE = StatusUpdates.noUpdate("");
     private final Logger logger = LoggerFactory.getLogger(WorldpayPaymentProvider.class);
 
     private final GatewayClient client;
@@ -56,9 +56,7 @@ public class WorldpayPaymentProvider implements PaymentProvider {
                         .postXMLRequestFor(gatewayAccount, buildOrderSubmitFor(request, gatewayTransactionId))
                         .bimap(
                                 AuthorisationResponse::authorisationFailureResponse,
-                                (response) -> response.getStatus() == OK.getStatusCode() ?
-                                        mapToCardAuthorisationResponse(response, gatewayTransactionId) :
-                                        errorResponse(logger, response)
+                                (response) -> mapToCardAuthorisationResponse(response, gatewayTransactionId)
                         )
         );
     }
@@ -71,9 +69,7 @@ public class WorldpayPaymentProvider implements PaymentProvider {
                         .postXMLRequestFor(gatewayAccount, requestString)
                         .bimap(
                                 CaptureResponse::captureFailureResponse,
-                                (response) -> response.getStatus() == OK.getStatusCode() ?
-                                        mapToCaptureResponse(response) :
-                                        handleCaptureError(response)
+                                this::mapToCaptureResponse
                         )
         );
     }
@@ -86,9 +82,7 @@ public class WorldpayPaymentProvider implements PaymentProvider {
                         .postXMLRequestFor(gatewayAccount, requestString)
                         .bimap(
                                 CancelResponse::cancelFailureResponse,
-                                (response) -> response.getStatus() == OK.getStatusCode() ?
-                                        mapToCancelResponse(response) :
-                                        errorCancelResponse(logger, response)
+                                this::mapToCancelResponse
                         )
         );
     }
@@ -127,13 +121,10 @@ public class WorldpayPaymentProvider implements PaymentProvider {
                                 InquiryResponse::inquiryFailureResponse,
                                 (response) -> response.getStatus() == OK.getStatusCode() ?
                                         mapToInquiryResponse(response) :
-                                        InquiryResponse.errorInquiryResponse(logger, response)
+                                        errorInquiryResponse(logger, response)
                         )
         );
     }
-
-
-
 
     private String buildOrderCaptureFor(CaptureRequest request) {
         return aWorldpayOrderCaptureRequest()
@@ -192,11 +183,10 @@ public class WorldpayPaymentProvider implements PaymentProvider {
                                 CaptureResponse::captureFailureResponse,
                                 (wResponse) -> wResponse.isCaptured() ?
                                         aSuccessfulCaptureResponse() :
-                                        new CaptureResponse(false, baseGatewayError(wResponse.getErrorMessage()))
+                                        captureFailureResponse(logger, wResponse.getErrorMessage())
                         )
         );
     }
-
 
     private InquiryResponse mapToInquiryResponse(Response response) {
         return reduce(
@@ -204,8 +194,8 @@ public class WorldpayPaymentProvider implements PaymentProvider {
                         .bimap(
                                 InquiryResponse::inquiryFailureResponse,
                                 (wResponse) -> wResponse.isError() ?
-                                        InquiryResponse.inquiryFailureResponse(baseGatewayError(wResponse.getErrorMessage())) :
-                                        InquiryResponse.statusUpdate(wResponse.getTransactionId(), wResponse.getLastEvent())
+                                        inquiryFailureResponse(baseGatewayError(wResponse.getErrorMessage())) :
+                                        inquiryStatusUpdate(wResponse.getTransactionId(), wResponse.getLastEvent())
 
                         )
         );
@@ -218,14 +208,9 @@ public class WorldpayPaymentProvider implements PaymentProvider {
                                 CancelResponse::cancelFailureResponse,
                                 (wResponse) -> wResponse.isCancelled() ?
                                         aSuccessfulCancelResponse() :
-                                        new CancelResponse(false, baseGatewayError(wResponse.getErrorMessage()))
+                                        cancelFailureResponse(logger, wResponse.getErrorMessage())
                         )
         );
-    }
-
-    private CaptureResponse handleCaptureError(Response response) {
-        logger.error(format("Error code received from Worldpay %s.", response.getStatus()));
-        return new CaptureResponse(false, baseGatewayError("Error processing capture request"));
     }
 
     private String generateTransactionId() {

@@ -19,17 +19,18 @@ import java.util.stream.Collectors;
 
 import static fj.data.Either.reduce;
 import static java.lang.String.format;
-import static javax.ws.rs.core.Response.Status.OK;
-import static uk.gov.pay.connector.model.AuthorisationResponse.*;
-import static uk.gov.pay.connector.model.CancelResponse.*;
-import static uk.gov.pay.connector.model.CaptureResponse.*;
+import static uk.gov.pay.connector.model.AuthorisationResponse.authorisationFailureResponse;
+import static uk.gov.pay.connector.model.AuthorisationResponse.successfulAuthorisation;
+import static uk.gov.pay.connector.model.CancelResponse.aSuccessfulCancelResponse;
+import static uk.gov.pay.connector.model.CancelResponse.cancelFailureResponse;
+import static uk.gov.pay.connector.model.CaptureResponse.aSuccessfulCaptureResponse;
+import static uk.gov.pay.connector.model.CaptureResponse.captureFailureResponse;
 import static uk.gov.pay.connector.model.domain.ChargeStatus.AUTHORISATION_SUCCESS;
 import static uk.gov.pay.connector.service.OrderCaptureRequestBuilder.aSmartpayOrderCaptureRequest;
 import static uk.gov.pay.connector.service.OrderSubmitRequestBuilder.aSmartpayOrderSubmitRequest;
 import static uk.gov.pay.connector.service.smartpay.SmartpayOrderCancelRequestBuilder.aSmartpayOrderCancelRequest;
 
 public class SmartpayPaymentProvider implements PaymentProvider {
-
     private static final String MERCHANT_CODE = "MerchantAccount";
     public static final String ACCEPTED = "[accepted]";
     private final Logger logger = LoggerFactory.getLogger(SmartpayPaymentProvider.class);
@@ -53,9 +54,7 @@ public class SmartpayPaymentProvider implements PaymentProvider {
                         .postXMLRequestFor(gatewayAccount, requestString)
                         .bimap(
                                 AuthorisationResponse::authorisationFailureResponse,
-                                (response) -> response.getStatus() == OK.getStatusCode() ?
-                                        mapToCardAuthorisationResponse(response) :
-                                        errorResponse(logger, response)
+                                this::mapToCardAuthorisationResponse
                         )
         );
     }
@@ -69,9 +68,19 @@ public class SmartpayPaymentProvider implements PaymentProvider {
                         .postXMLRequestFor(gatewayAccount, captureRequestString)
                         .bimap(
                                 CaptureResponse::captureFailureResponse,
-                                (response) -> response.getStatus() == OK.getStatusCode() ?
-                                        mapToCaptureResponse(response) :
-                                        errorCaptureResponse(logger, response)
+                                this::mapToCaptureResponse
+                        )
+        );
+    }
+
+    @Override
+    public CancelResponse cancel(CancelRequest request) {
+        return reduce(
+                client
+                        .postXMLRequestFor(gatewayAccount, buildCancelOrderFor(request))
+                        .bimap(
+                                CancelResponse::cancelFailureResponse,
+                                this::mapToCancelResponse
                         )
         );
     }
@@ -111,20 +120,6 @@ public class SmartpayPaymentProvider implements PaymentProvider {
         String smartpayStatus = notification.getEventCode();
         Optional<ChargeStatus> newChargeStatus = SmartpayStatusMapper.mapToChargeStatus(smartpayStatus, notification.isSuccessFull());
         return Pair.of(notification.getTransactionId(), newChargeStatus.get());
-    }
-
-    @Override
-    public CancelResponse cancel(CancelRequest request) {
-        return reduce(
-                client
-                        .postXMLRequestFor(gatewayAccount, buildCancelOrderFor(request))
-                        .bimap(
-                                CancelResponse::cancelFailureResponse,
-                                (response) -> response.getStatus() == OK.getStatusCode() ?
-                                        mapToCancelResponse(response) :
-                                        errorCancelResponse(logger, response)
-                        )
-        );
     }
 
     private AuthorisationResponse mapToCardAuthorisationResponse(Response response) {
