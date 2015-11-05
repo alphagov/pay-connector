@@ -1,4 +1,4 @@
-package uk.gov.pay.connector.it.client;
+package uk.gov.pay.connector.it.gatewayclient;
 
 import com.github.tomakehurst.wiremock.junit.WireMockRule;
 import org.junit.Before;
@@ -18,7 +18,7 @@ import static uk.gov.pay.connector.model.domain.ChargeStatus.CAPTURE_UNKNOWN;
 import static uk.gov.pay.connector.resources.CardResource.CAPTURE_FRONTEND_RESOURCE_PATH;
 import static uk.gov.pay.connector.resources.PaymentProviderValidator.SMARTPAY_PROVIDER;
 
-public class SmartpayStubSocketReadTimeoutITest {
+public class GatewayInvalidUrlITest {
     private static final String ACCOUNT_ID = "12341234";
     private static final String CHARGE_ID = "111";
     private static final String TRANSACTION_ID = "7914440428682669";
@@ -30,26 +30,25 @@ public class SmartpayStubSocketReadTimeoutITest {
 
     @Rule
     public DropwizardAppWithPostgresRule app = new DropwizardAppWithPostgresRule(
-            config("smartpay.url", "http://localhost:" + port + "/pal/servlet/soap/Payment"),
-            config("customJerseyClient.readTimeout", "500ms")
+            config("smartpay.url", "http://gobbledygook.invalid.url")
     );
 
-    private SmartpayMockClient smartpayMock;
+    private GatewayStub gatewayStub;
     private DatabaseTestHelper db;
 
     @Before
     public void setup() {
-        smartpayMock = new SmartpayMockClient(TRANSACTION_ID);
+        gatewayStub = new GatewayStub(TRANSACTION_ID);
         db = app.getDatabaseTestHelper();
     }
 
     @Test
-    public void failedCapture_ConnectionTimeoutFromGateway() throws Exception {
+    public void failedCapture_InvalidConnectorUrl() throws Exception {
         setupForCapture();
 
-        smartpayMock.respondWithTimeoutWhenCapture();
+        gatewayStub.respondWithUnexpectedResponseCodeWhenCapture();
 
-        String errorMessage = "Gateway connection timeout error";
+        String errorMessage = "Gateway Url DNS resolution error";
         String captureUrl = CAPTURE_FRONTEND_RESOURCE_PATH.replace("{chargeId}", CHARGE_ID);
 
         given()
@@ -64,7 +63,6 @@ public class SmartpayStubSocketReadTimeoutITest {
 
         assertThat(db.getChargeStatus(CHARGE_ID), is(CAPTURE_UNKNOWN.getValue()));
     }
-
 
     private void setupForCapture() {
         db.addGatewayAccount(ACCOUNT_ID, SMARTPAY_PROVIDER);

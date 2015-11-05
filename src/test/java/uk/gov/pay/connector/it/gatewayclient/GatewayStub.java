@@ -1,4 +1,4 @@
-package uk.gov.pay.connector.it.client;
+package uk.gov.pay.connector.it.gatewayclient;
 
 import com.github.tomakehurst.wiremock.client.ResponseDefinitionBuilder;
 
@@ -8,7 +8,7 @@ import static javax.ws.rs.core.HttpHeaders.CONTENT_TYPE;
 import static javax.ws.rs.core.MediaType.TEXT_XML;
 import static org.eclipse.jetty.http.HttpStatus.OK_200;
 
-public class SmartpayMockClient {
+public class GatewayStub {
     private static final String AUTH_SUCCESS_PAYLOAD = "<authorise success response/>";
     private static final String CAPTURE_SUCCESS_PAYLOAD = "<ns0:Envelope\n" +
             "    xmlns:ns0=\"http://schemas.xmlsoap.org/soap/envelope/\"\n" +
@@ -29,7 +29,7 @@ public class SmartpayMockClient {
     private static final int UNKNOWN_STATUS_CODE = 999;
     private final String transactionId;
 
-    public SmartpayMockClient(String transactionId) {
+    public GatewayStub(String transactionId) {
         this.transactionId = transactionId;
     }
 

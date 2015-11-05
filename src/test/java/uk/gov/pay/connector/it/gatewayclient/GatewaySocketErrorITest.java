@@ -1,4 +1,4 @@
-package uk.gov.pay.connector.it.client;
+package uk.gov.pay.connector.it.gatewayclient;
 
 import org.junit.Before;
 import org.junit.Rule;
@@ -17,7 +17,7 @@ import static uk.gov.pay.connector.model.domain.ChargeStatus.CAPTURE_UNKNOWN;
 import static uk.gov.pay.connector.resources.CardResource.CAPTURE_FRONTEND_RESOURCE_PATH;
 import static uk.gov.pay.connector.resources.PaymentProviderValidator.SMARTPAY_PROVIDER;
 
-public class SmartpayStubSocketErrorITest {
+public class GatewaySocketErrorITest {
     private static final String ACCOUNT_ID = "12341234";
     private static final String CHARGE_ID = "111";
     private static final String TRANSACTION_ID = "7914440428682669";

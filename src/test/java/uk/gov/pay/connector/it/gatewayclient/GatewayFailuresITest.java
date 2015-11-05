@@ -1,4 +1,4 @@
-package uk.gov.pay.connector.it.client;
+package uk.gov.pay.connector.it.gatewayclient;
 
 import com.github.tomakehurst.wiremock.junit.WireMockRule;
 import org.junit.Before;
@@ -19,7 +19,7 @@ import static uk.gov.pay.connector.resources.CardResource.CAPTURE_FRONTEND_RESOU
 import static uk.gov.pay.connector.resources.PaymentProviderValidator.SMARTPAY_PROVIDER;
 import static uk.gov.pay.connector.util.CardUtils.aValidCard;
 
-public class SmartpayStubITest {
+public class GatewayFailuresITest {
     private static final String ACCOUNT_ID = "12341234";
     private static final String CHARGE_ID = "111";
     private static final String TRANSACTION_ID = "7914440428682669";
@@ -35,12 +35,12 @@ public class SmartpayStubITest {
             config("smartpay.url", "http://localhost:" + port + "/pal/servlet/soap/Payment")
     );
 
-    private SmartpayMockClient smartpayMock;
+    private GatewayStub gatewayStub;
     private DatabaseTestHelper db;
 
     @Before
     public void setup() {
-        smartpayMock = new SmartpayMockClient(TRANSACTION_ID);
+        gatewayStub = new GatewayStub(TRANSACTION_ID);
         db = app.getDatabaseTestHelper();
 
         db.addGatewayAccount(ACCOUNT_ID, SMARTPAY_PROVIDER);
@@ -50,7 +50,7 @@ public class SmartpayStubITest {
     public void failedAuth_UnexpectedResponseCodeFromGateway() throws Exception {
         setupForCardAuth();
 
-        smartpayMock.respondWithUnexpectedResponseCodeWhenCardAuth();
+        gatewayStub.respondWithUnexpectedResponseCodeWhenCardAuth();
 
         String errorMessage = "Unexpected Response Code From Gateway";
         String cardAuthUrl = CardResource.AUTHORIZATION_FRONTEND_RESOURCE_PATH.replace("{chargeId}", CHARGE_ID);
@@ -72,7 +72,7 @@ public class SmartpayStubITest {
     @Test
     public void failedCapture_UnexpectedResponseCodeFromGateway() throws Exception {
         setupForCapture();
-        smartpayMock.respondWithUnexpectedResponseCodeWhenCapture();
+        gatewayStub.respondWithUnexpectedResponseCodeWhenCapture();
 
         String errorMessage = "Unexpected Response Code From Gateway";
         String captureUrl = CAPTURE_FRONTEND_RESOURCE_PATH.replace("{chargeId}", CHARGE_ID);
@@ -94,7 +94,7 @@ public class SmartpayStubITest {
     public void failedCapture_MalformedResponseFromGateway() throws Exception {
         setupForCapture();
 
-        smartpayMock.respondWithMalformedBody_WhenCapture();
+        gatewayStub.respondWithMalformedBody_WhenCapture();
 
         String errorMessage = "Invalid Response Received From Gateway";
         String captureUrl = CAPTURE_FRONTEND_RESOURCE_PATH.replace("{chargeId}", CHARGE_ID);
@@ -116,7 +116,7 @@ public class SmartpayStubITest {
     public void successCapture_ResourceTest() throws Exception {
         setupForCapture();
 
-        smartpayMock.respondWithSuccessWhenCapture();
+        gatewayStub.respondWithSuccessWhenCapture();
 
         String captureUrl = CAPTURE_FRONTEND_RESOURCE_PATH.replace("{chargeId}", CHARGE_ID);
         given()
