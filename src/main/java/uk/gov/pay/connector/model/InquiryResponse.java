@@ -5,7 +5,7 @@ import org.slf4j.Logger;
 import javax.ws.rs.core.Response;
 
 import static java.lang.String.format;
-import static uk.gov.pay.connector.model.GatewayError.baseGatewayError;
+import static uk.gov.pay.connector.model.GatewayError.unexpectedStatusCodeFromGateway;
 
 public class InquiryResponse implements GatewayResponse {
     private Boolean successful;
@@ -42,12 +42,12 @@ public class InquiryResponse implements GatewayResponse {
         return new InquiryResponse(false, gatewayError, null, null);
     }
 
-    public static InquiryResponse statusUpdate(String transactionId, String newStatus) {
+    public static InquiryResponse inquiryStatusUpdate(String transactionId, String newStatus) {
         return new InquiryResponse(true, null, transactionId, newStatus);
     }
 
     public static InquiryResponse errorInquiryResponse(Logger logger, Response response) {
         logger.error(format("Error code received from gateway: %s.", response.getStatus()));
-        return new InquiryResponse(false, baseGatewayError("Error processing request"), null, null);
+        return new InquiryResponse(false, unexpectedStatusCodeFromGateway("Error processing status inquiry"), null, null);
     }
 }

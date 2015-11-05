@@ -2,8 +2,6 @@ package uk.gov.pay.connector.model;
 
 import org.slf4j.Logger;
 
-import javax.ws.rs.core.Response;
-
 import static java.lang.String.format;
 import static uk.gov.pay.connector.model.GatewayError.baseGatewayError;
 
@@ -28,11 +26,6 @@ public class CancelResponse implements GatewayResponse {
 
     public static CancelResponse aSuccessfulCancelResponse() {
         return new CancelResponse(true, null);
-    }
-
-    public static CancelResponse errorCancelResponse(Logger logger, Response response) {
-        logger.error(format("Error code received from gateway: %s.", response.getStatus()));
-        return new CancelResponse(false, baseGatewayError("Error processing request"));
     }
 
     public static CancelResponse cancelFailureResponse(Logger logger, String errorMessage) {

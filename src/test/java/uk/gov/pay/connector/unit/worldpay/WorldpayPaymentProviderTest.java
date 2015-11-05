@@ -23,6 +23,7 @@ import static org.mockito.Matchers.*;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
 import static uk.gov.pay.connector.model.GatewayErrorType.GenericGatewayError;
+import static uk.gov.pay.connector.model.GatewayErrorType.UnexpectedStatusCodeFromGateway;
 import static uk.gov.pay.connector.model.domain.Address.anAddress;
 import static uk.gov.pay.connector.model.domain.GatewayAccount.gatewayAccountFor;
 import static uk.gov.pay.connector.service.GatewayClient.createGatewayClient;
@@ -65,7 +66,7 @@ public class WorldpayPaymentProviderTest {
         AuthorisationResponse response = connector.authorise(getCardAuthorisationRequest());
 
         assertThat(response.isSuccessful(), is(false));
-        assertEquals(response.getError(), new GatewayError("Error processing request", GenericGatewayError));
+        assertEquals(response.getError(), new GatewayError("Unexpected Response Code From Gateway", UnexpectedStatusCodeFromGateway));
     }
 
     @Test
@@ -83,7 +84,7 @@ public class WorldpayPaymentProviderTest {
         CaptureResponse response = connector.capture(getCaptureRequest());
 
         assertThat(response.isSuccessful(), is(false));
-        assertEquals(response.getError(), new GatewayError("Error processing capture request", GenericGatewayError));
+        assertEquals(response.getError(), new GatewayError("Unexpected Response Code From Gateway", UnexpectedStatusCodeFromGateway));
     }
 
     private AuthorisationRequest getCardAuthorisationRequest() {

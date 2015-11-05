@@ -3,11 +3,8 @@ package uk.gov.pay.connector.model;
 import org.slf4j.Logger;
 import uk.gov.pay.connector.model.domain.ChargeStatus;
 
-import javax.ws.rs.core.Response;
-
 import static java.lang.String.format;
 import static uk.gov.pay.connector.model.GatewayError.baseGatewayError;
-import static uk.gov.pay.connector.model.GatewayError.unexpectedStatusCodeFromGateway;
 import static uk.gov.pay.connector.model.domain.ChargeStatus.AUTHORISATION_REJECTED;
 
 public class AuthorisationResponse implements GatewayResponse {
@@ -29,16 +26,6 @@ public class AuthorisationResponse implements GatewayResponse {
 
     public static AuthorisationResponse successfulAuthorisation(ChargeStatus status, String transactionId) {
         return new AuthorisationResponse(true, null, status, transactionId);
-    }
-
-    public static AuthorisationResponse errorResponse(Logger logger, Response response) {
-        logger.error(format("Error code received from gateway: %s.", response.getStatus()));
-        return new AuthorisationResponse(baseGatewayError("Error processing request"));
-    }
-
-    public static AuthorisationResponse errorCardAuthResponse(Logger logger, Response response) {
-        logger.error(format("Error code received from provider: response status = %s.", response.getStatus()));
-        return new AuthorisationResponse(unexpectedStatusCodeFromGateway("Error processing capture request"));
     }
 
     public static AuthorisationResponse authorisationFailureNotUpdateResponse(Logger logger, String transactionId, String errorMessage) {
