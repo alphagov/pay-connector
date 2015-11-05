@@ -69,7 +69,7 @@ public class WorldpayPaymentProviderTest {
     }
 
     @Test
-    public void shouldBeAbleToSendOrderInquiryRequestWhenStatusNotificationComesIn() throws Exception {
+    public void shouldBeAbleToQueryTheStatusOfAnExistingTransaction() throws Exception {
         WorldpayPaymentProvider connector = getValidWorldpayPaymentProvider();
         AuthorisationResponse response = successfulWorldpayCardAuth(connector);
 
