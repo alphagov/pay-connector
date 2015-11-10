@@ -4,6 +4,7 @@ import org.junit.Test;
 import uk.gov.pay.connector.it.base.CardResourceITestBase;
 
 import static uk.gov.pay.connector.model.api.ExternalChargeStatus.EXT_IN_PROGRESS;
+import static uk.gov.pay.connector.model.api.ExternalChargeStatus.EXT_SUCCEEDED;
 import static uk.gov.pay.connector.model.domain.ChargeStatus.*;
 
 public class WorldpayCardResourceITest extends CardResourceITestBase {
@@ -52,6 +53,6 @@ public class WorldpayCardResourceITest extends CardResourceITestBase {
                 .statusCode(204);
 
         assertFrontendChargeStatusIs(chargeId, CAPTURE_SUBMITTED.getValue());
-        assertApiStatusIs(chargeId, EXT_IN_PROGRESS.getValue());
+        assertApiStatusIs(chargeId, EXT_SUCCEEDED.getValue());
     }
 }
