@@ -5,7 +5,9 @@ import uk.gov.pay.connector.it.base.CardResourceITestBase;
 
 import static com.jayway.restassured.http.ContentType.JSON;
 import static java.lang.String.format;
+import static java.util.UUID.randomUUID;
 import static org.hamcrest.Matchers.is;
+import static uk.gov.pay.connector.model.api.ExternalChargeStatus.EXT_FAILED;
 import static uk.gov.pay.connector.model.api.ExternalChargeStatus.EXT_IN_PROGRESS;
 import static uk.gov.pay.connector.model.domain.ChargeStatus.*;
 
@@ -102,6 +104,12 @@ public class CardResourceITest extends CardResourceITestBase {
         shouldReturnErrorFor(chargeId, detailsWithInvalidExpiryDate, "Values do not match expected format/length.");
 
         assertFrontendChargeStatusIs(chargeId, CREATED.getValue());
+    }
+
+    @Test
+    public void shouldFailPayment_IfCaptureStatusIsUnknown() {
+        String failedChargeId = createNewChargeWith(CAPTURE_UNKNOWN, randomUUID().toString());
+        assertApiStatusIs(failedChargeId,EXT_FAILED.getValue());
     }
 
     @Test
