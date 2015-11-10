@@ -152,6 +152,22 @@ public class CardResourceITestBase {
         return toJson(cardDetails);
     }
 
+    protected String accountBodyFor(String accountId) {
+        JsonObject body = new JsonObject();
+        body.addProperty("account_id", accountId);
+        return toJson(body);
+    }
+
+    protected String createAndAuthoriseCharge(String cardDetails) {
+        String chargeId = createNewCharge();
+        givenSetup()
+                .body(cardDetails)
+                .post(authoriseChargeUrlFor(chargeId))
+                .then()
+                .statusCode(204);
+        return chargeId;
+    }
+
     protected void shouldReturnErrorForCardDetailsWithMessage(String cardDetails, String errorMessage, String status) throws Exception {
         String chargeId = createNewChargeWith(ENTERING_CARD_DETAILS, null);
 

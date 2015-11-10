@@ -1,5 +1,6 @@
 package uk.gov.pay.connector.resources;
 
+import com.fasterxml.jackson.databind.JsonNode;
 import fj.F;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -14,6 +15,7 @@ import javax.ws.rs.core.Response;
 
 import static fj.data.Either.reduce;
 import static javax.ws.rs.core.MediaType.APPLICATION_JSON;
+import static org.apache.commons.lang3.StringUtils.isBlank;
 import static uk.gov.pay.connector.resources.CardDetailsValidator.isWellFormattedCardDetails;
 import static uk.gov.pay.connector.util.ResponseUtil.*;
 
@@ -23,6 +25,7 @@ public class CardResource {
     public static final String AUTHORIZATION_FRONTEND_RESOURCE_PATH = "/v1/frontend/charges/{chargeId}/cards";
     public static final String CAPTURE_FRONTEND_RESOURCE_PATH = "/v1/frontend/charges/{chargeId}/capture";
     public static final String CANCEL_CHARGE_PATH = "/v1/api/charges/{chargeId}/cancel";
+    public static final String ACCOUNT_ID_FIELD = "account_id";
     private final CardService cardService;
     private final Logger logger = LoggerFactory.getLogger(CardResource.class);
 
@@ -60,12 +63,29 @@ public class CardResource {
     @POST
     @Path(CANCEL_CHARGE_PATH)
     @Produces(APPLICATION_JSON)
-    public Response cancelCharge(@PathParam("chargeId") String chargeId) {
+    @Consumes(APPLICATION_JSON)
+    public Response cancelCharge(@PathParam("chargeId") String chargeId, JsonNode accountNode) {
+        if (invalidCancelRequest(accountNode)) {
+            return badRequestResponse(logger, "account_id is missing for cancellation");
+        }
+
+        String accountId = accountNode.get(ACCOUNT_ID_FIELD).asText();
         return reduce(
                 cardService
-                        .doCancel(chargeId)
+                        .doCancel(chargeId, accountId)
                         .bimap(handleError, handleGatewayResponse)
         );
+    }
+
+    private boolean invalidCancelRequest(JsonNode accountNode) {
+        if (accountNode == null) {
+            return true;
+        }
+        JsonNode accountId = accountNode.get(ACCOUNT_ID_FIELD);
+        if (accountId == null || isBlank(accountId.asText())) {
+            return true;
+        }
+        return false;
     }
 
     private F<GatewayError, Response> handleError =
