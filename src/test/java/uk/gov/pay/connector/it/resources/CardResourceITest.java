@@ -5,8 +5,11 @@ import uk.gov.pay.connector.it.base.CardResourceITestBase;
 
 import static com.jayway.restassured.http.ContentType.JSON;
 import static java.lang.String.format;
+import static java.util.UUID.randomUUID;
 import static org.hamcrest.Matchers.is;
+import static uk.gov.pay.connector.model.api.ExternalChargeStatus.EXT_FAILED;
 import static uk.gov.pay.connector.model.api.ExternalChargeStatus.EXT_IN_PROGRESS;
+import static uk.gov.pay.connector.model.api.ExternalChargeStatus.EXT_SUCCEEDED;
 import static uk.gov.pay.connector.model.domain.ChargeStatus.*;
 
 public class CardResourceITest extends CardResourceITestBase {
@@ -105,6 +108,12 @@ public class CardResourceITest extends CardResourceITestBase {
     }
 
     @Test
+    public void shouldFailPayment_IfCaptureStatusIsUnknown() {
+        String failedChargeId = createNewChargeWith(CAPTURE_UNKNOWN, randomUUID().toString());
+        assertApiStatusIs(failedChargeId,EXT_FAILED.getValue());
+    }
+
+    @Test
     public void shouldReturnErrorAndDoNotUpdateChargeStatus_IfCardDetailsAreAlreadySubmitted() throws Exception {
         String chargeId = createNewChargeWith(ENTERING_CARD_DETAILS, null);
         givenSetup()
@@ -155,7 +164,7 @@ public class CardResourceITest extends CardResourceITestBase {
                 .statusCode(204);
 
         assertFrontendChargeStatusIs(chargeId, CAPTURE_SUBMITTED.getValue());
-        assertApiStatusIs(chargeId, EXT_IN_PROGRESS.getValue());
+        assertApiStatusIs(chargeId, EXT_SUCCEEDED.getValue());
     }
 
     @Test
