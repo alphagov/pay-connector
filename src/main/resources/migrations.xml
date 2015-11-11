@@ -54,4 +54,12 @@
             </column>
         </createTable>
     </changeSet>
+
+    <changeSet id="add description to charges table" author="">
+        <addColumn tableName="charges">
+            <column name="description" type="varchar(255)">
+                <constraints nullable="false" unique="false"/>
+            </column>
+        </addColumn>
+    </changeSet>
 </databaseChangeLog>

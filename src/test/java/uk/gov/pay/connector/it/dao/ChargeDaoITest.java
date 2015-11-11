@@ -31,6 +31,7 @@ public class ChargeDaoITest {
     private ChargeDao chargeDao;
     private String gatewayAccountId = "564532435";
     private String returnUrl = "http://service.com/success-page";
+    private String expectedDescription = "Test description";
 
     @Before
     public void setUp() throws Exception {
@@ -56,6 +57,7 @@ public class ChargeDaoITest {
 
         assertThat(charge.get("charge_id"), is(chargeId));
         assertThat(charge.get("amount"), is(expectedAmount));
+        assertThat(charge.get("description"), is(expectedDescription));
         assertThat(charge.get("status"), is(CREATED.getValue()));
         assertThat(charge.get("gateway_account_id"), is(gatewayAccountId));
         assertThat(charge.get("return_url"), is(returnUrl));
@@ -70,11 +72,7 @@ public class ChargeDaoITest {
 
         Map<String, Object> charge = chargeDao.findById(chargeId).get();
 
-        assertThat(charge.get("charge_id"), is(chargeId));
-        assertThat(charge.get("amount"), is(amount));
         assertThat(charge.get("status"), is(AUTHORISATION_SUBMITTED.getValue()));
-        assertThat(charge.get("gateway_account_id"), is(gatewayAccountId));
-        assertThat(charge.get("return_url"), is(returnUrl));
     }
 
     @Test
@@ -118,6 +116,7 @@ public class ChargeDaoITest {
     private ImmutableMap<String, Object> newCharge(long amount) {
         return ImmutableMap.of(
                 "amount", amount,
+                "description", expectedDescription,
                 "gateway_account_id", gatewayAccountId,
                 "return_url", returnUrl);
     }

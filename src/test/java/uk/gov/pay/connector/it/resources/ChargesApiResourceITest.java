@@ -25,6 +25,7 @@ public class ChargesApiResourceITest {
     private static final String FRONTEND_CARD_DETAILS_URL = "/charge/";
 
     private static final String JSON_AMOUNT_KEY = "amount";
+    private static final String JSON_DESCRIPTION_KEY = "description";
     private static final String JSON_GATEWAY_ACC_KEY = "gateway_account_id";
     private static final String JSON_RETURN_URL_KEY = "return_url";
     private static final String JSON_CHARGE_KEY = "charge_id";
@@ -45,14 +46,17 @@ public class ChargesApiResourceITest {
     @Test
     public void makeChargeAndRetrieveAmount() throws Exception {
         long expectedAmount = 2113l;
+        String expectedDescription = "Test description";
         String postBody = toJson(ImmutableMap.of(
                 JSON_AMOUNT_KEY, expectedAmount,
+                JSON_DESCRIPTION_KEY, expectedDescription,
                 JSON_GATEWAY_ACC_KEY, accountId,
                 JSON_RETURN_URL_KEY, returnUrl));
         ValidatableResponse response = postCreateChargeResponse(postBody)
                 .statusCode(201)
                 .body(JSON_CHARGE_KEY, is(notNullValue()))
                 .body(JSON_AMOUNT_KEY, isNumber(expectedAmount))
+                .body(JSON_DESCRIPTION_KEY, is(expectedDescription))
                 .body(JSON_RETURN_URL_KEY, is(returnUrl))
                 .contentType(JSON);
 
@@ -68,6 +72,7 @@ public class ChargesApiResourceITest {
                 .contentType(JSON)
                 .body(JSON_CHARGE_KEY, is(chargeId))
                 .body(JSON_AMOUNT_KEY, isNumber(expectedAmount))
+                .body(JSON_DESCRIPTION_KEY, is(expectedDescription))
                 .body(JSON_STATUS_KEY, is("CREATED"))
                 .body(JSON_RETURN_URL_KEY, is(returnUrl));
 
@@ -92,6 +97,7 @@ public class ChargesApiResourceITest {
         String missingGatewayAccount = "1234123";
         String postBody = toJson(ImmutableMap.of(
                 JSON_AMOUNT_KEY, 2113,
+                JSON_DESCRIPTION_KEY, "Test description",
                 JSON_GATEWAY_ACC_KEY, missingGatewayAccount,
                 JSON_RETURN_URL_KEY, returnUrl));
         postCreateChargeResponse(postBody)
@@ -109,7 +115,7 @@ public class ChargesApiResourceITest {
                 .contentType(JSON)
                 .header("Location", is(nullValue()))
                 .body(JSON_CHARGE_KEY, is(nullValue()))
-                .body(JSON_MESSAGE_KEY, is("Field(s) missing: [amount, gateway_account_id, return_url]"));
+                .body(JSON_MESSAGE_KEY, is("Field(s) missing: [amount, description, gateway_account_id, return_url]"));
     }
 
     @Test

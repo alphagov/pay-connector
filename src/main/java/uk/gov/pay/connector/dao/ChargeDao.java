@@ -26,8 +26,8 @@ public class ChargeDao {
         Map<String, Object> fixedCharge = copyAndConvertFieldToLong(charge, "gateway_account_id");
         return jdbi.withHandle(handle ->
                         handle
-                                .createStatement("INSERT INTO charges(amount, gateway_account_id, status, return_url) " +
-                                        "VALUES (:amount, :gateway_account_id, :status, :return_url)")
+                                .createStatement("INSERT INTO charges(amount, gateway_account_id, status, return_url, description) " +
+                                        "VALUES (:amount, :gateway_account_id, :status, :return_url, :description)")
                                 .bindFromMap(fixedCharge)
                                 .bind("status", CREATED.getValue())
                                 .executeAndReturnGeneratedKeys(StringMapper.FIRST)
@@ -55,7 +55,7 @@ public class ChargeDao {
     public Optional<Map<String, Object>> findById(String chargeId) {
         Map<String, Object> data = jdbi.withHandle(handle ->
                         handle
-                                .createQuery("SELECT charge_id, amount, gateway_account_id, status, return_url, gateway_transaction_id " +
+                                .createQuery("SELECT charge_id, amount, gateway_account_id, status, return_url, gateway_transaction_id, description " +
                                         "FROM charges WHERE charge_id=:charge_id")
                                 .bind("charge_id", Long.valueOf(chargeId))
                                 .map(new DefaultMapper())
@@ -125,7 +125,7 @@ public class ChargeDao {
 
     public List<Map<String, Object>> findAllBy(String gatewayAccountId) {
         List<Map<String, Object>> rawData = jdbi.withHandle(handle ->
-                handle.createQuery("SELECT charge_id, gateway_transaction_id, status, amount " +
+                handle.createQuery("SELECT charge_id, gateway_transaction_id, status, amount, description " +
                         "FROM charges WHERE gateway_account_id=:gid " +
                         "ORDER BY charge_id DESC")
                         .bind("gid", Long.valueOf(gatewayAccountId))

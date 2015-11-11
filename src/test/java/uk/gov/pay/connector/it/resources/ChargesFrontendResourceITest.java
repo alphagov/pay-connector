@@ -33,6 +33,7 @@ public class ChargesFrontendResourceITest {
     public DropwizardAppWithPostgresRule app = new DropwizardAppWithPostgresRule();
 
     private String accountId = "72332423443245";
+    private String description = "Test description";
     private String returnUrl = "http://whatever.com";
 
     @Before
@@ -213,6 +214,7 @@ public class ChargesFrontendResourceITest {
 
     private String postToCreateACharge(long expectedAmount) {
         String postBody = toJson(ImmutableMap.of(
+                "description", description,
                 "amount", expectedAmount,
                 "gateway_account_id", accountId,
                 "return_url", returnUrl));
@@ -220,6 +222,7 @@ public class ChargesFrontendResourceITest {
         ValidatableResponse response = postCreateChargeResponse(postBody)
                 .statusCode(Status.CREATED.getStatusCode())
                 .body("charge_id", is(notNullValue()))
+                .body("description", is(description))
                 .body("amount", isNumber(expectedAmount))
                 .body("return_url", is(returnUrl))
                 .contentType(JSON);
@@ -232,6 +235,7 @@ public class ChargesFrontendResourceITest {
                 .statusCode(OK.getStatusCode())
                 .contentType(JSON)
                 .body("charge_id", is(chargeId))
+                .body("description", is(description))
                 .body("amount", isNumber(expectedAmount))
                 .body("containsKey('gateway_account_id')", is(false))
                 .body("status", is(chargeStatus.getValue()))
