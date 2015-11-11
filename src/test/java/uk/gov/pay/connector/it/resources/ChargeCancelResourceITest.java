@@ -122,7 +122,7 @@ public class ChargeCancelResourceITest {
 
     private String cancelBodyForAccount(String accountId) {
         JsonObject body = new JsonObject();
-        body.addProperty("account_id", accountId);
+        body.addProperty("gateway_account_id", accountId);
         return toJson(body);
     }
 

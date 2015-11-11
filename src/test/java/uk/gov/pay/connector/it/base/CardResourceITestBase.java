@@ -154,7 +154,7 @@ public class CardResourceITestBase {
 
     protected String accountBodyFor(String accountId) {
         JsonObject body = new JsonObject();
-        body.addProperty("account_id", accountId);
+        body.addProperty("gateway_account_id", accountId);
         return toJson(body);
     }
 
