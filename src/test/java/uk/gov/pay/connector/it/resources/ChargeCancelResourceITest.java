@@ -1,29 +1,30 @@
 package uk.gov.pay.connector.it.resources;
 
 import com.google.common.collect.ImmutableList;
-import com.google.gson.JsonObject;
-import com.jayway.restassured.response.ValidatableResponse;
 import org.apache.commons.lang.math.RandomUtils;
 import org.junit.Before;
 import org.junit.Rule;
 import org.junit.Test;
 import uk.gov.pay.connector.model.domain.ChargeStatus;
+import uk.gov.pay.connector.resources.ApiPaths;
 import uk.gov.pay.connector.rules.DropwizardAppWithPostgresRule;
+import uk.gov.pay.connector.util.RestAssuredClient;
 
 import java.util.Arrays;
 import java.util.List;
 
-import static com.jayway.restassured.RestAssured.given;
 import static com.jayway.restassured.http.ContentType.JSON;
 import static java.lang.String.format;
+import static javax.ws.rs.core.Response.Status.*;
 import static org.apache.commons.lang3.BooleanUtils.negate;
 import static org.hamcrest.Matchers.is;
 import static uk.gov.pay.connector.model.api.ExternalChargeStatus.EXT_SYSTEM_CANCELLED;
 import static uk.gov.pay.connector.model.domain.ChargeStatus.*;
-import static uk.gov.pay.connector.util.JsonEncoder.toJson;
+import static uk.gov.pay.connector.model.domain.ChargeStatus.CREATED;
+import static uk.gov.pay.connector.resources.ApiPaths.CHARGES_API_PATH;
+import static uk.gov.pay.connector.resources.ApiPaths.OLD_GET_CHARGE_FRONTEND_PATH;
 
 public class ChargeCancelResourceITest {
-
     private static final List<ChargeStatus> CANCELLABLE_STATES = ImmutableList.of(
             CREATED, ENTERING_CARD_DETAILS, AUTHORISATION_SUCCESS, AUTHORISATION_SUBMITTED, READY_FOR_CAPTURE
     );
@@ -33,12 +34,13 @@ public class ChargeCancelResourceITest {
     @Rule
     public DropwizardAppWithPostgresRule app = new DropwizardAppWithPostgresRule();
 
-    private String cancelChargePath(String accountId, String chargeId) {
-        return "/v1/api/accounts/" + accountId + "/charges/" + chargeId + "/cancel";
-    }
+    private RestAssuredClient restApiCall;
+    private RestAssuredClient restFrontendCall;
 
     @Before
     public void setupGatewayAccount() {
+        restApiCall = new RestAssuredClient(app, accountId, CHARGES_API_PATH);
+        restFrontendCall = new RestAssuredClient(app, accountId, OLD_GET_CHARGE_FRONTEND_PATH);
         app.getDatabaseTestHelper().addGatewayAccount(accountId, "sandbox");
     }
 
@@ -46,10 +48,19 @@ public class ChargeCancelResourceITest {
     public void respondWith204_whenCancellationSuccessful() {
         CANCELLABLE_STATES.forEach(status -> {
             String chargeId = createNewChargeWithStatus(status);
-
-            assertPostCancelHasStatus(chargeId, accountId, 204);
-            assertFrontendChargeStatusIs(chargeId, SYSTEM_CANCELLED.getValue());
-            assertApiStatusIs(chargeId, EXT_SYSTEM_CANCELLED.getValue());
+            restApiCall
+                    .withChargeId(chargeId)
+                    .postChargeCancellation(chargeId)
+                    .statusCode(NO_CONTENT.getStatusCode());
+            restApiCall
+                    .withRequestPath(ApiPaths.OLD_GET_CHARGE_API_PATH)
+                    .withChargeId(chargeId)
+                    .getCharge(chargeId)
+                    .body("status", is(EXT_SYSTEM_CANCELLED.getValue()));
+            restFrontendCall
+                    .withChargeId(chargeId)
+                    .getCharge(chargeId)
+                    .body("status", is(SYSTEM_CANCELLED.getValue()));
         });
     }
 
@@ -61,8 +72,10 @@ public class ChargeCancelResourceITest {
                     String chargeId = createNewChargeWithStatus(notCancellableState);
                     String expectedMessage = "Cannot cancel a charge id [" + chargeId
                             + "]: status is [" + notCancellableState.getValue() + "].";
-
-                    assertPostCancelHasStatus(chargeId, accountId, 400)
+                    restApiCall
+                            .withChargeId(chargeId)
+                            .postChargeCancellation(chargeId)
+                            .statusCode(BAD_REQUEST.getStatusCode())
                             .and()
                             .contentType(JSON)
                             .body("message", is(expectedMessage));
@@ -72,7 +85,10 @@ public class ChargeCancelResourceITest {
     @Test
     public void respondWith404_whenPaymentNotFound() {
         String unknownChargeId = "2344363244";
-        assertPostCancelHasStatus(unknownChargeId, accountId, 404)
+        restApiCall
+                .withChargeId(unknownChargeId)
+                .postChargeCancellation(unknownChargeId)
+                .statusCode(NOT_FOUND.getStatusCode())
                 .and()
                 .contentType(JSON)
                 .body("message", is("Charge with id [" + unknownChargeId + "] not found."));
@@ -83,7 +99,11 @@ public class ChargeCancelResourceITest {
         String chargeId = createNewChargeWithStatus(CREATED);
         String expectedMessage = "Invalid account Id";
 
-        assertPostCancelHasStatus(chargeId, null, 400)
+        restApiCall
+                .withAccountId("---garbage---")
+                .withChargeId(chargeId)
+                .postChargeCancellation(chargeId)
+                .statusCode(BAD_REQUEST.getStatusCode())
                 .and()
                 .contentType(JSON)
                 .body("message", is(expectedMessage));
@@ -94,7 +114,11 @@ public class ChargeCancelResourceITest {
         String chargeId = createNewChargeWithStatus(CREATED);
         String expectedMessage = "Invalid account Id";
 
-        assertPostCancelHasStatus(chargeId, "ABSDCEFG", 400)
+        restApiCall
+                .withAccountId("ABSDCEFG")
+                .withChargeId(chargeId)
+                .postChargeCancellation(chargeId)
+                .statusCode(BAD_REQUEST.getStatusCode())
                 .and()
                 .contentType(JSON)
                 .body("message", is(expectedMessage));
@@ -105,18 +129,14 @@ public class ChargeCancelResourceITest {
         String chargeId = createNewChargeWithStatus(CREATED);
         String expectedMessage = format("Charge with id [%s] not found.", chargeId);
 
-        assertPostCancelHasStatus(chargeId, "12345", 404)
+        restApiCall
+                .withAccountId("12345")
+                .withChargeId(chargeId)
+                .postChargeCancellation(chargeId)
+                .statusCode(NOT_FOUND.getStatusCode())
                 .and()
                 .contentType(JSON)
                 .body("message", is(expectedMessage));
-    }
-
-    private ValidatableResponse assertPostCancelHasStatus(String chargeId, String accountId, int expectedStatusCode) {
-        return given().port(app.getLocalPort())
-                .contentType(JSON)
-                .post(cancelChargePath(accountId, chargeId))
-                .then()
-                .statusCode(expectedStatusCode);
     }
 
     private String createNewChargeWithStatus(ChargeStatus status) {
@@ -124,20 +144,4 @@ public class ChargeCancelResourceITest {
         app.getDatabaseTestHelper().addCharge(chargeId, accountId, 500, status, "http://not.relevant", null);
         return chargeId;
     }
-
-    private void assertFrontendChargeStatusIs(String chargeId, String status) {
-        assertStatusIs("/v1/frontend/charges/" + chargeId, status);
-    }
-
-    private void assertApiStatusIs(String chargeId, String status) {
-        assertStatusIs("/v1/api/charges/" + chargeId, status);
-    }
-
-    private void assertStatusIs(String url, String status) {
-        given().port(app.getLocalPort())
-                .get(url)
-                .then()
-                .body("status", is(status));
-    }
-
 }

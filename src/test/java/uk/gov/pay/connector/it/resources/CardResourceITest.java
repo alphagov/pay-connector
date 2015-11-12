@@ -178,6 +178,7 @@ public class CardResourceITest extends CardResourceITestBase {
                 .contentType(JSON)
                 .body("message", is("Cannot capture a charge with status " + AUTHORISATION_SUBMITTED.getValue() + "."));
 
+
         assertFrontendChargeStatusIs(chargeIdNotAuthorised, AUTHORISATION_SUBMITTED.getValue());
     }
 

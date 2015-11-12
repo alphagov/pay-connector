@@ -15,7 +15,7 @@ import static org.hamcrest.Matchers.is;
 import static org.junit.Assert.assertThat;
 import static uk.gov.pay.connector.model.domain.ChargeStatus.AUTHORISATION_SUCCESS;
 import static uk.gov.pay.connector.model.domain.ChargeStatus.CAPTURE_UNKNOWN;
-import static uk.gov.pay.connector.resources.CardResource.FRONTEND_CAPTURE_RESOURCE;
+import static uk.gov.pay.connector.resources.ApiPaths.FRONTEND_CAPTURE_RESOURCE;
 import static uk.gov.pay.connector.resources.PaymentProviderValidator.SMARTPAY_PROVIDER;
 
 public class GatewayInvalidUrlITest {

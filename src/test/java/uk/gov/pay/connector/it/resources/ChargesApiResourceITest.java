@@ -6,22 +6,24 @@ import org.apache.commons.lang.math.RandomUtils;
 import org.junit.Before;
 import org.junit.Rule;
 import org.junit.Test;
+import uk.gov.pay.connector.model.domain.ChargeStatus;
 import uk.gov.pay.connector.rules.DropwizardAppWithPostgresRule;
+import uk.gov.pay.connector.util.RestAssuredClient;
 
-import static com.jayway.restassured.RestAssured.given;
 import static com.jayway.restassured.http.ContentType.JSON;
 import static java.lang.String.format;
+import static javax.ws.rs.core.Response.Status.*;
 import static org.hamcrest.Matchers.*;
 import static uk.gov.pay.connector.model.api.ExternalChargeStatus.EXT_IN_PROGRESS;
 import static uk.gov.pay.connector.model.domain.ChargeStatus.AUTHORISATION_SUCCESS;
+import static uk.gov.pay.connector.resources.ApiPaths.OLD_GET_CHARGE_API_PATH;
+import static uk.gov.pay.connector.resources.ApiPaths.OLD_CHARGES_API_PATH;
 import static uk.gov.pay.connector.util.JsonEncoder.toJson;
 import static uk.gov.pay.connector.util.LinksAssert.assertNextUrlLink;
 import static uk.gov.pay.connector.util.LinksAssert.assertSelfLink;
 import static uk.gov.pay.connector.util.NumberMatcher.isNumber;
 
 public class ChargesApiResourceITest {
-
-    private static final String CHARGES_API_PATH = "/v1/api/charges/";
     private static final String FRONTEND_CARD_DETAILS_URL = "/charge/";
 
     private static final String JSON_AMOUNT_KEY = "amount";
@@ -38,24 +40,28 @@ public class ChargesApiResourceITest {
     private String accountId = "72332423443245";
     private String returnUrl = "http://service.url/success-page/";
 
+    private RestAssuredClient restApiCall = new RestAssuredClient(app, accountId, OLD_CHARGES_API_PATH);
+
     @Before
     public void setupGatewayAccount() {
         app.getDatabaseTestHelper().addGatewayAccount(accountId, "test gateway");
     }
 
+    private long amount = 6234L;
+
     @Test
     public void makeChargeAndRetrieveAmount() throws Exception {
-        long expectedAmount = 2113l;
         String expectedDescription = "Test description";
         String postBody = toJson(ImmutableMap.of(
-                JSON_AMOUNT_KEY, expectedAmount,
+                JSON_AMOUNT_KEY, amount,
                 JSON_DESCRIPTION_KEY, expectedDescription,
                 JSON_GATEWAY_ACC_KEY, accountId,
                 JSON_RETURN_URL_KEY, returnUrl));
-        ValidatableResponse response = postCreateChargeResponse(postBody)
-                .statusCode(201)
+        ValidatableResponse response = restApiCall
+                .postCreateCharge(postBody)
+                .statusCode(CREATED.getStatusCode())
                 .body(JSON_CHARGE_KEY, is(notNullValue()))
-                .body(JSON_AMOUNT_KEY, isNumber(expectedAmount))
+                .body(JSON_AMOUNT_KEY, isNumber(amount))
                 .body(JSON_DESCRIPTION_KEY, is(expectedDescription))
                 .body(JSON_RETURN_URL_KEY, is(returnUrl))
                 .contentType(JSON);
@@ -67,13 +73,16 @@ public class ChargesApiResourceITest {
         assertSelfLink(response, documentLocation);
         assertNextUrlLink(response, cardDetailsLocationFor(chargeId));
 
-        ValidatableResponse getChargeResponse = getChargeResponseFor(chargeId)
-                .statusCode(200)
+        ValidatableResponse getChargeResponse = restApiCall
+                .withRequestPath(OLD_GET_CHARGE_API_PATH)
+                .withChargeId(chargeId)
+                .getCharge(chargeId)
+                .statusCode(OK.getStatusCode())
                 .contentType(JSON)
                 .body(JSON_CHARGE_KEY, is(chargeId))
-                .body(JSON_AMOUNT_KEY, isNumber(expectedAmount))
+                .body(JSON_AMOUNT_KEY, isNumber(amount))
                 .body(JSON_DESCRIPTION_KEY, is(expectedDescription))
-                .body(JSON_STATUS_KEY, is("CREATED"))
+                .body(JSON_STATUS_KEY, is(ChargeStatus.CREATED.getValue()))
                 .body(JSON_RETURN_URL_KEY, is(returnUrl));
 
         assertSelfLink(getChargeResponse, documentLocation);
@@ -82,11 +91,14 @@ public class ChargesApiResourceITest {
     @Test
     public void shouldFilterChargeStatusToReturnInProgressIfInternalStatusIsAuthorised() throws Exception {
         String chargeId = ((Integer) RandomUtils.nextInt(99999999)).toString();
-        app.getDatabaseTestHelper().addCharge(chargeId, accountId, 500, AUTHORISATION_SUCCESS, returnUrl, null);
+        app.getDatabaseTestHelper().addCharge(chargeId, accountId, amount, AUTHORISATION_SUCCESS, returnUrl, null);
         app.getDatabaseTestHelper().addToken(chargeId, "tokenId");
-        
-        getChargeResponseFor(chargeId)
-                .statusCode(200)
+
+        restApiCall
+                .withRequestPath(OLD_GET_CHARGE_API_PATH)
+                .withChargeId(chargeId)
+                .getCharge(chargeId)
+                .statusCode(OK.getStatusCode())
                 .contentType(JSON)
                 .body(JSON_CHARGE_KEY, is(chargeId))
                 .body(JSON_STATUS_KEY, is(EXT_IN_PROGRESS.getValue()));
@@ -96,12 +108,12 @@ public class ChargesApiResourceITest {
     public void cannotMakeChargeForMissingGatewayAccount() throws Exception {
         String missingGatewayAccount = "1234123";
         String postBody = toJson(ImmutableMap.of(
-                JSON_AMOUNT_KEY, 2113,
+                JSON_AMOUNT_KEY, amount,
                 JSON_DESCRIPTION_KEY, "Test description",
                 JSON_GATEWAY_ACC_KEY, missingGatewayAccount,
                 JSON_RETURN_URL_KEY, returnUrl));
-        postCreateChargeResponse(postBody)
-                .statusCode(400)
+        restApiCall.postCreateCharge(postBody)
+                .statusCode(BAD_REQUEST.getStatusCode())
                 .contentType(JSON)
                 .header("Location", is(nullValue()))
                 .body(JSON_CHARGE_KEY, is(nullValue()))
@@ -110,8 +122,8 @@ public class ChargesApiResourceITest {
 
     @Test
     public void cannotMakeChargeForMissingFields() throws Exception {
-        postCreateChargeResponse("{}")
-                .statusCode(400)
+        restApiCall.postCreateCharge("{}")
+                .statusCode(BAD_REQUEST.getStatusCode())
                 .contentType(JSON)
                 .header("Location", is(nullValue()))
                 .body(JSON_CHARGE_KEY, is(nullValue()))
@@ -121,28 +133,17 @@ public class ChargesApiResourceITest {
     @Test
     public void cannotGetCharge_WhenInvalidChargeId() throws Exception {
         String chargeId = "23235124";
-        getChargeResponseFor(chargeId)
-                .statusCode(404)
+        restApiCall
+                .withRequestPath(OLD_GET_CHARGE_API_PATH)
+                .withChargeId(chargeId)
+                .getCharge(chargeId)
+                .statusCode(NOT_FOUND.getStatusCode())
                 .contentType(JSON)
                 .body(JSON_MESSAGE_KEY, is(format("Charge with id [%s] not found.", chargeId)));
     }
 
-    private ValidatableResponse getChargeResponseFor(String chargeId) {
-        return given().port(app.getLocalPort())
-                .get(CHARGES_API_PATH + chargeId)
-                .then();
-    }
-
-    private ValidatableResponse postCreateChargeResponse(String postBody) {
-        return given().port(app.getLocalPort())
-                .contentType(JSON)
-                .body(postBody)
-                .post(CHARGES_API_PATH)
-                .then();
-    }
-
     private String expectedChargeLocationFor(String chargeId) {
-        return "http://localhost:" + app.getLocalPort() + CHARGES_API_PATH + chargeId;
+        return "http://localhost:" + app.getLocalPort() + OLD_GET_CHARGE_API_PATH.replace("{chargeId}", chargeId);
     }
 
     private String cardDetailsLocationFor(String chargeId) {
