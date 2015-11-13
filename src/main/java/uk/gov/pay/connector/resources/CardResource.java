@@ -25,7 +25,7 @@ public class CardResource {
     public static final String AUTHORIZATION_FRONTEND_RESOURCE_PATH = "/v1/frontend/charges/{chargeId}/cards";
     public static final String CAPTURE_FRONTEND_RESOURCE_PATH = "/v1/frontend/charges/{chargeId}/capture";
     public static final String CANCEL_CHARGE_PATH = "/v1/api/charges/{chargeId}/cancel";
-    public static final String ACCOUNT_ID_FIELD = "gateway_account_id";
+    public static final String GATEWAY_ACCOUNT_ID_FIELD = "gateway_account_id";
     private final CardService cardService;
     private final Logger logger = LoggerFactory.getLogger(CardResource.class);
 
@@ -69,7 +69,7 @@ public class CardResource {
             return badRequestResponse(logger, "account_id is missing for cancellation");
         }
 
-        String accountId = accountNode.get(ACCOUNT_ID_FIELD).asText();
+        String accountId = accountNode.get(GATEWAY_ACCOUNT_ID_FIELD).asText();
         return reduce(
                 cardService
                         .doCancel(chargeId, accountId)
@@ -81,7 +81,7 @@ public class CardResource {
         if (accountNode == null) {
             return true;
         }
-        JsonNode accountId = accountNode.get(ACCOUNT_ID_FIELD);
+        JsonNode accountId = accountNode.get(GATEWAY_ACCOUNT_ID_FIELD);
         if (accountId == null || isBlank(accountId.asText())) {
             return true;
         }
