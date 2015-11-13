@@ -2,6 +2,7 @@ package uk.gov.pay.connector.resources;
 
 import com.fasterxml.jackson.databind.JsonNode;
 import fj.F;
+import org.apache.commons.lang3.math.NumberUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import uk.gov.pay.connector.dao.PayDBIException;
@@ -15,17 +16,18 @@ import javax.ws.rs.core.Response;
 
 import static fj.data.Either.reduce;
 import static javax.ws.rs.core.MediaType.APPLICATION_JSON;
-import static org.apache.commons.lang3.StringUtils.isBlank;
 import static uk.gov.pay.connector.resources.CardDetailsValidator.isWellFormattedCardDetails;
+import static uk.gov.pay.connector.resources.GatewayAccountResource.ACCOUNT_RESOURCE;
 import static uk.gov.pay.connector.util.ResponseUtil.*;
 
 @Path("/")
 public class CardResource {
 
-    public static final String AUTHORIZATION_FRONTEND_RESOURCE_PATH = "/v1/frontend/charges/{chargeId}/cards";
-    public static final String CAPTURE_FRONTEND_RESOURCE_PATH = "/v1/frontend/charges/{chargeId}/capture";
-    public static final String CANCEL_CHARGE_PATH = "/v1/api/charges/{chargeId}/cancel";
-    public static final String GATEWAY_ACCOUNT_ID_FIELD = "gateway_account_id";
+    public static final String FRONTEND_RESOURCE = "/v1/frontend";
+    public static final String CHARGE_RESOURCE = "/charges/{chargeId}";
+    public static final String FRONTEND_AUTHORIZATION_RESOURCE = FRONTEND_RESOURCE + CHARGE_RESOURCE + "/cards";
+    public static final String FRONTEND_CAPTURE_RESOURCE = FRONTEND_RESOURCE + CHARGE_RESOURCE + "/capture";
+    public static final String CANCEL_CHARGE_PATH = ACCOUNT_RESOURCE + CHARGE_RESOURCE + "/cancel";
     private final CardService cardService;
     private final Logger logger = LoggerFactory.getLogger(CardResource.class);
 
@@ -34,7 +36,7 @@ public class CardResource {
     }
 
     @POST
-    @Path(AUTHORIZATION_FRONTEND_RESOURCE_PATH)
+    @Path(FRONTEND_AUTHORIZATION_RESOURCE)
     @Consumes(APPLICATION_JSON)
     @Produces(APPLICATION_JSON)
     public Response authoriseCharge(@PathParam("chargeId") String chargeId, Card cardDetails) {
@@ -49,7 +51,7 @@ public class CardResource {
     }
 
     @POST
-    @Path(CAPTURE_FRONTEND_RESOURCE_PATH)
+    @Path(FRONTEND_CAPTURE_RESOURCE)
     @Consumes(APPLICATION_JSON)
     @Produces(APPLICATION_JSON)
     public Response captureCharge(@PathParam("chargeId") String chargeId) throws PayDBIException {
@@ -64,28 +66,16 @@ public class CardResource {
     @Path(CANCEL_CHARGE_PATH)
     @Produces(APPLICATION_JSON)
     @Consumes(APPLICATION_JSON)
-    public Response cancelCharge(@PathParam("chargeId") String chargeId, JsonNode accountNode) {
-        if (invalidCancelRequest(accountNode)) {
-            return badRequestResponse(logger, "account_id is missing for cancellation");
+    public Response cancelCharge(@PathParam("accountId") String accountId, @PathParam("chargeId") String chargeId, JsonNode accountNode) {
+        if(!NumberUtils.isNumber(accountId)){
+            return badRequestResponse(logger, "Invalid account Id");
         }
 
-        String accountId = accountNode.get(GATEWAY_ACCOUNT_ID_FIELD).asText();
         return reduce(
                 cardService
                         .doCancel(chargeId, accountId)
                         .bimap(handleError, handleGatewayResponse)
         );
-    }
-
-    private boolean invalidCancelRequest(JsonNode accountNode) {
-        if (accountNode == null) {
-            return true;
-        }
-        JsonNode accountId = accountNode.get(GATEWAY_ACCOUNT_ID_FIELD);
-        if (accountId == null || isBlank(accountId.asText())) {
-            return true;
-        }
-        return false;
     }
 
     private F<GatewayError, Response> handleError =

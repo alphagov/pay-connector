@@ -22,8 +22,12 @@ import static uk.gov.pay.connector.resources.PaymentProviderValidator.*;
 import static uk.gov.pay.connector.util.ResponseUtil.badRequestResponse;
 import static uk.gov.pay.connector.util.ResponseUtil.notFoundResponse;
 
-@Path("/v1/api/accounts")
+
+@Path("/")
 public class GatewayAccountResource {
+
+    public static final String ACCOUNTS_RESOURCE = "/v1/api/accounts";
+    public static final String ACCOUNT_RESOURCE = ACCOUNTS_RESOURCE + "/{accountId}";
 
     private static final Logger logger = LoggerFactory.getLogger(GatewayAccountResource.class);
 
@@ -34,7 +38,7 @@ public class GatewayAccountResource {
     }
 
     @GET
-    @Path("/{accountId}")
+    @Path(ACCOUNT_RESOURCE)
     @Consumes(APPLICATION_JSON)
     @Produces(APPLICATION_JSON)
     public Response getGatewayAccount(@PathParam("accountId") String accountId) {
@@ -48,6 +52,7 @@ public class GatewayAccountResource {
     }
 
     @POST
+    @Path(ACCOUNTS_RESOURCE)
     @Consumes(APPLICATION_JSON)
     @Produces(APPLICATION_JSON)
     public Response createNewGatewayAccount(JsonNode node, @Context UriInfo uriInfo) {

@@ -15,7 +15,7 @@ import static org.hamcrest.Matchers.is;
 import static org.junit.Assert.assertThat;
 import static uk.gov.pay.connector.model.domain.ChargeStatus.AUTHORISATION_SUCCESS;
 import static uk.gov.pay.connector.model.domain.ChargeStatus.CAPTURE_UNKNOWN;
-import static uk.gov.pay.connector.resources.CardResource.CAPTURE_FRONTEND_RESOURCE_PATH;
+import static uk.gov.pay.connector.resources.CardResource.FRONTEND_CAPTURE_RESOURCE;
 import static uk.gov.pay.connector.resources.PaymentProviderValidator.SMARTPAY_PROVIDER;
 
 public class GatewayInvalidUrlITest {
@@ -49,7 +49,7 @@ public class GatewayInvalidUrlITest {
         gatewayStub.respondWithUnexpectedResponseCodeWhenCapture();
 
         String errorMessage = "Gateway Url DNS resolution error";
-        String captureUrl = CAPTURE_FRONTEND_RESOURCE_PATH.replace("{chargeId}", CHARGE_ID);
+        String captureUrl = FRONTEND_CAPTURE_RESOURCE.replace("{chargeId}", CHARGE_ID);
 
         given()
                 .port(app.getLocalPort())

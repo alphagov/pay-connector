@@ -70,8 +70,7 @@ public class SmartpayCardResourceITest extends CardResourceITestBase {
 
         givenSetup()
                 .contentType(ContentType.JSON)
-                .body(accountBodyFor(accountId))
-                .post(cancelChargeUrlFor(chargeId))
+                .post(cancelChargeUrlFor(accountId ,chargeId))
                 .then()
                 .statusCode(204);
     }

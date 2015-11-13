@@ -27,8 +27,8 @@ import static javax.ws.rs.core.Response.ok;
 import static org.apache.commons.lang3.StringUtils.isBlank;
 import static org.apache.commons.lang3.math.NumberUtils.isNumber;
 import static uk.gov.pay.connector.model.domain.ChargeStatus.*;
-import static uk.gov.pay.connector.resources.CardResource.AUTHORIZATION_FRONTEND_RESOURCE_PATH;
-import static uk.gov.pay.connector.resources.CardResource.CAPTURE_FRONTEND_RESOURCE_PATH;
+import static uk.gov.pay.connector.resources.CardResource.FRONTEND_AUTHORIZATION_RESOURCE;
+import static uk.gov.pay.connector.resources.CardResource.FRONTEND_CAPTURE_RESOURCE;
 import static uk.gov.pay.connector.util.LinksBuilder.linksBuilder;
 import static uk.gov.pay.connector.util.ResponseUtil.*;
 
@@ -106,8 +106,8 @@ public class ChargesFrontendResource {
     private Response buildOkResponse(@PathParam("chargeId") String chargeId, @Context UriInfo uriInfo, Map<String, Object> charge) {
         URI chargeLocation = locationUriFor(GET_CHARGE_FRONTEND_PATH, uriInfo, chargeId);
         Map<String, Object> responseData = linksBuilder(chargeLocation)
-                .addLink("cardAuth", HttpMethod.POST, locationUriFor(AUTHORIZATION_FRONTEND_RESOURCE_PATH, uriInfo, chargeId))
-                .addLink("cardCapture", HttpMethod.POST, locationUriFor(CAPTURE_FRONTEND_RESOURCE_PATH, uriInfo, chargeId))
+                .addLink("cardAuth", HttpMethod.POST, locationUriFor(FRONTEND_AUTHORIZATION_RESOURCE, uriInfo, chargeId))
+                .addLink("cardCapture", HttpMethod.POST, locationUriFor(FRONTEND_CAPTURE_RESOURCE, uriInfo, chargeId))
                 .appendLinksTo(removeGatewayAccount(charge));
 
         return ok(responseData).build();

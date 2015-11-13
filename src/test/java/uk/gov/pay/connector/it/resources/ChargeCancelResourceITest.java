@@ -33,8 +33,8 @@ public class ChargeCancelResourceITest {
     @Rule
     public DropwizardAppWithPostgresRule app = new DropwizardAppWithPostgresRule();
 
-    private String cancelChargePath(String chargeId) {
-        return "/v1/api/charges/" + chargeId + "/cancel";
+    private String cancelChargePath(String accountId, String chargeId) {
+        return "/v1/api/accounts/" + accountId + "/charges/" + chargeId + "/cancel";
     }
 
     @Before
@@ -81,7 +81,7 @@ public class ChargeCancelResourceITest {
     @Test
     public void respondWith400__IfAccountIdIsMissing() {
         String chargeId = createNewChargeWithStatus(CREATED);
-        String expectedMessage = "account_id is missing for cancellation";
+        String expectedMessage = "Invalid account Id";
 
         assertPostCancelHasStatus(chargeId, null, 400)
                 .and()
@@ -90,11 +90,11 @@ public class ChargeCancelResourceITest {
     }
 
     @Test
-    public void respondWith400__IfAccountIdIsEmpty() {
+    public void respondWith400__IfAccountIdIsNonNumeric() {
         String chargeId = createNewChargeWithStatus(CREATED);
-        String expectedMessage = "account_id is missing for cancellation";
+        String expectedMessage = "Invalid account Id";
 
-        assertPostCancelHasStatus(chargeId, " ", 400)
+        assertPostCancelHasStatus(chargeId, "ABSDCEFG", 400)
                 .and()
                 .contentType(JSON)
                 .body("message", is(expectedMessage));
@@ -114,16 +114,9 @@ public class ChargeCancelResourceITest {
     private ValidatableResponse assertPostCancelHasStatus(String chargeId, String accountId, int expectedStatusCode) {
         return given().port(app.getLocalPort())
                 .contentType(JSON)
-                .body(cancelBodyForAccount(accountId))
-                .post(cancelChargePath(chargeId))
+                .post(cancelChargePath(accountId, chargeId))
                 .then()
                 .statusCode(expectedStatusCode);
-    }
-
-    private String cancelBodyForAccount(String accountId) {
-        JsonObject body = new JsonObject();
-        body.addProperty("gateway_account_id", accountId);
-        return toJson(body);
     }
 
     private String createNewChargeWithStatus(ChargeStatus status) {
