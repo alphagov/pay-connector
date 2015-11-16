@@ -1,5 +1,6 @@
 package uk.gov.pay.connector.it.resources.smartpay;
 
+import com.jayway.restassured.http.ContentType;
 import org.junit.Test;
 import uk.gov.pay.connector.it.base.CardResourceITestBase;
 import uk.gov.pay.connector.model.domain.ChargeStatus;
@@ -68,7 +69,8 @@ public class SmartpayCardResourceITest extends CardResourceITestBase {
         smartpay.mockCancelResponse(gatewayTransactionId);
 
         givenSetup()
-                .post(cancelChargeUrlFor(chargeId))
+                .contentType(ContentType.JSON)
+                .post(cancelChargeUrlFor(accountId ,chargeId))
                 .then()
                 .statusCode(204);
     }

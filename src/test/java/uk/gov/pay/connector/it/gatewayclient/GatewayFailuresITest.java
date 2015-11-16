@@ -15,7 +15,7 @@ import static io.dropwizard.testing.ConfigOverride.config;
 import static org.hamcrest.Matchers.is;
 import static org.junit.Assert.assertThat;
 import static uk.gov.pay.connector.model.domain.ChargeStatus.*;
-import static uk.gov.pay.connector.resources.CardResource.CAPTURE_FRONTEND_RESOURCE_PATH;
+import static uk.gov.pay.connector.resources.CardResource.FRONTEND_CAPTURE_RESOURCE;
 import static uk.gov.pay.connector.resources.PaymentProviderValidator.SMARTPAY_PROVIDER;
 import static uk.gov.pay.connector.util.CardUtils.aValidCard;
 
@@ -53,7 +53,7 @@ public class GatewayFailuresITest {
         gatewayStub.respondWithUnexpectedResponseCodeWhenCardAuth();
 
         String errorMessage = "Unexpected Response Code From Gateway";
-        String cardAuthUrl = CardResource.AUTHORIZATION_FRONTEND_RESOURCE_PATH.replace("{chargeId}", CHARGE_ID);
+        String cardAuthUrl = CardResource.FRONTEND_AUTHORIZATION_RESOURCE.replace("{chargeId}", CHARGE_ID);
 
         given()
                 .port(app.getLocalPort())
@@ -75,7 +75,7 @@ public class GatewayFailuresITest {
         gatewayStub.respondWithUnexpectedResponseCodeWhenCapture();
 
         String errorMessage = "Unexpected Response Code From Gateway";
-        String captureUrl = CAPTURE_FRONTEND_RESOURCE_PATH.replace("{chargeId}", CHARGE_ID);
+        String captureUrl = FRONTEND_CAPTURE_RESOURCE.replace("{chargeId}", CHARGE_ID);
 
         given()
                 .port(app.getLocalPort())
@@ -97,7 +97,7 @@ public class GatewayFailuresITest {
         gatewayStub.respondWithMalformedBody_WhenCapture();
 
         String errorMessage = "Invalid Response Received From Gateway";
-        String captureUrl = CAPTURE_FRONTEND_RESOURCE_PATH.replace("{chargeId}", CHARGE_ID);
+        String captureUrl = FRONTEND_CAPTURE_RESOURCE.replace("{chargeId}", CHARGE_ID);
 
         given()
                 .port(app.getLocalPort())
@@ -118,7 +118,7 @@ public class GatewayFailuresITest {
 
         gatewayStub.respondWithSuccessWhenCapture();
 
-        String captureUrl = CAPTURE_FRONTEND_RESOURCE_PATH.replace("{chargeId}", CHARGE_ID);
+        String captureUrl = FRONTEND_CAPTURE_RESOURCE.replace("{chargeId}", CHARGE_ID);
         given()
                 .port(app.getLocalPort())
                 .contentType(JSON)

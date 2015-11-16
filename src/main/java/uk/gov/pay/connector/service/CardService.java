@@ -58,9 +58,9 @@ public class CardService {
                 .orElseGet(chargeNotFound(chargeId));
     }
 
-    public Either<GatewayError, GatewayResponse> doCancel(String chargeId) {
+    public Either<GatewayError, GatewayResponse> doCancel(String chargeId, String accountId) {
         return chargeDao
-                .findById(chargeId)
+                .findChargeForAccount(chargeId, accountId)
                 .map(cancelFor(chargeId))
                 .orElseGet(chargeNotFound(chargeId));
     }

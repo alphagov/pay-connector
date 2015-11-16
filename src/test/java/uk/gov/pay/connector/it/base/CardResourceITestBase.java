@@ -152,6 +152,12 @@ public class CardResourceITestBase {
         return toJson(cardDetails);
     }
 
+    protected String accountBodyFor(String accountId) {
+        JsonObject body = new JsonObject();
+        body.addProperty("gateway_account_id", accountId);
+        return toJson(body);
+    }
+
     protected void shouldReturnErrorForCardDetailsWithMessage(String cardDetails, String errorMessage, String status) throws Exception {
         String chargeId = createNewChargeWith(ENTERING_CARD_DETAILS, null);
 
@@ -167,14 +173,14 @@ public class CardResourceITestBase {
     }
 
     protected String authoriseChargeUrlFor(String chargeId) {
-        return AUTHORIZATION_FRONTEND_RESOURCE_PATH.replace("{chargeId}", chargeId);
+        return FRONTEND_AUTHORIZATION_RESOURCE.replace("{chargeId}", chargeId);
     }
 
     protected String captureChargeUrlFor(String chargeId) {
-        return CAPTURE_FRONTEND_RESOURCE_PATH.replace("{chargeId}", chargeId);
+        return FRONTEND_CAPTURE_RESOURCE.replace("{chargeId}", chargeId);
     }
 
-    protected String cancelChargeUrlFor(String chargeId) {
-        return CANCEL_CHARGE_PATH.replace("{chargeId}", chargeId);
+    protected String cancelChargeUrlFor(String accountId, String chargeId) {
+        return CANCEL_CHARGE_PATH.replace("{accountId}", accountId).replace("{chargeId}", chargeId);
     }
 }
