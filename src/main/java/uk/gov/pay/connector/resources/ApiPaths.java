@@ -3,11 +3,9 @@ package uk.gov.pay.connector.resources;
 import static uk.gov.pay.connector.resources.GatewayAccountResource.ACCOUNT_RESOURCE;
 
 public interface ApiPaths {
-    //local
     String CHARGE_RESOURCE = "/charges/{chargeId}";
     String FRONTEND_RESOURCE = "/v1/frontend";
 
-    //global
     String OLD_CHARGES_API_PATH = "/v1/api/charges/";
     String OLD_GET_CHARGE_API_PATH = OLD_CHARGES_API_PATH + "{chargeId}";
 

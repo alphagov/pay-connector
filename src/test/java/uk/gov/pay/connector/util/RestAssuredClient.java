@@ -7,12 +7,10 @@ import static com.jayway.restassured.RestAssured.given;
 import static com.jayway.restassured.http.ContentType.JSON;
 
 public class RestAssuredClient {
-    private DropwizardAppWithPostgresRule app;
+    private final DropwizardAppWithPostgresRule app;
+    private final String requestPathTemplate;
     private String accountId;
-    private String requestPathTemplate;
     private String chargeId;
-    private String requestPath;
-    private boolean requestPathOverride;
 
     public RestAssuredClient(DropwizardAppWithPostgresRule app, String accountId, String requestPathTemplate) {
         this.app = app;
@@ -30,17 +28,9 @@ public class RestAssuredClient {
         return this;
     }
 
-    public RestAssuredClient withRequestPath(String requestPath) {
-        this.requestPath = requestPath;
-        requestPathOverride = true;
-        return this;
-    }
-
     public ValidatableResponse postCreateCharge(String postBody) {
-        if (!requestPathOverride) {
-            requestPath = requestPathTemplate
-                    .replace("{accountId}", accountId);
-        }
+        String requestPath = requestPathTemplate
+                .replace("{accountId}", accountId);
 
         return given().port(app.getLocalPort())
                 .contentType(JSON)
@@ -49,27 +39,21 @@ public class RestAssuredClient {
                 .then();
     }
 
-    public ValidatableResponse getCharge(String chargeId1) {
-        if(requestPathOverride) {
-            requestPath  = requestPath
-                    .replace("{chargeId}", chargeId);
-        } else {
-            requestPath = requestPathTemplate
-                    .replace("{accountId}", accountId)
-                    .replace("{chargeId}", chargeId);
-        }
+    public ValidatableResponse getCharge() {
+        String requestPath = requestPathTemplate
+                .replace("{accountId}", accountId)
+                .replace("{chargeId}", chargeId);
 
         return given().port(app.getLocalPort())
                 .get(requestPath)
                 .then();
     }
 
-    public ValidatableResponse putChargeStatus(String chargeId1, String putBody) {
+    public ValidatableResponse putChargeStatus(String putBody) {
         String requestPath = requestPathTemplate
                 .replace("{accountId}", accountId)
                 .replace("{chargeId}", chargeId)
                 + "/status";
-        System.out.println("requestPath = " + requestPath);
         return given()
                 .port(app.getLocalPort())
                 .contentType(JSON).body(putBody)
@@ -77,23 +61,19 @@ public class RestAssuredClient {
                 .then();
     }
 
-    public ValidatableResponse postChargeCancellation(String chargeId1) {
+    public ValidatableResponse postChargeCancellation() {
         String requestPath = requestPathTemplate
                 .replace("{accountId}", accountId)
                 .replace("{chargeId}", chargeId)
                 + "/cancel";
-        System.out.println("requestPath = " + requestPath);
         return given().port(app.getLocalPort())
                 .post(requestPath)
                 .then();
     }
 
-    public ValidatableResponse getTransactions(String accountId1) {
-        if(!requestPathOverride) {
-            requestPath = requestPathTemplate;
-        }
+    public ValidatableResponse getTransactions() {
         return given().port(app.getLocalPort())
-                .get(requestPath + "?gatewayAccountId=" + accountId)
+                .get(requestPathTemplate + "?gatewayAccountId=" + accountId)
                 .then();
     }
 }

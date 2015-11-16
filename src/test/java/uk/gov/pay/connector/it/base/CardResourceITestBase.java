@@ -95,22 +95,14 @@ public class CardResourceITestBase {
     protected void assertFrontendChargeStatusIs(String chargeId, String status) {
         restFrontendCall
                 .withChargeId(chargeId)
-                .getCharge("irrelavant")
+                .getCharge()
                 .body("status", is(status));
     }
 
     protected void assertApiStatusIs(String chargeId, String status) {
         restApiCall
                 .withChargeId(chargeId)
-                .getCharge("irrelevant")
-                .body("status", is(status));
-    }
-
-    private void assertStatusIs(String url, String status) {
-
-        given().port(app.getLocalPort())
-                .get(url)
-                .then()
+                .getCharge()
                 .body("status", is(status));
     }
 

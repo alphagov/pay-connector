@@ -41,6 +41,7 @@ public class ChargesApiResourceITest {
     private String returnUrl = "http://service.url/success-page/";
 
     private RestAssuredClient restApiCall = new RestAssuredClient(app, accountId, OLD_CHARGES_API_PATH);
+    private RestAssuredClient restApiGetCall = new RestAssuredClient(app, accountId, OLD_GET_CHARGE_API_PATH);
 
     @Before
     public void setupGatewayAccount() {
@@ -73,10 +74,9 @@ public class ChargesApiResourceITest {
         assertSelfLink(response, documentLocation);
         assertNextUrlLink(response, cardDetailsLocationFor(chargeId));
 
-        ValidatableResponse getChargeResponse = restApiCall
-                .withRequestPath(OLD_GET_CHARGE_API_PATH)
+        ValidatableResponse getChargeResponse = restApiGetCall
                 .withChargeId(chargeId)
-                .getCharge(chargeId)
+                .getCharge()
                 .statusCode(OK.getStatusCode())
                 .contentType(JSON)
                 .body(JSON_CHARGE_KEY, is(chargeId))
@@ -94,10 +94,9 @@ public class ChargesApiResourceITest {
         app.getDatabaseTestHelper().addCharge(chargeId, accountId, amount, AUTHORISATION_SUCCESS, returnUrl, null);
         app.getDatabaseTestHelper().addToken(chargeId, "tokenId");
 
-        restApiCall
-                .withRequestPath(OLD_GET_CHARGE_API_PATH)
+        restApiGetCall
                 .withChargeId(chargeId)
-                .getCharge(chargeId)
+                .getCharge()
                 .statusCode(OK.getStatusCode())
                 .contentType(JSON)
                 .body(JSON_CHARGE_KEY, is(chargeId))
@@ -133,10 +132,9 @@ public class ChargesApiResourceITest {
     @Test
     public void cannotGetCharge_WhenInvalidChargeId() throws Exception {
         String chargeId = "23235124";
-        restApiCall
-                .withRequestPath(OLD_GET_CHARGE_API_PATH)
+        restApiGetCall
                 .withChargeId(chargeId)
-                .getCharge(chargeId)
+                .getCharge()
                 .statusCode(NOT_FOUND.getStatusCode())
                 .contentType(JSON)
                 .body(JSON_MESSAGE_KEY, is(format("Charge with id [%s] not found.", chargeId)));

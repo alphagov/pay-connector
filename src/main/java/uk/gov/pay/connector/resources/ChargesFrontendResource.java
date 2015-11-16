@@ -27,15 +27,8 @@ import static javax.ws.rs.core.Response.ok;
 import static org.apache.commons.lang3.StringUtils.isBlank;
 import static org.apache.commons.lang3.math.NumberUtils.isNumber;
 import static uk.gov.pay.connector.model.domain.ChargeStatus.*;
-// <<<<<<< c69bd2e6f047f29671a4e5099329b6afbf54da92
-//import static uk.gov.pay.connector.resources.CardResource.FRONTEND_AUTHORIZATION_RESOURCE;
-//import static uk.gov.pay.connector.resources.CardResource.FRONTEND_CAPTURE_RESOURCE;
-// =======
 import static uk.gov.pay.connector.resources.ApiPaths.*;
 import static uk.gov.pay.connector.resources.ApiPaths.OLD_GET_CHARGE_FRONTEND_PATH;
-// import static uk.gov.pay.connector.resources.CardResource.AUTHORIZATION_FRONTEND_RESOURCE_PATH;
-// import static uk.gov.pay.connector.resources.CardResource.CAPTURE_FRONTEND_RESOURCE_PATH;
-// >>>>>>> PP-195 Refactoring
 import static uk.gov.pay.connector.util.LinksBuilder.linksBuilder;
 import static uk.gov.pay.connector.util.ResponseUtil.*;
 

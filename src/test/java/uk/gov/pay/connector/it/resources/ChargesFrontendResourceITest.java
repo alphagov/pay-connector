@@ -34,7 +34,9 @@ public class ChargesFrontendResourceITest {
     private String returnUrl = "http://whatever.com";
     private long expectedAmount = 6234L;
 
-    private RestAssuredClient restApiCall = new RestAssuredClient(app, accountId, OLD_GET_CHARGE_API_PATH);
+    //TODO: This requires refactoring to move to the new REST endpoints convention
+    private RestAssuredClient restOldApiCall = new RestAssuredClient(app, accountId, OLD_CHARGES_API_PATH);
+    private RestAssuredClient restOldFrontendCall = new RestAssuredClient(app, accountId, OLD_CHARGES_FRONTEND_PATH);
     private RestAssuredClient restFrontendCall = new RestAssuredClient(app, accountId, OLD_GET_CHARGE_FRONTEND_PATH);
 
     @Before
@@ -73,7 +75,7 @@ public class ChargesFrontendResourceITest {
         restFrontendCall
                 .withAccountId(accountId)
                 .withChargeId(chargeId)
-                .putChargeStatus(chargeId, putBody)
+                .putChargeStatus(putBody)
                 .statusCode(NO_CONTENT.getStatusCode())
                 .body(isEmptyOrNullString());
 
@@ -87,7 +89,7 @@ public class ChargesFrontendResourceITest {
 
         restFrontendCall
                 .withChargeId(chargeId)
-                .putChargeStatus(chargeId, putBody)
+                .putChargeStatus(putBody)
                 .statusCode(BAD_REQUEST.getStatusCode())
                 .body(is("{\"message\":\"Field(s) missing: [new_status]\"}"));
 
@@ -103,7 +105,7 @@ public class ChargesFrontendResourceITest {
         restFrontendCall
                 .withAccountId(accountId)
                 .withChargeId(chargeId)
-                .putChargeStatus(chargeId, putBody)
+                .putChargeStatus(putBody)
                 .statusCode(BAD_REQUEST.getStatusCode())
                 .body(is("{\"message\":\"charge status not recognized: junk\"}"));
 
@@ -116,7 +118,7 @@ public class ChargesFrontendResourceITest {
         String chargeId = "23235124";
         restFrontendCall
                 .withChargeId(chargeId)
-                .getCharge(chargeId)
+                .getCharge()
                 .statusCode(NOT_FOUND.getStatusCode())
                 .contentType(JSON)
                 .body("message", is(format("Charge with id [%s] not found.", chargeId)));
@@ -136,9 +138,8 @@ public class ChargesFrontendResourceITest {
         app.getDatabaseTestHelper().addGatewayAccount(anotherAccountId, "another test gateway");
         app.getDatabaseTestHelper().addCharge("5001", anotherAccountId, 200, AUTHORISATION_SUBMITTED, returnUrl, "transaction-id-2");
 
-        ValidatableResponse response = restFrontendCall
-                .withRequestPath(OLD_CHARGES_FRONTEND_PATH)
-                .getTransactions(accountId);
+        ValidatableResponse response = restOldFrontendCall
+                .getTransactions();
 
         response.statusCode(OK.getStatusCode())
                 .contentType(JSON)
@@ -153,9 +154,8 @@ public class ChargesFrontendResourceITest {
         app.getDatabaseTestHelper().addCharge("102", accountId, 300, AUTHORISATION_REJECTED, returnUrl, null);
         app.getDatabaseTestHelper().addCharge("103", accountId, 100, AUTHORISATION_SUBMITTED, returnUrl, randomUUID().toString());
 
-        ValidatableResponse response = restFrontendCall
-                .withRequestPath(OLD_CHARGES_FRONTEND_PATH)
-                .getTransactions(accountId);
+        ValidatableResponse response = restOldFrontendCall
+                .getTransactions();
 
         response.statusCode(OK.getStatusCode())
                 .contentType(JSON)
@@ -170,10 +170,9 @@ public class ChargesFrontendResourceITest {
     @Test
     public void shouldReturn404_IfNoAccountExistsForTheGivenAccountId() {
         String nonExistentAccountId = "123456789";
-        ValidatableResponse response = restFrontendCall
-                .withRequestPath(OLD_CHARGES_FRONTEND_PATH)
+        ValidatableResponse response = restOldFrontendCall
                 .withAccountId(nonExistentAccountId)
-                .getTransactions(nonExistentAccountId);
+                .getTransactions();
 
         response.statusCode(NOT_FOUND.getStatusCode())
                 .contentType(JSON)
@@ -182,10 +181,9 @@ public class ChargesFrontendResourceITest {
 
     @Test
     public void shouldReturn400IfGatewayAccountIsMissingWhenListingTransactions() {
-        ValidatableResponse response = restFrontendCall
-                .withRequestPath(OLD_CHARGES_FRONTEND_PATH)
+        ValidatableResponse response = restOldFrontendCall
                 .withAccountId("")
-                .getTransactions("");
+                .getTransactions();
 
         response.statusCode(BAD_REQUEST.getStatusCode())
                 .contentType(JSON)
@@ -195,10 +193,9 @@ public class ChargesFrontendResourceITest {
     @Test
     public void shouldReturn400IfGatewayAccountIsNotANumberWhenListingTransactions() {
         String invalidAccRef = "XYZ";
-        ValidatableResponse response = restFrontendCall
-                .withRequestPath(OLD_CHARGES_FRONTEND_PATH)
+        ValidatableResponse response = restOldFrontendCall
                 .withAccountId(invalidAccRef)
-                .getTransactions(invalidAccRef);
+                .getTransactions();
 
         response.statusCode(BAD_REQUEST.getStatusCode())
                 .contentType(JSON)
@@ -207,9 +204,8 @@ public class ChargesFrontendResourceITest {
 
     @Test
     public void shouldReturnEmptyResult_IfNoTransactionsExistForAccount() {
-        ValidatableResponse response = restFrontendCall
-                .withRequestPath(OLD_CHARGES_FRONTEND_PATH)
-                .getTransactions(accountId);
+        ValidatableResponse response = restOldFrontendCall
+                .getTransactions();
 
         response.statusCode(OK.getStatusCode())
                 .contentType(JSON)
@@ -230,8 +226,7 @@ public class ChargesFrontendResourceITest {
                 "gateway_account_id", accountId,
                 "return_url", returnUrl));
 
-        ValidatableResponse response = restApiCall
-                .withRequestPath(OLD_CHARGES_API_PATH)
+        ValidatableResponse response = restOldApiCall
                 .withAccountId(accountId)
                 .postCreateCharge(postBody)
                 .statusCode(Status.CREATED.getStatusCode())
@@ -247,7 +242,7 @@ public class ChargesFrontendResourceITest {
     private ValidatableResponse validateGetCharge(long expectedAmount, String chargeId, ChargeStatus chargeStatus) {
         return restFrontendCall
                 .withChargeId(chargeId)
-                .getCharge(chargeId)
+                .getCharge()
                 .statusCode(OK.getStatusCode())
                 .contentType(JSON)
                 .body("charge_id", is(chargeId))
