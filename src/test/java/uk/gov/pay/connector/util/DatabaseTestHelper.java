@@ -1,5 +1,7 @@
 package uk.gov.pay.connector.util;
 
+import com.google.gson.Gson;
+import com.google.gson.JsonObject;
 import org.skife.jdbi.v2.DBI;
 import org.skife.jdbi.v2.util.StringMapper;
 import uk.gov.pay.connector.dao.TokenDao;
@@ -68,6 +70,16 @@ public class DatabaseTestHelper {
                                 .map(StringMapper.FIRST)
                                 .first()
         );
+    }
+
+    public JsonObject getAccountCredentials(String gatewayAccountId) {
+        String jsonString = jdbi.withHandle(h ->
+                        h.createQuery("SELECT credentials from gateway_accounts WHERE gateway_account_id = :gatewayAccountId")
+                                .bind("gatewayAccountId", Integer.parseInt(gatewayAccountId))
+                                .map(StringMapper.FIRST)
+                                .first()
+        );
+        return new Gson().fromJson(jsonString, JsonObject.class);
     }
 
     public void addToken(String chargeId, String tokenId) {

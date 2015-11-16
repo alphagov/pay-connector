@@ -47,6 +47,9 @@ The command to run all the tests is:
 
 ## FRONTEND NAMESPACE
 
+| Path                          | Supported Methods | Description                        |
+| ----------------------------- | ----------------- | ---------------------------------- |
+|[```/v1/frontend/accounts/{accountId}```](#put-v1frontendaccountsaccountid)              | PUT    |  Update gateway credentials associated with this account             |
 |[```/v1/frontend/charges/{chargeId}/status```](#put-v1frontendchargeschargeidstatus)         | PUT    |  Update status of the charge     |
 |[```/v1/frontend/charges/{chargeId}```](#get-v1frontendchargeschargeid)                                  | GET |  Find out the status of a charge            |
 |[```/v1/frontend/charges/{chargeId}/cards```](#post-v1frontendchargeschargeidcards)                      | POST |  Authorise the charge with the card details            |
@@ -300,6 +303,62 @@ Content-Length: 52
 
 {
     "message": "Charge with id [123456] not found."
+}
+```
+
+-----------------------------------------------------------------------------------------------------------
+
+### PUT /v1/frontend/accounts/{accountId}
+   
+
+Update gateway credentials associated with this account
+
+#### Request example
+
+```
+PUT /v1/frontend/accounts/111222333
+Content-Type: application/json
+
+{
+    "username": "a-user-name",
+    "password": "a-password",
+    "merchant_id": "a-merchant-id"
+}
+```
+
+##### Request body description
+
+| Field                    | required | Description                               |
+| ------------------------ |:--------:| ----------------------------------------- | 
+| `username`                 | X | The payment provider's username for this gateway account    | 
+| `password`                 | X | The payment provider's password for this gateway account    | 
+| `merchant_id`              |   | The payment provider's merchant id for this gateway account (if applicable)    | 
+
+#### Response for a successful update
+
+```
+200 OK
+```
+
+#### Response when account id is not found
+
+```
+HTTP/1.1 404 Not Found
+Content-Type: application/json
+
+{
+    "message": "The gateway account id '111222333' does not exist"
+}
+```
+
+#### Response if mandatory fields are missing
+
+```
+HTTP/1.1 400 Bad Request
+Content-Type: application/json
+
+{
+    "message": "The following fields are missing: [username]"
 }
 ```
 

@@ -2,22 +2,14 @@ package uk.gov.pay.connector.it.resources;
 
 import com.google.common.collect.ImmutableMap;
 import com.jayway.restassured.response.ValidatableResponse;
-import com.jayway.restassured.specification.RequestSpecification;
-import org.junit.Rule;
 import org.junit.Test;
-import uk.gov.pay.connector.rules.DropwizardAppWithPostgresRule;
 
-import static com.jayway.restassured.RestAssured.given;
 import static com.jayway.restassured.http.ContentType.JSON;
 import static java.lang.String.format;
-import static org.hamcrest.Matchers.*;
+import static org.hamcrest.Matchers.is;
 import static uk.gov.pay.connector.util.JsonEncoder.toJson;
 
-public class GatewayAccountResourceITest {
-
-    public static final String ACCOUNT_URL = "/v1/api/accounts/";
-    @Rule
-    public DropwizardAppWithPostgresRule app = new DropwizardAppWithPostgresRule();
+public class GatewayAccountResourceITest extends GatewayAccountResourceTestBase {
 
     @Test
     public void getAccountShouldReturn404IfAccountIdIsUnknown() throws Exception {
@@ -25,7 +17,7 @@ public class GatewayAccountResourceITest {
         String unknownAcocuntId = "92348739";
 
         givenSetup()
-                .get(ACCOUNT_URL + unknownAcocuntId)
+                .get(ACCOUNTS_API_URL + unknownAcocuntId)
                 .then()
                 .statusCode(404);
     }
@@ -37,7 +29,7 @@ public class GatewayAccountResourceITest {
 
         ValidatableResponse response = givenSetup()
                 .body(payload)
-                .post(ACCOUNT_URL)
+                .post(ACCOUNTS_API_URL)
                 .then()
                 .statusCode(201);
 
@@ -53,7 +45,7 @@ public class GatewayAccountResourceITest {
 
         givenSetup()
                 .body(payload)
-                .post(ACCOUNT_URL)
+                .post(ACCOUNTS_API_URL)
                 .then()
                 .statusCode(400)
                 .contentType(JSON)
@@ -78,42 +70,4 @@ public class GatewayAccountResourceITest {
         createAGatewayAccountFor("smartpay");
     }
 
-    private void createAGatewayAccountFor(String testProvider) {
-        ValidatableResponse response = givenSetup()
-                .body(toJson(ImmutableMap.of("payment_provider", testProvider)))
-                .post(ACCOUNT_URL)
-                .then()
-                .statusCode(201)
-                .contentType(JSON);
-
-        assertCorrectAccountLocationIn(response);
-
-        assertGettingAccountReturnsProviderName(response, testProvider);
-    }
-
-    private void assertGettingAccountReturnsProviderName(ValidatableResponse response, String providerName) {
-        givenSetup()
-                .get(response.extract().header("Location"))
-                .then()
-                .statusCode(200)
-                .contentType(JSON)
-                .body("payment_provider", is(providerName))
-                .body("gateway_account_id", is(notNullValue()));
-    }
-
-    private void assertCorrectAccountLocationIn(ValidatableResponse response) {
-        String accountId = response.extract().path("gateway_account_id");
-        String urlSlug = "api/accounts/" + accountId;
-
-        response.header("Location", containsString(urlSlug))
-                .body("gateway_account_id", containsString(accountId))
-                .body("links[0].href", containsString(urlSlug))
-                .body("links[0].rel", is("self"))
-                .body("links[0].method", is("GET"));
-    }
-
-    private RequestSpecification givenSetup() {
-        return given().port(app.getLocalPort())
-                .contentType(JSON);
-    }
 }
