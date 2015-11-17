@@ -27,17 +27,14 @@ import static javax.ws.rs.core.Response.ok;
 import static org.apache.commons.lang3.StringUtils.isBlank;
 import static org.apache.commons.lang3.math.NumberUtils.isNumber;
 import static uk.gov.pay.connector.model.domain.ChargeStatus.*;
-import static uk.gov.pay.connector.resources.CardResource.FRONTEND_AUTHORIZATION_RESOURCE;
-import static uk.gov.pay.connector.resources.CardResource.FRONTEND_CAPTURE_RESOURCE;
+import static uk.gov.pay.connector.resources.ApiPaths.*;
+import static uk.gov.pay.connector.resources.ApiPaths.OLD_GET_CHARGE_FRONTEND_PATH;
 import static uk.gov.pay.connector.util.LinksBuilder.linksBuilder;
 import static uk.gov.pay.connector.util.ResponseUtil.*;
 
 @Path("/")
 public class ChargesFrontendResource {
-
-    private static final String CHARGES_FRONTEND_PATH = "/v1/frontend/charges/";
-    private static final String GET_CHARGE_FRONTEND_PATH = CHARGES_FRONTEND_PATH + "{chargeId}";
-    private static final String PUT_CHARGE_STATUS_FRONTEND_PATH = CHARGES_FRONTEND_PATH + "{chargeId}/status";
+    private static final String PUT_CHARGE_STATUS_FRONTEND_PATH = OLD_GET_CHARGE_FRONTEND_PATH + "/status";
 
     private static final Logger logger = LoggerFactory.getLogger(ChargesFrontendResource.class);
     private final ChargeDao chargeDao;
@@ -49,7 +46,7 @@ public class ChargesFrontendResource {
     }
 
     @GET
-    @Path(GET_CHARGE_FRONTEND_PATH)
+    @Path(OLD_GET_CHARGE_FRONTEND_PATH)
     @Produces(APPLICATION_JSON)
     public Response getCharge(@PathParam("chargeId") String chargeId, @Context UriInfo uriInfo) {
         Optional<Map<String, Object>> maybeCharge = chargeDao.findById(chargeId);
@@ -75,7 +72,7 @@ public class ChargesFrontendResource {
     }
 
     @GET
-    @Path(CHARGES_FRONTEND_PATH)
+    @Path(OLD_CHARGES_FRONTEND_PATH)
     @Produces(APPLICATION_JSON)
     public Response getCharges(@QueryParam("gatewayAccountId") String gatewayAccountId, @Context UriInfo uriInfo) {
         return reduce(validateGatewayAccountReference(gatewayAccountId)
@@ -104,7 +101,7 @@ public class ChargesFrontendResource {
     }
 
     private Response buildOkResponse(@PathParam("chargeId") String chargeId, @Context UriInfo uriInfo, Map<String, Object> charge) {
-        URI chargeLocation = locationUriFor(GET_CHARGE_FRONTEND_PATH, uriInfo, chargeId);
+        URI chargeLocation = locationUriFor(OLD_GET_CHARGE_FRONTEND_PATH, uriInfo, chargeId);
         Map<String, Object> responseData = linksBuilder(chargeLocation)
                 .addLink("cardAuth", HttpMethod.POST, locationUriFor(FRONTEND_AUTHORIZATION_RESOURCE, uriInfo, chargeId))
                 .addLink("cardCapture", HttpMethod.POST, locationUriFor(FRONTEND_CAPTURE_RESOURCE, uriInfo, chargeId))

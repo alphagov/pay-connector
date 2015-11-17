@@ -23,18 +23,18 @@ import static javax.ws.rs.core.MediaType.APPLICATION_JSON;
 import static org.apache.commons.lang3.StringUtils.isEmpty;
 import static uk.gov.pay.connector.model.api.ExternalChargeStatus.mapFromStatus;
 import static uk.gov.pay.connector.model.api.Link.aLink;
+import static uk.gov.pay.connector.resources.ApiPaths.OLD_GET_CHARGE_API_PATH;
+import static uk.gov.pay.connector.resources.ApiPaths.OLD_CHARGES_API_PATH;
 import static uk.gov.pay.connector.util.ResponseUtil.badRequestResponse;
 import static uk.gov.pay.connector.util.ResponseUtil.fieldsMissingResponse;
 
 @Path("/")
 public class ChargesApiResource {
-    private static final String CHARGES_API_PATH = "/v1/api/charges/";
-    private static final String GET_CHARGE_API_PATH = CHARGES_API_PATH + "{chargeId}";
-
     private static final String AMOUNT_KEY = "amount";
+    private static final String DESCRIPTION_KEY = "description";
     private static final String GATEWAY_ACCOUNT_KEY = "gateway_account_id";
     private static final String RETURN_URL_KEY = "return_url";
-    private static final String[] REQUIRED_FIELDS = {AMOUNT_KEY, GATEWAY_ACCOUNT_KEY, RETURN_URL_KEY};
+    private static final String[] REQUIRED_FIELDS = {AMOUNT_KEY, DESCRIPTION_KEY, GATEWAY_ACCOUNT_KEY, RETURN_URL_KEY};
 
     private static final String STATUS_KEY = "status";
 
@@ -52,7 +52,7 @@ public class ChargesApiResource {
     }
 
     @GET
-    @Path(GET_CHARGE_API_PATH)
+    @Path(OLD_GET_CHARGE_API_PATH)
     @Produces(APPLICATION_JSON)
     public Response getCharge(@PathParam("chargeId") String chargeId, @Context UriInfo uriInfo) {
         Optional<Map<String, Object>> maybeCharge = chargeDao.findById(chargeId);
@@ -68,8 +68,7 @@ public class ChargesApiResource {
     }
 
     @POST
-    @Path(CHARGES_API_PATH)
-    @Consumes(APPLICATION_JSON)
+    @Path(OLD_CHARGES_API_PATH)
     @Produces(APPLICATION_JSON)
     public Response createNewCharge(Map<String, Object> chargeRequest, @Context UriInfo uriInfo) {
         Optional<List<String>> missingFields = checkMissingFields(chargeRequest);
@@ -118,7 +117,7 @@ public class ChargesApiResource {
 
     private URI chargeLocationFor(UriInfo uriInfo, String chargeId) {
         return uriInfo.getBaseUriBuilder()
-                .path(GET_CHARGE_API_PATH).build(chargeId);
+                .path(OLD_GET_CHARGE_API_PATH).build(chargeId);
     }
 
     private Optional<List<String>> checkMissingFields(Map<String, Object> inputData) {
@@ -136,9 +135,9 @@ public class ChargesApiResource {
                 aLink(selfUrl, "self", "GET").toMap()
         );
 
-        if(!isEmpty(tokenId)) {
+        if (!isEmpty(tokenId)) {
             links.add(
-                aLink(linksConfig.getCardDetailsUrl().replace("{chargeId}", chargeId).replace("{chargeTokenId}", tokenId), "next_url", "GET").toMap()
+                    aLink(linksConfig.getCardDetailsUrl().replace("{chargeId}", chargeId).replace("{chargeTokenId}", tokenId), "next_url", "GET").toMap()
             );
         }
 

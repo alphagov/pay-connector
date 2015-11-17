@@ -16,18 +16,12 @@ import javax.ws.rs.core.Response;
 
 import static fj.data.Either.reduce;
 import static javax.ws.rs.core.MediaType.APPLICATION_JSON;
+import static uk.gov.pay.connector.resources.ApiPaths.*;
 import static uk.gov.pay.connector.resources.CardDetailsValidator.isWellFormattedCardDetails;
-import static uk.gov.pay.connector.resources.GatewayAccountResource.ACCOUNT_RESOURCE;
 import static uk.gov.pay.connector.util.ResponseUtil.*;
 
 @Path("/")
 public class CardResource {
-
-    public static final String FRONTEND_RESOURCE = "/v1/frontend";
-    public static final String CHARGE_RESOURCE = "/charges/{chargeId}";
-    public static final String FRONTEND_AUTHORIZATION_RESOURCE = FRONTEND_RESOURCE + CHARGE_RESOURCE + "/cards";
-    public static final String FRONTEND_CAPTURE_RESOURCE = FRONTEND_RESOURCE + CHARGE_RESOURCE + "/capture";
-    public static final String CANCEL_CHARGE_PATH = ACCOUNT_RESOURCE + CHARGE_RESOURCE + "/cancel";
     private final CardService cardService;
     private final Logger logger = LoggerFactory.getLogger(CardResource.class);
 
@@ -65,8 +59,7 @@ public class CardResource {
     @POST
     @Path(CANCEL_CHARGE_PATH)
     @Produces(APPLICATION_JSON)
-    @Consumes(APPLICATION_JSON)
-    public Response cancelCharge(@PathParam("accountId") String accountId, @PathParam("chargeId") String chargeId, JsonNode accountNode) {
+    public Response cancelCharge(@PathParam("accountId") String accountId, @PathParam("chargeId") String chargeId) {
         if(!NumberUtils.isNumber(accountId)){
             return badRequestResponse(logger, "Invalid account Id");
         }

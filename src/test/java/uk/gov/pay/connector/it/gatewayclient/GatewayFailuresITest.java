@@ -4,7 +4,6 @@ import com.github.tomakehurst.wiremock.junit.WireMockRule;
 import org.junit.Before;
 import org.junit.Rule;
 import org.junit.Test;
-import uk.gov.pay.connector.resources.CardResource;
 import uk.gov.pay.connector.rules.DropwizardAppWithPostgresRule;
 import uk.gov.pay.connector.util.DatabaseTestHelper;
 import uk.gov.pay.connector.util.PortFactory;
@@ -15,7 +14,8 @@ import static io.dropwizard.testing.ConfigOverride.config;
 import static org.hamcrest.Matchers.is;
 import static org.junit.Assert.assertThat;
 import static uk.gov.pay.connector.model.domain.ChargeStatus.*;
-import static uk.gov.pay.connector.resources.CardResource.FRONTEND_CAPTURE_RESOURCE;
+import static uk.gov.pay.connector.resources.ApiPaths.FRONTEND_AUTHORIZATION_RESOURCE;
+import static uk.gov.pay.connector.resources.ApiPaths.FRONTEND_CAPTURE_RESOURCE;
 import static uk.gov.pay.connector.resources.PaymentProviderValidator.SMARTPAY_PROVIDER;
 import static uk.gov.pay.connector.util.CardUtils.aValidCard;
 
@@ -53,7 +53,7 @@ public class GatewayFailuresITest {
         gatewayStub.respondWithUnexpectedResponseCodeWhenCardAuth();
 
         String errorMessage = "Unexpected Response Code From Gateway";
-        String cardAuthUrl = CardResource.FRONTEND_AUTHORIZATION_RESOURCE.replace("{chargeId}", CHARGE_ID);
+        String cardAuthUrl = FRONTEND_AUTHORIZATION_RESOURCE.replace("{chargeId}", CHARGE_ID);
 
         given()
                 .port(app.getLocalPort())

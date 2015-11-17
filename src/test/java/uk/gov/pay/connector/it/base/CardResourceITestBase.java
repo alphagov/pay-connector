@@ -11,18 +11,22 @@ import uk.gov.pay.connector.rules.DropwizardAppWithPostgresRule;
 import uk.gov.pay.connector.rules.SmartpayMockClient;
 import uk.gov.pay.connector.rules.WorldpayMockClient;
 import uk.gov.pay.connector.util.PortFactory;
+import uk.gov.pay.connector.util.RestAssuredClient;
 
 import java.io.IOException;
 
 import static com.jayway.restassured.RestAssured.given;
 import static com.jayway.restassured.http.ContentType.JSON;
 import static io.dropwizard.testing.ConfigOverride.config;
+import static javax.ws.rs.core.Response.Status.BAD_REQUEST;
 import static org.hamcrest.Matchers.is;
 import static uk.gov.pay.connector.model.domain.ChargeStatus.*;
-import static uk.gov.pay.connector.resources.CardResource.*;
+import static uk.gov.pay.connector.resources.ApiPaths.*;
 import static uk.gov.pay.connector.util.JsonEncoder.toJson;
 
 public class CardResourceITestBase {
+    private RestAssuredClient restFrontendCall;
+    private RestAssuredClient restApiCall;
 
     @Rule
     public DropwizardAppWithPostgresRule app;
@@ -38,6 +42,7 @@ public class CardResourceITestBase {
 
     protected final String accountId;
     private final String paymentProvider;
+    private long amount = 6234;
 
     public CardResourceITestBase(String paymentProvider) {
         this.paymentProvider = paymentProvider;
@@ -46,6 +51,8 @@ public class CardResourceITestBase {
         app = new DropwizardAppWithPostgresRule(
                 config("worldpay.url", "http://localhost:" + port + "/jsp/merchant/xml/paymentService.jsp"),
                 config("smartpay.url", "http://localhost:" + port + "/pal/servlet/soap/Payment"));
+        restFrontendCall = new RestAssuredClient(app, accountId, OLD_GET_CHARGE_FRONTEND_PATH);
+        restApiCall = new RestAssuredClient(app, accountId, OLD_GET_CHARGE_API_PATH);
     }
 
     @Before
@@ -86,17 +93,16 @@ public class CardResourceITestBase {
     }
 
     protected void assertFrontendChargeStatusIs(String chargeId, String status) {
-        assertStatusIs("/v1/frontend/charges/" + chargeId, status);
+        restFrontendCall
+                .withChargeId(chargeId)
+                .getCharge()
+                .body("status", is(status));
     }
 
     protected void assertApiStatusIs(String chargeId, String status) {
-        assertStatusIs("/v1/api/charges/" + chargeId, status);
-    }
-
-    private void assertStatusIs(String url, String status) {
-        given().port(app.getLocalPort())
-                .get(url)
-                .then()
+        restApiCall
+                .withChargeId(chargeId)
+                .getCharge()
                 .body("status", is(status));
     }
 
@@ -112,7 +118,7 @@ public class CardResourceITestBase {
     protected String createNewChargeWith(ChargeStatus status, String gatewayTransactionId) {
         String chargeId = ((Integer) RandomUtils.nextInt(99999999)).toString();
 
-        app.getDatabaseTestHelper().addCharge(chargeId, accountId, 500, status, "returnUrl", gatewayTransactionId);
+        app.getDatabaseTestHelper().addCharge(chargeId, accountId, amount, status, "returnUrl", gatewayTransactionId);
         return chargeId;
     }
 
@@ -165,7 +171,7 @@ public class CardResourceITestBase {
                 .body(cardDetails)
                 .post(authoriseChargeUrlFor(chargeId))
                 .then()
-                .statusCode(400)
+                .statusCode(BAD_REQUEST.getStatusCode())
                 .contentType(JSON)
                 .body("message", is(errorMessage));
 
