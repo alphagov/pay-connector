@@ -91,7 +91,7 @@ public class PostgresContainer {
         Stopwatch timer = Stopwatch.createStarted();
         boolean succeeded = false;
         while (!succeeded && timer.elapsed(TimeUnit.SECONDS) < DB_TIMEOUT_SEC) {
-            Thread.sleep(10);
+            Thread.sleep(500);
             succeeded = checkPostgresConnection();
         }
         if (!succeeded) {
