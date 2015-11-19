@@ -2,10 +2,13 @@ package uk.gov.pay.connector.util;
 
 import com.google.gson.Gson;
 import com.google.gson.JsonObject;
+import org.postgresql.util.PGobject;
 import org.skife.jdbi.v2.DBI;
 import org.skife.jdbi.v2.util.StringMapper;
 import uk.gov.pay.connector.dao.TokenDao;
 import uk.gov.pay.connector.model.domain.ChargeStatus;
+
+import java.sql.SQLException;
 
 public class DatabaseTestHelper {
     private DBI jdbi;
@@ -18,8 +21,8 @@ public class DatabaseTestHelper {
 
     public void addGatewayAccount(String accountId, String paymentProvider) {
         jdbi.withHandle(h ->
-                        h.update("INSERT INTO gateway_accounts(gateway_account_id, payment_provider) VALUES(?, ?)",
-                                Long.valueOf(accountId), paymentProvider)
+                h.update("INSERT INTO gateway_accounts(gateway_account_id, payment_provider) VALUES(?, ?)",
+                        Long.valueOf(accountId), paymentProvider)
         );
     }
 
@@ -65,19 +68,19 @@ public class DatabaseTestHelper {
 
     public String getChargeTokenId(String chargeId) {
         return jdbi.withHandle(h ->
-                        h.createQuery("SELECT secure_redirect_token from tokens WHERE charge_id = :charge_id")
-                                .bind("charge_id", Long.valueOf(chargeId))
-                                .map(StringMapper.FIRST)
-                                .first()
+                h.createQuery("SELECT secure_redirect_token from tokens WHERE charge_id = :charge_id")
+                        .bind("charge_id", Long.valueOf(chargeId))
+                        .map(StringMapper.FIRST)
+                        .first()
         );
     }
 
     public JsonObject getAccountCredentials(String gatewayAccountId) {
         String jsonString = jdbi.withHandle(h ->
-                        h.createQuery("SELECT credentials from gateway_accounts WHERE gateway_account_id = :gatewayAccountId")
-                                .bind("gatewayAccountId", Integer.parseInt(gatewayAccountId))
-                                .map(StringMapper.FIRST)
-                                .first()
+                h.createQuery("SELECT credentials from gateway_accounts WHERE gateway_account_id = :gatewayAccountId")
+                        .bind("gatewayAccountId", Integer.parseInt(gatewayAccountId))
+                        .map(StringMapper.FIRST)
+                        .first()
         );
         return new Gson().fromJson(jsonString, JsonObject.class);
     }
@@ -88,10 +91,26 @@ public class DatabaseTestHelper {
 
     public String getChargeStatus(String chargeId) {
         return jdbi.withHandle(h ->
-                        h.createQuery("SELECT status from charges WHERE charge_id = :charge_id")
-                                .bind("charge_id", Long.valueOf(chargeId))
-                                .map(StringMapper.FIRST)
-                                .first()
+                h.createQuery("SELECT status from charges WHERE charge_id = :charge_id")
+                        .bind("charge_id", Long.valueOf(chargeId))
+                        .map(StringMapper.FIRST)
+                        .first()
         );
+    }
+
+    public void updateCredentialsFor(String accountId, String credentials) {
+        try {
+            PGobject pgCredentials = new PGobject();
+            pgCredentials.setType("json");
+            pgCredentials.setValue(credentials);
+            jdbi.withHandle(handle ->
+                    handle.createStatement("UPDATE gateway_accounts set credentials=:credentials WHERE gateway_account_id = :gatewayAccountId")
+                            .bind("gatewayAccountId", Integer.parseInt(accountId))
+                            .bind("credentials", pgCredentials)
+                            .execute()
+            );
+        } catch (SQLException e) {
+            throw new RuntimeException(e);
+        }
     }
 }

@@ -7,9 +7,10 @@ import org.junit.Test;
 import static com.jayway.restassured.http.ContentType.JSON;
 import static java.lang.String.format;
 import static org.hamcrest.Matchers.is;
+import static org.hamcrest.Matchers.nullValue;
 import static uk.gov.pay.connector.util.JsonEncoder.toJson;
 
-public class GatewayAccountResourceITest extends GatewayAccountResourceTestBase {
+public class GatewayAccountApiResourceITest extends GatewayAccountResourceTestBase {
 
     @Test
     public void getAccountShouldReturn404IfAccountIdIsUnknown() throws Exception {
@@ -20,6 +21,18 @@ public class GatewayAccountResourceITest extends GatewayAccountResourceTestBase 
                 .get(ACCOUNTS_API_URL + unknownAcocuntId)
                 .then()
                 .statusCode(404);
+    }
+
+    @Test
+    public void getAccountShouldNotReturnCredentials() throws Exception {
+
+        String gatewayAccountId = createAGatewayAccountFor("worldpay");
+
+        givenSetup()
+                .get(ACCOUNTS_API_URL + gatewayAccountId)
+                .then()
+                .statusCode(200)
+                .body("credentials", is(nullValue()));
     }
 
     @Test

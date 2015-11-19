@@ -40,7 +40,7 @@ public class GatewayAccountResourceTestBase {
 
         assertGettingAccountReturnsProviderName(response, testProvider);
 
-        assertGatewayAccountCredentialsAreEmpty(response);
+        assertGatewayAccountCredentialsAreEmptyInDB(response);
 
         return response.extract().path("gateway_account_id");
     }
@@ -66,7 +66,7 @@ public class GatewayAccountResourceTestBase {
                 .body("links[0].method", is("GET"));
     }
 
-    private void assertGatewayAccountCredentialsAreEmpty(ValidatableResponse response) {
+    private void assertGatewayAccountCredentialsAreEmptyInDB(ValidatableResponse response) {
         String gateway_account_id = response.extract().path("gateway_account_id");
         JsonObject accountCredentials = app.getDatabaseTestHelper().getAccountCredentials(gateway_account_id);
         assertThat(accountCredentials, is(new JsonObject()));

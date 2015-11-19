@@ -18,6 +18,7 @@ import javax.ws.rs.Produces;
 import javax.ws.rs.core.Context;
 import javax.ws.rs.core.Response;
 import javax.ws.rs.core.UriInfo;
+import java.io.IOException;
 import java.net.URI;
 import java.util.ArrayList;
 import java.util.List;
@@ -59,8 +60,12 @@ public class GatewayAccountResource {
 
         logger.info("Getting gateway account for account id {}", accountId);
 
-        return gatewayDao.findById(accountId)
-                .map(account -> Response.ok().entity(account).build())
+        return gatewayDao
+                .findById(accountId)
+                .map(gatewayAccount -> {
+                    gatewayAccount.remove("credentials");
+                    return Response.ok().entity(gatewayAccount).build();
+                })
                 .orElseGet(() -> notFoundResponse(logger, format("Account with id %s not found.", accountId)));
 
     }
@@ -89,6 +94,21 @@ public class GatewayAccountResource {
         addSelfLink(newLocation, account);
 
         return Response.created(newLocation).entity(account).build();
+    }
+
+    @GET
+    @Path(ACCOUNT_FRONTEND_RESOURCE)
+    @Produces(APPLICATION_JSON)
+    public Response getGatewayAccountWithCredentials(@PathParam("accountId") String gatewayAccountId) throws IOException {
+        return gatewayDao
+                .findById(gatewayAccountId)
+                .map(gatewayAccount ->
+                {
+                    Map<String, String> credentialsMap = (Map<String, String>) gatewayAccount.get("credentials");
+                    credentialsMap.remove("password");
+                    return Response.ok(gatewayAccount).build();
+                })
+                .orElseGet(() -> notFoundResponse(logger, format("Account with id '%s' not found", gatewayAccountId)));
     }
 
     @PUT

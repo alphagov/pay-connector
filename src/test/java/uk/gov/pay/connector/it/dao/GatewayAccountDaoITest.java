@@ -1,7 +1,5 @@
 package uk.gov.pay.connector.it.dao;
 
-import com.google.gson.Gson;
-import com.google.gson.JsonObject;
 import org.apache.commons.lang3.StringUtils;
 import org.junit.Before;
 import org.junit.Rule;
@@ -43,15 +41,19 @@ public class GatewayAccountDaoITest {
     }
 
     @Test
-    public void shouldFindGatewayAccountDetailsById() throws Exception {
+    public void shouldFindAccountInfoById() throws Exception {
         String paymentProvider = "test provider";
         String id = gatewayAccountDao.insertProviderAndReturnNewId(paymentProvider);
 
-        Optional<Map<String, Object>> retrievedAccount = gatewayAccountDao.findById(id);
+        // We dont set any credentials, so the json document in the DB is: {}
 
-        assertTrue(retrievedAccount.isPresent());
-        assertThat(retrievedAccount.get(), hasEntry("payment_provider", paymentProvider));
-        assertThat(retrievedAccount.get(), hasEntry("credentials", "{}"));
+        Optional<Map<String, Object>> gatewayAccountOpt = gatewayAccountDao.findById(id);
+
+        assertTrue(gatewayAccountOpt.isPresent());
+        Map<String, Object> gatewayAccountMap = gatewayAccountOpt.get();
+        assertThat(gatewayAccountMap, hasEntry("payment_provider", paymentProvider));
+        Map<String,String> credentialsMap = (Map<String, String>) gatewayAccountMap.get("credentials");
+        assertThat(credentialsMap.size(), is(0));
     }
 
     @Test
@@ -74,10 +76,11 @@ public class GatewayAccountDaoITest {
         String expectedJsonString = "{\"username\": \"Username\", \"password\": \"Password\"}";
         gatewayAccountDao.saveCredentials(expectedJsonString, gatewayAccountId);
 
-        Optional<Map<String, Object>> retrievedGatewayAccount = gatewayAccountDao.findById(gatewayAccountId);
-        String credentialsJsonString = (String) retrievedGatewayAccount.get().get("credentials");
-        JsonObject retrievedJsonObject = new Gson().fromJson(credentialsJsonString, JsonObject.class);
-        assertThat(retrievedJsonObject, is(new Gson().fromJson(expectedJsonString, JsonObject.class)));
+        Optional<Map<String, Object>> gatewayAccountMaybe = gatewayAccountDao.findById(gatewayAccountId);
+        assertThat(gatewayAccountMaybe.isPresent(), is(true));
+        Map<String,String> credentialsMap = (Map<String, String>) gatewayAccountMaybe.get().get("credentials");
+        assertThat(credentialsMap, hasEntry("username", "Username"));
+        assertThat(credentialsMap, hasEntry("password", "Password"));
     }
 
     @Test
@@ -91,9 +94,11 @@ public class GatewayAccountDaoITest {
             gatewayAccountDao.saveCredentials(expectedJsonString, gatewayAccountId);
             fail();
         } catch (RuntimeException e) {
-            Optional<Map<String, Object>> retrievedGatewayAccount = gatewayAccountDao.findById(gatewayAccountId);
-            String credentialsJsonString = (String) retrievedGatewayAccount.get().get("credentials");
-            assertThat(credentialsJsonString, is("{}"));
+            Optional<Map<String, Object>> gatewayAccountMaybe = gatewayAccountDao.findById(gatewayAccountId);
+            assertThat(gatewayAccountMaybe.isPresent(), is(true));
+            Map<String,String> credentialsMap = (Map<String, String>) gatewayAccountMaybe.get().get("credentials");
+            assertThat(credentialsMap.size(), is(0));
         }
     }
+
 }

@@ -2,15 +2,13 @@ package uk.gov.pay.connector.dao;
 
 import org.postgresql.util.PGobject;
 import org.skife.jdbi.v2.DBI;
-import org.skife.jdbi.v2.DefaultMapper;
 import org.skife.jdbi.v2.util.BooleanMapper;
 import org.skife.jdbi.v2.util.StringMapper;
+import uk.gov.pay.connector.mappers.GatewayAccountMapper;
 
 import java.sql.SQLException;
 import java.util.Map;
 import java.util.Optional;
-
-import static com.google.common.collect.Maps.newHashMap;
 
 public class GatewayAccountDao {
     private DBI jdbi;
@@ -41,12 +39,8 @@ public class GatewayAccountDao {
         Map<String, Object> gatewayAccount = jdbi.withHandle(handle -> handle
                 .createQuery("SELECT gateway_account_id, payment_provider, credentials FROM gateway_accounts WHERE gateway_account_id=:id")
                 .bind("id", Long.valueOf(gatewayAccountId))
-                .map(new DefaultMapper())
+                .map(new GatewayAccountMapper())
                 .first());
-
-        if (gatewayAccount != null) {
-            gatewayAccount = copyAndConvertFieldsToString(gatewayAccount);
-        }
 
         return Optional.ofNullable(gatewayAccount);
     }
@@ -69,13 +63,6 @@ public class GatewayAccountDao {
             throw new RuntimeException(e);
         }
         return pgCredentials;
-    }
-
-    private Map<String, Object> copyAndConvertFieldsToString(Map<String, Object> data) {
-        Map<String, Object> copy = newHashMap(data);
-        PGobject credentialsObject = (PGobject) data.get("credentials");
-        copy.put("credentials", credentialsObject.toString());
-        return copy;
     }
 
 }
