@@ -22,7 +22,7 @@ public class DatabaseTestHelper {
     }
 
     public void addCharge(String chargeId, String gatewayAccountId, long amount, ChargeStatus status, String returnUrl, String transactionId) {
-        addCharge(chargeId, gatewayAccountId, amount, status, returnUrl, transactionId, "Test description");
+        addCharge(chargeId, gatewayAccountId, amount, status, returnUrl, transactionId, "Test description", "Test reference");
     }
 
     public void addCharge(
@@ -32,7 +32,8 @@ public class DatabaseTestHelper {
             ChargeStatus status,
             String returnUrl,
             String transactionId,
-            String description
+            String description,
+            String reference
     ) {
         jdbi.withHandle(h ->
                         h.update(
@@ -44,16 +45,18 @@ public class DatabaseTestHelper {
                                         "        gateway_account_id,\n" +
                                         "        return_url,\n" +
                                         "        gateway_transaction_id,\n" +
-                                        "        description\n" +
+                                        "        description,\n" +
+                                        "        reference\n" +
                                         "    )\n" +
-                                        "   VALUES(?, ?, ?, ?, ?, ?, ?)\n",
+                                        "   VALUES(?, ?, ?, ?, ?, ?, ?, ?)\n",
                                 Long.valueOf(chargeId),
                                 amount,
                                 status.getValue(),
                                 Long.valueOf(gatewayAccountId),
                                 returnUrl,
                                 transactionId,
-                                description
+                                description,
+                                reference
                         )
         );
     }

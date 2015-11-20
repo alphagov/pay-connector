@@ -27,6 +27,7 @@ public class ChargesApiResourceITest {
     private static final String FRONTEND_CARD_DETAILS_URL = "/charge/";
 
     private static final String JSON_AMOUNT_KEY = "amount";
+    private static final String JSON_REFERENCE_KEY = "reference";
     private static final String JSON_DESCRIPTION_KEY = "description";
     private static final String JSON_GATEWAY_ACC_KEY = "gateway_account_id";
     private static final String JSON_RETURN_URL_KEY = "return_url";
@@ -52,9 +53,11 @@ public class ChargesApiResourceITest {
 
     @Test
     public void makeChargeAndRetrieveAmount() throws Exception {
+        String expectedReference = "Test reference";
         String expectedDescription = "Test description";
         String postBody = toJson(ImmutableMap.of(
                 JSON_AMOUNT_KEY, amount,
+                JSON_REFERENCE_KEY, expectedReference,
                 JSON_DESCRIPTION_KEY, expectedDescription,
                 JSON_GATEWAY_ACC_KEY, accountId,
                 JSON_RETURN_URL_KEY, returnUrl));
@@ -63,6 +66,7 @@ public class ChargesApiResourceITest {
                 .statusCode(CREATED.getStatusCode())
                 .body(JSON_CHARGE_KEY, is(notNullValue()))
                 .body(JSON_AMOUNT_KEY, isNumber(amount))
+                .body(JSON_REFERENCE_KEY, is(expectedReference))
                 .body(JSON_DESCRIPTION_KEY, is(expectedDescription))
                 .body(JSON_RETURN_URL_KEY, is(returnUrl))
                 .contentType(JSON);
@@ -81,6 +85,7 @@ public class ChargesApiResourceITest {
                 .contentType(JSON)
                 .body(JSON_CHARGE_KEY, is(chargeId))
                 .body(JSON_AMOUNT_KEY, isNumber(amount))
+                .body(JSON_REFERENCE_KEY, is(expectedReference))
                 .body(JSON_DESCRIPTION_KEY, is(expectedDescription))
                 .body(JSON_STATUS_KEY, is(ChargeStatus.CREATED.getValue()))
                 .body(JSON_RETURN_URL_KEY, is(returnUrl));
