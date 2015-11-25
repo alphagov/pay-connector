@@ -339,7 +339,7 @@ Content-Type: application/json
 | ------------------------ |:--------:| ----------------------------------------- |
 | `gateway_account_id`     | X | The account Id        |
 | `payment_provider`       | X | The payment provider for which this account is created.       |
-| `credentials`            | X | The payment provider credentials. Password is not returned.       |
+| `credentials`            | X | The payment provider credentials. Password is not returned. The default value is the empty JSON document {}      |
 
 -----------------------------------------------------------------------------------------------------------
 
@@ -363,11 +363,13 @@ Content-Type: application/json
 
 ##### Request body description
 
-| Field                    | required | Description                               |
-| ------------------------ |:--------:| ----------------------------------------- | 
-| `username`                 | X | The payment provider's username for this gateway account    | 
-| `password`                 | X | The payment provider's password for this gateway account    | 
-| `merchant_id`              |   | The payment provider's merchant id for this gateway account (if applicable)    | 
+| Field                    | Description                               |
+| ------------------------ | ----------------------------------------- |
+| `username`               | The payment provider's username for this gateway account    |
+| `password`               | The payment provider's password for this gateway account    |
+| `merchant_id`            | The payment provider's merchant id for this gateway account (if applicable)    |
+
+Note: The fields in the JSON document vary depending on the payment provider assigned to the given account. For instance Worldpay requires username, password and merchant_id, whereas Smartpay only requires username and password.
 
 #### Response for a successful update
 

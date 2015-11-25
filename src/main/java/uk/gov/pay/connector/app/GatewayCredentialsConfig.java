@@ -4,6 +4,7 @@ import io.dropwizard.Configuration;
 
 import javax.validation.Valid;
 import javax.validation.constraints.NotNull;
+import java.util.List;
 
 public class GatewayCredentialsConfig extends Configuration {
 
@@ -15,6 +16,8 @@ public class GatewayCredentialsConfig extends Configuration {
 
     private String password;
 
+    private List<String> credentials;
+
     public String getUrl() {
         return url;
     }
@@ -25,5 +28,9 @@ public class GatewayCredentialsConfig extends Configuration {
 
     public String getPassword() {
         return password;
+    }
+
+    public List<String> getCredentials() {
+        return credentials;
     }
 }

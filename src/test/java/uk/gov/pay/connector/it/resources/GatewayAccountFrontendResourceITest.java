@@ -60,22 +60,7 @@ public class GatewayAccountFrontendResourceITest extends GatewayAccountResourceT
     }
 
     @Test
-    public void shouldFailIfNoUsernameInRequestPayload() {
-        String accountId = createAGatewayAccountFor("smartpay");
-
-        ImmutableMap<String, String> expectedCredentials = ImmutableMap.of("password", "a-password");
-        String expectedCredentialsString = gson.toJson(expectedCredentials);
-
-        givenSetup().accept(JSON)
-                .body(expectedCredentialsString)
-                .put(ACCOUNTS_FRONTEND_URL + accountId)
-                .then()
-                .statusCode(400)
-                .body("message", is("The following fields are missing: [username]"));
-    }
-
-    @Test
-    public void shouldFailIfNoPasswordInRequestPayload() {
+    public void shouldFailIfAccountWith2RequiredCredentialsMisses1Credential() {
         String accountId = createAGatewayAccountFor("smartpay");
 
         ImmutableMap<String, String> expectedCredentials = ImmutableMap.of("username", "a-username");
@@ -90,10 +75,10 @@ public class GatewayAccountFrontendResourceITest extends GatewayAccountResourceT
     }
 
     @Test
-    public void shouldFailIfNoUsernameAndPasswordInRequestPayload() {
-        String accountId = createAGatewayAccountFor("smartpay");
+    public void shouldFailIfAccountWith3RequiredCredentialsMisses1Credential() {
+        String accountId = createAGatewayAccountFor("worldpay");
 
-        ImmutableMap<String, String> expectedCredentials = ImmutableMap.of("other-field", "other-value");
+        ImmutableMap<String, String> expectedCredentials = ImmutableMap.of("username", "a-username", "password", "a-password");
         String expectedCredentialsString = gson.toJson(expectedCredentials);
 
         givenSetup().accept(JSON)
@@ -101,7 +86,22 @@ public class GatewayAccountFrontendResourceITest extends GatewayAccountResourceT
                 .put(ACCOUNTS_FRONTEND_URL + accountId)
                 .then()
                 .statusCode(400)
-                .body("message", is("The following fields are missing: [username,password]"));
+                .body("message", is("The following fields are missing: [merchant_id]"));
+    }
+
+    @Test
+    public void shouldFailIfAccountWith3RequiredCredentialsMisses2Credentials() {
+        String accountId = createAGatewayAccountFor("worldpay");
+
+        ImmutableMap<String, String> expectedCredentials = ImmutableMap.of("username", "a-username");
+        String expectedCredentialsString = gson.toJson(expectedCredentials);
+
+        givenSetup().accept(JSON)
+                .body(expectedCredentialsString)
+                .put(ACCOUNTS_FRONTEND_URL + accountId)
+                .then()
+                .statusCode(400)
+                .body("message", is("The following fields are missing: [password,merchant_id]"));
     }
 
     @Test

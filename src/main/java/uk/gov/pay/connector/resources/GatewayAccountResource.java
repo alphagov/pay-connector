@@ -3,9 +3,9 @@ package uk.gov.pay.connector.resources;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableMap;
-import com.google.common.collect.Maps;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import uk.gov.pay.connector.app.ConnectorConfiguration;
 import uk.gov.pay.connector.dao.GatewayAccountDao;
 
 import javax.ws.rs.Consumes;
@@ -20,11 +20,12 @@ import javax.ws.rs.core.Response;
 import javax.ws.rs.core.UriInfo;
 import java.io.IOException;
 import java.net.URI;
-import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
+import java.util.stream.Collectors;
 
 import static com.google.common.base.Joiner.on;
+import static com.google.common.collect.Maps.newHashMap;
 import static java.lang.String.format;
 import static javax.ws.rs.core.MediaType.APPLICATION_JSON;
 import static org.apache.commons.lang3.math.NumberUtils.isNumber;
@@ -47,9 +48,13 @@ public class GatewayAccountResource {
     private static final Logger logger = LoggerFactory.getLogger(GatewayAccountResource.class);
 
     private final GatewayAccountDao gatewayDao;
+    private final Map<String, List<String>> providerCredentialFields;
 
-    public GatewayAccountResource(GatewayAccountDao gatewayDao) {
+    public GatewayAccountResource(GatewayAccountDao gatewayDao, ConnectorConfiguration conf) {
         this.gatewayDao = gatewayDao;
+        providerCredentialFields = newHashMap();
+        providerCredentialFields.put("worldpay", conf.getWorldpayConfig().getCredentials());
+        providerCredentialFields.put("smartpay", conf.getSmartpayConfig().getCredentials());
     }
 
     @GET
@@ -89,7 +94,7 @@ public class GatewayAccountResource {
                 getBaseUriBuilder().
                 path("/v1/api/accounts/{accountId}").build(gatewayAccountId);
 
-        Map<String, Object> account = Maps.newHashMap();
+        Map<String, Object> account = newHashMap();
         account.put("gateway_account_id", gatewayAccountId);
         addSelfLink(newLocation, account);
 
@@ -121,7 +126,9 @@ public class GatewayAccountResource {
             return notFoundResponse(logger, format("The gateway account id '%s' does not exist", gatewayAccountId));
         }
 
-        List<String> missingFieldsInRequestPayload = getMissingFieldsInRequestPayload(credentialsPayload);
+        String provider = (String) gatewayDao.findById(gatewayAccountId).get().get("payment_provider");
+
+        List<String> missingFieldsInRequestPayload = getMissingFieldsInRequestPayload(credentialsPayload, provider);
         if (!missingFieldsInRequestPayload.isEmpty()) {
             return badRequestResponse(logger, format("The following fields are missing: [%s]", on(",").join(missingFieldsInRequestPayload)));
         }
@@ -138,15 +145,10 @@ public class GatewayAccountResource {
         return true;
     }
 
-    private List<String> getMissingFieldsInRequestPayload(JsonNode credentialsPayload) {
-        List<String> missingFields = new ArrayList<>();
-        if (!credentialsPayload.has("username")) {
-            missingFields.add("username");
-        }
-        if (!credentialsPayload.has("password")) {
-            missingFields.add("password");
-        }
-        return missingFields;
+    private List<String> getMissingFieldsInRequestPayload(JsonNode credentialsPayload, String provider) {
+        return providerCredentialFields.get(provider).stream()
+                .filter(requiredField -> !credentialsPayload.has(requiredField))
+                .collect(Collectors.toList());
     }
 
     private Map<String, Object> addSelfLink(URI chargeId, Map<String, Object> charge) {
