@@ -1,6 +1,5 @@
 package uk.gov.pay.connector.it.dao;
 
-import org.apache.commons.lang3.StringUtils;
 import org.junit.Before;
 import org.junit.Rule;
 import org.junit.Test;
@@ -10,6 +9,7 @@ import uk.gov.pay.connector.rules.DropwizardAppWithPostgresRule;
 import java.util.Map;
 import java.util.Optional;
 
+import static org.apache.commons.lang3.StringUtils.isNotBlank;
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.hasEntry;
 import static org.hamcrest.Matchers.is;
@@ -31,8 +31,8 @@ public class GatewayAccountDaoITest {
     @Test
     public void insertANewChargeAndReturnTheId() throws Exception {
         String paymentProvider = "test provider";
-        String gatewayAccountId = gatewayAccountDao.insertProviderAndReturnNewId(paymentProvider);
-        assertTrue(StringUtils.isNotBlank(gatewayAccountId));
+        String gatewayAccountId = gatewayAccountDao.createGatewayAccount(paymentProvider);
+        assertTrue(isNotBlank(gatewayAccountId));
     }
 
     @Test
@@ -43,7 +43,7 @@ public class GatewayAccountDaoITest {
     @Test
     public void shouldFindAccountInfoById() throws Exception {
         String paymentProvider = "test provider";
-        String id = gatewayAccountDao.insertProviderAndReturnNewId(paymentProvider);
+        String id = gatewayAccountDao.createGatewayAccount(paymentProvider);
 
         // We dont set any credentials, so the json document in the DB is: {}
 
@@ -64,14 +64,14 @@ public class GatewayAccountDaoITest {
     @Test
     public void verifyIfIdExists() throws Exception {
         String paymentProvider = "test provider";
-        String id = gatewayAccountDao.insertProviderAndReturnNewId(paymentProvider);
+        String id = gatewayAccountDao.createGatewayAccount(paymentProvider);
         assertThat(gatewayAccountDao.idIsMissing(id), is(false));
     }
 
     @Test
     public void shouldUpdateEmptyCredentials() {
         String paymentProvider = "test provider";
-        String gatewayAccountId = gatewayAccountDao.insertProviderAndReturnNewId(paymentProvider);
+        String gatewayAccountId = gatewayAccountDao.createGatewayAccount(paymentProvider);
 
         String expectedJsonString = "{\"username\": \"Username\", \"password\": \"Password\"}";
         gatewayAccountDao.saveCredentials(expectedJsonString, gatewayAccountId);
@@ -86,7 +86,7 @@ public class GatewayAccountDaoITest {
     @Test
     public void shouldThrowExceptionWhenUpdatingCredentialsIfNotValidJson() {
         String paymentProvider = "test provider";
-        String gatewayAccountId = gatewayAccountDao.insertProviderAndReturnNewId(paymentProvider);
+        String gatewayAccountId = gatewayAccountDao.createGatewayAccount(paymentProvider);
 
         String expectedJsonString = "[blah]";
 

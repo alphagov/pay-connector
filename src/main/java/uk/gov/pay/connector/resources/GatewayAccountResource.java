@@ -83,7 +83,7 @@ public class GatewayAccountResource {
         }
 
         logger.info("Creating new gateway account using the {} provider", provider);
-        String gatewayAccountId = gatewayDao.insertProviderAndReturnNewId(provider);
+        String gatewayAccountId = gatewayDao.createGatewayAccount(provider);
 
         URI newLocation = uriInfo.
                 getBaseUriBuilder().

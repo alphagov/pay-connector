@@ -17,7 +17,7 @@ public class GatewayAccountDao {
         this.jdbi = jdbi;
     }
 
-    public String insertProviderAndReturnNewId(String paymentProvider) {
+    public String createGatewayAccount(String paymentProvider) {
         return jdbi.withHandle(handle -> handle
                         .createStatement("INSERT INTO gateway_accounts(payment_provider) VALUES (:paymentProvider)")
                         .bind("paymentProvider", paymentProvider)
