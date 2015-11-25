@@ -1,6 +1,5 @@
 package uk.gov.pay.connector.resources;
 
-import com.google.common.collect.Maps;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import uk.gov.pay.connector.app.LinksConfig;
@@ -8,6 +7,7 @@ import uk.gov.pay.connector.dao.ChargeDao;
 import uk.gov.pay.connector.dao.GatewayAccountDao;
 import uk.gov.pay.connector.dao.TokenDao;
 import uk.gov.pay.connector.model.api.ExternalChargeStatus;
+import uk.gov.pay.connector.util.ResponseBuilder;
 import uk.gov.pay.connector.util.ResponseUtil;
 
 import javax.ws.rs.*;
@@ -15,18 +15,19 @@ import javax.ws.rs.core.Context;
 import javax.ws.rs.core.Response;
 import javax.ws.rs.core.UriInfo;
 import java.net.URI;
+import java.net.URISyntaxException;
 import java.util.*;
 import java.util.stream.Collectors;
 
-import static com.google.common.collect.Lists.newArrayList;
+import static com.google.common.collect.Maps.newHashMap;
+import static java.lang.String.format;
+import static javax.ws.rs.HttpMethod.GET;
 import static javax.ws.rs.core.MediaType.APPLICATION_JSON;
 import static org.apache.commons.lang3.StringUtils.isEmpty;
 import static uk.gov.pay.connector.model.api.ExternalChargeStatus.mapFromStatus;
-import static uk.gov.pay.connector.model.api.Link.aLink;
-import static uk.gov.pay.connector.resources.ApiPaths.OLD_GET_CHARGE_API_PATH;
 import static uk.gov.pay.connector.resources.ApiPaths.OLD_CHARGES_API_PATH;
-import static uk.gov.pay.connector.util.ResponseUtil.badRequestResponse;
-import static uk.gov.pay.connector.util.ResponseUtil.fieldsMissingResponse;
+import static uk.gov.pay.connector.resources.ApiPaths.OLD_GET_CHARGE_API_PATH;
+import static uk.gov.pay.connector.util.ResponseUtil.*;
 
 @Path("/")
 public class ChargesApiResource {
@@ -60,12 +61,13 @@ public class ChargesApiResource {
 
         return maybeCharge
                 .map(charge -> {
-                    URI documentLocation = chargeLocationFor(uriInfo, chargeId);
+                    URI selfUri = selfUriFor(uriInfo, chargeId);
                     String tokenId = tokenDao.findByChargeId(chargeId);
-                    Map<String, Object> responseData = chargeResponseData(charge, documentLocation.toString(), chargeId, tokenId);
-                    return Response.ok(responseData).build();
+                    Map<String, Object> responseData = getResponseData(chargeId, tokenId, charge, selfUri);
+
+                    return ResponseUtil.entityResponse(responseData);
                 })
-                .orElseGet(() -> ResponseUtil.responseWithChargeNotFound(logger, chargeId));
+                .orElseGet(() -> responseWithChargeNotFound(logger, chargeId));
     }
 
     @POST
@@ -95,23 +97,28 @@ public class ChargesApiResource {
 
         return maybeCharge
                 .map(charge -> {
-                    URI newLocation = chargeLocationFor(uriInfo, chargeId);
-
-                    Map<String, Object> responseData = chargeResponseData(charge, newLocation.toString(), chargeId, tokenId);
+                    URI selfUri = selfUriFor(uriInfo, chargeId);
+                    Map<String, Object> responseData = getResponseData(chargeId, tokenId, charge, selfUri);
 
                     logger.info("charge = {}", charge);
                     logger.info("responseData = {}", responseData);
 
-                    URI chargeLocation = chargeLocationFor(uriInfo, chargeId);
-                    return Response.created(chargeLocation).entity(responseData).build();
+                    return entityCreatedResponse(selfUri, responseData);
                 })
-                .orElseGet(() -> ResponseUtil.responseWithChargeNotFound(logger, chargeId));
+                .orElseGet(() -> responseWithChargeNotFound(logger, chargeId));
     }
 
-    private Map<String, Object> chargeResponseData(Map<String, Object> charge, String selfUrl, String chargeId, String tokenId) {
-        Map<String, Object> externalData = Maps.newHashMap(charge);
-        externalData = convertStatusToExternalStatus(externalData);
-        return addLinks(externalData, selfUrl, chargeId, tokenId);
+    private Map<String, Object> getResponseData(String chargeId, String tokenId, Map<String, Object> charge, URI selfUri) {
+        ResponseBuilder responseBuilder = new ResponseBuilder()
+                .withCharge(convertStatusToExternalStatus(newHashMap(charge)))
+                .withLink("self", GET, selfUri);
+
+        if (!isEmpty(tokenId)) {
+            URI nextUrl = secureRedirectUriFor(chargeId, tokenId);
+            responseBuilder.withLink("next_url", GET, nextUrl);
+        }
+
+        return responseBuilder.build();
     }
 
     private Map<String, Object> convertStatusToExternalStatus(Map<String, Object> data) {
@@ -120,9 +127,22 @@ public class ChargesApiResource {
         return data;
     }
 
-    private URI chargeLocationFor(UriInfo uriInfo, String chargeId) {
+    private URI selfUriFor(UriInfo uriInfo, String chargeId) {
         return uriInfo.getBaseUriBuilder()
-                .path(OLD_GET_CHARGE_API_PATH).build(chargeId);
+                .path(OLD_GET_CHARGE_API_PATH)
+                .build(chargeId);
+    }
+
+    private URI secureRedirectUriFor(String chargeId, String tokenId) {
+        String secureRedirectLocation = linksConfig.getCardDetailsUrl()
+                .replace("{chargeId}", chargeId)
+                .replace("{chargeTokenId}", tokenId);
+        try {
+            return new URI(secureRedirectLocation);
+        } catch (URISyntaxException e) {
+            logger.error(format("Invalid secure redirect url: %s", secureRedirectLocation), e);
+            throw new RuntimeException(e);
+        }
     }
 
     private Optional<List<String>> checkMissingFields(Map<String, Object> inputData) {
@@ -133,20 +153,5 @@ public class ChargesApiResource {
         return missing.isEmpty()
                 ? Optional.<List<String>>empty()
                 : Optional.of(missing);
-    }
-
-    private Map<String, Object> addLinks(Map<String, Object> charge, String selfUrl, String chargeId, String tokenId) {
-        List<Map<String, String>> links = newArrayList(
-                aLink(selfUrl, "self", "GET").toMap()
-        );
-
-        if (!isEmpty(tokenId)) {
-            links.add(
-                    aLink(linksConfig.getCardDetailsUrl().replace("{chargeId}", chargeId).replace("{chargeTokenId}", tokenId), "next_url", "GET").toMap()
-            );
-        }
-
-        charge.put("links", links);
-        return charge;
     }
 }
