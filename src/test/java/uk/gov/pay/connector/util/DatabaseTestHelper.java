@@ -25,7 +25,7 @@ public class DatabaseTestHelper {
         addCharge(chargeId, gatewayAccountId, amount, status, returnUrl, transactionId, "Test description", "Test reference");
     }
 
-    public void addCharge(
+    private void addCharge(
             String chargeId,
             String gatewayAccountId,
             long amount,
