@@ -31,6 +31,7 @@ public class ChargesFrontendResourceITest {
 
     private String accountId = "72332423443245";
     private String description = "Test description";
+    private String reference = "Test reference";
     private String returnUrl = "http://whatever.com";
     private long expectedAmount = 6234L;
 
@@ -221,6 +222,7 @@ public class ChargesFrontendResourceITest {
 
     private String postToCreateACharge(long expectedAmount) {
         String postBody = toJson(ImmutableMap.of(
+                "reference", reference,
                 "description", description,
                 "amount", expectedAmount,
                 "gateway_account_id", accountId,
@@ -231,6 +233,7 @@ public class ChargesFrontendResourceITest {
                 .postCreateCharge(postBody)
                 .statusCode(Status.CREATED.getStatusCode())
                 .body("charge_id", is(notNullValue()))
+                .body("reference", is(reference))
                 .body("description", is(description))
                 .body("amount", isNumber(expectedAmount))
                 .body("return_url", is(returnUrl))
@@ -246,6 +249,7 @@ public class ChargesFrontendResourceITest {
                 .statusCode(OK.getStatusCode())
                 .contentType(JSON)
                 .body("charge_id", is(chargeId))
+                .body("containsKey('reference')", is(false))
                 .body("description", is(description))
                 .body("amount", isNumber(expectedAmount))
                 .body("containsKey('gateway_account_id')", is(false))

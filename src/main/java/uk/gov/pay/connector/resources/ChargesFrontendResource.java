@@ -9,6 +9,7 @@ import org.slf4j.LoggerFactory;
 import uk.gov.pay.connector.dao.ChargeDao;
 import uk.gov.pay.connector.dao.GatewayAccountDao;
 import uk.gov.pay.connector.model.domain.ChargeStatus;
+import uk.gov.pay.connector.util.ResponseBuilder;
 
 import javax.ws.rs.*;
 import javax.ws.rs.core.Context;
@@ -22,14 +23,14 @@ import java.util.Optional;
 import static com.google.common.collect.Lists.newArrayList;
 import static fj.data.Either.*;
 import static java.lang.String.format;
+import static javax.ws.rs.HttpMethod.GET;
+import static javax.ws.rs.HttpMethod.POST;
 import static javax.ws.rs.core.MediaType.APPLICATION_JSON;
 import static javax.ws.rs.core.Response.ok;
 import static org.apache.commons.lang3.StringUtils.isBlank;
 import static org.apache.commons.lang3.math.NumberUtils.isNumber;
 import static uk.gov.pay.connector.model.domain.ChargeStatus.*;
 import static uk.gov.pay.connector.resources.ApiPaths.*;
-import static uk.gov.pay.connector.resources.ApiPaths.OLD_GET_CHARGE_FRONTEND_PATH;
-import static uk.gov.pay.connector.util.LinksBuilder.linksBuilder;
 import static uk.gov.pay.connector.util.ResponseUtil.*;
 
 @Path("/")
@@ -101,11 +102,14 @@ public class ChargesFrontendResource {
     }
 
     private Response buildOkResponse(@PathParam("chargeId") String chargeId, @Context UriInfo uriInfo, Map<String, Object> charge) {
-        URI chargeLocation = locationUriFor(OLD_GET_CHARGE_FRONTEND_PATH, uriInfo, chargeId);
-        Map<String, Object> responseData = linksBuilder(chargeLocation)
-                .addLink("cardAuth", HttpMethod.POST, locationUriFor(FRONTEND_AUTHORIZATION_RESOURCE, uriInfo, chargeId))
-                .addLink("cardCapture", HttpMethod.POST, locationUriFor(FRONTEND_CAPTURE_RESOURCE, uriInfo, chargeId))
-                .appendLinksTo(removeGatewayAccount(charge));
+        Map<String, Object> responseData = new ResponseBuilder()
+                .withCharge(charge)
+                .withoutChargeField("gateway_account_id")
+                .withoutChargeField("reference")
+                .withLink("self", GET, locationUriFor(OLD_GET_CHARGE_FRONTEND_PATH, uriInfo, chargeId))
+                .withLink("cardAuth", POST, locationUriFor(FRONTEND_AUTHORIZATION_RESOURCE, uriInfo, chargeId))
+                .withLink("cardCapture", POST, locationUriFor(FRONTEND_CAPTURE_RESOURCE, uriInfo, chargeId))
+                .build();
 
         return ok(responseData).build();
     }

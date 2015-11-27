@@ -8,7 +8,6 @@ import org.junit.Test;
 import uk.gov.pay.connector.app.GatewayCredentialsConfig;
 import uk.gov.pay.connector.model.*;
 import uk.gov.pay.connector.model.domain.Card;
-import uk.gov.pay.connector.model.domain.ChargeStatus;
 import uk.gov.pay.connector.service.worldpay.WorldpayPaymentProvider;
 
 import javax.ws.rs.client.ClientBuilder;
@@ -21,7 +20,6 @@ import static java.util.UUID.randomUUID;
 import static org.hamcrest.CoreMatchers.hasItem;
 import static org.junit.Assert.*;
 import static uk.gov.pay.connector.model.domain.ChargeStatus.AUTHORISATION_SUCCESS;
-import static uk.gov.pay.connector.model.domain.ChargeStatus.CAPTURED;
 import static uk.gov.pay.connector.model.domain.GatewayAccount.gatewayAccountFor;
 import static uk.gov.pay.connector.service.GatewayClient.createGatewayClient;
 import static uk.gov.pay.connector.util.CardUtils.aValidCard;

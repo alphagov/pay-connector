@@ -62,4 +62,12 @@
             </column>
         </addColumn>
     </changeSet>
+
+    <changeSet id="add payment reference to charges table" author="">
+        <addColumn tableName="charges">
+            <column name="reference" type="varchar(255)" defaultValue="">
+                <constraints nullable="false" unique="false"/>
+            </column>
+        </addColumn>
+    </changeSet>
 </databaseChangeLog>

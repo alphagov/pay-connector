@@ -21,6 +21,11 @@ import static uk.gov.pay.connector.model.domain.ChargeStatus.*;
 import static uk.gov.pay.connector.util.TransactionId.randomId;
 
 public class ChargeDaoITest {
+    private static final String GATEWAY_ACCOUNT_ID = "564532435";
+    private static final String RETURN_URL = "http://service.com/success-page";
+    private static final String REFERENCE = "Test reference";
+    private static final String DESCRIPTION = "Test description";
+    private static final long AMOUNT = 101;
 
     @Rule
     public DropwizardAppWithPostgresRule app = new DropwizardAppWithPostgresRule();
@@ -29,18 +34,14 @@ public class ChargeDaoITest {
     public ExpectedException expectedEx = ExpectedException.none();
 
     private ChargeDao chargeDao;
-    private String gatewayAccountId = "564532435";
-    private String returnUrl = "http://service.com/success-page";
-    private String description = "Test description";
-    private long amount = 101;
     private String chargeId;
 
     @Before
     public void setUp() throws Exception {
         chargeDao = new ChargeDao(app.getJdbi());
-        app.getDatabaseTestHelper().addGatewayAccount(gatewayAccountId, "test_account");
+        app.getDatabaseTestHelper().addGatewayAccount(GATEWAY_ACCOUNT_ID, "test_account");
 
-        chargeId = chargeDao.saveNewCharge(newCharge(amount));
+        chargeId = chargeDao.saveNewCharge(newCharge(AMOUNT));
     }
 
     @Test
@@ -53,11 +54,12 @@ public class ChargeDaoITest {
         Map<String, Object> charge = chargeDao.findById(chargeId).get();
 
         assertThat(charge.get("charge_id"), is(chargeId));
-        assertThat(charge.get("amount"), is(amount));
-        assertThat(charge.get("description"), is(description));
+        assertThat(charge.get("amount"), is(AMOUNT));
+        assertThat(charge.get("reference"), is(REFERENCE));
+        assertThat(charge.get("description"), is(DESCRIPTION));
         assertThat(charge.get("status"), is(CREATED.getValue()));
-        assertThat(charge.get("gateway_account_id"), is(gatewayAccountId));
-        assertThat(charge.get("return_url"), is(returnUrl));
+        assertThat(charge.get("gateway_account_id"), is(GATEWAY_ACCOUNT_ID));
+        assertThat(charge.get("return_url"), is(RETURN_URL));
     }
 
     @Test
@@ -126,8 +128,9 @@ public class ChargeDaoITest {
     private ImmutableMap<String, Object> newCharge(long amount) {
         return ImmutableMap.of(
                 "amount", amount,
-                "description", description,
-                "gateway_account_id", gatewayAccountId,
-                "return_url", returnUrl);
+                "reference", REFERENCE,
+                "description", DESCRIPTION,
+                "gateway_account_id", GATEWAY_ACCOUNT_ID,
+                "return_url", RETURN_URL);
     }
 }
