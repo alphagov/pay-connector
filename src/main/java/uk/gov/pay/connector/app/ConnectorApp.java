@@ -18,11 +18,16 @@ import uk.gov.pay.connector.dao.GatewayAccountDao;
 import uk.gov.pay.connector.dao.TokenDao;
 import uk.gov.pay.connector.healthcheck.DatabaseHealthCheck;
 import uk.gov.pay.connector.healthcheck.Ping;
-import uk.gov.pay.connector.resources.*;
+import uk.gov.pay.connector.resources.CardResource;
+import uk.gov.pay.connector.resources.ChargesApiResource;
+import uk.gov.pay.connector.resources.ChargesFrontendResource;
+import uk.gov.pay.connector.resources.GatewayAccountResource;
+import uk.gov.pay.connector.resources.NotificationResource;
+import uk.gov.pay.connector.resources.SecurityTokensResource;
 import uk.gov.pay.connector.service.CardService;
 import uk.gov.pay.connector.service.ClientFactory;
 import uk.gov.pay.connector.service.PaymentProviders;
-import uk.gov.pay.connector.util.DbConnectionChecker;
+import uk.gov.pay.connector.util.DbWaitCommand;
 
 public class ConnectorApp extends Application<ConnectorConfiguration> {
     private DBI jdbi;
@@ -34,6 +39,7 @@ public class ConnectorApp extends Application<ConnectorConfiguration> {
                         new EnvironmentVariableSubstitutor()
                 )
         );
+
         bootstrap.addBundle(new DBIExceptionsBundle());
 
         bootstrap.addBundle(new MigrationsBundle<ConnectorConfiguration>() {
@@ -42,23 +48,17 @@ public class ConnectorApp extends Application<ConnectorConfiguration> {
                 return configuration.getDataSourceFactory();
             }
         });
+
+        bootstrap.addCommand(new DbWaitCommand());
     }
 
     @Override
     public void run(ConnectorConfiguration conf, Environment environment) throws Exception {
         DataSourceFactory dataSourceFactory = conf.getDataSourceFactory();
 
-        DbConnectionChecker checker = new DbConnectionChecker(
-                dataSourceFactory.getUrl(),
-                dataSourceFactory.getUser(),
-                dataSourceFactory.getPassword()
-        );
-        checker.waitForPostgresToStart();
-
         environment.healthChecks().register("ping", new Ping());
 
-        jdbi = new DBIFactory()
-                .build(environment, dataSourceFactory, "postgresql");
+        jdbi = new DBIFactory().build(environment, dataSourceFactory, "postgresql");
 
         ChargeDao chargeDao = new ChargeDao(jdbi);
         TokenDao tokenDao = new TokenDao(jdbi);
