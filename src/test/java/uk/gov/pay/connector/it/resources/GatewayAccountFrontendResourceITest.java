@@ -101,7 +101,7 @@ public class GatewayAccountFrontendResourceITest extends GatewayAccountResourceT
                 .put(ACCOUNTS_FRONTEND_URL + accountId)
                 .then()
                 .statusCode(400)
-                .body("message", is("The following fields are missing: [password,merchant_id]"));
+                .body("message", is("The following fields are missing: [password, merchant_id]"));
     }
 
     @Test

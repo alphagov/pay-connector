@@ -47,7 +47,7 @@ public class GatewayAccountDaoITest {
 
         // We dont set any credentials, so the json document in the DB is: {}
 
-        Optional<Map<String, Object>> gatewayAccountOpt = gatewayAccountDao.findById(id);
+        Optional<Map<String, Object>> gatewayAccountOpt = gatewayAccountDao.findByIdWithCredentials(id);
 
         assertTrue(gatewayAccountOpt.isPresent());
         Map<String, Object> gatewayAccountMap = gatewayAccountOpt.get();
@@ -59,6 +59,11 @@ public class GatewayAccountDaoITest {
     @Test
     public void findByIdNoFound() throws Exception {
         assertFalse(gatewayAccountDao.findById("123").isPresent());
+    }
+
+    @Test
+    public void findByIdWithCredentialsNoFound() throws Exception {
+        assertFalse(gatewayAccountDao.findByIdWithCredentials("123").isPresent());
     }
 
     @Test
@@ -76,7 +81,7 @@ public class GatewayAccountDaoITest {
         String expectedJsonString = "{\"username\": \"Username\", \"password\": \"Password\"}";
         gatewayAccountDao.saveCredentials(expectedJsonString, gatewayAccountId);
 
-        Optional<Map<String, Object>> gatewayAccountMaybe = gatewayAccountDao.findById(gatewayAccountId);
+        Optional<Map<String, Object>> gatewayAccountMaybe = gatewayAccountDao.findByIdWithCredentials(gatewayAccountId);
         assertThat(gatewayAccountMaybe.isPresent(), is(true));
         Map<String,String> credentialsMap = (Map<String, String>) gatewayAccountMaybe.get().get("credentials");
         assertThat(credentialsMap, hasEntry("username", "Username"));
@@ -94,7 +99,7 @@ public class GatewayAccountDaoITest {
             gatewayAccountDao.saveCredentials(expectedJsonString, gatewayAccountId);
             fail();
         } catch (RuntimeException e) {
-            Optional<Map<String, Object>> gatewayAccountMaybe = gatewayAccountDao.findById(gatewayAccountId);
+            Optional<Map<String, Object>> gatewayAccountMaybe = gatewayAccountDao.findByIdWithCredentials(gatewayAccountId);
             assertThat(gatewayAccountMaybe.isPresent(), is(true));
             Map<String,String> credentialsMap = (Map<String, String>) gatewayAccountMaybe.get().get("credentials");
             assertThat(credentialsMap.size(), is(0));

@@ -67,10 +67,7 @@ public class GatewayAccountResource {
 
         return gatewayDao
                 .findById(accountId)
-                .map(gatewayAccount -> {
-                    gatewayAccount.remove("credentials");
-                    return Response.ok().entity(gatewayAccount).build();
-                })
+                .map(gatewayAccount -> Response.ok().entity(gatewayAccount).build())
                 .orElseGet(() -> notFoundResponse(logger, format("Account with id %s not found.", accountId)));
 
     }
@@ -106,7 +103,7 @@ public class GatewayAccountResource {
     @Produces(APPLICATION_JSON)
     public Response getGatewayAccountWithCredentials(@PathParam("accountId") String gatewayAccountId) throws IOException {
         return gatewayDao
-                .findById(gatewayAccountId)
+                .findByIdWithCredentials(gatewayAccountId)
                 .map(gatewayAccount ->
                 {
                     Map<String, String> credentialsMap = (Map<String, String>) gatewayAccount.get("credentials");
@@ -122,27 +119,25 @@ public class GatewayAccountResource {
     @Produces(APPLICATION_JSON)
     public Response updateGatewayCredentials(@PathParam("accountId") String gatewayAccountId, JsonNode credentialsPayload) {
 
-        if (!gatewayAccountIdExists(gatewayAccountId)) {
+        if (!isNumber(gatewayAccountId)) {
             return notFoundResponse(logger, format("The gateway account id '%s' does not exist", gatewayAccountId));
         }
 
-        String provider = (String) gatewayDao.findById(gatewayAccountId).get().get("payment_provider");
+        return gatewayDao.findById(gatewayAccountId)
+                .map(  gatewayAccount ->
+                        {
+                            String provider = (String) gatewayAccount.get("payment_provider");
+                            List<String> missingFieldsInRequestPayload = getMissingFieldsInRequestPayload(credentialsPayload, provider);
+                            if (!missingFieldsInRequestPayload.isEmpty()) {
+                                return badRequestResponse(logger, format("The following fields are missing: [%s]", on(", ").join(missingFieldsInRequestPayload)));
+                            }
 
-        List<String> missingFieldsInRequestPayload = getMissingFieldsInRequestPayload(credentialsPayload, provider);
-        if (!missingFieldsInRequestPayload.isEmpty()) {
-            return badRequestResponse(logger, format("The following fields are missing: [%s]", on(",").join(missingFieldsInRequestPayload)));
-        }
-
-        gatewayDao.saveCredentials(credentialsPayload.toString(), gatewayAccountId);
-        return Response.ok().build();
-    }
-
-    private boolean gatewayAccountIdExists(String gatewayAccountId) {
-        if (!isNumber(gatewayAccountId) ||
-            !gatewayDao.findById(gatewayAccountId).isPresent()) {
-            return false;
-        }
-        return true;
+                            gatewayDao.saveCredentials(credentialsPayload.toString(), gatewayAccountId);
+                            return Response.ok().build();
+                        }
+                )
+                .orElseGet(() ->
+                        notFoundResponse(logger, format("The gateway account id '%s' does not exist", gatewayAccountId)));
     }
 
     private List<String> getMissingFieldsInRequestPayload(JsonNode credentialsPayload, String provider) {
