@@ -38,7 +38,7 @@ The command to run all the tests is:
 | Path                          | Supported Methods | Description                        |
 | ----------------------------- | ----------------- | ---------------------------------- |
 |[```/v1/api/accounts```](#post-v1apiaccounts)              | POST    |  Create a new account to associate charges with            |
-|[```/v1/api/accounts/{gatewayAccountId}```](#get-v1apiaccountsaccountsid)     | GET    |  Retrieves an existing account  |
+|[```/v1/api/accounts/{gatewayAccountId}```](#get-v1apiaccountsaccountsid)     | GET    |  Retrieves an existing account without the provider credentials  |
 |[```/v1/api/charges/{chargeId}```](#get-v1apichargeschargeid)                 | GET    |  Returns the charge with `chargeId`            |
 |[```/v1/api/charges```](#post-v1apicharges)                                  | POST    |  Create a new charge            |
 |[```/v1/api/notifications/worldpay```](#post-v1apinotificationsworldpay)                                  | POST |  Handle charge update notifications from Worldpay.            |
@@ -47,6 +47,10 @@ The command to run all the tests is:
 
 ## FRONTEND NAMESPACE
 
+| Path                          | Supported Methods | Description                        |
+| ----------------------------- | ----------------- | ---------------------------------- |
+|[```/v1/frontend/accounts/{accountId}```](#get-v1frontendaccountsaccountid)              | GET    |  Retrieves an existing account together with the provider credentials             |
+|[```/v1/frontend/accounts/{accountId}```](#put-v1frontendaccountsaccountid)              | PUT    |  Update gateway credentials associated with this account             |
 |[```/v1/frontend/charges/{chargeId}/status```](#put-v1frontendchargeschargeidstatus)         | PUT    |  Update status of the charge     |
 |[```/v1/frontend/charges/{chargeId}```](#get-v1frontendchargeschargeid)                                  | GET |  Find out the status of a charge            |
 |[```/v1/frontend/charges/{chargeId}/cards```](#post-v1frontendchargeschargeidcards)                      | POST |  Authorise the charge with the card details            |
@@ -108,7 +112,7 @@ Location: http://connector.service/v1/api/accounts/1
 
 ### GET /v1/api/accounts/{accountsId}
 
-Retrieves an existing gateway account.
+Retrieves an existing account without the provider credentials.
 
 #### Request example
 
@@ -300,6 +304,98 @@ Content-Length: 52
 
 {
     "message": "Charge with id [123456] not found."
+}
+```
+
+-----------------------------------------------------------------------------------------------------------
+
+### GET /v1/frontend/accounts/{accountId}
+
+Retrieves an existing account together with the provider credentials.
+
+#### Request example
+
+```
+GET /v1/frontend/accounts/111222333
+```
+
+#### Response example
+
+```
+200 OK
+Content-Type: application/json
+{
+    "payment_provider": "sandbox",
+    "gateway_account_id": "111222333",
+    "credentials: {
+      "username:" "Username"
+    }
+}
+```
+
+##### Response field description
+
+| Field                    | always present | Description                               |
+| ------------------------ |:--------:| ----------------------------------------- |
+| `gateway_account_id`     | X | The account Id        |
+| `payment_provider`       | X | The payment provider for which this account is created.       |
+| `credentials`            | X | The payment provider credentials. Password is not returned. The default value is the empty JSON document {}      |
+
+-----------------------------------------------------------------------------------------------------------
+
+### PUT /v1/frontend/accounts/{accountId}
+   
+
+Update gateway credentials associated with this account
+
+#### Request example
+
+```
+PUT /v1/frontend/accounts/111222333
+Content-Type: application/json
+
+{
+    "username": "a-user-name",
+    "password": "a-password",
+    "merchant_id": "a-merchant-id"
+}
+```
+
+##### Request body description
+
+| Field                    | Description                               |
+| ------------------------ | ----------------------------------------- |
+| `username`               | The payment provider's username for this gateway account    |
+| `password`               | The payment provider's password for this gateway account    |
+| `merchant_id`            | The payment provider's merchant id for this gateway account (if applicable)    |
+
+Note: The fields in the JSON document vary depending on the payment provider assigned to the given account. For instance Worldpay requires username, password and merchant_id, whereas Smartpay only requires username and password.
+
+#### Response for a successful update
+
+```
+200 OK
+```
+
+#### Response when account id is not found
+
+```
+HTTP/1.1 404 Not Found
+Content-Type: application/json
+
+{
+    "message": "The gateway account id '111222333' does not exist"
+}
+```
+
+#### Response if mandatory fields are missing
+
+```
+HTTP/1.1 400 Bad Request
+Content-Type: application/json
+
+{
+    "message": "The following fields are missing: [username]"
 }
 ```
 

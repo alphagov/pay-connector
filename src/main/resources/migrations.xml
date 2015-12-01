@@ -70,4 +70,13 @@
             </column>
         </addColumn>
     </changeSet>
+
+    <changeSet id="add credentials column to gateway_accounts table" author="">
+        <addColumn tableName="gateway_accounts">
+            <column name="credentials" type="json" defaultValue="{}">
+                <constraints nullable="false" unique="false"/>
+            </column>
+        </addColumn>
+    </changeSet>
+
 </databaseChangeLog>

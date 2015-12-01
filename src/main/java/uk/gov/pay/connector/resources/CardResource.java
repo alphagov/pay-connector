@@ -1,6 +1,5 @@
 package uk.gov.pay.connector.resources;
 
-import com.fasterxml.jackson.databind.JsonNode;
 import fj.F;
 import org.apache.commons.lang3.math.NumberUtils;
 import org.slf4j.Logger;
