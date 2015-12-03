@@ -8,13 +8,7 @@ import org.slf4j.LoggerFactory;
 import uk.gov.pay.connector.app.ConnectorConfiguration;
 import uk.gov.pay.connector.dao.GatewayAccountDao;
 
-import javax.ws.rs.Consumes;
-import javax.ws.rs.GET;
-import javax.ws.rs.POST;
-import javax.ws.rs.PUT;
-import javax.ws.rs.Path;
-import javax.ws.rs.PathParam;
-import javax.ws.rs.Produces;
+import javax.ws.rs.*;
 import javax.ws.rs.core.Context;
 import javax.ws.rs.core.Response;
 import javax.ws.rs.core.UriInfo;
@@ -29,9 +23,7 @@ import static com.google.common.collect.Maps.newHashMap;
 import static java.lang.String.format;
 import static javax.ws.rs.core.MediaType.APPLICATION_JSON;
 import static org.apache.commons.lang3.math.NumberUtils.isNumber;
-import static uk.gov.pay.connector.resources.PaymentProviderValidator.DEFAULT_PROVIDER;
-import static uk.gov.pay.connector.resources.PaymentProviderValidator.PAYMENT_PROVIDER_KEY;
-import static uk.gov.pay.connector.resources.PaymentProviderValidator.isValidProvider;
+import static uk.gov.pay.connector.resources.PaymentProviderValidator.*;
 import static uk.gov.pay.connector.util.ResponseUtil.badRequestResponse;
 import static uk.gov.pay.connector.util.ResponseUtil.notFoundResponse;
 
@@ -67,7 +59,7 @@ public class GatewayAccountResource {
 
         return gatewayDao
                 .findById(accountId)
-                .map(gatewayAccount -> Response.ok().entity(gatewayAccount).build())
+                .map(gatewayAccount -> Response.ok().entity(gatewayAccount.withoutCredentials()).build())
                 .orElseGet(() -> notFoundResponse(logger, format("Account with id %s not found.", accountId)));
 
     }
@@ -103,12 +95,11 @@ public class GatewayAccountResource {
     @Produces(APPLICATION_JSON)
     public Response getGatewayAccountWithCredentials(@PathParam("accountId") String gatewayAccountId) throws IOException {
         return gatewayDao
-                .findByIdWithCredentials(gatewayAccountId)
-                .map(gatewayAccount ->
+                .findById(gatewayAccountId)
+                .map(serviceAccount ->
                 {
-                    Map<String, String> credentialsMap = (Map<String, String>) gatewayAccount.get("credentials");
-                    credentialsMap.remove("password");
-                    return Response.ok(gatewayAccount).build();
+                    serviceAccount.getCredentials().remove("password");
+                    return Response.ok(serviceAccount).build();
                 })
                 .orElseGet(() -> notFoundResponse(logger, format("Account with id '%s' not found", gatewayAccountId)));
     }
@@ -126,8 +117,7 @@ public class GatewayAccountResource {
         return gatewayDao.findById(gatewayAccountId)
                 .map(  gatewayAccount ->
                         {
-                            String provider = (String) gatewayAccount.get("payment_provider");
-                            List<String> missingFieldsInRequestPayload = getMissingFieldsInRequestPayload(credentialsPayload, provider);
+                            List<String> missingFieldsInRequestPayload = getMissingFieldsInRequestPayload(credentialsPayload, gatewayAccount.getGatewayName());
                             if (!missingFieldsInRequestPayload.isEmpty()) {
                                 return badRequestResponse(logger, format("The following fields are missing: [%s]", on(", ").join(missingFieldsInRequestPayload)));
                             }

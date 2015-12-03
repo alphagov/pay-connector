@@ -1,6 +1,8 @@
 package uk.gov.pay.connector.unit.service;
 
 import fj.data.Either;
+import org.apache.commons.lang.math.NumberUtils;
+import org.apache.commons.lang.math.RandomUtils;
 import org.hamcrest.Description;
 import org.hamcrest.Matcher;
 import org.hamcrest.TypeSafeMatcher;
@@ -11,6 +13,7 @@ import uk.gov.pay.connector.dao.GatewayAccountDao;
 import uk.gov.pay.connector.model.*;
 import uk.gov.pay.connector.model.domain.Card;
 import uk.gov.pay.connector.model.domain.ChargeStatus;
+import uk.gov.pay.connector.model.domain.ServiceAccount;
 import uk.gov.pay.connector.service.CardService;
 import uk.gov.pay.connector.service.PaymentProvider;
 import uk.gov.pay.connector.service.PaymentProviders;
@@ -20,6 +23,7 @@ import java.util.HashMap;
 import java.util.Map;
 import java.util.Optional;
 
+import static org.assertj.core.util.Maps.newHashMap;
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.core.Is.is;
 import static org.junit.Assert.assertTrue;
@@ -95,10 +99,8 @@ public class CardServiceTest {
         when(theMockProvider.authorise(any())).thenReturn(resp);
     }
 
-    private Map<String, Object> theAccount() {
-        return new HashMap<String, Object>() {{
-            put("payment_provider", providerName);
-        }};
+    private ServiceAccount theAccount() {
+        return  new ServiceAccount(RandomUtils.nextLong(),providerName, newHashMap());
     }
 
     private Map<String, Object> theCharge(ChargeStatus status) {

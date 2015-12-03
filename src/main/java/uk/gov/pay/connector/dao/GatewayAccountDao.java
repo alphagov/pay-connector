@@ -2,17 +2,14 @@ package uk.gov.pay.connector.dao;
 
 import org.postgresql.util.PGobject;
 import org.skife.jdbi.v2.DBI;
-import org.skife.jdbi.v2.DefaultMapper;
-import org.skife.jdbi.v2.tweak.ResultSetMapper;
 import org.skife.jdbi.v2.util.BooleanMapper;
 import org.skife.jdbi.v2.util.StringMapper;
-import uk.gov.pay.connector.mappers.GatewayAccountMapper;
+import uk.gov.pay.connector.mappers.ServiceAccountMapper;
+import uk.gov.pay.connector.model.domain.ServiceAccount;
 
 import java.sql.SQLException;
-import java.util.Map;
 import java.util.Optional;
 
-import static java.lang.Boolean.FALSE;
 import static java.lang.Boolean.TRUE;
 import static java.lang.String.format;
 
@@ -41,14 +38,13 @@ public class GatewayAccountDao {
 
     }
 
-    public Optional<Map<String, Object>> findByIdWithCredentials(String gatewayAccountId) {
-        Map<String, Object> gatewayAccount = queryAccountById(gatewayAccountId, TRUE, new GatewayAccountMapper());
-        return Optional.ofNullable(gatewayAccount);
-    }
-
-    public Optional<Map<String, Object>> findById(String gatewayAccountId) {
-        Map<String, Object> gatewayAccount = queryAccountById(gatewayAccountId, FALSE, new DefaultMapper());
-        return Optional.ofNullable(gatewayAccount);
+    public Optional<ServiceAccount> findById(String gatewayAccountId) {
+        ServiceAccount serviceAccount = jdbi.withHandle(handle -> handle
+                .createQuery("SELECT gateway_account_id, payment_provider, credentials FROM gateway_accounts WHERE gateway_account_id=:id")
+                .bind("id", Long.valueOf(gatewayAccountId))
+                .map(new ServiceAccountMapper())
+                .first());
+        return Optional.ofNullable(serviceAccount);
     }
 
     public void saveCredentials(String credentialsJsonString, String gatewayAccountId) {
@@ -58,15 +54,6 @@ public class GatewayAccountDao {
                 .bind("id", Long.valueOf(gatewayAccountId))
                 .execute()
         );
-    }
-
-    private Map<String, Object> queryAccountById(String gatewayAccountId, Boolean withCredentials, ResultSetMapper<Map<String, Object>> mapper) {
-        String credentials = withCredentials ? ", credentials" : "";
-        return jdbi.withHandle(handle -> handle
-                .createQuery(format("SELECT gateway_account_id, payment_provider %s FROM gateway_accounts WHERE gateway_account_id=:id", credentials))
-                .bind("id", Long.valueOf(gatewayAccountId))
-                .map(mapper)
-                .first());
     }
 
     private PGobject createPostgresCredentials(String credentialsJsonString) {

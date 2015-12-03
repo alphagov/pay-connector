@@ -6,6 +6,7 @@ import uk.gov.pay.connector.dao.GatewayAccountDao;
 import uk.gov.pay.connector.model.*;
 import uk.gov.pay.connector.model.domain.Card;
 import uk.gov.pay.connector.model.domain.ChargeStatus;
+import uk.gov.pay.connector.model.domain.ServiceAccount;
 
 import java.util.Arrays;
 import java.util.Map;
@@ -25,7 +26,6 @@ import static uk.gov.pay.connector.model.domain.ChargeStatus.*;
 
 public class CardService {
     private static final String GATEWAY_ACCOUNT_ID_KEY = "gateway_account_id";
-    private static final String PAYMENT_PROVIDER_KEY = "payment_provider";
     private static final String GATEWAY_TRANSACTION_ID_KEY = "gateway_transaction_id";
     private static final String CHARGE_ID_KEY = "charge_id";
     private static final String AMOUNT_KEY = "amount";
@@ -125,9 +125,8 @@ public class CardService {
     }
 
     private PaymentProvider paymentProviderFor(Map<String, Object> charge) {
-        Optional<Map<String, Object>> maybeAccount = accountDao.findById((String) charge.get(GATEWAY_ACCOUNT_ID_KEY));
-        String paymentProviderName = String.valueOf(maybeAccount.get().get(PAYMENT_PROVIDER_KEY));
-        return providers.resolve(paymentProviderName);
+        Optional<ServiceAccount> maybeAccount = accountDao.findById((String) charge.get(GATEWAY_ACCOUNT_ID_KEY));
+        return providers.resolve(maybeAccount.get().getGatewayName());
     }
 
     private AuthorisationRequest authorisationRequest(String chargeId, String amountValue, Card card) {
