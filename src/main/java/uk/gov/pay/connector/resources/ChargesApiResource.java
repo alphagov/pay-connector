@@ -1,5 +1,6 @@
 package uk.gov.pay.connector.resources;
 
+import com.google.common.collect.ImmutableMap;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import uk.gov.pay.connector.app.LinksConfig;
@@ -37,6 +38,10 @@ public class ChargesApiResource {
     private static final String RETURN_URL_KEY = "return_url";
     private static final String REFERENCE_KEY = "reference";
     private static final String[] REQUIRED_FIELDS = {AMOUNT_KEY, DESCRIPTION_KEY, GATEWAY_ACCOUNT_KEY, REFERENCE_KEY, RETURN_URL_KEY};
+    private static final Map<String, Integer> MAXIMUM_FIELDS_SIZE = ImmutableMap.of(
+            DESCRIPTION_KEY, 255,
+            REFERENCE_KEY, 255
+    );
 
     private static final String STATUS_KEY = "status";
 
@@ -77,6 +82,11 @@ public class ChargesApiResource {
         Optional<List<String>> missingFields = checkMissingFields(chargeRequest);
         if (missingFields.isPresent()) {
             return fieldsMissingResponse(logger, missingFields.get());
+        }
+
+        Optional<List<String>> invalidSizeFields = checkInvalidSizeFields(chargeRequest);
+        if (invalidSizeFields.isPresent()) {
+            return fieldsInvalidSizeResponse(logger, invalidSizeFields.get());
         }
 
         String gatewayAccountId = chargeRequest.get("gateway_account_id").toString();
@@ -149,5 +159,21 @@ public class ChargesApiResource {
         return missing.isEmpty()
                 ? Optional.<List<String>>empty()
                 : Optional.of(missing);
+    }
+
+    private Optional<List<String>> checkInvalidSizeFields(Map<String, Object> inputData) {
+        List<String> invalidSize = MAXIMUM_FIELDS_SIZE.entrySet().stream()
+                .filter(entry -> !isFieldSizeValid(inputData, entry.getKey(), entry.getValue()))
+                .map(entry -> entry.getKey())
+                .collect(Collectors.toList());
+
+        return invalidSize.isEmpty()
+                ? Optional.<List<String>>empty()
+                : Optional.of(invalidSize);
+    }
+
+    private boolean isFieldSizeValid(Map<String, Object> chargeRequest, String fieldName, int fieldSize) {
+        String value = chargeRequest.get(fieldName).toString();
+        return value.length() <= fieldSize;
     }
 }

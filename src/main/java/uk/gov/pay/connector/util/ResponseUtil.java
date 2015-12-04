@@ -20,6 +20,11 @@ public class ResponseUtil {
         return badRequestResponse(logger, message);
     }
 
+    public static Response fieldsInvalidSizeResponse(Logger logger, List<String> invalidSizeFields) {
+        String message = format("Field(s) are too big: [%s]", COMMA_JOINER.join(invalidSizeFields));
+        return badRequestResponse(logger, message);
+    }
+
     public static Response responseWithChargeNotFound(Logger logger, String chargeId) {
         String message = format("Charge with id [%s] not found.", chargeId);
         return notFoundResponse(logger, message);

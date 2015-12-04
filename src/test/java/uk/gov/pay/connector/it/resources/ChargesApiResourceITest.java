@@ -13,11 +13,13 @@ import uk.gov.pay.connector.util.RestAssuredClient;
 import static com.jayway.restassured.http.ContentType.JSON;
 import static java.lang.String.format;
 import static javax.ws.rs.core.Response.Status.*;
+import static org.apache.commons.lang3.RandomStringUtils.randomAlphabetic;
+import static org.apache.commons.lang3.RandomStringUtils.randomAlphanumeric;
 import static org.hamcrest.Matchers.*;
 import static uk.gov.pay.connector.model.api.ExternalChargeStatus.EXT_IN_PROGRESS;
 import static uk.gov.pay.connector.model.domain.ChargeStatus.AUTHORISATION_SUCCESS;
-import static uk.gov.pay.connector.resources.ApiPaths.OLD_GET_CHARGE_API_PATH;
 import static uk.gov.pay.connector.resources.ApiPaths.OLD_CHARGES_API_PATH;
+import static uk.gov.pay.connector.resources.ApiPaths.OLD_GET_CHARGE_API_PATH;
 import static uk.gov.pay.connector.util.JsonEncoder.toJson;
 import static uk.gov.pay.connector.util.LinksAssert.assertNextUrlLink;
 import static uk.gov.pay.connector.util.LinksAssert.assertSelfLink;
@@ -113,6 +115,7 @@ public class ChargesApiResourceITest {
         String missingGatewayAccount = "1234123";
         String postBody = toJson(ImmutableMap.of(
                 JSON_AMOUNT_KEY, amount,
+                JSON_REFERENCE_KEY, "Test reference",
                 JSON_DESCRIPTION_KEY, "Test description",
                 JSON_GATEWAY_ACC_KEY, missingGatewayAccount,
                 JSON_RETURN_URL_KEY, returnUrl));
@@ -125,13 +128,29 @@ public class ChargesApiResourceITest {
     }
 
     @Test
+    public void cannotMakeChargeForInvalidSizeOfFields() throws Exception {
+        String postBody = toJson(ImmutableMap.of(
+                JSON_AMOUNT_KEY, amount,
+                JSON_REFERENCE_KEY, randomAlphabetic(256),
+                JSON_DESCRIPTION_KEY, randomAlphanumeric(256),
+                JSON_GATEWAY_ACC_KEY, accountId,
+                JSON_RETURN_URL_KEY, returnUrl));
+        restApiCall.postCreateCharge(postBody)
+                .statusCode(BAD_REQUEST.getStatusCode())
+                .contentType(JSON)
+                .header("Location", is(nullValue()))
+                .body(JSON_CHARGE_KEY, is(nullValue()))
+                .body(JSON_MESSAGE_KEY, is("Field(s) are too big: [description, reference]"));
+    }
+
+    @Test
     public void cannotMakeChargeForMissingFields() throws Exception {
         restApiCall.postCreateCharge("{}")
                 .statusCode(BAD_REQUEST.getStatusCode())
                 .contentType(JSON)
                 .header("Location", is(nullValue()))
                 .body(JSON_CHARGE_KEY, is(nullValue()))
-                .body(JSON_MESSAGE_KEY, is("Field(s) missing: [amount, description, gateway_account_id, return_url]"));
+                .body(JSON_MESSAGE_KEY, is("Field(s) missing: [amount, description, gateway_account_id, reference, return_url]"));
     }
 
     @Test
