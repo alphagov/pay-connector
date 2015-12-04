@@ -1,6 +1,7 @@
 package uk.gov.pay.connector.it.dao;
 
 import com.google.common.collect.ImmutableMap;
+import org.apache.commons.lang3.RandomStringUtils;
 import org.junit.Before;
 import org.junit.Rule;
 import org.junit.Test;
@@ -10,10 +11,12 @@ import uk.gov.pay.connector.dao.PayDBIException;
 import uk.gov.pay.connector.model.domain.ChargeStatus;
 import uk.gov.pay.connector.rules.DropwizardAppWithPostgresRule;
 
+import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
 import static com.google.common.collect.Lists.newArrayList;
+import static org.apache.commons.lang3.RandomStringUtils.randomAlphanumeric;
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.is;
 import static org.junit.Assert.assertEquals;
@@ -123,6 +126,14 @@ public class ChargeDaoITest {
         expectedEx.expectMessage("Could not update charge '" + unknownId + "' with status " + status.toString());
 
         chargeDao.updateStatus(unknownId, status);
+    }
+
+    @Test
+    public void invalidSizeOfFields() throws Exception {
+        expectedEx.expect(RuntimeException.class);
+        Map<String, Object> chargeData = new HashMap<>(newCharge(AMOUNT));
+        chargeData.put("reference", randomAlphanumeric(512));
+        chargeId = chargeDao.saveNewCharge(chargeData);
     }
 
     private ImmutableMap<String, Object> newCharge(long amount) {

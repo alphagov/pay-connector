@@ -22,7 +22,7 @@ public class ChargeDao {
         this.jdbi = jdbi;
     }
 
-    public String saveNewCharge(Map<String, Object> charge) throws PayDBIException {
+    public String saveNewCharge(Map<String, Object> charge) {
         Map<String, Object> fixedCharge = copyAndConvertFieldToLong(charge, "gateway_account_id");
         return jdbi.withHandle(handle ->
                         handle
@@ -68,7 +68,7 @@ public class ChargeDao {
         return Optional.ofNullable(data);
     }
 
-    public void updateGatewayTransactionId(String chargeId, String transactionId) throws PayDBIException {
+    public void updateGatewayTransactionId(String chargeId, String transactionId) {
         Integer numberOfUpdates = jdbi.withHandle(handle ->
                         handle
                                 .createStatement("UPDATE charges SET gateway_transaction_id=:transactionId WHERE charge_id=:charge_id")
