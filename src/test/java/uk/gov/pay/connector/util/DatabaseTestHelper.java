@@ -9,6 +9,7 @@ import uk.gov.pay.connector.dao.TokenDao;
 import uk.gov.pay.connector.model.domain.ChargeStatus;
 
 import java.sql.SQLException;
+import java.util.Map;
 
 public class DatabaseTestHelper {
     private DBI jdbi;
@@ -19,11 +20,26 @@ public class DatabaseTestHelper {
         this.tokenDao = new TokenDao(jdbi);
     }
 
+    public void addGatewayAccount(String accountId, String paymentGateway, Map<String, String> credentials) {
+        try {
+            PGobject jsonObject = new PGobject();
+            jsonObject.setType("json");
+            if (credentials == null || credentials.size() == 0) {
+                jsonObject.setValue("{}");
+            } else {
+                jsonObject.setValue(new Gson().toJson(credentials));
+            }
+            jdbi.withHandle(h ->
+                    h.update("INSERT INTO gateway_accounts(gateway_account_id, payment_provider, credentials) VALUES(?, ?, ?)",
+                            Long.valueOf(accountId), paymentGateway, jsonObject)
+            );
+        } catch (SQLException e) {
+            throw new RuntimeException(e);
+        }
+    }
+
     public void addGatewayAccount(String accountId, String paymentProvider) {
-        jdbi.withHandle(h ->
-                h.update("INSERT INTO gateway_accounts(gateway_account_id, payment_provider) VALUES(?, ?)",
-                        Long.valueOf(accountId), paymentProvider)
-        );
+        addGatewayAccount(accountId, paymentProvider, null);
     }
 
     public void addCharge(String chargeId, String gatewayAccountId, long amount, ChargeStatus status, String returnUrl, String transactionId) {
@@ -41,28 +57,28 @@ public class DatabaseTestHelper {
             String reference
     ) {
         jdbi.withHandle(h ->
-                        h.update(
-                                "INSERT INTO" +
-                                        "    charges(\n" +
-                                        "        charge_id,\n" +
-                                        "        amount,\n" +
-                                        "        status,\n" +
-                                        "        gateway_account_id,\n" +
-                                        "        return_url,\n" +
-                                        "        gateway_transaction_id,\n" +
-                                        "        description,\n" +
-                                        "        reference\n" +
-                                        "    )\n" +
-                                        "   VALUES(?, ?, ?, ?, ?, ?, ?, ?)\n",
-                                Long.valueOf(chargeId),
-                                amount,
-                                status.getValue(),
-                                Long.valueOf(gatewayAccountId),
-                                returnUrl,
-                                transactionId,
-                                description,
-                                reference
-                        )
+                h.update(
+                        "INSERT INTO" +
+                                "    charges(\n" +
+                                "        charge_id,\n" +
+                                "        amount,\n" +
+                                "        status,\n" +
+                                "        gateway_account_id,\n" +
+                                "        return_url,\n" +
+                                "        gateway_transaction_id,\n" +
+                                "        description,\n" +
+                                "        reference\n" +
+                                "    )\n" +
+                                "   VALUES(?, ?, ?, ?, ?, ?, ?, ?)\n",
+                        Long.valueOf(chargeId),
+                        amount,
+                        status.getValue(),
+                        Long.valueOf(gatewayAccountId),
+                        returnUrl,
+                        transactionId,
+                        description,
+                        reference
+                )
         );
     }
 

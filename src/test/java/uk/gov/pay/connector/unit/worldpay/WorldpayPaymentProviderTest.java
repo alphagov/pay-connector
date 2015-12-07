@@ -1,10 +1,12 @@
 package uk.gov.pay.connector.unit.worldpay;
 
+import com.google.common.collect.ImmutableMap;
 import org.junit.Before;
 import org.junit.Test;
 import uk.gov.pay.connector.model.*;
 import uk.gov.pay.connector.model.domain.Address;
 import uk.gov.pay.connector.model.domain.Card;
+import uk.gov.pay.connector.model.domain.ServiceAccount;
 import uk.gov.pay.connector.service.worldpay.WorldpayPaymentProvider;
 
 import javax.ws.rs.client.Client;
@@ -25,7 +27,7 @@ import static org.mockito.Mockito.when;
 import static uk.gov.pay.connector.model.GatewayErrorType.GenericGatewayError;
 import static uk.gov.pay.connector.model.GatewayErrorType.UnexpectedStatusCodeFromGateway;
 import static uk.gov.pay.connector.model.domain.Address.anAddress;
-import static uk.gov.pay.connector.model.domain.GatewayAccount.gatewayAccountFor;
+import static uk.gov.pay.connector.model.domain.ServiceAccount.*;
 import static uk.gov.pay.connector.service.GatewayClient.createGatewayClient;
 import static uk.gov.pay.connector.util.CardUtils.buildCardDetails;
 
@@ -39,8 +41,7 @@ public class WorldpayPaymentProviderTest {
         mockWorldpaySuccessfulOrderSubmitResponse();
 
         connector = new WorldpayPaymentProvider(
-                createGatewayClient(client, "http://smartpay.url"),
-                gatewayAccountFor("theUsername", "thePassword")
+                createGatewayClient(client, "http://worldpay.url")
         );
     }
 
@@ -92,7 +93,15 @@ public class WorldpayPaymentProviderTest {
         String amount = "500";
 
         String description = "This is the description";
-        return new AuthorisationRequest("chargeId", card, amount, description);
+        return new AuthorisationRequest("chargeId", card, amount, description, aServiceAccount());
+    }
+
+    private ServiceAccount aServiceAccount() {
+        return new ServiceAccount(1L, "worldpay", ImmutableMap.of(
+           CREDENTIALS_MERCHANT_ID,"worlpay-merchant",
+           CREDENTIALS_USERNAME,"worldpay-password",
+           CREDENTIALS_PASSWORD,"password"
+        ));
     }
 
     private void assertEquals(GatewayError actual, GatewayError expected) {
@@ -103,7 +112,7 @@ public class WorldpayPaymentProviderTest {
     }
 
     private CaptureRequest getCaptureRequest() {
-        return new CaptureRequest("500", randomUUID().toString());
+        return new CaptureRequest("500", randomUUID().toString(), aServiceAccount());
     }
 
     private void mockWorldpayErrorResponse(int httpStatus) {

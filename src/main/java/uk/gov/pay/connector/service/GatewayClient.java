@@ -5,6 +5,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import uk.gov.pay.connector.model.GatewayError;
 import uk.gov.pay.connector.model.domain.GatewayAccount;
+import uk.gov.pay.connector.model.domain.ServiceAccount;
 import uk.gov.pay.connector.util.XMLUnmarshaller;
 
 import javax.ws.rs.ProcessingException;
@@ -23,6 +24,8 @@ import static javax.ws.rs.core.HttpHeaders.AUTHORIZATION;
 import static javax.ws.rs.core.MediaType.APPLICATION_XML;
 import static javax.ws.rs.core.Response.Status.OK;
 import static uk.gov.pay.connector.model.GatewayError.*;
+import static uk.gov.pay.connector.model.domain.ServiceAccount.CREDENTIALS_PASSWORD;
+import static uk.gov.pay.connector.model.domain.ServiceAccount.CREDENTIALS_USERNAME;
 import static uk.gov.pay.connector.util.AuthUtil.encode;
 
 public class GatewayClient {
@@ -40,11 +43,13 @@ public class GatewayClient {
         return new GatewayClient(client, gatewayUrl);
     }
 
-    public Either<GatewayError, Response> postXMLRequestFor(GatewayAccount account, String request) {
+    public Either<GatewayError, Response> postXMLRequestFor(ServiceAccount account, String request) {
         try {
             Response response = client.target(gatewayUrl)
                     .request(APPLICATION_XML)
-                    .header(AUTHORIZATION, encode(account.getUsername(), account.getPassword()))
+                    .header(AUTHORIZATION, encode(
+                            account.getCredentials().get(CREDENTIALS_USERNAME),
+                            account.getCredentials().get(CREDENTIALS_PASSWORD)))
                     .post(Entity.xml(request));
             int statusCode = response.getStatus();
             if(statusCode == OK.getStatusCode()) {

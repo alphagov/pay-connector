@@ -7,9 +7,10 @@ import org.apache.commons.lang3.tuple.Pair;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import uk.gov.pay.connector.model.*;
-import uk.gov.pay.connector.model.domain.ChargeStatus;
+import uk.gov.pay.connector.model.domain.ServiceAccount;
 import uk.gov.pay.connector.service.PaymentProvider;
 
+import java.util.Optional;
 import java.util.UUID;
 
 import static uk.gov.pay.connector.model.CancelResponse.aSuccessfulCancelResponse;
@@ -57,18 +58,25 @@ public class SandboxPaymentProvider implements PaymentProvider {
         return aSuccessfulCancelResponse();
     }
 
+    //FIXME: no need of the service account
     @Override
-    public StatusUpdates newStatusFromNotification(String notification) {
+    public StatusUpdates newStatusFromNotification(ServiceAccount serviceAccount, String inboundNotification) {
         try {
-            JsonNode node = objectMapper.readValue(notification, JsonNode.class);
+            JsonNode node = objectMapper.readValue(inboundNotification, JsonNode.class);
 
             String transaction_id = node.get("transaction_id").textValue();
             String newStatus = node.get("status").textValue();
 
             return StatusUpdates.withUpdate("OK", ImmutableList.of(Pair.of(transaction_id, chargeStatusFrom(newStatus))));
         } catch (Exception e) {
-            LOGGER.error("Error understanding sandbox notification: " + notification, e);
+            LOGGER.error("Error understanding sandbox notification: " + inboundNotification, e);
             return StatusUpdates.noUpdate("OK");
         }
+    }
+
+    @Override
+    public Optional<String> getNotificationTransactionId(String inboundNotification) {
+        //TODO: Hopefully should dissapear after refactoring
+        return null;
     }
 }

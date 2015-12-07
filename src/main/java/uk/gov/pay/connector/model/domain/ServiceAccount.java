@@ -6,6 +6,9 @@ import com.google.common.collect.ImmutableMap;
 import java.util.Map;
 
 public class ServiceAccount {
+    public static final String CREDENTIALS_MERCHANT_ID = "merchant_id";
+    public static final String CREDENTIALS_USERNAME = "username";
+    public static final String CREDENTIALS_PASSWORD = "password";
 
     private Long id;
     private String gatewayName;

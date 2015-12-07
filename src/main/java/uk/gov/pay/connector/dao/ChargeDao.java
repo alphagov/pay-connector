@@ -162,4 +162,21 @@ public class ChargeDao {
                 .map(charge -> copyAndConvertFieldsToString(charge, fields))
                 .collect(toList());
     }
+
+    public Optional<String> findAccountByTransactionId(String provider, String transactionId) {
+        Map<String, Object> data = jdbi.withHandle(handle ->
+                handle
+                        .createQuery("SELECT ch.gateway_account_id FROM charges AS ch, gateway_accounts AS ga " +
+                                "WHERE ga.gateway_account_id = ch.gateway_account_id " +
+                                "AND ga.payment_provider=:provider " +
+                                "AND ch.gateway_transaction_id=:transactionId")
+                        .bind("provider", provider)
+                        .bind("transactionId", transactionId)
+                        .map(new DefaultMapper())
+                        .first()
+        );
+
+        return Optional.ofNullable(data.get("gateway_account_id").toString());
+    }
+
 }

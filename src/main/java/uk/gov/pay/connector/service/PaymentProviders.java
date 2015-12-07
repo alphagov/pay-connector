@@ -8,10 +8,10 @@ import uk.gov.pay.connector.service.smartpay.SmartpayPaymentProvider;
 import uk.gov.pay.connector.service.worldpay.WorldpayPaymentProvider;
 
 import static java.lang.String.format;
-import static uk.gov.pay.connector.model.domain.GatewayAccount.gatewayAccountFor;
 import static uk.gov.pay.connector.resources.PaymentProviderValidator.*;
 import static uk.gov.pay.connector.service.GatewayClient.createGatewayClient;
 
+//FIXME: may need to refactor this
 public class PaymentProviders {
     private final PaymentProvider worldpayProvider;
     private final PaymentProvider smartpayProvider;
@@ -26,8 +26,8 @@ public class PaymentProviders {
     private PaymentProvider createWorldpayProvider(ClientFactory clientFactory,
                                                    GatewayCredentialsConfig config) {
         return new WorldpayPaymentProvider(
-                createGatewayClient(clientFactory.createWithDropwizardClient("WORLD_PAY"), config.getUrl()),
-                gatewayAccountFor(config.getUsername(), config.getPassword()));
+                createGatewayClient(clientFactory.createWithDropwizardClient("WORLD_PAY"), config.getUrl())
+        );
     }
 
     private PaymentProvider createSmartPayProvider(ClientFactory clientFactory,
@@ -35,7 +35,6 @@ public class PaymentProviders {
                                                    ObjectMapper objectMapper) {
         return new SmartpayPaymentProvider(
                 createGatewayClient(clientFactory.createWithDropwizardClient("SMART_PAY"), config.getUrl()),
-                gatewayAccountFor(config.getUsername(), config.getPassword()),
                 objectMapper
         );
     }

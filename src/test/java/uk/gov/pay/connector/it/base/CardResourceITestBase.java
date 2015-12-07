@@ -1,6 +1,7 @@
 package uk.gov.pay.connector.it.base;
 
 import com.github.tomakehurst.wiremock.junit.WireMockRule;
+import com.google.common.collect.ImmutableMap;
 import com.google.gson.JsonObject;
 import com.jayway.restassured.specification.RequestSpecification;
 import org.apache.commons.lang.math.RandomUtils;
@@ -14,6 +15,7 @@ import uk.gov.pay.connector.util.PortFactory;
 import uk.gov.pay.connector.util.RestAssuredClient;
 
 import java.io.IOException;
+import java.util.Map;
 
 import static com.jayway.restassured.RestAssured.given;
 import static com.jayway.restassured.http.ContentType.JSON;
@@ -21,6 +23,7 @@ import static io.dropwizard.testing.ConfigOverride.config;
 import static javax.ws.rs.core.Response.Status.BAD_REQUEST;
 import static org.hamcrest.Matchers.is;
 import static uk.gov.pay.connector.model.domain.ChargeStatus.*;
+import static uk.gov.pay.connector.model.domain.ServiceAccount.*;
 import static uk.gov.pay.connector.resources.ApiPaths.*;
 import static uk.gov.pay.connector.util.JsonEncoder.toJson;
 
@@ -60,7 +63,12 @@ public class CardResourceITestBase {
         worldpay = new WorldpayMockClient();
         smartpay = new SmartpayMockClient();
 
-        app.getDatabaseTestHelper().addGatewayAccount(accountId, paymentProvider);
+        Map<String, String> credentials = ImmutableMap.of(
+                CREDENTIALS_MERCHANT_ID, "merchant-id",
+                CREDENTIALS_USERNAME, "test-user",
+                CREDENTIALS_PASSWORD, "test-password"
+        );
+        app.getDatabaseTestHelper().addGatewayAccount(accountId, paymentProvider, credentials);
     }
 
     protected String cardDetailsWithMinimalAddress(String cardNumber) {
@@ -165,6 +173,7 @@ public class CardResourceITestBase {
     }
 
     protected void shouldReturnErrorForCardDetailsWithMessage(String cardDetails, String errorMessage, String status) throws Exception {
+
         String chargeId = createNewChargeWith(ENTERING_CARD_DETAILS, null);
 
         givenSetup()

@@ -70,7 +70,7 @@ public class ConnectorApp extends Application<ConnectorConfiguration> {
         CardService cardService = new CardService(gatewayAccountDao, chargeDao, providers);
 
         environment.jersey().register(new SecurityTokensResource(tokenDao));
-        environment.jersey().register(new NotificationResource(providers, chargeDao));
+        environment.jersey().register(new NotificationResource(providers, chargeDao, gatewayAccountDao));
         environment.jersey().register(new ChargesApiResource(chargeDao, tokenDao, gatewayAccountDao, conf.getLinks()));
         environment.jersey().register(new ChargesFrontendResource(chargeDao, gatewayAccountDao));
         environment.jersey().register(new CardResource(cardService));

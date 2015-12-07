@@ -6,7 +6,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import uk.gov.pay.connector.model.*;
 import uk.gov.pay.connector.model.domain.ChargeStatus;
-import uk.gov.pay.connector.model.domain.GatewayAccount;
+import uk.gov.pay.connector.model.domain.ServiceAccount;
 import uk.gov.pay.connector.service.GatewayClient;
 import uk.gov.pay.connector.service.PaymentProvider;
 
@@ -36,12 +36,10 @@ public class SmartpayPaymentProvider implements PaymentProvider {
     private final Logger logger = LoggerFactory.getLogger(SmartpayPaymentProvider.class);
 
     private final GatewayClient client;
-    private final GatewayAccount gatewayAccount;
     private ObjectMapper objectMapper;
 
-    public SmartpayPaymentProvider(GatewayClient client, GatewayAccount gatewayAccount, ObjectMapper objectMapper) {
+    public SmartpayPaymentProvider(GatewayClient client, ObjectMapper objectMapper) {
         this.client = client;
-        this.gatewayAccount = gatewayAccount;
         this.objectMapper = objectMapper;
     }
 
@@ -51,7 +49,7 @@ public class SmartpayPaymentProvider implements PaymentProvider {
 
         return reduce(
                 client
-                        .postXMLRequestFor(gatewayAccount, requestString)
+                        .postXMLRequestFor(request.getServiceAccount(), requestString)
                         .bimap(
                                 AuthorisationResponse::authorisationFailureResponse,
                                 this::mapToCardAuthorisationResponse
@@ -65,7 +63,7 @@ public class SmartpayPaymentProvider implements PaymentProvider {
 
         return reduce(
                 client
-                        .postXMLRequestFor(gatewayAccount, captureRequestString)
+                        .postXMLRequestFor(request.getServiceAccount(), captureRequestString)
                         .bimap(
                                 CaptureResponse::captureFailureResponse,
                                 this::mapToCaptureResponse
@@ -77,7 +75,7 @@ public class SmartpayPaymentProvider implements PaymentProvider {
     public CancelResponse cancel(CancelRequest request) {
         return reduce(
                 client
-                        .postXMLRequestFor(gatewayAccount, buildCancelOrderFor(request))
+                        .postXMLRequestFor(request.getServiceAccount(), buildCancelOrderFor(request))
                         .bimap(
                                 CancelResponse::cancelFailureResponse,
                                 this::mapToCancelResponse
@@ -86,9 +84,9 @@ public class SmartpayPaymentProvider implements PaymentProvider {
     }
 
     @Override
-    public StatusUpdates newStatusFromNotification(String notification) {
+    public StatusUpdates newStatusFromNotification(ServiceAccount serviceAccount, String inboundNotification) {
         try {
-            List<SmartpayNotification> notifications = objectMapper.readValue(notification, SmartpayNotificationList.class).getNotifications();
+            List<SmartpayNotification> notifications = objectMapper.readValue(inboundNotification, SmartpayNotificationList.class).getNotifications();
             Collections.sort(notifications);
 
             List<Pair<String, ChargeStatus>> updates = notifications.stream()
@@ -102,9 +100,14 @@ public class SmartpayPaymentProvider implements PaymentProvider {
             // deterministic computer code could successfully parse the same message if it arrived a second time.
             // Barclays also mandate that acknowledging notifications should be unconditional.
             // See http://www.barclaycard.co.uk/business/files/SmartPay_Notifications_Guide.pdf for further details.
-            logger.error(String.format("Could not deserialise smartpay notification:\n %s", notification), e);
+            logger.error(String.format("Could not deserialise smartpay notification:\n %s", inboundNotification), e);
         }
         return StatusUpdates.noUpdate(ACCEPTED);
+    }
+
+    @Override
+    public Optional<String> getNotificationTransactionId(String inboundNotification) {
+        return null;
     }
 
     private boolean definedStatuses(SmartpayNotification notification) {

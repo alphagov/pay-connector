@@ -1,6 +1,7 @@
 package uk.gov.pay.connector.unit.smartpay;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
+import com.google.common.collect.ImmutableMap;
 import org.junit.Before;
 import org.junit.Test;
 import uk.gov.pay.connector.model.AuthorisationRequest;
@@ -9,6 +10,7 @@ import uk.gov.pay.connector.model.CaptureRequest;
 import uk.gov.pay.connector.model.CaptureResponse;
 import uk.gov.pay.connector.model.domain.Address;
 import uk.gov.pay.connector.model.domain.Card;
+import uk.gov.pay.connector.model.domain.ServiceAccount;
 import uk.gov.pay.connector.service.smartpay.SmartpayPaymentProvider;
 
 import javax.ws.rs.client.Client;
@@ -26,7 +28,6 @@ import static org.mockito.Matchers.*;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
 import static uk.gov.pay.connector.model.domain.Address.anAddress;
-import static uk.gov.pay.connector.model.domain.GatewayAccount.gatewayAccountFor;
 import static uk.gov.pay.connector.service.GatewayClient.createGatewayClient;
 import static uk.gov.pay.connector.util.CardUtils.buildCardDetails;
 
@@ -40,7 +41,7 @@ public class SmartpayPaymentProviderTest {
     public void setup() throws Exception {
         client = mock(Client.class);
         mockSmartpaySuccessfulOrderSubmitResponse();
-        provider = new SmartpayPaymentProvider(createGatewayClient(client, "http://smartpay.url"), gatewayAccountFor("theUsername", "thePassword"), new ObjectMapper());
+        provider = new SmartpayPaymentProvider(createGatewayClient(client, "http://smartpay.url"), new ObjectMapper());
     }
 
     @Test
@@ -53,7 +54,7 @@ public class SmartpayPaymentProviderTest {
     @Test
     public void shouldCaptureAPaymentSuccessfully() throws Exception {
         mockSmartpaySuccessfulCaptureResponse();
-        CaptureResponse response = provider.capture(new CaptureRequest("5000", "transaction-id"));
+        CaptureResponse response = provider.capture(new CaptureRequest("5000", "transaction-id", aServiceAccount()));
         assertTrue(response.isSuccessful());
     }
 
@@ -62,7 +63,14 @@ public class SmartpayPaymentProviderTest {
         String amount = "222";
 
         String description = "This is the description";
-        return new AuthorisationRequest("chargeId", card, amount, description);
+        return new AuthorisationRequest("chargeId", card, amount, description, aServiceAccount());
+    }
+
+    private ServiceAccount aServiceAccount() {
+        return new ServiceAccount(1L, "smartpay", ImmutableMap.of(
+                "username", "theUsername",
+                "password", "thePassword"
+        ));
     }
 
     private void mockSmartpaySuccessfulOrderSubmitResponse() {

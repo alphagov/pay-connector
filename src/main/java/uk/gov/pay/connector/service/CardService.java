@@ -86,7 +86,10 @@ public class CardService {
     private GatewayResponse captureFor(String chargeId, Map<String, Object> charge) {
         String transactionId = String.valueOf(charge.get(GATEWAY_TRANSACTION_ID_KEY));
 
-        CaptureRequest request = captureRequest(transactionId, String.valueOf(charge.get(AMOUNT_KEY)));
+        //FIXME: handle optionals
+        Optional<ServiceAccount> optionalServiceAccount = findAccountByCharge(chargeId);
+        CaptureRequest request = captureRequest(transactionId, String.valueOf(charge.get(AMOUNT_KEY)), optionalServiceAccount.get());
+
         CaptureResponse response = paymentProviderFor(charge)
                 .capture(request);
 
@@ -100,9 +103,15 @@ public class CardService {
         return response;
     }
 
+    private Optional<ServiceAccount> findAccountByCharge(String chargeId) {
+        //FIXME: Handle optional
+        Optional<Map<String,Object>> charge = chargeDao.findById(chargeId);
+        return accountDao.findById((String) charge.get().get("gateway_account_id"));
+    }
+
     private GatewayResponse authoriseFor(String chargeId, Card cardDetails, Map<String, Object> charge) {
 
-        AuthorisationRequest request = authorisationRequest(String.valueOf(charge.get(CHARGE_ID_KEY)), String.valueOf(charge.get(AMOUNT_KEY)), cardDetails);
+        AuthorisationRequest request = authorisationRequest(chargeId, String.valueOf(charge.get(AMOUNT_KEY)), cardDetails);
         AuthorisationResponse response = paymentProviderFor(charge)
                 .authorise(request);
 
@@ -115,7 +124,11 @@ public class CardService {
     }
 
     private GatewayResponse cancelFor(String chargeId, Map<String, Object> charge) {
-        CancelRequest request = cancelRequest(String.valueOf(charge.get(GATEWAY_TRANSACTION_ID_KEY)));
+
+        //FIXME: Handle Optionals
+        Optional<ServiceAccount> optionalServiceAccount = findAccountByCharge(chargeId);
+        CancelRequest request = cancelRequest(String.valueOf(charge.get(GATEWAY_TRANSACTION_ID_KEY)), optionalServiceAccount.get());
+
         CancelResponse response = paymentProviderFor(charge).cancel(request);
 
         if (response.isSuccessful()) {
@@ -130,7 +143,9 @@ public class CardService {
     }
 
     private AuthorisationRequest authorisationRequest(String chargeId, String amountValue, Card card) {
-        return new AuthorisationRequest(chargeId, card, amountValue, "This is the description");
+        //FIXME: Handle Optionals
+        Optional<ServiceAccount> optionalServiceAccount = findAccountByCharge(chargeId);
+        return new AuthorisationRequest(chargeId, card, amountValue, "This is the description", optionalServiceAccount.get());
     }
 
     private boolean hasStatus(Map<String, Object> charge, ChargeStatus... states) {
