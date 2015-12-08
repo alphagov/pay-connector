@@ -182,6 +182,8 @@ Content-Type: application/json
 
 {
     "charge_id": "1",
+    "description": "Breathing licence",
+    "reference": "Ref-1234",
     "amount": 5000,
     "gateway_account_id": "10",
     "status": "CREATED",
@@ -233,6 +235,8 @@ Content-Type: application/json
 | Field                    | required | Description                               |
 | ------------------------ |:--------:| ----------------------------------------- |
 | `amount`                 | X | The amount (in minor units) of the charge       |
+| `description`            | X | The payment description       |
+| `reference`              | X | There reference issued by the government service for this payment       |
 | `gateway_account_id`     | X | The gateway account to use for this charge |
 | `return_url`             | X | The url to return the user to after the payment process has completed.|
 
@@ -245,6 +249,8 @@ Location: http://connector.service/v1/api/charges/1
 
 {
     "charge_id": "1",
+    "description": "Breathing licence",
+    "reference": "Ref-1234",
     "links": [{
             "href": "http://connector.service/v1/api/charges/1",
             "rel" : "self",
