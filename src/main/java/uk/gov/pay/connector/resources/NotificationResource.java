@@ -8,7 +8,7 @@ import uk.gov.pay.connector.dao.GatewayAccountDao;
 import uk.gov.pay.connector.dao.PayDBIException;
 import uk.gov.pay.connector.model.StatusUpdates;
 import uk.gov.pay.connector.model.domain.ChargeStatus;
-import uk.gov.pay.connector.model.domain.ServiceAccount;
+import uk.gov.pay.connector.model.domain.GatewayAccount;
 import uk.gov.pay.connector.service.PaymentProvider;
 import uk.gov.pay.connector.service.PaymentProviders;
 
@@ -65,7 +65,7 @@ public class NotificationResource {
     }
 
 
-    private Function<String, ServiceAccount> findAccountByTransactionId(String provider) {
+    private Function<String, GatewayAccount> findAccountByTransactionId(String provider) {
         return transactionId -> {
             String accountId = chargeDao.findAccountByTransactionId(provider, transactionId).get();
             return accountDao.findById(accountId).get();

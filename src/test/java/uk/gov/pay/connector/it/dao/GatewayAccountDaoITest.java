@@ -4,7 +4,7 @@ import org.junit.Before;
 import org.junit.Rule;
 import org.junit.Test;
 import uk.gov.pay.connector.dao.GatewayAccountDao;
-import uk.gov.pay.connector.model.domain.ServiceAccount;
+import uk.gov.pay.connector.model.domain.GatewayAccount;
 import uk.gov.pay.connector.rules.DropwizardAppWithPostgresRule;
 
 import java.util.Map;
@@ -48,12 +48,12 @@ public class GatewayAccountDaoITest {
 
         // We dont set any credentials, so the json document in the DB is: {}
 
-        Optional<ServiceAccount> gatewayAccountOpt = gatewayAccountDao.findById(id);
+        Optional<GatewayAccount> gatewayAccountOpt = gatewayAccountDao.findById(id);
 
         assertTrue(gatewayAccountOpt.isPresent());
-        ServiceAccount serviceAccount = gatewayAccountOpt.get();
-        assertThat(serviceAccount.getGatewayName(), is(paymentProvider));
-        Map<String,String> credentialsMap = serviceAccount.getCredentials();
+        GatewayAccount gatewayAccount = gatewayAccountOpt.get();
+        assertThat(gatewayAccount.getGatewayName(), is(paymentProvider));
+        Map<String,String> credentialsMap = gatewayAccount.getCredentials();
         assertThat(credentialsMap.size(), is(0));
     }
 
@@ -77,7 +77,7 @@ public class GatewayAccountDaoITest {
         String expectedJsonString = "{\"username\": \"Username\", \"password\": \"Password\"}";
         gatewayAccountDao.saveCredentials(expectedJsonString, gatewayAccountId);
 
-        Optional<ServiceAccount> serviceAccountMaybe = gatewayAccountDao.findById(gatewayAccountId);
+        Optional<GatewayAccount> serviceAccountMaybe = gatewayAccountDao.findById(gatewayAccountId);
         assertThat(serviceAccountMaybe.isPresent(), is(true));
         Map<String,String> credentialsMap = serviceAccountMaybe.get().getCredentials();
         assertThat(credentialsMap, hasEntry("username", "Username"));
@@ -95,7 +95,7 @@ public class GatewayAccountDaoITest {
             gatewayAccountDao.saveCredentials(expectedJsonString, gatewayAccountId);
             fail();
         } catch (RuntimeException e) {
-            Optional<ServiceAccount> gatewayAccountMaybe = gatewayAccountDao.findById(gatewayAccountId);
+            Optional<GatewayAccount> gatewayAccountMaybe = gatewayAccountDao.findById(gatewayAccountId);
             assertThat(gatewayAccountMaybe.isPresent(), is(true));
             Map<String,String> credentialsMap = gatewayAccountMaybe.get().getCredentials();
             assertThat(credentialsMap.size(), is(0));

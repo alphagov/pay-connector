@@ -5,12 +5,11 @@ import org.skife.jdbi.v2.DBI;
 import org.skife.jdbi.v2.util.BooleanMapper;
 import org.skife.jdbi.v2.util.StringMapper;
 import uk.gov.pay.connector.mappers.ServiceAccountMapper;
-import uk.gov.pay.connector.model.domain.ServiceAccount;
+import uk.gov.pay.connector.model.domain.GatewayAccount;
 
 import java.sql.SQLException;
 import java.util.Optional;
 
-import static java.lang.Boolean.TRUE;
 import static java.lang.String.format;
 
 public class GatewayAccountDao {
@@ -38,13 +37,13 @@ public class GatewayAccountDao {
 
     }
 
-    public Optional<ServiceAccount> findById(String gatewayAccountId) {
-        ServiceAccount serviceAccount = jdbi.withHandle(handle -> handle
+    public Optional<GatewayAccount> findById(String gatewayAccountId) {
+        GatewayAccount gatewayAccount = jdbi.withHandle(handle -> handle
                 .createQuery("SELECT gateway_account_id, payment_provider, credentials FROM gateway_accounts WHERE gateway_account_id=:id")
                 .bind("id", Long.valueOf(gatewayAccountId))
                 .map(new ServiceAccountMapper())
                 .first());
-        return Optional.ofNullable(serviceAccount);
+        return Optional.ofNullable(gatewayAccount);
     }
 
     public void saveCredentials(String credentialsJsonString, String gatewayAccountId) {

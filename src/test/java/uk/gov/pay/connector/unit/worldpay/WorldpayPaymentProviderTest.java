@@ -6,7 +6,7 @@ import org.junit.Test;
 import uk.gov.pay.connector.model.*;
 import uk.gov.pay.connector.model.domain.Address;
 import uk.gov.pay.connector.model.domain.Card;
-import uk.gov.pay.connector.model.domain.ServiceAccount;
+import uk.gov.pay.connector.model.domain.GatewayAccount;
 import uk.gov.pay.connector.service.worldpay.WorldpayPaymentProvider;
 
 import javax.ws.rs.client.Client;
@@ -27,7 +27,7 @@ import static org.mockito.Mockito.when;
 import static uk.gov.pay.connector.model.GatewayErrorType.GenericGatewayError;
 import static uk.gov.pay.connector.model.GatewayErrorType.UnexpectedStatusCodeFromGateway;
 import static uk.gov.pay.connector.model.domain.Address.anAddress;
-import static uk.gov.pay.connector.model.domain.ServiceAccount.*;
+import static uk.gov.pay.connector.model.domain.GatewayAccount.*;
 import static uk.gov.pay.connector.service.GatewayClient.createGatewayClient;
 import static uk.gov.pay.connector.util.CardUtils.buildCardDetails;
 
@@ -96,8 +96,8 @@ public class WorldpayPaymentProviderTest {
         return new AuthorisationRequest("chargeId", card, amount, description, aServiceAccount());
     }
 
-    private ServiceAccount aServiceAccount() {
-        return new ServiceAccount(1L, "worldpay", ImmutableMap.of(
+    private GatewayAccount aServiceAccount() {
+        return new GatewayAccount(1L, "worldpay", ImmutableMap.of(
            CREDENTIALS_MERCHANT_ID,"worlpay-merchant",
            CREDENTIALS_USERNAME,"worldpay-password",
            CREDENTIALS_PASSWORD,"password"

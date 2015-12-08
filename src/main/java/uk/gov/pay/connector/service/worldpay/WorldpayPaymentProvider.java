@@ -9,7 +9,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import uk.gov.pay.connector.model.*;
 import uk.gov.pay.connector.model.domain.ChargeStatus;
-import uk.gov.pay.connector.model.domain.ServiceAccount;
+import uk.gov.pay.connector.model.domain.GatewayAccount;
 import uk.gov.pay.connector.service.GatewayClient;
 import uk.gov.pay.connector.service.PaymentProvider;
 
@@ -31,7 +31,7 @@ import static uk.gov.pay.connector.model.CaptureResponse.captureFailureResponse;
 import static uk.gov.pay.connector.model.GatewayError.baseGatewayError;
 import static uk.gov.pay.connector.model.InquiryResponse.*;
 import static uk.gov.pay.connector.model.domain.ChargeStatus.AUTHORISATION_SUCCESS;
-import static uk.gov.pay.connector.model.domain.ServiceAccount.CREDENTIALS_MERCHANT_ID;
+import static uk.gov.pay.connector.model.domain.GatewayAccount.CREDENTIALS_MERCHANT_ID;
 import static uk.gov.pay.connector.service.OrderCaptureRequestBuilder.aWorldpayOrderCaptureRequest;
 import static uk.gov.pay.connector.service.OrderSubmitRequestBuilder.aWorldpayOrderSubmitRequest;
 import static uk.gov.pay.connector.service.worldpay.OrderInquiryRequestBuilder.anOrderInquiryRequest;
@@ -54,7 +54,7 @@ public class WorldpayPaymentProvider implements PaymentProvider {
         String gatewayTransactionId = generateTransactionId();
         return reduce(
                 client
-                        .postXMLRequestFor(request.getServiceAccount(), buildOrderSubmitFor(request, gatewayTransactionId))
+                        .postXMLRequestFor(request.getGatewayAccount(), buildOrderSubmitFor(request, gatewayTransactionId))
                         .bimap(
                                 AuthorisationResponse::authorisationFailureResponse,
                                 (response) -> mapToCardAuthorisationResponse(response, gatewayTransactionId)
@@ -67,7 +67,7 @@ public class WorldpayPaymentProvider implements PaymentProvider {
         String requestString = buildOrderCaptureFor(request);
         return reduce(
                 client
-                        .postXMLRequestFor(request.getServiceAccount(), requestString)
+                        .postXMLRequestFor(request.getGatewayAccount(), requestString)
                         .bimap(
                                 CaptureResponse::captureFailureResponse,
                                 this::mapToCaptureResponse
@@ -80,7 +80,7 @@ public class WorldpayPaymentProvider implements PaymentProvider {
         String requestString = buildCancelOrderFor(request);
         return reduce(
                 client
-                        .postXMLRequestFor(request.getServiceAccount(), requestString)
+                        .postXMLRequestFor(request.getGatewayAccount(), requestString)
                         .bimap(
                                 CancelResponse::cancelFailureResponse,
                                 this::mapToCancelResponse
@@ -99,7 +99,7 @@ public class WorldpayPaymentProvider implements PaymentProvider {
     }
 
     @Override
-    public StatusUpdates handleNotification(String notificationPayload, Function<String, ServiceAccount> accountFinder, Consumer<StatusUpdates> accountUpdater) {
+    public StatusUpdates handleNotification(String notificationPayload, Function<String, GatewayAccount> accountFinder, Consumer<StatusUpdates> accountUpdater) {
 
 
         Optional<WorldpayNotification> notificationMaybe = parseNotification(notificationPayload);
@@ -116,8 +116,8 @@ public class WorldpayPaymentProvider implements PaymentProvider {
                     }
 
                     //phase 2
-                    ServiceAccount serviceAccount = accountFinder.apply(notification.getTransactionId());
-                    StatusUpdates statusUpdates = newStatusFromNotification(serviceAccount, notification.getTransactionId());
+                    GatewayAccount gatewayAccount = accountFinder.apply(notification.getTransactionId());
+                    StatusUpdates statusUpdates = newStatusFromNotification(gatewayAccount, notification.getTransactionId());
 
                     if (statusUpdates.successful()) {
                         accountUpdater.accept(statusUpdates);
@@ -127,8 +127,8 @@ public class WorldpayPaymentProvider implements PaymentProvider {
         ).orElseGet(() -> NO_UPDATE);
     }
 
-    private StatusUpdates newStatusFromNotification(ServiceAccount serviceAccount, String transactionId) {
-        InquiryResponse inquiryResponse = inquire(transactionId, serviceAccount);
+    private StatusUpdates newStatusFromNotification(GatewayAccount gatewayAccount, String transactionId) {
+        InquiryResponse inquiryResponse = inquire(transactionId, gatewayAccount);
         String worldpayStatus = inquiryResponse.getNewStatus();
         if (!inquiryResponse.isSuccessful() || StringUtils.isBlank(worldpayStatus)) {
             logger.error("Could not look up status from worldpay for worldpay charge id " + transactionId);
@@ -146,10 +146,10 @@ public class WorldpayPaymentProvider implements PaymentProvider {
     }
 
 
-    private InquiryResponse inquire(String transactionId, ServiceAccount serviceAccount) {
+    private InquiryResponse inquire(String transactionId, GatewayAccount gatewayAccount) {
         return reduce(
                 client
-                        .postXMLRequestFor(serviceAccount, buildOrderInquiryFor(serviceAccount, transactionId))
+                        .postXMLRequestFor(gatewayAccount, buildOrderInquiryFor(gatewayAccount, transactionId))
                         .bimap(
                                 InquiryResponse::inquiryFailureResponse,
                                 (response) -> response.getStatus() == OK.getStatusCode() ?
@@ -161,7 +161,7 @@ public class WorldpayPaymentProvider implements PaymentProvider {
 
     private String buildOrderCaptureFor(CaptureRequest request) {
         return aWorldpayOrderCaptureRequest()
-                .withMerchantCode(request.getServiceAccount().getCredentials().get(CREDENTIALS_MERCHANT_ID))
+                .withMerchantCode(request.getGatewayAccount().getCredentials().get(CREDENTIALS_MERCHANT_ID))
                 .withTransactionId(request.getTransactionId())
                 .withAmount(request.getAmount())
                 .withDate(DateTime.now(DateTimeZone.UTC))
@@ -170,7 +170,7 @@ public class WorldpayPaymentProvider implements PaymentProvider {
 
     private String buildOrderSubmitFor(AuthorisationRequest request, String gatewayTransactionId) {
         return aWorldpayOrderSubmitRequest()
-                .withMerchantCode(request.getServiceAccount().getCredentials().get(CREDENTIALS_MERCHANT_ID))
+                .withMerchantCode(request.getGatewayAccount().getCredentials().get(CREDENTIALS_MERCHANT_ID))
                 .withTransactionId(gatewayTransactionId)
                 .withDescription(request.getDescription())
                 .withAmount(request.getAmount())
@@ -180,14 +180,14 @@ public class WorldpayPaymentProvider implements PaymentProvider {
 
     private String buildCancelOrderFor(CancelRequest request) {
         return aWorldpayOrderCancelRequest()
-                .withMerchantCode(request.getServiceAccount().getCredentials().get(CREDENTIALS_MERCHANT_ID))
+                .withMerchantCode(request.getGatewayAccount().getCredentials().get(CREDENTIALS_MERCHANT_ID))
                 .withTransactionId(request.getTransactionId())
                 .build();
     }
 
-    private String buildOrderInquiryFor(ServiceAccount serviceAccount, String transactionId) {
+    private String buildOrderInquiryFor(GatewayAccount gatewayAccount, String transactionId) {
         return anOrderInquiryRequest()
-                .withMerchantCode(serviceAccount.getCredentials().get(CREDENTIALS_MERCHANT_ID))
+                .withMerchantCode(gatewayAccount.getCredentials().get(CREDENTIALS_MERCHANT_ID))
                 .withTransactionId(transactionId)
                 .build();
     }

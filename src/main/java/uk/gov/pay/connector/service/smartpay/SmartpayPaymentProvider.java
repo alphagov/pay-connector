@@ -6,7 +6,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import uk.gov.pay.connector.model.*;
 import uk.gov.pay.connector.model.domain.ChargeStatus;
-import uk.gov.pay.connector.model.domain.ServiceAccount;
+import uk.gov.pay.connector.model.domain.GatewayAccount;
 import uk.gov.pay.connector.service.GatewayClient;
 import uk.gov.pay.connector.service.PaymentProvider;
 
@@ -51,7 +51,7 @@ public class SmartpayPaymentProvider implements PaymentProvider {
 
         return reduce(
                 client
-                        .postXMLRequestFor(request.getServiceAccount(), requestString)
+                        .postXMLRequestFor(request.getGatewayAccount(), requestString)
                         .bimap(
                                 AuthorisationResponse::authorisationFailureResponse,
                                 this::mapToCardAuthorisationResponse
@@ -65,7 +65,7 @@ public class SmartpayPaymentProvider implements PaymentProvider {
 
         return reduce(
                 client
-                        .postXMLRequestFor(request.getServiceAccount(), captureRequestString)
+                        .postXMLRequestFor(request.getGatewayAccount(), captureRequestString)
                         .bimap(
                                 CaptureResponse::captureFailureResponse,
                                 this::mapToCaptureResponse
@@ -77,7 +77,7 @@ public class SmartpayPaymentProvider implements PaymentProvider {
     public CancelResponse cancel(CancelRequest request) {
         return reduce(
                 client
-                        .postXMLRequestFor(request.getServiceAccount(), buildCancelOrderFor(request))
+                        .postXMLRequestFor(request.getGatewayAccount(), buildCancelOrderFor(request))
                         .bimap(
                                 CancelResponse::cancelFailureResponse,
                                 this::mapToCancelResponse
@@ -86,7 +86,7 @@ public class SmartpayPaymentProvider implements PaymentProvider {
     }
 
     @Override
-    public StatusUpdates handleNotification(String inboundNotification, Function<String, ServiceAccount> accountFinder, Consumer<StatusUpdates> accountUpdater) {
+    public StatusUpdates handleNotification(String inboundNotification, Function<String, GatewayAccount> accountFinder, Consumer<StatusUpdates> accountUpdater) {
         try {
             List<SmartpayNotification> notifications = objectMapper.readValue(inboundNotification, SmartpayNotificationList.class).getNotifications();
             Collections.sort(notifications);

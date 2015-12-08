@@ -10,7 +10,7 @@ import uk.gov.pay.connector.model.CaptureRequest;
 import uk.gov.pay.connector.model.CaptureResponse;
 import uk.gov.pay.connector.model.domain.Address;
 import uk.gov.pay.connector.model.domain.Card;
-import uk.gov.pay.connector.model.domain.ServiceAccount;
+import uk.gov.pay.connector.model.domain.GatewayAccount;
 import uk.gov.pay.connector.service.smartpay.SmartpayPaymentProvider;
 
 import javax.ws.rs.client.Client;
@@ -66,8 +66,8 @@ public class SmartpayPaymentProviderTest {
         return new AuthorisationRequest("chargeId", card, amount, description, aServiceAccount());
     }
 
-    private ServiceAccount aServiceAccount() {
-        return new ServiceAccount(1L, "smartpay", ImmutableMap.of(
+    private GatewayAccount aServiceAccount() {
+        return new GatewayAccount(1L, "smartpay", ImmutableMap.of(
                 "username", "theUsername",
                 "password", "thePassword"
         ));

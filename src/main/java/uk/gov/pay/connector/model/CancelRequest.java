@@ -1,26 +1,26 @@
 package uk.gov.pay.connector.model;
 
-import uk.gov.pay.connector.model.domain.ServiceAccount;
+import uk.gov.pay.connector.model.domain.GatewayAccount;
 
 public class CancelRequest {
 
     private String transactionId;
-    private ServiceAccount serviceAccount;
+    private GatewayAccount gatewayAccount;
 
-    private CancelRequest(String transactionId, ServiceAccount serviceAccount) {
+    private CancelRequest(String transactionId, GatewayAccount gatewayAccount) {
         this.transactionId = transactionId;
-        this.serviceAccount = serviceAccount;
+        this.gatewayAccount = gatewayAccount;
     }
 
-    public static CancelRequest cancelRequest(String transactionId, ServiceAccount serviceAccount) {
-        return new CancelRequest(transactionId, serviceAccount);
+    public static CancelRequest cancelRequest(String transactionId, GatewayAccount gatewayAccount) {
+        return new CancelRequest(transactionId, gatewayAccount);
     }
 
     public String getTransactionId() {
         return transactionId;
     }
 
-    public ServiceAccount getServiceAccount() {
-        return serviceAccount;
+    public GatewayAccount getGatewayAccount() {
+        return gatewayAccount;
     }
 }

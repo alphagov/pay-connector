@@ -1,22 +1,22 @@
 package uk.gov.pay.connector.model;
 
-import uk.gov.pay.connector.model.domain.ServiceAccount;
+import uk.gov.pay.connector.model.domain.GatewayAccount;
 
 public class CaptureRequest {
 
     private String amount;
     private String transactionId;
-    private ServiceAccount serviceAccount;
+    private GatewayAccount gatewayAccount;
 
 
-    public CaptureRequest(String amount, String transactionId, ServiceAccount serviceAccount) {
+    public CaptureRequest(String amount, String transactionId, GatewayAccount gatewayAccount) {
         this.amount = amount;
         this.transactionId = transactionId;
-        this.serviceAccount = serviceAccount;
+        this.gatewayAccount = gatewayAccount;
     }
 
-    public static CaptureRequest captureRequest(String transactionId, String amount, ServiceAccount serviceAccount) {
-        return new CaptureRequest(amount, transactionId, serviceAccount);
+    public static CaptureRequest captureRequest(String transactionId, String amount, GatewayAccount gatewayAccount) {
+        return new CaptureRequest(amount, transactionId, gatewayAccount);
     }
 
     public String getAmount() {
@@ -27,7 +27,7 @@ public class CaptureRequest {
         return transactionId;
     }
 
-    public ServiceAccount getServiceAccount() {
-        return serviceAccount;
+    public GatewayAccount getGatewayAccount() {
+        return gatewayAccount;
     }
 }

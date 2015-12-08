@@ -6,7 +6,7 @@ import uk.gov.pay.connector.dao.GatewayAccountDao;
 import uk.gov.pay.connector.model.*;
 import uk.gov.pay.connector.model.domain.Card;
 import uk.gov.pay.connector.model.domain.ChargeStatus;
-import uk.gov.pay.connector.model.domain.ServiceAccount;
+import uk.gov.pay.connector.model.domain.GatewayAccount;
 
 import java.util.Arrays;
 import java.util.Map;
@@ -87,7 +87,7 @@ public class CardService {
         String transactionId = String.valueOf(charge.get(GATEWAY_TRANSACTION_ID_KEY));
 
         //FIXME: handle optionals
-        Optional<ServiceAccount> optionalServiceAccount = findAccountByCharge(chargeId);
+        Optional<GatewayAccount> optionalServiceAccount = findAccountByCharge(chargeId);
         CaptureRequest request = captureRequest(transactionId, String.valueOf(charge.get(AMOUNT_KEY)), optionalServiceAccount.get());
 
         CaptureResponse response = paymentProviderFor(charge)
@@ -103,7 +103,7 @@ public class CardService {
         return response;
     }
 
-    private Optional<ServiceAccount> findAccountByCharge(String chargeId) {
+    private Optional<GatewayAccount> findAccountByCharge(String chargeId) {
         //FIXME: Handle optional
         Optional<Map<String,Object>> charge = chargeDao.findById(chargeId);
         return accountDao.findById((String) charge.get().get("gateway_account_id"));
@@ -126,7 +126,7 @@ public class CardService {
     private GatewayResponse cancelFor(String chargeId, Map<String, Object> charge) {
 
         //FIXME: Handle Optionals
-        Optional<ServiceAccount> optionalServiceAccount = findAccountByCharge(chargeId);
+        Optional<GatewayAccount> optionalServiceAccount = findAccountByCharge(chargeId);
         CancelRequest request = cancelRequest(String.valueOf(charge.get(GATEWAY_TRANSACTION_ID_KEY)), optionalServiceAccount.get());
 
         CancelResponse response = paymentProviderFor(charge).cancel(request);
@@ -138,13 +138,13 @@ public class CardService {
     }
 
     private PaymentProvider paymentProviderFor(Map<String, Object> charge) {
-        Optional<ServiceAccount> maybeAccount = accountDao.findById((String) charge.get(GATEWAY_ACCOUNT_ID_KEY));
+        Optional<GatewayAccount> maybeAccount = accountDao.findById((String) charge.get(GATEWAY_ACCOUNT_ID_KEY));
         return providers.resolve(maybeAccount.get().getGatewayName());
     }
 
     private AuthorisationRequest authorisationRequest(String chargeId, String amountValue, Card card) {
         //FIXME: Handle Optionals
-        Optional<ServiceAccount> optionalServiceAccount = findAccountByCharge(chargeId);
+        Optional<GatewayAccount> optionalServiceAccount = findAccountByCharge(chargeId);
         return new AuthorisationRequest(chargeId, card, amountValue, "This is the description", optionalServiceAccount.get());
     }
 

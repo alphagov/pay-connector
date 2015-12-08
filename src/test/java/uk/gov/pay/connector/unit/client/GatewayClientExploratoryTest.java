@@ -4,7 +4,6 @@ import com.github.tomakehurst.wiremock.WireMockServer;
 import com.github.tomakehurst.wiremock.client.WireMock;
 import com.github.tomakehurst.wiremock.core.WireMockConfiguration;
 import org.junit.Test;
-import uk.gov.pay.connector.model.domain.GatewayAccount;
 import uk.gov.pay.connector.util.PortFactory;
 
 import javax.ws.rs.ProcessingException;
@@ -21,13 +20,11 @@ import static javax.ws.rs.core.HttpHeaders.AUTHORIZATION;
 import static javax.ws.rs.core.MediaType.APPLICATION_XML;
 import static org.hamcrest.core.Is.is;
 import static org.junit.Assert.*;
-import static uk.gov.pay.connector.model.domain.GatewayAccount.gatewayAccountFor;
 import static uk.gov.pay.connector.util.AuthUtil.encode;
 import static uk.gov.pay.connector.util.JerseyClientFactory.createClientWithApacheConnectorAndTimeout;
 import static uk.gov.pay.connector.util.JerseyClientFactory.createJerseyClient;
 
 public class GatewayClientExploratoryTest {
-    private final static GatewayAccount GATEWAY_ACCOUNT = gatewayAccountFor("user", "pass");
 
     @Test
     public void connectionToInvalidUrlUsingDefaultJerseyConnectorProvider() {
@@ -93,7 +90,7 @@ public class GatewayClientExploratoryTest {
     public Response postXMLRequestFor(Client client, String gatewayUrl, String requestBody) {
         return client.target(gatewayUrl)
                 .request(APPLICATION_XML)
-                .header(AUTHORIZATION, encode(GATEWAY_ACCOUNT.getUsername(), GATEWAY_ACCOUNT.getPassword()))
+                .header(AUTHORIZATION, encode("user", "pass"))
                 .post(Entity.xml(requestBody));
     }
 }

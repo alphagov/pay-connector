@@ -7,10 +7,9 @@ import org.apache.commons.lang3.tuple.Pair;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import uk.gov.pay.connector.model.*;
-import uk.gov.pay.connector.model.domain.ServiceAccount;
+import uk.gov.pay.connector.model.domain.GatewayAccount;
 import uk.gov.pay.connector.service.PaymentProvider;
 
-import java.util.Optional;
 import java.util.UUID;
 import java.util.function.Consumer;
 import java.util.function.Function;
@@ -61,7 +60,7 @@ public class SandboxPaymentProvider implements PaymentProvider {
     }
 
     @Override
-    public StatusUpdates handleNotification(String inboundNotification, Function<String, ServiceAccount> accountFinder, Consumer<StatusUpdates> accountUpdater) {
+    public StatusUpdates handleNotification(String inboundNotification, Function<String, GatewayAccount> accountFinder, Consumer<StatusUpdates> accountUpdater) {
         try {
             JsonNode node = objectMapper.readValue(inboundNotification, JsonNode.class);
 

@@ -8,11 +8,10 @@ import org.junit.Assume;
 import org.junit.Before;
 import org.junit.Test;
 import uk.gov.pay.connector.model.*;
-import uk.gov.pay.connector.model.domain.ServiceAccount;
+import uk.gov.pay.connector.model.domain.GatewayAccount;
 import uk.gov.pay.connector.service.GatewayClient;
 import uk.gov.pay.connector.service.PaymentProvider;
 import uk.gov.pay.connector.service.smartpay.SmartpayPaymentProvider;
-import uk.gov.pay.connector.service.worldpay.WorldpayPaymentProvider;
 import uk.gov.pay.connector.util.JerseyClientFactory;
 
 import javax.ws.rs.client.Client;
@@ -27,7 +26,6 @@ import static org.hamcrest.CoreMatchers.hasItem;
 import static org.junit.Assert.*;
 import static org.mockito.Mockito.mock;
 import static uk.gov.pay.connector.model.CancelRequest.cancelRequest;
-import static uk.gov.pay.connector.model.domain.ChargeStatus.AUTHORISATION_SUCCESS;
 import static uk.gov.pay.connector.model.domain.ChargeStatus.CAPTURED;
 import static uk.gov.pay.connector.service.GatewayClient.createGatewayClient;
 import static uk.gov.pay.connector.util.AuthorisationUtils.CHARGE_AMOUNT;
@@ -38,7 +36,7 @@ public class SmartpayPaymentProviderTest {
     private String url = "https://pal-test.barclaycardsmartpay.com/pal/servlet/soap/Payment";
     private String username = envOrThrow("GDS_CONNECTOR_SMARTPAY_USER");
     private String password = envOrThrow("GDS_CONNECTOR_SMARTPAY_PASSWORD");
-    private ServiceAccount validServiceAccount;
+    private GatewayAccount validGatewayAccount;
 
     @Before
     public void setUpAndCheckThatSmartpayIsUp() {
@@ -47,7 +45,7 @@ public class SmartpayPaymentProviderTest {
             Map<String, String> validSmartPayCredentials = ImmutableMap.of(
                     "username", username,
                     "password", password);
-            validServiceAccount = new ServiceAccount(123L, "smartpay", validSmartPayCredentials);
+            validGatewayAccount = new GatewayAccount(123L, "smartpay", validSmartPayCredentials);
         } catch (IOException ex) {
             Assume.assumeTrue(false);
         }
@@ -62,7 +60,7 @@ public class SmartpayPaymentProviderTest {
     @Test
     public void shouldFailRequestAuthorisationIfCredentialsAreNotCorrect() throws Exception {
         PaymentProvider paymentProvider = getSmartpayPaymentProvider();
-        ServiceAccount accountWithInvalidCredentials = new ServiceAccount(11L, "smartpay", ImmutableMap.of(
+        GatewayAccount accountWithInvalidCredentials = new GatewayAccount(11L, "smartpay", ImmutableMap.of(
                 "username","wrong-username",
                 "password","wrong-password"
         ));
@@ -78,7 +76,7 @@ public class SmartpayPaymentProviderTest {
         PaymentProvider paymentProvider = getSmartpayPaymentProvider();
         AuthorisationResponse response = testCardAuthorisation(paymentProvider);
 
-        CaptureRequest captureRequest = new CaptureRequest(CHARGE_AMOUNT, response.getTransactionId(), validServiceAccount);
+        CaptureRequest captureRequest = new CaptureRequest(CHARGE_AMOUNT, response.getTransactionId(), validGatewayAccount);
         CaptureResponse captureResponse = paymentProvider.capture(captureRequest);
         assertTrue(captureResponse.isSuccessful());
         assertNull(captureResponse.getError());
@@ -89,7 +87,7 @@ public class SmartpayPaymentProviderTest {
         PaymentProvider paymentProvider = getSmartpayPaymentProvider();
         AuthorisationResponse response = testCardAuthorisation(paymentProvider);
 
-        CancelResponse cancelResponse = paymentProvider.cancel(cancelRequest(response.getTransactionId(), validServiceAccount));
+        CancelResponse cancelResponse = paymentProvider.cancel(cancelRequest(response.getTransactionId(), validGatewayAccount));
         assertTrue(cancelResponse.isSuccessful());
         assertNull(cancelResponse.getError());
 
@@ -105,7 +103,7 @@ public class SmartpayPaymentProviderTest {
         String transactionId = response.getTransactionId();
         StatusUpdates statusResponse = paymentProvider.handleNotification(
                 notificationPayloadForTransaction(transactionId),
-                x -> validServiceAccount,
+                x -> validGatewayAccount,
                 accountUpdater
         );
 
@@ -113,7 +111,7 @@ public class SmartpayPaymentProviderTest {
     }
 
     private AuthorisationResponse testCardAuthorisation(PaymentProvider paymentProvider) {
-        AuthorisationRequest request = getCardAuthorisationRequest(validServiceAccount);
+        AuthorisationRequest request = getCardAuthorisationRequest(validGatewayAccount);
         AuthorisationResponse response = paymentProvider.authorise(request);
         assertTrue(response.isSuccessful());
 
