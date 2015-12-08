@@ -1,6 +1,8 @@
 package uk.gov.pay.connector.service;
 
 import fj.data.Either;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import uk.gov.pay.connector.dao.ChargeDao;
 import uk.gov.pay.connector.dao.GatewayAccountDao;
 import uk.gov.pay.connector.model.*;
@@ -27,8 +29,9 @@ import static uk.gov.pay.connector.model.domain.ChargeStatus.*;
 public class CardService {
     private static final String GATEWAY_ACCOUNT_ID_KEY = "gateway_account_id";
     private static final String GATEWAY_TRANSACTION_ID_KEY = "gateway_transaction_id";
-    private static final String CHARGE_ID_KEY = "charge_id";
     private static final String AMOUNT_KEY = "amount";
+
+    private final Logger logger = LoggerFactory.getLogger(CardService.class);
 
     private static final ChargeStatus[] CANCELLABLE_STATES = new ChargeStatus[]{
             CREATED, ENTERING_CARD_DETAILS, AUTHORISATION_SUCCESS, AUTHORISATION_SUBMITTED, READY_FOR_CAPTURE
@@ -85,11 +88,7 @@ public class CardService {
 
     private GatewayResponse captureFor(String chargeId, Map<String, Object> charge) {
         String transactionId = String.valueOf(charge.get(GATEWAY_TRANSACTION_ID_KEY));
-
-        //FIXME: handle optionals
-        Optional<GatewayAccount> optionalServiceAccount = findAccountByCharge(chargeId);
-        CaptureRequest request = captureRequest(transactionId, String.valueOf(charge.get(AMOUNT_KEY)), optionalServiceAccount.get());
-
+        CaptureRequest request = captureRequest(transactionId, String.valueOf(charge.get(AMOUNT_KEY)), getValidAccountForCharge().apply(chargeId));
         CaptureResponse response = paymentProviderFor(charge)
                 .capture(request);
 
@@ -104,8 +103,12 @@ public class CardService {
     }
 
     private Optional<GatewayAccount> findAccountByCharge(String chargeId) {
-        //FIXME: Handle optional
-        Optional<Map<String,Object>> charge = chargeDao.findById(chargeId);
+        Optional<Map<String, Object>> charge = chargeDao.findById(chargeId);
+        if (!charge.isPresent()) {
+            String errorMessage = String.format("No charge exists for this charge id %s.", chargeId);
+            logger.error(errorMessage);
+            throw new IllegalStateException(errorMessage);
+        }
         return accountDao.findById((String) charge.get().get("gateway_account_id"));
     }
 
@@ -124,11 +127,7 @@ public class CardService {
     }
 
     private GatewayResponse cancelFor(String chargeId, Map<String, Object> charge) {
-
-        //FIXME: Handle Optionals
-        Optional<GatewayAccount> optionalServiceAccount = findAccountByCharge(chargeId);
-        CancelRequest request = cancelRequest(String.valueOf(charge.get(GATEWAY_TRANSACTION_ID_KEY)), optionalServiceAccount.get());
-
+        CancelRequest request = cancelRequest(String.valueOf(charge.get(GATEWAY_TRANSACTION_ID_KEY)), getValidAccountForCharge().apply(chargeId));
         CancelResponse response = paymentProviderFor(charge).cancel(request);
 
         if (response.isSuccessful()) {
@@ -143,9 +142,19 @@ public class CardService {
     }
 
     private AuthorisationRequest authorisationRequest(String chargeId, String amountValue, Card card) {
-        //FIXME: Handle Optionals
-        Optional<GatewayAccount> optionalServiceAccount = findAccountByCharge(chargeId);
-        return new AuthorisationRequest(chargeId, card, amountValue, "This is the description", optionalServiceAccount.get());
+        return new AuthorisationRequest(chargeId, card, amountValue, "This is the description", getValidAccountForCharge().apply(chargeId));
+    }
+
+    private Function<String, GatewayAccount> getValidAccountForCharge() {
+        return chargeId -> {
+            Optional<GatewayAccount> optionalServiceAccount = findAccountByCharge(chargeId);
+            if (!optionalServiceAccount.isPresent()) {
+                String errorMessage = String.format("No account exists for this charge %s.", chargeId);
+                logger.error(errorMessage);
+                throw new IllegalStateException(errorMessage);
+            }
+            return optionalServiceAccount.get();
+        };
     }
 
     private boolean hasStatus(Map<String, Object> charge, ChargeStatus... states) {

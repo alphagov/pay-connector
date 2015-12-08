@@ -11,7 +11,10 @@ import static java.lang.String.format;
 import static uk.gov.pay.connector.resources.PaymentProviderValidator.*;
 import static uk.gov.pay.connector.service.GatewayClient.createGatewayClient;
 
-//FIXME: may need to refactor this
+/**
+ * TODO: This class seems to be singleton all the way down to GatewayClient
+ *       Could this cause multi-threaded issues? Need to discuss and possibly address a later point of time
+ */
 public class PaymentProviders {
     private final PaymentProvider worldpayProvider;
     private final PaymentProvider smartpayProvider;
