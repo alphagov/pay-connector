@@ -17,11 +17,15 @@ import java.io.IOException;
 import java.net.URL;
 import java.nio.charset.Charset;
 import java.util.Map;
+import java.util.function.Consumer;
 
 import static com.google.common.io.Resources.getResource;
 import static java.util.UUID.randomUUID;
 import static org.hamcrest.CoreMatchers.hasItem;
 import static org.junit.Assert.*;
+import static org.mockito.Matchers.any;
+import static org.mockito.Mockito.doNothing;
+import static org.mockito.Mockito.mock;
 import static uk.gov.pay.connector.model.domain.ChargeStatus.AUTHORISATION_SUCCESS;
 import static uk.gov.pay.connector.service.GatewayClient.createGatewayClient;
 import static uk.gov.pay.connector.util.CardUtils.aValidCard;
@@ -79,12 +83,18 @@ public class WorldpayPaymentProviderTest {
     }
 
     @Test
-    public void shouldBeAbleToQueryTheStatusOfAnExistingTransaction() throws Exception {
+    public void shouldBeAbleToHandleNotification() throws Exception {
         WorldpayPaymentProvider connector = getValidWorldpayPaymentProvider();
         AuthorisationResponse response = successfulWorldpayCardAuth(connector);
 
+        Consumer<StatusUpdates> accountUpdater = mock(Consumer.class);
+
         String transactionId = response.getTransactionId();
-        StatusUpdates statusResponse = connector.newStatusFromNotification(validServiceAccount, transactionId);
+        StatusUpdates statusResponse = connector.handleNotification(
+                notificationPayloadForTransaction(transactionId),
+                x -> validServiceAccount,
+                accountUpdater
+                );
 
         assertThat(statusResponse.getStatusUpdates(), hasItem(Pair.of(transactionId, AUTHORISATION_SUCCESS)));
     }

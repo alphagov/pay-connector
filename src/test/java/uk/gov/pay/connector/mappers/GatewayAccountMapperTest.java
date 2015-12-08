@@ -4,7 +4,7 @@ import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import org.junit.Test;
 import org.postgresql.util.PGobject;
-import uk.gov.pay.connector.model.domain.ServiceAccount;
+import uk.gov.pay.connector.model.domain.GatewayAccount;
 
 import java.io.IOException;
 import java.sql.ResultSet;
@@ -15,7 +15,7 @@ import static org.junit.Assert.assertThat;
 import static org.mockito.Matchers.any;
 import static org.mockito.Mockito.*;
 
-public class ServiceAccountMapperTest {
+public class GatewayAccountMapperTest {
 
     private ObjectMapper objectMapper = mock(ObjectMapper.class);
 
@@ -50,7 +50,7 @@ public class ServiceAccountMapperTest {
         pgObject.setValue("{}");
         when(resultSet.getObject("credentials")).thenReturn(pgObject);
 
-        ServiceAccount account = mapper.map(0, resultSet, null);
+        GatewayAccount account = mapper.map(0, resultSet, null);
 
         assertThat(account.getGatewayName(),is("worldpay"));
         assertThat(account.getId(),is(1234L));

@@ -16,6 +16,8 @@ import uk.gov.pay.connector.service.PaymentProvider;
 import javax.ws.rs.core.Response;
 import javax.xml.bind.JAXBException;
 import java.util.Optional;
+import java.util.function.Consumer;
+import java.util.function.Function;
 
 import static fj.data.Either.reduce;
 import static java.lang.String.format;
@@ -36,7 +38,6 @@ import static uk.gov.pay.connector.service.worldpay.OrderInquiryRequestBuilder.a
 import static uk.gov.pay.connector.service.worldpay.WorldpayOrderCancelRequestBuilder.aWorldpayOrderCancelRequest;
 import static uk.gov.pay.connector.util.XMLUnmarshaller.unmarshall;
 
-//FIXME: possible refactoring
 public class WorldpayPaymentProvider implements PaymentProvider {
     public static final String NOTIFICATION_ACKNOWLEDGED = "[OK]";
     public static final StatusUpdates NO_UPDATE = StatusUpdates.noUpdate(NOTIFICATION_ACKNOWLEDGED);
@@ -87,8 +88,46 @@ public class WorldpayPaymentProvider implements PaymentProvider {
         );
     }
 
+    public Optional<WorldpayNotification> parseNotification(String inboundNotification) {
+        try {
+            WorldpayNotification chargeNotification = unmarshall(inboundNotification, WorldpayNotification.class);
+            return Optional.ofNullable(chargeNotification);
+        } catch (JAXBException e) {
+            logger.error(format("Could not deserialise worldpay response %s", inboundNotification), e);
+            return Optional.empty();
+        }
+    }
+
     @Override
-    public StatusUpdates newStatusFromNotification(ServiceAccount serviceAccount, String transactionId) {
+    public StatusUpdates handleNotification(String notificationPayload, Function<String, ServiceAccount> accountFinder, Consumer<StatusUpdates> accountUpdater) {
+
+
+        Optional<WorldpayNotification> notificationMaybe = parseNotification(notificationPayload);
+        return notificationMaybe.map(notification -> {
+
+                    Optional<ChargeStatus> chargeStatus = WorldpayStatusesMapper.mapToChargeStatus(notification.getStatus());
+                    if (chargeStatus.isPresent()) {
+                        //phase 1
+                        Pair<String, ChargeStatus> pair = Pair.of(notification.getTransactionId(), chargeStatus.get());
+                        StatusUpdates statusUpdates = StatusUpdates.withUpdate(NOTIFICATION_ACKNOWLEDGED, ImmutableList.of(pair));
+                        accountUpdater.accept(statusUpdates);
+                    } else {
+                        logger.error(format("Could not map worldpay status %s to our internal status.", notification.getStatus()));
+                    }
+
+                    //phase 2
+                    ServiceAccount serviceAccount = accountFinder.apply(notification.getTransactionId());
+                    StatusUpdates statusUpdates = newStatusFromNotification(serviceAccount, notification.getTransactionId());
+
+                    if (statusUpdates.successful()) {
+                        accountUpdater.accept(statusUpdates);
+                    }
+                    return statusUpdates;
+                }
+        ).orElseGet(() -> NO_UPDATE);
+    }
+
+    private StatusUpdates newStatusFromNotification(ServiceAccount serviceAccount, String transactionId) {
         InquiryResponse inquiryResponse = inquire(transactionId, serviceAccount);
         String worldpayStatus = inquiryResponse.getNewStatus();
         if (!inquiryResponse.isSuccessful() || StringUtils.isBlank(worldpayStatus)) {
@@ -106,21 +145,11 @@ public class WorldpayPaymentProvider implements PaymentProvider {
         return StatusUpdates.withUpdate(NOTIFICATION_ACKNOWLEDGED, ImmutableList.of(update));
     }
 
-    @Override
-    public Optional<String> getNotificationTransactionId(String inboundNotification) {
-        try {
-            WorldpayNotification chargeNotification = unmarshall(inboundNotification, WorldpayNotification.class);
-            return Optional.ofNullable(chargeNotification.getTransactionId());
-        } catch (JAXBException e) {
-            logger.error(format("Could not deserialise worldpay response %s", inboundNotification), e);
-            return Optional.empty();
-        }
-    }
 
     private InquiryResponse inquire(String transactionId, ServiceAccount serviceAccount) {
         return reduce(
                 client
-                        .postXMLRequestFor(serviceAccount, buildOrderInquiryFor(serviceAccount ,transactionId))
+                        .postXMLRequestFor(serviceAccount, buildOrderInquiryFor(serviceAccount, transactionId))
                         .bimap(
                                 InquiryResponse::inquiryFailureResponse,
                                 (response) -> response.getStatus() == OK.getStatusCode() ?

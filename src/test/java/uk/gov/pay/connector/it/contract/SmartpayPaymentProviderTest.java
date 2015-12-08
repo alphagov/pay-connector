@@ -2,6 +2,8 @@ package uk.gov.pay.connector.it.contract;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.google.common.collect.ImmutableMap;
+import com.google.common.io.Resources;
+import org.apache.commons.lang3.tuple.Pair;
 import org.junit.Assume;
 import org.junit.Before;
 import org.junit.Test;
@@ -10,15 +12,23 @@ import uk.gov.pay.connector.model.domain.ServiceAccount;
 import uk.gov.pay.connector.service.GatewayClient;
 import uk.gov.pay.connector.service.PaymentProvider;
 import uk.gov.pay.connector.service.smartpay.SmartpayPaymentProvider;
+import uk.gov.pay.connector.service.worldpay.WorldpayPaymentProvider;
 import uk.gov.pay.connector.util.JerseyClientFactory;
 
 import javax.ws.rs.client.Client;
 import java.io.IOException;
 import java.net.URL;
+import java.nio.charset.Charset;
 import java.util.Map;
+import java.util.function.Consumer;
 
+import static com.google.common.io.Resources.getResource;
+import static org.hamcrest.CoreMatchers.hasItem;
 import static org.junit.Assert.*;
+import static org.mockito.Mockito.mock;
 import static uk.gov.pay.connector.model.CancelRequest.cancelRequest;
+import static uk.gov.pay.connector.model.domain.ChargeStatus.AUTHORISATION_SUCCESS;
+import static uk.gov.pay.connector.model.domain.ChargeStatus.CAPTURED;
 import static uk.gov.pay.connector.service.GatewayClient.createGatewayClient;
 import static uk.gov.pay.connector.util.AuthorisationUtils.CHARGE_AMOUNT;
 import static uk.gov.pay.connector.util.AuthorisationUtils.getCardAuthorisationRequest;
@@ -85,6 +95,23 @@ public class SmartpayPaymentProviderTest {
 
     }
 
+    @Test
+    public void shouldBeAbleToHandleNotification() throws Exception {
+        PaymentProvider paymentProvider = getSmartpayPaymentProvider();
+        AuthorisationResponse response = testCardAuthorisation(paymentProvider);
+
+        Consumer<StatusUpdates> accountUpdater = mock(Consumer.class);
+
+        String transactionId = response.getTransactionId();
+        StatusUpdates statusResponse = paymentProvider.handleNotification(
+                notificationPayloadForTransaction(transactionId),
+                x -> validServiceAccount,
+                accountUpdater
+        );
+
+        assertThat(statusResponse.getStatusUpdates(), hasItem(Pair.of(transactionId, CAPTURED)));
+    }
+
     private AuthorisationResponse testCardAuthorisation(PaymentProvider paymentProvider) {
         AuthorisationRequest request = getCardAuthorisationRequest(validServiceAccount);
         AuthorisationResponse response = paymentProvider.authorise(request);
@@ -97,5 +124,10 @@ public class SmartpayPaymentProviderTest {
         Client client = JerseyClientFactory.createJerseyClient();
         GatewayClient gatewayClient = createGatewayClient(client, url);
         return new SmartpayPaymentProvider(gatewayClient, new ObjectMapper());
+    }
+
+    private String notificationPayloadForTransaction(String transactionId) throws IOException {
+        URL resource = getResource("templates/smartpay/notification-capture.json");
+        return Resources.toString(resource, Charset.defaultCharset()).replace("{{transactionId}}", transactionId);
     }
 }

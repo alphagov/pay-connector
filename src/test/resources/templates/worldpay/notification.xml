@@ -9,7 +9,7 @@
                     <card type="creditcard"/>
                 </paymentMethodDetail>
                 <amount value="5000" currencyCode="GBP" exponent="2" debitCreditIndicator="credit"/>
-                <lastEvent>CAPTURED</lastEvent>
+                <lastEvent>{{status}}</lastEvent>
                 <CVCResultCode description="NOT SENT TO ACQUIRER"/>
                 <AVSResultCode description="NOT SENT TO ACQUIRER"/>
                 <cardHolderName><![CDATA[J. Shopper]]></cardHolderName>
@@ -19,7 +19,7 @@
                 </balance>
                 <riskScore value="66"/>
             </payment>
-            <journal journalType="CAPTURED">
+            <journal journalType="{{status}}">
                 <bookingDate>
                     <date dayOfMonth="02" month="10" year="2015"/>
                 </bookingDate>

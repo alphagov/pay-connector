@@ -12,6 +12,8 @@ import uk.gov.pay.connector.service.PaymentProvider;
 
 import java.util.Optional;
 import java.util.UUID;
+import java.util.function.Consumer;
+import java.util.function.Function;
 
 import static uk.gov.pay.connector.model.CancelResponse.aSuccessfulCancelResponse;
 import static uk.gov.pay.connector.model.CaptureResponse.aSuccessfulCaptureResponse;
@@ -58,25 +60,21 @@ public class SandboxPaymentProvider implements PaymentProvider {
         return aSuccessfulCancelResponse();
     }
 
-    //FIXME: no need of the service account
     @Override
-    public StatusUpdates newStatusFromNotification(ServiceAccount serviceAccount, String inboundNotification) {
+    public StatusUpdates handleNotification(String inboundNotification, Function<String, ServiceAccount> accountFinder, Consumer<StatusUpdates> accountUpdater) {
         try {
             JsonNode node = objectMapper.readValue(inboundNotification, JsonNode.class);
 
             String transaction_id = node.get("transaction_id").textValue();
             String newStatus = node.get("status").textValue();
 
-            return StatusUpdates.withUpdate("OK", ImmutableList.of(Pair.of(transaction_id, chargeStatusFrom(newStatus))));
+            StatusUpdates statusUpdates = StatusUpdates.withUpdate("OK", ImmutableList.of(Pair.of(transaction_id, chargeStatusFrom(newStatus))));
+            accountUpdater.accept(statusUpdates);
+            return statusUpdates;
         } catch (Exception e) {
             LOGGER.error("Error understanding sandbox notification: " + inboundNotification, e);
             return StatusUpdates.noUpdate("OK");
         }
     }
 
-    @Override
-    public Optional<String> getNotificationTransactionId(String inboundNotification) {
-        //TODO: Hopefully should dissapear after refactoring
-        return null;
-    }
 }

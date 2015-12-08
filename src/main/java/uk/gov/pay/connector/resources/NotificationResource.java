@@ -9,6 +9,7 @@ import uk.gov.pay.connector.dao.PayDBIException;
 import uk.gov.pay.connector.model.StatusUpdates;
 import uk.gov.pay.connector.model.domain.ChargeStatus;
 import uk.gov.pay.connector.model.domain.ServiceAccount;
+import uk.gov.pay.connector.service.PaymentProvider;
 import uk.gov.pay.connector.service.PaymentProviders;
 
 import javax.ws.rs.POST;
@@ -16,13 +17,12 @@ import javax.ws.rs.Path;
 import javax.ws.rs.PathParam;
 import javax.ws.rs.core.Response;
 import java.io.IOException;
-import java.util.HashMap;
-import java.util.Optional;
+import java.util.function.Consumer;
+import java.util.function.Function;
 
+import static com.google.common.collect.Lists.newLinkedList;
 import static javax.ws.rs.core.Response.Status.BAD_GATEWAY;
 
-
-//FIXME: redesign needed
 @Path("/")
 public class NotificationResource {
 
@@ -40,42 +40,36 @@ public class NotificationResource {
     @POST
     @Path("v1/api/notifications/smartpay")
     public Response authoriseSmartpayNotifications(@Auth String username, String notification) throws IOException {
-        logger.info("Received notification from smartpay" + notification);
-
-        ServiceAccount dummyServiceAccount = new ServiceAccount(-111L, "smartpay", new HashMap<String, String>());
-
-        StatusUpdates response = providers.resolve("smartpay").newStatusFromNotification(dummyServiceAccount, notification);
-
-        if (!response.successful()) {
-            return Response.status(BAD_GATEWAY).build();
-        }
-
-        response.getStatusUpdates().forEach(update -> updateCharge(chargeDao, update.getKey(), update.getValue()));
-
-        return Response.ok(response.getResponseForProvider()).build();
+        return handleNotification("smartpay", notification);
     }
 
     @POST
     @Path("v1/api/notifications/{provider}")
     public Response handleNotification(@PathParam("provider") String provider, String notification) {
+
         logger.info("Received notification from " + provider + ": " + notification);
 
-       Optional<String> transactionId =  providers.resolve(provider).getNotificationTransactionId(notification);
+        PaymentProvider paymentProvider = providers.resolve(provider);
+        StatusUpdates statusUpdates = paymentProvider.handleNotification(notification, findAccountByTransactionId(provider), accountUpdater());
 
-
-
-        Optional<String> serviceAccountId = chargeDao.findAccountByTransactionId(provider, transactionId.get());
-        Optional<ServiceAccount> serviceAccount = accountDao.findById(serviceAccountId.get());
-
-        StatusUpdates response = providers.resolve(provider).newStatusFromNotification(serviceAccount.get(), transactionId.get());
-
-        if (!response.successful()) {
+        if (!statusUpdates.successful()) {
             return Response.status(BAD_GATEWAY).build();
         }
 
-        response.getStatusUpdates().forEach(update -> updateCharge(chargeDao, update.getKey(), update.getValue()));
+        return Response.ok(statusUpdates.getResponseForProvider()).build();
+    }
 
-        return Response.ok(response.getResponseForProvider()).build();
+    private Consumer<StatusUpdates> accountUpdater() {
+        return statusUpdates ->
+                statusUpdates.getStatusUpdates().forEach(update -> updateCharge(chargeDao, update.getKey(), update.getValue()));
+    }
+
+
+    private Function<String, ServiceAccount> findAccountByTransactionId(String provider) {
+        return transactionId -> {
+            String accountId = chargeDao.findAccountByTransactionId(provider, transactionId).get();
+            return accountDao.findById(accountId).get();
+        };
     }
 
     private static void updateCharge(ChargeDao chargeDao, String key, ChargeStatus value) {

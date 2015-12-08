@@ -15,6 +15,8 @@ import java.io.IOException;
 import java.util.Collections;
 import java.util.List;
 import java.util.Optional;
+import java.util.function.Consumer;
+import java.util.function.Function;
 import java.util.stream.Collectors;
 
 import static fj.data.Either.reduce;
@@ -84,7 +86,7 @@ public class SmartpayPaymentProvider implements PaymentProvider {
     }
 
     @Override
-    public StatusUpdates newStatusFromNotification(ServiceAccount serviceAccount, String inboundNotification) {
+    public StatusUpdates handleNotification(String inboundNotification, Function<String, ServiceAccount> accountFinder, Consumer<StatusUpdates> accountUpdater) {
         try {
             List<SmartpayNotification> notifications = objectMapper.readValue(inboundNotification, SmartpayNotificationList.class).getNotifications();
             Collections.sort(notifications);
@@ -94,7 +96,9 @@ public class SmartpayPaymentProvider implements PaymentProvider {
                     .map(this::toInternalStatus)
                     .collect(Collectors.toList());
 
-            return StatusUpdates.withUpdate(ACCEPTED, updates);
+            StatusUpdates statusUpdates = StatusUpdates.withUpdate(ACCEPTED, updates);
+            accountUpdater.accept(statusUpdates);
+            return statusUpdates;
         } catch (IllegalArgumentException | IOException e) {
             // If we've failed to parse the message, we don't want it to be resent - there's no reason to believe our
             // deterministic computer code could successfully parse the same message if it arrived a second time.
@@ -103,11 +107,6 @@ public class SmartpayPaymentProvider implements PaymentProvider {
             logger.error(String.format("Could not deserialise smartpay notification:\n %s", inboundNotification), e);
         }
         return StatusUpdates.noUpdate(ACCEPTED);
-    }
-
-    @Override
-    public Optional<String> getNotificationTransactionId(String inboundNotification) {
-        return null;
     }
 
     private boolean definedStatuses(SmartpayNotification notification) {
