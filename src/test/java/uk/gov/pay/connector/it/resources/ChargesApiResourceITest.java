@@ -18,8 +18,8 @@ import static org.apache.commons.lang3.RandomStringUtils.randomAlphanumeric;
 import static org.hamcrest.Matchers.*;
 import static uk.gov.pay.connector.model.api.ExternalChargeStatus.EXT_IN_PROGRESS;
 import static uk.gov.pay.connector.model.domain.ChargeStatus.AUTHORISATION_SUCCESS;
-import static uk.gov.pay.connector.resources.ApiPaths.OLD_CHARGES_API_PATH;
-import static uk.gov.pay.connector.resources.ApiPaths.OLD_GET_CHARGE_API_PATH;
+import static uk.gov.pay.connector.resources.ApiPaths.CHARGES_API_PATH;
+import static uk.gov.pay.connector.resources.ApiPaths.CHARGE_API_PATH;
 import static uk.gov.pay.connector.util.JsonEncoder.toJson;
 import static uk.gov.pay.connector.util.LinksAssert.assertNextUrlLink;
 import static uk.gov.pay.connector.util.LinksAssert.assertSelfLink;
@@ -43,8 +43,8 @@ public class ChargesApiResourceITest {
     private String accountId = "72332423443245";
     private String returnUrl = "http://service.url/success-page/";
 
-    private RestAssuredClient restApiCall = new RestAssuredClient(app, accountId, OLD_CHARGES_API_PATH);
-    private RestAssuredClient restApiGetCall = new RestAssuredClient(app, accountId, OLD_GET_CHARGE_API_PATH);
+    private RestAssuredClient createChargeApi = new RestAssuredClient(app, accountId, CHARGES_API_PATH);
+    private RestAssuredClient getChargeApi = new RestAssuredClient(app, accountId, CHARGE_API_PATH);
 
     @Before
     public void setupGatewayAccount() {
@@ -63,7 +63,7 @@ public class ChargesApiResourceITest {
                 JSON_DESCRIPTION_KEY, expectedDescription,
                 JSON_GATEWAY_ACC_KEY, accountId,
                 JSON_RETURN_URL_KEY, returnUrl));
-        ValidatableResponse response = restApiCall
+        ValidatableResponse response = createChargeApi
                 .postCreateCharge(postBody)
                 .statusCode(CREATED.getStatusCode())
                 .body(JSON_CHARGE_KEY, is(notNullValue()))
@@ -74,13 +74,14 @@ public class ChargesApiResourceITest {
                 .contentType(JSON);
 
         String chargeId = response.extract().path(JSON_CHARGE_KEY);
-        String documentLocation = expectedChargeLocationFor(chargeId);
+        String documentLocation = expectedChargeLocationFor(accountId, chargeId);
 
         response.header("Location", is(documentLocation));
         assertSelfLink(response, documentLocation);
         assertNextUrlLink(response, cardDetailsLocationFor(chargeId));
 
-        ValidatableResponse getChargeResponse = restApiGetCall
+        ValidatableResponse getChargeResponse = getChargeApi
+                .withAccountId(accountId)
                 .withChargeId(chargeId)
                 .getCharge()
                 .statusCode(OK.getStatusCode())
@@ -101,7 +102,8 @@ public class ChargesApiResourceITest {
         app.getDatabaseTestHelper().addCharge(chargeId, accountId, amount, AUTHORISATION_SUCCESS, returnUrl, null);
         app.getDatabaseTestHelper().addToken(chargeId, "tokenId");
 
-        restApiGetCall
+        getChargeApi
+                .withAccountId(accountId)
                 .withChargeId(chargeId)
                 .getCharge()
                 .statusCode(OK.getStatusCode())
@@ -117,10 +119,11 @@ public class ChargesApiResourceITest {
                 JSON_AMOUNT_KEY, amount,
                 JSON_REFERENCE_KEY, "Test reference",
                 JSON_DESCRIPTION_KEY, "Test description",
-                JSON_GATEWAY_ACC_KEY, missingGatewayAccount,
                 JSON_RETURN_URL_KEY, returnUrl));
-        restApiCall.postCreateCharge(postBody)
-                .statusCode(BAD_REQUEST.getStatusCode())
+        createChargeApi
+                .withAccountId(missingGatewayAccount)
+                .postCreateCharge(postBody)
+                .statusCode(NOT_FOUND.getStatusCode())
                 .contentType(JSON)
                 .header("Location", is(nullValue()))
                 .body(JSON_CHARGE_KEY, is(nullValue()))
@@ -135,7 +138,7 @@ public class ChargesApiResourceITest {
                 JSON_DESCRIPTION_KEY, randomAlphanumeric(256),
                 JSON_GATEWAY_ACC_KEY, accountId,
                 JSON_RETURN_URL_KEY, returnUrl));
-        restApiCall.postCreateCharge(postBody)
+        createChargeApi.postCreateCharge(postBody)
                 .statusCode(BAD_REQUEST.getStatusCode())
                 .contentType(JSON)
                 .header("Location", is(nullValue()))
@@ -145,18 +148,19 @@ public class ChargesApiResourceITest {
 
     @Test
     public void cannotMakeChargeForMissingFields() throws Exception {
-        restApiCall.postCreateCharge("{}")
+        createChargeApi.postCreateCharge("{}")
                 .statusCode(BAD_REQUEST.getStatusCode())
                 .contentType(JSON)
                 .header("Location", is(nullValue()))
                 .body(JSON_CHARGE_KEY, is(nullValue()))
-                .body(JSON_MESSAGE_KEY, is("Field(s) missing: [amount, description, gateway_account_id, reference, return_url]"));
+                .body(JSON_MESSAGE_KEY, is("Field(s) missing: [amount, description, reference, return_url]"));
     }
 
     @Test
     public void cannotGetCharge_WhenInvalidChargeId() throws Exception {
         String chargeId = "23235124";
-        restApiGetCall
+        getChargeApi
+                .withAccountId(accountId)
                 .withChargeId(chargeId)
                 .getCharge()
                 .statusCode(NOT_FOUND.getStatusCode())
@@ -164,8 +168,10 @@ public class ChargesApiResourceITest {
                 .body(JSON_MESSAGE_KEY, is(format("Charge with id [%s] not found.", chargeId)));
     }
 
-    private String expectedChargeLocationFor(String chargeId) {
-        return "http://localhost:" + app.getLocalPort() + OLD_GET_CHARGE_API_PATH.replace("{chargeId}", chargeId);
+    private String expectedChargeLocationFor(String accountId, String chargeId) {
+        return "http://localhost:" + app.getLocalPort() + CHARGE_API_PATH
+                .replace("{accountId}", accountId)
+                .replace("{chargeId}", chargeId);
     }
 
     private String cardDetailsLocationFor(String chargeId) {

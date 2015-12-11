@@ -20,7 +20,7 @@ import static org.hamcrest.Matchers.is;
 import static uk.gov.pay.connector.model.api.ExternalChargeStatus.EXT_SYSTEM_CANCELLED;
 import static uk.gov.pay.connector.model.domain.ChargeStatus.*;
 import static uk.gov.pay.connector.model.domain.ChargeStatus.CREATED;
-import static uk.gov.pay.connector.resources.ApiPaths.CHARGES_API_PATH;
+import static uk.gov.pay.connector.resources.ApiPaths.CHARGE_API_PATH;
 import static uk.gov.pay.connector.resources.ApiPaths.OLD_GET_CHARGE_API_PATH;
 import static uk.gov.pay.connector.resources.ApiPaths.OLD_GET_CHARGE_FRONTEND_PATH;
 
@@ -42,7 +42,7 @@ public class ChargeCancelResourceITest {
     public void setupGatewayAccount() {
         restOldApiCall = new RestAssuredClient(app, accountId, OLD_GET_CHARGE_API_PATH);
         restOldFrontendCall = new RestAssuredClient(app, accountId, OLD_GET_CHARGE_FRONTEND_PATH);
-        restApiCall = new RestAssuredClient(app, accountId, CHARGES_API_PATH);
+        restApiCall = new RestAssuredClient(app, accountId, CHARGE_API_PATH);
         app.getDatabaseTestHelper().addGatewayAccount(accountId, "sandbox");
     }
 

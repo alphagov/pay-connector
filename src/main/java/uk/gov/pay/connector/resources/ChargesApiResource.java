@@ -28,16 +28,17 @@ import static org.apache.commons.lang3.StringUtils.isEmpty;
 import static uk.gov.pay.connector.model.api.ExternalChargeStatus.mapFromStatus;
 import static uk.gov.pay.connector.resources.ApiPaths.OLD_CHARGES_API_PATH;
 import static uk.gov.pay.connector.resources.ApiPaths.OLD_GET_CHARGE_API_PATH;
+import static uk.gov.pay.connector.resources.ApiPaths.CHARGE_API_PATH;
+import static uk.gov.pay.connector.resources.ApiPaths.CHARGES_API_PATH;
 import static uk.gov.pay.connector.util.ResponseUtil.*;
 
 @Path("/")
 public class ChargesApiResource {
     private static final String AMOUNT_KEY = "amount";
     private static final String DESCRIPTION_KEY = "description";
-    private static final String GATEWAY_ACCOUNT_KEY = "gateway_account_id";
     private static final String RETURN_URL_KEY = "return_url";
     private static final String REFERENCE_KEY = "reference";
-    private static final String[] REQUIRED_FIELDS = {AMOUNT_KEY, DESCRIPTION_KEY, GATEWAY_ACCOUNT_KEY, REFERENCE_KEY, RETURN_URL_KEY};
+    private static final String[] REQUIRED_FIELDS = {AMOUNT_KEY, DESCRIPTION_KEY, REFERENCE_KEY, RETURN_URL_KEY};
     private static final Map<String, Integer> MAXIMUM_FIELDS_SIZE = ImmutableMap.of(
             DESCRIPTION_KEY, 255,
             REFERENCE_KEY, 255
@@ -59,6 +60,29 @@ public class ChargesApiResource {
     }
 
     @GET
+    @Path(CHARGE_API_PATH)
+    @Produces(APPLICATION_JSON)
+    public Response getChargeForAccount(@PathParam("accountId") String accountId, @PathParam("chargeId") String chargeId, @Context UriInfo uriInfo) {
+        Optional<Map<String, Object>> maybeCharge = chargeDao.findChargeForAccount(chargeId, accountId);
+
+        return maybeCharge
+                .map(charge -> {
+                    URI selfUri = selfUriForNew(uriInfo, accountId, chargeId);
+                    String tokenId = tokenDao.findByChargeId(chargeId);
+                    Map<String, Object> responseData = getResponseData(chargeId, tokenId, charge, selfUri);
+
+                    return ResponseUtil.entityResponse(responseData);
+                })
+                .orElseGet(() -> responseWithChargeNotFound(logger, chargeId));
+
+    }
+
+    /**
+     * TODO: Keeping this api temporarily to keep things backward compatible.
+     * Need to remove once the PublicApi is migrated to use 'getChargeForAccount' apit above.
+     */
+    @Deprecated
+    @GET
     @Path(OLD_GET_CHARGE_API_PATH)
     @Produces(APPLICATION_JSON)
     public Response getCharge(@PathParam("chargeId") String chargeId, @Context UriInfo uriInfo) {
@@ -75,6 +99,50 @@ public class ChargesApiResource {
                 .orElseGet(() -> responseWithChargeNotFound(logger, chargeId));
     }
 
+
+    @POST
+    @Path(CHARGES_API_PATH)
+    @Produces(APPLICATION_JSON)
+    public Response createNewChargeForAccount(@PathParam("accountId") String accountId, Map<String, Object> chargeRequest, @Context UriInfo uriInfo) {
+        Optional<List<String>> missingFields = checkMissingFields(chargeRequest);
+        if (missingFields.isPresent()) {
+            return fieldsMissingResponse(logger, missingFields.get());
+        }
+
+        Optional<List<String>> invalidSizeFields = checkInvalidSizeFields(chargeRequest);
+        if (invalidSizeFields.isPresent()) {
+            return fieldsInvalidSizeResponse(logger, invalidSizeFields.get());
+        }
+
+        if (gatewayAccountDao.idIsMissing(accountId)) {
+            return notFoundResponse(logger, "Unknown gateway account: " + accountId);
+        }
+
+        logger.info("Creating new charge of {}.", chargeRequest);
+        String chargeId = chargeDao.saveNewCharge(chargeRequest);
+        String tokenId = UUID.randomUUID().toString();
+        tokenDao.insertNewToken(chargeId, tokenId);
+
+        Optional<Map<String, Object>> maybeCharge = chargeDao.findById(chargeId);
+
+        return maybeCharge
+                .map(charge -> {
+                    URI selfUri = selfUriForNew(uriInfo, accountId, chargeId);
+                    Map<String, Object> responseData = getResponseData(chargeId, tokenId, charge, selfUri);
+
+                    logger.info("charge = {}", charge);
+                    logger.info("responseData = {}", responseData);
+
+                    return entityCreatedResponse(selfUri, responseData);
+                })
+                .orElseGet(() -> responseWithChargeNotFound(logger, chargeId));
+    }
+
+    /**
+     * TODO: This is kept for backward compatibility
+     * Need to remove this method, once the public api is migrated to 'createNewChargeForAccount' api above
+     */
+    @Deprecated
     @POST
     @Path(OLD_CHARGES_API_PATH)
     @Produces(APPLICATION_JSON)
@@ -133,10 +201,23 @@ public class ChargesApiResource {
         return data;
     }
 
+    /**
+     * TODO: remove this
+     * (for Backward compatibility)
+     */
     private URI selfUriFor(UriInfo uriInfo, String chargeId) {
         return uriInfo.getBaseUriBuilder()
                 .path(OLD_GET_CHARGE_API_PATH)
                 .build(chargeId);
+    }
+
+    /**
+     * TODO: rename this after removing the above 'selfUriFor'
+     */
+    private URI selfUriForNew(UriInfo uriInfo, String accountId ,String chargeId) {
+        return uriInfo.getBaseUriBuilder()
+                .path(CHARGE_API_PATH)
+                .build(accountId, chargeId);
     }
 
     private URI secureRedirectUriFor(String chargeId, String tokenId) {

@@ -38,7 +38,7 @@ public class ChargeDao {
     public Optional<Map<String, Object>> findChargeForAccount(String chargeId, String accountId) {
         Map<String, Object> data = jdbi.withHandle(handle ->
                 handle
-                        .createQuery("SELECT charge_id, amount, gateway_account_id, status, return_url, gateway_transaction_id " +
+                        .createQuery("SELECT charge_id, amount, gateway_account_id, status, return_url, gateway_transaction_id, description, reference " +
                                 "FROM charges WHERE charge_id=:charge_id AND gateway_account_id=:account_id")
                         .bind("charge_id", Long.valueOf(chargeId))
                         .bind("account_id", Long.valueOf(accountId))
@@ -178,5 +178,4 @@ public class ChargeDao {
 
         return Optional.ofNullable(data.get("gateway_account_id").toString());
     }
-
 }
