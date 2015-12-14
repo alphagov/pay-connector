@@ -119,7 +119,7 @@ public class ChargesApiResource {
         }
 
         logger.info("Creating new charge of {}.", chargeRequest);
-        String chargeId = chargeDao.saveNewCharge(chargeRequest);
+        String chargeId = chargeDao.saveNewCharge(accountId, chargeRequest);
         String tokenId = UUID.randomUUID().toString();
         tokenDao.insertNewToken(chargeId, tokenId);
 
@@ -163,7 +163,7 @@ public class ChargesApiResource {
         }
 
         logger.info("Creating new charge of {}.", chargeRequest);
-        String chargeId = chargeDao.saveNewCharge(chargeRequest);
+        String chargeId = chargeDao.saveNewCharge((String) chargeRequest.get("gateway_account_id"), chargeRequest);
         String tokenId = UUID.randomUUID().toString();
         tokenDao.insertNewToken(chargeId, tokenId);
 
