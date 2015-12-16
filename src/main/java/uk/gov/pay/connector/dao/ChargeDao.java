@@ -22,13 +22,13 @@ public class ChargeDao {
         this.jdbi = jdbi;
     }
 
-    public String saveNewCharge(Map<String, Object> charge) {
-        Map<String, Object> fixedCharge = copyAndConvertFieldToLong(charge, "gateway_account_id");
+    public String saveNewCharge(String gatewayAccountId, Map<String, Object> charge) {
         return jdbi.withHandle(handle ->
                         handle
                                 .createStatement("INSERT INTO charges(amount, gateway_account_id, status, return_url, description, reference) " +
                                         "VALUES (:amount, :gateway_account_id, :status, :return_url, :description, :reference)")
-                                .bindFromMap(fixedCharge)
+                                .bindFromMap(charge)
+                                .bind("gateway_account_id", Long.valueOf(gatewayAccountId))
                                 .bind("status", CREATED.getValue())
                                 .executeAndReturnGeneratedKeys(StringMapper.FIRST)
                                 .first()
@@ -38,7 +38,7 @@ public class ChargeDao {
     public Optional<Map<String, Object>> findChargeForAccount(String chargeId, String accountId) {
         Map<String, Object> data = jdbi.withHandle(handle ->
                 handle
-                        .createQuery("SELECT charge_id, amount, gateway_account_id, status, return_url, gateway_transaction_id " +
+                        .createQuery("SELECT charge_id, amount, gateway_account_id, status, return_url, gateway_transaction_id, description, reference " +
                                 "FROM charges WHERE charge_id=:charge_id AND gateway_account_id=:account_id")
                         .bind("charge_id", Long.valueOf(chargeId))
                         .bind("account_id", Long.valueOf(accountId))
@@ -142,13 +142,6 @@ public class ChargeDao {
                 .collect(Collectors.joining(","));
     }
 
-    private Map<String, Object> copyAndConvertFieldToLong(Map<String, Object> charge, String field) {
-        Map<String, Object> copy = newHashMap(charge);
-        Long fieldAsLong = Long.valueOf(copy.remove(field).toString());
-        copy.put(field, fieldAsLong);
-        return copy;
-    }
-
     private Map<String, Object> copyAndConvertFieldsToString(Map<String, Object> data, String... fields) {
         Map<String, Object> copy = newHashMap(data);
         for (String field : fields) {
@@ -178,5 +171,4 @@ public class ChargeDao {
 
         return Optional.ofNullable(data.get("gateway_account_id").toString());
     }
-
 }

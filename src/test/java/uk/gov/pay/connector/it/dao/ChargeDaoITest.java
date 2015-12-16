@@ -44,7 +44,7 @@ public class ChargeDaoITest {
         chargeDao = new ChargeDao(app.getJdbi());
         app.getDatabaseTestHelper().addGatewayAccount(GATEWAY_ACCOUNT_ID, "test_account");
 
-        chargeId = chargeDao.saveNewCharge(newCharge(AMOUNT));
+        chargeId = chargeDao.saveNewCharge(GATEWAY_ACCOUNT_ID, newCharge(AMOUNT));
     }
 
     @Test
@@ -133,7 +133,7 @@ public class ChargeDaoITest {
         expectedEx.expect(RuntimeException.class);
         Map<String, Object> chargeData = new HashMap<>(newCharge(AMOUNT));
         chargeData.put("reference", randomAlphanumeric(512));
-        chargeId = chargeDao.saveNewCharge(chargeData);
+        chargeId = chargeDao.saveNewCharge(GATEWAY_ACCOUNT_ID, chargeData);
     }
 
     private ImmutableMap<String, Object> newCharge(long amount) {
@@ -141,7 +141,6 @@ public class ChargeDaoITest {
                 "amount", amount,
                 "reference", REFERENCE,
                 "description", DESCRIPTION,
-                "gateway_account_id", GATEWAY_ACCOUNT_ID,
                 "return_url", RETURN_URL);
     }
 }
