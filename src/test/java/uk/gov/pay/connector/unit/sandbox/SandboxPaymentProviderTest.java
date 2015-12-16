@@ -25,12 +25,11 @@ public class SandboxPaymentProviderTest {
 
     @Test
     public void shouldSuccessfullyParseANotification() throws Exception {
-        StatusUpdates statusUpdates = sandboxClient.handleNotification(toJson(ImmutableMap.of(
-                "transaction_id", "transaction",
-                "status", AUTHORISATION_REJECTED.getValue())),
+        StatusUpdates statusUpdates = sandboxClient.handleNotification(
+                mockInboundNotificationWithStatus(AUTHORISATION_REJECTED.getValue()),
                 x -> aServiceAccount(),
                 accountUpdater
-                );
+        );
 
         assertThat(statusUpdates.successful(), is(true));
         assertThat(statusUpdates.getStatusUpdates(), hasItem(Pair.of("transaction", AUTHORISATION_REJECTED)));
@@ -39,9 +38,8 @@ public class SandboxPaymentProviderTest {
 
     @Test
     public void shouldIgnoreUnknownStatuses() throws Exception {
-        StatusUpdates statusUpdates = sandboxClient.handleNotification(toJson(ImmutableMap.of(
-                "transaction_id", "transaction",
-                "status", "UNKNOWN_STATUS")),
+        StatusUpdates statusUpdates = sandboxClient.handleNotification(
+                mockInboundNotificationWithStatus("UNKNOWN_STATUS"),
                 x -> aServiceAccount(),
                 accountUpdater);
 
@@ -53,7 +51,7 @@ public class SandboxPaymentProviderTest {
     @Test
     public void shouldIgnoreMalformedJson() throws Exception {
         StatusUpdates statusUpdates = sandboxClient.handleNotification("{",
-                x ->aServiceAccount(),
+                x -> aServiceAccount(),
                 accountUpdater);
 
         assertThat(statusUpdates.successful(), is(true));
@@ -74,6 +72,12 @@ public class SandboxPaymentProviderTest {
 
     private GatewayAccount aServiceAccount() {
         return new GatewayAccount(1L, "smartpay", new HashMap<String, String>());
+    }
+
+    private String mockInboundNotificationWithStatus(String statusValue) {
+        return toJson(ImmutableMap.of(
+                "transaction_id", "transaction",
+                "status", statusValue));
     }
 
 

@@ -107,7 +107,7 @@ public class CardService {
         if (!charge.isPresent()) {
             String errorMessage = String.format("No charge exists for this charge id %s.", chargeId);
             logger.error(errorMessage);
-            throw new IllegalStateException(errorMessage);
+            return Optional.empty();
         }
         return accountDao.findById((String) charge.get().get("gateway_account_id"));
     }
@@ -151,7 +151,7 @@ public class CardService {
             if (!optionalServiceAccount.isPresent()) {
                 String errorMessage = String.format("No account exists for this charge %s.", chargeId);
                 logger.error(errorMessage);
-                throw new IllegalStateException(errorMessage);
+                throw new RuntimeException(errorMessage);
             }
             return optionalServiceAccount.get();
         };

@@ -14,6 +14,8 @@ import static com.jayway.restassured.RestAssured.given;
 import static javax.ws.rs.core.MediaType.TEXT_XML;
 import static org.hamcrest.Matchers.is;
 import static org.junit.Assert.assertThat;
+import static uk.gov.pay.connector.it.resources.worldpay.WorldpayPaymentStatus.AUTHORISED;
+import static uk.gov.pay.connector.it.resources.worldpay.WorldpayPaymentStatus.REFUSED;
 import static uk.gov.pay.connector.model.domain.ChargeStatus.*;
 import static uk.gov.pay.connector.resources.PaymentProviderValidator.WORLDPAY_PROVIDER;
 import static uk.gov.pay.connector.util.TransactionId.randomId;
@@ -33,9 +35,9 @@ public class WorldpayNotificationResourceITest extends CardResourceITestBase {
         String transactionId = randomId();
         String chargeId = createNewChargeWith(AUTHORISATION_SUCCESS, transactionId);
 
-        worldpay.mockInquiryResponse(transactionId, "REFUSED");
+        worldpay.mockInquiryResponse(transactionId, REFUSED.value());
 
-        String response = notifyConnector(transactionId, "AUTHORISED")
+        String response = notifyConnector(transactionId, AUTHORISED.value())
                 .statusCode(200)
                 .extract().body()
                 .asString();
@@ -51,9 +53,9 @@ public class WorldpayNotificationResourceITest extends CardResourceITestBase {
         String transactionId = randomId();
         String chargeId = createNewChargeWith(AUTHORISATION_SUBMITTED, transactionId);
 
-        worldpay.mockInquiryResponse(transactionId, "CAPTURED");
+            worldpay.mockInquiryResponse(transactionId, WorldpayPaymentStatus.CAPTURED.value());
 
-        String response = notifyConnector(transactionId, "CAPTURED")
+        String response = notifyConnector(transactionId, WorldpayPaymentStatus.CAPTURED.value())
                 .statusCode(200)
                 .extract().body()
                 .asString();
@@ -70,7 +72,7 @@ public class WorldpayNotificationResourceITest extends CardResourceITestBase {
 
         worldpay.mockInquiryResponse(transactionId, "PAID IN FULL WITH CABBAGES");
 
-        String response = notifyConnector(transactionId, "AUTHORISED")
+        String response = notifyConnector(transactionId, AUTHORISED.value())
                 .statusCode(200)
                 .extract().body()
                 .asString();
@@ -85,7 +87,7 @@ public class WorldpayNotificationResourceITest extends CardResourceITestBase {
         String transactionId = randomId();
         String chargeId = createNewChargeWith(AUTHORISATION_SUCCESS, transactionId);
 
-        worldpay.mockInquiryResponse(transactionId, "CAPTURED");
+        worldpay.mockInquiryResponse(transactionId, WorldpayPaymentStatus.CAPTURED.value());
 
         String response = notifyConnector(transactionId, "GARBAGE")
                 .statusCode(200)
