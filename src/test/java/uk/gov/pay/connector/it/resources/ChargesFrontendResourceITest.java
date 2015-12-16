@@ -35,10 +35,9 @@ public class ChargesFrontendResourceITest {
     private String returnUrl = "http://whatever.com";
     private long expectedAmount = 6234L;
 
-    //TODO: This requires refactoring to move to the new REST endpoints convention
-    private RestAssuredClient restOldApiCall = new RestAssuredClient(app, accountId, OLD_CHARGES_API_PATH);
-    private RestAssuredClient restOldFrontendCall = new RestAssuredClient(app, accountId, OLD_CHARGES_FRONTEND_PATH);
-    private RestAssuredClient restFrontendCall = new RestAssuredClient(app, accountId, OLD_GET_CHARGE_FRONTEND_PATH);
+    private RestAssuredClient chargeCall = new RestAssuredClient(app, accountId, CHARGES_API_PATH);
+    private RestAssuredClient frontendChargesCall = new RestAssuredClient(app, accountId, CHARGES_FRONTEND_PATH);
+    private RestAssuredClient frontendChargeCall = new RestAssuredClient(app, accountId, GET_CHARGE_FRONTEND_PATH);
 
     @Before
     public void setupGatewayAccount() {
@@ -73,7 +72,7 @@ public class ChargesFrontendResourceITest {
         String chargeId = postToCreateACharge(expectedAmount);
         String putBody = toJson(ImmutableMap.of("new_status", ENTERING_CARD_DETAILS.getValue()));
 
-        restFrontendCall
+        frontendChargeCall
                 .withAccountId(accountId)
                 .withChargeId(chargeId)
                 .putChargeStatus(putBody)
@@ -88,7 +87,7 @@ public class ChargesFrontendResourceITest {
         String chargeId = postToCreateACharge(expectedAmount);
         String putBody = "";
 
-        restFrontendCall
+        frontendChargeCall
                 .withChargeId(chargeId)
                 .putChargeStatus(putBody)
                 .statusCode(BAD_REQUEST.getStatusCode())
@@ -103,7 +102,7 @@ public class ChargesFrontendResourceITest {
         String chargeId = postToCreateACharge(expectedAmount);
         String putBody = toJson(ImmutableMap.of("new_status", "junk"));
 
-        restFrontendCall
+        frontendChargeCall
                 .withAccountId(accountId)
                 .withChargeId(chargeId)
                 .putChargeStatus(putBody)
@@ -117,7 +116,7 @@ public class ChargesFrontendResourceITest {
     @Test
     public void cannotGetCharge_WhenInvalidChargeId() throws Exception {
         String chargeId = "23235124";
-        restFrontendCall
+        frontendChargeCall
                 .withChargeId(chargeId)
                 .getCharge()
                 .statusCode(NOT_FOUND.getStatusCode())
@@ -139,7 +138,7 @@ public class ChargesFrontendResourceITest {
         app.getDatabaseTestHelper().addGatewayAccount(anotherAccountId, "another test gateway");
         app.getDatabaseTestHelper().addCharge("5001", anotherAccountId, 200, AUTHORISATION_SUBMITTED, returnUrl, "transaction-id-2");
 
-        ValidatableResponse response = restOldFrontendCall
+        ValidatableResponse response = frontendChargesCall
                 .getTransactions();
 
         response.statusCode(OK.getStatusCode())
@@ -155,7 +154,7 @@ public class ChargesFrontendResourceITest {
         app.getDatabaseTestHelper().addCharge("102", accountId, 300, AUTHORISATION_REJECTED, returnUrl, null);
         app.getDatabaseTestHelper().addCharge("103", accountId, 100, AUTHORISATION_SUBMITTED, returnUrl, randomUUID().toString());
 
-        ValidatableResponse response = restOldFrontendCall
+        ValidatableResponse response = frontendChargesCall
                 .getTransactions();
 
         response.statusCode(OK.getStatusCode())
@@ -171,7 +170,7 @@ public class ChargesFrontendResourceITest {
     @Test
     public void shouldReturn404_IfNoAccountExistsForTheGivenAccountId() {
         String nonExistentAccountId = "123456789";
-        ValidatableResponse response = restOldFrontendCall
+        ValidatableResponse response = frontendChargesCall
                 .withAccountId(nonExistentAccountId)
                 .getTransactions();
 
@@ -182,7 +181,7 @@ public class ChargesFrontendResourceITest {
 
     @Test
     public void shouldReturn400IfGatewayAccountIsMissingWhenListingTransactions() {
-        ValidatableResponse response = restOldFrontendCall
+        ValidatableResponse response = frontendChargesCall
                 .withAccountId("")
                 .getTransactions();
 
@@ -194,7 +193,7 @@ public class ChargesFrontendResourceITest {
     @Test
     public void shouldReturn400IfGatewayAccountIsNotANumberWhenListingTransactions() {
         String invalidAccRef = "XYZ";
-        ValidatableResponse response = restOldFrontendCall
+        ValidatableResponse response = frontendChargesCall
                 .withAccountId(invalidAccRef)
                 .getTransactions();
 
@@ -205,7 +204,7 @@ public class ChargesFrontendResourceITest {
 
     @Test
     public void shouldReturnEmptyResult_IfNoTransactionsExistForAccount() {
-        ValidatableResponse response = restOldFrontendCall
+        ValidatableResponse response = frontendChargesCall
                 .getTransactions();
 
         response.statusCode(OK.getStatusCode())
@@ -228,7 +227,7 @@ public class ChargesFrontendResourceITest {
                 "gateway_account_id", accountId,
                 "return_url", returnUrl));
 
-        ValidatableResponse response = restOldApiCall
+        ValidatableResponse response = chargeCall
                 .withAccountId(accountId)
                 .postCreateCharge(postBody)
                 .statusCode(Status.CREATED.getStatusCode())
@@ -243,7 +242,7 @@ public class ChargesFrontendResourceITest {
     }
 
     private ValidatableResponse validateGetCharge(long expectedAmount, String chargeId, ChargeStatus chargeStatus) {
-        return restFrontendCall
+        return frontendChargeCall
                 .withChargeId(chargeId)
                 .getCharge()
                 .statusCode(OK.getStatusCode())
@@ -258,6 +257,6 @@ public class ChargesFrontendResourceITest {
     }
 
     private String expectedChargeUrl(String chargeId, String path) {
-        return "http://localhost:" + app.getLocalPort() + OLD_GET_CHARGE_FRONTEND_PATH.replace("{chargeId}", chargeId) + path;
+        return "http://localhost:" + app.getLocalPort() + GET_CHARGE_FRONTEND_PATH.replace("{chargeId}", chargeId) + path;
     }
 }

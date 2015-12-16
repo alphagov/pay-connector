@@ -54,8 +54,8 @@ public class CardResourceITestBase {
         app = new DropwizardAppWithPostgresRule(
                 config("worldpay.url", "http://localhost:" + port + "/jsp/merchant/xml/paymentService.jsp"),
                 config("smartpay.url", "http://localhost:" + port + "/pal/servlet/soap/Payment"));
-        restFrontendCall = new RestAssuredClient(app, accountId, OLD_GET_CHARGE_FRONTEND_PATH);
-        restApiCall = new RestAssuredClient(app, accountId, OLD_GET_CHARGE_API_PATH);
+        restFrontendCall = new RestAssuredClient(app, accountId, GET_CHARGE_FRONTEND_PATH);
+        restApiCall = new RestAssuredClient(app, accountId, CHARGE_API_PATH);
     }
 
     @Before

@@ -35,7 +35,7 @@ import static uk.gov.pay.connector.util.ResponseUtil.*;
 
 @Path("/")
 public class ChargesFrontendResource {
-    private static final String PUT_CHARGE_STATUS_FRONTEND_PATH = OLD_GET_CHARGE_FRONTEND_PATH + "/status";
+    private static final String PUT_CHARGE_STATUS_FRONTEND_PATH = GET_CHARGE_FRONTEND_PATH + "/status";
 
     private static final Logger logger = LoggerFactory.getLogger(ChargesFrontendResource.class);
     private final ChargeDao chargeDao;
@@ -47,7 +47,7 @@ public class ChargesFrontendResource {
     }
 
     @GET
-    @Path(OLD_GET_CHARGE_FRONTEND_PATH)
+    @Path(GET_CHARGE_FRONTEND_PATH)
     @Produces(APPLICATION_JSON)
     public Response getCharge(@PathParam("chargeId") String chargeId, @Context UriInfo uriInfo) {
         Optional<Map<String, Object>> maybeCharge = chargeDao.findById(chargeId);
@@ -73,7 +73,7 @@ public class ChargesFrontendResource {
     }
 
     @GET
-    @Path(OLD_CHARGES_FRONTEND_PATH)
+    @Path(CHARGES_FRONTEND_PATH)
     @Produces(APPLICATION_JSON)
     public Response getCharges(@QueryParam("gatewayAccountId") String gatewayAccountId, @Context UriInfo uriInfo) {
         return reduce(validateGatewayAccountReference(gatewayAccountId)
@@ -106,7 +106,7 @@ public class ChargesFrontendResource {
                 .withCharge(charge)
                 .withoutChargeField("gateway_account_id")
                 .withoutChargeField("reference")
-                .withLink("self", GET, locationUriFor(OLD_GET_CHARGE_FRONTEND_PATH, uriInfo, chargeId))
+                .withLink("self", GET, locationUriFor(GET_CHARGE_FRONTEND_PATH, uriInfo, chargeId))
                 .withLink("cardAuth", POST, locationUriFor(FRONTEND_AUTHORIZATION_RESOURCE, uriInfo, chargeId))
                 .withLink("cardCapture", POST, locationUriFor(FRONTEND_CAPTURE_RESOURCE, uriInfo, chargeId))
                 .build();

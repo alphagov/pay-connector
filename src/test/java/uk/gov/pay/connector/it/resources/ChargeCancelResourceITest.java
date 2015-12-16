@@ -21,8 +21,7 @@ import static uk.gov.pay.connector.model.api.ExternalChargeStatus.EXT_SYSTEM_CAN
 import static uk.gov.pay.connector.model.domain.ChargeStatus.*;
 import static uk.gov.pay.connector.model.domain.ChargeStatus.CREATED;
 import static uk.gov.pay.connector.resources.ApiPaths.CHARGE_API_PATH;
-import static uk.gov.pay.connector.resources.ApiPaths.OLD_GET_CHARGE_API_PATH;
-import static uk.gov.pay.connector.resources.ApiPaths.OLD_GET_CHARGE_FRONTEND_PATH;
+import static uk.gov.pay.connector.resources.ApiPaths.GET_CHARGE_FRONTEND_PATH;
 
 public class ChargeCancelResourceITest {
     private static final List<ChargeStatus> CANCELLABLE_STATES = ImmutableList.of(
@@ -34,14 +33,12 @@ public class ChargeCancelResourceITest {
     @Rule
     public DropwizardAppWithPostgresRule app = new DropwizardAppWithPostgresRule();
 
-    private RestAssuredClient restOldApiCall;
-    private RestAssuredClient restOldFrontendCall;
+    private RestAssuredClient restFrontendCall;
     private RestAssuredClient restApiCall;
 
     @Before
     public void setupGatewayAccount() {
-        restOldApiCall = new RestAssuredClient(app, accountId, OLD_GET_CHARGE_API_PATH);
-        restOldFrontendCall = new RestAssuredClient(app, accountId, OLD_GET_CHARGE_FRONTEND_PATH);
+        restFrontendCall = new RestAssuredClient(app, accountId, GET_CHARGE_FRONTEND_PATH);
         restApiCall = new RestAssuredClient(app, accountId, CHARGE_API_PATH);
         app.getDatabaseTestHelper().addGatewayAccount(accountId, "sandbox");
     }
@@ -54,11 +51,11 @@ public class ChargeCancelResourceITest {
                     .withChargeId(chargeId)
                     .postChargeCancellation()
                     .statusCode(NO_CONTENT.getStatusCode());
-            restOldApiCall
+            restApiCall
                     .withChargeId(chargeId)
                     .getCharge()
                     .body("status", is(EXT_SYSTEM_CANCELLED.getValue()));
-            restOldFrontendCall
+            restFrontendCall
                     .withChargeId(chargeId)
                     .getCharge()
                     .body("status", is(SYSTEM_CANCELLED.getValue()));
