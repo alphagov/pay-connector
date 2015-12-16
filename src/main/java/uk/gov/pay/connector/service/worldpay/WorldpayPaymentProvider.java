@@ -16,6 +16,8 @@ import uk.gov.pay.connector.service.PaymentProvider;
 import javax.ws.rs.core.Response;
 import javax.xml.bind.JAXBException;
 import java.util.Optional;
+import java.util.function.Consumer;
+import java.util.function.Function;
 
 import static fj.data.Either.reduce;
 import static java.lang.String.format;
@@ -29,6 +31,7 @@ import static uk.gov.pay.connector.model.CaptureResponse.captureFailureResponse;
 import static uk.gov.pay.connector.model.GatewayError.baseGatewayError;
 import static uk.gov.pay.connector.model.InquiryResponse.*;
 import static uk.gov.pay.connector.model.domain.ChargeStatus.AUTHORISATION_SUCCESS;
+import static uk.gov.pay.connector.model.domain.GatewayAccount.CREDENTIALS_MERCHANT_ID;
 import static uk.gov.pay.connector.service.OrderCaptureRequestBuilder.aWorldpayOrderCaptureRequest;
 import static uk.gov.pay.connector.service.OrderSubmitRequestBuilder.aWorldpayOrderSubmitRequest;
 import static uk.gov.pay.connector.service.worldpay.OrderInquiryRequestBuilder.anOrderInquiryRequest;
@@ -41,11 +44,9 @@ public class WorldpayPaymentProvider implements PaymentProvider {
     private final Logger logger = LoggerFactory.getLogger(WorldpayPaymentProvider.class);
 
     private final GatewayClient client;
-    private final GatewayAccount gatewayAccount;
 
-    public WorldpayPaymentProvider(GatewayClient client, GatewayAccount gatewayAccount) {
+    public WorldpayPaymentProvider(GatewayClient client) {
         this.client = client;
-        this.gatewayAccount = gatewayAccount;
     }
 
     @Override
@@ -53,7 +54,7 @@ public class WorldpayPaymentProvider implements PaymentProvider {
         String gatewayTransactionId = generateTransactionId();
         return reduce(
                 client
-                        .postXMLRequestFor(gatewayAccount, buildOrderSubmitFor(request, gatewayTransactionId))
+                        .postXMLRequestFor(request.getGatewayAccount(), buildOrderSubmitFor(request, gatewayTransactionId))
                         .bimap(
                                 AuthorisationResponse::authorisationFailureResponse,
                                 (response) -> mapToCardAuthorisationResponse(response, gatewayTransactionId)
@@ -66,7 +67,7 @@ public class WorldpayPaymentProvider implements PaymentProvider {
         String requestString = buildOrderCaptureFor(request);
         return reduce(
                 client
-                        .postXMLRequestFor(gatewayAccount, requestString)
+                        .postXMLRequestFor(request.getGatewayAccount(), requestString)
                         .bimap(
                                 CaptureResponse::captureFailureResponse,
                                 this::mapToCaptureResponse
@@ -79,7 +80,7 @@ public class WorldpayPaymentProvider implements PaymentProvider {
         String requestString = buildCancelOrderFor(request);
         return reduce(
                 client
-                        .postXMLRequestFor(gatewayAccount, requestString)
+                        .postXMLRequestFor(request.getGatewayAccount(), requestString)
                         .bimap(
                                 CancelResponse::cancelFailureResponse,
                                 this::mapToCancelResponse
@@ -87,36 +88,68 @@ public class WorldpayPaymentProvider implements PaymentProvider {
         );
     }
 
-    @Override
-    public StatusUpdates newStatusFromNotification(String notification) {
+    public Optional<WorldpayNotification> parseNotification(String inboundNotification) {
         try {
-            WorldpayNotification chargeNotification = unmarshall(notification, WorldpayNotification.class);
-            InquiryResponse inquiryResponse = inquire(chargeNotification);
-
-            String worldpayStatus = inquiryResponse.getNewStatus();
-            if (!inquiryResponse.isSuccessful() || StringUtils.isBlank(worldpayStatus)) {
-                logger.error("Could not look up status from worldpay for worldpay charge id " + chargeNotification.getTransactionId());
-                return StatusUpdates.failed();
-            }
-
-            Optional<ChargeStatus> newChargeStatus = WorldpayStatusesMapper.mapToChargeStatus(worldpayStatus);
-            if (!newChargeStatus.isPresent()) {
-                logger.error(format("Could not map worldpay status %s to our internal status.", worldpayStatus));
-                return NO_UPDATE;
-            }
-
-            Pair<String, ChargeStatus> update = Pair.of(inquiryResponse.getTransactionId(), newChargeStatus.get());
-            return StatusUpdates.withUpdate(NOTIFICATION_ACKNOWLEDGED, ImmutableList.of(update));
+            WorldpayNotification chargeNotification = unmarshall(inboundNotification, WorldpayNotification.class);
+            return Optional.ofNullable(chargeNotification);
         } catch (JAXBException e) {
-            logger.error(format("Could not deserialise worldpay response %s", notification), e);
-            return NO_UPDATE;
+            logger.error(format("Could not deserialise worldpay response %s", inboundNotification), e);
+            return Optional.empty();
         }
     }
 
-    private InquiryResponse inquire(ChargeStatusRequest request) {
+    @Override
+    public StatusUpdates handleNotification(String notificationPayload, Function<String, GatewayAccount> accountFinder, Consumer<StatusUpdates> accountUpdater) {
+
+
+        Optional<WorldpayNotification> notificationMaybe = parseNotification(notificationPayload);
+        return notificationMaybe.map(notification -> {
+
+                    Optional<ChargeStatus> chargeStatus = WorldpayStatusesMapper.mapToChargeStatus(notification.getStatus());
+                    if (chargeStatus.isPresent()) {
+                        //phase 1
+                        Pair<String, ChargeStatus> pair = Pair.of(notification.getTransactionId(), chargeStatus.get());
+                        StatusUpdates statusUpdates = StatusUpdates.withUpdate(NOTIFICATION_ACKNOWLEDGED, ImmutableList.of(pair));
+                        accountUpdater.accept(statusUpdates);
+                    } else {
+                        logger.error(format("Could not map worldpay status %s to our internal status.", notification.getStatus()));
+                    }
+
+                    //phase 2
+                    GatewayAccount gatewayAccount = accountFinder.apply(notification.getTransactionId());
+                    StatusUpdates statusUpdates = newStatusFromNotification(gatewayAccount, notification.getTransactionId());
+
+                    if (statusUpdates.successful()) {
+                        accountUpdater.accept(statusUpdates);
+                    }
+                    return statusUpdates;
+                }
+        ).orElseGet(() -> NO_UPDATE);
+    }
+
+    private StatusUpdates newStatusFromNotification(GatewayAccount gatewayAccount, String transactionId) {
+        InquiryResponse inquiryResponse = inquire(transactionId, gatewayAccount);
+        String worldpayStatus = inquiryResponse.getNewStatus();
+        if (!inquiryResponse.isSuccessful() || StringUtils.isBlank(worldpayStatus)) {
+            logger.error("Could not look up status from worldpay for worldpay charge id " + transactionId);
+            return StatusUpdates.failed();
+        }
+
+        Optional<ChargeStatus> newChargeStatus = WorldpayStatusesMapper.mapToChargeStatus(worldpayStatus);
+        if (!newChargeStatus.isPresent()) {
+            logger.error(format("Could not map worldpay status %s to our internal status.", worldpayStatus));
+            return NO_UPDATE;
+        }
+
+        Pair<String, ChargeStatus> update = Pair.of(inquiryResponse.getTransactionId(), newChargeStatus.get());
+        return StatusUpdates.withUpdate(NOTIFICATION_ACKNOWLEDGED, ImmutableList.of(update));
+    }
+
+
+    private InquiryResponse inquire(String transactionId, GatewayAccount gatewayAccount) {
         return reduce(
                 client
-                        .postXMLRequestFor(gatewayAccount, buildOrderInquiryFor(request))
+                        .postXMLRequestFor(gatewayAccount, buildOrderInquiryFor(gatewayAccount, transactionId))
                         .bimap(
                                 InquiryResponse::inquiryFailureResponse,
                                 (response) -> response.getStatus() == OK.getStatusCode() ?
@@ -128,7 +161,7 @@ public class WorldpayPaymentProvider implements PaymentProvider {
 
     private String buildOrderCaptureFor(CaptureRequest request) {
         return aWorldpayOrderCaptureRequest()
-                .withMerchantCode(gatewayAccount.getUsername())
+                .withMerchantCode(request.getGatewayAccount().getCredentials().get(CREDENTIALS_MERCHANT_ID))
                 .withTransactionId(request.getTransactionId())
                 .withAmount(request.getAmount())
                 .withDate(DateTime.now(DateTimeZone.UTC))
@@ -137,7 +170,7 @@ public class WorldpayPaymentProvider implements PaymentProvider {
 
     private String buildOrderSubmitFor(AuthorisationRequest request, String gatewayTransactionId) {
         return aWorldpayOrderSubmitRequest()
-                .withMerchantCode(gatewayAccount.getUsername())
+                .withMerchantCode(request.getGatewayAccount().getCredentials().get(CREDENTIALS_MERCHANT_ID))
                 .withTransactionId(gatewayTransactionId)
                 .withDescription(request.getDescription())
                 .withAmount(request.getAmount())
@@ -147,15 +180,15 @@ public class WorldpayPaymentProvider implements PaymentProvider {
 
     private String buildCancelOrderFor(CancelRequest request) {
         return aWorldpayOrderCancelRequest()
-                .withMerchantCode(gatewayAccount.getUsername())
+                .withMerchantCode(request.getGatewayAccount().getCredentials().get(CREDENTIALS_MERCHANT_ID))
                 .withTransactionId(request.getTransactionId())
                 .build();
     }
 
-    private String buildOrderInquiryFor(ChargeStatusRequest request) {
+    private String buildOrderInquiryFor(GatewayAccount gatewayAccount, String transactionId) {
         return anOrderInquiryRequest()
-                .withMerchantCode(gatewayAccount.getUsername()) //TODO: map to the merchant code, not the username!
-                .withTransactionId(request.getTransactionId())
+                .withMerchantCode(gatewayAccount.getCredentials().get(CREDENTIALS_MERCHANT_ID))
+                .withTransactionId(transactionId)
                 .build();
     }
 

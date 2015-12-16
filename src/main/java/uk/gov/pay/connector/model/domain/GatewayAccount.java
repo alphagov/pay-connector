@@ -1,23 +1,42 @@
 package uk.gov.pay.connector.model.domain;
 
+import com.fasterxml.jackson.annotation.JsonProperty;
+import com.google.common.collect.ImmutableMap;
+
+import java.util.Map;
+
 public class GatewayAccount {
-    private String username;
-    private String password;
+    public static final String CREDENTIALS_MERCHANT_ID = "merchant_id";
+    public static final String CREDENTIALS_USERNAME = "username";
+    public static final String CREDENTIALS_PASSWORD = "password";
 
-    private GatewayAccount(String username, String password) {
-        this.username = username;
-        this.password = password;
+    private Long id;
+    private String gatewayName;
+    private Map<String, String> credentials;
+
+    public GatewayAccount(Long id, String gatewayName, Map<String, String> credentials) {
+        this.id = id;
+        this.gatewayName = gatewayName;
+        this.credentials = credentials;
     }
 
-    public static GatewayAccount gatewayAccountFor(String username, String password) {
-        return new GatewayAccount(username, password);
+    @JsonProperty("gateway_account_id")
+    public Long getId() {
+        return id;
     }
 
-    public String getUsername() {
-        return username;
+    @JsonProperty("payment_provider")
+    public String getGatewayName() {
+        return gatewayName;
     }
 
-    public String getPassword() {
-        return password;
+    public Map<String, String> getCredentials() {
+        return credentials;
+    }
+
+    public Map<String, String> withoutCredentials() {
+        return ImmutableMap.of(
+                "gateway_account_id", String.valueOf(id),
+                "payment_provider", gatewayName);
     }
 }

@@ -3,7 +3,6 @@ package uk.gov.pay.connector.it.resources.worldpay;
 import org.junit.Test;
 import uk.gov.pay.connector.it.base.CardResourceITestBase;
 
-import static uk.gov.pay.connector.model.api.ExternalChargeStatus.EXT_IN_PROGRESS;
 import static uk.gov.pay.connector.model.api.ExternalChargeStatus.EXT_SUCCEEDED;
 import static uk.gov.pay.connector.model.domain.ChargeStatus.*;
 

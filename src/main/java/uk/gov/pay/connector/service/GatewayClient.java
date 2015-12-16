@@ -23,6 +23,8 @@ import static javax.ws.rs.core.HttpHeaders.AUTHORIZATION;
 import static javax.ws.rs.core.MediaType.APPLICATION_XML;
 import static javax.ws.rs.core.Response.Status.OK;
 import static uk.gov.pay.connector.model.GatewayError.*;
+import static uk.gov.pay.connector.model.domain.GatewayAccount.CREDENTIALS_PASSWORD;
+import static uk.gov.pay.connector.model.domain.GatewayAccount.CREDENTIALS_USERNAME;
 import static uk.gov.pay.connector.util.AuthUtil.encode;
 
 public class GatewayClient {
@@ -44,7 +46,9 @@ public class GatewayClient {
         try {
             Response response = client.target(gatewayUrl)
                     .request(APPLICATION_XML)
-                    .header(AUTHORIZATION, encode(account.getUsername(), account.getPassword()))
+                    .header(AUTHORIZATION, encode(
+                            account.getCredentials().get(CREDENTIALS_USERNAME),
+                            account.getCredentials().get(CREDENTIALS_PASSWORD)))
                     .post(Entity.xml(request));
             int statusCode = response.getStatus();
             if(statusCode == OK.getStatusCode()) {
