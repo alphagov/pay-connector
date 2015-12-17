@@ -129,4 +129,11 @@ public class DatabaseTestHelper {
             throw new RuntimeException(e);
         }
     }
+
+    public void addEvent(Long chargeId, String chargeStatus) {
+        jdbi.withHandle(
+                h -> h.update("INSERT INTO charge_events(charge_id,status) values(?,?)",
+                        chargeId, chargeStatus)
+        );
+    }
 }

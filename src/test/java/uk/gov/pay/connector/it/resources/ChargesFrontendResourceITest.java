@@ -35,9 +35,7 @@ public class ChargesFrontendResourceITest {
     private String returnUrl = "http://whatever.com";
     private long expectedAmount = 6234L;
 
-    private RestAssuredClient chargeCall = new RestAssuredClient(app, accountId, CHARGES_API_PATH);
-    private RestAssuredClient frontendChargesCall = new RestAssuredClient(app, accountId, CHARGES_FRONTEND_PATH);
-    private RestAssuredClient frontendChargeCall = new RestAssuredClient(app, accountId, GET_CHARGE_FRONTEND_PATH);
+    private RestAssuredClient connectorRestApi = new RestAssuredClient(app, accountId);
 
     @Before
     public void setupGatewayAccount() {
@@ -72,7 +70,7 @@ public class ChargesFrontendResourceITest {
         String chargeId = postToCreateACharge(expectedAmount);
         String putBody = toJson(ImmutableMap.of("new_status", ENTERING_CARD_DETAILS.getValue()));
 
-        frontendChargeCall
+        connectorRestApi
                 .withAccountId(accountId)
                 .withChargeId(chargeId)
                 .putChargeStatus(putBody)
@@ -87,7 +85,7 @@ public class ChargesFrontendResourceITest {
         String chargeId = postToCreateACharge(expectedAmount);
         String putBody = "";
 
-        frontendChargeCall
+        connectorRestApi
                 .withChargeId(chargeId)
                 .putChargeStatus(putBody)
                 .statusCode(BAD_REQUEST.getStatusCode())
@@ -102,7 +100,7 @@ public class ChargesFrontendResourceITest {
         String chargeId = postToCreateACharge(expectedAmount);
         String putBody = toJson(ImmutableMap.of("new_status", "junk"));
 
-        frontendChargeCall
+        connectorRestApi
                 .withAccountId(accountId)
                 .withChargeId(chargeId)
                 .putChargeStatus(putBody)
@@ -116,7 +114,7 @@ public class ChargesFrontendResourceITest {
     @Test
     public void cannotGetCharge_WhenInvalidChargeId() throws Exception {
         String chargeId = "23235124";
-        frontendChargeCall
+        connectorRestApi
                 .withChargeId(chargeId)
                 .getCharge()
                 .statusCode(NOT_FOUND.getStatusCode())
@@ -138,7 +136,7 @@ public class ChargesFrontendResourceITest {
         app.getDatabaseTestHelper().addGatewayAccount(anotherAccountId, "another test gateway");
         app.getDatabaseTestHelper().addCharge("5001", anotherAccountId, 200, AUTHORISATION_SUBMITTED, returnUrl, "transaction-id-2");
 
-        ValidatableResponse response = frontendChargesCall
+        ValidatableResponse response = connectorRestApi
                 .getTransactions();
 
         response.statusCode(OK.getStatusCode())
@@ -154,7 +152,7 @@ public class ChargesFrontendResourceITest {
         app.getDatabaseTestHelper().addCharge("102", accountId, 300, AUTHORISATION_REJECTED, returnUrl, null);
         app.getDatabaseTestHelper().addCharge("103", accountId, 100, AUTHORISATION_SUBMITTED, returnUrl, randomUUID().toString());
 
-        ValidatableResponse response = frontendChargesCall
+        ValidatableResponse response = connectorRestApi
                 .getTransactions();
 
         response.statusCode(OK.getStatusCode())
@@ -170,7 +168,7 @@ public class ChargesFrontendResourceITest {
     @Test
     public void shouldReturn404_IfNoAccountExistsForTheGivenAccountId() {
         String nonExistentAccountId = "123456789";
-        ValidatableResponse response = frontendChargesCall
+        ValidatableResponse response = connectorRestApi
                 .withAccountId(nonExistentAccountId)
                 .getTransactions();
 
@@ -181,7 +179,7 @@ public class ChargesFrontendResourceITest {
 
     @Test
     public void shouldReturn400IfGatewayAccountIsMissingWhenListingTransactions() {
-        ValidatableResponse response = frontendChargesCall
+        ValidatableResponse response = connectorRestApi
                 .withAccountId("")
                 .getTransactions();
 
@@ -193,7 +191,7 @@ public class ChargesFrontendResourceITest {
     @Test
     public void shouldReturn400IfGatewayAccountIsNotANumberWhenListingTransactions() {
         String invalidAccRef = "XYZ";
-        ValidatableResponse response = frontendChargesCall
+        ValidatableResponse response = connectorRestApi
                 .withAccountId(invalidAccRef)
                 .getTransactions();
 
@@ -204,7 +202,7 @@ public class ChargesFrontendResourceITest {
 
     @Test
     public void shouldReturnEmptyResult_IfNoTransactionsExistForAccount() {
-        ValidatableResponse response = frontendChargesCall
+        ValidatableResponse response = connectorRestApi
                 .getTransactions();
 
         response.statusCode(OK.getStatusCode())
@@ -227,7 +225,7 @@ public class ChargesFrontendResourceITest {
                 "gateway_account_id", accountId,
                 "return_url", returnUrl));
 
-        ValidatableResponse response = chargeCall
+        ValidatableResponse response = connectorRestApi
                 .withAccountId(accountId)
                 .postCreateCharge(postBody)
                 .statusCode(Status.CREATED.getStatusCode())
@@ -242,9 +240,9 @@ public class ChargesFrontendResourceITest {
     }
 
     private ValidatableResponse validateGetCharge(long expectedAmount, String chargeId, ChargeStatus chargeStatus) {
-        return frontendChargeCall
+        return connectorRestApi
                 .withChargeId(chargeId)
-                .getCharge()
+                .getFrontendCharge()
                 .statusCode(OK.getStatusCode())
                 .contentType(JSON)
                 .body("charge_id", is(chargeId))
@@ -257,6 +255,6 @@ public class ChargesFrontendResourceITest {
     }
 
     private String expectedChargeUrl(String chargeId, String path) {
-        return "http://localhost:" + app.getLocalPort() + GET_CHARGE_FRONTEND_PATH.replace("{chargeId}", chargeId) + path;
+        return "http://localhost:" + app.getLocalPort() + CHARGE_FRONTEND_PATH.replace("{chargeId}", chargeId) + path;
     }
 }

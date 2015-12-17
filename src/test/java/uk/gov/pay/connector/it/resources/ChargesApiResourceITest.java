@@ -18,7 +18,6 @@ import static org.apache.commons.lang3.RandomStringUtils.randomAlphanumeric;
 import static org.hamcrest.Matchers.*;
 import static uk.gov.pay.connector.model.api.ExternalChargeStatus.EXT_IN_PROGRESS;
 import static uk.gov.pay.connector.model.domain.ChargeStatus.AUTHORISATION_SUCCESS;
-import static uk.gov.pay.connector.resources.ApiPaths.CHARGES_API_PATH;
 import static uk.gov.pay.connector.resources.ApiPaths.CHARGE_API_PATH;
 import static uk.gov.pay.connector.util.JsonEncoder.toJson;
 import static uk.gov.pay.connector.util.LinksAssert.assertNextUrlLink;
@@ -43,8 +42,8 @@ public class ChargesApiResourceITest {
     private String accountId = "72332423443245";
     private String returnUrl = "http://service.url/success-page/";
 
-    private RestAssuredClient createChargeApi = new RestAssuredClient(app, accountId, CHARGES_API_PATH);
-    private RestAssuredClient getChargeApi = new RestAssuredClient(app, accountId, CHARGE_API_PATH);
+    private RestAssuredClient createChargeApi = new RestAssuredClient(app, accountId);
+    private RestAssuredClient getChargeApi = new RestAssuredClient(app, accountId);
 
     @Before
     public void setupGatewayAccount() {

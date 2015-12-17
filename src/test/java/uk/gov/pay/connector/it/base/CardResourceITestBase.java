@@ -28,8 +28,7 @@ import static uk.gov.pay.connector.resources.ApiPaths.*;
 import static uk.gov.pay.connector.util.JsonEncoder.toJson;
 
 public class CardResourceITestBase {
-    private RestAssuredClient restFrontendCall;
-    private RestAssuredClient restApiCall;
+    private RestAssuredClient connectorRestApi;
 
     @Rule
     public DropwizardAppWithPostgresRule app;
@@ -54,8 +53,7 @@ public class CardResourceITestBase {
         app = new DropwizardAppWithPostgresRule(
                 config("worldpay.url", "http://localhost:" + port + "/jsp/merchant/xml/paymentService.jsp"),
                 config("smartpay.url", "http://localhost:" + port + "/pal/servlet/soap/Payment"));
-        restFrontendCall = new RestAssuredClient(app, accountId, GET_CHARGE_FRONTEND_PATH);
-        restApiCall = new RestAssuredClient(app, accountId, CHARGE_API_PATH);
+        connectorRestApi = new RestAssuredClient(app, accountId);
     }
 
     @Before
@@ -101,14 +99,14 @@ public class CardResourceITestBase {
     }
 
     protected void assertFrontendChargeStatusIs(String chargeId, String status) {
-        restFrontendCall
+        connectorRestApi
                 .withChargeId(chargeId)
-                .getCharge()
+                .getFrontendCharge()
                 .body("status", is(status));
     }
 
     protected void assertApiStatusIs(String chargeId, String status) {
-        restApiCall
+        connectorRestApi
                 .withChargeId(chargeId)
                 .getCharge()
                 .body("status", is(status));
@@ -164,12 +162,6 @@ public class CardResourceITestBase {
         cardDetails.addProperty("cardholder_name", cardHolderName);
         cardDetails.add("address", addressObject);
         return toJson(cardDetails);
-    }
-
-    protected String accountBodyFor(String accountId) {
-        JsonObject body = new JsonObject();
-        body.addProperty("gateway_account_id", accountId);
-        return toJson(body);
     }
 
     protected void shouldReturnErrorForCardDetailsWithMessage(String cardDetails, String errorMessage, String status) throws Exception {

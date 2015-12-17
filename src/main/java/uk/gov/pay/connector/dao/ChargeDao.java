@@ -3,7 +3,9 @@ package uk.gov.pay.connector.dao;
 import org.skife.jdbi.v2.DBI;
 import org.skife.jdbi.v2.DefaultMapper;
 import org.skife.jdbi.v2.util.StringMapper;
+import uk.gov.pay.connector.model.domain.ChargeEvent;
 import uk.gov.pay.connector.model.domain.ChargeStatus;
+import uk.gov.pay.connector.util.ChargeEventListener;
 
 import java.util.List;
 import java.util.Map;
@@ -13,26 +15,31 @@ import java.util.stream.Collectors;
 import static com.google.common.collect.Maps.newHashMap;
 import static java.lang.String.format;
 import static java.util.stream.Collectors.toList;
+import static uk.gov.pay.connector.model.domain.ChargeEvent.aChargeEventFor;
 import static uk.gov.pay.connector.model.domain.ChargeStatus.CREATED;
 
 public class ChargeDao {
     private DBI jdbi;
+    private ChargeEventListener eventListener;
 
-    public ChargeDao(DBI jdbi) {
+    public ChargeDao(DBI jdbi, ChargeEventListener eventListener) {
         this.jdbi = jdbi;
+        this.eventListener = eventListener;
     }
 
     public String saveNewCharge(String gatewayAccountId, Map<String, Object> charge) {
-        return jdbi.withHandle(handle ->
-                        handle
-                                .createStatement("INSERT INTO charges(amount, gateway_account_id, status, return_url, description, reference) " +
-                                        "VALUES (:amount, :gateway_account_id, :status, :return_url, :description, :reference)")
-                                .bindFromMap(charge)
-                                .bind("gateway_account_id", Long.valueOf(gatewayAccountId))
-                                .bind("status", CREATED.getValue())
-                                .executeAndReturnGeneratedKeys(StringMapper.FIRST)
-                                .first()
+        String newChargeId = jdbi.withHandle(handle ->
+                handle
+                        .createStatement("INSERT INTO charges(amount, gateway_account_id, status, return_url, description, reference) " +
+                                "VALUES (:amount, :gateway_account_id, :status, :return_url, :description, :reference)")
+                        .bindFromMap(charge)
+                        .bind("gateway_account_id", Long.valueOf(gatewayAccountId))
+                        .bind("status", CREATED.getValue())
+                        .executeAndReturnGeneratedKeys(StringMapper.FIRST)
+                        .first()
         );
+        eventListener.notify(aChargeEventFor(Long.parseLong(newChargeId), CREATED));
+        return newChargeId;
     }
 
     public Optional<Map<String, Object>> findChargeForAccount(String chargeId, String accountId) {
@@ -54,12 +61,12 @@ public class ChargeDao {
 
     public Optional<Map<String, Object>> findById(String chargeId) {
         Map<String, Object> data = jdbi.withHandle(handle ->
-                        handle
-                                .createQuery("SELECT charge_id, amount, gateway_account_id, status, return_url, gateway_transaction_id, description, reference " +
-                                        "FROM charges WHERE charge_id=:charge_id")
-                                .bind("charge_id", Long.valueOf(chargeId))
-                                .map(new DefaultMapper())
-                                .first()
+                handle
+                        .createQuery("SELECT charge_id, amount, gateway_account_id, status, return_url, gateway_transaction_id, description, reference " +
+                                "FROM charges WHERE charge_id=:charge_id")
+                        .bind("charge_id", Long.valueOf(chargeId))
+                        .map(new DefaultMapper())
+                        .first()
         );
 
         if (data != null) {
@@ -70,11 +77,11 @@ public class ChargeDao {
 
     public void updateGatewayTransactionId(String chargeId, String transactionId) {
         Integer numberOfUpdates = jdbi.withHandle(handle ->
-                        handle
-                                .createStatement("UPDATE charges SET gateway_transaction_id=:transactionId WHERE charge_id=:charge_id")
-                                .bind("charge_id", Long.valueOf(chargeId))
-                                .bind("transactionId", transactionId)
-                                .execute()
+                handle
+                        .createStatement("UPDATE charges SET gateway_transaction_id=:transactionId WHERE charge_id=:charge_id")
+                        .bind("charge_id", Long.valueOf(chargeId))
+                        .bind("transactionId", transactionId)
+                        .execute()
         );
 
         if (numberOfUpdates != 1) {
@@ -82,32 +89,35 @@ public class ChargeDao {
         }
     }
 
+    //FIXME: Need to verify with chargeId also as gatewayTnxIds could duplicate
     public void updateStatusWithGatewayInfo(String gatewayTransactionId, ChargeStatus newStatus) {
         Integer numberOfUpdates = jdbi.withHandle(handle ->
-                        handle
-                                .createStatement("UPDATE charges SET status=:status WHERE gateway_transaction_id=:gateway_transaction_id")
-                                .bind("gateway_transaction_id", gatewayTransactionId)
-                                .bind("status", newStatus.getValue())
-                                .execute()
+                handle
+                        .createStatement("UPDATE charges SET status=:status WHERE gateway_transaction_id=:gateway_transaction_id")
+                        .bind("gateway_transaction_id", gatewayTransactionId)
+                        .bind("status", newStatus.getValue())
+                        .execute()
         );
 
         if (numberOfUpdates != 1) {
             throw new PayDBIException(format("Could not update charge (gateway_transaction_id: %s) with status %s, updated %d rows.", gatewayTransactionId, newStatus, numberOfUpdates));
         }
+//        eventListener.notify(aChargeEventFor());
     }
 
     public void updateStatus(String chargeId, ChargeStatus newStatus) {
         Integer numberOfUpdates = jdbi.withHandle(handle ->
-                        handle
-                                .createStatement("UPDATE charges SET status=:status WHERE charge_id=:charge_id")
-                                .bind("charge_id", Long.valueOf(chargeId))
-                                .bind("status", newStatus.getValue())
-                                .execute()
+                handle
+                        .createStatement("UPDATE charges SET status=:status WHERE charge_id=:charge_id")
+                        .bind("charge_id", Long.valueOf(chargeId))
+                        .bind("status", newStatus.getValue())
+                        .execute()
         );
 
         if (numberOfUpdates != 1) {
             throw new PayDBIException(format("Could not update charge '%s' with status %s, updated %d rows.", chargeId, newStatus, numberOfUpdates));
         }
+        eventListener.notify(aChargeEventFor(Long.parseLong(chargeId), newStatus));
     }
 
     // updates the new status only if the charge is in one of the old statuses and returns num of rows affected
@@ -116,10 +126,10 @@ public class ChargeDao {
         String sql = format("UPDATE charges SET status=:newStatus WHERE charge_id=:charge_id and status in (%s)", getStringFromStatusList(oldStatuses));
 
         return jdbi.withHandle(handle ->
-                        handle.createStatement(sql)
-                                .bind("charge_id", Long.valueOf(chargeId))
-                                .bind("newStatus", newStatus.getValue())
-                                .execute()
+                handle.createStatement(sql)
+                        .bind("charge_id", Long.valueOf(chargeId))
+                        .bind("newStatus", newStatus.getValue())
+                        .execute()
         );
     }
 
