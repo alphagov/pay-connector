@@ -20,14 +20,10 @@ links:
 
 worldpay:
   url: http://localhost:10107/jsp/merchant/xml/paymentService.jsp
-  username: theUsername
-  password: thePassword
   credentials: ['username','password','merchant_id']
 
 smartpay:
   url: http://localhost:10106/pal/servlet/soap/Payment
-  username: theUsername
-  password: thePassword
   notification:
     username: smartpay_test_username
     password: smartpay_test_password
