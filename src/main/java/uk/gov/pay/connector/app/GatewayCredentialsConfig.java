@@ -12,22 +12,10 @@ public class GatewayCredentialsConfig extends Configuration {
     @NotNull
     private String url;
 
-    private String username;
-
-    private String password;
-
     private List<String> credentials;
 
     public String getUrl() {
         return url;
-    }
-
-    public String getUsername() {
-        return username;
-    }
-
-    public String getPassword() {
-        return password;
     }
 
     public List<String> getCredentials() {

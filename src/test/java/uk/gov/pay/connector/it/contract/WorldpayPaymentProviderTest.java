@@ -153,16 +153,6 @@ public class WorldpayPaymentProviderTest {
         public String getUrl() {
             return "https://secure-test.worldpay.com/jsp/merchant/xml/paymentService.jsp";
         }
-
-        @Override
-        public String getUsername() {
-            return "MERCHANTCODE";
-        }
-
-        @Override
-        public String getPassword() {
-            return envOrThrow("GDS_CONNECTOR_WORLDPAY_PASSWORD");
-        }
     };
 
     private String notificationPayloadForTransaction(String transactionId) throws IOException {
