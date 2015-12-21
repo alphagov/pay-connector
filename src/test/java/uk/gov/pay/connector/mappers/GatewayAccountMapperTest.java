@@ -22,7 +22,7 @@ public class GatewayAccountMapperTest {
     @Test(expected = RuntimeException.class)
     public void shouldThrowExceptionIfMapperCannotParseString() throws IOException, SQLException {
         doThrow(new IOException("")).when(objectMapper).readValue(any(String.class), any(TypeReference.class));
-        ServiceAccountMapper mapper = new ServiceAccountMapper(objectMapper);
+        GatewayAccountMapper mapper = new GatewayAccountMapper(objectMapper);
 
         ResultSet resultSet = mock(ResultSet.class);
         when(resultSet.getLong("gateway_account_id")).thenReturn(1234L);
@@ -40,7 +40,7 @@ public class GatewayAccountMapperTest {
     @Test
     public void shouldMapToAServiceAccountCorrectly() throws Exception {
         ObjectMapper oMapper = mock(ObjectMapper.class);
-        ServiceAccountMapper mapper = new ServiceAccountMapper(oMapper);
+        GatewayAccountMapper mapper = new GatewayAccountMapper(oMapper);
 
         ResultSet resultSet = mock(ResultSet.class);
         when(resultSet.getLong("gateway_account_id")).thenReturn(1234L);

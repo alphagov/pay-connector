@@ -4,7 +4,7 @@ import org.postgresql.util.PGobject;
 import org.skife.jdbi.v2.DBI;
 import org.skife.jdbi.v2.util.BooleanMapper;
 import org.skife.jdbi.v2.util.StringMapper;
-import uk.gov.pay.connector.mappers.ServiceAccountMapper;
+import uk.gov.pay.connector.mappers.GatewayAccountMapper;
 import uk.gov.pay.connector.model.domain.GatewayAccount;
 
 import java.sql.SQLException;
@@ -41,7 +41,7 @@ public class GatewayAccountDao {
         GatewayAccount gatewayAccount = jdbi.withHandle(handle -> handle
                 .createQuery("SELECT gateway_account_id, payment_provider, credentials FROM gateway_accounts WHERE gateway_account_id=:id")
                 .bind("id", Long.valueOf(gatewayAccountId))
-                .map(new ServiceAccountMapper())
+                .map(new GatewayAccountMapper())
                 .first());
         return Optional.ofNullable(gatewayAccount);
     }

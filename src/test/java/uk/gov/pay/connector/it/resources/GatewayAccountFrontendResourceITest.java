@@ -3,6 +3,7 @@ package uk.gov.pay.connector.it.resources;
 import com.google.common.collect.ImmutableMap;
 import com.google.gson.Gson;
 import com.google.gson.JsonObject;
+import org.apache.commons.lang3.StringEscapeUtils;
 import org.hamcrest.Matcher;
 import org.junit.Test;
 
@@ -57,6 +58,27 @@ public class GatewayAccountFrontendResourceITest extends GatewayAccountResourceT
 
         ImmutableMap<String, String> expectedCredentials = ImmutableMap.of("username", "a-username", "password", "a-password");
         updateCredentialsWith(accountId, expectedCredentials);
+    }
+
+    @Test
+    public void shouldSaveSpecialCharactersInUserNamesAndPassword() throws Exception {
+        String accountId = createAGatewayAccountFor("smartpay");
+
+
+        String specialUserName = "someone@some{[]where&^%>?\\/";
+        String specialPassword = "56g%%Bqv\\>/<wdUpi@#bh{[}]6JV+8w";
+        ImmutableMap<String, String> expectedCredentials = ImmutableMap.of("username", specialUserName, "password", specialPassword);
+        String expectedCredentialsString = gson.toJson(expectedCredentials);
+
+        givenSetup().accept(JSON)
+                .body(expectedCredentialsString)
+                .put(ACCOUNTS_FRONTEND_URL + accountId)
+                .then()
+                .statusCode(200);
+
+        JsonObject currentCredentials = app.getDatabaseTestHelper().getAccountCredentials(accountId);
+        assertThat(currentCredentials.get("username").getAsString(), is(specialUserName));
+        assertThat(currentCredentials.get("password").getAsString(), is(specialPassword));
     }
 
     @Test
