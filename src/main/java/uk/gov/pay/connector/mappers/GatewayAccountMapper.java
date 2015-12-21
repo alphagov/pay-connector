@@ -14,17 +14,17 @@ import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.util.Map;
 
-public class ServiceAccountMapper implements ResultSetMapper<GatewayAccount> {
+public class GatewayAccountMapper implements ResultSetMapper<GatewayAccount> {
 
 
-    private static Logger logger = LoggerFactory.getLogger(ServiceAccountMapper.class);
+    private static Logger logger = LoggerFactory.getLogger(GatewayAccountMapper.class);
     private final ObjectMapper mapper;
 
-    public ServiceAccountMapper() {
+    public GatewayAccountMapper() {
         this(new ObjectMapper());
     }
 
-    ServiceAccountMapper(ObjectMapper mapper) {
+    GatewayAccountMapper(ObjectMapper mapper) {
         this.mapper = mapper;
     }
 

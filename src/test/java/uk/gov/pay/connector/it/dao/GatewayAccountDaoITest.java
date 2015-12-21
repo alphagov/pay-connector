@@ -1,5 +1,7 @@
 package uk.gov.pay.connector.it.dao;
 
+import com.google.common.collect.ImmutableMap;
+import com.google.gson.Gson;
 import org.junit.Before;
 import org.junit.Rule;
 import org.junit.Test;
@@ -14,9 +16,7 @@ import static org.apache.commons.lang3.StringUtils.isNotBlank;
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.hasEntry;
 import static org.hamcrest.Matchers.is;
-import static org.junit.Assert.assertFalse;
-import static org.junit.Assert.assertTrue;
-import static org.junit.Assert.fail;
+import static org.junit.Assert.*;
 
 public class GatewayAccountDaoITest {
     @Rule
@@ -53,7 +53,7 @@ public class GatewayAccountDaoITest {
         assertTrue(gatewayAccountOpt.isPresent());
         GatewayAccount gatewayAccount = gatewayAccountOpt.get();
         assertThat(gatewayAccount.getGatewayName(), is(paymentProvider));
-        Map<String,String> credentialsMap = gatewayAccount.getCredentials();
+        Map<String, String> credentialsMap = gatewayAccount.getCredentials();
         assertThat(credentialsMap.size(), is(0));
     }
 
@@ -79,9 +79,28 @@ public class GatewayAccountDaoITest {
 
         Optional<GatewayAccount> serviceAccountMaybe = gatewayAccountDao.findById(gatewayAccountId);
         assertThat(serviceAccountMaybe.isPresent(), is(true));
-        Map<String,String> credentialsMap = serviceAccountMaybe.get().getCredentials();
+        Map<String, String> credentialsMap = serviceAccountMaybe.get().getCredentials();
         assertThat(credentialsMap, hasEntry("username", "Username"));
         assertThat(credentialsMap, hasEntry("password", "Password"));
+    }
+
+    @Test
+    public void shouldUpdateAndRetrieveCredentialsWithSpecialCharacters() throws Exception {
+        String paymentProvider = "test provider";
+        String gatewayAccountId = gatewayAccountDao.createGatewayAccount(paymentProvider);
+
+        String aUserNameWithSpecialChars = "someone@some{[]where&^%>?\\/";
+        String aPasswordWithSpecialChars = "56g%%Bqv\\>/<wdUpi@#bh{[}]6JV+8w";
+        ImmutableMap<String, String> credMap = ImmutableMap.of("username", aUserNameWithSpecialChars, "password", aPasswordWithSpecialChars);
+        String expectedJsonString = new Gson().toJson(credMap);
+
+        gatewayAccountDao.saveCredentials(expectedJsonString, gatewayAccountId);
+
+        Optional<GatewayAccount> serviceAccountMaybe = gatewayAccountDao.findById(gatewayAccountId);
+        assertThat(serviceAccountMaybe.isPresent(), is(true));
+        Map<String, String> credentialsMap = serviceAccountMaybe.get().getCredentials();
+        assertThat(credentialsMap, hasEntry("username", aUserNameWithSpecialChars));
+        assertThat(credentialsMap, hasEntry("password", aPasswordWithSpecialChars));
     }
 
     @Test
@@ -97,7 +116,7 @@ public class GatewayAccountDaoITest {
         } catch (RuntimeException e) {
             Optional<GatewayAccount> gatewayAccountMaybe = gatewayAccountDao.findById(gatewayAccountId);
             assertThat(gatewayAccountMaybe.isPresent(), is(true));
-            Map<String,String> credentialsMap = gatewayAccountMaybe.get().getCredentials();
+            Map<String, String> credentialsMap = gatewayAccountMaybe.get().getCredentials();
             assertThat(credentialsMap.size(), is(0));
         }
     }
