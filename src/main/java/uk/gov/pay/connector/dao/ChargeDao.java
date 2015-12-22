@@ -15,7 +15,6 @@ import java.util.stream.Collectors;
 import static com.google.common.collect.Maps.newHashMap;
 import static java.lang.String.format;
 import static java.util.stream.Collectors.toList;
-import static uk.gov.pay.connector.model.domain.ChargeEvent.aChargeEventFor;
 import static uk.gov.pay.connector.model.domain.ChargeStatus.CREATED;
 
 public class ChargeDao {
@@ -38,7 +37,7 @@ public class ChargeDao {
                         .executeAndReturnGeneratedKeys(StringMapper.FIRST)
                         .first()
         );
-        eventListener.notify(aChargeEventFor(Long.parseLong(newChargeId), CREATED));
+        eventListener.notify(ChargeEvent.from(Long.parseLong(newChargeId), CREATED));
         return newChargeId;
     }
 
@@ -89,20 +88,26 @@ public class ChargeDao {
         }
     }
 
-    //FIXME: Need to verify with chargeId also as gatewayTnxIds could duplicate
-    public void updateStatusWithGatewayInfo(String gatewayTransactionId, ChargeStatus newStatus) {
+    public void updateStatusWithGatewayInfo(String provider, String gatewayTransactionId, ChargeStatus newStatus) {
         Integer numberOfUpdates = jdbi.withHandle(handle ->
                 handle
-                        .createStatement("UPDATE charges SET status=:status WHERE gateway_transaction_id=:gateway_transaction_id")
+                        .createStatement("UPDATE charges AS ch SET status=:status " +
+                                "FROM gateway_accounts AS ga WHERE " +
+                                "ch.gateway_transaction_id=:gateway_transaction_id AND " +
+                                "ga.gateway_account_id=ch.gateway_account_id AND " +
+                                "ga.payment_provider=:provider")
                         .bind("gateway_transaction_id", gatewayTransactionId)
+                        .bind("provider", provider)
                         .bind("status", newStatus.getValue())
                         .execute()
+
+                //select ch.gateway_transaction_id FROM charges AS ch, gateway_accounts AS ga  where ch.gateway_transaction_id='8514507009153039' AND ga.gateway_account_id = ch.gateway_account_id AND ga.payment_provider='smartpay';
         );
 
         if (numberOfUpdates != 1) {
             throw new PayDBIException(format("Could not update charge (gateway_transaction_id: %s) with status %s, updated %d rows.", gatewayTransactionId, newStatus, numberOfUpdates));
         }
-//        eventListener.notify(aChargeEventFor());
+//        eventListener.notify(from());
     }
 
     public void updateStatus(String chargeId, ChargeStatus newStatus) {
@@ -117,7 +122,7 @@ public class ChargeDao {
         if (numberOfUpdates != 1) {
             throw new PayDBIException(format("Could not update charge '%s' with status %s, updated %d rows.", chargeId, newStatus, numberOfUpdates));
         }
-        eventListener.notify(aChargeEventFor(Long.parseLong(chargeId), newStatus));
+        eventListener.notify(ChargeEvent.from(Long.parseLong(chargeId), newStatus));
     }
 
     // updates the new status only if the charge is in one of the old statuses and returns num of rows affected
@@ -170,7 +175,7 @@ public class ChargeDao {
         Map<String, Object> data = jdbi.withHandle(handle ->
                 handle
                         .createQuery("SELECT ch.gateway_account_id FROM charges AS ch, gateway_accounts AS ga " +
-                                "WHERE ga.gateway_account_id = ch.gateway_account_id " +
+                                    "WHERE ga.gateway_account_id = ch.gateway_account_id " +
                                 "AND ga.payment_provider=:provider " +
                                 "AND ch.gateway_transaction_id=:transactionId")
                         .bind("provider", provider)

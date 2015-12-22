@@ -48,7 +48,7 @@ public class ChargeEvent {
         return chargeId;
     }
 
-    public static ChargeEvent aChargeEventFor(Long chargeId, ChargeStatus chargeStatus) {
+    public static ChargeEvent from(Long chargeId, ChargeStatus chargeStatus) {
         return new ChargeEvent(chargeId, chargeStatus);
     }
 }

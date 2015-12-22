@@ -30,6 +30,7 @@ public class ChargeDaoITest {
     private static final String REFERENCE = "Test reference";
     private static final String DESCRIPTION = "Test description";
     private static final long AMOUNT = 101;
+    public static final String PAYMENT_PROVIDER = "test_provider";
 
     @Rule
     public DropwizardAppWithPostgresRule app = new DropwizardAppWithPostgresRule();
@@ -44,7 +45,7 @@ public class ChargeDaoITest {
     @Before
     public void setUp() throws Exception {
         chargeDao = new ChargeDao(app.getJdbi(), eventListener);
-        app.getDatabaseTestHelper().addGatewayAccount(GATEWAY_ACCOUNT_ID, "test_account");
+        app.getDatabaseTestHelper().addGatewayAccount(GATEWAY_ACCOUNT_ID, PAYMENT_PROVIDER);
 
         chargeId = chargeDao.saveNewCharge(GATEWAY_ACCOUNT_ID, newCharge(AMOUNT));
     }
@@ -90,7 +91,7 @@ public class ChargeDaoITest {
         String gatewayTransactionId = randomId();
 
         chargeDao.updateGatewayTransactionId(chargeId, gatewayTransactionId);
-        chargeDao.updateStatusWithGatewayInfo(gatewayTransactionId, AUTHORISATION_SUBMITTED);
+        chargeDao.updateStatusWithGatewayInfo(PAYMENT_PROVIDER, gatewayTransactionId, AUTHORISATION_SUBMITTED);
 
         Map<String, Object> charge = chargeDao.findById(chargeId).get();
         assertThat(charge.get("status"), is(AUTHORISATION_SUBMITTED.getValue()));
