@@ -26,9 +26,13 @@ public class ChargeEvent {
         this(chargeId, chargeStatus, LocalDateTime.now());
     }
 
-    @JsonProperty
     public ChargeStatus getStatus() {
         return status;
+    }
+
+    @JsonProperty("status")
+    public String getStatusValue() {
+        return status.getValue();
     }
 
     @JsonProperty

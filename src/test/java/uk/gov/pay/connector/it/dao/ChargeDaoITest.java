@@ -6,6 +6,7 @@ import org.junit.Rule;
 import org.junit.Test;
 import org.junit.rules.ExpectedException;
 import uk.gov.pay.connector.dao.ChargeDao;
+import uk.gov.pay.connector.dao.EventDao;
 import uk.gov.pay.connector.dao.PayDBIException;
 import uk.gov.pay.connector.model.domain.ChargeStatus;
 import uk.gov.pay.connector.rules.DropwizardAppWithPostgresRule;
@@ -20,7 +21,6 @@ import static org.apache.commons.lang3.RandomStringUtils.randomAlphanumeric;
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.is;
 import static org.junit.Assert.assertEquals;
-import static org.mockito.Mockito.mock;
 import static uk.gov.pay.connector.model.domain.ChargeStatus.*;
 import static uk.gov.pay.connector.util.TransactionId.randomId;
 
@@ -40,10 +40,13 @@ public class ChargeDaoITest {
 
     private ChargeDao chargeDao;
     private String chargeId;
-    private ChargeEventListener eventListener = mock(ChargeEventListener.class);
+    private EventDao eventDao;
+    private ChargeEventListener eventListener;
 
     @Before
     public void setUp() throws Exception {
+        eventDao = new EventDao(app.getJdbi());
+        eventListener = new ChargeEventListener(eventDao);
         chargeDao = new ChargeDao(app.getJdbi(), eventListener);
         app.getDatabaseTestHelper().addGatewayAccount(GATEWAY_ACCOUNT_ID, PAYMENT_PROVIDER);
 

@@ -121,7 +121,6 @@ public class ChargesApiResource {
     @Produces(APPLICATION_JSON)
     public Response getEvents(@PathParam("accountId") Long accountId, @PathParam("chargeId") Long chargeId){
         List<ChargeEvent> events = eventDao.findEvents(accountId,chargeId);
-        //FIXME change statuses to enum values before return
         ImmutableMap<String, Object> responsePayload = ImmutableMap.of("charge_id", chargeId, "events", events);
         return Response.ok().entity(responsePayload).build();
     }

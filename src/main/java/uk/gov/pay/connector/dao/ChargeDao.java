@@ -3,6 +3,8 @@ package uk.gov.pay.connector.dao;
 import org.skife.jdbi.v2.DBI;
 import org.skife.jdbi.v2.DefaultMapper;
 import org.skife.jdbi.v2.util.StringMapper;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import uk.gov.pay.connector.model.domain.ChargeEvent;
 import uk.gov.pay.connector.model.domain.ChargeStatus;
 import uk.gov.pay.connector.util.ChargeEventListener;
@@ -18,6 +20,8 @@ import static java.util.stream.Collectors.toList;
 import static uk.gov.pay.connector.model.domain.ChargeStatus.CREATED;
 
 public class ChargeDao {
+    private static final Logger logger = LoggerFactory.getLogger(ChargeDao.class);
+
     private DBI jdbi;
     private ChargeEventListener eventListener;
 
@@ -106,6 +110,13 @@ public class ChargeDao {
         if (numberOfUpdates != 1) {
             throw new PayDBIException(format("Could not update charge (gateway_transaction_id: %s) with status %s, updated %d rows.", gatewayTransactionId, newStatus, numberOfUpdates));
         }
+
+        Optional<String> chargeIdMaybe = findChargeByTransactionId(provider, gatewayTransactionId);
+        if (chargeIdMaybe.isPresent()) {
+            eventListener.notify(ChargeEvent.from(Long.parseLong(chargeIdMaybe.get()), newStatus));
+        } else {
+            logger.error(String.format("Cannot find charge_id for gateway_transaction_id [%s] and provider [%s]", gatewayTransactionId, provider));
+        }
     }
 
     public void updateStatus(String chargeId, ChargeStatus newStatus) {
@@ -128,12 +139,16 @@ public class ChargeDao {
     public int updateNewStatusWhereOldStatusIn(String chargeId, ChargeStatus newStatus, List<ChargeStatus> oldStatuses) {
         String sql = format("UPDATE charges SET status=:newStatus WHERE charge_id=:charge_id and status in (%s)", getStringFromStatusList(oldStatuses));
 
-        return jdbi.withHandle(handle ->
+        Integer updateCount = jdbi.withHandle(handle ->
                 handle.createStatement(sql)
                         .bind("charge_id", Long.valueOf(chargeId))
                         .bind("newStatus", newStatus.getValue())
                         .execute()
         );
+        if (updateCount > 0) {
+            eventListener.notify(ChargeEvent.from(Long.parseLong(chargeId), newStatus));
+        }
+        return updateCount;
     }
 
     public List<Map<String, Object>> findAllBy(String gatewayAccountId) {
@@ -162,6 +177,22 @@ public class ChargeDao {
         );
 
         return Optional.ofNullable(data.get("gateway_account_id").toString());
+    }
+
+    private Optional<String> findChargeByTransactionId(String provider, String transactionId) {
+        Map<String, Object> data = jdbi.withHandle(handle ->
+                handle
+                        .createQuery("SELECT ch.charge_id FROM charges AS ch, gateway_accounts AS ga " +
+                                "WHERE ga.gateway_account_id = ch.gateway_account_id " +
+                                "AND ga.payment_provider=:provider " +
+                                "AND ch.gateway_transaction_id=:transactionId")
+                        .bind("provider", provider)
+                        .bind("transactionId", transactionId)
+                        .map(new DefaultMapper())
+                        .first()
+        );
+
+        return Optional.ofNullable(data.get("charge_id").toString());
     }
 
     private String getStringFromStatusList(List<ChargeStatus> oldStatuses) {
