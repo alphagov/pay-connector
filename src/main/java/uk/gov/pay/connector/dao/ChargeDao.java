@@ -101,13 +101,11 @@ public class ChargeDao {
                         .bind("status", newStatus.getValue())
                         .execute()
 
-                //select ch.gateway_transaction_id FROM charges AS ch, gateway_accounts AS ga  where ch.gateway_transaction_id='8514507009153039' AND ga.gateway_account_id = ch.gateway_account_id AND ga.payment_provider='smartpay';
         );
 
         if (numberOfUpdates != 1) {
             throw new PayDBIException(format("Could not update charge (gateway_transaction_id: %s) with status %s, updated %d rows.", gatewayTransactionId, newStatus, numberOfUpdates));
         }
-//        eventListener.notify(from());
     }
 
     public void updateStatus(String chargeId, ChargeStatus newStatus) {
@@ -150,6 +148,22 @@ public class ChargeDao {
         return copyAndConvertFieldsToString(rawData, "charge_id", "gateway_account_id");
     }
 
+    public Optional<String> findAccountByTransactionId(String provider, String transactionId) {
+        Map<String, Object> data = jdbi.withHandle(handle ->
+                handle
+                        .createQuery("SELECT ch.gateway_account_id FROM charges AS ch, gateway_accounts AS ga " +
+                                "WHERE ga.gateway_account_id = ch.gateway_account_id " +
+                                "AND ga.payment_provider=:provider " +
+                                "AND ch.gateway_transaction_id=:transactionId")
+                        .bind("provider", provider)
+                        .bind("transactionId", transactionId)
+                        .map(new DefaultMapper())
+                        .first()
+        );
+
+        return Optional.ofNullable(data.get("gateway_account_id").toString());
+    }
+
     private String getStringFromStatusList(List<ChargeStatus> oldStatuses) {
         return oldStatuses
                 .stream()
@@ -169,21 +183,5 @@ public class ChargeDao {
         return data.stream()
                 .map(charge -> copyAndConvertFieldsToString(charge, fields))
                 .collect(toList());
-    }
-
-    public Optional<String> findAccountByTransactionId(String provider, String transactionId) {
-        Map<String, Object> data = jdbi.withHandle(handle ->
-                handle
-                        .createQuery("SELECT ch.gateway_account_id FROM charges AS ch, gateway_accounts AS ga " +
-                                    "WHERE ga.gateway_account_id = ch.gateway_account_id " +
-                                "AND ga.payment_provider=:provider " +
-                                "AND ch.gateway_transaction_id=:transactionId")
-                        .bind("provider", provider)
-                        .bind("transactionId", transactionId)
-                        .map(new DefaultMapper())
-                        .first()
-        );
-
-        return Optional.ofNullable(data.get("gateway_account_id").toString());
     }
 }
