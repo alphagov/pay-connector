@@ -5,9 +5,11 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import uk.gov.pay.connector.app.LinksConfig;
 import uk.gov.pay.connector.dao.ChargeDao;
+import uk.gov.pay.connector.dao.EventDao;
 import uk.gov.pay.connector.dao.GatewayAccountDao;
 import uk.gov.pay.connector.dao.TokenDao;
 import uk.gov.pay.connector.model.api.ExternalChargeStatus;
+import uk.gov.pay.connector.model.domain.ChargeEvent;
 import uk.gov.pay.connector.util.ResponseBuilder;
 import uk.gov.pay.connector.util.ResponseUtil;
 
@@ -26,8 +28,7 @@ import static javax.ws.rs.HttpMethod.GET;
 import static javax.ws.rs.core.MediaType.APPLICATION_JSON;
 import static org.apache.commons.lang3.StringUtils.isEmpty;
 import static uk.gov.pay.connector.model.api.ExternalChargeStatus.mapFromStatus;
-import static uk.gov.pay.connector.resources.ApiPaths.CHARGES_API_PATH;
-import static uk.gov.pay.connector.resources.ApiPaths.CHARGE_API_PATH;
+import static uk.gov.pay.connector.resources.ApiPaths.*;
 import static uk.gov.pay.connector.util.ResponseUtil.*;
 
 @Path("/")
@@ -47,13 +48,15 @@ public class ChargesApiResource {
     private ChargeDao chargeDao;
     private TokenDao tokenDao;
     private GatewayAccountDao gatewayAccountDao;
+    private EventDao eventDao;
     private LinksConfig linksConfig;
     private Logger logger = LoggerFactory.getLogger(ChargesApiResource.class);
 
-    public ChargesApiResource(ChargeDao chargeDao, TokenDao tokenDao, GatewayAccountDao gatewayAccountDao, LinksConfig linksConfig) {
+    public ChargesApiResource(ChargeDao chargeDao, TokenDao tokenDao, GatewayAccountDao gatewayAccountDao, EventDao eventDao, LinksConfig linksConfig) {
         this.chargeDao = chargeDao;
         this.tokenDao = tokenDao;
         this.gatewayAccountDao = gatewayAccountDao;
+        this.eventDao = eventDao;
         this.linksConfig = linksConfig;
     }
 
@@ -111,6 +114,15 @@ public class ChargesApiResource {
                     return entityCreatedResponse(selfUri, responseData);
                 })
                 .orElseGet(() -> responseWithChargeNotFound(logger, chargeId));
+    }
+
+    @GET
+    @Path(CHARGE_EVENTS_API_PATH)
+    @Produces(APPLICATION_JSON)
+    public Response getEvents(@PathParam("accountId") Long accountId, @PathParam("chargeId") Long chargeId){
+        List<ChargeEvent> events = eventDao.findEvents(accountId,chargeId);
+        ImmutableMap<String, Object> responsePayload = ImmutableMap.of("charge_id", chargeId, "events", events);
+        return Response.ok().entity(responsePayload).build();
     }
 
     private Map<String, Object> getResponseData(String chargeId, String tokenId, Map<String, Object> charge, URI selfUri) {

@@ -5,17 +5,16 @@ import uk.gov.pay.connector.rules.DropwizardAppWithPostgresRule;
 
 import static com.jayway.restassured.RestAssured.given;
 import static com.jayway.restassured.http.ContentType.JSON;
+import static uk.gov.pay.connector.resources.ApiPaths.*;
 
 public class RestAssuredClient {
     private final DropwizardAppWithPostgresRule app;
-    private final String requestPathTemplate;
     private String accountId;
     private String chargeId;
 
-    public RestAssuredClient(DropwizardAppWithPostgresRule app, String accountId, String requestPathTemplate) {
+    public RestAssuredClient(DropwizardAppWithPostgresRule app, String accountId) {
         this.app = app;
         this.accountId = accountId;
-        this.requestPathTemplate = requestPathTemplate;
     }
 
     public RestAssuredClient withAccountId(String accountId) {
@@ -29,7 +28,7 @@ public class RestAssuredClient {
     }
 
     public ValidatableResponse postCreateCharge(String postBody) {
-        String requestPath = requestPathTemplate
+        String requestPath = CHARGES_API_PATH
                 .replace("{accountId}", accountId);
 
         return given().port(app.getLocalPort())
@@ -40,7 +39,7 @@ public class RestAssuredClient {
     }
 
     public ValidatableResponse getCharge() {
-        String requestPath = requestPathTemplate
+        String requestPath = CHARGE_API_PATH
                 .replace("{accountId}", accountId)
                 .replace("{chargeId}", chargeId);
 
@@ -50,7 +49,7 @@ public class RestAssuredClient {
     }
 
     public ValidatableResponse putChargeStatus(String putBody) {
-        String requestPath = requestPathTemplate
+        String requestPath = CHARGE_FRONTEND_PATH
                 .replace("{accountId}", accountId)
                 .replace("{chargeId}", chargeId)
                 + "/status";
@@ -62,7 +61,7 @@ public class RestAssuredClient {
     }
 
     public ValidatableResponse postChargeCancellation() {
-        String requestPath = requestPathTemplate
+        String requestPath = CHARGE_API_PATH
                 .replace("{accountId}", accountId)
                 .replace("{chargeId}", chargeId)
                 + "/cancel";
@@ -73,7 +72,25 @@ public class RestAssuredClient {
 
     public ValidatableResponse getTransactions() {
         return given().port(app.getLocalPort())
-                .get(requestPathTemplate + "?gatewayAccountId=" + accountId)
+                .get(CHARGES_FRONTEND_PATH + "?gatewayAccountId=" + accountId)
+                .then();
+    }
+
+    public ValidatableResponse getEvents(Long chargeId) {
+        String requestPath = CHARGE_EVENTS_API_PATH
+                .replace("{accountId}", accountId)
+                .replace("{chargeId}", String.valueOf(chargeId));
+        return given().port(app.getLocalPort())
+                .get(requestPath)
+                .then();
+    }
+
+    public ValidatableResponse getFrontendCharge() {
+        String requestPath = CHARGE_FRONTEND_PATH
+                .replace("{chargeId}", chargeId);
+        return given()
+                .port(app.getLocalPort())
+                .get(requestPath)
                 .then();
     }
 }

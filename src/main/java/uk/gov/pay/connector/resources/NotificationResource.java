@@ -50,7 +50,7 @@ public class NotificationResource {
         logger.info("Received notification from " + provider + ": " + notification);
 
         PaymentProvider paymentProvider = providers.resolve(provider);
-        StatusUpdates statusUpdates = paymentProvider.handleNotification(notification, findAccountByTransactionId(provider), accountUpdater());
+        StatusUpdates statusUpdates = paymentProvider.handleNotification(notification, findAccountByTransactionId(provider), accountUpdater(provider));
 
         if (!statusUpdates.successful()) {
             return Response.status(BAD_GATEWAY).build();
@@ -59,9 +59,9 @@ public class NotificationResource {
         return Response.ok(statusUpdates.getResponseForProvider()).build();
     }
 
-    private Consumer<StatusUpdates> accountUpdater() {
+    private Consumer<StatusUpdates> accountUpdater(String provider) {
         return statusUpdates ->
-                statusUpdates.getStatusUpdates().forEach(update -> updateCharge(chargeDao, update.getKey(), update.getValue()));
+                statusUpdates.getStatusUpdates().forEach(update -> updateCharge(chargeDao, provider , update.getKey(), update.getValue()));
     }
 
 
@@ -72,11 +72,11 @@ public class NotificationResource {
         };
     }
 
-    private static void updateCharge(ChargeDao chargeDao, String key, ChargeStatus value) {
+    private static void updateCharge(ChargeDao chargeDao, String provider, String transactionId, ChargeStatus value) {
         try {
-            chargeDao.updateStatusWithGatewayInfo(key, value);
+            chargeDao.updateStatusWithGatewayInfo(provider, transactionId, value);
         } catch (PayDBIException e) {
-            logger.error("Error when trying to update transaction id " + key + " to status " + value, e);
+            logger.error("Error when trying to update transaction id " + transactionId + " to status " + value, e);
         }
     }
 }

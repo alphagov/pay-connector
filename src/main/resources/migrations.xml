@@ -79,4 +79,22 @@
         </addColumn>
     </changeSet>
 
+    <changeSet id="build charge_events table" author="">
+        <createTable tableName="charge_events">
+            <column name="id" type="bigserial" autoIncrement="true">
+                <constraints primaryKey="true" nullable="false"/>
+            </column>
+            <column name="charge_id" type="bigserial">
+                <constraints foreignKeyName="fk__charges_events" referencedTableName="charges"
+                             referencedColumnNames="charge_id" nullable="false"/>
+            </column>
+            <column name="status" type="text">
+                <constraints nullable="false"/>
+            </column>
+            <column name="updated" type="timestamp without timezone" defaultValueComputed="(now() at time zone 'utc')">
+                <constraints nullable="false"/>
+            </column>
+        </createTable>
+    </changeSet>
+
 </databaseChangeLog>
