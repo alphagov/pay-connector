@@ -7,7 +7,7 @@ public interface ApiPaths {
     String CHARGE_RESOURCE = CHARGES_RESOURCE + "/{chargeId}";
     String FRONTEND_RESOURCE = "/v1/frontend";
 
-    String CHARGES_FRONTEND_PATH = "/v1/frontend/charges/";
+    String CHARGES_FRONTEND_PATH = FRONTEND_RESOURCE + CHARGES_RESOURCE;
     String CHARGE_FRONTEND_PATH = FRONTEND_RESOURCE + CHARGE_RESOURCE;
 
 
