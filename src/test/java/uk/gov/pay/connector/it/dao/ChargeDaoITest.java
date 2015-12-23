@@ -1,6 +1,9 @@
 package uk.gov.pay.connector.it.dao;
 
 import com.google.common.collect.ImmutableMap;
+import org.hamcrest.Description;
+import org.hamcrest.Matcher;
+import org.hamcrest.TypeSafeMatcher;
 import org.junit.Before;
 import org.junit.Rule;
 import org.junit.Test;
@@ -8,6 +11,7 @@ import org.junit.rules.ExpectedException;
 import uk.gov.pay.connector.dao.ChargeDao;
 import uk.gov.pay.connector.dao.EventDao;
 import uk.gov.pay.connector.dao.PayDBIException;
+import uk.gov.pay.connector.model.domain.ChargeEvent;
 import uk.gov.pay.connector.model.domain.ChargeStatus;
 import uk.gov.pay.connector.rules.DropwizardAppWithPostgresRule;
 import uk.gov.pay.connector.util.ChargeEventListener;
@@ -17,9 +21,13 @@ import java.util.List;
 import java.util.Map;
 
 import static com.google.common.collect.Lists.newArrayList;
+import static java.lang.Long.parseLong;
+import static java.util.Arrays.asList;
+import static java.util.stream.Collectors.toList;
 import static org.apache.commons.lang3.RandomStringUtils.randomAlphanumeric;
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.is;
+import static org.hamcrest.core.IsNot.not;
 import static org.junit.Assert.assertEquals;
 import static uk.gov.pay.connector.model.domain.ChargeStatus.*;
 import static uk.gov.pay.connector.util.TransactionId.randomId;
@@ -78,6 +86,8 @@ public class ChargeDaoITest {
         Map<String, Object> charge = chargeDao.findById(chargeId).get();
 
         assertThat(charge.get("status"), is(AUTHORISATION_SUBMITTED.getValue()));
+
+        assertLoggedEvents(AUTHORISATION_SUBMITTED);
     }
 
     @Test
@@ -98,6 +108,8 @@ public class ChargeDaoITest {
 
         Map<String, Object> charge = chargeDao.findById(chargeId).get();
         assertThat(charge.get("status"), is(AUTHORISATION_SUBMITTED.getValue()));
+
+        assertLoggedEvents(AUTHORISATION_SUBMITTED);
     }
 
     @Test
@@ -109,6 +121,8 @@ public class ChargeDaoITest {
         Map<String, Object> charge = chargeDao.findById(chargeId).get();
         assertThat(charge.get("charge_id"), is(chargeId));
         assertThat(charge.get("status"), is(ENTERING_CARD_DETAILS.getValue()));
+
+        assertLoggedEvents(CREATED, ENTERING_CARD_DETAILS);
     }
 
     @Test
@@ -121,6 +135,9 @@ public class ChargeDaoITest {
         Map<String, Object> charge = chargeDao.findById(chargeId).get();
         assertThat(charge.get("charge_id"), is(chargeId));
         assertThat(charge.get("status"), is(CAPTURE_SUBMITTED.getValue()));
+
+        List<ChargeEvent> events = eventDao.findEvents(parseLong(GATEWAY_ACCOUNT_ID), parseLong(chargeId));
+        assertThat(events,  not(shouldIncludeStatus(ENTERING_CARD_DETAILS)));
     }
 
     @Test
@@ -140,6 +157,26 @@ public class ChargeDaoITest {
         Map<String, Object> chargeData = new HashMap<>(newCharge(AMOUNT));
         chargeData.put("reference", randomAlphanumeric(512));
         chargeId = chargeDao.saveNewCharge(GATEWAY_ACCOUNT_ID, chargeData);
+    }
+
+    private void assertLoggedEvents(ChargeStatus... statuses) {
+        List<ChargeEvent> events = eventDao.findEvents(parseLong(GATEWAY_ACCOUNT_ID), parseLong(chargeId));
+        assertThat(events,  shouldIncludeStatus(statuses));
+    }
+
+    private Matcher<? super List<ChargeEvent>> shouldIncludeStatus(ChargeStatus... expectedStatuses) {
+        return new TypeSafeMatcher<List<ChargeEvent>>() {
+            @Override
+            protected boolean matchesSafely(List<ChargeEvent> chargeEvents) {
+                List<ChargeStatus> actualStatuses = chargeEvents.stream().map(ce -> ce.getStatus()).collect(toList());
+                return actualStatuses.containsAll(asList(expectedStatuses));
+            }
+
+            @Override
+            public void describeTo(Description description) {
+                description.appendText(String.format("does not contain [%s]", expectedStatuses));
+            }
+        };
     }
 
     private ImmutableMap<String, Object> newCharge(long amount) {

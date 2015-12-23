@@ -43,7 +43,8 @@ public class ChargeEvent {
     @Override
     public String toString() {
         return "ChargeEvent{" +
-                "status=" + status +
+                "chargeId=" + chargeId +
+                ", status=" + status +
                 ", updated=" + updated +
                 '}';
     }
