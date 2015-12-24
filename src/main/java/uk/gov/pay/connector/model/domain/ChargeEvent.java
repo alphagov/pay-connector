@@ -1,6 +1,7 @@
 package uk.gov.pay.connector.model.domain;
 
 import com.fasterxml.jackson.annotation.JsonProperty;
+import uk.gov.pay.connector.model.api.ExternalChargeStatus;
 
 import java.time.LocalDateTime;
 
@@ -31,8 +32,8 @@ public class ChargeEvent {
     }
 
     @JsonProperty("status")
-    public String getStatusValue() {
-        return status.getValue();
+    public String getExternalStatusValue() {
+        return ExternalChargeStatus.mapFromStatus(status).getValue();
     }
 
     @JsonProperty
