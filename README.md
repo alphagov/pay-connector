@@ -61,11 +61,12 @@ The command to run all the tests is:
 | ----------------------------- | ----------------- | ---------------------------------- |
 |[```/v1/api/accounts```](#post-v1apiaccounts)              | POST    |  Create a new account to associate charges with            |
 |[```/v1/api/accounts/{gatewayAccountId}```](#get-v1apiaccountsaccountsid)     | GET    |  Retrieves an existing account without the provider credentials  |
-|[```/v1/api/charges/{chargeId}```](#get-v1apichargeschargeid)                 | GET    |  Returns the charge with `chargeId`            |
-|[```/v1/api/charges```](#post-v1apicharges)                                  | POST    |  Create a new charge            |
+|[```/v1/api/accounts/{accountId}/charges/{chargeId}```](#get-v1apiaccountsaccountidchargeschargeid)                 | GET    |  Returns the charge with `chargeId`  belongs to account `accountId` |
+|[```/v1/api/accounts/{accountId}/charges```](#post-v1apiaccountsaccountidcharges)                                  | POST    |  Create a new charge for this account `accountId`           |
 |[```/v1/api/notifications/worldpay```](#post-v1apinotificationsworldpay)                                  | POST |  Handle charge update notifications from Worldpay.            |
 |[```/v1/api/notifications/smartpay```](#post-v1apinotificationssmartpay)                                  | POST |  Handle charge update notifications from Smartpay.            |
 |[```/v1/api/accounts/{accountId}/charges/{chargeId}/cancel```](#post-v1apiaccountsaccountidchargeschargeidcancel)  | POST    |  Cancels the charge with `chargeId` for account `accountId`           |
+|[```/v1/api/accounts/{accountId}/charges/{chargeId}/events```](#post-v1apiaccountsaccountidchargeschargeidevents)  | GET     |  Retrieves all the transaction history for the given `chargeId` of account `accountId`           |
 
 ## FRONTEND NAMESPACE
 
@@ -163,15 +164,15 @@ Content-Type: application/json
 
 -----------------------------------------------------------------------------------------------------------
 
-### GET /v1/api/charges/{chargeId}
+### GET /v1/api/accounts/{accountId}/charges/{chargeId}
 
-Find a charge by ID. This endpoint is very similar to [```/v1/frontend/charges/{chargeId}```](#get-v1frontendchargeschargeid)
+Find a charge by ID for a given account. It does a check to see if the charge belongs to the given account. This endpoint is very similar to [```/v1/frontend/charges/{chargeId}```](#get-v1frontendchargeschargeid)
 except it translates the status of the charge to an external representation (see [Payment States](https://sites.google.com/a/digital.cabinet-office.gov.uk/payments-platform/payment-states---evolving-diagram)).
 
 #### Request example
 
 ```
-GET /v1/api/charges/1
+GET /v1/api/accounts/2131/charges/1
 ```
 
 #### Response example
@@ -186,6 +187,7 @@ Content-Type: application/json
     "reference": "Ref-1234",
     "amount": 5000,
     "gateway_account_id": "10",
+    "gateway_transaction_id": "DFG98-FG8J-R78HJ-8JUG9",
     "status": "CREATED",
     "return_url": "http://example.service/return_from_payments" 
     "links": [
@@ -207,20 +209,26 @@ Content-Type: application/json
 
 | Field                    | always present | Description                               |
 | ------------------------ |:--------:| ----------------------------------------- |
-| `amount`                 | X | The unique identifier for this charge       |
+| `charge_id`                 | X | The unique identifier for this charge       |
+| `amount`                 | X | The amount of this charge       |
+| `description`            | X | The payment description       
+| `reference`              | X | There reference issued by the government service for this payment       |
 | `gateway_account_id`     | X | The ID of the gateway account to use with this charge       |
+| `gateway_transaction_id` | X | The gateway transaction reference associated to this charge       |
 | `status`                 | X | The current external status of the charge       |
+| `return_url`             | X | The url to return the user to after the payment process has completed.|
+| `links`                  | X | Array of relevant resource references related to this charge|
 
 -----------------------------------------------------------------------------------------------------------
 
-### POST /v1/api/charges
+### POST /v1/accounts/{accountId}/api/charges
 
-This endpoint creates a new charge through this connector.
+This endpoint creates a new charge for the given account.
 
 #### Request example
 
 ```
-POST /v1/api/charges
+POST /v1/api/accounts/3121/charges
 Content-Type: application/json
 
 {
@@ -272,6 +280,51 @@ Location: http://connector.service/v1/api/charges/1
 | `charge_id`                 | X | The unique identifier for this charge       |
 
 -----------------------------------------------------------------------------------------------------------
+
+### GET /v1/api/accounts/{accountId}/charges/{chargeId}/events
+
+This endpoint retrieves the transaction history for a given `chargeId` associated to account `accountId`
+
+#### Request example 
+
+```
+GET /v1/api/accounts/123/charges/4321/events
+
+```
+
+#### Response example
+
+```
+HTTP/1.1 200 OK
+Content-Type: application/json
+
+{
+ "charge_id": 4321,
+  "events":[
+    {
+        "status": "CREATED"
+        "updated": "23-12-2015 13:21:05"
+    },
+     {
+        "status": "IN PROGRESS",
+        "updated": "23-12-2015 13:23:12"
+     }
+  ]
+}
+```
+
+##### Response field description
+
+| Field                    | always present | Description                               |
+| ------------------------ |:--------:| ----------------------------------------- |
+| `charge_id`                 | X | The unique identifier for this charge       |
+| `events`                    | X | An array of events associated to this charge          |
+|  `events[0].status`         | X | The externally visible status of this event          |
+|  `events[0].updated`        | X | The date and time of the event                      |
+
+
+-----------------------------------------------------------------------------------------------------------
+
 
 ### PUT /v1/frontend/charges/{chargeId}/status
 
