@@ -75,9 +75,14 @@ public class ChargesFrontendResource {
     @GET
     @Path(CHARGES_FRONTEND_PATH)
     @Produces(APPLICATION_JSON)
-    public Response getCharges(@QueryParam("gatewayAccountId") String gatewayAccountId, @Context UriInfo uriInfo) {
+    public Response getCharges(@QueryParam("gatewayAccountId") String gatewayAccountId,
+                               @QueryParam("reference") String reference,
+                               @QueryParam("status") String status,
+                               @QueryParam("fromDate") String fromDate,
+                               @QueryParam("toDate") String toDate,
+                               @Context UriInfo uriInfo) {
         return reduce(validateGatewayAccountReference(gatewayAccountId)
-                .bimap(handleError, listTransactions(gatewayAccountId)));
+                .bimap(handleError, listTransactions(gatewayAccountId, reference, status, fromDate, toDate)));
     }
 
     private boolean invalidInput(Map newStatusMap) {
@@ -114,9 +119,10 @@ public class ChargesFrontendResource {
         return ok(responseData).build();
     }
 
-    private F<Boolean, Response> listTransactions(final String gatewayAccountId) {
+    private F<Boolean, Response> listTransactions(final String gatewayAccountId, final String reference,
+                                                  final String status, final String fromDate, final String toDate) {
         return success -> {
-            List<Map<String, Object>> charges = chargeDao.findAllBy(gatewayAccountId);
+            List<Map<String, Object>> charges = chargeDao.findAllBy(gatewayAccountId, reference, status, fromDate, toDate);
             if (charges.isEmpty()) {
                 return accountDao.findById(gatewayAccountId)
                         .map(x -> okResultsResponseFrom(charges))

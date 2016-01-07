@@ -36,6 +36,8 @@ public class ChargeDaoITest {
     private static final String GATEWAY_ACCOUNT_ID = "564532435";
     private static final String RETURN_URL = "http://service.com/success-page";
     private static final String REFERENCE = "Test reference";
+    private static final String FROM_DATE = "2016-01-01 01:00:00";
+    private static final String TO_DATE = "2026-01-08 01:00:00";
     private static final String DESCRIPTION = "Test description";
     private static final long AMOUNT = 101;
     public static final String PAYMENT_PROVIDER = "test_provider";
@@ -77,6 +79,95 @@ public class ChargeDaoITest {
         assertThat(charge.get("status"), is(CREATED.getValue()));
         assertThat(charge.get("gateway_account_id"), is(GATEWAY_ACCOUNT_ID));
         assertThat(charge.get("return_url"), is(RETURN_URL));
+    }
+
+    @Test
+    public void searchChargesByMatchingChargeId() throws Exception {
+        Map<String, Object> charge = chargeDao.findAllBy(GATEWAY_ACCOUNT_ID, chargeId, null, null, null).get(0);
+
+        assertThat(charge.get("charge_id"), is(chargeId));
+        assertThat(charge.get("amount"), is(AMOUNT));
+        assertThat(charge.get("reference"), is(REFERENCE));
+        assertThat(charge.get("description"), is(DESCRIPTION));
+        assertThat(charge.get("status"), is(CREATED.getValue()));
+    }
+
+    @Test
+    public void searchChargesByFullReferenceOnly() throws Exception {
+        Map<String, Object> charge = chargeDao.findAllBy(GATEWAY_ACCOUNT_ID, REFERENCE, null, null, null).get(0);
+
+        assertThat(charge.get("charge_id"), is(chargeId));
+        assertThat(charge.get("amount"), is(AMOUNT));
+        assertThat(charge.get("reference"), is(REFERENCE));
+        assertThat(charge.get("description"), is(DESCRIPTION));
+        assertThat(charge.get("status"), is(CREATED.getValue()));
+    }
+
+    @Test
+    public void searchChargesByPartialReferenceOnly() throws Exception {
+        Map<String, Object> charge = chargeDao.findAllBy(GATEWAY_ACCOUNT_ID, "reference", null, null, null).get(0);
+
+        assertThat(charge.get("charge_id"), is(chargeId));
+        assertThat(charge.get("amount"), is(AMOUNT));
+        assertThat(charge.get("reference"), is(REFERENCE));
+        assertThat(charge.get("description"), is(DESCRIPTION));
+        assertThat(charge.get("status"), is(CREATED.getValue()));
+    }
+
+    @Test
+    public void searchChargeByReferenceAndStatusOnly() throws Exception {
+        Map<String, Object> charge = chargeDao.findAllBy(GATEWAY_ACCOUNT_ID, REFERENCE, CREATED.getValue(), null, null).get(0);
+
+        assertThat(charge.get("charge_id"), is(chargeId));
+        assertThat(charge.get("amount"), is(AMOUNT));
+        assertThat(charge.get("reference"), is(REFERENCE));
+        assertThat(charge.get("description"), is(DESCRIPTION));
+        assertThat(charge.get("status"), is(CREATED.getValue()));
+    }
+
+    @Test
+    public void searchChargeByReferenceAndStatusAndFromDateAndToDate() throws Exception {
+        Map<String, Object> charge = chargeDao.findAllBy(GATEWAY_ACCOUNT_ID, REFERENCE, CREATED.getValue(), FROM_DATE, TO_DATE).get(0);
+
+        assertThat(charge.get("charge_id"), is(chargeId));
+        assertThat(charge.get("amount"), is(AMOUNT));
+        assertThat(charge.get("reference"), is(REFERENCE));
+        assertThat(charge.get("description"), is(DESCRIPTION));
+        assertThat(charge.get("status"), is(CREATED.getValue()));
+    }
+
+    @Test
+    public void searchChargeByReferenceAndStatusAndFromDate() throws Exception {
+        Map<String, Object> charge = chargeDao.findAllBy(GATEWAY_ACCOUNT_ID, REFERENCE, CREATED.getValue(), FROM_DATE, null).get(0);
+
+        assertThat(charge.get("charge_id"), is(chargeId));
+        assertThat(charge.get("amount"), is(AMOUNT));
+        assertThat(charge.get("reference"), is(REFERENCE));
+        assertThat(charge.get("description"), is(DESCRIPTION));
+        assertThat(charge.get("status"), is(CREATED.getValue()));
+    }
+
+    @Test
+    public void searchChargeByReferenceAndStatusAndToDate() throws Exception {
+        Map<String, Object> charge = chargeDao.findAllBy(GATEWAY_ACCOUNT_ID, REFERENCE, CREATED.getValue(), null, TO_DATE).get(0);
+
+        assertThat(charge.get("charge_id"), is(chargeId));
+        assertThat(charge.get("amount"), is(AMOUNT));
+        assertThat(charge.get("reference"), is(REFERENCE));
+        assertThat(charge.get("description"), is(DESCRIPTION));
+        assertThat(charge.get("status"), is(CREATED.getValue()));
+    }
+
+    @Test
+    public void searchChargeByReferenceAndStatusAndFromDate_ShouldReturnZero() throws Exception {
+        List<Map<String, Object>> charges = chargeDao.findAllBy(GATEWAY_ACCOUNT_ID, REFERENCE, CREATED.getValue(), TO_DATE, null);
+        assertThat(charges.size(), is(0));
+    }
+
+    @Test
+    public void searchChargeByReferenceAndStatusAndToDate_ShouldReturnZero() throws Exception {
+        List<Map<String, Object>> charges = chargeDao.findAllBy(GATEWAY_ACCOUNT_ID, REFERENCE, CREATED.getValue(), null, FROM_DATE);
+        assertThat(charges.size(), is(0));
     }
 
     @Test
