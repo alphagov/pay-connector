@@ -9,7 +9,7 @@ public class CardUtils {
 
     public static Card aValidCard() {
         String validSandboxCard = "4242424242424242";
-        return buildCardDetails(validSandboxCard, "123", "12/15");
+        return buildCardDetails(validSandboxCard, "123", "12/17");
     }
 
     public static Card buildCardDetails(String cardNumber, String cvc, String expiryDate) {
