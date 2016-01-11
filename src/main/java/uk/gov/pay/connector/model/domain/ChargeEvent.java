@@ -1,16 +1,25 @@
 package uk.gov.pay.connector.model.domain;
 
+import com.fasterxml.jackson.annotation.JsonFormat;
 import com.fasterxml.jackson.annotation.JsonProperty;
-import uk.gov.pay.connector.model.api.ExternalChargeStatus;
+import com.fasterxml.jackson.databind.annotation.JsonDeserialize;
+import com.fasterxml.jackson.databind.annotation.JsonSerialize;
+import com.fasterxml.jackson.datatype.joda.deser.LocalDateTimeDeserializer;
+import com.fasterxml.jackson.datatype.jsr310.ser.LocalDateTimeSerializer;
 
 import java.time.LocalDateTime;
 
+import static uk.gov.pay.connector.model.api.ExternalChargeStatus.mapFromStatus;
 import static uk.gov.pay.connector.model.domain.ChargeStatus.chargeStatusFrom;
 
 public class ChargeEvent {
 
     private Long chargeId;
     private ChargeStatus status;
+
+    @JsonDeserialize(using = LocalDateTimeDeserializer.class)
+    @JsonSerialize(using = LocalDateTimeSerializer.class)
+    @JsonFormat(pattern="yyyy-MM-dd HH:mm:ss")
     private LocalDateTime updated;
 
     public ChargeEvent(Long chargeId, String status, LocalDateTime updated) {
@@ -33,7 +42,7 @@ public class ChargeEvent {
 
     @JsonProperty("status")
     public String getExternalStatusValue() {
-        return ExternalChargeStatus.mapFromStatus(status).getValue();
+        return mapFromStatus(status).getValue();
     }
 
     @JsonProperty
