@@ -4,7 +4,6 @@ import org.apache.commons.lang3.StringUtils;
 import org.skife.jdbi.v2.DefaultMapper;
 import org.skife.jdbi.v2.Handle;
 import org.skife.jdbi.v2.Query;
-import uk.gov.pay.connector.dao.ChargeDao;
 
 import java.sql.Timestamp;
 import java.time.LocalDateTime;
@@ -20,7 +19,7 @@ public class ChargesSearch {
                                                        String reference, String status, String fromDate, String toDate) {
 
         Query<Map<String, Object>> queryStmt = handle
-                .createQuery(String.format(query, joinEventsTable(fromDate, toDate), constructSearchTransactionsQuery(reference, status, fromDate, toDate)))
+                .createQuery(String.format(query, constructSearchTransactionsQuery(reference, status, fromDate, toDate)))
                 .bind("gid", Long.valueOf(gatewayAccountId));
 
         // Filter by reference or chargeId
@@ -45,14 +44,6 @@ public class ChargesSearch {
             queryStmt.bind("toDate", Timestamp.valueOf(LocalDateTime.parse(toDate, formatter)));
         }
         return queryStmt.map(new DefaultMapper()).list();
-    }
-
-    private static String joinEventsTable(String fromDate, String toDate) {
-        StringBuffer sb = new StringBuffer();
-        if (isNotBlank(fromDate) || isNotBlank(toDate)) {
-            sb.append("INNER JOIN charge_events ce ON c.charge_id = ce.charge_id");
-        }
-        return sb.toString();
     }
 
     private static String constructSearchTransactionsQuery(String reference, String status, String fromDate, String toDate) {

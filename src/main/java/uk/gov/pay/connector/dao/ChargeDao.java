@@ -159,9 +159,10 @@ public class ChargeDao {
     public List<Map<String, Object>> findAllBy(String gatewayAccountId, String reference, String status,
                                                String fromDate, String toDate) {
         String query =
-                "SELECT DISTINCT c.charge_id, c.gateway_transaction_id, c.status, c.amount, c.description, c.reference " +
+                "SELECT DISTINCT c.charge_id, c.gateway_transaction_id, c.status, c.amount, " +
+                        "c.description, c.reference, to_char(ce.updated, 'YYYY-MM-DD HH24:MI:SS') as updated " +
                         "FROM charges c " +
-                        "%s " +
+                        "INNER JOIN charge_events ce ON (c.charge_id = ce.charge_id AND ce.status = 'CREATED')" +
                         "WHERE c.gateway_account_id=:gid " +
                         "%s " +
                         "ORDER BY c.charge_id DESC";

@@ -46,7 +46,7 @@ public class EventDaoTest {
     @Test
     public void shouldRetrieveAllEventsForAGivenCharge() throws Exception {
         List<ChargeStatus> statuses = asList(CREATED, ENTERING_CARD_DETAILS, AUTHORISATION_SUBMITTED, AUTHORISATION_SUCCESS, CAPTURE_SUBMITTED, CAPTURED);
-        setupLifeCycleEventsFor(CHARGE_ID, statuses);
+        setupLifeCycleEventsFor(app, CHARGE_ID, statuses);
         List<ChargeEvent> events = eventDao.findEvents(GATEWAY_ACCOUNT_ID, CHARGE_ID);
 
         assertThat(events.size(), is(statuses.size()));
@@ -64,7 +64,7 @@ public class EventDaoTest {
     public void shouldNotReturnEventsIfChargeDoesNotBelongToAccount() throws Exception {
 
         List<ChargeStatus> statuses = asList(CREATED, ENTERING_CARD_DETAILS);
-        setupLifeCycleEventsFor(CHARGE_ID, statuses);
+        setupLifeCycleEventsFor(app, CHARGE_ID, statuses);
         Long nonExistentAccountId = 1111L;
         List<ChargeEvent> events = eventDao.findEvents(nonExistentAccountId, CHARGE_ID);
 
@@ -91,7 +91,7 @@ public class EventDaoTest {
     }
 
 
-    private void setupLifeCycleEventsFor(Long chargeId, List<ChargeStatus> statuses) {
+    public static void setupLifeCycleEventsFor(DropwizardAppWithPostgresRule app, Long chargeId, List<ChargeStatus> statuses) {
         statuses.stream().forEach(
                 st -> app.getDatabaseTestHelper().addEvent(chargeId, st.getValue())
         );
