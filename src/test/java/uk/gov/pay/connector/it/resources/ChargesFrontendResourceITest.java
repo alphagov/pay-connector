@@ -6,6 +6,7 @@ import org.apache.commons.lang.math.RandomUtils;
 import org.junit.Before;
 import org.junit.Rule;
 import org.junit.Test;
+import uk.gov.pay.connector.model.api.ExternalChargeStatus;
 import uk.gov.pay.connector.model.domain.ChargeStatus;
 import uk.gov.pay.connector.rules.DropwizardAppWithPostgresRule;
 import uk.gov.pay.connector.util.RestAssuredClient;
@@ -151,8 +152,8 @@ public class ChargesFrontendResourceITest {
         response.statusCode(OK.getStatusCode())
                 .contentType(JSON)
                 .body("results", hasSize(2));
-        assertTransactionEntry(response, 0, chargeId2, null, amount2, AUTHORISATION_REJECTED.getValue());
-        assertTransactionEntry(response, 1, chargeId1, gatewayTransactionId1, amount1, AUTHORISATION_SUCCESS.getValue());
+        assertTransactionEntry(response, 0, chargeId2, null, amount2, ExternalChargeStatus.EXT_FAILED.getValue());
+        assertTransactionEntry(response, 1, chargeId1, gatewayTransactionId1, amount1, ExternalChargeStatus.EXT_IN_PROGRESS.getValue());
     }
 
     @Test

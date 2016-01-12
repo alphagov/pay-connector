@@ -4,6 +4,8 @@ import org.apache.commons.lang3.StringUtils;
 import org.skife.jdbi.v2.DefaultMapper;
 import org.skife.jdbi.v2.Handle;
 import org.skife.jdbi.v2.Query;
+import uk.gov.pay.connector.model.api.ExternalChargeStatus;
+import uk.gov.pay.connector.model.domain.ChargeStatus;
 
 import java.sql.Timestamp;
 import java.time.LocalDateTime;
@@ -16,7 +18,7 @@ import static org.apache.commons.lang3.StringUtils.isNotBlank;
 public class ChargesSearch {
 
     public static List<Map<String, Object>> createQueryHandle(Handle handle, String query, String gatewayAccountId,
-                                                       String reference, String status, String fromDate, String toDate) {
+                                                              String reference, ExternalChargeStatus status, String fromDate, String toDate) {
 
         Query<Map<String, Object>> queryStmt = handle
                 .createQuery(String.format(query, constructSearchTransactionsQuery(reference, status, fromDate, toDate)))
@@ -31,8 +33,13 @@ public class ChargesSearch {
         }
 
         // Filter by status
-        if (StringUtils.isNotBlank(status)) {
-            queryStmt.bind("status", status);
+        if (status != null) {
+            StringBuffer innerStatuses = new StringBuffer();
+            for( int i=0; i < status.getInnerStates().length; i++) {
+                ChargeStatus innerStatus = status.getInnerStates()[i];
+                innerStatuses.append(":status"+i);
+                queryStmt.bind("status" + i, innerStatus.getValue());
+            }
         }
 
         // Filter by Date(s)
@@ -46,7 +53,7 @@ public class ChargesSearch {
         return queryStmt.map(new DefaultMapper()).list();
     }
 
-    private static String constructSearchTransactionsQuery(String reference, String status, String fromDate, String toDate) {
+    private static String constructSearchTransactionsQuery(String reference, ExternalChargeStatus status, String fromDate, String toDate) {
         StringBuffer subQuery = new StringBuffer();
         String AND = " AND ";
 
@@ -61,9 +68,16 @@ public class ChargesSearch {
         }
 
         // Filter by status
-        if (isNotBlank(status)) {
+        if (status != null) {
             subQuery.append(AND);
-            subQuery.append("c.status=:status");
+            subQuery.append("c.status IN (");
+            for (int i=0; i < status.getInnerStates().length; i++) {
+                subQuery.append(":status"+i);
+                if (i+1 < status.getInnerStates().length) {
+                    subQuery.append(",");
+                }
+            }
+            subQuery.append(")");
         }
 
         // Filter by Date(s)

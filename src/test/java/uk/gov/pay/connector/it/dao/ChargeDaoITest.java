@@ -11,6 +11,7 @@ import org.junit.rules.ExpectedException;
 import uk.gov.pay.connector.dao.ChargeDao;
 import uk.gov.pay.connector.dao.EventDao;
 import uk.gov.pay.connector.dao.PayDBIException;
+import uk.gov.pay.connector.model.api.ExternalChargeStatus;
 import uk.gov.pay.connector.model.domain.ChargeEvent;
 import uk.gov.pay.connector.model.domain.ChargeStatus;
 import uk.gov.pay.connector.rules.DropwizardAppWithPostgresRule;
@@ -129,7 +130,7 @@ public class ChargeDaoITest {
 
     @Test
     public void searchChargeByReferenceAndStatusOnly() throws Exception {
-        Map<String, Object> charge = chargeDao.findAllBy(GATEWAY_ACCOUNT_ID, REFERENCE, CREATED.getValue(), null, null).get(0);
+        Map<String, Object> charge = chargeDao.findAllBy(GATEWAY_ACCOUNT_ID, REFERENCE, ExternalChargeStatus.EXT_CREATED, null, null).get(0);
 
         assertThat(charge.get("charge_id"), is(chargeId));
         assertThat(charge.get("amount"), is(AMOUNT));
@@ -143,7 +144,7 @@ public class ChargeDaoITest {
 
     @Test
     public void searchChargeByReferenceAndStatusAndFromDateAndToDate() throws Exception {
-        Map<String, Object> charge = chargeDao.findAllBy(GATEWAY_ACCOUNT_ID, REFERENCE, CREATED.getValue(), FROM_DATE, TO_DATE).get(0);
+        Map<String, Object> charge = chargeDao.findAllBy(GATEWAY_ACCOUNT_ID, REFERENCE, ExternalChargeStatus.EXT_CREATED, FROM_DATE, TO_DATE).get(0);
 
         assertThat(charge.get("charge_id"), is(chargeId));
         assertThat(charge.get("amount"), is(AMOUNT));
@@ -157,7 +158,7 @@ public class ChargeDaoITest {
 
     @Test
     public void searchChargeByReferenceAndStatusAndFromDate() throws Exception {
-        Map<String, Object> charge = chargeDao.findAllBy(GATEWAY_ACCOUNT_ID, REFERENCE, CREATED.getValue(), FROM_DATE, null).get(0);
+        Map<String, Object> charge = chargeDao.findAllBy(GATEWAY_ACCOUNT_ID, REFERENCE, ExternalChargeStatus.EXT_CREATED, FROM_DATE, null).get(0);
 
         assertThat(charge.get("charge_id"), is(chargeId));
         assertThat(charge.get("amount"), is(AMOUNT));
@@ -171,7 +172,7 @@ public class ChargeDaoITest {
 
     @Test
     public void searchChargeByReferenceAndStatusAndToDate() throws Exception {
-        Map<String, Object> charge = chargeDao.findAllBy(GATEWAY_ACCOUNT_ID, REFERENCE, CREATED.getValue(), null, TO_DATE).get(0);
+        Map<String, Object> charge = chargeDao.findAllBy(GATEWAY_ACCOUNT_ID, REFERENCE, ExternalChargeStatus.EXT_CREATED, null, TO_DATE).get(0);
 
         assertThat(charge.get("charge_id"), is(chargeId));
         assertThat(charge.get("amount"), is(AMOUNT));
@@ -185,13 +186,13 @@ public class ChargeDaoITest {
 
     @Test
     public void searchChargeByReferenceAndStatusAndFromDate_ShouldReturnZero() throws Exception {
-        List<Map<String, Object>> charges = chargeDao.findAllBy(GATEWAY_ACCOUNT_ID, REFERENCE, CREATED.getValue(), TO_DATE, null);
+        List<Map<String, Object>> charges = chargeDao.findAllBy(GATEWAY_ACCOUNT_ID, REFERENCE, ExternalChargeStatus.EXT_CREATED, TO_DATE, null);
         assertThat(charges.size(), is(0));
     }
 
     @Test
     public void searchChargeByReferenceAndStatusAndToDate_ShouldReturnZero() throws Exception {
-        List<Map<String, Object>> charges = chargeDao.findAllBy(GATEWAY_ACCOUNT_ID, REFERENCE, CREATED.getValue(), null, FROM_DATE);
+        List<Map<String, Object>> charges = chargeDao.findAllBy(GATEWAY_ACCOUNT_ID, REFERENCE, ExternalChargeStatus.EXT_CREATED, null, FROM_DATE);
         assertThat(charges.size(), is(0));
     }
 

@@ -5,6 +5,7 @@ import org.skife.jdbi.v2.DefaultMapper;
 import org.skife.jdbi.v2.util.StringMapper;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import uk.gov.pay.connector.model.api.ExternalChargeStatus;
 import uk.gov.pay.connector.model.domain.ChargeEvent;
 import uk.gov.pay.connector.model.domain.ChargeStatus;
 import uk.gov.pay.connector.util.ChargeEventListener;
@@ -156,7 +157,7 @@ public class ChargeDao {
         return updateCount;
     }
 
-    public List<Map<String, Object>> findAllBy(String gatewayAccountId, String reference, String status,
+    public List<Map<String, Object>> findAllBy(String gatewayAccountId, String reference, ExternalChargeStatus status,
                                                String fromDate, String toDate) {
         String query =
                 "SELECT DISTINCT c.charge_id, c.gateway_transaction_id, c.status, c.amount, " +

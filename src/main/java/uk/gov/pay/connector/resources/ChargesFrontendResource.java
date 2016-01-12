@@ -4,10 +4,12 @@ import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableMap;
 import fj.F;
 import fj.data.Either;
+import org.apache.commons.lang3.StringUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import uk.gov.pay.connector.dao.ChargeDao;
 import uk.gov.pay.connector.dao.GatewayAccountDao;
+import uk.gov.pay.connector.model.api.ExternalChargeStatus;
 import uk.gov.pay.connector.model.domain.ChargeStatus;
 import uk.gov.pay.connector.util.ResponseBuilder;
 
@@ -29,6 +31,8 @@ import static javax.ws.rs.core.MediaType.APPLICATION_JSON;
 import static javax.ws.rs.core.Response.ok;
 import static org.apache.commons.lang3.StringUtils.isBlank;
 import static org.apache.commons.lang3.math.NumberUtils.isNumber;
+import static uk.gov.pay.connector.model.api.ExternalChargeStatus.mapFromStatus;
+import static uk.gov.pay.connector.model.api.ExternalChargeStatus.valueOfExternalStatus;
 import static uk.gov.pay.connector.model.domain.ChargeStatus.*;
 import static uk.gov.pay.connector.resources.ApiPaths.*;
 import static uk.gov.pay.connector.util.ResponseUtil.*;
@@ -81,8 +85,12 @@ public class ChargesFrontendResource {
                                @QueryParam("fromDate") String fromDate,
                                @QueryParam("toDate") String toDate,
                                @Context UriInfo uriInfo) {
+        ExternalChargeStatus chargeStatus = null;
+        if (StringUtils.isNotBlank(status)) {
+            chargeStatus = valueOfExternalStatus(status);
+        }
         return reduce(validateGatewayAccountReference(gatewayAccountId)
-                .bimap(handleError, listTransactions(gatewayAccountId, reference, status, fromDate, toDate)));
+                .bimap(handleError, listTransactions(gatewayAccountId, reference, chargeStatus, fromDate, toDate)));
     }
 
     private boolean invalidInput(Map newStatusMap) {
@@ -120,9 +128,11 @@ public class ChargesFrontendResource {
     }
 
     private F<Boolean, Response> listTransactions(final String gatewayAccountId, final String reference,
-                                                  final String status, final String fromDate, final String toDate) {
+                                                  final ExternalChargeStatus status, final String fromDate, final String toDate) {
         return success -> {
             List<Map<String, Object>> charges = chargeDao.findAllBy(gatewayAccountId, reference, status, fromDate, toDate);
+            charges.forEach(charge -> charge.put(STATUS_KEY, mapFromStatus(charge.get(STATUS_KEY).toString()).getValue()));
+
             if (charges.isEmpty()) {
                 return accountDao.findById(gatewayAccountId)
                         .map(x -> okResultsResponseFrom(charges))
