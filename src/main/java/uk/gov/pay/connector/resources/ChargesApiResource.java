@@ -1,6 +1,8 @@
 package uk.gov.pay.connector.resources;
 
 import com.google.common.collect.ImmutableMap;
+import fj.F;
+import org.apache.commons.lang3.StringUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import uk.gov.pay.connector.app.LinksConfig;
@@ -23,11 +25,14 @@ import java.util.*;
 import java.util.stream.Collectors;
 
 import static com.google.common.collect.Maps.newHashMap;
+import static fj.data.Either.reduce;
 import static java.lang.String.format;
 import static javax.ws.rs.HttpMethod.GET;
 import static javax.ws.rs.core.MediaType.APPLICATION_JSON;
 import static org.apache.commons.lang3.StringUtils.isEmpty;
 import static uk.gov.pay.connector.model.api.ExternalChargeStatus.mapFromStatus;
+import static uk.gov.pay.connector.model.api.ExternalChargeStatus.valueOfExternalStatus;
+import static uk.gov.pay.connector.model.domain.ChargeStatus.STATUS_KEY;
 import static uk.gov.pay.connector.resources.ApiPaths.*;
 import static uk.gov.pay.connector.util.ResponseUtil.*;
 
@@ -136,6 +141,26 @@ public class ChargesApiResource {
         }
 
         return responseBuilder.build();
+    }
+
+    @GET
+    @Path(CHARGES_SEARCH_API_PATH)
+    @Produces(APPLICATION_JSON)
+    public Response getCharges(@PathParam("accountId") String accountId,
+                               @QueryParam("reference") String reference,
+                               @QueryParam("status") String status,
+                               @QueryParam("fromDate") String fromDate,
+                               @QueryParam("toDate") String toDate,
+                               @Context UriInfo uriInfo) {
+        ExternalChargeStatus chargeStatus = null;
+        if (StringUtils.isNotBlank(status)) {
+            chargeStatus = valueOfExternalStatus(status);
+        }
+
+        List<Map<String, Object>> charges = chargeDao.findAllBy(accountId, reference, chargeStatus, fromDate, toDate);
+        charges.forEach(charge -> charge.put(STATUS_KEY, mapFromStatus(charge.get(STATUS_KEY).toString()).getValue()));
+        ImmutableMap<String, Object> responsePayload = ImmutableMap.of("results", charges);
+        return Response.ok().entity(responsePayload).build();
     }
 
     private Map<String, Object> convertStatusToExternalStatus(Map<String, Object> data) {

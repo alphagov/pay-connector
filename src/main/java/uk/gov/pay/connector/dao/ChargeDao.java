@@ -157,6 +157,11 @@ public class ChargeDao {
         return updateCount;
     }
 
+
+    public List<Map<String,Object>> findAllBy(String gatewayAccountId) {
+        return findAllBy(gatewayAccountId, null, null, null, null);
+    }
+
     public List<Map<String, Object>> findAllBy(String gatewayAccountId, String reference, ExternalChargeStatus status,
                                                String fromDate, String toDate) {
         String query =
