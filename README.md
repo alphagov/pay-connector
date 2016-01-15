@@ -63,6 +63,7 @@ The command to run all the tests is:
 |[```/v1/api/accounts/{gatewayAccountId}```](#get-v1apiaccountsaccountsid)     | GET    |  Retrieves an existing account without the provider credentials  |
 |[```/v1/api/accounts/{accountId}/charges/{chargeId}```](#get-v1apiaccountsaccountidchargeschargeid)                 | GET    |  Returns the charge with `chargeId`  belongs to account `accountId` |
 |[```/v1/api/accounts/{accountId}/charges```](#post-v1apiaccountsaccountidcharges)                                  | POST    |  Create a new charge for this account `accountId`           |
+|[```/v1/api/accounts/{accountId}/charges```](#get-v1apiaccountsaccountidcharges)                                  | GET    |  Searches transactions for this account `accountId`           |
 |[```/v1/api/notifications/worldpay```](#post-v1apinotificationsworldpay)                                  | POST |  Handle charge update notifications from Worldpay.            |
 |[```/v1/api/notifications/smartpay```](#post-v1apinotificationssmartpay)                                  | POST |  Handle charge update notifications from Smartpay.            |
 |[```/v1/api/accounts/{accountId}/charges/{chargeId}/cancel```](#post-v1apiaccountsaccountidchargeschargeidcancel)  | POST    |  Cancels the charge with `chargeId` for account `accountId`           |
@@ -221,7 +222,7 @@ Content-Type: application/json
 
 -----------------------------------------------------------------------------------------------------------
 
-### POST /v1/accounts/{accountId}/api/charges
+### POST /v1/api/accounts/{accountId}/charges
 
 This endpoint creates a new charge for the given account.
 
@@ -278,6 +279,64 @@ Location: http://connector.service/v1/api/charges/1
 | Field                    | always present | Description                               |
 | ------------------------ |:--------:| ----------------------------------------- |
 | `charge_id`                 | X | The unique identifier for this charge       |
+
+-----------------------------------------------------------------------------------------------------------
+
+### GET /v1/api/accounts/{accountId}/charges
+
+This endpoint searches for transactions for the given account id.
+
+#### Request example
+
+```
+GET /v1/api/accounts/3121/charges
+Content-Type: application/json
+
+```
+
+##### Query Parameters description
+
+| Field                    | required | Description                               |
+| ------------------------ |:--------:| ----------------------------------------- |
+| `reference`              | X | There (partial or full) reference issued by the government service for this payment. |
+| `status`                 | X | The transaction status |
+| `from_date`               | X | The initial date to search transactions |
+| `to_date`                 | X | The end date we should search transactions|
+
+#### Response example
+
+```
+HTTP/1.1 200 OK
+Content-Type: application/json
+Location: http://connector.service/v1/api/charges/1
+
+{
+    "results": [{     
+        "charge_id": "1",
+        "description": "Breathing licence",
+        "reference": "Ref-1234",
+        "amount": 5000,
+        "gateway_account_id": "10",
+        "gateway_transaction_id": "DFG98-FG8J-R78HJ-8JUG9",
+        "status": "CREATED",
+        "return_url": "http://example.service/return_from_payments"
+     }]
+}
+```
+
+##### Response field description
+
+| Field                    | always present | Description                               |
+| ------------------------ |:--------:| ----------------------------------------- |
+| `results`                | X | List of payments       |
+| `charge_id`              | X | The unique identifier for this charge       |
+| `amount`                 | X | The amount of this charge       |
+| `description`            | X | The payment description       
+| `reference`              | X | There reference issued by the government service for this payment       |
+| `gateway_account_id`     | X | The ID of the gateway account to use with this charge       |
+| `gateway_transaction_id` | X | The gateway transaction reference associated to this charge       |
+| `status`                 | X | The current external status of the charge       |
+| `return_url`             | X | The url to return the user to after the payment process has completed.|
 
 -----------------------------------------------------------------------------------------------------------
 

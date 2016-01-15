@@ -3,6 +3,7 @@ package uk.gov.pay.connector.unit.client;
 import com.github.tomakehurst.wiremock.WireMockServer;
 import com.github.tomakehurst.wiremock.client.WireMock;
 import com.github.tomakehurst.wiremock.core.WireMockConfiguration;
+import org.apache.http.NoHttpResponseException;
 import org.junit.Test;
 import uk.gov.pay.connector.util.PortFactory;
 
@@ -11,6 +12,7 @@ import javax.ws.rs.client.Client;
 import javax.ws.rs.client.ClientBuilder;
 import javax.ws.rs.client.Entity;
 import javax.ws.rs.core.Response;
+import java.net.SocketException;
 import java.net.SocketTimeoutException;
 import java.net.UnknownHostException;
 
@@ -43,7 +45,6 @@ public class GatewayClientExploratoryTest {
     @Test
     public void connectionToInvalidUrlUsingApacheConnectorProvider() {
         Client client = createJerseyClient();
-
         String gatewayUrl = "http://invalidone.invalid";
         try {
             postXMLRequestFor(client, gatewayUrl, "<request/>");
