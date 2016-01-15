@@ -6,12 +6,14 @@ import com.fasterxml.jackson.databind.annotation.JsonDeserialize;
 import com.fasterxml.jackson.databind.annotation.JsonSerialize;
 import com.fasterxml.jackson.datatype.joda.deser.LocalDateTimeDeserializer;
 import com.fasterxml.jackson.datatype.jsr310.ser.LocalDateTimeSerializer;
+import io.dropwizard.jackson.JsonSnakeCase;
 
 import java.time.LocalDateTime;
 
 import static uk.gov.pay.connector.model.api.ExternalChargeStatus.mapFromStatus;
 import static uk.gov.pay.connector.model.domain.ChargeStatus.chargeStatusFrom;
 
+@JsonSnakeCase
 public class ChargeEvent {
 
     private Long chargeId;
