@@ -37,8 +37,8 @@ public class GatewayClientExploratoryTest {
             fail("Exception not thrown!");
         } catch (Exception e) {
             assertTrue(e instanceof ProcessingException);
-            assertTrue(e.getCause() instanceof IllegalStateException);
-            assertThat(e.getMessage(), is("Already connected"));
+            assertTrue(e.getCause() instanceof SocketException);
+            assertThat(e.getMessage(), is("java.net.SocketException: Unexpected end of file from server"));
         }
     }
 
@@ -51,7 +51,7 @@ public class GatewayClientExploratoryTest {
             fail("Exception not thrown!");
         } catch (Exception e) {
             assertTrue(e instanceof ProcessingException);
-            assertTrue(e.getCause() instanceof UnknownHostException);
+            assertTrue(e.getCause() instanceof NoHttpResponseException);
         }
     }
 

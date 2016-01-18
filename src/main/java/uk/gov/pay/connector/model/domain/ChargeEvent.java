@@ -34,10 +34,6 @@ public class ChargeEvent {
         this.updated = updated;
     }
 
-    public ChargeEvent(Long chargeId, ChargeStatus chargeStatus) {
-        this(chargeId, chargeStatus, LocalDateTime.now());
-    }
-
     public ChargeStatus getStatus() {
         return status;
     }
@@ -65,7 +61,7 @@ public class ChargeEvent {
         return chargeId;
     }
 
-    public static ChargeEvent from(Long chargeId, ChargeStatus chargeStatus) {
-        return new ChargeEvent(chargeId, chargeStatus);
+    public static ChargeEvent from(Long chargeId, ChargeStatus chargeStatus, LocalDateTime updated) {
+        return new ChargeEvent(chargeId, chargeStatus, updated);
     }
 }
