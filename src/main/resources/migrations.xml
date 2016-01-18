@@ -99,8 +99,8 @@
 
     <changeSet id="add created date to charges table" author="">
         <addColumn tableName="charges">
-            <column name="created_date" type="timestamp without timezone">
-                <constraints nullable="true"/>
+            <column name="created_date" type="timestamp without timezone" defaultValueComputed="(now() at time zone 'utc')">
+                <constraints nullable="false"/>
             </column>
         </addColumn>
     </changeSet>
