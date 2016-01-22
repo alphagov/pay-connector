@@ -5,6 +5,7 @@ import org.skife.jdbi.v2.DefaultMapper;
 import org.skife.jdbi.v2.util.StringMapper;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import uk.gov.pay.connector.model.api.ExternalChargeStatus;
 import uk.gov.pay.connector.model.domain.ChargeEvent;
 import uk.gov.pay.connector.model.domain.ChargeStatus;
 import uk.gov.pay.connector.util.ChargeEventListener;
@@ -18,6 +19,7 @@ import static com.google.common.collect.Maps.newHashMap;
 import static java.lang.String.format;
 import static java.util.stream.Collectors.toList;
 import static uk.gov.pay.connector.model.domain.ChargeStatus.CREATED;
+import static uk.gov.pay.connector.util.ChargesSearch.createQueryHandle;
 
 public class ChargeDao {
     private static final Logger logger = LoggerFactory.getLogger(ChargeDao.class);
@@ -155,14 +157,23 @@ public class ChargeDao {
         return updateCount;
     }
 
-    public List<Map<String, Object>> findAllBy(String gatewayAccountId) {
+
+    public List<Map<String,Object>> findAllBy(String gatewayAccountId) {
+        return findAllBy(gatewayAccountId, null, null, null, null);
+    }
+
+    public List<Map<String, Object>> findAllBy(String gatewayAccountId, String reference, ExternalChargeStatus status,
+                                               String fromDate, String toDate) {
+        String query =
+                "SELECT DISTINCT c.charge_id, c.gateway_transaction_id, c.status, c.amount, " +
+                        "c.description, c.reference, to_char(ce.updated, 'YYYY-MM-DD HH24:MI:SS') as updated " +
+                        "FROM charges c " +
+                        "INNER JOIN charge_events ce ON (c.charge_id = ce.charge_id AND ce.status = 'CREATED')" +
+                        "WHERE c.gateway_account_id=:gid " +
+                        "%s " +
+                        "ORDER BY c.charge_id DESC";
         List<Map<String, Object>> rawData = jdbi.withHandle(handle ->
-                handle.createQuery("SELECT charge_id, gateway_transaction_id, status, amount, description, reference " +
-                        "FROM charges WHERE gateway_account_id=:gid " +
-                        "ORDER BY charge_id DESC")
-                        .bind("gid", Long.valueOf(gatewayAccountId))
-                        .map(new DefaultMapper())
-                        .list());
+                createQueryHandle(handle, query, gatewayAccountId, reference, status, fromDate, toDate));
 
         return copyAndConvertFieldsToString(rawData, "charge_id", "gateway_account_id");
     }

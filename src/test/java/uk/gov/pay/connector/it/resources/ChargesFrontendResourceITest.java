@@ -6,20 +6,25 @@ import org.apache.commons.lang.math.RandomUtils;
 import org.junit.Before;
 import org.junit.Rule;
 import org.junit.Test;
+import uk.gov.pay.connector.model.api.ExternalChargeStatus;
 import uk.gov.pay.connector.model.domain.ChargeStatus;
 import uk.gov.pay.connector.rules.DropwizardAppWithPostgresRule;
 import uk.gov.pay.connector.util.RestAssuredClient;
 
+import java.util.List;
+
 import static com.jayway.restassured.http.ContentType.JSON;
 import static java.lang.String.format;
+import static java.util.Arrays.asList;
 import static java.util.UUID.randomUUID;
 import static javax.ws.rs.HttpMethod.POST;
 import static javax.ws.rs.core.Response.Status;
 import static javax.ws.rs.core.Response.Status.*;
 import static org.hamcrest.Matchers.*;
+import static uk.gov.pay.connector.it.dao.EventDaoTest.setupLifeCycleEventsFor;
 import static uk.gov.pay.connector.model.domain.ChargeStatus.*;
 import static uk.gov.pay.connector.model.domain.ChargeStatus.CREATED;
-import static uk.gov.pay.connector.resources.ApiPaths.*;
+import static uk.gov.pay.connector.resources.ApiPaths.CHARGE_FRONTEND_PATH;
 import static uk.gov.pay.connector.util.JsonEncoder.toJson;
 import static uk.gov.pay.connector.util.LinksAssert.assertLink;
 import static uk.gov.pay.connector.util.LinksAssert.assertSelfLink;
@@ -136,14 +141,19 @@ public class ChargesFrontendResourceITest {
         app.getDatabaseTestHelper().addGatewayAccount(anotherAccountId, "another test gateway");
         app.getDatabaseTestHelper().addCharge("5001", anotherAccountId, 200, AUTHORISATION_SUBMITTED, returnUrl, "transaction-id-2");
 
+        List<ChargeStatus> statuses = asList(CREATED, ENTERING_CARD_DETAILS, AUTHORISATION_SUBMITTED, AUTHORISATION_SUCCESS);
+        setupLifeCycleEventsFor(app, Long.valueOf(chargeId1), statuses);
+        setupLifeCycleEventsFor(app, Long.valueOf(chargeId2), statuses);
+        setupLifeCycleEventsFor(app, Long.valueOf(5001), statuses);
+
         ValidatableResponse response = connectorRestApi
                 .getTransactions();
 
         response.statusCode(OK.getStatusCode())
                 .contentType(JSON)
                 .body("results", hasSize(2));
-        assertTransactionEntry(response, 0, chargeId2, null, amount2, AUTHORISATION_REJECTED.getValue());
-        assertTransactionEntry(response, 1, chargeId1, gatewayTransactionId1, amount1, AUTHORISATION_SUCCESS.getValue());
+        assertTransactionEntry(response, 0, chargeId2, null, amount2, ExternalChargeStatus.EXT_FAILED.getValue());
+        assertTransactionEntry(response, 1, chargeId1, gatewayTransactionId1, amount1, ExternalChargeStatus.EXT_IN_PROGRESS.getValue());
     }
 
     @Test
@@ -151,6 +161,11 @@ public class ChargesFrontendResourceITest {
         app.getDatabaseTestHelper().addCharge("101", accountId, 500, AUTHORISATION_SUCCESS, returnUrl, randomUUID().toString());
         app.getDatabaseTestHelper().addCharge("102", accountId, 300, AUTHORISATION_REJECTED, returnUrl, null);
         app.getDatabaseTestHelper().addCharge("103", accountId, 100, AUTHORISATION_SUBMITTED, returnUrl, randomUUID().toString());
+
+        List<ChargeStatus> statuses = asList(CREATED, ENTERING_CARD_DETAILS, AUTHORISATION_SUBMITTED, AUTHORISATION_SUCCESS, CAPTURE_SUBMITTED, CAPTURED);
+        setupLifeCycleEventsFor(app, Long.valueOf(101), statuses);
+        setupLifeCycleEventsFor(app, Long.valueOf(102), statuses);
+        setupLifeCycleEventsFor(app, Long.valueOf(103), statuses);
 
         ValidatableResponse response = connectorRestApi
                 .getTransactions();

@@ -11,11 +11,14 @@ import org.junit.rules.ExpectedException;
 import uk.gov.pay.connector.dao.ChargeDao;
 import uk.gov.pay.connector.dao.EventDao;
 import uk.gov.pay.connector.dao.PayDBIException;
+import uk.gov.pay.connector.model.api.ExternalChargeStatus;
 import uk.gov.pay.connector.model.domain.ChargeEvent;
 import uk.gov.pay.connector.model.domain.ChargeStatus;
 import uk.gov.pay.connector.rules.DropwizardAppWithPostgresRule;
 import uk.gov.pay.connector.util.ChargeEventListener;
 
+import java.time.LocalDateTime;
+import java.time.format.DateTimeFormatter;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -36,9 +39,12 @@ public class ChargeDaoITest {
     private static final String GATEWAY_ACCOUNT_ID = "564532435";
     private static final String RETURN_URL = "http://service.com/success-page";
     private static final String REFERENCE = "Test reference";
+    private static final String FROM_DATE = "2016-01-01 01:00:00";
+    private static final String TO_DATE = "2026-01-08 01:00:00";
     private static final String DESCRIPTION = "Test description";
     private static final long AMOUNT = 101;
     public static final String PAYMENT_PROVIDER = "test_provider";
+    public static final String COUNCIL_TAX_PAYMENT_REFERENCE = "Council Tax Payment reference";
 
     @Rule
     public DropwizardAppWithPostgresRule app = new DropwizardAppWithPostgresRule();
@@ -50,6 +56,7 @@ public class ChargeDaoITest {
     private String chargeId;
     private EventDao eventDao;
     private ChargeEventListener eventListener;
+    private DateTimeFormatter formatter;
 
     @Before
     public void setUp() throws Exception {
@@ -57,8 +64,10 @@ public class ChargeDaoITest {
         eventListener = new ChargeEventListener(eventDao);
         chargeDao = new ChargeDao(app.getJdbi(), eventListener);
         app.getDatabaseTestHelper().addGatewayAccount(GATEWAY_ACCOUNT_ID, PAYMENT_PROVIDER);
+        formatter = DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss");
 
-        chargeId = chargeDao.saveNewCharge(GATEWAY_ACCOUNT_ID, newCharge(AMOUNT));
+        chargeId = chargeDao.saveNewCharge(GATEWAY_ACCOUNT_ID, newCharge(AMOUNT, REFERENCE));
+        chargeDao.saveNewCharge(GATEWAY_ACCOUNT_ID, newCharge(AMOUNT, COUNCIL_TAX_PAYMENT_REFERENCE));
     }
 
     @Test
@@ -77,6 +86,115 @@ public class ChargeDaoITest {
         assertThat(charge.get("status"), is(CREATED.getValue()));
         assertThat(charge.get("gateway_account_id"), is(GATEWAY_ACCOUNT_ID));
         assertThat(charge.get("return_url"), is(RETURN_URL));
+    }
+
+    @Test
+    public void searchChargesByFullReferenceOnly() throws Exception {
+        List<Map<String, Object>> charges = chargeDao.findAllBy(GATEWAY_ACCOUNT_ID, REFERENCE, null, null, null);
+        assertThat(charges.size(), is(1));
+        Map<String, Object> charge = charges.get(0);
+
+        assertThat(charge.get("charge_id"), is(chargeId));
+        assertThat(charge.get("amount"), is(AMOUNT));
+        assertThat(charge.get("reference"), is(REFERENCE));
+        assertThat(charge.get("description"), is(DESCRIPTION));
+        assertThat(charge.get("status"), is(CREATED.getValue()));
+        assertThat(LocalDateTime.parse(charge.get("updated").toString(), formatter).getYear(), is(LocalDateTime.now().getYear()));
+        assertThat(LocalDateTime.parse(charge.get("updated").toString(), formatter).getMonth(), is(LocalDateTime.now().getMonth()));
+        assertThat(LocalDateTime.parse(charge.get("updated").toString(), formatter).getDayOfMonth(), is(LocalDateTime.now().getDayOfMonth()));
+    }
+
+    @Test
+    public void searchChargesByPartialReferenceOnly() throws Exception {
+        List<Map<String, Object>> charges = chargeDao.findAllBy(GATEWAY_ACCOUNT_ID, "reference", null, null, null);
+        assertThat(charges.size(), is(2));
+        assertThat(charges.get(1).get("charge_id"), is(chargeId));
+        assertThat(charges.get(1).get("reference"), is(REFERENCE));
+        assertThat(charges.get(0).get("reference"), is(COUNCIL_TAX_PAYMENT_REFERENCE));
+        for(Map<String, Object> charge : charges) {
+            assertThat(charge.get("amount"), is(AMOUNT));
+            assertThat(charge.get("description"), is(DESCRIPTION));
+            assertThat(charge.get("status"), is(CREATED.getValue()));
+            assertThat(LocalDateTime.parse(charge.get("updated").toString(), formatter).getYear(), is(LocalDateTime.now().getYear()));
+            assertThat(LocalDateTime.parse(charge.get("updated").toString(), formatter).getMonth(), is(LocalDateTime.now().getMonth()));
+            assertThat(LocalDateTime.parse(charge.get("updated").toString(), formatter).getDayOfMonth(), is(LocalDateTime.now().getDayOfMonth()));
+        }
+    }
+
+    @Test
+    public void searchChargeByReferenceAndStatusOnly() throws Exception {
+        List<Map<String, Object>> charges = chargeDao.findAllBy(GATEWAY_ACCOUNT_ID, REFERENCE, ExternalChargeStatus.EXT_CREATED, null, null);
+        assertThat(charges.size(), is(1));
+        Map<String, Object> charge = charges.get(0);
+
+        assertThat(charge.get("charge_id"), is(chargeId));
+        assertThat(charge.get("amount"), is(AMOUNT));
+        assertThat(charge.get("reference"), is(REFERENCE));
+        assertThat(charge.get("description"), is(DESCRIPTION));
+        assertThat(charge.get("status"), is(CREATED.getValue()));
+        assertThat(LocalDateTime.parse(charge.get("updated").toString(), formatter).getYear(), is(LocalDateTime.now().getYear()));
+        assertThat(LocalDateTime.parse(charge.get("updated").toString(), formatter).getMonth(), is(LocalDateTime.now().getMonth()));
+        assertThat(LocalDateTime.parse(charge.get("updated").toString(), formatter).getDayOfMonth(), is(LocalDateTime.now().getDayOfMonth()));
+    }
+
+    @Test
+    public void searchChargeByReferenceAndStatusAndFromDateAndToDate() throws Exception {
+        List<Map<String, Object>> charges = chargeDao.findAllBy(GATEWAY_ACCOUNT_ID, REFERENCE, ExternalChargeStatus.EXT_CREATED, FROM_DATE, TO_DATE);
+        assertThat(charges.size(), is(1));
+        Map<String, Object> charge = charges.get(0);
+
+        assertThat(charge.get("charge_id"), is(chargeId));
+        assertThat(charge.get("amount"), is(AMOUNT));
+        assertThat(charge.get("reference"), is(REFERENCE));
+        assertThat(charge.get("description"), is(DESCRIPTION));
+        assertThat(charge.get("status"), is(CREATED.getValue()));
+        assertThat(LocalDateTime.parse(charge.get("updated").toString(), formatter).getYear(), is(LocalDateTime.now().getYear()));
+        assertThat(LocalDateTime.parse(charge.get("updated").toString(), formatter).getMonth(), is(LocalDateTime.now().getMonth()));
+        assertThat(LocalDateTime.parse(charge.get("updated").toString(), formatter).getDayOfMonth(), is(LocalDateTime.now().getDayOfMonth()));
+    }
+
+    @Test
+    public void searchChargeByReferenceAndStatusAndFromDate() throws Exception {
+        List<Map<String, Object>> charges = chargeDao.findAllBy(GATEWAY_ACCOUNT_ID, REFERENCE, ExternalChargeStatus.EXT_CREATED, FROM_DATE, null);
+        assertThat(charges.size(), is(1));
+        Map<String, Object> charge = charges.get(0);
+
+        assertThat(charge.get("charge_id"), is(chargeId));
+        assertThat(charge.get("amount"), is(AMOUNT));
+        assertThat(charge.get("reference"), is(REFERENCE));
+        assertThat(charge.get("description"), is(DESCRIPTION));
+        assertThat(charge.get("status"), is(CREATED.getValue()));
+        assertThat(LocalDateTime.parse(charge.get("updated").toString(), formatter).getYear(), is(LocalDateTime.now().getYear()));
+        assertThat(LocalDateTime.parse(charge.get("updated").toString(), formatter).getMonth(), is(LocalDateTime.now().getMonth()));
+        assertThat(LocalDateTime.parse(charge.get("updated").toString(), formatter).getDayOfMonth(), is(LocalDateTime.now().getDayOfMonth()));
+    }
+
+    @Test
+    public void searchChargeByReferenceAndStatusAndToDate() throws Exception {
+        List<Map<String, Object>> charges = chargeDao.findAllBy(GATEWAY_ACCOUNT_ID, REFERENCE, ExternalChargeStatus.EXT_CREATED, null, TO_DATE);
+        assertThat(charges.size(), is(1));
+        Map<String, Object> charge = charges.get(0);
+
+        assertThat(charge.get("charge_id"), is(chargeId));
+        assertThat(charge.get("amount"), is(AMOUNT));
+        assertThat(charge.get("reference"), is(REFERENCE));
+        assertThat(charge.get("description"), is(DESCRIPTION));
+        assertThat(charge.get("status"), is(CREATED.getValue()));
+        assertThat(LocalDateTime.parse(charge.get("updated").toString(), formatter).getYear(), is(LocalDateTime.now().getYear()));
+        assertThat(LocalDateTime.parse(charge.get("updated").toString(), formatter).getMonth(), is(LocalDateTime.now().getMonth()));
+        assertThat(LocalDateTime.parse(charge.get("updated").toString(), formatter).getDayOfMonth(), is(LocalDateTime.now().getDayOfMonth()));
+    }
+
+    @Test
+    public void searchChargeByReferenceAndStatusAndFromDate_ShouldReturnZero() throws Exception {
+        List<Map<String, Object>> charges = chargeDao.findAllBy(GATEWAY_ACCOUNT_ID, REFERENCE, ExternalChargeStatus.EXT_CREATED, TO_DATE, null);
+        assertThat(charges.size(), is(0));
+    }
+
+    @Test
+    public void searchChargeByReferenceAndStatusAndToDate_ShouldReturnZero() throws Exception {
+        List<Map<String, Object>> charges = chargeDao.findAllBy(GATEWAY_ACCOUNT_ID, REFERENCE, ExternalChargeStatus.EXT_CREATED, null, FROM_DATE);
+        assertThat(charges.size(), is(0));
     }
 
     @Test
@@ -154,7 +272,7 @@ public class ChargeDaoITest {
     @Test
     public void invalidSizeOfFields() throws Exception {
         expectedEx.expect(RuntimeException.class);
-        Map<String, Object> chargeData = new HashMap<>(newCharge(AMOUNT));
+        Map<String, Object> chargeData = new HashMap<>(newCharge(AMOUNT, REFERENCE));
         chargeData.put("reference", randomAlphanumeric(512));
         chargeId = chargeDao.saveNewCharge(GATEWAY_ACCOUNT_ID, chargeData);
     }
@@ -179,10 +297,10 @@ public class ChargeDaoITest {
         };
     }
 
-    private ImmutableMap<String, Object> newCharge(long amount) {
+    private ImmutableMap<String, Object> newCharge(long amount, String reference) {
         return ImmutableMap.of(
                 "amount", amount,
-                "reference", REFERENCE,
+                "reference", reference,
                 "description", DESCRIPTION,
                 "return_url", RETURN_URL);
     }

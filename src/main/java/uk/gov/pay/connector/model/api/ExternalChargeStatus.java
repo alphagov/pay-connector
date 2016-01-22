@@ -23,6 +23,9 @@ public enum ExternalChargeStatus {
     public String getValue() {
         return value;
     }
+    public ChargeStatus[] getInnerStates() {
+        return innerStates;
+    }
 
     public static ExternalChargeStatus mapFromStatus(ChargeStatus status) {
         for (ExternalChargeStatus ext : values()) {
@@ -32,6 +35,16 @@ public enum ExternalChargeStatus {
         }
         throw new IllegalArgumentException("charge status not recognized: " + status);
     }
+
+    public static ExternalChargeStatus valueOfExternalStatus(String externalStatus) {
+        for (ExternalChargeStatus v : values()) {
+            if (v.getValue().equals(externalStatus)) {
+                return v;
+            }
+        }
+        throw new IllegalArgumentException("External charge status not recognized: " + externalStatus);
+    }
+
 
     public static ExternalChargeStatus mapFromStatus(String status) {
         return mapFromStatus(chargeStatusFrom(status));

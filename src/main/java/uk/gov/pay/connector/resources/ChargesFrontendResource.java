@@ -29,6 +29,7 @@ import static javax.ws.rs.core.MediaType.APPLICATION_JSON;
 import static javax.ws.rs.core.Response.ok;
 import static org.apache.commons.lang3.StringUtils.isBlank;
 import static org.apache.commons.lang3.math.NumberUtils.isNumber;
+import static uk.gov.pay.connector.model.api.ExternalChargeStatus.mapFromStatus;
 import static uk.gov.pay.connector.model.domain.ChargeStatus.*;
 import static uk.gov.pay.connector.resources.ApiPaths.*;
 import static uk.gov.pay.connector.util.ResponseUtil.*;
@@ -117,6 +118,7 @@ public class ChargesFrontendResource {
     private F<Boolean, Response> listTransactions(final String gatewayAccountId) {
         return success -> {
             List<Map<String, Object>> charges = chargeDao.findAllBy(gatewayAccountId);
+            charges.forEach(charge -> charge.put(STATUS_KEY, mapFromStatus(charge.get(STATUS_KEY).toString()).getValue()));
             if (charges.isEmpty()) {
                 return accountDao.findById(gatewayAccountId)
                         .map(x -> okResultsResponseFrom(charges))
