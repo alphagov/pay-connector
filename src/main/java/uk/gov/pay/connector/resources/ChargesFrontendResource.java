@@ -1,6 +1,9 @@
 package uk.gov.pay.connector.resources;
 
 import com.google.common.collect.ImmutableList;
+import com.google.common.collect.ImmutableMap;
+import fj.F;
+import fj.data.Either;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import uk.gov.pay.connector.dao.ChargeDao;
@@ -18,10 +21,15 @@ import java.util.Map;
 import java.util.Optional;
 
 import static com.google.common.collect.Lists.newArrayList;
+import static fj.data.Either.*;
+import static java.lang.String.format;
 import static javax.ws.rs.HttpMethod.GET;
 import static javax.ws.rs.HttpMethod.POST;
 import static javax.ws.rs.core.MediaType.APPLICATION_JSON;
 import static javax.ws.rs.core.Response.ok;
+import static org.apache.commons.lang3.StringUtils.isBlank;
+import static org.apache.commons.lang3.math.NumberUtils.isNumber;
+import static uk.gov.pay.connector.model.api.ExternalChargeStatus.mapFromStatus;
 import static uk.gov.pay.connector.model.domain.ChargeStatus.*;
 import static uk.gov.pay.connector.resources.ApiPaths.*;
 import static uk.gov.pay.connector.util.ResponseUtil.*;
@@ -65,6 +73,14 @@ public class ChargesFrontendResource {
         }
     }
 
+    @GET
+    @Path(CHARGES_FRONTEND_PATH)
+    @Produces(APPLICATION_JSON)
+    public Response getCharges(@QueryParam("gatewayAccountId") String gatewayAccountId, @Context UriInfo uriInfo) {
+        return reduce(validateGatewayAccountReference(gatewayAccountId)
+                .bimap(handleError, listTransactions(gatewayAccountId)));
+    }
+
     private boolean invalidInput(Map newStatusMap) {
         return newStatusMap == null || newStatusMap.get("new_status") == null;
     }
@@ -97,6 +113,41 @@ public class ChargesFrontendResource {
                 .build();
 
         return ok(responseData).build();
+    }
+
+    private F<Boolean, Response> listTransactions(final String gatewayAccountId) {
+        return success -> {
+            List<Map<String, Object>> charges = chargeDao.findAllBy(gatewayAccountId);
+            charges.forEach(charge -> charge.put(STATUS_KEY, mapFromStatus(charge.get(STATUS_KEY).toString()).getValue()));
+            if (charges.isEmpty()) {
+                return accountDao.findById(gatewayAccountId)
+                        .map(x -> okResultsResponseFrom(charges))
+                        .orElseGet(() -> notFoundResponse(logger, format("account with id %s not found", gatewayAccountId)));
+            }
+            return okResultsResponseFrom(charges);
+        };
+    }
+
+    private Response okResultsResponseFrom(List<Map<String, Object>> charges) {
+        return ok(ImmutableMap.of("results", charges)).build();
+    }
+
+    private static F<String, Response> handleError =
+            errorMessage -> badRequestResponse(logger, errorMessage);
+
+
+    private Either<String, Boolean> validateGatewayAccountReference(String gatewayAccountId) {
+        if (isBlank(gatewayAccountId)) {
+            return left("missing gateway account reference");
+        } else if (!isNumber(gatewayAccountId)) {
+            return left(format("invalid gateway account reference %s", gatewayAccountId));
+        }
+        return right(true);
+    }
+
+    private Map<String, Object> removeGatewayAccount(Map<String, Object> charge) {
+        charge.remove("gateway_account_id");
+        return charge;
     }
 
     private URI locationUriFor(String path, UriInfo uriInfo, String chargeId) {
