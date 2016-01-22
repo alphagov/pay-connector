@@ -72,7 +72,7 @@ public class RestAssuredClient {
 
     public ValidatableResponse getTransactions() {
         return given().port(app.getLocalPort())
-                .get(CHARGES_FRONTEND_PATH + "?gatewayAccountId=" + accountId)
+                .get(CHARGES_API_PATH.replace("{accountId}", accountId))
                 .then();
     }
 

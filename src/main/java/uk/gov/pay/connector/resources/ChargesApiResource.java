@@ -2,6 +2,7 @@ package uk.gov.pay.connector.resources;
 
 import com.google.common.collect.ImmutableMap;
 import fj.F;
+import fj.data.Either;
 import org.apache.commons.lang3.StringUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -25,14 +26,18 @@ import java.util.*;
 import java.util.stream.Collectors;
 
 import static com.google.common.collect.Maps.newHashMap;
+import static fj.data.Either.left;
 import static fj.data.Either.reduce;
+import static fj.data.Either.right;
 import static java.lang.String.format;
 import static javax.ws.rs.HttpMethod.GET;
 import static javax.ws.rs.core.MediaType.APPLICATION_JSON;
+import static javax.ws.rs.core.Response.ok;
+import static org.apache.commons.lang3.StringUtils.isBlank;
 import static org.apache.commons.lang3.StringUtils.isEmpty;
+import static org.apache.commons.lang3.math.NumberUtils.isNumber;
 import static uk.gov.pay.connector.model.api.ExternalChargeStatus.mapFromStatus;
 import static uk.gov.pay.connector.model.api.ExternalChargeStatus.valueOfExternalStatus;
-import static uk.gov.pay.connector.model.domain.ChargeStatus.STATUS_KEY;
 import static uk.gov.pay.connector.resources.ApiPaths.*;
 import static uk.gov.pay.connector.util.ResponseUtil.*;
 
@@ -55,7 +60,7 @@ public class ChargesApiResource {
     private GatewayAccountDao gatewayAccountDao;
     private EventDao eventDao;
     private LinksConfig linksConfig;
-    private Logger logger = LoggerFactory.getLogger(ChargesApiResource.class);
+    private static final Logger logger = LoggerFactory.getLogger(ChargesApiResource.class);
 
     public ChargesApiResource(ChargeDao chargeDao, TokenDao tokenDao, GatewayAccountDao gatewayAccountDao, EventDao eventDao, LinksConfig linksConfig) {
         this.chargeDao = chargeDao;
@@ -81,6 +86,20 @@ public class ChargesApiResource {
                 })
                 .orElseGet(() -> responseWithChargeNotFound(logger, chargeId));
 
+    }
+
+    @GET
+    @Path(CHARGES_API_PATH)
+    @Produces(APPLICATION_JSON)
+    public Response getCharges(@PathParam("accountId") String accountId,
+                               @QueryParam("reference") String reference,
+                               @QueryParam("status") String status,
+                               @QueryParam("from_date") String fromDate,
+                               @QueryParam("to_date") String toDate,
+                               @Context UriInfo uriInfo) {
+
+        return reduce(validateGatewayAccountReference(accountId)
+                .bimap(handleError, listTransactions(accountId, reference, status, fromDate, toDate)));
     }
 
     @POST
@@ -127,7 +146,7 @@ public class ChargesApiResource {
     public Response getEvents(@PathParam("accountId") Long accountId, @PathParam("chargeId") Long chargeId){
         List<ChargeEvent> events = eventDao.findEvents(accountId,chargeId);
         ImmutableMap<String, Object> responsePayload = ImmutableMap.of("charge_id", chargeId, "events", events);
-        return Response.ok().entity(responsePayload).build();
+        return ok().entity(responsePayload).build();
     }
 
     private Map<String, Object> getResponseData(String chargeId, String tokenId, Map<String, Object> charge, URI selfUri) {
@@ -141,26 +160,6 @@ public class ChargesApiResource {
         }
 
         return responseBuilder.build();
-    }
-
-    @GET
-    @Path(CHARGES_API_PATH)
-    @Produces(APPLICATION_JSON)
-    public Response getCharges(@PathParam("accountId") String accountId,
-                               @QueryParam("reference") String reference,
-                               @QueryParam("status") String status,
-                               @QueryParam("from_date") String fromDate,
-                               @QueryParam("to_date") String toDate,
-                               @Context UriInfo uriInfo) {
-        ExternalChargeStatus chargeStatus = null;
-        if (StringUtils.isNotBlank(status)) {
-            chargeStatus = valueOfExternalStatus(status);
-        }
-
-        List<Map<String, Object>> charges = chargeDao.findAllBy(accountId, reference, chargeStatus, fromDate, toDate);
-        charges.forEach(charge -> charge.put(STATUS_KEY, mapFromStatus(charge.get(STATUS_KEY).toString()).getValue()));
-        ImmutableMap<String, Object> responsePayload = ImmutableMap.of("results", charges);
-        return Response.ok().entity(responsePayload).build();
     }
 
     private Map<String, Object> convertStatusToExternalStatus(Map<String, Object> data) {
@@ -212,4 +211,42 @@ public class ChargesApiResource {
         String value = chargeRequest.get(fieldName).toString();
         return value.length() <= fieldSize;
     }
+
+    private F<Boolean, Response> listTransactions(final String accountId, String reference,
+                                                  String status, String fromDate, String toDate) {
+        return success -> {
+            ExternalChargeStatus chargeStatus = null;
+            if (StringUtils.isNotBlank(status)) {
+                chargeStatus = valueOfExternalStatus(status);
+            }
+
+            List<Map<String, Object>> charges = chargeDao.findAllBy(accountId, reference, chargeStatus, fromDate, toDate);
+            charges.forEach(charge -> charge.put(STATUS_KEY, mapFromStatus(charge.get(STATUS_KEY).toString()).getValue()));
+
+            if (charges.isEmpty()) {
+                return gatewayAccountDao.findById(accountId)
+                        .map(x -> okResultsResponseFrom(charges))
+                        .orElseGet(() -> notFoundResponse(logger, format("account with id %s not found", accountId)));
+            }
+            return okResultsResponseFrom(charges);
+        };
+    }
+
+    private static F<String, Response> handleError =
+            errorMessage -> badRequestResponse(logger, errorMessage);
+
+    private Response okResultsResponseFrom(List<Map<String, Object>> charges) {
+        return ok(ImmutableMap.of("results", charges)).build();
+    }
+
+    private Either<String, Boolean> validateGatewayAccountReference(String gatewayAccountId) {
+        if (isBlank(gatewayAccountId)) {
+            return left("missing gateway account reference");
+        } else if (!isNumber(gatewayAccountId)) {
+            return left(format("invalid gateway account reference %s", gatewayAccountId));
+        }
+        return right(true);
+    }
+
+
 }
