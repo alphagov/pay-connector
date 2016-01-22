@@ -193,14 +193,12 @@ public class ChargesFrontendResourceITest {
     }
 
     @Test
-    public void shouldReturn400IfGatewayAccountIsMissingWhenListingTransactions() {
+    public void shouldReturn404IfGatewayAccountIsMissingWhenListingTransactions() {
         ValidatableResponse response = connectorRestApi
                 .withAccountId("")
                 .getTransactions();
 
-        response.statusCode(BAD_REQUEST.getStatusCode())
-                .contentType(JSON)
-                .body("message", is("missing gateway account reference"));
+        response.statusCode(NOT_FOUND.getStatusCode());
     }
 
     @Test
