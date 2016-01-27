@@ -1,8 +1,11 @@
 package uk.gov.pay.connector.it.dao;
 
 import com.google.common.collect.ImmutableMap;
+import org.exparity.hamcrest.date.LocalDateMatchers;
+import org.exparity.hamcrest.date.LocalDateTimeMatchers;
 import org.hamcrest.Description;
 import org.hamcrest.Matcher;
+import org.hamcrest.MatcherAssert;
 import org.hamcrest.TypeSafeMatcher;
 import org.junit.Before;
 import org.junit.Rule;
@@ -19,6 +22,7 @@ import uk.gov.pay.connector.util.ChargeEventListener;
 
 import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
+import java.time.temporal.ChronoUnit;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -57,6 +61,7 @@ public class ChargeDaoITest {
     private EventDao eventDao;
     private ChargeEventListener eventListener;
     private DateTimeFormatter formatter;
+    private String createdDate;
 
     @Before
     public void setUp() throws Exception {
@@ -67,6 +72,7 @@ public class ChargeDaoITest {
         formatter = DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss");
 
         chargeId = chargeDao.saveNewCharge(GATEWAY_ACCOUNT_ID, newCharge(AMOUNT, REFERENCE));
+        createdDate = (String) chargeDao.findById(chargeId).get().get("created_date");
         chargeDao.saveNewCharge(GATEWAY_ACCOUNT_ID, newCharge(AMOUNT, COUNCIL_TAX_PAYMENT_REFERENCE));
     }
 
@@ -86,6 +92,12 @@ public class ChargeDaoITest {
         assertThat(charge.get("status"), is(CREATED.getValue()));
         assertThat(charge.get("gateway_account_id"), is(GATEWAY_ACCOUNT_ID));
         assertThat(charge.get("return_url"), is(RETURN_URL));
+        LocalDateTime createdDate = LocalDateTime.parse(charge.get("created_date").toString(), formatter);
+        LocalDateTime today = LocalDateTime.now();
+        MatcherAssert.assertThat(createdDate, LocalDateTimeMatchers.sameDay(today));
+        MatcherAssert.assertThat(createdDate, LocalDateTimeMatchers.sameMonthOfYear(today));
+        MatcherAssert.assertThat(createdDate, LocalDateTimeMatchers.sameYear(today));
+        MatcherAssert.assertThat(createdDate, LocalDateTimeMatchers.within(1, ChronoUnit.MINUTES, today));
     }
 
     @Test
