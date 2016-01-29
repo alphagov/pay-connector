@@ -3,6 +3,8 @@ package uk.gov.pay.connector.resources;
 import com.google.common.collect.ImmutableMap;
 import fj.F;
 import fj.data.Either;
+import org.apache.commons.csv.CSVFormat;
+import org.apache.commons.csv.CSVPrinter;
 import org.apache.commons.lang3.StringUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -13,6 +15,7 @@ import uk.gov.pay.connector.dao.GatewayAccountDao;
 import uk.gov.pay.connector.dao.TokenDao;
 import uk.gov.pay.connector.model.api.ExternalChargeStatus;
 import uk.gov.pay.connector.model.domain.ChargeEvent;
+import uk.gov.pay.connector.util.CSVGenerator;
 import uk.gov.pay.connector.util.ResponseBuilder;
 import uk.gov.pay.connector.util.ResponseUtil;
 
@@ -20,6 +23,10 @@ import javax.ws.rs.*;
 import javax.ws.rs.core.Context;
 import javax.ws.rs.core.Response;
 import javax.ws.rs.core.UriInfo;
+import java.io.File;
+import java.io.FileReader;
+import java.io.FileWriter;
+import java.io.IOException;
 import java.net.URI;
 import java.net.URISyntaxException;
 import java.util.*;
@@ -32,6 +39,7 @@ import static fj.data.Either.right;
 import static java.lang.String.format;
 import static javax.ws.rs.HttpMethod.GET;
 import static javax.ws.rs.core.MediaType.APPLICATION_JSON;
+import static javax.ws.rs.core.MediaType.TEXT_PLAIN;
 import static javax.ws.rs.core.Response.ok;
 import static org.apache.commons.lang3.StringUtils.isBlank;
 import static org.apache.commons.lang3.StringUtils.isEmpty;
@@ -54,6 +62,7 @@ public class ChargesApiResource {
     );
 
     private static final String STATUS_KEY = "status";
+    private final String TEXT_CSV = "text/csv";
 
     private ChargeDao chargeDao;
     private TokenDao tokenDao;
@@ -91,15 +100,29 @@ public class ChargesApiResource {
     @GET
     @Path(CHARGES_API_PATH)
     @Produces(APPLICATION_JSON)
-    public Response getCharges(@PathParam("accountId") String accountId,
-                               @QueryParam("reference") String reference,
-                               @QueryParam("status") String status,
-                               @QueryParam("from_date") String fromDate,
-                               @QueryParam("to_date") String toDate,
-                               @Context UriInfo uriInfo) {
+    public Response getChargesJson(@PathParam("accountId") String accountId,
+                                   @QueryParam("reference") String reference,
+                                   @QueryParam("status") String status,
+                                   @QueryParam("from_date") String fromDate,
+                                   @QueryParam("to_date") String toDate,
+                                   @Context UriInfo uriInfo) {
 
         return reduce(validateGatewayAccountReference(accountId)
                 .bimap(handleError, listTransactions(accountId, reference, status, fromDate, toDate)));
+    }
+
+    @GET
+    @Path(CHARGES_API_PATH)
+    @Produces(TEXT_CSV)
+    public Response getChargesCsv(@PathParam("accountId") String accountId,
+                                   @QueryParam("reference") String reference,
+                                   @QueryParam("status") String status,
+                                   @QueryParam("from_date") String fromDate,
+                                   @QueryParam("to_date") String toDate,
+                                   @Context UriInfo uriInfo) {
+
+        return reduce(validateGatewayAccountReference(accountId)
+                .bimap(handleError, getCsvResponse(accountId, reference, status, fromDate, toDate)));
     }
 
     @POST
@@ -212,16 +235,9 @@ public class ChargesApiResource {
         return value.length() <= fieldSize;
     }
 
-    private F<Boolean, Response> listTransactions(final String accountId, String reference,
-                                                  String status, String fromDate, String toDate) {
+    private F<Boolean, Response> listTransactions(final String accountId, String reference, String status, String fromDate, String toDate) {
         return success -> {
-            ExternalChargeStatus chargeStatus = null;
-            if (StringUtils.isNotBlank(status)) {
-                chargeStatus = valueOfExternalStatus(status);
-            }
-
-            List<Map<String, Object>> charges = chargeDao.findAllBy(accountId, reference, chargeStatus, fromDate, toDate);
-            charges.forEach(charge -> charge.put(STATUS_KEY, mapFromStatus(charge.get(STATUS_KEY).toString()).getValue()));
+            List<Map<String, Object>> charges = getChargesForCriteria(accountId, reference, status, fromDate, toDate);
 
             if (charges.isEmpty()) {
                 return gatewayAccountDao.findById(accountId)
@@ -230,6 +246,29 @@ public class ChargesApiResource {
             }
             return okResultsResponseFrom(charges);
         };
+    }
+
+    private F<Boolean, Response> getCsvResponse(final String accountId, String reference, String status, String fromDate, String toDate) {
+        return success -> {
+            List<Map<String, Object>> charges = getChargesForCriteria(accountId, reference, status, fromDate, toDate);
+
+            if (charges.isEmpty()) {
+                return gatewayAccountDao.findById(accountId)
+                        .map(x -> ok(CSVGenerator.generate(charges)).build())
+                        .orElseGet(() -> notFoundResponse(logger, format("account with id %s not found", accountId)));
+            }
+            return ok(CSVGenerator.generate(charges)).build();
+        };
+    }
+
+    private List<Map<String, Object>> getChargesForCriteria(String accountId, String reference, String status, String fromDate, String toDate) {
+        ExternalChargeStatus chargeStatus = null;
+        if (StringUtils.isNotBlank(status)) {
+            chargeStatus = valueOfExternalStatus(status);
+        }
+        List<Map<String, Object>> charges = chargeDao.findAllBy(accountId, reference, chargeStatus, fromDate, toDate);
+        charges.forEach(charge -> charge.put(STATUS_KEY, mapFromStatus(charge.get(STATUS_KEY).toString()).getValue()));
+        return charges;
     }
 
     private static F<String, Response> handleError =
@@ -247,6 +286,5 @@ public class ChargesApiResource {
         }
         return right(true);
     }
-
 
 }
