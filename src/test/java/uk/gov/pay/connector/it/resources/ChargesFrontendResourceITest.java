@@ -3,6 +3,7 @@ package uk.gov.pay.connector.it.resources;
 import com.google.common.collect.ImmutableMap;
 import com.jayway.restassured.response.ValidatableResponse;
 import org.apache.commons.lang.math.RandomUtils;
+import org.exparity.hamcrest.date.LocalDateTimeMatchers;
 import org.junit.Before;
 import org.junit.Rule;
 import org.junit.Test;
@@ -11,6 +12,7 @@ import uk.gov.pay.connector.model.domain.ChargeStatus;
 import uk.gov.pay.connector.rules.DropwizardAppWithPostgresRule;
 import uk.gov.pay.connector.util.RestAssuredClient;
 
+import java.time.format.DateTimeFormatter;
 import java.util.List;
 
 import static com.jayway.restassured.http.ContentType.JSON;
@@ -39,6 +41,7 @@ public class ChargesFrontendResourceITest {
     private String reference = "Test reference";
     private String returnUrl = "http://whatever.com";
     private long expectedAmount = 6234L;
+    private DateTimeFormatter dateTimeFormatter = DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss");
 
     private RestAssuredClient connectorRestApi = new RestAssuredClient(app, accountId);
 
@@ -227,6 +230,7 @@ public class ChargesFrontendResourceITest {
         response.body("results[" + index + "].charge_id", is(chargeId))
                 .body("results[" + index + "].gateway_transaction_id", is(gatewayTransactionId))
                 .body("results[" + index + "].amount", is(amount))
+                .body("results[" + index + "].updated",is(notNullValue()))
                 .body("results[" + index + "].status", is(chargeStatus));
     }
 
@@ -247,12 +251,14 @@ public class ChargesFrontendResourceITest {
                 .body("description", is(description))
                 .body("amount", isNumber(expectedAmount))
                 .body("return_url", is(returnUrl))
+                .body("created_date", is(notNullValue()))
                 .contentType(JSON);
 
         return response.extract().path("charge_id");
     }
 
     private ValidatableResponse validateGetCharge(long expectedAmount, String chargeId, ChargeStatus chargeStatus) {
+
         return connectorRestApi
                 .withChargeId(chargeId)
                 .getFrontendCharge()
@@ -264,7 +270,8 @@ public class ChargesFrontendResourceITest {
                 .body("amount", isNumber(expectedAmount))
                 .body("containsKey('gateway_account_id')", is(false))
                 .body("status", is(chargeStatus.getValue()))
-                .body("return_url", is(returnUrl));
+                .body("return_url", is(returnUrl))
+                .body("created_date", is(notNullValue()));
     }
 
     private String expectedChargeUrl(String chargeId, String path) {
