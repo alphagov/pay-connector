@@ -17,6 +17,9 @@ public class CSVGenerator {
     private static final Logger logger = LoggerFactory.getLogger(CSVGenerator.class);
 
     public static String generate(List<Map<String, Object>> objectMapList) {
+        if (objectMapList.isEmpty()) {
+            return new String();
+        }
         CSVFormat csvFileFormat = CSVFormat.DEFAULT.withRecordSeparator(NEW_LINE_SEPARATOR);
         StringBuilder builder = new StringBuilder();
 

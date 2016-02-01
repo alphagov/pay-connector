@@ -3,8 +3,6 @@ package uk.gov.pay.connector.resources;
 import com.google.common.collect.ImmutableMap;
 import fj.F;
 import fj.data.Either;
-import org.apache.commons.csv.CSVFormat;
-import org.apache.commons.csv.CSVPrinter;
 import org.apache.commons.lang3.StringUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -23,10 +21,6 @@ import javax.ws.rs.*;
 import javax.ws.rs.core.Context;
 import javax.ws.rs.core.Response;
 import javax.ws.rs.core.UriInfo;
-import java.io.File;
-import java.io.FileReader;
-import java.io.FileWriter;
-import java.io.IOException;
 import java.net.URI;
 import java.net.URISyntaxException;
 import java.util.*;
@@ -39,7 +33,6 @@ import static fj.data.Either.right;
 import static java.lang.String.format;
 import static javax.ws.rs.HttpMethod.GET;
 import static javax.ws.rs.core.MediaType.APPLICATION_JSON;
-import static javax.ws.rs.core.MediaType.TEXT_PLAIN;
 import static javax.ws.rs.core.Response.ok;
 import static org.apache.commons.lang3.StringUtils.isBlank;
 import static org.apache.commons.lang3.StringUtils.isEmpty;
@@ -108,7 +101,7 @@ public class ChargesApiResource {
                                    @Context UriInfo uriInfo) {
 
         return reduce(validateGatewayAccountReference(accountId)
-                .bimap(handleError, listTransactions(accountId, reference, status, fromDate, toDate)));
+                .bimap(handleError, listChargesAsJsonResponse(accountId, reference, status, fromDate, toDate)));
     }
 
     @GET
@@ -122,7 +115,7 @@ public class ChargesApiResource {
                                    @Context UriInfo uriInfo) {
 
         return reduce(validateGatewayAccountReference(accountId)
-                .bimap(handleError, getCsvResponse(accountId, reference, status, fromDate, toDate)));
+                .bimap(handleError, listChargesAsCsvResponse(accountId, reference, status, fromDate, toDate)));
     }
 
     @POST
@@ -235,7 +228,7 @@ public class ChargesApiResource {
         return value.length() <= fieldSize;
     }
 
-    private F<Boolean, Response> listTransactions(final String accountId, String reference, String status, String fromDate, String toDate) {
+    private F<Boolean, Response> listChargesAsJsonResponse(final String accountId, String reference, String status, String fromDate, String toDate) {
         return success -> {
             List<Map<String, Object>> charges = getChargesForCriteria(accountId, reference, status, fromDate, toDate);
 
@@ -248,14 +241,15 @@ public class ChargesApiResource {
         };
     }
 
-    private F<Boolean, Response> getCsvResponse(final String accountId, String reference, String status, String fromDate, String toDate) {
+    private F<Boolean, Response> listChargesAsCsvResponse(final String accountId, String reference, String status, String fromDate, String toDate) {
         return success -> {
             List<Map<String, Object>> charges = getChargesForCriteria(accountId, reference, status, fromDate, toDate);
 
             if (charges.isEmpty()) {
+                logger.info("no charges found for given filter");
                 return gatewayAccountDao.findById(accountId)
-                        .map(x -> ok(CSVGenerator.generate(charges)).build())
-                        .orElseGet(() -> notFoundResponse(logger, format("account with id %s not found", accountId)));
+                        .map(x -> ok().build())
+                        .orElseGet(() -> notFoundResponseAsString(logger, format("account with id %s not found", accountId)));
             }
             return ok(CSVGenerator.generate(charges)).build();
         };
