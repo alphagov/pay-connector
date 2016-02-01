@@ -13,7 +13,7 @@ import uk.gov.pay.connector.dao.GatewayAccountDao;
 import uk.gov.pay.connector.dao.TokenDao;
 import uk.gov.pay.connector.model.api.ExternalChargeStatus;
 import uk.gov.pay.connector.model.domain.ChargeEvent;
-import uk.gov.pay.connector.util.CSVGenerator;
+import uk.gov.pay.connector.util.ChargesCSVGenerator;
 import uk.gov.pay.connector.util.ResponseBuilder;
 import uk.gov.pay.connector.util.ResponseUtil;
 
@@ -251,7 +251,7 @@ public class ChargesApiResource {
                         .map(x -> ok().build())
                         .orElseGet(() -> notFoundResponseAsString(logger, format("account with id %s not found", accountId)));
             }
-            return ok(CSVGenerator.generate(charges)).build();
+            return ok(ChargesCSVGenerator.generate(charges)).build();
         };
     }
 

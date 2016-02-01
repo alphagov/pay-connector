@@ -131,8 +131,8 @@ public class ChargesApiResourceITest {
                 .statusCode(OK.getStatusCode())
                 .contentType(CSV_CONTENT_TYPE)
                 .body(containsString(
-                        "reference,amount,gateway_account_id,charge_id,description,updated,gateway_transaction_id,status\n" +
-                                "Test reference,6234,null," + chargeId + ",Test description"));
+                        "Service Payment Reference,Amount,gateway_account_id,Charge ID,Description,Date Last Updated,Gateway Transaction ID,Status\n" +
+                        "Test reference,6234,null," + chargeId + ",Test description"));
     }
 
     @Test
