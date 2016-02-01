@@ -10,31 +10,32 @@ import static org.junit.Assert.assertEquals;
 
 public class ChargesCSVGeneratorTest {
 
+    // this map is to map the database header fileds to the header to be exported into the CSV file
+    private static final Map chargeMap = ImmutableMap.<String, String>builder()
+            .put("reference", "ref")
+            .put("charge_id", "100")
+            .put("gateway_transaction_id", "200")
+            .put("gateway_account_id", "300")
+            .put("amount", "400")
+            .put("date_created", "10/10/2016")
+            .put("updated", "11/10/2016")
+            .put("status", "Status")
+            .put("payment_provider", "Provider")
+            .put("description", "Description")
+            .build();
+
     @Test
     public void testGenerateWithMappedHeaders() throws Exception {
         ArrayList<Map<String, Object>> objectMapList = new ArrayList<>();
-        objectMapList.add(ImmutableMap.of("reference","value-1a","charge_id","value-2a","gateway_transaction_id","value-3a"));
-        objectMapList.add(ImmutableMap.of("reference", "value-1b", "charge_id", "value-2b", "gateway_transaction_id", "value-3b"));
+
+        objectMapList.add(chargeMap);
+        objectMapList.add(ImmutableMap.of("reference", "ref-2", "charge_id", "chargeid-2", "gateway_transaction_id", "trans-2"));
 
         String generate = ChargesCSVGenerator.generate(objectMapList);
-        String expectedOutput = "Service Payment Reference,Charge ID,Gateway Transaction ID\n" +
-                "value-1a,value-2a,value-3a\n" +
-                "value-1b,value-2b,value-3b\n";
+        String expectedOutput = "Service Payment Reference,Amount,Status,Gateway Transaction ID,GOV.UK Pay ID,Date Created,Last Updated\n" +
+                                "ref,400,Status,200,100,10/10/2016,11/10/2016\n" +
+                                "ref-2,,,trans-2,chargeid-2,,\n";
         
-        assertEquals(expectedOutput, generate);
-    }
-
-    @Test
-    public void testGenerateWithUnmappedHeaders() throws Exception {
-        ArrayList<Map<String, Object>> objectMapList = new ArrayList<>();
-        objectMapList.add(ImmutableMap.of("something","value-1a","charge_id","value-2a","gateway_transaction_id","value-3a"));
-        objectMapList.add(ImmutableMap.of("something", "value-1b", "charge_id", "value-2b", "gateway_transaction_id", "value-3b"));
-
-        String generate = ChargesCSVGenerator.generate(objectMapList);
-        String expectedOutput = "something,Charge ID,Gateway Transaction ID\n" +
-                "value-1a,value-2a,value-3a\n" +
-                "value-1b,value-2b,value-3b\n";
-
         assertEquals(expectedOutput, generate);
     }
 }
