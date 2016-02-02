@@ -167,8 +167,8 @@ public class ChargeDao {
     public List<Map<String, Object>> findAllBy(String gatewayAccountId, String reference, ExternalChargeStatus status,
                                                String fromDate, String toDate) {
         String query = "SELECT DISTINCT c.charge_id, c.gateway_transaction_id, c.status, c.amount, " +
-                "c.description, c.reference, to_char(c.created_date, 'DD/MM/YYYY HH24:MI:SS') as created_date" +
-                ", to_char(c.created_date, 'YYYY-MM-DD HH24:MI:SS') as updated " + // TODO for backward compatibility, remove this line once PP-280 merged 
+                "c.description, c.reference, c.created_date" +
+                ", to_char(c.created_date, 'YYYY-MM-DD HH24:MI:SS') as updated " + // TODO for backward compatibility, remove this line once PP-280 merged
                 "FROM charges c " +
                 "WHERE c.gateway_account_id=:gid " +
                 "%s " +

@@ -23,6 +23,8 @@ import javax.ws.rs.core.Response;
 import javax.ws.rs.core.UriInfo;
 import java.net.URI;
 import java.net.URISyntaxException;
+import java.text.DateFormat;
+import java.text.SimpleDateFormat;
 import java.util.*;
 import java.util.stream.Collectors;
 
@@ -55,6 +57,7 @@ public class ChargesApiResource {
     );
 
     private static final String STATUS_KEY = "status";
+    public static final String CREATED_DATE = "created_date";
     private final String TEXT_CSV = "text/csv";
 
     private ChargeDao chargeDao;
@@ -62,7 +65,9 @@ public class ChargesApiResource {
     private GatewayAccountDao gatewayAccountDao;
     private EventDao eventDao;
     private LinksConfig linksConfig;
+
     private static final Logger logger = LoggerFactory.getLogger(ChargesApiResource.class);
+    private static final DateFormat DATE_FORMAT = new SimpleDateFormat("dd/MM/yyyy HH:mm:ss");
 
     public ChargesApiResource(ChargeDao chargeDao, TokenDao tokenDao, GatewayAccountDao gatewayAccountDao, EventDao eventDao, LinksConfig linksConfig) {
         this.chargeDao = chargeDao;
@@ -160,7 +165,7 @@ public class ChargesApiResource {
     @Path(CHARGE_EVENTS_API_PATH)
     @Produces(APPLICATION_JSON)
     public Response getEvents(@PathParam("accountId") Long accountId, @PathParam("chargeId") Long chargeId){
-        List<ChargeEvent> events = eventDao.findEvents(accountId,chargeId);
+        List<ChargeEvent> events = eventDao.findEvents(accountId, chargeId);
         ImmutableMap<String, Object> responsePayload = ImmutableMap.of("charge_id", chargeId, "events", events);
         return ok().entity(responsePayload).build();
     }
@@ -261,7 +266,10 @@ public class ChargesApiResource {
             chargeStatus = valueOfExternalStatus(status);
         }
         List<Map<String, Object>> charges = chargeDao.findAllBy(accountId, reference, chargeStatus, fromDate, toDate);
-        charges.forEach(charge -> charge.put(STATUS_KEY, mapFromStatus(charge.get(STATUS_KEY).toString()).getValue()));
+        charges.forEach(charge -> {
+                    charge.put(STATUS_KEY, mapFromStatus(charge.get(STATUS_KEY).toString()).getValue());
+                    charge.put(CREATED_DATE, DATE_FORMAT.format(charge.get(CREATED_DATE)));
+        });
         return charges;
     }
 
