@@ -121,9 +121,10 @@ public class ChargesApiResourceITest {
     @Test
     public void shouldGetChargeTransactionsForCSVAcceptHeader() throws Exception {
         String chargeId = ((Integer) RandomUtils.nextInt(99999999)).toString();
-        app.getDatabaseTestHelper().addCharge(chargeId, accountId, amount, AUTHORISATION_SUCCESS, returnUrl, null);
+        ChargeStatus chargeStatus = AUTHORISATION_SUCCESS;
+        app.getDatabaseTestHelper().addCharge(chargeId, accountId, amount, chargeStatus, returnUrl, null);
         app.getDatabaseTestHelper().addToken(chargeId, "tokenId");
-        app.getDatabaseTestHelper().addEvent(Long.valueOf(chargeId), CREATED.getValue());
+        app.getDatabaseTestHelper().addEvent(Long.valueOf(chargeId), chargeStatus.getValue());
 
         getChargeApi
                 .withAccountId(accountId)
@@ -131,16 +132,17 @@ public class ChargesApiResourceITest {
                 .statusCode(OK.getStatusCode())
                 .contentType(CSV_CONTENT_TYPE)
                 .body(containsString(
-                        "Service Payment Reference,Amount,Status,Gateway Transaction ID,GOV.UK Pay ID,Date Created,Last Updated\n" +
+                        "Service Payment Reference,Amount,Status,Gateway Transaction ID,GOV.UK Pay ID,Date Created\n" +
                         "Test reference,6234,IN PROGRESS,," + chargeId));
     }
 
     @Test
     public void shouldGetChargeTransactionsForJSONAcceptHeader() throws Exception {
         String chargeId = ((Integer) RandomUtils.nextInt(99999999)).toString();
-        app.getDatabaseTestHelper().addCharge(chargeId, accountId, amount, AUTHORISATION_SUCCESS, returnUrl, null);
+        ChargeStatus chargeStatus = AUTHORISATION_SUCCESS;
+        app.getDatabaseTestHelper().addCharge(chargeId, accountId, amount, chargeStatus, returnUrl, null);
         app.getDatabaseTestHelper().addToken(chargeId, "tokenId");
-        app.getDatabaseTestHelper().addEvent(Long.valueOf(chargeId), CREATED.getValue());
+        app.getDatabaseTestHelper().addEvent(Long.valueOf(chargeId), chargeStatus.getValue());
 
         getChargeApi
                 .withAccountId(accountId)

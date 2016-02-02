@@ -168,8 +168,7 @@ public class ChargesFrontendResourceITest {
         setupLifeCycleEventsFor(app, Long.valueOf(102), statuses);
         setupLifeCycleEventsFor(app, Long.valueOf(103), statuses);
 
-        ValidatableResponse response = connectorRestApi
-                .getTransactions();
+        ValidatableResponse response = connectorRestApi.getTransactions();
 
         response.statusCode(OK.getStatusCode())
                 .contentType(JSON)

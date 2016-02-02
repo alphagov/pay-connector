@@ -44,11 +44,11 @@ public class ChargesSearch {
         // Filter by Date(s)
         if (isNotBlank(fromDate)) {
             subQuery.append(AND);
-            subQuery.append("ce.updated >= :fromDate");
+            subQuery.append("c.created_date >= :fromDate");
         }
         if (isNotBlank(toDate)) {
             subQuery.append(AND);
-            subQuery.append("ce.updated <= :toDate");
+            subQuery.append("c.created_date <= :toDate");
         }
 
         return subQuery.toString();

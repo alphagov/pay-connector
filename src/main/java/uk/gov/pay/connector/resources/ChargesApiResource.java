@@ -248,7 +248,7 @@ public class ChargesApiResource {
             if (charges.isEmpty()) {
                 logger.info("no charges found for given filter");
                 return gatewayAccountDao.findById(accountId)
-                        .map(x -> ok().build())
+                        .map(x -> ok(ChargesCSVGenerator.generate(charges)).build())
                         .orElseGet(() -> notFoundResponseAsString(logger, format("account with id %s not found", accountId)));
             }
             return ok(ChargesCSVGenerator.generate(charges)).build();

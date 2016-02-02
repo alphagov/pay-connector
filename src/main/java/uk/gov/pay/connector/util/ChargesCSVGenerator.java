@@ -25,8 +25,7 @@ public class ChargesCSVGenerator {
         STATUS("status","Status"),
         GATEWAY_TRANSACTION_ID("gateway_transaction_id","Gateway Transaction ID"),
         CHARGE_ID("charge_id", "GOV.UK Pay ID"),
-        DATE_CREATED("date_created","Date Created"),
-        DATE_UPDATED("updated","Last Updated");
+        DATE_CREATED("created_date","Date Created");
 
         private String databaseHeader;
         private String csvHeader;

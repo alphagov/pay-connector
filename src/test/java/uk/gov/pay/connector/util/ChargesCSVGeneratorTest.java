@@ -17,8 +17,7 @@ public class ChargesCSVGeneratorTest {
             .put("gateway_transaction_id", "200")
             .put("gateway_account_id", "300")
             .put("amount", "400")
-            .put("date_created", "10/10/2016")
-            .put("updated", "11/10/2016")
+            .put("created_date", "10/10/2016")
             .put("status", "Status")
             .put("payment_provider", "Provider")
             .put("description", "Description")
@@ -32,9 +31,9 @@ public class ChargesCSVGeneratorTest {
         objectMapList.add(ImmutableMap.of("reference", "ref-2", "charge_id", "chargeid-2", "gateway_transaction_id", "trans-2"));
 
         String generate = ChargesCSVGenerator.generate(objectMapList);
-        String expectedOutput = "Service Payment Reference,Amount,Status,Gateway Transaction ID,GOV.UK Pay ID,Date Created,Last Updated\n" +
-                                "ref,400,Status,200,100,10/10/2016,11/10/2016\n" +
-                                "ref-2,,,trans-2,chargeid-2,,\n";
+        String expectedOutput = "Service Payment Reference,Amount,Status,Gateway Transaction ID,GOV.UK Pay ID,Date Created\n" +
+                                "ref,400,Status,200,100,10/10/2016\n" +
+                                "ref-2,,,trans-2,chargeid-2,\n";
         
         assertEquals(expectedOutput, generate);
     }
