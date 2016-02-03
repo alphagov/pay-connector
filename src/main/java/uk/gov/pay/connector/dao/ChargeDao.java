@@ -166,17 +166,26 @@ public class ChargeDao {
 
     public List<Map<String, Object>> findAllBy(String gatewayAccountId, String reference, ExternalChargeStatus status,
                                                String fromDate, String toDate) {
-        String query = "SELECT DISTINCT c.charge_id, c.gateway_transaction_id, c.status, c.amount, " +
-                "c.description, c.reference, c.created_date" +
-                ", to_char(c.created_date, 'YYYY-MM-DD HH24:MI:SS') as updated " + // TODO for backward compatibility, remove this line once PP-280 merged
-                "FROM charges c " +
-                "WHERE c.gateway_account_id=:gid " +
-                "%s " +
-                "ORDER BY c.charge_id DESC";
+        String query =
+                "SELECT DISTINCT " +
+                        "c.charge_id, " +
+                        "c.gateway_transaction_id, " +
+                        "c.status, " +
+                        "c.amount, " +
+                        "c.description, " +
+                        "c.reference, " +
+                        "c.created_date, " +
+                        // TODO for backward compatibility, remove the following line once PP-280 Self-service doesn't look for updated column merged FROM charges c
+                        "to_char(c.created_date, 'YYYY-MM-DD HH24:MI:SS') as updated " +
+                    "WHERE " +
+                        "c.gateway_account_id=:gid " +
+                        "%s " +
+                    "ORDER BY c.charge_id DESC";
+
         List<Map<String, Object>> rawData = jdbi.withHandle(handle ->
                 createQueryHandle(handle, query, gatewayAccountId, reference, status, fromDate, toDate));
 
-        logger.info("found "+rawData.size()+ " charge records for the criteria");
+        logger.info("found " + rawData.size() + " charge records for the criteria");
         return copyAndConvertFieldsToString(rawData, "charge_id", "gateway_account_id");
     }
 
