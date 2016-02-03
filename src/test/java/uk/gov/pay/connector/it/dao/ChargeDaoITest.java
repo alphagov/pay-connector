@@ -2,6 +2,7 @@ package uk.gov.pay.connector.it.dao;
 
 import com.google.common.collect.ImmutableMap;
 import org.exparity.hamcrest.date.LocalDateTimeMatchers;
+import org.exparity.hamcrest.date.ZonedDateTimeMatchers;
 import org.hamcrest.Description;
 import org.hamcrest.Matcher;
 import org.hamcrest.MatcherAssert;
@@ -18,12 +19,15 @@ import uk.gov.pay.connector.model.domain.ChargeEvent;
 import uk.gov.pay.connector.model.domain.ChargeStatus;
 import uk.gov.pay.connector.rules.DropwizardAppWithPostgresRule;
 import uk.gov.pay.connector.util.ChargeEventListener;
+import uk.gov.pay.connector.util.DateTimeUtils;
 
 import java.time.LocalDateTime;
-import java.time.ZoneId;
+import java.time.ZonedDateTime;
 import java.time.format.DateTimeFormatter;
 import java.time.temporal.ChronoUnit;
-import java.util.*;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
 
 import static com.google.common.collect.Lists.newArrayList;
 import static java.lang.Long.parseLong;
@@ -110,7 +114,7 @@ public class ChargeDaoITest {
         assertThat(charge.get("description"), is(DESCRIPTION));
         assertThat(charge.get("status"), is(CREATED.getValue()));
 
-        assertDateMatch((Date) charge.get("created_date"));
+        assertDateMatch(charge.get("created_date").toString());
     }
 
     @Test
@@ -125,7 +129,7 @@ public class ChargeDaoITest {
             assertThat(charge.get("amount"), is(AMOUNT));
             assertThat(charge.get("description"), is(DESCRIPTION));
             assertThat(charge.get("status"), is(CREATED.getValue()));
-            assertDateMatch((Date) charge.get("created_date"));
+            assertDateMatch(charge.get("created_date").toString());
         }
     }
 
@@ -140,7 +144,7 @@ public class ChargeDaoITest {
         assertThat(charge.get("reference"), is(REFERENCE));
         assertThat(charge.get("description"), is(DESCRIPTION));
         assertThat(charge.get("status"), is(CREATED.getValue()));
-        assertDateMatch((Date) charge.get("created_date"));
+        assertDateMatch(charge.get("created_date").toString());
     }
 
     @Test
@@ -154,7 +158,7 @@ public class ChargeDaoITest {
         assertThat(charge.get("reference"), is(REFERENCE));
         assertThat(charge.get("description"), is(DESCRIPTION));
         assertThat(charge.get("status"), is(CREATED.getValue()));
-        assertDateMatch((Date) charge.get("created_date"));
+        assertDateMatch(charge.get("created_date").toString());
     }
 
     @Test
@@ -168,7 +172,7 @@ public class ChargeDaoITest {
         assertThat(charge.get("reference"), is(REFERENCE));
         assertThat(charge.get("description"), is(DESCRIPTION));
         assertThat(charge.get("status"), is(CREATED.getValue()));
-        assertDateMatch((Date) charge.get("created_date"));
+        assertDateMatch(charge.get("created_date").toString());
     }
 
     @Test
@@ -182,7 +186,7 @@ public class ChargeDaoITest {
         assertThat(charge.get("reference"), is(REFERENCE));
         assertThat(charge.get("description"), is(DESCRIPTION));
         assertThat(charge.get("status"), is(CREATED.getValue()));
-        assertDateMatch((Date) charge.get("created_date"));
+        assertDateMatch(charge.get("created_date").toString());
     }
 
     @Test
@@ -305,10 +309,8 @@ public class ChargeDaoITest {
                 "return_url", RETURN_URL);
     }
 
-    private void assertDateMatch(Date createdDate) {
-        LocalDateTime createdLocalDateTime = LocalDateTime.ofInstant(createdDate.toInstant(), ZoneId.systemDefault());
-        assertThat("year mismatch", LocalDateTime.now().getYear(), is(createdLocalDateTime.getYear()));
-        assertThat("month mismatch", LocalDateTime.now().getMonth(), is(createdLocalDateTime.getMonth()));
-        assertThat("day mismatch", LocalDateTime.now().getDayOfMonth(), is(createdLocalDateTime.getDayOfMonth()));
+    private void assertDateMatch(String createdDateString) {
+        ZonedDateTime createdDateTime = DateTimeUtils.toUTCZonedDateTime(createdDateString).get();
+        assertThat(createdDateTime, ZonedDateTimeMatchers.within(1, ChronoUnit.MINUTES, ZonedDateTime.now()));
     }
 }

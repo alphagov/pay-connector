@@ -67,7 +67,6 @@ public class ChargesApiResource {
     private LinksConfig linksConfig;
 
     private static final Logger logger = LoggerFactory.getLogger(ChargesApiResource.class);
-    private static final DateFormat DATE_FORMAT = new SimpleDateFormat("dd/MM/yyyy HH:mm:ss");
 
     public ChargesApiResource(ChargeDao chargeDao, TokenDao tokenDao, GatewayAccountDao gatewayAccountDao, EventDao eventDao, LinksConfig linksConfig) {
         this.chargeDao = chargeDao;
@@ -268,7 +267,7 @@ public class ChargesApiResource {
         List<Map<String, Object>> charges = chargeDao.findAllBy(accountId, reference, chargeStatus, fromDate, toDate);
         charges.forEach(charge -> {
                     charge.put(STATUS_KEY, mapFromStatus(charge.get(STATUS_KEY).toString()).getValue());
-                    charge.put(CREATED_DATE, DATE_FORMAT.format(charge.get(CREATED_DATE)));
+                    charge.put(CREATED_DATE, charge.get(CREATED_DATE));
         });
         return charges;
     }

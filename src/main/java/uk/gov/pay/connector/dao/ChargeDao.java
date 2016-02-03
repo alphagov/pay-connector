@@ -174,7 +174,7 @@ public class ChargeDao {
                         "c.amount, " +
                         "c.description, " +
                         "c.reference, " +
-                        "c.created_date, " +
+                        "to_char(c.created_date AT TIME ZONE 'UTC', 'YYYY-MM-DD\"T\"HH24:MI:SSZ') as created_date, " +
                         // TODO for backward compatibility, remove the following line once PP-280 Self-service doesn't look for updated column merged
                         "to_char(c.created_date, 'YYYY-MM-DD HH24:MI:SS') as updated " +
                 "FROM " +
