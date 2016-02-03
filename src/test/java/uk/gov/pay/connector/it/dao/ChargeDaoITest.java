@@ -1,7 +1,6 @@
 package uk.gov.pay.connector.it.dao;
 
 import com.google.common.collect.ImmutableMap;
-import org.exparity.hamcrest.date.LocalDateMatchers;
 import org.exparity.hamcrest.date.LocalDateTimeMatchers;
 import org.hamcrest.Description;
 import org.hamcrest.Matcher;
@@ -21,11 +20,10 @@ import uk.gov.pay.connector.rules.DropwizardAppWithPostgresRule;
 import uk.gov.pay.connector.util.ChargeEventListener;
 
 import java.time.LocalDateTime;
+import java.time.ZoneId;
 import java.time.format.DateTimeFormatter;
 import java.time.temporal.ChronoUnit;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 
 import static com.google.common.collect.Lists.newArrayList;
 import static java.lang.Long.parseLong;
@@ -111,9 +109,8 @@ public class ChargeDaoITest {
         assertThat(charge.get("reference"), is(REFERENCE));
         assertThat(charge.get("description"), is(DESCRIPTION));
         assertThat(charge.get("status"), is(CREATED.getValue()));
-        assertThat(LocalDateTime.parse(charge.get("updated").toString(), formatter).getYear(), is(LocalDateTime.now().getYear()));
-        assertThat(LocalDateTime.parse(charge.get("updated").toString(), formatter).getMonth(), is(LocalDateTime.now().getMonth()));
-        assertThat(LocalDateTime.parse(charge.get("updated").toString(), formatter).getDayOfMonth(), is(LocalDateTime.now().getDayOfMonth()));
+
+        assertDateMatch((Date) charge.get("created_date"));
     }
 
     @Test
@@ -123,13 +120,12 @@ public class ChargeDaoITest {
         assertThat(charges.get(1).get("charge_id"), is(chargeId));
         assertThat(charges.get(1).get("reference"), is(REFERENCE));
         assertThat(charges.get(0).get("reference"), is(COUNCIL_TAX_PAYMENT_REFERENCE));
+
         for(Map<String, Object> charge : charges) {
             assertThat(charge.get("amount"), is(AMOUNT));
             assertThat(charge.get("description"), is(DESCRIPTION));
             assertThat(charge.get("status"), is(CREATED.getValue()));
-            assertThat(LocalDateTime.parse(charge.get("updated").toString(), formatter).getYear(), is(LocalDateTime.now().getYear()));
-            assertThat(LocalDateTime.parse(charge.get("updated").toString(), formatter).getMonth(), is(LocalDateTime.now().getMonth()));
-            assertThat(LocalDateTime.parse(charge.get("updated").toString(), formatter).getDayOfMonth(), is(LocalDateTime.now().getDayOfMonth()));
+            assertDateMatch((Date) charge.get("created_date"));
         }
     }
 
@@ -144,9 +140,7 @@ public class ChargeDaoITest {
         assertThat(charge.get("reference"), is(REFERENCE));
         assertThat(charge.get("description"), is(DESCRIPTION));
         assertThat(charge.get("status"), is(CREATED.getValue()));
-        assertThat(LocalDateTime.parse(charge.get("updated").toString(), formatter).getYear(), is(LocalDateTime.now().getYear()));
-        assertThat(LocalDateTime.parse(charge.get("updated").toString(), formatter).getMonth(), is(LocalDateTime.now().getMonth()));
-        assertThat(LocalDateTime.parse(charge.get("updated").toString(), formatter).getDayOfMonth(), is(LocalDateTime.now().getDayOfMonth()));
+        assertDateMatch((Date) charge.get("created_date"));
     }
 
     @Test
@@ -160,9 +154,7 @@ public class ChargeDaoITest {
         assertThat(charge.get("reference"), is(REFERENCE));
         assertThat(charge.get("description"), is(DESCRIPTION));
         assertThat(charge.get("status"), is(CREATED.getValue()));
-        assertThat(LocalDateTime.parse(charge.get("updated").toString(), formatter).getYear(), is(LocalDateTime.now().getYear()));
-        assertThat(LocalDateTime.parse(charge.get("updated").toString(), formatter).getMonth(), is(LocalDateTime.now().getMonth()));
-        assertThat(LocalDateTime.parse(charge.get("updated").toString(), formatter).getDayOfMonth(), is(LocalDateTime.now().getDayOfMonth()));
+        assertDateMatch((Date) charge.get("created_date"));
     }
 
     @Test
@@ -176,9 +168,7 @@ public class ChargeDaoITest {
         assertThat(charge.get("reference"), is(REFERENCE));
         assertThat(charge.get("description"), is(DESCRIPTION));
         assertThat(charge.get("status"), is(CREATED.getValue()));
-        assertThat(LocalDateTime.parse(charge.get("updated").toString(), formatter).getYear(), is(LocalDateTime.now().getYear()));
-        assertThat(LocalDateTime.parse(charge.get("updated").toString(), formatter).getMonth(), is(LocalDateTime.now().getMonth()));
-        assertThat(LocalDateTime.parse(charge.get("updated").toString(), formatter).getDayOfMonth(), is(LocalDateTime.now().getDayOfMonth()));
+        assertDateMatch((Date) charge.get("created_date"));
     }
 
     @Test
@@ -192,9 +182,7 @@ public class ChargeDaoITest {
         assertThat(charge.get("reference"), is(REFERENCE));
         assertThat(charge.get("description"), is(DESCRIPTION));
         assertThat(charge.get("status"), is(CREATED.getValue()));
-        assertThat(LocalDateTime.parse(charge.get("updated").toString(), formatter).getYear(), is(LocalDateTime.now().getYear()));
-        assertThat(LocalDateTime.parse(charge.get("updated").toString(), formatter).getMonth(), is(LocalDateTime.now().getMonth()));
-        assertThat(LocalDateTime.parse(charge.get("updated").toString(), formatter).getDayOfMonth(), is(LocalDateTime.now().getDayOfMonth()));
+        assertDateMatch((Date) charge.get("created_date"));
     }
 
     @Test
@@ -267,7 +255,7 @@ public class ChargeDaoITest {
         assertThat(charge.get("status"), is(CAPTURE_SUBMITTED.getValue()));
 
         List<ChargeEvent> events = eventDao.findEvents(parseLong(GATEWAY_ACCOUNT_ID), parseLong(chargeId));
-        assertThat(events,  not(shouldIncludeStatus(ENTERING_CARD_DETAILS)));
+        assertThat(events, not(shouldIncludeStatus(ENTERING_CARD_DETAILS)));
     }
 
     @Test
@@ -315,5 +303,12 @@ public class ChargeDaoITest {
                 "reference", reference,
                 "description", DESCRIPTION,
                 "return_url", RETURN_URL);
+    }
+
+    private void assertDateMatch(Date createdDate) {
+        LocalDateTime createdLocalDateTime = LocalDateTime.ofInstant(createdDate.toInstant(), ZoneId.systemDefault());
+        assertThat("year mismatch", LocalDateTime.now().getYear(), is(createdLocalDateTime.getYear()));
+        assertThat("month mismatch", LocalDateTime.now().getMonth(), is(createdLocalDateTime.getMonth()));
+        assertThat("day mismatch", LocalDateTime.now().getDayOfMonth(), is(createdLocalDateTime.getDayOfMonth()));
     }
 }

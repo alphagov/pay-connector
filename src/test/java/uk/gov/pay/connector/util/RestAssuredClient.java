@@ -76,6 +76,14 @@ public class RestAssuredClient {
                 .then();
     }
 
+    public ValidatableResponse getTransactionsWithAcceptHeader(String acceptContentType) {
+        return given()
+                .accept(acceptContentType)
+                .port(app.getLocalPort())
+                .get(CHARGES_API_PATH.replace("{accountId}", accountId))
+                .then();
+    }
+
     public ValidatableResponse getEvents(Long chargeId) {
         String requestPath = CHARGE_EVENTS_API_PATH
                 .replace("{accountId}", accountId)

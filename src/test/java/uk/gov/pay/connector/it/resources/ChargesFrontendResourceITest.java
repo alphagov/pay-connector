@@ -127,6 +127,7 @@ public class ChargesFrontendResourceITest {
                 .body("message", is(format("Charge with id [%s] not found.", chargeId)));
     }
 
+    //TODO getTransactions test should sit in the ChargesAPIResourceTest and not in here as it uses end points defined in the APIResource
     @Test
     public void shouldReturnAllTransactionsForAGivenGatewayAccount() {
         String chargeId1 = "10001";
@@ -167,8 +168,7 @@ public class ChargesFrontendResourceITest {
         setupLifeCycleEventsFor(app, Long.valueOf(102), statuses);
         setupLifeCycleEventsFor(app, Long.valueOf(103), statuses);
 
-        ValidatableResponse response = connectorRestApi
-                .getTransactions();
+        ValidatableResponse response = connectorRestApi.getTransactions();
 
         response.statusCode(OK.getStatusCode())
                 .contentType(JSON)

@@ -167,16 +167,26 @@ public class ChargeDao {
     public List<Map<String, Object>> findAllBy(String gatewayAccountId, String reference, ExternalChargeStatus status,
                                                String fromDate, String toDate) {
         String query =
-                "SELECT DISTINCT c.charge_id, c.gateway_transaction_id, c.status, c.amount, " +
-                        "c.description, c.reference, to_char(ce.updated, 'YYYY-MM-DD HH24:MI:SS') as updated " +
+                "SELECT DISTINCT " +
+                        "c.charge_id, " +
+                        "c.gateway_transaction_id, " +
+                        "c.status, " +
+                        "c.amount, " +
+                        "c.description, " +
+                        "c.reference, " +
+                        "c.created_date, " +
+                        // TODO for backward compatibility, remove the following line once PP-280 Self-service doesn't look for updated column merged
+                        "to_char(c.created_date, 'YYYY-MM-DD HH24:MI:SS') as updated " +
                         "FROM charges c " +
-                        "INNER JOIN charge_events ce ON (c.charge_id = ce.charge_id AND ce.status = 'CREATED')" +
-                        "WHERE c.gateway_account_id=:gid " +
+                        "WHERE " +
+                        "c.gateway_account_id=:gid " +
                         "%s " +
                         "ORDER BY c.charge_id DESC";
+
         List<Map<String, Object>> rawData = jdbi.withHandle(handle ->
                 createQueryHandle(handle, query, gatewayAccountId, reference, status, fromDate, toDate));
 
+        logger.info("found " + rawData.size() + " charge records for the criteria");
         return copyAndConvertFieldsToString(rawData, "charge_id", "gateway_account_id");
     }
 

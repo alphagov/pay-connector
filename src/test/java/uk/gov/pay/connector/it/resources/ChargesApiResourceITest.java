@@ -6,9 +6,12 @@ import org.apache.commons.lang.math.RandomUtils;
 import org.junit.Before;
 import org.junit.Rule;
 import org.junit.Test;
+import org.slf4j.LoggerFactory;
 import uk.gov.pay.connector.model.domain.ChargeStatus;
 import uk.gov.pay.connector.rules.DropwizardAppWithPostgresRule;
 import uk.gov.pay.connector.util.RestAssuredClient;
+
+import javax.ws.rs.core.Response.Status;
 
 import static com.jayway.restassured.http.ContentType.JSON;
 import static java.lang.String.format;
@@ -18,6 +21,7 @@ import static org.apache.commons.lang3.RandomStringUtils.randomAlphanumeric;
 import static org.hamcrest.Matchers.*;
 import static uk.gov.pay.connector.model.api.ExternalChargeStatus.EXT_IN_PROGRESS;
 import static uk.gov.pay.connector.model.domain.ChargeStatus.AUTHORISATION_SUCCESS;
+import static uk.gov.pay.connector.model.domain.ChargeStatus.CREATED;
 import static uk.gov.pay.connector.resources.ApiPaths.CHARGE_API_PATH;
 import static uk.gov.pay.connector.util.JsonEncoder.toJson;
 import static uk.gov.pay.connector.util.LinksAssert.assertNextUrlLink;
@@ -35,6 +39,7 @@ public class ChargesApiResourceITest {
     private static final String JSON_CHARGE_KEY = "charge_id";
     private static final String JSON_STATUS_KEY = "status";
     private static final String JSON_MESSAGE_KEY = "message";
+    public static final String CSV_CONTENT_TYPE = "text/csv";
 
     @Rule
     public DropwizardAppWithPostgresRule app = new DropwizardAppWithPostgresRule();
@@ -51,6 +56,8 @@ public class ChargesApiResourceITest {
     }
 
     private long amount = 6234L;
+    private static final org.slf4j.Logger logger = LoggerFactory.getLogger(ChargesApiResourceITest.class);
+
 
     @Test
     public void makeChargeAndRetrieveAmount() throws Exception {
@@ -64,7 +71,7 @@ public class ChargesApiResourceITest {
                 JSON_RETURN_URL_KEY, returnUrl));
         ValidatableResponse response = createChargeApi
                 .postCreateCharge(postBody)
-                .statusCode(CREATED.getStatusCode())
+                .statusCode(Status.CREATED.getStatusCode())
                 .body(JSON_CHARGE_KEY, is(notNullValue()))
                 .body(JSON_AMOUNT_KEY, isNumber(amount))
                 .body(JSON_REFERENCE_KEY, is(expectedReference))
@@ -109,6 +116,41 @@ public class ChargesApiResourceITest {
                 .contentType(JSON)
                 .body(JSON_CHARGE_KEY, is(chargeId))
                 .body(JSON_STATUS_KEY, is(EXT_IN_PROGRESS.getValue()));
+    }
+
+    @Test
+    public void shouldGetChargeTransactionsForCSVAcceptHeader() throws Exception {
+        String chargeId = ((Integer) RandomUtils.nextInt(99999999)).toString();
+        ChargeStatus chargeStatus = AUTHORISATION_SUCCESS;
+        app.getDatabaseTestHelper().addCharge(chargeId, accountId, amount, chargeStatus, returnUrl, null);
+        app.getDatabaseTestHelper().addToken(chargeId, "tokenId");
+        app.getDatabaseTestHelper().addEvent(Long.valueOf(chargeId), chargeStatus.getValue());
+
+        getChargeApi
+                .withAccountId(accountId)
+                .getTransactionsWithAcceptHeader(CSV_CONTENT_TYPE)
+                .statusCode(OK.getStatusCode())
+                .contentType(CSV_CONTENT_TYPE)
+                .body(containsString(
+                        "Service Payment Reference,Amount,Status,Gateway Transaction ID,GOV.UK Pay ID,Date Created\n" +
+                        "Test reference,6234,IN PROGRESS,," + chargeId));
+    }
+
+    @Test
+    public void shouldGetChargeTransactionsForJSONAcceptHeader() throws Exception {
+        String chargeId = ((Integer) RandomUtils.nextInt(99999999)).toString();
+        ChargeStatus chargeStatus = AUTHORISATION_SUCCESS;
+        app.getDatabaseTestHelper().addCharge(chargeId, accountId, amount, chargeStatus, returnUrl, null);
+        app.getDatabaseTestHelper().addToken(chargeId, "tokenId");
+        app.getDatabaseTestHelper().addEvent(Long.valueOf(chargeId), chargeStatus.getValue());
+
+        getChargeApi
+                .withAccountId(accountId)
+                .getTransactionsWithAcceptHeader(JSON.getAcceptHeader())
+                .statusCode(OK.getStatusCode())
+                .contentType(JSON)
+                .body("results.charge_id", hasItem(chargeId))
+                .body("results.status", hasItem(EXT_IN_PROGRESS.getValue()));
     }
 
     @Test
