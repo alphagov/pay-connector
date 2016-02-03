@@ -177,11 +177,12 @@ public class ChargeDao {
                         "c.created_date, " +
                         // TODO for backward compatibility, remove the following line once PP-280 Self-service doesn't look for updated column merged
                         "to_char(c.created_date, 'YYYY-MM-DD HH24:MI:SS') as updated " +
-                        "FROM charges c " +
-                        "WHERE " +
+                "FROM " +
+                        "charges c " +
+                "WHERE " +
                         "c.gateway_account_id=:gid " +
                         "%s " +
-                        "ORDER BY c.charge_id DESC";
+                "ORDER BY c.charge_id DESC";
 
         List<Map<String, Object>> rawData = jdbi.withHandle(handle ->
                 createQueryHandle(handle, query, gatewayAccountId, reference, status, fromDate, toDate));
