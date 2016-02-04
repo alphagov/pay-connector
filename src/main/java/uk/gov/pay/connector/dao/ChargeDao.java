@@ -9,9 +9,11 @@ import uk.gov.pay.connector.model.api.ExternalChargeStatus;
 import uk.gov.pay.connector.model.domain.ChargeEvent;
 import uk.gov.pay.connector.model.domain.ChargeStatus;
 import uk.gov.pay.connector.util.ChargeEventListener;
+import uk.gov.pay.connector.util.DateTimeUtils;
 
 import java.sql.Timestamp;
 import java.time.LocalDateTime;
+import java.time.ZonedDateTime;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
@@ -37,15 +39,15 @@ public class ChargeDao {
     public String saveNewCharge(String gatewayAccountId, Map<String, Object> charge) {
         LocalDateTime createdDate = LocalDateTime.now();
         String newChargeId = jdbi.withHandle(handle ->
-                        handle
-                                .createStatement("INSERT INTO charges(amount, gateway_account_id, status, return_url, description, reference, created_date) " +
-                                        "VALUES (:amount, :gateway_account_id, :status, :return_url, :description, :reference, :created_date)")
-                                .bindFromMap(charge)
-                                .bind("gateway_account_id", Long.valueOf(gatewayAccountId))
-                                .bind("status", CREATED.getValue())
-                                .bind("created_date", Timestamp.valueOf(createdDate))
-                                .executeAndReturnGeneratedKeys(StringMapper.FIRST)
-                                .first()
+                handle
+                        .createStatement("INSERT INTO charges(amount, gateway_account_id, status, return_url, description, reference, created_date) " +
+                                "VALUES (:amount, :gateway_account_id, :status, :return_url, :description, :reference, :created_date)")
+                        .bindFromMap(charge)
+                        .bind("gateway_account_id", Long.valueOf(gatewayAccountId))
+                        .bind("status", CREATED.getValue())
+                        .bind("created_date", Timestamp.valueOf(createdDate))
+                        .executeAndReturnGeneratedKeys(StringMapper.FIRST)
+                        .first()
         );
         eventListener.notify(ChargeEvent.from(Long.parseLong(newChargeId), CREATED, createdDate));
         return newChargeId;
@@ -93,11 +95,11 @@ public class ChargeDao {
 
     public void updateGatewayTransactionId(String chargeId, String transactionId) {
         Integer numberOfUpdates = jdbi.withHandle(handle ->
-                    handle
-                            .createStatement("UPDATE charges SET gateway_transaction_id=:transactionId WHERE charge_id=:charge_id")
-                            .bind("charge_id", Long.valueOf(chargeId))
-                            .bind("transactionId", transactionId)
-                            .execute()
+                handle
+                        .createStatement("UPDATE charges SET gateway_transaction_id=:transactionId WHERE charge_id=:charge_id")
+                        .bind("charge_id", Long.valueOf(chargeId))
+                        .bind("transactionId", transactionId)
+                        .execute()
         );
 
         if (numberOfUpdates != 1) {
@@ -134,11 +136,11 @@ public class ChargeDao {
 
     public void updateStatus(String chargeId, ChargeStatus newStatus) {
         Integer numberOfUpdates = jdbi.withHandle(handle ->
-                    handle
-                            .createStatement("UPDATE charges SET status=:status WHERE charge_id=:charge_id")
-                            .bind("charge_id", Long.valueOf(chargeId))
-                            .bind("status", newStatus.getValue())
-                            .execute()
+                handle
+                        .createStatement("UPDATE charges SET status=:status WHERE charge_id=:charge_id")
+                        .bind("charge_id", Long.valueOf(chargeId))
+                        .bind("status", newStatus.getValue())
+                        .execute()
         );
 
         if (numberOfUpdates != 1) {
@@ -177,17 +179,18 @@ public class ChargeDao {
                         "to_char(c.created_date AT TIME ZONE 'UTC', 'YYYY-MM-DD\"T\"HH24:MI:SSZ') as created_date, " +
                         // TODO for backward compatibility, remove the following line once PP-280 Self-service doesn't look for updated column merged
                         "to_char(c.created_date, 'YYYY-MM-DD HH24:MI:SS') as updated " +
-                "FROM " +
+                        "FROM " +
                         "charges c " +
-                "WHERE " +
+                        "WHERE " +
                         "c.gateway_account_id=:gid " +
                         "%s " +
-                "ORDER BY c.charge_id DESC";
+                        "ORDER BY c.charge_id DESC";
 
         List<Map<String, Object>> rawData = jdbi.withHandle(handle ->
                 createQueryHandle(handle, query, gatewayAccountId, reference, status, fromDate, toDate));
 
         logger.info("found " + rawData.size() + " charge records for the criteria");
+        convertCreatedDate(rawData);
         return copyAndConvertFieldsToString(rawData, "charge_id", "gateway_account_id");
     }
 
@@ -205,6 +208,20 @@ public class ChargeDao {
         );
 
         return Optional.ofNullable(data.get("gateway_account_id").toString());
+    }
+
+    private void convertCreatedDate(List<Map<String, Object>> charges) {
+        charges.stream().forEach(charge -> {
+            String dateString = charge.get("created_date").toString();
+            Optional<ZonedDateTime> createdDateOptional = DateTimeUtils.toUTCZonedDateTime(dateString);
+            if (createdDateOptional.isPresent()) {
+                charge.put("created_date", createdDateOptional.get());
+            } else {
+                //This should never be happening
+                logger.error(String.format("Charge.created_date is not stored in correct format [%s]", dateString));
+                charge.put("created_date", null);
+            }
+        });
     }
 
     private Optional<String> findChargeByTransactionId(String provider, String transactionId) {

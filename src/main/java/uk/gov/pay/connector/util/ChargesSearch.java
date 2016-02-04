@@ -8,6 +8,7 @@ import uk.gov.pay.connector.model.api.ExternalChargeStatus;
 
 import java.sql.Timestamp;
 import java.time.LocalDateTime;
+import java.time.ZonedDateTime;
 import java.time.format.DateTimeFormatter;
 import java.util.Arrays;
 import java.util.List;
@@ -67,12 +68,11 @@ public class ChargesSearch {
         }
 
         // Filter by Date(s)
-        DateTimeFormatter formatter = DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss");
         if (StringUtils.isNotBlank(fromDate)) {
-            queryStmt.bind("fromDate", Timestamp.valueOf(LocalDateTime.parse(fromDate, formatter)));
+            queryStmt.bind("fromDate", Timestamp.from(DateTimeUtils.toUTCZonedDateTime(fromDate).get().toInstant()));
         }
         if (StringUtils.isNotBlank(toDate)) {
-            queryStmt.bind("toDate", Timestamp.valueOf(LocalDateTime.parse(toDate, formatter)));
+            queryStmt.bind("toDate", Timestamp.from(DateTimeUtils.toUTCZonedDateTime(toDate).get().toInstant()));
         }
         return queryStmt.map(new DefaultMapper()).list();
     }

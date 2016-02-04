@@ -45,8 +45,8 @@ public class ChargeDaoITest {
     private static final String GATEWAY_ACCOUNT_ID = "564532435";
     private static final String RETURN_URL = "http://service.com/success-page";
     private static final String REFERENCE = "Test reference";
-    private static final String FROM_DATE = "2016-01-01 01:00:00";
-    private static final String TO_DATE = "2026-01-08 01:00:00";
+    private static final String FROM_DATE = "2016-01-01T01:00:00Z";
+    private static final String TO_DATE = "2026-01-08T01:00:00Z";
     private static final String DESCRIPTION = "Test description";
     private static final long AMOUNT = 101;
     public static final String PAYMENT_PROVIDER = "test_provider";

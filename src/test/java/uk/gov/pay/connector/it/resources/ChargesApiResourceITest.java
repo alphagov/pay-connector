@@ -3,26 +3,41 @@ package uk.gov.pay.connector.it.resources;
 import com.google.common.collect.ImmutableMap;
 import com.jayway.restassured.response.ValidatableResponse;
 import org.apache.commons.lang.math.RandomUtils;
+import org.exparity.hamcrest.date.ZonedDateTimeMatchers;
 import org.junit.Before;
 import org.junit.Rule;
 import org.junit.Test;
 import org.slf4j.LoggerFactory;
 import uk.gov.pay.connector.model.domain.ChargeStatus;
 import uk.gov.pay.connector.rules.DropwizardAppWithPostgresRule;
+import uk.gov.pay.connector.util.DateTimeUtils;
 import uk.gov.pay.connector.util.RestAssuredClient;
 
+import javax.ws.rs.core.HttpHeaders;
+import javax.ws.rs.core.MediaType;
 import javax.ws.rs.core.Response.Status;
 
+import java.time.ZonedDateTime;
+import java.time.temporal.ChronoUnit;
+import java.util.List;
+import java.util.Map;
+import java.util.stream.Collectors;
+
+import static com.google.common.collect.Lists.newArrayList;
 import static com.jayway.restassured.http.ContentType.JSON;
 import static java.lang.String.format;
+import static java.time.ZonedDateTime.now;
 import static javax.ws.rs.core.Response.Status.*;
 import static org.apache.commons.lang3.RandomStringUtils.randomAlphabetic;
 import static org.apache.commons.lang3.RandomStringUtils.randomAlphanumeric;
+import static org.exparity.hamcrest.date.ZonedDateTimeMatchers.within;
+import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.*;
 import static uk.gov.pay.connector.model.api.ExternalChargeStatus.EXT_IN_PROGRESS;
-import static uk.gov.pay.connector.model.domain.ChargeStatus.AUTHORISATION_SUCCESS;
+import static uk.gov.pay.connector.model.domain.ChargeStatus.*;
 import static uk.gov.pay.connector.model.domain.ChargeStatus.CREATED;
 import static uk.gov.pay.connector.resources.ApiPaths.CHARGE_API_PATH;
+import static uk.gov.pay.connector.util.DateTimeUtils.toUTCZonedDateTime;
 import static uk.gov.pay.connector.util.JsonEncoder.toJson;
 import static uk.gov.pay.connector.util.LinksAssert.assertNextUrlLink;
 import static uk.gov.pay.connector.util.LinksAssert.assertSelfLink;
@@ -128,12 +143,13 @@ public class ChargesApiResourceITest {
 
         getChargeApi
                 .withAccountId(accountId)
-                .getTransactionsWithAcceptHeader(CSV_CONTENT_TYPE)
+                .withHeader(HttpHeaders.ACCEPT, CSV_CONTENT_TYPE)
+                .getTransactions()
                 .statusCode(OK.getStatusCode())
                 .contentType(CSV_CONTENT_TYPE)
                 .body(containsString(
                         "Service Payment Reference,Amount,Status,Gateway Transaction ID,GOV.UK Pay ID,Date Created\n" +
-                        "Test reference,6234,IN PROGRESS,," + chargeId));
+                                "Test reference,6234,IN PROGRESS,," + chargeId));
     }
 
     @Test
@@ -146,11 +162,43 @@ public class ChargesApiResourceITest {
 
         getChargeApi
                 .withAccountId(accountId)
-                .getTransactionsWithAcceptHeader(JSON.getAcceptHeader())
+                .withHeader(HttpHeaders.ACCEPT, MediaType.APPLICATION_JSON)
+                .getTransactions()
                 .statusCode(OK.getStatusCode())
                 .contentType(JSON)
                 .body("results.charge_id", hasItem(chargeId))
                 .body("results.status", hasItem(EXT_IN_PROGRESS.getValue()));
+    }
+
+    @Test
+    public void shouldFilterTransactionsBasedOnFromAndToDates() throws Exception {
+        addCharge(CREATED, "ref-1", now());
+        addCharge(AUTHORISATION_SUBMITTED, "ref-2", now());
+        addCharge(CAPTURED, "ref-3", now().minusDays(2));
+
+        ValidatableResponse response = getChargeApi
+                .withAccountId(accountId)
+                .withQueryParam("from_date", DateTimeUtils.toUTCDateString(now().minusDays(1)))
+                .withQueryParam("to_date", DateTimeUtils.toUTCDateString(now().plusDays(1)))
+                .withHeader(HttpHeaders.ACCEPT, MediaType.APPLICATION_JSON)
+                .getTransactions()
+                .statusCode(OK.getStatusCode())
+                .contentType(JSON)
+                .body("results.size()", is(2));
+
+        List<Map<String, Object>> results = response.extract().body().jsonPath().getList("results");
+        List<String> references = collect(results, "reference");
+        assertThat(references, containsInAnyOrder("ref-1", "ref-2"));
+        assertThat(references, not(contains("ref-3")));
+
+        List<String> statuses = collect(results, "status");
+        assertThat(statuses, containsInAnyOrder("CREATED", "IN PROGRESS"));
+        assertThat(statuses, not(contains("SUCCEEDED")));
+
+        List<String> createdDateStrings = collect(results, "created_date");
+        datesFrom(createdDateStrings).forEach(createdDate ->
+                assertThat(createdDate, is(within(1, ChronoUnit.DAYS, now())))
+        );
     }
 
     @Test
@@ -207,6 +255,25 @@ public class ChargesApiResourceITest {
                 .statusCode(NOT_FOUND.getStatusCode())
                 .contentType(JSON)
                 .body(JSON_MESSAGE_KEY, is(format("Charge with id [%s] not found.", chargeId)));
+    }
+
+    private List<ZonedDateTime> datesFrom(List<String> createdDateStrings) {
+        List<ZonedDateTime> dateTimes = newArrayList();
+        createdDateStrings.stream().forEach(aDateString -> dateTimes.add(toUTCZonedDateTime(aDateString).get()));
+        return dateTimes;
+    }
+
+    private String addCharge(ChargeStatus status, String reference, ZonedDateTime fromDate) {
+        String chargeId = ((Integer) RandomUtils.nextInt(99999999)).toString();
+        ChargeStatus chargeStatus = status != null ? status : AUTHORISATION_SUCCESS;
+        app.getDatabaseTestHelper().addCharge(chargeId, accountId, amount, chargeStatus, returnUrl, null, reference, fromDate);
+        app.getDatabaseTestHelper().addToken(chargeId, "tokenId");
+        app.getDatabaseTestHelper().addEvent(Long.valueOf(chargeId), chargeStatus.getValue());
+        return chargeId;
+    }
+
+    private List<String> collect(List<Map<String, Object>> results, String field) {
+        return results.stream().map(result -> result.get(field).toString()).collect(Collectors.toList());
     }
 
     private String expectedChargeLocationFor(String accountId, String chargeId) {

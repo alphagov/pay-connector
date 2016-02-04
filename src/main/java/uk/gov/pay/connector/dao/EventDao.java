@@ -4,7 +4,6 @@ import org.skife.jdbi.v2.DBI;
 import uk.gov.pay.connector.mappers.ChargeEventMapper;
 import uk.gov.pay.connector.model.domain.ChargeEvent;
 
-import java.time.format.DateTimeFormatter;
 import java.util.List;
 
 public class EventDao {

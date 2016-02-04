@@ -14,6 +14,7 @@ import uk.gov.pay.connector.dao.TokenDao;
 import uk.gov.pay.connector.model.api.ExternalChargeStatus;
 import uk.gov.pay.connector.model.domain.ChargeEvent;
 import uk.gov.pay.connector.util.ChargesCSVGenerator;
+import uk.gov.pay.connector.util.DateTimeUtils;
 import uk.gov.pay.connector.util.ResponseBuilder;
 import uk.gov.pay.connector.util.ResponseUtil;
 
@@ -25,6 +26,7 @@ import java.net.URI;
 import java.net.URISyntaxException;
 import java.text.DateFormat;
 import java.text.SimpleDateFormat;
+import java.time.ZonedDateTime;
 import java.util.*;
 import java.util.stream.Collectors;
 
@@ -42,6 +44,7 @@ import static org.apache.commons.lang3.math.NumberUtils.isNumber;
 import static uk.gov.pay.connector.model.api.ExternalChargeStatus.mapFromStatus;
 import static uk.gov.pay.connector.model.api.ExternalChargeStatus.valueOfExternalStatus;
 import static uk.gov.pay.connector.resources.ApiPaths.*;
+import static uk.gov.pay.connector.util.DateTimeUtils.toUTCDateString;
 import static uk.gov.pay.connector.util.ResponseUtil.*;
 
 @Path("/")
@@ -112,11 +115,11 @@ public class ChargesApiResource {
     @Path(CHARGES_API_PATH)
     @Produces(TEXT_CSV)
     public Response getChargesCsv(@PathParam("accountId") String accountId,
-                                   @QueryParam("reference") String reference,
-                                   @QueryParam("status") String status,
-                                   @QueryParam("from_date") String fromDate,
-                                   @QueryParam("to_date") String toDate,
-                                   @Context UriInfo uriInfo) {
+                                  @QueryParam("reference") String reference,
+                                  @QueryParam("status") String status,
+                                  @QueryParam("from_date") String fromDate,
+                                  @QueryParam("to_date") String toDate,
+                                  @Context UriInfo uriInfo) {
 
         return reduce(validateGatewayAccountReference(accountId)
                 .bimap(handleError, listChargesAsCsvResponse(accountId, reference, status, fromDate, toDate)));
@@ -163,7 +166,7 @@ public class ChargesApiResource {
     @GET
     @Path(CHARGE_EVENTS_API_PATH)
     @Produces(APPLICATION_JSON)
-    public Response getEvents(@PathParam("accountId") Long accountId, @PathParam("chargeId") Long chargeId){
+    public Response getEvents(@PathParam("accountId") Long accountId, @PathParam("chargeId") Long chargeId) {
         List<ChargeEvent> events = eventDao.findEvents(accountId, chargeId);
         ImmutableMap<String, Object> responsePayload = ImmutableMap.of("charge_id", chargeId, "events", events);
         return ok().entity(responsePayload).build();
@@ -188,7 +191,7 @@ public class ChargesApiResource {
         return data;
     }
 
-    private URI selfUriFor(UriInfo uriInfo, String accountId ,String chargeId) {
+    private URI selfUriFor(UriInfo uriInfo, String accountId, String chargeId) {
         return uriInfo.getBaseUriBuilder()
                 .path(CHARGE_API_PATH)
                 .build(accountId, chargeId);
@@ -266,8 +269,8 @@ public class ChargesApiResource {
         }
         List<Map<String, Object>> charges = chargeDao.findAllBy(accountId, reference, chargeStatus, fromDate, toDate);
         charges.forEach(charge -> {
-                    charge.put(STATUS_KEY, mapFromStatus(charge.get(STATUS_KEY).toString()).getValue());
-                    charge.put(CREATED_DATE, charge.get(CREATED_DATE));
+            charge.put(STATUS_KEY, mapFromStatus(charge.get(STATUS_KEY).toString()).getValue());
+            charge.put(CREATED_DATE, toUTCDateString((ZonedDateTime) charge.get(CREATED_DATE)));
         });
         return charges;
     }
