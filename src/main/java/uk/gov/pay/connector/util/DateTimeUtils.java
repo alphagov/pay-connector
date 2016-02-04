@@ -1,5 +1,6 @@
 package uk.gov.pay.connector.util;
 
+import java.time.LocalDateTime;
 import java.time.ZoneId;
 import java.time.ZonedDateTime;
 import java.time.format.DateTimeFormatter;
@@ -11,7 +12,7 @@ public class DateTimeUtils {
     private static final ZoneId UTC = ZoneId.of("Z");
     private static DateTimeFormatter dateTimeFormatterUTC = DateTimeFormatter.ISO_INSTANT.withZone(UTC);
     private static DateTimeFormatter dateTimeFormatterAny = DateTimeFormatter.ISO_ZONED_DATE_TIME;
-    private static DateTimeFormatter localDateTimeWithoutTimeZone = DateTimeFormatter.ofPattern("");
+    private static DateTimeFormatter localDateTimeWithoutTimeZone = DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss");
 
     /**
      * Converts any valid ZonedDateTime String (ISO_8601) representation to a UTC ZonedDateTime
@@ -33,7 +34,14 @@ public class DateTimeUtils {
                     .withZoneSameInstant(UTC);
             return Optional.of(utcDateTime);
         } catch (DateTimeParseException ex) {
-            return Optional.empty();
+            //TODO: for backward compatibility to get end-to-end passed. Remove this.
+            try {
+                ZonedDateTime utcZonedDateTime = LocalDateTime.parse(dateString, localDateTimeWithoutTimeZone).atZone(UTC);
+                return Optional.of(utcZonedDateTime);
+            } catch (DateTimeParseException ex2) {
+                return Optional.empty();
+            }
+            //return Optional.empty();
         }
     }
 
@@ -44,6 +52,7 @@ public class DateTimeUtils {
      * 1. ZonedDateTime("2010-01-01T12:00:00+01:00[Europe/Paris]") ==> "2010-12-31T22:59:59.132Z" <br/>
      * 2. ZonedDateTime("2010-12-31T22:59:59.132Z") ==> "2010-12-31T22:59:59.132Z" <br/>
      * </p>
+     *
      * @param dateTime
      * @return UTC ISO_8601 date string
      */

@@ -62,4 +62,18 @@ public class DateTimeUtilsTest {
         assertTrue(result.isPresent());
         assertThat(result.get().toString(), endsWith("Z"));
     }
+
+
+    /**
+     * TODO: temporarily making sure the old date format works for backward compatibility
+     * @throws Exception
+     */
+    @Test
+    public void shouldConvertALocalDateTimeStringToZonedDateTime() throws Exception {
+        String aDate = "2010-01-01 12:10:10";
+        Optional<ZonedDateTime> result = DateTimeUtils.toUTCZonedDateTime(aDate);
+        assertTrue(result.isPresent());
+        assertThat(result.get().toString(), endsWith("Z"));
+
+    }
 }
