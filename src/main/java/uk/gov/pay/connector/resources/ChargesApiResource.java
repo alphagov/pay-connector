@@ -24,8 +24,10 @@ import javax.ws.rs.core.UriInfo;
 import java.net.URI;
 import java.net.URISyntaxException;
 import java.text.DateFormat;
+import java.text.DecimalFormat;
 import java.text.SimpleDateFormat;
 import java.util.*;
+import java.util.function.Function;
 import java.util.stream.Collectors;
 
 import static com.google.common.collect.Maps.newHashMap;
@@ -68,6 +70,7 @@ public class ChargesApiResource {
 
     private static final Logger logger = LoggerFactory.getLogger(ChargesApiResource.class);
     private static final DateFormat DATE_FORMAT = new SimpleDateFormat("dd/MM/yyyy HH:mm:ss");
+    public static final DecimalFormat DECIMAL_FORMAT = new DecimalFormat("0.00");
 
     public ChargesApiResource(ChargeDao chargeDao, TokenDao tokenDao, GatewayAccountDao gatewayAccountDao, EventDao eventDao, LinksConfig linksConfig) {
         this.chargeDao = chargeDao;
@@ -106,21 +109,23 @@ public class ChargesApiResource {
                                    @Context UriInfo uriInfo) {
 
         return reduce(validateGatewayAccountReference(accountId)
-                .bimap(handleError, listChargesAsJsonResponse(accountId, reference, status, fromDate, toDate)));
+                .bimap(handleError,
+                        listChargesResponse(accountId, reference, status, fromDate, toDate, jsonResponse())));
     }
 
     @GET
     @Path(CHARGES_API_PATH)
     @Produces(TEXT_CSV)
     public Response getChargesCsv(@PathParam("accountId") String accountId,
-                                   @QueryParam("reference") String reference,
-                                   @QueryParam("status") String status,
-                                   @QueryParam("from_date") String fromDate,
-                                   @QueryParam("to_date") String toDate,
-                                   @Context UriInfo uriInfo) {
+                                  @QueryParam("reference") String reference,
+                                  @QueryParam("status") String status,
+                                  @QueryParam("from_date") String fromDate,
+                                  @QueryParam("to_date") String toDate,
+                                  @Context UriInfo uriInfo) {
 
         return reduce(validateGatewayAccountReference(accountId)
-                .bimap(handleError, listChargesAsCsvResponse(accountId, reference, status, fromDate, toDate)));
+                .bimap(handleError,
+                        listChargesResponse(accountId, reference, status, fromDate, toDate, csvResponse())));
     }
 
     @POST
@@ -164,7 +169,7 @@ public class ChargesApiResource {
     @GET
     @Path(CHARGE_EVENTS_API_PATH)
     @Produces(APPLICATION_JSON)
-    public Response getEvents(@PathParam("accountId") Long accountId, @PathParam("chargeId") Long chargeId){
+    public Response getEvents(@PathParam("accountId") Long accountId, @PathParam("chargeId") Long chargeId) {
         List<ChargeEvent> events = eventDao.findEvents(accountId, chargeId);
         ImmutableMap<String, Object> responsePayload = ImmutableMap.of("charge_id", chargeId, "events", events);
         return ok().entity(responsePayload).build();
@@ -189,7 +194,7 @@ public class ChargesApiResource {
         return data;
     }
 
-    private URI selfUriFor(UriInfo uriInfo, String accountId ,String chargeId) {
+    private URI selfUriFor(UriInfo uriInfo, String accountId, String chargeId) {
         return uriInfo.getBaseUriBuilder()
                 .path(CHARGE_API_PATH)
                 .build(accountId, chargeId);
@@ -233,31 +238,26 @@ public class ChargesApiResource {
         return value.length() <= fieldSize;
     }
 
-    private F<Boolean, Response> listChargesAsJsonResponse(final String accountId, String reference, String status, String fromDate, String toDate) {
-        return success -> {
-            List<Map<String, Object>> charges = getChargesForCriteria(accountId, reference, status, fromDate, toDate);
-
-            if (charges.isEmpty()) {
-                return gatewayAccountDao.findById(accountId)
-                        .map(x -> okResultsResponseFrom(charges))
-                        .orElseGet(() -> notFoundResponse(logger, format("account with id %s not found", accountId)));
-            }
-            return okResultsResponseFrom(charges);
-        };
-    }
-
-    private F<Boolean, Response> listChargesAsCsvResponse(final String accountId, String reference, String status, String fromDate, String toDate) {
+    private F<Boolean, Response> listChargesResponse(final String accountId, String reference, String status, String fromDate, String toDate, Function<Object, Response> buildResponseFunction) {
         return success -> {
             List<Map<String, Object>> charges = getChargesForCriteria(accountId, reference, status, fromDate, toDate);
 
             if (charges.isEmpty()) {
                 logger.info("no charges found for given filter");
                 return gatewayAccountDao.findById(accountId)
-                        .map(x -> ok(ChargesCSVGenerator.generate(charges)).build())
-                        .orElseGet(() -> notFoundResponseAsString(logger, format("account with id %s not found", accountId)));
+                        .map(x -> buildResponseFunction.apply(charges))
+                        .orElseGet(() -> notFoundResponse(logger, format("account with id %s not found", accountId)));
             }
-            return ok(ChargesCSVGenerator.generate(charges)).build();
+            return buildResponseFunction.apply(charges);
         };
+    }
+
+    private Function<Object, Response> jsonResponse() {
+        return charges -> ok(ImmutableMap.of("results", charges)).build();
+    }
+
+    private Function<Object, Response> csvResponse() {
+        return charges -> ok(ChargesCSVGenerator.generate((List<Map<String, Object>>) charges)).build();
     }
 
     private List<Map<String, Object>> getChargesForCriteria(String accountId, String reference, String status, String fromDate, String toDate) {
@@ -267,18 +267,16 @@ public class ChargesApiResource {
         }
         List<Map<String, Object>> charges = chargeDao.findAllBy(accountId, reference, chargeStatus, fromDate, toDate);
         charges.forEach(charge -> {
-                    charge.put(STATUS_KEY, mapFromStatus(charge.get(STATUS_KEY).toString()).getValue());
-                    charge.put(CREATED_DATE, DATE_FORMAT.format(charge.get(CREATED_DATE)));
+            charge.put(STATUS_KEY, mapFromStatus(charge.get(STATUS_KEY).toString()).getValue());
+            charge.put(CREATED_DATE, DATE_FORMAT.format(charge.get(CREATED_DATE)));
+            double pounds = Double.valueOf(charge.get(AMOUNT_KEY).toString()) / 100;
+            charge.put(AMOUNT_KEY, DECIMAL_FORMAT.format(pounds)); //convert pences to Pounds upto 2 decimals
         });
         return charges;
     }
 
     private static F<String, Response> handleError =
             errorMessage -> badRequestResponse(logger, errorMessage);
-
-    private Response okResultsResponseFrom(List<Map<String, Object>> charges) {
-        return ok(ImmutableMap.of("results", charges)).build();
-    }
 
     private Either<String, Boolean> validateGatewayAccountReference(String gatewayAccountId) {
         if (isBlank(gatewayAccountId)) {

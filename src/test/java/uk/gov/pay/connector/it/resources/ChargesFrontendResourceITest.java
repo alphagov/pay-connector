@@ -11,6 +11,7 @@ import uk.gov.pay.connector.model.domain.ChargeStatus;
 import uk.gov.pay.connector.rules.DropwizardAppWithPostgresRule;
 import uk.gov.pay.connector.util.RestAssuredClient;
 
+import java.text.DecimalFormat;
 import java.util.List;
 
 import static com.jayway.restassured.http.ContentType.JSON;
@@ -39,6 +40,7 @@ public class ChargesFrontendResourceITest {
     private String reference = "Test reference";
     private String returnUrl = "http://whatever.com";
     private long expectedAmount = 6234L;
+    public static final DecimalFormat DECIMAL_FORMAT = new DecimalFormat("0.00");
 
     private RestAssuredClient connectorRestApi = new RestAssuredClient(app, accountId);
 
@@ -147,8 +149,7 @@ public class ChargesFrontendResourceITest {
         setupLifeCycleEventsFor(app, Long.valueOf(chargeId2), statuses);
         setupLifeCycleEventsFor(app, Long.valueOf(5001), statuses);
 
-        ValidatableResponse response = connectorRestApi
-                .getTransactions();
+        ValidatableResponse response = connectorRestApi.getTransactions();
 
         response.statusCode(OK.getStatusCode())
                 .contentType(JSON)
@@ -226,7 +227,7 @@ public class ChargesFrontendResourceITest {
     private void assertTransactionEntry(ValidatableResponse response, int index, String chargeId, String gatewayTransactionId, int amount, String chargeStatus) {
         response.body("results[" + index + "].charge_id", is(chargeId))
                 .body("results[" + index + "].gateway_transaction_id", is(gatewayTransactionId))
-                .body("results[" + index + "].amount", is(amount))
+                .body("results[" + index + "].amount", is(DECIMAL_FORMAT.format(Double.valueOf(amount) / 100)))
                 .body("results[" + index + "].status", is(chargeStatus));
     }
 
