@@ -7,9 +7,6 @@ import org.skife.jdbi.v2.Query;
 import uk.gov.pay.connector.model.api.ExternalChargeStatus;
 
 import java.sql.Timestamp;
-import java.time.LocalDateTime;
-import java.time.ZonedDateTime;
-import java.time.format.DateTimeFormatter;
 import java.util.Arrays;
 import java.util.List;
 import java.util.Map;

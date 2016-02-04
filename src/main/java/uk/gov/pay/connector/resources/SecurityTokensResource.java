@@ -4,14 +4,14 @@ import com.google.common.collect.ImmutableMap;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import uk.gov.pay.connector.dao.TokenDao;
-import uk.gov.pay.connector.util.ResponseUtil;
 
 import javax.ws.rs.*;
 import javax.ws.rs.core.Response;
 import java.util.Map;
 
 import static javax.ws.rs.core.MediaType.APPLICATION_JSON;
-import static uk.gov.pay.connector.util.ResponseUtil.*;
+import static uk.gov.pay.connector.util.ResponseUtil.noContentResponse;
+import static uk.gov.pay.connector.util.ResponseUtil.notFoundResponse;
 
 @Path("/")
 public class SecurityTokensResource {

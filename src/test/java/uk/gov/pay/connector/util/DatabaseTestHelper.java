@@ -12,10 +12,8 @@ import java.sql.SQLException;
 import java.sql.Timestamp;
 import java.time.ZonedDateTime;
 import java.util.Map;
-import java.util.TimeZone;
 
 import static java.time.ZonedDateTime.now;
-import static uk.gov.pay.connector.util.DateTimeUtils.toUTCDateString;
 
 public class DatabaseTestHelper {
     private DBI jdbi;

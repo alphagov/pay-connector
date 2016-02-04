@@ -3,7 +3,6 @@ package uk.gov.pay.connector.it.resources;
 import com.google.common.collect.ImmutableMap;
 import com.google.gson.Gson;
 import com.google.gson.JsonObject;
-import org.apache.commons.lang3.StringEscapeUtils;
 import org.hamcrest.Matcher;
 import org.junit.Test;
 
