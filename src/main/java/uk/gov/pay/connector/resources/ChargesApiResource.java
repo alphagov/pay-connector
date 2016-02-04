@@ -1,9 +1,11 @@
 package uk.gov.pay.connector.resources;
 
+import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableMap;
 import fj.F;
 import fj.data.Either;
 import org.apache.commons.lang3.StringUtils;
+import org.apache.commons.lang3.tuple.Pair;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import uk.gov.pay.connector.app.LinksConfig;
@@ -37,6 +39,7 @@ import static fj.data.Either.right;
 import static java.lang.String.format;
 import static javax.ws.rs.HttpMethod.GET;
 import static javax.ws.rs.core.MediaType.APPLICATION_JSON;
+import static javax.ws.rs.core.Response.Status.BAD_REQUEST;
 import static javax.ws.rs.core.Response.ok;
 import static org.apache.commons.lang3.StringUtils.isBlank;
 import static org.apache.commons.lang3.StringUtils.isEmpty;
@@ -61,6 +64,8 @@ public class ChargesApiResource {
 
     private static final String STATUS_KEY = "status";
     public static final String CREATED_DATE = "created_date";
+    public static final String FROM_DATE_KEY = "from_date";
+    public static final String TO_DATE_KEY = "to_date";
     private final String TEXT_CSV = "text/csv";
 
     private ChargeDao chargeDao;
@@ -101,28 +106,47 @@ public class ChargesApiResource {
     @Path(CHARGES_API_PATH)
     @Produces(APPLICATION_JSON)
     public Response getChargesJson(@PathParam("accountId") String accountId,
-                                   @QueryParam("reference") String reference,
-                                   @QueryParam("status") String status,
-                                   @QueryParam("from_date") String fromDate,
-                                   @QueryParam("to_date") String toDate,
+                                   @QueryParam(REFERENCE_KEY) String reference,
+                                   @QueryParam(STATUS_KEY) String status,
+                                   @QueryParam(FROM_DATE_KEY) String fromDate,
+                                   @QueryParam(TO_DATE_KEY) String toDate,
                                    @Context UriInfo uriInfo) {
 
-        return reduce(validateGatewayAccountReference(accountId)
-                .bimap(handleError, listChargesAsJsonResponse(accountId, reference, status, fromDate, toDate)));
+        Optional<String> errorMessageOptional = ApiValidators.validateQueryParams(ImmutableList.of(
+                Pair.of(REFERENCE_KEY, reference),
+                Pair.of(STATUS_KEY, status),
+                Pair.of(FROM_DATE_KEY, fromDate),
+                Pair.of(TO_DATE_KEY, toDate)
+        ));
+        return errorMessageOptional
+                .map(errorMessage -> badRequestResponse(logger, errorMessage))
+                .orElseGet(() ->
+                        reduce(validateGatewayAccountReference(accountId)
+                                .bimap(handleError, listChargesAsJsonResponse(accountId, reference, status, fromDate, toDate))));
     }
 
     @GET
     @Path(CHARGES_API_PATH)
     @Produces(TEXT_CSV)
     public Response getChargesCsv(@PathParam("accountId") String accountId,
-                                  @QueryParam("reference") String reference,
-                                  @QueryParam("status") String status,
-                                  @QueryParam("from_date") String fromDate,
-                                  @QueryParam("to_date") String toDate,
+                                  @QueryParam(REFERENCE_KEY) String reference,
+                                  @QueryParam(STATUS_KEY) String status,
+                                  @QueryParam(FROM_DATE_KEY) String fromDate,
+                                  @QueryParam(TO_DATE_KEY) String toDate,
                                   @Context UriInfo uriInfo) {
 
-        return reduce(validateGatewayAccountReference(accountId)
-                .bimap(handleError, listChargesAsCsvResponse(accountId, reference, status, fromDate, toDate)));
+        Optional<String> errorMessageOptional = ApiValidators.validateQueryParams(ImmutableList.of(
+                Pair.of(REFERENCE_KEY, reference),
+                Pair.of(STATUS_KEY, status),
+                Pair.of(FROM_DATE_KEY, fromDate),
+                Pair.of(TO_DATE_KEY, toDate)
+        ));
+        return errorMessageOptional
+                .map(errorMessage -> Response.status(BAD_REQUEST).entity(errorMessage).build())
+                .orElseGet(() ->
+                        reduce(validateGatewayAccountReference(accountId)
+                                .bimap(handleError, listChargesAsCsvResponse(accountId, reference, status, fromDate, toDate))));
+
     }
 
     @POST

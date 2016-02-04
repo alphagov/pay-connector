@@ -202,6 +202,32 @@ public class ChargesApiResourceITest {
     }
 
     @Test
+    public void shouldError400_IfFromAndToDatesAreNotInCorrectFormatDuringFilterJson() throws Exception {
+        getChargeApi
+                .withAccountId(accountId)
+                .withQueryParam("from_date", "invalid-date-string")
+                .withQueryParam("to_date", "Another invalid date")
+                .withHeader(HttpHeaders.ACCEPT, MediaType.APPLICATION_JSON)
+                .getTransactions()
+                .statusCode(BAD_REQUEST.getStatusCode())
+                .contentType(JSON)
+                .body("message", is("query parameters [from_date, to_date] not in correct format"));
+    }
+
+    @Test
+    public void shouldError400_IfFromAndToDatesAreNotInCorrectFormatDuringFilterCsv() throws Exception {
+        getChargeApi
+                .withAccountId(accountId)
+                .withQueryParam("from_date", "invalid-date-string")
+                .withQueryParam("to_date", "Another invalid date")
+                .withHeader(HttpHeaders.ACCEPT, CSV_CONTENT_TYPE)
+                .getTransactions()
+                .statusCode(BAD_REQUEST.getStatusCode())
+                .contentType(CSV_CONTENT_TYPE)
+                .body(containsString("query parameters [from_date, to_date] not in correct format"));
+    }
+
+    @Test
     public void cannotMakeChargeForMissingGatewayAccount() throws Exception {
         String missingGatewayAccount = "1234123";
         String postBody = toJson(ImmutableMap.of(
