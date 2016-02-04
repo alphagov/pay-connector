@@ -47,6 +47,7 @@ import static org.apache.commons.lang3.math.NumberUtils.isNumber;
 import static uk.gov.pay.connector.model.api.ExternalChargeStatus.mapFromStatus;
 import static uk.gov.pay.connector.model.api.ExternalChargeStatus.valueOfExternalStatus;
 import static uk.gov.pay.connector.resources.ApiPaths.*;
+import static uk.gov.pay.connector.resources.ApiValidators.validateGatewayAccountReference;
 import static uk.gov.pay.connector.util.DateTimeUtils.toUTCDateString;
 import static uk.gov.pay.connector.util.ResponseUtil.*;
 
@@ -304,15 +305,6 @@ public class ChargesApiResource {
 
     private Response okResultsResponseFrom(List<Map<String, Object>> charges) {
         return ok(ImmutableMap.of("results", charges)).build();
-    }
-
-    private Either<String, Boolean> validateGatewayAccountReference(String gatewayAccountId) {
-        if (isBlank(gatewayAccountId)) {
-            return left("missing gateway account reference");
-        } else if (!isNumber(gatewayAccountId)) {
-            return left(format("invalid gateway account reference %s", gatewayAccountId));
-        }
-        return right(true);
     }
 
 }
