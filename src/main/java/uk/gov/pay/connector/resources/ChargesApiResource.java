@@ -70,7 +70,6 @@ public class ChargesApiResource {
 
     private static final Logger logger = LoggerFactory.getLogger(ChargesApiResource.class);
     private static final DateFormat DATE_FORMAT = new SimpleDateFormat("dd/MM/yyyy HH:mm:ss");
-    public static final DecimalFormat DECIMAL_FORMAT = new DecimalFormat("0.00");
 
     public ChargesApiResource(ChargeDao chargeDao, TokenDao tokenDao, GatewayAccountDao gatewayAccountDao, EventDao eventDao, LinksConfig linksConfig) {
         this.chargeDao = chargeDao;
@@ -269,8 +268,6 @@ public class ChargesApiResource {
         charges.forEach(charge -> {
             charge.put(STATUS_KEY, mapFromStatus(charge.get(STATUS_KEY).toString()).getValue());
             charge.put(CREATED_DATE, DATE_FORMAT.format(charge.get(CREATED_DATE)));
-            double pounds = Double.valueOf(charge.get(AMOUNT_KEY).toString()) / 100;
-            charge.put(AMOUNT_KEY, DECIMAL_FORMAT.format(pounds)); //convert pences to Pounds upto 2 decimals
         });
         return charges;
     }

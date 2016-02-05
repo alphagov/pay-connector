@@ -40,7 +40,6 @@ public class ChargesFrontendResourceITest {
     private String reference = "Test reference";
     private String returnUrl = "http://whatever.com";
     private long expectedAmount = 6234L;
-    public static final DecimalFormat DECIMAL_FORMAT = new DecimalFormat("0.00");
 
     private RestAssuredClient connectorRestApi = new RestAssuredClient(app, accountId);
 
@@ -227,7 +226,7 @@ public class ChargesFrontendResourceITest {
     private void assertTransactionEntry(ValidatableResponse response, int index, String chargeId, String gatewayTransactionId, int amount, String chargeStatus) {
         response.body("results[" + index + "].charge_id", is(chargeId))
                 .body("results[" + index + "].gateway_transaction_id", is(gatewayTransactionId))
-                .body("results[" + index + "].amount", is(DECIMAL_FORMAT.format(Double.valueOf(amount) / 100)))
+                .body("results[" + index + "].amount", is(amount))
                 .body("results[" + index + "].status", is(chargeStatus));
     }
 
