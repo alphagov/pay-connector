@@ -18,7 +18,7 @@ import static uk.gov.pay.connector.resources.ChargesApiResource.TO_DATE_KEY;
 
 public class ApiValidators {
 
-    public static Optional<String> validateQueryParams(List<Pair<String, String>> queryParams) {
+    public static Optional<String> validateDateQueryParams(List<Pair<String, String>> queryParams) {
         List<String> invalidQueryParams = newArrayList();
 
         queryParams.stream()
