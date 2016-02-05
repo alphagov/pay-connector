@@ -63,8 +63,7 @@ The command to run all the tests is:
 |[```/v1/api/accounts/{gatewayAccountId}```](#get-v1apiaccountsaccountsid)     | GET    |  Retrieves an existing account without the provider credentials  |
 |[```/v1/api/accounts/{accountId}/charges/{chargeId}```](#get-v1apiaccountsaccountidchargeschargeid)                 | GET    |  Returns the charge with `chargeId`  belongs to account `accountId` |
 |[```/v1/api/accounts/{accountId}/charges```](#post-v1apiaccountsaccountidcharges)                                  | POST    |  Create a new charge for this account `accountId`           |
-|[```/v1/api/accounts/{accountId}/charges```](#get-v1apiaccountsaccountidcharges)                                  | GET    |  Searches transactions for this account `accountId` returns JSON           |
-|[```/v1/api/accounts/{accountId}/charges```](#get-v1apiaccountsaccountidcharges)                                  | GET    |  Downloads transactions for this account `accountId` into a CSV when Accept header set to "text/csv"           |
+|[```/v1/api/accounts/{accountId}/charges```](#get-v1apiaccountsaccountidcharges)                                  | GET    |  Searches transactions for this account `accountId` returns JSON or CSV as requested           |
 |[```/v1/api/notifications/worldpay```](#post-v1apinotificationsworldpay)                                  | POST |  Handle charge update notifications from Worldpay.            |
 |[```/v1/api/notifications/smartpay```](#post-v1apinotificationssmartpay)                                  | POST |  Handle charge update notifications from Smartpay.            |
 |[```/v1/api/accounts/{accountId}/charges/{chargeId}/cancel```](#post-v1apiaccountsaccountidchargeschargeidcancel)  | POST    |  Cancels the charge with `chargeId` for account `accountId`           |
