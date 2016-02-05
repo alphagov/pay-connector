@@ -9,7 +9,11 @@ import uk.gov.pay.connector.dao.TokenDao;
 import uk.gov.pay.connector.model.domain.ChargeStatus;
 
 import java.sql.SQLException;
+import java.sql.Timestamp;
+import java.time.ZonedDateTime;
 import java.util.Map;
+
+import static java.time.ZonedDateTime.now;
 
 public class DatabaseTestHelper {
     private DBI jdbi;
@@ -43,7 +47,11 @@ public class DatabaseTestHelper {
     }
 
     public void addCharge(String chargeId, String gatewayAccountId, long amount, ChargeStatus status, String returnUrl, String transactionId) {
-        addCharge(chargeId, gatewayAccountId, amount, status, returnUrl, transactionId, "Test description", "Test reference");
+        addCharge(chargeId, gatewayAccountId, amount, status, returnUrl, transactionId, "Test description", "Test reference", now());
+    }
+
+    public void addCharge(String chargeId, String accountId, long amount, ChargeStatus chargeStatus, String returnUrl, String transactionId, String reference, ZonedDateTime createdDate) {
+        addCharge(chargeId, accountId, amount, chargeStatus, returnUrl, transactionId, "Test description", reference, createdDate == null ? now() : createdDate);
     }
 
     private void addCharge(
@@ -54,7 +62,8 @@ public class DatabaseTestHelper {
             String returnUrl,
             String transactionId,
             String description,
-            String reference
+            String reference,
+            ZonedDateTime createdDate
     ) {
         jdbi.withHandle(h ->
                 h.update(
@@ -67,9 +76,10 @@ public class DatabaseTestHelper {
                                 "        return_url,\n" +
                                 "        gateway_transaction_id,\n" +
                                 "        description,\n" +
+                                "        created_date,\n" +
                                 "        reference\n" +
                                 "    )\n" +
-                                "   VALUES(?, ?, ?, ?, ?, ?, ?, ?)\n",
+                                "   VALUES(?, ?, ?, ?, ?, ?, ?, ?, ?)\n",
                         Long.valueOf(chargeId),
                         amount,
                         status.getValue(),
@@ -77,6 +87,7 @@ public class DatabaseTestHelper {
                         returnUrl,
                         transactionId,
                         description,
+                        Timestamp.from(createdDate.toInstant()),
                         reference
                 )
         );

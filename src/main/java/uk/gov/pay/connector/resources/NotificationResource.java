@@ -20,7 +20,6 @@ import java.io.IOException;
 import java.util.function.Consumer;
 import java.util.function.Function;
 
-import static com.google.common.collect.Lists.newLinkedList;
 import static javax.ws.rs.core.Response.Status.BAD_GATEWAY;
 
 @Path("/")

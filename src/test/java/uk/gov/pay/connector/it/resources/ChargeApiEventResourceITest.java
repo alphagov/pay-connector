@@ -6,7 +6,6 @@ import org.junit.Before;
 import org.junit.Rule;
 import org.junit.Test;
 import uk.gov.pay.connector.it.fixtures.ChargeApiFixtures;
-import uk.gov.pay.connector.model.api.ExternalChargeStatus;
 import uk.gov.pay.connector.model.domain.ChargeStatus;
 import uk.gov.pay.connector.rules.DropwizardAppWithPostgresRule;
 import uk.gov.pay.connector.util.RestAssuredClient;
@@ -16,10 +15,8 @@ import static javax.ws.rs.core.Response.Status.NO_CONTENT;
 import static org.hamcrest.CoreMatchers.equalTo;
 import static org.hamcrest.core.Is.is;
 import static org.hamcrest.core.IsCollectionContaining.hasItems;
-import static uk.gov.pay.connector.model.api.ExternalChargeStatus.EXT_CREATED;
-import static uk.gov.pay.connector.model.api.ExternalChargeStatus.EXT_IN_PROGRESS;
-import static uk.gov.pay.connector.model.api.ExternalChargeStatus.EXT_SYSTEM_CANCELLED;
-import static uk.gov.pay.connector.model.domain.ChargeStatus.*;
+import static uk.gov.pay.connector.model.api.ExternalChargeStatus.*;
+import static uk.gov.pay.connector.model.domain.ChargeStatus.ENTERING_CARD_DETAILS;
 import static uk.gov.pay.connector.util.JsonEncoder.toJson;
 
 public class ChargeApiEventResourceITest {

@@ -6,7 +6,6 @@ import uk.gov.pay.connector.it.base.CardResourceITestBase;
 import uk.gov.pay.connector.model.domain.ChargeStatus;
 
 import static org.hamcrest.Matchers.is;
-import static uk.gov.pay.connector.model.api.ExternalChargeStatus.EXT_IN_PROGRESS;
 import static uk.gov.pay.connector.model.api.ExternalChargeStatus.EXT_SUCCEEDED;
 import static uk.gov.pay.connector.model.domain.ChargeStatus.*;
 import static uk.gov.pay.connector.util.TransactionId.randomId;

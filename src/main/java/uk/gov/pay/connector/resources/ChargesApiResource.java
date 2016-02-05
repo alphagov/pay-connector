@@ -1,9 +1,10 @@
 package uk.gov.pay.connector.resources;
 
+import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableMap;
 import fj.F;
-import fj.data.Either;
 import org.apache.commons.lang3.StringUtils;
+import org.apache.commons.lang3.tuple.Pair;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import uk.gov.pay.connector.app.LinksConfig;
@@ -23,25 +24,23 @@ import javax.ws.rs.core.Response;
 import javax.ws.rs.core.UriInfo;
 import java.net.URI;
 import java.net.URISyntaxException;
-import java.text.DateFormat;
-import java.text.SimpleDateFormat;
+import java.time.ZonedDateTime;
 import java.util.*;
 import java.util.stream.Collectors;
 
 import static com.google.common.collect.Maps.newHashMap;
-import static fj.data.Either.left;
 import static fj.data.Either.reduce;
-import static fj.data.Either.right;
 import static java.lang.String.format;
 import static javax.ws.rs.HttpMethod.GET;
 import static javax.ws.rs.core.MediaType.APPLICATION_JSON;
+import static javax.ws.rs.core.Response.Status.BAD_REQUEST;
 import static javax.ws.rs.core.Response.ok;
-import static org.apache.commons.lang3.StringUtils.isBlank;
 import static org.apache.commons.lang3.StringUtils.isEmpty;
-import static org.apache.commons.lang3.math.NumberUtils.isNumber;
 import static uk.gov.pay.connector.model.api.ExternalChargeStatus.mapFromStatus;
 import static uk.gov.pay.connector.model.api.ExternalChargeStatus.valueOfExternalStatus;
 import static uk.gov.pay.connector.resources.ApiPaths.*;
+import static uk.gov.pay.connector.resources.ApiValidators.validateGatewayAccountReference;
+import static uk.gov.pay.connector.util.DateTimeUtils.toUTCDateString;
 import static uk.gov.pay.connector.util.ResponseUtil.*;
 
 @Path("/")
@@ -58,6 +57,8 @@ public class ChargesApiResource {
 
     private static final String STATUS_KEY = "status";
     public static final String CREATED_DATE = "created_date";
+    public static final String FROM_DATE_KEY = "from_date";
+    public static final String TO_DATE_KEY = "to_date";
     private final String TEXT_CSV = "text/csv";
 
     private ChargeDao chargeDao;
@@ -67,7 +68,6 @@ public class ChargesApiResource {
     private LinksConfig linksConfig;
 
     private static final Logger logger = LoggerFactory.getLogger(ChargesApiResource.class);
-    private static final DateFormat DATE_FORMAT = new SimpleDateFormat("dd/MM/yyyy HH:mm:ss");
 
     public ChargesApiResource(ChargeDao chargeDao, TokenDao tokenDao, GatewayAccountDao gatewayAccountDao, EventDao eventDao, LinksConfig linksConfig) {
         this.chargeDao = chargeDao;
@@ -99,28 +99,47 @@ public class ChargesApiResource {
     @Path(CHARGES_API_PATH)
     @Produces(APPLICATION_JSON)
     public Response getChargesJson(@PathParam("accountId") String accountId,
-                                   @QueryParam("reference") String reference,
-                                   @QueryParam("status") String status,
-                                   @QueryParam("from_date") String fromDate,
-                                   @QueryParam("to_date") String toDate,
+                                   @QueryParam(REFERENCE_KEY) String reference,
+                                   @QueryParam(STATUS_KEY) String status,
+                                   @QueryParam(FROM_DATE_KEY) String fromDate,
+                                   @QueryParam(TO_DATE_KEY) String toDate,
                                    @Context UriInfo uriInfo) {
 
-        return reduce(validateGatewayAccountReference(accountId)
-                .bimap(handleError, listChargesAsJsonResponse(accountId, reference, status, fromDate, toDate)));
+        Optional<String> errorMessageOptional = ApiValidators.validateDateQueryParams(ImmutableList.of(
+                Pair.of(REFERENCE_KEY, reference),
+                Pair.of(STATUS_KEY, status),
+                Pair.of(FROM_DATE_KEY, fromDate),
+                Pair.of(TO_DATE_KEY, toDate)
+        ));
+        return errorMessageOptional
+                .map(errorMessage -> badRequestResponse(logger, errorMessage))
+                .orElseGet(() ->
+                        reduce(validateGatewayAccountReference(accountId)
+                                .bimap(handleError, listChargesAsJsonResponse(accountId, reference, status, fromDate, toDate))));
     }
 
     @GET
     @Path(CHARGES_API_PATH)
     @Produces(TEXT_CSV)
     public Response getChargesCsv(@PathParam("accountId") String accountId,
-                                   @QueryParam("reference") String reference,
-                                   @QueryParam("status") String status,
-                                   @QueryParam("from_date") String fromDate,
-                                   @QueryParam("to_date") String toDate,
-                                   @Context UriInfo uriInfo) {
+                                  @QueryParam(REFERENCE_KEY) String reference,
+                                  @QueryParam(STATUS_KEY) String status,
+                                  @QueryParam(FROM_DATE_KEY) String fromDate,
+                                  @QueryParam(TO_DATE_KEY) String toDate,
+                                  @Context UriInfo uriInfo) {
 
-        return reduce(validateGatewayAccountReference(accountId)
-                .bimap(handleError, listChargesAsCsvResponse(accountId, reference, status, fromDate, toDate)));
+        Optional<String> errorMessageOptional = ApiValidators.validateDateQueryParams(ImmutableList.of(
+                Pair.of(REFERENCE_KEY, reference),
+                Pair.of(STATUS_KEY, status),
+                Pair.of(FROM_DATE_KEY, fromDate),
+                Pair.of(TO_DATE_KEY, toDate)
+        ));
+        return errorMessageOptional
+                .map(errorMessage -> Response.status(BAD_REQUEST).entity(errorMessage).build())
+                .orElseGet(() ->
+                        reduce(validateGatewayAccountReference(accountId)
+                                .bimap(handleError, listChargesAsCsvResponse(accountId, reference, status, fromDate, toDate))));
+
     }
 
     @POST
@@ -164,7 +183,7 @@ public class ChargesApiResource {
     @GET
     @Path(CHARGE_EVENTS_API_PATH)
     @Produces(APPLICATION_JSON)
-    public Response getEvents(@PathParam("accountId") Long accountId, @PathParam("chargeId") Long chargeId){
+    public Response getEvents(@PathParam("accountId") Long accountId, @PathParam("chargeId") Long chargeId) {
         List<ChargeEvent> events = eventDao.findEvents(accountId, chargeId);
         ImmutableMap<String, Object> responsePayload = ImmutableMap.of("charge_id", chargeId, "events", events);
         return ok().entity(responsePayload).build();
@@ -189,7 +208,7 @@ public class ChargesApiResource {
         return data;
     }
 
-    private URI selfUriFor(UriInfo uriInfo, String accountId ,String chargeId) {
+    private URI selfUriFor(UriInfo uriInfo, String accountId, String chargeId) {
         return uriInfo.getBaseUriBuilder()
                 .path(CHARGE_API_PATH)
                 .build(accountId, chargeId);
@@ -267,8 +286,8 @@ public class ChargesApiResource {
         }
         List<Map<String, Object>> charges = chargeDao.findAllBy(accountId, reference, chargeStatus, fromDate, toDate);
         charges.forEach(charge -> {
-                    charge.put(STATUS_KEY, mapFromStatus(charge.get(STATUS_KEY).toString()).getValue());
-                    charge.put(CREATED_DATE, DATE_FORMAT.format(charge.get(CREATED_DATE)));
+            charge.put(STATUS_KEY, mapFromStatus(charge.get(STATUS_KEY).toString()).getValue());
+            charge.put(CREATED_DATE, toUTCDateString((ZonedDateTime) charge.get(CREATED_DATE)));
         });
         return charges;
     }
@@ -278,15 +297,6 @@ public class ChargesApiResource {
 
     private Response okResultsResponseFrom(List<Map<String, Object>> charges) {
         return ok(ImmutableMap.of("results", charges)).build();
-    }
-
-    private Either<String, Boolean> validateGatewayAccountReference(String gatewayAccountId) {
-        if (isBlank(gatewayAccountId)) {
-            return left("missing gateway account reference");
-        } else if (!isNumber(gatewayAccountId)) {
-            return left(format("invalid gateway account reference %s", gatewayAccountId));
-        }
-        return right(true);
     }
 
 }
