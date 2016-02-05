@@ -285,12 +285,13 @@ Location: http://connector.service/v1/api/charges/1
 
 ### GET /v1/api/accounts/{accountId}/charges
 
-This endpoint searches for transactions for the given account id.
+This endpoint searches for transactions for the given account id and specified filters in query params and responds with JSON or CSV according to the Accept header
 
-#### Request example
+#### Request example for JSON response
 
 ```
 GET /v1/api/accounts/3121/charges
+Accept application/json
 
 ```
 
@@ -308,7 +309,6 @@ GET /v1/api/accounts/3121/charges
 ```
 HTTP/1.1 200 OK
 Content-Type: application/json
-Location: http://connector.service/v1/api/charges/1
 
 {
     "results": [{     
@@ -340,11 +340,8 @@ Location: http://connector.service/v1/api/charges/1
 
 -----------------------------------------------------------------------------------------------------------
 
-### GET /v1/api/accounts/{accountId}/charges
 
-This endpoint searches for transactions for the given account id and for given filters in the query params and returns a "text/csv" content type for Accept header "text/csv"
-
-#### Request example
+#### Request example for CSV response
 
 ```
 GET /v1/api/accounts/3121/charges
