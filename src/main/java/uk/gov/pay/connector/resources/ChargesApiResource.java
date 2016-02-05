@@ -26,7 +26,6 @@ import javax.ws.rs.core.UriInfo;
 import java.net.URI;
 import java.net.URISyntaxException;
 import java.text.DateFormat;
-import java.text.DecimalFormat;
 import java.text.SimpleDateFormat;
 import java.time.ZonedDateTime;
 import java.util.*;
@@ -34,9 +33,7 @@ import java.util.function.Function;
 import java.util.stream.Collectors;
 
 import static com.google.common.collect.Maps.newHashMap;
-import static fj.data.Either.left;
-import static fj.data.Either.reduce;
-import static fj.data.Either.right;
+import static fj.data.Either.*;
 import static java.lang.String.format;
 import static javax.ws.rs.HttpMethod.GET;
 import static javax.ws.rs.core.MediaType.APPLICATION_JSON;
@@ -77,7 +74,6 @@ public class ChargesApiResource {
 
     private static final Logger logger = LoggerFactory.getLogger(ChargesApiResource.class);
     private static final DateFormat DATE_FORMAT = new SimpleDateFormat("dd/MM/yyyy HH:mm:ss");
-    public static final DecimalFormat DECIMAL_FORMAT = new DecimalFormat("0.00");
 
     public ChargesApiResource(ChargeDao chargeDao, TokenDao tokenDao, GatewayAccountDao gatewayAccountDao, EventDao eventDao, LinksConfig linksConfig) {
         this.chargeDao = chargeDao;

@@ -1,6 +1,7 @@
 package uk.gov.pay.connector.util;
 
 import com.google.common.collect.ImmutableMap;
+import com.google.common.collect.Maps;
 import org.junit.Test;
 
 import java.util.ArrayList;
@@ -10,22 +11,22 @@ import static org.junit.Assert.assertEquals;
 
 public class ChargesCSVGeneratorTest {
 
-    private static final Map chargeMap = ImmutableMap.<String, String>builder()
+    private static final Map chargeMap = Maps.newHashMap(ImmutableMap.<String, String>builder()
             .put("reference", "ref")
             .put("charge_id", "100")
             .put("gateway_transaction_id", "200")
             .put("gateway_account_id", "300")
-            .put("amount", "4.00")
+            .put("amount", "400")
             .put("created_date", "10/10/2016")
             .put("status", "Status")
             .put("payment_provider", "Provider")
             .put("description", "Description")
-            .build();
-    private static final Map chargeMap_2 = ImmutableMap.of(
+            .build());
+    private static final Map chargeMap_2 = Maps.newHashMap(ImmutableMap.of(
             "reference", "ref-2",
             "charge_id", "chargeid-2",
             "gateway_transaction_id", "trans-2"
-            );
+            ));
 
     @Test
     public void testGenerateWithMappedHeaders() throws Exception {
