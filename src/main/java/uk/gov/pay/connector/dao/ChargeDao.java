@@ -176,7 +176,7 @@ public class ChargeDao {
                         "c.amount, " +
                         "c.description, " +
                         "c.reference, " +
-                        "to_char(c.created_date AT TIME ZONE 'UTC', 'YYYY-MM-DD\"T\"HH24:MI:SSZ') as created_date, " +
+                        "to_char(c.created_date AT TIME ZONE 'UTC', 'YYYY-MM-DD\"T\"HH24:MI:SSZ') as created_date " +
                         "FROM " +
                         "charges c " +
                         "WHERE " +
