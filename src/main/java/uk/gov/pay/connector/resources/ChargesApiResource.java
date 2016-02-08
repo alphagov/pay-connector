@@ -113,8 +113,6 @@ public class ChargesApiResource {
                                    @Context UriInfo uriInfo) {
 
         Optional<String> errorMessageOptional = ApiValidators.validateDateQueryParams(ImmutableList.of(
-                Pair.of(REFERENCE_KEY, reference),
-                Pair.of(STATUS_KEY, status),
                 Pair.of(FROM_DATE_KEY, fromDate),
                 Pair.of(TO_DATE_KEY, toDate)
         ));
@@ -136,8 +134,6 @@ public class ChargesApiResource {
                                   @Context UriInfo uriInfo) {
 
         Optional<String> errorMessageOptional = ApiValidators.validateDateQueryParams(ImmutableList.of(
-                Pair.of(REFERENCE_KEY, reference),
-                Pair.of(STATUS_KEY, status),
                 Pair.of(FROM_DATE_KEY, fromDate),
                 Pair.of(TO_DATE_KEY, toDate)
         ));

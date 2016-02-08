@@ -13,8 +13,6 @@ import static fj.data.Either.right;
 import static java.lang.String.format;
 import static org.apache.commons.lang3.StringUtils.*;
 import static org.apache.commons.lang3.math.NumberUtils.isNumber;
-import static uk.gov.pay.connector.resources.ChargesApiResource.FROM_DATE_KEY;
-import static uk.gov.pay.connector.resources.ChargesApiResource.TO_DATE_KEY;
 
 public class ApiValidators {
 
@@ -22,7 +20,6 @@ public class ApiValidators {
         List<String> invalidQueryParams = newArrayList();
 
         queryParams.stream()
-                .filter(param -> FROM_DATE_KEY.equals(param.getLeft()) || TO_DATE_KEY.equals(param.getLeft()))
                 .forEach(param -> {
                     String dateString = param.getRight();
                     if (isNotBlank(dateString) && !DateTimeUtils.toUTCZonedDateTime(dateString).isPresent()) {
