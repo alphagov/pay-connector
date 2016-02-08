@@ -34,14 +34,7 @@ public class DateTimeUtils {
                     .withZoneSameInstant(UTC);
             return Optional.of(utcDateTime);
         } catch (DateTimeParseException ex) {
-            //TODO: for backward compatibility to get end-to-end passed. Remove this.
-            try {
-                ZonedDateTime utcZonedDateTime = LocalDateTime.parse(dateString, localDateTimeWithoutTimeZone).atZone(UTC);
-                return Optional.of(utcZonedDateTime);
-            } catch (DateTimeParseException ex2) {
-                return Optional.empty();
-            }
-            //return Optional.empty();
+            return Optional.empty();
         }
     }
 
