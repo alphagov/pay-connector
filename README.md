@@ -63,7 +63,7 @@ The command to run all the tests is:
 |[```/v1/api/accounts/{gatewayAccountId}```](#get-v1apiaccountsaccountsid)     | GET    |  Retrieves an existing account without the provider credentials  |
 |[```/v1/api/accounts/{accountId}/charges/{chargeId}```](#get-v1apiaccountsaccountidchargeschargeid)                 | GET    |  Returns the charge with `chargeId`  belongs to account `accountId` |
 |[```/v1/api/accounts/{accountId}/charges```](#post-v1apiaccountsaccountidcharges)                                  | POST    |  Create a new charge for this account `accountId`           |
-|[```/v1/api/accounts/{accountId}/charges```](#get-v1apiaccountsaccountidcharges)                                  | GET    |  Searches transactions for this account `accountId`           |
+|[```/v1/api/accounts/{accountId}/charges```](#get-v1apiaccountsaccountidcharges)                                  | GET    |  Searches transactions for this account `accountId` returns JSON or CSV as requested           |
 |[```/v1/api/notifications/worldpay```](#post-v1apinotificationsworldpay)                                  | POST |  Handle charge update notifications from Worldpay.            |
 |[```/v1/api/notifications/smartpay```](#post-v1apinotificationssmartpay)                                  | POST |  Handle charge update notifications from Smartpay.            |
 |[```/v1/api/accounts/{accountId}/charges/{chargeId}/cancel```](#post-v1apiaccountsaccountidchargeschargeidcancel)  | POST    |  Cancels the charge with `chargeId` for account `accountId`           |
@@ -284,13 +284,13 @@ Location: http://connector.service/v1/api/charges/1
 
 ### GET /v1/api/accounts/{accountId}/charges
 
-This endpoint searches for transactions for the given account id.
+This endpoint searches for transactions for the given account id and specified filters in query params and responds with JSON or CSV according to the Accept header
 
-#### Request example
+#### Request example for JSON response
 
 ```
 GET /v1/api/accounts/3121/charges
-Content-Type: application/json
+Accept application/json
 
 ```
 
@@ -308,7 +308,6 @@ Content-Type: application/json
 ```
 HTTP/1.1 200 OK
 Content-Type: application/json
-Location: http://connector.service/v1/api/charges/1
 
 {
     "results": [{     
@@ -337,6 +336,48 @@ Location: http://connector.service/v1/api/charges/1
 | `gateway_transaction_id` | X | The gateway transaction reference associated to this charge       |
 | `status`                 | X | The current external status of the charge       |
 | `return_url`             | X | The url to return the user to after the payment process has completed.|
+
+-----------------------------------------------------------------------------------------------------------
+
+
+#### Request example for CSV response
+
+```
+GET /v1/api/accounts/3121/charges
+Accept: text/csv
+
+```
+
+##### Query Parameters description
+
+| Field                    | required | Description                               |
+| ------------------------ |:--------:| ----------------------------------------- |
+| `reference`              | X | There (partial or full) reference issued by the government service for this payment. |
+| `status`                 | X | The transaction status |
+| `from_date`               | X | The initial date to search transactions |
+| `to_date`                 | X | The end date we should search transactions|
+
+#### Response example
+
+```
+HTTP/1.1 200 OK
+Content-Type: text/csv
+
+Service Payment Reference,Amount,Status,Gateway Transaction ID,GOV.UK Pay ID,Date Created
+ref2,500.00,IN PROGRESS,DFG98-FG8J-R78HJ-8JUG9,1,05/02/2016 14:17:00
+
+```
+
+##### Response field description
+
+| Field                    | always present | Description                               |
+| ------------------------ |:--------:| ----------------------------------------- |
+| `GOV.UK Pay ID`              | X | The unique identifier for this charge       |
+| `amount`                 | X | The amount of this charge       |
+| `Service Payment Reference`              | X | There reference issued by the government service for this payment       |
+| `Service Payment Reference` | X | The gateway transaction reference associated to this charge       |
+| `status`                 | X | The current external status of the charge       |
+| `Date Created`                 | X | Date the charge was created       |
 
 -----------------------------------------------------------------------------------------------------------
 

@@ -3,6 +3,7 @@ package uk.gov.pay.connector.resources;
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableMap;
 import fj.F;
+import fj.data.Either;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.lang3.tuple.Pair;
 import org.slf4j.Logger;
@@ -24,22 +25,27 @@ import javax.ws.rs.core.Response;
 import javax.ws.rs.core.UriInfo;
 import java.net.URI;
 import java.net.URISyntaxException;
+import java.text.DateFormat;
+import java.text.DecimalFormat;
+import java.text.SimpleDateFormat;
 import java.time.ZonedDateTime;
 import java.util.*;
+import java.util.function.Function;
 import java.util.stream.Collectors;
 
 import static com.google.common.collect.Maps.newHashMap;
-import static fj.data.Either.reduce;
+import static fj.data.Either.*;
 import static java.lang.String.format;
 import static javax.ws.rs.HttpMethod.GET;
 import static javax.ws.rs.core.MediaType.APPLICATION_JSON;
 import static javax.ws.rs.core.Response.Status.BAD_REQUEST;
 import static javax.ws.rs.core.Response.ok;
+import static org.apache.commons.lang3.StringUtils.isBlank;
 import static org.apache.commons.lang3.StringUtils.isEmpty;
+import static org.apache.commons.lang3.math.NumberUtils.isNumber;
 import static uk.gov.pay.connector.model.api.ExternalChargeStatus.mapFromStatus;
 import static uk.gov.pay.connector.model.api.ExternalChargeStatus.valueOfExternalStatus;
 import static uk.gov.pay.connector.resources.ApiPaths.*;
-import static uk.gov.pay.connector.resources.ApiValidators.validateGatewayAccountReference;
 import static uk.gov.pay.connector.util.DateTimeUtils.toUTCDateString;
 import static uk.gov.pay.connector.util.ResponseUtil.*;
 
@@ -68,6 +74,7 @@ public class ChargesApiResource {
     private LinksConfig linksConfig;
 
     private static final Logger logger = LoggerFactory.getLogger(ChargesApiResource.class);
+    private static final DateFormat DATE_FORMAT = new SimpleDateFormat("dd/MM/yyyy HH:mm:ss");
 
     public ChargesApiResource(ChargeDao chargeDao, TokenDao tokenDao, GatewayAccountDao gatewayAccountDao, EventDao eventDao, LinksConfig linksConfig) {
         this.chargeDao = chargeDao;
@@ -115,7 +122,7 @@ public class ChargesApiResource {
                 .map(errorMessage -> badRequestResponse(logger, errorMessage))
                 .orElseGet(() ->
                         reduce(validateGatewayAccountReference(accountId)
-                                .bimap(handleError, listChargesAsJsonResponse(accountId, reference, status, fromDate, toDate))));
+                                .bimap(handleError, listChargesResponse(accountId, reference, status, fromDate, toDate, jsonResponse()))));
     }
 
     @GET
@@ -138,7 +145,7 @@ public class ChargesApiResource {
                 .map(errorMessage -> Response.status(BAD_REQUEST).entity(errorMessage).build())
                 .orElseGet(() ->
                         reduce(validateGatewayAccountReference(accountId)
-                                .bimap(handleError, listChargesAsCsvResponse(accountId, reference, status, fromDate, toDate))));
+                                .bimap(handleError, listChargesResponse(accountId, reference, status, fromDate, toDate, csvResponse()))));
 
     }
 
@@ -252,31 +259,26 @@ public class ChargesApiResource {
         return value.length() <= fieldSize;
     }
 
-    private F<Boolean, Response> listChargesAsJsonResponse(final String accountId, String reference, String status, String fromDate, String toDate) {
-        return success -> {
-            List<Map<String, Object>> charges = getChargesForCriteria(accountId, reference, status, fromDate, toDate);
-
-            if (charges.isEmpty()) {
-                return gatewayAccountDao.findById(accountId)
-                        .map(x -> okResultsResponseFrom(charges))
-                        .orElseGet(() -> notFoundResponse(logger, format("account with id %s not found", accountId)));
-            }
-            return okResultsResponseFrom(charges);
-        };
-    }
-
-    private F<Boolean, Response> listChargesAsCsvResponse(final String accountId, String reference, String status, String fromDate, String toDate) {
+    private F<Boolean, Response> listChargesResponse(final String accountId, String reference, String status, String fromDate, String toDate, Function<Object, Response> buildResponseFunction) {
         return success -> {
             List<Map<String, Object>> charges = getChargesForCriteria(accountId, reference, status, fromDate, toDate);
 
             if (charges.isEmpty()) {
                 logger.info("no charges found for given filter");
                 return gatewayAccountDao.findById(accountId)
-                        .map(x -> ok(ChargesCSVGenerator.generate(charges)).build())
-                        .orElseGet(() -> notFoundResponseAsString(logger, format("account with id %s not found", accountId)));
+                        .map(x -> buildResponseFunction.apply(charges))
+                        .orElseGet(() -> notFoundResponse(logger, format("account with id %s not found", accountId)));
             }
-            return ok(ChargesCSVGenerator.generate(charges)).build();
+            return buildResponseFunction.apply(charges);
         };
+    }
+
+    private Function<Object, Response> jsonResponse() {
+        return charges -> ok(ImmutableMap.of("results", charges)).build();
+    }
+
+    private Function<Object, Response> csvResponse() {
+        return charges -> ok(ChargesCSVGenerator.generate((List<Map<String, Object>>) charges)).build();
     }
 
     private List<Map<String, Object>> getChargesForCriteria(String accountId, String reference, String status, String fromDate, String toDate) {
@@ -295,8 +297,13 @@ public class ChargesApiResource {
     private static F<String, Response> handleError =
             errorMessage -> badRequestResponse(logger, errorMessage);
 
-    private Response okResultsResponseFrom(List<Map<String, Object>> charges) {
-        return ok(ImmutableMap.of("results", charges)).build();
+    private Either<String, Boolean> validateGatewayAccountReference(String gatewayAccountId) {
+        if (isBlank(gatewayAccountId)) {
+            return left("missing gateway account reference");
+        } else if (!isNumber(gatewayAccountId)) {
+            return left(format("invalid gateway account reference %s", gatewayAccountId));
+        }
+        return right(true);
     }
 
 }

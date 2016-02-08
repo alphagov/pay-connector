@@ -147,7 +147,7 @@ public class ChargesApiResourceITest {
                 .contentType(CSV_CONTENT_TYPE)
                 .body(containsString(
                         "Service Payment Reference,Amount,Status,Gateway Transaction ID,GOV.UK Pay ID,Date Created\n" +
-                                "Test reference,6234,IN PROGRESS,," + chargeId));
+                        "Test reference,62.34,IN PROGRESS,," + chargeId));
     }
 
     @Test
