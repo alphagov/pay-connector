@@ -3,7 +3,6 @@ package uk.gov.pay.connector.resources;
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableMap;
 import fj.F;
-import fj.data.Either;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.lang3.tuple.Pair;
 import org.slf4j.Logger;
@@ -26,7 +25,6 @@ import javax.ws.rs.core.UriInfo;
 import java.net.URI;
 import java.net.URISyntaxException;
 import java.text.DateFormat;
-import java.text.DecimalFormat;
 import java.text.SimpleDateFormat;
 import java.time.ZonedDateTime;
 import java.util.*;
@@ -34,18 +32,17 @@ import java.util.function.Function;
 import java.util.stream.Collectors;
 
 import static com.google.common.collect.Maps.newHashMap;
-import static fj.data.Either.*;
+import static fj.data.Either.reduce;
 import static java.lang.String.format;
 import static javax.ws.rs.HttpMethod.GET;
 import static javax.ws.rs.core.MediaType.APPLICATION_JSON;
 import static javax.ws.rs.core.Response.Status.BAD_REQUEST;
 import static javax.ws.rs.core.Response.ok;
-import static org.apache.commons.lang3.StringUtils.isBlank;
 import static org.apache.commons.lang3.StringUtils.isEmpty;
-import static org.apache.commons.lang3.math.NumberUtils.isNumber;
 import static uk.gov.pay.connector.model.api.ExternalChargeStatus.mapFromStatus;
 import static uk.gov.pay.connector.model.api.ExternalChargeStatus.valueOfExternalStatus;
 import static uk.gov.pay.connector.resources.ApiPaths.*;
+import static uk.gov.pay.connector.resources.ApiValidators.validateGatewayAccountReference;
 import static uk.gov.pay.connector.util.DateTimeUtils.toUTCDateString;
 import static uk.gov.pay.connector.util.ResponseUtil.*;
 
@@ -113,8 +110,6 @@ public class ChargesApiResource {
                                    @Context UriInfo uriInfo) {
 
         Optional<String> errorMessageOptional = ApiValidators.validateDateQueryParams(ImmutableList.of(
-                Pair.of(REFERENCE_KEY, reference),
-                Pair.of(STATUS_KEY, status),
                 Pair.of(FROM_DATE_KEY, fromDate),
                 Pair.of(TO_DATE_KEY, toDate)
         ));
@@ -136,8 +131,6 @@ public class ChargesApiResource {
                                   @Context UriInfo uriInfo) {
 
         Optional<String> errorMessageOptional = ApiValidators.validateDateQueryParams(ImmutableList.of(
-                Pair.of(REFERENCE_KEY, reference),
-                Pair.of(STATUS_KEY, status),
                 Pair.of(FROM_DATE_KEY, fromDate),
                 Pair.of(TO_DATE_KEY, toDate)
         ));
@@ -297,13 +290,5 @@ public class ChargesApiResource {
     private static F<String, Response> handleError =
             errorMessage -> badRequestResponse(logger, errorMessage);
 
-    private Either<String, Boolean> validateGatewayAccountReference(String gatewayAccountId) {
-        if (isBlank(gatewayAccountId)) {
-            return left("missing gateway account reference");
-        } else if (!isNumber(gatewayAccountId)) {
-            return left(format("invalid gateway account reference %s", gatewayAccountId));
-        }
-        return right(true);
-    }
 
 }
