@@ -189,7 +189,7 @@ public class ChargeDao {
 
         logger.info("found " + rawData.size() + " charge records for the criteria");
         convertCreatedDate(rawData);
-        return copyAndConvertFieldsToString(rawData, "charge_id", "gateway_account_id");
+        return copyAndConvertFieldsToString(rawData, "charge_id");
     }
 
     public Optional<String> findAccountByTransactionId(String provider, String transactionId) {
