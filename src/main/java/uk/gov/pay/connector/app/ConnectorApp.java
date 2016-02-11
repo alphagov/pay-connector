@@ -1,11 +1,17 @@
 package uk.gov.pay.connector.app;
 
+import com.google.inject.Guice;
+import com.google.inject.Injector;
+import com.google.inject.Module;
+import com.google.inject.persist.PersistFilter;
+import com.google.inject.persist.jpa.JpaPersistModule;
 import io.dropwizard.Application;
 import io.dropwizard.auth.AuthFactory;
 import io.dropwizard.auth.basic.BasicAuthFactory;
 import io.dropwizard.configuration.EnvironmentVariableSubstitutor;
 import io.dropwizard.configuration.SubstitutingSourceProvider;
 import io.dropwizard.db.DataSourceFactory;
+import io.dropwizard.db.DatabaseConfiguration;
 import io.dropwizard.jdbi.DBIFactory;
 import io.dropwizard.jdbi.bundles.DBIExceptionsBundle;
 import io.dropwizard.migrations.MigrationsBundle;
@@ -25,6 +31,8 @@ import uk.gov.pay.connector.service.ClientFactory;
 import uk.gov.pay.connector.service.PaymentProviders;
 import uk.gov.pay.connector.util.ChargeEventListener;
 import uk.gov.pay.connector.util.DbWaitCommand;
+
+import java.util.Properties;
 
 public class ConnectorApp extends Application<ConnectorConfiguration> {
     private DBI jdbi;
@@ -51,6 +59,13 @@ public class ConnectorApp extends Application<ConnectorConfiguration> {
 
     @Override
     public void run(ConnectorConfiguration conf, Environment environment) throws Exception {
+        // JPA stuff
+
+        final Injector injector = Guice.createInjector(new ConnectorModule(conf, environment), createJpaModule(conf.getDatabaseConfig()));
+        environment.servlets().addFilter("persistFilter", injector.getInstance(PersistFilter.class));
+        environment.jersey().register(injector.getInstance(GatewayAccountJpaResource.class));
+
+        // end JPA stuff
         DataSourceFactory dataSourceFactory = conf.getDataSourceFactory();
 
         environment.healthChecks().register("ping", new Ping());
@@ -84,6 +99,19 @@ public class ConnectorApp extends Application<ConnectorConfiguration> {
                                 String.class)));
 
         environment.healthChecks().register("database", new DatabaseHealthCheck(jdbi, dataSourceFactory.getValidationQuery()));
+    }
+
+    private JpaPersistModule createJpaModule(final DatabaseConfig dbConfig) {
+        final Properties properties = new Properties();
+        properties.put("javax.persistence.jdbc.driver", dbConfig.getDriverClass());
+        properties.put("javax.persistence.jdbc.url", dbConfig.getUrl());
+        properties.put("javax.persistence.jdbc.user", dbConfig.getUser());
+        properties.put("javax.persistence.jdbc.password", dbConfig.getPassword());
+
+        final JpaPersistModule jpaModule = new JpaPersistModule("ConnectorUnit");
+        jpaModule.properties(properties);
+
+        return jpaModule;
     }
 
     public DBI getJdbi() {

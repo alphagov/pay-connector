@@ -27,6 +27,13 @@ smartpay:
     username: not-contract-tested
     password: not-contract-tested
 
+databaseJpa:
+  driverClass: org.postgresql.Driver
+  user: postgres
+  password: mysecretpassword
+  url:
+
+
 database:
   driverClass: org.postgresql.Driver
   user: postgres
