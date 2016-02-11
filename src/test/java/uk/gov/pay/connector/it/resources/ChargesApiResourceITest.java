@@ -7,6 +7,7 @@ import org.junit.Before;
 import org.junit.Rule;
 import org.junit.Test;
 import org.slf4j.LoggerFactory;
+import uk.gov.pay.connector.model.api.ExternalChargeStatus;
 import uk.gov.pay.connector.model.domain.ChargeStatus;
 import uk.gov.pay.connector.rules.DropwizardAppWithPostgresRule;
 import uk.gov.pay.connector.util.DateTimeUtils;
@@ -25,12 +26,15 @@ import static com.google.common.collect.Lists.newArrayList;
 import static com.jayway.restassured.http.ContentType.JSON;
 import static java.lang.String.format;
 import static java.time.ZonedDateTime.now;
+import static java.util.Arrays.asList;
 import static javax.ws.rs.core.Response.Status.*;
 import static org.apache.commons.lang3.RandomStringUtils.randomAlphabetic;
 import static org.apache.commons.lang3.RandomStringUtils.randomAlphanumeric;
 import static org.exparity.hamcrest.date.ZonedDateTimeMatchers.within;
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.*;
+import static uk.gov.pay.connector.it.dao.EventDaoTest.setupLifeCycleEventsFor;
+import static uk.gov.pay.connector.model.api.ExternalChargeStatus.*;
 import static uk.gov.pay.connector.model.api.ExternalChargeStatus.EXT_IN_PROGRESS;
 import static uk.gov.pay.connector.model.domain.ChargeStatus.*;
 import static uk.gov.pay.connector.model.domain.ChargeStatus.CREATED;
@@ -147,7 +151,7 @@ public class ChargesApiResourceITest {
                 .contentType(CSV_CONTENT_TYPE)
                 .body(containsString(
                         "Service Payment Reference,Amount,Status,Gateway Transaction ID,GOV.UK Pay ID,Date Created\n" +
-                        "Test reference,62.34,IN PROGRESS,," + chargeId));
+                                "Test reference,62.34,IN PROGRESS,," + chargeId));
     }
 
     @Test
@@ -166,6 +170,31 @@ public class ChargesApiResourceITest {
                 .contentType(JSON)
                 .body("results.charge_id", hasItem(chargeId))
                 .body("results.status", hasItem(EXT_IN_PROGRESS.getValue()));
+    }
+
+    @Test
+    public void shouldNotGetRepeatedExternalChargeEvents() throws Exception {
+        String chargeId = ((Integer) RandomUtils.nextInt(99999999)).toString();
+        ChargeStatus chargeStatus = AUTHORISATION_SUCCESS;
+        app.getDatabaseTestHelper().addCharge(chargeId, accountId, amount, chargeStatus, returnUrl, null);
+        app.getDatabaseTestHelper().addToken(chargeId, "tokenId");
+
+        List<ChargeStatus> statuses = asList(CREATED, ENTERING_CARD_DETAILS, AUTHORISATION_SUBMITTED, ChargeStatus.SYSTEM_CANCELLED, ChargeStatus.ENTERING_CARD_DETAILS);
+        setupLifeCycleEventsFor(app, Long.valueOf(chargeId), statuses);
+
+        getChargeApi
+                .withAccountId(accountId)
+                .withHeader(HttpHeaders.ACCEPT, MediaType.APPLICATION_JSON)
+                .getEvents(new Long(chargeId))
+                .statusCode(OK.getStatusCode())
+                .contentType(JSON)
+                .body("charge_id", is(Integer.parseInt(chargeId)))
+                .body("events.status", hasSize(4))
+                .body("events.status[0]", is(EXT_CREATED.getValue()))
+                .body("events.status[1]", is(EXT_IN_PROGRESS.getValue()))
+                .body("events.status[2]", is(EXT_SYSTEM_CANCELLED.getValue()))
+                .body("events.status[3]", is(EXT_IN_PROGRESS.getValue()));
+
     }
 
     @Test
