@@ -108,7 +108,7 @@ public class WorldpayPaymentProvider implements PaymentProvider {
                     Optional<ChargeStatus> chargeStatus = WorldpayStatusesMapper.mapToChargeStatus(notification.getStatus());
                     if (chargeStatus.isPresent()) {
                         if (WorldpayStatusesBlacklist.has(chargeStatus.get())) {
-                            logger.info(format("Ignore black listed notification of type %s", notification.getStatus()));
+                            logger.info(format("Ignored black listed notification of type %s", notification.getStatus()));
                             return NO_UPDATE;
                         }
 

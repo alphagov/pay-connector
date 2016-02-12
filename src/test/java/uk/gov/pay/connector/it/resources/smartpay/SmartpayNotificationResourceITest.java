@@ -42,11 +42,12 @@ public class SmartpayNotificationResourceITest extends CardResourceITestBase {
 
         assertFrontendChargeStatusIs(chargeId, "CAPTURED");
     }
+
     @Test
-    public void shouldHandleANotificationForFailedEvent() throws Exception {
+    public void shouldIgnoreAuthorisedNotification() throws Exception {
 
         String transactionId = randomId();
-        String chargeId = createNewChargeWith(AUTHORISATION_SUBMITTED, transactionId);
+        String chargeId = createNewChargeWith(CAPTURED, transactionId);
 
         String response = notifyConnector(notificationPayloadForTransaction(transactionId, "notification-authorisation"))
                 .then()
@@ -55,7 +56,7 @@ public class SmartpayNotificationResourceITest extends CardResourceITestBase {
 
         assertThat(response, is(RESPONSE_EXPECTED_BY_SMARTPAY));
 
-        assertFrontendChargeStatusIs(chargeId, AUTHORISATION_REJECTED.getValue());
+        assertFrontendChargeStatusIs(chargeId, "CAPTURED");
     }
 
     @Test
@@ -74,7 +75,7 @@ public class SmartpayNotificationResourceITest extends CardResourceITestBase {
         assertThat(response, is(RESPONSE_EXPECTED_BY_SMARTPAY));
 
         assertFrontendChargeStatusIs(chargeId, CAPTURED.getValue());
-        assertFrontendChargeStatusIs(chargeId2, AUTHORISATION_SUCCESS.getValue());
+        assertFrontendChargeStatusIs(chargeId2, CREATED.getValue());
     }
 
     @Test

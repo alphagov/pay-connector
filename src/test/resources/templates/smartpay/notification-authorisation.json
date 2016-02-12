@@ -24,7 +24,7 @@
         "paymentMethod": "visa",
         "pspReference": "{{transactionId}}",
         "reason": "96968:1111:8/2018",
-        "success": "false"
+        "success": "true"
       }
     }
   ]
