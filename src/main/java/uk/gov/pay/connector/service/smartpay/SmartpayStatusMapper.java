@@ -12,7 +12,7 @@ import static uk.gov.pay.connector.model.domain.ChargeStatus.*;
 
 public class SmartpayStatusMapper {
 
-    private static final Map<String, Map<Boolean, ChargeStatus>> worldpayStatuses = ImmutableMap.<String, Map<Boolean, ChargeStatus>>builder().
+    private static final Map<String, Map<Boolean, ChargeStatus>> smartpayStatuses = ImmutableMap.<String, Map<Boolean, ChargeStatus>>builder().
             put("AUTHORISATION", ImmutableMap.of(true, AUTHORISATION_SUCCESS, false, AUTHORISATION_REJECTED)).
             put("CAPTURE", ImmutableMap.of(true, CAPTURED)).
             put("CANCELLATION", Collections.emptyMap()).
@@ -24,7 +24,7 @@ public class SmartpayStatusMapper {
             put("REPORT_AVAILABLE", Collections.emptyMap()).
             build();
 
-    public static Optional<ChargeStatus> mapToChargeStatus(String worldpayStatus, Boolean successFull) {
-        return ofNullable(worldpayStatuses.get(worldpayStatus)).flatMap(m -> ofNullable(m.get(successFull)));
+    public static Optional<ChargeStatus> mapToChargeStatus(String smartpayStatus, Boolean successFull) {
+        return ofNullable(smartpayStatuses.get(smartpayStatus)).flatMap(m -> ofNullable(m.get(successFull)));
     }
 }
