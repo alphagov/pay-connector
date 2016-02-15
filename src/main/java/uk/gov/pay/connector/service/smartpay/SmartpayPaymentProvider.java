@@ -115,6 +115,10 @@ public class SmartpayPaymentProvider implements PaymentProvider {
         if (!newChargeStatus.isPresent()) {
             logger.error(format("Could not map Smartpay status %s to our internal status.", notification.getEventCode()));
         }
+        if (SmartpayStatusesBlacklist.has(newChargeStatus.get())) {
+            logger.info(format("Ignored black listed notification of type %s", notification.getEventCode()));
+            return false;
+        }
         return newChargeStatus.isPresent();
     }
 

@@ -37,7 +37,7 @@ public class WorldpayNotificationResourceITest extends CardResourceITestBase {
 
         worldpay.mockInquiryResponse(transactionId, REFUSED.value());
 
-        String response = notifyConnector(transactionId, AUTHORISED.value())
+        String response = notifyConnector(transactionId, WorldpayPaymentStatus.CAPTURED.value())
                 .statusCode(200)
                 .extract().body()
                 .asString();
@@ -51,11 +51,29 @@ public class WorldpayNotificationResourceITest extends CardResourceITestBase {
     @Test
     public void shouldUpdateTheLatestStatusToDatabase() throws Exception {
         String transactionId = randomId();
-        String chargeId = createNewChargeWith(AUTHORISATION_SUBMITTED, transactionId);
+        String chargeId = createNewChargeWith(AUTHORISATION_SUCCESS, transactionId);
 
-            worldpay.mockInquiryResponse(transactionId, WorldpayPaymentStatus.CAPTURED.value());
+        worldpay.mockInquiryResponse(transactionId, WorldpayPaymentStatus.CAPTURED.value());
 
         String response = notifyConnector(transactionId, WorldpayPaymentStatus.CAPTURED.value())
+                .statusCode(200)
+                .extract().body()
+                .asString();
+
+        assertThat(response, is(RESPONSE_EXPECTED_BY_WORLDPAY));
+
+        assertFrontendChargeStatusIs(chargeId, CAPTURED.getValue());
+    }
+
+    @Test
+    public void shouldIgnoreAuthorisedNotification() throws Exception {
+
+        String transactionId = randomId();
+        String chargeId = createNewChargeWith(CAPTURED, transactionId);
+
+        worldpay.mockInquiryResponse(transactionId, WorldpayPaymentStatus.AUTHORISED.value());
+
+        String response = notifyConnector(transactionId, WorldpayPaymentStatus.AUTHORISED.value())
                 .statusCode(200)
                 .extract().body()
                 .asString();
@@ -72,14 +90,14 @@ public class WorldpayNotificationResourceITest extends CardResourceITestBase {
 
         worldpay.mockInquiryResponse(transactionId, "PAID IN FULL WITH CABBAGES");
 
-        String response = notifyConnector(transactionId, AUTHORISED.value())
+        String response = notifyConnector(transactionId, WorldpayPaymentStatus.CAPTURED.value())
                 .statusCode(200)
                 .extract().body()
                 .asString();
 
         assertThat(response, is(RESPONSE_EXPECTED_BY_WORLDPAY));
 
-        assertFrontendChargeStatusIs(chargeId, AUTHORISATION_SUCCESS.getValue());
+        assertFrontendChargeStatusIs(chargeId, CAPTURED.getValue());
     }
 
     @Test

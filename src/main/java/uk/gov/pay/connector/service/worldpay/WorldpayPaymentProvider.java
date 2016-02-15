@@ -107,6 +107,11 @@ public class WorldpayPaymentProvider implements PaymentProvider {
 
                     Optional<ChargeStatus> chargeStatus = WorldpayStatusesMapper.mapToChargeStatus(notification.getStatus());
                     if (chargeStatus.isPresent()) {
+                        if (WorldpayStatusesBlacklist.has(chargeStatus.get())) {
+                            logger.info(format("Ignored black listed notification of type %s", notification.getStatus()));
+                            return NO_UPDATE;
+                        }
+
                         //phase 1
                         Pair<String, ChargeStatus> pair = Pair.of(notification.getTransactionId(), chargeStatus.get());
                         StatusUpdates statusUpdates = StatusUpdates.withUpdate(NOTIFICATION_ACKNOWLEDGED, ImmutableList.of(pair));
@@ -126,6 +131,8 @@ public class WorldpayPaymentProvider implements PaymentProvider {
                 }
         ).orElseGet(() -> NO_UPDATE);
     }
+
+//    private StatusUpdates validateStatus
 
     private StatusUpdates newStatusFromNotification(GatewayAccount gatewayAccount, String transactionId) {
         InquiryResponse inquiryResponse = inquire(transactionId, gatewayAccount);
