@@ -59,7 +59,7 @@ public class ChargeDao {
                         .createQuery("SELECT c.charge_id, c.amount, c.gateway_account_id, c.status, c.return_url, " +
                                 "c.gateway_transaction_id, c.description, c.reference, to_char(c.created_date, 'YYYY-MM-DD HH24:MI:SS') as created_date, ga.payment_provider " +
                                 "FROM charges c, gateway_accounts ga " +
-                                "WHERE c.gateway_account_id = ga.gateway_account_id " +
+                                "WHERE c.gateway_account_id = ga.id " +
                                 "AND c.charge_id=:charge_id " +
                                 "AND c.gateway_account_id=:account_id")
                         .bind("charge_id", Long.valueOf(chargeId))
@@ -80,7 +80,7 @@ public class ChargeDao {
                         .createQuery("SELECT c.charge_id, c.amount, c.gateway_account_id, c.status, c.return_url, " +
                                 "c.gateway_transaction_id, c.description, c.reference, to_char(c.created_date, 'YYYY-MM-DD HH24:MI:SS') as created_date, ga.payment_provider " +
                                 "FROM charges c, gateway_accounts ga " +
-                                "WHERE c.gateway_account_id = ga.gateway_account_id " +
+                                "WHERE c.gateway_account_id = ga.id " +
                                 "AND c.charge_id=:charge_id")
                         .bind("charge_id", Long.valueOf(chargeId))
                         .map(new DefaultMapper())
@@ -113,7 +113,7 @@ public class ChargeDao {
                         .createStatement("UPDATE charges AS ch SET status=:status " +
                                 "FROM gateway_accounts AS ga WHERE " +
                                 "ch.gateway_transaction_id=:gateway_transaction_id AND " +
-                                "ga.gateway_account_id=ch.gateway_account_id AND " +
+                                "ga.id=ch.gateway_account_id AND " +
                                 "ga.payment_provider=:provider")
                         .bind("gateway_transaction_id", gatewayTransactionId)
                         .bind("provider", provider)
@@ -196,7 +196,7 @@ public class ChargeDao {
         Map<String, Object> data = jdbi.withHandle(handle ->
                 handle
                         .createQuery("SELECT ch.gateway_account_id FROM charges AS ch, gateway_accounts AS ga " +
-                                "WHERE ga.gateway_account_id = ch.gateway_account_id " +
+                                "WHERE ga.id = ch.gateway_account_id " +
                                 "AND ga.payment_provider=:provider " +
                                 "AND ch.gateway_transaction_id=:transactionId")
                         .bind("provider", provider)
@@ -226,7 +226,7 @@ public class ChargeDao {
         Map<String, Object> data = jdbi.withHandle(handle ->
                 handle
                         .createQuery("SELECT ch.charge_id FROM charges AS ch, gateway_accounts AS ga " +
-                                "WHERE ga.gateway_account_id = ch.gateway_account_id " +
+                                "WHERE ga.id = ch.gateway_account_id " +
                                 "AND ga.payment_provider=:provider " +
                                 "AND ch.gateway_transaction_id=:transactionId")
                         .bind("provider", provider)

@@ -28,7 +28,7 @@ public class GatewayAccountDao {
 
     public boolean idIsMissing(String gatewayAccountId) {
         return jdbi.withHandle(handle -> handle
-                .createQuery("SELECT NOT EXISTS(SELECT 1 from gateway_accounts where gateway_account_id=:id)")
+                .createQuery("SELECT NOT EXISTS(SELECT 1 from gateway_accounts where id=:id)")
                 .bind("id", Long.valueOf(gatewayAccountId))
                 .map(BooleanMapper.FIRST)
                 .first());
@@ -37,7 +37,7 @@ public class GatewayAccountDao {
 
     public Optional<GatewayAccount> findById(String gatewayAccountId) {
         GatewayAccount gatewayAccount = jdbi.withHandle(handle -> handle
-                .createQuery("SELECT gateway_account_id, payment_provider, credentials FROM gateway_accounts WHERE gateway_account_id=:id")
+                .createQuery("SELECT id, payment_provider, credentials FROM gateway_accounts WHERE id=:id")
                 .bind("id", Long.valueOf(gatewayAccountId))
                 .map(new GatewayAccountMapper())
                 .first());
@@ -46,7 +46,7 @@ public class GatewayAccountDao {
 
     public void saveCredentials(String credentialsJsonString, String gatewayAccountId) {
         jdbi.withHandle(handle -> handle
-                .createStatement("UPDATE gateway_accounts SET credentials = :credentials WHERE gateway_account_id = :id")
+                .createStatement("UPDATE gateway_accounts SET credentials = :credentials WHERE id=:id")
                 .bind("credentials", createPostgresCredentials(credentialsJsonString))
                 .bind("id", Long.valueOf(gatewayAccountId))
                 .execute()

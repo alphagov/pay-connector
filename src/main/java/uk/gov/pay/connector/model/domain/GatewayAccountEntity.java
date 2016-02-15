@@ -16,15 +16,16 @@ public class GatewayAccountEntity extends AbstractEntity {
     protected GatewayAccountEntity() {
     }
 
+    //TODO: Should we rename the columns to be more consistent?
     @Column(name = "payment_provider")
     private String gatewayName;
 
     //TODO: Revisit this to map to a java.util.Map
     @Column(name = "credentials", columnDefinition = "json")
     @Convert( converter = CredentialsConverter.class)
-    private String credentials;
+    private Map<String, String> credentials;
 
-    public GatewayAccountEntity(String gatewayName, String credentials) {
+    public GatewayAccountEntity(String gatewayName, Map<String, String> credentials) {
         this.gatewayName = gatewayName;
         this.credentials = credentials;
     }
@@ -40,7 +41,7 @@ public class GatewayAccountEntity extends AbstractEntity {
         return gatewayName;
     }
 
-    public String getCredentials() {
+    public Map<String, String> getCredentials() {
         return credentials;
     }
 

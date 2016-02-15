@@ -34,7 +34,7 @@ public class DatabaseTestHelper {
                 jsonObject.setValue(new Gson().toJson(credentials));
             }
             jdbi.withHandle(h ->
-                    h.update("INSERT INTO gateway_accounts(gateway_account_id, payment_provider, credentials) VALUES(?, ?, ?)",
+                    h.update("INSERT INTO gateway_accounts(id, payment_provider, credentials) VALUES(?, ?, ?)",
                             Long.valueOf(accountId), paymentGateway, jsonObject)
             );
         } catch (SQLException e) {
@@ -104,7 +104,7 @@ public class DatabaseTestHelper {
 
     public JsonObject getAccountCredentials(String gatewayAccountId) {
         String jsonString = jdbi.withHandle(h ->
-                h.createQuery("SELECT credentials from gateway_accounts WHERE gateway_account_id = :gatewayAccountId")
+                h.createQuery("SELECT credentials from gateway_accounts WHERE id = :gatewayAccountId")
                         .bind("gatewayAccountId", Integer.parseInt(gatewayAccountId))
                         .map(StringMapper.FIRST)
                         .first()
@@ -131,7 +131,7 @@ public class DatabaseTestHelper {
             pgCredentials.setType("json");
             pgCredentials.setValue(credentials);
             jdbi.withHandle(handle ->
-                    handle.createStatement("UPDATE gateway_accounts set credentials=:credentials WHERE gateway_account_id = :gatewayAccountId")
+                    handle.createStatement("UPDATE gateway_accounts set credentials=:credentials WHERE id=:gatewayAccountId")
                             .bind("gatewayAccountId", Integer.parseInt(accountId))
                             .bind("credentials", pgCredentials)
                             .execute()

@@ -32,7 +32,7 @@ public class GatewayAccountMapper implements ResultSetMapper<GatewayAccount> {
     public GatewayAccount map(int i, ResultSet resultSet, StatementContext statementContext) throws SQLException {
         PGobject credentialsPgObject = (PGobject) resultSet.getObject("credentials");
         String credentialsJsonString = credentialsPgObject.toString();
-        long gatewayAccountId = resultSet.getLong("gateway_account_id");
+        long gatewayAccountId = resultSet.getLong("id");
         String paymentGatewayName = resultSet.getString("payment_provider");
         try {
             Map<String,String> credentialsMap = mapper.readValue(credentialsJsonString, new TypeReference<Map<String, String>>() {});

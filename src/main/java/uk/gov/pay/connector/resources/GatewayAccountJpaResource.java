@@ -76,8 +76,7 @@ public class GatewayAccountJpaResource {
         }
 
         logger.info("Creating new gateway account using the {} provider", provider);
-//        GatewayAccountEntity entity = new GatewayAccountEntity(provider, newHashMap());
-        GatewayAccountEntity entity = new GatewayAccountEntity(provider, "{}");
+        GatewayAccountEntity entity = new GatewayAccountEntity(provider, newHashMap());
         gatewayDao.persist(entity);
 
         URI newLocation = uriInfo.

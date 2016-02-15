@@ -25,7 +25,7 @@ public class GatewayAccountMapperTest {
         GatewayAccountMapper mapper = new GatewayAccountMapper(objectMapper);
 
         ResultSet resultSet = mock(ResultSet.class);
-        when(resultSet.getLong("gateway_account_id")).thenReturn(1234L);
+        when(resultSet.getLong("id")).thenReturn(1234L);
         when(resultSet.getString("payment_provider")).thenReturn("sandbox");
         PGobject pgObject = new PGobject();
         pgObject.setType("json");
@@ -43,7 +43,7 @@ public class GatewayAccountMapperTest {
         GatewayAccountMapper mapper = new GatewayAccountMapper(oMapper);
 
         ResultSet resultSet = mock(ResultSet.class);
-        when(resultSet.getLong("gateway_account_id")).thenReturn(1234L);
+        when(resultSet.getLong("id")).thenReturn(1234L);
         when(resultSet.getString("payment_provider")).thenReturn("worldpay");
         PGobject pgObject = new PGobject();
         pgObject.setType("json");
