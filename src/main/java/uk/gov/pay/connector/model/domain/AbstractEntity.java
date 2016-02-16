@@ -10,8 +10,7 @@ import java.io.Serializable;
 public abstract class AbstractEntity implements Serializable {
 
     @Id
-    @SequenceGenerator(name="charges_gateway_account_id_seq", sequenceName="charges_gateway_account_id_seq", allocationSize=1)
-    @GeneratedValue(strategy = GenerationType.SEQUENCE, generator = "charges_gateway_account_id_seq")
+    @GeneratedValue(strategy = GenerationType.IDENTITY)
     @JsonIgnore
     private Long id;
 
