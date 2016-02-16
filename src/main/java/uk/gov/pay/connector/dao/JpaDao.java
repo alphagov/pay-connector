@@ -7,6 +7,7 @@ import javax.persistence.EntityManager;
 import javax.persistence.Query;
 import java.util.List;
 import java.util.Map;
+import java.util.Optional;
 
 @Transactional
 public class JpaDao<T> {
@@ -23,8 +24,8 @@ public class JpaDao<T> {
         entityManager.get().persist(object);
     }
 
-    public <T, ID> T findById(final Class<T> clazz, final ID id) {
-        return entityManager.get().find(clazz, id);
+    public <T, ID> Optional<T> findById(final Class<T> clazz, final ID id) {
+        return Optional.ofNullable(entityManager.get().find(clazz, id));
     }
 
     public <T> T merge(final T object) {

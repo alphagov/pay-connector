@@ -3,6 +3,7 @@ package uk.gov.pay.connector.resources;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableMap;
+import org.apache.commons.lang3.math.NumberUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import uk.gov.pay.connector.app.ConnectorConfiguration;
@@ -10,10 +11,7 @@ import uk.gov.pay.connector.dao.GatewayAccountJpaDao;
 import uk.gov.pay.connector.model.domain.GatewayAccountEntity;
 
 import javax.inject.Inject;
-import javax.ws.rs.Consumes;
-import javax.ws.rs.POST;
-import javax.ws.rs.Path;
-import javax.ws.rs.Produces;
+import javax.ws.rs.*;
 import javax.ws.rs.core.Context;
 import javax.ws.rs.core.Response;
 import javax.ws.rs.core.UriInfo;
@@ -24,13 +22,15 @@ import java.util.Map;
 import static com.google.common.collect.Maps.newHashMap;
 import static java.lang.String.format;
 import static javax.ws.rs.core.MediaType.APPLICATION_JSON;
+import static org.apache.commons.lang3.math.NumberUtils.isNumber;
 import static uk.gov.pay.connector.resources.PaymentProviderValidator.*;
 import static uk.gov.pay.connector.util.ResponseUtil.badRequestResponse;
+import static uk.gov.pay.connector.util.ResponseUtil.notFoundResponse;
 
 @Path("/")
 public class GatewayAccountJpaResource {
-    public static final String ACCOUNTS_API_RESOURCE = "/v1/api/accounts";
-    public static final String ACCOUNT_API_RESOURCE = ACCOUNTS_API_RESOURCE + "/{accountId}";
+    public static final String ACCOUNTS_API_JPA_RESOURCE = "/v1/api/jpa/accounts";
+    public static final String ACCOUNT_API__JPA_RESOURCE = ACCOUNTS_API_JPA_RESOURCE + "/{accountId}";
 
     public static final String ACCOUNTS_FRONTEND_RESOURCE = "/v1/frontend/accounts";
     public static final String ACCOUNT_FRONTEND_RESOURCE = ACCOUNTS_FRONTEND_RESOURCE + "/{accountId}";
@@ -48,23 +48,26 @@ public class GatewayAccountJpaResource {
         providerCredentialFields.put("smartpay", conf.getSmartpayConfig().getCredentials());
     }
 
-    //    @GET
-//    @Path(ACCOUNT_API_RESOURCE)
-//    @Consumes(APPLICATION_JSON)
-//    @Produces(APPLICATION_JSON)
-//    public Response getGatewayAccount(@PathParam("accountId") String accountId) {
-//
-//        logger.info("Getting gateway account for account id {}", accountId);
-//
-//        return gatewayDao
-//                .findById(accountId)
-//                .map(gatewayAccount -> Response.ok().entity(gatewayAccount.withoutCredentials()).build())
-//                .orElseGet(() -> notFoundResponse(logger, format("Account with id %s not found.", accountId)));
-//
-//    }
-//
+    @GET
+    @Path(ACCOUNT_API__JPA_RESOURCE)
+    @Consumes(APPLICATION_JSON)
+    @Produces(APPLICATION_JSON)
+    public Response getGatewayAccount(@PathParam("accountId") String accountId) {
+        logger.info("Getting gateway account for account id {}", accountId);
+
+        if(!isNumber(accountId)){
+            return badRequestResponse(logger, format("Invalid account ID format. was [%s]. Should be a number", accountId));
+        }
+
+        return gatewayDao
+                .findById(GatewayAccountEntity.class, Long.parseLong(accountId))
+                .map(gatewayAccount -> Response.ok().entity(gatewayAccount.withoutCredentials()).build())
+                .orElseGet(() -> notFoundResponse(logger, format("Account with id %s not found.", accountId)));
+
+    }
+
     @POST
-    @Path(ACCOUNTS_API_RESOURCE + "/jpa")
+    @Path(ACCOUNTS_API_JPA_RESOURCE)
     @Consumes(APPLICATION_JSON)
     @Produces(APPLICATION_JSON)
     public Response createNewGatewayAccount(JsonNode node, @Context UriInfo uriInfo) {
