@@ -14,7 +14,7 @@ public class JpaDao<T> {
 
     private static final String QUERY_SELECT_ALL = "SELECT o FROM %s o ORDER BY o.id";
 
-    private final Provider<EntityManager> entityManager;
+    protected final Provider<EntityManager> entityManager;
 
     public JpaDao(Provider<EntityManager> entityManager) {
         this.entityManager = entityManager;
