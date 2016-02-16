@@ -12,7 +12,7 @@ import static org.hamcrest.CoreMatchers.nullValue;
 import static org.hamcrest.core.Is.is;
 import static org.junit.Assert.assertThat;
 
-public class GatewayAccountFrontendResourceITest extends GatewayAccountResourceTestBase {
+public class GatewayAccountFrontendJpaResourceITest extends GatewayAccountResourceTestBase {
 
     private Gson gson =  new Gson();
 
@@ -23,7 +23,7 @@ public class GatewayAccountFrontendResourceITest extends GatewayAccountResourceT
         app.getDatabaseTestHelper().updateCredentialsFor(accountId,  gson.toJson(credentials));
 
         givenSetup().accept(JSON)
-                .get(ACCOUNTS_FRONTEND_URL + accountId)
+                .get(ACCOUNTS_FRONTEND_JPA_URL + accountId)
                 .then()
                 .statusCode(200)
                 .body("payment_provider", is("worldpay"))
@@ -37,7 +37,7 @@ public class GatewayAccountFrontendResourceITest extends GatewayAccountResourceT
     public void shouldReturn404IfGatewayAccountDoesNotExist() {
         String nonExistingGatewayAccount = "12345";
         givenSetup().accept(JSON)
-                .get(ACCOUNTS_FRONTEND_URL + nonExistingGatewayAccount)
+                .get(ACCOUNTS_FRONTEND_JPA_URL + nonExistingGatewayAccount)
                 .then()
                 .statusCode(404)
                 .body("message", is("Account with id '12345' not found"));
@@ -72,7 +72,7 @@ public class GatewayAccountFrontendResourceITest extends GatewayAccountResourceT
 
         givenSetup().accept(JSON)
                 .body(expectedCredentialsString)
-                .put(ACCOUNTS_FRONTEND_URL + accountId)
+                .put(ACCOUNTS_FRONTEND_JPA_URL + accountId)
                 .then()
                 .statusCode(200);
 
@@ -90,7 +90,7 @@ public class GatewayAccountFrontendResourceITest extends GatewayAccountResourceT
 
         givenSetup().accept(JSON)
                 .body(expectedCredentialsString)
-                .put(ACCOUNTS_FRONTEND_URL + accountId)
+                .put(ACCOUNTS_FRONTEND_JPA_URL + accountId)
                 .then()
                 .statusCode(400)
                 .body("message", is("The following fields are missing: [password]"));
@@ -105,7 +105,7 @@ public class GatewayAccountFrontendResourceITest extends GatewayAccountResourceT
 
         givenSetup().accept(JSON)
                 .body(expectedCredentialsString)
-                .put(ACCOUNTS_FRONTEND_URL + accountId)
+                .put(ACCOUNTS_FRONTEND_JPA_URL + accountId)
                 .then()
                 .statusCode(400)
                 .body("message", is("The following fields are missing: [merchant_id]"));
@@ -120,7 +120,7 @@ public class GatewayAccountFrontendResourceITest extends GatewayAccountResourceT
 
         givenSetup().accept(JSON)
                 .body(expectedCredentialsString)
-                .put(ACCOUNTS_FRONTEND_URL + accountId)
+                .put(ACCOUNTS_FRONTEND_JPA_URL + accountId)
                 .then()
                 .statusCode(400)
                 .body("message", is("The following fields are missing: [password, merchant_id]"));
@@ -146,18 +146,17 @@ public class GatewayAccountFrontendResourceITest extends GatewayAccountResourceT
 
         givenSetup().accept(JSON)
                 .body(expectedCredentialsString)
-                .put(ACCOUNTS_FRONTEND_URL + nonExistingAccountId)
+                .put(ACCOUNTS_FRONTEND_JPA_URL + nonExistingAccountId)
                 .then()
                 .statusCode(404)
                 .body("message", matcher);
     }
 
     private void updateCredentialsWith(String accountId, ImmutableMap<String, String> expectedCredentials) {
-        String expectedCredentialsString = gson.toJson(expectedCredentials);
 
         givenSetup().accept(JSON)
-                .body(expectedCredentialsString)
-                .put(ACCOUNTS_FRONTEND_URL + accountId)
+                .body(expectedCredentials)
+                .put(ACCOUNTS_FRONTEND_JPA_URL + accountId)
                 .then()
                 .statusCode(200);
 

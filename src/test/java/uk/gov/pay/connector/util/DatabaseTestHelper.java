@@ -103,14 +103,15 @@ public class DatabaseTestHelper {
         );
     }
 
-    public JsonObject getAccountCredentials(String gatewayAccountId) {
+    public Map<String, String> getAccountCredentials(String gatewayAccountId) {
+
         String jsonString = jdbi.withHandle(h ->
                 h.createQuery("SELECT credentials from gateway_accounts WHERE id = :gatewayAccountId")
                         .bind("gatewayAccountId", Integer.parseInt(gatewayAccountId))
                         .map(StringMapper.FIRST)
                         .first()
         );
-        return new Gson().fromJson(jsonString, JsonObject.class);
+        return new Gson().fromJson(jsonString, Map.class);
     }
 
     public void addToken(String chargeId, String tokenId) {

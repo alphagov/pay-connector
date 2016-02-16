@@ -1,5 +1,6 @@
 package uk.gov.pay.connector.model.domain;
 
+import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import org.postgresql.util.PGobject;
@@ -17,8 +18,10 @@ public class CredentialsConverter implements AttributeConverter<Map<String,Strin
         PGobject pgCredentials = new PGobject();
         pgCredentials.setType("json");
         try {
-            pgCredentials.setValue(credentials.toString());
+            pgCredentials.setValue(new ObjectMapper().writeValueAsString(credentials));
         } catch (SQLException e) {
+            throw new RuntimeException(e);
+        } catch (JsonProcessingException e) {
             throw new RuntimeException(e);
         }
         return pgCredentials;

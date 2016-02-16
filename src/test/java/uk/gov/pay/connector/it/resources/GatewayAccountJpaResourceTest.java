@@ -20,7 +20,7 @@ public class GatewayAccountJpaResourceTest extends GatewayAccountResourceTestBas
 
         ValidatableResponse response = givenSetup()
                 .body(payload)
-                .post(ACCOUNTS_RESOURCE_JPA)
+                .post(ACCOUNTS_RESOURCE_JPA_URL)
                 .then()
                 .statusCode(201);
 
@@ -35,7 +35,7 @@ public class GatewayAccountJpaResourceTest extends GatewayAccountResourceTestBas
         String unknownAcocuntId = "92348739";
 
         givenSetup()
-                .get(ACCOUNTS_RESOURCE_JPA + unknownAcocuntId)
+                .get(ACCOUNTS_RESOURCE_JPA_URL + unknownAcocuntId)
                 .then()
                 .statusCode(404)
                 .body("message", is(String.format("Account with id %s not found.", unknownAcocuntId)));
@@ -47,7 +47,7 @@ public class GatewayAccountJpaResourceTest extends GatewayAccountResourceTestBas
         String unknownAcocuntId = "92348739wsx673hdg";
 
         givenSetup()
-                .get(ACCOUNTS_RESOURCE_JPA + unknownAcocuntId)
+                .get(ACCOUNTS_RESOURCE_JPA_URL + unknownAcocuntId)
                 .then()
                 .statusCode(400)
                 .body("message", is(String.format("Invalid account ID format. was [%s]. Should be a number", unknownAcocuntId)));

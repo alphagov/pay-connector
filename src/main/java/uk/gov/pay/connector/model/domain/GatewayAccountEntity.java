@@ -46,6 +46,10 @@ public class GatewayAccountEntity extends AbstractEntity {
         return credentials;
     }
 
+    public void setCredentials(Map<String, String> credentials) {
+        this.credentials = credentials;
+    }
+
     public Map<String, String> withoutCredentials() {
         return ImmutableMap.of(
                 "gateway_account_id", String.valueOf(super.getId()),

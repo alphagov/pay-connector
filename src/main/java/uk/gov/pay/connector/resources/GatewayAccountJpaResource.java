@@ -1,9 +1,10 @@
 package uk.gov.pay.connector.resources;
 
 import com.fasterxml.jackson.databind.JsonNode;
+import com.fasterxml.jackson.databind.ObjectMapper;
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableMap;
-import org.apache.commons.lang3.math.NumberUtils;
+import com.google.inject.persist.Transactional;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import uk.gov.pay.connector.app.ConnectorConfiguration;
@@ -15,13 +16,16 @@ import javax.ws.rs.*;
 import javax.ws.rs.core.Context;
 import javax.ws.rs.core.Response;
 import javax.ws.rs.core.UriInfo;
+import java.io.IOException;
 import java.net.URI;
 import java.util.List;
 import java.util.Map;
+import java.util.stream.Collectors;
 
 import static com.google.common.collect.Maps.newHashMap;
 import static java.lang.String.format;
 import static javax.ws.rs.core.MediaType.APPLICATION_JSON;
+import static jersey.repackaged.com.google.common.base.Joiner.on;
 import static org.apache.commons.lang3.math.NumberUtils.isNumber;
 import static uk.gov.pay.connector.resources.PaymentProviderValidator.*;
 import static uk.gov.pay.connector.util.ResponseUtil.badRequestResponse;
@@ -30,10 +34,10 @@ import static uk.gov.pay.connector.util.ResponseUtil.notFoundResponse;
 @Path("/")
 public class GatewayAccountJpaResource {
     public static final String ACCOUNTS_API_JPA_RESOURCE = "/v1/api/jpa/accounts";
-    public static final String ACCOUNT_API__JPA_RESOURCE = ACCOUNTS_API_JPA_RESOURCE + "/{accountId}";
+    public static final String ACCOUNT_API_JPA_RESOURCE = ACCOUNTS_API_JPA_RESOURCE + "/{accountId}";
 
-    public static final String ACCOUNTS_FRONTEND_RESOURCE = "/v1/frontend/accounts";
-    public static final String ACCOUNT_FRONTEND_RESOURCE = ACCOUNTS_FRONTEND_RESOURCE + "/{accountId}";
+    public static final String ACCOUNTS_FRONTEND_JPA_RESOURCE = "/v1/jpa/frontend/accounts";
+    public static final String ACCOUNT_FRONTEND_JPA_RESOURCE = ACCOUNTS_FRONTEND_JPA_RESOURCE + "/{accountId}";
     private static final Logger logger = LoggerFactory.getLogger(GatewayAccountResource.class);
 
 
@@ -49,7 +53,7 @@ public class GatewayAccountJpaResource {
     }
 
     @GET
-    @Path(ACCOUNT_API__JPA_RESOURCE)
+    @Path(ACCOUNT_API_JPA_RESOURCE)
     @Consumes(APPLICATION_JSON)
     @Produces(APPLICATION_JSON)
     public Response getGatewayAccount(@PathParam("accountId") String accountId) {
@@ -92,52 +96,59 @@ public class GatewayAccountJpaResource {
 
         return Response.created(newLocation).entity(account).build();
     }
-//
-//    @GET
-//    @Path(ACCOUNT_FRONTEND_RESOURCE)
-//    @Produces(APPLICATION_JSON)
-//    public Response getGatewayAccountWithCredentials(@PathParam("accountId") String gatewayAccountId) throws IOException {
-//        return gatewayDao
-//                .findById(gatewayAccountId)
-//                .map(serviceAccount ->
-//                {
-//                    serviceAccount.getCredentials().remove("password");
-//                    return Response.ok(serviceAccount).build();
-//                })
-//                .orElseGet(() -> notFoundResponse(logger, format("Account with id '%s' not found", gatewayAccountId)));
-//    }
-//
-//    @PUT
-//    @Path(ACCOUNT_FRONTEND_RESOURCE)
-//    @Consumes(APPLICATION_JSON)
-//    @Produces(APPLICATION_JSON)
-//    public Response updateGatewayCredentials(@PathParam("accountId") String gatewayAccountId, JsonNode credentialsPayload) {
-//
-//        if (!isNumber(gatewayAccountId)) {
-//            return notFoundResponse(logger, format("The gateway account id '%s' does not exist", gatewayAccountId));
-//        }
-//
-//        return gatewayDao.findById(gatewayAccountId)
-//                .map(  gatewayAccount ->
-//                        {
-//                            List<String> missingFieldsInRequestPayload = getMissingFieldsInRequestPayload(credentialsPayload, gatewayAccount.getGatewayName());
-//                            if (!missingFieldsInRequestPayload.isEmpty()) {
-//                                return badRequestResponse(logger, format("The following fields are missing: [%s]", on(", ").join(missingFieldsInRequestPayload)));
-//                            }
-//
-//                            gatewayDao.saveCredentials(credentialsPayload.toString(), gatewayAccountId);
-//                            return Response.ok().build();
-//                        }
-//                )
-//                .orElseGet(() ->
-//                        notFoundResponse(logger, format("The gateway account id '%s' does not exist", gatewayAccountId)));
-//    }
-//
-//    private List<String> getMissingFieldsInRequestPayload(JsonNode credentialsPayload, String provider) {
-//        return providerCredentialFields.get(provider).stream()
-//                .filter(requiredField -> !credentialsPayload.has(requiredField))
-//                .collect(Collectors.toList());
-//    }
+
+    @GET
+    @Path(ACCOUNT_FRONTEND_JPA_RESOURCE)
+    @Produces(APPLICATION_JSON)
+    public Response getGatewayAccountWithCredentials(@PathParam("accountId") String gatewayAccountId) throws IOException {
+
+        if(!isNumber(gatewayAccountId)){
+            return badRequestResponse(logger, format("Invalid account ID format. was [%s]. Should be a number", gatewayAccountId));
+        }
+
+        return gatewayDao
+                .findById(GatewayAccountEntity.class, Long.parseLong(gatewayAccountId))
+                .map(serviceAccount ->
+                {
+                    serviceAccount.getCredentials().remove("password");
+                    return Response.ok(serviceAccount).build();
+                })
+                .orElseGet(() -> notFoundResponse(logger, format("Account with id '%s' not found", gatewayAccountId)));
+    }
+
+    @PUT
+    @Path(ACCOUNT_FRONTEND_JPA_RESOURCE)
+    @Consumes(APPLICATION_JSON)
+    @Produces(APPLICATION_JSON)
+	//TODO: Discuss service layer introduction
+    @Transactional
+    public Response updateGatewayCredentials(@PathParam("accountId") String gatewayAccountId, JsonNode credentialsPayload) {
+
+        if (!isNumber(gatewayAccountId)) {
+            return notFoundResponse(logger, format("The gateway account id '%s' does not exist", gatewayAccountId));
+        }
+
+        return gatewayDao.findById(GatewayAccountEntity.class, Long.parseLong(gatewayAccountId))
+                .map(  gatewayAccount ->
+                        {
+                            List<String> missingFieldsInRequestPayload = getMissingFieldsInRequestPayload(credentialsPayload, gatewayAccount.getGatewayName());
+                            if (!missingFieldsInRequestPayload.isEmpty()) {
+                                return badRequestResponse(logger, format("The following fields are missing: [%s]", on(", ").join(missingFieldsInRequestPayload)));
+                            }
+                            gatewayAccount.setCredentials(new ObjectMapper().convertValue(credentialsPayload, Map.class));
+                            gatewayDao.persist(gatewayAccount);
+                            return Response.ok().build();
+                        }
+                )
+                .orElseGet(() ->
+                        notFoundResponse(logger, format("The gateway account id '%s' does not exist", gatewayAccountId)));
+    }
+
+    private List<String> getMissingFieldsInRequestPayload(JsonNode credentialsPayload, String provider) {
+        return providerCredentialFields.get(provider).stream()
+                .filter(requiredField -> !credentialsPayload.has(requiredField))
+                .collect(Collectors.toList());
+    }
 
     private Map<String, Object> addSelfLink(URI chargeId, Map<String, Object> charge) {
         List<Map<String, Object>> links = ImmutableList.of(ImmutableMap.of("href", chargeId, "rel", "self", "method", "GET"));

@@ -10,6 +10,7 @@ import uk.gov.pay.connector.model.domain.GatewayAccount;
 import java.sql.SQLException;
 import java.util.Optional;
 
+@Deprecated
 public class GatewayAccountDao {
     private DBI jdbi;
 
