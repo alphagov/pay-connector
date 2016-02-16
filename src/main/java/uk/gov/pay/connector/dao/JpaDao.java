@@ -9,7 +9,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 
-@Transactional
+//rename this when we can get rid of Jpa
 public class JpaDao<T> {
 
     private static final String QUERY_SELECT_ALL = "SELECT o FROM %s o ORDER BY o.id";
@@ -20,6 +20,7 @@ public class JpaDao<T> {
         this.entityManager = entityManager;
     }
 
+    @Transactional
     public <T> void persist(final T object) {
         entityManager.get().persist(object);
     }

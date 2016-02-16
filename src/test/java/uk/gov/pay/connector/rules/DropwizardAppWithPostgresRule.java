@@ -1,5 +1,7 @@
 package uk.gov.pay.connector.rules;
 
+import com.google.inject.Provider;
+import com.google.inject.persist.jpa.JpaPersistModule;
 import io.dropwizard.testing.ConfigOverride;
 import io.dropwizard.testing.junit.DropwizardAppRule;
 import org.junit.rules.RuleChain;
@@ -11,9 +13,12 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import uk.gov.pay.connector.app.ConnectorApp;
 import uk.gov.pay.connector.app.ConnectorConfiguration;
+import uk.gov.pay.connector.app.DatabaseConfig;
 import uk.gov.pay.connector.util.DatabaseTestHelper;
 
+import javax.persistence.EntityManager;
 import java.util.List;
+import java.util.Properties;
 
 import static com.google.common.collect.Lists.newArrayList;
 import static io.dropwizard.testing.ConfigOverride.config;
@@ -21,18 +26,20 @@ import static io.dropwizard.testing.ResourceHelpers.resourceFilePath;
 
 public class DropwizardAppWithPostgresRule implements TestRule {
     private static final Logger logger = LoggerFactory.getLogger(DropwizardAppWithPostgresRule.class);
+    public static final String JPA_UNIT = "ConnectorUnit";
 
     private final String configFilePath;
     private final PostgresDockerRule postgres;
     private final DropwizardAppRule<ConnectorConfiguration> app;
     private final RuleChain rules;
+    private final JpaPersistModule persistModule;
 
     private DatabaseTestHelper databaseTestHelper;
-    
+
     public DropwizardAppWithPostgresRule() {
         this("config/test-it-config.yaml");
     }
-    
+
     public DropwizardAppWithPostgresRule(ConfigOverride... configOverrides) {
         this("config/test-it-config.yaml", configOverrides);
     }
@@ -51,6 +58,7 @@ public class DropwizardAppWithPostgresRule implements TestRule {
                 configFilePath,
                 cfgOverrideList.toArray(new ConfigOverride[cfgOverrideList.size()])
         );
+        persistModule = createJpaModule(postgres);
         rules = RuleChain.outerRule(postgres).around(app);
     }
 
@@ -97,8 +105,25 @@ public class DropwizardAppWithPostgresRule implements TestRule {
         postgres.stop();
     }
 
+    private JpaPersistModule createJpaModule(final PostgresDockerRule postgres) {
+        final Properties properties = new Properties();
+        properties.put("javax.persistence.jdbc.driver", postgres.getDriverClass());
+        properties.put("javax.persistence.jdbc.url", postgres.getConnectionUrl());
+        properties.put("javax.persistence.jdbc.user", postgres.getUsername());
+        properties.put("javax.persistence.jdbc.password", postgres.getPassword());
+
+        final JpaPersistModule jpaModule = new JpaPersistModule(JPA_UNIT);
+        jpaModule.properties(properties);
+
+        return jpaModule;
+    }
+
     private void restoreDropwizardsLogging() {
         app.getConfiguration().getLoggingFactory().configure(app.getEnvironment().metrics(),
                 app.getApplication().getName());
+    }
+
+    public JpaPersistModule getPersistModule() {
+        return persistModule;
     }
 }

@@ -16,8 +16,8 @@ public class EventDao {
     public List<ChargeEvent> findEvents(Long accountId, Long chargeId) {
         return jdbi.withHandle(handle ->
                 handle.createQuery("SELECT cs.id, cs.charge_id, cs.status, to_char(cs.updated,'DD/MM/YYYY HH24:MI:SS') as updated FROM charge_events AS cs WHERE cs.charge_id IN " +
-                        "(SELECT ch.charge_id FROM charges AS ch" +
-                        " WHERE ch.charge_id=:chargeId AND" +
+                        "(SELECT ch.id FROM charges AS ch" +
+                        " WHERE ch.id=:chargeId AND" +
                         " ch.gateway_account_id=:accountId)")
                         .bind("chargeId", chargeId)
                         .bind("accountId", accountId)

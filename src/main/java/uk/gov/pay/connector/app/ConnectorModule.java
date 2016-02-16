@@ -16,8 +16,5 @@ public class ConnectorModule extends AbstractModule {
     protected void configure() {
         bind(ConnectorConfiguration.class).toInstance(configuration);
         bind(Environment.class).toInstance(environment);
-//        bind(Dao.class).to(DaoImpl.class).in(Singleton.class);
-//        bind(PlayerService.class).in(Singleton.class);
-//        bind(ScoreService.class).in(Singleton.class);
     }
 }

@@ -69,7 +69,7 @@ public class DatabaseTestHelper {
                 h.update(
                         "INSERT INTO" +
                                 "    charges(\n" +
-                                "        charge_id,\n" +
+                                "        id,\n" +
                                 "        amount,\n" +
                                 "        status,\n" +
                                 "        gateway_account_id,\n" +
@@ -118,7 +118,7 @@ public class DatabaseTestHelper {
 
     public String getChargeStatus(String chargeId) {
         return jdbi.withHandle(h ->
-                h.createQuery("SELECT status from charges WHERE charge_id = :charge_id")
+                h.createQuery("SELECT status from charges WHERE id = :charge_id")
                         .bind("charge_id", Long.valueOf(chargeId))
                         .map(StringMapper.FIRST)
                         .first()
