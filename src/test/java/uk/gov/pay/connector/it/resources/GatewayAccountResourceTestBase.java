@@ -17,6 +17,7 @@ public class GatewayAccountResourceTestBase {
 
     public static final String ACCOUNTS_API_URL = "/v1/api/accounts/";
     public static final String ACCOUNTS_FRONTEND_URL = "/v1/frontend/accounts/";
+    public static final String ACCOUNTS_RESOURCE_JPA = "/v1/api/jpa/accounts/";
 
     @Rule
     public DropwizardAppWithPostgresRule app = new DropwizardAppWithPostgresRule();
@@ -26,10 +27,29 @@ public class GatewayAccountResourceTestBase {
                 .contentType(JSON);
     }
 
+
+    //TODO remove this after complete migration
     protected String createAGatewayAccountFor(String testProvider) {
         ValidatableResponse response = givenSetup()
                 .body(toJson(ImmutableMap.of("payment_provider", testProvider)))
                 .post(ACCOUNTS_API_URL)
+                .then()
+                .statusCode(201)
+                .contentType(JSON);
+
+        assertCorrectAccountLocationIn(response);
+
+        assertGettingAccountReturnsProviderName(response, testProvider);
+
+        assertGatewayAccountCredentialsAreEmptyInDB(response);
+
+        return response.extract().path("gateway_account_id");
+    }
+
+    protected String createJpaGatewayAccountFor(String testProvider) {
+        ValidatableResponse response = givenSetup()
+                .body(toJson(ImmutableMap.of("payment_provider", testProvider)))
+                .post(ACCOUNTS_RESOURCE_JPA)
                 .then()
                 .statusCode(201)
                 .contentType(JSON);

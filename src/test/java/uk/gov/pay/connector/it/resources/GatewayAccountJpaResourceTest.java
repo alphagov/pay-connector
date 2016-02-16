@@ -2,15 +2,16 @@ package uk.gov.pay.connector.it.resources;
 
 import com.google.common.collect.ImmutableMap;
 import com.jayway.restassured.response.ValidatableResponse;
+import org.hamcrest.Matchers;
 import org.junit.Test;
 
+import static com.jayway.restassured.http.ContentType.JSON;
+import static java.lang.String.format;
+import static org.hamcrest.Matchers.nullValue;
 import static org.hamcrest.core.Is.is;
 import static uk.gov.pay.connector.util.JsonEncoder.toJson;
 
 public class GatewayAccountJpaResourceTest extends GatewayAccountResourceTestBase {
-
-
-    public static final String ACCOUNTS_RESOURCE_JPA = "/v1/api/jpa/accounts/";
 
     @Test
     public void createGatewayAccountWithoutPaymentProviderDefaultsToSandbox() throws Exception {
@@ -51,4 +52,49 @@ public class GatewayAccountJpaResourceTest extends GatewayAccountResourceTestBas
                 .statusCode(400)
                 .body("message", is(String.format("Invalid account ID format. was [%s]. Should be a number", unknownAcocuntId)));
     }
+
+    @Test
+    public void getAccountShouldNotReturnCredentials() throws Exception {
+
+        String gatewayAccountId = createAGatewayAccountFor("worldpay");
+
+        givenSetup()
+                .get(ACCOUNTS_API_URL + gatewayAccountId)
+                .then()
+                .statusCode(200)
+                .body("credentials", Matchers.is(nullValue()));
+    }
+
+    @Test
+    public void createAccountShouldFailIfPaymentProviderIsNotSandboxOfWorldpay() throws Exception {
+        String testProvider = "random";
+        String payload = toJson(ImmutableMap.of("payment_provider", testProvider));
+
+        givenSetup()
+                .body(payload)
+                .post(ACCOUNTS_API_URL)
+                .then()
+                .statusCode(400)
+                .contentType(JSON)
+                .body("message", Matchers.is(format("Unsupported payment provider %s.", testProvider)));
+    }
+
+    @Test
+    public void createAGatewayAccountForSandbox() throws Exception {
+
+        createJpaGatewayAccountFor("sandbox");
+    }
+
+    @Test
+    public void createAGatewayAccountForWorldpay() throws Exception {
+
+        createJpaGatewayAccountFor("worldpay");
+    }
+
+    @Test
+    public void createAGatewayAccountForSmartpay() throws Exception {
+
+        createJpaGatewayAccountFor("smartpay");
+    }
+
 }
