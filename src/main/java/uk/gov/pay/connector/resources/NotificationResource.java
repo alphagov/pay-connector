@@ -2,6 +2,7 @@ package uk.gov.pay.connector.resources;
 
 import com.sun.org.apache.xpath.internal.operations.Bool;
 import io.dropwizard.auth.Auth;
+import org.apache.commons.lang3.StringUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import uk.gov.pay.connector.dao.ChargeDao;
@@ -74,7 +75,7 @@ public class NotificationResource {
                 return false;
             }
 
-            if (chargeStatusRequest.getTransactionId() == null) {
+            if (StringUtils.isEmpty(chargeStatusRequest.getTransactionId())) {
                 logger.error(format("Invalid transaction ID %s", chargeStatusRequest.getTransactionId()));
                 return false;
             }
