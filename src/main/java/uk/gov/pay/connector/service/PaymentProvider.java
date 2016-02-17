@@ -14,5 +14,5 @@ public interface PaymentProvider {
 
     CancelResponse cancel(CancelRequest request);
 
-    StatusUpdates handleNotification(String notificationPayload, Function<String, GatewayAccount> accountFinder, Consumer<StatusUpdates> accountUpdater);
+    StatusUpdates handleNotification(String notificationPayload, Function<ChargeStatusRequest, Boolean> payloadChecks, Function<String, GatewayAccount> accountFinder, Consumer<StatusUpdates> accountUpdater);
 }

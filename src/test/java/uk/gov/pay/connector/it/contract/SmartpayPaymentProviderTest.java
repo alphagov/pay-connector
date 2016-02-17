@@ -107,6 +107,7 @@ public class SmartpayPaymentProviderTest {
         String transactionId = response.getTransactionId();
         StatusUpdates statusResponse = paymentProvider.handleNotification(
                 notificationPayloadForTransaction(transactionId),
+                x -> true,
                 x -> validGatewayAccount,
                 accountUpdater
         );
