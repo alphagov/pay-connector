@@ -90,6 +90,7 @@ public class WorldpayPaymentProviderTest {
         String transactionId = response.getTransactionId();
         StatusUpdates statusResponse = connector.handleNotification(
                 notificationPayloadForTransaction(transactionId),
+                x -> true,
                 x -> validGatewayAccount,
                 accountUpdater
                 );

@@ -27,6 +27,7 @@ public class SandboxPaymentProviderTest {
     public void shouldSuccessfullyParseANotification() throws Exception {
         StatusUpdates statusUpdates = sandboxClient.handleNotification(
                 mockInboundNotificationWithStatus(AUTHORISATION_REJECTED.getValue()),
+                x -> true,
                 x -> aServiceAccount(),
                 accountUpdater
         );
@@ -40,6 +41,7 @@ public class SandboxPaymentProviderTest {
     public void shouldIgnoreUnknownStatuses() throws Exception {
         StatusUpdates statusUpdates = sandboxClient.handleNotification(
                 mockInboundNotificationWithStatus("UNKNOWN_STATUS"),
+                x -> true,
                 x -> aServiceAccount(),
                 accountUpdater);
 
@@ -51,6 +53,7 @@ public class SandboxPaymentProviderTest {
     @Test
     public void shouldIgnoreMalformedJson() throws Exception {
         StatusUpdates statusUpdates = sandboxClient.handleNotification("{",
+                x -> true,
                 x -> aServiceAccount(),
                 accountUpdater);
 
@@ -62,6 +65,7 @@ public class SandboxPaymentProviderTest {
     @Test
     public void shouldIgnoreJsonWithMissingFields() throws Exception {
         StatusUpdates statusUpdates = sandboxClient.handleNotification("{}",
+                x -> true,
                 x -> aServiceAccount(),
                 accountUpdater);
 

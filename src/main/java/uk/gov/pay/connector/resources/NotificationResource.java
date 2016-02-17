@@ -1,14 +1,17 @@
 package uk.gov.pay.connector.resources;
 
+import com.sun.org.apache.xpath.internal.operations.Bool;
 import io.dropwizard.auth.Auth;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import uk.gov.pay.connector.dao.IChargeDao;
 import uk.gov.pay.connector.dao.IGatewayAccountDao;
 import uk.gov.pay.connector.dao.PayDBIException;
+import uk.gov.pay.connector.model.ChargeStatusRequest;
 import uk.gov.pay.connector.model.StatusUpdates;
 import uk.gov.pay.connector.model.domain.ChargeStatus;
 import uk.gov.pay.connector.model.domain.GatewayAccount;
+import uk.gov.pay.connector.service.ChargeStatusBlacklist;
 import uk.gov.pay.connector.service.PaymentProvider;
 import uk.gov.pay.connector.service.PaymentProviders;
 
@@ -20,6 +23,7 @@ import java.io.IOException;
 import java.util.function.Consumer;
 import java.util.function.Function;
 
+import static java.lang.String.format;
 import static javax.ws.rs.core.Response.Status.BAD_GATEWAY;
 
 @Path("/")
@@ -49,7 +53,7 @@ public class NotificationResource {
         logger.info("Received notification from " + provider + ": " + notification);
 
         PaymentProvider paymentProvider = providers.resolve(provider);
-        StatusUpdates statusUpdates = paymentProvider.handleNotification(notification, findAccountByTransactionId(provider), accountUpdater(provider));
+        StatusUpdates statusUpdates = paymentProvider.handleNotification(notification, this::payloadChecks, findAccountByTransactionId(provider), accountUpdater(provider));
 
         if (!statusUpdates.successful()) {
             return Response.status(BAD_GATEWAY).build();
@@ -63,6 +67,20 @@ public class NotificationResource {
                 statusUpdates.getStatusUpdates().forEach(update -> updateCharge(chargeDao, provider, update.getKey(), update.getValue()));
     }
 
+    private boolean payloadChecks(ChargeStatusRequest chargeStatusRequest) {
+            if (chargeStatusRequest.getChargeStatus().isPresent() &&
+                    ChargeStatusBlacklist.has(chargeStatusRequest.getChargeStatus().get())) {
+                logger.info(format("Ignored black listed notification of type %s", chargeStatusRequest.getChargeStatus()));
+                return false;
+            }
+
+            if (chargeStatusRequest.getTransactionId() == null) {
+                logger.error(format("Invalid transaction ID %s", chargeStatusRequest.getTransactionId()));
+                return false;
+            }
+
+            return true;
+    }
 
     private Function<String, GatewayAccount> findAccountByTransactionId(String provider) {
         return transactionId -> {

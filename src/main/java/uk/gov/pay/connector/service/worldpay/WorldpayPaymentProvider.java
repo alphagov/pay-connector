@@ -12,6 +12,7 @@ import uk.gov.pay.connector.model.domain.ChargeStatus;
 import uk.gov.pay.connector.model.domain.GatewayAccount;
 import uk.gov.pay.connector.service.GatewayClient;
 import uk.gov.pay.connector.service.PaymentProvider;
+import uk.gov.pay.connector.service.ChargeStatusBlacklist;
 
 import javax.ws.rs.core.Response;
 import javax.xml.bind.JAXBException;
@@ -91,7 +92,12 @@ public class WorldpayPaymentProvider implements PaymentProvider {
     public Optional<WorldpayNotification> parseNotification(String inboundNotification) {
         try {
             WorldpayNotification chargeNotification = unmarshall(inboundNotification, WorldpayNotification.class);
-            return Optional.ofNullable(chargeNotification);
+
+            return Optional.ofNullable(chargeNotification)
+                    .map(notification -> {
+                        notification.setChargeStatus(WorldpayStatusesMapper.mapToChargeStatus(notification.getStatus()));
+                        return notification;
+                    });
         } catch (JAXBException e) {
             logger.error(format("Could not deserialise worldpay response %s", inboundNotification), e);
             return Optional.empty();
@@ -99,21 +105,21 @@ public class WorldpayPaymentProvider implements PaymentProvider {
     }
 
     @Override
-    public StatusUpdates handleNotification(String notificationPayload, Function<String, GatewayAccount> accountFinder, Consumer<StatusUpdates> accountUpdater) {
-
+    public StatusUpdates handleNotification(String notificationPayload,
+                                            Function<ChargeStatusRequest, Boolean> payloadChecks,
+                                            Function<String, GatewayAccount> accountFinder,
+                                            Consumer<StatusUpdates> accountUpdater) {
 
         Optional<WorldpayNotification> notificationMaybe = parseNotification(notificationPayload);
         return notificationMaybe.map(notification -> {
 
-                    Optional<ChargeStatus> chargeStatus = WorldpayStatusesMapper.mapToChargeStatus(notification.getStatus());
-                    if (chargeStatus.isPresent()) {
-                        if (WorldpayStatusesBlacklist.has(chargeStatus.get())) {
-                            logger.info(format("Ignored black listed notification of type %s", notification.getStatus()));
-                            return NO_UPDATE;
-                        }
+                    if (!payloadChecks.apply(notification)) {
+                        return NO_UPDATE;
+                    }
 
+                    if (notification.getChargeStatus().isPresent()) {
                         //phase 1
-                        Pair<String, ChargeStatus> pair = Pair.of(notification.getTransactionId(), chargeStatus.get());
+                        Pair<String, ChargeStatus> pair = Pair.of(notification.getTransactionId(), notification.getChargeStatus().get());
                         StatusUpdates statusUpdates = StatusUpdates.withUpdate(NOTIFICATION_ACKNOWLEDGED, ImmutableList.of(pair));
                         accountUpdater.accept(statusUpdates);
                     } else {
