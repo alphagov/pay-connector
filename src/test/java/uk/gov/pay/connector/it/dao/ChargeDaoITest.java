@@ -28,6 +28,7 @@ import java.time.temporal.ChronoUnit;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Optional;
 
 import static com.google.common.collect.Lists.newArrayList;
 import static java.lang.Long.parseLong;
@@ -173,6 +174,13 @@ public class ChargeDaoITest {
         assertThat(charge.get("description"), is(DESCRIPTION));
         assertThat(charge.get("status"), is(CREATED.getValue()));
         assertDateMatch(charge.get("created_date").toString());
+    }
+
+    @Test
+    public void findAccountByTransactionId_ShouldBeEmptyForNonExistentTransaction() throws Exception {
+        Optional<String> accountByTransactionId = chargeDao.findAccountByTransactionId(PAYMENT_PROVIDER, "non-existent-tx-id");
+
+        assertThat(accountByTransactionId, is(Optional.empty()));
     }
 
     @Test
