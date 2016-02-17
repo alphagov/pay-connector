@@ -222,7 +222,11 @@ public class ChargeDao implements IChargeDao {
                         .first()
         );
 
-        return Optional.ofNullable(data.get("gateway_account_id").toString());
+        if(data != null && data.get("gateway_account_id") != null) {
+            return Optional.ofNullable(data.get("gateway_account_id").toString());
+        }
+
+        return Optional.empty();
     }
 
     private void convertCreatedDate(List<Map<String, Object>> charges) {
@@ -252,7 +256,11 @@ public class ChargeDao implements IChargeDao {
                         .first()
         );
 
-        return Optional.ofNullable(data.get("charge_id").toString());
+        if(data != null && data.get("charge_id") != null) {
+            return Optional.ofNullable(data.get("charge_id").toString());
+        }
+
+        return Optional.empty();
     }
 
     private String getStringFromStatusList(List<ChargeStatus> oldStatuses) {
