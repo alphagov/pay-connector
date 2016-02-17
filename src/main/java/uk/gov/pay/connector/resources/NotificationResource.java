@@ -15,6 +15,7 @@ import uk.gov.pay.connector.model.domain.GatewayAccount;
 import uk.gov.pay.connector.service.ChargeStatusBlacklist;
 import uk.gov.pay.connector.service.PaymentProvider;
 import uk.gov.pay.connector.service.PaymentProviders;
+import uk.gov.pay.connector.util.NotificationUtil;
 
 import javax.ws.rs.POST;
 import javax.ws.rs.Path;
@@ -34,6 +35,7 @@ public class NotificationResource {
     private PaymentProviders providers;
     private ChargeDao chargeDao;
     private GatewayAccountDao accountDao;
+    private NotificationUtil notificationUtil = new NotificationUtil(new ChargeStatusBlacklist());
 
     public NotificationResource(PaymentProviders providers, ChargeDao chargeDao, GatewayAccountDao accountDao) {
         this.providers = providers;
@@ -54,7 +56,7 @@ public class NotificationResource {
         logger.info("Received notification from " + provider + ": " + notification);
 
         PaymentProvider paymentProvider = providers.resolve(provider);
-        StatusUpdates statusUpdates = paymentProvider.handleNotification(notification, this::payloadChecks, findAccountByTransactionId(provider), accountUpdater(provider));
+        StatusUpdates statusUpdates = paymentProvider.handleNotification(notification, notificationUtil::payloadChecks, findAccountByTransactionId(provider), accountUpdater(provider));
 
         if (!statusUpdates.successful()) {
             return Response.status(BAD_GATEWAY).build();
@@ -68,20 +70,6 @@ public class NotificationResource {
                 statusUpdates.getStatusUpdates().forEach(update -> updateCharge(chargeDao, provider, update.getKey(), update.getValue()));
     }
 
-    private boolean payloadChecks(ChargeStatusRequest chargeStatusRequest) {
-            if (chargeStatusRequest.getChargeStatus().isPresent() &&
-                    ChargeStatusBlacklist.has(chargeStatusRequest.getChargeStatus().get())) {
-                logger.info(format("Ignored black listed notification of type %s", chargeStatusRequest.getChargeStatus()));
-                return false;
-            }
-
-            if (StringUtils.isEmpty(chargeStatusRequest.getTransactionId())) {
-                logger.error(format("Invalid transaction ID %s", chargeStatusRequest.getTransactionId()));
-                return false;
-            }
-
-            return true;
-    }
 
     private Function<String, GatewayAccount> findAccountByTransactionId(String provider) {
         return transactionId -> {

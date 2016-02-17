@@ -15,7 +15,7 @@ public class ChargeStatusBlacklist {
             .add(AUTHORISATION_REJECTED)
             .build();
 
-    public static boolean has(ChargeStatus chargeStatus) {
+    public boolean has(ChargeStatus chargeStatus) {
         return blackList.stream()
                 .filter(cs -> cs == chargeStatus)
                 .findAny()

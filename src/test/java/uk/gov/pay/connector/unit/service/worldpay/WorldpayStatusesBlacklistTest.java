@@ -9,16 +9,18 @@ import static uk.gov.pay.connector.model.domain.ChargeStatus.*;
 
 public class WorldpayStatusesBlacklistTest {
 
+    ChargeStatusBlacklist chargeStatusBlacklist = new ChargeStatusBlacklist();
+
     @Test
     public void shouldBlacklistedAuthorisedStatuses() throws Exception {
-        assertTrue(ChargeStatusBlacklist.has(AUTHORISATION_SUBMITTED));
-        assertTrue(ChargeStatusBlacklist.has(AUTHORISATION_SUCCESS));
-        assertTrue(ChargeStatusBlacklist.has(AUTHORISATION_REJECTED));
+        assertTrue(chargeStatusBlacklist.has(AUTHORISATION_SUBMITTED));
+        assertTrue(chargeStatusBlacklist.has(AUTHORISATION_SUCCESS));
+        assertTrue(chargeStatusBlacklist.has(AUTHORISATION_REJECTED));
     }
 
     @Test
     public void shouldNotBlacklistNonAuthorisedStatuses() throws Exception {
-        assertFalse(ChargeStatusBlacklist.has(CAPTURED));
-        assertFalse(ChargeStatusBlacklist.has(SYSTEM_CANCELLED));
+        assertFalse(chargeStatusBlacklist.has(CAPTURED));
+        assertFalse(chargeStatusBlacklist.has(SYSTEM_CANCELLED));
     }
 }
