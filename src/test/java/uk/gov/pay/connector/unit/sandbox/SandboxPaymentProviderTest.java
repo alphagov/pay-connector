@@ -9,6 +9,7 @@ import uk.gov.pay.connector.model.domain.GatewayAccount;
 import uk.gov.pay.connector.service.sandbox.SandboxPaymentProvider;
 
 import java.util.HashMap;
+import java.util.Optional;
 import java.util.function.Consumer;
 
 import static org.hamcrest.MatcherAssert.assertThat;
@@ -74,8 +75,8 @@ public class SandboxPaymentProviderTest {
         assertThat(statusUpdates.getResponseForProvider(), is("OK"));
     }
 
-    private GatewayAccount aServiceAccount() {
-        return new GatewayAccount(1L, "smartpay", new HashMap<String, String>());
+    private Optional<GatewayAccount> aServiceAccount() {
+        return Optional.of(new GatewayAccount(1L, "smartpay", new HashMap<String, String>()));
     }
 
     private String mockInboundNotificationWithStatus(String statusValue) {

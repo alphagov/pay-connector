@@ -10,6 +10,7 @@ import uk.gov.pay.connector.model.*;
 import uk.gov.pay.connector.model.domain.GatewayAccount;
 import uk.gov.pay.connector.service.PaymentProvider;
 
+import java.util.Optional;
 import java.util.UUID;
 import java.util.function.Consumer;
 import java.util.function.Function;
@@ -60,7 +61,7 @@ public class SandboxPaymentProvider implements PaymentProvider {
     }
 
     @Override
-    public StatusUpdates handleNotification(String inboundNotification, Function<ChargeStatusRequest, Boolean> payloadChecks, Function<String, GatewayAccount> accountFinder, Consumer<StatusUpdates> accountUpdater) {
+    public StatusUpdates handleNotification(String inboundNotification, Function<ChargeStatusRequest, Boolean> payloadChecks, Function<String, Optional<GatewayAccount>> accountFinder, Consumer<StatusUpdates> accountUpdater) {
         try {
             JsonNode node = objectMapper.readValue(inboundNotification, JsonNode.class);
 

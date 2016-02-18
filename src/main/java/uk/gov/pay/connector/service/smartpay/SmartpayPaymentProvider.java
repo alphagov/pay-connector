@@ -88,7 +88,7 @@ public class SmartpayPaymentProvider implements PaymentProvider {
     @Override
     public StatusUpdates handleNotification(String inboundNotification,
                                             Function<ChargeStatusRequest, Boolean> payloadChecks,
-                                            Function<String, GatewayAccount> accountFinder,
+                                            Function<String, Optional<GatewayAccount>> accountFinder,
                                             Consumer<StatusUpdates> accountUpdater) {
         try {
             List<SmartpayNotification> notifications = objectMapper.readValue(inboundNotification, SmartpayNotificationList.class).getNotifications();

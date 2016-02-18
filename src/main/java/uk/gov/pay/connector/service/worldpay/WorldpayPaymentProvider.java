@@ -107,7 +107,7 @@ public class WorldpayPaymentProvider implements PaymentProvider {
     @Override
     public StatusUpdates handleNotification(String notificationPayload,
                                             Function<ChargeStatusRequest, Boolean> payloadChecks,
-                                            Function<String, GatewayAccount> accountFinder,
+                                            Function<String, Optional<GatewayAccount>> accountFinder,
                                             Consumer<StatusUpdates> accountUpdater) {
 
         Optional<WorldpayNotification> notificationMaybe = parseNotification(notificationPayload);
@@ -127,8 +127,13 @@ public class WorldpayPaymentProvider implements PaymentProvider {
                     }
 
                     //phase 2
-                    GatewayAccount gatewayAccount = accountFinder.apply(notification.getTransactionId());
-                    StatusUpdates statusUpdates = newStatusFromNotification(gatewayAccount, notification.getTransactionId());
+                    Optional<GatewayAccount> gatewayAccount = accountFinder.apply(notification.getTransactionId());
+
+                    if (!gatewayAccount.isPresent()) {
+                        return NO_UPDATE;
+                    }
+
+                    StatusUpdates statusUpdates = newStatusFromNotification(gatewayAccount.get(), notification.getTransactionId());
 
                     if (statusUpdates.successful()) {
                         accountUpdater.accept(statusUpdates);
