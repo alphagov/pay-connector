@@ -1,7 +1,7 @@
 package uk.gov.pay.connector.unit.service.smartpay;
 
 import org.junit.Test;
-import uk.gov.pay.connector.service.worldpay.WorldpayStatusesBlacklist;
+import uk.gov.pay.connector.service.ChargeStatusBlacklist;
 
 import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertTrue;
@@ -9,16 +9,18 @@ import static uk.gov.pay.connector.model.domain.ChargeStatus.*;
 
 public class SmartpayStatusesBlacklistTest {
 
+    ChargeStatusBlacklist chargeStatusBlacklist = new ChargeStatusBlacklist();
+
     @Test
     public void shouldBlacklistedAuthorisedStatuses() throws Exception {
-        assertTrue(WorldpayStatusesBlacklist.has(AUTHORISATION_SUBMITTED));
-        assertTrue(WorldpayStatusesBlacklist.has(AUTHORISATION_SUCCESS));
-        assertTrue(WorldpayStatusesBlacklist.has(AUTHORISATION_REJECTED));
+        assertTrue(chargeStatusBlacklist.has(AUTHORISATION_SUBMITTED));
+        assertTrue(chargeStatusBlacklist.has(AUTHORISATION_SUCCESS));
+        assertTrue(chargeStatusBlacklist.has(AUTHORISATION_REJECTED));
     }
 
     @Test
     public void shouldNotBlacklistNonAuthorisedStatuses() throws Exception {
-        assertFalse(WorldpayStatusesBlacklist.has(CAPTURED));
-        assertFalse(WorldpayStatusesBlacklist.has(SYSTEM_CANCELLED));
+        assertFalse(chargeStatusBlacklist.has(CAPTURED));
+        assertFalse(chargeStatusBlacklist.has(SYSTEM_CANCELLED));
     }
 }

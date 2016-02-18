@@ -86,14 +86,19 @@ public class SmartpayPaymentProvider implements PaymentProvider {
     }
 
     @Override
-    public StatusUpdates handleNotification(String inboundNotification, Function<String, GatewayAccount> accountFinder, Consumer<StatusUpdates> accountUpdater) {
+    public StatusUpdates handleNotification(String inboundNotification,
+                                            Function<ChargeStatusRequest, Boolean> payloadChecks,
+                                            Function<String, Optional<GatewayAccount>> accountFinder,
+                                            Consumer<StatusUpdates> accountUpdater) {
         try {
             List<SmartpayNotification> notifications = objectMapper.readValue(inboundNotification, SmartpayNotificationList.class).getNotifications();
             Collections.sort(notifications);
 
             List<Pair<String, ChargeStatus>> updates = notifications.stream()
-                    .filter(this::definedStatuses)
-                    .map(this::toInternalStatus)
+                    .map(this::extendInternalStatus)
+                    .filter((notification) -> notification.getChargeStatus().isPresent())
+                    .filter((notification) -> payloadChecks.apply(notification))
+                    .map(this::toPair)
                     .collect(Collectors.toList());
 
             StatusUpdates statusUpdates = StatusUpdates.withUpdate(ACCEPTED, updates);
@@ -109,23 +114,14 @@ public class SmartpayPaymentProvider implements PaymentProvider {
         return StatusUpdates.noUpdate(ACCEPTED);
     }
 
-    private boolean definedStatuses(SmartpayNotification notification) {
-        String smartpayStatus = notification.getEventCode();
-        Optional<ChargeStatus> newChargeStatus = SmartpayStatusMapper.mapToChargeStatus(smartpayStatus, notification.isSuccessFull());
-        if (!newChargeStatus.isPresent()) {
-            logger.error(format("Could not map Smartpay status %s to our internal status.", notification.getEventCode()));
-        }
-        if (SmartpayStatusesBlacklist.has(newChargeStatus.get())) {
-            logger.info(format("Ignored black listed notification of type %s", notification.getEventCode()));
-            return false;
-        }
-        return newChargeStatus.isPresent();
+    private SmartpayNotification extendInternalStatus(SmartpayNotification notification) {
+        notification.setChargeStatus(SmartpayStatusMapper.mapToChargeStatus(
+                notification.getEventCode(), notification.isSuccessFull()));
+        return notification;
     }
 
-    private Pair<String, ChargeStatus> toInternalStatus(SmartpayNotification notification) {
-        String smartpayStatus = notification.getEventCode();
-        Optional<ChargeStatus> newChargeStatus = SmartpayStatusMapper.mapToChargeStatus(smartpayStatus, notification.isSuccessFull());
-        return Pair.of(notification.getTransactionId(), newChargeStatus.get());
+    private Pair<String, ChargeStatus> toPair(SmartpayNotification notification) {
+        return Pair.of(notification.getTransactionId(), notification.getChargeStatus().get());
     }
 
     private AuthorisationResponse mapToCardAuthorisationResponse(Response response) {

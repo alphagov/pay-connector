@@ -118,6 +118,23 @@ public class WorldpayNotificationResourceITest extends CardResourceITestBase {
     }
 
     @Test
+    public void shouldNotUpdateStatusToDatabaseIfGatewayAccountIsNotFound() throws Exception {
+        String transactionId = randomId();
+        String chargeId = createNewChargeWith(AUTHORISATION_SUCCESS, transactionId);
+
+        worldpay.mockInquiryResponse(transactionId, WorldpayPaymentStatus.CAPTURED.value());
+
+        String response = notifyConnector("unknown-transation-id", "GARBAGE")
+                .statusCode(200)
+                .extract().body()
+                .asString();
+
+        assertThat(response, is(RESPONSE_EXPECTED_BY_WORLDPAY));
+
+        assertFrontendChargeStatusIs(chargeId, AUTHORISATION_SUCCESS.getValue());
+    }
+
+    @Test
     public void shouldReturnErrorIfInquiryForChargeStatusFails() throws Exception {
         String transactionId = randomId();
         String chargeId = createNewChargeWith(AUTHORISATION_SUCCESS, transactionId);

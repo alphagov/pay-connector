@@ -1,25 +1,33 @@
 package uk.gov.pay.connector.resources;
 
+import com.sun.org.apache.xpath.internal.operations.Bool;
 import io.dropwizard.auth.Auth;
+import org.apache.commons.lang3.StringUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import uk.gov.pay.connector.dao.ChargeDao;
 import uk.gov.pay.connector.dao.GatewayAccountDao;
 import uk.gov.pay.connector.dao.PayDBIException;
+import uk.gov.pay.connector.model.ChargeStatusRequest;
 import uk.gov.pay.connector.model.StatusUpdates;
 import uk.gov.pay.connector.model.domain.ChargeStatus;
 import uk.gov.pay.connector.model.domain.GatewayAccount;
+import uk.gov.pay.connector.service.ChargeStatusBlacklist;
 import uk.gov.pay.connector.service.PaymentProvider;
 import uk.gov.pay.connector.service.PaymentProviders;
+import uk.gov.pay.connector.util.NotificationUtil;
 
+import javax.swing.text.html.Option;
 import javax.ws.rs.POST;
 import javax.ws.rs.Path;
 import javax.ws.rs.PathParam;
 import javax.ws.rs.core.Response;
 import java.io.IOException;
+import java.util.Optional;
 import java.util.function.Consumer;
 import java.util.function.Function;
 
+import static java.lang.String.format;
 import static javax.ws.rs.core.Response.Status.BAD_GATEWAY;
 
 @Path("/")
@@ -29,6 +37,7 @@ public class NotificationResource {
     private PaymentProviders providers;
     private ChargeDao chargeDao;
     private GatewayAccountDao accountDao;
+    private NotificationUtil notificationUtil = new NotificationUtil(new ChargeStatusBlacklist());
 
     public NotificationResource(PaymentProviders providers, ChargeDao chargeDao, GatewayAccountDao accountDao) {
         this.providers = providers;
@@ -49,7 +58,7 @@ public class NotificationResource {
         logger.info("Received notification from " + provider + ": " + notification);
 
         PaymentProvider paymentProvider = providers.resolve(provider);
-        StatusUpdates statusUpdates = paymentProvider.handleNotification(notification, findAccountByTransactionId(provider), accountUpdater(provider));
+        StatusUpdates statusUpdates = paymentProvider.handleNotification(notification, notificationUtil::payloadChecks, findAccountByTransactionId(provider), accountUpdater(provider));
 
         if (!statusUpdates.successful()) {
             return Response.status(BAD_GATEWAY).build();
@@ -60,14 +69,23 @@ public class NotificationResource {
 
     private Consumer<StatusUpdates> accountUpdater(String provider) {
         return statusUpdates ->
-                statusUpdates.getStatusUpdates().forEach(update -> updateCharge(chargeDao, provider , update.getKey(), update.getValue()));
+                statusUpdates.getStatusUpdates().forEach(update -> updateCharge(chargeDao, provider, update.getKey(), update.getValue()));
     }
 
 
-    private Function<String, GatewayAccount> findAccountByTransactionId(String provider) {
+    private Function<String, Optional<GatewayAccount>> findAccountByTransactionId(String provider) {
         return transactionId -> {
-            String accountId = chargeDao.findAccountByTransactionId(provider, transactionId).get();
-            return accountDao.findById(accountId).get();
+            Optional<String> accountId = chargeDao.findAccountByTransactionId(provider, transactionId);
+
+            if (accountId.isPresent()) {
+                Optional<GatewayAccount> gatewayAccount = accountDao.findById(accountId.get());
+
+                if (gatewayAccount.isPresent())
+                    return gatewayAccount;
+            }
+
+            logger.error("Could not find account for transaction id " + transactionId);
+            return Optional.empty();
         };
     }
 

@@ -17,6 +17,7 @@ import java.io.IOException;
 import java.net.URL;
 import java.nio.charset.Charset;
 import java.util.Map;
+import java.util.Optional;
 import java.util.function.Consumer;
 
 import static com.google.common.io.Resources.getResource;
@@ -90,7 +91,8 @@ public class WorldpayPaymentProviderTest {
         String transactionId = response.getTransactionId();
         StatusUpdates statusResponse = connector.handleNotification(
                 notificationPayloadForTransaction(transactionId),
-                x -> validGatewayAccount,
+                x -> true,
+                x -> Optional.of(validGatewayAccount),
                 accountUpdater
                 );
 

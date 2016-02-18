@@ -9,6 +9,7 @@ import uk.gov.pay.connector.model.domain.GatewayAccount;
 import uk.gov.pay.connector.service.sandbox.SandboxPaymentProvider;
 
 import java.util.HashMap;
+import java.util.Optional;
 import java.util.function.Consumer;
 
 import static org.hamcrest.MatcherAssert.assertThat;
@@ -27,6 +28,7 @@ public class SandboxPaymentProviderTest {
     public void shouldSuccessfullyParseANotification() throws Exception {
         StatusUpdates statusUpdates = sandboxClient.handleNotification(
                 mockInboundNotificationWithStatus(AUTHORISATION_REJECTED.getValue()),
+                x -> true,
                 x -> aServiceAccount(),
                 accountUpdater
         );
@@ -40,6 +42,7 @@ public class SandboxPaymentProviderTest {
     public void shouldIgnoreUnknownStatuses() throws Exception {
         StatusUpdates statusUpdates = sandboxClient.handleNotification(
                 mockInboundNotificationWithStatus("UNKNOWN_STATUS"),
+                x -> true,
                 x -> aServiceAccount(),
                 accountUpdater);
 
@@ -51,6 +54,7 @@ public class SandboxPaymentProviderTest {
     @Test
     public void shouldIgnoreMalformedJson() throws Exception {
         StatusUpdates statusUpdates = sandboxClient.handleNotification("{",
+                x -> true,
                 x -> aServiceAccount(),
                 accountUpdater);
 
@@ -62,6 +66,7 @@ public class SandboxPaymentProviderTest {
     @Test
     public void shouldIgnoreJsonWithMissingFields() throws Exception {
         StatusUpdates statusUpdates = sandboxClient.handleNotification("{}",
+                x -> true,
                 x -> aServiceAccount(),
                 accountUpdater);
 
@@ -70,8 +75,8 @@ public class SandboxPaymentProviderTest {
         assertThat(statusUpdates.getResponseForProvider(), is("OK"));
     }
 
-    private GatewayAccount aServiceAccount() {
-        return new GatewayAccount(1L, "smartpay", new HashMap<String, String>());
+    private Optional<GatewayAccount> aServiceAccount() {
+        return Optional.of(new GatewayAccount(1L, "smartpay", new HashMap<String, String>()));
     }
 
     private String mockInboundNotificationWithStatus(String statusValue) {
