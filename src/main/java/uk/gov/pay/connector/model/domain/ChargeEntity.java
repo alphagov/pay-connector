@@ -5,6 +5,7 @@ import com.fasterxml.jackson.annotation.JsonProperty;
 import javax.persistence.*;
 import java.time.ZoneId;
 import java.time.ZonedDateTime;
+import java.util.Optional;
 
 @Entity
 @Table(name = "charges")
@@ -28,10 +29,9 @@ public class ChargeEntity extends AbstractEntity {
     private String returnUrl;
 
 
-    //TODO: Need to revisit if GatewayAccountEntity is better suited here as composite object
-    @JsonProperty("gateway_account_id")
-    @Column(name = "gateway_account_id")
-    private Long gatewayAccountId;
+    @ManyToOne
+    @JoinColumn(name = "gateway_account_id", updatable = false)
+    private GatewayAccountEntity gatewayAccount;
 
     @JsonProperty
     @Column(name = "description")
@@ -43,21 +43,21 @@ public class ChargeEntity extends AbstractEntity {
 
     @JsonProperty("created_date")
     @Column(name = "created_date")
-    @Convert( converter = UTCDateTimeConverter.class)
+    @Convert(converter = UTCDateTimeConverter.class)
     private ZonedDateTime createdDate;
 
     protected ChargeEntity() {
         //for jpa
     }
 
-    public ChargeEntity(Long amount, String status, String gatewayTransactionId, String returnUrl, String description, String reference, Long gatewayAccountId) {
+    public ChargeEntity(Long amount, String status, String gatewayTransactionId, String returnUrl, String description, String reference, GatewayAccountEntity gatewayAccount) {
         this.amount = amount;
         this.status = status;
         this.gatewayTransactionId = gatewayTransactionId;
         this.returnUrl = returnUrl;
         this.description = description;
         this.reference = reference;
-        this.gatewayAccountId = gatewayAccountId;
+        this.gatewayAccount = gatewayAccount;
         this.createdDate = ZonedDateTime.now(ZoneId.of("UTC"));
     }
 
@@ -77,8 +77,8 @@ public class ChargeEntity extends AbstractEntity {
         return returnUrl;
     }
 
-    public Long getGatewayAccountId() {
-        return gatewayAccountId;
+    public GatewayAccountEntity getGatewayAccount() {
+        return gatewayAccount;
     }
 
     public String getDescription() {
@@ -91,5 +91,13 @@ public class ChargeEntity extends AbstractEntity {
 
     public ZonedDateTime getCreatedDate() {
         return createdDate;
+    }
+
+    public void setStatus(ChargeStatus status) {
+        this.status = status.getValue();
+    }
+
+    public void setGatewayTransactionId(String gatewayTransactionId) {
+        this.gatewayTransactionId = gatewayTransactionId;
     }
 }

@@ -1,50 +1,34 @@
 package uk.gov.pay.connector.it.dao;
 
 import com.google.common.collect.ImmutableMap;
-import com.google.inject.Provider;
-import org.exparity.hamcrest.date.LocalDateTimeMatchers;
 import org.exparity.hamcrest.date.ZonedDateTimeMatchers;
-import org.hamcrest.Description;
-import org.hamcrest.Matcher;
 import org.hamcrest.MatcherAssert;
-import org.hamcrest.TypeSafeMatcher;
 import org.junit.Before;
 import org.junit.Rule;
 import org.junit.Test;
 import org.junit.rules.ExpectedException;
-import uk.gov.pay.connector.dao.ChargeDao;
 import uk.gov.pay.connector.dao.ChargeJpaDao;
 import uk.gov.pay.connector.dao.EventDao;
-import uk.gov.pay.connector.dao.PayDBIException;
-import uk.gov.pay.connector.model.api.ExternalChargeStatus;
 import uk.gov.pay.connector.model.domain.ChargeEntity;
-import uk.gov.pay.connector.model.domain.ChargeEvent;
 import uk.gov.pay.connector.model.domain.ChargeStatus;
+import uk.gov.pay.connector.model.domain.GatewayAccountEntity;
 import uk.gov.pay.connector.rules.DropwizardAppWithPostgresRule;
 import uk.gov.pay.connector.util.ChargeEventListener;
-import uk.gov.pay.connector.util.DateTimeUtils;
 
-import java.time.LocalDateTime;
 import java.time.ZonedDateTime;
 import java.time.format.DateTimeFormatter;
 import java.time.temporal.ChronoUnit;
 import java.util.HashMap;
-import java.util.List;
 import java.util.Map;
+import java.util.Optional;
 import java.util.UUID;
 
-import static com.google.common.collect.Lists.newArrayList;
-import static java.lang.Long.parseLong;
-import static java.util.Arrays.asList;
-import static java.util.stream.Collectors.toList;
-import static org.apache.commons.lang3.RandomStringUtils.randomAlphanumeric;
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.is;
 import static org.hamcrest.Matchers.notNullValue;
-import static org.hamcrest.core.IsNot.not;
-import static org.junit.Assert.assertEquals;
-import static uk.gov.pay.connector.model.domain.ChargeStatus.*;
-import static uk.gov.pay.connector.util.TransactionId.randomId;
+import static org.junit.Assert.assertTrue;
+import static uk.gov.pay.connector.model.domain.ChargeStatus.AUTHORISATION_SUBMITTED;
+import static uk.gov.pay.connector.model.domain.ChargeStatus.CREATED;
 
 public class ChargeJpaDaoITest {
     private static final Long GATEWAY_ACCOUNT_ID = 564532435L;
@@ -64,11 +48,10 @@ public class ChargeJpaDaoITest {
     public ExpectedException expectedEx = ExpectedException.none();
 
     private ChargeJpaDao chargeDao;
-    private String chargeId;
+    private Long chargeId;
     private EventDao eventDao;
     private ChargeEventListener eventListener;
     private DateTimeFormatter formatter;
-    private String createdDate;
     public GuicedTestEnvironment env;
 
 
@@ -78,6 +61,7 @@ public class ChargeJpaDaoITest {
                 .start();
 
         chargeDao = env.getInstance(ChargeJpaDao.class);
+
         app.getDatabaseTestHelper().addGatewayAccount(GATEWAY_ACCOUNT_ID.toString(), PAYMENT_PROVIDER);
         formatter = DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss");
     }
@@ -92,26 +76,7 @@ public class ChargeJpaDaoITest {
         assertThat(app.getDatabaseTestHelper().getChargeStatus(chargeEntity.getId().toString()), is("CREATED"));
     }
 
-//    @Test
-//    public void insertAmountAndThenGetAmountById() throws Exception {
-//        Map<String, Object> charge = chargeDao.findById(chargeId).get();
-//
-//        assertThat(charge.get("charge_id"), is(chargeId));
-//        assertThat(charge.get("amount"), is(AMOUNT));
-//        assertThat(charge.get("reference"), is(REFERENCE));
-//        assertThat(charge.get("description"), is(DESCRIPTION));
-//        assertThat(charge.get("status"), is(CREATED.getValue()));
-//        assertThat(charge.get("gateway_account_id"), is(GATEWAY_ACCOUNT_ID));
-//        assertThat(charge.get("return_url"), is(RETURN_URL));
-//        LocalDateTime createdDate = LocalDateTime.parse(charge.get("created_date").toString(), formatter);
-//        LocalDateTime today = LocalDateTime.now();
-//        MatcherAssert.assertThat(createdDate, LocalDateTimeMatchers.sameDay(today));
-//        MatcherAssert.assertThat(createdDate, LocalDateTimeMatchers.sameMonthOfYear(today));
-//        MatcherAssert.assertThat(createdDate, LocalDateTimeMatchers.sameYear(today));
-//        MatcherAssert.assertThat(createdDate, LocalDateTimeMatchers.within(1, ChronoUnit.MINUTES, today));
-//    }
-//
-//    @Test
+    //    @Test
 //    public void searchChargesByFullReferenceOnly() throws Exception {
 //        List<Map<String, Object>> charges = chargeDao.findAllBy(GATEWAY_ACCOUNT_ID, REFERENCE, null, null, null);
 //        assertThat(charges.size(), is(1));
@@ -210,38 +175,64 @@ public class ChargeJpaDaoITest {
 //        assertThat(charges.size(), is(0));
 //    }
 //
-//    @Test
-//    public void insertChargeAndThenUpdateStatus() throws Exception {
-//        chargeDao.updateStatus(chargeId, AUTHORISATION_SUBMITTED);
-//
-//        Map<String, Object> charge = chargeDao.findById(chargeId).get();
-//
-//        assertThat(charge.get("status"), is(AUTHORISATION_SUBMITTED.getValue()));
-//
+    @Test
+    public void shouldUpdateCharge() throws Exception {
+        Long id = System.currentTimeMillis();
+        app.getDatabaseTestHelper().addCharge(id.toString(),
+                GATEWAY_ACCOUNT_ID.toString(), AMOUNT,CREATED, RETURN_URL, UUID.randomUUID().toString(), REFERENCE, ZonedDateTime.now());
+        ChargeEntity charge = chargeDao.findById(id).get();
+
+
+        charge.setStatus(AUTHORISATION_SUBMITTED);
+        String newGatewayTransactionId = "new-gateway-transaction-id";
+        charge.setGatewayTransactionId(newGatewayTransactionId);
+        chargeDao.persist(charge);
+
+        Map<String, Object> chargeFromDB = app.getDatabaseTestHelper().getCharge(id);
+        assertThat(chargeFromDB.get("status").toString(), is(AUTHORISATION_SUBMITTED.getValue()));
+        assertThat(chargeFromDB.get("gateway_transaction_id"), is(newGatewayTransactionId));
+
+        // TODO: Enable this when the eventDao is completed.
 //        assertLoggedEvents(AUTHORISATION_SUBMITTED);
-//    }
+    }
+
+    @Test
+    public void insertAmountAndThenGetAmountById() throws Exception {
+
+        Long id = System.currentTimeMillis();
+        app.getDatabaseTestHelper().addCharge(id.toString(),
+                GATEWAY_ACCOUNT_ID.toString(), AMOUNT,CREATED, RETURN_URL, UUID.randomUUID().toString(), REFERENCE, ZonedDateTime.now());
+        ChargeEntity charge = chargeDao.findById(id).get();
+
+        assertThat(charge.getId(), is(id));
+        assertThat(charge.getAmount(), is(AMOUNT));
+        assertThat(charge.getReference(), is(REFERENCE));
+        assertThat(charge.getDescription(), is(DESCRIPTION));
+        assertThat(charge.getStatus(), is(CREATED.getValue()));
+        assertThat(charge.getGatewayAccount().getId(), is(GATEWAY_ACCOUNT_ID));
+        assertThat(charge.getReturnUrl(), is(RETURN_URL));
+        ZonedDateTime now = ZonedDateTime.now();
+        ZonedDateTime createdDate = charge.getCreatedDate();
+        assertThat(createdDate, ZonedDateTimeMatchers.isDayOfMonth(now.getDayOfMonth()));
+        assertThat(createdDate, ZonedDateTimeMatchers.isMonth(now.getMonth()));
+        assertThat(createdDate, ZonedDateTimeMatchers.isYear(now.getYear()));
+        MatcherAssert.assertThat(createdDate, ZonedDateTimeMatchers.within(1, ChronoUnit.MINUTES, now));
+    }
 //
-//    @Test
-//    public void insertChargeAndThenUpdateGatewayTransactionId() throws Exception {
-//        String transactionId = randomId();
-//        chargeDao.updateGatewayTransactionId(chargeId, transactionId);
+
 //
-//        Map<String, Object> charge = chargeDao.findById(chargeId).get();
-//        assertThat(charge.get("gateway_transaction_id"), is(transactionId));
-//    }
-//
-//    @Test
-//    public void insertChargeAndThenUpdateStatusPerGatewayTransactionId() throws Exception {
-//        String gatewayTransactionId = randomId();
-//
-//        chargeDao.updateGatewayTransactionId(chargeId, gatewayTransactionId);
-//        chargeDao.updateStatusWithGatewayInfo(PAYMENT_PROVIDER, gatewayTransactionId, AUTHORISATION_SUBMITTED);
-//
-//        Map<String, Object> charge = chargeDao.findById(chargeId).get();
-//        assertThat(charge.get("status"), is(AUTHORISATION_SUBMITTED.getValue()));
-//
-//        assertLoggedEvents(AUTHORISATION_SUBMITTED);
-//    }
+    @Test
+    public void shouldFindChargeEntityByGatewayTransactionIdAndProvider() throws Exception {
+
+        Long id = System.currentTimeMillis();
+        String transactionId = UUID.randomUUID().toString();
+        app.getDatabaseTestHelper().addCharge(id.toString(),
+                GATEWAY_ACCOUNT_ID.toString(), AMOUNT,CREATED, RETURN_URL, transactionId, REFERENCE, ZonedDateTime.now());
+
+        Optional<ChargeEntity> charge = chargeDao.findByGatewayTransactionIdAndProvider(transactionId, PAYMENT_PROVIDER);
+
+        assertTrue(charge.isPresent());
+    }
 //
 //    @Test
 //    public void updateStatusToEnteringCardDetailsFromCreated_shouldReturnOne() throws Exception {
@@ -327,10 +318,17 @@ public class ChargeJpaDaoITest {
         return new ChargeEntity(amount,
                 ChargeStatus.CREATED.toString(),
                 UUID.randomUUID().toString(),
-                "http://return.url",
-                "random-description",
-                "random-reference",
-                GATEWAY_ACCOUNT_ID
+                RETURN_URL,
+                DESCRIPTION,
+                REFERENCE,
+                newGatewayAccountEntity(GATEWAY_ACCOUNT_ID)
         );
+    }
+
+    private GatewayAccountEntity newGatewayAccountEntity(Long id) {
+        GatewayAccountEntity gatewayAccountEntity = new GatewayAccountEntity("sanbox", new HashMap<>());
+        gatewayAccountEntity.setId(id);
+
+        return gatewayAccountEntity;
     }
 }
