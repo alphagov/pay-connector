@@ -17,11 +17,13 @@ import uk.gov.pay.connector.service.PaymentProvider;
 import uk.gov.pay.connector.service.PaymentProviders;
 import uk.gov.pay.connector.util.NotificationUtil;
 
+import javax.swing.text.html.Option;
 import javax.ws.rs.POST;
 import javax.ws.rs.Path;
 import javax.ws.rs.PathParam;
 import javax.ws.rs.core.Response;
 import java.io.IOException;
+import java.util.Optional;
 import java.util.function.Consumer;
 import java.util.function.Function;
 
@@ -71,10 +73,19 @@ public class NotificationResource {
     }
 
 
-    private Function<String, GatewayAccount> findAccountByTransactionId(String provider) {
+    private Function<String, Optional<GatewayAccount>> findAccountByTransactionId(String provider) {
         return transactionId -> {
-            String accountId = chargeDao.findAccountByTransactionId(provider, transactionId).get();
-            return accountDao.findById(accountId).get();
+            Optional<String> accountId = chargeDao.findAccountByTransactionId(provider, transactionId);
+
+            if (accountId.isPresent()) {
+                Optional<GatewayAccount> gatewayAccount = accountDao.findById(accountId.get());
+
+                if (gatewayAccount.isPresent())
+                    return gatewayAccount;
+            }
+
+            logger.error("Could not find account for transaction id " + transactionId);
+            return Optional.empty();
         };
     }
 
