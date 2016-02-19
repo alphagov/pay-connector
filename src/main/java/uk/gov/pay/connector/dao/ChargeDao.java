@@ -25,6 +25,7 @@ import static java.util.stream.Collectors.toList;
 import static uk.gov.pay.connector.model.domain.ChargeStatus.CREATED;
 import static uk.gov.pay.connector.util.ChargesSearch.createQueryHandle;
 
+@Deprecated
 public class ChargeDao {
     private static final Logger logger = LoggerFactory.getLogger(ChargeDao.class);
 

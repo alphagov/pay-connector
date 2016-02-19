@@ -6,6 +6,7 @@ import uk.gov.pay.connector.model.domain.ChargeEvent;
 
 import java.util.List;
 
+@Deprecated
 public class EventDao {
     private DBI jdbi;
 

@@ -64,6 +64,7 @@ public class ConnectorApp extends Application<ConnectorConfiguration> {
         final Injector injector = Guice.createInjector(new ConnectorModule(conf, environment), createJpaModule(conf.getDatabaseConfig()));
         environment.servlets().addFilter("persistFilter", injector.getInstance(PersistFilter.class));
         environment.jersey().register(injector.getInstance(GatewayAccountJpaResource.class));
+        environment.jersey().register(injector.getInstance(EventsApiJpaResource.class));
 
         // end JPA stuff
         DataSourceFactory dataSourceFactory = conf.getDataSourceFactory();

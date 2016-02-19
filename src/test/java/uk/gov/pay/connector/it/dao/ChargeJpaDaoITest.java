@@ -1,6 +1,5 @@
 package uk.gov.pay.connector.it.dao;
 
-import com.google.common.collect.ImmutableMap;
 import org.exparity.hamcrest.date.ZonedDateTimeMatchers;
 import org.hamcrest.MatcherAssert;
 import org.junit.Before;
@@ -18,14 +17,13 @@ import uk.gov.pay.connector.util.ChargeEventListener;
 import java.time.ZonedDateTime;
 import java.time.format.DateTimeFormatter;
 import java.time.temporal.ChronoUnit;
-import java.util.HashMap;
-import java.util.Map;
-import java.util.Optional;
-import java.util.UUID;
+import java.util.*;
 
+import static com.google.common.collect.Lists.newArrayList;
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.is;
 import static org.hamcrest.Matchers.notNullValue;
+import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertTrue;
 import static uk.gov.pay.connector.model.domain.ChargeStatus.AUTHORISATION_SUBMITTED;
 import static uk.gov.pay.connector.model.domain.ChargeStatus.CREATED;
@@ -76,7 +74,7 @@ public class ChargeJpaDaoITest {
         assertThat(app.getDatabaseTestHelper().getChargeStatus(chargeEntity.getId().toString()), is("CREATED"));
     }
 
-    //    @Test
+//        @Test
 //    public void searchChargesByFullReferenceOnly() throws Exception {
 //        List<Map<String, Object>> charges = chargeDao.findAllBy(GATEWAY_ACCOUNT_ID, REFERENCE, null, null, null);
 //        assertThat(charges.size(), is(1));
@@ -174,7 +172,7 @@ public class ChargeJpaDaoITest {
 //        List<Map<String, Object>> charges = chargeDao.findAllBy(GATEWAY_ACCOUNT_ID, REFERENCE, ExternalChargeStatus.EXT_CREATED, null, FROM_DATE);
 //        assertThat(charges.size(), is(0));
 //    }
-//
+
     @Test
     public void shouldUpdateCharge() throws Exception {
         Long id = System.currentTimeMillis();
@@ -218,9 +216,7 @@ public class ChargeJpaDaoITest {
         assertThat(createdDate, ZonedDateTimeMatchers.isYear(now.getYear()));
         MatcherAssert.assertThat(createdDate, ZonedDateTimeMatchers.within(1, ChronoUnit.MINUTES, now));
     }
-//
 
-//
     @Test
     public void shouldFindChargeEntityByGatewayTransactionIdAndProvider() throws Exception {
 
@@ -233,7 +229,7 @@ public class ChargeJpaDaoITest {
 
         assertTrue(charge.isPresent());
     }
-//
+
 //    @Test
 //    public void updateStatusToEnteringCardDetailsFromCreated_shouldReturnOne() throws Exception {
 //        List<ChargeStatus> oldStatuses = newArrayList(CREATED, ENTERING_CARD_DETAILS);

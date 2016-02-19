@@ -41,6 +41,7 @@ import static org.junit.Assert.assertEquals;
 import static uk.gov.pay.connector.model.domain.ChargeStatus.*;
 import static uk.gov.pay.connector.util.TransactionId.randomId;
 
+@Deprecated
 public class ChargeDaoITest {
     private static final String GATEWAY_ACCOUNT_ID = "564532435";
     private static final String RETURN_URL = "http://service.com/success-page";
