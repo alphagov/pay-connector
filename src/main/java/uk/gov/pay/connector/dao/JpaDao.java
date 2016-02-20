@@ -9,7 +9,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 
-//rename this when we can get rid of Jpa
+//TODO: rename this when we can get rid of Jpa
 public class JpaDao<T> {
 
     private static final String QUERY_SELECT_ALL = "SELECT o FROM %s o ORDER BY o.id";
@@ -29,14 +29,17 @@ public class JpaDao<T> {
         return Optional.ofNullable(entityManager.get().find(clazz, id));
     }
 
+    @Transactional
     public <T> T merge(final T object) {
         return entityManager.get().merge(object);
     }
 
+    @Transactional
     public <T> void remove(final T object) {
         entityManager.get().remove(object);
     }
 
+    @Transactional
     public <T, ID> void removeById(final Class<T> clazz, final ID id) {
         remove(findById(clazz, id));
     }

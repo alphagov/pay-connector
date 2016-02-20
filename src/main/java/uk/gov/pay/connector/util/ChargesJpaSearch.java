@@ -1,23 +1,20 @@
 package uk.gov.pay.connector.util;
 
 import org.apache.commons.lang3.StringUtils;
-import org.skife.jdbi.v2.DefaultMapper;
-import org.skife.jdbi.v2.Handle;
-import org.skife.jdbi.v2.Query;
 import uk.gov.pay.connector.model.api.ExternalChargeStatus;
+import uk.gov.pay.connector.model.domain.ChargeEntity;
 
+import javax.persistence.TypedQuery;
 import java.sql.Timestamp;
+import java.time.ZonedDateTime;
 import java.util.Arrays;
-import java.util.List;
-import java.util.Map;
 import java.util.stream.Collectors;
 
 import static org.apache.commons.lang3.StringUtils.isNotBlank;
 
-@Deprecated
-public class ChargesSearch {
+public class ChargesJpaSearch {
 
-    private static String constructSearchTransactionsQuery(String reference, ExternalChargeStatus status, String fromDate, String toDate) {
+    public static String constructSearchTransactionsQuery(String reference, ExternalChargeStatus status, String fromDate, String toDate) {
         StringBuffer subQuery = new StringBuffer();
 
         String AND = " AND ";
@@ -25,7 +22,7 @@ public class ChargesSearch {
         // Filter by reference or chargeId
         if (isNotBlank(reference)) {
             subQuery.append(AND);
-            subQuery.append("c.reference LIKE :reference");
+            subQuery.append("c.reference like :reference");
         }
 
         // Filter by status
@@ -43,35 +40,34 @@ public class ChargesSearch {
         // Filter by Date(s)
         if (isNotBlank(fromDate)) {
             subQuery.append(AND);
-            subQuery.append("c.created_date >= :fromDate");
+            subQuery.append("c.createdDate >= :fromDate");
         }
         if (isNotBlank(toDate)) {
             subQuery.append(AND);
-            subQuery.append("c.created_date <= :toDate");
+            subQuery.append("c.createdDate <= :toDate");
         }
 
         return subQuery.toString();
     }
 
-    public static List<Map<String, Object>> createQueryHandle(Handle handle, String query, String gatewayAccountId,
-                                                              String reference, ExternalChargeStatus status, String fromDate, String toDate) {
+    public static TypedQuery<ChargeEntity> setParameters(TypedQuery<ChargeEntity> query, Long gatewayAccountId,
+                                                       String reference,
+                                                       String fromDate, String toDate) {
 
-        Query<Map<String, Object>> queryStmt = handle
-                .createQuery(String.format(query, constructSearchTransactionsQuery(reference, status, fromDate, toDate)))
-                .bind("gid", Long.valueOf(gatewayAccountId));
+        query.setParameter("gid", Long.valueOf(gatewayAccountId));
 
         // Filter by reference or chargeId
         if (StringUtils.isNotBlank(reference)) {
-            queryStmt.bind("reference", "%" + reference + "%");
+            query.setParameter("reference", "%" + reference + "%");
         }
 
         // Filter by Date(s)
         if (StringUtils.isNotBlank(fromDate)) {
-            queryStmt.bind("fromDate", Timestamp.from(DateTimeUtils.toUTCZonedDateTime(fromDate).get().toInstant()));
+            query.setParameter("fromDate", ZonedDateTime.parse(fromDate));
         }
         if (StringUtils.isNotBlank(toDate)) {
-            queryStmt.bind("toDate", Timestamp.from(DateTimeUtils.toUTCZonedDateTime(toDate).get().toInstant()));
+            query.setParameter("toDate", ZonedDateTime.parse(toDate));
         }
-        return queryStmt.map(new DefaultMapper()).list();
+        return query;
     }
 }
