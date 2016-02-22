@@ -7,13 +7,11 @@ import org.hamcrest.Matcher;
 import org.hamcrest.MatcherAssert;
 import org.hamcrest.TypeSafeMatcher;
 import org.junit.Before;
+import org.junit.Ignore;
 import org.junit.Rule;
 import org.junit.Test;
 import org.junit.rules.ExpectedException;
-import uk.gov.pay.connector.dao.ChargeJpaDao;
-import uk.gov.pay.connector.dao.ChargeSearchQueryBuilder;
-import uk.gov.pay.connector.dao.EventJpaDao;
-import uk.gov.pay.connector.dao.GatewayAccountJpaDao;
+import uk.gov.pay.connector.dao.*;
 import uk.gov.pay.connector.model.domain.ChargeEntity;
 import uk.gov.pay.connector.model.domain.ChargeEventEntity;
 import uk.gov.pay.connector.model.domain.ChargeStatus;
@@ -30,12 +28,15 @@ import java.util.List;
 import java.util.Optional;
 import java.util.UUID;
 
+import static com.google.common.collect.Lists.newArrayList;
 import static java.util.Arrays.asList;
 import static java.util.stream.Collectors.toList;
 import static org.apache.commons.lang3.RandomStringUtils.randomAlphanumeric;
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.is;
+import static org.hamcrest.Matchers.not;
 import static org.hamcrest.Matchers.notNullValue;
+import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertTrue;
 import static uk.gov.pay.connector.model.domain.ChargeStatus.*;
 
@@ -310,45 +311,47 @@ public class ChargeJpaDaoITest {
         assertTrue(charge.isPresent());
     }
 
-//    @Test
-//    public void updateStatusToEnteringCardDetailsFromCreated_shouldReturnOne() throws Exception {
-//        List<ChargeStatus> oldStatuses = newArrayList(CREATED, ENTERING_CARD_DETAILS);
-//        int rowsUpdated = chargeDao.updateNewStatusWhereOldStatusIn(chargeId, ENTERING_CARD_DETAILS, oldStatuses);
-//        assertEquals(1, rowsUpdated);
-//        ChargeEntity charge = chargeDao.findById(chargeId).get();
-//        assertThat(charge.getId(), is(chargeId));
-//        assertThat(charge.getStatus(), is(ENTERING_CARD_DETAILS.getValue()));
-//
-//        assertLoggedEvents(chargeId, CREATED, ENTERING_CARD_DETAILS);
-//    }
-//
-//    @Test
-//    public void updateStatusToEnteringCardDetailsFromCaptured_shouldReturnZero() throws Exception {
-//        ChargeEntity charge = chargeDao.findById(chargeId).get();
-//        charge.setStatus(CAPTURE_SUBMITTED);
-//        chargeDao.merge(charge);
-//        List<ChargeStatus> oldStatuses = newArrayList(CREATED, ENTERING_CARD_DETAILS);
-//        int rowsUpdated = chargeDao.updateNewStatusWhereOldStatusIn(chargeId, ENTERING_CARD_DETAILS, oldStatuses);
-//
-//        assertEquals(0, rowsUpdated);
-//        charge = chargeDao.findById(chargeId).get();
-//        assertThat(charge.getId(), is(chargeId));
-//        assertThat(charge.getStatus(), is(CAPTURE_SUBMITTED.getValue()));
-//
-//        List<ChargeEventEntity> events = eventDao.findEvents(GATEWAY_ACCOUNT_ID, chargeId);
-//        assertThat(events, not(shouldIncludeStatus(ENTERING_CARD_DETAILS)));
-//    }
+    @Test
+    public void updateStatusToEnteringCardDetailsFromCreated_shouldReturnOne() throws Exception {
+        List<ChargeStatus> oldStatuses = newArrayList(CREATED, ENTERING_CARD_DETAILS);
+        chargeDao.updateNewStatusWhereOldStatusIn(chargeId, ENTERING_CARD_DETAILS, oldStatuses);
 
-//    @Test
-//    public void throwDBIExceptionIfStatusNotUpdateForMissingCharge() throws Exception {
-//        String unknownId = "128457938450746";
-//        ChargeStatus status = AUTHORISATION_SUCCESS;
-//
-//        expectedEx.expect(PayDBIException.class);
-//        expectedEx.expectMessage("Could not update charge '" + unknownId + "' with status " + status.toString());
-//
-//        chargeDao.updateStatus(Long.valueOf(unknownId), status);
-//    }
+        ChargeEntity charge = chargeDao.findById(chargeId).get();
+
+        assertThat(charge.getId(), is(chargeId));
+        assertThat(charge.getStatus(), is(ENTERING_CARD_DETAILS.getValue()));
+        assertLoggedEvents(chargeId, CREATED, ENTERING_CARD_DETAILS);
+    }
+
+    @Test
+    public void updateStatusToEnteringCardDetailsFromCaptured_shouldReturnZero() throws Exception {
+
+        ChargeEntity charge = chargeDao.findById(chargeId).get();
+        charge.setStatus(CAPTURE_SUBMITTED);
+
+        chargeDao.merge(charge);
+        List<ChargeStatus> oldStatuses = newArrayList(CREATED, ENTERING_CARD_DETAILS);
+
+        chargeDao.updateNewStatusWhereOldStatusIn(chargeId, ENTERING_CARD_DETAILS, oldStatuses);
+
+        charge = chargeDao.findById(chargeId).get();
+        assertThat(charge.getId(), is(chargeId));
+        assertThat(charge.getStatus(), is(CAPTURE_SUBMITTED.getValue()));
+
+        List<ChargeEventEntity> events = eventDao.findEvents(GATEWAY_ACCOUNT_ID, chargeId);
+        assertThat(events, not(shouldIncludeStatus(ENTERING_CARD_DETAILS)));
+    }
+
+/*    @Test
+    public void throwDBIExceptionIfStatusNotUpdateForMissingCharge() throws Exception {
+        String unknownId = "128457938450746";
+        ChargeStatus status = AUTHORISATION_SUCCESS;
+
+        expectedEx.expect(PayDBIException.class);
+        expectedEx.expectMessage("Could not update charge '" + unknownId + "' with status " + status.toString());
+
+        chargeDao.updateStatus(Long.valueOf(unknownId), status);
+    }*/
 
     @Test
     public void invalidSizeOfFields() throws Exception {

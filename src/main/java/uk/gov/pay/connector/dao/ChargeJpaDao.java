@@ -11,6 +11,7 @@ import uk.gov.pay.connector.util.ChargeEventJpaListener;
 
 import javax.inject.Inject;
 import javax.persistence.EntityManager;
+import javax.persistence.Query;
 import javax.persistence.TypedQuery;
 import java.time.LocalDateTime;
 import java.util.List;
@@ -21,7 +22,8 @@ import static java.lang.String.format;
 import static uk.gov.pay.connector.model.domain.ChargeStatus.CREATED;
 
 public class ChargeJpaDao extends JpaDao<ChargeEntity> {
-    private static final Logger logger = LoggerFactory.getLogger(ChargeDao.class);
+
+    private static final Logger logger = LoggerFactory.getLogger(ChargeJpaDao.class);
 
     private ChargeEventJpaListener eventListener;
 
@@ -32,7 +34,7 @@ public class ChargeJpaDao extends JpaDao<ChargeEntity> {
     }
 
     @Transactional
-    public void persist( ChargeEntity charge) {
+    public void persist(ChargeEntity charge) {
         super.persist(charge);
         eventListener.notify(ChargeEventEntity.from(charge, CREATED, charge.getCreatedDate().toLocalDateTime()));
     }
@@ -69,35 +71,37 @@ public class ChargeJpaDao extends JpaDao<ChargeEntity> {
 
     // updates the new status only if the charge is in one of the old statuses and returns num of rows affected
     // very specific transition happening here so check for a valid state before transitioning
-//    @Transactional
-//    public int updateNewStatusWhereOldStatusIn(Long chargeId, ChargeStatus newStatus, List<ChargeStatus> oldStatuses) {
-//        String sql = format("UPDATE ChargeEntity c SET c.status=:newStatus WHERE c.id=:chargeId and c.status in (%s)", getStringFromStatusList(oldStatuses));
-//
-//        int updateCount = entityManager.get().createQuery(sql, ChargeEntity.class)
-//               .setParameter("chargeId", chargeId)
-//               .setParameter("newStatus", newStatus.getValue())
-//               .executeUpdate();
-//        if (updateCount > 0) {
-//            eventListener.notify(ChargeEventEntity.from(chargeId, newStatus, LocalDateTime.now()));
-//        }
-//        return updateCount;
-//    }
-//
-//    @Transactional
-//    public void updateStatus(Long chargeId, ChargeStatus newStatus) {
-//
-//        int updateCount = entityManager.get()
-//                .createQuery("UPDATE ChargeEntity c SET c.status=:newStatus WHERE c.id=:chargeId", ChargeEntity.class)
-//                .setParameter("chargeId", chargeId)
-//                .setParameter("newStatus", newStatus.getValue())
-//                .executeUpdate();
-//        if (updateCount != 1) {
-//            throw new PayDBIException(format("Could not update charge '%s' with status %s, updated %d rows.", chargeId, newStatus, updateCount));
-//        }
-//        entityManager.get().flush();
-//        entityManager.get().clear();
-//        eventListener.notify(ChargeEventEntity.from(chargeId, newStatus, LocalDateTime.now()));
-//    }
+    @Transactional
+    public void updateNewStatusWhereOldStatusIn(Long chargeId, ChargeStatus newStatus, List<ChargeStatus> oldStatuses) {
+
+        ChargeEntity chargeEntity = findById(chargeId).get();
+        String status = chargeEntity.getStatus();
+
+        if(oldStatuses.contains(ChargeStatus.chargeStatusFrom(status))){
+            chargeEntity.setStatus(newStatus);
+            eventListener.notify(ChargeEventEntity.from(chargeEntity, newStatus, LocalDateTime.now()));
+        }
+    }
+
+    @Transactional
+    public void updateStatus(Long chargeId, ChargeStatus newStatus) {
+
+        ChargeEntity chargeEntity = findById(chargeId).get();
+        chargeEntity.setStatus(newStatus);
+        eventListener.notify(ChargeEventEntity.from(chargeEntity, newStatus, LocalDateTime.now()));
+
+        int updateCount = entityManager.get()
+                .createQuery("UPDATE ChargeEntity c SET c.status=:newStatus WHERE c.id=:chargeId", ChargeEntity.class)
+                .setParameter("chargeId", chargeId)
+                .setParameter("newStatus", newStatus.getValue())
+                .executeUpdate();
+        if (updateCount != 1) {
+            throw new PayDBIException(format("Could not update charge '%s' with status %s, updated %d rows.", chargeId, newStatus, updateCount));
+        }
+        entityManager.get().flush();
+        entityManager.get().clear();
+
+    }
 
     private String getStringFromStatusList(List<ChargeStatus> oldStatuses) {
         return oldStatuses
