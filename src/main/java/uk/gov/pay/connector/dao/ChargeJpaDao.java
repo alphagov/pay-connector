@@ -4,7 +4,6 @@ import com.google.inject.Provider;
 import com.google.inject.persist.Transactional;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import uk.gov.pay.connector.model.api.ExternalChargeStatus;
 import uk.gov.pay.connector.model.domain.ChargeEntity;
 import uk.gov.pay.connector.model.domain.ChargeEventEntity;
 import uk.gov.pay.connector.model.domain.ChargeStatus;
@@ -14,15 +13,12 @@ import javax.inject.Inject;
 import javax.persistence.EntityManager;
 import javax.persistence.TypedQuery;
 import java.time.LocalDateTime;
-import java.time.ZonedDateTime;
 import java.util.List;
 import java.util.Optional;
 import java.util.stream.Collectors;
 
 import static java.lang.String.format;
 import static uk.gov.pay.connector.model.domain.ChargeStatus.CREATED;
-import static uk.gov.pay.connector.util.ChargesJpaSearch.constructSearchTransactionsQuery;
-import static uk.gov.pay.connector.util.ChargesJpaSearch.setParameters;
 
 public class ChargeJpaDao extends JpaDao<ChargeEntity> {
     private static final Logger logger = LoggerFactory.getLogger(ChargeDao.class);
@@ -70,15 +66,8 @@ public class ChargeJpaDao extends JpaDao<ChargeEntity> {
         return Optional.ofNullable(query.getSingleResult());
     }
 
-    public List<ChargeEntity> findAllBy(Long gatewayAccountId, String reference, String status, ZonedDateTime fromDate, ZonedDateTime toDate) {
-
-        TypedQuery<ChargeEntity> query = new ChargeSearchQueryBuilder()
-                .withGatewayAccountId(gatewayAccountId)
-                .withReferenceLike(reference)
-                .withStatus(status)
-                .withCreatedDateBetween(fromDate, toDate)
-                .build(entityManager);
-
+    public List<ChargeEntity> findAllBy(ChargeSearchQueryBuilder queryBuilder) {
+        TypedQuery<ChargeEntity> query = queryBuilder.buildWith(entityManager);
         return query.getResultList();
     }
 
@@ -114,23 +103,6 @@ public class ChargeJpaDao extends JpaDao<ChargeEntity> {
         entityManager.get().flush();
         entityManager.get().clear();
         eventListener.notify(ChargeEventEntity.from(chargeId, newStatus, LocalDateTime.now()));
-    }
-
-	@Transactional
-    public List<ChargeEntity> findAllBy(Long gatewayAccountId, String reference, ExternalChargeStatus status,
-                                               String fromDate, String toDate) {
-        String queryStr =
-                "SELECT c " +
-                        "FROM " +
-                        "ChargeEntity c " +
-                        "WHERE " +
-                        "c.gatewayAccount.id=:gid " +
-                        "%s " +
-                        "ORDER BY c.id DESC";
-
-        TypedQuery<ChargeEntity> query = entityManager.get()
-                .createQuery(format(queryStr, constructSearchTransactionsQuery(reference, status, fromDate, toDate)), ChargeEntity.class);
-        return setParameters(query, gatewayAccountId, reference, fromDate, toDate).getResultList();
     }
 
     private String getStringFromStatusList(List<ChargeStatus> oldStatuses) {

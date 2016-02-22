@@ -1,26 +1,37 @@
 package uk.gov.pay.connector.dao;
 
+import com.google.common.base.Joiner;
+import com.google.common.base.Preconditions;
 import com.google.inject.Provider;
 import uk.gov.pay.connector.model.domain.ChargeEntity;
 
 import javax.persistence.EntityManager;
 import javax.persistence.TypedQuery;
 import java.time.ZonedDateTime;
+import java.util.Arrays;
+import java.util.List;
+
+import static org.apache.commons.lang3.StringUtils.isNoneBlank;
+import static org.apache.commons.lang3.StringUtils.isNotBlank;
 
 public class ChargeSearchQueryBuilder {
 
-    private static final String BASE_QUERY = "select c from ChargeEntity c where ";
-    private static final String AND = " and ";
+    private static final String BASE_QUERY =
+            "SELECT c " +
+            "FROM ChargeEntity c " +
+            "WHERE c.gatewayAccount.id = :gatewayAccountId";
+
+    private static final String AND = " AND ";
 
     private Long gatewayAccountId;
     private String reference;
-    private String status;
+    private List<String> statuses;
     private ZonedDateTime fromDate;
     private ZonedDateTime toDate;
 
-    public ChargeSearchQueryBuilder withGatewayAccountId(Long gatewayAccountId) {
+    public ChargeSearchQueryBuilder(Long gatewayAccountId) {
+        Preconditions.checkNotNull(gatewayAccountId);
         this.gatewayAccountId = gatewayAccountId;
-        return this;
     }
 
     public ChargeSearchQueryBuilder withReferenceLike(String reference) {
@@ -28,8 +39,8 @@ public class ChargeSearchQueryBuilder {
         return this;
     }
 
-    public ChargeSearchQueryBuilder withStatus(String status) {
-        this.status = status;
+    public ChargeSearchQueryBuilder withStatus(String ... statuses) {
+        this.statuses = Arrays.asList(statuses);
         return this;
     }
 
@@ -39,21 +50,47 @@ public class ChargeSearchQueryBuilder {
         return this;
     }
 
-    public TypedQuery<ChargeEntity> build(Provider<EntityManager> entityManagerProvider) {
-
-        String query = BASE_QUERY + "c.gatewayAccount.id = :gatewayAccountId" +
-                AND + "c.reference like :reference" +
-                AND + "c.status = :status" +
-                AND + "c.createdDate between :fromDate and :toDate";
-
-        TypedQuery<ChargeEntity> typedQuery = entityManagerProvider.get().createQuery(query, ChargeEntity.class);
+    public TypedQuery<ChargeEntity> buildWith(Provider<EntityManager> entityManagerProvider) {
+        TypedQuery<ChargeEntity> typedQuery = entityManagerProvider.get().createQuery(buildQuery(), ChargeEntity.class);
 
         typedQuery.setParameter("gatewayAccountId", gatewayAccountId);
-        typedQuery.setParameter("reference", "%" + reference + "%");
-        typedQuery.setParameter("status", status);
-        typedQuery.setParameter("fromDate", fromDate);
-        typedQuery.setParameter("toDate", toDate);
+
+        if (isNoneBlank(reference)) {
+            typedQuery.setParameter("reference", "%" + reference + "%");
+        }
+
+        if (statuses != null && statuses.size() > 0) {
+            typedQuery.setParameter("statuses", statuses);
+        }
+
+        if (fromDate != null) {
+            typedQuery.setParameter("fromDate", fromDate);
+        }
+
+        if (toDate != null) {
+            typedQuery.setParameter("toDate", toDate);
+        }
 
         return typedQuery;
+    }
+
+    private String buildQuery() {
+        StringBuilder query = new StringBuilder(BASE_QUERY);
+
+        if (isNotBlank(reference)) {
+            query.append(AND);
+            query.append("c.reference LIKE :reference");
+        }
+
+        if (statuses != null && statuses.size() > 0) {
+            query.append(AND).append("c.status IN :statuses");
+        }
+
+        if (fromDate != null && toDate != null) {
+            query.append(AND).append("c.createdDate BETWEEN :fromDate AND :toDate");
+        }
+
+        query.append(" ORDER BY c.id DESC");
+        return query.toString();
     }
 }
