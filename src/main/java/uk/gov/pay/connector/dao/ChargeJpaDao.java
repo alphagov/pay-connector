@@ -14,6 +14,7 @@ import javax.inject.Inject;
 import javax.persistence.EntityManager;
 import javax.persistence.TypedQuery;
 import java.time.LocalDateTime;
+import java.time.ZonedDateTime;
 import java.util.List;
 import java.util.Optional;
 import java.util.stream.Collectors;
@@ -67,6 +68,18 @@ public class ChargeJpaDao extends JpaDao<ChargeEntity> {
         query.setParameter("paymentProvider", paymentProvider);
 
         return Optional.ofNullable(query.getSingleResult());
+    }
+
+    public List<ChargeEntity> findAllBy(Long gatewayAccountId, String reference, String status, ZonedDateTime fromDate, ZonedDateTime toDate) {
+
+        TypedQuery<ChargeEntity> query = new ChargeSearchQueryBuilder()
+                .withGatewayAccountId(gatewayAccountId)
+                .withReferenceLike(reference)
+                .withStatus(status)
+                .withCreatedDateBetween(fromDate, toDate)
+                .build(entityManager);
+
+        return query.getResultList();
     }
 
     // updates the new status only if the charge is in one of the old statuses and returns num of rows affected
@@ -128,3 +141,5 @@ public class ChargeJpaDao extends JpaDao<ChargeEntity> {
     }
 
 }
+
+

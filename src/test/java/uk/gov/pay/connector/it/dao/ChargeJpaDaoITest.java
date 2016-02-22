@@ -223,7 +223,7 @@ public class ChargeJpaDaoITest {
 
         Long id = System.currentTimeMillis();
         app.getDatabaseTestHelper().addCharge(id.toString(),
-                GATEWAY_ACCOUNT_ID.toString(), AMOUNT,CREATED, RETURN_URL, UUID.randomUUID().toString(), REFERENCE, ZonedDateTime.now());
+                GATEWAY_ACCOUNT_ID.toString(), AMOUNT, CREATED, RETURN_URL, UUID.randomUUID().toString(), REFERENCE, ZonedDateTime.now());
         ChargeEntity charge = chargeDao.findById(id).get();
 
         assertThat(charge.getId(), is(id));
@@ -241,19 +241,20 @@ public class ChargeJpaDaoITest {
         MatcherAssert.assertThat(createdDate, ZonedDateTimeMatchers.within(1, ChronoUnit.MINUTES, now));
     }
 
+//
     @Test
     public void shouldFindChargeEntityByGatewayTransactionIdAndProvider() throws Exception {
 
         Long id = System.currentTimeMillis();
         String transactionId = UUID.randomUUID().toString();
         app.getDatabaseTestHelper().addCharge(id.toString(),
-                GATEWAY_ACCOUNT_ID.toString(), AMOUNT,CREATED, RETURN_URL, transactionId, REFERENCE, ZonedDateTime.now());
+                GATEWAY_ACCOUNT_ID.toString(), AMOUNT, CREATED, RETURN_URL, transactionId, REFERENCE, ZonedDateTime.now());
 
         Optional<ChargeEntity> charge = chargeDao.findByGatewayTransactionIdAndProvider(transactionId, PAYMENT_PROVIDER);
 
         assertTrue(charge.isPresent());
     }
-
+//
 //    @Test
 //    public void updateStatusToEnteringCardDetailsFromCreated_shouldReturnOne() throws Exception {
 //        List<ChargeStatus> oldStatuses = newArrayList(CREATED, ENTERING_CARD_DETAILS);
@@ -321,7 +322,7 @@ public class ChargeJpaDaoITest {
             }
         };
     }
-
+    @Deprecated
     private ImmutableMap<String, Object> newCharge(long amount, String reference) {
         return ImmutableMap.of(
                 "amount", amount,
