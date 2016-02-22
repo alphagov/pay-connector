@@ -16,7 +16,7 @@ public class EventJpaDao extends JpaDao<ChargeEventEntity> {
     public List<ChargeEventEntity> findEvents(Long accountId, Long chargeId) {
         return entityManager.get().createQuery(
                 "SELECT cs " +
-                        "FROM ChargeEventEntity AS cs WHERE cs.chargeId IN " +
+                        "FROM ChargeEventEntity AS cs WHERE cs.chargeEntity.id IN " +
                         "(SELECT ch.id FROM ChargeEntity AS ch" +
                         " WHERE ch.id=:chargeId AND" +
                         " ch.gatewayAccount.id=:accountId)", ChargeEventEntity.class)

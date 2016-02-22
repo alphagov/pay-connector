@@ -1,6 +1,5 @@
 package uk.gov.pay.connector.rules;
 
-import com.google.inject.Provider;
 import com.google.inject.persist.jpa.JpaPersistModule;
 import io.dropwizard.testing.ConfigOverride;
 import io.dropwizard.testing.junit.DropwizardAppRule;
@@ -13,10 +12,8 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import uk.gov.pay.connector.app.ConnectorApp;
 import uk.gov.pay.connector.app.ConnectorConfiguration;
-import uk.gov.pay.connector.app.DatabaseConfig;
 import uk.gov.pay.connector.util.DatabaseTestHelper;
 
-import javax.persistence.EntityManager;
 import java.util.List;
 import java.util.Properties;
 

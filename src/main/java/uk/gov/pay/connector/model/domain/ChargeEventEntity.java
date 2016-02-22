@@ -20,8 +20,9 @@ import static uk.gov.pay.connector.model.domain.ChargeStatus.chargeStatusFrom;
 @Embeddable
 public class ChargeEventEntity extends AbstractEntity {
 
-    @Column(name= "charge_id")
-    private Long chargeId;
+    @ManyToOne
+    @JoinColumn(name = "charge_id", updatable = false)
+    private ChargeEntity chargeEntity;
 
     @Convert(converter = ChargeStatusConverter.class)
     private ChargeStatus status;
@@ -34,12 +35,12 @@ public class ChargeEventEntity extends AbstractEntity {
 
     protected ChargeEventEntity() {}
 
-    public ChargeEventEntity(Long chargeId, String status, LocalDateTime updated) {
-        this(chargeId, chargeStatusFrom(status), updated);
+    public ChargeEventEntity(ChargeEntity chargeEntity, String status, LocalDateTime updated) {
+        this(chargeEntity, chargeStatusFrom(status), updated);
     }
 
-    public ChargeEventEntity(Long chargeId, ChargeStatus chargeStatus, LocalDateTime updated) {
-        this.chargeId = chargeId;
+    public ChargeEventEntity(ChargeEntity chargeEntity, ChargeStatus chargeStatus, LocalDateTime updated) {
+        this.chargeEntity = chargeEntity;
         this.status = chargeStatus;
         this.updated = updated;
     }
@@ -58,20 +59,11 @@ public class ChargeEventEntity extends AbstractEntity {
         return updated;
     }
 
-    @Override
-    public String toString() {
-        return "ChargeEvent{" +
-                "chargeId=" + chargeId +
-                ", status=" + status +
-                ", updated=" + updated +
-                '}';
+    public ChargeEntity getChargeEntity() {
+        return chargeEntity;
     }
 
-    public Long getChargeId() {
-        return chargeId;
-    }
-
-    public static ChargeEventEntity from(Long chargeId, ChargeStatus chargeStatus, LocalDateTime updated) {
-        return new ChargeEventEntity(chargeId, chargeStatus, updated);
+    public static ChargeEventEntity from(ChargeEntity chargeEntity, ChargeStatus chargeStatus, LocalDateTime updated) {
+        return new ChargeEventEntity(chargeEntity, chargeStatus, updated);
     }
 }

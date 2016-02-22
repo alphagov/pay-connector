@@ -1,13 +1,14 @@
 package uk.gov.pay.connector.dao;
 
-import com.google.common.base.Joiner;
 import com.google.common.base.Preconditions;
 import com.google.inject.Provider;
 import uk.gov.pay.connector.model.domain.ChargeEntity;
+import uk.gov.pay.connector.model.domain.ChargeStatus;
 
 import javax.persistence.EntityManager;
 import javax.persistence.TypedQuery;
 import java.time.ZonedDateTime;
+import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 
@@ -18,14 +19,14 @@ public class ChargeSearchQueryBuilder {
 
     private static final String BASE_QUERY =
             "SELECT c " +
-            "FROM ChargeEntity c " +
-            "WHERE c.gatewayAccount.id = :gatewayAccountId";
+                    "FROM ChargeEntity c " +
+                    "WHERE c.gatewayAccount.id = :gatewayAccountId";
 
     private static final String AND = " AND ";
 
     private Long gatewayAccountId;
     private String reference;
-    private List<String> statuses;
+    private List<ChargeStatus> statuses = new ArrayList<>();
     private ZonedDateTime fromDate;
     private ZonedDateTime toDate;
 
@@ -39,8 +40,18 @@ public class ChargeSearchQueryBuilder {
         return this;
     }
 
-    public ChargeSearchQueryBuilder withStatus(String ... statuses) {
+    public ChargeSearchQueryBuilder withStatus(ChargeStatus... statuses) {
         this.statuses = Arrays.asList(statuses);
+        return this;
+    }
+
+    public ChargeSearchQueryBuilder withCreatedDateFrom(ZonedDateTime fromDate) {
+        this.fromDate = fromDate;
+        return this;
+    }
+
+    public ChargeSearchQueryBuilder withCreatedDateTo(ZonedDateTime toDate) {
+        this.toDate = toDate;
         return this;
     }
 
@@ -59,7 +70,7 @@ public class ChargeSearchQueryBuilder {
             typedQuery.setParameter("reference", "%" + reference + "%");
         }
 
-        if (statuses != null && statuses.size() > 0) {
+        if (!statuses.isEmpty()) {
             typedQuery.setParameter("statuses", statuses);
         }
 
@@ -86,11 +97,18 @@ public class ChargeSearchQueryBuilder {
             query.append(AND).append("c.status IN :statuses");
         }
 
-        if (fromDate != null && toDate != null) {
-            query.append(AND).append("c.createdDate BETWEEN :fromDate AND :toDate");
+        if (fromDate != null) {
+            query.append(AND);
+            query.append("c.createdDate >= :fromDate");
+        }
+        if (toDate != null) {
+            query.append(AND);
+            query.append("c.createdDate <= :toDate");
         }
 
         query.append(" ORDER BY c.id DESC");
+
+        System.out.println("query.toString() = " + query.toString());
         return query.toString();
     }
 }

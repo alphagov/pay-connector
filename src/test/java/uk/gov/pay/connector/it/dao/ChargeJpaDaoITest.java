@@ -10,8 +10,10 @@ import org.junit.Before;
 import org.junit.Rule;
 import org.junit.Test;
 import org.junit.rules.ExpectedException;
-import uk.gov.pay.connector.dao.*;
-import uk.gov.pay.connector.model.api.ExternalChargeStatus;
+import uk.gov.pay.connector.dao.ChargeJpaDao;
+import uk.gov.pay.connector.dao.ChargeSearchQueryBuilder;
+import uk.gov.pay.connector.dao.EventJpaDao;
+import uk.gov.pay.connector.dao.GatewayAccountJpaDao;
 import uk.gov.pay.connector.model.domain.ChargeEntity;
 import uk.gov.pay.connector.model.domain.ChargeEventEntity;
 import uk.gov.pay.connector.model.domain.ChargeStatus;
@@ -35,7 +37,6 @@ import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.is;
 import static org.hamcrest.Matchers.notNullValue;
 import static org.junit.Assert.assertTrue;
-import static uk.gov.pay.connector.model.api.ExternalChargeStatus.EXT_CREATED;
 import static uk.gov.pay.connector.model.domain.ChargeStatus.*;
 
 public class ChargeJpaDaoITest {
@@ -78,7 +79,8 @@ public class ChargeJpaDaoITest {
         formatter = DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss");
 
         gatewayAccountEntity = gatewayAccountJpaDao.findById(GatewayAccountEntity.class, GATEWAY_ACCOUNT_ID).get();
-        ChargeEntity charge = new ChargeEntity(AMOUNT, CREATED.getValue(), "", "", DESCRIPTION, REFERENCE, gatewayAccountEntity);
+        ChargeEntity charge = new ChargeEntity(AMOUNT, CREATED.getValue(), "", "", DESCRIPTION,
+                REFERENCE, gatewayAccountEntity);
         chargeDao.persist(charge);
         chargeId = charge.getId();
     }
@@ -88,8 +90,8 @@ public class ChargeJpaDaoITest {
     public void insertANewChargeAndReturnTheId() throws Exception {
         ChargeEntity chargeEntity = newChargeEntity(AMOUNT, REFERENCE);
         chargeDao.persist(chargeEntity);
-        assertThat(chargeEntity.getId(), is(notNullValue()));
 
+        assertThat(chargeEntity.getId(), is(notNullValue()));
         assertThat(app.getDatabaseTestHelper().getChargeStatus(chargeEntity.getId().toString()), is("CREATED"));
     }
 
@@ -154,7 +156,7 @@ public class ChargeJpaDaoITest {
     @Test
     public void searchChargeByReferenceAndStatusOnly() throws Exception {
         ChargeSearchQueryBuilder queryBuilder = new ChargeSearchQueryBuilder(GATEWAY_ACCOUNT_ID)
-                .withReferenceLike(REFERENCE).withStatus(CREATED.getValue(), "WHATEVER");
+                .withReferenceLike(REFERENCE).withStatus(CREATED);
         List<ChargeEntity> charges = chargeDao.findAllBy(queryBuilder);
         assertThat(charges.size(), is(1));
         ChargeEntity charge = charges.get(0);
@@ -167,9 +169,12 @@ public class ChargeJpaDaoITest {
         assertDateMatch(charge.getCreatedDate().toString());
     }
 
-    /*@Test
+    @Test
     public void searchChargeByReferenceAndStatusAndFromDateAndToDate() throws Exception {
-        List<ChargeEntity> charges = chargeDao.findAllBy(GATEWAY_ACCOUNT_ID, REFERENCE, EXT_CREATED.getValue(), ZonedDateTime.parse(FROM_DATE), ZonedDateTime.parse(TO_DATE));
+        ChargeSearchQueryBuilder queryBuilder = new ChargeSearchQueryBuilder(GATEWAY_ACCOUNT_ID)
+                .withReferenceLike(REFERENCE).withStatus(CREATED)
+                .withCreatedDateBetween(ZonedDateTime.parse(FROM_DATE), ZonedDateTime.parse(TO_DATE));
+        List<ChargeEntity> charges = chargeDao.findAllBy(queryBuilder);
         assertThat(charges.size(), is(1));
         ChargeEntity charge = charges.get(0);
 
@@ -183,7 +188,11 @@ public class ChargeJpaDaoITest {
 
     @Test
     public void searchChargeByReferenceAndStatusAndFromDate() throws Exception {
-        List<ChargeEntity> charges = chargeDao.findAllBy(GATEWAY_ACCOUNT_ID, REFERENCE, EXT_CREATED.getValue(), ZonedDateTime.parse(FROM_DATE), null);
+        ChargeSearchQueryBuilder queryBuilder = new ChargeSearchQueryBuilder(GATEWAY_ACCOUNT_ID)
+                .withReferenceLike(REFERENCE).withStatus(CREATED)
+                .withCreatedDateFrom(ZonedDateTime.parse(FROM_DATE));
+
+        List<ChargeEntity> charges = chargeDao.findAllBy(queryBuilder);
         assertThat(charges.size(), is(1));
         ChargeEntity charge = charges.get(0);
 
@@ -193,11 +202,30 @@ public class ChargeJpaDaoITest {
         assertThat(charge.getDescription(), is(DESCRIPTION));
         assertThat(charge.getStatus(), is(CREATED.getValue()));
         assertDateMatch(charge.getCreatedDate().toString());
+    }
+
+    @Test
+    public void searchChargeByMultipleStatuses() {
+        ChargeEntity charge = new ChargeEntity(AMOUNT, ENTERING_CARD_DETAILS.getValue(), "", "",
+                DESCRIPTION, REFERENCE, gatewayAccountEntity);
+        chargeDao.persist(charge);
+        ChargeSearchQueryBuilder queryBuilder = new ChargeSearchQueryBuilder(GATEWAY_ACCOUNT_ID)
+                .withReferenceLike(REFERENCE).withStatus(CREATED, ENTERING_CARD_DETAILS)
+                .withCreatedDateFrom(ZonedDateTime.parse(FROM_DATE));
+        List<ChargeEntity> charges = chargeDao.findAllBy(queryBuilder);
+
+        assertThat(charges.size(), is(2));
+        assertThat(charges.get(0).getStatus(), is(ENTERING_CARD_DETAILS.getValue()));
+        assertThat(charges.get(1).getStatus(), is(CREATED.getValue()));
     }
 
     @Test
     public void searchChargeByReferenceAndStatusAndToDate() throws Exception {
-        List<ChargeEntity> charges = chargeDao.findAllBy(GATEWAY_ACCOUNT_ID, REFERENCE, EXT_CREATED.getValue(), null, ZonedDateTime.parse(TO_DATE));
+        ChargeSearchQueryBuilder queryBuilder = new ChargeSearchQueryBuilder(GATEWAY_ACCOUNT_ID)
+                .withReferenceLike(REFERENCE).withStatus(CREATED)
+                .withCreatedDateTo(ZonedDateTime.parse(TO_DATE));
+
+        List<ChargeEntity> charges = chargeDao.findAllBy(queryBuilder);
         assertThat(charges.size(), is(1));
         ChargeEntity charge = charges.get(0);
 
@@ -210,17 +238,24 @@ public class ChargeJpaDaoITest {
     }
 
     @Test
-    public void searchChargeByReferenceAndStatusAndFromDate_ShouldReturnZero() throws Exception {
-        List<ChargeEntity> charges = chargeDao.findAllBy(GATEWAY_ACCOUNT_ID, REFERENCE, EXT_CREATED.getValue(), ZonedDateTime.parse(TO_DATE), null);
+    public void searchChargeByReferenceAndStatusAndFromDate_ShouldReturnZeroIfDateIsNotInRange() throws Exception {
+        ChargeSearchQueryBuilder queryBuilder = new ChargeSearchQueryBuilder(GATEWAY_ACCOUNT_ID)
+                .withReferenceLike(REFERENCE).withStatus(CREATED)
+                .withCreatedDateFrom(ZonedDateTime.parse(TO_DATE));
+        List<ChargeEntity> charges = chargeDao.findAllBy(queryBuilder);
         assertThat(charges.size(), is(0));
-    }
+}
 
     @Test
-    public void searchChargeByReferenceAndStatusAndToDate_ShouldReturnZero() throws Exception {
-        List<ChargeEntity> charges = chargeDao.findAllBy(GATEWAY_ACCOUNT_ID, REFERENCE, EXT_CREATED.getValue(), null, ZonedDateTime.parse(FROM_DATE));
+    public void searchChargeByReferenceAndStatusAndToDate_ShouldReturnZeroIfToDateIsNotInRange() throws Exception {
+
+        ChargeSearchQueryBuilder queryBuilder = new ChargeSearchQueryBuilder(GATEWAY_ACCOUNT_ID)
+                .withReferenceLike(REFERENCE).withStatus(CREATED)
+                .withCreatedDateTo(ZonedDateTime.parse(FROM_DATE));
+
+        List<ChargeEntity> charges = chargeDao.findAllBy(queryBuilder);
         assertThat(charges.size(), is(0));
     }
-*/
     @Test
     public void shouldUpdateCharge() throws Exception {
         ChargeEntity charge = new ChargeEntity(AMOUNT, CREATED.getValue(), UUID.randomUUID().toString(), RETURN_URL, "", REFERENCE, gatewayAccountEntity);
@@ -262,7 +297,6 @@ public class ChargeJpaDaoITest {
         MatcherAssert.assertThat(createdDate, ZonedDateTimeMatchers.within(1, ChronoUnit.MINUTES, now));
     }
 
-//
     @Test
     public void shouldFindChargeEntityByGatewayTransactionIdAndProvider() throws Exception {
 
@@ -275,12 +309,11 @@ public class ChargeJpaDaoITest {
 
         assertTrue(charge.isPresent());
     }
-//
+
 //    @Test
 //    public void updateStatusToEnteringCardDetailsFromCreated_shouldReturnOne() throws Exception {
 //        List<ChargeStatus> oldStatuses = newArrayList(CREATED, ENTERING_CARD_DETAILS);
 //        int rowsUpdated = chargeDao.updateNewStatusWhereOldStatusIn(chargeId, ENTERING_CARD_DETAILS, oldStatuses);
-//        chargeDao.f
 //        assertEquals(1, rowsUpdated);
 //        ChargeEntity charge = chargeDao.findById(chargeId).get();
 //        assertThat(charge.getId(), is(chargeId));
@@ -288,7 +321,7 @@ public class ChargeJpaDaoITest {
 //
 //        assertLoggedEvents(chargeId, CREATED, ENTERING_CARD_DETAILS);
 //    }
-
+//
 //    @Test
 //    public void updateStatusToEnteringCardDetailsFromCaptured_shouldReturnZero() throws Exception {
 //        ChargeEntity charge = chargeDao.findById(chargeId).get();
@@ -306,16 +339,16 @@ public class ChargeJpaDaoITest {
 //        assertThat(events, not(shouldIncludeStatus(ENTERING_CARD_DETAILS)));
 //    }
 
-    @Test
-    public void throwDBIExceptionIfStatusNotUpdateForMissingCharge() throws Exception {
-        String unknownId = "128457938450746";
-        ChargeStatus status = AUTHORISATION_SUCCESS;
-
-        expectedEx.expect(PayDBIException.class);
-        expectedEx.expectMessage("Could not update charge '" + unknownId + "' with status " + status.toString());
-
-        chargeDao.updateStatus(Long.valueOf(unknownId), status);
-    }
+//    @Test
+//    public void throwDBIExceptionIfStatusNotUpdateForMissingCharge() throws Exception {
+//        String unknownId = "128457938450746";
+//        ChargeStatus status = AUTHORISATION_SUCCESS;
+//
+//        expectedEx.expect(PayDBIException.class);
+//        expectedEx.expectMessage("Could not update charge '" + unknownId + "' with status " + status.toString());
+//
+//        chargeDao.updateStatus(Long.valueOf(unknownId), status);
+//    }
 
     @Test
     public void invalidSizeOfFields() throws Exception {

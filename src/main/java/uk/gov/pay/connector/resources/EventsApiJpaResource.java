@@ -51,7 +51,7 @@ public class EventsApiJpaResource {
         List<ChargeEventExternal> externalEvents = events
                 .stream()
                 .map(event ->
-                        new ChargeEventExternal(event.getChargeId(), mapFromStatus(event.getStatus()), event.getUpdated()))
+                        new ChargeEventExternal(event.getChargeEntity().getId(), mapFromStatus(event.getStatus()), event.getUpdated()))
                 .collect(toList());
 
         return externalEvents;
