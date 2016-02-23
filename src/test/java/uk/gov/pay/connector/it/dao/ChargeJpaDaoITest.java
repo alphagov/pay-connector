@@ -44,7 +44,7 @@ public class ChargeJpaDaoITest {
     private static final String DESCRIPTION = "Test description";
     private static final long AMOUNT = 101;
     public static final String PAYMENT_PROVIDER = "test_provider";
-    public static final String COUNCIL_TAX_PAYMENT_REFERENCE = "Council Tax Payment reference";
+
 
     @Rule
     public DropwizardAppWithPostgresRule app = new DropwizardAppWithPostgresRule();
@@ -151,8 +151,9 @@ public class ChargeJpaDaoITest {
     public void searchChargesByPartialReferenceOnly() throws Exception {
 
         // given
+        String paymentReference = "Council Tax Payment reference 2";
         Long chargeId = System.currentTimeMillis();
-        app.getDatabaseTestHelper().addCharge(chargeId.toString(), gatewayAccountEntity.getId().toString(), AMOUNT, CREATED, RETURN_URL, UUID.randomUUID().toString(), COUNCIL_TAX_PAYMENT_REFERENCE, ZonedDateTime.now());
+        app.getDatabaseTestHelper().addCharge(chargeId.toString(), gatewayAccountEntity.getId().toString(), AMOUNT, CREATED, RETURN_URL, UUID.randomUUID().toString(), paymentReference, ZonedDateTime.now());
 
         ChargeSearchQueryBuilder queryBuilder = new ChargeSearchQueryBuilder(GATEWAY_ACCOUNT_ID)
                 .withReferenceLike("reference");
@@ -164,7 +165,7 @@ public class ChargeJpaDaoITest {
         assertThat(charges.size(), is(2));
         assertThat(charges.get(1).getId(), is(this.chargeId));
         assertThat(charges.get(1).getReference(), is(REFERENCE));
-        assertThat(charges.get(0).getReference(), is(COUNCIL_TAX_PAYMENT_REFERENCE));
+        assertThat(charges.get(0).getReference(), is(paymentReference));
 
         for (ChargeEntity charge : charges) {
             assertThat(charge.getAmount(), is(AMOUNT));
@@ -180,7 +181,7 @@ public class ChargeJpaDaoITest {
         // given
         ChargeSearchQueryBuilder queryBuilder = new ChargeSearchQueryBuilder(GATEWAY_ACCOUNT_ID)
                 .withReferenceLike(REFERENCE)
-                .withStatus(CREATED);
+                .withStatusIn(CREATED);
 
         // when
         List<ChargeEntity> charges = chargeDao.findAllBy(queryBuilder);
@@ -203,8 +204,9 @@ public class ChargeJpaDaoITest {
         // given
         ChargeSearchQueryBuilder queryBuilder = new ChargeSearchQueryBuilder(GATEWAY_ACCOUNT_ID)
                 .withReferenceLike(REFERENCE)
-                .withStatus(CREATED)
-                .withCreatedDateBetween(ZonedDateTime.parse(FROM_DATE), ZonedDateTime.parse(TO_DATE));
+                .withStatusIn(CREATED)
+                .withCreatedDateFrom(ZonedDateTime.parse(FROM_DATE))
+                .withCreatedDateTo(ZonedDateTime.parse(TO_DATE));
 
         // when
         List<ChargeEntity> charges = chargeDao.findAllBy(queryBuilder);
@@ -227,7 +229,7 @@ public class ChargeJpaDaoITest {
         // given
         ChargeSearchQueryBuilder queryBuilder = new ChargeSearchQueryBuilder(GATEWAY_ACCOUNT_ID)
                 .withReferenceLike(REFERENCE)
-                .withStatus(CREATED)
+                .withStatusIn(CREATED)
                 .withCreatedDateFrom(ZonedDateTime.parse(FROM_DATE));
 
         // when
@@ -255,7 +257,7 @@ public class ChargeJpaDaoITest {
 
         ChargeSearchQueryBuilder queryBuilder = new ChargeSearchQueryBuilder(GATEWAY_ACCOUNT_ID)
                 .withReferenceLike(REFERENCE)
-                .withStatus(CREATED, ENTERING_CARD_DETAILS)
+                .withStatusIn(CREATED, ENTERING_CARD_DETAILS)
                 .withCreatedDateFrom(ZonedDateTime.parse(FROM_DATE));
 
         // when
@@ -273,7 +275,7 @@ public class ChargeJpaDaoITest {
         // given
         ChargeSearchQueryBuilder queryBuilder = new ChargeSearchQueryBuilder(GATEWAY_ACCOUNT_ID)
                 .withReferenceLike(REFERENCE)
-                .withStatus(CREATED)
+                .withStatusIn(CREATED)
                 .withCreatedDateTo(ZonedDateTime.parse(TO_DATE));
 
         // when
@@ -296,7 +298,7 @@ public class ChargeJpaDaoITest {
 
         ChargeSearchQueryBuilder queryBuilder = new ChargeSearchQueryBuilder(GATEWAY_ACCOUNT_ID)
                 .withReferenceLike(REFERENCE)
-                .withStatus(CREATED)
+                .withStatusIn(CREATED)
                 .withCreatedDateFrom(ZonedDateTime.parse(TO_DATE));
 
         List<ChargeEntity> charges = chargeDao.findAllBy(queryBuilder);
@@ -309,7 +311,7 @@ public class ChargeJpaDaoITest {
 
         ChargeSearchQueryBuilder queryBuilder = new ChargeSearchQueryBuilder(GATEWAY_ACCOUNT_ID)
                 .withReferenceLike(REFERENCE)
-                .withStatus(CREATED)
+                .withStatusIn(CREATED)
                 .withCreatedDateTo(ZonedDateTime.parse(FROM_DATE));
 
         List<ChargeEntity> charges = chargeDao.findAllBy(queryBuilder);

@@ -40,7 +40,7 @@ public class ChargeSearchQueryBuilder {
         return this;
     }
 
-    public ChargeSearchQueryBuilder withStatus(ChargeStatus... statuses) {
+    public ChargeSearchQueryBuilder withStatusIn(ChargeStatus... statuses) {
         this.statuses = Arrays.asList(statuses);
         return this;
     }
@@ -51,12 +51,6 @@ public class ChargeSearchQueryBuilder {
     }
 
     public ChargeSearchQueryBuilder withCreatedDateTo(ZonedDateTime toDate) {
-        this.toDate = toDate;
-        return this;
-    }
-
-    public ChargeSearchQueryBuilder withCreatedDateBetween(ZonedDateTime fromDate, ZonedDateTime toDate) {
-        this.fromDate = fromDate;
         this.toDate = toDate;
         return this;
     }
