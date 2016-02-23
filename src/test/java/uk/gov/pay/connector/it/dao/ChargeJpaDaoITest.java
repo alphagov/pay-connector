@@ -7,7 +7,6 @@ import org.hamcrest.Matcher;
 import org.hamcrest.MatcherAssert;
 import org.hamcrest.TypeSafeMatcher;
 import org.junit.Before;
-import org.junit.Ignore;
 import org.junit.Rule;
 import org.junit.Test;
 import org.junit.rules.ExpectedException;
@@ -17,11 +16,9 @@ import uk.gov.pay.connector.model.domain.ChargeEventEntity;
 import uk.gov.pay.connector.model.domain.ChargeStatus;
 import uk.gov.pay.connector.model.domain.GatewayAccountEntity;
 import uk.gov.pay.connector.rules.DropwizardAppWithPostgresRule;
-import uk.gov.pay.connector.util.ChargeEventListener;
 import uk.gov.pay.connector.util.DateTimeUtils;
 
 import java.time.ZonedDateTime;
-import java.time.format.DateTimeFormatter;
 import java.time.temporal.ChronoUnit;
 import java.util.HashMap;
 import java.util.List;
@@ -33,14 +30,12 @@ import static java.util.Arrays.asList;
 import static java.util.stream.Collectors.toList;
 import static org.apache.commons.lang3.RandomStringUtils.randomAlphanumeric;
 import static org.hamcrest.MatcherAssert.assertThat;
-import static org.hamcrest.Matchers.is;
-import static org.hamcrest.Matchers.not;
-import static org.hamcrest.Matchers.notNullValue;
-import static org.junit.Assert.assertEquals;
+import static org.hamcrest.Matchers.*;
 import static org.junit.Assert.assertTrue;
 import static uk.gov.pay.connector.model.domain.ChargeStatus.*;
 
 public class ChargeJpaDaoITest {
+
     private static final Long GATEWAY_ACCOUNT_ID = 564532435L;
     private static final String RETURN_URL = "http://service.com/success-page";
     private static final String REFERENCE = "Test reference";
@@ -61,8 +56,6 @@ public class ChargeJpaDaoITest {
     private GatewayAccountJpaDao gatewayAccountJpaDao;
     private Long chargeId;
     private EventJpaDao eventDao;
-    private ChargeEventListener eventListener;
-    private DateTimeFormatter formatter;
     private GatewayAccountEntity gatewayAccountEntity;
     public GuicedTestEnvironment env;
 
@@ -77,7 +70,6 @@ public class ChargeJpaDaoITest {
         gatewayAccountJpaDao = env.getInstance(GatewayAccountJpaDao.class);
 
         app.getDatabaseTestHelper().addGatewayAccount(GATEWAY_ACCOUNT_ID.toString(), PAYMENT_PROVIDER);
-        formatter = DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss");
 
         gatewayAccountEntity = gatewayAccountJpaDao.findById(GatewayAccountEntity.class, GATEWAY_ACCOUNT_ID).get();
         ChargeEntity charge = new ChargeEntity(AMOUNT, CREATED.getValue(), "", "", DESCRIPTION,
@@ -86,23 +78,43 @@ public class ChargeJpaDaoITest {
         chargeId = charge.getId();
     }
 
-
     @Test
     public void insertANewChargeAndReturnTheId() throws Exception {
-        ChargeEntity chargeEntity = newChargeEntity(AMOUNT, REFERENCE);
+
+        // given
+        GatewayAccountEntity gatewayAccountEntity = new GatewayAccountEntity("sanbox", new HashMap<>());
+        gatewayAccountEntity.setId(GATEWAY_ACCOUNT_ID);
+
+        ChargeEntity chargeEntity = new ChargeEntity(AMOUNT,
+                CREATED.toString(),
+                UUID.randomUUID().toString(),
+                RETURN_URL,
+                DESCRIPTION,
+                REFERENCE,
+                gatewayAccountEntity
+        );
+
+        // when
         chargeDao.persist(chargeEntity);
 
+        // then
         assertThat(chargeEntity.getId(), is(notNullValue()));
         assertThat(app.getDatabaseTestHelper().getChargeStatus(chargeEntity.getId().toString()), is("CREATED"));
     }
 
     @Test
-    public void searchChargesByGatewayAccountIdnly() throws Exception {
-        ChargeSearchQueryBuilder queryBuilder = new ChargeSearchQueryBuilder(GATEWAY_ACCOUNT_ID);
-        List<ChargeEntity> charges = chargeDao.findAllBy(queryBuilder);
-        assertThat(charges.size(), is(1));
-        ChargeEntity charge = charges.get(0);
+    public void searchChargesByGatewayAccountIdOnly() throws Exception {
 
+        // given
+        ChargeSearchQueryBuilder queryBuilder = new ChargeSearchQueryBuilder(GATEWAY_ACCOUNT_ID);
+
+        // when
+        List<ChargeEntity> charges = chargeDao.findAllBy(queryBuilder);
+
+        // then
+        assertThat(charges.size(), is(1));
+
+        ChargeEntity charge = charges.get(0);
         assertThat(charge.getId(), is(chargeId));
         assertThat(charge.getAmount(), is(AMOUNT));
         assertThat(charge.getReference(), is(REFERENCE));
@@ -114,12 +126,18 @@ public class ChargeJpaDaoITest {
 
     @Test
     public void searchChargesByFullReferenceOnly() throws Exception {
+
+        // given
         ChargeSearchQueryBuilder queryBuilder = new ChargeSearchQueryBuilder(GATEWAY_ACCOUNT_ID)
                 .withReferenceLike(REFERENCE);
-        List<ChargeEntity> charges = chargeDao.findAllBy(queryBuilder);
-        assertThat(charges.size(), is(1));
-        ChargeEntity charge = charges.get(0);
 
+        // when
+        List<ChargeEntity> charges = chargeDao.findAllBy(queryBuilder);
+
+        // then
+        assertThat(charges.size(), is(1));
+
+        ChargeEntity charge = charges.get(0);
         assertThat(charge.getId(), is(chargeId));
         assertThat(charge.getAmount(), is(AMOUNT));
         assertThat(charge.getReference(), is(REFERENCE));
@@ -131,22 +149,24 @@ public class ChargeJpaDaoITest {
 
     @Test
     public void searchChargesByPartialReferenceOnly() throws Exception {
-        ChargeEntity newCharge = new ChargeEntity(AMOUNT, CREATED.getValue(), UUID.randomUUID().toString(),
-                RETURN_URL, DESCRIPTION, COUNCIL_TAX_PAYMENT_REFERENCE, gatewayAccountEntity);
-        chargeDao.persist(newCharge);
 
+        // given
+        Long chargeId = System.currentTimeMillis();
+        app.getDatabaseTestHelper().addCharge(chargeId.toString(), gatewayAccountEntity.getId().toString(), AMOUNT, CREATED, RETURN_URL, UUID.randomUUID().toString(), COUNCIL_TAX_PAYMENT_REFERENCE, ZonedDateTime.now());
 
         ChargeSearchQueryBuilder queryBuilder = new ChargeSearchQueryBuilder(GATEWAY_ACCOUNT_ID)
                 .withReferenceLike("reference");
 
+        // when
         List<ChargeEntity> charges = chargeDao.findAllBy(queryBuilder);
 
+        // then
         assertThat(charges.size(), is(2));
-        assertThat(charges.get(1).getId(), is(chargeId));
+        assertThat(charges.get(1).getId(), is(this.chargeId));
         assertThat(charges.get(1).getReference(), is(REFERENCE));
         assertThat(charges.get(0).getReference(), is(COUNCIL_TAX_PAYMENT_REFERENCE));
 
-        for(ChargeEntity charge : charges) {
+        for (ChargeEntity charge : charges) {
             assertThat(charge.getAmount(), is(AMOUNT));
             assertThat(charge.getDescription(), is(DESCRIPTION));
             assertThat(charge.getStatus(), is(CREATED.getValue()));
@@ -156,9 +176,16 @@ public class ChargeJpaDaoITest {
 
     @Test
     public void searchChargeByReferenceAndStatusOnly() throws Exception {
+
+        // given
         ChargeSearchQueryBuilder queryBuilder = new ChargeSearchQueryBuilder(GATEWAY_ACCOUNT_ID)
-                .withReferenceLike(REFERENCE).withStatus(CREATED);
+                .withReferenceLike(REFERENCE)
+                .withStatus(CREATED);
+
+        // when
         List<ChargeEntity> charges = chargeDao.findAllBy(queryBuilder);
+
+        // then
         assertThat(charges.size(), is(1));
         ChargeEntity charge = charges.get(0);
 
@@ -172,10 +199,17 @@ public class ChargeJpaDaoITest {
 
     @Test
     public void searchChargeByReferenceAndStatusAndFromDateAndToDate() throws Exception {
+
+        // given
         ChargeSearchQueryBuilder queryBuilder = new ChargeSearchQueryBuilder(GATEWAY_ACCOUNT_ID)
-                .withReferenceLike(REFERENCE).withStatus(CREATED)
+                .withReferenceLike(REFERENCE)
+                .withStatus(CREATED)
                 .withCreatedDateBetween(ZonedDateTime.parse(FROM_DATE), ZonedDateTime.parse(TO_DATE));
+
+        // when
         List<ChargeEntity> charges = chargeDao.findAllBy(queryBuilder);
+
+        // then
         assertThat(charges.size(), is(1));
         ChargeEntity charge = charges.get(0);
 
@@ -189,11 +223,17 @@ public class ChargeJpaDaoITest {
 
     @Test
     public void searchChargeByReferenceAndStatusAndFromDate() throws Exception {
+
+        // given
         ChargeSearchQueryBuilder queryBuilder = new ChargeSearchQueryBuilder(GATEWAY_ACCOUNT_ID)
-                .withReferenceLike(REFERENCE).withStatus(CREATED)
+                .withReferenceLike(REFERENCE)
+                .withStatus(CREATED)
                 .withCreatedDateFrom(ZonedDateTime.parse(FROM_DATE));
 
+        // when
         List<ChargeEntity> charges = chargeDao.findAllBy(queryBuilder);
+
+        // then
         assertThat(charges.size(), is(1));
         ChargeEntity charge = charges.get(0);
 
@@ -202,19 +242,26 @@ public class ChargeJpaDaoITest {
         assertThat(charge.getReference(), is(REFERENCE));
         assertThat(charge.getDescription(), is(DESCRIPTION));
         assertThat(charge.getStatus(), is(CREATED.getValue()));
+
         assertDateMatch(charge.getCreatedDate().toString());
     }
 
     @Test
     public void searchChargeByMultipleStatuses() {
-        ChargeEntity charge = new ChargeEntity(AMOUNT, ENTERING_CARD_DETAILS.getValue(), "", "",
-                DESCRIPTION, REFERENCE, gatewayAccountEntity);
-        chargeDao.persist(charge);
+
+        // given
+        Long chargeId = System.currentTimeMillis();
+        app.getDatabaseTestHelper().addCharge(chargeId.toString(), gatewayAccountEntity.getId().toString(), AMOUNT, ENTERING_CARD_DETAILS, RETURN_URL, UUID.randomUUID().toString(), REFERENCE, ZonedDateTime.now());
+
         ChargeSearchQueryBuilder queryBuilder = new ChargeSearchQueryBuilder(GATEWAY_ACCOUNT_ID)
-                .withReferenceLike(REFERENCE).withStatus(CREATED, ENTERING_CARD_DETAILS)
+                .withReferenceLike(REFERENCE)
+                .withStatus(CREATED, ENTERING_CARD_DETAILS)
                 .withCreatedDateFrom(ZonedDateTime.parse(FROM_DATE));
+
+        // when
         List<ChargeEntity> charges = chargeDao.findAllBy(queryBuilder);
 
+        // then
         assertThat(charges.size(), is(2));
         assertThat(charges.get(0).getStatus(), is(ENTERING_CARD_DETAILS.getValue()));
         assertThat(charges.get(1).getStatus(), is(CREATED.getValue()));
@@ -222,11 +269,17 @@ public class ChargeJpaDaoITest {
 
     @Test
     public void searchChargeByReferenceAndStatusAndToDate() throws Exception {
+
+        // given
         ChargeSearchQueryBuilder queryBuilder = new ChargeSearchQueryBuilder(GATEWAY_ACCOUNT_ID)
-                .withReferenceLike(REFERENCE).withStatus(CREATED)
+                .withReferenceLike(REFERENCE)
+                .withStatus(CREATED)
                 .withCreatedDateTo(ZonedDateTime.parse(TO_DATE));
 
+        // when
         List<ChargeEntity> charges = chargeDao.findAllBy(queryBuilder);
+
+        // then
         assertThat(charges.size(), is(1));
         ChargeEntity charge = charges.get(0);
 
@@ -240,30 +293,41 @@ public class ChargeJpaDaoITest {
 
     @Test
     public void searchChargeByReferenceAndStatusAndFromDate_ShouldReturnZeroIfDateIsNotInRange() throws Exception {
+
         ChargeSearchQueryBuilder queryBuilder = new ChargeSearchQueryBuilder(GATEWAY_ACCOUNT_ID)
-                .withReferenceLike(REFERENCE).withStatus(CREATED)
+                .withReferenceLike(REFERENCE)
+                .withStatus(CREATED)
                 .withCreatedDateFrom(ZonedDateTime.parse(TO_DATE));
+
         List<ChargeEntity> charges = chargeDao.findAllBy(queryBuilder);
+
         assertThat(charges.size(), is(0));
-}
+    }
 
     @Test
     public void searchChargeByReferenceAndStatusAndToDate_ShouldReturnZeroIfToDateIsNotInRange() throws Exception {
 
         ChargeSearchQueryBuilder queryBuilder = new ChargeSearchQueryBuilder(GATEWAY_ACCOUNT_ID)
-                .withReferenceLike(REFERENCE).withStatus(CREATED)
+                .withReferenceLike(REFERENCE)
+                .withStatus(CREATED)
                 .withCreatedDateTo(ZonedDateTime.parse(FROM_DATE));
 
         List<ChargeEntity> charges = chargeDao.findAllBy(queryBuilder);
+
         assertThat(charges.size(), is(0));
     }
+
     @Test
     public void shouldUpdateCharge() throws Exception {
-        ChargeEntity charge = new ChargeEntity(AMOUNT, CREATED.getValue(), UUID.randomUUID().toString(), RETURN_URL, "", REFERENCE, gatewayAccountEntity);
-        chargeDao.persist(charge);
-        charge = chargeDao.findById(charge.getId()).get();
 
+        // given
+        Long chargeId = System.currentTimeMillis();
+        app.getDatabaseTestHelper().addCharge(chargeId.toString(), gatewayAccountEntity.getId().toString(), AMOUNT, CREATED, RETURN_URL, UUID.randomUUID().toString(), REFERENCE, ZonedDateTime.now());
 
+        // when
+        ChargeEntity charge = chargeDao.findById(chargeId).get();
+
+        // then
         charge.setStatus(AUTHORISATION_SUBMITTED);
         charge.setGatewayTransactionId("new-gateway-transaction-id");
         chargeDao.merge(charge);
@@ -278,11 +342,15 @@ public class ChargeJpaDaoITest {
     @Test
     public void insertAmountAndThenGetAmountById() throws Exception {
 
+        // given
         Long id = System.currentTimeMillis();
         app.getDatabaseTestHelper().addCharge(id.toString(),
                 GATEWAY_ACCOUNT_ID.toString(), AMOUNT, CREATED, RETURN_URL, UUID.randomUUID().toString(), REFERENCE, ZonedDateTime.now());
+
+        // when
         ChargeEntity charge = chargeDao.findById(id).get();
 
+        // then
         assertThat(charge.getId(), is(id));
         assertThat(charge.getAmount(), is(AMOUNT));
         assertThat(charge.getReference(), is(REFERENCE));
@@ -313,7 +381,9 @@ public class ChargeJpaDaoITest {
 
     @Test
     public void updateStatusToEnteringCardDetailsFromCreated_shouldReturnOne() throws Exception {
+
         List<ChargeStatus> oldStatuses = newArrayList(CREATED, ENTERING_CARD_DETAILS);
+
         chargeDao.updateNewStatusWhereOldStatusIn(chargeId, ENTERING_CARD_DETAILS, oldStatuses);
 
         ChargeEntity charge = chargeDao.findById(chargeId).get();
@@ -342,7 +412,7 @@ public class ChargeJpaDaoITest {
         assertThat(events, not(shouldIncludeStatus(ENTERING_CARD_DETAILS)));
     }
 
-/*    @Test
+    @Test
     public void throwDBIExceptionIfStatusNotUpdateForMissingCharge() throws Exception {
         String unknownId = "128457938450746";
         ChargeStatus status = AUTHORISATION_SUCCESS;
@@ -351,7 +421,7 @@ public class ChargeJpaDaoITest {
         expectedEx.expectMessage("Could not update charge '" + unknownId + "' with status " + status.toString());
 
         chargeDao.updateStatus(Long.valueOf(unknownId), status);
-    }*/
+    }
 
     @Test
     public void invalidSizeOfFields() throws Exception {
@@ -361,8 +431,8 @@ public class ChargeJpaDaoITest {
     }
 
     private void assertLoggedEvents(Long chargeId, ChargeStatus... statuses) {
-        List<ChargeEventEntity> events = eventDao.findEvents(GATEWAY_ACCOUNT_ID,  chargeId);
-        assertThat(events,  shouldIncludeStatus(statuses));
+        List<ChargeEventEntity> events = eventDao.findEvents(GATEWAY_ACCOUNT_ID, chargeId);
+        assertThat(events, shouldIncludeStatus(statuses));
     }
 
     private Matcher<? super List<ChargeEventEntity>> shouldIncludeStatus(ChargeStatus... expectedStatuses) {
@@ -379,6 +449,7 @@ public class ChargeJpaDaoITest {
             }
         };
     }
+
     @Deprecated
     private ImmutableMap<String, Object> newCharge(long amount, String reference) {
         return ImmutableMap.of(
@@ -393,21 +464,4 @@ public class ChargeJpaDaoITest {
         assertThat(createdDateTime, ZonedDateTimeMatchers.within(1, ChronoUnit.MINUTES, ZonedDateTime.now()));
     }
 
-    private ChargeEntity newChargeEntity(Long amount, String reference) {
-        return new ChargeEntity(amount,
-                CREATED.toString(),
-                UUID.randomUUID().toString(),
-                RETURN_URL,
-                DESCRIPTION,
-                REFERENCE,
-                newGatewayAccountEntity(GATEWAY_ACCOUNT_ID)
-        );
-    }
-
-    private GatewayAccountEntity newGatewayAccountEntity(Long id) {
-        GatewayAccountEntity gatewayAccountEntity = new GatewayAccountEntity("sanbox", new HashMap<>());
-        gatewayAccountEntity.setId(id);
-
-        return gatewayAccountEntity;
-    }
 }

@@ -69,47 +69,33 @@ public class ChargeJpaDao extends JpaDao<ChargeEntity> {
         return query.getResultList();
     }
 
-    // updates the new status only if the charge is in one of the old statuses and returns num of rows affected
-    // very specific transition happening here so check for a valid state before transitioning
     @Transactional
-    public void updateNewStatusWhereOldStatusIn(Long chargeId, ChargeStatus newStatus, List<ChargeStatus> oldStatuses) {
+    public int updateNewStatusWhereOldStatusIn(Long chargeId, ChargeStatus newStatus, List<ChargeStatus> oldStatuses) {
 
-        ChargeEntity chargeEntity = findById(chargeId).get();
-        String status = chargeEntity.getStatus();
+        //FIXME WIP. This method won't exist as soon this is switched to use JPA.
+        // Just done to conform to common interface before switching dao implementations
+        final int[] updated = {0};
 
-        if(oldStatuses.contains(ChargeStatus.chargeStatusFrom(status))){
-            chargeEntity.setStatus(newStatus);
-            eventListener.notify(ChargeEventEntity.from(chargeEntity, newStatus, LocalDateTime.now()));
-        }
+        findById(chargeId).ifPresent(charge -> {
+            String status = charge.getStatus();
+            if (oldStatuses.contains(ChargeStatus.chargeStatusFrom(status))) {
+                charge.setStatus(newStatus);
+                eventListener.notify(ChargeEventEntity.from(charge, newStatus, LocalDateTime.now()));
+            }
+
+            updated[0] = 1;
+        });
+
+        return updated[0];
     }
 
     @Transactional
     public void updateStatus(Long chargeId, ChargeStatus newStatus) {
-
-        ChargeEntity chargeEntity = findById(chargeId).get();
+        ChargeEntity chargeEntity = findById(chargeId)
+                .orElseThrow(() -> new PayDBIException(format("Could not update charge '%s' with status %s, updated %d rows.", chargeId, newStatus, 0)));
         chargeEntity.setStatus(newStatus);
         eventListener.notify(ChargeEventEntity.from(chargeEntity, newStatus, LocalDateTime.now()));
-
-        int updateCount = entityManager.get()
-                .createQuery("UPDATE ChargeEntity c SET c.status=:newStatus WHERE c.id=:chargeId", ChargeEntity.class)
-                .setParameter("chargeId", chargeId)
-                .setParameter("newStatus", newStatus.getValue())
-                .executeUpdate();
-        if (updateCount != 1) {
-            throw new PayDBIException(format("Could not update charge '%s' with status %s, updated %d rows.", chargeId, newStatus, updateCount));
-        }
-        entityManager.get().flush();
-        entityManager.get().clear();
-
     }
-
-    private String getStringFromStatusList(List<ChargeStatus> oldStatuses) {
-        return oldStatuses
-                .stream()
-                .map(t -> "'" + t.getValue() + "'")
-                .collect(Collectors.joining(","));
-    }
-
 }
 
 
