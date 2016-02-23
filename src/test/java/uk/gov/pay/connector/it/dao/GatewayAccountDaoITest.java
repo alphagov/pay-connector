@@ -39,7 +39,7 @@ public class GatewayAccountDaoITest {
 
     @Test
     public void idIsMissingForMissingAccount() throws Exception {
-        assertThat(gatewayAccountDao.idIsMissing("1"), is(true));
+        assertThat(gatewayAccountDao.idIsMissing("999"), is(true));
     }
 
     @Test

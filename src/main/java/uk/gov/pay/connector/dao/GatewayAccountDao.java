@@ -11,13 +11,15 @@ import java.sql.SQLException;
 import java.util.Optional;
 
 @Deprecated
-public class GatewayAccountDao {
+public class GatewayAccountDao implements IGatewayAccountDao {
+
     private DBI jdbi;
 
     public GatewayAccountDao(DBI jdbi) {
         this.jdbi = jdbi;
     }
 
+    @Override
     public String createGatewayAccount(String paymentProvider) {
         return jdbi.withHandle(handle -> handle
                 .createStatement("INSERT INTO gateway_accounts(payment_provider) VALUES (:paymentProvider)")
@@ -27,6 +29,7 @@ public class GatewayAccountDao {
         );
     }
 
+    @Override
     public boolean idIsMissing(String gatewayAccountId) {
         return jdbi.withHandle(handle -> handle
                 .createQuery("SELECT NOT EXISTS(SELECT 1 from gateway_accounts where id=:id)")
@@ -36,6 +39,7 @@ public class GatewayAccountDao {
 
     }
 
+    @Override
     public Optional<GatewayAccount> findById(String gatewayAccountId) {
         GatewayAccount gatewayAccount = jdbi.withHandle(handle -> handle
                 .createQuery("SELECT id, payment_provider, credentials FROM gateway_accounts WHERE id=:id")
@@ -45,6 +49,7 @@ public class GatewayAccountDao {
         return Optional.ofNullable(gatewayAccount);
     }
 
+    @Override
     public void saveCredentials(String credentialsJsonString, String gatewayAccountId) {
         jdbi.withHandle(handle -> handle
                 .createStatement("UPDATE gateway_accounts SET credentials = :credentials WHERE id=:id")
@@ -64,5 +69,4 @@ public class GatewayAccountDao {
         }
         return pgCredentials;
     }
-
 }
