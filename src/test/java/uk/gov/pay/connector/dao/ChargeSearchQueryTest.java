@@ -18,7 +18,7 @@ import static uk.gov.pay.connector.model.domain.ChargeStatus.CREATED;
 import static uk.gov.pay.connector.model.domain.ChargeStatus.READY_FOR_CAPTURE;
 
 @RunWith(MockitoJUnitRunner.class)
-public class ChargeSearchQueryBuilderTest {
+public class ChargeSearchQueryTest {
 
     private static final Long GATEWAY_ACCOUNT_ID = 12345L;
     private static final String REFERENCE = "reference";
@@ -37,19 +37,19 @@ public class ChargeSearchQueryBuilderTest {
         String expectedTypedQuery = "SELECT c FROM ChargeEntity c " +
                 "WHERE c.gatewayAccount.id = :gatewayAccountId " +
                 "AND c.reference LIKE :reference " +
-                "AND c.status IN :statuses " +
                 "AND c.createdDate >= :fromDate " +
                 "AND c.createdDate <= :toDate " +
+                "AND c.status IN :statuses " +
                 "ORDER BY c.id DESC";
 
         when(entityManagerMock.createQuery(expectedTypedQuery, ChargeEntity.class)).thenReturn(queryMock);
 
-        TypedQuery<ChargeEntity> typedQuery = new ChargeSearchQueryBuilder(GATEWAY_ACCOUNT_ID)
+        TypedQuery<ChargeEntity> typedQuery = new ChargeSearchQuery(GATEWAY_ACCOUNT_ID)
                 .withReferenceLike(REFERENCE)
                 .withStatusIn(CREATED, READY_FOR_CAPTURE)
                 .withCreatedDateFrom(FROM_DATE)
                 .withCreatedDateTo(TO_DATE)
-                .buildWith(() -> entityManagerMock);
+                .apply(entityManagerMock);
 
         assertThat(typedQuery, is(queryMock));
 
@@ -71,8 +71,8 @@ public class ChargeSearchQueryBuilderTest {
 
         when(entityManagerMock.createQuery(expectedTypedQuery, ChargeEntity.class)).thenReturn(queryMock);
 
-        TypedQuery<ChargeEntity> typedQuery = new ChargeSearchQueryBuilder(GATEWAY_ACCOUNT_ID)
-                .buildWith(() -> entityManagerMock);
+        TypedQuery<ChargeEntity> typedQuery = new ChargeSearchQuery(GATEWAY_ACCOUNT_ID)
+                .apply(entityManagerMock);
 
         assertThat(typedQuery, is(queryMock));
 
@@ -91,9 +91,9 @@ public class ChargeSearchQueryBuilderTest {
 
         when(entityManagerMock.createQuery(expectedTypedQuery, ChargeEntity.class)).thenReturn(queryMock);
 
-        TypedQuery<ChargeEntity> typedQuery = new ChargeSearchQueryBuilder(GATEWAY_ACCOUNT_ID)
+        TypedQuery<ChargeEntity> typedQuery = new ChargeSearchQuery(GATEWAY_ACCOUNT_ID)
                 .withReferenceLike(REFERENCE)
-                .buildWith(() -> entityManagerMock);
+                .apply(entityManagerMock);
 
         assertThat(typedQuery, is(queryMock));
 
@@ -113,9 +113,9 @@ public class ChargeSearchQueryBuilderTest {
 
         when(entityManagerMock.createQuery(expectedTypedQuery, ChargeEntity.class)).thenReturn(queryMock);
 
-        TypedQuery<ChargeEntity> typedQuery = new ChargeSearchQueryBuilder(GATEWAY_ACCOUNT_ID)
+        TypedQuery<ChargeEntity> typedQuery = new ChargeSearchQuery(GATEWAY_ACCOUNT_ID)
                 .withStatusIn(CREATED)
-                .buildWith(() -> entityManagerMock);
+                .apply(entityManagerMock);
 
         assertThat(typedQuery, is(queryMock));
 
@@ -135,9 +135,9 @@ public class ChargeSearchQueryBuilderTest {
 
         when(entityManagerMock.createQuery(expectedTypedQuery, ChargeEntity.class)).thenReturn(queryMock);
 
-        TypedQuery<ChargeEntity> typedQuery = new ChargeSearchQueryBuilder(GATEWAY_ACCOUNT_ID)
+        TypedQuery<ChargeEntity> typedQuery = new ChargeSearchQuery(GATEWAY_ACCOUNT_ID)
                 .withCreatedDateFrom(FROM_DATE)
-                .buildWith(() -> entityManagerMock);
+                .apply(entityManagerMock);
 
         assertThat(typedQuery, is(queryMock));
 
@@ -157,9 +157,9 @@ public class ChargeSearchQueryBuilderTest {
 
         when(entityManagerMock.createQuery(expectedTypedQuery, ChargeEntity.class)).thenReturn(queryMock);
 
-        TypedQuery<ChargeEntity> typedQuery = new ChargeSearchQueryBuilder(GATEWAY_ACCOUNT_ID)
+        TypedQuery<ChargeEntity> typedQuery = new ChargeSearchQuery(GATEWAY_ACCOUNT_ID)
                 .withCreatedDateTo(TO_DATE)
-                .buildWith(() -> entityManagerMock);
+                .apply(entityManagerMock);
 
         assertThat(typedQuery, is(queryMock));
 
@@ -171,6 +171,6 @@ public class ChargeSearchQueryBuilderTest {
 
     @Test(expected = NullPointerException.class)
     public void shouldFailWhenGatewayAccountIsNotSpecified() {
-        new ChargeSearchQueryBuilder(null).buildWith(() -> entityManagerMock);
+        new ChargeSearchQuery(null).apply(entityManagerMock);
     }
 }

@@ -11,12 +11,10 @@ import uk.gov.pay.connector.util.ChargeEventJpaListener;
 
 import javax.inject.Inject;
 import javax.persistence.EntityManager;
-import javax.persistence.Query;
 import javax.persistence.TypedQuery;
 import java.time.LocalDateTime;
 import java.util.List;
 import java.util.Optional;
-import java.util.stream.Collectors;
 
 import static java.lang.String.format;
 import static uk.gov.pay.connector.model.domain.ChargeStatus.CREATED;
@@ -64,8 +62,8 @@ public class ChargeJpaDao extends JpaDao<ChargeEntity> {
         return Optional.ofNullable(query.getSingleResult());
     }
 
-    public List<ChargeEntity> findAllBy(ChargeSearchQueryBuilder queryBuilder) {
-        TypedQuery<ChargeEntity> query = queryBuilder.buildWith(entityManager);
+    public List<ChargeEntity> findAllBy(ChargeSearchQuery searchQuery) {
+        TypedQuery<ChargeEntity> query = searchQuery.apply(entityManager.get());
         return query.getResultList();
     }
 

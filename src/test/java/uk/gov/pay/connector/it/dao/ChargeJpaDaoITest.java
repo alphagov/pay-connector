@@ -106,7 +106,7 @@ public class ChargeJpaDaoITest {
     public void searchChargesByGatewayAccountIdOnly() throws Exception {
 
         // given
-        ChargeSearchQueryBuilder queryBuilder = new ChargeSearchQueryBuilder(GATEWAY_ACCOUNT_ID);
+        ChargeSearchQuery queryBuilder = new ChargeSearchQuery(GATEWAY_ACCOUNT_ID);
 
         // when
         List<ChargeEntity> charges = chargeDao.findAllBy(queryBuilder);
@@ -128,7 +128,7 @@ public class ChargeJpaDaoITest {
     public void searchChargesByFullReferenceOnly() throws Exception {
 
         // given
-        ChargeSearchQueryBuilder queryBuilder = new ChargeSearchQueryBuilder(GATEWAY_ACCOUNT_ID)
+        ChargeSearchQuery queryBuilder = new ChargeSearchQuery(GATEWAY_ACCOUNT_ID)
                 .withReferenceLike(REFERENCE);
 
         // when
@@ -155,7 +155,7 @@ public class ChargeJpaDaoITest {
         Long chargeId = System.currentTimeMillis();
         app.getDatabaseTestHelper().addCharge(chargeId.toString(), gatewayAccountEntity.getId().toString(), AMOUNT, CREATED, RETURN_URL, UUID.randomUUID().toString(), paymentReference, ZonedDateTime.now());
 
-        ChargeSearchQueryBuilder queryBuilder = new ChargeSearchQueryBuilder(GATEWAY_ACCOUNT_ID)
+        ChargeSearchQuery queryBuilder = new ChargeSearchQuery(GATEWAY_ACCOUNT_ID)
                 .withReferenceLike("reference");
 
         // when
@@ -179,7 +179,7 @@ public class ChargeJpaDaoITest {
     public void searchChargeByReferenceAndStatusOnly() throws Exception {
 
         // given
-        ChargeSearchQueryBuilder queryBuilder = new ChargeSearchQueryBuilder(GATEWAY_ACCOUNT_ID)
+        ChargeSearchQuery queryBuilder = new ChargeSearchQuery(GATEWAY_ACCOUNT_ID)
                 .withReferenceLike(REFERENCE)
                 .withStatusIn(CREATED);
 
@@ -202,7 +202,7 @@ public class ChargeJpaDaoITest {
     public void searchChargeByReferenceAndStatusAndFromDateAndToDate() throws Exception {
 
         // given
-        ChargeSearchQueryBuilder queryBuilder = new ChargeSearchQueryBuilder(GATEWAY_ACCOUNT_ID)
+        ChargeSearchQuery queryBuilder = new ChargeSearchQuery(GATEWAY_ACCOUNT_ID)
                 .withReferenceLike(REFERENCE)
                 .withStatusIn(CREATED)
                 .withCreatedDateFrom(ZonedDateTime.parse(FROM_DATE))
@@ -227,7 +227,7 @@ public class ChargeJpaDaoITest {
     public void searchChargeByReferenceAndStatusAndFromDate() throws Exception {
 
         // given
-        ChargeSearchQueryBuilder queryBuilder = new ChargeSearchQueryBuilder(GATEWAY_ACCOUNT_ID)
+        ChargeSearchQuery queryBuilder = new ChargeSearchQuery(GATEWAY_ACCOUNT_ID)
                 .withReferenceLike(REFERENCE)
                 .withStatusIn(CREATED)
                 .withCreatedDateFrom(ZonedDateTime.parse(FROM_DATE));
@@ -255,7 +255,7 @@ public class ChargeJpaDaoITest {
         Long chargeId = System.currentTimeMillis();
         app.getDatabaseTestHelper().addCharge(chargeId.toString(), gatewayAccountEntity.getId().toString(), AMOUNT, ENTERING_CARD_DETAILS, RETURN_URL, UUID.randomUUID().toString(), REFERENCE, ZonedDateTime.now());
 
-        ChargeSearchQueryBuilder queryBuilder = new ChargeSearchQueryBuilder(GATEWAY_ACCOUNT_ID)
+        ChargeSearchQuery queryBuilder = new ChargeSearchQuery(GATEWAY_ACCOUNT_ID)
                 .withReferenceLike(REFERENCE)
                 .withStatusIn(CREATED, ENTERING_CARD_DETAILS)
                 .withCreatedDateFrom(ZonedDateTime.parse(FROM_DATE));
@@ -273,7 +273,7 @@ public class ChargeJpaDaoITest {
     public void searchChargeByReferenceAndStatusAndToDate() throws Exception {
 
         // given
-        ChargeSearchQueryBuilder queryBuilder = new ChargeSearchQueryBuilder(GATEWAY_ACCOUNT_ID)
+        ChargeSearchQuery queryBuilder = new ChargeSearchQuery(GATEWAY_ACCOUNT_ID)
                 .withReferenceLike(REFERENCE)
                 .withStatusIn(CREATED)
                 .withCreatedDateTo(ZonedDateTime.parse(TO_DATE));
@@ -296,7 +296,7 @@ public class ChargeJpaDaoITest {
     @Test
     public void searchChargeByReferenceAndStatusAndFromDate_ShouldReturnZeroIfDateIsNotInRange() throws Exception {
 
-        ChargeSearchQueryBuilder queryBuilder = new ChargeSearchQueryBuilder(GATEWAY_ACCOUNT_ID)
+        ChargeSearchQuery queryBuilder = new ChargeSearchQuery(GATEWAY_ACCOUNT_ID)
                 .withReferenceLike(REFERENCE)
                 .withStatusIn(CREATED)
                 .withCreatedDateFrom(ZonedDateTime.parse(TO_DATE));
@@ -309,7 +309,7 @@ public class ChargeJpaDaoITest {
     @Test
     public void searchChargeByReferenceAndStatusAndToDate_ShouldReturnZeroIfToDateIsNotInRange() throws Exception {
 
-        ChargeSearchQueryBuilder queryBuilder = new ChargeSearchQueryBuilder(GATEWAY_ACCOUNT_ID)
+        ChargeSearchQuery queryBuilder = new ChargeSearchQuery(GATEWAY_ACCOUNT_ID)
                 .withReferenceLike(REFERENCE)
                 .withStatusIn(CREATED)
                 .withCreatedDateTo(ZonedDateTime.parse(FROM_DATE));
