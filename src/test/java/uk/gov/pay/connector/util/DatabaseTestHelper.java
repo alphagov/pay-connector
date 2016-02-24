@@ -1,12 +1,10 @@
 package uk.gov.pay.connector.util;
 
 import com.google.gson.Gson;
-import com.google.gson.JsonObject;
 import org.postgresql.util.PGobject;
 import org.skife.jdbi.v2.DBI;
 import org.skife.jdbi.v2.DefaultMapper;
 import org.skife.jdbi.v2.util.StringMapper;
-import uk.gov.pay.connector.dao.TokenDao;
 import uk.gov.pay.connector.model.domain.ChargeStatus;
 
 import java.sql.SQLException;
@@ -18,11 +16,9 @@ import static java.time.ZonedDateTime.now;
 
 public class DatabaseTestHelper {
     private DBI jdbi;
-    private TokenDao tokenDao;
 
     public DatabaseTestHelper(DBI jdbi) {
         this.jdbi = jdbi;
-        this.tokenDao = new TokenDao(jdbi);
     }
 
     public void addGatewayAccount(String accountId, String paymentGateway, Map<String, String> credentials) {
@@ -115,7 +111,13 @@ public class DatabaseTestHelper {
     }
 
     public void addToken(String chargeId, String tokenId) {
-        tokenDao.insertNewToken(chargeId, tokenId);
+        jdbi.withHandle(handle ->
+                handle
+                        .createStatement("INSERT INTO tokens(charge_id, secure_redirect_token) VALUES (:charge_id, :secure_redirect_token)")
+                        .bind("charge_id", Long.valueOf(chargeId))
+                        .bind("secure_redirect_token", tokenId)
+                        .execute()
+        );
     }
 
     public String getChargeStatus(String chargeId) {

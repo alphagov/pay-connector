@@ -7,13 +7,16 @@ import java.util.Optional;
 
 import static java.lang.String.format;
 
-public class TokenDao {
+@Deprecated
+public class TokenDao implements ITokenDao {
+
     private DBI jdbi;
 
     public TokenDao(DBI jdbi) {
         this.jdbi = jdbi;
     }
 
+    @Override
     public void insertNewToken(String chargeId, String tokenId) {
         int rowsInserted = jdbi.withHandle(handle ->
                         handle
@@ -27,6 +30,7 @@ public class TokenDao {
         }
     }
 
+    @Override
     public String findByChargeId(String chargeId) {
         String tokenId = jdbi.withHandle(handle ->
                         handle
@@ -39,6 +43,7 @@ public class TokenDao {
         return tokenId;
     }
 
+    @Override
     public Optional<String> findChargeByTokenId(String tokenId) {
         String chargeId = jdbi.withHandle(handle ->
                         handle
@@ -51,6 +56,7 @@ public class TokenDao {
         return Optional.ofNullable(chargeId);
     }
 
+    @Override
     public void deleteByTokenId(String tokenId) {
         int rowsDeleted = jdbi.withHandle(handle ->
                         handle
