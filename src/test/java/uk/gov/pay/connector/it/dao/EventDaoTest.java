@@ -60,7 +60,6 @@ public class EventDaoTest {
 
     }
 
-
     @Test
     public void shouldNotReturnEventsIfChargeDoesNotBelongToAccount() throws Exception {
 

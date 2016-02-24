@@ -8,7 +8,7 @@ import org.junit.Before;
 import org.junit.Rule;
 import org.junit.Test;
 import uk.gov.pay.connector.dao.EventJpaDao;
-import uk.gov.pay.connector.model.domain.ChargeEventEntity;
+import uk.gov.pay.connector.model.domain.ChargeEvent;
 import uk.gov.pay.connector.model.domain.ChargeStatus;
 import uk.gov.pay.connector.rules.DropwizardAppWithPostgresRule;
 
@@ -49,9 +49,10 @@ public class EventDaoJpaTest {
 
     @Test
     public void shouldRetrieveAllEventsForAGivenCharge() throws Exception {
+
         List<ChargeStatus> statuses = asList(CREATED, ENTERING_CARD_DETAILS, AUTHORISATION_SUBMITTED, AUTHORISATION_SUCCESS, CAPTURE_SUBMITTED, CAPTURED);
         setupLifeCycleEventsFor(app, CHARGE_ID, statuses);
-        List<ChargeEventEntity> events = eventDao.findEvents(GATEWAY_ACCOUNT_ID, CHARGE_ID);
+        List<ChargeEvent> events = eventDao.findEvents(GATEWAY_ACCOUNT_ID, CHARGE_ID);
 
         assertThat(events.size(), is(statuses.size()));
         assertThat(events, containsStatuses(statuses));
@@ -63,24 +64,23 @@ public class EventDaoJpaTest {
 
     }
 
-
     @Test
     public void shouldNotReturnEventsIfChargeDoesNotBelongToAccount() throws Exception {
 
         List<ChargeStatus> statuses = asList(CREATED, ENTERING_CARD_DETAILS);
         setupLifeCycleEventsFor(app, CHARGE_ID, statuses);
         Long nonExistentAccountId = 1111L;
-        List<ChargeEventEntity> events = eventDao.findEvents(nonExistentAccountId, CHARGE_ID);
+        List<ChargeEvent> events = eventDao.findEvents(nonExistentAccountId, CHARGE_ID);
 
         assertThat(events.size(), is(0));
     }
 
-    private Matcher<? super List<ChargeEventEntity>> containsStatuses(final List<ChargeStatus> expected) {
-        return new TypeSafeMatcher<List<ChargeEventEntity>>() {
+    private Matcher<? super List<ChargeEvent>> containsStatuses(final List<ChargeStatus> expected) {
+        return new TypeSafeMatcher<List<ChargeEvent>>() {
             private List<ChargeStatus> chargeStatuses;
 
             @Override
-            protected boolean matchesSafely(List<ChargeEventEntity> chargeEvents) {
+            protected boolean matchesSafely(List<ChargeEvent> chargeEvents) {
                 this.chargeStatuses = chargeEvents.stream()
                         .map(ce -> ce.getStatus())
                         .collect(Collectors.toList());
@@ -94,11 +94,9 @@ public class EventDaoJpaTest {
         };
     }
 
-
     public static void setupLifeCycleEventsFor(DropwizardAppWithPostgresRule app, Long chargeId, List<ChargeStatus> statuses) {
         statuses.stream().forEach(
                 st -> app.getDatabaseTestHelper().addEvent(chargeId, st.getValue())
         );
     }
-
 }

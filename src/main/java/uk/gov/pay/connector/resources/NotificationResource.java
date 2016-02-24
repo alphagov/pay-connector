@@ -4,7 +4,7 @@ import io.dropwizard.auth.Auth;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import uk.gov.pay.connector.dao.ChargeDao;
-import uk.gov.pay.connector.dao.GatewayAccountDao;
+import uk.gov.pay.connector.dao.IGatewayAccountDao;
 import uk.gov.pay.connector.dao.PayDBIException;
 import uk.gov.pay.connector.model.StatusUpdates;
 import uk.gov.pay.connector.model.domain.ChargeStatus;
@@ -28,9 +28,9 @@ public class NotificationResource {
     private static final Logger logger = LoggerFactory.getLogger(NotificationResource.class);
     private PaymentProviders providers;
     private ChargeDao chargeDao;
-    private GatewayAccountDao accountDao;
+    private IGatewayAccountDao accountDao;
 
-    public NotificationResource(PaymentProviders providers, ChargeDao chargeDao, GatewayAccountDao accountDao) {
+    public NotificationResource(PaymentProviders providers, ChargeDao chargeDao, IGatewayAccountDao accountDao) {
         this.providers = providers;
         this.chargeDao = chargeDao;
         this.accountDao = accountDao;
@@ -60,7 +60,7 @@ public class NotificationResource {
 
     private Consumer<StatusUpdates> accountUpdater(String provider) {
         return statusUpdates ->
-                statusUpdates.getStatusUpdates().forEach(update -> updateCharge(chargeDao, provider , update.getKey(), update.getValue()));
+                statusUpdates.getStatusUpdates().forEach(update -> updateCharge(chargeDao, provider, update.getKey(), update.getValue()));
     }
 
 

@@ -39,7 +39,7 @@ public class EventsApiJpaResource {
     @Path(CHARGE_EVENTS_API_JPA_PATH)
     @Produces(APPLICATION_JSON)
     public Response getEvents(@PathParam("accountId") Long accountId, @PathParam("chargeId") Long chargeId) {
-        List<ChargeEventEntity> events = eventDao.findEvents(accountId, chargeId);
+        List<ChargeEventEntity> events = eventDao.findEventsEntities(accountId, chargeId);
         List<ChargeEventExternal> eventsExternal = transformToExternalStatus(events);
         List<ChargeEventExternal> nonRepeatingExternalChargeEvents = getNonRepeatingChargeEvents(eventsExternal);
 

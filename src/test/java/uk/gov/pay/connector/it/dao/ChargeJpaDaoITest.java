@@ -12,7 +12,7 @@ import org.junit.Test;
 import org.junit.rules.ExpectedException;
 import uk.gov.pay.connector.dao.*;
 import uk.gov.pay.connector.model.domain.ChargeEntity;
-import uk.gov.pay.connector.model.domain.ChargeEventEntity;
+import uk.gov.pay.connector.model.domain.ChargeEvent;
 import uk.gov.pay.connector.model.domain.ChargeStatus;
 import uk.gov.pay.connector.model.domain.GatewayAccountEntity;
 import uk.gov.pay.connector.rules.DropwizardAppWithPostgresRule;
@@ -58,7 +58,6 @@ public class ChargeJpaDaoITest {
     private EventJpaDao eventDao;
     private GatewayAccountEntity gatewayAccountEntity;
     public GuicedTestEnvironment env;
-
 
     @Before
     public void setUp() throws Exception {
@@ -410,7 +409,7 @@ public class ChargeJpaDaoITest {
         assertThat(charge.getId(), is(chargeId));
         assertThat(charge.getStatus(), is(CAPTURE_SUBMITTED.getValue()));
 
-        List<ChargeEventEntity> events = eventDao.findEvents(GATEWAY_ACCOUNT_ID, chargeId);
+        List<ChargeEvent> events = eventDao.findEvents(GATEWAY_ACCOUNT_ID, chargeId);
         assertThat(events, not(shouldIncludeStatus(ENTERING_CARD_DETAILS)));
     }
 
@@ -433,14 +432,14 @@ public class ChargeJpaDaoITest {
     }
 
     private void assertLoggedEvents(Long chargeId, ChargeStatus... statuses) {
-        List<ChargeEventEntity> events = eventDao.findEvents(GATEWAY_ACCOUNT_ID, chargeId);
+        List<ChargeEvent> events = eventDao.findEvents(GATEWAY_ACCOUNT_ID, chargeId);
         assertThat(events, shouldIncludeStatus(statuses));
     }
 
-    private Matcher<? super List<ChargeEventEntity>> shouldIncludeStatus(ChargeStatus... expectedStatuses) {
-        return new TypeSafeMatcher<List<ChargeEventEntity>>() {
+    private Matcher<? super List<ChargeEvent>> shouldIncludeStatus(ChargeStatus... expectedStatuses) {
+        return new TypeSafeMatcher<List<ChargeEvent>>() {
             @Override
-            protected boolean matchesSafely(List<ChargeEventEntity> chargeEvents) {
+            protected boolean matchesSafely(List<ChargeEvent> chargeEvents) {
                 List<ChargeStatus> actualStatuses = chargeEvents.stream().map(ce -> ce.getStatus()).collect(toList());
                 return actualStatuses.containsAll(asList(expectedStatuses));
             }
@@ -465,5 +464,4 @@ public class ChargeJpaDaoITest {
         ZonedDateTime createdDateTime = DateTimeUtils.toUTCZonedDateTime(createdDateString).get();
         assertThat(createdDateTime, ZonedDateTimeMatchers.within(1, ChronoUnit.MINUTES, ZonedDateTime.now()));
     }
-
 }

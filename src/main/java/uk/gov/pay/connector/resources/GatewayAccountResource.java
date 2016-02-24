@@ -6,7 +6,7 @@ import com.google.common.collect.ImmutableMap;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import uk.gov.pay.connector.app.ConnectorConfiguration;
-import uk.gov.pay.connector.dao.GatewayAccountDao;
+import uk.gov.pay.connector.dao.IGatewayAccountDao;
 
 import javax.ws.rs.*;
 import javax.ws.rs.core.Context;
@@ -39,10 +39,10 @@ public class GatewayAccountResource {
 
     private static final Logger logger = LoggerFactory.getLogger(GatewayAccountResource.class);
 
-    private final GatewayAccountDao gatewayDao;
+    private final IGatewayAccountDao gatewayDao;
     private final Map<String, List<String>> providerCredentialFields;
 
-    public GatewayAccountResource(GatewayAccountDao gatewayDao, ConnectorConfiguration conf) {
+    public GatewayAccountResource(IGatewayAccountDao gatewayDao, ConnectorConfiguration conf) {
         this.gatewayDao = gatewayDao;
         providerCredentialFields = newHashMap();
         providerCredentialFields.put("worldpay", conf.getWorldpayConfig().getCredentials());
@@ -115,7 +115,7 @@ public class GatewayAccountResource {
         }
 
         return gatewayDao.findById(gatewayAccountId)
-                .map(  gatewayAccount ->
+                .map(gatewayAccount ->
                         {
                             List<String> missingFieldsInRequestPayload = getMissingFieldsInRequestPayload(credentialsPayload, gatewayAccount.getGatewayName());
                             if (!missingFieldsInRequestPayload.isEmpty()) {

@@ -19,10 +19,7 @@ import io.dropwizard.setup.Bootstrap;
 import io.dropwizard.setup.Environment;
 import org.skife.jdbi.v2.DBI;
 import uk.gov.pay.connector.auth.SmartpayAuthenticator;
-import uk.gov.pay.connector.dao.ChargeDao;
-import uk.gov.pay.connector.dao.EventDao;
-import uk.gov.pay.connector.dao.GatewayAccountDao;
-import uk.gov.pay.connector.dao.TokenDao;
+import uk.gov.pay.connector.dao.*;
 import uk.gov.pay.connector.healthcheck.DatabaseHealthCheck;
 import uk.gov.pay.connector.healthcheck.Ping;
 import uk.gov.pay.connector.resources.*;
@@ -77,7 +74,7 @@ public class ConnectorApp extends Application<ConnectorConfiguration> {
         ChargeEventListener chargeEventListener = new ChargeEventListener(eventDao);
         ChargeDao chargeDao = new ChargeDao(jdbi, chargeEventListener);
         TokenDao tokenDao = new TokenDao(jdbi);
-        GatewayAccountDao gatewayAccountDao = new GatewayAccountDao(jdbi);
+        IGatewayAccountDao gatewayAccountDao = new GatewayAccountDao(jdbi);
 
         ClientFactory clientFactory = new ClientFactory(environment, conf);
 
@@ -87,7 +84,7 @@ public class ConnectorApp extends Application<ConnectorConfiguration> {
         environment.jersey().register(new SecurityTokensResource(tokenDao));
         environment.jersey().register(new NotificationResource(providers, chargeDao, gatewayAccountDao));
         environment.jersey().register(new ChargesApiResource(chargeDao, tokenDao, gatewayAccountDao, eventDao, conf.getLinks()));
-        environment.jersey().register(new ChargesFrontendResource(chargeDao, gatewayAccountDao));
+        environment.jersey().register(new ChargesFrontendResource(chargeDao));
         environment.jersey().register(new CardResource(cardService));
         environment.jersey().register(new GatewayAccountResource(gatewayAccountDao, conf));
 
