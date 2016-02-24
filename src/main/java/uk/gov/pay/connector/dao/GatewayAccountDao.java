@@ -1,11 +1,13 @@
 package uk.gov.pay.connector.dao;
 
+import org.apache.commons.lang3.NotImplementedException;
 import org.postgresql.util.PGobject;
 import org.skife.jdbi.v2.DBI;
 import org.skife.jdbi.v2.util.BooleanMapper;
 import org.skife.jdbi.v2.util.StringMapper;
 import uk.gov.pay.connector.mappers.GatewayAccountMapper;
 import uk.gov.pay.connector.model.domain.GatewayAccount;
+import uk.gov.pay.connector.model.domain.GatewayAccountEntity;
 
 import java.sql.SQLException;
 import java.util.Optional;
@@ -47,6 +49,11 @@ public class GatewayAccountDao implements IGatewayAccountDao {
                 .map(new GatewayAccountMapper())
                 .first());
         return Optional.ofNullable(gatewayAccount);
+    }
+
+    @Override
+    public Optional<GatewayAccountEntity> findById(Long gatewayAccountId) {
+        throw new NotImplementedException("this method isnt implemented for old style dao");
     }
 
     @Override

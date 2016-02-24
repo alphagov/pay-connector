@@ -1,29 +1,33 @@
 package uk.gov.pay.connector.dao;
 
+import com.google.common.collect.ImmutableMap;
 import com.google.inject.Provider;
 import com.google.inject.persist.Transactional;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import uk.gov.pay.connector.model.domain.ChargeEntity;
-import uk.gov.pay.connector.model.domain.ChargeEventEntity;
-import uk.gov.pay.connector.model.domain.ChargeStatus;
+import uk.gov.pay.connector.model.api.ExternalChargeStatus;
+import uk.gov.pay.connector.model.domain.*;
 import uk.gov.pay.connector.util.ChargeEventJpaListener;
 
 import javax.inject.Inject;
 import javax.persistence.EntityManager;
 import javax.persistence.TypedQuery;
 import java.time.LocalDateTime;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 import java.util.Optional;
 
+import static com.google.common.collect.Maps.toMap;
 import static java.lang.String.format;
 import static uk.gov.pay.connector.model.domain.ChargeStatus.CREATED;
 
-public class ChargeJpaDao extends JpaDao<ChargeEntity> {
+public class ChargeJpaDao extends JpaDao<ChargeEntity> implements IChargeDao {
 
     private static final Logger logger = LoggerFactory.getLogger(ChargeJpaDao.class);
 
     private ChargeEventJpaListener eventListener;
+    private GatewayAccountJpaDao gatewayAccountDao;
 
     @Inject
     public ChargeJpaDao(final Provider<EntityManager> entityManager, ChargeEventJpaListener eventListener) {
@@ -32,13 +36,13 @@ public class ChargeJpaDao extends JpaDao<ChargeEntity> {
     }
 
     @Transactional
-    public void persist(ChargeEntity charge) {
+    public void create(ChargeEntity charge) {
         super.persist(charge);
         eventListener.notify(ChargeEventEntity.from(charge, CREATED, charge.getCreatedDate().toLocalDateTime()));
     }
 
     @Transactional
-    public ChargeEntity merge(final ChargeEntity charge) {
+    public ChargeEntity update(final ChargeEntity charge) {
         ChargeEntity updated = super.merge(charge);
         eventListener.notify(ChargeEventEntity.from(
                 charge,
@@ -47,11 +51,7 @@ public class ChargeJpaDao extends JpaDao<ChargeEntity> {
         return updated;
     }
 
-    public <ID> Optional<ChargeEntity> findById(final ID id) {
-        return super.findById(ChargeEntity.class, id);
-    }
-
-
+    @Transactional
     public Optional<ChargeEntity> findByGatewayTransactionIdAndProvider(String transactionId, String paymentProvider) {
         TypedQuery<ChargeEntity> query = entityManager.get()
                 .createQuery("select c from ChargeEntity c where c.gatewayTransactionId = :gatewayTransactionId and c.gatewayAccount.gatewayName = :paymentProvider", ChargeEntity.class);
@@ -67,6 +67,82 @@ public class ChargeJpaDao extends JpaDao<ChargeEntity> {
         return query.getResultList();
     }
 
+
+    @Override
+    @Transactional
+    public String saveNewCharge(String gatewayAccountId, Map<String, Object> charge) {
+        GatewayAccountEntity gatewayAccountEntity = gatewayAccountDao.findById(new Long(gatewayAccountId))
+                .orElseThrow(() -> new PayDBIException(format("Could not create a new charge with Gateway accountId '%s'", gatewayAccountId, 0)));
+
+        ChargeEntity chargeEntity =
+                new ChargeEntity(new Long(charge.get("amount").toString()),
+                        CREATED.getValue(),
+                        null,
+                        charge.get("return_url").toString(),
+                        charge.get("description").toString(),
+                        charge.get("reference").toString(),
+                        gatewayAccountEntity);
+
+        create(chargeEntity);
+        return chargeEntity.getId().toString();
+    }
+
+    @Override
+    public Optional<Map<String, Object>> findChargeForAccount(String chargeId, String accountId) {
+        Optional<ChargeEntity> chargeEntityOpt = findById(new Long(chargeId));
+        if (chargeEntityOpt.isPresent() && chargeEntityOpt.get().getGatewayAccount().getId().equals(accountId)) {
+            return Optional.of(buildChargeMap(chargeEntityOpt.get()));
+        }
+        return Optional.empty();
+    }
+
+    @Override
+    public Optional<Map<String, Object>> findById(String chargeId) {
+        Map<String, Object> chargeMap = new HashMap<String, Object>();
+        Optional<ChargeEntity> chargeEntityOptional = findById(new Long(chargeId));
+
+        if (chargeEntityOptional.isPresent()) {
+            chargeMap = buildChargeMap(chargeEntityOptional.get());
+        }
+        return Optional.of(chargeMap);
+    }
+
+    @Override
+    public Optional<ChargeEntity> findById(Long chargeId) {
+        return super.findById(ChargeEntity.class, chargeId);
+    }
+
+    @Override
+    public void updateGatewayTransactionId(String chargeId, String transactionId) {
+        ChargeEntity charge = findById(new Long(chargeId))
+                .orElseThrow(() -> new PayDBIException(format("Could not update charge '%s' with gateway transaction id %s", chargeId, transactionId)));
+        charge.setGatewayTransactionId(transactionId);
+    }
+
+    @Override
+    public void updateStatusWithGatewayInfo(String provider, String gatewayTransactionId, ChargeStatus newStatus) {
+
+    }
+
+    @Override
+    public void updateStatus(String chargeId, ChargeStatus newStatus) {
+        updateStatus(new Long(chargeId), newStatus);
+    }
+
+    @Transactional
+    public ChargeEntity updateStatus(Long chargeId, ChargeStatus newStatus) {
+        ChargeEntity chargeEntity = findById(chargeId)
+                .orElseThrow(() -> new PayDBIException(format("Could not update charge '%s' with status %s, updated %d rows.", chargeId, newStatus, 0)));
+        chargeEntity.setStatus(newStatus);
+        eventListener.notify(ChargeEventEntity.from(chargeEntity, newStatus, LocalDateTime.now()));
+        return chargeEntity;
+    }
+
+    @Override
+    public int updateNewStatusWhereOldStatusIn(String chargeId, ChargeStatus newStatus, List<ChargeStatus> oldStatuses) {
+        return updateNewStatusWhereOldStatusIn(new Long(chargeId), newStatus, oldStatuses);
+    }
+
     @Transactional
     public int updateNewStatusWhereOldStatusIn(Long chargeId, ChargeStatus newStatus, List<ChargeStatus> oldStatuses) {
 
@@ -77,22 +153,35 @@ public class ChargeJpaDao extends JpaDao<ChargeEntity> {
         findById(chargeId).ifPresent(charge -> {
             String status = charge.getStatus();
             if (oldStatuses.contains(ChargeStatus.chargeStatusFrom(status))) {
-                charge.setStatus(newStatus);
-                eventListener.notify(ChargeEventEntity.from(charge, newStatus, LocalDateTime.now()));
+                updateStatus(chargeId, newStatus);
             }
-
             updated[0] = 1;
         });
-
         return updated[0];
     }
 
-    @Transactional
-    public void updateStatus(Long chargeId, ChargeStatus newStatus) {
-        ChargeEntity chargeEntity = findById(chargeId)
-                .orElseThrow(() -> new PayDBIException(format("Could not update charge '%s' with status %s, updated %d rows.", chargeId, newStatus, 0)));
-        chargeEntity.setStatus(newStatus);
-        eventListener.notify(ChargeEventEntity.from(chargeEntity, newStatus, LocalDateTime.now()));
+    @Override
+    public List<Map<String, Object>> findAllBy(String gatewayAccountId, String reference, ExternalChargeStatus status, String fromDate, String toDate) {
+        return null;
+    }
+
+    @Override
+    public Optional<String> findAccountByTransactionId(String provider, String transactionId) {
+        return null;
+    }
+
+    private Map<String, Object> buildChargeMap(ChargeEntity chargeEntity) {
+        return new ImmutableMap.Builder<String, Object>()
+                .put("charge_id",chargeEntity.getId())
+                .put("amount",chargeEntity.getAmount())
+                .put("status",chargeEntity.getStatus())
+                .put("gateway_transaction_id",chargeEntity.getGatewayTransactionId())
+                .put("return_url",chargeEntity.getReturnUrl())
+                .put("gateway_account_id",chargeEntity.getGatewayAccount().getId())
+                .put("description",chargeEntity.getDescription())
+                .put("reference",chargeEntity.getReference())
+                .put("created_date",chargeEntity.getCreatedDate())
+                .build();
     }
 }
 

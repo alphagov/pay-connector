@@ -1,11 +1,13 @@
 package uk.gov.pay.connector.dao;
 
+import org.apache.commons.lang3.NotImplementedException;
 import org.skife.jdbi.v2.DBI;
 import org.skife.jdbi.v2.DefaultMapper;
 import org.skife.jdbi.v2.util.StringMapper;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import uk.gov.pay.connector.model.api.ExternalChargeStatus;
+import uk.gov.pay.connector.model.domain.ChargeEntity;
 import uk.gov.pay.connector.model.domain.ChargeEvent;
 import uk.gov.pay.connector.model.domain.ChargeStatus;
 import uk.gov.pay.connector.util.ChargeEventListener;
@@ -26,7 +28,7 @@ import static uk.gov.pay.connector.model.domain.ChargeStatus.CREATED;
 import static uk.gov.pay.connector.util.ChargesSearch.createQueryHandle;
 
 @Deprecated
-public class ChargeDao {
+public class ChargeDao implements IChargeDao {
     private static final Logger logger = LoggerFactory.getLogger(ChargeDao.class);
 
     private DBI jdbi;
@@ -37,6 +39,7 @@ public class ChargeDao {
         this.eventListener = eventListener;
     }
 
+    @Override
     public String saveNewCharge(String gatewayAccountId, Map<String, Object> charge) {
         LocalDateTime createdDate = LocalDateTime.now();
         String newChargeId = jdbi.withHandle(handle ->
@@ -54,6 +57,7 @@ public class ChargeDao {
         return newChargeId;
     }
 
+    @Override
     public Optional<Map<String, Object>> findChargeForAccount(String chargeId, String accountId) {
         Map<String, Object> data = jdbi.withHandle(handle ->
                 handle
@@ -75,6 +79,7 @@ public class ChargeDao {
         return Optional.ofNullable(data);
     }
 
+    @Override
     public Optional<Map<String, Object>> findById(String chargeId) {
         Map<String, Object> data = jdbi.withHandle(handle ->
                 handle
@@ -94,6 +99,12 @@ public class ChargeDao {
         return Optional.ofNullable(data);
     }
 
+    @Override
+    public Optional<ChargeEntity> findById(Long chargeId) {
+        throw new NotImplementedException("this method is not implemented yet, just to suffice the interface");
+    }
+
+    @Override
     public void updateGatewayTransactionId(String chargeId, String transactionId) {
         Integer numberOfUpdates = jdbi.withHandle(handle ->
                 handle
@@ -108,6 +119,7 @@ public class ChargeDao {
         }
     }
 
+    @Override
     public void updateStatusWithGatewayInfo(String provider, String gatewayTransactionId, ChargeStatus newStatus) {
         Integer numberOfUpdates = jdbi.withHandle(handle ->
                 handle
@@ -135,6 +147,7 @@ public class ChargeDao {
         }
     }
 
+    @Override
     public void updateStatus(String chargeId, ChargeStatus newStatus) {
         Integer numberOfUpdates = jdbi.withHandle(handle ->
                 handle
@@ -152,6 +165,7 @@ public class ChargeDao {
 
     // updates the new status only if the charge is in one of the old statuses and returns num of rows affected
     // very specific transition happening here so check for a valid state before transitioning
+    @Override
     public int updateNewStatusWhereOldStatusIn(String chargeId, ChargeStatus newStatus, List<ChargeStatus> oldStatuses) {
         String sql = format("UPDATE charges SET status=:newStatus WHERE id=:charge_id and status in (%s)", getStringFromStatusList(oldStatuses));
 
@@ -167,6 +181,7 @@ public class ChargeDao {
         return updateCount;
     }
 
+    @Override
     public List<Map<String, Object>> findAllBy(String gatewayAccountId, String reference, ExternalChargeStatus status,
                                                String fromDate, String toDate) {
         String query =
@@ -193,6 +208,7 @@ public class ChargeDao {
         return copyAndConvertFieldsToString(rawData, "charge_id");
     }
 
+    @Override
     public Optional<String> findAccountByTransactionId(String provider, String transactionId) {
         Map<String, Object> data = jdbi.withHandle(handle ->
                 handle

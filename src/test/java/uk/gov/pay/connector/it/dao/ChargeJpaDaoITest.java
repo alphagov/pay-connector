@@ -73,7 +73,7 @@ public class ChargeJpaDaoITest {
         gatewayAccountEntity = gatewayAccountJpaDao.findById(GatewayAccountEntity.class, GATEWAY_ACCOUNT_ID).get();
         ChargeEntity charge = new ChargeEntity(AMOUNT, CREATED.getValue(), "", "", DESCRIPTION,
                 REFERENCE, gatewayAccountEntity);
-        chargeDao.persist(charge);
+        chargeDao.create(charge);
         chargeId = charge.getId();
     }
 
@@ -94,7 +94,7 @@ public class ChargeJpaDaoITest {
         );
 
         // when
-        chargeDao.persist(chargeEntity);
+        chargeDao.create(chargeEntity);
 
         // then
         assertThat(chargeEntity.getId(), is(notNullValue()));
@@ -331,7 +331,7 @@ public class ChargeJpaDaoITest {
         // then
         charge.setStatus(AUTHORISATION_SUBMITTED);
         charge.setGatewayTransactionId("new-gateway-transaction-id");
-        chargeDao.merge(charge);
+        chargeDao.update(charge);
 
         ChargeEntity chargeFromDB = chargeDao.findById(ChargeEntity.class, charge.getId()).get();
         assertThat(chargeFromDB.getStatus(), is(AUTHORISATION_SUBMITTED.getValue()));
@@ -400,7 +400,7 @@ public class ChargeJpaDaoITest {
         ChargeEntity charge = chargeDao.findById(chargeId).get();
         charge.setStatus(CAPTURE_SUBMITTED);
 
-        chargeDao.merge(charge);
+        chargeDao.update(charge);
         List<ChargeStatus> oldStatuses = newArrayList(CREATED, ENTERING_CARD_DETAILS);
 
         chargeDao.updateNewStatusWhereOldStatusIn(chargeId, ENTERING_CARD_DETAILS, oldStatuses);
@@ -428,7 +428,7 @@ public class ChargeJpaDaoITest {
     public void invalidSizeOfFields() throws Exception {
         expectedEx.expect(RuntimeException.class);
         ChargeEntity charge = new ChargeEntity(AMOUNT, CREATED.getValue(), "", "", "", randomAlphanumeric(512), gatewayAccountEntity);
-        chargeDao.persist(charge);
+        chargeDao.create(charge);
     }
 
     private void assertLoggedEvents(Long chargeId, ChargeStatus... statuses) {

@@ -47,6 +47,11 @@ public class GatewayAccountJpaDao extends JpaDao<GatewayAccountEntity> implement
     }
 
     @Override
+    public Optional<GatewayAccountEntity> findById(Long gatewayAccountId) {
+        return super.findById(GatewayAccountEntity.class, gatewayAccountId);
+    }
+
+    @Override
     @Transactional
     public void saveCredentials(String credentialsJsonString, String gatewayAccountId) {
         findById(GatewayAccountEntity.class, Long.valueOf(gatewayAccountId)).ifPresent(

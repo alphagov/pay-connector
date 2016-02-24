@@ -8,6 +8,7 @@ import org.apache.commons.lang3.tuple.Pair;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import uk.gov.pay.connector.app.LinksConfig;
+import uk.gov.pay.connector.dao.*;
 import uk.gov.pay.connector.dao.ChargeDao;
 import uk.gov.pay.connector.dao.EventDao;
 import uk.gov.pay.connector.dao.IGatewayAccountDao;
@@ -66,7 +67,7 @@ public class ChargesApiResource {
     public static final String TO_DATE_KEY = "to_date";
     private final String TEXT_CSV = "text/csv";
 
-    private ChargeDao chargeDao;
+    private IChargeDao chargeDao;
     private TokenDao tokenDao;
     private IGatewayAccountDao gatewayAccountDao;
     private EventDao eventDao;
