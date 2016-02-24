@@ -23,7 +23,7 @@ import static uk.gov.pay.connector.model.domain.ChargeStatus.CREATED;
 
 public class ChargeCancelResourceITest {
     private static final List<ChargeStatus> CANCELLABLE_STATES = ImmutableList.of(
-            CREATED, ENTERING_CARD_DETAILS, AUTHORISATION_SUCCESS, AUTHORISATION_SUBMITTED, READY_FOR_CAPTURE
+            CREATED, ENTERING_CARD_DETAILS, AUTHORISATION_SUCCESS, AUTHORISATION_READY, READY_FOR_CAPTURE
     );
 
     private String accountId = "66757943593456";

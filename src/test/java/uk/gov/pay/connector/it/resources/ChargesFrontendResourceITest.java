@@ -150,9 +150,9 @@ public class ChargesFrontendResourceITest {
 
         String anotherAccountId = "5454545";
         app.getDatabaseTestHelper().addGatewayAccount(anotherAccountId, "another test gateway");
-        app.getDatabaseTestHelper().addCharge("5001", anotherAccountId, 200, AUTHORISATION_SUBMITTED, returnUrl, "transaction-id-2");
+        app.getDatabaseTestHelper().addCharge("5001", anotherAccountId, 200, AUTHORISATION_READY, returnUrl, "transaction-id-2");
 
-        List<ChargeStatus> statuses = asList(CREATED, ENTERING_CARD_DETAILS, AUTHORISATION_SUBMITTED, AUTHORISATION_SUCCESS);
+        List<ChargeStatus> statuses = asList(CREATED, ENTERING_CARD_DETAILS, AUTHORISATION_READY, AUTHORISATION_SUCCESS);
         setupLifeCycleEventsFor(app, Long.valueOf(chargeId1), statuses);
         setupLifeCycleEventsFor(app, Long.valueOf(chargeId2), statuses);
         setupLifeCycleEventsFor(app, Long.valueOf(5001), statuses);
@@ -170,9 +170,9 @@ public class ChargesFrontendResourceITest {
     public void shouldReturnTransactionsOnDescendingOrderOfChargeId() {
         app.getDatabaseTestHelper().addCharge("101", accountId, 500, AUTHORISATION_SUCCESS, returnUrl, randomUUID().toString());
         app.getDatabaseTestHelper().addCharge("102", accountId, 300, AUTHORISATION_REJECTED, returnUrl, null);
-        app.getDatabaseTestHelper().addCharge("103", accountId, 100, AUTHORISATION_SUBMITTED, returnUrl, randomUUID().toString());
+        app.getDatabaseTestHelper().addCharge("103", accountId, 100, AUTHORISATION_READY, returnUrl, randomUUID().toString());
 
-        List<ChargeStatus> statuses = asList(CREATED, ENTERING_CARD_DETAILS, AUTHORISATION_SUBMITTED, AUTHORISATION_SUCCESS, CAPTURE_SUBMITTED, CAPTURED);
+        List<ChargeStatus> statuses = asList(CREATED, ENTERING_CARD_DETAILS, AUTHORISATION_READY, AUTHORISATION_SUCCESS, CAPTURE_SUBMITTED, CAPTURED);
         setupLifeCycleEventsFor(app, Long.valueOf(101), statuses);
         setupLifeCycleEventsFor(app, Long.valueOf(102), statuses);
         setupLifeCycleEventsFor(app, Long.valueOf(103), statuses);

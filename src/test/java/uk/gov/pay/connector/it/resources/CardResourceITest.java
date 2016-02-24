@@ -168,17 +168,17 @@ public class CardResourceITest extends CardResourceITestBase {
 
     @Test
     public void shouldReturnErrorWithoutChangingChargeState_IfOriginalStateIsNotAuthorised() {
-        String chargeIdNotAuthorised = createNewChargeWith(AUTHORISATION_SUBMITTED, null);
+        String chargeIdNotAuthorised = createNewChargeWith(AUTHORISATION_READY, null);
 
         givenSetup()
                 .post(captureChargeUrlFor(chargeIdNotAuthorised))
                 .then()
                 .statusCode(400)
                 .contentType(JSON)
-                .body("message", is("Cannot capture a charge with status " + AUTHORISATION_SUBMITTED.getValue() + "."));
+                .body("message", is("Cannot capture a charge with status " + AUTHORISATION_READY.getValue() + "."));
 
 
-        assertFrontendChargeStatusIs(chargeIdNotAuthorised, AUTHORISATION_SUBMITTED.getValue());
+        assertFrontendChargeStatusIs(chargeIdNotAuthorised, AUTHORISATION_READY.getValue());
     }
 
     private void shouldAuthoriseChargeFor(String cardDetails) throws Exception {
