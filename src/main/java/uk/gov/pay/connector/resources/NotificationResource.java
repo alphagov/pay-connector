@@ -3,7 +3,7 @@ package uk.gov.pay.connector.resources;
 import io.dropwizard.auth.Auth;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import uk.gov.pay.connector.dao.ChargeDao;
+import uk.gov.pay.connector.dao.IChargeDao;
 import uk.gov.pay.connector.dao.IGatewayAccountDao;
 import uk.gov.pay.connector.dao.PayDBIException;
 import uk.gov.pay.connector.model.StatusUpdates;
@@ -27,10 +27,10 @@ public class NotificationResource {
 
     private static final Logger logger = LoggerFactory.getLogger(NotificationResource.class);
     private PaymentProviders providers;
-    private ChargeDao chargeDao;
+    private IChargeDao chargeDao;
     private IGatewayAccountDao accountDao;
 
-    public NotificationResource(PaymentProviders providers, ChargeDao chargeDao, IGatewayAccountDao accountDao) {
+    public NotificationResource(PaymentProviders providers, IChargeDao chargeDao, IGatewayAccountDao accountDao) {
         this.providers = providers;
         this.chargeDao = chargeDao;
         this.accountDao = accountDao;
@@ -71,7 +71,7 @@ public class NotificationResource {
         };
     }
 
-    private static void updateCharge(ChargeDao chargeDao, String provider, String transactionId, ChargeStatus value) {
+    private static void updateCharge(IChargeDao chargeDao, String provider, String transactionId, ChargeStatus value) {
         try {
             chargeDao.updateStatusWithGatewayInfo(provider, transactionId, value);
         } catch (PayDBIException e) {

@@ -3,8 +3,7 @@ package uk.gov.pay.connector.service;
 import fj.data.Either;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import uk.gov.pay.connector.dao.ChargeDao;
-import uk.gov.pay.connector.dao.GatewayAccountDao;
+import uk.gov.pay.connector.dao.IChargeDao;
 import uk.gov.pay.connector.dao.IGatewayAccountDao;
 import uk.gov.pay.connector.model.*;
 import uk.gov.pay.connector.model.domain.Card;
@@ -39,10 +38,10 @@ public class CardService {
     };
 
     private final IGatewayAccountDao accountDao;
-    private final ChargeDao chargeDao;
+    private final IChargeDao chargeDao;
     private final PaymentProviders providers;
 
-    public CardService(IGatewayAccountDao accountDao, ChargeDao chargeDao, PaymentProviders providers) {
+    public CardService(IGatewayAccountDao accountDao, IChargeDao chargeDao, PaymentProviders providers) {
         this.accountDao = accountDao;
         this.chargeDao = chargeDao;
         this.providers = providers;

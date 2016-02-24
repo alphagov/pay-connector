@@ -68,15 +68,15 @@ public class ChargesApiResource {
     private final String TEXT_CSV = "text/csv";
 
     private IChargeDao chargeDao;
-    private TokenDao tokenDao;
+    private ITokenDao tokenDao;
     private IGatewayAccountDao gatewayAccountDao;
-    private EventDao eventDao;
+    private IEventDao eventDao;
     private LinksConfig linksConfig;
 
     private static final Logger logger = LoggerFactory.getLogger(ChargesApiResource.class);
     private static final DateFormat DATE_FORMAT = new SimpleDateFormat("dd/MM/yyyy HH:mm:ss");
 
-    public ChargesApiResource(ChargeDao chargeDao, TokenDao tokenDao, IGatewayAccountDao gatewayAccountDao, EventDao eventDao, LinksConfig linksConfig) {
+    public ChargesApiResource(IChargeDao chargeDao, ITokenDao tokenDao, IGatewayAccountDao gatewayAccountDao, IEventDao eventDao, LinksConfig linksConfig) {
         this.chargeDao = chargeDao;
         this.tokenDao = tokenDao;
         this.gatewayAccountDao = gatewayAccountDao;

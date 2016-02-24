@@ -56,24 +56,24 @@ public class ConnectorApp extends Application<ConnectorConfiguration> {
 
     @Override
     public void run(ConnectorConfiguration conf, Environment environment) throws Exception {
-        // JPA stuff
 
+        // JPA stuff
         final Injector injector = Guice.createInjector(new ConnectorModule(conf, environment), createJpaModule(conf.getDatabaseConfig()));
         environment.servlets().addFilter("persistFilter", injector.getInstance(PersistFilter.class));
         environment.jersey().register(injector.getInstance(GatewayAccountJpaResource.class));
         environment.jersey().register(injector.getInstance(EventsApiJpaResource.class));
-
         // end JPA stuff
+
         DataSourceFactory dataSourceFactory = conf.getDataSourceFactory();
 
         environment.healthChecks().register("ping", new Ping());
 
         jdbi = new DBIFactory().build(environment, dataSourceFactory, "postgresql");
 
-        EventDao eventDao = new EventDao(jdbi);
+        IEventDao eventDao = new EventDao(jdbi);
         ChargeEventListener chargeEventListener = new ChargeEventListener(eventDao);
-        ChargeDao chargeDao = new ChargeDao(jdbi, chargeEventListener);
-        TokenDao tokenDao = new TokenDao(jdbi);
+        IChargeDao chargeDao = new ChargeDao(jdbi, chargeEventListener);
+        ITokenDao tokenDao = new TokenDao(jdbi);
         IGatewayAccountDao gatewayAccountDao = new GatewayAccountDao(jdbi);
 
         ClientFactory clientFactory = new ClientFactory(environment, conf);
