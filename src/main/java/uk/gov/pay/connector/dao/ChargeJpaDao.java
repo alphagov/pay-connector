@@ -10,6 +10,7 @@ import uk.gov.pay.connector.util.ChargeEventJpaListener;
 
 import javax.inject.Inject;
 import javax.persistence.EntityManager;
+import javax.persistence.Query;
 import javax.persistence.TypedQuery;
 import java.time.LocalDateTime;
 import java.time.ZonedDateTime;
@@ -215,12 +216,12 @@ public class ChargeJpaDao extends JpaDao<ChargeEntity> implements IChargeDao {
                 "AND " +
                 "c.gatewayAccount.gatewayName=:provider";
 
-        TypedQuery<ChargeEntity> query = entityManager.get().createQuery(qlString, ChargeEntity.class);
+        Query query = entityManager.get().createQuery(qlString);
         query.setParameter("gatewayTransactionId", transactionId);
         query.setParameter("provider", provider);
 
-        return Optional.ofNullable(query.getSingleResult().getId().toString());
-
+        String account = query.getSingleResult().toString();
+        return Optional.ofNullable(account);
     }
 
     private Map<String, Object> buildChargeMap(ChargeEntity chargeEntity) {

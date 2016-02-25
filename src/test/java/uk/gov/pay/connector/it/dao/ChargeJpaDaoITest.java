@@ -463,7 +463,7 @@ public class ChargeJpaDaoITest {
 
     private void assertLoggedEvents(ChargeStatus... statuses) {
         List<ChargeEvent> events = eventDao.findEvents(GATEWAY_ACCOUNT_ID, chargeId);
-        assertThat(events,  shouldIncludeStatus(statuses));
+        assertThat(events, shouldIncludeStatus(statuses));
     }
 
     private Matcher<? super List<ChargeEvent>> shouldIncludeStatus(ChargeStatus... expectedStatuses) {
@@ -493,6 +493,21 @@ public class ChargeJpaDaoITest {
     private void assertDateMatch(String createdDateString) {
         ZonedDateTime createdDateTime = DateTimeUtils.toUTCZonedDateTime(createdDateString).get();
         assertThat(createdDateTime, ZonedDateTimeMatchers.within(1, ChronoUnit.MINUTES, ZonedDateTime.now()));
+    }
+
+    @Test
+    public void shouldReturnChargeByTransactionId() {
+
+        Long id = System.currentTimeMillis();
+        String transactionId = UUID.randomUUID().toString();
+
+        app.getDatabaseTestHelper().addCharge(id.toString(),
+                GATEWAY_ACCOUNT_ID.toString(), AMOUNT, CREATED, RETURN_URL, transactionId, "Whatever Payment", ZonedDateTime.now());
+
+        Optional<String> account = chargeDao.findAccountByTransactionId(PAYMENT_PROVIDER, transactionId);
+
+        assertThat(account.isPresent(), is(true));
+        assertThat(account.get(), is(String.valueOf(GATEWAY_ACCOUNT_ID)));
     }
 
     @Test
@@ -542,7 +557,7 @@ public class ChargeJpaDaoITest {
         assertThat(charges.get(1).get("reference"), is(REFERENCE));
         assertThat(charges.get(0).get("reference"), is(COUNCIL_TAX_PAYMENT_REFERENCE));
 
-        for(Map<String, Object> charge : charges) {
+        for (Map<String, Object> charge : charges) {
             assertThat(charge.get("amount"), is(AMOUNT));
             assertThat(charge.get("description"), is(DESCRIPTION));
             assertThat(charge.get("status"), is(CREATED.getValue()));
