@@ -1,9 +1,7 @@
 package uk.gov.pay.connector.dao;
 
-import com.google.common.collect.ImmutableMap;
 import com.google.inject.Provider;
 import com.google.inject.persist.Transactional;
-import org.skife.jdbi.v2.DefaultMapper;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import uk.gov.pay.connector.model.api.ExternalChargeStatus;
@@ -12,17 +10,14 @@ import uk.gov.pay.connector.util.ChargeEventJpaListener;
 
 import javax.inject.Inject;
 import javax.persistence.EntityManager;
-import javax.persistence.Query;
 import javax.persistence.TypedQuery;
 import java.time.LocalDateTime;
 import java.time.ZonedDateTime;
 import java.util.*;
 
-import static com.google.common.collect.Maps.toMap;
 import static java.lang.String.format;
 import static java.util.stream.Collectors.toList;
 import static uk.gov.pay.connector.model.domain.ChargeStatus.CREATED;
-import static uk.gov.pay.connector.util.ChargesSearch.createQueryHandle;
 
 public class ChargeJpaDao extends JpaDao<ChargeEntity> implements IChargeDao {
 
@@ -32,9 +27,10 @@ public class ChargeJpaDao extends JpaDao<ChargeEntity> implements IChargeDao {
     private GatewayAccountJpaDao gatewayAccountDao;
 
     @Inject
-    public ChargeJpaDao(final Provider<EntityManager> entityManager, ChargeEventJpaListener eventListener) {
+    public ChargeJpaDao(final Provider<EntityManager> entityManager, ChargeEventJpaListener eventListener, GatewayAccountJpaDao gatewayAccountDao) {
         super(entityManager);
         this.eventListener = eventListener;
+        this.gatewayAccountDao = gatewayAccountDao;
     }
 
     @Transactional
@@ -228,17 +224,17 @@ public class ChargeJpaDao extends JpaDao<ChargeEntity> implements IChargeDao {
     }
 
     private Map<String, Object> buildChargeMap(ChargeEntity chargeEntity) {
-        return new ImmutableMap.Builder<String, Object>()
-                .put("charge_id", chargeEntity.getId())
-                .put("amount", chargeEntity.getAmount())
-                .put("status", chargeEntity.getStatus())
-                .put("gateway_transaction_id", chargeEntity.getGatewayTransactionId())
-                .put("return_url", chargeEntity.getReturnUrl())
-                .put("gateway_account_id", chargeEntity.getGatewayAccount().getId())
-                .put("description", chargeEntity.getDescription())
-                .put("reference", chargeEntity.getReference())
-                .put("created_date", chargeEntity.getCreatedDate())
-                .build();
+        HashMap<String, Object> charge = new HashMap<>();
+        charge.put("charge_id", chargeEntity.getId());
+        charge.put("amount", chargeEntity.getAmount());
+        charge.put("status", chargeEntity.getStatus());
+        charge.put("gateway_transaction_id", chargeEntity.getGatewayTransactionId());
+        charge.put("return_url", chargeEntity.getReturnUrl());
+        charge.put("gateway_account_id", String.valueOf(chargeEntity.getGatewayAccount().getId()));
+        charge.put("description", chargeEntity.getDescription());
+        charge.put("reference", chargeEntity.getReference());
+        charge.put("created_date", chargeEntity.getCreatedDate());
+        return Collections.unmodifiableMap(charge);
     }
 
     private ChargeEntity findChargeByTransactionId(String provider, String transactionId) {

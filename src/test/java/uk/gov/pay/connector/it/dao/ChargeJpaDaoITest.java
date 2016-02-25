@@ -504,7 +504,7 @@ public class ChargeJpaDaoITest {
         assertThat(charge.get("reference"), is(REFERENCE));
         assertThat(charge.get("description"), is(DESCRIPTION));
         assertThat(charge.get("status"), is(CREATED.getValue()));
-        assertThat(charge.get("gateway_account_id"), is(GATEWAY_ACCOUNT_ID));
+        assertThat(charge.get("gateway_account_id"), is(String.valueOf(GATEWAY_ACCOUNT_ID)));
         assertThat(charge.get("return_url"), is(RETURN_URL));
         LocalDateTime createdDate = ((ZonedDateTime) charge.get("created_date")).toLocalDateTime();
         LocalDateTime today = LocalDateTime.now();

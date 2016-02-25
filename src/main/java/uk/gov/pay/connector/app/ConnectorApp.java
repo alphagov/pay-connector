@@ -2,7 +2,6 @@ package uk.gov.pay.connector.app;
 
 import com.google.inject.Guice;
 import com.google.inject.Injector;
-import com.google.inject.Module;
 import com.google.inject.persist.PersistFilter;
 import com.google.inject.persist.jpa.JpaPersistModule;
 import io.dropwizard.Application;
@@ -11,7 +10,6 @@ import io.dropwizard.auth.basic.BasicAuthFactory;
 import io.dropwizard.configuration.EnvironmentVariableSubstitutor;
 import io.dropwizard.configuration.SubstitutingSourceProvider;
 import io.dropwizard.db.DataSourceFactory;
-import io.dropwizard.db.DatabaseConfiguration;
 import io.dropwizard.jdbi.DBIFactory;
 import io.dropwizard.jdbi.bundles.DBIExceptionsBundle;
 import io.dropwizard.migrations.MigrationsBundle;
@@ -26,7 +24,6 @@ import uk.gov.pay.connector.resources.*;
 import uk.gov.pay.connector.service.CardService;
 import uk.gov.pay.connector.service.ClientFactory;
 import uk.gov.pay.connector.service.PaymentProviders;
-import uk.gov.pay.connector.util.ChargeEventListener;
 import uk.gov.pay.connector.util.DbWaitCommand;
 
 import java.util.Properties;
@@ -70,11 +67,10 @@ public class ConnectorApp extends Application<ConnectorConfiguration> {
 
         jdbi = new DBIFactory().build(environment, dataSourceFactory, "postgresql");
 
-        IEventDao eventDao = new EventDao(jdbi);
-        ChargeEventListener chargeEventListener = new ChargeEventListener(eventDao);
-        IChargeDao chargeDao = new ChargeDao(jdbi, chargeEventListener);
-        ITokenDao tokenDao = new TokenDao(jdbi);
-        IGatewayAccountDao gatewayAccountDao = new GatewayAccountDao(jdbi);
+        IEventDao eventDao = injector.getInstance(EventJpaDao.class);
+        IChargeDao chargeDao = injector.getInstance(ChargeJpaDao.class);
+        ITokenDao tokenDao = injector.getInstance(TokenJpaDao.class);
+        IGatewayAccountDao gatewayAccountDao = injector.getInstance(GatewayAccountJpaDao.class);
 
         ClientFactory clientFactory = new ClientFactory(environment, conf);
 
