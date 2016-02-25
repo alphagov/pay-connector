@@ -23,6 +23,11 @@ public class GuicedTestEnvironment {
         return this;
     }
 
+    public GuicedTestEnvironment stop() {
+        injector.getInstance(PersistService.class).stop();
+        return this;
+    }
+
     public <T> T getInstance(Class<T> daoClass) {
         return injector.getInstance(daoClass);
     }

@@ -4,6 +4,7 @@ import org.apache.commons.collections4.CollectionUtils;
 import org.hamcrest.Description;
 import org.hamcrest.Matcher;
 import org.hamcrest.TypeSafeMatcher;
+import org.junit.After;
 import org.junit.Before;
 import org.junit.Rule;
 import org.junit.Test;
@@ -47,6 +48,11 @@ public class EventDaoJpaTest {
         app.getDatabaseTestHelper().addCharge(CHARGE_ID.toString(), GATEWAY_ACCOUNT_ID.toString(), AMOUNT, CAPTURED, RETURN_URL, TRANSACTION_ID);
     }
 
+    @After
+    public void tearDown() {
+        env.stop();
+    }
+
     @Test
     public void shouldRetrieveAllEventsForAGivenCharge() throws Exception {
 
@@ -57,11 +63,7 @@ public class EventDaoJpaTest {
         assertThat(events.size(), is(statuses.size()));
         assertThat(events, containsStatuses(statuses));
 
-        events.stream().forEach(event -> {
-                    assertThat(event.getUpdated(), is(within(1, MINUTES, now())));
-                }
-        );
-
+        events.stream().forEach(event -> assertThat(event.getUpdated(), is(within(1, MINUTES, now()))));
     }
 
     @Test

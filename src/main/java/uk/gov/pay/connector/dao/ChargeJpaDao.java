@@ -3,6 +3,7 @@ package uk.gov.pay.connector.dao;
 import com.google.common.collect.ImmutableMap;
 import com.google.inject.Provider;
 import com.google.inject.persist.Transactional;
+import org.skife.jdbi.v2.DefaultMapper;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import uk.gov.pay.connector.model.api.ExternalChargeStatus;
@@ -11,16 +12,17 @@ import uk.gov.pay.connector.util.ChargeEventJpaListener;
 
 import javax.inject.Inject;
 import javax.persistence.EntityManager;
+import javax.persistence.Query;
 import javax.persistence.TypedQuery;
 import java.time.LocalDateTime;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
-import java.util.Optional;
+import java.time.ZonedDateTime;
+import java.util.*;
 
 import static com.google.common.collect.Maps.toMap;
 import static java.lang.String.format;
+import static java.util.stream.Collectors.toList;
 import static uk.gov.pay.connector.model.domain.ChargeStatus.CREATED;
+import static uk.gov.pay.connector.util.ChargesSearch.createQueryHandle;
 
 public class ChargeJpaDao extends JpaDao<ChargeEntity> implements IChargeDao {
 
@@ -51,7 +53,6 @@ public class ChargeJpaDao extends JpaDao<ChargeEntity> implements IChargeDao {
         return updated;
     }
 
-    @Transactional
     public Optional<ChargeEntity> findByGatewayTransactionIdAndProvider(String transactionId, String paymentProvider) {
         TypedQuery<ChargeEntity> query = entityManager.get()
                 .createQuery("select c from ChargeEntity c where c.gatewayTransactionId = :gatewayTransactionId and c.gatewayAccount.gatewayName = :paymentProvider", ChargeEntity.class);
@@ -66,7 +67,6 @@ public class ChargeJpaDao extends JpaDao<ChargeEntity> implements IChargeDao {
         TypedQuery<ChargeEntity> query = searchQuery.apply(entityManager.get());
         return query.getResultList();
     }
-
 
     @Override
     @Transactional
@@ -98,7 +98,7 @@ public class ChargeJpaDao extends JpaDao<ChargeEntity> implements IChargeDao {
 
     @Override
     public Optional<Map<String, Object>> findById(String chargeId) {
-        Map<String, Object> chargeMap = new HashMap<String, Object>();
+        Map<String, Object> chargeMap = new HashMap<>();
         Optional<ChargeEntity> chargeEntityOptional = findById(new Long(chargeId));
 
         if (chargeEntityOptional.isPresent()) {
@@ -113,6 +113,7 @@ public class ChargeJpaDao extends JpaDao<ChargeEntity> implements IChargeDao {
     }
 
     @Override
+    @Transactional
     public void updateGatewayTransactionId(String chargeId, String transactionId) {
         ChargeEntity charge = findById(new Long(chargeId))
                 .orElseThrow(() -> new PayDBIException(format("Could not update charge '%s' with gateway transaction id %s", chargeId, transactionId)));
@@ -120,11 +121,58 @@ public class ChargeJpaDao extends JpaDao<ChargeEntity> implements IChargeDao {
     }
 
     @Override
+    @Transactional
     public void updateStatusWithGatewayInfo(String provider, String gatewayTransactionId, ChargeStatus newStatus) {
 
+        final int[] updated = {0};
+
+        findByGatewayTransactionIdAndProvider(gatewayTransactionId, provider)
+                .ifPresent(chargeEntity -> {
+                    chargeEntity.setStatus(newStatus);
+                    updated[0] = 1;
+                });
+
+        if (updated[0] != 1) {
+            throw new PayDBIException(format("Could not update charge (gateway_transaction_id: %s) with status %s, updated %d rows.", gatewayTransactionId, newStatus, updated));
+        }
+
+        ChargeEntity charge = findChargeByTransactionId(provider, gatewayTransactionId);
+        if (charge != null) {
+            eventListener.notify(ChargeEventEntity.from(charge, newStatus, LocalDateTime.now()));
+        } else {
+            logger.error(String.format("Cannot find id for gateway_transaction_id [%s] and provider [%s]", gatewayTransactionId, provider));
+        }
     }
 
     @Override
+    public List<Map<String, Object>> findAllBy(String gatewayAccountId, String reference, ExternalChargeStatus status, String fromDate, String toDate) {
+
+        ChargeSearchQuery searchQuery = new ChargeSearchQuery(new Long(gatewayAccountId));
+
+        if (reference != null) {
+            searchQuery.withReferenceLike(reference);
+        }
+        if (status != null) {
+            searchQuery.withStatusIn(status.getInnerStates());
+        }
+        if (fromDate != null) {
+            searchQuery.withCreatedDateFrom(ZonedDateTime.parse(fromDate));
+        }
+        if (toDate != null) {
+            searchQuery.withCreatedDateTo(ZonedDateTime.parse(toDate));
+        }
+
+        List<ChargeEntity> chargeEntities = findAllBy(searchQuery);
+        logger.info("found " + chargeEntities.size() + " charge records for the criteria");
+
+        return chargeEntities
+                .stream()
+                .map(charge -> buildChargeMap(charge))
+                .collect(toList());
+    }
+
+    @Override
+    @Transactional
     public void updateStatus(String chargeId, ChargeStatus newStatus) {
         updateStatus(new Long(chargeId), newStatus);
     }
@@ -139,6 +187,7 @@ public class ChargeJpaDao extends JpaDao<ChargeEntity> implements IChargeDao {
     }
 
     @Override
+    @Transactional
     public int updateNewStatusWhereOldStatusIn(String chargeId, ChargeStatus newStatus, List<ChargeStatus> oldStatuses) {
         return updateNewStatusWhereOldStatusIn(new Long(chargeId), newStatus, oldStatuses);
     }
@@ -154,35 +203,57 @@ public class ChargeJpaDao extends JpaDao<ChargeEntity> implements IChargeDao {
             String status = charge.getStatus();
             if (oldStatuses.contains(ChargeStatus.chargeStatusFrom(status))) {
                 updateStatus(chargeId, newStatus);
+                updated[0] = 1;
             }
-            updated[0] = 1;
         });
+
         return updated[0];
     }
 
-    @Override
-    public List<Map<String, Object>> findAllBy(String gatewayAccountId, String reference, ExternalChargeStatus status, String fromDate, String toDate) {
-        return null;
-    }
 
     @Override
     public Optional<String> findAccountByTransactionId(String provider, String transactionId) {
-        return null;
+        String qlString = "SELECT c.gatewayAccount.id FROM ChargeEntity c " +
+                "WHERE " +
+                "c.gatewayTransactionId=:gatewayTransactionId " +
+                "AND " +
+                "c.gatewayAccount.gatewayName=:provider";
+
+        TypedQuery<ChargeEntity> query = entityManager.get().createQuery(qlString, ChargeEntity.class);
+        query.setParameter("gatewayTransactionId", transactionId);
+        query.setParameter("provider", provider);
+
+        return Optional.ofNullable(query.getSingleResult().getId().toString());
+
     }
 
     private Map<String, Object> buildChargeMap(ChargeEntity chargeEntity) {
         return new ImmutableMap.Builder<String, Object>()
-                .put("charge_id",chargeEntity.getId())
-                .put("amount",chargeEntity.getAmount())
-                .put("status",chargeEntity.getStatus())
-                .put("gateway_transaction_id",chargeEntity.getGatewayTransactionId())
-                .put("return_url",chargeEntity.getReturnUrl())
-                .put("gateway_account_id",chargeEntity.getGatewayAccount().getId())
-                .put("description",chargeEntity.getDescription())
-                .put("reference",chargeEntity.getReference())
-                .put("created_date",chargeEntity.getCreatedDate())
+                .put("charge_id", chargeEntity.getId())
+                .put("amount", chargeEntity.getAmount())
+                .put("status", chargeEntity.getStatus())
+                .put("gateway_transaction_id", chargeEntity.getGatewayTransactionId())
+                .put("return_url", chargeEntity.getReturnUrl())
+                .put("gateway_account_id", chargeEntity.getGatewayAccount().getId())
+                .put("description", chargeEntity.getDescription())
+                .put("reference", chargeEntity.getReference())
+                .put("created_date", chargeEntity.getCreatedDate())
                 .build();
     }
+
+    private ChargeEntity findChargeByTransactionId(String provider, String transactionId) {
+        String qlString = "SELECT c FROM ChargeEntity c " +
+                "WHERE " +
+                "c.gatewayAccount.gatewayName=:provider " +
+                "AND " +
+                "c.gatewayTransactionId=:transactionId";
+
+        TypedQuery<ChargeEntity> query = entityManager.get().createQuery(qlString, ChargeEntity.class);
+        query.setParameter("provider", provider);
+        query.setParameter("transactionId", transactionId);
+        return query.getSingleResult();
+    }
+
 }
 
 

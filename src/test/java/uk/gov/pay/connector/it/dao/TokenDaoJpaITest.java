@@ -1,5 +1,6 @@
 package uk.gov.pay.connector.it.dao;
 
+import org.junit.After;
 import org.junit.Before;
 import org.junit.Rule;
 import org.junit.Test;
@@ -22,16 +23,22 @@ public class TokenDaoJpaITest {
     public ExpectedException expectedException = ExpectedException.none();
     private TokenJpaDao tokenDao;
     private DatabaseTestHelper databaseTestHelper;
+    private GuicedTestEnvironment env;
 
     @Before
     public void setUp() throws Exception {
 
-        GuicedTestEnvironment env = GuicedTestEnvironment
+        env = GuicedTestEnvironment
                 .from(app.getPersistModule())
                 .start();
 
         tokenDao = env.getInstance(TokenJpaDao.class);
         databaseTestHelper = app.getDatabaseTestHelper();
+    }
+
+    @After
+    public void tearDown() {
+        env.stop();
     }
 
     @Test
@@ -44,8 +51,7 @@ public class TokenDaoJpaITest {
         assertThat(databaseTestHelper.getChargeTokenId(chargeId), is(tokenId));
     }
 
-    // FIXME. Weird behaviour, tokenDao.findByChargeId returning unwanted results. WIP
-   /* @Test
+    @Test
     public void shouldFindByChargeId() {
 
         String chargeId = "10101";
@@ -53,7 +59,7 @@ public class TokenDaoJpaITest {
         databaseTestHelper.addToken(chargeId, tokenId);
 
         assertThat(tokenDao.findByChargeId(chargeId), is(tokenId));
-    }*/
+    }
 
     @Test
     public void shouldNotFindByChargeId() {
