@@ -20,7 +20,10 @@ public class GatewayAccountFrontendJpaResourceITest extends GatewayAccountResour
     public void shouldGetCredentialsForExistingAccount() {
         String accountId = createAGatewayAccountFor("worldpay");
         ImmutableMap<String, String> credentials = ImmutableMap.of("username", "a-username", "password", "a-password", "merchant_id", "a-merchant-id");
-        app.getDatabaseTestHelper().updateCredentialsFor(accountId,  gson.toJson(credentials));
+
+        updateCredentialsWith(accountId, credentials);
+        // TODO investigate why does not work updating db with databaseHelper
+        //app.getDatabaseTestHelper().updateCredentialsFor(accountId,  gson.toJson(credentials));
 
         givenSetup().accept(JSON)
                 .get(ACCOUNTS_FRONTEND_JPA_URL + accountId)

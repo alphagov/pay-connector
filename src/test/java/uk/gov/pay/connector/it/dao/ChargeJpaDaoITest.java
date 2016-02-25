@@ -7,10 +7,7 @@ import org.hamcrest.Description;
 import org.hamcrest.Matcher;
 import org.hamcrest.MatcherAssert;
 import org.hamcrest.TypeSafeMatcher;
-import org.junit.After;
-import org.junit.Before;
-import org.junit.Rule;
-import org.junit.Test;
+import org.junit.*;
 import org.junit.rules.ExpectedException;
 import uk.gov.pay.connector.dao.*;
 import uk.gov.pay.connector.model.api.ExternalChargeStatus;
@@ -514,7 +511,7 @@ public class ChargeJpaDaoITest {
     public void insertAmountAndThenGetAmountById_old() throws Exception {
         Map<String, Object> charge = chargeDao.findById(chargeId.toString()).get();
 
-        assertThat(charge.get("charge_id"), is(chargeId));
+        assertThat(charge.get("charge_id"), is(String.valueOf(chargeId)));
         assertThat(charge.get("amount"), is(AMOUNT));
         assertThat(charge.get("reference"), is(REFERENCE));
         assertThat(charge.get("description"), is(DESCRIPTION));
@@ -535,7 +532,7 @@ public class ChargeJpaDaoITest {
         assertThat(charges.size(), is(1));
         Map<String, Object> charge = charges.get(0);
 
-        assertThat(charge.get("charge_id"), is(chargeId));
+        assertThat(charge.get("charge_id"), is(String.valueOf(chargeId)));
         assertThat(charge.get("amount"), is(AMOUNT));
         assertThat(charge.get("reference"), is(REFERENCE));
         assertThat(charge.get("description"), is(DESCRIPTION));
@@ -553,7 +550,7 @@ public class ChargeJpaDaoITest {
 
         List<Map<String, Object>> charges = chargeDao.findAllBy(GATEWAY_ACCOUNT_ID.toString(), "reference", null, null, null);
         assertThat(charges.size(), is(2));
-        assertThat(charges.get(1).get("charge_id"), is(chargeId));
+        assertThat(charges.get(1).get("charge_id"), is(String.valueOf(chargeId)));
         assertThat(charges.get(1).get("reference"), is(REFERENCE));
         assertThat(charges.get(0).get("reference"), is(COUNCIL_TAX_PAYMENT_REFERENCE));
 
@@ -571,7 +568,7 @@ public class ChargeJpaDaoITest {
         assertThat(charges.size(), is(1));
         Map<String, Object> charge = charges.get(0);
 
-        assertThat(charge.get("charge_id"), is(chargeId));
+        assertThat(charge.get("charge_id"), is(String.valueOf(chargeId)));
         assertThat(charge.get("amount"), is(AMOUNT));
         assertThat(charge.get("reference"), is(REFERENCE));
         assertThat(charge.get("description"), is(DESCRIPTION));
@@ -585,7 +582,7 @@ public class ChargeJpaDaoITest {
         assertThat(charges.size(), is(1));
         Map<String, Object> charge = charges.get(0);
 
-        assertThat(charge.get("charge_id"), is(chargeId));
+        assertThat(charge.get("charge_id"), is(String.valueOf(chargeId)));
         assertThat(charge.get("amount"), is(AMOUNT));
         assertThat(charge.get("reference"), is(REFERENCE));
         assertThat(charge.get("description"), is(DESCRIPTION));
@@ -599,7 +596,7 @@ public class ChargeJpaDaoITest {
         assertThat(charges.size(), is(1));
         Map<String, Object> charge = charges.get(0);
 
-        assertThat(charge.get("charge_id"), is(chargeId));
+        assertThat(charge.get("charge_id"), is(String.valueOf(chargeId)));
         assertThat(charge.get("amount"), is(AMOUNT));
         assertThat(charge.get("reference"), is(REFERENCE));
         assertThat(charge.get("description"), is(DESCRIPTION));
@@ -613,7 +610,7 @@ public class ChargeJpaDaoITest {
         assertThat(charges.size(), is(1));
         Map<String, Object> charge = charges.get(0);
 
-        assertThat(charge.get("charge_id"), is(chargeId));
+        assertThat(charge.get("charge_id"), is(String.valueOf(chargeId)));
         assertThat(charge.get("amount"), is(AMOUNT));
         assertThat(charge.get("reference"), is(REFERENCE));
         assertThat(charge.get("description"), is(DESCRIPTION));
@@ -675,7 +672,7 @@ public class ChargeJpaDaoITest {
 
         assertEquals(1, rowsUpdated);
         Map<String, Object> charge = chargeDao.findById(chargeId.toString()).get();
-        assertThat(charge.get("charge_id"), is(chargeId));
+        assertThat(charge.get("charge_id"), is(String.valueOf(chargeId)));
         assertThat(charge.get("status"), is(ENTERING_CARD_DETAILS.getValue()));
 
         assertLoggedEvents(CREATED, ENTERING_CARD_DETAILS);
@@ -689,7 +686,7 @@ public class ChargeJpaDaoITest {
 
         assertEquals(0, rowsUpdated);
         Map<String, Object> charge = chargeDao.findById(chargeId.toString()).get();
-        assertThat(charge.get("charge_id"), is(chargeId));
+        assertThat(charge.get("charge_id"), is(String.valueOf(chargeId)));
         assertThat(charge.get("status"), is(CAPTURE_SUBMITTED.getValue()));
 
         List<ChargeEvent> events = eventDao.findEvents(GATEWAY_ACCOUNT_ID, chargeId);
@@ -704,4 +701,37 @@ public class ChargeJpaDaoITest {
         chargeId = new Long(chargeDao.saveNewCharge(GATEWAY_ACCOUNT_ID.toString(), chargeData));
     }
 
+    @Test
+    public void shouldFindChargeForAccount() {
+        Map<String, Object> charge = chargeDao.findChargeForAccount(String.valueOf(chargeId), String.valueOf(GATEWAY_ACCOUNT_ID)).get();
+        assertThat(charge.get("charge_id"), is(String.valueOf(chargeId)));
+        assertThat(charge.get("amount"), is(AMOUNT));
+        assertThat(charge.get("reference"), is(REFERENCE));
+        assertThat(charge.get("description"), is(DESCRIPTION));
+        assertThat(charge.get("status"), is(CREATED.getValue()));
+        assertThat(charge.get("gateway_account_id"), is(String.valueOf(GATEWAY_ACCOUNT_ID)));
+        assertThat(charge.get("return_url"), is(RETURN_URL));
+    }
+
+    @Test
+    public void shouldSaveANewCharge() {
+
+        Map<String, Object> newCharge = new HashMap<>();
+        newCharge.put("amount", "12345");
+        newCharge.put("reference", "This is a reference");
+        newCharge.put("description", "This is a description");
+        newCharge.put("return_url", "http://return.com");
+
+        String chargeId = chargeDao.saveNewCharge(String.valueOf(GATEWAY_ACCOUNT_ID), newCharge);
+
+        assertThat(chargeId, is(notNullValue()));
+        assertThat(Long.valueOf(chargeId), is(notNullValue()));
+    }
+
+    @Test
+    public void shouldReturnNullFindingByIdWhenChargeDoesNotExist() {
+        Optional<Map<String, Object>> charge = chargeDao.findById("5686541");
+
+        assertThat(charge.isPresent(), is(false));
+    }
 }

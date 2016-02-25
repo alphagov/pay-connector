@@ -5,7 +5,10 @@ import com.google.inject.persist.Transactional;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import uk.gov.pay.connector.model.api.ExternalChargeStatus;
-import uk.gov.pay.connector.model.domain.*;
+import uk.gov.pay.connector.model.domain.ChargeEntity;
+import uk.gov.pay.connector.model.domain.ChargeEventEntity;
+import uk.gov.pay.connector.model.domain.ChargeStatus;
+import uk.gov.pay.connector.model.domain.GatewayAccountEntity;
 import uk.gov.pay.connector.util.ChargeEventJpaListener;
 
 import javax.inject.Inject;
@@ -13,7 +16,6 @@ import javax.persistence.EntityManager;
 import javax.persistence.Query;
 import javax.persistence.TypedQuery;
 import java.time.LocalDateTime;
-import java.time.ZonedDateTime;
 import java.util.*;
 
 import static java.lang.String.format;
@@ -50,6 +52,7 @@ public class ChargeJpaDao extends JpaDao<ChargeEntity> implements IChargeDao {
         return updated;
     }
 
+    @Transactional
     public Optional<ChargeEntity> findByGatewayTransactionIdAndProvider(String transactionId, String paymentProvider) {
         TypedQuery<ChargeEntity> query = entityManager.get()
                 .createQuery("select c from ChargeEntity c where c.gatewayTransactionId = :gatewayTransactionId and c.gatewayAccount.gatewayName = :paymentProvider", ChargeEntity.class);
@@ -60,6 +63,7 @@ public class ChargeJpaDao extends JpaDao<ChargeEntity> implements IChargeDao {
         return Optional.ofNullable(query.getSingleResult());
     }
 
+    @Transactional
     public List<ChargeEntity> findAllBy(ChargeSearchQuery searchQuery) {
         TypedQuery<ChargeEntity> query = searchQuery.apply(entityManager.get());
         return query.getResultList();
@@ -80,31 +84,36 @@ public class ChargeJpaDao extends JpaDao<ChargeEntity> implements IChargeDao {
                         charge.get("reference").toString(),
                         gatewayAccountEntity);
 
-        create(chargeEntity);
+        super.persist(chargeEntity);
+        entityManager.get().flush();
+        eventListener.notify(ChargeEventEntity.from(chargeEntity, CREATED, chargeEntity.getCreatedDate().toLocalDateTime()));
         return chargeEntity.getId().toString();
     }
 
     @Override
+    @Transactional
     public Optional<Map<String, Object>> findChargeForAccount(String chargeId, String accountId) {
         Optional<ChargeEntity> chargeEntityOpt = findById(new Long(chargeId));
-        if (chargeEntityOpt.isPresent() && chargeEntityOpt.get().getGatewayAccount().getId().equals(accountId)) {
+        if (chargeEntityOpt.isPresent() && chargeEntityOpt.get().getGatewayAccount().getId().toString().equals(accountId)) {
             return Optional.of(buildChargeMap(chargeEntityOpt.get()));
         }
         return Optional.empty();
     }
 
     @Override
+    @Transactional
     public Optional<Map<String, Object>> findById(String chargeId) {
-        Map<String, Object> chargeMap = new HashMap<>();
+        Map<String, Object> chargeMap = null;
         Optional<ChargeEntity> chargeEntityOptional = findById(new Long(chargeId));
 
         if (chargeEntityOptional.isPresent()) {
             chargeMap = buildChargeMap(chargeEntityOptional.get());
         }
-        return Optional.of(chargeMap);
+        return Optional.ofNullable(chargeMap);
     }
 
     @Override
+    @Transactional
     public Optional<ChargeEntity> findById(Long chargeId) {
         return super.findById(ChargeEntity.class, chargeId);
     }
@@ -120,44 +129,20 @@ public class ChargeJpaDao extends JpaDao<ChargeEntity> implements IChargeDao {
     @Override
     @Transactional
     public void updateStatusWithGatewayInfo(String provider, String gatewayTransactionId, ChargeStatus newStatus) {
-
-        final int[] updated = {0};
-
-        findByGatewayTransactionIdAndProvider(gatewayTransactionId, provider)
-                .ifPresent(chargeEntity -> {
-                    chargeEntity.setStatus(newStatus);
-                    updated[0] = 1;
-                });
-
-        if (updated[0] != 1) {
-            throw new PayDBIException(format("Could not update charge (gateway_transaction_id: %s) with status %s, updated %d rows.", gatewayTransactionId, newStatus, updated));
-        }
-
-        ChargeEntity charge = findChargeByTransactionId(provider, gatewayTransactionId);
-        if (charge != null) {
-            eventListener.notify(ChargeEventEntity.from(charge, newStatus, LocalDateTime.now()));
-        } else {
-            logger.error(String.format("Cannot find id for gateway_transaction_id [%s] and provider [%s]", gatewayTransactionId, provider));
-        }
+        ChargeEntity chargeEntity = findByGatewayTransactionIdAndProvider(gatewayTransactionId, provider)
+                .orElseThrow(() -> new PayDBIException(format("Could not update charge (gateway_transaction_id: %s) with status %s", gatewayTransactionId, newStatus)));
+        chargeEntity.setStatus(newStatus);
+        eventListener.notify(ChargeEventEntity.from(chargeEntity, newStatus, LocalDateTime.now()));
     }
 
     @Override
+    @Transactional
     public List<Map<String, Object>> findAllBy(String gatewayAccountId, String reference, ExternalChargeStatus status, String fromDate, String toDate) {
-
         ChargeSearchQuery searchQuery = new ChargeSearchQuery(new Long(gatewayAccountId));
-
-        if (reference != null) {
-            searchQuery.withReferenceLike(reference);
-        }
-        if (status != null) {
-            searchQuery.withStatusIn(status.getInnerStates());
-        }
-        if (fromDate != null) {
-            searchQuery.withCreatedDateFrom(ZonedDateTime.parse(fromDate));
-        }
-        if (toDate != null) {
-            searchQuery.withCreatedDateTo(ZonedDateTime.parse(toDate));
-        }
+        searchQuery.withReferenceLike(reference);
+        searchQuery.withExternalStatus(status);
+        searchQuery.withCreatedDateFrom(fromDate);
+        searchQuery.withCreatedDateTo(toDate);
 
         List<ChargeEntity> chargeEntities = findAllBy(searchQuery);
         logger.info("found " + chargeEntities.size() + " charge records for the criteria");
@@ -203,12 +188,11 @@ public class ChargeJpaDao extends JpaDao<ChargeEntity> implements IChargeDao {
                 updated[0] = 1;
             }
         });
-
         return updated[0];
     }
 
-
     @Override
+    @Transactional
     public Optional<String> findAccountByTransactionId(String provider, String transactionId) {
         String qlString = "SELECT c.gatewayAccount.id FROM ChargeEntity c " +
                 "WHERE " +
@@ -225,8 +209,8 @@ public class ChargeJpaDao extends JpaDao<ChargeEntity> implements IChargeDao {
     }
 
     private Map<String, Object> buildChargeMap(ChargeEntity chargeEntity) {
-        HashMap<String, Object> charge = new HashMap<>();
-        charge.put("charge_id", chargeEntity.getId());
+        Map<String, Object> charge = new HashMap<>();
+        charge.put("charge_id", String.valueOf(chargeEntity.getId()));
         charge.put("amount", chargeEntity.getAmount());
         charge.put("status", chargeEntity.getStatus());
         charge.put("gateway_transaction_id", chargeEntity.getGatewayTransactionId());
@@ -235,22 +219,8 @@ public class ChargeJpaDao extends JpaDao<ChargeEntity> implements IChargeDao {
         charge.put("description", chargeEntity.getDescription());
         charge.put("reference", chargeEntity.getReference());
         charge.put("created_date", chargeEntity.getCreatedDate());
-        return Collections.unmodifiableMap(charge);
+        return charge;
     }
-
-    private ChargeEntity findChargeByTransactionId(String provider, String transactionId) {
-        String qlString = "SELECT c FROM ChargeEntity c " +
-                "WHERE " +
-                "c.gatewayAccount.gatewayName=:provider " +
-                "AND " +
-                "c.gatewayTransactionId=:transactionId";
-
-        TypedQuery<ChargeEntity> query = entityManager.get().createQuery(qlString, ChargeEntity.class);
-        query.setParameter("provider", provider);
-        query.setParameter("transactionId", transactionId);
-        return query.getSingleResult();
-    }
-
 }
 
 

@@ -31,11 +31,13 @@ public class GatewayAccountJpaDao extends JpaDao<GatewayAccountEntity> implement
     }
 
     @Override
+    @Transactional
     public boolean idIsMissing(String gatewayAccountId) {
         return !super.findById(GatewayAccountEntity.class, Long.valueOf(gatewayAccountId)).isPresent();
     }
 
     @Override
+    @Transactional
     public Optional<GatewayAccount> findById(String gatewayAccountId) {
         return super.findById(GatewayAccountEntity.class, Long.valueOf(gatewayAccountId)).map(gatewayAccountEntity -> {
             GatewayAccount gatewayAccount = null;
@@ -47,6 +49,7 @@ public class GatewayAccountJpaDao extends JpaDao<GatewayAccountEntity> implement
     }
 
     @Override
+    @Transactional
     public Optional<GatewayAccountEntity> findById(Long gatewayAccountId) {
         return super.findById(GatewayAccountEntity.class, gatewayAccountId);
     }

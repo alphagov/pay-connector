@@ -21,7 +21,8 @@ public class GatewayAccountFrontendResourceITest extends GatewayAccountResourceT
     public void shouldGetCredentialsForExistingAccount() {
         String accountId = createAGatewayAccountFor("worldpay");
         ImmutableMap<String, String> credentials = ImmutableMap.of("username", "a-username", "password", "a-password", "merchant_id", "a-merchant-id");
-        app.getDatabaseTestHelper().updateCredentialsFor(accountId,  gson.toJson(credentials));
+
+        updateCredentialsWith(accountId, credentials);
 
         givenSetup().accept(JSON)
                 .get(ACCOUNTS_FRONTEND_URL + accountId)

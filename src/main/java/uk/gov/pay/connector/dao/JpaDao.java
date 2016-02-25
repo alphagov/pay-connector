@@ -25,6 +25,7 @@ public class JpaDao<T> {
         entityManager.get().persist(object);
     }
 
+    @Transactional
     public <T, ID> Optional<T> findById(final Class<T> clazz, final ID id) {
         return Optional.ofNullable(entityManager.get().find(clazz, id));
     }
@@ -44,11 +45,13 @@ public class JpaDao<T> {
         remove(findById(clazz, id));
     }
 
+    @Transactional
     public <T> List<T> findAll(final Class clazz) {
         final String query = String.format(QUERY_SELECT_ALL, clazz.getSimpleName());
         return entityManager.get().createQuery(query).getResultList();
     }
 
+    @Transactional
     public <T> List<T> find(final Class<T> clazz, final String namedQuery, final Map<String, Object> paramsMap) {
         final Query query = fillNamedParametersQuery(clazz, namedQuery, paramsMap);
         return query.getResultList();

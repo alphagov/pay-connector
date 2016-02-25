@@ -43,6 +43,7 @@ public class TokenJpaDao extends JpaDao<TokenEntity> implements ITokenDao {
     }
 
     @Override
+    @Transactional
     public Optional<String> findChargeByTokenId(String tokenId) {
 
         String chargeId = null;

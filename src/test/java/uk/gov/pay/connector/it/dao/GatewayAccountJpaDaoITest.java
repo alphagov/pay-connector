@@ -195,6 +195,25 @@ public class GatewayAccountJpaDaoITest {
     }
 
     @Test
+    public void shouldGetCredentialsWhenFindingGatewayAccountById() {
+
+        String paymentProvider = "test provider";
+        String accountId = "786";
+        HashMap<String, String> credentials = new HashMap<>();
+        credentials.put("username", "Username");
+        credentials.put("password", "Password");
+
+        databaseTestHelper.addGatewayAccount(accountId, paymentProvider, credentials);
+
+        Optional<GatewayAccountEntity> gatewayAccount = gatewayAccountDao.findById(Long.valueOf(accountId));
+
+        assertThat(gatewayAccount.isPresent(), is(true));
+        Map<String, String> accountCredentials = gatewayAccount.get().getCredentials();
+        assertThat(accountCredentials, hasEntry("username", "Username"));
+        assertThat(accountCredentials, hasEntry("password", "Password"));
+    }
+
+    @Test
     public void shouldUpdateAndRetrieveCredentialsWithSpecialCharactersWhenFindingByIdReturningGatewayAccount() throws Exception {
 
         String paymentProvider = "test provider";

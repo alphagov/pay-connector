@@ -1,6 +1,7 @@
 package uk.gov.pay.connector.dao;
 
 import com.google.common.base.Preconditions;
+import uk.gov.pay.connector.model.api.ExternalChargeStatus;
 import uk.gov.pay.connector.model.domain.ChargeEntity;
 import uk.gov.pay.connector.model.domain.ChargeStatus;
 
@@ -33,22 +34,37 @@ public class ChargeSearchQuery {
     }
 
     public ChargeSearchQuery withReferenceLike(String reference) {
-        queryParameters.put(REFERENCE, "%" + reference + "%");
+        if (reference!= null) queryParameters.put(REFERENCE, "%" + reference + "%");
         return this;
     }
 
     public ChargeSearchQuery withStatusIn(ChargeStatus... statuses) {
-        queryParameters.put(STATUSES, Arrays.asList(statuses));
+        if (statuses.length > 0) queryParameters.put(STATUSES, Arrays.asList(statuses));
+        return this;
+    }
+
+    public ChargeSearchQuery withExternalStatus(ExternalChargeStatus status) {
+        if (status !=null ) queryParameters.put(STATUSES, Arrays.asList(status.getInnerStates()));
         return this;
     }
 
     public ChargeSearchQuery withCreatedDateFrom(ZonedDateTime fromDate) {
-        queryParameters.put(FROM_DATE, fromDate);
+        if (fromDate != null) queryParameters.put(FROM_DATE, fromDate);
         return this;
     }
 
     public ChargeSearchQuery withCreatedDateTo(ZonedDateTime toDate) {
-        queryParameters.put(TO_DATE, toDate);
+        if (toDate!=null) queryParameters.put(TO_DATE, toDate);
+        return this;
+    }
+
+    public ChargeSearchQuery withCreatedDateFrom(String fromDate) {
+        if (fromDate != null) queryParameters.put(FROM_DATE, ZonedDateTime.parse(fromDate));
+        return this;
+    }
+
+    public ChargeSearchQuery withCreatedDateTo(String toDate) {
+        if (toDate!=null) queryParameters.put(TO_DATE, ZonedDateTime.parse(toDate));
         return this;
     }
 
