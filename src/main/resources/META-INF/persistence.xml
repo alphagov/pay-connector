@@ -12,6 +12,8 @@
         <class>uk.gov.pay.connector.model.domain.UTCDateTimeConverter</class>
         <exclude-unlisted-classes>true</exclude-unlisted-classes>
         <properties>
+            <property name="eclipselink.query-results-cache" value="false"/>
+            <property name="eclipselink.cache.shared.default" value="false"/>
             <property name="eclipselink.ddl-generation.output-mode" value="database"/>
             <property name="eclipselink.logging.level" value="FINE"/>
             <property name="eclipselink.logging.level.sql" value="ALL"/>

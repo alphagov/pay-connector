@@ -28,7 +28,7 @@ public class EventJpaDao extends JpaDao<ChargeEventEntity> implements IEventDao 
                 .setParameter("chargeId", chargeId)
                 .setParameter("accountId", accountId)
                 .getResultList().stream()
-                .map(entity -> new ChargeEvent(entity.getId(), entity.getStatus().toString(), entity.getUpdated()))
+                .map(entity -> new ChargeEvent(entity.getChargeEntity().getId(), entity.getStatus().toString(), entity.getUpdated()))
                 .collect(Collectors.toList());
     }
 
