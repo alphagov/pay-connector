@@ -10,6 +10,7 @@ import javax.persistence.EntityManager;
 import java.util.List;
 import java.util.stream.Collectors;
 
+@Transactional
 public class EventJpaDao extends JpaDao<ChargeEventEntity> implements IEventDao {
 
     @Inject
@@ -17,7 +18,6 @@ public class EventJpaDao extends JpaDao<ChargeEventEntity> implements IEventDao 
         super(entityManager);
     }
 
-    @Transactional
     public List<ChargeEvent> findEvents(Long accountId, Long chargeId) {
         return entityManager.get().createQuery(
                 "SELECT cs " +
@@ -32,7 +32,6 @@ public class EventJpaDao extends JpaDao<ChargeEventEntity> implements IEventDao 
                 .collect(Collectors.toList());
     }
 
-    @Transactional
     public List<ChargeEventEntity> findEventsEntities(Long accountId, Long chargeId) {
         return entityManager.get().createQuery(
                 "SELECT cs " +
@@ -46,7 +45,6 @@ public class EventJpaDao extends JpaDao<ChargeEventEntity> implements IEventDao 
     }
 
     @Override
-    @Transactional
     public void save(ChargeEvent chargeEvent) {
         entityManager.get().persist(chargeEvent);
         entityManager.get().flush();

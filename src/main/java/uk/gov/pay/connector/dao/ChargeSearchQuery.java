@@ -12,6 +12,8 @@ import java.util.Arrays;
 import java.util.HashMap;
 import java.util.Map;
 
+import static org.apache.commons.lang3.StringUtils.isNotBlank;
+
 public class ChargeSearchQuery {
 
     private static final String REFERENCE = "reference";
@@ -34,7 +36,7 @@ public class ChargeSearchQuery {
     }
 
     public ChargeSearchQuery withReferenceLike(String reference) {
-        if (reference!= null) queryParameters.put(REFERENCE, "%" + reference + "%");
+        if (isNotBlank(reference)) queryParameters.put(REFERENCE, "%" + reference + "%");
         return this;
     }
 
@@ -44,7 +46,7 @@ public class ChargeSearchQuery {
     }
 
     public ChargeSearchQuery withExternalStatus(ExternalChargeStatus status) {
-        if (status !=null ) queryParameters.put(STATUSES, Arrays.asList(status.getInnerStates()));
+        if (status != null) queryParameters.put(STATUSES, Arrays.asList(status.getInnerStates()));
         return this;
     }
 
@@ -54,17 +56,17 @@ public class ChargeSearchQuery {
     }
 
     public ChargeSearchQuery withCreatedDateTo(ZonedDateTime toDate) {
-        if (toDate!=null) queryParameters.put(TO_DATE, toDate);
+        if (toDate != null) queryParameters.put(TO_DATE, toDate);
         return this;
     }
 
     public ChargeSearchQuery withCreatedDateFrom(String fromDate) {
-        if (fromDate != null) queryParameters.put(FROM_DATE, ZonedDateTime.parse(fromDate));
+        if (isNotBlank(fromDate)) queryParameters.put(FROM_DATE, ZonedDateTime.parse(fromDate));
         return this;
     }
 
     public ChargeSearchQuery withCreatedDateTo(String toDate) {
-        if (toDate!=null) queryParameters.put(TO_DATE, ZonedDateTime.parse(toDate));
+        if (isNotBlank(toDate)) queryParameters.put(TO_DATE, ZonedDateTime.parse(toDate));
         return this;
     }
 

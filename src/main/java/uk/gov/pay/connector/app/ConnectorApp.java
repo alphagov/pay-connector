@@ -2,6 +2,7 @@ package uk.gov.pay.connector.app;
 
 import com.google.inject.Guice;
 import com.google.inject.Injector;
+import com.google.inject.Provider;
 import com.google.inject.persist.PersistFilter;
 import com.google.inject.persist.jpa.JpaPersistModule;
 import io.dropwizard.Application;
@@ -10,12 +11,9 @@ import io.dropwizard.auth.basic.BasicAuthFactory;
 import io.dropwizard.configuration.EnvironmentVariableSubstitutor;
 import io.dropwizard.configuration.SubstitutingSourceProvider;
 import io.dropwizard.db.DataSourceFactory;
-import io.dropwizard.jdbi.DBIFactory;
-import io.dropwizard.jdbi.bundles.DBIExceptionsBundle;
 import io.dropwizard.migrations.MigrationsBundle;
 import io.dropwizard.setup.Bootstrap;
 import io.dropwizard.setup.Environment;
-import org.skife.jdbi.v2.DBI;
 import uk.gov.pay.connector.auth.SmartpayAuthenticator;
 import uk.gov.pay.connector.dao.*;
 import uk.gov.pay.connector.healthcheck.DatabaseHealthCheck;
@@ -24,12 +22,13 @@ import uk.gov.pay.connector.resources.*;
 import uk.gov.pay.connector.service.CardService;
 import uk.gov.pay.connector.service.ClientFactory;
 import uk.gov.pay.connector.service.PaymentProviders;
-import uk.gov.pay.connector.util.DbWaitCommand;
 
+import javax.persistence.EntityManager;
+import javax.servlet.DispatcherType;
+import java.util.EnumSet;
 import java.util.Properties;
 
 public class ConnectorApp extends Application<ConnectorConfiguration> {
-    private DBI jdbi;
 
     @Override
     public void initialize(Bootstrap<ConnectorConfiguration> bootstrap) {
@@ -39,33 +38,26 @@ public class ConnectorApp extends Application<ConnectorConfiguration> {
                 )
         );
 
-        bootstrap.addBundle(new DBIExceptionsBundle());
-
         bootstrap.addBundle(new MigrationsBundle<ConnectorConfiguration>() {
             @Override
             public DataSourceFactory getDataSourceFactory(ConnectorConfiguration configuration) {
                 return configuration.getDataSourceFactory();
             }
         });
-
-        bootstrap.addCommand(new DbWaitCommand());
     }
 
     @Override
     public void run(ConnectorConfiguration conf, Environment environment) throws Exception {
 
-        // JPA stuff
         final Injector injector = Guice.createInjector(new ConnectorModule(conf, environment), createJpaModule(conf.getDatabaseConfig()));
-        environment.servlets().addFilter("persistFilter", injector.getInstance(PersistFilter.class));
+        environment.servlets().addFilter("persistFilter", injector.getInstance(PersistFilter.class))
+                .addMappingForUrlPatterns(EnumSet.of(DispatcherType.REQUEST), true, "/*");
         environment.jersey().register(injector.getInstance(GatewayAccountJpaResource.class));
         environment.jersey().register(injector.getInstance(EventsApiJpaResource.class));
-        // end JPA stuff
 
         DataSourceFactory dataSourceFactory = conf.getDataSourceFactory();
 
         environment.healthChecks().register("ping", new Ping());
-
-        jdbi = new DBIFactory().build(environment, dataSourceFactory, "postgresql");
 
         IEventDao eventDao = injector.getInstance(EventJpaDao.class);
         IChargeDao chargeDao = injector.getInstance(ChargeJpaDao.class);
@@ -92,7 +84,7 @@ public class ConnectorApp extends Application<ConnectorConfiguration> {
                                 "",
                                 String.class)));
 
-        environment.healthChecks().register("database", new DatabaseHealthCheck(jdbi, dataSourceFactory.getValidationQuery()));
+        environment.healthChecks().register("database", new DatabaseHealthCheck(injector.getProvider(EntityManager.class), dataSourceFactory.getValidationQuery()));
     }
 
     private JpaPersistModule createJpaModule(final DatabaseConfig dbConfig) {
@@ -106,10 +98,6 @@ public class ConnectorApp extends Application<ConnectorConfiguration> {
         jpaModule.properties(properties);
 
         return jpaModule;
-    }
-
-    public DBI getJdbi() {
-        return jdbi;
     }
 
     public static void main(String[] args) throws Exception {

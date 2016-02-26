@@ -1,6 +1,7 @@
 package uk.gov.pay.connector.rules;
 
 import com.google.inject.persist.jpa.JpaPersistModule;
+import io.dropwizard.db.DataSourceFactory;
 import io.dropwizard.testing.ConfigOverride;
 import io.dropwizard.testing.junit.DropwizardAppRule;
 import org.junit.rules.RuleChain;
@@ -70,7 +71,8 @@ public class DropwizardAppWithPostgresRule implements TestRule {
 
                 restoreDropwizardsLogging();
 
-                databaseTestHelper = new DatabaseTestHelper(getJdbi());
+                DataSourceFactory dataSourceFactory = app.getConfiguration().getDataSourceFactory();
+                databaseTestHelper = new DatabaseTestHelper(new DBI(dataSourceFactory.getUrl(), dataSourceFactory.getUser(), dataSourceFactory.getPassword()));
 
                 base.evaluate();
             }
@@ -79,11 +81,6 @@ public class DropwizardAppWithPostgresRule implements TestRule {
 
     public ConnectorConfiguration getConf() {
         return app.getConfiguration();
-    }
-
-    public DBI getJdbi() {
-        ConnectorApp dropwizard = app.getApplication();
-        return dropwizard.getJdbi();
     }
 
     public int getLocalPort() {

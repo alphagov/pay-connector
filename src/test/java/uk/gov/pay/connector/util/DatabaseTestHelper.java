@@ -15,6 +15,7 @@ import java.util.Map;
 import static java.time.ZonedDateTime.now;
 
 public class DatabaseTestHelper {
+
     private DBI jdbi;
 
     public DatabaseTestHelper(DBI jdbi) {

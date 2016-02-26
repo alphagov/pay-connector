@@ -7,8 +7,8 @@ import org.hamcrest.Matcher;
 import org.hamcrest.TypeSafeMatcher;
 import org.junit.Test;
 import org.mockito.ArgumentCaptor;
-import uk.gov.pay.connector.dao.ChargeDao;
-import uk.gov.pay.connector.dao.GatewayAccountDao;
+import uk.gov.pay.connector.dao.IChargeDao;
+import uk.gov.pay.connector.dao.IGatewayAccountDao;
 import uk.gov.pay.connector.model.*;
 import uk.gov.pay.connector.model.domain.Card;
 import uk.gov.pay.connector.model.domain.ChargeStatus;
@@ -37,8 +37,8 @@ public class CardServiceTest {
     private final String providerName = "theProvider";
     private final PaymentProvider theMockProvider = mock(PaymentProvider.class);
 
-    private GatewayAccountDao accountDao = mock(GatewayAccountDao.class);
-    private ChargeDao chargeDao = mock(ChargeDao.class);
+    private IGatewayAccountDao accountDao = mock(IGatewayAccountDao.class);
+    private IChargeDao chargeDao = mock(IChargeDao.class);
     private PaymentProviders providers = mock(PaymentProviders.class);
     private final CardService cardService = new CardService(accountDao, chargeDao, providers);
 

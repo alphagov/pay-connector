@@ -12,6 +12,7 @@ import java.util.Optional;
 
 import static java.lang.String.format;
 
+@Transactional
 public class TokenJpaDao extends JpaDao<TokenEntity> implements ITokenDao {
 
     @Inject
@@ -20,13 +21,11 @@ public class TokenJpaDao extends JpaDao<TokenEntity> implements ITokenDao {
     }
 
     @Override
-    @Transactional
     public void insertNewToken(String chargeId, String tokenId) {
         super.persist(new TokenEntity(Long.valueOf(chargeId), tokenId));
     }
 
     @Override
-    @Transactional
     public String findByChargeId(String chargeId) {
 
         String token = null;
@@ -43,7 +42,6 @@ public class TokenJpaDao extends JpaDao<TokenEntity> implements ITokenDao {
     }
 
     @Override
-    @Transactional
     public Optional<String> findChargeByTokenId(String tokenId) {
 
         String chargeId = null;
@@ -61,7 +59,6 @@ public class TokenJpaDao extends JpaDao<TokenEntity> implements ITokenDao {
     }
 
     @Override
-    @Transactional
     public void deleteByTokenId(String tokenId) {
 
         int rowsDeleted = entityManager.get().createQuery("DELETE FROM TokenEntity t WHERE t.token = :token")

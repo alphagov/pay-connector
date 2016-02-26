@@ -16,12 +16,16 @@ import javax.persistence.EntityManager;
 import javax.persistence.Query;
 import javax.persistence.TypedQuery;
 import java.time.LocalDateTime;
-import java.util.*;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
+import java.util.Optional;
 
 import static java.lang.String.format;
 import static java.util.stream.Collectors.toList;
 import static uk.gov.pay.connector.model.domain.ChargeStatus.CREATED;
 
+@Transactional
 public class ChargeJpaDao extends JpaDao<ChargeEntity> implements IChargeDao {
 
     private static final Logger logger = LoggerFactory.getLogger(ChargeJpaDao.class);
@@ -36,13 +40,11 @@ public class ChargeJpaDao extends JpaDao<ChargeEntity> implements IChargeDao {
         this.gatewayAccountDao = gatewayAccountDao;
     }
 
-    @Transactional
     public void create(ChargeEntity charge) {
         super.persist(charge);
         eventListener.notify(ChargeEventEntity.from(charge, CREATED, charge.getCreatedDate().toLocalDateTime()));
     }
 
-    @Transactional
     public ChargeEntity update(final ChargeEntity charge) {
         ChargeEntity updated = super.merge(charge);
         eventListener.notify(ChargeEventEntity.from(
@@ -52,7 +54,6 @@ public class ChargeJpaDao extends JpaDao<ChargeEntity> implements IChargeDao {
         return updated;
     }
 
-    @Transactional
     public Optional<ChargeEntity> findByGatewayTransactionIdAndProvider(String transactionId, String paymentProvider) {
         TypedQuery<ChargeEntity> query = entityManager.get()
                 .createQuery("select c from ChargeEntity c where c.gatewayTransactionId = :gatewayTransactionId and c.gatewayAccount.gatewayName = :paymentProvider", ChargeEntity.class);
@@ -63,14 +64,12 @@ public class ChargeJpaDao extends JpaDao<ChargeEntity> implements IChargeDao {
         return Optional.ofNullable(query.getSingleResult());
     }
 
-    @Transactional
     public List<ChargeEntity> findAllBy(ChargeSearchQuery searchQuery) {
         TypedQuery<ChargeEntity> query = searchQuery.apply(entityManager.get());
         return query.getResultList();
     }
 
     @Override
-    @Transactional
     public String saveNewCharge(String gatewayAccountId, Map<String, Object> charge) {
         GatewayAccountEntity gatewayAccountEntity = gatewayAccountDao.findById(new Long(gatewayAccountId))
                 .orElseThrow(() -> new PayDBIException(format("Could not create a new charge with Gateway accountId '%s'", gatewayAccountId, 0)));
@@ -91,7 +90,6 @@ public class ChargeJpaDao extends JpaDao<ChargeEntity> implements IChargeDao {
     }
 
     @Override
-    @Transactional
     public Optional<Map<String, Object>> findChargeForAccount(String chargeId, String accountId) {
         Optional<ChargeEntity> chargeEntityOpt = findById(new Long(chargeId));
         if (chargeEntityOpt.isPresent() && chargeEntityOpt.get().getGatewayAccount().getId().toString().equals(accountId)) {
@@ -101,7 +99,6 @@ public class ChargeJpaDao extends JpaDao<ChargeEntity> implements IChargeDao {
     }
 
     @Override
-    @Transactional
     public Optional<Map<String, Object>> findById(String chargeId) {
         Map<String, Object> chargeMap = null;
         Optional<ChargeEntity> chargeEntityOptional = findById(new Long(chargeId));
@@ -113,13 +110,12 @@ public class ChargeJpaDao extends JpaDao<ChargeEntity> implements IChargeDao {
     }
 
     @Override
-    @Transactional
     public Optional<ChargeEntity> findById(Long chargeId) {
         return super.findById(ChargeEntity.class, chargeId);
     }
 
     @Override
-    @Transactional
+
     public void updateGatewayTransactionId(String chargeId, String transactionId) {
         ChargeEntity charge = findById(new Long(chargeId))
                 .orElseThrow(() -> new PayDBIException(format("Could not update charge '%s' with gateway transaction id %s", chargeId, transactionId)));
@@ -127,7 +123,6 @@ public class ChargeJpaDao extends JpaDao<ChargeEntity> implements IChargeDao {
     }
 
     @Override
-    @Transactional
     public void updateStatusWithGatewayInfo(String provider, String gatewayTransactionId, ChargeStatus newStatus) {
         ChargeEntity chargeEntity = findByGatewayTransactionIdAndProvider(gatewayTransactionId, provider)
                 .orElseThrow(() -> new PayDBIException(format("Could not update charge (gateway_transaction_id: %s) with status %s", gatewayTransactionId, newStatus)));
@@ -136,7 +131,6 @@ public class ChargeJpaDao extends JpaDao<ChargeEntity> implements IChargeDao {
     }
 
     @Override
-    @Transactional
     public List<Map<String, Object>> findAllBy(String gatewayAccountId, String reference, ExternalChargeStatus status, String fromDate, String toDate) {
         ChargeSearchQuery searchQuery = new ChargeSearchQuery(new Long(gatewayAccountId));
         searchQuery.withReferenceLike(reference);
@@ -154,12 +148,10 @@ public class ChargeJpaDao extends JpaDao<ChargeEntity> implements IChargeDao {
     }
 
     @Override
-    @Transactional
     public void updateStatus(String chargeId, ChargeStatus newStatus) {
         updateStatus(new Long(chargeId), newStatus);
     }
 
-    @Transactional
     public ChargeEntity updateStatus(Long chargeId, ChargeStatus newStatus) {
         ChargeEntity chargeEntity = findById(chargeId)
                 .orElseThrow(() -> new PayDBIException(format("Could not update charge '%s' with status %s, updated %d rows.", chargeId, newStatus, 0)));
@@ -169,12 +161,10 @@ public class ChargeJpaDao extends JpaDao<ChargeEntity> implements IChargeDao {
     }
 
     @Override
-    @Transactional
     public int updateNewStatusWhereOldStatusIn(String chargeId, ChargeStatus newStatus, List<ChargeStatus> oldStatuses) {
         return updateNewStatusWhereOldStatusIn(new Long(chargeId), newStatus, oldStatuses);
     }
 
-    @Transactional
     public int updateNewStatusWhereOldStatusIn(Long chargeId, ChargeStatus newStatus, List<ChargeStatus> oldStatuses) {
 
         //FIXME WIP. This method won't exist as soon this is switched to use JPA.
@@ -192,7 +182,6 @@ public class ChargeJpaDao extends JpaDao<ChargeEntity> implements IChargeDao {
     }
 
     @Override
-    @Transactional
     public Optional<String> findAccountByTransactionId(String provider, String transactionId) {
         String qlString = "SELECT c.gatewayAccount.id FROM ChargeEntity c " +
                 "WHERE " +
@@ -204,7 +193,13 @@ public class ChargeJpaDao extends JpaDao<ChargeEntity> implements IChargeDao {
         query.setParameter("gatewayTransactionId", transactionId);
         query.setParameter("provider", provider);
 
-        String account = query.getSingleResult().toString();
+        String account = null;
+        List<Long> result = query.getResultList();
+
+        if (!result.isEmpty()) {
+            account = result.get(0).toString();
+        }
+
         return Optional.ofNullable(account);
     }
 
@@ -218,6 +213,7 @@ public class ChargeJpaDao extends JpaDao<ChargeEntity> implements IChargeDao {
         charge.put("gateway_account_id", String.valueOf(chargeEntity.getGatewayAccount().getId()));
         charge.put("description", chargeEntity.getDescription());
         charge.put("reference", chargeEntity.getReference());
+        charge.put("payment_provider", chargeEntity.getGatewayAccount().getGatewayName());
         charge.put("created_date", chargeEntity.getCreatedDate());
         return charge;
     }

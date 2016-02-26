@@ -7,7 +7,10 @@ import org.hamcrest.Description;
 import org.hamcrest.Matcher;
 import org.hamcrest.MatcherAssert;
 import org.hamcrest.TypeSafeMatcher;
-import org.junit.*;
+import org.junit.After;
+import org.junit.Before;
+import org.junit.Rule;
+import org.junit.Test;
 import org.junit.rules.ExpectedException;
 import uk.gov.pay.connector.dao.*;
 import uk.gov.pay.connector.model.api.ExternalChargeStatus;
@@ -19,25 +22,21 @@ import uk.gov.pay.connector.rules.DropwizardAppWithPostgresRule;
 import uk.gov.pay.connector.util.DateTimeUtils;
 
 import java.time.LocalDateTime;
-import java.time.ZoneId;
 import java.time.ZonedDateTime;
-import java.time.format.DateTimeFormatter;
 import java.time.temporal.ChronoUnit;
-import java.time.temporal.TemporalAccessor;
 import java.util.*;
 
 import static com.google.common.collect.Lists.newArrayList;
-import static java.lang.Long.parseLong;
 import static java.util.Arrays.asList;
 import static java.util.stream.Collectors.toList;
 import static org.apache.commons.lang3.RandomStringUtils.randomAlphanumeric;
 import static org.hamcrest.MatcherAssert.assertThat;
-import static org.hamcrest.Matchers.*;
+import static org.hamcrest.Matchers.is;
+import static org.hamcrest.Matchers.notNullValue;
 import static org.hamcrest.core.IsNot.not;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertTrue;
 import static uk.gov.pay.connector.model.domain.ChargeStatus.*;
-import static uk.gov.pay.connector.util.DateTimeUtils.toUTCDateString;
 import static uk.gov.pay.connector.util.TransactionId.randomId;
 
 public class ChargeJpaDaoITest {
@@ -51,7 +50,6 @@ public class ChargeJpaDaoITest {
     private static final long AMOUNT = 101;
     public static final String PAYMENT_PROVIDER = "test_provider";
     public static final String COUNCIL_TAX_PAYMENT_REFERENCE = "Council Tax Payment reference";
-    private DateTimeFormatter formatter;
 
     @Rule
     public DropwizardAppWithPostgresRule app = new DropwizardAppWithPostgresRule();
@@ -707,6 +705,7 @@ public class ChargeJpaDaoITest {
         assertThat(charge.get("charge_id"), is(String.valueOf(chargeId)));
         assertThat(charge.get("amount"), is(AMOUNT));
         assertThat(charge.get("reference"), is(REFERENCE));
+        assertThat(charge.get("payment_provider"), is(PAYMENT_PROVIDER));
         assertThat(charge.get("description"), is(DESCRIPTION));
         assertThat(charge.get("status"), is(CREATED.getValue()));
         assertThat(charge.get("gateway_account_id"), is(String.valueOf(GATEWAY_ACCOUNT_ID)));

@@ -14,6 +14,7 @@ import java.util.HashMap;
 import java.util.Map;
 import java.util.Optional;
 
+@Transactional
 public class GatewayAccountJpaDao extends JpaDao<GatewayAccountEntity> implements IGatewayAccountDao {
 
     @Inject
@@ -22,7 +23,6 @@ public class GatewayAccountJpaDao extends JpaDao<GatewayAccountEntity> implement
     }
 
     @Override
-    @Transactional
     public String createGatewayAccount(String paymentProvider) {
         GatewayAccountEntity gatewayAccount = new GatewayAccountEntity(paymentProvider, new HashMap<>());
         super.persist(gatewayAccount);
@@ -31,13 +31,11 @@ public class GatewayAccountJpaDao extends JpaDao<GatewayAccountEntity> implement
     }
 
     @Override
-    @Transactional
     public boolean idIsMissing(String gatewayAccountId) {
         return !super.findById(GatewayAccountEntity.class, Long.valueOf(gatewayAccountId)).isPresent();
     }
 
     @Override
-    @Transactional
     public Optional<GatewayAccount> findById(String gatewayAccountId) {
         return super.findById(GatewayAccountEntity.class, Long.valueOf(gatewayAccountId)).map(gatewayAccountEntity -> {
             GatewayAccount gatewayAccount = null;
@@ -49,13 +47,11 @@ public class GatewayAccountJpaDao extends JpaDao<GatewayAccountEntity> implement
     }
 
     @Override
-    @Transactional
     public Optional<GatewayAccountEntity> findById(Long gatewayAccountId) {
         return super.findById(GatewayAccountEntity.class, gatewayAccountId);
     }
 
     @Override
-    @Transactional
     public void saveCredentials(String credentialsJsonString, String gatewayAccountId) {
         findById(GatewayAccountEntity.class, Long.valueOf(gatewayAccountId)).ifPresent(
                 entity -> {

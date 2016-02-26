@@ -22,7 +22,6 @@ import static javax.ws.rs.HttpMethod.POST;
 import static javax.ws.rs.core.Response.Status;
 import static javax.ws.rs.core.Response.Status.*;
 import static org.hamcrest.Matchers.*;
-import static uk.gov.pay.connector.it.dao.EventDaoTest.setupLifeCycleEventsFor;
 import static uk.gov.pay.connector.model.domain.ChargeStatus.*;
 import static uk.gov.pay.connector.model.domain.ChargeStatus.CREATED;
 import static uk.gov.pay.connector.resources.ApiPaths.CHARGE_FRONTEND_PATH;
@@ -273,5 +272,11 @@ public class ChargesFrontendResourceITest {
 
     private String expectedChargeUrl(String chargeId, String path) {
         return "http://localhost:" + app.getLocalPort() + CHARGE_FRONTEND_PATH.replace("{chargeId}", chargeId) + path;
+    }
+
+    private static void setupLifeCycleEventsFor(DropwizardAppWithPostgresRule app, Long chargeId, List<ChargeStatus> statuses) {
+        statuses.stream().forEach(
+                st -> app.getDatabaseTestHelper().addEvent(chargeId, st.getValue())
+        );
     }
 }

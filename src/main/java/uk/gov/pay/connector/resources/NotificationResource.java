@@ -14,7 +14,6 @@ import uk.gov.pay.connector.service.PaymentProvider;
 import uk.gov.pay.connector.service.PaymentProviders;
 import uk.gov.pay.connector.util.NotificationUtil;
 
-import javax.swing.text.html.Option;
 import javax.ws.rs.POST;
 import javax.ws.rs.Path;
 import javax.ws.rs.PathParam;
