@@ -1,10 +1,15 @@
 package uk.gov.pay.connector.it.dao;
 
+import com.google.inject.AbstractModule;
 import com.google.inject.Guice;
 import com.google.inject.Injector;
+import com.google.inject.Singleton;
 import com.google.inject.persist.PersistService;
 import com.google.inject.persist.jpa.JpaPersistModule;
-import uk.gov.pay.connector.app.DataAccessModule;
+import uk.gov.pay.connector.dao.ChargeJpaDao;
+import uk.gov.pay.connector.dao.EventJpaDao;
+import uk.gov.pay.connector.dao.GatewayAccountJpaDao;
+import uk.gov.pay.connector.dao.TokenJpaDao;
 
 public class GuicedTestEnvironment {
 
@@ -30,5 +35,16 @@ public class GuicedTestEnvironment {
 
     public <T> T getInstance(Class<T> daoClass) {
         return injector.getInstance(daoClass);
+    }
+
+    public class DataAccessModule extends AbstractModule {
+
+        @Override
+        protected void configure() {
+            bind(ChargeJpaDao.class).in(Singleton.class);
+            bind(EventJpaDao.class).in(Singleton.class);
+            bind(TokenJpaDao.class).in(Singleton.class);
+            bind(GatewayAccountJpaDao.class).in(Singleton.class);
+        }
     }
 }
