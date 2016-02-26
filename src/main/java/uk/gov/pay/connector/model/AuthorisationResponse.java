@@ -6,6 +6,7 @@ import uk.gov.pay.connector.model.domain.ChargeStatus;
 import static java.lang.String.format;
 import static uk.gov.pay.connector.model.GatewayError.baseGatewayError;
 import static uk.gov.pay.connector.model.domain.ChargeStatus.AUTHORISATION_REJECTED;
+import static uk.gov.pay.connector.model.domain.ChargeStatus.SYSTEM_ERROR;
 
 public class AuthorisationResponse implements GatewayResponse {
     private boolean successful;
@@ -21,7 +22,9 @@ public class AuthorisationResponse implements GatewayResponse {
     }
 
     public AuthorisationResponse(GatewayError error) {
+        this.successful = false;
         this.error = error;
+        this.status = SYSTEM_ERROR;
     }
 
     public static AuthorisationResponse successfulAuthorisation(ChargeStatus status, String transactionId) {
@@ -30,7 +33,7 @@ public class AuthorisationResponse implements GatewayResponse {
 
     public static AuthorisationResponse authorisationFailureNotUpdateResponse(Logger logger, String transactionId, String errorMessage) {
         logger.error(format("Error received from gateway: %s.", errorMessage));
-        return new AuthorisationResponse(false, baseGatewayError(errorMessage), null, transactionId);
+        return new AuthorisationResponse(false, baseGatewayError(errorMessage), SYSTEM_ERROR, transactionId);
     }
 
     public static AuthorisationResponse authorisationFailureResponse(Logger logger, String transactionId, String errorMessage) {

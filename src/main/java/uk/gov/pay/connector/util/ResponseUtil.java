@@ -39,6 +39,11 @@ public class ResponseUtil {
         return responseWithMessageMap(NOT_FOUND, message);
     }
 
+    public static Response acceptedResponse(Logger logger, String message) {
+        logger.error(message);
+        return responseWithMessageMap(ACCEPTED, message);
+    }
+
     public static Response notFoundResponseAsString(Logger logger, String message) {
         logger.error(message);
         return responseWithEntity(NOT_FOUND, message);

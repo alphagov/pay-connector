@@ -31,8 +31,16 @@ public class GatewayError {
         return new GatewayError(msg, GatewayConnectionTimeoutError);
     }
 
+    public static GatewayError illegalStateError(String msg) {
+        return new GatewayError(msg, IllegalStateError);
+    }
+
     public static GatewayError gatewayConnectionSocketException(String msg) {
         return new GatewayError(msg, GatewayConnectionSocketError);
+    }
+
+    public static GatewayError operationAlreadyInProgress(String msg) {
+        return new GatewayError(msg, OperationAlreadyInProgress);
     }
 
     public String getMessage() {

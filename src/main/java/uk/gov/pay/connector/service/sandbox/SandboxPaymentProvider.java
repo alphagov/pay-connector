@@ -19,6 +19,7 @@ import static uk.gov.pay.connector.model.CancelResponse.aSuccessfulCancelRespons
 import static uk.gov.pay.connector.model.CaptureResponse.aSuccessfulCaptureResponse;
 import static uk.gov.pay.connector.model.GatewayErrorType.GenericGatewayError;
 import static uk.gov.pay.connector.model.domain.ChargeStatus.AUTHORISATION_SUCCESS;
+import static uk.gov.pay.connector.model.domain.ChargeStatus.SYSTEM_ERROR;
 import static uk.gov.pay.connector.model.domain.ChargeStatus.chargeStatusFrom;
 import static uk.gov.pay.connector.service.sandbox.SandboxCardNumbers.*;
 
@@ -47,7 +48,7 @@ public class SandboxPaymentProvider implements PaymentProvider {
             return new AuthorisationResponse(true, null, AUTHORISATION_SUCCESS, transactionId);
         }
 
-        return new AuthorisationResponse(false, new GatewayError("Unsupported card details.", GenericGatewayError), null, transactionId);
+        return new AuthorisationResponse(false, new GatewayError("Unsupported card details.", GenericGatewayError), SYSTEM_ERROR, transactionId);
     }
 
     @Override

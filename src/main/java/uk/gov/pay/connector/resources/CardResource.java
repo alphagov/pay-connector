@@ -78,13 +78,16 @@ public class CardResource {
                     case ChargeNotFound:
                         return notFoundResponse(logger, error.getMessage());
                     case UnexpectedStatusCodeFromGateway:
-                        return serviceErrorResponse(logger, "Unexpected Response Code From Gateway");
                     case MalformedResponseReceivedFromGateway:
                     case GatewayUrlDnsError:
                     case GatewayConnectionTimeoutError:
                     case GatewayConnectionSocketError:
+                    case IllegalStateError:
                         return serviceErrorResponse(logger, error.getMessage());
+                    case OperationAlreadyInProgress:
+                    return acceptedResponse(logger, error.getMessage());
                 }
+
                 return badRequestResponse(logger, error.getMessage());
             };
 

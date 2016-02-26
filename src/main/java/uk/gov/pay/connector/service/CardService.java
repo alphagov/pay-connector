@@ -17,6 +17,9 @@ import static fj.data.Either.right;
 import static java.lang.String.format;
 import static org.apache.commons.lang3.StringUtils.equalsIgnoreCase;
 import static uk.gov.pay.connector.model.GatewayError.baseGatewayError;
+import static uk.gov.pay.connector.model.CancelRequest.cancelRequest;
+import static uk.gov.pay.connector.model.CaptureRequest.captureRequest;
+import static uk.gov.pay.connector.model.GatewayError.*;
 import static uk.gov.pay.connector.model.GatewayErrorType.ChargeNotFound;
 import static uk.gov.pay.connector.model.domain.ChargeStatus.*;
 
@@ -38,9 +41,81 @@ public class CardService {
     }
 
     public Either<GatewayError, GatewayResponse> doAuthorise(String chargeId, Card cardDetails) {
+
+        Function<Map<String, Object>, Either<GatewayError, GatewayResponse>> doAuthorise =
+                (charge) -> {
+                    Either<GatewayError, Map<String, Object>> preAuthorised = preAuthorise(charge);
+                    if (preAuthorised.isLeft())
+                        return left(preAuthorised.left().value());
+
+                    Either<GatewayError, AuthorisationResponse> authorised = authorise(charge, cardDetails);
+                    if (authorised.isLeft())
+                        return left(authorised.left().value());
+
+                    Either<GatewayError, GatewayResponse> postAuthorised = postAuthorise(charge, authorised.right().value());
+                    if (postAuthorised.isLeft())
+                        return left(postAuthorised.left().value());
+
+                    return right(authorised.right().value());
+                };
+
         return chargeDao
-                .findById(Long.valueOf(chargeId))
-                .map(authorise(cardDetails))
+                .findById(chargeId)
+                .map(doAuthorise)
+                .orElseGet(chargeNotFound(chargeId));
+    }
+
+    private Either<GatewayError, Map<String, Object>> preAuthorise(Map<String, Object> charge) {
+        String chargeId = String.valueOf(charge.get(CHARGE_ID_KEY));
+
+        if (!hasStatus(charge, ENTERING_CARD_DETAILS)) {
+            if (hasStatus(charge, AUTHORISATION_READY)) {
+                return left(operationAlreadyInProgress(format("Authorisation for charge already in progress, %s",
+                        chargeId)));
+            }
+            logger.error(format("Charge with id [%s] and with status [%s] should be in [ENTERING CARD DETAILS] for authorisation.",
+                    chargeId, charge.get(STATUS_KEY)));
+            return left(illegalStateError(format("Charge not in correct state to be processed, %s", chargeId)));
+        }
+        chargeDao.updateStatus(chargeId, AUTHORISATION_READY);
+        return right(charge);
+    }
+
+    private Either<GatewayError, AuthorisationResponse> authorise(Map<String, Object> charge, Card cardDetails) {
+        String chargeId = String.valueOf(charge.get(CHARGE_ID_KEY));
+        String amountValue = String.valueOf(charge.get(AMOUNT_KEY));
+
+        AuthorisationRequest request = authorisationRequest(chargeId, amountValue, cardDetails);
+        AuthorisationResponse response = paymentProviderFor(charge)
+                .authorise(request);
+
+        return right(response);
+    }
+
+    private Either<GatewayError, GatewayResponse> postAuthorise(Map<String, Object> charge, AuthorisationResponse response) {
+
+        Function<Map<String, Object>, Either<GatewayError, GatewayResponse>> postAuthorise =
+                (reloadedCharge) -> {
+
+                    String chargeId = String.valueOf(reloadedCharge.get(CHARGE_ID_KEY));
+
+                    if (!hasStatus(reloadedCharge, AUTHORISATION_READY)) {
+                        logger.error(format("Charge with id [%s] and with status [%s] should be in [AUTHORISATION_READY] for authorisation.",
+                                chargeId, reloadedCharge.get(STATUS_KEY)));
+                        return left(illegalStateError(format("Charge not in correct state to be processed, %s", chargeId)));
+                    }
+
+                    chargeDao.updateStatus(chargeId, response.getNewChargeStatus());
+                    chargeDao.updateGatewayTransactionId(chargeId, response.getTransactionId());
+
+                    return right(response);
+                };
+
+        // Reload charge
+        String chargeId = String.valueOf(charge.get(CHARGE_ID_KEY));
+        return chargeDao
+                .findById(chargeId)
+                .map(postAuthorise)
                 .orElseGet(chargeNotFound(chargeId));
     }
 

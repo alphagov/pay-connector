@@ -7,15 +7,17 @@ import org.hamcrest.Matcher;
 import org.hamcrest.TypeSafeMatcher;
 import org.junit.Test;
 import org.mockito.ArgumentCaptor;
-import uk.gov.pay.connector.dao.ChargeJpaDao;
-import uk.gov.pay.connector.dao.GatewayAccountJpaDao;
 import uk.gov.pay.connector.model.*;
-import uk.gov.pay.connector.model.domain.*;
+import uk.gov.pay.connector.model.domain.Card;
+import uk.gov.pay.connector.model.domain.ChargeStatus;
+import uk.gov.pay.connector.model.domain.GatewayAccount;
 import uk.gov.pay.connector.service.CardService;
 import uk.gov.pay.connector.service.PaymentProvider;
 import uk.gov.pay.connector.service.PaymentProviders;
 import uk.gov.pay.connector.util.CardUtils;
 
+import java.util.HashMap;
+import java.util.Map;
 import java.util.Optional;
 
 import static org.assertj.core.util.Maps.newHashMap;
@@ -24,8 +26,6 @@ import static org.hamcrest.core.Is.is;
 import static org.junit.Assert.assertTrue;
 import static org.mockito.Matchers.any;
 import static org.mockito.Mockito.*;
-import static uk.gov.pay.connector.model.GatewayErrorType.ChargeNotFound;
-import static uk.gov.pay.connector.model.GatewayErrorType.GenericGatewayError;
 import static uk.gov.pay.connector.model.domain.ChargeStatus.*;
 
 public class CardServiceTest {
@@ -57,17 +57,30 @@ public class CardServiceTest {
 
         assertTrue(response.isRight());
         assertThat(response.right().value(), is(aSuccessfulResponse()));
-
-        ArgumentCaptor<ChargeEntity> argumentCaptor = ArgumentCaptor.forClass(ChargeEntity.class);
-
-        verify(chargeDao).mergeChargeEntityWithChangedStatus(argumentCaptor.capture());
-
-        ChargeEntity updatedCharge = argumentCaptor.getValue();
-        assertThat(updatedCharge.getStatus(), is(AUTHORISATION_SUCCESS.getValue()));
+        verify(chargeDao, times(1)).updateStatus(chargeId, AUTHORISATION_READY);
+        verify(chargeDao, times(1)).updateStatus(chargeId, AUTHORISATION_SUCCESS);
+        verify(chargeDao, times(1)).updateGatewayTransactionId(eq(chargeId), any(String.class));
     }
 
     @Test
-    public void doAuthorise_shouldGetAChargeNotFoundWhenChargeDoesNotExist() {
+    public void shouldNotAuthoriseAChargeIfInternalStateIsIncorrect() throws Exception {
+
+        String chargeId = "theChargeId";
+        String gatewayTxId = "theTxId";
+
+        mockSuccessfulAuthorisationWithIncorrectInternalState(chargeId, gatewayTxId);
+        Card cardDetails = CardUtils.aValidCard();
+        Either<GatewayError, GatewayResponse> response = cardService.doAuthorise(chargeId, cardDetails);
+
+        assertTrue(response.isLeft());
+        assertThat(response.left().value(),
+                is(anIllegalStateErrorResponse("Charge not in correct state to be processed, theChargeId")));
+        verify(chargeDao, times(1)).updateStatus(chargeId, AUTHORISATION_READY);
+        verify(chargeDao, times(0)).updateGatewayTransactionId(eq(chargeId), any(String.class));
+    }
+
+    @Test
+    public void doAuthorise_shouldCaptureACharge() throws Exception {
 
         Long chargeId = 45678L;
 
@@ -277,16 +290,51 @@ public class CardServiceTest {
 
     }
 
+    private void mockSuccessfulCapture(String chargeId, String gatewayTransactionId) {
+        Map<String, Object> charge = theCharge(chargeId, AUTHORISATION_SUCCESS);
+        charge.put("gateway_transaction_id", gatewayTransactionId);
+
+        when(chargeDao.findById(chargeId)).thenReturn(Optional.of(charge));
+        when(accountDao.findById(gatewayAccountId)).thenReturn(Optional.of(theAccount()));
+        when(providers.resolve(providerName)).thenReturn(theMockProvider);
+        CaptureResponse response = new CaptureResponse(true, null);
+        when(theMockProvider.capture(any())).thenReturn(response);
+    }
+
+    private void mockSuccessfulAuthorisation(String chargeId, String transactionId) {
+        when(chargeDao.findById(chargeId))
+                .thenReturn(Optional.of(theCharge(chargeId, ENTERING_CARD_DETAILS)))
+                .thenReturn(Optional.of(theCharge(chargeId, AUTHORISATION_READY)));
+        when(accountDao.findById(gatewayAccountId)).thenReturn(Optional.of(theAccount()));
+        when(providers.resolve(providerName)).thenReturn(theMockProvider);
+        AuthorisationResponse resp = new AuthorisationResponse(true, null, AUTHORISATION_SUCCESS, transactionId);
+        when(theMockProvider.authorise(any())).thenReturn(resp);
+    }
+
+    private void mockSuccessfulAuthorisationWithIncorrectInternalState(String chargeId, String transactionId) {
+        when(chargeDao.findById(chargeId))
+                .thenReturn(Optional.of(theCharge(chargeId, ENTERING_CARD_DETAILS)))
+                .thenReturn(Optional.of(theCharge(chargeId, AUTHORISATION_SUCCESS)));
+        when(accountDao.findById(gatewayAccountId)).thenReturn(Optional.of(theAccount()));
+        when(providers.resolve(providerName)).thenReturn(theMockProvider);
+        AuthorisationResponse resp = new AuthorisationResponse(true, null, AUTHORISATION_SUCCESS, transactionId);
+        when(theMockProvider.authorise(any())).thenReturn(resp);
+    }
+
+
     private GatewayAccount theAccount() {
         return new GatewayAccount(RandomUtils.nextLong(), providerName, newHashMap());
     }
 
-    private ChargeEntity newCharge(ChargeStatus status) {
-        GatewayAccount gatewayAccount = theAccount();
-        GatewayAccountEntity gatewayAccountEntity = new GatewayAccountEntity(gatewayAccount.getGatewayName(), gatewayAccount.getCredentials());
-        gatewayAccountEntity.setId(gatewayAccount.getId());
-        return new ChargeEntity(500L, status.getValue(), "", "", "", "", gatewayAccountEntity);
+    private Map<String, Object> theCharge(String chargeId, ChargeStatus status) {
+        return new HashMap<String, Object>() {{
+            put("charge_id", chargeId);
+            put("status", status.getValue());
+            put("amount", "500");
+            put("gateway_account_id", gatewayAccountId);
+        }};
     }
+
 
     private Matcher<GatewayResponse> aSuccessfulResponse() {
         return new TypeSafeMatcher<GatewayResponse>() {
@@ -301,6 +349,24 @@ public class CardServiceTest {
             @Override
             public void describeTo(Description description) {
                 description.appendText("Success, but response was not successful: " + gatewayResponse.getError().getMessage());
+            }
+        };
+    }
+
+    private Matcher<GatewayError> anIllegalStateErrorResponse(String message) {
+        return new TypeSafeMatcher<GatewayError>() {
+            private GatewayError gatewayError;
+
+            @Override
+            protected boolean matchesSafely(GatewayError gatewayError) {
+                this.gatewayError = gatewayError;
+                return (gatewayError.getErrorType() == IllegalStateError) && (gatewayError.getMessage().equals(message));
+            }
+
+            @Override
+            public void describeTo(Description description) {
+                description.appendText(format("failure of type: %s, with message: %s",
+                        gatewayError.getErrorType(), gatewayError.getMessage()));
             }
         };
     }

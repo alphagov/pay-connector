@@ -88,12 +88,12 @@ public class CardResourceITest extends CardResourceITestBase {
     }
 
     @Test
-    public void shouldRejectRandomCardNumberAndNotUpdateChargeStatus() throws Exception {
+    public void shouldRejectRandomCardNumber() throws Exception {
         String chargeId = createNewChargeWith(ENTERING_CARD_DETAILS, null);
         String randomCardNumberDetails = buildJsonCardDetailsFor("1111111111111119");
 
         shouldReturnErrorFor(chargeId, randomCardNumberDetails, "Unsupported card details.");
-        assertFrontendChargeStatusIs(chargeId, ENTERING_CARD_DETAILS.getValue());
+        assertFrontendChargeStatusIs(chargeId, SYSTEM_ERROR.getValue());
     }
 
     @Test
@@ -124,9 +124,16 @@ public class CardResourceITest extends CardResourceITestBase {
         String originalStatus = AUTHORISATION_SUCCESS.getValue();
         assertFrontendChargeStatusIs(chargeId, originalStatus);
 
-        shouldReturnErrorFor(chargeId, validCardDetails, format("Charge not in correct state to be processed, %s", chargeId));
+        shouldReturnErrorFor(chargeId, validCardDetails, format("Charge not in correct state to be processed, %s", chargeId), 500);
 
         assertFrontendChargeStatusIs(chargeId, originalStatus);
+    }
+
+    @Test
+    public void shouldReturnErrorAndDoNotUpdateChargeStatus_IfAuthorisationAlreadyInProgress() throws Exception {
+        String chargeId = createNewChargeWith(AUTHORISATION_READY, null);
+        shouldReturnErrorFor(chargeId, validCardDetails, format("Authorisation for charge already in progress, %s", chargeId), 202);
+        assertFrontendChargeStatusIs(chargeId, AUTHORISATION_READY.getValue());
     }
 
     @Test
@@ -194,11 +201,15 @@ public class CardResourceITest extends CardResourceITestBase {
     }
 
     private void shouldReturnErrorFor(String chargeId, String randomCardNumber, String expectedMessage) {
+        shouldReturnErrorFor(chargeId, randomCardNumber, expectedMessage, 400);
+    }
+
+    private void shouldReturnErrorFor(String chargeId, String randomCardNumber, String expectedMessage, int statusCode) {
         givenSetup()
                 .body(randomCardNumber)
                 .post(authoriseChargeUrlFor(chargeId))
                 .then()
-                .statusCode(400)
+                .statusCode(statusCode)
                 .contentType(JSON)
                 .body("message", is(expectedMessage));
     }
