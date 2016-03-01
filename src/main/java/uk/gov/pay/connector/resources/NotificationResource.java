@@ -1,14 +1,11 @@
 package uk.gov.pay.connector.resources;
 
-import com.sun.org.apache.xpath.internal.operations.Bool;
 import io.dropwizard.auth.Auth;
-import org.apache.commons.lang3.StringUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import uk.gov.pay.connector.dao.ChargeDao;
-import uk.gov.pay.connector.dao.GatewayAccountDao;
+import uk.gov.pay.connector.dao.IChargeDao;
+import uk.gov.pay.connector.dao.IGatewayAccountDao;
 import uk.gov.pay.connector.dao.PayDBIException;
-import uk.gov.pay.connector.model.ChargeStatusRequest;
 import uk.gov.pay.connector.model.StatusUpdates;
 import uk.gov.pay.connector.model.domain.ChargeStatus;
 import uk.gov.pay.connector.model.domain.GatewayAccount;
@@ -17,7 +14,6 @@ import uk.gov.pay.connector.service.PaymentProvider;
 import uk.gov.pay.connector.service.PaymentProviders;
 import uk.gov.pay.connector.util.NotificationUtil;
 
-import javax.swing.text.html.Option;
 import javax.ws.rs.POST;
 import javax.ws.rs.Path;
 import javax.ws.rs.PathParam;
@@ -27,7 +23,6 @@ import java.util.Optional;
 import java.util.function.Consumer;
 import java.util.function.Function;
 
-import static java.lang.String.format;
 import static javax.ws.rs.core.Response.Status.BAD_GATEWAY;
 
 @Path("/")
@@ -35,11 +30,11 @@ public class NotificationResource {
 
     private static final Logger logger = LoggerFactory.getLogger(NotificationResource.class);
     private PaymentProviders providers;
-    private ChargeDao chargeDao;
-    private GatewayAccountDao accountDao;
+    private IChargeDao chargeDao;
+    private IGatewayAccountDao accountDao;
     private NotificationUtil notificationUtil = new NotificationUtil(new ChargeStatusBlacklist());
 
-    public NotificationResource(PaymentProviders providers, ChargeDao chargeDao, GatewayAccountDao accountDao) {
+    public NotificationResource(PaymentProviders providers, IChargeDao chargeDao, IGatewayAccountDao accountDao) {
         this.providers = providers;
         this.chargeDao = chargeDao;
         this.accountDao = accountDao;
@@ -89,7 +84,7 @@ public class NotificationResource {
         };
     }
 
-    private static void updateCharge(ChargeDao chargeDao, String provider, String transactionId, ChargeStatus value) {
+    private static void updateCharge(IChargeDao chargeDao, String provider, String transactionId, ChargeStatus value) {
         try {
             chargeDao.updateStatusWithGatewayInfo(provider, transactionId, value);
         } catch (PayDBIException e) {

@@ -8,10 +8,8 @@ import org.apache.commons.lang3.tuple.Pair;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import uk.gov.pay.connector.app.LinksConfig;
-import uk.gov.pay.connector.dao.ChargeDao;
-import uk.gov.pay.connector.dao.EventDao;
-import uk.gov.pay.connector.dao.GatewayAccountDao;
-import uk.gov.pay.connector.dao.TokenDao;
+import uk.gov.pay.connector.dao.*;
+import uk.gov.pay.connector.dao.IGatewayAccountDao;
 import uk.gov.pay.connector.model.api.ExternalChargeStatus;
 import uk.gov.pay.connector.model.domain.ChargeEvent;
 import uk.gov.pay.connector.model.domain.ChargeEventExternal;
@@ -66,16 +64,16 @@ public class ChargesApiResource {
     public static final String TO_DATE_KEY = "to_date";
     private final String TEXT_CSV = "text/csv";
 
-    private ChargeDao chargeDao;
-    private TokenDao tokenDao;
-    private GatewayAccountDao gatewayAccountDao;
-    private EventDao eventDao;
+    private IChargeDao chargeDao;
+    private ITokenDao tokenDao;
+    private IGatewayAccountDao gatewayAccountDao;
+    private IEventDao eventDao;
     private LinksConfig linksConfig;
 
     private static final Logger logger = LoggerFactory.getLogger(ChargesApiResource.class);
     private static final DateFormat DATE_FORMAT = new SimpleDateFormat("dd/MM/yyyy HH:mm:ss");
 
-    public ChargesApiResource(ChargeDao chargeDao, TokenDao tokenDao, GatewayAccountDao gatewayAccountDao, EventDao eventDao, LinksConfig linksConfig) {
+    public ChargesApiResource(IChargeDao chargeDao, ITokenDao tokenDao, IGatewayAccountDao gatewayAccountDao, IEventDao eventDao, LinksConfig linksConfig) {
         this.chargeDao = chargeDao;
         this.tokenDao = tokenDao;
         this.gatewayAccountDao = gatewayAccountDao;

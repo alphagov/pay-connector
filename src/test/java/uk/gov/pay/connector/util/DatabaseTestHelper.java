@@ -1,11 +1,10 @@
 package uk.gov.pay.connector.util;
 
 import com.google.gson.Gson;
-import com.google.gson.JsonObject;
 import org.postgresql.util.PGobject;
 import org.skife.jdbi.v2.DBI;
+import org.skife.jdbi.v2.DefaultMapper;
 import org.skife.jdbi.v2.util.StringMapper;
-import uk.gov.pay.connector.dao.TokenDao;
 import uk.gov.pay.connector.model.domain.ChargeStatus;
 
 import java.sql.SQLException;
@@ -16,12 +15,11 @@ import java.util.Map;
 import static java.time.ZonedDateTime.now;
 
 public class DatabaseTestHelper {
+
     private DBI jdbi;
-    private TokenDao tokenDao;
 
     public DatabaseTestHelper(DBI jdbi) {
         this.jdbi = jdbi;
-        this.tokenDao = new TokenDao(jdbi);
     }
 
     public void addGatewayAccount(String accountId, String paymentGateway, Map<String, String> credentials) {
@@ -34,7 +32,7 @@ public class DatabaseTestHelper {
                 jsonObject.setValue(new Gson().toJson(credentials));
             }
             jdbi.withHandle(h ->
-                    h.update("INSERT INTO gateway_accounts(gateway_account_id, payment_provider, credentials) VALUES(?, ?, ?)",
+                    h.update("INSERT INTO gateway_accounts(id, payment_provider, credentials) VALUES(?, ?, ?)",
                             Long.valueOf(accountId), paymentGateway, jsonObject)
             );
         } catch (SQLException e) {
@@ -69,7 +67,7 @@ public class DatabaseTestHelper {
                 h.update(
                         "INSERT INTO" +
                                 "    charges(\n" +
-                                "        charge_id,\n" +
+                                "        id,\n" +
                                 "        amount,\n" +
                                 "        status,\n" +
                                 "        gateway_account_id,\n" +
@@ -102,23 +100,30 @@ public class DatabaseTestHelper {
         );
     }
 
-    public JsonObject getAccountCredentials(String gatewayAccountId) {
+    public Map<String, String> getAccountCredentials(String gatewayAccountId) {
+
         String jsonString = jdbi.withHandle(h ->
-                h.createQuery("SELECT credentials from gateway_accounts WHERE gateway_account_id = :gatewayAccountId")
+                h.createQuery("SELECT credentials from gateway_accounts WHERE id = :gatewayAccountId")
                         .bind("gatewayAccountId", Integer.parseInt(gatewayAccountId))
                         .map(StringMapper.FIRST)
                         .first()
         );
-        return new Gson().fromJson(jsonString, JsonObject.class);
+        return new Gson().fromJson(jsonString, Map.class);
     }
 
     public void addToken(String chargeId, String tokenId) {
-        tokenDao.insertNewToken(chargeId, tokenId);
+        jdbi.withHandle(handle ->
+                handle
+                        .createStatement("INSERT INTO tokens(charge_id, secure_redirect_token) VALUES (:charge_id, :secure_redirect_token)")
+                        .bind("charge_id", Long.valueOf(chargeId))
+                        .bind("secure_redirect_token", tokenId)
+                        .execute()
+        );
     }
 
     public String getChargeStatus(String chargeId) {
         return jdbi.withHandle(h ->
-                h.createQuery("SELECT status from charges WHERE charge_id = :charge_id")
+                h.createQuery("SELECT status from charges WHERE id = :charge_id")
                         .bind("charge_id", Long.valueOf(chargeId))
                         .map(StringMapper.FIRST)
                         .first()
@@ -131,7 +136,7 @@ public class DatabaseTestHelper {
             pgCredentials.setType("json");
             pgCredentials.setValue(credentials);
             jdbi.withHandle(handle ->
-                    handle.createStatement("UPDATE gateway_accounts set credentials=:credentials WHERE gateway_account_id = :gatewayAccountId")
+                    handle.createStatement("UPDATE gateway_accounts set credentials=:credentials WHERE id=:gatewayAccountId")
                             .bind("gatewayAccountId", Integer.parseInt(accountId))
                             .bind("credentials", pgCredentials)
                             .execute()
@@ -145,6 +150,15 @@ public class DatabaseTestHelper {
         jdbi.withHandle(
                 h -> h.update("INSERT INTO charge_events(charge_id,status) values(?,?)",
                         chargeId, chargeStatus)
+        );
+    }
+
+    public Map<String, Object> getCharge(Long chargeId) {
+        return jdbi.withHandle(h ->
+                h.createQuery("SELECT * from charges WHERE id = :charge_id")
+                        .bind("charge_id", chargeId)
+                        .map(new DefaultMapper())
+                        .first()
         );
     }
 }

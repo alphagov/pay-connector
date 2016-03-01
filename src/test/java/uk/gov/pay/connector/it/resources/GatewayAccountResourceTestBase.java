@@ -1,11 +1,13 @@
 package uk.gov.pay.connector.it.resources;
 
 import com.google.common.collect.ImmutableMap;
-import com.google.gson.JsonObject;
 import com.jayway.restassured.response.ValidatableResponse;
 import com.jayway.restassured.specification.RequestSpecification;
 import org.junit.Rule;
 import uk.gov.pay.connector.rules.DropwizardAppWithPostgresRule;
+
+import java.util.HashMap;
+import java.util.Map;
 
 import static com.jayway.restassured.RestAssured.given;
 import static com.jayway.restassured.http.ContentType.JSON;
@@ -17,6 +19,8 @@ public class GatewayAccountResourceTestBase {
 
     public static final String ACCOUNTS_API_URL = "/v1/api/accounts/";
     public static final String ACCOUNTS_FRONTEND_URL = "/v1/frontend/accounts/";
+    public static final String ACCOUNTS_FRONTEND_JPA_URL = "/v1/jpa/frontend/accounts/";
+    public static final String ACCOUNTS_RESOURCE_JPA_URL = "/v1/api/jpa/accounts/";
 
     @Rule
     public DropwizardAppWithPostgresRule app = new DropwizardAppWithPostgresRule();
@@ -26,10 +30,29 @@ public class GatewayAccountResourceTestBase {
                 .contentType(JSON);
     }
 
+
+    //TODO remove this after complete migration
     protected String createAGatewayAccountFor(String testProvider) {
         ValidatableResponse response = givenSetup()
                 .body(toJson(ImmutableMap.of("payment_provider", testProvider)))
                 .post(ACCOUNTS_API_URL)
+                .then()
+                .statusCode(201)
+                .contentType(JSON);
+
+        assertCorrectAccountLocationIn(response);
+
+        assertGettingAccountReturnsProviderName(response, testProvider);
+
+        assertGatewayAccountCredentialsAreEmptyInDB(response);
+
+        return response.extract().path("gateway_account_id");
+    }
+
+    protected String createJpaGatewayAccountFor(String testProvider) {
+        ValidatableResponse response = givenSetup()
+                .body(toJson(ImmutableMap.of("payment_provider", testProvider)))
+                .post(ACCOUNTS_RESOURCE_JPA_URL)
                 .then()
                 .statusCode(201)
                 .contentType(JSON);
@@ -66,8 +89,8 @@ public class GatewayAccountResourceTestBase {
 
     private void assertGatewayAccountCredentialsAreEmptyInDB(ValidatableResponse response) {
         String gateway_account_id = response.extract().path("gateway_account_id");
-        JsonObject accountCredentials = app.getDatabaseTestHelper().getAccountCredentials(gateway_account_id);
-        assertThat(accountCredentials, is(new JsonObject()));
+        Map<String, String> accountCredentials = app.getDatabaseTestHelper().getAccountCredentials(gateway_account_id);
+        assertThat(accountCredentials, is(new HashMap<>()));
     }
 
 }

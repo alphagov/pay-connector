@@ -105,4 +105,18 @@
         </addColumn>
     </changeSet>
 
+    <changeSet id="rename 'gateway_accounts' primary key column" author="">
+        <renameColumn columnDataType="bigserial"
+                      oldColumnName="gateway_account_id"
+                      newColumnName="id"
+                      tableName="gateway_accounts"/>
+    </changeSet>
+
+    <changeSet id="rename 'charges' primary key column" author="">
+        <renameColumn columnDataType="bigserial"
+                      oldColumnName="charge_id"
+                      newColumnName="id"
+                      tableName="charges"/>
+    </changeSet>
+
 </databaseChangeLog>

@@ -3,8 +3,7 @@ package uk.gov.pay.connector.resources;
 import com.google.common.collect.ImmutableList;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import uk.gov.pay.connector.dao.ChargeDao;
-import uk.gov.pay.connector.dao.GatewayAccountDao;
+import uk.gov.pay.connector.dao.IChargeDao;
 import uk.gov.pay.connector.model.domain.ChargeStatus;
 import uk.gov.pay.connector.util.ResponseBuilder;
 
@@ -31,12 +30,10 @@ public class ChargesFrontendResource {
     private static final String PUT_CHARGE_STATUS_FRONTEND_PATH = CHARGE_FRONTEND_PATH + "/status";
 
     private static final Logger logger = LoggerFactory.getLogger(ChargesFrontendResource.class);
-    private final ChargeDao chargeDao;
-    private final GatewayAccountDao accountDao;
+    private final IChargeDao chargeDao;
 
-    public ChargesFrontendResource(ChargeDao chargeDao, GatewayAccountDao accountDao) {
+    public ChargesFrontendResource(IChargeDao chargeDao) {
         this.chargeDao = chargeDao;
-        this.accountDao = accountDao;
     }
 
     @GET

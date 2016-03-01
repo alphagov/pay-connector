@@ -11,7 +11,6 @@ import uk.gov.pay.connector.model.domain.ChargeStatus;
 import uk.gov.pay.connector.rules.DropwizardAppWithPostgresRule;
 import uk.gov.pay.connector.util.RestAssuredClient;
 
-import java.text.DecimalFormat;
 import java.time.format.DateTimeFormatter;
 import java.util.List;
 
@@ -23,7 +22,6 @@ import static javax.ws.rs.HttpMethod.POST;
 import static javax.ws.rs.core.Response.Status;
 import static javax.ws.rs.core.Response.Status.*;
 import static org.hamcrest.Matchers.*;
-import static uk.gov.pay.connector.it.dao.EventDaoTest.setupLifeCycleEventsFor;
 import static uk.gov.pay.connector.model.domain.ChargeStatus.*;
 import static uk.gov.pay.connector.model.domain.ChargeStatus.CREATED;
 import static uk.gov.pay.connector.resources.ApiPaths.CHARGE_FRONTEND_PATH;
@@ -75,6 +73,7 @@ public class ChargesFrontendResourceITest {
 
     @Test
     public void shouldUpdateChargeStatusToEnteringCardDetails() {
+
         String chargeId = postToCreateACharge(expectedAmount);
         String putBody = toJson(ImmutableMap.of("new_status", ENTERING_CARD_DETAILS.getValue()));
 
@@ -274,5 +273,11 @@ public class ChargesFrontendResourceITest {
 
     private String expectedChargeUrl(String chargeId, String path) {
         return "http://localhost:" + app.getLocalPort() + CHARGE_FRONTEND_PATH.replace("{chargeId}", chargeId) + path;
+    }
+
+    private static void setupLifeCycleEventsFor(DropwizardAppWithPostgresRule app, Long chargeId, List<ChargeStatus> statuses) {
+        statuses.stream().forEach(
+                st -> app.getDatabaseTestHelper().addEvent(chargeId, st.getValue())
+        );
     }
 }

@@ -4,10 +4,11 @@ import org.apache.commons.collections4.CollectionUtils;
 import org.hamcrest.Description;
 import org.hamcrest.Matcher;
 import org.hamcrest.TypeSafeMatcher;
+import org.junit.After;
 import org.junit.Before;
 import org.junit.Rule;
 import org.junit.Test;
-import uk.gov.pay.connector.dao.EventDao;
+import uk.gov.pay.connector.dao.EventJpaDao;
 import uk.gov.pay.connector.model.domain.ChargeEvent;
 import uk.gov.pay.connector.model.domain.ChargeStatus;
 import uk.gov.pay.connector.rules.DropwizardAppWithPostgresRule;
@@ -24,7 +25,7 @@ import static org.hamcrest.core.Is.is;
 import static org.junit.Assert.assertThat;
 import static uk.gov.pay.connector.model.domain.ChargeStatus.*;
 
-public class EventDaoTest {
+public class EventDaoJpaTest {
 
     private static final Long GATEWAY_ACCOUNT_ID = 564532435L;
     private static final Long CHARGE_ID = 123456L;
@@ -34,17 +35,27 @@ public class EventDaoTest {
 
     @Rule
     public DropwizardAppWithPostgresRule app = new DropwizardAppWithPostgresRule();
-    private EventDao eventDao;
+    public GuicedTestEnvironment env;
+    private EventJpaDao eventDao;
 
     @Before
     public void setUp() throws Exception {
-        eventDao = new EventDao(app.getJdbi());
+        env = GuicedTestEnvironment.from(app.getPersistModule()).start();
+
+        eventDao = env.getInstance(EventJpaDao.class);
+
         app.getDatabaseTestHelper().addGatewayAccount(GATEWAY_ACCOUNT_ID.toString(), "test_account");
         app.getDatabaseTestHelper().addCharge(CHARGE_ID.toString(), GATEWAY_ACCOUNT_ID.toString(), AMOUNT, CAPTURED, RETURN_URL, TRANSACTION_ID);
     }
 
+    @After
+    public void tearDown() {
+        env.stop();
+    }
+
     @Test
     public void shouldRetrieveAllEventsForAGivenCharge() throws Exception {
+
         List<ChargeStatus> statuses = asList(CREATED, ENTERING_CARD_DETAILS, AUTHORISATION_SUBMITTED, AUTHORISATION_SUCCESS, CAPTURE_SUBMITTED, CAPTURED);
         setupLifeCycleEventsFor(app, CHARGE_ID, statuses);
         List<ChargeEvent> events = eventDao.findEvents(GATEWAY_ACCOUNT_ID, CHARGE_ID);
@@ -52,13 +63,8 @@ public class EventDaoTest {
         assertThat(events.size(), is(statuses.size()));
         assertThat(events, containsStatuses(statuses));
 
-        events.stream().forEach(event -> {
-                    assertThat(event.getUpdated(), is(within(1, MINUTES, now())));
-                }
-        );
-
+        events.stream().forEach(event -> assertThat(event.getUpdated(), is(within(1, MINUTES, now()))));
     }
-
 
     @Test
     public void shouldNotReturnEventsIfChargeDoesNotBelongToAccount() throws Exception {
@@ -90,11 +96,9 @@ public class EventDaoTest {
         };
     }
 
-
     public static void setupLifeCycleEventsFor(DropwizardAppWithPostgresRule app, Long chargeId, List<ChargeStatus> statuses) {
         statuses.stream().forEach(
                 st -> app.getDatabaseTestHelper().addEvent(chargeId, st.getValue())
         );
     }
-
 }

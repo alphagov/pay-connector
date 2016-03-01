@@ -1,22 +1,25 @@
 package uk.gov.pay.connector.healthcheck;
 
 import com.codahale.metrics.health.HealthCheck;
-import org.skife.jdbi.v2.DBI;
+import com.google.inject.Provider;
+
+import javax.inject.Inject;
+import javax.persistence.EntityManager;
 
 public class DatabaseHealthCheck extends HealthCheck {
-    private final DBI database;
+
+    private Provider<EntityManager> entityManager;
     private String validationQuery;
 
-    public DatabaseHealthCheck(DBI database, String validationQuery) {
-        this.database = database;
+    @Inject
+    public DatabaseHealthCheck(Provider<EntityManager> entityManager, String validationQuery) {
+        this.entityManager = entityManager;
         this.validationQuery = validationQuery;
     }
 
     @Override
     protected Result check() throws Exception {
-        return database.withHandle(h -> {
-            h.createQuery(validationQuery).first();
-            return Result.healthy();
-        });
+        entityManager.get().createNativeQuery(validationQuery).getSingleResult();
+        return Result.healthy();
     }
 }
