@@ -37,13 +37,8 @@ public class GatewayAccountJpaDao extends JpaDao<GatewayAccountEntity> implement
 
     @Override
     public Optional<GatewayAccount> findById(String gatewayAccountId) {
-        return super.findById(GatewayAccountEntity.class, Long.valueOf(gatewayAccountId)).map(gatewayAccountEntity -> {
-            GatewayAccount gatewayAccount = null;
-            if (gatewayAccountEntity != null) {
-                gatewayAccount = new GatewayAccount(gatewayAccountEntity.getId(), gatewayAccountEntity.getGatewayName(), gatewayAccountEntity.getCredentials());
-            }
-            return gatewayAccount;
-        });
+        return super.findById(GatewayAccountEntity.class, Long.valueOf(gatewayAccountId))
+                .map(gatewayAccountEntity -> new GatewayAccount(gatewayAccountEntity.getId(), gatewayAccountEntity.getGatewayName(), gatewayAccountEntity.getCredentials()));
     }
 
     @Override

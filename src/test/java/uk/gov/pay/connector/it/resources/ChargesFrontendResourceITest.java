@@ -73,6 +73,7 @@ public class ChargesFrontendResourceITest {
 
     @Test
     public void shouldUpdateChargeStatusToEnteringCardDetails() {
+
         String chargeId = postToCreateACharge(expectedAmount);
         String putBody = toJson(ImmutableMap.of("new_status", ENTERING_CARD_DETAILS.getValue()));
 

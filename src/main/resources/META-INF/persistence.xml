@@ -2,22 +2,13 @@
 <persistence version="2.1" xmlns="http://java.sun.com/xml/ns/persistence">
     <persistence-unit name="ConnectorUnit" transaction-type="RESOURCE_LOCAL">
         <provider>org.eclipse.persistence.jpa.PersistenceProvider</provider>
-        <class>uk.gov.pay.connector.model.domain.ChargeEntity</class>
-        <class>uk.gov.pay.connector.model.domain.ChargeEventEntity</class>
-        <class>uk.gov.pay.connector.model.domain.GatewayAccountEntity</class>
-        <class>uk.gov.pay.connector.model.domain.TokenEntity</class>
-        <class>uk.gov.pay.connector.model.domain.LocalDateTimeConverter</class>
-        <class>uk.gov.pay.connector.model.domain.ChargeStatusConverter</class>
-        <class>uk.gov.pay.connector.model.domain.CredentialsConverter</class>
-        <class>uk.gov.pay.connector.model.domain.UTCDateTimeConverter</class>
-        <exclude-unlisted-classes>true</exclude-unlisted-classes>
+        <exclude-unlisted-classes>false</exclude-unlisted-classes>
         <properties>
             <property name="eclipselink.query-results-cache" value="false"/>
             <property name="eclipselink.cache.shared.default" value="false"/>
             <property name="eclipselink.ddl-generation.output-mode" value="database"/>
             <property name="eclipselink.logging.level" value="FINE"/>
             <property name="eclipselink.logging.level.sql" value="ALL"/>
-            <!--<property name="javax.persistence.schema-generation.database.action" value="create"/>-->
         </properties>
     </persistence-unit>
 </persistence>

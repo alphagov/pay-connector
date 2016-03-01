@@ -2,7 +2,6 @@ package uk.gov.pay.connector.app;
 
 import com.google.inject.Guice;
 import com.google.inject.Injector;
-import com.google.inject.Provider;
 import com.google.inject.persist.PersistFilter;
 import com.google.inject.persist.jpa.JpaPersistModule;
 import io.dropwizard.Application;
@@ -49,7 +48,7 @@ public class ConnectorApp extends Application<ConnectorConfiguration> {
     @Override
     public void run(ConnectorConfiguration conf, Environment environment) throws Exception {
 
-        final Injector injector = Guice.createInjector(new ConnectorModule(conf, environment), createJpaModule(conf.getDatabaseConfig()));
+        final Injector injector = Guice.createInjector(new ConnectorModule(conf, environment), createJpaModule(conf.getDataSourceFactory()));
         environment.servlets().addFilter("persistFilter", injector.getInstance(PersistFilter.class))
                 .addMappingForUrlPatterns(EnumSet.of(DispatcherType.REQUEST), true, "/*");
         environment.jersey().register(injector.getInstance(GatewayAccountJpaResource.class));
@@ -87,7 +86,7 @@ public class ConnectorApp extends Application<ConnectorConfiguration> {
         environment.healthChecks().register("database", new DatabaseHealthCheck(injector.getProvider(EntityManager.class), dataSourceFactory.getValidationQuery()));
     }
 
-    private JpaPersistModule createJpaModule(final DatabaseConfig dbConfig) {
+    private JpaPersistModule createJpaModule(final DataSourceFactory dbConfig) {
         final Properties properties = new Properties();
         properties.put("javax.persistence.jdbc.driver", dbConfig.getDriverClass());
         properties.put("javax.persistence.jdbc.url", dbConfig.getUrl());

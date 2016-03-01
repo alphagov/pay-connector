@@ -9,7 +9,6 @@ import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 
-//TODO: rename this when we can get rid of Jpa
 @Transactional
 public class JpaDao<T> {
 
@@ -31,14 +30,6 @@ public class JpaDao<T> {
 
     public <T> T merge(final T object) {
         return entityManager.get().merge(object);
-    }
-
-    public <T> void remove(final T object) {
-        entityManager.get().remove(object);
-    }
-
-    public <T, ID> void removeById(final Class<T> clazz, final ID id) {
-        remove(findById(clazz, id));
     }
 
     public <T> List<T> findAll(final Class clazz) {

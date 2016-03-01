@@ -17,7 +17,6 @@ import uk.gov.pay.connector.model.api.ExternalChargeStatus;
 import uk.gov.pay.connector.model.domain.ChargeEntity;
 import uk.gov.pay.connector.model.domain.ChargeEvent;
 import uk.gov.pay.connector.model.domain.ChargeStatus;
-import uk.gov.pay.connector.model.domain.GatewayAccountEntity;
 import uk.gov.pay.connector.rules.DropwizardAppWithPostgresRule;
 import uk.gov.pay.connector.util.DateTimeUtils;
 
@@ -35,7 +34,6 @@ import static org.hamcrest.Matchers.is;
 import static org.hamcrest.Matchers.notNullValue;
 import static org.hamcrest.core.IsNot.not;
 import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertTrue;
 import static uk.gov.pay.connector.model.domain.ChargeStatus.*;
 import static uk.gov.pay.connector.util.TransactionId.randomId;
 
@@ -47,9 +45,10 @@ public class ChargeJpaDaoITest {
     private static final String FROM_DATE = "2016-01-01T01:00:00Z";
     private static final String TO_DATE = "2026-01-08T01:00:00Z";
     private static final String DESCRIPTION = "Test description";
-    private static final long AMOUNT = 101;
-    public static final String PAYMENT_PROVIDER = "test_provider";
-    public static final String COUNCIL_TAX_PAYMENT_REFERENCE = "Council Tax Payment reference";
+    private static final Long AMOUNT = 101L;
+    private static final Long CHARGE_ID = 977L;
+    private static final String PAYMENT_PROVIDER = "test_provider";
+    private static final String COUNCIL_TAX_PAYMENT_REFERENCE = "Council Tax Payment reference";
 
     @Rule
     public DropwizardAppWithPostgresRule app = new DropwizardAppWithPostgresRule();
@@ -58,10 +57,7 @@ public class ChargeJpaDaoITest {
     public ExpectedException expectedEx = ExpectedException.none();
 
     private ChargeJpaDao chargeDao;
-    private GatewayAccountJpaDao gatewayAccountJpaDao;
-    private Long chargeId;
     private EventJpaDao eventDao;
-    private GatewayAccountEntity gatewayAccountEntity;
     public GuicedTestEnvironment env;
 
     @Before
@@ -71,43 +67,14 @@ public class ChargeJpaDaoITest {
 
         chargeDao = env.getInstance(ChargeJpaDao.class);
         eventDao = env.getInstance(EventJpaDao.class);
-        gatewayAccountJpaDao = env.getInstance(GatewayAccountJpaDao.class);
 
         app.getDatabaseTestHelper().addGatewayAccount(GATEWAY_ACCOUNT_ID.toString(), PAYMENT_PROVIDER);
-
-        gatewayAccountEntity = gatewayAccountJpaDao.findById(GatewayAccountEntity.class, GATEWAY_ACCOUNT_ID).get();
-        ChargeEntity charge = new ChargeEntity(AMOUNT, CREATED.getValue(), "", RETURN_URL, DESCRIPTION, REFERENCE, gatewayAccountEntity);
-        chargeDao.create(charge);
-        chargeId = charge.getId();
+        app.getDatabaseTestHelper().addCharge(String.valueOf(CHARGE_ID), String.valueOf(GATEWAY_ACCOUNT_ID), AMOUNT, CREATED, RETURN_URL, "", REFERENCE, ZonedDateTime.now());
     }
 
     @After
     public void tearDown() {
         env.stop();
-    }
-
-    @Test
-    public void insertANewChargeAndReturnTheId() throws Exception {
-
-        // given
-        GatewayAccountEntity gatewayAccountEntity = new GatewayAccountEntity("sanbox", new HashMap<>());
-        gatewayAccountEntity.setId(GATEWAY_ACCOUNT_ID);
-
-        ChargeEntity chargeEntity = new ChargeEntity(AMOUNT,
-                CREATED.toString(),
-                UUID.randomUUID().toString(),
-                RETURN_URL,
-                DESCRIPTION,
-                REFERENCE,
-                gatewayAccountEntity
-        );
-
-        // when
-        chargeDao.create(chargeEntity);
-
-        // then
-        assertThat(chargeEntity.getId(), is(notNullValue()));
-        assertThat(app.getDatabaseTestHelper().getChargeStatus(chargeEntity.getId().toString()), is("CREATED"));
     }
 
     @Test
@@ -123,7 +90,7 @@ public class ChargeJpaDaoITest {
         assertThat(charges.size(), is(1));
 
         ChargeEntity charge = charges.get(0);
-        assertThat(charge.getId(), is(chargeId));
+        assertThat(charge.getId(), is(CHARGE_ID));
         assertThat(charge.getAmount(), is(AMOUNT));
         assertThat(charge.getReference(), is(REFERENCE));
         assertThat(charge.getDescription(), is(DESCRIPTION));
@@ -146,7 +113,7 @@ public class ChargeJpaDaoITest {
         assertThat(charges.size(), is(1));
 
         ChargeEntity charge = charges.get(0);
-        assertThat(charge.getId(), is(chargeId));
+        assertThat(charge.getId(), is(CHARGE_ID));
         assertThat(charge.getAmount(), is(AMOUNT));
         assertThat(charge.getReference(), is(REFERENCE));
         assertThat(charge.getDescription(), is(DESCRIPTION));
@@ -161,7 +128,7 @@ public class ChargeJpaDaoITest {
         // given
         String paymentReference = "Council Tax Payment reference 2";
         Long chargeId = System.currentTimeMillis();
-        app.getDatabaseTestHelper().addCharge(chargeId.toString(), gatewayAccountEntity.getId().toString(), AMOUNT, CREATED, RETURN_URL, UUID.randomUUID().toString(), paymentReference, ZonedDateTime.now());
+        app.getDatabaseTestHelper().addCharge(chargeId.toString(), GATEWAY_ACCOUNT_ID.toString(), AMOUNT, CREATED, RETURN_URL, UUID.randomUUID().toString(), paymentReference, ZonedDateTime.now());
 
         ChargeSearchQuery queryBuilder = new ChargeSearchQuery(GATEWAY_ACCOUNT_ID)
                 .withReferenceLike("reference");
@@ -171,7 +138,7 @@ public class ChargeJpaDaoITest {
 
         // then
         assertThat(charges.size(), is(2));
-        assertThat(charges.get(1).getId(), is(this.chargeId));
+        assertThat(charges.get(1).getId(), is(CHARGE_ID));
         assertThat(charges.get(1).getReference(), is(REFERENCE));
         assertThat(charges.get(0).getReference(), is(paymentReference));
 
@@ -198,7 +165,7 @@ public class ChargeJpaDaoITest {
         assertThat(charges.size(), is(1));
         ChargeEntity charge = charges.get(0);
 
-        assertThat(charge.getId(), is(chargeId));
+        assertThat(charge.getId(), is(CHARGE_ID));
         assertThat(charge.getAmount(), is(AMOUNT));
         assertThat(charge.getReference(), is(REFERENCE));
         assertThat(charge.getDescription(), is(DESCRIPTION));
@@ -223,7 +190,7 @@ public class ChargeJpaDaoITest {
         assertThat(charges.size(), is(1));
         ChargeEntity charge = charges.get(0);
 
-        assertThat(charge.getId(), is(chargeId));
+        assertThat(charge.getId(), is(CHARGE_ID));
         assertThat(charge.getAmount(), is(AMOUNT));
         assertThat(charge.getReference(), is(REFERENCE));
         assertThat(charge.getDescription(), is(DESCRIPTION));
@@ -247,7 +214,7 @@ public class ChargeJpaDaoITest {
         assertThat(charges.size(), is(1));
         ChargeEntity charge = charges.get(0);
 
-        assertThat(charge.getId(), is(chargeId));
+        assertThat(charge.getId(), is(CHARGE_ID));
         assertThat(charge.getAmount(), is(AMOUNT));
         assertThat(charge.getReference(), is(REFERENCE));
         assertThat(charge.getDescription(), is(DESCRIPTION));
@@ -261,7 +228,7 @@ public class ChargeJpaDaoITest {
 
         // given
         Long chargeId = System.currentTimeMillis();
-        app.getDatabaseTestHelper().addCharge(chargeId.toString(), gatewayAccountEntity.getId().toString(), AMOUNT, ENTERING_CARD_DETAILS, RETURN_URL, UUID.randomUUID().toString(), REFERENCE, ZonedDateTime.now());
+        app.getDatabaseTestHelper().addCharge(chargeId.toString(), GATEWAY_ACCOUNT_ID.toString(), AMOUNT, ENTERING_CARD_DETAILS, RETURN_URL, UUID.randomUUID().toString(), REFERENCE, ZonedDateTime.now());
 
         ChargeSearchQuery queryBuilder = new ChargeSearchQuery(GATEWAY_ACCOUNT_ID)
                 .withReferenceLike(REFERENCE)
@@ -293,7 +260,7 @@ public class ChargeJpaDaoITest {
         assertThat(charges.size(), is(1));
         ChargeEntity charge = charges.get(0);
 
-        assertThat(charge.getId(), is(chargeId));
+        assertThat(charge.getId(), is(CHARGE_ID));
         assertThat(charge.getAmount(), is(AMOUNT));
         assertThat(charge.getReference(), is(REFERENCE));
         assertThat(charge.getDescription(), is(DESCRIPTION));
@@ -328,28 +295,6 @@ public class ChargeJpaDaoITest {
     }
 
     @Test
-    public void shouldUpdateCharge() throws Exception {
-
-        // given
-        Long chargeId = System.currentTimeMillis();
-        app.getDatabaseTestHelper().addCharge(chargeId.toString(), gatewayAccountEntity.getId().toString(), AMOUNT, CREATED, RETURN_URL, UUID.randomUUID().toString(), REFERENCE, ZonedDateTime.now());
-
-        // when
-        ChargeEntity charge = chargeDao.findById(chargeId).get();
-
-        // then
-        charge.setStatus(AUTHORISATION_SUBMITTED);
-        charge.setGatewayTransactionId("new-gateway-transaction-id");
-        chargeDao.update(charge);
-
-        ChargeEntity chargeFromDB = chargeDao.findById(ChargeEntity.class, charge.getId()).get();
-        assertThat(chargeFromDB.getStatus(), is(AUTHORISATION_SUBMITTED.getValue()));
-        assertThat(chargeFromDB.getGatewayTransactionId(), is("new-gateway-transaction-id"));
-
-        assertLoggedEvents(charge.getId(), AUTHORISATION_SUBMITTED);
-    }
-
-    @Test
     public void insertAmountAndThenGetAmountById() throws Exception {
 
         // given
@@ -377,49 +322,17 @@ public class ChargeJpaDaoITest {
     }
 
     @Test
-    public void shouldFindChargeEntityByGatewayTransactionIdAndProvider() throws Exception {
-
-        Long id = System.currentTimeMillis();
-        String transactionId = UUID.randomUUID().toString();
-        app.getDatabaseTestHelper().addCharge(id.toString(),
-                GATEWAY_ACCOUNT_ID.toString(), AMOUNT, CREATED, RETURN_URL, transactionId, REFERENCE, ZonedDateTime.now());
-
-        Optional<ChargeEntity> charge = chargeDao.findByGatewayTransactionIdAndProvider(transactionId, PAYMENT_PROVIDER);
-
-        assertTrue(charge.isPresent());
-    }
-
-    @Test
     public void updateStatusToEnteringCardDetailsFromCreated_shouldReturnOne() throws Exception {
 
         List<ChargeStatus> oldStatuses = newArrayList(CREATED, ENTERING_CARD_DETAILS);
 
-        chargeDao.updateNewStatusWhereOldStatusIn(chargeId, ENTERING_CARD_DETAILS, oldStatuses);
+        chargeDao.updateNewStatusWhereOldStatusIn(CHARGE_ID, ENTERING_CARD_DETAILS, oldStatuses);
 
-        ChargeEntity charge = chargeDao.findById(chargeId).get();
+        ChargeEntity charge = chargeDao.findById(CHARGE_ID).get();
 
-        assertThat(charge.getId(), is(chargeId));
+        assertThat(charge.getId(), is(CHARGE_ID));
         assertThat(charge.getStatus(), is(ENTERING_CARD_DETAILS.getValue()));
-        assertLoggedEvents(chargeId, CREATED, ENTERING_CARD_DETAILS);
-    }
-
-    @Test
-    public void updateStatusToEnteringCardDetailsFromCaptured_shouldReturnZero() throws Exception {
-
-        ChargeEntity charge = chargeDao.findById(chargeId).get();
-        charge.setStatus(CAPTURE_SUBMITTED);
-
-        chargeDao.update(charge);
-        List<ChargeStatus> oldStatuses = newArrayList(CREATED, ENTERING_CARD_DETAILS);
-
-        chargeDao.updateNewStatusWhereOldStatusIn(chargeId, ENTERING_CARD_DETAILS, oldStatuses);
-
-        charge = chargeDao.findById(chargeId).get();
-        assertThat(charge.getId(), is(chargeId));
-        assertThat(charge.getStatus(), is(CAPTURE_SUBMITTED.getValue()));
-
-        List<ChargeEvent> events = eventDao.findEvents(GATEWAY_ACCOUNT_ID, chargeId);
-        assertThat(events, not(shouldIncludeStatus(ENTERING_CARD_DETAILS)));
+        assertLoggedEvents(CHARGE_ID, ENTERING_CARD_DETAILS);
     }
 
     @Test
@@ -444,20 +357,13 @@ public class ChargeJpaDaoITest {
         chargeDao.updateStatus(unknownId, status);
     }
 
-    @Test
-    public void invalidSizeOfFields() throws Exception {
-        expectedEx.expect(RuntimeException.class);
-        ChargeEntity charge = new ChargeEntity(AMOUNT, CREATED.getValue(), "", "", "", randomAlphanumeric(512), gatewayAccountEntity);
-        chargeDao.create(charge);
-    }
-
     private void assertLoggedEvents(Long chargeId, ChargeStatus... statuses) {
         List<ChargeEvent> events = eventDao.findEvents(GATEWAY_ACCOUNT_ID, chargeId);
         assertThat(events, shouldIncludeStatus(statuses));
     }
 
     private void assertLoggedEvents(ChargeStatus... statuses) {
-        List<ChargeEvent> events = eventDao.findEvents(GATEWAY_ACCOUNT_ID, chargeId);
+        List<ChargeEvent> events = eventDao.findEvents(GATEWAY_ACCOUNT_ID, CHARGE_ID);
         assertThat(events, shouldIncludeStatus(statuses));
     }
 
@@ -507,9 +413,9 @@ public class ChargeJpaDaoITest {
 
     @Test
     public void insertAmountAndThenGetAmountById_old() throws Exception {
-        Map<String, Object> charge = chargeDao.findById(chargeId.toString()).get();
+        Map<String, Object> charge = chargeDao.findById(CHARGE_ID.toString()).get();
 
-        assertThat(charge.get("charge_id"), is(String.valueOf(chargeId)));
+        assertThat(charge.get("charge_id"), is(String.valueOf(CHARGE_ID)));
         assertThat(charge.get("amount"), is(AMOUNT));
         assertThat(charge.get("reference"), is(REFERENCE));
         assertThat(charge.get("description"), is(DESCRIPTION));
@@ -530,7 +436,7 @@ public class ChargeJpaDaoITest {
         assertThat(charges.size(), is(1));
         Map<String, Object> charge = charges.get(0);
 
-        assertThat(charge.get("charge_id"), is(String.valueOf(chargeId)));
+        assertThat(charge.get("charge_id"), is(String.valueOf(CHARGE_ID)));
         assertThat(charge.get("amount"), is(AMOUNT));
         assertThat(charge.get("reference"), is(REFERENCE));
         assertThat(charge.get("description"), is(DESCRIPTION));
@@ -548,7 +454,7 @@ public class ChargeJpaDaoITest {
 
         List<Map<String, Object>> charges = chargeDao.findAllBy(GATEWAY_ACCOUNT_ID.toString(), "reference", null, null, null);
         assertThat(charges.size(), is(2));
-        assertThat(charges.get(1).get("charge_id"), is(String.valueOf(chargeId)));
+        assertThat(charges.get(1).get("charge_id"), is(String.valueOf(CHARGE_ID)));
         assertThat(charges.get(1).get("reference"), is(REFERENCE));
         assertThat(charges.get(0).get("reference"), is(COUNCIL_TAX_PAYMENT_REFERENCE));
 
@@ -566,7 +472,7 @@ public class ChargeJpaDaoITest {
         assertThat(charges.size(), is(1));
         Map<String, Object> charge = charges.get(0);
 
-        assertThat(charge.get("charge_id"), is(String.valueOf(chargeId)));
+        assertThat(charge.get("charge_id"), is(String.valueOf(CHARGE_ID)));
         assertThat(charge.get("amount"), is(AMOUNT));
         assertThat(charge.get("reference"), is(REFERENCE));
         assertThat(charge.get("description"), is(DESCRIPTION));
@@ -580,7 +486,7 @@ public class ChargeJpaDaoITest {
         assertThat(charges.size(), is(1));
         Map<String, Object> charge = charges.get(0);
 
-        assertThat(charge.get("charge_id"), is(String.valueOf(chargeId)));
+        assertThat(charge.get("charge_id"), is(String.valueOf(CHARGE_ID)));
         assertThat(charge.get("amount"), is(AMOUNT));
         assertThat(charge.get("reference"), is(REFERENCE));
         assertThat(charge.get("description"), is(DESCRIPTION));
@@ -594,7 +500,7 @@ public class ChargeJpaDaoITest {
         assertThat(charges.size(), is(1));
         Map<String, Object> charge = charges.get(0);
 
-        assertThat(charge.get("charge_id"), is(String.valueOf(chargeId)));
+        assertThat(charge.get("charge_id"), is(String.valueOf(CHARGE_ID)));
         assertThat(charge.get("amount"), is(AMOUNT));
         assertThat(charge.get("reference"), is(REFERENCE));
         assertThat(charge.get("description"), is(DESCRIPTION));
@@ -608,7 +514,7 @@ public class ChargeJpaDaoITest {
         assertThat(charges.size(), is(1));
         Map<String, Object> charge = charges.get(0);
 
-        assertThat(charge.get("charge_id"), is(String.valueOf(chargeId)));
+        assertThat(charge.get("charge_id"), is(String.valueOf(CHARGE_ID)));
         assertThat(charge.get("amount"), is(AMOUNT));
         assertThat(charge.get("reference"), is(REFERENCE));
         assertThat(charge.get("description"), is(DESCRIPTION));
@@ -630,9 +536,9 @@ public class ChargeJpaDaoITest {
 
     @Test
     public void insertChargeAndThenUpdateStatus_old() throws Exception {
-        chargeDao.updateStatus(chargeId, AUTHORISATION_SUBMITTED);
+        chargeDao.updateStatus(CHARGE_ID, AUTHORISATION_SUBMITTED);
 
-        Map<String, Object> charge = chargeDao.findById(chargeId.toString()).get();
+        Map<String, Object> charge = chargeDao.findById(CHARGE_ID.toString()).get();
 
         assertThat(charge.get("status"), is(AUTHORISATION_SUBMITTED.getValue()));
 
@@ -642,9 +548,9 @@ public class ChargeJpaDaoITest {
     @Test
     public void insertChargeAndThenUpdateGatewayTransactionId_old() throws Exception {
         String transactionId = randomId();
-        chargeDao.updateGatewayTransactionId(chargeId.toString(), transactionId);
+        chargeDao.updateGatewayTransactionId(CHARGE_ID.toString(), transactionId);
 
-        Map<String, Object> charge = chargeDao.findById(chargeId.toString()).get();
+        Map<String, Object> charge = chargeDao.findById(CHARGE_ID.toString()).get();
         assertThat(charge.get("gateway_transaction_id"), is(transactionId));
     }
 
@@ -652,10 +558,10 @@ public class ChargeJpaDaoITest {
     public void insertChargeAndThenUpdateStatusPerGatewayTransactionId_old() throws Exception {
         String gatewayTransactionId = randomId();
 
-        chargeDao.updateGatewayTransactionId(chargeId.toString(), gatewayTransactionId);
+        chargeDao.updateGatewayTransactionId(CHARGE_ID.toString(), gatewayTransactionId);
         chargeDao.updateStatusWithGatewayInfo(PAYMENT_PROVIDER, gatewayTransactionId, AUTHORISATION_SUBMITTED);
 
-        Map<String, Object> charge = chargeDao.findById(chargeId.toString()).get();
+        Map<String, Object> charge = chargeDao.findById(CHARGE_ID.toString()).get();
 
         assertThat(charge.get("gateway_transaction_id"), is(gatewayTransactionId));
         assertThat(charge.get("status"), is(AUTHORISATION_SUBMITTED.getValue()));
@@ -664,30 +570,41 @@ public class ChargeJpaDaoITest {
     }
 
     @Test
+    public void shouldThrowExceptionWhenUpdateStatusWithGatewayInfoIsNotFound() {
+
+        String gatewayTransactionId = randomId();
+
+        expectedEx.expect(PayDBIException.class);
+        expectedEx.expectMessage(is("Could not update charge (gateway_transaction_id: " + gatewayTransactionId + ") with status AUTHORISATION SUBMITTED"));
+
+        chargeDao.updateStatusWithGatewayInfo(PAYMENT_PROVIDER, gatewayTransactionId, AUTHORISATION_SUBMITTED);
+    }
+
+    @Test
     public void updateStatusToEnteringCardDetailsFromCreated_shouldReturnOne_old() throws Exception {
         List<ChargeStatus> oldStatuses = newArrayList(CREATED, ENTERING_CARD_DETAILS);
-        int rowsUpdated = chargeDao.updateNewStatusWhereOldStatusIn(chargeId, ENTERING_CARD_DETAILS, oldStatuses);
+        int rowsUpdated = chargeDao.updateNewStatusWhereOldStatusIn(CHARGE_ID, ENTERING_CARD_DETAILS, oldStatuses);
 
         assertEquals(1, rowsUpdated);
-        Map<String, Object> charge = chargeDao.findById(chargeId.toString()).get();
-        assertThat(charge.get("charge_id"), is(String.valueOf(chargeId)));
+        Map<String, Object> charge = chargeDao.findById(CHARGE_ID.toString()).get();
+        assertThat(charge.get("charge_id"), is(String.valueOf(CHARGE_ID)));
         assertThat(charge.get("status"), is(ENTERING_CARD_DETAILS.getValue()));
 
-        assertLoggedEvents(CREATED, ENTERING_CARD_DETAILS);
+        assertLoggedEvents(ENTERING_CARD_DETAILS);
     }
 
     @Test
     public void updateStatusToEnteringCardDetailsFromCaptured_shouldReturnZero_old() throws Exception {
-        chargeDao.updateStatus(chargeId, CAPTURE_SUBMITTED);
+        chargeDao.updateStatus(CHARGE_ID, CAPTURE_SUBMITTED);
         List<ChargeStatus> oldStatuses = newArrayList(CREATED, ENTERING_CARD_DETAILS);
-        int rowsUpdated = chargeDao.updateNewStatusWhereOldStatusIn(chargeId, ENTERING_CARD_DETAILS, oldStatuses);
+        int rowsUpdated = chargeDao.updateNewStatusWhereOldStatusIn(CHARGE_ID, ENTERING_CARD_DETAILS, oldStatuses);
 
         assertEquals(0, rowsUpdated);
-        Map<String, Object> charge = chargeDao.findById(chargeId.toString()).get();
-        assertThat(charge.get("charge_id"), is(String.valueOf(chargeId)));
+        Map<String, Object> charge = chargeDao.findById(CHARGE_ID.toString()).get();
+        assertThat(charge.get("charge_id"), is(String.valueOf(CHARGE_ID)));
         assertThat(charge.get("status"), is(CAPTURE_SUBMITTED.getValue()));
 
-        List<ChargeEvent> events = eventDao.findEvents(GATEWAY_ACCOUNT_ID, chargeId);
+        List<ChargeEvent> events = eventDao.findEvents(GATEWAY_ACCOUNT_ID, CHARGE_ID);
         assertThat(events, not(shouldIncludeStatus(ENTERING_CARD_DETAILS)));
     }
 
@@ -696,13 +613,13 @@ public class ChargeJpaDaoITest {
         expectedEx.expect(RuntimeException.class);
         Map<String, Object> chargeData = new HashMap<>(newCharge(AMOUNT, REFERENCE));
         chargeData.put("reference", randomAlphanumeric(512));
-        chargeId = new Long(chargeDao.saveNewCharge(GATEWAY_ACCOUNT_ID.toString(), chargeData));
+        chargeDao.saveNewCharge(GATEWAY_ACCOUNT_ID.toString(), chargeData);
     }
 
     @Test
     public void shouldFindChargeForAccount() {
-        Map<String, Object> charge = chargeDao.findChargeForAccount(String.valueOf(chargeId), String.valueOf(GATEWAY_ACCOUNT_ID)).get();
-        assertThat(charge.get("charge_id"), is(String.valueOf(chargeId)));
+        Map<String, Object> charge = chargeDao.findChargeForAccount(String.valueOf(CHARGE_ID), String.valueOf(GATEWAY_ACCOUNT_ID)).get();
+        assertThat(charge.get("charge_id"), is(String.valueOf(CHARGE_ID)));
         assertThat(charge.get("amount"), is(AMOUNT));
         assertThat(charge.get("reference"), is(REFERENCE));
         assertThat(charge.get("payment_provider"), is(PAYMENT_PROVIDER));

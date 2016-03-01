@@ -13,6 +13,7 @@ import uk.gov.pay.connector.util.ChargeEventJpaListener;
 
 import javax.inject.Inject;
 import javax.persistence.EntityManager;
+import javax.persistence.NoResultException;
 import javax.persistence.Query;
 import javax.persistence.TypedQuery;
 import java.time.LocalDateTime;
@@ -40,28 +41,22 @@ public class ChargeJpaDao extends JpaDao<ChargeEntity> implements IChargeDao {
         this.gatewayAccountDao = gatewayAccountDao;
     }
 
-    public void create(ChargeEntity charge) {
-        super.persist(charge);
-        eventListener.notify(ChargeEventEntity.from(charge, CREATED, charge.getCreatedDate().toLocalDateTime()));
-    }
-
-    public ChargeEntity update(final ChargeEntity charge) {
-        ChargeEntity updated = super.merge(charge);
-        eventListener.notify(ChargeEventEntity.from(
-                charge,
-                ChargeStatus.chargeStatusFrom(charge.getStatus()),
-                LocalDateTime.now()));
-        return updated;
-    }
-
-    public Optional<ChargeEntity> findByGatewayTransactionIdAndProvider(String transactionId, String paymentProvider) {
+    private Optional<ChargeEntity> findByGatewayTransactionIdAndProvider(String transactionId, String paymentProvider) {
         TypedQuery<ChargeEntity> query = entityManager.get()
                 .createQuery("select c from ChargeEntity c where c.gatewayTransactionId = :gatewayTransactionId and c.gatewayAccount.gatewayName = :paymentProvider", ChargeEntity.class);
 
         query.setParameter("gatewayTransactionId", transactionId);
         query.setParameter("paymentProvider", paymentProvider);
 
-        return Optional.ofNullable(query.getSingleResult());
+        ChargeEntity result = null;
+
+        try {
+            result = query.getSingleResult();
+        } catch (NoResultException e) {
+            // This will be removed!
+        }
+
+        return Optional.ofNullable(result);
     }
 
     public List<ChargeEntity> findAllBy(ChargeSearchQuery searchQuery) {
@@ -72,7 +67,7 @@ public class ChargeJpaDao extends JpaDao<ChargeEntity> implements IChargeDao {
     @Override
     public String saveNewCharge(String gatewayAccountId, Map<String, Object> charge) {
         GatewayAccountEntity gatewayAccountEntity = gatewayAccountDao.findById(new Long(gatewayAccountId))
-                .orElseThrow(() -> new PayDBIException(format("Could not create a new charge with Gateway accountId '%s'", gatewayAccountId, 0)));
+                .orElseThrow(() -> new PayDBIException(format("Could not create a new charge with Gateway accountId '%s'", gatewayAccountId)));
 
         ChargeEntity chargeEntity =
                 new ChargeEntity(new Long(charge.get("amount").toString()),
@@ -218,5 +213,3 @@ public class ChargeJpaDao extends JpaDao<ChargeEntity> implements IChargeDao {
         return charge;
     }
 }
-
-

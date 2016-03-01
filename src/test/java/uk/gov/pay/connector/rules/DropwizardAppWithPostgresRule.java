@@ -47,7 +47,6 @@ public class DropwizardAppWithPostgresRule implements TestRule {
         postgres = new PostgresDockerRule();
         List<ConfigOverride> cfgOverrideList = newArrayList(configOverrides);
         cfgOverrideList.add(config("database.url", postgres.getConnectionUrl()));
-        cfgOverrideList.add(config("databaseJpa.url", postgres.getConnectionUrl()));
         cfgOverrideList.add(config("database.user", postgres.getUsername()));
         cfgOverrideList.add(config("database.password", postgres.getPassword()));
 

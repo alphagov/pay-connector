@@ -38,7 +38,7 @@ public class GatewayAccountJpaResource {
 
     public static final String ACCOUNTS_FRONTEND_JPA_RESOURCE = "/v1/jpa/frontend/accounts";
     public static final String ACCOUNT_FRONTEND_JPA_RESOURCE = ACCOUNTS_FRONTEND_JPA_RESOURCE + "/{accountId}";
-    private static final Logger logger = LoggerFactory.getLogger(GatewayAccountResource.class);
+    private static final Logger logger = LoggerFactory.getLogger(GatewayAccountJpaResource.class);
 
 
     private final GatewayAccountJpaDao gatewayDao;

@@ -27,12 +27,6 @@ smartpay:
     username: smartpay_notification_username
     password: smartpay_notification_password
 
-databaseJpa:
-  driverClass: org.postgresql.Driver
-  user: postgres
-  password: mysecretpassword
-  url:
-
 database:
   driverClass: org.postgresql.Driver
   user: postgres

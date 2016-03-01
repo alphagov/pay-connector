@@ -4,7 +4,6 @@ import com.fasterxml.jackson.annotation.JsonProperty;
 import io.dropwizard.Configuration;
 import io.dropwizard.client.JerseyClientConfiguration;
 import io.dropwizard.db.DataSourceFactory;
-import io.dropwizard.db.DatabaseConfiguration;
 
 import javax.validation.Valid;
 import javax.validation.constraints.NotNull;
@@ -37,11 +36,6 @@ public class ConnectorConfiguration extends Configuration {
     @JsonProperty("customJerseyClient")
     private CustomJerseyClientConfiguration customJerseyClient;
 
-    @Valid
-    @NotNull
-    @JsonProperty("databaseJpa")
-    private DatabaseConfig databaseConfig;
-
     @JsonProperty("database")
     public DataSourceFactory getDataSourceFactory() {
         return dataSourceFactory;
@@ -67,9 +61,5 @@ public class ConnectorConfiguration extends Configuration {
 
     public CustomJerseyClientConfiguration getCustomJerseyClient() {
         return customJerseyClient;
-    }
-
-    public DatabaseConfig getDatabaseConfig() {
-        return databaseConfig;
     }
 }

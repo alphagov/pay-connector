@@ -1,7 +1,6 @@
 package uk.gov.pay.connector.app;
 
 import com.google.inject.AbstractModule;
-import com.google.inject.persist.PersistFilter;
 import io.dropwizard.setup.Environment;
 import uk.gov.pay.connector.util.ChargeEventJpaListener;
 

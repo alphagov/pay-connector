@@ -44,12 +44,6 @@ jerseyClient:
 customJerseyClient:
   readTimeout: 2000ms
 
-databaseJpa:
-  driverClass: org.postgresql.Driver
-  user: postgres
-  password: mysecretpassword
-  url:
-
 database:
   driverClass: org.postgresql.Driver
   user: postgres
