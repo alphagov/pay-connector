@@ -6,7 +6,7 @@
     <artifactId>pay-connector</artifactId>
 
     <properties>
-        <dropwizard.version>0.8.4</dropwizard.version>
+        <dropwizard.version>0.9.2</dropwizard.version>
         <wiremock.version>1.57</wiremock.version>
         <jpa.version>2.6.2</jpa.version>
         <guice.version>4.0</guice.version>
@@ -33,9 +33,19 @@
             <version>${dropwizard.version}</version>
         </dependency>
         <dependency>
+          <groupId>io.dropwizard</groupId>
+          <artifactId>dropwizard-jackson</artifactId>
+          <version>${dropwizard.version}</version>
+        </dependency>
+        <dependency>
             <groupId>io.dropwizard</groupId>
             <artifactId>dropwizard-client</artifactId>
             <version>${dropwizard.version}</version>
+        </dependency>
+        <dependency>
+          <groupId>com.fasterxml.jackson.datatype</groupId>
+          <artifactId>jackson-datatype-jsr310</artifactId>
+          <version>2.7.2</version>
         </dependency>
         <dependency>
             <groupId>org.postgresql</groupId>
@@ -46,11 +56,6 @@
             <groupId>com.google.guava</groupId>
             <artifactId>guava</artifactId>
             <version>18.0</version>
-        </dependency>
-        <dependency>
-            <groupId>com.fasterxml.jackson.core</groupId>
-            <artifactId>jackson-databind</artifactId>
-            <version>2.5.1</version>
         </dependency>
         <dependency>
             <groupId>org.eclipse.persistence</groupId>
@@ -149,16 +154,6 @@
             <artifactId>gson</artifactId>
             <version>2.3.1</version>
             <scope>test</scope>
-        </dependency>
-        <dependency>
-            <groupId>com.fasterxml.jackson.datatype</groupId>
-            <artifactId>jackson-datatype-jsr310</artifactId>
-            <version>2.6.4</version>
-        </dependency>
-        <dependency>
-            <groupId>com.fasterxml.jackson.core</groupId>
-            <artifactId>jackson-annotations</artifactId>
-            <version>2.6.4</version>
         </dependency>
     </dependencies>
     <build>
