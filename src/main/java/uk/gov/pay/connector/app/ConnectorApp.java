@@ -5,14 +5,17 @@ import com.google.inject.Injector;
 import com.google.inject.persist.PersistFilter;
 import com.google.inject.persist.jpa.JpaPersistModule;
 import io.dropwizard.Application;
-import io.dropwizard.auth.AuthFactory;
-import io.dropwizard.auth.basic.BasicAuthFactory;
+import io.dropwizard.auth.AuthDynamicFeature;
+import io.dropwizard.auth.AuthValueFactoryProvider;
+import io.dropwizard.auth.basic.BasicCredentialAuthFilter;
 import io.dropwizard.configuration.EnvironmentVariableSubstitutor;
 import io.dropwizard.configuration.SubstitutingSourceProvider;
 import io.dropwizard.db.DataSourceFactory;
 import io.dropwizard.migrations.MigrationsBundle;
 import io.dropwizard.setup.Bootstrap;
 import io.dropwizard.setup.Environment;
+import org.glassfish.jersey.server.filter.RolesAllowedDynamicFeature;
+import uk.gov.pay.connector.auth.BasicAuthUser;
 import uk.gov.pay.connector.auth.SmartpayAuthenticator;
 import uk.gov.pay.connector.dao.*;
 import uk.gov.pay.connector.healthcheck.DatabaseHealthCheck;
@@ -75,13 +78,17 @@ public class ConnectorApp extends Application<ConnectorConfiguration> {
         environment.jersey().register(new CardResource(cardService));
         environment.jersey().register(new GatewayAccountResource(gatewayAccountDao, conf));
 
-        environment.jersey().register(
-                AuthFactory.binder(
-                        new BasicAuthFactory<>(
-                                new SmartpayAuthenticator(
-                                        conf.getSmartpayConfig().getNotification()),
-                                "",
-                                String.class)));
+        environment.jersey().register(RolesAllowedDynamicFeature.class);
+
+        SmartpayAuthenticator smartPayAuth = new SmartpayAuthenticator(conf.getSmartpayConfig().getNotification());
+
+        BasicCredentialAuthFilter<BasicAuthUser> basicCredentialAuthFilter =
+            new BasicCredentialAuthFilter.Builder<BasicAuthUser>()
+                .setAuthenticator(smartPayAuth)
+                .buildAuthFilter();
+
+        environment.jersey().register(new AuthDynamicFeature(basicCredentialAuthFilter));
+        environment.jersey().register(new AuthValueFactoryProvider.Binder<>(BasicAuthUser.class));
 
         environment.healthChecks().register("database", new DatabaseHealthCheck(injector.getProvider(EntityManager.class), dataSourceFactory.getValidationQuery()));
     }

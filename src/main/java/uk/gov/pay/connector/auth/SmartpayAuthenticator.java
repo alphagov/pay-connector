@@ -6,7 +6,7 @@ import io.dropwizard.auth.Authenticator;
 import io.dropwizard.auth.basic.BasicCredentials;
 import uk.gov.pay.connector.app.NotificationCredentials;
 
-public class SmartpayAuthenticator implements Authenticator<BasicCredentials, String> {
+public class SmartpayAuthenticator implements Authenticator<BasicCredentials, BasicAuthUser> {
     private NotificationCredentials creds;
 
     public SmartpayAuthenticator(NotificationCredentials creds) {
@@ -14,7 +14,9 @@ public class SmartpayAuthenticator implements Authenticator<BasicCredentials, St
     }
 
     @Override
-    public Optional<String> authenticate(BasicCredentials basicCredentials) throws AuthenticationException {
-        return creds.asBasicCredentials().equals(basicCredentials) ? Optional.of(creds.getUsername()) : Optional.absent();
+    public Optional<BasicAuthUser> authenticate(BasicCredentials basicCredentials) throws AuthenticationException {
+        return creds.asBasicCredentials().equals(basicCredentials)
+               ? Optional.of( new BasicAuthUser(creds.getUsername()) )
+               : Optional.absent();
     }
 }
