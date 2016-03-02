@@ -2,6 +2,7 @@ package uk.gov.pay.connector.healthcheck;
 
 import com.codahale.metrics.health.HealthCheck;
 import com.google.inject.Provider;
+import uk.gov.pay.connector.app.ConnectorConfiguration;
 
 import javax.inject.Inject;
 import javax.persistence.EntityManager;
@@ -12,9 +13,9 @@ public class DatabaseHealthCheck extends HealthCheck {
     private String validationQuery;
 
     @Inject
-    public DatabaseHealthCheck(Provider<EntityManager> entityManager, String validationQuery) {
+    public DatabaseHealthCheck(Provider<EntityManager> entityManager, ConnectorConfiguration config) {
         this.entityManager = entityManager;
-        this.validationQuery = validationQuery;
+        this.validationQuery = config.getDataSourceFactory().getValidationQuery();
     }
 
     @Override

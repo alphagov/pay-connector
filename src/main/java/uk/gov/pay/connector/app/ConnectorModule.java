@@ -2,15 +2,15 @@ package uk.gov.pay.connector.app;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.google.inject.AbstractModule;
-import com.google.inject.Provider;
 import com.google.inject.Provides;
+import com.google.inject.persist.jpa.JpaPersistModule;
+import io.dropwizard.db.DataSourceFactory;
 import io.dropwizard.setup.Environment;
 import uk.gov.pay.connector.dao.*;
-import uk.gov.pay.connector.resources.EventsApiJpaResource;
-import uk.gov.pay.connector.resources.GatewayAccountJpaResource;
 import uk.gov.pay.connector.util.ChargeEventJpaListener;
 
 import javax.inject.Singleton;
+import java.util.Properties;
 
 public class ConnectorModule extends AbstractModule {
     final ConnectorConfiguration configuration;
@@ -25,11 +25,26 @@ public class ConnectorModule extends AbstractModule {
     protected void configure() {
         bind(ConnectorConfiguration.class).toInstance(configuration);
         bind(Environment.class).toInstance(environment);
+
         bind(ChargeEventJpaListener.class).in(Singleton.class);
         bind(ITokenDao.class).to(TokenJpaDao.class);
         bind(IChargeDao.class).to(ChargeJpaDao.class);
         bind(IEventDao.class).to(EventJpaDao.class);
         bind(IGatewayAccountDao.class).to(GatewayAccountJpaDao.class);
+
+        install(jpaModule(configuration.getDataSourceFactory()));
+    }
+
+    private JpaPersistModule jpaModule(DataSourceFactory dbConfig) {
+        final Properties properties = new Properties();
+        properties.put("javax.persistence.jdbc.driver", dbConfig.getDriverClass());
+        properties.put("javax.persistence.jdbc.url", dbConfig.getUrl());
+        properties.put("javax.persistence.jdbc.user", dbConfig.getUser());
+        properties.put("javax.persistence.jdbc.password", dbConfig.getPassword());
+        final JpaPersistModule jpaModule = new JpaPersistModule("ConnectorUnit");
+        jpaModule.properties(properties);
+
+        return jpaModule;
     }
 
     @Provides
