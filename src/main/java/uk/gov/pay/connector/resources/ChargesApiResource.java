@@ -9,11 +9,10 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import uk.gov.pay.connector.app.ConnectorConfiguration;
 import uk.gov.pay.connector.app.LinksConfig;
-import uk.gov.pay.connector.dao.*;
+import uk.gov.pay.connector.dao.IChargeDao;
 import uk.gov.pay.connector.dao.IGatewayAccountDao;
+import uk.gov.pay.connector.dao.ITokenDao;
 import uk.gov.pay.connector.model.api.ExternalChargeStatus;
-import uk.gov.pay.connector.model.domain.ChargeEvent;
-import uk.gov.pay.connector.model.domain.ChargeEventExternal;
 import uk.gov.pay.connector.util.ChargesCSVGenerator;
 import uk.gov.pay.connector.util.ResponseBuilder;
 import uk.gov.pay.connector.util.ResponseUtil;
@@ -25,8 +24,6 @@ import javax.ws.rs.core.Response;
 import javax.ws.rs.core.UriInfo;
 import java.net.URI;
 import java.net.URISyntaxException;
-import java.text.DateFormat;
-import java.text.SimpleDateFormat;
 import java.time.ZonedDateTime;
 import java.util.*;
 import java.util.function.Function;
@@ -35,7 +32,6 @@ import java.util.stream.Collectors;
 import static com.google.common.collect.Maps.newHashMap;
 import static fj.data.Either.reduce;
 import static java.lang.String.format;
-import static java.util.stream.Collectors.toList;
 import static javax.ws.rs.HttpMethod.GET;
 import static javax.ws.rs.core.MediaType.APPLICATION_JSON;
 import static javax.ws.rs.core.Response.Status.BAD_REQUEST;
@@ -43,7 +39,8 @@ import static javax.ws.rs.core.Response.ok;
 import static org.apache.commons.lang3.StringUtils.isEmpty;
 import static uk.gov.pay.connector.model.api.ExternalChargeStatus.mapFromStatus;
 import static uk.gov.pay.connector.model.api.ExternalChargeStatus.valueOfExternalStatus;
-import static uk.gov.pay.connector.resources.ApiPaths.*;
+import static uk.gov.pay.connector.resources.ApiPaths.CHARGES_API_PATH;
+import static uk.gov.pay.connector.resources.ApiPaths.CHARGE_API_PATH;
 import static uk.gov.pay.connector.resources.ApiValidators.validateGatewayAccountReference;
 import static uk.gov.pay.connector.util.DateTimeUtils.toUTCDateString;
 import static uk.gov.pay.connector.util.ResponseUtil.*;
@@ -69,18 +66,15 @@ public class ChargesApiResource {
     private IChargeDao chargeDao;
     private ITokenDao tokenDao;
     private IGatewayAccountDao gatewayAccountDao;
-    private IEventDao eventDao;
     private LinksConfig linksConfig;
 
     private static final Logger logger = LoggerFactory.getLogger(ChargesApiResource.class);
-    private static final DateFormat DATE_FORMAT = new SimpleDateFormat("dd/MM/yyyy HH:mm:ss");
 
     @Inject
-    public ChargesApiResource(IChargeDao chargeDao, ITokenDao tokenDao, IGatewayAccountDao gatewayAccountDao, IEventDao eventDao, ConnectorConfiguration configuration) {
+    public ChargesApiResource(IChargeDao chargeDao, ITokenDao tokenDao, IGatewayAccountDao gatewayAccountDao, ConnectorConfiguration configuration) {
         this.chargeDao = chargeDao;
         this.tokenDao = tokenDao;
         this.gatewayAccountDao = gatewayAccountDao;
-        this.eventDao = eventDao;
         this.linksConfig = configuration.getLinks();
     }
 
@@ -181,41 +175,6 @@ public class ChargesApiResource {
                     return entityCreatedResponse(selfUri, responseData);
                 })
                 .orElseGet(() -> responseWithChargeNotFound(logger, chargeId));
-    }
-
-    @GET
-    @Path(CHARGE_EVENTS_API_PATH)
-    @Produces(APPLICATION_JSON)
-    public Response getEvents(@PathParam("accountId") Long accountId, @PathParam("chargeId") Long chargeId) {
-        List<ChargeEvent> events = eventDao.findEvents(accountId, chargeId);
-        List<ChargeEventExternal> eventsExternal = transformToExternalStatus(events);
-        List<ChargeEventExternal> nonRepeatingExternalChargeEvents = getNonRepeatingChargeEvents(eventsExternal);
-
-        ImmutableMap<String, Object> responsePayload = ImmutableMap.of("charge_id", chargeId, "events", nonRepeatingExternalChargeEvents);
-        return ok().entity(responsePayload).build();
-    }
-
-    private List<ChargeEventExternal> transformToExternalStatus(List<ChargeEvent> events) {
-        List<ChargeEventExternal> externalEvents = events
-                .stream()
-                .map(event ->
-                        new ChargeEventExternal(event.getChargeId(), mapFromStatus(event.getStatus()), event.getUpdated()))
-                .collect(toList());
-
-        return externalEvents;
-    }
-
-    private List<ChargeEventExternal> getNonRepeatingChargeEvents(List<ChargeEventExternal> externalEvents) {
-        ListIterator<ChargeEventExternal> iterator = externalEvents.listIterator();
-        ChargeEventExternal prev = null;
-        while (iterator.hasNext()) {
-            ChargeEventExternal current = iterator.next();
-            if (current.equals(prev)) { // remove any immediately repeating statuses
-                iterator.remove();
-            }
-            prev = current;
-        }
-        return externalEvents;
     }
 
     private Map<String, Object> getResponseData(String chargeId, String tokenId, Map<String, Object> charge, URI selfUri) {

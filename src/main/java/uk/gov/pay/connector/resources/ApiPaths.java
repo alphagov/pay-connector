@@ -18,6 +18,4 @@ public interface ApiPaths {
     String CANCEL_CHARGE_PATH = CHARGE_API_PATH + "/cancel";
 
     String CHARGE_EVENTS_API_PATH = CHARGE_API_PATH + "/events";
-    String CHARGES_API_JPA_PATH = ACCOUNT_API_RESOURCE + CHARGES_RESOURCE + "/jpa";
-    String CHARGE_EVENTS_API_JPA_PATH = CHARGE_API_PATH + "/jpa/events";
 }
