@@ -17,13 +17,9 @@ import io.dropwizard.setup.Environment;
 import org.glassfish.jersey.server.filter.RolesAllowedDynamicFeature;
 import uk.gov.pay.connector.auth.BasicAuthUser;
 import uk.gov.pay.connector.auth.SmartpayAuthenticator;
-import uk.gov.pay.connector.dao.*;
 import uk.gov.pay.connector.healthcheck.DatabaseHealthCheck;
 import uk.gov.pay.connector.healthcheck.Ping;
 import uk.gov.pay.connector.resources.*;
-import uk.gov.pay.connector.service.CardService;
-import uk.gov.pay.connector.service.ClientFactory;
-import uk.gov.pay.connector.service.PaymentProviders;
 
 import javax.persistence.EntityManager;
 import javax.servlet.DispatcherType;
@@ -49,38 +45,31 @@ public class ConnectorApp extends Application<ConnectorConfiguration> {
     }
 
     @Override
-    public void run(ConnectorConfiguration conf, Environment environment) throws Exception {
+    public void run(ConnectorConfiguration config, Environment environment) throws Exception {
 
-        final Injector injector = Guice.createInjector(new ConnectorModule(conf, environment), createJpaModule(conf.getDataSourceFactory()));
+        final Injector injector = Guice.createInjector(
+                new ConnectorModule(config, environment),
+                createJpaModule(config.getDataSourceFactory()));
+
         environment.servlets().addFilter("persistFilter", injector.getInstance(PersistFilter.class))
                 .addMappingForUrlPatterns(EnumSet.of(DispatcherType.REQUEST), true, "/*");
+
         environment.jersey().register(injector.getInstance(GatewayAccountJpaResource.class));
         environment.jersey().register(injector.getInstance(EventsApiJpaResource.class));
+        environment.jersey().register(injector.getInstance(SecurityTokensResource.class));
+        environment.jersey().register(injector.getInstance(ChargesApiResource.class));
+        environment.jersey().register(injector.getInstance(ChargesFrontendResource.class));
+        environment.jersey().register(injector.getInstance(NotificationResource.class));
+        environment.jersey().register(injector.getInstance(CardResource.class));
+        environment.jersey().register(injector.getInstance(GatewayAccountResource.class));
 
-        DataSourceFactory dataSourceFactory = conf.getDataSourceFactory();
+        DataSourceFactory dataSourceFactory = config.getDataSourceFactory();
 
         environment.healthChecks().register("ping", new Ping());
 
-        IEventDao eventDao = injector.getInstance(EventJpaDao.class);
-        IChargeDao chargeDao = injector.getInstance(ChargeJpaDao.class);
-        ITokenDao tokenDao = injector.getInstance(TokenJpaDao.class);
-        IGatewayAccountDao gatewayAccountDao = injector.getInstance(GatewayAccountJpaDao.class);
-
-        ClientFactory clientFactory = new ClientFactory(environment, conf);
-
-        PaymentProviders providers = new PaymentProviders(conf, clientFactory, environment.getObjectMapper());
-        CardService cardService = new CardService(gatewayAccountDao, chargeDao, providers);
-
-        environment.jersey().register(new SecurityTokensResource(tokenDao));
-        environment.jersey().register(new NotificationResource(providers, chargeDao, gatewayAccountDao));
-        environment.jersey().register(new ChargesApiResource(chargeDao, tokenDao, gatewayAccountDao, eventDao, conf.getLinks()));
-        environment.jersey().register(new ChargesFrontendResource(chargeDao));
-        environment.jersey().register(new CardResource(cardService));
-        environment.jersey().register(new GatewayAccountResource(gatewayAccountDao, conf));
-
         environment.jersey().register(RolesAllowedDynamicFeature.class);
 
-        SmartpayAuthenticator smartPayAuth = new SmartpayAuthenticator(conf.getSmartpayConfig().getNotification());
+        SmartpayAuthenticator smartPayAuth = new SmartpayAuthenticator(config.getSmartpayConfig().getNotification());
 
         BasicCredentialAuthFilter<BasicAuthUser> basicCredentialAuthFilter =
             new BasicCredentialAuthFilter.Builder<BasicAuthUser>()

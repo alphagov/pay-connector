@@ -10,6 +10,7 @@ import uk.gov.pay.connector.model.domain.Card;
 import uk.gov.pay.connector.model.domain.ChargeStatus;
 import uk.gov.pay.connector.model.domain.GatewayAccount;
 
+import javax.inject.Inject;
 import java.util.Arrays;
 import java.util.Map;
 import java.util.Optional;
@@ -41,6 +42,7 @@ public class CardService {
     private final IChargeDao chargeDao;
     private final PaymentProviders providers;
 
+    @Inject
     public CardService(IGatewayAccountDao accountDao, IChargeDao chargeDao, PaymentProviders providers) {
         this.accountDao = accountDao;
         this.chargeDao = chargeDao;

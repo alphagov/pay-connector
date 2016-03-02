@@ -15,6 +15,7 @@ import uk.gov.pay.connector.service.PaymentProvider;
 import uk.gov.pay.connector.service.PaymentProviders;
 import uk.gov.pay.connector.util.NotificationUtil;
 
+import javax.inject.Inject;
 import javax.annotation.security.PermitAll;
 import javax.ws.rs.POST;
 import javax.ws.rs.Path;
@@ -36,6 +37,7 @@ public class NotificationResource {
     private IGatewayAccountDao accountDao;
     private NotificationUtil notificationUtil = new NotificationUtil(new ChargeStatusBlacklist());
 
+    @Inject
     public NotificationResource(PaymentProviders providers, IChargeDao chargeDao, IGatewayAccountDao accountDao) {
         this.providers = providers;
         this.chargeDao = chargeDao;

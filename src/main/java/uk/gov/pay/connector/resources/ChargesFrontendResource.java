@@ -7,6 +7,7 @@ import uk.gov.pay.connector.dao.IChargeDao;
 import uk.gov.pay.connector.model.domain.ChargeStatus;
 import uk.gov.pay.connector.util.ResponseBuilder;
 
+import javax.inject.Inject;
 import javax.ws.rs.*;
 import javax.ws.rs.core.Context;
 import javax.ws.rs.core.Response;
@@ -32,6 +33,7 @@ public class ChargesFrontendResource {
     private static final Logger logger = LoggerFactory.getLogger(ChargesFrontendResource.class);
     private final IChargeDao chargeDao;
 
+    @Inject
     public ChargesFrontendResource(IChargeDao chargeDao) {
         this.chargeDao = chargeDao;
     }
