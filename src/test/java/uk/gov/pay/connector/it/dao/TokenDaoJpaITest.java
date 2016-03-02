@@ -5,11 +5,14 @@ import org.junit.Before;
 import org.junit.Rule;
 import org.junit.Test;
 import org.junit.rules.ExpectedException;
-import uk.gov.pay.connector.dao.PayDBIException;
 import uk.gov.pay.connector.dao.TokenJpaDao;
+import uk.gov.pay.connector.model.domain.TokenEntity;
 import uk.gov.pay.connector.rules.DropwizardAppWithPostgresRule;
 import uk.gov.pay.connector.util.DatabaseTestHelper;
 
+import java.util.Optional;
+
+import static org.hamcrest.CoreMatchers.notNullValue;
 import static org.hamcrest.CoreMatchers.nullValue;
 import static org.hamcrest.core.Is.is;
 import static org.junit.Assert.assertThat;
@@ -78,6 +81,28 @@ public class TokenDaoJpaITest {
     }
 
     @Test
+    public void shouldFindByTokenId() {
+
+        String chargeId = "987654";
+        String tokenId = "qwerty";
+        databaseTestHelper.addToken(chargeId, tokenId);
+
+        TokenEntity entity = tokenDao.findByTokenId(tokenId).get();
+
+        assertThat(entity.getId(), is(notNullValue()));
+        assertThat(entity.getChargeId(), is(Long.valueOf(chargeId)));
+        assertThat(entity.getToken(), is(tokenId));
+    }
+
+    @Test
+    public void shouldNotFindByTokenId() {
+
+        String tokenId = "sdfgh";
+
+        assertThat(tokenDao.findByTokenId(tokenId), is(Optional.empty()));
+    }
+
+    @Test
     public void shouldNotFindChargeByTokenId() {
         String noExistingTokenId = "non_existing_tokenId";
         assertThat(tokenDao.findChargeByTokenId(noExistingTokenId).isPresent(), is(false));
@@ -95,14 +120,5 @@ public class TokenDaoJpaITest {
         tokenDao.deleteByTokenId(tokenId);
 
         assertThat(databaseTestHelper.getChargeTokenId(chargeId), is(nullValue()));
-    }
-
-    @Test
-    public void shouldFailWhenDeleteATokenByIdWhenTokenDoesNotExist() {
-
-        expectedException.expect(PayDBIException.class);
-        expectedException.expectMessage(is("Unexpected: Failed to delete chargeTokenId = 'non_existing_tokenId' from tokens table"));
-
-        tokenDao.deleteByTokenId("non_existing_tokenId");
     }
 }

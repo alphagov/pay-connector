@@ -7,9 +7,7 @@ import com.google.inject.persist.jpa.JpaPersistModule;
 import io.dropwizard.db.DataSourceFactory;
 import io.dropwizard.setup.Environment;
 import uk.gov.pay.connector.dao.*;
-import uk.gov.pay.connector.util.ChargeEventJpaListener;
 
-import javax.inject.Singleton;
 import java.util.Properties;
 
 public class ConnectorModule extends AbstractModule {
@@ -26,7 +24,6 @@ public class ConnectorModule extends AbstractModule {
         bind(ConnectorConfiguration.class).toInstance(configuration);
         bind(Environment.class).toInstance(environment);
 
-        bind(ChargeEventJpaListener.class).in(Singleton.class);
         bind(ITokenDao.class).to(TokenJpaDao.class);
         bind(IChargeDao.class).to(ChargeJpaDao.class);
         bind(IEventDao.class).to(EventJpaDao.class);

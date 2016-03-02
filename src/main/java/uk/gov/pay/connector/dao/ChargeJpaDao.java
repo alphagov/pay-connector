@@ -9,7 +9,6 @@ import uk.gov.pay.connector.model.domain.ChargeEntity;
 import uk.gov.pay.connector.model.domain.ChargeEventEntity;
 import uk.gov.pay.connector.model.domain.ChargeStatus;
 import uk.gov.pay.connector.model.domain.GatewayAccountEntity;
-import uk.gov.pay.connector.util.ChargeEventJpaListener;
 
 import javax.inject.Inject;
 import javax.persistence.EntityManager;
@@ -31,13 +30,13 @@ public class ChargeJpaDao extends JpaDao<ChargeEntity> implements IChargeDao {
 
     private static final Logger logger = LoggerFactory.getLogger(ChargeJpaDao.class);
 
-    private ChargeEventJpaListener eventListener;
     private GatewayAccountJpaDao gatewayAccountDao;
+    private EventJpaDao eventDao;
 
     @Inject
-    public ChargeJpaDao(final Provider<EntityManager> entityManager, ChargeEventJpaListener eventListener, GatewayAccountJpaDao gatewayAccountDao) {
+    public ChargeJpaDao(final Provider<EntityManager> entityManager, GatewayAccountJpaDao gatewayAccountDao, EventJpaDao eventDao) {
         super(entityManager);
-        this.eventListener = eventListener;
+        this.eventDao = eventDao;
         this.gatewayAccountDao = gatewayAccountDao;
     }
 
@@ -80,7 +79,7 @@ public class ChargeJpaDao extends JpaDao<ChargeEntity> implements IChargeDao {
 
         super.persist(chargeEntity);
         entityManager.get().flush();
-        eventListener.notify(ChargeEventEntity.from(chargeEntity, CREATED, chargeEntity.getCreatedDate().toLocalDateTime()));
+        eventDao.persist(ChargeEventEntity.from(chargeEntity, CREATED, chargeEntity.getCreatedDate().toLocalDateTime()));
         return chargeEntity.getId().toString();
     }
 
@@ -122,7 +121,7 @@ public class ChargeJpaDao extends JpaDao<ChargeEntity> implements IChargeDao {
         ChargeEntity chargeEntity = findByGatewayTransactionIdAndProvider(gatewayTransactionId, provider)
                 .orElseThrow(() -> new PayDBIException(format("Could not update charge (gateway_transaction_id: %s) with status %s", gatewayTransactionId, newStatus)));
         chargeEntity.setStatus(newStatus);
-        eventListener.notify(ChargeEventEntity.from(chargeEntity, newStatus, LocalDateTime.now()));
+        eventDao.persist(ChargeEventEntity.from(chargeEntity, newStatus, LocalDateTime.now()));
     }
 
     @Override
@@ -151,7 +150,7 @@ public class ChargeJpaDao extends JpaDao<ChargeEntity> implements IChargeDao {
         ChargeEntity chargeEntity = findById(chargeId)
                 .orElseThrow(() -> new PayDBIException(format("Could not update charge '%s' with status %s, updated %d rows.", chargeId, newStatus, 0)));
         chargeEntity.setStatus(newStatus);
-        eventListener.notify(ChargeEventEntity.from(chargeEntity, newStatus, LocalDateTime.now()));
+        eventDao.persist(ChargeEventEntity.from(chargeEntity, newStatus, LocalDateTime.now()));
         return chargeEntity;
     }
 

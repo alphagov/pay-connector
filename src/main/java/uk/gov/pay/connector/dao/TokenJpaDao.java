@@ -10,8 +10,6 @@ import javax.persistence.TypedQuery;
 import java.util.List;
 import java.util.Optional;
 
-import static java.lang.String.format;
-
 @Transactional
 public class TokenJpaDao extends JpaDao<TokenEntity> implements ITokenDao {
 
@@ -60,13 +58,14 @@ public class TokenJpaDao extends JpaDao<TokenEntity> implements ITokenDao {
 
     @Override
     public void deleteByTokenId(String tokenId) {
+        findByTokenId(tokenId).ifPresent(token -> entityManager.get().remove(token));
+    }
 
-        int rowsDeleted = entityManager.get().createQuery("DELETE FROM TokenEntity t WHERE t.token = :token")
+    public Optional<TokenEntity> findByTokenId(String tokenId) {
+        return entityManager.get()
+                .createQuery("SELECT t FROM TokenEntity t WHERE t.token = :token", TokenEntity.class)
                 .setParameter("token", tokenId)
-                .executeUpdate();
-
-        if (rowsDeleted != 1) {
-            throw new PayDBIException(format("Unexpected: Failed to delete chargeTokenId = '%s' from tokens table", tokenId));
-        }
+                .getResultList().stream()
+                .findFirst();
     }
 }

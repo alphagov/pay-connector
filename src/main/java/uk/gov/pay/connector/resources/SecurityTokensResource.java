@@ -3,7 +3,7 @@ package uk.gov.pay.connector.resources;
 import com.google.common.collect.ImmutableMap;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import uk.gov.pay.connector.dao.ITokenDao;
+import uk.gov.pay.connector.dao.TokenJpaDao;
 
 import javax.inject.Inject;
 import javax.ws.rs.*;
@@ -19,10 +19,10 @@ public class SecurityTokensResource {
     private static final String TOKEN_VALIDATION_PATH = "/v1/frontend/tokens/{chargeTokenId}";
 
     private final Logger logger = LoggerFactory.getLogger(SecurityTokensResource.class);
-    private final ITokenDao tokenDao;
+    private final TokenJpaDao tokenDao;
 
     @Inject
-    public SecurityTokensResource(ITokenDao tokenDao) {
+    public SecurityTokensResource(TokenJpaDao tokenDao) {
         this.tokenDao = tokenDao;
     }
 
@@ -32,13 +32,12 @@ public class SecurityTokensResource {
     public Response verifyToken(@PathParam("chargeTokenId") String chargeTokenId) {
         logger.debug("verify({})", chargeTokenId);
 
-        return tokenDao
-                .findChargeByTokenId(chargeTokenId)
-                .map(chargeId -> {
-                    Map<Object, Object> tokenResource = ImmutableMap.builder().put("chargeId", chargeId).build();
+        return tokenDao.findByTokenId(chargeTokenId)
+                .map(token -> {
+                    Map<Object, Object> tokenResource = ImmutableMap.builder().put("chargeId", String.valueOf(token.getChargeId())).build();
                     return Response.ok().entity(tokenResource).build();
                 }).orElseGet(() ->
-                        notFoundResponse(logger, "Token has expired!"));
+                    notFoundResponse(logger, "Token has expired!"));
     }
 
     @DELETE
