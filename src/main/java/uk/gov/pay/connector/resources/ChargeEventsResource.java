@@ -23,14 +23,12 @@ import static uk.gov.pay.connector.model.api.ExternalChargeStatus.mapFromStatus;
 import static uk.gov.pay.connector.resources.ApiPaths.CHARGE_EVENTS_API_PATH;
 
 @Path("/")
-public class ChargeEventsApiResource {
+public class ChargeEventsResource {
 
     private EventJpaDao eventDao;
 
-    private static final Logger logger = LoggerFactory.getLogger(ChargeEventsApiResource.class);
-
     @Inject
-    public ChargeEventsApiResource(EventJpaDao eventDao) {
+    public ChargeEventsResource(EventJpaDao eventDao) {
         this.eventDao = eventDao;
     }
 

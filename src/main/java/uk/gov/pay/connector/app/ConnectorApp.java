@@ -52,10 +52,10 @@ public class ConnectorApp extends Application<ConnectorConfiguration> {
         environment.servlets().addFilter("persistFilter", injector.getInstance(PersistFilter.class))
                 .addMappingForUrlPatterns(EnumSet.of(DispatcherType.REQUEST), true, "/*");
 
-        environment.jersey().register(injector.getInstance(GatewayAccountJpaResource.class));
-        environment.jersey().register(injector.getInstance(ChargeEventsApiResource.class));
+        environment.jersey().register(injector.getInstance(GatewayAccountResource.class));
+        environment.jersey().register(injector.getInstance(ChargeEventsResource.class));
         environment.jersey().register(injector.getInstance(SecurityTokensResource.class));
-        environment.jersey().register(injector.getInstance(ChargesApiResource.class));
+        environment.jersey().register(injector.getInstance(ChargesResource.class));
         environment.jersey().register(injector.getInstance(ChargesFrontendResource.class));
         environment.jersey().register(injector.getInstance(NotificationResource.class));
         environment.jersey().register(injector.getInstance(CardResource.class));

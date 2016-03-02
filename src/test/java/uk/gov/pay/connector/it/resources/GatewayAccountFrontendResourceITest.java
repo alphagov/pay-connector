@@ -12,7 +12,6 @@ import static org.hamcrest.CoreMatchers.nullValue;
 import static org.hamcrest.core.Is.is;
 import static org.junit.Assert.assertThat;
 
-@Deprecated
 public class GatewayAccountFrontendResourceITest extends GatewayAccountResourceTestBase {
 
     private Gson gson =  new Gson();
@@ -22,7 +21,7 @@ public class GatewayAccountFrontendResourceITest extends GatewayAccountResourceT
         String accountId = createAGatewayAccountFor("worldpay");
         ImmutableMap<String, String> credentials = ImmutableMap.of("username", "a-username", "password", "a-password", "merchant_id", "a-merchant-id");
 
-        updateCredentialsWith(accountId, credentials);
+        app.getDatabaseTestHelper().updateCredentialsFor(accountId,  gson.toJson(credentials));
 
         givenSetup().accept(JSON)
                 .get(ACCOUNTS_FRONTEND_URL + accountId)
@@ -43,6 +42,17 @@ public class GatewayAccountFrontendResourceITest extends GatewayAccountResourceT
                 .then()
                 .statusCode(404)
                 .body("message", is("Account with id '12345' not found"));
+
+    }
+
+    @Test
+    public void shouldReturn400IfGatewayAccountIsNotNumeric() {
+        String nonNumericGatewayAccount = "ABC";
+        givenSetup().accept(JSON)
+                .get(ACCOUNTS_FRONTEND_URL + nonNumericGatewayAccount)
+                .then()
+                .statusCode(400)
+                .body("message", is("Invalid account ID format. was [ABC]. Should be a number"));
 
     }
 
@@ -155,10 +165,9 @@ public class GatewayAccountFrontendResourceITest extends GatewayAccountResourceT
     }
 
     private void updateCredentialsWith(String accountId, ImmutableMap<String, String> expectedCredentials) {
-        String expectedCredentialsString = gson.toJson(expectedCredentials);
 
         givenSetup().accept(JSON)
-                .body(expectedCredentialsString)
+                .body(expectedCredentials)
                 .put(ACCOUNTS_FRONTEND_URL + accountId)
                 .then()
                 .statusCode(200);
@@ -166,5 +175,4 @@ public class GatewayAccountFrontendResourceITest extends GatewayAccountResourceT
         Map<String, String> currentCredentials = app.getDatabaseTestHelper().getAccountCredentials(accountId);
         assertThat(currentCredentials, is(expectedCredentials));
     }
-
 }

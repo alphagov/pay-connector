@@ -42,7 +42,7 @@ import static uk.gov.pay.connector.util.LinksAssert.assertNextUrlLink;
 import static uk.gov.pay.connector.util.LinksAssert.assertSelfLink;
 import static uk.gov.pay.connector.util.NumberMatcher.isNumber;
 
-public class ChargesApiResourceITest {
+public class ChargesResourceITest {
     private static final String FRONTEND_CARD_DETAILS_URL = "/charge/";
 
     private static final String JSON_AMOUNT_KEY = "amount";

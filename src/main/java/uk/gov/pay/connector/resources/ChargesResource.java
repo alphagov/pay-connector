@@ -46,7 +46,7 @@ import static uk.gov.pay.connector.util.DateTimeUtils.toUTCDateString;
 import static uk.gov.pay.connector.util.ResponseUtil.*;
 
 @Path("/")
-public class ChargesApiResource {
+public class ChargesResource {
     private static final String AMOUNT_KEY = "amount";
     private static final String DESCRIPTION_KEY = "description";
     private static final String RETURN_URL_KEY = "return_url";
@@ -68,10 +68,10 @@ public class ChargesApiResource {
     private IGatewayAccountDao gatewayAccountDao;
     private LinksConfig linksConfig;
 
-    private static final Logger logger = LoggerFactory.getLogger(ChargesApiResource.class);
+    private static final Logger logger = LoggerFactory.getLogger(ChargesResource.class);
 
     @Inject
-    public ChargesApiResource(IChargeDao chargeDao, ITokenDao tokenDao, IGatewayAccountDao gatewayAccountDao, ConnectorConfiguration configuration) {
+    public ChargesResource(IChargeDao chargeDao, ITokenDao tokenDao, IGatewayAccountDao gatewayAccountDao, ConnectorConfiguration configuration) {
         this.chargeDao = chargeDao;
         this.tokenDao = tokenDao;
         this.gatewayAccountDao = gatewayAccountDao;
@@ -277,6 +277,4 @@ public class ChargesApiResource {
 
     private static F<String, Response> handleError =
             errorMessage -> badRequestResponse(logger, errorMessage);
-
-
 }
