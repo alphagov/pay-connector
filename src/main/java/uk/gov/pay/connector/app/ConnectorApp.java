@@ -19,6 +19,7 @@ import uk.gov.pay.connector.auth.SmartpayAuthenticator;
 import uk.gov.pay.connector.healthcheck.DatabaseHealthCheck;
 import uk.gov.pay.connector.healthcheck.Ping;
 import uk.gov.pay.connector.resources.*;
+import uk.gov.pay.connector.util.DbWaitCommand;
 
 import javax.servlet.DispatcherType;
 import java.util.EnumSet;
@@ -39,6 +40,8 @@ public class ConnectorApp extends Application<ConnectorConfiguration> {
                 return configuration.getDataSourceFactory();
             }
         });
+
+        bootstrap.addCommand(new DbWaitCommand());
     }
 
     @Override
@@ -49,10 +52,10 @@ public class ConnectorApp extends Application<ConnectorConfiguration> {
         environment.servlets().addFilter("persistFilter", injector.getInstance(PersistFilter.class))
                 .addMappingForUrlPatterns(EnumSet.of(DispatcherType.REQUEST), true, "/*");
 
-        environment.jersey().register(injector.getInstance(GatewayAccountJpaResource.class));
-        environment.jersey().register(injector.getInstance(EventsApiJpaResource.class));
+        environment.jersey().register(injector.getInstance(GatewayAccountResource.class));
+        environment.jersey().register(injector.getInstance(ChargeEventsResource.class));
         environment.jersey().register(injector.getInstance(SecurityTokensResource.class));
-        environment.jersey().register(injector.getInstance(ChargesApiResource.class));
+        environment.jersey().register(injector.getInstance(ChargesResource.class));
         environment.jersey().register(injector.getInstance(ChargesFrontendResource.class));
         environment.jersey().register(injector.getInstance(NotificationResource.class));
         environment.jersey().register(injector.getInstance(CardResource.class));

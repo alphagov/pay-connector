@@ -2,6 +2,7 @@ package uk.gov.pay.connector.it.resources;
 
 import com.google.common.collect.ImmutableMap;
 import com.jayway.restassured.response.ValidatableResponse;
+import org.hamcrest.core.Is;
 import org.junit.Test;
 
 import static com.jayway.restassured.http.ContentType.JSON;
@@ -10,15 +11,15 @@ import static org.hamcrest.Matchers.is;
 import static org.hamcrest.Matchers.nullValue;
 import static uk.gov.pay.connector.util.JsonEncoder.toJson;
 
-public class GatewayAccountApiResourceITest extends GatewayAccountResourceTestBase {
+public class GatewayAccountResourceITest extends GatewayAccountResourceTestBase {
 
     @Test
     public void getAccountShouldReturn404IfAccountIdIsUnknown() throws Exception {
 
-        String unknownAcocuntId = "92348739";
+        String unknownAccountId = "92348739";
 
         givenSetup()
-                .get(ACCOUNTS_API_URL + unknownAcocuntId)
+                .get(ACCOUNTS_API_URL + unknownAccountId)
                 .then()
                 .statusCode(404);
     }
@@ -63,6 +64,18 @@ public class GatewayAccountApiResourceITest extends GatewayAccountResourceTestBa
                 .statusCode(400)
                 .contentType(JSON)
                 .body("message", is(format("Unsupported payment provider %s.", testProvider)));
+    }
+
+    @Test
+    public void getAccountShouldReturn400IfAccountIdIsNotNumeric() throws Exception {
+
+        String unknownAcocuntId = "92348739wsx673hdg";
+
+        givenSetup()
+                .get(ACCOUNTS_API_URL + unknownAcocuntId)
+                .then()
+                .statusCode(400)
+                .body("message", Is.is(String.format("Invalid account ID format. was [%s]. Should be a number", unknownAcocuntId)));
     }
 
     @Test

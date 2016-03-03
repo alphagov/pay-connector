@@ -96,7 +96,7 @@ public class RestAssuredClient {
     }
 
     public ValidatableResponse getEvents(Long chargeId) {
-        String requestPath = CHARGE_EVENTS_API_JPA_PATH
+        String requestPath = CHARGE_EVENTS_API_PATH
                 .replace("{accountId}", accountId)
                 .replace("{chargeId}", String.valueOf(chargeId));
         return given().port(app.getLocalPort())

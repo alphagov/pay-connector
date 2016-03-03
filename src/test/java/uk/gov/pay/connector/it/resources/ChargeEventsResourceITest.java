@@ -19,8 +19,7 @@ import static uk.gov.pay.connector.model.api.ExternalChargeStatus.*;
 import static uk.gov.pay.connector.model.domain.ChargeStatus.ENTERING_CARD_DETAILS;
 import static uk.gov.pay.connector.util.JsonEncoder.toJson;
 
-@Deprecated
-public class ChargeApiEventResourceITest {
+public class ChargeEventsResourceITest {
 
     private static final String JSON_CHARGE_KEY = "charge_id";
 

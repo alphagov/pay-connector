@@ -3,7 +3,6 @@ package uk.gov.pay.connector.util;
 import com.google.gson.Gson;
 import org.postgresql.util.PGobject;
 import org.skife.jdbi.v2.DBI;
-import org.skife.jdbi.v2.DefaultMapper;
 import org.skife.jdbi.v2.util.StringMapper;
 import uk.gov.pay.connector.model.domain.ChargeStatus;
 
@@ -150,15 +149,6 @@ public class DatabaseTestHelper {
         jdbi.withHandle(
                 h -> h.update("INSERT INTO charge_events(charge_id,status) values(?,?)",
                         chargeId, chargeStatus)
-        );
-    }
-
-    public Map<String, Object> getCharge(Long chargeId) {
-        return jdbi.withHandle(h ->
-                h.createQuery("SELECT * from charges WHERE id = :charge_id")
-                        .bind("charge_id", chargeId)
-                        .map(new DefaultMapper())
-                        .first()
         );
     }
 }
