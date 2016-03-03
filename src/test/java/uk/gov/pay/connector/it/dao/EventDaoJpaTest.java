@@ -55,12 +55,7 @@ public class EventDaoJpaTest {
 
     @Test
     public void shouldRetrieveAllEventsForAGivenCharge() throws Exception {
-<<<<<<< ab5ab5ebe4a805cb9b4106668fd2d9586a821c8f:src/test/java/uk/gov/pay/connector/it/dao/EventDaoJpaTest.java
-
-        List<ChargeStatus> statuses = asList(CREATED, ENTERING_CARD_DETAILS, AUTHORISATION_SUBMITTED, AUTHORISATION_SUCCESS, CAPTURE_SUBMITTED, CAPTURED);
-=======
         List<ChargeStatus> statuses = asList(CREATED, ENTERING_CARD_DETAILS, AUTHORISATION_READY, AUTHORISATION_SUCCESS, CAPTURE_SUBMITTED, CAPTURED);
->>>>>>> PP-543 Introduce new state AUTHORISATION_SUCCESS:src/test/java/uk/gov/pay/connector/it/dao/EventDaoTest.java
         setupLifeCycleEventsFor(app, CHARGE_ID, statuses);
         List<ChargeEvent> events = eventDao.findEvents(GATEWAY_ACCOUNT_ID, CHARGE_ID);
 

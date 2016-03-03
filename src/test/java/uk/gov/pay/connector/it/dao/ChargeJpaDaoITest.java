@@ -544,13 +544,13 @@ public class ChargeJpaDaoITest {
 
     @Test
     public void insertChargeAndThenUpdateStatus_old() throws Exception {
-        chargeDao.updateStatus(CHARGE_ID, AUTHORISATION_SUBMITTED);
+        chargeDao.updateStatus(CHARGE_ID, AUTHORISATION_READY);
 
         Map<String, Object> charge = chargeDao.findById(CHARGE_ID.toString()).get();
 
-        assertThat(charge.get("status"), is(AUTHORISATION_SUBMITTED.getValue()));
+        assertThat(charge.get("status"), is(AUTHORISATION_READY.getValue()));
 
-        assertLoggedEvents(AUTHORISATION_SUBMITTED);
+        assertLoggedEvents(AUTHORISATION_READY);
     }
 
     @Test
@@ -567,14 +567,14 @@ public class ChargeJpaDaoITest {
         String gatewayTransactionId = randomId();
 
         chargeDao.updateGatewayTransactionId(CHARGE_ID.toString(), gatewayTransactionId);
-        chargeDao.updateStatusWithGatewayInfo(PAYMENT_PROVIDER, gatewayTransactionId, AUTHORISATION_SUBMITTED);
+        chargeDao.updateStatusWithGatewayInfo(PAYMENT_PROVIDER, gatewayTransactionId, AUTHORISATION_READY);
 
         Map<String, Object> charge = chargeDao.findById(CHARGE_ID.toString()).get();
 
         assertThat(charge.get("gateway_transaction_id"), is(gatewayTransactionId));
-        assertThat(charge.get("status"), is(AUTHORISATION_SUBMITTED.getValue()));
+        assertThat(charge.get("status"), is(AUTHORISATION_READY.getValue()));
 
-        assertLoggedEvents(AUTHORISATION_SUBMITTED);
+        assertLoggedEvents(AUTHORISATION_READY);
     }
 
     @Test
