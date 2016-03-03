@@ -8,7 +8,7 @@ import org.glassfish.jersey.client.spi.ConnectorProvider;
 import javax.ws.rs.client.Client;
 import javax.ws.rs.client.ClientBuilder;
 
-public class JerseyClientFactory {
+public class TestClientFactory {
     public static Client createJerseyClient() {
         return createClientWithApacheConnectorAndTimeout(-1);
     }

@@ -14,7 +14,7 @@ import uk.gov.pay.connector.model.domain.GatewayAccount;
 import uk.gov.pay.connector.service.GatewayClient;
 import uk.gov.pay.connector.service.PaymentProvider;
 import uk.gov.pay.connector.service.smartpay.SmartpayPaymentProvider;
-import uk.gov.pay.connector.util.JerseyClientFactory;
+import uk.gov.pay.connector.util.TestClientFactory;
 
 import javax.ws.rs.client.Client;
 import java.io.IOException;
@@ -125,7 +125,7 @@ public class SmartpayPaymentProviderTest {
     }
 
     private PaymentProvider getSmartpayPaymentProvider() throws Exception {
-        Client client = JerseyClientFactory.createJerseyClient();
+        Client client = TestClientFactory.createJerseyClient();
         GatewayClient gatewayClient = createGatewayClient(client, url);
         return new SmartpayPaymentProvider(gatewayClient, new ObjectMapper());
     }
