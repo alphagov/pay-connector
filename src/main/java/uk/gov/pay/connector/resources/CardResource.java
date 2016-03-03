@@ -10,6 +10,7 @@ import uk.gov.pay.connector.model.GatewayResponse;
 import uk.gov.pay.connector.model.domain.Card;
 import uk.gov.pay.connector.service.CardService;
 
+import javax.inject.Inject;
 import javax.ws.rs.*;
 import javax.ws.rs.core.Response;
 
@@ -24,6 +25,7 @@ public class CardResource {
     private final CardService cardService;
     private final Logger logger = LoggerFactory.getLogger(CardResource.class);
 
+    @Inject
     public CardResource(CardService cardService) {
         this.cardService = cardService;
     }

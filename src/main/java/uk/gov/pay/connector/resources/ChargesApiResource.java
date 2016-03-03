@@ -7,6 +7,7 @@ import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.lang3.tuple.Pair;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import uk.gov.pay.connector.app.ConnectorConfiguration;
 import uk.gov.pay.connector.app.LinksConfig;
 import uk.gov.pay.connector.dao.*;
 import uk.gov.pay.connector.dao.IGatewayAccountDao;
@@ -17,6 +18,7 @@ import uk.gov.pay.connector.util.ChargesCSVGenerator;
 import uk.gov.pay.connector.util.ResponseBuilder;
 import uk.gov.pay.connector.util.ResponseUtil;
 
+import javax.inject.Inject;
 import javax.ws.rs.*;
 import javax.ws.rs.core.Context;
 import javax.ws.rs.core.Response;
@@ -73,12 +75,13 @@ public class ChargesApiResource {
     private static final Logger logger = LoggerFactory.getLogger(ChargesApiResource.class);
     private static final DateFormat DATE_FORMAT = new SimpleDateFormat("dd/MM/yyyy HH:mm:ss");
 
-    public ChargesApiResource(IChargeDao chargeDao, ITokenDao tokenDao, IGatewayAccountDao gatewayAccountDao, IEventDao eventDao, LinksConfig linksConfig) {
+    @Inject
+    public ChargesApiResource(IChargeDao chargeDao, ITokenDao tokenDao, IGatewayAccountDao gatewayAccountDao, IEventDao eventDao, ConnectorConfiguration configuration) {
         this.chargeDao = chargeDao;
         this.tokenDao = tokenDao;
         this.gatewayAccountDao = gatewayAccountDao;
         this.eventDao = eventDao;
-        this.linksConfig = linksConfig;
+        this.linksConfig = configuration.getLinks();
     }
 
     @GET

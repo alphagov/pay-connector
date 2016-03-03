@@ -5,6 +5,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import uk.gov.pay.connector.dao.ITokenDao;
 
+import javax.inject.Inject;
 import javax.ws.rs.*;
 import javax.ws.rs.core.Response;
 import java.util.Map;
@@ -20,6 +21,7 @@ public class SecurityTokensResource {
     private final Logger logger = LoggerFactory.getLogger(SecurityTokensResource.class);
     private final ITokenDao tokenDao;
 
+    @Inject
     public SecurityTokensResource(ITokenDao tokenDao) {
         this.tokenDao = tokenDao;
     }

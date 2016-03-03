@@ -8,6 +8,7 @@ import org.slf4j.LoggerFactory;
 import uk.gov.pay.connector.app.ConnectorConfiguration;
 import uk.gov.pay.connector.dao.IGatewayAccountDao;
 
+import javax.inject.Inject;
 import javax.ws.rs.*;
 import javax.ws.rs.core.Context;
 import javax.ws.rs.core.Response;
@@ -42,6 +43,7 @@ public class GatewayAccountResource {
     private final IGatewayAccountDao gatewayDao;
     private final Map<String, List<String>> providerCredentialFields;
 
+    @Inject
     public GatewayAccountResource(IGatewayAccountDao gatewayDao, ConnectorConfiguration conf) {
         this.gatewayDao = gatewayDao;
         providerCredentialFields = newHashMap();

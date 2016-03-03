@@ -8,12 +8,14 @@ import org.glassfish.jersey.apache.connector.ApacheConnectorProvider;
 import org.glassfish.jersey.client.ClientProperties;
 import uk.gov.pay.connector.app.ConnectorConfiguration;
 
+import javax.inject.Inject;
 import javax.ws.rs.client.Client;
 
 public class ClientFactory {
     private final Environment environment;
     private final ConnectorConfiguration conf;
 
+    @Inject
     public ClientFactory(Environment environment, ConnectorConfiguration conf) {
         this.environment = environment;
         this.conf = conf;

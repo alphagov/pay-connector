@@ -3,7 +3,6 @@ package uk.gov.pay.connector.app;
 import com.google.inject.Guice;
 import com.google.inject.Injector;
 import com.google.inject.persist.PersistFilter;
-import com.google.inject.persist.jpa.JpaPersistModule;
 import io.dropwizard.Application;
 import io.dropwizard.auth.AuthDynamicFeature;
 import io.dropwizard.auth.AuthValueFactoryProvider;
@@ -17,18 +16,12 @@ import io.dropwizard.setup.Environment;
 import org.glassfish.jersey.server.filter.RolesAllowedDynamicFeature;
 import uk.gov.pay.connector.auth.BasicAuthUser;
 import uk.gov.pay.connector.auth.SmartpayAuthenticator;
-import uk.gov.pay.connector.dao.*;
 import uk.gov.pay.connector.healthcheck.DatabaseHealthCheck;
 import uk.gov.pay.connector.healthcheck.Ping;
 import uk.gov.pay.connector.resources.*;
-import uk.gov.pay.connector.service.CardService;
-import uk.gov.pay.connector.service.ClientFactory;
-import uk.gov.pay.connector.service.PaymentProviders;
 
-import javax.persistence.EntityManager;
 import javax.servlet.DispatcherType;
 import java.util.EnumSet;
-import java.util.Properties;
 
 public class ConnectorApp extends Application<ConnectorConfiguration> {
 
@@ -49,61 +42,37 @@ public class ConnectorApp extends Application<ConnectorConfiguration> {
     }
 
     @Override
-    public void run(ConnectorConfiguration conf, Environment environment) throws Exception {
+    public void run(ConnectorConfiguration configuration, Environment environment) throws Exception {
 
-        final Injector injector = Guice.createInjector(new ConnectorModule(conf, environment), createJpaModule(conf.getDataSourceFactory()));
+        final Injector injector = Guice.createInjector(new ConnectorModule(configuration, environment));
+
         environment.servlets().addFilter("persistFilter", injector.getInstance(PersistFilter.class))
                 .addMappingForUrlPatterns(EnumSet.of(DispatcherType.REQUEST), true, "/*");
+
         environment.jersey().register(injector.getInstance(GatewayAccountJpaResource.class));
         environment.jersey().register(injector.getInstance(EventsApiJpaResource.class));
-
-        DataSourceFactory dataSourceFactory = conf.getDataSourceFactory();
+        environment.jersey().register(injector.getInstance(SecurityTokensResource.class));
+        environment.jersey().register(injector.getInstance(ChargesApiResource.class));
+        environment.jersey().register(injector.getInstance(ChargesFrontendResource.class));
+        environment.jersey().register(injector.getInstance(NotificationResource.class));
+        environment.jersey().register(injector.getInstance(CardResource.class));
+        environment.jersey().register(injector.getInstance(GatewayAccountResource.class));
+        setupSmartpayBasicAuth(environment, configuration.getSmartpayConfig());
 
         environment.healthChecks().register("ping", new Ping());
-
-        IEventDao eventDao = injector.getInstance(EventJpaDao.class);
-        IChargeDao chargeDao = injector.getInstance(ChargeJpaDao.class);
-        ITokenDao tokenDao = injector.getInstance(TokenJpaDao.class);
-        IGatewayAccountDao gatewayAccountDao = injector.getInstance(GatewayAccountJpaDao.class);
-
-        ClientFactory clientFactory = new ClientFactory(environment, conf);
-
-        PaymentProviders providers = new PaymentProviders(conf, clientFactory, environment.getObjectMapper());
-        CardService cardService = new CardService(gatewayAccountDao, chargeDao, providers);
-
-        environment.jersey().register(new SecurityTokensResource(tokenDao));
-        environment.jersey().register(new NotificationResource(providers, chargeDao, gatewayAccountDao));
-        environment.jersey().register(new ChargesApiResource(chargeDao, tokenDao, gatewayAccountDao, eventDao, conf.getLinks()));
-        environment.jersey().register(new ChargesFrontendResource(chargeDao));
-        environment.jersey().register(new CardResource(cardService));
-        environment.jersey().register(new GatewayAccountResource(gatewayAccountDao, conf));
-
-        environment.jersey().register(RolesAllowedDynamicFeature.class);
-
-        SmartpayAuthenticator smartPayAuth = new SmartpayAuthenticator(conf.getSmartpayConfig().getNotification());
-
-        BasicCredentialAuthFilter<BasicAuthUser> basicCredentialAuthFilter =
-            new BasicCredentialAuthFilter.Builder<BasicAuthUser>()
-                .setAuthenticator(smartPayAuth)
-                .buildAuthFilter();
-
-        environment.jersey().register(new AuthDynamicFeature(basicCredentialAuthFilter));
-        environment.jersey().register(new AuthValueFactoryProvider.Binder<>(BasicAuthUser.class));
-
-        environment.healthChecks().register("database", new DatabaseHealthCheck(injector.getProvider(EntityManager.class), dataSourceFactory.getValidationQuery()));
+        environment.healthChecks().register("database", injector.getInstance(DatabaseHealthCheck.class));
     }
 
-    private JpaPersistModule createJpaModule(final DataSourceFactory dbConfig) {
-        final Properties properties = new Properties();
-        properties.put("javax.persistence.jdbc.driver", dbConfig.getDriverClass());
-        properties.put("javax.persistence.jdbc.url", dbConfig.getUrl());
-        properties.put("javax.persistence.jdbc.user", dbConfig.getUser());
-        properties.put("javax.persistence.jdbc.password", dbConfig.getPassword());
+    private void setupSmartpayBasicAuth(Environment environment, SmartpayCredentialsConfig smartpayConfig) {
+        SmartpayAuthenticator smartpayAuthenticator = new SmartpayAuthenticator(smartpayConfig.getNotification());
+        BasicCredentialAuthFilter<BasicAuthUser> basicCredentialAuthFilter =
+                new BasicCredentialAuthFilter.Builder<BasicAuthUser>()
+                        .setAuthenticator(smartpayAuthenticator)
+                        .buildAuthFilter();
 
-        final JpaPersistModule jpaModule = new JpaPersistModule("ConnectorUnit");
-        jpaModule.properties(properties);
-
-        return jpaModule;
+        environment.jersey().register(RolesAllowedDynamicFeature.class);
+        environment.jersey().register(new AuthDynamicFeature(basicCredentialAuthFilter));
+        environment.jersey().register(new AuthValueFactoryProvider.Binder<>(BasicAuthUser.class));
     }
 
     public static void main(String[] args) throws Exception {

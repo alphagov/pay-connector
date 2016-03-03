@@ -7,6 +7,8 @@ import uk.gov.pay.connector.service.sandbox.SandboxPaymentProvider;
 import uk.gov.pay.connector.service.smartpay.SmartpayPaymentProvider;
 import uk.gov.pay.connector.service.worldpay.WorldpayPaymentProvider;
 
+import javax.inject.Inject;
+
 import static java.lang.String.format;
 import static uk.gov.pay.connector.resources.PaymentProviderValidator.*;
 import static uk.gov.pay.connector.service.GatewayClient.createGatewayClient;
@@ -23,6 +25,7 @@ public class PaymentProviders {
     private final PaymentProvider smartpayProvider;
     private final PaymentProvider sandboxProvider;
 
+    @Inject
     public PaymentProviders(ConnectorConfiguration config, ClientFactory clientFactory, ObjectMapper objectMapper) {
         this.worldpayProvider = createWorldpayProvider(clientFactory, config.getWorldpayConfig());
         this.smartpayProvider = createSmartPayProvider(clientFactory, config.getSmartpayConfig(), objectMapper);

@@ -1,9 +1,7 @@
 package uk.gov.pay.connector.resources;
 
-import io.dropwizard.auth.Auth;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import uk.gov.pay.connector.auth.BasicAuthUser;
 import uk.gov.pay.connector.dao.IChargeDao;
 import uk.gov.pay.connector.dao.IGatewayAccountDao;
 import uk.gov.pay.connector.dao.PayDBIException;
@@ -16,6 +14,7 @@ import uk.gov.pay.connector.service.PaymentProviders;
 import uk.gov.pay.connector.util.NotificationUtil;
 
 import javax.annotation.security.PermitAll;
+import javax.inject.Inject;
 import javax.ws.rs.POST;
 import javax.ws.rs.Path;
 import javax.ws.rs.PathParam;
@@ -36,6 +35,7 @@ public class NotificationResource {
     private IGatewayAccountDao accountDao;
     private NotificationUtil notificationUtil = new NotificationUtil(new ChargeStatusBlacklist());
 
+    @Inject
     public NotificationResource(PaymentProviders providers, IChargeDao chargeDao, IGatewayAccountDao accountDao) {
         this.providers = providers;
         this.chargeDao = chargeDao;
