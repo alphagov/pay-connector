@@ -2,8 +2,7 @@ package uk.gov.pay.connector.resources;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import uk.gov.pay.connector.dao.IChargeDao;
-import uk.gov.pay.connector.dao.IGatewayAccountDao;
+import uk.gov.pay.connector.dao.ChargeJpaDao;
 import uk.gov.pay.connector.dao.PayDBIException;
 import uk.gov.pay.connector.model.StatusUpdates;
 import uk.gov.pay.connector.model.domain.ChargeStatus;
@@ -31,15 +30,13 @@ public class NotificationResource {
 
     private static final Logger logger = LoggerFactory.getLogger(NotificationResource.class);
     private PaymentProviders providers;
-    private IChargeDao chargeDao;
-    private IGatewayAccountDao accountDao;
+    private ChargeJpaDao chargeDao;
     private NotificationUtil notificationUtil = new NotificationUtil(new ChargeStatusBlacklist());
 
     @Inject
-    public NotificationResource(PaymentProviders providers, IChargeDao chargeDao, IGatewayAccountDao accountDao) {
+    public NotificationResource(PaymentProviders providers, ChargeJpaDao chargeDao) {
         this.providers = providers;
         this.chargeDao = chargeDao;
-        this.accountDao = accountDao;
     }
 
     @POST
@@ -70,24 +67,18 @@ public class NotificationResource {
                 statusUpdates.getStatusUpdates().forEach(update -> updateCharge(chargeDao, provider, update.getKey(), update.getValue()));
     }
 
-
     private Function<String, Optional<GatewayAccount>> findAccountByTransactionId(String provider) {
-        return transactionId -> {
-            Optional<String> accountId = chargeDao.findAccountByTransactionId(provider, transactionId);
-
-            if (accountId.isPresent()) {
-                Optional<GatewayAccount> gatewayAccount = accountDao.findById(accountId.get());
-
-                if (gatewayAccount.isPresent())
-                    return gatewayAccount;
-            }
-
-            logger.error("Could not find account for transaction id " + transactionId);
-            return Optional.empty();
-        };
+        return transactionId ->
+                chargeDao.findByProviderAndTransactionId(provider, transactionId)
+                        .map((chargeEntity) ->
+                                Optional.of(GatewayAccount.valueOf(chargeEntity.getGatewayAccount())))
+                        .orElseGet(() -> {
+                            logger.error("Could not find account for transaction id " + transactionId);
+                            return Optional.empty();
+                        });
     }
 
-    private static void updateCharge(IChargeDao chargeDao, String provider, String transactionId, ChargeStatus value) {
+    private static void updateCharge(ChargeJpaDao chargeDao, String provider, String transactionId, ChargeStatus value) {
         try {
             chargeDao.updateStatusWithGatewayInfo(provider, transactionId, value);
         } catch (PayDBIException e) {

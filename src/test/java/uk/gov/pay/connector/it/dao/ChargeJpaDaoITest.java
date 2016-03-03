@@ -12,16 +12,23 @@ import org.junit.Before;
 import org.junit.Rule;
 import org.junit.Test;
 import org.junit.rules.ExpectedException;
-import uk.gov.pay.connector.dao.*;
+import uk.gov.pay.connector.dao.ChargeJpaDao;
+import uk.gov.pay.connector.dao.ChargeSearchQuery;
+import uk.gov.pay.connector.dao.EventJpaDao;
+import uk.gov.pay.connector.dao.PayDBIException;
 import uk.gov.pay.connector.model.api.ExternalChargeStatus;
 import uk.gov.pay.connector.model.domain.ChargeEntity;
 import uk.gov.pay.connector.model.domain.ChargeEvent;
 import uk.gov.pay.connector.model.domain.ChargeStatus;
+import uk.gov.pay.connector.model.domain.GatewayAccountEntity;
 import uk.gov.pay.connector.rules.DropwizardAppWithPostgresRule;
+import uk.gov.pay.connector.util.DatabaseTestHelper;
 import uk.gov.pay.connector.util.DateTimeUtils;
 
 import java.time.LocalDateTime;
+import java.time.ZoneId;
 import java.time.ZonedDateTime;
+import java.time.format.DateTimeFormatter;
 import java.time.temporal.ChronoUnit;
 import java.util.*;
 
@@ -59,6 +66,7 @@ public class ChargeJpaDaoITest {
     private ChargeJpaDao chargeDao;
     private EventJpaDao eventDao;
     public GuicedTestEnvironment env;
+    private DatabaseTestHelper databaseTestHelper;
 
     @Before
     public void setUp() throws Exception {
@@ -68,8 +76,10 @@ public class ChargeJpaDaoITest {
         chargeDao = env.getInstance(ChargeJpaDao.class);
         eventDao = env.getInstance(EventJpaDao.class);
 
-        app.getDatabaseTestHelper().addGatewayAccount(GATEWAY_ACCOUNT_ID.toString(), PAYMENT_PROVIDER);
-        app.getDatabaseTestHelper().addCharge(String.valueOf(CHARGE_ID), String.valueOf(GATEWAY_ACCOUNT_ID), AMOUNT, CREATED, RETURN_URL, "", REFERENCE, ZonedDateTime.now());
+        databaseTestHelper = app.getDatabaseTestHelper();
+
+        databaseTestHelper.addGatewayAccount(GATEWAY_ACCOUNT_ID.toString(), PAYMENT_PROVIDER);
+        databaseTestHelper.addCharge(String.valueOf(CHARGE_ID), String.valueOf(GATEWAY_ACCOUNT_ID), AMOUNT, CREATED, RETURN_URL, "", REFERENCE, ZonedDateTime.now());
     }
 
     @After
@@ -128,7 +138,7 @@ public class ChargeJpaDaoITest {
         // given
         String paymentReference = "Council Tax Payment reference 2";
         Long chargeId = System.currentTimeMillis();
-        app.getDatabaseTestHelper().addCharge(chargeId.toString(), GATEWAY_ACCOUNT_ID.toString(), AMOUNT, CREATED, RETURN_URL, UUID.randomUUID().toString(), paymentReference, ZonedDateTime.now());
+        databaseTestHelper.addCharge(chargeId.toString(), GATEWAY_ACCOUNT_ID.toString(), AMOUNT, CREATED, RETURN_URL, UUID.randomUUID().toString(), paymentReference, ZonedDateTime.now());
 
         ChargeSearchQuery queryBuilder = new ChargeSearchQuery(GATEWAY_ACCOUNT_ID)
                 .withReferenceLike("reference");
@@ -228,7 +238,7 @@ public class ChargeJpaDaoITest {
 
         // given
         Long chargeId = System.currentTimeMillis();
-        app.getDatabaseTestHelper().addCharge(chargeId.toString(), GATEWAY_ACCOUNT_ID.toString(), AMOUNT, ENTERING_CARD_DETAILS, RETURN_URL, UUID.randomUUID().toString(), REFERENCE, ZonedDateTime.now());
+        databaseTestHelper.addCharge(chargeId.toString(), GATEWAY_ACCOUNT_ID.toString(), AMOUNT, ENTERING_CARD_DETAILS, RETURN_URL, UUID.randomUUID().toString(), REFERENCE, ZonedDateTime.now());
 
         ChargeSearchQuery queryBuilder = new ChargeSearchQuery(GATEWAY_ACCOUNT_ID)
                 .withReferenceLike(REFERENCE)
@@ -299,7 +309,7 @@ public class ChargeJpaDaoITest {
 
         // given
         Long id = System.currentTimeMillis();
-        app.getDatabaseTestHelper().addCharge(id.toString(),
+        databaseTestHelper.addCharge(id.toString(),
                 GATEWAY_ACCOUNT_ID.toString(), AMOUNT, CREATED, RETURN_URL, UUID.randomUUID().toString(), REFERENCE, ZonedDateTime.now());
 
         // when
@@ -402,7 +412,7 @@ public class ChargeJpaDaoITest {
         Long id = System.currentTimeMillis();
         String transactionId = UUID.randomUUID().toString();
 
-        app.getDatabaseTestHelper().addCharge(id.toString(),
+        databaseTestHelper.addCharge(id.toString(),
                 GATEWAY_ACCOUNT_ID.toString(), AMOUNT, CREATED, RETURN_URL, transactionId, "Whatever Payment", ZonedDateTime.now());
 
         Optional<String> account = chargeDao.findAccountByTransactionId(PAYMENT_PROVIDER, transactionId);
@@ -449,7 +459,7 @@ public class ChargeJpaDaoITest {
     public void searchChargesByPartialReferenceOnly_old() throws Exception {
 
         Long id = System.currentTimeMillis();
-        app.getDatabaseTestHelper().addCharge(id.toString(),
+        databaseTestHelper.addCharge(id.toString(),
                 GATEWAY_ACCOUNT_ID.toString(), AMOUNT, CREATED, RETURN_URL, UUID.randomUUID().toString(), COUNCIL_TAX_PAYMENT_REFERENCE, ZonedDateTime.now());
 
         List<Map<String, Object>> charges = chargeDao.findAllBy(GATEWAY_ACCOUNT_ID.toString(), "reference", null, null, null);
@@ -649,5 +659,51 @@ public class ChargeJpaDaoITest {
         Optional<Map<String, Object>> charge = chargeDao.findById("5686541");
 
         assertThat(charge.isPresent(), is(false));
+    }
+
+    @Test
+    public void shouldFindChargeEntityByProviderAndTransactionId() {
+
+        // given
+        String transactionId = "7826782163";
+        ZonedDateTime createdDate = ZonedDateTime.now(ZoneId.of("UTC"));
+        Long chargeId = 9999L;
+
+        databaseTestHelper.addCharge(String.valueOf(chargeId), String.valueOf(GATEWAY_ACCOUNT_ID), AMOUNT, CREATED, RETURN_URL, transactionId, REFERENCE, createdDate);
+
+        // when
+        Optional<ChargeEntity> chargeOptional = chargeDao.findByProviderAndTransactionId(PAYMENT_PROVIDER, transactionId);
+
+        // then
+        assertThat(chargeOptional.isPresent(), is(true));
+
+        ChargeEntity charge = chargeOptional.get();
+        assertThat(charge.getId(), is(chargeId));
+        assertThat(charge.getGatewayTransactionId(), is(transactionId));
+        assertThat(charge.getReturnUrl(), is(RETURN_URL));
+        assertThat(charge.getStatus(), is(CREATED.getValue()));
+        assertThat(charge.getDescription(), is(DESCRIPTION));
+        assertThat(charge.getCreatedDate(), is(createdDate));
+        assertThat(charge.getReference(), is(REFERENCE));
+        assertThat(charge.getGatewayAccount(), is(notNullValue()));
+    }
+
+    @Test
+    public void shouldGetGatewayAccountWhenFindingChargeEntityByProviderAndTransactionId() {
+
+        String transactionId = "7826782163";
+        ZonedDateTime createdDate = ZonedDateTime.now();
+        databaseTestHelper.addCharge(String.valueOf(8888L), String.valueOf(GATEWAY_ACCOUNT_ID), AMOUNT, CREATED, RETURN_URL, transactionId, REFERENCE, createdDate);
+
+        Optional<ChargeEntity> chargeOptional = chargeDao.findByProviderAndTransactionId(PAYMENT_PROVIDER, transactionId);
+
+        assertThat(chargeOptional.isPresent(), is(true));
+
+        ChargeEntity charge = chargeOptional.get();
+        GatewayAccountEntity gatewayAccount = charge.getGatewayAccount();
+        assertThat(gatewayAccount, is(notNullValue()));
+        assertThat(gatewayAccount.getId(), is(GATEWAY_ACCOUNT_ID));
+        assertThat(gatewayAccount.getGatewayName(), is(PAYMENT_PROVIDER));
+        assertThat(gatewayAccount.getCredentials(), is(Collections.EMPTY_MAP));
     }
 }

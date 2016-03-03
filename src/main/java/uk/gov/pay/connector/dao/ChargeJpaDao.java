@@ -40,6 +40,7 @@ public class ChargeJpaDao extends JpaDao<ChargeEntity> implements IChargeDao {
         this.gatewayAccountDao = gatewayAccountDao;
     }
 
+    //TODO Remove this method in favour of findByProviderAndTransactionId
     private Optional<ChargeEntity> findByGatewayTransactionIdAndProvider(String transactionId, String paymentProvider) {
         TypedQuery<ChargeEntity> query = entityManager.get()
                 .createQuery("select c from ChargeEntity c where c.gatewayTransactionId = :gatewayTransactionId and c.gatewayAccount.gatewayName = :paymentProvider", ChargeEntity.class);
@@ -195,6 +196,18 @@ public class ChargeJpaDao extends JpaDao<ChargeEntity> implements IChargeDao {
         }
 
         return Optional.ofNullable(account);
+    }
+
+    public Optional<ChargeEntity> findByProviderAndTransactionId(String provider, String transactionId) {
+
+        String query = "SELECT c FROM ChargeEntity c " +
+                "WHERE c.gatewayTransactionId = :gatewayTransactionId " +
+                "AND c.gatewayAccount.gatewayName = :provider";
+
+        return entityManager.get()
+                .createQuery(query, ChargeEntity.class)
+                .setParameter("gatewayTransactionId", transactionId)
+                .setParameter("provider", provider).getResultList().stream().findFirst();
     }
 
     private Map<String, Object> buildChargeMap(ChargeEntity chargeEntity) {

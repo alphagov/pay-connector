@@ -4,8 +4,8 @@ import com.google.common.collect.ImmutableList;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import uk.gov.pay.connector.dao.IChargeDao;
+import uk.gov.pay.connector.model.domain.ChargeEntity;
 import uk.gov.pay.connector.model.domain.ChargeStatus;
-import uk.gov.pay.connector.util.ResponseBuilder;
 
 import javax.inject.Inject;
 import javax.ws.rs.*;
@@ -21,9 +21,9 @@ import static com.google.common.collect.Lists.newArrayList;
 import static javax.ws.rs.HttpMethod.GET;
 import static javax.ws.rs.HttpMethod.POST;
 import static javax.ws.rs.core.MediaType.APPLICATION_JSON;
-import static javax.ws.rs.core.Response.ok;
 import static uk.gov.pay.connector.model.domain.ChargeStatus.*;
 import static uk.gov.pay.connector.resources.ApiPaths.*;
+import static uk.gov.pay.connector.resources.ChargeResponse.Builder.aChargeResponse;
 import static uk.gov.pay.connector.util.ResponseUtil.*;
 
 @Path("/")
@@ -42,10 +42,12 @@ public class ChargesFrontendResource {
     @Path(CHARGE_FRONTEND_PATH)
     @Produces(APPLICATION_JSON)
     public Response getCharge(@PathParam("chargeId") String chargeId, @Context UriInfo uriInfo) {
-        Optional<Map<String, Object>> maybeCharge = chargeDao.findById(chargeId);
+
+        Optional<ChargeEntity> maybeCharge = chargeDao.findById(Long.valueOf(chargeId));
         logger.debug("charge from DB: " + maybeCharge);
+
         return maybeCharge
-                .map(charge -> buildOkResponse(chargeId, uriInfo, charge))
+                .map(charge -> Response.ok(buildChargeResponse(chargeId, uriInfo, charge)).build())
                 .orElseGet(() -> responseWithChargeNotFound(logger, chargeId));
     }
 
@@ -85,21 +87,23 @@ public class ChargesFrontendResource {
         return newChargeStatus.equals(ENTERING_CARD_DETAILS);
     }
 
-    private Response buildOkResponse(@PathParam("chargeId") String chargeId, @Context UriInfo uriInfo, Map<String, Object> charge) {
-        Map<String, Object> responseData = new ResponseBuilder()
-                .withCharge(charge)
-                .withoutChargeField("gateway_account_id")
-                .withoutChargeField("reference")
+    private ChargeResponse buildChargeResponse(String chargeId, UriInfo uriInfo, ChargeEntity charge) {
+        return aChargeResponse()
+                .withChargeId(String.valueOf(charge.getId()))
+                .withAmount(charge.getAmount())
+                .withDescription(charge.getDescription())
+                .withStatus(charge.getStatus())
+                .withGatewayTransactionId(charge.getGatewayTransactionId())
+                .withCreatedDate(charge.getCreatedDate())
+                .withReturnUrl(charge.getReturnUrl())
                 .withLink("self", GET, locationUriFor(CHARGE_FRONTEND_PATH, uriInfo, chargeId))
                 .withLink("cardAuth", POST, locationUriFor(FRONTEND_AUTHORIZATION_RESOURCE, uriInfo, chargeId))
-                .withLink("cardCapture", POST, locationUriFor(FRONTEND_CAPTURE_RESOURCE, uriInfo, chargeId))
-                .build();
-
-        return ok(responseData).build();
+                .withLink("cardCapture", POST, locationUriFor(FRONTEND_CAPTURE_RESOURCE, uriInfo, chargeId)).build();
     }
 
     private URI locationUriFor(String path, UriInfo uriInfo, String chargeId) {
         return uriInfo.getBaseUriBuilder()
-                .path(path).build(chargeId);
+                .path(path)
+                .build(chargeId);
     }
 }
