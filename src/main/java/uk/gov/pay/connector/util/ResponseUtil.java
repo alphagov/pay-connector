@@ -3,6 +3,7 @@ package uk.gov.pay.connector.util;
 import com.google.common.base.Joiner;
 import com.google.common.collect.ImmutableMap;
 import org.slf4j.Logger;
+import uk.gov.pay.connector.resources.ChargeResponse;
 
 import javax.ws.rs.core.Response;
 import java.net.URI;
@@ -61,13 +62,5 @@ public class ResponseUtil {
 
     private static Response responseWithEntity(Status status, Object entity) {
         return status(status).entity(entity).build();
-    }
-
-    public static Response entityCreatedResponse(URI selfUri, Map<String, Object> responseData) {
-        return created(selfUri).entity(responseData).build();
-    }
-
-    public static Response entityResponse(Map<String, Object> responseData) {
-        return ok(responseData).build();
     }
 }

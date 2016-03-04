@@ -14,6 +14,7 @@ import uk.gov.pay.connector.util.RestAssuredClient;
 import javax.ws.rs.core.HttpHeaders;
 import javax.ws.rs.core.MediaType;
 import javax.ws.rs.core.Response.Status;
+import java.time.ZoneId;
 import java.time.ZonedDateTime;
 import java.time.temporal.ChronoUnit;
 import java.util.List;
@@ -32,7 +33,6 @@ import static org.exparity.hamcrest.date.ZonedDateTimeMatchers.within;
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.*;
 import static uk.gov.pay.connector.model.api.ExternalChargeStatus.*;
-import static uk.gov.pay.connector.model.api.ExternalChargeStatus.EXT_IN_PROGRESS;
 import static uk.gov.pay.connector.model.domain.ChargeStatus.*;
 import static uk.gov.pay.connector.model.domain.ChargeStatus.CREATED;
 import static uk.gov.pay.connector.resources.ApiPaths.CHARGE_API_PATH;
@@ -136,7 +136,8 @@ public class ChargesResourceITest {
     public void shouldGetChargeTransactionsForCSVAcceptHeader() throws Exception {
         String chargeId = ((Integer) RandomUtils.nextInt(99999999)).toString();
         ChargeStatus chargeStatus = AUTHORISATION_SUCCESS;
-        app.getDatabaseTestHelper().addCharge(chargeId, accountId, AMOUNT, chargeStatus, returnUrl, null);
+        ZonedDateTime createdDate = ZonedDateTime.now(ZoneId.of("UTC"));
+        app.getDatabaseTestHelper().addCharge(chargeId, accountId, AMOUNT, chargeStatus, returnUrl, null, "My reference", createdDate);
         app.getDatabaseTestHelper().addToken(chargeId, "tokenId");
         app.getDatabaseTestHelper().addEvent(Long.valueOf(chargeId), chargeStatus.getValue());
 
@@ -146,9 +147,8 @@ public class ChargesResourceITest {
                 .getTransactions()
                 .statusCode(OK.getStatusCode())
                 .contentType(CSV_CONTENT_TYPE)
-                .body(containsString(
-                        "Service Payment Reference,Amount,Status,Gateway Transaction ID,GOV.UK Pay ID,Date Created\n" +
-                                "Test reference,62.34,IN PROGRESS,," + chargeId));
+                .body(is("Service Payment Reference,Amount,Status,Gateway Transaction ID,GOV.UK Pay ID,Date Created\n" +
+                        "My reference,62.34,IN PROGRESS,," + chargeId + "," + DateTimeUtils.toUTCDateString(createdDate) + "\n"));
     }
 
     @Test

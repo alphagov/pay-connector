@@ -71,6 +71,30 @@ public class TokenDaoJpaITest {
     }
 
     @Test
+    public void shouldFindTokenByChargeId() {
+
+        Long chargeId = 101012L;
+        String tokenId = "tokenBB2";
+        databaseTestHelper.addToken(String.valueOf(chargeId), tokenId);
+
+        Optional<TokenEntity> tokenOptional = tokenDao.findTokenByChargeId(chargeId);
+
+        assertThat(tokenOptional.isPresent(), is(true));
+
+        TokenEntity token = tokenOptional.get();
+
+        assertThat(token.getId(), is(notNullValue()));
+        assertThat(token.getToken(), is(tokenId));
+        assertThat(token.getChargeId(), is(chargeId));
+    }
+
+    @Test
+    public void shouldNotFindTokenByChargeId() {
+        Long noExistingChargeId = 9876512L;
+        assertThat(tokenDao.findTokenByChargeId(noExistingChargeId).isPresent(), is(false));
+    }
+
+    @Test
     public void shouldFindChargeByTokenId() {
 
         String chargeId = "11112";

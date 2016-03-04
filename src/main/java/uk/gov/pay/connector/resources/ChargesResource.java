@@ -9,13 +9,13 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import uk.gov.pay.connector.app.ConnectorConfiguration;
 import uk.gov.pay.connector.app.LinksConfig;
-import uk.gov.pay.connector.dao.IChargeDao;
-import uk.gov.pay.connector.dao.IGatewayAccountDao;
-import uk.gov.pay.connector.dao.ITokenDao;
+import uk.gov.pay.connector.dao.*;
 import uk.gov.pay.connector.model.api.ExternalChargeStatus;
+import uk.gov.pay.connector.model.domain.ChargeEntity;
+import uk.gov.pay.connector.model.domain.ChargeEventEntity;
+import uk.gov.pay.connector.model.domain.TokenEntity;
+import uk.gov.pay.connector.resources.ChargeResponse.Builder;
 import uk.gov.pay.connector.util.ChargesCSVGenerator;
-import uk.gov.pay.connector.util.ResponseBuilder;
-import uk.gov.pay.connector.util.ResponseUtil;
 
 import javax.inject.Inject;
 import javax.ws.rs.*;
@@ -24,25 +24,24 @@ import javax.ws.rs.core.Response;
 import javax.ws.rs.core.UriInfo;
 import java.net.URI;
 import java.net.URISyntaxException;
-import java.time.ZonedDateTime;
 import java.util.*;
 import java.util.function.Function;
 import java.util.stream.Collectors;
 
-import static com.google.common.collect.Maps.newHashMap;
 import static fj.data.Either.reduce;
 import static java.lang.String.format;
 import static javax.ws.rs.HttpMethod.GET;
 import static javax.ws.rs.core.MediaType.APPLICATION_JSON;
 import static javax.ws.rs.core.Response.Status.BAD_REQUEST;
+import static javax.ws.rs.core.Response.created;
 import static javax.ws.rs.core.Response.ok;
-import static org.apache.commons.lang3.StringUtils.isEmpty;
 import static uk.gov.pay.connector.model.api.ExternalChargeStatus.mapFromStatus;
 import static uk.gov.pay.connector.model.api.ExternalChargeStatus.valueOfExternalStatus;
+import static uk.gov.pay.connector.model.domain.ChargeStatus.CREATED;
 import static uk.gov.pay.connector.resources.ApiPaths.CHARGES_API_PATH;
 import static uk.gov.pay.connector.resources.ApiPaths.CHARGE_API_PATH;
 import static uk.gov.pay.connector.resources.ApiValidators.validateGatewayAccountReference;
-import static uk.gov.pay.connector.util.DateTimeUtils.toUTCDateString;
+import static uk.gov.pay.connector.resources.ChargeResponse.Builder.aChargeResponse;
 import static uk.gov.pay.connector.util.ResponseUtil.*;
 
 @Path("/")
@@ -58,23 +57,24 @@ public class ChargesResource {
     );
 
     private static final String STATUS_KEY = "status";
-    public static final String CREATED_DATE = "created_date";
     public static final String FROM_DATE_KEY = "from_date";
     public static final String TO_DATE_KEY = "to_date";
     private final String TEXT_CSV = "text/csv";
 
-    private IChargeDao chargeDao;
-    private ITokenDao tokenDao;
-    private IGatewayAccountDao gatewayAccountDao;
+    private ChargeJpaDao chargeDao;
+    private TokenJpaDao tokenDao;
+    private GatewayAccountJpaDao gatewayAccountDao;
+    private EventJpaDao eventDao;
     private LinksConfig linksConfig;
 
     private static final Logger logger = LoggerFactory.getLogger(ChargesResource.class);
 
     @Inject
-    public ChargesResource(IChargeDao chargeDao, ITokenDao tokenDao, IGatewayAccountDao gatewayAccountDao, ConnectorConfiguration configuration) {
+    public ChargesResource(ChargeJpaDao chargeDao, TokenJpaDao tokenDao, GatewayAccountJpaDao gatewayAccountDao, EventJpaDao eventDao, ConnectorConfiguration configuration) {
         this.chargeDao = chargeDao;
         this.tokenDao = tokenDao;
         this.gatewayAccountDao = gatewayAccountDao;
+        this.eventDao = eventDao;
         this.linksConfig = configuration.getLinks();
     }
 
@@ -82,18 +82,12 @@ public class ChargesResource {
     @Path(CHARGE_API_PATH)
     @Produces(APPLICATION_JSON)
     public Response getCharge(@PathParam("accountId") String accountId, @PathParam("chargeId") String chargeId, @Context UriInfo uriInfo) {
-        Optional<Map<String, Object>> maybeCharge = chargeDao.findChargeForAccount(chargeId, accountId);
-
-        return maybeCharge
+        return chargeDao.findChargeForAccount(Long.valueOf(chargeId), accountId)
                 .map(charge -> {
-                    URI selfUri = selfUriFor(uriInfo, accountId, chargeId);
-                    String tokenId = tokenDao.findByChargeId(chargeId);
-                    Map<String, Object> responseData = getResponseData(chargeId, tokenId, charge, selfUri);
-
-                    return ResponseUtil.entityResponse(responseData);
+                    Optional<TokenEntity> token = tokenDao.findTokenByChargeId(Long.valueOf(chargeId));
+                    return Response.ok(buildChargeResponse(uriInfo, charge, token)).build();
                 })
                 .orElseGet(() -> responseWithChargeNotFound(logger, chargeId));
-
     }
 
     @GET
@@ -153,47 +147,51 @@ public class ChargesResource {
             return fieldsInvalidSizeResponse(logger, invalidSizeFields.get());
         }
 
-        if (gatewayAccountDao.idIsMissing(accountId)) {
-            return notFoundResponse(logger, "Unknown gateway account: " + accountId);
-        }
+        return gatewayAccountDao.findById(Long.valueOf(accountId)).map(
+                gatewayAccountEntity -> {
+                    logger.info("Creating new charge of {}.", chargeRequest);
+                    ChargeEntity chargeEntity =
+                            new ChargeEntity(new Long(chargeRequest.get("amount").toString()),
+                                    CREATED.getValue(),
+                                    null,
+                                    chargeRequest.get("return_url").toString(),
+                                    chargeRequest.get("description").toString(),
+                                    chargeRequest.get("reference").toString(),
+                                    gatewayAccountEntity);
+                    chargeDao.persist(chargeEntity);
+                    eventDao.persist(ChargeEventEntity.from(chargeEntity, CREATED, chargeEntity.getCreatedDate().toLocalDateTime()));
+                    TokenEntity token = new TokenEntity(chargeEntity.getId(), UUID.randomUUID().toString());
+                    tokenDao.persist(token);
+                    URI selfUri = selfUriFor(uriInfo, accountId, chargeEntity.getId().toString());
 
-        logger.info("Creating new charge of {}.", chargeRequest);
-        String chargeId = chargeDao.saveNewCharge(accountId, chargeRequest);
-        String tokenId = UUID.randomUUID().toString();
-        tokenDao.insertNewToken(chargeId, tokenId);
+                    ChargeResponse response = buildChargeResponse(uriInfo, chargeEntity, Optional.of(token));
 
-        Optional<Map<String, Object>> maybeCharge = chargeDao.findById(chargeId);
+                    logger.info("charge = {}", chargeEntity);
+                    logger.info("responseData = {}", response);
 
-        return maybeCharge
-                .map(charge -> {
-                    URI selfUri = selfUriFor(uriInfo, accountId, chargeId);
-                    Map<String, Object> responseData = getResponseData(chargeId, tokenId, charge, selfUri);
-
-                    logger.info("charge = {}", charge);
-                    logger.info("responseData = {}", responseData);
-
-                    return entityCreatedResponse(selfUri, responseData);
+                    return created(selfUri).entity(response).build();
                 })
-                .orElseGet(() -> responseWithChargeNotFound(logger, chargeId));
+                .orElse(notFoundResponse(logger, "Unknown gateway account: " + accountId));
     }
 
-    private Map<String, Object> getResponseData(String chargeId, String tokenId, Map<String, Object> charge, URI selfUri) {
-        ResponseBuilder responseBuilder = new ResponseBuilder()
-                .withCharge(convertStatusToExternalStatus(newHashMap(charge)))
-                .withLink("self", GET, selfUri);
-
-        if (!isEmpty(tokenId)) {
-            URI nextUrl = secureRedirectUriFor(chargeId, tokenId);
+    private ChargeResponse buildChargeResponse(UriInfo uriInfo, ChargeEntity charge, Optional<TokenEntity> token) {
+        String chargeId = String.valueOf(charge.getId());
+        Builder responseBuilder = aChargeResponse()
+                .withChargeId(chargeId)
+                .withAmount(charge.getAmount())
+                .withReference(charge.getReference())
+                .withDescription(charge.getDescription())
+                .withStatus(mapFromStatus(charge.getStatus()).getValue())
+                .withGatewayTransactionId(charge.getGatewayTransactionId())
+                .withProviderName(charge.getGatewayAccount().getGatewayName())
+                .withCreatedDate(charge.getCreatedDate())
+                .withReturnUrl(charge.getReturnUrl())
+                .withLink("self", GET, selfUriFor(uriInfo, charge.getGatewayAccount().getId().toString(), chargeId));
+        token.ifPresent(tokenEntity -> {
+            URI nextUrl = secureRedirectUriFor(chargeId, tokenEntity.getToken());
             responseBuilder.withLink("next_url", GET, nextUrl);
-        }
-
+        });
         return responseBuilder.build();
-    }
-
-    private Map<String, Object> convertStatusToExternalStatus(Map<String, Object> data) {
-        ExternalChargeStatus externalState = mapFromStatus(data.get(STATUS_KEY).toString());
-        data.put(STATUS_KEY, externalState.getValue());
-        return data;
     }
 
     private URI selfUriFor(UriInfo uriInfo, String accountId, String chargeId) {
@@ -240,39 +238,53 @@ public class ChargesResource {
         return value.length() <= fieldSize;
     }
 
-    private F<Boolean, Response> listChargesResponse(final String accountId, String reference, String status, String fromDate, String toDate, Function<Object, Response> buildResponseFunction) {
+    private F<Boolean, Response> listChargesResponse(final String accountId, String reference, String status, String fromDate, String toDate, Function<List<ChargeEntity>, Response> responseFunction) {
         return success -> {
-            List<Map<String, Object>> charges = getChargesForCriteria(accountId, reference, status, fromDate, toDate);
+
+            List<ChargeEntity> charges = getChargesForCriteriaJpa(accountId, reference, status, fromDate, toDate);
 
             if (charges.isEmpty()) {
                 logger.info("no charges found for given filter");
-                return gatewayAccountDao.findById(accountId)
-                        .map(x -> buildResponseFunction.apply(charges))
-                        .orElseGet(() -> notFoundResponse(logger, format("account with id %s not found", accountId)));
+                if (!gatewayAccountDao.findById(Long.valueOf(accountId)).isPresent()) {
+                    return notFoundResponse(logger, format("account with id %s not found", accountId));
+                }
             }
-            return buildResponseFunction.apply(charges);
+
+            return responseFunction.apply(charges);
         };
     }
 
-    private Function<Object, Response> jsonResponse() {
-        return charges -> ok(ImmutableMap.of("results", charges)).build();
+    private Function<List<ChargeEntity>, Response> jsonResponse() {
+        return charges -> ok(ImmutableMap.of("results", charges.stream()
+                .map(charge -> aChargeResponse()
+                        .withChargeId(String.valueOf(charge.getId()))
+                        .withAmount(charge.getAmount())
+                        .withReference(charge.getReference())
+                        .withDescription(charge.getDescription())
+                        .withStatus(mapFromStatus(charge.getStatus()).getValue())
+                        .withGatewayTransactionId(charge.getGatewayTransactionId())
+                        .withCreatedDate(charge.getCreatedDate())
+                        .withReturnUrl(charge.getReturnUrl()).build())
+                .collect(Collectors.toList()))).build();
     }
 
-    private Function<Object, Response> csvResponse() {
-        return charges -> ok(ChargesCSVGenerator.generate((List<Map<String, Object>>) charges)).build();
+    private Function<List<ChargeEntity>, Response> csvResponse() {
+        return charges -> ok(ChargesCSVGenerator.generate(charges)).build();
     }
 
-    private List<Map<String, Object>> getChargesForCriteria(String accountId, String reference, String status, String fromDate, String toDate) {
+    private List<ChargeEntity> getChargesForCriteriaJpa(String accountId, String reference, String status, String fromDate, String toDate) {
         ExternalChargeStatus chargeStatus = null;
         if (StringUtils.isNotBlank(status)) {
             chargeStatus = valueOfExternalStatus(status);
         }
-        List<Map<String, Object>> charges = chargeDao.findAllBy(accountId, reference, chargeStatus, fromDate, toDate);
-        charges.forEach(charge -> {
-            charge.put(STATUS_KEY, mapFromStatus(charge.get(STATUS_KEY).toString()).getValue());
-            charge.put(CREATED_DATE, toUTCDateString((ZonedDateTime) charge.get(CREATED_DATE)));
-        });
-        return charges;
+
+        ChargeSearchQuery searchQuery = new ChargeSearchQuery(new Long(accountId));
+        searchQuery.withReferenceLike(reference);
+        searchQuery.withExternalStatus(chargeStatus);
+        searchQuery.withCreatedDateFrom(fromDate);
+        searchQuery.withCreatedDateTo(toDate);
+
+        return chargeDao.findAllBy(searchQuery);
     }
 
     private static F<String, Response> handleError =

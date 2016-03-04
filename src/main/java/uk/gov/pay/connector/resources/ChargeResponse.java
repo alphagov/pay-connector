@@ -1,7 +1,9 @@
 package uk.gov.pay.connector.resources;
 
+import com.fasterxml.jackson.annotation.JsonInclude;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import com.google.common.collect.ImmutableMap;
+import uk.gov.pay.connector.util.DateTimeUtils;
 
 import java.net.URI;
 import java.time.ZonedDateTime;
@@ -9,11 +11,14 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 
+import static com.fasterxml.jackson.annotation.JsonInclude.*;
+
+
+@JsonInclude(Include.NON_NULL)
 public class ChargeResponse {
 
     @JsonProperty("links")
     private List<Map<String, Object>> dataLinks = new ArrayList<>();
-
     @JsonProperty("charge_id")
     private String chargeId;
 
@@ -32,10 +37,20 @@ public class ChargeResponse {
     @JsonProperty
     private String description;
 
-    @JsonProperty("created_date")
+    @JsonProperty
+    private String reference;
+
+    @JsonProperty("payment_provider")
+    private String providerName;
+
     private ZonedDateTime createdDate;
 
-    private ChargeResponse(String chargeId, Long amount, String status, String gatewayTransactionId, String returnUrl, String description, ZonedDateTime createdDate, List<Map<String, Object>> dataLinks) {
+    @JsonProperty("created_date")
+    public String getCreatedDate() {
+        return DateTimeUtils.toUTCDateString(createdDate);
+    }
+
+    private ChargeResponse(String chargeId, Long amount, String status, String gatewayTransactionId, String returnUrl, String description, String reference, String providerName, ZonedDateTime createdDate, List<Map<String, Object>> dataLinks) {
         this.dataLinks = dataLinks;
         this.chargeId = chargeId;
         this.amount = amount;
@@ -43,6 +58,8 @@ public class ChargeResponse {
         this.gatewayTransactionId = gatewayTransactionId;
         this.returnUrl = returnUrl;
         this.description = description;
+        this.reference = reference;
+        this.providerName = providerName;
         this.createdDate = createdDate;
     }
 
@@ -56,6 +73,8 @@ public class ChargeResponse {
         private String description;
         private ZonedDateTime createdDate;
         private List<Map<String, Object>> links = new ArrayList<>();
+        private String reference;
+        private String providerName;
 
         private Builder() {
         }
@@ -94,6 +113,11 @@ public class ChargeResponse {
             return this;
         }
 
+        public Builder withReference(String reference) {
+            this.reference = reference;
+            return this;
+        }
+
         public Builder withCreatedDate(ZonedDateTime createdDate) {
             this.createdDate = createdDate;
             return this;
@@ -109,7 +133,12 @@ public class ChargeResponse {
         }
 
         public ChargeResponse build() {
-            return new ChargeResponse(chargeId, amount, status, gatewayTransactionId, returnUrl, description, createdDate, links);
+            return new ChargeResponse(chargeId, amount, status, gatewayTransactionId, returnUrl, description, reference, providerName, createdDate, links);
+        }
+
+        public Builder withProviderName(String providerName) {
+            this.providerName = providerName;
+            return this;
         }
     }
 }
