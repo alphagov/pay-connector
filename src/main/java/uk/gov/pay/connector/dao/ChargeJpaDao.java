@@ -93,6 +93,10 @@ public class ChargeJpaDao extends JpaDao<ChargeEntity> implements IChargeDao {
         return Optional.empty();
     }
 
+    public Optional<ChargeEntity> findChargeForAccount(Long chargeId, String accountId) {
+        return findById(chargeId).filter(charge -> charge.isAssociatedTo(accountId));
+    }
+
     @Override
     public Optional<Map<String, Object>> findById(String chargeId) {
         Map<String, Object> chargeMap = null;
@@ -208,6 +212,12 @@ public class ChargeJpaDao extends JpaDao<ChargeEntity> implements IChargeDao {
                 .createQuery(query, ChargeEntity.class)
                 .setParameter("gatewayTransactionId", transactionId)
                 .setParameter("provider", provider).getResultList().stream().findFirst();
+    }
+
+    //FIXME This will be removed shortly after finishing PP-576 refactoring
+    public void mergeChargeEntityWithChangedStatus(ChargeEntity chargeEntity) {
+        super.merge(chargeEntity);
+        eventDao.persist(ChargeEventEntity.from(chargeEntity, ChargeStatus.chargeStatusFrom(chargeEntity.getStatus()), LocalDateTime.now()));
     }
 
     private Map<String, Object> buildChargeMap(ChargeEntity chargeEntity) {
