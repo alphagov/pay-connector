@@ -40,9 +40,16 @@ jerseyClient:
   retries: 0
   userAgent: connector
   gzipEnabledForRequests: false
+  proxy:
+      host: localhost
+      port: 1234
+      scheme : http
+      nonProxyHosts:
+        - localhost
 
 customJerseyClient:
   readTimeout: 2000ms
+  enableProxy: false
 
 database:
   driverClass: org.postgresql.Driver
