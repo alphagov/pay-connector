@@ -39,4 +39,8 @@ public class GatewayAccount {
                 "gateway_account_id", String.valueOf(id),
                 "payment_provider", gatewayName);
     }
+
+    public static GatewayAccount valueOf(GatewayAccountEntity entity) {
+        return new GatewayAccount(entity.getId(), entity.getGatewayName(), entity.getCredentials());
+    }
 }
