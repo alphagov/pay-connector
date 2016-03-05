@@ -113,12 +113,12 @@ public class CardResourceITestBase {
     }
 
     protected String authoriseNewCharge() {
-        return createNewChargeWith(AUTHORISATION_SUCCESS, null);
+        return createNewChargeWith(AUTHORISATION_SUCCESS, "");
     }
 
 
     protected String createNewCharge() {
-        return createNewChargeWith(CREATED, null);
+        return createNewChargeWith(CREATED, "");
     }
 
     protected String createNewChargeWith(ChargeStatus status, String gatewayTransactionId) {

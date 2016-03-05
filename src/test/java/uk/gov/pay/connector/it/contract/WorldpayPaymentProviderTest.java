@@ -9,6 +9,9 @@ import org.junit.Test;
 import uk.gov.pay.connector.app.GatewayCredentialsConfig;
 import uk.gov.pay.connector.model.*;
 import uk.gov.pay.connector.model.domain.*;
+import uk.gov.pay.connector.model.domain.Card;
+import uk.gov.pay.connector.model.domain.GatewayAccount;
+import uk.gov.pay.connector.model.domain.GatewayAccountEntity;
 import uk.gov.pay.connector.service.worldpay.WorldpayPaymentProvider;
 
 import javax.ws.rs.client.ClientBuilder;
@@ -31,7 +34,7 @@ import static uk.gov.pay.connector.util.SystemUtils.envOrThrow;
 
 public class WorldpayPaymentProviderTest {
 
-    private GatewayAccount validGatewayAccount;
+    private GatewayAccountEntity validGatewayAccount;
 
     @Before
     public void checkThatWorldpayIsUp(){
@@ -42,7 +45,11 @@ public class WorldpayPaymentProviderTest {
                     "merchant_id","MERCHANTCODE",
                     "username",envOrThrow("GDS_CONNECTOR_WORLDPAY_USER"),
                     "password",envOrThrow("GDS_CONNECTOR_WORLDPAY_PASSWORD"));
-            validGatewayAccount = new GatewayAccount(1234L, "worldpay", validCredentails);
+
+            validGatewayAccount = new GatewayAccountEntity();
+            validGatewayAccount.setId(1234L);
+            validGatewayAccount.setGatewayName("worldpay");
+            validGatewayAccount.setCredentials(validCredentails);
 
         } catch(IOException ex) {
             Assume.assumeTrue(false);

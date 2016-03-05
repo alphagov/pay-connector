@@ -9,6 +9,10 @@ import org.junit.Before;
 import org.junit.Test;
 import uk.gov.pay.connector.model.*;
 import uk.gov.pay.connector.model.domain.*;
+import uk.gov.pay.connector.model.domain.Address;
+import uk.gov.pay.connector.model.domain.Card;
+import uk.gov.pay.connector.model.domain.GatewayAccount;
+import uk.gov.pay.connector.model.domain.GatewayAccountEntity;
 import uk.gov.pay.connector.service.GatewayClient;
 import uk.gov.pay.connector.service.PaymentProvider;
 import uk.gov.pay.connector.service.smartpay.SmartpayPaymentProvider;
@@ -38,7 +42,7 @@ public class SmartpayPaymentProviderTest {
     private String url = "https://pal-test.barclaycardsmartpay.com/pal/servlet/soap/Payment";
     private String username = envOrThrow("GDS_CONNECTOR_SMARTPAY_USER");
     private String password = envOrThrow("GDS_CONNECTOR_SMARTPAY_PASSWORD");
-    private GatewayAccount validGatewayAccount;
+    private GatewayAccountEntity validGatewayAccount;
 
     @Before
     public void setUpAndCheckThatSmartpayIsUp() {
@@ -47,7 +51,10 @@ public class SmartpayPaymentProviderTest {
             Map<String, String> validSmartPayCredentials = ImmutableMap.of(
                     "username", username,
                     "password", password);
-            validGatewayAccount = new GatewayAccount(123L, "smartpay", validSmartPayCredentials);
+            validGatewayAccount = new GatewayAccountEntity();
+            validGatewayAccount.setId(123L);
+            validGatewayAccount.setGatewayName("smartpay");
+            validGatewayAccount.setCredentials(validSmartPayCredentials);
         } catch (IOException ex) {
             Assume.assumeTrue(false);
         }
@@ -62,10 +69,14 @@ public class SmartpayPaymentProviderTest {
     @Test
     public void shouldFailRequestAuthorisationIfCredentialsAreNotCorrect() throws Exception {
         PaymentProvider paymentProvider = getSmartpayPaymentProvider();
-        GatewayAccount accountWithInvalidCredentials = new GatewayAccount(11L, "smartpay", ImmutableMap.of(
-                "username","wrong-username",
-                "password","wrong-password"
+        GatewayAccountEntity accountWithInvalidCredentials = new GatewayAccountEntity();
+        accountWithInvalidCredentials.setId(11L);
+        accountWithInvalidCredentials.setGatewayName("smartpay");
+        accountWithInvalidCredentials.setCredentials(ImmutableMap.of(
+                "username", "wrong-username",
+                "password", "wrong-password"
         ));
+
         AuthorisationRequest request = getCardAuthorisationRequest(accountWithInvalidCredentials);
         AuthorisationResponse response = paymentProvider.authorise(request);
 
@@ -140,7 +151,7 @@ public class SmartpayPaymentProviderTest {
         return Resources.toString(resource, Charset.defaultCharset()).replace("{{transactionId}}", transactionId);
     }
 
-    public static AuthorisationRequest getCardAuthorisationRequest(GatewayAccount gatewayAccount) {
+    public static AuthorisationRequest getCardAuthorisationRequest(GatewayAccountEntity gatewayAccount) {
         Address address = Address.anAddress();
         address.setLine1("41");
         address.setLine2("Scala Street");

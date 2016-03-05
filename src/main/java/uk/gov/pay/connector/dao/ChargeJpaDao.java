@@ -11,10 +11,7 @@ import uk.gov.pay.connector.model.domain.ChargeStatus;
 import uk.gov.pay.connector.model.domain.GatewayAccountEntity;
 
 import javax.inject.Inject;
-import javax.persistence.EntityManager;
-import javax.persistence.NoResultException;
-import javax.persistence.Query;
-import javax.persistence.TypedQuery;
+import javax.persistence.*;
 import java.time.LocalDateTime;
 import java.util.HashMap;
 import java.util.List;
@@ -70,7 +67,8 @@ public class ChargeJpaDao extends JpaDao<ChargeEntity> implements IChargeDao {
                 .orElseThrow(() -> new PayDBIException(format("Could not create a new charge with Gateway accountId '%s'", gatewayAccountId)));
 
         ChargeEntity chargeEntity =
-                new ChargeEntity(new Long(charge.get("amount").toString()),
+                new ChargeEntity(null,
+                        new Long(charge.get("amount").toString()),
                         CREATED.getValue(),
                         null,
                         charge.get("return_url").toString(),
@@ -95,6 +93,24 @@ public class ChargeJpaDao extends JpaDao<ChargeEntity> implements IChargeDao {
 
     public Optional<ChargeEntity> findChargeForAccount(Long chargeId, String accountId) {
         return findById(chargeId).filter(charge -> charge.isAssociatedTo(accountId));
+    }
+
+    @Override
+    public Optional<ChargeEntity> findChargeForAccount(Long chargeId, Long accountId) {
+        TypedQuery<ChargeEntity> query = entityManager.get()
+                .createQuery("select c from ChargeEntity c "
+                        + "join GatewayAccountEntity ga "
+                        + "where c.id = :chargeId "
+                        + "and ga.id = :accountId", ChargeEntity.class);
+
+        query.setParameter("chargeId", chargeId);
+        query.setParameter("accountId", accountId);
+
+        try {
+            return Optional.ofNullable(query.getSingleResult());
+        } catch (NoResultException e) {
+            return Optional.empty();
+        }
     }
 
     @Override

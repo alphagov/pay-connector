@@ -10,7 +10,7 @@ import java.util.Map;
 import java.util.Optional;
 
 @Transactional
-public class JpaDao<T> {
+abstract public class JpaDao<T> implements IJpaDao {
 
     private static final String QUERY_SELECT_ALL = "SELECT o FROM %s o ORDER BY o.id";
 
@@ -20,23 +20,36 @@ public class JpaDao<T> {
         this.entityManager = entityManager;
     }
 
+    @Override
     public <T> void persist(final T object) {
         entityManager.get().persist(object);
     }
 
+    @Override
     public <T, ID> Optional<T> findById(final Class<T> clazz, final ID id) {
         return Optional.ofNullable(entityManager.get().find(clazz, id));
     }
 
+    @Override
     public <T> T merge(final T object) {
         return entityManager.get().merge(object);
     }
 
+    public <T> void remove(final T object) {
+        entityManager.get().remove(object);
+    }
+
+    public <T, ID> void removeById(final Class<T> clazz, final ID id) {
+        remove(findById(clazz, id));
+    }
+
+    @Override
     public <T> List<T> findAll(final Class clazz) {
         final String query = String.format(QUERY_SELECT_ALL, clazz.getSimpleName());
         return entityManager.get().createQuery(query).getResultList();
     }
 
+    @Override
     public <T> List<T> find(final Class<T> clazz, final String namedQuery, final Map<String, Object> paramsMap) {
         final Query query = fillNamedParametersQuery(clazz, namedQuery, paramsMap);
         return query.getResultList();

@@ -6,6 +6,7 @@ import org.apache.commons.lang3.tuple.Pair;
 import org.junit.Test;
 import uk.gov.pay.connector.model.StatusUpdates;
 import uk.gov.pay.connector.model.domain.GatewayAccount;
+import uk.gov.pay.connector.model.domain.GatewayAccountEntity;
 import uk.gov.pay.connector.service.sandbox.SandboxPaymentProvider;
 
 import java.util.HashMap;
@@ -75,8 +76,13 @@ public class SandboxPaymentProviderTest {
         assertThat(statusUpdates.getResponseForProvider(), is("OK"));
     }
 
-    private Optional<GatewayAccount> aServiceAccount() {
-        return Optional.of(new GatewayAccount(1L, "smartpay", new HashMap<String, String>()));
+    private Optional<GatewayAccountEntity> aServiceAccount() {
+        GatewayAccountEntity gatewayAccount = new GatewayAccountEntity();
+        gatewayAccount.setId(1L);
+        gatewayAccount.setGatewayName("smartpay");
+        gatewayAccount.setCredentials(new HashMap<String, String>());
+
+        return Optional.ofNullable(gatewayAccount);
     }
 
     private String mockInboundNotificationWithStatus(String statusValue) {

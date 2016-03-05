@@ -86,6 +86,31 @@ public class ChargeJpaDaoITest {
     }
 
     @Test
+    public void insertANewChargeAndReturnTheId() throws Exception {
+
+        // given
+        GatewayAccountEntity gatewayAccountEntity = new GatewayAccountEntity("sanbox", new HashMap<>());
+        gatewayAccountEntity.setId(GATEWAY_ACCOUNT_ID);
+
+        ChargeEntity chargeEntity = new ChargeEntity(null,
+                AMOUNT,
+                CREATED.toString(),
+                UUID.randomUUID().toString(),
+                RETURN_URL,
+                DESCRIPTION,
+                REFERENCE,
+                gatewayAccountEntity
+        );
+
+        // when
+        chargeDao.persist(chargeEntity);
+
+        // then
+        assertThat(chargeEntity.getId(), is(notNullValue()));
+        assertThat(app.getDatabaseTestHelper().getChargeStatus(chargeEntity.getId().toString()), is("CREATED"));
+    }
+
+    @Test
     public void searchChargesByGatewayAccountIdOnly() throws Exception {
 
         // given
@@ -645,15 +670,30 @@ public class ChargeJpaDaoITest {
 
     @Test
     public void shouldFindChargeForAccount() {
-        Map<String, Object> charge = chargeDao.findChargeForAccount(String.valueOf(CHARGE_ID), String.valueOf(GATEWAY_ACCOUNT_ID)).get();
-        assertThat(charge.get("charge_id"), is(String.valueOf(CHARGE_ID)));
-        assertThat(charge.get("amount"), is(AMOUNT));
-        assertThat(charge.get("reference"), is(REFERENCE));
-        assertThat(charge.get("payment_provider"), is(PAYMENT_PROVIDER));
-        assertThat(charge.get("description"), is(DESCRIPTION));
-        assertThat(charge.get("status"), is(CREATED.getValue()));
-        assertThat(charge.get("gateway_account_id"), is(String.valueOf(GATEWAY_ACCOUNT_ID)));
-        assertThat(charge.get("return_url"), is(RETURN_URL));
+        Optional<ChargeEntity> charge = chargeDao.findChargeForAccount(CHARGE_ID, GATEWAY_ACCOUNT_ID);
+        assertThat(charge.isPresent(), is(true));
+        assertThat(charge.get().getId(), is(CHARGE_ID));
+        assertThat(charge.get().getAmount(), is(AMOUNT));
+        assertThat(charge.get().getReference(), is(REFERENCE));
+        assertThat(charge.get().getGatewayAccount().getGatewayName(), is(PAYMENT_PROVIDER));
+        assertThat(charge.get().getDescription(), is(DESCRIPTION));
+        assertThat(charge.get().getStatus(), is(CREATED.getValue()));
+        assertThat(charge.get().getGatewayAccount().getId(), is(GATEWAY_ACCOUNT_ID));
+        assertThat(charge.get().getReturnUrl(), is(RETURN_URL));
+    }
+
+    @Test
+    public void shoulNotFindChargeForAccountWhenAccountIsUnknown() {
+        Long unknownAccount = 0L;
+        Optional<ChargeEntity> charge = chargeDao.findChargeForAccount(CHARGE_ID, unknownAccount);
+        assertThat(charge.isPresent(), is(false));
+    }
+
+    @Test
+    public void shoulNotFindChargeForAccountWhenChargeIsUnknown() {
+        Long unknownCharge = 0L;
+        Optional<ChargeEntity> charge = chargeDao.findChargeForAccount(unknownCharge, GATEWAY_ACCOUNT_ID);
+        assertThat(charge.isPresent(), is(false));
     }
 
     @Test

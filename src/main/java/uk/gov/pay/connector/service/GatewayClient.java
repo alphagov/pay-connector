@@ -4,7 +4,7 @@ import fj.data.Either;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import uk.gov.pay.connector.model.GatewayError;
-import uk.gov.pay.connector.model.domain.GatewayAccount;
+import uk.gov.pay.connector.model.domain.GatewayAccountEntity;
 import uk.gov.pay.connector.util.XMLUnmarshaller;
 import uk.gov.pay.connector.util.XMLUnmarshallerException;
 
@@ -42,7 +42,7 @@ public class GatewayClient {
         return new GatewayClient(client, gatewayUrl);
     }
 
-    public Either<GatewayError, Response> postXMLRequestFor(GatewayAccount account, String request) {
+    public Either<GatewayError, Response> postXMLRequestFor(GatewayAccountEntity account, String request) {
         try {
             Response response = client.target(gatewayUrl)
                     .request(APPLICATION_XML)

@@ -119,4 +119,12 @@
                       tableName="charges"/>
     </changeSet>
 
+    <changeSet id="add version to charges table" author="">
+        <addColumn tableName="charges">
+            <column name="version" type="bigint">
+                <constraints nullable="false"/>
+            </column>
+        </addColumn>
+    </changeSet>
+
 </databaseChangeLog>

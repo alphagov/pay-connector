@@ -2,7 +2,6 @@ package uk.gov.pay.connector.app;
 
 import com.google.inject.Guice;
 import com.google.inject.Injector;
-import com.google.inject.persist.PersistFilter;
 import io.dropwizard.Application;
 import io.dropwizard.auth.AuthDynamicFeature;
 import io.dropwizard.auth.AuthValueFactoryProvider;
@@ -20,9 +19,6 @@ import uk.gov.pay.connector.healthcheck.DatabaseHealthCheck;
 import uk.gov.pay.connector.healthcheck.Ping;
 import uk.gov.pay.connector.resources.*;
 import uk.gov.pay.connector.util.DbWaitCommand;
-
-import javax.servlet.DispatcherType;
-import java.util.EnumSet;
 
 public class ConnectorApp extends Application<ConnectorConfiguration> {
 
@@ -51,8 +47,7 @@ public class ConnectorApp extends Application<ConnectorConfiguration> {
 
         final Injector injector = Guice.createInjector(new ConnectorModule(configuration, environment));
 
-        environment.servlets().addFilter("persistFilter", injector.getInstance(PersistFilter.class))
-                .addMappingForUrlPatterns(EnumSet.of(DispatcherType.REQUEST), true, "/*");
+        injector.getInstance(PersistenceServiceInitialiser.class);
 
         environment.jersey().register(injector.getInstance(GatewayAccountResource.class));
         environment.jersey().register(injector.getInstance(ChargeEventsResource.class));

@@ -4,6 +4,10 @@ import com.google.common.collect.ImmutableMap;
 import org.junit.Before;
 import org.junit.Test;
 import uk.gov.pay.connector.model.*;
+import uk.gov.pay.connector.model.domain.Address;
+import uk.gov.pay.connector.model.domain.Card;
+import uk.gov.pay.connector.model.domain.GatewayAccount;
+import uk.gov.pay.connector.model.domain.GatewayAccountEntity;
 import uk.gov.pay.connector.model.domain.*;
 import uk.gov.pay.connector.service.worldpay.WorldpayPaymentProvider;
 
@@ -93,12 +97,16 @@ public class WorldpayPaymentProviderTest {
         return new AuthorisationRequest(chargeEntity, card);
     }
 
-    private GatewayAccount aServiceAccount() {
-        return new GatewayAccount(1L, "worldpay", ImmutableMap.of(
-           CREDENTIALS_MERCHANT_ID,"worlpay-merchant",
-           CREDENTIALS_USERNAME,"worldpay-password",
-           CREDENTIALS_PASSWORD,"password"
+    private GatewayAccountEntity aServiceAccount() {
+        GatewayAccountEntity gatewayAccount = new GatewayAccountEntity();
+        gatewayAccount.setId(1L);
+        gatewayAccount.setGatewayName("worldpay");
+        gatewayAccount.setCredentials(ImmutableMap.of(
+                CREDENTIALS_MERCHANT_ID,"worlpay-merchant",
+                CREDENTIALS_USERNAME,"worldpay-password",
+                CREDENTIALS_PASSWORD,"password"
         ));
+        return gatewayAccount;
     }
 
     private void assertEquals(GatewayError actual, GatewayError expected) {

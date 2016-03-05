@@ -44,11 +44,11 @@ public class DatabaseTestHelper {
     }
 
     public void addCharge(String chargeId, String gatewayAccountId, long amount, ChargeStatus status, String returnUrl, String transactionId) {
-        addCharge(chargeId, gatewayAccountId, amount, status, returnUrl, transactionId, "Test description", "Test reference", now());
+        addCharge(chargeId, gatewayAccountId, amount, status, returnUrl, transactionId, "Test description", "Test reference", now(), 1);
     }
 
     public void addCharge(String chargeId, String accountId, long amount, ChargeStatus chargeStatus, String returnUrl, String transactionId, String reference, ZonedDateTime createdDate) {
-        addCharge(chargeId, accountId, amount, chargeStatus, returnUrl, transactionId, "Test description", reference, createdDate == null ? now() : createdDate);
+        addCharge(chargeId, accountId, amount, chargeStatus, returnUrl, transactionId, "Test description", reference, createdDate == null ? now() : createdDate, 1);
     }
 
     private void addCharge(
@@ -60,7 +60,8 @@ public class DatabaseTestHelper {
             String transactionId,
             String description,
             String reference,
-            ZonedDateTime createdDate
+            ZonedDateTime createdDate,
+            long version
     ) {
         jdbi.withHandle(h ->
                 h.update(
@@ -74,9 +75,10 @@ public class DatabaseTestHelper {
                                 "        gateway_transaction_id,\n" +
                                 "        description,\n" +
                                 "        created_date,\n" +
-                                "        reference\n" +
+                                "        reference,\n" +
+                                "        version\n" +
                                 "    )\n" +
-                                "   VALUES(?, ?, ?, ?, ?, ?, ?, ?, ?)\n",
+                                "   VALUES(?, ?, ?, ?, ?, ?, ?, ?, ?, ?)\n",
                         Long.valueOf(chargeId),
                         amount,
                         status.getValue(),
@@ -85,7 +87,8 @@ public class DatabaseTestHelper {
                         transactionId,
                         description,
                         Timestamp.from(createdDate.toInstant()),
-                        reference
+                        reference,
+                        version
                 )
         );
     }

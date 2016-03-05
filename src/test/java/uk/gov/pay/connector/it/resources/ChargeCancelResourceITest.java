@@ -93,28 +93,28 @@ public class ChargeCancelResourceITest {
     @Test
     public void respondWith400__IfAccountIdIsMissing() {
         String chargeId = createNewChargeWithStatus(CREATED);
-        String expectedMessage = "Invalid account Id";
+        String expectedMessage = "HTTP 404 Not Found";
 
         restApiCall
-                .withAccountId("---garbage---")
+                .withAccountId("")
                 .withChargeId(chargeId)
                 .postChargeCancellation()
-                .statusCode(BAD_REQUEST.getStatusCode())
+                .statusCode(NOT_FOUND.getStatusCode())
                 .and()
                 .contentType(JSON)
                 .body("message", is(expectedMessage));
     }
 
     @Test
-    public void respondWith400__IfAccountIdIsNonNumeric() {
+    public void respondWith404__IfAccountIdIsNonNumeric() {
         String chargeId = createNewChargeWithStatus(CREATED);
-        String expectedMessage = "Invalid account Id";
+        String expectedMessage = "HTTP 404 Not Found";
 
         restApiCall
                 .withAccountId("ABSDCEFG")
                 .withChargeId(chargeId)
                 .postChargeCancellation()
-                .statusCode(BAD_REQUEST.getStatusCode())
+                .statusCode(NOT_FOUND.getStatusCode())
                 .and()
                 .contentType(JSON)
                 .body("message", is(expectedMessage));

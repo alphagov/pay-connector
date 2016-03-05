@@ -1,9 +1,18 @@
 package uk.gov.pay.connector.service;
 
+import com.google.inject.persist.Transactional;
 import fj.data.Either;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+import uk.gov.pay.connector.dao.IChargeDao;
 import uk.gov.pay.connector.dao.ChargeJpaDao;
 import uk.gov.pay.connector.dao.GatewayAccountJpaDao;
+import uk.gov.pay.connector.dao.IGatewayAccountDao;
 import uk.gov.pay.connector.model.*;
+import uk.gov.pay.connector.model.domain.Card;
+import uk.gov.pay.connector.model.domain.ChargeEntity;
+import uk.gov.pay.connector.model.domain.ChargeStatus;
+import uk.gov.pay.connector.model.domain.GatewayAccountEntity;
 import uk.gov.pay.connector.model.domain.*;
 
 import javax.inject.Inject;
@@ -24,6 +33,7 @@ import static uk.gov.pay.connector.model.GatewayErrorType.ChargeNotFound;
 import static uk.gov.pay.connector.model.domain.ChargeStatus.*;
 
 public class CardService {
+    private final Logger logger = LoggerFactory.getLogger(CardService.class);
 
     private static final ChargeStatus[] CANCELLABLE_STATES = new ChargeStatus[]{
             CREATED, ENTERING_CARD_DETAILS, AUTHORISATION_SUCCESS, AUTHORISATION_READY, READY_FOR_CAPTURE
@@ -40,19 +50,21 @@ public class CardService {
         this.providers = providers;
     }
 
-    public Either<GatewayError, GatewayResponse> doAuthorise(String chargeId, Card cardDetails) {
+    public Either<GatewayError, GatewayResponse> doAuthorise(Long chargeId, Card cardDetails) {
 
-        Function<Map<String, Object>, Either<GatewayError, GatewayResponse>> doAuthorise =
+        Function<ChargeEntity, Either<GatewayError, GatewayResponse>> doAuthorise =
                 (charge) -> {
-                    Either<GatewayError, Map<String, Object>> preAuthorised = preAuthorise(charge);
+                    Either<GatewayError, ChargeEntity> preAuthorised = preAuthorise(charge);
                     if (preAuthorised.isLeft())
                         return left(preAuthorised.left().value());
 
-                    Either<GatewayError, AuthorisationResponse> authorised = authorise(charge, cardDetails);
+                    Either<GatewayError, AuthorisationResponse> authorised =
+                            authorise(preAuthorised.right().value(), cardDetails);
                     if (authorised.isLeft())
                         return left(authorised.left().value());
 
-                    Either<GatewayError, GatewayResponse> postAuthorised = postAuthorise(charge, authorised.right().value());
+                    Either<GatewayError, GatewayResponse> postAuthorised =
+                            postAuthorise(preAuthorised.right().value(), authorised.right().value());
                     if (postAuthorised.isLeft())
                         return left(postAuthorised.left().value());
 
@@ -65,68 +77,47 @@ public class CardService {
                 .orElseGet(chargeNotFound(chargeId));
     }
 
-    private Either<GatewayError, Map<String, Object>> preAuthorise(Map<String, Object> charge) {
-        String chargeId = String.valueOf(charge.get(CHARGE_ID_KEY));
-
-        if (!hasStatus(charge, ENTERING_CARD_DETAILS)) {
-            if (hasStatus(charge, AUTHORISATION_READY)) {
+    @Transactional
+    public Either<GatewayError, ChargeEntity> preAuthorise(ChargeEntity charge) {
+        ChargeEntity reloadedCharge = chargeDao.merge(charge);
+        if (!hasStatus(reloadedCharge, ENTERING_CARD_DETAILS)) {
+            if (hasStatus(reloadedCharge, AUTHORISATION_READY)) {
                 return left(operationAlreadyInProgress(format("Authorisation for charge already in progress, %s",
-                        chargeId)));
+                        reloadedCharge.getId())));
             }
             logger.error(format("Charge with id [%s] and with status [%s] should be in [ENTERING CARD DETAILS] for authorisation.",
-                    chargeId, charge.get(STATUS_KEY)));
-            return left(illegalStateError(format("Charge not in correct state to be processed, %s", chargeId)));
+                    reloadedCharge.getId(), reloadedCharge.getStatus()));
+            return left(illegalStateError(format("Charge not in correct state to be processed, %s", reloadedCharge.getId())));
         }
-        chargeDao.updateStatus(chargeId, AUTHORISATION_READY);
-        return right(charge);
+        reloadedCharge.setStatus(AUTHORISATION_READY);
+
+        return right(reloadedCharge);
     }
 
-    private Either<GatewayError, AuthorisationResponse> authorise(Map<String, Object> charge, Card cardDetails) {
-        String chargeId = String.valueOf(charge.get(CHARGE_ID_KEY));
-        String amountValue = String.valueOf(charge.get(AMOUNT_KEY));
+    private Either<GatewayError, AuthorisationResponse> authorise(ChargeEntity charge, Card cardDetails) {
+        PaymentProvider paymentProvider = paymentProviderFor(charge);
+        AuthorisationRequest request = authorisationRequest(charge.getId(), charge.getAmount(), cardDetails);
+        AuthorisationResponse response = paymentProvider.authorise(request);
+        return right(response);
+    }
 
-        AuthorisationRequest request = authorisationRequest(chargeId, amountValue, cardDetails);
-        AuthorisationResponse response = paymentProviderFor(charge)
-                .authorise(request);
+    @Transactional
+    public Either<GatewayError, GatewayResponse> postAuthorise(ChargeEntity charge, AuthorisationResponse response) {
+        ChargeEntity reloadedCharge = chargeDao.merge(charge);
+        reloadedCharge.setStatus(response.getNewChargeStatus());
+        reloadedCharge.setGatewayTransactionId(response.getTransactionId());
 
         return right(response);
     }
 
-    private Either<GatewayError, GatewayResponse> postAuthorise(Map<String, Object> charge, AuthorisationResponse response) {
-
-        Function<Map<String, Object>, Either<GatewayError, GatewayResponse>> postAuthorise =
-                (reloadedCharge) -> {
-
-                    String chargeId = String.valueOf(reloadedCharge.get(CHARGE_ID_KEY));
-
-                    if (!hasStatus(reloadedCharge, AUTHORISATION_READY)) {
-                        logger.error(format("Charge with id [%s] and with status [%s] should be in [AUTHORISATION_READY] for authorisation.",
-                                chargeId, reloadedCharge.get(STATUS_KEY)));
-                        return left(illegalStateError(format("Charge not in correct state to be processed, %s", chargeId)));
-                    }
-
-                    chargeDao.updateStatus(chargeId, response.getNewChargeStatus());
-                    chargeDao.updateGatewayTransactionId(chargeId, response.getTransactionId());
-
-                    return right(response);
-                };
-
-        // Reload charge
-        String chargeId = String.valueOf(charge.get(CHARGE_ID_KEY));
-        return chargeDao
-                .findById(chargeId)
-                .map(postAuthorise)
-                .orElseGet(chargeNotFound(chargeId));
-    }
-
-    public Either<GatewayError, GatewayResponse> doCapture(String chargeId) {
+    public Either<GatewayError, GatewayResponse> doCapture(Long chargeId) {
         return chargeDao
                 .findById(Long.valueOf(chargeId))
                 .map(capture())
                 .orElseGet(chargeNotFound(chargeId));
     }
 
-    public Either<GatewayError, GatewayResponse> doCancel(String chargeId, String accountId) {
+    public Either<GatewayError, GatewayResponse> doCancel(Long chargeId, Long accountId) {
         return chargeDao
                 .findChargeForAccount(Long.valueOf(chargeId), accountId)
                 .map(cancel())
@@ -198,6 +189,23 @@ public class CardService {
         return providers.resolve(maybeAccount.get().getGatewayName());
     }
 
+    private AuthorisationRequest authorisationRequest(Long chargeId, Long amountValue, Card card) {
+        return new AuthorisationRequest(chargeId.toString(), card, amountValue.toString(),
+                "This is the description", getValidAccountForCharge().apply(chargeId));
+    }
+
+    private Function<Long, GatewayAccountEntity> getValidAccountForCharge() {
+        return chargeId -> {
+            GatewayAccountEntity gatewayAccount = findAccountByCharge(chargeId);
+            if (gatewayAccount == null) {
+                String errorMessage = String.format("No account exists for this charge %s.", chargeId);
+                logger.error(errorMessage);
+                throw new RuntimeException(errorMessage);
+            }
+            return gatewayAccount;
+        };
+    }
+
     private boolean hasStatus(ChargeEntity charge, ChargeStatus... states) {
         return Arrays.stream(states)
                 .anyMatch(status -> equalsIgnoreCase(status.getValue(), charge.getStatus()));
@@ -211,11 +219,11 @@ public class CardService {
         return baseGatewayError(format("Charge not in correct state to be processed, %d", chargeId));
     }
 
-    private GatewayError cancelErrorMessageFor(String chargeId, String status) {
+    private GatewayError cancelErrorMessageFor(Long chargeId, String status) {
         return baseGatewayError(format("Cannot cancel a charge id [%s]: status is [%s].", chargeId, status));
     }
 
-    private Supplier<Either<GatewayError, GatewayResponse>> chargeNotFound(String chargeId) {
+    private Supplier<Either<GatewayError, GatewayResponse>> chargeNotFound(Long chargeId) {
         return () -> left(new GatewayError(format("Charge with id [%s] not found.", chargeId), ChargeNotFound));
     }
 }
