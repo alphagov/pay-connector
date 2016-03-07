@@ -2,6 +2,7 @@ package uk.gov.pay.connector.rules;
 
 import com.google.inject.persist.jpa.JpaPersistModule;
 import io.dropwizard.db.DataSourceFactory;
+import io.dropwizard.setup.Environment;
 import io.dropwizard.testing.ConfigOverride;
 import io.dropwizard.testing.junit.DropwizardAppRule;
 import org.junit.rules.RuleChain;
@@ -80,6 +81,10 @@ public class DropwizardAppWithPostgresRule implements TestRule {
 
     public ConnectorConfiguration getConf() {
         return app.getConfiguration();
+    }
+
+    public Environment getEnvironment(){
+        return app.getEnvironment();
     }
 
     public int getLocalPort() {

@@ -21,8 +21,8 @@ import static javax.ws.rs.core.MediaType.APPLICATION_XML;
 import static org.hamcrest.core.Is.is;
 import static org.junit.Assert.*;
 import static uk.gov.pay.connector.util.AuthUtil.encode;
-import static uk.gov.pay.connector.util.JerseyClientFactory.createClientWithApacheConnectorAndTimeout;
-import static uk.gov.pay.connector.util.JerseyClientFactory.createJerseyClient;
+import static uk.gov.pay.connector.util.TestClientFactory.createClientWithApacheConnectorAndTimeout;
+import static uk.gov.pay.connector.util.TestClientFactory.createJerseyClient;
 
 public class GatewayClientExploratoryTest {
 
