@@ -1,4 +1,4 @@
-package uk.gov.pay.connector.resources;
+package uk.gov.pay.connector.model;
 
 import com.fasterxml.jackson.annotation.JsonInclude;
 import com.fasterxml.jackson.annotation.JsonProperty;
@@ -19,6 +19,7 @@ public class ChargeResponse {
 
     @JsonProperty("links")
     private List<Map<String, Object>> dataLinks = new ArrayList<>();
+
     @JsonProperty("charge_id")
     private String chargeId;
 
@@ -61,6 +62,66 @@ public class ChargeResponse {
         this.reference = reference;
         this.providerName = providerName;
         this.createdDate = createdDate;
+    }
+
+    public URI getLink(String rel) {
+        return dataLinks.stream()
+                .filter(map -> rel.equals(map.get("rel")))
+                .findFirst()
+                .map(link -> (URI) link.get("href"))
+                .get();
+    }
+
+    @Override
+    public boolean equals(Object o) {
+        if (this == o) return true;
+        if (o == null || getClass() != o.getClass()) return false;
+
+        ChargeResponse that = (ChargeResponse) o;
+
+        if (dataLinks != null ? !dataLinks.equals(that.dataLinks) : that.dataLinks != null) return false;
+        if (chargeId != null ? !chargeId.equals(that.chargeId) : that.chargeId != null) return false;
+        if (amount != null ? !amount.equals(that.amount) : that.amount != null) return false;
+        if (status != null ? !status.equals(that.status) : that.status != null) return false;
+        if (gatewayTransactionId != null ? !gatewayTransactionId.equals(that.gatewayTransactionId) : that.gatewayTransactionId != null)
+            return false;
+        if (returnUrl != null ? !returnUrl.equals(that.returnUrl) : that.returnUrl != null) return false;
+        if (description != null ? !description.equals(that.description) : that.description != null) return false;
+        if (reference != null ? !reference.equals(that.reference) : that.reference != null) return false;
+        if (providerName != null ? !providerName.equals(that.providerName) : that.providerName != null) return false;
+        return createdDate != null ? createdDate.equals(that.createdDate) : that.createdDate == null;
+
+    }
+
+    @Override
+    public int hashCode() {
+        int result = dataLinks != null ? dataLinks.hashCode() : 0;
+        result = 31 * result + (chargeId != null ? chargeId.hashCode() : 0);
+        result = 31 * result + (amount != null ? amount.hashCode() : 0);
+        result = 31 * result + (status != null ? status.hashCode() : 0);
+        result = 31 * result + (gatewayTransactionId != null ? gatewayTransactionId.hashCode() : 0);
+        result = 31 * result + (returnUrl != null ? returnUrl.hashCode() : 0);
+        result = 31 * result + (description != null ? description.hashCode() : 0);
+        result = 31 * result + (reference != null ? reference.hashCode() : 0);
+        result = 31 * result + (providerName != null ? providerName.hashCode() : 0);
+        result = 31 * result + (createdDate != null ? createdDate.hashCode() : 0);
+        return result;
+    }
+
+    @Override
+    public String toString() {
+        return "ChargeResponse{" +
+                "dataLinks=" + dataLinks +
+                ", chargeId='" + chargeId + '\'' +
+                ", amount=" + amount +
+                ", status='" + status + '\'' +
+                ", gatewayTransactionId='" + gatewayTransactionId + '\'' +
+                ", returnUrl='" + returnUrl + '\'' +
+                ", description='" + description + '\'' +
+                ", reference='" + reference + '\'' +
+                ", providerName='" + providerName + '\'' +
+                ", createdDate=" + createdDate +
+                '}';
     }
 
     public static class Builder {

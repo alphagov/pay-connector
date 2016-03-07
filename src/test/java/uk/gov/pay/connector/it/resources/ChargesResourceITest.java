@@ -136,7 +136,7 @@ public class ChargesResourceITest {
     public void shouldGetChargeTransactionsForCSVAcceptHeader() throws Exception {
         String chargeId = ((Integer) RandomUtils.nextInt(99999999)).toString();
         ChargeStatus chargeStatus = AUTHORISATION_SUCCESS;
-        ZonedDateTime createdDate = ZonedDateTime.now(ZoneId.of("UTC"));
+        ZonedDateTime createdDate = ZonedDateTime.of(2016, 1, 25, 13, 45, 32, 123, ZoneId.of("UTC"));
         app.getDatabaseTestHelper().addCharge(chargeId, accountId, AMOUNT, chargeStatus, returnUrl, null, "My reference", createdDate);
         app.getDatabaseTestHelper().addToken(chargeId, "tokenId");
         app.getDatabaseTestHelper().addEvent(Long.valueOf(chargeId), chargeStatus.getValue());
@@ -148,7 +148,7 @@ public class ChargesResourceITest {
                 .statusCode(OK.getStatusCode())
                 .contentType(CSV_CONTENT_TYPE)
                 .body(is("Service Payment Reference,Amount,Status,Gateway Transaction ID,GOV.UK Pay ID,Date Created\n" +
-                        "My reference,62.34,IN PROGRESS,," + chargeId + "," + DateTimeUtils.toUTCDateString(createdDate) + "\n"));
+                        "My reference,62.34,IN PROGRESS,," + chargeId + ",2016-01-25T13:45:32Z\n"));
     }
 
     @Test
