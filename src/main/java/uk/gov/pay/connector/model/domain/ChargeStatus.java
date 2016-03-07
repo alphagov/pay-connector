@@ -16,8 +16,6 @@ public enum ChargeStatus {
     CAPTURE_UNKNOWN("CAPTURE UNKNOWN"),
     ;
 
-    public static final String STATUS_KEY = "status";
-
     private String value;
 
     ChargeStatus(String value) {

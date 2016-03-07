@@ -28,7 +28,6 @@ import uk.gov.pay.connector.util.DateTimeUtils;
 import java.time.LocalDateTime;
 import java.time.ZoneId;
 import java.time.ZonedDateTime;
-import java.time.format.DateTimeFormatter;
 import java.time.temporal.ChronoUnit;
 import java.util.*;
 
@@ -37,8 +36,7 @@ import static java.util.Arrays.asList;
 import static java.util.stream.Collectors.toList;
 import static org.apache.commons.lang3.RandomStringUtils.randomAlphanumeric;
 import static org.hamcrest.MatcherAssert.assertThat;
-import static org.hamcrest.Matchers.is;
-import static org.hamcrest.Matchers.notNullValue;
+import static org.hamcrest.Matchers.*;
 import static org.hamcrest.core.IsNot.not;
 import static org.junit.Assert.assertEquals;
 import static uk.gov.pay.connector.model.domain.ChargeStatus.*;
@@ -619,6 +617,25 @@ public class ChargeJpaDaoITest {
     }
 
     @Test
+    public void shouldUpdateEventsWhenMergeWithChargeEntityWithNewStatus() {
+
+        Long chargeId = 56735L;
+        String transactionId = "345654";
+        databaseTestHelper.addCharge(String.valueOf(chargeId), String.valueOf(GATEWAY_ACCOUNT_ID), AMOUNT, CREATED, RETURN_URL, transactionId, REFERENCE, ZonedDateTime.now(ZoneId.of("UTC")));
+
+        Optional<ChargeEntity> charge = chargeDao.findById(chargeId);
+        ChargeEntity entity = charge.get();
+        entity.setStatus(ENTERING_CARD_DETAILS);
+
+        chargeDao.mergeChargeEntityWithChangedStatus(entity);
+
+        List<ChargeEvent> events = eventDao.findEvents(GATEWAY_ACCOUNT_ID, chargeId);
+
+        assertThat(events, hasSize(1));
+        assertThat(events, shouldIncludeStatus(ENTERING_CARD_DETAILS));
+    }
+
+    @Test
     public void invalidSizeOfFields_old() throws Exception {
         expectedEx.expect(RuntimeException.class);
         Map<String, Object> chargeData = new HashMap<>(newCharge(AMOUNT, REFERENCE));
@@ -705,5 +722,33 @@ public class ChargeJpaDaoITest {
         assertThat(gatewayAccount.getId(), is(GATEWAY_ACCOUNT_ID));
         assertThat(gatewayAccount.getGatewayName(), is(PAYMENT_PROVIDER));
         assertThat(gatewayAccount.getCredentials(), is(Collections.EMPTY_MAP));
+    }
+
+    @Test
+    public void shouldGetChargeByChargeIdWithCorrectAssociatedAccountId() {
+
+        String transactionId = "7826782163";
+        ZonedDateTime createdDate = ZonedDateTime.now(ZoneId.of("UTC"));
+        Long chargeId = 876786L;
+
+        databaseTestHelper.addCharge(String.valueOf(chargeId), String.valueOf(GATEWAY_ACCOUNT_ID), AMOUNT, CREATED, RETURN_URL, transactionId, REFERENCE, createdDate);
+
+        ChargeEntity charge = chargeDao.findChargeForAccount(chargeId, String.valueOf(GATEWAY_ACCOUNT_ID)).get();
+
+        assertThat(charge.getId(), is(chargeId));
+        assertThat(charge.getGatewayTransactionId(), is(transactionId));
+        assertThat(charge.getReturnUrl(), is(RETURN_URL));
+        assertThat(charge.getStatus(), is(CREATED.getValue()));
+        assertThat(charge.getDescription(), is(DESCRIPTION));
+        assertThat(charge.getCreatedDate(), is(createdDate));
+        assertThat(charge.getReference(), is(REFERENCE));
+        assertThat(charge.getGatewayAccount(), is(notNullValue()));
+        assertThat(charge.getGatewayAccount().getId(), is(GATEWAY_ACCOUNT_ID));
+    }
+
+    @Test
+    public void shouldGetChargeByChargeIdAsNullWhenAccountIdDoesNotMatch() {
+        Optional<ChargeEntity> chargeForAccount = chargeDao.findChargeForAccount(CHARGE_ID, String.valueOf(456781L));
+        assertThat(chargeForAccount.isPresent(), is(false));
     }
 }

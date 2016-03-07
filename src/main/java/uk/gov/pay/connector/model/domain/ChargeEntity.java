@@ -99,4 +99,8 @@ public class ChargeEntity extends AbstractEntity {
     public void setGatewayTransactionId(String gatewayTransactionId) {
         this.gatewayTransactionId = gatewayTransactionId;
     }
+
+    public boolean isAssociatedTo(String accountId){
+        return this.getGatewayAccount().getId().toString().equals(accountId);
+    }
 }

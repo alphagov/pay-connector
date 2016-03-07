@@ -7,6 +7,7 @@ import uk.gov.pay.connector.util.templates.TemplateStringBuilder;
 import java.util.Map;
 
 import static com.google.common.collect.Maps.newHashMap;
+import static org.apache.commons.lang3.StringUtils.defaultString;
 
 public class OrderCaptureRequestBuilder {
 
@@ -35,7 +36,7 @@ public class OrderCaptureRequestBuilder {
     }
 
     public OrderCaptureRequestBuilder withTransactionId(String transactionId) {
-        this.transactionId = transactionId;
+        this.transactionId = defaultString(transactionId);
         return this;
     }
 

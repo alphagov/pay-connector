@@ -8,9 +8,7 @@ import org.junit.Assume;
 import org.junit.Before;
 import org.junit.Test;
 import uk.gov.pay.connector.model.*;
-import uk.gov.pay.connector.model.domain.Address;
-import uk.gov.pay.connector.model.domain.Card;
-import uk.gov.pay.connector.model.domain.GatewayAccount;
+import uk.gov.pay.connector.model.domain.*;
 import uk.gov.pay.connector.service.GatewayClient;
 import uk.gov.pay.connector.service.PaymentProvider;
 import uk.gov.pay.connector.service.smartpay.SmartpayPaymentProvider;
@@ -28,7 +26,6 @@ import static com.google.common.io.Resources.getResource;
 import static org.hamcrest.CoreMatchers.hasItem;
 import static org.junit.Assert.*;
 import static org.mockito.Mockito.mock;
-import static uk.gov.pay.connector.model.CancelRequest.cancelRequest;
 import static uk.gov.pay.connector.model.domain.ChargeStatus.CAPTURED;
 import static uk.gov.pay.connector.service.GatewayClient.createGatewayClient;
 import static uk.gov.pay.connector.util.CardUtils.buildCardDetails;
@@ -81,8 +78,12 @@ public class SmartpayPaymentProviderTest {
         PaymentProvider paymentProvider = getSmartpayPaymentProvider();
         AuthorisationResponse response = testCardAuthorisation(paymentProvider);
 
-        CaptureRequest captureRequest = new CaptureRequest(CHARGE_AMOUNT, response.getTransactionId(), validGatewayAccount);
-        CaptureResponse captureResponse = paymentProvider.capture(captureRequest);
+        GatewayAccountEntity gatewayAccountEntity = new GatewayAccountEntity(validGatewayAccount.getGatewayName(), validGatewayAccount.getCredentials());
+        gatewayAccountEntity.setId(validGatewayAccount.getId());
+        ChargeEntity charge = new ChargeEntity(Long.valueOf(CHARGE_AMOUNT), ChargeStatus.CREATED.getValue(), response.getTransactionId(), "", "", "", gatewayAccountEntity);
+
+
+        CaptureResponse captureResponse = paymentProvider.capture(CaptureRequest.valueOf(charge));
         assertTrue(captureResponse.isSuccessful());
         assertNull(captureResponse.getError());
     }
@@ -92,7 +93,11 @@ public class SmartpayPaymentProviderTest {
         PaymentProvider paymentProvider = getSmartpayPaymentProvider();
         AuthorisationResponse response = testCardAuthorisation(paymentProvider);
 
-        CancelResponse cancelResponse = paymentProvider.cancel(cancelRequest(response.getTransactionId(), validGatewayAccount));
+        GatewayAccountEntity gatewayAccountEntity = new GatewayAccountEntity(validGatewayAccount.getGatewayName(), validGatewayAccount.getCredentials());
+        gatewayAccountEntity.setId(validGatewayAccount.getId());
+        ChargeEntity charge = new ChargeEntity(Long.valueOf(CHARGE_AMOUNT), ChargeStatus.CREATED.getValue(), response.getTransactionId(), "", "", "", gatewayAccountEntity);
+
+        CancelResponse cancelResponse = paymentProvider.cancel(CancelRequest.valueOf(charge));
         assertTrue(cancelResponse.isSuccessful());
         assertNull(cancelResponse.getError());
 
@@ -147,9 +152,11 @@ public class SmartpayPaymentProviderTest {
         Card card = aValidSmartpayCard();
         card.setAddress(address);
 
-        String amount = CHARGE_AMOUNT;
-        String description = "This is the description";
-        return new AuthorisationRequest("chargeId", card, amount, description, gatewayAccount);
+        GatewayAccountEntity gatewayAccountEntity = new GatewayAccountEntity(gatewayAccount.getGatewayName(), gatewayAccount.getCredentials());
+        gatewayAccountEntity.setId(gatewayAccount.getId());
+        ChargeEntity chargeEntity = new ChargeEntity(Long.valueOf(CHARGE_AMOUNT), ChargeStatus.CREATED.getValue(), "", "", "This is the description", "reference", gatewayAccountEntity);
+
+        return new AuthorisationRequest(chargeEntity, card);
     }
 
     public static Card aValidSmartpayCard() {

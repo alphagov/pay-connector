@@ -4,9 +4,7 @@ import com.google.common.collect.ImmutableMap;
 import org.junit.Before;
 import org.junit.Test;
 import uk.gov.pay.connector.model.*;
-import uk.gov.pay.connector.model.domain.Address;
-import uk.gov.pay.connector.model.domain.Card;
-import uk.gov.pay.connector.model.domain.GatewayAccount;
+import uk.gov.pay.connector.model.domain.*;
 import uk.gov.pay.connector.service.worldpay.WorldpayPaymentProvider;
 
 import javax.ws.rs.client.Client;
@@ -47,8 +45,6 @@ public class WorldpayPaymentProviderTest {
 
     @Test
     public void shouldSendSuccessfullyAOrderForMerchant() throws Exception {
-        mockWorldpaySuccessfulOrderSubmitResponse();
-
         AuthorisationResponse response = connector.authorise(getCardAuthorisationRequest());
         assertTrue(response.isSuccessful());
     }
@@ -90,10 +86,11 @@ public class WorldpayPaymentProviderTest {
 
     private AuthorisationRequest getCardAuthorisationRequest() {
         Card card = getValidTestCard();
-        String amount = "500";
-
-        String description = "This is the description";
-        return new AuthorisationRequest("chargeId", card, amount, description, aServiceAccount());
+        GatewayAccount gatewayAccount = aServiceAccount();
+        GatewayAccountEntity gatewayAccountEntity = new GatewayAccountEntity(gatewayAccount.getGatewayName(), gatewayAccount.getCredentials());
+        gatewayAccountEntity.setId(gatewayAccount.getId());
+        ChargeEntity chargeEntity = new ChargeEntity(500L, ChargeStatus.CREATED.getValue(), "", "", "This is the description", "reference", gatewayAccountEntity);
+        return new AuthorisationRequest(chargeEntity, card);
     }
 
     private GatewayAccount aServiceAccount() {
@@ -112,7 +109,12 @@ public class WorldpayPaymentProviderTest {
     }
 
     private CaptureRequest getCaptureRequest() {
-        return new CaptureRequest("500", randomUUID().toString(), aServiceAccount());
+        GatewayAccount gatewayAccount = aServiceAccount();
+        GatewayAccountEntity gatewayAccountEntity = new GatewayAccountEntity(gatewayAccount.getGatewayName(), gatewayAccount.getCredentials());
+        gatewayAccountEntity.setId(gatewayAccount.getId());
+        ChargeEntity charge = new ChargeEntity(500L, ChargeStatus.CREATED.getValue(), randomUUID().toString(), "", "", "", gatewayAccountEntity);
+
+        return CaptureRequest.valueOf(charge);
     }
 
     private void mockWorldpayErrorResponse(int httpStatus) {

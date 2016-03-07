@@ -8,9 +8,7 @@ import uk.gov.pay.connector.model.AuthorisationRequest;
 import uk.gov.pay.connector.model.AuthorisationResponse;
 import uk.gov.pay.connector.model.CaptureRequest;
 import uk.gov.pay.connector.model.CaptureResponse;
-import uk.gov.pay.connector.model.domain.Address;
-import uk.gov.pay.connector.model.domain.Card;
-import uk.gov.pay.connector.model.domain.GatewayAccount;
+import uk.gov.pay.connector.model.domain.*;
 import uk.gov.pay.connector.service.smartpay.SmartpayPaymentProvider;
 
 import javax.ws.rs.client.Client;
@@ -19,6 +17,7 @@ import javax.ws.rs.client.Invocation;
 import javax.ws.rs.client.WebTarget;
 import javax.ws.rs.core.Response;
 
+import static java.util.UUID.randomUUID;
 import static javax.ws.rs.core.MediaType.APPLICATION_XML;
 import static org.hamcrest.CoreMatchers.notNullValue;
 import static org.hamcrest.MatcherAssert.assertThat;
@@ -54,16 +53,18 @@ public class SmartpayPaymentProviderTest {
     @Test
     public void shouldCaptureAPaymentSuccessfully() throws Exception {
         mockSmartpaySuccessfulCaptureResponse();
-        CaptureResponse response = provider.capture(new CaptureRequest("5000", "transaction-id", aServiceAccount()));
+        CaptureResponse response = provider.capture(getCaptureRequest());
         assertTrue(response.isSuccessful());
     }
 
     private AuthorisationRequest getCardAuthorisationRequest() {
         Card card = getValidTestCard();
-        String amount = "222";
 
-        String description = "This is the description";
-        return new AuthorisationRequest("chargeId", card, amount, description, aServiceAccount());
+        GatewayAccountEntity gatewayAccountEntity = new GatewayAccountEntity(aServiceAccount().getGatewayName(), aServiceAccount().getCredentials());
+        gatewayAccountEntity.setId(aServiceAccount().getId());
+        ChargeEntity chargeEntity = new ChargeEntity(222L, ChargeStatus.CREATED.getValue(), "", "", "This is the description", "reference", gatewayAccountEntity);
+
+        return new AuthorisationRequest(chargeEntity, card);
     }
 
     private GatewayAccount aServiceAccount() {
@@ -71,6 +72,15 @@ public class SmartpayPaymentProviderTest {
                 "username", "theUsername",
                 "password", "thePassword"
         ));
+    }
+
+    private CaptureRequest getCaptureRequest() {
+        GatewayAccount gatewayAccount = aServiceAccount();
+        GatewayAccountEntity gatewayAccountEntity = new GatewayAccountEntity(gatewayAccount.getGatewayName(), gatewayAccount.getCredentials());
+        gatewayAccountEntity.setId(gatewayAccount.getId());
+        ChargeEntity charge = new ChargeEntity(5000L, ChargeStatus.CREATED.getValue(), "transaction-id", "", "", "", gatewayAccountEntity);
+
+        return CaptureRequest.valueOf(charge);
     }
 
     private void mockSmartpaySuccessfulOrderSubmitResponse() {
