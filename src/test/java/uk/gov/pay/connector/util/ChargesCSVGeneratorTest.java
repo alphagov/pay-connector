@@ -1,45 +1,68 @@
 package uk.gov.pay.connector.util;
 
-import com.google.common.collect.ImmutableMap;
-import com.google.common.collect.Maps;
 import org.junit.Test;
+import uk.gov.pay.connector.model.domain.ChargeEntity;
+import uk.gov.pay.connector.model.domain.GatewayAccountEntity;
 
-import java.util.ArrayList;
-import java.util.Map;
+import java.util.HashMap;
 
-import static org.junit.Assert.assertEquals;
+import static com.google.common.collect.Lists.newArrayList;
+import static org.hamcrest.core.Is.is;
+import static org.junit.Assert.assertThat;
 
 public class ChargesCSVGeneratorTest {
 
-    private static final Map chargeMap = Maps.newHashMap(ImmutableMap.<String, String>builder()
-            .put("reference", "ref")
-            .put("charge_id", "100")
-            .put("gateway_transaction_id", "200")
-            .put("gateway_account_id", "300")
-            .put("amount", "400")
-            .put("created_date", "10/10/2016")
-            .put("status", "Status")
-            .put("payment_provider", "Provider")
-            .put("description", "Description")
-            .build());
-    private static final Map chargeMap_2 = Maps.newHashMap(ImmutableMap.of(
-            "reference", "ref-2",
-            "charge_id", "chargeid-2",
-            "gateway_transaction_id", "trans-2"
-            ));
+    @Test
+    public void shouldGenerateCsvOnlyWithHeadersWhenListOfChargesIsEmpty() throws Exception {
+
+        String generatedCsv = ChargesCSVGenerator.generate(newArrayList());
+        String expectedOutput = "Service Payment Reference,Amount,Status,Gateway Transaction ID,GOV.UK Pay ID,Date Created\n";
+
+        assertThat(generatedCsv, is(expectedOutput));
+    }
 
     @Test
-    public void testGenerateWithMappedHeaders() throws Exception {
-        ArrayList<Map<String, Object>> objectMapList = new ArrayList<>();
+    public void shouldGenerateCsvForACharge() throws Exception {
 
-        objectMapList.add(chargeMap);
-        objectMapList.add(chargeMap_2);
+        GatewayAccountEntity gatewayAccount = new GatewayAccountEntity("Provider", new HashMap<String, String>() {{
+            put("username", "bla");
+            put("password", "meh");
+        }});
+        gatewayAccount.setId(4000L);
 
-        String generate = ChargesCSVGenerator.generate(objectMapList);
+        ChargeEntity charge = new ChargeEntity(14000L, "CREATED", "222", "http://return.url.com", "A description", "reference", gatewayAccount);
+        charge.setId(1001L);
+
+        String generatedCsv = ChargesCSVGenerator.generate(newArrayList(charge));
+
+        String expectedDate = DateTimeUtils.toUTCDateString(charge.getCreatedDate());
         String expectedOutput = "Service Payment Reference,Amount,Status,Gateway Transaction ID,GOV.UK Pay ID,Date Created\n" +
-                                "ref,4.00,Status,200,100,10/10/2016\n" +
-                                "ref-2,,,trans-2,chargeid-2,\n";
-        
-        assertEquals(expectedOutput, generate);
+                "reference,140.00,CREATED,222,1001," + expectedDate + "\n";
+
+        assertThat(generatedCsv, is(expectedOutput));
+    }
+
+    @Test
+    public void shouldGenerateCsvForMultipleCharges() throws Exception {
+
+        GatewayAccountEntity gatewayAccount = new GatewayAccountEntity("Provider", null);
+        gatewayAccount.setId(300L);
+        ChargeEntity charge1 = new ChargeEntity(400L, "CREATED", "200", null, "A description", "ref", gatewayAccount);
+        String expectedDateCharge1 = DateTimeUtils.toUTCDateString(charge1.getCreatedDate());
+        charge1.setId(100L);
+
+
+        GatewayAccountEntity gatewayAccount2 = new GatewayAccountEntity("SmartPay", null);
+        gatewayAccount.setId(600L);
+        ChargeEntity charge2 = new ChargeEntity(200L, "READY_FOR_CAPTURE", null, null, "Another description", "ref-2", gatewayAccount2);
+        String expectedDateCharge2 = DateTimeUtils.toUTCDateString(charge2.getCreatedDate());
+        charge2.setId(101L);
+
+        String generate = ChargesCSVGenerator.generate(newArrayList(charge1, charge2));
+        String expectedOutput = "Service Payment Reference,Amount,Status,Gateway Transaction ID,GOV.UK Pay ID,Date Created\n" +
+                "ref,4.00,CREATED,200,100," + expectedDateCharge1 + "\n" +
+                "ref-2,2.00,IN PROGRESS,,101," + expectedDateCharge2 + "\n";
+
+        assertThat(generate, is(expectedOutput));
     }
 }

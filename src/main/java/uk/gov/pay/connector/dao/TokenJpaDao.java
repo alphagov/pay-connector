@@ -68,4 +68,12 @@ public class TokenJpaDao extends JpaDao<TokenEntity> implements ITokenDao {
                 .getResultList().stream()
                 .findFirst();
     }
+
+    public Optional<TokenEntity> findTokenByChargeId(Long chargeId) {
+        return entityManager.get()
+                .createQuery("SELECT t FROM TokenEntity t WHERE t.chargeId = :chargeId", TokenEntity.class)
+                .setParameter("chargeId", chargeId)
+                .getResultList().stream()
+                .findFirst();
+    }
 }

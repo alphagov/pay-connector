@@ -5,9 +5,7 @@ import com.google.common.collect.ImmutableMap;
 import org.slf4j.Logger;
 
 import javax.ws.rs.core.Response;
-import java.net.URI;
 import java.util.List;
-import java.util.Map;
 
 import static java.lang.String.format;
 import static javax.ws.rs.core.Response.*;
@@ -61,13 +59,5 @@ public class ResponseUtil {
 
     private static Response responseWithEntity(Status status, Object entity) {
         return status(status).entity(entity).build();
-    }
-
-    public static Response entityCreatedResponse(URI selfUri, Map<String, Object> responseData) {
-        return created(selfUri).entity(responseData).build();
-    }
-
-    public static Response entityResponse(Map<String, Object> responseData) {
-        return ok(responseData).build();
     }
 }
