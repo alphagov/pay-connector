@@ -245,5 +245,4 @@ public class ChargeServiceTest {
 
         return expectedChargeEntity;
     }
-
 }
