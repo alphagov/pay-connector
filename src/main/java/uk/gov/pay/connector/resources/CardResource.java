@@ -1,9 +1,9 @@
 package uk.gov.pay.connector.resources;
 
 import fj.F;
+import org.apache.commons.lang3.math.NumberUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import uk.gov.pay.connector.dao.PayDBIException;
 import uk.gov.pay.connector.model.GatewayError;
 import uk.gov.pay.connector.model.GatewayResponse;
 import uk.gov.pay.connector.model.domain.Card;
@@ -34,6 +34,7 @@ public class CardResource {
     @Consumes(APPLICATION_JSON)
     @Produces(APPLICATION_JSON)
     public Response authoriseCharge(@PathParam("chargeId") Long chargeId, Card cardDetails) {
+
         if (!isWellFormattedCardDetails(cardDetails)) {
             return badRequestResponse(logger, "Values do not match expected format/length.");
         }
@@ -48,7 +49,8 @@ public class CardResource {
     @Path(FRONTEND_CAPTURE_RESOURCE)
     @Consumes(APPLICATION_JSON)
     @Produces(APPLICATION_JSON)
-    public Response captureCharge(@PathParam("chargeId") Long chargeId) throws PayDBIException {
+    public Response captureCharge(@PathParam("chargeId") Long chargeId) {
+
         return reduce(
                 cardService
                         .doCapture(chargeId)

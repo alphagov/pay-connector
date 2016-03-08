@@ -217,7 +217,7 @@ public class ChargesFrontendResourceITest {
                 .withAccountId(invalidAccRef)
                 .getTransactions();
 
-        response.statusCode(BAD_REQUEST.getStatusCode())
+        response.statusCode(NOT_FOUND.getStatusCode())
                 .contentType(JSON)
                 .body("message", is(format("invalid gateway account reference %s", invalidAccRef)));
     }

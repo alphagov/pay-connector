@@ -14,11 +14,12 @@ import static com.google.common.collect.Lists.newArrayList;
 import static org.hamcrest.core.Is.is;
 import static org.junit.Assert.assertThat;
 import static org.mockito.Mockito.*;
+import static uk.gov.pay.connector.dao.ChargeSearch.aChargeSearch;
 import static uk.gov.pay.connector.model.domain.ChargeStatus.CREATED;
 import static uk.gov.pay.connector.model.domain.ChargeStatus.READY_FOR_CAPTURE;
 
 @RunWith(MockitoJUnitRunner.class)
-public class ChargeSearchQueryTest {
+public class ChargeSearchTest {
 
     private static final Long GATEWAY_ACCOUNT_ID = 12345L;
     private static final String REFERENCE = "reference";
@@ -44,7 +45,7 @@ public class ChargeSearchQueryTest {
 
         when(entityManagerMock.createQuery(expectedTypedQuery, ChargeEntity.class)).thenReturn(queryMock);
 
-        TypedQuery<ChargeEntity> typedQuery = new ChargeSearchQuery(GATEWAY_ACCOUNT_ID)
+        TypedQuery<ChargeEntity> typedQuery = aChargeSearch(GATEWAY_ACCOUNT_ID)
                 .withReferenceLike(REFERENCE)
                 .withStatusIn(CREATED, READY_FOR_CAPTURE)
                 .withCreatedDateFrom(FROM_DATE)
@@ -71,7 +72,7 @@ public class ChargeSearchQueryTest {
 
         when(entityManagerMock.createQuery(expectedTypedQuery, ChargeEntity.class)).thenReturn(queryMock);
 
-        TypedQuery<ChargeEntity> typedQuery = new ChargeSearchQuery(GATEWAY_ACCOUNT_ID)
+        TypedQuery<ChargeEntity> typedQuery = aChargeSearch(GATEWAY_ACCOUNT_ID)
                 .apply(entityManagerMock);
 
         assertThat(typedQuery, is(queryMock));
@@ -91,7 +92,7 @@ public class ChargeSearchQueryTest {
 
         when(entityManagerMock.createQuery(expectedTypedQuery, ChargeEntity.class)).thenReturn(queryMock);
 
-        TypedQuery<ChargeEntity> typedQuery = new ChargeSearchQuery(GATEWAY_ACCOUNT_ID)
+        TypedQuery<ChargeEntity> typedQuery = aChargeSearch(GATEWAY_ACCOUNT_ID)
                 .withReferenceLike(REFERENCE)
                 .apply(entityManagerMock);
 
@@ -113,7 +114,7 @@ public class ChargeSearchQueryTest {
 
         when(entityManagerMock.createQuery(expectedTypedQuery, ChargeEntity.class)).thenReturn(queryMock);
 
-        TypedQuery<ChargeEntity> typedQuery = new ChargeSearchQuery(GATEWAY_ACCOUNT_ID)
+        TypedQuery<ChargeEntity> typedQuery = aChargeSearch(GATEWAY_ACCOUNT_ID)
                 .withStatusIn(CREATED)
                 .apply(entityManagerMock);
 
@@ -135,7 +136,7 @@ public class ChargeSearchQueryTest {
 
         when(entityManagerMock.createQuery(expectedTypedQuery, ChargeEntity.class)).thenReturn(queryMock);
 
-        TypedQuery<ChargeEntity> typedQuery = new ChargeSearchQuery(GATEWAY_ACCOUNT_ID)
+        TypedQuery<ChargeEntity> typedQuery = aChargeSearch(GATEWAY_ACCOUNT_ID)
                 .withCreatedDateFrom(FROM_DATE)
                 .apply(entityManagerMock);
 
@@ -157,7 +158,7 @@ public class ChargeSearchQueryTest {
 
         when(entityManagerMock.createQuery(expectedTypedQuery, ChargeEntity.class)).thenReturn(queryMock);
 
-        TypedQuery<ChargeEntity> typedQuery = new ChargeSearchQuery(GATEWAY_ACCOUNT_ID)
+        TypedQuery<ChargeEntity> typedQuery = aChargeSearch(GATEWAY_ACCOUNT_ID)
                 .withCreatedDateTo(TO_DATE)
                 .apply(entityManagerMock);
 
@@ -171,6 +172,6 @@ public class ChargeSearchQueryTest {
 
     @Test(expected = NullPointerException.class)
     public void shouldFailWhenGatewayAccountIsNotSpecified() {
-        new ChargeSearchQuery(null).apply(entityManagerMock);
+        aChargeSearch(null).apply(entityManagerMock);
     }
 }

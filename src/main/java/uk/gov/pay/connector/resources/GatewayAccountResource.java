@@ -8,7 +8,7 @@ import com.google.inject.persist.Transactional;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import uk.gov.pay.connector.app.ConnectorConfiguration;
-import uk.gov.pay.connector.dao.GatewayAccountJpaDao;
+import uk.gov.pay.connector.dao.GatewayAccountDao;
 import uk.gov.pay.connector.model.domain.GatewayAccountEntity;
 
 import javax.inject.Inject;
@@ -43,11 +43,11 @@ public class GatewayAccountResource {
     private static final Logger logger = LoggerFactory.getLogger(GatewayAccountResource.class);
 
 
-    private final GatewayAccountJpaDao gatewayDao;
+    private final GatewayAccountDao gatewayDao;
     private final Map<String, List<String>> providerCredentialFields;
 
     @Inject
-    public GatewayAccountResource(GatewayAccountJpaDao gatewayDao, ConnectorConfiguration conf) {
+    public GatewayAccountResource(GatewayAccountDao gatewayDao, ConnectorConfiguration conf) {
         this.gatewayDao = gatewayDao;
         providerCredentialFields = newHashMap();
         providerCredentialFields.put("worldpay", conf.getWorldpayConfig().getCredentials());

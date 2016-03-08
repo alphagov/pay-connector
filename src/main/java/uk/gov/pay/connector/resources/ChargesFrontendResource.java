@@ -3,7 +3,7 @@ package uk.gov.pay.connector.resources;
 import com.google.common.collect.ImmutableList;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import uk.gov.pay.connector.dao.IChargeDao;
+import uk.gov.pay.connector.dao.ChargeDao;
 import uk.gov.pay.connector.model.ChargeResponse;
 import uk.gov.pay.connector.model.domain.ChargeEntity;
 import uk.gov.pay.connector.model.domain.ChargeStatus;
@@ -22,20 +22,22 @@ import static com.google.common.collect.Lists.newArrayList;
 import static javax.ws.rs.HttpMethod.GET;
 import static javax.ws.rs.HttpMethod.POST;
 import static javax.ws.rs.core.MediaType.APPLICATION_JSON;
+import static uk.gov.pay.connector.model.ChargeResponse.Builder.aChargeResponse;
 import static uk.gov.pay.connector.model.domain.ChargeStatus.*;
 import static uk.gov.pay.connector.resources.ApiPaths.*;
-import static uk.gov.pay.connector.model.ChargeResponse.Builder.aChargeResponse;
 import static uk.gov.pay.connector.util.ResponseUtil.*;
 
 @Path("/")
 public class ChargesFrontendResource {
-    private static final String PUT_CHARGE_STATUS_FRONTEND_PATH = CHARGE_FRONTEND_PATH + "/status";
 
+    private static final String PUT_CHARGE_STATUS_FRONTEND_PATH = CHARGE_FRONTEND_PATH + "/status";
     private static final Logger logger = LoggerFactory.getLogger(ChargesFrontendResource.class);
-    private final IChargeDao chargeDao;
+    private static final List<ChargeStatus> CURRENT_STATUSES_ALLOWING_UPDATE_TO_NEW_STATUS = newArrayList(CREATED, ENTERING_CARD_DETAILS);
+
+    private final ChargeDao chargeDao;
 
     @Inject
-    public ChargesFrontendResource(IChargeDao chargeDao) {
+    public ChargesFrontendResource(ChargeDao chargeDao) {
         this.chargeDao = chargeDao;
     }
 
@@ -75,13 +77,15 @@ public class ChargesFrontendResource {
         if (!isValidStateTransition(newChargeStatus)) {
             return badRequestResponse(logger, "charge with id: " + chargeId + " cant be updated to the new state: " + newChargeStatus.getValue());
         }
-
-        List<ChargeStatus> oldStatuses = newArrayList(CREATED, ENTERING_CARD_DETAILS);
-        int rowsUpdated = chargeDao.updateNewStatusWhereOldStatusIn(chargeId, newChargeStatus, oldStatuses);
-        if (rowsUpdated == 0) {
-            return badRequestResponse(logger, "charge with id: " + chargeId + " cant be updated to the new state: " + newChargeStatus.getValue());
-        }
-        return noContentResponse();
+        return chargeDao.findById(Long.valueOf(chargeId))
+                .map(chargeEntity -> {
+                    if (CURRENT_STATUSES_ALLOWING_UPDATE_TO_NEW_STATUS.contains(chargeStatusFrom(chargeEntity.getStatus()))) {
+                        chargeEntity.setStatus(newChargeStatus);
+                        chargeDao.mergeAndNotifyStatusHasChanged(chargeEntity);
+                        return noContentResponse();
+                    }
+                    return badRequestResponse(logger, "charge with id: " + chargeId + " cant be updated to the new state: " + newChargeStatus.getValue());
+                }).get();
     }
 
     private boolean isValidStateTransition(ChargeStatus newChargeStatus) {

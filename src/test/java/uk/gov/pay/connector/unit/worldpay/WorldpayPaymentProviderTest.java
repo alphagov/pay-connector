@@ -89,7 +89,8 @@ public class WorldpayPaymentProviderTest {
         GatewayAccountEntity gatewayAccount = aServiceAccount();
         GatewayAccountEntity gatewayAccountEntity = new GatewayAccountEntity(gatewayAccount.getGatewayName(), gatewayAccount.getCredentials());
         gatewayAccountEntity.setId(gatewayAccount.getId());
-        ChargeEntity chargeEntity = new ChargeEntity(1L, 500L, ChargeStatus.CREATED.getValue(), "", "", "This is the description", "reference", gatewayAccountEntity);
+        ChargeEntity chargeEntity = new ChargeEntity(500L, ChargeStatus.CREATED.getValue(), "", "", "This is the description", "reference", gatewayAccountEntity);
+        chargeEntity.setId(1L);
         return new AuthorisationRequest(chargeEntity, card);
     }
 
@@ -116,8 +117,8 @@ public class WorldpayPaymentProviderTest {
         GatewayAccountEntity gatewayAccount = aServiceAccount();
         GatewayAccountEntity gatewayAccountEntity = new GatewayAccountEntity(gatewayAccount.getGatewayName(), gatewayAccount.getCredentials());
         gatewayAccountEntity.setId(gatewayAccount.getId());
-        ChargeEntity charge = new ChargeEntity(1L, 500L, ChargeStatus.CREATED.getValue(), randomUUID().toString(), "", "", "", gatewayAccountEntity);
-
+        ChargeEntity charge = new ChargeEntity(500L, ChargeStatus.CREATED.getValue(), randomUUID().toString(), "", "", "", gatewayAccountEntity);
+        charge.setId(1L);
         return CaptureRequest.valueOf(charge);
     }
 

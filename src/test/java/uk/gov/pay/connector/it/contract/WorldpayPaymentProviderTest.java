@@ -72,8 +72,8 @@ public class WorldpayPaymentProviderTest {
 
         GatewayAccountEntity gatewayAccountEntity = new GatewayAccountEntity(validGatewayAccount.getGatewayName(), validGatewayAccount.getCredentials());
         gatewayAccountEntity.setId(validGatewayAccount.getId());
-        ChargeEntity charge = new ChargeEntity(1L, 500L, ChargeStatus.CREATED.getValue(), randomUUID().toString(), "", "", "", gatewayAccountEntity);
-
+        ChargeEntity charge = new ChargeEntity(500L, ChargeStatus.CREATED.getValue(), randomUUID().toString(), "", "", "", gatewayAccountEntity);
+        charge.setId(1L);
         CaptureResponse response = connector.capture(CaptureRequest.valueOf(charge));
 
         assertTrue(response.isSuccessful());
@@ -86,8 +86,8 @@ public class WorldpayPaymentProviderTest {
 
         GatewayAccountEntity gatewayAccountEntity = new GatewayAccountEntity(validGatewayAccount.getGatewayName(), validGatewayAccount.getCredentials());
         gatewayAccountEntity.setId(validGatewayAccount.getId());
-        ChargeEntity charge = new ChargeEntity(1L, 500L, ChargeStatus.CREATED.getValue(), response.getTransactionId(), "", "", "", gatewayAccountEntity);
-
+        ChargeEntity charge = new ChargeEntity(500L, ChargeStatus.CREATED.getValue(), response.getTransactionId(), "", "", "", gatewayAccountEntity);
+        charge.setId(1L);
         CancelRequest cancelRequest = CancelRequest.valueOf(charge);
         CancelResponse cancelResponse = connector.cancel(cancelRequest);
 
@@ -131,8 +131,8 @@ public class WorldpayPaymentProviderTest {
 
         GatewayAccountEntity gatewayAccountEntity = new GatewayAccountEntity(providerName, credentials);
         gatewayAccountEntity.setId(gatewayAccountId);
-        ChargeEntity chargeEntity = new ChargeEntity(1L, 500L, ChargeStatus.CREATED.getValue(), "", "", "a description", "reference", gatewayAccountEntity);
-
+        ChargeEntity chargeEntity = new ChargeEntity(500L, ChargeStatus.CREATED.getValue(), "", "", "a description", "reference", gatewayAccountEntity);
+        chargeEntity.setId(1L);
         AuthorisationRequest request = new AuthorisationRequest(chargeEntity, aValidCard());
         AuthorisationResponse response = connector.authorise(request);
 
@@ -143,8 +143,8 @@ public class WorldpayPaymentProviderTest {
         Card card = aValidCard();
         GatewayAccountEntity gatewayAccountEntity = new GatewayAccountEntity(validGatewayAccount.getGatewayName(), validGatewayAccount.getCredentials());
         gatewayAccountEntity.setId(validGatewayAccount.getId());
-        ChargeEntity chargeEntity = new ChargeEntity(1L, 500L, ChargeStatus.CREATED.getValue(), "", "", "This is the description", "reference", gatewayAccountEntity);
-
+        ChargeEntity chargeEntity = new ChargeEntity(500L, ChargeStatus.CREATED.getValue(), "", "", "This is the description", "reference", gatewayAccountEntity);
+        chargeEntity.setId(1L);
         return new AuthorisationRequest(chargeEntity, card);
     }
 

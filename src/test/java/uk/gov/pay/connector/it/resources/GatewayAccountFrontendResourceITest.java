@@ -14,14 +14,14 @@ import static org.junit.Assert.assertThat;
 
 public class GatewayAccountFrontendResourceITest extends GatewayAccountResourceTestBase {
 
-    private Gson gson =  new Gson();
+    private Gson gson = new Gson();
 
     @Test
     public void shouldGetCredentialsForExistingAccount() {
         String accountId = createAGatewayAccountFor("worldpay");
         ImmutableMap<String, String> credentials = ImmutableMap.of("username", "a-username", "password", "a-password", "merchant_id", "a-merchant-id");
 
-        app.getDatabaseTestHelper().updateCredentialsFor(accountId,  gson.toJson(credentials));
+        app.getDatabaseTestHelper().updateCredentialsFor(accountId, gson.toJson(credentials));
 
         givenSetup().accept(JSON)
                 .get(ACCOUNTS_FRONTEND_URL + accountId)
@@ -88,7 +88,7 @@ public class GatewayAccountFrontendResourceITest extends GatewayAccountResourceT
                 .then()
                 .statusCode(200);
 
-        Map<String, String> currentCredentials = app.getDatabaseTestHelper().getAccountCredentials(accountId);
+        Map<String, String> currentCredentials = app.getDatabaseTestHelper().getAccountCredentials(Long.valueOf(accountId));
         assertThat(currentCredentials.get("username"), is(specialUserName));
         assertThat(currentCredentials.get("password"), is(specialPassword));
     }
@@ -172,7 +172,7 @@ public class GatewayAccountFrontendResourceITest extends GatewayAccountResourceT
                 .then()
                 .statusCode(200);
 
-        Map<String, String> currentCredentials = app.getDatabaseTestHelper().getAccountCredentials(accountId);
+        Map<String, String> currentCredentials = app.getDatabaseTestHelper().getAccountCredentials(Long.valueOf(accountId));
         assertThat(currentCredentials, is(expectedCredentials));
     }
 }

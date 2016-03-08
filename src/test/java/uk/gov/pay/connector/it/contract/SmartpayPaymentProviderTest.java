@@ -87,8 +87,8 @@ public class SmartpayPaymentProviderTest {
 
         GatewayAccountEntity gatewayAccountEntity = new GatewayAccountEntity(validGatewayAccount.getGatewayName(), validGatewayAccount.getCredentials());
         gatewayAccountEntity.setId(validGatewayAccount.getId());
-        ChargeEntity charge = new ChargeEntity(1L, Long.valueOf(CHARGE_AMOUNT), ChargeStatus.CREATED.getValue(), response.getTransactionId(), "", "", "", gatewayAccountEntity);
-
+        ChargeEntity charge = new ChargeEntity(Long.valueOf(CHARGE_AMOUNT), ChargeStatus.CREATED.getValue(), response.getTransactionId(), "", "", "", gatewayAccountEntity);
+        charge.setId(1L);
 
         CaptureResponse captureResponse = paymentProvider.capture(CaptureRequest.valueOf(charge));
         assertTrue(captureResponse.isSuccessful());
@@ -102,8 +102,8 @@ public class SmartpayPaymentProviderTest {
 
         GatewayAccountEntity gatewayAccountEntity = new GatewayAccountEntity(validGatewayAccount.getGatewayName(), validGatewayAccount.getCredentials());
         gatewayAccountEntity.setId(validGatewayAccount.getId());
-        ChargeEntity charge = new ChargeEntity(1L, Long.valueOf(CHARGE_AMOUNT), ChargeStatus.CREATED.getValue(), response.getTransactionId(), "", "", "", gatewayAccountEntity);
-
+        ChargeEntity charge = new ChargeEntity(Long.valueOf(CHARGE_AMOUNT), ChargeStatus.CREATED.getValue(), response.getTransactionId(), "", "", "", gatewayAccountEntity);
+        charge.setId(1L);
         CancelResponse cancelResponse = paymentProvider.cancel(CancelRequest.valueOf(charge));
         assertTrue(cancelResponse.isSuccessful());
         assertNull(cancelResponse.getError());
@@ -161,8 +161,8 @@ public class SmartpayPaymentProviderTest {
 
         GatewayAccountEntity gatewayAccountEntity = new GatewayAccountEntity(gatewayAccount.getGatewayName(), gatewayAccount.getCredentials());
         gatewayAccountEntity.setId(gatewayAccount.getId());
-        ChargeEntity chargeEntity = new ChargeEntity(1L, Long.valueOf(CHARGE_AMOUNT), ChargeStatus.CREATED.getValue(), "", "", "This is the description", "reference", gatewayAccountEntity);
-
+        ChargeEntity chargeEntity = new ChargeEntity(Long.valueOf(CHARGE_AMOUNT), ChargeStatus.CREATED.getValue(), "", "", "This is the description", "reference", gatewayAccountEntity);
+        chargeEntity.setId(1L);
         return new AuthorisationRequest(chargeEntity, card);
     }
 

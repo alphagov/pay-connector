@@ -2,6 +2,7 @@ package uk.gov.pay.connector.resources;
 
 import fj.data.Either;
 import org.apache.commons.lang3.tuple.Pair;
+import uk.gov.pay.connector.dao.GatewayAccountDao;
 import uk.gov.pay.connector.util.DateTimeUtils;
 
 import java.util.List;
@@ -34,11 +35,13 @@ public class ApiValidators {
         return Optional.empty();
     }
 
-    public static Either<String, Boolean> validateGatewayAccountReference(String gatewayAccountId) {
+    public static Either<String, Boolean> validateGatewayAccountReference(GatewayAccountDao gatewayAccountDao, String gatewayAccountId) {
         if (isBlank(gatewayAccountId)) {
             return left("missing gateway account reference");
         } else if (!isNumber(gatewayAccountId)) {
             return left(format("invalid gateway account reference %s", gatewayAccountId));
+        } else if (!gatewayAccountDao.findById(Long.valueOf(gatewayAccountId)).isPresent()) {
+            return left(format("account with id %s not found", gatewayAccountId));
         }
         return right(true);
     }

@@ -3,21 +3,14 @@ package uk.gov.pay.connector.resources;
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableMap;
 import fj.F;
-import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.lang3.tuple.Pair;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import uk.gov.pay.connector.app.ConnectorConfiguration;
-import uk.gov.pay.connector.app.LinksConfig;
-import uk.gov.pay.connector.dao.ChargeJpaDao;
-import uk.gov.pay.connector.dao.ChargeSearchQuery;
-import uk.gov.pay.connector.dao.GatewayAccountJpaDao;
-import uk.gov.pay.connector.dao.TokenJpaDao;
+import uk.gov.pay.connector.dao.ChargeDao;
+import uk.gov.pay.connector.dao.GatewayAccountDao;
 import uk.gov.pay.connector.model.ChargeResponse;
 import uk.gov.pay.connector.model.api.ExternalChargeStatus;
 import uk.gov.pay.connector.model.domain.ChargeEntity;
-import uk.gov.pay.connector.model.domain.TokenEntity;
-import uk.gov.pay.connector.model.ChargeResponse.Builder;
 import uk.gov.pay.connector.service.ChargeService;
 import uk.gov.pay.connector.util.ChargesCSVGenerator;
 
@@ -26,8 +19,7 @@ import javax.ws.rs.*;
 import javax.ws.rs.core.Context;
 import javax.ws.rs.core.Response;
 import javax.ws.rs.core.UriInfo;
-import java.net.URI;
-import java.net.URISyntaxException;
+import java.time.ZonedDateTime;
 import java.util.Arrays;
 import java.util.List;
 import java.util.Map;
@@ -36,18 +28,18 @@ import java.util.function.Function;
 import java.util.stream.Collectors;
 
 import static fj.data.Either.reduce;
-import static java.lang.String.format;
-import static javax.ws.rs.HttpMethod.GET;
 import static javax.ws.rs.core.MediaType.APPLICATION_JSON;
 import static javax.ws.rs.core.Response.Status.BAD_REQUEST;
 import static javax.ws.rs.core.Response.created;
 import static javax.ws.rs.core.Response.ok;
+import static org.apache.commons.lang3.StringUtils.isNotBlank;
+import static uk.gov.pay.connector.dao.ChargeSearch.aChargeSearch;
+import static uk.gov.pay.connector.model.ChargeResponse.Builder.aChargeResponse;
 import static uk.gov.pay.connector.model.api.ExternalChargeStatus.mapFromStatus;
 import static uk.gov.pay.connector.model.api.ExternalChargeStatus.valueOfExternalStatus;
 import static uk.gov.pay.connector.resources.ApiPaths.CHARGES_API_PATH;
 import static uk.gov.pay.connector.resources.ApiPaths.CHARGE_API_PATH;
 import static uk.gov.pay.connector.resources.ApiValidators.validateGatewayAccountReference;
-import static uk.gov.pay.connector.model.ChargeResponse.Builder.aChargeResponse;
 import static uk.gov.pay.connector.util.ResponseUtil.*;
 
 @Path("/")
@@ -67,28 +59,24 @@ public class ChargesResource {
     public static final String TO_DATE_KEY = "to_date";
     private final String TEXT_CSV = "text/csv";
 
-    private ChargeJpaDao chargeDao;
-    private TokenJpaDao tokenDao;
-    private GatewayAccountJpaDao gatewayAccountDao;
+    private ChargeDao chargeDao;
+    private GatewayAccountDao gatewayAccountDao;
     private ChargeService chargeService;
-    private LinksConfig linksConfig;
 
     private static final Logger logger = LoggerFactory.getLogger(ChargesResource.class);
 
     @Inject
-    public ChargesResource(ChargeJpaDao chargeDao, TokenJpaDao tokenDao, GatewayAccountJpaDao gatewayAccountDao, ChargeService chargeService, ConnectorConfiguration configuration) {
+    public ChargesResource(ChargeDao chargeDao, GatewayAccountDao gatewayAccountDao, ChargeService chargeService) {
         this.chargeDao = chargeDao;
-        this.tokenDao = tokenDao;
         this.gatewayAccountDao = gatewayAccountDao;
         this.chargeService = chargeService;
-        this.linksConfig = configuration.getLinks();
     }
 
     @GET
     @Path(CHARGE_API_PATH)
     @Produces(APPLICATION_JSON)
     public Response getCharge(@PathParam("accountId") String accountId, @PathParam("chargeId") String chargeId, @Context UriInfo uriInfo) {
-        return chargeService.findChargeForAccount(Long.valueOf(chargeId), accountId, uriInfo)
+        return chargeService.findChargeForAccount(Long.valueOf(chargeId), Long.valueOf(accountId), uriInfo)
                 .map(chargeResponse -> Response.ok(chargeResponse).build())
                 .orElseGet(() -> responseWithChargeNotFound(logger, chargeId));
     }
@@ -102,16 +90,11 @@ public class ChargesResource {
                                    @QueryParam(FROM_DATE_KEY) String fromDate,
                                    @QueryParam(TO_DATE_KEY) String toDate,
                                    @Context UriInfo uriInfo) {
-
-        Optional<String> errorMessageOptional = ApiValidators.validateDateQueryParams(ImmutableList.of(
-                Pair.of(FROM_DATE_KEY, fromDate),
-                Pair.of(TO_DATE_KEY, toDate)
-        ));
-        return errorMessageOptional
+        return ApiValidators
+                .validateDateQueryParams(ImmutableList.of(Pair.of(FROM_DATE_KEY, fromDate), Pair.of(TO_DATE_KEY, toDate)))
                 .map(errorMessage -> badRequestResponse(logger, errorMessage))
-                .orElseGet(() ->
-                        reduce(validateGatewayAccountReference(accountId)
-                                .bimap(handleError, listChargesResponse(accountId, reference, status, fromDate, toDate, jsonResponse()))));
+                .orElseGet(() -> reduce(validateGatewayAccountReference(gatewayAccountDao, accountId)
+                        .bimap(handleError, listCharges(accountId, reference, status, fromDate, toDate, jsonResponse()))));
     }
 
     @GET
@@ -123,17 +106,22 @@ public class ChargesResource {
                                   @QueryParam(FROM_DATE_KEY) String fromDate,
                                   @QueryParam(TO_DATE_KEY) String toDate,
                                   @Context UriInfo uriInfo) {
-
-        Optional<String> errorMessageOptional = ApiValidators.validateDateQueryParams(ImmutableList.of(
-                Pair.of(FROM_DATE_KEY, fromDate),
-                Pair.of(TO_DATE_KEY, toDate)
-        ));
-        return errorMessageOptional
+        return ApiValidators
+                .validateDateQueryParams(ImmutableList.of(Pair.of(FROM_DATE_KEY, fromDate), Pair.of(TO_DATE_KEY, toDate)))
                 .map(errorMessage -> Response.status(BAD_REQUEST).entity(errorMessage).build())
-                .orElseGet(() ->
-                        reduce(validateGatewayAccountReference(accountId)
-                                .bimap(handleError, listChargesResponse(accountId, reference, status, fromDate, toDate, csvResponse()))));
+                .orElseGet(() -> reduce(validateGatewayAccountReference(gatewayAccountDao, accountId)
+                        .bimap(handleError, listCharges(accountId, reference, status, fromDate, toDate, csvResponse()))));
+    }
 
+    private F<Boolean, Response> listCharges(String accountId, String reference, String status, String fromDate, String toDate, Function<List<ChargeEntity>, Response> responseFunction) {
+        return success -> {
+            List<ChargeEntity> charges = chargeDao.findAllBy(aChargeSearch(Long.valueOf(accountId))
+                    .withReferenceLike(reference)
+                    .withExternalStatus(parseStatus(status))
+                    .withCreatedDateFrom(parseDate(fromDate))
+                    .withCreatedDateTo(parseDate(toDate)));
+            return responseFunction.apply(charges);
+        };
     }
 
     @POST
@@ -157,7 +145,23 @@ public class ChargesResource {
                     logger.info("responseData = {}", response);
                     return created(response.getLink("self")).entity(response).build();
                 })
-                .orElse(notFoundResponse(logger, "Unknown gateway account: " + accountId));
+                .orElseGet(() -> notFoundResponse(logger, "Unknown gateway account: " + accountId));
+    }
+
+    private ExternalChargeStatus parseStatus(String status) {
+        ExternalChargeStatus chargeStatus = null;
+        if (isNotBlank(status)) {
+            chargeStatus = valueOfExternalStatus(status);
+        }
+        return chargeStatus;
+    }
+
+    private ZonedDateTime parseDate(String date) {
+        ZonedDateTime parse = null;
+        if (isNotBlank(date)) {
+            parse = ZonedDateTime.parse(date);
+        }
+        return parse;
     }
 
     private Optional<List<String>> checkMissingFields(Map<String, Object> inputData) {
@@ -186,22 +190,6 @@ public class ChargesResource {
         return value.length() <= fieldSize;
     }
 
-    private F<Boolean, Response> listChargesResponse(final String accountId, String reference, String status, String fromDate, String toDate, Function<List<ChargeEntity>, Response> responseFunction) {
-        return success -> {
-
-            List<ChargeEntity> charges = getChargesForCriteriaJpa(accountId, reference, status, fromDate, toDate);
-
-            if (charges.isEmpty()) {
-                logger.info("no charges found for given filter");
-                if (!gatewayAccountDao.findById(Long.valueOf(accountId)).isPresent()) {
-                    return notFoundResponse(logger, format("account with id %s not found", accountId));
-                }
-            }
-
-            return responseFunction.apply(charges);
-        };
-    }
-
     private Function<List<ChargeEntity>, Response> jsonResponse() {
         return charges -> ok(ImmutableMap.of("results", charges.stream()
                 .map(charge -> aChargeResponse()
@@ -220,21 +208,6 @@ public class ChargesResource {
         return charges -> ok(ChargesCSVGenerator.generate(charges)).build();
     }
 
-    private List<ChargeEntity> getChargesForCriteriaJpa(String accountId, String reference, String status, String fromDate, String toDate) {
-        ExternalChargeStatus chargeStatus = null;
-        if (StringUtils.isNotBlank(status)) {
-            chargeStatus = valueOfExternalStatus(status);
-        }
-
-        ChargeSearchQuery searchQuery = new ChargeSearchQuery(new Long(accountId));
-        searchQuery.withReferenceLike(reference);
-        searchQuery.withExternalStatus(chargeStatus);
-        searchQuery.withCreatedDateFrom(fromDate);
-        searchQuery.withCreatedDateTo(toDate);
-
-        return chargeDao.findAllBy(searchQuery);
-    }
-
     private static F<String, Response> handleError =
-            errorMessage -> badRequestResponse(logger, errorMessage);
+            errorMessage -> notFoundResponse(logger, errorMessage);
 }

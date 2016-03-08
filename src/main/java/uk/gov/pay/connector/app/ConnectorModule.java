@@ -6,7 +6,6 @@ import com.google.inject.Provides;
 import com.google.inject.persist.jpa.JpaPersistModule;
 import io.dropwizard.db.DataSourceFactory;
 import io.dropwizard.setup.Environment;
-import uk.gov.pay.connector.dao.*;
 
 import java.util.Properties;
 
@@ -23,12 +22,6 @@ public class ConnectorModule extends AbstractModule {
     protected void configure() {
         bind(ConnectorConfiguration.class).toInstance(configuration);
         bind(Environment.class).toInstance(environment);
-
-        bind(ITokenDao.class).to(TokenJpaDao.class);
-        bind(IChargeDao.class).to(ChargeJpaDao.class);
-        bind(IEventDao.class).to(EventJpaDao.class);
-        bind(IGatewayAccountDao.class).to(GatewayAccountJpaDao.class);
-
         install(jpaModule(configuration));
     }
 

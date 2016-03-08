@@ -61,8 +61,8 @@ public class SmartpayPaymentProviderTest {
 
         GatewayAccountEntity gatewayAccountEntity = new GatewayAccountEntity(aServiceAccount().getGatewayName(), aServiceAccount().getCredentials());
         gatewayAccountEntity.setId(aServiceAccount().getId());
-        ChargeEntity chargeEntity = new ChargeEntity(1L, 222L, ChargeStatus.CREATED.getValue(), "", "", "This is the description", "reference", gatewayAccountEntity);
-
+        ChargeEntity chargeEntity = new ChargeEntity(222L, ChargeStatus.CREATED.getValue(), "", "", "This is the description", "reference", gatewayAccountEntity);
+        chargeEntity.setId(1L);
         return new AuthorisationRequest(chargeEntity, card);
     }
 
@@ -82,8 +82,8 @@ public class SmartpayPaymentProviderTest {
         GatewayAccountEntity gatewayAccount = aServiceAccount();
         GatewayAccountEntity gatewayAccountEntity = new GatewayAccountEntity(gatewayAccount.getGatewayName(), gatewayAccount.getCredentials());
         gatewayAccountEntity.setId(gatewayAccount.getId());
-        ChargeEntity charge = new ChargeEntity(1L, 5000L, ChargeStatus.CREATED.getValue(), "transaction-id", "", "", "", gatewayAccountEntity);
-
+        ChargeEntity charge = new ChargeEntity(5000L, ChargeStatus.CREATED.getValue(), "transaction-id", "", "", "", gatewayAccountEntity);
+        charge.setId(1L);
         return CaptureRequest.valueOf(charge);
     }
 

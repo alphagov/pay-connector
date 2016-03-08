@@ -2,9 +2,7 @@ package uk.gov.pay.connector.resources;
 
 import com.google.common.collect.ImmutableMap;
 import com.google.inject.Inject;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
-import uk.gov.pay.connector.dao.EventJpaDao;
+import uk.gov.pay.connector.dao.EventDao;
 import uk.gov.pay.connector.model.domain.ChargeEventEntity;
 import uk.gov.pay.connector.model.domain.ChargeEventExternal;
 
@@ -25,10 +23,10 @@ import static uk.gov.pay.connector.resources.ApiPaths.CHARGE_EVENTS_API_PATH;
 @Path("/")
 public class ChargeEventsResource {
 
-    private EventJpaDao eventDao;
+    private EventDao eventDao;
 
     @Inject
-    public ChargeEventsResource(EventJpaDao eventDao) {
+    public ChargeEventsResource(EventDao eventDao) {
         this.eventDao = eventDao;
     }
 
@@ -36,7 +34,7 @@ public class ChargeEventsResource {
     @Path(CHARGE_EVENTS_API_PATH)
     @Produces(APPLICATION_JSON)
     public Response getEvents(@PathParam("accountId") Long accountId, @PathParam("chargeId") Long chargeId) {
-        List<ChargeEventEntity> events = eventDao.findEventsEntities(accountId, chargeId);
+        List<ChargeEventEntity> events = eventDao.findEvents(accountId, chargeId);
         List<ChargeEventExternal> eventsExternal = transformToExternalStatus(events);
         List<ChargeEventExternal> nonRepeatingExternalChargeEvents = getNonRepeatingChargeEvents(eventsExternal);
 

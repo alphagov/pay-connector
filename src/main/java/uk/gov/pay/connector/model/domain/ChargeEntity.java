@@ -7,6 +7,8 @@ import javax.persistence.*;
 import java.time.ZoneId;
 import java.time.ZonedDateTime;
 
+import static uk.gov.pay.connector.model.domain.ChargeStatus.*;
+
 @Entity
 @Table(name = "charges")
 @SequenceGenerator(name = "charges_charge_id_seq", sequenceName = "charges_charge_id_seq", allocationSize = 1)
@@ -54,9 +56,17 @@ public class ChargeEntity extends AbstractEntity {
         //for jpa
     }
 
-    public ChargeEntity(Long id, Long amount, String status, String gatewayTransactionId,
-                        String returnUrl, String description, String reference, GatewayAccountEntity gatewayAccount) {
-        super(id);
+    public ChargeEntity(Long amount, String returnUrl, String description, String reference, GatewayAccountEntity gatewayAccount) {
+        this.amount = amount;
+        this.status = CREATED.getValue();
+        this.returnUrl = returnUrl;
+        this.description = description;
+        this.reference = reference;
+        this.gatewayAccount = gatewayAccount;
+        this.createdDate = ZonedDateTime.now(ZoneId.of("UTC"));
+    }
+
+    public ChargeEntity(Long amount, String status, String gatewayTransactionId, String returnUrl, String description, String reference, GatewayAccountEntity gatewayAccount) {
         this.amount = amount;
         this.status = status;
         this.gatewayTransactionId = gatewayTransactionId;
@@ -119,7 +129,7 @@ public class ChargeEntity extends AbstractEntity {
         this.gatewayAccount = gatewayAccount;
     }
 
-    public boolean isAssociatedTo(String accountId){
-        return this.getGatewayAccount().getId().toString().equals(accountId);
+    public boolean isAssociatedTo(Long accountId){
+        return this.getGatewayAccount().getId().compareTo(accountId) == 0;
     }
 }
