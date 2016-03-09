@@ -26,11 +26,13 @@ import java.util.EnumSet;
 
 public class ConnectorApp extends Application<ConnectorConfiguration> {
 
+    public static final boolean NON_STRICT_VARIABLE_SUBSTITUTOR = false;
+
     @Override
     public void initialize(Bootstrap<ConnectorConfiguration> bootstrap) {
         bootstrap.setConfigurationSourceProvider(
                 new SubstitutingSourceProvider(bootstrap.getConfigurationSourceProvider(),
-                        new EnvironmentVariableSubstitutor()
+                        new EnvironmentVariableSubstitutor(NON_STRICT_VARIABLE_SUBSTITUTOR)
                 )
         );
 

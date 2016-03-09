@@ -24,6 +24,10 @@ public class ConnectorConfiguration extends Configuration {
 
     @Valid
     @NotNull
+    private JPAConfiguration jpaConfiguration;
+
+    @Valid
+    @NotNull
     private LinksConfig links = new LinksConfig();
 
     @Valid
@@ -53,6 +57,11 @@ public class ConnectorConfiguration extends Configuration {
     @JsonProperty("smartpay")
     public SmartpayCredentialsConfig getSmartpayConfig() {
         return smartpayConfig;
+    }
+
+    @JsonProperty("jpa")
+    public JPAConfiguration getJpaConfiguration() {
+        return jpaConfiguration;
     }
 
     public JerseyClientConfiguration getClientConfiguration() {
