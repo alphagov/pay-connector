@@ -6,12 +6,12 @@ import org.slf4j.LoggerFactory;
 import uk.gov.pay.connector.model.GatewayError;
 import uk.gov.pay.connector.model.domain.GatewayAccount;
 import uk.gov.pay.connector.util.XMLUnmarshaller;
+import uk.gov.pay.connector.util.XMLUnmarshallerException;
 
 import javax.ws.rs.ProcessingException;
 import javax.ws.rs.client.Client;
 import javax.ws.rs.client.Entity;
 import javax.ws.rs.core.Response;
-import javax.xml.bind.JAXBException;
 import java.net.SocketException;
 import java.net.SocketTimeoutException;
 import java.net.UnknownHostException;
@@ -51,7 +51,7 @@ public class GatewayClient {
                             account.getCredentials().get(CREDENTIALS_PASSWORD)))
                     .post(Entity.xml(request));
             int statusCode = response.getStatus();
-            if(statusCode == OK.getStatusCode()) {
+            if (statusCode == OK.getStatusCode()) {
                 return right(response);
             } else {
                 logger.error(format("Gateway returned unexpected status code: %d, for gateway url=%s", statusCode, gatewayUrl));
@@ -59,7 +59,7 @@ public class GatewayClient {
             }
         } catch (ProcessingException pe) {
             if (pe.getCause() != null) {
-                if(pe.getCause() instanceof UnknownHostException) {
+                if (pe.getCause() instanceof UnknownHostException) {
                     logger.error(format("DNS resolution error for gateway url=%s", gatewayUrl), pe);
                     return left(unknownHostException("Gateway Url DNS resolution error"));
                 }
@@ -74,8 +74,7 @@ public class GatewayClient {
             }
             logger.error(format("Exception for gateway url=%s", gatewayUrl), pe);
             return left(baseGatewayError(pe.getMessage()));
-        }
-        catch(Exception e) {
+        } catch (Exception e) {
             logger.error(format("Exception for gateway url=%s", gatewayUrl), e);
             return left(baseGatewayError(e.getMessage()));
         }
@@ -86,7 +85,7 @@ public class GatewayClient {
         logger.debug("response payload=" + payload);
         try {
             return right(XMLUnmarshaller.unmarshall(payload, clazz));
-        } catch (JAXBException e) {
+        } catch (XMLUnmarshallerException e) {
             String error = format("Could not unmarshall response %s.", payload);
             logger.error(error, e);
             return left(malformedResponseReceivedFromGateway("Invalid Response Received From Gateway"));

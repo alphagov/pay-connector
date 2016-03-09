@@ -12,10 +12,9 @@ import uk.gov.pay.connector.model.domain.ChargeStatus;
 import uk.gov.pay.connector.model.domain.GatewayAccount;
 import uk.gov.pay.connector.service.GatewayClient;
 import uk.gov.pay.connector.service.PaymentProvider;
-import uk.gov.pay.connector.service.ChargeStatusBlacklist;
+import uk.gov.pay.connector.util.XMLUnmarshallerException;
 
 import javax.ws.rs.core.Response;
-import javax.xml.bind.JAXBException;
 import java.util.Optional;
 import java.util.function.Consumer;
 import java.util.function.Function;
@@ -98,7 +97,7 @@ public class WorldpayPaymentProvider implements PaymentProvider {
                         notification.setChargeStatus(WorldpayStatusesMapper.mapToChargeStatus(notification.getStatus()));
                         return notification;
                     });
-        } catch (JAXBException e) {
+        } catch (XMLUnmarshallerException e) {
             logger.error(format("Could not deserialise worldpay response %s", inboundNotification), e);
             return Optional.empty();
         }
