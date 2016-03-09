@@ -48,7 +48,7 @@ public class ChargeService {
     public ChargeResponse create(Map<String, Object> chargeRequest, GatewayAccountEntity gatewayAccount, UriInfo uriInfo) {
 
         ChargeEntity chargeEntity =
-                new ChargeEntity(new Long(chargeRequest.get("amount").toString()),
+                new ChargeEntity(null, new Long(chargeRequest.get("amount").toString()),
                         CREATED.getValue(),
                         null,
                         chargeRequest.get("return_url").toString(),

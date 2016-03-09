@@ -4,20 +4,15 @@ import com.google.inject.persist.Transactional;
 import fj.data.Either;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import uk.gov.pay.connector.dao.IChargeDao;
 import uk.gov.pay.connector.dao.ChargeJpaDao;
 import uk.gov.pay.connector.dao.GatewayAccountJpaDao;
-import uk.gov.pay.connector.dao.IGatewayAccountDao;
 import uk.gov.pay.connector.model.*;
 import uk.gov.pay.connector.model.domain.Card;
 import uk.gov.pay.connector.model.domain.ChargeEntity;
 import uk.gov.pay.connector.model.domain.ChargeStatus;
-import uk.gov.pay.connector.model.domain.GatewayAccountEntity;
-import uk.gov.pay.connector.model.domain.*;
 
 import javax.inject.Inject;
 import java.util.Arrays;
-import java.util.Optional;
 import java.util.function.Function;
 import java.util.function.Supplier;
 
@@ -25,9 +20,6 @@ import static fj.data.Either.left;
 import static fj.data.Either.right;
 import static java.lang.String.format;
 import static org.apache.commons.lang3.StringUtils.equalsIgnoreCase;
-import static uk.gov.pay.connector.model.GatewayError.baseGatewayError;
-import static uk.gov.pay.connector.model.CancelRequest.cancelRequest;
-import static uk.gov.pay.connector.model.CaptureRequest.captureRequest;
 import static uk.gov.pay.connector.model.GatewayError.*;
 import static uk.gov.pay.connector.model.GatewayErrorType.ChargeNotFound;
 import static uk.gov.pay.connector.model.domain.ChargeStatus.*;
@@ -95,9 +87,9 @@ public class CardService {
     }
 
     private Either<GatewayError, AuthorisationResponse> authorise(ChargeEntity charge, Card cardDetails) {
-        PaymentProvider paymentProvider = paymentProviderFor(charge);
-        AuthorisationRequest request = authorisationRequest(charge.getId(), charge.getAmount(), cardDetails);
-        AuthorisationResponse response = paymentProvider.authorise(request);
+        AuthorisationRequest request = new AuthorisationRequest(charge, cardDetails);
+        AuthorisationResponse response = paymentProviderFor(charge)
+                .authorise(request);
         return right(response);
     }
 
@@ -130,16 +122,10 @@ public class CardService {
                 left(captureErrorMessageFor(charge.getStatus()));
     }
 
-    private Function<ChargeEntity, Either<GatewayError, GatewayResponse>> authorise(Card cardDetails) {
-        return charge -> hasStatus(charge, ENTERING_CARD_DETAILS) ?
-                right(authoriseFor(cardDetails, charge)) :
-                left(authoriseErrorMessageFor(charge.getId()));
-    }
-
     private Function<ChargeEntity, Either<GatewayError, GatewayResponse>> cancel() {
         return charge -> hasStatus(charge, CANCELLABLE_STATES) ?
                 right(cancelFor(charge)) :
-                left(cancelErrorMessageFor(String.valueOf(charge.getId()), charge.getStatus()));
+                left(cancelErrorMessageFor(charge.getId(), charge.getStatus()));
     }
 
     private GatewayResponse captureFor(ChargeEntity charge) {
@@ -158,21 +144,6 @@ public class CardService {
         return response;
     }
 
-    private GatewayResponse authoriseFor(Card cardDetails, ChargeEntity charge) {
-
-        AuthorisationRequest request = new AuthorisationRequest(charge, cardDetails);
-        AuthorisationResponse response = paymentProviderFor(charge)
-                .authorise(request);
-
-        if (response.getNewChargeStatus() != null) {
-            charge.setStatus(response.getNewChargeStatus());
-            charge.setGatewayTransactionId(response.getTransactionId());
-            chargeDao.mergeChargeEntityWithChangedStatus(charge);
-        }
-
-        return response;
-    }
-
     private GatewayResponse cancelFor(ChargeEntity charge) {
         CancelRequest request = CancelRequest.valueOf(charge);
         CancelResponse response = paymentProviderFor(charge).cancel(request);
@@ -185,25 +156,7 @@ public class CardService {
     }
 
     private PaymentProvider paymentProviderFor(ChargeEntity charge) {
-        Optional<GatewayAccountEntity> maybeAccount = accountDao.findById(charge.getGatewayAccount().getId());
-        return providers.resolve(maybeAccount.get().getGatewayName());
-    }
-
-    private AuthorisationRequest authorisationRequest(Long chargeId, Long amountValue, Card card) {
-        return new AuthorisationRequest(chargeId.toString(), card, amountValue.toString(),
-                "This is the description", getValidAccountForCharge().apply(chargeId));
-    }
-
-    private Function<Long, GatewayAccountEntity> getValidAccountForCharge() {
-        return chargeId -> {
-            GatewayAccountEntity gatewayAccount = findAccountByCharge(chargeId);
-            if (gatewayAccount == null) {
-                String errorMessage = String.format("No account exists for this charge %s.", chargeId);
-                logger.error(errorMessage);
-                throw new RuntimeException(errorMessage);
-            }
-            return gatewayAccount;
-        };
+        return providers.resolve(charge.getGatewayAccount().getGatewayName());
     }
 
     private boolean hasStatus(ChargeEntity charge, ChargeStatus... states) {
@@ -213,10 +166,6 @@ public class CardService {
 
     private GatewayError captureErrorMessageFor(String currentStatus) {
         return baseGatewayError(format("Cannot capture a charge with status %s.", currentStatus));
-    }
-
-    private GatewayError authoriseErrorMessageFor(Long chargeId) {
-        return baseGatewayError(format("Charge not in correct state to be processed, %d", chargeId));
     }
 
     private GatewayError cancelErrorMessageFor(Long chargeId, String status) {

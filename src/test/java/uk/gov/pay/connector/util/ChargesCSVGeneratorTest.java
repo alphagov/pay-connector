@@ -30,8 +30,7 @@ public class ChargesCSVGeneratorTest {
         }});
         gatewayAccount.setId(4000L);
 
-        ChargeEntity charge = new ChargeEntity(14000L, "CREATED", "222", "http://return.url.com", "A description", "reference", gatewayAccount);
-        charge.setId(1001L);
+        ChargeEntity charge = new ChargeEntity(1001L, 14000L, "CREATED", "222", "http://return.url.com", "A description", "reference", gatewayAccount);
 
         String generatedCsv = ChargesCSVGenerator.generate(newArrayList(charge));
 
@@ -47,16 +46,15 @@ public class ChargesCSVGeneratorTest {
 
         GatewayAccountEntity gatewayAccount = new GatewayAccountEntity("Provider", null);
         gatewayAccount.setId(300L);
-        ChargeEntity charge1 = new ChargeEntity(400L, "CREATED", "200", null, "A description", "ref", gatewayAccount);
+        ChargeEntity charge1 = new ChargeEntity(null, 400L, "CREATED", "200", null, "A description", "ref", gatewayAccount);
         String expectedDateCharge1 = DateTimeUtils.toUTCDateString(charge1.getCreatedDate());
         charge1.setId(100L);
 
 
         GatewayAccountEntity gatewayAccount2 = new GatewayAccountEntity("SmartPay", null);
         gatewayAccount.setId(600L);
-        ChargeEntity charge2 = new ChargeEntity(200L, "READY_FOR_CAPTURE", null, null, "Another description", "ref-2", gatewayAccount2);
+        ChargeEntity charge2 = new ChargeEntity(101L, 200L, "READY_FOR_CAPTURE", null, null, "Another description", "ref-2", gatewayAccount2);
         String expectedDateCharge2 = DateTimeUtils.toUTCDateString(charge2.getCreatedDate());
-        charge2.setId(101L);
 
         String generate = ChargesCSVGenerator.generate(newArrayList(charge1, charge2));
         String expectedOutput = "Service Payment Reference,Amount,Status,Gateway Transaction ID,GOV.UK Pay ID,Date Created\n" +

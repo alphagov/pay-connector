@@ -121,8 +121,7 @@ public class ChargeServiceTest {
         String returnUrl = "return_url";
         String description = "test_description";
         String reference = "reference";
-        ChargeEntity newCharge = new ChargeEntity(1000L, ChargeStatus.CREATED.getValue(),null, returnUrl, description, reference, gatewayAccount);
-        newCharge.setId(chargeId);
+        ChargeEntity newCharge = new ChargeEntity(chargeId, 1000L, ChargeStatus.CREATED.getValue(),null, returnUrl, description, reference, gatewayAccount);
 
         String tokenValue = "test_token";
         TokenEntity tokenEntity = new TokenEntity(chargeId, tokenValue);
@@ -150,8 +149,7 @@ public class ChargeServiceTest {
         String returnUrl = "return_url";
         String description = "test_description";
         String reference = "reference";
-        ChargeEntity newCharge = new ChargeEntity(1000L, ChargeStatus.CREATED.getValue(),null, returnUrl, description, reference, gatewayAccount);
-        newCharge.setId(chargeId);
+        ChargeEntity newCharge = new ChargeEntity(chargeId, 1000L, ChargeStatus.CREATED.getValue(),null, returnUrl, description, reference, gatewayAccount);
 
         Optional<ChargeEntity> chargeEntity = Optional.of(newCharge);
 
