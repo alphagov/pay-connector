@@ -54,6 +54,11 @@ public class ResponseUtil {
         return responseWithMessageMap(INTERNAL_SERVER_ERROR, message);
     }
 
+    public static Response conflictErrorResponse(Logger logger, String message) {
+        logger.error(message);
+        return responseWithMessageMap(CONFLICT, message);
+    }
+
     private static Response responseWithMessageMap(Status status, String message) {
         return responseWithEntity(status, ImmutableMap.of("message", message));
     }

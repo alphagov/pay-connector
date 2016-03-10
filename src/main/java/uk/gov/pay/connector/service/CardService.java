@@ -12,6 +12,7 @@ import uk.gov.pay.connector.model.domain.ChargeEntity;
 import uk.gov.pay.connector.model.domain.ChargeStatus;
 
 import javax.inject.Inject;
+import javax.persistence.OptimisticLockException;
 import java.util.Arrays;
 import java.util.function.Function;
 import java.util.function.Supplier;
@@ -21,7 +22,9 @@ import static fj.data.Either.right;
 import static java.lang.String.format;
 import static org.apache.commons.lang3.StringUtils.equalsIgnoreCase;
 import static uk.gov.pay.connector.model.GatewayError.*;
-import static uk.gov.pay.connector.model.GatewayErrorType.ChargeNotFound;
+import static uk.gov.pay.connector.model.GatewayError.illegalStateError;
+import static uk.gov.pay.connector.model.GatewayError.operationAlreadyInProgress;
+import static uk.gov.pay.connector.model.GatewayErrorType.CHARGE_NOT_FOUND;
 import static uk.gov.pay.connector.model.domain.ChargeStatus.*;
 
 public class CardService {
@@ -46,7 +49,14 @@ public class CardService {
 
         Function<ChargeEntity, Either<GatewayError, GatewayResponse>> doAuthorise =
                 (charge) -> {
-                    Either<GatewayError, ChargeEntity> preAuthorised = preAuthorise(charge);
+                    Either<GatewayError, ChargeEntity> preAuthorised = null;
+
+                    try {
+                        preAuthorised = preAuthorise(charge);
+                    } catch (OptimisticLockException e) {
+                        return left(conflictError(format("Authorisation for charge conflicting, %s", chargeId)));
+                    }
+
                     if (preAuthorised.isLeft())
                         return left(preAuthorised.left().value());
 
@@ -173,6 +183,6 @@ public class CardService {
     }
 
     private Supplier<Either<GatewayError, GatewayResponse>> chargeNotFound(Long chargeId) {
-        return () -> left(new GatewayError(format("Charge with id [%s] not found.", chargeId), ChargeNotFound));
+        return () -> left(new GatewayError(format("Charge with id [%s] not found.", chargeId), CHARGE_NOT_FOUND));
     }
 }

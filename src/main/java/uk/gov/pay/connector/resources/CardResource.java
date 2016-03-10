@@ -70,17 +70,19 @@ public class CardResource {
     private F<GatewayError, Response> handleError =
             (error) -> {
                 switch (error.getErrorType()) {
-                    case ChargeNotFound:
+                    case CHARGE_NOT_FOUND:
                         return notFoundResponse(logger, error.getMessage());
-                    case UnexpectedStatusCodeFromGateway:
-                    case MalformedResponseReceivedFromGateway:
-                    case GatewayUrlDnsError:
-                    case GatewayConnectionTimeoutError:
-                    case GatewayConnectionSocketError:
-                    case IllegalStateError:
+                    case UNEXPECTED_STATUS_CODE_FROM_GATEWAY:
+                    case MALFORMED_RESPONSE_RECEIVED_FROM_GATEWAY:
+                    case GATEWAY_URL_DNS_ERROR:
+                    case GATEWAY_CONNECTION_TIMEOUT_ERROR:
+                    case GATEWAY_CONNECTION_SOCKET_ERROR:
+                    case ILLEGAL_STATE_ERROR:
                         return serviceErrorResponse(logger, error.getMessage());
-                    case OperationAlreadyInProgress:
-                    return acceptedResponse(logger, error.getMessage());
+                    case OPERATION_ALREADY_IN_PROGRESS:
+                        return acceptedResponse(logger, error.getMessage());
+                    case CONFLICT_ERROR:
+                        return conflictErrorResponse(logger, error.getMessage());
                 }
 
                 return badRequestResponse(logger, error.getMessage());

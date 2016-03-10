@@ -99,7 +99,7 @@ public class ChargeJpaDao extends JpaDao<ChargeEntity> implements IChargeDao {
     public Optional<ChargeEntity> findChargeForAccount(Long chargeId, Long accountId) {
         TypedQuery<ChargeEntity> query = entityManager.get()
                 .createQuery("select c from ChargeEntity c "
-                        + "join GatewayAccountEntity ga "
+                        + "join c.gatewayAccount ga "
                         + "where c.id = :chargeId "
                         + "and ga.id = :accountId", ChargeEntity.class);
 
