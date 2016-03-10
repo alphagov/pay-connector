@@ -23,7 +23,7 @@ import static uk.gov.pay.connector.model.domain.ChargeStatus.CREATED;
 
 public class ChargeCancelResourceITest {
     private static final List<ChargeStatus> CANCELLABLE_STATES = ImmutableList.of(
-            CREATED, ENTERING_CARD_DETAILS, AUTHORISATION_SUCCESS, AUTHORISATION_SUBMITTED, READY_FOR_CAPTURE
+            CREATED, ENTERING_CARD_DETAILS, AUTHORISATION_SUCCESS, AUTHORISATION_READY, READY_FOR_CAPTURE
     );
 
     private String accountId = "66757943593456";
@@ -93,28 +93,28 @@ public class ChargeCancelResourceITest {
     @Test
     public void respondWith400__IfAccountIdIsMissing() {
         String chargeId = createNewChargeWithStatus(CREATED);
-        String expectedMessage = "Invalid account Id";
+        String expectedMessage = "HTTP 404 Not Found";
 
         restApiCall
-                .withAccountId("---garbage---")
+                .withAccountId("")
                 .withChargeId(chargeId)
                 .postChargeCancellation()
-                .statusCode(BAD_REQUEST.getStatusCode())
+                .statusCode(NOT_FOUND.getStatusCode())
                 .and()
                 .contentType(JSON)
                 .body("message", is(expectedMessage));
     }
 
     @Test
-    public void respondWith400__IfAccountIdIsNonNumeric() {
+    public void respondWith404__IfAccountIdIsNonNumeric() {
         String chargeId = createNewChargeWithStatus(CREATED);
-        String expectedMessage = "Invalid account Id";
+        String expectedMessage = "HTTP 404 Not Found";
 
         restApiCall
                 .withAccountId("ABSDCEFG")
                 .withChargeId(chargeId)
                 .postChargeCancellation()
-                .statusCode(BAD_REQUEST.getStatusCode())
+                .statusCode(NOT_FOUND.getStatusCode())
                 .and()
                 .contentType(JSON)
                 .body("message", is(expectedMessage));

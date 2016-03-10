@@ -17,7 +17,6 @@ import javax.ws.rs.client.Invocation;
 import javax.ws.rs.client.WebTarget;
 import javax.ws.rs.core.Response;
 
-import static java.util.UUID.randomUUID;
 import static javax.ws.rs.core.MediaType.APPLICATION_XML;
 import static org.hamcrest.CoreMatchers.notNullValue;
 import static org.hamcrest.MatcherAssert.assertThat;
@@ -62,23 +61,28 @@ public class SmartpayPaymentProviderTest {
 
         GatewayAccountEntity gatewayAccountEntity = new GatewayAccountEntity(aServiceAccount().getGatewayName(), aServiceAccount().getCredentials());
         gatewayAccountEntity.setId(aServiceAccount().getId());
-        ChargeEntity chargeEntity = new ChargeEntity(222L, ChargeStatus.CREATED.getValue(), "", "", "This is the description", "reference", gatewayAccountEntity);
+        ChargeEntity chargeEntity = new ChargeEntity(1L, 222L, ChargeStatus.CREATED.getValue(), "", "", "This is the description", "reference", gatewayAccountEntity);
 
         return new AuthorisationRequest(chargeEntity, card);
     }
 
-    private GatewayAccount aServiceAccount() {
-        return new GatewayAccount(1L, "smartpay", ImmutableMap.of(
+    private GatewayAccountEntity aServiceAccount() {
+        GatewayAccountEntity gatewayAccount = new GatewayAccountEntity();
+        gatewayAccount.setId(1L);
+        gatewayAccount.setGatewayName("smartpay");
+        gatewayAccount.setCredentials(ImmutableMap.of(
                 "username", "theUsername",
                 "password", "thePassword"
         ));
+
+        return gatewayAccount;
     }
 
     private CaptureRequest getCaptureRequest() {
-        GatewayAccount gatewayAccount = aServiceAccount();
+        GatewayAccountEntity gatewayAccount = aServiceAccount();
         GatewayAccountEntity gatewayAccountEntity = new GatewayAccountEntity(gatewayAccount.getGatewayName(), gatewayAccount.getCredentials());
         gatewayAccountEntity.setId(gatewayAccount.getId());
-        ChargeEntity charge = new ChargeEntity(5000L, ChargeStatus.CREATED.getValue(), "transaction-id", "", "", "", gatewayAccountEntity);
+        ChargeEntity charge = new ChargeEntity(1L, 5000L, ChargeStatus.CREATED.getValue(), "transaction-id", "", "", "", gatewayAccountEntity);
 
         return CaptureRequest.valueOf(charge);
     }

@@ -7,6 +7,7 @@ import uk.gov.pay.connector.dao.PayDBIException;
 import uk.gov.pay.connector.model.StatusUpdates;
 import uk.gov.pay.connector.model.domain.ChargeStatus;
 import uk.gov.pay.connector.model.domain.GatewayAccount;
+import uk.gov.pay.connector.model.domain.GatewayAccountEntity;
 import uk.gov.pay.connector.service.ChargeStatusBlacklist;
 import uk.gov.pay.connector.service.PaymentProvider;
 import uk.gov.pay.connector.service.PaymentProviders;
@@ -67,11 +68,11 @@ public class NotificationResource {
                 statusUpdates.getStatusUpdates().forEach(update -> updateCharge(chargeDao, provider, update.getKey(), update.getValue()));
     }
 
-    private Function<String, Optional<GatewayAccount>> findAccountByTransactionId(String provider) {
+    private Function<String, Optional<GatewayAccountEntity>> findAccountByTransactionId(String provider) {
         return transactionId ->
                 chargeDao.findByProviderAndTransactionId(provider, transactionId)
                         .map((chargeEntity) ->
-                                Optional.of(GatewayAccount.valueOf(chargeEntity.getGatewayAccount())))
+                                Optional.of(chargeEntity.getGatewayAccount()))
                         .orElseGet(() -> {
                             logger.error("Could not find account for transaction id " + transactionId);
                             return Optional.empty();

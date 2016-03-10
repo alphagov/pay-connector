@@ -12,27 +12,39 @@ public class GatewayError {
     }
 
     public static GatewayError baseGatewayError(String msg) {
-        return new GatewayError(msg, GenericGatewayError);
+        return new GatewayError(msg, GENERIC_GATEWAY_ERROR);
     }
 
     public static GatewayError unexpectedStatusCodeFromGateway(String msg) {
-        return new GatewayError(msg, UnexpectedStatusCodeFromGateway);
+        return new GatewayError(msg, UNEXPECTED_STATUS_CODE_FROM_GATEWAY);
     }
 
     public static GatewayError malformedResponseReceivedFromGateway(String msg) {
-        return new GatewayError(msg, MalformedResponseReceivedFromGateway);
+        return new GatewayError(msg, MALFORMED_RESPONSE_RECEIVED_FROM_GATEWAY);
     }
 
     public static GatewayError unknownHostException(String msg) {
-        return new GatewayError(msg, GatewayUrlDnsError);
+        return new GatewayError(msg, GATEWAY_URL_DNS_ERROR);
     }
 
     public static GatewayError gatewayConnectionTimeoutException(String msg) {
-        return new GatewayError(msg, GatewayConnectionTimeoutError);
+        return new GatewayError(msg, GATEWAY_CONNECTION_TIMEOUT_ERROR);
+    }
+
+    public static GatewayError illegalStateError(String msg) {
+        return new GatewayError(msg, ILLEGAL_STATE_ERROR);
+    }
+
+    public static GatewayError conflictError(String msg) {
+        return new GatewayError(msg, CONFLICT_ERROR);
     }
 
     public static GatewayError gatewayConnectionSocketException(String msg) {
-        return new GatewayError(msg, GatewayConnectionSocketError);
+        return new GatewayError(msg, GATEWAY_CONNECTION_SOCKET_ERROR);
+    }
+
+    public static GatewayError operationAlreadyInProgress(String msg) {
+        return new GatewayError(msg, OPERATION_ALREADY_IN_PROGRESS);
     }
 
     public String getMessage() {

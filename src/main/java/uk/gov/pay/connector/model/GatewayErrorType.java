@@ -1,12 +1,16 @@
 package uk.gov.pay.connector.model;
 
 public enum GatewayErrorType {
-    ChargeNotFound,
-    GenericGatewayError,
-    UnexpectedStatusCodeFromGateway,
-    MalformedResponseReceivedFromGateway,
-    GatewayUrlDnsError,
-    GatewayConnectionTimeoutError,
-    GatewayConnectionSocketError,
-    ;
+    CHARGE_NOT_FOUND,
+
+    ILLEGAL_STATE_ERROR,
+    CONFLICT_ERROR,
+    GENERIC_GATEWAY_ERROR,
+    UNEXPECTED_STATUS_CODE_FROM_GATEWAY,
+    MALFORMED_RESPONSE_RECEIVED_FROM_GATEWAY,
+    GATEWAY_URL_DNS_ERROR,
+    GATEWAY_CONNECTION_TIMEOUT_ERROR,
+    GATEWAY_CONNECTION_SOCKET_ERROR,
+
+    OPERATION_ALREADY_IN_PROGRESS
 }

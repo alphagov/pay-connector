@@ -22,8 +22,8 @@ import static org.junit.Assert.assertTrue;
 import static org.mockito.Matchers.*;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
-import static uk.gov.pay.connector.model.GatewayErrorType.GenericGatewayError;
-import static uk.gov.pay.connector.model.GatewayErrorType.UnexpectedStatusCodeFromGateway;
+import static uk.gov.pay.connector.model.GatewayErrorType.GENERIC_GATEWAY_ERROR;
+import static uk.gov.pay.connector.model.GatewayErrorType.UNEXPECTED_STATUS_CODE_FROM_GATEWAY;
 import static uk.gov.pay.connector.model.domain.Address.anAddress;
 import static uk.gov.pay.connector.model.domain.GatewayAccount.*;
 import static uk.gov.pay.connector.service.GatewayClient.createGatewayClient;
@@ -63,7 +63,7 @@ public class WorldpayPaymentProviderTest {
         AuthorisationResponse response = connector.authorise(getCardAuthorisationRequest());
 
         assertThat(response.isSuccessful(), is(false));
-        assertEquals(response.getError(), new GatewayError("Unexpected Response Code From Gateway", UnexpectedStatusCodeFromGateway));
+        assertEquals(response.getError(), new GatewayError("Unexpected Response Code From Gateway", UNEXPECTED_STATUS_CODE_FROM_GATEWAY));
     }
 
     @Test
@@ -72,7 +72,7 @@ public class WorldpayPaymentProviderTest {
         CaptureResponse response = connector.capture(getCaptureRequest());
 
         assertThat(response.isSuccessful(), is(false));
-        assertEquals(response.getError(), new GatewayError("Order has already been paid", GenericGatewayError));
+        assertEquals(response.getError(), new GatewayError("Order has already been paid", GENERIC_GATEWAY_ERROR));
     }
 
     @Test
@@ -81,24 +81,28 @@ public class WorldpayPaymentProviderTest {
         CaptureResponse response = connector.capture(getCaptureRequest());
 
         assertThat(response.isSuccessful(), is(false));
-        assertEquals(response.getError(), new GatewayError("Unexpected Response Code From Gateway", UnexpectedStatusCodeFromGateway));
+        assertEquals(response.getError(), new GatewayError("Unexpected Response Code From Gateway", UNEXPECTED_STATUS_CODE_FROM_GATEWAY));
     }
 
     private AuthorisationRequest getCardAuthorisationRequest() {
         Card card = getValidTestCard();
-        GatewayAccount gatewayAccount = aServiceAccount();
+        GatewayAccountEntity gatewayAccount = aServiceAccount();
         GatewayAccountEntity gatewayAccountEntity = new GatewayAccountEntity(gatewayAccount.getGatewayName(), gatewayAccount.getCredentials());
         gatewayAccountEntity.setId(gatewayAccount.getId());
-        ChargeEntity chargeEntity = new ChargeEntity(500L, ChargeStatus.CREATED.getValue(), "", "", "This is the description", "reference", gatewayAccountEntity);
+        ChargeEntity chargeEntity = new ChargeEntity(1L, 500L, ChargeStatus.CREATED.getValue(), "", "", "This is the description", "reference", gatewayAccountEntity);
         return new AuthorisationRequest(chargeEntity, card);
     }
 
-    private GatewayAccount aServiceAccount() {
-        return new GatewayAccount(1L, "worldpay", ImmutableMap.of(
-           CREDENTIALS_MERCHANT_ID,"worlpay-merchant",
-           CREDENTIALS_USERNAME,"worldpay-password",
-           CREDENTIALS_PASSWORD,"password"
+    private GatewayAccountEntity aServiceAccount() {
+        GatewayAccountEntity gatewayAccount = new GatewayAccountEntity();
+        gatewayAccount.setId(1L);
+        gatewayAccount.setGatewayName("worldpay");
+        gatewayAccount.setCredentials(ImmutableMap.of(
+                CREDENTIALS_MERCHANT_ID,"worlpay-merchant",
+                CREDENTIALS_USERNAME,"worldpay-password",
+                CREDENTIALS_PASSWORD,"password"
         ));
+        return gatewayAccount;
     }
 
     private void assertEquals(GatewayError actual, GatewayError expected) {
@@ -109,10 +113,10 @@ public class WorldpayPaymentProviderTest {
     }
 
     private CaptureRequest getCaptureRequest() {
-        GatewayAccount gatewayAccount = aServiceAccount();
+        GatewayAccountEntity gatewayAccount = aServiceAccount();
         GatewayAccountEntity gatewayAccountEntity = new GatewayAccountEntity(gatewayAccount.getGatewayName(), gatewayAccount.getCredentials());
         gatewayAccountEntity.setId(gatewayAccount.getId());
-        ChargeEntity charge = new ChargeEntity(500L, ChargeStatus.CREATED.getValue(), randomUUID().toString(), "", "", "", gatewayAccountEntity);
+        ChargeEntity charge = new ChargeEntity(1L, 500L, ChargeStatus.CREATED.getValue(), randomUUID().toString(), "", "", "", gatewayAccountEntity);
 
         return CaptureRequest.valueOf(charge);
     }

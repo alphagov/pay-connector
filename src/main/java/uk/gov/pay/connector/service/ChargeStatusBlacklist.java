@@ -11,6 +11,7 @@ public class ChargeStatusBlacklist {
 
     private static final List<ChargeStatus> blackList = ImmutableList.<ChargeStatus>builder()
             .add(AUTHORISATION_SUBMITTED)
+            .add(AUTHORISATION_READY)
             .add(AUTHORISATION_SUCCESS)
             .add(AUTHORISATION_REJECTED)
             .build();

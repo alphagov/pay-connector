@@ -5,7 +5,17 @@ import org.apache.commons.lang3.StringUtils;
 public enum ChargeStatus {
     CREATED("CREATED"),
     ENTERING_CARD_DETAILS("ENTERING CARD DETAILS"),
+    AUTHORISATION_READY("AUTHORISATION READY"),
+
+    /**
+     * TODO: Remove deprecated AUTHORISATION_SUBMITTED state after refactoring PP-543
+     *
+     * PP-543 Introduce per-provider charge status DTO's and mappings
+     * Upon refactoring charge status SENT_FOR_AUTHORISATION can be mapped to a per-provider DTO status specific
+     * for Worldpay instead of generic common status AUTHORISATION_SUBMITTED.
+     */
     AUTHORISATION_SUBMITTED("AUTHORISATION SUBMITTED"),
+
     AUTHORISATION_SUCCESS("AUTHORISATION SUCCESS"),
     AUTHORISATION_REJECTED("AUTHORISATION REJECTED"),
     READY_FOR_CAPTURE("READY_FOR_CAPTURE"),

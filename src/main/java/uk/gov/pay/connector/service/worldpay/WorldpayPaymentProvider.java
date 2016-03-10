@@ -10,6 +10,7 @@ import org.slf4j.LoggerFactory;
 import uk.gov.pay.connector.model.*;
 import uk.gov.pay.connector.model.domain.ChargeStatus;
 import uk.gov.pay.connector.model.domain.GatewayAccount;
+import uk.gov.pay.connector.model.domain.GatewayAccountEntity;
 import uk.gov.pay.connector.service.GatewayClient;
 import uk.gov.pay.connector.service.PaymentProvider;
 import uk.gov.pay.connector.util.XMLUnmarshallerException;
@@ -106,7 +107,7 @@ public class WorldpayPaymentProvider implements PaymentProvider {
     @Override
     public StatusUpdates handleNotification(String notificationPayload,
                                             Function<ChargeStatusRequest, Boolean> payloadChecks,
-                                            Function<String, Optional<GatewayAccount>> accountFinder,
+                                            Function<String, Optional<GatewayAccountEntity>> accountFinder,
                                             Consumer<StatusUpdates> accountUpdater) {
 
         Optional<WorldpayNotification> notificationMaybe = parseNotification(notificationPayload);
@@ -126,7 +127,7 @@ public class WorldpayPaymentProvider implements PaymentProvider {
                     }
 
                     //phase 2
-                    Optional<GatewayAccount> gatewayAccount = accountFinder.apply(notification.getTransactionId());
+                    Optional<GatewayAccountEntity> gatewayAccount = accountFinder.apply(notification.getTransactionId());
 
                     if (!gatewayAccount.isPresent()) {
                         return NO_UPDATE;
@@ -144,7 +145,7 @@ public class WorldpayPaymentProvider implements PaymentProvider {
 
 //    private StatusUpdates validateStatus
 
-    private StatusUpdates newStatusFromNotification(GatewayAccount gatewayAccount, String transactionId) {
+    private StatusUpdates newStatusFromNotification(GatewayAccountEntity gatewayAccount, String transactionId) {
         InquiryResponse inquiryResponse = inquire(transactionId, gatewayAccount);
         String worldpayStatus = inquiryResponse.getNewStatus();
         if (!inquiryResponse.isSuccessful() || StringUtils.isBlank(worldpayStatus)) {
@@ -163,7 +164,7 @@ public class WorldpayPaymentProvider implements PaymentProvider {
     }
 
 
-    private InquiryResponse inquire(String transactionId, GatewayAccount gatewayAccount) {
+    private InquiryResponse inquire(String transactionId, GatewayAccountEntity gatewayAccount) {
         return reduce(
                 client
                         .postXMLRequestFor(gatewayAccount, buildOrderInquiryFor(gatewayAccount, transactionId))
@@ -202,7 +203,7 @@ public class WorldpayPaymentProvider implements PaymentProvider {
                 .build();
     }
 
-    private String buildOrderInquiryFor(GatewayAccount gatewayAccount, String transactionId) {
+    private String buildOrderInquiryFor(GatewayAccountEntity gatewayAccount, String transactionId) {
         return anOrderInquiryRequest()
                 .withMerchantCode(gatewayAccount.getCredentials().get(CREDENTIALS_MERCHANT_ID))
                 .withTransactionId(transactionId)

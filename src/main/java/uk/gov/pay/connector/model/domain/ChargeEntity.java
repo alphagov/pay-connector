@@ -1,5 +1,6 @@
 package uk.gov.pay.connector.model.domain;
 
+import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonProperty;
 
 import javax.persistence.*;
@@ -27,7 +28,6 @@ public class ChargeEntity extends AbstractEntity {
     @Column(name = "return_url")
     private String returnUrl;
 
-
     @ManyToOne
     @JoinColumn(name = "gateway_account_id", updatable = false)
     private GatewayAccountEntity gatewayAccount;
@@ -45,11 +45,18 @@ public class ChargeEntity extends AbstractEntity {
     @Convert(converter = UTCDateTimeConverter.class)
     private ZonedDateTime createdDate;
 
-    protected ChargeEntity() {
+    @Version
+    @JsonIgnore
+    @Column(name = "version")
+    private Long version;
+
+    public ChargeEntity() {
         //for jpa
     }
 
-    public ChargeEntity(Long amount, String status, String gatewayTransactionId, String returnUrl, String description, String reference, GatewayAccountEntity gatewayAccount) {
+    public ChargeEntity(Long id, Long amount, String status, String gatewayTransactionId,
+                        String returnUrl, String description, String reference, GatewayAccountEntity gatewayAccount) {
+        super(id);
         this.amount = amount;
         this.status = status;
         this.gatewayTransactionId = gatewayTransactionId;
@@ -92,12 +99,24 @@ public class ChargeEntity extends AbstractEntity {
         return createdDate;
     }
 
+    public Long getVersion() {
+        return version;
+    }
+
     public void setStatus(ChargeStatus status) {
         this.status = status.getValue();
     }
 
+    public void setAmount(Long amount) {
+        this.amount = amount;
+    }
+
     public void setGatewayTransactionId(String gatewayTransactionId) {
         this.gatewayTransactionId = gatewayTransactionId;
+    }
+
+    public void setGatewayAccount(GatewayAccountEntity gatewayAccount) {
+        this.gatewayAccount = gatewayAccount;
     }
 
     public boolean isAssociatedTo(String accountId){

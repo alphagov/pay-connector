@@ -2,6 +2,7 @@ package uk.gov.pay.connector.model;
 
 import uk.gov.pay.connector.model.domain.ChargeEntity;
 import uk.gov.pay.connector.model.domain.GatewayAccount;
+import uk.gov.pay.connector.model.domain.GatewayAccountEntity;
 
 public class CaptureRequest {
 
@@ -19,8 +20,8 @@ public class CaptureRequest {
         return charge.getGatewayTransactionId();
     }
 
-    public GatewayAccount getGatewayAccount() {
-        return GatewayAccount.valueOf(charge.getGatewayAccount());
+    public GatewayAccountEntity getGatewayAccount() {
+        return charge.getGatewayAccount();
     }
 
     public static CaptureRequest valueOf(ChargeEntity charge) {

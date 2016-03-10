@@ -1,7 +1,6 @@
 package uk.gov.pay.connector.resources;
 
 import fj.F;
-import org.apache.commons.lang3.math.NumberUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import uk.gov.pay.connector.dao.PayDBIException;
@@ -34,7 +33,7 @@ public class CardResource {
     @Path(FRONTEND_AUTHORIZATION_RESOURCE)
     @Consumes(APPLICATION_JSON)
     @Produces(APPLICATION_JSON)
-    public Response authoriseCharge(@PathParam("chargeId") String chargeId, Card cardDetails) {
+    public Response authoriseCharge(@PathParam("chargeId") Long chargeId, Card cardDetails) {
         if (!isWellFormattedCardDetails(cardDetails)) {
             return badRequestResponse(logger, "Values do not match expected format/length.");
         }
@@ -49,7 +48,7 @@ public class CardResource {
     @Path(FRONTEND_CAPTURE_RESOURCE)
     @Consumes(APPLICATION_JSON)
     @Produces(APPLICATION_JSON)
-    public Response captureCharge(@PathParam("chargeId") String chargeId) throws PayDBIException {
+    public Response captureCharge(@PathParam("chargeId") Long chargeId) throws PayDBIException {
         return reduce(
                 cardService
                         .doCapture(chargeId)
@@ -60,11 +59,7 @@ public class CardResource {
     @POST
     @Path(CANCEL_CHARGE_PATH)
     @Produces(APPLICATION_JSON)
-    public Response cancelCharge(@PathParam("accountId") String accountId, @PathParam("chargeId") String chargeId) {
-        if(!NumberUtils.isNumber(accountId)){
-            return badRequestResponse(logger, "Invalid account Id");
-        }
-
+    public Response cancelCharge(@PathParam("accountId") Long accountId, @PathParam("chargeId") Long chargeId) {
         return reduce(
                 cardService
                         .doCancel(chargeId, accountId)
@@ -75,16 +70,21 @@ public class CardResource {
     private F<GatewayError, Response> handleError =
             (error) -> {
                 switch (error.getErrorType()) {
-                    case ChargeNotFound:
+                    case CHARGE_NOT_FOUND:
                         return notFoundResponse(logger, error.getMessage());
-                    case UnexpectedStatusCodeFromGateway:
-                        return serviceErrorResponse(logger, "Unexpected Response Code From Gateway");
-                    case MalformedResponseReceivedFromGateway:
-                    case GatewayUrlDnsError:
-                    case GatewayConnectionTimeoutError:
-                    case GatewayConnectionSocketError:
+                    case UNEXPECTED_STATUS_CODE_FROM_GATEWAY:
+                    case MALFORMED_RESPONSE_RECEIVED_FROM_GATEWAY:
+                    case GATEWAY_URL_DNS_ERROR:
+                    case GATEWAY_CONNECTION_TIMEOUT_ERROR:
+                    case GATEWAY_CONNECTION_SOCKET_ERROR:
+                    case ILLEGAL_STATE_ERROR:
                         return serviceErrorResponse(logger, error.getMessage());
+                    case OPERATION_ALREADY_IN_PROGRESS:
+                        return acceptedResponse(logger, error.getMessage());
+                    case CONFLICT_ERROR:
+                        return conflictErrorResponse(logger, error.getMessage());
                 }
+
                 return badRequestResponse(logger, error.getMessage());
             };
 

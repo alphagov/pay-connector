@@ -9,11 +9,18 @@ import java.io.Serializable;
 @MappedSuperclass
 public abstract class AbstractEntity implements Serializable {
 
+    public AbstractEntity() {
+        //for jpa
+    }
+
+    public AbstractEntity(Long id) {
+        this.id = id;
+    }
+
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     @JsonIgnore
     private Long id;
-
 
     @JsonProperty
     public Long getId() {

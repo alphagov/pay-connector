@@ -8,10 +8,12 @@ import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 
-public interface IChargeDao {
+public interface IChargeDao extends IJpaDao {
     String saveNewCharge(String gatewayAccountId, Map<String, Object> charge);
 
     Optional<Map<String, Object>> findChargeForAccount(String chargeId, String accountId);
+
+    Optional<ChargeEntity> findChargeForAccount(Long chargeId, Long accountId);
 
     Optional<Map<String, Object>> findById(String chargeId);
 

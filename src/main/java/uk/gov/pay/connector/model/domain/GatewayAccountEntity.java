@@ -14,7 +14,7 @@ public class GatewayAccountEntity extends AbstractEntity {
     public static final String CREDENTIALS_USERNAME = "username";
     public static final String CREDENTIALS_PASSWORD = "password";
 
-    protected GatewayAccountEntity() {
+    public GatewayAccountEntity() {
     }
 
     //TODO: Should we rename the columns to be more consistent?
@@ -44,6 +44,10 @@ public class GatewayAccountEntity extends AbstractEntity {
 
     public Map<String, String> getCredentials() {
         return credentials;
+    }
+
+    public void setGatewayName(String gatewayName) {
+        this.gatewayName = gatewayName;
     }
 
     public void setCredentials(Map<String, String> credentials) {

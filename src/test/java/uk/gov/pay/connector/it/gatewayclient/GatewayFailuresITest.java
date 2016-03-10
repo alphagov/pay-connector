@@ -66,7 +66,7 @@ public class GatewayFailuresITest {
                 .contentType(JSON)
                 .body("message", is(errorMessage));
 
-        assertThat(db.getChargeStatus(CHARGE_ID), is(ENTERING_CARD_DETAILS.getValue()));
+        assertThat(db.getChargeStatus(CHARGE_ID), is(SYSTEM_ERROR.getValue()));
     }
 
     @Test

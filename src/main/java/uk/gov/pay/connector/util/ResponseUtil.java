@@ -39,6 +39,11 @@ public class ResponseUtil {
         return responseWithMessageMap(NOT_FOUND, message);
     }
 
+    public static Response acceptedResponse(Logger logger, String message) {
+        logger.error(message);
+        return responseWithMessageMap(ACCEPTED, message);
+    }
+
     public static Response notFoundResponseAsString(Logger logger, String message) {
         logger.error(message);
         return responseWithEntity(NOT_FOUND, message);
@@ -47,6 +52,11 @@ public class ResponseUtil {
     public static Response serviceErrorResponse(Logger logger, String message) {
         logger.error(message);
         return responseWithMessageMap(INTERNAL_SERVER_ERROR, message);
+    }
+
+    public static Response conflictErrorResponse(Logger logger, String message) {
+        logger.error(message);
+        return responseWithMessageMap(CONFLICT, message);
     }
 
     private static Response responseWithMessageMap(Status status, String message) {

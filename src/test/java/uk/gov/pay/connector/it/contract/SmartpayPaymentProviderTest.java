@@ -38,7 +38,7 @@ public class SmartpayPaymentProviderTest {
     private String url = "https://pal-test.barclaycardsmartpay.com/pal/servlet/soap/Payment";
     private String username = envOrThrow("GDS_CONNECTOR_SMARTPAY_USER");
     private String password = envOrThrow("GDS_CONNECTOR_SMARTPAY_PASSWORD");
-    private GatewayAccount validGatewayAccount;
+    private GatewayAccountEntity validGatewayAccount;
 
     @Before
     public void setUpAndCheckThatSmartpayIsUp() {
@@ -47,7 +47,10 @@ public class SmartpayPaymentProviderTest {
             Map<String, String> validSmartPayCredentials = ImmutableMap.of(
                     "username", username,
                     "password", password);
-            validGatewayAccount = new GatewayAccount(123L, "smartpay", validSmartPayCredentials);
+            validGatewayAccount = new GatewayAccountEntity();
+            validGatewayAccount.setId(123L);
+            validGatewayAccount.setGatewayName("smartpay");
+            validGatewayAccount.setCredentials(validSmartPayCredentials);
         } catch (IOException ex) {
             Assume.assumeTrue(false);
         }
@@ -62,10 +65,14 @@ public class SmartpayPaymentProviderTest {
     @Test
     public void shouldFailRequestAuthorisationIfCredentialsAreNotCorrect() throws Exception {
         PaymentProvider paymentProvider = getSmartpayPaymentProvider();
-        GatewayAccount accountWithInvalidCredentials = new GatewayAccount(11L, "smartpay", ImmutableMap.of(
-                "username","wrong-username",
-                "password","wrong-password"
+        GatewayAccountEntity accountWithInvalidCredentials = new GatewayAccountEntity();
+        accountWithInvalidCredentials.setId(11L);
+        accountWithInvalidCredentials.setGatewayName("smartpay");
+        accountWithInvalidCredentials.setCredentials(ImmutableMap.of(
+                "username", "wrong-username",
+                "password", "wrong-password"
         ));
+
         AuthorisationRequest request = getCardAuthorisationRequest(accountWithInvalidCredentials);
         AuthorisationResponse response = paymentProvider.authorise(request);
 
@@ -80,7 +87,7 @@ public class SmartpayPaymentProviderTest {
 
         GatewayAccountEntity gatewayAccountEntity = new GatewayAccountEntity(validGatewayAccount.getGatewayName(), validGatewayAccount.getCredentials());
         gatewayAccountEntity.setId(validGatewayAccount.getId());
-        ChargeEntity charge = new ChargeEntity(Long.valueOf(CHARGE_AMOUNT), ChargeStatus.CREATED.getValue(), response.getTransactionId(), "", "", "", gatewayAccountEntity);
+        ChargeEntity charge = new ChargeEntity(1L, Long.valueOf(CHARGE_AMOUNT), ChargeStatus.CREATED.getValue(), response.getTransactionId(), "", "", "", gatewayAccountEntity);
 
 
         CaptureResponse captureResponse = paymentProvider.capture(CaptureRequest.valueOf(charge));
@@ -95,7 +102,7 @@ public class SmartpayPaymentProviderTest {
 
         GatewayAccountEntity gatewayAccountEntity = new GatewayAccountEntity(validGatewayAccount.getGatewayName(), validGatewayAccount.getCredentials());
         gatewayAccountEntity.setId(validGatewayAccount.getId());
-        ChargeEntity charge = new ChargeEntity(Long.valueOf(CHARGE_AMOUNT), ChargeStatus.CREATED.getValue(), response.getTransactionId(), "", "", "", gatewayAccountEntity);
+        ChargeEntity charge = new ChargeEntity(1L, Long.valueOf(CHARGE_AMOUNT), ChargeStatus.CREATED.getValue(), response.getTransactionId(), "", "", "", gatewayAccountEntity);
 
         CancelResponse cancelResponse = paymentProvider.cancel(CancelRequest.valueOf(charge));
         assertTrue(cancelResponse.isSuccessful());
@@ -140,7 +147,7 @@ public class SmartpayPaymentProviderTest {
         return Resources.toString(resource, Charset.defaultCharset()).replace("{{transactionId}}", transactionId);
     }
 
-    public static AuthorisationRequest getCardAuthorisationRequest(GatewayAccount gatewayAccount) {
+    public static AuthorisationRequest getCardAuthorisationRequest(GatewayAccountEntity gatewayAccount) {
         Address address = Address.anAddress();
         address.setLine1("41");
         address.setLine2("Scala Street");
@@ -154,7 +161,7 @@ public class SmartpayPaymentProviderTest {
 
         GatewayAccountEntity gatewayAccountEntity = new GatewayAccountEntity(gatewayAccount.getGatewayName(), gatewayAccount.getCredentials());
         gatewayAccountEntity.setId(gatewayAccount.getId());
-        ChargeEntity chargeEntity = new ChargeEntity(Long.valueOf(CHARGE_AMOUNT), ChargeStatus.CREATED.getValue(), "", "", "This is the description", "reference", gatewayAccountEntity);
+        ChargeEntity chargeEntity = new ChargeEntity(1L, Long.valueOf(CHARGE_AMOUNT), ChargeStatus.CREATED.getValue(), "", "", "This is the description", "reference", gatewayAccountEntity);
 
         return new AuthorisationRequest(chargeEntity, card);
     }

@@ -6,6 +6,7 @@ import org.apache.commons.lang.math.RandomUtils;
 import org.junit.Before;
 import org.junit.Rule;
 import org.junit.Test;
+import org.slf4j.LoggerFactory;
 import uk.gov.pay.connector.model.domain.ChargeStatus;
 import uk.gov.pay.connector.rules.DropwizardAppWithPostgresRule;
 import uk.gov.pay.connector.util.DateTimeUtils;
@@ -176,7 +177,7 @@ public class ChargesResourceITest {
         app.getDatabaseTestHelper().addCharge(chargeId, accountId, AMOUNT, chargeStatus, returnUrl, null);
         app.getDatabaseTestHelper().addToken(chargeId, "tokenId");
 
-        List<ChargeStatus> statuses = asList(CREATED, ENTERING_CARD_DETAILS, AUTHORISATION_SUBMITTED, ChargeStatus.SYSTEM_CANCELLED, ChargeStatus.ENTERING_CARD_DETAILS);
+        List<ChargeStatus> statuses = asList(CREATED, ENTERING_CARD_DETAILS, AUTHORISATION_READY, ChargeStatus.SYSTEM_CANCELLED, ChargeStatus.ENTERING_CARD_DETAILS);
         setupLifeCycleEventsFor(app, Long.valueOf(chargeId), statuses);
 
         getChargeApi
@@ -197,7 +198,7 @@ public class ChargesResourceITest {
     @Test
     public void shouldFilterTransactionsBasedOnFromAndToDates() throws Exception {
         addCharge(CREATED, "ref-1", now());
-        addCharge(AUTHORISATION_SUBMITTED, "ref-2", now());
+        addCharge(AUTHORISATION_READY, "ref-2", now());
         addCharge(CAPTURED, "ref-3", now().minusDays(2));
 
         ValidatableResponse response = getChargeApi
