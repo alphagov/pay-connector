@@ -6,7 +6,9 @@ import org.slf4j.LoggerFactory;
 import uk.gov.pay.connector.model.GatewayError;
 import uk.gov.pay.connector.model.GatewayResponse;
 import uk.gov.pay.connector.model.domain.Card;
-import uk.gov.pay.connector.service.CardService;
+import uk.gov.pay.connector.service.CardAuthoriseService;
+import uk.gov.pay.connector.service.CardCancelService;
+import uk.gov.pay.connector.service.CardCaptureService;
 
 import javax.inject.Inject;
 import javax.ws.rs.*;
@@ -20,12 +22,16 @@ import static uk.gov.pay.connector.util.ResponseUtil.*;
 
 @Path("/")
 public class CardResource {
-    private final CardService cardService;
+    private final CardAuthoriseService cardAuthoriseService;
+    private final CardCaptureService cardCaptureService;
+    private final CardCancelService cardCancelService;
     private final Logger logger = LoggerFactory.getLogger(CardResource.class);
 
     @Inject
-    public CardResource(CardService cardService) {
-        this.cardService = cardService;
+    public CardResource(CardAuthoriseService cardAuthoriseService, CardCaptureService cardCaptureService, CardCancelService cardCancelService) {
+        this.cardAuthoriseService = cardAuthoriseService;
+        this.cardCaptureService = cardCaptureService;
+        this.cardCancelService = cardCancelService;
     }
 
     @POST
@@ -39,7 +45,7 @@ public class CardResource {
         }
 
         return reduce(
-                cardService
+                cardAuthoriseService
                         .doAuthorise(chargeId, cardDetails)
                         .bimap(handleError, handleGatewayResponse));
     }
@@ -51,7 +57,7 @@ public class CardResource {
     public Response captureCharge(@PathParam("chargeId") String chargeId) {
 
         return reduce(
-                cardService
+                cardCaptureService
                         .doCapture(chargeId)
                         .bimap(handleError, handleGatewayResponse)
         );
@@ -62,7 +68,7 @@ public class CardResource {
     @Produces(APPLICATION_JSON)
     public Response cancelCharge(@PathParam("accountId") Long accountId, @PathParam("chargeId") String chargeId) {
         return reduce(
-                cardService
+                cardCancelService
                         .doCancel(chargeId, accountId)
                         .bimap(handleError, handleGatewayResponse)
         );
