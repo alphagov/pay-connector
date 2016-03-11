@@ -7,7 +7,7 @@ import javax.persistence.Table;
 
 @Entity
 @Table(name = "tokens")
-@SequenceGenerator(name="tokens_id_seq", sequenceName="tokens_id_seq", allocationSize=1)
+@SequenceGenerator(name = "tokens_id_seq", sequenceName = "tokens_id_seq", allocationSize = 1)
 public class TokenEntity extends AbstractEntity {
 
     @Column(name = "charge_id")

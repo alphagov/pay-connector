@@ -3,8 +3,8 @@ package uk.gov.pay.connector.resources;
 import com.google.common.collect.ImmutableMap;
 import com.google.inject.Inject;
 import uk.gov.pay.connector.dao.EventDao;
+import uk.gov.pay.connector.model.ChargeEvent;
 import uk.gov.pay.connector.model.domain.ChargeEventEntity;
-import uk.gov.pay.connector.model.domain.ChargeEventExternal;
 
 import javax.ws.rs.GET;
 import javax.ws.rs.Path;
@@ -35,28 +35,28 @@ public class ChargeEventsResource {
     @Produces(APPLICATION_JSON)
     public Response getEvents(@PathParam("accountId") Long accountId, @PathParam("chargeId") Long chargeId) {
         List<ChargeEventEntity> events = eventDao.findEvents(accountId, chargeId);
-        List<ChargeEventExternal> eventsExternal = transformToExternalStatus(events);
-        List<ChargeEventExternal> nonRepeatingExternalChargeEvents = getNonRepeatingChargeEvents(eventsExternal);
+        List<ChargeEvent> eventsExternal = transformToExternalStatus(events);
+        List<ChargeEvent> nonRepeatingExternalChargeEvents = getNonRepeatingChargeEvents(eventsExternal);
 
         ImmutableMap<String, Object> responsePayload = ImmutableMap.of("charge_id", chargeId, "events", nonRepeatingExternalChargeEvents);
         return ok().entity(responsePayload).build();
     }
 
-    private List<ChargeEventExternal> transformToExternalStatus(List<ChargeEventEntity> events) {
-        List<ChargeEventExternal> externalEvents = events
+    private List<ChargeEvent> transformToExternalStatus(List<ChargeEventEntity> events) {
+        List<ChargeEvent> externalEvents = events
                 .stream()
                 .map(event ->
-                        new ChargeEventExternal(event.getChargeEntity().getId(), mapFromStatus(event.getStatus()), event.getUpdated()))
+                        new ChargeEvent(event.getChargeEntity().getId(), mapFromStatus(event.getStatus()), event.getUpdated()))
                 .collect(toList());
 
         return externalEvents;
     }
 
-    private List<ChargeEventExternal> getNonRepeatingChargeEvents(List<ChargeEventExternal> externalEvents) {
-        ListIterator<ChargeEventExternal> iterator = externalEvents.listIterator();
-        ChargeEventExternal prev = null;
+    private List<ChargeEvent> getNonRepeatingChargeEvents(List<ChargeEvent> externalEvents) {
+        ListIterator<ChargeEvent> iterator = externalEvents.listIterator();
+        ChargeEvent prev = null;
         while (iterator.hasNext()) {
-            ChargeEventExternal current = iterator.next();
+            ChargeEvent current = iterator.next();
             if (current.equals(prev)) { // remove any immediately repeating statuses
                 iterator.remove();
             }

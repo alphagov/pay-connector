@@ -14,7 +14,6 @@ import static com.jayway.restassured.RestAssured.given;
 import static javax.ws.rs.core.MediaType.TEXT_XML;
 import static org.hamcrest.Matchers.is;
 import static org.junit.Assert.assertThat;
-import static uk.gov.pay.connector.it.resources.worldpay.WorldpayPaymentStatus.AUTHORISED;
 import static uk.gov.pay.connector.it.resources.worldpay.WorldpayPaymentStatus.REFUSED;
 import static uk.gov.pay.connector.model.domain.ChargeStatus.*;
 import static uk.gov.pay.connector.resources.PaymentProviderValidator.WORLDPAY_PROVIDER;

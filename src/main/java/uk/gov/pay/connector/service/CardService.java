@@ -2,10 +2,10 @@ package uk.gov.pay.connector.service;
 
 import com.google.inject.persist.Transactional;
 import fj.data.Either;
-import uk.gov.pay.connector.dao.ChargeDao;
-import uk.gov.pay.connector.dao.GatewayAccountDao;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import uk.gov.pay.connector.dao.ChargeDao;
+import uk.gov.pay.connector.dao.GatewayAccountDao;
 import uk.gov.pay.connector.model.*;
 import uk.gov.pay.connector.model.domain.Card;
 import uk.gov.pay.connector.model.domain.ChargeEntity;
@@ -22,8 +22,6 @@ import static fj.data.Either.right;
 import static java.lang.String.format;
 import static org.apache.commons.lang3.StringUtils.equalsIgnoreCase;
 import static uk.gov.pay.connector.model.GatewayError.*;
-import static uk.gov.pay.connector.model.GatewayError.illegalStateError;
-import static uk.gov.pay.connector.model.GatewayError.operationAlreadyInProgress;
 import static uk.gov.pay.connector.model.GatewayErrorType.CHARGE_NOT_FOUND;
 import static uk.gov.pay.connector.model.domain.ChargeStatus.*;
 

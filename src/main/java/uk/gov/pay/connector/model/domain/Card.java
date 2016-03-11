@@ -4,7 +4,6 @@ import com.fasterxml.jackson.annotation.JsonProperty;
 
 public class Card {
 
-
     private String cardNo;
     private String cardHolder;
     private String cvc;

@@ -1,6 +1,7 @@
 package uk.gov.pay.connector.it.dao;
 
 import com.google.common.collect.ImmutableMap;
+import org.apache.commons.lang.RandomStringUtils;
 import org.exparity.hamcrest.date.ZonedDateTimeMatchers;
 import org.hamcrest.Description;
 import org.hamcrest.Matcher;
@@ -29,10 +30,10 @@ import java.util.*;
 
 import static java.util.Arrays.asList;
 import static java.util.stream.Collectors.toList;
-import static org.apache.commons.lang3.RandomStringUtils.randomAlphanumeric;
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.*;
 import static uk.gov.pay.connector.dao.ChargeSearch.aChargeSearch;
+import static uk.gov.pay.connector.fixture.ChargeEntityFixture.aValidChargeEntity;
 import static uk.gov.pay.connector.model.domain.ChargeStatus.CREATED;
 import static uk.gov.pay.connector.model.domain.ChargeStatus.ENTERING_CARD_DETAILS;
 
@@ -378,7 +379,7 @@ public class ChargeDaoITest {
 
         GatewayAccountEntity gatewayAccount = new GatewayAccountEntity(PAYMENT_PROVIDER, new HashMap<>());
         gatewayAccount.setId(GATEWAY_ACCOUNT_ID);
-        chargeDao.persist(new ChargeEntity(100L, "CREATED", "1", RETURN_URL, DESCRIPTION, randomAlphanumeric(512), gatewayAccount));
+        chargeDao.persist(aValidChargeEntity().withReference(RandomStringUtils.randomAlphanumeric(255)).build());
     }
 
     @Test
@@ -386,7 +387,11 @@ public class ChargeDaoITest {
 
         GatewayAccountEntity gatewayAccount = new GatewayAccountEntity(PAYMENT_PROVIDER, new HashMap<>());
         gatewayAccount.setId(GATEWAY_ACCOUNT_ID);
-        ChargeEntity chargeEntity = new ChargeEntity(12345L, "CREATED", null, "http://return.com", "This is a description", "This is a reference", gatewayAccount);
+
+        ChargeEntity chargeEntity = aValidChargeEntity()
+                .withId(null)
+                .withGatewayAccountEntity(gatewayAccount)
+                .build();
 
         assertThat(chargeEntity.getId(), is(nullValue()));
 

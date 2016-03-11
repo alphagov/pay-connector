@@ -82,14 +82,14 @@ public class GatewayAccountDaoITest {
         Long accountId = 888L;
         databaseTestHelper.addGatewayAccount(accountId.toString(), paymentProvider);
 
-        Optional<GatewayAccountEntity> gatewayAccountBeforeUpdate = gatewayAccountDao.findById(accountId);
-        Assert.assertThat(gatewayAccountBeforeUpdate.get().getCredentials(), is(emptyMap()));
+        GatewayAccountEntity gatewayAccount = gatewayAccountDao.findById(accountId).get();
 
-        GatewayAccountEntity gatewayAccount = new GatewayAccountEntity(paymentProvider, new HashMap<String, String>() {{
+        assertThat(gatewayAccount.getCredentials(), is(emptyMap()));
+
+        gatewayAccount.setCredentials(new HashMap<String, String>() {{
             put("username", "Username");
             put("password", "Password");
         }});
-        gatewayAccount.setId(accountId);
 
         gatewayAccountDao.merge(gatewayAccount);
 
@@ -111,8 +111,8 @@ public class GatewayAccountDaoITest {
         String aPasswordWithSpecialChars = "56g%%Bqv\\>/<wdUpi@#bh{[}]6JV+8w";
         ImmutableMap<String, String> credMap = ImmutableMap.of("username", aUserNameWithSpecialChars, "password", aPasswordWithSpecialChars);
 
-        GatewayAccountEntity gatewayAccount = new GatewayAccountEntity(paymentProvider, credMap);
-        gatewayAccount.setId(Long.valueOf(accountId));
+        GatewayAccountEntity gatewayAccount = gatewayAccountDao.findById(Long.valueOf(accountId)).get();
+        gatewayAccount.setCredentials(credMap);
 
         gatewayAccountDao.merge(gatewayAccount);
 

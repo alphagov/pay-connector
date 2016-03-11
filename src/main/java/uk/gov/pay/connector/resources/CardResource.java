@@ -1,7 +1,6 @@
 package uk.gov.pay.connector.resources;
 
 import fj.F;
-import org.apache.commons.lang3.math.NumberUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import uk.gov.pay.connector.model.GatewayError;

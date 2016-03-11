@@ -1,8 +1,6 @@
 package uk.gov.pay.connector.it.resources;
 
 import com.google.common.collect.ImmutableMap;
-import com.jayway.restassured.matcher.ResponseAwareMatcher;
-import com.jayway.restassured.response.Response;
 import com.jayway.restassured.response.ValidatableResponse;
 import org.apache.commons.lang.math.RandomUtils;
 import org.exparity.hamcrest.date.ZonedDateTimeMatchers;
@@ -29,7 +27,6 @@ import static java.util.UUID.randomUUID;
 import static javax.ws.rs.HttpMethod.POST;
 import static javax.ws.rs.core.Response.Status;
 import static javax.ws.rs.core.Response.Status.*;
-import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.*;
 import static uk.gov.pay.connector.model.domain.ChargeStatus.*;
 import static uk.gov.pay.connector.model.domain.ChargeStatus.CREATED;

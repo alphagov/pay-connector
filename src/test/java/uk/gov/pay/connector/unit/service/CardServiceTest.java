@@ -9,6 +9,7 @@ import org.junit.Test;
 import org.mockito.ArgumentCaptor;
 import uk.gov.pay.connector.dao.ChargeDao;
 import uk.gov.pay.connector.dao.GatewayAccountDao;
+import uk.gov.pay.connector.fixture.ChargeEntityFixture;
 import uk.gov.pay.connector.model.*;
 import uk.gov.pay.connector.model.domain.*;
 import uk.gov.pay.connector.service.CardService;
@@ -314,9 +315,10 @@ public class CardServiceTest {
         GatewayAccount gatewayAccount = newAccount();
         GatewayAccountEntity gatewayAccountEntity = new GatewayAccountEntity(gatewayAccount.getGatewayName(), gatewayAccount.getCredentials());
         gatewayAccountEntity.setId(gatewayAccount.getId());
-        ChargeEntity entity = new ChargeEntity(500L, status.getValue(), "", "", "", "", gatewayAccountEntity);
-        entity.setId(chargeId);
-        return entity;
+        return ChargeEntityFixture.aValidChargeEntity()
+                .withId(chargeId)
+                .withStatus(status)
+                .withGatewayAccountEntity(gatewayAccountEntity).build();
     }
 
     private Matcher<GatewayResponse> aSuccessfulResponse() {

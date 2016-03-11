@@ -6,7 +6,6 @@ import uk.gov.pay.connector.dao.ChargeDao;
 import uk.gov.pay.connector.model.StatusUpdates;
 import uk.gov.pay.connector.model.domain.ChargeEntity;
 import uk.gov.pay.connector.model.domain.ChargeStatus;
-import uk.gov.pay.connector.model.domain.GatewayAccount;
 import uk.gov.pay.connector.model.domain.GatewayAccountEntity;
 import uk.gov.pay.connector.service.ChargeStatusBlacklist;
 import uk.gov.pay.connector.service.PaymentProvider;

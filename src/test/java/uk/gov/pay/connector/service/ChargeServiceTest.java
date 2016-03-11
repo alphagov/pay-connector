@@ -13,7 +13,6 @@ import uk.gov.pay.connector.dao.ChargeDao;
 import uk.gov.pay.connector.dao.TokenDao;
 import uk.gov.pay.connector.model.ChargeResponse;
 import uk.gov.pay.connector.model.domain.ChargeEntity;
-import uk.gov.pay.connector.model.domain.ChargeStatus;
 import uk.gov.pay.connector.model.domain.GatewayAccountEntity;
 import uk.gov.pay.connector.model.domain.TokenEntity;
 
@@ -35,6 +34,7 @@ import static org.hamcrest.core.IsNull.notNullValue;
 import static org.hamcrest.core.IsNull.nullValue;
 import static org.junit.Assert.assertThat;
 import static org.mockito.Mockito.*;
+import static uk.gov.pay.connector.fixture.ChargeEntityFixture.aValidChargeEntity;
 import static uk.gov.pay.connector.model.ChargeResponse.Builder.aChargeResponse;
 import static uk.gov.pay.connector.model.api.ExternalChargeStatus.mapFromStatus;
 
@@ -143,11 +143,11 @@ public class ChargeServiceTest {
 
         GatewayAccountEntity gatewayAccount = new GatewayAccountEntity("provider", new HashMap<>());
         gatewayAccount.setId(1L);
-        String returnUrl = "return_url";
-        String description = "test_description";
-        String reference = "reference";
-        ChargeEntity newCharge = new ChargeEntity(1000L, ChargeStatus.CREATED.getValue(), null, returnUrl, description, reference, gatewayAccount);
-        newCharge.setId(chargeId);
+
+        ChargeEntity newCharge = aValidChargeEntity()
+                .withId(chargeId)
+                .withGatewayAccountEntity(gatewayAccount)
+                .build();
 
         String tokenValue = "test_token";
         TokenEntity tokenEntity = new TokenEntity(chargeId, tokenValue);
@@ -174,11 +174,11 @@ public class ChargeServiceTest {
 
         GatewayAccountEntity gatewayAccount = new GatewayAccountEntity("provider", new HashMap<>());
         gatewayAccount.setId(1L);
-        String returnUrl = "return_url";
-        String description = "test_description";
-        String reference = "reference";
-        ChargeEntity newCharge = new ChargeEntity(1000L, ChargeStatus.CREATED.getValue(), null, returnUrl, description, reference, gatewayAccount);
-        newCharge.setId(chargeId);
+
+        ChargeEntity newCharge = aValidChargeEntity()
+                .withId(chargeId)
+                .withGatewayAccountEntity(gatewayAccount)
+                .build();
 
         Optional<ChargeEntity> chargeEntity = Optional.of(newCharge);
 

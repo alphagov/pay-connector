@@ -4,7 +4,10 @@ import com.google.common.collect.ImmutableMap;
 import org.junit.Before;
 import org.junit.Test;
 import uk.gov.pay.connector.model.*;
-import uk.gov.pay.connector.model.domain.*;
+import uk.gov.pay.connector.model.domain.Address;
+import uk.gov.pay.connector.model.domain.Card;
+import uk.gov.pay.connector.model.domain.ChargeEntity;
+import uk.gov.pay.connector.model.domain.GatewayAccountEntity;
 import uk.gov.pay.connector.service.worldpay.WorldpayPaymentProvider;
 
 import javax.ws.rs.client.Client;
@@ -13,7 +16,6 @@ import javax.ws.rs.client.Invocation;
 import javax.ws.rs.client.WebTarget;
 import javax.ws.rs.core.Response;
 
-import static java.util.UUID.randomUUID;
 import static javax.ws.rs.core.MediaType.APPLICATION_XML;
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.core.Is.is;
@@ -22,6 +24,7 @@ import static org.junit.Assert.assertTrue;
 import static org.mockito.Matchers.*;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
+import static uk.gov.pay.connector.fixture.ChargeEntityFixture.aValidChargeEntity;
 import static uk.gov.pay.connector.model.GatewayErrorType.GENERIC_GATEWAY_ERROR;
 import static uk.gov.pay.connector.model.GatewayErrorType.UNEXPECTED_STATUS_CODE_FROM_GATEWAY;
 import static uk.gov.pay.connector.model.domain.Address.anAddress;
@@ -86,11 +89,9 @@ public class WorldpayPaymentProviderTest {
 
     private AuthorisationRequest getCardAuthorisationRequest() {
         Card card = getValidTestCard();
-        GatewayAccountEntity gatewayAccount = aServiceAccount();
-        GatewayAccountEntity gatewayAccountEntity = new GatewayAccountEntity(gatewayAccount.getGatewayName(), gatewayAccount.getCredentials());
-        gatewayAccountEntity.setId(gatewayAccount.getId());
-        ChargeEntity chargeEntity = new ChargeEntity(500L, ChargeStatus.CREATED.getValue(), "", "", "This is the description", "reference", gatewayAccountEntity);
-        chargeEntity.setId(1L);
+        ChargeEntity chargeEntity = aValidChargeEntity()
+                .withGatewayAccountEntity(aServiceAccount())
+                .build();
         return new AuthorisationRequest(chargeEntity, card);
     }
 
@@ -99,9 +100,9 @@ public class WorldpayPaymentProviderTest {
         gatewayAccount.setId(1L);
         gatewayAccount.setGatewayName("worldpay");
         gatewayAccount.setCredentials(ImmutableMap.of(
-                CREDENTIALS_MERCHANT_ID,"worlpay-merchant",
-                CREDENTIALS_USERNAME,"worldpay-password",
-                CREDENTIALS_PASSWORD,"password"
+                CREDENTIALS_MERCHANT_ID, "worlpay-merchant",
+                CREDENTIALS_USERNAME, "worldpay-password",
+                CREDENTIALS_PASSWORD, "password"
         ));
         return gatewayAccount;
     }
@@ -114,12 +115,10 @@ public class WorldpayPaymentProviderTest {
     }
 
     private CaptureRequest getCaptureRequest() {
-        GatewayAccountEntity gatewayAccount = aServiceAccount();
-        GatewayAccountEntity gatewayAccountEntity = new GatewayAccountEntity(gatewayAccount.getGatewayName(), gatewayAccount.getCredentials());
-        gatewayAccountEntity.setId(gatewayAccount.getId());
-        ChargeEntity charge = new ChargeEntity(500L, ChargeStatus.CREATED.getValue(), randomUUID().toString(), "", "", "", gatewayAccountEntity);
-        charge.setId(1L);
-        return CaptureRequest.valueOf(charge);
+        ChargeEntity chargeEntity = aValidChargeEntity()
+                .withGatewayAccountEntity(aServiceAccount())
+                .build();
+        return CaptureRequest.valueOf(chargeEntity);
     }
 
     private void mockWorldpayErrorResponse(int httpStatus) {
