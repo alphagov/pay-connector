@@ -11,7 +11,7 @@ import org.apache.commons.lang3.StringUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import uk.gov.pay.connector.dao.ChargeDao;
-import uk.gov.pay.connector.model.GatewayError;
+import uk.gov.pay.connector.model.ErrorResponse;
 import uk.gov.pay.connector.model.GatewayResponse;
 import uk.gov.pay.connector.model.domain.ChargeEntity;
 import uk.gov.pay.connector.model.domain.ChargeStatus;
@@ -78,7 +78,7 @@ public class ChargeExpiryTask extends Task {
     private boolean filterExpirableCharges(ChargeEntity ce) {
         if (ce.getStatus().equals(AUTHORISATION_SUCCESS.getValue())) {
             logger.debug(format("sending a cancel request for charge ID: %s", ce.getId()));
-            Either<GatewayError, GatewayResponse> cancelResponse = cardService.doCancel(ce.getId(), ce.getGatewayAccount().getId());
+            Either<ErrorResponse, GatewayResponse> cancelResponse = cardService.doCancel(ce.getId(), ce.getGatewayAccount().getId());
 
             if (cancelResponse.isLeft()) {
                 logger.error(format("gateway error: %s %s, while cancelling the charge ID %s",

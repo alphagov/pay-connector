@@ -28,7 +28,7 @@ import static uk.gov.pay.connector.model.CancelResponse.aSuccessfulCancelRespons
 import static uk.gov.pay.connector.model.CancelResponse.cancelFailureResponse;
 import static uk.gov.pay.connector.model.CaptureResponse.aSuccessfulCaptureResponse;
 import static uk.gov.pay.connector.model.CaptureResponse.captureFailureResponse;
-import static uk.gov.pay.connector.model.GatewayError.baseGatewayError;
+import static uk.gov.pay.connector.model.ErrorResponse.baseGatewayError;
 import static uk.gov.pay.connector.model.InquiryResponse.*;
 import static uk.gov.pay.connector.model.domain.ChargeStatus.AUTHORISATION_SUCCESS;
 import static uk.gov.pay.connector.model.domain.GatewayAccount.CREDENTIALS_MERCHANT_ID;

@@ -5,15 +5,15 @@ import org.slf4j.Logger;
 import javax.ws.rs.core.Response;
 
 import static java.lang.String.format;
-import static uk.gov.pay.connector.model.GatewayError.unexpectedStatusCodeFromGateway;
+import static uk.gov.pay.connector.model.ErrorResponse.unexpectedStatusCodeFromGateway;
 
 public class InquiryResponse implements GatewayResponse {
     private Boolean successful;
-    private GatewayError error;
+    private ErrorResponse error;
     private String transactionId;
     private String newStatus;
 
-    public InquiryResponse(Boolean successful, GatewayError error, String transactionId, String newStatus) {
+    public InquiryResponse(Boolean successful, ErrorResponse error, String transactionId, String newStatus) {
         this.successful = successful;
         this.error = error;
         this.transactionId = transactionId;
@@ -26,7 +26,7 @@ public class InquiryResponse implements GatewayResponse {
     }
 
     @Override
-    public GatewayError getError() {
+    public ErrorResponse getError() {
         return error;
     }
 
@@ -38,8 +38,8 @@ public class InquiryResponse implements GatewayResponse {
         return newStatus;
     }
 
-    public static InquiryResponse inquiryFailureResponse(GatewayError gatewayError) {
-        return new InquiryResponse(false, gatewayError, null, null);
+    public static InquiryResponse inquiryFailureResponse(ErrorResponse errorResponse) {
+        return new InquiryResponse(false, errorResponse, null, null);
     }
 
     public static InquiryResponse inquiryStatusUpdate(String transactionId, String newStatus) {
