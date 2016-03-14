@@ -99,7 +99,8 @@
 
     <changeSet id="add created date to charges table" author="">
         <addColumn tableName="charges">
-            <column name="created_date" type="timestamp without timezone" defaultValueComputed="(now() at time zone 'utc')">
+            <column name="created_date" type="timestamp without timezone"
+                    defaultValueComputed="(now() at time zone 'utc')">
                 <constraints nullable="false"/>
             </column>
         </addColumn>
@@ -151,4 +152,17 @@
         </addColumn>
     </changeSet>
 
+    <changeSet id="add randomized charge id to charges table" author="">
+        <addColumn tableName="charges">
+            <column name="charge_id" type="char(26)">
+                <constraints nullable="true" unique="true"/>
+            </column>
+        </addColumn>
+    </changeSet>
+
+    <changeSet id="migrate existing id data" author="">
+        <sql>
+            UPDATE charges SET charge_id = id;
+        </sql>
+    </changeSet>
 </databaseChangeLog>
