@@ -16,7 +16,7 @@ import java.util.function.Consumer;
 import java.util.function.Function;
 
 import static uk.gov.pay.connector.model.CancelResponse.aSuccessfulCancelResponse;
-import static uk.gov.pay.connector.model.CaptureResponse.aSuccessfulCaptureResponse;
+import static uk.gov.pay.connector.model.CaptureResponse.successfulCaptureResponse;
 import static uk.gov.pay.connector.model.GatewayErrorType.GENERIC_GATEWAY_ERROR;
 import static uk.gov.pay.connector.model.domain.ChargeStatus.*;
 import static uk.gov.pay.connector.service.sandbox.SandboxCardNumbers.*;
@@ -46,12 +46,12 @@ public class SandboxPaymentProvider implements PaymentProvider {
             return new AuthorisationResponse(true, null, AUTHORISATION_SUCCESS, transactionId);
         }
 
-        return new AuthorisationResponse(false, new GatewayError("Unsupported card details.", GENERIC_GATEWAY_ERROR), SYSTEM_ERROR, transactionId);
+        return new AuthorisationResponse(false, new GatewayError("Unsupported card details.", GENERIC_GATEWAY_ERROR), AUTHORISATION_ERROR, transactionId);
     }
 
     @Override
     public CaptureResponse capture(CaptureRequest request) {
-        return aSuccessfulCaptureResponse();
+        return successfulCaptureResponse(CAPTURE_SUBMITTED);
     }
 
     @Override

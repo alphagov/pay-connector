@@ -8,7 +8,6 @@ import uk.gov.pay.connector.model.CaptureResponse;
 import uk.gov.pay.connector.model.GatewayError;
 import uk.gov.pay.connector.model.GatewayResponse;
 import uk.gov.pay.connector.model.domain.ChargeEntity;
-import uk.gov.pay.connector.model.domain.ChargeStatus;
 
 import javax.inject.Inject;
 import java.util.function.Function;
@@ -17,7 +16,7 @@ import static fj.data.Either.left;
 import static fj.data.Either.right;
 import static java.lang.String.format;
 import static uk.gov.pay.connector.model.GatewayError.baseGatewayError;
-import static uk.gov.pay.connector.model.domain.ChargeStatus.*;
+import static uk.gov.pay.connector.model.domain.ChargeStatus.AUTHORISATION_SUCCESS;
 
 public class CardCaptureService extends CardService {
 
@@ -44,12 +43,7 @@ public class CardCaptureService extends CardService {
         CaptureResponse response = paymentProviderFor(charge)
                 .capture(request);
 
-        ChargeStatus newStatus =
-                response.isSuccessful() ?
-                        CAPTURE_SUBMITTED :
-                        CAPTURE_UNKNOWN;
-
-        charge.setStatus(newStatus);
+        charge.setStatus(response.getStatus());
         chargeDao.mergeAndNotifyStatusHasChanged(charge);
 
         return response;

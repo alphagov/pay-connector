@@ -67,7 +67,7 @@ public class GatewayFailuresITest {
                 .contentType(JSON)
                 .body("message", is(errorMessage));
 
-        assertThat(db.getChargeStatus(CHARGE_ID), is(SYSTEM_ERROR.getValue()));
+        assertThat(db.getChargeStatus(CHARGE_ID), is(AUTHORISATION_ERROR.getValue()));
     }
 
     @Test
@@ -88,7 +88,7 @@ public class GatewayFailuresITest {
                 .contentType(JSON)
                 .body("message", is(errorMessage));
 
-        assertThat(db.getChargeStatus(CHARGE_ID), is(CAPTURE_UNKNOWN.getValue()));
+        assertThat(db.getChargeStatus(CHARGE_ID), is(CAPTURE_ERROR.getValue()));
     }
 
     @Test
@@ -110,7 +110,7 @@ public class GatewayFailuresITest {
                 .contentType(JSON)
                 .body("message", is(errorMessage));
 
-        assertThat(db.getChargeStatus(CHARGE_ID), is(CAPTURE_UNKNOWN.getValue()));
+        assertThat(db.getChargeStatus(CHARGE_ID), is(CAPTURE_ERROR.getValue()));
     }
 
     @Test

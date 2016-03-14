@@ -35,7 +35,7 @@ public class CardCaptureServiceTest extends CardServiceTest {
         when(mockedChargeDao.findById(chargeId)).thenReturn(Optional.of(charge));
         when(mockedAccountDao.findById(charge.getGatewayAccount().getId())).thenReturn(Optional.of(charge.getGatewayAccount()));
         when(mockedProviders.resolve(providerName)).thenReturn(mockedPaymentProvider);
-        CaptureResponse response1 = new CaptureResponse(true, null);
+        CaptureResponse response1 = CaptureResponse.successfulCaptureResponse(CAPTURE_SUBMITTED);
         when(mockedPaymentProvider.capture(any())).thenReturn(response1);
 
         Either<GatewayError, GatewayResponse> response = cardService.doCapture(chargeId);
@@ -97,7 +97,7 @@ public class CardCaptureServiceTest extends CardServiceTest {
         when(mockedChargeDao.findById(chargeId)).thenReturn(Optional.of(charge));
         when(mockedAccountDao.findById(charge.getGatewayAccount().getId())).thenReturn(Optional.of(charge.getGatewayAccount()));
         when(mockedProviders.resolve(providerName)).thenReturn(mockedPaymentProvider);
-        CaptureResponse unsuccessfulResponse = new CaptureResponse(false, new GatewayError("error", GENERIC_GATEWAY_ERROR));
+        CaptureResponse unsuccessfulResponse = CaptureResponse.captureFailureResponse(new GatewayError("error", GENERIC_GATEWAY_ERROR));
         when(mockedPaymentProvider.capture(any())).thenReturn(unsuccessfulResponse);
 
         Either<GatewayError, GatewayResponse> response = cardService.doCapture(chargeId);
@@ -107,7 +107,7 @@ public class CardCaptureServiceTest extends CardServiceTest {
         ArgumentCaptor<ChargeEntity> argumentCaptor = ArgumentCaptor.forClass(ChargeEntity.class);
         verify(mockedChargeDao).mergeAndNotifyStatusHasChanged(argumentCaptor.capture());
 
-        assertThat(argumentCaptor.getValue().getStatus(), is(CAPTURE_UNKNOWN.getValue()));
+        assertThat(argumentCaptor.getValue().getStatus(), is(CAPTURE_ERROR.getValue()));
 
         ArgumentCaptor<CaptureRequest> request = ArgumentCaptor.forClass(CaptureRequest.class);
         verify(mockedPaymentProvider, times(1)).capture(request.capture());

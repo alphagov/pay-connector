@@ -21,12 +21,13 @@ import java.util.stream.Collectors;
 
 import static fj.data.Either.reduce;
 import static uk.gov.pay.connector.model.AuthorisationResponse.authorisationFailureResponse;
-import static uk.gov.pay.connector.model.AuthorisationResponse.successfulAuthorisation;
+import static uk.gov.pay.connector.model.AuthorisationResponse.successfulAuthorisationResponse;
 import static uk.gov.pay.connector.model.CancelResponse.aSuccessfulCancelResponse;
 import static uk.gov.pay.connector.model.CancelResponse.cancelFailureResponse;
-import static uk.gov.pay.connector.model.CaptureResponse.aSuccessfulCaptureResponse;
 import static uk.gov.pay.connector.model.CaptureResponse.captureFailureResponse;
+import static uk.gov.pay.connector.model.CaptureResponse.successfulCaptureResponse;
 import static uk.gov.pay.connector.model.domain.ChargeStatus.AUTHORISATION_SUCCESS;
+import static uk.gov.pay.connector.model.domain.ChargeStatus.CAPTURE_SUBMITTED;
 import static uk.gov.pay.connector.service.OrderCaptureRequestBuilder.aSmartpayOrderCaptureRequest;
 import static uk.gov.pay.connector.service.OrderSubmitRequestBuilder.aSmartpayOrderSubmitRequest;
 import static uk.gov.pay.connector.service.smartpay.SmartpayOrderCancelRequestBuilder.aSmartpayOrderCancelRequest;
@@ -129,7 +130,7 @@ public class SmartpayPaymentProvider implements PaymentProvider {
                         .bimap(
                                 AuthorisationResponse::authorisationFailureResponse,
                                 (sResponse) -> sResponse.isAuthorised() ?
-                                        successfulAuthorisation(AUTHORISATION_SUCCESS, sResponse.getPspReference()) :
+                                        successfulAuthorisationResponse(AUTHORISATION_SUCCESS, sResponse.getPspReference()) :
                                         authorisationFailureResponse(logger, sResponse.getPspReference(), sResponse.getErrorMessage())
                         )
         );
@@ -141,7 +142,7 @@ public class SmartpayPaymentProvider implements PaymentProvider {
                         .bimap(
                                 CaptureResponse::captureFailureResponse,
                                 (sResponse) -> sResponse.isCaptured() ?
-                                        aSuccessfulCaptureResponse() :
+                                        successfulCaptureResponse(CAPTURE_SUBMITTED) :
                                         captureFailureResponse(logger, sResponse.getErrorMessage(), sResponse.getPspReference())
                         )
         );

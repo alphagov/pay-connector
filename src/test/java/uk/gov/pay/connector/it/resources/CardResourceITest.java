@@ -71,7 +71,7 @@ public class CardResourceITest extends CardResourceITestBase {
         String cardDetailsToReject = buildJsonCardDetailsFor("4000000000000119");
 
         String expectedErrorMessage = "This transaction could be not be processed.";
-        String expectedChargeStatus = SYSTEM_ERROR.getValue();
+        String expectedChargeStatus = AUTHORISATION_ERROR.getValue();
         shouldReturnErrorForCardDetailsWithMessage(cardDetailsToReject, expectedErrorMessage, expectedChargeStatus);
     }
 
@@ -93,7 +93,7 @@ public class CardResourceITest extends CardResourceITestBase {
         String randomCardNumberDetails = buildJsonCardDetailsFor("1111111111111119");
 
         shouldReturnErrorFor(chargeId, randomCardNumberDetails, "Unsupported card details.");
-        assertFrontendChargeStatusIs(chargeId, SYSTEM_ERROR.getValue());
+        assertFrontendChargeStatusIs(chargeId, AUTHORISATION_ERROR.getValue());
     }
 
     @Test
@@ -108,7 +108,7 @@ public class CardResourceITest extends CardResourceITestBase {
 
     @Test
     public void shouldFailPayment_IfCaptureStatusIsUnknown() {
-        String failedChargeId = createNewChargeWith(CAPTURE_UNKNOWN, randomUUID().toString());
+        String failedChargeId = createNewChargeWith(CAPTURE_ERROR, randomUUID().toString());
         assertApiStatusIs(failedChargeId,EXT_FAILED.getValue());
     }
 
