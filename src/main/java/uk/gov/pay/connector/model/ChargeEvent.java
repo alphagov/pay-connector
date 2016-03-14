@@ -1,18 +1,18 @@
-package uk.gov.pay.connector.model.domain;
+package uk.gov.pay.connector.model;
 
 import com.fasterxml.jackson.annotation.JsonFormat;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import com.fasterxml.jackson.databind.annotation.JsonDeserialize;
 import com.fasterxml.jackson.databind.annotation.JsonSerialize;
-import io.dropwizard.jackson.JsonSnakeCase;
 import com.fasterxml.jackson.datatype.jsr310.deser.LocalDateTimeDeserializer;
 import com.fasterxml.jackson.datatype.jsr310.ser.LocalDateTimeSerializer;
+import io.dropwizard.jackson.JsonSnakeCase;
 import uk.gov.pay.connector.model.api.ExternalChargeStatus;
 
 import java.time.LocalDateTime;
 
 @JsonSnakeCase
-public class ChargeEventExternal {
+public class ChargeEvent {
 
     private Long chargeId;
     private ExternalChargeStatus status;
@@ -22,7 +22,7 @@ public class ChargeEventExternal {
     @JsonFormat(pattern = "yyyy-MM-dd HH:mm:ss")
     private LocalDateTime updated;
 
-    public ChargeEventExternal(Long chargeId, ExternalChargeStatus chargeStatus, LocalDateTime updated) {
+    public ChargeEvent(Long chargeId, ExternalChargeStatus chargeStatus, LocalDateTime updated) {
         this.chargeId = chargeId;
         this.status = chargeStatus;
         this.updated = updated;
@@ -72,7 +72,7 @@ public class ChargeEventExternal {
         if (this == o) return true;
         if (o == null || getClass() != o.getClass()) return false;
 
-        ChargeEventExternal that = (ChargeEventExternal) o;
+        ChargeEvent that = (ChargeEvent) o;
 
         if (!chargeId.equals(that.chargeId)) return false;
         return status == that.status;

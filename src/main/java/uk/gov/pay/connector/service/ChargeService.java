@@ -4,12 +4,10 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import uk.gov.pay.connector.app.ConnectorConfiguration;
 import uk.gov.pay.connector.app.LinksConfig;
-import uk.gov.pay.connector.dao.ChargeJpaDao;
-import uk.gov.pay.connector.dao.EventJpaDao;
-import uk.gov.pay.connector.dao.TokenJpaDao;
+import uk.gov.pay.connector.dao.ChargeDao;
+import uk.gov.pay.connector.dao.TokenDao;
 import uk.gov.pay.connector.model.ChargeResponse;
 import uk.gov.pay.connector.model.domain.ChargeEntity;
-import uk.gov.pay.connector.model.domain.ChargeEventEntity;
 import uk.gov.pay.connector.model.domain.GatewayAccountEntity;
 import uk.gov.pay.connector.model.domain.TokenEntity;
 
@@ -25,38 +23,31 @@ import static java.lang.String.format;
 import static javax.ws.rs.HttpMethod.GET;
 import static uk.gov.pay.connector.model.ChargeResponse.Builder.aChargeResponse;
 import static uk.gov.pay.connector.model.api.ExternalChargeStatus.mapFromStatus;
-import static uk.gov.pay.connector.model.domain.ChargeStatus.CREATED;
 import static uk.gov.pay.connector.resources.ApiPaths.CHARGE_API_PATH;
 
 public class ChargeService {
 
     private static final Logger logger = LoggerFactory.getLogger(ChargeService.class);
 
-    ChargeJpaDao chargeDao;
-    EventJpaDao eventDao;
-    TokenJpaDao tokenDao;
+    ChargeDao chargeDao;
+    TokenDao tokenDao;
     LinksConfig linksConfig;
 
     @Inject
-    public ChargeService(TokenJpaDao tokenDao, ChargeJpaDao chargeDao, EventJpaDao eventDao, ConnectorConfiguration config) {
+    public ChargeService(TokenDao tokenDao, ChargeDao chargeDao, ConnectorConfiguration config) {
         this.tokenDao = tokenDao;
         this.chargeDao = chargeDao;
-        this.eventDao = eventDao;
         this.linksConfig = config.getLinks();
     }
 
     public ChargeResponse create(Map<String, Object> chargeRequest, GatewayAccountEntity gatewayAccount, UriInfo uriInfo) {
 
-        ChargeEntity chargeEntity =
-                new ChargeEntity(null, new Long(chargeRequest.get("amount").toString()),
-                        CREATED.getValue(),
-                        null,
-                        chargeRequest.get("return_url").toString(),
-                        chargeRequest.get("description").toString(),
-                        chargeRequest.get("reference").toString(),
-                        gatewayAccount);
+        ChargeEntity chargeEntity = new ChargeEntity(new Long(chargeRequest.get("amount").toString()),
+                chargeRequest.get("return_url").toString(),
+                chargeRequest.get("description").toString(),
+                chargeRequest.get("reference").toString(),
+                gatewayAccount);
         chargeDao.persist(chargeEntity);
-        eventDao.persist(ChargeEventEntity.from(chargeEntity, CREATED, chargeEntity.getCreatedDate().toLocalDateTime()));
         TokenEntity token = new TokenEntity(chargeEntity.getId(), UUID.randomUUID().toString());
         tokenDao.persist(token);
         ChargeResponse response = buildChargeResponse(uriInfo, chargeEntity, Optional.of(token));
@@ -64,10 +55,10 @@ public class ChargeService {
         return response;
     }
 
-    public Optional<ChargeResponse> findChargeForAccount(Long chargeId, String accountId, UriInfo uriInfo) {
-        return chargeDao.findChargeForAccount(chargeId, accountId)
+    public Optional<ChargeResponse> findChargeForAccount(Long chargeId, Long accountId, UriInfo uriInfo) {
+        return chargeDao.findByIdAndGatewayAccount(chargeId, accountId)
                 .map(chargeEntity -> {
-                    Optional<TokenEntity> token = tokenDao.findTokenByChargeId(chargeId);
+                    Optional<TokenEntity> token = tokenDao.findByChargeId(chargeId);
                     return buildChargeResponse(uriInfo, chargeEntity, token);
                 });
     }

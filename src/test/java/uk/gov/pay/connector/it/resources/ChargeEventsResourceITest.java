@@ -5,13 +5,14 @@ import com.jayway.restassured.response.ValidatableResponse;
 import org.junit.Before;
 import org.junit.Rule;
 import org.junit.Test;
-import uk.gov.pay.connector.it.fixtures.ChargeApiFixtures;
 import uk.gov.pay.connector.model.domain.ChargeStatus;
 import uk.gov.pay.connector.rules.DropwizardAppWithPostgresRule;
 import uk.gov.pay.connector.util.RestAssuredClient;
 
-import static javax.ws.rs.core.Response.Status.CREATED;
-import static javax.ws.rs.core.Response.Status.NO_CONTENT;
+import java.io.Serializable;
+
+import static com.jayway.restassured.http.ContentType.JSON;
+import static javax.ws.rs.core.Response.Status.*;
 import static org.hamcrest.CoreMatchers.equalTo;
 import static org.hamcrest.core.Is.is;
 import static org.hamcrest.core.IsCollectionContaining.hasItems;
@@ -63,6 +64,44 @@ public class ChargeEventsResourceITest {
                         , EXT_IN_PROGRESS.getValue()
                         , EXT_SYSTEM_CANCELLED.getValue()))
                 .body("events.updated.size()", equalTo(3));
+    }
+
+    @Test
+    public void shouldReturn404WhenAccountIdIsNonNumeric() {
+        connectorApi.withAccountId("invalidAccountId")
+                .getEvents(123L)
+                .contentType(JSON)
+                .statusCode(NOT_FOUND.getStatusCode())
+                .body("code", is(404))
+                .body("message", is("HTTP 404 Not Found"));
+    }
+
+    public static class ChargeApiFixtures {
+
+        private static final String JSON_AMOUNT_KEY = "amount";
+        private static final String JSON_REFERENCE_KEY = "reference";
+        private static final String JSON_DESCRIPTION_KEY = "description";
+        private static final String JSON_GATEWAY_ACC_KEY = "gateway_account_id";
+        private static final String JSON_RETURN_URL_KEY = "return_url";
+
+        private static Long defaultAmount = 6234L;
+        private static String defaultReference = "a-reference";
+        private static String defaultDescription = "a-description";
+        private static String defaultReturnUrl = "http://service.url/success-page/";
+
+        public static String aValidCharge(String accountId) {
+            return buildCharge(accountId, defaultAmount, defaultReference, defaultDescription, defaultReturnUrl);
+        }
+
+        private static String buildCharge(String accountId, Long amount, Serializable reference, String description, String returnUrl) {
+            return toJson(ImmutableMap.of(
+                    JSON_AMOUNT_KEY, amount,
+                    JSON_REFERENCE_KEY, reference,
+                    JSON_DESCRIPTION_KEY, description,
+                    JSON_GATEWAY_ACC_KEY, accountId,
+                    JSON_RETURN_URL_KEY, returnUrl));
+        }
+
     }
 
     private String updateStatusTo(ChargeStatus chargeStatus) {

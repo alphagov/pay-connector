@@ -14,7 +14,7 @@ import java.util.Map;
 
 import static org.apache.commons.lang3.StringUtils.isNotBlank;
 
-public class ChargeSearchQuery {
+public class ChargeSearch {
 
     private static final String REFERENCE = "reference";
     private static final String STATUSES = "statuses";
@@ -30,43 +30,37 @@ public class ChargeSearchQuery {
     private Long gatewayAccountId;
     private Map<String, Object> queryParameters = new HashMap<>();
 
-    public ChargeSearchQuery(Long gatewayAccountId) {
+    public static ChargeSearch aChargeSearch(Long gatewayAccountId) {
+        return new ChargeSearch(gatewayAccountId);
+    }
+
+    private ChargeSearch(Long gatewayAccountId) {
         Preconditions.checkNotNull(gatewayAccountId);
         this.gatewayAccountId = gatewayAccountId;
     }
 
-    public ChargeSearchQuery withReferenceLike(String reference) {
+    public ChargeSearch withReferenceLike(String reference) {
         if (isNotBlank(reference)) queryParameters.put(REFERENCE, "%" + reference + "%");
         return this;
     }
 
-    public ChargeSearchQuery withStatusIn(ChargeStatus... statuses) {
+    public ChargeSearch withStatusIn(ChargeStatus... statuses) {
         if (statuses.length > 0) queryParameters.put(STATUSES, Arrays.asList(statuses));
         return this;
     }
 
-    public ChargeSearchQuery withExternalStatus(ExternalChargeStatus status) {
+    public ChargeSearch withExternalStatus(ExternalChargeStatus status) {
         if (status != null) queryParameters.put(STATUSES, Arrays.asList(status.getInnerStates()));
         return this;
     }
 
-    public ChargeSearchQuery withCreatedDateFrom(ZonedDateTime fromDate) {
+    public ChargeSearch withCreatedDateFrom(ZonedDateTime fromDate) {
         if (fromDate != null) queryParameters.put(FROM_DATE, fromDate);
         return this;
     }
 
-    public ChargeSearchQuery withCreatedDateTo(ZonedDateTime toDate) {
+    public ChargeSearch withCreatedDateTo(ZonedDateTime toDate) {
         if (toDate != null) queryParameters.put(TO_DATE, toDate);
-        return this;
-    }
-
-    public ChargeSearchQuery withCreatedDateFrom(String fromDate) {
-        if (isNotBlank(fromDate)) queryParameters.put(FROM_DATE, ZonedDateTime.parse(fromDate));
-        return this;
-    }
-
-    public ChargeSearchQuery withCreatedDateTo(String toDate) {
-        if (isNotBlank(toDate)) queryParameters.put(TO_DATE, ZonedDateTime.parse(toDate));
         return this;
     }
 

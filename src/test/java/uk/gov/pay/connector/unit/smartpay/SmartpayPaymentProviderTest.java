@@ -8,7 +8,10 @@ import uk.gov.pay.connector.model.AuthorisationRequest;
 import uk.gov.pay.connector.model.AuthorisationResponse;
 import uk.gov.pay.connector.model.CaptureRequest;
 import uk.gov.pay.connector.model.CaptureResponse;
-import uk.gov.pay.connector.model.domain.*;
+import uk.gov.pay.connector.model.domain.Address;
+import uk.gov.pay.connector.model.domain.Card;
+import uk.gov.pay.connector.model.domain.ChargeEntity;
+import uk.gov.pay.connector.model.domain.GatewayAccountEntity;
 import uk.gov.pay.connector.service.smartpay.SmartpayPaymentProvider;
 
 import javax.ws.rs.client.Client;
@@ -25,6 +28,7 @@ import static org.junit.Assert.assertTrue;
 import static org.mockito.Matchers.*;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
+import static uk.gov.pay.connector.fixture.ChargeEntityFixture.aValidChargeEntity;
 import static uk.gov.pay.connector.model.domain.Address.anAddress;
 import static uk.gov.pay.connector.service.GatewayClient.createGatewayClient;
 import static uk.gov.pay.connector.util.CardUtils.buildCardDetails;
@@ -44,26 +48,30 @@ public class SmartpayPaymentProviderTest {
 
     @Test
     public void shouldSendSuccessfullyAOrderForMerchant() throws Exception {
-        AuthorisationResponse response = provider.authorise(getCardAuthorisationRequest());
+
+        Card card = getValidTestCard();
+
+        ChargeEntity chargeEntity = aValidChargeEntity()
+                .withGatewayAccountEntity(aServiceAccount())
+                .build();
+
+        AuthorisationResponse response = provider.authorise(new AuthorisationRequest(chargeEntity, card));
+
         assertTrue(response.isSuccessful());
         assertThat(response.getTransactionId(), is(notNullValue()));
     }
 
     @Test
     public void shouldCaptureAPaymentSuccessfully() throws Exception {
+
         mockSmartpaySuccessfulCaptureResponse();
-        CaptureResponse response = provider.capture(getCaptureRequest());
+
+        ChargeEntity chargeEntity = aValidChargeEntity()
+                .withGatewayAccountEntity(aServiceAccount())
+                .build();
+
+        CaptureResponse response = provider.capture(CaptureRequest.valueOf(chargeEntity));
         assertTrue(response.isSuccessful());
-    }
-
-    private AuthorisationRequest getCardAuthorisationRequest() {
-        Card card = getValidTestCard();
-
-        GatewayAccountEntity gatewayAccountEntity = new GatewayAccountEntity(aServiceAccount().getGatewayName(), aServiceAccount().getCredentials());
-        gatewayAccountEntity.setId(aServiceAccount().getId());
-        ChargeEntity chargeEntity = new ChargeEntity(1L, 222L, ChargeStatus.CREATED.getValue(), "", "", "This is the description", "reference", gatewayAccountEntity);
-
-        return new AuthorisationRequest(chargeEntity, card);
     }
 
     private GatewayAccountEntity aServiceAccount() {
@@ -76,15 +84,6 @@ public class SmartpayPaymentProviderTest {
         ));
 
         return gatewayAccount;
-    }
-
-    private CaptureRequest getCaptureRequest() {
-        GatewayAccountEntity gatewayAccount = aServiceAccount();
-        GatewayAccountEntity gatewayAccountEntity = new GatewayAccountEntity(gatewayAccount.getGatewayName(), gatewayAccount.getCredentials());
-        gatewayAccountEntity.setId(gatewayAccount.getId());
-        ChargeEntity charge = new ChargeEntity(1L, 5000L, ChargeStatus.CREATED.getValue(), "transaction-id", "", "", "", gatewayAccountEntity);
-
-        return CaptureRequest.valueOf(charge);
     }
 
     private void mockSmartpaySuccessfulOrderSubmitResponse() {

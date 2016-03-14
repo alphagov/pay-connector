@@ -1,7 +1,6 @@
 package uk.gov.pay.connector.service;
 
 import uk.gov.pay.connector.model.*;
-import uk.gov.pay.connector.model.domain.GatewayAccount;
 import uk.gov.pay.connector.model.domain.GatewayAccountEntity;
 
 import java.util.Optional;

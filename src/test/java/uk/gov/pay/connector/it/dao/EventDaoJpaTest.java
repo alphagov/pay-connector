@@ -7,9 +7,8 @@ import org.hamcrest.TypeSafeMatcher;
 import org.junit.After;
 import org.junit.Before;
 import org.junit.Rule;
-import org.junit.Test;
-import uk.gov.pay.connector.dao.EventJpaDao;
-import uk.gov.pay.connector.model.domain.ChargeEvent;
+import uk.gov.pay.connector.dao.EventDao;
+import uk.gov.pay.connector.model.domain.ChargeEventEntity;
 import uk.gov.pay.connector.model.domain.ChargeStatus;
 import uk.gov.pay.connector.rules.DropwizardAppWithPostgresRule;
 
@@ -17,13 +16,7 @@ import java.util.List;
 import java.util.UUID;
 import java.util.stream.Collectors;
 
-import static java.time.LocalDateTime.now;
-import static java.time.temporal.ChronoUnit.MINUTES;
-import static java.util.Arrays.asList;
-import static org.exparity.hamcrest.date.LocalDateTimeMatchers.within;
-import static org.hamcrest.core.Is.is;
-import static org.junit.Assert.assertThat;
-import static uk.gov.pay.connector.model.domain.ChargeStatus.*;
+import static uk.gov.pay.connector.model.domain.ChargeStatus.CAPTURED;
 
 public class EventDaoJpaTest {
 
@@ -36,13 +29,13 @@ public class EventDaoJpaTest {
     @Rule
     public DropwizardAppWithPostgresRule app = new DropwizardAppWithPostgresRule();
     public GuicedTestEnvironment env;
-    private EventJpaDao eventDao;
+    private EventDao eventDao;
 
     @Before
     public void setUp() throws Exception {
         env = GuicedTestEnvironment.from(app.getPersistModule()).start();
 
-        eventDao = env.getInstance(EventJpaDao.class);
+        eventDao = env.getInstance(EventDao.class);
 
         app.getDatabaseTestHelper().addGatewayAccount(GATEWAY_ACCOUNT_ID.toString(), "test_account");
         app.getDatabaseTestHelper().addCharge(CHARGE_ID.toString(), GATEWAY_ACCOUNT_ID.toString(), AMOUNT, CAPTURED, RETURN_URL, TRANSACTION_ID);
@@ -53,37 +46,15 @@ public class EventDaoJpaTest {
         env.stop();
     }
 
-    @Test
-    public void shouldRetrieveAllEventsForAGivenCharge() throws Exception {
-        List<ChargeStatus> statuses = asList(CREATED, ENTERING_CARD_DETAILS, AUTHORISATION_READY, AUTHORISATION_SUCCESS, CAPTURE_SUBMITTED, CAPTURED);
-        setupLifeCycleEventsFor(app, CHARGE_ID, statuses);
-        List<ChargeEvent> events = eventDao.findEvents(GATEWAY_ACCOUNT_ID, CHARGE_ID);
 
-        assertThat(events.size(), is(statuses.size()));
-        assertThat(events, containsStatuses(statuses));
-
-        events.stream().forEach(event -> assertThat(event.getUpdated(), is(within(1, MINUTES, now()))));
-    }
-
-    @Test
-    public void shouldNotReturnEventsIfChargeDoesNotBelongToAccount() throws Exception {
-
-        List<ChargeStatus> statuses = asList(CREATED, ENTERING_CARD_DETAILS);
-        setupLifeCycleEventsFor(app, CHARGE_ID, statuses);
-        Long nonExistentAccountId = 1111L;
-        List<ChargeEvent> events = eventDao.findEvents(nonExistentAccountId, CHARGE_ID);
-
-        assertThat(events.size(), is(0));
-    }
-
-    private Matcher<? super List<ChargeEvent>> containsStatuses(final List<ChargeStatus> expected) {
-        return new TypeSafeMatcher<List<ChargeEvent>>() {
+    private Matcher<? super List<ChargeEventEntity>> containsStatuses(final List<ChargeStatus> expected) {
+        return new TypeSafeMatcher<List<ChargeEventEntity>>() {
             private List<ChargeStatus> chargeStatuses;
 
             @Override
-            protected boolean matchesSafely(List<ChargeEvent> chargeEvents) {
+            protected boolean matchesSafely(List<ChargeEventEntity> chargeEvents) {
                 this.chargeStatuses = chargeEvents.stream()
-                        .map(ce -> ce.getStatus())
+                        .map(ChargeEventEntity::getStatus)
                         .collect(Collectors.toList());
                 return CollectionUtils.containsAll(chargeStatuses, expected);
             }

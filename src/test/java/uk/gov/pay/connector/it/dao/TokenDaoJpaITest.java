@@ -5,7 +5,7 @@ import org.junit.Before;
 import org.junit.Rule;
 import org.junit.Test;
 import org.junit.rules.ExpectedException;
-import uk.gov.pay.connector.dao.TokenJpaDao;
+import uk.gov.pay.connector.dao.TokenDao;
 import uk.gov.pay.connector.model.domain.TokenEntity;
 import uk.gov.pay.connector.rules.DropwizardAppWithPostgresRule;
 import uk.gov.pay.connector.util.DatabaseTestHelper;
@@ -13,7 +13,6 @@ import uk.gov.pay.connector.util.DatabaseTestHelper;
 import java.util.Optional;
 
 import static org.hamcrest.CoreMatchers.notNullValue;
-import static org.hamcrest.CoreMatchers.nullValue;
 import static org.hamcrest.core.Is.is;
 import static org.junit.Assert.assertThat;
 
@@ -24,7 +23,7 @@ public class TokenDaoJpaITest {
 
     @Rule
     public ExpectedException expectedException = ExpectedException.none();
-    private TokenJpaDao tokenDao;
+    private TokenDao tokenDao;
     private DatabaseTestHelper databaseTestHelper;
     private GuicedTestEnvironment env;
 
@@ -35,7 +34,7 @@ public class TokenDaoJpaITest {
                 .from(app.getPersistModule())
                 .start();
 
-        tokenDao = env.getInstance(TokenJpaDao.class);
+        tokenDao = env.getInstance(TokenDao.class);
         databaseTestHelper = app.getDatabaseTestHelper();
     }
 
@@ -45,39 +44,23 @@ public class TokenDaoJpaITest {
     }
 
     @Test
-    public void shouldInsertAToken() {
+    public void persist_shouldInsertAToken() {
 
         String tokenId = "tokenIdA";
         String chargeId = "123456";
-        tokenDao.insertNewToken(chargeId, tokenId);
+        tokenDao.persist(new TokenEntity(Long.valueOf(chargeId), tokenId));
 
         assertThat(databaseTestHelper.getChargeTokenId(chargeId), is(tokenId));
     }
 
     @Test
-    public void shouldFindByChargeId() {
-
-        String chargeId = "10101";
-        String tokenId = "tokenBB";
-        databaseTestHelper.addToken(chargeId, tokenId);
-
-        assertThat(tokenDao.findByChargeId(chargeId), is(tokenId));
-    }
-
-    @Test
-    public void shouldNotFindByChargeId() {
-        String noExistingChargeId = "987651";
-        assertThat(tokenDao.findByChargeId(noExistingChargeId), is(nullValue()));
-    }
-
-    @Test
-    public void shouldFindTokenByChargeId() {
+    public void findByChargeId_shouldFindToken() {
 
         Long chargeId = 101012L;
         String tokenId = "tokenBB2";
         databaseTestHelper.addToken(String.valueOf(chargeId), tokenId);
 
-        Optional<TokenEntity> tokenOptional = tokenDao.findTokenByChargeId(chargeId);
+        Optional<TokenEntity> tokenOptional = tokenDao.findByChargeId(chargeId);
 
         assertThat(tokenOptional.isPresent(), is(true));
 
@@ -89,23 +72,13 @@ public class TokenDaoJpaITest {
     }
 
     @Test
-    public void shouldNotFindTokenByChargeId() {
+    public void findByChargeId_shouldNotFindToken() {
         Long noExistingChargeId = 9876512L;
-        assertThat(tokenDao.findTokenByChargeId(noExistingChargeId).isPresent(), is(false));
+        assertThat(tokenDao.findByChargeId(noExistingChargeId).isPresent(), is(false));
     }
 
     @Test
-    public void shouldFindChargeByTokenId() {
-
-        String chargeId = "11112";
-        String tokenId = "tokenD2";
-        databaseTestHelper.addToken(chargeId, tokenId);
-
-        assertThat(tokenDao.findChargeByTokenId(tokenId).get(), is(chargeId));
-    }
-
-    @Test
-    public void shouldFindByTokenId() {
+    public void findByTokenId_shouldFindToken() {
 
         String chargeId = "987654";
         String tokenId = "qwerty";
@@ -119,30 +92,10 @@ public class TokenDaoJpaITest {
     }
 
     @Test
-    public void shouldNotFindByTokenId() {
+    public void findByTokenId_shouldNotFindToken() {
 
-        String tokenId = "sdfgh";
+        String tokenId = "non_existing_tokenId";
 
         assertThat(tokenDao.findByTokenId(tokenId), is(Optional.empty()));
-    }
-
-    @Test
-    public void shouldNotFindChargeByTokenId() {
-        String noExistingTokenId = "non_existing_tokenId";
-        assertThat(tokenDao.findChargeByTokenId(noExistingTokenId).isPresent(), is(false));
-    }
-
-    @Test
-    public void shouldDeleteATokenByTokenId() {
-
-        String chargeId = "09871";
-        String tokenId = "tokenC1";
-        databaseTestHelper.addToken(chargeId, tokenId);
-
-        assertThat(databaseTestHelper.getChargeTokenId(chargeId), is(tokenId));
-
-        tokenDao.deleteByTokenId(tokenId);
-
-        assertThat(databaseTestHelper.getChargeTokenId(chargeId), is(nullValue()));
     }
 }

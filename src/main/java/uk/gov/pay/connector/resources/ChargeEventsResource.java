@@ -2,17 +2,17 @@ package uk.gov.pay.connector.resources;
 
 import com.google.common.collect.ImmutableMap;
 import com.google.inject.Inject;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
-import uk.gov.pay.connector.dao.EventJpaDao;
+import uk.gov.pay.connector.dao.ChargeDao;
+import uk.gov.pay.connector.model.ChargeEvent;
+import uk.gov.pay.connector.model.domain.ChargeEntity;
 import uk.gov.pay.connector.model.domain.ChargeEventEntity;
-import uk.gov.pay.connector.model.domain.ChargeEventExternal;
 
 import javax.ws.rs.GET;
 import javax.ws.rs.Path;
 import javax.ws.rs.PathParam;
 import javax.ws.rs.Produces;
 import javax.ws.rs.core.Response;
+import java.util.Collections;
 import java.util.List;
 import java.util.ListIterator;
 
@@ -25,40 +25,42 @@ import static uk.gov.pay.connector.resources.ApiPaths.CHARGE_EVENTS_API_PATH;
 @Path("/")
 public class ChargeEventsResource {
 
-    private EventJpaDao eventDao;
+    private ChargeDao chargeDao;
 
     @Inject
-    public ChargeEventsResource(EventJpaDao eventDao) {
-        this.eventDao = eventDao;
+    public ChargeEventsResource(ChargeDao chargeDao) {
+        this.chargeDao = chargeDao;
     }
 
     @GET
     @Path(CHARGE_EVENTS_API_PATH)
     @Produces(APPLICATION_JSON)
     public Response getEvents(@PathParam("accountId") Long accountId, @PathParam("chargeId") Long chargeId) {
-        List<ChargeEventEntity> events = eventDao.findEventsEntities(accountId, chargeId);
-        List<ChargeEventExternal> eventsExternal = transformToExternalStatus(events);
-        List<ChargeEventExternal> nonRepeatingExternalChargeEvents = getNonRepeatingChargeEvents(eventsExternal);
+
+        List<ChargeEventEntity> events = chargeDao.findByIdAndGatewayAccount(chargeId, accountId)
+                .map(ChargeEntity::getEvents)
+                .orElseGet(() -> Collections.EMPTY_LIST);
+
+        List<ChargeEvent> eventsExternal = transformToExternalStatus(events);
+        List<ChargeEvent> nonRepeatingExternalChargeEvents = getNonRepeatingChargeEvents(eventsExternal);
 
         ImmutableMap<String, Object> responsePayload = ImmutableMap.of("charge_id", chargeId, "events", nonRepeatingExternalChargeEvents);
         return ok().entity(responsePayload).build();
     }
 
-    private List<ChargeEventExternal> transformToExternalStatus(List<ChargeEventEntity> events) {
-        List<ChargeEventExternal> externalEvents = events
+    private List<ChargeEvent> transformToExternalStatus(List<ChargeEventEntity> events) {
+        return events
                 .stream()
                 .map(event ->
-                        new ChargeEventExternal(event.getChargeEntity().getId(), mapFromStatus(event.getStatus()), event.getUpdated()))
+                        new ChargeEvent(event.getChargeEntity().getId(), mapFromStatus(event.getStatus()), event.getUpdated()))
                 .collect(toList());
-
-        return externalEvents;
     }
 
-    private List<ChargeEventExternal> getNonRepeatingChargeEvents(List<ChargeEventExternal> externalEvents) {
-        ListIterator<ChargeEventExternal> iterator = externalEvents.listIterator();
-        ChargeEventExternal prev = null;
+    private List<ChargeEvent> getNonRepeatingChargeEvents(List<ChargeEvent> externalEvents) {
+        ListIterator<ChargeEvent> iterator = externalEvents.listIterator();
+        ChargeEvent prev = null;
         while (iterator.hasNext()) {
-            ChargeEventExternal current = iterator.next();
+            ChargeEvent current = iterator.next();
             if (current.equals(prev)) { // remove any immediately repeating statuses
                 iterator.remove();
             }

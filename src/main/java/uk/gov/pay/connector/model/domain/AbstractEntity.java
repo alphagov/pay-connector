@@ -22,6 +22,14 @@ public abstract class AbstractEntity implements Serializable {
     @JsonIgnore
     private Long id;
 
+    @Version
+    @Column(name = "version")
+    private Long version;
+
+    public Long getVersion() {
+        return version;
+    }
+
     @JsonProperty
     public Long getId() {
         return id;
@@ -31,5 +39,4 @@ public abstract class AbstractEntity implements Serializable {
     public void setId(Long id) {
         this.id = id;
     }
-
 }

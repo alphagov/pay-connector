@@ -102,11 +102,11 @@ public class DatabaseTestHelper {
         );
     }
 
-    public Map<String, String> getAccountCredentials(String gatewayAccountId) {
+    public Map<String, String> getAccountCredentials(Long gatewayAccountId) {
 
         String jsonString = jdbi.withHandle(h ->
                 h.createQuery("SELECT credentials from gateway_accounts WHERE id = :gatewayAccountId")
-                        .bind("gatewayAccountId", Integer.parseInt(gatewayAccountId))
+                        .bind("gatewayAccountId", gatewayAccountId)
                         .map(StringMapper.FIRST)
                         .first()
         );

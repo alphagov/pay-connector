@@ -7,6 +7,7 @@ import org.junit.Test;
 
 import static com.jayway.restassured.http.ContentType.JSON;
 import static java.lang.String.format;
+import static javax.ws.rs.core.Response.Status.NOT_FOUND;
 import static org.hamcrest.Matchers.is;
 import static org.hamcrest.Matchers.nullValue;
 import static uk.gov.pay.connector.util.JsonEncoder.toJson;
@@ -67,15 +68,17 @@ public class GatewayAccountResourceITest extends GatewayAccountResourceTestBase 
     }
 
     @Test
-    public void getAccountShouldReturn400IfAccountIdIsNotNumeric() throws Exception {
+    public void getAccountShouldReturn404IfAccountIdIsNotNumeric() throws Exception {
 
         String unknownAcocuntId = "92348739wsx673hdg";
 
         givenSetup()
                 .get(ACCOUNTS_API_URL + unknownAcocuntId)
                 .then()
-                .statusCode(400)
-                .body("message", Is.is(String.format("Invalid account ID format. was [%s]. Should be a number", unknownAcocuntId)));
+                .contentType(JSON)
+                .statusCode(NOT_FOUND.getStatusCode())
+                .body("code", Is.is(404))
+                .body("message", Is.is("HTTP 404 Not Found"));
     }
 
     @Test

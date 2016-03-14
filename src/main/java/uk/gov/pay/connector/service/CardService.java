@@ -4,8 +4,8 @@ import com.google.inject.persist.Transactional;
 import fj.data.Either;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import uk.gov.pay.connector.dao.ChargeJpaDao;
-import uk.gov.pay.connector.dao.GatewayAccountJpaDao;
+import uk.gov.pay.connector.dao.ChargeDao;
+import uk.gov.pay.connector.dao.GatewayAccountDao;
 import uk.gov.pay.connector.model.*;
 import uk.gov.pay.connector.model.domain.Card;
 import uk.gov.pay.connector.model.domain.ChargeEntity;
@@ -22,8 +22,6 @@ import static fj.data.Either.right;
 import static java.lang.String.format;
 import static org.apache.commons.lang3.StringUtils.equalsIgnoreCase;
 import static uk.gov.pay.connector.model.GatewayError.*;
-import static uk.gov.pay.connector.model.GatewayError.illegalStateError;
-import static uk.gov.pay.connector.model.GatewayError.operationAlreadyInProgress;
 import static uk.gov.pay.connector.model.GatewayErrorType.CHARGE_NOT_FOUND;
 import static uk.gov.pay.connector.model.domain.ChargeStatus.*;
 
@@ -34,12 +32,12 @@ public class CardService {
             CREATED, ENTERING_CARD_DETAILS, AUTHORISATION_SUCCESS, AUTHORISATION_READY, READY_FOR_CAPTURE
     };
 
-    private final GatewayAccountJpaDao accountDao;
-    private final ChargeJpaDao chargeDao;
+    private final GatewayAccountDao accountDao;
+    private final ChargeDao chargeDao;
     private final PaymentProviders providers;
 
     @Inject
-    public CardService(GatewayAccountJpaDao accountDao, ChargeJpaDao chargeDao, PaymentProviders providers) {
+    public CardService(GatewayAccountDao accountDao, ChargeDao chargeDao, PaymentProviders providers) {
         this.accountDao = accountDao;
         this.chargeDao = chargeDao;
         this.providers = providers;
@@ -121,7 +119,7 @@ public class CardService {
 
     public Either<GatewayError, GatewayResponse> doCancel(Long chargeId, Long accountId) {
         return chargeDao
-                .findChargeForAccount(Long.valueOf(chargeId), accountId)
+                .findByIdAndGatewayAccount(Long.valueOf(chargeId), accountId)
                 .map(cancel())
                 .orElseGet(chargeNotFound(chargeId));
     }
@@ -149,7 +147,7 @@ public class CardService {
                         CAPTURE_UNKNOWN;
 
         charge.setStatus(newStatus);
-        chargeDao.mergeChargeEntityWithChangedStatus(charge);
+        chargeDao.mergeAndNotifyStatusHasChanged(charge);
 
         return response;
     }
@@ -160,7 +158,7 @@ public class CardService {
 
         if (response.isSuccessful()) {
             charge.setStatus(SYSTEM_CANCELLED);
-            chargeDao.mergeChargeEntityWithChangedStatus(charge);
+            chargeDao.mergeAndNotifyStatusHasChanged(charge);
         }
         return response;
     }

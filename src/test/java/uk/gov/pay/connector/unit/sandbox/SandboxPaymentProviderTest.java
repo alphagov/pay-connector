@@ -5,7 +5,6 @@ import com.google.common.collect.ImmutableMap;
 import org.apache.commons.lang3.tuple.Pair;
 import org.junit.Test;
 import uk.gov.pay.connector.model.StatusUpdates;
-import uk.gov.pay.connector.model.domain.GatewayAccount;
 import uk.gov.pay.connector.model.domain.GatewayAccountEntity;
 import uk.gov.pay.connector.service.sandbox.SandboxPaymentProvider;
 

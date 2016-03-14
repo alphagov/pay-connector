@@ -5,7 +5,6 @@ import javax.persistence.Converter;
 import java.sql.Timestamp;
 import java.time.LocalDateTime;
 import java.time.ZoneId;
-import java.time.ZonedDateTime;
 
 @Converter
 public class LocalDateTimeConverter implements AttributeConverter<LocalDateTime, Timestamp> {

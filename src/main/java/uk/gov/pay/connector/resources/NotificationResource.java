@@ -2,11 +2,10 @@ package uk.gov.pay.connector.resources;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import uk.gov.pay.connector.dao.ChargeJpaDao;
-import uk.gov.pay.connector.dao.PayDBIException;
+import uk.gov.pay.connector.dao.ChargeDao;
 import uk.gov.pay.connector.model.StatusUpdates;
+import uk.gov.pay.connector.model.domain.ChargeEntity;
 import uk.gov.pay.connector.model.domain.ChargeStatus;
-import uk.gov.pay.connector.model.domain.GatewayAccount;
 import uk.gov.pay.connector.model.domain.GatewayAccountEntity;
 import uk.gov.pay.connector.service.ChargeStatusBlacklist;
 import uk.gov.pay.connector.service.PaymentProvider;
@@ -31,11 +30,11 @@ public class NotificationResource {
 
     private static final Logger logger = LoggerFactory.getLogger(NotificationResource.class);
     private PaymentProviders providers;
-    private ChargeJpaDao chargeDao;
+    private ChargeDao chargeDao;
     private NotificationUtil notificationUtil = new NotificationUtil(new ChargeStatusBlacklist());
 
     @Inject
-    public NotificationResource(PaymentProviders providers, ChargeJpaDao chargeDao) {
+    public NotificationResource(PaymentProviders providers, ChargeDao chargeDao) {
         this.providers = providers;
         this.chargeDao = chargeDao;
     }
@@ -79,11 +78,14 @@ public class NotificationResource {
                         });
     }
 
-    private static void updateCharge(ChargeJpaDao chargeDao, String provider, String transactionId, ChargeStatus value) {
-        try {
-            chargeDao.updateStatusWithGatewayInfo(provider, transactionId, value);
-        } catch (PayDBIException e) {
-            logger.error("Error when trying to update transaction id " + transactionId + " to status " + value, e);
+    private static void updateCharge(ChargeDao chargeDao, String provider, String transactionId, ChargeStatus value) {
+        Optional<ChargeEntity> charge = chargeDao.findByProviderAndTransactionId(provider, transactionId);
+        if (charge.isPresent()) {
+            ChargeEntity entity = charge.get();
+            entity.setStatus(value);
+            chargeDao.mergeAndNotifyStatusHasChanged(entity);
+        } else {
+            logger.error("Error when trying to update transaction id " + transactionId + " to status " + value);
         }
     }
 }

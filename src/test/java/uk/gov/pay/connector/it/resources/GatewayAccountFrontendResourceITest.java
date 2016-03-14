@@ -2,26 +2,26 @@ package uk.gov.pay.connector.it.resources;
 
 import com.google.common.collect.ImmutableMap;
 import com.google.gson.Gson;
-import org.hamcrest.Matcher;
 import org.junit.Test;
 
 import java.util.Map;
 
 import static com.jayway.restassured.http.ContentType.JSON;
+import static javax.ws.rs.core.Response.Status.NOT_FOUND;
 import static org.hamcrest.CoreMatchers.nullValue;
 import static org.hamcrest.core.Is.is;
 import static org.junit.Assert.assertThat;
 
 public class GatewayAccountFrontendResourceITest extends GatewayAccountResourceTestBase {
 
-    private Gson gson =  new Gson();
+    private Gson gson = new Gson();
 
     @Test
     public void shouldGetCredentialsForExistingAccount() {
         String accountId = createAGatewayAccountFor("worldpay");
         ImmutableMap<String, String> credentials = ImmutableMap.of("username", "a-username", "password", "a-password", "merchant_id", "a-merchant-id");
 
-        app.getDatabaseTestHelper().updateCredentialsFor(accountId,  gson.toJson(credentials));
+        app.getDatabaseTestHelper().updateCredentialsFor(accountId, gson.toJson(credentials));
 
         givenSetup().accept(JSON)
                 .get(ACCOUNTS_FRONTEND_URL + accountId)
@@ -46,13 +46,15 @@ public class GatewayAccountFrontendResourceITest extends GatewayAccountResourceT
     }
 
     @Test
-    public void shouldReturn400IfGatewayAccountIsNotNumeric() {
+    public void shouldReturn404IfGatewayAccountIsNotNumeric() {
         String nonNumericGatewayAccount = "ABC";
         givenSetup().accept(JSON)
                 .get(ACCOUNTS_FRONTEND_URL + nonNumericGatewayAccount)
                 .then()
-                .statusCode(400)
-                .body("message", is("Invalid account ID format. was [ABC]. Should be a number"));
+                .contentType(JSON)
+                .statusCode(NOT_FOUND.getStatusCode())
+                .body("code", is(404))
+                .body("message", is("HTTP 404 Not Found"));
 
     }
 
@@ -88,7 +90,7 @@ public class GatewayAccountFrontendResourceITest extends GatewayAccountResourceT
                 .then()
                 .statusCode(200);
 
-        Map<String, String> currentCredentials = app.getDatabaseTestHelper().getAccountCredentials(accountId);
+        Map<String, String> currentCredentials = app.getDatabaseTestHelper().getAccountCredentials(Long.valueOf(accountId));
         assertThat(currentCredentials.get("username"), is(specialUserName));
         assertThat(currentCredentials.get("password"), is(specialPassword));
     }
@@ -140,18 +142,20 @@ public class GatewayAccountFrontendResourceITest extends GatewayAccountResourceT
 
     @Test
     public void shouldFailIfAccountIdIsNotNumeric() {
-
-        String nonExistingAccountId = "NO_NUMERIC_ACCOUNT_ID";
-        assertUpdateInvalidAccountReturnsMessage(nonExistingAccountId, is("The gateway account id 'NO_NUMERIC_ACCOUNT_ID' does not exist"));
+        givenSetup()
+                .accept(JSON)
+                .body(gson.toJson(ImmutableMap.of("username", "a-username", "password", "a-password")))
+                .put(ACCOUNTS_FRONTEND_URL + "NO_NUMERIC_ACCOUNT_ID")
+                .then()
+                .contentType(JSON)
+                .statusCode(NOT_FOUND.getStatusCode())
+                .body("code", is(404))
+                .body("message", is("HTTP 404 Not Found"));
     }
 
     @Test
     public void shouldFailIfAccountIdDoesNotExist() {
         String nonExistingAccountId = "111111111";
-        assertUpdateInvalidAccountReturnsMessage(nonExistingAccountId, is("The gateway account id '111111111' does not exist"));
-    }
-
-    private void assertUpdateInvalidAccountReturnsMessage(String nonExistingAccountId, Matcher<String> matcher) {
         createAGatewayAccountFor("smartpay");
         ImmutableMap<String, String> expectedCredentials = ImmutableMap.of("username", "a-username", "password", "a-password");
         String expectedCredentialsString = gson.toJson(expectedCredentials);
@@ -161,7 +165,7 @@ public class GatewayAccountFrontendResourceITest extends GatewayAccountResourceT
                 .put(ACCOUNTS_FRONTEND_URL + nonExistingAccountId)
                 .then()
                 .statusCode(404)
-                .body("message", matcher);
+                .body("message", is("The gateway account id '111111111' does not exist"));
     }
 
     private void updateCredentialsWith(String accountId, ImmutableMap<String, String> expectedCredentials) {
@@ -172,7 +176,7 @@ public class GatewayAccountFrontendResourceITest extends GatewayAccountResourceT
                 .then()
                 .statusCode(200);
 
-        Map<String, String> currentCredentials = app.getDatabaseTestHelper().getAccountCredentials(accountId);
+        Map<String, String> currentCredentials = app.getDatabaseTestHelper().getAccountCredentials(Long.valueOf(accountId));
         assertThat(currentCredentials, is(expectedCredentials));
     }
 }

@@ -2,17 +2,13 @@ package uk.gov.pay.connector.dao;
 
 import com.google.inject.Provider;
 import com.google.inject.persist.Transactional;
+import uk.gov.pay.connector.model.domain.AbstractEntity;
 
 import javax.persistence.EntityManager;
-import javax.persistence.Query;
-import java.util.List;
-import java.util.Map;
 import java.util.Optional;
 
 @Transactional
-abstract public class JpaDao<T> implements IJpaDao {
-
-    private static final String QUERY_SELECT_ALL = "SELECT o FROM %s o ORDER BY o.id";
+public abstract class JpaDao<T extends AbstractEntity> {
 
     protected final Provider<EntityManager> entityManager;
 
@@ -20,44 +16,19 @@ abstract public class JpaDao<T> implements IJpaDao {
         this.entityManager = entityManager;
     }
 
-    @Override
-    public <T> void persist(final T object) {
+    public void persist(final T object) {
         entityManager.get().persist(object);
     }
 
-    @Override
-    public <T, ID> Optional<T> findById(final Class<T> clazz, final ID id) {
-        return Optional.ofNullable(entityManager.get().find(clazz, id));
-    }
-
-    @Override
-    public <T> T merge(final T object) {
-        return entityManager.get().merge(object);
-    }
-
-    public <T> void remove(final T object) {
+    public void remove(final T object) {
         entityManager.get().remove(object);
     }
 
-    public <T, ID> void removeById(final Class<T> clazz, final ID id) {
-        remove(findById(clazz, id));
+    public <ID> Optional<T> findById(final Class<T> clazz, final ID id) {
+        return Optional.ofNullable(entityManager.get().find(clazz, id));
     }
 
-    @Override
-    public <T> List<T> findAll(final Class clazz) {
-        final String query = String.format(QUERY_SELECT_ALL, clazz.getSimpleName());
-        return entityManager.get().createQuery(query).getResultList();
-    }
-
-    @Override
-    public <T> List<T> find(final Class<T> clazz, final String namedQuery, final Map<String, Object> paramsMap) {
-        final Query query = fillNamedParametersQuery(clazz, namedQuery, paramsMap);
-        return query.getResultList();
-    }
-
-    private Query fillNamedParametersQuery(final Class clazz, final String namedQuery, final Map<String, Object> paramsMap) {
-        final Query query = entityManager.get().createNamedQuery(namedQuery, clazz);
-        paramsMap.entrySet().forEach((param) -> query.setParameter(param.getKey(), param.getValue()));
-        return query;
+    public T merge(final T object) {
+        return entityManager.get().merge(object);
     }
 }

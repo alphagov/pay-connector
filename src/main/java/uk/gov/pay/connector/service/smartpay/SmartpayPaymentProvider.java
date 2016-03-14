@@ -6,7 +6,6 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import uk.gov.pay.connector.model.*;
 import uk.gov.pay.connector.model.domain.ChargeStatus;
-import uk.gov.pay.connector.model.domain.GatewayAccount;
 import uk.gov.pay.connector.model.domain.GatewayAccountEntity;
 import uk.gov.pay.connector.service.GatewayClient;
 import uk.gov.pay.connector.service.PaymentProvider;
@@ -21,7 +20,6 @@ import java.util.function.Function;
 import java.util.stream.Collectors;
 
 import static fj.data.Either.reduce;
-import static java.lang.String.format;
 import static uk.gov.pay.connector.model.AuthorisationResponse.authorisationFailureResponse;
 import static uk.gov.pay.connector.model.AuthorisationResponse.successfulAuthorisation;
 import static uk.gov.pay.connector.model.CancelResponse.aSuccessfulCancelResponse;

@@ -7,8 +7,9 @@ import org.hamcrest.Matcher;
 import org.hamcrest.TypeSafeMatcher;
 import org.junit.Test;
 import org.mockito.ArgumentCaptor;
-import uk.gov.pay.connector.dao.ChargeJpaDao;
-import uk.gov.pay.connector.dao.GatewayAccountJpaDao;
+import uk.gov.pay.connector.dao.ChargeDao;
+import uk.gov.pay.connector.dao.GatewayAccountDao;
+import uk.gov.pay.connector.fixture.ChargeEntityFixture;
 import uk.gov.pay.connector.model.*;
 import uk.gov.pay.connector.model.domain.*;
 import uk.gov.pay.connector.service.CardService;
@@ -32,8 +33,8 @@ public class CardServiceTest {
     private final String providerName = "theProvider";
     private final PaymentProvider theMockProvider = mock(PaymentProvider.class);
 
-    private GatewayAccountJpaDao accountDao = mock(GatewayAccountJpaDao.class);
-    private ChargeJpaDao chargeDao = mock(ChargeJpaDao.class);
+    private GatewayAccountDao accountDao = mock(GatewayAccountDao.class);
+    private ChargeDao chargeDao = mock(ChargeDao.class);
     private PaymentProviders providers = mock(PaymentProviders.class);
     private final CardService cardService = new CardService(accountDao, chargeDao, providers);
 
@@ -144,7 +145,7 @@ public class CardServiceTest {
         assertTrue(response.isRight());
         assertThat(response.right().value(), is(aSuccessfulResponse()));
         ArgumentCaptor<ChargeEntity> argumentCaptor = ArgumentCaptor.forClass(ChargeEntity.class);
-        verify(chargeDao).mergeChargeEntityWithChangedStatus(argumentCaptor.capture());
+        verify(chargeDao).mergeAndNotifyStatusHasChanged(argumentCaptor.capture());
 
         assertThat(argumentCaptor.getValue().getStatus(), is(CAPTURE_SUBMITTED.getValue()));
 
@@ -206,7 +207,7 @@ public class CardServiceTest {
         assertTrue(response.isRight());
         assertThat(response.right().value(), is(anUnSuccessfulResponse()));
         ArgumentCaptor<ChargeEntity> argumentCaptor = ArgumentCaptor.forClass(ChargeEntity.class);
-        verify(chargeDao).mergeChargeEntityWithChangedStatus(argumentCaptor.capture());
+        verify(chargeDao).mergeAndNotifyStatusHasChanged(argumentCaptor.capture());
 
         assertThat(argumentCaptor.getValue().getStatus(), is(CAPTURE_UNKNOWN.getValue()));
 
@@ -223,7 +224,7 @@ public class CardServiceTest {
 
         ChargeEntity charge = newCharge(chargeId, ENTERING_CARD_DETAILS);
 
-        when(chargeDao.findChargeForAccount(chargeId, accountId)).thenReturn(Optional.of(charge));
+        when(chargeDao.findByIdAndGatewayAccount(chargeId, accountId)).thenReturn(Optional.of(charge));
         when(accountDao.findById(charge.getGatewayAccount().getId())).thenReturn(Optional.of(charge.getGatewayAccount()));
 
         when(providers.resolve(providerName)).thenReturn(theMockProvider);
@@ -237,7 +238,7 @@ public class CardServiceTest {
 
         ArgumentCaptor<ChargeEntity> argumentCaptor = ArgumentCaptor.forClass(ChargeEntity.class);
 
-        verify(chargeDao).mergeChargeEntityWithChangedStatus(argumentCaptor.capture());
+        verify(chargeDao).mergeAndNotifyStatusHasChanged(argumentCaptor.capture());
         ChargeEntity updatedCharge = argumentCaptor.getValue();
         assertThat(updatedCharge.getStatus(), is(SYSTEM_CANCELLED.getValue()));
     }
@@ -247,7 +248,7 @@ public class CardServiceTest {
         Long chargeId = 1234L;
         Long accountId = 1L;
 
-        when(chargeDao.findChargeForAccount(chargeId, accountId)).thenReturn(Optional.empty());
+        when(chargeDao.findByIdAndGatewayAccount(chargeId, accountId)).thenReturn(Optional.empty());
 
         Either<GatewayError, GatewayResponse> response = cardService.doCancel(chargeId, accountId);
 
@@ -266,7 +267,7 @@ public class CardServiceTest {
         ChargeEntity charge = newCharge(chargeId, CAPTURE_SUBMITTED);
         charge.setId(chargeId);
 
-        when(chargeDao.findChargeForAccount(chargeId, accountId)).thenReturn(Optional.of(charge));
+        when(chargeDao.findByIdAndGatewayAccount(chargeId, accountId)).thenReturn(Optional.of(charge));
 
         Either<GatewayError, GatewayResponse> response = cardService.doCancel(chargeId, accountId);
 
@@ -284,7 +285,7 @@ public class CardServiceTest {
 
         ChargeEntity charge = newCharge(chargeId, ENTERING_CARD_DETAILS);
 
-        when(chargeDao.findChargeForAccount(chargeId, accountId)).thenReturn(Optional.of(charge));
+        when(chargeDao.findByIdAndGatewayAccount(chargeId, accountId)).thenReturn(Optional.of(charge));
         when(accountDao.findById(charge.getGatewayAccount().getId())).thenReturn(Optional.of(charge.getGatewayAccount()));
 
         when(providers.resolve(providerName)).thenReturn(theMockProvider);
@@ -311,11 +312,14 @@ public class CardServiceTest {
     }
 
     private ChargeEntity newCharge(Long chargeId, ChargeStatus status) {
-            GatewayAccount gatewayAccount = newAccount();
-            GatewayAccountEntity gatewayAccountEntity = new GatewayAccountEntity(gatewayAccount.getGatewayName(), gatewayAccount.getCredentials());
-            gatewayAccountEntity.setId(gatewayAccount.getId());
-            return new ChargeEntity(chargeId, 500L, status.getValue(), "", "", "", "", gatewayAccountEntity);
-        }
+        GatewayAccount gatewayAccount = newAccount();
+        GatewayAccountEntity gatewayAccountEntity = new GatewayAccountEntity(gatewayAccount.getGatewayName(), gatewayAccount.getCredentials());
+        gatewayAccountEntity.setId(gatewayAccount.getId());
+        return ChargeEntityFixture.aValidChargeEntity()
+                .withId(chargeId)
+                .withStatus(status)
+                .withGatewayAccountEntity(gatewayAccountEntity).build();
+    }
 
     private Matcher<GatewayResponse> aSuccessfulResponse() {
         return new TypeSafeMatcher<GatewayResponse>() {

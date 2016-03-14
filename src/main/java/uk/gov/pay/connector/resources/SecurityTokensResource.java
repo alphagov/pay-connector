@@ -1,9 +1,10 @@
 package uk.gov.pay.connector.resources;
 
 import com.google.common.collect.ImmutableMap;
+import com.google.inject.persist.Transactional;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import uk.gov.pay.connector.dao.TokenJpaDao;
+import uk.gov.pay.connector.dao.TokenDao;
 
 import javax.inject.Inject;
 import javax.ws.rs.*;
@@ -19,10 +20,10 @@ public class SecurityTokensResource {
     private static final String TOKEN_VALIDATION_PATH = "/v1/frontend/tokens/{chargeTokenId}";
 
     private final Logger logger = LoggerFactory.getLogger(SecurityTokensResource.class);
-    private final TokenJpaDao tokenDao;
+    private final TokenDao tokenDao;
 
     @Inject
-    public SecurityTokensResource(TokenJpaDao tokenDao) {
+    public SecurityTokensResource(TokenDao tokenDao) {
         this.tokenDao = tokenDao;
     }
 
@@ -42,10 +43,11 @@ public class SecurityTokensResource {
 
     @DELETE
     @Path(TOKEN_VALIDATION_PATH)
+    @Transactional
     public Response deleteToken(@PathParam("chargeTokenId") String chargeTokenId) {
         logger.debug("delete({})", chargeTokenId);
-        tokenDao.deleteByTokenId(chargeTokenId);
-
+        tokenDao.findByTokenId(chargeTokenId)
+                .ifPresent(tokenDao::remove);
         return noContentResponse();
     }
 }

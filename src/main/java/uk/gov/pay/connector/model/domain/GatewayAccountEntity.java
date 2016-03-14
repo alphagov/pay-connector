@@ -10,9 +10,6 @@ import java.util.Map;
 @Table(name = "gateway_accounts")
 @SequenceGenerator(name="gateway_accounts_gateway_account_id_seq", sequenceName="gateway_accounts_gateway_account_id_seq", allocationSize=1)
 public class GatewayAccountEntity extends AbstractEntity {
-    public static final String CREDENTIALS_MERCHANT_ID = "merchant_id";
-    public static final String CREDENTIALS_USERNAME = "username";
-    public static final String CREDENTIALS_PASSWORD = "password";
 
     public GatewayAccountEntity() {
     }

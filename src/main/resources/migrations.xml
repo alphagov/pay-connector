@@ -127,4 +127,28 @@
         </addColumn>
     </changeSet>
 
+    <changeSet id="add version to charge_events table" author="">
+        <addColumn tableName="charge_events">
+            <column name="version" type="bigint" defaultValue="0">
+                <constraints nullable="false"/>
+            </column>
+        </addColumn>
+    </changeSet>
+
+    <changeSet id="add version to gateway_accounts table" author="">
+        <addColumn tableName="gateway_accounts">
+            <column name="version" type="bigint" defaultValue="0">
+                <constraints nullable="false"/>
+            </column>
+        </addColumn>
+    </changeSet>
+
+    <changeSet id="add version to tokens table" author="">
+        <addColumn tableName="tokens">
+            <column name="version" type="bigint" defaultValue="0">
+                <constraints nullable="false"/>
+            </column>
+        </addColumn>
+    </changeSet>
+
 </databaseChangeLog>
