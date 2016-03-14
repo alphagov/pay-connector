@@ -68,6 +68,13 @@ public class ChargeDao extends JpaDao<ChargeEntity> {
                 .setParameter("provider", provider).getResultList().stream().findFirst();
     }
 
+    // Temporary methods until notification listeners are in place
+    public void persist(ChargeEntity chargeEntity) {
+        super.persist(chargeEntity);
+        eventDao.persist(ChargeEventEntity.from(chargeEntity, ChargeStatus.CREATED, chargeEntity.getCreatedDate().toLocalDateTime()));
+    }
+
+
     public List<ChargeEntity> findBeforeDateWithStatusIn(ZonedDateTime date, List<ChargeStatus> statuses) {
         CriteriaBuilder cb = entityManager.get().getCriteriaBuilder();
         CriteriaQuery cq = cb.createQuery();
