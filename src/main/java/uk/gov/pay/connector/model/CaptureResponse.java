@@ -3,15 +3,15 @@ package uk.gov.pay.connector.model;
 import org.slf4j.Logger;
 
 import static java.lang.String.format;
-import static uk.gov.pay.connector.model.GatewayError.baseGatewayError;
+import static uk.gov.pay.connector.model.ErrorResponse.baseGatewayError;
 
 public class CaptureResponse implements GatewayResponse {
 
     private final Boolean successful;
-    private final GatewayError error;
+    private final ErrorResponse error;
 
 
-    public CaptureResponse(boolean successful, GatewayError errorMessage) {
+    public CaptureResponse(boolean successful, ErrorResponse errorMessage) {
         this.successful = successful;
         this.error = errorMessage;
     }
@@ -20,7 +20,7 @@ public class CaptureResponse implements GatewayResponse {
         return successful;
     }
 
-    public GatewayError getError() {
+    public ErrorResponse getError() {
         return error;
     }
 
@@ -34,8 +34,8 @@ public class CaptureResponse implements GatewayResponse {
         return new CaptureResponse(false, baseGatewayError("A problem occurred."));
     }
 
-    public static CaptureResponse captureFailureResponse(GatewayError gatewayError) {
-        return new CaptureResponse(false, gatewayError);
+    public static CaptureResponse captureFailureResponse(ErrorResponse errorResponse) {
+        return new CaptureResponse(false, errorResponse);
     }
 
     public static CaptureResponse captureFailureResponse(Logger logger, String errorMessage) {

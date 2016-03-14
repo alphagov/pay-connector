@@ -1,6 +1,6 @@
 package uk.gov.pay.connector.model;
 
-public enum GatewayErrorType {
+public enum ErrorType {
     CHARGE_NOT_FOUND,
 
     ILLEGAL_STATE_ERROR,

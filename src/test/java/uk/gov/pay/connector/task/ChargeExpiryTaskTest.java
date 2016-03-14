@@ -10,8 +10,8 @@ import org.mockito.Mock;
 import org.mockito.runners.MockitoJUnitRunner;
 import uk.gov.pay.connector.dao.ChargeDao;
 import uk.gov.pay.connector.model.CancelResponse;
-import uk.gov.pay.connector.model.GatewayError;
-import uk.gov.pay.connector.model.GatewayErrorType;
+import uk.gov.pay.connector.model.ErrorResponse;
+import uk.gov.pay.connector.model.ErrorType;
 import uk.gov.pay.connector.model.GatewayResponse;
 import uk.gov.pay.connector.model.domain.ChargeEntity;
 import uk.gov.pay.connector.model.domain.ChargeStatus;
@@ -77,8 +77,8 @@ public class ChargeExpiryTaskTest {
 
     @Test
     public void shouldNotExpireChargeWhenCancelFailed() throws Exception {
-        GatewayError gatewayError = new GatewayError("error-message", GatewayErrorType.GATEWAY_CONNECTION_TIMEOUT_ERROR);
-        mockCancelResponse(Either.left(gatewayError));
+        ErrorResponse errorResponse = new ErrorResponse("error-message", ErrorType.GATEWAY_CONNECTION_TIMEOUT_ERROR);
+        mockCancelResponse(Either.left(errorResponse));
         when(mockChargeEntity.getStatus()).thenReturn(ChargeStatus.AUTHORISATION_SUCCESS.getValue());
 
         chargeExpiryTask.execute(ImmutableMultimap.of(), null);
@@ -87,7 +87,7 @@ public class ChargeExpiryTaskTest {
         verify(mockChargeEntity, times(0)).setStatus(ChargeStatus.EXPIRED);
     }
 
-    private void mockCancelResponse(Either<GatewayError, GatewayResponse> either) {
+    private void mockCancelResponse(Either<ErrorResponse, GatewayResponse> either) {
         when(mockCardService.doCancel(anyString(), anyLong())).thenReturn(either);
     }
 }

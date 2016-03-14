@@ -26,7 +26,7 @@ import static org.hamcrest.core.Is.is;
 import static org.junit.Assert.assertTrue;
 import static org.mockito.Matchers.any;
 import static org.mockito.Mockito.*;
-import static uk.gov.pay.connector.model.GatewayErrorType.*;
+import static uk.gov.pay.connector.model.ErrorType.*;
 import static uk.gov.pay.connector.model.domain.ChargeStatus.*;
 
 public class CardServiceTest {
@@ -56,7 +56,7 @@ public class CardServiceTest {
         mockSuccessfulAuthorisation(gatewayTxId);
 
         Card cardDetails = CardUtils.aValidCard();
-        Either<GatewayError, GatewayResponse> response = cardService.doAuthorise(externalId, cardDetails);
+        Either<ErrorResponse, GatewayResponse> response = cardService.doAuthorise(externalId, cardDetails);
 
         assertTrue(response.isRight());
         assertThat(response.right().value(), is(aSuccessfulResponse()));
@@ -71,13 +71,13 @@ public class CardServiceTest {
 
         when(chargeDao.findByExternalId(chargeId)).thenReturn(Optional.empty());
 
-        Either<GatewayError, GatewayResponse> response = cardService.doAuthorise(chargeId, CardUtils.aValidCard());
+        Either<ErrorResponse, GatewayResponse> response = cardService.doAuthorise(chargeId, CardUtils.aValidCard());
 
         assertTrue(response.isLeft());
-        GatewayError gatewayError = response.left().value();
+        ErrorResponse errorResponse = response.left().value();
 
-        assertThat(gatewayError.getErrorType(), is(CHARGE_NOT_FOUND));
-        assertThat(gatewayError.getMessage(), is("Charge with id [45678] not found."));
+        assertThat(errorResponse.getErrorType(), is(CHARGE_NOT_FOUND));
+        assertThat(errorResponse.getMessage(), is("Charge with id [45678] not found."));
     }
 
     @Test
@@ -95,13 +95,13 @@ public class CardServiceTest {
                 .thenReturn(charge);
 
         Card cardDetails = CardUtils.aValidCard();
-        Either<GatewayError, GatewayResponse> response = cardService.doAuthorise(externalId, cardDetails);
+        Either<ErrorResponse, GatewayResponse> response = cardService.doAuthorise(externalId, cardDetails);
 
         assertTrue(response.isLeft());
-        GatewayError gatewayError = response.left().value();
+        ErrorResponse errorResponse = response.left().value();
 
-        assertThat(gatewayError.getErrorType(), is(ILLEGAL_STATE_ERROR));
-        assertThat(gatewayError.getMessage(), is("Charge not in correct state to be processed, " + externalId));
+        assertThat(errorResponse.getErrorType(), is(ILLEGAL_STATE_ERROR));
+        assertThat(errorResponse.getMessage(), is("Charge not in correct state to be processed, " + externalId));
     }
 
     @Test
@@ -120,13 +120,13 @@ public class CardServiceTest {
         when(chargeDao.findById(chargeId)).thenReturn(Optional.of(charge));
 
         Card cardDetails = CardUtils.aValidCard();
-        Either<GatewayError, GatewayResponse> response = cardService.doAuthorise(externalId, cardDetails);
+        Either<ErrorResponse, GatewayResponse> response = cardService.doAuthorise(externalId, cardDetails);
 
         assertTrue(response.isLeft());
-        GatewayError gatewayError = response.left().value();
+        ErrorResponse errorResponse = response.left().value();
 
-        assertThat(gatewayError.getErrorType(), is(CONFLICT_ERROR));
-        assertThat(gatewayError.getMessage(), is("Authorisation for charge conflicting, " + externalId));
+        assertThat(errorResponse.getErrorType(), is(CONFLICT_ERROR));
+        assertThat(errorResponse.getMessage(), is("Authorisation for charge conflicting, " + externalId));
     }
 
     @Test
@@ -144,7 +144,7 @@ public class CardServiceTest {
         CaptureResponse response1 = new CaptureResponse(true, null);
         when(theMockProvider.capture(any())).thenReturn(response1);
 
-        Either<GatewayError, GatewayResponse> response = cardService.doCapture(externalId);
+        Either<ErrorResponse, GatewayResponse> response = cardService.doCapture(externalId);
 
         assertTrue(response.isRight());
         assertThat(response.right().value(), is(aSuccessfulResponse()));
@@ -165,13 +165,13 @@ public class CardServiceTest {
 
         when(chargeDao.findByExternalId(chargeId)).thenReturn(Optional.empty());
 
-        Either<GatewayError, GatewayResponse> response = cardService.doCapture(chargeId);
+        Either<ErrorResponse, GatewayResponse> response = cardService.doCapture(chargeId);
 
         assertTrue(response.isLeft());
-        GatewayError gatewayError = response.left().value();
+        ErrorResponse errorResponse = response.left().value();
 
-        assertThat(gatewayError.getErrorType(), is(CHARGE_NOT_FOUND));
-        assertThat(gatewayError.getMessage(), is("Charge with id [" + chargeId + "] not found."));
+        assertThat(errorResponse.getErrorType(), is(CHARGE_NOT_FOUND));
+        assertThat(errorResponse.getMessage(), is("Charge with id [" + chargeId + "] not found."));
     }
 
     @Test
@@ -185,13 +185,13 @@ public class CardServiceTest {
         String externalId = charge.getExternalId();
         when(chargeDao.findByExternalId(externalId)).thenReturn(Optional.of(charge));
 
-        Either<GatewayError, GatewayResponse> response = cardService.doCapture(externalId);
+        Either<ErrorResponse, GatewayResponse> response = cardService.doCapture(externalId);
 
         assertTrue(response.isLeft());
-        GatewayError gatewayError = response.left().value();
+        ErrorResponse errorResponse = response.left().value();
 
-        assertThat(gatewayError.getErrorType(), is(GENERIC_GATEWAY_ERROR));
-        assertThat(gatewayError.getMessage(), is("Cannot capture a charge with status CREATED."));
+        assertThat(errorResponse.getErrorType(), is(GENERIC_GATEWAY_ERROR));
+        assertThat(errorResponse.getMessage(), is("Cannot capture a charge with status CREATED."));
     }
 
     @Test
@@ -206,10 +206,10 @@ public class CardServiceTest {
         when(chargeDao.findByExternalId(externalId)).thenReturn(Optional.of(charge));
         when(accountDao.findById(charge.getGatewayAccount().getId())).thenReturn(Optional.of(charge.getGatewayAccount()));
         when(providers.resolve(providerName)).thenReturn(theMockProvider);
-        CaptureResponse unsuccessfulResponse = new CaptureResponse(false, new GatewayError("error", GENERIC_GATEWAY_ERROR));
+        CaptureResponse unsuccessfulResponse = new CaptureResponse(false, new ErrorResponse("error", GENERIC_GATEWAY_ERROR));
         when(theMockProvider.capture(any())).thenReturn(unsuccessfulResponse);
 
-        Either<GatewayError, GatewayResponse> response = cardService.doCapture(externalId);
+        Either<ErrorResponse, GatewayResponse> response = cardService.doCapture(externalId);
 
         assertTrue(response.isRight());
         assertThat(response.right().value(), is(anUnSuccessfulResponse()));
@@ -239,7 +239,7 @@ public class CardServiceTest {
         CancelResponse cancelResponse = new CancelResponse(true, null);
         when(theMockProvider.cancel(any())).thenReturn(cancelResponse);
 
-        Either<GatewayError, GatewayResponse> response = cardService.doCancel(externalId, accountId);
+        Either<ErrorResponse, GatewayResponse> response = cardService.doCancel(externalId, accountId);
 
         assertTrue(response.isRight());
         assertThat(response.right().value(), is(aSuccessfulResponse()));
@@ -258,13 +258,13 @@ public class CardServiceTest {
 
         when(chargeDao.findByExternalIdAndGatewayAccount(chargeId, accountId)).thenReturn(Optional.empty());
 
-        Either<GatewayError, GatewayResponse> response = cardService.doCancel(chargeId, accountId);
+        Either<ErrorResponse, GatewayResponse> response = cardService.doCancel(chargeId, accountId);
 
         assertTrue(response.isLeft());
-        GatewayError gatewayError = response.left().value();
+        ErrorResponse errorResponse = response.left().value();
 
-        assertThat(gatewayError.getErrorType(), is(CHARGE_NOT_FOUND));
-        assertThat(gatewayError.getMessage(), is("Charge with id [1234] not found."));
+        assertThat(errorResponse.getErrorType(), is(CHARGE_NOT_FOUND));
+        assertThat(errorResponse.getMessage(), is("Charge with id [1234] not found."));
     }
 
     @Test
@@ -278,13 +278,13 @@ public class CardServiceTest {
         String externalId = charge.getExternalId();
         when(chargeDao.findByExternalIdAndGatewayAccount(externalId, accountId)).thenReturn(Optional.of(charge));
 
-        Either<GatewayError, GatewayResponse> response = cardService.doCancel(externalId, accountId);
+        Either<ErrorResponse, GatewayResponse> response = cardService.doCancel(externalId, accountId);
 
         assertTrue(response.isLeft());
-        GatewayError gatewayError = response.left().value();
+        ErrorResponse errorResponse = response.left().value();
 
-        assertThat(gatewayError.getErrorType(), is(GENERIC_GATEWAY_ERROR));
-        assertThat(gatewayError.getMessage(), is("Cannot cancel a charge id [" + externalId + "]: status is [CAPTURE SUBMITTED]."));
+        assertThat(errorResponse.getErrorType(), is(GENERIC_GATEWAY_ERROR));
+        assertThat(errorResponse.getMessage(), is("Cannot cancel a charge id [" + externalId + "]: status is [CAPTURE SUBMITTED]."));
     }
 
     @Test
@@ -299,10 +299,10 @@ public class CardServiceTest {
         when(accountDao.findById(charge.getGatewayAccount().getId())).thenReturn(Optional.of(charge.getGatewayAccount()));
 
         when(providers.resolve(providerName)).thenReturn(theMockProvider);
-        CancelResponse cancelResponse = new CancelResponse(false, new GatewayError("Error", GatewayErrorType.GENERIC_GATEWAY_ERROR));
+        CancelResponse cancelResponse = new CancelResponse(false, new ErrorResponse("Error", ErrorType.GENERIC_GATEWAY_ERROR));
         when(theMockProvider.cancel(any())).thenReturn(cancelResponse);
 
-        Either<GatewayError, GatewayResponse> response = cardService.doCancel(externalId, accountId);
+        Either<ErrorResponse, GatewayResponse> response = cardService.doCancel(externalId, accountId);
 
         assertTrue(response.isRight());
         assertThat(response.right().value(), is(anUnSuccessfulResponse()));

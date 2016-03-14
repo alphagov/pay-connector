@@ -3,7 +3,7 @@ package uk.gov.pay.connector.service;
 import fj.data.Either;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import uk.gov.pay.connector.model.GatewayError;
+import uk.gov.pay.connector.model.ErrorResponse;
 import uk.gov.pay.connector.model.domain.GatewayAccountEntity;
 import uk.gov.pay.connector.util.XMLUnmarshaller;
 import uk.gov.pay.connector.util.XMLUnmarshallerException;
@@ -22,7 +22,7 @@ import static java.lang.String.format;
 import static javax.ws.rs.core.HttpHeaders.AUTHORIZATION;
 import static javax.ws.rs.core.MediaType.APPLICATION_XML;
 import static javax.ws.rs.core.Response.Status.OK;
-import static uk.gov.pay.connector.model.GatewayError.*;
+import static uk.gov.pay.connector.model.ErrorResponse.*;
 import static uk.gov.pay.connector.model.domain.GatewayAccount.CREDENTIALS_PASSWORD;
 import static uk.gov.pay.connector.model.domain.GatewayAccount.CREDENTIALS_USERNAME;
 import static uk.gov.pay.connector.util.AuthUtil.encode;
@@ -42,7 +42,7 @@ public class GatewayClient {
         return new GatewayClient(client, gatewayUrl);
     }
 
-    public Either<GatewayError, Response> postXMLRequestFor(GatewayAccountEntity account, String request) {
+    public Either<ErrorResponse, Response> postXMLRequestFor(GatewayAccountEntity account, String request) {
         try {
             Response response = client.target(gatewayUrl)
                     .request(APPLICATION_XML)
@@ -80,7 +80,7 @@ public class GatewayClient {
         }
     }
 
-    public <T> Either<GatewayError, T> unmarshallResponse(Response response, Class<T> clazz) {
+    public <T> Either<ErrorResponse, T> unmarshallResponse(Response response, Class<T> clazz) {
         String payload = response.readEntity(String.class);
         logger.debug("response payload=" + payload);
         try {
