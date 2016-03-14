@@ -55,6 +55,16 @@ public class RestAssuredClient {
                 .then();
     }
 
+    public ValidatableResponse postAdminTask(String postBody, String task) {
+        String requestPath = "/tasks/"+task;
+
+        return given().port(app.getAdminPort())
+                .contentType(JSON)
+                .body(postBody)
+                .post(requestPath)
+                .then();
+    }
+
     public ValidatableResponse getCharge() {
         String requestPath = CHARGE_API_PATH
                 .replace("{accountId}", accountId)

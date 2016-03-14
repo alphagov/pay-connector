@@ -24,7 +24,7 @@ public enum ChargeStatus {
     CAPTURED("CAPTURED"),
     CAPTURE_SUBMITTED("CAPTURE SUBMITTED"),
     CAPTURE_UNKNOWN("CAPTURE UNKNOWN"),
-    ;
+    EXPIRED("EXPIRED");
 
     private String value;
 

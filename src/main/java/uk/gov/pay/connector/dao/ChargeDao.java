@@ -8,17 +8,23 @@ import uk.gov.pay.connector.model.domain.ChargeStatus;
 
 import javax.inject.Inject;
 import javax.persistence.EntityManager;
+import javax.persistence.Query;
 import javax.persistence.TypedQuery;
+import javax.persistence.criteria.CriteriaBuilder;
+import javax.persistence.criteria.CriteriaQuery;
+import javax.persistence.criteria.Expression;
+import javax.persistence.criteria.Root;
 import java.time.LocalDateTime;
+import java.time.ZonedDateTime;
 import java.util.List;
 import java.util.Optional;
-
-import static uk.gov.pay.connector.model.domain.ChargeStatus.CREATED;
 
 @Transactional
 public class ChargeDao extends JpaDao<ChargeEntity> {
 
     private EventDao eventDao;
+    public static final String STATUS = "status";
+    public static final String CREATED_DATE = "createdDate";
 
     @Inject
     public ChargeDao(final Provider<EntityManager> entityManager, EventDao eventDao) {
@@ -62,10 +68,17 @@ public class ChargeDao extends JpaDao<ChargeEntity> {
                 .setParameter("provider", provider).getResultList().stream().findFirst();
     }
 
-    // Temporary methods until notification listeners are in place
-    public void persist(ChargeEntity chargeEntity) {
-        super.persist(chargeEntity);
-        eventDao.persist(ChargeEventEntity.from(chargeEntity, CREATED, chargeEntity.getCreatedDate().toLocalDateTime()));
+    public List<ChargeEntity> findBeforeDateWithStatusIn(ZonedDateTime date, List<ChargeStatus> statuses) {
+        CriteriaBuilder cb = entityManager.get().getCriteriaBuilder();
+        CriteriaQuery cq = cb.createQuery();
+        Root entity = cq.from(ChargeEntity.class);
+
+        Expression expression = entity.get(STATUS).in(statuses);
+        cq.where(cb.lessThan(entity.get(CREATED_DATE), date),
+                entity.get(STATUS).in(statuses));
+
+        Query query = entityManager.get().createQuery(cq);
+        return query.getResultList();
     }
 
     public void mergeAndNotifyStatusHasChanged(ChargeEntity chargeEntity) {
