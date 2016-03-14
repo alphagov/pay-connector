@@ -3,12 +3,9 @@ package uk.gov.pay.connector.model.domain;
 import javax.persistence.*;
 import java.time.LocalDateTime;
 
-import static uk.gov.pay.connector.model.api.ExternalChargeStatus.mapFromStatus;
-import static uk.gov.pay.connector.model.domain.ChargeStatus.chargeStatusFrom;
-
 @Entity
 @Table(name = "charge_events")
-@Embeddable
+@SequenceGenerator(name = "charge_events_charge_id_seq", sequenceName = "charge_events_charge_id_seq", allocationSize = 1)
 public class ChargeEventEntity extends AbstractEntity {
 
     @ManyToOne
@@ -24,10 +21,6 @@ public class ChargeEventEntity extends AbstractEntity {
     protected ChargeEventEntity() {
     }
 
-    public ChargeEventEntity(ChargeEntity chargeEntity, String status, LocalDateTime updated) {
-        this(chargeEntity, chargeStatusFrom(status), updated);
-    }
-
     public ChargeEventEntity(ChargeEntity chargeEntity, ChargeStatus chargeStatus, LocalDateTime updated) {
         this.chargeEntity = chargeEntity;
         this.status = chargeStatus;
@@ -36,10 +29,6 @@ public class ChargeEventEntity extends AbstractEntity {
 
     public ChargeStatus getStatus() {
         return status;
-    }
-
-    public String getExternalStatusValue() {
-        return mapFromStatus(status).getValue();
     }
 
     public LocalDateTime getUpdated() {

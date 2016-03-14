@@ -2,8 +2,9 @@ package uk.gov.pay.connector.resources;
 
 import com.google.common.collect.ImmutableMap;
 import com.google.inject.Inject;
-import uk.gov.pay.connector.dao.EventDao;
+import uk.gov.pay.connector.dao.ChargeDao;
 import uk.gov.pay.connector.model.ChargeEvent;
+import uk.gov.pay.connector.model.domain.ChargeEntity;
 import uk.gov.pay.connector.model.domain.ChargeEventEntity;
 
 import javax.ws.rs.GET;
@@ -11,6 +12,7 @@ import javax.ws.rs.Path;
 import javax.ws.rs.PathParam;
 import javax.ws.rs.Produces;
 import javax.ws.rs.core.Response;
+import java.util.Collections;
 import java.util.List;
 import java.util.ListIterator;
 
@@ -23,18 +25,22 @@ import static uk.gov.pay.connector.resources.ApiPaths.CHARGE_EVENTS_API_PATH;
 @Path("/")
 public class ChargeEventsResource {
 
-    private EventDao eventDao;
+    private ChargeDao chargeDao;
 
     @Inject
-    public ChargeEventsResource(EventDao eventDao) {
-        this.eventDao = eventDao;
+    public ChargeEventsResource(ChargeDao chargeDao) {
+        this.chargeDao = chargeDao;
     }
 
     @GET
     @Path(CHARGE_EVENTS_API_PATH)
     @Produces(APPLICATION_JSON)
     public Response getEvents(@PathParam("accountId") Long accountId, @PathParam("chargeId") Long chargeId) {
-        List<ChargeEventEntity> events = eventDao.findEvents(accountId, chargeId);
+
+        List<ChargeEventEntity> events = chargeDao.findByIdAndGatewayAccount(chargeId, accountId)
+                .map(ChargeEntity::getEvents)
+                .orElseGet(() -> Collections.EMPTY_LIST);
+
         List<ChargeEvent> eventsExternal = transformToExternalStatus(events);
         List<ChargeEvent> nonRepeatingExternalChargeEvents = getNonRepeatingChargeEvents(eventsExternal);
 
@@ -43,13 +49,11 @@ public class ChargeEventsResource {
     }
 
     private List<ChargeEvent> transformToExternalStatus(List<ChargeEventEntity> events) {
-        List<ChargeEvent> externalEvents = events
+        return events
                 .stream()
                 .map(event ->
                         new ChargeEvent(event.getChargeEntity().getId(), mapFromStatus(event.getStatus()), event.getUpdated()))
                 .collect(toList());
-
-        return externalEvents;
     }
 
     private List<ChargeEvent> getNonRepeatingChargeEvents(List<ChargeEvent> externalEvents) {

@@ -8,7 +8,7 @@ import javax.persistence.EntityManager;
 import java.util.Optional;
 
 @Transactional
-public class JpaDao<T extends AbstractEntity> {
+public abstract class JpaDao<T extends AbstractEntity> {
 
     protected final Provider<EntityManager> entityManager;
 

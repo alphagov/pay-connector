@@ -12,7 +12,6 @@ import uk.gov.pay.connector.util.DateTimeUtils;
 import uk.gov.pay.connector.util.RestAssuredClient;
 
 import javax.ws.rs.core.HttpHeaders;
-import javax.ws.rs.core.MediaType;
 import javax.ws.rs.core.Response.Status;
 import java.time.ZoneId;
 import java.time.ZonedDateTime;
@@ -26,6 +25,7 @@ import static com.jayway.restassured.http.ContentType.JSON;
 import static java.lang.String.format;
 import static java.time.ZonedDateTime.now;
 import static java.util.Arrays.asList;
+import static javax.ws.rs.core.MediaType.APPLICATION_JSON;
 import static javax.ws.rs.core.Response.Status.*;
 import static org.apache.commons.lang3.RandomStringUtils.randomAlphabetic;
 import static org.apache.commons.lang3.RandomStringUtils.randomAlphanumeric;
@@ -117,6 +117,62 @@ public class ChargesResourceITest {
     }
 
     @Test
+    public void shouldReturn404WhenCreatingChargeAccountIdIsNonNumeric() {
+
+        String postBody = toJson(ImmutableMap.of(
+                JSON_AMOUNT_KEY, AMOUNT,
+                JSON_REFERENCE_KEY, "Test reference",
+                JSON_DESCRIPTION_KEY, "Test description",
+                JSON_GATEWAY_ACC_KEY, accountId,
+                JSON_RETURN_URL_KEY, returnUrl));
+
+        createChargeApi
+                .withAccountId("invalidAccountId")
+                .postCreateCharge(postBody)
+                .contentType(JSON)
+                .statusCode(NOT_FOUND.getStatusCode())
+                .body("code", is(404))
+                .body("message", is("HTTP 404 Not Found"));
+    }
+
+    @Test
+    public void shouldReturn404OnGetChargeWhenAccountIdIsNonNumeric() {
+        getChargeApi
+                .withAccountId("wrongAccount")
+                .withChargeId("123")
+                .withHeader(HttpHeaders.ACCEPT, JSON.getAcceptHeader())
+                .getCharge()
+                .contentType(JSON)
+                .statusCode(NOT_FOUND.getStatusCode())
+                .body("code", is(404))
+                .body("message", is("HTTP 404 Not Found"));
+    }
+
+    @Test
+    public void shouldReturn404OnGetTransactionsAsCSVWhenAccountIdIsNonNumeric() {
+        getChargeApi
+                .withAccountId("invalidAccountId")
+                .withHeader(HttpHeaders.ACCEPT, CSV_CONTENT_TYPE)
+                .getTransactions()
+                .contentType(JSON)
+                .statusCode(NOT_FOUND.getStatusCode())
+                .body("code", is(404))
+                .body("message", is("HTTP 404 Not Found"));
+    }
+
+    @Test
+    public void shouldReturn404OnGetTransactionsAsJsonWhenAccountIdIsNonNumeric() {
+        getChargeApi
+                .withAccountId("invalidAccountId")
+                .withHeader(HttpHeaders.ACCEPT, APPLICATION_JSON)
+                .getTransactions()
+                .contentType(JSON)
+                .statusCode(NOT_FOUND.getStatusCode())
+                .body("code", is(404))
+                .body("message", is("HTTP 404 Not Found"));
+    }
+
+    @Test
     public void shouldFilterChargeStatusToReturnInProgressIfInternalStatusIsAuthorised() throws Exception {
         String chargeId = ((Integer) RandomUtils.nextInt(99999999)).toString();
         app.getDatabaseTestHelper().addCharge(chargeId, accountId, AMOUNT, AUTHORISATION_SUCCESS, returnUrl, null);
@@ -155,18 +211,24 @@ public class ChargesResourceITest {
     public void shouldGetChargeTransactionsForJSONAcceptHeader() throws Exception {
         String chargeId = ((Integer) RandomUtils.nextInt(99999999)).toString();
         ChargeStatus chargeStatus = AUTHORISATION_SUCCESS;
-        app.getDatabaseTestHelper().addCharge(chargeId, accountId, AMOUNT, chargeStatus, returnUrl, null);
+        ZonedDateTime createdDate = ZonedDateTime.of(2016, 1, 26, 13, 45, 32, 123, ZoneId.of("UTC"));
+        app.getDatabaseTestHelper().addCharge(chargeId, accountId, AMOUNT, chargeStatus, returnUrl, null, "My reference", createdDate);
         app.getDatabaseTestHelper().addToken(chargeId, "tokenId");
         app.getDatabaseTestHelper().addEvent(Long.valueOf(chargeId), chargeStatus.getValue());
 
         getChargeApi
                 .withAccountId(accountId)
-                .withHeader(HttpHeaders.ACCEPT, MediaType.APPLICATION_JSON)
+                .withHeader(HttpHeaders.ACCEPT, APPLICATION_JSON)
                 .getTransactions()
                 .statusCode(OK.getStatusCode())
                 .contentType(JSON)
                 .body("results.charge_id", hasItem(chargeId))
-                .body("results.status", hasItem(EXT_IN_PROGRESS.getValue()));
+                .body("results.status", hasItem(EXT_IN_PROGRESS.getValue()))
+                .body("results.amount", hasItem(6234))
+                .body("results.reference", hasItem("My reference"))
+                .body("results.return_url", hasItem(returnUrl))
+                .body("results.description", hasItem("Test description"))
+                .body("results.created_date", hasItem("2016-01-26T13:45:32Z"));
     }
 
     @Test
@@ -181,7 +243,7 @@ public class ChargesResourceITest {
 
         getChargeApi
                 .withAccountId(accountId)
-                .withHeader(HttpHeaders.ACCEPT, MediaType.APPLICATION_JSON)
+                .withHeader(HttpHeaders.ACCEPT, APPLICATION_JSON)
                 .getEvents(new Long(chargeId))
                 .statusCode(OK.getStatusCode())
                 .contentType(JSON)
@@ -204,7 +266,7 @@ public class ChargesResourceITest {
                 .withAccountId(accountId)
                 .withQueryParam("from_date", DateTimeUtils.toUTCDateString(now().minusDays(1)))
                 .withQueryParam("to_date", DateTimeUtils.toUTCDateString(now().plusDays(1)))
-                .withHeader(HttpHeaders.ACCEPT, MediaType.APPLICATION_JSON)
+                .withHeader(HttpHeaders.ACCEPT, APPLICATION_JSON)
                 .getTransactions()
                 .statusCode(OK.getStatusCode())
                 .contentType(JSON)
@@ -231,7 +293,7 @@ public class ChargesResourceITest {
                 .withAccountId(accountId)
                 .withQueryParam("from_date", "invalid-date-string")
                 .withQueryParam("to_date", "Another invalid date")
-                .withHeader(HttpHeaders.ACCEPT, MediaType.APPLICATION_JSON)
+                .withHeader(HttpHeaders.ACCEPT, APPLICATION_JSON)
                 .getTransactions()
                 .statusCode(BAD_REQUEST.getStatusCode())
                 .contentType(JSON)

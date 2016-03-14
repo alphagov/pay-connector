@@ -11,8 +11,8 @@ import uk.gov.pay.connector.util.RestAssuredClient;
 
 import java.io.Serializable;
 
-import static javax.ws.rs.core.Response.Status.CREATED;
-import static javax.ws.rs.core.Response.Status.NO_CONTENT;
+import static com.jayway.restassured.http.ContentType.JSON;
+import static javax.ws.rs.core.Response.Status.*;
 import static org.hamcrest.CoreMatchers.equalTo;
 import static org.hamcrest.core.Is.is;
 import static org.hamcrest.core.IsCollectionContaining.hasItems;
@@ -64,6 +64,16 @@ public class ChargeEventsResourceITest {
                         , EXT_IN_PROGRESS.getValue()
                         , EXT_SYSTEM_CANCELLED.getValue()))
                 .body("events.updated.size()", equalTo(3));
+    }
+
+    @Test
+    public void shouldReturn404WhenAccountIdIsNonNumeric() {
+        connectorApi.withAccountId("invalidAccountId")
+                .getEvents(123L)
+                .contentType(JSON)
+                .statusCode(NOT_FOUND.getStatusCode())
+                .body("code", is(404))
+                .body("message", is("HTTP 404 Not Found"));
     }
 
     public static class ChargeApiFixtures {

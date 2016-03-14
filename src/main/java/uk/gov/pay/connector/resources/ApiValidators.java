@@ -12,8 +12,8 @@ import static com.google.common.collect.Lists.newArrayList;
 import static fj.data.Either.left;
 import static fj.data.Either.right;
 import static java.lang.String.format;
-import static org.apache.commons.lang3.StringUtils.*;
-import static org.apache.commons.lang3.math.NumberUtils.isNumber;
+import static org.apache.commons.lang3.StringUtils.isNotBlank;
+import static org.apache.commons.lang3.StringUtils.join;
 
 public class ApiValidators {
 
@@ -35,12 +35,8 @@ public class ApiValidators {
         return Optional.empty();
     }
 
-    public static Either<String, Boolean> validateGatewayAccountReference(GatewayAccountDao gatewayAccountDao, String gatewayAccountId) {
-        if (isBlank(gatewayAccountId)) {
-            return left("missing gateway account reference");
-        } else if (!isNumber(gatewayAccountId)) {
-            return left(format("invalid gateway account reference %s", gatewayAccountId));
-        } else if (!gatewayAccountDao.findById(Long.valueOf(gatewayAccountId)).isPresent()) {
+    public static Either<String, Boolean> validateGatewayAccountReference(GatewayAccountDao gatewayAccountDao, Long gatewayAccountId) {
+        if (!gatewayAccountDao.findById(gatewayAccountId).isPresent()) {
             return left(format("account with id %s not found", gatewayAccountId));
         }
         return right(true);

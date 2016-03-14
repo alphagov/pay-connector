@@ -367,7 +367,7 @@ public class ChargeDaoITest {
 
         chargeDao.mergeAndNotifyStatusHasChanged(entity);
 
-        List<ChargeEventEntity> events = eventDao.findEvents(GATEWAY_ACCOUNT_ID, chargeId);
+        List<ChargeEventEntity> events = chargeDao.findById(chargeId).get().getEvents();
 
         assertThat(events, hasSize(1));
         assertThat(events, shouldIncludeStatus(ENTERING_CARD_DETAILS));

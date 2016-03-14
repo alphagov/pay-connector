@@ -3,6 +3,8 @@ package uk.gov.pay.connector.model.domain;
 import javax.persistence.*;
 import java.time.ZoneId;
 import java.time.ZonedDateTime;
+import java.util.ArrayList;
+import java.util.List;
 
 import static uk.gov.pay.connector.model.domain.ChargeStatus.CREATED;
 
@@ -26,6 +28,9 @@ public class ChargeEntity extends AbstractEntity {
     @ManyToOne
     @JoinColumn(name = "gateway_account_id", updatable = false)
     private GatewayAccountEntity gatewayAccount;
+
+    @OneToMany(mappedBy = "chargeEntity")
+    private List<ChargeEventEntity> events = new ArrayList<>();
 
     @Column(name = "description")
     private String description;
@@ -101,5 +106,9 @@ public class ChargeEntity extends AbstractEntity {
 
     public boolean isAssociatedTo(Long accountId) {
         return this.getGatewayAccount().getId().equals(accountId);
+    }
+
+    public List<ChargeEventEntity> getEvents() {
+        return events;
     }
 }

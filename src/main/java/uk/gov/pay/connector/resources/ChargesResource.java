@@ -75,8 +75,8 @@ public class ChargesResource {
     @GET
     @Path(CHARGE_API_PATH)
     @Produces(APPLICATION_JSON)
-    public Response getCharge(@PathParam("accountId") String accountId, @PathParam("chargeId") String chargeId, @Context UriInfo uriInfo) {
-        return chargeService.findChargeForAccount(Long.valueOf(chargeId), Long.valueOf(accountId), uriInfo)
+    public Response getCharge(@PathParam("accountId") Long accountId, @PathParam("chargeId") String chargeId, @Context UriInfo uriInfo) {
+        return chargeService.findChargeForAccount(Long.valueOf(chargeId), accountId, uriInfo)
                 .map(chargeResponse -> Response.ok(chargeResponse).build())
                 .orElseGet(() -> responseWithChargeNotFound(logger, chargeId));
     }
@@ -84,7 +84,7 @@ public class ChargesResource {
     @GET
     @Path(CHARGES_API_PATH)
     @Produces(APPLICATION_JSON)
-    public Response getChargesJson(@PathParam("accountId") String accountId,
+    public Response getChargesJson(@PathParam("accountId") Long accountId,
                                    @QueryParam(REFERENCE_KEY) String reference,
                                    @QueryParam(STATUS_KEY) String status,
                                    @QueryParam(FROM_DATE_KEY) String fromDate,
@@ -100,7 +100,7 @@ public class ChargesResource {
     @GET
     @Path(CHARGES_API_PATH)
     @Produces(TEXT_CSV)
-    public Response getChargesCsv(@PathParam("accountId") String accountId,
+    public Response getChargesCsv(@PathParam("accountId") Long accountId,
                                   @QueryParam(REFERENCE_KEY) String reference,
                                   @QueryParam(STATUS_KEY) String status,
                                   @QueryParam(FROM_DATE_KEY) String fromDate,
@@ -113,9 +113,9 @@ public class ChargesResource {
                         .bimap(handleError, listCharges(accountId, reference, status, fromDate, toDate, csvResponse()))));
     }
 
-    private F<Boolean, Response> listCharges(String accountId, String reference, String status, String fromDate, String toDate, Function<List<ChargeEntity>, Response> responseFunction) {
+    private F<Boolean, Response> listCharges(Long accountId, String reference, String status, String fromDate, String toDate, Function<List<ChargeEntity>, Response> responseFunction) {
         return success -> {
-            List<ChargeEntity> charges = chargeDao.findAllBy(aChargeSearch(Long.valueOf(accountId))
+            List<ChargeEntity> charges = chargeDao.findAllBy(aChargeSearch(accountId)
                     .withReferenceLike(reference)
                     .withExternalStatus(parseStatus(status))
                     .withCreatedDateFrom(parseDate(fromDate))
@@ -127,7 +127,7 @@ public class ChargesResource {
     @POST
     @Path(CHARGES_API_PATH)
     @Produces(APPLICATION_JSON)
-    public Response createNewCharge(@PathParam("accountId") String accountId, Map<String, Object> chargeRequest, @Context UriInfo uriInfo) {
+    public Response createNewCharge(@PathParam("accountId") Long accountId, Map<String, Object> chargeRequest, @Context UriInfo uriInfo) {
         Optional<List<String>> missingFields = checkMissingFields(chargeRequest);
         if (missingFields.isPresent()) {
             return fieldsMissingResponse(logger, missingFields.get());
@@ -138,7 +138,7 @@ public class ChargesResource {
             return fieldsInvalidSizeResponse(logger, invalidSizeFields.get());
         }
 
-        return gatewayAccountDao.findById(Long.valueOf(accountId)).map(
+        return gatewayAccountDao.findById(accountId).map(
                 gatewayAccountEntity -> {
                     logger.info("Creating new charge of {}.", chargeRequest);
                     ChargeResponse response = chargeService.create(chargeRequest, gatewayAccountEntity, uriInfo);

@@ -28,6 +28,7 @@ import static javax.ws.rs.HttpMethod.POST;
 import static javax.ws.rs.core.Response.Status;
 import static javax.ws.rs.core.Response.Status.*;
 import static org.hamcrest.Matchers.*;
+import static org.hamcrest.core.Is.is;
 import static uk.gov.pay.connector.model.domain.ChargeStatus.*;
 import static uk.gov.pay.connector.model.domain.ChargeStatus.CREATED;
 import static uk.gov.pay.connector.resources.ApiPaths.CHARGE_FRONTEND_PATH;
@@ -42,7 +43,6 @@ public class ChargesFrontendResourceITest {
 
     private String accountId = "72332423443245";
     private String description = "Test description";
-    private String reference = "Test reference";
     private String returnUrl = "http://whatever.com";
     private long expectedAmount = 6234L;
 
@@ -170,9 +170,9 @@ public class ChargesFrontendResourceITest {
         app.getDatabaseTestHelper().addCharge("103", accountId, 100, AUTHORISATION_READY, returnUrl, randomUUID().toString());
 
         List<ChargeStatus> statuses = asList(CREATED, ENTERING_CARD_DETAILS, AUTHORISATION_READY, AUTHORISATION_SUCCESS, CAPTURE_SUBMITTED, CAPTURED);
-        setupLifeCycleEventsFor(app, Long.valueOf(101), statuses);
-        setupLifeCycleEventsFor(app, Long.valueOf(102), statuses);
-        setupLifeCycleEventsFor(app, Long.valueOf(103), statuses);
+        setupLifeCycleEventsFor(app, 101L, statuses);
+        setupLifeCycleEventsFor(app, 102L, statuses);
+        setupLifeCycleEventsFor(app, 103L, statuses);
 
         ValidatableResponse response = connectorRestApi.getTransactions();
 
@@ -208,7 +208,7 @@ public class ChargesFrontendResourceITest {
     }
 
     @Test
-    public void shouldReturn400IfGatewayAccountIsNotANumberWhenListingTransactions() {
+    public void shouldReturn404IfGatewayAccountIsNotANumberWhenListingTransactions() {
         String invalidAccRef = "XYZ";
         ValidatableResponse response = connectorRestApi
                 .withAccountId(invalidAccRef)
@@ -216,7 +216,8 @@ public class ChargesFrontendResourceITest {
 
         response.statusCode(NOT_FOUND.getStatusCode())
                 .contentType(JSON)
-                .body("message", is(format("invalid gateway account reference %s", invalidAccRef)));
+                .body("code", is(404))
+                .body("message", is("HTTP 404 Not Found"));
     }
 
     @Test
@@ -237,6 +238,7 @@ public class ChargesFrontendResourceITest {
     }
 
     private String postToCreateACharge(long expectedAmount) {
+        String reference = "Test reference";
         String postBody = toJson(ImmutableMap.of(
                 "reference", reference,
                 "description", description,
