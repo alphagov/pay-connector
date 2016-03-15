@@ -117,4 +117,8 @@ public class ChargeEntity extends AbstractEntity {
     public List<ChargeEventEntity> getEvents() {
         return events;
     }
+
+    public String getExternalId() {
+        return externalId;
+    }
 }

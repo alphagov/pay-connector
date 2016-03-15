@@ -21,7 +21,8 @@ import static uk.gov.pay.connector.util.CardUtils.aValidCard;
 
 public class GatewayFailuresITest {
     private static final String ACCOUNT_ID = "12341234";
-    private static final String CHARGE_ID = "111";
+    private static final Long CHARGE_ID = 111L;
+    private static final String EXTERNAL_CHARGE_ID = "abcd1234";
     private static final String TRANSACTION_ID = "7914440428682669";
     private static final long AMOUNT = 3333;
 
@@ -53,7 +54,7 @@ public class GatewayFailuresITest {
         gatewayStub.respondWithUnexpectedResponseCodeWhenCardAuth();
 
         String errorMessage = "Unexpected Response Code From Gateway";
-        String cardAuthUrl = FRONTEND_AUTHORIZATION_RESOURCE.replace("{chargeId}", CHARGE_ID);
+        String cardAuthUrl = FRONTEND_AUTHORIZATION_RESOURCE.replace("{chargeId}", EXTERNAL_CHARGE_ID);
 
         given()
                 .port(app.getLocalPort())
@@ -75,7 +76,7 @@ public class GatewayFailuresITest {
         gatewayStub.respondWithUnexpectedResponseCodeWhenCapture();
 
         String errorMessage = "Unexpected Response Code From Gateway";
-        String captureUrl = FRONTEND_CAPTURE_RESOURCE.replace("{chargeId}", CHARGE_ID);
+        String captureUrl = FRONTEND_CAPTURE_RESOURCE.replace("{chargeId}", EXTERNAL_CHARGE_ID);
 
         given()
                 .port(app.getLocalPort())
@@ -97,7 +98,7 @@ public class GatewayFailuresITest {
         gatewayStub.respondWithMalformedBody_WhenCapture();
 
         String errorMessage = "Invalid Response Received From Gateway";
-        String captureUrl = FRONTEND_CAPTURE_RESOURCE.replace("{chargeId}", CHARGE_ID);
+        String captureUrl = FRONTEND_CAPTURE_RESOURCE.replace("{chargeId}", EXTERNAL_CHARGE_ID);
 
         given()
                 .port(app.getLocalPort())
@@ -118,7 +119,7 @@ public class GatewayFailuresITest {
 
         gatewayStub.respondWithSuccessWhenCapture();
 
-        String captureUrl = FRONTEND_CAPTURE_RESOURCE.replace("{chargeId}", CHARGE_ID);
+        String captureUrl = FRONTEND_CAPTURE_RESOURCE.replace("{chargeId}", EXTERNAL_CHARGE_ID);
         given()
                 .port(app.getLocalPort())
                 .contentType(JSON)
@@ -131,10 +132,10 @@ public class GatewayFailuresITest {
     }
 
     private void setupForCapture() {
-        db.addCharge(CHARGE_ID, ACCOUNT_ID, AMOUNT, AUTHORISATION_SUCCESS, "return_url", TRANSACTION_ID);
+        db.addCharge(CHARGE_ID, EXTERNAL_CHARGE_ID, ACCOUNT_ID, AMOUNT, AUTHORISATION_SUCCESS, "return_url", TRANSACTION_ID);
     }
 
     private void setupForCardAuth() {
-        db.addCharge(CHARGE_ID, ACCOUNT_ID, AMOUNT, ENTERING_CARD_DETAILS, "return_url", TRANSACTION_ID);
+        db.addCharge(CHARGE_ID, EXTERNAL_CHARGE_ID, ACCOUNT_ID, AMOUNT, ENTERING_CARD_DETAILS, "return_url", TRANSACTION_ID);
     }
 }

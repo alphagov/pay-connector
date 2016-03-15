@@ -19,8 +19,10 @@ import static uk.gov.pay.connector.resources.ApiPaths.FRONTEND_CAPTURE_RESOURCE;
 import static uk.gov.pay.connector.resources.PaymentProviderValidator.SMARTPAY_PROVIDER;
 
 public class GatewaySocketReadTimeoutITest {
+
     private static final String ACCOUNT_ID = "12341234";
-    private static final String CHARGE_ID = "111";
+    private static final Long CHARGE_ID = 111L;
+    private static final String EXTERNAL_CHARGE_ID = "charge111";
     private static final String TRANSACTION_ID = "7914440428682669";
 
     private int port = PortFactory.findFreePort();
@@ -50,7 +52,7 @@ public class GatewaySocketReadTimeoutITest {
         gatewayStub.respondWithTimeoutWhenCapture();
 
         String errorMessage = "Gateway connection timeout error";
-        String captureUrl = FRONTEND_CAPTURE_RESOURCE.replace("{chargeId}", CHARGE_ID);
+        String captureUrl = FRONTEND_CAPTURE_RESOURCE.replace("{chargeId}", EXTERNAL_CHARGE_ID);
 
         given()
                 .port(app.getLocalPort())
@@ -69,6 +71,6 @@ public class GatewaySocketReadTimeoutITest {
     private void setupForCapture() {
         db.addGatewayAccount(ACCOUNT_ID, SMARTPAY_PROVIDER);
         long amount = 3333;
-        db.addCharge(CHARGE_ID, ACCOUNT_ID, amount, AUTHORISATION_SUCCESS, "return_url", TRANSACTION_ID);
+        db.addCharge(CHARGE_ID, EXTERNAL_CHARGE_ID, ACCOUNT_ID, amount, AUTHORISATION_SUCCESS, "return_url", TRANSACTION_ID);
     }
 }

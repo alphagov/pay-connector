@@ -55,16 +55,16 @@ public class ChargeService {
         return response;
     }
 
-    public Optional<ChargeResponse> findChargeForAccount(Long chargeId, Long accountId, UriInfo uriInfo) {
-        return chargeDao.findByIdAndGatewayAccount(chargeId, accountId)
+    public Optional<ChargeResponse> findChargeForAccount(String externalId, Long accountId, UriInfo uriInfo) {
+        return chargeDao.findByExternalIdAndGatewayAccount(externalId, accountId)
                 .map(chargeEntity -> {
-                    Optional<TokenEntity> token = tokenDao.findByChargeId(chargeId);
+                    Optional<TokenEntity> token = tokenDao.findByChargeId(chargeEntity.getId());
                     return buildChargeResponse(uriInfo, chargeEntity, token);
                 });
     }
 
     private ChargeResponse buildChargeResponse(UriInfo uriInfo, ChargeEntity charge, Optional<TokenEntity> token) {
-        String chargeId = String.valueOf(charge.getId());
+        String chargeId = charge.getExternalId();
         ChargeResponse.Builder responseBuilder = aChargeResponse()
                 .withChargeId(chargeId)
                 .withAmount(charge.getAmount())

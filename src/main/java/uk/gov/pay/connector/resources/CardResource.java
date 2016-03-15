@@ -32,7 +32,7 @@ public class CardResource {
     @Path(FRONTEND_AUTHORIZATION_RESOURCE)
     @Consumes(APPLICATION_JSON)
     @Produces(APPLICATION_JSON)
-    public Response authoriseCharge(@PathParam("chargeId") Long chargeId, Card cardDetails) {
+    public Response authoriseCharge(@PathParam("chargeId") String chargeId, Card cardDetails) {
 
         if (!isWellFormattedCardDetails(cardDetails)) {
             return badRequestResponse(logger, "Values do not match expected format/length.");
@@ -48,7 +48,7 @@ public class CardResource {
     @Path(FRONTEND_CAPTURE_RESOURCE)
     @Consumes(APPLICATION_JSON)
     @Produces(APPLICATION_JSON)
-    public Response captureCharge(@PathParam("chargeId") Long chargeId) {
+    public Response captureCharge(@PathParam("chargeId") String chargeId) {
 
         return reduce(
                 cardService
@@ -60,7 +60,7 @@ public class CardResource {
     @POST
     @Path(CANCEL_CHARGE_PATH)
     @Produces(APPLICATION_JSON)
-    public Response cancelCharge(@PathParam("accountId") Long accountId, @PathParam("chargeId") Long chargeId) {
+    public Response cancelCharge(@PathParam("accountId") Long accountId, @PathParam("chargeId") String chargeId) {
         return reduce(
                 cardService
                         .doCancel(chargeId, accountId)

@@ -46,7 +46,7 @@ public class ChargesFrontendResource {
     @Produces(APPLICATION_JSON)
     public Response getCharge(@PathParam("chargeId") String chargeId, @Context UriInfo uriInfo) {
 
-        Optional<ChargeEntity> maybeCharge = chargeDao.findById(Long.valueOf(chargeId));
+        Optional<ChargeEntity> maybeCharge = chargeDao.findByExternalId(chargeId);
         logger.debug("charge from DB: " + maybeCharge);
 
         return maybeCharge
@@ -77,7 +77,7 @@ public class ChargesFrontendResource {
         if (!isValidStateTransition(newChargeStatus)) {
             return badRequestResponse(logger, "charge with id: " + chargeId + " cant be updated to the new state: " + newChargeStatus.getValue());
         }
-        return chargeDao.findById(Long.valueOf(chargeId))
+        return chargeDao.findByExternalId(chargeId)
                 .map(chargeEntity -> {
                     if (CURRENT_STATUSES_ALLOWING_UPDATE_TO_NEW_STATUS.contains(chargeStatusFrom(chargeEntity.getStatus()))) {
                         chargeEntity.setStatus(newChargeStatus);
@@ -93,7 +93,7 @@ public class ChargesFrontendResource {
     }
 
     private ChargeResponse buildChargeResponse(UriInfo uriInfo, ChargeEntity charge) {
-        String chargeId = String.valueOf(charge.getId());
+        String chargeId = charge.getExternalId();
         return aChargeResponse()
                 .withChargeId(chargeId)
                 .withAmount(charge.getAmount())

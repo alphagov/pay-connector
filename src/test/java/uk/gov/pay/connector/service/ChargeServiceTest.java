@@ -82,10 +82,12 @@ public class ChargeServiceTest {
         GatewayAccountEntity gatewayAccount = new GatewayAccountEntity("provider", new HashMap<>());
         gatewayAccount.setId(1L);
         long expectedChargeEntityId = 12345L;
+        final String[] externalChargeId = new String[1];
 
         doAnswer(invocation -> {
             ChargeEntity chargeEntityBeingPersisted = (ChargeEntity) invocation.getArguments()[0];
             chargeEntityBeingPersisted.setId(expectedChargeEntityId);
+            externalChargeId[0] = chargeEntityBeingPersisted.getExternalId();
             return null;
         }).when(chargeDao).persist(any(ChargeEntity.class));
 
@@ -98,6 +100,7 @@ public class ChargeServiceTest {
         assertThat(expectedChargeEntity.getId(), is(expectedChargeEntityId));
         assertThat(expectedChargeEntity.getStatus(), is("CREATED"));
         assertThat(expectedChargeEntity.getGatewayAccount().getId(), is(1L));
+        assertThat(expectedChargeEntity.getExternalId(), is(externalChargeId[0]));
         assertThat(expectedChargeEntity.getGatewayAccount().getCredentials(), is(emptyMap()));
         assertThat(expectedChargeEntity.getGatewayAccount().getGatewayName(), is("provider"));
         assertThat(expectedChargeEntity.getReference(), is("Pay reference"));
@@ -114,8 +117,8 @@ public class ChargeServiceTest {
         assertThat(tokenEntity.getToken(), is(notNullValue()));
 
         ChargeResponse.Builder expectedChargeResponse = chargeResponseBuilderOf(expectedChargeEntity);
-        expectedChargeResponse.withLink("self", GET, new URI(SERVICE_HOST + "/v1/api/accounts/1/charges/12345"));
-        expectedChargeResponse.withLink("next_url", GET, new URI("http://payments.com/12345/" + tokenEntity.getToken()));
+        expectedChargeResponse.withLink("self", GET, new URI(SERVICE_HOST + "/v1/api/accounts/1/charges/" + externalChargeId[0]));
+        expectedChargeResponse.withLink("next_url", GET, new URI("http://payments.com/" + externalChargeId[0] + "/" + tokenEntity.getToken()));
 
         assertThat(response, is(expectedChargeResponse.build()));
     }
@@ -155,20 +158,22 @@ public class ChargeServiceTest {
         Optional<ChargeEntity> chargeEntity = Optional.of(newCharge);
         Optional<TokenEntity> token = Optional.of(tokenEntity);
 
-        when(chargeDao.findByIdAndGatewayAccount(chargeId, accountId)).thenReturn(chargeEntity);
+        String externalId = newCharge.getExternalId();
+        when(chargeDao.findByExternalIdAndGatewayAccount(externalId, accountId)).thenReturn(chargeEntity);
         when(tokenDao.findByChargeId(chargeId)).thenReturn(token);
 
-        Optional<ChargeResponse> chargeResponseForAccount = service.findChargeForAccount(chargeId, accountId, uriInfo);
+        Optional<ChargeResponse> chargeResponseForAccount = service.findChargeForAccount(externalId, accountId, uriInfo);
 
         ChargeResponse.Builder expectedChargeResponse = chargeResponseBuilderOf(chargeEntity.get());
-        expectedChargeResponse.withLink("self", GET, new URI(SERVICE_HOST + "/v1/api/accounts/1/charges/101"));
-        expectedChargeResponse.withLink("next_url", GET, new URI("http://payments.com/101/" + tokenEntity.getToken()));
+        expectedChargeResponse.withLink("self", GET, new URI(SERVICE_HOST + "/v1/api/accounts/1/charges/" + externalId));
+        expectedChargeResponse.withLink("next_url", GET, new URI("http://payments.com/" + externalId + "/" + tokenEntity.getToken()));
 
         assertThat(chargeResponseForAccount.get(), is(expectedChargeResponse.build()));
     }
 
     @Test
     public void shouldFindChargeForChargeIdAndAccountIdWithoutNextUrlWhenNoTokenExist() throws Exception {
+
         Long chargeId = 101L;
         Long accountId = 10L;
 
@@ -182,33 +187,36 @@ public class ChargeServiceTest {
 
         Optional<ChargeEntity> chargeEntity = Optional.of(newCharge);
 
-        when(chargeDao.findByIdAndGatewayAccount(chargeId, accountId)).thenReturn(chargeEntity);
+        String externalId = newCharge.getExternalId();
+        when(chargeDao.findByExternalIdAndGatewayAccount(externalId, accountId)).thenReturn(chargeEntity);
         Optional<TokenEntity> nonExistingToken = Optional.empty();
         when(tokenDao.findByChargeId(chargeId)).thenReturn(nonExistingToken);
 
-        Optional<ChargeResponse> chargeResponseForAccount = service.findChargeForAccount(chargeId, accountId, uriInfo);
+        Optional<ChargeResponse> chargeResponseForAccount = service.findChargeForAccount(externalId, accountId, uriInfo);
 
         ChargeResponse.Builder expectedChargeResponse = chargeResponseBuilderOf(chargeEntity.get());
-        expectedChargeResponse.withLink("self", GET, new URI(SERVICE_HOST + "/v1/api/accounts/1/charges/101"));
+        expectedChargeResponse.withLink("self", GET, new URI(SERVICE_HOST + "/v1/api/accounts/1/charges/" + externalId));
 
         assertThat(chargeResponseForAccount.get(), is(expectedChargeResponse.build()));
     }
 
     @Test
     public void shouldNotFindAChargeWhenNoChargeForChargeIdAndAccountId() {
-        Long chargeId = 101L;
+
+        String externalChargeId = "101abc";
         Long accountId = 10L;
         Optional<ChargeEntity> nonExistingCharge = Optional.empty();
-        when(chargeDao.findByIdAndGatewayAccount(chargeId, accountId)).thenReturn(nonExistingCharge);
 
-        Optional<ChargeResponse> chargeForAccount = service.findChargeForAccount(chargeId, accountId, uriInfo);
+        when(chargeDao.findByExternalIdAndGatewayAccount(externalChargeId, accountId)).thenReturn(nonExistingCharge);
+
+        Optional<ChargeResponse> chargeForAccount = service.findChargeForAccount(externalChargeId, accountId, uriInfo);
 
         assertThat(chargeForAccount.isPresent(), is(false));
     }
 
     private ChargeResponse.Builder chargeResponseBuilderOf(ChargeEntity chargeEntity) throws URISyntaxException {
         return aChargeResponse()
-                .withChargeId(String.valueOf(chargeEntity.getId()))
+                .withChargeId(chargeEntity.getExternalId())
                 .withAmount(chargeEntity.getAmount())
                 .withReference(chargeEntity.getReference())
                 .withDescription(chargeEntity.getDescription())

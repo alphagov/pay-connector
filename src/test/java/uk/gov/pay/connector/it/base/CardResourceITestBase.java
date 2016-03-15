@@ -44,11 +44,10 @@ public class CardResourceITestBase {
 
     protected final String accountId;
     private final String paymentProvider;
-    private long amount = 6234;
 
     public CardResourceITestBase(String paymentProvider) {
         this.paymentProvider = paymentProvider;
-        this.accountId = String.valueOf(RandomUtils.nextInt(99999));
+        this.accountId = String.valueOf(RandomUtils.nextInt());
 
         app = new DropwizardAppWithPostgresRule(
                 config("worldpay.url", "http://localhost:" + port + "/jsp/merchant/xml/paymentService.jsp"),
@@ -122,10 +121,10 @@ public class CardResourceITestBase {
     }
 
     protected String createNewChargeWith(ChargeStatus status, String gatewayTransactionId) {
-        String chargeId = ((Integer) RandomUtils.nextInt(99999999)).toString();
-
-        app.getDatabaseTestHelper().addCharge(chargeId, accountId, amount, status, "returnUrl", gatewayTransactionId);
-        return chargeId;
+        long chargeId = RandomUtils.nextInt();
+        String externalChargeId = "charge-" + chargeId;
+        app.getDatabaseTestHelper().addCharge(chargeId, externalChargeId, accountId, 6234L, status, "returnUrl", gatewayTransactionId);
+        return externalChargeId;
     }
 
     protected RequestSpecification givenSetup() {

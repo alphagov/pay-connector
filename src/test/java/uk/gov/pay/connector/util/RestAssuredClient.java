@@ -95,10 +95,10 @@ public class RestAssuredClient {
                 .then();
     }
 
-    public ValidatableResponse getEvents(Long chargeId) {
+    public ValidatableResponse getEvents(String chargeId) {
         String requestPath = CHARGE_EVENTS_API_PATH
                 .replace("{accountId}", accountId)
-                .replace("{chargeId}", String.valueOf(chargeId));
+                .replace("{chargeId}", chargeId);
         return given().port(app.getLocalPort())
                 .get(requestPath)
                 .then();

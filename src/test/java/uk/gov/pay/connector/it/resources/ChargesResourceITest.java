@@ -43,8 +43,8 @@ import static uk.gov.pay.connector.util.LinksAssert.assertSelfLink;
 import static uk.gov.pay.connector.util.NumberMatcher.isNumber;
 
 public class ChargesResourceITest {
-    private static final String FRONTEND_CARD_DETAILS_URL = "/charge/";
 
+    private static final String FRONTEND_CARD_DETAILS_URL = "/charge/";
     private static final String JSON_AMOUNT_KEY = "amount";
     private static final String JSON_REFERENCE_KEY = "reference";
     private static final String JSON_DESCRIPTION_KEY = "description";
@@ -74,6 +74,7 @@ public class ChargesResourceITest {
 
     @Test
     public void makeChargeAndRetrieveAmount() throws Exception {
+
         String expectedReference = "Test reference";
         String expectedDescription = "Test description";
         String postBody = toJson(ImmutableMap.of(
@@ -82,6 +83,7 @@ public class ChargesResourceITest {
                 JSON_DESCRIPTION_KEY, expectedDescription,
                 JSON_GATEWAY_ACC_KEY, accountId,
                 JSON_RETURN_URL_KEY, returnUrl));
+
         ValidatableResponse response = createChargeApi
                 .postCreateCharge(postBody)
                 .statusCode(Status.CREATED.getStatusCode())
@@ -93,20 +95,22 @@ public class ChargesResourceITest {
                 .body(JSON_RETURN_URL_KEY, is(returnUrl))
                 .contentType(JSON);
 
-        String chargeId = response.extract().path(JSON_CHARGE_KEY);
-        String documentLocation = expectedChargeLocationFor(accountId, chargeId);
+        String externalChargeId = response.extract().path(JSON_CHARGE_KEY);
+        String documentLocation = expectedChargeLocationFor(accountId, externalChargeId);
 
         response.header("Location", is(documentLocation));
         assertSelfLink(response, documentLocation);
-        assertNextUrlLink(response, cardDetailsLocationFor(chargeId));
+
+        String chargeTokenId = app.getDatabaseTestHelper().getChargeTokenByExternalChargeId(externalChargeId);
+        assertNextUrlLink(response, "http://Frontend" + FRONTEND_CARD_DETAILS_URL + externalChargeId + "?chargeTokenId=" + chargeTokenId);
 
         ValidatableResponse getChargeResponse = getChargeApi
                 .withAccountId(accountId)
-                .withChargeId(chargeId)
+                .withChargeId(externalChargeId)
                 .getCharge()
                 .statusCode(OK.getStatusCode())
                 .contentType(JSON)
-                .body(JSON_CHARGE_KEY, is(chargeId))
+                .body(JSON_CHARGE_KEY, is(externalChargeId))
                 .body(JSON_AMOUNT_KEY, isNumber(AMOUNT))
                 .body(JSON_REFERENCE_KEY, is(expectedReference))
                 .body(JSON_DESCRIPTION_KEY, is(expectedDescription))
@@ -174,26 +178,32 @@ public class ChargesResourceITest {
 
     @Test
     public void shouldFilterChargeStatusToReturnInProgressIfInternalStatusIsAuthorised() throws Exception {
-        String chargeId = ((Integer) RandomUtils.nextInt(99999999)).toString();
-        app.getDatabaseTestHelper().addCharge(chargeId, accountId, AMOUNT, AUTHORISATION_SUCCESS, returnUrl, null);
+
+        long chargeId = RandomUtils.nextInt();
+        String externalChargeId = "charge1";
+
+        app.getDatabaseTestHelper().addCharge(chargeId, externalChargeId, accountId, AMOUNT, AUTHORISATION_SUCCESS, returnUrl, null);
         app.getDatabaseTestHelper().addToken(chargeId, "tokenId");
 
         getChargeApi
                 .withAccountId(accountId)
-                .withChargeId(chargeId)
+                .withChargeId(externalChargeId)
                 .getCharge()
                 .statusCode(OK.getStatusCode())
                 .contentType(JSON)
-                .body(JSON_CHARGE_KEY, is(chargeId))
+                .body(JSON_CHARGE_KEY, is(externalChargeId))
                 .body(JSON_STATUS_KEY, is(EXT_IN_PROGRESS.getValue()));
     }
 
     @Test
     public void shouldGetChargeTransactionsForCSVAcceptHeader() throws Exception {
-        String chargeId = ((Integer) RandomUtils.nextInt(99999999)).toString();
+
+        long chargeId = RandomUtils.nextInt();
+        String externalChargeId = "charge4";
+
         ChargeStatus chargeStatus = AUTHORISATION_SUCCESS;
         ZonedDateTime createdDate = ZonedDateTime.of(2016, 1, 25, 13, 45, 32, 123, ZoneId.of("UTC"));
-        app.getDatabaseTestHelper().addCharge(chargeId, accountId, AMOUNT, chargeStatus, returnUrl, null, "My reference", createdDate);
+        app.getDatabaseTestHelper().addCharge(chargeId, externalChargeId, accountId, AMOUNT, chargeStatus, returnUrl, null, "My reference", createdDate);
         app.getDatabaseTestHelper().addToken(chargeId, "tokenId");
         app.getDatabaseTestHelper().addEvent(Long.valueOf(chargeId), chargeStatus.getValue());
 
@@ -209,12 +219,15 @@ public class ChargesResourceITest {
 
     @Test
     public void shouldGetChargeTransactionsForJSONAcceptHeader() throws Exception {
-        String chargeId = ((Integer) RandomUtils.nextInt(99999999)).toString();
+
+        long chargeId = RandomUtils.nextInt();
+        String externalChargeId = "charge3";
+
         ChargeStatus chargeStatus = AUTHORISATION_SUCCESS;
         ZonedDateTime createdDate = ZonedDateTime.of(2016, 1, 26, 13, 45, 32, 123, ZoneId.of("UTC"));
-        app.getDatabaseTestHelper().addCharge(chargeId, accountId, AMOUNT, chargeStatus, returnUrl, null, "My reference", createdDate);
+        app.getDatabaseTestHelper().addCharge(chargeId, externalChargeId, accountId, AMOUNT, chargeStatus, returnUrl, null, "My reference", createdDate);
         app.getDatabaseTestHelper().addToken(chargeId, "tokenId");
-        app.getDatabaseTestHelper().addEvent(Long.valueOf(chargeId), chargeStatus.getValue());
+        app.getDatabaseTestHelper().addEvent(chargeId, chargeStatus.getValue());
 
         getChargeApi
                 .withAccountId(accountId)
@@ -222,7 +235,7 @@ public class ChargesResourceITest {
                 .getTransactions()
                 .statusCode(OK.getStatusCode())
                 .contentType(JSON)
-                .body("results.charge_id", hasItem(chargeId))
+                .body("results.charge_id", hasItem(externalChargeId))
                 .body("results.status", hasItem(EXT_IN_PROGRESS.getValue()))
                 .body("results.amount", hasItem(6234))
                 .body("results.reference", hasItem("My reference"))
@@ -233,21 +246,24 @@ public class ChargesResourceITest {
 
     @Test
     public void shouldNotGetRepeatedExternalChargeEvents() throws Exception {
-        String chargeId = ((Integer) RandomUtils.nextInt(99999999)).toString();
+
+        long chargeId = RandomUtils.nextInt();
+        String externalChargeId = "charge4";
+
         ChargeStatus chargeStatus = AUTHORISATION_SUCCESS;
-        app.getDatabaseTestHelper().addCharge(chargeId, accountId, AMOUNT, chargeStatus, returnUrl, null);
+        app.getDatabaseTestHelper().addCharge(chargeId, externalChargeId, accountId, AMOUNT, chargeStatus, returnUrl, null);
         app.getDatabaseTestHelper().addToken(chargeId, "tokenId");
 
         List<ChargeStatus> statuses = asList(CREATED, ENTERING_CARD_DETAILS, AUTHORISATION_READY, ChargeStatus.SYSTEM_CANCELLED, ChargeStatus.ENTERING_CARD_DETAILS);
-        setupLifeCycleEventsFor(app, Long.valueOf(chargeId), statuses);
+        setupLifeCycleEventsFor(app, chargeId, statuses);
 
         getChargeApi
                 .withAccountId(accountId)
                 .withHeader(HttpHeaders.ACCEPT, APPLICATION_JSON)
-                .getEvents(new Long(chargeId))
+                .getEvents(externalChargeId)
                 .statusCode(OK.getStatusCode())
                 .contentType(JSON)
-                .body("charge_id", is(Integer.parseInt(chargeId)))
+                .body("charge_id", is(externalChargeId))
                 .body("events.status", hasSize(4))
                 .body("events.status[0]", is(EXT_CREATED.getValue()))
                 .body("events.status[1]", is(EXT_IN_PROGRESS.getValue()))
@@ -375,13 +391,13 @@ public class ChargesResourceITest {
         return dateTimes;
     }
 
-    private String addCharge(ChargeStatus status, String reference, ZonedDateTime fromDate) {
-        String chargeId = ((Integer) RandomUtils.nextInt(99999999)).toString();
+    private void addCharge(ChargeStatus status, String reference, ZonedDateTime fromDate) {
+        long chargeId = RandomUtils.nextInt();
+        String externalChargeId = "charge" + chargeId;
         ChargeStatus chargeStatus = status != null ? status : AUTHORISATION_SUCCESS;
-        app.getDatabaseTestHelper().addCharge(chargeId, accountId, AMOUNT, chargeStatus, returnUrl, null, reference, fromDate);
+        app.getDatabaseTestHelper().addCharge(chargeId, externalChargeId, accountId, AMOUNT, chargeStatus, returnUrl, null, reference, fromDate);
         app.getDatabaseTestHelper().addToken(chargeId, "tokenId");
-        app.getDatabaseTestHelper().addEvent(Long.valueOf(chargeId), chargeStatus.getValue());
-        return chargeId;
+        app.getDatabaseTestHelper().addEvent(chargeId, chargeStatus.getValue());
     }
 
     private List<String> collect(List<Map<String, Object>> results, String field) {
@@ -394,15 +410,9 @@ public class ChargesResourceITest {
                 .replace("{chargeId}", chargeId);
     }
 
-    private String cardDetailsLocationFor(String chargeId) {
-        String chargeTokenId = app.getDatabaseTestHelper().getChargeTokenId(chargeId);
-        return "http://Frontend" + FRONTEND_CARD_DETAILS_URL + chargeId + "?chargeTokenId=" + chargeTokenId;
-    }
-
     private static void setupLifeCycleEventsFor(DropwizardAppWithPostgresRule app, Long chargeId, List<ChargeStatus> statuses) {
         statuses.stream().forEach(
                 st -> app.getDatabaseTestHelper().addEvent(chargeId, st.getValue())
         );
     }
-
 }

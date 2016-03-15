@@ -4,6 +4,7 @@ import com.google.common.collect.ImmutableMap;
 import com.google.inject.persist.Transactional;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import uk.gov.pay.connector.dao.ChargeDao;
 import uk.gov.pay.connector.dao.TokenDao;
 
 import javax.inject.Inject;
@@ -21,10 +22,12 @@ public class SecurityTokensResource {
 
     private final Logger logger = LoggerFactory.getLogger(SecurityTokensResource.class);
     private final TokenDao tokenDao;
+    private ChargeDao chargeDao;
 
     @Inject
-    public SecurityTokensResource(TokenDao tokenDao) {
+    public SecurityTokensResource(TokenDao tokenDao, ChargeDao chargeDao) {
         this.tokenDao = tokenDao;
+        this.chargeDao = chargeDao;
     }
 
     @GET
@@ -35,10 +38,11 @@ public class SecurityTokensResource {
 
         return tokenDao.findByTokenId(chargeTokenId)
                 .map(token -> {
-                    Map<Object, Object> tokenResource = ImmutableMap.builder().put("chargeId", String.valueOf(token.getChargeId())).build();
+                    String externalId = chargeDao.findById(token.getChargeId()).get().getExternalId();
+                    Map<Object, Object> tokenResource = ImmutableMap.builder().put("chargeId", externalId).build();
                     return Response.ok().entity(tokenResource).build();
                 }).orElseGet(() ->
-                    notFoundResponse(logger, "Token has expired!"));
+                        notFoundResponse(logger, "Token has expired!"));
     }
 
     @DELETE

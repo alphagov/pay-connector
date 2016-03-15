@@ -47,8 +47,8 @@ public class TokenDaoJpaITest {
     public void persist_shouldInsertAToken() {
 
         String tokenId = "tokenIdA";
-        String chargeId = "123456";
-        tokenDao.persist(new TokenEntity(Long.valueOf(chargeId), tokenId));
+        Long chargeId = 123456L;
+        tokenDao.persist(new TokenEntity(chargeId, tokenId));
 
         assertThat(databaseTestHelper.getChargeTokenId(chargeId), is(tokenId));
     }
@@ -58,7 +58,7 @@ public class TokenDaoJpaITest {
 
         Long chargeId = 101012L;
         String tokenId = "tokenBB2";
-        databaseTestHelper.addToken(String.valueOf(chargeId), tokenId);
+        databaseTestHelper.addToken(chargeId, tokenId);
 
         Optional<TokenEntity> tokenOptional = tokenDao.findByChargeId(chargeId);
 
@@ -80,14 +80,14 @@ public class TokenDaoJpaITest {
     @Test
     public void findByTokenId_shouldFindToken() {
 
-        String chargeId = "987654";
+        Long chargeId = 987654L;
         String tokenId = "qwerty";
         databaseTestHelper.addToken(chargeId, tokenId);
 
         TokenEntity entity = tokenDao.findByTokenId(tokenId).get();
 
         assertThat(entity.getId(), is(notNullValue()));
-        assertThat(entity.getChargeId(), is(Long.valueOf(chargeId)));
+        assertThat(entity.getChargeId(), is(chargeId));
         assertThat(entity.getToken(), is(tokenId));
     }
 

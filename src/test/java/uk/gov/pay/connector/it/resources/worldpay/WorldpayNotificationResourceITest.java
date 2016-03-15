@@ -46,7 +46,6 @@ public class WorldpayNotificationResourceITest extends CardResourceITestBase {
         assertFrontendChargeStatusIs(chargeId, AUTHORISATION_REJECTED.getValue());
     }
 
-
     @Test
     public void shouldUpdateTheLatestStatusToDatabase() throws Exception {
         String transactionId = randomId();
