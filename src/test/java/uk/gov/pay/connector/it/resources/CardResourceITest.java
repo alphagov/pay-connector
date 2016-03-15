@@ -124,7 +124,7 @@ public class CardResourceITest extends CardResourceITestBase {
         String originalStatus = AUTHORISATION_SUCCESS.getValue();
         assertFrontendChargeStatusIs(chargeId, originalStatus);
 
-        shouldReturnErrorFor(chargeId, validCardDetails, format("Charge not in correct state to be processed, %s", chargeId), 500);
+        shouldReturnErrorForAuth(chargeId, validCardDetails, format("Charge not in correct state to be processed, %s", chargeId), 500);
 
         assertFrontendChargeStatusIs(chargeId, originalStatus);
     }
@@ -132,8 +132,22 @@ public class CardResourceITest extends CardResourceITestBase {
     @Test
     public void shouldReturnErrorAndDoNotUpdateChargeStatus_IfAuthorisationAlreadyInProgress() throws Exception {
         String chargeId = createNewChargeWith(AUTHORISATION_READY, null);
-        shouldReturnErrorFor(chargeId, validCardDetails, format("Authorisation for charge already in progress, %s", chargeId), 202);
+        shouldReturnErrorForAuth(chargeId, validCardDetails, format("Authorisation for charge already in progress, %s", chargeId), 202);
         assertFrontendChargeStatusIs(chargeId, AUTHORISATION_READY.getValue());
+    }
+
+    @Test
+    public void shouldReturnAuthError_IfChargeExpired() throws Exception {
+        String chargeId = createNewChargeWith(EXPIRED, null);
+        shouldReturnErrorForAuth(chargeId, validCardDetails, format("Cannot authorise charge as it is expired, %s", chargeId), 400);
+        assertFrontendChargeStatusIs(chargeId, EXPIRED.getValue());
+    }
+
+    @Test
+    public void shouldReturnCaptureError_IfChargeExpired() throws Exception {
+        String chargeId = createNewChargeWith(EXPIRED, null);
+        assertErrorWithCodeAndMessageForCapture(chargeId, 400, format("Cannot capture charge as it is expired, %s", chargeId));
+        assertFrontendChargeStatusIs(chargeId, EXPIRED.getValue());
     }
 
     @Test
@@ -148,17 +162,19 @@ public class CardResourceITest extends CardResourceITestBase {
                 .body("message", is(format("Charge with id [%s] not found.", unknownId)));
     }
 
-
     @Test
     public void shouldReturn404IfChargeDoesNotExist_ForCapture() {
         String unknownId = "398579438759438";
+        assertErrorWithCodeAndMessageForCapture(unknownId, 404, String.format("Charge with id [%s] not found.", unknownId));
+    }
 
+    private void assertErrorWithCodeAndMessageForCapture(String chargeId, int expectedStatusCode, String message) {
         givenSetup()
-                .post(captureChargeUrlFor(unknownId))
+                .post(captureChargeUrlFor(chargeId))
                 .then()
-                .statusCode(404)
+                .statusCode(expectedStatusCode)
                 .contentType(JSON)
-                .body("message", is(format("Charge with id [%s] not found.", unknownId)));
+                .body("message", is(message));
     }
 
     @Test
@@ -176,21 +192,12 @@ public class CardResourceITest extends CardResourceITestBase {
     @Test
     public void shouldReturnErrorWithoutChangingChargeState_IfOriginalStateIsNotAuthorised() {
         String chargeIdNotAuthorised = createNewChargeWith(AUTHORISATION_READY, null);
-
-        givenSetup()
-                .post(captureChargeUrlFor(chargeIdNotAuthorised))
-                .then()
-                .statusCode(400)
-                .contentType(JSON)
-                .body("message", is("Cannot capture a charge with status " + AUTHORISATION_READY.getValue() + "."));
-
-
+        assertErrorWithCodeAndMessageForCapture(chargeIdNotAuthorised, 400, "Cannot capture a charge with status " + AUTHORISATION_READY.getValue() + ".");
         assertFrontendChargeStatusIs(chargeIdNotAuthorised, AUTHORISATION_READY.getValue());
     }
 
     private void shouldAuthoriseChargeFor(String cardDetails) throws Exception {
         String chargeId = createNewChargeWith(ENTERING_CARD_DETAILS, null);
-
         givenSetup()
                 .body(cardDetails)
                 .post(authoriseChargeUrlFor(chargeId))
@@ -201,10 +208,10 @@ public class CardResourceITest extends CardResourceITestBase {
     }
 
     private void shouldReturnErrorFor(String chargeId, String randomCardNumber, String expectedMessage) {
-        shouldReturnErrorFor(chargeId, randomCardNumber, expectedMessage, 400);
+        shouldReturnErrorForAuth(chargeId, randomCardNumber, expectedMessage, 400);
     }
 
-    private void shouldReturnErrorFor(String chargeId, String randomCardNumber, String expectedMessage, int statusCode) {
+    private void shouldReturnErrorForAuth(String chargeId, String randomCardNumber, String expectedMessage, int statusCode) {
         givenSetup()
                 .body(randomCardNumber)
                 .post(authoriseChargeUrlFor(chargeId))

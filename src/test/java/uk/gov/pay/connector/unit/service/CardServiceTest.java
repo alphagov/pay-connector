@@ -23,6 +23,8 @@ import java.util.Optional;
 import static org.assertj.core.util.Maps.newHashMap;
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.core.Is.is;
+import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertTrue;
 import static org.mockito.Matchers.any;
 import static org.mockito.Mockito.*;
@@ -31,12 +33,13 @@ import static uk.gov.pay.connector.model.domain.ChargeStatus.*;
 
 public class CardServiceTest {
     private final String providerName = "theProvider";
-    private final PaymentProvider theMockProvider = mock(PaymentProvider.class);
 
-    private GatewayAccountDao accountDao = mock(GatewayAccountDao.class);
-    private ChargeDao chargeDao = mock(ChargeDao.class);
-    private PaymentProviders providers = mock(PaymentProviders.class);
-    private final CardService cardService = new CardService(accountDao, chargeDao, providers);
+    private final PaymentProvider theMockProvider = mock(PaymentProvider.class);
+    private GatewayAccountDao mockAccountDao = mock(GatewayAccountDao.class);
+    private ChargeDao mockChargeDao = mock(ChargeDao.class);
+    private PaymentProviders mockProviders = mock(PaymentProviders.class);
+
+    private final CardService cardService = new CardService(mockAccountDao, mockChargeDao, mockProviders);
 
     @Test
     public void doAuthorise_shouldAuthoriseACharge() throws Exception {
@@ -47,9 +50,9 @@ public class CardServiceTest {
         ChargeEntity charge = newCharge(chargeId, ENTERING_CARD_DETAILS);
 
         String externalId = charge.getExternalId();
-        when(chargeDao.findByExternalId(externalId))
+        when(mockChargeDao.findByExternalId(externalId))
                 .thenReturn(Optional.of(charge));
-        when(chargeDao.merge(any()))
+        when(mockChargeDao.merge(any()))
                 .thenReturn(charge)
                 .thenReturn(charge);
 
@@ -69,7 +72,7 @@ public class CardServiceTest {
 
         String chargeId = "45678";
 
-        when(chargeDao.findByExternalId(chargeId)).thenReturn(Optional.empty());
+        when(mockChargeDao.findByExternalId(chargeId)).thenReturn(Optional.empty());
 
         Either<ErrorResponse, GatewayResponse> response = cardService.doAuthorise(chargeId, CardUtils.aValidCard());
 
@@ -88,9 +91,9 @@ public class CardServiceTest {
         ChargeEntity charge = newCharge(chargeId, ChargeStatus.CREATED);
 
         String externalId = charge.getExternalId();
-        when(chargeDao.findByExternalId(externalId))
+        when(mockChargeDao.findByExternalId(externalId))
                 .thenReturn(Optional.of(charge));
-        when(chargeDao.merge(any()))
+        when(mockChargeDao.merge(any()))
                 .thenReturn(charge)
                 .thenReturn(charge);
 
@@ -112,12 +115,12 @@ public class CardServiceTest {
         ChargeEntity charge = newCharge(chargeId, ChargeStatus.CREATED);
 
         String externalId = charge.getExternalId();
-        when(chargeDao.findByExternalId(externalId))
+        when(mockChargeDao.findByExternalId(externalId))
                 .thenReturn(Optional.of(charge));
-        when(chargeDao.merge(any()))
+        when(mockChargeDao.merge(any()))
                 .thenThrow(new OptimisticLockException());
 
-        when(chargeDao.findById(chargeId)).thenReturn(Optional.of(charge));
+        when(mockChargeDao.findById(chargeId)).thenReturn(Optional.of(charge));
 
         Card cardDetails = CardUtils.aValidCard();
         Either<ErrorResponse, GatewayResponse> response = cardService.doAuthorise(externalId, cardDetails);
@@ -138,9 +141,9 @@ public class CardServiceTest {
         charge.setGatewayTransactionId(gatewayTxId);
 
         String externalId = charge.getExternalId();
-        when(chargeDao.findByExternalId(externalId)).thenReturn(Optional.of(charge));
-        when(accountDao.findById(charge.getGatewayAccount().getId())).thenReturn(Optional.of(charge.getGatewayAccount()));
-        when(providers.resolve(providerName)).thenReturn(theMockProvider);
+        when(mockChargeDao.findByExternalId(externalId)).thenReturn(Optional.of(charge));
+        when(mockAccountDao.findById(charge.getGatewayAccount().getId())).thenReturn(Optional.of(charge.getGatewayAccount()));
+        when(mockProviders.resolve(providerName)).thenReturn(theMockProvider);
         CaptureResponse response1 = new CaptureResponse(true, null);
         when(theMockProvider.capture(any())).thenReturn(response1);
 
@@ -149,7 +152,7 @@ public class CardServiceTest {
         assertTrue(response.isRight());
         assertThat(response.right().value(), is(aSuccessfulResponse()));
         ArgumentCaptor<ChargeEntity> argumentCaptor = ArgumentCaptor.forClass(ChargeEntity.class);
-        verify(chargeDao).mergeAndNotifyStatusHasChanged(argumentCaptor.capture());
+        verify(mockChargeDao).mergeAndNotifyStatusHasChanged(argumentCaptor.capture());
 
         assertThat(argumentCaptor.getValue().getStatus(), is(CAPTURE_SUBMITTED.getValue()));
 
@@ -163,7 +166,7 @@ public class CardServiceTest {
 
         String chargeId = "45678abc";
 
-        when(chargeDao.findByExternalId(chargeId)).thenReturn(Optional.empty());
+        when(mockChargeDao.findByExternalId(chargeId)).thenReturn(Optional.empty());
 
         Either<ErrorResponse, GatewayResponse> response = cardService.doCapture(chargeId);
 
@@ -183,7 +186,7 @@ public class CardServiceTest {
         charge.setGatewayTransactionId(gatewayTxId);
 
         String externalId = charge.getExternalId();
-        when(chargeDao.findByExternalId(externalId)).thenReturn(Optional.of(charge));
+        when(mockChargeDao.findByExternalId(externalId)).thenReturn(Optional.of(charge));
 
         Either<ErrorResponse, GatewayResponse> response = cardService.doCapture(externalId);
 
@@ -203,9 +206,9 @@ public class CardServiceTest {
         charge.setGatewayTransactionId(gatewayTxId);
 
         String externalId = charge.getExternalId();
-        when(chargeDao.findByExternalId(externalId)).thenReturn(Optional.of(charge));
-        when(accountDao.findById(charge.getGatewayAccount().getId())).thenReturn(Optional.of(charge.getGatewayAccount()));
-        when(providers.resolve(providerName)).thenReturn(theMockProvider);
+        when(mockChargeDao.findByExternalId(externalId)).thenReturn(Optional.of(charge));
+        when(mockAccountDao.findById(charge.getGatewayAccount().getId())).thenReturn(Optional.of(charge.getGatewayAccount()));
+        when(mockProviders.resolve(providerName)).thenReturn(theMockProvider);
         CaptureResponse unsuccessfulResponse = new CaptureResponse(false, new ErrorResponse("error", GENERIC_GATEWAY_ERROR));
         when(theMockProvider.capture(any())).thenReturn(unsuccessfulResponse);
 
@@ -214,7 +217,7 @@ public class CardServiceTest {
         assertTrue(response.isRight());
         assertThat(response.right().value(), is(anUnSuccessfulResponse()));
         ArgumentCaptor<ChargeEntity> argumentCaptor = ArgumentCaptor.forClass(ChargeEntity.class);
-        verify(chargeDao).mergeAndNotifyStatusHasChanged(argumentCaptor.capture());
+        verify(mockChargeDao).mergeAndNotifyStatusHasChanged(argumentCaptor.capture());
 
         assertThat(argumentCaptor.getValue().getStatus(), is(CAPTURE_UNKNOWN.getValue()));
 
@@ -232,10 +235,10 @@ public class CardServiceTest {
         ChargeEntity charge = newCharge(chargeId, ENTERING_CARD_DETAILS);
 
         String externalId = charge.getExternalId();
-        when(chargeDao.findByExternalIdAndGatewayAccount(externalId, accountId)).thenReturn(Optional.of(charge));
-        when(accountDao.findById(charge.getGatewayAccount().getId())).thenReturn(Optional.of(charge.getGatewayAccount()));
+        when(mockChargeDao.findByExternalIdAndGatewayAccount(externalId, accountId)).thenReturn(Optional.of(charge));
+        when(mockAccountDao.findById(charge.getGatewayAccount().getId())).thenReturn(Optional.of(charge.getGatewayAccount()));
 
-        when(providers.resolve(providerName)).thenReturn(theMockProvider);
+        when(mockProviders.resolve(providerName)).thenReturn(theMockProvider);
         CancelResponse cancelResponse = new CancelResponse(true, null);
         when(theMockProvider.cancel(any())).thenReturn(cancelResponse);
 
@@ -246,7 +249,7 @@ public class CardServiceTest {
 
         ArgumentCaptor<ChargeEntity> argumentCaptor = ArgumentCaptor.forClass(ChargeEntity.class);
 
-        verify(chargeDao).mergeAndNotifyStatusHasChanged(argumentCaptor.capture());
+        verify(mockChargeDao).mergeAndNotifyStatusHasChanged(argumentCaptor.capture());
         ChargeEntity updatedCharge = argumentCaptor.getValue();
         assertThat(updatedCharge.getStatus(), is(SYSTEM_CANCELLED.getValue()));
     }
@@ -256,7 +259,7 @@ public class CardServiceTest {
         String chargeId = "1234";
         Long accountId = 1L;
 
-        when(chargeDao.findByExternalIdAndGatewayAccount(chargeId, accountId)).thenReturn(Optional.empty());
+        when(mockChargeDao.findByExternalIdAndGatewayAccount(chargeId, accountId)).thenReturn(Optional.empty());
 
         Either<ErrorResponse, GatewayResponse> response = cardService.doCancel(chargeId, accountId);
 
@@ -276,7 +279,7 @@ public class CardServiceTest {
         charge.setId(chargeId);
 
         String externalId = charge.getExternalId();
-        when(chargeDao.findByExternalIdAndGatewayAccount(externalId, accountId)).thenReturn(Optional.of(charge));
+        when(mockChargeDao.findByExternalIdAndGatewayAccount(externalId, accountId)).thenReturn(Optional.of(charge));
 
         Either<ErrorResponse, GatewayResponse> response = cardService.doCancel(externalId, accountId);
 
@@ -295,10 +298,10 @@ public class CardServiceTest {
         ChargeEntity charge = newCharge(chargeId, ENTERING_CARD_DETAILS);
 
         String externalId = charge.getExternalId();
-        when(chargeDao.findByExternalIdAndGatewayAccount(externalId, accountId)).thenReturn(Optional.of(charge));
-        when(accountDao.findById(charge.getGatewayAccount().getId())).thenReturn(Optional.of(charge.getGatewayAccount()));
+        when(mockChargeDao.findByExternalIdAndGatewayAccount(externalId, accountId)).thenReturn(Optional.of(charge));
+        when(mockAccountDao.findById(charge.getGatewayAccount().getId())).thenReturn(Optional.of(charge.getGatewayAccount()));
 
-        when(providers.resolve(providerName)).thenReturn(theMockProvider);
+        when(mockProviders.resolve(providerName)).thenReturn(theMockProvider);
         CancelResponse cancelResponse = new CancelResponse(false, new ErrorResponse("Error", ErrorType.GENERIC_GATEWAY_ERROR));
         when(theMockProvider.cancel(any())).thenReturn(cancelResponse);
 
@@ -307,12 +310,54 @@ public class CardServiceTest {
         assertTrue(response.isRight());
         assertThat(response.right().value(), is(anUnSuccessfulResponse()));
 
-        verify(chargeDao, never()).merge(any(ChargeEntity.class));
+        verify(mockChargeDao, never()).merge(any(ChargeEntity.class));
 
     }
 
+    @Test
+    public void doAuthorise_shouldReturnChargeExpiredErrorTypeForExpiredCharges() {
+        ChargeEntity charge = newCharge(100L, EXPIRED);
+        String externalId = charge.getExternalId();
+        when(mockChargeDao.findById(100L)).thenReturn(Optional.of(charge));
+        when(mockChargeDao.merge(any())).thenReturn(charge);
+
+        CardService cardService = new CardService(mockAccountDao, mockChargeDao, mockProviders);
+        Either<ErrorResponse, GatewayResponse> response = cardService.doAuthorise(externalId, new Card());
+
+        assertTrue(response.isLeft());
+        assertEquals(response.left().value().getErrorType(), ErrorType.CHARGE_EXPIRED);
+    }
+
+    @Test
+    public void doCapture_shouldReturnChargeExpiredErrorTypeForExpiredCharges() {
+        long chargeId = 100L;
+        ChargeEntity charge = newCharge(chargeId, EXPIRED);
+        String externalId = charge.getExternalId();
+        when(mockChargeDao.findById(chargeId)).thenReturn(Optional.of(charge));
+
+        Either<ErrorResponse, GatewayResponse> response = cardService.doCapture(externalId);
+
+        assertTrue(response.isLeft());
+        assertEquals(response.left().value().getErrorType(), ErrorType.CHARGE_EXPIRED);
+    }
+
+    @Test
+    public void doCancel_shouldReturnChargeExpiredErrorTypeForExpiredCharges() {
+        long chargeId = 100L;
+        ChargeEntity charge = newCharge(chargeId, EXPIRED);
+        String externalId = charge.getExternalId();
+        long accountId = 1L;
+
+        when(mockChargeDao.findByExternalIdAndGatewayAccount(externalId, accountId)).thenReturn(Optional.of(charge));
+
+        Either<ErrorResponse, GatewayResponse> response = cardService.doCancel(externalId, accountId);
+
+        assertTrue(response.isLeft());
+        assertEquals(response.left().value().getErrorType(), ErrorType.CHARGE_EXPIRED);
+    }
+
     private void mockSuccessfulAuthorisation(String transactionId) {
-        when(providers.resolve(providerName)).thenReturn(theMockProvider);
+        when(mockProviders.resolve(providerName)).thenReturn(theMockProvider);
         AuthorisationResponse resp = new AuthorisationResponse(true, null, AUTHORISATION_SUCCESS, transactionId);
         when(theMockProvider.authorise(any())).thenReturn(resp);
     }
