@@ -44,11 +44,6 @@ public class ResponseUtil {
         return responseWithMessageMap(ACCEPTED, message);
     }
 
-    public static Response notFoundResponseAsString(Logger logger, String message) {
-        logger.error(message);
-        return responseWithEntity(NOT_FOUND, message);
-    }
-
     public static Response serviceErrorResponse(Logger logger, String message) {
         logger.error(message);
         return responseWithMessageMap(INTERNAL_SERVER_ERROR, message);

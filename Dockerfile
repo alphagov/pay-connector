@@ -16,5 +16,5 @@ ADD docker-startup.sh /app/docker-startup.sh
 ADD newrelic/* /app/newrelic/
 
 CMD sleep 20 && \
-    java -jar *-allinone.jar db migrate *.yaml && \
+        java -jar *-allinone.jar db migrate *.yaml && \
     bash ./docker-startup.sh

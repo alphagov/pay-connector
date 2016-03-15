@@ -1,5 +1,7 @@
 package uk.gov.pay.connector.model.domain;
 
+import uk.gov.pay.connector.util.RandomIdGenerator;
+
 import javax.persistence.*;
 import java.time.ZoneId;
 import java.time.ZonedDateTime;
@@ -12,6 +14,9 @@ import static uk.gov.pay.connector.model.domain.ChargeStatus.CREATED;
 @Table(name = "charges")
 @SequenceGenerator(name = "charges_charge_id_seq", sequenceName = "charges_charge_id_seq", allocationSize = 1)
 public class ChargeEntity extends AbstractEntity {
+
+    @Column(name = "external_id")
+    private String externalId;
 
     @Column(name = "amount")
     private Long amount;
@@ -54,6 +59,7 @@ public class ChargeEntity extends AbstractEntity {
         this.reference = reference;
         this.gatewayAccount = gatewayAccount;
         this.createdDate = ZonedDateTime.now(ZoneId.of("UTC"));
+        this.externalId = RandomIdGenerator.newId();
     }
 
     public Long getAmount() {
