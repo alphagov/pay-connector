@@ -68,6 +68,7 @@ public class DatabaseTestHelper {
                         "INSERT INTO" +
                                 "    charges(\n" +
                                 "        id,\n" +
+                                "        external_id,\n" +
                                 "        amount,\n" +
                                 "        status,\n" +
                                 "        gateway_account_id,\n" +
@@ -78,8 +79,9 @@ public class DatabaseTestHelper {
                                 "        reference,\n" +
                                 "        version\n" +
                                 "    )\n" +
-                                "   VALUES(?, ?, ?, ?, ?, ?, ?, ?, ?, ?)\n",
+                                "   VALUES(?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)\n",
                         Long.valueOf(chargeId),
+                        RandomIdGenerator.newId(),
                         amount,
                         status.getValue(),
                         Long.valueOf(gatewayAccountId),
