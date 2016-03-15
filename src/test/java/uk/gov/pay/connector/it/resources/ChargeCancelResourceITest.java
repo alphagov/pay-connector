@@ -63,7 +63,7 @@ public class ChargeCancelResourceITest {
     @Test
     public void respondWith400_whenNotCancellableState() {
         Arrays.stream(ChargeStatus.values())
-                .filter(status -> negate(CANCELLABLE_STATES.contains(status)))
+                .filter(status -> negate(CANCELLABLE_STATES.contains(status) && !status.equals(ChargeStatus.EXPIRED.getValue())))
                 .forEach(notCancellableState -> {
                     String chargeId = createNewChargeWithStatus(notCancellableState);
                     String expectedMessage = "Cannot cancel a charge id [" + chargeId
@@ -130,6 +130,20 @@ public class ChargeCancelResourceITest {
                 .withChargeId(chargeId)
                 .postChargeCancellation()
                 .statusCode(NOT_FOUND.getStatusCode())
+                .and()
+                .contentType(JSON)
+                .body("message", is(expectedMessage));
+    }
+
+    @Test
+    public void respondWith400_IfChargeIsExpired() {
+        String chargeId = createNewChargeWithStatus(EXPIRED);
+        String expectedMessage = format("Cannot cancel a charge id [%s]: status is [%s].", chargeId, EXPIRED.getValue());
+
+        restApiCall
+                .withChargeId(chargeId)
+                .postChargeCancellation()
+                .statusCode(BAD_REQUEST.getStatusCode())
                 .and()
                 .contentType(JSON)
                 .body("message", is(expectedMessage));

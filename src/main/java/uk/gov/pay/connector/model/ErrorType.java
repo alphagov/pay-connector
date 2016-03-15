@@ -2,6 +2,7 @@ package uk.gov.pay.connector.model;
 
 public enum ErrorType {
     CHARGE_NOT_FOUND,
+    CHARGE_EXPIRED,
 
     ILLEGAL_STATE_ERROR,
     CONFLICT_ERROR,

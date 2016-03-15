@@ -47,6 +47,10 @@ public class ErrorResponse {
         return new ErrorResponse(msg, OPERATION_ALREADY_IN_PROGRESS);
     }
 
+    public static ErrorResponse chargeExpired(String msg) {
+        return new ErrorResponse(msg, CHARGE_EXPIRED);
+    }
+
     public String getMessage() {
         return message;
     }

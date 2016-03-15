@@ -14,6 +14,7 @@ import uk.gov.pay.connector.model.domain.ChargeStatus;
 import javax.inject.Inject;
 import javax.persistence.OptimisticLockException;
 import java.util.Arrays;
+import java.util.Optional;
 import java.util.function.Function;
 import java.util.function.Supplier;
 
@@ -80,6 +81,9 @@ public class CardService {
     @Transactional
     public Either<ErrorResponse, ChargeEntity> preAuthorise(ChargeEntity charge) {
         ChargeEntity reloadedCharge = chargeDao.merge(charge);
+        if (hasStatus(reloadedCharge, EXPIRED)) {
+            return left(chargeExpired(format("Cannot authorise charge as it is expired, %s", reloadedCharge.getId())));
+        }
         if (!hasStatus(reloadedCharge, ENTERING_CARD_DETAILS)) {
             if (hasStatus(reloadedCharge, AUTHORISATION_READY)) {
                 return left(operationAlreadyInProgress(format("Authorisation for charge already in progress, %s",
@@ -112,16 +116,24 @@ public class CardService {
     }
 
     public Either<ErrorResponse, GatewayResponse> doCapture(Long chargeId) {
-        return chargeDao
-                .findById(Long.valueOf(chargeId))
+        Optional<ChargeEntity> chargeOpt = chargeDao.findById(Long.valueOf(chargeId));
+        if (chargeOpt.isPresent() && hasStatus(chargeOpt.get(), EXPIRED)) {
+            return left(chargeExpired(format("Cannot capture charge as it is expired, %s", chargeOpt.get().getId())));
+        }
+        return chargeOpt
                 .map(capture())
                 .orElseGet(chargeNotFound(chargeId));
     }
 
     public Either<ErrorResponse, GatewayResponse> doCancel(Long chargeId, Long accountId) {
-        return chargeDao
-                .findByIdAndGatewayAccount(Long.valueOf(chargeId), accountId)
-                .map(cancel())
+        Optional<ChargeEntity> charge = chargeDao.findByIdAndGatewayAccount(chargeId, accountId);
+
+        if(charge.isPresent() && hasStatus(charge.get(), EXPIRED)) {
+            return left(chargeExpired(format("Cannot cancel a charge id [%s]: status is [%s].", charge.get().getId(), EXPIRED.getValue())));
+
+        }
+
+        return charge.map(cancel())
                 .orElseGet(chargeNotFound(chargeId));
     }
 

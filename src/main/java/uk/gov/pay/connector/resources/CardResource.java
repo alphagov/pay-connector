@@ -73,6 +73,8 @@ public class CardResource {
                 switch (error.getErrorType()) {
                     case CHARGE_NOT_FOUND:
                         return notFoundResponse(logger, error.getMessage());
+                    case CHARGE_EXPIRED:
+                        return badRequestResponse(logger, error.getMessage());
                     case UNEXPECTED_STATUS_CODE_FROM_GATEWAY:
                     case MALFORMED_RESPONSE_RECEIVED_FROM_GATEWAY:
                     case GATEWAY_URL_DNS_ERROR:
