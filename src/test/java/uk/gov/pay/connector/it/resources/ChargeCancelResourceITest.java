@@ -1,12 +1,12 @@
 package uk.gov.pay.connector.it.resources;
 
 import com.google.common.collect.ImmutableList;
-import org.apache.commons.lang.math.RandomUtils;
 import org.junit.Before;
 import org.junit.Rule;
 import org.junit.Test;
 import uk.gov.pay.connector.model.domain.ChargeStatus;
 import uk.gov.pay.connector.rules.DropwizardAppWithPostgresRule;
+import uk.gov.pay.connector.util.RandomIdGenerator;
 import uk.gov.pay.connector.util.RestAssuredClient;
 
 import java.util.Arrays;
@@ -44,17 +44,17 @@ public class ChargeCancelResourceITest {
     @Test
     public void respondWith204_whenCancellationSuccessful() {
         CANCELLABLE_STATES.forEach(status -> {
-            String externalChargeId = createNewChargeWithStatus(status);
+            String chargeId = createNewChargeWithStatus(status);
             restApiCall
-                    .withChargeId(externalChargeId)
+                    .withChargeId(chargeId)
                     .postChargeCancellation()
                     .statusCode(NO_CONTENT.getStatusCode());
             restApiCall
-                    .withChargeId(externalChargeId)
+                    .withChargeId(chargeId)
                     .getCharge()
                     .body("status", is(EXT_SYSTEM_CANCELLED.getValue()));
             restFrontendCall
-                    .withChargeId(externalChargeId)
+                    .withChargeId(chargeId)
                     .getCharge()
                     .body("status", is(SYSTEM_CANCELLED.getValue()));
         });
@@ -92,12 +92,12 @@ public class ChargeCancelResourceITest {
 
     @Test
     public void respondWith400__IfAccountIdIsMissing() {
-        String externalChargeId = createNewChargeWithStatus(CREATED);
+        String chargeId = createNewChargeWithStatus(CREATED);
         String expectedMessage = "HTTP 404 Not Found";
 
         restApiCall
                 .withAccountId("")
-                .withChargeId(externalChargeId)
+                .withChargeId(chargeId)
                 .postChargeCancellation()
                 .statusCode(NOT_FOUND.getStatusCode())
                 .and()
@@ -107,12 +107,12 @@ public class ChargeCancelResourceITest {
 
     @Test
     public void respondWith404__IfAccountIdIsNonNumeric() {
-        String externalChargeId = createNewChargeWithStatus(CREATED);
+        String chargeId = createNewChargeWithStatus(CREATED);
         String expectedMessage = "HTTP 404 Not Found";
 
         restApiCall
                 .withAccountId("ABSDCEFG")
-                .withChargeId(externalChargeId)
+                .withChargeId(chargeId)
                 .postChargeCancellation()
                 .statusCode(NOT_FOUND.getStatusCode())
                 .and()
@@ -122,12 +122,12 @@ public class ChargeCancelResourceITest {
 
     @Test
     public void respondWith404__IfChargeIdDoNotBelongToAccount() {
-        String externalChargeId = createNewChargeWithStatus(CREATED);
-        String expectedMessage = format("Charge with id [%s] not found.", externalChargeId);
+        String chargeId = createNewChargeWithStatus(CREATED);
+        String expectedMessage = format("Charge with id [%s] not found.", chargeId);
 
         restApiCall
                 .withAccountId("12345")
-                .withChargeId(externalChargeId)
+                .withChargeId(chargeId)
                 .postChargeCancellation()
                 .statusCode(NOT_FOUND.getStatusCode())
                 .and()
@@ -136,9 +136,8 @@ public class ChargeCancelResourceITest {
     }
 
     private String createNewChargeWithStatus(ChargeStatus status) {
-        long chargeId = RandomUtils.nextInt();
-        String externalChargeId = "charge" + chargeId;
-        app.getDatabaseTestHelper().addCharge(chargeId, externalChargeId, accountId, 500, status, "http://not.relevant", null);
-        return externalChargeId;
+        String chargeId = RandomIdGenerator.newId();
+        app.getDatabaseTestHelper().addCharge(chargeId, accountId, 500, status, "http://not.relevant", null);
+        return chargeId;
     }
 }

@@ -14,9 +14,10 @@ import static org.hamcrest.Matchers.isEmptyOrNullString;
 import static uk.gov.pay.connector.model.domain.ChargeStatus.CREATED;
 
 public class SecurityTokensResourceITest {
+
     private static final String TOKEN_ID = "tokenId";
     private static final String ACCOUNT_ID = "23476";
-    private static final String EXTERNAL_CHARGE_ID = "charge827364";
+    private static final String CHARGE_ID = "charge827364";
 
     private String tokensUrlFor(String id) {
         return "/v1/frontend/tokens/" + id;
@@ -32,13 +33,13 @@ public class SecurityTokensResourceITest {
 
     @Test
     public void shouldSuccessfullyValidateToken() throws Exception {
-        createNewCharge(EXTERNAL_CHARGE_ID, TOKEN_ID);
+        createNewCharge(CHARGE_ID, TOKEN_ID);
         givenSetup()
                 .get(tokensUrlFor(TOKEN_ID))
                 .then()
                 .statusCode(200)
                 .contentType(JSON)
-                .body("chargeId", is(EXTERNAL_CHARGE_ID));
+                .body("chargeId", is(CHARGE_ID));
     }
 
     @Test
@@ -48,7 +49,7 @@ public class SecurityTokensResourceITest {
 
     @Test
     public void shouldSuccessfullyDeleteToken() throws Exception {
-        createNewCharge(EXTERNAL_CHARGE_ID, TOKEN_ID);
+        createNewCharge(CHARGE_ID, TOKEN_ID);
         givenSetup()
                 .delete(tokensUrlFor(TOKEN_ID))
                 .then()
@@ -66,10 +67,10 @@ public class SecurityTokensResourceITest {
                 .body("message", is("Token has expired!"));
     }
 
-    private void createNewCharge(String externalChargeId, String tokenId) {
-        long chargeId = nextInt();
-        app.getDatabaseTestHelper().addCharge(chargeId, externalChargeId, ACCOUNT_ID, 500, CREATED, "return_url", null);
-        app.getDatabaseTestHelper().addToken(chargeId, tokenId);
+    private void createNewCharge(String chargeId, String tokenId) {
+        long chargeInternalId = nextInt();
+        app.getDatabaseTestHelper().addCharge(chargeInternalId, chargeId, ACCOUNT_ID, 500, CREATED, "return_url", null);
+        app.getDatabaseTestHelper().addToken(chargeInternalId, tokenId);
     }
 
     private RequestSpecification givenSetup() {

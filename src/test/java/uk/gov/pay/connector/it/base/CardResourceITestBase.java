@@ -12,6 +12,7 @@ import uk.gov.pay.connector.rules.DropwizardAppWithPostgresRule;
 import uk.gov.pay.connector.rules.SmartpayMockClient;
 import uk.gov.pay.connector.rules.WorldpayMockClient;
 import uk.gov.pay.connector.util.PortFactory;
+import uk.gov.pay.connector.util.RandomIdGenerator;
 import uk.gov.pay.connector.util.RestAssuredClient;
 
 import java.io.IOException;
@@ -121,10 +122,9 @@ public class CardResourceITestBase {
     }
 
     protected String createNewChargeWith(ChargeStatus status, String gatewayTransactionId) {
-        long chargeId = RandomUtils.nextInt();
-        String externalChargeId = "charge-" + chargeId;
-        app.getDatabaseTestHelper().addCharge(chargeId, externalChargeId, accountId, 6234L, status, "returnUrl", gatewayTransactionId);
-        return externalChargeId;
+        String chargeId = RandomIdGenerator.newId();
+        app.getDatabaseTestHelper().addCharge(chargeId, accountId, 6234L, status, "returnUrl", gatewayTransactionId);
+        return chargeId;
     }
 
     protected RequestSpecification givenSetup() {

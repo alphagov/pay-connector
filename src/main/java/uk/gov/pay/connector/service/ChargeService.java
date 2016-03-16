@@ -55,8 +55,8 @@ public class ChargeService {
         return response;
     }
 
-    public Optional<ChargeResponse> findChargeForAccount(String externalId, Long accountId, UriInfo uriInfo) {
-        return chargeDao.findByExternalIdAndGatewayAccount(externalId, accountId)
+    public Optional<ChargeResponse> findChargeForAccount(String chargeId, Long accountId, UriInfo uriInfo) {
+        return chargeDao.findByExternalIdAndGatewayAccount(chargeId, accountId)
                 .map(chargeEntity -> {
                     Optional<TokenEntity> token = tokenDao.findByChargeId(chargeEntity.getId());
                     return buildChargeResponse(uriInfo, chargeEntity, token);
