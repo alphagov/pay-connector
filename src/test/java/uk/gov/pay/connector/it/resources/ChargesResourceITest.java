@@ -337,6 +337,7 @@ public class ChargesResourceITest {
                 JSON_REFERENCE_KEY, "Test reference",
                 JSON_DESCRIPTION_KEY, "Test description",
                 JSON_RETURN_URL_KEY, returnUrl));
+
         createChargeApi
                 .withAccountId(missingGatewayAccount)
                 .postCreateCharge(postBody)
@@ -355,6 +356,7 @@ public class ChargesResourceITest {
                 JSON_DESCRIPTION_KEY, randomAlphanumeric(256),
                 JSON_GATEWAY_ACC_KEY, accountId,
                 JSON_RETURN_URL_KEY, returnUrl));
+
         createChargeApi.postCreateCharge(postBody)
                 .statusCode(BAD_REQUEST.getStatusCode())
                 .contentType(JSON)
@@ -383,6 +385,13 @@ public class ChargesResourceITest {
                 .statusCode(NOT_FOUND.getStatusCode())
                 .contentType(JSON)
                 .body(JSON_MESSAGE_KEY, is(format("Charge with id [%s] not found.", chargeId)));
+    }
+
+    @Test
+    public void shouldGetAcceptedResponseForExpiryChargeTask () {
+        getChargeApi
+                .postChargeExpiryTask()
+                .statusCode(NO_CONTENT.getStatusCode());
     }
 
     private List<ZonedDateTime> datesFrom(List<String> createdDateStrings) {

@@ -18,7 +18,6 @@ import uk.gov.pay.connector.auth.SmartpayAuthenticator;
 import uk.gov.pay.connector.healthcheck.DatabaseHealthCheck;
 import uk.gov.pay.connector.healthcheck.Ping;
 import uk.gov.pay.connector.resources.*;
-import uk.gov.pay.connector.task.ChargeExpiryTask;
 import uk.gov.pay.connector.util.DbWaitCommand;
 
 public class ConnectorApp extends Application<ConnectorConfiguration> {
@@ -62,8 +61,6 @@ public class ConnectorApp extends Application<ConnectorConfiguration> {
 
         environment.healthChecks().register("ping", new Ping());
         environment.healthChecks().register("database", injector.getInstance(DatabaseHealthCheck.class));
-
-        environment.admin().addTask(injector.getInstance(ChargeExpiryTask.class));
     }
 
     private void setupSmartpayBasicAuth(Environment environment, SmartpayCredentialsConfig smartpayConfig) {

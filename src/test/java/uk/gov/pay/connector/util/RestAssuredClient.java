@@ -75,6 +75,12 @@ public class RestAssuredClient {
                 .then();
     }
 
+    public ValidatableResponse postChargeExpiryTask() {
+        return given().port(app.getLocalPort())
+                .post(EXPIRE_CHARGES)
+                .then();
+    }
+
     public ValidatableResponse putChargeStatus(String putBody) {
         String requestPath = CHARGE_FRONTEND_PATH
                 .replace("{accountId}", accountId)
