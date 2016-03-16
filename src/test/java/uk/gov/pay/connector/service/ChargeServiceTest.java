@@ -1,18 +1,21 @@
 package uk.gov.pay.connector.service;
 
+import fj.data.Either;
 import org.exparity.hamcrest.date.ZonedDateTimeMatchers;
 import org.junit.Before;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.mockito.ArgumentCaptor;
+import org.mockito.InOrder;
 import org.mockito.Mock;
 import org.mockito.runners.MockitoJUnitRunner;
 import uk.gov.pay.connector.app.ConnectorConfiguration;
 import uk.gov.pay.connector.app.LinksConfig;
 import uk.gov.pay.connector.dao.ChargeDao;
 import uk.gov.pay.connector.dao.TokenDao;
-import uk.gov.pay.connector.model.ChargeResponse;
+import uk.gov.pay.connector.model.*;
 import uk.gov.pay.connector.model.domain.ChargeEntity;
+import uk.gov.pay.connector.model.domain.ChargeStatus;
 import uk.gov.pay.connector.model.domain.GatewayAccountEntity;
 import uk.gov.pay.connector.model.domain.TokenEntity;
 
@@ -27,6 +30,7 @@ import java.util.HashMap;
 import java.util.Map;
 import java.util.Optional;
 
+import static java.util.Arrays.asList;
 import static java.util.Collections.emptyMap;
 import static javax.ws.rs.HttpMethod.GET;
 import static org.hamcrest.core.Is.is;
@@ -37,6 +41,9 @@ import static org.mockito.Mockito.*;
 import static uk.gov.pay.connector.fixture.ChargeEntityFixture.aValidChargeEntity;
 import static uk.gov.pay.connector.model.ChargeResponse.Builder.aChargeResponse;
 import static uk.gov.pay.connector.model.api.ExternalChargeStatus.mapFromStatus;
+import static uk.gov.pay.connector.model.domain.ChargeStatus.EXPIRED;
+import static uk.gov.pay.connector.model.domain.ChargeStatus.EXPIRE_CANCEL_FAILED;
+import static uk.gov.pay.connector.model.domain.ChargeStatus.EXPIRE_CANCEL_PENDING;
 
 
 @RunWith(MockitoJUnitRunner.class)
@@ -49,6 +56,8 @@ public class ChargeServiceTest {
     private ChargeDao chargeDao;
     @Mock
     private ConnectorConfiguration config;
+    @Mock
+    private CardService cardService;
 
     private UriInfo uriInfo;
     Map<String, Object> chargeRequest;
@@ -74,7 +83,7 @@ public class ChargeServiceTest {
             put("reference", "Pay reference");
         }};
 
-        service = new ChargeService(tokenDao, chargeDao, config);
+        service = new ChargeService(tokenDao, chargeDao, config, cardService);
     }
 
     @Test
@@ -130,7 +139,7 @@ public class ChargeServiceTest {
 
         GatewayAccountEntity gatewayAccount = new GatewayAccountEntity("provider", new HashMap<>());
         gatewayAccount.setId(1L);
-        service = new ChargeService(tokenDao, chargeDao, invalidConfig);
+        service = new ChargeService(tokenDao, chargeDao, invalidConfig, cardService);
 
         service.create(chargeRequest, gatewayAccount, uriInfo);
     }
@@ -206,6 +215,122 @@ public class ChargeServiceTest {
         assertThat(chargeForAccount.isPresent(), is(false));
     }
 
+    @Test
+    public void shouldUpdateChargeStatusForAllChargesWithTheGivenStatus() {
+        ChargeEntity chargeEntity1 = mock(ChargeEntity.class);
+        ChargeEntity chargeEntity2 = mock(ChargeEntity.class);
+        when(chargeDao.merge(chargeEntity1)).thenReturn(chargeEntity1);
+        when(chargeDao.merge(chargeEntity2)).thenReturn(chargeEntity2);
+
+        service.updateStatus(asList(chargeEntity1, chargeEntity2), ChargeStatus.ENTERING_CARD_DETAILS);
+
+        InOrder inOrder = inOrder(chargeEntity1, chargeEntity2, chargeDao);
+
+        inOrder.verify(chargeDao).merge(chargeEntity1);
+        inOrder.verify(chargeEntity1).setStatus(ChargeStatus.ENTERING_CARD_DETAILS);
+
+        inOrder.verify(chargeDao).merge(chargeEntity2);
+        inOrder.verify(chargeEntity2).setStatus(ChargeStatus.ENTERING_CARD_DETAILS);
+    }
+
+    @Test
+    public void shouldUpdateChargeStatusWhenExpiringWithSuccessfulProviderCancellation() {
+        long chargeId = 10L;
+        long accountId = 100L;
+
+        ChargeEntity chargeEntity1 = mock(ChargeEntity.class);
+        ChargeEntity chargeEntity2 = mock(ChargeEntity.class);
+        GatewayAccountEntity gatewayAccount = mock(GatewayAccountEntity.class);
+
+        when(chargeEntity1.getStatus()).thenReturn(ChargeStatus.ENTERING_CARD_DETAILS.getValue());
+        when(chargeEntity2.getStatus()).thenReturn(ChargeStatus.AUTHORISATION_SUCCESS.getValue());
+        when(chargeEntity2.getId()).thenReturn(chargeId);
+        when(gatewayAccount.getId()).thenReturn( accountId);
+        when(chargeEntity2.getGatewayAccount()).thenReturn(gatewayAccount);
+        when(chargeDao.merge(chargeEntity1)).thenReturn(chargeEntity1);
+        when(chargeDao.merge(chargeEntity2)).thenReturn(chargeEntity2);
+
+        mockCancelResponse(chargeId, accountId, Either.right(CancelResponse.aSuccessfulCancelResponse()));
+
+        service.expire(asList(chargeEntity1, chargeEntity2));
+
+        InOrder inOrder = inOrder(chargeEntity1, chargeDao, chargeEntity2);
+        inOrder.verify(chargeDao).merge(chargeEntity1);
+        inOrder.verify(chargeEntity1).setStatus(EXPIRED);
+
+        inOrder.verify(chargeDao).merge(chargeEntity2);
+        inOrder.verify(chargeEntity2).setStatus(EXPIRE_CANCEL_PENDING);
+
+        inOrder.verify(chargeDao).merge(chargeEntity2);
+        inOrder.verify(chargeEntity2).setStatus(EXPIRED);
+    }
+
+    @Test
+    public void shouldUpdateChargeStatusWhenExpiringWithUnsuccessfulProviderCancellation() {
+        long chargeId = 10L;
+        long accountId = 100L;
+
+        ChargeEntity chargeEntity1 = mock(ChargeEntity.class);
+        ChargeEntity chargeEntity2 = mock(ChargeEntity.class);
+        GatewayAccountEntity gatewayAccount = mock(GatewayAccountEntity.class);
+
+        when(chargeEntity1.getStatus()).thenReturn(ChargeStatus.ENTERING_CARD_DETAILS.getValue());
+        when(chargeEntity2.getStatus()).thenReturn(ChargeStatus.AUTHORISATION_SUCCESS.getValue());
+        when(chargeEntity2.getId()).thenReturn(chargeId);
+        when(gatewayAccount.getId()).thenReturn( accountId);
+        when(chargeEntity2.getGatewayAccount()).thenReturn(gatewayAccount);
+        when(chargeDao.merge(chargeEntity1)).thenReturn(chargeEntity1);
+        when(chargeDao.merge(chargeEntity2)).thenReturn(chargeEntity2);
+
+        CancelResponse unsuccessfulResponse = new CancelResponse(false, ErrorResponse.unexpectedStatusCodeFromGateway("invalid status"));
+        mockCancelResponse(chargeId, accountId, Either.right(unsuccessfulResponse));
+
+        service.expire(asList(chargeEntity1, chargeEntity2));
+
+        InOrder inOrder = inOrder(chargeEntity1, chargeDao, chargeEntity2);
+        inOrder.verify(chargeDao).merge(chargeEntity1);
+        inOrder.verify(chargeEntity1).setStatus(EXPIRED);
+
+        inOrder.verify(chargeDao).merge(chargeEntity2);
+        inOrder.verify(chargeEntity2).setStatus(EXPIRE_CANCEL_PENDING);
+
+        inOrder.verify(chargeDao).merge(chargeEntity2);
+        inOrder.verify(chargeEntity2).setStatus(EXPIRE_CANCEL_FAILED);
+    }
+
+    @Test
+    public void shouldUpdateChargeStatusWhenExpiringWithFailedProviderCancellation() {
+        long chargeId = 10L;
+        long accountId = 100L;
+
+        ChargeEntity chargeEntity1 = mock(ChargeEntity.class);
+        ChargeEntity chargeEntity2 = mock(ChargeEntity.class);
+        GatewayAccountEntity gatewayAccount = mock(GatewayAccountEntity.class);
+
+        when(chargeEntity1.getStatus()).thenReturn(ChargeStatus.ENTERING_CARD_DETAILS.getValue());
+        when(chargeEntity2.getStatus()).thenReturn(ChargeStatus.AUTHORISATION_SUCCESS.getValue());
+        when(chargeEntity2.getId()).thenReturn(chargeId);
+        when(gatewayAccount.getId()).thenReturn( accountId);
+        when(chargeEntity2.getGatewayAccount()).thenReturn(gatewayAccount);
+        when(chargeDao.merge(chargeEntity1)).thenReturn(chargeEntity1);
+        when(chargeDao.merge(chargeEntity2)).thenReturn(chargeEntity2);
+
+        ErrorResponse errorResponse = new ErrorResponse("error-message", ErrorType.GATEWAY_CONNECTION_TIMEOUT_ERROR);
+        mockCancelResponse(chargeId, accountId, Either.left(errorResponse));
+
+        service.expire(asList(chargeEntity1, chargeEntity2));
+
+        InOrder inOrder = inOrder(chargeEntity1, chargeDao, chargeEntity2);
+        inOrder.verify(chargeDao).merge(chargeEntity1);
+        inOrder.verify(chargeEntity1).setStatus(EXPIRED);
+
+        inOrder.verify(chargeDao).merge(chargeEntity2);
+        inOrder.verify(chargeEntity2).setStatus(EXPIRE_CANCEL_PENDING);
+
+        inOrder.verify(chargeDao).merge(chargeEntity2);
+        inOrder.verify(chargeEntity2).setStatus(EXPIRE_CANCEL_FAILED);
+    }
+
     private ChargeResponse.Builder chargeResponseBuilderOf(ChargeEntity chargeEntity) throws URISyntaxException {
         return aChargeResponse()
                 .withChargeId(String.valueOf(chargeEntity.getId()))
@@ -218,4 +343,9 @@ public class ChargeServiceTest {
                 .withCreatedDate(chargeEntity.getCreatedDate())
                 .withReturnUrl(chargeEntity.getReturnUrl());
     }
+
+    private void mockCancelResponse(Long chargeId, Long accountId, Either<ErrorResponse, GatewayResponse> either) {
+        when(cardService.doCancel(chargeId, accountId)).thenReturn(either);
+    }
+
 }
