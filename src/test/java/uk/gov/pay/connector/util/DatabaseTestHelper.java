@@ -43,16 +43,17 @@ public class DatabaseTestHelper {
         addGatewayAccount(accountId, paymentProvider, null);
     }
 
-    public void addCharge(String chargeId, String gatewayAccountId, long amount, ChargeStatus status, String returnUrl, String transactionId) {
-        addCharge(chargeId, gatewayAccountId, amount, status, returnUrl, transactionId, "Test description", "Test reference", now(), 1);
+    public void addCharge(Long chargeId, String externalChargeId, String gatewayAccountId, long amount, ChargeStatus status, String returnUrl, String transactionId) {
+        addCharge(chargeId, externalChargeId, gatewayAccountId, amount, status, returnUrl, transactionId, "Test description", "Test reference", now(), 1);
     }
 
-    public void addCharge(String chargeId, String accountId, long amount, ChargeStatus chargeStatus, String returnUrl, String transactionId, String reference, ZonedDateTime createdDate) {
-        addCharge(chargeId, accountId, amount, chargeStatus, returnUrl, transactionId, "Test description", reference, createdDate == null ? now() : createdDate, 1);
+    public void addCharge(Long chargeId, String externalChargeId, String accountId, long amount, ChargeStatus chargeStatus, String returnUrl, String transactionId, String reference, ZonedDateTime createdDate) {
+        addCharge(chargeId, externalChargeId, accountId, amount, chargeStatus, returnUrl, transactionId, "Test description", reference, createdDate == null ? now() : createdDate, 1);
     }
 
     private void addCharge(
-            String chargeId,
+            Long chargeId,
+            String externalChargeId,
             String gatewayAccountId,
             long amount,
             ChargeStatus status,
@@ -80,8 +81,8 @@ public class DatabaseTestHelper {
                                 "        version\n" +
                                 "    )\n" +
                                 "   VALUES(?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)\n",
-                        Long.valueOf(chargeId),
-                        RandomIdGenerator.newId(),
+                        chargeId,
+                        externalChargeId,
                         amount,
                         status.getValue(),
                         Long.valueOf(gatewayAccountId),
@@ -95,13 +96,25 @@ public class DatabaseTestHelper {
         );
     }
 
-    public String getChargeTokenId(String chargeId) {
+    public String getChargeTokenId(Long chargeId) {
         return jdbi.withHandle(h ->
                 h.createQuery("SELECT secure_redirect_token from tokens WHERE charge_id = :charge_id")
-                        .bind("charge_id", Long.valueOf(chargeId))
+                        .bind("charge_id", chargeId)
                         .map(StringMapper.FIRST)
                         .first()
         );
+    }
+
+    public String getChargeTokenByExternalChargeId(String externalChargeId) {
+
+        String chargeId = jdbi.withHandle(h ->
+                h.createQuery("SELECT id from charges WHERE external_id = :external_id")
+                        .bind("external_id", externalChargeId)
+                        .map(StringMapper.FIRST)
+                        .first()
+        );
+
+        return getChargeTokenId(Long.valueOf(chargeId));
     }
 
     public Map<String, String> getAccountCredentials(Long gatewayAccountId) {
@@ -115,20 +128,20 @@ public class DatabaseTestHelper {
         return new Gson().fromJson(jsonString, Map.class);
     }
 
-    public void addToken(String chargeId, String tokenId) {
+    public void addToken(Long chargeId, String tokenId) {
         jdbi.withHandle(handle ->
                 handle
                         .createStatement("INSERT INTO tokens(charge_id, secure_redirect_token) VALUES (:charge_id, :secure_redirect_token)")
-                        .bind("charge_id", Long.valueOf(chargeId))
+                        .bind("charge_id", chargeId)
                         .bind("secure_redirect_token", tokenId)
                         .execute()
         );
     }
 
-    public String getChargeStatus(String chargeId) {
+    public String getChargeStatus(Long chargeId) {
         return jdbi.withHandle(h ->
                 h.createQuery("SELECT status from charges WHERE id = :charge_id")
-                        .bind("charge_id", Long.valueOf(chargeId))
+                        .bind("charge_id", chargeId)
                         .map(StringMapper.FIRST)
                         .first()
         );

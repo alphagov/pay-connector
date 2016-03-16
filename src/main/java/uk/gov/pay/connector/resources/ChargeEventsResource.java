@@ -35,9 +35,9 @@ public class ChargeEventsResource {
     @GET
     @Path(CHARGE_EVENTS_API_PATH)
     @Produces(APPLICATION_JSON)
-    public Response getEvents(@PathParam("accountId") Long accountId, @PathParam("chargeId") Long chargeId) {
+    public Response getEvents(@PathParam("accountId") Long accountId, @PathParam("chargeId") String chargeId) {
 
-        List<ChargeEventEntity> events = chargeDao.findByIdAndGatewayAccount(chargeId, accountId)
+        List<ChargeEventEntity> events = chargeDao.findByExternalIdAndGatewayAccount(chargeId, accountId)
                 .map(ChargeEntity::getEvents)
                 .orElseGet(() -> Collections.EMPTY_LIST);
 

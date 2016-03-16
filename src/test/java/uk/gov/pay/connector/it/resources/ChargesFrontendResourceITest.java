@@ -17,6 +17,7 @@ import uk.gov.pay.connector.util.RestAssuredClient;
 import java.time.ZonedDateTime;
 import java.time.temporal.ChronoUnit;
 import java.util.List;
+import java.util.Random;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
@@ -70,10 +71,11 @@ public class ChargesFrontendResourceITest {
 
     @Test
     public void shouldReturnInternalChargeStatusIfInternalStatusIsAuthorised() throws Exception {
-        String chargeId = ((Integer) RandomUtils.nextInt(99999999)).toString();
-        app.getDatabaseTestHelper().addCharge(chargeId, accountId, expectedAmount, AUTHORISATION_SUCCESS, returnUrl, null);
+        long chargeId = RandomUtils.nextInt();
+        String externalChargeId = "charge" + chargeId;
+        app.getDatabaseTestHelper().addCharge(chargeId, externalChargeId, accountId, expectedAmount, AUTHORISATION_SUCCESS, returnUrl, null);
 
-        validateGetCharge(expectedAmount, chargeId, AUTHORISATION_SUCCESS);
+        validateGetCharge(expectedAmount, externalChargeId, AUTHORISATION_SUCCESS);
     }
 
     @Test
@@ -137,37 +139,44 @@ public class ChargesFrontendResourceITest {
     //TODO getTransactions test should sit in the ChargesAPIResourceTest and not in here as it uses end points defined in the APIResource
     @Test
     public void shouldReturnAllTransactionsForAGivenGatewayAccount() {
-        String chargeId1 = "10001";
-        String chargeId2 = "10002";
+
+        Long chargeId1 = 10001L;
+        String externalChargeId1 = "10001";
+        Long chargeId2 = 10002L;
+        String externalChargeId2 = "10002";
+
         int amount1 = 100;
         int amount2 = 500;
         String gatewayTransactionId1 = "transaction-id-1";
-        app.getDatabaseTestHelper().addCharge(chargeId1, accountId, amount1, AUTHORISATION_SUCCESS, returnUrl, gatewayTransactionId1);
-        app.getDatabaseTestHelper().addCharge(chargeId2, accountId, amount2, AUTHORISATION_REJECTED, returnUrl, null);
+
+        app.getDatabaseTestHelper().addCharge(chargeId1, externalChargeId1, accountId, amount1, AUTHORISATION_SUCCESS, returnUrl, gatewayTransactionId1);
+        app.getDatabaseTestHelper().addCharge(chargeId2, externalChargeId2, accountId, amount2, AUTHORISATION_REJECTED, returnUrl, null);
 
         String anotherAccountId = "5454545";
+        Long chargeId3 = 5001L;
         app.getDatabaseTestHelper().addGatewayAccount(anotherAccountId, "another test gateway");
-        app.getDatabaseTestHelper().addCharge("5001", anotherAccountId, 200, AUTHORISATION_READY, returnUrl, "transaction-id-2");
+        app.getDatabaseTestHelper().addCharge(chargeId3, "charge5001", anotherAccountId, 200, AUTHORISATION_READY, returnUrl, "transaction-id-2");
 
         List<ChargeStatus> statuses = asList(CREATED, ENTERING_CARD_DETAILS, AUTHORISATION_READY, AUTHORISATION_SUCCESS);
-        setupLifeCycleEventsFor(app, Long.valueOf(chargeId1), statuses);
-        setupLifeCycleEventsFor(app, Long.valueOf(chargeId2), statuses);
-        setupLifeCycleEventsFor(app, Long.valueOf(5001), statuses);
+        setupLifeCycleEventsFor(app, chargeId1, statuses);
+        setupLifeCycleEventsFor(app, chargeId2, statuses);
+        setupLifeCycleEventsFor(app, chargeId3, statuses);
 
         ValidatableResponse response = connectorRestApi.getTransactions();
 
         response.statusCode(OK.getStatusCode())
                 .contentType(JSON)
                 .body("results", hasSize(2));
-        assertTransactionEntry(response, 0, chargeId2, null, amount2, ExternalChargeStatus.EXT_FAILED.getValue());
-        assertTransactionEntry(response, 1, chargeId1, gatewayTransactionId1, amount1, ExternalChargeStatus.EXT_IN_PROGRESS.getValue());
+        assertTransactionEntry(response, 0, externalChargeId2, null, amount2, ExternalChargeStatus.EXT_FAILED.getValue());
+        assertTransactionEntry(response, 1, externalChargeId1, gatewayTransactionId1, amount1, ExternalChargeStatus.EXT_IN_PROGRESS.getValue());
     }
 
     @Test
     public void shouldReturnTransactionsOnDescendingOrderOfChargeId() {
-        app.getDatabaseTestHelper().addCharge("101", accountId, 500, AUTHORISATION_SUCCESS, returnUrl, randomUUID().toString());
-        app.getDatabaseTestHelper().addCharge("102", accountId, 300, AUTHORISATION_REJECTED, returnUrl, null);
-        app.getDatabaseTestHelper().addCharge("103", accountId, 100, AUTHORISATION_READY, returnUrl, randomUUID().toString());
+
+        app.getDatabaseTestHelper().addCharge( 101L, "101", accountId, 500, AUTHORISATION_SUCCESS, returnUrl, randomUUID().toString());
+        app.getDatabaseTestHelper().addCharge( 102L, "102", accountId, 300, AUTHORISATION_REJECTED, returnUrl, null);
+        app.getDatabaseTestHelper().addCharge( 103L, "103", accountId, 100, AUTHORISATION_READY, returnUrl, randomUUID().toString());
 
         List<ChargeStatus> statuses = asList(CREATED, ENTERING_CARD_DETAILS, AUTHORISATION_READY, AUTHORISATION_SUCCESS, CAPTURE_SUBMITTED, CAPTURED);
         setupLifeCycleEventsFor(app, 101L, statuses);
@@ -230,8 +239,8 @@ public class ChargesFrontendResourceITest {
                 .body("results", hasSize(0));
     }
 
-    private void assertTransactionEntry(ValidatableResponse response, int index, String chargeId, String gatewayTransactionId, int amount, String chargeStatus) {
-        response.body("results[" + index + "].charge_id", is(chargeId))
+    private void assertTransactionEntry(ValidatableResponse response, int index, String externalChargeId, String gatewayTransactionId, int amount, String chargeStatus) {
+        response.body("results[" + index + "].charge_id", is(externalChargeId))
                 .body("results[" + index + "].gateway_transaction_id", is(gatewayTransactionId))
                 .body("results[" + index + "].amount", is(amount))
                 .body("results[" + index + "].status", is(chargeStatus));
@@ -261,14 +270,14 @@ public class ChargesFrontendResourceITest {
         return response.extract().path("charge_id");
     }
 
-    private ValidatableResponse validateGetCharge(long expectedAmount, String chargeId, ChargeStatus chargeStatus) {
+    private ValidatableResponse validateGetCharge(long expectedAmount, String externalChargeId, ChargeStatus chargeStatus) {
 
         return connectorRestApi
-                .withChargeId(chargeId)
+                .withChargeId(externalChargeId)
                 .getFrontendCharge()
                 .statusCode(OK.getStatusCode())
                 .contentType(JSON)
-                .body("charge_id", is(chargeId))
+                .body("charge_id", is(externalChargeId))
                 .body("containsKey('reference')", is(false))
                 .body("description", is(description))
                 .body("amount", isNumber(expectedAmount))

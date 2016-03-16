@@ -43,7 +43,7 @@ public class CardService {
         this.providers = providers;
     }
 
-    public Either<GatewayError, GatewayResponse> doAuthorise(Long chargeId, Card cardDetails) {
+    public Either<GatewayError, GatewayResponse> doAuthorise(String chargeId, Card cardDetails) {
 
         Function<ChargeEntity, Either<GatewayError, GatewayResponse>> doAuthorise =
                 (charge) -> {
@@ -72,7 +72,7 @@ public class CardService {
                 };
 
         return chargeDao
-                .findById(chargeId)
+                .findByExternalId(chargeId)
                 .map(doAuthorise)
                 .orElseGet(chargeNotFound(chargeId));
     }
@@ -83,11 +83,11 @@ public class CardService {
         if (!hasStatus(reloadedCharge, ENTERING_CARD_DETAILS)) {
             if (hasStatus(reloadedCharge, AUTHORISATION_READY)) {
                 return left(operationAlreadyInProgress(format("Authorisation for charge already in progress, %s",
-                        reloadedCharge.getId())));
+                        reloadedCharge.getExternalId())));
             }
             logger.error(format("Charge with id [%s] and with status [%s] should be in [ENTERING CARD DETAILS] for authorisation.",
-                    reloadedCharge.getId(), reloadedCharge.getStatus()));
-            return left(illegalStateError(format("Charge not in correct state to be processed, %s", reloadedCharge.getId())));
+                    reloadedCharge.getExternalId(), reloadedCharge.getStatus()));
+            return left(illegalStateError(format("Charge not in correct state to be processed, %s", reloadedCharge.getExternalId())));
         }
         reloadedCharge.setStatus(AUTHORISATION_READY);
 
@@ -110,16 +110,16 @@ public class CardService {
         return right(response);
     }
 
-    public Either<GatewayError, GatewayResponse> doCapture(Long chargeId) {
+    public Either<GatewayError, GatewayResponse> doCapture(String chargeId) {
         return chargeDao
-                .findById(Long.valueOf(chargeId))
+                .findByExternalId(chargeId)
                 .map(capture())
                 .orElseGet(chargeNotFound(chargeId));
     }
 
-    public Either<GatewayError, GatewayResponse> doCancel(Long chargeId, Long accountId) {
+    public Either<GatewayError, GatewayResponse> doCancel(String chargeId, Long accountId) {
         return chargeDao
-                .findByIdAndGatewayAccount(Long.valueOf(chargeId), accountId)
+                .findByExternalIdAndGatewayAccount(chargeId, accountId)
                 .map(cancel())
                 .orElseGet(chargeNotFound(chargeId));
     }
@@ -133,7 +133,7 @@ public class CardService {
     private Function<ChargeEntity, Either<GatewayError, GatewayResponse>> cancel() {
         return charge -> hasStatus(charge, CANCELLABLE_STATES) ?
                 right(cancelFor(charge)) :
-                left(cancelErrorMessageFor(charge.getId(), charge.getStatus()));
+                left(cancelErrorMessageFor(charge.getExternalId(), charge.getStatus()));
     }
 
     private GatewayResponse captureFor(ChargeEntity charge) {
@@ -176,11 +176,11 @@ public class CardService {
         return baseGatewayError(format("Cannot capture a charge with status %s.", currentStatus));
     }
 
-    private GatewayError cancelErrorMessageFor(Long chargeId, String status) {
+    private GatewayError cancelErrorMessageFor(String chargeId, String status) {
         return baseGatewayError(format("Cannot cancel a charge id [%s]: status is [%s].", chargeId, status));
     }
 
-    private Supplier<Either<GatewayError, GatewayResponse>> chargeNotFound(Long chargeId) {
+    private Supplier<Either<GatewayError, GatewayResponse>> chargeNotFound(String chargeId) {
         return () -> left(new GatewayError(format("Charge with id [%s] not found.", chargeId), CHARGE_NOT_FOUND));
     }
 }

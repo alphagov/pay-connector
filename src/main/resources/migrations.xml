@@ -171,4 +171,12 @@
                               tableName="charges"/>
     </changeSet>
 
+    <changeSet id="createIndex charges.external_id" author="">
+        <createIndex indexName="idx_charges_external_id"
+                     tableName="charges"
+                     unique="true">
+            <column name="external_id" type="char(26)"/>
+        </createIndex>
+    </changeSet>
+
 </databaseChangeLog>

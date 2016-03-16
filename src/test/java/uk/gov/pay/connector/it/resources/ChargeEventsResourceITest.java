@@ -44,22 +44,23 @@ public class ChargeEventsResourceITest {
         ValidatableResponse response = connectorApi
                 .postCreateCharge(createPayload)
                 .statusCode(CREATED.getStatusCode());
-        Long chargeId = Long.parseLong(response.extract().path(JSON_CHARGE_KEY));
+
+        String chargeId = response.extract().path(JSON_CHARGE_KEY);
 
         //update charge 1
-        connectorApi.withChargeId(chargeId.toString())
+        connectorApi.withChargeId(chargeId)
                 .putChargeStatus(updateStatusTo(ENTERING_CARD_DETAILS))
                 .statusCode(NO_CONTENT.getStatusCode());
 
         //cancel charge
         connectorApi
-                .withChargeId(chargeId.toString())
+                .withChargeId(chargeId)
                 .postChargeCancellation();
 
         //Then
         connectorApi
                 .getEvents(chargeId)
-                .body("charge_id", is(chargeId.intValue()))
+                .body("charge_id", is(chargeId))
                 .body("events.status", hasItems(EXT_CREATED.getValue()
                         , EXT_IN_PROGRESS.getValue()
                         , EXT_SYSTEM_CANCELLED.getValue()))
@@ -69,7 +70,7 @@ public class ChargeEventsResourceITest {
     @Test
     public void shouldReturn404WhenAccountIdIsNonNumeric() {
         connectorApi.withAccountId("invalidAccountId")
-                .getEvents(123L)
+                .getEvents("123charge")
                 .contentType(JSON)
                 .statusCode(NOT_FOUND.getStatusCode())
                 .body("code", is(404))

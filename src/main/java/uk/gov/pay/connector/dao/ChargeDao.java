@@ -35,8 +35,19 @@ public class ChargeDao extends JpaDao<ChargeEntity> {
         return super.findById(ChargeEntity.class, chargeId);
     }
 
-    public Optional<ChargeEntity> findByIdAndGatewayAccount(Long chargeId, Long accountId) {
-        return findById(chargeId).filter(charge -> charge.isAssociatedTo(accountId));
+    public Optional<ChargeEntity> findByExternalId(String externalId) {
+
+        String query = "SELECT c FROM ChargeEntity c " +
+                "WHERE c.externalId = :externalId";
+
+        return entityManager.get()
+                .createQuery(query, ChargeEntity.class)
+                .setParameter("externalId", externalId)
+                .getResultList().stream().findFirst();
+    }
+
+    public Optional<ChargeEntity> findByExternalIdAndGatewayAccount(String externalId, Long accountId) {
+        return findByExternalId(externalId).filter(charge -> charge.isAssociatedTo(accountId));
     }
 
     public Optional<ChargeEntity> findByProviderAndTransactionId(String provider, String transactionId) {

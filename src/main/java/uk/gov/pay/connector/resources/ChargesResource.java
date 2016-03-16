@@ -76,7 +76,7 @@ public class ChargesResource {
     @Path(CHARGE_API_PATH)
     @Produces(APPLICATION_JSON)
     public Response getCharge(@PathParam("accountId") Long accountId, @PathParam("chargeId") String chargeId, @Context UriInfo uriInfo) {
-        return chargeService.findChargeForAccount(Long.valueOf(chargeId), accountId, uriInfo)
+        return chargeService.findChargeForAccount(chargeId, accountId, uriInfo)
                 .map(chargeResponse -> Response.ok(chargeResponse).build())
                 .orElseGet(() -> responseWithChargeNotFound(logger, chargeId));
     }
@@ -193,7 +193,7 @@ public class ChargesResource {
     private Function<List<ChargeEntity>, Response> jsonResponse() {
         return charges -> ok(ImmutableMap.of("results", charges.stream()
                 .map(charge -> aChargeResponse()
-                        .withChargeId(String.valueOf(charge.getId()))
+                        .withChargeId(charge.getExternalId())
                         .withAmount(charge.getAmount())
                         .withReference(charge.getReference())
                         .withDescription(charge.getDescription())

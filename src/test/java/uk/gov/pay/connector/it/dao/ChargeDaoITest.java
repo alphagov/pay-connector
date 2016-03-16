@@ -1,8 +1,6 @@
 package uk.gov.pay.connector.it.dao;
 
-import com.google.common.collect.ImmutableMap;
 import org.apache.commons.lang.RandomStringUtils;
-import org.exparity.hamcrest.date.ZonedDateTimeMatchers;
 import org.hamcrest.Description;
 import org.hamcrest.Matcher;
 import org.hamcrest.MatcherAssert;
@@ -14,7 +12,6 @@ import org.junit.Test;
 import org.junit.rules.ExpectedException;
 import uk.gov.pay.connector.dao.ChargeDao;
 import uk.gov.pay.connector.dao.ChargeSearch;
-import uk.gov.pay.connector.dao.EventDao;
 import uk.gov.pay.connector.model.domain.ChargeEntity;
 import uk.gov.pay.connector.model.domain.ChargeEventEntity;
 import uk.gov.pay.connector.model.domain.ChargeStatus;
@@ -30,6 +27,7 @@ import java.util.*;
 
 import static java.util.Arrays.asList;
 import static java.util.stream.Collectors.toList;
+import static org.exparity.hamcrest.date.ZonedDateTimeMatchers.*;
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.*;
 import static uk.gov.pay.connector.dao.ChargeSearch.aChargeSearch;
@@ -47,6 +45,7 @@ public class ChargeDaoITest {
     private static final String DESCRIPTION = "Test description";
     private static final Long AMOUNT = 101L;
     private static final Long CHARGE_ID = 977L;
+    private static final String EXTERNAL_CHARGE_ID = "charge977";
     private static final String PAYMENT_PROVIDER = "test_provider";
 
     @Rule
@@ -56,7 +55,6 @@ public class ChargeDaoITest {
     public ExpectedException expectedEx = ExpectedException.none();
 
     private ChargeDao chargeDao;
-    private EventDao eventDao;
     public GuicedTestEnvironment env;
     private DatabaseTestHelper databaseTestHelper;
 
@@ -64,14 +62,11 @@ public class ChargeDaoITest {
     public void setUp() throws Exception {
         env = GuicedTestEnvironment.from(app.getPersistModule())
                 .start();
-
         chargeDao = env.getInstance(ChargeDao.class);
-        eventDao = env.getInstance(EventDao.class);
-
         databaseTestHelper = app.getDatabaseTestHelper();
 
         databaseTestHelper.addGatewayAccount(GATEWAY_ACCOUNT_ID.toString(), PAYMENT_PROVIDER);
-        databaseTestHelper.addCharge(String.valueOf(CHARGE_ID), String.valueOf(GATEWAY_ACCOUNT_ID), AMOUNT, CREATED, RETURN_URL, "", REFERENCE, ZonedDateTime.now());
+        databaseTestHelper.addCharge(CHARGE_ID, EXTERNAL_CHARGE_ID, String.valueOf(GATEWAY_ACCOUNT_ID), AMOUNT, CREATED, RETURN_URL, "", REFERENCE, ZonedDateTime.now());
     }
 
     @After
@@ -130,7 +125,8 @@ public class ChargeDaoITest {
         // given
         String paymentReference = "Council Tax Payment reference 2";
         Long chargeId = System.currentTimeMillis();
-        databaseTestHelper.addCharge(chargeId.toString(), GATEWAY_ACCOUNT_ID.toString(), AMOUNT, CREATED, RETURN_URL, UUID.randomUUID().toString(), paymentReference, ZonedDateTime.now());
+        String externalChargeId = "chargeabc";
+        databaseTestHelper.addCharge(chargeId, externalChargeId, GATEWAY_ACCOUNT_ID.toString(), AMOUNT, CREATED, RETURN_URL, UUID.randomUUID().toString(), paymentReference, ZonedDateTime.now());
 
         ChargeSearch queryBuilder = aChargeSearch(GATEWAY_ACCOUNT_ID)
                 .withReferenceLike("reference");
@@ -230,7 +226,9 @@ public class ChargeDaoITest {
 
         // given
         Long chargeId = System.currentTimeMillis();
-        databaseTestHelper.addCharge(chargeId.toString(), GATEWAY_ACCOUNT_ID.toString(), AMOUNT, ENTERING_CARD_DETAILS, RETURN_URL, UUID.randomUUID().toString(), REFERENCE, ZonedDateTime.now());
+        String externalChargeId = "chargeqwerty";
+
+        databaseTestHelper.addCharge(chargeId, externalChargeId, GATEWAY_ACCOUNT_ID.toString(), AMOUNT, ENTERING_CARD_DETAILS, RETURN_URL, UUID.randomUUID().toString(), REFERENCE, ZonedDateTime.now());
 
         ChargeSearch queryBuilder = aChargeSearch(GATEWAY_ACCOUNT_ID)
                 .withReferenceLike(REFERENCE)
@@ -301,8 +299,9 @@ public class ChargeDaoITest {
 
         // given
         Long id = System.currentTimeMillis();
-        databaseTestHelper.addCharge(id.toString(),
-                GATEWAY_ACCOUNT_ID.toString(), AMOUNT, CREATED, RETURN_URL, UUID.randomUUID().toString(), REFERENCE, ZonedDateTime.now());
+        String externalChargeId = "chargesfsdf";
+
+        databaseTestHelper.addCharge(id, externalChargeId, GATEWAY_ACCOUNT_ID.toString(), AMOUNT, CREATED, RETURN_URL, UUID.randomUUID().toString(), REFERENCE, ZonedDateTime.now());
 
         // when
         ChargeEntity charge = chargeDao.findById(id).get();
@@ -317,10 +316,10 @@ public class ChargeDaoITest {
         assertThat(charge.getReturnUrl(), is(RETURN_URL));
         ZonedDateTime now = ZonedDateTime.now();
         ZonedDateTime createdDate = charge.getCreatedDate();
-        assertThat(createdDate, ZonedDateTimeMatchers.isDayOfMonth(now.getDayOfMonth()));
-        assertThat(createdDate, ZonedDateTimeMatchers.isMonth(now.getMonth()));
-        assertThat(createdDate, ZonedDateTimeMatchers.isYear(now.getYear()));
-        MatcherAssert.assertThat(createdDate, ZonedDateTimeMatchers.within(1, ChronoUnit.MINUTES, now));
+        assertThat(createdDate, isDayOfMonth(now.getDayOfMonth()));
+        assertThat(createdDate, isMonth(now.getMonth()));
+        assertThat(createdDate, isYear(now.getYear()));
+        MatcherAssert.assertThat(createdDate, within(1, ChronoUnit.MINUTES, now));
     }
 
     private Matcher<? super List<ChargeEventEntity>> shouldIncludeStatus(ChargeStatus... expectedStatuses) {
@@ -340,26 +339,19 @@ public class ChargeDaoITest {
         };
     }
 
-    @Deprecated
-    private ImmutableMap<String, Object> newCharge(long amount, String reference) {
-        return ImmutableMap.of(
-                "amount", amount,
-                "reference", reference,
-                "description", DESCRIPTION,
-                "return_url", RETURN_URL);
-    }
-
     private void assertDateMatch(String createdDateString) {
         ZonedDateTime createdDateTime = DateTimeUtils.toUTCZonedDateTime(createdDateString).get();
-        assertThat(createdDateTime, ZonedDateTimeMatchers.within(1, ChronoUnit.MINUTES, ZonedDateTime.now()));
+        assertThat(createdDateTime, within(1, ChronoUnit.MINUTES, ZonedDateTime.now()));
     }
 
     @Test
     public void shouldUpdateEventsWhenMergeWithChargeEntityWithNewStatus() {
 
         Long chargeId = 56735L;
+        String externalChargeId = "charge456";
+
         String transactionId = "345654";
-        databaseTestHelper.addCharge(String.valueOf(chargeId), String.valueOf(GATEWAY_ACCOUNT_ID), AMOUNT, CREATED, RETURN_URL, transactionId, REFERENCE, ZonedDateTime.now(ZoneId.of("UTC")));
+        databaseTestHelper.addCharge(chargeId, externalChargeId, String.valueOf(GATEWAY_ACCOUNT_ID), AMOUNT, CREATED, RETURN_URL, transactionId, REFERENCE, ZonedDateTime.now(ZoneId.of("UTC")));
 
         Optional<ChargeEntity> charge = chargeDao.findById(chargeId);
         ChargeEntity entity = charge.get();
@@ -415,8 +407,9 @@ public class ChargeDaoITest {
         String transactionId = "7826782163";
         ZonedDateTime createdDate = ZonedDateTime.now(ZoneId.of("UTC"));
         Long chargeId = 9999L;
+        String externalChargeId = "charge9999";
 
-        databaseTestHelper.addCharge(String.valueOf(chargeId), String.valueOf(GATEWAY_ACCOUNT_ID), AMOUNT, CREATED, RETURN_URL, transactionId, REFERENCE, createdDate);
+        databaseTestHelper.addCharge(chargeId, externalChargeId, String.valueOf(GATEWAY_ACCOUNT_ID), AMOUNT, CREATED, RETURN_URL, transactionId, REFERENCE, createdDate);
 
         // when
         Optional<ChargeEntity> chargeOptional = chargeDao.findByProviderAndTransactionId(PAYMENT_PROVIDER, transactionId);
@@ -440,7 +433,7 @@ public class ChargeDaoITest {
 
         String transactionId = "7826782163";
         ZonedDateTime createdDate = ZonedDateTime.now();
-        databaseTestHelper.addCharge(String.valueOf(8888L), String.valueOf(GATEWAY_ACCOUNT_ID), AMOUNT, CREATED, RETURN_URL, transactionId, REFERENCE, createdDate);
+        databaseTestHelper.addCharge(8888L, "charge8888", String.valueOf(GATEWAY_ACCOUNT_ID), AMOUNT, CREATED, RETURN_URL, transactionId, REFERENCE, createdDate);
 
         Optional<ChargeEntity> chargeOptional = chargeDao.findByProviderAndTransactionId(PAYMENT_PROVIDER, transactionId);
 
@@ -460,10 +453,11 @@ public class ChargeDaoITest {
         String transactionId = "7826782163";
         ZonedDateTime createdDate = ZonedDateTime.now(ZoneId.of("UTC"));
         Long chargeId = 876786L;
+        String externalChargeId = "charge876786";
 
-        databaseTestHelper.addCharge(String.valueOf(chargeId), String.valueOf(GATEWAY_ACCOUNT_ID), AMOUNT, CREATED, RETURN_URL, transactionId, REFERENCE, createdDate);
+        databaseTestHelper.addCharge(chargeId, externalChargeId, String.valueOf(GATEWAY_ACCOUNT_ID), AMOUNT, CREATED, RETURN_URL, transactionId, REFERENCE, createdDate);
 
-        ChargeEntity charge = chargeDao.findByIdAndGatewayAccount(chargeId, GATEWAY_ACCOUNT_ID).get();
+        ChargeEntity charge = chargeDao.findByExternalIdAndGatewayAccount(externalChargeId, GATEWAY_ACCOUNT_ID).get();
 
         assertThat(charge.getId(), is(chargeId));
         assertThat(charge.getGatewayTransactionId(), is(transactionId));
@@ -478,7 +472,19 @@ public class ChargeDaoITest {
 
     @Test
     public void shouldGetChargeByChargeIdAsNullWhenAccountIdDoesNotMatch() {
-        Optional<ChargeEntity> chargeForAccount = chargeDao.findByIdAndGatewayAccount(CHARGE_ID, 456781L);
+        Optional<ChargeEntity> chargeForAccount = chargeDao.findByExternalIdAndGatewayAccount(EXTERNAL_CHARGE_ID, 456781L);
+        assertThat(chargeForAccount.isPresent(), is(false));
+    }
+
+    @Test
+    public void findByExternalId_shouldFindAChargeEntity() {
+        Optional<ChargeEntity> chargeForAccount = chargeDao.findByExternalId(EXTERNAL_CHARGE_ID);
+        assertThat(chargeForAccount.isPresent(), is(true));
+    }
+
+    @Test
+    public void findByExternalId_shouldNotFindAChargeEntity() {
+        Optional<ChargeEntity> chargeForAccount = chargeDao.findByExternalId("abcdefg123");
         assertThat(chargeForAccount.isPresent(), is(false));
     }
 }
