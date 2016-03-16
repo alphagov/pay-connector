@@ -15,8 +15,8 @@ import static org.hamcrest.core.Is.is;
 import static org.junit.Assert.assertThat;
 import static org.mockito.Mockito.*;
 import static uk.gov.pay.connector.dao.ChargeSearch.aChargeSearch;
+import static uk.gov.pay.connector.model.domain.ChargeStatus.CAPTURE_READY;
 import static uk.gov.pay.connector.model.domain.ChargeStatus.CREATED;
-import static uk.gov.pay.connector.model.domain.ChargeStatus.READY_FOR_CAPTURE;
 
 @RunWith(MockitoJUnitRunner.class)
 public class ChargeSearchTest {
@@ -47,7 +47,7 @@ public class ChargeSearchTest {
 
         TypedQuery<ChargeEntity> typedQuery = aChargeSearch(GATEWAY_ACCOUNT_ID)
                 .withReferenceLike(REFERENCE)
-                .withStatusIn(CREATED, READY_FOR_CAPTURE)
+                .withStatusIn(CREATED, CAPTURE_READY)
                 .withCreatedDateFrom(FROM_DATE)
                 .withCreatedDateTo(TO_DATE)
                 .apply(entityManagerMock);
@@ -57,7 +57,7 @@ public class ChargeSearchTest {
         verify(entityManagerMock).createQuery(expectedTypedQuery, ChargeEntity.class);
         verify(queryMock).setParameter("gatewayAccountId", GATEWAY_ACCOUNT_ID);
         verify(queryMock).setParameter("reference", "%reference%");
-        verify(queryMock).setParameter("statuses", newArrayList(CREATED, READY_FOR_CAPTURE));
+        verify(queryMock).setParameter("statuses", newArrayList(CREATED, CAPTURE_READY));
         verify(queryMock).setParameter("fromDate", FROM_DATE);
         verify(queryMock).setParameter("toDate", TO_DATE);
         verifyNoMoreInteractions(queryMock, entityManagerMock);

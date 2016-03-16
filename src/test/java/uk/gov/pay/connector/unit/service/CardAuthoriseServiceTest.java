@@ -18,10 +18,9 @@ import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.core.Is.is;
 import static org.junit.Assert.assertTrue;
 import static org.mockito.Matchers.any;
-import static org.mockito.Mockito.when;
+import static org.mockito.Mockito.*;
 import static uk.gov.pay.connector.model.GatewayErrorType.*;
-import static uk.gov.pay.connector.model.domain.ChargeStatus.AUTHORISATION_SUCCESS;
-import static uk.gov.pay.connector.model.domain.ChargeStatus.ENTERING_CARD_DETAILS;
+import static uk.gov.pay.connector.model.domain.ChargeStatus.*;
 
 public class CardAuthoriseServiceTest extends CardServiceTest {
 
@@ -54,7 +53,8 @@ public class CardAuthoriseServiceTest extends CardServiceTest {
     public void shouldGetAChargeNotFoundWhenChargeDoesNotExist() {
         Long chargeId = 45678L;
 
-        when(mockedChargeDao.findById(chargeId)).thenReturn(Optional.empty());
+        when(mockedChargeDao.findById(chargeId))
+                .thenReturn(Optional.empty());
 
         Either<GatewayError, GatewayResponse> response = cardAuthorisationService.doAuthorise(chargeId, CardUtils.aValidCard());
 
@@ -63,6 +63,27 @@ public class CardAuthoriseServiceTest extends CardServiceTest {
 
         assertThat(gatewayError.getErrorType(), is(CHARGE_NOT_FOUND));
         assertThat(gatewayError.getMessage(), is("Charge with id [45678] not found."));
+    }
+
+    @Test
+    public void shouldGetAOperationAlreadyInProgressWhenStatusIsAuthorisationReady() throws Exception {
+        Long chargeId = 1234L;
+
+        ChargeEntity charge = createNewChargeWith(chargeId, ChargeStatus.AUTHORISATION_READY);
+
+        when(mockedChargeDao.findById(charge.getId()))
+                .thenReturn(Optional.of(charge));
+        when(mockedChargeDao.merge(any()))
+                .thenReturn(charge);
+
+        Card cardDetails = CardUtils.aValidCard();
+        Either<GatewayError, GatewayResponse> response = cardAuthorisationService.doAuthorise(chargeId, cardDetails);
+
+        assertTrue(response.isLeft());
+        GatewayError gatewayError = response.left().value();
+
+        assertThat(gatewayError.getErrorType(), is(OPERATION_ALREADY_IN_PROGRESS));
+        assertThat(gatewayError.getMessage(), is("Authorisation for charge already in progress, 1234"));
     }
 
     @Test
@@ -107,11 +128,44 @@ public class CardAuthoriseServiceTest extends CardServiceTest {
         assertThat(gatewayError.getMessage(), is("Authorisation for charge conflicting, 1234"));
     }
 
+    @Test
+    public void shouldUpdateChargeWithAuthorisationErrorWhenAuthorisationFails() {
+        Long chargeId = 1L;
+        String gatewayTxId = "theTxId";
+        ChargeEntity charge = createNewChargeWith(chargeId, ENTERING_CARD_DETAILS);
+        charge.setGatewayTransactionId(gatewayTxId);
+
+        ChargeEntity reloadedCharge = mock(ChargeEntity.class);
+
+        when(mockedChargeDao.findById(chargeId))
+                .thenReturn(Optional.of(charge));
+        when(mockedChargeDao.merge(any()))
+                .thenReturn(charge)
+                .thenReturn(reloadedCharge);
+
+        mockUnsuccessfulAuthorisation();
+
+        Card cardDetails = CardUtils.aValidCard();
+        Either<GatewayError, GatewayResponse> response = cardAuthorisationService.doAuthorise(chargeId, cardDetails);
+
+        assertTrue(response.isRight());
+        assertThat(response.right().value(), is(anUnSuccessfulResponse()));
+
+        verify(reloadedCharge, times(1)).setStatus(AUTHORISATION_ERROR);
+        verify(reloadedCharge, times(1)).setGatewayTransactionId(null);
+    }
+
     private void mockSuccessfulAuthorisation(String transactionId) {
         when(mockedProviders.resolve(providerName))
                 .thenReturn(mockedPaymentProvider);
         when(mockedPaymentProvider.authorise(any()))
-                .thenReturn(new AuthorisationResponse(true, null, AUTHORISATION_SUCCESS, transactionId))
-        ;
+                .thenReturn(AuthorisationResponse.successfulAuthorisationResponse(AUTHORISATION_SUCCESS, transactionId));
+    }
+
+    private void mockUnsuccessfulAuthorisation() {
+        when(mockedProviders.resolve(providerName))
+                .thenReturn(mockedPaymentProvider);
+        when(mockedPaymentProvider.authorise(any()))
+                .thenReturn(AuthorisationResponse.authorisationFailureResponse(GatewayError.baseGatewayError("error")));
     }
 }

@@ -8,8 +8,10 @@ import uk.gov.pay.connector.model.CaptureResponse;
 import uk.gov.pay.connector.model.GatewayError;
 import uk.gov.pay.connector.model.GatewayResponse;
 import uk.gov.pay.connector.model.domain.ChargeEntity;
+import uk.gov.pay.connector.model.domain.ChargeStatus;
 import uk.gov.pay.connector.service.CardCaptureService;
 
+import javax.persistence.OptimisticLockException;
 import java.util.Optional;
 
 import static org.hamcrest.MatcherAssert.assertThat;
@@ -17,28 +19,28 @@ import static org.hamcrest.core.Is.is;
 import static org.junit.Assert.assertTrue;
 import static org.mockito.Matchers.any;
 import static org.mockito.Mockito.*;
-import static uk.gov.pay.connector.model.GatewayErrorType.CHARGE_NOT_FOUND;
-import static uk.gov.pay.connector.model.GatewayErrorType.GENERIC_GATEWAY_ERROR;
+import static uk.gov.pay.connector.model.GatewayErrorType.*;
 import static uk.gov.pay.connector.model.domain.ChargeStatus.*;
 
 public class CardCaptureServiceTest extends CardServiceTest {
-    private final CardCaptureService cardService = new CardCaptureService(mockedAccountDao, mockedChargeDao, mockedProviders);
+    private final CardCaptureService cardCaptureService = new CardCaptureService(mockedAccountDao, mockedChargeDao, mockedProviders);
 
     @Test
     public void shouldCaptureACharge() throws Exception {
-
         Long chargeId = 1L;
         String gatewayTxId = "theTxId";
+
         ChargeEntity charge = createNewChargeWith(chargeId, AUTHORISATION_SUCCESS);
         charge.setGatewayTransactionId(gatewayTxId);
 
-        when(mockedChargeDao.findById(chargeId)).thenReturn(Optional.of(charge));
-        when(mockedAccountDao.findById(charge.getGatewayAccount().getId())).thenReturn(Optional.of(charge.getGatewayAccount()));
-        when(mockedProviders.resolve(providerName)).thenReturn(mockedPaymentProvider);
-        CaptureResponse response1 = CaptureResponse.successfulCaptureResponse(CAPTURE_SUBMITTED);
-        when(mockedPaymentProvider.capture(any())).thenReturn(response1);
+        when(mockedChargeDao.findById(charge.getId()))
+                .thenReturn(Optional.of(charge));
+        when(mockedChargeDao.merge(any()))
+                .thenReturn(charge);
 
-        Either<GatewayError, GatewayResponse> response = cardService.doCapture(chargeId);
+        mockSuccessfulCapture();
+
+        Either<GatewayError, GatewayResponse> response = cardCaptureService.doCapture(chargeId);
 
         assertTrue(response.isRight());
         assertThat(response.right().value(), is(aSuccessfulResponse()));
@@ -53,13 +55,14 @@ public class CardCaptureServiceTest extends CardServiceTest {
     }
 
     @Test
-    public void shouldGetChargeNotFoundWhenChargeDoesNotExist() {
+    public void shouldGetAChargeNotFoundWhenChargeDoesNotExist() {
 
         Long chargeId = 45678L;
 
-        when(mockedChargeDao.findById(chargeId)).thenReturn(Optional.empty());
+        when(mockedChargeDao.findById(chargeId))
+                .thenReturn(Optional.empty());
 
-        Either<GatewayError, GatewayResponse> response = cardService.doCapture(chargeId);
+        Either<GatewayError, GatewayResponse> response = cardCaptureService.doCapture(chargeId);
 
         assertTrue(response.isLeft());
         GatewayError gatewayError = response.left().value();
@@ -69,48 +72,101 @@ public class CardCaptureServiceTest extends CardServiceTest {
     }
 
     @Test
-    public void shouldGetAnErrorWhenStatusIsNotAuthorisationSuccess() {
+    public void shouldGetAOperationAlreadyInProgressWhenStatusIsCaptureReady() throws Exception {
+        Long chargeId = 1234L;
 
-        Long chargeId = 1L;
-        String gatewayTxId = "theTxId";
-        ChargeEntity charge = createNewChargeWith(chargeId, CREATED);
-        charge.setGatewayTransactionId(gatewayTxId);
+        ChargeEntity charge = createNewChargeWith(chargeId, ChargeStatus.CAPTURE_READY);
 
-        when(mockedChargeDao.findById(chargeId)).thenReturn(Optional.of(charge));
+        when(mockedChargeDao.findById(charge.getId()))
+                .thenReturn(Optional.of(charge));
+        when(mockedChargeDao.merge(any()))
+                .thenReturn(charge);
 
-        Either<GatewayError, GatewayResponse> response = cardService.doCapture(chargeId);
+        Either<GatewayError, GatewayResponse> response = cardCaptureService.doCapture(chargeId);
 
         assertTrue(response.isLeft());
         GatewayError gatewayError = response.left().value();
 
-        assertThat(gatewayError.getErrorType(), is(GENERIC_GATEWAY_ERROR));
-        assertThat(gatewayError.getMessage(), is("Cannot capture a charge with status CREATED."));
+        assertThat(gatewayError.getErrorType(), is(OPERATION_ALREADY_IN_PROGRESS));
+        assertThat(gatewayError.getMessage(), is("Capture for charge already in progress, 1234"));
     }
 
     @Test
-    public void shouldUpdateChargeWithCaptureUnknownWhenProviderResponseIsNotSuccessful() {
+    public void shouldGetAIllegalErrorWhenInvalidStatus() throws Exception {
+        Long chargeId = 1234L;
+
+        ChargeEntity charge = createNewChargeWith(chargeId, ChargeStatus.CREATED);
+
+        when(mockedChargeDao.findById(charge.getId()))
+                .thenReturn(Optional.of(charge));
+        when(mockedChargeDao.merge(any()))
+                .thenReturn(charge);
+
+        Either<GatewayError, GatewayResponse> response = cardCaptureService.doCapture(chargeId);
+
+        assertTrue(response.isLeft());
+        GatewayError gatewayError = response.left().value();
+
+        assertThat(gatewayError.getErrorType(), is(ILLEGAL_STATE_ERROR));
+        assertThat(gatewayError.getMessage(), is("Charge not in correct state to be processed, 1234"));
+    }
+
+    @Test
+    public void shouldGetAConflictErrorWhenConflicting() throws Exception {
+        Long chargeId = 1234L;
+
+        ChargeEntity charge = createNewChargeWith(chargeId, ChargeStatus.CREATED);
+
+        when(mockedChargeDao.findById(charge.getId()))
+                .thenReturn(Optional.of(charge));
+        when(mockedChargeDao.merge(any()))
+                .thenThrow(new OptimisticLockException());
+
+        Either<GatewayError, GatewayResponse> response = cardCaptureService.doCapture(chargeId);
+
+        assertTrue(response.isLeft());
+        GatewayError gatewayError = response.left().value();
+
+        assertThat(gatewayError.getErrorType(), is(CONFLICT_ERROR));
+        assertThat(gatewayError.getMessage(), is("Capture for charge conflicting, 1234"));
+    }
+
+    @Test
+    public void shouldUpdateChargeWithCaptureErrorWhenCaptureFails() {
         Long chargeId = 1L;
         String gatewayTxId = "theTxId";
         ChargeEntity charge = createNewChargeWith(chargeId, AUTHORISATION_SUCCESS);
         charge.setGatewayTransactionId(gatewayTxId);
 
-        when(mockedChargeDao.findById(chargeId)).thenReturn(Optional.of(charge));
-        when(mockedAccountDao.findById(charge.getGatewayAccount().getId())).thenReturn(Optional.of(charge.getGatewayAccount()));
-        when(mockedProviders.resolve(providerName)).thenReturn(mockedPaymentProvider);
-        CaptureResponse unsuccessfulResponse = CaptureResponse.captureFailureResponse(new GatewayError("error", GENERIC_GATEWAY_ERROR));
-        when(mockedPaymentProvider.capture(any())).thenReturn(unsuccessfulResponse);
+        ChargeEntity reloadedCharge = mock(ChargeEntity.class);
 
-        Either<GatewayError, GatewayResponse> response = cardService.doCapture(chargeId);
+        when(mockedChargeDao.findById(chargeId))
+                .thenReturn(Optional.of(charge));
+        when(mockedChargeDao.merge(any()))
+                .thenReturn(charge)
+                .thenReturn(reloadedCharge);
+
+        mockUnsuccessfulCapture();
+
+        Either<GatewayError, GatewayResponse> response = cardCaptureService.doCapture(chargeId);
 
         assertTrue(response.isRight());
         assertThat(response.right().value(), is(anUnSuccessfulResponse()));
-        ArgumentCaptor<ChargeEntity> argumentCaptor = ArgumentCaptor.forClass(ChargeEntity.class);
-        verify(mockedChargeDao).mergeAndNotifyStatusHasChanged(argumentCaptor.capture());
 
-        assertThat(argumentCaptor.getValue().getStatus(), is(CAPTURE_ERROR.getValue()));
+        verify(reloadedCharge, times(1)).setStatus(CAPTURE_ERROR);
+    }
 
-        ArgumentCaptor<CaptureRequest> request = ArgumentCaptor.forClass(CaptureRequest.class);
-        verify(mockedPaymentProvider, times(1)).capture(request.capture());
-        assertThat(request.getValue().getTransactionId(), is(gatewayTxId));
+    private void mockSuccessfulCapture() {
+        when(mockedProviders.resolve(providerName))
+                .thenReturn(mockedPaymentProvider);
+        when(mockedPaymentProvider.capture(any()))
+                .thenReturn(CaptureResponse.successfulCaptureResponse(CAPTURE_SUBMITTED));
+    }
+
+    private void mockUnsuccessfulCapture() {
+        when(mockedProviders.resolve(providerName))
+                .thenReturn(mockedPaymentProvider);
+        when(mockedPaymentProvider.capture(any()))
+                .thenReturn(CaptureResponse.captureFailureResponse(GatewayError.baseGatewayError("error")));
     }
 }

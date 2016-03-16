@@ -22,7 +22,7 @@ import static uk.gov.pay.connector.model.domain.ChargeStatus.*;
 public class CardCancelService extends CardService {
 
     private static final ChargeStatus[] CANCELLABLE_STATES = new ChargeStatus[]{
-            CREATED, ENTERING_CARD_DETAILS, AUTHORISATION_SUCCESS, AUTHORISATION_READY, READY_FOR_CAPTURE
+            CREATED, ENTERING_CARD_DETAILS, AUTHORISATION_SUCCESS, AUTHORISATION_READY, CAPTURE_READY
     };
 
     @Inject

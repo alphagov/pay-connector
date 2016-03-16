@@ -5,15 +5,12 @@ import uk.gov.pay.connector.it.base.CardResourceITestBase;
 
 import static com.jayway.restassured.http.ContentType.JSON;
 import static java.lang.String.format;
-import static java.util.UUID.randomUUID;
 import static org.hamcrest.Matchers.is;
-import static uk.gov.pay.connector.model.api.ExternalChargeStatus.EXT_FAILED;
-import static uk.gov.pay.connector.model.api.ExternalChargeStatus.EXT_SUCCEEDED;
 import static uk.gov.pay.connector.model.domain.ChargeStatus.*;
 
-public class CardResourceITest extends CardResourceITestBase {
+public class CardAuthoriseResourceITest extends CardResourceITestBase {
 
-    public CardResourceITest() {
+    public CardAuthoriseResourceITest() {
         super("sandbox");
     }
 
@@ -106,14 +103,32 @@ public class CardResourceITest extends CardResourceITestBase {
         assertFrontendChargeStatusIs(chargeId, CREATED.getValue());
     }
 
-    @Test
-    public void shouldFailPayment_IfCaptureStatusIsUnknown() {
-        String failedChargeId = createNewChargeWith(CAPTURE_ERROR, randomUUID().toString());
-        assertApiStatusIs(failedChargeId,EXT_FAILED.getValue());
+    private void shouldAuthoriseChargeFor(String cardDetails) throws Exception {
+        String chargeId = createNewChargeWith(ENTERING_CARD_DETAILS, null);
+
+        givenSetup()
+                .body(cardDetails)
+                .post(authoriseChargeUrlFor(chargeId))
+                .then()
+                .statusCode(204);
+
+        assertFrontendChargeStatusIs(chargeId, AUTHORISATION_SUCCESS.getValue());
     }
 
     @Test
-    public void shouldReturnErrorAndDoNotUpdateChargeStatus_IfCardDetailsAreAlreadySubmitted() throws Exception {
+    public void shouldReturn404IfChargeDoesNotExist_ForAuthorise() throws Exception {
+        String unknownId = "61234569847520367";
+        givenSetup()
+                .body(validCardDetails)
+                .post(authoriseChargeUrlFor(unknownId))
+                .then()
+                .statusCode(404)
+                .contentType(JSON)
+                .body("message", is(format("Charge with id [%s] not found.", unknownId)));
+    }
+
+    @Test
+    public void shouldReturnErrorWithoutChangingChargeState_IfOriginalStateIsNotEnteringCardDetails() throws Exception {
         String chargeId = createNewChargeWith(ENTERING_CARD_DETAILS, null);
         givenSetup()
                 .body(validCardDetails)
@@ -134,70 +149,6 @@ public class CardResourceITest extends CardResourceITestBase {
         String chargeId = createNewChargeWith(AUTHORISATION_READY, null);
         shouldReturnErrorFor(chargeId, validCardDetails, format("Authorisation for charge already in progress, %s", chargeId), 202);
         assertFrontendChargeStatusIs(chargeId, AUTHORISATION_READY.getValue());
-    }
-
-    @Test
-    public void shouldReturn404IfChargeDoesNotExist_ForAuthorise() throws Exception {
-        String unknownId = "61234569847520367";
-        givenSetup()
-                .body(validCardDetails)
-                .post(authoriseChargeUrlFor(unknownId))
-                .then()
-                .statusCode(404)
-                .contentType(JSON)
-                .body("message", is(format("Charge with id [%s] not found.", unknownId)));
-    }
-
-
-    @Test
-    public void shouldReturn404IfChargeDoesNotExist_ForCapture() {
-        String unknownId = "398579438759438";
-
-        givenSetup()
-                .post(captureChargeUrlFor(unknownId))
-                .then()
-                .statusCode(404)
-                .contentType(JSON)
-                .body("message", is(format("Charge with id [%s] not found.", unknownId)));
-    }
-
-    @Test
-    public void shouldSubmitForCaptureTheCardPayment_IfChargeWasPreviouslyAuthorised() {
-        String chargeId = authoriseNewCharge();
-        givenSetup()
-                .post(captureChargeUrlFor(chargeId))
-                .then()
-                .statusCode(204);
-
-        assertFrontendChargeStatusIs(chargeId, CAPTURE_SUBMITTED.getValue());
-        assertApiStatusIs(chargeId, EXT_SUCCEEDED.getValue());
-    }
-
-    @Test
-    public void shouldReturnErrorWithoutChangingChargeState_IfOriginalStateIsNotAuthorised() {
-        String chargeIdNotAuthorised = createNewChargeWith(AUTHORISATION_READY, null);
-
-        givenSetup()
-                .post(captureChargeUrlFor(chargeIdNotAuthorised))
-                .then()
-                .statusCode(400)
-                .contentType(JSON)
-                .body("message", is("Cannot capture a charge with status " + AUTHORISATION_READY.getValue() + "."));
-
-
-        assertFrontendChargeStatusIs(chargeIdNotAuthorised, AUTHORISATION_READY.getValue());
-    }
-
-    private void shouldAuthoriseChargeFor(String cardDetails) throws Exception {
-        String chargeId = createNewChargeWith(ENTERING_CARD_DETAILS, null);
-
-        givenSetup()
-                .body(cardDetails)
-                .post(authoriseChargeUrlFor(chargeId))
-                .then()
-                .statusCode(204);
-
-        assertFrontendChargeStatusIs(chargeId, AUTHORISATION_SUCCESS.getValue());
     }
 
     private void shouldReturnErrorFor(String chargeId, String randomCardNumber, String expectedMessage) {

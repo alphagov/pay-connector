@@ -34,8 +34,8 @@ public class ConnectorModule extends AbstractModule {
         properties.put("javax.persistence.jdbc.password", dbConfig.getPassword());
 
         JPAConfiguration jpaConfiguration = configuration.getJpaConfiguration();
-        properties.put("eclipselink.logging.level", jpaConfiguration.getJpaLoggingLevel());
-        properties.put("eclipselink.logging.level.sql", jpaConfiguration.getSqlLoggingLevel());
+        properties.put("eclipselink.logging.level", "FINE");
+        properties.put("eclipselink.logging.level.sql", "FINE");
         properties.put("eclipselink.query-results-cache", jpaConfiguration.getCacheSharedDefault());
         properties.put("eclipselink.cache.shared.default", jpaConfiguration.getCacheSharedDefault());
         properties.put("eclipselink.ddl-generation.output-mode", jpaConfiguration.getDdlGenerationOutputMode());
