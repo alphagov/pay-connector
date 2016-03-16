@@ -227,18 +227,16 @@ public class ChargeServiceTest {
     public void shouldUpdateChargeStatusForAllChargesWithTheGivenStatus() {
         ChargeEntity chargeEntity1 = mock(ChargeEntity.class);
         ChargeEntity chargeEntity2 = mock(ChargeEntity.class);
-        when(chargeDao.merge(chargeEntity1)).thenReturn(chargeEntity1);
-        when(chargeDao.merge(chargeEntity2)).thenReturn(chargeEntity2);
 
         service.updateStatus(asList(chargeEntity1, chargeEntity2), ChargeStatus.ENTERING_CARD_DETAILS);
 
         InOrder inOrder = inOrder(chargeEntity1, chargeEntity2, chargeDao);
 
-        inOrder.verify(chargeDao).merge(chargeEntity1);
         inOrder.verify(chargeEntity1).setStatus(ChargeStatus.ENTERING_CARD_DETAILS);
+        inOrder.verify(chargeDao).mergeAndNotifyStatusHasChanged(chargeEntity1);
 
-        inOrder.verify(chargeDao).merge(chargeEntity2);
         inOrder.verify(chargeEntity2).setStatus(ChargeStatus.ENTERING_CARD_DETAILS);
+        inOrder.verify(chargeDao).mergeAndNotifyStatusHasChanged(chargeEntity2);
     }
 
     @Test
@@ -255,22 +253,20 @@ public class ChargeServiceTest {
         when(chargeEntity2.getId()).thenReturn(chargeId);
         when(gatewayAccount.getId()).thenReturn( accountId);
         when(chargeEntity2.getGatewayAccount()).thenReturn(gatewayAccount);
-        when(chargeDao.merge(chargeEntity1)).thenReturn(chargeEntity1);
-        when(chargeDao.merge(chargeEntity2)).thenReturn(chargeEntity2);
 
         mockCancelResponse(chargeId, accountId, Either.right(CancelResponse.aSuccessfulCancelResponse()));
 
         service.expire(asList(chargeEntity1, chargeEntity2));
 
         InOrder inOrder = inOrder(chargeEntity1, chargeDao, chargeEntity2);
-        inOrder.verify(chargeDao).merge(chargeEntity1);
         inOrder.verify(chargeEntity1).setStatus(EXPIRED);
+        inOrder.verify(chargeDao).mergeAndNotifyStatusHasChanged(chargeEntity1);
 
-        inOrder.verify(chargeDao).merge(chargeEntity2);
         inOrder.verify(chargeEntity2).setStatus(EXPIRE_CANCEL_PENDING);
+        inOrder.verify(chargeDao).mergeAndNotifyStatusHasChanged(chargeEntity2);
 
-        inOrder.verify(chargeDao).merge(chargeEntity2);
         inOrder.verify(chargeEntity2).setStatus(EXPIRED);
+        inOrder.verify(chargeDao).mergeAndNotifyStatusHasChanged(chargeEntity2);
     }
 
     @Test
@@ -287,8 +283,6 @@ public class ChargeServiceTest {
         when(chargeEntity2.getId()).thenReturn(chargeId);
         when(gatewayAccount.getId()).thenReturn( accountId);
         when(chargeEntity2.getGatewayAccount()).thenReturn(gatewayAccount);
-        when(chargeDao.merge(chargeEntity1)).thenReturn(chargeEntity1);
-        when(chargeDao.merge(chargeEntity2)).thenReturn(chargeEntity2);
 
         CancelResponse unsuccessfulResponse = new CancelResponse(false, ErrorResponse.unexpectedStatusCodeFromGateway("invalid status"));
         mockCancelResponse(chargeId, accountId, Either.right(unsuccessfulResponse));
@@ -296,14 +290,14 @@ public class ChargeServiceTest {
         service.expire(asList(chargeEntity1, chargeEntity2));
 
         InOrder inOrder = inOrder(chargeEntity1, chargeDao, chargeEntity2);
-        inOrder.verify(chargeDao).merge(chargeEntity1);
         inOrder.verify(chargeEntity1).setStatus(EXPIRED);
+        inOrder.verify(chargeDao).mergeAndNotifyStatusHasChanged(chargeEntity1);
 
-        inOrder.verify(chargeDao).merge(chargeEntity2);
         inOrder.verify(chargeEntity2).setStatus(EXPIRE_CANCEL_PENDING);
+        inOrder.verify(chargeDao).mergeAndNotifyStatusHasChanged(chargeEntity2);
 
-        inOrder.verify(chargeDao).merge(chargeEntity2);
         inOrder.verify(chargeEntity2).setStatus(EXPIRE_CANCEL_FAILED);
+        inOrder.verify(chargeDao).mergeAndNotifyStatusHasChanged(chargeEntity2);
     }
 
     @Test
@@ -320,8 +314,6 @@ public class ChargeServiceTest {
         when(chargeEntity2.getId()).thenReturn(chargeId);
         when(gatewayAccount.getId()).thenReturn( accountId);
         when(chargeEntity2.getGatewayAccount()).thenReturn(gatewayAccount);
-        when(chargeDao.merge(chargeEntity1)).thenReturn(chargeEntity1);
-        when(chargeDao.merge(chargeEntity2)).thenReturn(chargeEntity2);
 
         ErrorResponse errorResponse = new ErrorResponse("error-message", ErrorType.GATEWAY_CONNECTION_TIMEOUT_ERROR);
         mockCancelResponse(chargeId, accountId, Either.left(errorResponse));
@@ -329,14 +321,14 @@ public class ChargeServiceTest {
         service.expire(asList(chargeEntity1, chargeEntity2));
 
         InOrder inOrder = inOrder(chargeEntity1, chargeDao, chargeEntity2);
-        inOrder.verify(chargeDao).merge(chargeEntity1);
         inOrder.verify(chargeEntity1).setStatus(EXPIRED);
+        inOrder.verify(chargeDao).mergeAndNotifyStatusHasChanged(chargeEntity1);
 
-        inOrder.verify(chargeDao).merge(chargeEntity2);
         inOrder.verify(chargeEntity2).setStatus(EXPIRE_CANCEL_PENDING);
+        inOrder.verify(chargeDao).mergeAndNotifyStatusHasChanged(chargeEntity2);
 
-        inOrder.verify(chargeDao).merge(chargeEntity2);
         inOrder.verify(chargeEntity2).setStatus(EXPIRE_CANCEL_FAILED);
+        inOrder.verify(chargeDao).mergeAndNotifyStatusHasChanged(chargeEntity2);
     }
 
     private ChargeResponse.Builder chargeResponseBuilderOf(ChargeEntity chargeEntity) throws URISyntaxException {

@@ -73,8 +73,8 @@ public class ChargeService {
     @Transactional
     public void updateStatus(List<ChargeEntity> chargeEntities, ChargeStatus status) {
         chargeEntities.stream().forEach(chargeEntity -> {
-            chargeEntity = chargeDao.merge(chargeEntity);
             chargeEntity.setStatus(status);
+            chargeDao.mergeAndNotifyStatusHasChanged(chargeEntity);
         });
     }
 
