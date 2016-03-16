@@ -31,7 +31,7 @@ public class CardCaptureService extends CardService {
         super(accountDao, chargeDao, providers);
     }
 
-    public Either<GatewayError, GatewayResponse> doCapture(Long chargeId) {
+    public Either<GatewayError, GatewayResponse> doCapture(String chargeId) {
 
         Function<ChargeEntity, Either<GatewayError, GatewayResponse>> doCapture =
                 (charge) -> {
@@ -60,7 +60,7 @@ public class CardCaptureService extends CardService {
                 };
 
         return chargeDao
-                .findById(chargeId)
+                .findByExternalId(chargeId)
                 .map(doCapture)
                 .orElseGet(chargeNotFound(chargeId));
     }
@@ -71,11 +71,11 @@ public class CardCaptureService extends CardService {
         if (!hasStatus(reloadedCharge, AUTHORISATION_SUCCESS)) {
             if (hasStatus(reloadedCharge, CAPTURE_READY)) {
                 return left(operationAlreadyInProgress(format("Capture for charge already in progress, %s",
-                        reloadedCharge.getId())));
+                        reloadedCharge.getExternalId())));
             }
             logger.error(format("Charge with id [%s] and with status [%s] should be in [AUTHORISATION SUCCESS] for capture.",
                     reloadedCharge.getId(), reloadedCharge.getStatus()));
-            return left(illegalStateError(format("Charge not in correct state to be processed, %s", reloadedCharge.getId())));
+            return left(illegalStateError(format("Charge not in correct state to be processed, %s", reloadedCharge.getExternalId())));
         }
         reloadedCharge.setStatus(CAPTURE_READY);
 

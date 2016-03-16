@@ -30,9 +30,9 @@ public class CardCancelService extends CardService {
         super(accountDao, chargeDao, providers);
     }
 
-    public Either<GatewayError, GatewayResponse> doCancel(Long chargeId, Long accountId) {
+    public Either<GatewayError, GatewayResponse> doCancel(String chargeId, Long accountId) {
         return chargeDao
-                .findByIdAndGatewayAccount(Long.valueOf(chargeId), accountId)
+                .findByExternalIdAndGatewayAccount(chargeId, accountId)
                 .map(cancel())
                 .orElseGet(chargeNotFound(chargeId));
     }
@@ -40,7 +40,7 @@ public class CardCancelService extends CardService {
     private Function<ChargeEntity, Either<GatewayError, GatewayResponse>> cancel() {
         return charge -> hasStatus(charge, CANCELLABLE_STATES) ?
                 right(cancelFor(charge)) :
-                left(cancelErrorMessageFor(charge.getId(), charge.getStatus()));
+                left(cancelErrorMessageFor(charge.getExternalId(), charge.getStatus()));
     }
 
     private GatewayResponse cancelFor(ChargeEntity charge) {
@@ -54,7 +54,7 @@ public class CardCancelService extends CardService {
         return response;
     }
 
-    private GatewayError cancelErrorMessageFor(Long chargeId, String status) {
+    private GatewayError cancelErrorMessageFor(String chargeId, String status) {
         return baseGatewayError(format("Cannot cancel a charge id [%s]: status is [%s].", chargeId, status));
     }
 }

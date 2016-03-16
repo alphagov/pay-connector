@@ -33,7 +33,7 @@ public class CardAuthoriseServiceTest extends CardServiceTest {
 
         ChargeEntity charge = createNewChargeWith(chargeId, ENTERING_CARD_DETAILS);
 
-        when(mockedChargeDao.findById(charge.getId()))
+        when(mockedChargeDao.findByExternalId(charge.getExternalId()))
                 .thenReturn(Optional.of(charge));
         when(mockedChargeDao.merge(any()))
                 .thenReturn(charge);
@@ -41,7 +41,7 @@ public class CardAuthoriseServiceTest extends CardServiceTest {
         mockSuccessfulAuthorisation(gatewayTxId);
 
         Card cardDetails = CardUtils.aValidCard();
-        Either<GatewayError, GatewayResponse> response = cardAuthorisationService.doAuthorise(chargeId, cardDetails);
+        Either<GatewayError, GatewayResponse> response = cardAuthorisationService.doAuthorise(charge.getExternalId(), cardDetails);
 
         assertTrue(response.isRight());
         assertThat(response.right().value(), is(aSuccessfulResponse()));
@@ -51,9 +51,9 @@ public class CardAuthoriseServiceTest extends CardServiceTest {
 
     @Test
     public void shouldGetAChargeNotFoundWhenChargeDoesNotExist() {
-        Long chargeId = 45678L;
+        String chargeId = "jgk3erq5sv2i4cds6qqa9f1a8a";
 
-        when(mockedChargeDao.findById(chargeId))
+        when(mockedChargeDao.findByExternalId(chargeId))
                 .thenReturn(Optional.empty());
 
         Either<GatewayError, GatewayResponse> response = cardAuthorisationService.doAuthorise(chargeId, CardUtils.aValidCard());
@@ -62,7 +62,7 @@ public class CardAuthoriseServiceTest extends CardServiceTest {
         GatewayError gatewayError = response.left().value();
 
         assertThat(gatewayError.getErrorType(), is(CHARGE_NOT_FOUND));
-        assertThat(gatewayError.getMessage(), is("Charge with id [45678] not found."));
+        assertThat(gatewayError.getMessage(), is("Charge with id [jgk3erq5sv2i4cds6qqa9f1a8a] not found."));
     }
 
     @Test
@@ -71,19 +71,19 @@ public class CardAuthoriseServiceTest extends CardServiceTest {
 
         ChargeEntity charge = createNewChargeWith(chargeId, ChargeStatus.AUTHORISATION_READY);
 
-        when(mockedChargeDao.findById(charge.getId()))
+        when(mockedChargeDao.findByExternalId(charge.getExternalId()))
                 .thenReturn(Optional.of(charge));
         when(mockedChargeDao.merge(any()))
                 .thenReturn(charge);
 
         Card cardDetails = CardUtils.aValidCard();
-        Either<GatewayError, GatewayResponse> response = cardAuthorisationService.doAuthorise(chargeId, cardDetails);
+        Either<GatewayError, GatewayResponse> response = cardAuthorisationService.doAuthorise(charge.getExternalId(), cardDetails);
 
         assertTrue(response.isLeft());
         GatewayError gatewayError = response.left().value();
 
         assertThat(gatewayError.getErrorType(), is(OPERATION_ALREADY_IN_PROGRESS));
-        assertThat(gatewayError.getMessage(), is("Authorisation for charge already in progress, 1234"));
+        assertThat(gatewayError.getMessage(), is("Authorisation for charge already in progress, " + charge.getExternalId()));
     }
 
     @Test
@@ -92,19 +92,19 @@ public class CardAuthoriseServiceTest extends CardServiceTest {
 
         ChargeEntity charge = createNewChargeWith(chargeId, ChargeStatus.CREATED);
 
-        when(mockedChargeDao.findById(charge.getId()))
+        when(mockedChargeDao.findByExternalId(charge.getExternalId()))
                 .thenReturn(Optional.of(charge));
         when(mockedChargeDao.merge(any()))
                 .thenReturn(charge);
 
         Card cardDetails = CardUtils.aValidCard();
-        Either<GatewayError, GatewayResponse> response = cardAuthorisationService.doAuthorise(chargeId, cardDetails);
+        Either<GatewayError, GatewayResponse> response = cardAuthorisationService.doAuthorise(charge.getExternalId(), cardDetails);
 
         assertTrue(response.isLeft());
         GatewayError gatewayError = response.left().value();
 
         assertThat(gatewayError.getErrorType(), is(ILLEGAL_STATE_ERROR));
-        assertThat(gatewayError.getMessage(), is("Charge not in correct state to be processed, 1234"));
+        assertThat(gatewayError.getMessage(), is("Charge not in correct state to be processed, " + charge.getExternalId()));
     }
 
     @Test
@@ -113,19 +113,19 @@ public class CardAuthoriseServiceTest extends CardServiceTest {
 
         ChargeEntity charge = createNewChargeWith(chargeId, ChargeStatus.CREATED);
 
-        when(mockedChargeDao.findById(charge.getId()))
+        when(mockedChargeDao.findByExternalId(charge.getExternalId()))
                 .thenReturn(Optional.of(charge));
         when(mockedChargeDao.merge(any()))
                 .thenThrow(new OptimisticLockException());
 
         Card cardDetails = CardUtils.aValidCard();
-        Either<GatewayError, GatewayResponse> response = cardAuthorisationService.doAuthorise(chargeId, cardDetails);
+        Either<GatewayError, GatewayResponse> response = cardAuthorisationService.doAuthorise(charge.getExternalId(), cardDetails);
 
         assertTrue(response.isLeft());
         GatewayError gatewayError = response.left().value();
 
         assertThat(gatewayError.getErrorType(), is(CONFLICT_ERROR));
-        assertThat(gatewayError.getMessage(), is("Authorisation for charge conflicting, 1234"));
+        assertThat(gatewayError.getMessage(), is("Authorisation for charge conflicting, " + charge.getExternalId()));
     }
 
     @Test
@@ -137,7 +137,7 @@ public class CardAuthoriseServiceTest extends CardServiceTest {
 
         ChargeEntity reloadedCharge = mock(ChargeEntity.class);
 
-        when(mockedChargeDao.findById(chargeId))
+        when(mockedChargeDao.findByExternalId(charge.getExternalId()))
                 .thenReturn(Optional.of(charge));
         when(mockedChargeDao.merge(any()))
                 .thenReturn(charge)
@@ -146,7 +146,7 @@ public class CardAuthoriseServiceTest extends CardServiceTest {
         mockUnsuccessfulAuthorisation();
 
         Card cardDetails = CardUtils.aValidCard();
-        Either<GatewayError, GatewayResponse> response = cardAuthorisationService.doAuthorise(chargeId, cardDetails);
+        Either<GatewayError, GatewayResponse> response = cardAuthorisationService.doAuthorise(charge.getExternalId(), cardDetails);
 
         assertTrue(response.isRight());
         assertThat(response.right().value(), is(anUnSuccessfulResponse()));

@@ -32,7 +32,7 @@ public class CardAuthoriseService extends CardService {
         super(accountDao, chargeDao, providers);
     }
 
-    public Either<GatewayError, GatewayResponse> doAuthorise(Long chargeId, Card cardDetails) {
+    public Either<GatewayError, GatewayResponse> doAuthorise(String chargeId, Card cardDetails) {
 
         Function<ChargeEntity, Either<GatewayError, GatewayResponse>> doAuthorise =
                 (charge) -> {
@@ -61,7 +61,7 @@ public class CardAuthoriseService extends CardService {
                 };
 
         return chargeDao
-                .findById(chargeId)
+                .findByExternalId(chargeId)
                 .map(doAuthorise)
                 .orElseGet(chargeNotFound(chargeId));
     }
@@ -72,11 +72,11 @@ public class CardAuthoriseService extends CardService {
         if (!hasStatus(reloadedCharge, ENTERING_CARD_DETAILS)) {
             if (hasStatus(reloadedCharge, AUTHORISATION_READY)) {
                 return left(operationAlreadyInProgress(format("Authorisation for charge already in progress, %s",
-                        reloadedCharge.getId())));
+                        reloadedCharge.getExternalId())));
             }
             logger.error(format("Charge with id [%s] and with status [%s] should be in [ENTERING CARD DETAILS] for authorisation.",
                     reloadedCharge.getId(), reloadedCharge.getStatus()));
-            return left(illegalStateError(format("Charge not in correct state to be processed, %s", reloadedCharge.getId())));
+            return left(illegalStateError(format("Charge not in correct state to be processed, %s", reloadedCharge.getExternalId())));
         }
         reloadedCharge.setStatus(AUTHORISATION_READY);
 

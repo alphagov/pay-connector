@@ -39,7 +39,7 @@ public abstract class CardService {
                 .anyMatch(status -> equalsIgnoreCase(status.getValue(), charge.getStatus()));
     }
 
-    protected Supplier<Either<GatewayError, GatewayResponse>> chargeNotFound(Long chargeId) {
+    protected Supplier<Either<GatewayError, GatewayResponse>> chargeNotFound(String chargeId) {
         return () -> left(new GatewayError(format("Charge with id [%s] not found.", chargeId), CHARGE_NOT_FOUND));
     }
 }
