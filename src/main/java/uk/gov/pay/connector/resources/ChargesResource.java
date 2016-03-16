@@ -2,15 +2,22 @@ package uk.gov.pay.connector.resources;
 
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableMap;
+import com.google.common.collect.Lists;
 import fj.F;
+import fj.data.Either;
+import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.lang3.tuple.Pair;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import uk.gov.pay.connector.dao.ChargeDao;
 import uk.gov.pay.connector.dao.GatewayAccountDao;
 import uk.gov.pay.connector.model.ChargeResponse;
+import uk.gov.pay.connector.model.ErrorResponse;
+import uk.gov.pay.connector.model.GatewayResponse;
 import uk.gov.pay.connector.model.api.ExternalChargeStatus;
 import uk.gov.pay.connector.model.domain.ChargeEntity;
+import uk.gov.pay.connector.model.domain.ChargeStatus;
+import uk.gov.pay.connector.service.CardService;
 import uk.gov.pay.connector.service.ChargeService;
 import uk.gov.pay.connector.util.ChargesCSVGenerator;
 
@@ -20,15 +27,14 @@ import javax.ws.rs.core.Context;
 import javax.ws.rs.core.Response;
 import javax.ws.rs.core.UriInfo;
 import java.time.ZonedDateTime;
-import java.util.Arrays;
-import java.util.List;
-import java.util.Map;
-import java.util.Optional;
+import java.util.*;
 import java.util.function.Function;
 import java.util.stream.Collectors;
 
 import static fj.data.Either.reduce;
+import static java.lang.String.format;
 import static javax.ws.rs.core.MediaType.APPLICATION_JSON;
+import static javax.ws.rs.core.Response.*;
 import static javax.ws.rs.core.Response.Status.BAD_REQUEST;
 import static javax.ws.rs.core.Response.created;
 import static javax.ws.rs.core.Response.ok;
@@ -37,8 +43,8 @@ import static uk.gov.pay.connector.dao.ChargeSearch.aChargeSearch;
 import static uk.gov.pay.connector.model.ChargeResponse.Builder.aChargeResponse;
 import static uk.gov.pay.connector.model.api.ExternalChargeStatus.mapFromStatus;
 import static uk.gov.pay.connector.model.api.ExternalChargeStatus.valueOfExternalStatus;
-import static uk.gov.pay.connector.resources.ApiPaths.CHARGES_API_PATH;
-import static uk.gov.pay.connector.resources.ApiPaths.CHARGE_API_PATH;
+import static uk.gov.pay.connector.model.domain.ChargeStatus.*;
+import static uk.gov.pay.connector.resources.ApiPaths.*;
 import static uk.gov.pay.connector.resources.ApiValidators.validateGatewayAccountReference;
 import static uk.gov.pay.connector.util.ResponseUtil.*;
 
@@ -62,6 +68,15 @@ public class ChargesResource {
     private ChargeDao chargeDao;
     private GatewayAccountDao gatewayAccountDao;
     private ChargeService chargeService;
+    private CardService cardService;
+
+    private static final int ONE_HOUR = 3600;
+    private static final String CHARGE_EXPIRY_WINDOW = "CHARGE_EXPIRY_WINDOW_SECONDS";
+    protected static final ArrayList<ChargeStatus> NON_TERMINAL_STATUSES = Lists.newArrayList(
+                    CREATED,
+                    ENTERING_CARD_DETAILS,
+                    AUTHORISATION_SUBMITTED,
+                    AUTHORISATION_SUCCESS);
 
     private static final Logger logger = LoggerFactory.getLogger(ChargesResource.class);
 
@@ -77,7 +92,7 @@ public class ChargesResource {
     @Produces(APPLICATION_JSON)
     public Response getCharge(@PathParam("accountId") Long accountId, @PathParam("chargeId") String chargeId, @Context UriInfo uriInfo) {
         return chargeService.findChargeForAccount(Long.valueOf(chargeId), accountId, uriInfo)
-                .map(chargeResponse -> Response.ok(chargeResponse).build())
+                .map(chargeResponse -> ok(chargeResponse).build())
                 .orElseGet(() -> responseWithChargeNotFound(logger, chargeId));
     }
 
@@ -108,7 +123,7 @@ public class ChargesResource {
                                   @Context UriInfo uriInfo) {
         return ApiValidators
                 .validateDateQueryParams(ImmutableList.of(Pair.of(FROM_DATE_KEY, fromDate), Pair.of(TO_DATE_KEY, toDate)))
-                .map(errorMessage -> Response.status(BAD_REQUEST).entity(errorMessage).build())
+                .map(errorMessage -> status(BAD_REQUEST).entity(errorMessage).build())
                 .orElseGet(() -> reduce(validateGatewayAccountReference(gatewayAccountDao, accountId)
                         .bimap(handleError, listCharges(accountId, reference, status, fromDate, toDate, csvResponse()))));
     }
@@ -146,6 +161,25 @@ public class ChargesResource {
                     return created(response.getLink("self")).entity(response).build();
                 })
                 .orElseGet(() -> notFoundResponse(logger, "Unknown gateway account: " + accountId));
+    }
+
+    @POST
+    @Path(EXPIRE_CHARGES)
+    public Response expireCharges(@Context UriInfo uriInfo) {
+        List<ChargeEntity> charges = chargeDao.findBeforeDateWithStatusIn(getExpiryDate(), NON_TERMINAL_STATUSES);
+        logger.info(format("%s charges found expiring since %s", charges.size(), getExpiryDate()));
+        chargeService.expire(charges);
+        return noContentResponse();
+    }
+
+    private ZonedDateTime getExpiryDate() {
+        //default expiry window, can be overridden by env var
+        int chargeExpiryWindowSeconds = ONE_HOUR;
+        if (StringUtils.isNotBlank(System.getenv(CHARGE_EXPIRY_WINDOW))) {
+            chargeExpiryWindowSeconds = Integer.parseInt(System.getenv(CHARGE_EXPIRY_WINDOW));
+        }
+        logger.info("Charge expiry window size in seconds: " +chargeExpiryWindowSeconds);
+        return ZonedDateTime.now().minusSeconds(chargeExpiryWindowSeconds);
     }
 
     private ExternalChargeStatus parseStatus(String status) {
