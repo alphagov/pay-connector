@@ -58,4 +58,12 @@ public class ErrorResponse {
     public ErrorType getErrorType() {
         return errorType;
     }
+
+    @Override
+    public String toString() {
+        return "ErrorResponse{" +
+                "message='" + message + '\'' +
+                ", errorType=" + errorType +
+                '}';
+    }
 }
