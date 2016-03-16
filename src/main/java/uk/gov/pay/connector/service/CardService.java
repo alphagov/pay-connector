@@ -82,7 +82,7 @@ public class CardService {
     public Either<ErrorResponse, ChargeEntity> preAuthorise(ChargeEntity charge) {
         ChargeEntity reloadedCharge = chargeDao.merge(charge);
         if (hasStatus(reloadedCharge, EXPIRED)) {
-            return left(chargeExpired(format("Cannot authorise charge as it is expired, %s", reloadedCharge.getId())));
+            return left(chargeExpired(format("Cannot authorise charge as it is expired, %s", reloadedCharge.getExternalId())));
         }
         if (!hasStatus(reloadedCharge, ENTERING_CARD_DETAILS)) {
             if (hasStatus(reloadedCharge, AUTHORISATION_READY)) {
@@ -115,9 +115,9 @@ public class CardService {
     }
 
     public Either<ErrorResponse, GatewayResponse> doCapture(String chargeId) {
-        Optional<ChargeEntity> chargeOpt = chargeDao.findById(Long.valueOf(chargeId));
+        Optional<ChargeEntity> chargeOpt = chargeDao.findByExternalId(chargeId);
         if (chargeOpt.isPresent() && hasStatus(chargeOpt.get(), EXPIRED)) {
-            return left(chargeExpired(format("Cannot capture charge as it is expired, %s", chargeOpt.get().getId())));
+            return left(chargeExpired(format("Cannot capture charge as it is expired, %s", chargeOpt.get().getExternalId())));
         }
         return chargeOpt
                 .map(capture())
@@ -128,7 +128,7 @@ public class CardService {
         Optional<ChargeEntity> charge = chargeDao.findByExternalIdAndGatewayAccount(chargeId, accountId);
 
         if(charge.isPresent() && hasStatus(charge.get(), EXPIRED)) {
-            return left(chargeExpired(format("Cannot cancel a charge id [%s]: status is [%s].", charge.get().getId(), EXPIRED.getValue())));
+            return left(chargeExpired(format("Cannot cancel a charge id [%s]: status is [%s].", charge.get().getExternalId(), EXPIRED.getValue())));
 
         }
 

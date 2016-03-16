@@ -318,7 +318,7 @@ public class CardServiceTest {
     public void doAuthorise_shouldReturnChargeExpiredErrorTypeForExpiredCharges() {
         ChargeEntity charge = newCharge(100L, EXPIRED);
         String externalId = charge.getExternalId();
-        when(mockChargeDao.findById(100L)).thenReturn(Optional.of(charge));
+        when(mockChargeDao.findByExternalId(externalId)).thenReturn(Optional.of(charge));
         when(mockChargeDao.merge(any())).thenReturn(charge);
 
         CardService cardService = new CardService(mockAccountDao, mockChargeDao, mockProviders);
@@ -333,7 +333,7 @@ public class CardServiceTest {
         long chargeId = 100L;
         ChargeEntity charge = newCharge(chargeId, EXPIRED);
         String externalId = charge.getExternalId();
-        when(mockChargeDao.findById(chargeId)).thenReturn(Optional.of(charge));
+        when(mockChargeDao.findByExternalId(externalId)).thenReturn(Optional.of(charge));
 
         Either<ErrorResponse, GatewayResponse> response = cardService.doCapture(externalId);
 

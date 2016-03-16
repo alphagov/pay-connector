@@ -99,7 +99,7 @@ public class ChargeService {
         List<ChargeEntity> failedCancelled = new ArrayList<>();
 
         charges.stream().forEach(chargeEntity -> {
-            Either<ErrorResponse, GatewayResponse> gatewayResponse = cardService.doCancel(chargeEntity.getId(), chargeEntity.getGatewayAccount().getId());
+            Either<ErrorResponse, GatewayResponse> gatewayResponse = cardService.doCancel(chargeEntity.getExternalId(), chargeEntity.getGatewayAccount().getId());
 
             if(responseIsNotSuccessful(gatewayResponse)) {
                 logUnsuccessfulResponseReasons(chargeEntity, gatewayResponse);

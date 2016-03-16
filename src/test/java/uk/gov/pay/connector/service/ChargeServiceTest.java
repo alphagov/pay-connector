@@ -41,9 +41,7 @@ import static org.mockito.Mockito.*;
 import static uk.gov.pay.connector.fixture.ChargeEntityFixture.aValidChargeEntity;
 import static uk.gov.pay.connector.model.ChargeResponse.Builder.aChargeResponse;
 import static uk.gov.pay.connector.model.api.ExternalChargeStatus.mapFromStatus;
-import static uk.gov.pay.connector.model.domain.ChargeStatus.EXPIRED;
-import static uk.gov.pay.connector.model.domain.ChargeStatus.EXPIRE_CANCEL_FAILED;
-import static uk.gov.pay.connector.model.domain.ChargeStatus.EXPIRE_CANCEL_PENDING;
+import static uk.gov.pay.connector.model.domain.ChargeStatus.*;
 
 
 @RunWith(MockitoJUnitRunner.class)
@@ -243,6 +241,7 @@ public class ChargeServiceTest {
     public void shouldUpdateChargeStatusWhenExpiringWithSuccessfulProviderCancellation() {
         long chargeId = 10L;
         long accountId = 100L;
+        String extChargeId = "ext-id";
 
         ChargeEntity chargeEntity1 = mock(ChargeEntity.class);
         ChargeEntity chargeEntity2 = mock(ChargeEntity.class);
@@ -250,11 +249,11 @@ public class ChargeServiceTest {
 
         when(chargeEntity1.getStatus()).thenReturn(ChargeStatus.ENTERING_CARD_DETAILS.getValue());
         when(chargeEntity2.getStatus()).thenReturn(ChargeStatus.AUTHORISATION_SUCCESS.getValue());
-        when(chargeEntity2.getId()).thenReturn(chargeId);
+        when(chargeEntity2.getExternalId()).thenReturn(extChargeId);
         when(gatewayAccount.getId()).thenReturn( accountId);
         when(chargeEntity2.getGatewayAccount()).thenReturn(gatewayAccount);
 
-        mockCancelResponse(chargeId, accountId, Either.right(CancelResponse.aSuccessfulCancelResponse()));
+        mockCancelResponse(extChargeId, accountId, Either.right(CancelResponse.aSuccessfulCancelResponse()));
 
         service.expire(asList(chargeEntity1, chargeEntity2));
 
@@ -273,6 +272,7 @@ public class ChargeServiceTest {
     public void shouldUpdateChargeStatusWhenExpiringWithUnsuccessfulProviderCancellation() {
         long chargeId = 10L;
         long accountId = 100L;
+        String extChargeId = "ext-id";
 
         ChargeEntity chargeEntity1 = mock(ChargeEntity.class);
         ChargeEntity chargeEntity2 = mock(ChargeEntity.class);
@@ -280,12 +280,12 @@ public class ChargeServiceTest {
 
         when(chargeEntity1.getStatus()).thenReturn(ChargeStatus.ENTERING_CARD_DETAILS.getValue());
         when(chargeEntity2.getStatus()).thenReturn(ChargeStatus.AUTHORISATION_SUCCESS.getValue());
-        when(chargeEntity2.getId()).thenReturn(chargeId);
+        when(chargeEntity2.getExternalId()).thenReturn(extChargeId);
         when(gatewayAccount.getId()).thenReturn( accountId);
         when(chargeEntity2.getGatewayAccount()).thenReturn(gatewayAccount);
 
         CancelResponse unsuccessfulResponse = new CancelResponse(false, ErrorResponse.unexpectedStatusCodeFromGateway("invalid status"));
-        mockCancelResponse(chargeId, accountId, Either.right(unsuccessfulResponse));
+        mockCancelResponse(extChargeId, accountId, Either.right(unsuccessfulResponse));
 
         service.expire(asList(chargeEntity1, chargeEntity2));
 
@@ -304,6 +304,7 @@ public class ChargeServiceTest {
     public void shouldUpdateChargeStatusWhenExpiringWithFailedProviderCancellation() {
         long chargeId = 10L;
         long accountId = 100L;
+        String extChargeId = "ext-id";
 
         ChargeEntity chargeEntity1 = mock(ChargeEntity.class);
         ChargeEntity chargeEntity2 = mock(ChargeEntity.class);
@@ -311,12 +312,12 @@ public class ChargeServiceTest {
 
         when(chargeEntity1.getStatus()).thenReturn(ChargeStatus.ENTERING_CARD_DETAILS.getValue());
         when(chargeEntity2.getStatus()).thenReturn(ChargeStatus.AUTHORISATION_SUCCESS.getValue());
-        when(chargeEntity2.getId()).thenReturn(chargeId);
+        when(chargeEntity2.getExternalId()).thenReturn(extChargeId);
         when(gatewayAccount.getId()).thenReturn( accountId);
         when(chargeEntity2.getGatewayAccount()).thenReturn(gatewayAccount);
 
         ErrorResponse errorResponse = new ErrorResponse("error-message", ErrorType.GATEWAY_CONNECTION_TIMEOUT_ERROR);
-        mockCancelResponse(chargeId, accountId, Either.left(errorResponse));
+        mockCancelResponse(extChargeId, accountId, Either.left(errorResponse));
 
         service.expire(asList(chargeEntity1, chargeEntity2));
 
@@ -344,8 +345,8 @@ public class ChargeServiceTest {
                 .withReturnUrl(chargeEntity.getReturnUrl());
     }
 
-    private void mockCancelResponse(Long chargeId, Long accountId, Either<ErrorResponse, GatewayResponse> either) {
-        when(cardService.doCancel(chargeId, accountId)).thenReturn(either);
+    private void mockCancelResponse(String extChargeId, Long accountId, Either<ErrorResponse, GatewayResponse> either) {
+        when(cardService.doCancel(extChargeId, accountId)).thenReturn(either);
     }
 
 }
