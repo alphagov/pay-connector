@@ -90,7 +90,7 @@ public class ChargeService {
                         chargeEntity -> ChargeStatus.AUTHORISATION_SUCCESS.getValue().equals(chargeEntity.getStatus())));
         List<ChargeEntity> nonAuthSuccessCharges = chargesToProcessExpiry.get(Boolean.FALSE);
         updateStatus(nonAuthSuccessCharges, ChargeStatus.EXPIRED);
-        int expiredSuccess = chargesToProcessExpiry.get(true).size();
+        int expiredSuccess = nonAuthSuccessCharges.size();
 
         List<ChargeEntity> authSuccessCharges = chargesToProcessExpiry.get(Boolean.TRUE);
         Pair<Integer, Integer> successFailPair = expireChargesInAuthorisationSuccess(authSuccessCharges);

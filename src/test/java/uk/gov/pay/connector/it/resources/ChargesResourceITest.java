@@ -114,7 +114,7 @@ public class ChargesResourceITest {
                 .body(JSON_AMOUNT_KEY, isNumber(AMOUNT))
                 .body(JSON_REFERENCE_KEY, is(expectedReference))
                 .body(JSON_DESCRIPTION_KEY, is(expectedDescription))
-                .body(JSON_STATUS_KEY, is(ChargeStatus.CREATED.getValue()))
+                .body(JSON_STATUS_KEY, is(CREATED.getValue()))
                 .body(JSON_RETURN_URL_KEY, is(returnUrl));
 
         assertSelfLink(getChargeResponse, documentLocation);
@@ -254,7 +254,7 @@ public class ChargesResourceITest {
         app.getDatabaseTestHelper().addCharge(chargeId, externalChargeId, accountId, AMOUNT, chargeStatus, returnUrl, null);
         app.getDatabaseTestHelper().addToken(chargeId, "tokenId");
 
-        List<ChargeStatus> statuses = asList(CREATED, ENTERING_CARD_DETAILS, AUTHORISATION_READY, ChargeStatus.SYSTEM_CANCELLED, ChargeStatus.ENTERING_CARD_DETAILS);
+        List<ChargeStatus> statuses = asList(CREATED, ENTERING_CARD_DETAILS, AUTHORISATION_READY, SYSTEM_CANCELLED, ENTERING_CARD_DETAILS);
         setupLifeCycleEventsFor(app, chargeId, statuses);
 
         getChargeApi
@@ -388,13 +388,28 @@ public class ChargesResourceITest {
     }
 
     @Test
-    public void shouldGetAcceptedResponseForExpiryChargeTask () {
+    public void shouldGetSuccessAndFailedResponseForExpiryChargeTask () {
+        //create charge
+        String extChargeId = addCharge(CREATED, "ref", ZonedDateTime.now().minusHours(1));
+
+        // run expiry task
         getChargeApi
                 .postChargeExpiryTask()
                 .statusCode(OK.getStatusCode())
                 .contentType(JSON)
-                .body("expiry-success", is(0))
+                .body("expiry-success", is(1))
                 .body("expiry-failed", is(0));
+
+        // get the charge back and assert its status is expired
+        getChargeApi
+                .withAccountId(accountId)
+                .withChargeId(extChargeId)
+                .getCharge()
+                .statusCode(OK.getStatusCode())
+                .contentType(JSON)
+                .body(JSON_CHARGE_KEY, is(extChargeId))
+                .body(JSON_STATUS_KEY, is(EXPIRED.getValue()));
+
     }
 
     private List<ZonedDateTime> datesFrom(List<String> createdDateStrings) {
@@ -403,13 +418,14 @@ public class ChargesResourceITest {
         return dateTimes;
     }
 
-    private void addCharge(ChargeStatus status, String reference, ZonedDateTime fromDate) {
+    private String addCharge(ChargeStatus status, String reference, ZonedDateTime fromDate) {
         long chargeId = RandomUtils.nextInt();
         String externalChargeId = "charge" + chargeId;
         ChargeStatus chargeStatus = status != null ? status : AUTHORISATION_SUCCESS;
         app.getDatabaseTestHelper().addCharge(chargeId, externalChargeId, accountId, AMOUNT, chargeStatus, returnUrl, null, reference, fromDate);
         app.getDatabaseTestHelper().addToken(chargeId, "tokenId");
         app.getDatabaseTestHelper().addEvent(chargeId, chargeStatus.getValue());
+        return externalChargeId;
     }
 
     private List<String> collect(List<Map<String, Object>> results, String field) {
