@@ -90,7 +90,7 @@ The command to run all the tests is:
 
 ### POST /v1/tasks/expired-charges-sweep
 
-This starts a task to expire the charges with a default window of 1 Hr. The default value can be overridden by setting an environment variable CHARGE_EXPIRY_WINDOW_SECONDS in seconds. 
+This starts a task to expire the charges with a default window of 1 Hr. The default value can be overridden by setting an environment variable CHARGE_EXPIRY_WINDOW_SECONDS in seconds. Response of the call will tell you how many charges were successfully expired and how many of them failed for some reason.
 
 #### Request example
 
@@ -101,7 +101,12 @@ POST /v1/tasks/expired-charges-sweep
 #### Response example
 
 ```
-204 No Content
+200 OK
+Content-Type: application/json
+{
+"expiry-success": 0
+"expiry-failed": 0
+}
 ```
 -----------------------------------------------------------------------------------------------------------
 
