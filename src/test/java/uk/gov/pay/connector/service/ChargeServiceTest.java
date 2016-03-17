@@ -59,7 +59,7 @@ public class ChargeServiceTest {
     @Mock
     private ConnectorConfiguration config;
     @Mock
-    private CardService cardService;
+    private CardCancelService cardCancelService;
 
     private UriInfo uriInfo;
     Map<String, Object> chargeRequest;
@@ -85,11 +85,12 @@ public class ChargeServiceTest {
             put("reference", "Pay reference");
         }};
 
-        service = new ChargeService(tokenDao, chargeDao, config, cardService);
+        service = new ChargeService(tokenDao, chargeDao, config, cardCancelService);
     }
 
     @Test
     public void shouldCreateACharge() throws Exception {
+
         GatewayAccountEntity gatewayAccount = new GatewayAccountEntity("provider", new HashMap<>());
         gatewayAccount.setId(1L);
         long expectedChargeEntityId = 12345L;
@@ -144,7 +145,7 @@ public class ChargeServiceTest {
 
         GatewayAccountEntity gatewayAccount = new GatewayAccountEntity("provider", new HashMap<>());
         gatewayAccount.setId(1L);
-        service = new ChargeService(tokenDao, chargeDao, invalidConfig, cardService);
+        service = new ChargeService(tokenDao, chargeDao, invalidConfig, cardCancelService);
 
         service.create(chargeRequest, gatewayAccount, uriInfo);
     }
@@ -356,7 +357,7 @@ public class ChargeServiceTest {
     }
 
     private void mockCancelResponse(String extChargeId, Long accountId, Either<ErrorResponse, GatewayResponse> either) {
-        when(cardService.doCancel(extChargeId, accountId)).thenReturn(either);
+        when(cardCancelService.doCancel(extChargeId, accountId)).thenReturn(either);
     }
 
 }

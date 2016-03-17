@@ -73,10 +73,10 @@ public class GatewayClient {
                 }
             }
             logger.error(format("Exception for gateway url=%s", gatewayUrl), pe);
-            return left(baseGatewayError(pe.getMessage()));
+            return left(baseError(pe.getMessage()));
         } catch (Exception e) {
             logger.error(format("Exception for gateway url=%s", gatewayUrl), e);
-            return left(baseGatewayError(e.getMessage()));
+            return left(baseError(e.getMessage()));
         }
     }
 

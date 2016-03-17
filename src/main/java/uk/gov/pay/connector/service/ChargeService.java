@@ -23,7 +23,6 @@ import javax.ws.rs.core.UriInfo;
 import java.net.URI;
 import java.net.URISyntaxException;
 import java.util.*;
-import java.util.function.Predicate;
 import java.util.stream.Collectors;
 
 import static java.lang.String.format;
@@ -42,14 +41,14 @@ public class ChargeService {
     ChargeDao chargeDao;
     TokenDao tokenDao;
     LinksConfig linksConfig;
-    CardService cardService;
+    CardCancelService cardCancelService;
 
     @Inject
-    public ChargeService(TokenDao tokenDao, ChargeDao chargeDao, ConnectorConfiguration config, CardService cardService) {
+    public ChargeService(TokenDao tokenDao, ChargeDao chargeDao, ConnectorConfiguration config, CardCancelService cardCancelService) {
         this.tokenDao = tokenDao;
         this.chargeDao = chargeDao;
         this.linksConfig = config.getLinks();
-        this.cardService = cardService;
+        this.cardCancelService = cardCancelService;
     }
 
     public ChargeResponse create(Map<String, Object> chargeRequest, GatewayAccountEntity gatewayAccount, UriInfo uriInfo) {
@@ -67,8 +66,8 @@ public class ChargeService {
         return response;
     }
 
-    public Optional<ChargeResponse> findChargeForAccount(String externalId, Long accountId, UriInfo uriInfo) {
-        return chargeDao.findByExternalIdAndGatewayAccount(externalId, accountId)
+    public Optional<ChargeResponse> findChargeForAccount(String chargeId, Long accountId, UriInfo uriInfo) {
+        return chargeDao.findByExternalIdAndGatewayAccount(chargeId, accountId)
                 .map(chargeEntity -> {
                     Optional<TokenEntity> token = tokenDao.findByChargeId(chargeEntity.getId());
                     return buildChargeResponse(uriInfo, chargeEntity, token);
@@ -105,7 +104,7 @@ public class ChargeService {
         List<ChargeEntity> failedCancelled = new ArrayList<>();
 
         charges.stream().forEach(chargeEntity -> {
-            Either<ErrorResponse, GatewayResponse> gatewayResponse = cardService.doCancel(chargeEntity.getExternalId(), chargeEntity.getGatewayAccount().getId());
+            Either<ErrorResponse, GatewayResponse> gatewayResponse = cardCancelService.doCancel(chargeEntity.getExternalId(), chargeEntity.getGatewayAccount().getId());
 
             if (responseIsNotSuccessful(gatewayResponse)) {
                 logUnsuccessfulResponseReasons(chargeEntity, gatewayResponse);

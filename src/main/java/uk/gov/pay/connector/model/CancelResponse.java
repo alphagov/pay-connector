@@ -3,7 +3,7 @@ package uk.gov.pay.connector.model;
 import org.slf4j.Logger;
 
 import static java.lang.String.format;
-import static uk.gov.pay.connector.model.ErrorResponse.baseGatewayError;
+import static uk.gov.pay.connector.model.ErrorResponse.baseError;
 
 public class CancelResponse implements GatewayResponse {
 
@@ -30,7 +30,7 @@ public class CancelResponse implements GatewayResponse {
 
     public static CancelResponse cancelFailureResponse(Logger logger, String errorMessage) {
         logger.error(format("Failed to cancel charge: %s", errorMessage));
-        return new CancelResponse(false, baseGatewayError(errorMessage));
+        return new CancelResponse(false, baseError(errorMessage));
     }
 
     public static CancelResponse cancelFailureResponse(ErrorResponse errorResponse) {

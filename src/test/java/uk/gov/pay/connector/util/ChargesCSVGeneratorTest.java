@@ -10,7 +10,7 @@ import java.util.HashMap;
 import static com.google.common.collect.Lists.newArrayList;
 import static org.hamcrest.core.Is.is;
 import static org.junit.Assert.assertThat;
-import static uk.gov.pay.connector.model.domain.ChargeStatus.READY_FOR_CAPTURE;
+import static uk.gov.pay.connector.model.domain.ChargeStatus.CAPTURE_READY;
 
 public class ChargesCSVGeneratorTest {
 
@@ -71,7 +71,7 @@ public class ChargesCSVGeneratorTest {
         ChargeEntity charge2 = ChargeEntityFixture.aValidChargeEntity()
                 .withId(101L)
                 .withAmount(200L)
-                .withStatus(READY_FOR_CAPTURE)
+                .withStatus(CAPTURE_READY)
                 .withReference("ref-2")
                 .withGatewayAccountEntity(gatewayAccount2)
                 .build();

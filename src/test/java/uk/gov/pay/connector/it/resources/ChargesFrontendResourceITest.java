@@ -2,7 +2,6 @@ package uk.gov.pay.connector.it.resources;
 
 import com.google.common.collect.ImmutableMap;
 import com.jayway.restassured.response.ValidatableResponse;
-import org.apache.commons.lang.math.RandomUtils;
 import org.exparity.hamcrest.date.ZonedDateTimeMatchers;
 import org.hamcrest.Description;
 import org.junit.Before;
@@ -12,12 +11,12 @@ import uk.gov.pay.connector.model.api.ExternalChargeStatus;
 import uk.gov.pay.connector.model.domain.ChargeStatus;
 import uk.gov.pay.connector.rules.DropwizardAppWithPostgresRule;
 import uk.gov.pay.connector.util.DateTimeUtils;
+import uk.gov.pay.connector.util.RandomIdGenerator;
 import uk.gov.pay.connector.util.RestAssuredClient;
 
 import java.time.ZonedDateTime;
 import java.time.temporal.ChronoUnit;
 import java.util.List;
-import java.util.Random;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
@@ -71,11 +70,11 @@ public class ChargesFrontendResourceITest {
 
     @Test
     public void shouldReturnInternalChargeStatusIfInternalStatusIsAuthorised() throws Exception {
-        long chargeId = RandomUtils.nextInt();
-        String externalChargeId = "charge" + chargeId;
-        app.getDatabaseTestHelper().addCharge(chargeId, externalChargeId, accountId, expectedAmount, AUTHORISATION_SUCCESS, returnUrl, null);
 
-        validateGetCharge(expectedAmount, externalChargeId, AUTHORISATION_SUCCESS);
+        String chargeId = RandomIdGenerator.newId();
+        app.getDatabaseTestHelper().addCharge(chargeId, accountId, expectedAmount, AUTHORISATION_SUCCESS, returnUrl, null);
+
+        validateGetCharge(expectedAmount, chargeId, AUTHORISATION_SUCCESS);
     }
 
     @Test
@@ -174,9 +173,9 @@ public class ChargesFrontendResourceITest {
     @Test
     public void shouldReturnTransactionsOnDescendingOrderOfChargeId() {
 
-        app.getDatabaseTestHelper().addCharge( 101L, "101", accountId, 500, AUTHORISATION_SUCCESS, returnUrl, randomUUID().toString());
-        app.getDatabaseTestHelper().addCharge( 102L, "102", accountId, 300, AUTHORISATION_REJECTED, returnUrl, null);
-        app.getDatabaseTestHelper().addCharge( 103L, "103", accountId, 100, AUTHORISATION_READY, returnUrl, randomUUID().toString());
+        app.getDatabaseTestHelper().addCharge(101L, "charge101", accountId, 500, AUTHORISATION_SUCCESS, returnUrl, randomUUID().toString());
+        app.getDatabaseTestHelper().addCharge(102L, "charge102", accountId, 300, AUTHORISATION_REJECTED, returnUrl, null);
+        app.getDatabaseTestHelper().addCharge(103L, "charge103", accountId, 100, AUTHORISATION_READY, returnUrl, randomUUID().toString());
 
         List<ChargeStatus> statuses = asList(CREATED, ENTERING_CARD_DETAILS, AUTHORISATION_READY, AUTHORISATION_SUCCESS, CAPTURE_SUBMITTED, CAPTURED);
         setupLifeCycleEventsFor(app, 101L, statuses);
@@ -189,9 +188,9 @@ public class ChargesFrontendResourceITest {
                 .contentType(JSON)
                 .body("results", hasSize(3));
 
-        response.body("results[" + 0 + "].charge_id", is("103"));
-        response.body("results[" + 1 + "].charge_id", is("102"));
-        response.body("results[" + 2 + "].charge_id", is("101"));
+        response.body("results[" + 0 + "].charge_id", is("charge103"));
+        response.body("results[" + 1 + "].charge_id", is("charge102"));
+        response.body("results[" + 2 + "].charge_id", is("charge101"));
 
     }
 
@@ -270,14 +269,14 @@ public class ChargesFrontendResourceITest {
         return response.extract().path("charge_id");
     }
 
-    private ValidatableResponse validateGetCharge(long expectedAmount, String externalChargeId, ChargeStatus chargeStatus) {
+    private ValidatableResponse validateGetCharge(long expectedAmount, String chargeId, ChargeStatus chargeStatus) {
 
         return connectorRestApi
-                .withChargeId(externalChargeId)
+                .withChargeId(chargeId)
                 .getFrontendCharge()
                 .statusCode(OK.getStatusCode())
                 .contentType(JSON)
-                .body("charge_id", is(externalChargeId))
+                .body("charge_id", is(chargeId))
                 .body("containsKey('reference')", is(false))
                 .body("description", is(description))
                 .body("amount", isNumber(expectedAmount))

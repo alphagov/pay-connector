@@ -505,7 +505,7 @@ public class ChargeDaoITest {
     @Test
     public void testFindByDateStatus_findsNoneForValidStatus() throws Exception {
         databaseTestHelper.addCharge(100L, "ext-id", String.valueOf(GATEWAY_ACCOUNT_ID), AMOUNT, CREATED, RETURN_URL, "", REFERENCE, now().minusHours(2));
-        ArrayList<ChargeStatus> chargeStatuses = Lists.newArrayList(READY_FOR_CAPTURE, SYSTEM_CANCELLED);
+        ArrayList<ChargeStatus> chargeStatuses = Lists.newArrayList(CAPTURE_READY, SYSTEM_CANCELLED);
 
         List<ChargeEntity> charges = chargeDao.findBeforeDateWithStatusIn(now().minusHours(1), chargeStatuses);
 

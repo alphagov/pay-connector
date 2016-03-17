@@ -5,15 +5,12 @@ import uk.gov.pay.connector.it.base.CardResourceITestBase;
 
 import static com.jayway.restassured.http.ContentType.JSON;
 import static java.lang.String.format;
-import static java.util.UUID.randomUUID;
 import static org.hamcrest.Matchers.is;
-import static uk.gov.pay.connector.model.api.ExternalChargeStatus.EXT_FAILED;
-import static uk.gov.pay.connector.model.api.ExternalChargeStatus.EXT_SUCCEEDED;
 import static uk.gov.pay.connector.model.domain.ChargeStatus.*;
 
-public class CardResourceITest extends CardResourceITestBase {
+public class CardAuthoriseResourceITest extends CardResourceITestBase {
 
-    public CardResourceITest() {
+    public CardAuthoriseResourceITest() {
         super("sandbox");
     }
 
@@ -71,7 +68,7 @@ public class CardResourceITest extends CardResourceITestBase {
         String cardDetailsToReject = buildJsonCardDetailsFor("4000000000000119");
 
         String expectedErrorMessage = "This transaction could be not be processed.";
-        String expectedChargeStatus = SYSTEM_ERROR.getValue();
+        String expectedChargeStatus = AUTHORISATION_ERROR.getValue();
         shouldReturnErrorForCardDetailsWithMessage(cardDetailsToReject, expectedErrorMessage, expectedChargeStatus);
     }
 
@@ -93,7 +90,7 @@ public class CardResourceITest extends CardResourceITestBase {
         String randomCardNumberDetails = buildJsonCardDetailsFor("1111111111111119");
 
         shouldReturnErrorFor(chargeId, randomCardNumberDetails, "Unsupported card details.");
-        assertFrontendChargeStatusIs(chargeId, SYSTEM_ERROR.getValue());
+        assertFrontendChargeStatusIs(chargeId, AUTHORISATION_ERROR.getValue());
     }
 
     @Test
@@ -106,47 +103,22 @@ public class CardResourceITest extends CardResourceITestBase {
         assertFrontendChargeStatusIs(chargeId, CREATED.getValue());
     }
 
-    @Test
-    public void shouldFailPayment_IfCaptureStatusIsUnknown() {
-        String failedChargeId = createNewChargeWith(CAPTURE_UNKNOWN, randomUUID().toString());
-        assertApiStatusIs(failedChargeId,EXT_FAILED.getValue());
-    }
-
-    @Test
-    public void shouldReturnErrorAndDoNotUpdateChargeStatus_IfCardDetailsAreAlreadySubmitted() throws Exception {
+    private void shouldAuthoriseChargeFor(String cardDetails) throws Exception {
         String chargeId = createNewChargeWith(ENTERING_CARD_DETAILS, null);
+
         givenSetup()
-                .body(validCardDetails)
+                .body(cardDetails)
                 .post(authoriseChargeUrlFor(chargeId))
                 .then()
                 .statusCode(204);
 
-        String originalStatus = AUTHORISATION_SUCCESS.getValue();
-        assertFrontendChargeStatusIs(chargeId, originalStatus);
-
-        shouldReturnErrorForAuth(chargeId, validCardDetails, format("Charge not in correct state to be processed, %s", chargeId), 500);
-
-        assertFrontendChargeStatusIs(chargeId, originalStatus);
-    }
-
-    @Test
-    public void shouldReturnErrorAndDoNotUpdateChargeStatus_IfAuthorisationAlreadyInProgress() throws Exception {
-        String chargeId = createNewChargeWith(AUTHORISATION_READY, null);
-        shouldReturnErrorForAuth(chargeId, validCardDetails, format("Authorisation for charge already in progress, %s", chargeId), 202);
-        assertFrontendChargeStatusIs(chargeId, AUTHORISATION_READY.getValue());
+        assertFrontendChargeStatusIs(chargeId, AUTHORISATION_SUCCESS.getValue());
     }
 
     @Test
     public void shouldReturnAuthError_IfChargeExpired() throws Exception {
         String chargeId = createNewChargeWith(EXPIRED, null);
-        shouldReturnErrorForAuth(chargeId, validCardDetails, format("Cannot authorise charge as it is expired, %s", chargeId), 400);
-        assertFrontendChargeStatusIs(chargeId, EXPIRED.getValue());
-    }
-
-    @Test
-    public void shouldReturnCaptureError_IfChargeExpired() throws Exception {
-        String chargeId = createNewChargeWith(EXPIRED, null);
-        assertErrorWithCodeAndMessageForCapture(chargeId, 400, format("Cannot capture charge as it is expired, %s", chargeId));
+        authoriseAndVerifyFor(chargeId, validCardDetails, format("Cannot authorise charge as it is expired, %s", chargeId), 400);
         assertFrontendChargeStatusIs(chargeId, EXPIRED.getValue());
     }
 
@@ -163,55 +135,30 @@ public class CardResourceITest extends CardResourceITestBase {
     }
 
     @Test
-    public void shouldReturn404IfChargeDoesNotExist_ForCapture() {
-        String unknownId = "398579438759438";
-        assertErrorWithCodeAndMessageForCapture(unknownId, 404, String.format("Charge with id [%s] not found.", unknownId));
-    }
+    public void shouldReturnErrorWithoutChangingChargeState_IfOriginalStateIsNotEnteringCardDetails() throws Exception {
+        String chargeId = createNewChargeWith(AUTHORISATION_SUCCESS, null);
 
-    private void assertErrorWithCodeAndMessageForCapture(String chargeId, int expectedStatusCode, String message) {
-        givenSetup()
-                .post(captureChargeUrlFor(chargeId))
-                .then()
-                .statusCode(expectedStatusCode)
-                .contentType(JSON)
-                .body("message", is(message));
-    }
+        assertFrontendChargeStatusIs(chargeId, AUTHORISATION_SUCCESS.getValue());
 
-    @Test
-    public void shouldSubmitForCaptureTheCardPayment_IfChargeWasPreviouslyAuthorised() {
-        String chargeId = authoriseNewCharge();
-        givenSetup()
-                .post(captureChargeUrlFor(chargeId))
-                .then()
-                .statusCode(204);
-
-        assertFrontendChargeStatusIs(chargeId, CAPTURE_SUBMITTED.getValue());
-        assertApiStatusIs(chargeId, EXT_SUCCEEDED.getValue());
-    }
-
-    @Test
-    public void shouldReturnErrorWithoutChangingChargeState_IfOriginalStateIsNotAuthorised() {
-        String chargeIdNotAuthorised = createNewChargeWith(AUTHORISATION_READY, null);
-        assertErrorWithCodeAndMessageForCapture(chargeIdNotAuthorised, 400, "Cannot capture a charge with status " + AUTHORISATION_READY.getValue() + ".");
-        assertFrontendChargeStatusIs(chargeIdNotAuthorised, AUTHORISATION_READY.getValue());
-    }
-
-    private void shouldAuthoriseChargeFor(String cardDetails) throws Exception {
-        String chargeId = createNewChargeWith(ENTERING_CARD_DETAILS, null);
-        givenSetup()
-                .body(cardDetails)
-                .post(authoriseChargeUrlFor(chargeId))
-                .then()
-                .statusCode(204);
+        String msg = format("Charge not in correct state to be processed, %s", chargeId);
+        authoriseAndVerifyFor(chargeId, validCardDetails, msg, 500);
 
         assertFrontendChargeStatusIs(chargeId, AUTHORISATION_SUCCESS.getValue());
     }
 
-    private void shouldReturnErrorFor(String chargeId, String randomCardNumber, String expectedMessage) {
-        shouldReturnErrorForAuth(chargeId, randomCardNumber, expectedMessage, 400);
+    @Test
+    public void shouldReturnErrorAndDoNotUpdateChargeStatus_IfAuthorisationAlreadyInProgress() throws Exception {
+        String chargeId = createNewChargeWith(AUTHORISATION_READY, null);
+        String message = format("Authorisation for charge already in progress, %s", chargeId);
+        authoriseAndVerifyFor(chargeId, validCardDetails, message, 202);
+        assertFrontendChargeStatusIs(chargeId, AUTHORISATION_READY.getValue());
     }
 
-    private void shouldReturnErrorForAuth(String chargeId, String randomCardNumber, String expectedMessage, int statusCode) {
+    private void shouldReturnErrorFor(String chargeId, String randomCardNumber, String expectedMessage) {
+        authoriseAndVerifyFor(chargeId, randomCardNumber, expectedMessage, 400);
+    }
+
+    private void authoriseAndVerifyFor(String chargeId, String randomCardNumber, String expectedMessage, int statusCode) {
         givenSetup()
                 .body(randomCardNumber)
                 .post(authoriseChargeUrlFor(chargeId))

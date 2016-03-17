@@ -11,7 +11,7 @@ public class ErrorResponse {
         this.errorType = errorType;
     }
 
-    public static ErrorResponse baseGatewayError(String msg) {
+    public static ErrorResponse baseError(String msg) {
         return new ErrorResponse(msg, GENERIC_GATEWAY_ERROR);
     }
 
