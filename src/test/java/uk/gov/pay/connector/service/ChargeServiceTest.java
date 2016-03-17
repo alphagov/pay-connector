@@ -79,6 +79,7 @@ public class ChargeServiceTest {
 
     @Test
     public void shouldCreateACharge() throws Exception {
+
         GatewayAccountEntity gatewayAccount = new GatewayAccountEntity("provider", new HashMap<>());
         gatewayAccount.setId(1L);
         long expectedChargeEntityId = 12345L;
