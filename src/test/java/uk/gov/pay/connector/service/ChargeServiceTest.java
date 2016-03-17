@@ -33,15 +33,19 @@ import java.util.Optional;
 import static java.util.Arrays.asList;
 import static java.util.Collections.emptyMap;
 import static javax.ws.rs.HttpMethod.GET;
+import static junit.framework.TestCase.assertTrue;
 import static org.hamcrest.core.Is.is;
 import static org.hamcrest.core.IsNull.notNullValue;
 import static org.hamcrest.core.IsNull.nullValue;
+import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertThat;
 import static org.mockito.Mockito.*;
 import static uk.gov.pay.connector.fixture.ChargeEntityFixture.aValidChargeEntity;
 import static uk.gov.pay.connector.model.ChargeResponse.Builder.aChargeResponse;
 import static uk.gov.pay.connector.model.api.ExternalChargeStatus.mapFromStatus;
 import static uk.gov.pay.connector.model.domain.ChargeStatus.*;
+import static uk.gov.pay.connector.service.ChargeService.EXPIRY_FAILED;
+import static uk.gov.pay.connector.service.ChargeService.EXPIRY_SUCCESS;
 
 
 @RunWith(MockitoJUnitRunner.class)
@@ -255,7 +259,9 @@ public class ChargeServiceTest {
 
         mockCancelResponse(extChargeId, accountId, Either.right(CancelResponse.aSuccessfulCancelResponse()));
 
-        service.expire(asList(chargeEntity1, chargeEntity2));
+        Map<String, Integer> result = service.expire(asList(chargeEntity1, chargeEntity2));
+        assertEquals(2, result.get(EXPIRY_SUCCESS).intValue());
+        assertEquals(0, result.get(EXPIRY_FAILED).intValue());
 
         InOrder inOrder = inOrder(chargeEntity1, chargeDao, chargeEntity2);
         inOrder.verify(chargeEntity1).setStatus(EXPIRED);
@@ -287,7 +293,9 @@ public class ChargeServiceTest {
         CancelResponse unsuccessfulResponse = new CancelResponse(false, ErrorResponse.unexpectedStatusCodeFromGateway("invalid status"));
         mockCancelResponse(extChargeId, accountId, Either.right(unsuccessfulResponse));
 
-        service.expire(asList(chargeEntity1, chargeEntity2));
+        Map<String, Integer> result = service.expire(asList(chargeEntity1, chargeEntity2));
+        assertEquals(1, result.get(EXPIRY_SUCCESS).intValue());
+        assertEquals(1, result.get(EXPIRY_FAILED).intValue());
 
         InOrder inOrder = inOrder(chargeEntity1, chargeDao, chargeEntity2);
         inOrder.verify(chargeEntity1).setStatus(EXPIRED);
@@ -319,7 +327,9 @@ public class ChargeServiceTest {
         ErrorResponse errorResponse = new ErrorResponse("error-message", ErrorType.GATEWAY_CONNECTION_TIMEOUT_ERROR);
         mockCancelResponse(extChargeId, accountId, Either.left(errorResponse));
 
-        service.expire(asList(chargeEntity1, chargeEntity2));
+        Map<String, Integer> result = service.expire(asList(chargeEntity1, chargeEntity2));
+        assertEquals(1, result.get(EXPIRY_SUCCESS).intValue());
+        assertEquals(1, result.get(EXPIRY_FAILED).intValue());
 
         InOrder inOrder = inOrder(chargeEntity1, chargeDao, chargeEntity2);
         inOrder.verify(chargeEntity1).setStatus(EXPIRED);

@@ -391,7 +391,10 @@ public class ChargesResourceITest {
     public void shouldGetAcceptedResponseForExpiryChargeTask () {
         getChargeApi
                 .postChargeExpiryTask()
-                .statusCode(NO_CONTENT.getStatusCode());
+                .statusCode(OK.getStatusCode())
+                .contentType(JSON)
+                .body("expiry-success", is(0))
+                .body("expiry-failed", is(0));
     }
 
     private List<ZonedDateTime> datesFrom(List<String> createdDateStrings) {

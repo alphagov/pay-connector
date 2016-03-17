@@ -165,11 +165,12 @@ public class ChargesResource {
 
     @POST
     @Path(EXPIRE_CHARGES)
+    @Produces(APPLICATION_JSON)
     public Response expireCharges(@Context UriInfo uriInfo) {
         List<ChargeEntity> charges = chargeDao.findBeforeDateWithStatusIn(getExpiryDate(), NON_TERMINAL_STATUSES);
         logger.info(format("%s charges found expiring since %s", charges.size(), getExpiryDate()));
-        chargeService.expire(charges);
-        return noContentResponse();
+        Map<String, Integer> resultMap = chargeService.expire(charges);
+        return successResponseWithEntity(resultMap);
     }
 
     private ZonedDateTime getExpiryDate() {
