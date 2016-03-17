@@ -54,11 +54,11 @@ The command to run all the tests is:
 ```
     mvn test
 ```
-## ADMIN NAMESPACE (end points running on connector admin)
+## TASKS NAMESPACE
 
 | Path                          | Supported Methods | Description                        |
 | ----------------------------- | ----------------- | ---------------------------------- |
-|[```/tasks/expired-charges-sweep```](#post-taskscharges-expiry-sweep)  | POST    |  Starts the task to expire the charges with a default window of 1 Hr |   
+|[```/v1/tasks/expired-charges-sweep```](#post-v1tasksexpired-charges-sweep)  | POST    |  Spawns a task to expire charges with a default window of 1 Hr |   
 
 ## API NAMESPACE
 
@@ -88,24 +88,20 @@ The command to run all the tests is:
 |[```/v1/frontend/tokens/{chargeTokenId}```](#get-v1frontendtokenschargetokenid)                                  | GET |  Retrieve information about a secure redirect token.            |
 |[```/v1/frontend/tokens/{chargeTokenId}```](#delete-v1frontendtokenschargetokenid)                                  | DELETE |  Delete the secure redirect token.            |
 
-### POST /tasks/charges-expiry-sweep
+### POST /v1/tasks/expired-charges-sweep
 
-This end point is accessible only through the admin port (9301 in case of docker).
-
-This starts the task to expire the charges with a default window of 1 Hr. The default value can be over-ridden by setting an environment variable CHARGE_EXPIRY_WINDOW_SECONDS in seconds. 
-
-Also can be overridden by adding a query param "CHARGE_EXPIRY_WINDOW_SECONDS=xx", mainly intended for testing, xx being numeric value in seconds (i.e. /tasks/charges-expiry-sweep?CHARGE_EXPIRY_WINDOW_SECONDS=60)
+This starts a task to expire the charges with a default window of 1 Hr. The default value can be overridden by setting an environment variable CHARGE_EXPIRY_WINDOW_SECONDS in seconds. 
 
 #### Request example
 
 ```
-POST /tasks/charges-expiry-sweep
+POST /v1/tasks/expired-charges-sweep
 ```
 
 #### Response example
 
 ```
-200 OK
+204 No Content
 ```
 -----------------------------------------------------------------------------------------------------------
 
