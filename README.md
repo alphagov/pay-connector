@@ -58,7 +58,7 @@ The command to run all the tests is:
 
 | Path                          | Supported Methods | Description                        |
 | ----------------------------- | ----------------- | ---------------------------------- |
-|[```/v1/tasks/expired-charges-sweep```](#post-taskscharges-expiry-sweep)  | POST    |  Spawns a task to expire charges with a default window of 1 Hr |   
+|[```/v1/tasks/expired-charges-sweep```](#post-expired-charges-sweep)  | POST    |  Spawns a task to expire charges with a default window of 1 Hr |   
 
 ## API NAMESPACE
 
