@@ -22,9 +22,9 @@ public class ExternalChargeStatusTest {
 
     @Test
     public void shouldMapAnInternalStatusToAnExternalStatusCorrectly() throws Exception {
-            assertThat(ExternalChargeStatus.mapFromStatus(READY_FOR_CAPTURE), is(EXT_IN_PROGRESS));
+        assertThat(ExternalChargeStatus.mapFromStatus(CAPTURE_READY), is(EXT_IN_PROGRESS));
             assertThat(ExternalChargeStatus.mapFromStatus(CREATED), is(EXT_CREATED));
-            assertThat(ExternalChargeStatus.mapFromStatus(SYSTEM_ERROR), is(EXT_FAILED));
+        assertThat(ExternalChargeStatus.mapFromStatus(AUTHORISATION_ERROR), is(EXT_FAILED));
             assertThat(ExternalChargeStatus.mapFromStatus(CAPTURE_SUBMITTED), is(EXT_SUCCEEDED));
             assertThat(ExternalChargeStatus.mapFromStatus(SYSTEM_CANCELLED), is(EXT_SYSTEM_CANCELLED));
     }

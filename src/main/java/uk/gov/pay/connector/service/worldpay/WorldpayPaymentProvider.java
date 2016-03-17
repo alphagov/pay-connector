@@ -26,11 +26,12 @@ import static javax.ws.rs.core.Response.Status.OK;
 import static uk.gov.pay.connector.model.AuthorisationResponse.*;
 import static uk.gov.pay.connector.model.CancelResponse.aSuccessfulCancelResponse;
 import static uk.gov.pay.connector.model.CancelResponse.cancelFailureResponse;
-import static uk.gov.pay.connector.model.CaptureResponse.aSuccessfulCaptureResponse;
 import static uk.gov.pay.connector.model.CaptureResponse.captureFailureResponse;
+import static uk.gov.pay.connector.model.CaptureResponse.successfulCaptureResponse;
 import static uk.gov.pay.connector.model.GatewayError.baseGatewayError;
 import static uk.gov.pay.connector.model.InquiryResponse.*;
 import static uk.gov.pay.connector.model.domain.ChargeStatus.AUTHORISATION_SUCCESS;
+import static uk.gov.pay.connector.model.domain.ChargeStatus.CAPTURE_SUBMITTED;
 import static uk.gov.pay.connector.model.domain.GatewayAccount.CREDENTIALS_MERCHANT_ID;
 import static uk.gov.pay.connector.service.OrderCaptureRequestBuilder.aWorldpayOrderCaptureRequest;
 import static uk.gov.pay.connector.service.OrderSubmitRequestBuilder.aWorldpayOrderSubmitRequest;
@@ -219,7 +220,7 @@ public class WorldpayPaymentProvider implements PaymentProvider {
                                         return authorisationFailureNotUpdateResponse(logger, gatewayTransactionId, wResponse.getErrorMessage());
                                     }
                                     return wResponse.isAuthorised() ?
-                                            successfulAuthorisation(AUTHORISATION_SUCCESS, gatewayTransactionId) :
+                                            successfulAuthorisationResponse(AUTHORISATION_SUCCESS, gatewayTransactionId) :
                                             authorisationFailureResponse(logger, gatewayTransactionId, "Unauthorised");
                                 }
                         )
@@ -232,7 +233,7 @@ public class WorldpayPaymentProvider implements PaymentProvider {
                         .bimap(
                                 CaptureResponse::captureFailureResponse,
                                 (wResponse) -> wResponse.isCaptured() ?
-                                        aSuccessfulCaptureResponse() :
+                                        successfulCaptureResponse(CAPTURE_SUBMITTED) :
                                         captureFailureResponse(logger, wResponse.getErrorMessage())
                         )
         );

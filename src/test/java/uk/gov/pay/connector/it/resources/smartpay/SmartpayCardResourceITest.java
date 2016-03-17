@@ -84,7 +84,7 @@ public class SmartpayCardResourceITest extends CardResourceITestBase {
                 .post(captureChargeUrlFor(chargeId))
                 .then()
                 .statusCode(400)
-                .body("message", is("A problem occurred."));
+                .body("message", is("validation 167 Original pspReference required for this operation"));
     }
 
     private String buildCardDetailsWith(String cvc) {

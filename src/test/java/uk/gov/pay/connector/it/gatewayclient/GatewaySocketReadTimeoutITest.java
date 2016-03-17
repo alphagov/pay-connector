@@ -14,7 +14,7 @@ import static io.dropwizard.testing.ConfigOverride.config;
 import static org.hamcrest.Matchers.is;
 import static org.junit.Assert.assertThat;
 import static uk.gov.pay.connector.model.domain.ChargeStatus.AUTHORISATION_SUCCESS;
-import static uk.gov.pay.connector.model.domain.ChargeStatus.CAPTURE_UNKNOWN;
+import static uk.gov.pay.connector.model.domain.ChargeStatus.CAPTURE_ERROR;
 import static uk.gov.pay.connector.resources.ApiPaths.FRONTEND_CAPTURE_RESOURCE;
 import static uk.gov.pay.connector.resources.PaymentProviderValidator.SMARTPAY_PROVIDER;
 
@@ -64,7 +64,7 @@ public class GatewaySocketReadTimeoutITest {
                 .contentType(JSON)
                 .body("message", is(errorMessage));
 
-        assertThat(db.getChargeStatus(CHARGE_ID), is(CAPTURE_UNKNOWN.getValue()));
+        assertThat(db.getChargeStatus(CHARGE_ID), is(CAPTURE_ERROR.getValue()));
     }
 
 
