@@ -12,7 +12,6 @@ import uk.gov.pay.connector.service.PaymentProvider;
 
 import javax.ws.rs.core.Response;
 import java.io.IOException;
-import java.util.Collections;
 import java.util.List;
 import java.util.Optional;
 import java.util.function.Consumer;
@@ -20,6 +19,7 @@ import java.util.function.Function;
 import java.util.stream.Collectors;
 
 import static fj.data.Either.reduce;
+import static java.lang.String.format;
 import static uk.gov.pay.connector.model.AuthorisationResponse.authorisationFailureResponse;
 import static uk.gov.pay.connector.model.AuthorisationResponse.successfulAuthorisationResponse;
 import static uk.gov.pay.connector.model.CancelResponse.aSuccessfulCancelResponse;
@@ -92,26 +92,35 @@ public class SmartpayPaymentProvider implements PaymentProvider {
                                             Consumer<StatusUpdates> accountUpdater) {
         try {
             List<SmartpayNotification> notifications = objectMapper.readValue(inboundNotification, SmartpayNotificationList.class).getNotifications();
-            Collections.sort(notifications);
 
             List<Pair<String, ChargeStatus>> updates = notifications.stream()
+                    .sorted()
                     .map(this::extendInternalStatus)
-                    .filter((notification) -> notification.getChargeStatus().isPresent())
-                    .filter((notification) -> payloadChecks.apply(notification))
+                    .peek(this::logIfChargeStatusNotFound)
+                    .filter(notification -> notification.getChargeStatus().isPresent())
+                    .filter(payloadChecks::apply)
                     .map(this::toPair)
                     .collect(Collectors.toList());
 
-            StatusUpdates statusUpdates = StatusUpdates.withUpdate(ACCEPTED, updates);
-            accountUpdater.accept(statusUpdates);
-            return statusUpdates;
+            if(updates.size() > 0) {
+                StatusUpdates statusUpdates = StatusUpdates.withUpdate(ACCEPTED, updates);
+                accountUpdater.accept(statusUpdates);
+                return statusUpdates;
+            }
         } catch (IllegalArgumentException | IOException e) {
             // If we've failed to parse the message, we don't want it to be resent - there's no reason to believe our
             // deterministic computer code could successfully parse the same message if it arrived a second time.
             // Barclays also mandate that acknowledging notifications should be unconditional.
             // See http://www.barclaycard.co.uk/business/files/SmartPay_Notifications_Guide.pdf for further details.
-            logger.error(String.format("Could not deserialise smartpay notification:\n %s", inboundNotification), e);
+            logger.error(format("Could not deserialise smartpay notification:\n %s", inboundNotification), e);
         }
         return StatusUpdates.noUpdate(ACCEPTED);
+    }
+
+    private void logIfChargeStatusNotFound(SmartpayNotification notification) {
+        if(!notification.getChargeStatus().isPresent()) {
+            logger.error(format("No matching ChargeStatus found for status on notification: %s", notification.getEventCode()));
+        }
     }
 
     private SmartpayNotification extendInternalStatus(SmartpayNotification notification) {
