@@ -3,7 +3,7 @@ package uk.gov.pay.connector.service;
 import fj.data.Either;
 import uk.gov.pay.connector.dao.ChargeDao;
 import uk.gov.pay.connector.dao.GatewayAccountDao;
-import uk.gov.pay.connector.model.GatewayError;
+import uk.gov.pay.connector.model.ErrorResponse;
 import uk.gov.pay.connector.model.GatewayResponse;
 import uk.gov.pay.connector.model.domain.ChargeEntity;
 import uk.gov.pay.connector.model.domain.ChargeStatus;
@@ -15,7 +15,7 @@ import java.util.function.Supplier;
 import static fj.data.Either.left;
 import static java.lang.String.format;
 import static org.apache.commons.lang3.StringUtils.equalsIgnoreCase;
-import static uk.gov.pay.connector.model.GatewayErrorType.CHARGE_NOT_FOUND;
+import static uk.gov.pay.connector.model.ErrorType.CHARGE_NOT_FOUND;
 
 public abstract class CardService {
 
@@ -39,7 +39,7 @@ public abstract class CardService {
                 .anyMatch(status -> equalsIgnoreCase(status.getValue(), charge.getStatus()));
     }
 
-    protected Supplier<Either<GatewayError, GatewayResponse>> chargeNotFound(String chargeId) {
-        return () -> left(new GatewayError(format("Charge with id [%s] not found.", chargeId), CHARGE_NOT_FOUND));
+    protected Supplier<Either<ErrorResponse, GatewayResponse>> chargeNotFound(String chargeId) {
+        return () -> left(new ErrorResponse(format("Charge with id [%s] not found.", chargeId), CHARGE_NOT_FOUND));
     }
 }

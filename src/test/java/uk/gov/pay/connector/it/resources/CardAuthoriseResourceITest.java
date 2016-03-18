@@ -116,6 +116,13 @@ public class CardAuthoriseResourceITest extends CardResourceITestBase {
     }
 
     @Test
+    public void shouldReturnAuthError_IfChargeExpired() throws Exception {
+        String chargeId = createNewChargeWith(EXPIRED, null);
+        authoriseAndVerifyFor(chargeId, validCardDetails, format("Cannot authorise charge as it is expired, %s", chargeId), 400);
+        assertFrontendChargeStatusIs(chargeId, EXPIRED.getValue());
+    }
+
+    @Test
     public void shouldReturn404IfChargeDoesNotExist_ForAuthorise() throws Exception {
         String unknownId = "61234569847520367";
         givenSetup()
@@ -129,33 +136,29 @@ public class CardAuthoriseResourceITest extends CardResourceITestBase {
 
     @Test
     public void shouldReturnErrorWithoutChangingChargeState_IfOriginalStateIsNotEnteringCardDetails() throws Exception {
-        String chargeId = createNewChargeWith(ENTERING_CARD_DETAILS, null);
-        givenSetup()
-                .body(validCardDetails)
-                .post(authoriseChargeUrlFor(chargeId))
-                .then()
-                .statusCode(204);
+        String chargeId = createNewChargeWith(AUTHORISATION_SUCCESS, null);
 
-        String originalStatus = AUTHORISATION_SUCCESS.getValue();
-        assertFrontendChargeStatusIs(chargeId, originalStatus);
+        assertFrontendChargeStatusIs(chargeId, AUTHORISATION_SUCCESS.getValue());
 
-        shouldReturnErrorFor(chargeId, validCardDetails, format("Charge not in correct state to be processed, %s", chargeId), 500);
+        String msg = format("Charge not in correct state to be processed, %s", chargeId);
+        authoriseAndVerifyFor(chargeId, validCardDetails, msg, 500);
 
-        assertFrontendChargeStatusIs(chargeId, originalStatus);
+        assertFrontendChargeStatusIs(chargeId, AUTHORISATION_SUCCESS.getValue());
     }
 
     @Test
     public void shouldReturnErrorAndDoNotUpdateChargeStatus_IfAuthorisationAlreadyInProgress() throws Exception {
         String chargeId = createNewChargeWith(AUTHORISATION_READY, null);
-        shouldReturnErrorFor(chargeId, validCardDetails, format("Authorisation for charge already in progress, %s", chargeId), 202);
+        String message = format("Authorisation for charge already in progress, %s", chargeId);
+        authoriseAndVerifyFor(chargeId, validCardDetails, message, 202);
         assertFrontendChargeStatusIs(chargeId, AUTHORISATION_READY.getValue());
     }
 
     private void shouldReturnErrorFor(String chargeId, String randomCardNumber, String expectedMessage) {
-        shouldReturnErrorFor(chargeId, randomCardNumber, expectedMessage, 400);
+        authoriseAndVerifyFor(chargeId, randomCardNumber, expectedMessage, 400);
     }
 
-    private void shouldReturnErrorFor(String chargeId, String randomCardNumber, String expectedMessage, int statusCode) {
+    private void authoriseAndVerifyFor(String chargeId, String randomCardNumber, String expectedMessage, int statusCode) {
         givenSetup()
                 .body(randomCardNumber)
                 .post(authoriseChargeUrlFor(chargeId))

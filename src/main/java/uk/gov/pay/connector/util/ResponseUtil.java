@@ -62,6 +62,10 @@ public class ResponseUtil {
         return noContent().build();
     }
 
+    public static Response successResponseWithEntity(Object entity) {
+        return responseWithEntity(OK, entity);
+    }
+
     private static Response responseWithEntity(Status status, Object entity) {
         return status(status).entity(entity).build();
     }

@@ -3,20 +3,19 @@ package uk.gov.pay.connector.service;
 import fj.data.Either;
 import uk.gov.pay.connector.dao.ChargeDao;
 import uk.gov.pay.connector.dao.GatewayAccountDao;
-import uk.gov.pay.connector.model.CancelRequest;
-import uk.gov.pay.connector.model.CancelResponse;
-import uk.gov.pay.connector.model.GatewayError;
-import uk.gov.pay.connector.model.GatewayResponse;
+import uk.gov.pay.connector.model.*;
 import uk.gov.pay.connector.model.domain.ChargeEntity;
 import uk.gov.pay.connector.model.domain.ChargeStatus;
 
 import javax.inject.Inject;
+import java.util.Optional;
 import java.util.function.Function;
 
 import static fj.data.Either.left;
 import static fj.data.Either.right;
 import static java.lang.String.format;
-import static uk.gov.pay.connector.model.GatewayError.baseGatewayError;
+import static uk.gov.pay.connector.model.ErrorResponse.baseError;
+import static uk.gov.pay.connector.model.ErrorResponse.chargeExpired;
 import static uk.gov.pay.connector.model.domain.ChargeStatus.*;
 
 public class CardCancelService extends CardService {
@@ -30,14 +29,18 @@ public class CardCancelService extends CardService {
         super(accountDao, chargeDao, providers);
     }
 
-    public Either<GatewayError, GatewayResponse> doCancel(String chargeId, Long accountId) {
-        return chargeDao
-                .findByExternalIdAndGatewayAccount(chargeId, accountId)
-                .map(cancel())
+    public Either<ErrorResponse, GatewayResponse> doCancel(String chargeId, Long accountId) {
+        Optional<ChargeEntity> charge = chargeDao.findByExternalIdAndGatewayAccount(chargeId, accountId);
+        if(charge.isPresent() && hasStatus(charge.get(), EXPIRED)) {
+            return left(chargeExpired(format("Cannot cancel a charge id [%s]: status is [%s].", charge.get().getExternalId(), EXPIRED.getValue())));
+
+        }
+        return charge.map(cancel())
                 .orElseGet(chargeNotFound(chargeId));
     }
 
-    private Function<ChargeEntity, Either<GatewayError, GatewayResponse>> cancel() {
+
+    private Function<ChargeEntity, Either<ErrorResponse, GatewayResponse>> cancel() {
         return charge -> hasStatus(charge, CANCELLABLE_STATES) ?
                 right(cancelFor(charge)) :
                 left(cancelErrorMessageFor(charge.getExternalId(), charge.getStatus()));
@@ -54,7 +57,7 @@ public class CardCancelService extends CardService {
         return response;
     }
 
-    private GatewayError cancelErrorMessageFor(String chargeId, String status) {
-        return baseGatewayError(format("Cannot cancel a charge id [%s]: status is [%s].", chargeId, status));
+    private ErrorResponse cancelErrorMessageFor(String chargeId, String status) {
+        return baseError(format("Cannot cancel a charge id [%s]: status is [%s].", chargeId, status));
     }
 }

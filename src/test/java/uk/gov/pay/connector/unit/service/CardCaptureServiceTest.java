@@ -3,10 +3,7 @@ package uk.gov.pay.connector.unit.service;
 import fj.data.Either;
 import org.junit.Test;
 import org.mockito.ArgumentCaptor;
-import uk.gov.pay.connector.model.CaptureRequest;
-import uk.gov.pay.connector.model.CaptureResponse;
-import uk.gov.pay.connector.model.GatewayError;
-import uk.gov.pay.connector.model.GatewayResponse;
+import uk.gov.pay.connector.model.*;
 import uk.gov.pay.connector.model.domain.ChargeEntity;
 import uk.gov.pay.connector.model.domain.ChargeStatus;
 import uk.gov.pay.connector.service.CardCaptureService;
@@ -19,7 +16,7 @@ import static org.hamcrest.core.Is.is;
 import static org.junit.Assert.assertTrue;
 import static org.mockito.Matchers.any;
 import static org.mockito.Mockito.*;
-import static uk.gov.pay.connector.model.GatewayErrorType.*;
+import static uk.gov.pay.connector.model.ErrorType.*;
 import static uk.gov.pay.connector.model.domain.ChargeStatus.*;
 
 public class CardCaptureServiceTest extends CardServiceTest {
@@ -40,7 +37,7 @@ public class CardCaptureServiceTest extends CardServiceTest {
 
         mockSuccessfulCapture();
 
-        Either<GatewayError, GatewayResponse> response = cardCaptureService.doCapture(charge.getExternalId());
+        Either<ErrorResponse, GatewayResponse> response = cardCaptureService.doCapture(charge.getExternalId());
 
         assertTrue(response.isRight());
         assertThat(response.right().value(), is(aSuccessfulResponse()));
@@ -62,13 +59,13 @@ public class CardCaptureServiceTest extends CardServiceTest {
         when(mockedChargeDao.findByExternalId(chargeId))
                 .thenReturn(Optional.empty());
 
-        Either<GatewayError, GatewayResponse> response = cardCaptureService.doCapture(chargeId);
+        Either<ErrorResponse, GatewayResponse> response = cardCaptureService.doCapture(chargeId);
 
         assertTrue(response.isLeft());
-        GatewayError gatewayError = response.left().value();
+        ErrorResponse errorResponse = response.left().value();
 
-        assertThat(gatewayError.getErrorType(), is(CHARGE_NOT_FOUND));
-        assertThat(gatewayError.getMessage(), is("Charge with id [jgk3erq5sv2i4cds6qqa9f1a8a] not found."));
+        assertThat(errorResponse.getErrorType(), is(CHARGE_NOT_FOUND));
+        assertThat(errorResponse.getMessage(), is("Charge with id [jgk3erq5sv2i4cds6qqa9f1a8a] not found."));
     }
 
     @Test
@@ -82,10 +79,10 @@ public class CardCaptureServiceTest extends CardServiceTest {
         when(mockedChargeDao.merge(any()))
                 .thenReturn(charge);
 
-        Either<GatewayError, GatewayResponse> response = cardCaptureService.doCapture(charge.getExternalId());
+        Either<ErrorResponse, GatewayResponse> response = cardCaptureService.doCapture(charge.getExternalId());
 
         assertTrue(response.isLeft());
-        GatewayError gatewayError = response.left().value();
+        ErrorResponse gatewayError = response.left().value();
 
         assertThat(gatewayError.getErrorType(), is(OPERATION_ALREADY_IN_PROGRESS));
         assertThat(gatewayError.getMessage(), is("Capture for charge already in progress, " + charge.getExternalId()));
@@ -102,10 +99,10 @@ public class CardCaptureServiceTest extends CardServiceTest {
         when(mockedChargeDao.merge(any()))
                 .thenReturn(charge);
 
-        Either<GatewayError, GatewayResponse> response = cardCaptureService.doCapture(charge.getExternalId());
+        Either<ErrorResponse, GatewayResponse> response = cardCaptureService.doCapture(charge.getExternalId());
 
         assertTrue(response.isLeft());
-        GatewayError gatewayError = response.left().value();
+        ErrorResponse gatewayError = response.left().value();
 
         assertThat(gatewayError.getErrorType(), is(ILLEGAL_STATE_ERROR));
         assertThat(gatewayError.getMessage(), is("Charge not in correct state to be processed, " + charge.getExternalId()));
@@ -122,10 +119,10 @@ public class CardCaptureServiceTest extends CardServiceTest {
         when(mockedChargeDao.merge(any()))
                 .thenThrow(new OptimisticLockException());
 
-        Either<GatewayError, GatewayResponse> response = cardCaptureService.doCapture(charge.getExternalId());
+        Either<ErrorResponse, GatewayResponse> response = cardCaptureService.doCapture(charge.getExternalId());
 
         assertTrue(response.isLeft());
-        GatewayError gatewayError = response.left().value();
+        ErrorResponse gatewayError = response.left().value();
 
         assertThat(gatewayError.getErrorType(), is(CONFLICT_ERROR));
         assertThat(gatewayError.getMessage(), is("Capture for charge conflicting, " + charge.getExternalId()));
@@ -148,7 +145,7 @@ public class CardCaptureServiceTest extends CardServiceTest {
 
         mockUnsuccessfulCapture();
 
-        Either<GatewayError, GatewayResponse> response = cardCaptureService.doCapture(charge.getExternalId());
+        Either<ErrorResponse, GatewayResponse> response = cardCaptureService.doCapture(charge.getExternalId());
 
         assertTrue(response.isRight());
         assertThat(response.right().value(), is(anUnSuccessfulResponse()));
@@ -167,6 +164,6 @@ public class CardCaptureServiceTest extends CardServiceTest {
         when(mockedProviders.resolve(providerName))
                 .thenReturn(mockedPaymentProvider);
         when(mockedPaymentProvider.capture(any()))
-                .thenReturn(CaptureResponse.captureFailureResponse(GatewayError.baseGatewayError("error")));
+                .thenReturn(CaptureResponse.captureFailureResponse(ErrorResponse.baseError("error")));
     }
 }

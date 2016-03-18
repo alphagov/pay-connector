@@ -3,15 +3,15 @@ package uk.gov.pay.connector.model;
 import org.slf4j.Logger;
 
 import static java.lang.String.format;
-import static uk.gov.pay.connector.model.GatewayError.baseGatewayError;
+import static uk.gov.pay.connector.model.ErrorResponse.baseError;
 
 public class CancelResponse implements GatewayResponse {
 
     private final Boolean successful;
-    private final GatewayError error;
+    private final ErrorResponse error;
 
 
-    public CancelResponse(boolean successful, GatewayError errorMessage) {
+    public CancelResponse(boolean successful, ErrorResponse errorMessage) {
         this.successful = successful;
         this.error = errorMessage;
     }
@@ -20,7 +20,7 @@ public class CancelResponse implements GatewayResponse {
         return successful;
     }
 
-    public GatewayError getError() {
+    public ErrorResponse getError() {
         return error;
     }
 
@@ -30,10 +30,10 @@ public class CancelResponse implements GatewayResponse {
 
     public static CancelResponse cancelFailureResponse(Logger logger, String errorMessage) {
         logger.error(format("Failed to cancel charge: %s", errorMessage));
-        return new CancelResponse(false, baseGatewayError(errorMessage));
+        return new CancelResponse(false, baseError(errorMessage));
     }
 
-    public static CancelResponse cancelFailureResponse(GatewayError gatewayError) {
-        return new CancelResponse(false, gatewayError);
+    public static CancelResponse cancelFailureResponse(ErrorResponse errorResponse) {
+        return new CancelResponse(false, errorResponse);
     }
 }

@@ -4,5 +4,5 @@ public interface GatewayResponse {
 
     public Boolean isSuccessful();
 
-    public GatewayError getError();
+    public ErrorResponse getError();
 }

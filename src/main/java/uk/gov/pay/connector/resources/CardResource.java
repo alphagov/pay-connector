@@ -3,7 +3,7 @@ package uk.gov.pay.connector.resources;
 import fj.F;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import uk.gov.pay.connector.model.GatewayError;
+import uk.gov.pay.connector.model.ErrorResponse;
 import uk.gov.pay.connector.model.GatewayResponse;
 import uk.gov.pay.connector.model.domain.Card;
 import uk.gov.pay.connector.service.CardAuthoriseService;
@@ -74,11 +74,13 @@ public class CardResource {
         );
     }
 
-    private F<GatewayError, Response> handleError =
+    private F<ErrorResponse, Response> handleError =
             (error) -> {
                 switch (error.getErrorType()) {
                     case CHARGE_NOT_FOUND:
                         return notFoundResponse(logger, error.getMessage());
+                    case CHARGE_EXPIRED:
+                        return badRequestResponse(logger, error.getMessage());
                     case UNEXPECTED_STATUS_CODE_FROM_GATEWAY:
                     case MALFORMED_RESPONSE_RECEIVED_FROM_GATEWAY:
                     case GATEWAY_URL_DNS_ERROR:

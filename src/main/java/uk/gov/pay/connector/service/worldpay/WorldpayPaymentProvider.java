@@ -28,7 +28,7 @@ import static uk.gov.pay.connector.model.CancelResponse.aSuccessfulCancelRespons
 import static uk.gov.pay.connector.model.CancelResponse.cancelFailureResponse;
 import static uk.gov.pay.connector.model.CaptureResponse.captureFailureResponse;
 import static uk.gov.pay.connector.model.CaptureResponse.successfulCaptureResponse;
-import static uk.gov.pay.connector.model.GatewayError.baseGatewayError;
+import static uk.gov.pay.connector.model.ErrorResponse.baseError;
 import static uk.gov.pay.connector.model.InquiryResponse.*;
 import static uk.gov.pay.connector.model.domain.ChargeStatus.AUTHORISATION_SUCCESS;
 import static uk.gov.pay.connector.model.domain.ChargeStatus.CAPTURE_SUBMITTED;
@@ -245,7 +245,7 @@ public class WorldpayPaymentProvider implements PaymentProvider {
                         .bimap(
                                 InquiryResponse::inquiryFailureResponse,
                                 (wResponse) -> wResponse.isError() ?
-                                        inquiryFailureResponse(baseGatewayError(wResponse.getErrorMessage())) :
+                                        inquiryFailureResponse(baseError(wResponse.getErrorMessage())) :
                                         inquiryStatusUpdate(wResponse.getTransactionId(), wResponse.getLastEvent())
 
                         )

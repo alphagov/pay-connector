@@ -1,5 +1,7 @@
 package uk.gov.pay.connector.it.dao;
 
+import com.google.common.collect.ImmutableMap;
+import com.google.common.collect.Lists;
 import org.apache.commons.lang.RandomStringUtils;
 import org.hamcrest.Description;
 import org.hamcrest.Matcher;
@@ -25,15 +27,16 @@ import java.time.ZonedDateTime;
 import java.time.temporal.ChronoUnit;
 import java.util.*;
 
+import static java.time.ZonedDateTime.now;
 import static java.util.Arrays.asList;
 import static java.util.stream.Collectors.toList;
 import static org.exparity.hamcrest.date.ZonedDateTimeMatchers.*;
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.*;
+import static org.junit.Assert.assertEquals;
 import static uk.gov.pay.connector.dao.ChargeSearch.aChargeSearch;
 import static uk.gov.pay.connector.fixture.ChargeEntityFixture.aValidChargeEntity;
-import static uk.gov.pay.connector.model.domain.ChargeStatus.CREATED;
-import static uk.gov.pay.connector.model.domain.ChargeStatus.ENTERING_CARD_DETAILS;
+import static uk.gov.pay.connector.model.domain.ChargeStatus.*;
 
 public class ChargeDaoITest {
 
@@ -314,7 +317,7 @@ public class ChargeDaoITest {
         assertThat(charge.getStatus(), is(CREATED.getValue()));
         assertThat(charge.getGatewayAccount().getId(), is(GATEWAY_ACCOUNT_ID));
         assertThat(charge.getReturnUrl(), is(RETURN_URL));
-        ZonedDateTime now = ZonedDateTime.now();
+        ZonedDateTime now = now();
         ZonedDateTime createdDate = charge.getCreatedDate();
         assertThat(createdDate, isDayOfMonth(now.getDayOfMonth()));
         assertThat(createdDate, isMonth(now.getMonth()));
@@ -405,7 +408,7 @@ public class ChargeDaoITest {
 
         // given
         String transactionId = "7826782163";
-        ZonedDateTime createdDate = ZonedDateTime.now(ZoneId.of("UTC"));
+        ZonedDateTime createdDate = now(ZoneId.of("UTC"));
         Long chargeId = 9999L;
         String externalChargeId = "charge9999";
 
@@ -451,7 +454,7 @@ public class ChargeDaoITest {
     public void shouldGetChargeByChargeIdWithCorrectAssociatedAccountId() {
 
         String transactionId = "7826782163";
-        ZonedDateTime createdDate = ZonedDateTime.now(ZoneId.of("UTC"));
+        ZonedDateTime createdDate = now(ZoneId.of("UTC"));
         Long chargeId = 876786L;
         String externalChargeId = "charge876786";
 
@@ -486,5 +489,36 @@ public class ChargeDaoITest {
     public void findByExternalId_shouldNotFindAChargeEntity() {
         Optional<ChargeEntity> chargeForAccount = chargeDao.findByExternalId("abcdefg123");
         assertThat(chargeForAccount.isPresent(), is(false));
+    }
+
+    @Test
+    public void testFindByDate_status_findsValidChargeForStatus() throws Exception {
+        databaseTestHelper.addCharge(100L, "ext-id", String.valueOf(GATEWAY_ACCOUNT_ID), AMOUNT, CREATED, RETURN_URL, "", REFERENCE, now().minusHours(2));
+        ArrayList<ChargeStatus> chargeStatuses = Lists.newArrayList(CREATED, ENTERING_CARD_DETAILS, AUTHORISATION_SUBMITTED, AUTHORISATION_SUCCESS);
+
+        List<ChargeEntity> charges = chargeDao.findBeforeDateWithStatusIn(now().minusHours(1), chargeStatuses);
+
+        assertThat(charges.size(), is(1));
+        assertEquals(charges.get(0).getId(), new Long(100));
+    }
+
+    @Test
+    public void testFindByDateStatus_findsNoneForValidStatus() throws Exception {
+        databaseTestHelper.addCharge(100L, "ext-id", String.valueOf(GATEWAY_ACCOUNT_ID), AMOUNT, CREATED, RETURN_URL, "", REFERENCE, now().minusHours(2));
+        ArrayList<ChargeStatus> chargeStatuses = Lists.newArrayList(CAPTURE_READY, SYSTEM_CANCELLED);
+
+        List<ChargeEntity> charges = chargeDao.findBeforeDateWithStatusIn(now().minusHours(1), chargeStatuses);
+
+        assertThat(charges.size(), is(0));
+    }
+
+    @Test
+    public void testFindByDateStatus_findsNoneForExpiredDate() throws Exception {
+        databaseTestHelper.addCharge(100L, "ext-id", String.valueOf(GATEWAY_ACCOUNT_ID), AMOUNT, CREATED, RETURN_URL, "", REFERENCE, now().minusMinutes(30));
+        ArrayList<ChargeStatus> chargeStatuses = Lists.newArrayList(CREATED, ENTERING_CARD_DETAILS, AUTHORISATION_SUBMITTED, AUTHORISATION_SUCCESS);
+
+        List<ChargeEntity> charges = chargeDao.findBeforeDateWithStatusIn(now().minusHours(1), chargeStatuses);
+
+        assertThat(charges.size(), is(0));
     }
 }

@@ -8,10 +8,11 @@ import uk.gov.pay.connector.dao.ChargeDao;
 import uk.gov.pay.connector.dao.GatewayAccountDao;
 import uk.gov.pay.connector.model.AuthorisationRequest;
 import uk.gov.pay.connector.model.AuthorisationResponse;
-import uk.gov.pay.connector.model.GatewayError;
+import uk.gov.pay.connector.model.ErrorResponse;
 import uk.gov.pay.connector.model.GatewayResponse;
 import uk.gov.pay.connector.model.domain.Card;
 import uk.gov.pay.connector.model.domain.ChargeEntity;
+import uk.gov.pay.connector.model.domain.ChargeStatus;
 
 import javax.inject.Inject;
 import javax.persistence.OptimisticLockException;
@@ -20,7 +21,7 @@ import java.util.function.Function;
 import static fj.data.Either.left;
 import static fj.data.Either.right;
 import static java.lang.String.format;
-import static uk.gov.pay.connector.model.GatewayError.*;
+import static uk.gov.pay.connector.model.ErrorResponse.*;
 import static uk.gov.pay.connector.model.domain.ChargeStatus.AUTHORISATION_READY;
 import static uk.gov.pay.connector.model.domain.ChargeStatus.ENTERING_CARD_DETAILS;
 
@@ -32,11 +33,11 @@ public class CardAuthoriseService extends CardService {
         super(accountDao, chargeDao, providers);
     }
 
-    public Either<GatewayError, GatewayResponse> doAuthorise(String chargeId, Card cardDetails) {
+    public Either<ErrorResponse, GatewayResponse> doAuthorise(String chargeId, Card cardDetails) {
 
-        Function<ChargeEntity, Either<GatewayError, GatewayResponse>> doAuthorise =
+        Function<ChargeEntity, Either<ErrorResponse, GatewayResponse>> doAuthorise =
                 (charge) -> {
-                    Either<GatewayError, ChargeEntity> preAuthorised = null;
+                    Either<ErrorResponse, ChargeEntity> preAuthorised = null;
 
                     try {
                         preAuthorised = preAuthorise(charge);
@@ -47,12 +48,12 @@ public class CardAuthoriseService extends CardService {
                     if (preAuthorised.isLeft())
                         return left(preAuthorised.left().value());
 
-                    Either<GatewayError, AuthorisationResponse> authorised =
+                    Either<ErrorResponse, AuthorisationResponse> authorised =
                             authorise(preAuthorised.right().value(), cardDetails);
                     if (authorised.isLeft())
                         return left(authorised.left().value());
 
-                    Either<GatewayError, GatewayResponse> postAuthorised =
+                    Either<ErrorResponse, GatewayResponse> postAuthorised =
                             postAuthorise(preAuthorised.right().value(), authorised.right().value());
                     if (postAuthorised.isLeft())
                         return left(postAuthorised.left().value());
@@ -67,8 +68,11 @@ public class CardAuthoriseService extends CardService {
     }
 
     @Transactional
-    public Either<GatewayError, ChargeEntity> preAuthorise(ChargeEntity charge) {
+    public Either<ErrorResponse, ChargeEntity> preAuthorise(ChargeEntity charge) {
         ChargeEntity reloadedCharge = chargeDao.merge(charge);
+        if (hasStatus(reloadedCharge, ChargeStatus.EXPIRED)) {
+            return left(chargeExpired(format("Cannot authorise charge as it is expired, %s", reloadedCharge.getExternalId())));
+        }
         if (!hasStatus(reloadedCharge, ENTERING_CARD_DETAILS)) {
             if (hasStatus(reloadedCharge, AUTHORISATION_READY)) {
                 return left(operationAlreadyInProgress(format("Authorisation for charge already in progress, %s",
@@ -83,7 +87,7 @@ public class CardAuthoriseService extends CardService {
         return right(reloadedCharge);
     }
 
-    private Either<GatewayError, AuthorisationResponse> authorise(ChargeEntity charge, Card cardDetails) {
+    private Either<ErrorResponse, AuthorisationResponse> authorise(ChargeEntity charge, Card cardDetails) {
         AuthorisationRequest request = new AuthorisationRequest(charge, cardDetails);
         AuthorisationResponse response = paymentProviderFor(charge)
                 .authorise(request);
@@ -92,7 +96,7 @@ public class CardAuthoriseService extends CardService {
     }
 
     @Transactional
-    public Either<GatewayError, GatewayResponse> postAuthorise(ChargeEntity charge, AuthorisationResponse response) {
+    public Either<ErrorResponse, GatewayResponse> postAuthorise(ChargeEntity charge, AuthorisationResponse response) {
         ChargeEntity reloadedCharge = chargeDao.merge(charge);
         reloadedCharge.setStatus(response.getNewChargeStatus());
         reloadedCharge.setGatewayTransactionId(response.getTransactionId());

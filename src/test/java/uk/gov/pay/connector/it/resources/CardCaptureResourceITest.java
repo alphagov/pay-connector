@@ -38,27 +38,16 @@ public class CardCaptureResourceITest extends CardResourceITestBase {
     @Test
     public void shouldReturn404IfChargeDoesNotExist_ForCapture() {
         String unknownId = "398579438759438";
+        String message = String.format("Charge with id [%s] not found.", unknownId);
 
-        givenSetup()
-                .post(captureChargeUrlFor(unknownId))
-                .then()
-                .statusCode(404)
-                .contentType(JSON)
-                .body("message", is(format("Charge with id [%s] not found.", unknownId)));
-
+        captureAndVerifyFor(unknownId, 404, message);
     }
 
     @Test
     public void shouldReturnErrorWithoutChangingChargeState_IfOriginalStateIsNotAuthorised() {
         String chargeId = createNewChargeWith(ENTERING_CARD_DETAILS, null);
-
-        givenSetup()
-                .post(captureChargeUrlFor(chargeId))
-                .then()
-                .statusCode(500)
-                .contentType(JSON)
-                .body("message", is("Charge not in correct state to be processed, " + chargeId));
-
+        String message = "Charge not in correct state to be processed, " + chargeId;
+        captureAndVerifyFor(chargeId, 500, message);
 
         assertFrontendChargeStatusIs(chargeId, ENTERING_CARD_DETAILS.getValue());
     }
@@ -67,13 +56,27 @@ public class CardCaptureResourceITest extends CardResourceITestBase {
     public void shouldReturnErrorAndDoNotUpdateChargeStatus_IfCaptureAlreadyInProgress() throws Exception {
         String chargeId = createNewChargeWith(CAPTURE_READY, null);
 
-        givenSetup()
-                .post(captureChargeUrlFor(chargeId))
-                .then()
-                .statusCode(202)
-                .contentType(JSON)
-                .body("message", is(format("Capture for charge already in progress, %s", chargeId)));
+        String message = format("Capture for charge already in progress, %s", chargeId);
+        captureAndVerifyFor(chargeId, 202, message);
 
         assertFrontendChargeStatusIs(chargeId, CAPTURE_READY.getValue());
     }
+
+    @Test
+    public void shouldReturnCaptureError_IfChargeExpired() throws Exception {
+        String chargeId = createNewChargeWith(EXPIRED, null);
+        String message = format("Cannot capture charge as it is expired, %s", chargeId);
+        captureAndVerifyFor(chargeId, 400, message);
+        assertFrontendChargeStatusIs(chargeId, EXPIRED.getValue());
+    }
+
+    private void captureAndVerifyFor(String chargeId, int expectedStatusCode, String message) {
+        givenSetup()
+                .post(captureChargeUrlFor(chargeId))
+                .then()
+                .statusCode(expectedStatusCode)
+                .contentType(JSON)
+                .body("message", is(message));
+    }
+
 }

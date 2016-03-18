@@ -122,9 +122,10 @@ public class CardResourceITestBase {
     }
 
     protected String createNewChargeWith(ChargeStatus status, String gatewayTransactionId) {
-        String chargeId = RandomIdGenerator.newId();
-        app.getDatabaseTestHelper().addCharge(chargeId, accountId, 6234L, status, "returnUrl", gatewayTransactionId);
-        return chargeId;
+        long chargeId = RandomUtils.nextInt();
+        String externalChargeId = "charge-" + chargeId;
+        app.getDatabaseTestHelper().addCharge(chargeId, externalChargeId, accountId, 6234L, status, "returnUrl", gatewayTransactionId);
+        return externalChargeId;
     }
 
     protected RequestSpecification givenSetup() {

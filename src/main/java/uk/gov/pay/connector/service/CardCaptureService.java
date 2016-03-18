@@ -8,9 +8,10 @@ import uk.gov.pay.connector.dao.ChargeDao;
 import uk.gov.pay.connector.dao.GatewayAccountDao;
 import uk.gov.pay.connector.model.CaptureRequest;
 import uk.gov.pay.connector.model.CaptureResponse;
-import uk.gov.pay.connector.model.GatewayError;
+import uk.gov.pay.connector.model.ErrorResponse;
 import uk.gov.pay.connector.model.GatewayResponse;
 import uk.gov.pay.connector.model.domain.ChargeEntity;
+import uk.gov.pay.connector.model.domain.ChargeStatus;
 
 import javax.inject.Inject;
 import javax.persistence.OptimisticLockException;
@@ -19,7 +20,7 @@ import java.util.function.Function;
 import static fj.data.Either.left;
 import static fj.data.Either.right;
 import static java.lang.String.format;
-import static uk.gov.pay.connector.model.GatewayError.*;
+import static uk.gov.pay.connector.model.ErrorResponse.*;
 import static uk.gov.pay.connector.model.domain.ChargeStatus.AUTHORISATION_SUCCESS;
 import static uk.gov.pay.connector.model.domain.ChargeStatus.CAPTURE_READY;
 
@@ -31,11 +32,11 @@ public class CardCaptureService extends CardService {
         super(accountDao, chargeDao, providers);
     }
 
-    public Either<GatewayError, GatewayResponse> doCapture(String chargeId) {
+    public Either<ErrorResponse, GatewayResponse> doCapture(String chargeId) {
 
-        Function<ChargeEntity, Either<GatewayError, GatewayResponse>> doCapture =
+        Function<ChargeEntity, Either<ErrorResponse, GatewayResponse>> doCapture =
                 (charge) -> {
-                    Either<GatewayError, ChargeEntity> preCapture = null;
+                    Either<ErrorResponse, ChargeEntity> preCapture = null;
 
                     try {
                         preCapture = preCapture(charge);
@@ -46,12 +47,12 @@ public class CardCaptureService extends CardService {
                     if (preCapture.isLeft())
                         return left(preCapture.left().value());
 
-                    Either<GatewayError, CaptureResponse> captured =
+                    Either<ErrorResponse, CaptureResponse> captured =
                             capture(preCapture.right().value());
                     if (captured.isLeft())
                         return left(captured.left().value());
 
-                    Either<GatewayError, GatewayResponse> postCapture =
+                    Either<ErrorResponse, GatewayResponse> postCapture =
                             postCapture(preCapture.right().value(), captured.right().value());
                     if (postCapture.isLeft())
                         return left(postCapture.left().value());
@@ -66,8 +67,11 @@ public class CardCaptureService extends CardService {
     }
 
     @Transactional
-    public Either<GatewayError, ChargeEntity> preCapture(ChargeEntity charge) {
+    public Either<ErrorResponse, ChargeEntity> preCapture(ChargeEntity charge) {
         ChargeEntity reloadedCharge = chargeDao.merge(charge);
+        if (hasStatus(reloadedCharge, ChargeStatus.EXPIRED)) {
+            return left(chargeExpired(format("Cannot capture charge as it is expired, %s", reloadedCharge.getExternalId())));
+        }
         if (!hasStatus(reloadedCharge, AUTHORISATION_SUCCESS)) {
             if (hasStatus(reloadedCharge, CAPTURE_READY)) {
                 return left(operationAlreadyInProgress(format("Capture for charge already in progress, %s",
@@ -83,7 +87,7 @@ public class CardCaptureService extends CardService {
     }
 
 
-    private Either<GatewayError, CaptureResponse> capture(ChargeEntity charge) {
+    private Either<ErrorResponse, CaptureResponse> capture(ChargeEntity charge) {
         CaptureRequest request = CaptureRequest.valueOf(charge);
         CaptureResponse response = paymentProviderFor(charge)
                 .capture(request);
@@ -92,7 +96,7 @@ public class CardCaptureService extends CardService {
     }
 
     @Transactional
-    public Either<GatewayError, GatewayResponse> postCapture(ChargeEntity charge, CaptureResponse response) {
+    public Either<ErrorResponse, GatewayResponse> postCapture(ChargeEntity charge, CaptureResponse response) {
         ChargeEntity reloadedCharge = chargeDao.merge(charge);
         reloadedCharge.setStatus(response.getStatus());
 
