@@ -4,7 +4,6 @@ import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.Lists;
 import fj.F;
-import fj.data.Either;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.lang3.tuple.Pair;
 import org.slf4j.Logger;
@@ -12,8 +11,6 @@ import org.slf4j.LoggerFactory;
 import uk.gov.pay.connector.dao.ChargeDao;
 import uk.gov.pay.connector.dao.GatewayAccountDao;
 import uk.gov.pay.connector.model.ChargeResponse;
-import uk.gov.pay.connector.model.ErrorResponse;
-import uk.gov.pay.connector.model.GatewayResponse;
 import uk.gov.pay.connector.model.api.ExternalChargeStatus;
 import uk.gov.pay.connector.model.domain.ChargeEntity;
 import uk.gov.pay.connector.model.domain.ChargeStatus;
@@ -34,10 +31,8 @@ import java.util.stream.Collectors;
 import static fj.data.Either.reduce;
 import static java.lang.String.format;
 import static javax.ws.rs.core.MediaType.APPLICATION_JSON;
-import static javax.ws.rs.core.Response.*;
 import static javax.ws.rs.core.Response.Status.BAD_REQUEST;
-import static javax.ws.rs.core.Response.created;
-import static javax.ws.rs.core.Response.ok;
+import static javax.ws.rs.core.Response.*;
 import static org.apache.commons.lang3.StringUtils.isNotBlank;
 import static uk.gov.pay.connector.dao.ChargeSearch.aChargeSearch;
 import static uk.gov.pay.connector.model.ChargeResponse.Builder.aChargeResponse;
@@ -68,15 +63,14 @@ public class ChargesResource {
     private ChargeDao chargeDao;
     private GatewayAccountDao gatewayAccountDao;
     private ChargeService chargeService;
-    private CardService cardService;
 
     private static final int ONE_HOUR = 3600;
     private static final String CHARGE_EXPIRY_WINDOW = "CHARGE_EXPIRY_WINDOW_SECONDS";
     protected static final ArrayList<ChargeStatus> NON_TERMINAL_STATUSES = Lists.newArrayList(
-                    CREATED,
-                    ENTERING_CARD_DETAILS,
-                    AUTHORISATION_SUBMITTED,
-                    AUTHORISATION_SUCCESS);
+            CREATED,
+            ENTERING_CARD_DETAILS,
+            AUTHORISATION_SUBMITTED,
+            AUTHORISATION_SUCCESS);
 
     private static final Logger logger = LoggerFactory.getLogger(ChargesResource.class);
 
@@ -179,7 +173,7 @@ public class ChargesResource {
         if (StringUtils.isNotBlank(System.getenv(CHARGE_EXPIRY_WINDOW))) {
             chargeExpiryWindowSeconds = Integer.parseInt(System.getenv(CHARGE_EXPIRY_WINDOW));
         }
-        logger.info("Charge expiry window size in seconds: " +chargeExpiryWindowSeconds);
+        logger.info("Charge expiry window size in seconds: " + chargeExpiryWindowSeconds);
         return ZonedDateTime.now().minusSeconds(chargeExpiryWindowSeconds);
     }
 
