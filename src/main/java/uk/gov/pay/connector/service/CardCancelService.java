@@ -17,9 +17,7 @@ import static fj.data.Either.left;
 import static fj.data.Either.right;
 import static java.lang.String.format;
 import static org.apache.commons.lang3.StringUtils.equalsIgnoreCase;
-import static uk.gov.pay.connector.model.ErrorResponse.baseErrorResponse;
 import static uk.gov.pay.connector.model.ErrorResponse.chargeExpired;
-import static uk.gov.pay.connector.model.ErrorResponseType.CHARGE_NOT_FOUND;
 import static uk.gov.pay.connector.model.domain.ChargeStatus.*;
 
 public class CardCancelService implements TransactionalGatewayOperation {

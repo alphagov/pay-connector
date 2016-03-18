@@ -18,12 +18,7 @@ import static fj.data.Either.left;
 import static fj.data.Either.right;
 import static java.lang.String.format;
 import static org.apache.commons.lang3.StringUtils.equalsIgnoreCase;
-import static uk.gov.pay.connector.model.ErrorResponse.chargeExpired;
-import static uk.gov.pay.connector.model.ErrorResponse.illegalStateError;
-import static uk.gov.pay.connector.model.ErrorResponse.operationAlreadyInProgress;
-import static uk.gov.pay.connector.model.GatewayError.illegalStateError;
-import static uk.gov.pay.connector.model.GatewayError.operationAlreadyInProgress;
-import static uk.gov.pay.connector.model.GatewayErrorType.CHARGE_NOT_FOUND;
+import static uk.gov.pay.connector.model.ErrorResponse.*;
 import static uk.gov.pay.connector.model.domain.ChargeStatus.AUTHORISATION_READY;
 import static uk.gov.pay.connector.model.domain.ChargeStatus.ENTERING_CARD_DETAILS;
 
