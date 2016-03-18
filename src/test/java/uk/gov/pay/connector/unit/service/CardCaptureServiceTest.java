@@ -20,7 +20,7 @@ import static uk.gov.pay.connector.model.ErrorType.*;
 import static uk.gov.pay.connector.model.domain.ChargeStatus.*;
 
 public class CardCaptureServiceTest extends CardServiceTest {
-    private final CardCaptureService cardCaptureService = new CardCaptureService(mockedAccountDao, mockedChargeDao, mockedProviders);
+    private final CardCaptureService cardCaptureService = new CardCaptureService(mockedChargeDao, mockedProviders);
 
     @Test
     public void shouldCaptureACharge() throws Exception {
@@ -125,7 +125,7 @@ public class CardCaptureServiceTest extends CardServiceTest {
         ErrorResponse gatewayError = response.left().value();
 
         assertThat(gatewayError.getErrorType(), is(CONFLICT_ERROR));
-        assertThat(gatewayError.getMessage(), is("Capture for charge conflicting, " + charge.getExternalId()));
+        assertThat(gatewayError.getMessage(), is("Operation for charge conflicting, " + charge.getExternalId()));
     }
 
     @Test

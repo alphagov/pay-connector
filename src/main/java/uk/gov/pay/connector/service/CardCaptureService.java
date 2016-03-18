@@ -5,69 +5,47 @@ import fj.data.Either;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import uk.gov.pay.connector.dao.ChargeDao;
-import uk.gov.pay.connector.dao.GatewayAccountDao;
-import uk.gov.pay.connector.model.CaptureRequest;
-import uk.gov.pay.connector.model.CaptureResponse;
-import uk.gov.pay.connector.model.ErrorResponse;
-import uk.gov.pay.connector.model.GatewayResponse;
+import uk.gov.pay.connector.model.*;
 import uk.gov.pay.connector.model.domain.ChargeEntity;
 import uk.gov.pay.connector.model.domain.ChargeStatus;
 
 import javax.inject.Inject;
-import javax.persistence.OptimisticLockException;
-import java.util.function.Function;
+import java.util.Arrays;
+import java.util.function.Supplier;
 
 import static fj.data.Either.left;
 import static fj.data.Either.right;
 import static java.lang.String.format;
-import static uk.gov.pay.connector.model.ErrorResponse.*;
+import static org.apache.commons.lang3.StringUtils.equalsIgnoreCase;
+import static uk.gov.pay.connector.model.ErrorResponse.chargeExpired;
+import static uk.gov.pay.connector.model.ErrorResponse.illegalStateError;
+import static uk.gov.pay.connector.model.ErrorResponse.operationAlreadyInProgress;
+import static uk.gov.pay.connector.model.ErrorResponseType.CHARGE_NOT_FOUND;
 import static uk.gov.pay.connector.model.domain.ChargeStatus.AUTHORISATION_SUCCESS;
 import static uk.gov.pay.connector.model.domain.ChargeStatus.CAPTURE_READY;
 
-public class CardCaptureService extends CardService {
+public class CardCaptureService implements TransactionalGatewayOperation {
     private final Logger logger = LoggerFactory.getLogger(CardCaptureService.class);
 
+    private final ChargeDao chargeDao;
+    private final PaymentProviders providers;
+
     @Inject
-    public CardCaptureService(GatewayAccountDao accountDao, ChargeDao chargeDao, PaymentProviders providers) {
-        super(accountDao, chargeDao, providers);
+    public CardCaptureService(ChargeDao chargeDao, PaymentProviders providers) {
+        this.chargeDao = chargeDao;
+        this.providers = providers;
     }
 
     public Either<ErrorResponse, GatewayResponse> doCapture(String chargeId) {
-
-        Function<ChargeEntity, Either<ErrorResponse, GatewayResponse>> doCapture =
-                (charge) -> {
-                    Either<ErrorResponse, ChargeEntity> preCapture = null;
-
-                    try {
-                        preCapture = preCapture(charge);
-                    } catch (OptimisticLockException e) {
-                        return left(conflictError(format("Capture for charge conflicting, %s", chargeId)));
-                    }
-
-                    if (preCapture.isLeft())
-                        return left(preCapture.left().value());
-
-                    Either<ErrorResponse, CaptureResponse> captured =
-                            capture(preCapture.right().value());
-                    if (captured.isLeft())
-                        return left(captured.left().value());
-
-                    Either<ErrorResponse, GatewayResponse> postCapture =
-                            postCapture(preCapture.right().value(), captured.right().value());
-                    if (postCapture.isLeft())
-                        return left(postCapture.left().value());
-
-                    return right(captured.right().value());
-                };
-
         return chargeDao
                 .findByExternalId(chargeId)
-                .map(doCapture)
+                .map(TransactionalGatewayOperation.super::executeGatewayOperationFor)
                 .orElseGet(chargeNotFound(chargeId));
     }
 
     @Transactional
-    public Either<ErrorResponse, ChargeEntity> preCapture(ChargeEntity charge) {
+    @Override
+    public Either<ErrorResponse, ChargeEntity> preOperation(ChargeEntity charge) {
         ChargeEntity reloadedCharge = chargeDao.merge(charge);
         if (hasStatus(reloadedCharge, ChargeStatus.EXPIRED)) {
             return left(chargeExpired(format("Cannot capture charge as it is expired, %s", reloadedCharge.getExternalId())));
@@ -86,22 +64,38 @@ public class CardCaptureService extends CardService {
         return right(reloadedCharge);
     }
 
-
-    private Either<ErrorResponse, CaptureResponse> capture(ChargeEntity charge) {
-        CaptureRequest request = CaptureRequest.valueOf(charge);
-        CaptureResponse response = paymentProviderFor(charge)
+    @Override
+    public Either<ErrorResponse, GatewayResponse> operation(ChargeEntity chargeEntity) {
+        CaptureRequest request = CaptureRequest.valueOf(chargeEntity);
+        CaptureResponse response = paymentProviderFor(chargeEntity)
                 .capture(request);
 
         return right(response);
     }
 
     @Transactional
-    public Either<ErrorResponse, GatewayResponse> postCapture(ChargeEntity charge, CaptureResponse response) {
-        ChargeEntity reloadedCharge = chargeDao.merge(charge);
-        reloadedCharge.setStatus(response.getStatus());
+    @Override
+    public Either<ErrorResponse, GatewayResponse> postOperation(ChargeEntity chargeEntity, GatewayResponse operationResponse) {
+        CaptureResponse captureResponse = (CaptureResponse) operationResponse;
+
+        ChargeEntity reloadedCharge = chargeDao.merge(chargeEntity);
+        reloadedCharge.setStatus(captureResponse.getStatus());
 
         chargeDao.mergeAndNotifyStatusHasChanged(reloadedCharge);
 
-        return right(response);
+        return right(operationResponse);
+    }
+
+    public PaymentProvider paymentProviderFor(ChargeEntity charge) {
+        return providers.resolve(charge.getGatewayAccount().getGatewayName());
+    }
+
+    public boolean hasStatus(ChargeEntity charge, ChargeStatus... states) {
+        return Arrays.stream(states)
+                .anyMatch(status -> equalsIgnoreCase(status.getValue(), charge.getStatus()));
+    }
+
+    public Supplier<Either<ErrorResponse, GatewayResponse>> chargeNotFound(String chargeId) {
+        return () -> left(new ErrorResponse(format("Charge with id [%s] not found.", chargeId), ErrorType.CHARGE_NOT_FOUND));
     }
 }

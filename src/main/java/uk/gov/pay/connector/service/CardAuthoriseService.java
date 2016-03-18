@@ -5,71 +5,55 @@ import fj.data.Either;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import uk.gov.pay.connector.dao.ChargeDao;
-import uk.gov.pay.connector.dao.GatewayAccountDao;
-import uk.gov.pay.connector.model.AuthorisationRequest;
-import uk.gov.pay.connector.model.AuthorisationResponse;
-import uk.gov.pay.connector.model.ErrorResponse;
-import uk.gov.pay.connector.model.GatewayResponse;
+import uk.gov.pay.connector.model.*;
 import uk.gov.pay.connector.model.domain.Card;
 import uk.gov.pay.connector.model.domain.ChargeEntity;
 import uk.gov.pay.connector.model.domain.ChargeStatus;
 
 import javax.inject.Inject;
-import javax.persistence.OptimisticLockException;
-import java.util.function.Function;
+import java.util.Arrays;
+import java.util.function.Supplier;
 
 import static fj.data.Either.left;
 import static fj.data.Either.right;
 import static java.lang.String.format;
-import static uk.gov.pay.connector.model.ErrorResponse.*;
+import static org.apache.commons.lang3.StringUtils.equalsIgnoreCase;
+import static uk.gov.pay.connector.model.ErrorResponse.chargeExpired;
+import static uk.gov.pay.connector.model.ErrorResponse.illegalStateError;
+import static uk.gov.pay.connector.model.ErrorResponse.operationAlreadyInProgress;
+import static uk.gov.pay.connector.model.GatewayError.illegalStateError;
+import static uk.gov.pay.connector.model.GatewayError.operationAlreadyInProgress;
+import static uk.gov.pay.connector.model.GatewayErrorType.CHARGE_NOT_FOUND;
 import static uk.gov.pay.connector.model.domain.ChargeStatus.AUTHORISATION_READY;
 import static uk.gov.pay.connector.model.domain.ChargeStatus.ENTERING_CARD_DETAILS;
 
-public class CardAuthoriseService extends CardService {
+public class CardAuthoriseService implements TransactionalGatewayOperation {
     private final Logger logger = LoggerFactory.getLogger(CardAuthoriseService.class);
 
+    private final ChargeDao chargeDao;
+    private final PaymentProviders providers;
+
+    private Card cardDetails;
+
     @Inject
-    public CardAuthoriseService(GatewayAccountDao accountDao, ChargeDao chargeDao, PaymentProviders providers) {
-        super(accountDao, chargeDao, providers);
+    public CardAuthoriseService(ChargeDao chargeDao, PaymentProviders providers) {
+        this.chargeDao = chargeDao;
+        this.providers = providers;
     }
 
     public Either<ErrorResponse, GatewayResponse> doAuthorise(String chargeId, Card cardDetails) {
-
-        Function<ChargeEntity, Either<ErrorResponse, GatewayResponse>> doAuthorise =
-                (charge) -> {
-                    Either<ErrorResponse, ChargeEntity> preAuthorised = null;
-
-                    try {
-                        preAuthorised = preAuthorise(charge);
-                    } catch (OptimisticLockException e) {
-                        return left(conflictError(format("Authorisation for charge conflicting, %s", chargeId)));
-                    }
-
-                    if (preAuthorised.isLeft())
-                        return left(preAuthorised.left().value());
-
-                    Either<ErrorResponse, AuthorisationResponse> authorised =
-                            authorise(preAuthorised.right().value(), cardDetails);
-                    if (authorised.isLeft())
-                        return left(authorised.left().value());
-
-                    Either<ErrorResponse, GatewayResponse> postAuthorised =
-                            postAuthorise(preAuthorised.right().value(), authorised.right().value());
-                    if (postAuthorised.isLeft())
-                        return left(postAuthorised.left().value());
-
-                    return right(authorised.right().value());
-                };
+        this.cardDetails = cardDetails;
 
         return chargeDao
                 .findByExternalId(chargeId)
-                .map(doAuthorise)
+                .map(TransactionalGatewayOperation.super::executeGatewayOperationFor)
                 .orElseGet(chargeNotFound(chargeId));
     }
 
     @Transactional
-    public Either<ErrorResponse, ChargeEntity> preAuthorise(ChargeEntity charge) {
-        ChargeEntity reloadedCharge = chargeDao.merge(charge);
+    @Override
+    public Either<ErrorResponse, ChargeEntity> preOperation(ChargeEntity chargeEntity) {
+        ChargeEntity reloadedCharge = chargeDao.merge(chargeEntity);
         if (hasStatus(reloadedCharge, ChargeStatus.EXPIRED)) {
             return left(chargeExpired(format("Cannot authorise charge as it is expired, %s", reloadedCharge.getExternalId())));
         }
@@ -87,20 +71,38 @@ public class CardAuthoriseService extends CardService {
         return right(reloadedCharge);
     }
 
-    private Either<ErrorResponse, AuthorisationResponse> authorise(ChargeEntity charge, Card cardDetails) {
-        AuthorisationRequest request = new AuthorisationRequest(charge, cardDetails);
-        AuthorisationResponse response = paymentProviderFor(charge)
+    @Override
+    public Either<ErrorResponse, GatewayResponse> operation(ChargeEntity chargeEntity) {
+        AuthorisationRequest request = new AuthorisationRequest(chargeEntity, this.cardDetails);
+        AuthorisationResponse response = paymentProviderFor(chargeEntity)
                 .authorise(request);
 
         return right(response);
     }
 
     @Transactional
-    public Either<ErrorResponse, GatewayResponse> postAuthorise(ChargeEntity charge, AuthorisationResponse response) {
-        ChargeEntity reloadedCharge = chargeDao.merge(charge);
-        reloadedCharge.setStatus(response.getNewChargeStatus());
-        reloadedCharge.setGatewayTransactionId(response.getTransactionId());
+    @Override
+    public Either<ErrorResponse, GatewayResponse> postOperation(ChargeEntity chargeEntity, GatewayResponse operationResponse) {
+        AuthorisationResponse authorisationResponse = (AuthorisationResponse) operationResponse;
 
-        return right(response);
+        ChargeEntity reloadedCharge = chargeDao.merge(chargeEntity);
+        reloadedCharge.setStatus(authorisationResponse.getNewChargeStatus());
+        reloadedCharge.setGatewayTransactionId(authorisationResponse.getTransactionId());
+
+        return right(operationResponse);
     }
+
+    public PaymentProvider paymentProviderFor(ChargeEntity charge) {
+        return providers.resolve(charge.getGatewayAccount().getGatewayName());
+    }
+
+    public boolean hasStatus(ChargeEntity charge, ChargeStatus... states) {
+        return Arrays.stream(states)
+                .anyMatch(status -> equalsIgnoreCase(status.getValue(), charge.getStatus()));
+    }
+
+    public Supplier<Either<ErrorResponse, GatewayResponse>> chargeNotFound(String chargeId) {
+        return () -> left(new ErrorResponse(format("Charge with id [%s] not found.", chargeId), ErrorType.CHARGE_NOT_FOUND));
+    }
+
 }
