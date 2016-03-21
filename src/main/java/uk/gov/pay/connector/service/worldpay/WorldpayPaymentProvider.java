@@ -129,16 +129,16 @@ public class WorldpayPaymentProvider implements PaymentProvider {
                     //phase 2
                     Optional<GatewayAccountEntity> gatewayAccount = accountFinder.apply(notification.getTransactionId());
 
-                    if (!gatewayAccount.isPresent()) {
-                        return NO_UPDATE;
-                    }
+                    return gatewayAccount.map(gatewayAccountEntity -> {
+                        StatusUpdates statusUpdates = newStatusFromNotification(gatewayAccountEntity, notification.getTransactionId());
 
-                    StatusUpdates statusUpdates = newStatusFromNotification(gatewayAccount.get(), notification.getTransactionId());
+                        if (statusUpdates.successful()) {
+                            accountUpdater.accept(statusUpdates);
+                        }
+                        return statusUpdates;
 
-                    if (statusUpdates.successful()) {
-                        accountUpdater.accept(statusUpdates);
-                    }
-                    return statusUpdates;
+                    }).orElseGet(() -> NO_UPDATE);
+
                 }
         ).orElseGet(() -> NO_UPDATE);
     }
