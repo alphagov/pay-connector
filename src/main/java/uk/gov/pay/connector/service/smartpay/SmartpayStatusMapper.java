@@ -25,6 +25,6 @@ public class SmartpayStatusMapper {
             build();
 
     public static Optional<ChargeStatus> mapToChargeStatus(String smartpayStatus, Boolean successFull) {
-        return ofNullable(smartpayStatuses.get(smartpayStatus)).flatMap(m -> ofNullable(m.get(successFull)));
+        return ofNullable(smartpayStatuses.get(smartpayStatus)).map(m -> m.get(successFull));
     }
 }
