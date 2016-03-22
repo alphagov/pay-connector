@@ -113,37 +113,43 @@ public class WorldpayPaymentProvider implements PaymentProvider {
         Optional<WorldpayNotification> notificationMaybe = parseNotification(notificationPayload);
         return notificationMaybe.map(notification -> {
 
+                    if (!notification.getChargeStatus().isPresent()) {
+                        logger.error(format("Could not map worldpay status %s to our internal status.", notification.getStatus()));
+                    }
+
                     if (!payloadChecks.apply(notification)) {
                         return NO_UPDATE;
                     }
 
-                    if (notification.getChargeStatus().isPresent()) {
-                        //phase 1
-                        Pair<String, ChargeStatus> pair = Pair.of(notification.getTransactionId(), notification.getChargeStatus().get());
-                        StatusUpdates statusUpdates = StatusUpdates.withUpdate(NOTIFICATION_ACKNOWLEDGED, ImmutableList.of(pair));
-                        accountUpdater.accept(statusUpdates);
-                    } else {
-                        logger.error(format("Could not map worldpay status %s to our internal status.", notification.getStatus()));
-                    }
-
-                    //phase 2
                     Optional<GatewayAccountEntity> gatewayAccount = accountFinder.apply(notification.getTransactionId());
 
-                    return gatewayAccount.map(gatewayAccountEntity -> {
-                        StatusUpdates statusUpdates = newStatusFromNotification(gatewayAccountEntity, notification.getTransactionId());
+                    if (!gatewayAccount.isPresent()) {
+                        return NO_UPDATE;
+                    }
 
-                        if (statusUpdates.successful()) {
-                            accountUpdater.accept(statusUpdates);
-                        }
-                        return statusUpdates;
+                    StatusUpdates statusUpdates = newStatusFromNotification(gatewayAccount.get(), notification.getTransactionId());
 
-                    }).orElseGet(() -> NO_UPDATE);
-
+                    if (statusUpdates.successful()) {
+                        logMismatchingStatuses(notification, statusUpdates);
+                        accountUpdater.accept(statusUpdates);
+                    }
+                    return statusUpdates;
                 }
         ).orElseGet(() -> NO_UPDATE);
     }
 
-//    private StatusUpdates validateStatus
+    private void logMismatchingStatuses(WorldpayNotification notification, StatusUpdates statusUpdates) {
+        statusUpdates.getStatusUpdates()
+                .stream()
+                .findFirst()
+                .ifPresent(status -> {
+                    if(status.getValue().equals(notification.getChargeStatus().get())) {
+                        logger.error(format("Inquiry status '%s' did not match notification status '%s'",
+                                status.getValue(),
+                                notification.getChargeStatus().get()));
+                    }
+        });
+    }
 
     private StatusUpdates newStatusFromNotification(GatewayAccountEntity gatewayAccount, String transactionId) {
         InquiryResponse inquiryResponse = inquire(transactionId, gatewayAccount);

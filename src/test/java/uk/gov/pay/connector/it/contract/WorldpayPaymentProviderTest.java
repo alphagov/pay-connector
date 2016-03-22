@@ -26,6 +26,8 @@ import static java.util.UUID.randomUUID;
 import static org.hamcrest.CoreMatchers.hasItem;
 import static org.junit.Assert.*;
 import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.times;
+import static org.mockito.Mockito.verify;
 import static uk.gov.pay.connector.fixture.ChargeEntityFixture.aValidChargeEntity;
 import static uk.gov.pay.connector.model.domain.ChargeStatus.AUTHORISATION_SUCCESS;
 import static uk.gov.pay.connector.service.GatewayClient.createGatewayClient;
@@ -98,7 +100,7 @@ public class WorldpayPaymentProviderTest {
     }
 
     @Test
-    public void shouldBeAbleToHandleNotification() throws Exception {
+    public void handleNotification_shouldOnlyUpdateChargeStatusOnce() throws Exception {
         WorldpayPaymentProvider connector = getValidWorldpayPaymentProvider();
         AuthorisationResponse response = successfulWorldpayCardAuth(connector);
 
@@ -106,13 +108,33 @@ public class WorldpayPaymentProviderTest {
 
         String transactionId = response.getTransactionId();
         StatusUpdates statusResponse = connector.handleNotification(
-                notificationPayloadForTransaction(transactionId),
+                notificationPayloadForTransaction(transactionId, "AUTHORISED"),
                 x -> true,
                 x -> Optional.of(validGatewayAccount),
                 accountUpdater
         );
 
         assertThat(statusResponse.getStatusUpdates(), hasItem(Pair.of(transactionId, AUTHORISATION_SUCCESS)));
+        verify(accountUpdater, times(1)).accept(statusResponse);
+    }
+
+    @Test
+    public void handleNotification_shouldRelyOnInquiryStatusWhenNotificationStatusCannotBeMapped() throws Exception {
+        WorldpayPaymentProvider connector = getValidWorldpayPaymentProvider();
+        AuthorisationResponse response = successfulWorldpayCardAuth(connector);
+
+        Consumer<StatusUpdates> accountUpdater = mock(Consumer.class);
+
+        String transactionId = response.getTransactionId();
+        StatusUpdates statusResponse = connector.handleNotification(
+                notificationPayloadForTransaction(transactionId, "UNKNOWN_STATUS"),
+                x -> true,
+                x -> Optional.of(validGatewayAccount),
+                accountUpdater
+        );
+
+        assertThat(statusResponse.getStatusUpdates(), hasItem(Pair.of(transactionId, AUTHORISATION_SUCCESS)));
+        verify(accountUpdater).accept(statusResponse);
     }
 
     @Test
@@ -182,8 +204,10 @@ public class WorldpayPaymentProviderTest {
         }
     };
 
-    private String notificationPayloadForTransaction(String transactionId) throws IOException {
+    private String notificationPayloadForTransaction(String transactionId, String status) throws IOException {
         URL resource = getResource("templates/worldpay/notification.xml");
-        return Resources.toString(resource, Charset.defaultCharset()).replace("{{transactionId}}", transactionId);
+        return Resources.toString(resource, Charset.defaultCharset())
+                .replace("{{transactionId}}", transactionId)
+                .replace("{{status}}", status);
     }
 }
