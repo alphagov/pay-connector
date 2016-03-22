@@ -14,6 +14,7 @@ import uk.gov.pay.connector.util.DateTimeUtils;
 import uk.gov.pay.connector.util.RandomIdGenerator;
 import uk.gov.pay.connector.util.RestAssuredClient;
 
+import javax.ws.rs.core.HttpHeaders;
 import java.time.ZonedDateTime;
 import java.time.temporal.ChronoUnit;
 import java.util.List;
@@ -25,6 +26,7 @@ import static java.lang.String.format;
 import static java.util.Arrays.asList;
 import static java.util.UUID.randomUUID;
 import static javax.ws.rs.HttpMethod.POST;
+import static javax.ws.rs.core.MediaType.APPLICATION_JSON;
 import static javax.ws.rs.core.Response.Status;
 import static javax.ws.rs.core.Response.Status.*;
 import static org.hamcrest.Matchers.*;
@@ -161,7 +163,7 @@ public class ChargesFrontendResourceITest {
         setupLifeCycleEventsFor(app, chargeId2, statuses);
         setupLifeCycleEventsFor(app, chargeId3, statuses);
 
-        ValidatableResponse response = connectorRestApi.getTransactions();
+        ValidatableResponse response = connectorRestApi.withHeader(HttpHeaders.ACCEPT, APPLICATION_JSON).getTransactions();
 
         response.statusCode(OK.getStatusCode())
                 .contentType(JSON)
@@ -182,7 +184,7 @@ public class ChargesFrontendResourceITest {
         setupLifeCycleEventsFor(app, 102L, statuses);
         setupLifeCycleEventsFor(app, 103L, statuses);
 
-        ValidatableResponse response = connectorRestApi.getTransactions();
+        ValidatableResponse response = connectorRestApi.withHeader(HttpHeaders.ACCEPT, APPLICATION_JSON).getTransactions();
 
         response.statusCode(OK.getStatusCode())
                 .contentType(JSON)
@@ -198,6 +200,7 @@ public class ChargesFrontendResourceITest {
     public void shouldReturn404_IfNoAccountExistsForTheGivenAccountId() {
         String nonExistentAccountId = "123456789";
         ValidatableResponse response = connectorRestApi
+                .withHeader(HttpHeaders.ACCEPT, APPLICATION_JSON)
                 .withAccountId(nonExistentAccountId)
                 .getTransactions();
 
@@ -231,6 +234,7 @@ public class ChargesFrontendResourceITest {
     @Test
     public void shouldReturnEmptyResult_IfNoTransactionsExistForAccount() {
         ValidatableResponse response = connectorRestApi
+                .withHeader(HttpHeaders.ACCEPT, APPLICATION_JSON)
                 .getTransactions();
 
         response.statusCode(OK.getStatusCode())
