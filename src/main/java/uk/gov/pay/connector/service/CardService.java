@@ -15,6 +15,7 @@ import static uk.gov.pay.connector.model.ErrorResponse.*;
 
 abstract public class CardService {
     protected final ChargeDao chargeDao;
+    protected final PaymentProviders providers;
     private final Logger logger = LoggerFactory.getLogger(CardCancelService.class);
 
     protected enum OperationType {
@@ -33,8 +34,9 @@ abstract public class CardService {
         }
     }
 
-    public CardService(ChargeDao chargeDao) {
+    public CardService(ChargeDao chargeDao, PaymentProviders providers) {
         this.chargeDao = chargeDao;
+        this.providers = providers;
     }
 
     public Either<ErrorResponse, ChargeEntity> preOperation(ChargeEntity chargeEntity, OperationType operationType, ChargeStatus[] legalStatuses, ChargeStatus lockingStatus) {
@@ -55,4 +57,9 @@ abstract public class CardService {
 
         return right(reloadedCharge);
     }
+
+    public PaymentProvider getPaymentProviderFor(ChargeEntity chargeEntity) {
+        return providers.resolve(chargeEntity.getGatewayAccount().getGatewayName());
+    }
+
 }

@@ -25,7 +25,7 @@ public class CardCaptureService extends CardService implements TransactionalGate
 
     @Inject
     public CardCaptureService(ChargeDao chargeDao, PaymentProviders providers) {
-        super(chargeDao);
+        super(chargeDao, providers);
         this.providers = providers;
     }
 
@@ -43,10 +43,8 @@ public class CardCaptureService extends CardService implements TransactionalGate
 
     @Override
     public Either<ErrorResponse, GatewayResponse> operation(ChargeEntity chargeEntity) {
-        CaptureRequest request = CaptureRequest.valueOf(chargeEntity);
-        String gatewayName = chargeEntity.getGatewayAccount().getGatewayName();
-        CaptureResponse response = providers.resolve(gatewayName).capture(request);
-        return right(response);
+        return right(getPaymentProviderFor(chargeEntity)
+                .capture(CaptureRequest.valueOf(chargeEntity)));
     }
 
     @Transactional

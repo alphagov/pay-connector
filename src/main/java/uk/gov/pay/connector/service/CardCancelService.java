@@ -25,7 +25,7 @@ public class CardCancelService extends CardService implements TransactionalGatew
 
     @Inject
     public CardCancelService(ChargeDao chargeDao, PaymentProviders providers) {
-        super(chargeDao);
+        super(chargeDao, providers);
         this.providers = providers;
     }
 
@@ -44,10 +44,8 @@ public class CardCancelService extends CardService implements TransactionalGatew
 
     @Override
     public Either<ErrorResponse, GatewayResponse> operation(ChargeEntity chargeEntity) {
-        CancelRequest cancelRequest = CancelRequest.valueOf(chargeEntity);
-        String gatewayName = chargeEntity.getGatewayAccount().getGatewayName();
-        CancelResponse cancelResponse = providers.resolve(gatewayName).cancel(cancelRequest);
-        return right(cancelResponse);
+        return right(getPaymentProviderFor(chargeEntity)
+                .cancel(CancelRequest.valueOf(chargeEntity)));
     }
 
     @Transactional

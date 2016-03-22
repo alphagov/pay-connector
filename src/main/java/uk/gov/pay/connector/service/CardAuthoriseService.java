@@ -22,14 +22,11 @@ public class CardAuthoriseService extends CardService implements TransactionalGa
             ENTERING_CARD_DETAILS
     };
 
-    private final PaymentProviders providers;
-
     private Card cardDetails;
 
     @Inject
     public CardAuthoriseService(ChargeDao chargeDao, PaymentProviders providers) {
-        super(chargeDao);
-        this.providers = providers;
+        super(chargeDao, providers);
     }
 
     public Either<ErrorResponse, GatewayResponse> doAuthorise(String chargeId, Card cardDetails) {
@@ -49,12 +46,8 @@ public class CardAuthoriseService extends CardService implements TransactionalGa
 
     @Override
     public Either<ErrorResponse, GatewayResponse> operation(ChargeEntity chargeEntity) {
-        AuthorisationRequest request = new AuthorisationRequest(chargeEntity, this.cardDetails);
-        String gatewayName = chargeEntity.getGatewayAccount().getGatewayName();
-        AuthorisationResponse response = providers.resolve(gatewayName)
-                .authorise(request);
-
-        return right(response);
+        return right(getPaymentProviderFor(chargeEntity)
+                .authorise(AuthorisationRequest.valueOf(chargeEntity, this.cardDetails)));
     }
 
     @Transactional
