@@ -7,6 +7,7 @@ import uk.gov.pay.connector.model.StatusUpdates;
 import uk.gov.pay.connector.model.domain.ChargeEntity;
 import uk.gov.pay.connector.model.domain.ChargeStatus;
 import uk.gov.pay.connector.model.domain.GatewayAccountEntity;
+import uk.gov.pay.connector.service.ChargeService;
 import uk.gov.pay.connector.service.ChargeStatusBlacklist;
 import uk.gov.pay.connector.service.PaymentProvider;
 import uk.gov.pay.connector.service.PaymentProviders;
@@ -23,6 +24,7 @@ import java.util.Optional;
 import java.util.function.Consumer;
 import java.util.function.Function;
 
+import static java.util.Collections.singletonList;
 import static javax.ws.rs.core.Response.Status.BAD_GATEWAY;
 
 @Path("/")
@@ -30,12 +32,14 @@ public class NotificationResource {
 
     private static final Logger logger = LoggerFactory.getLogger(NotificationResource.class);
     private PaymentProviders providers;
+    private ChargeService chargeService;
     private ChargeDao chargeDao;
     private NotificationUtil notificationUtil = new NotificationUtil(new ChargeStatusBlacklist());
 
     @Inject
-    public NotificationResource(PaymentProviders providers, ChargeDao chargeDao) {
+    public NotificationResource(PaymentProviders providers, ChargeDao chargeDao, ChargeService chargeService) {
         this.providers = providers;
+        this.chargeService = chargeService;
         this.chargeDao = chargeDao;
     }
 
@@ -64,7 +68,7 @@ public class NotificationResource {
 
     private Consumer<StatusUpdates> accountUpdater(String provider) {
         return statusUpdates ->
-                statusUpdates.getStatusUpdates().forEach(update -> updateCharge(chargeDao, provider, update.getKey(), update.getValue()));
+                statusUpdates.getStatusUpdates().forEach(update -> updateCharge(provider, update.getKey(), update.getValue()));
     }
 
     private Function<String, Optional<GatewayAccountEntity>> findAccountByTransactionId(String provider) {
@@ -78,14 +82,12 @@ public class NotificationResource {
                         });
     }
 
-    private static void updateCharge(ChargeDao chargeDao, String provider, String transactionId, ChargeStatus value) {
+    private void updateCharge(String provider, String transactionId, ChargeStatus status) {
         Optional<ChargeEntity> charge = chargeDao.findByProviderAndTransactionId(provider, transactionId);
         if (charge.isPresent()) {
-            ChargeEntity entity = charge.get();
-            entity.setStatus(value);
-            chargeDao.mergeAndNotifyStatusHasChanged(entity);
+            chargeService.updateStatus(singletonList(charge.get()), status);
         } else {
-            logger.error("Error when trying to update transaction id " + transactionId + " to status " + value);
+            logger.error("Error when trying to update transaction id " + transactionId + " to status " + status);
         }
     }
 }
