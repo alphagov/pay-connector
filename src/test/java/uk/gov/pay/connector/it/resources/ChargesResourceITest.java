@@ -22,6 +22,7 @@ import java.util.stream.Collectors;
 
 import static com.google.common.collect.Lists.newArrayList;
 import static com.jayway.restassured.http.ContentType.JSON;
+import static java.lang.Long.valueOf;
 import static java.lang.String.format;
 import static java.time.ZonedDateTime.now;
 import static java.util.Arrays.asList;
@@ -205,7 +206,7 @@ public class ChargesResourceITest {
         ZonedDateTime createdDate = ZonedDateTime.of(2016, 1, 25, 13, 45, 32, 123, ZoneId.of("UTC"));
         app.getDatabaseTestHelper().addCharge(chargeId, externalChargeId, accountId, AMOUNT, chargeStatus, returnUrl, null, "My reference", createdDate);
         app.getDatabaseTestHelper().addToken(chargeId, "tokenId");
-        app.getDatabaseTestHelper().addEvent(Long.valueOf(chargeId), chargeStatus.getValue());
+        app.getDatabaseTestHelper().addEvent(valueOf(chargeId), chargeStatus.getValue());
 
         getChargeApi
                 .withAccountId(accountId)
@@ -214,7 +215,7 @@ public class ChargesResourceITest {
                 .statusCode(OK.getStatusCode())
                 .contentType(CSV_CONTENT_TYPE)
                 .body(is("Service Payment Reference,Amount,Status,Gateway Transaction ID,GOV.UK Pay ID,Date Created\n" +
-                        "My reference,62.34,IN PROGRESS,," + chargeId + ",2016-01-25T13:45:32Z\n"));
+                        "My reference,62.34,IN PROGRESS,," + externalChargeId + ",2016-01-25T13:45:32Z\n"));
     }
 
     @Test

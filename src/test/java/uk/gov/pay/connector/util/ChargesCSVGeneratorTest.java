@@ -40,11 +40,13 @@ public class ChargesCSVGeneratorTest {
                 .withGatewayAccountEntity(gatewayAccount)
                 .build();
 
+        String externalId = charge.getExternalId();
+
         String generatedCsv = ChargesCSVGenerator.generate(newArrayList(charge));
 
         String expectedDate = DateTimeUtils.toUTCDateString(charge.getCreatedDate());
         String expectedOutput = "Service Payment Reference,Amount,Status,Gateway Transaction ID,GOV.UK Pay ID,Date Created\n" +
-                "reference,140.00,CREATED,222,1001," + expectedDate + "\n";
+                "reference,140.00,CREATED,222," + externalId + "," + expectedDate + "\n";
 
         assertThat(generatedCsv, is(expectedOutput));
     }
@@ -63,6 +65,7 @@ public class ChargesCSVGeneratorTest {
                 .withGatewayAccountEntity(gatewayAccount)
                 .build();
 
+        String externalId1 = charge1.getExternalId();
         String expectedDateCharge1 = DateTimeUtils.toUTCDateString(charge1.getCreatedDate());
 
         GatewayAccountEntity gatewayAccount2 = new GatewayAccountEntity("SmartPay", null);
@@ -76,12 +79,13 @@ public class ChargesCSVGeneratorTest {
                 .withGatewayAccountEntity(gatewayAccount2)
                 .build();
 
+        String externalId2 = charge2.getExternalId();
         String expectedDateCharge2 = DateTimeUtils.toUTCDateString(charge2.getCreatedDate());
 
         String generate = ChargesCSVGenerator.generate(newArrayList(charge1, charge2));
         String expectedOutput = "Service Payment Reference,Amount,Status,Gateway Transaction ID,GOV.UK Pay ID,Date Created\n" +
-                "ref,4.00,CREATED,200,100," + expectedDateCharge1 + "\n" +
-                "ref-2,2.00,IN PROGRESS,,101," + expectedDateCharge2 + "\n";
+                "ref,4.00,CREATED,200," + externalId1 + "," + expectedDateCharge1 + "\n" +
+                "ref-2,2.00,IN PROGRESS,," + externalId2 + "," + expectedDateCharge2 + "\n";
 
         assertThat(generate, is(expectedOutput));
     }
