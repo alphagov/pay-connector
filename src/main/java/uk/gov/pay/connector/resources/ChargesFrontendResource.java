@@ -81,7 +81,7 @@ public class ChargesFrontendResource {
                 .map(chargeEntity -> {
                     if (CURRENT_STATUSES_ALLOWING_UPDATE_TO_NEW_STATUS.contains(chargeStatusFrom(chargeEntity.getStatus()))) {
                         chargeEntity.setStatus(newChargeStatus);
-                        chargeDao.mergeAndNotifyStatusHasChanged(chargeEntity);
+                        chargeDao.notifyStatusHasChanged(chargeEntity);
                         return noContentResponse();
                     }
                     return badRequestResponse(logger, "charge with id: " + chargeId + " cant be updated to the new state: " + newChargeStatus.getValue());

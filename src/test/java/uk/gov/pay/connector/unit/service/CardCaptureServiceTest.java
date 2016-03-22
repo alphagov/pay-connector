@@ -3,7 +3,10 @@ package uk.gov.pay.connector.unit.service;
 import fj.data.Either;
 import org.junit.Test;
 import org.mockito.ArgumentCaptor;
-import uk.gov.pay.connector.model.*;
+import uk.gov.pay.connector.model.CaptureRequest;
+import uk.gov.pay.connector.model.CaptureResponse;
+import uk.gov.pay.connector.model.ErrorResponse;
+import uk.gov.pay.connector.model.GatewayResponse;
 import uk.gov.pay.connector.model.domain.ChargeEntity;
 import uk.gov.pay.connector.model.domain.ChargeStatus;
 import uk.gov.pay.connector.service.CardCaptureService;
@@ -42,7 +45,7 @@ public class CardCaptureServiceTest extends CardServiceTest {
         assertTrue(response.isRight());
         assertThat(response.right().value(), is(aSuccessfulResponse()));
         ArgumentCaptor<ChargeEntity> argumentCaptor = ArgumentCaptor.forClass(ChargeEntity.class);
-        verify(mockedChargeDao).mergeAndNotifyStatusHasChanged(argumentCaptor.capture());
+        verify(mockedChargeDao).notifyStatusHasChanged(argumentCaptor.capture());
 
         assertThat(argumentCaptor.getValue().getStatus(), is(CAPTURE_SUBMITTED.getValue()));
 

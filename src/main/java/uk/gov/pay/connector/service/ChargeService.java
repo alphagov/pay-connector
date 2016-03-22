@@ -78,7 +78,7 @@ public class ChargeService {
     public void updateStatus(List<ChargeEntity> chargeEntities, ChargeStatus status) {
         chargeEntities.stream().forEach(chargeEntity -> {
             chargeEntity.setStatus(status);
-            chargeDao.mergeAndNotifyStatusHasChanged(chargeEntity);
+            chargeDao.notifyStatusHasChanged(chargeEntity);
         });
     }
 

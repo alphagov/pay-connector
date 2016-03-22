@@ -1,6 +1,5 @@
 package uk.gov.pay.connector.it.dao;
 
-import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.Lists;
 import org.apache.commons.lang.RandomStringUtils;
 import org.hamcrest.Description;
@@ -360,7 +359,7 @@ public class ChargeDaoITest {
         ChargeEntity entity = charge.get();
         entity.setStatus(ENTERING_CARD_DETAILS);
 
-        chargeDao.mergeAndNotifyStatusHasChanged(entity);
+        chargeDao.notifyStatusHasChanged(entity);
 
         List<ChargeEventEntity> events = chargeDao.findById(chargeId).get().getEvents();
 

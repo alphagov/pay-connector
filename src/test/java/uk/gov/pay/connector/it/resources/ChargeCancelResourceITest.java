@@ -15,7 +15,6 @@ import java.util.List;
 import static com.jayway.restassured.http.ContentType.JSON;
 import static java.lang.String.format;
 import static javax.ws.rs.core.Response.Status.*;
-import static org.apache.commons.lang3.BooleanUtils.negate;
 import static org.hamcrest.Matchers.is;
 import static uk.gov.pay.connector.model.api.ExternalChargeStatus.EXT_SYSTEM_CANCELLED;
 import static uk.gov.pay.connector.model.domain.ChargeStatus.*;
@@ -61,21 +60,44 @@ public class ChargeCancelResourceITest {
     }
 
     @Test
-    public void respondWith400_whenNotCancellableState() {
-        Arrays.stream(ChargeStatus.values())
-                .filter(status -> negate(CANCELLABLE_STATES.contains(status) && !status.equals(ChargeStatus.EXPIRED.getValue())))
+    public void respondWith500_whenNotCancellableState() {
+        ChargeStatus[] statuses = {
+                AUTHORISATION_REJECTED,
+                AUTHORISATION_ERROR,
+                CAPTURED,
+                CAPTURE_SUBMITTED,
+                CAPTURE_ERROR,
+                EXPIRE_CANCEL_PENDING,
+                EXPIRE_CANCEL_FAILED,
+                CANCEL_ERROR,
+                SYSTEM_CANCELLED
+        };
+
+        Arrays.asList(statuses).stream()
                 .forEach(notCancellableState -> {
                     String chargeId = createNewChargeWithStatus(notCancellableState);
-                    String expectedMessage = "Cannot cancel a charge id [" + chargeId
-                            + "]: status is [" + notCancellableState.getValue() + "].";
+                    String expectedMessage = "Charge not in correct state to be processed, " + chargeId;
                     restApiCall
                             .withChargeId(chargeId)
                             .postChargeCancellation()
-                            .statusCode(BAD_REQUEST.getStatusCode())
+                            .statusCode(INTERNAL_SERVER_ERROR.getStatusCode())
                             .and()
                             .contentType(JSON)
                             .body("message", is(expectedMessage));
                 });
+    }
+
+    @Test
+    public void respondWith202_whenCancelAlreadyInProgress() {
+        String chargeId = createNewChargeWithStatus(CANCEL_READY);
+        String expectedMessage = "Cancellation for charge already in progress, " + chargeId;
+        restApiCall
+                .withChargeId(chargeId)
+                .postChargeCancellation()
+                .statusCode(ACCEPTED.getStatusCode())
+                .and()
+                .contentType(JSON)
+                .body("message", is(expectedMessage));
     }
 
     @Test
@@ -138,7 +160,7 @@ public class ChargeCancelResourceITest {
     @Test
     public void respondWith400_IfChargeIsExpired() {
         String chargeId = createNewChargeWithStatus(EXPIRED);
-        String expectedMessage = format("Cannot cancel a charge id [%s]: status is [%s].", chargeId, EXPIRED.getValue());
+        String expectedMessage = format("Cancellation for charge failed as already expired, %s", chargeId);
 
         restApiCall
                 .withChargeId(chargeId)
