@@ -22,7 +22,7 @@ public class StatusUpdates {
     }
 
     public static StatusUpdates failed() {
-        return new StatusUpdates(false, "", Collections.emptyList());
+        return new StatusUpdates(false, "Process failure", Collections.emptyList());
     }
 
     public boolean successful() {

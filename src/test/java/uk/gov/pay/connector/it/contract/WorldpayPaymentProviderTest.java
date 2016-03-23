@@ -26,8 +26,6 @@ import static java.util.UUID.randomUUID;
 import static org.hamcrest.CoreMatchers.hasItem;
 import static org.junit.Assert.*;
 import static org.mockito.Mockito.mock;
-import static org.mockito.Mockito.times;
-import static org.mockito.Mockito.verify;
 import static uk.gov.pay.connector.fixture.ChargeEntityFixture.aValidChargeEntity;
 import static uk.gov.pay.connector.model.domain.ChargeStatus.AUTHORISATION_SUCCESS;
 import static uk.gov.pay.connector.service.GatewayClient.createGatewayClient;
@@ -37,13 +35,14 @@ import static uk.gov.pay.connector.util.SystemUtils.envOrThrow;
 public class WorldpayPaymentProviderTest {
 
     private GatewayAccountEntity validGatewayAccount;
+    private Map<String, String> validCredentails;
 
     @Before
     public void checkThatWorldpayIsUp() {
         try {
             new URL(getWorldpayConfig().getUrl()).openConnection().connect();
 
-            Map<String, String> validCredentails = ImmutableMap.of(
+            validCredentails = ImmutableMap.of(
                     "merchant_id", "MERCHANTCODE",
                     "username", envOrThrow("GDS_CONNECTOR_WORLDPAY_USER"),
                     "password", envOrThrow("GDS_CONNECTOR_WORLDPAY_PASSWORD"));
@@ -104,37 +103,17 @@ public class WorldpayPaymentProviderTest {
         WorldpayPaymentProvider connector = getValidWorldpayPaymentProvider();
         AuthorisationResponse response = successfulWorldpayCardAuth(connector);
 
-        Consumer<StatusUpdates> accountUpdater = mock(Consumer.class);
+        Consumer<StatusUpdates> mockAccountUpdater = mock(Consumer.class);
 
         String transactionId = response.getTransactionId();
         StatusUpdates statusResponse = connector.handleNotification(
                 notificationPayloadForTransaction(transactionId, "AUTHORISED"),
-                x -> true,
-                x -> Optional.of(validGatewayAccount),
-                accountUpdater
+                payloadChecks -> true,
+                accoundFinder -> Optional.of(validGatewayAccount),
+                mockAccountUpdater
         );
 
         assertThat(statusResponse.getStatusUpdates(), hasItem(Pair.of(transactionId, AUTHORISATION_SUCCESS)));
-        verify(accountUpdater, times(1)).accept(statusResponse);
-    }
-
-    @Test
-    public void handleNotification_shouldRelyOnInquiryStatusWhenNotificationStatusCannotBeMapped() throws Exception {
-        WorldpayPaymentProvider connector = getValidWorldpayPaymentProvider();
-        AuthorisationResponse response = successfulWorldpayCardAuth(connector);
-
-        Consumer<StatusUpdates> accountUpdater = mock(Consumer.class);
-
-        String transactionId = response.getTransactionId();
-        StatusUpdates statusResponse = connector.handleNotification(
-                notificationPayloadForTransaction(transactionId, "UNKNOWN_STATUS"),
-                x -> true,
-                x -> Optional.of(validGatewayAccount),
-                accountUpdater
-        );
-
-        assertThat(statusResponse.getStatusUpdates(), hasItem(Pair.of(transactionId, AUTHORISATION_SUCCESS)));
-        verify(accountUpdater).accept(statusResponse);
     }
 
     @Test
