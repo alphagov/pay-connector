@@ -19,14 +19,15 @@ import uk.gov.pay.connector.model.domain.GatewayAccountEntity;
 import uk.gov.pay.connector.model.domain.TokenEntity;
 
 import javax.inject.Inject;
+import javax.ws.rs.core.UriBuilder;
 import javax.ws.rs.core.UriInfo;
 import java.net.URI;
-import java.net.URISyntaxException;
 import java.util.*;
 import java.util.stream.Collectors;
 
 import static java.lang.String.format;
 import static javax.ws.rs.HttpMethod.GET;
+import static javax.ws.rs.HttpMethod.POST;
 import static org.apache.commons.lang3.BooleanUtils.negate;
 import static uk.gov.pay.connector.model.ChargeResponse.Builder.aChargeResponse;
 import static uk.gov.pay.connector.model.api.ExternalChargeStatus.mapFromStatus;
@@ -35,13 +36,14 @@ import static uk.gov.pay.connector.resources.ApiPaths.CHARGE_API_PATH;
 public class ChargeService {
 
     private static final Logger logger = LoggerFactory.getLogger(ChargeService.class);
+
     public static final String EXPIRY_SUCCESS = "expiry-success";
     public static final String EXPIRY_FAILED = "expiry-failed";
 
-    ChargeDao chargeDao;
-    TokenDao tokenDao;
-    LinksConfig linksConfig;
-    CardCancelService cardCancelService;
+    private ChargeDao chargeDao;
+    private TokenDao tokenDao;
+    private LinksConfig linksConfig;
+    private CardCancelService cardCancelService;
 
     @Inject
     public ChargeService(TokenDao tokenDao, ChargeDao chargeDao, ConnectorConfiguration config, CardCancelService cardCancelService) {
@@ -152,8 +154,12 @@ public class ChargeService {
                 .withReturnUrl(charge.getReturnUrl())
                 .withLink("self", GET, selfUriFor(uriInfo, charge.getGatewayAccount().getId(), chargeId));
         token.ifPresent(tokenEntity -> {
-            responseBuilder.withLink("next_url", GET, secureRedirectUriFor(chargeId, tokenEntity.getToken()));
+            responseBuilder.withLink("next_url", GET, nextUrl(chargeId, tokenEntity.getToken()));
+            responseBuilder.withLink("next_url_post", POST, nextUrlPost(chargeId),"multipart/form-data",new HashMap<String, Object>(){{
+                put("chargeTokenId",tokenEntity.getToken());
+            }});
         });
+
         return responseBuilder.build();
     }
 
@@ -163,15 +169,16 @@ public class ChargeService {
                 .build(accountId, chargeId);
     }
 
-    private URI secureRedirectUriFor(String chargeId, String tokenId) {
-        String secureRedirectLocation = linksConfig.getCardDetailsUrl()
-                .replace("{chargeId}", chargeId)
-                .replace("{chargeTokenId}", tokenId);
-        try {
-            return new URI(secureRedirectLocation);
-        } catch (URISyntaxException e) {
-            logger.error(format("Invalid secure redirect url: %s", secureRedirectLocation), e);
-            throw new RuntimeException(e);
-        }
+    private URI nextUrl(String chargeId, String tokenId) {
+        return UriBuilder.fromUri(linksConfig.getCardDetailsBaseUrl())
+                .path(chargeId)
+                .queryParam("chargeTokenId", tokenId)
+                .build();
+    }
+
+    private URI nextUrlPost(String chargeId) {
+        return UriBuilder.fromUri(linksConfig.getCardDetailsBaseUrl())
+                .path(chargeId)
+                .build();
     }
 }

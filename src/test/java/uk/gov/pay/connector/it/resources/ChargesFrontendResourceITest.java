@@ -2,27 +2,21 @@ package uk.gov.pay.connector.it.resources;
 
 import com.google.common.collect.ImmutableMap;
 import com.jayway.restassured.response.ValidatableResponse;
-import org.exparity.hamcrest.date.ZonedDateTimeMatchers;
-import org.hamcrest.Description;
 import org.junit.Before;
 import org.junit.Rule;
 import org.junit.Test;
 import uk.gov.pay.connector.model.api.ExternalChargeStatus;
 import uk.gov.pay.connector.model.domain.ChargeStatus;
 import uk.gov.pay.connector.rules.DropwizardAppWithPostgresRule;
-import uk.gov.pay.connector.util.DateTimeUtils;
 import uk.gov.pay.connector.util.RandomIdGenerator;
 import uk.gov.pay.connector.util.RestAssuredClient;
 
 import javax.ws.rs.core.HttpHeaders;
-import java.time.ZonedDateTime;
-import java.time.temporal.ChronoUnit;
 import java.util.List;
-import java.util.regex.Matcher;
-import java.util.regex.Pattern;
 
 import static com.jayway.restassured.http.ContentType.JSON;
 import static java.lang.String.format;
+import static java.time.temporal.ChronoUnit.*;
 import static java.util.Arrays.asList;
 import static java.util.UUID.randomUUID;
 import static javax.ws.rs.HttpMethod.POST;
@@ -38,6 +32,8 @@ import static uk.gov.pay.connector.util.JsonEncoder.toJson;
 import static uk.gov.pay.connector.util.LinksAssert.assertLink;
 import static uk.gov.pay.connector.util.LinksAssert.assertSelfLink;
 import static uk.gov.pay.connector.util.NumberMatcher.isNumber;
+import static uk.gov.pay.connector.util.matcher.RegexMatcher.matchesRegex;
+import static uk.gov.pay.connector.util.matcher.ZoneDateTimeAsStringWithinMatcher.*;
 
 public class ChargesFrontendResourceITest {
     @Rule
@@ -289,41 +285,7 @@ public class ChargesFrontendResourceITest {
                 .body("return_url", is(returnUrl))
                 .body("created_date", is(notNullValue()))
                 .body("created_date", matchesRegex("^\\d{4}-\\d{2}-\\d{2}T\\d{2}:\\d{2}:\\d{2}.\\d{3}Z"))
-                .body("created_date", isADateWithinOneMinute());
-    }
-
-    private org.hamcrest.Matcher isADateWithinOneMinute() {
-        return new org.hamcrest.TypeSafeMatcher<String>() {
-
-            private ZonedDateTime now = ZonedDateTime.now();
-
-            @Override
-            protected boolean matchesSafely(String dateAsString) {
-                ZonedDateTime createdDateTime = DateTimeUtils.toUTCZonedDateTime(dateAsString).get();
-                return ZonedDateTimeMatchers.within(1, ChronoUnit.MINUTES, now).matches(createdDateTime);
-            }
-
-            @Override
-            public void describeTo(Description description) {
-                description.appendText("A date within a minute from " + now.toString());
-            }
-        };
-    }
-
-    private org.hamcrest.Matcher matchesRegex(final String pattern) {
-        return new org.hamcrest.TypeSafeMatcher<String>() {
-            @Override
-            protected boolean matchesSafely(String input) {
-                Pattern compiledPattern = Pattern.compile(pattern);
-                Matcher matcher = compiledPattern.matcher(input);
-                return matcher.matches();
-            }
-
-            @Override
-            public void describeTo(Description description) {
-                description.appendText("A String matching pattern: " + pattern);
-            }
-        };
+                .body("created_date", isWithin(10, SECONDS));
     }
 
     private String expectedChargeUrl(String chargeId, String path) {

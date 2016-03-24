@@ -2,10 +2,13 @@ package uk.gov.pay.connector.app;
 
 import io.dropwizard.Configuration;
 
-public class LinksConfig extends Configuration {
-    private String cardDetailsUrl;
+import java.net.URI;
 
-    public String getCardDetailsUrl() {
-        return cardDetailsUrl;
+public class LinksConfig extends Configuration {
+
+    private URI cardDetailsBaseUrl;
+
+    public URI getCardDetailsBaseUrl() {
+        return cardDetailsBaseUrl;
     }
 }

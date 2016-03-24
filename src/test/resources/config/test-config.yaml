@@ -16,7 +16,7 @@ logging:
         logFormat: "[%thread] %highlight(%-5level) %cyan(%logger{15}) - %msg %n"
 
 links:
-  cardDetailsUrl: http://Frontend/charge/{chargeId}?chargeTokenId={chargeTokenId}
+  cardDetailsBaseUrl: http://Frontend/charge
 
 worldpay:
   url: http://dummy.com
