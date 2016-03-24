@@ -89,7 +89,7 @@ public class WorldpayNotificationResourceITest extends CardResourceITestBase {
         worldpay.mockInquiryResponse(transactionId, "PAID IN FULL WITH CABBAGES");
 
         notifyConnector(transactionId, WorldpayPaymentStatus.CAPTURED.value())
-                .statusCode(502)
+                .statusCode(500)
                 .extract().body()
                 .asString();
 
@@ -121,7 +121,7 @@ public class WorldpayNotificationResourceITest extends CardResourceITestBase {
         worldpay.mockInquiryResponse(transactionId, WorldpayPaymentStatus.CAPTURED.value());
 
         notifyConnector("unknown-transation-id", "GARBAGE")
-                .statusCode(502)
+                .statusCode(500)
                 .extract().body()
                 .asString();
 
@@ -136,7 +136,7 @@ public class WorldpayNotificationResourceITest extends CardResourceITestBase {
         worldpay.mockErrorResponse();
 
         notifyConnector(transactionId, "GARBAGE")
-                .statusCode(502);
+                .statusCode(500);
 
         assertFrontendChargeStatusIs(chargeId, AUTHORISATION_SUCCESS.getValue());
     }

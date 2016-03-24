@@ -90,21 +90,6 @@ public class WorldpayPaymentProvider implements PaymentProvider {
         );
     }
 
-    public Optional<WorldpayNotification> parseNotification(String inboundNotification) {
-        try {
-            WorldpayNotification chargeNotification = unmarshall(inboundNotification, WorldpayNotification.class);
-
-            return Optional.ofNullable(chargeNotification)
-                    .map(notification -> {
-                        notification.setChargeStatus(WorldpayStatusesMapper.mapToChargeStatus(notification.getStatus()));
-                        return notification;
-                    });
-        } catch (XMLUnmarshallerException e) {
-            logger.error(format("Could not deserialise worldpay response %s", inboundNotification), e);
-            return Optional.empty();
-        }
-    }
-
     @Override
     public StatusUpdates handleNotification(String notificationPayload,
                                             Function<ChargeStatusRequest, Boolean> payloadChecks,
@@ -128,6 +113,21 @@ public class WorldpayPaymentProvider implements PaymentProvider {
                             .orElseGet(() -> FAILED);
                 })
                 .orElseGet(() -> FAILED);
+    }
+
+    private Optional<WorldpayNotification> parseNotification(String inboundNotification) {
+        try {
+            WorldpayNotification chargeNotification = unmarshall(inboundNotification, WorldpayNotification.class);
+
+            return Optional.ofNullable(chargeNotification)
+                    .map(notification -> {
+                        notification.setChargeStatus(WorldpayStatusesMapper.mapToChargeStatus(notification.getStatus()));
+                        return notification;
+                    });
+        } catch (XMLUnmarshallerException e) {
+            logger.error(format("Could not deserialise worldpay response %s", inboundNotification), e);
+            return Optional.empty();
+        }
     }
 
     private void processInquiryStatus(Consumer<StatusUpdates> accountUpdater, WorldpayNotification notification, StatusUpdates statusUpdates) {
