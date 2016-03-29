@@ -35,7 +35,7 @@ public class CardCancelServiceTest extends CardServiceTest {
 
         when(mockedChargeDao.findByExternalIdAndGatewayAccount(charge.getExternalId(), accountId))
                 .thenReturn(Optional.of(charge));
-        when(mockedChargeDao.merge(any()))
+        when(mockedChargeDao.merge(charge))
                 .thenReturn(charge)
                 .thenReturn(reloadedCharge);
 
@@ -47,7 +47,7 @@ public class CardCancelServiceTest extends CardServiceTest {
         assertThat(response.right().value(), is(aSuccessfulResponse()));
 
         ArgumentCaptor<ChargeEntity> argumentCaptor = ArgumentCaptor.forClass(ChargeEntity.class);
-        verify(mockedChargeDao).notifyStatusHasChanged(argumentCaptor.capture());
+        verify(mockedChargeDao).mergeAndNotifyStatusHasChanged(argumentCaptor.capture());
         assertThat(argumentCaptor.getValue(), is(reloadedCharge));
 
         verify(reloadedCharge, times(1)).setStatus(SYSTEM_CANCELLED);
@@ -80,7 +80,7 @@ public class CardCancelServiceTest extends CardServiceTest {
 
         when(mockedChargeDao.findByExternalIdAndGatewayAccount(charge.getExternalId(), accountId))
                 .thenReturn(Optional.of(charge));
-        when(mockedChargeDao.merge(any()))
+        when(mockedChargeDao.merge(charge))
                 .thenReturn(charge);
 
         Either<ErrorResponse, GatewayResponse> response = cardCancelService.doCancel(charge.getExternalId(), accountId);
@@ -101,7 +101,7 @@ public class CardCancelServiceTest extends CardServiceTest {
 
         when(mockedChargeDao.findByExternalIdAndGatewayAccount(charge.getExternalId(), accountId))
                 .thenReturn(Optional.of(charge));
-        when(mockedChargeDao.merge(any()))
+        when(mockedChargeDao.merge(charge))
                 .thenReturn(charge);
 
         Either<ErrorResponse, GatewayResponse> response = cardCancelService.doCancel(charge.getExternalId(), accountId);
@@ -122,7 +122,7 @@ public class CardCancelServiceTest extends CardServiceTest {
 
         when(mockedChargeDao.findByExternalIdAndGatewayAccount(charge.getExternalId(), accountId))
                 .thenReturn(Optional.of(charge));
-        when(mockedChargeDao.merge(any()))
+        when(mockedChargeDao.merge(charge))
                 .thenThrow(new OptimisticLockException());
 
         Either<ErrorResponse, GatewayResponse> response = cardCancelService.doCancel(charge.getExternalId(), accountId);
@@ -145,7 +145,7 @@ public class CardCancelServiceTest extends CardServiceTest {
 
         when(mockedChargeDao.findByExternalIdAndGatewayAccount(charge.getExternalId(), accountId))
                 .thenReturn(Optional.of(charge));
-        when(mockedChargeDao.merge(any()))
+        when(mockedChargeDao.merge(charge))
                 .thenReturn(charge)
                 .thenReturn(reloadedCharge);
 

@@ -359,7 +359,7 @@ public class ChargeDaoITest {
         ChargeEntity entity = charge.get();
         entity.setStatus(ENTERING_CARD_DETAILS);
 
-        chargeDao.notifyStatusHasChanged(entity);
+        chargeDao.mergeAndNotifyStatusHasChanged(entity);
 
         List<ChargeEventEntity> events = chargeDao.findById(chargeId).get().getEvents();
 

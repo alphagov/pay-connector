@@ -55,7 +55,7 @@ public class CardCaptureService extends CardService implements TransactionalGate
         ChargeEntity reloadedCharge = chargeDao.merge(chargeEntity);
         reloadedCharge.setStatus(captureResponse.getStatus());
 
-        chargeDao.notifyStatusHasChanged(reloadedCharge);
+        chargeDao.mergeAndNotifyStatusHasChanged(reloadedCharge);
 
         return right(operationResponse);
     }

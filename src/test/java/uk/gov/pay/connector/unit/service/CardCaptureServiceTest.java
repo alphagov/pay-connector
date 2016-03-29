@@ -45,7 +45,7 @@ public class CardCaptureServiceTest extends CardServiceTest {
         assertTrue(response.isRight());
         assertThat(response.right().value(), is(aSuccessfulResponse()));
         ArgumentCaptor<ChargeEntity> argumentCaptor = ArgumentCaptor.forClass(ChargeEntity.class);
-        verify(mockedChargeDao).notifyStatusHasChanged(argumentCaptor.capture());
+        verify(mockedChargeDao).mergeAndNotifyStatusHasChanged(argumentCaptor.capture());
 
         assertThat(argumentCaptor.getValue().getStatus(), is(CAPTURE_SUBMITTED.getValue()));
 

@@ -235,10 +235,10 @@ public class ChargeServiceTest {
         InOrder inOrder = inOrder(chargeEntity1, chargeEntity2, chargeDao);
 
         inOrder.verify(chargeEntity1).setStatus(ChargeStatus.ENTERING_CARD_DETAILS);
-        inOrder.verify(chargeDao).notifyStatusHasChanged(chargeEntity1);
+        inOrder.verify(chargeDao).mergeAndNotifyStatusHasChanged(chargeEntity1);
 
         inOrder.verify(chargeEntity2).setStatus(ChargeStatus.ENTERING_CARD_DETAILS);
-        inOrder.verify(chargeDao).notifyStatusHasChanged(chargeEntity2);
+        inOrder.verify(chargeDao).mergeAndNotifyStatusHasChanged(chargeEntity2);
     }
 
     @Test
@@ -265,13 +265,13 @@ public class ChargeServiceTest {
 
         InOrder inOrder = inOrder(chargeEntity1, chargeDao, chargeEntity2);
         inOrder.verify(chargeEntity1).setStatus(EXPIRED);
-        inOrder.verify(chargeDao).notifyStatusHasChanged(chargeEntity1);
+        inOrder.verify(chargeDao).mergeAndNotifyStatusHasChanged(chargeEntity1);
 
         inOrder.verify(chargeEntity2).setStatus(EXPIRE_CANCEL_PENDING);
-        inOrder.verify(chargeDao).notifyStatusHasChanged(chargeEntity2);
+        inOrder.verify(chargeDao).mergeAndNotifyStatusHasChanged(chargeEntity2);
 
         inOrder.verify(chargeEntity2).setStatus(EXPIRED);
-        inOrder.verify(chargeDao).notifyStatusHasChanged(chargeEntity2);
+        inOrder.verify(chargeDao).mergeAndNotifyStatusHasChanged(chargeEntity2);
     }
 
     @Test
@@ -299,13 +299,13 @@ public class ChargeServiceTest {
 
         InOrder inOrder = inOrder(chargeEntity1, chargeDao, chargeEntity2);
         inOrder.verify(chargeEntity1).setStatus(EXPIRED);
-        inOrder.verify(chargeDao).notifyStatusHasChanged(chargeEntity1);
+        inOrder.verify(chargeDao).mergeAndNotifyStatusHasChanged(chargeEntity1);
 
         inOrder.verify(chargeEntity2).setStatus(EXPIRE_CANCEL_PENDING);
-        inOrder.verify(chargeDao).notifyStatusHasChanged(chargeEntity2);
+        inOrder.verify(chargeDao).mergeAndNotifyStatusHasChanged(chargeEntity2);
 
         inOrder.verify(chargeEntity2).setStatus(EXPIRE_CANCEL_FAILED);
-        inOrder.verify(chargeDao).notifyStatusHasChanged(chargeEntity2);
+        inOrder.verify(chargeDao).mergeAndNotifyStatusHasChanged(chargeEntity2);
     }
 
     @Test
@@ -333,13 +333,13 @@ public class ChargeServiceTest {
 
         InOrder inOrder = inOrder(chargeEntity1, chargeDao, chargeEntity2);
         inOrder.verify(chargeEntity1).setStatus(EXPIRED);
-        inOrder.verify(chargeDao).notifyStatusHasChanged(chargeEntity1);
+        inOrder.verify(chargeDao).mergeAndNotifyStatusHasChanged(chargeEntity1);
 
         inOrder.verify(chargeEntity2).setStatus(EXPIRE_CANCEL_PENDING);
-        inOrder.verify(chargeDao).notifyStatusHasChanged(chargeEntity2);
+        inOrder.verify(chargeDao).mergeAndNotifyStatusHasChanged(chargeEntity2);
 
         inOrder.verify(chargeEntity2).setStatus(EXPIRE_CANCEL_FAILED);
-        inOrder.verify(chargeDao).notifyStatusHasChanged(chargeEntity2);
+        inOrder.verify(chargeDao).mergeAndNotifyStatusHasChanged(chargeEntity2);
     }
 
     private ChargeResponse.Builder chargeResponseBuilderOf(ChargeEntity chargeEntity) throws URISyntaxException {

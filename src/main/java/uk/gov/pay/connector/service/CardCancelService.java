@@ -56,7 +56,7 @@ public class CardCancelService extends CardService implements TransactionalGatew
         ChargeEntity reloadedCharge = chargeDao.merge(chargeEntity);
         reloadedCharge.setStatus(cancelResponse.getStatus());
 
-        chargeDao.notifyStatusHasChanged(reloadedCharge);
+        chargeDao.mergeAndNotifyStatusHasChanged(reloadedCharge);
 
         return right(operationResponse);
     }
