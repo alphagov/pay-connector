@@ -25,7 +25,7 @@ import static uk.gov.pay.connector.model.domain.ChargeStatus.*;
 
 public class CardAuthoriseServiceTest extends CardServiceTest {
 
-    private final CardAuthoriseService cardAuthorisationService = new CardAuthoriseService(mockedAccountDao, mockedChargeDao, mockedProviders);
+    private final CardAuthoriseService cardAuthorisationService = new CardAuthoriseService(mockedChargeDao, mockedProviders);
 
     @Test
     public void shouldAuthoriseACharge() throws Exception {
@@ -126,7 +126,7 @@ public class CardAuthoriseServiceTest extends CardServiceTest {
         ErrorResponse gatewayError = response.left().value();
 
         assertThat(gatewayError.getErrorType(), is(CONFLICT_ERROR));
-        assertThat(gatewayError.getMessage(), is("Authorisation for charge conflicting, " + charge.getExternalId()));
+        assertThat(gatewayError.getMessage(), is("Operation for charge conflicting, " + charge.getExternalId()));
     }
 
     @Test

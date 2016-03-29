@@ -118,7 +118,7 @@ public class CardAuthoriseResourceITest extends CardResourceITestBase {
     @Test
     public void shouldReturnAuthError_IfChargeExpired() throws Exception {
         String chargeId = createNewChargeWith(EXPIRED, null);
-        authoriseAndVerifyFor(chargeId, validCardDetails, format("Cannot authorise charge as it is expired, %s", chargeId), 400);
+        authoriseAndVerifyFor(chargeId, validCardDetails, format("Authorisation for charge failed as already expired, %s", chargeId), 400);
         assertFrontendChargeStatusIs(chargeId, EXPIRED.getValue());
     }
 

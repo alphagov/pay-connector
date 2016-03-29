@@ -6,8 +6,10 @@ import javax.persistence.*;
 import java.time.ZoneId;
 import java.time.ZonedDateTime;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.List;
 
+import static org.apache.commons.lang3.StringUtils.equalsIgnoreCase;
 import static uk.gov.pay.connector.model.domain.ChargeStatus.CREATED;
 
 @Entity
@@ -120,5 +122,10 @@ public class ChargeEntity extends AbstractEntity {
 
     public String getExternalId() {
         return externalId;
+    }
+
+    public boolean hasStatus(ChargeStatus... states) {
+        return Arrays.stream(states)
+                .anyMatch(status -> equalsIgnoreCase(status.getValue(), getStatus()));
     }
 }

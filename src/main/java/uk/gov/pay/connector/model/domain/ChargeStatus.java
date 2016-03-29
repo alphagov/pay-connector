@@ -29,6 +29,9 @@ public enum ChargeStatus {
     EXPIRE_CANCEL_FAILED("EXPIRE CANCEL FAILED"),
     EXPIRED("EXPIRED"),
 
+    CANCEL_READY("CANCEL READY"),
+    CANCEL_ERROR("CANCEL ERROR"),
+
     SYSTEM_CANCELLED("SYSTEM CANCELLED");
 
     private String value;

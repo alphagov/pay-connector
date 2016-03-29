@@ -33,7 +33,6 @@ import java.util.Optional;
 import static java.util.Arrays.asList;
 import static java.util.Collections.emptyMap;
 import static javax.ws.rs.HttpMethod.GET;
-import static junit.framework.TestCase.assertTrue;
 import static org.hamcrest.core.Is.is;
 import static org.hamcrest.core.IsNull.notNullValue;
 import static org.hamcrest.core.IsNull.nullValue;
@@ -258,7 +257,7 @@ public class ChargeServiceTest {
         when(gatewayAccount.getId()).thenReturn( accountId);
         when(chargeEntity2.getGatewayAccount()).thenReturn(gatewayAccount);
 
-        mockCancelResponse(extChargeId, accountId, Either.right(CancelResponse.aSuccessfulCancelResponse()));
+        mockCancelResponse(extChargeId, accountId, Either.right(CancelResponse.successfulCancelResponse(SYSTEM_CANCELLED)));
 
         Map<String, Integer> result = service.expire(asList(chargeEntity1, chargeEntity2));
         assertEquals(2, result.get(EXPIRY_SUCCESS).intValue());
@@ -291,7 +290,7 @@ public class ChargeServiceTest {
         when(gatewayAccount.getId()).thenReturn( accountId);
         when(chargeEntity2.getGatewayAccount()).thenReturn(gatewayAccount);
 
-        CancelResponse unsuccessfulResponse = new CancelResponse(false, ErrorResponse.unexpectedStatusCodeFromGateway("invalid status"));
+        CancelResponse unsuccessfulResponse = CancelResponse.cancelFailureResponse(ErrorResponse.unexpectedStatusCodeFromGateway("invalid status"));
         mockCancelResponse(extChargeId, accountId, Either.right(unsuccessfulResponse));
 
         Map<String, Integer> result = service.expire(asList(chargeEntity1, chargeEntity2));

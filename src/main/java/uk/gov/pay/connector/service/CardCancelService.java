@@ -1,63 +1,67 @@
 package uk.gov.pay.connector.service;
 
+import com.google.inject.persist.Transactional;
 import fj.data.Either;
 import uk.gov.pay.connector.dao.ChargeDao;
-import uk.gov.pay.connector.dao.GatewayAccountDao;
 import uk.gov.pay.connector.model.*;
 import uk.gov.pay.connector.model.domain.ChargeEntity;
 import uk.gov.pay.connector.model.domain.ChargeStatus;
 
 import javax.inject.Inject;
-import java.util.Optional;
-import java.util.function.Function;
+import java.util.function.Supplier;
 
 import static fj.data.Either.left;
 import static fj.data.Either.right;
 import static java.lang.String.format;
-import static uk.gov.pay.connector.model.ErrorResponse.baseError;
-import static uk.gov.pay.connector.model.ErrorResponse.chargeExpired;
 import static uk.gov.pay.connector.model.domain.ChargeStatus.*;
 
-public class CardCancelService extends CardService {
+public class CardCancelService extends CardService implements TransactionalGatewayOperation {
 
-    private static final ChargeStatus[] CANCELLABLE_STATES = new ChargeStatus[]{
+    private static ChargeStatus[] legalStatuses = new ChargeStatus[]{
             CREATED, ENTERING_CARD_DETAILS, AUTHORISATION_SUCCESS, AUTHORISATION_READY, CAPTURE_READY
     };
 
+    private final PaymentProviders providers;
+
     @Inject
-    public CardCancelService(GatewayAccountDao accountDao, ChargeDao chargeDao, PaymentProviders providers) {
-        super(accountDao, chargeDao, providers);
+    public CardCancelService(ChargeDao chargeDao, PaymentProviders providers) {
+        super(chargeDao, providers);
+        this.providers = providers;
     }
 
     public Either<ErrorResponse, GatewayResponse> doCancel(String chargeId, Long accountId) {
-        Optional<ChargeEntity> charge = chargeDao.findByExternalIdAndGatewayAccount(chargeId, accountId);
-        if(charge.isPresent() && hasStatus(charge.get(), EXPIRED)) {
-            return left(chargeExpired(format("Cannot cancel a charge id [%s]: status is [%s].", charge.get().getExternalId(), EXPIRED.getValue())));
-
-        }
-        return charge.map(cancel())
+        return chargeDao
+                .findByExternalIdAndGatewayAccount(chargeId, accountId)
+                .map(TransactionalGatewayOperation.super::executeGatewayOperationFor)
                 .orElseGet(chargeNotFound(chargeId));
     }
 
-
-    private Function<ChargeEntity, Either<ErrorResponse, GatewayResponse>> cancel() {
-        return charge -> hasStatus(charge, CANCELLABLE_STATES) ?
-                right(cancelFor(charge)) :
-                left(cancelErrorMessageFor(charge.getExternalId(), charge.getStatus()));
+    @Transactional
+    @Override
+    public Either<ErrorResponse, ChargeEntity> preOperation(ChargeEntity chargeEntity) {
+        return preOperation(chargeEntity, OperationType.CANCELLATION, legalStatuses, ChargeStatus.CANCEL_READY);
     }
 
-    private GatewayResponse cancelFor(ChargeEntity charge) {
-        CancelRequest request = CancelRequest.valueOf(charge);
-        CancelResponse response = paymentProviderFor(charge).cancel(request);
-
-        if (response.isSuccessful()) {
-            charge.setStatus(SYSTEM_CANCELLED);
-            chargeDao.mergeAndNotifyStatusHasChanged(charge);
-        }
-        return response;
+    @Override
+    public Either<ErrorResponse, GatewayResponse> operation(ChargeEntity chargeEntity) {
+        return right(getPaymentProviderFor(chargeEntity)
+                .cancel(CancelRequest.valueOf(chargeEntity)));
     }
 
-    private ErrorResponse cancelErrorMessageFor(String chargeId, String status) {
-        return baseError(format("Cannot cancel a charge id [%s]: status is [%s].", chargeId, status));
+    @Transactional
+    @Override
+    public Either<ErrorResponse, GatewayResponse> postOperation(ChargeEntity chargeEntity, GatewayResponse operationResponse) {
+        CancelResponse cancelResponse = (CancelResponse) operationResponse;
+
+        ChargeEntity reloadedCharge = chargeDao.merge(chargeEntity);
+        reloadedCharge.setStatus(cancelResponse.getStatus());
+
+        chargeDao.mergeAndNotifyStatusHasChanged(reloadedCharge);
+
+        return right(operationResponse);
+    }
+
+    public Supplier<Either<ErrorResponse, GatewayResponse>> chargeNotFound(String chargeId) {
+        return () -> left(new ErrorResponse(format("Charge with id [%s] not found.", chargeId), ErrorType.CHARGE_NOT_FOUND));
     }
 }

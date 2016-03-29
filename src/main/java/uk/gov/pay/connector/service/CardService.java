@@ -1,45 +1,65 @@
 package uk.gov.pay.connector.service;
 
 import fj.data.Either;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import uk.gov.pay.connector.dao.ChargeDao;
-import uk.gov.pay.connector.dao.GatewayAccountDao;
 import uk.gov.pay.connector.model.ErrorResponse;
-import uk.gov.pay.connector.model.GatewayResponse;
 import uk.gov.pay.connector.model.domain.ChargeEntity;
 import uk.gov.pay.connector.model.domain.ChargeStatus;
 
-import javax.inject.Inject;
-import java.util.Arrays;
-import java.util.function.Supplier;
-
 import static fj.data.Either.left;
+import static fj.data.Either.right;
 import static java.lang.String.format;
-import static org.apache.commons.lang3.StringUtils.equalsIgnoreCase;
-import static uk.gov.pay.connector.model.ErrorType.CHARGE_NOT_FOUND;
+import static uk.gov.pay.connector.model.ErrorResponse.*;
 
-public abstract class CardService {
-
-    protected final GatewayAccountDao accountDao;
+abstract public class CardService {
     protected final ChargeDao chargeDao;
     protected final PaymentProviders providers;
+    private final Logger logger = LoggerFactory.getLogger(CardCancelService.class);
 
-    @Inject
-    public CardService(GatewayAccountDao accountDao, ChargeDao chargeDao, PaymentProviders providers) {
-        this.accountDao = accountDao;
+    protected enum OperationType {
+        CAPTURE("Capture"),
+        AUTHORISATION("Authorisation"),
+        CANCELLATION("Cancellation");
+
+        private String value;
+
+        OperationType(String value) {
+            this.value = value;
+        }
+
+        public String getValue() {
+            return value;
+        }
+    }
+
+    public CardService(ChargeDao chargeDao, PaymentProviders providers) {
         this.chargeDao = chargeDao;
         this.providers = providers;
     }
 
-    protected PaymentProvider paymentProviderFor(ChargeEntity charge) {
-        return providers.resolve(charge.getGatewayAccount().getGatewayName());
+    public Either<ErrorResponse, ChargeEntity> preOperation(ChargeEntity chargeEntity, OperationType operationType, ChargeStatus[] legalStatuses, ChargeStatus lockingStatus) {
+        ChargeEntity reloadedCharge = chargeDao.merge(chargeEntity);
+        if (reloadedCharge.hasStatus(ChargeStatus.EXPIRED)) {
+            return left(chargeExpired(format("%s for charge failed as already expired, %s", operationType.getValue(), reloadedCharge.getExternalId())));
+        }
+        if (!reloadedCharge.hasStatus(legalStatuses)) {
+            if (reloadedCharge.hasStatus(lockingStatus)) {
+                return left(operationAlreadyInProgress(format("%s for charge already in progress, %s",
+                        operationType.getValue(), reloadedCharge.getExternalId())));
+            }
+            logger.error(format("Charge with id [%s] and with status [%s] should be in one of the following legal states, [%s]",
+                    reloadedCharge.getId(), reloadedCharge.getStatus(), legalStatuses));
+            return left(illegalStateError(format("Charge not in correct state to be processed, %s", reloadedCharge.getExternalId())));
+        }
+        reloadedCharge.setStatus(lockingStatus);
+
+        return right(reloadedCharge);
     }
 
-    protected boolean hasStatus(ChargeEntity charge, ChargeStatus... states) {
-        return Arrays.stream(states)
-                .anyMatch(status -> equalsIgnoreCase(status.getValue(), charge.getStatus()));
+    public PaymentProvider getPaymentProviderFor(ChargeEntity chargeEntity) {
+        return providers.resolve(chargeEntity.getGatewayAccount().getGatewayName());
     }
 
-    protected Supplier<Either<ErrorResponse, GatewayResponse>> chargeNotFound(String chargeId) {
-        return () -> left(new ErrorResponse(format("Charge with id [%s] not found.", chargeId), CHARGE_NOT_FOUND));
-    }
 }

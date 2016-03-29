@@ -24,14 +24,13 @@ import static java.lang.String.format;
 import static java.util.UUID.randomUUID;
 import static javax.ws.rs.core.Response.Status.OK;
 import static uk.gov.pay.connector.model.AuthorisationResponse.*;
-import static uk.gov.pay.connector.model.CancelResponse.aSuccessfulCancelResponse;
 import static uk.gov.pay.connector.model.CancelResponse.cancelFailureResponse;
+import static uk.gov.pay.connector.model.CancelResponse.successfulCancelResponse;
 import static uk.gov.pay.connector.model.CaptureResponse.captureFailureResponse;
 import static uk.gov.pay.connector.model.CaptureResponse.successfulCaptureResponse;
 import static uk.gov.pay.connector.model.ErrorResponse.baseError;
 import static uk.gov.pay.connector.model.InquiryResponse.*;
-import static uk.gov.pay.connector.model.domain.ChargeStatus.AUTHORISATION_SUCCESS;
-import static uk.gov.pay.connector.model.domain.ChargeStatus.CAPTURE_SUBMITTED;
+import static uk.gov.pay.connector.model.domain.ChargeStatus.*;
 import static uk.gov.pay.connector.model.domain.GatewayAccount.CREDENTIALS_MERCHANT_ID;
 import static uk.gov.pay.connector.service.OrderCaptureRequestBuilder.aWorldpayOrderCaptureRequest;
 import static uk.gov.pay.connector.service.OrderSubmitRequestBuilder.aWorldpayOrderSubmitRequest;
@@ -258,7 +257,7 @@ public class WorldpayPaymentProvider implements PaymentProvider {
                         .bimap(
                                 CancelResponse::cancelFailureResponse,
                                 (wResponse) -> wResponse.isCancelled() ?
-                                        aSuccessfulCancelResponse() :
+                                        successfulCancelResponse(SYSTEM_CANCELLED) :
                                         cancelFailureResponse(logger, wResponse.getErrorMessage())
                         )
         );

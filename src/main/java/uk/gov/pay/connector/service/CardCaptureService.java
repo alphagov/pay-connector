@@ -2,106 +2,65 @@ package uk.gov.pay.connector.service;
 
 import com.google.inject.persist.Transactional;
 import fj.data.Either;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 import uk.gov.pay.connector.dao.ChargeDao;
-import uk.gov.pay.connector.dao.GatewayAccountDao;
-import uk.gov.pay.connector.model.CaptureRequest;
-import uk.gov.pay.connector.model.CaptureResponse;
-import uk.gov.pay.connector.model.ErrorResponse;
-import uk.gov.pay.connector.model.GatewayResponse;
+import uk.gov.pay.connector.model.*;
 import uk.gov.pay.connector.model.domain.ChargeEntity;
 import uk.gov.pay.connector.model.domain.ChargeStatus;
 
 import javax.inject.Inject;
-import javax.persistence.OptimisticLockException;
-import java.util.function.Function;
+import java.util.function.Supplier;
 
 import static fj.data.Either.left;
 import static fj.data.Either.right;
 import static java.lang.String.format;
-import static uk.gov.pay.connector.model.ErrorResponse.*;
 import static uk.gov.pay.connector.model.domain.ChargeStatus.AUTHORISATION_SUCCESS;
-import static uk.gov.pay.connector.model.domain.ChargeStatus.CAPTURE_READY;
 
-public class CardCaptureService extends CardService {
-    private final Logger logger = LoggerFactory.getLogger(CardCaptureService.class);
+public class CardCaptureService extends CardService implements TransactionalGatewayOperation {
+
+    private static ChargeStatus[] legalStatuses = new ChargeStatus[]{
+            AUTHORISATION_SUCCESS
+    };
+
+    private final PaymentProviders providers;
 
     @Inject
-    public CardCaptureService(GatewayAccountDao accountDao, ChargeDao chargeDao, PaymentProviders providers) {
-        super(accountDao, chargeDao, providers);
+    public CardCaptureService(ChargeDao chargeDao, PaymentProviders providers) {
+        super(chargeDao, providers);
+        this.providers = providers;
     }
 
     public Either<ErrorResponse, GatewayResponse> doCapture(String chargeId) {
-
-        Function<ChargeEntity, Either<ErrorResponse, GatewayResponse>> doCapture =
-                (charge) -> {
-                    Either<ErrorResponse, ChargeEntity> preCapture = null;
-
-                    try {
-                        preCapture = preCapture(charge);
-                    } catch (OptimisticLockException e) {
-                        return left(conflictError(format("Capture for charge conflicting, %s", chargeId)));
-                    }
-
-                    if (preCapture.isLeft())
-                        return left(preCapture.left().value());
-
-                    Either<ErrorResponse, CaptureResponse> captured =
-                            capture(preCapture.right().value());
-                    if (captured.isLeft())
-                        return left(captured.left().value());
-
-                    Either<ErrorResponse, GatewayResponse> postCapture =
-                            postCapture(preCapture.right().value(), captured.right().value());
-                    if (postCapture.isLeft())
-                        return left(postCapture.left().value());
-
-                    return right(captured.right().value());
-                };
-
         return chargeDao
                 .findByExternalId(chargeId)
-                .map(doCapture)
+                .map(TransactionalGatewayOperation.super::executeGatewayOperationFor)
                 .orElseGet(chargeNotFound(chargeId));
     }
-
     @Transactional
-    public Either<ErrorResponse, ChargeEntity> preCapture(ChargeEntity charge) {
-        ChargeEntity reloadedCharge = chargeDao.merge(charge);
-        if (hasStatus(reloadedCharge, ChargeStatus.EXPIRED)) {
-            return left(chargeExpired(format("Cannot capture charge as it is expired, %s", reloadedCharge.getExternalId())));
-        }
-        if (!hasStatus(reloadedCharge, AUTHORISATION_SUCCESS)) {
-            if (hasStatus(reloadedCharge, CAPTURE_READY)) {
-                return left(operationAlreadyInProgress(format("Capture for charge already in progress, %s",
-                        reloadedCharge.getExternalId())));
-            }
-            logger.error(format("Charge with id [%s] and with status [%s] should be in [AUTHORISATION SUCCESS] for capture.",
-                    reloadedCharge.getId(), reloadedCharge.getStatus()));
-            return left(illegalStateError(format("Charge not in correct state to be processed, %s", reloadedCharge.getExternalId())));
-        }
-        reloadedCharge.setStatus(CAPTURE_READY);
-
-        return right(reloadedCharge);
+    @Override
+    public Either<ErrorResponse, ChargeEntity> preOperation(ChargeEntity chargeEntity) {
+        return preOperation(chargeEntity, CardService.OperationType.CAPTURE, legalStatuses, ChargeStatus.CAPTURE_READY);
     }
 
-
-    private Either<ErrorResponse, CaptureResponse> capture(ChargeEntity charge) {
-        CaptureRequest request = CaptureRequest.valueOf(charge);
-        CaptureResponse response = paymentProviderFor(charge)
-                .capture(request);
-
-        return right(response);
+    @Override
+    public Either<ErrorResponse, GatewayResponse> operation(ChargeEntity chargeEntity) {
+        return right(getPaymentProviderFor(chargeEntity)
+                .capture(CaptureRequest.valueOf(chargeEntity)));
     }
 
     @Transactional
-    public Either<ErrorResponse, GatewayResponse> postCapture(ChargeEntity charge, CaptureResponse response) {
-        ChargeEntity reloadedCharge = chargeDao.merge(charge);
-        reloadedCharge.setStatus(response.getStatus());
+    @Override
+    public Either<ErrorResponse, GatewayResponse> postOperation(ChargeEntity chargeEntity, GatewayResponse operationResponse) {
+        CaptureResponse captureResponse = (CaptureResponse) operationResponse;
+
+        ChargeEntity reloadedCharge = chargeDao.merge(chargeEntity);
+        reloadedCharge.setStatus(captureResponse.getStatus());
 
         chargeDao.mergeAndNotifyStatusHasChanged(reloadedCharge);
 
-        return right(response);
+        return right(operationResponse);
+    }
+
+    public Supplier<Either<ErrorResponse, GatewayResponse>> chargeNotFound(String chargeId) {
+        return () -> left(new ErrorResponse(format("Charge with id [%s] not found.", chargeId), ErrorType.CHARGE_NOT_FOUND));
     }
 }

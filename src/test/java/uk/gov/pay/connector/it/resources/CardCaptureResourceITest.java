@@ -65,7 +65,7 @@ public class CardCaptureResourceITest extends CardResourceITestBase {
     @Test
     public void shouldReturnCaptureError_IfChargeExpired() throws Exception {
         String chargeId = createNewChargeWith(EXPIRED, null);
-        String message = format("Cannot capture charge as it is expired, %s", chargeId);
+        String message = format("Capture for charge failed as already expired, %s", chargeId);
         captureAndVerifyFor(chargeId, 400, message);
         assertFrontendChargeStatusIs(chargeId, EXPIRED.getValue());
     }
