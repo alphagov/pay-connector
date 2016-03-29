@@ -16,7 +16,7 @@ logging:
         logFormat: "[%thread] %highlight(%-5level) %cyan(%logger{15}) - %msg %n"
 
 links:
-  cardDetailsBaseUrl: http://Frontend/charge/
+  frontendUrl: http://Frontend/
 
 worldpay:
   url: http://localhost:10107/jsp/merchant/xml/paymentService.jsp

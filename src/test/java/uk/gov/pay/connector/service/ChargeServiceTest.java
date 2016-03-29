@@ -81,8 +81,8 @@ public class ChargeServiceTest {
         when(config.getLinks())
                 .thenReturn(linksConfig);
 
-        when(linksConfig.getCardDetailsBaseUrl())
-                .thenReturn(URI.create("http://payments.com/charges/"));
+        when(linksConfig.getFrontendUrl())
+                .thenReturn("http://payments.com");
 
         when(this.uriInfo.getBaseUriBuilder())
                 .thenReturn(UriBuilder.fromUri(SERVICE_HOST));
@@ -139,8 +139,8 @@ public class ChargeServiceTest {
         ChargeResponse.Builder expectedChargeResponse = chargeResponseBuilderOf(createdChargeEntity);
 
         expectedChargeResponse.withLink("self", GET, new URI(SERVICE_HOST + "/v1/api/accounts/1/charges/" + externalChargeId[0]));
-        expectedChargeResponse.withLink("next_url", GET, new URI("http://payments.com/charges/" + externalChargeId[0] + "?chargeTokenId=" + tokenEntity.getToken()));
-        expectedChargeResponse.withLink("next_url_post", POST, new URI("http://payments.com/charges/" + externalChargeId[0]), "multipart/form-data", new HashMap<String, Object>() {{
+        expectedChargeResponse.withLink("next_url", GET, new URI("http://payments.com/charge/" + externalChargeId[0] + "?chargeTokenId=" + tokenEntity.getToken()));
+        expectedChargeResponse.withLink("next_url_post", POST, new URI("http://payments.com/charge/" + externalChargeId[0]), "application/x-www-form-urlencoded", new HashMap<String, Object>() {{
             put("chargeTokenId", tokenEntity.getToken());
         }});
 
@@ -175,8 +175,8 @@ public class ChargeServiceTest {
 
         ChargeResponse.Builder expectedChargeResponse = chargeResponseBuilderOf(chargeEntity.get());
         expectedChargeResponse.withLink("self", GET, new URI(SERVICE_HOST + "/v1/api/accounts/1/charges/" + externalId));
-        expectedChargeResponse.withLink("next_url", GET, new URI("http://payments.com/charges/" + externalId + "?chargeTokenId=" + tokenEntity.getToken()));
-        expectedChargeResponse.withLink("next_url_post", POST, new URI("http://payments.com/charges/" + externalId), "multipart/form-data", new HashMap<String, Object>() {{
+        expectedChargeResponse.withLink("next_url", GET, new URI("http://payments.com/charge/" + externalId + "?chargeTokenId=" + tokenEntity.getToken()));
+        expectedChargeResponse.withLink("next_url_post", POST, new URI("http://payments.com/charge/" + externalId), "application/x-www-form-urlencoded", new HashMap<String, Object>() {{
             put("chargeTokenId", tokenEntity.getToken());
         }});
 
@@ -362,5 +362,4 @@ public class ChargeServiceTest {
     private void mockCancelResponse(String extChargeId, Long accountId, Either<ErrorResponse, GatewayResponse> either) {
         when(cardCancelService.doCancel(extChargeId, accountId)).thenReturn(either);
     }
-
 }

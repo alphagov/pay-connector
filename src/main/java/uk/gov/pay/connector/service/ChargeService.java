@@ -28,6 +28,7 @@ import java.util.stream.Collectors;
 import static java.lang.String.format;
 import static javax.ws.rs.HttpMethod.GET;
 import static javax.ws.rs.HttpMethod.POST;
+import static javax.ws.rs.core.MediaType.APPLICATION_FORM_URLENCODED;
 import static org.apache.commons.lang3.BooleanUtils.negate;
 import static uk.gov.pay.connector.model.ChargeResponse.Builder.aChargeResponse;
 import static uk.gov.pay.connector.model.api.ExternalChargeStatus.mapFromStatus;
@@ -155,8 +156,8 @@ public class ChargeService {
                 .withLink("self", GET, selfUriFor(uriInfo, charge.getGatewayAccount().getId(), chargeId));
         token.ifPresent(tokenEntity -> {
             responseBuilder.withLink("next_url", GET, nextUrl(chargeId, tokenEntity.getToken()));
-            responseBuilder.withLink("next_url_post", POST, nextUrlPost(chargeId),"multipart/form-data",new HashMap<String, Object>(){{
-                put("chargeTokenId",tokenEntity.getToken());
+            responseBuilder.withLink("next_url_post", POST, chargeUrl(chargeId), APPLICATION_FORM_URLENCODED, new HashMap<String, Object>() {{
+                put("chargeTokenId", tokenEntity.getToken());
             }});
         });
 
@@ -170,14 +171,16 @@ public class ChargeService {
     }
 
     private URI nextUrl(String chargeId, String tokenId) {
-        return UriBuilder.fromUri(linksConfig.getCardDetailsBaseUrl())
+        return UriBuilder.fromUri(linksConfig.getFrontendUrl())
+                .path("charge")
                 .path(chargeId)
                 .queryParam("chargeTokenId", tokenId)
                 .build();
     }
 
-    private URI nextUrlPost(String chargeId) {
-        return UriBuilder.fromUri(linksConfig.getCardDetailsBaseUrl())
+    private URI chargeUrl(String chargeId) {
+        return UriBuilder.fromUri(linksConfig.getFrontendUrl())
+                .path("charge")
                 .path(chargeId)
                 .build();
     }

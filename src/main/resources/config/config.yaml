@@ -16,7 +16,7 @@ logging:
         logFormat: "[%thread] %highlight(%-5level) %cyan(%logger{15}) - %msg %n"
 
 links:
-  cardDetailBaseUrl: ${CARD_DETAILS_BASE_URL}
+  frontendUrl: ${FRONTEND_URL}
 
 worldpay:
   url: ${GDS_CONNECTOR_WORLDPAY_URL}

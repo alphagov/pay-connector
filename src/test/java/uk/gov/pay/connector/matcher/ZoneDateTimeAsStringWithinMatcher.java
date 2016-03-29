@@ -1,4 +1,4 @@
-package uk.gov.pay.connector.util.matcher;
+package uk.gov.pay.connector.matcher;
 
 import org.exparity.hamcrest.date.ZonedDateTimeMatchers;
 import org.hamcrest.Description;

@@ -15,6 +15,7 @@ import javax.ws.rs.core.HttpHeaders;
 import javax.ws.rs.core.Response.Status;
 import java.time.ZoneId;
 import java.time.ZonedDateTime;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.stream.Collectors;
@@ -34,6 +35,9 @@ import static org.apache.commons.lang3.RandomStringUtils.randomAlphanumeric;
 import static org.exparity.hamcrest.date.ZonedDateTimeMatchers.within;
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.*;
+import static org.hamcrest.text.MatchesPattern.matchesPattern;
+import static uk.gov.pay.connector.matcher.ResponseContainsLinkMatcher.containsLink;
+import static uk.gov.pay.connector.matcher.ZoneDateTimeAsStringWithinMatcher.isWithin;
 import static uk.gov.pay.connector.model.api.ExternalChargeStatus.*;
 import static uk.gov.pay.connector.model.domain.ChargeStatus.*;
 import static uk.gov.pay.connector.model.domain.ChargeStatus.CREATED;
@@ -41,8 +45,6 @@ import static uk.gov.pay.connector.resources.ApiPaths.CHARGE_API_PATH;
 import static uk.gov.pay.connector.util.DateTimeUtils.toUTCZonedDateTime;
 import static uk.gov.pay.connector.util.JsonEncoder.toJson;
 import static uk.gov.pay.connector.util.NumberMatcher.isNumber;
-import static uk.gov.pay.connector.util.matcher.RegexMatcher.matchesRegex;
-import static uk.gov.pay.connector.util.matcher.ZoneDateTimeAsStringWithinMatcher.isWithin;
 
 public class ChargesResourceITest {
 
@@ -95,7 +97,7 @@ public class ChargesResourceITest {
                 .body(JSON_DESCRIPTION_KEY, is(expectedDescription))
                 .body(JSON_PROVIDER_KEY, is(PROVIDER_NAME))
                 .body(JSON_RETURN_URL_KEY, is(returnUrl))
-                .body("created_date", matchesRegex("^\\d{4}-\\d{2}-\\d{2}T\\d{2}:\\d{2}:\\d{2}.\\d{3}Z"))
+                .body("created_date", matchesPattern("^\\d{4}-\\d{2}-\\d{2}T\\d{2}:\\d{2}:\\d{2}.\\d{3}Z"))
                 .body("created_date", isWithin(10, SECONDS))
                 .contentType(JSON);
 
@@ -103,16 +105,16 @@ public class ChargesResourceITest {
         String documentLocation = expectedChargeLocationFor(accountId, externalChargeId);
         String chargeTokenId = app.getDatabaseTestHelper().getChargeTokenByExternalChargeId(externalChargeId);
 
+        String hrefNextUrl = "http://Frontend" + FRONTEND_CARD_DETAILS_URL + externalChargeId + "?chargeTokenId=" + chargeTokenId;
+        String hrefNextUrlPost = "http://Frontend" + FRONTEND_CARD_DETAILS_URL + externalChargeId;
+
         response.header("Location", is(documentLocation))
                 .body("links", hasSize(3))
-                .body("links.find {it.rel=='self'}.method", is("GET"))
-                .body("links.find {it.rel=='self'}.href", is(documentLocation))
-                .body("links.find {it.rel=='next_url'}.method", is("GET"))
-                .body("links.find {it.rel=='next_url'}.href", is("http://Frontend" + FRONTEND_CARD_DETAILS_URL + externalChargeId + "?chargeTokenId=" + chargeTokenId))
-                .body("links.find {it.rel=='next_url_post'}.method", is("POST"))
-                .body("links.find {it.rel=='next_url_post'}.href", is("http://Frontend" + FRONTEND_CARD_DETAILS_URL + externalChargeId))
-                .body("links.find {it.rel=='next_url_post'}.type", is("multipart/form-data"))
-                .body("links.find {it.rel=='next_url_post'}.params.chargeTokenId", is(chargeTokenId));
+                .body("links", containsLink("self", "GET", documentLocation))
+                .body("links", containsLink("next_url", "GET", hrefNextUrl))
+                .body("links", containsLink("next_url_post", "POST", hrefNextUrlPost, "application/x-www-form-urlencoded", new HashMap<String, Object>() {{
+                    put("chargeTokenId", chargeTokenId);
+                }}));
 
         ValidatableResponse getChargeResponse = getChargeApi
                 .withAccountId(accountId)
@@ -128,15 +130,12 @@ public class ChargesResourceITest {
                 .body(JSON_RETURN_URL_KEY, is(returnUrl));
 
         getChargeResponse.body("links", hasSize(3))
-                .body("links.find {it.rel=='self'}.method", is("GET"))
-                .body("links.find {it.rel=='self'}.href", is(documentLocation))
-                .body("links.find {it.rel=='next_url'}.method", is("GET"))
-                .body("links.find {it.rel=='next_url'}.href", is("http://Frontend" + FRONTEND_CARD_DETAILS_URL + externalChargeId + "?chargeTokenId=" + chargeTokenId))
-                .body("links.find {it.rel=='next_url_post'}.method", is("POST"))
-                .body("links.find {it.rel=='next_url_post'}.href", is("http://Frontend" + FRONTEND_CARD_DETAILS_URL + externalChargeId))
-                .body("links.find {it.rel=='next_url_post'}.type", is("multipart/form-data"))
-                .body("links.find {it.rel=='next_url_post'}.params.chargeTokenId", is(chargeTokenId));
-
+                .body("links", hasSize(3))
+                .body("links", containsLink("self", "GET", documentLocation))
+                .body("links", containsLink("next_url", "GET", hrefNextUrl))
+                .body("links", containsLink("next_url_post", "POST", hrefNextUrlPost, "application/x-www-form-urlencoded", new HashMap<String, Object>() {{
+                    put("chargeTokenId", chargeTokenId);
+                }}));
     }
 
     @Test
