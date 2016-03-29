@@ -25,7 +25,7 @@ import java.util.function.Consumer;
 import java.util.function.Function;
 
 import static java.util.Collections.singletonList;
-import static javax.ws.rs.core.Response.Status.BAD_GATEWAY;
+import static javax.ws.rs.core.Response.Status.INTERNAL_SERVER_ERROR;
 
 @Path("/")
 public class NotificationResource {
@@ -60,7 +60,7 @@ public class NotificationResource {
         StatusUpdates statusUpdates = paymentProvider.handleNotification(notification, notificationUtil::payloadChecks, findAccountByTransactionId(provider), accountUpdater(provider));
 
         if (!statusUpdates.successful()) {
-            return Response.status(BAD_GATEWAY).build();
+            return Response.status(INTERNAL_SERVER_ERROR).build();
         }
 
         return Response.ok(statusUpdates.getResponseForProvider()).build();

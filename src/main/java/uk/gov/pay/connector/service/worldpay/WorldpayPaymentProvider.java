@@ -41,6 +41,7 @@ import static uk.gov.pay.connector.util.XMLUnmarshaller.unmarshall;
 public class WorldpayPaymentProvider implements PaymentProvider {
     public static final String NOTIFICATION_ACKNOWLEDGED = "[OK]";
     public static final StatusUpdates NO_UPDATE = StatusUpdates.noUpdate(NOTIFICATION_ACKNOWLEDGED);
+    public static final StatusUpdates FAILED = StatusUpdates.failed();
     private final Logger logger = LoggerFactory.getLogger(WorldpayPaymentProvider.class);
 
     private final GatewayClient client;
@@ -88,7 +89,32 @@ public class WorldpayPaymentProvider implements PaymentProvider {
         );
     }
 
-    public Optional<WorldpayNotification> parseNotification(String inboundNotification) {
+    @Override
+    public StatusUpdates handleNotification(String notificationPayload,
+                                            Function<ChargeStatusRequest, Boolean> payloadChecks,
+                                            Function<String, Optional<GatewayAccountEntity>> accountFinder,
+                                            Consumer<StatusUpdates> accountUpdater) {
+
+        Optional<WorldpayNotification> notificationMaybe = parseNotification(notificationPayload);
+
+        return notificationMaybe
+                .map(notification -> {
+                    if (!payloadChecks.apply(notification)) {
+                        return NO_UPDATE;
+                    }
+
+                    return accountFinder.apply(notification.getTransactionId())
+                            .map(gatewayAccount -> {
+                                StatusUpdates statusUpdates = confirmStatus(gatewayAccount, notification.getTransactionId());
+                                processInquiryStatus(accountUpdater, notification, statusUpdates);
+                                return statusUpdates;
+                            })
+                            .orElseGet(() -> FAILED);
+                })
+                .orElseGet(() -> FAILED);
+    }
+
+    private Optional<WorldpayNotification> parseNotification(String inboundNotification) {
         try {
             WorldpayNotification chargeNotification = unmarshall(inboundNotification, WorldpayNotification.class);
 
@@ -103,48 +129,28 @@ public class WorldpayPaymentProvider implements PaymentProvider {
         }
     }
 
-    @Override
-    public StatusUpdates handleNotification(String notificationPayload,
-                                            Function<ChargeStatusRequest, Boolean> payloadChecks,
-                                            Function<String, Optional<GatewayAccountEntity>> accountFinder,
-                                            Consumer<StatusUpdates> accountUpdater) {
-
-        Optional<WorldpayNotification> notificationMaybe = parseNotification(notificationPayload);
-        return notificationMaybe.map(notification -> {
-
-                    if (!payloadChecks.apply(notification)) {
-                        return NO_UPDATE;
-                    }
-
-                    if (notification.getChargeStatus().isPresent()) {
-                        //phase 1
-                        Pair<String, ChargeStatus> pair = Pair.of(notification.getTransactionId(), notification.getChargeStatus().get());
-                        StatusUpdates statusUpdates = StatusUpdates.withUpdate(NOTIFICATION_ACKNOWLEDGED, ImmutableList.of(pair));
-                        accountUpdater.accept(statusUpdates);
-                    } else {
-                        logger.error(format("Could not map worldpay status %s to our internal status.", notification.getStatus()));
-                    }
-
-                    //phase 2
-                    Optional<GatewayAccountEntity> gatewayAccount = accountFinder.apply(notification.getTransactionId());
-
-                    return gatewayAccount.map(gatewayAccountEntity -> {
-                        StatusUpdates statusUpdates = newStatusFromNotification(gatewayAccountEntity, notification.getTransactionId());
-
-                        if (statusUpdates.successful()) {
-                            accountUpdater.accept(statusUpdates);
-                        }
-                        return statusUpdates;
-
-                    }).orElseGet(() -> NO_UPDATE);
-
-                }
-        ).orElseGet(() -> NO_UPDATE);
+    private void processInquiryStatus(Consumer<StatusUpdates> accountUpdater, WorldpayNotification notification, StatusUpdates statusUpdates) {
+        if (statusUpdates.successful()) {
+            logMismatchingStatuses(notification, statusUpdates);
+            accountUpdater.accept(statusUpdates);
+        }
     }
 
-//    private StatusUpdates validateStatus
+    private void logMismatchingStatuses(WorldpayNotification notification, StatusUpdates statusUpdates) {
+        statusUpdates.getStatusUpdates()
+                .stream()
+                .findFirst()
+                .ifPresent(status -> {
+                    if(!notification.getChargeStatus().isPresent() ||
+                            status.getValue() != notification.getChargeStatus().get()) {
+                        logger.error(format("Inquiry status '%s' did not match notification status '%s'",
+                                status.getValue(),
+                                notification.getChargeStatus()));
+                    }
+        });
+    }
 
-    private StatusUpdates newStatusFromNotification(GatewayAccountEntity gatewayAccount, String transactionId) {
+    private StatusUpdates confirmStatus(GatewayAccountEntity gatewayAccount, String transactionId) {
         InquiryResponse inquiryResponse = inquire(transactionId, gatewayAccount);
         String worldpayStatus = inquiryResponse.getNewStatus();
         if (!inquiryResponse.isSuccessful() || StringUtils.isBlank(worldpayStatus)) {
@@ -152,14 +158,16 @@ public class WorldpayPaymentProvider implements PaymentProvider {
             return StatusUpdates.failed();
         }
 
-        Optional<ChargeStatus> newChargeStatus = WorldpayStatusesMapper.mapToChargeStatus(worldpayStatus);
-        if (!newChargeStatus.isPresent()) {
-            logger.error(format("Could not map worldpay status %s to our internal status.", worldpayStatus));
-            return NO_UPDATE;
-        }
-
-        Pair<String, ChargeStatus> update = Pair.of(inquiryResponse.getTransactionId(), newChargeStatus.get());
-        return StatusUpdates.withUpdate(NOTIFICATION_ACKNOWLEDGED, ImmutableList.of(update));
+        return WorldpayStatusesMapper
+                .mapToChargeStatus(worldpayStatus)
+                .map(chargeStatus -> {
+                    Pair<String, ChargeStatus> update = Pair.of(inquiryResponse.getTransactionId(), chargeStatus);
+                    return StatusUpdates.withUpdate(NOTIFICATION_ACKNOWLEDGED, ImmutableList.of(update));
+                })
+                .orElseGet(() -> {
+                    logger.error(format("Could not map worldpay status %s to our internal status.", worldpayStatus));
+                    return FAILED;
+                });
     }
 
 

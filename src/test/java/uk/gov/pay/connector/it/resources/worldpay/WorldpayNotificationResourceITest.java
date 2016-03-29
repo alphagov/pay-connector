@@ -88,14 +88,12 @@ public class WorldpayNotificationResourceITest extends CardResourceITestBase {
 
         worldpay.mockInquiryResponse(transactionId, "PAID IN FULL WITH CABBAGES");
 
-        String response = notifyConnector(transactionId, WorldpayPaymentStatus.CAPTURED.value())
-                .statusCode(200)
+        notifyConnector(transactionId, WorldpayPaymentStatus.CAPTURED.value())
+                .statusCode(500)
                 .extract().body()
                 .asString();
 
-        assertThat(response, is(RESPONSE_EXPECTED_BY_WORLDPAY));
-
-        assertFrontendChargeStatusIs(chargeId, CAPTURED.getValue());
+        assertFrontendChargeStatusIs(chargeId, AUTHORISATION_SUCCESS.getValue());
     }
 
     @Test
@@ -122,12 +120,10 @@ public class WorldpayNotificationResourceITest extends CardResourceITestBase {
 
         worldpay.mockInquiryResponse(transactionId, WorldpayPaymentStatus.CAPTURED.value());
 
-        String response = notifyConnector("unknown-transation-id", "GARBAGE")
-                .statusCode(200)
+        notifyConnector("unknown-transation-id", "GARBAGE")
+                .statusCode(500)
                 .extract().body()
                 .asString();
-
-        assertThat(response, is(RESPONSE_EXPECTED_BY_WORLDPAY));
 
         assertFrontendChargeStatusIs(chargeId, AUTHORISATION_SUCCESS.getValue());
     }
@@ -140,7 +136,7 @@ public class WorldpayNotificationResourceITest extends CardResourceITestBase {
         worldpay.mockErrorResponse();
 
         notifyConnector(transactionId, "GARBAGE")
-                .statusCode(502);
+                .statusCode(500);
 
         assertFrontendChargeStatusIs(chargeId, AUTHORISATION_SUCCESS.getValue());
     }

@@ -35,13 +35,14 @@ import static uk.gov.pay.connector.util.SystemUtils.envOrThrow;
 public class WorldpayPaymentProviderTest {
 
     private GatewayAccountEntity validGatewayAccount;
+    private Map<String, String> validCredentails;
 
     @Before
     public void checkThatWorldpayIsUp() {
         try {
             new URL(getWorldpayConfig().getUrl()).openConnection().connect();
 
-            Map<String, String> validCredentails = ImmutableMap.of(
+            validCredentails = ImmutableMap.of(
                     "merchant_id", "MERCHANTCODE",
                     "username", envOrThrow("GDS_CONNECTOR_WORLDPAY_USER"),
                     "password", envOrThrow("GDS_CONNECTOR_WORLDPAY_PASSWORD"));
@@ -98,18 +99,18 @@ public class WorldpayPaymentProviderTest {
     }
 
     @Test
-    public void shouldBeAbleToHandleNotification() throws Exception {
+    public void handleNotification_shouldOnlyUpdateChargeStatusOnce() throws Exception {
         WorldpayPaymentProvider connector = getValidWorldpayPaymentProvider();
         AuthorisationResponse response = successfulWorldpayCardAuth(connector);
 
-        Consumer<StatusUpdates> accountUpdater = mock(Consumer.class);
+        Consumer<StatusUpdates> mockAccountUpdater = mock(Consumer.class);
 
         String transactionId = response.getTransactionId();
         StatusUpdates statusResponse = connector.handleNotification(
-                notificationPayloadForTransaction(transactionId),
-                x -> true,
-                x -> Optional.of(validGatewayAccount),
-                accountUpdater
+                notificationPayloadForTransaction(transactionId, "AUTHORISED"),
+                payloadChecks -> true,
+                accoundFinder -> Optional.of(validGatewayAccount),
+                mockAccountUpdater
         );
 
         assertThat(statusResponse.getStatusUpdates(), hasItem(Pair.of(transactionId, AUTHORISATION_SUCCESS)));
@@ -182,8 +183,10 @@ public class WorldpayPaymentProviderTest {
         }
     };
 
-    private String notificationPayloadForTransaction(String transactionId) throws IOException {
+    private String notificationPayloadForTransaction(String transactionId, String status) throws IOException {
         URL resource = getResource("templates/worldpay/notification.xml");
-        return Resources.toString(resource, Charset.defaultCharset()).replace("{{transactionId}}", transactionId);
+        return Resources.toString(resource, Charset.defaultCharset())
+                .replace("{{transactionId}}", transactionId)
+                .replace("{{status}}", status);
     }
 }
