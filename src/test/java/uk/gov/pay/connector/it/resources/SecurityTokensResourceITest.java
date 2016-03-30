@@ -22,7 +22,7 @@ public class SecurityTokensResourceITest {
     private static final String CHARGE_ID = "charge827364";
 
     private String tokensUrlFor(String id) {
-        return SecurityTokensResource.CHARGE_FOR_TOKEN_PATH.replace("{chargeTokenId}", id);
+        return SecurityTokensResource.CHARGE_TOKEN_PATH.replace("{chargeTokenId}", id);
     }
 
     @Rule
@@ -61,7 +61,7 @@ public class SecurityTokensResourceITest {
 
     private ValidatableResponse findTokenGetsStatusCode(int expectedStatusCode) {
         return givenSetup()
-                .get(tokensUrlFor(TOKEN_ID))
+                .get(tokensUrlFor(TOKEN_ID)+"/charge")
                 .then()
                 .statusCode(expectedStatusCode)
                 .contentType(JSON);
