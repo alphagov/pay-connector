@@ -132,7 +132,7 @@ public class ChargeServiceTest {
         verify(tokenDao).persist(tokenEntityArgumentCaptor.capture());
 
         TokenEntity tokenEntity = tokenEntityArgumentCaptor.getValue();
-        assertThat(tokenEntity.getChargeId(), is(createdChargeEntity.getId()));
+        assertThat(tokenEntity.getChargeEntity().getId(), is(createdChargeEntity.getId()));
         assertThat(tokenEntity.getToken(), is(notNullValue()));
 
         // Then - expected response is returned
@@ -173,7 +173,7 @@ public class ChargeServiceTest {
         verify(tokenDao).persist(tokenEntityArgumentCaptor.capture());
 
         TokenEntity tokenEntity = tokenEntityArgumentCaptor.getValue();
-        assertThat(tokenEntity.getChargeId(), is(newCharge.getId()));
+        assertThat(tokenEntity.getChargeEntity().getId(), is(newCharge.getId()));
         assertThat(tokenEntity.getToken(), is(notNullValue()));
 
         ChargeResponse.Builder expectedChargeResponse = chargeResponseBuilderOf(chargeEntity.get());
@@ -209,7 +209,7 @@ public class ChargeServiceTest {
         verify(tokenDao).persist(tokenEntityArgumentCaptor.capture());
 
         TokenEntity tokenEntity = tokenEntityArgumentCaptor.getValue();
-        assertThat(tokenEntity.getChargeId(), is(newCharge.getId()));
+        assertThat(tokenEntity.getChargeEntity().getId(), is(newCharge.getId()));
         assertThat(tokenEntity.getToken(), is(notNullValue()));
 
         ChargeResponse.Builder expectedChargeResponse = chargeResponseBuilderOf(chargeEntity.get());

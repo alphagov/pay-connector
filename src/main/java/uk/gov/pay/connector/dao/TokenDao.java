@@ -26,7 +26,7 @@ public class TokenDao extends JpaDao<TokenEntity> {
 
     public Optional<TokenEntity> findByChargeId(Long chargeId) {
         return entityManager.get()
-                .createQuery("SELECT t FROM TokenEntity t WHERE t.chargeId = :chargeId", TokenEntity.class)
+                .createQuery("SELECT t FROM TokenEntity t WHERE t.chargeEntity.id = :chargeId", TokenEntity.class)
                 .setParameter("chargeId", chargeId)
                 .getResultList().stream()
                 .findFirst();

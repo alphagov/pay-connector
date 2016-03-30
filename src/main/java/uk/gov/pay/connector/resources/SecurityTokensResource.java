@@ -38,7 +38,7 @@ public class SecurityTokensResource {
 
         return tokenDao.findByTokenId(chargeTokenId)
                 .map(token -> {
-                    String externalId = chargeDao.findById(token.getChargeId()).get().getExternalId();
+                    String externalId = chargeDao.findById(token.getChargeEntity().getId()).get().getExternalId();
                     Map<Object, Object> tokenResource = ImmutableMap.builder().put("chargeId", externalId).build();
                     return Response.ok().entity(tokenResource).build();
                 }).orElseGet(() ->

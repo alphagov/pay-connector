@@ -106,7 +106,7 @@ public class ChargeService {
 
     @Transactional
     private TokenEntity createNewChargeEntityToken(ChargeEntity chargeEntity) {
-        TokenEntity token = TokenEntity.generateTokenFor(chargeEntity.getId());
+        TokenEntity token = TokenEntity.generateNewTokenFor(chargeEntity);
         tokenDao.persist(token);
         return token;
     }
