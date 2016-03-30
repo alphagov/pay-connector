@@ -4,6 +4,7 @@ import javax.persistence.Column;
 import javax.persistence.Entity;
 import javax.persistence.SequenceGenerator;
 import javax.persistence.Table;
+import java.util.UUID;
 
 @Entity
 @Table(name = "tokens")
@@ -22,6 +23,15 @@ public class TokenEntity extends AbstractEntity {
     public TokenEntity(Long chargeId, String token) {
         this.chargeId = chargeId;
         this.token = token;
+    }
+
+    public TokenEntity(Long chargeId) {
+        this.chargeId = chargeId;
+        this.token = UUID.randomUUID().toString();
+    }
+
+    public static TokenEntity generateTokenFor(Long chargeId) {
+        return new TokenEntity(chargeId);
     }
 
     public Long getChargeId() {

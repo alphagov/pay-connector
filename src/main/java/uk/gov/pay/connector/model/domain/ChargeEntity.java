@@ -1,5 +1,6 @@
 package uk.gov.pay.connector.model.domain;
 
+import uk.gov.pay.connector.model.api.ExternalChargeStatus;
 import uk.gov.pay.connector.util.RandomIdGenerator;
 
 import javax.persistence.*;
@@ -124,8 +125,13 @@ public class ChargeEntity extends AbstractEntity {
         return externalId;
     }
 
-    public boolean hasStatus(ChargeStatus... states) {
-        return Arrays.stream(states)
-                .anyMatch(status -> equalsIgnoreCase(status.getValue(), getStatus()));
+    public boolean hasStatus(ChargeStatus... status) {
+        return Arrays.stream(status)
+                .anyMatch(s -> equalsIgnoreCase(s.getValue(), getStatus()));
+    }
+
+    public boolean hasExternalStatus(ExternalChargeStatus... status) {
+        return Arrays.stream(status)
+                .anyMatch(s -> ExternalChargeStatus.mapFromStatus(getStatus()).equals(s));
     }
 }
