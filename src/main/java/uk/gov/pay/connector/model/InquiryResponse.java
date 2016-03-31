@@ -30,6 +30,11 @@ public class InquiryResponse implements GatewayResponse {
         return error;
     }
 
+    @Override
+    public Boolean isInProgress() {
+        return false;
+    }
+
     public String getTransactionId() {
         return transactionId;
     }

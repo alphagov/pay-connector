@@ -14,12 +14,18 @@ public class AuthorisationResponse implements GatewayResponse {
     private ErrorResponse error;
     private ChargeStatus status;
     private String transactionId;
+    private boolean inProgress;
 
     public AuthorisationResponse(boolean successful, ErrorResponse error, ChargeStatus status, String transactionId) {
+        this(successful, error, status, transactionId, false);
+    }
+
+    public AuthorisationResponse(boolean successful, ErrorResponse error, ChargeStatus status, String transactionId, boolean inProgress) {
         this.successful = successful;
         this.error = error;
         this.status = status;
         this.transactionId = transactionId;
+        this.inProgress = inProgress;
     }
 
     public AuthorisationResponse(ErrorResponse error) {
@@ -52,6 +58,11 @@ public class AuthorisationResponse implements GatewayResponse {
 
     public ErrorResponse getError() {
         return error;
+    }
+
+    @Override
+    public Boolean isInProgress() {
+        return inProgress;
     }
 
     public ChargeStatus getNewChargeStatus() {

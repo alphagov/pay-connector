@@ -2,13 +2,20 @@ package uk.gov.pay.connector.service;
 
 import com.google.inject.persist.Transactional;
 import fj.data.Either;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import uk.gov.pay.connector.dao.ChargeDao;
 import uk.gov.pay.connector.model.*;
 import uk.gov.pay.connector.model.domain.Card;
 import uk.gov.pay.connector.model.domain.ChargeEntity;
 import uk.gov.pay.connector.model.domain.ChargeStatus;
+import uk.gov.pay.connector.resources.CardExecutorService;
 
 import javax.inject.Inject;
+import java.util.concurrent.ExecutionException;
+import java.util.concurrent.Future;
+import java.util.concurrent.TimeUnit;
+import java.util.concurrent.TimeoutException;
 import java.util.function.Supplier;
 
 import static fj.data.Either.left;
@@ -18,6 +25,8 @@ import static uk.gov.pay.connector.model.domain.ChargeStatus.ENTERING_CARD_DETAI
 
 public class CardAuthoriseService extends CardService implements TransactionalGatewayOperation {
 
+    private static final Logger logger = LoggerFactory.getLogger(CardAuthoriseService.class);
+
     private static ChargeStatus[] legalStates = new ChargeStatus[]{
             ENTERING_CARD_DETAILS
     };
@@ -25,8 +34,8 @@ public class CardAuthoriseService extends CardService implements TransactionalGa
     private Card cardDetails;
 
     @Inject
-    public CardAuthoriseService(ChargeDao chargeDao, PaymentProviders providers) {
-        super(chargeDao, providers);
+    public CardAuthoriseService(ChargeDao chargeDao, PaymentProviders providers, CardExecutorService cardExecutorService) {
+        super(chargeDao, providers, cardExecutorService);
     }
 
     public Either<ErrorResponse, GatewayResponse> doAuthorise(String chargeId, Card cardDetails) {
@@ -46,8 +55,21 @@ public class CardAuthoriseService extends CardService implements TransactionalGa
 
     @Override
     public Either<ErrorResponse, GatewayResponse> operation(ChargeEntity chargeEntity) {
-        return right(getPaymentProviderFor(chargeEntity)
-                .authorise(AuthorisationRequest.valueOf(chargeEntity, this.cardDetails)));
+        Supplier<AuthorisationResponse> authorisationSupplier = () ->
+                getPaymentProviderFor(chargeEntity).authorise(AuthorisationRequest.valueOf(chargeEntity, this.cardDetails));
+        try {
+            Future<AuthorisationResponse> futureResponse = cardExecutorService.execute(authorisationSupplier);
+            return right(futureResponse.get(10, TimeUnit.SECONDS));
+        } catch (InterruptedException | ExecutionException e) {
+            logger.error("Exception occurred while doing authorisation", e);
+            return left(new ErrorResponse("Exception occurred while doing authorisation", ErrorType.GENERIC_GATEWAY_ERROR));
+        } catch (TimeoutException e) {
+            return right(inProgressGatewayResponse(ChargeStatus.chargeStatusFrom(chargeEntity.getStatus()), chargeEntity.getId()));
+        }
+    }
+
+    private GatewayResponse inProgressGatewayResponse(ChargeStatus chargeStatus, Long id) {
+        return new AuthorisationResponse(false, null, chargeStatus, id.toString(), true);
     }
 
     @Transactional

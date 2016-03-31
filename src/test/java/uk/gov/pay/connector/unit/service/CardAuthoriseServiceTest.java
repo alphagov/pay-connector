@@ -2,9 +2,11 @@ package uk.gov.pay.connector.unit.service;
 
 import fj.data.Either;
 import org.junit.Test;
+import org.junit.runner.RunWith;
+import org.mockito.Mock;
+import org.mockito.runners.MockitoJUnitRunner;
 import uk.gov.pay.connector.model.AuthorisationResponse;
 import uk.gov.pay.connector.model.ErrorResponse;
-import uk.gov.pay.connector.model.ErrorType;
 import uk.gov.pay.connector.model.GatewayResponse;
 import uk.gov.pay.connector.model.domain.Card;
 import uk.gov.pay.connector.model.domain.ChargeEntity;
@@ -14,7 +16,11 @@ import uk.gov.pay.connector.util.CardUtils;
 
 import javax.persistence.OptimisticLockException;
 import java.util.Optional;
+import java.util.concurrent.ExecutionException;
+import java.util.concurrent.Future;
+import java.util.concurrent.TimeoutException;
 
+import static fj.data.Either.right;
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.core.Is.is;
 import static org.junit.Assert.assertTrue;
@@ -23,23 +29,26 @@ import static org.mockito.Mockito.*;
 import static uk.gov.pay.connector.model.ErrorType.*;
 import static uk.gov.pay.connector.model.domain.ChargeStatus.*;
 
+@RunWith(MockitoJUnitRunner.class)
 public class CardAuthoriseServiceTest extends CardServiceTest {
 
-    private final CardAuthoriseService cardAuthorisationService = new CardAuthoriseService(mockedChargeDao, mockedProviders);
+    private final CardAuthoriseService cardAuthorisationService = new CardAuthoriseService(mockedChargeDao, mockedProviders, mockExecutorService);
+
+    @Mock
+    private Future<AuthorisationResponse> mockFutureResponse;
 
     @Test
     public void shouldAuthoriseACharge() throws Exception {
         Long chargeId = 1L;
         String gatewayTxId = "theTxId";
-
         ChargeEntity charge = createNewChargeWith(chargeId, ENTERING_CARD_DETAILS);
 
-        when(mockedChargeDao.findByExternalId(charge.getExternalId()))
-                .thenReturn(Optional.of(charge));
-        when(mockedChargeDao.merge(any()))
-                .thenReturn(charge);
+        when(mockedChargeDao.findByExternalId(charge.getExternalId())).thenReturn(Optional.of(charge));
+        when(mockedChargeDao.merge(any())).thenReturn(charge);
+        when(mockExecutorService.execute(any())).thenReturn(mockFutureResponse);
 
-        mockSuccessfulAuthorisation(gatewayTxId);
+        AuthorisationResponse authorisationResponse = AuthorisationResponse.successfulAuthorisationResponse(AUTHORISATION_SUCCESS, gatewayTxId);
+        when(mockFutureResponse.get(anyLong(), any())).thenReturn(authorisationResponse);
 
         Card cardDetails = CardUtils.aValidCard();
         Either<ErrorResponse, GatewayResponse> response = cardAuthorisationService.doAuthorise(charge.getExternalId(), cardDetails);
@@ -48,6 +57,24 @@ public class CardAuthoriseServiceTest extends CardServiceTest {
         assertThat(response.right().value(), is(aSuccessfulResponse()));
         assertThat(charge.getStatus(), is(AUTHORISATION_SUCCESS.getValue()));
         assertThat(charge.getGatewayTransactionId(), is(gatewayTxId));
+    }
+
+    @Test
+    public void authoriseShouldReturnInProgressWhenTimeout() throws Exception {
+        Long chargeId = 1L;
+        ChargeEntity charge = createNewChargeWith(chargeId, ENTERING_CARD_DETAILS);
+
+        when(mockedChargeDao.findByExternalId(charge.getExternalId())).thenReturn(Optional.of(charge));
+        when(mockedChargeDao.merge(any())).thenReturn(charge);
+        when(mockFutureResponse.get(anyLong(), any())).thenThrow(new TimeoutException());
+        when(mockExecutorService.execute(any())).thenReturn(mockFutureResponse);
+        Card cardDetails = CardUtils.aValidCard();
+
+        Either<ErrorResponse, GatewayResponse> response = cardAuthorisationService.doAuthorise(charge.getExternalId(), cardDetails);
+
+        assertTrue(response.isRight());
+        assertTrue(response.right().value().isInProgress());
+        assertThat(charge.getStatus(), is(AUTHORISATION_READY.getValue()));
     }
 
     @Test
@@ -130,7 +157,7 @@ public class CardAuthoriseServiceTest extends CardServiceTest {
     }
 
     @Test
-    public void shouldUpdateChargeWithAuthorisationErrorWhenAuthorisationFails() {
+    public void shouldUpdateChargeWithAuthorisationErrorWhenAuthorisationFails() throws InterruptedException, ExecutionException, TimeoutException {
         Long chargeId = 1L;
         String gatewayTxId = "theTxId";
         ChargeEntity charge = createNewChargeWith(chargeId, ENTERING_CARD_DETAILS);
@@ -144,7 +171,10 @@ public class CardAuthoriseServiceTest extends CardServiceTest {
                 .thenReturn(charge)
                 .thenReturn(reloadedCharge);
 
-        mockUnsuccessfulAuthorisation();
+        when(mockExecutorService.execute(any())).thenReturn(mockFutureResponse);
+
+        AuthorisationResponse authorisationResponse = AuthorisationResponse.authorisationFailureResponse(ErrorResponse.baseError("error"));
+        when(mockFutureResponse.get(anyLong(), any())).thenReturn(authorisationResponse);
 
         Card cardDetails = CardUtils.aValidCard();
         Either<ErrorResponse, GatewayResponse> response = cardAuthorisationService.doAuthorise(charge.getExternalId(), cardDetails);
@@ -154,19 +184,5 @@ public class CardAuthoriseServiceTest extends CardServiceTest {
 
         verify(reloadedCharge, times(1)).setStatus(AUTHORISATION_ERROR);
         verify(reloadedCharge, times(1)).setGatewayTransactionId(null);
-    }
-
-    private void mockSuccessfulAuthorisation(String transactionId) {
-        when(mockedProviders.resolve(providerName))
-                .thenReturn(mockedPaymentProvider);
-        when(mockedPaymentProvider.authorise(any()))
-                .thenReturn(AuthorisationResponse.successfulAuthorisationResponse(AUTHORISATION_SUCCESS, transactionId));
-    }
-
-    private void mockUnsuccessfulAuthorisation() {
-        when(mockedProviders.resolve(providerName))
-                .thenReturn(mockedPaymentProvider);
-        when(mockedPaymentProvider.authorise(any()))
-                .thenReturn(AuthorisationResponse.authorisationFailureResponse(ErrorResponse.baseError("error")));
     }
 }
