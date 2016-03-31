@@ -30,6 +30,10 @@ public class CaptureResponse implements GatewayResponse {
         return error;
     }
 
+    public Boolean isInProgress() {
+        return false;
+    }
+
     public static CaptureResponse successfulCaptureResponse(ChargeStatus status) {
         return new CaptureResponse(true, null, status);
     }

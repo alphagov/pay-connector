@@ -1,14 +1,19 @@
 package uk.gov.pay.connector.unit.service;
 
+import fj.data.Either;
 import org.hamcrest.Description;
 import org.hamcrest.Matcher;
 import org.hamcrest.TypeSafeMatcher;
+import org.mockito.Mock;
 import uk.gov.pay.connector.dao.ChargeDao;
 import uk.gov.pay.connector.dao.GatewayAccountDao;
 import uk.gov.pay.connector.fixture.ChargeEntityFixture;
+import uk.gov.pay.connector.model.AuthorisationResponse;
+import uk.gov.pay.connector.model.ErrorResponse;
 import uk.gov.pay.connector.model.GatewayResponse;
 import uk.gov.pay.connector.model.domain.ChargeEntity;
 import uk.gov.pay.connector.model.domain.ChargeStatus;
+import uk.gov.pay.connector.resources.CardExecutorService;
 import uk.gov.pay.connector.service.PaymentProvider;
 import uk.gov.pay.connector.service.PaymentProviders;
 
@@ -21,6 +26,7 @@ public abstract class CardServiceTest {
 
     protected GatewayAccountDao mockedAccountDao = mock(GatewayAccountDao.class);
     protected ChargeDao mockedChargeDao = mock(ChargeDao.class);
+    protected CardExecutorService mockExecutorService = mock(CardExecutorService.class);
 
     protected ChargeEntity createNewChargeWith(Long chargeId, ChargeStatus status) {
         return ChargeEntityFixture

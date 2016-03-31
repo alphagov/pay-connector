@@ -47,6 +47,11 @@ public class CancelResponse implements GatewayResponse {
         return error;
     }
 
+    @Override
+    public Boolean isInProgress() {
+        return false;
+    }
+
     public ChargeStatus getStatus() {
         return status;
     }
