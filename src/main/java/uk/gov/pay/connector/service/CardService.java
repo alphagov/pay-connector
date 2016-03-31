@@ -7,6 +7,7 @@ import uk.gov.pay.connector.dao.ChargeDao;
 import uk.gov.pay.connector.model.ErrorResponse;
 import uk.gov.pay.connector.model.domain.ChargeEntity;
 import uk.gov.pay.connector.model.domain.ChargeStatus;
+import uk.gov.pay.connector.resources.CardExecutorService;
 
 import static fj.data.Either.left;
 import static fj.data.Either.right;
@@ -17,6 +18,7 @@ abstract public class CardService {
     protected final ChargeDao chargeDao;
     protected final PaymentProviders providers;
     private final Logger logger = LoggerFactory.getLogger(CardCancelService.class);
+    protected CardExecutorService cardExecutorService;
 
     protected enum OperationType {
         CAPTURE("Capture"),
@@ -37,6 +39,12 @@ abstract public class CardService {
     public CardService(ChargeDao chargeDao, PaymentProviders providers) {
         this.chargeDao = chargeDao;
         this.providers = providers;
+    }
+
+    public CardService(ChargeDao chargeDao, PaymentProviders providers, CardExecutorService cardExecutorService) {
+        this.chargeDao = chargeDao;
+        this.providers = providers;
+        this.cardExecutorService = cardExecutorService;
     }
 
     public Either<ErrorResponse, ChargeEntity> preOperation(ChargeEntity chargeEntity, OperationType operationType, ChargeStatus[] legalStatuses, ChargeStatus lockingStatus) {
