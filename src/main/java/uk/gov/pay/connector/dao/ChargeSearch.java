@@ -24,7 +24,7 @@ public class ChargeSearch {
         put(REFERENCE, " AND c.reference LIKE :reference");
         put(FROM_DATE, " AND c.createdDate >= :fromDate");
         put(STATUSES, " AND c.status IN :statuses");
-        put(TO_DATE, " AND c.createdDate <= :toDate");
+        put(TO_DATE, " AND c.createdDate < :toDate");
     }};
 
     private Long gatewayAccountId;
