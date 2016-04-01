@@ -15,7 +15,7 @@ import javax.ws.rs.core.HttpHeaders;
 import javax.ws.rs.core.Response.Status;
 import java.time.ZoneId;
 import java.time.ZonedDateTime;
-import java.time.temporal.ChronoUnit;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.stream.Collectors;
@@ -25,6 +25,8 @@ import static com.jayway.restassured.http.ContentType.JSON;
 import static java.lang.Long.valueOf;
 import static java.lang.String.format;
 import static java.time.ZonedDateTime.now;
+import static java.time.temporal.ChronoUnit.DAYS;
+import static java.time.temporal.ChronoUnit.SECONDS;
 import static java.util.Arrays.asList;
 import static javax.ws.rs.core.MediaType.APPLICATION_JSON;
 import static javax.ws.rs.core.Response.Status.*;
@@ -33,14 +35,15 @@ import static org.apache.commons.lang3.RandomStringUtils.randomAlphanumeric;
 import static org.exparity.hamcrest.date.ZonedDateTimeMatchers.within;
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.*;
+import static org.hamcrest.text.MatchesPattern.matchesPattern;
+import static uk.gov.pay.connector.matcher.ResponseContainsLinkMatcher.containsLink;
+import static uk.gov.pay.connector.matcher.ZoneDateTimeAsStringWithinMatcher.isWithin;
 import static uk.gov.pay.connector.model.api.ExternalChargeStatus.*;
 import static uk.gov.pay.connector.model.domain.ChargeStatus.*;
 import static uk.gov.pay.connector.model.domain.ChargeStatus.CREATED;
 import static uk.gov.pay.connector.resources.ApiPaths.CHARGE_API_PATH;
 import static uk.gov.pay.connector.util.DateTimeUtils.toUTCZonedDateTime;
 import static uk.gov.pay.connector.util.JsonEncoder.toJson;
-import static uk.gov.pay.connector.util.LinksAssert.assertNextUrlLink;
-import static uk.gov.pay.connector.util.LinksAssert.assertSelfLink;
 import static uk.gov.pay.connector.util.NumberMatcher.isNumber;
 
 public class ChargesResourceITest {
@@ -94,16 +97,24 @@ public class ChargesResourceITest {
                 .body(JSON_DESCRIPTION_KEY, is(expectedDescription))
                 .body(JSON_PROVIDER_KEY, is(PROVIDER_NAME))
                 .body(JSON_RETURN_URL_KEY, is(returnUrl))
+                .body("created_date", matchesPattern("^\\d{4}-\\d{2}-\\d{2}T\\d{2}:\\d{2}:\\d{2}.\\d{3}Z"))
+                .body("created_date", isWithin(10, SECONDS))
                 .contentType(JSON);
 
         String externalChargeId = response.extract().path(JSON_CHARGE_KEY);
         String documentLocation = expectedChargeLocationFor(accountId, externalChargeId);
-
-        response.header("Location", is(documentLocation));
-        assertSelfLink(response, documentLocation);
-
         String chargeTokenId = app.getDatabaseTestHelper().getChargeTokenByExternalChargeId(externalChargeId);
-        assertNextUrlLink(response, "http://Frontend" + FRONTEND_CARD_DETAILS_URL + externalChargeId + "?chargeTokenId=" + chargeTokenId);
+
+        String hrefNextUrl = "http://Frontend" + FRONTEND_CARD_DETAILS_URL + externalChargeId + "?chargeTokenId=" + chargeTokenId;
+        String hrefNextUrlPost = "http://Frontend" + FRONTEND_CARD_DETAILS_URL + externalChargeId;
+
+        response.header("Location", is(documentLocation))
+                .body("links", hasSize(3))
+                .body("links", containsLink("self", "GET", documentLocation))
+                .body("links", containsLink("next_url", "GET", hrefNextUrl))
+                .body("links", containsLink("next_url_post", "POST", hrefNextUrlPost, "application/x-www-form-urlencoded", new HashMap<String, Object>() {{
+                    put("chargeTokenId", chargeTokenId);
+                }}));
 
         ValidatableResponse getChargeResponse = getChargeApi
                 .withAccountId(accountId)
@@ -118,7 +129,13 @@ public class ChargesResourceITest {
                 .body(JSON_STATUS_KEY, is(CREATED.getValue()))
                 .body(JSON_RETURN_URL_KEY, is(returnUrl));
 
-        assertSelfLink(getChargeResponse, documentLocation);
+        getChargeResponse.body("links", hasSize(3))
+                .body("links", hasSize(3))
+                .body("links", containsLink("self", "GET", documentLocation))
+                .body("links", containsLink("next_url", "GET", hrefNextUrl))
+                .body("links", containsLink("next_url_post", "POST", hrefNextUrlPost, "application/x-www-form-urlencoded", new HashMap<String, Object>() {{
+                    put("chargeTokenId", chargeTokenId);
+                }}));
     }
 
     @Test
@@ -300,7 +317,7 @@ public class ChargesResourceITest {
 
         List<String> createdDateStrings = collect(results, "created_date");
         datesFrom(createdDateStrings).forEach(createdDate ->
-                assertThat(createdDate, is(within(1, ChronoUnit.DAYS, now())))
+                assertThat(createdDate, is(within(1, DAYS, now())))
         );
     }
 
@@ -389,7 +406,7 @@ public class ChargesResourceITest {
     }
 
     @Test
-    public void shouldGetSuccessAndFailedResponseForExpiryChargeTask () {
+    public void shouldGetSuccessAndFailedResponseForExpiryChargeTask() {
         //create charge
         String extChargeId = addCharge(CREATED, "ref", ZonedDateTime.now().minusHours(1));
 

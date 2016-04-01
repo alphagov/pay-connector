@@ -14,9 +14,8 @@ import static org.mockito.Mockito.when;
 
 public class NotificationUtilTest {
 
-    NotificationUtil notificationUtil;
-
-    ChargeStatusBlacklist chargeStatusBlacklist;
+    private NotificationUtil notificationUtil;
+    private ChargeStatusBlacklist chargeStatusBlacklist;
 
     @Before
     public void setup() {

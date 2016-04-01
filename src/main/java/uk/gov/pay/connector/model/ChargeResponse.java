@@ -193,6 +193,17 @@ public class ChargeResponse {
             return this;
         }
 
+        public Builder withLink(String rel, String method, URI href, String type, Map<String,Object> params) {
+            links.add(ImmutableMap.of(
+                    "rel", rel,
+                    "method", method,
+                    "href", href,
+                    "type", type,
+                    "params", params
+            ));
+            return this;
+        }
+
         public ChargeResponse build() {
             return new ChargeResponse(chargeId, amount, status, gatewayTransactionId, returnUrl, description, reference, providerName, createdDate, links);
         }
