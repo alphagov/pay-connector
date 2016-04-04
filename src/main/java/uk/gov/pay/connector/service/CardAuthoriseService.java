@@ -21,11 +21,14 @@ import java.util.function.Supplier;
 import static fj.data.Either.left;
 import static fj.data.Either.right;
 import static java.lang.String.format;
+import static org.apache.commons.lang3.StringUtils.isNotBlank;
 import static uk.gov.pay.connector.model.domain.ChargeStatus.ENTERING_CARD_DETAILS;
 
 public class CardAuthoriseService extends CardService implements TransactionalGatewayOperation {
 
     private static final Logger logger = LoggerFactory.getLogger(CardAuthoriseService.class);
+    private static final String TIMEOUT_ENV_VAR = "AUTH_READ_TIMEOUT";
+    private static int timeout = 10;
 
     private static ChargeStatus[] legalStates = new ChargeStatus[]{
             ENTERING_CARD_DETAILS
@@ -36,11 +39,13 @@ public class CardAuthoriseService extends CardService implements TransactionalGa
     @Inject
     public CardAuthoriseService(ChargeDao chargeDao, PaymentProviders providers, CardExecutorService cardExecutorService) {
         super(chargeDao, providers, cardExecutorService);
+        if (isNotBlank( System.getProperty(TIMEOUT_ENV_VAR))) {
+            timeout = Integer.valueOf(System.getProperty(TIMEOUT_ENV_VAR));
+        }
     }
 
     public Either<ErrorResponse, GatewayResponse> doAuthorise(String chargeId, Card cardDetails) {
         this.cardDetails = cardDetails;
-
         return chargeDao
                 .findByExternalId(chargeId)
                 .map(TransactionalGatewayOperation.super::executeGatewayOperationFor)
@@ -59,7 +64,7 @@ public class CardAuthoriseService extends CardService implements TransactionalGa
                 getPaymentProviderFor(chargeEntity).authorise(AuthorisationRequest.valueOf(chargeEntity, this.cardDetails));
         try {
             Future<AuthorisationResponse> futureResponse = cardExecutorService.execute(authorisationSupplier);
-            return right(futureResponse.get(10, TimeUnit.SECONDS));
+            return right(futureResponse.get(timeout, TimeUnit.SECONDS));
         } catch (InterruptedException | ExecutionException e) {
             logger.error("Exception occurred while doing authorisation", e);
             return left(new ErrorResponse("Exception occurred while doing authorisation", ErrorType.GENERIC_GATEWAY_ERROR));
