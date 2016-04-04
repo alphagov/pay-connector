@@ -2,6 +2,7 @@ package uk.gov.pay.connector.service;
 
 import com.google.inject.persist.Transactional;
 import fj.data.Either;
+import org.apache.commons.lang3.tuple.Pair;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import uk.gov.pay.connector.dao.ChargeDao;
@@ -12,23 +13,18 @@ import uk.gov.pay.connector.model.domain.ChargeStatus;
 import uk.gov.pay.connector.resources.CardExecutorService;
 
 import javax.inject.Inject;
-import java.util.concurrent.ExecutionException;
-import java.util.concurrent.Future;
-import java.util.concurrent.TimeUnit;
-import java.util.concurrent.TimeoutException;
+import java.util.Optional;
 import java.util.function.Supplier;
 
 import static fj.data.Either.left;
 import static fj.data.Either.right;
 import static java.lang.String.format;
-import static org.apache.commons.lang3.StringUtils.isNotBlank;
 import static uk.gov.pay.connector.model.domain.ChargeStatus.ENTERING_CARD_DETAILS;
+import static uk.gov.pay.connector.resources.CardExecutorService.*;
 
 public class CardAuthoriseService extends CardService implements TransactionalGatewayOperation {
 
     private static final Logger logger = LoggerFactory.getLogger(CardAuthoriseService.class);
-    private static final String TIMEOUT_ENV_VAR = "AUTH_READ_TIMEOUT";
-    private static int timeout = 10;
 
     private static ChargeStatus[] legalStates = new ChargeStatus[]{
             ENTERING_CARD_DETAILS
@@ -39,17 +35,27 @@ public class CardAuthoriseService extends CardService implements TransactionalGa
     @Inject
     public CardAuthoriseService(ChargeDao chargeDao, PaymentProviders providers, CardExecutorService cardExecutorService) {
         super(chargeDao, providers, cardExecutorService);
-        if (isNotBlank( System.getProperty(TIMEOUT_ENV_VAR))) {
-            timeout = Integer.valueOf(System.getProperty(TIMEOUT_ENV_VAR));
-        }
     }
 
     public Either<ErrorResponse, GatewayResponse> doAuthorise(String chargeId, Card cardDetails) {
         this.cardDetails = cardDetails;
-        return chargeDao
-                .findByExternalId(chargeId)
-                .map(TransactionalGatewayOperation.super::executeGatewayOperationFor)
-                .orElseGet(chargeNotFound(chargeId));
+        Optional<ChargeEntity> chargeEntity = chargeDao.findByExternalId(chargeId);
+
+        if (chargeEntity.isPresent()) {
+            Supplier<Either<ErrorResponse, GatewayResponse>> authorisationSupplier = () -> TransactionalGatewayOperation.super.executeGatewayOperationFor(chargeEntity.get());
+            Pair<ExecutionStatus, Either<ErrorResponse, GatewayResponse>> executeResult = cardExecutorService.execute(chargeId, authorisationSupplier);
+
+            switch (executeResult.getLeft()) {
+                case COMPLETED:
+                    return executeResult.getRight();
+                case IN_PROGRESS:
+                    return right(inProgressGatewayResponse(ChargeStatus.chargeStatusFrom(chargeEntity.get().getStatus()), chargeId));
+                default:
+                    return left(new ErrorResponse("Exception occurred while doing authorisation", ErrorType.GENERIC_GATEWAY_ERROR));
+            }
+        } else {
+            return chargeNotFound(chargeId).get();
+        }
     }
 
     @Transactional
@@ -60,21 +66,12 @@ public class CardAuthoriseService extends CardService implements TransactionalGa
 
     @Override
     public Either<ErrorResponse, GatewayResponse> operation(ChargeEntity chargeEntity) {
-        Supplier<AuthorisationResponse> authorisationSupplier = () ->
-                getPaymentProviderFor(chargeEntity).authorise(AuthorisationRequest.valueOf(chargeEntity, this.cardDetails));
-        try {
-            Future<AuthorisationResponse> futureResponse = cardExecutorService.execute(authorisationSupplier);
-            return right(futureResponse.get(timeout, TimeUnit.SECONDS));
-        } catch (InterruptedException | ExecutionException e) {
-            logger.error("Exception occurred while doing authorisation", e);
-            return left(new ErrorResponse("Exception occurred while doing authorisation", ErrorType.GENERIC_GATEWAY_ERROR));
-        } catch (TimeoutException e) {
-            return right(inProgressGatewayResponse(ChargeStatus.chargeStatusFrom(chargeEntity.getStatus()), chargeEntity.getId()));
-        }
+        return right(getPaymentProviderFor(chargeEntity)
+                .authorise(AuthorisationRequest.valueOf(chargeEntity, this.cardDetails)));
     }
 
-    private GatewayResponse inProgressGatewayResponse(ChargeStatus chargeStatus, Long id) {
-        return new AuthorisationResponse(false, null, chargeStatus, id.toString(), true);
+    private GatewayResponse inProgressGatewayResponse(ChargeStatus chargeStatus, String id) {
+        return new AuthorisationResponse(false, null, chargeStatus, id, true);
     }
 
     @Transactional
