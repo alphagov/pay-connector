@@ -139,8 +139,8 @@ public class ChargeServiceTest {
         ChargeResponse.Builder expectedChargeResponse = chargeResponseBuilderOf(createdChargeEntity);
 
         expectedChargeResponse.withLink("self", GET, new URI(SERVICE_HOST + "/v1/api/accounts/1/charges/" + externalChargeId[0]));
-        expectedChargeResponse.withLink("next_url", GET, new URI("http://payments.com/charge/" + externalChargeId[0] + "?chargeTokenId=" + tokenEntity.getToken()));
-        expectedChargeResponse.withLink("next_url_post", POST, new URI("http://payments.com/charge/" + externalChargeId[0]), "application/x-www-form-urlencoded", new HashMap<String, Object>() {{
+        expectedChargeResponse.withLink("next_url", GET, new URI("http://payments.com/secure/" + tokenEntity.getToken()));
+        expectedChargeResponse.withLink("next_url_post", POST, new URI("http://payments.com/secure"), "application/x-www-form-urlencoded", new HashMap<String, Object>() {{
             put("chargeTokenId", tokenEntity.getToken());
         }});
 
@@ -178,7 +178,10 @@ public class ChargeServiceTest {
 
         ChargeResponse.Builder expectedChargeResponse = chargeResponseBuilderOf(chargeEntity.get());
         expectedChargeResponse.withLink("self", GET, new URI(SERVICE_HOST + "/v1/api/accounts/1/charges/" + externalId));
-        expectedChargeResponse.withLink("next_url", GET, new URI("http://payments.com/" + externalId + "/" + tokenEntity.getToken()));
+        expectedChargeResponse.withLink("next_url", GET, new URI("http://payments.com/secure/" + tokenEntity.getToken()));
+        expectedChargeResponse.withLink("next_url_post", POST, new URI("http://payments.com/secure"), "application/x-www-form-urlencoded", new HashMap<String, Object>() {{
+            put("chargeTokenId", tokenEntity.getToken());
+        }});
 
         assertThat(chargeResponseForAccount.get(), is(expectedChargeResponse.build()));
     }
@@ -214,8 +217,8 @@ public class ChargeServiceTest {
 
         ChargeResponse.Builder expectedChargeResponse = chargeResponseBuilderOf(chargeEntity.get());
         expectedChargeResponse.withLink("self", GET, new URI(SERVICE_HOST + "/v1/api/accounts/1/charges/" + externalId));
-        expectedChargeResponse.withLink("next_url", GET, new URI("http://payments.com/charge/" + externalId + "?chargeTokenId=" + tokenEntity.getToken()));
-        expectedChargeResponse.withLink("next_url_post", POST, new URI("http://payments.com/charge/" + externalId), "application/x-www-form-urlencoded", new HashMap<String, Object>() {{
+        expectedChargeResponse.withLink("next_url", GET, new URI("http://payments.com/secure/" + tokenEntity.getToken()));
+        expectedChargeResponse.withLink("next_url_post", POST, new URI("http://payments.com/secure"), "application/x-www-form-urlencoded", new HashMap<String, Object>() {{
             put("chargeTokenId", tokenEntity.getToken());
         }});
 

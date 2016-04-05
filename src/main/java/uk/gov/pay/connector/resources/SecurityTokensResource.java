@@ -1,6 +1,5 @@
 package uk.gov.pay.connector.resources;
 
-import com.google.common.collect.ImmutableMap;
 import com.google.inject.persist.Transactional;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -38,7 +37,7 @@ public class SecurityTokensResource {
         logger.debug("get charge for token {}", chargeTokenId);
         Optional<ChargeEntity> chargeOpt = chargeDao.findByTokenId(chargeTokenId);
         return chargeOpt
-                .map(charge ->  successResponseWithEntity(ImmutableMap.of("charge", chargeOpt.get())))
+                .map(charge -> successResponseWithEntity(charge))
                 .orElseGet(() -> notFoundResponse(logger, "Token invalid!"));
     }
 

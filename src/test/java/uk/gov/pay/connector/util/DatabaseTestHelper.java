@@ -102,8 +102,9 @@ public class DatabaseTestHelper {
     }
 
     public String getChargeTokenId(Long chargeId) {
+
         return jdbi.withHandle(h ->
-                h.createQuery("SELECT secure_redirect_token from tokens WHERE charge_id = :charge_id")
+                        h.createQuery("SELECT secure_redirect_token from tokens WHERE charge_id = :charge_id ORDER BY id DESC")
                         .bind("charge_id", chargeId)
                         .map(StringMapper.FIRST)
                         .first()

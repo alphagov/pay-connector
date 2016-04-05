@@ -36,9 +36,10 @@ public class SecurityTokensResourceITest {
     @Test
     public void shouldSuccessfullyGetChargeForToken() throws Exception {
         createNewChargeAndToken(CHARGE_ID, TOKEN_ID);
-        findTokenGetsStatusCode(200)
-                .body("charge.externalId", is(CHARGE_ID))
-                .body("charge.status", is(CREATED.getValue()));
+        ValidatableResponse tokenGetsStatusCode = findTokenGetsStatusCode(200);
+        tokenGetsStatusCode
+                .body("externalId", is(CHARGE_ID))
+                .body("status", is(CREATED.getValue()));
     }
 
     @Test
