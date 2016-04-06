@@ -18,6 +18,8 @@ import java.util.function.Function;
 import static uk.gov.pay.connector.model.CancelResponse.successfulCancelResponse;
 import static uk.gov.pay.connector.model.CaptureResponse.successfulCaptureResponse;
 import static uk.gov.pay.connector.model.ErrorType.GENERIC_GATEWAY_ERROR;
+import static uk.gov.pay.connector.model.GatewayResponse.ResponseStatus.FAILED;
+import static uk.gov.pay.connector.model.GatewayResponse.ResponseStatus.SUCCEDED;
 import static uk.gov.pay.connector.model.domain.ChargeStatus.*;
 import static uk.gov.pay.connector.service.sandbox.SandboxCardNumbers.*;
 
@@ -39,14 +41,14 @@ public class SandboxPaymentProvider implements PaymentProvider {
 
         if (isInvalidCard(cardNumber)) {
             CardError errorInfo = cardErrorFor(cardNumber);
-            return new AuthorisationResponse(false, new ErrorResponse(errorInfo.getErrorMessage(), GENERIC_GATEWAY_ERROR), errorInfo.getNewErrorStatus(), transactionId);
+            return new AuthorisationResponse(FAILED, new ErrorResponse(errorInfo.getErrorMessage(), GENERIC_GATEWAY_ERROR), errorInfo.getNewErrorStatus(), transactionId);
         }
 
         if (isValidCard(cardNumber)) {
-            return new AuthorisationResponse(true, null, AUTHORISATION_SUCCESS, transactionId);
+            return new AuthorisationResponse(SUCCEDED, null, AUTHORISATION_SUCCESS, transactionId);
         }
 
-        return new AuthorisationResponse(false, new ErrorResponse("Unsupported card details.", GENERIC_GATEWAY_ERROR), AUTHORISATION_ERROR, transactionId);
+        return new AuthorisationResponse(FAILED, new ErrorResponse("Unsupported card details.", GENERIC_GATEWAY_ERROR), AUTHORISATION_ERROR, transactionId);
     }
 
     @Override
