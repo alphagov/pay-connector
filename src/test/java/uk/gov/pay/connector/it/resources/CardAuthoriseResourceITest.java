@@ -2,6 +2,9 @@ package uk.gov.pay.connector.it.resources;
 
 import org.junit.Test;
 import uk.gov.pay.connector.it.base.CardResourceITestBase;
+import uk.gov.pay.connector.resources.CardExecutorService;
+
+import java.lang.reflect.Field;
 
 import static com.jayway.restassured.http.ContentType.JSON;
 import static java.lang.String.format;
@@ -144,6 +147,17 @@ public class CardAuthoriseResourceITest extends CardResourceITestBase {
         authoriseAndVerifyFor(chargeId, validCardDetails, msg, 500);
 
         assertFrontendChargeStatusIs(chargeId, AUTHORISATION_SUCCESS.getValue());
+    }
+
+    @Test
+    public void shouldReturn202_WhenGatewayAuthorisationResponseIsDelayed() throws NoSuchFieldException, IllegalAccessException {
+        Field timeout = CardExecutorService.class.getDeclaredField("timeout");
+        timeout.setAccessible(true);
+        timeout.setInt(null, 0);
+        String chargeId = createNewChargeWith(ENTERING_CARD_DETAILS, null);
+        String message = "Request in progress";
+        authoriseAndVerifyFor(chargeId, validCardDetails, message, 202);
+        timeout.setInt(null, 10);
     }
 
     @Test

@@ -12,7 +12,6 @@ import uk.gov.pay.connector.rules.DropwizardAppWithPostgresRule;
 import uk.gov.pay.connector.rules.SmartpayMockClient;
 import uk.gov.pay.connector.rules.WorldpayMockClient;
 import uk.gov.pay.connector.util.PortFactory;
-import uk.gov.pay.connector.util.RandomIdGenerator;
 import uk.gov.pay.connector.util.RestAssuredClient;
 
 import java.io.IOException;
