@@ -19,6 +19,8 @@ import java.util.function.Supplier;
 import static fj.data.Either.left;
 import static fj.data.Either.right;
 import static java.lang.String.format;
+import static uk.gov.pay.connector.model.GatewayResponse.ResponseStatus.FAILED;
+import static uk.gov.pay.connector.model.GatewayResponse.ResponseStatus.IN_PROGRESS;
 import static uk.gov.pay.connector.model.domain.ChargeStatus.ENTERING_CARD_DETAILS;
 import static uk.gov.pay.connector.resources.CardExecutorService.ExecutionStatus;
 
@@ -71,7 +73,7 @@ public class CardAuthoriseService extends CardService implements TransactionalGa
     }
 
     private GatewayResponse inProgressGatewayResponse(ChargeStatus chargeStatus, String id) {
-        return new AuthorisationResponse(false, null, chargeStatus, id, true);
+        return new AuthorisationResponse(IN_PROGRESS, null, chargeStatus, id);
     }
 
     @Transactional
