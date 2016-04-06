@@ -36,7 +36,7 @@ Important configurations.
   
 #### Environment Variables
 
-`AUTH_READ_TIMEOUT`:  The env variable AUTH_READ_TIMEOUT can be passed into the app to override the default value of 10     seconds, i.e. the timeout before the resource responds with an awaited auth response (202), so that frontend can choose to show a spinner and poll for auth response.
+`AUTH_READ_TIMEOUT_SECONDS`:  The env variable AUTH_READ_TIMEOUT_SECONDS can be passed into the app to override the default value of 10     seconds, i.e. the timeout before the resource responds with an awaited auth response (202), so that frontend can choose to show a spinner and poll for auth response.
 
 ## Integration tests
 
