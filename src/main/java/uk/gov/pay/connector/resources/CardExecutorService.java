@@ -1,12 +1,16 @@
 package uk.gov.pay.connector.resources;
 
+import com.google.inject.Inject;
+import com.google.inject.Singleton;
 import org.apache.commons.lang3.tuple.Pair;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import java.util.List;
 import java.util.concurrent.*;
 import java.util.function.Supplier;
 
+import static java.util.concurrent.TimeUnit.MILLISECONDS;
 import static org.apache.commons.lang3.StringUtils.isNotBlank;
 import static uk.gov.pay.connector.resources.CardExecutorService.ExecutionStatus.*;
 
@@ -16,8 +20,7 @@ public class CardExecutorService<T> {
     private static final Logger logger = LoggerFactory.getLogger(CardExecutorService.class);
     private static final String TIMEOUT_ENV_VAR = "AUTH_READ_TIMEOUT";
     private static int timeout = 10;
-    private static ExecutorService executor = Executors.newCachedThreadPool();
-    private static ConcurrentMap<String, Future> futureObjects = new ConcurrentHashMap<>();
+    private ExecutorService executor = Executors.newCachedThreadPool();
 
     public enum ExecutionStatus {
         COMPLETED,
@@ -42,8 +45,16 @@ public class CardExecutorService<T> {
         } catch (InterruptedException | ExecutionException e) {
             return Pair.of(FAILED, null);
         } catch (TimeoutException e) {
-            futureObjects.putIfAbsent(id, futureObject);
             return Pair.of(IN_PROGRESS, null);
         }
+    }
+
+    @Override
+    protected void finalize() throws Throwable {
+        logger.info("finalizing CardExecutorService");
+        super.finalize();
+        executor.shutdown();
+        executor.awaitTermination(1, TimeUnit.SECONDS);
+        executor.shutdownNow();
     }
 }

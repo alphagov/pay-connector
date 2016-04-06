@@ -20,7 +20,7 @@ import static fj.data.Either.left;
 import static fj.data.Either.right;
 import static java.lang.String.format;
 import static uk.gov.pay.connector.model.domain.ChargeStatus.ENTERING_CARD_DETAILS;
-import static uk.gov.pay.connector.resources.CardExecutorService.*;
+import static uk.gov.pay.connector.resources.CardExecutorService.ExecutionStatus;
 
 public class CardAuthoriseService extends CardService implements TransactionalGatewayOperation {
 
