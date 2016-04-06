@@ -2,6 +2,7 @@ package uk.gov.pay.connector.it.dao;
 
 import com.google.common.collect.Lists;
 import org.apache.commons.lang.RandomStringUtils;
+import org.exparity.hamcrest.date.ZonedDateTimeMatchers;
 import org.hamcrest.Description;
 import org.hamcrest.Matcher;
 import org.hamcrest.MatcherAssert;
@@ -303,7 +304,8 @@ public class ChargeDaoITest {
         Long id = System.currentTimeMillis();
         String externalChargeId = "chargesfsdf";
 
-        databaseTestHelper.addCharge(id, externalChargeId, GATEWAY_ACCOUNT_ID.toString(), AMOUNT, CREATED, RETURN_URL, UUID.randomUUID().toString(), REFERENCE, ZonedDateTime.now());
+        ZonedDateTime createdDateTime = ZonedDateTime.now(ZoneId.of("UTC"));
+        databaseTestHelper.addCharge(id, externalChargeId, GATEWAY_ACCOUNT_ID.toString(), AMOUNT, CREATED, RETURN_URL, UUID.randomUUID().toString(), REFERENCE, createdDateTime);
 
         // when
         ChargeEntity charge = chargeDao.findById(id).get();
@@ -316,12 +318,14 @@ public class ChargeDaoITest {
         assertThat(charge.getStatus(), is(CREATED.getValue()));
         assertThat(charge.getGatewayAccount().getId(), is(GATEWAY_ACCOUNT_ID));
         assertThat(charge.getReturnUrl(), is(RETURN_URL));
-        ZonedDateTime now = now();
-        ZonedDateTime createdDate = charge.getCreatedDate();
-        assertThat(createdDate, isDayOfMonth(now.getDayOfMonth()));
-        assertThat(createdDate, isMonth(now.getMonth()));
-        assertThat(createdDate, isYear(now.getYear()));
-        MatcherAssert.assertThat(createdDate, within(1, ChronoUnit.MINUTES, now));
+
+        ZonedDateTime actualCreatedDate = charge.getCreatedDate();
+        assertThat(actualCreatedDate, isDayOfMonth(createdDateTime.getDayOfMonth()));
+        assertThat(actualCreatedDate, isMonth(createdDateTime.getMonth()));
+        assertThat(actualCreatedDate, isYear(createdDateTime.getYear()));
+        assertThat(actualCreatedDate, isSecond(createdDateTime.getSecond()));
+        assertThat(actualCreatedDate.getNano(), is(createdDateTime.getNano()));
+        MatcherAssert.assertThat(actualCreatedDate, within(1, ChronoUnit.MINUTES, createdDateTime));
     }
 
     private Matcher<? super List<ChargeEventEntity>> shouldIncludeStatus(ChargeStatus... expectedStatuses) {
@@ -392,6 +396,8 @@ public class ChargeDaoITest {
         chargeDao.persist(chargeEntity);
 
         assertThat(chargeEntity.getId(), is(notNullValue()));
+        // Ensure always max precision is being millis
+        assertThat(chargeEntity.getCreatedDate().getNano() % 1000000, is(0));
     }
 
     @Test

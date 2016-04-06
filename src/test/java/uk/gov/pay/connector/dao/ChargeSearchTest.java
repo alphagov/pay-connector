@@ -39,7 +39,7 @@ public class ChargeSearchTest {
                 "WHERE c.gatewayAccount.id = :gatewayAccountId " +
                 "AND c.reference LIKE :reference " +
                 "AND c.createdDate >= :fromDate " +
-                "AND c.createdDate <= :toDate " +
+                "AND c.createdDate < :toDate " +
                 "AND c.status IN :statuses " +
                 "ORDER BY c.id DESC";
 
@@ -153,7 +153,7 @@ public class ChargeSearchTest {
 
         String expectedTypedQuery = "SELECT c FROM ChargeEntity c " +
                 "WHERE c.gatewayAccount.id = :gatewayAccountId " +
-                "AND c.createdDate <= :toDate " +
+                "AND c.createdDate < :toDate " +
                 "ORDER BY c.id DESC";
 
         when(entityManagerMock.createQuery(expectedTypedQuery, ChargeEntity.class)).thenReturn(queryMock);
