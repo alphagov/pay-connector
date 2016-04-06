@@ -1,16 +1,12 @@
 package uk.gov.pay.connector.resources;
 
-import com.google.inject.Inject;
-import com.google.inject.Singleton;
 import org.apache.commons.lang3.tuple.Pair;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import java.util.List;
 import java.util.concurrent.*;
 import java.util.function.Supplier;
 
-import static java.util.concurrent.TimeUnit.MILLISECONDS;
 import static org.apache.commons.lang3.StringUtils.isNotBlank;
 import static uk.gov.pay.connector.resources.CardExecutorService.ExecutionStatus.*;
 
@@ -18,9 +14,9 @@ import static uk.gov.pay.connector.resources.CardExecutorService.ExecutionStatus
 public class CardExecutorService<T> {
 
     private static final Logger logger = LoggerFactory.getLogger(CardExecutorService.class);
-    private static final String TIMEOUT_ENV_VAR = "AUTH_READ_TIMEOUT";
     private static int timeout = 10;
     private ExecutorService executor = Executors.newCachedThreadPool();
+    public static final String TIMEOUT_ENV_VAR_SECONDS = "AUTH_READ_TIMEOUT_SECONDS";
 
     public enum ExecutionStatus {
         COMPLETED,
@@ -29,8 +25,8 @@ public class CardExecutorService<T> {
     }
 
     public CardExecutorService() {
-        if (isNotBlank( System.getProperty(TIMEOUT_ENV_VAR))) {
-            timeout = Integer.valueOf(System.getProperty(TIMEOUT_ENV_VAR));
+        if (isNotBlank( System.getProperty(TIMEOUT_ENV_VAR_SECONDS))) {
+            timeout = Integer.valueOf(System.getProperty(TIMEOUT_ENV_VAR_SECONDS));
         }
     }
 
