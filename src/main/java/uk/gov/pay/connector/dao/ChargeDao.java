@@ -14,7 +14,6 @@ import javax.persistence.criteria.CriteriaBuilder;
 import javax.persistence.criteria.CriteriaQuery;
 import javax.persistence.criteria.Expression;
 import javax.persistence.criteria.Root;
-import java.time.LocalDateTime;
 import java.time.ZonedDateTime;
 import java.util.List;
 import java.util.Optional;
@@ -71,7 +70,7 @@ public class ChargeDao extends JpaDao<ChargeEntity> {
     // Temporary methods until notification listeners are in place
     public void persist(ChargeEntity chargeEntity) {
         super.persist(chargeEntity);
-        eventDao.persist(ChargeEventEntity.from(chargeEntity, ChargeStatus.CREATED, chargeEntity.getCreatedDate().toLocalDateTime()));
+        eventDao.persist(ChargeEventEntity.from(chargeEntity, ChargeStatus.CREATED, chargeEntity.getCreatedDate()));
     }
 
 
@@ -90,6 +89,6 @@ public class ChargeDao extends JpaDao<ChargeEntity> {
 
     public void mergeAndNotifyStatusHasChanged(ChargeEntity chargeEntity) {
         super.merge(chargeEntity);
-        eventDao.persist(ChargeEventEntity.from(chargeEntity, ChargeStatus.chargeStatusFrom(chargeEntity.getStatus()), LocalDateTime.now()));
+        eventDao.persist(ChargeEventEntity.from(chargeEntity, ChargeStatus.chargeStatusFrom(chargeEntity.getStatus()), ZonedDateTime.now()));
     }
 }

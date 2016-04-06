@@ -2,7 +2,6 @@ package uk.gov.pay.connector.it.dao;
 
 import com.google.common.collect.Lists;
 import org.apache.commons.lang.RandomStringUtils;
-import org.exparity.hamcrest.date.ZonedDateTimeMatchers;
 import org.hamcrest.Description;
 import org.hamcrest.Matcher;
 import org.hamcrest.MatcherAssert;
@@ -346,7 +345,10 @@ public class ChargeDaoITest {
     }
 
     private void assertDateMatch(String createdDateString) {
-        ZonedDateTime createdDateTime = DateTimeUtils.toUTCZonedDateTime(createdDateString).get();
+        assertDateMatch(DateTimeUtils.toUTCZonedDateTime(createdDateString).get());
+    }
+
+    private void assertDateMatch(ZonedDateTime createdDateTime) {
         assertThat(createdDateTime, within(1, ChronoUnit.MINUTES, ZonedDateTime.now()));
     }
 
@@ -369,6 +371,7 @@ public class ChargeDaoITest {
 
         assertThat(events, hasSize(1));
         assertThat(events, shouldIncludeStatus(ENTERING_CARD_DETAILS));
+        assertDateMatch(events.get(0).getUpdated());
     }
 
     @Test
