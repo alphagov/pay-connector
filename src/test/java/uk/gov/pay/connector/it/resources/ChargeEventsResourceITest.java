@@ -10,12 +10,14 @@ import uk.gov.pay.connector.rules.DropwizardAppWithPostgresRule;
 import uk.gov.pay.connector.util.RestAssuredClient;
 
 import java.io.Serializable;
+import java.time.temporal.ChronoUnit;
 
 import static com.jayway.restassured.http.ContentType.JSON;
 import static javax.ws.rs.core.Response.Status.*;
 import static org.hamcrest.CoreMatchers.equalTo;
 import static org.hamcrest.core.Is.is;
 import static org.hamcrest.core.IsCollectionContaining.hasItems;
+import static uk.gov.pay.connector.matcher.ZoneDateTimeAsStringWithinMatcher.isWithin;
 import static uk.gov.pay.connector.model.api.ExternalChargeStatus.*;
 import static uk.gov.pay.connector.model.domain.ChargeStatus.ENTERING_CARD_DETAILS;
 import static uk.gov.pay.connector.util.JsonEncoder.toJson;
@@ -35,6 +37,22 @@ public class ChargeEventsResourceITest {
         app.getDatabaseTestHelper().addGatewayAccount(accountId, "sandbox");
     }
 
+    @Test
+    public void shouldIncludeAllAttributesForAGivenCharge() {
+        String createPayload = ChargeApiFixtures.aValidCharge(accountId);
+        //create charge
+        ValidatableResponse response = connectorApi
+                .postCreateCharge(createPayload)
+                .statusCode(CREATED.getStatusCode());
+
+        String chargeId = response.extract().path(JSON_CHARGE_KEY);
+
+        connectorApi
+                .getEvents(chargeId)
+                .body("charge_id", is(chargeId))
+                .body("events[0].status", is(EXT_CREATED.getValue()))
+                .body("events[0].updated", isWithin(1, ChronoUnit.MINUTES));
+    }
 
     @Test
     public void shouldGetAllEventsForAGivenCharge() throws Exception {

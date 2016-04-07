@@ -1,7 +1,7 @@
 package uk.gov.pay.connector.model.domain;
 
 import javax.persistence.*;
-import java.time.LocalDateTime;
+import java.time.ZonedDateTime;
 
 @Entity
 @Table(name = "charge_events")
@@ -15,13 +15,13 @@ public class ChargeEventEntity extends AbstractEntity {
     @Convert(converter = ChargeStatusConverter.class)
     private ChargeStatus status;
 
-    @Convert(converter = LocalDateTimeConverter.class)
-    private LocalDateTime updated;
+    @Convert(converter = UTCDateTimeConverter.class)
+    private ZonedDateTime updated;
 
     protected ChargeEventEntity() {
     }
 
-    public ChargeEventEntity(ChargeEntity chargeEntity, ChargeStatus chargeStatus, LocalDateTime updated) {
+    public ChargeEventEntity(ChargeEntity chargeEntity, ChargeStatus chargeStatus, ZonedDateTime updated) {
         this.chargeEntity = chargeEntity;
         this.status = chargeStatus;
         this.updated = updated;
@@ -31,7 +31,7 @@ public class ChargeEventEntity extends AbstractEntity {
         return status;
     }
 
-    public LocalDateTime getUpdated() {
+    public ZonedDateTime getUpdated() {
         return updated;
     }
 
@@ -39,7 +39,7 @@ public class ChargeEventEntity extends AbstractEntity {
         return chargeEntity;
     }
 
-    public static ChargeEventEntity from(ChargeEntity chargeEntity, ChargeStatus chargeStatus, LocalDateTime updated) {
+    public static ChargeEventEntity from(ChargeEntity chargeEntity, ChargeStatus chargeStatus, ZonedDateTime updated) {
         return new ChargeEventEntity(chargeEntity, chargeStatus, updated);
     }
 }
