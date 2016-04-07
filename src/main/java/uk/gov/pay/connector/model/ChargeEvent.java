@@ -1,15 +1,11 @@
 package uk.gov.pay.connector.model;
 
-import com.fasterxml.jackson.annotation.JsonFormat;
 import com.fasterxml.jackson.annotation.JsonProperty;
-import com.fasterxml.jackson.databind.annotation.JsonDeserialize;
-import com.fasterxml.jackson.databind.annotation.JsonSerialize;
-import com.fasterxml.jackson.datatype.jsr310.deser.LocalDateTimeDeserializer;
-import com.fasterxml.jackson.datatype.jsr310.ser.LocalDateTimeSerializer;
 import io.dropwizard.jackson.JsonSnakeCase;
 import uk.gov.pay.connector.model.api.ExternalChargeStatus;
+import uk.gov.pay.connector.util.DateTimeUtils;
 
-import java.time.LocalDateTime;
+import java.time.ZonedDateTime;
 
 @JsonSnakeCase
 public class ChargeEvent {
@@ -17,12 +13,9 @@ public class ChargeEvent {
     private Long chargeId;
     private ExternalChargeStatus status;
 
-    @JsonDeserialize(using = LocalDateTimeDeserializer.class)
-    @JsonSerialize(using = LocalDateTimeSerializer.class)
-    @JsonFormat(pattern = "yyyy-MM-dd HH:mm:ss")
-    private LocalDateTime updated;
+    private ZonedDateTime updated;
 
-    public ChargeEvent(Long chargeId, ExternalChargeStatus chargeStatus, LocalDateTime updated) {
+    public ChargeEvent(Long chargeId, ExternalChargeStatus chargeStatus, ZonedDateTime updated) {
         this.chargeId = chargeId;
         this.status = chargeStatus;
         this.updated = updated;
@@ -49,12 +42,9 @@ public class ChargeEvent {
         return status.getValue();
     }
 
-    public LocalDateTime getUpdated() {
-        return updated;
-    }
-
-    public void setUpdated(LocalDateTime updated) {
-        this.updated = updated;
+    @JsonProperty("updated")
+    public String getUpdated() {
+        return DateTimeUtils.toUTCDateString(updated);
     }
 
     @Override
