@@ -2,41 +2,36 @@ package uk.gov.pay.connector.it.resources;
 
 import com.google.common.collect.ImmutableMap;
 import com.jayway.restassured.response.ValidatableResponse;
-import org.exparity.hamcrest.date.ZonedDateTimeMatchers;
-import org.hamcrest.Description;
 import org.junit.Before;
 import org.junit.Rule;
 import org.junit.Test;
 import uk.gov.pay.connector.model.api.ExternalChargeStatus;
 import uk.gov.pay.connector.model.domain.ChargeStatus;
 import uk.gov.pay.connector.rules.DropwizardAppWithPostgresRule;
-import uk.gov.pay.connector.util.DateTimeUtils;
 import uk.gov.pay.connector.util.RandomIdGenerator;
 import uk.gov.pay.connector.util.RestAssuredClient;
 
 import javax.ws.rs.core.HttpHeaders;
-import java.time.ZonedDateTime;
-import java.time.temporal.ChronoUnit;
 import java.util.List;
-import java.util.regex.Matcher;
-import java.util.regex.Pattern;
 
 import static com.jayway.restassured.http.ContentType.JSON;
 import static java.lang.String.format;
+import static java.time.temporal.ChronoUnit.SECONDS;
 import static java.util.Arrays.asList;
 import static java.util.UUID.randomUUID;
+import static javax.ws.rs.HttpMethod.GET;
 import static javax.ws.rs.HttpMethod.POST;
 import static javax.ws.rs.core.MediaType.APPLICATION_JSON;
 import static javax.ws.rs.core.Response.Status;
 import static javax.ws.rs.core.Response.Status.*;
 import static org.hamcrest.Matchers.*;
 import static org.hamcrest.core.Is.is;
+import static org.hamcrest.text.MatchesPattern.matchesPattern;
+import static uk.gov.pay.connector.matcher.ResponseContainsLinkMatcher.containsLink;
+import static uk.gov.pay.connector.matcher.ZoneDateTimeAsStringWithinMatcher.isWithin;
 import static uk.gov.pay.connector.model.domain.ChargeStatus.*;
 import static uk.gov.pay.connector.model.domain.ChargeStatus.CREATED;
-import static uk.gov.pay.connector.resources.ApiPaths.CHARGE_FRONTEND_PATH;
 import static uk.gov.pay.connector.util.JsonEncoder.toJson;
-import static uk.gov.pay.connector.util.LinksAssert.assertLink;
-import static uk.gov.pay.connector.util.LinksAssert.assertSelfLink;
 import static uk.gov.pay.connector.util.NumberMatcher.isNumber;
 
 public class ChargesFrontendResourceITest {
@@ -57,17 +52,15 @@ public class ChargesFrontendResourceITest {
 
     @Test
     public void getChargeShouldIncludeCardAuthAndCardCaptureLinkButNotGatewayAccountId() throws Exception {
+
         String chargeId = postToCreateACharge(expectedAmount);
-        ValidatableResponse getChargeResponse = validateGetCharge(expectedAmount, chargeId, CREATED);
+        String expectedLocation = "http://localhost:" + app.getLocalPort() + "/v1/frontend/charges/" + chargeId;
 
-        String documentLocation = expectedChargeUrl(chargeId, "");
-        assertSelfLink(getChargeResponse, documentLocation);
-
-        String cardAuthUrl = expectedChargeUrl(chargeId, "/cards");
-        assertLink(getChargeResponse, "cardAuth", POST, cardAuthUrl);
-
-        String cardCaptureUrl = expectedChargeUrl(chargeId, "/capture");
-        assertLink(getChargeResponse, "cardCapture", POST, cardCaptureUrl);
+        validateGetCharge(expectedAmount, chargeId, CREATED)
+                .body("links", hasSize(3))
+                .body("links", containsLink("self", GET, expectedLocation))
+                .body("links", containsLink("cardAuth", POST, expectedLocation + "/cards"))
+                .body("links", containsLink("cardCapture", POST, expectedLocation + "/capture"));
     }
 
     @Test
@@ -288,46 +281,8 @@ public class ChargesFrontendResourceITest {
                 .body("status", is(chargeStatus.getValue()))
                 .body("return_url", is(returnUrl))
                 .body("created_date", is(notNullValue()))
-                .body("created_date", matchesRegex("^\\d{4}-\\d{2}-\\d{2}T\\d{2}:\\d{2}:\\d{2}.\\d{3}Z"))
-                .body("created_date", isADateWithinOneMinute());
-    }
-
-    private org.hamcrest.Matcher isADateWithinOneMinute() {
-        return new org.hamcrest.TypeSafeMatcher<String>() {
-
-            private ZonedDateTime now = ZonedDateTime.now();
-
-            @Override
-            protected boolean matchesSafely(String dateAsString) {
-                ZonedDateTime createdDateTime = DateTimeUtils.toUTCZonedDateTime(dateAsString).get();
-                return ZonedDateTimeMatchers.within(1, ChronoUnit.MINUTES, now).matches(createdDateTime);
-            }
-
-            @Override
-            public void describeTo(Description description) {
-                description.appendText("A date within a minute from " + now.toString());
-            }
-        };
-    }
-
-    private org.hamcrest.Matcher matchesRegex(final String pattern) {
-        return new org.hamcrest.TypeSafeMatcher<String>() {
-            @Override
-            protected boolean matchesSafely(String input) {
-                Pattern compiledPattern = Pattern.compile(pattern);
-                Matcher matcher = compiledPattern.matcher(input);
-                return matcher.matches();
-            }
-
-            @Override
-            public void describeTo(Description description) {
-                description.appendText("A String matching pattern: " + pattern);
-            }
-        };
-    }
-
-    private String expectedChargeUrl(String chargeId, String path) {
-        return "http://localhost:" + app.getLocalPort() + CHARGE_FRONTEND_PATH.replace("{chargeId}", chargeId) + path;
+                .body("created_date", matchesPattern("^\\d{4}-\\d{2}-\\d{2}T\\d{2}:\\d{2}:\\d{2}.\\d{3}Z"))
+                .body("created_date", isWithin(10, SECONDS));
     }
 
     private static void setupLifeCycleEventsFor(DropwizardAppWithPostgresRule app, Long chargeId, List<ChargeStatus> statuses) {

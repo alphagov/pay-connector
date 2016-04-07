@@ -48,11 +48,13 @@ public class DateTimeUtilsTest {
         Optional<ZonedDateTime> result = DateTimeUtils.toUTCZonedDateTime(aDate);
         assertTrue(result.isPresent());
         assertThat(result.get().toString(), endsWith("Z"));
+        assertThat(result.get().toString(), is("2010-01-01T11:00Z"));
 
         aDate = "2010-12-31T23:59:59.132+01:00[Europe/Paris]";
         result = DateTimeUtils.toUTCZonedDateTime(aDate);
         assertTrue(result.isPresent());
         assertThat(result.get().toString(), endsWith("Z"));
+        assertThat(result.get().toString(), is("2010-12-31T22:59:59.132Z"));
     }
 
     @Test
@@ -61,6 +63,6 @@ public class DateTimeUtilsTest {
         Optional<ZonedDateTime> result = DateTimeUtils.toUTCZonedDateTime(aDate);
         assertTrue(result.isPresent());
         assertThat(result.get().toString(), endsWith("Z"));
+        assertThat(result.get().toString(), is("2010-01-01T11:10:10Z"));
     }
-
 }

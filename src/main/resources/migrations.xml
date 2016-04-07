@@ -179,4 +179,19 @@
         </createIndex>
     </changeSet>
 
+    <changeSet id="createIndex charges.reference" author="">
+        <createIndex indexName="idx_charges_reference"
+                     tableName="charges"
+                     unique="false">
+            <column name="reference"/>
+        </createIndex>
+    </changeSet>
+
+    <changeSet id="createIndex charges.created_date" author="">
+        <createIndex indexName="idx_charges_created_date"
+                     tableName="charges"
+                     unique="false">
+            <column name="created_date"/>
+        </createIndex>
+    </changeSet>
 </databaseChangeLog>

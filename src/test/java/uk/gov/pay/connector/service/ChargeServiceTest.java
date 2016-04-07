@@ -33,11 +33,13 @@ import java.util.Optional;
 import static java.util.Arrays.asList;
 import static java.util.Collections.emptyMap;
 import static javax.ws.rs.HttpMethod.GET;
+import static javax.ws.rs.HttpMethod.POST;
 import static org.hamcrest.core.Is.is;
 import static org.hamcrest.core.IsNull.notNullValue;
 import static org.hamcrest.core.IsNull.nullValue;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertThat;
+import static org.mockito.ArgumentCaptor.forClass;
 import static org.mockito.Mockito.*;
 import static uk.gov.pay.connector.fixture.ChargeEntityFixture.aValidChargeEntity;
 import static uk.gov.pay.connector.model.ChargeResponse.Builder.aChargeResponse;
@@ -50,7 +52,8 @@ import static uk.gov.pay.connector.service.ChargeService.EXPIRY_SUCCESS;
 @RunWith(MockitoJUnitRunner.class)
 public class ChargeServiceTest {
 
-    public static final String SERVICE_HOST = "http://my-service";
+    private static final String SERVICE_HOST = "http://my-service";
+
     @Mock
     private TokenDao tokenDao;
     @Mock
@@ -59,30 +62,30 @@ public class ChargeServiceTest {
     private ConnectorConfiguration config;
     @Mock
     private CardCancelService cardCancelService;
-
+    @Mock
     private UriInfo uriInfo;
-    Map<String, Object> chargeRequest;
+    @Mock
+    private LinksConfig linksConfig;
 
     private ChargeService service;
+    private Map<String, Object> chargeRequest = new HashMap<String, Object>() {{
+        put("amount", "100");
+        put("return_url", "http://return-service.com");
+        put("description", "This is a description");
+        put("reference", "Pay reference");
+    }};
 
     @Before
     public void setUp() throws Exception {
-        LinksConfig linksConfig = mock(LinksConfig.class);
-        when(config.getLinks()).thenReturn(linksConfig);
-        when(linksConfig.getCardDetailsUrl())
-                .thenReturn("http://payments.com/{chargeId}/{chargeTokenId}");
 
-        uriInfo = mock(UriInfo.class);
+        when(config.getLinks())
+                .thenReturn(linksConfig);
 
-        UriBuilder uriBuilder = UriBuilder.fromUri(SERVICE_HOST);
-        when(uriInfo.getBaseUriBuilder()).thenReturn(uriBuilder);
+        when(linksConfig.getFrontendUrl())
+                .thenReturn("http://payments.com");
 
-        chargeRequest = new HashMap<String, Object>() {{
-            put("amount", "100");
-            put("return_url", "http://return-service.com");
-            put("description", "This is a description");
-            put("reference", "Pay reference");
-        }};
+        when(this.uriInfo.getBaseUriBuilder())
+                .thenReturn(UriBuilder.fromUri(SERVICE_HOST));
 
         service = new ChargeService(tokenDao, chargeDao, config, cardCancelService);
     }
@@ -90,63 +93,58 @@ public class ChargeServiceTest {
     @Test
     public void shouldCreateACharge() throws Exception {
 
+        // Given - existing gateway account
         GatewayAccountEntity gatewayAccount = new GatewayAccountEntity("provider", new HashMap<>());
         gatewayAccount.setId(1L);
-        long expectedChargeEntityId = 12345L;
-        final String[] externalChargeId = new String[1];
 
+        // Given - persisting a ChargeEntity, it will be populated with an id
+        long chargeEntityId = 12345L;
+        final String[] externalChargeId = new String[1];
         doAnswer(invocation -> {
             ChargeEntity chargeEntityBeingPersisted = (ChargeEntity) invocation.getArguments()[0];
-            chargeEntityBeingPersisted.setId(expectedChargeEntityId);
+            chargeEntityBeingPersisted.setId(chargeEntityId);
             externalChargeId[0] = chargeEntityBeingPersisted.getExternalId();
             return null;
         }).when(chargeDao).persist(any(ChargeEntity.class));
 
+        // When
         ChargeResponse response = service.create(chargeRequest, gatewayAccount, uriInfo);
 
-        ArgumentCaptor<ChargeEntity> chargeEntityArgumentCaptor = ArgumentCaptor.forClass(ChargeEntity.class);
+        // Then - a chargeEntity is created
+        ArgumentCaptor<ChargeEntity> chargeEntityArgumentCaptor = forClass(ChargeEntity.class);
         verify(chargeDao).persist(chargeEntityArgumentCaptor.capture());
 
-        ChargeEntity expectedChargeEntity = chargeEntityArgumentCaptor.getValue();
-        assertThat(expectedChargeEntity.getId(), is(expectedChargeEntityId));
-        assertThat(expectedChargeEntity.getStatus(), is("CREATED"));
-        assertThat(expectedChargeEntity.getGatewayAccount().getId(), is(1L));
-        assertThat(expectedChargeEntity.getExternalId(), is(externalChargeId[0]));
-        assertThat(expectedChargeEntity.getGatewayAccount().getCredentials(), is(emptyMap()));
-        assertThat(expectedChargeEntity.getGatewayAccount().getGatewayName(), is("provider"));
-        assertThat(expectedChargeEntity.getReference(), is("Pay reference"));
-        assertThat(expectedChargeEntity.getDescription(), is("This is a description"));
-        assertThat(expectedChargeEntity.getAmount(), is(100L));
-        assertThat(expectedChargeEntity.getGatewayTransactionId(), is(nullValue()));
-        assertThat(expectedChargeEntity.getCreatedDate(), is(ZonedDateTimeMatchers.within(3, ChronoUnit.SECONDS, ZonedDateTime.now(ZoneId.of("UTC")))));
+        ChargeEntity createdChargeEntity = chargeEntityArgumentCaptor.getValue();
+        assertThat(createdChargeEntity.getId(), is(chargeEntityId));
+        assertThat(createdChargeEntity.getStatus(), is("CREATED"));
+        assertThat(createdChargeEntity.getGatewayAccount().getId(), is(1L));
+        assertThat(createdChargeEntity.getExternalId(), is(externalChargeId[0]));
+        assertThat(createdChargeEntity.getGatewayAccount().getCredentials(), is(emptyMap()));
+        assertThat(createdChargeEntity.getGatewayAccount().getGatewayName(), is("provider"));
+        assertThat(createdChargeEntity.getReference(), is("Pay reference"));
+        assertThat(createdChargeEntity.getDescription(), is("This is a description"));
+        assertThat(createdChargeEntity.getAmount(), is(100L));
+        assertThat(createdChargeEntity.getGatewayTransactionId(), is(nullValue()));
+        assertThat(createdChargeEntity.getCreatedDate(), is(ZonedDateTimeMatchers.within(3, ChronoUnit.SECONDS, ZonedDateTime.now(ZoneId.of("UTC")))));
 
-        ArgumentCaptor<TokenEntity> tokenEntityArgumentCaptor = ArgumentCaptor.forClass(TokenEntity.class);
+        // Then - a TokenEntity is created
+        ArgumentCaptor<TokenEntity> tokenEntityArgumentCaptor = forClass(TokenEntity.class);
         verify(tokenDao).persist(tokenEntityArgumentCaptor.capture());
 
         TokenEntity tokenEntity = tokenEntityArgumentCaptor.getValue();
-        assertThat(tokenEntity.getChargeId(), is(expectedChargeEntity.getId()));
+        assertThat(tokenEntity.getChargeId(), is(createdChargeEntity.getId()));
         assertThat(tokenEntity.getToken(), is(notNullValue()));
 
-        ChargeResponse.Builder expectedChargeResponse = chargeResponseBuilderOf(expectedChargeEntity);
+        // Then - expected response is returned
+        ChargeResponse.Builder expectedChargeResponse = chargeResponseBuilderOf(createdChargeEntity);
+
         expectedChargeResponse.withLink("self", GET, new URI(SERVICE_HOST + "/v1/api/accounts/1/charges/" + externalChargeId[0]));
-        expectedChargeResponse.withLink("next_url", GET, new URI("http://payments.com/" + externalChargeId[0] + "/" + tokenEntity.getToken()));
+        expectedChargeResponse.withLink("next_url", GET, new URI("http://payments.com/charge/" + externalChargeId[0] + "?chargeTokenId=" + tokenEntity.getToken()));
+        expectedChargeResponse.withLink("next_url_post", POST, new URI("http://payments.com/charge/" + externalChargeId[0]), "application/x-www-form-urlencoded", new HashMap<String, Object>() {{
+            put("chargeTokenId", tokenEntity.getToken());
+        }});
 
         assertThat(response, is(expectedChargeResponse.build()));
-    }
-
-    @Test(expected = RuntimeException.class)
-    public void shouldThrowRuntimeExceptionForInvalidRedirectUrl() {
-        LinksConfig invalidLingsConfig = mock(LinksConfig.class);
-        ConnectorConfiguration invalidConfig = mock(ConnectorConfiguration.class);
-
-        when(invalidLingsConfig.getCardDetailsUrl()).thenReturn("blah:asfas/aadw%£>this_is_not_a_url");
-        when(invalidConfig.getLinks()).thenReturn(invalidLingsConfig);
-
-        GatewayAccountEntity gatewayAccount = new GatewayAccountEntity("provider", new HashMap<>());
-        gatewayAccount.setId(1L);
-        service = new ChargeService(tokenDao, chargeDao, invalidConfig, cardCancelService);
-
-        service.create(chargeRequest, gatewayAccount, uriInfo);
     }
 
     @Test
@@ -177,7 +175,10 @@ public class ChargeServiceTest {
 
         ChargeResponse.Builder expectedChargeResponse = chargeResponseBuilderOf(chargeEntity.get());
         expectedChargeResponse.withLink("self", GET, new URI(SERVICE_HOST + "/v1/api/accounts/1/charges/" + externalId));
-        expectedChargeResponse.withLink("next_url", GET, new URI("http://payments.com/" + externalId + "/" + tokenEntity.getToken()));
+        expectedChargeResponse.withLink("next_url", GET, new URI("http://payments.com/charge/" + externalId + "?chargeTokenId=" + tokenEntity.getToken()));
+        expectedChargeResponse.withLink("next_url_post", POST, new URI("http://payments.com/charge/" + externalId), "application/x-www-form-urlencoded", new HashMap<String, Object>() {{
+            put("chargeTokenId", tokenEntity.getToken());
+        }});
 
         assertThat(chargeResponseForAccount.get(), is(expectedChargeResponse.build()));
     }
@@ -254,7 +255,7 @@ public class ChargeServiceTest {
         when(chargeEntity1.getStatus()).thenReturn(ChargeStatus.ENTERING_CARD_DETAILS.getValue());
         when(chargeEntity2.getStatus()).thenReturn(ChargeStatus.AUTHORISATION_SUCCESS.getValue());
         when(chargeEntity2.getExternalId()).thenReturn(extChargeId);
-        when(gatewayAccount.getId()).thenReturn( accountId);
+        when(gatewayAccount.getId()).thenReturn(accountId);
         when(chargeEntity2.getGatewayAccount()).thenReturn(gatewayAccount);
 
         mockCancelResponse(extChargeId, accountId, Either.right(CancelResponse.successfulCancelResponse(SYSTEM_CANCELLED)));
@@ -287,7 +288,7 @@ public class ChargeServiceTest {
         when(chargeEntity1.getStatus()).thenReturn(ChargeStatus.ENTERING_CARD_DETAILS.getValue());
         when(chargeEntity2.getStatus()).thenReturn(ChargeStatus.AUTHORISATION_SUCCESS.getValue());
         when(chargeEntity2.getExternalId()).thenReturn(extChargeId);
-        when(gatewayAccount.getId()).thenReturn( accountId);
+        when(gatewayAccount.getId()).thenReturn(accountId);
         when(chargeEntity2.getGatewayAccount()).thenReturn(gatewayAccount);
 
         CancelResponse unsuccessfulResponse = CancelResponse.cancelFailureResponse(ErrorResponse.unexpectedStatusCodeFromGateway("invalid status"));
@@ -310,7 +311,6 @@ public class ChargeServiceTest {
 
     @Test
     public void shouldUpdateChargeStatusWhenExpiringWithFailedProviderCancellation() {
-        long chargeId = 10L;
         long accountId = 100L;
         String extChargeId = "ext-id";
 
@@ -321,7 +321,7 @@ public class ChargeServiceTest {
         when(chargeEntity1.getStatus()).thenReturn(ChargeStatus.ENTERING_CARD_DETAILS.getValue());
         when(chargeEntity2.getStatus()).thenReturn(ChargeStatus.AUTHORISATION_SUCCESS.getValue());
         when(chargeEntity2.getExternalId()).thenReturn(extChargeId);
-        when(gatewayAccount.getId()).thenReturn( accountId);
+        when(gatewayAccount.getId()).thenReturn(accountId);
         when(chargeEntity2.getGatewayAccount()).thenReturn(gatewayAccount);
 
         ErrorResponse errorResponse = new ErrorResponse("error-message", ErrorType.GATEWAY_CONNECTION_TIMEOUT_ERROR);
@@ -342,6 +342,10 @@ public class ChargeServiceTest {
         inOrder.verify(chargeDao).mergeAndNotifyStatusHasChanged(chargeEntity2);
     }
 
+    /**
+     * TODO To create a matcher rather than using main src to build our assertions
+     */
+    @Deprecated
     private ChargeResponse.Builder chargeResponseBuilderOf(ChargeEntity chargeEntity) throws URISyntaxException {
         return aChargeResponse()
                 .withChargeId(chargeEntity.getExternalId())
@@ -358,5 +362,4 @@ public class ChargeServiceTest {
     private void mockCancelResponse(String extChargeId, Long accountId, Either<ErrorResponse, GatewayResponse> either) {
         when(cardCancelService.doCancel(extChargeId, accountId)).thenReturn(either);
     }
-
 }
