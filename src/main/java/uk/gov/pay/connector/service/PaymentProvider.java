@@ -13,7 +13,7 @@ public interface PaymentProvider {
 
     CaptureResponse capture(CaptureRequest request);
 
-    CancelResponse cancel(CancelRequest request);
+    CancelGatewayResponse cancel(CancelRequest request);
 
     StatusUpdates handleNotification(String notificationPayload, Function<ChargeStatusRequest, Boolean> payloadChecks, Function<String, Optional<GatewayAccountEntity>> accountFinder, Consumer<StatusUpdates> accountUpdater);
 }

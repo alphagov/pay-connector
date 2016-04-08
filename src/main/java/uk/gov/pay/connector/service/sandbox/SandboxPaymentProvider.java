@@ -15,7 +15,7 @@ import java.util.UUID;
 import java.util.function.Consumer;
 import java.util.function.Function;
 
-import static uk.gov.pay.connector.model.CancelResponse.successfulCancelResponse;
+import static uk.gov.pay.connector.model.CancelGatewayResponse.successfulCancelResponse;
 import static uk.gov.pay.connector.model.CaptureResponse.successfulCaptureResponse;
 import static uk.gov.pay.connector.model.ErrorType.GENERIC_GATEWAY_ERROR;
 import static uk.gov.pay.connector.model.GatewayResponse.ResponseStatus.FAILED;
@@ -57,7 +57,7 @@ public class SandboxPaymentProvider implements PaymentProvider {
     }
 
     @Override
-    public CancelResponse cancel(CancelRequest request) {
+    public CancelGatewayResponse cancel(CancelRequest request) {
         return successfulCancelResponse(SYSTEM_CANCELLED);
     }
 

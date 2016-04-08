@@ -32,7 +32,7 @@ import static javax.ws.rs.core.MediaType.APPLICATION_FORM_URLENCODED;
 import static org.apache.commons.lang3.BooleanUtils.negate;
 import static uk.gov.pay.connector.model.ChargeResponse.Builder.aChargeResponse;
 import static uk.gov.pay.connector.model.api.ExternalChargeStatus.*;
-import static uk.gov.pay.connector.resources.ApiPaths.CHARGE_API_PATH;
+import static uk.gov.pay.connector.resources.ApiPaths.CHARGE_API_RESOURCE;
 
 public class ChargeService {
 
@@ -176,7 +176,7 @@ public class ChargeService {
 
     private URI selfUriFor(UriInfo uriInfo, Long accountId, String chargeId) {
         return uriInfo.getBaseUriBuilder()
-                .path(CHARGE_API_PATH)
+                .path(CHARGE_API_RESOURCE)
                 .build(accountId, chargeId);
     }
 

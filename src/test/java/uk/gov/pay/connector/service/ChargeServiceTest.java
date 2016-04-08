@@ -302,7 +302,7 @@ public class ChargeServiceTest {
         when(gatewayAccount.getId()).thenReturn(accountId);
         when(chargeEntity2.getGatewayAccount()).thenReturn(gatewayAccount);
 
-        mockCancelResponse(extChargeId, accountId, Either.right(CancelResponse.successfulCancelResponse(SYSTEM_CANCELLED)));
+        mockCancelResponse(extChargeId, accountId, Either.right(CancelGatewayResponse.successfulCancelResponse(SYSTEM_CANCELLED)));
 
         Map<String, Integer> result = service.expire(asList(chargeEntity1, chargeEntity2));
         assertEquals(2, result.get(EXPIRY_SUCCESS).intValue());
@@ -335,7 +335,7 @@ public class ChargeServiceTest {
         when(gatewayAccount.getId()).thenReturn(accountId);
         when(chargeEntity2.getGatewayAccount()).thenReturn(gatewayAccount);
 
-        CancelResponse unsuccessfulResponse = CancelResponse.cancelFailureResponse(ErrorResponse.unexpectedStatusCodeFromGateway("invalid status"));
+        CancelGatewayResponse unsuccessfulResponse = CancelGatewayResponse.cancelFailureResponse(ErrorResponse.unexpectedStatusCodeFromGateway("invalid status"));
         mockCancelResponse(extChargeId, accountId, Either.right(unsuccessfulResponse));
 
         Map<String, Integer> result = service.expire(asList(chargeEntity1, chargeEntity2));

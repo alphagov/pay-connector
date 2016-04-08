@@ -36,7 +36,6 @@ interface TransactionalGatewayOperation {
         return right(postOperationResponse.right().value());
     }
 
-
     public Either<ErrorResponse, ChargeEntity> preOperation(ChargeEntity chargeEntity);
 
     public Either<ErrorResponse, GatewayResponse> operation(ChargeEntity chargeEntity);

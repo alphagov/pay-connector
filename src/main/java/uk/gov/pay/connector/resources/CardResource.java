@@ -9,6 +9,7 @@ import uk.gov.pay.connector.model.domain.Card;
 import uk.gov.pay.connector.service.CardAuthoriseService;
 import uk.gov.pay.connector.service.CardCancelService;
 import uk.gov.pay.connector.service.CardCaptureService;
+import uk.gov.pay.connector.service.UserCardCancelService;
 
 import javax.inject.Inject;
 import javax.ws.rs.*;
@@ -25,13 +26,15 @@ public class CardResource {
     private final CardAuthoriseService cardAuthoriseService;
     private final CardCaptureService cardCaptureService;
     private final CardCancelService cardCancelService;
+    private final UserCardCancelService userCardCancelService;
     private final Logger logger = LoggerFactory.getLogger(CardResource.class);
 
     @Inject
-    public CardResource(CardAuthoriseService cardAuthoriseService, CardCaptureService cardCaptureService, CardCancelService cardCancelService) {
+    public CardResource(CardAuthoriseService cardAuthoriseService, CardCaptureService cardCaptureService, CardCancelService cardCancelService, UserCardCancelService userCardCancelService) {
         this.cardAuthoriseService = cardAuthoriseService;
         this.cardCaptureService = cardCaptureService;
         this.cardCancelService = cardCancelService;
+        this.userCardCancelService = userCardCancelService;
     }
 
     @POST
@@ -64,12 +67,23 @@ public class CardResource {
     }
 
     @POST
-    @Path(CANCEL_CHARGE_PATH)
+    @Path(CANCEL_CHARGE_RESOURCE)
     @Produces(APPLICATION_JSON)
     public Response cancelCharge(@PathParam("accountId") Long accountId, @PathParam("chargeId") String chargeId) {
         return reduce(
                 cardCancelService
                         .doCancel(chargeId, accountId)
+                        .bimap(handleError, handleGatewayResponse)
+        );
+    }
+
+    @POST
+    @Path(FRONTEND_CANCEL_RESOURCE)
+    @Produces(APPLICATION_JSON)
+    public Response userCancelCharge(@PathParam("chargeId") String chargeId) {
+        return reduce(
+                userCardCancelService
+                        .doCancel(chargeId)
                         .bimap(handleError, handleGatewayResponse)
         );
     }
@@ -80,13 +94,13 @@ public class CardResource {
                     case CHARGE_NOT_FOUND:
                         return notFoundResponse(logger, error.getMessage());
                     case CHARGE_EXPIRED:
+                    case ILLEGAL_STATE_ERROR:
                         return badRequestResponse(logger, error.getMessage());
                     case UNEXPECTED_STATUS_CODE_FROM_GATEWAY:
                     case MALFORMED_RESPONSE_RECEIVED_FROM_GATEWAY:
                     case GATEWAY_URL_DNS_ERROR:
                     case GATEWAY_CONNECTION_TIMEOUT_ERROR:
                     case GATEWAY_CONNECTION_SOCKET_ERROR:
-                    case ILLEGAL_STATE_ERROR:
                         return serviceErrorResponse(logger, error.getMessage());
                     case OPERATION_ALREADY_IN_PROGRESS:
                         return acceptedResponse(logger, error.getMessage());

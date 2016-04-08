@@ -1,9 +1,10 @@
 package uk.gov.pay.connector.unit.service;
 
+import com.google.common.util.concurrent.UncheckedExecutionException;
 import fj.data.Either;
 import org.junit.Test;
 import org.mockito.ArgumentCaptor;
-import uk.gov.pay.connector.model.CancelResponse;
+import uk.gov.pay.connector.model.CancelGatewayResponse;
 import uk.gov.pay.connector.model.ErrorResponse;
 import uk.gov.pay.connector.model.GatewayResponse;
 import uk.gov.pay.connector.model.domain.ChargeEntity;
@@ -11,6 +12,7 @@ import uk.gov.pay.connector.model.domain.ChargeStatus;
 import uk.gov.pay.connector.service.CardCancelService;
 
 import javax.persistence.OptimisticLockException;
+import java.io.UncheckedIOException;
 import java.util.Optional;
 
 import static org.hamcrest.MatcherAssert.assertThat;
@@ -24,13 +26,75 @@ import static uk.gov.pay.connector.model.domain.ChargeStatus.*;
 public class CardCancelServiceTest extends CardServiceTest {
     private final CardCancelService cardCancelService = new CardCancelService(mockedChargeDao, mockedProviders);
 
+
     @Test
-    public void shouldCancelACharge() throws Exception {
+    /**
+     * Mocks an unsuccessful response from payment provider. We still expect charge to be successfullt cancelled
+     */
+    public void whenChargeThatHasStatusCreatedIsCancelled_chargeShouldBeCancelledWithoutCallingGatewayProvider() throws Exception {
+
+        Long chargeId = 1234L;
+        Long accountId = 1L;
+
+        ChargeEntity charge = createNewChargeWith(chargeId, CREATED);
+        ChargeEntity reloadedCharge = mock(ChargeEntity.class);
+
+        when(mockedChargeDao.findByExternalIdAndGatewayAccount(charge.getExternalId(), accountId))
+                .thenReturn(Optional.of(charge));
+        when(mockedChargeDao.merge(charge))
+                .thenReturn(reloadedCharge);
+
+        //should not call payment provider cancel
+       verifyPaymentProviderNotCalled();
+
+        Either<ErrorResponse, GatewayResponse> response = cardCancelService.doCancel(charge.getExternalId(), accountId);
+
+        assertTrue(response.isRight());
+        assertThat(response.right().value(), is(aSuccessfulResponse()));
+
+        ArgumentCaptor<ChargeEntity> argumentCaptor = ArgumentCaptor.forClass(ChargeEntity.class);
+        verify(mockedChargeDao).mergeAndNotifyStatusHasChanged(argumentCaptor.capture());
+        assertThat(argumentCaptor.getValue(), is(reloadedCharge));
+
+        verify(reloadedCharge, times(1)).setStatus(SYSTEM_CANCELLED);
+    }
+
+    @Test
+    public void whenChargeThatHasStatusEnteringCardDetailsIsCancelled_chargeShouldBeCancelledWithoutCallingGatewayProvider() throws Exception {
 
         Long chargeId = 1234L;
         Long accountId = 1L;
 
         ChargeEntity charge = createNewChargeWith(chargeId, ENTERING_CARD_DETAILS);
+        ChargeEntity reloadedCharge = mock(ChargeEntity.class);
+
+        when(mockedChargeDao.findByExternalIdAndGatewayAccount(charge.getExternalId(), accountId))
+                .thenReturn(Optional.of(charge));
+        when(mockedChargeDao.merge(charge))
+                .thenReturn(reloadedCharge);
+
+        verifyPaymentProviderNotCalled();
+
+        Either<ErrorResponse, GatewayResponse> response = cardCancelService.doCancel(charge.getExternalId(), accountId);
+
+        assertTrue(response.isRight());
+        assertThat(response.right().value(), is(aSuccessfulResponse()));
+
+        ArgumentCaptor<ChargeEntity> argumentCaptor = ArgumentCaptor.forClass(ChargeEntity.class);
+        verify(mockedChargeDao).mergeAndNotifyStatusHasChanged(argumentCaptor.capture());
+        assertThat(argumentCaptor.getValue(), is(reloadedCharge));
+
+        verify(reloadedCharge, times(1)).setStatus(SYSTEM_CANCELLED);
+    }
+
+
+    @Test
+    public void whenChargeThatHasAnyOtherLegalStatusIsCancelled_chargeShouldBeCancelledCallingGatewayProvider() throws Exception {
+
+        Long chargeId = 1234L;
+        Long accountId = 1L;
+
+        ChargeEntity charge = createNewChargeWith(chargeId, AUTHORISATION_SUCCESS);
         ChargeEntity reloadedCharge = mock(ChargeEntity.class);
 
         when(mockedChargeDao.findByExternalIdAndGatewayAccount(charge.getExternalId(), accountId))
@@ -52,6 +116,7 @@ public class CardCancelServiceTest extends CardServiceTest {
 
         verify(reloadedCharge, times(1)).setStatus(SYSTEM_CANCELLED);
     }
+
 
     @Test
     public void shouldGetChargeNotFoundWhenChargeDoesNotExistForAccount() {
@@ -97,7 +162,7 @@ public class CardCancelServiceTest extends CardServiceTest {
         Long chargeId = 1234L;
         Long accountId = 1L;
 
-        ChargeEntity charge = createNewChargeWith(chargeId, ChargeStatus.CANCEL_READY);
+        ChargeEntity charge = createNewChargeWith(chargeId, CANCEL_READY);
 
         when(mockedChargeDao.findByExternalIdAndGatewayAccount(charge.getExternalId(), accountId))
                 .thenReturn(Optional.of(charge));
@@ -118,7 +183,7 @@ public class CardCancelServiceTest extends CardServiceTest {
         Long chargeId = 1234L;
         Long accountId = 1L;
 
-        ChargeEntity charge = createNewChargeWith(chargeId, ChargeStatus.ENTERING_CARD_DETAILS);
+        ChargeEntity charge = createNewChargeWith(chargeId, AUTHORISATION_SUCCESS);
 
         when(mockedChargeDao.findByExternalIdAndGatewayAccount(charge.getExternalId(), accountId))
                 .thenReturn(Optional.of(charge));
@@ -139,7 +204,7 @@ public class CardCancelServiceTest extends CardServiceTest {
         Long chargeId = 1234L;
         Long accountId = 1L;
 
-        ChargeEntity charge = createNewChargeWith(chargeId, ENTERING_CARD_DETAILS);
+        ChargeEntity charge = createNewChargeWith(chargeId, AUTHORISATION_SUCCESS);
 
         ChargeEntity reloadedCharge = mock(ChargeEntity.class);
 
@@ -159,17 +224,28 @@ public class CardCancelServiceTest extends CardServiceTest {
         verify(reloadedCharge, times(1)).setStatus(CANCEL_ERROR);
     }
 
-    private void mockSuccessfulCancel() {
+    void mockSuccessfulCancel() {
         when(mockedProviders.resolve(providerName))
                 .thenReturn(mockedPaymentProvider);
         when(mockedPaymentProvider.cancel(any()))
-                .thenReturn(CancelResponse.successfulCancelResponse(SYSTEM_CANCELLED));
+                .thenReturn(CancelGatewayResponse.successfulCancelResponse(SYSTEM_CANCELLED));
     }
 
-    private void mockUnsuccessfulCancel() {
+    void mockUnsuccessfulCancel() {
         when(mockedProviders.resolve(providerName))
                 .thenReturn(mockedPaymentProvider);
         when(mockedPaymentProvider.cancel(any()))
-                .thenReturn(CancelResponse.cancelFailureResponse(ErrorResponse.baseError("error")));
+                .thenReturn(CancelGatewayResponse.cancelFailureResponse(ErrorResponse.baseError("error")));
+    }
+
+    void verifyPaymentProviderNotCalled() {
+        when(mockedProviders.resolve(providerName))
+                .thenReturn(mockedPaymentProvider);
+
+        verify(mockedPaymentProvider, never()).cancel(any());
+
+        when(mockedPaymentProvider.cancel(any()))
+                .thenReturn(CancelGatewayResponse.successfulCancelResponse(SYSTEM_CANCELLED));
+
     }
 }

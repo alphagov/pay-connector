@@ -6,9 +6,10 @@ import uk.gov.pay.connector.dao.ChargeDao;
 import uk.gov.pay.connector.model.*;
 import uk.gov.pay.connector.model.domain.ChargeEntity;
 import uk.gov.pay.connector.model.domain.ChargeStatus;
+import static uk.gov.pay.connector.model.CancelGatewayResponse.successfulCancelResponse;
 
 import javax.inject.Inject;
-import java.util.function.Supplier;
+import java.util.Optional;
 
 import static fj.data.Either.left;
 import static fj.data.Either.right;
@@ -21,6 +22,9 @@ public class CardCancelService extends CardService implements TransactionalGatew
             CREATED, ENTERING_CARD_DETAILS, AUTHORISATION_SUCCESS, AUTHORISATION_READY, CAPTURE_READY
     };
 
+    private static ChargeStatus[] localStatuses = new ChargeStatus[]{
+            CREATED, ENTERING_CARD_DETAILS
+    };
     private final PaymentProviders providers;
 
     @Inject
@@ -30,11 +34,31 @@ public class CardCancelService extends CardService implements TransactionalGatew
     }
 
     public Either<ErrorResponse, GatewayResponse> doCancel(String chargeId, Long accountId) {
-        return chargeDao
-                .findByExternalIdAndGatewayAccount(chargeId, accountId)
-                .map(TransactionalGatewayOperation.super::executeGatewayOperationFor)
-                .orElseGet(chargeNotFound(chargeId));
+        Optional<ChargeEntity> charge = chargeDao
+                .findByExternalIdAndGatewayAccount(chargeId, accountId);
+        if (charge.isPresent()){
+            return globalCancel(charge.get(), ChargeStatus.SYSTEM_CANCELLED);
+        } else {
+            return chargeNotFound(chargeId);
+        }
     }
+
+    Either<ErrorResponse, GatewayResponse> globalCancel(ChargeEntity charge, ChargeStatus status) {
+            if (charge.hasStatus(localStatuses)) {
+                return localCancel(charge, status);
+            } else {
+                return TransactionalGatewayOperation.super.executeGatewayOperationFor(charge);
+            }
+    }
+
+    private Either<ErrorResponse, GatewayResponse> localCancel(ChargeEntity chargeEntity, ChargeStatus status) {
+        ChargeEntity reloadedCharge = chargeDao.merge(chargeEntity);
+        reloadedCharge.setStatus(status);
+        chargeDao.mergeAndNotifyStatusHasChanged(reloadedCharge);
+
+        return right(successfulCancelResponse(status));
+    }
+
 
     @Transactional
     @Override
@@ -51,7 +75,7 @@ public class CardCancelService extends CardService implements TransactionalGatew
     @Transactional
     @Override
     public Either<ErrorResponse, GatewayResponse> postOperation(ChargeEntity chargeEntity, GatewayResponse operationResponse) {
-        CancelResponse cancelResponse = (CancelResponse) operationResponse;
+        CancelGatewayResponse cancelResponse = (CancelGatewayResponse) operationResponse;
 
         ChargeEntity reloadedCharge = chargeDao.merge(chargeEntity);
         reloadedCharge.setStatus(cancelResponse.getStatus());
@@ -61,7 +85,7 @@ public class CardCancelService extends CardService implements TransactionalGatew
         return right(operationResponse);
     }
 
-    public Supplier<Either<ErrorResponse, GatewayResponse>> chargeNotFound(String chargeId) {
-        return () -> left(new ErrorResponse(format("Charge with id [%s] not found.", chargeId), ErrorType.CHARGE_NOT_FOUND));
+    Either<ErrorResponse, GatewayResponse> chargeNotFound(String chargeId) {
+        return left(new ErrorResponse(format("Charge with id [%s] not found.", chargeId), ErrorType.CHARGE_NOT_FOUND));
     }
 }
