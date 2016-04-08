@@ -7,7 +7,6 @@ import uk.gov.pay.connector.dao.ChargeDao;
 import uk.gov.pay.connector.model.ErrorResponse;
 import uk.gov.pay.connector.model.domain.ChargeEntity;
 import uk.gov.pay.connector.model.domain.ChargeStatus;
-import uk.gov.pay.connector.resources.CardExecutorService;
 
 import static fj.data.Either.left;
 import static fj.data.Either.right;

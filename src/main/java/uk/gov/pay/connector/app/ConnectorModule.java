@@ -7,7 +7,7 @@ import com.google.inject.Singleton;
 import com.google.inject.persist.jpa.JpaPersistModule;
 import io.dropwizard.db.DataSourceFactory;
 import io.dropwizard.setup.Environment;
-import uk.gov.pay.connector.resources.CardExecutorService;
+import uk.gov.pay.connector.service.CardExecutorService;
 
 import java.util.Properties;
 

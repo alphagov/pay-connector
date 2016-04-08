@@ -33,8 +33,8 @@ import static uk.gov.pay.connector.model.AuthorisationResponse.successfulAuthori
 import static uk.gov.pay.connector.model.ErrorType.*;
 import static uk.gov.pay.connector.model.domain.ChargeStatus.AUTHORISATION_SUCCESS;
 import static uk.gov.pay.connector.model.domain.ChargeStatus.ENTERING_CARD_DETAILS;
-import static uk.gov.pay.connector.resources.CardExecutorService.ExecutionStatus.COMPLETED;
-import static uk.gov.pay.connector.resources.CardExecutorService.ExecutionStatus.IN_PROGRESS;
+import static uk.gov.pay.connector.service.CardExecutorService.ExecutionStatus.COMPLETED;
+import static uk.gov.pay.connector.service.CardExecutorService.ExecutionStatus.IN_PROGRESS;
 
 @RunWith(MockitoJUnitRunner.class)
 public class CardAuthoriseServiceTest extends CardServiceTest {
@@ -53,7 +53,7 @@ public class CardAuthoriseServiceTest extends CardServiceTest {
         when(mockedChargeDao.findByExternalId(charge.getExternalId())).thenReturn(Optional.of(charge));
         when(mockedChargeDao.merge(any())).thenReturn(charge);
         Either<ErrorResponse, GatewayResponse> authorisationResponse = right(successfulAuthorisationResponse(AUTHORISATION_SUCCESS, gatewayTxId));
-        when(mockExecutorService.execute(anyString(), any())).thenReturn(Pair.of(COMPLETED, authorisationResponse));
+        when(mockExecutorService.execute(any())).thenReturn(Pair.of(COMPLETED, authorisationResponse));
 
         Card cardDetails = CardUtils.aValidCard();
         Either<ErrorResponse, GatewayResponse> response = cardAuthorisationService.doAuthorise(charge.getExternalId(), cardDetails);
@@ -69,7 +69,7 @@ public class CardAuthoriseServiceTest extends CardServiceTest {
 
         when(mockedChargeDao.findByExternalId(charge.getExternalId())).thenReturn(Optional.of(charge));
         when(mockedChargeDao.merge(any())).thenReturn(charge);
-        when(mockExecutorService.execute(anyString(), any())).thenReturn(Pair.of(IN_PROGRESS, null));
+        when(mockExecutorService.execute(any())).thenReturn(Pair.of(IN_PROGRESS, null));
         Card cardDetails = CardUtils.aValidCard();
 
         Either<ErrorResponse, GatewayResponse> response = cardAuthorisationService.doAuthorise(charge.getExternalId(), cardDetails);
@@ -102,7 +102,7 @@ public class CardAuthoriseServiceTest extends CardServiceTest {
         when(mockedChargeDao.findByExternalId(charge.getExternalId())).thenReturn(Optional.of(charge));
         when(mockedChargeDao.merge(any())).thenReturn(charge);
         ErrorResponse mockErrorResponse = new ErrorResponse("Authorisation for charge already in progress, " + charge.getExternalId(), ErrorType.OPERATION_ALREADY_IN_PROGRESS);
-        when(mockExecutorService.execute(anyString(), any())).thenReturn(Pair.of(COMPLETED, left(mockErrorResponse)));
+        when(mockExecutorService.execute(any())).thenReturn(Pair.of(COMPLETED, left(mockErrorResponse)));
 
         Card cardDetails = CardUtils.aValidCard();
         Either<ErrorResponse, GatewayResponse> response = cardAuthorisationService.doAuthorise(charge.getExternalId(), cardDetails);
@@ -123,7 +123,7 @@ public class CardAuthoriseServiceTest extends CardServiceTest {
         when(mockedChargeDao.findByExternalId(charge.getExternalId())).thenReturn(Optional.of(charge));
         when(mockedChargeDao.merge(any())).thenReturn(charge);
         ErrorResponse mockErrorResponse = ErrorResponse.illegalStateError("Charge not in correct state to be processed, " + charge.getExternalId());
-        when(mockExecutorService.execute(anyString(), any())).thenReturn(Pair.of(COMPLETED, left(mockErrorResponse)));
+        when(mockExecutorService.execute(any())).thenReturn(Pair.of(COMPLETED, left(mockErrorResponse)));
 
         Card cardDetails = CardUtils.aValidCard();
         Either<ErrorResponse, GatewayResponse> response = cardAuthorisationService.doAuthorise(charge.getExternalId(), cardDetails);
@@ -144,7 +144,7 @@ public class CardAuthoriseServiceTest extends CardServiceTest {
         when(mockedChargeDao.findByExternalId(charge.getExternalId())).thenReturn(Optional.of(charge));
         when(mockedChargeDao.merge(any())).thenThrow(new OptimisticLockException());
         ErrorResponse mockErrorResponse = ErrorResponse.conflictError("Operation for charge conflicting, " + charge.getExternalId());
-        when(mockExecutorService.execute(anyString(), any())).thenReturn(Pair.of(COMPLETED, left(mockErrorResponse)));
+        when(mockExecutorService.execute(any())).thenReturn(Pair.of(COMPLETED, left(mockErrorResponse)));
 
         Card cardDetails = CardUtils.aValidCard();
         Either<ErrorResponse, GatewayResponse> response = cardAuthorisationService.doAuthorise(charge.getExternalId(), cardDetails);
@@ -169,7 +169,7 @@ public class CardAuthoriseServiceTest extends CardServiceTest {
                 .thenReturn(charge)
                 .thenReturn(reloadedCharge);
         Either<ErrorResponse, GatewayResponse> authorisationResponse = right(authorisationFailureResponse(ErrorResponse.baseError("Authorization failed")));
-        when(mockExecutorService.execute(anyString(), any())).thenReturn(Pair.of(COMPLETED, authorisationResponse));
+        when(mockExecutorService.execute(any())).thenReturn(Pair.of(COMPLETED, authorisationResponse));
 
         Card cardDetails = CardUtils.aValidCard();
         Either<ErrorResponse, GatewayResponse> response = cardAuthorisationService.doAuthorise(charge.getExternalId(), cardDetails);

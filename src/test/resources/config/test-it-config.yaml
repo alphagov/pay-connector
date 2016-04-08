@@ -29,6 +29,10 @@ smartpay:
     password: smartpay_test_password
   credentials: ['username','password']
 
+executorServiceConfig:
+  timeoutInSeconds: ${AUTH_READ_TIMEOUT_SECONDS:-10}
+  threadsPerCpu: ${NUMBER_OF_THREADS_PER_CPU:-100}
+
 jerseyClient:
   timeout: 500ms
   connectionTimeout: 500ms

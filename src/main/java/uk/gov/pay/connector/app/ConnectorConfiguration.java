@@ -16,6 +16,10 @@ public class ConnectorConfiguration extends Configuration {
 
     @Valid
     @NotNull
+    private CardExecutorServiceConfig executorServiceConfig = new CardExecutorServiceConfig();
+
+    @Valid
+    @NotNull
     private SmartpayCredentialsConfig smartpayConfig;
 
     @Valid
@@ -62,6 +66,10 @@ public class ConnectorConfiguration extends Configuration {
     @JsonProperty("jpa")
     public JPAConfiguration getJpaConfiguration() {
         return jpaConfiguration;
+    }
+
+    public CardExecutorServiceConfig getExecutorServiceConfig() {
+        return executorServiceConfig;
     }
 
     public JerseyClientConfiguration getClientConfiguration() {

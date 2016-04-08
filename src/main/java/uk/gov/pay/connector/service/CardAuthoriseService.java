@@ -10,7 +10,6 @@ import uk.gov.pay.connector.model.*;
 import uk.gov.pay.connector.model.domain.Card;
 import uk.gov.pay.connector.model.domain.ChargeEntity;
 import uk.gov.pay.connector.model.domain.ChargeStatus;
-import uk.gov.pay.connector.resources.CardExecutorService;
 
 import javax.inject.Inject;
 import java.util.Optional;
@@ -19,10 +18,9 @@ import java.util.function.Supplier;
 import static fj.data.Either.left;
 import static fj.data.Either.right;
 import static java.lang.String.format;
-import static uk.gov.pay.connector.model.GatewayResponse.ResponseStatus.FAILED;
 import static uk.gov.pay.connector.model.GatewayResponse.ResponseStatus.IN_PROGRESS;
 import static uk.gov.pay.connector.model.domain.ChargeStatus.ENTERING_CARD_DETAILS;
-import static uk.gov.pay.connector.resources.CardExecutorService.ExecutionStatus;
+import static uk.gov.pay.connector.service.CardExecutorService.ExecutionStatus;
 
 public class CardAuthoriseService extends CardService implements TransactionalGatewayOperation {
 
@@ -45,7 +43,7 @@ public class CardAuthoriseService extends CardService implements TransactionalGa
 
         if (chargeEntity.isPresent()) {
             Supplier<Either<ErrorResponse, GatewayResponse>> authorisationSupplier = () -> TransactionalGatewayOperation.super.executeGatewayOperationFor(chargeEntity.get());
-            Pair<ExecutionStatus, Either<ErrorResponse, GatewayResponse>> executeResult = cardExecutorService.execute(chargeId, authorisationSupplier);
+            Pair<ExecutionStatus, Either<ErrorResponse, GatewayResponse>> executeResult = cardExecutorService.execute(authorisationSupplier);
 
             switch (executeResult.getLeft()) {
                 case COMPLETED:
