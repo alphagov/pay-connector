@@ -22,7 +22,6 @@ import javax.inject.Inject;
 import javax.ws.rs.core.UriBuilder;
 import javax.ws.rs.core.UriInfo;
 import java.net.URI;
-import java.net.URISyntaxException;
 import java.util.*;
 import java.util.stream.Collectors;
 
@@ -104,7 +103,6 @@ public class ChargeService {
         return ImmutableMap.of(EXPIRY_SUCCESS, expiredSuccess + successFailPair.getLeft(), EXPIRY_FAILED, successFailPair.getRight());
     }
 
-    @Transactional
     private TokenEntity createNewChargeEntityToken(ChargeEntity chargeEntity) {
         TokenEntity token = TokenEntity.generateNewTokenFor(chargeEntity);
         tokenDao.persist(token);

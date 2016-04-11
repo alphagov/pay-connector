@@ -85,6 +85,11 @@ public class DatabaseFixtures {
             return this;
         }
 
+        public TestCharge withAmount(long amount) {
+            this.amount = amount;
+            return this;
+        }
+
         public TestCharge withCreatedDate(ZonedDateTime createdDate) {
             this.createdDate = createdDate;
             return this;

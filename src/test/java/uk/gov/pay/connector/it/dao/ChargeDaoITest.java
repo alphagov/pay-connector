@@ -1,8 +1,6 @@
 package uk.gov.pay.connector.it.dao;
 
 import com.google.common.collect.Lists;
-import com.sun.org.apache.xml.internal.dtm.DTMAxisIterator;
-import junit.framework.Assert;
 import org.apache.commons.lang.RandomStringUtils;
 import org.hamcrest.Description;
 import org.hamcrest.Matcher;
@@ -20,7 +18,6 @@ import uk.gov.pay.connector.model.domain.ChargeEventEntity;
 import uk.gov.pay.connector.model.domain.ChargeStatus;
 import uk.gov.pay.connector.model.domain.GatewayAccountEntity;
 import uk.gov.pay.connector.rules.DropwizardAppWithPostgresRule;
-import uk.gov.pay.connector.util.DatabaseTestHelper;
 import uk.gov.pay.connector.util.DateTimeUtils;
 
 import java.time.ZoneId;
@@ -612,7 +609,16 @@ public class ChargeDaoITest {
 
     @Test
     public void testFindChargeByTokenId() {
-        app.getDatabaseTestHelper().addCharge(100L, "ext-id", String.valueOf(defaultTestAccount.getAccountId()), 300L, CREATED, "return-url", "", "reference", now());
+        DatabaseFixtures
+                .withDatabaseTestHelper(app.getDatabaseTestHelper())
+                .aTestCharge()
+                .withTestAccount(defaultTestAccount)
+                .withChargeId(100L)
+                .withExternalChargeId("ext-id")
+                .withCreatedDate(now())
+                .withAmount(300L)
+                .insert();
+
         app.getDatabaseTestHelper().addToken(100L, "some-token-id");
 
         Optional<ChargeEntity> chargeOpt = chargeDao.findByTokenId("some-token-id");
