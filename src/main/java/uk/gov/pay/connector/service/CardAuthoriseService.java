@@ -42,7 +42,7 @@ public class CardAuthoriseService extends CardService implements TransactionalGa
         Optional<ChargeEntity> chargeEntity = chargeDao.findByExternalId(chargeId);
 
         if (chargeEntity.isPresent()) {
-            Supplier<Either<ErrorResponse, GatewayResponse>> authorisationSupplier = () -> TransactionalGatewayOperation.super.executeGatewayOperationFor(chargeEntity.get());
+            Supplier<Either<ErrorResponse, GatewayResponse>> authorisationSupplier = () -> executeGatewayOperationFor(chargeEntity.get());
             Pair<ExecutionStatus, Either<ErrorResponse, GatewayResponse>> executeResult = cardExecutorService.execute(authorisationSupplier);
 
             switch (executeResult.getLeft()) {
