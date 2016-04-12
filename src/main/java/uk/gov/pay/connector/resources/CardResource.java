@@ -98,8 +98,8 @@ public class CardResource {
             };
 
     private F<GatewayResponse, Response> handleGatewayResponse =
-            response -> response.isSuccessful() ?
-                    noContentResponse() :
-                    handleError.f(response.getError());
+            response -> response.isSuccessful() ? noContentResponse() :
+                    response.isInProgress() ? acceptedResponse(logger, "Request in progress") :
+                            handleError.f(response.getError());
 
 }

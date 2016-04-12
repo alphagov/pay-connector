@@ -17,6 +17,7 @@ abstract public class CardService {
     protected final ChargeDao chargeDao;
     protected final PaymentProviders providers;
     private final Logger logger = LoggerFactory.getLogger(CardCancelService.class);
+    protected CardExecutorService cardExecutorService;
 
     protected enum OperationType {
         CAPTURE("Capture"),
@@ -37,6 +38,12 @@ abstract public class CardService {
     public CardService(ChargeDao chargeDao, PaymentProviders providers) {
         this.chargeDao = chargeDao;
         this.providers = providers;
+    }
+
+    public CardService(ChargeDao chargeDao, PaymentProviders providers, CardExecutorService cardExecutorService) {
+        this.chargeDao = chargeDao;
+        this.providers = providers;
+        this.cardExecutorService = cardExecutorService;
     }
 
     public Either<ErrorResponse, ChargeEntity> preOperation(ChargeEntity chargeEntity, OperationType operationType, ChargeStatus[] legalStatuses, ChargeStatus lockingStatus) {

@@ -4,11 +4,11 @@ import org.hamcrest.Description;
 import org.hamcrest.Matcher;
 import org.hamcrest.TypeSafeMatcher;
 import uk.gov.pay.connector.dao.ChargeDao;
-import uk.gov.pay.connector.dao.GatewayAccountDao;
 import uk.gov.pay.connector.fixture.ChargeEntityFixture;
 import uk.gov.pay.connector.model.GatewayResponse;
 import uk.gov.pay.connector.model.domain.ChargeEntity;
 import uk.gov.pay.connector.model.domain.ChargeStatus;
+import uk.gov.pay.connector.service.CardExecutorService;
 import uk.gov.pay.connector.service.PaymentProvider;
 import uk.gov.pay.connector.service.PaymentProviders;
 
@@ -19,8 +19,8 @@ public abstract class CardServiceTest {
     protected final PaymentProvider mockedPaymentProvider = mock(PaymentProvider.class);
     protected PaymentProviders mockedProviders = mock(PaymentProviders.class);
 
-    protected GatewayAccountDao mockedAccountDao = mock(GatewayAccountDao.class);
     protected ChargeDao mockedChargeDao = mock(ChargeDao.class);
+    protected CardExecutorService mockExecutorService = mock(CardExecutorService.class);
 
     protected ChargeEntity createNewChargeWith(Long chargeId, ChargeStatus status) {
         return ChargeEntityFixture

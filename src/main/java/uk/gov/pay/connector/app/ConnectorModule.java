@@ -3,9 +3,11 @@ package uk.gov.pay.connector.app;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.google.inject.AbstractModule;
 import com.google.inject.Provides;
+import com.google.inject.Singleton;
 import com.google.inject.persist.jpa.JpaPersistModule;
 import io.dropwizard.db.DataSourceFactory;
 import io.dropwizard.setup.Environment;
+import uk.gov.pay.connector.service.CardExecutorService;
 
 import java.util.Properties;
 
@@ -22,6 +24,8 @@ public class ConnectorModule extends AbstractModule {
     protected void configure() {
         bind(ConnectorConfiguration.class).toInstance(configuration);
         bind(Environment.class).toInstance(environment);
+        bind(CardExecutorService.class).in(Singleton.class);
+
         install(jpaModule(configuration));
     }
 

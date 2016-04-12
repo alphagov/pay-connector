@@ -33,6 +33,10 @@ Important configurations.
         username: <Worldpay merchantID | this will be removed when gateway accounts have the capability to store username/passwords >
         password: <Worldpay merchat password for integration | this will be removed when gateway accounts have the capability to store username/passwords>
   ```
+  
+#### Environment Variables
+
+`AUTH_READ_TIMEOUT_SECONDS`:  The env variable AUTH_READ_TIMEOUT_SECONDS can be passed into the app to override the default value of 10     seconds, i.e. the timeout before the resource responds with an awaited auth response (202), so that frontend can choose to show a spinner and poll for auth response.
 
 ## Integration tests
 

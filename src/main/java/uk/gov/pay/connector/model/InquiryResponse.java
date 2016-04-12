@@ -6,23 +6,19 @@ import javax.ws.rs.core.Response;
 
 import static java.lang.String.format;
 import static uk.gov.pay.connector.model.ErrorResponse.unexpectedStatusCodeFromGateway;
+import static uk.gov.pay.connector.model.GatewayResponse.ResponseStatus.FAILED;
+import static uk.gov.pay.connector.model.GatewayResponse.ResponseStatus.SUCCEDED;
 
-public class InquiryResponse implements GatewayResponse {
-    private Boolean successful;
+public class InquiryResponse extends GatewayResponse {
     private ErrorResponse error;
     private String transactionId;
     private String newStatus;
 
-    public InquiryResponse(Boolean successful, ErrorResponse error, String transactionId, String newStatus) {
-        this.successful = successful;
+    public InquiryResponse(ResponseStatus responseStatus, ErrorResponse error, String transactionId, String newStatus) {
+        this.responseStatus = responseStatus;
         this.error = error;
         this.transactionId = transactionId;
         this.newStatus = newStatus;
-    }
-
-    @Override
-    public Boolean isSuccessful() {
-        return successful;
     }
 
     @Override
@@ -39,15 +35,15 @@ public class InquiryResponse implements GatewayResponse {
     }
 
     public static InquiryResponse inquiryFailureResponse(ErrorResponse errorResponse) {
-        return new InquiryResponse(false, errorResponse, null, null);
+        return new InquiryResponse(FAILED, errorResponse, null, null);
     }
 
     public static InquiryResponse inquiryStatusUpdate(String transactionId, String newStatus) {
-        return new InquiryResponse(true, null, transactionId, newStatus);
+        return new InquiryResponse(SUCCEDED, null, transactionId, newStatus);
     }
 
     public static InquiryResponse errorInquiryResponse(Logger logger, Response response) {
         logger.error(format("Error code received from gateway: %s.", response.getStatus()));
-        return new InquiryResponse(false, unexpectedStatusCodeFromGateway("Error processing status inquiry"), null, null);
+        return new InquiryResponse(FAILED, unexpectedStatusCodeFromGateway("Error processing status inquiry"), null, null);
     }
 }
