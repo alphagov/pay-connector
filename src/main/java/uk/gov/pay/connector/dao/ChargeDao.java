@@ -51,6 +51,17 @@ public class ChargeDao extends JpaDao<ChargeEntity> {
                 .getResultList().stream().findFirst();
     }
 
+    public Optional<ChargeEntity> findByTokenId(String tokenId) {
+        String query = "SELECT te.chargeEntity FROM TokenEntity te WHERE te.token=:tokenId";
+
+        return entityManager.get()
+                .createQuery(query, ChargeEntity.class)
+                .setParameter("tokenId", tokenId)
+                .getResultList()
+                .stream()
+                .findFirst();
+    }
+
     public Optional<ChargeEntity> findByExternalIdAndGatewayAccount(String externalId, Long accountId) {
         return findByExternalId(externalId).filter(charge -> charge.isAssociatedTo(accountId));
     }
@@ -72,7 +83,6 @@ public class ChargeDao extends JpaDao<ChargeEntity> {
         super.persist(chargeEntity);
         eventDao.persist(ChargeEventEntity.from(chargeEntity, ChargeStatus.CREATED, chargeEntity.getCreatedDate()));
     }
-
 
     public List<ChargeEntity> findBeforeDateWithStatusIn(ZonedDateTime date, List<ChargeStatus> statuses) {
         CriteriaBuilder cb = entityManager.get().getCriteriaBuilder();

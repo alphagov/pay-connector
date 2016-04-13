@@ -1,7 +1,10 @@
 package uk.gov.pay.connector.it.dao;
 
 import com.google.common.collect.ImmutableMap;
-import org.junit.*;
+import org.junit.After;
+import org.junit.Before;
+import org.junit.Rule;
+import org.junit.Test;
 import uk.gov.pay.connector.dao.GatewayAccountDao;
 import uk.gov.pay.connector.model.domain.GatewayAccountEntity;
 import uk.gov.pay.connector.rules.DropwizardAppWithPostgresRule;

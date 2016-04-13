@@ -132,15 +132,15 @@ public class ChargeServiceTest {
         verify(tokenDao).persist(tokenEntityArgumentCaptor.capture());
 
         TokenEntity tokenEntity = tokenEntityArgumentCaptor.getValue();
-        assertThat(tokenEntity.getChargeId(), is(createdChargeEntity.getId()));
+        assertThat(tokenEntity.getChargeEntity().getId(), is(createdChargeEntity.getId()));
         assertThat(tokenEntity.getToken(), is(notNullValue()));
 
         // Then - expected response is returned
         ChargeResponse.Builder expectedChargeResponse = chargeResponseBuilderOf(createdChargeEntity);
 
         expectedChargeResponse.withLink("self", GET, new URI(SERVICE_HOST + "/v1/api/accounts/1/charges/" + externalChargeId[0]));
-        expectedChargeResponse.withLink("next_url", GET, new URI("http://payments.com/charge/" + externalChargeId[0] + "?chargeTokenId=" + tokenEntity.getToken()));
-        expectedChargeResponse.withLink("next_url_post", POST, new URI("http://payments.com/charge/" + externalChargeId[0]), "application/x-www-form-urlencoded", new HashMap<String, Object>() {{
+        expectedChargeResponse.withLink("next_url", GET, new URI("http://payments.com/secure/" + tokenEntity.getToken()));
+        expectedChargeResponse.withLink("next_url_post", POST, new URI("http://payments.com/secure"), "application/x-www-form-urlencoded", new HashMap<String, Object>() {{
             put("chargeTokenId", tokenEntity.getToken());
         }});
 
@@ -148,7 +148,7 @@ public class ChargeServiceTest {
     }
 
     @Test
-    public void shouldFindChargeForChargeIdAndAccountIdWithNextUrlWhenTokenExist() throws Exception {
+    public void shouldFindChargeForChargeIdAndAccountIdWithNextUrlWhenChargeStatusIsCreated() throws Exception {
 
         Long chargeId = 101L;
         Long accountId = 10L;
@@ -159,24 +159,27 @@ public class ChargeServiceTest {
         ChargeEntity newCharge = aValidChargeEntity()
                 .withId(chargeId)
                 .withGatewayAccountEntity(gatewayAccount)
+                .withStatus(CREATED)
                 .build();
 
-        String tokenValue = "test_token";
-        TokenEntity tokenEntity = new TokenEntity(chargeId, tokenValue);
-
         Optional<ChargeEntity> chargeEntity = Optional.of(newCharge);
-        Optional<TokenEntity> token = Optional.of(tokenEntity);
 
         String externalId = newCharge.getExternalId();
         when(chargeDao.findByExternalIdAndGatewayAccount(externalId, accountId)).thenReturn(chargeEntity);
-        when(tokenDao.findByChargeId(chargeId)).thenReturn(token);
 
         Optional<ChargeResponse> chargeResponseForAccount = service.findChargeForAccount(externalId, accountId, uriInfo);
 
+        ArgumentCaptor<TokenEntity> tokenEntityArgumentCaptor = ArgumentCaptor.forClass(TokenEntity.class);
+        verify(tokenDao).persist(tokenEntityArgumentCaptor.capture());
+
+        TokenEntity tokenEntity = tokenEntityArgumentCaptor.getValue();
+        assertThat(tokenEntity.getChargeEntity().getId(), is(newCharge.getId()));
+        assertThat(tokenEntity.getToken(), is(notNullValue()));
+
         ChargeResponse.Builder expectedChargeResponse = chargeResponseBuilderOf(chargeEntity.get());
         expectedChargeResponse.withLink("self", GET, new URI(SERVICE_HOST + "/v1/api/accounts/1/charges/" + externalId));
-        expectedChargeResponse.withLink("next_url", GET, new URI("http://payments.com/charge/" + externalId + "?chargeTokenId=" + tokenEntity.getToken()));
-        expectedChargeResponse.withLink("next_url_post", POST, new URI("http://payments.com/charge/" + externalId), "application/x-www-form-urlencoded", new HashMap<String, Object>() {{
+        expectedChargeResponse.withLink("next_url", GET, new URI("http://payments.com/secure/" + tokenEntity.getToken()));
+        expectedChargeResponse.withLink("next_url_post", POST, new URI("http://payments.com/secure"), "application/x-www-form-urlencoded", new HashMap<String, Object>() {{
             put("chargeTokenId", tokenEntity.getToken());
         }});
 
@@ -184,7 +187,7 @@ public class ChargeServiceTest {
     }
 
     @Test
-    public void shouldFindChargeForChargeIdAndAccountIdWithoutNextUrlWhenNoTokenExist() throws Exception {
+    public void shouldFindChargeForChargeIdAndAccountIdWithNextUrlWhenChargeStatusIsInProgress() throws Exception {
 
         Long chargeId = 101L;
         Long accountId = 10L;
@@ -195,16 +198,57 @@ public class ChargeServiceTest {
         ChargeEntity newCharge = aValidChargeEntity()
                 .withId(chargeId)
                 .withGatewayAccountEntity(gatewayAccount)
+                .withStatus(ENTERING_CARD_DETAILS)
                 .build();
 
         Optional<ChargeEntity> chargeEntity = Optional.of(newCharge);
 
         String externalId = newCharge.getExternalId();
         when(chargeDao.findByExternalIdAndGatewayAccount(externalId, accountId)).thenReturn(chargeEntity);
-        Optional<TokenEntity> nonExistingToken = Optional.empty();
-        when(tokenDao.findByChargeId(chargeId)).thenReturn(nonExistingToken);
 
         Optional<ChargeResponse> chargeResponseForAccount = service.findChargeForAccount(externalId, accountId, uriInfo);
+
+        ArgumentCaptor<TokenEntity> tokenEntityArgumentCaptor = ArgumentCaptor.forClass(TokenEntity.class);
+        verify(tokenDao).persist(tokenEntityArgumentCaptor.capture());
+
+        TokenEntity tokenEntity = tokenEntityArgumentCaptor.getValue();
+        assertThat(tokenEntity.getChargeEntity().getId(), is(newCharge.getId()));
+        assertThat(tokenEntity.getToken(), is(notNullValue()));
+
+        ChargeResponse.Builder expectedChargeResponse = chargeResponseBuilderOf(chargeEntity.get());
+        expectedChargeResponse.withLink("self", GET, new URI(SERVICE_HOST + "/v1/api/accounts/1/charges/" + externalId));
+        expectedChargeResponse.withLink("next_url", GET, new URI("http://payments.com/secure/" + tokenEntity.getToken()));
+        expectedChargeResponse.withLink("next_url_post", POST, new URI("http://payments.com/secure"), "application/x-www-form-urlencoded", new HashMap<String, Object>() {{
+            put("chargeTokenId", tokenEntity.getToken());
+        }});
+
+        assertThat(chargeResponseForAccount.get(), is(expectedChargeResponse.build()));
+
+    }
+
+    @Test
+    public void shouldFindChargeForChargeIdAndAccountIdWithoutNextUrlWhenChargeCannotBeResumed() throws Exception {
+
+        Long chargeId = 101L;
+        Long accountId = 10L;
+
+        GatewayAccountEntity gatewayAccount = new GatewayAccountEntity("provider", new HashMap<>());
+        gatewayAccount.setId(1L);
+
+        ChargeEntity newCharge = aValidChargeEntity()
+                .withId(chargeId)
+                .withGatewayAccountEntity(gatewayAccount)
+                .withStatus(CAPTURED)
+                .build();
+
+        Optional<ChargeEntity> chargeEntity = Optional.of(newCharge);
+
+        String externalId = newCharge.getExternalId();
+        when(chargeDao.findByExternalIdAndGatewayAccount(externalId, accountId)).thenReturn(chargeEntity);
+
+        Optional<ChargeResponse> chargeResponseForAccount = service.findChargeForAccount(externalId, accountId, uriInfo);
+
+        verify(tokenDao, never()).persist(any());
 
         ChargeResponse.Builder expectedChargeResponse = chargeResponseBuilderOf(chargeEntity.get());
         expectedChargeResponse.withLink("self", GET, new URI(SERVICE_HOST + "/v1/api/accounts/1/charges/" + externalId));

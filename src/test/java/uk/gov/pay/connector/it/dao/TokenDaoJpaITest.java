@@ -5,7 +5,9 @@ import org.junit.Before;
 import org.junit.Rule;
 import org.junit.Test;
 import org.junit.rules.ExpectedException;
+import uk.gov.pay.connector.dao.ChargeDao;
 import uk.gov.pay.connector.dao.TokenDao;
+import uk.gov.pay.connector.model.domain.ChargeEntity;
 import uk.gov.pay.connector.model.domain.TokenEntity;
 import uk.gov.pay.connector.rules.DropwizardAppWithPostgresRule;
 import uk.gov.pay.connector.util.DatabaseTestHelper;
@@ -18,14 +20,25 @@ import static org.junit.Assert.assertThat;
 
 public class TokenDaoJpaITest {
 
+    private static final Long GATEWAY_ACCOUNT_ID = 564532435L;
+    private static final String RETURN_URL = "http://service.com/success-page";
+    private static final String REFERENCE = "Test reference";
+    private static final Long AMOUNT = 101L;
+    private static final Long CHARGE_ID = 977L;
+    private static final String EXTERNAL_CHARGE_ID = "charge977";
+
     @Rule
     public DropwizardAppWithPostgresRule app = new DropwizardAppWithPostgresRule();
 
     @Rule
     public ExpectedException expectedException = ExpectedException.none();
     private TokenDao tokenDao;
+    private ChargeDao chargeDao;
     private DatabaseTestHelper databaseTestHelper;
     private GuicedTestEnvironment env;
+
+    private DatabaseFixtures.TestAccount defaultTestAccount;
+    private DatabaseFixtures.TestCharge defaultTestCharge;
 
     @Before
     public void setUp() throws Exception {
@@ -35,7 +48,19 @@ public class TokenDaoJpaITest {
                 .start();
 
         tokenDao = env.getInstance(TokenDao.class);
+        chargeDao = env.getInstance(ChargeDao.class);
         databaseTestHelper = app.getDatabaseTestHelper();
+
+        this.defaultTestAccount = DatabaseFixtures
+                .withDatabaseTestHelper(app.getDatabaseTestHelper())
+                .aTestAccount()
+                .insert();
+
+        this.defaultTestCharge = DatabaseFixtures
+                .withDatabaseTestHelper(app.getDatabaseTestHelper())
+                .aTestCharge()
+                .withTestAccount(defaultTestAccount)
+                .insert();
     }
 
     @After
@@ -46,21 +71,23 @@ public class TokenDaoJpaITest {
     @Test
     public void persist_shouldInsertAToken() {
 
-        String tokenId = "tokenIdA";
-        Long chargeId = 123456L;
-        tokenDao.persist(new TokenEntity(chargeId, tokenId));
+        ChargeEntity defaultChargeTestEntity = new ChargeEntity();
+        defaultChargeTestEntity.setId(defaultTestCharge.getChargeId());
 
-        assertThat(databaseTestHelper.getChargeTokenId(chargeId), is(tokenId));
+        TokenEntity tokenEntity = TokenEntity.generateNewTokenFor(defaultChargeTestEntity);
+
+        tokenDao.persist(tokenEntity);
+
+        assertThat(databaseTestHelper.getChargeTokenId(defaultChargeTestEntity.getId()), is(tokenEntity.getToken()));
     }
 
     @Test
     public void findByChargeId_shouldFindToken() {
 
-        Long chargeId = 101012L;
         String tokenId = "tokenBB2";
-        databaseTestHelper.addToken(chargeId, tokenId);
+        databaseTestHelper.addToken(defaultTestCharge.getChargeId(), tokenId);
 
-        Optional<TokenEntity> tokenOptional = tokenDao.findByChargeId(chargeId);
+        Optional<TokenEntity> tokenOptional = tokenDao.findByChargeId(defaultTestCharge.getChargeId());
 
         assertThat(tokenOptional.isPresent(), is(true));
 
@@ -68,7 +95,7 @@ public class TokenDaoJpaITest {
 
         assertThat(token.getId(), is(notNullValue()));
         assertThat(token.getToken(), is(tokenId));
-        assertThat(token.getChargeId(), is(chargeId));
+        assertThat(token.getChargeEntity().getId(), is(defaultTestCharge.getChargeId()));
     }
 
     @Test
@@ -80,14 +107,13 @@ public class TokenDaoJpaITest {
     @Test
     public void findByTokenId_shouldFindToken() {
 
-        Long chargeId = 987654L;
         String tokenId = "qwerty";
-        databaseTestHelper.addToken(chargeId, tokenId);
+        databaseTestHelper.addToken(defaultTestCharge.getChargeId(), tokenId);
 
         TokenEntity entity = tokenDao.findByTokenId(tokenId).get();
 
         assertThat(entity.getId(), is(notNullValue()));
-        assertThat(entity.getChargeId(), is(chargeId));
+        assertThat(entity.getChargeEntity().getId(), is(defaultTestCharge.getChargeId()));
         assertThat(entity.getToken(), is(tokenId));
     }
 

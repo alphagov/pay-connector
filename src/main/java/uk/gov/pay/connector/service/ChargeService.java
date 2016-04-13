@@ -31,7 +31,7 @@ import static javax.ws.rs.HttpMethod.POST;
 import static javax.ws.rs.core.MediaType.APPLICATION_FORM_URLENCODED;
 import static org.apache.commons.lang3.BooleanUtils.negate;
 import static uk.gov.pay.connector.model.ChargeResponse.Builder.aChargeResponse;
-import static uk.gov.pay.connector.model.api.ExternalChargeStatus.mapFromStatus;
+import static uk.gov.pay.connector.model.api.ExternalChargeStatus.*;
 import static uk.gov.pay.connector.resources.ApiPaths.CHARGE_API_PATH;
 
 public class ChargeService {
@@ -54,6 +54,7 @@ public class ChargeService {
         this.cardCancelService = cardCancelService;
     }
 
+    @Transactional
     public ChargeResponse create(Map<String, Object> chargeRequest, GatewayAccountEntity gatewayAccount, UriInfo uriInfo) {
 
         ChargeEntity chargeEntity = new ChargeEntity(new Long(chargeRequest.get("amount").toString()),
@@ -62,18 +63,20 @@ public class ChargeService {
                 chargeRequest.get("reference").toString(),
                 gatewayAccount);
         chargeDao.persist(chargeEntity);
-        TokenEntity token = new TokenEntity(chargeEntity.getId(), UUID.randomUUID().toString());
-        tokenDao.persist(token);
-        ChargeResponse response = buildChargeResponse(uriInfo, chargeEntity, Optional.of(token));
+        ChargeResponse response =
+                chargeResponseBuilder(uriInfo, chargeEntity, createNewChargeEntityToken(chargeEntity)).build();
         logger.info("charge = {}", chargeEntity);
         return response;
     }
 
+    @Transactional
     public Optional<ChargeResponse> findChargeForAccount(String chargeId, Long accountId, UriInfo uriInfo) {
         return chargeDao.findByExternalIdAndGatewayAccount(chargeId, accountId)
                 .map(chargeEntity -> {
-                    Optional<TokenEntity> token = tokenDao.findByChargeId(chargeEntity.getId());
-                    return buildChargeResponse(uriInfo, chargeEntity, token);
+                    if (chargeEntity.hasExternalStatus(EXT_CREATED) || chargeEntity.hasExternalStatus(EXT_IN_PROGRESS)) {
+                        return chargeResponseBuilder(uriInfo, chargeEntity, createNewChargeEntityToken(chargeEntity)).build();
+                    }
+                    return chargeResponseBuilder(uriInfo, chargeEntity).build();
                 });
     }
 
@@ -98,6 +101,12 @@ public class ChargeService {
         Pair<Integer, Integer> successFailPair = expireChargesInAuthorisationSuccess(authSuccessCharges);
 
         return ImmutableMap.of(EXPIRY_SUCCESS, expiredSuccess + successFailPair.getLeft(), EXPIRY_FAILED, successFailPair.getRight());
+    }
+
+    private TokenEntity createNewChargeEntityToken(ChargeEntity chargeEntity) {
+        TokenEntity token = TokenEntity.generateNewTokenFor(chargeEntity);
+        tokenDao.persist(token);
+        return token;
     }
 
     private Pair<Integer, Integer> expireChargesInAuthorisationSuccess(List<ChargeEntity> charges) {
@@ -141,7 +150,15 @@ public class ChargeService {
         return gatewayResponse.isLeft() || negate(gatewayResponse.right().value().isSuccessful());
     }
 
-    private ChargeResponse buildChargeResponse(UriInfo uriInfo, ChargeEntity charge, Optional<TokenEntity> token) {
+    private ChargeResponse.Builder chargeResponseBuilder(UriInfo uriInfo, ChargeEntity charge, TokenEntity token) {
+        return chargeResponseBuilder(uriInfo, charge)
+                .withLink("next_url", GET, nextUrl(token.getToken()))
+                .withLink("next_url_post", POST, nextUrl(), APPLICATION_FORM_URLENCODED, new HashMap<String, Object>() {{
+                    put("chargeTokenId", token.getToken());
+                }});
+    }
+
+    private ChargeResponse.Builder chargeResponseBuilder(UriInfo uriInfo, ChargeEntity charge) {
         String chargeId = charge.getExternalId();
         ChargeResponse.Builder responseBuilder = aChargeResponse()
                 .withChargeId(chargeId)
@@ -154,14 +171,7 @@ public class ChargeService {
                 .withCreatedDate(charge.getCreatedDate())
                 .withReturnUrl(charge.getReturnUrl())
                 .withLink("self", GET, selfUriFor(uriInfo, charge.getGatewayAccount().getId(), chargeId));
-        token.ifPresent(tokenEntity -> {
-            responseBuilder.withLink("next_url", GET, nextUrl(chargeId, tokenEntity.getToken()));
-            responseBuilder.withLink("next_url_post", POST, chargeUrl(chargeId), APPLICATION_FORM_URLENCODED, new HashMap<String, Object>() {{
-                put("chargeTokenId", tokenEntity.getToken());
-            }});
-        });
-
-        return responseBuilder.build();
+        return responseBuilder;
     }
 
     private URI selfUriFor(UriInfo uriInfo, Long accountId, String chargeId) {
@@ -170,18 +180,16 @@ public class ChargeService {
                 .build(accountId, chargeId);
     }
 
-    private URI nextUrl(String chargeId, String tokenId) {
+    private URI nextUrl(String tokenId) {
         return UriBuilder.fromUri(linksConfig.getFrontendUrl())
-                .path("charge")
-                .path(chargeId)
-                .queryParam("chargeTokenId", tokenId)
+                .path("secure")
+                .path(tokenId)
                 .build();
     }
 
-    private URI chargeUrl(String chargeId) {
+    private URI nextUrl() {
         return UriBuilder.fromUri(linksConfig.getFrontendUrl())
-                .path("charge")
-                .path(chargeId)
+                .path("secure")
                 .build();
     }
 }

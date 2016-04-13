@@ -48,7 +48,7 @@ import static uk.gov.pay.connector.util.NumberMatcher.isNumber;
 
 public class ChargesResourceITest {
 
-    private static final String FRONTEND_CARD_DETAILS_URL = "/charge/";
+    private static final String FRONTEND_CARD_DETAILS_URL = "/secure";
     private static final String JSON_AMOUNT_KEY = "amount";
     private static final String JSON_REFERENCE_KEY = "reference";
     private static final String JSON_DESCRIPTION_KEY = "description";
@@ -105,8 +105,8 @@ public class ChargesResourceITest {
         String documentLocation = expectedChargeLocationFor(accountId, externalChargeId);
         String chargeTokenId = app.getDatabaseTestHelper().getChargeTokenByExternalChargeId(externalChargeId);
 
-        String hrefNextUrl = "http://Frontend" + FRONTEND_CARD_DETAILS_URL + externalChargeId + "?chargeTokenId=" + chargeTokenId;
-        String hrefNextUrlPost = "http://Frontend" + FRONTEND_CARD_DETAILS_URL + externalChargeId;
+        String hrefNextUrl = "http://Frontend" + FRONTEND_CARD_DETAILS_URL + "/" + chargeTokenId;
+        String hrefNextUrlPost = "http://Frontend" + FRONTEND_CARD_DETAILS_URL;
 
         response.header("Location", is(documentLocation))
                 .body("links", hasSize(3))
@@ -129,12 +129,17 @@ public class ChargesResourceITest {
                 .body(JSON_STATUS_KEY, is(CREATED.getValue()))
                 .body(JSON_RETURN_URL_KEY, is(returnUrl));
 
+        // Reload the charge token which as it should have changed
+        String newChargeTokenId = app.getDatabaseTestHelper().getChargeTokenByExternalChargeId(externalChargeId);
+
+        String newHrefNextUrl = "http://Frontend" + FRONTEND_CARD_DETAILS_URL + "/" + newChargeTokenId;
+
         getChargeResponse.body("links", hasSize(3))
                 .body("links", hasSize(3))
                 .body("links", containsLink("self", "GET", documentLocation))
-                .body("links", containsLink("next_url", "GET", hrefNextUrl))
+                .body("links", containsLink("next_url", "GET", newHrefNextUrl))
                 .body("links", containsLink("next_url_post", "POST", hrefNextUrlPost, "application/x-www-form-urlencoded", new HashMap<String, Object>() {{
-                    put("chargeTokenId", chargeTokenId);
+                    put("chargeTokenId", newChargeTokenId);
                 }}));
     }
 

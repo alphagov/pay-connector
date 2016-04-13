@@ -1,24 +1,24 @@
 package uk.gov.pay.connector.resources;
 
-import com.google.common.collect.ImmutableMap;
 import com.google.inject.persist.Transactional;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import uk.gov.pay.connector.dao.ChargeDao;
 import uk.gov.pay.connector.dao.TokenDao;
+import uk.gov.pay.connector.model.domain.ChargeEntity;
 
 import javax.inject.Inject;
 import javax.ws.rs.*;
 import javax.ws.rs.core.Response;
-import java.util.Map;
+import java.util.Optional;
 
 import static javax.ws.rs.core.MediaType.APPLICATION_JSON;
-import static uk.gov.pay.connector.util.ResponseUtil.noContentResponse;
-import static uk.gov.pay.connector.util.ResponseUtil.notFoundResponse;
+import static uk.gov.pay.connector.util.ResponseUtil.*;
 
 @Path("/")
 public class SecurityTokensResource {
-    private static final String TOKEN_VALIDATION_PATH = "/v1/frontend/tokens/{chargeTokenId}";
+    public static final String CHARGE_TOKEN_PATH = "/v1/frontend/tokens/{chargeTokenId}";
+    public static final String GET_CHARGE_BY_TOKEN_PATH = CHARGE_TOKEN_PATH+ "/charge";
 
     private final Logger logger = LoggerFactory.getLogger(SecurityTokensResource.class);
     private final TokenDao tokenDao;
@@ -31,22 +31,18 @@ public class SecurityTokensResource {
     }
 
     @GET
-    @Path(TOKEN_VALIDATION_PATH)
+    @Path(GET_CHARGE_BY_TOKEN_PATH)
     @Produces(APPLICATION_JSON)
-    public Response verifyToken(@PathParam("chargeTokenId") String chargeTokenId) {
-        logger.debug("verify({})", chargeTokenId);
-
-        return tokenDao.findByTokenId(chargeTokenId)
-                .map(token -> {
-                    String externalId = chargeDao.findById(token.getChargeId()).get().getExternalId();
-                    Map<Object, Object> tokenResource = ImmutableMap.builder().put("chargeId", externalId).build();
-                    return Response.ok().entity(tokenResource).build();
-                }).orElseGet(() ->
-                        notFoundResponse(logger, "Token has expired!"));
+    public Response getChargeForToken(@PathParam("chargeTokenId") String chargeTokenId) {
+        logger.debug("get charge for token {}", chargeTokenId);
+        Optional<ChargeEntity> chargeOpt = chargeDao.findByTokenId(chargeTokenId);
+        return chargeOpt
+                .map(charge -> successResponseWithEntity(charge))
+                .orElseGet(() -> notFoundResponse(logger, "Token invalid!"));
     }
 
     @DELETE
-    @Path(TOKEN_VALIDATION_PATH)
+    @Path(CHARGE_TOKEN_PATH)
     @Transactional
     public Response deleteToken(@PathParam("chargeTokenId") String chargeTokenId) {
         logger.debug("delete({})", chargeTokenId);

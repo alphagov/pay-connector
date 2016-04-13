@@ -1,9 +1,11 @@
 package uk.gov.pay.connector.it.resources;
 
+import com.jayway.restassured.response.ValidatableResponse;
 import com.jayway.restassured.specification.RequestSpecification;
 import org.junit.Before;
 import org.junit.Rule;
 import org.junit.Test;
+import uk.gov.pay.connector.resources.SecurityTokensResource;
 import uk.gov.pay.connector.rules.DropwizardAppWithPostgresRule;
 
 import static com.jayway.restassured.RestAssured.given;
@@ -20,7 +22,7 @@ public class SecurityTokensResourceITest {
     private static final String CHARGE_ID = "charge827364";
 
     private String tokensUrlFor(String id) {
-        return "/v1/frontend/tokens/" + id;
+        return SecurityTokensResource.CHARGE_TOKEN_PATH.replace("{chargeTokenId}", id);
     }
 
     @Rule
@@ -32,42 +34,41 @@ public class SecurityTokensResourceITest {
     }
 
     @Test
-    public void shouldSuccessfullyValidateToken() throws Exception {
-        createNewCharge(CHARGE_ID, TOKEN_ID);
-        givenSetup()
-                .get(tokensUrlFor(TOKEN_ID))
-                .then()
-                .statusCode(200)
-                .contentType(JSON)
-                .body("chargeId", is(CHARGE_ID));
+    public void shouldSuccessfullyGetChargeForToken() throws Exception {
+        createNewChargeAndToken(CHARGE_ID, TOKEN_ID);
+        ValidatableResponse tokenGetsStatusCode = findTokenGetsStatusCode(200);
+        tokenGetsStatusCode
+                .body("externalId", is(CHARGE_ID))
+                .body("status", is(CREATED.getValue()));
     }
 
     @Test
     public void shouldReturn404WhenTokenNotFound() throws Exception {
-        deleteTokenThatHasExpiredShouldReturn404();
+        findTokenGetsStatusCode(404)
+                .body("message", is("Token invalid!"));
     }
 
     @Test
     public void shouldSuccessfullyDeleteToken() throws Exception {
-        createNewCharge(CHARGE_ID, TOKEN_ID);
+        createNewChargeAndToken(CHARGE_ID, TOKEN_ID);
         givenSetup()
                 .delete(tokensUrlFor(TOKEN_ID))
                 .then()
                 .statusCode(204)
                 .body(isEmptyOrNullString());
-        deleteTokenThatHasExpiredShouldReturn404();
+        findTokenGetsStatusCode(404)
+                .body("message", is("Token invalid!"));
     }
 
-    private void deleteTokenThatHasExpiredShouldReturn404() {
-        givenSetup()
-                .get(tokensUrlFor(TOKEN_ID))
+    private ValidatableResponse findTokenGetsStatusCode(int expectedStatusCode) {
+        return givenSetup()
+                .get(tokensUrlFor(TOKEN_ID)+"/charge")
                 .then()
-                .statusCode(404)
-                .contentType(JSON)
-                .body("message", is("Token has expired!"));
+                .statusCode(expectedStatusCode)
+                .contentType(JSON);
     }
 
-    private void createNewCharge(String chargeId, String tokenId) {
+    private void createNewChargeAndToken(String chargeId, String tokenId) {
         long chargeInternalId = nextInt();
         app.getDatabaseTestHelper().addCharge(chargeInternalId, chargeId, ACCOUNT_ID, 500, CREATED, "return_url", null);
         app.getDatabaseTestHelper().addToken(chargeInternalId, tokenId);
