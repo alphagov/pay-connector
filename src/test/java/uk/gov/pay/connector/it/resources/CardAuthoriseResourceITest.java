@@ -21,7 +21,7 @@ public class CardAuthoriseResourceITest extends CardResourceITestBase {
             "4242424242424242",
             "5105105105105100",
             "348560871512574",
-            "4485197542476643",
+//            "4485197542476643", //FIXME: after user research session
             "5582575229987470",
             "4917902691983168",
             "3528373272496082",
