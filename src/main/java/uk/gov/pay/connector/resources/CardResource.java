@@ -93,9 +93,6 @@ public class CardResource {
                 switch (error.getErrorType()) {
                     case CHARGE_NOT_FOUND:
                         return notFoundResponse(logger, error.getMessage());
-                    case CHARGE_EXPIRED:
-                    case ILLEGAL_STATE_ERROR:
-                        return badRequestResponse(logger, error.getMessage());
                     case UNEXPECTED_STATUS_CODE_FROM_GATEWAY:
                     case MALFORMED_RESPONSE_RECEIVED_FROM_GATEWAY:
                     case GATEWAY_URL_DNS_ERROR:
@@ -104,8 +101,6 @@ public class CardResource {
                         return serviceErrorResponse(logger, error.getMessage());
                     case OPERATION_ALREADY_IN_PROGRESS:
                         return acceptedResponse(logger, error.getMessage());
-                    case CONFLICT_ERROR:
-                        return conflictErrorResponse(logger, error.getMessage());
                 }
 
                 return badRequestResponse(logger, error.getMessage());

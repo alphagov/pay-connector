@@ -7,6 +7,7 @@ import org.slf4j.LoggerFactory;
 import uk.gov.pay.connector.app.CardExecutorServiceConfig;
 import uk.gov.pay.connector.app.ConnectorConfiguration;
 
+import javax.ws.rs.WebApplicationException;
 import java.util.concurrent.*;
 import java.util.function.Supplier;
 
@@ -59,9 +60,14 @@ public class CardExecutorService<T> {
 
         try {
             return Pair.of(COMPLETED, futureObject.get(config.getTimeoutInSeconds(), TimeUnit.SECONDS));
-        } catch (InterruptedException | ExecutionException e) {
+        } catch (ExecutionException executionException) {
+            if (executionException.getCause() instanceof WebApplicationException) {
+                throw (WebApplicationException) executionException.getCause();
+            }
             return Pair.of(FAILED, null);
-        } catch (TimeoutException e) {
+        } catch (InterruptedException interruptedException) {
+            return Pair.of(FAILED, null);
+        } catch (TimeoutException timeoutException) {
             return Pair.of(IN_PROGRESS, null);
         }
     }

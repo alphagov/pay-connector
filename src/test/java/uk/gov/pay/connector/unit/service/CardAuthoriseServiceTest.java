@@ -6,6 +6,7 @@ import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.mockito.Mock;
 import org.mockito.runners.MockitoJUnitRunner;
+import uk.gov.pay.connector.exception.ConflictRuntimeException;
 import uk.gov.pay.connector.model.ErrorResponse;
 import uk.gov.pay.connector.model.ErrorType;
 import uk.gov.pay.connector.model.GatewayResponse;
@@ -135,7 +136,7 @@ public class CardAuthoriseServiceTest extends CardServiceTest {
         assertThat(gatewayError.getMessage(), is("Charge not in correct state to be processed, " + charge.getExternalId()));
     }
 
-    @Test
+    @Test(expected=ConflictRuntimeException.class)
     public void shouldGetAConflictErrorWhenConflicting() throws Exception {
         Long chargeId = 1234L;
 
@@ -143,17 +144,10 @@ public class CardAuthoriseServiceTest extends CardServiceTest {
 
         when(mockedChargeDao.findByExternalId(charge.getExternalId())).thenReturn(Optional.of(charge));
         when(mockedChargeDao.merge(any())).thenThrow(new OptimisticLockException());
-        ErrorResponse mockErrorResponse = ErrorResponse.conflictError("Operation for charge conflicting, " + charge.getExternalId());
-        when(mockExecutorService.execute(any())).thenReturn(Pair.of(COMPLETED, left(mockErrorResponse)));
+        when(mockExecutorService.execute(any())).thenThrow(new ConflictRuntimeException("Operation for charge conflicting, " + charge.getExternalId()));
 
         Card cardDetails = CardUtils.aValidCard();
-        Either<ErrorResponse, GatewayResponse> response = cardAuthorisationService.doAuthorise(charge.getExternalId(), cardDetails);
-
-        assertTrue(response.isLeft());
-        ErrorResponse gatewayError = response.left().value();
-
-        assertThat(gatewayError.getErrorType(), is(CONFLICT_ERROR));
-        assertThat(gatewayError.getMessage(), is("Operation for charge conflicting, " + charge.getExternalId()));
+        cardAuthorisationService.doAuthorise(charge.getExternalId(), cardDetails);
     }
 
     @Test

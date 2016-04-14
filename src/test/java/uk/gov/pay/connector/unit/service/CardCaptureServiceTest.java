@@ -3,6 +3,7 @@ package uk.gov.pay.connector.unit.service;
 import fj.data.Either;
 import org.junit.Test;
 import org.mockito.ArgumentCaptor;
+import uk.gov.pay.connector.exception.ConflictRuntimeException;
 import uk.gov.pay.connector.model.CaptureRequest;
 import uk.gov.pay.connector.model.CaptureResponse;
 import uk.gov.pay.connector.model.ErrorResponse;
@@ -111,7 +112,7 @@ public class CardCaptureServiceTest extends CardServiceTest {
         assertThat(gatewayError.getMessage(), is("Charge not in correct state to be processed, " + charge.getExternalId()));
     }
 
-    @Test
+    @Test(expected=ConflictRuntimeException.class)
     public void shouldGetAConflictErrorWhenConflicting() throws Exception {
         Long chargeId = 1234L;
 
@@ -122,13 +123,7 @@ public class CardCaptureServiceTest extends CardServiceTest {
         when(mockedChargeDao.merge(any()))
                 .thenThrow(new OptimisticLockException());
 
-        Either<ErrorResponse, GatewayResponse> response = cardCaptureService.doCapture(charge.getExternalId());
-
-        assertTrue(response.isLeft());
-        ErrorResponse gatewayError = response.left().value();
-
-        assertThat(gatewayError.getErrorType(), is(CONFLICT_ERROR));
-        assertThat(gatewayError.getMessage(), is("Operation for charge conflicting, " + charge.getExternalId()));
+        cardCaptureService.doCapture(charge.getExternalId());
     }
 
     @Test

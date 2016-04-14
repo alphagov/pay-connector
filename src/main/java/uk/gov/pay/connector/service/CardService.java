@@ -1,12 +1,17 @@
 package uk.gov.pay.connector.service;
 
+import com.google.common.collect.ImmutableMap;
 import fj.data.Either;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import uk.gov.pay.connector.dao.ChargeDao;
+import uk.gov.pay.connector.exception.ChargeExpiredRuntimeException;
 import uk.gov.pay.connector.model.ErrorResponse;
 import uk.gov.pay.connector.model.domain.ChargeEntity;
 import uk.gov.pay.connector.model.domain.ChargeStatus;
+
+import java.util.Collections;
+import java.util.stream.Stream;
 
 import static fj.data.Either.left;
 import static fj.data.Either.right;
@@ -49,7 +54,7 @@ abstract public class CardService {
     public Either<ErrorResponse, ChargeEntity> preOperation(ChargeEntity chargeEntity, OperationType operationType, ChargeStatus[] legalStatuses, ChargeStatus lockingStatus) {
         ChargeEntity reloadedCharge = chargeDao.merge(chargeEntity);
         if (reloadedCharge.hasStatus(ChargeStatus.EXPIRED)) {
-            return left(chargeExpired(format("%s for charge failed as already expired, %s", operationType.getValue(), reloadedCharge.getExternalId())));
+            throw new ChargeExpiredRuntimeException(format("%s for charge failed as already expired, %s", operationType.getValue(), reloadedCharge.getExternalId()));
         }
         if (!reloadedCharge.hasStatus(legalStatuses)) {
             if (reloadedCharge.hasStatus(lockingStatus)) {

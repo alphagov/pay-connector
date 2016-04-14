@@ -4,13 +4,12 @@ import fj.data.Either;
 import org.junit.Test;
 import org.mockito.InOrder;
 import org.mockito.Mock;
+import uk.gov.pay.connector.exception.ConflictRuntimeException;
 import uk.gov.pay.connector.model.CancelGatewayResponse;
 import uk.gov.pay.connector.model.ErrorResponse;
-import uk.gov.pay.connector.model.ErrorType;
 import uk.gov.pay.connector.model.GatewayResponse;
 import uk.gov.pay.connector.model.domain.ChargeEntity;
 import uk.gov.pay.connector.model.domain.ChargeStatus;
-
 import uk.gov.pay.connector.model.domain.GatewayAccountEntity;
 import uk.gov.pay.connector.service.CardCancelService;
 import uk.gov.pay.connector.service.ChargeService;
@@ -151,7 +150,7 @@ public class CardCancelServiceTest extends CardServiceTest {
         assertThat(gatewayError.getMessage(), is("Cancellation for charge already in progress, " + charge.getExternalId()));
     }
 
-    @Test
+    @Test(expected=ConflictRuntimeException.class)
     public void shouldGetAConflictErrorWhenConflicting() throws Exception {
         Long chargeId = 1234L;
         Long accountId = 1L;
@@ -163,13 +162,7 @@ public class CardCancelServiceTest extends CardServiceTest {
         when(mockedChargeDao.merge(charge))
                 .thenThrow(new OptimisticLockException());
 
-        Either<ErrorResponse, GatewayResponse> response = cardCancelService.doCancel(charge.getExternalId(), accountId);
-
-        assertTrue(response.isLeft());
-        ErrorResponse gatewayError = response.left().value();
-
-        assertThat(gatewayError.getErrorType(), is(CONFLICT_ERROR));
-        assertThat(gatewayError.getMessage(), is("Operation for charge conflicting, " + charge.getExternalId()));
+        cardCancelService.doCancel(charge.getExternalId(), accountId);
     }
 
     @Test
