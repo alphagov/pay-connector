@@ -144,7 +144,7 @@ public class CardAuthoriseResourceITest extends CardResourceITestBase {
         assertFrontendChargeStatusIs(chargeId, AUTHORISATION_SUCCESS.getValue());
 
         String msg = format("Charge not in correct state to be processed, %s", chargeId);
-        authoriseAndVerifyFor(chargeId, validCardDetails, msg, 400);
+        authoriseAndVerifyFor(chargeId, validCardDetails, msg, 500);
 
         assertFrontendChargeStatusIs(chargeId, AUTHORISATION_SUCCESS.getValue());
     }

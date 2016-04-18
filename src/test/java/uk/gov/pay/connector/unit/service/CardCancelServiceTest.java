@@ -6,6 +6,8 @@ import org.mockito.InOrder;
 import org.mockito.Mock;
 import uk.gov.pay.connector.exception.ConflictRuntimeException;
 import uk.gov.pay.connector.model.CancelGatewayResponse;
+import uk.gov.pay.connector.exception.IllegalStateRuntimeException;
+import uk.gov.pay.connector.exception.OperationAlreadyInProgressRuntimeException;
 import uk.gov.pay.connector.model.ErrorResponse;
 import uk.gov.pay.connector.model.GatewayResponse;
 import uk.gov.pay.connector.model.domain.ChargeEntity;
@@ -107,7 +109,7 @@ public class CardCancelServiceTest extends CardServiceTest {
         assertThat(gatewayError.getMessage(), is("Charge with id [jgk3erq5sv2i4cds6qqa9f1a8a] not found."));
     }
 
-    @Test
+    @Test(expected = IllegalStateRuntimeException.class)
     public void shouldFailForStatesThatAreNotCancellable() {
         Long chargeId = 1234L;
         Long accountId = 1L;
@@ -120,16 +122,10 @@ public class CardCancelServiceTest extends CardServiceTest {
         when(mockedChargeDao.merge(charge))
                 .thenReturn(charge);
 
-        Either<ErrorResponse, GatewayResponse> response = cardCancelService.doCancel(charge.getExternalId(), accountId);
-
-        assertTrue(response.isLeft());
-        ErrorResponse gatewayError = response.left().value();
-
-        assertThat(gatewayError.getErrorType(), is(ILLEGAL_STATE_ERROR));
-        assertThat(gatewayError.getMessage(), is("Charge not in correct state to be processed, " + charge.getExternalId()));
+        cardCancelService.doCancel(charge.getExternalId(), accountId);
     }
 
-    @Test
+    @Test(expected = OperationAlreadyInProgressRuntimeException.class)
     public void shouldGetAOperationAlreadyInProgressWhenStatusIsCancelReady() throws Exception {
         Long chargeId = 1234L;
         Long accountId = 1L;
@@ -141,13 +137,7 @@ public class CardCancelServiceTest extends CardServiceTest {
         when(mockedChargeDao.merge(charge))
                 .thenReturn(charge);
 
-        Either<ErrorResponse, GatewayResponse> response = cardCancelService.doCancel(charge.getExternalId(), accountId);
-
-        assertTrue(response.isLeft());
-        ErrorResponse gatewayError = response.left().value();
-
-        assertThat(gatewayError.getErrorType(), is(OPERATION_ALREADY_IN_PROGRESS));
-        assertThat(gatewayError.getMessage(), is("Cancellation for charge already in progress, " + charge.getExternalId()));
+        cardCancelService.doCancel(charge.getExternalId(), accountId);
     }
 
     @Test(expected=ConflictRuntimeException.class)
@@ -220,44 +210,22 @@ public class CardCancelServiceTest extends CardServiceTest {
     }
 
     @Test
-    public void shouldUpdateChargeStatusWhenExpiringWithUnsuccessfulProviderCancellation() {
-        ChargeEntity chargeEntity1 = createNewChargeWith(chargeId, ENTERING_CARD_DETAILS);
-        ChargeEntity chargeEntity2 = createNewChargeWith(chargeId, AUTHORISATION_SUCCESS);
-
-        GatewayAccountEntity gatewayAccount = mock(GatewayAccountEntity.class);
-        chargeEntity1.setGatewayAccount(gatewayAccount);
-        chargeEntity2.setGatewayAccount(gatewayAccount);
-
-
-        when(gatewayAccount.getId()).thenReturn(accountId);
-        when(gatewayAccount.getGatewayName()).thenReturn(providerName);
-
-        mockChargeDaoFindByChargeIdAndAccountId(chargeEntity1, accountId);
-        mockChargeDaoFindByChargeIdAndAccountId(chargeEntity2, accountId);
-        mockChargeDaoMergeCharge(chargeEntity1);
-        mockChargeDaoMergeCharge(chargeEntity2);
-
-        mockUnsuccessfulCancel();
-
-        Map<String, Integer> result = cardCancelService.expire(asList(chargeEntity1, chargeEntity2));
-        assertEquals(1, result.get(EXPIRY_SUCCESS).intValue());
-        assertEquals(1, result.get(EXPIRY_FAILED).intValue());
-
-        InOrder inOrder = inOrder(chargeService, chargeService, chargeService);
-        inOrder.verify(chargeService).updateStatus(Arrays.asList(chargeEntity1), EXPIRED);
-        inOrder.verify(chargeService).updateStatus(Arrays.asList(chargeEntity2), EXPIRE_CANCEL_PENDING);
-        inOrder.verify(chargeService).updateStatus(Arrays.asList(chargeEntity2), EXPIRE_CANCEL_FAILED);
-    }
-
-    @Test
     public void shouldUpdateChargeStatusWhenExpiringWithFailedProviderCancellation() {
+        ChargeStatus[] legalStatuses = new ChargeStatus[]{
+                CREATED, ENTERING_CARD_DETAILS, AUTHORISATION_SUCCESS, AUTHORISATION_READY, CAPTURE_READY
+        };
         ChargeEntity chargeEntity1 = mock(ChargeEntity.class);
         ChargeEntity chargeEntity2 = mock(ChargeEntity.class);
         GatewayAccountEntity gatewayAccount = mock(GatewayAccountEntity.class);
         when(gatewayAccount.getId()).thenReturn(accountId);
+        when(gatewayAccount.getGatewayName()).thenReturn(providerName);
+
         when(chargeEntity2.getGatewayAccount()).thenReturn(gatewayAccount);
+        when(chargeEntity1.getGatewayAccount()).thenReturn(gatewayAccount);
+
         when(chargeEntity1.getStatus()).thenReturn(ChargeStatus.ENTERING_CARD_DETAILS.getValue());
         when(chargeEntity2.getStatus()).thenReturn(ChargeStatus.AUTHORISATION_SUCCESS.getValue());
+        when(chargeEntity2.hasStatus(legalStatuses)).thenReturn(true);
 
         mockChargeDaoFindByChargeIdAndAccountId(chargeEntity1, accountId);
         mockChargeDaoFindByChargeIdAndAccountId(chargeEntity2, accountId);

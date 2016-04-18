@@ -13,6 +13,7 @@ import java.util.List;
 
 import static com.jayway.restassured.http.ContentType.JSON;
 import static javax.ws.rs.core.Response.Status.BAD_REQUEST;
+import static javax.ws.rs.core.Response.Status.INTERNAL_SERVER_ERROR;
 import static javax.ws.rs.core.Response.Status.NO_CONTENT;
 import static org.hamcrest.Matchers.is;
 import static uk.gov.pay.connector.model.api.ExternalChargeStatus.EXT_USER_CANCELLED;
@@ -82,7 +83,7 @@ public class ChargeCancelFrontendResourceITest {
                     connectorRestApi
                             .withChargeId(chargeId)
                             .postFrontendChargeCancellation()
-                            .statusCode(BAD_REQUEST.getStatusCode())
+                            .statusCode(INTERNAL_SERVER_ERROR.getStatusCode())
                             .and()
                             .contentType(JSON)
                             .body("message", is(expectedMessage));

@@ -6,6 +6,8 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import uk.gov.pay.connector.dao.ChargeDao;
 import uk.gov.pay.connector.exception.ChargeExpiredRuntimeException;
+import uk.gov.pay.connector.exception.IllegalStateRuntimeException;
+import uk.gov.pay.connector.exception.OperationAlreadyInProgressRuntimeException;
 import uk.gov.pay.connector.model.ErrorResponse;
 import uk.gov.pay.connector.model.domain.ChargeEntity;
 import uk.gov.pay.connector.model.domain.ChargeStatus;
@@ -58,12 +60,12 @@ abstract public class CardService {
         }
         if (!reloadedCharge.hasStatus(legalStatuses)) {
             if (reloadedCharge.hasStatus(lockingStatus)) {
-                return left(operationAlreadyInProgress(format("%s for charge already in progress, %s",
-                        operationType.getValue(), reloadedCharge.getExternalId())));
+                throw new OperationAlreadyInProgressRuntimeException(format("%s for charge already in progress, %s",
+                        operationType.getValue(), reloadedCharge.getExternalId()));
             }
             logger.error(format("Charge with id [%s] and with status [%s] should be in one of the following legal states, [%s]",
                     reloadedCharge.getId(), reloadedCharge.getStatus(), legalStatuses));
-            return left(illegalStateError(format("Charge not in correct state to be processed, %s", reloadedCharge.getExternalId())));
+            throw new IllegalStateRuntimeException(format("Charge not in correct state to be processed, %s", reloadedCharge.getExternalId()));
         }
         reloadedCharge.setStatus(lockingStatus);
 
