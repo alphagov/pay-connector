@@ -4,10 +4,11 @@ import fj.data.Either;
 import org.junit.Test;
 import org.mockito.InOrder;
 import org.mockito.Mock;
+import uk.gov.pay.connector.exception.ChargeNotFoundRuntimeException;
 import uk.gov.pay.connector.exception.ConflictRuntimeException;
-import uk.gov.pay.connector.model.CancelGatewayResponse;
 import uk.gov.pay.connector.exception.IllegalStateRuntimeException;
 import uk.gov.pay.connector.exception.OperationAlreadyInProgressRuntimeException;
+import uk.gov.pay.connector.model.CancelGatewayResponse;
 import uk.gov.pay.connector.model.ErrorResponse;
 import uk.gov.pay.connector.model.GatewayResponse;
 import uk.gov.pay.connector.model.domain.ChargeEntity;
@@ -28,7 +29,6 @@ import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertTrue;
 import static org.mockito.Matchers.any;
 import static org.mockito.Mockito.*;
-import static uk.gov.pay.connector.model.ErrorType.*;
 import static uk.gov.pay.connector.model.domain.ChargeStatus.*;
 import static uk.gov.pay.connector.service.CardCancelService.EXPIRY_FAILED;
 import static uk.gov.pay.connector.service.CardCancelService.EXPIRY_SUCCESS;
@@ -91,8 +91,7 @@ public class CardCancelServiceTest extends CardServiceTest {
         verifyChargeUpdated(charge, SYSTEM_CANCELLED);
     }
 
-
-    @Test
+    @Test(expected = ChargeNotFoundRuntimeException.class)
     public void shouldGetChargeNotFoundWhenChargeDoesNotExistForAccount() {
         String chargeId = "jgk3erq5sv2i4cds6qqa9f1a8a";
         Long accountId = 1L;
@@ -100,13 +99,7 @@ public class CardCancelServiceTest extends CardServiceTest {
         when(mockedChargeDao.findByExternalIdAndGatewayAccount(chargeId, accountId))
                 .thenReturn(Optional.empty());
 
-        Either<ErrorResponse, GatewayResponse> response = cardCancelService.doCancel(chargeId, accountId);
-
-        assertTrue(response.isLeft());
-        ErrorResponse gatewayError = response.left().value();
-
-        assertThat(gatewayError.getErrorType(), is(CHARGE_NOT_FOUND));
-        assertThat(gatewayError.getMessage(), is("Charge with id [jgk3erq5sv2i4cds6qqa9f1a8a] not found."));
+        cardCancelService.doCancel(chargeId, accountId);
     }
 
     @Test(expected = IllegalStateRuntimeException.class)

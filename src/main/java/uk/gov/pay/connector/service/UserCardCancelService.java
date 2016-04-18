@@ -2,6 +2,7 @@ package uk.gov.pay.connector.service;
 
 import fj.data.Either;
 import uk.gov.pay.connector.dao.ChargeDao;
+import uk.gov.pay.connector.exception.ChargeNotFoundRuntimeException;
 import uk.gov.pay.connector.model.CancelGatewayResponse;
 import uk.gov.pay.connector.model.ErrorResponse;
 import uk.gov.pay.connector.model.GatewayResponse;
@@ -14,6 +15,7 @@ import java.util.Arrays;
 import java.util.Optional;
 
 import static fj.data.Either.right;
+import static java.lang.String.format;
 
 public class UserCardCancelService extends CardCancelService implements TransactionalGatewayOperation  {
     @Inject
@@ -42,9 +44,8 @@ public class UserCardCancelService extends CardCancelService implements Transact
                 .findByExternalId(chargeId);
         if (charge.isPresent()) {
             return cancelCharge(charge.get());
-        }  else {
-            return chargeNotFound(chargeId);
         }
+        throw new ChargeNotFoundRuntimeException(format("Charge with id [%s] not found.", chargeId));
     }
 
     protected ChargeStatus getCancelledStatus() {

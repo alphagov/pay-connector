@@ -7,20 +7,22 @@ import org.apache.commons.lang3.tuple.Pair;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import uk.gov.pay.connector.dao.ChargeDao;
-import uk.gov.pay.connector.model.*;
+import uk.gov.pay.connector.exception.ChargeNotFoundRuntimeException;
+import uk.gov.pay.connector.model.CancelGatewayResponse;
+import uk.gov.pay.connector.model.CancelRequest;
+import uk.gov.pay.connector.model.ErrorResponse;
+import uk.gov.pay.connector.model.GatewayResponse;
 import uk.gov.pay.connector.model.domain.ChargeEntity;
 import uk.gov.pay.connector.model.domain.ChargeStatus;
-
-import static org.apache.commons.lang3.BooleanUtils.negate;
-import static uk.gov.pay.connector.model.CancelGatewayResponse.successfulCancelResponse;
 
 import javax.inject.Inject;
 import java.util.*;
 import java.util.stream.Collectors;
 
-import static fj.data.Either.left;
 import static fj.data.Either.right;
 import static java.lang.String.format;
+import static org.apache.commons.lang3.BooleanUtils.negate;
+import static uk.gov.pay.connector.model.CancelGatewayResponse.successfulCancelResponse;
 import static uk.gov.pay.connector.model.domain.ChargeStatus.*;
 
 public class CardCancelService extends CardService implements TransactionalGatewayOperation {
@@ -48,9 +50,8 @@ public class CardCancelService extends CardService implements TransactionalGatew
                 .findByExternalIdAndGatewayAccount(chargeId, accountId);
         if (charge.isPresent()) {
             return cancelCharge(charge.get());
-        }  else {
-            return chargeNotFound(chargeId);
         }
+        throw new ChargeNotFoundRuntimeException(format("Charge with id [%s] not found.", chargeId));
     }
 
     Either<ErrorResponse, GatewayResponse> cancelCharge(ChargeEntity charge) {
@@ -126,10 +127,6 @@ public class CardCancelService extends CardService implements TransactionalGatew
         chargeService.updateStatus(Arrays.asList(chargeEntity), cancelResponse.getStatus());
 
         return right(operationResponse);
-    }
-
-    Either<ErrorResponse, GatewayResponse> chargeNotFound(String chargeId) {
-        return left(new ErrorResponse(format("Charge with id [%s] not found.", chargeId), ErrorType.CHARGE_NOT_FOUND));
     }
 
     private boolean responseIsNotSuccessful(Either<ErrorResponse, GatewayResponse> gatewayResponse) {

@@ -1,6 +1,5 @@
 package uk.gov.pay.connector.service;
 
-import com.google.common.collect.ImmutableMap;
 import fj.data.Either;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -12,13 +11,8 @@ import uk.gov.pay.connector.model.ErrorResponse;
 import uk.gov.pay.connector.model.domain.ChargeEntity;
 import uk.gov.pay.connector.model.domain.ChargeStatus;
 
-import java.util.Collections;
-import java.util.stream.Stream;
-
-import static fj.data.Either.left;
 import static fj.data.Either.right;
 import static java.lang.String.format;
-import static uk.gov.pay.connector.model.ErrorResponse.*;
 
 abstract public class CardService {
     protected final ChargeDao chargeDao;

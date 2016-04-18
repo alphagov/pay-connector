@@ -6,6 +6,7 @@ import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.mockito.Mock;
 import org.mockito.runners.MockitoJUnitRunner;
+import uk.gov.pay.connector.exception.ChargeNotFoundRuntimeException;
 import uk.gov.pay.connector.exception.ConflictRuntimeException;
 import uk.gov.pay.connector.model.ErrorResponse;
 import uk.gov.pay.connector.model.ErrorType;
@@ -79,20 +80,14 @@ public class CardAuthoriseServiceTest extends CardServiceTest {
         assertTrue(response.right().value().isInProgress());
     }
 
-    @Test
+    @Test(expected = ChargeNotFoundRuntimeException.class)
     public void shouldGetAChargeNotFoundWhenChargeDoesNotExist() {
         String chargeId = "jgk3erq5sv2i4cds6qqa9f1a8a";
 
         when(mockedChargeDao.findByExternalId(chargeId))
                 .thenReturn(Optional.empty());
 
-        Either<ErrorResponse, GatewayResponse> response = cardAuthorisationService.doAuthorise(chargeId, CardUtils.aValidCard());
-
-        assertTrue(response.isLeft());
-        ErrorResponse gatewayError = response.left().value();
-
-        assertThat(gatewayError.getErrorType(), is(CHARGE_NOT_FOUND));
-        assertThat(gatewayError.getMessage(), is("Charge with id [jgk3erq5sv2i4cds6qqa9f1a8a] not found."));
+        cardAuthorisationService.doAuthorise(chargeId, CardUtils.aValidCard());
     }
 
     @Test

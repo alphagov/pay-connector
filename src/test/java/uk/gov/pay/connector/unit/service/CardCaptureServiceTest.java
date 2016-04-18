@@ -3,6 +3,7 @@ package uk.gov.pay.connector.unit.service;
 import fj.data.Either;
 import org.junit.Test;
 import org.mockito.ArgumentCaptor;
+import uk.gov.pay.connector.exception.ChargeNotFoundRuntimeException;
 import uk.gov.pay.connector.exception.ConflictRuntimeException;
 import uk.gov.pay.connector.exception.IllegalStateRuntimeException;
 import uk.gov.pay.connector.exception.OperationAlreadyInProgressRuntimeException;
@@ -57,7 +58,7 @@ public class CardCaptureServiceTest extends CardServiceTest {
         assertThat(request.getValue().getTransactionId(), is(gatewayTxId));
     }
 
-    @Test
+    @Test(expected = ChargeNotFoundRuntimeException.class)
     public void shouldGetAChargeNotFoundWhenChargeDoesNotExist() {
 
         String chargeId = "jgk3erq5sv2i4cds6qqa9f1a8a";
@@ -65,13 +66,7 @@ public class CardCaptureServiceTest extends CardServiceTest {
         when(mockedChargeDao.findByExternalId(chargeId))
                 .thenReturn(Optional.empty());
 
-        Either<ErrorResponse, GatewayResponse> response = cardCaptureService.doCapture(chargeId);
-
-        assertTrue(response.isLeft());
-        ErrorResponse errorResponse = response.left().value();
-
-        assertThat(errorResponse.getErrorType(), is(CHARGE_NOT_FOUND));
-        assertThat(errorResponse.getMessage(), is("Charge with id [jgk3erq5sv2i4cds6qqa9f1a8a] not found."));
+        cardCaptureService.doCapture(chargeId);
     }
 
     @Test(expected = OperationAlreadyInProgressRuntimeException.class)
