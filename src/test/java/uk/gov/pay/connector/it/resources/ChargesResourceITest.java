@@ -27,7 +27,6 @@ import static java.lang.String.format;
 import static java.time.ZonedDateTime.now;
 import static java.time.temporal.ChronoUnit.DAYS;
 import static java.time.temporal.ChronoUnit.SECONDS;
-import static java.util.Arrays.asList;
 import static javax.ws.rs.core.MediaType.APPLICATION_JSON;
 import static javax.ws.rs.core.Response.Status.*;
 import static org.apache.commons.lang3.RandomStringUtils.randomAlphabetic;
@@ -38,7 +37,7 @@ import static org.hamcrest.Matchers.*;
 import static org.hamcrest.text.MatchesPattern.matchesPattern;
 import static uk.gov.pay.connector.matcher.ResponseContainsLinkMatcher.containsLink;
 import static uk.gov.pay.connector.matcher.ZoneDateTimeAsStringWithinMatcher.isWithin;
-import static uk.gov.pay.connector.model.api.ExternalChargeStatus.*;
+import static uk.gov.pay.connector.model.api.ExternalChargeStatus.EXT_IN_PROGRESS;
 import static uk.gov.pay.connector.model.domain.ChargeStatus.*;
 import static uk.gov.pay.connector.model.domain.ChargeStatus.CREATED;
 import static uk.gov.pay.connector.resources.ApiPaths.CHARGE_API_PATH;
@@ -268,34 +267,6 @@ public class ChargesResourceITest {
     }
 
     @Test
-    public void shouldNotGetRepeatedExternalChargeEvents() throws Exception {
-
-        long chargeId = RandomUtils.nextInt();
-        String externalChargeId = "charge4";
-
-        ChargeStatus chargeStatus = AUTHORISATION_SUCCESS;
-        app.getDatabaseTestHelper().addCharge(chargeId, externalChargeId, accountId, AMOUNT, chargeStatus, returnUrl, null);
-        app.getDatabaseTestHelper().addToken(chargeId, "tokenId");
-
-        List<ChargeStatus> statuses = asList(CREATED, ENTERING_CARD_DETAILS, AUTHORISATION_READY, SYSTEM_CANCELLED, ENTERING_CARD_DETAILS);
-        setupLifeCycleEventsFor(app, chargeId, statuses);
-
-        getChargeApi
-                .withAccountId(accountId)
-                .withHeader(HttpHeaders.ACCEPT, APPLICATION_JSON)
-                .getEvents(externalChargeId)
-                .statusCode(OK.getStatusCode())
-                .contentType(JSON)
-                .body("charge_id", is(externalChargeId))
-                .body("events.status", hasSize(4))
-                .body("events.status[0]", is(EXT_CREATED.getValue()))
-                .body("events.status[1]", is(EXT_IN_PROGRESS.getValue()))
-                .body("events.status[2]", is(EXT_SYSTEM_CANCELLED.getValue()))
-                .body("events.status[3]", is(EXT_IN_PROGRESS.getValue()));
-
-    }
-
-    @Test
     public void shouldFilterTransactionsBasedOnFromAndToDates() throws Exception {
         addCharge(CREATED, "ref-1", now());
         addCharge(AUTHORISATION_READY, "ref-2", now());
@@ -461,9 +432,4 @@ public class ChargesResourceITest {
                 .replace("{chargeId}", chargeId);
     }
 
-    private static void setupLifeCycleEventsFor(DropwizardAppWithPostgresRule app, Long chargeId, List<ChargeStatus> statuses) {
-        statuses.stream().forEach(
-                st -> app.getDatabaseTestHelper().addEvent(chargeId, st.getValue())
-        );
-    }
 }
