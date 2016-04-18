@@ -89,7 +89,7 @@ public class ChargesResource {
     public Response getCharge(@PathParam("accountId") Long accountId, @PathParam("chargeId") String chargeId, @Context UriInfo uriInfo) {
         return chargeService.findChargeForAccount(chargeId, accountId, uriInfo)
                 .map(chargeResponse -> Response.ok(chargeResponse).build())
-                .orElseGet(() -> responseWithChargeNotFound(logger, chargeId));
+                .orElseGet(() -> responseWithChargeNotFound(chargeId));
     }
 
     @GET
@@ -103,7 +103,7 @@ public class ChargesResource {
                                    @Context UriInfo uriInfo) {
         return ApiValidators
                 .validateDateQueryParams(ImmutableList.of(Pair.of(FROM_DATE_KEY, fromDate), Pair.of(TO_DATE_KEY, toDate)))
-                .map(errorMessage -> badRequestResponse(logger, errorMessage))
+                .map(errorMessage -> badRequestResponse(errorMessage))
                 .orElseGet(() -> reduce(validateGatewayAccountReference(gatewayAccountDao, accountId)
                         .bimap(handleError, listCharges(accountId, reference, status, fromDate, toDate, jsonResponse()))));
     }
@@ -141,12 +141,12 @@ public class ChargesResource {
     public Response createNewCharge(@PathParam("accountId") Long accountId, Map<String, Object> chargeRequest, @Context UriInfo uriInfo) {
         Optional<List<String>> missingFields = checkMissingFields(chargeRequest);
         if (missingFields.isPresent()) {
-            return fieldsMissingResponse(logger, missingFields.get());
+            return fieldsMissingResponse(missingFields.get());
         }
 
         Optional<List<String>> invalidSizeFields = checkInvalidSizeFields(chargeRequest);
         if (invalidSizeFields.isPresent()) {
-            return fieldsInvalidSizeResponse(logger, invalidSizeFields.get());
+            return fieldsInvalidSizeResponse(invalidSizeFields.get());
         }
 
         return gatewayAccountDao.findById(accountId).map(
@@ -156,7 +156,7 @@ public class ChargesResource {
                     logger.info("responseData = {}", response);
                     return created(response.getLink("self")).entity(response).build();
                 })
-                .orElseGet(() -> notFoundResponse(logger, "Unknown gateway account: " + accountId));
+                .orElseGet(() -> notFoundResponse("Unknown gateway account: " + accountId));
     }
 
     @POST
@@ -242,5 +242,5 @@ public class ChargesResource {
     }
 
     private static F<String, Response> handleError =
-            errorMessage -> notFoundResponse(logger, errorMessage);
+            errorMessage -> notFoundResponse(errorMessage);
 }

@@ -44,7 +44,7 @@ public class CardResource {
     public Response authoriseCharge(@PathParam("chargeId") String chargeId, Card cardDetails) {
 
         if (!isWellFormattedCardDetails(cardDetails)) {
-            return badRequestResponse(logger, "Values do not match expected format/length.");
+            return badRequestResponse("Values do not match expected format/length.");
         }
 
         return reduce(
@@ -92,23 +92,23 @@ public class CardResource {
             (error) -> {
                 switch (error.getErrorType()) {
                     case CHARGE_NOT_FOUND:
-                        return notFoundResponse(logger, error.getMessage());
+                        return notFoundResponse(error.getMessage());
                     case UNEXPECTED_STATUS_CODE_FROM_GATEWAY:
                     case MALFORMED_RESPONSE_RECEIVED_FROM_GATEWAY:
                     case GATEWAY_URL_DNS_ERROR:
                     case GATEWAY_CONNECTION_TIMEOUT_ERROR:
                     case GATEWAY_CONNECTION_SOCKET_ERROR:
-                        return serviceErrorResponse(logger, error.getMessage());
+                        return serviceErrorResponse(error.getMessage());
                     case OPERATION_ALREADY_IN_PROGRESS:
-                        return acceptedResponse(logger, error.getMessage());
+                        return acceptedResponse(error.getMessage());
                 }
 
-                return badRequestResponse(logger, error.getMessage());
+                return badRequestResponse(error.getMessage());
             };
 
     private F<GatewayResponse, Response> handleGatewayResponse =
             response -> response.isSuccessful() ? noContentResponse() :
-                    response.isInProgress() ? acceptedResponse(logger, "Request in progress") :
+                    response.isInProgress() ? acceptedResponse("Request in progress") :
                             handleError.f(response.getError());
 
 }
