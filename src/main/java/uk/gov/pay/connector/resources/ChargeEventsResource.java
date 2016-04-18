@@ -49,10 +49,8 @@ public class ChargeEventsResource {
     }
 
     private List<ChargeEvent> transformToExternalStatus(List<ChargeEventEntity> events) {
-        return events
-                .stream()
-                .map(event ->
-                        new ChargeEvent(event.getChargeEntity().getId(), mapFromStatus(event.getStatus()), event.getUpdated()))
+        return events.stream()
+                .map(event -> new ChargeEvent(event.getChargeEntity().getExternalId(), mapFromStatus(event.getStatus()), event.getUpdated()))
                 .collect(toList());
     }
 
