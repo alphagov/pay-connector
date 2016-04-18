@@ -14,6 +14,7 @@ import uk.gov.pay.connector.model.ChargeResponse;
 import uk.gov.pay.connector.model.api.ExternalChargeStatus;
 import uk.gov.pay.connector.model.domain.ChargeEntity;
 import uk.gov.pay.connector.model.domain.ChargeStatus;
+import uk.gov.pay.connector.service.CardCancelService;
 import uk.gov.pay.connector.service.ChargeService;
 import uk.gov.pay.connector.util.ChargesCSVGenerator;
 
@@ -62,6 +63,7 @@ public class ChargesResource {
     private ChargeDao chargeDao;
     private GatewayAccountDao gatewayAccountDao;
     private ChargeService chargeService;
+    private CardCancelService cardCancelService;
 
     private static final int ONE_HOUR = 3600;
     private static final String CHARGE_EXPIRY_WINDOW = "CHARGE_EXPIRY_WINDOW_SECONDS";
@@ -74,10 +76,11 @@ public class ChargesResource {
     private static final Logger logger = LoggerFactory.getLogger(ChargesResource.class);
 
     @Inject
-    public ChargesResource(ChargeDao chargeDao, GatewayAccountDao gatewayAccountDao, ChargeService chargeService) {
+    public ChargesResource(ChargeDao chargeDao, GatewayAccountDao gatewayAccountDao, ChargeService chargeService, CardCancelService cardCancelService) {
         this.chargeDao = chargeDao;
         this.gatewayAccountDao = gatewayAccountDao;
         this.chargeService = chargeService;
+        this.cardCancelService = cardCancelService;
     }
 
     @GET
@@ -162,7 +165,7 @@ public class ChargesResource {
     public Response expireCharges(@Context UriInfo uriInfo) {
         List<ChargeEntity> charges = chargeDao.findBeforeDateWithStatusIn(getExpiryDate(), NON_TERMINAL_STATUSES);
         logger.info(format("%s charges found expiring since %s", charges.size(), getExpiryDate()));
-        Map<String, Integer> resultMap = chargeService.expire(charges);
+        Map<String, Integer> resultMap = cardCancelService.expire(charges);
         return successResponseWithEntity(resultMap);
     }
 

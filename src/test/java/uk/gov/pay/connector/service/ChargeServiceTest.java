@@ -37,7 +37,6 @@ import static javax.ws.rs.HttpMethod.POST;
 import static org.hamcrest.core.Is.is;
 import static org.hamcrest.core.IsNull.notNullValue;
 import static org.hamcrest.core.IsNull.nullValue;
-import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertThat;
 import static org.mockito.ArgumentCaptor.forClass;
 import static org.mockito.Mockito.*;
@@ -45,8 +44,6 @@ import static uk.gov.pay.connector.fixture.ChargeEntityFixture.aValidChargeEntit
 import static uk.gov.pay.connector.model.ChargeResponse.Builder.aChargeResponse;
 import static uk.gov.pay.connector.model.api.ExternalChargeStatus.mapFromStatus;
 import static uk.gov.pay.connector.model.domain.ChargeStatus.*;
-import static uk.gov.pay.connector.service.ChargeService.EXPIRY_FAILED;
-import static uk.gov.pay.connector.service.ChargeService.EXPIRY_SUCCESS;
 
 
 @RunWith(MockitoJUnitRunner.class)
@@ -60,8 +57,6 @@ public class ChargeServiceTest {
     private ChargeDao chargeDao;
     @Mock
     private ConnectorConfiguration config;
-    @Mock
-    private CardCancelService cardCancelService;
     @Mock
     private UriInfo uriInfo;
     @Mock
@@ -87,7 +82,7 @@ public class ChargeServiceTest {
         when(this.uriInfo.getBaseUriBuilder())
                 .thenReturn(UriBuilder.fromUri(SERVICE_HOST));
 
-        service = new ChargeService(tokenDao, chargeDao, config, cardCancelService);
+        service = new ChargeService(tokenDao, chargeDao, config);
     }
 
     @Test
@@ -286,106 +281,6 @@ public class ChargeServiceTest {
         inOrder.verify(chargeDao).mergeAndNotifyStatusHasChanged(chargeEntity2);
     }
 
-    @Test
-    public void shouldUpdateChargeStatusWhenExpiringWithSuccessfulProviderCancellation() {
-        long chargeId = 10L;
-        long accountId = 100L;
-        String extChargeId = "ext-id";
-
-        ChargeEntity chargeEntity1 = mock(ChargeEntity.class);
-        ChargeEntity chargeEntity2 = mock(ChargeEntity.class);
-        GatewayAccountEntity gatewayAccount = mock(GatewayAccountEntity.class);
-
-        when(chargeEntity1.getStatus()).thenReturn(ChargeStatus.ENTERING_CARD_DETAILS.getValue());
-        when(chargeEntity2.getStatus()).thenReturn(ChargeStatus.AUTHORISATION_SUCCESS.getValue());
-        when(chargeEntity2.getExternalId()).thenReturn(extChargeId);
-        when(gatewayAccount.getId()).thenReturn(accountId);
-        when(chargeEntity2.getGatewayAccount()).thenReturn(gatewayAccount);
-
-        mockCancelResponse(extChargeId, accountId, Either.right(CancelGatewayResponse.successfulCancelResponse(SYSTEM_CANCELLED)));
-
-        Map<String, Integer> result = service.expire(asList(chargeEntity1, chargeEntity2));
-        assertEquals(2, result.get(EXPIRY_SUCCESS).intValue());
-        assertEquals(0, result.get(EXPIRY_FAILED).intValue());
-
-        InOrder inOrder = inOrder(chargeEntity1, chargeDao, chargeEntity2);
-        inOrder.verify(chargeEntity1).setStatus(EXPIRED);
-        inOrder.verify(chargeDao).mergeAndNotifyStatusHasChanged(chargeEntity1);
-
-        inOrder.verify(chargeEntity2).setStatus(EXPIRE_CANCEL_PENDING);
-        inOrder.verify(chargeDao).mergeAndNotifyStatusHasChanged(chargeEntity2);
-
-        inOrder.verify(chargeEntity2).setStatus(EXPIRED);
-        inOrder.verify(chargeDao).mergeAndNotifyStatusHasChanged(chargeEntity2);
-    }
-
-    @Test
-    public void shouldUpdateChargeStatusWhenExpiringWithUnsuccessfulProviderCancellation() {
-        long chargeId = 10L;
-        long accountId = 100L;
-        String extChargeId = "ext-id";
-
-        ChargeEntity chargeEntity1 = mock(ChargeEntity.class);
-        ChargeEntity chargeEntity2 = mock(ChargeEntity.class);
-        GatewayAccountEntity gatewayAccount = mock(GatewayAccountEntity.class);
-
-        when(chargeEntity1.getStatus()).thenReturn(ChargeStatus.ENTERING_CARD_DETAILS.getValue());
-        when(chargeEntity2.getStatus()).thenReturn(ChargeStatus.AUTHORISATION_SUCCESS.getValue());
-        when(chargeEntity2.getExternalId()).thenReturn(extChargeId);
-        when(gatewayAccount.getId()).thenReturn(accountId);
-        when(chargeEntity2.getGatewayAccount()).thenReturn(gatewayAccount);
-
-        CancelGatewayResponse unsuccessfulResponse = CancelGatewayResponse.cancelFailureResponse(ErrorResponse.unexpectedStatusCodeFromGateway("invalid status"));
-        mockCancelResponse(extChargeId, accountId, Either.right(unsuccessfulResponse));
-
-        Map<String, Integer> result = service.expire(asList(chargeEntity1, chargeEntity2));
-        assertEquals(1, result.get(EXPIRY_SUCCESS).intValue());
-        assertEquals(1, result.get(EXPIRY_FAILED).intValue());
-
-        InOrder inOrder = inOrder(chargeEntity1, chargeDao, chargeEntity2);
-        inOrder.verify(chargeEntity1).setStatus(EXPIRED);
-        inOrder.verify(chargeDao).mergeAndNotifyStatusHasChanged(chargeEntity1);
-
-        inOrder.verify(chargeEntity2).setStatus(EXPIRE_CANCEL_PENDING);
-        inOrder.verify(chargeDao).mergeAndNotifyStatusHasChanged(chargeEntity2);
-
-        inOrder.verify(chargeEntity2).setStatus(EXPIRE_CANCEL_FAILED);
-        inOrder.verify(chargeDao).mergeAndNotifyStatusHasChanged(chargeEntity2);
-    }
-
-    @Test
-    public void shouldUpdateChargeStatusWhenExpiringWithFailedProviderCancellation() {
-        long accountId = 100L;
-        String extChargeId = "ext-id";
-
-        ChargeEntity chargeEntity1 = mock(ChargeEntity.class);
-        ChargeEntity chargeEntity2 = mock(ChargeEntity.class);
-        GatewayAccountEntity gatewayAccount = mock(GatewayAccountEntity.class);
-
-        when(chargeEntity1.getStatus()).thenReturn(ChargeStatus.ENTERING_CARD_DETAILS.getValue());
-        when(chargeEntity2.getStatus()).thenReturn(ChargeStatus.AUTHORISATION_SUCCESS.getValue());
-        when(chargeEntity2.getExternalId()).thenReturn(extChargeId);
-        when(gatewayAccount.getId()).thenReturn(accountId);
-        when(chargeEntity2.getGatewayAccount()).thenReturn(gatewayAccount);
-
-        ErrorResponse errorResponse = new ErrorResponse("error-message", ErrorType.GATEWAY_CONNECTION_TIMEOUT_ERROR);
-        mockCancelResponse(extChargeId, accountId, Either.left(errorResponse));
-
-        Map<String, Integer> result = service.expire(asList(chargeEntity1, chargeEntity2));
-        assertEquals(1, result.get(EXPIRY_SUCCESS).intValue());
-        assertEquals(1, result.get(EXPIRY_FAILED).intValue());
-
-        InOrder inOrder = inOrder(chargeEntity1, chargeDao, chargeEntity2);
-        inOrder.verify(chargeEntity1).setStatus(EXPIRED);
-        inOrder.verify(chargeDao).mergeAndNotifyStatusHasChanged(chargeEntity1);
-
-        inOrder.verify(chargeEntity2).setStatus(EXPIRE_CANCEL_PENDING);
-        inOrder.verify(chargeDao).mergeAndNotifyStatusHasChanged(chargeEntity2);
-
-        inOrder.verify(chargeEntity2).setStatus(EXPIRE_CANCEL_FAILED);
-        inOrder.verify(chargeDao).mergeAndNotifyStatusHasChanged(chargeEntity2);
-    }
-
     /**
      * TODO To create a matcher rather than using main src to build our assertions
      */
@@ -401,9 +296,5 @@ public class ChargeServiceTest {
                 .withProviderName(chargeEntity.getGatewayAccount().getGatewayName())
                 .withCreatedDate(chargeEntity.getCreatedDate())
                 .withReturnUrl(chargeEntity.getReturnUrl());
-    }
-
-    private void mockCancelResponse(String extChargeId, Long accountId, Either<ErrorResponse, GatewayResponse> either) {
-        when(cardCancelService.doCancel(extChargeId, accountId)).thenReturn(either);
     }
 }
