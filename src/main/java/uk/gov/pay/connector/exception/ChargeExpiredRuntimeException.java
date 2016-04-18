@@ -2,7 +2,9 @@ package uk.gov.pay.connector.exception;
 
 import uk.gov.pay.connector.util.ResponseUtil;
 
-public class ChargeExpiredRuntimeException extends ConnectorRuntimeException {
+import javax.ws.rs.WebApplicationException;
+
+public class ChargeExpiredRuntimeException extends WebApplicationException {
     public ChargeExpiredRuntimeException(String message) {
         super(ResponseUtil.badRequestResponse(message));
     }

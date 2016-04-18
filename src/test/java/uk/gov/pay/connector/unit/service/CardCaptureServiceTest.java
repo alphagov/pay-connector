@@ -1,6 +1,5 @@
 package uk.gov.pay.connector.unit.service;
 
-import fj.data.Either;
 import org.junit.Test;
 import org.mockito.ArgumentCaptor;
 import uk.gov.pay.connector.exception.ChargeNotFoundRuntimeException;
@@ -20,10 +19,8 @@ import java.util.Optional;
 
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.core.Is.is;
-import static org.junit.Assert.assertTrue;
 import static org.mockito.Matchers.any;
 import static org.mockito.Mockito.*;
-import static uk.gov.pay.connector.model.ErrorType.*;
 import static uk.gov.pay.connector.model.domain.ChargeStatus.*;
 
 public class CardCaptureServiceTest extends CardServiceTest {
@@ -44,10 +41,9 @@ public class CardCaptureServiceTest extends CardServiceTest {
 
         mockSuccessfulCapture();
 
-        Either<ErrorResponse, GatewayResponse> response = cardCaptureService.doCapture(charge.getExternalId());
+        GatewayResponse response = cardCaptureService.doCapture(charge.getExternalId());
 
-        assertTrue(response.isRight());
-        assertThat(response.right().value(), is(aSuccessfulResponse()));
+        assertThat(response, is(aSuccessfulResponse()));
         ArgumentCaptor<ChargeEntity> argumentCaptor = ArgumentCaptor.forClass(ChargeEntity.class);
         verify(mockedChargeDao).mergeAndNotifyStatusHasChanged(argumentCaptor.capture());
 
@@ -127,10 +123,9 @@ public class CardCaptureServiceTest extends CardServiceTest {
 
         mockUnsuccessfulCapture();
 
-        Either<ErrorResponse, GatewayResponse> response = cardCaptureService.doCapture(charge.getExternalId());
+        GatewayResponse response = cardCaptureService.doCapture(charge.getExternalId());
 
-        assertTrue(response.isRight());
-        assertThat(response.right().value(), is(anUnSuccessfulResponse()));
+        assertThat(response, is(anUnSuccessfulResponse()));
 
         verify(reloadedCharge, times(1)).setStatus(CAPTURE_ERROR);
     }

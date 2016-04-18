@@ -1,17 +1,14 @@
 package uk.gov.pay.connector.service;
 
-import fj.data.Either;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import uk.gov.pay.connector.dao.ChargeDao;
 import uk.gov.pay.connector.exception.ChargeExpiredRuntimeException;
 import uk.gov.pay.connector.exception.IllegalStateRuntimeException;
 import uk.gov.pay.connector.exception.OperationAlreadyInProgressRuntimeException;
-import uk.gov.pay.connector.model.ErrorResponse;
 import uk.gov.pay.connector.model.domain.ChargeEntity;
 import uk.gov.pay.connector.model.domain.ChargeStatus;
 
-import static fj.data.Either.right;
 import static java.lang.String.format;
 
 abstract public class CardService {
@@ -47,7 +44,7 @@ abstract public class CardService {
         this.cardExecutorService = cardExecutorService;
     }
 
-    public Either<ErrorResponse, ChargeEntity> preOperation(ChargeEntity chargeEntity, OperationType operationType, ChargeStatus[] legalStatuses, ChargeStatus lockingStatus) {
+    public ChargeEntity preOperation(ChargeEntity chargeEntity, OperationType operationType, ChargeStatus[] legalStatuses, ChargeStatus lockingStatus) {
         ChargeEntity reloadedCharge = chargeDao.merge(chargeEntity);
         if (reloadedCharge.hasStatus(ChargeStatus.EXPIRED)) {
             throw new ChargeExpiredRuntimeException(format("%s for charge failed as already expired, %s", operationType.getValue(), reloadedCharge.getExternalId()));
@@ -63,7 +60,7 @@ abstract public class CardService {
         }
         reloadedCharge.setStatus(lockingStatus);
 
-        return right(reloadedCharge);
+        return reloadedCharge;
     }
 
     public PaymentProvider getPaymentProviderFor(ChargeEntity chargeEntity) {

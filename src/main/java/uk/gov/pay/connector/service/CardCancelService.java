@@ -2,7 +2,6 @@ package uk.gov.pay.connector.service;
 
 import com.google.common.collect.ImmutableMap;
 import com.google.inject.persist.Transactional;
-import fj.data.Either;
 import org.apache.commons.lang3.tuple.Pair;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -10,7 +9,6 @@ import uk.gov.pay.connector.dao.ChargeDao;
 import uk.gov.pay.connector.exception.ChargeNotFoundRuntimeException;
 import uk.gov.pay.connector.model.CancelGatewayResponse;
 import uk.gov.pay.connector.model.CancelRequest;
-import uk.gov.pay.connector.model.ErrorResponse;
 import uk.gov.pay.connector.model.GatewayResponse;
 import uk.gov.pay.connector.model.domain.ChargeEntity;
 import uk.gov.pay.connector.model.domain.ChargeStatus;
@@ -19,7 +17,6 @@ import javax.inject.Inject;
 import java.util.*;
 import java.util.stream.Collectors;
 
-import static fj.data.Either.right;
 import static java.lang.String.format;
 import static org.apache.commons.lang3.BooleanUtils.negate;
 import static uk.gov.pay.connector.model.CancelGatewayResponse.successfulCancelResponse;
@@ -45,7 +42,7 @@ public class CardCancelService extends CardService implements TransactionalGatew
         this.chargeService = chargeService;
     }
 
-    public Either<ErrorResponse, GatewayResponse> doCancel(String chargeId, Long accountId) {
+    public GatewayResponse doCancel(String chargeId, Long accountId) {
         Optional<ChargeEntity> charge = chargeDao
                 .findByExternalIdAndGatewayAccount(chargeId, accountId);
         if (charge.isPresent()) {
@@ -54,12 +51,12 @@ public class CardCancelService extends CardService implements TransactionalGatew
         throw new ChargeNotFoundRuntimeException(format("Charge with id [%s] not found.", chargeId));
     }
 
-    Either<ErrorResponse, GatewayResponse> cancelCharge(ChargeEntity charge) {
-            if (charge.hasStatus(nonGatewayStatuses)) {
-                return nonGatewayCancel(charge);
-            } else {
-                return executeGatewayOperationFor(charge);
-            }
+    GatewayResponse cancelCharge(ChargeEntity charge) {
+        if (charge.hasStatus(nonGatewayStatuses)) {
+            return nonGatewayCancel(charge);
+        } else {
+            return executeGatewayOperationFor(charge);
+        }
     }
 
     public Map<String, Integer> expire(List<ChargeEntity> charges) {
@@ -84,7 +81,7 @@ public class CardCancelService extends CardService implements TransactionalGatew
         List<ChargeEntity> failedCancelled = new ArrayList<>();
 
         charges.stream().forEach(chargeEntity -> {
-            Either<ErrorResponse, GatewayResponse> gatewayResponse = doCancel(chargeEntity.getExternalId(), chargeEntity.getGatewayAccount().getId());
+            GatewayResponse gatewayResponse = doCancel(chargeEntity.getExternalId(), chargeEntity.getGatewayAccount().getId());
 
             if (responseIsNotSuccessful(gatewayResponse)) {
                 logUnsuccessfulResponseReasons(chargeEntity, gatewayResponse);
@@ -104,46 +101,40 @@ public class CardCancelService extends CardService implements TransactionalGatew
         return ChargeStatus.SYSTEM_CANCELLED;
     }
 
-    Either<ErrorResponse, GatewayResponse> nonGatewayCancel(ChargeEntity charge) {
+    private GatewayResponse nonGatewayCancel(ChargeEntity charge) {
         chargeService.updateStatus(Arrays.asList(charge), getCancelledStatus());
-        return right(successfulCancelResponse(getCancelledStatus()));
+        return successfulCancelResponse(getCancelledStatus());
     }
 
     @Transactional
     @Override
-    public Either<ErrorResponse, ChargeEntity> preOperation(ChargeEntity chargeEntity) {
+    public ChargeEntity preOperation(ChargeEntity chargeEntity) {
         return preOperation(chargeEntity, OperationType.CANCELLATION, legalStatuses, ChargeStatus.CANCEL_READY);
     }
 
     @Override
-    public Either<ErrorResponse, GatewayResponse> operation(ChargeEntity chargeEntity) {
-        return right(getPaymentProviderFor(chargeEntity)
-                .cancel(CancelRequest.valueOf(chargeEntity)));
+    public GatewayResponse operation(ChargeEntity chargeEntity) {
+        return getPaymentProviderFor(chargeEntity)
+                .cancel(CancelRequest.valueOf(chargeEntity));
     }
 
     @Override
-    public Either<ErrorResponse, GatewayResponse> postOperation(ChargeEntity chargeEntity, GatewayResponse operationResponse) {
+    public GatewayResponse postOperation(ChargeEntity chargeEntity, GatewayResponse operationResponse) {
         CancelGatewayResponse cancelResponse = (CancelGatewayResponse) operationResponse;
         chargeService.updateStatus(Arrays.asList(chargeEntity), cancelResponse.getStatus());
-
-        return right(operationResponse);
+        return operationResponse;
     }
 
-    private boolean responseIsNotSuccessful(Either<ErrorResponse, GatewayResponse> gatewayResponse) {
-        return gatewayResponse.isLeft() || negate(gatewayResponse.right().value().isSuccessful());
+    private boolean responseIsNotSuccessful(GatewayResponse gatewayResponse) {
+        return negate(gatewayResponse.isSuccessful());
     }
 
-    private void logUnsuccessfulResponseReasons(ChargeEntity chargeEntity, Either<ErrorResponse, GatewayResponse> gatewayResponse) {
-        if (gatewayResponse.isLeft()) {
+    private void logUnsuccessfulResponseReasons(ChargeEntity chargeEntity, GatewayResponse gatewayResponse) {
+        if (gatewayResponse.isFailed()) {
             logger.error(format("gateway error: %s %s, while cancelling the charge ID %s",
-                    gatewayResponse.left().value().getMessage(),
-                    gatewayResponse.left().value().getErrorType(),
+                    gatewayResponse.getError().getMessage(),
+                    gatewayResponse.getError().getErrorType(),
                     chargeEntity.getId()));
         }
-
-        if (gatewayResponse.isRight()) {
-            logger.error(format("gateway unsuccessful response: %s, while cancelling Charge ID: %s",
-                    gatewayResponse.right().value().getError(), chargeEntity.getId()));
         }
-    }
 }

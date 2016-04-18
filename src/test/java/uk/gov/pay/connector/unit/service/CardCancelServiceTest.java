@@ -1,6 +1,5 @@
 package uk.gov.pay.connector.unit.service;
 
-import fj.data.Either;
 import org.junit.Test;
 import org.mockito.InOrder;
 import org.mockito.Mock;
@@ -26,7 +25,6 @@ import static java.util.Arrays.asList;
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.core.Is.is;
 import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertTrue;
 import static org.mockito.Matchers.any;
 import static org.mockito.Mockito.*;
 import static uk.gov.pay.connector.model.domain.ChargeStatus.*;
@@ -53,10 +51,9 @@ public class CardCancelServiceTest extends CardServiceTest {
         mockChargeDaoFindByChargeIdAndAccountId(charge, accountId);
         verifyPaymentProviderNotCalled();
 
-        Either<ErrorResponse, GatewayResponse> response = cardCancelService.doCancel(charge.getExternalId(), accountId);
+        GatewayResponse response = cardCancelService.doCancel(charge.getExternalId(), accountId);
 
-        assertTrue(response.isRight());
-        assertThat(response.right().value(), is(aSuccessfulResponse()));
+        assertThat(response, is(aSuccessfulResponse()));
         verifyChargeUpdated(charge, SYSTEM_CANCELLED);
     }
 
@@ -67,10 +64,9 @@ public class CardCancelServiceTest extends CardServiceTest {
         mockChargeDaoFindByChargeIdAndAccountId(charge, accountId);
         verifyPaymentProviderNotCalled();
 
-        Either<ErrorResponse, GatewayResponse> response = cardCancelService.doCancel(charge.getExternalId(), accountId);
+        GatewayResponse response = cardCancelService.doCancel(charge.getExternalId(), accountId);
 
-        assertTrue(response.isRight());
-        assertThat(response.right().value(), is(aSuccessfulResponse()));
+        assertThat(response, is(aSuccessfulResponse()));
         verifyChargeUpdated(charge, SYSTEM_CANCELLED);
     }
 
@@ -84,10 +80,9 @@ public class CardCancelServiceTest extends CardServiceTest {
 
         mockSuccessfulCancel();
 
-        Either<ErrorResponse, GatewayResponse> response = cardCancelService.doCancel(charge.getExternalId(), accountId);
+        GatewayResponse response = cardCancelService.doCancel(charge.getExternalId(), accountId);
 
-        assertTrue(response.isRight());
-        assertThat(response.right().value(), is(aSuccessfulResponse()));
+        assertThat(response, is(aSuccessfulResponse()));
         verifyChargeUpdated(charge, SYSTEM_CANCELLED);
     }
 
@@ -165,10 +160,9 @@ public class CardCancelServiceTest extends CardServiceTest {
 
         mockUnsuccessfulCancel();
 
-        Either<ErrorResponse, GatewayResponse> response = cardCancelService.doCancel(charge.getExternalId(), accountId);
+        GatewayResponse response = cardCancelService.doCancel(charge.getExternalId(), accountId);
 
-        assertTrue(response.isRight());
-        assertThat(response.right().value(), is(anUnSuccessfulResponse()));
+        assertThat(response, is(anUnSuccessfulResponse()));
 
         verifyChargeUpdated(charge, CANCEL_ERROR);
     }
