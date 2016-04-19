@@ -187,6 +187,6 @@ public class CardResourceITestBase {
     }
 
     protected String cancelChargeUrlFor(String accountId, String chargeId) {
-        return CANCEL_CHARGE_PATH.replace("{accountId}", accountId).replace("{chargeId}", chargeId);
+        return CANCEL_CHARGE_RESOURCE.replace("{accountId}", accountId).replace("{chargeId}", chargeId);
     }
 }

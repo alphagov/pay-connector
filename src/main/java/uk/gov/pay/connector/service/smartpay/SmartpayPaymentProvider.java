@@ -22,8 +22,8 @@ import static fj.data.Either.reduce;
 import static java.lang.String.format;
 import static uk.gov.pay.connector.model.AuthorisationResponse.authorisationFailureResponse;
 import static uk.gov.pay.connector.model.AuthorisationResponse.successfulAuthorisationResponse;
-import static uk.gov.pay.connector.model.CancelResponse.cancelFailureResponse;
-import static uk.gov.pay.connector.model.CancelResponse.successfulCancelResponse;
+import static uk.gov.pay.connector.model.CancelGatewayResponse.cancelFailureResponse;
+import static uk.gov.pay.connector.model.CancelGatewayResponse.successfulCancelResponse;
 import static uk.gov.pay.connector.model.CaptureResponse.captureFailureResponse;
 import static uk.gov.pay.connector.model.CaptureResponse.successfulCaptureResponse;
 import static uk.gov.pay.connector.model.domain.ChargeStatus.*;
@@ -73,12 +73,12 @@ public class SmartpayPaymentProvider implements PaymentProvider {
     }
 
     @Override
-    public CancelResponse cancel(CancelRequest request) {
+    public CancelGatewayResponse cancel(CancelRequest request) {
         return reduce(
                 client
                         .postXMLRequestFor(request.getGatewayAccount(), buildCancelOrderFor(request))
                         .bimap(
-                                CancelResponse::cancelFailureResponse,
+                                CancelGatewayResponse::cancelFailureResponse,
                                 this::mapToCancelResponse
                         )
         );
@@ -156,11 +156,11 @@ public class SmartpayPaymentProvider implements PaymentProvider {
         );
     }
 
-    private CancelResponse mapToCancelResponse(Response response) {
+    private CancelGatewayResponse mapToCancelResponse(Response response) {
         return reduce(
                 client.unmarshallResponse(response, SmartpayCancelResponse.class)
                         .bimap(
-                                CancelResponse::cancelFailureResponse,
+                                CancelGatewayResponse::cancelFailureResponse,
                                 (sResponse) -> sResponse.isCancelled() ?
                                         successfulCancelResponse(SYSTEM_CANCELLED) :
                                         cancelFailureResponse(logger, sResponse.getErrorMessage())

@@ -92,7 +92,7 @@ public class WorldpayPaymentProviderTest {
                 .build();
 
         CancelRequest cancelRequest = CancelRequest.valueOf(charge);
-        CancelResponse cancelResponse = connector.cancel(cancelRequest);
+        CancelGatewayResponse cancelResponse = connector.cancel(cancelRequest);
 
         assertTrue(cancelResponse.isSuccessful());
         assertNull(cancelResponse.getError());

@@ -24,8 +24,8 @@ import static java.lang.String.format;
 import static java.util.UUID.randomUUID;
 import static javax.ws.rs.core.Response.Status.OK;
 import static uk.gov.pay.connector.model.AuthorisationResponse.*;
-import static uk.gov.pay.connector.model.CancelResponse.cancelFailureResponse;
-import static uk.gov.pay.connector.model.CancelResponse.successfulCancelResponse;
+import static uk.gov.pay.connector.model.CancelGatewayResponse.cancelFailureResponse;
+import static uk.gov.pay.connector.model.CancelGatewayResponse.successfulCancelResponse;
 import static uk.gov.pay.connector.model.CaptureResponse.captureFailureResponse;
 import static uk.gov.pay.connector.model.CaptureResponse.successfulCaptureResponse;
 import static uk.gov.pay.connector.model.ErrorResponse.baseError;
@@ -77,13 +77,13 @@ public class WorldpayPaymentProvider implements PaymentProvider {
     }
 
     @Override
-    public CancelResponse cancel(CancelRequest request) {
+    public CancelGatewayResponse cancel(CancelRequest request) {
         String requestString = buildCancelOrderFor(request);
         return reduce(
                 client
                         .postXMLRequestFor(request.getGatewayAccount(), requestString)
                         .bimap(
-                                CancelResponse::cancelFailureResponse,
+                                CancelGatewayResponse::cancelFailureResponse,
                                 this::mapToCancelResponse
                         )
         );
@@ -259,11 +259,11 @@ public class WorldpayPaymentProvider implements PaymentProvider {
         );
     }
 
-    private CancelResponse mapToCancelResponse(Response response) {
+    private CancelGatewayResponse mapToCancelResponse(Response response) {
         return reduce(
                 client.unmarshallResponse(response, WorldpayCancelResponse.class)
                         .bimap(
-                                CancelResponse::cancelFailureResponse,
+                                CancelGatewayResponse::cancelFailureResponse,
                                 (wResponse) -> wResponse.isCancelled() ?
                                         successfulCancelResponse(SYSTEM_CANCELLED) :
                                         cancelFailureResponse(logger, wResponse.getErrorMessage())

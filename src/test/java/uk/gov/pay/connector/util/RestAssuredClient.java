@@ -45,7 +45,7 @@ public class RestAssuredClient {
     }
 
     public ValidatableResponse postCreateCharge(String postBody) {
-        String requestPath = CHARGES_API_PATH
+        String requestPath = CHARGES_API_RESOURCE
                 .replace("{accountId}", accountId);
 
         return given().port(app.getLocalPort())
@@ -66,7 +66,7 @@ public class RestAssuredClient {
     }
 
     public ValidatableResponse getCharge() {
-        String requestPath = CHARGE_API_PATH
+        String requestPath = CHARGE_API_RESOURCE
                 .replace("{accountId}", accountId)
                 .replace("{chargeId}", chargeId);
 
@@ -82,7 +82,7 @@ public class RestAssuredClient {
     }
 
     public ValidatableResponse putChargeStatus(String putBody) {
-        String requestPath = CHARGE_FRONTEND_PATH
+        String requestPath = FRONTEND_CHARGE_RESOURCE
                 .replace("{accountId}", accountId)
                 .replace("{chargeId}", chargeId)
                 + "/status";
@@ -94,7 +94,7 @@ public class RestAssuredClient {
     }
 
     public ValidatableResponse postChargeCancellation() {
-        String requestPath = CHARGE_API_PATH
+        String requestPath = CHARGE_API_RESOURCE
                 .replace("{accountId}", accountId)
                 .replace("{chargeId}", chargeId)
                 + "/cancel";
@@ -107,12 +107,12 @@ public class RestAssuredClient {
         return given().port(app.getLocalPort())
                 .headers(headers)
                 .queryParams(queryParams)
-                .get(CHARGES_API_PATH.replace("{accountId}", accountId))
+                .get(CHARGES_API_RESOURCE.replace("{accountId}", accountId))
                 .then();
     }
 
     public ValidatableResponse getEvents(String chargeId) {
-        String requestPath = CHARGE_EVENTS_API_PATH
+        String requestPath = CHARGE_EVENTS_API_RESOURCE
                 .replace("{accountId}", accountId)
                 .replace("{chargeId}", chargeId);
         return given().port(app.getLocalPort())
@@ -121,11 +121,20 @@ public class RestAssuredClient {
     }
 
     public ValidatableResponse getFrontendCharge() {
-        String requestPath = CHARGE_FRONTEND_PATH
+        String requestPath = FRONTEND_CHARGE_RESOURCE
                 .replace("{chargeId}", chargeId);
         return given()
                 .port(app.getLocalPort())
                 .get(requestPath)
+                .then();
+    }
+
+    public ValidatableResponse postFrontendChargeCancellation() {
+        String requestPath = FRONTEND_CANCEL_RESOURCE
+                .replace("{accountId}", accountId)
+                .replace("{chargeId}", chargeId);
+        return given().port(app.getLocalPort())
+                .post(requestPath)
                 .then();
     }
 }

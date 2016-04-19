@@ -114,7 +114,7 @@ public class SmartpayPaymentProviderTest {
                 .withGatewayAccountEntity(validGatewayAccount)
                 .build();
 
-        CancelResponse cancelResponse = paymentProvider.cancel(CancelRequest.valueOf(chargeEntity));
+        CancelGatewayResponse cancelResponse = paymentProvider.cancel(CancelRequest.valueOf(chargeEntity));
         assertTrue(cancelResponse.isSuccessful());
         assertNull(cancelResponse.getError());
 

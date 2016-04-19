@@ -40,27 +40,29 @@ public class ChargeCancelResourceITest {
         app.getDatabaseTestHelper().addGatewayAccount(accountId, "sandbox");
     }
 
-    @Test
+       @Test
     public void respondWith204_whenCancellationSuccessful() {
         CANCELLABLE_STATES.forEach(status -> {
             String chargeId = createNewChargeWithStatus(status);
             restApiCall
                     .withChargeId(chargeId)
                     .postChargeCancellation()
-                    .statusCode(NO_CONTENT.getStatusCode());
+                    .statusCode(NO_CONTENT.getStatusCode()); //assertion
+
             restApiCall
                     .withChargeId(chargeId)
                     .getCharge()
                     .body("status", is(EXT_SYSTEM_CANCELLED.getValue()));
+
             restFrontendCall
                     .withChargeId(chargeId)
-                    .getCharge()
+                    .getFrontendCharge()
                     .body("status", is(SYSTEM_CANCELLED.getValue()));
         });
     }
 
     @Test
-    public void respondWith500_whenNotCancellableState() {
+    public void respondWith400_whenNotCancellableState() {
         ChargeStatus[] statuses = {
                 AUTHORISATION_REJECTED,
                 AUTHORISATION_ERROR,
@@ -80,7 +82,7 @@ public class ChargeCancelResourceITest {
                     restApiCall
                             .withChargeId(chargeId)
                             .postChargeCancellation()
-                            .statusCode(INTERNAL_SERVER_ERROR.getStatusCode())
+                            .statusCode(BAD_REQUEST.getStatusCode())
                             .and()
                             .contentType(JSON)
                             .body("message", is(expectedMessage));

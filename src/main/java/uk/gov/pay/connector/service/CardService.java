@@ -68,5 +68,4 @@ abstract public class CardService {
     public PaymentProvider getPaymentProviderFor(ChargeEntity chargeEntity) {
         return providers.resolve(chargeEntity.getGatewayAccount().getGatewayName());
     }
-
 }

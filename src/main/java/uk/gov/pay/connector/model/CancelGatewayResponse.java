@@ -9,35 +9,35 @@ import static uk.gov.pay.connector.model.GatewayResponse.ResponseStatus.FAILED;
 import static uk.gov.pay.connector.model.GatewayResponse.ResponseStatus.SUCCEDED;
 import static uk.gov.pay.connector.model.domain.ChargeStatus.CANCEL_ERROR;
 
-public class CancelResponse extends GatewayResponse {
+public class CancelGatewayResponse extends GatewayResponse {
 
     private final ErrorResponse error;
 
     private final ChargeStatus status;
 
-    public CancelResponse(ResponseStatus responseStatus, ErrorResponse errorMessage, ChargeStatus status) {
+    public CancelGatewayResponse(ResponseStatus responseStatus, ErrorResponse errorMessage, ChargeStatus status) {
         this.responseStatus = responseStatus;
         this.error = errorMessage;
         this.status = status;
     }
 
-    public CancelResponse(ErrorResponse error) {
+    public CancelGatewayResponse(ErrorResponse error) {
         this.responseStatus = FAILED;
         this.error = error;
         this.status = CANCEL_ERROR;
     }
 
-    public static CancelResponse successfulCancelResponse(ChargeStatus status) {
-        return new CancelResponse(SUCCEDED, null, status);
+    public static CancelGatewayResponse successfulCancelResponse(ChargeStatus status) {
+        return new CancelGatewayResponse(SUCCEDED, null, status);
     }
 
-    public static CancelResponse cancelFailureResponse(Logger logger, String errorMessage) {
+    public static CancelGatewayResponse cancelFailureResponse(Logger logger, String errorMessage) {
         logger.error(format("Failed to cancel charge: %s", errorMessage));
-        return new CancelResponse(FAILED, baseError(errorMessage), CANCEL_ERROR);
+        return new CancelGatewayResponse(FAILED, baseError(errorMessage), CANCEL_ERROR);
     }
 
-    public static CancelResponse cancelFailureResponse(ErrorResponse errorResponse) {
-        return new CancelResponse(errorResponse);
+    public static CancelGatewayResponse cancelFailureResponse(ErrorResponse errorResponse) {
+        return new CancelGatewayResponse(errorResponse);
     }
 
     public ErrorResponse getError() {
@@ -47,5 +47,4 @@ public class CancelResponse extends GatewayResponse {
     public ChargeStatus getStatus() {
         return status;
     }
-
 }

@@ -32,26 +32,21 @@ import static javax.ws.rs.core.MediaType.APPLICATION_FORM_URLENCODED;
 import static org.apache.commons.lang3.BooleanUtils.negate;
 import static uk.gov.pay.connector.model.ChargeResponse.Builder.aChargeResponse;
 import static uk.gov.pay.connector.model.api.ExternalChargeStatus.*;
-import static uk.gov.pay.connector.resources.ApiPaths.CHARGE_API_PATH;
+import static uk.gov.pay.connector.resources.ApiPaths.CHARGE_API_RESOURCE;
 
 public class ChargeService {
 
     private static final Logger logger = LoggerFactory.getLogger(ChargeService.class);
 
-    public static final String EXPIRY_SUCCESS = "expiry-success";
-    public static final String EXPIRY_FAILED = "expiry-failed";
-
     private ChargeDao chargeDao;
     private TokenDao tokenDao;
     private LinksConfig linksConfig;
-    private CardCancelService cardCancelService;
 
     @Inject
-    public ChargeService(TokenDao tokenDao, ChargeDao chargeDao, ConnectorConfiguration config, CardCancelService cardCancelService) {
+    public ChargeService(TokenDao tokenDao, ChargeDao chargeDao, ConnectorConfiguration config) {
         this.tokenDao = tokenDao;
         this.chargeDao = chargeDao;
         this.linksConfig = config.getLinks();
-        this.cardCancelService = cardCancelService;
     }
 
     @Transactional
@@ -88,66 +83,10 @@ public class ChargeService {
         });
     }
 
-    public Map<String, Integer> expire(List<ChargeEntity> charges) {
-        Map<Boolean, List<ChargeEntity>> chargesToProcessExpiry = charges
-                .stream()
-                .collect(Collectors.partitioningBy(
-                        chargeEntity -> ChargeStatus.AUTHORISATION_SUCCESS.getValue().equals(chargeEntity.getStatus())));
-        List<ChargeEntity> nonAuthSuccessCharges = chargesToProcessExpiry.get(Boolean.FALSE);
-        updateStatus(nonAuthSuccessCharges, ChargeStatus.EXPIRED);
-        int expiredSuccess = nonAuthSuccessCharges.size();
-
-        List<ChargeEntity> authSuccessCharges = chargesToProcessExpiry.get(Boolean.TRUE);
-        Pair<Integer, Integer> successFailPair = expireChargesInAuthorisationSuccess(authSuccessCharges);
-
-        return ImmutableMap.of(EXPIRY_SUCCESS, expiredSuccess + successFailPair.getLeft(), EXPIRY_FAILED, successFailPair.getRight());
-    }
-
     private TokenEntity createNewChargeEntityToken(ChargeEntity chargeEntity) {
         TokenEntity token = TokenEntity.generateNewTokenFor(chargeEntity);
         tokenDao.persist(token);
         return token;
-    }
-
-    private Pair<Integer, Integer> expireChargesInAuthorisationSuccess(List<ChargeEntity> charges) {
-        updateStatus(charges, ChargeStatus.EXPIRE_CANCEL_PENDING);
-
-        List<ChargeEntity> successfullyCancelled = new ArrayList<>();
-        List<ChargeEntity> failedCancelled = new ArrayList<>();
-
-        charges.stream().forEach(chargeEntity -> {
-            Either<ErrorResponse, GatewayResponse> gatewayResponse = cardCancelService.doCancel(chargeEntity.getExternalId(), chargeEntity.getGatewayAccount().getId());
-
-            if (responseIsNotSuccessful(gatewayResponse)) {
-                logUnsuccessfulResponseReasons(chargeEntity, gatewayResponse);
-                failedCancelled.add(chargeEntity);
-            } else {
-                successfullyCancelled.add(chargeEntity);
-            }
-        });
-        updateStatus(successfullyCancelled, ChargeStatus.EXPIRED);
-        int expiredSuccess = successfullyCancelled.size();
-        updateStatus(failedCancelled, ChargeStatus.EXPIRE_CANCEL_FAILED);
-        int expireFailed = failedCancelled.size();
-        return Pair.of(expiredSuccess, expireFailed);
-    }
-
-    private void logUnsuccessfulResponseReasons(ChargeEntity chargeEntity, Either<ErrorResponse, GatewayResponse> gatewayResponse) {
-        if (gatewayResponse.isLeft()) {
-            logger.error(format("gateway error: %s %s, while cancelling the charge ID %s",
-                    gatewayResponse.left().value().getMessage(),
-                    gatewayResponse.left().value().getErrorType(),
-                    chargeEntity.getId()));
-        }
-
-        if (gatewayResponse.isRight()) {
-            logger.error(format("gateway unsuccessful response: %s, while cancelling Charge ID: %s",
-                    gatewayResponse.right().value().getError(), chargeEntity.getId()));
-        }
-    }
-
-    private boolean responseIsNotSuccessful(Either<ErrorResponse, GatewayResponse> gatewayResponse) {
-        return gatewayResponse.isLeft() || negate(gatewayResponse.right().value().isSuccessful());
     }
 
     private ChargeResponse.Builder chargeResponseBuilder(UriInfo uriInfo, ChargeEntity charge, TokenEntity token) {
@@ -176,7 +115,7 @@ public class ChargeService {
 
     private URI selfUriFor(UriInfo uriInfo, Long accountId, String chargeId) {
         return uriInfo.getBaseUriBuilder()
-                .path(CHARGE_API_PATH)
+                .path(CHARGE_API_RESOURCE)
                 .build(accountId, chargeId);
     }
 
