@@ -194,4 +194,12 @@
             <column name="created_date"/>
         </createIndex>
     </changeSet>
+
+    <changeSet id="add service_name column to charges table" author="">
+        <addColumn tableName="gateway_accounts">
+            <column name="service_name" type="varchar(50)">
+                <constraints nullable="true" unique="false"/>
+            </column>
+        </addColumn>
+    </changeSet>
 </databaseChangeLog>
