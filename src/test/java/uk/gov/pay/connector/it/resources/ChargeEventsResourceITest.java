@@ -3,6 +3,7 @@ package uk.gov.pay.connector.it.resources;
 import com.google.common.collect.ImmutableMap;
 import com.jayway.restassured.response.ValidatableResponse;
 import org.apache.commons.lang.math.RandomUtils;
+import org.hamcrest.CoreMatchers;
 import org.hamcrest.Matchers;
 import org.junit.Before;
 import org.junit.Rule;
@@ -21,8 +22,7 @@ import static java.util.Arrays.asList;
 import static javax.ws.rs.core.Response.Status.NOT_FOUND;
 import static javax.ws.rs.core.Response.Status.NO_CONTENT;
 import static org.hamcrest.CoreMatchers.equalTo;
-import static org.hamcrest.Matchers.hasSize;
-import static org.hamcrest.Matchers.isEmptyOrNullString;
+import static org.hamcrest.Matchers.*;
 import static org.hamcrest.core.Is.is;
 import static org.hamcrest.core.IsCollectionContaining.hasItems;
 import static uk.gov.pay.connector.matcher.ZoneDateTimeAsStringWithinMatcher.isWithin;
@@ -112,7 +112,10 @@ public class ChargeEventsResourceITest {
                 .body("events.status[1]", Matchers.is(EXT_IN_PROGRESS.getValue()))
                 .body("events.status[2]", Matchers.is(EXT_SYSTEM_CANCELLED.getValue()))
                 .body("events.status[3]", Matchers.is(EXT_IN_PROGRESS.getValue()))
-                .body("events.chargeId[0]", isEmptyOrNullString()); // chargeId should not be there in json response for every event
+                .body("events.chargeId[0]", isEmptyOrNullString())
+                .body("events.chargeId[1]", isEmptyOrNullString())
+                .body("events.chargeId[2]", isEmptyOrNullString())
+                .body("events.chargeId[3]", isEmptyOrNullString()); // chargeId should not be there in json response for every event
     }
 
     @Test
