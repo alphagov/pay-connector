@@ -22,7 +22,7 @@ public class DatabaseTestHelper {
         this.jdbi = jdbi;
     }
 
-    public void addGatewayAccount(String accountId, String paymentGateway, Map<String, String> credentials) {
+    public void addGatewayAccount(String accountId, String paymentGateway, Map<String, String> credentials, String serviceName) {
         try {
             PGobject jsonObject = new PGobject();
             jsonObject.setType("json");
@@ -32,16 +32,20 @@ public class DatabaseTestHelper {
                 jsonObject.setValue(new Gson().toJson(credentials));
             }
             jdbi.withHandle(h ->
-                    h.update("INSERT INTO gateway_accounts(id, payment_provider, credentials) VALUES(?, ?, ?)",
-                            Long.valueOf(accountId), paymentGateway, jsonObject)
+                            h.update("INSERT INTO gateway_accounts(id, payment_provider, credentials, service_name) VALUES(?, ?, ?, ?)",
+                                    Long.valueOf(accountId), paymentGateway, jsonObject, serviceName)
             );
         } catch (SQLException e) {
             throw new RuntimeException(e);
         }
     }
 
+    public void addGatewayAccount(String accountId, String paymentProvider, Map<String, String> credentials) {
+        addGatewayAccount(accountId, paymentProvider, credentials, null);
+    }
+
     public void addGatewayAccount(String accountId, String paymentProvider) {
-        addGatewayAccount(accountId, paymentProvider, null);
+        addGatewayAccount(accountId, paymentProvider, null, null);
     }
 
     public void addCharge(Long chargeId, String externalChargeId, String gatewayAccountId, long amount, ChargeStatus status, String returnUrl, String transactionId) {
@@ -134,6 +138,15 @@ public class DatabaseTestHelper {
         return new Gson().fromJson(jsonString, Map.class);
     }
 
+    public String getAccountServiceName(Long gatewayAccountId) {
+        return jdbi.withHandle(h ->
+                        h.createQuery("SELECT service_name from gateway_accounts WHERE id = :gatewayAccountId")
+                                .bind("gatewayAccountId", gatewayAccountId)
+                                .map(StringMapper.FIRST)
+                                .first()
+        );
+    }
+
     public void addToken(Long chargeId, String tokenId) {
         jdbi.withHandle(handle ->
                 handle
@@ -159,14 +172,23 @@ public class DatabaseTestHelper {
             pgCredentials.setType("json");
             pgCredentials.setValue(credentials);
             jdbi.withHandle(handle ->
-                    handle.createStatement("UPDATE gateway_accounts set credentials=:credentials WHERE id=:gatewayAccountId")
-                            .bind("gatewayAccountId", Integer.parseInt(accountId))
-                            .bind("credentials", pgCredentials)
-                            .execute()
+                            handle.createStatement("UPDATE gateway_accounts set credentials=:credentials WHERE id=:gatewayAccountId")
+                                    .bind("gatewayAccountId", Integer.parseInt(accountId))
+                                    .bind("credentials", pgCredentials)
+                                    .execute()
             );
         } catch (SQLException e) {
             throw new RuntimeException(e);
         }
+    }
+
+    public void updateServiceNameFor(String accountId, String serviceName) {
+        jdbi.withHandle(handle ->
+                        handle.createStatement("UPDATE gateway_accounts set service_name=:serviceName WHERE id=:gatewayAccountId")
+                                .bind("gatewayAccountId", Integer.parseInt(accountId))
+                                .bind("serviceName", serviceName)
+                                .execute()
+        );
     }
 
     public void addEvent(Long chargeId, String chargeStatus) {

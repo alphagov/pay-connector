@@ -6,6 +6,7 @@ import uk.gov.pay.connector.model.domain.ChargeStatus;
 import uk.gov.pay.connector.util.DatabaseTestHelper;
 
 import java.time.ZonedDateTime;
+import java.util.HashMap;
 
 public class DatabaseFixtures {
 
@@ -27,9 +28,14 @@ public class DatabaseFixtures {
         return new TestCharge();
     }
 
+    public TestToken aTestToken() {
+        return new TestToken();
+    }
+
     public class TestAccount {
         long accountId = 564532435L;
         String paymentProvider = "test_provider";
+        String serviceName = "service_name";
 
         public long getAccountId() {
             return accountId;
@@ -39,13 +45,17 @@ public class DatabaseFixtures {
             return paymentProvider;
         }
 
+        public String getServiceName() {
+            return serviceName;
+        }
+
         public TestAccount withAccountId(long accountId){
             this.accountId = accountId;
             return this;
         }
 
         public TestAccount insert() {
-            databaseTestHelper.addGatewayAccount(String.valueOf(accountId), paymentProvider);
+            databaseTestHelper.addGatewayAccount(String.valueOf(accountId), paymentProvider, new HashMap<String, String>(), serviceName);
             return this;
         }
     }
@@ -143,6 +153,31 @@ public class DatabaseFixtures {
 
         public TestAccount getAccount() {
             return testAccount;
+        }
+    }
+
+    public class TestToken {
+        TestCharge testCharge;
+        String secureRedirectToken = "3c9fee80-977a-4da5-a003-4872a8cf95b6";
+
+        public TestToken withTestToken(TestCharge testCharge) {
+            this.testCharge = testCharge;
+            return this;
+        }
+
+        public TestToken insert() {
+            if (testCharge == null)
+                throw new IllegalStateException("Test Charge must be provided.");
+            databaseTestHelper.addToken(testCharge.getChargeId(), secureRedirectToken);
+            return this;
+        }
+
+        public TestCharge getTestCharge() {
+            return testCharge;
+        }
+
+        public String getSecureRedirectToken() {
+            return secureRedirectToken;
         }
     }
 }

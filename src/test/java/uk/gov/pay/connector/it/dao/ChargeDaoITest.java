@@ -675,5 +675,8 @@ public class ChargeDaoITest {
         Optional<ChargeEntity> chargeOpt = chargeDao.findByTokenId("some-token-id");
         assertTrue(chargeOpt.isPresent());
         assertEquals(chargeOpt.get().getExternalId(), "ext-id");
+
+        assertThat(chargeOpt.get().getGatewayAccount(), is(notNullValue()));
+        assertThat(chargeOpt.get().getGatewayAccount().getId(), is(defaultTestAccount.getAccountId()));
     }
 }
