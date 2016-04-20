@@ -2,6 +2,9 @@ package uk.gov.pay.connector.it.resources;
 
 import com.google.common.collect.ImmutableMap;
 import com.jayway.restassured.response.ValidatableResponse;
+import org.apache.commons.lang.math.RandomUtils;
+import org.hamcrest.CoreMatchers;
+import org.hamcrest.Matchers;
 import org.junit.Before;
 import org.junit.Rule;
 import org.junit.Test;
@@ -9,17 +12,22 @@ import uk.gov.pay.connector.model.domain.ChargeStatus;
 import uk.gov.pay.connector.rules.DropwizardAppWithPostgresRule;
 import uk.gov.pay.connector.util.RestAssuredClient;
 
+import javax.ws.rs.core.Response;
 import java.io.Serializable;
 import java.time.temporal.ChronoUnit;
+import java.util.List;
 
 import static com.jayway.restassured.http.ContentType.JSON;
-import static javax.ws.rs.core.Response.Status.*;
+import static java.util.Arrays.asList;
+import static javax.ws.rs.core.Response.Status.NOT_FOUND;
+import static javax.ws.rs.core.Response.Status.NO_CONTENT;
 import static org.hamcrest.CoreMatchers.equalTo;
+import static org.hamcrest.Matchers.*;
 import static org.hamcrest.core.Is.is;
 import static org.hamcrest.core.IsCollectionContaining.hasItems;
 import static uk.gov.pay.connector.matcher.ZoneDateTimeAsStringWithinMatcher.isWithin;
 import static uk.gov.pay.connector.model.api.ExternalChargeStatus.*;
-import static uk.gov.pay.connector.model.domain.ChargeStatus.ENTERING_CARD_DETAILS;
+import static uk.gov.pay.connector.model.domain.ChargeStatus.*;
 import static uk.gov.pay.connector.util.JsonEncoder.toJson;
 
 public class ChargeEventsResourceITest {
@@ -43,7 +51,7 @@ public class ChargeEventsResourceITest {
         //create charge
         ValidatableResponse response = connectorApi
                 .postCreateCharge(createPayload)
-                .statusCode(CREATED.getStatusCode());
+                .statusCode(Response.Status.CREATED.getStatusCode());
 
         String chargeId = response.extract().path(JSON_CHARGE_KEY);
 
@@ -61,7 +69,7 @@ public class ChargeEventsResourceITest {
         //create charge
         ValidatableResponse response = connectorApi
                 .postCreateCharge(createPayload)
-                .statusCode(CREATED.getStatusCode());
+                .statusCode(Response.Status.CREATED.getStatusCode());
 
         String chargeId = response.extract().path(JSON_CHARGE_KEY);
 
@@ -83,6 +91,31 @@ public class ChargeEventsResourceITest {
                         , EXT_IN_PROGRESS.getValue()
                         , EXT_SYSTEM_CANCELLED.getValue()))
                 .body("events.updated.size()", equalTo(3));
+    }
+
+    @Test
+    public void shouldNotGetRepeatedExternalChargeEvents() throws Exception {
+        long chargeId = RandomUtils.nextInt();
+        String externalChargeId = "charge4";
+
+        ChargeStatus chargeStatus = AUTHORISATION_SUCCESS;
+        app.getDatabaseTestHelper().addCharge(chargeId, externalChargeId, accountId, 100L, chargeStatus, "returnUrl", null);
+        app.getDatabaseTestHelper().addToken(chargeId, "tokenId");
+        List<ChargeStatus> statuses = asList(ChargeStatus.CREATED, ENTERING_CARD_DETAILS, AUTHORISATION_READY, SYSTEM_CANCELLED, ENTERING_CARD_DETAILS);
+        setupLifeCycleEventsFor(app, chargeId, statuses);
+
+        connectorApi
+                .getEvents(externalChargeId)
+                .body("charge_id", Matchers.is(externalChargeId))
+                .body("events.status", hasSize(4))
+                .body("events.status[0]", Matchers.is(EXT_CREATED.getValue()))
+                .body("events.status[1]", Matchers.is(EXT_IN_PROGRESS.getValue()))
+                .body("events.status[2]", Matchers.is(EXT_SYSTEM_CANCELLED.getValue()))
+                .body("events.status[3]", Matchers.is(EXT_IN_PROGRESS.getValue()))
+                .body("events.chargeId[0]", isEmptyOrNullString())
+                .body("events.chargeId[1]", isEmptyOrNullString())
+                .body("events.chargeId[2]", isEmptyOrNullString())
+                .body("events.chargeId[3]", isEmptyOrNullString()); // chargeId should not be there in json response for every event
     }
 
     @Test
@@ -125,5 +158,11 @@ public class ChargeEventsResourceITest {
 
     private String updateStatusTo(ChargeStatus chargeStatus) {
         return toJson(ImmutableMap.of("new_status", chargeStatus.getValue()));
+    }
+
+    private static void setupLifeCycleEventsFor(DropwizardAppWithPostgresRule app, Long chargeId, List<ChargeStatus> statuses) {
+        statuses.stream().forEach(
+                st -> app.getDatabaseTestHelper().addEvent(chargeId, st.getValue())
+        );
     }
 }
