@@ -231,7 +231,9 @@ public class ChargesResource {
                         .withStatus(mapFromStatus(charge.getStatus()).getValue())
                         .withGatewayTransactionId(charge.getGatewayTransactionId())
                         .withCreatedDate(charge.getCreatedDate())
-                        .withReturnUrl(charge.getReturnUrl()).build())
+                        .withReturnUrl(charge.getReturnUrl())
+                        .withProviderName(charge.getGatewayAccount().getGatewayName())
+                        .build())
                 .collect(Collectors.toList()))).build();
     }
 

@@ -263,7 +263,8 @@ public class ChargesResourceITest {
                 .body("results.reference", hasItem("My reference"))
                 .body("results.return_url", hasItem(returnUrl))
                 .body("results.description", hasItem("Test description"))
-                .body("results.created_date", hasItem("2016-01-26T13:45:32Z"));
+                .body("results.created_date", hasItem("2016-01-26T13:45:32Z"))
+                .body("results.payment_provider", hasItem(PROVIDER_NAME));
     }
 
     @Test
