@@ -51,7 +51,7 @@ public class ChargesFrontendResource {
 
         return maybeCharge
                 .map(charge -> Response.ok(buildChargeResponse(uriInfo, charge)).build())
-                .orElseGet(() -> responseWithChargeNotFound(logger, chargeId));
+                .orElseGet(() -> responseWithChargeNotFound(chargeId));
     }
 
     @PUT
@@ -59,13 +59,13 @@ public class ChargesFrontendResource {
     @Produces(APPLICATION_JSON)
     public Response updateChargeStatus(@PathParam("chargeId") String chargeId, Map newStatusMap) {
         if (invalidInput(newStatusMap)) {
-            return fieldsMissingResponse(logger, ImmutableList.of("new_status"));
+            return fieldsMissingResponse(ImmutableList.of("new_status"));
         }
         try {
             return updateStatus(chargeId, chargeStatusFrom(newStatusMap.get("new_status").toString()));
         } catch (IllegalArgumentException e) {
             logger.error(e.getMessage(), e);
-            return badRequestResponse(logger, e.getMessage());
+            return badRequestResponse(e.getMessage());
         }
     }
 
@@ -75,7 +75,7 @@ public class ChargesFrontendResource {
 
     private Response updateStatus(String chargeId, ChargeStatus newChargeStatus) {
         if (!isValidStateTransition(newChargeStatus)) {
-            return badRequestResponse(logger, "charge with id: " + chargeId + " cant be updated to the new state: " + newChargeStatus.getValue());
+            return badRequestResponse("charge with id: " + chargeId + " cant be updated to the new state: " + newChargeStatus.getValue());
         }
         return chargeDao.findByExternalId(chargeId)
                 .map(chargeEntity -> {
@@ -84,7 +84,7 @@ public class ChargesFrontendResource {
                         chargeDao.mergeAndNotifyStatusHasChanged(chargeEntity);
                         return noContentResponse();
                     }
-                    return badRequestResponse(logger, "charge with id: " + chargeId + " cant be updated to the new state: " + newChargeStatus.getValue());
+                    return badRequestResponse("charge with id: " + chargeId + " cant be updated to the new state: " + newChargeStatus.getValue());
                 }).get();
     }
 

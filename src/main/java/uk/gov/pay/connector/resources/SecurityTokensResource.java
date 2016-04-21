@@ -38,7 +38,7 @@ public class SecurityTokensResource {
         Optional<ChargeEntity> chargeOpt = chargeDao.findByTokenId(chargeTokenId);
         return chargeOpt
                 .map(charge -> successResponseWithEntity(charge))
-                .orElseGet(() -> notFoundResponse(logger, "Token invalid!"));
+                .orElseGet(() -> notFoundResponse("Token invalid!"));
     }
 
     @DELETE

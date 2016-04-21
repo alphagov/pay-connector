@@ -1,19 +1,17 @@
 package uk.gov.pay.connector.service;
 
-import fj.data.Either;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import uk.gov.pay.connector.dao.ChargeDao;
-import uk.gov.pay.connector.model.ErrorResponse;
+import uk.gov.pay.connector.exception.ChargeExpiredRuntimeException;
+import uk.gov.pay.connector.exception.IllegalStateRuntimeException;
+import uk.gov.pay.connector.exception.OperationAlreadyInProgressRuntimeException;
 import uk.gov.pay.connector.model.domain.ChargeEntity;
 import uk.gov.pay.connector.model.domain.ChargeStatus;
 
-import static fj.data.Either.left;
-import static fj.data.Either.right;
 import static java.lang.String.format;
-import static uk.gov.pay.connector.model.ErrorResponse.*;
 
-abstract public class CardService {
+public abstract class CardService {
     protected final ChargeDao chargeDao;
     protected final PaymentProviders providers;
     private final Logger logger = LoggerFactory.getLogger(CardCancelService.class);
@@ -46,23 +44,22 @@ abstract public class CardService {
         this.cardExecutorService = cardExecutorService;
     }
 
-    public Either<ErrorResponse, ChargeEntity> preOperation(ChargeEntity chargeEntity, OperationType operationType, ChargeStatus[] legalStatuses, ChargeStatus lockingStatus) {
+    public ChargeEntity preOperation(ChargeEntity chargeEntity, OperationType operationType, ChargeStatus[] legalStatuses, ChargeStatus lockingStatus) {
         ChargeEntity reloadedCharge = chargeDao.merge(chargeEntity);
         if (reloadedCharge.hasStatus(ChargeStatus.EXPIRED)) {
-            return left(chargeExpired(format("%s for charge failed as already expired, %s", operationType.getValue(), reloadedCharge.getExternalId())));
+            throw new ChargeExpiredRuntimeException(operationType.getValue(), reloadedCharge.getExternalId());
         }
         if (!reloadedCharge.hasStatus(legalStatuses)) {
             if (reloadedCharge.hasStatus(lockingStatus)) {
-                return left(operationAlreadyInProgress(format("%s for charge already in progress, %s",
-                        operationType.getValue(), reloadedCharge.getExternalId())));
+                throw new OperationAlreadyInProgressRuntimeException(operationType.getValue(), reloadedCharge.getExternalId());
             }
             logger.error(format("Charge with id [%s] and with status [%s] should be in one of the following legal states, [%s]",
                     reloadedCharge.getId(), reloadedCharge.getStatus(), legalStatuses));
-            return left(illegalStateError(format("Charge not in correct state to be processed, %s", reloadedCharge.getExternalId())));
+            throw new IllegalStateRuntimeException(reloadedCharge.getExternalId());
         }
         reloadedCharge.setStatus(lockingStatus);
 
-        return right(reloadedCharge);
+        return reloadedCharge;
     }
 
     public PaymentProvider getPaymentProviderFor(ChargeEntity chargeEntity) {

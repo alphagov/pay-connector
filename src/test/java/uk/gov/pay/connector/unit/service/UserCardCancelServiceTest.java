@@ -1,8 +1,6 @@
 package uk.gov.pay.connector.unit.service;
 
-import fj.data.Either;
 import org.junit.Test;
-import uk.gov.pay.connector.model.ErrorResponse;
 import uk.gov.pay.connector.model.GatewayResponse;
 import uk.gov.pay.connector.model.domain.ChargeEntity;
 import uk.gov.pay.connector.service.UserCardCancelService;
@@ -11,8 +9,7 @@ import java.util.Optional;
 
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.core.Is.is;
-import static org.junit.Assert.assertTrue;
-import static org.mockito.Mockito.*;
+import static org.mockito.Mockito.when;
 import static uk.gov.pay.connector.model.domain.ChargeStatus.*;
 
 public class UserCardCancelServiceTest extends CardCancelServiceTest {
@@ -28,10 +25,9 @@ public class UserCardCancelServiceTest extends CardCancelServiceTest {
         mockChargeDaoFindByChargeId(charge);
         verifyPaymentProviderNotCalled();
 
-        Either<ErrorResponse, GatewayResponse> response = userCardCancelService.doCancel(charge.getExternalId());
+        GatewayResponse response = userCardCancelService.doCancel(charge.getExternalId());
 
-        assertTrue(response.isRight());
-        assertThat(response.right().value(), is(aSuccessfulResponse()));
+        assertThat(response, is(aSuccessfulResponse()));
         verifyChargeUpdated(charge, USER_CANCELLED);
     }
 
@@ -43,10 +39,9 @@ public class UserCardCancelServiceTest extends CardCancelServiceTest {
         mockChargeDaoFindByChargeId(charge);
         mockUnsuccessfulCancel();
 
-        Either<ErrorResponse, GatewayResponse> response = userCardCancelService.doCancel(charge.getExternalId());
+        GatewayResponse response = userCardCancelService.doCancel(charge.getExternalId());
 
-        assertTrue(response.isRight());
-        assertThat(response.right().value(), is(anUnSuccessfulResponse()));
+        assertThat(response, is(anUnSuccessfulResponse()));
         verifyChargeUpdated(charge, CANCEL_ERROR);
     }
 
