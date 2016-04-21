@@ -15,7 +15,7 @@ interface TransactionalGatewayOperation {
         try {
             preOperationResponse = preOperation(chargeEntity);
         } catch (OptimisticLockException e) {
-            throw new ConflictRuntimeException(format("Operation for charge conflicting, %s", chargeEntity.getExternalId()));
+            throw new ConflictRuntimeException(chargeEntity.getExternalId());
         }
 
         GatewayResponse operationResponse = operation(preOperationResponse);

@@ -48,7 +48,7 @@ public class CardCancelService extends CardService implements TransactionalGatew
         if (charge.isPresent()) {
             return cancelCharge(charge.get());
         }
-        throw new ChargeNotFoundRuntimeException(format("Charge with id [%s] not found.", chargeId));
+        throw new ChargeNotFoundRuntimeException(chargeId);
     }
 
     GatewayResponse cancelCharge(ChargeEntity charge) {

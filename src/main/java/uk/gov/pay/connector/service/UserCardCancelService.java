@@ -41,7 +41,7 @@ public class UserCardCancelService extends CardCancelService implements Transact
         if (charge.isPresent()) {
             return cancelCharge(charge.get());
         }
-        throw new ChargeNotFoundRuntimeException(format("Charge with id [%s] not found.", chargeId));
+        throw new ChargeNotFoundRuntimeException(chargeId);
     }
 
     protected ChargeStatus getCancelledStatus() {

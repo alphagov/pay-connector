@@ -82,7 +82,7 @@ public class ChargeCancelResourceITest {
                     restApiCall
                             .withChargeId(chargeId)
                             .postChargeCancellation()
-                            .statusCode(INTERNAL_SERVER_ERROR.getStatusCode())
+                            .statusCode(BAD_REQUEST.getStatusCode())
                             .and()
                             .contentType(JSON)
                             .body("message", is(expectedMessage));

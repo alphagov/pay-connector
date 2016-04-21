@@ -32,7 +32,7 @@ public class CardCaptureService extends CardService implements TransactionalGate
         return chargeDao
                 .findByExternalId(chargeId)
                 .map(TransactionalGatewayOperation.super::executeGatewayOperationFor)
-                .orElseThrow(() -> new ChargeNotFoundRuntimeException(format("Charge with id [%s] not found.", chargeId)));
+                .orElseThrow(() -> new ChargeNotFoundRuntimeException(chargeId));
     }
     @Transactional
     @Override

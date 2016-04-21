@@ -51,7 +51,7 @@ public class CardAuthoriseService extends CardService implements TransactionalGa
                     throw new GenericGatewayRuntimeException("Exception occurred while doing authorisation");
             }
         } else {
-            throw new ChargeNotFoundRuntimeException(format("Charge with id [%s] not found.", chargeId));
+            throw new ChargeNotFoundRuntimeException(chargeId);
         }
     }
 

@@ -24,7 +24,6 @@ import java.util.concurrent.ExecutionException;
 import java.util.concurrent.Future;
 import java.util.concurrent.TimeoutException;
 
-import static fj.data.Either.right;
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.core.Is.is;
 import static org.junit.Assert.assertTrue;
@@ -95,7 +94,7 @@ public class CardAuthoriseServiceTest extends CardServiceTest {
 
         when(mockedChargeDao.findByExternalId(charge.getExternalId())).thenReturn(Optional.of(charge));
         when(mockedChargeDao.merge(any())).thenReturn(charge);
-        when(mockExecutorService.execute(any())).thenThrow(new OperationAlreadyInProgressRuntimeException("Authorisation for charge already in progress, " + charge.getExternalId()));
+        when(mockExecutorService.execute(any())).thenThrow(new OperationAlreadyInProgressRuntimeException("Authorisation", charge.getExternalId()));
 
         Card cardDetails = CardUtils.aValidCard();
         cardAuthorisationService.doAuthorise(charge.getExternalId(), cardDetails);
@@ -109,7 +108,7 @@ public class CardAuthoriseServiceTest extends CardServiceTest {
 
         when(mockedChargeDao.findByExternalId(charge.getExternalId())).thenReturn(Optional.of(charge));
         when(mockedChargeDao.merge(any())).thenReturn(charge);
-        when(mockExecutorService.execute(any())).thenThrow(new IllegalStateRuntimeException("Charge not in correct state to be processed, " + charge.getExternalId()));
+        when(mockExecutorService.execute(any())).thenThrow(new IllegalStateRuntimeException(charge.getExternalId()));
 
         Card cardDetails = CardUtils.aValidCard();
         cardAuthorisationService.doAuthorise(charge.getExternalId(), cardDetails);
@@ -123,7 +122,7 @@ public class CardAuthoriseServiceTest extends CardServiceTest {
 
         when(mockedChargeDao.findByExternalId(charge.getExternalId())).thenReturn(Optional.of(charge));
         when(mockedChargeDao.merge(any())).thenThrow(new OptimisticLockException());
-        when(mockExecutorService.execute(any())).thenThrow(new ConflictRuntimeException("Operation for charge conflicting, " + charge.getExternalId()));
+        when(mockExecutorService.execute(any())).thenThrow(new ConflictRuntimeException(charge.getExternalId()));
 
         Card cardDetails = CardUtils.aValidCard();
         cardAuthorisationService.doAuthorise(charge.getExternalId(), cardDetails);

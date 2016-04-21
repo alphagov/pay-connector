@@ -47,7 +47,7 @@ public class CardCaptureResourceITest extends CardResourceITestBase {
     public void shouldReturnErrorWithoutChangingChargeState_IfOriginalStateIsNotAuthorised() {
         String chargeId = createNewChargeWith(ENTERING_CARD_DETAILS, null);
         String message = "Charge not in correct state to be processed, " + chargeId;
-        captureAndVerifyFor(chargeId, 500, message);
+        captureAndVerifyFor(chargeId, 400, message);
 
         assertFrontendChargeStatusIs(chargeId, ENTERING_CARD_DETAILS.getValue());
     }

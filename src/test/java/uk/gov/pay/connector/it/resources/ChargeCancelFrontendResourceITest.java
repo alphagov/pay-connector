@@ -83,7 +83,7 @@ public class ChargeCancelFrontendResourceITest {
                     connectorRestApi
                             .withChargeId(chargeId)
                             .postFrontendChargeCancellation()
-                            .statusCode(INTERNAL_SERVER_ERROR.getStatusCode())
+                            .statusCode(BAD_REQUEST.getStatusCode())
                             .and()
                             .contentType(JSON)
                             .body("message", is(expectedMessage));
