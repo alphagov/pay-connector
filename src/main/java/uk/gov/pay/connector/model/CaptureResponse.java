@@ -6,7 +6,6 @@ import uk.gov.pay.connector.model.domain.ChargeStatus;
 import static java.lang.String.format;
 import static uk.gov.pay.connector.model.ErrorResponse.baseError;
 import static uk.gov.pay.connector.model.GatewayResponse.ResponseStatus.*;
-import static uk.gov.pay.connector.model.GatewayResponse.ResponseStatus.FAILED;
 import static uk.gov.pay.connector.model.domain.ChargeStatus.CAPTURE_ERROR;
 
 public class CaptureResponse extends GatewayResponse {

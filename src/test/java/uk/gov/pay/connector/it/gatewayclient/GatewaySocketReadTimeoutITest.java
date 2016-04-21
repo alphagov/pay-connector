@@ -15,7 +15,7 @@ import static org.hamcrest.Matchers.is;
 import static org.junit.Assert.assertThat;
 import static uk.gov.pay.connector.model.domain.ChargeStatus.AUTHORISATION_SUCCESS;
 import static uk.gov.pay.connector.model.domain.ChargeStatus.CAPTURE_ERROR;
-import static uk.gov.pay.connector.resources.ApiPaths.FRONTEND_CAPTURE_RESOURCE;
+import static uk.gov.pay.connector.resources.ApiPaths.FRONTEND_CHARGE_CAPTURE_API_PATH;
 import static uk.gov.pay.connector.resources.PaymentProviderValidator.SMARTPAY_PROVIDER;
 
 public class GatewaySocketReadTimeoutITest {
@@ -52,7 +52,7 @@ public class GatewaySocketReadTimeoutITest {
         gatewayStub.respondWithTimeoutWhenCapture();
 
         String errorMessage = "Gateway connection timeout error";
-        String captureUrl = FRONTEND_CAPTURE_RESOURCE.replace("{chargeId}", EXTERNAL_CHARGE_ID);
+        String captureUrl = FRONTEND_CHARGE_CAPTURE_API_PATH.replace("{chargeId}", EXTERNAL_CHARGE_ID);
 
         given()
                 .port(app.getLocalPort())

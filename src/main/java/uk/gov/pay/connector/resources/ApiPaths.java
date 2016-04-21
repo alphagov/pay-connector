@@ -1,22 +1,20 @@
 package uk.gov.pay.connector.resources;
 
-import static uk.gov.pay.connector.resources.GatewayAccountResource.ACCOUNT_API_RESOURCE;
-
 public interface ApiPaths {
-    String CHARGES_RESOURCE = "/charges";
-    String CHARGE_RESOURCE = CHARGES_RESOURCE + "/{chargeId}";
-    String FRONTEND_RESOURCE = "/v1/frontend";
 
-    String FRONTEND_CHARGE_RESOURCE = FRONTEND_RESOURCE + CHARGE_RESOURCE;
+    String GATEWAY_ACCOUNTS_API_PATH = "/v1/api/accounts";
+    String GATEWAY_ACCOUNT_API_PATH = "/v1/api/accounts/{accountId}";
 
-    String FRONTEND_AUTHORIZATION_RESOURCE = FRONTEND_RESOURCE + CHARGE_RESOURCE + "/cards";
-    String FRONTEND_CAPTURE_RESOURCE = FRONTEND_RESOURCE + CHARGE_RESOURCE + "/capture";
-    String FRONTEND_CANCEL_RESOURCE = FRONTEND_RESOURCE + CHARGE_RESOURCE + "/cancel";
+    String FRONTEND_GATEWAY_ACCOUNT_API_PATH = "/v1/frontend/accounts/{accountId}";
+    String FRONTEND_CHARGE_API_PATH = "/v1/frontend/charges/{chargeId}";
+    String FRONTEND_CHARGE_STATUS_API_PATH = "/v1/frontend/charges/{chargeId}/status";
+    String FRONTEND_CHARGE_AUTHORIZE_API_PATH = "/v1/frontend/charges/{chargeId}/cards";
+    String FRONTEND_CHARGE_CAPTURE_API_PATH = "/v1/frontend/charges/{chargeId}/capture";
+    String FRONTEND_CHARGE_CANCEL_API_PATH = "/v1/frontend/charges/{chargeId}/cancel";
 
-    String CHARGE_API_RESOURCE = ACCOUNT_API_RESOURCE + CHARGE_RESOURCE;
-    String CHARGES_API_RESOURCE = ACCOUNT_API_RESOURCE + CHARGES_RESOURCE;
-    String CANCEL_CHARGE_RESOURCE = CHARGE_API_RESOURCE + "/cancel";
-
-    String CHARGE_EVENTS_API_RESOURCE = CHARGE_API_RESOURCE + "/events";
-    String EXPIRE_CHARGES = "/v1/tasks/expired-charges-sweep";
+    String CHARGES_API_PATH = "/v1/api/accounts/{accountId}/charges";
+    String CHARGE_API_PATH = "/v1/api/accounts/{accountId}/charges/{chargeId}";
+    String CHARGE_CANCEL_API_PATH = "/v1/api/accounts/{accountId}/charges/{chargeId}/cancel";
+    String CHARGE_EVENTS_API_PATH = "/v1/api/accounts/{accountId}/charges/{chargeId}/events";
+    String CHARGES_EXPIRE_CHARGES_TASK_API_PATH = "/v1/tasks/expired-charges-sweep";
 }

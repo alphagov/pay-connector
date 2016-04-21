@@ -1,7 +1,6 @@
 package uk.gov.pay.connector.model;
 
 import com.fasterxml.jackson.annotation.JsonIgnore;
-import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import io.dropwizard.jackson.JsonSnakeCase;
 import uk.gov.pay.connector.model.api.ExternalChargeStatus;

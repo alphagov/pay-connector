@@ -27,7 +27,7 @@ import static javax.ws.rs.HttpMethod.POST;
 import static javax.ws.rs.core.MediaType.APPLICATION_FORM_URLENCODED;
 import static uk.gov.pay.connector.model.ChargeResponse.Builder.aChargeResponse;
 import static uk.gov.pay.connector.model.api.ExternalChargeStatus.*;
-import static uk.gov.pay.connector.resources.ApiPaths.CHARGE_API_RESOURCE;
+import static uk.gov.pay.connector.resources.ApiPaths.CHARGE_API_PATH;
 
 public class ChargeService {
 
@@ -110,7 +110,7 @@ public class ChargeService {
 
     private URI selfUriFor(UriInfo uriInfo, Long accountId, String chargeId) {
         return uriInfo.getBaseUriBuilder()
-                .path(CHARGE_API_RESOURCE)
+                .path(CHARGE_API_PATH)
                 .build(accountId, chargeId);
     }
 

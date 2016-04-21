@@ -1,6 +1,5 @@
 package uk.gov.pay.connector.app;
 
-import com.fasterxml.jackson.annotation.JsonProperty;
 import io.dropwizard.Configuration;
 
 public class CardExecutorServiceConfig extends Configuration {

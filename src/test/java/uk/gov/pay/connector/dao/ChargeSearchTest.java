@@ -15,8 +15,9 @@ import static org.hamcrest.core.Is.is;
 import static org.junit.Assert.assertThat;
 import static org.mockito.Mockito.*;
 import static uk.gov.pay.connector.dao.ChargeSearch.aChargeSearch;
-import static uk.gov.pay.connector.model.domain.ChargeStatus.CAPTURE_READY;
-import static uk.gov.pay.connector.model.domain.ChargeStatus.CREATED;
+import static uk.gov.pay.connector.model.api.ExternalChargeStatus.EXT_EXPIRED;
+import static uk.gov.pay.connector.model.api.ExternalChargeStatus.EXT_SUCCEEDED;
+import static uk.gov.pay.connector.model.domain.ChargeStatus.*;
 
 @RunWith(MockitoJUnitRunner.class)
 public class ChargeSearchTest {
@@ -47,7 +48,7 @@ public class ChargeSearchTest {
 
         TypedQuery<ChargeEntity> typedQuery = aChargeSearch(GATEWAY_ACCOUNT_ID)
                 .withReferenceLike(REFERENCE)
-                .withStatusIn(CREATED, CAPTURE_READY)
+                .withExternalStatus(EXT_SUCCEEDED)
                 .withCreatedDateFrom(FROM_DATE)
                 .withCreatedDateTo(TO_DATE)
                 .apply(entityManagerMock);
@@ -57,7 +58,7 @@ public class ChargeSearchTest {
         verify(entityManagerMock).createQuery(expectedTypedQuery, ChargeEntity.class);
         verify(queryMock).setParameter("gatewayAccountId", GATEWAY_ACCOUNT_ID);
         verify(queryMock).setParameter("reference", "%reference%");
-        verify(queryMock).setParameter("statuses", newArrayList(CREATED, CAPTURE_READY));
+        verify(queryMock).setParameter("statuses", newArrayList(CAPTURED, CAPTURE_SUBMITTED));
         verify(queryMock).setParameter("fromDate", FROM_DATE);
         verify(queryMock).setParameter("toDate", TO_DATE);
         verifyNoMoreInteractions(queryMock, entityManagerMock);
@@ -105,7 +106,7 @@ public class ChargeSearchTest {
     }
 
     @Test
-    public void shouldCreateAQueryWithStatus() {
+    public void shouldCreateAQueryWithExternalStatusMappingToInternalStatuses() {
 
         String expectedTypedQuery = "SELECT c FROM ChargeEntity c " +
                 "WHERE c.gatewayAccount.id = :gatewayAccountId " +
@@ -115,14 +116,14 @@ public class ChargeSearchTest {
         when(entityManagerMock.createQuery(expectedTypedQuery, ChargeEntity.class)).thenReturn(queryMock);
 
         TypedQuery<ChargeEntity> typedQuery = aChargeSearch(GATEWAY_ACCOUNT_ID)
-                .withStatusIn(CREATED)
+                .withExternalStatus(EXT_EXPIRED)
                 .apply(entityManagerMock);
 
         assertThat(typedQuery, is(queryMock));
 
         verify(entityManagerMock).createQuery(expectedTypedQuery, ChargeEntity.class);
         verify(queryMock).setParameter("gatewayAccountId", GATEWAY_ACCOUNT_ID);
-        verify(queryMock).setParameter("statuses", newArrayList(CREATED));
+        verify(queryMock).setParameter("statuses", newArrayList(EXPIRED, EXPIRE_CANCEL_PENDING, EXPIRE_CANCEL_FAILED));
         verifyNoMoreInteractions(queryMock, entityManagerMock);
     }
 
@@ -167,6 +168,29 @@ public class ChargeSearchTest {
         verify(entityManagerMock).createQuery(expectedTypedQuery, ChargeEntity.class);
         verify(queryMock).setParameter("gatewayAccountId", GATEWAY_ACCOUNT_ID);
         verify(queryMock).setParameter("toDate", TO_DATE);
+        verifyNoMoreInteractions(queryMock, entityManagerMock);
+    }
+
+    @Test
+    public void shouldAllowMissingNullOrEmptyParameters() {
+
+        String expectedTypedQuery = "SELECT c FROM ChargeEntity c " +
+                "WHERE c.gatewayAccount.id = :gatewayAccountId " +
+                "ORDER BY c.id DESC";
+
+        when(entityManagerMock.createQuery(expectedTypedQuery, ChargeEntity.class)).thenReturn(queryMock);
+
+        TypedQuery<ChargeEntity> typedQuery = aChargeSearch(GATEWAY_ACCOUNT_ID)
+                .withReferenceLike("  ")
+                .withExternalStatus(null)
+                .withCreatedDateFrom(null)
+                .withCreatedDateTo(null)
+                .apply(entityManagerMock);
+
+        assertThat(typedQuery, is(queryMock));
+
+        verify(entityManagerMock).createQuery(expectedTypedQuery, ChargeEntity.class);
+        verify(queryMock).setParameter("gatewayAccountId", GATEWAY_ACCOUNT_ID);
         verifyNoMoreInteractions(queryMock, entityManagerMock);
     }
 

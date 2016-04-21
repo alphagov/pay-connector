@@ -1,5 +1,7 @@
 package uk.gov.pay.connector.it.dao;
 
+import org.apache.commons.lang3.RandomUtils;
+import org.bouncycastle.util.test.Test;
 import uk.gov.pay.connector.model.domain.ChargeStatus;
 import uk.gov.pay.connector.util.DatabaseTestHelper;
 
@@ -37,6 +39,11 @@ public class DatabaseFixtures {
             return paymentProvider;
         }
 
+        public TestAccount withAccountId(long accountId){
+            this.accountId = accountId;
+            return this;
+        }
+
         public TestAccount insert() {
             databaseTestHelper.addGatewayAccount(String.valueOf(accountId), paymentProvider);
             return this;
@@ -44,8 +51,8 @@ public class DatabaseFixtures {
     }
 
     public class TestCharge {
-        Long chargeId = 977L;
-        String externalChargeId = "charge977";
+        Long chargeId = RandomUtils.nextLong(1, 99999);
+        String externalChargeId = "charge_" + chargeId;
         long amount = 101L;
         ChargeStatus chargeStatus = ChargeStatus.CREATED;
         String returnUrl = "http://service.com/success-page";

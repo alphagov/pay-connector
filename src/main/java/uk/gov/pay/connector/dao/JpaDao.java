@@ -12,7 +12,7 @@ public abstract class JpaDao<T extends AbstractEntity> {
 
     protected final Provider<EntityManager> entityManager;
 
-    public JpaDao(Provider<EntityManager> entityManager) {
+    protected JpaDao(Provider<EntityManager> entityManager) {
         this.entityManager = entityManager;
     }
 

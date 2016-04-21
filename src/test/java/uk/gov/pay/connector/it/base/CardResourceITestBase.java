@@ -179,14 +179,14 @@ public class CardResourceITestBase {
     }
 
     protected String authoriseChargeUrlFor(String chargeId) {
-        return FRONTEND_AUTHORIZATION_RESOURCE.replace("{chargeId}", chargeId);
+        return FRONTEND_CHARGE_AUTHORIZE_API_PATH.replace("{chargeId}", chargeId);
     }
 
     protected String captureChargeUrlFor(String chargeId) {
-        return FRONTEND_CAPTURE_RESOURCE.replace("{chargeId}", chargeId);
+        return FRONTEND_CHARGE_CAPTURE_API_PATH.replace("{chargeId}", chargeId);
     }
 
     protected String cancelChargeUrlFor(String accountId, String chargeId) {
-        return CANCEL_CHARGE_RESOURCE.replace("{accountId}", accountId).replace("{chargeId}", chargeId);
+        return CHARGE_CANCEL_API_PATH.replace("{accountId}", accountId).replace("{chargeId}", chargeId);
     }
 }

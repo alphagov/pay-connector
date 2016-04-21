@@ -30,7 +30,6 @@ import static uk.gov.pay.connector.util.ResponseUtil.*;
 @Path("/")
 public class ChargesFrontendResource {
 
-    private static final String PUT_CHARGE_STATUS_FRONTEND_PATH = FRONTEND_CHARGE_RESOURCE + "/status";
     private static final Logger logger = LoggerFactory.getLogger(ChargesFrontendResource.class);
     private static final List<ChargeStatus> CURRENT_STATUSES_ALLOWING_UPDATE_TO_NEW_STATUS = newArrayList(CREATED, ENTERING_CARD_DETAILS);
 
@@ -42,7 +41,7 @@ public class ChargesFrontendResource {
     }
 
     @GET
-    @Path(FRONTEND_CHARGE_RESOURCE)
+    @Path(FRONTEND_CHARGE_API_PATH)
     @Produces(APPLICATION_JSON)
     public Response getCharge(@PathParam("chargeId") String chargeId, @Context UriInfo uriInfo) {
 
@@ -55,7 +54,7 @@ public class ChargesFrontendResource {
     }
 
     @PUT
-    @Path(PUT_CHARGE_STATUS_FRONTEND_PATH)
+    @Path(FRONTEND_CHARGE_STATUS_API_PATH)
     @Produces(APPLICATION_JSON)
     public Response updateChargeStatus(@PathParam("chargeId") String chargeId, Map newStatusMap) {
         if (invalidInput(newStatusMap)) {
@@ -102,9 +101,9 @@ public class ChargesFrontendResource {
                 .withGatewayTransactionId(charge.getGatewayTransactionId())
                 .withCreatedDate(charge.getCreatedDate())
                 .withReturnUrl(charge.getReturnUrl())
-                .withLink("self", GET, locationUriFor(FRONTEND_CHARGE_RESOURCE, uriInfo, chargeId))
-                .withLink("cardAuth", POST, locationUriFor(FRONTEND_AUTHORIZATION_RESOURCE, uriInfo, chargeId))
-                .withLink("cardCapture", POST, locationUriFor(FRONTEND_CAPTURE_RESOURCE, uriInfo, chargeId)).build();
+                .withLink("self", GET, locationUriFor(FRONTEND_CHARGE_API_PATH, uriInfo, chargeId))
+                .withLink("cardAuth", POST, locationUriFor(FRONTEND_CHARGE_AUTHORIZE_API_PATH, uriInfo, chargeId))
+                .withLink("cardCapture", POST, locationUriFor(FRONTEND_CHARGE_CAPTURE_API_PATH, uriInfo, chargeId)).build();
     }
 
     private URI locationUriFor(String path, UriInfo uriInfo, String chargeId) {
