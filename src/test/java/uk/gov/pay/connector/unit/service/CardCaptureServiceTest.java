@@ -1,6 +1,8 @@
 package uk.gov.pay.connector.unit.service;
 
+import org.junit.Rule;
 import org.junit.Test;
+import org.junit.rules.ExpectedException;
 import org.mockito.ArgumentCaptor;
 import uk.gov.pay.connector.exception.ChargeNotFoundRuntimeException;
 import uk.gov.pay.connector.exception.ConflictRuntimeException;
@@ -17,13 +19,19 @@ import uk.gov.pay.connector.service.CardCaptureService;
 import javax.persistence.OptimisticLockException;
 import java.util.Optional;
 
+import static junit.framework.Assert.assertTrue;
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.core.Is.is;
+import static org.junit.Assert.assertEquals;
 import static org.mockito.Matchers.any;
 import static org.mockito.Mockito.*;
 import static uk.gov.pay.connector.model.domain.ChargeStatus.*;
 
 public class CardCaptureServiceTest extends CardServiceTest {
+
+    @Rule
+    public final ExpectedException exception = ExpectedException.none();
+
     private final CardCaptureService cardCaptureService = new CardCaptureService(mockedChargeDao, mockedProviders);
 
     @Test
@@ -65,7 +73,7 @@ public class CardCaptureServiceTest extends CardServiceTest {
         cardCaptureService.doCapture(chargeId);
     }
 
-    @Test(expected = OperationAlreadyInProgressRuntimeException.class)
+    @Test
     public void shouldGetAOperationAlreadyInProgressWhenStatusIsCaptureReady() throws Exception {
         Long chargeId = 1234L;
 
@@ -75,10 +83,12 @@ public class CardCaptureServiceTest extends CardServiceTest {
                 .thenReturn(Optional.of(charge));
         when(mockedChargeDao.merge(any()))
                 .thenReturn(charge);
+        exception.expect(OperationAlreadyInProgressRuntimeException.class);
         cardCaptureService.doCapture(charge.getExternalId());
+        assertEquals(charge.getStatus(), is(ChargeStatus.CAPTURE_READY.getValue()));
     }
 
-    @Test(expected = IllegalStateRuntimeException.class)
+    @Test
     public void shouldGetAIllegalErrorWhenInvalidStatus() throws Exception {
         Long chargeId = 1234L;
 
@@ -89,10 +99,12 @@ public class CardCaptureServiceTest extends CardServiceTest {
         when(mockedChargeDao.merge(any()))
                 .thenReturn(charge);
 
+        exception.expect(IllegalStateRuntimeException.class);
         cardCaptureService.doCapture(charge.getExternalId());
+        assertEquals(charge.getStatus(), is(ChargeStatus.CREATED.getValue()));
     }
 
-    @Test(expected = ConflictRuntimeException.class)
+    @Test
     public void shouldGetAConflictErrorWhenConflicting() throws Exception {
         Long chargeId = 1234L;
 
@@ -103,7 +115,9 @@ public class CardCaptureServiceTest extends CardServiceTest {
         when(mockedChargeDao.merge(any()))
                 .thenThrow(new OptimisticLockException());
 
+        exception.expect(ConflictRuntimeException.class);
         cardCaptureService.doCapture(charge.getExternalId());
+        assertEquals(charge.getStatus(), is(ChargeStatus.CREATED.getValue()));
     }
 
     @Test
