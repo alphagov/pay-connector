@@ -85,6 +85,7 @@ public class ChargeCancelFrontendResourceITest {
                             .and()
                             .contentType(JSON)
                             .body("message", is(expectedMessage));
+
                 });
     }
 

@@ -11,8 +11,6 @@ import javax.inject.Inject;
 import java.util.Arrays;
 import java.util.Optional;
 
-import static java.lang.String.format;
-
 public class UserCardCancelService extends CardCancelService implements TransactionalGatewayOperation  {
     @Inject
     public UserCardCancelService(ChargeDao chargeDao, PaymentProviders providers, ChargeService chargeService) {
@@ -23,13 +21,14 @@ public class UserCardCancelService extends CardCancelService implements Transact
     public GatewayResponse postOperation(ChargeEntity chargeEntity, GatewayResponse operationResponse) {
         CancelGatewayResponse cancelResponse = (CancelGatewayResponse) operationResponse;
 
-        //TODO: This needs to be thought about when refactoring statuses
-        // It would be better if we had three levels of status: GatewayStatus, InternalChargeStatus and
-        // ExternalChargeStatus. This would allow us to map GatewayStatus to InternalStaus differently
-        // depending on context
-        ChargeStatus updatedStatus = (cancelResponse.getStatus().equals(ChargeStatus.SYSTEM_CANCELLED)) ?
-                getCancelledStatus() :
-                cancelResponse.getStatus();
+        ChargeStatus updatedStatus;
+        if (cancelResponse.isSuccessful()) {
+            updatedStatus = getCancelledStatus();
+
+        } else {
+            logUnsuccessfulResponseReasons(chargeEntity, operationResponse);
+            updatedStatus = ChargeStatus.USER_CANCEL_ERROR;
+        }
 
         chargeService.updateStatus(Arrays.asList(chargeEntity), updatedStatus);
         return operationResponse;

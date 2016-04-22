@@ -129,12 +129,12 @@ public class CardCancelService extends CardService implements TransactionalGatew
         return negate(gatewayResponse.isSuccessful());
     }
 
-    private void logUnsuccessfulResponseReasons(ChargeEntity chargeEntity, GatewayResponse gatewayResponse) {
+    void logUnsuccessfulResponseReasons(ChargeEntity chargeEntity, GatewayResponse gatewayResponse) {
         if (gatewayResponse.isFailed()) {
             logger.error(format("gateway error: %s %s, while cancelling the charge ID %s",
                     gatewayResponse.getError().getMessage(),
                     gatewayResponse.getError().getErrorType(),
                     chargeEntity.getId()));
         }
-        }
+    }
 }

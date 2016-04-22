@@ -32,7 +32,7 @@ public class UserCardCancelServiceTest extends CardCancelServiceTest {
     }
 
     @Test
-    public void whenUsersTriesToCancelChargeAndPaymentGatewayFails_chargeStatusShouldBeSetToCancelError() {
+    public void whenUsersTriesToCancelChargeAndPaymentGatewayFails_chargeStatusShouldBeSetToUserCancelError() {
         ChargeEntity charge = createNewChargeWith(chargeId, AUTHORISATION_SUCCESS);
 
         mockChargeDaoMergeCharge(charge);
@@ -42,7 +42,7 @@ public class UserCardCancelServiceTest extends CardCancelServiceTest {
         GatewayResponse response = userCardCancelService.doCancel(charge.getExternalId());
 
         assertThat(response, is(anUnSuccessfulResponse()));
-        verifyChargeUpdated(charge, CANCEL_ERROR);
+        verifyChargeUpdated(charge, USER_CANCEL_ERROR);
     }
 
     private void mockChargeDaoFindByChargeId(ChargeEntity charge) {

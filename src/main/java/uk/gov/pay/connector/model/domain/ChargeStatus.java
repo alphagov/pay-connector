@@ -34,7 +34,8 @@ public enum ChargeStatus {
 
     SYSTEM_CANCELLED("SYSTEM CANCELLED"),
 
-    USER_CANCELLED("USER CANCELLED");
+    USER_CANCELLED("USER CANCELLED"),
+    USER_CANCEL_ERROR("USER CANCEL ERROR");
 
     private String value;
 
