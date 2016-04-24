@@ -25,3 +25,5 @@ target
 .flooignore
 
 bin
+
+.DS_Store
