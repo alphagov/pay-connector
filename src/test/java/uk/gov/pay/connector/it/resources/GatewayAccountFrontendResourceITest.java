@@ -137,10 +137,8 @@ public class GatewayAccountFrontendResourceITest extends GatewayAccountResourceT
                 .body("message", is("HTTP 404 Not Found"));
     }
 
-    // updateGatewayAccountCredentials
-
     @Test
-    public void shouldUpdateGatewayAccountCredentialsForAWorldpayAccountSuccessfully() {
+    public void updateCredentials_shouldUpdateGatewayAccountCredentialsForAWorldpayAccountSuccessfully() {
         String accountId = createAGatewayAccountFor("worldpay");
 
         GatewayAccountPayload gatewayAccountPayload = GatewayAccountPayload.createDefault()
@@ -155,7 +153,7 @@ public class GatewayAccountFrontendResourceITest extends GatewayAccountResourceT
     }
 
     @Test
-    public void shouldUpdateGatewayAccountCredentialsForASmartpayAccountSuccessfully() {
+    public void updateCredentials_shouldUpdateGatewayAccountCredentialsForASmartpayAccountSuccessfully() {
         String accountId = createAGatewayAccountFor("smartpay");
 
         GatewayAccountPayload gatewayAccountPayload = GatewayAccountPayload.createDefault();
@@ -169,7 +167,7 @@ public class GatewayAccountFrontendResourceITest extends GatewayAccountResourceT
     }
 
     @Test
-    public void shouldUpdateGatewayAccountCredentialsWithCharactersInUserNamesAndPassword() throws Exception {
+    public void updateCredentials_shouldUpdateGatewayAccountCredentialsWithSpecialCharactersInUserNamesAndPassword() throws Exception {
         String accountId = createAGatewayAccountFor("smartpay");
 
         GatewayAccountPayload gatewayAccountPayload = GatewayAccountPayload.createDefault()
@@ -185,7 +183,7 @@ public class GatewayAccountFrontendResourceITest extends GatewayAccountResourceT
     }
 
     @Test
-    public void shouldNotUpdateGatewayAccountCredentialsIfMissingCredentials() {
+    public void updateCredentials_shouldNotUpdateGatewayAccountCredentialsIfMissingCredentials() {
         String accountId = createAGatewayAccountFor("worldpay");
 
         updateGatewayAccountCredentialsWith(accountId, new HashMap<>())
@@ -195,7 +193,7 @@ public class GatewayAccountFrontendResourceITest extends GatewayAccountResourceT
     }
 
     @Test
-    public void shouldNotUpdateGatewayAccountCredentialsIfAccountWith2RequiredCredentialsMisses1Credential() {
+    public void updateCredentials_shouldNotUpdateGatewayAccountCredentialsIfAccountWith2RequiredCredentialsMisses1Credential() {
         String accountId = createAGatewayAccountFor("smartpay");
 
         Map<String, Object> credentials = new GatewayAccountPayload()
@@ -210,7 +208,7 @@ public class GatewayAccountFrontendResourceITest extends GatewayAccountResourceT
     }
 
     @Test
-    public void shouldNotUpdateGatewayAccountCredentialsIfAccountWith3RequiredCredentialsMisses1Credential() {
+    public void updateCredentials_shouldNotUpdateGatewayAccountCredentialsIfAccountWith3RequiredCredentialsMisses1Credential() {
         String accountId = createAGatewayAccountFor("worldpay");
 
         Map<String, Object> credentials = GatewayAccountPayload.createDefault().buildCredentialsPayload();
@@ -222,7 +220,7 @@ public class GatewayAccountFrontendResourceITest extends GatewayAccountResourceT
     }
 
     @Test
-    public void shouldNotUpdateGatewayAccountCredentialsIfAccountWith3RequiredCredentialsMisses2Credentials() {
+    public void updateCredentials_shouldNotUpdateGatewayAccountCredentialsIfAccountWith3RequiredCredentialsMisses2Credentials() {
         String accountId = createAGatewayAccountFor("worldpay");
 
         Map<String, Object> credentials = new GatewayAccountPayload()
@@ -237,7 +235,7 @@ public class GatewayAccountFrontendResourceITest extends GatewayAccountResourceT
     }
 
     @Test
-    public void shouldNotUpdateGatewayAccountCredentialsIfAccountIdIsNotNumeric() {
+    public void updateCredentials_shouldNotUpdateGatewayAccountCredentialsIfAccountIdIsNotNumeric() {
         Map<String, Object> credentials = GatewayAccountPayload.createDefault().buildCredentialsPayload();
         updateGatewayAccountCredentialsWith("NO_NUMERIC_ACCOUNT_ID", credentials)
                 .then()
@@ -248,7 +246,7 @@ public class GatewayAccountFrontendResourceITest extends GatewayAccountResourceT
     }
 
     @Test
-    public void shouldNotUpdateGatewayAccountCredentialsIfAccountIdDoesNotExist() {
+    public void updateCredentials_shouldNotUpdateGatewayAccountCredentialsIfAccountIdDoesNotExist() {
         String nonExistingAccountId = "111111111";
         createAGatewayAccountFor("smartpay");
 
@@ -259,17 +257,15 @@ public class GatewayAccountFrontendResourceITest extends GatewayAccountResourceT
                 .body("message", is("The gateway account id '111111111' does not exist"));
     }
 
-    // updateGatewayAccountServiceName
-
     @Test
-    public void shouldUpdateGatewayAccountServiceNameSuccessfully() {
+    public void updateServiceName_shouldUpdateGatewayAccountServiceNameSuccessfully() {
         String accountId = createAGatewayAccountFor("smartpay");
 
         GatewayAccountPayload gatewayAccountPayload = GatewayAccountPayload.createDefault();
 
         givenSetup().accept(JSON)
                 .body(gatewayAccountPayload.buildServiceNamePayload())
-                .put(ACCOUNTS_FRONTEND_URL + accountId + "/servicename")
+                .patch(ACCOUNTS_FRONTEND_URL + accountId + "/servicename")
                 .then()
                 .statusCode(200);
 
@@ -278,7 +274,7 @@ public class GatewayAccountFrontendResourceITest extends GatewayAccountResourceT
     }
 
     @Test
-    public void shouldNotUpdateGatewayAccountServiceNameIfMissingServiceName() {
+    public void updateServiceName_shouldNotUpdateGatewayAccountServiceNameIfMissingServiceName() {
         String accountId = createAGatewayAccountFor("worldpay");
 
         updateGatewayAccountServiceNameWith(accountId, new HashMap<>())
@@ -288,7 +284,7 @@ public class GatewayAccountFrontendResourceITest extends GatewayAccountResourceT
     }
 
     @Test
-    public void shouldFailUpdatingIfInvalidServiceNameLength() {
+    public void updateServiceName_shouldFailUpdatingIfInvalidServiceNameLength() {
         String accountId = createAGatewayAccountFor("worldpay");
 
         GatewayAccountPayload gatewayAccountPayload = GatewayAccountPayload.createDefault()
@@ -301,7 +297,7 @@ public class GatewayAccountFrontendResourceITest extends GatewayAccountResourceT
     }
 
     @Test
-    public void shouldNotUpdateGatewayAccountServiceNameIfAccountIdIsNotNumeric() {
+    public void updateServiceName_shouldNotUpdateGatewayAccountServiceNameIfAccountIdIsNotNumeric() {
         Map<String, String> serviceNamePayload = GatewayAccountPayload.createDefault().buildServiceNamePayload();
         updateGatewayAccountServiceNameWith("NO_NUMERIC_ACCOUNT_ID", serviceNamePayload)
                 .then()
@@ -312,7 +308,7 @@ public class GatewayAccountFrontendResourceITest extends GatewayAccountResourceT
     }
 
     @Test
-    public void shouldNotUpdateGatewayAccountServiceNameIfAccountIdDoesNotExist() {
+    public void updateServiceName_shouldNotUpdateGatewayAccountServiceNameIfAccountIdDoesNotExist() {
         String nonExistingAccountId = "111111111";
         createAGatewayAccountFor("smartpay");
 
@@ -326,12 +322,12 @@ public class GatewayAccountFrontendResourceITest extends GatewayAccountResourceT
     private Response updateGatewayAccountCredentialsWith(String accountId, Map<String, Object> credentials) {
         return givenSetup().accept(JSON)
                 .body(credentials)
-                .put(ACCOUNTS_FRONTEND_URL + accountId + "/credentials");
+                .patch(ACCOUNTS_FRONTEND_URL + accountId + "/credentials");
     }
 
     private Response updateGatewayAccountServiceNameWith(String accountId, Map<String, String> serviceName) {
         return givenSetup().accept(JSON)
                 .body(serviceName)
-                .put(ACCOUNTS_FRONTEND_URL + accountId + "/servicename");
+                .patch(ACCOUNTS_FRONTEND_URL + accountId + "/servicename");
     }
 }

@@ -12,6 +12,9 @@ public interface ApiPaths {
     String FRONTEND_CHARGE_CAPTURE_API_PATH = "/v1/frontend/charges/{chargeId}/capture";
     String FRONTEND_CHARGE_CANCEL_API_PATH = "/v1/frontend/charges/{chargeId}/cancel";
 
+    String FRONTEND_ACCOUNT_CREDENTIALS_API_PATH = "/v1/frontend/accounts/{accountId}/credentials";
+    String FRONTEND_ACCOUNT_SERVICENAME_API_PATH = "/v1/frontend/accounts/{accountId}/servicename";
+
     String CHARGES_API_PATH = "/v1/api/accounts/{accountId}/charges";
     String CHARGE_API_PATH = "/v1/api/accounts/{accountId}/charges/{chargeId}";
     String CHARGE_CANCEL_API_PATH = "/v1/api/accounts/{accountId}/charges/{chargeId}/cancel";

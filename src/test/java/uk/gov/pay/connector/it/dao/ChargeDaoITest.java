@@ -391,14 +391,7 @@ public class ChargeDaoITest {
         assertThat(charge.getStatus(), is(CREATED.getValue()));
         assertThat(charge.getGatewayAccount().getId(), is(defaultTestAccount.getAccountId()));
         assertThat(charge.getReturnUrl(), is(defaultTestCharge.getReturnUrl()));
-
-        ZonedDateTime actualCreatedDate = charge.getCreatedDate();
-        assertThat(actualCreatedDate, isDayOfMonth(createdDateTime.getDayOfMonth()));
-        assertThat(actualCreatedDate, isMonth(createdDateTime.getMonth()));
-        assertThat(actualCreatedDate, isYear(createdDateTime.getYear()));
-        assertThat(actualCreatedDate, isSecond(createdDateTime.getSecond()));
-        assertThat(actualCreatedDate.getNano(), is(createdDateTime.getNano()));
-        MatcherAssert.assertThat(actualCreatedDate, within(1, ChronoUnit.MINUTES, createdDateTime));
+        assertThat(charge.getCreatedDate(), is(createdDateTime));
     }
 
     private Matcher<? super List<ChargeEventEntity>> shouldIncludeStatus(ChargeStatus... expectedStatuses) {
@@ -568,6 +561,7 @@ public class ChargeDaoITest {
                 .aTestCharge()
                 .withTestAccount(defaultTestAccount)
                 .withChargeId(chargeId)
+                .withCreatedDate(createdDate)
                 .withExternalChargeId(externalChargeId)
                 .withTransactionId(transactionId)
                 .insert();
