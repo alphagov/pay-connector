@@ -26,6 +26,7 @@ import static com.google.common.collect.Maps.newHashMap;
 import static java.lang.String.format;
 import static javax.ws.rs.core.MediaType.APPLICATION_JSON;
 import static jersey.repackaged.com.google.common.base.Joiner.on;
+import static uk.gov.pay.connector.resources.ApiPaths.*;
 import static uk.gov.pay.connector.resources.PaymentProviderValidator.*;
 import static uk.gov.pay.connector.util.ResponseUtil.badRequestResponse;
 import static uk.gov.pay.connector.util.ResponseUtil.notFoundResponse;
@@ -33,14 +34,7 @@ import static uk.gov.pay.connector.util.ResponseUtil.notFoundResponse;
 @Path("/")
 public class GatewayAccountResource {
 
-    public static final String ACCOUNTS_API_RESOURCE = "/v1/api/accounts";
-    public static final String ACCOUNT_API_RESOURCE = ACCOUNTS_API_RESOURCE + "/{accountId}";
-
-    public static final String ACCOUNTS_FRONTEND_RESOURCE = "/v1/frontend/accounts";
-    public static final String ACCOUNT_FRONTEND_RESOURCE = ACCOUNTS_FRONTEND_RESOURCE + "/{accountId}";
-
     private static final Logger logger = LoggerFactory.getLogger(GatewayAccountResource.class);
-
 
     private final GatewayAccountDao gatewayDao;
     private final Map<String, List<String>> providerCredentialFields;
@@ -54,7 +48,7 @@ public class GatewayAccountResource {
     }
 
     @GET
-    @Path(ACCOUNT_API_RESOURCE)
+    @Path(GATEWAY_ACCOUNT_API_PATH)
     @Consumes(APPLICATION_JSON)
     @Produces(APPLICATION_JSON)
     public Response getGatewayAccount(@PathParam("accountId") Long accountId) {
@@ -67,7 +61,7 @@ public class GatewayAccountResource {
     }
 
     @POST
-    @Path(ACCOUNTS_API_RESOURCE)
+    @Path(GATEWAY_ACCOUNTS_API_PATH)
     @Consumes(APPLICATION_JSON)
     @Produces(APPLICATION_JSON)
     public Response createNewGatewayAccount(JsonNode node, @Context UriInfo uriInfo) {
@@ -94,7 +88,7 @@ public class GatewayAccountResource {
     }
 
     @GET
-    @Path(ACCOUNT_FRONTEND_RESOURCE)
+    @Path(FRONTEND_GATEWAY_ACCOUNT_API_PATH)
     @Produces(APPLICATION_JSON)
     public Response getGatewayAccountWithCredentials(@PathParam("accountId") Long gatewayAccountId) throws IOException {
 
@@ -108,7 +102,7 @@ public class GatewayAccountResource {
     }
 
     @PUT
-    @Path(ACCOUNT_FRONTEND_RESOURCE)
+    @Path(FRONTEND_GATEWAY_ACCOUNT_API_PATH)
     @Consumes(APPLICATION_JSON)
     @Produces(APPLICATION_JSON)
     @Transactional

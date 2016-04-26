@@ -3,7 +3,6 @@ package uk.gov.pay.connector.dao;
 import com.google.common.base.Preconditions;
 import uk.gov.pay.connector.model.api.ExternalChargeStatus;
 import uk.gov.pay.connector.model.domain.ChargeEntity;
-import uk.gov.pay.connector.model.domain.ChargeStatus;
 
 import javax.persistence.EntityManager;
 import javax.persistence.TypedQuery;
@@ -41,11 +40,6 @@ public class ChargeSearch {
 
     public ChargeSearch withReferenceLike(String reference) {
         if (isNotBlank(reference)) queryParameters.put(REFERENCE, "%" + reference + "%");
-        return this;
-    }
-
-    public ChargeSearch withStatusIn(ChargeStatus... statuses) {
-        if (statuses.length > 0) queryParameters.put(STATUSES, Arrays.asList(statuses));
         return this;
     }
 

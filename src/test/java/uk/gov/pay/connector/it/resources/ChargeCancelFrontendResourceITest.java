@@ -18,8 +18,6 @@ import static javax.ws.rs.core.Response.Status.NO_CONTENT;
 import static org.hamcrest.Matchers.is;
 import static uk.gov.pay.connector.model.api.ExternalChargeStatus.EXT_USER_CANCELLED;
 import static uk.gov.pay.connector.model.domain.ChargeStatus.*;
-import static uk.gov.pay.connector.model.domain.ChargeStatus.AUTHORISATION_READY;
-import static uk.gov.pay.connector.model.domain.ChargeStatus.CAPTURE_READY;
 
 /**
  * There are currently no integration tests for case when payment gateway fails. However, this case is unit tested

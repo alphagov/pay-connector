@@ -33,7 +33,7 @@ public class CardResource {
     }
 
     @POST
-    @Path(FRONTEND_AUTHORIZATION_RESOURCE)
+    @Path(FRONTEND_CHARGE_AUTHORIZE_API_PATH)
     @Consumes(APPLICATION_JSON)
     @Produces(APPLICATION_JSON)
     public Response authoriseCharge(@PathParam("chargeId") String chargeId, Card cardDetails) {
@@ -45,7 +45,7 @@ public class CardResource {
     }
 
     @POST
-    @Path(FRONTEND_CAPTURE_RESOURCE)
+    @Path(FRONTEND_CHARGE_CAPTURE_API_PATH)
     @Consumes(APPLICATION_JSON)
     @Produces(APPLICATION_JSON)
     public Response captureCharge(@PathParam("chargeId") String chargeId) {
@@ -53,14 +53,14 @@ public class CardResource {
     }
 
     @POST
-    @Path(CANCEL_CHARGE_RESOURCE)
+    @Path(CHARGE_CANCEL_API_PATH)
     @Produces(APPLICATION_JSON)
     public Response cancelCharge(@PathParam("accountId") Long accountId, @PathParam("chargeId") String chargeId) {
         return handleGatewayResponse(cardCancelService.doCancel(chargeId, accountId));
     }
 
     @POST
-    @Path(FRONTEND_CANCEL_RESOURCE)
+    @Path(FRONTEND_CHARGE_CANCEL_API_PATH)
     @Produces(APPLICATION_JSON)
     public Response userCancelCharge(@PathParam("chargeId") String chargeId) {
         return handleGatewayResponse(userCardCancelService.doCancel(chargeId));

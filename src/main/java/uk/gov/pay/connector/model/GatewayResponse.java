@@ -1,8 +1,6 @@
 package uk.gov.pay.connector.model;
 
-import static uk.gov.pay.connector.model.GatewayResponse.ResponseStatus.FAILED;
-import static uk.gov.pay.connector.model.GatewayResponse.ResponseStatus.IN_PROGRESS;
-import static uk.gov.pay.connector.model.GatewayResponse.ResponseStatus.SUCCEDED;
+import static uk.gov.pay.connector.model.GatewayResponse.ResponseStatus.*;
 
 public abstract class GatewayResponse {
 

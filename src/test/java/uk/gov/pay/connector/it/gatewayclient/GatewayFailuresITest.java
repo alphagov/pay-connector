@@ -14,8 +14,8 @@ import static io.dropwizard.testing.ConfigOverride.config;
 import static org.hamcrest.Matchers.is;
 import static org.junit.Assert.assertThat;
 import static uk.gov.pay.connector.model.domain.ChargeStatus.*;
-import static uk.gov.pay.connector.resources.ApiPaths.FRONTEND_AUTHORIZATION_RESOURCE;
-import static uk.gov.pay.connector.resources.ApiPaths.FRONTEND_CAPTURE_RESOURCE;
+import static uk.gov.pay.connector.resources.ApiPaths.FRONTEND_CHARGE_AUTHORIZE_API_PATH;
+import static uk.gov.pay.connector.resources.ApiPaths.FRONTEND_CHARGE_CAPTURE_API_PATH;
 import static uk.gov.pay.connector.resources.PaymentProviderValidator.SMARTPAY_PROVIDER;
 import static uk.gov.pay.connector.util.CardUtils.aValidCard;
 
@@ -54,7 +54,7 @@ public class GatewayFailuresITest {
         gatewayStub.respondWithUnexpectedResponseCodeWhenCardAuth();
 
         String errorMessage = "Unexpected Response Code From Gateway";
-        String cardAuthUrl = FRONTEND_AUTHORIZATION_RESOURCE.replace("{chargeId}", EXTERNAL_CHARGE_ID);
+        String cardAuthUrl = FRONTEND_CHARGE_AUTHORIZE_API_PATH.replace("{chargeId}", EXTERNAL_CHARGE_ID);
 
         given()
                 .port(app.getLocalPort())
@@ -76,7 +76,7 @@ public class GatewayFailuresITest {
         gatewayStub.respondWithUnexpectedResponseCodeWhenCapture();
 
         String errorMessage = "Unexpected Response Code From Gateway";
-        String captureUrl = FRONTEND_CAPTURE_RESOURCE.replace("{chargeId}", EXTERNAL_CHARGE_ID);
+        String captureUrl = FRONTEND_CHARGE_CAPTURE_API_PATH.replace("{chargeId}", EXTERNAL_CHARGE_ID);
 
         given()
                 .port(app.getLocalPort())
@@ -98,7 +98,7 @@ public class GatewayFailuresITest {
         gatewayStub.respondWithMalformedBody_WhenCapture();
 
         String errorMessage = "Invalid Response Received From Gateway";
-        String captureUrl = FRONTEND_CAPTURE_RESOURCE.replace("{chargeId}", EXTERNAL_CHARGE_ID);
+        String captureUrl = FRONTEND_CHARGE_CAPTURE_API_PATH.replace("{chargeId}", EXTERNAL_CHARGE_ID);
 
         given()
                 .port(app.getLocalPort())
@@ -119,7 +119,7 @@ public class GatewayFailuresITest {
 
         gatewayStub.respondWithSuccessWhenCapture();
 
-        String captureUrl = FRONTEND_CAPTURE_RESOURCE.replace("{chargeId}", EXTERNAL_CHARGE_ID);
+        String captureUrl = FRONTEND_CHARGE_CAPTURE_API_PATH.replace("{chargeId}", EXTERNAL_CHARGE_ID);
         given()
                 .port(app.getLocalPort())
                 .contentType(JSON)

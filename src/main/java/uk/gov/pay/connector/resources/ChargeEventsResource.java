@@ -20,7 +20,7 @@ import static java.util.stream.Collectors.toList;
 import static javax.ws.rs.core.MediaType.APPLICATION_JSON;
 import static javax.ws.rs.core.Response.ok;
 import static uk.gov.pay.connector.model.api.ExternalChargeStatus.mapFromStatus;
-import static uk.gov.pay.connector.resources.ApiPaths.CHARGE_EVENTS_API_RESOURCE;
+import static uk.gov.pay.connector.resources.ApiPaths.CHARGE_EVENTS_API_PATH;
 
 @Path("/")
 public class ChargeEventsResource {
@@ -33,7 +33,7 @@ public class ChargeEventsResource {
     }
 
     @GET
-    @Path(CHARGE_EVENTS_API_RESOURCE)
+    @Path(CHARGE_EVENTS_API_PATH)
     @Produces(APPLICATION_JSON)
     public Response getEvents(@PathParam("accountId") Long accountId, @PathParam("chargeId") String chargeId) {
 

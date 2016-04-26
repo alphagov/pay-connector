@@ -13,10 +13,6 @@ public abstract class AbstractEntity implements Serializable {
         //for jpa
     }
 
-    public AbstractEntity(Long id) {
-        this.id = id;
-    }
-
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     @JsonIgnore

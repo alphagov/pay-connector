@@ -84,7 +84,7 @@ public class ChargesResource {
     }
 
     @GET
-    @Path(CHARGE_API_RESOURCE)
+    @Path(CHARGE_API_PATH)
     @Produces(APPLICATION_JSON)
     public Response getCharge(@PathParam("accountId") Long accountId, @PathParam("chargeId") String chargeId, @Context UriInfo uriInfo) {
         return chargeService.findChargeForAccount(chargeId, accountId, uriInfo)
@@ -93,7 +93,7 @@ public class ChargesResource {
     }
 
     @GET
-    @Path(CHARGES_API_RESOURCE)
+    @Path(CHARGES_API_PATH)
     @Produces(APPLICATION_JSON)
     public Response getChargesJson(@PathParam("accountId") Long accountId,
                                    @QueryParam(REFERENCE_KEY) String reference,
@@ -109,7 +109,7 @@ public class ChargesResource {
     }
 
     @GET
-    @Path(CHARGES_API_RESOURCE)
+    @Path(CHARGES_API_PATH)
     @Produces(TEXT_CSV)
     public Response getChargesCsv(@PathParam("accountId") Long accountId,
                                   @QueryParam(REFERENCE_KEY) String reference,
@@ -136,7 +136,7 @@ public class ChargesResource {
     }
 
     @POST
-    @Path(CHARGES_API_RESOURCE)
+    @Path(CHARGES_API_PATH)
     @Produces(APPLICATION_JSON)
     public Response createNewCharge(@PathParam("accountId") Long accountId, Map<String, Object> chargeRequest, @Context UriInfo uriInfo) {
         Optional<List<String>> missingFields = checkMissingFields(chargeRequest);
@@ -160,7 +160,7 @@ public class ChargesResource {
     }
 
     @POST
-    @Path(EXPIRE_CHARGES)
+    @Path(CHARGES_EXPIRE_CHARGES_TASK_API_PATH)
     @Produces(APPLICATION_JSON)
     public Response expireCharges(@Context UriInfo uriInfo) {
         List<ChargeEntity> charges = chargeDao.findBeforeDateWithStatusIn(getExpiryDate(), NON_TERMINAL_STATUSES);

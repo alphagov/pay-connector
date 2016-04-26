@@ -12,7 +12,6 @@ import javax.persistence.Query;
 import javax.persistence.TypedQuery;
 import javax.persistence.criteria.CriteriaBuilder;
 import javax.persistence.criteria.CriteriaQuery;
-import javax.persistence.criteria.Expression;
 import javax.persistence.criteria.Root;
 import java.time.ZonedDateTime;
 import java.util.List;
@@ -21,9 +20,10 @@ import java.util.Optional;
 @Transactional
 public class ChargeDao extends JpaDao<ChargeEntity> {
 
+    private static final String STATUS = "status";
+    private static final String CREATED_DATE = "createdDate";
+
     private EventDao eventDao;
-    public static final String STATUS = "status";
-    public static final String CREATED_DATE = "createdDate";
 
     @Inject
     public ChargeDao(final Provider<EntityManager> entityManager, EventDao eventDao) {
@@ -89,7 +89,7 @@ public class ChargeDao extends JpaDao<ChargeEntity> {
         CriteriaQuery cq = cb.createQuery();
         Root entity = cq.from(ChargeEntity.class);
 
-        Expression expression = entity.get(STATUS).in(statuses);
+        entity.get(STATUS).in(statuses);
         cq.where(cb.lessThan(entity.get(CREATED_DATE), date),
                 entity.get(STATUS).in(statuses));
 

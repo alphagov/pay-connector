@@ -40,7 +40,7 @@ import static uk.gov.pay.connector.matcher.ZoneDateTimeAsStringWithinMatcher.isW
 import static uk.gov.pay.connector.model.api.ExternalChargeStatus.EXT_IN_PROGRESS;
 import static uk.gov.pay.connector.model.domain.ChargeStatus.*;
 import static uk.gov.pay.connector.model.domain.ChargeStatus.CREATED;
-import static uk.gov.pay.connector.resources.ApiPaths.CHARGE_API_RESOURCE;
+import static uk.gov.pay.connector.resources.ApiPaths.CHARGE_API_PATH;
 import static uk.gov.pay.connector.util.DateTimeUtils.toUTCZonedDateTime;
 import static uk.gov.pay.connector.util.JsonEncoder.toJson;
 import static uk.gov.pay.connector.util.NumberMatcher.isNumber;
@@ -428,7 +428,7 @@ public class ChargesResourceITest {
     }
 
     private String expectedChargeLocationFor(String accountId, String chargeId) {
-        return "http://localhost:" + app.getLocalPort() + CHARGE_API_RESOURCE
+        return "http://localhost:" + app.getLocalPort() + CHARGE_API_PATH
                 .replace("{accountId}", accountId)
                 .replace("{chargeId}", chargeId);
     }
