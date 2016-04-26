@@ -507,6 +507,7 @@ public class ChargeDaoITest {
                 .aTestCharge()
                 .withTestAccount(defaultTestAccount)
                 .withChargeId(chargeId)
+                .withCreatedDate(createdDate)
                 .withExternalChargeId(externalChargeId)
                 .withTransactionId(transactionId)
                 .insert();
