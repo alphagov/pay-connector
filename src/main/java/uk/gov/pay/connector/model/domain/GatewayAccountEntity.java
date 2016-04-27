@@ -23,6 +23,9 @@ public class GatewayAccountEntity extends AbstractEntity {
     @Convert( converter = CredentialsConverter.class)
     private Map<String, String> credentials;
 
+    @Column(name = "service_name")
+    private String serviceName;
+
     public GatewayAccountEntity(String gatewayName, Map<String, String> credentials) {
         this.gatewayName = gatewayName;
         this.credentials = credentials;
@@ -43,12 +46,21 @@ public class GatewayAccountEntity extends AbstractEntity {
         return credentials;
     }
 
+    @JsonProperty("service_name")
+    public String getServiceName() {
+        return serviceName;
+    }
+
     public void setGatewayName(String gatewayName) {
         this.gatewayName = gatewayName;
     }
 
     public void setCredentials(Map<String, String> credentials) {
         this.credentials = credentials;
+    }
+
+    public void setServiceName(String serviceName) {
+        this.serviceName = serviceName;
     }
 
     public Map<String, String> withoutCredentials() {
