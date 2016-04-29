@@ -69,7 +69,6 @@ public class ChargeCancelResourceITest {
                 CAPTURED,
                 CAPTURE_SUBMITTED,
                 CAPTURE_ERROR,
-                EXPIRE_CANCEL_PENDING,
                 EXPIRE_CANCEL_FAILED,
                 CANCEL_ERROR,
                 SYSTEM_CANCELLED
