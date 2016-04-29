@@ -6,11 +6,12 @@ import org.slf4j.LoggerFactory;
 import uk.gov.pay.connector.util.DependentResource;
 
 import javax.inject.Inject;
+import java.sql.Connection;
 import java.sql.SQLException;
 
 public class DependentResourceChecker implements Managed {
 
-    public static final int INITIALI_SECONDS_TO_WAIT = 5;
+    public static final int PROGRESSIVE_SECONDS_TO_WAIT = 5;
     private static final Logger logger = LoggerFactory.getLogger(DependentResourceChecker.class);
 
     private final DependentResource dependentResource;
@@ -25,26 +26,28 @@ public class DependentResourceChecker implements Managed {
         waitingForDatabaseConnectivity();
     }
 
+    @Override
+    public void stop() throws Exception {}
+
     private void waitingForDatabaseConnectivity() {
-        logger.info("Checking for database availability");
+        logger.info("Checking for database availability >>>");
         boolean databaseAvailable = isDatabaseAvailable();
 
+        long timeToWait = 0;
         while(!databaseAvailable) {
-            logger.info("Waiting for "+ INITIALI_SECONDS_TO_WAIT +" seconds till the database is available ...");
-            dependentResource.sleep(INITIALI_SECONDS_TO_WAIT * 1000);
+            timeToWait += PROGRESSIVE_SECONDS_TO_WAIT;
+            logger.info("Waiting for "+ timeToWait +" seconds till the database is available ...");
+            dependentResource.sleep(timeToWait * 1000);
             databaseAvailable = isDatabaseAvailable();
         }
-        logger.info("Database available");
+        logger.info("Database available.");
     }
 
-    @Override
-    public void stop() throws Exception {
-
-    }
 
     public boolean isDatabaseAvailable() {
         try {
-            dependentResource.getDatabaseConnection();
+            Connection connection = dependentResource.getDatabaseConnection();
+            connection.close();
             return true;
         } catch (SQLException e) {
             return false;
