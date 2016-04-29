@@ -27,7 +27,6 @@ import java.util.stream.Collectors;
 import static com.google.common.collect.Maps.newHashMap;
 import static java.lang.String.format;
 import static javax.ws.rs.core.MediaType.APPLICATION_JSON;
-import static jersey.repackaged.com.google.common.base.Joiner.on;
 import static uk.gov.pay.connector.resources.ApiPaths.*;
 import static uk.gov.pay.connector.resources.PaymentProviderValidator.*;
 import static uk.gov.pay.connector.util.ResponseUtil.*;
@@ -105,37 +104,6 @@ public class GatewayAccountResource {
                 })
                 .orElseGet(() -> notFoundResponse(format("Account with id '%s' not found", gatewayAccountId)));
     }
-
-    // >>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>> BACKWARD COMPATIBLE FIX STARTS HERE
-    @PUT
-    @Path("/v1/frontend/accounts/{accountId}")
-    @Consumes(APPLICATION_JSON)
-    @Produces(APPLICATION_JSON)
-    @Transactional
-    public Response updateGatewayCredentials(@PathParam("accountId") Long gatewayAccountId, JsonNode credentialsPayload) {
-
-        return gatewayDao.findById(gatewayAccountId)
-                .map(gatewayAccount ->
-                        {
-                            List<String> missingFieldsInRequestPayload = getMissingFieldsInRequestPayload(credentialsPayload, gatewayAccount.getGatewayName());
-                            if (!missingFieldsInRequestPayload.isEmpty()) {
-                                return badRequestResponse(format("The following fields are missing: [%s]", on(", ").join(missingFieldsInRequestPayload)));
-                            }
-                            gatewayAccount.setCredentials(new ObjectMapper().convertValue(credentialsPayload, Map.class));
-                            gatewayDao.persist(gatewayAccount);
-                            return Response.ok().build();
-                        }
-                )
-                .orElseGet(() ->
-                        notFoundResponse(format("The gateway account id '%s' does not exist", gatewayAccountId)));
-    }
-
-    private List<String> getMissingFieldsInRequestPayload(JsonNode credentialsPayload, String provider) {
-        return providerCredentialFields.get(provider).stream()
-                .filter(requiredField -> !credentialsPayload.has(requiredField))
-                .collect(Collectors.toList());
-    }
-    // <<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<< BACKWARD COMPATIBLE FIX ENDS HERE
 
     @PATCH
     @Path(FRONTEND_ACCOUNT_CREDENTIALS_API_PATH)
