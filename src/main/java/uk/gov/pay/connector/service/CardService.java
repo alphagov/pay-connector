@@ -9,6 +9,8 @@ import uk.gov.pay.connector.exception.OperationAlreadyInProgressRuntimeException
 import uk.gov.pay.connector.model.domain.ChargeEntity;
 import uk.gov.pay.connector.model.domain.ChargeStatus;
 
+import java.util.Arrays;
+
 import static java.lang.String.format;
 
 public abstract class CardService {
@@ -54,7 +56,7 @@ public abstract class CardService {
                 throw new OperationAlreadyInProgressRuntimeException(operationType.getValue(), reloadedCharge.getExternalId());
             }
             logger.error(format("Charge with id [%s] and with status [%s] should be in one of the following legal states, [%s]",
-                    reloadedCharge.getId(), reloadedCharge.getStatus(), legalStatuses));
+                    reloadedCharge.getId(), reloadedCharge.getStatus(), Arrays.asList(legalStatuses.toString())));
             throw new IllegalStateRuntimeException(reloadedCharge.getExternalId());
         }
         reloadedCharge.setStatus(lockingStatus);

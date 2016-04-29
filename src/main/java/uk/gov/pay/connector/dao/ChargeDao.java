@@ -97,8 +97,9 @@ public class ChargeDao extends JpaDao<ChargeEntity> {
         return query.getResultList();
     }
 
-    public void mergeAndNotifyStatusHasChanged(ChargeEntity chargeEntity) {
-        super.merge(chargeEntity);
+    public ChargeEntity mergeAndNotifyStatusHasChanged(ChargeEntity chargeEntity) {
+        ChargeEntity mergedCharge = super.merge(chargeEntity);
         eventDao.persist(ChargeEventEntity.from(chargeEntity, ChargeStatus.chargeStatusFrom(chargeEntity.getStatus()), ZonedDateTime.now()));
+        return mergedCharge;
     }
 }

@@ -30,12 +30,13 @@ import static org.mockito.Mockito.*;
 import static uk.gov.pay.connector.model.domain.ChargeStatus.*;
 import static uk.gov.pay.connector.service.CardCancelService.EXPIRY_FAILED;
 import static uk.gov.pay.connector.service.CardCancelService.EXPIRY_SUCCESS;
+import static uk.gov.pay.connector.service.CardCancelService.LEGAL_STATUSES;
 
 public class CardCancelServiceTest extends CardServiceTest {
     @Mock
-    protected ChargeService chargeService = mock(ChargeService.class);
+    protected ChargeService mockChargeService = mock(ChargeService.class);
 
-    private final CardCancelService cardCancelService = new CardCancelService(mockedChargeDao, mockedProviders, chargeService);
+    private final CardCancelService cardCancelService = new CardCancelService(mockedChargeDao, mockedProviders, mockChargeService);
 
     private final Long chargeId = 1234L;
     private final Long accountId = 1L;
@@ -176,9 +177,9 @@ public class CardCancelServiceTest extends CardServiceTest {
         chargeEntity1.setGatewayAccount(gatewayAccount);
         chargeEntity2.setGatewayAccount(gatewayAccount);
 
-
         when(gatewayAccount.getId()).thenReturn(accountId);
         when(gatewayAccount.getGatewayName()).thenReturn(providerName);
+        when(mockChargeService.updateStatus(Arrays.asList(chargeEntity2), EXPIRE_CANCEL_PENDING)).thenReturn(Arrays.asList(chargeEntity2));
 
         mockChargeDaoFindByChargeIdAndAccountId(chargeEntity1, accountId);
         mockChargeDaoFindByChargeIdAndAccountId(chargeEntity2, accountId);
@@ -190,17 +191,14 @@ public class CardCancelServiceTest extends CardServiceTest {
         assertEquals(2, result.get(EXPIRY_SUCCESS).intValue());
         assertEquals(0, result.get(EXPIRY_FAILED).intValue());
 
-        InOrder inOrder = inOrder(chargeService, chargeService, chargeService);
-        inOrder.verify(chargeService).updateStatus(Arrays.asList(chargeEntity1), EXPIRED);
-        inOrder.verify(chargeService).updateStatus(Arrays.asList(chargeEntity2), EXPIRE_CANCEL_PENDING);
-        inOrder.verify(chargeService).updateStatus(Arrays.asList(chargeEntity2), EXPIRED);
+        InOrder inOrder = inOrder(mockChargeService, mockChargeService, mockChargeService);
+        inOrder.verify(mockChargeService).updateStatus(Arrays.asList(chargeEntity1), EXPIRED);
+        inOrder.verify(mockChargeService).updateStatus(Arrays.asList(chargeEntity2), EXPIRE_CANCEL_PENDING);
+        inOrder.verify(mockChargeService).updateStatus(Arrays.asList(chargeEntity2), EXPIRED);
     }
 
     @Test
     public void shouldUpdateChargeStatusWhenExpiringWithFailedProviderCancellation() {
-        ChargeStatus[] legalStatuses = new ChargeStatus[]{
-                CREATED, ENTERING_CARD_DETAILS, AUTHORISATION_SUCCESS, AUTHORISATION_READY, CAPTURE_READY
-        };
         ChargeEntity chargeEntity1 = mock(ChargeEntity.class);
         ChargeEntity chargeEntity2 = mock(ChargeEntity.class);
         GatewayAccountEntity gatewayAccount = mock(GatewayAccountEntity.class);
@@ -212,7 +210,8 @@ public class CardCancelServiceTest extends CardServiceTest {
 
         when(chargeEntity1.getStatus()).thenReturn(ChargeStatus.ENTERING_CARD_DETAILS.getValue());
         when(chargeEntity2.getStatus()).thenReturn(ChargeStatus.AUTHORISATION_SUCCESS.getValue());
-        when(chargeEntity2.hasStatus(legalStatuses)).thenReturn(true);
+        when(chargeEntity2.hasStatus(LEGAL_STATUSES)).thenReturn(true);
+        when(mockChargeService.updateStatus(Arrays.asList(chargeEntity2), EXPIRE_CANCEL_PENDING)).thenReturn(Arrays.asList(chargeEntity2));
 
         mockChargeDaoFindByChargeIdAndAccountId(chargeEntity1, accountId);
         mockChargeDaoFindByChargeIdAndAccountId(chargeEntity2, accountId);
@@ -226,10 +225,10 @@ public class CardCancelServiceTest extends CardServiceTest {
         assertEquals(1, result.get(EXPIRY_SUCCESS).intValue());
         assertEquals(1, result.get(EXPIRY_FAILED).intValue());
 
-        InOrder inOrder = inOrder(chargeService, chargeService, chargeService);
-        inOrder.verify(chargeService).updateStatus(Arrays.asList(chargeEntity1), EXPIRED);
-        inOrder.verify(chargeService).updateStatus(Arrays.asList(chargeEntity2), EXPIRE_CANCEL_PENDING);
-        inOrder.verify(chargeService).updateStatus(Arrays.asList(chargeEntity2), EXPIRE_CANCEL_FAILED);
+        InOrder inOrder = inOrder(mockChargeService, mockChargeService, mockChargeService);
+        inOrder.verify(mockChargeService).updateStatus(Arrays.asList(chargeEntity1), EXPIRED);
+        inOrder.verify(mockChargeService).updateStatus(Arrays.asList(chargeEntity2), EXPIRE_CANCEL_PENDING);
+        inOrder.verify(mockChargeService).updateStatus(Arrays.asList(chargeEntity2), EXPIRE_CANCEL_FAILED);
     }
 
     void mockSuccessfulCancel() {
@@ -247,7 +246,7 @@ public class CardCancelServiceTest extends CardServiceTest {
     }
 
     void verifyChargeUpdated(ChargeEntity charge, ChargeStatus status) {
-        verify(chargeService).updateStatus(Arrays.asList(charge), status);
+        verify(mockChargeService).updateStatus(Arrays.asList(charge), status);
     }
 
     void verifyPaymentProviderNotCalled() {

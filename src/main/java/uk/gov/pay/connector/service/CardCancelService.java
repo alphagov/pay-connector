@@ -26,9 +26,15 @@ public class CardCancelService extends CardService implements TransactionalGatew
     private static final Logger logger = LoggerFactory.getLogger(ChargeService.class);
     public static final String EXPIRY_SUCCESS = "expiry-success";
     public static final String EXPIRY_FAILED = "expiry-failed";
-    private static ChargeStatus[] legalStatuses = new ChargeStatus[]{
-            CREATED, ENTERING_CARD_DETAILS, AUTHORISATION_SUCCESS, AUTHORISATION_READY, CAPTURE_READY
-    };
+    public static final ChargeStatus[] LEGAL_STATUSES =
+            new ChargeStatus[]{
+                    CREATED,
+                    ENTERING_CARD_DETAILS,
+                    AUTHORISATION_SUCCESS,
+                    AUTHORISATION_READY,
+                    CAPTURE_READY,
+                    EXPIRE_CANCEL_PENDING
+            };
 
     private static ChargeStatus[] nonGatewayStatuses = new ChargeStatus[]{
             CREATED, ENTERING_CARD_DETAILS
@@ -59,11 +65,13 @@ public class CardCancelService extends CardService implements TransactionalGatew
         }
     }
 
+    @Transactional
     public Map<String, Integer> expire(List<ChargeEntity> charges) {
         Map<Boolean, List<ChargeEntity>> chargesToProcessExpiry = charges
                 .stream()
                 .collect(Collectors.partitioningBy(
                         chargeEntity -> ChargeStatus.AUTHORISATION_SUCCESS.getValue().equals(chargeEntity.getStatus())));
+
         List<ChargeEntity> nonAuthSuccessCharges = chargesToProcessExpiry.get(Boolean.FALSE);
         chargeService.updateStatus(nonAuthSuccessCharges, ChargeStatus.EXPIRED);
         int expiredSuccess = nonAuthSuccessCharges.size();
@@ -75,14 +83,13 @@ public class CardCancelService extends CardService implements TransactionalGatew
     }
 
     private Pair<Integer, Integer> expireChargesInAuthorisationSuccess(List<ChargeEntity> charges) {
-        chargeService.updateStatus(charges, ChargeStatus.EXPIRE_CANCEL_PENDING);
+        List<ChargeEntity> chargeEntitiesMerged = chargeService.updateStatus(charges, ChargeStatus.EXPIRE_CANCEL_PENDING);
 
         List<ChargeEntity> successfullyCancelled = new ArrayList<>();
         List<ChargeEntity> failedCancelled = new ArrayList<>();
 
-        charges.stream().forEach(chargeEntity -> {
+        chargeEntitiesMerged.stream().forEach(chargeEntity -> {
             GatewayResponse gatewayResponse = doCancel(chargeEntity.getExternalId(), chargeEntity.getGatewayAccount().getId());
-
             if (responseIsNotSuccessful(gatewayResponse)) {
                 logUnsuccessfulResponseReasons(chargeEntity, gatewayResponse);
                 failedCancelled.add(chargeEntity);
@@ -109,7 +116,7 @@ public class CardCancelService extends CardService implements TransactionalGatew
     @Transactional
     @Override
     public ChargeEntity preOperation(ChargeEntity chargeEntity) {
-        return preOperation(chargeEntity, OperationType.CANCELLATION, legalStatuses, ChargeStatus.CANCEL_READY);
+        return preOperation(chargeEntity, OperationType.CANCELLATION, LEGAL_STATUSES, ChargeStatus.CANCEL_READY);
     }
 
     @Override
