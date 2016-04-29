@@ -11,7 +11,7 @@ import java.sql.SQLException;
 public class DependentResourceChecker implements Managed {
 
     public static final int INITIALI_SECONDS_TO_WAIT = 5;
-    private Logger logger = LoggerFactory.getLogger(DependentResourceChecker.class);
+    private static final Logger logger = LoggerFactory.getLogger(DependentResourceChecker.class);
 
     private final DependentResource dependentResource;
 
@@ -40,10 +40,6 @@ public class DependentResourceChecker implements Managed {
     @Override
     public void stop() throws Exception {
 
-    }
-
-    public void setLogger(Logger logger) {
-        this.logger = logger;
     }
 
     public boolean isDatabaseAvailable() {
