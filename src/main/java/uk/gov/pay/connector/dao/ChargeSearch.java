@@ -29,8 +29,8 @@ public class ChargeSearch {
 
     private Long gatewayAccountId;
     private Map<String, Object> queryParameters = new HashMap<>();
-    private Long offset = new Long(0);
-    private String limit = "ALL";
+    private int offset = 0;
+    private int limit = 100;
 
     public static ChargeSearch aChargeSearch(Long gatewayAccountId) {
         return new ChargeSearch(gatewayAccountId);
@@ -61,27 +61,27 @@ public class ChargeSearch {
         return this;
     }
 
-    public ChargeSearch withLimit(Long limit) {
-        if (limit != null) this.limit = limit.toString();
+    public ChargeSearch withLimit(int limit) {
+        if (limit >= 0) this.limit = limit;
         return this;
     }
 
-    public ChargeSearch withOffset(Long offset) {
-        if (offset != null) this.offset = offset;
+    public ChargeSearch withOffset(int offset) {
+        if (offset >=0) this.offset = offset;
         return this;
     }
 
     public TypedQuery<ChargeEntity> apply(EntityManager entityManager) {
         TypedQuery<ChargeEntity> typedQuery = entityManager.createQuery(buildQueryDefinition(), ChargeEntity.class);
         applyParametersTo(typedQuery);
+        typedQuery.setFirstResult(offset);
+        typedQuery.setMaxResults(limit);
         return typedQuery;
     }
 
     private void applyParametersTo(TypedQuery<ChargeEntity> typedQuery) {
         typedQuery.setParameter("gatewayAccountId", gatewayAccountId);
         queryParameters.forEach(typedQuery::setParameter);
-        typedQuery.setParameter("limit", limit);
-        typedQuery.setParameter("offset", offset);
     }
 
     private String buildQueryDefinition() {
@@ -90,8 +90,6 @@ public class ChargeSearch {
                 "WHERE c.gatewayAccount.id = :gatewayAccountId");
         queryParameters.forEach((parameterName, parameterValue) -> query.append(QUERY_DEFINITIONS.get(parameterName)));
         query.append(" ORDER BY c.id DESC");
-        query.append(" LIMIT :limit");
-        query.append(" OFFSET :offset");
         return query.toString();
     }
 }

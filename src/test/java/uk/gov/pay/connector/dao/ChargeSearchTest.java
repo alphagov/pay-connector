@@ -35,7 +35,6 @@ public class ChargeSearchTest {
 
     @Test
     public void shouldCreateSearchQueryWithAllTheParametersSpecified() {
-
         String expectedTypedQuery = "SELECT c FROM ChargeEntity c " +
                 "WHERE c.gatewayAccount.id = :gatewayAccountId " +
                 "AND c.reference LIKE :reference " +
@@ -54,132 +53,165 @@ public class ChargeSearchTest {
                 .apply(entityManagerMock);
 
         assertThat(typedQuery, is(queryMock));
-
         verify(entityManagerMock).createQuery(expectedTypedQuery, ChargeEntity.class);
         verify(queryMock).setParameter("gatewayAccountId", GATEWAY_ACCOUNT_ID);
         verify(queryMock).setParameter("reference", "%reference%");
         verify(queryMock).setParameter("statuses", newArrayList(CAPTURED, CAPTURE_SUBMITTED));
         verify(queryMock).setParameter("fromDate", FROM_DATE);
         verify(queryMock).setParameter("toDate", TO_DATE);
+        verify(queryMock).setFirstResult(0);
+        verify(queryMock).setMaxResults(100);
         verifyNoMoreInteractions(queryMock, entityManagerMock);
     }
 
     @Test
     public void shouldCreateAQueryWithOnlyGatewayAccountId() {
-
         String expectedTypedQuery = "SELECT c FROM ChargeEntity c " +
                 "WHERE c.gatewayAccount.id = :gatewayAccountId " +
                 "ORDER BY c.id DESC";
 
         when(entityManagerMock.createQuery(expectedTypedQuery, ChargeEntity.class)).thenReturn(queryMock);
-
         TypedQuery<ChargeEntity> typedQuery = aChargeSearch(GATEWAY_ACCOUNT_ID)
                 .apply(entityManagerMock);
 
         assertThat(typedQuery, is(queryMock));
-
         verify(entityManagerMock).createQuery(expectedTypedQuery, ChargeEntity.class);
         verify(queryMock).setParameter("gatewayAccountId", GATEWAY_ACCOUNT_ID);
+        verify(queryMock).setFirstResult(0);
+        verify(queryMock).setMaxResults(100);
+
+        verifyNoMoreInteractions(queryMock, entityManagerMock);
+    }
+
+    @Test
+    public void shouldCreateAQueryWithProvidedLimitAndOffset() {
+        String expectedTypedQuery = "SELECT c FROM ChargeEntity c " +
+                "WHERE c.gatewayAccount.id = :gatewayAccountId " +
+                "ORDER BY c.id DESC";
+
+        when(entityManagerMock.createQuery(expectedTypedQuery, ChargeEntity.class)).thenReturn(queryMock);
+        TypedQuery<ChargeEntity> typedQuery = aChargeSearch(GATEWAY_ACCOUNT_ID)
+                .withOffset(100)
+                .withLimit(500)
+                .apply(entityManagerMock);
+
+        assertThat(typedQuery, is(queryMock));
+        verify(entityManagerMock).createQuery(expectedTypedQuery, ChargeEntity.class);
+        verify(queryMock).setParameter("gatewayAccountId", GATEWAY_ACCOUNT_ID);
+        verify(queryMock).setFirstResult(100);
+        verify(queryMock).setMaxResults(500);
+        verifyNoMoreInteractions(queryMock, entityManagerMock);
+    }
+
+    @Test
+    public void shouldCreateAQueryWithDefaultLimitAndOffsetIfNotProvided() {
+        String expectedTypedQuery = "SELECT c FROM ChargeEntity c " +
+                "WHERE c.gatewayAccount.id = :gatewayAccountId " +
+                "ORDER BY c.id DESC";
+
+        when(entityManagerMock.createQuery(expectedTypedQuery, ChargeEntity.class)).thenReturn(queryMock);
+        TypedQuery<ChargeEntity> typedQuery = aChargeSearch(GATEWAY_ACCOUNT_ID)
+                .apply(entityManagerMock);
+
+        assertThat(typedQuery, is(queryMock));
+        verify(entityManagerMock).createQuery(expectedTypedQuery, ChargeEntity.class);
+        verify(queryMock).setParameter("gatewayAccountId", GATEWAY_ACCOUNT_ID);
+        verify(queryMock).setFirstResult(0);
+        verify(queryMock).setMaxResults(100);
         verifyNoMoreInteractions(queryMock, entityManagerMock);
     }
 
     @Test
     public void shouldCreateAQueryWithReference() {
-
         String expectedTypedQuery = "SELECT c FROM ChargeEntity c " +
                 "WHERE c.gatewayAccount.id = :gatewayAccountId " +
                 "AND c.reference LIKE :reference " +
                 "ORDER BY c.id DESC";
 
         when(entityManagerMock.createQuery(expectedTypedQuery, ChargeEntity.class)).thenReturn(queryMock);
-
         TypedQuery<ChargeEntity> typedQuery = aChargeSearch(GATEWAY_ACCOUNT_ID)
                 .withReferenceLike(REFERENCE)
                 .apply(entityManagerMock);
 
         assertThat(typedQuery, is(queryMock));
-
         verify(entityManagerMock).createQuery(expectedTypedQuery, ChargeEntity.class);
         verify(queryMock).setParameter("gatewayAccountId", GATEWAY_ACCOUNT_ID);
         verify(queryMock).setParameter("reference", "%reference%");
+        verify(queryMock).setFirstResult(0);
+        verify(queryMock).setMaxResults(100);
         verifyNoMoreInteractions(queryMock, entityManagerMock);
     }
 
     @Test
     public void shouldCreateAQueryWithExternalStatusMappingToInternalStatuses() {
-
         String expectedTypedQuery = "SELECT c FROM ChargeEntity c " +
                 "WHERE c.gatewayAccount.id = :gatewayAccountId " +
                 "AND c.status IN :statuses " +
                 "ORDER BY c.id DESC";
 
         when(entityManagerMock.createQuery(expectedTypedQuery, ChargeEntity.class)).thenReturn(queryMock);
-
         TypedQuery<ChargeEntity> typedQuery = aChargeSearch(GATEWAY_ACCOUNT_ID)
                 .withExternalStatus(EXT_EXPIRED)
                 .apply(entityManagerMock);
 
         assertThat(typedQuery, is(queryMock));
-
         verify(entityManagerMock).createQuery(expectedTypedQuery, ChargeEntity.class);
         verify(queryMock).setParameter("gatewayAccountId", GATEWAY_ACCOUNT_ID);
         verify(queryMock).setParameter("statuses", newArrayList(EXPIRED, EXPIRE_CANCEL_PENDING, EXPIRE_CANCEL_FAILED));
+        verify(queryMock).setFirstResult(0);
+        verify(queryMock).setMaxResults(100);
         verifyNoMoreInteractions(queryMock, entityManagerMock);
     }
 
     @Test
     public void shouldCreateAQueryWithAFromDate() {
-
         String expectedTypedQuery = "SELECT c FROM ChargeEntity c " +
                 "WHERE c.gatewayAccount.id = :gatewayAccountId " +
                 "AND c.createdDate >= :fromDate " +
                 "ORDER BY c.id DESC";
 
         when(entityManagerMock.createQuery(expectedTypedQuery, ChargeEntity.class)).thenReturn(queryMock);
-
         TypedQuery<ChargeEntity> typedQuery = aChargeSearch(GATEWAY_ACCOUNT_ID)
                 .withCreatedDateFrom(FROM_DATE)
                 .apply(entityManagerMock);
 
         assertThat(typedQuery, is(queryMock));
-
         verify(entityManagerMock).createQuery(expectedTypedQuery, ChargeEntity.class);
         verify(queryMock).setParameter("gatewayAccountId", GATEWAY_ACCOUNT_ID);
         verify(queryMock).setParameter("fromDate", FROM_DATE);
+        verify(queryMock).setFirstResult(0);
+        verify(queryMock).setMaxResults(100);
         verifyNoMoreInteractions(queryMock, entityManagerMock);
     }
 
     @Test
     public void shouldCreateAQueryWithAToDate() {
-
         String expectedTypedQuery = "SELECT c FROM ChargeEntity c " +
                 "WHERE c.gatewayAccount.id = :gatewayAccountId " +
                 "AND c.createdDate < :toDate " +
                 "ORDER BY c.id DESC";
 
         when(entityManagerMock.createQuery(expectedTypedQuery, ChargeEntity.class)).thenReturn(queryMock);
-
         TypedQuery<ChargeEntity> typedQuery = aChargeSearch(GATEWAY_ACCOUNT_ID)
                 .withCreatedDateTo(TO_DATE)
                 .apply(entityManagerMock);
 
         assertThat(typedQuery, is(queryMock));
-
         verify(entityManagerMock).createQuery(expectedTypedQuery, ChargeEntity.class);
         verify(queryMock).setParameter("gatewayAccountId", GATEWAY_ACCOUNT_ID);
         verify(queryMock).setParameter("toDate", TO_DATE);
+        verify(queryMock).setFirstResult(0);
+        verify(queryMock).setMaxResults(100);
         verifyNoMoreInteractions(queryMock, entityManagerMock);
     }
 
     @Test
     public void shouldAllowMissingNullOrEmptyParameters() {
-
         String expectedTypedQuery = "SELECT c FROM ChargeEntity c " +
                 "WHERE c.gatewayAccount.id = :gatewayAccountId " +
                 "ORDER BY c.id DESC";
 
         when(entityManagerMock.createQuery(expectedTypedQuery, ChargeEntity.class)).thenReturn(queryMock);
-
         TypedQuery<ChargeEntity> typedQuery = aChargeSearch(GATEWAY_ACCOUNT_ID)
                 .withReferenceLike("  ")
                 .withExternalStatus(null)
@@ -188,9 +220,10 @@ public class ChargeSearchTest {
                 .apply(entityManagerMock);
 
         assertThat(typedQuery, is(queryMock));
-
         verify(entityManagerMock).createQuery(expectedTypedQuery, ChargeEntity.class);
         verify(queryMock).setParameter("gatewayAccountId", GATEWAY_ACCOUNT_ID);
+        verify(queryMock).setFirstResult(0);
+        verify(queryMock).setMaxResults(100);
         verifyNoMoreInteractions(queryMock, entityManagerMock);
     }
 
