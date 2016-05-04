@@ -30,7 +30,7 @@ import static org.mockito.Mockito.*;
 import static uk.gov.pay.connector.model.domain.ChargeStatus.*;
 import static uk.gov.pay.connector.service.CardCancelService.EXPIRY_FAILED;
 import static uk.gov.pay.connector.service.CardCancelService.EXPIRY_SUCCESS;
-import static uk.gov.pay.connector.service.CardCancelService.LEGAL_STATUSES;
+import static uk.gov.pay.connector.service.CardCancelService.CANCELLABLE_STATUSES;
 
 public class CardCancelServiceTest extends CardServiceTest {
     @Mock
@@ -210,7 +210,7 @@ public class CardCancelServiceTest extends CardServiceTest {
 
         when(chargeEntity1.getStatus()).thenReturn(ChargeStatus.ENTERING_CARD_DETAILS.getValue());
         when(chargeEntity2.getStatus()).thenReturn(ChargeStatus.AUTHORISATION_SUCCESS.getValue());
-        when(chargeEntity2.hasStatus(LEGAL_STATUSES)).thenReturn(true);
+        when(chargeEntity2.hasStatus(CANCELLABLE_STATUSES)).thenReturn(true);
         when(mockChargeService.updateStatus(Arrays.asList(chargeEntity2), EXPIRE_CANCEL_PENDING)).thenReturn(Arrays.asList(chargeEntity2));
 
         mockChargeDaoFindByChargeIdAndAccountId(chargeEntity1, accountId);
