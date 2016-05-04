@@ -103,8 +103,8 @@ public class ChargesResource {
                                    @QueryParam(STATUS_KEY) String status,
                                    @QueryParam(FROM_DATE_KEY) String fromDate,
                                    @QueryParam(TO_DATE_KEY) String toDate,
-                                   @QueryParam(PAGE) @DefaultValue("1") long pageNumber,
-                                   @QueryParam(DISPLAY_COUNT) @DefaultValue("100") long displayCount,
+                                   @QueryParam(PAGE) @DefaultValue("1") Long pageNumber,
+                                   @QueryParam(DISPLAY_COUNT) @DefaultValue("100") Long displayCount,
                                    @Context UriInfo uriInfo) {
 
         List<Pair<String, String>> inputDatePairMap = ImmutableList.of(Pair.of(FROM_DATE_KEY, fromDate), Pair.of(TO_DATE_KEY, toDate));
@@ -112,7 +112,7 @@ public class ChargesResource {
                 .validateDateQueryParams(inputDatePairMap)
                 .map(errorMessage -> badRequestResponse(errorMessage))
                 .orElseGet(() -> reduce(validateGatewayAccountReference(gatewayAccountDao, accountId)
-                        .bimap(handleError, listCharges(accountId, reference, status, fromDate, toDate, jsonResponse()))));
+                        .bimap(handleError, listCharges(accountId, reference, status, fromDate, toDate, pageNumber, displayCount, jsonResponse()))));
     }
 
     @GET
@@ -139,6 +139,21 @@ public class ChargesResource {
                             .withExternalStatus(parseStatus(status))
                             .withCreatedDateFrom(parseDate(fromDate))
                             .withCreatedDateTo(parseDate(toDate))
+            );
+            return responseFunction.apply(charges);
+        };
+    }
+
+    private F<Boolean, Response> listCharges(Long accountId, String reference, String status, String fromDate, String toDate, Long page, Long displayCount, Function<List<ChargeEntity>, Response> responseFunction) {
+        return success -> {
+            List<ChargeEntity> charges = chargeDao.findAllBy(
+                    aChargeSearch(accountId)
+                            .withReferenceLike(reference)
+                            .withExternalStatus(parseStatus(status))
+                            .withCreatedDateFrom(parseDate(fromDate))
+                            .withCreatedDateTo(parseDate(toDate))
+                            .withLimit(displayCount)
+                            .withOffset(page - 1) // zero based offset = 1 based page number
             );
             return responseFunction.apply(charges);
         };

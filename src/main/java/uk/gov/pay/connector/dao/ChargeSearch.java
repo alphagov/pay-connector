@@ -29,8 +29,8 @@ public class ChargeSearch {
 
     private Long gatewayAccountId;
     private Map<String, Object> queryParameters = new HashMap<>();
-    private int offset = 0;
-    private int limit = 100;
+    private Long offset;
+    private Long limit;
 
     public static ChargeSearch aChargeSearch(Long gatewayAccountId) {
         return new ChargeSearch(gatewayAccountId);
@@ -61,21 +61,25 @@ public class ChargeSearch {
         return this;
     }
 
-    public ChargeSearch withLimit(int limit) {
-        if (limit >= 0) this.limit = limit;
+    public ChargeSearch withLimit(Long limit) {
+        this.limit = limit;
         return this;
     }
 
-    public ChargeSearch withOffset(int offset) {
-        if (offset >=0) this.offset = offset;
+    public ChargeSearch withOffset(Long offset) {
+        this.offset = offset;
         return this;
     }
 
     public TypedQuery<ChargeEntity> apply(EntityManager entityManager) {
         TypedQuery<ChargeEntity> typedQuery = entityManager.createQuery(buildQueryDefinition(), ChargeEntity.class);
         applyParametersTo(typedQuery);
-        typedQuery.setFirstResult(offset);
-        typedQuery.setMaxResults(limit);
+
+        if (offset != null)
+            typedQuery.setFirstResult(offset.intValue());
+        if (limit != null)
+            typedQuery.setMaxResults(limit.intValue());
+
         return typedQuery;
     }
 

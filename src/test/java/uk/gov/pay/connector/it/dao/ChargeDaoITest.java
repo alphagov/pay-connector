@@ -118,8 +118,8 @@ public class ChargeDaoITest {
         insertNewChargeWithId(600L);
         insertNewChargeWithId(500L);
         ChargeSearch queryBuilder = aChargeSearch(defaultTestAccount.getAccountId())
-                .withLimit(3)
-                .withOffset(2);
+                .withLimit(3L)
+                .withOffset(2L);
 
         // when
         List<ChargeEntity> charges = chargeDao.findAllBy(queryBuilder);

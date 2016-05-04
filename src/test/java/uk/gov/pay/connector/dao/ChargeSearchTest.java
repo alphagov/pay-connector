@@ -59,8 +59,6 @@ public class ChargeSearchTest {
         verify(queryMock).setParameter("statuses", newArrayList(CAPTURED, CAPTURE_SUBMITTED));
         verify(queryMock).setParameter("fromDate", FROM_DATE);
         verify(queryMock).setParameter("toDate", TO_DATE);
-        verify(queryMock).setFirstResult(0);
-        verify(queryMock).setMaxResults(100);
         verifyNoMoreInteractions(queryMock, entityManagerMock);
     }
 
@@ -77,8 +75,6 @@ public class ChargeSearchTest {
         assertThat(typedQuery, is(queryMock));
         verify(entityManagerMock).createQuery(expectedTypedQuery, ChargeEntity.class);
         verify(queryMock).setParameter("gatewayAccountId", GATEWAY_ACCOUNT_ID);
-        verify(queryMock).setFirstResult(0);
-        verify(queryMock).setMaxResults(100);
 
         verifyNoMoreInteractions(queryMock, entityManagerMock);
     }
@@ -91,8 +87,8 @@ public class ChargeSearchTest {
 
         when(entityManagerMock.createQuery(expectedTypedQuery, ChargeEntity.class)).thenReturn(queryMock);
         TypedQuery<ChargeEntity> typedQuery = aChargeSearch(GATEWAY_ACCOUNT_ID)
-                .withOffset(100)
-                .withLimit(500)
+                .withOffset(100L)
+                .withLimit(500L)
                 .apply(entityManagerMock);
 
         assertThat(typedQuery, is(queryMock));
@@ -116,8 +112,6 @@ public class ChargeSearchTest {
         assertThat(typedQuery, is(queryMock));
         verify(entityManagerMock).createQuery(expectedTypedQuery, ChargeEntity.class);
         verify(queryMock).setParameter("gatewayAccountId", GATEWAY_ACCOUNT_ID);
-        verify(queryMock).setFirstResult(0);
-        verify(queryMock).setMaxResults(100);
         verifyNoMoreInteractions(queryMock, entityManagerMock);
     }
 
@@ -137,8 +131,6 @@ public class ChargeSearchTest {
         verify(entityManagerMock).createQuery(expectedTypedQuery, ChargeEntity.class);
         verify(queryMock).setParameter("gatewayAccountId", GATEWAY_ACCOUNT_ID);
         verify(queryMock).setParameter("reference", "%reference%");
-        verify(queryMock).setFirstResult(0);
-        verify(queryMock).setMaxResults(100);
         verifyNoMoreInteractions(queryMock, entityManagerMock);
     }
 
@@ -158,8 +150,6 @@ public class ChargeSearchTest {
         verify(entityManagerMock).createQuery(expectedTypedQuery, ChargeEntity.class);
         verify(queryMock).setParameter("gatewayAccountId", GATEWAY_ACCOUNT_ID);
         verify(queryMock).setParameter("statuses", newArrayList(EXPIRED, EXPIRE_CANCEL_PENDING, EXPIRE_CANCEL_FAILED));
-        verify(queryMock).setFirstResult(0);
-        verify(queryMock).setMaxResults(100);
         verifyNoMoreInteractions(queryMock, entityManagerMock);
     }
 
@@ -179,8 +169,6 @@ public class ChargeSearchTest {
         verify(entityManagerMock).createQuery(expectedTypedQuery, ChargeEntity.class);
         verify(queryMock).setParameter("gatewayAccountId", GATEWAY_ACCOUNT_ID);
         verify(queryMock).setParameter("fromDate", FROM_DATE);
-        verify(queryMock).setFirstResult(0);
-        verify(queryMock).setMaxResults(100);
         verifyNoMoreInteractions(queryMock, entityManagerMock);
     }
 
@@ -200,8 +188,6 @@ public class ChargeSearchTest {
         verify(entityManagerMock).createQuery(expectedTypedQuery, ChargeEntity.class);
         verify(queryMock).setParameter("gatewayAccountId", GATEWAY_ACCOUNT_ID);
         verify(queryMock).setParameter("toDate", TO_DATE);
-        verify(queryMock).setFirstResult(0);
-        verify(queryMock).setMaxResults(100);
         verifyNoMoreInteractions(queryMock, entityManagerMock);
     }
 
@@ -222,8 +208,6 @@ public class ChargeSearchTest {
         assertThat(typedQuery, is(queryMock));
         verify(entityManagerMock).createQuery(expectedTypedQuery, ChargeEntity.class);
         verify(queryMock).setParameter("gatewayAccountId", GATEWAY_ACCOUNT_ID);
-        verify(queryMock).setFirstResult(0);
-        verify(queryMock).setMaxResults(100);
         verifyNoMoreInteractions(queryMock, entityManagerMock);
     }
 
