@@ -19,6 +19,7 @@ public class ChargeSearch {
     private static final String STATUSES = "statuses";
     private static final String FROM_DATE = "fromDate";
     private static final String TO_DATE = "toDate";
+
     private static final Map<String, String> QUERY_DEFINITIONS = new HashMap<String, String>() {{
         put(REFERENCE, " AND c.reference LIKE :reference");
         put(FROM_DATE, " AND c.createdDate >= :fromDate");
@@ -28,6 +29,8 @@ public class ChargeSearch {
 
     private Long gatewayAccountId;
     private Map<String, Object> queryParameters = new HashMap<>();
+    private Long offset = new Long(0);
+    private String limit = "ALL";
 
     public static ChargeSearch aChargeSearch(Long gatewayAccountId) {
         return new ChargeSearch(gatewayAccountId);
@@ -58,6 +61,16 @@ public class ChargeSearch {
         return this;
     }
 
+    public ChargeSearch withLimit(Long limit) {
+        if (limit != null) this.limit = limit.toString();
+        return this;
+    }
+
+    public ChargeSearch withOffset(Long offset) {
+        if (offset != null) this.offset = offset;
+        return this;
+    }
+
     public TypedQuery<ChargeEntity> apply(EntityManager entityManager) {
         TypedQuery<ChargeEntity> typedQuery = entityManager.createQuery(buildQueryDefinition(), ChargeEntity.class);
         applyParametersTo(typedQuery);
@@ -67,6 +80,8 @@ public class ChargeSearch {
     private void applyParametersTo(TypedQuery<ChargeEntity> typedQuery) {
         typedQuery.setParameter("gatewayAccountId", gatewayAccountId);
         queryParameters.forEach(typedQuery::setParameter);
+        typedQuery.setParameter("limit", limit);
+        typedQuery.setParameter("offset", offset);
     }
 
     private String buildQueryDefinition() {
@@ -75,6 +90,8 @@ public class ChargeSearch {
                 "WHERE c.gatewayAccount.id = :gatewayAccountId");
         queryParameters.forEach((parameterName, parameterValue) -> query.append(QUERY_DEFINITIONS.get(parameterName)));
         query.append(" ORDER BY c.id DESC");
+        query.append(" LIMIT :limit");
+        query.append(" OFFSET :offset");
         return query.toString();
     }
 }
