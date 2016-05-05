@@ -9,6 +9,7 @@ import org.apache.commons.lang3.tuple.Pair;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import uk.gov.pay.connector.dao.ChargeDao;
+import uk.gov.pay.connector.dao.ChargeSearchParams;
 import uk.gov.pay.connector.dao.GatewayAccountDao;
 import uk.gov.pay.connector.model.ChargeResponse;
 import uk.gov.pay.connector.model.api.ExternalChargeStatus;
@@ -34,7 +35,6 @@ import static javax.ws.rs.core.MediaType.APPLICATION_JSON;
 import static javax.ws.rs.core.Response.Status.BAD_REQUEST;
 import static javax.ws.rs.core.Response.*;
 import static org.apache.commons.lang3.StringUtils.isNotBlank;
-import static uk.gov.pay.connector.dao.ChargeSearch.aChargeSearch;
 import static uk.gov.pay.connector.model.ChargeResponse.Builder.aChargeResponse;
 import static uk.gov.pay.connector.model.api.ExternalChargeStatus.mapFromStatus;
 import static uk.gov.pay.connector.model.api.ExternalChargeStatus.valueOfExternalStatus;
@@ -104,7 +104,7 @@ public class ChargesResource {
                                    @QueryParam(FROM_DATE_KEY) String fromDate,
                                    @QueryParam(TO_DATE_KEY) String toDate,
                                    @QueryParam(PAGE) @DefaultValue("1") Long pageNumber,
-                                   @QueryParam(DISPLAY_COUNT) @DefaultValue("100") Long displayCount,
+                                   @QueryParam(DISPLAY_COUNT) @DefaultValue("100") Long displaySize,
                                    @Context UriInfo uriInfo) {
 
         List<Pair<String, String>> inputDatePairMap = ImmutableList.of(Pair.of(FROM_DATE_KEY, fromDate), Pair.of(TO_DATE_KEY, toDate));
@@ -112,7 +112,7 @@ public class ChargesResource {
                 .validateDateQueryParams(inputDatePairMap)
                 .map(errorMessage -> badRequestResponse(errorMessage))
                 .orElseGet(() -> reduce(validateGatewayAccountReference(gatewayAccountDao, accountId)
-                        .bimap(handleError, listCharges(accountId, reference, status, fromDate, toDate, pageNumber, displayCount, jsonResponse()))));
+                        .bimap(handleError, listCharges(accountId, reference, status, fromDate, toDate, pageNumber, displaySize, jsonResponse()))));
     }
 
     @GET
@@ -134,26 +134,28 @@ public class ChargesResource {
     private F<Boolean, Response> listCharges(Long accountId, String reference, String status, String fromDate, String toDate, Function<List<ChargeEntity>, Response> responseFunction) {
         return success -> {
             List<ChargeEntity> charges = chargeDao.findAllBy(
-                    aChargeSearch(accountId)
+                    new ChargeSearchParams()
+                            .withGatewayAccountId(accountId)
                             .withReferenceLike(reference)
-                            .withExternalStatus(parseStatus(status))
-                            .withCreatedDateFrom(parseDate(fromDate))
-                            .withCreatedDateTo(parseDate(toDate))
+                            .withExternalChargeStatus(parseStatus(status))
+                            .withFromDate(parseDate(fromDate))
+                            .withToDate(parseDate(toDate))
             );
             return responseFunction.apply(charges);
         };
     }
 
-    private F<Boolean, Response> listCharges(Long accountId, String reference, String status, String fromDate, String toDate, Long page, Long displayCount, Function<List<ChargeEntity>, Response> responseFunction) {
+    private F<Boolean, Response> listCharges(Long accountId, String reference, String status, String fromDate, String toDate, Long page, Long displaySize, Function<List<ChargeEntity>, Response> responseFunction) {
         return success -> {
             List<ChargeEntity> charges = chargeDao.findAllBy(
-                    aChargeSearch(accountId)
+                    new ChargeSearchParams()
+                            .withGatewayAccountId(accountId)
                             .withReferenceLike(reference)
-                            .withExternalStatus(parseStatus(status))
-                            .withCreatedDateFrom(parseDate(fromDate))
-                            .withCreatedDateTo(parseDate(toDate))
-                            .withLimit(displayCount)
-                            .withOffset(page - 1) // zero based offset = 1 based page number
+                            .withExternalChargeStatus(parseStatus(status))
+                            .withFromDate(parseDate(fromDate))
+                            .withToDate(parseDate(toDate))
+                            .withDisplaySize(displaySize)
+                            .withPage(page - 1) // zero based offset = 1 based page number
             );
             return responseFunction.apply(charges);
         };
