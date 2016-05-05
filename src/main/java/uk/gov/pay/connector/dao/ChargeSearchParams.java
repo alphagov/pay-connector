@@ -13,7 +13,7 @@ public class ChargeSearchParams {
     private String reference;
     private ZonedDateTime fromDate;
     private ZonedDateTime toDate;
-    private Long page = 0L;
+    private Long page = 1L;
     private Long displaySize = 100L;
     private List<ChargeStatus> chargeStatuses;
 
@@ -64,7 +64,7 @@ public class ChargeSearchParams {
     }
 
     public Long getPage() {
-        return page;
+        return page - 1; // 1 based page and 0 based offset
     }
 
     public ChargeSearchParams withPage(Long page) {

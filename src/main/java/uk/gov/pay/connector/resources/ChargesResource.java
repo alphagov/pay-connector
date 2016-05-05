@@ -60,7 +60,7 @@ public class ChargesResource {
     private static final String TO_DATE_KEY = "to_date";
     private static final String ACCOUNT_ID = "accountId";
     public static final String PAGE = "page";
-    private static final String DISPLAY_COUNT = "display_count";
+    private static final String DISPLAY_SIZE = "display_size";
     private final String TEXT_CSV = "text/csv";
 
     private ChargeDao chargeDao;
@@ -104,7 +104,7 @@ public class ChargesResource {
                                    @QueryParam(FROM_DATE_KEY) String fromDate,
                                    @QueryParam(TO_DATE_KEY) String toDate,
                                    @QueryParam(PAGE) @DefaultValue("1") Long pageNumber,
-                                   @QueryParam(DISPLAY_COUNT) @DefaultValue("100") Long displaySize,
+                                   @QueryParam(DISPLAY_SIZE) @DefaultValue("100") Long displaySize,
                                    @Context UriInfo uriInfo) {
 
         List<Pair<String, String>> inputDatePairMap = ImmutableList.of(Pair.of(FROM_DATE_KEY, fromDate), Pair.of(TO_DATE_KEY, toDate));
@@ -155,7 +155,7 @@ public class ChargesResource {
                             .withFromDate(parseDate(fromDate))
                             .withToDate(parseDate(toDate))
                             .withDisplaySize(displaySize)
-                            .withPage(page - 1) // zero based offset = 1 based page number
+                            .withPage(page)
             );
             return responseFunction.apply(charges);
         };

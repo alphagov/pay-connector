@@ -90,7 +90,7 @@ public class ChargeDaoITest {
     }
 
     @Test
-    public void searchChargesWithDefaultLimit_100AndOffset_0() throws Exception {
+    public void searchChargesWithDefaultSize_100AndPage_1() throws Exception {
         // given
         insertNewChargeWithId(700L);
         insertNewChargeWithId(800L);
@@ -113,27 +113,51 @@ public class ChargeDaoITest {
     }
 
     @Test
-    public void searchChargesWithLimitAndOffset() throws Exception {
+    public void searchChargesWithSizeAndPageSet() throws Exception {
         // given
         insertNewChargeWithId(700L);
         insertNewChargeWithId(800L);
         insertNewChargeWithId(900L);
         insertNewChargeWithId(600L);
         insertNewChargeWithId(500L);
+        insertNewChargeWithId(400L);
+        insertNewChargeWithId(300L);
+        insertNewChargeWithId(200L);
 
+        // when
         ChargeSearchParams params = new ChargeSearchParams()
+                .withGatewayAccountId(defaultTestAccount.getAccountId())
+                .withPage(1L)
+                .withDisplaySize(3L);
+        List<ChargeEntity> charges = chargeDao.findAllBy(params);
+        // then
+        assertThat(charges.size(), is(3));
+        assertThat(charges.get(0).getId(), is(900L));
+        assertThat(charges.get(1).getId(), is(800L));
+        assertThat(charges.get(2).getId(), is(700L));
+
+        // when
+        params = new ChargeSearchParams()
                 .withGatewayAccountId(defaultTestAccount.getAccountId())
                 .withPage(2L)
                 .withDisplaySize(3L);
-
-        // when
-        List<ChargeEntity> charges = chargeDao.findAllBy(params);
-
+        charges = chargeDao.findAllBy(params);
         // then
         assertThat(charges.size(), is(3));
-        assertThat(charges.get(0).getId(), is(700L));
-        assertThat(charges.get(1).getId(), is(600L));
-        assertThat(charges.get(2).getId(), is(500L));
+        assertThat(charges.get(0).getId(), is(600L));
+        assertThat(charges.get(1).getId(), is(500L));
+        assertThat(charges.get(2).getId(), is(400L));
+
+        // when
+        params = new ChargeSearchParams()
+                .withGatewayAccountId(defaultTestAccount.getAccountId())
+                .withPage(3L)
+                .withDisplaySize(3L);
+        charges = chargeDao.findAllBy(params);
+        // then
+        assertThat(charges.size(), is(2));
+        assertThat(charges.get(0).getId(), is(300L));
+        assertThat(charges.get(1).getId(), is(200L));
     }
 
     @Test

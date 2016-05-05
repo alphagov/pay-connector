@@ -98,7 +98,8 @@ public class ChargeDao extends JpaDao<ChargeEntity> {
                 .orderBy(cb.desc(charge.get("id")));
 
         Query query = entityManager.get().createQuery(cq);
-        query.setFirstResult(params.getPage().intValue());
+        Long firstResult = params.getPage() * params.getDisplaySize();
+        query.setFirstResult(firstResult.intValue());
         query.setMaxResults(params.getDisplaySize().intValue());
 
         return query.getResultList();
