@@ -13,7 +13,7 @@ import static org.mockito.Mockito.when;
 import static uk.gov.pay.connector.model.domain.ChargeStatus.*;
 
 public class UserCardCancelServiceTest extends CardCancelServiceTest {
-    private final UserCardCancelService userCardCancelService = new UserCardCancelService(mockedChargeDao, mockedProviders, chargeService);
+    private final UserCardCancelService userCardCancelService = new UserCardCancelService(mockedChargeDao, mockedProviders, mockChargeService);
 
     private final Long chargeId = 1234L;
     private final Long accountId = 1L;

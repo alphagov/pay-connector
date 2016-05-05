@@ -17,10 +17,7 @@ import javax.inject.Inject;
 import javax.ws.rs.core.UriBuilder;
 import javax.ws.rs.core.UriInfo;
 import java.net.URI;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
-import java.util.Optional;
+import java.util.*;
 
 import static javax.ws.rs.HttpMethod.GET;
 import static javax.ws.rs.HttpMethod.POST;
@@ -71,11 +68,15 @@ public class ChargeService {
     }
 
     @Transactional
-    public void updateStatus(List<ChargeEntity> chargeEntities, ChargeStatus status) {
+    public List<ChargeEntity> updateStatus(List<ChargeEntity> chargeEntities, ChargeStatus status) {
+        List<ChargeEntity> mergedCharges = new ArrayList<ChargeEntity>();
         chargeEntities.stream().forEach(chargeEntity -> {
             chargeEntity.setStatus(status);
-            chargeDao.mergeAndNotifyStatusHasChanged(chargeEntity);
+            logger.info("charge status to update: "+chargeEntity.getStatus() + "for Charge ID: "+chargeEntity.getId());
+            ChargeEntity mergedEnt = chargeDao.mergeAndNotifyStatusHasChanged(chargeEntity);
+            mergedCharges.add(mergedEnt);
         });
+        return mergedCharges;
     }
 
     private TokenEntity createNewChargeEntityToken(ChargeEntity chargeEntity) {
