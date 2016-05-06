@@ -9,6 +9,7 @@ import org.apache.commons.lang3.tuple.Pair;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import uk.gov.pay.connector.dao.ChargeDao;
+import uk.gov.pay.connector.dao.ChargeSearchParams;
 import uk.gov.pay.connector.dao.GatewayAccountDao;
 import uk.gov.pay.connector.model.ChargeResponse;
 import uk.gov.pay.connector.model.api.ExternalChargeStatus;
@@ -34,7 +35,6 @@ import static javax.ws.rs.core.MediaType.APPLICATION_JSON;
 import static javax.ws.rs.core.Response.Status.BAD_REQUEST;
 import static javax.ws.rs.core.Response.*;
 import static org.apache.commons.lang3.StringUtils.isNotBlank;
-import static uk.gov.pay.connector.dao.ChargeSearch.aChargeSearch;
 import static uk.gov.pay.connector.model.ChargeResponse.Builder.aChargeResponse;
 import static uk.gov.pay.connector.model.api.ExternalChargeStatus.mapFromStatus;
 import static uk.gov.pay.connector.model.api.ExternalChargeStatus.valueOfExternalStatus;
@@ -56,8 +56,11 @@ public class ChargesResource {
     );
 
     private static final String STATUS_KEY = "status";
-    public static final String FROM_DATE_KEY = "from_date";
-    public static final String TO_DATE_KEY = "to_date";
+    private static final String FROM_DATE_KEY = "from_date";
+    private static final String TO_DATE_KEY = "to_date";
+    private static final String ACCOUNT_ID = "accountId";
+    public static final String PAGE = "page";
+    private static final String DISPLAY_SIZE = "display_size";
     private final String TEXT_CSV = "text/csv";
 
     private ChargeDao chargeDao;
@@ -67,7 +70,7 @@ public class ChargesResource {
 
     private static final int ONE_HOUR = 3600;
     private static final String CHARGE_EXPIRY_WINDOW = "CHARGE_EXPIRY_WINDOW_SECONDS";
-    protected static final ArrayList<ChargeStatus> NON_TERMINAL_STATUSES = Lists.newArrayList(
+    private static final ArrayList<ChargeStatus> NON_TERMINAL_STATUSES = Lists.newArrayList(
             CREATED,
             ENTERING_CARD_DETAILS,
             AUTHORISATION_SUBMITTED,
@@ -86,7 +89,7 @@ public class ChargesResource {
     @GET
     @Path(CHARGE_API_PATH)
     @Produces(APPLICATION_JSON)
-    public Response getCharge(@PathParam("accountId") Long accountId, @PathParam("chargeId") String chargeId, @Context UriInfo uriInfo) {
+    public Response getCharge(@PathParam(ACCOUNT_ID) Long accountId, @PathParam("chargeId") String chargeId, @Context UriInfo uriInfo) {
         return chargeService.findChargeForAccount(chargeId, accountId, uriInfo)
                 .map(chargeResponse -> Response.ok(chargeResponse).build())
                 .orElseGet(() -> responseWithChargeNotFound(chargeId));
@@ -95,23 +98,27 @@ public class ChargesResource {
     @GET
     @Path(CHARGES_API_PATH)
     @Produces(APPLICATION_JSON)
-    public Response getChargesJson(@PathParam("accountId") Long accountId,
+    public Response getChargesJson(@PathParam(ACCOUNT_ID) Long accountId,
                                    @QueryParam(REFERENCE_KEY) String reference,
                                    @QueryParam(STATUS_KEY) String status,
                                    @QueryParam(FROM_DATE_KEY) String fromDate,
                                    @QueryParam(TO_DATE_KEY) String toDate,
+                                   @QueryParam(PAGE) @DefaultValue("1") Long pageNumber,
+                                   @QueryParam(DISPLAY_SIZE) @DefaultValue("100") Long displaySize,
                                    @Context UriInfo uriInfo) {
+
+        List<Pair<String, String>> inputDatePairMap = ImmutableList.of(Pair.of(FROM_DATE_KEY, fromDate), Pair.of(TO_DATE_KEY, toDate));
         return ApiValidators
-                .validateDateQueryParams(ImmutableList.of(Pair.of(FROM_DATE_KEY, fromDate), Pair.of(TO_DATE_KEY, toDate)))
+                .validateDateQueryParams(inputDatePairMap)
                 .map(errorMessage -> badRequestResponse(errorMessage))
                 .orElseGet(() -> reduce(validateGatewayAccountReference(gatewayAccountDao, accountId)
-                        .bimap(handleError, listCharges(accountId, reference, status, fromDate, toDate, jsonResponse()))));
+                        .bimap(handleError, listCharges(accountId, reference, status, fromDate, toDate, pageNumber, displaySize, jsonResponse()))));
     }
 
     @GET
     @Path(CHARGES_API_PATH)
     @Produces(TEXT_CSV)
-    public Response getChargesCsv(@PathParam("accountId") Long accountId,
+    public Response getChargesCsv(@PathParam(ACCOUNT_ID) Long accountId,
                                   @QueryParam(REFERENCE_KEY) String reference,
                                   @QueryParam(STATUS_KEY) String status,
                                   @QueryParam(FROM_DATE_KEY) String fromDate,
@@ -126,11 +133,30 @@ public class ChargesResource {
 
     private F<Boolean, Response> listCharges(Long accountId, String reference, String status, String fromDate, String toDate, Function<List<ChargeEntity>, Response> responseFunction) {
         return success -> {
-            List<ChargeEntity> charges = chargeDao.findAllBy(aChargeSearch(accountId)
-                    .withReferenceLike(reference)
-                    .withExternalStatus(parseStatus(status))
-                    .withCreatedDateFrom(parseDate(fromDate))
-                    .withCreatedDateTo(parseDate(toDate)));
+            List<ChargeEntity> charges = chargeDao.findAllBy(
+                    new ChargeSearchParams()
+                            .withGatewayAccountId(accountId)
+                            .withReferenceLike(reference)
+                            .withExternalChargeStatus(parseStatus(status))
+                            .withFromDate(parseDate(fromDate))
+                            .withToDate(parseDate(toDate))
+            );
+            return responseFunction.apply(charges);
+        };
+    }
+
+    private F<Boolean, Response> listCharges(Long accountId, String reference, String status, String fromDate, String toDate, Long page, Long displaySize, Function<List<ChargeEntity>, Response> responseFunction) {
+        return success -> {
+            List<ChargeEntity> charges = chargeDao.findAllBy(
+                    new ChargeSearchParams()
+                            .withGatewayAccountId(accountId)
+                            .withReferenceLike(reference)
+                            .withExternalChargeStatus(parseStatus(status))
+                            .withFromDate(parseDate(fromDate))
+                            .withToDate(parseDate(toDate))
+                            .withDisplaySize(displaySize)
+                            .withPage(page)
+            );
             return responseFunction.apply(charges);
         };
     }
@@ -138,7 +164,7 @@ public class ChargesResource {
     @POST
     @Path(CHARGES_API_PATH)
     @Produces(APPLICATION_JSON)
-    public Response createNewCharge(@PathParam("accountId") Long accountId, Map<String, Object> chargeRequest, @Context UriInfo uriInfo) {
+    public Response createNewCharge(@PathParam(ACCOUNT_ID) Long accountId, Map<String, Object> chargeRequest, @Context UriInfo uriInfo) {
         Optional<List<String>> missingFields = checkMissingFields(chargeRequest);
         if (missingFields.isPresent()) {
             return fieldsMissingResponse(missingFields.get());

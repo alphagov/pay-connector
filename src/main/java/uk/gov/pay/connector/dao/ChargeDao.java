@@ -2,6 +2,7 @@ package uk.gov.pay.connector.dao;
 
 import com.google.inject.Provider;
 import com.google.inject.persist.Transactional;
+import uk.gov.pay.connector.model.api.ExternalChargeStatus;
 import uk.gov.pay.connector.model.domain.ChargeEntity;
 import uk.gov.pay.connector.model.domain.ChargeEventEntity;
 import uk.gov.pay.connector.model.domain.ChargeStatus;
@@ -10,18 +11,17 @@ import javax.inject.Inject;
 import javax.persistence.EntityManager;
 import javax.persistence.Query;
 import javax.persistence.TypedQuery;
-import javax.persistence.criteria.CriteriaBuilder;
-import javax.persistence.criteria.CriteriaQuery;
-import javax.persistence.criteria.Root;
+import javax.persistence.criteria.*;
 import java.time.ZonedDateTime;
-import java.util.List;
-import java.util.Optional;
+import java.util.*;
 
 @Transactional
 public class ChargeDao extends JpaDao<ChargeEntity> {
 
     private static final String STATUS = "status";
     private static final String CREATED_DATE = "createdDate";
+    private static final String GATEWAY_ACCOUNT = "gatewayAccount";
+    private static final String REFERENCE = "reference";
 
     private EventDao eventDao;
 
@@ -29,11 +29,6 @@ public class ChargeDao extends JpaDao<ChargeEntity> {
     public ChargeDao(final Provider<EntityManager> entityManager, EventDao eventDao) {
         super(entityManager);
         this.eventDao = eventDao;
-    }
-
-    public List<ChargeEntity> findAllBy(ChargeSearch searchQuery) {
-        TypedQuery<ChargeEntity> query = searchQuery.apply(entityManager.get());
-        return query.getResultList();
     }
 
     public Optional<ChargeEntity> findById(Long chargeId) {
@@ -85,15 +80,28 @@ public class ChargeDao extends JpaDao<ChargeEntity> {
     }
 
     public List<ChargeEntity> findBeforeDateWithStatusIn(ZonedDateTime date, List<ChargeStatus> statuses) {
-        CriteriaBuilder cb = entityManager.get().getCriteriaBuilder();
-        CriteriaQuery cq = cb.createQuery();
-        Root entity = cq.from(ChargeEntity.class);
+        ChargeSearchParams params = new ChargeSearchParams()
+                .withToDate(date)
+                .withInternalChargeStatuses(statuses);
+        return findAllBy(params);
+    }
 
-        entity.get(STATUS).in(statuses);
-        cq.where(cb.lessThan(entity.get(CREATED_DATE), date),
-                entity.get(STATUS).in(statuses));
+    public List<ChargeEntity> findAllBy(ChargeSearchParams params) {
+        CriteriaBuilder cb = entityManager.get().getCriteriaBuilder();
+        CriteriaQuery<ChargeEntity> cq = cb.createQuery(ChargeEntity.class);
+        Root<ChargeEntity> charge = cq.from(ChargeEntity.class);
+
+        List<Predicate> predicates = buildParamPredicates(params, cb, charge);
+
+        cq.select(charge)
+                .where(predicates.toArray(new Predicate[]{}))
+                .orderBy(cb.desc(charge.get("id")));
 
         Query query = entityManager.get().createQuery(cq);
+        Long firstResult = params.getPage() * params.getDisplaySize();
+        query.setFirstResult(firstResult.intValue());
+        query.setMaxResults(params.getDisplaySize().intValue());
+
         return query.getResultList();
     }
 
@@ -101,5 +109,21 @@ public class ChargeDao extends JpaDao<ChargeEntity> {
         ChargeEntity mergedCharge = super.merge(chargeEntity);
         eventDao.persist(ChargeEventEntity.from(chargeEntity, ChargeStatus.chargeStatusFrom(chargeEntity.getStatus()), ZonedDateTime.now()));
         return mergedCharge;
+    }
+
+    private List<Predicate> buildParamPredicates(ChargeSearchParams params, CriteriaBuilder cb, Root<ChargeEntity> charge) {
+        List<Predicate> predicates = new ArrayList<>();
+        if (params.getGatewayAccountId() != null)
+            predicates.add(cb.equal(charge.get(GATEWAY_ACCOUNT).get("id"), params.getGatewayAccountId()));
+        if (params.getReference() != null)
+            predicates.add(cb.like(charge.get(REFERENCE), '%'+params.getReference()+'%'));
+        if (params.getChargeStatuses() != null && !params.getChargeStatuses().isEmpty())
+            predicates.add(charge.get(STATUS).in(params.getChargeStatuses()));
+        if (params.getFromDate() != null)
+            predicates.add(cb.greaterThanOrEqualTo(charge.get(CREATED_DATE), params.getFromDate()));
+        if (params.getToDate() != null)
+            predicates.add(cb.lessThan(charge.get(CREATED_DATE), params.getToDate()));
+
+        return predicates;
     }
 }
