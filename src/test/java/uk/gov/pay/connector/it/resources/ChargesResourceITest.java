@@ -1,5 +1,6 @@
 package uk.gov.pay.connector.it.resources;
 
+import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableMap;
 import com.jayway.restassured.response.ValidatableResponse;
 import org.apache.commons.lang.math.RandomUtils;
@@ -296,6 +297,78 @@ public class ChargesResourceITest {
         datesFrom(createdDateStrings).forEach(createdDate ->
                 assertThat(createdDate, is(within(1, DAYS, now())))
         );
+    }
+
+    @Test
+    public void shouldGetAllTransactionsForDefault_page_1_size_100_inCreationDateOrder() throws Exception {
+        String id_1 = addCharge(CREATED, "ref-1", now());
+        String id_2 = addCharge(AUTHORISATION_READY, "ref-2", now().plusHours(1));
+        String id_3 = addCharge(CREATED, "ref-3", now().plusHours(2));
+        String id_4 = addCharge(CREATED, "ref-4", now().plusHours(3));
+        String id_5 = addCharge(CREATED, "ref-5", now().plusHours(4));
+
+        ValidatableResponse response = getChargeApi
+                .withAccountId(accountId)
+                .withHeader(HttpHeaders.ACCEPT, APPLICATION_JSON)
+                .getTransactions()
+                .statusCode(OK.getStatusCode())
+                .contentType(JSON)
+                .body("results.size()", is(5));
+
+        List<Map<String, Object>> results = response.extract().body().jsonPath().getList("results");
+        List<String> references = collect(results, "charge_id");
+        assertThat(references, is(ImmutableList.of(id_5, id_4, id_3, id_2, id_1)));
+    }
+
+    @Test
+    public void shouldGetTransactionsForPageAndSizeParams_inCreationDateOrder() throws Exception {
+        String id_1 = addCharge(CREATED, "ref-1", now());
+        String id_2 = addCharge(CREATED, "ref-2", now().plusHours(1));
+        String id_3 = addCharge(CREATED, "ref-3", now().plusHours(2));
+        String id_4 = addCharge(CREATED, "ref-4", now().plusHours(3));
+        String id_5 = addCharge(CREATED, "ref-5", now().plusHours(4));
+
+        ValidatableResponse response = getChargeApi
+                .withAccountId(accountId)
+                .withQueryParam("display_size", "2")
+                .withQueryParam("page", "1")
+                .withHeader(HttpHeaders.ACCEPT, APPLICATION_JSON)
+                .getTransactions()
+                .statusCode(OK.getStatusCode())
+                .contentType(JSON)
+                .body("results.size()", is(2));
+
+        List<Map<String, Object>> results = response.extract().body().jsonPath().getList("results");
+        List<String> charge_ids = collect(results, "charge_id");
+        assertThat(charge_ids, is(ImmutableList.of(id_5, id_4)));
+
+        response = getChargeApi
+                .withAccountId(accountId)
+                .withQueryParam("display_size", "2")
+                .withQueryParam("page", "2")
+                .withHeader(HttpHeaders.ACCEPT, APPLICATION_JSON)
+                .getTransactions()
+                .statusCode(OK.getStatusCode())
+                .contentType(JSON)
+                .body("results.size()", is(2));
+
+        results = response.extract().body().jsonPath().getList("results");
+        charge_ids = collect(results, "charge_id");
+        assertThat(charge_ids, is(ImmutableList.of(id_3, id_2)));
+
+        response = getChargeApi
+                .withAccountId(accountId)
+                .withQueryParam("display_size", "2")
+                .withQueryParam("page", "3")
+                .withHeader(HttpHeaders.ACCEPT, APPLICATION_JSON)
+                .getTransactions()
+                .statusCode(OK.getStatusCode())
+                .contentType(JSON)
+                .body("results.size()", is(1));
+
+        results = response.extract().body().jsonPath().getList("results");
+        charge_ids = collect(results, "charge_id");
+        assertThat(charge_ids, is(ImmutableList.of(id_1)));
     }
 
     @Test

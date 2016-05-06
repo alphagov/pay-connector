@@ -95,7 +95,7 @@ public class ChargeDao extends JpaDao<ChargeEntity> {
 
         cq.select(charge)
                 .where(predicates.toArray(new Predicate[]{}))
-                .orderBy(cb.desc(charge.get("id")));
+                .orderBy(cb.desc(charge.get(CREATED_DATE)));
 
         Query query = entityManager.get().createQuery(cq);
         Long firstResult = params.getPage() * params.getDisplaySize();
