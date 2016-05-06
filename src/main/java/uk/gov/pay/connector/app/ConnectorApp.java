@@ -17,9 +17,8 @@ import uk.gov.pay.connector.auth.BasicAuthUser;
 import uk.gov.pay.connector.auth.SmartpayAuthenticator;
 import uk.gov.pay.connector.healthcheck.DatabaseHealthCheck;
 import uk.gov.pay.connector.healthcheck.Ping;
-import uk.gov.pay.connector.managed.DependentResourceChecker;
 import uk.gov.pay.connector.resources.*;
-import uk.gov.pay.connector.util.DbWaitCommand;
+import uk.gov.pay.connector.util.DependentResourceWaitCommand;
 
 public class ConnectorApp extends Application<ConnectorConfiguration> {
 
@@ -40,7 +39,7 @@ public class ConnectorApp extends Application<ConnectorConfiguration> {
             }
         });
 
-        bootstrap.addCommand(new DbWaitCommand());
+        bootstrap.addCommand(new DependentResourceWaitCommand());
     }
 
     @Override
@@ -49,8 +48,6 @@ public class ConnectorApp extends Application<ConnectorConfiguration> {
         final Injector injector = Guice.createInjector(new ConnectorModule(configuration, environment));
 
         injector.getInstance(PersistenceServiceInitialiser.class);
-
-        environment.lifecycle().manage(injector.getInstance(DependentResourceChecker.class));
 
         environment.jersey().register(injector.getInstance(GatewayAccountResource.class));
         environment.jersey().register(injector.getInstance(ChargeEventsResource.class));

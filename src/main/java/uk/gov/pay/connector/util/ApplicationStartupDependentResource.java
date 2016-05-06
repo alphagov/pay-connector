@@ -7,12 +7,12 @@ import java.sql.Connection;
 import java.sql.DriverManager;
 import java.sql.SQLException;
 
-public class DependentResource {
+public class ApplicationStartupDependentResource {
 
     private final ConnectorConfiguration configuration;
 
     @Inject
-    public DependentResource(ConnectorConfiguration configuration) {
+    public ApplicationStartupDependentResource(ConnectorConfiguration configuration) {
         this.configuration = configuration;
     }
 
