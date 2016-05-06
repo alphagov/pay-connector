@@ -8,6 +8,7 @@ import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.lang3.tuple.Pair;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import uk.gov.pay.connector.app.ConnectorConfiguration;
 import uk.gov.pay.connector.dao.ChargeDao;
 import uk.gov.pay.connector.dao.ChargeSearchParams;
 import uk.gov.pay.connector.dao.GatewayAccountDao;
@@ -52,7 +53,7 @@ import static uk.gov.pay.connector.resources.ApiValidators.validateGatewayAccoun
 import static uk.gov.pay.connector.util.ResponseUtil.*;
 
 @Path("/")
-public class ChargesResource {
+public class ChargesApiResource {
     private static final String AMOUNT_KEY = "amount";
     private static final String DESCRIPTION_KEY = "description";
     private static final String RETURN_URL_KEY = "return_url";
@@ -74,6 +75,7 @@ public class ChargesResource {
     private GatewayAccountDao gatewayAccountDao;
     private ChargeService chargeService;
     private CardCancelService cardCancelService;
+    private ConnectorConfiguration configuration;
 
     private static final int ONE_HOUR = 3600;
     private static final String CHARGE_EXPIRY_WINDOW = "CHARGE_EXPIRY_WINDOW_SECONDS";
@@ -82,14 +84,15 @@ public class ChargesResource {
             ENTERING_CARD_DETAILS,
             AUTHORISATION_SUCCESS);
 
-    private static final Logger logger = LoggerFactory.getLogger(ChargesResource.class);
+    private static final Logger logger = LoggerFactory.getLogger(ChargesApiResource.class);
 
     @Inject
-    public ChargesResource(ChargeDao chargeDao, GatewayAccountDao gatewayAccountDao, ChargeService chargeService, CardCancelService cardCancelService) {
+    public ChargesApiResource(ChargeDao chargeDao, GatewayAccountDao gatewayAccountDao, ChargeService chargeService, CardCancelService cardCancelService, ConnectorConfiguration configuration) {
         this.chargeDao = chargeDao;
         this.gatewayAccountDao = gatewayAccountDao;
         this.chargeService = chargeService;
         this.cardCancelService = cardCancelService;
+        this.configuration = configuration;
     }
 
     @GET
@@ -109,16 +112,27 @@ public class ChargesResource {
                                    @QueryParam(STATE_KEY) String state,
                                    @QueryParam(FROM_DATE_KEY) String fromDate,
                                    @QueryParam(TO_DATE_KEY) String toDate,
-                                   @QueryParam(PAGE) @DefaultValue("1") Long pageNumber,
-                                   @QueryParam(DISPLAY_SIZE) @DefaultValue("100") Long displaySize,
+                                   @QueryParam(PAGE) Long pageNumber,
+                                   @QueryParam(DISPLAY_SIZE) Long displaySize,
                                    @Context UriInfo uriInfo) {
 
         List<Pair<String, String>> inputDatePairMap = ImmutableList.of(Pair.of(FROM_DATE_KEY, fromDate), Pair.of(TO_DATE_KEY, toDate));
+
         return ApiValidators
                 .validateDateQueryParams(inputDatePairMap)
                 .map(ResponseUtil::badRequestResponse)
                 .orElseGet(() -> reduce(validateGatewayAccountReference(gatewayAccountDao, accountId)
-                        .bimap(handleError, listCharges(accountId, reference, state, fromDate, toDate, pageNumber, displaySize, jsonResponse()))));
+                        .bimap(handleError,
+                                listCharges(new ChargeSearchParams()
+                                        .withGatewayAccountId(accountId)
+                                        .withReferenceLike(reference)
+                                        .withExternalChargeState(parseState(state))
+                                        .withFromDate(parseDate(fromDate))
+                                        .withToDate(parseDate(toDate))
+                                        .withDisplaySize(displaySize != null && displaySize >= 1 ?
+                                                displaySize :
+                                                configuration.getTransactionsPaginationConfig().getDisplayPageSize())
+                                        .withPage(pageNumber)))));
     }
 
     private F<Boolean, Response> listCharges(Long accountId, String reference, String state, String fromDate, String toDate, Function<List<ChargeEntity>, Response> responseFunction) {
@@ -135,20 +149,34 @@ public class ChargesResource {
         };
     }
 
-    private F<Boolean, Response> listCharges(Long accountId, String reference, String state, String fromDate, String toDate, Long page, Long displaySize, Function<List<ChargeEntity>, Response> responseFunction) {
-        return success -> {
-            List<ChargeEntity> charges = chargeDao.findAllBy(
-                    new ChargeSearchParams()
-                            .withGatewayAccountId(accountId)
-                            .withReferenceLike(reference)
-                            .withExternalChargeState(parseState(state))
-                            .withFromDate(parseDate(fromDate))
-                            .withToDate(parseDate(toDate))
-                            .withDisplaySize(displaySize)
-                            .withPage(page)
-            );
-            return responseFunction.apply(charges);
-        };
+    private F<Boolean, Response> listCharges(Function<List<ChargeEntity>, Response> responseFunction, ChargeSearchParams searchParams) {
+        List<ChargeEntity> charges = chargeDao.findAllBy(searchParams);
+        return success -> responseFunction.apply(charges);
+    }
+
+    private F<Boolean, Response> listCharges(ChargeSearchParams searchParams) {
+        List<ChargeEntity> charges = chargeDao.findAllBy(searchParams);
+        Long totalCount = chargeDao.getTotalFor(searchParams);
+        List<ChargeResponse> chargesResponse =
+                charges.stream()
+                        .map(charge -> aChargeResponse()
+                                .withChargeId(charge.getExternalId())
+                                .withAmount(charge.getAmount())
+                                .withReference(charge.getReference())
+                                .withDescription(charge.getDescription())
+                                .withState(ChargeStatus.fromString(charge.getStatus()).toExternal())
+                                .withGatewayTransactionId(charge.getGatewayTransactionId())
+                                .withCreatedDate(charge.getCreatedDate())
+                                .withReturnUrl(charge.getReturnUrl())
+                                .withProviderName(charge.getGatewayAccount().getGatewayName())
+                                .build()
+                        ).collect(Collectors.toList());
+
+        return success ->
+                new ChargesPaginationResponseBuilder(searchParams)
+                        .withChargeResponses(chargesResponse)
+                        .withTotalCount(totalCount)
+                        .buildResponse();
     }
 
     @POST
@@ -235,22 +263,6 @@ public class ChargesResource {
     private boolean isFieldSizeValid(Map<String, Object> chargeRequest, String fieldName, int fieldSize) {
         String value = chargeRequest.get(fieldName).toString();
         return value.length() <= fieldSize;
-    }
-
-    private Function<List<ChargeEntity>, Response> jsonResponse() {
-        return charges -> ok(ImmutableMap.of("results", charges.stream()
-                .map(charge -> aChargeResponse()
-                        .withChargeId(charge.getExternalId())
-                        .withAmount(charge.getAmount())
-                        .withReference(charge.getReference())
-                        .withDescription(charge.getDescription())
-                        .withState(ChargeStatus.fromString(charge.getStatus()).toExternal())
-                        .withGatewayTransactionId(charge.getGatewayTransactionId())
-                        .withCreatedDate(charge.getCreatedDate())
-                        .withReturnUrl(charge.getReturnUrl())
-                        .withProviderName(charge.getGatewayAccount().getGatewayName())
-                        .build())
-                .collect(Collectors.toList()))).build();
     }
 
     private static F<String, Response> handleError =

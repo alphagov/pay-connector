@@ -41,12 +41,13 @@ import static uk.gov.pay.connector.matcher.ZoneDateTimeAsStringWithinMatcher.isW
 import static uk.gov.pay.connector.model.api.ExternalChargeState.EXTERNAL_SUBMITTED;
 import static uk.gov.pay.connector.model.domain.ChargeStatus.*;
 import static uk.gov.pay.connector.model.domain.ChargeStatus.CREATED;
+import static uk.gov.pay.connector.resources.ApiPaths.CHARGES_API_PATH;
 import static uk.gov.pay.connector.resources.ApiPaths.CHARGE_API_PATH;
 import static uk.gov.pay.connector.util.DateTimeUtils.toUTCZonedDateTime;
 import static uk.gov.pay.connector.util.JsonEncoder.toJson;
 import static uk.gov.pay.connector.util.NumberMatcher.isNumber;
 
-public class ChargesResourceITest {
+public class ChargesApiResourceITest {
 
     private static final String FRONTEND_CARD_DETAILS_URL = "/secure";
     private static final String JSON_AMOUNT_KEY = "amount";
@@ -267,6 +268,142 @@ public class ChargesResourceITest {
         datesFrom(createdDateStrings).forEach(createdDate ->
                 assertThat(createdDate, is(within(1, DAYS, now())))
         );
+    }
+
+    @Test
+    public void shouldShowTotalCountResultsAndHalLinksForCharges() throws Exception {
+        addCharge(CREATED, "ref-1", now());
+        addCharge(AUTHORISATION_READY, "ref-2", now().minusDays(1));
+        addCharge(CAPTURED, "ref-3", now().minusDays(2));
+        addCharge(CAPTURED, "ref-4", now().minusDays(3));
+        addCharge(CAPTURED, "ref-5", now().minusDays(4));
+        String chargesPath = CHARGES_API_PATH.replace("{accountId}", accountId);
+
+        assertResultsAndJustSelfLinkWhenJustOneResult(chargesPath);
+        assertResultsAndNoPrevLinkWhenOnFirstPage(chargesPath);
+        assertResultsAndAllLinksWhenOnMiddlePage(chargesPath);
+        assertResultsAndNoNextLinksWhenOnLastPage(chargesPath);
+        assert404WhenRequestingInvalidPage(chargesPath);
+    }
+
+    private void assert404WhenRequestingInvalidPage(String chargesPath) {
+        // when 5 charges are there, page is 10, display-size is 2
+        ValidatableResponse response = getChargeApi
+                .withAccountId(accountId)
+                .withQueryParam("reference", "ref")
+                .withQueryParam("page", "10")
+                .withQueryParam("display_size", "2")
+                .withHeader(HttpHeaders.ACCEPT, APPLICATION_JSON)
+                .getTransactions()
+                .statusCode(NOT_FOUND.getStatusCode());
+    }
+
+    private void assertResultsAndJustSelfLinkWhenJustOneResult(String chargesPath) {
+        // when 5 charges are there, page is 1, display-size is 2
+        ValidatableResponse response = getChargeApi
+                .withAccountId(accountId)
+                .withQueryParam("reference", "ref-1")
+                .withQueryParam("page", "1")
+                .withQueryParam("display_size", "2")
+                .withHeader(HttpHeaders.ACCEPT, APPLICATION_JSON)
+                .getTransactions()
+                .statusCode(OK.getStatusCode())
+                .contentType(JSON)
+                // then no prev and next link
+                .body("results.size()", is(1))
+                .body("total", is(1))
+                .body("count", is(1))
+                .body("_links.next_page", isEmptyOrNullString())
+                .body("_links.prev_page", isEmptyOrNullString())
+                .body("_links.first_page.href", is(chargesPath + "?&reference=ref-1&page=1&display_size=2"))
+                .body("_links.last_page.href", is(chargesPath + "?&reference=ref-1&page=1&display_size=2"))
+                .body("_links.self.href", is(chargesPath + "?&reference=ref-1&page=1&display_size=2"));
+
+        List<Map<String, Object>> results = response.extract().body().jsonPath().getList("results");
+        List<String> references = collect(results, "reference");
+        assertThat(references, containsInAnyOrder("ref-1"));
+        assertThat(references, not(contains("ref-1", "ref-3", "ref-4", "ref-5")));
+    }
+
+    private void assertResultsAndNoPrevLinkWhenOnFirstPage(String chargesPath) {
+        // when 5 charges are there, page is 1, display-size is 2
+        ValidatableResponse response = getChargeApi
+                .withAccountId(accountId)
+                .withQueryParam("reference", "ref")
+                .withQueryParam("page", "1")
+                .withQueryParam("display_size", "2")
+                .withHeader(HttpHeaders.ACCEPT, APPLICATION_JSON)
+                .getTransactions()
+                .statusCode(OK.getStatusCode())
+                .contentType(JSON)
+                // then no prev link
+                .body("results.size()", is(2))
+                .body("total", is(5))
+                .body("count", is(2))
+                .body("_links.next_page.href", is(chargesPath + "?&reference=ref&page=2&display_size=2"))
+                .body("_links.prev_page", isEmptyOrNullString())
+                .body("_links.first_page.href", is(chargesPath + "?&reference=ref&page=1&display_size=2"))
+                .body("_links.last_page.href", is(chargesPath + "?&reference=ref&page=3&display_size=2"))
+                .body("_links.self.href", is(chargesPath + "?&reference=ref&page=1&display_size=2"));
+
+        List<Map<String, Object>> results = response.extract().body().jsonPath().getList("results");
+        List<String> references = collect(results, "reference");
+        assertThat(references, containsInAnyOrder("ref-1", "ref-2"));
+        assertThat(references, not(contains("ref-3", "ref-4", "ref-5")));
+    }
+
+    private void assertResultsAndAllLinksWhenOnMiddlePage(String chargesPath) {
+        // when 5 charges are there, page is 2, display-size is 2
+        ValidatableResponse response = getChargeApi
+                .withAccountId(accountId)
+                .withQueryParam("reference", "ref")
+                .withQueryParam("page", "2")
+                .withQueryParam("display_size", "2")
+                .withHeader(HttpHeaders.ACCEPT, APPLICATION_JSON)
+                .getTransactions()
+                .statusCode(OK.getStatusCode())
+                .contentType(JSON)
+                // then all links present
+                .body("results.size()", is(2))
+                .body("total", is(5))
+                .body("count", is(2))
+                .body("_links.next_page.href", is(chargesPath + "?&reference=ref&page=3&display_size=2"))
+                .body("_links.prev_page.href", is(chargesPath + "?&reference=ref&page=1&display_size=2"))
+                .body("_links.first_page.href", is(chargesPath + "?&reference=ref&page=1&display_size=2"))
+                .body("_links.last_page.href", is(chargesPath + "?&reference=ref&page=3&display_size=2"))
+                .body("_links.self.href", is(chargesPath + "?&reference=ref&page=2&display_size=2"));
+
+        List<Map<String, Object>> results = response.extract().body().jsonPath().getList("results");
+        List<String> references = collect(results, "reference");
+        assertThat(references, containsInAnyOrder("ref-3", "ref-4"));
+        assertThat(references, not(contains("ref-1", "ref-2", "ref-5")));
+    }
+
+    private void assertResultsAndNoNextLinksWhenOnLastPage(String chargesPath) {
+        // when 5 charges are there, page is 3, display-size is 2
+        ValidatableResponse response = getChargeApi
+                .withAccountId(accountId)
+                .withQueryParam("reference", "ref")
+                .withQueryParam("page", "3")
+                .withQueryParam("display_size", "2")
+                .withHeader(HttpHeaders.ACCEPT, APPLICATION_JSON)
+                .getTransactions()
+                .statusCode(OK.getStatusCode())
+                .contentType(JSON)
+                // then no next link
+                .body("results.size()", is(1))
+                .body("total", is(5))
+                .body("count", is(1))
+                .body("_links.next_page", isEmptyOrNullString())
+                .body("_links.prev_page.href", is(chargesPath + "?&reference=ref&page=2&display_size=2"))
+                .body("_links.first_page.href", is(chargesPath + "?&reference=ref&page=1&display_size=2"))
+                .body("_links.last_page.href", is(chargesPath + "?&reference=ref&page=3&display_size=2"))
+                .body("_links.self.href", is(chargesPath + "?&reference=ref&page=3&display_size=2"));
+
+        List<Map<String, Object>> results = response.extract().body().jsonPath().getList("results");
+        List<String> references = collect(results, "reference");
+        assertThat(references, containsInAnyOrder("ref-5"));
+        assertThat(references, not(contains("ref-1", "ref-2", "ref-3", "ref-4")));
     }
 
     @Test

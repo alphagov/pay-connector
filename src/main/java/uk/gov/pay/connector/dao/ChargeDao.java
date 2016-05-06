@@ -90,17 +90,28 @@ public class ChargeDao extends JpaDao<ChargeEntity> {
         Root<ChargeEntity> charge = cq.from(ChargeEntity.class);
 
         List<Predicate> predicates = buildParamPredicates(params, cb, charge);
-
         cq.select(charge)
                 .where(predicates.toArray(new Predicate[]{}))
                 .orderBy(cb.desc(charge.get(CREATED_DATE)));
-
         Query query = entityManager.get().createQuery(cq);
-        Long firstResult = params.getPage() * params.getDisplaySize();
-        query.setFirstResult(firstResult.intValue());
-        query.setMaxResults(params.getDisplaySize().intValue());
 
+        if (params.getPage() != null && params.getDisplaySize() != null) {
+            Long firstResult = (params.getPage() - 1) * params.getDisplaySize(); // page coming from params is 1 based, so -1
+            query.setFirstResult(firstResult.intValue());
+            query.setMaxResults(params.getDisplaySize().intValue());
+        }
         return query.getResultList();
+    }
+
+    public Long getTotalFor(ChargeSearchParams params) {
+        CriteriaBuilder cb = entityManager.get().getCriteriaBuilder();
+        CriteriaQuery<Long> cq = cb.createQuery(Long.class);
+        Root<ChargeEntity> charge = cq.from(ChargeEntity.class);
+        List<Predicate> predicates = buildParamPredicates(params, cb, charge);
+
+        cq.select(cb.count(charge));
+        cq.where(predicates.toArray(new Predicate[]{}));
+        return entityManager.get().createQuery(cq).getSingleResult();
     }
 
     public ChargeEntity mergeAndNotifyStatusHasChanged(ChargeEntity chargeEntity) {
@@ -114,7 +125,7 @@ public class ChargeDao extends JpaDao<ChargeEntity> {
         if (params.getGatewayAccountId() != null)
             predicates.add(cb.equal(charge.get(GATEWAY_ACCOUNT).get("id"), params.getGatewayAccountId()));
         if (params.getReference() != null)
-            predicates.add(cb.like(charge.get(REFERENCE), '%'+params.getReference()+'%'));
+            predicates.add(cb.like(charge.get(REFERENCE), '%' + params.getReference() + '%'));
         if (params.getChargeStatuses() != null && !params.getChargeStatuses().isEmpty())
             predicates.add(charge.get(STATUS).in(params.getChargeStatuses()));
         if (params.getFromDate() != null)

@@ -79,7 +79,7 @@ public class ChargeDaoITest extends DaoITestBase {
     }
 
     @Test
-    public void searchChargesWithDefaultSize_100AndPage_1_shouldGetChargesInCreationDateOrder() throws Exception {
+    public void searchChargesWithDefaultSizeAndPage_shouldGetChargesInCreationDateOrder() throws Exception {
         // given
         insertNewChargeWithId(700L, now().plusHours(1));
         insertNewChargeWithId(800L, now().plusHours(2));
@@ -150,8 +150,27 @@ public class ChargeDaoITest extends DaoITestBase {
     }
 
     @Test
-    public void searchChargesByFullReferenceOnly() throws Exception {
+    public void shouldGetTotalCount_5_when_displaySizeIs_2() {
+        // given
+        insertNewChargeWithId(700L, now().plusHours(1));
+        insertNewChargeWithId(800L, now().plusHours(2));
+        insertNewChargeWithId(900L, now().plusHours(3));
+        insertNewChargeWithId(600L, now().plusHours(4));
+        insertNewChargeWithId(500L, now().plusHours(5));
+        ChargeSearchParams params = new ChargeSearchParams()
+                .withGatewayAccountId(defaultTestAccount.getAccountId())
+                .withExternalChargeState(singletonList(EXTERNAL_CREATED))
+                .withDisplaySize(2L);
 
+        // when
+        Long count = chargeDao.getTotalFor(params);
+
+        // then gets the count(*) irrespective of the max results (display_size)
+        assertThat("total count for transactions mismatch", count, is(5L));
+    }
+
+    @Test
+    public void searchChargesByFullReferenceOnly() throws Exception {
         // given
         insertTestCharge();
         ChargeSearchParams params = new ChargeSearchParams()

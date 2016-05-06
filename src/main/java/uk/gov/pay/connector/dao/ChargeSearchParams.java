@@ -1,9 +1,11 @@
 package uk.gov.pay.connector.dao;
 
 import uk.gov.pay.connector.model.api.ExternalChargeState;
+import org.apache.commons.lang3.StringUtils;
 import uk.gov.pay.connector.model.domain.ChargeStatus;
 
 import java.time.ZonedDateTime;
+import java.util.ArrayList;
 import java.util.LinkedList;
 import java.util.List;
 
@@ -13,9 +15,10 @@ public class ChargeSearchParams {
     private String reference;
     private ZonedDateTime fromDate;
     private ZonedDateTime toDate;
-    private Long page = 1L;
-    private Long displaySize = 100L;
+    private Long page;
+    private Long displaySize;
     private List<ChargeStatus> chargeStatuses = new LinkedList<>();
+    private List<ExternalChargeState> externalChargeStates = new ArrayList<>();
 
     public Long getGatewayAccountId() {
         return gatewayAccountId;
@@ -30,14 +33,13 @@ public class ChargeSearchParams {
         return chargeStatuses;
     }
 
-
-    public ChargeSearchParams withExternalChargeState(List<ExternalChargeState> externalStates) {
-        if (externalStates != null) {
-            for (ExternalChargeState externalState : externalStates) {
+    public ChargeSearchParams withExternalChargeState(List<ExternalChargeState> externalChargeStates) {
+        if (externalChargeStates != null) {
+            this.externalChargeStates = externalChargeStates;
+            for (ExternalChargeState externalState : externalChargeStates) {
                 this.chargeStatuses.addAll(ChargeStatus.fromExternal(externalState));
             }
         }
-
         return this;
     }
 
@@ -69,12 +71,11 @@ public class ChargeSearchParams {
     }
 
     public Long getPage() {
-        return page - 1; // 1 based page and 0 based offset
+        return page;
     }
 
     public ChargeSearchParams withPage(Long page) {
-        if (page != null && page >= 0)
-            this.page = page;
+        this.page = (page != null && page >= 1) ? page : 1; // always show first page if its an invalid page request
         return this;
     }
 
@@ -83,13 +84,33 @@ public class ChargeSearchParams {
     }
 
     public ChargeSearchParams withDisplaySize(Long displaySize) {
-        if (displaySize != null && displaySize >= 0)
-            this.displaySize = displaySize;
+        this.displaySize = displaySize;
         return this;
     }
 
     public ChargeSearchParams withInternalChargeStatuses(List<ChargeStatus> statuses) {
         this.chargeStatuses = statuses;
         return this;
+    }
+
+    public String buildQueryParams() {
+        StringBuilder builder = new StringBuilder();
+
+        if (StringUtils.isNotBlank(reference))
+            builder.append("&reference=" + reference);
+        if (fromDate != null)
+            builder.append("&from_date=" + fromDate);
+        if (toDate != null)
+            builder.append("&to_date=" + toDate);
+        if (page != null)
+            builder.append("&page=" + page);
+        if (displaySize != null)
+            builder.append("&display_size=" + displaySize);
+        if (externalChargeStates != null && !externalChargeStates.isEmpty()) {
+            for (ExternalChargeState extState : externalChargeStates) {
+                builder.append("&state=" + extState.getStatus());
+            }
+        }
+        return builder.toString();
     }
 }

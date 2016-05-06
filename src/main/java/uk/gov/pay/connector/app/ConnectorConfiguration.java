@@ -20,6 +20,11 @@ public class ConnectorConfiguration extends Configuration {
 
     @Valid
     @NotNull
+    @JsonProperty("transactionsPaginationServiceConfig")
+    private TransactionsPaginationServiceConfig transactionsPaginationServiceConfig;
+
+    @Valid
+    @NotNull
     private SmartpayCredentialsConfig smartpayConfig;
 
     @Valid
@@ -70,6 +75,10 @@ public class ConnectorConfiguration extends Configuration {
 
     public CardExecutorServiceConfig getExecutorServiceConfig() {
         return executorServiceConfig;
+    }
+
+    public TransactionsPaginationServiceConfig getTransactionsPaginationConfig() {
+        return transactionsPaginationServiceConfig;
     }
 
     public JerseyClientConfiguration getClientConfiguration() {
