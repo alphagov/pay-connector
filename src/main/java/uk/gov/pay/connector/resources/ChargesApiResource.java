@@ -21,30 +21,18 @@ import uk.gov.pay.connector.service.ChargeService;
 import uk.gov.pay.connector.util.ResponseUtil;
 
 import javax.inject.Inject;
-import javax.ws.rs.DefaultValue;
-import javax.ws.rs.GET;
-import javax.ws.rs.POST;
-import javax.ws.rs.Path;
-import javax.ws.rs.PathParam;
-import javax.ws.rs.Produces;
-import javax.ws.rs.QueryParam;
+import javax.ws.rs.*;
 import javax.ws.rs.core.Context;
 import javax.ws.rs.core.Response;
 import javax.ws.rs.core.UriInfo;
 import java.time.ZonedDateTime;
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.List;
-import java.util.Map;
-import java.util.Optional;
-import java.util.function.Function;
+import java.util.*;
 import java.util.stream.Collectors;
 
 import static fj.data.Either.reduce;
 import static java.lang.String.format;
 import static javax.ws.rs.core.MediaType.APPLICATION_JSON;
 import static javax.ws.rs.core.Response.created;
-import static javax.ws.rs.core.Response.ok;
 import static org.apache.commons.lang3.StringUtils.isNotBlank;
 import static uk.gov.pay.connector.model.ChargeResponse.aChargeResponse;
 import static uk.gov.pay.connector.model.domain.ChargeStatus.*;
@@ -133,25 +121,6 @@ public class ChargesApiResource {
                                                 displaySize :
                                                 configuration.getTransactionsPaginationConfig().getDisplayPageSize())
                                         .withPage(pageNumber), uriInfo))));
-    }
-
-    private F<Boolean, Response> listCharges(Long accountId, String reference, String state, String fromDate, String toDate, Function<List<ChargeEntity>, Response> responseFunction) {
-        return success -> {
-            List<ChargeEntity> charges = chargeDao.findAllBy(
-                    new ChargeSearchParams()
-                            .withGatewayAccountId(accountId)
-                            .withReferenceLike(reference)
-                            .withExternalChargeState(parseState(state))
-                            .withFromDate(parseDate(fromDate))
-                            .withToDate(parseDate(toDate))
-            );
-            return responseFunction.apply(charges);
-        };
-    }
-
-    private F<Boolean, Response> listCharges(Function<List<ChargeEntity>, Response> responseFunction, ChargeSearchParams searchParams) {
-        List<ChargeEntity> charges = chargeDao.findAllBy(searchParams);
-        return success -> responseFunction.apply(charges);
     }
 
     private F<Boolean, Response> listCharges(ChargeSearchParams searchParams, UriInfo uriInfo) {
