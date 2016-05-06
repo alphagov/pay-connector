@@ -90,13 +90,13 @@ public class ChargeDaoITest {
     }
 
     @Test
-    public void searchChargesWithDefaultSize_100AndPage_1() throws Exception {
+    public void searchChargesWithDefaultSize_100AndPage_1_shouldGetChargesInCreationDateOrder() throws Exception {
         // given
-        insertNewChargeWithId(700L);
-        insertNewChargeWithId(800L);
-        insertNewChargeWithId(900L);
-        insertNewChargeWithId(600L);
-        insertNewChargeWithId(500L);
+        insertNewChargeWithId(700L, now().plusHours(1));
+        insertNewChargeWithId(800L, now().plusHours(2));
+        insertNewChargeWithId(900L, now().plusHours(3));
+        insertNewChargeWithId(600L, now().plusHours(4));
+        insertNewChargeWithId(500L, now().plusHours(5));
         ChargeSearchParams params = new ChargeSearchParams()
                 .withGatewayAccountId(defaultTestAccount.getAccountId());
 
@@ -105,24 +105,24 @@ public class ChargeDaoITest {
 
         // then
         assertThat(charges.size(), is(5));
-        assertThat(charges.get(0).getId(), is(900L));
-        assertThat(charges.get(1).getId(), is(800L));
-        assertThat(charges.get(2).getId(), is(700L));
-        assertThat(charges.get(3).getId(), is(600L));
-        assertThat(charges.get(4).getId(), is(500L));
+        assertThat(charges.get(0).getId(), is(500L));
+        assertThat(charges.get(1).getId(), is(600L));
+        assertThat(charges.get(2).getId(), is(900L));
+        assertThat(charges.get(3).getId(), is(800L));
+        assertThat(charges.get(4).getId(), is(700L));
     }
 
     @Test
-    public void searchChargesWithSizeAndPageSet() throws Exception {
+    public void searchChargesWithSizeAndPageSetshouldGetChargesInCreationDateOrder() throws Exception {
         // given
-        insertNewChargeWithId(700L);
-        insertNewChargeWithId(800L);
-        insertNewChargeWithId(900L);
-        insertNewChargeWithId(600L);
-        insertNewChargeWithId(500L);
-        insertNewChargeWithId(400L);
-        insertNewChargeWithId(300L);
-        insertNewChargeWithId(200L);
+        insertNewChargeWithId(900L, now().plusHours(1));
+        insertNewChargeWithId(800L, now().plusHours(2));
+        insertNewChargeWithId(700L, now().plusHours(3));
+        insertNewChargeWithId(600L, now().plusHours(4));
+        insertNewChargeWithId(500L, now().plusHours(5));
+        insertNewChargeWithId(400L, now().plusHours(6));
+        insertNewChargeWithId(300L, now().plusHours(7));
+        insertNewChargeWithId(200L, now().plusHours(8));
 
         // when
         ChargeSearchParams params = new ChargeSearchParams()
@@ -132,9 +132,9 @@ public class ChargeDaoITest {
         List<ChargeEntity> charges = chargeDao.findAllBy(params);
         // then
         assertThat(charges.size(), is(3));
-        assertThat(charges.get(0).getId(), is(900L));
-        assertThat(charges.get(1).getId(), is(800L));
-        assertThat(charges.get(2).getId(), is(700L));
+        assertThat(charges.get(0).getId(), is(200L));
+        assertThat(charges.get(1).getId(), is(300L));
+        assertThat(charges.get(2).getId(), is(400L));
 
         // when
         params = new ChargeSearchParams()
@@ -144,9 +144,9 @@ public class ChargeDaoITest {
         charges = chargeDao.findAllBy(params);
         // then
         assertThat(charges.size(), is(3));
-        assertThat(charges.get(0).getId(), is(600L));
-        assertThat(charges.get(1).getId(), is(500L));
-        assertThat(charges.get(2).getId(), is(400L));
+        assertThat(charges.get(0).getId(), is(500L));
+        assertThat(charges.get(1).getId(), is(600L));
+        assertThat(charges.get(2).getId(), is(700L));
 
         // when
         params = new ChargeSearchParams()
@@ -156,8 +156,8 @@ public class ChargeDaoITest {
         charges = chargeDao.findAllBy(params);
         // then
         assertThat(charges.size(), is(2));
-        assertThat(charges.get(0).getId(), is(300L));
-        assertThat(charges.get(1).getId(), is(200L));
+        assertThat(charges.get(0).getId(), is(800L));
+        assertThat(charges.get(1).getId(), is(900L));
     }
 
     @Test
@@ -339,7 +339,7 @@ public class ChargeDaoITest {
     }
 
     @Test
-    public void searchChargesShouldBeOrderedByChargeIdDescending() {
+    public void searchChargesShouldBeOrderedByCreationDateDescending() {
 
         // given
         insertTestCharge();
@@ -379,8 +379,8 @@ public class ChargeDaoITest {
 
         // then
         assertThat(charges.size(), is(3));
-        assertThat(charges.get(0).getId(), is(557L));
-        assertThat(charges.get(1).getId(), is(556L));
+        assertThat(charges.get(0).getId(), is(556L));
+        assertThat(charges.get(1).getId(), is(557L));
         assertThat(charges.get(2).getId(), is(555L));
     }
 
@@ -763,11 +763,12 @@ public class ChargeDaoITest {
                 .insert();
     }
 
-    private DatabaseFixtures.TestCharge insertNewChargeWithId(Long chargeId) {
+    private DatabaseFixtures.TestCharge insertNewChargeWithId(Long chargeId, ZonedDateTime creationDate) {
         return DatabaseFixtures
                 .withDatabaseTestHelper(app.getDatabaseTestHelper())
                 .aTestCharge()
                 .withChargeId(chargeId)
+                .withCreatedDate(creationDate)
                 .withTestAccount(defaultTestAccount)
                 .insert();
     }
