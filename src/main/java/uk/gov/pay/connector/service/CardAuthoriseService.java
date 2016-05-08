@@ -46,7 +46,7 @@ public class CardAuthoriseService extends CardService implements TransactionalGa
                 case COMPLETED:
                     return executeResult.getRight();
                 case IN_PROGRESS:
-                    return inProgressGatewayResponse(ChargeStatus.chargeStatusFrom(chargeEntity.get().getStatus()), chargeId);
+                    return inProgressGatewayResponse(ChargeStatus.fromString(chargeEntity.get().getStatus()), chargeId);
                 default:
                     throw new GenericGatewayRuntimeException("Exception occurred while doing authorisation");
             }

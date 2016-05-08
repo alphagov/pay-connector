@@ -3,52 +3,32 @@ package uk.gov.pay.connector.model.api;
 import uk.gov.pay.connector.model.domain.ChargeStatus;
 
 import static org.apache.commons.lang3.ArrayUtils.contains;
-import static uk.gov.pay.connector.model.domain.ChargeStatus.*;
 
 public enum ExternalChargeStatus {
-    EXT_CREATED("CREATED", CREATED),
-    EXT_IN_PROGRESS("IN PROGRESS", ENTERING_CARD_DETAILS, AUTHORISATION_SUBMITTED, AUTHORISATION_READY, AUTHORISATION_SUCCESS, CAPTURE_READY, CANCEL_READY),
-    EXT_SUCCEEDED("SUCCEEDED", CAPTURED, CAPTURE_SUBMITTED),
-    EXT_FAILED("FAILED", AUTHORISATION_REJECTED, CAPTURE_ERROR, AUTHORISATION_ERROR, CANCEL_ERROR),
-    EXT_SYSTEM_CANCELLED("SYSTEM CANCELLED", SYSTEM_CANCELLED),
-    EXT_EXPIRED("EXPIRED", EXPIRED, EXPIRE_CANCEL_PENDING, EXPIRE_CANCEL_FAILED),
-    EXT_USER_CANCELLED("USER CANCELLED", USER_CANCELLED, USER_CANCEL_ERROR);
+    EXT_CREATED("CREATED"),
+    EXT_IN_PROGRESS("IN PROGRESS"),
+    EXT_SUCCEEDED("SUCCEEDED"),
+    EXT_FAILED("FAILED"),
+    EXT_SYSTEM_CANCELLED("SYSTEM CANCELLED"),
+    EXT_EXPIRED("EXPIRED"),
+    EXT_USER_CANCELLED("USER CANCELLED");
 
     private final String value;
-    private final ChargeStatus[] innerStates;
 
-    ExternalChargeStatus(String value, ChargeStatus... innerStates) {
+    ExternalChargeStatus(String value) {
         this.value = value;
-        this.innerStates = innerStates;
     }
 
     public String getValue() {
         return value;
     }
-    public ChargeStatus[] getInnerStates() {
-        return innerStates;
-    }
 
-    public static ExternalChargeStatus mapFromStatus(ChargeStatus status) {
-        for (ExternalChargeStatus ext : values()) {
-            if (contains(ext.innerStates, status)) {
-                return ext;
-            }
-        }
-        throw new IllegalArgumentException("charge status not recognized: " + status);
-    }
-
-    public static ExternalChargeStatus valueOfExternalStatus(String externalStatus) {
+    public static ExternalChargeStatus fromString(String externalStatus) {
         for (ExternalChargeStatus v : values()) {
             if (v.getValue().equals(externalStatus)) {
                 return v;
             }
         }
         throw new IllegalArgumentException("External charge status not recognized: " + externalStatus);
-    }
-
-
-    public static ExternalChargeStatus mapFromStatus(String status) {
-        return mapFromStatus(chargeStatusFrom(status));
     }
 }

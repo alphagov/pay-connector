@@ -7,6 +7,7 @@ import org.apache.commons.lang3.tuple.Pair;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import uk.gov.pay.connector.model.*;
+import uk.gov.pay.connector.model.domain.ChargeStatus;
 import uk.gov.pay.connector.model.domain.GatewayAccountEntity;
 import uk.gov.pay.connector.service.PaymentProvider;
 
@@ -69,7 +70,7 @@ public class SandboxPaymentProvider implements PaymentProvider {
             String transaction_id = node.get("transaction_id").textValue();
             String newStatus = node.get("status").textValue();
 
-            StatusUpdates statusUpdates = StatusUpdates.withUpdate("OK", ImmutableList.of(Pair.of(transaction_id, chargeStatusFrom(newStatus))));
+            StatusUpdates statusUpdates = StatusUpdates.withUpdate("OK", ImmutableList.of(Pair.of(transaction_id, ChargeStatus.fromString(newStatus))));
             accountUpdater.accept(statusUpdates);
             return statusUpdates;
         } catch (Exception e) {

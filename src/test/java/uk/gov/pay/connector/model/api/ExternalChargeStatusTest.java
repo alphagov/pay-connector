@@ -12,20 +12,12 @@ import static uk.gov.pay.connector.model.api.ExternalChargeStatus.*;
 import static uk.gov.pay.connector.model.domain.ChargeStatus.*;
 
 public class ExternalChargeStatusTest {
-
-    @Test
-    public void shouldMapAllInternalStatuesCorrectlyToExternalStatuses() throws Exception {
-        for (ChargeStatus chargeStatus : EnumSet.allOf(ChargeStatus.class)) {
-            assertThat(ExternalChargeStatus.mapFromStatus(chargeStatus), is(instanceOf(ExternalChargeStatus.class)));
-        }
-    }
-
     @Test
     public void shouldMapAnInternalStatusToAnExternalStatusCorrectly() throws Exception {
-        assertThat(ExternalChargeStatus.mapFromStatus(CAPTURE_READY), is(EXT_IN_PROGRESS));
-            assertThat(ExternalChargeStatus.mapFromStatus(CREATED), is(EXT_CREATED));
-        assertThat(ExternalChargeStatus.mapFromStatus(AUTHORISATION_ERROR), is(EXT_FAILED));
-            assertThat(ExternalChargeStatus.mapFromStatus(CAPTURE_SUBMITTED), is(EXT_SUCCEEDED));
-            assertThat(ExternalChargeStatus.mapFromStatus(SYSTEM_CANCELLED), is(EXT_SYSTEM_CANCELLED));
+        assertThat(CAPTURE_READY.toExternal(), is(EXT_IN_PROGRESS));
+        assertThat(CREATED.toExternal(), is(EXT_CREATED));
+        assertThat(AUTHORISATION_ERROR.toExternal(), is(EXT_FAILED));
+        assertThat(CAPTURE_SUBMITTED.toExternal(), is(EXT_SUCCEEDED));
+        assertThat(SYSTEM_CANCELLED.toExternal(), is(EXT_SYSTEM_CANCELLED));
     }
 }

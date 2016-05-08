@@ -41,7 +41,6 @@ import static org.mockito.ArgumentCaptor.forClass;
 import static org.mockito.Mockito.*;
 import static uk.gov.pay.connector.fixture.ChargeEntityFixture.aValidChargeEntity;
 import static uk.gov.pay.connector.model.ChargeResponse.Builder.aChargeResponse;
-import static uk.gov.pay.connector.model.api.ExternalChargeStatus.mapFromStatus;
 import static uk.gov.pay.connector.model.domain.ChargeStatus.*;
 
 
@@ -290,7 +289,7 @@ public class ChargeServiceTest {
                 .withAmount(chargeEntity.getAmount())
                 .withReference(chargeEntity.getReference())
                 .withDescription(chargeEntity.getDescription())
-                .withStatus(mapFromStatus(chargeEntity.getStatus()).getValue())
+                .withStatus(ChargeStatus.fromString(chargeEntity.getStatus()).toExternal().getValue())
                 .withGatewayTransactionId(chargeEntity.getGatewayTransactionId())
                 .withProviderName(chargeEntity.getGatewayAccount().getGatewayName())
                 .withCreatedDate(chargeEntity.getCreatedDate())

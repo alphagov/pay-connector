@@ -31,8 +31,10 @@ public class ChargeSearchParams {
     }
 
     public ChargeSearchParams withExternalChargeStatus(ExternalChargeStatus externalChargeStatus) {
-        if (externalChargeStatus != null)
-            this.chargeStatuses = Arrays.asList(externalChargeStatus.getInnerStates());
+        if (externalChargeStatus != null) {
+            this.chargeStatuses = ChargeStatus.fromExternal(externalChargeStatus);
+        }
+
         return this;
     }
 

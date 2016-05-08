@@ -5,6 +5,7 @@ import org.apache.commons.csv.CSVPrinter;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import uk.gov.pay.connector.model.domain.ChargeEntity;
+import uk.gov.pay.connector.model.domain.ChargeStatus;
 
 import java.io.IOException;
 import java.text.DecimalFormat;
@@ -13,7 +14,6 @@ import java.util.function.Function;
 
 import static com.google.common.collect.Lists.newArrayList;
 import static org.apache.commons.lang3.StringUtils.defaultString;
-import static uk.gov.pay.connector.model.api.ExternalChargeStatus.mapFromStatus;
 import static uk.gov.pay.connector.util.DateTimeUtils.toUTCDateString;
 
 public class ChargesCSVGenerator {
@@ -56,7 +56,7 @@ public class ChargesCSVGenerator {
             String[] csvChargeArray = new String[6];
             csvChargeArray[0] = defaultString(charge.getReference());
             csvChargeArray[1] = DECIMAL_FORMAT.format(Double.valueOf(charge.getAmount().toString()) / 100);
-            csvChargeArray[2] = mapFromStatus(charge.getStatus()).getValue();
+            csvChargeArray[2] = ChargeStatus.fromString(charge.getStatus()).toExternal().getValue();
             csvChargeArray[3] = defaultString(charge.getGatewayTransactionId());
             csvChargeArray[4] = charge.getExternalId();
             csvChargeArray[5] = toUTCDateString(charge.getCreatedDate());

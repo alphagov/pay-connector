@@ -61,7 +61,7 @@ public class ChargesFrontendResource {
             return fieldsMissingResponse(ImmutableList.of("new_status"));
         }
         try {
-            return updateStatus(chargeId, chargeStatusFrom(newStatusMap.get("new_status").toString()));
+            return updateStatus(chargeId, ChargeStatus.fromString(newStatusMap.get("new_status").toString()));
         } catch (IllegalArgumentException e) {
             logger.error(e.getMessage(), e);
             return badRequestResponse(e.getMessage());
@@ -78,7 +78,7 @@ public class ChargesFrontendResource {
         }
         return chargeDao.findByExternalId(chargeId)
                 .map(chargeEntity -> {
-                    if (CURRENT_STATUSES_ALLOWING_UPDATE_TO_NEW_STATUS.contains(chargeStatusFrom(chargeEntity.getStatus()))) {
+                    if (CURRENT_STATUSES_ALLOWING_UPDATE_TO_NEW_STATUS.contains(ChargeStatus.fromString(chargeEntity.getStatus()))) {
                         chargeEntity.setStatus(newChargeStatus);
                         chargeDao.mergeAndNotifyStatusHasChanged(chargeEntity);
                         return noContentResponse();

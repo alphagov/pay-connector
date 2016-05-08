@@ -36,8 +36,6 @@ import static javax.ws.rs.core.Response.Status.BAD_REQUEST;
 import static javax.ws.rs.core.Response.*;
 import static org.apache.commons.lang3.StringUtils.isNotBlank;
 import static uk.gov.pay.connector.model.ChargeResponse.Builder.aChargeResponse;
-import static uk.gov.pay.connector.model.api.ExternalChargeStatus.mapFromStatus;
-import static uk.gov.pay.connector.model.api.ExternalChargeStatus.valueOfExternalStatus;
 import static uk.gov.pay.connector.model.domain.ChargeStatus.*;
 import static uk.gov.pay.connector.resources.ApiPaths.*;
 import static uk.gov.pay.connector.resources.ApiValidators.validateGatewayAccountReference;
@@ -208,7 +206,7 @@ public class ChargesResource {
     private ExternalChargeStatus parseStatus(String status) {
         ExternalChargeStatus chargeStatus = null;
         if (isNotBlank(status)) {
-            chargeStatus = valueOfExternalStatus(status);
+            chargeStatus = ExternalChargeStatus.fromString(status);
         }
         return chargeStatus;
     }
@@ -254,7 +252,7 @@ public class ChargesResource {
                         .withAmount(charge.getAmount())
                         .withReference(charge.getReference())
                         .withDescription(charge.getDescription())
-                        .withStatus(mapFromStatus(charge.getStatus()).getValue())
+                        .withStatus(ChargeStatus.fromString(charge.getStatus()).toExternal().getValue())
                         .withGatewayTransactionId(charge.getGatewayTransactionId())
                         .withCreatedDate(charge.getCreatedDate())
                         .withReturnUrl(charge.getReturnUrl())
