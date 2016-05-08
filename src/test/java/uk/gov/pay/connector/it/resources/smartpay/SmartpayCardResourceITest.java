@@ -6,7 +6,7 @@ import uk.gov.pay.connector.it.base.CardResourceITestBase;
 import uk.gov.pay.connector.model.domain.ChargeStatus;
 
 import static org.hamcrest.Matchers.is;
-import static uk.gov.pay.connector.model.api.LegacyChargeStatus.LEGACY_EXT_SUCCEEDED;
+import static uk.gov.pay.connector.model.api.ExternalChargeState.EXTERNAL_CONFIRMED;
 import static uk.gov.pay.connector.model.domain.ChargeStatus.*;
 import static uk.gov.pay.connector.util.TransactionId.randomId;
 
@@ -57,7 +57,7 @@ public class SmartpayCardResourceITest extends CardResourceITestBase {
                 .statusCode(204);
 
         assertFrontendChargeStatusIs(chargeId, CAPTURE_SUBMITTED.getValue());
-        assertApiStatusIs(chargeId, LEGACY_EXT_SUCCEEDED.getValue());
+        assertApiStateIs(chargeId, EXTERNAL_CONFIRMED.getStatus());
     }
 
     @Test

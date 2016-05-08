@@ -32,6 +32,7 @@ public class ChargeSearchParams {
         return chargeStatuses;
     }
 
+
     public ChargeSearchParams withExternalChargeState(List<ExternalChargeState> externalStates) {
         if (externalStates != null) {
             for (ExternalChargeState externalState : externalStates) {

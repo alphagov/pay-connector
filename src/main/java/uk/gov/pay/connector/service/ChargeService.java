@@ -8,6 +8,7 @@ import uk.gov.pay.connector.app.LinksConfig;
 import uk.gov.pay.connector.dao.ChargeDao;
 import uk.gov.pay.connector.dao.TokenDao;
 import uk.gov.pay.connector.model.ChargeResponse;
+import uk.gov.pay.connector.model.api.ExternalChargeState;
 import uk.gov.pay.connector.model.domain.ChargeEntity;
 import uk.gov.pay.connector.model.domain.ChargeStatus;
 import uk.gov.pay.connector.model.domain.GatewayAccountEntity;
@@ -60,7 +61,7 @@ public class ChargeService {
     public Optional<ChargeResponse> findChargeForAccount(String chargeId, Long accountId, UriInfo uriInfo) {
         return chargeDao.findByExternalIdAndGatewayAccount(chargeId, accountId)
                 .map(chargeEntity -> {
-                    if (chargeEntity.hasExternalStatus(LEGACY_EXT_CREATED) || chargeEntity.hasExternalStatus(LEGACY_EXT_IN_PROGRESS)) {
+                    if ( !ChargeStatus.fromString(chargeEntity.getStatus()).toExternal().isFinished() ) {
                         return chargeResponseBuilder(uriInfo, chargeEntity, createNewChargeEntityToken(chargeEntity)).build();
                     }
                     return chargeResponseBuilder(uriInfo, chargeEntity).build();

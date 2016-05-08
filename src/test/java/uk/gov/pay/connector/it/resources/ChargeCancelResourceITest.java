@@ -15,7 +15,7 @@ import static java.lang.String.format;
 import static java.util.Arrays.asList;
 import static javax.ws.rs.core.Response.Status.*;
 import static org.hamcrest.Matchers.is;
-import static uk.gov.pay.connector.model.api.LegacyChargeStatus.LEGACY_EXT_SYSTEM_CANCELLED;
+import static uk.gov.pay.connector.model.api.ExternalChargeState.EXTERNAL_CANCELLED;
 import static uk.gov.pay.connector.model.domain.ChargeStatus.*;
 import static uk.gov.pay.connector.model.domain.ChargeStatus.CREATED;
 import static uk.gov.pay.connector.service.CardCancelService.CANCELLABLE_STATUSES;
@@ -49,7 +49,9 @@ public class ChargeCancelResourceITest {
                     restApiCall
                             .withChargeId(chargeId)
                             .getCharge()
-                            .body("status", is(LEGACY_EXT_SYSTEM_CANCELLED.getValue()));
+                            .body("state.status", is("cancelled"))
+                            .body("state.message", is("Payment was cancelled by the service"))
+                            .body("state.code", is("P0040"));
 
                     restFrontendCall
                             .withChargeId(chargeId)
