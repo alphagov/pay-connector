@@ -289,7 +289,7 @@ public class ChargeServiceTest {
                 .withAmount(chargeEntity.getAmount())
                 .withReference(chargeEntity.getReference())
                 .withDescription(chargeEntity.getDescription())
-                .withStatus(ChargeStatus.fromString(chargeEntity.getStatus()).toExternal().getValue())
+                .withStatus(ChargeStatus.fromString(chargeEntity.getStatus()).toLegacy().getValue())
                 .withGatewayTransactionId(chargeEntity.getGatewayTransactionId())
                 .withProviderName(chargeEntity.getGatewayAccount().getGatewayName())
                 .withCreatedDate(chargeEntity.getCreatedDate())

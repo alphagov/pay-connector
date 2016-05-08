@@ -16,7 +16,7 @@ import static java.util.Arrays.asList;
 import static javax.ws.rs.core.Response.Status.BAD_REQUEST;
 import static javax.ws.rs.core.Response.Status.NO_CONTENT;
 import static org.hamcrest.Matchers.is;
-import static uk.gov.pay.connector.model.api.ExternalChargeStatus.EXT_USER_CANCELLED;
+import static uk.gov.pay.connector.model.api.LegacyChargeStatus.LEGACY_EXT_USER_CANCELLED;
 import static uk.gov.pay.connector.model.domain.ChargeStatus.*;
 import static uk.gov.pay.connector.service.CardCancelService.CANCELLABLE_STATUSES;
 
@@ -60,7 +60,7 @@ public class ChargeCancelFrontendResourceITest {
                     connectorRestApi
                             .withChargeId(chargeId)
                             .getCharge()
-                            .body("status", is(EXT_USER_CANCELLED.getValue()));
+                            .body("status", is(LEGACY_EXT_USER_CANCELLED.getValue()));
                 });
     }
 

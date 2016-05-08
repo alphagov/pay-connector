@@ -38,7 +38,7 @@ import static org.hamcrest.Matchers.*;
 import static org.hamcrest.text.MatchesPattern.matchesPattern;
 import static uk.gov.pay.connector.matcher.ResponseContainsLinkMatcher.containsLink;
 import static uk.gov.pay.connector.matcher.ZoneDateTimeAsStringWithinMatcher.isWithin;
-import static uk.gov.pay.connector.model.api.ExternalChargeStatus.EXT_IN_PROGRESS;
+import static uk.gov.pay.connector.model.api.LegacyChargeStatus.LEGACY_EXT_IN_PROGRESS;
 import static uk.gov.pay.connector.model.domain.ChargeStatus.*;
 import static uk.gov.pay.connector.model.domain.ChargeStatus.CREATED;
 import static uk.gov.pay.connector.resources.ApiPaths.CHARGE_API_PATH;
@@ -215,7 +215,7 @@ public class ChargesResourceITest {
                 .statusCode(OK.getStatusCode())
                 .contentType(JSON)
                 .body(JSON_CHARGE_KEY, is(externalChargeId))
-                .body(JSON_STATUS_KEY, is(EXT_IN_PROGRESS.getValue()));
+                .body(JSON_STATUS_KEY, is(LEGACY_EXT_IN_PROGRESS.getValue()));
     }
 
     @Test
@@ -259,7 +259,7 @@ public class ChargesResourceITest {
                 .statusCode(OK.getStatusCode())
                 .contentType(JSON)
                 .body("results.charge_id", hasItem(externalChargeId))
-                .body("results.status", hasItem(EXT_IN_PROGRESS.getValue()))
+                .body("results.status", hasItem(LEGACY_EXT_IN_PROGRESS.getValue()))
                 .body("results.amount", hasItem(6234))
                 .body("results.reference", hasItem("My reference"))
                 .body("results.return_url", hasItem(returnUrl))

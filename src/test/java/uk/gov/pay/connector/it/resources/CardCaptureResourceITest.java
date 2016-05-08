@@ -7,8 +7,8 @@ import static com.jayway.restassured.http.ContentType.JSON;
 import static java.lang.String.format;
 import static java.util.UUID.randomUUID;
 import static org.hamcrest.Matchers.is;
-import static uk.gov.pay.connector.model.api.ExternalChargeStatus.EXT_FAILED;
-import static uk.gov.pay.connector.model.api.ExternalChargeStatus.EXT_SUCCEEDED;
+import static uk.gov.pay.connector.model.api.LegacyChargeStatus.LEGACY_EXT_FAILED;
+import static uk.gov.pay.connector.model.api.LegacyChargeStatus.LEGACY_EXT_SUCCEEDED;
 import static uk.gov.pay.connector.model.domain.ChargeStatus.*;
 
 public class CardCaptureResourceITest extends CardResourceITestBase {
@@ -20,7 +20,7 @@ public class CardCaptureResourceITest extends CardResourceITestBase {
     @Test
     public void shouldFailPayment_IfCaptureStatusIsUnknown() {
         String failedChargeId = createNewChargeWith(CAPTURE_ERROR, randomUUID().toString());
-        assertApiStatusIs(failedChargeId, EXT_FAILED.getValue());
+        assertApiStatusIs(failedChargeId, LEGACY_EXT_FAILED.getValue());
     }
 
     @Test
@@ -32,7 +32,7 @@ public class CardCaptureResourceITest extends CardResourceITestBase {
                 .statusCode(204);
 
         assertFrontendChargeStatusIs(chargeId, CAPTURE_SUBMITTED.getValue());
-        assertApiStatusIs(chargeId, EXT_SUCCEEDED.getValue());
+        assertApiStatusIs(chargeId, LEGACY_EXT_SUCCEEDED.getValue());
     }
 
     @Test

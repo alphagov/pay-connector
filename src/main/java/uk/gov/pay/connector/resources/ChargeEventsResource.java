@@ -6,7 +6,6 @@ import uk.gov.pay.connector.dao.ChargeDao;
 import uk.gov.pay.connector.model.ChargeEvent;
 import uk.gov.pay.connector.model.domain.ChargeEntity;
 import uk.gov.pay.connector.model.domain.ChargeEventEntity;
-import uk.gov.pay.connector.model.domain.ChargeStatus;
 
 import javax.ws.rs.GET;
 import javax.ws.rs.Path;
@@ -49,7 +48,7 @@ public class ChargeEventsResource {
 
     private List<ChargeEvent> transformToExternalStatus(List<ChargeEventEntity> events) {
         return events.stream()
-                .map(event -> new ChargeEvent(event.getChargeEntity().getExternalId(), event.getStatus().toExternal(), event.getUpdated()))
+                .map(event -> new ChargeEvent(event.getChargeEntity().getExternalId(), event.getStatus().toLegacy(), event.getUpdated()))
                 .collect(toList());
     }
 

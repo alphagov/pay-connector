@@ -12,7 +12,7 @@ import uk.gov.pay.connector.dao.ChargeDao;
 import uk.gov.pay.connector.dao.ChargeSearchParams;
 import uk.gov.pay.connector.dao.GatewayAccountDao;
 import uk.gov.pay.connector.model.ChargeResponse;
-import uk.gov.pay.connector.model.api.ExternalChargeStatus;
+import uk.gov.pay.connector.model.api.LegacyChargeStatus;
 import uk.gov.pay.connector.model.domain.ChargeEntity;
 import uk.gov.pay.connector.model.domain.ChargeStatus;
 import uk.gov.pay.connector.service.CardCancelService;
@@ -203,10 +203,10 @@ public class ChargesResource {
         return ZonedDateTime.now().minusSeconds(chargeExpiryWindowSeconds);
     }
 
-    private ExternalChargeStatus parseStatus(String status) {
-        ExternalChargeStatus chargeStatus = null;
+    private LegacyChargeStatus parseStatus(String status) {
+        LegacyChargeStatus chargeStatus = null;
         if (isNotBlank(status)) {
-            chargeStatus = ExternalChargeStatus.fromString(status);
+            chargeStatus = LegacyChargeStatus.fromString(status);
         }
         return chargeStatus;
     }
@@ -252,7 +252,7 @@ public class ChargesResource {
                         .withAmount(charge.getAmount())
                         .withReference(charge.getReference())
                         .withDescription(charge.getDescription())
-                        .withStatus(ChargeStatus.fromString(charge.getStatus()).toExternal().getValue())
+                        .withStatus(ChargeStatus.fromString(charge.getStatus()).toLegacy().getValue())
                         .withGatewayTransactionId(charge.getGatewayTransactionId())
                         .withCreatedDate(charge.getCreatedDate())
                         .withReturnUrl(charge.getReturnUrl())

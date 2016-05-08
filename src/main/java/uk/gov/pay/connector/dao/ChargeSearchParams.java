@@ -1,10 +1,9 @@
 package uk.gov.pay.connector.dao;
 
-import uk.gov.pay.connector.model.api.ExternalChargeStatus;
+import uk.gov.pay.connector.model.api.LegacyChargeStatus;
 import uk.gov.pay.connector.model.domain.ChargeStatus;
 
 import java.time.ZonedDateTime;
-import java.util.Arrays;
 import java.util.List;
 
 public class ChargeSearchParams {
@@ -30,7 +29,7 @@ public class ChargeSearchParams {
         return chargeStatuses;
     }
 
-    public ChargeSearchParams withExternalChargeStatus(ExternalChargeStatus externalChargeStatus) {
+    public ChargeSearchParams withExternalChargeStatus(LegacyChargeStatus externalChargeStatus) {
         if (externalChargeStatus != null) {
             this.chargeStatuses = ChargeStatus.fromExternal(externalChargeStatus);
         }

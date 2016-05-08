@@ -3,7 +3,7 @@ package uk.gov.pay.connector.model;
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import io.dropwizard.jackson.JsonSnakeCase;
-import uk.gov.pay.connector.model.api.ExternalChargeStatus;
+import uk.gov.pay.connector.model.api.LegacyChargeStatus;
 import uk.gov.pay.connector.util.DateTimeUtils;
 
 import java.time.ZonedDateTime;
@@ -12,11 +12,11 @@ import java.time.ZonedDateTime;
 public class ChargeEvent {
 
     private String extChargeId;
-    private ExternalChargeStatus status;
+    private LegacyChargeStatus status;
 
     private ZonedDateTime updated;
 
-    public ChargeEvent(String extChargeId, ExternalChargeStatus chargeStatus, ZonedDateTime updated) {
+    public ChargeEvent(String extChargeId, LegacyChargeStatus chargeStatus, ZonedDateTime updated) {
         this.extChargeId = extChargeId;
         this.status = chargeStatus;
         this.updated = updated;
@@ -31,11 +31,11 @@ public class ChargeEvent {
         this.extChargeId = chargeId;
     }
 
-    public ExternalChargeStatus getStatus() {
+    public LegacyChargeStatus getStatus() {
         return status;
     }
 
-    public void setStatus(ExternalChargeStatus status) {
+    public void setStatus(LegacyChargeStatus status) {
         this.status = status;
     }
 

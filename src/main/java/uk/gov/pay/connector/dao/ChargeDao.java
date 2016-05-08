@@ -2,7 +2,6 @@ package uk.gov.pay.connector.dao;
 
 import com.google.inject.Provider;
 import com.google.inject.persist.Transactional;
-import uk.gov.pay.connector.model.api.ExternalChargeStatus;
 import uk.gov.pay.connector.model.domain.ChargeEntity;
 import uk.gov.pay.connector.model.domain.ChargeEventEntity;
 import uk.gov.pay.connector.model.domain.ChargeStatus;
@@ -10,7 +9,6 @@ import uk.gov.pay.connector.model.domain.ChargeStatus;
 import javax.inject.Inject;
 import javax.persistence.EntityManager;
 import javax.persistence.Query;
-import javax.persistence.TypedQuery;
 import javax.persistence.criteria.*;
 import java.time.ZonedDateTime;
 import java.util.*;

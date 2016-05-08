@@ -33,8 +33,8 @@ import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.*;
 import static org.junit.Assert.assertEquals;
 import static uk.gov.pay.connector.fixture.ChargeEntityFixture.aValidChargeEntity;
-import static uk.gov.pay.connector.model.api.ExternalChargeStatus.EXT_CREATED;
-import static uk.gov.pay.connector.model.api.ExternalChargeStatus.EXT_IN_PROGRESS;
+import static uk.gov.pay.connector.model.api.LegacyChargeStatus.LEGACY_EXT_CREATED;
+import static uk.gov.pay.connector.model.api.LegacyChargeStatus.LEGACY_EXT_IN_PROGRESS;
 import static uk.gov.pay.connector.model.domain.ChargeStatus.*;
 
 public class ChargeDaoITest {
@@ -231,7 +231,7 @@ public class ChargeDaoITest {
         ChargeSearchParams params = new ChargeSearchParams()
                 .withGatewayAccountId(defaultTestAccount.getAccountId())
                 .withReferenceLike(defaultTestCharge.getReference())
-                .withExternalChargeStatus(EXT_CREATED);
+                .withExternalChargeStatus(LEGACY_EXT_CREATED);
 
         // when
         List<ChargeEntity> charges = chargeDao.findAllBy(params);
@@ -256,7 +256,7 @@ public class ChargeDaoITest {
         ChargeSearchParams params = new ChargeSearchParams()
                 .withGatewayAccountId(defaultTestAccount.getAccountId())
                 .withReferenceLike(defaultTestCharge.getReference())
-                .withExternalChargeStatus(EXT_CREATED)
+                .withExternalChargeStatus(LEGACY_EXT_CREATED)
                 .withFromDate(ZonedDateTime.parse(FROM_DATE))
                 .withToDate(ZonedDateTime.parse(TO_DATE));
 
@@ -283,7 +283,7 @@ public class ChargeDaoITest {
         ChargeSearchParams params = new ChargeSearchParams()
                 .withGatewayAccountId(defaultTestAccount.getAccountId())
                 .withReferenceLike(defaultTestCharge.getReference())
-                .withExternalChargeStatus(EXT_CREATED)
+                .withExternalChargeStatus(LEGACY_EXT_CREATED)
                 .withFromDate(ZonedDateTime.parse(FROM_DATE));
 
         // when
@@ -326,7 +326,7 @@ public class ChargeDaoITest {
         ChargeSearchParams params = new ChargeSearchParams()
                 .withGatewayAccountId(defaultTestAccount.getAccountId())
                 .withReferenceLike(defaultTestCharge.getReference())
-                .withExternalChargeStatus(EXT_IN_PROGRESS)
+                .withExternalChargeStatus(LEGACY_EXT_IN_PROGRESS)
                 .withFromDate(ZonedDateTime.parse(FROM_DATE));
 
         // when
@@ -392,7 +392,7 @@ public class ChargeDaoITest {
         ChargeSearchParams params = new ChargeSearchParams()
                 .withGatewayAccountId(defaultTestAccount.getAccountId())
                 .withReferenceLike(defaultTestCharge.getReference())
-                .withExternalChargeStatus(EXT_CREATED)
+                .withExternalChargeStatus(LEGACY_EXT_CREATED)
                 .withToDate(ZonedDateTime.parse(TO_DATE));
 
         // when
@@ -417,7 +417,7 @@ public class ChargeDaoITest {
         ChargeSearchParams params = new ChargeSearchParams()
                 .withGatewayAccountId(defaultTestAccount.getAccountId())
                 .withReferenceLike(defaultTestCharge.getReference())
-                .withExternalChargeStatus(EXT_CREATED)
+                .withExternalChargeStatus(LEGACY_EXT_CREATED)
                 .withFromDate(ZonedDateTime.parse(TO_DATE));
 
         // when
@@ -432,7 +432,7 @@ public class ChargeDaoITest {
         ChargeSearchParams params = new ChargeSearchParams()
                 .withGatewayAccountId(defaultTestAccount.getAccountId())
                 .withReferenceLike(defaultTestCharge.getReference())
-                .withExternalChargeStatus(EXT_CREATED)
+                .withExternalChargeStatus(LEGACY_EXT_CREATED)
                 .withToDate(ZonedDateTime.parse(FROM_DATE));
 
         List<ChargeEntity> charges = chargeDao.findAllBy(params);

@@ -56,7 +56,7 @@ public class ChargesCSVGenerator {
             String[] csvChargeArray = new String[6];
             csvChargeArray[0] = defaultString(charge.getReference());
             csvChargeArray[1] = DECIMAL_FORMAT.format(Double.valueOf(charge.getAmount().toString()) / 100);
-            csvChargeArray[2] = ChargeStatus.fromString(charge.getStatus()).toExternal().getValue();
+            csvChargeArray[2] = ChargeStatus.fromString(charge.getStatus()).toLegacy().getValue();
             csvChargeArray[3] = defaultString(charge.getGatewayTransactionId());
             csvChargeArray[4] = charge.getExternalId();
             csvChargeArray[5] = toUTCDateString(charge.getCreatedDate());

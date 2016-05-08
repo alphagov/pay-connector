@@ -23,7 +23,7 @@ import static javax.ws.rs.HttpMethod.GET;
 import static javax.ws.rs.HttpMethod.POST;
 import static javax.ws.rs.core.MediaType.APPLICATION_FORM_URLENCODED;
 import static uk.gov.pay.connector.model.ChargeResponse.Builder.aChargeResponse;
-import static uk.gov.pay.connector.model.api.ExternalChargeStatus.*;
+import static uk.gov.pay.connector.model.api.LegacyChargeStatus.*;
 import static uk.gov.pay.connector.resources.ApiPaths.CHARGE_API_PATH;
 
 public class ChargeService {
@@ -60,7 +60,7 @@ public class ChargeService {
     public Optional<ChargeResponse> findChargeForAccount(String chargeId, Long accountId, UriInfo uriInfo) {
         return chargeDao.findByExternalIdAndGatewayAccount(chargeId, accountId)
                 .map(chargeEntity -> {
-                    if (chargeEntity.hasExternalStatus(EXT_CREATED) || chargeEntity.hasExternalStatus(EXT_IN_PROGRESS)) {
+                    if (chargeEntity.hasExternalStatus(LEGACY_EXT_CREATED) || chargeEntity.hasExternalStatus(LEGACY_EXT_IN_PROGRESS)) {
                         return chargeResponseBuilder(uriInfo, chargeEntity, createNewChargeEntityToken(chargeEntity)).build();
                     }
                     return chargeResponseBuilder(uriInfo, chargeEntity).build();
@@ -100,7 +100,7 @@ public class ChargeService {
                 .withAmount(charge.getAmount())
                 .withReference(charge.getReference())
                 .withDescription(charge.getDescription())
-                .withStatus(ChargeStatus.fromString(charge.getStatus()).toExternal().getValue())
+                .withStatus(ChargeStatus.fromString(charge.getStatus()).toLegacy().getValue())
                 .withGatewayTransactionId(charge.getGatewayTransactionId())
                 .withProviderName(charge.getGatewayAccount().getGatewayName())
                 .withCreatedDate(charge.getCreatedDate())
