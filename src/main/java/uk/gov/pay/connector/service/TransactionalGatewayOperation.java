@@ -6,8 +6,6 @@ import uk.gov.pay.connector.model.domain.ChargeEntity;
 
 import javax.persistence.OptimisticLockException;
 
-import static java.lang.String.format;
-
 interface TransactionalGatewayOperation {
 
     default GatewayResponse executeGatewayOperationFor(ChargeEntity chargeEntity) {

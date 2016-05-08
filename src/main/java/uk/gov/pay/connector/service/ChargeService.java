@@ -100,6 +100,7 @@ public class ChargeService {
                 .withAmount(charge.getAmount())
                 .withReference(charge.getReference())
                 .withDescription(charge.getDescription())
+                .withState(ChargeStatus.fromString(charge.getStatus()).toExternal())
                 .withStatus(ChargeStatus.fromString(charge.getStatus()).toLegacy().getValue())
                 .withGatewayTransactionId(charge.getGatewayTransactionId())
                 .withProviderName(charge.getGatewayAccount().getGatewayName())

@@ -3,6 +3,7 @@ package uk.gov.pay.connector.model;
 import com.fasterxml.jackson.annotation.JsonInclude;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import com.google.common.collect.ImmutableMap;
+import uk.gov.pay.connector.model.api.ExternalChargeState;
 import uk.gov.pay.connector.util.DateTimeUtils;
 
 import java.net.URI;
@@ -25,6 +26,9 @@ public class ChargeResponse {
 
     @JsonProperty
     private Long amount;
+
+    @JsonProperty
+    private ExternalChargeState state;
 
     @JsonProperty
     private String status;
@@ -51,10 +55,11 @@ public class ChargeResponse {
         return DateTimeUtils.toUTCDateString(createdDate);
     }
 
-    private ChargeResponse(String chargeId, Long amount, String status, String gatewayTransactionId, String returnUrl, String description, String reference, String providerName, ZonedDateTime createdDate, List<Map<String, Object>> dataLinks) {
+    private ChargeResponse(String chargeId, Long amount, ExternalChargeState state, String status, String gatewayTransactionId, String returnUrl, String description, String reference, String providerName, ZonedDateTime createdDate, List<Map<String, Object>> dataLinks) {
         this.dataLinks = dataLinks;
         this.chargeId = chargeId;
         this.amount = amount;
+        this.state = state;
         this.status = status;
         this.gatewayTransactionId = gatewayTransactionId;
         this.returnUrl = returnUrl;
@@ -114,6 +119,7 @@ public class ChargeResponse {
                 "dataLinks=" + dataLinks +
                 ", chargeId='" + chargeId + '\'' +
                 ", amount=" + amount +
+                ", state='" + state + '\'' +
                 ", status='" + status + '\'' +
                 ", gatewayTransactionId='" + gatewayTransactionId + '\'' +
                 ", returnUrl='" + returnUrl + '\'' +
@@ -128,6 +134,7 @@ public class ChargeResponse {
 
         private String chargeId;
         private Long amount;
+        private ExternalChargeState state;
         private String status;
         private String gatewayTransactionId;
         private String returnUrl;
@@ -151,6 +158,11 @@ public class ChargeResponse {
 
         public Builder withAmount(Long amount) {
             this.amount = amount;
+            return this;
+        }
+
+        public Builder withState(ExternalChargeState state) {
+            this.state = state;
             return this;
         }
 
@@ -205,7 +217,7 @@ public class ChargeResponse {
         }
 
         public ChargeResponse build() {
-            return new ChargeResponse(chargeId, amount, status, gatewayTransactionId, returnUrl, description, reference, providerName, createdDate, links);
+            return new ChargeResponse(chargeId, amount, state, status, gatewayTransactionId, returnUrl, description, reference, providerName, createdDate, links);
         }
 
         public Builder withProviderName(String providerName) {
