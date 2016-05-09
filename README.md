@@ -197,7 +197,10 @@ Content-Type: application/json
     "amount": 5000,
     "gateway_account_id": "10",
     "gateway_transaction_id": "DFG98-FG8J-R78HJ-8JUG9",
-    "status": "CREATED",
+    "state": {
+      "status": "created",
+      "finished": false
+    }
     "return_url": "http://example.service/return_from_payments" 
     "links": [
         {
@@ -410,11 +413,19 @@ Content-Type: application/json
  "charge_id": 4321,
   "events":[
     {
-        "status": "CREATED"
+        "state": {
+          "status": "created",
+          "finished": false
+        }
         "updated": "23-12-2015 13:21:05"
     },
      {
-        "status": "IN PROGRESS",
+        "state": {
+          "status": "cancelled",
+          "finished": true,
+          "message": "Payment was cancelled by service",
+          "code": "P0040"
+        }
         "updated": "23-12-2015 13:23:12"
      }
   ]
