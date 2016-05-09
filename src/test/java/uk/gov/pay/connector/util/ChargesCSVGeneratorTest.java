@@ -11,6 +11,7 @@ import static com.google.common.collect.Lists.newArrayList;
 import static org.hamcrest.core.Is.is;
 import static org.junit.Assert.assertThat;
 import static uk.gov.pay.connector.model.domain.ChargeStatus.CAPTURE_READY;
+import static uk.gov.pay.connector.model.domain.ChargeStatus.USER_CANCELLED;
 
 public class ChargesCSVGeneratorTest {
 
@@ -18,7 +19,7 @@ public class ChargesCSVGeneratorTest {
     public void shouldGenerateCsvOnlyWithHeadersWhenListOfChargesIsEmpty() throws Exception {
 
         String generatedCsv = ChargesCSVGenerator.generate(newArrayList());
-        String expectedOutput = "Service Payment Reference,Amount,Status,Gateway Transaction ID,GOV.UK Pay ID,Date Created\n";
+        String expectedOutput = "Service Payment Reference,Amount,State,Finished,Error Message,Error Code,Status,Gateway Transaction ID,GOV.UK Pay ID,Date Created\n";
 
         assertThat(generatedCsv, is(expectedOutput));
     }
@@ -45,8 +46,8 @@ public class ChargesCSVGeneratorTest {
         String generatedCsv = ChargesCSVGenerator.generate(newArrayList(charge));
 
         String expectedDate = DateTimeUtils.toUTCDateString(charge.getCreatedDate());
-        String expectedOutput = "Service Payment Reference,Amount,Status,Gateway Transaction ID,GOV.UK Pay ID,Date Created\n" +
-                "reference,140.00,CREATED,222," + externalId + "," + expectedDate + "\n";
+        String expectedOutput = "Service Payment Reference,Amount,State,Finished,Error Message,Error Code,Status,Gateway Transaction ID,GOV.UK Pay ID,Date Created\n" +
+                "reference,140.00,created,false,,,CREATED,222," + externalId + "," + expectedDate + "\n";
 
         assertThat(generatedCsv, is(expectedOutput));
     }
@@ -82,10 +83,23 @@ public class ChargesCSVGeneratorTest {
         String externalId2 = charge2.getExternalId();
         String expectedDateCharge2 = DateTimeUtils.toUTCDateString(charge2.getCreatedDate());
 
-        String generate = ChargesCSVGenerator.generate(newArrayList(charge1, charge2));
-        String expectedOutput = "Service Payment Reference,Amount,Status,Gateway Transaction ID,GOV.UK Pay ID,Date Created\n" +
-                "ref,4.00,CREATED,200," + externalId1 + "," + expectedDateCharge1 + "\n" +
-                "ref-2,2.00,IN PROGRESS,," + externalId2 + "," + expectedDateCharge2 + "\n";
+        ChargeEntity charge3 = ChargeEntityFixture.aValidChargeEntity()
+                .withId(101L)
+                .withAmount(300L)
+                .withStatus(USER_CANCELLED)
+                .withReference("ref-7")
+                .withGatewayAccountEntity(gatewayAccount2)
+                .build();
+
+        String externalId3 = charge3.getExternalId();
+        String expectedDateCharge3 = DateTimeUtils.toUTCDateString(charge3.getCreatedDate());
+
+        String generate = ChargesCSVGenerator.generate(newArrayList(charge1, charge2, charge3));
+        String expectedOutput =
+                "Service Payment Reference,Amount,State,Finished,Error Message,Error Code,Status,Gateway Transaction ID,GOV.UK Pay ID,Date Created\n" +
+                "ref,4.00,created,false,,,CREATED,200," + externalId1 + "," + expectedDateCharge1 + "\n" +
+                "ref-2,2.00,submitted,false,,,IN PROGRESS,," + externalId2 + "," + expectedDateCharge2 + "\n" +
+                "ref-7,3.00,failed,true,Payment was cancelled by the user,P0030,USER CANCELLED,," + externalId3 + "," + expectedDateCharge3 + "\n";
 
         assertThat(generate, is(expectedOutput));
     }
