@@ -1,8 +1,7 @@
 package uk.gov.pay.connector.model;
 
 import org.slf4j.Logger;
-
-import javax.ws.rs.core.Response;
+import uk.gov.pay.connector.service.GatewayClient;
 
 import static java.lang.String.format;
 import static uk.gov.pay.connector.model.ErrorResponse.unexpectedStatusCodeFromGateway;
@@ -42,7 +41,7 @@ public class InquiryResponse extends GatewayResponse {
         return new InquiryResponse(SUCCEDED, null, transactionId, newStatus);
     }
 
-    public static InquiryResponse errorInquiryResponse(Logger logger, Response response) {
+    public static InquiryResponse errorInquiryResponse(Logger logger, GatewayClient.Response response) {
         logger.error(format("Error code received from gateway: %s.", response.getStatus()));
         return new InquiryResponse(FAILED, unexpectedStatusCodeFromGateway("Error processing status inquiry"), null, null);
     }
