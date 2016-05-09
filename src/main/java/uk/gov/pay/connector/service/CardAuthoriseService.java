@@ -80,6 +80,8 @@ public class CardAuthoriseService extends CardService implements TransactionalGa
         reloadedCharge.setStatus(authorisationResponse.getNewChargeStatus());
         reloadedCharge.setGatewayTransactionId(authorisationResponse.getTransactionId());
 
+        chargeDao.mergeAndNotifyStatusHasChanged(reloadedCharge);
+
         return operationResponse;
     }
 }
