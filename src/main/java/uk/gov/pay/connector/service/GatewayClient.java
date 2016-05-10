@@ -11,16 +11,9 @@ import uk.gov.pay.connector.util.XMLUnmarshallerException;
 import javax.ws.rs.ProcessingException;
 import javax.ws.rs.client.Client;
 import javax.ws.rs.client.Entity;
-import javax.ws.rs.core.*;
-import javax.ws.rs.core.Link.Builder;
 import java.net.SocketException;
 import java.net.SocketTimeoutException;
-import java.net.URI;
 import java.net.UnknownHostException;
-import java.util.Date;
-import java.util.Locale;
-import java.util.Map;
-import java.util.Set;
 
 import static fj.data.Either.left;
 import static fj.data.Either.right;
@@ -104,96 +97,20 @@ public class GatewayClient {
     }
 
     static public class Response {
-        private final javax.ws.rs.core.Response delegate;
+        private final int status;
         private final String entity;
 
         protected Response(final javax.ws.rs.core.Response delegate) {
-            this.delegate = delegate;
+            this.status = delegate.getStatus();
             this.entity = delegate.readEntity(String.class);
         }
 
         public int getStatus() {
-            return delegate.getStatus();
-        }
-
-        public javax.ws.rs.core.Response.StatusType getStatusInfo() {
-            return delegate.getStatusInfo();
+            return status;
         }
 
         public String getEntity() {
             return entity;
-        }
-
-        public String toString() {
-            return delegate.toString();
-        }
-
-        public MediaType getMediaType() {
-            return delegate.getMediaType();
-        }
-
-        public Locale getLanguage() {
-            return delegate.getLanguage();
-        }
-
-        public int getLength() {
-            return delegate.getLength();
-        }
-
-        public Set<String> getAllowedMethods() {
-            return delegate.getAllowedMethods();
-        }
-
-        public Map<String, NewCookie> getCookies() {
-            return delegate.getCookies();
-        }
-
-        public EntityTag getEntityTag() {
-            return delegate.getEntityTag();
-        }
-
-        public Date getDate() {
-            return delegate.getDate();
-        }
-
-        public Date getLastModified() {
-            return delegate.getLastModified();
-        }
-
-        public URI getLocation() {
-            return delegate.getLocation();
-        }
-
-        public Set<Link> getLinks() {
-            return delegate.getLinks();
-        }
-
-        public boolean hasLink(final String relation) {
-            return delegate.hasLink(relation);
-        }
-
-        public Link getLink(final String relation) {
-            return delegate.getLink(relation);
-        }
-
-        public Builder getLinkBuilder(final String relation) {
-            return delegate.getLinkBuilder(relation);
-        }
-
-        public MultivaluedMap<String, Object> getMetadata() {
-            return delegate.getMetadata();
-        }
-
-        public MultivaluedMap<String, Object> getHeaders() {
-            return delegate.getHeaders();
-        }
-
-        public MultivaluedMap<String, String> getStringHeaders() {
-            return delegate.getStringHeaders();
-        }
-
-        public String getHeaderString(final String name) {
-            return delegate.getHeaderString(name);
         }
     }
 }
