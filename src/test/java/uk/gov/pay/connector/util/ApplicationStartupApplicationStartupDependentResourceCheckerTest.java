@@ -1,4 +1,4 @@
-package uk.gov.pay.connector.managed;
+package uk.gov.pay.connector.util;
 
 import ch.qos.logback.classic.Logger;
 import ch.qos.logback.classic.spi.ILoggingEvent;
@@ -14,7 +14,6 @@ import org.mockito.Mock;
 import org.mockito.runners.MockitoJUnitRunner;
 import org.slf4j.LoggerFactory;
 import uk.gov.pay.connector.app.ConnectorConfiguration;
-import uk.gov.pay.connector.util.DependentResource;
 
 import java.sql.Connection;
 import java.sql.SQLException;
@@ -25,16 +24,16 @@ import static org.junit.Assert.assertThat;
 import static org.mockito.Mockito.*;
 
 @RunWith(MockitoJUnitRunner.class)
-public class DependentResourceCheckerTest {
+public class ApplicationStartupApplicationStartupDependentResourceCheckerTest {
 
     @InjectMocks
-    DependentResourceChecker dependentResourceChecker;
+    ApplicationStartupDependentResourceChecker applicationStartupDependentResourceChecker;
 
     @Mock
     ConnectorConfiguration mockConnectorConfiguration;
 
     @Mock
-    DependentResource mockDependentResource;
+    ApplicationStartupDependentResource mockApplicationStartupDependentResource;
 
     private Appender<ILoggingEvent> mockAppender;
 
@@ -43,7 +42,7 @@ public class DependentResourceCheckerTest {
 
     @Before
     public void setup() {
-        Logger root = (Logger) LoggerFactory.getLogger(DependentResourceChecker.class);
+        Logger root = (Logger) LoggerFactory.getLogger(ApplicationStartupDependentResourceChecker.class);
         mockAppender = mockAppender();
         root.addAppender(mockAppender);
     }
@@ -52,14 +51,14 @@ public class DependentResourceCheckerTest {
     public void start_ShouldWaitAndLogUntilDatabaseIsAccessible() throws Exception {
 
         Connection mockConnection = mock(Connection.class);
-        when(mockDependentResource.getDatabaseConnection())
+        when(mockApplicationStartupDependentResource.getDatabaseConnection())
                 .thenThrow(new SQLException("not there yet"))
                 .thenReturn(mockConnection);
 
-        dependentResourceChecker.start();
+        applicationStartupDependentResourceChecker.checkAndWaitForResources();
 
-        verify(mockDependentResource, times(2)).getDatabaseConnection();
-        verify(mockDependentResource).sleep(5000L);
+        verify(mockApplicationStartupDependentResource, times(2)).getDatabaseConnection();
+        verify(mockApplicationStartupDependentResource).sleep(5000L);
 
         verify(mockAppender, times(3)).doAppend(loggingEventArgumentCaptor.capture());
         List<LoggingEvent> allValues = loggingEventArgumentCaptor.getAllValues();
@@ -72,18 +71,18 @@ public class DependentResourceCheckerTest {
     @Test
     public void start_ShouldProgressivelyIncrementSleepingTimeBetweenChecksForDBAccessibility() throws Exception {
         Connection mockConnection = mock(Connection.class);
-        when(mockDependentResource.getDatabaseConnection())
+        when(mockApplicationStartupDependentResource.getDatabaseConnection())
                 .thenThrow(new SQLException("not there"))
                 .thenThrow(new SQLException("not there yet"))
                 .thenThrow(new SQLException("still not there"))
                 .thenReturn(mockConnection);
 
-        dependentResourceChecker.start();
+        applicationStartupDependentResourceChecker.checkAndWaitForResources();
 
-        verify(mockDependentResource, times(4)).getDatabaseConnection();
-        verify(mockDependentResource).sleep(5000L);
-        verify(mockDependentResource).sleep(10000L);
-        verify(mockDependentResource).sleep(15000L);
+        verify(mockApplicationStartupDependentResource, times(4)).getDatabaseConnection();
+        verify(mockApplicationStartupDependentResource).sleep(5000L);
+        verify(mockApplicationStartupDependentResource).sleep(10000L);
+        verify(mockApplicationStartupDependentResource).sleep(15000L);
         verify(mockAppender, times(5)).doAppend(loggingEventArgumentCaptor.capture());
 
         List<LoggingEvent> logStatement = loggingEventArgumentCaptor.getAllValues();
@@ -97,9 +96,9 @@ public class DependentResourceCheckerTest {
     @Test
     public void start_ShouldCloseAnyAcquiredConnectionWhenTheCheckIsDone() throws Exception {
         Connection mockConnection = mock(Connection.class);
-        when(mockDependentResource.getDatabaseConnection()).thenReturn(mockConnection);
+        when(mockApplicationStartupDependentResource.getDatabaseConnection()).thenReturn(mockConnection);
 
-        dependentResourceChecker.start();
+        applicationStartupDependentResourceChecker.checkAndWaitForResources();
 
         verify(mockConnection).close();
     }
