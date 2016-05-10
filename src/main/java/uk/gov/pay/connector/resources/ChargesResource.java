@@ -12,7 +12,8 @@ import uk.gov.pay.connector.dao.ChargeDao;
 import uk.gov.pay.connector.dao.ChargeSearchParams;
 import uk.gov.pay.connector.dao.GatewayAccountDao;
 import uk.gov.pay.connector.model.ChargeResponse;
-import uk.gov.pay.connector.model.api.ExternalChargeStatus;
+import uk.gov.pay.connector.model.api.ExternalChargeState;
+import uk.gov.pay.connector.model.api.LegacyChargeStatus;
 import uk.gov.pay.connector.model.domain.ChargeEntity;
 import uk.gov.pay.connector.model.domain.ChargeStatus;
 import uk.gov.pay.connector.service.CardCancelService;
@@ -36,8 +37,6 @@ import static javax.ws.rs.core.Response.Status.BAD_REQUEST;
 import static javax.ws.rs.core.Response.*;
 import static org.apache.commons.lang3.StringUtils.isNotBlank;
 import static uk.gov.pay.connector.model.ChargeResponse.Builder.aChargeResponse;
-import static uk.gov.pay.connector.model.api.ExternalChargeStatus.mapFromStatus;
-import static uk.gov.pay.connector.model.api.ExternalChargeStatus.valueOfExternalStatus;
 import static uk.gov.pay.connector.model.domain.ChargeStatus.*;
 import static uk.gov.pay.connector.resources.ApiPaths.*;
 import static uk.gov.pay.connector.resources.ApiValidators.validateGatewayAccountReference;
@@ -55,6 +54,7 @@ public class ChargesResource {
             REFERENCE_KEY, 255
     );
 
+    private static final String STATE_KEY = "state";
     private static final String STATUS_KEY = "status";
     private static final String FROM_DATE_KEY = "from_date";
     private static final String TO_DATE_KEY = "to_date";
@@ -100,6 +100,7 @@ public class ChargesResource {
     @Produces(APPLICATION_JSON)
     public Response getChargesJson(@PathParam(ACCOUNT_ID) Long accountId,
                                    @QueryParam(REFERENCE_KEY) String reference,
+                                   @QueryParam(STATE_KEY) String state,
                                    @QueryParam(STATUS_KEY) String status,
                                    @QueryParam(FROM_DATE_KEY) String fromDate,
                                    @QueryParam(TO_DATE_KEY) String toDate,
@@ -112,7 +113,7 @@ public class ChargesResource {
                 .validateDateQueryParams(inputDatePairMap)
                 .map(errorMessage -> badRequestResponse(errorMessage))
                 .orElseGet(() -> reduce(validateGatewayAccountReference(gatewayAccountDao, accountId)
-                        .bimap(handleError, listCharges(accountId, reference, status, fromDate, toDate, pageNumber, displaySize, jsonResponse()))));
+                        .bimap(handleError, listCharges(accountId, reference, state, status, fromDate, toDate, pageNumber, displaySize, jsonResponse()))));
     }
 
     @GET
@@ -120,6 +121,7 @@ public class ChargesResource {
     @Produces(TEXT_CSV)
     public Response getChargesCsv(@PathParam(ACCOUNT_ID) Long accountId,
                                   @QueryParam(REFERENCE_KEY) String reference,
+                                  @QueryParam(STATE_KEY) String state,
                                   @QueryParam(STATUS_KEY) String status,
                                   @QueryParam(FROM_DATE_KEY) String fromDate,
                                   @QueryParam(TO_DATE_KEY) String toDate,
@@ -128,16 +130,17 @@ public class ChargesResource {
                 .validateDateQueryParams(ImmutableList.of(Pair.of(FROM_DATE_KEY, fromDate), Pair.of(TO_DATE_KEY, toDate)))
                 .map(errorMessage -> status(BAD_REQUEST).entity(errorMessage).build())
                 .orElseGet(() -> reduce(validateGatewayAccountReference(gatewayAccountDao, accountId)
-                        .bimap(handleError, listCharges(accountId, reference, status, fromDate, toDate, csvResponse()))));
+                        .bimap(handleError, listCharges(accountId, reference, state, status, fromDate, toDate, csvResponse()))));
     }
 
-    private F<Boolean, Response> listCharges(Long accountId, String reference, String status, String fromDate, String toDate, Function<List<ChargeEntity>, Response> responseFunction) {
+    private F<Boolean, Response> listCharges(Long accountId, String reference, String state, String status, String fromDate, String toDate, Function<List<ChargeEntity>, Response> responseFunction) {
         return success -> {
             List<ChargeEntity> charges = chargeDao.findAllBy(
                     new ChargeSearchParams()
                             .withGatewayAccountId(accountId)
                             .withReferenceLike(reference)
-                            .withExternalChargeStatus(parseStatus(status))
+                            .withExternalChargeState(parseState(state))
+                            .withLegacyChargeStatus(parseStatus(status))
                             .withFromDate(parseDate(fromDate))
                             .withToDate(parseDate(toDate))
             );
@@ -145,13 +148,14 @@ public class ChargesResource {
         };
     }
 
-    private F<Boolean, Response> listCharges(Long accountId, String reference, String status, String fromDate, String toDate, Long page, Long displaySize, Function<List<ChargeEntity>, Response> responseFunction) {
+    private F<Boolean, Response> listCharges(Long accountId, String reference, String state, String status, String fromDate, String toDate, Long page, Long displaySize, Function<List<ChargeEntity>, Response> responseFunction) {
         return success -> {
             List<ChargeEntity> charges = chargeDao.findAllBy(
                     new ChargeSearchParams()
                             .withGatewayAccountId(accountId)
                             .withReferenceLike(reference)
-                            .withExternalChargeStatus(parseStatus(status))
+                            .withExternalChargeState(parseState(state))
+                            .withLegacyChargeStatus(parseStatus(status))
                             .withFromDate(parseDate(fromDate))
                             .withToDate(parseDate(toDate))
                             .withDisplaySize(displaySize)
@@ -205,10 +209,18 @@ public class ChargesResource {
         return ZonedDateTime.now().minusSeconds(chargeExpiryWindowSeconds);
     }
 
-    private ExternalChargeStatus parseStatus(String status) {
-        ExternalChargeStatus chargeStatus = null;
+    private List<ExternalChargeState> parseState(String state) {
+        List<ExternalChargeState> externalStates = null;
+        if (isNotBlank(state)) {
+            externalStates = ExternalChargeState.fromStatusString(state);
+        }
+        return externalStates;
+    }
+
+    private LegacyChargeStatus parseStatus(String status) {
+        LegacyChargeStatus chargeStatus = null;
         if (isNotBlank(status)) {
-            chargeStatus = valueOfExternalStatus(status);
+            chargeStatus = LegacyChargeStatus.fromString(status);
         }
         return chargeStatus;
     }
@@ -254,7 +266,8 @@ public class ChargesResource {
                         .withAmount(charge.getAmount())
                         .withReference(charge.getReference())
                         .withDescription(charge.getDescription())
-                        .withStatus(mapFromStatus(charge.getStatus()).getValue())
+                        .withState(ChargeStatus.fromString(charge.getStatus()).toExternal())
+                        .withStatus(ChargeStatus.fromString(charge.getStatus()).toLegacy().getValue())
                         .withGatewayTransactionId(charge.getGatewayTransactionId())
                         .withCreatedDate(charge.getCreatedDate())
                         .withReturnUrl(charge.getReturnUrl())

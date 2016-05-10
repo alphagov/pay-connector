@@ -5,7 +5,7 @@ import com.jayway.restassured.response.ValidatableResponse;
 import org.junit.Before;
 import org.junit.Rule;
 import org.junit.Test;
-import uk.gov.pay.connector.model.api.ExternalChargeStatus;
+import uk.gov.pay.connector.model.api.ExternalChargeState;
 import uk.gov.pay.connector.model.domain.ChargeStatus;
 import uk.gov.pay.connector.rules.DropwizardAppWithPostgresRule;
 import uk.gov.pay.connector.util.RandomIdGenerator;
@@ -161,8 +161,8 @@ public class ChargesFrontendResourceITest {
         response.statusCode(OK.getStatusCode())
                 .contentType(JSON)
                 .body("results", hasSize(2));
-        assertTransactionEntry(response, 0, externalChargeId2, null, amount2, ExternalChargeStatus.EXT_FAILED.getValue());
-        assertTransactionEntry(response, 1, externalChargeId1, gatewayTransactionId1, amount1, ExternalChargeStatus.EXT_IN_PROGRESS.getValue());
+        assertTransactionEntry(response, 0, externalChargeId2, null, amount2, ExternalChargeState.EXTERNAL_FAILED_REJECTED.getStatus());
+        assertTransactionEntry(response, 1, externalChargeId1, gatewayTransactionId1, amount1, ExternalChargeState.EXTERNAL_SUBMITTED.getStatus());
     }
 
     @Test
@@ -239,7 +239,7 @@ public class ChargesFrontendResourceITest {
         response.body("results[" + index + "].charge_id", is(externalChargeId))
                 .body("results[" + index + "].gateway_transaction_id", is(gatewayTransactionId))
                 .body("results[" + index + "].amount", is(amount))
-                .body("results[" + index + "].status", is(chargeStatus));
+                .body("results[" + index + "].state.status", is(chargeStatus));
     }
 
     private String postToCreateACharge(long expectedAmount) {

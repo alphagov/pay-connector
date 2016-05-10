@@ -3,7 +3,8 @@ package uk.gov.pay.connector.model;
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import io.dropwizard.jackson.JsonSnakeCase;
-import uk.gov.pay.connector.model.api.ExternalChargeStatus;
+import uk.gov.pay.connector.model.api.ExternalChargeState;
+import uk.gov.pay.connector.model.api.LegacyChargeStatus;
 import uk.gov.pay.connector.util.DateTimeUtils;
 
 import java.time.ZonedDateTime;
@@ -12,13 +13,16 @@ import java.time.ZonedDateTime;
 public class ChargeEvent {
 
     private String extChargeId;
-    private ExternalChargeStatus status;
+
+    private ExternalChargeState state;
+    private LegacyChargeStatus legacyStatus;
 
     private ZonedDateTime updated;
 
-    public ChargeEvent(String extChargeId, ExternalChargeStatus chargeStatus, ZonedDateTime updated) {
+    public ChargeEvent(String extChargeId, ExternalChargeState state, LegacyChargeStatus legacyStatus, ZonedDateTime updated) {
         this.extChargeId = extChargeId;
-        this.status = chargeStatus;
+        this.state = state;
+        this.legacyStatus = legacyStatus;
         this.updated = updated;
     }
 
@@ -31,18 +35,25 @@ public class ChargeEvent {
         this.extChargeId = chargeId;
     }
 
-    public ExternalChargeStatus getStatus() {
-        return status;
+    public LegacyChargeStatus getStatus() {
+        return legacyStatus;
     }
 
-    public void setStatus(ExternalChargeStatus status) {
-        this.status = status;
+    public void setStatus(LegacyChargeStatus status) {
+        this.legacyStatus = status;
+    }
+
+    @JsonProperty("state")
+    public ExternalChargeState getState() {
+        return state;
     }
 
     @JsonProperty("status")
-    public String getExternalStatusString() {
-        return status.getValue();
+    public String getLegacyStatusString() {
+        return legacyStatus.getValue();
     }
+
+
 
     @JsonProperty("updated")
     public String getUpdated() {
@@ -53,7 +64,7 @@ public class ChargeEvent {
     public String toString() {
         return "ChargeEvent{" +
                 "chargeId=" + extChargeId +
-                ", status=" + status +
+                ", state=" + state +
                 ", updated=" + updated +
                 '}';
     }
@@ -67,13 +78,13 @@ public class ChargeEvent {
         ChargeEvent that = (ChargeEvent) o;
 
         if (!extChargeId.equals(that.extChargeId)) return false;
-        return status == that.status;
+        return state == that.state;
     }
 
     @Override
     public int hashCode() {
         int result = extChargeId.hashCode();
-        result = 31 * result + status.hashCode();
+        result = 31 * result + state.hashCode();
         return result;
     }
 }

@@ -38,7 +38,7 @@ import static org.hamcrest.Matchers.*;
 import static org.hamcrest.text.MatchesPattern.matchesPattern;
 import static uk.gov.pay.connector.matcher.ResponseContainsLinkMatcher.containsLink;
 import static uk.gov.pay.connector.matcher.ZoneDateTimeAsStringWithinMatcher.isWithin;
-import static uk.gov.pay.connector.model.api.ExternalChargeStatus.EXT_IN_PROGRESS;
+import static uk.gov.pay.connector.model.api.ExternalChargeState.EXTERNAL_SUBMITTED;
 import static uk.gov.pay.connector.model.domain.ChargeStatus.*;
 import static uk.gov.pay.connector.model.domain.ChargeStatus.CREATED;
 import static uk.gov.pay.connector.resources.ApiPaths.CHARGE_API_PATH;
@@ -56,6 +56,7 @@ public class ChargesResourceITest {
     private static final String JSON_RETURN_URL_KEY = "return_url";
     private static final String JSON_CHARGE_KEY = "charge_id";
     private static final String JSON_STATUS_KEY = "status";
+    private static final String JSON_STATE_KEY = "state.status";
     private static final String JSON_MESSAGE_KEY = "message";
     private static final String JSON_PROVIDER_KEY = "payment_provider";
     private static final String CSV_CONTENT_TYPE = "text/csv";
@@ -215,7 +216,7 @@ public class ChargesResourceITest {
                 .statusCode(OK.getStatusCode())
                 .contentType(JSON)
                 .body(JSON_CHARGE_KEY, is(externalChargeId))
-                .body(JSON_STATUS_KEY, is(EXT_IN_PROGRESS.getValue()));
+                .body(JSON_STATE_KEY, is(EXTERNAL_SUBMITTED.getStatus()));
     }
 
     @Test
@@ -236,8 +237,8 @@ public class ChargesResourceITest {
                 .getTransactions()
                 .statusCode(OK.getStatusCode())
                 .contentType(CSV_CONTENT_TYPE)
-                .body(is("Service Payment Reference,Amount,Status,Gateway Transaction ID,GOV.UK Pay ID,Date Created\n" +
-                        "My reference,62.34,IN PROGRESS,," + externalChargeId + ",2016-01-25T13:45:32Z\n"));
+                .body(is("Service Payment Reference,Amount,State,Finished,Error Message,Error Code,Status,Gateway Transaction ID,GOV.UK Pay ID,Date Created\n" +
+                    "My reference,62.34,submitted,false,,,IN PROGRESS,," + externalChargeId + ",2016-01-25T13:45:32Z\n"));
     }
 
     @Test
@@ -259,7 +260,7 @@ public class ChargesResourceITest {
                 .statusCode(OK.getStatusCode())
                 .contentType(JSON)
                 .body("results.charge_id", hasItem(externalChargeId))
-                .body("results.status", hasItem(EXT_IN_PROGRESS.getValue()))
+                .body("results.state.status", hasItem(EXTERNAL_SUBMITTED.getStatus()))
                 .body("results.amount", hasItem(6234))
                 .body("results.reference", hasItem("My reference"))
                 .body("results.return_url", hasItem(returnUrl))

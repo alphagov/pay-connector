@@ -25,7 +25,7 @@ import static org.hamcrest.Matchers.*;
 import static org.hamcrest.core.Is.is;
 import static org.hamcrest.core.IsCollectionContaining.hasItems;
 import static uk.gov.pay.connector.matcher.ZoneDateTimeAsStringWithinMatcher.isWithin;
-import static uk.gov.pay.connector.model.api.ExternalChargeStatus.*;
+import static uk.gov.pay.connector.model.api.ExternalChargeState.*;
 import static uk.gov.pay.connector.model.domain.ChargeStatus.*;
 import static uk.gov.pay.connector.util.JsonEncoder.toJson;
 
@@ -57,7 +57,7 @@ public class ChargeEventsResourceITest {
         connectorApi
                 .getEvents(chargeId)
                 .body("charge_id", is(chargeId))
-                .body("events[0].status", is(EXT_CREATED.getValue()))
+                .body("events[0].state.status", is(EXTERNAL_CREATED.getStatus()))
                 .body("events[0].updated", isWithin(1, ChronoUnit.MINUTES));
     }
 
@@ -86,9 +86,11 @@ public class ChargeEventsResourceITest {
         connectorApi
                 .getEvents(chargeId)
                 .body("charge_id", is(chargeId))
-                .body("events.status", hasItems(EXT_CREATED.getValue()
-                        , EXT_IN_PROGRESS.getValue()
-                        , EXT_SYSTEM_CANCELLED.getValue()))
+                .body("events.state.status", hasItems(
+                    EXTERNAL_CREATED.getStatus(),
+                    EXTERNAL_STARTED.getStatus(),
+                    EXTERNAL_CANCELLED.getStatus()
+                ))
                 .body("events.updated.size()", equalTo(3));
     }
 
@@ -106,11 +108,11 @@ public class ChargeEventsResourceITest {
         connectorApi
                 .getEvents(externalChargeId)
                 .body("charge_id", Matchers.is(externalChargeId))
-                .body("events.status", hasSize(4))
-                .body("events.status[0]", Matchers.is(EXT_CREATED.getValue()))
-                .body("events.status[1]", Matchers.is(EXT_IN_PROGRESS.getValue()))
-                .body("events.status[2]", Matchers.is(EXT_SYSTEM_CANCELLED.getValue()))
-                .body("events.status[3]", Matchers.is(EXT_IN_PROGRESS.getValue()))
+                .body("events.state", hasSize(4))
+                .body("events.state[0].status", Matchers.is(EXTERNAL_CREATED.getStatus()))
+                .body("events.state[1].status", Matchers.is(EXTERNAL_STARTED.getStatus()))
+                .body("events.state[2].status", Matchers.is(EXTERNAL_CANCELLED.getStatus()))
+                .body("events.state[3].status", Matchers.is(EXTERNAL_STARTED.getStatus()))
                 .body("events.chargeId[0]", isEmptyOrNullString())
                 .body("events.chargeId[1]", isEmptyOrNullString())
                 .body("events.chargeId[2]", isEmptyOrNullString())

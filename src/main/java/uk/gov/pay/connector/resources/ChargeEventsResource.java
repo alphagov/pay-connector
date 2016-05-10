@@ -19,12 +19,10 @@ import java.util.ListIterator;
 import static java.util.stream.Collectors.toList;
 import static javax.ws.rs.core.MediaType.APPLICATION_JSON;
 import static javax.ws.rs.core.Response.ok;
-import static uk.gov.pay.connector.model.api.ExternalChargeStatus.mapFromStatus;
 import static uk.gov.pay.connector.resources.ApiPaths.CHARGE_EVENTS_API_PATH;
 
 @Path("/")
 public class ChargeEventsResource {
-
     private ChargeDao chargeDao;
 
     @Inject
@@ -50,7 +48,12 @@ public class ChargeEventsResource {
 
     private List<ChargeEvent> transformToExternalStatus(List<ChargeEventEntity> events) {
         return events.stream()
-                .map(event -> new ChargeEvent(event.getChargeEntity().getExternalId(), mapFromStatus(event.getStatus()), event.getUpdated()))
+                .map(event -> new ChargeEvent(
+                        event.getChargeEntity().getExternalId(),
+                        event.getStatus().toExternal(),
+                        event.getStatus().toLegacy(),
+                        event.getUpdated()
+                ))
                 .collect(toList());
     }
 

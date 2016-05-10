@@ -104,11 +104,11 @@ public class CardResourceITestBase {
                 .body("status", is(status));
     }
 
-    protected void assertApiStatusIs(String chargeId, String status) {
+    protected void assertApiStateIs(String chargeId, String stateString) {
         connectorRestApi
                 .withChargeId(chargeId)
                 .getCharge()
-                .body("status", is(status));
+                .body("state.status", is(stateString));
     }
 
     protected String authoriseNewCharge() {

@@ -15,7 +15,7 @@ public class ChargeStatusConverter implements AttributeConverter<ChargeStatus, S
         if (status == null) {
             return null;
         } else {
-            return ChargeStatus.chargeStatusFrom(status);
+            return ChargeStatus.fromString(status);
         }
     }
 }

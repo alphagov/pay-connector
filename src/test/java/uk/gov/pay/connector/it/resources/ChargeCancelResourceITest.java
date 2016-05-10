@@ -1,6 +1,5 @@
 package uk.gov.pay.connector.it.resources;
 
-import com.google.common.collect.ImmutableList;
 import org.junit.Before;
 import org.junit.Rule;
 import org.junit.Test;
@@ -10,14 +9,13 @@ import uk.gov.pay.connector.util.RandomIdGenerator;
 import uk.gov.pay.connector.util.RestAssuredClient;
 
 import java.util.Arrays;
-import java.util.List;
 
 import static com.jayway.restassured.http.ContentType.JSON;
 import static java.lang.String.format;
 import static java.util.Arrays.asList;
 import static javax.ws.rs.core.Response.Status.*;
 import static org.hamcrest.Matchers.is;
-import static uk.gov.pay.connector.model.api.ExternalChargeStatus.EXT_SYSTEM_CANCELLED;
+import static uk.gov.pay.connector.model.api.ExternalChargeState.EXTERNAL_CANCELLED;
 import static uk.gov.pay.connector.model.domain.ChargeStatus.*;
 import static uk.gov.pay.connector.model.domain.ChargeStatus.CREATED;
 import static uk.gov.pay.connector.service.CardCancelService.CANCELLABLE_STATUSES;
@@ -51,7 +49,9 @@ public class ChargeCancelResourceITest {
                     restApiCall
                             .withChargeId(chargeId)
                             .getCharge()
-                            .body("status", is(EXT_SYSTEM_CANCELLED.getValue()));
+                            .body("state.status", is("cancelled"))
+                            .body("state.message", is("Payment was cancelled by the service"))
+                            .body("state.code", is("P0040"));
 
                     restFrontendCall
                             .withChargeId(chargeId)

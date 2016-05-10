@@ -1,11 +1,13 @@
 package uk.gov.pay.connector.dao;
 
-import uk.gov.pay.connector.model.api.ExternalChargeStatus;
+import uk.gov.pay.connector.model.api.ExternalChargeState;
+import uk.gov.pay.connector.model.api.LegacyChargeStatus;
 import uk.gov.pay.connector.model.domain.ChargeStatus;
 
 import java.time.ZonedDateTime;
-import java.util.Arrays;
+import java.util.LinkedList;
 import java.util.List;
+import java.util.stream.Collectors;
 
 public class ChargeSearchParams {
 
@@ -15,7 +17,7 @@ public class ChargeSearchParams {
     private ZonedDateTime toDate;
     private Long page = 1L;
     private Long displaySize = 100L;
-    private List<ChargeStatus> chargeStatuses;
+    private List<ChargeStatus> chargeStatuses = new LinkedList<>();
 
     public Long getGatewayAccountId() {
         return gatewayAccountId;
@@ -30,9 +32,23 @@ public class ChargeSearchParams {
         return chargeStatuses;
     }
 
-    public ChargeSearchParams withExternalChargeStatus(ExternalChargeStatus externalChargeStatus) {
-        if (externalChargeStatus != null)
-            this.chargeStatuses = Arrays.asList(externalChargeStatus.getInnerStates());
+
+    public ChargeSearchParams withExternalChargeState(List<ExternalChargeState> externalStates) {
+        if (externalStates != null) {
+            for (ExternalChargeState externalState : externalStates) {
+                this.chargeStatuses.addAll(ChargeStatus.fromExternal(externalState));
+            }
+        }
+
+        return this;
+    }
+
+
+    public ChargeSearchParams withLegacyChargeStatus(LegacyChargeStatus externalChargeStatus) {
+        if (externalChargeStatus != null) {
+            this.chargeStatuses.addAll(ChargeStatus.fromLegacy(externalChargeStatus));
+        }
+
         return this;
     }
 
