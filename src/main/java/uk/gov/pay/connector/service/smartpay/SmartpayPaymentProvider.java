@@ -10,7 +10,6 @@ import uk.gov.pay.connector.model.domain.GatewayAccountEntity;
 import uk.gov.pay.connector.service.GatewayClient;
 import uk.gov.pay.connector.service.PaymentProvider;
 
-import javax.ws.rs.core.Response;
 import java.io.IOException;
 import java.util.List;
 import java.util.Optional;
@@ -132,7 +131,7 @@ public class SmartpayPaymentProvider implements PaymentProvider {
         return Pair.of(notification.getTransactionId(), notification.getChargeStatus().get());
     }
 
-    private AuthorisationResponse mapToCardAuthorisationResponse(Response response) {
+    private AuthorisationResponse mapToCardAuthorisationResponse(GatewayClient.Response response) {
         return reduce(
                 client.unmarshallResponse(response, SmartpayAuthorisationResponse.class)
                         .bimap(
@@ -144,7 +143,7 @@ public class SmartpayPaymentProvider implements PaymentProvider {
         );
     }
 
-    private CaptureResponse mapToCaptureResponse(Response response) {
+    private CaptureResponse mapToCaptureResponse(GatewayClient.Response response) {
         return reduce(
                 client.unmarshallResponse(response, SmartpayCaptureResponse.class)
                         .bimap(
@@ -156,7 +155,7 @@ public class SmartpayPaymentProvider implements PaymentProvider {
         );
     }
 
-    private CancelGatewayResponse mapToCancelResponse(Response response) {
+    private CancelGatewayResponse mapToCancelResponse(GatewayClient.Response response) {
         return reduce(
                 client.unmarshallResponse(response, SmartpayCancelResponse.class)
                         .bimap(

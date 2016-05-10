@@ -11,7 +11,6 @@ import uk.gov.pay.connector.util.XMLUnmarshallerException;
 import javax.ws.rs.ProcessingException;
 import javax.ws.rs.client.Client;
 import javax.ws.rs.client.Entity;
-import javax.ws.rs.core.Response;
 import java.net.SocketException;
 import java.net.SocketTimeoutException;
 import java.net.UnknownHostException;
@@ -42,9 +41,10 @@ public class GatewayClient {
         return new GatewayClient(client, gatewayUrl);
     }
 
-    public Either<ErrorResponse, Response> postXMLRequestFor(GatewayAccountEntity account, String request) {
+    public Either<ErrorResponse, GatewayClient.Response> postXMLRequestFor(GatewayAccountEntity account, String request) {
+        javax.ws.rs.core.Response response = null;
         try {
-            Response response = client.target(gatewayUrl)
+            response = client.target(gatewayUrl)
                     .request(APPLICATION_XML)
                     .header(AUTHORIZATION, encode(
                             account.getCredentials().get(CREDENTIALS_USERNAME),
@@ -52,7 +52,7 @@ public class GatewayClient {
                     .post(Entity.xml(request));
             int statusCode = response.getStatus();
             if (statusCode == OK.getStatusCode()) {
-                return right(response);
+                return right(new GatewayClient.Response(response));
             } else {
                 logger.error(format("Gateway returned unexpected status code: %d, for gateway url=%s", statusCode, gatewayUrl));
                 return left(unexpectedStatusCodeFromGateway("Unexpected Response Code From Gateway"));
@@ -77,11 +77,15 @@ public class GatewayClient {
         } catch (Exception e) {
             logger.error(format("Exception for gateway url=%s", gatewayUrl), e);
             return left(baseError(e.getMessage()));
+        } finally {
+            if (response != null) {
+                response.close();
+            }
         }
     }
 
-    public <T> Either<ErrorResponse, T> unmarshallResponse(Response response, Class<T> clazz) {
-        String payload = response.readEntity(String.class);
+    public <T> Either<ErrorResponse, T> unmarshallResponse(GatewayClient.Response response, Class<T> clazz) {
+        String payload = response.getEntity();
         logger.debug("response payload=" + payload);
         try {
             return right(XMLUnmarshaller.unmarshall(payload, clazz));
@@ -89,6 +93,24 @@ public class GatewayClient {
             String error = format("Could not unmarshall response %s.", payload);
             logger.error(error, e);
             return left(malformedResponseReceivedFromGateway("Invalid Response Received From Gateway"));
+        }
+    }
+
+    static public class Response {
+        private final int status;
+        private final String entity;
+
+        protected Response(final javax.ws.rs.core.Response delegate) {
+            this.status = delegate.getStatus();
+            this.entity = delegate.readEntity(String.class);
+        }
+
+        public int getStatus() {
+            return status;
+        }
+
+        public String getEntity() {
+            return entity;
         }
     }
 }

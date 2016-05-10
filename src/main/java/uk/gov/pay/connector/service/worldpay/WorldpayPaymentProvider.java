@@ -14,7 +14,6 @@ import uk.gov.pay.connector.service.GatewayClient;
 import uk.gov.pay.connector.service.PaymentProvider;
 import uk.gov.pay.connector.util.XMLUnmarshallerException;
 
-import javax.ws.rs.core.Response;
 import java.util.Optional;
 import java.util.function.Consumer;
 import java.util.function.Function;
@@ -217,7 +216,7 @@ public class WorldpayPaymentProvider implements PaymentProvider {
                 .build();
     }
 
-    private AuthorisationResponse mapToCardAuthorisationResponse(Response response, String gatewayTransactionId) {
+    private AuthorisationResponse mapToCardAuthorisationResponse(GatewayClient.Response response, String gatewayTransactionId) {
         return reduce(
                 client.unmarshallResponse(response, WorldpayOrderStatusResponse.class)
                         .bimap(
@@ -234,7 +233,7 @@ public class WorldpayPaymentProvider implements PaymentProvider {
         );
     }
 
-    private CaptureResponse mapToCaptureResponse(Response response) {
+    private CaptureResponse mapToCaptureResponse(GatewayClient.Response response) {
         return reduce(
                 client.unmarshallResponse(response, WorldpayCaptureResponse.class)
                         .bimap(
@@ -246,7 +245,7 @@ public class WorldpayPaymentProvider implements PaymentProvider {
         );
     }
 
-    private InquiryResponse mapToInquiryResponse(Response response) {
+    private InquiryResponse mapToInquiryResponse(GatewayClient.Response response) {
         return reduce(
                 client.unmarshallResponse(response, WorldpayOrderStatusResponse.class)
                         .bimap(
@@ -259,7 +258,7 @@ public class WorldpayPaymentProvider implements PaymentProvider {
         );
     }
 
-    private CancelGatewayResponse mapToCancelResponse(Response response) {
+    private CancelGatewayResponse mapToCancelResponse(GatewayClient.Response response) {
         return reduce(
                 client.unmarshallResponse(response, WorldpayCancelResponse.class)
                         .bimap(
