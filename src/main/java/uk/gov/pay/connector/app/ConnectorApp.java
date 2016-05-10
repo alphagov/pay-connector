@@ -15,7 +15,9 @@ import io.dropwizard.setup.Environment;
 import org.glassfish.jersey.server.filter.RolesAllowedDynamicFeature;
 import uk.gov.pay.connector.auth.BasicAuthUser;
 import uk.gov.pay.connector.auth.SmartpayAuthenticator;
+import uk.gov.pay.connector.healthcheck.CardExecutorServiceHealthCheck;
 import uk.gov.pay.connector.healthcheck.DatabaseHealthCheck;
+import uk.gov.pay.connector.resources.HealthCheckResource;
 import uk.gov.pay.connector.healthcheck.Ping;
 import uk.gov.pay.connector.managed.DependentResourceChecker;
 import uk.gov.pay.connector.resources.*;
@@ -59,11 +61,12 @@ public class ConnectorApp extends Application<ConnectorConfiguration> {
         environment.jersey().register(injector.getInstance(ChargesFrontendResource.class));
         environment.jersey().register(injector.getInstance(NotificationResource.class));
         environment.jersey().register(injector.getInstance(CardResource.class));
-        environment.jersey().register(injector.getInstance(GatewayAccountResource.class));
+        environment.jersey().register(injector.getInstance(HealthCheckResource.class));
         setupSmartpayBasicAuth(environment, configuration.getSmartpayConfig());
 
         environment.healthChecks().register("ping", new Ping());
         environment.healthChecks().register("database", injector.getInstance(DatabaseHealthCheck.class));
+        environment.healthChecks().register("cardExecutorService", injector.getInstance(CardExecutorServiceHealthCheck.class));
     }
 
     private void setupSmartpayBasicAuth(Environment environment, SmartpayCredentialsConfig smartpayConfig) {

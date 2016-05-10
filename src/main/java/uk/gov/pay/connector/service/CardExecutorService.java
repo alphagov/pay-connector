@@ -52,6 +52,10 @@ public class CardExecutorService<T> {
         });
     }
 
+    public ExecutorService getExecutor() {
+        return executor;
+    }
+
     // accepts a supplier function and executed that in a separate Thread of its own.
     // returns a Pair of the execution status and the return type
     public Pair<ExecutionStatus, T> execute(Supplier<T> callable) {
