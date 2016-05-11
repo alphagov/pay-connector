@@ -45,7 +45,7 @@ public class ChargesCSVGeneratorTest {
 
         String generatedCsv = ChargesCSVGenerator.generate(newArrayList(charge));
 
-        String expectedDate = DateTimeUtils.toUTCDateString(charge.getCreatedDate());
+        String expectedDate = DateTimeUtils.toLondonZone(charge.getCreatedDate());
         String expectedOutput = "Service Payment Reference,Amount,State,Finished,Error Message,Error Code,Status,Gateway Transaction ID,GOV.UK Pay ID,Date Created\n" +
                 "reference,140.00,created,false,,,CREATED,222," + externalId + "," + expectedDate + "\n";
 
@@ -67,7 +67,7 @@ public class ChargesCSVGeneratorTest {
                 .build();
 
         String externalId1 = charge1.getExternalId();
-        String expectedDateCharge1 = DateTimeUtils.toUTCDateString(charge1.getCreatedDate());
+        String expectedDateCharge1 = DateTimeUtils.toLondonZone(charge1.getCreatedDate());
 
         GatewayAccountEntity gatewayAccount2 = new GatewayAccountEntity("SmartPay", null);
         gatewayAccount.setId(600L);
@@ -81,7 +81,7 @@ public class ChargesCSVGeneratorTest {
                 .build();
 
         String externalId2 = charge2.getExternalId();
-        String expectedDateCharge2 = DateTimeUtils.toUTCDateString(charge2.getCreatedDate());
+        String expectedDateCharge2 = DateTimeUtils.toLondonZone(charge2.getCreatedDate());
 
         ChargeEntity charge3 = ChargeEntityFixture.aValidChargeEntity()
                 .withId(101L)
@@ -92,7 +92,7 @@ public class ChargesCSVGeneratorTest {
                 .build();
 
         String externalId3 = charge3.getExternalId();
-        String expectedDateCharge3 = DateTimeUtils.toUTCDateString(charge3.getCreatedDate());
+        String expectedDateCharge3 = DateTimeUtils.toLondonZone(charge3.getCreatedDate());
 
         String generate = ChargesCSVGenerator.generate(newArrayList(charge1, charge2, charge3));
         String expectedOutput =

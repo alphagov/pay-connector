@@ -65,4 +65,15 @@ public class DateTimeUtilsTest {
         assertThat(result.get().toString(), endsWith("Z"));
         assertThat(result.get().toString(), is("2010-01-01T11:10:10Z"));
     }
+
+    @Test
+    public void shouldConvertZoneDateTimeToLondonTimeZone() {
+        String aDate = "2016-07-07T17:24:48Z";
+        Optional<ZonedDateTime> zonedDateTime = DateTimeUtils.toUTCZonedDateTime(aDate);
+
+        String result = DateTimeUtils.toLondonZone(zonedDateTime.get());
+
+        assertThat(result, is("2016-07-07 18:24:48"));
+
+    }
 }

@@ -1,10 +1,14 @@
 package uk.gov.pay.connector.util;
 
+import java.text.SimpleDateFormat;
+import java.time.LocalDateTime;
 import java.time.ZoneId;
 import java.time.ZonedDateTime;
 import java.time.format.DateTimeFormatter;
+import java.time.format.DateTimeFormatterBuilder;
 import java.time.format.DateTimeParseException;
 import java.util.Optional;
+import java.util.TimeZone;
 
 public class DateTimeUtils {
 
@@ -49,5 +53,14 @@ public class DateTimeUtils {
      */
     public static String toUTCDateString(ZonedDateTime dateTime) {
         return dateTime.format(dateTimeFormatterUTC);
+    }
+
+
+    public static String toLondonZone(ZonedDateTime zonedDateTime) {
+        DateTimeFormatter dateTimeFormatter = DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss");
+
+        LocalDateTime localDateTime = zonedDateTime.withZoneSameInstant(ZoneId.of("Europe/London")).toLocalDateTime();
+
+        return localDateTime.format(dateTimeFormatter);
     }
 }

@@ -15,6 +15,7 @@ import java.util.function.Function;
 
 import static com.google.common.collect.Lists.newArrayList;
 import static org.apache.commons.lang3.StringUtils.defaultString;
+import static uk.gov.pay.connector.util.DateTimeUtils.toLondonZone;
 import static uk.gov.pay.connector.util.DateTimeUtils.toUTCDateString;
 
 public class ChargesCSVGenerator {
@@ -81,7 +82,7 @@ public class ChargesCSVGenerator {
             csvChargeArray[6] = ChargeStatus.fromString(charge.getStatus()).toLegacy().getValue();
             csvChargeArray[7] = defaultString(charge.getGatewayTransactionId());
             csvChargeArray[8] = charge.getExternalId();
-            csvChargeArray[9] = toUTCDateString(charge.getCreatedDate());
+            csvChargeArray[9] = toLondonZone(charge.getCreatedDate());
 
             return csvChargeArray;
         };
