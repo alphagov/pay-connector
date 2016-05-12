@@ -47,7 +47,7 @@ public class XMLUnmarshaller {
 
     private static XMLReader buildXmlReader() throws ParserConfigurationException, SAXException {
         SAXParserFactory spf = SAXParserFactory.newInstance();
-        spf.setFeature(FEATURE_SECURE_PROCESSING, true);
+        spf.setFeature(FEATURE_SECURE_PROCESSING, true); // Explicitly set. Do not remove
         disableExternalDTDs(spf);
         disableExternalEntities(spf);
         SAXParser saxParser = spf.newSAXParser();

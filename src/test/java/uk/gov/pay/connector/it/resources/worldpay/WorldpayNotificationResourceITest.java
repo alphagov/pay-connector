@@ -11,6 +11,7 @@ import java.nio.charset.Charset;
 
 import static com.google.common.io.Resources.getResource;
 import static com.jayway.restassured.RestAssured.given;
+import static javax.ws.rs.core.MediaType.APPLICATION_JSON;
 import static javax.ws.rs.core.MediaType.TEXT_XML;
 import static org.hamcrest.Matchers.is;
 import static org.junit.Assert.assertThat;
@@ -141,6 +142,17 @@ public class WorldpayNotificationResourceITest extends CardResourceITestBase {
         assertFrontendChargeStatusIs(chargeId, AUTHORISATION_SUCCESS.getValue());
     }
 
+    @Test
+    public void shouldFailWhenUnexpectedContentType() throws Exception {
+        given().port(app.getLocalPort())
+                .body(notificationPayloadForTransaction("any", "WHATEVER"))
+                .contentType(APPLICATION_JSON)
+                .post(NOTIFICATION_PATH)
+                .then()
+                .statusCode(415);
+
+    }
+
     private ValidatableResponse notifyConnector(String transactionId, String status) throws IOException {
         return given().port(app.getLocalPort())
                 .body(notificationPayloadForTransaction(transactionId, status))
@@ -149,7 +161,7 @@ public class WorldpayNotificationResourceITest extends CardResourceITestBase {
                 .then();
     }
 
-    private String notificationPayloadForTransaction(String transactionId,String status) throws IOException {
+    private String notificationPayloadForTransaction(String transactionId, String status) throws IOException {
         URL resource = getResource("templates/worldpay/notification.xml");
         return Resources.toString(resource, Charset.defaultCharset())
                 .replace("{{transactionId}}", transactionId)
