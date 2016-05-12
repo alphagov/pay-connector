@@ -1,6 +1,5 @@
 package uk.gov.pay.connector.it.dao;
 
-import org.junit.After;
 import org.junit.Before;
 import org.junit.Rule;
 import org.junit.Test;
@@ -9,8 +8,6 @@ import uk.gov.pay.connector.dao.ChargeDao;
 import uk.gov.pay.connector.dao.TokenDao;
 import uk.gov.pay.connector.model.domain.ChargeEntity;
 import uk.gov.pay.connector.model.domain.TokenEntity;
-import uk.gov.pay.connector.rules.DropwizardAppWithPostgresRule;
-import uk.gov.pay.connector.util.DatabaseTestHelper;
 
 import java.util.Optional;
 
@@ -18,54 +15,31 @@ import static org.hamcrest.CoreMatchers.notNullValue;
 import static org.hamcrest.core.Is.is;
 import static org.junit.Assert.assertThat;
 
-public class TokenDaoJpaITest {
-
-    private static final Long GATEWAY_ACCOUNT_ID = 564532435L;
-    private static final String RETURN_URL = "http://service.com/success-page";
-    private static final String REFERENCE = "Test reference";
-    private static final Long AMOUNT = 101L;
-    private static final Long CHARGE_ID = 977L;
-    private static final String EXTERNAL_CHARGE_ID = "charge977";
-
-    @Rule
-    public DropwizardAppWithPostgresRule app = new DropwizardAppWithPostgresRule();
+public class TokenDaoJpaITest extends DaoITestBase {
 
     @Rule
     public ExpectedException expectedException = ExpectedException.none();
     private TokenDao tokenDao;
     private ChargeDao chargeDao;
-    private DatabaseTestHelper databaseTestHelper;
-    private GuicedTestEnvironment env;
 
     private DatabaseFixtures.TestAccount defaultTestAccount;
     private DatabaseFixtures.TestCharge defaultTestCharge;
 
     @Before
     public void setUp() throws Exception {
-
-        env = GuicedTestEnvironment
-                .from(app.getPersistModule())
-                .start();
-
         tokenDao = env.getInstance(TokenDao.class);
         chargeDao = env.getInstance(ChargeDao.class);
-        databaseTestHelper = app.getDatabaseTestHelper();
 
         this.defaultTestAccount = DatabaseFixtures
-                .withDatabaseTestHelper(app.getDatabaseTestHelper())
+                .withDatabaseTestHelper(databaseTestHelper)
                 .aTestAccount()
                 .insert();
 
         this.defaultTestCharge = DatabaseFixtures
-                .withDatabaseTestHelper(app.getDatabaseTestHelper())
+                .withDatabaseTestHelper(databaseTestHelper)
                 .aTestCharge()
                 .withTestAccount(defaultTestAccount)
                 .insert();
-    }
-
-    @After
-    public void tearDown() {
-        env.stop();
     }
 
     @Test

@@ -5,7 +5,6 @@ import org.apache.commons.lang.RandomStringUtils;
 import org.hamcrest.Description;
 import org.hamcrest.Matcher;
 import org.hamcrest.TypeSafeMatcher;
-import org.junit.After;
 import org.junit.Before;
 import org.junit.Rule;
 import org.junit.Test;
@@ -16,7 +15,6 @@ import uk.gov.pay.connector.model.domain.ChargeEntity;
 import uk.gov.pay.connector.model.domain.ChargeEventEntity;
 import uk.gov.pay.connector.model.domain.ChargeStatus;
 import uk.gov.pay.connector.model.domain.GatewayAccountEntity;
-import uk.gov.pay.connector.rules.DropwizardAppWithPostgresRule;
 import uk.gov.pay.connector.util.DateTimeUtils;
 
 import java.time.ZoneId;
@@ -38,34 +36,24 @@ import static uk.gov.pay.connector.model.api.ExternalChargeState.EXTERNAL_CREATE
 import static uk.gov.pay.connector.model.api.ExternalChargeState.EXTERNAL_STARTED;
 import static uk.gov.pay.connector.model.domain.ChargeStatus.*;
 
-public class ChargeDaoITest {
+public class ChargeDaoITest extends DaoITestBase {
 
     private static final String FROM_DATE = "2016-01-01T01:00:00Z";
     private static final String TO_DATE = "2026-01-08T01:00:00Z";
     private static final String DESCRIPTION = "Test description";
 
     @Rule
-    public DropwizardAppWithPostgresRule app = new DropwizardAppWithPostgresRule();
-
-    @Rule
     public ExpectedException expectedEx = ExpectedException.none();
 
     private ChargeDao chargeDao;
-    public GuicedTestEnvironment env;
 
     private DatabaseFixtures.TestAccount defaultTestAccount;
     private DatabaseFixtures.TestCharge defaultTestCharge;
 
     @Before
     public void setUp() throws Exception {
-        env = GuicedTestEnvironment.from(app.getPersistModule()).start();
         chargeDao = env.getInstance(ChargeDao.class);
         insertTestAccount();
-    }
-
-    @After
-    public void tearDown() {
-        env.stop();
     }
 
     @Test
@@ -196,7 +184,7 @@ public class ChargeDaoITest {
         String externalChargeId = "chargeabc";
 
         DatabaseFixtures
-                .withDatabaseTestHelper(app.getDatabaseTestHelper())
+                .withDatabaseTestHelper(databaseTestHelper)
                 .aTestCharge()
                 .withTestAccount(defaultTestAccount)
                 .withChargeId(chargeId)
@@ -309,7 +297,7 @@ public class ChargeDaoITest {
         // given
         insertTestCharge();
         DatabaseFixtures
-                .withDatabaseTestHelper(app.getDatabaseTestHelper())
+                .withDatabaseTestHelper(databaseTestHelper)
                 .aTestCharge()
                 .withChargeId(12345)
                 .withTestAccount(defaultTestAccount)
@@ -317,7 +305,7 @@ public class ChargeDaoITest {
                 .insert();
 
         DatabaseFixtures
-                .withDatabaseTestHelper(app.getDatabaseTestHelper())
+                .withDatabaseTestHelper(databaseTestHelper)
                 .aTestCharge()
                 .withChargeId(12346)
                 .withTestAccount(defaultTestAccount)
@@ -346,27 +334,27 @@ public class ChargeDaoITest {
         insertTestCharge();
         long accountId = 123;
         DatabaseFixtures.TestAccount account = DatabaseFixtures
-                .withDatabaseTestHelper(app.getDatabaseTestHelper())
+                .withDatabaseTestHelper(databaseTestHelper)
                 .aTestAccount()
                 .withAccountId(accountId)
                 .insert();
 
         DatabaseFixtures
-                .withDatabaseTestHelper(app.getDatabaseTestHelper())
+                .withDatabaseTestHelper(databaseTestHelper)
                 .aTestCharge()
                 .withChargeId(555L)
                 .withTestAccount(account)
                 .insert();
 
         DatabaseFixtures
-                .withDatabaseTestHelper(app.getDatabaseTestHelper())
+                .withDatabaseTestHelper(databaseTestHelper)
                 .aTestCharge()
                 .withChargeId(557L)
                 .withTestAccount(account)
                 .insert();
 
         DatabaseFixtures
-                .withDatabaseTestHelper(app.getDatabaseTestHelper())
+                .withDatabaseTestHelper(databaseTestHelper)
                 .aTestCharge()
                 .withChargeId(556L)
                 .withTestAccount(account)
@@ -451,7 +439,7 @@ public class ChargeDaoITest {
 
         ZonedDateTime createdDateTime = ZonedDateTime.now(ZoneId.of("UTC"));
         DatabaseFixtures
-                .withDatabaseTestHelper(app.getDatabaseTestHelper())
+                .withDatabaseTestHelper(databaseTestHelper)
                 .aTestCharge()
                 .withTestAccount(defaultTestAccount)
                 .withChargeId(chargeId)
@@ -507,7 +495,7 @@ public class ChargeDaoITest {
         String transactionId = "345654";
 
         DatabaseFixtures
-                .withDatabaseTestHelper(app.getDatabaseTestHelper())
+                .withDatabaseTestHelper(databaseTestHelper)
                 .aTestCharge()
                 .withTestAccount(defaultTestAccount)
                 .withChargeId(chargeId)
@@ -576,7 +564,7 @@ public class ChargeDaoITest {
         String externalChargeId = "charge9999";
 
         DatabaseFixtures
-                .withDatabaseTestHelper(app.getDatabaseTestHelper())
+                .withDatabaseTestHelper(databaseTestHelper)
                 .aTestCharge()
                 .withTestAccount(defaultTestAccount)
                 .withChargeId(chargeId)
@@ -608,7 +596,7 @@ public class ChargeDaoITest {
         String transactionId = "7826782163";
 
         DatabaseFixtures
-                .withDatabaseTestHelper(app.getDatabaseTestHelper())
+                .withDatabaseTestHelper(databaseTestHelper)
                 .aTestCharge()
                 .withTestAccount(defaultTestAccount)
                 .withChargeId(8888L)
@@ -637,7 +625,7 @@ public class ChargeDaoITest {
         String externalChargeId = "charge876786";
 
         DatabaseFixtures
-                .withDatabaseTestHelper(app.getDatabaseTestHelper())
+                .withDatabaseTestHelper(databaseTestHelper)
                 .aTestCharge()
                 .withTestAccount(defaultTestAccount)
                 .withChargeId(chargeId)
@@ -682,7 +670,7 @@ public class ChargeDaoITest {
     @Test
     public void testFindByDate_status_findsValidChargeForStatus() throws Exception {
         DatabaseFixtures
-                .withDatabaseTestHelper(app.getDatabaseTestHelper())
+                .withDatabaseTestHelper(databaseTestHelper)
                 .aTestCharge()
                 .withTestAccount(defaultTestAccount)
                 .withChargeId(100L)
@@ -701,7 +689,7 @@ public class ChargeDaoITest {
     @Test
     public void testFindByDateStatus_findsNoneForValidStatus() throws Exception {
         DatabaseFixtures
-                .withDatabaseTestHelper(app.getDatabaseTestHelper())
+                .withDatabaseTestHelper(databaseTestHelper)
                 .aTestCharge()
                 .withTestAccount(defaultTestAccount)
                 .withChargeId(100L)
@@ -719,7 +707,7 @@ public class ChargeDaoITest {
     @Test
     public void testFindByDateStatus_findsNoneForExpiredDate() throws Exception {
         DatabaseFixtures
-                .withDatabaseTestHelper(app.getDatabaseTestHelper())
+                .withDatabaseTestHelper(databaseTestHelper)
                 .aTestCharge()
                 .withTestAccount(defaultTestAccount)
                 .withChargeId(100L)
@@ -737,7 +725,7 @@ public class ChargeDaoITest {
     @Test
     public void testFindChargeByTokenId() {
         DatabaseFixtures
-                .withDatabaseTestHelper(app.getDatabaseTestHelper())
+                .withDatabaseTestHelper(databaseTestHelper)
                 .aTestCharge()
                 .withTestAccount(defaultTestAccount)
                 .withChargeId(100L)
@@ -746,7 +734,7 @@ public class ChargeDaoITest {
                 .withAmount(300L)
                 .insert();
 
-        app.getDatabaseTestHelper().addToken(100L, "some-token-id");
+        databaseTestHelper.addToken(100L, "some-token-id");
 
         Optional<ChargeEntity> chargeOpt = chargeDao.findByTokenId("some-token-id");
         assertTrue(chargeOpt.isPresent());
@@ -758,7 +746,7 @@ public class ChargeDaoITest {
 
     private void insertTestCharge() {
         this.defaultTestCharge = DatabaseFixtures
-                .withDatabaseTestHelper(app.getDatabaseTestHelper())
+                .withDatabaseTestHelper(databaseTestHelper)
                 .aTestCharge()
                 .withTestAccount(defaultTestAccount)
                 .insert();
@@ -766,7 +754,7 @@ public class ChargeDaoITest {
 
     private DatabaseFixtures.TestCharge insertNewChargeWithId(Long chargeId, ZonedDateTime creationDate) {
         return DatabaseFixtures
-                .withDatabaseTestHelper(app.getDatabaseTestHelper())
+                .withDatabaseTestHelper(databaseTestHelper)
                 .aTestCharge()
                 .withChargeId(chargeId)
                 .withCreatedDate(creationDate)
@@ -776,7 +764,7 @@ public class ChargeDaoITest {
 
     private void insertTestAccount() {
         this.defaultTestAccount = DatabaseFixtures
-                .withDatabaseTestHelper(app.getDatabaseTestHelper())
+                .withDatabaseTestHelper(databaseTestHelper)
                 .aTestAccount()
                 .insert();
     }

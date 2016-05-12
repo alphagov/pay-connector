@@ -1,14 +1,10 @@
 package uk.gov.pay.connector.it.dao;
 
 import com.google.common.collect.ImmutableMap;
-import org.junit.After;
 import org.junit.Before;
-import org.junit.Rule;
 import org.junit.Test;
 import uk.gov.pay.connector.dao.GatewayAccountDao;
 import uk.gov.pay.connector.model.domain.GatewayAccountEntity;
-import uk.gov.pay.connector.rules.DropwizardAppWithPostgresRule;
-import uk.gov.pay.connector.util.DatabaseTestHelper;
 
 import java.io.IOException;
 import java.util.HashMap;
@@ -22,26 +18,13 @@ import static org.hamcrest.Matchers.is;
 import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertTrue;
 
-public class GatewayAccountDaoITest {
+public class GatewayAccountDaoITest extends DaoITestBase {
 
-    @Rule
-    public DropwizardAppWithPostgresRule app = new DropwizardAppWithPostgresRule();
-
-    public GuicedTestEnvironment env;
     private GatewayAccountDao gatewayAccountDao;
-    private DatabaseTestHelper databaseTestHelper;
 
     @Before
     public void setUp() throws Exception {
-        env = GuicedTestEnvironment.from(app.getPersistModule())
-                .start();
-        databaseTestHelper = app.getDatabaseTestHelper();
         gatewayAccountDao = env.getInstance(GatewayAccountDao.class);
-    }
-
-    @After
-    public void tearDown() {
-        env.stop();
     }
 
     @Test
