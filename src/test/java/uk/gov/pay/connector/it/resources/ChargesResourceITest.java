@@ -238,7 +238,7 @@ public class ChargesResourceITest {
                 .statusCode(OK.getStatusCode())
                 .contentType(CSV_CONTENT_TYPE)
                 .body(is("Service Payment Reference,Amount,State,Finished,Error Message,Error Code,Status,Gateway Transaction ID,GOV.UK Pay ID,Date Created\n" +
-                    "My reference,62.34,submitted,false,,,IN PROGRESS,," + externalChargeId + ",2016-01-25T13:45:32Z\n"));
+                    "My reference,62.34,submitted,false,,,IN PROGRESS,," + externalChargeId + ",2016-01-25 13:45:32\n"));
     }
 
     @Test
