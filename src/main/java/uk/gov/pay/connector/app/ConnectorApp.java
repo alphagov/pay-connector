@@ -15,12 +15,16 @@ import io.dropwizard.setup.Environment;
 import org.glassfish.jersey.server.filter.RolesAllowedDynamicFeature;
 import uk.gov.pay.connector.auth.BasicAuthUser;
 import uk.gov.pay.connector.auth.SmartpayAuthenticator;
+import uk.gov.pay.connector.filters.LoggingFilter;
 import uk.gov.pay.connector.healthcheck.CardExecutorServiceHealthCheck;
 import uk.gov.pay.connector.healthcheck.DatabaseHealthCheck;
 import uk.gov.pay.connector.resources.HealthCheckResource;
 import uk.gov.pay.connector.healthcheck.Ping;
 import uk.gov.pay.connector.resources.*;
 import uk.gov.pay.connector.util.DependentResourceWaitCommand;
+
+import static javax.servlet.DispatcherType.REQUEST;
+import static java.util.EnumSet.of;
 
 public class ConnectorApp extends Application<ConnectorConfiguration> {
 
@@ -60,6 +64,9 @@ public class ConnectorApp extends Application<ConnectorConfiguration> {
         environment.jersey().register(injector.getInstance(CardResource.class));
         environment.jersey().register(injector.getInstance(HealthCheckResource.class));
         setupSmartpayBasicAuth(environment, configuration.getSmartpayConfig());
+
+        environment.servlets().addFilter("LoggingFilter", injector.getInstance(LoggingFilter.class))
+                .addMappingForUrlPatterns(of(REQUEST), true, ApiPaths.API_VERSION_PATH + "/*");
 
         environment.healthChecks().register("ping", new Ping());
         environment.healthChecks().register("database", injector.getInstance(DatabaseHealthCheck.class));
