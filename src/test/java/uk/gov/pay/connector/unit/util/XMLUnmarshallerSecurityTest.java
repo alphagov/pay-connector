@@ -21,7 +21,7 @@ public class XMLUnmarshallerSecurityTest {
     public final ExpectedException expectedException = ExpectedException.none();
 
     @Test
-    public void preventEntityExpansionAttack_shouldFailUnmarshallingWhenSecureProcessingIsEnabledAndLimitIsSetToMinValue() throws Exception {
+    public void preventXEE_aBillionLaughsAttack_shouldFailUnmarshallingWhenSecureProcessingIsEnabledAndLimitIsSetToMinValue() throws Exception {
 
         String xmlData = "<!DOCTYPE foo [" +
                 "<!ENTITY a \"1234567890\" >" +
@@ -44,7 +44,7 @@ public class XMLUnmarshallerSecurityTest {
     }
 
     @Test
-    public void preventEntityReferenceAttack_shouldFailUnmarshallingWithOneEntityWithAnExternalReference() throws Exception {
+    public void preventXEE_externalEntityReference_shouldFailUnmarshallingWithOneEntityWithAnExternalReference() throws Exception {
 
         String xmlData = "<!DOCTYPE foo [" +
                 "<!ENTITY mrdanger SYSTEM \"file:///boot.ini\" >" +
@@ -58,16 +58,37 @@ public class XMLUnmarshallerSecurityTest {
     }
 
     @Test
-    public void preventXMLIncludeAttack_shouldNotProcessXmlIncludeWhenUnmarshalling() throws Exception {
+    public void preventXEE_XMLInclude_shouldNotProcessXmlIncludeWhenUnmarshalling() throws Exception {
 
         String xmlData = "<foo xmlns:xi=\"http://www.w3.org/2001/XInclude\">" +
                 "<xi:include href=\"metadata.xml\" parse=\"xml\" xpointer=\"name\"/>" +
-                 "hola"+
+                "hola" +
                 "</foo>";
 
         XMLUnmarshallingAttackTest unmarshall = XMLUnmarshaller.unmarshall(xmlData, XMLUnmarshallingAttackTest.class);
 
         assertThat(unmarshall.getValue(), is("hola"));
+    }
+
+    @Test
+    public void preventXMLInjections_whenXmlTagsInsideExpectedTags_shouldReturnEmpty() throws Exception {
+
+        String xmlData = "<foo>asd<hi>boom!</hi></foo>";
+
+        XMLUnmarshallingAttackTest unmarshall = XMLUnmarshaller.unmarshall(xmlData, XMLUnmarshallingAttackTest.class);
+
+        assertThat(unmarshall.getValue(), is(""));
+
+    }
+
+    @Test
+    public void shouldFailUnmarshalling_whenXMLIsNotWellFormed() throws Exception {
+
+        String xmlData = "<foo>asd<</foo>";
+
+        expectedException.expect(XMLUnmarshallerException.class);
+
+        XMLUnmarshaller.unmarshall(xmlData, XMLUnmarshallingAttackTest.class);
     }
 
     private Matcher<Throwable> unmarshalExceptionWithLinkedSAXParseException(final String expectedMessage) {

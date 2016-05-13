@@ -12,6 +12,7 @@ import java.nio.charset.Charset;
 import static com.google.common.io.Resources.getResource;
 import static com.jayway.restassured.RestAssured.given;
 import static javax.ws.rs.core.MediaType.APPLICATION_JSON;
+import static javax.ws.rs.core.MediaType.TEXT_XML;
 import static org.hamcrest.Matchers.is;
 import static org.junit.Assert.assertThat;
 import static uk.gov.pay.connector.model.domain.ChargeStatus.*;
@@ -107,6 +108,19 @@ public class SmartpayNotificationResourceITest extends CardResourceITestBase {
                 .statusCode(401);
     }
 
+    @Test
+    public void shouldFailASmartpayNotificationWithAnUnexpectedContentType() throws Exception {
+        String transactionId = randomId();
+        createNewChargeWith(AUTHORISATION_SUCCESS, transactionId);
+
+        given()
+                .port(app.getLocalPort())
+                .body(notificationPayloadForTransaction(transactionId, "notification-capture"))
+                .contentType(TEXT_XML)
+                .post(NOTIFICATION_PATH)
+                .then()
+                .statusCode(415);
+    }
 
     private Response notifyConnector(String payload) throws IOException {
         return given()
