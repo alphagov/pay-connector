@@ -16,12 +16,12 @@ import static org.junit.Assert.assertTrue;
 import static uk.gov.pay.connector.model.domain.ChargeStatus.*;
 
 @RunWith(Parameterized.class)
-public class ChargeEntityStateTransitionTest {
+public class StateTransitionsTest {
 
     private final ChargeStatus state;
     private final List<ChargeStatus> validTransitions;
 
-    public ChargeEntityStateTransitionTest(ChargeStatus state, List<ChargeStatus> validTransitions) {
+    public StateTransitionsTest(ChargeStatus state, List<ChargeStatus> validTransitions) {
         this.state = state;
         this.validTransitions = validTransitions;
     }
@@ -46,7 +46,7 @@ public class ChargeEntityStateTransitionTest {
     public void shouldValidateCorrectTransitionsAndInvalidTransitions() throws Exception {
 
         validTransitions.forEach(targetState ->
-               assertTrue(format("Charge transition [%s] -> [%s] is missing", state, targetState), StateTransitions.transitionTo(state, targetState))
+               assertTrue(format("Charge transition [%s] -> [%s] assumes valid, but not!", state, targetState), StateTransitions.transitionTo(state, targetState))
         );
 
         EnumSet.allOf(ChargeStatus.class).stream()
