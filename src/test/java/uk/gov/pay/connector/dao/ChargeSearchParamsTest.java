@@ -7,8 +7,21 @@ import java.time.ZonedDateTime;
 import static java.util.Collections.singletonList;
 import static org.junit.Assert.assertEquals;
 import static uk.gov.pay.connector.model.api.ExternalChargeState.EXTERNAL_CREATED;
+import static java.lang.String.format;
+import static java.util.Collections.singletonList;
+import static org.junit.Assert.assertEquals;
+import static uk.gov.pay.connector.model.api.ExternalChargeState.EXTERNAL_CREATED;
 
 public class ChargeSearchParamsTest {
+
+    public static final String FROM_DATE = "2012-06-30T12:30:40Z[GMT]";
+    public static final String TO_DATE = "2012-07-30T12:30:40Z[GMT]";
+    public static final String EXPECTED_QUERY_STRING = "&reference=ref" +
+            "&from_date="+FROM_DATE+
+            "&to_date="+TO_DATE+
+            "&page=%s" +
+            "&display_size=%s" +
+            "&state=created";
 
     @Test
     public void shouldBuildQueryParamsForChargeSearch() throws Exception {
@@ -18,18 +31,10 @@ public class ChargeSearchParamsTest {
                 .withGatewayAccountId(111L)
                 .withPage(2L)
                 .withReferenceLike("ref")
-                .withFromDate(ZonedDateTime.parse("2012-06-30T12:30:40Z[GMT]"))
-                .withToDate(ZonedDateTime.parse("2012-07-30T12:30:40Z[GMT]"));
+                .withFromDate(ZonedDateTime.parse(FROM_DATE))
+                .withToDate(ZonedDateTime.parse(TO_DATE));
 
-        String expectedQueryString =
-                "&reference=ref" +
-                "&from_date=2012-06-30T12:30:40Z[GMT]" +
-                "&to_date=2012-07-30T12:30:40Z[GMT]" +
-                "&page=2" +
-                "&display_size=5" +
-                "&state=created";
-
-        assertEquals("query params string mismatch", expectedQueryString, params.buildQueryParams());
+        assertEquals("query params string mismatch", format(EXPECTED_QUERY_STRING, 2, 5), params.buildQueryParams());
     }
 
     @Test
@@ -40,18 +45,10 @@ public class ChargeSearchParamsTest {
                 .withGatewayAccountId(111L)
                 .withPage(-1L)
                 .withReferenceLike("ref")
-                .withFromDate(ZonedDateTime.parse("2012-06-30T12:30:40Z[GMT]"))
-                .withToDate(ZonedDateTime.parse("2012-07-30T12:30:40Z[GMT]"));
+                .withFromDate(ZonedDateTime.parse(FROM_DATE))
+                .withToDate(ZonedDateTime.parse(TO_DATE));
 
-        String expectedQueryString =
-                "&reference=ref" +
-                "&from_date=2012-06-30T12:30:40Z[GMT]" +
-                "&to_date=2012-07-30T12:30:40Z[GMT]" +
-                "&page=1" +
-                "&display_size=500" +
-                "&state=created";
-
-        assertEquals("query params string mismatch", expectedQueryString, params.buildQueryParams());
+        assertEquals("query params string mismatch", format(EXPECTED_QUERY_STRING, 1, 500), params.buildQueryParams());
 
     }
 }

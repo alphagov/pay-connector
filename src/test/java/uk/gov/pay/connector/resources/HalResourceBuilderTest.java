@@ -3,7 +3,10 @@ package uk.gov.pay.connector.resources;
 import com.google.common.collect.ImmutableList;
 import org.junit.Test;
 
-import static org.junit.Assert.*;
+import java.net.URI;
+import java.net.URISyntaxException;
+
+import static org.junit.Assert.assertEquals;
 
 public class HalResourceBuilderTest {
 
@@ -12,11 +15,11 @@ public class HalResourceBuilderTest {
         String result = new HalResourceBuilder()
                 .withProperty("count", 100)
                 .withProperty("total", 300)
-                .withSelfLink("/self")
-                .withLink("first_page", "?page=1")
-                .withLink("next_page", "?page=3")
-                .withLink("last_page", "?page=5")
-                .withLink("previous_page", "?page=2")
+                .withSelfLink(uriOf("/self"))
+                .withLink("first_page", uriOf("?page=1"))
+                .withLink("next_page", uriOf("?page=3"))
+                .withLink("last_page", uriOf("?page=5"))
+                .withLink("previous_page", uriOf("?page=2"))
                 .withProperty("results", ImmutableList.of("one", "two"))
                 .build();
 
@@ -35,4 +38,9 @@ public class HalResourceBuilderTest {
                 "}",
                 result);
     }
+
+    private URI uriOf(String link) throws URISyntaxException {
+        return new URI(link);
+    }
+
 }

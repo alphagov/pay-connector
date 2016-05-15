@@ -33,10 +33,11 @@ public class ChargeSearchParams {
         return chargeStatuses;
     }
 
-    public ChargeSearchParams withExternalChargeState(List<ExternalChargeState> externalChargeStates) {
-        if (externalChargeStates != null) {
-            this.externalChargeStates = externalChargeStates;
-            for (ExternalChargeState externalState : externalChargeStates) {
+
+    public ChargeSearchParams withExternalChargeState(List<ExternalChargeState> externalStates) {
+        if (externalStates != null) {
+            this.externalChargeStates = externalStates;
+            for (ExternalChargeState externalState : externalStates) {
                 this.chargeStatuses.addAll(ChargeStatus.fromExternal(externalState));
             }
         }

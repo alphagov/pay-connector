@@ -12,18 +12,18 @@ import java.util.Map;
 
 public class HalResourceBuilder implements HalResource {
     public static final String SELF_LINK_KEY = "self";
-    private Map<String, String> linkMap = new HashMap<>();
+    private Map<String, URI> linkMap = new HashMap<>();
     private Map<String, Object> propertyMap = new HashMap<>();
-    private String selfLink;
+    private URI selfLink;
 
-    public HalResourceBuilder withLink(String linkKey, String linkValue) {
-        if (linkKey!=null && linkValue!=null) {
-            linkMap.put(linkKey, linkValue);
+    public HalResourceBuilder withLink(String linkKey, URI link) {
+        if (linkKey!=null && link !=null) {
+            linkMap.put(linkKey, link);
         }
         return this;
     }
 
-    public HalResourceBuilder withSelfLink(String selfLink) {
+    public HalResourceBuilder withSelfLink(URI selfLink) {
         if (selfLink != null) {
             this.selfLink = selfLink;
         }
@@ -39,7 +39,7 @@ public class HalResourceBuilder implements HalResource {
 
     @Override
     public URI location() {
-        return buildUri(selfLink);
+        return selfLink;
     }
 
     @Override
@@ -48,7 +48,7 @@ public class HalResourceBuilder implements HalResource {
         builder.addLink(SELF_LINK_KEY, this);
 
         for (String key : linkMap.keySet()) {
-            builder.addLink(key, buildUri(linkMap.get(key)));
+            builder.addLink(key, linkMap.get(key));
         }
         for (String key : propertyMap.keySet()) {
             builder.addProperty(key, propertyMap.get(key));
@@ -60,15 +60,6 @@ public class HalResourceBuilder implements HalResource {
         try {
             return representationBuilder().build().serialize();
         } catch (JsonProcessingException e) {
-            e.printStackTrace();
-        }
-        return null;
-    }
-
-    public URI buildUri(String uri) {
-        try {
-            return new URI(uri);
-        } catch (URISyntaxException e) {
             e.printStackTrace();
         }
         return null;

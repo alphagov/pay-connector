@@ -132,7 +132,7 @@ public class ChargesApiResource {
                                         .withDisplaySize(displaySize != null && displaySize >= 1 ?
                                                 displaySize :
                                                 configuration.getTransactionsPaginationConfig().getDisplayPageSize())
-                                        .withPage(pageNumber)))));
+                                        .withPage(pageNumber), uriInfo))));
     }
 
     private F<Boolean, Response> listCharges(Long accountId, String reference, String state, String fromDate, String toDate, Function<List<ChargeEntity>, Response> responseFunction) {
@@ -154,7 +154,7 @@ public class ChargesApiResource {
         return success -> responseFunction.apply(charges);
     }
 
-    private F<Boolean, Response> listCharges(ChargeSearchParams searchParams) {
+    private F<Boolean, Response> listCharges(ChargeSearchParams searchParams, UriInfo uriInfo) {
         List<ChargeEntity> charges = chargeDao.findAllBy(searchParams);
         Long totalCount = chargeDao.getTotalFor(searchParams);
         List<ChargeResponse> chargesResponse =
@@ -173,7 +173,7 @@ public class ChargesApiResource {
                         ).collect(Collectors.toList());
 
         return success ->
-                new ChargesPaginationResponseBuilder(searchParams)
+                new ChargesPaginationResponseBuilder(searchParams, uriInfo)
                         .withChargeResponses(chargesResponse)
                         .withTotalCount(totalCount)
                         .buildResponse();

@@ -4,6 +4,8 @@ import uk.gov.pay.connector.dao.ChargeSearchParams;
 import uk.gov.pay.connector.model.ChargeResponse;
 
 import javax.ws.rs.core.Response;
+import javax.ws.rs.core.UriInfo;
+import java.net.URI;
 import java.util.List;
 
 import static javax.ws.rs.core.Response.ok;
@@ -13,21 +15,22 @@ import static uk.gov.pay.connector.util.ResponseUtil.notFoundResponse;
 public class ChargesPaginationResponseBuilder {
 
     private ChargeSearchParams searchParams;
+    private UriInfo uriInfo;
     private List<ChargeResponse> chargeResponses;
+
     private Long totalCount;
     private Long selfPageNum;
-    private String transactionsPath;
-    private String selfLink;
-    private String firstLink;
-    private String lastLink;
-    private String prevLink;
-    private String nextLink;
+    private URI selfLink;
+    private URI firstLink;
+    private URI lastLink;
+    private URI prevLink;
+    private URI nextLink;
 
-    public ChargesPaginationResponseBuilder(ChargeSearchParams searchParams) {
+    public ChargesPaginationResponseBuilder(ChargeSearchParams searchParams, UriInfo uriInfo) {
         this.searchParams = searchParams;
+        this.uriInfo = uriInfo;
         selfPageNum = searchParams.getPage();
-        transactionsPath = CHARGES_API_PATH.replace("{accountId}", searchParams.getGatewayAccountId().toString());
-        selfLink = transactionsPath + "?" + searchParams.buildQueryParams();
+        selfLink = uriWithParams(searchParams.buildQueryParams());
     }
 
     public ChargesPaginationResponseBuilder withChargeResponses(List<ChargeResponse> chargeResponses) {
@@ -53,6 +56,7 @@ public class ChargesPaginationResponseBuilder {
                 .withProperty("results", chargeResponses)
                 .withProperty("count", chargeResponses.size())
                 .withProperty("total", totalCount)
+                .withProperty("page", selfPageNum)
                 .withSelfLink(selfLink)
                 .withLink("first_page", firstLink)
                 .withLink("last_page", lastLink)
@@ -65,19 +69,27 @@ public class ChargesPaginationResponseBuilder {
 
     private void buildLinks(double lastPage) {
         searchParams.withPage(1L);
-        firstLink = transactionsPath + "?" + searchParams.buildQueryParams();
+        firstLink = uriWithParams(searchParams.buildQueryParams());
 
         searchParams.withPage((long) lastPage);
-        lastLink = transactionsPath + "?" + searchParams.buildQueryParams();
+        lastLink = uriWithParams(searchParams.buildQueryParams());
 
         searchParams.withPage(selfPageNum - 1);
-        prevLink = selfPageNum == 1L ? null : transactionsPath + "?" + searchParams.buildQueryParams();
+        prevLink = selfPageNum == 1L ? null : uriWithParams(searchParams.buildQueryParams());
 
         searchParams.withPage(selfPageNum + 1);
-        nextLink = selfPageNum == lastPage ? null : transactionsPath + "?" + searchParams.buildQueryParams();
+        nextLink = selfPageNum == lastPage ? null : uriWithParams(searchParams.buildQueryParams());
     }
 
     private boolean invalidPageRequest(double lastPage) {
         return searchParams.getPage() > lastPage || searchParams.getPage() < 1;
     }
+
+    private URI uriWithParams(String params) {
+        return uriInfo.getBaseUriBuilder()
+                .path(CHARGES_API_PATH)
+                .replaceQuery(params)
+                .build(searchParams.getGatewayAccountId());
+    }
+
 }
