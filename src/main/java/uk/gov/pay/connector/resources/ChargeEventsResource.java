@@ -51,7 +51,6 @@ public class ChargeEventsResource {
                 .map(event -> new ChargeEvent(
                         event.getChargeEntity().getExternalId(),
                         event.getStatus().toExternal(),
-                        event.getStatus().toLegacy(),
                         event.getUpdated()
                 ))
                 .collect(toList());

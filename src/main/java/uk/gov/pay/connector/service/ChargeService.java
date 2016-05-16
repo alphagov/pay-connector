@@ -8,11 +8,11 @@ import uk.gov.pay.connector.app.LinksConfig;
 import uk.gov.pay.connector.dao.ChargeDao;
 import uk.gov.pay.connector.dao.TokenDao;
 import uk.gov.pay.connector.model.ChargeResponse;
-import uk.gov.pay.connector.model.api.ExternalChargeState;
 import uk.gov.pay.connector.model.domain.ChargeEntity;
 import uk.gov.pay.connector.model.domain.ChargeStatus;
 import uk.gov.pay.connector.model.domain.GatewayAccountEntity;
 import uk.gov.pay.connector.model.domain.TokenEntity;
+import static uk.gov.pay.connector.model.ChargeResponse.ChargeResponseBuilder;
 
 import javax.inject.Inject;
 import javax.ws.rs.core.UriBuilder;
@@ -23,12 +23,10 @@ import java.util.*;
 import static javax.ws.rs.HttpMethod.GET;
 import static javax.ws.rs.HttpMethod.POST;
 import static javax.ws.rs.core.MediaType.APPLICATION_FORM_URLENCODED;
-import static uk.gov.pay.connector.model.ChargeResponse.Builder.aChargeResponse;
-import static uk.gov.pay.connector.model.api.LegacyChargeStatus.*;
+import static uk.gov.pay.connector.model.ChargeResponse.aChargeResponse;
 import static uk.gov.pay.connector.resources.ApiPaths.CHARGE_API_PATH;
 
 public class ChargeService {
-
     private static final Logger logger = LoggerFactory.getLogger(ChargeService.class);
 
     private ChargeDao chargeDao;
@@ -86,7 +84,7 @@ public class ChargeService {
         return token;
     }
 
-    private ChargeResponse.Builder chargeResponseBuilder(UriInfo uriInfo, ChargeEntity charge, TokenEntity token) {
+    private ChargeResponseBuilder chargeResponseBuilder(UriInfo uriInfo, ChargeEntity charge, TokenEntity token) {
         return chargeResponseBuilder(uriInfo, charge)
                 .withLink("next_url", GET, nextUrl(token.getToken()))
                 .withLink("next_url_post", POST, nextUrl(), APPLICATION_FORM_URLENCODED, new HashMap<String, Object>() {{
@@ -94,15 +92,14 @@ public class ChargeService {
                 }});
     }
 
-    private ChargeResponse.Builder chargeResponseBuilder(UriInfo uriInfo, ChargeEntity charge) {
+    private ChargeResponseBuilder chargeResponseBuilder(UriInfo uriInfo, ChargeEntity charge) {
         String chargeId = charge.getExternalId();
-        ChargeResponse.Builder responseBuilder = aChargeResponse()
+        ChargeResponseBuilder responseBuilder = aChargeResponse()
                 .withChargeId(chargeId)
                 .withAmount(charge.getAmount())
                 .withReference(charge.getReference())
                 .withDescription(charge.getDescription())
                 .withState(ChargeStatus.fromString(charge.getStatus()).toExternal())
-                .withStatus(ChargeStatus.fromString(charge.getStatus()).toLegacy().getValue())
                 .withGatewayTransactionId(charge.getGatewayTransactionId())
                 .withProviderName(charge.getGatewayAccount().getGatewayName())
                 .withCreatedDate(charge.getCreatedDate())

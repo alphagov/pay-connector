@@ -1,13 +1,11 @@
 package uk.gov.pay.connector.dao;
 
 import uk.gov.pay.connector.model.api.ExternalChargeState;
-import uk.gov.pay.connector.model.api.LegacyChargeStatus;
 import uk.gov.pay.connector.model.domain.ChargeStatus;
 
 import java.time.ZonedDateTime;
 import java.util.LinkedList;
 import java.util.List;
-import java.util.stream.Collectors;
 
 public class ChargeSearchParams {
 
@@ -38,15 +36,6 @@ public class ChargeSearchParams {
             for (ExternalChargeState externalState : externalStates) {
                 this.chargeStatuses.addAll(ChargeStatus.fromExternal(externalState));
             }
-        }
-
-        return this;
-    }
-
-
-    public ChargeSearchParams withLegacyChargeStatus(LegacyChargeStatus externalChargeStatus) {
-        if (externalChargeStatus != null) {
-            this.chargeStatuses.addAll(ChargeStatus.fromLegacy(externalChargeStatus));
         }
 
         return this;

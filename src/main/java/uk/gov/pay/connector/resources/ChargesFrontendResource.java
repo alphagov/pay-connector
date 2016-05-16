@@ -22,7 +22,7 @@ import static com.google.common.collect.Lists.newArrayList;
 import static javax.ws.rs.HttpMethod.GET;
 import static javax.ws.rs.HttpMethod.POST;
 import static javax.ws.rs.core.MediaType.APPLICATION_JSON;
-import static uk.gov.pay.connector.model.ChargeResponse.Builder.aChargeResponse;
+import static uk.gov.pay.connector.model.FrontendChargeResponse.aFrontendChargeResponse;
 import static uk.gov.pay.connector.model.domain.ChargeStatus.*;
 import static uk.gov.pay.connector.resources.ApiPaths.*;
 import static uk.gov.pay.connector.util.ResponseUtil.*;
@@ -93,11 +93,11 @@ public class ChargesFrontendResource {
 
     private ChargeResponse buildChargeResponse(UriInfo uriInfo, ChargeEntity charge) {
         String chargeId = charge.getExternalId();
-        return aChargeResponse()
+        return aFrontendChargeResponse()
+                .withStatus(charge.getStatus())
                 .withChargeId(chargeId)
                 .withAmount(charge.getAmount())
                 .withDescription(charge.getDescription())
-                .withStatus(charge.getStatus())
                 .withGatewayTransactionId(charge.getGatewayTransactionId())
                 .withCreatedDate(charge.getCreatedDate())
                 .withReturnUrl(charge.getReturnUrl())

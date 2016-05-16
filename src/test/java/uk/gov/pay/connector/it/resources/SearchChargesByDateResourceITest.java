@@ -73,7 +73,7 @@ public class SearchChargesByDateResourceITest {
                 .body("results[0].charge_id", is(chargeId))
                 .body("results[0].amount", is(AMOUNT))
                 .body("results[0].description", is("Test description"))
-                .body("results[0].status", is("CREATED"))
+                .body("results[0].state.status", is("created"))
                 .body("results[0].links.size()", is(0))
                 .body("results[0].return_url", is("http://return.com/1"))
                 .body("results[0].created_date", is("2016-02-02T00:00:00.299Z"))

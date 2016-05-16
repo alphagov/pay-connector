@@ -57,7 +57,6 @@ public class ChargesCSVGenerator {
                 "Finished",
                 "Error Message",
                 "Error Code",
-                "Status",
                 "Gateway Transaction ID",
                 "GOV.UK Pay ID",
                 "Date Created"
@@ -66,7 +65,7 @@ public class ChargesCSVGenerator {
 
     private static Function<ChargeEntity, String[]> asArray() {
         return charge -> {
-            String[] csvChargeArray = new String[10];
+            String[] csvChargeArray = new String[9];
 
             csvChargeArray[0] = defaultString(charge.getReference());
             csvChargeArray[1] = DECIMAL_FORMAT.format(Double.valueOf(charge.getAmount().toString()) / 100);
@@ -79,10 +78,9 @@ public class ChargesCSVGenerator {
             csvChargeArray[4] = state.isFinished() && (state.getMessage() != null) ? state.getMessage() : "";
             csvChargeArray[5] = state.isFinished() && (state.getCode() != null) ? state.getCode() : "";
 
-            csvChargeArray[6] = ChargeStatus.fromString(charge.getStatus()).toLegacy().getValue();
-            csvChargeArray[7] = defaultString(charge.getGatewayTransactionId());
-            csvChargeArray[8] = charge.getExternalId();
-            csvChargeArray[9] = toLondonZone(charge.getCreatedDate());
+            csvChargeArray[6] = defaultString(charge.getGatewayTransactionId());
+            csvChargeArray[7] = charge.getExternalId();
+            csvChargeArray[8] = toLondonZone(charge.getCreatedDate());
 
             return csvChargeArray;
         };

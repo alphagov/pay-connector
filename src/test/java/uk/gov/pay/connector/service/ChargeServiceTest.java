@@ -40,7 +40,8 @@ import static org.junit.Assert.assertThat;
 import static org.mockito.ArgumentCaptor.forClass;
 import static org.mockito.Mockito.*;
 import static uk.gov.pay.connector.fixture.ChargeEntityFixture.aValidChargeEntity;
-import static uk.gov.pay.connector.model.ChargeResponse.Builder.aChargeResponse;
+import static uk.gov.pay.connector.model.ChargeResponse.*;
+import static uk.gov.pay.connector.model.ChargeResponse.aChargeResponse;
 import static uk.gov.pay.connector.model.domain.ChargeStatus.*;
 
 
@@ -129,7 +130,7 @@ public class ChargeServiceTest {
         assertThat(tokenEntity.getToken(), is(notNullValue()));
 
         // Then - expected response is returned
-        ChargeResponse.Builder expectedChargeResponse = chargeResponseBuilderOf(createdChargeEntity);
+        ChargeResponseBuilder expectedChargeResponse = chargeResponseBuilderOf(createdChargeEntity);
 
         expectedChargeResponse.withLink("self", GET, new URI(SERVICE_HOST + "/v1/api/accounts/1/charges/" + externalChargeId[0]));
         expectedChargeResponse.withLink("next_url", GET, new URI("http://payments.com/secure/" + tokenEntity.getToken()));
@@ -169,7 +170,7 @@ public class ChargeServiceTest {
         assertThat(tokenEntity.getChargeEntity().getId(), is(newCharge.getId()));
         assertThat(tokenEntity.getToken(), is(notNullValue()));
 
-        ChargeResponse.Builder expectedChargeResponse = chargeResponseBuilderOf(chargeEntity.get());
+        ChargeResponseBuilder expectedChargeResponse = chargeResponseBuilderOf(chargeEntity.get());
         expectedChargeResponse.withLink("self", GET, new URI(SERVICE_HOST + "/v1/api/accounts/1/charges/" + externalId));
         expectedChargeResponse.withLink("next_url", GET, new URI("http://payments.com/secure/" + tokenEntity.getToken()));
         expectedChargeResponse.withLink("next_url_post", POST, new URI("http://payments.com/secure"), "application/x-www-form-urlencoded", new HashMap<String, Object>() {{
@@ -208,7 +209,7 @@ public class ChargeServiceTest {
         assertThat(tokenEntity.getChargeEntity().getId(), is(newCharge.getId()));
         assertThat(tokenEntity.getToken(), is(notNullValue()));
 
-        ChargeResponse.Builder expectedChargeResponse = chargeResponseBuilderOf(chargeEntity.get());
+        ChargeResponseBuilder expectedChargeResponse = chargeResponseBuilderOf(chargeEntity.get());
         expectedChargeResponse.withLink("self", GET, new URI(SERVICE_HOST + "/v1/api/accounts/1/charges/" + externalId));
         expectedChargeResponse.withLink("next_url", GET, new URI("http://payments.com/secure/" + tokenEntity.getToken()));
         expectedChargeResponse.withLink("next_url_post", POST, new URI("http://payments.com/secure"), "application/x-www-form-urlencoded", new HashMap<String, Object>() {{
@@ -243,7 +244,7 @@ public class ChargeServiceTest {
 
         verify(tokenDao, never()).persist(any());
 
-        ChargeResponse.Builder expectedChargeResponse = chargeResponseBuilderOf(chargeEntity.get());
+        ChargeResponseBuilder expectedChargeResponse = chargeResponseBuilderOf(chargeEntity.get());
         expectedChargeResponse.withLink("self", GET, new URI(SERVICE_HOST + "/v1/api/accounts/1/charges/" + externalId));
 
         assertThat(chargeResponseForAccount.get(), is(expectedChargeResponse.build()));
@@ -283,13 +284,13 @@ public class ChargeServiceTest {
      * TODO To create a matcher rather than using main src to build our assertions
      */
     @Deprecated
-    private ChargeResponse.Builder chargeResponseBuilderOf(ChargeEntity chargeEntity) throws URISyntaxException {
+    private ChargeResponseBuilder chargeResponseBuilderOf(ChargeEntity chargeEntity) throws URISyntaxException {
         return aChargeResponse()
                 .withChargeId(chargeEntity.getExternalId())
                 .withAmount(chargeEntity.getAmount())
                 .withReference(chargeEntity.getReference())
                 .withDescription(chargeEntity.getDescription())
-                .withStatus(ChargeStatus.fromString(chargeEntity.getStatus()).toLegacy().getValue())
+                .withState(ChargeStatus.fromString(chargeEntity.getStatus()).toExternal())
                 .withGatewayTransactionId(chargeEntity.getGatewayTransactionId())
                 .withProviderName(chargeEntity.getGatewayAccount().getGatewayName())
                 .withCreatedDate(chargeEntity.getCreatedDate())

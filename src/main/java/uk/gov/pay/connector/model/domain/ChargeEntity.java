@@ -1,7 +1,6 @@
 package uk.gov.pay.connector.model.domain;
 
 import uk.gov.pay.connector.model.api.ExternalChargeState;
-import uk.gov.pay.connector.model.api.LegacyChargeStatus;
 import uk.gov.pay.connector.util.RandomIdGenerator;
 
 import javax.persistence.*;

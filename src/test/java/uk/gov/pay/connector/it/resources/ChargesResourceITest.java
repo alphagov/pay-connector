@@ -55,7 +55,6 @@ public class ChargesResourceITest {
     private static final String JSON_GATEWAY_ACC_KEY = "gateway_account_id";
     private static final String JSON_RETURN_URL_KEY = "return_url";
     private static final String JSON_CHARGE_KEY = "charge_id";
-    private static final String JSON_STATUS_KEY = "status";
     private static final String JSON_STATE_KEY = "state.status";
     private static final String JSON_MESSAGE_KEY = "message";
     private static final String JSON_PROVIDER_KEY = "payment_provider";
@@ -127,7 +126,7 @@ public class ChargesResourceITest {
                 .body(JSON_AMOUNT_KEY, isNumber(AMOUNT))
                 .body(JSON_REFERENCE_KEY, is(expectedReference))
                 .body(JSON_DESCRIPTION_KEY, is(expectedDescription))
-                .body(JSON_STATUS_KEY, is(CREATED.getValue()))
+                .body(JSON_STATE_KEY, is(CREATED.toExternal().getStatus()))
                 .body(JSON_RETURN_URL_KEY, is(returnUrl));
 
         // Reload the charge token which as it should have changed
@@ -237,8 +236,8 @@ public class ChargesResourceITest {
                 .getTransactions()
                 .statusCode(OK.getStatusCode())
                 .contentType(CSV_CONTENT_TYPE)
-                .body(is("Service Payment Reference,Amount,State,Finished,Error Message,Error Code,Status,Gateway Transaction ID,GOV.UK Pay ID,Date Created\n" +
-                    "My reference,62.34,submitted,false,,,IN PROGRESS,," + externalChargeId + ",2016-01-25 13:45:32\n"));
+                .body(is("Service Payment Reference,Amount,State,Finished,Error Message,Error Code,Gateway Transaction ID,GOV.UK Pay ID,Date Created\n" +
+                    "My reference,62.34,submitted,false,,,," + externalChargeId + ",2016-01-25 13:45:32\n"));
     }
 
     @Test
@@ -290,9 +289,14 @@ public class ChargesResourceITest {
         assertThat(references, containsInAnyOrder("ref-1", "ref-2"));
         assertThat(references, not(contains("ref-3")));
 
-        List<String> statuses = collect(results, "status");
-        assertThat(statuses, containsInAnyOrder("CREATED", "IN PROGRESS"));
-        assertThat(statuses, not(contains("SUCCEEDED")));
+        // collect statuses from states
+        List<Object> statuses = results
+                .stream()
+                .map(result -> ((Map<Object, Object>) result.get("state")).get("status"))
+                .collect(Collectors.toList());
+
+        assertThat(statuses, containsInAnyOrder("created", "started"));
+        assertThat(statuses, not(contains("confirmed")));
 
         List<String> createdDateStrings = collect(results, "created_date");
         datesFrom(createdDateStrings).forEach(createdDate ->
@@ -477,7 +481,7 @@ public class ChargesResourceITest {
                 .statusCode(OK.getStatusCode())
                 .contentType(JSON)
                 .body(JSON_CHARGE_KEY, is(extChargeId))
-                .body(JSON_STATUS_KEY, is(EXPIRED.getValue()));
+                .body(JSON_STATE_KEY, is(EXPIRED.toExternal().getStatus()));
 
     }
 

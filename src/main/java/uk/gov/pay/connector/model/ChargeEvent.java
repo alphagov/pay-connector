@@ -4,25 +4,19 @@ import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import io.dropwizard.jackson.JsonSnakeCase;
 import uk.gov.pay.connector.model.api.ExternalChargeState;
-import uk.gov.pay.connector.model.api.LegacyChargeStatus;
 import uk.gov.pay.connector.util.DateTimeUtils;
 
 import java.time.ZonedDateTime;
 
 @JsonSnakeCase
 public class ChargeEvent {
-
     private String extChargeId;
-
     private ExternalChargeState state;
-    private LegacyChargeStatus legacyStatus;
-
     private ZonedDateTime updated;
 
-    public ChargeEvent(String extChargeId, ExternalChargeState state, LegacyChargeStatus legacyStatus, ZonedDateTime updated) {
+    public ChargeEvent(String extChargeId, ExternalChargeState state, ZonedDateTime updated) {
         this.extChargeId = extChargeId;
         this.state = state;
-        this.legacyStatus = legacyStatus;
         this.updated = updated;
     }
 
@@ -35,25 +29,10 @@ public class ChargeEvent {
         this.extChargeId = chargeId;
     }
 
-    public LegacyChargeStatus getStatus() {
-        return legacyStatus;
-    }
-
-    public void setStatus(LegacyChargeStatus status) {
-        this.legacyStatus = status;
-    }
-
     @JsonProperty("state")
     public ExternalChargeState getState() {
         return state;
     }
-
-    @JsonProperty("status")
-    public String getLegacyStatusString() {
-        return legacyStatus.getValue();
-    }
-
-
 
     @JsonProperty("updated")
     public String getUpdated() {
