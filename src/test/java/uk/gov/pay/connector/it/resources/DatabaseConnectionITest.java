@@ -1,5 +1,6 @@
 package uk.gov.pay.connector.it.resources;
 
+import org.junit.Ignore;
 import org.junit.Rule;
 import org.junit.Test;
 import uk.gov.pay.connector.rules.DropwizardAppWithPostgresRule;
@@ -12,7 +13,7 @@ public class DatabaseConnectionITest {
     @Rule
     public DropwizardAppWithPostgresRule app = new DropwizardAppWithPostgresRule();
 
-    @Test
+    @Test @Ignore
     public void testDatabaseHealthcheckWhenDatabaseIsUp() {
         given().port(app.getAdminPort())
                 .get("/healthcheck")
@@ -21,7 +22,7 @@ public class DatabaseConnectionITest {
                 .body("database.healthy", is(true));
     }
 
-    @Test
+    @Test @Ignore
     public void testDatabaseHealthcheckWhenDatabaseIsDown() {
         app.stopPostgres();
         given().port(app.getAdminPort())
