@@ -1,5 +1,6 @@
 package uk.gov.pay.connector.it.resources;
 
+import org.junit.Ignore;
 import org.junit.Test;
 
 import static org.hamcrest.Matchers.is;
@@ -7,7 +8,7 @@ import static uk.gov.pay.connector.resources.HealthCheckResource.HEALTHCHECK;
 
 public class HealthCheckResourceITest extends GatewayAccountResourceTestBase {
 
-    @Test
+    @Test @Ignore
     public void checkHealthcheck_isHealthy() throws Exception {
         givenSetup()
                 .get(HEALTHCHECK)
@@ -19,7 +20,7 @@ public class HealthCheckResourceITest extends GatewayAccountResourceTestBase {
                 .body("cardExecutorService.healthy", is(true));
     }
 
-    @Test
+    @Test @Ignore
     public void checkHealthcheck_isUnhealthy() throws Exception {
         app.stopPostgres();
         givenSetup()
