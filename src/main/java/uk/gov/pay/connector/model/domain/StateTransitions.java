@@ -21,11 +21,17 @@ public class StateTransitions {
             .put(CAPTURE_READY,         validTransitions(CAPTURE_SUBMITTED, CAPTURE_ERROR))
             .put(CAPTURE_SUBMITTED,     validTransitions(CAPTURED)) // can this ever be a capture error?
             /**
-             * FIXME: EXPIRE_CANCEL_PENDING --> SYSTEM_CANCELLED is wrong.
+             * FIXME: EXPIRE_CANCEL_PENDING --> SYSTEM_CANCELLED and EXPIRE_CANCEL_PENDING --> CANCEL_READY are wrong.
              *   temporarily allowing to keep the current functionality working
              */
-            .put(EXPIRE_CANCEL_PENDING, validTransitions(EXPIRE_CANCEL_FAILED, SYSTEM_CANCELLED ,EXPIRED))
+            .put(EXPIRE_CANCEL_PENDING, validTransitions(EXPIRE_CANCEL_FAILED, SYSTEM_CANCELLED, CANCEL_READY, EXPIRED))
             .put(CANCEL_READY,          validTransitions(CANCEL_ERROR, SYSTEM_CANCELLED, USER_CANCEL_ERROR, USER_CANCELLED))
+
+            /**
+             * FIXME: SYSTEM_CANCELLED --> EXPIRED is wrong.
+             *   temporarily allowing to keep the current functionality working
+             */
+            .put(SYSTEM_CANCELLED,      validTransitions(EXPIRED))
 
             .build();
 

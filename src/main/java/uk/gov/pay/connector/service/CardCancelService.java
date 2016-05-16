@@ -26,10 +26,12 @@ public class CardCancelService extends CardService implements TransactionalGatew
     private static final Logger logger = LoggerFactory.getLogger(CardCancelService.class);
     public static final String EXPIRY_SUCCESS = "expiry-success";
     public static final String EXPIRY_FAILED = "expiry-failed";
+
     public static final ChargeStatus[] USER_CANCELLABLE_STATUSES =
             new ChargeStatus[]{
                     ENTERING_CARD_DETAILS,
-                    AUTHORISATION_SUCCESS
+                    AUTHORISATION_SUCCESS,
+                    EXPIRE_CANCEL_PENDING //
             };
 
     public static final ChargeStatus[] SYSTEM_CANCELLABLE_STATUSES =
