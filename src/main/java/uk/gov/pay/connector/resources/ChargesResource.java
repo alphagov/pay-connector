@@ -18,6 +18,7 @@ import uk.gov.pay.connector.model.domain.ChargeStatus;
 import uk.gov.pay.connector.service.CardCancelService;
 import uk.gov.pay.connector.service.ChargeService;
 import uk.gov.pay.connector.util.ChargesCSVGenerator;
+import uk.gov.pay.connector.util.ResponseUtil;
 
 import javax.inject.Inject;
 import javax.ws.rs.*;
@@ -57,7 +58,7 @@ public class ChargesResource {
     private static final String FROM_DATE_KEY = "from_date";
     private static final String TO_DATE_KEY = "to_date";
     private static final String ACCOUNT_ID = "accountId";
-    public static final String PAGE = "page";
+    private static final String PAGE = "page";
     private static final String DISPLAY_SIZE = "display_size";
     private final String TEXT_CSV = "text/csv";
 
@@ -108,7 +109,7 @@ public class ChargesResource {
         List<Pair<String, String>> inputDatePairMap = ImmutableList.of(Pair.of(FROM_DATE_KEY, fromDate), Pair.of(TO_DATE_KEY, toDate));
         return ApiValidators
                 .validateDateQueryParams(inputDatePairMap)
-                .map(errorMessage -> badRequestResponse(errorMessage))
+                .map(ResponseUtil::badRequestResponse)
                 .orElseGet(() -> reduce(validateGatewayAccountReference(gatewayAccountDao, accountId)
                         .bimap(handleError, listCharges(accountId, reference, state, fromDate, toDate, pageNumber, displaySize, jsonResponse()))));
     }
@@ -225,18 +226,18 @@ public class ChargesResource {
                 .collect(Collectors.toList());
 
         return missing.isEmpty()
-                ? Optional.<List<String>>empty()
+                ? Optional.empty()
                 : Optional.of(missing);
     }
 
     private Optional<List<String>> checkInvalidSizeFields(Map<String, Object> inputData) {
         List<String> invalidSize = MAXIMUM_FIELDS_SIZE.entrySet().stream()
                 .filter(entry -> !isFieldSizeValid(inputData, entry.getKey(), entry.getValue()))
-                .map(entry -> entry.getKey())
+                .map(Map.Entry::getKey)
                 .collect(Collectors.toList());
 
         return invalidSize.isEmpty()
-                ? Optional.<List<String>>empty()
+                ? Optional.empty()
                 : Optional.of(invalidSize);
     }
 
@@ -266,5 +267,5 @@ public class ChargesResource {
     }
 
     private static F<String, Response> handleError =
-            errorMessage -> notFoundResponse(errorMessage);
+            ResponseUtil::notFoundResponse;
 }

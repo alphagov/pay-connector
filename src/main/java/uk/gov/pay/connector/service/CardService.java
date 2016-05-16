@@ -9,14 +9,15 @@ import uk.gov.pay.connector.exception.OperationAlreadyInProgressRuntimeException
 import uk.gov.pay.connector.model.domain.ChargeEntity;
 import uk.gov.pay.connector.model.domain.ChargeStatus;
 
-import java.util.Arrays;
+import java.util.stream.Collectors;
+import java.util.stream.Stream;
 
 import static java.lang.String.format;
 
 public abstract class CardService {
     protected final ChargeDao chargeDao;
     protected final PaymentProviders providers;
-    private final Logger logger = LoggerFactory.getLogger(CardCancelService.class);
+    private final Logger logger = LoggerFactory.getLogger(getClass());
     protected CardExecutorService cardExecutorService;
 
     protected enum OperationType {
@@ -56,12 +57,16 @@ public abstract class CardService {
                 throw new OperationAlreadyInProgressRuntimeException(operationType.getValue(), reloadedCharge.getExternalId());
             }
             logger.error(format("Charge with id [%s] and with status [%s] should be in one of the following legal states, [%s]",
-                    reloadedCharge.getId(), reloadedCharge.getStatus(), Arrays.asList(legalStatuses.toString())));
+                    reloadedCharge.getId(), reloadedCharge.getStatus(), getLegalStatusNames(legalStatuses)));
             throw new IllegalStateRuntimeException(reloadedCharge.getExternalId());
         }
         reloadedCharge.setStatus(lockingStatus);
 
         return reloadedCharge;
+    }
+
+    private String getLegalStatusNames(ChargeStatus[] legalStatuses) {
+        return Stream.of(legalStatuses).map(ChargeStatus::toString).collect(Collectors.joining(", "));
     }
 
     public PaymentProvider getPaymentProviderFor(ChargeEntity chargeEntity) {
