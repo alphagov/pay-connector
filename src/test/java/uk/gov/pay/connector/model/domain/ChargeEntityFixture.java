@@ -1,8 +1,4 @@
-package uk.gov.pay.connector.fixture;
-
-import uk.gov.pay.connector.model.domain.ChargeEntity;
-import uk.gov.pay.connector.model.domain.ChargeStatus;
-import uk.gov.pay.connector.model.domain.GatewayAccountEntity;
+package uk.gov.pay.connector.model.domain;
 
 import java.util.HashMap;
 
@@ -22,10 +18,9 @@ public class ChargeEntityFixture {
     }
 
     public ChargeEntity build() {
-        ChargeEntity chargeEntity = new ChargeEntity(amount, returnUrl, description, reference, gatewayAccountEntity);
+        ChargeEntity chargeEntity = new ChargeEntity(amount, status ,returnUrl, description, reference, gatewayAccountEntity);
         chargeEntity.setId(id);
         chargeEntity.setGatewayTransactionId(transactionId);
-        chargeEntity.setStatus(status);
         return chargeEntity;
     }
 

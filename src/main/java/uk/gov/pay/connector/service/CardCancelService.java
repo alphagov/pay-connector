@@ -26,14 +26,17 @@ public class CardCancelService extends CardService implements TransactionalGatew
     private static final Logger logger = LoggerFactory.getLogger(CardCancelService.class);
     public static final String EXPIRY_SUCCESS = "expiry-success";
     public static final String EXPIRY_FAILED = "expiry-failed";
-    public static final ChargeStatus[] CANCELLABLE_STATUSES =
+    public static final ChargeStatus[] USER_CANCELLABLE_STATUSES =
+            new ChargeStatus[]{
+                    ENTERING_CARD_DETAILS,
+                    AUTHORISATION_SUCCESS
+            };
+
+    public static final ChargeStatus[] SYSTEM_CANCELLABLE_STATUSES =
             new ChargeStatus[]{
                     CREATED,
                     ENTERING_CARD_DETAILS,
-                    AUTHORISATION_SUCCESS,
-                    AUTHORISATION_READY,
-                    CAPTURE_READY,
-                    EXPIRE_CANCEL_PENDING
+                    AUTHORISATION_SUCCESS
             };
 
     private static ChargeStatus[] nonGatewayStatuses = new ChargeStatus[]{
@@ -116,7 +119,7 @@ public class CardCancelService extends CardService implements TransactionalGatew
     @Transactional
     @Override
     public ChargeEntity preOperation(ChargeEntity chargeEntity) {
-        return preOperation(chargeEntity, OperationType.CANCELLATION, CANCELLABLE_STATUSES, ChargeStatus.CANCEL_READY);
+        return preOperation(chargeEntity, OperationType.CANCELLATION, USER_CANCELLABLE_STATUSES, ChargeStatus.CANCEL_READY);
     }
 
     @Override

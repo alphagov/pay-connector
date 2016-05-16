@@ -15,10 +15,9 @@ import static java.lang.String.format;
 import static java.util.Arrays.asList;
 import static javax.ws.rs.core.Response.Status.*;
 import static org.hamcrest.Matchers.is;
-import static uk.gov.pay.connector.model.api.ExternalChargeState.EXTERNAL_CANCELLED;
 import static uk.gov.pay.connector.model.domain.ChargeStatus.*;
 import static uk.gov.pay.connector.model.domain.ChargeStatus.CREATED;
-import static uk.gov.pay.connector.service.CardCancelService.CANCELLABLE_STATUSES;
+import static uk.gov.pay.connector.service.CardCancelService.SYSTEM_CANCELLABLE_STATUSES;
 
 public class ChargeCancelResourceITest {
     private String accountId = "66757943593456";
@@ -38,7 +37,7 @@ public class ChargeCancelResourceITest {
 
     @Test
     public void respondWith204_whenCancellationSuccessful() {
-        asList(CANCELLABLE_STATUSES)
+        asList(SYSTEM_CANCELLABLE_STATUSES)
                 .forEach(status -> {
                     String chargeId = createNewChargeWithStatus(status);
                     restApiCall
