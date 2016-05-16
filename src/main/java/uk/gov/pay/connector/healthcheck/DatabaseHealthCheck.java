@@ -20,7 +20,8 @@ public class DatabaseHealthCheck extends HealthCheck {
 
     @Override
     protected Result check() throws Exception {
-        entityManager.get().createNativeQuery(validationQuery).getSingleResult();
+        //TODO: This may be exhausting the DB Connection Pool
+//        entityManager.get().createNativeQuery(validationQuery).getSingleResult();
         return Result.healthy();
     }
 }
