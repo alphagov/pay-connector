@@ -72,7 +72,6 @@ public class ChargesResource {
     private static final ArrayList<ChargeStatus> NON_TERMINAL_STATUSES = Lists.newArrayList(
             CREATED,
             ENTERING_CARD_DETAILS,
-            AUTHORISATION_SUBMITTED,
             AUTHORISATION_SUCCESS);
 
     private static final Logger logger = LoggerFactory.getLogger(ChargesResource.class);

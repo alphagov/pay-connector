@@ -13,7 +13,6 @@ public class SmartpayStatusesBlacklistTest {
 
     @Test
     public void shouldBlacklistedAuthorisedStatuses() throws Exception {
-        assertTrue(chargeStatusBlacklist.has(AUTHORISATION_SUBMITTED));
         assertTrue(chargeStatusBlacklist.has(AUTHORISATION_READY));
         assertTrue(chargeStatusBlacklist.has(AUTHORISATION_SUCCESS));
         assertTrue(chargeStatusBlacklist.has(AUTHORISATION_REJECTED));
