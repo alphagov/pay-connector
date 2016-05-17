@@ -9,7 +9,7 @@ import java.util.Map;
 import static java.util.Collections.emptyList;
 import static uk.gov.pay.connector.model.domain.ChargeStatus.*;
 
-public class StateTransitions {
+public final class StateTransitions {
 
     private static final Map<ChargeStatus, List<ChargeStatus>> TRANSITION_TABLE = ImmutableMap.<ChargeStatus, List<ChargeStatus>>builder()
 

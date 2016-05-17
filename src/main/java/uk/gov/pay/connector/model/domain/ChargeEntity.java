@@ -108,7 +108,7 @@ public class ChargeEntity extends AbstractEntity {
         if (StateTransitions.transitionTo(ChargeStatus.fromString(this.status), status)) {
             this.status = status.getValue();
         } else {
-            throw new InvalidStateTransitionException(String.format("Charge state transition [%s] -> [%s] not allowed", this.status, status));
+            throw new InvalidStateTransitionException(this.status, status.getValue());
         }
     }
 

@@ -1,8 +1,10 @@
 package uk.gov.pay.connector.exception;
 
-public class InvalidStateTransitionException extends RuntimeException {
+import static java.lang.String.format;
 
-    public InvalidStateTransitionException(String message) {
-        super(message);
+public class InvalidStateTransitionException extends IllegalStateException {
+
+    public InvalidStateTransitionException(String currentState, String targetState) {
+        super(format("Charge state transition [%s] -> [%s] not allowed", currentState, targetState));
     }
 }
