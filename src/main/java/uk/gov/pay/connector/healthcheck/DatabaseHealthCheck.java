@@ -1,27 +1,35 @@
 package uk.gov.pay.connector.healthcheck;
 
 import com.codahale.metrics.health.HealthCheck;
-import com.google.inject.Provider;
 import uk.gov.pay.connector.app.ConnectorConfiguration;
 
 import javax.inject.Inject;
-import javax.persistence.EntityManager;
+import java.sql.Connection;
+import java.sql.DriverManager;
 
 public class DatabaseHealthCheck extends HealthCheck {
 
-    private Provider<EntityManager> entityManager;
-    private String validationQuery;
+    private ConnectorConfiguration configuration;
 
     @Inject
-    public DatabaseHealthCheck(Provider<EntityManager> entityManager, ConnectorConfiguration config) {
-        this.entityManager = entityManager;
-        this.validationQuery = config.getDataSourceFactory().getValidationQuery();
+    public DatabaseHealthCheck(ConnectorConfiguration configuration) {
+        this.configuration = configuration;
     }
 
     @Override
     protected Result check() throws Exception {
-        //TODO: This may be exhausting the DB Connection Pool
-//        entityManager.get().createNativeQuery(validationQuery).getSingleResult();
+        Connection connection = null;
+        try {
+            connection = DriverManager.getConnection(
+                    configuration.getDataSourceFactory().getUrl(),
+                    configuration.getDataSourceFactory().getUser(),
+                    configuration.getDataSourceFactory().getPassword());
+            connection.createStatement().execute("SELECT '1'");
+        } catch (Exception e) {
+            Result.unhealthy(e.getMessage());
+        } finally {
+            connection.close();
+        }
         return Result.healthy();
     }
 }
