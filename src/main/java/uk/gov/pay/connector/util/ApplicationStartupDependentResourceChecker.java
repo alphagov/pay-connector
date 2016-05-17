@@ -37,12 +37,20 @@ public class ApplicationStartupDependentResourceChecker {
 
 
     private boolean isDatabaseAvailable() {
+        Connection connection = null;
         try {
-            Connection connection = applicationStartupDependentResource.getDatabaseConnection();
-            connection.close();
+            connection = applicationStartupDependentResource.getDatabaseConnection();
             return true;
         } catch (SQLException e) {
             return false;
+        } finally {
+            if(connection != null) {
+                try {
+                    connection.close();
+                } catch (SQLException e) {
+                    logger.error("Error closing connection acquired for Database check");
+                }
+            }
         }
     }
 }
