@@ -31,7 +31,7 @@ import static org.exparity.hamcrest.date.ZonedDateTimeMatchers.within;
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.*;
 import static org.junit.Assert.assertEquals;
-import static uk.gov.pay.connector.fixture.ChargeEntityFixture.aValidChargeEntity;
+import static uk.gov.pay.connector.model.domain.ChargeEntityFixture.aValidChargeEntity;
 import static uk.gov.pay.connector.model.api.ExternalChargeState.EXTERNAL_CREATED;
 import static uk.gov.pay.connector.model.api.ExternalChargeState.EXTERNAL_STARTED;
 import static uk.gov.pay.connector.model.domain.ChargeStatus.*;
@@ -678,7 +678,7 @@ public class ChargeDaoITest extends DaoITestBase {
                 .withCreatedDate(now().minusHours(2))
                 .insert();
 
-        ArrayList<ChargeStatus> chargeStatuses = Lists.newArrayList(CREATED, ENTERING_CARD_DETAILS, AUTHORISATION_SUBMITTED, AUTHORISATION_SUCCESS);
+        ArrayList<ChargeStatus> chargeStatuses = Lists.newArrayList(CREATED, ENTERING_CARD_DETAILS, AUTHORISATION_SUCCESS);
 
         List<ChargeEntity> charges = chargeDao.findBeforeDateWithStatusIn(now().minusHours(1), chargeStatuses);
 
@@ -715,7 +715,7 @@ public class ChargeDaoITest extends DaoITestBase {
                 .withCreatedDate(now().minusMinutes(30))
                 .insert();
 
-        ArrayList<ChargeStatus> chargeStatuses = Lists.newArrayList(CREATED, ENTERING_CARD_DETAILS, AUTHORISATION_SUBMITTED, AUTHORISATION_SUCCESS);
+        ArrayList<ChargeStatus> chargeStatuses = Lists.newArrayList(CREATED, ENTERING_CARD_DETAILS, AUTHORISATION_SUCCESS);
 
         List<ChargeEntity> charges = chargeDao.findBeforeDateWithStatusIn(now().minusHours(1), chargeStatuses);
 

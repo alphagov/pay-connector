@@ -16,9 +16,8 @@ import static java.util.Arrays.asList;
 import static javax.ws.rs.core.Response.Status.BAD_REQUEST;
 import static javax.ws.rs.core.Response.Status.NO_CONTENT;
 import static org.hamcrest.Matchers.is;
-import static uk.gov.pay.connector.model.api.ExternalChargeState.EXTERNAL_CANCELLED;
 import static uk.gov.pay.connector.model.domain.ChargeStatus.*;
-import static uk.gov.pay.connector.service.CardCancelService.CANCELLABLE_STATUSES;
+import static uk.gov.pay.connector.service.CardCancelService.USER_CANCELLABLE_STATUSES;
 
 /**
  * There are currently no integration tests for case when payment gateway fails. However, this case is unit tested
@@ -49,7 +48,7 @@ public class ChargeCancelFrontendResourceITest {
 
     @Test
     public void respondWith204_whenCancellationSuccessful() {
-        asList(CANCELLABLE_STATUSES)
+        asList(USER_CANCELLABLE_STATUSES)
                 .forEach(cancellableStatus -> {
                     String chargeId = createNewChargeWithStatus(cancellableStatus);
                     connectorRestApi

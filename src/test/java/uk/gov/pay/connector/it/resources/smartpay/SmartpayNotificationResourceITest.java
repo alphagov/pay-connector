@@ -32,7 +32,7 @@ public class SmartpayNotificationResourceITest extends CardResourceITestBase {
     public void shouldHandleASmartpayNotification() throws Exception {
 
         String transactionId = randomId();
-        String chargeId = createNewChargeWith(AUTHORISATION_SUCCESS, transactionId);
+        String chargeId = createNewChargeWith(CAPTURE_SUBMITTED, transactionId);
 
         String response = notifyConnector(notificationPayloadForTransaction(transactionId, "notification-capture"))
                 .then()
@@ -65,7 +65,7 @@ public class SmartpayNotificationResourceITest extends CardResourceITestBase {
 
         String transactionId = randomId();
         String transactionId2 = randomId();
-        String chargeId = createNewChargeWith(AUTHORISATION_SUCCESS, transactionId);
+        String chargeId = createNewChargeWith(CAPTURE_SUBMITTED, transactionId);
         String chargeId2 = createNewChargeWith(CREATED, transactionId2);
 
         String response = notifyConnector(multipleNotifications(transactionId, transactionId2))
@@ -82,7 +82,7 @@ public class SmartpayNotificationResourceITest extends CardResourceITestBase {
     @Test
     public void shouldKeepLatestSmartpayStatusFromNotifications() throws Exception {
         String transactionId = randomId();
-        String chargeId = createNewChargeWith(CREATED, transactionId);
+        String chargeId = createNewChargeWith(CAPTURE_SUBMITTED, transactionId);
 
         String response = notifyConnector(multipleNotifications(transactionId, transactionId))
                 .then()

@@ -34,7 +34,7 @@ import static org.hamcrest.core.Is.is;
 import static org.junit.Assert.*;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.verifyZeroInteractions;
-import static uk.gov.pay.connector.fixture.ChargeEntityFixture.aValidChargeEntity;
+import static uk.gov.pay.connector.model.domain.ChargeEntityFixture.aValidChargeEntity;
 import static uk.gov.pay.connector.model.domain.ChargeStatus.AUTHORISATION_SUCCESS;
 import static uk.gov.pay.connector.model.domain.ChargeStatus.CAPTURED;
 import static uk.gov.pay.connector.service.GatewayClient.createGatewayClient;

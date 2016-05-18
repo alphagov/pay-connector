@@ -17,7 +17,6 @@ public class WorldpayStatusesMapper {
     private static final Logger logger = LoggerFactory.getLogger(WorldpayStatusesMapper.class);
 
     private static final Map<String, ChargeStatus> worldpayStatuses = ImmutableMap.<String, ChargeStatus>builder()
-                .put("SENT_FOR_AUTHORISATION", AUTHORISATION_SUBMITTED)
                 .put("AUTHORISED", AUTHORISATION_SUCCESS)
                 .put("CANCELLED", SYSTEM_CANCELLED)
                 .put("CAPTURED", CAPTURED)

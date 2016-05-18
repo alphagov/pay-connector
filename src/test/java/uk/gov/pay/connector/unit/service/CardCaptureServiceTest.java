@@ -19,7 +19,6 @@ import uk.gov.pay.connector.service.CardCaptureService;
 import javax.persistence.OptimisticLockException;
 import java.util.Optional;
 
-import static junit.framework.Assert.assertTrue;
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.core.Is.is;
 import static org.junit.Assert.assertEquals;

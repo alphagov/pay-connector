@@ -37,7 +37,7 @@ import static org.mockito.Matchers.any;
 import static org.mockito.Matchers.anyObject;
 import static org.mockito.Matchers.anyString;
 import static org.mockito.Mockito.*;
-import static uk.gov.pay.connector.fixture.ChargeEntityFixture.aValidChargeEntity;
+import static uk.gov.pay.connector.model.domain.ChargeEntityFixture.aValidChargeEntity;
 import static uk.gov.pay.connector.model.ErrorType.GENERIC_GATEWAY_ERROR;
 import static uk.gov.pay.connector.model.ErrorType.UNEXPECTED_STATUS_CODE_FROM_GATEWAY;
 import static uk.gov.pay.connector.model.domain.Address.anAddress;

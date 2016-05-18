@@ -4,7 +4,7 @@ import org.hamcrest.Description;
 import org.hamcrest.Matcher;
 import org.hamcrest.TypeSafeMatcher;
 import uk.gov.pay.connector.dao.ChargeDao;
-import uk.gov.pay.connector.fixture.ChargeEntityFixture;
+import uk.gov.pay.connector.model.domain.ChargeEntityFixture;
 import uk.gov.pay.connector.model.GatewayResponse;
 import uk.gov.pay.connector.model.domain.ChargeEntity;
 import uk.gov.pay.connector.model.domain.ChargeStatus;

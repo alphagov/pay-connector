@@ -1,5 +1,6 @@
 package uk.gov.pay.connector.model.domain;
 
+import uk.gov.pay.connector.exception.InvalidStateTransitionException;
 import uk.gov.pay.connector.model.api.ExternalChargeState;
 import uk.gov.pay.connector.util.RandomIdGenerator;
 
@@ -16,6 +17,7 @@ import static uk.gov.pay.connector.model.domain.ChargeStatus.CREATED;
 @Entity
 @Table(name = "charges")
 @SequenceGenerator(name = "charges_charge_id_seq", sequenceName = "charges_charge_id_seq", allocationSize = 1)
+@Access(AccessType.FIELD)
 public class ChargeEntity extends AbstractEntity {
 
     @Column(name = "external_id")
@@ -55,8 +57,13 @@ public class ChargeEntity extends AbstractEntity {
     }
 
     public ChargeEntity(Long amount, String returnUrl, String description, String reference, GatewayAccountEntity gatewayAccount) {
+        this(amount, CREATED, returnUrl, description, reference, gatewayAccount);
+    }
+
+    //for fixture
+    ChargeEntity(Long amount, ChargeStatus status, String returnUrl, String description, String reference, GatewayAccountEntity gatewayAccount) {
         this.amount = amount;
-        this.status = CREATED.getValue();
+        this.status = status.getValue();
         this.returnUrl = returnUrl;
         this.description = description;
         this.reference = reference;
@@ -97,8 +104,12 @@ public class ChargeEntity extends AbstractEntity {
         return createdDate;
     }
 
-    public void setStatus(ChargeStatus status) {
-        this.status = status.getValue();
+    public void setStatus(ChargeStatus status) throws InvalidStateTransitionException {
+        if (StateTransitions.transitionTo(ChargeStatus.fromString(this.status), status)) {
+            this.status = status.getValue();
+        } else {
+            throw new InvalidStateTransitionException(this.status, status.getValue());
+        }
     }
 
     public void setAmount(Long amount) {

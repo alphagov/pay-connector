@@ -39,9 +39,9 @@ import static org.hamcrest.core.IsNull.nullValue;
 import static org.junit.Assert.assertThat;
 import static org.mockito.ArgumentCaptor.forClass;
 import static org.mockito.Mockito.*;
-import static uk.gov.pay.connector.fixture.ChargeEntityFixture.aValidChargeEntity;
-import static uk.gov.pay.connector.model.ChargeResponse.*;
+import static uk.gov.pay.connector.model.ChargeResponse.ChargeResponseBuilder;
 import static uk.gov.pay.connector.model.ChargeResponse.aChargeResponse;
+import static uk.gov.pay.connector.model.domain.ChargeEntityFixture.aValidChargeEntity;
 import static uk.gov.pay.connector.model.domain.ChargeStatus.*;
 
 

@@ -1,5 +1,6 @@
 package uk.gov.pay.connector.unit.service;
 
+import com.google.common.collect.ImmutableList;
 import org.junit.Test;
 import org.mockito.InOrder;
 import org.mockito.Mock;
@@ -28,9 +29,7 @@ import static org.junit.Assert.assertEquals;
 import static org.mockito.Matchers.any;
 import static org.mockito.Mockito.*;
 import static uk.gov.pay.connector.model.domain.ChargeStatus.*;
-import static uk.gov.pay.connector.service.CardCancelService.EXPIRY_FAILED;
-import static uk.gov.pay.connector.service.CardCancelService.EXPIRY_SUCCESS;
-import static uk.gov.pay.connector.service.CardCancelService.CANCELLABLE_STATUSES;
+import static uk.gov.pay.connector.service.CardCancelService.*;
 
 public class CardCancelServiceTest extends CardServiceTest {
     @Mock
@@ -41,36 +40,22 @@ public class CardCancelServiceTest extends CardServiceTest {
     private final Long chargeId = 1234L;
     private final Long accountId = 1L;
 
-    private static ChargeStatus[] nonGatewayStatuses = new ChargeStatus[]{
-            CREATED, ENTERING_CARD_DETAILS
-    };
-
     @Test
-    public void whenChargeThatHasStatusCreatedIsCancelled_chargeShouldBeCancelledWithoutCallingGatewayProvider() throws Exception {
-        ChargeEntity charge = createNewChargeWith(chargeId, CREATED);
+    public void shouldCancelledWithoutCallingGatewayProviderPriorToAuthorisation() throws Exception {
 
-        mockChargeDaoFindByChargeIdAndAccountId(charge, accountId);
-        verifyPaymentProviderNotCalled();
+        ImmutableList.of(CREATED, ENTERING_CARD_DETAILS).forEach(currentState -> {
 
-        GatewayResponse response = cardCancelService.doCancel(charge.getExternalId(), accountId);
+            ChargeEntity charge = createNewChargeWith(chargeId, currentState);
 
-        assertThat(response, is(aSuccessfulResponse()));
-        verifyChargeUpdated(charge, SYSTEM_CANCELLED);
+            mockChargeDaoFindByChargeIdAndAccountId(charge, accountId);
+            verifyPaymentProviderNotCalled();
+
+            GatewayResponse response = cardCancelService.doCancel(charge.getExternalId(), accountId);
+
+            assertThat(response, is(aSuccessfulResponse()));
+            verifyChargeUpdated(charge, SYSTEM_CANCELLED);
+        });
     }
-
-    @Test
-    public void whenChargeThatHasStatusEnteringCardDetailsIsCancelled_chargeShouldBeCancelledWithoutCallingGatewayProvider() throws Exception {
-        ChargeEntity charge = createNewChargeWith(chargeId, ENTERING_CARD_DETAILS);
-
-        mockChargeDaoFindByChargeIdAndAccountId(charge, accountId);
-        verifyPaymentProviderNotCalled();
-
-        GatewayResponse response = cardCancelService.doCancel(charge.getExternalId(), accountId);
-
-        assertThat(response, is(aSuccessfulResponse()));
-        verifyChargeUpdated(charge, SYSTEM_CANCELLED);
-    }
-
 
     @Test
     public void whenChargeThatHasAnyOtherLegalStatusIsCancelled_chargeShouldBeCancelledCallingGatewayProvider() throws Exception {
@@ -129,7 +114,7 @@ public class CardCancelServiceTest extends CardServiceTest {
         cardCancelService.doCancel(charge.getExternalId(), accountId);
     }
 
-    @Test(expected=ConflictRuntimeException.class)
+    @Test(expected = ConflictRuntimeException.class)
     public void shouldGetAConflictErrorWhenConflicting() throws Exception {
         Long chargeId = 1234L;
         Long accountId = 1L;
@@ -210,7 +195,7 @@ public class CardCancelServiceTest extends CardServiceTest {
 
         when(chargeEntity1.getStatus()).thenReturn(ChargeStatus.ENTERING_CARD_DETAILS.getValue());
         when(chargeEntity2.getStatus()).thenReturn(ChargeStatus.AUTHORISATION_SUCCESS.getValue());
-        when(chargeEntity2.hasStatus(CANCELLABLE_STATUSES)).thenReturn(true);
+        when(chargeEntity2.hasStatus(USER_CANCELLABLE_STATUSES)).thenReturn(true);
         when(mockChargeService.updateStatus(Arrays.asList(chargeEntity2), EXPIRE_CANCEL_PENDING)).thenReturn(Arrays.asList(chargeEntity2));
 
         mockChargeDaoFindByChargeIdAndAccountId(chargeEntity1, accountId);

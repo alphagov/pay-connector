@@ -33,7 +33,7 @@ public class WorldpayNotificationResourceITest extends CardResourceITestBase {
     public void shouldHandleAWorldpayNotification() throws Exception {
 
         String transactionId = randomId();
-        String chargeId = createNewChargeWith(AUTHORISATION_SUCCESS, transactionId);
+        String chargeId = createNewChargeWith(AUTHORISATION_READY, transactionId);
 
         worldpay.mockInquiryResponse(transactionId, REFUSED.value());
 
@@ -50,7 +50,7 @@ public class WorldpayNotificationResourceITest extends CardResourceITestBase {
     @Test
     public void shouldUpdateTheLatestStatusToDatabase() throws Exception {
         String transactionId = randomId();
-        String chargeId = createNewChargeWith(AUTHORISATION_SUCCESS, transactionId);
+        String chargeId = createNewChargeWith(CAPTURE_SUBMITTED, transactionId);
 
         worldpay.mockInquiryResponse(transactionId, WorldpayPaymentStatus.CAPTURED.value());
 
@@ -100,7 +100,7 @@ public class WorldpayNotificationResourceITest extends CardResourceITestBase {
     @Test
     public void shouldNotAddUnknownStatusToDatabaseFromANotification() throws Exception {
         String transactionId = randomId();
-        String chargeId = createNewChargeWith(AUTHORISATION_SUCCESS, transactionId);
+        String chargeId = createNewChargeWith(CAPTURE_SUBMITTED, transactionId);
 
         worldpay.mockInquiryResponse(transactionId, WorldpayPaymentStatus.CAPTURED.value());
 

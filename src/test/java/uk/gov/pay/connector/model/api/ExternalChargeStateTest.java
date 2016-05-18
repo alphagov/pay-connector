@@ -21,7 +21,6 @@ public class ExternalChargeStateTest {
         assertThat(CREATED.toExternal().getStatus(), is("created"));
         assertThat(ENTERING_CARD_DETAILS.toExternal().getStatus(), is("started"));
         assertThat(AUTHORISATION_READY.toExternal().getStatus(), is("started"));
-        assertThat(AUTHORISATION_SUBMITTED.toExternal().getStatus(), is("submitted"));
 
         assertThat(AUTHORISATION_SUCCESS.toExternal().getStatus(), is("submitted"));
         assertThat(AUTHORISATION_REJECTED.toExternal().getStatus(), is("failed"));

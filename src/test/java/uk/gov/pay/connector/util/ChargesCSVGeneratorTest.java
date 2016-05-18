@@ -1,7 +1,7 @@
 package uk.gov.pay.connector.util;
 
 import org.junit.Test;
-import uk.gov.pay.connector.fixture.ChargeEntityFixture;
+import uk.gov.pay.connector.model.domain.ChargeEntityFixture;
 import uk.gov.pay.connector.model.domain.ChargeEntity;
 import uk.gov.pay.connector.model.domain.GatewayAccountEntity;
 
