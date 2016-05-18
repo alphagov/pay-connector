@@ -30,12 +30,8 @@ public class StateTransitionsTestBase {
         params.add(new Object[]{AUTHORISATION_READY, of(AUTHORISATION_SUCCESS, AUTHORISATION_REJECTED, AUTHORISATION_ERROR)});
         params.add(new Object[]{AUTHORISATION_SUCCESS, of(CAPTURE_READY, CANCEL_READY, EXPIRE_CANCEL_PENDING)});
         params.add(new Object[]{CAPTURE_READY, of(CAPTURE_SUBMITTED, CAPTURE_ERROR)});
-        //FIXME: remove EXPIRE_CANCEL_PENDING --> SYSTEM_CANCELLED,  when cancellation fix is done
-        params.add(new Object[]{EXPIRE_CANCEL_PENDING, of(EXPIRE_CANCEL_FAILED, SYSTEM_CANCELLED, EXPIRED, CANCEL_READY)});
+        params.add(new Object[]{EXPIRE_CANCEL_PENDING, of(EXPIRE_CANCEL_FAILED, EXPIRED)});
         params.add(new Object[]{CANCEL_READY, of(CANCEL_ERROR, SYSTEM_CANCELLED, USER_CANCEL_ERROR, USER_CANCELLED)});
-        //FIXME: remove SYSTEM_CANCELLED --> EXPIRED when cancellation fix is done
-        params.add(new Object[]{SYSTEM_CANCELLED, of(EXPIRED)});
-
         return params;
     }
 

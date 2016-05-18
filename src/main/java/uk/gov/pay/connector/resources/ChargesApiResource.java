@@ -9,7 +9,6 @@ import org.apache.commons.lang3.tuple.Pair;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import uk.gov.pay.connector.app.ConnectorConfiguration;
-import uk.gov.pay.connector.app.TransactionsPaginationServiceConfig;
 import uk.gov.pay.connector.dao.ChargeDao;
 import uk.gov.pay.connector.dao.ChargeSearchParams;
 import uk.gov.pay.connector.dao.GatewayAccountDao;
@@ -17,6 +16,7 @@ import uk.gov.pay.connector.model.ChargeResponse;
 import uk.gov.pay.connector.model.domain.ChargeEntity;
 import uk.gov.pay.connector.model.domain.ChargeStatus;
 import uk.gov.pay.connector.service.CardCancelService;
+import uk.gov.pay.connector.service.CardExpiryService;
 import uk.gov.pay.connector.service.ChargeService;
 import uk.gov.pay.connector.util.ResponseUtil;
 
@@ -59,10 +59,10 @@ public class ChargesApiResource {
     private static final String PAGE = "page";
     private static final String DISPLAY_SIZE = "display_size";
 
-    private ChargeDao chargeDao;
-    private GatewayAccountDao gatewayAccountDao;
-    private ChargeService chargeService;
-    private CardCancelService cardCancelService;
+    private final ChargeDao chargeDao;
+    private final GatewayAccountDao gatewayAccountDao;
+    private final ChargeService chargeService;
+    private final CardExpiryService cardExpiryService;
     private ConnectorConfiguration configuration;
 
     private static final int ONE_HOUR = 3600;
@@ -75,11 +75,11 @@ public class ChargesApiResource {
     private static final Logger logger = LoggerFactory.getLogger(ChargesApiResource.class);
 
     @Inject
-    public ChargesApiResource(ChargeDao chargeDao, GatewayAccountDao gatewayAccountDao, ChargeService chargeService, CardCancelService cardCancelService, ConnectorConfiguration configuration) {
+    public ChargesApiResource(ChargeDao chargeDao, GatewayAccountDao gatewayAccountDao, ChargeService chargeService, CardExpiryService cardExpiryService, ConnectorConfiguration configuration) {
         this.chargeDao = chargeDao;
         this.gatewayAccountDao = gatewayAccountDao;
         this.chargeService = chargeService;
-        this.cardCancelService = cardCancelService;
+        this.cardExpiryService = cardExpiryService;
         this.configuration = configuration;
     }
 
@@ -151,7 +151,7 @@ public class ChargesApiResource {
     public Response expireCharges(@Context UriInfo uriInfo) {
         List<ChargeEntity> charges = chargeDao.findBeforeDateWithStatusIn(getExpiryDate(), NON_TERMINAL_STATUSES);
         logger.info(format("Charges found for expiry - number_of_charges=%s, since_date=%s", charges.size(), getExpiryDate()));
-        Map<String, Integer> resultMap = cardCancelService.expire(charges);
+        Map<String, Integer> resultMap = cardExpiryService.expire(charges);
         return successResponseWithEntity(resultMap);
     }
 
