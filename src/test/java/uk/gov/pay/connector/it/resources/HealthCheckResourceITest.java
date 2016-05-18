@@ -1,6 +1,5 @@
 package uk.gov.pay.connector.it.resources;
 
-import org.junit.Ignore;
 import org.junit.Test;
 
 import static org.hamcrest.Matchers.is;

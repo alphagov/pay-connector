@@ -21,15 +21,18 @@ public class DatabaseHealthCheck extends HealthCheck {
         Connection connection = null;
         try {
             connection = DriverManager.getConnection(
-                    configuration.getDataSourceFactory().getUrl(),
-                    configuration.getDataSourceFactory().getUser(),
-                    configuration.getDataSourceFactory().getPassword());
-            connection.createStatement().execute("SELECT '1'");
+                configuration.getDataSourceFactory().getUrl(),
+                configuration.getDataSourceFactory().getUser(),
+                configuration.getDataSourceFactory().getPassword());
+            connection.setReadOnly(true);
+            return connection.isValid(5) ? Result.healthy() : Result.unhealthy("Could not validate the DB connection.");
         } catch (Exception e) {
-            Result.unhealthy(e.getMessage());
+            return Result.unhealthy(e.getMessage());
         } finally {
-            connection.close();
+            if (connection !=null) {
+                connection.close();
+            }
         }
-        return Result.healthy();
     }
+
 }

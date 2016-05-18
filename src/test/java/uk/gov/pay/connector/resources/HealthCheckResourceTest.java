@@ -65,6 +65,7 @@ public class HealthCheckResourceTest {
 
     @Test
     public void checkHealthCheck_isHealthy() throws JsonProcessingException {
+        ObjectWriter ow = new ObjectMapper().writer().withDefaultPrettyPrinter();
         SortedMap<String,HealthCheck.Result> registry = new TreeMap<>();
         registry.put("ping", HealthCheck.Result.healthy());
         registry.put("database", HealthCheck.Result.healthy());
@@ -73,7 +74,6 @@ public class HealthCheckResourceTest {
         when(healthCheckRegistry.runHealthChecks()).thenReturn(registry);
         Response response = resource.healthCheck();
         assertThat(response.getStatus(), is(200));
-        ObjectWriter ow = new ObjectMapper().writer().withDefaultPrettyPrinter();
         String body = ow.writeValueAsString(response.getEntity());
 
         JsonAssert.with(body)
