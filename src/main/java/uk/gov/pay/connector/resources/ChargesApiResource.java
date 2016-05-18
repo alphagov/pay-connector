@@ -114,7 +114,7 @@ public class ChargesApiResource {
                                 listCharges(new ChargeSearchParams()
                                         .withGatewayAccountId(accountId)
                                         .withReferenceLike(reference)
-                                        .withExternalChargeState(parseState(state))
+                                        .withExternalChargeState(state)
                                         .withFromDate(parseDate(fromDate))
                                         .withToDate(parseDate(toDate))
                                         .withDisplaySize(displaySize != null && displaySize >= 1 ?

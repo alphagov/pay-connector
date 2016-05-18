@@ -27,7 +27,7 @@ public class ChargeSearchParamsTest {
     public void shouldBuildQueryParamsForChargeSearch() throws Exception {
         ChargeSearchParams params = new ChargeSearchParams()
                 .withDisplaySize(5L)
-                .withExternalChargeState(singletonList(EXTERNAL_CREATED))
+                .withExternalChargeState(EXTERNAL_CREATED.getStatus())
                 .withGatewayAccountId(111L)
                 .withPage(2L)
                 .withReferenceLike("ref")
@@ -41,7 +41,7 @@ public class ChargeSearchParamsTest {
     public void shouldSetPageAToOneWhenValueLessThanZero() {
         ChargeSearchParams params = new ChargeSearchParams()
                 .withDisplaySize(500L)
-                .withExternalChargeState(singletonList(EXTERNAL_CREATED))
+                .withExternalChargeState(EXTERNAL_CREATED.getStatus())
                 .withGatewayAccountId(111L)
                 .withPage(-1L)
                 .withReferenceLike("ref")

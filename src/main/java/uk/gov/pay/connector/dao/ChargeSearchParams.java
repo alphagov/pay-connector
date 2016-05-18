@@ -1,13 +1,14 @@
 package uk.gov.pay.connector.dao;
 
-import uk.gov.pay.connector.model.api.ExternalChargeState;
 import org.apache.commons.lang3.StringUtils;
+import uk.gov.pay.connector.model.api.ExternalChargeState;
 import uk.gov.pay.connector.model.domain.ChargeStatus;
 
 import java.time.ZonedDateTime;
-import java.util.ArrayList;
 import java.util.LinkedList;
 import java.util.List;
+
+import static org.apache.commons.lang3.StringUtils.isNotBlank;
 
 public class ChargeSearchParams {
 
@@ -18,7 +19,7 @@ public class ChargeSearchParams {
     private Long page;
     private Long displaySize;
     private List<ChargeStatus> chargeStatuses = new LinkedList<>();
-    private List<ExternalChargeState> externalChargeStates = new ArrayList<>();
+    private String externalChargeState;
 
     public Long getGatewayAccountId() {
         return gatewayAccountId;
@@ -34,10 +35,10 @@ public class ChargeSearchParams {
     }
 
 
-    public ChargeSearchParams withExternalChargeState(List<ExternalChargeState> externalStates) {
-        if (externalStates != null) {
-            this.externalChargeStates = externalStates;
-            for (ExternalChargeState externalState : externalStates) {
+    public ChargeSearchParams withExternalChargeState(String state) {
+        if (state != null) {
+            this.externalChargeState = state;
+            for (ExternalChargeState externalState : parseState(state)) {
                 this.chargeStatuses.addAll(ChargeStatus.fromExternal(externalState));
             }
         }
@@ -107,11 +108,18 @@ public class ChargeSearchParams {
             builder.append("&page=" + page);
         if (displaySize != null)
             builder.append("&display_size=" + displaySize);
-        if (externalChargeStates != null && !externalChargeStates.isEmpty()) {
-            for (ExternalChargeState extState : externalChargeStates) {
-                builder.append("&state=" + extState.getStatus());
-            }
+        if (StringUtils.isNotBlank(externalChargeState)) {
+            builder.append("&state=" + externalChargeState);
         }
         return builder.toString();
     }
+
+    private List<ExternalChargeState> parseState(String state) {
+        List<ExternalChargeState> externalStates = null;
+        if (isNotBlank(state)) {
+            externalStates = ExternalChargeState.fromStatusString(state);
+        }
+        return externalStates;
+    }
+
 }

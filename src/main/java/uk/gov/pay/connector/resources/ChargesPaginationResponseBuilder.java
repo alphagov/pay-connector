@@ -47,7 +47,7 @@ public class ChargesPaginationResponseBuilder {
         if (totalCount > 0) {
             double lastPage = Math.ceil(new Double(totalCount) / searchParams.getDisplaySize());
             if (invalidPageRequest(lastPage)) {
-                return notFoundResponse("the requested page is not found");
+                return notFoundResponse("the requested page not found");
             }
             buildLinks(lastPage);
         }
