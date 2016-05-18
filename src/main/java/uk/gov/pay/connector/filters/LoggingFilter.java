@@ -30,5 +30,7 @@ public class LoggingFilter implements Filter {
     }
 
     @Override
-    public void destroy() {}
+    public void destroy() {
+        logger.warn("Destroying logging filter");
+    }
 }

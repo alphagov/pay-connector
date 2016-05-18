@@ -23,7 +23,7 @@ import static uk.gov.pay.connector.model.CancelGatewayResponse.successfulCancelR
 import static uk.gov.pay.connector.model.domain.ChargeStatus.*;
 
 public class CardCancelService extends CardService implements TransactionalGatewayOperation {
-    private static final Logger logger = LoggerFactory.getLogger(ChargeService.class);
+    private static final Logger logger = LoggerFactory.getLogger(CardCancelService.class);
     public static final String EXPIRY_SUCCESS = "expiry-success";
     public static final String EXPIRY_FAILED = "expiry-failed";
     public static final ChargeStatus[] CANCELLABLE_STATUSES =
@@ -109,7 +109,7 @@ public class CardCancelService extends CardService implements TransactionalGatew
     }
 
     private GatewayResponse nonGatewayCancel(ChargeEntity charge) {
-        chargeService.updateStatus(Arrays.asList(charge), getCancelledStatus());
+        chargeService.updateStatus(Collections.singletonList(charge), getCancelledStatus());
         return successfulCancelResponse(getCancelledStatus());
     }
 
@@ -128,7 +128,7 @@ public class CardCancelService extends CardService implements TransactionalGatew
     @Override
     public GatewayResponse postOperation(ChargeEntity chargeEntity, GatewayResponse operationResponse) {
         CancelGatewayResponse cancelResponse = (CancelGatewayResponse) operationResponse;
-        chargeService.updateStatus(Arrays.asList(chargeEntity), cancelResponse.getStatus());
+        chargeService.updateStatus(Collections.singletonList(chargeEntity), cancelResponse.getStatus());
         return operationResponse;
     }
 

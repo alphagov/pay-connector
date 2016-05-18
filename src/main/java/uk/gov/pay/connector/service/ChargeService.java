@@ -49,10 +49,7 @@ public class ChargeService {
                 chargeRequest.get("reference").toString(),
                 gatewayAccount);
         chargeDao.persist(chargeEntity);
-        ChargeResponse response =
-                chargeResponseBuilder(uriInfo, chargeEntity, createNewChargeEntityToken(chargeEntity)).build();
-        logger.info("charge = {}", chargeEntity);
-        return response;
+        return chargeResponseBuilder(uriInfo, chargeEntity, createNewChargeEntityToken(chargeEntity)).build();
     }
 
     @Transactional
@@ -68,10 +65,10 @@ public class ChargeService {
 
     @Transactional
     public List<ChargeEntity> updateStatus(List<ChargeEntity> chargeEntities, ChargeStatus status) {
-        List<ChargeEntity> mergedCharges = new ArrayList<ChargeEntity>();
+        List<ChargeEntity> mergedCharges = new ArrayList<>();
         chargeEntities.stream().forEach(chargeEntity -> {
+            logger.info("charge status to update - from: "+ chargeEntity.getStatus()+ ", to: "+ status + " for Charge ID: "+chargeEntity.getId());
             chargeEntity.setStatus(status);
-            logger.info("charge status to update: "+chargeEntity.getStatus() + "for Charge ID: "+chargeEntity.getId());
             ChargeEntity mergedEnt = chargeDao.mergeAndNotifyStatusHasChanged(chargeEntity);
             mergedCharges.add(mergedEnt);
         });
@@ -94,7 +91,7 @@ public class ChargeService {
 
     private ChargeResponseBuilder chargeResponseBuilder(UriInfo uriInfo, ChargeEntity charge) {
         String chargeId = charge.getExternalId();
-        ChargeResponseBuilder responseBuilder = aChargeResponse()
+        return aChargeResponse()
                 .withChargeId(chargeId)
                 .withAmount(charge.getAmount())
                 .withReference(charge.getReference())
@@ -105,7 +102,6 @@ public class ChargeService {
                 .withCreatedDate(charge.getCreatedDate())
                 .withReturnUrl(charge.getReturnUrl())
                 .withLink("self", GET, selfUriFor(uriInfo, charge.getGatewayAccount().getId(), chargeId));
-        return responseBuilder;
     }
 
     private URI selfUriFor(UriInfo uriInfo, Long accountId, String chargeId) {
