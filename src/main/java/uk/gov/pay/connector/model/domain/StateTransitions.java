@@ -14,7 +14,7 @@ public final class StateTransitions {
     private static final Map<ChargeStatus, List<ChargeStatus>> TRANSITION_TABLE = ImmutableMap.<ChargeStatus, List<ChargeStatus>>builder()
 
             .put(CREATED,               validTransitions(ENTERING_CARD_DETAILS, SYSTEM_CANCELLED, EXPIRED))
-            //ENTERING_CARD_DETAILS -> ENTERING_CARD_DETAILS currently seems harmless, so including as a valid transition
+            //ENTERING_CARD_DETAILS -> ENTERING_CARD_DETAILS allowed here only to support browser refresh in frontend. Will fix as part of PP-702
             .put(ENTERING_CARD_DETAILS, validTransitions(ENTERING_CARD_DETAILS, AUTHORISATION_READY, EXPIRED, USER_CANCELLED, SYSTEM_CANCELLED))
             .put(AUTHORISATION_READY,   validTransitions(AUTHORISATION_SUCCESS, AUTHORISATION_REJECTED, AUTHORISATION_ERROR))
             .put(AUTHORISATION_SUCCESS, validTransitions(CAPTURE_READY, CANCEL_READY, EXPIRE_CANCEL_PENDING))
@@ -35,7 +35,7 @@ public final class StateTransitions {
 
             .build();
 
-    public static Boolean transitionTo(ChargeStatus state, ChargeStatus targetState) {
+    public static boolean transitionTo(ChargeStatus state, ChargeStatus targetState) {
         return TRANSITION_TABLE.getOrDefault(state, emptyList()).contains(targetState);
     }
 
