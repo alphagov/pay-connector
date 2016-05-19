@@ -3,6 +3,7 @@ package uk.gov.pay.connector.model.api;
 import com.fasterxml.jackson.annotation.JsonFormat;
 import com.fasterxml.jackson.annotation.JsonInclude;
 
+import java.util.Arrays;
 import java.util.List;
 import java.util.stream.Collectors;
 
@@ -63,6 +64,11 @@ public enum ExternalChargeState {
     }
 
     public static List<ExternalChargeState> fromStatusString(String status) {
+        // temporary code to allow migration from Confirmed/Captured to Success 
+        if ("success".equals(status)) {
+            return Arrays.asList(EXTERNAL_CONFIRMED, EXTERNAL_CAPTURED);
+        }
+      
         List<ExternalChargeState> valid = stream(values()).filter(v -> v.getStatus().equals(status)).collect(Collectors.toList());
 
         if (valid.isEmpty()) {
