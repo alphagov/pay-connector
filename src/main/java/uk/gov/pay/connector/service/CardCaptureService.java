@@ -51,6 +51,8 @@ public class CardCaptureService extends CardService implements TransactionalGate
     public GatewayResponse postOperation(ChargeEntity chargeEntity, GatewayResponse operationResponse) {
         CaptureResponse captureResponse = (CaptureResponse) operationResponse;
 
+        logger.info(format("Card captured response received - status = %s, charge_external_id = %s", captureResponse.getStatus(), chargeEntity.getExternalId()));
+
         ChargeEntity reloadedCharge = chargeDao.merge(chargeEntity);
         reloadedCharge.setStatus(captureResponse.getStatus());
 

@@ -76,6 +76,8 @@ public class CardAuthoriseService extends CardService implements TransactionalGa
     public GatewayResponse postOperation(ChargeEntity chargeEntity, GatewayResponse operationResponse) {
         AuthorisationResponse authorisationResponse = (AuthorisationResponse) operationResponse;
 
+        logger.info(format("Card authorisation response received - status = %s, charge_external_id = %s", authorisationResponse.getNewChargeStatus(), chargeEntity.getExternalId()));
+
         ChargeEntity reloadedCharge = chargeDao.merge(chargeEntity);
         reloadedCharge.setStatus(authorisationResponse.getNewChargeStatus());
         reloadedCharge.setGatewayTransactionId(authorisationResponse.getTransactionId());

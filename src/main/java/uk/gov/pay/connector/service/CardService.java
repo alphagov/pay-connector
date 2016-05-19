@@ -17,7 +17,7 @@ import static java.lang.String.format;
 public abstract class CardService {
     protected final ChargeDao chargeDao;
     protected final PaymentProviders providers;
-    private final Logger logger = LoggerFactory.getLogger(getClass());
+    protected final Logger logger = LoggerFactory.getLogger(getClass());
     protected CardExecutorService cardExecutorService;
 
     protected enum OperationType {
@@ -49,6 +49,12 @@ public abstract class CardService {
 
     public ChargeEntity preOperation(ChargeEntity chargeEntity, OperationType operationType, ChargeStatus[] legalStatuses, ChargeStatus lockingStatus) {
         ChargeEntity reloadedCharge = chargeDao.merge(chargeEntity);
+
+        logger.info(format("Card pre-operation - operation_type=%s, charge_external_id=%s, locking_status=%s",
+                operationType.getValue(),
+                chargeEntity.getExternalId(),
+                lockingStatus));
+
         if (reloadedCharge.hasStatus(ChargeStatus.EXPIRED)) {
             throw new ChargeExpiredRuntimeException(operationType.getValue(), reloadedCharge.getExternalId());
         }
@@ -57,7 +63,7 @@ public abstract class CardService {
                 throw new OperationAlreadyInProgressRuntimeException(operationType.getValue(), reloadedCharge.getExternalId());
             }
             logger.error(format("Charge with id [%s] and with status [%s] should be in one of the following legal states, [%s]",
-                    reloadedCharge.getId(), reloadedCharge.getStatus(), getLegalStatusNames(legalStatuses)));
+                    reloadedCharge.getExternalId(), reloadedCharge.getStatus(), getLegalStatusNames(legalStatuses)));
             throw new IllegalStateRuntimeException(reloadedCharge.getExternalId());
         }
         reloadedCharge.setStatus(lockingStatus);

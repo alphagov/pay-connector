@@ -12,6 +12,8 @@ import uk.gov.pay.connector.model.domain.ChargeEntity;
 import uk.gov.pay.connector.model.domain.ChargeStatus;
 import uk.gov.pay.connector.model.domain.GatewayAccountEntity;
 import uk.gov.pay.connector.model.domain.TokenEntity;
+
+import static java.lang.String.format;
 import static uk.gov.pay.connector.model.ChargeResponse.ChargeResponseBuilder;
 
 import javax.inject.Inject;
@@ -67,7 +69,8 @@ public class ChargeService {
     public List<ChargeEntity> updateStatus(List<ChargeEntity> chargeEntities, ChargeStatus status) {
         List<ChargeEntity> mergedCharges = new ArrayList<>();
         chargeEntities.stream().forEach(chargeEntity -> {
-            logger.info("charge status to update - from: "+ chargeEntity.getStatus()+ ", to: "+ status + " for Charge ID: "+chargeEntity.getId());
+            logger.info(format("Charge status to update - from=%s, to=%s, charge_external_id=%s",
+                    chargeEntity.getStatus(), status, chargeEntity.getExternalId()));
             chargeEntity.setStatus(status);
             ChargeEntity mergedEnt = chargeDao.mergeAndNotifyStatusHasChanged(chargeEntity);
             mergedCharges.add(mergedEnt);
