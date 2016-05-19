@@ -9,18 +9,27 @@ import uk.gov.pay.connector.util.RandomIdGenerator;
 import uk.gov.pay.connector.util.RestAssuredClient;
 
 import java.util.Arrays;
+import java.util.List;
+import java.util.Random;
 
 import static com.jayway.restassured.http.ContentType.JSON;
 import static java.lang.String.format;
 import static java.util.Arrays.asList;
 import static javax.ws.rs.core.Response.Status.*;
-import static org.hamcrest.Matchers.is;
+import static org.hamcrest.MatcherAssert.assertThat;
+import static org.hamcrest.Matchers.*;
 import static uk.gov.pay.connector.model.domain.ChargeStatus.*;
 import static uk.gov.pay.connector.model.domain.ChargeStatus.CREATED;
-import static uk.gov.pay.connector.service.CardCancelService.SYSTEM_CANCELLABLE_STATUSES;
 
 public class ChargeCancelResourceITest {
     private String accountId = "66757943593456";
+
+    public static final ChargeStatus[] SYSTEM_CANCELLABLE_STATUSES =
+            new ChargeStatus[]{
+                    CREATED,
+                    ENTERING_CARD_DETAILS,
+                    AUTHORISATION_SUCCESS
+            };
 
     @Rule
     public DropwizardAppWithPostgresRule app = new DropwizardAppWithPostgresRule();
@@ -30,8 +39,8 @@ public class ChargeCancelResourceITest {
 
     @Before
     public void setupGatewayAccount() {
-        restFrontendCall = new RestAssuredClient(app, accountId);
         restApiCall = new RestAssuredClient(app, accountId);
+        restFrontendCall = new RestAssuredClient(app, accountId);
         app.getDatabaseTestHelper().addGatewayAccount(accountId, "sandbox");
     }
 
@@ -56,6 +65,14 @@ public class ChargeCancelResourceITest {
                             .withChargeId(chargeId)
                             .getFrontendCharge()
                             .body("status", is(SYSTEM_CANCELLED.getValue()));
+
+                    List<String> events = app.getDatabaseTestHelper().getInternalEvents(chargeId);
+                    assertThat(events.size(), isOneOf(2, 3));
+                    assertThat(events, hasItems(status.getValue(), SYSTEM_CANCELLED.getValue()));
+
+                    if (status.equals(AUTHORISATION_SUCCESS)) {
+                        assertThat(events, hasItem(SYSTEM_CANCEL_READY.getValue()));
+                    }
                 });
     }
 
@@ -68,7 +85,7 @@ public class ChargeCancelResourceITest {
                 CAPTURE_SUBMITTED,
                 CAPTURE_ERROR,
                 EXPIRE_CANCEL_FAILED,
-                CANCEL_ERROR,
+                SYSTEM_CANCEL_ERROR,
                 SYSTEM_CANCELLED
         };
 
@@ -88,7 +105,7 @@ public class ChargeCancelResourceITest {
 
     @Test
     public void respondWith202_whenCancelAlreadyInProgress() {
-        String chargeId = createNewChargeWithStatus(CANCEL_READY);
+        String chargeId = createNewChargeWithStatus(SYSTEM_CANCEL_READY);
         String expectedMessage = "Cancellation for charge already in progress, " + chargeId;
         restApiCall
                 .withChargeId(chargeId)
@@ -156,23 +173,11 @@ public class ChargeCancelResourceITest {
                 .body("message", is(expectedMessage));
     }
 
-    @Test
-    public void respondWith400_IfChargeIsExpired() {
-        String chargeId = createNewChargeWithStatus(EXPIRED);
-        String expectedMessage = format("Cancellation for charge failed as already expired, %s", chargeId);
-
-        restApiCall
-                .withChargeId(chargeId)
-                .postChargeCancellation()
-                .statusCode(BAD_REQUEST.getStatusCode())
-                .and()
-                .contentType(JSON)
-                .body("message", is(expectedMessage));
-    }
-
     private String createNewChargeWithStatus(ChargeStatus status) {
-        String chargeId = RandomIdGenerator.newId();
-        app.getDatabaseTestHelper().addCharge(chargeId, accountId, 500, status, "http://not.relevant", null);
-        return chargeId;
+        String externalChargeId = RandomIdGenerator.newId();
+        long chargeId = new Random().nextInt(100000);
+        app.getDatabaseTestHelper().addCharge(chargeId, externalChargeId, accountId, 500, status, "http://not.relevant", null);
+        app.getDatabaseTestHelper().addEvent(chargeId, status.getValue());
+        return externalChargeId;
     }
 }

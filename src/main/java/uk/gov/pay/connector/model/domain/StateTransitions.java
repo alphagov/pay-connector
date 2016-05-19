@@ -17,11 +17,12 @@ public final class StateTransitions {
             //ENTERING_CARD_DETAILS -> ENTERING_CARD_DETAILS allowed here only to support browser refresh in frontend. Will fix as part of PP-702
             .put(ENTERING_CARD_DETAILS, validTransitions(ENTERING_CARD_DETAILS, AUTHORISATION_READY, EXPIRED, USER_CANCELLED, SYSTEM_CANCELLED))
             .put(AUTHORISATION_READY,   validTransitions(AUTHORISATION_SUCCESS, AUTHORISATION_REJECTED, AUTHORISATION_ERROR))
-            .put(AUTHORISATION_SUCCESS, validTransitions(CAPTURE_READY, CANCEL_READY, EXPIRE_CANCEL_PENDING))
+            .put(AUTHORISATION_SUCCESS, validTransitions(CAPTURE_READY, SYSTEM_CANCEL_READY, USER_CANCEL_READY, EXPIRE_CANCEL_PENDING))
             .put(CAPTURE_READY,         validTransitions(CAPTURE_SUBMITTED, CAPTURE_ERROR))
             .put(CAPTURE_SUBMITTED,     validTransitions(CAPTURED)) // can this ever be a capture error?
             .put(EXPIRE_CANCEL_PENDING, validTransitions(EXPIRE_CANCEL_FAILED, EXPIRED))
-            .put(CANCEL_READY,          validTransitions(CANCEL_ERROR, SYSTEM_CANCELLED, USER_CANCEL_ERROR, USER_CANCELLED))
+            .put(SYSTEM_CANCEL_READY,   validTransitions(SYSTEM_CANCEL_ERROR, SYSTEM_CANCELLED))
+            .put(USER_CANCEL_READY,     validTransitions(USER_CANCEL_ERROR, USER_CANCELLED))
             .build();
 
     public static boolean transitionTo(ChargeStatus state, ChargeStatus targetState) {

@@ -8,26 +8,24 @@ import org.slf4j.LoggerFactory;
 import uk.gov.pay.connector.dao.ChargeDao;
 import uk.gov.pay.connector.exception.IllegalStateRuntimeException;
 import uk.gov.pay.connector.exception.OperationAlreadyInProgressRuntimeException;
+import uk.gov.pay.connector.model.CancelGatewayResponse;
 import uk.gov.pay.connector.model.CancelRequest;
 import uk.gov.pay.connector.model.GatewayResponse;
 import uk.gov.pay.connector.model.domain.ChargeEntity;
 import uk.gov.pay.connector.model.domain.ChargeStatus;
-import uk.gov.pay.connector.service.transaction.TransactionFlow;
+import uk.gov.pay.connector.service.transaction.*;
 
 import javax.inject.Inject;
 import java.util.*;
-import java.util.function.BiFunction;
-import java.util.function.Function;
-import java.util.function.Predicate;
-import java.util.function.Supplier;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
+import static com.google.common.collect.Lists.newArrayList;
 import static java.lang.String.format;
 import static org.apache.commons.lang3.BooleanUtils.negate;
 import static uk.gov.pay.connector.model.domain.ChargeStatus.*;
 
-public class CardExpiryService {
+public class ChargeExpiryService {
 
     private final Logger logger = LoggerFactory.getLogger(getClass());
 
@@ -42,17 +40,14 @@ public class CardExpiryService {
             };
     private final ChargeDao chargeDao;
     private final PaymentProviders providers;
-    private Provider<TransactionFlow<ChargeEntity, GatewayResponse, ChargeEntity>> transactionFlowProvider;
-    private final ChargeService chargeService;
+    private Provider<TransactionFlow> transactionFlowProvider;
 
     @Inject
-    public CardExpiryService(ChargeDao chargeDao, PaymentProviders providers,
-                             Provider<TransactionFlow<ChargeEntity, GatewayResponse, ChargeEntity>> transactionFlowProvider,
-                             ChargeService chargeService) {
+    public ChargeExpiryService(ChargeDao chargeDao, PaymentProviders providers,
+                               Provider<TransactionFlow> transactionFlowProvider) {
         this.chargeDao = chargeDao;
         this.providers = providers;
         this.transactionFlowProvider = transactionFlowProvider;
-        this.chargeService = chargeService;
     }
 
     public Map<String, Integer> expire(List<ChargeEntity> charges) {
@@ -68,41 +63,57 @@ public class CardExpiryService {
     }
 
     private int expireChargesWithCancellationNotRequired(List<ChargeEntity> nonAuthSuccessCharges) {
-        chargeService.updateStatus(nonAuthSuccessCharges, ChargeStatus.EXPIRED);
-        return nonAuthSuccessCharges.size();
+        List<ChargeEntity> processedEntities = nonAuthSuccessCharges.stream().map(chargeEntity -> transactionFlowProvider.get()
+                .executeNext((TransactionalOperation<TransactionContext, ChargeEntity>) (context -> {
+                    logger.info("charge status to update - from: " + chargeEntity.getStatus() + ", to: " + EXPIRED + " for Charge ID: " + chargeEntity.getId());
+                    chargeEntity.setStatus(EXPIRED);
+                    return chargeDao.mergeAndNotifyStatusHasChanged(chargeEntity);
+                }))
+                .complete().get(ChargeEntity.class))
+                .collect(Collectors.toList());
+        return processedEntities.size();
     }
 
 
     private Pair<Integer, Integer> expireChargesWithCancellation(List<ChargeEntity> gatewayAuthorizedCharges) {
-        Map<Boolean, List<ChargeEntity>> processedCharges = gatewayAuthorizedCharges.stream().map(chargeEntity -> transactionFlowProvider.get()
-                .startInTx(prepareForExpireCancel(chargeEntity))
-                .operationNotInTx(doGatewayCancel())
-                .completeInTx(finishExpireCancel())
-                .execute())
-                .filter(pickIfExistOrWarn())
-                .map(Optional::get)
-                .collect(Collectors.partitioningBy(processedChargeEntity ->
-                        EXPIRED.getValue().equals(processedChargeEntity.getStatus())));
-        boolean expireCancelled = true;
-        boolean expireCancelFailed = false; //for readability
+
+        final List<ChargeEntity> expireCancelled = newArrayList();
+        final List<ChargeEntity> expireCancelFailed = newArrayList();
+        final List<ChargeEntity> unexpectedStatuses = newArrayList();
+
+        gatewayAuthorizedCharges.forEach(chargeEntity -> {
+            ChargeEntity processedEntity = transactionFlowProvider.get()
+                    .executeNext(prepareForExpireCancel(chargeEntity))
+                    .executeNext(doGatewayCancel())
+                    .executeNext(finishExpireCancel())
+                    .complete().get(ChargeEntity.class);
+
+            if (processedEntity == null) {
+                //this shouldn't happen, but don't break the expiry job
+                logger.error("Transaction context did not return a processed ChargeEntity during expiry of charge {}", chargeEntity.getExternalId());
+            } else {
+                if (EXPIRED.getValue().equals(processedEntity.getStatus())) {
+                    expireCancelled.add(processedEntity);
+                } else if (EXPIRE_CANCEL_FAILED.getValue().equals(processedEntity.getStatus())) {
+                    expireCancelFailed.add(processedEntity);
+                } else {
+                    unexpectedStatuses.add(processedEntity); //this shouldn't happen, but still don't break the expiry job
+                }
+            }
+        });
+
+        unexpectedStatuses.forEach(chargeEntity ->
+                logger.error("ChargeEntity with id {} returned with unexpected status {} during expiry", chargeEntity.getExternalId(), chargeEntity.getStatus())
+        );
 
         return Pair.of(
-                processedCharges.get(expireCancelled).size(),
-                processedCharges.get(expireCancelFailed).size()
+                expireCancelled.size(),
+                expireCancelFailed.size()
         );
     }
 
-    private Predicate<? super Optional<ChargeEntity>> pickIfExistOrWarn() {
-        return optionalEntity -> {
-            if (!optionalEntity.isPresent()) {
-                logger.error("Transaction did not return a completed entity");
-            }
-            return optionalEntity.isPresent();
-        };
-    }
-
-    private Supplier<ChargeEntity> prepareForExpireCancel(ChargeEntity chargeEntity) {
-        return () -> {
+    private TransactionalOperation<TransactionContext, ChargeEntity> prepareForExpireCancel(ChargeEntity chargeEntity) {
+        return context -> {
             ChargeEntity reloadedCharge = chargeDao.merge(chargeEntity);
 
             if (!reloadedCharge.hasStatus(EXPIRABLE_STATUSES)) {
@@ -114,18 +125,23 @@ public class CardExpiryService {
                 throw new IllegalStateRuntimeException(reloadedCharge.getExternalId());
             }
             reloadedCharge.setStatus(EXPIRE_CANCEL_PENDING);
-
-            return reloadedCharge;
+            return chargeDao.mergeAndNotifyStatusHasChanged(reloadedCharge);
         };
     }
 
-    public Function<ChargeEntity, GatewayResponse> doGatewayCancel() {
-        return chargeEntity -> providers.resolve(chargeEntity.getGatewayAccount().getGatewayName())
-                .cancel(CancelRequest.valueOf(chargeEntity));
+    private NonTransactionalOperation<TransactionContext, GatewayResponse> doGatewayCancel() {
+        return context -> {
+            ChargeEntity chargeEntity = context.get(ChargeEntity.class);
+            return providers.resolve(chargeEntity.getGatewayAccount().getGatewayName())
+                    .cancel(CancelRequest.valueOf(chargeEntity));
+
+        };
     }
 
-    private BiFunction<ChargeEntity, GatewayResponse, ChargeEntity> finishExpireCancel() {
-        return (chargeEntity, gatewayResponse) -> {
+    private TransactionalOperation<TransactionContext, ChargeEntity> finishExpireCancel() {
+        return context -> {
+            ChargeEntity chargeEntity = context.get(ChargeEntity.class);
+            GatewayResponse gatewayResponse = context.get(CancelGatewayResponse.class);
             ChargeStatus status;
             if (responseIsNotSuccessful(gatewayResponse)) {
                 logUnsuccessfulResponseReasons(chargeEntity, gatewayResponse);

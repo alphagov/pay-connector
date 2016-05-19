@@ -34,13 +34,6 @@ public class CardCancelService extends CardService implements TransactionalGatew
                     EXPIRE_CANCEL_PENDING //
             };
 
-    public static final ChargeStatus[] SYSTEM_CANCELLABLE_STATUSES =
-            new ChargeStatus[]{
-                    CREATED,
-                    ENTERING_CARD_DETAILS,
-                    AUTHORISATION_SUCCESS
-            };
-
     private static ChargeStatus[] nonGatewayStatuses = new ChargeStatus[]{
             CREATED, ENTERING_CARD_DETAILS
     };
@@ -121,7 +114,7 @@ public class CardCancelService extends CardService implements TransactionalGatew
     @Transactional
     @Override
     public ChargeEntity preOperation(ChargeEntity chargeEntity) {
-        return preOperation(chargeEntity, OperationType.CANCELLATION, USER_CANCELLABLE_STATUSES, ChargeStatus.CANCEL_READY);
+        return preOperation(chargeEntity, OperationType.CANCELLATION, USER_CANCELLABLE_STATUSES, ChargeStatus.USER_CANCEL_READY);
     }
 
     @Override

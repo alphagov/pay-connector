@@ -2,59 +2,72 @@ package uk.gov.pay.connector.service.transaction;
 
 import com.google.inject.persist.Transactional;
 
-import java.util.Optional;
-import java.util.function.BiFunction;
-import java.util.function.Function;
-import java.util.function.Supplier;
+/**
+ * <p>Represents and manages a set of transactional (and non-transactional) operations
+ * in a provided flow in that respective order.
+ * The operations could either be {@link TransactionalOperation} or {@link NonTransactionalOperation}
+ * </p>
+ * <p>
+ * <b>example usage:</b>
+ * <pre>
+ *  {@code
+ *
+ *  @Inject
+ *  private final Provider<TransactionFlow> transactionFlowProvider ;
+ *
+ *  GatewayResponse result = transactionFlowProvider.get()
+ *   .executeNext((TransactionalOperation<TransactionContext, ChargeEntity>) context-> {
+ *       //do some transactional stuff
+ *       return chargeEntity;
+ *   })
+ *   .executeNext((NonTransactionalOperation<TransactionContext, GatewayResponse>) context-> {
+ *       //do some non transactional stuff
+ *       return gatewayResponse;
+ *   })
+ *   .complete()
+ *   .get(GatewayResponse.class);
+ *
+ * }
+ * </pre>
+ */
+public final class TransactionFlow {
 
-public class TransactionFlow<T, U, V> {
+    private TransactionContext context;
 
-    private Supplier<T> before;
-    private Function<T, U> operation;
-    private BiFunction<T, U, V> after;
-
-    public TransactionFlow<T, U, V> startInTx(Supplier<T> preOperation) {
-        this.before = preOperation;
-        return this;
+    public TransactionFlow() {
+        context = new TransactionContext();
     }
 
-    public TransactionFlow<T, U, V> operationNotInTx(Function<T, U> operation) {
-        this.operation = operation;
-        return this;
-    }
-
-    public TransactionFlow<T, U, V> completeInTx(BiFunction<T, U, V> postOperation) {
-        this.after = postOperation;
-        return this;
-    }
-
-    public Optional<V> execute() {
-        if (before != null) {
-            T data = doBefore(before);
-            if (operation != null) {
-                U response = doOperation(data, operation);
-                if (after != null) {
-                    return Optional.ofNullable(doAfter(data, response, after));
-                }
-            }
-        }
-        return Optional.empty();
-    }
-
+    /**
+     * executes the given block of code in a Transactional boundary.
+     * @param op block of code to be executed
+     * @param <R> result to be persisted
+     * @return
+     */
     @Transactional
-    public T doBefore(Supplier<T> before) {
-        return before.get();
+    public <R> TransactionFlow executeNext(TransactionalOperation<TransactionContext, R> op) {
+        R result = op.execute(context);
+        context.put(result);
+        return this;
     }
 
-
-    public U doOperation(T charge, Function<T, U> operation) {
-        return operation.apply(charge);
+    /**
+     * executes the given block of code outside of a Transactional boundary.
+     * @param op block of code to be executed
+     * @param <R> result to be persisted
+     * @return
+     */
+    public <R> TransactionFlow executeNext(NonTransactionalOperation<TransactionContext, R> op) {
+        R result = op.execute(context);
+        context.put(result);
+        return this;
     }
 
-    @Transactional
-    public V doAfter(T data, U gatewayResponse, BiFunction<T, U, V> after) {
-        return after.apply(data, gatewayResponse);
+    /**
+     * demarcates the end of transaction flow
+     * @return all result objects persisted during the execution of transaction flow.
+     */
+    public TransactionContext complete() {
+        return context;
     }
-
-
 }

@@ -7,7 +7,7 @@ import static java.lang.String.format;
 import static uk.gov.pay.connector.model.ErrorResponse.baseError;
 import static uk.gov.pay.connector.model.GatewayResponse.ResponseStatus.FAILED;
 import static uk.gov.pay.connector.model.GatewayResponse.ResponseStatus.SUCCEDED;
-import static uk.gov.pay.connector.model.domain.ChargeStatus.CANCEL_ERROR;
+import static uk.gov.pay.connector.model.domain.ChargeStatus.SYSTEM_CANCEL_ERROR;
 
 public class CancelGatewayResponse extends GatewayResponse {
 
@@ -24,7 +24,7 @@ public class CancelGatewayResponse extends GatewayResponse {
     public CancelGatewayResponse(ErrorResponse error) {
         this.responseStatus = FAILED;
         this.error = error;
-        this.status = CANCEL_ERROR;
+        this.status = SYSTEM_CANCEL_ERROR;
     }
 
     public static CancelGatewayResponse successfulCancelResponse(ChargeStatus status) {
@@ -33,7 +33,7 @@ public class CancelGatewayResponse extends GatewayResponse {
 
     public static CancelGatewayResponse cancelFailureResponse(Logger logger, String errorMessage) {
         logger.error(format("Failed to cancel charge: %s", errorMessage));
-        return new CancelGatewayResponse(FAILED, baseError(errorMessage), CANCEL_ERROR);
+        return new CancelGatewayResponse(FAILED, baseError(errorMessage), SYSTEM_CANCEL_ERROR);
     }
 
     public static CancelGatewayResponse cancelFailureResponse(ErrorResponse errorResponse) {

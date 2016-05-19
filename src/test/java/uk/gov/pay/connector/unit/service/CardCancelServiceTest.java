@@ -104,7 +104,7 @@ public class CardCancelServiceTest extends CardServiceTest {
         Long chargeId = 1234L;
         Long accountId = 1L;
 
-        ChargeEntity charge = createNewChargeWith(chargeId, CANCEL_READY);
+        ChargeEntity charge = createNewChargeWith(chargeId, SYSTEM_CANCEL_READY);
 
         when(mockedChargeDao.findByExternalIdAndGatewayAccount(charge.getExternalId(), accountId))
                 .thenReturn(Optional.of(charge));
@@ -150,7 +150,7 @@ public class CardCancelServiceTest extends CardServiceTest {
 
         assertThat(response, is(anUnSuccessfulResponse()));
 
-        verifyChargeUpdated(charge, CANCEL_ERROR);
+        verifyChargeUpdated(charge, SYSTEM_CANCEL_ERROR);
     }
 
     @Test

@@ -58,7 +58,7 @@ public class ConnectorModule extends AbstractModule {
     }
 
     @Provides
-    public <T, U, V> TransactionFlow chargeTransactionFlow() {
-        return new TransactionFlow<T, U, V>();
+    public TransactionFlow transactionFlow() {
+        return new TransactionFlow();
     }
 }

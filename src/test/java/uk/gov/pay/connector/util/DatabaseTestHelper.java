@@ -10,6 +10,7 @@ import uk.gov.pay.connector.model.domain.ChargeStatus;
 import java.sql.SQLException;
 import java.sql.Timestamp;
 import java.time.ZonedDateTime;
+import java.util.List;
 import java.util.Map;
 
 import static java.time.ZonedDateTime.now;
@@ -32,8 +33,8 @@ public class DatabaseTestHelper {
                 jsonObject.setValue(new Gson().toJson(credentials));
             }
             jdbi.withHandle(h ->
-                            h.update("INSERT INTO gateway_accounts(id, payment_provider, credentials, service_name) VALUES(?, ?, ?, ?)",
-                                    Long.valueOf(accountId), paymentGateway, jsonObject, serviceName)
+                    h.update("INSERT INTO gateway_accounts(id, payment_provider, credentials, service_name) VALUES(?, ?, ?, ?)",
+                            Long.valueOf(accountId), paymentGateway, jsonObject, serviceName)
             );
         } catch (SQLException e) {
             throw new RuntimeException(e);
@@ -108,7 +109,7 @@ public class DatabaseTestHelper {
     public String getChargeTokenId(Long chargeId) {
 
         return jdbi.withHandle(h ->
-                        h.createQuery("SELECT secure_redirect_token from tokens WHERE charge_id = :charge_id ORDER BY id DESC")
+                h.createQuery("SELECT secure_redirect_token from tokens WHERE charge_id = :charge_id ORDER BY id DESC")
                         .bind("charge_id", chargeId)
                         .map(StringMapper.FIRST)
                         .first()
@@ -140,10 +141,10 @@ public class DatabaseTestHelper {
 
     public String getAccountServiceName(Long gatewayAccountId) {
         return jdbi.withHandle(h ->
-                        h.createQuery("SELECT service_name from gateway_accounts WHERE id = :gatewayAccountId")
-                                .bind("gatewayAccountId", gatewayAccountId)
-                                .map(StringMapper.FIRST)
-                                .first()
+                h.createQuery("SELECT service_name from gateway_accounts WHERE id = :gatewayAccountId")
+                        .bind("gatewayAccountId", gatewayAccountId)
+                        .map(StringMapper.FIRST)
+                        .first()
         );
     }
 
@@ -172,10 +173,10 @@ public class DatabaseTestHelper {
             pgCredentials.setType("json");
             pgCredentials.setValue(credentials);
             jdbi.withHandle(handle ->
-                            handle.createStatement("UPDATE gateway_accounts set credentials=:credentials WHERE id=:gatewayAccountId")
-                                    .bind("gatewayAccountId", Integer.parseInt(accountId))
-                                    .bind("credentials", pgCredentials)
-                                    .execute()
+                    handle.createStatement("UPDATE gateway_accounts set credentials=:credentials WHERE id=:gatewayAccountId")
+                            .bind("gatewayAccountId", Integer.parseInt(accountId))
+                            .bind("credentials", pgCredentials)
+                            .execute()
             );
         } catch (SQLException e) {
             throw new RuntimeException(e);
@@ -184,10 +185,10 @@ public class DatabaseTestHelper {
 
     public void updateServiceNameFor(String accountId, String serviceName) {
         jdbi.withHandle(handle ->
-                        handle.createStatement("UPDATE gateway_accounts set service_name=:serviceName WHERE id=:gatewayAccountId")
-                                .bind("gatewayAccountId", Integer.parseInt(accountId))
-                                .bind("serviceName", serviceName)
-                                .execute()
+                handle.createStatement("UPDATE gateway_accounts set service_name=:serviceName WHERE id=:gatewayAccountId")
+                        .bind("gatewayAccountId", Integer.parseInt(accountId))
+                        .bind("serviceName", serviceName)
+                        .execute()
         );
     }
 
@@ -195,6 +196,15 @@ public class DatabaseTestHelper {
         jdbi.withHandle(
                 h -> h.update("INSERT INTO charge_events(charge_id,status) values(?,?)",
                         chargeId, chargeStatus)
+        );
+    }
+
+    public List<String> getInternalEvents(String externalChargeId) {
+        return jdbi.withHandle(h ->
+                h.createQuery("SELECT status from charge_events WHERE charge_id = (SELECT id from charges WHERE external_id=:external_id)")
+                        .bind("external_id", externalChargeId)
+                        .map(StringMapper.FIRST)
+                        .list()
         );
     }
 }

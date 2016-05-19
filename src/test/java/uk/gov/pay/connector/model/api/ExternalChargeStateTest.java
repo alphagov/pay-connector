@@ -35,8 +35,8 @@ public class ExternalChargeStateTest {
         assertThat(EXPIRE_CANCEL_FAILED.toExternal().getStatus(), is("failed"));
         assertThat(EXPIRED.toExternal().getStatus(), is("failed"));
 
-        assertThat(CANCEL_READY.toExternal().getStatus(), is("cancelled"));
-        assertThat(CANCEL_ERROR.toExternal().getStatus(), is("cancelled"));
+        assertThat(SYSTEM_CANCEL_READY.toExternal().getStatus(), is("cancelled"));
+        assertThat(SYSTEM_CANCEL_ERROR.toExternal().getStatus(), is("cancelled"));
         assertThat(SYSTEM_CANCELLED.toExternal().getStatus(), is("cancelled"));
 
         assertThat(USER_CANCELLED.toExternal().getStatus(), is("failed"));
