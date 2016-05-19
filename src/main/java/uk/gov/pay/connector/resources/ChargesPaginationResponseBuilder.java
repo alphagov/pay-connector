@@ -10,7 +10,6 @@ import java.util.List;
 
 import static javax.ws.rs.core.Response.ok;
 import static uk.gov.pay.connector.resources.ApiPaths.CHARGES_API_PATH;
-import static uk.gov.pay.connector.util.ResponseUtil.notFoundResponse;
 
 public class ChargesPaginationResponseBuilder {
 
@@ -44,13 +43,8 @@ public class ChargesPaginationResponseBuilder {
     }
 
     public Response buildResponse() {
-        if (totalCount > 0) {
-            double lastPage = Math.ceil(new Double(totalCount) / searchParams.getDisplaySize());
-            if (invalidPageRequest(lastPage)) {
-                return notFoundResponse("the requested page not found");
-            }
-            buildLinks(lastPage);
-        }
+        double lastPage = Math.ceil(new Double(totalCount) / searchParams.getDisplaySize());
+        buildLinks(lastPage);
 
         String halString = new HalResourceBuilder()
                 .withProperty("results", chargeResponses)
@@ -79,10 +73,6 @@ public class ChargesPaginationResponseBuilder {
 
         searchParams.withPage(selfPageNum + 1);
         nextLink = selfPageNum == lastPage ? null : uriWithParams(searchParams.buildQueryParams());
-    }
-
-    private boolean invalidPageRequest(double lastPage) {
-        return searchParams.getPage() > lastPage || searchParams.getPage() < 1;
     }
 
     private URI uriWithParams(String params) {

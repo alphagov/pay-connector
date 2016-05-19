@@ -24,6 +24,7 @@ import java.util.*;
 
 import static java.time.ZonedDateTime.now;
 import static java.util.Arrays.asList;
+import static java.util.Collections.singletonList;
 import static java.util.stream.Collectors.toList;
 import static junit.framework.TestCase.assertTrue;
 import static org.exparity.hamcrest.date.ZonedDateTimeMatchers.within;
@@ -31,6 +32,7 @@ import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.*;
 import static org.junit.Assert.assertEquals;
 import static uk.gov.pay.connector.model.api.ExternalChargeState.EXTERNAL_CREATED;
+import static uk.gov.pay.connector.model.api.ExternalChargeState.EXTERNAL_STARTED;
 import static uk.gov.pay.connector.model.domain.ChargeEntityFixture.aValidChargeEntity;
 import static uk.gov.pay.connector.model.domain.ChargeStatus.*;
 
@@ -332,7 +334,7 @@ public class ChargeDaoITest extends DaoITestBase {
         ChargeSearchParams params = new ChargeSearchParams()
                 .withGatewayAccountId(defaultTestAccount.getAccountId())
                 .withReferenceLike(defaultTestCharge.getReference())
-                .withExternalChargeState(EXTERNAL_CREATED.getStatus())
+                .withExternalChargeState(EXTERNAL_STARTED.getStatus())
                 .withFromDate(ZonedDateTime.parse(FROM_DATE));
 
         // when

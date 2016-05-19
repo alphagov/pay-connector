@@ -1,6 +1,5 @@
 package uk.gov.pay.connector.dao;
 
-import org.apache.commons.lang3.StringUtils;
 import uk.gov.pay.connector.model.api.ExternalChargeState;
 import uk.gov.pay.connector.model.domain.ChargeStatus;
 
@@ -77,7 +76,7 @@ public class ChargeSearchParams {
     }
 
     public ChargeSearchParams withPage(Long page) {
-        this.page = (page != null && page >= 1) ? page : 1; // always show first page if its an invalid page request
+        this.page = page;
         return this;
     }
 
@@ -98,7 +97,7 @@ public class ChargeSearchParams {
     public String buildQueryParams() {
         StringBuilder builder = new StringBuilder();
 
-        if (StringUtils.isNotBlank(reference))
+        if (isNotBlank(reference))
             builder.append("&reference=" + reference);
         if (fromDate != null)
             builder.append("&from_date=" + fromDate);
@@ -108,7 +107,7 @@ public class ChargeSearchParams {
             builder.append("&page=" + page);
         if (displaySize != null)
             builder.append("&display_size=" + displaySize);
-        if (StringUtils.isNotBlank(externalChargeState)) {
+        if (isNotBlank(externalChargeState)) {
             builder.append("&state=" + externalChargeState);
         }
         return builder.toString();

@@ -16,7 +16,8 @@ public class ChargeSearchParamsTest {
 
     public static final String FROM_DATE = "2012-06-30T12:30:40Z[GMT]";
     public static final String TO_DATE = "2012-07-30T12:30:40Z[GMT]";
-    public static final String EXPECTED_QUERY_STRING = "&reference=ref" +
+    public static final String EXPECTED_QUERY_STRING =
+            "&reference=ref" +
             "&from_date="+FROM_DATE+
             "&to_date="+TO_DATE+
             "&page=%s" +
@@ -35,20 +36,5 @@ public class ChargeSearchParamsTest {
                 .withToDate(ZonedDateTime.parse(TO_DATE));
 
         assertEquals("query params string mismatch", format(EXPECTED_QUERY_STRING, 2, 5), params.buildQueryParams());
-    }
-
-    @Test
-    public void shouldSetPageAToOneWhenValueLessThanZero() {
-        ChargeSearchParams params = new ChargeSearchParams()
-                .withDisplaySize(500L)
-                .withExternalChargeState(EXTERNAL_CREATED.getStatus())
-                .withGatewayAccountId(111L)
-                .withPage(-1L)
-                .withReferenceLike("ref")
-                .withFromDate(ZonedDateTime.parse(FROM_DATE))
-                .withToDate(ZonedDateTime.parse(TO_DATE));
-
-        assertEquals("query params string mismatch", format(EXPECTED_QUERY_STRING, 1, 500), params.buildQueryParams());
-
     }
 }
