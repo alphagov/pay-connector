@@ -4,8 +4,9 @@ import uk.gov.pay.connector.model.api.ExternalChargeState;
 import uk.gov.pay.connector.model.domain.ChargeStatus;
 
 import java.time.ZonedDateTime;
-import java.util.LinkedList;
+import java.util.HashSet;
 import java.util.List;
+import java.util.Set;
 
 import static org.apache.commons.lang3.StringUtils.isNotBlank;
 
@@ -17,7 +18,7 @@ public class ChargeSearchParams {
     private ZonedDateTime toDate;
     private Long page;
     private Long displaySize;
-    private List<ChargeStatus> chargeStatuses = new LinkedList<>();
+    private Set<ChargeStatus> chargeStatuses = new HashSet<>();
     private String externalChargeState;
 
     public Long getGatewayAccountId() {
@@ -29,7 +30,7 @@ public class ChargeSearchParams {
         return this;
     }
 
-    public List<ChargeStatus> getChargeStatuses() {
+    public Set<ChargeStatus> getChargeStatuses() {
         return chargeStatuses;
     }
 
@@ -90,7 +91,7 @@ public class ChargeSearchParams {
     }
 
     public ChargeSearchParams withInternalChargeStatuses(List<ChargeStatus> statuses) {
-        this.chargeStatuses = statuses;
+        this.chargeStatuses = new HashSet<>(statuses);
         return this;
     }
 

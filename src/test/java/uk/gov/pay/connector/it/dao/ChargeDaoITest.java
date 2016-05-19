@@ -195,7 +195,6 @@ public class ChargeDaoITest extends DaoITestBase {
 
     @Test
     public void searchChargesByPartialReferenceOnly() throws Exception {
-
         // given
         insertTestCharge();
         String paymentReference = "Council Tax Payment reference 2";
@@ -211,9 +210,10 @@ public class ChargeDaoITest extends DaoITestBase {
                 .withReference(paymentReference)
                 .insert();
 
+        String reference = "reference";
         ChargeSearchParams params = new ChargeSearchParams()
                 .withGatewayAccountId(defaultTestAccount.getAccountId())
-                .withReferenceLike("reference");
+                .withReferenceLike(reference);
 
         // when
         List<ChargeEntity> charges = chargeDao.findAllBy(params);
@@ -231,6 +231,29 @@ public class ChargeDaoITest extends DaoITestBase {
             assertDateMatch(charge.getCreatedDate().toString());
         }
     }
+
+    @Test
+    public void aBasicTestAgainstSqlInjection() throws Exception {
+        // given
+        insertTestCharge();
+        ChargeSearchParams params = new ChargeSearchParams()
+                .withReferenceLike("reference");
+        // when passed in a simple reference string
+        List<ChargeEntity> charges = chargeDao.findAllBy(params);
+        // then it fetches a single result
+        assertThat(charges.size(), is(1));
+
+        // when passed in a non existent reference with an sql injected string
+        String sqlInjectionReferenceString = "reffff%' or 1=1 or c.reference like '%1";
+        params = new ChargeSearchParams()
+                .withReferenceLike(sqlInjectionReferenceString);
+        charges = chargeDao.findAllBy(params);
+        // then it fetches no result
+        // with a typical sql injection vulnerable query doing this should fetch all results
+        assertThat(charges.size(), is(0));
+    }
+
+
 
     @Test
     public void searchChargeByReferenceAndLegacyStatusOnly() throws Exception {
