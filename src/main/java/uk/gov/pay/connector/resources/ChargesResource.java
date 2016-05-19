@@ -17,24 +17,33 @@ import uk.gov.pay.connector.model.domain.ChargeEntity;
 import uk.gov.pay.connector.model.domain.ChargeStatus;
 import uk.gov.pay.connector.service.CardCancelService;
 import uk.gov.pay.connector.service.ChargeService;
-import uk.gov.pay.connector.util.ChargesCSVGenerator;
 import uk.gov.pay.connector.util.ResponseUtil;
 
 import javax.inject.Inject;
-import javax.ws.rs.*;
+import javax.ws.rs.DefaultValue;
+import javax.ws.rs.GET;
+import javax.ws.rs.POST;
+import javax.ws.rs.Path;
+import javax.ws.rs.PathParam;
+import javax.ws.rs.Produces;
+import javax.ws.rs.QueryParam;
 import javax.ws.rs.core.Context;
 import javax.ws.rs.core.Response;
 import javax.ws.rs.core.UriInfo;
 import java.time.ZonedDateTime;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.List;
+import java.util.Map;
+import java.util.Optional;
 import java.util.function.Function;
 import java.util.stream.Collectors;
 
 import static fj.data.Either.reduce;
 import static java.lang.String.format;
 import static javax.ws.rs.core.MediaType.APPLICATION_JSON;
-import static javax.ws.rs.core.Response.Status.BAD_REQUEST;
-import static javax.ws.rs.core.Response.*;
+import static javax.ws.rs.core.Response.created;
+import static javax.ws.rs.core.Response.ok;
 import static org.apache.commons.lang3.StringUtils.isNotBlank;
 import static uk.gov.pay.connector.model.ChargeResponse.aChargeResponse;
 import static uk.gov.pay.connector.model.domain.ChargeStatus.*;
@@ -60,7 +69,6 @@ public class ChargesResource {
     private static final String ACCOUNT_ID = "accountId";
     private static final String PAGE = "page";
     private static final String DISPLAY_SIZE = "display_size";
-    private final String TEXT_CSV = "text/csv";
 
     private ChargeDao chargeDao;
     private GatewayAccountDao gatewayAccountDao;
@@ -111,22 +119,6 @@ public class ChargesResource {
                 .map(ResponseUtil::badRequestResponse)
                 .orElseGet(() -> reduce(validateGatewayAccountReference(gatewayAccountDao, accountId)
                         .bimap(handleError, listCharges(accountId, reference, state, fromDate, toDate, pageNumber, displaySize, jsonResponse()))));
-    }
-
-    @GET
-    @Path(CHARGES_API_PATH)
-    @Produces(TEXT_CSV)
-    public Response getChargesCsv(@PathParam(ACCOUNT_ID) Long accountId,
-                                  @QueryParam(REFERENCE_KEY) String reference,
-                                  @QueryParam(STATE_KEY) String state,
-                                  @QueryParam(FROM_DATE_KEY) String fromDate,
-                                  @QueryParam(TO_DATE_KEY) String toDate,
-                                  @Context UriInfo uriInfo) {
-        return ApiValidators
-                .validateDateQueryParams(ImmutableList.of(Pair.of(FROM_DATE_KEY, fromDate), Pair.of(TO_DATE_KEY, toDate)))
-                .map(errorMessage -> status(BAD_REQUEST).entity(errorMessage).build())
-                .orElseGet(() -> reduce(validateGatewayAccountReference(gatewayAccountDao, accountId)
-                        .bimap(handleError, listCharges(accountId, reference, state, fromDate, toDate, csvResponse()))));
     }
 
     private F<Boolean, Response> listCharges(Long accountId, String reference, String state, String fromDate, String toDate, Function<List<ChargeEntity>, Response> responseFunction) {
@@ -259,10 +251,6 @@ public class ChargesResource {
                         .withProviderName(charge.getGatewayAccount().getGatewayName())
                         .build())
                 .collect(Collectors.toList()))).build();
-    }
-
-    private Function<List<ChargeEntity>, Response> csvResponse() {
-        return charges -> ok(ChargesCSVGenerator.generate(charges)).build();
     }
 
     private static F<String, Response> handleError =

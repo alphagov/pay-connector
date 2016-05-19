@@ -58,7 +58,6 @@ public class ChargesResourceITest {
     private static final String JSON_STATE_KEY = "state.status";
     private static final String JSON_MESSAGE_KEY = "message";
     private static final String JSON_PROVIDER_KEY = "payment_provider";
-    private static final String CSV_CONTENT_TYPE = "text/csv";
     private static final String PROVIDER_NAME = "test_gateway";
     private static final long AMOUNT = 6234L;
 
@@ -176,19 +175,7 @@ public class ChargesResourceITest {
     }
 
     @Test
-    public void shouldReturn404OnGetTransactionsAsCSVWhenAccountIdIsNonNumeric() {
-        getChargeApi
-                .withAccountId("invalidAccountId")
-                .withHeader(HttpHeaders.ACCEPT, CSV_CONTENT_TYPE)
-                .getTransactions()
-                .contentType(JSON)
-                .statusCode(NOT_FOUND.getStatusCode())
-                .body("code", is(404))
-                .body("message", is("HTTP 404 Not Found"));
-    }
-
-    @Test
-    public void shouldReturn404OnGetTransactionsAsJsonWhenAccountIdIsNonNumeric() {
+    public void shouldReturn404OnGetTransactionsWhenAccountIdIsNonNumeric() {
         getChargeApi
                 .withAccountId("invalidAccountId")
                 .withHeader(HttpHeaders.ACCEPT, APPLICATION_JSON)
@@ -216,28 +203,6 @@ public class ChargesResourceITest {
                 .contentType(JSON)
                 .body(JSON_CHARGE_KEY, is(externalChargeId))
                 .body(JSON_STATE_KEY, is(EXTERNAL_SUBMITTED.getStatus()));
-    }
-
-    @Test
-    public void shouldGetChargeTransactionsForCSVAcceptHeader() throws Exception {
-
-        long chargeId = RandomUtils.nextInt();
-        String externalChargeId = "charge4";
-
-        ChargeStatus chargeStatus = AUTHORISATION_SUCCESS;
-        ZonedDateTime createdDate = ZonedDateTime.of(2016, 1, 25, 13, 45, 32, 123, ZoneId.of("UTC"));
-        app.getDatabaseTestHelper().addCharge(chargeId, externalChargeId, accountId, AMOUNT, chargeStatus, returnUrl, null, "My reference", createdDate);
-        app.getDatabaseTestHelper().addToken(chargeId, "tokenId");
-        app.getDatabaseTestHelper().addEvent(valueOf(chargeId), chargeStatus.getValue());
-
-        getChargeApi
-                .withAccountId(accountId)
-                .withHeader(HttpHeaders.ACCEPT, CSV_CONTENT_TYPE)
-                .getTransactions()
-                .statusCode(OK.getStatusCode())
-                .contentType(CSV_CONTENT_TYPE)
-                .body(is("Service Payment Reference,Amount,State,Finished,Error Message,Error Code,Gateway Transaction ID,GOV.UK Pay ID,Date Created\n" +
-                    "My reference,62.34,submitted,false,,,," + externalChargeId + ",2016-01-25 13:45:32\n"));
     }
 
     @Test
@@ -377,7 +342,7 @@ public class ChargesResourceITest {
     }
 
     @Test
-    public void shouldError400_IfFromAndToDatesAreNotInCorrectFormatDuringFilterJson() throws Exception {
+    public void shouldError400_IfFromAndToDatesAreNotInCorrectFormatDuringFilter() throws Exception {
         getChargeApi
                 .withAccountId(accountId)
                 .withQueryParam("from_date", "invalid-date-string")
@@ -387,19 +352,6 @@ public class ChargesResourceITest {
                 .statusCode(BAD_REQUEST.getStatusCode())
                 .contentType(JSON)
                 .body("message", is("query parameters [from_date, to_date] not in correct format"));
-    }
-
-    @Test
-    public void shouldError400_IfFromAndToDatesAreNotInCorrectFormatDuringFilterCsv() throws Exception {
-        getChargeApi
-                .withAccountId(accountId)
-                .withQueryParam("from_date", "invalid-date-string")
-                .withQueryParam("to_date", "Another invalid date")
-                .withHeader(HttpHeaders.ACCEPT, CSV_CONTENT_TYPE)
-                .getTransactions()
-                .statusCode(BAD_REQUEST.getStatusCode())
-                .contentType(CSV_CONTENT_TYPE)
-                .body(containsString("query parameters [from_date, to_date] not in correct format"));
     }
 
     @Test
