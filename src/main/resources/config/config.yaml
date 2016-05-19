@@ -68,7 +68,7 @@ database:
   validationQuery: "SELECT '1'"
 
   # the timeout before a connection validation queries fail
-  validationQueryTimeout: 3s
+  validationQueryTimeout: 2s
 
   # The initial size of the connection pool
   initialSize: 4
