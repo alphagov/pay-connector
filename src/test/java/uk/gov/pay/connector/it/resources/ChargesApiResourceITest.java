@@ -472,7 +472,8 @@ public class ChargesApiResourceITest {
                 .withQueryParam("display_size", "2")
                 .withHeader(HttpHeaders.ACCEPT, APPLICATION_JSON)
                 .getTransactions()
-                .statusCode(NOT_FOUND.getStatusCode());
+                .statusCode(NOT_FOUND.getStatusCode())
+                .body("message", is("the requested page not found"));
     }
 
     private void assertBadRequestForNegativePageDisplaySize() {
