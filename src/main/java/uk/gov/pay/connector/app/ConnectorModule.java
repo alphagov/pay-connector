@@ -43,6 +43,7 @@ public class ConnectorModule extends AbstractModule {
         properties.put("eclipselink.query-results-cache", jpaConfiguration.getCacheSharedDefault());
         properties.put("eclipselink.cache.shared.default", jpaConfiguration.getCacheSharedDefault());
         properties.put("eclipselink.ddl-generation.output-mode", jpaConfiguration.getDdlGenerationOutputMode());
+        properties.put("eclipselink.session.customizer", "uk.gov.pay.connector.util.ConnectorSessionCustomiser");
 
         final JpaPersistModule jpaModule = new JpaPersistModule("ConnectorUnit");
         jpaModule.properties(properties);
