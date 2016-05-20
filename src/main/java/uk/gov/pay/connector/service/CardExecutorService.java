@@ -1,5 +1,6 @@
 package uk.gov.pay.connector.service;
 
+import com.google.common.util.concurrent.ThreadFactoryBuilder;
 import com.google.inject.Inject;
 import org.apache.commons.lang3.tuple.Pair;
 import org.slf4j.Logger;
@@ -30,8 +31,13 @@ public class CardExecutorService<T> {
 
     @Inject
     public CardExecutorService(ConnectorConfiguration configuration) {
+        final ThreadFactory threadFactory = new ThreadFactoryBuilder()
+                .setNameFormat("CardExecutorService-%d")
+                .build();
+
         this.config = configuration.getExecutorServiceConfig();
-        this.executor = Executors.newFixedThreadPool(config.getThreadsPerCpu() * getRuntime().availableProcessors());
+        int numberOfThreads = config.getThreadsPerCpu() * getRuntime().availableProcessors();
+        this.executor = Executors.newFixedThreadPool(numberOfThreads, threadFactory);
         addShutdownHook();
     }
 
