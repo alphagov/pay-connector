@@ -7,7 +7,7 @@ import static com.jayway.restassured.http.ContentType.JSON;
 import static java.lang.String.format;
 import static java.util.UUID.randomUUID;
 import static org.hamcrest.Matchers.is;
-import static uk.gov.pay.connector.model.api.ExternalChargeState.EXTERNAL_CONFIRMED;
+import static uk.gov.pay.connector.model.api.ExternalChargeState.EXTERNAL_SUCCESS;
 import static uk.gov.pay.connector.model.api.ExternalChargeState.EXTERNAL_ERROR_GATEWAY;
 import static uk.gov.pay.connector.model.domain.ChargeStatus.*;
 
@@ -32,7 +32,7 @@ public class CardCaptureResourceITest extends CardResourceITestBase {
                 .statusCode(204);
 
         assertFrontendChargeStatusIs(chargeId, CAPTURE_SUBMITTED.getValue());
-        assertApiStateIs(chargeId, EXTERNAL_CONFIRMED.getStatus());
+        assertApiStateIs(chargeId, EXTERNAL_SUCCESS.getStatus());
     }
 
     @Test

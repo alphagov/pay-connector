@@ -3,7 +3,7 @@ package uk.gov.pay.connector.it.resources.worldpay;
 import org.junit.Test;
 import uk.gov.pay.connector.it.base.CardResourceITestBase;
 
-import static uk.gov.pay.connector.model.api.ExternalChargeState.EXTERNAL_CONFIRMED;
+import static uk.gov.pay.connector.model.api.ExternalChargeState.EXTERNAL_SUCCESS;
 import static uk.gov.pay.connector.model.domain.ChargeStatus.*;
 
 public class WorldpayCardResourceITest extends CardResourceITestBase {
@@ -52,6 +52,6 @@ public class WorldpayCardResourceITest extends CardResourceITestBase {
                 .statusCode(204);
 
         assertFrontendChargeStatusIs(chargeId, CAPTURE_SUBMITTED.getValue());
-        assertApiStateIs(chargeId, EXTERNAL_CONFIRMED.getStatus());
+        assertApiStateIs(chargeId, EXTERNAL_SUCCESS.getStatus());
     }
 }

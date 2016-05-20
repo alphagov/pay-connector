@@ -27,8 +27,8 @@ public class ExternalChargeStateTest {
         assertThat(AUTHORISATION_ERROR.toExternal().getStatus(), is("error"));
 
         assertThat(CAPTURE_READY.toExternal().getStatus(), is("submitted"));
-        assertThat(CAPTURED.toExternal().getStatus(), is("captured"));
-        assertThat(CAPTURE_SUBMITTED.toExternal().getStatus(), is("confirmed"));
+        assertThat(CAPTURED.toExternal().getStatus(), is("success"));
+        assertThat(CAPTURE_SUBMITTED.toExternal().getStatus(), is("success"));
         assertThat(CAPTURE_ERROR.toExternal().getStatus(), is("error"));
 
         assertThat(EXPIRE_CANCEL_PENDING.toExternal().getStatus(), is("failed"));
@@ -71,11 +71,11 @@ public class ExternalChargeStateTest {
     }
 
     @Test
-    public void confirmedStateSerializesCorrectly() throws Exception {
-        String json = mapper.writeValueAsString(ExternalChargeState.EXTERNAL_CONFIRMED);
+    public void successStateSerializesCorrectly() throws Exception {
+        String json = mapper.writeValueAsString(ExternalChargeState.EXTERNAL_SUCCESS);
         JsonNode object = mapper.readTree(json);
 
-        assertThat(object.get("status").asText(), is("confirmed"));
+        assertThat(object.get("status").asText(), is("success"));
         assertThat(object.get("finished").asBoolean(), is(true));
         assertThat(object.has("code"), is(false));
         assertThat(object.has("message"), is(false));
