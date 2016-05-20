@@ -4,6 +4,7 @@ import uk.gov.pay.connector.model.api.ExternalChargeState;
 import uk.gov.pay.connector.model.domain.ChargeStatus;
 
 import java.time.ZonedDateTime;
+import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
@@ -115,11 +116,10 @@ public class ChargeSearchParams {
     }
 
     private List<ExternalChargeState> parseState(String state) {
-        List<ExternalChargeState> externalStates = null;
+        List<ExternalChargeState> externalStates = new ArrayList<>();
         if (isNotBlank(state)) {
-            externalStates = ExternalChargeState.fromStatusString(state);
+            externalStates.addAll(ExternalChargeState.fromStatusString(state));
         }
         return externalStates;
     }
-
 }
