@@ -46,7 +46,7 @@ public class HealthCheckResourceTest {
     public void checkHealthCheck_isUnHealthy() throws JsonProcessingException {
         SortedMap<String,HealthCheck.Result> registry = new TreeMap<>();
         registry.put("ping", HealthCheck.Result.unhealthy("application is unavailable"));
-        registry.put("postgresql", HealthCheck.Result.unhealthy("database in unavailable"));
+        registry.put("database", HealthCheck.Result.unhealthy("database in unavailable"));
         registry.put("deadlocks", HealthCheck.Result.unhealthy("no new threads available"));
         registry.put("cardExecutorService", HealthCheck.Result.unhealthy("thread pool exhausted"));
         when(healthCheckRegistry.runHealthChecks()).thenReturn(registry);
@@ -58,28 +58,28 @@ public class HealthCheckResourceTest {
         JsonAssert.with(body)
                 .assertThat("$.*", hasSize(4))
                 .assertThat("$.ping.healthy", Is.is(false))
-                .assertThat("$.postgresql.healthy", Is.is(false))
+                .assertThat("$.database.healthy", Is.is(false))
                 .assertThat("$.cardExecutorService.healthy", Is.is(false))
                 .assertThat("$.deadlocks.healthy", Is.is(false));
     }
 
     @Test
     public void checkHealthCheck_isHealthy() throws JsonProcessingException {
+        ObjectWriter ow = new ObjectMapper().writer().withDefaultPrettyPrinter();
         SortedMap<String,HealthCheck.Result> registry = new TreeMap<>();
         registry.put("ping", HealthCheck.Result.healthy());
-        registry.put("postgresql", HealthCheck.Result.healthy());
+        registry.put("database", HealthCheck.Result.healthy());
         registry.put("deadlocks", HealthCheck.Result.healthy());
         registry.put("cardExecutorService", HealthCheck.Result.healthy());
         when(healthCheckRegistry.runHealthChecks()).thenReturn(registry);
         Response response = resource.healthCheck();
         assertThat(response.getStatus(), is(200));
-        ObjectWriter ow = new ObjectMapper().writer().withDefaultPrettyPrinter();
         String body = ow.writeValueAsString(response.getEntity());
 
         JsonAssert.with(body)
                 .assertThat("$.*", hasSize(4))
                 .assertThat("$.ping.healthy", Is.is(true))
-                .assertThat("$.postgresql.healthy", Is.is(true))
+                .assertThat("$.database.healthy", Is.is(true))
                 .assertThat("$.cardExecutorService.healthy", Is.is(true))
                 .assertThat("$.deadlocks.healthy", Is.is(true));
     }
@@ -88,7 +88,7 @@ public class HealthCheckResourceTest {
     public void checkHealthCheck_AllHealthy_exceptDeadlocks() throws JsonProcessingException {
         SortedMap<String,HealthCheck.Result> registry = new TreeMap<>();
         registry.put("ping", HealthCheck.Result.healthy());
-        registry.put("postgresql", HealthCheck.Result.healthy());
+        registry.put("database", HealthCheck.Result.healthy());
         registry.put("deadlocks", HealthCheck.Result.unhealthy("no new threads available"));
         registry.put("cardExecutorService", HealthCheck.Result.healthy());
         when(healthCheckRegistry.runHealthChecks()).thenReturn(registry);
@@ -100,7 +100,7 @@ public class HealthCheckResourceTest {
         JsonAssert.with(body)
                 .assertThat("$.*", hasSize(4))
                 .assertThat("$.ping.healthy", Is.is(true))
-                .assertThat("$.postgresql.healthy", Is.is(true))
+                .assertThat("$.database.healthy", Is.is(true))
                 .assertThat("$.deadlocks.healthy", Is.is(false))
                 .assertThat("$.cardExecutorService.healthy", Is.is(true));
     }
@@ -110,7 +110,7 @@ public class HealthCheckResourceTest {
         ObjectWriter ow = new ObjectMapper().writer().withDefaultPrettyPrinter();
         SortedMap<String,HealthCheck.Result> registry = new TreeMap<>();
         registry.put("ping", HealthCheck.Result.healthy());
-        registry.put("postgresql", HealthCheck.Result.healthy());
+        registry.put("database", HealthCheck.Result.healthy());
         registry.put("deadlocks", HealthCheck.Result.healthy());
         Map<String, Integer> stats = new HashMap<>();
         stats.put("active-thread-count", 100);
@@ -126,7 +126,7 @@ public class HealthCheckResourceTest {
         JsonAssert.with(body)
                 .assertThat("$.*", hasSize(4))
                 .assertThat("$.ping.healthy", Is.is(true))
-                .assertThat("$.postgresql.healthy", Is.is(true))
+                .assertThat("$.database.healthy", Is.is(true))
                 .assertThat("$.cardExecutorService.healthy", Is.is(false))
                 .assertThat("$.cardExecutorService.message", Is.is(ow.writeValueAsString(stats)))
                 .assertThat("$.deadlocks.healthy", Is.is(true));

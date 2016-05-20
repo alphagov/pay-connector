@@ -13,7 +13,7 @@ public class DatabaseConnectionITest {
     @Rule
     public DropwizardAppWithPostgresRule app = new DropwizardAppWithPostgresRule();
 
-    @Test @Ignore
+    @Test
     public void testDatabaseHealthcheckWhenDatabaseIsUp() {
         given().port(app.getAdminPort())
                 .get("/healthcheck")
@@ -22,7 +22,7 @@ public class DatabaseConnectionITest {
                 .body("database.healthy", is(true));
     }
 
-    @Test @Ignore
+    @Test
     public void testDatabaseHealthcheckWhenDatabaseIsDown() {
         app.stopPostgres();
         given().port(app.getAdminPort())
