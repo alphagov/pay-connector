@@ -19,6 +19,7 @@ import static uk.gov.pay.connector.service.CardExecutorService.ExecutionStatus.*
 public class CardExecutorService<T> {
 
     private static final Logger logger = LoggerFactory.getLogger(CardExecutorService.class);
+    private static final int QUEUE_WAIT_WARN_THRESHOLD_MILLIS = 3000;
 
     private CardExecutorServiceConfig config;
     private ExecutorService executor;
@@ -65,8 +66,17 @@ public class CardExecutorService<T> {
     // accepts a supplier function and executed that in a separate Thread of its own.
     // returns a Pair of the execution status and the return type
     public Pair<ExecutionStatus, T> execute(Supplier<T> callable) {
-        Callable<T> task = () -> callable.get();
-        Future<T> futureObject = executor.submit(task);
+        Callable<T> task = callable::get;
+        final long startTime = System.currentTimeMillis();
+        Future<T> futureObject = executor.submit(() -> {
+            long totalWaitTime = System.currentTimeMillis() - startTime;
+            logger.debug("Card operation task spent {} ms in queue", totalWaitTime);
+            if(totalWaitTime > QUEUE_WAIT_WARN_THRESHOLD_MILLIS) {
+                logger.warn("CardExecutor Service delay - queue_wait_time={}", totalWaitTime);
+            }
+
+            return task.call();
+        });
 
         try {
             return Pair.of(COMPLETED, futureObject.get(config.getTimeoutInSeconds(), TimeUnit.SECONDS));
