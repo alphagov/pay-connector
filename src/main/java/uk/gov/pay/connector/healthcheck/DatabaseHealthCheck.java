@@ -25,7 +25,7 @@ public class DatabaseHealthCheck extends HealthCheck {
                 configuration.getDataSourceFactory().getUser(),
                 configuration.getDataSourceFactory().getPassword());
             connection.setReadOnly(true);
-            return connection.isValid(5) ? Result.healthy() : Result.unhealthy("Could not validate the DB connection.");
+            return connection.isValid(2) ? Result.healthy() : Result.unhealthy("Could not validate the DB connection.");
         } catch (Exception e) {
             return Result.unhealthy(e.getMessage());
         } finally {
