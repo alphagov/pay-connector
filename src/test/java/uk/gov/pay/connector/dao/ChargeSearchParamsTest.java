@@ -17,7 +17,7 @@ public class ChargeSearchParamsTest {
     public static final String FROM_DATE = "2012-06-30T12:30:40Z[GMT]";
     public static final String TO_DATE = "2012-07-30T12:30:40Z[GMT]";
     public static final String EXPECTED_QUERY_STRING =
-            "&reference=ref" +
+            "reference=ref" +
                     "&from_date=" + FROM_DATE +
                     "&to_date=" + TO_DATE +
                     "&page=%s" +

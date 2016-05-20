@@ -510,9 +510,9 @@ public class ChargesApiResourceITest {
                 .body("count", is(1))
                 .body("_links.next_page", isEmptyOrNullString())
                 .body("_links.prev_page", isEmptyOrNullString())
-                .body("_links.first_page.href", is(expectedChargesLocationFor(accountId, "?&reference=ref-1&page=1&display_size=2")))
-                .body("_links.last_page.href", is(expectedChargesLocationFor(accountId, "?&reference=ref-1&page=1&display_size=2")))
-                .body("_links.self.href", is(expectedChargesLocationFor(accountId, "?&reference=ref-1&page=1&display_size=2")));
+                .body("_links.first_page.href", is(expectedChargesLocationFor(accountId, "?reference=ref-1&page=1&display_size=2")))
+                .body("_links.last_page.href", is(expectedChargesLocationFor(accountId, "?reference=ref-1&page=1&display_size=2")))
+                .body("_links.self.href", is(expectedChargesLocationFor(accountId, "?reference=ref-1&page=1&display_size=2")));
 
         List<Map<String, Object>> results = response.extract().body().jsonPath().getList("results");
         List<String> references = collect(results, "reference");
@@ -535,11 +535,11 @@ public class ChargesApiResourceITest {
                 .body("results.size()", is(2))
                 .body("total", is(5))
                 .body("count", is(2))
-                .body("_links.next_page.href", is(expectedChargesLocationFor(accountId, "?&reference=ref&page=2&display_size=2")))
+                .body("_links.next_page.href", is(expectedChargesLocationFor(accountId, "?reference=ref&page=2&display_size=2")))
                 .body("_links.prev_page", isEmptyOrNullString())
-                .body("_links.first_page.href", is(expectedChargesLocationFor(accountId, "?&reference=ref&page=1&display_size=2")))
-                .body("_links.last_page.href", is(expectedChargesLocationFor(accountId, "?&reference=ref&page=3&display_size=2")))
-                .body("_links.self.href", is(expectedChargesLocationFor(accountId, "?&reference=ref&page=1&display_size=2")));
+                .body("_links.first_page.href", is(expectedChargesLocationFor(accountId, "?reference=ref&page=1&display_size=2")))
+                .body("_links.last_page.href", is(expectedChargesLocationFor(accountId, "?reference=ref&page=3&display_size=2")))
+                .body("_links.self.href", is(expectedChargesLocationFor(accountId, "?reference=ref&page=1&display_size=2")));
 
         List<Map<String, Object>> results = response.extract().body().jsonPath().getList("results");
         List<String> references = collect(results, "reference");
@@ -562,11 +562,11 @@ public class ChargesApiResourceITest {
                 .body("results.size()", is(2))
                 .body("total", is(5))
                 .body("count", is(2))
-                .body("_links.next_page.href", is(expectedChargesLocationFor(accountId, "?&reference=ref&page=3&display_size=2")))
-                .body("_links.prev_page.href", is(expectedChargesLocationFor(accountId, "?&reference=ref&page=1&display_size=2")))
-                .body("_links.first_page.href", is(expectedChargesLocationFor(accountId, "?&reference=ref&page=1&display_size=2")))
-                .body("_links.last_page.href", is(expectedChargesLocationFor(accountId, "?&reference=ref&page=3&display_size=2")))
-                .body("_links.self.href", is(expectedChargesLocationFor(accountId, "?&reference=ref&page=2&display_size=2")));
+                .body("_links.next_page.href", is(expectedChargesLocationFor(accountId, "?reference=ref&page=3&display_size=2")))
+                .body("_links.prev_page.href", is(expectedChargesLocationFor(accountId, "?reference=ref&page=1&display_size=2")))
+                .body("_links.first_page.href", is(expectedChargesLocationFor(accountId, "?reference=ref&page=1&display_size=2")))
+                .body("_links.last_page.href", is(expectedChargesLocationFor(accountId, "?reference=ref&page=3&display_size=2")))
+                .body("_links.self.href", is(expectedChargesLocationFor(accountId, "?reference=ref&page=2&display_size=2")));
 
         List<Map<String, Object>> results = response.extract().body().jsonPath().getList("results");
         List<String> references = collect(results, "reference");
@@ -590,10 +590,10 @@ public class ChargesApiResourceITest {
                 .body("total", is(5))
                 .body("count", is(1))
                 .body("_links.next_page", isEmptyOrNullString())
-                .body("_links.prev_page.href", is(expectedChargesLocationFor(accountId, "?&reference=ref&page=2&display_size=2")))
-                .body("_links.first_page.href", is(expectedChargesLocationFor(accountId, "?&reference=ref&page=1&display_size=2")))
-                .body("_links.last_page.href", is(expectedChargesLocationFor(accountId, "?&reference=ref&page=3&display_size=2")))
-                .body("_links.self.href", is(expectedChargesLocationFor(accountId, "?&reference=ref&page=3&display_size=2")));
+                .body("_links.prev_page.href", is(expectedChargesLocationFor(accountId, "?reference=ref&page=2&display_size=2")))
+                .body("_links.first_page.href", is(expectedChargesLocationFor(accountId, "?reference=ref&page=1&display_size=2")))
+                .body("_links.last_page.href", is(expectedChargesLocationFor(accountId, "?reference=ref&page=3&display_size=2")))
+                .body("_links.self.href", is(expectedChargesLocationFor(accountId, "?reference=ref&page=3&display_size=2")));
 
         List<Map<String, Object>> results = response.extract().body().jsonPath().getList("results");
         List<String> references = collect(results, "reference");
