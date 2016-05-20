@@ -31,9 +31,9 @@ import static org.exparity.hamcrest.date.ZonedDateTimeMatchers.within;
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.*;
 import static org.junit.Assert.assertEquals;
-import static uk.gov.pay.connector.model.domain.ChargeEntityFixture.aValidChargeEntity;
 import static uk.gov.pay.connector.model.api.ExternalChargeState.EXTERNAL_CREATED;
 import static uk.gov.pay.connector.model.api.ExternalChargeState.EXTERNAL_STARTED;
+import static uk.gov.pay.connector.model.domain.ChargeEntityFixture.aValidChargeEntity;
 import static uk.gov.pay.connector.model.domain.ChargeStatus.*;
 
 public class ChargeDaoITest extends DaoITestBase {
@@ -79,7 +79,7 @@ public class ChargeDaoITest extends DaoITestBase {
     }
 
     @Test
-    public void searchChargesWithDefaultSize_100AndPage_1_shouldGetChargesInCreationDateOrder() throws Exception {
+    public void searchChargesWithDefaultSizeAndPage_shouldGetChargesInCreationDateOrder() throws Exception {
         // given
         insertNewChargeWithId(700L, now().plusHours(1));
         insertNewChargeWithId(800L, now().plusHours(2));
@@ -150,8 +150,27 @@ public class ChargeDaoITest extends DaoITestBase {
     }
 
     @Test
-    public void searchChargesByFullReferenceOnly() throws Exception {
+    public void shouldGetTotalCount_5_when_displaySizeIs_2() {
+        // given
+        insertNewChargeWithId(700L, now().plusHours(1));
+        insertNewChargeWithId(800L, now().plusHours(2));
+        insertNewChargeWithId(900L, now().plusHours(3));
+        insertNewChargeWithId(600L, now().plusHours(4));
+        insertNewChargeWithId(500L, now().plusHours(5));
+        ChargeSearchParams params = new ChargeSearchParams()
+                .withGatewayAccountId(defaultTestAccount.getAccountId())
+                .withExternalChargeState(EXTERNAL_CREATED.getStatus())
+                .withDisplaySize(2L);
 
+        // when
+        Long count = chargeDao.getTotalFor(params);
+
+        // then gets the count(*) irrespective of the max results (display_size)
+        assertThat("total count for transactions mismatch", count, is(5L));
+    }
+
+    @Test
+    public void searchChargesByFullReferenceOnly() throws Exception {
         // given
         insertTestCharge();
         ChargeSearchParams params = new ChargeSearchParams()
@@ -176,7 +195,6 @@ public class ChargeDaoITest extends DaoITestBase {
 
     @Test
     public void searchChargesByPartialReferenceOnly() throws Exception {
-
         // given
         insertTestCharge();
         String paymentReference = "Council Tax Payment reference 2";
@@ -192,9 +210,10 @@ public class ChargeDaoITest extends DaoITestBase {
                 .withReference(paymentReference)
                 .insert();
 
+        String reference = "reference";
         ChargeSearchParams params = new ChargeSearchParams()
                 .withGatewayAccountId(defaultTestAccount.getAccountId())
-                .withReferenceLike("reference");
+                .withReferenceLike(reference);
 
         // when
         List<ChargeEntity> charges = chargeDao.findAllBy(params);
@@ -214,13 +233,36 @@ public class ChargeDaoITest extends DaoITestBase {
     }
 
     @Test
+    public void aBasicTestAgainstSqlInjection() throws Exception {
+        // given
+        insertTestCharge();
+        ChargeSearchParams params = new ChargeSearchParams()
+                .withReferenceLike("reference");
+        // when passed in a simple reference string
+        List<ChargeEntity> charges = chargeDao.findAllBy(params);
+        // then it fetches a single result
+        assertThat(charges.size(), is(1));
+
+        // when passed in a non existent reference with an sql injected string
+        String sqlInjectionReferenceString = "reffff%' or 1=1 or c.reference like '%1";
+        params = new ChargeSearchParams()
+                .withReferenceLike(sqlInjectionReferenceString);
+        charges = chargeDao.findAllBy(params);
+        // then it fetches no result
+        // with a typical sql injection vulnerable query doing this should fetch all results
+        assertThat(charges.size(), is(0));
+    }
+
+
+
+    @Test
     public void searchChargeByReferenceAndLegacyStatusOnly() throws Exception {
         // given
         insertTestCharge();
         ChargeSearchParams params = new ChargeSearchParams()
                 .withGatewayAccountId(defaultTestAccount.getAccountId())
                 .withReferenceLike(defaultTestCharge.getReference())
-                .withExternalChargeState(singletonList(EXTERNAL_CREATED));
+                .withExternalChargeState(EXTERNAL_CREATED.getStatus());
 
         // when
         List<ChargeEntity> charges = chargeDao.findAllBy(params);
@@ -245,7 +287,7 @@ public class ChargeDaoITest extends DaoITestBase {
         ChargeSearchParams params = new ChargeSearchParams()
                 .withGatewayAccountId(defaultTestAccount.getAccountId())
                 .withReferenceLike(defaultTestCharge.getReference())
-                .withExternalChargeState(singletonList(EXTERNAL_CREATED))
+                .withExternalChargeState(EXTERNAL_CREATED.getStatus())
                 .withFromDate(ZonedDateTime.parse(FROM_DATE))
                 .withToDate(ZonedDateTime.parse(TO_DATE));
 
@@ -272,7 +314,7 @@ public class ChargeDaoITest extends DaoITestBase {
         ChargeSearchParams params = new ChargeSearchParams()
                 .withGatewayAccountId(defaultTestAccount.getAccountId())
                 .withReferenceLike(defaultTestCharge.getReference())
-                .withExternalChargeState(singletonList(EXTERNAL_CREATED))
+                .withExternalChargeState(EXTERNAL_CREATED.getStatus())
                 .withFromDate(ZonedDateTime.parse(FROM_DATE));
 
         // when
@@ -315,7 +357,7 @@ public class ChargeDaoITest extends DaoITestBase {
         ChargeSearchParams params = new ChargeSearchParams()
                 .withGatewayAccountId(defaultTestAccount.getAccountId())
                 .withReferenceLike(defaultTestCharge.getReference())
-                .withExternalChargeState(singletonList(EXTERNAL_STARTED))
+                .withExternalChargeState(EXTERNAL_STARTED.getStatus())
                 .withFromDate(ZonedDateTime.parse(FROM_DATE));
 
         // when
@@ -381,7 +423,7 @@ public class ChargeDaoITest extends DaoITestBase {
         ChargeSearchParams params = new ChargeSearchParams()
                 .withGatewayAccountId(defaultTestAccount.getAccountId())
                 .withReferenceLike(defaultTestCharge.getReference())
-                .withExternalChargeState(singletonList(EXTERNAL_CREATED))
+                .withExternalChargeState(EXTERNAL_CREATED.getStatus())
                 .withToDate(ZonedDateTime.parse(TO_DATE));
 
         // when
@@ -406,7 +448,7 @@ public class ChargeDaoITest extends DaoITestBase {
         ChargeSearchParams params = new ChargeSearchParams()
                 .withGatewayAccountId(defaultTestAccount.getAccountId())
                 .withReferenceLike(defaultTestCharge.getReference())
-                .withExternalChargeState(singletonList(EXTERNAL_CREATED))
+                .withExternalChargeState(EXTERNAL_CREATED.getStatus())
                 .withFromDate(ZonedDateTime.parse(TO_DATE));
 
         // when
@@ -421,7 +463,7 @@ public class ChargeDaoITest extends DaoITestBase {
         ChargeSearchParams params = new ChargeSearchParams()
                 .withGatewayAccountId(defaultTestAccount.getAccountId())
                 .withReferenceLike(defaultTestCharge.getReference())
-                .withExternalChargeState(singletonList(EXTERNAL_CREATED))
+                .withExternalChargeState(EXTERNAL_CREATED.getStatus())
                 .withToDate(ZonedDateTime.parse(FROM_DATE));
 
         List<ChargeEntity> charges = chargeDao.findAllBy(params);

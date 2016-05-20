@@ -69,3 +69,6 @@ jpa:
 executorServiceConfig:
   timeoutInSeconds: ${AUTH_READ_TIMEOUT_SECONDS:-10}
   threadsPerCpu: ${NUMBER_OF_THREADS_PER_CPU:-100}
+
+transactionsPaginationServiceConfig:
+  displayPageSize: ${TRANSACTION_LIST_DISPLAY_SIZE:-500}

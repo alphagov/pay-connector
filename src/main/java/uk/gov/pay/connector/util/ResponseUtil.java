@@ -36,6 +36,11 @@ public class ResponseUtil {
         return responseWithMessageMap(BAD_REQUEST, message);
     }
 
+    public static Response badRequestResponse(List message) {
+        logger.error(message.toString());
+        return responseWithMessageMap(BAD_REQUEST, message);
+    }
+
     public static Response notFoundResponse(String message) {
         logger.error(message);
         return responseWithMessageMap(NOT_FOUND, message);
@@ -58,6 +63,10 @@ public class ResponseUtil {
 
     private static Response responseWithMessageMap(Status status, String message) {
         return responseWithEntity(status, ImmutableMap.of("message", message));
+    }
+
+    private static Response responseWithMessageMap(Status status, Object entity) {
+        return responseWithEntity(status, ImmutableMap.of("message", entity));
     }
 
     public static Response noContentResponse() {

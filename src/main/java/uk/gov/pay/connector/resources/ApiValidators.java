@@ -5,32 +5,45 @@ import org.apache.commons.lang3.tuple.Pair;
 import uk.gov.pay.connector.dao.GatewayAccountDao;
 import uk.gov.pay.connector.util.DateTimeUtils;
 
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 import java.util.Optional;
+import java.util.stream.Collectors;
 
 import static com.google.common.collect.Lists.newArrayList;
 import static fj.data.Either.left;
 import static fj.data.Either.right;
 import static java.lang.String.format;
 import static org.apache.commons.lang3.StringUtils.isNotBlank;
-import static org.apache.commons.lang3.StringUtils.join;
 
 public class ApiValidators {
 
-    public static Optional<String> validateDateQueryParams(List<Pair<String, String>> queryParams) {
-        List<String> invalidQueryParams = newArrayList();
+    public static Optional<List> validateQueryParams(List<Pair<String, String>> dateParams, List<Pair<String, Long>> nonNegativePairMap) {
+        Map<String, String> invalidQueryParams = new HashMap<>();
 
-        queryParams.stream()
+        dateParams.stream()
                 .forEach(param -> {
                     String dateString = param.getRight();
                     if (isNotBlank(dateString) && !DateTimeUtils.toUTCZonedDateTime(dateString).isPresent()) {
-                        invalidQueryParams.add(param.getLeft());
+                        invalidQueryParams.put(param.getLeft(), "query param '%s' not in correct format");
                     }
                 });
 
-        if (invalidQueryParams.size() > 0) {
-            return Optional.of(format("query parameters [%s] not in correct format",
-                    join(invalidQueryParams, ", ")));
+        nonNegativePairMap.stream()
+                .forEach(param -> {
+                    if (param.getRight() != null && param.getRight() < 1) {
+                        invalidQueryParams.put(param.getLeft(), "query param '%s' should be a non zero positive integer");
+                    }
+                });
+
+        if (!invalidQueryParams.isEmpty()) {
+            List<String> invalidResponse = newArrayList();
+            invalidResponse.addAll(invalidQueryParams.keySet()
+                    .stream()
+                    .map(param -> String.format(invalidQueryParams.get(param), param))
+                    .collect(Collectors.toList()));
+            return Optional.of(invalidResponse);
         }
         return Optional.empty();
     }
