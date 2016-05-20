@@ -4,18 +4,15 @@ import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.Lists;
 import fj.F;
-import io.dropwizard.Configuration;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.lang3.tuple.Pair;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import uk.gov.pay.connector.app.ConnectorConfiguration;
 import uk.gov.pay.connector.app.TransactionsPaginationServiceConfig;
 import uk.gov.pay.connector.dao.ChargeDao;
 import uk.gov.pay.connector.dao.ChargeSearchParams;
 import uk.gov.pay.connector.dao.GatewayAccountDao;
 import uk.gov.pay.connector.model.ChargeResponse;
-import uk.gov.pay.connector.model.api.ExternalChargeState;
 import uk.gov.pay.connector.model.domain.ChargeEntity;
 import uk.gov.pay.connector.model.domain.ChargeStatus;
 import uk.gov.pay.connector.service.CardCancelService;
@@ -140,9 +137,8 @@ public class ChargesApiResource {
 
         return gatewayAccountDao.findById(accountId).map(
                 gatewayAccountEntity -> {
-                    logger.info("Creating new charge of {}.", chargeRequest);
+                    logger.info("Creating new charge - {}", chargeRequest);
                     ChargeResponse response = chargeService.create(chargeRequest, gatewayAccountEntity, uriInfo);
-                    logger.info("responseData = {}", response);
                     return created(response.getLink("self")).entity(response).build();
                 })
                 .orElseGet(() -> notFoundResponse("Unknown gateway account: " + accountId));
@@ -153,7 +149,7 @@ public class ChargesApiResource {
     @Produces(APPLICATION_JSON)
     public Response expireCharges(@Context UriInfo uriInfo) {
         List<ChargeEntity> charges = chargeDao.findBeforeDateWithStatusIn(getExpiryDate(), NON_TERMINAL_STATUSES);
-        logger.info(format("%s charges found expiring since %s", charges.size(), getExpiryDate()));
+        logger.info(format("Charges found for expiry - number_of_charges=%s, since_date=%s", charges.size(), getExpiryDate()));
         Map<String, Integer> resultMap = cardCancelService.expire(charges);
         return successResponseWithEntity(resultMap);
     }
@@ -164,16 +160,8 @@ public class ChargesApiResource {
         if (StringUtils.isNotBlank(System.getenv(CHARGE_EXPIRY_WINDOW))) {
             chargeExpiryWindowSeconds = Integer.parseInt(System.getenv(CHARGE_EXPIRY_WINDOW));
         }
-        logger.info("Charge expiry window size in seconds: " + chargeExpiryWindowSeconds);
+        logger.debug("Charge expiry window size in seconds: " + chargeExpiryWindowSeconds);
         return ZonedDateTime.now().minusSeconds(chargeExpiryWindowSeconds);
-    }
-
-    private List<ExternalChargeState> parseState(String state) {
-        List<ExternalChargeState> externalStates = null;
-        if (isNotBlank(state)) {
-            externalStates = ExternalChargeState.fromStatusString(state);
-        }
-        return externalStates;
     }
 
     private ZonedDateTime parseDate(String date) {
