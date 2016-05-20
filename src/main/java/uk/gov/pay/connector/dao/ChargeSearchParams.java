@@ -112,7 +112,7 @@ public class ChargeSearchParams {
         if (isNotBlank(externalChargeState)) {
             builder.append("&state=" + externalChargeState);
         }
-        return builder.toString();
+        return builder.toString().replaceFirst("&", "");
     }
 
     private List<ExternalChargeState> parseState(String state) {
