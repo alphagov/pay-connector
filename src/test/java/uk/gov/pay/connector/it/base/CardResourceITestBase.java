@@ -15,6 +15,7 @@ import uk.gov.pay.connector.util.PortFactory;
 import uk.gov.pay.connector.util.RestAssuredClient;
 
 import java.io.IOException;
+import java.time.ZonedDateTime;
 import java.util.Map;
 
 import static com.jayway.restassured.RestAssured.given;
@@ -37,6 +38,7 @@ public class CardResourceITestBase {
 
     @Rule
     public WireMockRule wireMockRule = new WireMockRule(port);
+    protected static final long AMOUNT = 6234L;
 
     protected WorldpayMockClient worldpay;
 
@@ -188,5 +190,15 @@ public class CardResourceITestBase {
 
     protected String cancelChargeUrlFor(String accountId, String chargeId) {
         return CHARGE_CANCEL_API_PATH.replace("{accountId}", accountId).replace("{chargeId}", chargeId);
+    }
+
+    protected String addCharge(ChargeStatus status, String reference, ZonedDateTime fromDate, String gatewayTransactionId) {
+        long chargeId = RandomUtils.nextInt();
+        String externalChargeId = "charge" + chargeId;
+        ChargeStatus chargeStatus = status != null ? status : AUTHORISATION_SUCCESS;
+        app.getDatabaseTestHelper().addCharge(chargeId, externalChargeId, accountId, AMOUNT, chargeStatus, "http://somereturn.gov.uk", gatewayTransactionId, reference, fromDate);
+        app.getDatabaseTestHelper().addToken(chargeId, "tokenId");
+        app.getDatabaseTestHelper().addEvent(chargeId, chargeStatus.getValue());
+        return externalChargeId;
     }
 }

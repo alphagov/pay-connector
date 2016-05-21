@@ -5,35 +5,29 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import uk.gov.pay.connector.dao.ChargeDao;
 import uk.gov.pay.connector.exception.ChargeNotFoundRuntimeException;
-import uk.gov.pay.connector.exception.IllegalStateRuntimeException;
-import uk.gov.pay.connector.exception.OperationAlreadyInProgressRuntimeException;
 import uk.gov.pay.connector.model.CancelGatewayResponse;
-import uk.gov.pay.connector.model.CancelRequest;
 import uk.gov.pay.connector.model.GatewayResponse;
 import uk.gov.pay.connector.model.domain.ChargeEntity;
 import uk.gov.pay.connector.model.domain.ChargeStatus;
-import uk.gov.pay.connector.service.transaction.NonTransactionalOperation;
 import uk.gov.pay.connector.service.transaction.TransactionContext;
 import uk.gov.pay.connector.service.transaction.TransactionFlow;
 import uk.gov.pay.connector.service.transaction.TransactionalOperation;
 
 import javax.inject.Inject;
 import java.util.Optional;
-import java.util.function.Function;
-import java.util.stream.Collectors;
-import java.util.stream.Stream;
 
 import static java.lang.String.format;
 import static uk.gov.pay.connector.model.CancelGatewayResponse.successfulCancelResponse;
 import static uk.gov.pay.connector.model.ErrorResponse.baseError;
 import static uk.gov.pay.connector.model.GatewayResponse.ResponseStatus.FAILED;
-import static uk.gov.pay.connector.model.domain.ChargeStatus.*;
-import static uk.gov.pay.connector.service.ChargeCancelService.CancellationStatusFlow.SYSTEM_CANCELLATION_FLOW;
-import static uk.gov.pay.connector.service.ChargeCancelService.CancellationStatusFlow.USER_CANCELLATION_FLOW;
+import static uk.gov.pay.connector.model.domain.ChargeStatus.CREATED;
+import static uk.gov.pay.connector.model.domain.ChargeStatus.ENTERING_CARD_DETAILS;
+import static uk.gov.pay.connector.service.CancelServiceFunctions.*;
+import static uk.gov.pay.connector.service.StatusFlow.SYSTEM_CANCELLATION_FLOW;
+import static uk.gov.pay.connector.service.StatusFlow.USER_CANCELLATION_FLOW;
 
 public class ChargeCancelService {
 
-    private static final String CANCELLATION = "Cancellation";
     private final Logger logger = LoggerFactory.getLogger(getClass());
 
     private static ChargeStatus[] nonGatewayStatuses = new ChargeStatus[]{
@@ -65,32 +59,46 @@ public class ChargeCancelService {
                 .orElseThrow(() -> new ChargeNotFoundRuntimeException(chargeId));
     }
 
-    private Optional<GatewayResponse> doCancel(ChargeEntity chargeEntity, CancellationStatusFlow statusFlow) {
+    private Optional<GatewayResponse> doCancel(ChargeEntity chargeEntity, StatusFlow statusFlow) {
         if (chargeEntity.hasStatus(nonGatewayStatuses)) {
             return Optional.of(nonGatewayCancel(chargeEntity, statusFlow));
         } else {
-            return doGatewayCancel(chargeEntity, statusFlow);
+            return cancelChargeWithGatewayCleanup(chargeEntity, statusFlow);
         }
     }
 
-    private Optional<GatewayResponse> doGatewayCancel(ChargeEntity charge, CancellationStatusFlow statusFlow) {
+    private Optional<GatewayResponse> cancelChargeWithGatewayCleanup(ChargeEntity charge, StatusFlow statusFlow) {
         return Optional.ofNullable(transactionFlowProvider.get()
-                .executeNext(prepareForCancel(charge, statusFlow))
-                .executeNext(doGatewayCancel())
-                .executeNext(finishCancel(determineTerminalState(statusFlow.getSuccessTerminalState(), statusFlow.getFailureTerminalState())))
+                .executeNext(prepareForTerminate(chargeDao, charge, statusFlow))
+                .executeNext(doGatewayCancel(providers))
+                .executeNext(finishCancel(statusFlow))
                 .complete()
                 .get(CancelGatewayResponse.class));
 
     }
 
-    private GatewayResponse nonGatewayCancel(ChargeEntity chargeEntity, CancellationStatusFlow statusFlow) {
+    private TransactionalOperation<TransactionContext, GatewayResponse> finishCancel(StatusFlow statusFlow) {
+        return context -> {
+            ChargeEntity chargeEntity = context.get(ChargeEntity.class);
+            GatewayResponse cancelResponse = context.get(CancelGatewayResponse.class);
+            ChargeStatus updateTo = determineTerminalState(cancelResponse, statusFlow);
+            logger.info("charge status to update - from: {}, to: {} for Charge ID: {}",
+                    chargeEntity.getStatus(), updateTo, chargeEntity.getId());
+            chargeEntity.setStatus(updateTo);
+            chargeDao.mergeAndNotifyStatusHasChanged(chargeEntity);
+            return cancelResponse;
+        };
+    }
+
+    private ChargeStatus determineTerminalState(GatewayResponse cancelResponse, StatusFlow statusFlow) {
+        return cancelResponse.isSuccessful() ? statusFlow.getSuccessTerminalState() : statusFlow.getFailureTerminalState();
+    }
+
+    private GatewayResponse nonGatewayCancel(ChargeEntity chargeEntity, StatusFlow statusFlow) {
         ChargeStatus completeStatus = statusFlow.getSuccessTerminalState();
         ChargeEntity processedCharge = transactionFlowProvider.get()
-                .executeNext((TransactionalOperation<TransactionContext, ChargeEntity>) context -> {
-                    logger.info("charge status to update - from: " + chargeEntity.getStatus() + ", to: " + completeStatus + " for Charge ID: " + chargeEntity.getId());
-                    chargeEntity.setStatus(completeStatus);
-                    return chargeDao.mergeAndNotifyStatusHasChanged(chargeEntity);
-                }).complete()
+                .executeNext(changeStatusTo(chargeDao, chargeEntity, completeStatus))
+                .complete()
                 .get(ChargeEntity.class);
 
         if (completeStatus.getValue().equals(processedCharge.getStatus())) {
@@ -105,104 +113,4 @@ public class ChargeCancelService {
         }
     }
 
-    private TransactionalOperation<TransactionContext, ChargeEntity> prepareForCancel(ChargeEntity chargeEntity, CancellationStatusFlow statusFlow) {
-
-        return context -> {
-            ChargeEntity reloadedCharge = chargeDao.merge(chargeEntity);
-
-            if (!reloadedCharge.hasStatus(statusFlow.getCancellableStatuses())) {
-                if (reloadedCharge.hasStatus(statusFlow.getLockState())) {
-                    throw new OperationAlreadyInProgressRuntimeException(CANCELLATION, reloadedCharge.getExternalId());
-                }
-                logger.error(format("Charge with id [%s] and with status [%s] should be in one of the following legal states, [%s]",
-                        reloadedCharge.getId(), reloadedCharge.getStatus(), getLegalStatusNames(statusFlow.getCancellableStatuses())));
-                throw new IllegalStateRuntimeException(reloadedCharge.getExternalId());
-            }
-
-            logger.info("charge status to update - from: " + chargeEntity.getStatus() + ", to: " + statusFlow.getLockState() + " for Charge ID: " + chargeEntity.getId());
-            reloadedCharge.setStatus(statusFlow.getLockState());
-            return chargeDao.mergeAndNotifyStatusHasChanged(reloadedCharge);
-        };
-    }
-
-    private NonTransactionalOperation<TransactionContext, GatewayResponse> doGatewayCancel() {
-        return context -> {
-            ChargeEntity chargeEntity = context.get(ChargeEntity.class);
-            return providers.resolve(chargeEntity.getGatewayAccount().getGatewayName())
-                    .cancel(CancelRequest.valueOf(chargeEntity));
-        };
-    }
-
-    private TransactionalOperation<TransactionContext, GatewayResponse> finishCancel(Function<GatewayResponse, ChargeStatus> determineTerminalState) {
-        return context -> {
-            ChargeEntity chargeEntity = context.get(ChargeEntity.class);
-            GatewayResponse cancelResponse = context.get(CancelGatewayResponse.class);
-            ChargeStatus updateTo = determineTerminalState.apply(cancelResponse);
-            logger.info("charge status to update - from: " + chargeEntity.getStatus() + ", to: " + updateTo + " for Charge ID: " + chargeEntity.getId());
-            chargeEntity.setStatus(updateTo);
-            chargeDao.mergeAndNotifyStatusHasChanged(chargeEntity);
-            return cancelResponse;
-        };
-    }
-
-    private Function<GatewayResponse, ChargeStatus> determineTerminalState(ChargeStatus onSuccess, ChargeStatus onFail) {
-        return gatewayResponse -> gatewayResponse.isSuccessful() ? onSuccess : onFail;
-    }
-
-    private String getLegalStatusNames(ChargeStatus[] legalStatuses) {
-        return Stream.of(legalStatuses).map(ChargeStatus::toString).collect(Collectors.joining(", "));
-    }
-
-    static class CancellationStatusFlow {
-
-        public static final CancellationStatusFlow USER_CANCELLATION_FLOW = new CancellationStatusFlow(
-                new ChargeStatus[]{
-                        ENTERING_CARD_DETAILS,
-                        AUTHORISATION_SUCCESS,
-                        EXPIRE_CANCEL_PENDING //
-                },
-                USER_CANCEL_READY,
-                USER_CANCELLED,
-                USER_CANCEL_ERROR
-        );
-
-        public static final CancellationStatusFlow SYSTEM_CANCELLATION_FLOW = new CancellationStatusFlow(
-                new ChargeStatus[]{
-                        CREATED,
-                        ENTERING_CARD_DETAILS,
-                        AUTHORISATION_SUCCESS
-                },
-                SYSTEM_CANCEL_READY,
-                SYSTEM_CANCELLED,
-                SYSTEM_CANCEL_ERROR
-        );
-
-        private ChargeStatus[] cancellableStatuses;
-        private ChargeStatus lockState;
-        private ChargeStatus successTerminalState;
-        private ChargeStatus failureTerminalState;
-
-        private CancellationStatusFlow(ChargeStatus[] cancellableStatuses, ChargeStatus lockState, ChargeStatus successTerminalState, ChargeStatus failureTerminalState) {
-            this.cancellableStatuses = cancellableStatuses;
-            this.lockState = lockState;
-            this.successTerminalState = successTerminalState;
-            this.failureTerminalState = failureTerminalState;
-        }
-
-        public ChargeStatus[] getCancellableStatuses() {
-            return cancellableStatuses;
-        }
-
-        public ChargeStatus getLockState() {
-            return lockState;
-        }
-
-        public ChargeStatus getSuccessTerminalState() {
-            return successTerminalState;
-        }
-
-        public ChargeStatus getFailureTerminalState() {
-            return failureTerminalState;
-        }
-    }
 }

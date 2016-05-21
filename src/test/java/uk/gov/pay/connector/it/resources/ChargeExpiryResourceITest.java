@@ -1,9 +1,7 @@
 package uk.gov.pay.connector.it.resources;
 
-import org.apache.commons.lang.math.RandomUtils;
 import org.junit.Test;
 import uk.gov.pay.connector.it.base.CardResourceITestBase;
-import uk.gov.pay.connector.model.domain.ChargeStatus;
 import uk.gov.pay.connector.util.RestAssuredClient;
 
 import java.time.ZonedDateTime;
@@ -21,12 +19,10 @@ import static uk.gov.pay.connector.model.domain.ChargeStatus.*;
 
 public class ChargeExpiryResourceITest extends CardResourceITestBase {
 
-    private static final long AMOUNT = 6234L;
     private static final String JSON_CHARGE_KEY = "charge_id";
     private static final String JSON_STATE_KEY = "state.status";
     private static final String PROVIDER_NAME = "worldpay";
 
-    private String returnUrl = "http://service.url/success-page/";
 
     private RestAssuredClient getChargeApi = new RestAssuredClient(app, accountId);
 
@@ -64,12 +60,12 @@ public class ChargeExpiryResourceITest extends CardResourceITestBase {
         List<String> events2 = app.getDatabaseTestHelper().getInternalEvents(extChargeId2);
 
         assertThat(events1, containsInAnyOrder(CREATED.getValue(), EXPIRED.getValue()));
-        assertThat(events2, containsInAnyOrder(AUTHORISATION_SUCCESS.getValue(), EXPIRE_CANCEL_PENDING.getValue(), EXPIRED.getValue()));
+        assertThat(events2, containsInAnyOrder(AUTHORISATION_SUCCESS.getValue(), EXPIRE_CANCEL_READY.getValue(), EXPIRED.getValue()));
 
         assertTrue(isEqualCollection(events1,
                 asList(CREATED.getValue(), EXPIRED.getValue())));
         assertTrue(isEqualCollection(events2,
-                asList(AUTHORISATION_SUCCESS.getValue(), EXPIRE_CANCEL_PENDING.getValue(), EXPIRED.getValue())));
+                asList(AUTHORISATION_SUCCESS.getValue(), EXPIRE_CANCEL_READY.getValue(), EXPIRED.getValue())));
     }
 
     @Test
@@ -98,7 +94,7 @@ public class ChargeExpiryResourceITest extends CardResourceITestBase {
         List<String> events = app.getDatabaseTestHelper().getInternalEvents(extChargeId1);
 
         assertTrue(isEqualCollection(events,
-                asList(AUTHORISATION_SUCCESS.getValue(), EXPIRE_CANCEL_PENDING.getValue(), EXPIRE_CANCEL_FAILED.getValue())));
+                asList(AUTHORISATION_SUCCESS.getValue(), EXPIRE_CANCEL_READY.getValue(), EXPIRE_CANCEL_FAILED.getValue())));
 
     }
 
@@ -140,19 +136,10 @@ public class ChargeExpiryResourceITest extends CardResourceITestBase {
         List<String> events2 = app.getDatabaseTestHelper().getInternalEvents(extChargeId2);
 
         assertTrue(isEqualCollection(events1,
-                asList(AUTHORISATION_SUCCESS.getValue(), EXPIRE_CANCEL_PENDING.getValue(), EXPIRED.getValue())));
+                asList(AUTHORISATION_SUCCESS.getValue(), EXPIRE_CANCEL_READY.getValue(), EXPIRED.getValue())));
         assertTrue(isEqualCollection(events2,
-                asList(AUTHORISATION_SUCCESS.getValue(), EXPIRE_CANCEL_PENDING.getValue(), EXPIRE_CANCEL_FAILED.getValue())));
+                asList(AUTHORISATION_SUCCESS.getValue(), EXPIRE_CANCEL_READY.getValue(), EXPIRE_CANCEL_FAILED.getValue())));
 
     }
 
-    private String addCharge(ChargeStatus status, String reference, ZonedDateTime fromDate, String gatewayTransactionId) {
-        long chargeId = RandomUtils.nextInt();
-        String externalChargeId = "charge" + chargeId;
-        ChargeStatus chargeStatus = status != null ? status : AUTHORISATION_SUCCESS;
-        app.getDatabaseTestHelper().addCharge(chargeId, externalChargeId, accountId, AMOUNT, chargeStatus, returnUrl, gatewayTransactionId, reference, fromDate);
-        app.getDatabaseTestHelper().addToken(chargeId, "tokenId");
-        app.getDatabaseTestHelper().addEvent(chargeId, chargeStatus.getValue());
-        return externalChargeId;
-    }
 }

@@ -75,7 +75,7 @@ public class ChargesApiResource {
 
     @Inject
     public ChargesApiResource(ChargeDao chargeDao, GatewayAccountDao gatewayAccountDao,
-                           ChargeService chargeService, ChargeExpiryService chargeExpiryService,
+                              ChargeService chargeService, ChargeExpiryService chargeExpiryService,
                               ConnectorConfiguration configuration) {
         this.chargeDao = chargeDao;
         this.gatewayAccountDao = gatewayAccountDao;
@@ -119,8 +119,8 @@ public class ChargesApiResource {
                                         .withExternalChargeState(state)
                                         .withFromDate(parseDate(fromDate))
                                         .withToDate(parseDate(toDate))
-                                        .withDisplaySize(displaySize != null ? displaySize: configuration.getTransactionsPaginationConfig().getDisplayPageSize())
-                                        .withPage(pageNumber!= null? pageNumber: 1), uriInfo)))); // always the first page if its missing
+                                        .withDisplaySize(displaySize != null ? displaySize : configuration.getTransactionsPaginationConfig().getDisplayPageSize())
+                                        .withPage(pageNumber != null ? pageNumber : 1), uriInfo)))); // always the first page if its missing
     }
 
     @POST
@@ -189,7 +189,7 @@ public class ChargesApiResource {
         if (totalCount > 0) {
             double lastPage = Math.ceil(new Double(totalCount) / searchParams.getDisplaySize());
             if (searchParams.getPage() > lastPage || searchParams.getPage() < 1) {
-                return success-> notFoundResponse("the requested page not found");
+                return success -> notFoundResponse("the requested page not found");
             }
         }
 

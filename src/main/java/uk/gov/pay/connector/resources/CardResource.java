@@ -77,6 +77,10 @@ public class CardResource {
             case GATEWAY_CONNECTION_SOCKET_ERROR:
                 return serviceErrorResponse(error.getMessage());
         }
+        /* FIXME: This state doesn't sound right here. particularly when cancelling and
+         gateway sends a valid but cancellation could not be done, why are we responding caller as BAD REQUEST? (Request was fine)
+         Either way if we got this far it cannot be a BAD REQUEST !!!
+         */
         return badRequestResponse(error.getMessage());
     }
 

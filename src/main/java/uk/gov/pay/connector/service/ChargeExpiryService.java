@@ -6,24 +6,26 @@ import org.apache.commons.lang3.tuple.Pair;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import uk.gov.pay.connector.dao.ChargeDao;
-import uk.gov.pay.connector.exception.IllegalStateRuntimeException;
-import uk.gov.pay.connector.exception.OperationAlreadyInProgressRuntimeException;
 import uk.gov.pay.connector.model.CancelGatewayResponse;
-import uk.gov.pay.connector.model.CancelRequest;
 import uk.gov.pay.connector.model.GatewayResponse;
 import uk.gov.pay.connector.model.domain.ChargeEntity;
 import uk.gov.pay.connector.model.domain.ChargeStatus;
-import uk.gov.pay.connector.service.transaction.*;
+import uk.gov.pay.connector.service.transaction.TransactionContext;
+import uk.gov.pay.connector.service.transaction.TransactionFlow;
+import uk.gov.pay.connector.service.transaction.TransactionalOperation;
 
 import javax.inject.Inject;
-import java.util.*;
+import java.util.List;
+import java.util.Map;
 import java.util.stream.Collectors;
-import java.util.stream.Stream;
 
 import static com.google.common.collect.Lists.newArrayList;
 import static java.lang.String.format;
 import static org.apache.commons.lang3.BooleanUtils.negate;
-import static uk.gov.pay.connector.model.domain.ChargeStatus.*;
+import static uk.gov.pay.connector.model.domain.ChargeStatus.EXPIRED;
+import static uk.gov.pay.connector.model.domain.ChargeStatus.EXPIRE_CANCEL_FAILED;
+import static uk.gov.pay.connector.service.CancelServiceFunctions.*;
+import static uk.gov.pay.connector.service.StatusFlow.EXPIRE_FLOW;
 
 public class ChargeExpiryService {
 
@@ -32,12 +34,6 @@ public class ChargeExpiryService {
     public static final String EXPIRY_SUCCESS = "expiry-success";
     public static final String EXPIRY_FAILED = "expiry-failed";
 
-    public static final ChargeStatus[] EXPIRABLE_STATUSES =
-            new ChargeStatus[]{
-                    CREATED,
-                    ENTERING_CARD_DETAILS,
-                    AUTHORISATION_SUCCESS
-            };
     private final ChargeDao chargeDao;
     private final PaymentProviders providers;
     private Provider<TransactionFlow> transactionFlowProvider;
@@ -57,25 +53,24 @@ public class ChargeExpiryService {
                         ChargeStatus.AUTHORISATION_SUCCESS.getValue().equals(chargeEntity.getStatus())));
 
         int expiredSuccess = expireChargesWithCancellationNotRequired(chargesToProcessExpiry.get(Boolean.FALSE));
-        Pair<Integer, Integer> expireWithCancellationResult = expireChargesWithCancellation(chargesToProcessExpiry.get(Boolean.TRUE));
+        Pair<Integer, Integer> expireWithCancellationResult = expireChargesWithGatewayCancellation(chargesToProcessExpiry.get(Boolean.TRUE));
 
-        return ImmutableMap.of(EXPIRY_SUCCESS, expiredSuccess + expireWithCancellationResult.getLeft(), EXPIRY_FAILED, expireWithCancellationResult.getRight());
+        return ImmutableMap.of(EXPIRY_SUCCESS, expiredSuccess + expireWithCancellationResult.getLeft(),
+                EXPIRY_FAILED, expireWithCancellationResult.getRight());
     }
 
     private int expireChargesWithCancellationNotRequired(List<ChargeEntity> nonAuthSuccessCharges) {
-        List<ChargeEntity> processedEntities = nonAuthSuccessCharges.stream().map(chargeEntity -> transactionFlowProvider.get()
-                .executeNext((TransactionalOperation<TransactionContext, ChargeEntity>) (context -> {
-                    logger.info("charge status to update - from: " + chargeEntity.getStatus() + ", to: " + EXPIRED + " for Charge ID: " + chargeEntity.getId());
-                    chargeEntity.setStatus(EXPIRED);
-                    return chargeDao.mergeAndNotifyStatusHasChanged(chargeEntity);
-                }))
-                .complete().get(ChargeEntity.class))
+        List<ChargeEntity> processedEntities = nonAuthSuccessCharges
+                .stream().map(chargeEntity -> transactionFlowProvider.get()
+                        .executeNext(changeStatusTo(chargeDao,chargeEntity, EXPIRED))
+                        .complete()
+                        .get(ChargeEntity.class))
                 .collect(Collectors.toList());
+
         return processedEntities.size();
     }
 
-
-    private Pair<Integer, Integer> expireChargesWithCancellation(List<ChargeEntity> gatewayAuthorizedCharges) {
+    private Pair<Integer, Integer> expireChargesWithGatewayCancellation(List<ChargeEntity> gatewayAuthorizedCharges) {
 
         final List<ChargeEntity> expireCancelled = newArrayList();
         final List<ChargeEntity> expireCancelFailed = newArrayList();
@@ -83,14 +78,15 @@ public class ChargeExpiryService {
 
         gatewayAuthorizedCharges.forEach(chargeEntity -> {
             ChargeEntity processedEntity = transactionFlowProvider.get()
-                    .executeNext(prepareForExpireCancel(chargeEntity))
-                    .executeNext(doGatewayCancel())
+                    .executeNext(prepareForTerminate(chargeDao,chargeEntity, EXPIRE_FLOW))
+                    .executeNext(doGatewayCancel(providers))
                     .executeNext(finishExpireCancel())
                     .complete().get(ChargeEntity.class);
 
             if (processedEntity == null) {
                 //this shouldn't happen, but don't break the expiry job
-                logger.error("Transaction context did not return a processed ChargeEntity during expiry of charge {}", chargeEntity.getExternalId());
+                logger.error("Transaction context did not return a processed ChargeEntity during expiry of charge {}",
+                        chargeEntity.getExternalId());
             } else {
                 if (EXPIRED.getValue().equals(processedEntity.getStatus())) {
                     expireCancelled.add(processedEntity);
@@ -103,39 +99,14 @@ public class ChargeExpiryService {
         });
 
         unexpectedStatuses.forEach(chargeEntity ->
-                logger.error("ChargeEntity with id {} returned with unexpected status {} during expiry", chargeEntity.getExternalId(), chargeEntity.getStatus())
+                logger.error("ChargeEntity with id {} returned with unexpected status {} during expiry",
+                        chargeEntity.getExternalId(), chargeEntity.getStatus())
         );
 
         return Pair.of(
                 expireCancelled.size(),
                 expireCancelFailed.size()
         );
-    }
-
-    private TransactionalOperation<TransactionContext, ChargeEntity> prepareForExpireCancel(ChargeEntity chargeEntity) {
-        return context -> {
-            ChargeEntity reloadedCharge = chargeDao.merge(chargeEntity);
-
-            if (!reloadedCharge.hasStatus(EXPIRABLE_STATUSES)) {
-                if (reloadedCharge.hasStatus(EXPIRE_CANCEL_PENDING)) {
-                    throw new OperationAlreadyInProgressRuntimeException("Expiration", reloadedCharge.getExternalId());
-                }
-                logger.error(format("Charge with id [%s] and with status [%s] should be in one of the following legal states, [%s]",
-                        reloadedCharge.getId(), reloadedCharge.getStatus(), getLegalStatusNames(EXPIRABLE_STATUSES)));
-                throw new IllegalStateRuntimeException(reloadedCharge.getExternalId());
-            }
-            reloadedCharge.setStatus(EXPIRE_CANCEL_PENDING);
-            return chargeDao.mergeAndNotifyStatusHasChanged(reloadedCharge);
-        };
-    }
-
-    private NonTransactionalOperation<TransactionContext, GatewayResponse> doGatewayCancel() {
-        return context -> {
-            ChargeEntity chargeEntity = context.get(ChargeEntity.class);
-            return providers.resolve(chargeEntity.getGatewayAccount().getGatewayName())
-                    .cancel(CancelRequest.valueOf(chargeEntity));
-
-        };
     }
 
     private TransactionalOperation<TransactionContext, ChargeEntity> finishExpireCancel() {
@@ -149,7 +120,8 @@ public class ChargeExpiryService {
             } else {
                 status = EXPIRED;
             }
-            logger.info("charge status to update - from: " + chargeEntity.getStatus() + ", to: " + status + " for Charge ID: " + chargeEntity.getId());
+            logger.info("charge status to update - from: {}, to: {} for Charge ID: {}",
+                    chargeEntity.getStatus(), status, chargeEntity.getId());
             chargeEntity.setStatus(status);
             return chargeDao.mergeAndNotifyStatusHasChanged(chargeEntity);
         };
@@ -162,10 +134,6 @@ public class ChargeExpiryService {
                     gatewayResponse.getError().getErrorType(),
                     chargeEntity.getId()));
         }
-    }
-
-    private String getLegalStatusNames(ChargeStatus[] legalStatuses) {
-        return Stream.of(legalStatuses).map(ChargeStatus::toString).collect(Collectors.joining(", "));
     }
 
     private boolean responseIsNotSuccessful(GatewayResponse gatewayResponse) {
