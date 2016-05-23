@@ -8,6 +8,7 @@ import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.lang3.tuple.Pair;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import uk.gov.pay.connector.app.ConnectorConfiguration;
 import uk.gov.pay.connector.app.TransactionsPaginationServiceConfig;
 import uk.gov.pay.connector.dao.ChargeDao;
 import uk.gov.pay.connector.dao.ChargeSearchParams;
@@ -62,7 +63,7 @@ public class ChargesApiResource {
     private GatewayAccountDao gatewayAccountDao;
     private ChargeService chargeService;
     private CardCancelService cardCancelService;
-    private TransactionsPaginationServiceConfig configuration;
+    private ConnectorConfiguration configuration;
 
     private static final int ONE_HOUR = 3600;
     private static final String CHARGE_EXPIRY_WINDOW = "CHARGE_EXPIRY_WINDOW_SECONDS";
@@ -74,7 +75,7 @@ public class ChargesApiResource {
     private static final Logger logger = LoggerFactory.getLogger(ChargesApiResource.class);
 
     @Inject
-    public ChargesApiResource(ChargeDao chargeDao, GatewayAccountDao gatewayAccountDao, ChargeService chargeService, CardCancelService cardCancelService, TransactionsPaginationServiceConfig configuration) {
+    public ChargesApiResource(ChargeDao chargeDao, GatewayAccountDao gatewayAccountDao, ChargeService chargeService, CardCancelService cardCancelService, ConnectorConfiguration configuration) {
         this.chargeDao = chargeDao;
         this.gatewayAccountDao = gatewayAccountDao;
         this.chargeService = chargeService;
@@ -117,7 +118,7 @@ public class ChargesApiResource {
                                         .withExternalChargeState(state)
                                         .withFromDate(parseDate(fromDate))
                                         .withToDate(parseDate(toDate))
-                                        .withDisplaySize(displaySize != null ? displaySize: configuration.getDisplayPageSize())
+                                        .withDisplaySize(displaySize != null ? displaySize: configuration.getTransactionsPaginationConfig().getDisplayPageSize())
                                         .withPage(pageNumber!= null? pageNumber: 1), uriInfo)))); // always the first page if its missing
     }
 
