@@ -36,6 +36,7 @@ import static org.exparity.hamcrest.date.ZonedDateTimeMatchers.within;
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.*;
 import static org.hamcrest.text.MatchesPattern.matchesPattern;
+import static org.junit.Assert.assertEquals;
 import static uk.gov.pay.connector.matcher.ResponseContainsLinkMatcher.containsLink;
 import static uk.gov.pay.connector.matcher.ZoneDateTimeAsStringWithinMatcher.isWithin;
 import static uk.gov.pay.connector.model.api.ExternalChargeState.EXTERNAL_SUBMITTED;
@@ -277,8 +278,8 @@ public class ChargesApiResourceITest {
         addCharge(CAPTURED, "ref-3", now().minusDays(2));
         addCharge(CAPTURED, "ref-4", now().minusDays(3));
         addCharge(CAPTURED, "ref-5", now().minusDays(4));
-        String chargesPath = CHARGES_API_PATH.replace("{accountId}", accountId);
 
+        assertResultsWhenPageAndDisplaySizeNotSet();
         assertResultsAndJustSelfLinkWhenJustOneResult();
         assertResultsAndNoPrevLinkWhenOnFirstPage();
         assertResultsAndAllLinksWhenOnMiddlePage();
@@ -307,7 +308,6 @@ public class ChargesApiResourceITest {
                 .contentType(JSON)
                 .body("message", is(expectedList));
     }
-
     @Test
     public void shouldGetAllTransactionsForDefault_page_1_size_100_inCreationDateOrder() throws Exception {
         String id_1 = addCharge(CREATED, "ref-1", now());
@@ -513,6 +513,30 @@ public class ChargesApiResourceITest {
                 .body("_links.first_page.href", is(expectedChargesLocationFor(accountId, "?reference=ref-1&page=1&display_size=2")))
                 .body("_links.last_page.href", is(expectedChargesLocationFor(accountId, "?reference=ref-1&page=1&display_size=2")))
                 .body("_links.self.href", is(expectedChargesLocationFor(accountId, "?reference=ref-1&page=1&display_size=2")));
+
+        List<Map<String, Object>> results = response.extract().body().jsonPath().getList("results");
+        List<String> references = collect(results, "reference");
+        assertThat(references, containsInAnyOrder("ref-1"));
+        assertThat(references, not(contains("ref-1", "ref-3", "ref-4", "ref-5")));
+    }
+
+    private void assertResultsWhenPageAndDisplaySizeNotSet() {
+        ValidatableResponse response = getChargeApi
+                .withAccountId(accountId)
+                .withQueryParam("reference", "ref-1")
+                .withHeader(HttpHeaders.ACCEPT, APPLICATION_JSON)
+                .getTransactions()
+                .statusCode(OK.getStatusCode())
+                .contentType(JSON)
+                // then no prev and next link
+                .body("results.size()", is(1))
+                .body("total", is(1))
+                .body("count", is(1))
+                .body("_links.next_page", isEmptyOrNullString())
+                .body("_links.prev_page", isEmptyOrNullString())
+                .body("_links.first_page.href", is(expectedChargesLocationFor(accountId, "?reference=ref-1&page=1&display_size=500")))
+                .body("_links.last_page.href", is(expectedChargesLocationFor(accountId, "?reference=ref-1&page=1&display_size=500")))
+                .body("_links.self.href", is(expectedChargesLocationFor(accountId, "?reference=ref-1&page=1&display_size=500")));
 
         List<Map<String, Object>> results = response.extract().body().jsonPath().getList("results");
         List<String> references = collect(results, "reference");
