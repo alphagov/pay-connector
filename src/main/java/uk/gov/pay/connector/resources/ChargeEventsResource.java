@@ -20,6 +20,7 @@ import static java.util.stream.Collectors.toList;
 import static javax.ws.rs.core.MediaType.APPLICATION_JSON;
 import static javax.ws.rs.core.Response.ok;
 import static uk.gov.pay.connector.resources.ApiPaths.CHARGE_EVENTS_API_PATH;
+import static uk.gov.pay.connector.util.ResponseUtil.responseWithChargeNotFound;
 
 @Path("/")
 public class ChargeEventsResource {
@@ -34,15 +35,17 @@ public class ChargeEventsResource {
     @Path(CHARGE_EVENTS_API_PATH)
     @Produces(APPLICATION_JSON)
     public Response getEvents(@PathParam("accountId") Long accountId, @PathParam("chargeId") String chargeId) {
+        return chargeDao.findByExternalIdAndGatewayAccount(chargeId, accountId)
+                .map(entity -> buildEventsResponse(entity.getExternalId(), entity.getEvents()))
+                .orElseGet(() -> responseWithChargeNotFound(chargeId));
+    }
 
-        List<ChargeEventEntity> events = chargeDao.findByExternalIdAndGatewayAccount(chargeId, accountId)
-                .map(ChargeEntity::getEvents)
-                .orElseGet(() -> Collections.EMPTY_LIST);
-
+    private Response buildEventsResponse(String chargeId, List<ChargeEventEntity> events) {
         List<ChargeEvent> eventsExternal = transformToExternalStatus(events);
         List<ChargeEvent> nonRepeatingExternalChargeEvents = getNonRepeatingChargeEvents(eventsExternal);
-
-        ImmutableMap<String, Object> responsePayload = ImmutableMap.of("charge_id", chargeId, "events", nonRepeatingExternalChargeEvents);
+        ImmutableMap<String, Object> responsePayload = ImmutableMap.of(
+                "charge_id", chargeId,
+                "events", nonRepeatingExternalChargeEvents);
         return ok().entity(responsePayload).build();
     }
 
