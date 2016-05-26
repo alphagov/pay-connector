@@ -41,6 +41,16 @@ public class TransactionFlowTest {
         assertThat(flow.complete(), is(mockContext));
     }
 
+    @Test
+    public void shouldNotPreserveResultInContextIfResultValueIsNull() throws Exception {
+        TransactionContext mockContext = mock(TransactionContext.class);
+        TransactionFlow flow = new TransactionFlow(mockContext);
+        flow.executeNext((PreTransactionalOperation<TransactionContext, String>) ctx -> null);
+
+        verify(mockContext, times(0)).put(any());
+        assertThat(flow.complete(), is(mockContext));
+    }
+
     @Test(expected = ConflictRuntimeException.class)
     public void shouldReportConflictsIfDatabaseOperationIsInVersionConflict() throws Exception {
         TransactionContext mockContext = mock(TransactionContext.class);

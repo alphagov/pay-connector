@@ -57,8 +57,4 @@ public class ConnectorModule extends AbstractModule {
         return environment.getObjectMapper();
     }
 
-    @Provides
-    public TransactionFlow transactionFlow() {
-        return new TransactionFlow();
-    }
 }

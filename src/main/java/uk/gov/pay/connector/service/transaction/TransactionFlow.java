@@ -34,10 +34,11 @@ import java.util.Objects;
  * }
  * </pre>
  */
-public final class TransactionFlow {
+public class TransactionFlow {
 
     private TransactionContext context;
 
+    //for Guice
     public TransactionFlow() {
         context = new TransactionContext();
     }
@@ -55,25 +56,22 @@ public final class TransactionFlow {
      */
     @Transactional
     public <R> TransactionFlow executeNext(TransactionalOperation<TransactionContext, R> op) {
-        Objects.requireNonNull(op);
-        R result = op.execute(context);
-        context.put(result);
+        execute(op);
         return this;
     }
 
     /**
      * executes the given block of code in a Transactional boundary and handles Optimistic Lock errors
-     * @throws ConflictRuntimeException - in case of a version clash
+     *
      * @param op
      * @param <R>
      * @return
+     * @throws ConflictRuntimeException - in case of a version clash
      */
     @Transactional
     public <R> TransactionFlow executeNext(PreTransactionalOperation<TransactionContext, R> op) {
-        Objects.requireNonNull(op);
         try {
-            R result = op.execute(context);
-            context.put(result);
+            execute(op);
             return this;
         } catch (OptimisticLockException e) {
             throw new ConflictRuntimeException(e);
@@ -88,9 +86,7 @@ public final class TransactionFlow {
      * @return
      */
     public <R> TransactionFlow executeNext(NonTransactionalOperation<TransactionContext, R> op) {
-        Objects.requireNonNull(op);
-        R result = op.execute(context);
-        context.put(result);
+        execute(op);
         return this;
     }
 
@@ -101,5 +97,13 @@ public final class TransactionFlow {
      */
     public TransactionContext complete() {
         return context;
+    }
+
+    private <R> void execute(ManagedOperation<TransactionContext, R> op) {
+        Objects.requireNonNull(op);
+        R result = op.execute(context);
+        if (result != null) {
+            context.put(result);
+        }
     }
 }
