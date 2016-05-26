@@ -8,6 +8,7 @@ import com.google.inject.persist.jpa.JpaPersistModule;
 import io.dropwizard.db.DataSourceFactory;
 import io.dropwizard.setup.Environment;
 import uk.gov.pay.connector.service.CardExecutorService;
+import uk.gov.pay.connector.service.transaction.TransactionFlow;
 
 import java.util.Properties;
 
@@ -55,4 +56,5 @@ public class ConnectorModule extends AbstractModule {
     public ObjectMapper provideObjectMapper() {
         return environment.getObjectMapper();
     }
+
 }

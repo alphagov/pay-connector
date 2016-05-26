@@ -1,7 +1,6 @@
 package uk.gov.pay.connector.it.dao;
 
 import org.apache.commons.lang3.RandomUtils;
-import org.bouncycastle.util.test.Test;
 import uk.gov.pay.connector.model.domain.ChargeStatus;
 import uk.gov.pay.connector.util.DatabaseTestHelper;
 

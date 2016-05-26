@@ -2,74 +2,144 @@ package uk.gov.pay.connector.it.resources;
 
 import com.google.common.collect.ImmutableList;
 import org.junit.Before;
-import org.junit.Rule;
 import org.junit.Test;
+import uk.gov.pay.connector.it.base.CardResourceITestBase;
 import uk.gov.pay.connector.model.domain.ChargeStatus;
-import uk.gov.pay.connector.rules.DropwizardAppWithPostgresRule;
-import uk.gov.pay.connector.util.RandomIdGenerator;
 import uk.gov.pay.connector.util.RestAssuredClient;
 
+import java.time.ZonedDateTime;
 import java.util.List;
 
 import static com.jayway.restassured.http.ContentType.JSON;
-import static java.util.Arrays.asList;
-import static javax.ws.rs.core.Response.Status.BAD_REQUEST;
-import static javax.ws.rs.core.Response.Status.NO_CONTENT;
+import static javax.ws.rs.core.Response.Status.*;
+import static org.hamcrest.MatcherAssert.assertThat;
+import static org.hamcrest.Matchers.hasItems;
 import static org.hamcrest.Matchers.is;
 import static uk.gov.pay.connector.model.domain.ChargeStatus.*;
-import static uk.gov.pay.connector.service.CardCancelService.USER_CANCELLABLE_STATUSES;
 
-/**
- * There are currently no integration tests for case when payment gateway fails. However, this case is unit tested
- */
-public class ChargeCancelFrontendResourceITest {
-    @Rule
-    public DropwizardAppWithPostgresRule app = new DropwizardAppWithPostgresRule();
+public class ChargeCancelFrontendResourceITest extends CardResourceITestBase {
 
-    private String accountId = "66757943593456";
     private RestAssuredClient connectorRestApi;
+    private RestAssuredClient restFrontendCall;
 
-    private static final List<ChargeStatus> NON_CANCELLABLE_STATUSES = ImmutableList.of(
+
+    private static final List<ChargeStatus> NON_USER_CANCELLABLE_STATUSES = ImmutableList.of(
             AUTHORISATION_REJECTED,
             AUTHORISATION_ERROR,
             CAPTURED,
             CAPTURE_SUBMITTED,
             CAPTURE_ERROR,
+            CAPTURE_ERROR,
+            EXPIRED,
+            EXPIRE_CANCEL_READY,
             EXPIRE_CANCEL_FAILED,
-            CANCEL_ERROR,
-            SYSTEM_CANCELLED
+            SYSTEM_CANCEL_READY,
+            SYSTEM_CANCEL_ERROR,
+            SYSTEM_CANCELLED,
+            USER_CANCEL_ERROR,
+            USER_CANCELLED
     );
+
+    public ChargeCancelFrontendResourceITest() {
+        super("worldpay");
+    }
 
     @Before
     public void setupGatewayAccount() {
         connectorRestApi = new RestAssuredClient(app, accountId);
-        app.getDatabaseTestHelper().addGatewayAccount(accountId, "sandbox");
+        restFrontendCall = new RestAssuredClient(app, accountId);
     }
 
     @Test
-    public void respondWith204_whenCancellationSuccessful() {
-        asList(USER_CANCELLABLE_STATUSES)
-                .forEach(cancellableStatus -> {
-                    String chargeId = createNewChargeWithStatus(cancellableStatus);
-                    connectorRestApi
-                            .withChargeId(chargeId)
-                            .withAccountId(accountId)
-                            .postFrontendChargeCancellation()
-                            .statusCode(NO_CONTENT.getStatusCode());
-                    connectorRestApi
-                            .withChargeId(chargeId)
-                            .getCharge()
-                            .body("state.status", is("failed"))
-                            .body("state.message", is("Payment was cancelled by the user"))
-                            .body("state.code", is("P0030"));
-                });
+    public void respondWith204WithNoLockingState_whenCancellationBeforeAuth() {
+
+        String chargeId = addCharge(ENTERING_CARD_DETAILS, "ref", ZonedDateTime.now().minusHours(1), "irrelvant");
+        userCancelChargeAndCheckApiStatus(chargeId, USER_CANCELLED, 204);
+        List<String> events = app.getDatabaseTestHelper().getInternalEvents(chargeId);
+        assertThat(events.size(), is(2));
+        assertThat(events, hasItems(ENTERING_CARD_DETAILS.getValue(), USER_CANCELLED.getValue()));
+    }
+
+    @Test
+    public void respondWith204WithLockingState_whenCancellationAfterAuth() {
+        String gatewayTransactionId = "gatewayTransactionId";
+        String chargeId = addCharge(AUTHORISATION_SUCCESS, "ref", ZonedDateTime.now().minusHours(1), gatewayTransactionId);
+        worldpay.mockCancelResponse(gatewayTransactionId);
+
+        userCancelChargeAndCheckApiStatus(chargeId, USER_CANCELLED, NO_CONTENT.getStatusCode());
+
+        List<String> events = app.getDatabaseTestHelper().getInternalEvents(chargeId);
+        assertThat(events.size(), is(3));
+        assertThat(events, hasItems(AUTHORISATION_SUCCESS.getValue(),
+                USER_CANCEL_READY.getValue(),
+                USER_CANCELLED.getValue()));
+    }
+
+    @Test
+    public void respondWith202_whenCancelAlreadyInProgress() {
+        String chargeId = addCharge(USER_CANCEL_READY, "ref", ZonedDateTime.now().minusHours(1), "irrelvant");
+        String expectedMessage = "User Cancellation for charge already in progress, " + chargeId;
+        connectorRestApi
+                .withChargeId(chargeId)
+                .postFrontendChargeCancellation()
+                .statusCode(ACCEPTED.getStatusCode())
+                .and()
+                .contentType(JSON)
+                .body("message", is(expectedMessage));
+    }
+
+    @Test
+    public void respondWith204WithLockingState_whenCancelFailsAfterAuth() {
+
+        String gatewayTransactionId = "gatewayTransactionId";
+        worldpay.mockCancelFailResponse();
+        String chargeId = addCharge(AUTHORISATION_SUCCESS, "ref", ZonedDateTime.now().minusHours(1), gatewayTransactionId);
+
+        userCancelChargeAndCheckApiStatus(chargeId, USER_CANCEL_ERROR, 400); //FIXME: this doesn't sound like a BAD REQUEST scenario
+        List<String> events = app.getDatabaseTestHelper().getInternalEvents(chargeId);
+        assertThat(events.size(), is(3));
+        assertThat(events, hasItems(AUTHORISATION_SUCCESS.getValue(),
+                USER_CANCEL_READY.getValue(),
+                USER_CANCEL_ERROR.getValue()));
+    }
+
+    private String userCancelChargeAndCheckApiStatus(String chargeId, ChargeStatus targetState, int httpStatusCode) {
+        connectorRestApi
+                .withChargeId(chargeId)
+                .postFrontendChargeCancellation()
+                .statusCode(httpStatusCode);
+        connectorRestApi
+                .withChargeId(chargeId)
+                .getCharge()
+                .body("state.status", is("failed"))
+                .body("state.message", is("Payment was cancelled by the user"))
+                .body("state.code", is("P0030"));
+
+        restFrontendCall
+                .withChargeId(chargeId)
+                .getFrontendCharge()
+                .body("status", is(targetState.getValue()));
+        return chargeId;
+    }
+
+    @Test
+    public void respondWith404_whenPaymentNotFound() {
+        String unknownChargeId = "2344363244";
+        connectorRestApi
+                .withChargeId(unknownChargeId)
+                .withAccountId(accountId)
+                .postFrontendChargeCancellation()
+                .statusCode(NOT_FOUND.getStatusCode())
+                .and()
+                .contentType(JSON)
+                .body("message", is("Charge with id [" + unknownChargeId + "] not found."));
     }
 
     @Test
     public void respondWith400_whenNotCancellableState() {
-        NON_CANCELLABLE_STATUSES
-                .forEach(nonCancellableStatus -> {
-                    String chargeId = createNewChargeWithStatus(nonCancellableStatus);
+        NON_USER_CANCELLABLE_STATUSES
+                .forEach(status -> {
+                    String chargeId = addCharge(status, "ref", ZonedDateTime.now().minusHours(1), "irrelavant");
                     String incorrectStateMessage = "Charge not in correct state to be processed, " + chargeId;
 
                     connectorRestApi
@@ -81,11 +151,5 @@ public class ChargeCancelFrontendResourceITest {
                             .body("message", is(incorrectStateMessage));
 
                 });
-    }
-
-    private String createNewChargeWithStatus(ChargeStatus status) {
-        String chargeId = RandomIdGenerator.newId();
-        app.getDatabaseTestHelper().addCharge(chargeId, accountId, 500, status, "http://not.relevant", null);
-        return chargeId;
     }
 }

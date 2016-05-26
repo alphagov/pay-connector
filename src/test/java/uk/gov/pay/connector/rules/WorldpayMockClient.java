@@ -49,9 +49,34 @@ public class WorldpayMockClient {
         paymentServiceResponse(errorResponse);
     }
 
+    public void mockCancelFailResponse() {
+        String cancelResponse = loadFromTemplate("cancel-failed-response.xml","");
+        paymentServiceResponse(cancelResponse);
+    }
+
+    public void mockCancelSuccessOnlyFor(String gatewayTransactionId) {
+        String cancelSuccessResponse = loadFromTemplate("cancel-success-response.xml", gatewayTransactionId);
+        String bodyMatchXpath = "//orderModification[@orderCode = '" + gatewayTransactionId + "']";
+        bodyMatchingPaymentServiceResponse(bodyMatchXpath, cancelSuccessResponse);
+
+    }
+
     private void paymentServiceResponse(String responseBody) {
         stubFor(
                 post(urlPathEqualTo("/jsp/merchant/xml/paymentService.jsp"))
+                        .willReturn(
+                                aResponse()
+                                        .withHeader(CONTENT_TYPE, TEXT_XML)
+                                        .withStatus(200)
+                                        .withBody(responseBody)
+                        )
+        );
+    }
+
+    private void bodyMatchingPaymentServiceResponse(String xpathContent, String responseBody) {
+        stubFor(
+                post(urlPathEqualTo("/jsp/merchant/xml/paymentService.jsp"))
+                        .withRequestBody(matchingXPath(xpathContent))
                         .willReturn(
                                 aResponse()
                                         .withHeader(CONTENT_TYPE, TEXT_XML)
