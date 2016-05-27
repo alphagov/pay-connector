@@ -202,4 +202,26 @@
             </column>
         </addColumn>
     </changeSet>
+
+    <changeSet id="migrate legacy states in charges, events table" author="">
+        <sql>
+            UPDATE charges SET status = 'EXPIRE CANCEL READY' WHERE status = 'EXPIRE CANCEL PENDING';
+        </sql>
+        <sql>
+            UPDATE charge_events SET status = 'EXPIRE CANCEL READY' WHERE status = 'EXPIRE CANCEL PENDING';
+        </sql>
+        <sql>
+            UPDATE charges SET status = 'SYSTEM CANCEL READY' WHERE status = 'CANCEL READY';
+        </sql>
+        <sql>
+            UPDATE charge_events SET status = 'SYSTEM CANCEL READY' WHERE status = 'CANCEL READY';
+        </sql>
+        <sql>
+            UPDATE charges SET status = 'SYSTEM CANCEL ERROR' WHERE status = 'CANCEL ERROR';
+        </sql>
+        <sql>
+            UPDATE charge_events SET status = 'SYSTEM CANCEL ERROR' WHERE status = 'CANCEL ERROR';
+        </sql>
+    </changeSet>
+
 </databaseChangeLog>
