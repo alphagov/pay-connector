@@ -55,7 +55,7 @@ jerseyClient:
         - localhost
 
 customJerseyClient:
-  readTimeout: 20000ms
+  readTimeout: 90000ms
   enableProxy: ${HTTP_PROXY_ENABLED}
 
 database:
