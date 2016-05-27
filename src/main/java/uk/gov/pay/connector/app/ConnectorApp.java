@@ -18,13 +18,12 @@ import uk.gov.pay.connector.auth.SmartpayAuthenticator;
 import uk.gov.pay.connector.filters.LoggingFilter;
 import uk.gov.pay.connector.healthcheck.CardExecutorServiceHealthCheck;
 import uk.gov.pay.connector.healthcheck.DatabaseHealthCheck;
-import uk.gov.pay.connector.resources.HealthCheckResource;
 import uk.gov.pay.connector.healthcheck.Ping;
 import uk.gov.pay.connector.resources.*;
 import uk.gov.pay.connector.util.DependentResourceWaitCommand;
 
-import static javax.servlet.DispatcherType.REQUEST;
 import static java.util.EnumSet.of;
+import static javax.servlet.DispatcherType.REQUEST;
 
 public class ConnectorApp extends Application<ConnectorConfiguration> {
 
@@ -62,6 +61,7 @@ public class ConnectorApp extends Application<ConnectorConfiguration> {
         environment.jersey().register(injector.getInstance(ChargesFrontendResource.class));
         environment.jersey().register(injector.getInstance(NotificationResource.class));
         environment.jersey().register(injector.getInstance(CardResource.class));
+        environment.jersey().register(injector.getInstance(CardTypesResource.class));
         environment.jersey().register(injector.getInstance(HealthCheckResource.class));
         setupSmartpayBasicAuth(environment, configuration.getSmartpayConfig());
 

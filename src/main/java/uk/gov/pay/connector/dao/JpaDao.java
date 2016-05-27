@@ -2,13 +2,12 @@ package uk.gov.pay.connector.dao;
 
 import com.google.inject.Provider;
 import com.google.inject.persist.Transactional;
-import uk.gov.pay.connector.model.domain.AbstractEntity;
 
 import javax.persistence.EntityManager;
 import java.util.Optional;
 
 @Transactional
-public abstract class JpaDao<T extends AbstractEntity> {
+public abstract class JpaDao<T> {
 
     protected final Provider<EntityManager> entityManager;
 

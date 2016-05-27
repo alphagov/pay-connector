@@ -1,43 +1,70 @@
 package uk.gov.pay.connector.it.dao;
 
 import com.google.common.collect.ImmutableMap;
+import org.hamcrest.Matchers;
 import org.junit.Before;
 import org.junit.Test;
 import uk.gov.pay.connector.dao.GatewayAccountDao;
+import uk.gov.pay.connector.model.domain.CardTypeEntity;
 import uk.gov.pay.connector.model.domain.GatewayAccountEntity;
 
 import java.io.IOException;
-import java.util.HashMap;
-import java.util.Map;
-import java.util.Optional;
+import java.util.*;
 
 import static java.util.Collections.emptyMap;
+import static org.hamcrest.CoreMatchers.allOf;
 import static org.hamcrest.MatcherAssert.assertThat;
-import static org.hamcrest.Matchers.hasEntry;
-import static org.hamcrest.Matchers.is;
+import static org.hamcrest.Matchers.*;
+import static org.hamcrest.core.Is.is;
 import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertTrue;
 
 public class GatewayAccountDaoITest extends DaoITestBase {
 
     private GatewayAccountDao gatewayAccountDao;
+    private DatabaseFixtures databaseFixtures;
 
     @Before
     public void setUp() throws Exception {
         gatewayAccountDao = env.getInstance(GatewayAccountDao.class);
+        databaseFixtures = DatabaseFixtures.withDatabaseTestHelper(databaseTestHelper);
     }
 
     @Test
-    public void persist_shouldCreateACharge() throws Exception {
+    public void persist_shouldCreateAnAccount() throws Exception {
+        DatabaseFixtures.TestCardType mastercardCreditCardTypeRecord = createMastercardCreditCardTypeRecord();
+        DatabaseFixtures.TestCardType visaDebitCardTypeRecord = createVisaDebitCardTypeRecord();
+        createAccountRecord(mastercardCreditCardTypeRecord, visaDebitCardTypeRecord);
 
         String paymentProvider = "test provider";
-        GatewayAccountEntity entity = new GatewayAccountEntity(paymentProvider, new HashMap<>());
+        GatewayAccountEntity account = new GatewayAccountEntity(paymentProvider, new HashMap<>());
 
-        gatewayAccountDao.persist(entity);
+        CardTypeEntity masterCardCreditCardType = new CardTypeEntity();
+        masterCardCreditCardType.setId(mastercardCreditCardTypeRecord.getId());
 
-        assertNotNull(entity.getId());
+        CardTypeEntity visaCardDebitCardType = new CardTypeEntity();
+        visaCardDebitCardType.setId(visaDebitCardTypeRecord.getId());
 
-        databaseTestHelper.getAccountCredentials(entity.getId());
+        account.setCardTypes(Arrays.asList(masterCardCreditCardType, visaCardDebitCardType));
+
+        gatewayAccountDao.persist(account);
+
+        assertNotNull(account.getId());
+
+        databaseTestHelper.getAccountCredentials(account.getId());
+
+        List<Map<String, Object>> acceptedCardTypesByAccountId = databaseTestHelper.getAcceptedCardTypesByAccountId(account.getId());
+
+        assertThat(acceptedCardTypesByAccountId, containsInAnyOrder(
+                allOf(
+                        org.hamcrest.Matchers.hasEntry("label", mastercardCreditCardTypeRecord.getLabel()),
+                        org.hamcrest.Matchers.hasEntry("type", mastercardCreditCardTypeRecord.getType()),
+                        org.hamcrest.Matchers.hasEntry("brand", mastercardCreditCardTypeRecord.getBrand())
+                ), allOf(
+                        org.hamcrest.Matchers.hasEntry("label", visaDebitCardTypeRecord.getLabel()),
+                        org.hamcrest.Matchers.hasEntry("type", visaDebitCardTypeRecord.getType()),
+                        org.hamcrest.Matchers.hasEntry("brand", visaDebitCardTypeRecord.getBrand())
+                )));
     }
 
     @Test
@@ -47,22 +74,72 @@ public class GatewayAccountDaoITest extends DaoITestBase {
 
     @Test
     public void findById_shouldFindGatewayAccount() throws Exception {
+        DatabaseFixtures.TestCardType mastercardCreditCardTypeRecord = createMastercardCreditCardTypeRecord();
+        DatabaseFixtures.TestCardType visaDebitCardTypeRecord = createVisaDebitCardTypeRecord();
+        DatabaseFixtures.TestAccount accountRecord = createAccountRecord(mastercardCreditCardTypeRecord, visaDebitCardTypeRecord);
 
-        String paymentProvider = "test provider";
-        String accountId = "666";
-        databaseTestHelper.addGatewayAccount(accountId, paymentProvider);
-
-        Optional<GatewayAccountEntity> gatewayAccountOpt = gatewayAccountDao.findById(GatewayAccountEntity.class, Long.valueOf(accountId));
+        Optional<GatewayAccountEntity> gatewayAccountOpt =
+                gatewayAccountDao.findById(GatewayAccountEntity.class, accountRecord.getAccountId());
 
         assertTrue(gatewayAccountOpt.isPresent());
         GatewayAccountEntity gatewayAccount = gatewayAccountOpt.get();
-        assertThat(gatewayAccount.getGatewayName(), is(paymentProvider));
+        assertThat(gatewayAccount.getGatewayName(), is(accountRecord.getPaymentProvider()));
         Map<String, String> credentialsMap = gatewayAccount.getCredentials();
         assertThat(credentialsMap.size(), is(0));
+
+        assertThat(gatewayAccount.getCardTypes(), containsInAnyOrder(
+                allOf(
+                        hasProperty("id", is(Matchers.notNullValue())),
+                        hasProperty("label", is(mastercardCreditCardTypeRecord.getLabel())),
+                        hasProperty("type", is(CardTypeEntity.Type.fromString(mastercardCreditCardTypeRecord.getType()))),
+                        hasProperty("brand", is(mastercardCreditCardTypeRecord.getBrand()))
+                ), allOf(
+                        hasProperty("id", is(Matchers.notNullValue())),
+                        hasProperty("label", is(visaDebitCardTypeRecord.getLabel())),
+                        hasProperty("type", is(CardTypeEntity.Type.fromString(visaDebitCardTypeRecord.getType()))),
+                        hasProperty("brand", is(visaDebitCardTypeRecord.getBrand()))
+                )));
     }
 
     @Test
-    public void shouldUpdateEmptyCredentials() throws IOException {
+    public void findById_shouldUpdateAccountCardTypes() throws Exception {
+        DatabaseFixtures.TestCardType mastercardCreditCardTypeRecord = createMastercardCreditCardTypeRecord();
+        DatabaseFixtures.TestCardType visaCreditCardTypeRecord = createVisaCreditCardTypeRecord();
+        DatabaseFixtures.TestCardType visaDebitCardTypeRecord = createVisaDebitCardTypeRecord();
+        DatabaseFixtures.TestAccount accountRecord = createAccountRecord(mastercardCreditCardTypeRecord, visaCreditCardTypeRecord);
+
+        Optional<GatewayAccountEntity> gatewayAccountOpt =
+                gatewayAccountDao.findById(GatewayAccountEntity.class, accountRecord.getAccountId());
+
+        assertTrue(gatewayAccountOpt.isPresent());
+        GatewayAccountEntity gatewayAccount = gatewayAccountOpt.get();
+
+        CardTypeEntity visaDebitCardType = new CardTypeEntity();
+        visaDebitCardType.setId(visaDebitCardTypeRecord.getId());
+
+        List<CardTypeEntity> cardTypes = gatewayAccount.getCardTypes();
+
+        cardTypes.removeIf(p -> p.getId().equals(visaCreditCardTypeRecord.getId()));
+        cardTypes.add(visaDebitCardType);
+
+        gatewayAccountDao.merge(gatewayAccount);
+
+        List<Map<String, Object>> acceptedCardTypesByAccountId = databaseTestHelper.getAcceptedCardTypesByAccountId(accountRecord.getAccountId());
+
+        assertThat(acceptedCardTypesByAccountId, containsInAnyOrder(
+                allOf(
+                        org.hamcrest.Matchers.hasEntry("label", mastercardCreditCardTypeRecord.getLabel()),
+                        org.hamcrest.Matchers.hasEntry("type", mastercardCreditCardTypeRecord.getType()),
+                        org.hamcrest.Matchers.hasEntry("brand", mastercardCreditCardTypeRecord.getBrand())
+                ), allOf(
+                        org.hamcrest.Matchers.hasEntry("label", visaDebitCardTypeRecord.getLabel()),
+                        org.hamcrest.Matchers.hasEntry("type", visaDebitCardTypeRecord.getType()),
+                        org.hamcrest.Matchers.hasEntry("brand", visaDebitCardTypeRecord.getBrand())
+                )));
+    }
+
+    @Test
+    public void findById_shouldUpdateEmptyCredentials() throws IOException {
 
         String paymentProvider = "test provider";
         Long accountId = 888L;
@@ -87,7 +164,7 @@ public class GatewayAccountDaoITest extends DaoITestBase {
     }
 
     @Test
-    public void shouldUpdateAndRetrieveCredentialsWithSpecialCharacters() throws Exception {
+    public void findById_shouldUpdateAndRetrieveCredentialsWithSpecialCharacters() throws Exception {
 
         String paymentProvider = "test provider";
         String accountId = "333";
@@ -110,7 +187,7 @@ public class GatewayAccountDaoITest extends DaoITestBase {
     }
 
     @Test
-    public void shouldFindAccountInfoByIdWhenFindingByIdReturningGatewayAccount() throws Exception {
+    public void findById_shouldFindAccountInfoByIdWhenFindingByIdReturningGatewayAccount() throws Exception {
 
         String paymentProvider = "test provider";
         String accountId = "12345";
@@ -125,12 +202,7 @@ public class GatewayAccountDaoITest extends DaoITestBase {
     }
 
     @Test
-    public void findByIdNoFound() throws Exception {
-        assertThat(gatewayAccountDao.findById(123L).isPresent(), is(false));
-    }
-
-    @Test
-    public void shouldGetCredentialsWhenFindingGatewayAccountById() {
+    public void findById_shouldGetCredentialsWhenFindingGatewayAccountById() {
 
         String paymentProvider = "test provider";
         String accountId = "786";
@@ -146,5 +218,24 @@ public class GatewayAccountDaoITest extends DaoITestBase {
         Map<String, String> accountCredentials = gatewayAccount.get().getCredentials();
         assertThat(accountCredentials, hasEntry("username", "Username"));
         assertThat(accountCredentials, hasEntry("password", "Password"));
+    }
+
+    public DatabaseFixtures.TestCardType createMastercardCreditCardTypeRecord() {
+        return databaseFixtures.aMastercardCreditCardType().insert();
+    }
+
+    public DatabaseFixtures.TestCardType createVisaDebitCardTypeRecord() {
+        return databaseFixtures.aVisaDebitCardType().insert();
+    }
+
+    public DatabaseFixtures.TestCardType createVisaCreditCardTypeRecord() {
+        return databaseFixtures.aVisaCreditCardType().insert();
+    }
+
+    public DatabaseFixtures.TestAccount createAccountRecord(DatabaseFixtures.TestCardType... cardTypes) {
+        return databaseFixtures
+                .aTestAccount()
+                .withCardTypes(Arrays.asList(cardTypes))
+                .insert();
     }
 }

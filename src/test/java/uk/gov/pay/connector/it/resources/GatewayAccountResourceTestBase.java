@@ -3,9 +3,12 @@ package uk.gov.pay.connector.it.resources;
 import com.google.common.collect.ImmutableMap;
 import com.jayway.restassured.response.ValidatableResponse;
 import com.jayway.restassured.specification.RequestSpecification;
+import org.junit.Before;
 import org.junit.Rule;
+import uk.gov.pay.connector.it.dao.DatabaseFixtures;
 import uk.gov.pay.connector.rules.DropwizardAppWithPostgresRule;
 
+import java.util.Arrays;
 import java.util.HashMap;
 import java.util.Map;
 
@@ -22,12 +25,17 @@ public class GatewayAccountResourceTestBase {
 
     @Rule
     public DropwizardAppWithPostgresRule app = new DropwizardAppWithPostgresRule();
+    protected DatabaseFixtures databaseFixtures;
+
+    @Before
+    public void setUp() {
+        databaseFixtures = DatabaseFixtures.withDatabaseTestHelper(app.getDatabaseTestHelper());
+    }
 
     protected RequestSpecification givenSetup() {
         return given().port(app.getLocalPort())
                 .contentType(JSON);
     }
-
 
     //TODO remove this after complete migration
     protected String createAGatewayAccountFor(String testProvider) {
@@ -74,4 +82,22 @@ public class GatewayAccountResourceTestBase {
         assertThat(accountCredentials, is(new HashMap<>()));
     }
 
+    protected DatabaseFixtures.TestCardType createMastercardCreditCardTypeRecord() {
+        return databaseFixtures.aMastercardCreditCardType().insert();
+    }
+
+    protected DatabaseFixtures.TestCardType createVisaDebitCardTypeRecord() {
+        return databaseFixtures.aVisaDebitCardType().insert();
+    }
+
+    protected DatabaseFixtures.TestCardType createVisaCreditCardTypeRecord() {
+        return databaseFixtures.aVisaCreditCardType().insert();
+    }
+
+    protected DatabaseFixtures.TestAccount createAccountRecord(DatabaseFixtures.TestCardType... cardTypes) {
+        return databaseFixtures
+                .aTestAccount()
+                .withCardTypes(Arrays.asList(cardTypes))
+                .insert();
+    }
 }

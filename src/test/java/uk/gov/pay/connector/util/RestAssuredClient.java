@@ -137,4 +137,11 @@ public class RestAssuredClient {
                 .post(requestPath)
                 .then();
     }
+
+    public ValidatableResponse getCardTypes() {
+        String requestPath = CARD_TYPES_API_PATH;
+        return given().port(app.getLocalPort())
+                .get(requestPath)
+                .then();
+    }
 }

@@ -224,4 +224,43 @@
         </sql>
     </changeSet>
 
+
+    <changeSet id="build card_types table" author="">
+        <createTable tableName="card_types">
+            <column name="id" type="uuid" defaultValueComputed="(uuid_generate_v4())">
+                <constraints primaryKey="true" nullable="false"/>
+            </column>
+            <column name="brand" type="text">
+                <constraints nullable="false"/>
+            </column>
+            <column name="type" type="varchar(15)">
+                <constraints nullable="false"/>
+            </column>
+            <column name="label" type="text">
+                <constraints nullable="false"/>
+            </column>
+            <column name="version" type="bigint" defaultValue="0">
+                <constraints nullable="false"/>
+            </column>
+        </createTable>
+    </changeSet>
+
+    <changeSet id="build accepted_card_types table" author="">
+        <createTable tableName="accepted_card_types">
+            <column name="gateway_account_id" type="bigint">
+                <constraints primaryKey="true"
+                             foreignKeyName="fk__accepted_card_types_gateway_accounts"
+                             referencedTableName="gateway_accounts"
+                             referencedColumnNames="id" nullable="false"/>
+            </column>
+            <column name="card_type_id" type="uuid">
+                <constraints primaryKey="true"
+                             foreignKeyName="fk__accepted_card_types_card_type" referencedTableName="card_types"
+                             referencedColumnNames="id" nullable="false"/>
+            </column>
+            <column name="version" type="bigint" defaultValue="0">
+                <constraints nullable="false"/>
+            </column>
+        </createTable>
+    </changeSet>
 </databaseChangeLog>
