@@ -130,6 +130,15 @@ public class ChargeEventsResourceITest {
                 .body("message", is("HTTP 404 Not Found"));
     }
 
+    @Test
+    public void shouldReturn404WhenIsChargeIdNotExists() {
+        connectorApi.withAccountId(accountId)
+                .getEvents("non-existent-charge")
+                .contentType(JSON)
+                .statusCode(NOT_FOUND.getStatusCode())
+                .body("message", is("Charge with id [non-existent-charge] not found."));
+    }
+
     public static class ChargeApiFixtures {
 
         private static final String JSON_AMOUNT_KEY = "amount";
