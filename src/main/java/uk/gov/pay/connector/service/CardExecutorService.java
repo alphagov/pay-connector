@@ -19,7 +19,7 @@ import static uk.gov.pay.connector.service.CardExecutorService.ExecutionStatus.*
 public class CardExecutorService<T> {
 
     private static final Logger logger = LoggerFactory.getLogger(CardExecutorService.class);
-    private static final int QUEUE_WAIT_WARN_THRESHOLD_MILLIS = 3000;
+    private static final int QUEUE_WAIT_WARN_THRESHOLD_MILLIS = 10000;
 
     private CardExecutorServiceConfig config;
     private ExecutorService executor;
@@ -71,7 +71,7 @@ public class CardExecutorService<T> {
         Future<T> futureObject = executor.submit(() -> {
             long totalWaitTime = System.currentTimeMillis() - startTime;
             logger.debug("Card operation task spent {} ms in queue", totalWaitTime);
-            if(totalWaitTime > QUEUE_WAIT_WARN_THRESHOLD_MILLIS) {
+            if (totalWaitTime > QUEUE_WAIT_WARN_THRESHOLD_MILLIS) {
                 logger.warn("CardExecutor Service delay - queue_wait_time={}", totalWaitTime);
             }
 
