@@ -68,24 +68,22 @@ public class CardExecutorService<T> {
     public Pair<ExecutionStatus, T> execute(Supplier<T> callable) {
         Callable<T> task = callable::get;
         final long startTime = System.currentTimeMillis();
+
         Future<T> futureObject = executor.submit(() -> {
             long totalWaitTime = System.currentTimeMillis() - startTime;
             logger.debug("Card operation task spent {} ms in queue", totalWaitTime);
             if (totalWaitTime > QUEUE_WAIT_WARN_THRESHOLD_MILLIS) {
                 logger.warn("CardExecutor Service delay - queue_wait_time={}", totalWaitTime);
             }
-
             return task.call();
         });
 
         try {
             return Pair.of(COMPLETED, futureObject.get(config.getTimeoutInSeconds(), TimeUnit.SECONDS));
-        } catch (ExecutionException executionException) {
-            if (executionException.getCause() instanceof WebApplicationException) {
-                throw (WebApplicationException) executionException.getCause();
+        } catch (ExecutionException | InterruptedException exception) {
+            if (exception.getCause() instanceof WebApplicationException) {
+                throw (WebApplicationException) exception.getCause();
             }
-            return Pair.of(FAILED, null);
-        } catch (InterruptedException interruptedException) {
             return Pair.of(FAILED, null);
         } catch (TimeoutException timeoutException) {
             return Pair.of(IN_PROGRESS, null);

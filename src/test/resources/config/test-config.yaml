@@ -67,7 +67,7 @@ jpa:
   cacheSharedDefault: false
 
 executorServiceConfig:
-  timeoutInSeconds: ${AUTH_READ_TIMEOUT_SECONDS:-10}
+  timeoutInSeconds: ${AUTH_READ_TIMEOUT_SECONDS:-1}
   threadsPerCpu: ${NUMBER_OF_THREADS_PER_CPU:-100}
 
 transactionsPaginationServiceConfig:
