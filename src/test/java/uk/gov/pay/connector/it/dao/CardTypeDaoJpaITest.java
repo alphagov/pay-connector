@@ -24,7 +24,6 @@ public class CardTypeDaoJpaITest extends DaoITestBase {
     private DatabaseFixtures.TestCardType mastercardCreditCardTypeTestRecord;
     private DatabaseFixtures.TestCardType visaDebitCardTypeTestRecord;
 
-
     @Before
     public void setUp() throws Exception {
         cardTypeDao = env.getInstance(CardTypeDao.class);
@@ -50,7 +49,7 @@ public class CardTypeDaoJpaITest extends DaoITestBase {
 
         assertThat(cardTypeEntity.getId(), is(notNullValue()));
         assertThat(cardTypeEntity.getLabel(), is(mastercardCreditCardTypeTestRecord.getLabel()));
-        assertThat(cardTypeEntity.getType(), is(CardTypeEntity.Type.fromString(mastercardCreditCardTypeTestRecord.getType())));
+        assertThat(cardTypeEntity.getType(), is(mastercardCreditCardTypeTestRecord.getType()));
         assertThat(cardTypeEntity.getBrand(), is(mastercardCreditCardTypeTestRecord.getBrand()));
     }
 
@@ -68,12 +67,12 @@ public class CardTypeDaoJpaITest extends DaoITestBase {
                 allOf(
                         hasProperty("id", is(Matchers.notNullValue())),
                         hasProperty("label", is(mastercardCreditCardTypeTestRecord.getLabel())),
-                        hasProperty("type", is(CardTypeEntity.Type.fromString(mastercardCreditCardTypeTestRecord.getType()))),
+                        hasProperty("type", is(mastercardCreditCardTypeTestRecord.getType())),
                         hasProperty("brand", is(mastercardCreditCardTypeTestRecord.getBrand()))
                 ), allOf(
                         hasProperty("id", is(Matchers.notNullValue())),
                         hasProperty("label", is(visaDebitCardTypeTestRecord.getLabel())),
-                        hasProperty("type", is(CardTypeEntity.Type.fromString(visaDebitCardTypeTestRecord.getType()))),
+                        hasProperty("type", is(visaDebitCardTypeTestRecord.getType())),
                         hasProperty("brand", is(visaDebitCardTypeTestRecord.getBrand()))
                 )));
     }

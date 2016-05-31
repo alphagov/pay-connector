@@ -41,7 +41,7 @@ public class GatewayAccountResource {
 
     private static final String CREDENTIALS_FIELD_NAME = "credentials";
     private static final String SERVICE_NAME_FIELD_NAME = "service_name";
-    private static final String CARD_TYPES_FIELD_NAME = "cardTypes";
+    private static final String CARD_TYPES_FIELD_NAME = "card_types";
     private static final int SERVICE_NAME_FIELD_LENGTH = 50;
 
     private final GatewayAccountDao gatewayDao;
@@ -189,12 +189,13 @@ public class GatewayAccountResource {
 
         List<UUID> cardTypeIds = cardTypes.get(CARD_TYPES_FIELD_NAME);
 
-        List<UUID> cardTypeIdNotFound = cardTypeIds.stream()
+        List<String> cardTypeIdNotFound = cardTypeIds.stream()
                 .filter(cardTypeId -> !cardTypeDao.findById(cardTypeId).isPresent())
+                .map(UUID::toString)
                 .collect(Collectors.toList());
 
         if (cardTypeIdNotFound.size() > 0) {
-            return badRequestResponse(format("CardType referenced by id '%s' does not exist", cardTypeIdNotFound.get(0)));
+            return badRequestResponse(format("CardType(s) referenced by id(s) '%s' not found", String.join(",", cardTypeIdNotFound)));
         }
 
         List<CardTypeEntity> cardTypeEntities = cardTypeIds.stream()

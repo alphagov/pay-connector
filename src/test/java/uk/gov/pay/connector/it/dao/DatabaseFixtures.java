@@ -1,6 +1,7 @@
 package uk.gov.pay.connector.it.dao;
 
 import org.apache.commons.lang3.RandomUtils;
+import uk.gov.pay.connector.model.domain.CardTypeEntity.Type;
 import uk.gov.pay.connector.model.domain.ChargeStatus;
 import uk.gov.pay.connector.util.DatabaseTestHelper;
 
@@ -35,19 +36,19 @@ public class DatabaseFixtures {
     }
 
     public TestCardType aMastercardCreditCardType() {
-        return new TestCardType().withLabel("MasterCard").withType("CREDIT").withBrand("mastercard");
+        return new TestCardType().withLabel("MasterCard").withType(Type.CREDIT).withBrand("mastercard");
     }
 
     public TestCardType aMastercardDebitCardType() {
-        return new TestCardType().withLabel("MasterCard").withType("DEBIT").withBrand("mastercard");
+        return new TestCardType().withLabel("MasterCard").withType(Type.DEBIT).withBrand("mastercard");
     }
 
     public TestCardType aVisaCreditCardType() {
-        return new TestCardType().withLabel("Visa").withType("CREDIT").withBrand("visa");
+        return new TestCardType().withLabel("Visa").withType(Type.CREDIT).withBrand("visa");
     }
 
     public TestCardType aVisaDebitCardType() {
-        return new TestCardType().withLabel("Visa").withType("DEBIT").withBrand("visa");
+        return new TestCardType().withLabel("Visa").withType(Type.DEBIT).withBrand("visa");
     }
 
     public class TestAccount {
@@ -212,7 +213,7 @@ public class DatabaseFixtures {
     public class TestCardType {
         UUID id = UUID.randomUUID();
         String label = "Mastercard";
-        String type = "CREDIT";
+        Type type = Type.CREDIT;
         String brand = "mastercard-c";
 
         public TestCardType withCardTypeId(UUID id) {
@@ -225,7 +226,7 @@ public class DatabaseFixtures {
             return this;
         }
 
-        public TestCardType withType(String type) {
+        public TestCardType withType(Type type) {
             this.type = type;
             return this;
         }
@@ -237,7 +238,7 @@ public class DatabaseFixtures {
 
 
         public TestCardType insert() {
-            databaseTestHelper.addCardType(id, label, type, brand);
+            databaseTestHelper.addCardType(id, label, type.toString(), brand);
             return this;
         }
 
@@ -257,11 +258,11 @@ public class DatabaseFixtures {
             this.label = label;
         }
 
-        public String getType() {
+        public Type getType() {
             return type;
         }
 
-        public void setType(String type) {
+        public void setType(Type type) {
             this.type = type;
         }
 

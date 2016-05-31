@@ -16,7 +16,7 @@ import static uk.gov.pay.connector.util.ResponseUtil.successResponseWithEntity;
 
 @Path("/")
 public class CardTypesResource {
-    private static final String CARD_TYPES_FIELD_NAME = "cardTypes";
+    private static final String CARD_TYPES_FIELD_NAME = "card_types";
 
     private final CardTypeDao cardTypeDao;
 

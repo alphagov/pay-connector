@@ -2,7 +2,6 @@ package uk.gov.pay.connector.model.domain;
 
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonProperty;
-import org.apache.commons.lang3.StringUtils;
 
 import javax.persistence.*;
 import java.util.UUID;
@@ -12,31 +11,8 @@ import java.util.UUID;
 public class CardTypeEntity extends UuidAbstractEntity {
 
     public enum Type {
-        CREDIT("CREDIT"),
-        DEBIT("DEBIT");
-
-        private String value;
-
-        Type(String value) {
-            this.value = value;
-        }
-
-        public String getValue() {
-            return value;
-        }
-
-        public String toString() {
-            return this.getValue();
-        }
-
-        public static Type fromString(String type) {
-            for (Type t : values()) {
-                if (StringUtils.equals(t.getValue(), type)) {
-                    return t;
-                }
-            }
-            throw new IllegalArgumentException("type not recognized: " + type);
-        }
+        CREDIT,
+        DEBIT
     }
 
     @Column

@@ -333,7 +333,7 @@ public class GatewayAccountFrontendResourceITest extends GatewayAccountResourceT
         updateGatewayAccountCardTypesWith(accountRecord.getAccountId(), body)
                 .then()
                 .statusCode(400)
-                .body("message", is("Field(s) missing: [cardTypes]"));
+                .body("message", is("Field(s) missing: [card_types]"));
     }
 
     @Test
@@ -348,7 +348,7 @@ public class GatewayAccountFrontendResourceITest extends GatewayAccountResourceT
         updateGatewayAccountCardTypesWith(accountRecord.getAccountId(), buildAcceptedCardTypesBody(aVisaDebitCardTypeWithNonExistingId))
                 .then()
                 .statusCode(400)
-                .body("message", is(format("CardType referenced by id '%s' does not exist", aVisaDebitCardTypeWithNonExistingId.getId())));
+                .body("message", is(format("CardType(s) referenced by id(s) '%s' not found", aVisaDebitCardTypeWithNonExistingId.getId())));
     }
 
     @Test
@@ -369,11 +369,11 @@ public class GatewayAccountFrontendResourceITest extends GatewayAccountResourceT
         MatcherAssert.assertThat(acceptedCardTypes, containsInAnyOrder(
                 allOf(
                         org.hamcrest.Matchers.hasEntry("label", mastercardCreditCardTypeRecord.getLabel()),
-                        org.hamcrest.Matchers.hasEntry("type", mastercardCreditCardTypeRecord.getType()),
+                        org.hamcrest.Matchers.hasEntry("type", mastercardCreditCardTypeRecord.getType().toString()),
                         org.hamcrest.Matchers.hasEntry("brand", mastercardCreditCardTypeRecord.getBrand())
                 ), allOf(
                         org.hamcrest.Matchers.hasEntry("label", visaDebitCardTypeRecord.getLabel()),
-                        org.hamcrest.Matchers.hasEntry("type", visaDebitCardTypeRecord.getType()),
+                        org.hamcrest.Matchers.hasEntry("type", visaDebitCardTypeRecord.getType().toString()),
                         org.hamcrest.Matchers.hasEntry("brand", visaDebitCardTypeRecord.getBrand())
                 )));
     }
@@ -426,6 +426,6 @@ public class GatewayAccountFrontendResourceITest extends GatewayAccountResourceT
                 .map(cardType -> "\"" + cardType.getId().toString() + "\"")
                 .collect(Collectors.toList());
 
-        return format("{\"cardTypes\": [%s]}", String.join(",", cardTypeIds));
+        return format("{\"card_types\": [%s]}", String.join(",", cardTypeIds));
     }
 }

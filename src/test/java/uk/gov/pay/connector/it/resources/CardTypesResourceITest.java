@@ -22,7 +22,7 @@ public class CardTypesResourceITest {
     public void shouldGetNoCardTypesWhenNoCardTypesExist() throws Exception {
         connectorApi
                 .getCardTypes()
-                .body("cardTypes.size()", is(0));
+                .body("card_types.size()", is(0));
     }
 
     @Test
@@ -34,10 +34,10 @@ public class CardTypesResourceITest {
 
         connectorApi
                 .getCardTypes()
-                .body("cardTypes.size()", is(1))
-                .body("cardTypes[0].id", is(this.mastercardCreditCardTypeTestRecord.getId().toString()))
-                .body("cardTypes[0].brand", is(this.mastercardCreditCardTypeTestRecord.getBrand()))
-                .body("cardTypes[0].label", is(this.mastercardCreditCardTypeTestRecord.getLabel()))
-                .body("cardTypes[0].type", is(this.mastercardCreditCardTypeTestRecord.getType().toString()));
+                .body("card_types.size()", is(1))
+                .body("card_types[0].id", is(this.mastercardCreditCardTypeTestRecord.getId().toString()))
+                .body("card_types[0].brand", is(this.mastercardCreditCardTypeTestRecord.getBrand()))
+                .body("card_types[0].label", is(this.mastercardCreditCardTypeTestRecord.getLabel()))
+                .body("card_types[0].type", is(this.mastercardCreditCardTypeTestRecord.getType().toString()));
     }
 }
