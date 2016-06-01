@@ -16,10 +16,13 @@ public interface ApiPaths {
 
     String FRONTEND_ACCOUNT_CREDENTIALS_API_PATH = API_VERSION_PATH +"/frontend/accounts/{accountId}/credentials";
     String FRONTEND_ACCOUNT_SERVICENAME_API_PATH = API_VERSION_PATH +"/frontend/accounts/{accountId}/servicename";
+    String FRONTEND_ACCOUNT_CARDTYPES_API_PATH = API_VERSION_PATH + "/frontend/accounts/{accountId}/card-types";
 
     String CHARGES_API_PATH = API_VERSION_PATH +"/api/accounts/{accountId}/charges";
     String CHARGE_API_PATH = API_VERSION_PATH +"/api/accounts/{accountId}/charges/{chargeId}";
     String CHARGE_CANCEL_API_PATH = API_VERSION_PATH +"/api/accounts/{accountId}/charges/{chargeId}/cancel";
     String CHARGE_EVENTS_API_PATH = API_VERSION_PATH +"/api/accounts/{accountId}/charges/{chargeId}/events";
     String CHARGES_EXPIRE_CHARGES_TASK_API_PATH = API_VERSION_PATH +"/tasks/expired-charges-sweep";
+
+    String CARD_TYPES_API_PATH = API_VERSION_PATH + "/api/card-types";
 }

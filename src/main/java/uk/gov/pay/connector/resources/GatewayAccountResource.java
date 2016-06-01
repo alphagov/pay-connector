@@ -9,7 +9,9 @@ import io.dropwizard.jersey.PATCH;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import uk.gov.pay.connector.app.ConnectorConfiguration;
+import uk.gov.pay.connector.dao.CardTypeDao;
 import uk.gov.pay.connector.dao.GatewayAccountDao;
+import uk.gov.pay.connector.model.domain.CardTypeEntity;
 import uk.gov.pay.connector.model.domain.GatewayAccountEntity;
 
 import javax.inject.Inject;
@@ -22,6 +24,7 @@ import java.net.URI;
 import java.util.Arrays;
 import java.util.List;
 import java.util.Map;
+import java.util.UUID;
 import java.util.stream.Collectors;
 
 import static com.google.common.collect.Maps.newHashMap;
@@ -38,14 +41,17 @@ public class GatewayAccountResource {
 
     private static final String CREDENTIALS_FIELD_NAME = "credentials";
     private static final String SERVICE_NAME_FIELD_NAME = "service_name";
+    private static final String CARD_TYPES_FIELD_NAME = "card_types";
     private static final int SERVICE_NAME_FIELD_LENGTH = 50;
 
     private final GatewayAccountDao gatewayDao;
+    private final CardTypeDao cardTypeDao;
     private final Map<String, List<String>> providerCredentialFields;
 
     @Inject
-    public GatewayAccountResource(GatewayAccountDao gatewayDao, ConnectorConfiguration conf) {
+    public GatewayAccountResource(GatewayAccountDao gatewayDao, CardTypeDao cardTypeDao, ConnectorConfiguration conf) {
         this.gatewayDao = gatewayDao;
+        this.cardTypeDao = cardTypeDao;
         providerCredentialFields = newHashMap();
         providerCredentialFields.put("worldpay", conf.getWorldpayConfig().getCredentials());
         providerCredentialFields.put("smartpay", conf.getSmartpayConfig().getCredentials());
@@ -60,6 +66,33 @@ public class GatewayAccountResource {
         return gatewayDao
                 .findById(GatewayAccountEntity.class, accountId)
                 .map(gatewayAccount -> Response.ok().entity(gatewayAccount.withoutCredentials()).build())
+                .orElseGet(() -> notFoundResponse(format("Account with id %s not found.", accountId)));
+
+    }
+
+    @GET
+    @Path(FRONTEND_GATEWAY_ACCOUNT_API_PATH)
+    @Produces(APPLICATION_JSON)
+    public Response getGatewayAccountWithCredentials(@PathParam("accountId") Long gatewayAccountId) throws IOException {
+
+        return gatewayDao.findById(gatewayAccountId)
+                .map(serviceAccount ->
+                {
+                    serviceAccount.getCredentials().remove("password");
+                    return Response.ok(serviceAccount).build();
+                })
+                .orElseGet(() -> notFoundResponse(format("Account with id '%s' not found", gatewayAccountId)));
+    }
+
+    @GET
+    @Path(FRONTEND_ACCOUNT_CARDTYPES_API_PATH)
+    @Consumes(APPLICATION_JSON)
+    @Produces(APPLICATION_JSON)
+    public Response getGatewayAccountAcceptedCardTypes(@PathParam("accountId") Long accountId) {
+        logger.info("Getting accepted card types for gateway account with account id {}", accountId);
+        return gatewayDao
+                .findById(GatewayAccountEntity.class, accountId)
+                .map(gatewayAccount -> successResponseWithEntity(ImmutableMap.of(CARD_TYPES_FIELD_NAME, gatewayAccount.getCardTypes())))
                 .orElseGet(() -> notFoundResponse(format("Account with id %s not found.", accountId)));
 
     }
@@ -89,20 +122,6 @@ public class GatewayAccountResource {
         addSelfLink(newLocation, account);
 
         return Response.created(newLocation).entity(account).build();
-    }
-
-    @GET
-    @Path(FRONTEND_GATEWAY_ACCOUNT_API_PATH)
-    @Produces(APPLICATION_JSON)
-    public Response getGatewayAccountWithCredentials(@PathParam("accountId") Long gatewayAccountId) throws IOException {
-
-        return gatewayDao.findById(gatewayAccountId)
-                .map(serviceAccount ->
-                {
-                    serviceAccount.getCredentials().remove("password");
-                    return Response.ok(serviceAccount).build();
-                })
-                .orElseGet(() -> notFoundResponse(format("Account with id '%s' not found", gatewayAccountId)));
     }
 
     @PATCH
@@ -154,6 +173,40 @@ public class GatewayAccountResource {
                             return Response.ok().build();
                         }
                 )
+                .orElseGet(() ->
+                        notFoundResponse(format("The gateway account id '%s' does not exist", gatewayAccountId)));
+    }
+
+    @POST
+    @Path(FRONTEND_ACCOUNT_CARDTYPES_API_PATH)
+    @Consumes(APPLICATION_JSON)
+    @Produces(APPLICATION_JSON)
+    @Transactional
+    public Response updateGatewayAccountAcceptedCardTypes(@PathParam("accountId") Long gatewayAccountId, Map<String, List<UUID>> cardTypes) {
+        if (!cardTypes.containsKey(CARD_TYPES_FIELD_NAME)) {
+            return fieldsMissingResponse(Arrays.asList(CARD_TYPES_FIELD_NAME));
+        }
+
+        List<UUID> cardTypeIds = cardTypes.get(CARD_TYPES_FIELD_NAME);
+
+        List<String> cardTypeIdNotFound = cardTypeIds.stream()
+                .filter(cardTypeId -> !cardTypeDao.findById(cardTypeId).isPresent())
+                .map(UUID::toString)
+                .collect(Collectors.toList());
+
+        if (cardTypeIdNotFound.size() > 0) {
+            return badRequestResponse(format("CardType(s) referenced by id(s) '%s' not found", String.join(",", cardTypeIdNotFound)));
+        }
+
+        List<CardTypeEntity> cardTypeEntities = cardTypeIds.stream()
+                .map(CardTypeEntity::aCardType)
+                .collect(Collectors.toList());
+
+        return gatewayDao.findById(gatewayAccountId)
+                .map(gatewayAccount -> {
+                    gatewayAccount.setCardTypes(cardTypeEntities);
+                    return Response.ok().build();
+                })
                 .orElseGet(() ->
                         notFoundResponse(format("The gateway account id '%s' does not exist", gatewayAccountId)));
     }

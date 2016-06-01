@@ -1,11 +1,15 @@
 package uk.gov.pay.connector.it.dao;
 
 import org.apache.commons.lang3.RandomUtils;
+import uk.gov.pay.connector.model.domain.CardTypeEntity.Type;
 import uk.gov.pay.connector.model.domain.ChargeStatus;
 import uk.gov.pay.connector.util.DatabaseTestHelper;
 
 import java.time.ZonedDateTime;
+import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.List;
+import java.util.UUID;
 
 public class DatabaseFixtures {
 
@@ -31,10 +35,28 @@ public class DatabaseFixtures {
         return new TestToken();
     }
 
+    public TestCardType aMastercardCreditCardType() {
+        return new TestCardType().withLabel("MasterCard").withType(Type.CREDIT).withBrand("mastercard");
+    }
+
+    public TestCardType aMastercardDebitCardType() {
+        return new TestCardType().withLabel("MasterCard").withType(Type.DEBIT).withBrand("mastercard");
+    }
+
+    public TestCardType aVisaCreditCardType() {
+        return new TestCardType().withLabel("Visa").withType(Type.CREDIT).withBrand("visa");
+    }
+
+    public TestCardType aVisaDebitCardType() {
+        return new TestCardType().withLabel("Visa").withType(Type.DEBIT).withBrand("visa");
+    }
+
     public class TestAccount {
         long accountId = 564532435L;
         String paymentProvider = "test_provider";
         String serviceName = "service_name";
+        String selectedPaymentCategory = null;
+        private List<TestCardType> cardTypes = new ArrayList<>();
 
         public long getAccountId() {
             return accountId;
@@ -48,13 +70,21 @@ public class DatabaseFixtures {
             return serviceName;
         }
 
-        public TestAccount withAccountId(long accountId){
+        public TestAccount withAccountId(long accountId) {
             this.accountId = accountId;
+            return this;
+        }
+
+        public TestAccount withCardTypes(List<TestCardType> cardTypes) {
+            this.cardTypes = cardTypes;
             return this;
         }
 
         public TestAccount insert() {
             databaseTestHelper.addGatewayAccount(String.valueOf(accountId), paymentProvider, new HashMap<String, String>(), serviceName);
+            for (TestCardType cardType : cardTypes) {
+                databaseTestHelper.addAcceptedCardType(this.getAccountId(), cardType.getId());
+            }
             return this;
         }
     }
@@ -177,6 +207,71 @@ public class DatabaseFixtures {
 
         public String getSecureRedirectToken() {
             return secureRedirectToken;
+        }
+    }
+
+    public class TestCardType {
+        UUID id = UUID.randomUUID();
+        String label = "Mastercard";
+        Type type = Type.CREDIT;
+        String brand = "mastercard-c";
+
+        public TestCardType withCardTypeId(UUID id) {
+            this.id = id;
+            return this;
+        }
+
+        public TestCardType withLabel(String label) {
+            this.label = label;
+            return this;
+        }
+
+        public TestCardType withType(Type type) {
+            this.type = type;
+            return this;
+        }
+
+        public TestCardType withBrand(String brand) {
+            this.brand = brand;
+            return this;
+        }
+
+
+        public TestCardType insert() {
+            databaseTestHelper.addCardType(id, label, type.toString(), brand);
+            return this;
+        }
+
+        public UUID getId() {
+            return id;
+        }
+
+        public void setId(UUID id) {
+            this.id = id;
+        }
+
+        public String getLabel() {
+            return label;
+        }
+
+        public void setLabel(String label) {
+            this.label = label;
+        }
+
+        public Type getType() {
+            return type;
+        }
+
+        public void setType(Type type) {
+            this.type = type;
+        }
+
+        public String getBrand() {
+            return brand;
+        }
+
+        public void setBrand(String brand) {
+            this.brand = brand;
         }
     }
 }

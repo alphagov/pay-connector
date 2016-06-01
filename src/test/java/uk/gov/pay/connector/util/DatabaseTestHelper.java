@@ -12,6 +12,7 @@ import java.sql.Timestamp;
 import java.time.ZonedDateTime;
 import java.util.List;
 import java.util.Map;
+import java.util.UUID;
 
 import static java.time.ZonedDateTime.now;
 
@@ -75,54 +76,54 @@ public class DatabaseTestHelper {
             long version
     ) {
         jdbi.withHandle(h ->
-                h.update(
-                        "INSERT INTO" +
-                                "    charges(\n" +
-                                "        id,\n" +
-                                "        external_id,\n" +
-                                "        amount,\n" +
-                                "        status,\n" +
-                                "        gateway_account_id,\n" +
-                                "        return_url,\n" +
-                                "        gateway_transaction_id,\n" +
-                                "        description,\n" +
-                                "        created_date,\n" +
-                                "        reference,\n" +
-                                "        version\n" +
-                                "    )\n" +
-                                "   VALUES(?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)\n",
-                        chargeId,
-                        externalChargeId,
-                        amount,
-                        status.getValue(),
-                        Long.valueOf(gatewayAccountId),
-                        returnUrl,
-                        transactionId,
-                        description,
-                        Timestamp.from(createdDate.toInstant()),
-                        reference,
-                        version
-                )
+                        h.update(
+                                "INSERT INTO" +
+                                        "    charges(\n" +
+                                        "        id,\n" +
+                                        "        external_id,\n" +
+                                        "        amount,\n" +
+                                        "        status,\n" +
+                                        "        gateway_account_id,\n" +
+                                        "        return_url,\n" +
+                                        "        gateway_transaction_id,\n" +
+                                        "        description,\n" +
+                                        "        created_date,\n" +
+                                        "        reference,\n" +
+                                        "        version\n" +
+                                        "    )\n" +
+                                        "   VALUES(?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)\n",
+                                chargeId,
+                                externalChargeId,
+                                amount,
+                                status.getValue(),
+                                Long.valueOf(gatewayAccountId),
+                                returnUrl,
+                                transactionId,
+                                description,
+                                Timestamp.from(createdDate.toInstant()),
+                                reference,
+                                version
+                        )
         );
     }
 
     public String getChargeTokenId(Long chargeId) {
 
         return jdbi.withHandle(h ->
-                h.createQuery("SELECT secure_redirect_token from tokens WHERE charge_id = :charge_id ORDER BY id DESC")
-                        .bind("charge_id", chargeId)
-                        .map(StringMapper.FIRST)
-                        .first()
+                        h.createQuery("SELECT secure_redirect_token from tokens WHERE charge_id = :charge_id ORDER BY id DESC")
+                                .bind("charge_id", chargeId)
+                                .map(StringMapper.FIRST)
+                                .first()
         );
     }
 
     public String getChargeTokenByExternalChargeId(String externalChargeId) {
 
         String chargeId = jdbi.withHandle(h ->
-                h.createQuery("SELECT id from charges WHERE external_id = :external_id")
-                        .bind("external_id", externalChargeId)
-                        .map(StringMapper.FIRST)
-                        .first()
+                        h.createQuery("SELECT id from charges WHERE external_id = :external_id")
+                                .bind("external_id", externalChargeId)
+                                .map(StringMapper.FIRST)
+                                .first()
         );
 
         return getChargeTokenId(Long.valueOf(chargeId));
@@ -131,10 +132,10 @@ public class DatabaseTestHelper {
     public Map<String, String> getAccountCredentials(Long gatewayAccountId) {
 
         String jsonString = jdbi.withHandle(h ->
-                h.createQuery("SELECT credentials from gateway_accounts WHERE id = :gatewayAccountId")
-                        .bind("gatewayAccountId", gatewayAccountId)
-                        .map(StringMapper.FIRST)
-                        .first()
+                        h.createQuery("SELECT credentials from gateway_accounts WHERE id = :gatewayAccountId")
+                                .bind("gatewayAccountId", gatewayAccountId)
+                                .map(StringMapper.FIRST)
+                                .first()
         );
         return new Gson().fromJson(jsonString, Map.class);
     }
@@ -148,47 +149,81 @@ public class DatabaseTestHelper {
         );
     }
 
+    public List<Map<String, Object>> getAcceptedCardTypesByAccountId(Long gatewayAccountId) {
+
+        List<Map<String, Object>> ret = jdbi.withHandle(h ->
+                h.createQuery("SELECT ct.id, ct.label, ct.type, ct.brand, ct.version " +
+                        "FROM card_types ct " +
+                        "LEFT JOIN accepted_card_types act ON ct.id = act.card_type_id " +
+                        "WHERE act.gateway_account_id = :gatewayAccountId")
+                        .bind("gatewayAccountId", gatewayAccountId)
+                        .list());
+        return ret;
+    }
+
     public void addToken(Long chargeId, String tokenId) {
         jdbi.withHandle(handle ->
-                handle
-                        .createStatement("INSERT INTO tokens(charge_id, secure_redirect_token) VALUES (:charge_id, :secure_redirect_token)")
-                        .bind("charge_id", chargeId)
-                        .bind("secure_redirect_token", tokenId)
-                        .execute()
+                        handle
+                                .createStatement("INSERT INTO tokens(charge_id, secure_redirect_token) VALUES (:charge_id, :secure_redirect_token)")
+                                .bind("charge_id", chargeId)
+                                .bind("secure_redirect_token", tokenId)
+                                .execute()
+        );
+    }
+
+    public void addCardType(UUID id, String label, String type, String brand) {
+        jdbi.withHandle(handle ->
+                        handle
+                                .createStatement("INSERT INTO card_types(id, label, type, brand) VALUES (:id, :label, :type, :brand)")
+                                .bind("id", id)
+                                .bind("label", label)
+                                .bind("type", type)
+                                .bind("brand", brand)
+                                .execute()
+        );
+    }
+
+    public void addAcceptedCardType(long accountId, UUID cardTypeId) {
+        jdbi.withHandle(handle ->
+                        handle
+                                .createStatement("INSERT INTO accepted_card_types(gateway_account_id, card_type_id) VALUES (:accountId, :cardTypeId)")
+                                .bind("accountId", accountId)
+                                .bind("cardTypeId", cardTypeId)
+                                .execute()
         );
     }
 
     public String getChargeStatus(Long chargeId) {
         return jdbi.withHandle(h ->
-                h.createQuery("SELECT status from charges WHERE id = :charge_id")
-                        .bind("charge_id", chargeId)
-                        .map(StringMapper.FIRST)
-                        .first()
+                        h.createQuery("SELECT status from charges WHERE id = :charge_id")
+                                .bind("charge_id", chargeId)
+                                .map(StringMapper.FIRST)
+                                .first()
         );
     }
 
-    public void updateCredentialsFor(String accountId, String credentials) {
+    public void updateCredentialsFor(long accountId, String credentials) {
         try {
             PGobject pgCredentials = new PGobject();
             pgCredentials.setType("json");
             pgCredentials.setValue(credentials);
             jdbi.withHandle(handle ->
-                    handle.createStatement("UPDATE gateway_accounts set credentials=:credentials WHERE id=:gatewayAccountId")
-                            .bind("gatewayAccountId", Integer.parseInt(accountId))
-                            .bind("credentials", pgCredentials)
-                            .execute()
+                            handle.createStatement("UPDATE gateway_accounts set credentials=:credentials WHERE id=:gatewayAccountId")
+                                    .bind("gatewayAccountId", accountId)
+                                    .bind("credentials", pgCredentials)
+                                    .execute()
             );
         } catch (SQLException e) {
             throw new RuntimeException(e);
         }
     }
 
-    public void updateServiceNameFor(String accountId, String serviceName) {
+    public void updateServiceNameFor(long accountId, String serviceName) {
         jdbi.withHandle(handle ->
-                handle.createStatement("UPDATE gateway_accounts set service_name=:serviceName WHERE id=:gatewayAccountId")
-                        .bind("gatewayAccountId", Integer.parseInt(accountId))
-                        .bind("serviceName", serviceName)
-                        .execute()
+                        handle.createStatement("UPDATE gateway_accounts set service_name=:serviceName WHERE id=:gatewayAccountId")
+                                .bind("gatewayAccountId", accountId)
+                                .bind("serviceName", serviceName)
+                                .execute()
         );
     }
 

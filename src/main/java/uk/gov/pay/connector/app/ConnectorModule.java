@@ -46,6 +46,9 @@ public class ConnectorModule extends AbstractModule {
         properties.put("eclipselink.ddl-generation.output-mode", jpaConfiguration.getDdlGenerationOutputMode());
         properties.put("eclipselink.session.customizer", "uk.gov.pay.connector.util.ConnectorSessionCustomiser");
 
+        properties.put("eclipselink.logging.level", "FINE");
+        properties.put("eclipselink.logging.level.sql", "FINE");
+
         final JpaPersistModule jpaModule = new JpaPersistModule("ConnectorUnit");
         jpaModule.properties(properties);
 
