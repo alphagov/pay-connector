@@ -7,7 +7,7 @@ import io.dropwizard.util.Duration;
 import javax.validation.Valid;
 
 public class CustomJerseyClientConfiguration extends Configuration {
-    private Duration readTimeout = Duration.milliseconds(20000L);
+    private Duration readTimeout;
 
     @Valid
     @JsonProperty

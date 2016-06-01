@@ -43,8 +43,7 @@ public class ClientFactory {
                 .using(new ApacheConnectorProvider())
                 .using(clientConfiguration)
                 .withProperty(ClientProperties.READ_TIMEOUT, readTimeoutInMillis)
-                .withProperty(ApacheClientProperties.CONNECTION_MANAGER, createConnectionManager())
-        ;
+                .withProperty(ApacheClientProperties.CONNECTION_MANAGER, createConnectionManager());
 
         // optionally set proxy; see comment below why this has to be done
         if (conf.getCustomJerseyClient().isProxyEnabled()) {

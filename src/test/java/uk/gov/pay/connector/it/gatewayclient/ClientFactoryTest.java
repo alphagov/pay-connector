@@ -1,5 +1,6 @@
 package uk.gov.pay.connector.it.gatewayclient;
 
+import org.glassfish.jersey.client.ClientProperties;
 import org.junit.After;
 import org.junit.Before;
 import org.junit.Rule;
@@ -17,6 +18,7 @@ import java.util.Collection;
 
 import static io.dropwizard.testing.ConfigOverride.config;
 import static java.lang.String.format;
+import static org.junit.Assert.assertEquals;
 import static org.mockserver.integration.ClientAndServer.startClientAndServer;
 import static org.mockserver.model.HttpRequest.request;
 import static org.mockserver.model.HttpResponse.response;
@@ -77,6 +79,7 @@ public class ClientFactoryTest {
         client.target(serverUrl).path("hello").request().get();
 
         mockServer.verify(request().withPath("/hello"), once());
+        assertEquals(90000, client.getConfiguration().getProperty(ClientProperties.READ_TIMEOUT));
 
         if (proxyEnabled) {
             proxy.verify(request().withPath("/hello"), once());
