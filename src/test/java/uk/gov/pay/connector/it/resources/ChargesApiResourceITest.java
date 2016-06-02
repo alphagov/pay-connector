@@ -59,6 +59,7 @@ public class ChargesApiResourceITest {
     private static final String JSON_CHARGE_KEY = "charge_id";
     private static final String JSON_STATE_KEY = "state.status";
     private static final String JSON_MESSAGE_KEY = "message";
+    private static final String JSON_EMAIL_KEY = "email";
     private static final String JSON_PROVIDER_KEY = "payment_provider";
     private static final String PROVIDER_NAME = "test_gateway";
     private static final long AMOUNT = 6234L;
@@ -68,6 +69,7 @@ public class ChargesApiResourceITest {
 
     private String accountId = "72332423443245";
     private String returnUrl = "http://service.url/success-page/";
+    private String email = "bob@bobbington.bob";
 
     private RestAssuredClient createChargeApi = new RestAssuredClient(app, accountId);
     private RestAssuredClient getChargeApi = new RestAssuredClient(app, accountId);
@@ -82,12 +84,13 @@ public class ChargesApiResourceITest {
 
         String expectedReference = "Test reference";
         String expectedDescription = "Test description";
-        String postBody = toJson(ImmutableMap.of(
-                JSON_AMOUNT_KEY, AMOUNT,
-                JSON_REFERENCE_KEY, expectedReference,
-                JSON_DESCRIPTION_KEY, expectedDescription,
-                JSON_GATEWAY_ACC_KEY, accountId,
-                JSON_RETURN_URL_KEY, returnUrl));
+        String postBody = toJson(ImmutableMap.builder()
+                .put(JSON_AMOUNT_KEY, AMOUNT)
+                .put(JSON_REFERENCE_KEY, expectedReference)
+                .put(JSON_DESCRIPTION_KEY, expectedDescription)
+                .put(JSON_GATEWAY_ACC_KEY, accountId)
+                .put(JSON_RETURN_URL_KEY, returnUrl)
+                .put(JSON_EMAIL_KEY, email).build());
 
         ValidatableResponse response = createChargeApi
                 .postCreateCharge(postBody)
@@ -98,6 +101,7 @@ public class ChargesApiResourceITest {
                 .body(JSON_DESCRIPTION_KEY, is(expectedDescription))
                 .body(JSON_PROVIDER_KEY, is(PROVIDER_NAME))
                 .body(JSON_RETURN_URL_KEY, is(returnUrl))
+                .body(JSON_EMAIL_KEY, is(email))
                 .body("created_date", matchesPattern("^\\d{4}-\\d{2}-\\d{2}T\\d{2}:\\d{2}:\\d{2}.\\d{3}Z"))
                 .body("created_date", isWithin(10, SECONDS))
                 .contentType(JSON);
@@ -128,7 +132,9 @@ public class ChargesApiResourceITest {
                 .body(JSON_REFERENCE_KEY, is(expectedReference))
                 .body(JSON_DESCRIPTION_KEY, is(expectedDescription))
                 .body(JSON_STATE_KEY, is(CREATED.toExternal().getStatus()))
-                .body(JSON_RETURN_URL_KEY, is(returnUrl));
+                .body(JSON_RETURN_URL_KEY, is(returnUrl))
+                .body(JSON_EMAIL_KEY, is(email));
+
 
         // Reload the charge token which as it should have changed
         String newChargeTokenId = app.getDatabaseTestHelper().getChargeTokenByExternalChargeId(externalChargeId);
@@ -142,6 +148,55 @@ public class ChargesApiResourceITest {
                 .body("links", containsLink("next_url_post", "POST", hrefNextUrlPost, "application/x-www-form-urlencoded", new HashMap<String, Object>() {{
                     put("chargeTokenId", newChargeTokenId);
                 }}));
+    }
+
+    @Test
+    public void makeChargeNoEmailField_shouldReturnOK() throws Exception {
+        String expectedReference = "Test reference";
+        String expectedDescription = "Test description";
+        String postBody = toJson(ImmutableMap.builder()
+                .put(JSON_AMOUNT_KEY, AMOUNT)
+                .put(JSON_REFERENCE_KEY, expectedReference)
+                .put(JSON_DESCRIPTION_KEY, expectedDescription)
+                .put(JSON_GATEWAY_ACC_KEY, accountId)
+                .put(JSON_EMAIL_KEY, email)
+                .put(JSON_RETURN_URL_KEY, returnUrl).build());
+
+
+        createChargeApi
+                .postCreateCharge(postBody)
+                .statusCode(Status.CREATED.getStatusCode())
+                .body(JSON_CHARGE_KEY, is(notNullValue()))
+                .body(JSON_AMOUNT_KEY, isNumber(AMOUNT))
+                .body(JSON_REFERENCE_KEY, is(expectedReference))
+                .body(JSON_DESCRIPTION_KEY, is(expectedDescription))
+                .body(JSON_PROVIDER_KEY, is(PROVIDER_NAME))
+                .body(JSON_RETURN_URL_KEY, is(returnUrl))
+                .body("created_date", matchesPattern("^\\d{4}-\\d{2}-\\d{2}T\\d{2}:\\d{2}:\\d{2}.\\d{3}Z"))
+                .body("created_date", isWithin(10, SECONDS))
+                .contentType(JSON);
+
+    }
+
+    @Test
+    public void makeChargeInvalidEmail_shouldReturnBadRequest() throws Exception {
+        String expectedReference = "Test reference";
+        String expectedDescription = "Test description";
+        String postBody = toJson(ImmutableMap.builder()
+                .put(JSON_AMOUNT_KEY, AMOUNT)
+                .put(JSON_REFERENCE_KEY, expectedReference)
+                .put(JSON_DESCRIPTION_KEY, expectedDescription)
+                .put(JSON_GATEWAY_ACC_KEY, accountId)
+                .put(JSON_EMAIL_KEY, "invalidemail...")
+                .put(JSON_RETURN_URL_KEY, returnUrl).build());
+
+        createChargeApi
+                .postCreateCharge(postBody)
+                .contentType(JSON)
+                .statusCode(BAD_REQUEST.getStatusCode())
+                .header("Location", is(nullValue()))
+                .body(JSON_CHARGE_KEY, is(nullValue()))
+                .body(JSON_MESSAGE_KEY, is("Field(s) are invalid: [email]"));
     }
 
     @Test
@@ -269,6 +324,8 @@ public class ChargesApiResourceITest {
         datesFrom(createdDateStrings).forEach(createdDate ->
                 assertThat(createdDate, is(within(1, DAYS, now())))
         );
+        List<String> emails = collect(results, "email");
+        assertThat(emails, contains(email, email));
     }
 
     @Test
@@ -635,7 +692,7 @@ public class ChargesApiResourceITest {
         long chargeId = RandomUtils.nextInt();
         String externalChargeId = "charge" + chargeId;
         ChargeStatus chargeStatus = status != null ? status : AUTHORISATION_SUCCESS;
-        app.getDatabaseTestHelper().addCharge(chargeId, externalChargeId, accountId, AMOUNT, chargeStatus, returnUrl, null, reference, fromDate);
+        app.getDatabaseTestHelper().addCharge(chargeId, externalChargeId, accountId, AMOUNT, chargeStatus, returnUrl, null, reference, fromDate, email);
         app.getDatabaseTestHelper().addToken(chargeId, "tokenId");
         app.getDatabaseTestHelper().addEvent(chargeId, chargeStatus.getValue());
         return externalChargeId;

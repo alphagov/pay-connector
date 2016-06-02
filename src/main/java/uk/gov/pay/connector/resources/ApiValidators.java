@@ -9,6 +9,7 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
+import java.util.regex.Pattern;
 import java.util.stream.Collectors;
 
 import static com.google.common.collect.Lists.newArrayList;
@@ -18,6 +19,32 @@ import static java.lang.String.format;
 import static org.apache.commons.lang3.StringUtils.isNotBlank;
 
 public class ApiValidators {
+    private static final String EMAIL_KEY = "email";
+
+    private enum ChargeParamValidator {
+        EMAIL(EMAIL_KEY){
+            boolean validate(String email) {
+                return Pattern.matches(".+@.+\\..+", email);
+            }
+        };
+
+        private final String type;
+        ChargeParamValidator(String type){this.type = type;}
+        @Override public String toString(){return type;}
+
+        abstract boolean validate(String candidate);
+
+        private static final Map<String, ChargeParamValidator> stringToEnum = new HashMap<String, ChargeParamValidator>();
+        static{
+            for(ChargeParamValidator val: values()){
+                stringToEnum.put(val.toString(), val);
+            }
+        }
+
+        public static Optional<ChargeParamValidator> fromString(String type){
+            return Optional.ofNullable(stringToEnum.get(type));
+        }
+    }
 
     public static Optional<List> validateQueryParams(List<Pair<String, String>> dateParams, List<Pair<String, Long>> nonNegativePairMap) {
         Map<String, String> invalidQueryParams = new HashMap<>();
@@ -53,5 +80,18 @@ public class ApiValidators {
             return left(format("account with id %s not found", gatewayAccountId));
         }
         return right(true);
+    }
+
+    public static Optional<List<String>> validateChargeParams(Map<String, Object> inputData) {
+        List<String> invalid = inputData.entrySet().stream()
+                .filter(entry -> ChargeParamValidator.fromString(entry.getKey())
+                        .map(validator -> !validator.validate(entry.getValue().toString()))
+                        .orElse(false))
+                .map(Map.Entry::getKey)
+                .collect(Collectors.toList());
+
+        return invalid.isEmpty()
+                ? Optional.empty()
+                : Optional.of(invalid);
     }
 }

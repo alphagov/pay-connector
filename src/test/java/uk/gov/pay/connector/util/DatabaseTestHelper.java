@@ -51,15 +51,19 @@ public class DatabaseTestHelper {
     }
 
     public void addCharge(Long chargeId, String externalChargeId, String gatewayAccountId, long amount, ChargeStatus status, String returnUrl, String transactionId) {
-        addCharge(chargeId, externalChargeId, gatewayAccountId, amount, status, returnUrl, transactionId, "Test description", "Test reference", now(), 1);
+        addCharge(chargeId, externalChargeId, gatewayAccountId, amount, status, returnUrl, transactionId, "Test description", "Test reference", now(), 1, null);
     }
 
     public void addCharge(String externalChargeId, String gatewayAccountId, long amount, ChargeStatus status, String returnUrl, String transactionId) {
-        addCharge((long) RandomUtils.nextInt(1, 9999999), externalChargeId, gatewayAccountId, amount, status, returnUrl, transactionId, "Test description", "Test reference", now(), 1);
+        addCharge((long) RandomUtils.nextInt(1, 9999999), externalChargeId, gatewayAccountId, amount, status, returnUrl, transactionId, "Test description", "Test reference", now(), 1, null);
     }
 
     public void addCharge(Long chargeId, String externalChargeId, String accountId, long amount, ChargeStatus chargeStatus, String returnUrl, String transactionId, String reference, ZonedDateTime createdDate) {
-        addCharge(chargeId, externalChargeId, accountId, amount, chargeStatus, returnUrl, transactionId, "Test description", reference, createdDate == null ? now() : createdDate, 1);
+        addCharge(chargeId, externalChargeId, accountId, amount, chargeStatus, returnUrl, transactionId, "Test description", reference, createdDate == null ? now() : createdDate, 1, null);
+    }
+
+    public void addCharge(Long chargeId, String externalChargeId, String accountId, long amount, ChargeStatus chargeStatus, String returnUrl, String transactionId, String reference, ZonedDateTime createdDate, String email) {
+        addCharge(chargeId, externalChargeId, accountId, amount, chargeStatus, returnUrl, transactionId, "Test description", reference, createdDate == null ? now() : createdDate, 1, email);
     }
 
     private void addCharge(
@@ -73,7 +77,8 @@ public class DatabaseTestHelper {
             String description,
             String reference,
             ZonedDateTime createdDate,
-            long version
+            long version,
+            String email
     ) {
         jdbi.withHandle(h ->
                         h.update(
@@ -89,9 +94,10 @@ public class DatabaseTestHelper {
                                         "        description,\n" +
                                         "        created_date,\n" +
                                         "        reference,\n" +
-                                        "        version\n" +
+                                        "        version,\n" +
+                                        "        email\n" +
                                         "    )\n" +
-                                        "   VALUES(?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)\n",
+                                        "   VALUES(?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)\n",
                                 chargeId,
                                 externalChargeId,
                                 amount,
@@ -102,7 +108,8 @@ public class DatabaseTestHelper {
                                 description,
                                 Timestamp.from(createdDate.toInstant()),
                                 reference,
-                                version
+                                version,
+                                email
                         )
         );
     }

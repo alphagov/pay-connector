@@ -20,6 +20,7 @@ public abstract class AbstractChargeResponseBuilder<T extends AbstractChargeResp
     protected List<Map<String, Object>> links = new ArrayList<>();
     protected String reference;
     protected String providerName;
+    protected String email;
 
     protected abstract T thisObject();
 
@@ -45,6 +46,11 @@ public abstract class AbstractChargeResponseBuilder<T extends AbstractChargeResp
 
     public T withReturnUrl(String returnUrl) {
         this.returnUrl = returnUrl;
+        return thisObject();
+    }
+
+    public T withEmail(String email) {
+        this.email = email;
         return thisObject();
     }
 

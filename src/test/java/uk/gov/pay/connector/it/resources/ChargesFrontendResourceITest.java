@@ -41,6 +41,8 @@ public class ChargesFrontendResourceITest {
     private String accountId = "72332423443245";
     private String description = "Test description";
     private String returnUrl = "http://whatever.com";
+    private String email = "email@whatever.com";
+
     private long expectedAmount = 6234L;
 
     private RestAssuredClient connectorRestApi = new RestAssuredClient(app, accountId);
@@ -67,7 +69,7 @@ public class ChargesFrontendResourceITest {
     public void shouldReturnInternalChargeStatusIfInternalStatusIsAuthorised() throws Exception {
 
         String chargeId = RandomIdGenerator.newId();
-        app.getDatabaseTestHelper().addCharge(chargeId, accountId, expectedAmount, AUTHORISATION_SUCCESS, returnUrl, null);
+        app.getDatabaseTestHelper().addCharge((long) 123456, chargeId, accountId, expectedAmount, AUTHORISATION_SUCCESS, returnUrl, null, "ref", null, email);
 
         validateGetCharge(expectedAmount, chargeId, AUTHORISATION_SUCCESS);
     }
@@ -244,12 +246,13 @@ public class ChargesFrontendResourceITest {
 
     private String postToCreateACharge(long expectedAmount) {
         String reference = "Test reference";
-        String postBody = toJson(ImmutableMap.of(
-                "reference", reference,
-                "description", description,
-                "amount", expectedAmount,
-                "gateway_account_id", accountId,
-                "return_url", returnUrl));
+        String postBody = toJson(ImmutableMap.builder()
+                .put("reference", reference)
+                .put("description", description)
+                .put("amount", expectedAmount)
+                .put("gateway_account_id", accountId)
+                .put("return_url", returnUrl)
+                .put("email", email).build());
 
         ValidatableResponse response = connectorRestApi
                 .withAccountId(accountId)
@@ -260,6 +263,7 @@ public class ChargesFrontendResourceITest {
                 .body("description", is(description))
                 .body("amount", isNumber(expectedAmount))
                 .body("return_url", is(returnUrl))
+                .body("email", is(email))
                 .body("created_date", is(notNullValue()))
                 .contentType(JSON);
 
@@ -280,6 +284,7 @@ public class ChargesFrontendResourceITest {
                 .body("containsKey('gateway_account_id')", is(false))
                 .body("status", is(chargeStatus.getValue()))
                 .body("return_url", is(returnUrl))
+                .body("email", is(email))
                 .body("created_date", is(notNullValue()))
                 .body("created_date", matchesPattern("^\\d{4}-\\d{2}-\\d{2}T\\d{2}:\\d{2}:\\d{2}.\\d{3}Z"))
                 .body("created_date", isWithin(10, SECONDS));

@@ -7,6 +7,7 @@ public class ChargeEntityFixture {
     private Long id = 1L;
     private Long amount = 500L;
     private String returnUrl = "http://return.com";
+    private String email = "test@email.com";
     private String description = "This is a description";
     private String reference = "This is a reference";
     private ChargeStatus status = ChargeStatus.CREATED;
@@ -18,7 +19,7 @@ public class ChargeEntityFixture {
     }
 
     public ChargeEntity build() {
-        ChargeEntity chargeEntity = new ChargeEntity(amount, status ,returnUrl, description, reference, gatewayAccountEntity);
+        ChargeEntity chargeEntity = new ChargeEntity(amount, status ,returnUrl, description, reference, gatewayAccountEntity, email);
         chargeEntity.setId(id);
         chargeEntity.setGatewayTransactionId(transactionId);
         return chargeEntity;

@@ -263,4 +263,12 @@
             </column>
         </createTable>
     </changeSet>
+
+    <changeSet id="add email column to charges table" author="">
+        <addColumn tableName="charges">
+            <column name="email" type="varchar(50)">
+                <constraints nullable="true" unique="false"/>
+            </column>
+        </addColumn>
+    </changeSet>
 </databaseChangeLog>
