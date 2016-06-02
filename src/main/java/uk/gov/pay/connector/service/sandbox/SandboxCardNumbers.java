@@ -26,25 +26,21 @@ public class SandboxCardNumbers {
     private static final List GOOD_CARDS = ImmutableList.of(
             "4444333322221111",
             "4242424242424242",
+            "4000056655665556",
             "5105105105105100",
-            "348560871512574",
-//            "4485197542476643", //FIXME: after user research session
-            "5582575229987470",
-            "4917902691983168",
-            "3528373272496082",
-            "6011188510795021",
-            "6763376639165982",
-            "36375928148471");
+            "5200828282828210",
+            "371449635398431",
+            "3566002020360505",
+            "6011000990139424",
+            "36148900647913");
 
     private static final String DECLINED_CARD_NUMBER = "4000000000000002";
-    private static final String DECLINED_CARD_NUMBER2 = "4485197542476643";  ////FIXME: after user research session
     private static final String CVC_ERROR_CARD_NUMBER = "4000000000000127";
     private static final String EXPIRED_CARD_NUMBER = "4000000000000069";
     private static final String PROCESSING_ERROR_CARD_NUMBER = "4000000000000119";
 
     private static final Map<String, CardError> ERROR_CARDS = ImmutableMap.of(
             DECLINED_CARD_NUMBER, new CardError(AUTHORISATION_REJECTED, "This transaction was declined."),
-            DECLINED_CARD_NUMBER2, new CardError(AUTHORISATION_REJECTED, "This transaction was declined."), //FIXME: fix this properly later
             PROCESSING_ERROR_CARD_NUMBER, new CardError(AUTHORISATION_ERROR, "This transaction could be not be processed."),
             EXPIRED_CARD_NUMBER, new CardError(AUTHORISATION_REJECTED, "The card is expired."),
             CVC_ERROR_CARD_NUMBER, new CardError(AUTHORISATION_REJECTED, "The CVC code is incorrect."));
