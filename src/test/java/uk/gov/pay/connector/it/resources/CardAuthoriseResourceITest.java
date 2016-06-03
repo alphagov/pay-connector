@@ -18,17 +18,15 @@ public class CardAuthoriseResourceITest extends CardResourceITestBase {
     }
 
     private static final String[] VALID_SANDBOX_CARD_LIST = new String[]{
+            "4444333322221111",
             "4242424242424242",
+            "4000056655665556",
             "5105105105105100",
-            "348560871512574",
-//            "4485197542476643", //FIXME: after user research session
-            "5582575229987470",
-            "4917902691983168",
-            "3528373272496082",
-            "6011188510795021",
-            "6763376639165982",
-            "36375928148471"
-    };
+            "5200828282828210",
+            "371449635398431",
+            "3566002020360505",
+            "6011000990139424",
+            "36148900647913"};
 
     private String validCardDetails = buildJsonCardDetailsFor(VALID_SANDBOX_CARD_LIST[0]);
 
