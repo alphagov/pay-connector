@@ -47,7 +47,7 @@ public class ChargesApiResource {
     private static final String DESCRIPTION_KEY = "description";
     private static final String RETURN_URL_KEY = "return_url";
     private static final String REFERENCE_KEY = "reference";
-    private static final String EMAIL_KEY = "email";
+    public static final String EMAIL_KEY = "email";
 
     private static final String[] REQUIRED_FIELDS = {AMOUNT_KEY, DESCRIPTION_KEY, REFERENCE_KEY, RETURN_URL_KEY};
     private static final Map<String, Integer> MAXIMUM_FIELDS_SIZE = ImmutableMap.of(

@@ -237,6 +237,65 @@ public class ChargesFrontendResourceITest {
                 .body("results", hasSize(0));
     }
 
+    @Test
+    public void patchValidEmailOnChargeWithReplaceOp_shouldReturnOk() {
+        String chargeId = postToCreateACharge(expectedAmount);
+        String patchBody = createPatch("replace", "email", "a@b.c");
+
+        ValidatableResponse response = connectorRestApi
+                .withChargeId(chargeId)
+                .patchCharge(patchBody);
+
+        response.statusCode(OK.getStatusCode())
+                .contentType(JSON)
+                .body("email", is("a@b.c"));
+    }
+
+    @Test
+    public void patchValidEmailOnChargeWithAnyOpExceptReplace_shouldReturnBadRequest() {
+        String chargeId = postToCreateACharge(expectedAmount);
+        String patchBody = createPatch("delete", "email", "a@b.c");
+
+        ValidatableResponse response = connectorRestApi
+                .withChargeId(chargeId)
+                .patchCharge(patchBody);
+
+        response.statusCode(BAD_REQUEST.getStatusCode())
+                .contentType(JSON)
+                .body("message", is("Bad patch parameters{op=delete, path=email, value=a@b.c}"));
+    }
+
+
+    @Test
+    public void patchInvalidEmailOnCharge_shouldReturnBadRequest() {
+        String chargeId = postToCreateACharge(expectedAmount);
+        String patchBody = createPatch("replace", "email", "@ab.c");
+
+        ValidatableResponse response = connectorRestApi
+                .withChargeId(chargeId)
+                .patchCharge(patchBody);
+
+        response.statusCode(BAD_REQUEST.getStatusCode())
+                .contentType(JSON)
+                .body("message", is("Invalid patch parameters{op=replace, path=email, value=@ab.c}"));
+
+    }
+
+    @Test
+    public void patchUnpatchableChargeField_shouldReturnBadRequest() {
+        String chargeId = postToCreateACharge(expectedAmount);
+        String patchBody = createPatch("replace", "amount", "1");
+
+        ValidatableResponse response = connectorRestApi
+                .withChargeId(chargeId)
+                .patchCharge(patchBody);
+
+        response.statusCode(BAD_REQUEST.getStatusCode())
+                .contentType(JSON)
+                .body("message", is("Bad patch parameters{op=replace, path=amount, value=1}"));
+    }
+
+
     private void assertTransactionEntry(ValidatableResponse response, int index, String externalChargeId, String gatewayTransactionId, int amount, String chargeStatus) {
         response.body("results[" + index + "].charge_id", is(externalChargeId))
                 .body("results[" + index + "].gateway_transaction_id", is(gatewayTransactionId))
@@ -294,5 +353,10 @@ public class ChargesFrontendResourceITest {
         statuses.stream().forEach(
                 st -> app.getDatabaseTestHelper().addEvent(chargeId, st.getValue())
         );
+    }
+
+    private static String createPatch(String op, String path, String value) {
+        return toJson(ImmutableMap.of("op", op, "path", path, "value", value));
+
     }
 }

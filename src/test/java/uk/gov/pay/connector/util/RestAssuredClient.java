@@ -93,6 +93,18 @@ public class RestAssuredClient {
                 .then();
     }
 
+    public ValidatableResponse patchCharge(String patchBody) {
+        String requestPath = FRONTEND_CHARGE_API_PATH
+                .replace("{accountId}", accountId)
+                .replace("{chargeId}", chargeId);
+
+        return given()
+                .port(app.getLocalPort())
+                .contentType(JSON).body(patchBody)
+                .patch(requestPath)
+                .then();
+    }
+
     public ValidatableResponse postChargeCancellation() {
         String requestPath = CHARGE_API_PATH
                 .replace("{accountId}", accountId)

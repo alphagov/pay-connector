@@ -7,11 +7,13 @@ import uk.gov.pay.connector.app.ConnectorConfiguration;
 import uk.gov.pay.connector.app.LinksConfig;
 import uk.gov.pay.connector.dao.ChargeDao;
 import uk.gov.pay.connector.dao.TokenDao;
+import uk.gov.pay.connector.model.ChargePatchRequest;
 import uk.gov.pay.connector.model.ChargeResponse;
 import uk.gov.pay.connector.model.domain.ChargeEntity;
 import uk.gov.pay.connector.model.domain.ChargeStatus;
 import uk.gov.pay.connector.model.domain.GatewayAccountEntity;
 import uk.gov.pay.connector.model.domain.TokenEntity;
+import uk.gov.pay.connector.resources.ChargesApiResource;
 
 import static java.lang.String.format;
 import static uk.gov.pay.connector.model.ChargeResponse.ChargeResponseBuilder;
@@ -78,6 +80,17 @@ public class ChargeService {
             mergedCharges.add(mergedEnt);
         });
         return mergedCharges;
+    }
+
+    @Transactional
+    public ChargeEntity updateCharge(ChargeEntity chargeEntity, ChargePatchRequest chargePatchRequest) {
+        switch (chargePatchRequest.getPath()) {
+            case ChargesApiResource.EMAIL_KEY:
+                chargeEntity.setEmail(chargePatchRequest.getValue());
+        }
+
+        chargeDao.merge(chargeEntity);
+        return chargeEntity;
     }
 
     private TokenEntity createNewChargeEntityToken(ChargeEntity chargeEntity) {

@@ -3,6 +3,7 @@ package uk.gov.pay.connector.resources;
 import fj.data.Either;
 import org.apache.commons.lang3.tuple.Pair;
 import uk.gov.pay.connector.dao.GatewayAccountDao;
+import uk.gov.pay.connector.model.ChargePatchRequest;
 import uk.gov.pay.connector.util.DateTimeUtils;
 
 import java.util.HashMap;
@@ -93,5 +94,13 @@ public class ApiValidators {
         return invalid.isEmpty()
                 ? Optional.empty()
                 : Optional.of(invalid);
+    }
+
+    public static boolean validateChargePatchParams(ChargePatchRequest chargePatchRequest) {
+        boolean invalid = ChargeParamValidator.fromString(chargePatchRequest.getPath())
+                        .map(validator -> !validator.validate(chargePatchRequest.getValue()))
+                        .orElse(false);
+
+        return !invalid;
     }
 }
