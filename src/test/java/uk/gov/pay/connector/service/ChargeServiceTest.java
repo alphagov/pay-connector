@@ -294,6 +294,7 @@ public class ChargeServiceTest {
                 .withGatewayTransactionId(chargeEntity.getGatewayTransactionId())
                 .withProviderName(chargeEntity.getGatewayAccount().getGatewayName())
                 .withCreatedDate(chargeEntity.getCreatedDate())
+                .withEmail(chargeEntity.getEmail())
                 .withReturnUrl(chargeEntity.getReturnUrl());
     }
 }

@@ -35,6 +35,9 @@ public class ChargeEntity extends AbstractEntity {
     @Column(name = "return_url")
     private String returnUrl;
 
+    @Column(name = "email")
+    private String email;
+
     @ManyToOne
     @JoinColumn(name = "gateway_account_id", updatable = false)
     private GatewayAccountEntity gatewayAccount;
@@ -56,12 +59,12 @@ public class ChargeEntity extends AbstractEntity {
         //for jpa
     }
 
-    public ChargeEntity(Long amount, String returnUrl, String description, String reference, GatewayAccountEntity gatewayAccount) {
-        this(amount, CREATED, returnUrl, description, reference, gatewayAccount);
+    public ChargeEntity(Long amount, String returnUrl, String description, String reference, GatewayAccountEntity gatewayAccount, String email) {
+        this(amount, CREATED, returnUrl, description, reference, gatewayAccount, email);
     }
 
     //for fixture
-    ChargeEntity(Long amount, ChargeStatus status, String returnUrl, String description, String reference, GatewayAccountEntity gatewayAccount) {
+    ChargeEntity(Long amount, ChargeStatus status, String returnUrl, String description, String reference, GatewayAccountEntity gatewayAccount, String email) {
         this.amount = amount;
         this.status = status.getValue();
         this.returnUrl = returnUrl;
@@ -70,6 +73,7 @@ public class ChargeEntity extends AbstractEntity {
         this.gatewayAccount = gatewayAccount;
         this.createdDate = ZonedDateTime.now(ZoneId.of("UTC"));
         this.externalId = RandomIdGenerator.newId();
+        this.email = email;
     }
 
     public Long getAmount() {
@@ -142,5 +146,9 @@ public class ChargeEntity extends AbstractEntity {
 
     public boolean hasExternalStatus(ExternalChargeState... state) {
         return Arrays.stream(state).anyMatch(s -> ChargeStatus.fromString(getStatus()).toExternal().equals(s));
+    }
+
+    public String getEmail() {
+        return email;
     }
 }

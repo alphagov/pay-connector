@@ -44,12 +44,14 @@ public class ChargeService {
 
     @Transactional
     public ChargeResponse create(Map<String, Object> chargeRequest, GatewayAccountEntity gatewayAccount, UriInfo uriInfo) {
-
+        String email = chargeRequest.get("email") != null ? chargeRequest.get("email").toString() : null;
         ChargeEntity chargeEntity = new ChargeEntity(new Long(chargeRequest.get("amount").toString()),
                 chargeRequest.get("return_url").toString(),
                 chargeRequest.get("description").toString(),
                 chargeRequest.get("reference").toString(),
-                gatewayAccount);
+                gatewayAccount,
+                email
+                );
         chargeDao.persist(chargeEntity);
         return chargeResponseBuilder(uriInfo, chargeEntity, createNewChargeEntityToken(chargeEntity)).build();
     }
@@ -104,6 +106,7 @@ public class ChargeService {
                 .withProviderName(charge.getGatewayAccount().getGatewayName())
                 .withCreatedDate(charge.getCreatedDate())
                 .withReturnUrl(charge.getReturnUrl())
+                .withEmail(charge.getEmail())
                 .withLink("self", GET, selfUriFor(uriInfo, charge.getGatewayAccount().getId(), chargeId));
     }
 

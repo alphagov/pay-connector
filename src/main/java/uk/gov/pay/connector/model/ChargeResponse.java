@@ -27,7 +27,7 @@ public class ChargeResponse {
 
         @Override
         public ChargeResponse build() {
-            return new ChargeResponse(chargeId, amount, state, gatewayTransactionId, returnUrl, description, reference, providerName, createdDate, links);
+            return new ChargeResponse(chargeId, amount, state, gatewayTransactionId, returnUrl, email, description, reference, providerName, createdDate, links);
         }
     }
 
@@ -53,6 +53,9 @@ public class ChargeResponse {
     @JsonProperty("return_url")
     private String returnUrl;
 
+    @JsonProperty("email")
+    private String email;
+
     @JsonProperty
     private String description;
 
@@ -69,7 +72,7 @@ public class ChargeResponse {
         return DateTimeUtils.toUTCDateString(createdDate);
     }
 
-    protected ChargeResponse(String chargeId, Long amount, ExternalChargeState state, String gatewayTransactionId, String returnUrl, String description, String reference, String providerName, ZonedDateTime createdDate, List<Map<String, Object>> dataLinks) {
+    protected ChargeResponse(String chargeId, Long amount, ExternalChargeState state, String gatewayTransactionId, String returnUrl, String email, String description, String reference, String providerName, ZonedDateTime createdDate, List<Map<String, Object>> dataLinks) {
         this.dataLinks = dataLinks;
         this.chargeId = chargeId;
         this.amount = amount;
@@ -80,6 +83,7 @@ public class ChargeResponse {
         this.reference = reference;
         this.providerName = providerName;
         this.createdDate = createdDate;
+        this.email = email;
     }
 
     public URI getLink(String rel) {
@@ -102,6 +106,7 @@ public class ChargeResponse {
                 .append(this.state, that.state)
                 .append(this.gatewayTransactionId, that.gatewayTransactionId)
                 .append(this.returnUrl, that.returnUrl)
+                .append(this.email, that.email)
                 .append(this.description, that.description)
                 .append(this.reference, that.reference)
                 .append(this.providerName, that.providerName)

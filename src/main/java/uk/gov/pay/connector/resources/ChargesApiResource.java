@@ -26,6 +26,8 @@ import javax.ws.rs.core.Response;
 import javax.ws.rs.core.UriInfo;
 import java.time.ZonedDateTime;
 import java.util.*;
+import java.util.Optional;
+import java.util.regex.Pattern;
 import java.util.stream.Collectors;
 
 import static fj.data.Either.reduce;
@@ -45,6 +47,8 @@ public class ChargesApiResource {
     private static final String DESCRIPTION_KEY = "description";
     private static final String RETURN_URL_KEY = "return_url";
     private static final String REFERENCE_KEY = "reference";
+    private static final String EMAIL_KEY = "email";
+
     private static final String[] REQUIRED_FIELDS = {AMOUNT_KEY, DESCRIPTION_KEY, REFERENCE_KEY, RETURN_URL_KEY};
     private static final Map<String, Integer> MAXIMUM_FIELDS_SIZE = ImmutableMap.of(
             DESCRIPTION_KEY, 255,
@@ -137,6 +141,11 @@ public class ChargesApiResource {
             return fieldsInvalidSizeResponse(invalidSizeFields.get());
         }
 
+        Optional<List<String>> invalidFields = ApiValidators.validateChargeParams(chargeRequest);
+        if (invalidFields.isPresent()) {
+            return fieldsInvalidResponse(invalidFields.get());
+        }
+
         return gatewayAccountDao.findById(accountId).map(
                 gatewayAccountEntity -> {
                     logger.info("Creating new charge - {}", chargeRequest);
@@ -205,6 +214,7 @@ public class ChargesApiResource {
                                 .withGatewayTransactionId(charge.getGatewayTransactionId())
                                 .withCreatedDate(charge.getCreatedDate())
                                 .withReturnUrl(charge.getReturnUrl())
+                                .withEmail(charge.getEmail())
                                 .withProviderName(charge.getGatewayAccount().getGatewayName())
                                 .build()
                         ).collect(Collectors.toList());
