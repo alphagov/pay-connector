@@ -45,12 +45,12 @@ public class ChargeService {
     }
 
     @Transactional
-    public ChargeResponse create(Map<String, Object> chargeRequest, GatewayAccountEntity gatewayAccount, UriInfo uriInfo) {
-        String email = chargeRequest.get("email") != null ? chargeRequest.get("email").toString() : null;
-        ChargeEntity chargeEntity = new ChargeEntity(new Long(chargeRequest.get("amount").toString()),
-                chargeRequest.get("return_url").toString(),
-                chargeRequest.get("description").toString(),
-                chargeRequest.get("reference").toString(),
+    public ChargeResponse create(Map<String, String> chargeRequest, GatewayAccountEntity gatewayAccount, UriInfo uriInfo) {
+        String email = chargeRequest.get("email") != null ? chargeRequest.get("email") : null;
+        ChargeEntity chargeEntity = new ChargeEntity(new Long(chargeRequest.get("amount")),
+                chargeRequest.get("return_url"),
+                chargeRequest.get("description"),
+                chargeRequest.get("reference"),
                 gatewayAccount,
                 email
                 );

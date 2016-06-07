@@ -83,10 +83,10 @@ public class ApiValidators {
         return right(true);
     }
 
-    public static Optional<List<String>> validateChargeParams(Map<String, Object> inputData) {
+    public static Optional<List<String>> validateChargeParams(Map<String, String> inputData) {
         List<String> invalid = inputData.entrySet().stream()
                 .filter(entry -> ChargeParamValidator.fromString(entry.getKey())
-                        .map(validator -> !validator.validate(entry.getValue().toString()))
+                        .map(validator -> !validator.validate(entry.getValue()))
                         .orElse(false))
                 .map(Map.Entry::getKey)
                 .collect(Collectors.toList());

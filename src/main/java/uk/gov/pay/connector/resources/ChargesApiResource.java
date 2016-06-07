@@ -27,7 +27,6 @@ import javax.ws.rs.core.UriInfo;
 import java.time.ZonedDateTime;
 import java.util.*;
 import java.util.Optional;
-import java.util.regex.Pattern;
 import java.util.stream.Collectors;
 
 import static fj.data.Either.reduce;
@@ -130,7 +129,7 @@ public class ChargesApiResource {
     @POST
     @Path(CHARGES_API_PATH)
     @Produces(APPLICATION_JSON)
-    public Response createNewCharge(@PathParam(ACCOUNT_ID) Long accountId, Map<String, Object> chargeRequest, @Context UriInfo uriInfo) {
+    public Response createNewCharge(@PathParam(ACCOUNT_ID) Long accountId, Map<String, String> chargeRequest, @Context UriInfo uriInfo) {
         Optional<List<String>> missingFields = checkMissingFields(chargeRequest);
         if (missingFields.isPresent()) {
             return fieldsMissingResponse(missingFields.get());
@@ -183,7 +182,7 @@ public class ChargesApiResource {
         return parse;
     }
 
-    private Optional<List<String>> checkMissingFields(Map<String, Object> inputData) {
+    private Optional<List<String>> checkMissingFields(Map<String, String> inputData) {
         List<String> missing = Arrays.stream(REQUIRED_FIELDS)
                 .filter(field -> !inputData.containsKey(field))
                 .collect(Collectors.toList());
@@ -226,7 +225,7 @@ public class ChargesApiResource {
                         .buildResponse();
     }
 
-    private Optional<List<String>> checkInvalidSizeFields(Map<String, Object> inputData) {
+    private Optional<List<String>> checkInvalidSizeFields(Map<String, String> inputData) {
         List<String> invalidSize = MAXIMUM_FIELDS_SIZE.entrySet().stream()
                 .filter(entry -> !isFieldSizeValid(inputData, entry.getKey(), entry.getValue()))
                 .map(Map.Entry::getKey)
@@ -237,8 +236,8 @@ public class ChargesApiResource {
                 : Optional.of(invalidSize);
     }
 
-    private boolean isFieldSizeValid(Map<String, Object> chargeRequest, String fieldName, int fieldSize) {
-        String value = chargeRequest.get(fieldName).toString();
+    private boolean isFieldSizeValid(Map<String, String> chargeRequest, String fieldName, int fieldSize) {
+        String value = chargeRequest.get(fieldName);
         return value.length() <= fieldSize;
     }
 
