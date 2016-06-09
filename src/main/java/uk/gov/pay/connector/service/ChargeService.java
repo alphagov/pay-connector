@@ -7,8 +7,8 @@ import uk.gov.pay.connector.app.ConnectorConfiguration;
 import uk.gov.pay.connector.app.LinksConfig;
 import uk.gov.pay.connector.dao.ChargeDao;
 import uk.gov.pay.connector.dao.TokenDao;
-import uk.gov.pay.connector.model.ChargePatchRequest;
 import uk.gov.pay.connector.model.ChargeResponse;
+import uk.gov.pay.connector.model.PatchRequestBuilder;
 import uk.gov.pay.connector.model.domain.ChargeEntity;
 import uk.gov.pay.connector.model.domain.ChargeStatus;
 import uk.gov.pay.connector.model.domain.GatewayAccountEntity;
@@ -83,7 +83,7 @@ public class ChargeService {
     }
 
     @Transactional
-    public ChargeEntity updateCharge(ChargeEntity chargeEntity, ChargePatchRequest chargePatchRequest) {
+    public ChargeEntity updateCharge(ChargeEntity chargeEntity, PatchRequestBuilder.PatchRequest chargePatchRequest) {
         switch (chargePatchRequest.getPath()) {
             case ChargesApiResource.EMAIL_KEY:
                 chargeEntity.setEmail(chargePatchRequest.getValue());
