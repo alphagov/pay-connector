@@ -28,6 +28,8 @@ public class CardTypeDaoJpaITest extends DaoITestBase {
     public void setUp() throws Exception {
         cardTypeDao = env.getInstance(CardTypeDao.class);
 
+        databaseTestHelper.deleteAllCardTypes();
+
         this.mastercardCreditCardTypeTestRecord = DatabaseFixtures
                 .withDatabaseTestHelper(databaseTestHelper)
                 .aMastercardCreditCardType()

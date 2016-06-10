@@ -190,6 +190,14 @@ public class DatabaseTestHelper {
         );
     }
 
+    public void deleteAllCardTypes() {
+        jdbi.withHandle(handle ->
+                        handle
+                                .createStatement("DELETE FROM card_types")
+                                .execute()
+        );
+    }
+
     public void addAcceptedCardType(long accountId, UUID cardTypeId) {
         jdbi.withHandle(handle ->
                         handle

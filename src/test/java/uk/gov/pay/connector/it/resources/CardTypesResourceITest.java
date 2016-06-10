@@ -1,5 +1,6 @@
 package uk.gov.pay.connector.it.resources;
 
+import org.junit.Before;
 import org.junit.Rule;
 import org.junit.Test;
 import uk.gov.pay.connector.it.dao.DatabaseFixtures;
@@ -17,6 +18,11 @@ public class CardTypesResourceITest {
     private RestAssuredClient connectorApi = new RestAssuredClient(app, accountId);
 
     private DatabaseFixtures.TestCardType mastercardCreditCardTypeTestRecord;
+
+    @Before
+    public void setUp() throws Exception {
+        app.getDatabaseTestHelper().deleteAllCardTypes();
+    }
 
     @Test
     public void shouldGetNoCardTypesWhenNoCardTypesExist() throws Exception {

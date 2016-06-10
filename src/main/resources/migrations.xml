@@ -271,4 +271,9 @@
             </column>
         </addColumn>
     </changeSet>
+    <changeSet id="Seed database table card_types" author="">
+        <loadData file="seed-data/card_types.csv"
+                  tableName="card_types">
+        </loadData>
+    </changeSet>
 </databaseChangeLog>
