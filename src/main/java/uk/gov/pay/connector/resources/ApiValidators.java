@@ -3,6 +3,7 @@ package uk.gov.pay.connector.resources;
 import fj.data.Either;
 import org.apache.commons.lang3.tuple.Pair;
 import uk.gov.pay.connector.dao.GatewayAccountDao;
+import uk.gov.pay.connector.model.PatchRequestBuilder;
 import uk.gov.pay.connector.util.DateTimeUtils;
 
 import java.util.HashMap;
@@ -17,10 +18,9 @@ import static fj.data.Either.left;
 import static fj.data.Either.right;
 import static java.lang.String.format;
 import static org.apache.commons.lang3.StringUtils.isNotBlank;
+import static uk.gov.pay.connector.resources.ChargesApiResource.EMAIL_KEY;
 
-public class ApiValidators {
-    private static final String EMAIL_KEY = "email";
-
+class ApiValidators {
     private enum ChargeParamValidator {
         EMAIL(EMAIL_KEY){
             boolean validate(String email) {
@@ -46,7 +46,7 @@ public class ApiValidators {
         }
     }
 
-    public static Optional<List> validateQueryParams(List<Pair<String, String>> dateParams, List<Pair<String, Long>> nonNegativePairMap) {
+    static Optional<List> validateQueryParams(List<Pair<String, String>> dateParams, List<Pair<String, Long>> nonNegativePairMap) {
         Map<String, String> invalidQueryParams = new HashMap<>();
 
         dateParams.stream()
@@ -75,17 +75,17 @@ public class ApiValidators {
         return Optional.empty();
     }
 
-    public static Either<String, Boolean> validateGatewayAccountReference(GatewayAccountDao gatewayAccountDao, Long gatewayAccountId) {
+    static Either<String, Boolean> validateGatewayAccountReference(GatewayAccountDao gatewayAccountDao, Long gatewayAccountId) {
         if (!gatewayAccountDao.findById(gatewayAccountId).isPresent()) {
             return left(format("account with id %s not found", gatewayAccountId));
         }
         return right(true);
     }
 
-    public static Optional<List<String>> validateChargeParams(Map<String, Object> inputData) {
+    static Optional<List<String>> validateChargeParams(Map<String, String> inputData) {
         List<String> invalid = inputData.entrySet().stream()
                 .filter(entry -> ChargeParamValidator.fromString(entry.getKey())
-                        .map(validator -> !validator.validate(entry.getValue().toString()))
+                        .map(validator -> !validator.validate(entry.getValue()))
                         .orElse(false))
                 .map(Map.Entry::getKey)
                 .collect(Collectors.toList());
@@ -93,5 +93,13 @@ public class ApiValidators {
         return invalid.isEmpty()
                 ? Optional.empty()
                 : Optional.of(invalid);
+    }
+
+    public static boolean validateChargePatchParams(PatchRequestBuilder.PatchRequest chargePatchRequest) {
+        boolean invalid = ChargeParamValidator.fromString(chargePatchRequest.getPath())
+                        .map(validator -> !validator.validate(chargePatchRequest.getValue()))
+                        .orElse(false);
+
+        return !invalid;
     }
 }

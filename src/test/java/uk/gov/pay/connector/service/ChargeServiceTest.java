@@ -62,7 +62,7 @@ public class ChargeServiceTest {
     private LinksConfig linksConfig;
 
     private ChargeService service;
-    private Map<String, Object> chargeRequest = new HashMap<String, Object>() {{
+    private Map<String, String> chargeRequest = new HashMap<String, String>() {{
         put("amount", "100");
         put("return_url", "http://return-service.com");
         put("description", "This is a description");

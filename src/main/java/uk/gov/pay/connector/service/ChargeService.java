@@ -8,10 +8,12 @@ import uk.gov.pay.connector.app.LinksConfig;
 import uk.gov.pay.connector.dao.ChargeDao;
 import uk.gov.pay.connector.dao.TokenDao;
 import uk.gov.pay.connector.model.ChargeResponse;
+import uk.gov.pay.connector.model.PatchRequestBuilder;
 import uk.gov.pay.connector.model.domain.ChargeEntity;
 import uk.gov.pay.connector.model.domain.ChargeStatus;
 import uk.gov.pay.connector.model.domain.GatewayAccountEntity;
 import uk.gov.pay.connector.model.domain.TokenEntity;
+import uk.gov.pay.connector.resources.ChargesApiResource;
 
 import static java.lang.String.format;
 import static uk.gov.pay.connector.model.ChargeResponse.ChargeResponseBuilder;
@@ -43,12 +45,12 @@ public class ChargeService {
     }
 
     @Transactional
-    public ChargeResponse create(Map<String, Object> chargeRequest, GatewayAccountEntity gatewayAccount, UriInfo uriInfo) {
-        String email = chargeRequest.get("email") != null ? chargeRequest.get("email").toString() : null;
-        ChargeEntity chargeEntity = new ChargeEntity(new Long(chargeRequest.get("amount").toString()),
-                chargeRequest.get("return_url").toString(),
-                chargeRequest.get("description").toString(),
-                chargeRequest.get("reference").toString(),
+    public ChargeResponse create(Map<String, String> chargeRequest, GatewayAccountEntity gatewayAccount, UriInfo uriInfo) {
+        String email = chargeRequest.get("email") != null ? chargeRequest.get("email") : null;
+        ChargeEntity chargeEntity = new ChargeEntity(new Long(chargeRequest.get("amount")),
+                chargeRequest.get("return_url"),
+                chargeRequest.get("description"),
+                chargeRequest.get("reference"),
                 gatewayAccount,
                 email
                 );
@@ -78,6 +80,17 @@ public class ChargeService {
             mergedCharges.add(mergedEnt);
         });
         return mergedCharges;
+    }
+
+    @Transactional
+    public ChargeEntity updateCharge(ChargeEntity chargeEntity, PatchRequestBuilder.PatchRequest chargePatchRequest) {
+        switch (chargePatchRequest.getPath()) {
+            case ChargesApiResource.EMAIL_KEY:
+                chargeEntity.setEmail(chargePatchRequest.getValue());
+        }
+
+        chargeDao.merge(chargeEntity);
+        return chargeEntity;
     }
 
     private TokenEntity createNewChargeEntityToken(ChargeEntity chargeEntity) {
