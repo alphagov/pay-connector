@@ -8,7 +8,6 @@ import com.google.inject.persist.jpa.JpaPersistModule;
 import io.dropwizard.db.DataSourceFactory;
 import io.dropwizard.setup.Environment;
 import uk.gov.pay.connector.service.CardExecutorService;
-import uk.gov.pay.connector.service.transaction.TransactionFlow;
 
 import java.util.Properties;
 
@@ -45,9 +44,6 @@ public class ConnectorModule extends AbstractModule {
         properties.put("eclipselink.cache.shared.default", jpaConfiguration.getCacheSharedDefault());
         properties.put("eclipselink.ddl-generation.output-mode", jpaConfiguration.getDdlGenerationOutputMode());
         properties.put("eclipselink.session.customizer", "uk.gov.pay.connector.util.ConnectorSessionCustomiser");
-
-        properties.put("eclipselink.logging.level", "FINE");
-        properties.put("eclipselink.logging.level.sql", "FINE");
 
         final JpaPersistModule jpaModule = new JpaPersistModule("ConnectorUnit");
         jpaModule.properties(properties);
