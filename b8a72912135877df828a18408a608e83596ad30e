@@ -3,3 +3,5 @@ release.tag=testing_tag_release-2
 release.testing_tag_release-2.date=2016-06-20:18:04:09
 
 stage.tag=testing_tag_staging-2
+
+stage.testing_tag_staging-2.date=2016-06-21:11:35:37
