@@ -11,3 +11,5 @@ stage.alpha_staging-1.status=failed
 production.tag=alpha_production-1
 
 production.alpha_production-1.date=2016-06-21:11:47:27
+
+production.alpha_production-1.status=failed
