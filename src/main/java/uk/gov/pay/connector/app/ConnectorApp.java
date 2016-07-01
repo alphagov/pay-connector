@@ -63,6 +63,7 @@ public class ConnectorApp extends Application<ConnectorConfiguration> {
         environment.jersey().register(injector.getInstance(CardResource.class));
         environment.jersey().register(injector.getInstance(CardTypesResource.class));
         environment.jersey().register(injector.getInstance(HealthCheckResource.class));
+        environment.jersey().register(injector.getInstance(EmailNotificationResource.class));
         setupSmartpayBasicAuth(environment, configuration.getSmartpayConfig());
 
         environment.servlets().addFilter("LoggingFilter", injector.getInstance(LoggingFilter.class))

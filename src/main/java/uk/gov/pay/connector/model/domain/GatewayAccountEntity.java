@@ -1,5 +1,6 @@
 package uk.gov.pay.connector.model.domain;
 
+import com.fasterxml.jackson.annotation.JsonBackReference;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import com.google.common.collect.ImmutableMap;
 
@@ -27,7 +28,8 @@ public class GatewayAccountEntity extends AbstractEntity {
     @Column(name = "service_name")
     private String serviceName;
 
-    @OneToOne(mappedBy="accountEntity")
+    @JsonBackReference
+    @OneToOne(mappedBy="accountEntity", cascade = CascadeType.PERSIST)
     private EmailNotificationEntity emailNotification;
 
     @ManyToMany

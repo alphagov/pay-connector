@@ -295,7 +295,7 @@
                              referencedTableName="gateway_accounts"
                              referencedColumnNames="id"/>
             </column>
-            <column name="template" type="text">
+            <column name="template_body" type="text">
                 <constraints nullable="false"/>
             </column>
             <column name="version" type="bigint" defaultValue="0">

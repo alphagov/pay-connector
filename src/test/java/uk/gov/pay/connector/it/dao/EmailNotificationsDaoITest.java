@@ -52,7 +52,7 @@ public class EmailNotificationsDaoITest extends DaoITestBase {
 
         emailNotificationsDao.persist(emailNotificationEntity);
 
-        assertThat(databaseTestHelper.getEmailNotificationTemplateByAccountId(defaultAccount.getId()), is(emailNotificationEntity.getTemplate()));
+        assertThat(databaseTestHelper.getEmailNotificationTemplateByAccountId(defaultAccount.getId()), is(emailNotificationEntity.getTemplateBody()));
     }
 
     @Test
@@ -68,7 +68,7 @@ public class EmailNotificationsDaoITest extends DaoITestBase {
         EmailNotificationEntity notification = emailNotificationOptional.get();
 
         assertThat(notification.getId(), is(notNullValue()));
-        assertThat(notification.getTemplate(), is(template));
+        assertThat(notification.getTemplateBody(), is(template));
         assertThat(notification.getAccountEntity().getId(), is(defaultEmailNotification.getTestAccount().accountId));
     }
 

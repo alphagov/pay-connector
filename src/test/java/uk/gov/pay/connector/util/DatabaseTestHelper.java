@@ -127,7 +127,7 @@ public class DatabaseTestHelper {
     public String getEmailNotificationTemplateByAccountId(Long accountId) {
 
         return jdbi.withHandle(h ->
-                        h.createQuery("SELECT template from email_notifications WHERE account_id = :account_id ORDER BY id DESC")
+                        h.createQuery("SELECT template_body from email_notifications WHERE account_id = :account_id ORDER BY id DESC")
                                 .bind("account_id", accountId)
                                 .map(StringMapper.FIRST)
                                 .first()
@@ -188,12 +188,12 @@ public class DatabaseTestHelper {
         );
     }
 
-    public void addEmailNotification(Long accountId, String template) {
+    public void addEmailNotification(Long accountId, String templateBody) {
         jdbi.withHandle(handle ->
                         handle
-                                .createStatement("INSERT INTO email_notifications(account_id, template) VALUES (:account_id, :template)")
+                                .createStatement("INSERT INTO email_notifications(account_id, template_body) VALUES (:account_id, :templateBody)")
                                 .bind("account_id", accountId)
-                                .bind("template", template)
+                                .bind("templateBody", templateBody)
                                 .execute()
         );
     }

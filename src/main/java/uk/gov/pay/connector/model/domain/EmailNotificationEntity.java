@@ -1,5 +1,7 @@
 package uk.gov.pay.connector.model.domain;
 
+import com.fasterxml.jackson.annotation.JsonManagedReference;
+
 import javax.persistence.*;
 
 @Entity
@@ -7,27 +9,28 @@ import javax.persistence.*;
 @SequenceGenerator(name = "email_notifications_id_seq", sequenceName = "email_notifications_id_seq", allocationSize = 1)
 public class EmailNotificationEntity extends AbstractEntity {
 
-    @Column(name = "template")
-    private String template;
+    @Column(name = "template_body")
+    private String templateBody;
 
     @OneToOne
     @JoinColumn(name = "account_id", nullable = false)
-    GatewayAccountEntity accountEntity;
+    @JsonManagedReference
+    private GatewayAccountEntity accountEntity;
 
     public EmailNotificationEntity () {
 
     }
-    public EmailNotificationEntity(GatewayAccountEntity accountEntity, String template) {
+    public EmailNotificationEntity(GatewayAccountEntity accountEntity, String templateBody) {
         this.accountEntity = accountEntity;
-        this.template = template;
+        this.templateBody = templateBody;
     }
 
-    public String getTemplate() {
-        return template;
+    public String getTemplateBody() {
+        return templateBody;
     }
 
-    public void setTemplate(String template) {
-        this.template = template;
+    public void setTemplateBody(String templateBody) {
+        this.templateBody = templateBody;
     }
 
     public GatewayAccountEntity getAccountEntity() {
