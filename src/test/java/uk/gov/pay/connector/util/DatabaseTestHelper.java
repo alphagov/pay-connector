@@ -124,6 +124,16 @@ public class DatabaseTestHelper {
         );
     }
 
+    public String getEmailNotificationTemplateByAccountId(Long accountId) {
+
+        return jdbi.withHandle(h ->
+                        h.createQuery("SELECT template from email_notifications WHERE account_id = :account_id ORDER BY id DESC")
+                                .bind("account_id", accountId)
+                                .map(StringMapper.FIRST)
+                                .first()
+        );
+    }
+
     public String getChargeTokenByExternalChargeId(String externalChargeId) {
 
         String chargeId = jdbi.withHandle(h ->
@@ -174,6 +184,16 @@ public class DatabaseTestHelper {
                                 .createStatement("INSERT INTO tokens(charge_id, secure_redirect_token) VALUES (:charge_id, :secure_redirect_token)")
                                 .bind("charge_id", chargeId)
                                 .bind("secure_redirect_token", tokenId)
+                                .execute()
+        );
+    }
+
+    public void addEmailNotification(Long accountId, String template) {
+        jdbi.withHandle(handle ->
+                        handle
+                                .createStatement("INSERT INTO email_notifications(account_id, template) VALUES (:account_id, :template)")
+                                .bind("account_id", accountId)
+                                .bind("template", template)
                                 .execute()
         );
     }

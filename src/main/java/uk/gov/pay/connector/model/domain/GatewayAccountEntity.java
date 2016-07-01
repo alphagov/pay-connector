@@ -27,6 +27,9 @@ public class GatewayAccountEntity extends AbstractEntity {
     @Column(name = "service_name")
     private String serviceName;
 
+    @OneToOne(mappedBy="accountEntity")
+    private EmailNotificationEntity emailNotification;
+
     @ManyToMany
     @JoinTable(
             name = "accepted_card_types",
@@ -64,6 +67,10 @@ public class GatewayAccountEntity extends AbstractEntity {
         return cardTypes;
     }
 
+    public EmailNotificationEntity getEmailNotification() {
+        return emailNotification;
+    }
+
     public void setGatewayName(String gatewayName) {
         this.gatewayName = gatewayName;
     }
@@ -78,6 +85,10 @@ public class GatewayAccountEntity extends AbstractEntity {
 
     public void setCardTypes(List<CardTypeEntity> cardTypes) {
         this.cardTypes = cardTypes;
+    }
+
+    public void setEmailNotification(EmailNotificationEntity emailNotification) {
+        this.emailNotification = emailNotification;
     }
 
     public Map<String, String> withoutCredentials() {
