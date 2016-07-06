@@ -2,6 +2,7 @@ package uk.gov.pay.connector.it.resources;
 
 import com.google.common.collect.ImmutableMap;
 import com.jayway.restassured.response.ValidatableResponse;
+import org.apache.commons.lang.RandomStringUtils;
 import org.junit.Before;
 import org.junit.Rule;
 import org.junit.Test;
@@ -24,6 +25,7 @@ import static javax.ws.rs.HttpMethod.POST;
 import static javax.ws.rs.core.MediaType.APPLICATION_JSON;
 import static javax.ws.rs.core.Response.Status;
 import static javax.ws.rs.core.Response.Status.*;
+import static org.apache.commons.lang.RandomStringUtils.*;
 import static org.hamcrest.Matchers.*;
 import static org.hamcrest.core.Is.is;
 import static org.hamcrest.text.MatchesPattern.matchesPattern;
@@ -41,7 +43,7 @@ public class ChargesFrontendResourceITest {
     private String accountId = "72332423443245";
     private String description = "Test description";
     private String returnUrl = "http://whatever.com";
-    private String email = "email@whatever.com";
+    private String email = randomAlphanumeric(242) + "@example.com";
 
     private long expectedAmount = 6234L;
 
@@ -240,7 +242,9 @@ public class ChargesFrontendResourceITest {
     @Test
     public void patchValidEmailOnChargeWithReplaceOp_shouldReturnOk() {
         String chargeId = postToCreateACharge(expectedAmount);
-        String patchBody = createPatch("replace", "email", "a@b.c");
+        String email = randomAlphanumeric(242) + "@example.com";
+
+        String patchBody = createPatch("replace", "email", email);
 
         ValidatableResponse response = connectorRestApi
                 .withChargeId(chargeId)
@@ -248,7 +252,7 @@ public class ChargesFrontendResourceITest {
 
         response.statusCode(OK.getStatusCode())
                 .contentType(JSON)
-                .body("email", is("a@b.c"));
+                .body("email", is(email));
     }
 
     @Test

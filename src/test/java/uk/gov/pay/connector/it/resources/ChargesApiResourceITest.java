@@ -23,7 +23,6 @@ import java.util.stream.Collectors;
 
 import static com.google.common.collect.Lists.newArrayList;
 import static com.jayway.restassured.http.ContentType.JSON;
-import static java.lang.Long.valueOf;
 import static java.lang.String.format;
 import static java.time.ZonedDateTime.now;
 import static java.time.temporal.ChronoUnit.DAYS;
@@ -36,7 +35,6 @@ import static org.exparity.hamcrest.date.ZonedDateTimeMatchers.within;
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.*;
 import static org.hamcrest.text.MatchesPattern.matchesPattern;
-import static org.junit.Assert.assertEquals;
 import static uk.gov.pay.connector.matcher.ResponseContainsLinkMatcher.containsLink;
 import static uk.gov.pay.connector.matcher.ZoneDateTimeAsStringWithinMatcher.isWithin;
 import static uk.gov.pay.connector.model.api.ExternalChargeState.EXTERNAL_SUBMITTED;
@@ -69,7 +67,7 @@ public class ChargesApiResourceITest {
 
     private String accountId = "72332423443245";
     private String returnUrl = "http://service.url/success-page/";
-    private String email = "bob@bobbington.bob";
+    private String email = randomAlphanumeric(242) + "@example.com";
 
     private RestAssuredClient createChargeApi = new RestAssuredClient(app, accountId);
     private RestAssuredClient getChargeApi = new RestAssuredClient(app, accountId);
@@ -365,6 +363,7 @@ public class ChargesApiResourceITest {
                 .contentType(JSON)
                 .body("message", is(expectedList));
     }
+
     @Test
     public void shouldGetAllTransactionsForDefault_page_1_size_100_inCreationDateOrder() throws Exception {
         String id_1 = addCharge(CREATED, "ref-1", now());
