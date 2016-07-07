@@ -51,6 +51,10 @@ public class DatabaseFixtures {
         return new TestCardType().withLabel("Visa").withType(Type.DEBIT).withBrand("visa");
     }
 
+    public TestEmailNotification anEmailNotification() {
+        return new TestEmailNotification();
+    }
+
     public class TestAccount {
         long accountId = 564532435L;
         String paymentProvider = "test_provider";
@@ -207,6 +211,32 @@ public class DatabaseFixtures {
 
         public String getSecureRedirectToken() {
             return secureRedirectToken;
+        }
+    }
+
+    public class TestEmailNotification {
+
+        TestAccount testAccount;
+        String template = "Lorem ipsum dolor sit amet, consectetur adipiscing elit.";
+
+        public TestEmailNotification withTestAccount(TestAccount testAccount) {
+            this.testAccount = testAccount;
+            return this;
+        }
+
+        public TestEmailNotification insert() {
+            if (testAccount == null)
+                throw new IllegalStateException("Test Account must be provided.");
+            databaseTestHelper.addToken(testAccount.getAccountId(), template);
+            return this;
+        }
+
+        public TestAccount getTestAccount() {
+            return testAccount;
+        }
+
+        public String getTemplate() {
+            return template;
         }
     }
 

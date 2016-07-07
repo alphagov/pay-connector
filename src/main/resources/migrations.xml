@@ -283,4 +283,25 @@
                         newDataType="varchar(254)"
                         tableName="charges"/>
     </changeSet>
+
+    <changeSet id="build email notifications table" author="">
+        <createTable tableName="email_notifications">
+            <column name="id" type="bigserial" autoIncrement="true">
+                <constraints primaryKey="true" nullable="false"/>
+            </column>
+            <column name="account_id" type="bigserial">
+                <constraints nullable="false"
+                             foreignKeyName="fk__email_notifications_gateway_accounts"
+                             referencedTableName="gateway_accounts"
+                             referencedColumnNames="id"/>
+            </column>
+            <column name="template_body" type="text">
+                <constraints nullable="false"/>
+            </column>
+            <column name="version" type="bigint" defaultValue="0">
+                <constraints nullable="false"/>
+            </column>
+        </createTable>
+    </changeSet>
+
 </databaseChangeLog>
