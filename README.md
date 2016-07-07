@@ -448,7 +448,7 @@ Content-Type: application/json
 
 ### GET /v1/api/accounts/{accountId}/email-notification
 
-This endpoint updates an email notification template body for account `accountId`
+This endpoint retrieves an email notification template body for account `accountId`
 
 #### Request example 
 

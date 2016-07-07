@@ -79,6 +79,6 @@ public class EmailNotificationResourceITest extends GatewayAccountResourceTestBa
                 .get(ACCOUNTS_API_URL + accountId + "/email-notification")
                 .then()
                 .statusCode(200)
-                .body("templateBody", is(templateBody));
+                .body("template_body", is(templateBody));
     }
 }
