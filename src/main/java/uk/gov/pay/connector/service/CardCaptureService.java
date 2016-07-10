@@ -1,6 +1,7 @@
 package uk.gov.pay.connector.service;
 
 import com.google.inject.persist.Transactional;
+import org.apache.commons.lang3.StringUtils;
 import uk.gov.pay.connector.dao.ChargeDao;
 import uk.gov.pay.connector.exception.ChargeNotFoundRuntimeException;
 import uk.gov.pay.connector.model.CaptureRequest;
@@ -21,11 +22,14 @@ public class CardCaptureService extends CardService implements TransactionalGate
     };
 
     private final PaymentProviders providers;
+    private final UserNotificationService userNotificationService;
+
 
     @Inject
-    public CardCaptureService(ChargeDao chargeDao, PaymentProviders providers) {
+    public CardCaptureService(ChargeDao chargeDao, PaymentProviders providers, UserNotificationService userNotificationService) {
         super(chargeDao, providers);
         this.providers = providers;
+        this.userNotificationService = userNotificationService;
     }
 
     public GatewayResponse doCapture(String chargeId) {
@@ -34,6 +38,7 @@ public class CardCaptureService extends CardService implements TransactionalGate
                 .map(TransactionalGatewayOperation.super::executeGatewayOperationFor)
                 .orElseThrow(() -> new ChargeNotFoundRuntimeException(chargeId));
     }
+
     @Transactional
     @Override
     public ChargeEntity preOperation(ChargeEntity chargeEntity) {
@@ -50,14 +55,19 @@ public class CardCaptureService extends CardService implements TransactionalGate
     @Override
     public GatewayResponse postOperation(ChargeEntity chargeEntity, GatewayResponse operationResponse) {
         CaptureResponse captureResponse = (CaptureResponse) operationResponse;
-
         logger.info(format("Card captured response received - status = %s, charge_external_id = %s", captureResponse.getStatus(), chargeEntity.getExternalId()));
 
         ChargeEntity reloadedCharge = chargeDao.merge(chargeEntity);
         reloadedCharge.setStatus(captureResponse.getStatus());
-
         chargeDao.mergeAndNotifyStatusHasChanged(reloadedCharge);
 
+        if (operationResponse.isSuccessful()) {
+            sendEmailNotification(reloadedCharge);
+        }
         return operationResponse;
+    }
+
+    private void sendEmailNotification(ChargeEntity reloadedCharge) {
+        userNotificationService.notifyPaymentSuccessEmail(reloadedCharge.getEmail());
     }
 }

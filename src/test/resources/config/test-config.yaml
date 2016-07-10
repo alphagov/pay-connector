@@ -72,3 +72,10 @@ executorServiceConfig:
 
 transactionsPaginationServiceConfig:
   displayPageSize: ${TRANSACTION_LIST_DISPLAY_SIZE:-500}
+
+notifyConfig:
+  emailTemplateId: ${NOTIFY_EMAIL_TEMPLATE}
+  serviceId: ${NOTIFY_SERVICE_ID}
+  secret: ${NOTIFY_SECRET}
+  notificationBaseURL: ${NOTIFY_BASE_URL}
+  emailNotifyEnabled: ${NOTIFY_EMAIL_ENABLED:-false}
