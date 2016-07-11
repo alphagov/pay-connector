@@ -51,3 +51,5 @@ stage.alpha_staging-5.status=failed
 stage.tag=alpha_staging-5
 
 stage.alpha_staging-5.date=2016-07-11:15:03:16
+
+stage.alpha_staging-5.status=failed
