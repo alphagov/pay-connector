@@ -26,6 +26,7 @@ public class SandboxCardNumbers {
     private static final List GOOD_CARDS = ImmutableList.of(
             "4444333322221111",
             "4242424242424242",
+            "4917610000000000003",
             "4000056655665556",
             "5105105105105100",
             "5200828282828210",
