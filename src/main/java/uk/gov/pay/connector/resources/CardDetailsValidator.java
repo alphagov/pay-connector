@@ -28,7 +28,7 @@ public class CardDetailsValidator {
     }
 
     private static boolean isValidCardNumberLength(Object number) {
-        return number != null && number.toString().matches("[0-9]{14,16}");
+        return number != null && number.toString().matches("[0-9]{14,19}");
     }
 
     private static boolean is3Digits(Object number) {

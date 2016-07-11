@@ -19,6 +19,7 @@ public class CardAuthoriseResourceITest extends CardResourceITestBase {
 
     private static final String[] VALID_SANDBOX_CARD_LIST = new String[]{
             "4444333322221111",
+            "4917610000000000003",
             "4242424242424242",
             "4000056655665556",
             "5105105105105100",
@@ -88,10 +89,28 @@ public class CardAuthoriseResourceITest extends CardResourceITestBase {
     @Test
     public void shouldRejectRandomCardNumber() throws Exception {
         String chargeId = createNewChargeWith(ENTERING_CARD_DETAILS, null);
-        String randomCardNumberDetails = buildJsonCardDetailsFor("1111111111111119");
+        String randomCardNumberDetails = buildJsonCardDetailsFor("1111111111111119234");
 
         shouldReturnErrorFor(chargeId, randomCardNumberDetails, "Unsupported card details.");
         assertFrontendChargeStatusIs(chargeId, AUTHORISATION_ERROR.getValue());
+    }
+
+    @Test
+    public void shouldReturnError_WhenCardNumberLongerThanMaximumExpected() throws Exception {
+        String chargeId = createNewChargeWith(ENTERING_CARD_DETAILS, null);
+        String randomCardNumberDetails = buildJsonCardDetailsFor("11111111111111192345");
+
+        shouldReturnErrorFor(chargeId, randomCardNumberDetails, "Values do not match expected format/length.");
+        assertFrontendChargeStatusIs(chargeId, ENTERING_CARD_DETAILS.getValue());
+    }
+
+    @Test
+    public void shouldReturnError_WhenCardNumberShorterThanMinimumExpected() throws Exception {
+        String chargeId = createNewChargeWith(ENTERING_CARD_DETAILS, null);
+        String randomCardNumberDetails = buildJsonCardDetailsFor("1111111111111");
+
+        shouldReturnErrorFor(chargeId, randomCardNumberDetails, "Values do not match expected format/length.");
+        assertFrontendChargeStatusIs(chargeId, ENTERING_CARD_DETAILS.getValue());
     }
 
     @Test
