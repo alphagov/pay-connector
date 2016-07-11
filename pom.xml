@@ -10,6 +10,12 @@
         <jpa.version>2.6.2</jpa.version>
         <guice.version>4.0</guice.version>
     </properties>
+    <repositories>
+        <repository>
+            <id>local-repo</id>
+            <url>file://${basedir}/repo</url>
+        </repository>
+    </repositories>
     <dependencies>
         <dependency>
             <groupId>io.dropwizard</groupId>
@@ -70,8 +76,6 @@
         <dependency>
             <groupId>govuk.notify</groupId>
             <artifactId>notifyClient</artifactId>
-            <systemPath>${basedir}/lib/notifyClient-1.2.jar</systemPath>
-            <scope>system</scope>
             <version>1.2</version>
         </dependency>
         <dependency>
@@ -337,28 +341,6 @@
                         <goals>
                             <goal>integration-test</goal>
                         </goals>
-                    </execution>
-                </executions>
-            </plugin>
-            <plugin>
-                <groupId>org.apache.maven.plugins</groupId>
-                <artifactId>maven-install-plugin</artifactId>
-                <version>2.5.1</version>
-                <configuration>
-                    <groupId>govuk.notify</groupId>
-                    <artifactId>notifyClient</artifactId>
-                    <version>1.2</version>
-                    <packaging>jar</packaging>
-                    <file>${basedir}/lib/notifyClient-1.2.jar</file>
-                    <generatePom>true</generatePom>
-                </configuration>
-                <executions>
-                    <execution>
-                        <id>install-jar-lib</id>
-                        <goals>
-                            <goal>install-file</goal>
-                        </goals>
-                        <phase>validate</phase>
                     </execution>
                 </executions>
             </plugin>
