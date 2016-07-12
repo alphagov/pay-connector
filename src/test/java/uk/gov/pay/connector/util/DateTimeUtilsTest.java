@@ -76,4 +76,14 @@ public class DateTimeUtilsTest {
         assertThat(result, is("2016-07-07 18:24:48"));
 
     }
+
+    @Test
+    public void toUserFriendlyDateShouldFormatAsDateInLondonTimezone() {
+        String aDate = "2016-07-07T23:24:48Z";
+        Optional<ZonedDateTime> zonedDateTime = DateTimeUtils.toUTCZonedDateTime(aDate);
+
+        String result = DateTimeUtils.toUserFriendlyDate(zonedDateTime.get());
+
+        assertThat(result, is("8 July 2016"));
+    }
 }

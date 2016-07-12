@@ -1,5 +1,7 @@
 package uk.gov.pay.connector.model.domain;
 
+import java.time.ZoneId;
+import java.time.ZonedDateTime;
 import java.util.HashMap;
 
 public class ChargeEntityFixture {
@@ -13,13 +15,14 @@ public class ChargeEntityFixture {
     private ChargeStatus status = ChargeStatus.CREATED;
     private GatewayAccountEntity gatewayAccountEntity = defaultGatewayAccountEntity();
     private String transactionId;
+    private ZonedDateTime createdDate = ZonedDateTime.now(ZoneId.of("UTC"));
 
     public static ChargeEntityFixture aValidChargeEntity() {
         return new ChargeEntityFixture();
     }
 
     public ChargeEntity build() {
-        ChargeEntity chargeEntity = new ChargeEntity(amount, status ,returnUrl, description, reference, gatewayAccountEntity, email);
+        ChargeEntity chargeEntity = new ChargeEntity(amount, status ,returnUrl, description, reference, gatewayAccountEntity, email, createdDate);
         chargeEntity.setId(id);
         chargeEntity.setGatewayTransactionId(transactionId);
         return chargeEntity;
@@ -65,9 +68,19 @@ public class ChargeEntityFixture {
         return this;
     }
 
+    public ChargeEntityFixture withCreatedDate(ZonedDateTime createdDate) {
+        this.createdDate = createdDate;
+        return this;
+    }
+
     private GatewayAccountEntity defaultGatewayAccountEntity() {
         GatewayAccountEntity accountEntity = new GatewayAccountEntity("provider", new HashMap<>());
+
         accountEntity.setId(1L);
+        accountEntity.setServiceName("MyService");
+        EmailNotificationEntity emailNotificationEntity = new EmailNotificationEntity(accountEntity, "template body");
+        accountEntity.setEmailNotification(emailNotificationEntity);
+
         return accountEntity;
     }
 }

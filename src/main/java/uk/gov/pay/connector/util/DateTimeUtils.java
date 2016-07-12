@@ -63,4 +63,12 @@ public class DateTimeUtils {
 
         return localDateTime.format(dateTimeFormatter);
     }
+
+    public static String toUserFriendlyDate(ZonedDateTime zonedDateTime) {
+        DateTimeFormatter dateTimeFormatter = DateTimeFormatter.ofPattern("d MMMM yyyy");
+
+        LocalDateTime localDateTime = zonedDateTime.withZoneSameInstant(ZoneId.of("Europe/London")).toLocalDateTime();
+
+        return localDateTime.format(dateTimeFormatter);
+    }
 }
