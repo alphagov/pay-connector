@@ -32,14 +32,10 @@ public class UserNotificationService {
     }
 
     public Optional<String> notifyPaymentSuccessEmail(String emailAddress) {
-        if (!emailNotifyEnabled) {
-            logger.warn("Email notifications is disabled by configuration");
-            return Optional.empty();
-        }
-        if (StringUtils.isNotBlank(emailAddress)) {
+        if (emailNotifyEnabled) {
+            EmailRequest emailRequest = buildRequest(emailAddress, this.emailTemplateId, Collections.EMPTY_MAP);
+            GovNotifyApiClient govNotifyApiClient = notifyClientProvider.get();
             try {
-                EmailRequest emailRequest = buildRequest(emailAddress, this.emailTemplateId, Collections.EMPTY_MAP);
-                GovNotifyApiClient govNotifyApiClient = notifyClientProvider.get();
                 NotificationCreatedResponse notificationCreatedResponse = govNotifyApiClient.sendEmail(emailRequest);
                 return Optional.of(notificationCreatedResponse.getId());
             } catch (GovNotifyClientException e) {
@@ -67,11 +63,13 @@ public class UserNotificationService {
     }
 
     private void readEmailConfig(ConnectorConfiguration configuration) {
+        this.emailNotifyEnabled = configuration.getNotifyConfiguration().isEmailNotifyEnabled();
+        if (!emailNotifyEnabled) {
+            logger.warn("Email notifications is disabled by configuration");
+        }
         if (StringUtils.isBlank(configuration.getNotifyConfiguration().getEmailTemplateId())) {
             throw new RuntimeException("config property 'emailTemplateId' is missing or not set, which needs to point to the email template on the notify");
         }
         this.emailTemplateId = configuration.getNotifyConfiguration().getEmailTemplateId();
-        this.emailNotifyEnabled = configuration.getNotifyConfiguration().isEmailNotifyEnabled();
     }
-
 }

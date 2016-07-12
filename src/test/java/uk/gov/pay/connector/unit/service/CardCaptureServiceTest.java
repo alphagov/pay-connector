@@ -82,6 +82,8 @@ public class CardCaptureServiceTest extends CardServiceTest {
         when(mockedChargeDao.findByExternalId(chargeId))
                 .thenReturn(Optional.empty());
         cardCaptureService.doCapture(chargeId);
+        // verify an email notification is not sent when an unsuccessful capture
+        verifyZeroInteractions(mockUserNotificationService);
     }
 
     @Test
@@ -95,6 +97,8 @@ public class CardCaptureServiceTest extends CardServiceTest {
         exception.expect(OperationAlreadyInProgressRuntimeException.class);
         cardCaptureService.doCapture(charge.getExternalId());
         assertEquals(charge.getStatus(), is(ChargeStatus.CAPTURE_READY.getValue()));
+        // verify an email notification is not sent when an unsuccessful capture
+        verifyZeroInteractions(mockUserNotificationService);
     }
 
     @Test
@@ -109,6 +113,8 @@ public class CardCaptureServiceTest extends CardServiceTest {
         exception.expect(IllegalStateRuntimeException.class);
         cardCaptureService.doCapture(charge.getExternalId());
         assertEquals(charge.getStatus(), is(ChargeStatus.CREATED.getValue()));
+        // verify an email notification is not sent when an unsuccessful capture
+        verifyZeroInteractions(mockUserNotificationService);
     }
 
     @Test
@@ -122,6 +128,8 @@ public class CardCaptureServiceTest extends CardServiceTest {
         exception.expect(ConflictRuntimeException.class);
         cardCaptureService.doCapture(charge.getExternalId());
         assertEquals(charge.getStatus(), is(ChargeStatus.CREATED.getValue()));
+        // verify an email notification is not sent when an unsuccessful capture
+        verifyZeroInteractions(mockUserNotificationService);
     }
 
     @Test
@@ -144,7 +152,6 @@ public class CardCaptureServiceTest extends CardServiceTest {
 
         // verify an email notification is not sent when an unsuccessful capture
         verifyZeroInteractions(mockUserNotificationService);
-
     }
 
     private void mockSuccessfulCapture() {

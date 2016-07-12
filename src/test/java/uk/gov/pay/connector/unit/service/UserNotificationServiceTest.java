@@ -8,6 +8,7 @@ import org.junit.runner.RunWith;
 import org.mockito.Mock;
 import org.mockito.runners.MockitoJUnitRunner;
 import uk.gov.notifications.client.api.GovNotifyApiClient;
+import uk.gov.notifications.client.api.GovNotifyClientException;
 import uk.gov.notifications.client.model.EmailRequest;
 import uk.gov.notifications.client.model.NotificationCreatedResponse;
 import uk.gov.notifications.client.model.Personalisation;
@@ -52,7 +53,6 @@ public class UserNotificationServiceTest {
         when(mockConfig.getNotifyConfiguration()).thenReturn(mockNotifyConfiguration);
         when(mockNotifyConfiguration.getEmailTemplateId()).thenReturn("some-template");
         when(mockNotifyConfiguration.isEmailNotifyEnabled()).thenReturn(true);
-        userNotificationService = new UserNotificationService(mockNotifyClientProvider, mockConfig);
     }
 
     @Test
@@ -61,6 +61,7 @@ public class UserNotificationServiceTest {
         when(mockNotifyClient.sendEmail(any(EmailRequest.class))).thenReturn(mockNotificationCreatedResponse);
         when(mockNotificationCreatedResponse.getId()).thenReturn("100");
 
+        userNotificationService = new UserNotificationService(mockNotifyClientProvider, mockConfig);
         userNotificationService.notifyPaymentSuccessEmail("test@email.com");
         verify(mockNotifyClient).sendEmail(any(EmailRequest.class));
     }
@@ -70,6 +71,7 @@ public class UserNotificationServiceTest {
         when(mockNotifyClientProvider.get()).thenReturn(mockNotifyClient);
         when(mockNotifyClient.checkStatus("100")).thenReturn(mockStatusResponse);
 
+        userNotificationService = new UserNotificationService(mockNotifyClientProvider, mockConfig);
         userNotificationService.checkDeliveryStatus("100");
         verify(mockStatusResponse).getStatus();
     }
@@ -86,13 +88,27 @@ public class UserNotificationServiceTest {
     }
     @Test
     public void testEmailRequestBuilderWithPersonalisation() {
+        userNotificationService = new UserNotificationService(mockNotifyClientProvider, mockConfig);
         EmailRequest emailRequest = userNotificationService.buildRequest("test@email.com", "1234", personalisationMap);
         assertEquals(personalisationMap, emailRequest.getPersonalisation().asMap());
     }
 
     @Test
     public void testEmailRequestBuilderWithoutPersonalisation() {
+        userNotificationService = new UserNotificationService(mockNotifyClientProvider, mockConfig);
         EmailRequest emailRequest = userNotificationService.buildRequest("test@email.com", "1234", Collections.EMPTY_MAP);
         assertNull(emailRequest.getPersonalisation());
+    }
+
+    @Test
+    public void testEmailSendWhenEmailsNotifyDisabled() throws Exception {
+        when(mockNotifyConfiguration.isEmailNotifyEnabled()).thenReturn(false);
+        when(mockNotifyClientProvider.get()).thenReturn(mockNotifyClient);
+        when(mockNotifyClient.sendEmail(any(EmailRequest.class))).thenReturn(mockNotificationCreatedResponse);
+        when(mockNotificationCreatedResponse.getId()).thenReturn("100");
+
+        userNotificationService = new UserNotificationService(mockNotifyClientProvider, mockConfig);
+        userNotificationService.notifyPaymentSuccessEmail("test@email.com");
+        verifyZeroInteractions(mockNotifyClient);
     }
 }

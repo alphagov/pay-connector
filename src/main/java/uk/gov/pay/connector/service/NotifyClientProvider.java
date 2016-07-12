@@ -7,7 +7,6 @@ import uk.gov.notifications.client.api.ClientConfiguration;
 import uk.gov.notifications.client.api.GovNotifyApiClient;
 import uk.gov.notifications.client.http.ApacheGovNotifyHttpClient;
 import uk.gov.pay.connector.app.ConnectorConfiguration;
-import uk.gov.pay.connector.service.userNotifications.DropwizardGovUkHttpClient;
 
 public class NotifyClientProvider implements Provider<GovNotifyApiClient> {
 
@@ -25,7 +24,6 @@ public class NotifyClientProvider implements Provider<GovNotifyApiClient> {
                 .secret(readSecretConfig())
                 .build();
 
-//        DropwizardGovUkHttpClient client = new DropwizardGovUkHttpClient(clientFactory);
         ApacheGovNotifyHttpClient client = new ApacheGovNotifyHttpClient();
         return new GovNotifyApiClient(config, client);
     }
