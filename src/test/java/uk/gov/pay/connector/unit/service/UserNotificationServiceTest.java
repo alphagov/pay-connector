@@ -77,9 +77,10 @@ public class UserNotificationServiceTest {
     }
 
     @Test
-    public void testEmailSendingThrowsExceptionForMissingConfigParam() throws Exception {
+    public void testEmailSendingThrowsExceptionForMissingTemplate() throws Exception {
         try {
             reset(mockNotifyConfiguration);
+            when(mockNotifyConfiguration.isEmailNotifyEnabled()).thenReturn(true);
             userNotificationService = new UserNotificationService(mockNotifyClientProvider, mockConfig);
             fail("this method should throw an ex");
         } catch(Exception e) {

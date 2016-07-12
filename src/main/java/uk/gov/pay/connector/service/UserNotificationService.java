@@ -19,22 +19,23 @@ import java.util.Optional;
 
 public class UserNotificationService {
 
-    private final NotifyClientProvider notifyClientProvider;
     private String emailTemplateId;
     private boolean emailNotifyEnabled;
 
     protected final Logger logger = LoggerFactory.getLogger(getClass());
+    private GovNotifyApiClient govNotifyApiClient;
 
     @Inject
     public UserNotificationService(NotifyClientProvider notifyClientProvider, ConnectorConfiguration configuration) {
-        this.notifyClientProvider = notifyClientProvider;
         readEmailConfig(configuration);
+        if (emailNotifyEnabled) {
+            govNotifyApiClient = notifyClientProvider.get();
+        }
     }
 
     public Optional<String> notifyPaymentSuccessEmail(String emailAddress) {
         if (emailNotifyEnabled) {
             EmailRequest emailRequest = buildRequest(emailAddress, this.emailTemplateId, Collections.EMPTY_MAP);
-            GovNotifyApiClient govNotifyApiClient = notifyClientProvider.get();
             try {
                 NotificationCreatedResponse notificationCreatedResponse = govNotifyApiClient.sendEmail(emailRequest);
                 return Optional.of(notificationCreatedResponse.getId());
@@ -46,7 +47,7 @@ public class UserNotificationService {
     }
 
     public String checkDeliveryStatus(String notificationId) throws GovNotifyClientException {
-        return notifyClientProvider.get().checkStatus(notificationId).getStatus();
+        return govNotifyApiClient.checkStatus(notificationId).getStatus();
     }
 
     public EmailRequest buildRequest(String emailAddress, String emailTemplateId, Map<String, Object> emailPersonalisation) {
@@ -63,13 +64,14 @@ public class UserNotificationService {
     }
 
     private void readEmailConfig(ConnectorConfiguration configuration) {
-        this.emailNotifyEnabled = configuration.getNotifyConfiguration().isEmailNotifyEnabled();
+        emailNotifyEnabled = configuration.getNotifyConfiguration().isEmailNotifyEnabled();
+        emailTemplateId = configuration.getNotifyConfiguration().getEmailTemplateId();
+
         if (!emailNotifyEnabled) {
             logger.warn("Email notifications is disabled by configuration");
         }
-        if (StringUtils.isBlank(configuration.getNotifyConfiguration().getEmailTemplateId())) {
+        if (emailNotifyEnabled && StringUtils.isBlank(emailTemplateId)) {
             throw new RuntimeException("config property 'emailTemplateId' is missing or not set, which needs to point to the email template on the notify");
         }
-        this.emailTemplateId = configuration.getNotifyConfiguration().getEmailTemplateId();
     }
 }

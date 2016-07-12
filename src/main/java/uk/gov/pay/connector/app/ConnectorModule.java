@@ -8,6 +8,7 @@ import com.google.inject.persist.jpa.JpaPersistModule;
 import io.dropwizard.db.DataSourceFactory;
 import io.dropwizard.setup.Environment;
 import uk.gov.pay.connector.service.CardExecutorService;
+import uk.gov.pay.connector.service.NotifyClientProvider;
 
 import java.util.Properties;
 
@@ -25,6 +26,7 @@ public class ConnectorModule extends AbstractModule {
         bind(ConnectorConfiguration.class).toInstance(configuration);
         bind(Environment.class).toInstance(environment);
         bind(CardExecutorService.class).in(Singleton.class);
+        bind(NotifyClientProvider.class).in(Singleton.class);
 
         install(jpaModule(configuration));
     }
