@@ -55,6 +55,8 @@ The command to run all the tests is:
 |[```/v1/api/notifications/smartpay```](#post-v1apinotificationssmartpay)                                  | POST |  Handle charge update notifications from Smartpay.            |
 |[```/v1/api/accounts/{accountId}/charges/{chargeId}/cancel```](#post-v1apiaccountsaccountidchargeschargeidcancel)  | POST    |  Cancels the charge with `chargeId` for account `accountId`           |
 |[```/v1/api/accounts/{accountId}/charges/{chargeId}/events```](#post-v1apiaccountsaccountidchargeschargeidevents)  | GET     |  Retrieves all the transaction history for the given `chargeId` of account `accountId`           |
+|[```/v1/api/accounts/{accountId}/email-notification```](#post-v1apiaccountsaccountidchargeschargeidcancel)  | POST    |  Updates an email notification template body for account `accountId`           |
+|[```/v1/api/accounts/{accountId}/email-notification```](#post-v1apiaccountsaccountidchargeschargeidevents)  | GET     |  Retrieves the email notification template body for the given account `accountId`           |
 
 ## FRONTEND NAMESPACE
 
@@ -441,6 +443,83 @@ Content-Type: application/json
 |  `events[0].status`         | X | The externally visible status of this event          |
 |  `events[0].updated`        | X | The date and time of the event                      |
 
+
+----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
+
+### GET /v1/api/accounts/{accountId}/email-notification
+
+This endpoint retrieves an email notification template body for account `accountId`
+
+#### Request example 
+
+```
+GET /v1/api/accounts/123/email-notification
+
+```
+
+#### Response example
+
+```
+HTTP/1.1 200 OK
+Content-Type: application/json
+
+{
+   "id":1,
+   "version":1,
+   "template_body":"bla bla"
+}
+```
+
+##### Response field description
+
+| Field                    | always present | Description                         |
+| ------------------------ |:--------:| ----------------------------------------- |
+| `template_body`          | X        | The service template body paragraph       |
+
+
+-----------------------------------------------------------------------------------------------------------
+
+### POST /v1/api/accounts/{accountId}/email-notification
+
+Updates an email notification template body for account `accountId`
+
+#### Request example
+
+```
+POST /v1/api/accounts/123/email-notification
+Content-Type: application/json
+{
+    "custom-email-text": "lorem ipsum"
+}
+```
+
+#### Response when update is successful
+
+```
+200 {}
+```
+
+#### Response when update unsuccessful due to invalid account
+
+```
+HTTP/1.1 404 Not Found
+Content-Type: application/json
+Content-Length: 72
+
+{
+    "message": "The gateway account id '111' does not exist"
+}
+```
+
+#### Response if mandatory fields are missing
+
+```
+HTTP/1.1 400 Bad Request
+Content-Type: application/json
+
+{
+    "message": "The following fields are missing: [custom-email-text]"
+}
 
 -----------------------------------------------------------------------------------------------------------
 

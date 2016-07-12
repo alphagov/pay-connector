@@ -1,6 +1,8 @@
 package uk.gov.pay.connector.model.domain;
 
+import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonManagedReference;
+import com.fasterxml.jackson.annotation.JsonProperty;
 
 import javax.persistence.*;
 
@@ -10,9 +12,11 @@ import javax.persistence.*;
 public class EmailNotificationEntity extends AbstractEntity {
 
     @Column(name = "template_body")
+    @JsonProperty("template_body")
     private String templateBody;
 
     @OneToOne
+    @JsonIgnore
     @JoinColumn(name = "account_id", nullable = false)
     @JsonManagedReference
     private GatewayAccountEntity accountEntity;

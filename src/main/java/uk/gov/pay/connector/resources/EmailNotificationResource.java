@@ -12,7 +12,6 @@ import javax.ws.rs.*;
 import javax.ws.rs.core.Response;
 import java.util.Collections;
 import java.util.Map;
-import java.util.Optional;
 
 import static java.lang.String.format;
 import static javax.ws.rs.core.MediaType.APPLICATION_JSON;
@@ -39,12 +38,15 @@ public class EmailNotificationResource {
     @GET
     @Path(GATEWAY_ACCOUNTS_API_EMAIL_NOTIFICATION)
     @Produces(APPLICATION_JSON)
-    public Response getEmailNotificationText(@PathParam("accountId") Long accountId) {
-        logger.info("Getting email notification text for account id {}", accountId);
-        return emailNotificationsDao
-                .findByAccountId(accountId)
-                .map(emailNotificationEntity -> Response.ok().entity(emailNotificationEntity).build())
-                .orElseGet(() -> notFoundResponse(format("Account with id %s not found.", accountId)));
+    public Response getEmailNotificationText(@PathParam("accountId") Long gatewayAccountId) {
+        logger.info("Getting email notification text for account id {}", gatewayAccountId);
+
+        return gatewayDao.findById(gatewayAccountId)
+                .map(gatewayAccount ->
+                                emailNotificationsDao.findByAccountId(gatewayAccount.getId())
+                                        .map(emailNotificationEntity -> Response.ok().entity(emailNotificationEntity).build())
+                                        .orElseGet(() -> Response.ok().build()))
+                .orElseGet(() -> notFoundResponse(format("Account with id %s not found.", gatewayAccountId)));
     }
 
     @POST
@@ -60,16 +62,14 @@ public class EmailNotificationResource {
         String emailNotificationTemplate = payload.get(EMAIL_NOTIFICATION_FIELD_NAME);
 
         return gatewayDao.findById(gatewayAccountId)
-            .map(gatewayAccount ->
-            {
-                Optional<EmailNotificationEntity> emailNotificationEntity = emailNotificationsDao.findByAccountId(gatewayAccountId);
-                if (emailNotificationEntity.isPresent()) {
-                    emailNotificationEntity.get().setTemplateBody(emailNotificationTemplate);
-                } else {
-                    gatewayAccount.setEmailNotification(new EmailNotificationEntity(gatewayAccount, emailNotificationTemplate));
-                }
-                return Response.ok().build();
-            })
-            .orElseGet(() -> notFoundResponse(format("The gateway account id '%s' does not exist", gatewayAccountId)));
+                .map(gatewayAccount ->
+                                emailNotificationsDao.findByAccountId(gatewayAccountId).map(emailNotificationEntity -> {
+                                    emailNotificationEntity.setTemplateBody(emailNotificationTemplate);
+                                    return Response.ok().build();
+                                }).orElseGet(() -> {
+                                    gatewayAccount.setEmailNotification(new EmailNotificationEntity(gatewayAccount, emailNotificationTemplate));
+                                    return Response.ok().build();
+                                }))
+                .orElseGet(() -> notFoundResponse(format("The gateway account id '%s' does not exist", gatewayAccountId)));
     }
 }
