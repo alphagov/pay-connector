@@ -124,12 +124,11 @@ public class DatabaseTestHelper {
         );
     }
 
-    public String getEmailNotificationTemplateByAccountId(Long accountId) {
+    public Map<String, Object>  getEmailNotificationByAccountId(Long accountId) {
 
         return jdbi.withHandle(h ->
-                        h.createQuery("SELECT template_body from email_notifications WHERE account_id = :account_id ORDER BY id DESC")
+                        h.createQuery("SELECT template_body, enabled from email_notifications WHERE account_id = :account_id ORDER BY id DESC")
                                 .bind("account_id", accountId)
-                                .map(StringMapper.FIRST)
                                 .first()
         );
     }

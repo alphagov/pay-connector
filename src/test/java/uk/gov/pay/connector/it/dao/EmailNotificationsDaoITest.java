@@ -56,6 +56,7 @@ public class EmailNotificationsDaoITest extends DaoITestBase {
         assertThat(notification.getId(), is(notNullValue()));
         assertThat(notification.getTemplateBody(), is(template));
         assertThat(notification.getAccountEntity().getId(), is(defaultEmailNotification.getTestAccount().accountId));
+        assertThat(notification.isEnabled(), is(true));
     }
 
     @Test

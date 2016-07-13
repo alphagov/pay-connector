@@ -5,6 +5,7 @@ import org.junit.Test;
 import uk.gov.pay.connector.resources.EmailNotificationResource;
 
 import java.util.HashMap;
+import java.util.Map;
 
 import static com.jayway.restassured.http.ContentType.JSON;
 import static org.hamcrest.core.Is.is;
@@ -23,8 +24,9 @@ public class EmailNotificationResourceITest extends GatewayAccountResourceTestBa
                 .then()
                 .statusCode(200);
 
-        String dbTemplateBody = app.getDatabaseTestHelper().getEmailNotificationTemplateByAccountId(Long.valueOf(accountId));
-        assertThat(dbTemplateBody, is(templateBody));
+        Map<String, Object> emailNotification = app.getDatabaseTestHelper().getEmailNotificationByAccountId(Long.valueOf(accountId));
+        assertThat(emailNotification.get("template_body"), is(templateBody));
+        assertThat(emailNotification.get("enabled"), is(true));
     }
 
     @Test
@@ -63,6 +65,7 @@ public class EmailNotificationResourceITest extends GatewayAccountResourceTestBa
                 .get(ACCOUNTS_API_URL + accountId + "/email-notification")
                 .then()
                 .statusCode(200)
-                .body("template_body", is(templateBody));
+                .body("template_body", is(templateBody))
+                .body("enabled", is(true));
     }
 }

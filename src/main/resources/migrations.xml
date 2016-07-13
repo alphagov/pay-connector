@@ -310,4 +310,10 @@
                                tableName="email_notifications"/>
     </changeSet>
 
+    <changeSet id="add enabled column to email notifications table" author="">
+        <addColumn tableName="email_notifications">
+            <column name="enabled" type="boolean" defaultValue="true" />
+        </addColumn>
+    </changeSet>
+
 </databaseChangeLog>

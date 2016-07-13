@@ -51,6 +51,7 @@ public class GatewayAccountDaoITest extends DaoITestBase {
         assertNotNull(account.getId());
         assertNotNull(account.getEmailNotification());
         assertThat(account.getEmailNotification().getAccountEntity().getId(), is(account.getId()));
+        assertThat(account.getEmailNotification().isEnabled(), is(true));
 
         databaseTestHelper.getAccountCredentials(account.getId());
 
