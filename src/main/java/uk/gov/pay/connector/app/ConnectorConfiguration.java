@@ -25,6 +25,11 @@ public class ConnectorConfiguration extends Configuration {
 
     @Valid
     @NotNull
+    @JsonProperty("notifyConfig")
+    private NotifyConfiguration notifyConfig;
+
+    @Valid
+    @NotNull
     private SmartpayCredentialsConfig smartpayConfig;
 
     @Valid
@@ -79,6 +84,10 @@ public class ConnectorConfiguration extends Configuration {
 
     public TransactionsPaginationServiceConfig getTransactionsPaginationConfig() {
         return transactionsPaginationServiceConfig;
+    }
+
+    public NotifyConfiguration getNotifyConfiguration() {
+        return notifyConfig;
     }
 
     public JerseyClientConfiguration getClientConfiguration() {

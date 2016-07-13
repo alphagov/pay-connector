@@ -21,11 +21,14 @@ public class CardCaptureService extends CardService implements TransactionalGate
     };
 
     private final PaymentProviders providers;
+    private final UserNotificationService userNotificationService;
+
 
     @Inject
-    public CardCaptureService(ChargeDao chargeDao, PaymentProviders providers) {
+    public CardCaptureService(ChargeDao chargeDao, PaymentProviders providers, UserNotificationService userNotificationService) {
         super(chargeDao, providers);
         this.providers = providers;
+        this.userNotificationService = userNotificationService;
     }
 
     public GatewayResponse doCapture(String chargeId) {
@@ -34,6 +37,7 @@ public class CardCaptureService extends CardService implements TransactionalGate
                 .map(TransactionalGatewayOperation.super::executeGatewayOperationFor)
                 .orElseThrow(() -> new ChargeNotFoundRuntimeException(chargeId));
     }
+
     @Transactional
     @Override
     public ChargeEntity preOperation(ChargeEntity chargeEntity) {
@@ -50,14 +54,16 @@ public class CardCaptureService extends CardService implements TransactionalGate
     @Override
     public GatewayResponse postOperation(ChargeEntity chargeEntity, GatewayResponse operationResponse) {
         CaptureResponse captureResponse = (CaptureResponse) operationResponse;
-
         logger.info(format("Card captured response received - status = %s, charge_external_id = %s", captureResponse.getStatus(), chargeEntity.getExternalId()));
 
         ChargeEntity reloadedCharge = chargeDao.merge(chargeEntity);
         reloadedCharge.setStatus(captureResponse.getStatus());
-
         chargeDao.mergeAndNotifyStatusHasChanged(reloadedCharge);
 
+        if (operationResponse.isSuccessful()) {
+            userNotificationService.notifyPaymentSuccessEmail(reloadedCharge.getEmail());
+        }
         return operationResponse;
     }
+
 }

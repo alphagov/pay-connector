@@ -12,9 +12,19 @@ Important configurations.
         password: <Worldpay merchat password for integration | this will be removed when gateway accounts have the capability to store username/passwords>
   ```
   
-#### Environment Variables
+## Environment Variables
 
 `AUTH_READ_TIMEOUT_SECONDS`:  The env variable AUTH_READ_TIMEOUT_SECONDS can be passed into the app to override the default value of 10     seconds, i.e. the timeout before the resource responds with an awaited auth response (202), so that frontend can choose to show a spinner and poll for auth response.
+
+`NOTIFY_EMAIL_ENABLED`: The env variable to enable confirmation emails to be sent over by GOV.UK Notify, defaults to false.
+
+`NOTIFY_EMAIL_TEMPLATE`: ID of the email template specified in the GOV.UK Notify to be used for sending emails, there are no defaults for this one. An email template can accept personalisation (placeholder values which are passed in by the code).
+
+`NOTIFY_SERVICE_ID`: Service ID for the account created at GOV.UK Notify, no defaults.
+
+`NOTIFY_SECRET`: Secret for the account created at GOV.UK Notify, no defaults.
+
+`NOTIFY_BASE_URL`: Base URL of GOV.UK Notify API to be used, defaults to `https://api.notifications.service.gov.uk`.
 
 ## Integration tests
 
