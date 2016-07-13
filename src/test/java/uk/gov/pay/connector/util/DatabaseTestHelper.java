@@ -198,6 +198,16 @@ public class DatabaseTestHelper {
         );
     }
 
+    public void updateEmailNotification(Long accountId, String templateBody) {
+        jdbi.withHandle(handle ->
+                        handle
+                                .createStatement("UPDATE email_notifications SET template_body= :templateBody WHERE account_id=:account_id")
+                                .bind("account_id", accountId)
+                                .bind("templateBody", templateBody)
+                                .execute()
+        );
+    }
+
     public void addCardType(UUID id, String label, String type, String brand) {
         jdbi.withHandle(handle ->
                         handle

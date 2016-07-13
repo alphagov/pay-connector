@@ -22,11 +22,10 @@ public class EmailNotificationEntity extends AbstractEntity {
     private GatewayAccountEntity accountEntity;
 
     public EmailNotificationEntity () {
-
     }
-    public EmailNotificationEntity(GatewayAccountEntity accountEntity, String templateBody) {
+
+    public EmailNotificationEntity(GatewayAccountEntity accountEntity) {
         this.accountEntity = accountEntity;
-        this.templateBody = templateBody;
     }
 
     public String getTemplateBody() {

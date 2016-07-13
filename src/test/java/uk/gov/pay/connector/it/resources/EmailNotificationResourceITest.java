@@ -13,22 +13,6 @@ import static org.junit.Assert.assertThat;
 public class EmailNotificationResourceITest extends GatewayAccountResourceTestBase {
 
     @Test
-    public void insertEmailNotification_shouldInsertSuccessfully() {
-        String accountId = createAGatewayAccountFor("smartpay");
-        app.getDatabaseTestHelper().addEmailNotification(Long.parseLong(accountId), "ipsum lorem");
-
-        String templateBody = "lorem ipsum";
-        givenSetup().accept(JSON)
-                .body(ImmutableMap.of(EmailNotificationResource.EMAIL_NOTIFICATION_FIELD_NAME, templateBody))
-                .post(ACCOUNTS_API_URL + accountId + "/email-notification")
-                .then()
-                .statusCode(200);
-
-        String currentServiceName = app.getDatabaseTestHelper().getEmailNotificationTemplateByAccountId(Long.valueOf(accountId));
-        assertThat(currentServiceName, is(templateBody));
-    }
-
-    @Test
     public void updateEmailNotification_shouldUpdateSuccessfullyIfEmailNotificationAlreadyExists() {
         String accountId = createAGatewayAccountFor("smartpay");
 
@@ -39,8 +23,8 @@ public class EmailNotificationResourceITest extends GatewayAccountResourceTestBa
                 .then()
                 .statusCode(200);
 
-        String currentServiceName = app.getDatabaseTestHelper().getEmailNotificationTemplateByAccountId(Long.valueOf(accountId));
-        assertThat(currentServiceName, is(templateBody));
+        String dbTemplateBody = app.getDatabaseTestHelper().getEmailNotificationTemplateByAccountId(Long.valueOf(accountId));
+        assertThat(dbTemplateBody, is(templateBody));
     }
 
     @Test
@@ -73,7 +57,7 @@ public class EmailNotificationResourceITest extends GatewayAccountResourceTestBa
     public void getEmailNotificationSuccessfully() {
         String templateBody = "lorem ipsum";
         String accountId = createAGatewayAccountFor("worldpay");
-        app.getDatabaseTestHelper().addEmailNotification(Long.parseLong(accountId), templateBody);
+        app.getDatabaseTestHelper().updateEmailNotification(Long.parseLong(accountId), templateBody);
 
         givenSetup().accept(JSON)
                 .get(ACCOUNTS_API_URL + accountId + "/email-notification")

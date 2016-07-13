@@ -15,7 +15,6 @@ import static java.util.Collections.emptyMap;
 import static org.hamcrest.CoreMatchers.allOf;
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.*;
-import static org.hamcrest.core.Is.is;
 import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertTrue;
 
@@ -50,6 +49,8 @@ public class GatewayAccountDaoITest extends DaoITestBase {
         gatewayAccountDao.persist(account);
 
         assertNotNull(account.getId());
+        assertNotNull(account.getEmailNotification());
+        assertThat(account.getEmailNotification().getAccountEntity().getId(), is(account.getId()));
 
         databaseTestHelper.getAccountCredentials(account.getId());
 

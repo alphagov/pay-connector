@@ -7,7 +7,6 @@ import org.junit.rules.ExpectedException;
 import uk.gov.pay.connector.dao.ChargeDao;
 import uk.gov.pay.connector.dao.EmailNotificationsDao;
 import uk.gov.pay.connector.model.domain.EmailNotificationEntity;
-import uk.gov.pay.connector.model.domain.GatewayAccountEntity;
 
 import java.util.Optional;
 
@@ -40,19 +39,6 @@ public class EmailNotificationsDaoITest extends DaoITestBase {
                 .anEmailNotification()
                 .withTestAccount(defaultTestAccount)
                 .insert();
-    }
-
-    @Test
-    public void persist_shouldInsertAnEmailNotification() {
-
-        GatewayAccountEntity defaultAccount = new GatewayAccountEntity();
-        defaultAccount.setId(defaultEmailNotification.getTestAccount().getAccountId());
-
-        EmailNotificationEntity emailNotificationEntity = new EmailNotificationEntity(defaultAccount, defaultEmailNotification.getTemplate());
-
-        emailNotificationsDao.persist(emailNotificationEntity);
-
-        assertThat(databaseTestHelper.getEmailNotificationTemplateByAccountId(defaultAccount.getId()), is(emailNotificationEntity.getTemplateBody()));
     }
 
     @Test
