@@ -45,7 +45,7 @@ public class EmailNotificationsDaoITest extends DaoITestBase {
     public void findByAccountId_shouldFindEmailNotification() {
 
         String template = "lorem ipsum";
-        databaseTestHelper.addEmailNotification(defaultEmailNotification.getTestAccount().getAccountId(), template);
+        databaseTestHelper.addEmailNotification(defaultEmailNotification.getTestAccount().getAccountId(), template, true);
 
         Optional<EmailNotificationEntity> emailNotificationOptional = emailNotificationsDao.findByAccountId(defaultEmailNotification.getTestAccount().getAccountId());
 

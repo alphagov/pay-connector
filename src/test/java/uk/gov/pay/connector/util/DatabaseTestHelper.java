@@ -187,21 +187,23 @@ public class DatabaseTestHelper {
         );
     }
 
-    public void addEmailNotification(Long accountId, String templateBody) {
+    public void addEmailNotification(Long accountId, String templateBody, boolean enabled) {
         jdbi.withHandle(handle ->
                         handle
-                                .createStatement("INSERT INTO email_notifications(account_id, template_body) VALUES (:account_id, :templateBody)")
+                                .createStatement("INSERT INTO email_notifications(account_id, template_body, enabled) VALUES (:account_id, :templateBody, :enabled)")
                                 .bind("account_id", accountId)
                                 .bind("templateBody", templateBody)
+                                .bind("enabled", enabled)
                                 .execute()
         );
     }
 
-    public void updateEmailNotification(Long accountId, String templateBody) {
+    public void updateEmailNotification(Long accountId, String templateBody, boolean enabled) {
         jdbi.withHandle(handle ->
                         handle
-                                .createStatement("UPDATE email_notifications SET template_body= :templateBody WHERE account_id=:account_id")
+                                .createStatement("UPDATE email_notifications SET template_body= :templateBody, enabled= :enabled WHERE account_id=:account_id")
                                 .bind("account_id", accountId)
+                                .bind("enabled", enabled)
                                 .bind("templateBody", templateBody)
                                 .execute()
         );

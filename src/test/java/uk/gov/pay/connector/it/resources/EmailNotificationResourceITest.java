@@ -10,6 +10,7 @@ import java.util.Map;
 import static com.jayway.restassured.http.ContentType.JSON;
 import static org.hamcrest.core.Is.is;
 import static org.junit.Assert.assertThat;
+import static uk.gov.pay.connector.util.JsonEncoder.toJson;
 
 public class EmailNotificationResourceITest extends GatewayAccountResourceTestBase {
 
@@ -19,7 +20,7 @@ public class EmailNotificationResourceITest extends GatewayAccountResourceTestBa
 
         String templateBody = "lorem ipsum";
         givenSetup().accept(JSON)
-                .body(ImmutableMap.of(EmailNotificationResource.EMAIL_NOTIFICATION_FIELD_NAME, templateBody))
+                .body(ImmutableMap.of(EmailNotificationResource.EMAIL_NOTIFICATION_TEMPLATE_BODY, templateBody))
                 .post(ACCOUNTS_API_URL + accountId + "/email-notification")
                 .then()
                 .statusCode(200);
@@ -48,7 +49,7 @@ public class EmailNotificationResourceITest extends GatewayAccountResourceTestBa
         String templateBody = "lorem ipsum";
 
         givenSetup().accept(JSON)
-                .body(ImmutableMap.of(EmailNotificationResource.EMAIL_NOTIFICATION_FIELD_NAME, templateBody))
+                .body(ImmutableMap.of(EmailNotificationResource.EMAIL_NOTIFICATION_TEMPLATE_BODY, templateBody))
                 .post(ACCOUNTS_API_URL + nonExistingAccountId + "/email-notification")
                 .then()
                 .statusCode(404)
@@ -56,10 +57,39 @@ public class EmailNotificationResourceITest extends GatewayAccountResourceTestBa
     }
 
     @Test
+    public void disableEmailNotification_shouldUpdateSuccessfully() {
+        String accountId = createAGatewayAccountFor("smartpay");
+
+        givenSetup().accept(JSON)
+                .body(getPatchRequestBody("replace", EmailNotificationResource.EMAIL_NOTIFICATION_ENABLED, false))
+                .patch(ACCOUNTS_API_URL + accountId + "/email-notification")
+                .then()
+                .statusCode(200);
+
+        Map<String, Object> emailNotification = app.getDatabaseTestHelper().getEmailNotificationByAccountId(Long.parseLong(accountId));
+        assertThat(emailNotification.get("enabled"), is(false));
+    }
+
+    @Test
+    public void enableEmailNotification_shouldUpdateSuccessfully() {
+        String accountId = createAGatewayAccountFor("smartpay");
+        app.getDatabaseTestHelper().updateEmailNotification(Long.parseLong(accountId), "lorem ipsum", false);
+
+        givenSetup().accept(JSON)
+                .body(getPatchRequestBody("replace", EmailNotificationResource.EMAIL_NOTIFICATION_ENABLED, true))
+                .patch(ACCOUNTS_API_URL + accountId + "/email-notification")
+                .then()
+                .statusCode(200);
+
+        Map<String, Object> emailNotification = app.getDatabaseTestHelper().getEmailNotificationByAccountId(Long.parseLong(accountId));
+        assertThat(emailNotification.get("enabled"), is(true));
+    }
+
+    @Test
     public void getEmailNotificationSuccessfully() {
         String templateBody = "lorem ipsum";
         String accountId = createAGatewayAccountFor("worldpay");
-        app.getDatabaseTestHelper().updateEmailNotification(Long.parseLong(accountId), templateBody);
+        app.getDatabaseTestHelper().updateEmailNotification(Long.parseLong(accountId), templateBody, true);
 
         givenSetup().accept(JSON)
                 .get(ACCOUNTS_API_URL + accountId + "/email-notification")
@@ -67,5 +97,9 @@ public class EmailNotificationResourceITest extends GatewayAccountResourceTestBa
                 .statusCode(200)
                 .body("template_body", is(templateBody))
                 .body("enabled", is(true));
+    }
+
+    private String getPatchRequestBody(String operation, String path, boolean value) {
+        return toJson(ImmutableMap.of("op",operation, "path", path, "value", value));
     }
 }
