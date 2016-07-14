@@ -23,3 +23,5 @@ alpha_staging-6.approver=till.wirth@digital.cabinet-office.gov.uk
 alpha_staging-6.approve-date=2016-07-14:10:55:34
 
 production.tag=alpha_production-6
+
+production.alpha_production-6.date=2016-07-14:10:15:37
