@@ -67,6 +67,7 @@ The command to run all the tests is:
 |[```/v1/api/accounts/{accountId}/charges/{chargeId}/events```](#post-v1apiaccountsaccountidchargeschargeidevents)  | GET     |  Retrieves all the transaction history for the given `chargeId` of account `accountId`           |
 |[```/v1/api/accounts/{accountId}/email-notification```](#post-v1apiaccountsaccountidchargeschargeidcancel)  | POST    |  Updates an email notification template body for account `accountId`           |
 |[```/v1/api/accounts/{accountId}/email-notification```](#post-v1apiaccountsaccountidchargeschargeidevents)  | GET     |  Retrieves the email notification template body for the given account `accountId`           |
+|[```/v1/api/accounts/{accountId}/email-notification```](#post-v1apiaccountsaccountidchargeschargeidevents)  | PATCH   |  Enables/Disables email notifications for the given account `accountId`           |
 
 ## FRONTEND NAMESPACE
 
@@ -529,6 +530,58 @@ Content-Type: application/json
 
 {
     "message": "The following fields are missing: [custom-email-text]"
+}
+
+-----------------------------------------------------------------------------------------------------------
+
+### PATCH /v1/api/accounts/{accountId}/email-notification
+
+Enables/disables email notifications for account `accountId`
+
+#### Request example
+
+```
+PATCH /v1/api/accounts/123/email-notification
+Content-Type: application/json
+{
+    "op":"replace", "path":"enabled", "value": true
+}
+```
+
+```
+PATCH /v1/api/accounts/123/email-notification
+Content-Type: application/json
+{
+    "op":"replace", "path":"enabled", "value": false
+}
+```
+
+#### Response when update is successful
+
+```
+200 {}
+```
+
+#### Response when update unsuccessful due to invalid account
+
+```
+HTTP/1.1 404 Not Found
+Content-Type: application/json
+Content-Length: 72
+
+{
+    "message": "The gateway account id '111' does not exist"
+}
+```
+
+#### Response if mandatory fields are missing
+
+```
+HTTP/1.1 400 Bad Request
+Content-Type: application/json
+
+{
+    "message": "The following fields are missing: [enabled]"
 }
 
 -----------------------------------------------------------------------------------------------------------

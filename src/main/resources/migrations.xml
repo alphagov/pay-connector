@@ -304,4 +304,16 @@
         </createTable>
     </changeSet>
 
+    <changeSet author="" id="drop not null constraint on email notifications table">
+        <dropNotNullConstraint columnDataType="text"
+                               columnName="template_body"
+                               tableName="email_notifications"/>
+    </changeSet>
+
+    <changeSet id="add enabled column to email notifications table" author="">
+        <addColumn tableName="email_notifications">
+            <column name="enabled" type="boolean" defaultValue="true" />
+        </addColumn>
+    </changeSet>
+
 </databaseChangeLog>

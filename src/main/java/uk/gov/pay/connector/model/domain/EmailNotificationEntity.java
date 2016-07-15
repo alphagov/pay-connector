@@ -15,6 +15,8 @@ public class EmailNotificationEntity extends AbstractEntity {
     @JsonProperty("template_body")
     private String templateBody;
 
+    private boolean enabled;
+
     @OneToOne
     @JsonIgnore
     @JoinColumn(name = "account_id", nullable = false)
@@ -22,11 +24,11 @@ public class EmailNotificationEntity extends AbstractEntity {
     private GatewayAccountEntity accountEntity;
 
     public EmailNotificationEntity () {
-
     }
-    public EmailNotificationEntity(GatewayAccountEntity accountEntity, String templateBody) {
+
+    public EmailNotificationEntity(GatewayAccountEntity accountEntity) {
         this.accountEntity = accountEntity;
-        this.templateBody = templateBody;
+        this.enabled = true;
     }
 
     public String getTemplateBody() {
@@ -40,4 +42,14 @@ public class EmailNotificationEntity extends AbstractEntity {
     public GatewayAccountEntity getAccountEntity() {
         return accountEntity;
     }
+
+
+    public boolean isEnabled() {
+        return enabled;
+    }
+
+    public void setEnabled(boolean enabled) {
+        this.enabled = enabled;
+    }
+
 }

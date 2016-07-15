@@ -7,7 +7,6 @@ import org.junit.rules.ExpectedException;
 import uk.gov.pay.connector.dao.ChargeDao;
 import uk.gov.pay.connector.dao.EmailNotificationsDao;
 import uk.gov.pay.connector.model.domain.EmailNotificationEntity;
-import uk.gov.pay.connector.model.domain.GatewayAccountEntity;
 
 import java.util.Optional;
 
@@ -43,23 +42,10 @@ public class EmailNotificationsDaoITest extends DaoITestBase {
     }
 
     @Test
-    public void persist_shouldInsertAnEmailNotification() {
-
-        GatewayAccountEntity defaultAccount = new GatewayAccountEntity();
-        defaultAccount.setId(defaultEmailNotification.getTestAccount().getAccountId());
-
-        EmailNotificationEntity emailNotificationEntity = new EmailNotificationEntity(defaultAccount, defaultEmailNotification.getTemplate());
-
-        emailNotificationsDao.persist(emailNotificationEntity);
-
-        assertThat(databaseTestHelper.getEmailNotificationTemplateByAccountId(defaultAccount.getId()), is(emailNotificationEntity.getTemplateBody()));
-    }
-
-    @Test
     public void findByAccountId_shouldFindEmailNotification() {
 
         String template = "lorem ipsum";
-        databaseTestHelper.addEmailNotification(defaultEmailNotification.getTestAccount().getAccountId(), template);
+        databaseTestHelper.addEmailNotification(defaultEmailNotification.getTestAccount().getAccountId(), template, true);
 
         Optional<EmailNotificationEntity> emailNotificationOptional = emailNotificationsDao.findByAccountId(defaultEmailNotification.getTestAccount().getAccountId());
 
@@ -70,6 +56,7 @@ public class EmailNotificationsDaoITest extends DaoITestBase {
         assertThat(notification.getId(), is(notNullValue()));
         assertThat(notification.getTemplateBody(), is(template));
         assertThat(notification.getAccountEntity().getId(), is(defaultEmailNotification.getTestAccount().accountId));
+        assertThat(notification.isEnabled(), is(true));
     }
 
     @Test
