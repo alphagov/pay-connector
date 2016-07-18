@@ -18,7 +18,7 @@ Important configurations.
 
 `NOTIFY_EMAIL_ENABLED`: The env variable to enable confirmation emails to be sent over by GOV.UK Notify, defaults to false.
 
-`NOTIFY_EMAIL_TEMPLATE`: ID of the email template specified in the GOV.UK Notify to be used for sending emails, there are no defaults for this one. An email template can accept personalisation (placeholder values which are passed in by the code).
+`NOTIFY_PAYMENT_RECEIPT_EMAIL_TEMPLATE_ID`: ID of the email template specified in the GOV.UK Notify to be used for sending emails, there are no defaults for this one. An email template can accept personalisation (placeholder values which are passed in by the code).
 
 `NOTIFY_SERVICE_ID`: Service ID for the account created at GOV.UK Notify, no defaults.
 

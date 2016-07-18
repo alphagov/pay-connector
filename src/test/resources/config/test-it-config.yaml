@@ -96,7 +96,7 @@ jpa:
   cacheSharedDefault: false
 
 notifyConfig:
-  emailTemplateId: ${NOTIFY_EMAIL_TEMPLATE}
+  emailTemplateId: ${NOTIFY_PAYMENT_RECEIPT_EMAIL_TEMPLATE_ID}
   serviceId: ${NOTIFY_SERVICE_ID}
   secret: ${NOTIFY_SECRET}
   notificationBaseURL: ${NOTIFY_BASE_URL}
