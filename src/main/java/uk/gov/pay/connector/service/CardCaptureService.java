@@ -61,7 +61,7 @@ public class CardCaptureService extends CardService implements TransactionalGate
         chargeDao.mergeAndNotifyStatusHasChanged(reloadedCharge);
 
         if (operationResponse.isSuccessful()) {
-            userNotificationService.notifyPaymentSuccessEmail(reloadedCharge.getEmail());
+            userNotificationService.notifyPaymentSuccessEmail(reloadedCharge);
         }
         return operationResponse;
     }

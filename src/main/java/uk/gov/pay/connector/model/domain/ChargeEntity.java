@@ -60,18 +60,19 @@ public class ChargeEntity extends AbstractEntity {
     }
 
     public ChargeEntity(Long amount, String returnUrl, String description, String reference, GatewayAccountEntity gatewayAccount, String email) {
-        this(amount, CREATED, returnUrl, description, reference, gatewayAccount, email);
+        this(amount, CREATED, returnUrl, description, reference, gatewayAccount, email, ZonedDateTime.now(ZoneId.of("UTC")));
     }
 
     //for fixture
-    ChargeEntity(Long amount, ChargeStatus status, String returnUrl, String description, String reference, GatewayAccountEntity gatewayAccount, String email) {
+    ChargeEntity(Long amount, ChargeStatus status, String returnUrl, String description, String reference,
+                 GatewayAccountEntity gatewayAccount, String email, ZonedDateTime createdDate) {
         this.amount = amount;
         this.status = status.getValue();
         this.returnUrl = returnUrl;
         this.description = description;
         this.reference = reference;
         this.gatewayAccount = gatewayAccount;
-        this.createdDate = ZonedDateTime.now(ZoneId.of("UTC"));
+        this.createdDate = createdDate;
         this.externalId = RandomIdGenerator.newId();
         this.email = email;
     }

@@ -73,7 +73,7 @@ public class CardCaptureServiceTest extends CardServiceTest {
         assertThat(request.getValue().getTransactionId(), is(gatewayTxId));
 
         // verify an email notification is sent for a successful capture
-        verify(mockUserNotificationService).notifyPaymentSuccessEmail(charge.getEmail());
+        verify(mockUserNotificationService).notifyPaymentSuccessEmail(charge);
     }
 
     @Test(expected = ChargeNotFoundRuntimeException.class)
