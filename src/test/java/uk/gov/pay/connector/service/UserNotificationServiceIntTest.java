@@ -26,7 +26,8 @@ public class UserNotificationServiceIntTest {
     public WireMockRule wireMockRule = new WireMockRule(port);
     @Rule
     public DropwizardAppWithPostgresRule app = new DropwizardAppWithPostgresRule(
-            config("notifyConfig.notificationBaseURL", "http://localhost:" + port)
+            config("notifyConfig.notificationBaseURL", "http://localhost:" + port),
+            config("notifyConfig.emailNotifyEnabled", "true")
     );
 
     private UserNotificationService userNotificationService;
