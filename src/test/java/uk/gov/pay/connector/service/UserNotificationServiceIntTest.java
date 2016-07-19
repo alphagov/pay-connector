@@ -8,13 +8,15 @@ import uk.gov.notifications.client.api.GovNotifyClientException;
 import uk.gov.notifications.client.model.StatusResponse;
 import uk.gov.pay.connector.app.ConnectorConfiguration;
 import uk.gov.pay.connector.it.mock.NotifyEmailMock;
+import uk.gov.pay.connector.model.domain.ChargeEntityFixture;
 import uk.gov.pay.connector.rules.DropwizardAppWithPostgresRule;
 import uk.gov.pay.connector.util.PortFactory;
 
 import java.util.Optional;
 
 import static io.dropwizard.testing.ConfigOverride.config;
-import static org.junit.Assert.*;
+import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertFalse;
 
 public class UserNotificationServiceIntTest {
 
@@ -86,7 +88,7 @@ public class UserNotificationServiceIntTest {
         notifyEmailMock.responseWithEmailRequestResponse(201, SUCCESS_EMAIL_REQUEST_RESPONSE, -1);
         notifyEmailMock.responseWithEmailCheckStatusResponse(201, SUCCESS_EMAIL_DELIVERY_RESPONSE, -1);
 
-        Optional<String> idOptional = userNotificationService.notifyPaymentSuccessEmail("mail@stubbed.com");
+        Optional<String> idOptional = userNotificationService.notifyPaymentSuccessEmail(ChargeEntityFixture.aValidChargeEntity().build());
 
         String id = idOptional.orElseThrow(() -> new Exception("id not returned from notification service"));
         StatusResponse checkDeliveryStatus = userNotificationService.checkDeliveryStatus(id);
@@ -96,7 +98,7 @@ public class UserNotificationServiceIntTest {
     @Test
     public void notifyPaymentFailedEmailRequest() throws Exception {
         notifyEmailMock.responseWithEmailRequestResponse(400, BAD_REQUEST_RESPONSE, -1);
-        Optional<String> idOptional = userNotificationService.notifyPaymentSuccessEmail("mail@stubbed.com");
+        Optional<String> idOptional = userNotificationService.notifyPaymentSuccessEmail(ChargeEntityFixture.aValidChargeEntity().build());
         assertFalse(idOptional.isPresent());
     }
 
@@ -104,6 +106,5 @@ public class UserNotificationServiceIntTest {
     public void checkDeliveryStatusForNonExistentId() throws Exception {
         notifyEmailMock.responseWithEmailCheckStatusResponse(404, "{}", -1);
         userNotificationService.checkDeliveryStatus("0");
-        fail("this should throw an exception GovNotifyClientException");
     }
 }
