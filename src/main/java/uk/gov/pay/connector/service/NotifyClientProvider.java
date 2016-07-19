@@ -9,8 +9,12 @@ import uk.gov.pay.connector.app.ConnectorConfiguration;
 
 public class NotifyClientProvider implements Provider<GovNotifyApiClient> {
 
-    @Inject
     private ConnectorConfiguration configuration;
+
+    @Inject
+    public NotifyClientProvider(ConnectorConfiguration configuration) {
+        this.configuration = configuration;
+    }
 
     @Override
     public GovNotifyApiClient get() {

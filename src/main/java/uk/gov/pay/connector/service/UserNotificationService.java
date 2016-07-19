@@ -10,6 +10,7 @@ import uk.gov.notifications.client.api.GovNotifyClientException;
 import uk.gov.notifications.client.model.EmailRequest;
 import uk.gov.notifications.client.model.NotificationCreatedResponse;
 import uk.gov.notifications.client.model.Personalisation;
+import uk.gov.notifications.client.model.StatusResponse;
 import uk.gov.pay.connector.app.ConnectorConfiguration;
 import uk.gov.pay.connector.model.domain.ChargeEntity;
 import uk.gov.pay.connector.model.domain.GatewayAccount;
@@ -53,8 +54,8 @@ public class UserNotificationService {
         return Optional.empty();
     }
 
-    public String checkDeliveryStatus(String notificationId) throws GovNotifyClientException {
-        return govNotifyApiClient.checkStatus(notificationId).getStatus();
+    public StatusResponse checkDeliveryStatus(String notificationId) throws GovNotifyClientException {
+        return govNotifyApiClient.checkStatus(notificationId);
     }
 
     public EmailRequest buildRequest(String emailAddress, String emailTemplateId, Map<String, String> emailPersonalisation) {

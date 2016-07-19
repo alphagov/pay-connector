@@ -69,11 +69,11 @@ public class UserNotificationServiceTest {
     @Test
     public void testEmailSendingStatus() throws Exception {
         when(mockNotifyClientProvider.get()).thenReturn(mockNotifyClient);
-        when(mockNotifyClient.checkStatus("100")).thenReturn(mockStatusResponse);
 
         userNotificationService = new UserNotificationService(mockNotifyClientProvider, mockConfig);
         userNotificationService.checkDeliveryStatus("100");
-        verify(mockStatusResponse).getStatus();
+
+        verify(mockNotifyClient).checkStatus("100");
     }
 
     @Test

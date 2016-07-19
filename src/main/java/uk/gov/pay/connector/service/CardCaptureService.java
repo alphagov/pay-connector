@@ -11,6 +11,8 @@ import uk.gov.pay.connector.model.domain.ChargeStatus;
 
 import javax.inject.Inject;
 
+import java.util.Optional;
+
 import static java.lang.String.format;
 import static uk.gov.pay.connector.model.domain.ChargeStatus.AUTHORISATION_SUCCESS;
 

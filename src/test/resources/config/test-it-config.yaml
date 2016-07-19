@@ -96,9 +96,9 @@ jpa:
   cacheSharedDefault: false
 
 notifyConfig:
-  emailTemplateId: ${NOTIFY_PAYMENT_RECEIPT_EMAIL_TEMPLATE_ID}
-  serviceId: ${NOTIFY_SERVICE_ID}
-  secret: ${NOTIFY_SECRET}
-  notificationBaseURL: ${NOTIFY_BASE_URL}
-  emailNotifyEnabled: ${NOTIFY_EMAIL_ENABLED:-false}
+  emailTemplateId: test-template-id
+  serviceId: test-service-id
+  secret: 11111111-1111-1111-1111-111111111111
+  notificationBaseURL: https://stubs.pymnt.localdomain
+  emailNotifyEnabled: false
 
