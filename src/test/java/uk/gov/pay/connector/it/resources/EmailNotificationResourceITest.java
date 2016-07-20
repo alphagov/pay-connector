@@ -2,6 +2,7 @@ package uk.gov.pay.connector.it.resources;
 
 import com.google.common.collect.ImmutableMap;
 import org.junit.Test;
+import uk.gov.pay.connector.it.dao.DatabaseFixtures;
 import uk.gov.pay.connector.resources.EmailNotificationResource;
 
 import java.util.HashMap;
@@ -26,6 +27,24 @@ public class EmailNotificationResourceITest extends GatewayAccountResourceTestBa
                 .statusCode(200);
 
         Map<String, Object> emailNotification = app.getDatabaseTestHelper().getEmailNotificationByAccountId(Long.valueOf(accountId));
+        assertThat(emailNotification.get("template_body"), is(templateBody));
+        assertThat(emailNotification.get("enabled"), is(true));
+    }
+
+    @Test
+    public void updateEmailNotification_shouldUpdateSuccessfullyIfEmailNotificationDoesNotExist() {
+        DatabaseFixtures.TestAccount testAccount = databaseFixtures
+                .aTestAccount()
+                .insert();
+
+        String templateBody = "lorem ipsum";
+        givenSetup().accept(JSON)
+                .body(ImmutableMap.of(EmailNotificationResource.EMAIL_NOTIFICATION_TEMPLATE_BODY, templateBody))
+                .post(ACCOUNTS_API_URL + testAccount.getAccountId() + "/email-notification")
+                .then()
+                .statusCode(200);
+
+        Map<String, Object> emailNotification = app.getDatabaseTestHelper().getEmailNotificationByAccountId(Long.valueOf(testAccount.getAccountId()));
         assertThat(emailNotification.get("template_body"), is(templateBody));
         assertThat(emailNotification.get("enabled"), is(true));
     }

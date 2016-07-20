@@ -31,6 +31,12 @@ public class EmailNotificationEntity extends AbstractEntity {
         this.enabled = true;
     }
 
+    public EmailNotificationEntity(GatewayAccountEntity gatewayAccount, String templateBody) {
+        this.accountEntity = gatewayAccount;
+        this.templateBody = templateBody;
+        this.enabled = true;
+    }
+
     public String getTemplateBody() {
         return templateBody;
     }

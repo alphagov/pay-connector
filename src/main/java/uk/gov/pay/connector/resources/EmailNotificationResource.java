@@ -5,7 +5,9 @@ import io.dropwizard.jersey.PATCH;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import uk.gov.pay.connector.dao.EmailNotificationsDao;
+import uk.gov.pay.connector.dao.GatewayAccountDao;
 import uk.gov.pay.connector.model.PatchRequestBuilder;
+import uk.gov.pay.connector.model.domain.EmailNotificationEntity;
 
 import javax.inject.Inject;
 import javax.ws.rs.*;
@@ -17,11 +19,7 @@ import static java.lang.String.format;
 import static javax.ws.rs.core.MediaType.APPLICATION_JSON;
 import static uk.gov.pay.connector.model.PatchRequestBuilder.aPatchRequestBuilder;
 import static uk.gov.pay.connector.resources.ApiPaths.GATEWAY_ACCOUNTS_API_EMAIL_NOTIFICATION;
-import static uk.gov.pay.connector.resources.ApiValidators.validateChargePatchParams;
-import static uk.gov.pay.connector.resources.ChargesApiResource.EMAIL_KEY;
-import static uk.gov.pay.connector.util.ResponseUtil.badRequestResponse;
-import static uk.gov.pay.connector.util.ResponseUtil.fieldsMissingResponse;
-import static uk.gov.pay.connector.util.ResponseUtil.notFoundResponse;
+import static uk.gov.pay.connector.util.ResponseUtil.*;
 
 @Path("/")
 public class EmailNotificationResource {
@@ -32,10 +30,12 @@ public class EmailNotificationResource {
     public static final String EMAIL_NOTIFICATION_ENABLED = "enabled";
 
     private final EmailNotificationsDao emailNotificationsDao;
+    private final GatewayAccountDao gatewayDao;
 
     @Inject
-    public EmailNotificationResource(EmailNotificationsDao emailNotificationsDao) {
+    public EmailNotificationResource(GatewayAccountDao gatewayDao, EmailNotificationsDao emailNotificationsDao) {
         this.emailNotificationsDao = emailNotificationsDao;
+        this.gatewayDao = gatewayDao;
     }
 
     @GET
@@ -44,8 +44,11 @@ public class EmailNotificationResource {
     public Response getEmailNotificationText(@PathParam("accountId") Long gatewayAccountId) {
         logger.info("Getting email notification text for account id {}", gatewayAccountId);
 
-        return emailNotificationsDao.findByAccountId(gatewayAccountId)
-                .map(emailNotificationEntity -> Response.ok().entity(emailNotificationEntity).build())
+        return gatewayDao.findById(gatewayAccountId)
+                .map(gatewayAccount ->
+                        emailNotificationsDao.findByAccountId(gatewayAccount.getId())
+                                .map(emailNotificationEntity -> Response.ok().entity(emailNotificationEntity).build())
+                                .orElseGet(() -> Response.ok().build()))
                 .orElseGet(() -> notFoundResponse(format("Account with id %s not found.", gatewayAccountId)));
     }
 
@@ -59,13 +62,17 @@ public class EmailNotificationResource {
             return fieldsMissingResponse(Collections.singletonList(EMAIL_NOTIFICATION_TEMPLATE_BODY));
         }
 
-        return emailNotificationsDao.findByAccountId(gatewayAccountId)
-            .map(emailNotificationEntity -> {
-                emailNotificationEntity.setTemplateBody(payload.get(EMAIL_NOTIFICATION_TEMPLATE_BODY));
-                emailNotificationEntity.setEnabled(true);
-                return Response.ok().build();
-            })
-            .orElseGet(() -> notFoundResponse(format("The gateway account id '%s' does not exist", gatewayAccountId)));
+        return gatewayDao.findById(gatewayAccountId)
+                .map(gatewayAccount ->
+                        emailNotificationsDao.findByAccountId(gatewayAccountId).map(emailNotificationEntity -> {
+                            emailNotificationEntity.setTemplateBody(payload.get(EMAIL_NOTIFICATION_TEMPLATE_BODY));
+                            return Response.ok().build();
+                        }).orElseGet(() -> {
+                            gatewayAccount.setEmailNotification(
+                                    new EmailNotificationEntity(gatewayAccount, payload.get(EMAIL_NOTIFICATION_TEMPLATE_BODY)));
+                            return Response.ok().build();
+                        }))
+                .orElseGet(() -> notFoundResponse(format("The gateway account id '%s' does not exist", gatewayAccountId)));
     }
 
     @PATCH
