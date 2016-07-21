@@ -93,11 +93,15 @@ public class EmailNotificationResource {
             return badRequestResponse("Bad patch parameters" + emailPatchMap.toString());
         }
 
-        return emailNotificationsDao.findByAccountId(gatewayAccountId)
-                .map(emailNotificationEntity -> {
-                    emailNotificationEntity.setEnabled(Boolean.parseBoolean(emailPatchRequest.getValue()));
-                    return Response.ok().build();
-                })
+        return gatewayDao.findById(gatewayAccountId)
+                .map(gatewayAccount -> emailNotificationsDao.findByAccountId(gatewayAccountId)
+                        .map(emailNotificationEntity -> {
+                            emailNotificationEntity.setEnabled(Boolean.parseBoolean(emailPatchRequest.getValue()));
+                            return Response.ok().build();
+                        }).orElseGet(() -> {
+                            gatewayAccount.setEmailNotification(new EmailNotificationEntity(gatewayAccount));
+                            return Response.ok().build();
+                        }))
                 .orElseGet(() -> notFoundResponse(format("The gateway account id '%s' does not exist", gatewayAccountId)));
     }
 }
