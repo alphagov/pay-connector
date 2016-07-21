@@ -50,6 +50,22 @@ public class EmailNotificationResourceITest extends GatewayAccountResourceTestBa
     }
 
     @Test
+    public void updateEmailNotification_shouldTurnOnEmailNotificationsSuccessfullyIfEmailNotificationDoesNotExist() {
+        DatabaseFixtures.TestAccount testAccount = databaseFixtures
+                .aTestAccount()
+                .insert();
+
+        givenSetup().accept(JSON)
+                .body(getPatchRequestBody("replace", EmailNotificationResource.EMAIL_NOTIFICATION_ENABLED, true))
+                .patch(ACCOUNTS_API_URL + testAccount.getAccountId() + "/email-notification")
+                .then()
+                .statusCode(200);
+
+        Map<String, Object> emailNotification = app.getDatabaseTestHelper().getEmailNotificationByAccountId(Long.valueOf(testAccount.getAccountId()));
+        assertThat(emailNotification.get("enabled"), is(true));
+    }
+
+    @Test
     public void updateEmailNotification_shouldNotUpdateIfMissingField() {
         String accountId = createAGatewayAccountFor("worldpay");
 
