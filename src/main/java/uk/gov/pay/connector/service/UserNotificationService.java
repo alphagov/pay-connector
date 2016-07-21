@@ -13,6 +13,7 @@ import uk.gov.notifications.client.model.Personalisation;
 import uk.gov.notifications.client.model.StatusResponse;
 import uk.gov.pay.connector.app.ConnectorConfiguration;
 import uk.gov.pay.connector.model.domain.ChargeEntity;
+import uk.gov.pay.connector.model.domain.EmailNotificationEntity;
 import uk.gov.pay.connector.model.domain.GatewayAccount;
 import uk.gov.pay.connector.model.domain.GatewayAccountEntity;
 import uk.gov.pay.connector.util.DateTimeUtils;
@@ -86,15 +87,19 @@ public class UserNotificationService {
 
     private Map<String, String> buildEmailPersonalisationFromCharge(ChargeEntity charge) {
         GatewayAccountEntity gatewayAccount = charge.getGatewayAccount();
+        EmailNotificationEntity emailNotification = gatewayAccount
+                .getEmailNotification();
+
+        String customParagraph = emailNotification != null ?
+                emailNotification.getTemplateBody() :
+                "";
 
         return new ImmutableMap.Builder<String, String>()
                 .put("serviceReference", charge.getReference())
                 .put("date", DateTimeUtils.toUserFriendlyDate(charge.getCreatedDate()))
                 .put("amount", formatToPounds(charge.getAmount()))
                 .put("description", charge.getDescription())
-                .put("customParagraph", StringUtils.defaultString(gatewayAccount
-                        .getEmailNotification()
-                        .getTemplateBody()))
+                .put("customParagraph", StringUtils.defaultString(customParagraph))
                 .put("serviceName",  StringUtils.defaultString(gatewayAccount.getServiceName()))
                 .build();
     }
