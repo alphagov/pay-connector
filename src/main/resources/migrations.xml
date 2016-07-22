@@ -316,4 +316,37 @@
         </addColumn>
     </changeSet>
 
+    <changeSet id="build refunds table" author="">
+        <createTable tableName="refunds">
+            <column name="id" type="bigserial" autoIncrement="true">
+                <constraints primaryKey="true" nullable="false"/>
+            </column>
+            <column name="external_id" type="char(26)">
+                <constraints nullable="false" unique="true"/>
+            </column>
+            <column name="amount" type="bigint">
+                <constraints nullable="false"/>
+            </column>
+            <column name="status" type="varchar(15)">
+                <constraints nullable="false"/>
+            </column>
+            <column name="charge_id" type="bigserial">
+                <constraints foreignKeyName="fk__refunds_charges" referencedTableName="charges"
+                             referencedColumnNames="id" nullable="false"/>
+            </column>
+            <column name="created_date" type="timestamp without timezone"
+                    defaultValueComputed="(now() at time zone 'utc')">
+                <constraints nullable="false"/>
+            </column>
+            <column name="version" type="bigint" defaultValue="0">
+                <constraints nullable="false"/>
+            </column>
+        </createTable>
+        <createIndex indexName="idx_refunds_external_id"
+                     tableName="refunds"
+                     unique="true">
+            <column name="external_id" type="char(26)"/>
+        </createIndex>
+    </changeSet>
+
 </databaseChangeLog>

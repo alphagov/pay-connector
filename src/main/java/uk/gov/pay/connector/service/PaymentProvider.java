@@ -9,11 +9,13 @@ import java.util.function.Function;
 
 public interface PaymentProvider {
 
-    AuthorisationResponse authorise(AuthorisationRequest request);
+    AuthorisationGatewayResponse authorise(AuthorisationGatewayRequest request);
 
-    CaptureResponse capture(CaptureRequest request);
+    CaptureGatewayResponse capture(CaptureGatewayRequest request);
 
-    CancelGatewayResponse cancel(CancelRequest request);
+    CancelGatewayResponse cancel(CancelGatewayRequest request);
+
+    RefundGatewayResponse refund(RefundGatewayRequest request);
 
     StatusUpdates handleNotification(String notificationPayload, Function<ChargeStatusRequest, Boolean> payloadChecks, Function<String, Optional<GatewayAccountEntity>> accountFinder, Consumer<StatusUpdates> accountUpdater);
 }

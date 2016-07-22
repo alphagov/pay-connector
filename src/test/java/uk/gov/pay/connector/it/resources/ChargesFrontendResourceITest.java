@@ -2,7 +2,6 @@ package uk.gov.pay.connector.it.resources;
 
 import com.google.common.collect.ImmutableMap;
 import com.jayway.restassured.response.ValidatableResponse;
-import org.apache.commons.lang.RandomStringUtils;
 import org.junit.Before;
 import org.junit.Rule;
 import org.junit.Test;
@@ -25,7 +24,7 @@ import static javax.ws.rs.HttpMethod.POST;
 import static javax.ws.rs.core.MediaType.APPLICATION_JSON;
 import static javax.ws.rs.core.Response.Status;
 import static javax.ws.rs.core.Response.Status.*;
-import static org.apache.commons.lang.RandomStringUtils.*;
+import static org.apache.commons.lang.RandomStringUtils.randomAlphanumeric;
 import static org.hamcrest.Matchers.*;
 import static org.hamcrest.core.Is.is;
 import static org.hamcrest.text.MatchesPattern.matchesPattern;
@@ -55,14 +54,15 @@ public class ChargesFrontendResourceITest {
     }
 
     @Test
-    public void getChargeShouldIncludeCardAuthAndCardCaptureLinkButNotGatewayAccountId() throws Exception {
+    public void getChargeShouldIncludeExpectedLinksButNotGatewayAccountId() throws Exception {
 
         String chargeId = postToCreateACharge(expectedAmount);
         String expectedLocation = "http://localhost:" + app.getLocalPort() + "/v1/frontend/charges/" + chargeId;
 
         validateGetCharge(expectedAmount, chargeId, CREATED)
-                .body("links", hasSize(3))
+                .body("links", hasSize(4))
                 .body("links", containsLink("self", GET, expectedLocation))
+                .body("links", containsLink("refunds", GET, expectedLocation + "/refunds"))
                 .body("links", containsLink("cardAuth", POST, expectedLocation + "/cards"))
                 .body("links", containsLink("cardCapture", POST, expectedLocation + "/capture"));
     }
@@ -348,6 +348,9 @@ public class ChargesFrontendResourceITest {
                 .body("status", is(chargeStatus.getValue()))
                 .body("return_url", is(returnUrl))
                 .body("email", is(email))
+                .body("refunds.status", is("pending"))
+                .body("refunds.amount_submitted", is(0))
+                .body("refunds.amount_available", is(expectedAmount))
                 .body("created_date", is(notNullValue()))
                 .body("created_date", matchesPattern("^\\d{4}-\\d{2}-\\d{2}T\\d{2}:\\d{2}:\\d{2}.\\d{3}Z"))
                 .body("created_date", isWithin(10, SECONDS));

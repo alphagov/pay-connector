@@ -31,24 +31,8 @@ public class ErrorResponse {
         return new ErrorResponse(msg, GATEWAY_CONNECTION_TIMEOUT_ERROR);
     }
 
-    public static ErrorResponse illegalStateError(String msg) {
-        return new ErrorResponse(msg, ILLEGAL_STATE_ERROR);
-    }
-
-    public static ErrorResponse conflictError(String msg) {
-        return new ErrorResponse(msg, CONFLICT_ERROR);
-    }
-
     public static ErrorResponse gatewayConnectionSocketException(String msg) {
         return new ErrorResponse(msg, GATEWAY_CONNECTION_SOCKET_ERROR);
-    }
-
-    public static ErrorResponse operationAlreadyInProgress(String msg) {
-        return new ErrorResponse(msg, OPERATION_ALREADY_IN_PROGRESS);
-    }
-
-    public static ErrorResponse chargeExpired(String msg) {
-        return new ErrorResponse(msg, CHARGE_EXPIRED);
     }
 
     public String getMessage() {

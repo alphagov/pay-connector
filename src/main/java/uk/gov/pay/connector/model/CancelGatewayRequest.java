@@ -3,16 +3,16 @@ package uk.gov.pay.connector.model;
 import uk.gov.pay.connector.model.domain.ChargeEntity;
 import uk.gov.pay.connector.model.domain.GatewayAccountEntity;
 
-public class CaptureRequest implements GatewayRequest {
+public class CancelGatewayRequest implements GatewayRequest {
 
     private ChargeEntity charge;
 
-    private CaptureRequest(ChargeEntity charge) {
+    private CancelGatewayRequest(ChargeEntity charge) {
         this.charge = charge;
     }
 
-    public String getAmount() {
-        return String.valueOf(charge.getAmount());
+    public static CancelGatewayRequest valueOf(ChargeEntity charge) {
+        return new CancelGatewayRequest(charge);
     }
 
     public String getTransactionId() {
@@ -22,9 +22,5 @@ public class CaptureRequest implements GatewayRequest {
     @Override
     public GatewayAccountEntity getGatewayAccount() {
         return charge.getGatewayAccount();
-    }
-
-    public static CaptureRequest valueOf(ChargeEntity charge) {
-        return new CaptureRequest(charge);
     }
 }

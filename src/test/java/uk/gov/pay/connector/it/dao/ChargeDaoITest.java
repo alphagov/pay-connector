@@ -11,10 +11,7 @@ import org.junit.Test;
 import org.junit.rules.ExpectedException;
 import uk.gov.pay.connector.dao.ChargeDao;
 import uk.gov.pay.connector.dao.ChargeSearchParams;
-import uk.gov.pay.connector.model.domain.ChargeEntity;
-import uk.gov.pay.connector.model.domain.ChargeEventEntity;
-import uk.gov.pay.connector.model.domain.ChargeStatus;
-import uk.gov.pay.connector.model.domain.GatewayAccountEntity;
+import uk.gov.pay.connector.model.domain.*;
 import uk.gov.pay.connector.util.DateTimeUtils;
 
 import java.time.ZoneId;
@@ -24,13 +21,13 @@ import java.util.*;
 
 import static java.time.ZonedDateTime.now;
 import static java.util.Arrays.asList;
-import static java.util.Collections.singletonList;
 import static java.util.stream.Collectors.toList;
 import static junit.framework.TestCase.assertTrue;
 import static org.exparity.hamcrest.date.ZonedDateTimeMatchers.within;
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.*;
 import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertNotNull;
 import static uk.gov.pay.connector.model.api.ExternalChargeState.EXTERNAL_CREATED;
 import static uk.gov.pay.connector.model.api.ExternalChargeState.EXTERNAL_STARTED;
 import static uk.gov.pay.connector.model.domain.ChargeEntityFixture.aValidChargeEntity;
@@ -48,6 +45,7 @@ public class ChargeDaoITest extends DaoITestBase {
     private ChargeDao chargeDao;
 
     private DatabaseFixtures.TestAccount defaultTestAccount;
+    private DatabaseFixtures.TestRefund defaultTestRefund;
     private DatabaseFixtures.TestCharge defaultTestCharge;
 
     @Before
@@ -252,7 +250,6 @@ public class ChargeDaoITest extends DaoITestBase {
         // with a typical sql injection vulnerable query doing this should fetch all results
         assertThat(charges.size(), is(0));
     }
-
 
 
     @Test
@@ -471,38 +468,6 @@ public class ChargeDaoITest extends DaoITestBase {
         assertThat(charges.size(), is(0));
     }
 
-    @Test
-    public void insertAmountAndThenGetAmountById() throws Exception {
-
-        // given
-        insertTestCharge();
-        Long chargeId = System.currentTimeMillis();
-        String externalChargeId = "chargesfsdf";
-
-        ZonedDateTime createdDateTime = ZonedDateTime.now(ZoneId.of("UTC"));
-        DatabaseFixtures
-                .withDatabaseTestHelper(databaseTestHelper)
-                .aTestCharge()
-                .withTestAccount(defaultTestAccount)
-                .withChargeId(chargeId)
-                .withExternalChargeId(externalChargeId)
-                .withCreatedDate(createdDateTime)
-                .insert();
-
-        // when
-        ChargeEntity charge = chargeDao.findById(chargeId).get();
-
-        // then
-        assertThat(charge.getId(), is(chargeId));
-        assertThat(charge.getAmount(), is(defaultTestCharge.getAmount()));
-        assertThat(charge.getReference(), is(defaultTestCharge.getReference()));
-        assertThat(charge.getDescription(), is(DESCRIPTION));
-        assertThat(charge.getStatus(), is(CREATED.getValue()));
-        assertThat(charge.getGatewayAccount().getId(), is(defaultTestAccount.getAccountId()));
-        assertThat(charge.getReturnUrl(), is(defaultTestCharge.getReturnUrl()));
-        assertThat(charge.getCreatedDate(), is(createdDateTime));
-    }
-
     private Matcher<? super List<ChargeEventEntity>> shouldIncludeStatus(ChargeStatus... expectedStatuses) {
         return new TypeSafeMatcher<List<ChargeEventEntity>>() {
             @Override
@@ -697,6 +662,36 @@ public class ChargeDaoITest extends DaoITestBase {
     }
 
     @Test
+    public void findById_shouldFindChargeEntity() throws Exception {
+
+        // given
+        insertTestCharge();
+        insertTestRefund();
+
+        // when
+        ChargeEntity charge = chargeDao.findById(defaultTestCharge.getChargeId()).get();
+
+        // then
+        assertThat(charge.getId(), is(defaultTestCharge.getChargeId()));
+        assertThat(charge.getAmount(), is(defaultTestCharge.getAmount()));
+        assertThat(charge.getReference(), is(defaultTestCharge.getReference()));
+        assertThat(charge.getDescription(), is(DESCRIPTION));
+        assertThat(charge.getStatus(), is(CREATED.getValue()));
+        assertThat(charge.getGatewayAccount().getId(), is(defaultTestAccount.getAccountId()));
+        assertThat(charge.getReturnUrl(), is(defaultTestCharge.getReturnUrl()));
+        assertThat(charge.getCreatedDate(), is(defaultTestCharge.getCreatedDate()));
+
+        assertThat(charge.getRefunds().size(), is(1));
+        RefundEntity refund = charge.getRefunds().get(0);
+        assertThat(refund.getId(), is(defaultTestRefund.getId()));
+        assertThat(refund.getAmount(), is(defaultTestRefund.getAmount()));
+        assertThat(refund.getStatus(), is(defaultTestRefund.getStatus()));
+        assertThat(refund.getCreatedDate(), is(defaultTestRefund.getCreatedDate()));
+        assertThat(refund.getChargeEntity().getId(), is(defaultTestCharge.getChargeId()));
+        assertNotNull(refund.getVersion());
+    }
+
+    @Test
     public void findByExternalId_shouldFindAChargeEntity() {
         insertTestCharge();
         Optional<ChargeEntity> chargeForAccount = chargeDao.findByExternalId(defaultTestCharge.getExternalChargeId());
@@ -786,11 +781,26 @@ public class ChargeDaoITest extends DaoITestBase {
         assertThat(chargeOpt.get().getGatewayAccount().getId(), is(defaultTestAccount.getAccountId()));
     }
 
+    private void insertTestAccount() {
+        this.defaultTestAccount = DatabaseFixtures
+                .withDatabaseTestHelper(databaseTestHelper)
+                .aTestAccount()
+                .insert();
+    }
+
     private void insertTestCharge() {
         this.defaultTestCharge = DatabaseFixtures
                 .withDatabaseTestHelper(databaseTestHelper)
                 .aTestCharge()
                 .withTestAccount(defaultTestAccount)
+                .insert();
+    }
+
+    private void insertTestRefund() {
+        this.defaultTestRefund = DatabaseFixtures
+                .withDatabaseTestHelper(databaseTestHelper)
+                .aTestRefund()
+                .withTestCharge(defaultTestCharge)
                 .insert();
     }
 
@@ -801,13 +811,6 @@ public class ChargeDaoITest extends DaoITestBase {
                 .withChargeId(chargeId)
                 .withCreatedDate(creationDate)
                 .withTestAccount(defaultTestAccount)
-                .insert();
-    }
-
-    private void insertTestAccount() {
-        this.defaultTestAccount = DatabaseFixtures
-                .withDatabaseTestHelper(databaseTestHelper)
-                .aTestAccount()
                 .insert();
     }
 }

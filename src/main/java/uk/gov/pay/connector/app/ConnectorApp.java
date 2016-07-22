@@ -73,6 +73,7 @@ public class ConnectorApp extends Application<ConnectorConfiguration> {
         environment.jersey().register(injector.getInstance(SecurityTokensResource.class));
         environment.jersey().register(injector.getInstance(ChargesApiResource.class));
         environment.jersey().register(injector.getInstance(ChargesFrontendResource.class));
+        environment.jersey().register(injector.getInstance(ChargeRefundsResource.class));
         environment.jersey().register(injector.getInstance(NotificationResource.class));
         environment.jersey().register(injector.getInstance(CardResource.class));
         environment.jersey().register(injector.getInstance(CardTypesResource.class));

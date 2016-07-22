@@ -39,6 +39,12 @@ public class WorldpayMockClient {
         paymentServiceResponse(captureResponse);
     }
 
+    public void mockRefundResponse() {
+        String gatewayTransactionId = randomId();
+        String refundResponse = loadFromTemplate("refund-success-response.xml", gatewayTransactionId);
+        paymentServiceResponse(refundResponse);
+    }
+
     public void mockCancelResponse(String gatewayTransactionId) {
         String cancelResponse = loadFromTemplate("cancel-success-response.xml", gatewayTransactionId);
         paymentServiceResponse(cancelResponse);
@@ -62,6 +68,7 @@ public class WorldpayMockClient {
     }
 
     private void paymentServiceResponse(String responseBody) {
+        //FIXME - This mocking approach is very poor. Needs to be revisited. Story PP-900 created.
         stubFor(
                 post(urlPathEqualTo("/jsp/merchant/xml/paymentService.jsp"))
                         .willReturn(

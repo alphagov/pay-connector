@@ -5,8 +5,8 @@ import org.apache.commons.lang3.tuple.Pair;
 import uk.gov.pay.connector.dao.ChargeDao;
 import uk.gov.pay.connector.exception.ChargeNotFoundRuntimeException;
 import uk.gov.pay.connector.exception.GenericGatewayRuntimeException;
-import uk.gov.pay.connector.model.AuthorisationRequest;
-import uk.gov.pay.connector.model.AuthorisationResponse;
+import uk.gov.pay.connector.model.AuthorisationGatewayRequest;
+import uk.gov.pay.connector.model.AuthorisationGatewayResponse;
 import uk.gov.pay.connector.model.GatewayResponse;
 import uk.gov.pay.connector.model.domain.Card;
 import uk.gov.pay.connector.model.domain.ChargeEntity;
@@ -64,23 +64,23 @@ public class CardAuthoriseService extends CardService implements TransactionalGa
     @Override
     public GatewayResponse operation(ChargeEntity chargeEntity) {
         return getPaymentProviderFor(chargeEntity)
-                .authorise(AuthorisationRequest.valueOf(chargeEntity, this.cardDetails));
+                .authorise(AuthorisationGatewayRequest.valueOf(chargeEntity, this.cardDetails));
     }
 
     private GatewayResponse inProgressGatewayResponse(ChargeStatus chargeStatus, String id) {
-        return new AuthorisationResponse(IN_PROGRESS, null, chargeStatus, id);
+        return new AuthorisationGatewayResponse(IN_PROGRESS, null, chargeStatus, id);
     }
 
     @Transactional
     @Override
     public GatewayResponse postOperation(ChargeEntity chargeEntity, GatewayResponse operationResponse) {
-        AuthorisationResponse authorisationResponse = (AuthorisationResponse) operationResponse;
+        AuthorisationGatewayResponse authorisationGatewayResponse = (AuthorisationGatewayResponse) operationResponse;
 
-        logger.info(format("Card authorisation response received - status = %s, charge_external_id = %s", authorisationResponse.getNewChargeStatus(), chargeEntity.getExternalId()));
+        logger.info(format("Card authorisation response received - status = %s, charge_external_id = %s", authorisationGatewayResponse.getNewChargeStatus(), chargeEntity.getExternalId()));
 
         ChargeEntity reloadedCharge = chargeDao.merge(chargeEntity);
-        reloadedCharge.setStatus(authorisationResponse.getNewChargeStatus());
-        reloadedCharge.setGatewayTransactionId(authorisationResponse.getTransactionId());
+        reloadedCharge.setStatus(authorisationGatewayResponse.getNewChargeStatus());
+        reloadedCharge.setGatewayTransactionId(authorisationGatewayResponse.getTransactionId());
 
         chargeDao.mergeAndNotifyStatusHasChanged(reloadedCharge);
 

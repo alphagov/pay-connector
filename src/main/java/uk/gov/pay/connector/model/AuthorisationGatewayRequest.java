@@ -4,11 +4,11 @@ import uk.gov.pay.connector.model.domain.Card;
 import uk.gov.pay.connector.model.domain.ChargeEntity;
 import uk.gov.pay.connector.model.domain.GatewayAccountEntity;
 
-public class AuthorisationRequest implements GatewayRequest {
+public class AuthorisationGatewayRequest implements GatewayRequest {
     private Card card;
     private ChargeEntity charge;
 
-    public AuthorisationRequest(ChargeEntity charge, Card card) {
+    public AuthorisationGatewayRequest(ChargeEntity charge, Card card) {
         this.charge = charge;
         this.card = card;
     }
@@ -33,7 +33,7 @@ public class AuthorisationRequest implements GatewayRequest {
     public GatewayAccountEntity getGatewayAccount() {return charge.getGatewayAccount();
     }
 
-    public static AuthorisationRequest valueOf(ChargeEntity charge, Card card) {
-        return new AuthorisationRequest(charge, card);
+    public static AuthorisationGatewayRequest valueOf(ChargeEntity charge, Card card) {
+        return new AuthorisationGatewayRequest(charge, card);
     }
 }

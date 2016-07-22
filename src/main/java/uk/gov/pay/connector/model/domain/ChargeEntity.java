@@ -43,6 +43,9 @@ public class ChargeEntity extends AbstractEntity {
     private GatewayAccountEntity gatewayAccount;
 
     @OneToMany(mappedBy = "chargeEntity")
+    private List<RefundEntity> refunds = new ArrayList<>();
+
+    @OneToMany(mappedBy = "chargeEntity")
     private List<ChargeEventEntity> events = new ArrayList<>();
 
     @Column(name = "description")
@@ -131,6 +134,10 @@ public class ChargeEntity extends AbstractEntity {
 
     public boolean isAssociatedTo(Long accountId) {
         return this.getGatewayAccount().getId().equals(accountId);
+    }
+
+    public List<RefundEntity> getRefunds() {
+        return refunds;
     }
 
     public List<ChargeEventEntity> getEvents() {

@@ -82,8 +82,8 @@ public class SmartpayPaymentProviderTest {
                 "password", "wrong-password"
         ));
 
-        AuthorisationRequest request = getCardAuthorisationRequest(accountWithInvalidCredentials);
-        AuthorisationResponse response = paymentProvider.authorise(request);
+        AuthorisationGatewayRequest request = getCardAuthorisationRequest(accountWithInvalidCredentials);
+        AuthorisationGatewayResponse response = paymentProvider.authorise(request);
 
         assertFalse(response.isSuccessful());
         assertNotNull(response.getError());
@@ -92,29 +92,29 @@ public class SmartpayPaymentProviderTest {
     @Test
     public void shouldSuccessfullySendACaptureRequest() throws Exception {
         PaymentProvider paymentProvider = getSmartpayPaymentProvider();
-        AuthorisationResponse response = testCardAuthorisation(paymentProvider, validGatewayAccount);
+        AuthorisationGatewayResponse response = testCardAuthorisation(paymentProvider, validGatewayAccount);
 
         ChargeEntity chargeEntity = aValidChargeEntity()
                 .withTransactionId(response.getTransactionId())
                 .withGatewayAccountEntity(validGatewayAccount)
                 .build();
 
-        CaptureResponse captureResponse = paymentProvider.capture(CaptureRequest.valueOf(chargeEntity));
-        assertTrue(captureResponse.isSuccessful());
-        assertNull(captureResponse.getError());
+        CaptureGatewayResponse captureGatewayResponse = paymentProvider.capture(CaptureGatewayRequest.valueOf(chargeEntity));
+        assertTrue(captureGatewayResponse.isSuccessful());
+        assertNull(captureGatewayResponse.getError());
     }
 
     @Test
     public void shouldSuccessfullySendACancelRequest() throws Exception {
         PaymentProvider paymentProvider = getSmartpayPaymentProvider();
-        AuthorisationResponse response = testCardAuthorisation(paymentProvider, validGatewayAccount);
+        AuthorisationGatewayResponse response = testCardAuthorisation(paymentProvider, validGatewayAccount);
 
         ChargeEntity chargeEntity = aValidChargeEntity()
                 .withTransactionId(response.getTransactionId())
                 .withGatewayAccountEntity(validGatewayAccount)
                 .build();
 
-        CancelGatewayResponse cancelResponse = paymentProvider.cancel(CancelRequest.valueOf(chargeEntity));
+        CancelGatewayResponse cancelResponse = paymentProvider.cancel(CancelGatewayRequest.valueOf(chargeEntity));
         assertTrue(cancelResponse.isSuccessful());
         assertNull(cancelResponse.getError());
 
@@ -123,7 +123,7 @@ public class SmartpayPaymentProviderTest {
     @Test
     public void shouldBeAbleToHandleNotification() throws Exception {
         PaymentProvider paymentProvider = getSmartpayPaymentProvider();
-        AuthorisationResponse response = testCardAuthorisation(paymentProvider, validGatewayAccount);
+        AuthorisationGatewayResponse response = testCardAuthorisation(paymentProvider, validGatewayAccount);
 
         Consumer<StatusUpdates> accountUpdater = mockAccountUpdater();
 
@@ -141,7 +141,7 @@ public class SmartpayPaymentProviderTest {
     @Test
     public void handleNotification_shouldNotUpdateChargeStatusForUnknownProviderStatusButAcceptNotification() throws Exception {
         PaymentProvider paymentProvider = getSmartpayPaymentProvider();
-        AuthorisationResponse response = testCardAuthorisation(paymentProvider, validGatewayAccount);
+        AuthorisationGatewayResponse response = testCardAuthorisation(paymentProvider, validGatewayAccount);
 
         Consumer<StatusUpdates> accountUpdater = mockAccountUpdater();
 
@@ -161,7 +161,7 @@ public class SmartpayPaymentProviderTest {
     @Test
     public void handleNotification_shouldProcessNotificationsInOrderOfNotificationDate() throws Exception {
         PaymentProvider paymentProvider = getSmartpayPaymentProvider();
-        AuthorisationResponse response = testCardAuthorisation(paymentProvider, validGatewayAccount);
+        AuthorisationGatewayResponse response = testCardAuthorisation(paymentProvider, validGatewayAccount);
 
         Consumer<StatusUpdates> accountUpdater = mockAccountUpdater();
 
@@ -177,9 +177,9 @@ public class SmartpayPaymentProviderTest {
         assertThat(statusResponse.getStatusUpdates(), contains(Pair.of(transactionId, CAPTURED), Pair.of(transactionId2, AUTHORISATION_SUCCESS)));
     }
 
-    private AuthorisationResponse testCardAuthorisation(PaymentProvider paymentProvider, GatewayAccountEntity gatewayAccountEntity) {
-        AuthorisationRequest request = getCardAuthorisationRequest(gatewayAccountEntity);
-        AuthorisationResponse response = paymentProvider.authorise(request);
+    private AuthorisationGatewayResponse testCardAuthorisation(PaymentProvider paymentProvider, GatewayAccountEntity gatewayAccountEntity) {
+        AuthorisationGatewayRequest request = getCardAuthorisationRequest(gatewayAccountEntity);
+        AuthorisationGatewayResponse response = paymentProvider.authorise(request);
         assertTrue(response.isSuccessful());
 
         return response;
@@ -208,7 +208,7 @@ public class SmartpayPaymentProviderTest {
                 .replace("{{transactionId2}}", transactionId2);
     }
 
-    public static AuthorisationRequest getCardAuthorisationRequest(GatewayAccountEntity gatewayAccount) {
+    public static AuthorisationGatewayRequest getCardAuthorisationRequest(GatewayAccountEntity gatewayAccount) {
         Address address = Address.anAddress();
         address.setLine1("41");
         address.setLine2("Scala Street");
@@ -223,7 +223,7 @@ public class SmartpayPaymentProviderTest {
         ChargeEntity chargeEntity = aValidChargeEntity()
                 .withGatewayAccountEntity(gatewayAccount).build();
 
-        return new AuthorisationRequest(chargeEntity, card);
+        return new AuthorisationGatewayRequest(chargeEntity, card);
     }
 
     public static Card aValidSmartpayCard() {

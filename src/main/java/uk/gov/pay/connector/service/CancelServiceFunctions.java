@@ -5,7 +5,7 @@ import org.slf4j.LoggerFactory;
 import uk.gov.pay.connector.dao.ChargeDao;
 import uk.gov.pay.connector.exception.IllegalStateRuntimeException;
 import uk.gov.pay.connector.exception.OperationAlreadyInProgressRuntimeException;
-import uk.gov.pay.connector.model.CancelRequest;
+import uk.gov.pay.connector.model.CancelGatewayRequest;
 import uk.gov.pay.connector.model.GatewayResponse;
 import uk.gov.pay.connector.model.domain.ChargeEntity;
 import uk.gov.pay.connector.model.domain.ChargeStatus;
@@ -56,7 +56,7 @@ class CancelServiceFunctions {
         return context -> {
             ChargeEntity chargeEntity = context.get(ChargeEntity.class);
             return providers.resolve(chargeEntity.getGatewayAccount().getGatewayName())
-                    .cancel(CancelRequest.valueOf(chargeEntity));
+                    .cancel(CancelGatewayRequest.valueOf(chargeEntity));
         };
     }
 
