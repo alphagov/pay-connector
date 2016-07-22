@@ -3,10 +3,10 @@
   <groupId>govuk.notify</groupId>
   <artifactId>notifyClient</artifactId>
   <versioning>
-    <release>1.2</release>
+    <release>2.0</release>
     <versions>
-      <version>1.2</version>
+      <version>2.0</version>
     </versions>
-    <lastUpdated>20160711220054</lastUpdated>
+    <lastUpdated>20160722171300</lastUpdated>
   </versioning>
 </metadata>

@@ -1,27 +1,21 @@
 package uk.gov.pay.connector.service;
 
-import com.google.common.collect.ImmutableMap;
-import com.google.gson.Gson;
 import org.apache.commons.lang3.StringUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import uk.gov.notifications.client.api.GovNotifyApiClient;
-import uk.gov.notifications.client.api.GovNotifyClientException;
-import uk.gov.notifications.client.model.EmailRequest;
-import uk.gov.notifications.client.model.NotificationCreatedResponse;
-import uk.gov.notifications.client.model.Personalisation;
-import uk.gov.notifications.client.model.StatusResponse;
 import uk.gov.pay.connector.app.ConnectorConfiguration;
 import uk.gov.pay.connector.model.domain.ChargeEntity;
 import uk.gov.pay.connector.model.domain.EmailNotificationEntity;
-import uk.gov.pay.connector.model.domain.GatewayAccount;
 import uk.gov.pay.connector.model.domain.GatewayAccountEntity;
 import uk.gov.pay.connector.util.DateTimeUtils;
+import uk.gov.service.notify.Notification;
+import uk.gov.service.notify.NotificationClient;
+import uk.gov.service.notify.NotificationClientException;
+import uk.gov.service.notify.NotificationResponse;
 
 import javax.inject.Inject;
 import java.math.BigDecimal;
-
-import java.util.Map;
+import java.util.HashMap;
 import java.util.Optional;
 
 
@@ -31,46 +25,40 @@ public class UserNotificationService {
     private boolean emailNotifyEnabled;
 
     protected final Logger logger = LoggerFactory.getLogger(getClass());
-    private GovNotifyApiClient govNotifyApiClient;
+    private NotificationClient notificationClient;
 
     @Inject
-    public UserNotificationService(NotifyClientProvider notifyClientProvider, ConnectorConfiguration configuration) {
+    public UserNotificationService(ConnectorConfiguration configuration) {
         readEmailConfig(configuration);
         if (emailNotifyEnabled) {
-            govNotifyApiClient = notifyClientProvider.get();
+            notificationClient = new NotificationClient(
+                configuration.getNotifyConfiguration().getSecret(),
+                configuration.getNotifyConfiguration().getServiceId(),
+                configuration.getNotifyConfiguration().getNotificationBaseURL()
+            );
         }
     }
 
     public Optional<String> notifyPaymentSuccessEmail(ChargeEntity chargeEntity) {
         if (emailNotifyEnabled) {
             String emailAddress = chargeEntity.getEmail();
-            EmailRequest emailRequest = buildRequest(emailAddress, this.emailTemplateId, buildEmailPersonalisationFromCharge(chargeEntity));
+
             try {
-                NotificationCreatedResponse notificationCreatedResponse = govNotifyApiClient.sendEmail(emailRequest);
-                return Optional.of(notificationCreatedResponse.getId());
-            } catch (GovNotifyClientException e) {
+                NotificationResponse response = notificationClient.sendEmail(
+                    this.emailTemplateId, emailAddress, buildEmailPersonalisationFromCharge(chargeEntity)
+                );
+
+                return Optional.of(response.getNotificationId());
+            } catch (NotificationClientException e) {
                 logger.error(String.format("failed to send confirmation email at %s", emailAddress), e);
             }
         }
         return Optional.empty();
     }
 
-    public StatusResponse checkDeliveryStatus(String notificationId) throws GovNotifyClientException {
-        return govNotifyApiClient.checkStatus(notificationId);
-    }
-
-    public EmailRequest buildRequest(String emailAddress, String emailTemplateId, Map<String, String> emailPersonalisation) {
-        EmailRequest.Builder emailRequestBuilder = EmailRequest
-                .builder()
-                .email(emailAddress)
-                .templateId(emailTemplateId);
-
-        if (!emailPersonalisation.isEmpty()) {
-            emailRequestBuilder = emailRequestBuilder
-                    .personalisation(Personalisation.fromJsonString(new Gson().toJson(emailPersonalisation)));
-        }
-
-        return emailRequestBuilder.build();
+    public String checkDeliveryStatus(String notificationId) throws NotificationClientException {
+        Notification notification = notificationClient.getNotificationById(notificationId);
+        return notification.getStatus();
     }
 
     private void readEmailConfig(ConnectorConfiguration configuration) {
@@ -85,7 +73,7 @@ public class UserNotificationService {
         }
     }
 
-    private Map<String, String> buildEmailPersonalisationFromCharge(ChargeEntity charge) {
+    private HashMap<String, String> buildEmailPersonalisationFromCharge(ChargeEntity charge) {
         GatewayAccountEntity gatewayAccount = charge.getGatewayAccount();
         EmailNotificationEntity emailNotification = gatewayAccount
                 .getEmailNotification();
@@ -94,14 +82,16 @@ public class UserNotificationService {
                 emailNotification.getTemplateBody() :
                 "";
 
-        return new ImmutableMap.Builder<String, String>()
-                .put("serviceReference", charge.getReference())
-                .put("date", DateTimeUtils.toUserFriendlyDate(charge.getCreatedDate()))
-                .put("amount", formatToPounds(charge.getAmount()))
-                .put("description", charge.getDescription())
-                .put("customParagraph", StringUtils.defaultString(customParagraph))
-                .put("serviceName",  StringUtils.defaultString(gatewayAccount.getServiceName()))
-                .build();
+        HashMap<String, String> map = new HashMap<>();
+
+        map.put("serviceReference", charge.getReference());
+        map.put("date", DateTimeUtils.toUserFriendlyDate(charge.getCreatedDate()));
+        map.put("amount", formatToPounds(charge.getAmount()));
+        map.put("description", charge.getDescription());
+        map.put("customParagraph", StringUtils.defaultString(customParagraph));
+        map.put("serviceName", StringUtils.defaultString(gatewayAccount.getServiceName()));
+
+        return map;
     }
 
     private String formatToPounds(long amountInPence) {

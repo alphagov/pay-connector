@@ -5,14 +5,13 @@ import com.google.common.collect.ImmutableMap;
 import org.junit.Before;
 import org.junit.Rule;
 import org.junit.Test;
-import uk.gov.notifications.client.api.GovNotifyClientException;
-import uk.gov.notifications.client.model.StatusResponse;
 import uk.gov.pay.connector.app.ConnectorConfiguration;
 import uk.gov.pay.connector.it.mock.NotifyEmailMock;
 import uk.gov.pay.connector.model.domain.ChargeEntity;
 import uk.gov.pay.connector.model.domain.ChargeEntityFixture;
 import uk.gov.pay.connector.rules.DropwizardAppWithPostgresRule;
 import uk.gov.pay.connector.util.PortFactory;
+import uk.gov.service.notify.NotificationClientException;
 
 import java.util.Map;
 import java.util.Optional;
@@ -83,8 +82,7 @@ public class UserNotificationServiceIntTest {
     @Before
     public void before() {
         ConnectorConfiguration configuration = app.getConf();
-        NotifyClientProvider notifyClientProvider = new NotifyClientProvider(configuration);
-        userNotificationService = new UserNotificationService(notifyClientProvider, configuration);
+        userNotificationService = new UserNotificationService(configuration);
     }
 
     @Test
@@ -95,8 +93,8 @@ public class UserNotificationServiceIntTest {
         Optional<String> idOptional = userNotificationService.notifyPaymentSuccessEmail(ChargeEntityFixture.aValidChargeEntity().build());
 
         String id = idOptional.orElseThrow(() -> new Exception("id not returned from notification service"));
-        StatusResponse checkDeliveryStatus = userNotificationService.checkDeliveryStatus(id);
-        assertEquals("delivered", checkDeliveryStatus.getStatus());
+        String checkDeliveryStatus = userNotificationService.checkDeliveryStatus(id);
+        assertEquals("delivered", checkDeliveryStatus);
     }
 
     @Test
@@ -120,8 +118,8 @@ public class UserNotificationServiceIntTest {
         Optional<String> idOptional = userNotificationService.notifyPaymentSuccessEmail(ChargeEntityFixture.aValidChargeEntity().build());
 
         String id = idOptional.orElseThrow(() -> new Exception("id not returned from notification service"));
-        StatusResponse checkDeliveryStatus = userNotificationService.checkDeliveryStatus(id);
-        assertEquals("delivered", checkDeliveryStatus.getStatus());
+        String checkDeliveryStatus = userNotificationService.checkDeliveryStatus(id);
+        assertEquals("delivered", checkDeliveryStatus);
     }
 
     @Test
@@ -131,7 +129,7 @@ public class UserNotificationServiceIntTest {
         assertFalse(idOptional.isPresent());
     }
 
-    @Test(expected = GovNotifyClientException.class)
+    @Test(expected = NotificationClientException.class)
     public void checkDeliveryStatusForNonExistentId() throws Exception {
         notifyEmailMock.responseWithEmailCheckStatusResponse(404, "{}", -1);
         userNotificationService.checkDeliveryStatus("0");

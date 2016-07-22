@@ -19,8 +19,22 @@ import uk.gov.pay.connector.filters.LoggingFilter;
 import uk.gov.pay.connector.healthcheck.CardExecutorServiceHealthCheck;
 import uk.gov.pay.connector.healthcheck.DatabaseHealthCheck;
 import uk.gov.pay.connector.healthcheck.Ping;
-import uk.gov.pay.connector.resources.*;
+import uk.gov.pay.connector.resources.ApiPaths;
+import uk.gov.pay.connector.resources.CardResource;
+import uk.gov.pay.connector.resources.CardTypesResource;
+import uk.gov.pay.connector.resources.ChargeEventsResource;
+import uk.gov.pay.connector.resources.ChargesApiResource;
+import uk.gov.pay.connector.resources.ChargesFrontendResource;
+import uk.gov.pay.connector.resources.EmailNotificationResource;
+import uk.gov.pay.connector.resources.GatewayAccountResource;
+import uk.gov.pay.connector.resources.HealthCheckResource;
+import uk.gov.pay.connector.resources.NotificationResource;
+import uk.gov.pay.connector.resources.SecurityTokensResource;
 import uk.gov.pay.connector.util.DependentResourceWaitCommand;
+import uk.gov.pay.connector.util.TrustingSSLSocketFactory;
+
+import javax.net.ssl.HttpsURLConnection;
+import javax.net.ssl.SSLSocketFactory;
 
 import static java.util.EnumSet.of;
 import static javax.servlet.DispatcherType.REQUEST;
@@ -88,5 +102,9 @@ public class ConnectorApp extends Application<ConnectorConfiguration> {
 
     public static void main(String[] args) throws Exception {
         new ConnectorApp().run(args);
+
+        SSLSocketFactory socketFactory = new TrustingSSLSocketFactory();
+
+        HttpsURLConnection.setDefaultSSLSocketFactory(socketFactory);
     }
 }

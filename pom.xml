@@ -76,7 +76,7 @@
         <dependency>
             <groupId>govuk.notify</groupId>
             <artifactId>notifyClient</artifactId>
-            <version>1.2</version>
+            <version>2.0</version>
         </dependency>
         <dependency>
             <groupId>com.google.guava</groupId>
