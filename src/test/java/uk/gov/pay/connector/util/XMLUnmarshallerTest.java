@@ -1,4 +1,4 @@
-package uk.gov.pay.connector.unit.util;
+package uk.gov.pay.connector.util;
 
 import com.google.common.io.Resources;
 import org.junit.Test;
@@ -7,7 +7,6 @@ import uk.gov.pay.connector.service.worldpay.WorldpayCancelResponse;
 import uk.gov.pay.connector.service.worldpay.WorldpayCaptureResponse;
 import uk.gov.pay.connector.service.worldpay.WorldpayNotification;
 import uk.gov.pay.connector.service.worldpay.WorldpayOrderStatusResponse;
-import uk.gov.pay.connector.util.XMLUnmarshaller;
 
 import java.io.IOException;
 import java.nio.charset.Charset;

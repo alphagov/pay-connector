@@ -1,4 +1,4 @@
-package uk.gov.pay.connector.unit.service;
+package uk.gov.pay.connector.service;
 
 import fj.data.Either;
 import org.apache.commons.lang3.tuple.Pair;
@@ -15,7 +15,6 @@ import uk.gov.pay.connector.model.GatewayResponse;
 import uk.gov.pay.connector.model.domain.Card;
 import uk.gov.pay.connector.model.domain.ChargeEntity;
 import uk.gov.pay.connector.model.domain.ChargeStatus;
-import uk.gov.pay.connector.service.CardAuthoriseService;
 import uk.gov.pay.connector.util.CardUtils;
 
 import javax.persistence.OptimisticLockException;
@@ -30,8 +29,8 @@ import static org.junit.Assert.assertTrue;
 import static org.mockito.Matchers.any;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
-import static uk.gov.pay.connector.model.AuthorisationResponse.authorisationFailureResponse;
-import static uk.gov.pay.connector.model.AuthorisationResponse.successfulAuthorisationResponse;
+import static uk.gov.pay.connector.model.AuthorisationGatewayResponse.authorisationFailureResponse;
+import static uk.gov.pay.connector.model.AuthorisationGatewayResponse.successfulAuthorisationResponse;
 import static uk.gov.pay.connector.model.domain.ChargeStatus.AUTHORISATION_SUCCESS;
 import static uk.gov.pay.connector.model.domain.ChargeStatus.ENTERING_CARD_DETAILS;
 import static uk.gov.pay.connector.service.CardExecutorService.ExecutionStatus.COMPLETED;

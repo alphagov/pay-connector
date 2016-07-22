@@ -1,4 +1,4 @@
-package uk.gov.pay.connector.unit.service;
+package uk.gov.pay.connector.service;
 
 import org.junit.Before;
 import org.junit.Rule;
@@ -12,14 +12,12 @@ import uk.gov.pay.connector.exception.ChargeNotFoundRuntimeException;
 import uk.gov.pay.connector.exception.ConflictRuntimeException;
 import uk.gov.pay.connector.exception.IllegalStateRuntimeException;
 import uk.gov.pay.connector.exception.OperationAlreadyInProgressRuntimeException;
-import uk.gov.pay.connector.model.CaptureRequest;
-import uk.gov.pay.connector.model.CaptureResponse;
+import uk.gov.pay.connector.model.CaptureGatewayRequest;
+import uk.gov.pay.connector.model.CaptureGatewayResponse;
 import uk.gov.pay.connector.model.ErrorResponse;
 import uk.gov.pay.connector.model.GatewayResponse;
 import uk.gov.pay.connector.model.domain.ChargeEntity;
 import uk.gov.pay.connector.model.domain.ChargeStatus;
-import uk.gov.pay.connector.service.CardCaptureService;
-import uk.gov.pay.connector.service.UserNotificationService;
 
 import javax.persistence.OptimisticLockException;
 import java.util.Optional;
@@ -68,7 +66,7 @@ public class CardCaptureServiceTest extends CardServiceTest {
 
         assertThat(argumentCaptor.getValue().getStatus(), is(CAPTURE_SUBMITTED.getValue()));
 
-        ArgumentCaptor<CaptureRequest> request = ArgumentCaptor.forClass(CaptureRequest.class);
+        ArgumentCaptor<CaptureGatewayRequest> request = ArgumentCaptor.forClass(CaptureGatewayRequest.class);
         verify(mockedPaymentProvider, times(1)).capture(request.capture());
         assertThat(request.getValue().getTransactionId(), is(gatewayTxId));
 
@@ -158,13 +156,13 @@ public class CardCaptureServiceTest extends CardServiceTest {
         when(mockedProviders.resolve(providerName))
                 .thenReturn(mockedPaymentProvider);
         when(mockedPaymentProvider.capture(any()))
-                .thenReturn(CaptureResponse.successfulCaptureResponse(CAPTURE_SUBMITTED));
+                .thenReturn(CaptureGatewayResponse.successfulCaptureResponse(CAPTURE_SUBMITTED));
     }
 
     private void mockUnsuccessfulCapture() {
         when(mockedProviders.resolve(providerName))
                 .thenReturn(mockedPaymentProvider);
         when(mockedPaymentProvider.capture(any()))
-                .thenReturn(CaptureResponse.captureFailureResponse(ErrorResponse.baseError("error")));
+                .thenReturn(CaptureGatewayResponse.captureFailureResponse(ErrorResponse.baseError("error")));
     }
 }

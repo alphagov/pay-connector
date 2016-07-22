@@ -1,4 +1,4 @@
-package uk.gov.pay.connector.unit.service.smartpay;
+package uk.gov.pay.connector.service.smartpay;
 
 import com.google.common.io.Resources;
 import org.junit.Test;

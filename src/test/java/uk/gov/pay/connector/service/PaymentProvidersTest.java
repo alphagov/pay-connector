@@ -1,4 +1,4 @@
-package uk.gov.pay.connector.unit.service;
+package uk.gov.pay.connector.service;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 import org.junit.Before;
@@ -8,9 +8,6 @@ import org.junit.rules.ExpectedException;
 import uk.gov.pay.connector.app.ConnectorConfiguration;
 import uk.gov.pay.connector.app.GatewayCredentialsConfig;
 import uk.gov.pay.connector.app.SmartpayCredentialsConfig;
-import uk.gov.pay.connector.service.ClientFactory;
-import uk.gov.pay.connector.service.PaymentProvider;
-import uk.gov.pay.connector.service.PaymentProviders;
 import uk.gov.pay.connector.service.sandbox.SandboxPaymentProvider;
 import uk.gov.pay.connector.service.smartpay.SmartpayPaymentProvider;
 import uk.gov.pay.connector.service.worldpay.WorldpayPaymentProvider;

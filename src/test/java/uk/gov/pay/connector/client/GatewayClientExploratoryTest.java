@@ -1,4 +1,4 @@
-package uk.gov.pay.connector.unit.client;
+package uk.gov.pay.connector.client;
 
 import com.github.tomakehurst.wiremock.WireMockServer;
 import com.github.tomakehurst.wiremock.client.WireMock;

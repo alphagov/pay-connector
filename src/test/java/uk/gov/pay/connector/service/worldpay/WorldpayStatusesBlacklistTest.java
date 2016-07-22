@@ -1,4 +1,4 @@
-package uk.gov.pay.connector.unit.service.worldpay;
+package uk.gov.pay.connector.service.worldpay;
 
 import org.junit.Test;
 import uk.gov.pay.connector.service.ChargeStatusBlacklist;

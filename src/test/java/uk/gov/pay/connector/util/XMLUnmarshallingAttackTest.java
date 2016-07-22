@@ -1,4 +1,4 @@
-package uk.gov.pay.connector.unit.util;
+package uk.gov.pay.connector.util;
 
 import javax.xml.bind.annotation.XmlRootElement;
 import javax.xml.bind.annotation.XmlValue;

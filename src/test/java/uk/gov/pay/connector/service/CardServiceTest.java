@@ -1,4 +1,4 @@
-package uk.gov.pay.connector.unit.service;
+package uk.gov.pay.connector.service;
 
 import org.hamcrest.Description;
 import org.hamcrest.Matcher;
@@ -8,9 +8,6 @@ import uk.gov.pay.connector.model.GatewayResponse;
 import uk.gov.pay.connector.model.domain.ChargeEntity;
 import uk.gov.pay.connector.model.domain.ChargeEntityFixture;
 import uk.gov.pay.connector.model.domain.ChargeStatus;
-import uk.gov.pay.connector.service.CardExecutorService;
-import uk.gov.pay.connector.service.PaymentProvider;
-import uk.gov.pay.connector.service.PaymentProviders;
 
 import static org.mockito.Mockito.mock;
 

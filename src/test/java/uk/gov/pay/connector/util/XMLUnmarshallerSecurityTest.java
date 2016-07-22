@@ -1,4 +1,4 @@
-package uk.gov.pay.connector.unit.util;
+package uk.gov.pay.connector.util;
 
 import org.hamcrest.Description;
 import org.hamcrest.Matcher;
@@ -7,8 +7,6 @@ import org.junit.Rule;
 import org.junit.Test;
 import org.junit.rules.ExpectedException;
 import org.xml.sax.SAXParseException;
-import uk.gov.pay.connector.util.XMLUnmarshaller;
-import uk.gov.pay.connector.util.XMLUnmarshallerException;
 
 import javax.xml.bind.UnmarshalException;
 

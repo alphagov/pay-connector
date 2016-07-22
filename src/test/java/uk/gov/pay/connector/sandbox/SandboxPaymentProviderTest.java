@@ -1,4 +1,4 @@
-package uk.gov.pay.connector.unit.sandbox;
+package uk.gov.pay.connector.sandbox;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.google.common.collect.ImmutableMap;

@@ -1,13 +1,13 @@
-package uk.gov.pay.connector.unit.smartpay;
+package uk.gov.pay.connector.smartpay;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.google.common.collect.ImmutableMap;
 import org.junit.Before;
 import org.junit.Test;
-import uk.gov.pay.connector.model.AuthorisationRequest;
-import uk.gov.pay.connector.model.AuthorisationResponse;
-import uk.gov.pay.connector.model.CaptureRequest;
-import uk.gov.pay.connector.model.CaptureResponse;
+import uk.gov.pay.connector.model.AuthorisationGatewayRequest;
+import uk.gov.pay.connector.model.AuthorisationGatewayResponse;
+import uk.gov.pay.connector.model.CaptureGatewayRequest;
+import uk.gov.pay.connector.model.CaptureGatewayResponse;
 import uk.gov.pay.connector.model.domain.Address;
 import uk.gov.pay.connector.model.domain.Card;
 import uk.gov.pay.connector.model.domain.ChargeEntity;
@@ -55,7 +55,7 @@ public class SmartpayPaymentProviderTest {
                 .withGatewayAccountEntity(aServiceAccount())
                 .build();
 
-        AuthorisationResponse response = provider.authorise(new AuthorisationRequest(chargeEntity, card));
+        AuthorisationGatewayResponse response = provider.authorise(new AuthorisationGatewayRequest(chargeEntity, card));
 
         assertTrue(response.isSuccessful());
         assertThat(response.getTransactionId(), is(notNullValue()));
@@ -70,7 +70,7 @@ public class SmartpayPaymentProviderTest {
                 .withGatewayAccountEntity(aServiceAccount())
                 .build();
 
-        CaptureResponse response = provider.capture(CaptureRequest.valueOf(chargeEntity));
+        CaptureGatewayResponse response = provider.capture(CaptureGatewayRequest.valueOf(chargeEntity));
         assertTrue(response.isSuccessful());
     }
 
