@@ -1,6 +1,7 @@
 package uk.gov.pay.connector.service;
 
 import com.github.tomakehurst.wiremock.junit.WireMockRule;
+import com.google.common.collect.ImmutableMap;
 import org.junit.Before;
 import org.junit.Rule;
 import org.junit.Test;
@@ -8,10 +9,12 @@ import uk.gov.notifications.client.api.GovNotifyClientException;
 import uk.gov.notifications.client.model.StatusResponse;
 import uk.gov.pay.connector.app.ConnectorConfiguration;
 import uk.gov.pay.connector.it.mock.NotifyEmailMock;
+import uk.gov.pay.connector.model.domain.ChargeEntity;
 import uk.gov.pay.connector.model.domain.ChargeEntityFixture;
 import uk.gov.pay.connector.rules.DropwizardAppWithPostgresRule;
 import uk.gov.pay.connector.util.PortFactory;
 
+import java.util.Map;
 import java.util.Optional;
 
 import static io.dropwizard.testing.ConfigOverride.config;
@@ -87,6 +90,31 @@ public class UserNotificationServiceIntTest {
     @Test
     public void notifyPaymentSuccessEmail() throws Exception {
         notifyEmailMock.responseWithEmailRequestResponse(201, SUCCESS_EMAIL_REQUEST_RESPONSE, -1);
+        notifyEmailMock.responseWithEmailCheckStatusResponse(201, SUCCESS_EMAIL_DELIVERY_RESPONSE, -1);
+
+        Optional<String> idOptional = userNotificationService.notifyPaymentSuccessEmail(ChargeEntityFixture.aValidChargeEntity().build());
+
+        String id = idOptional.orElseThrow(() -> new Exception("id not returned from notification service"));
+        StatusResponse checkDeliveryStatus = userNotificationService.checkDeliveryStatus(id);
+        assertEquals("delivered", checkDeliveryStatus.getStatus());
+    }
+
+    @Test
+    public void notifyPaymentSuccessEmailWithPersonalisation() throws Exception {
+        ChargeEntity charge = ChargeEntityFixture.aValidChargeEntity().build();
+        Map<String, String> expectedParameters = new ImmutableMap.Builder<String, String>()
+                .put("serviceReference", charge.getReference())
+                .put("amount", "5.00")
+                .put("description", charge.getDescription())
+                .put("customParagraph", charge.getGatewayAccount().getEmailNotification().getTemplateBody())
+                .put("serviceName", charge.getGatewayAccount().getServiceName())
+                .build();
+
+        notifyEmailMock.responseWithEmailRequestResponseMatchingPersonalisation(
+                201,
+                SUCCESS_EMAIL_REQUEST_RESPONSE,
+                expectedParameters,
+                -1);
         notifyEmailMock.responseWithEmailCheckStatusResponse(201, SUCCESS_EMAIL_DELIVERY_RESPONSE, -1);
 
         Optional<String> idOptional = userNotificationService.notifyPaymentSuccessEmail(ChargeEntityFixture.aValidChargeEntity().build());
