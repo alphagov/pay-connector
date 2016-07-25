@@ -28,14 +28,10 @@ public class UserNotificationService {
     private NotificationClient notificationClient;
 
     @Inject
-    public UserNotificationService(ConnectorConfiguration configuration) {
+    public UserNotificationService(NotifyClientProvider notifyClientProvider, ConnectorConfiguration configuration) {
         readEmailConfig(configuration);
         if (emailNotifyEnabled) {
-            notificationClient = new NotificationClient(
-                configuration.getNotifyConfiguration().getSecret(),
-                configuration.getNotifyConfiguration().getServiceId(),
-                configuration.getNotifyConfiguration().getNotificationBaseURL()
-            );
+            this.notificationClient = notifyClientProvider.get();
         }
     }
 

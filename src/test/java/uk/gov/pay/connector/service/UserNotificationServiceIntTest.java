@@ -36,6 +36,9 @@ public class UserNotificationServiceIntTest {
     private UserNotificationService userNotificationService;
     private NotifyEmailMock notifyEmailMock = new NotifyEmailMock();
 
+    private NotifyClientProvider notifyClientProvider;
+
+
     private static final String SUCCESS_EMAIL_REQUEST_RESPONSE = "{" +
             "                        \"data\":{" +
             "                            \"notification\":{" +
@@ -83,7 +86,8 @@ public class UserNotificationServiceIntTest {
     @Before
     public void before() {
         ConnectorConfiguration configuration = app.getConf();
-        userNotificationService = new UserNotificationService(configuration);
+        NotifyClientProvider notifyClientProvider = new NotifyClientProvider(configuration);
+        userNotificationService = new UserNotificationService(notifyClientProvider, configuration);
     }
 
     @Test

@@ -58,6 +58,9 @@ public class ConnectorApp extends Application<ConnectorConfiguration> {
             }
         });
 
+        SSLSocketFactory socketFactory = new TrustingSSLSocketFactory();
+        HttpsURLConnection.setDefaultSSLSocketFactory(socketFactory);
+
         bootstrap.addCommand(new DependentResourceWaitCommand());
     }
 
@@ -102,9 +105,5 @@ public class ConnectorApp extends Application<ConnectorConfiguration> {
 
     public static void main(String[] args) throws Exception {
         new ConnectorApp().run(args);
-
-        SSLSocketFactory socketFactory = new TrustingSSLSocketFactory();
-
-        HttpsURLConnection.setDefaultSSLSocketFactory(socketFactory);
     }
 }
