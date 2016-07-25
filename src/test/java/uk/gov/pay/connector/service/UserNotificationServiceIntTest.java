@@ -3,6 +3,7 @@ package uk.gov.pay.connector.service;
 import com.github.tomakehurst.wiremock.junit.WireMockRule;
 import com.google.common.collect.ImmutableMap;
 import org.junit.Before;
+import org.junit.Ignore;
 import org.junit.Rule;
 import org.junit.Test;
 import uk.gov.pay.connector.app.ConnectorConfiguration;
@@ -86,6 +87,7 @@ public class UserNotificationServiceIntTest {
     }
 
     @Test
+    @Ignore
     public void notifyPaymentSuccessEmail() throws Exception {
         notifyEmailMock.responseWithEmailRequestResponse(201, SUCCESS_EMAIL_REQUEST_RESPONSE, -1);
         notifyEmailMock.responseWithEmailCheckStatusResponse(201, SUCCESS_EMAIL_DELIVERY_RESPONSE, -1);
@@ -98,6 +100,7 @@ public class UserNotificationServiceIntTest {
     }
 
     @Test
+    @Ignore
     public void notifyPaymentSuccessEmailWithPersonalisation() throws Exception {
         ChargeEntity charge = ChargeEntityFixture.aValidChargeEntity().build();
         Map<String, String> expectedParameters = new ImmutableMap.Builder<String, String>()
@@ -123,6 +126,7 @@ public class UserNotificationServiceIntTest {
     }
 
     @Test
+    @Ignore
     public void notifyPaymentFailedEmailRequest() throws Exception {
         notifyEmailMock.responseWithEmailRequestResponse(400, BAD_REQUEST_RESPONSE, -1);
         Optional<String> idOptional = userNotificationService.notifyPaymentSuccessEmail(ChargeEntityFixture.aValidChargeEntity().build());
@@ -130,6 +134,7 @@ public class UserNotificationServiceIntTest {
     }
 
     @Test(expected = NotificationClientException.class)
+    @Ignore
     public void checkDeliveryStatusForNonExistentId() throws Exception {
         notifyEmailMock.responseWithEmailCheckStatusResponse(404, "{}", -1);
         userNotificationService.checkDeliveryStatus("0");
