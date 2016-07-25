@@ -10,12 +10,6 @@
         <jpa.version>2.6.2</jpa.version>
         <guice.version>4.0</guice.version>
     </properties>
-    <repositories>
-        <repository>
-            <id>local-repo</id>
-            <url>file://${basedir}/repo</url>
-        </repository>
-    </repositories>
     <dependencies>
         <dependency>
             <groupId>io.dropwizard</groupId>
@@ -74,9 +68,9 @@
             <version>9.4-1201-jdbc41</version>
         </dependency>
         <dependency>
-            <groupId>govuk.notify</groupId>
-            <artifactId>notifyClient</artifactId>
-            <version>2.0</version>
+            <groupId>uk.gov.service.notify</groupId>
+            <artifactId>notifications-java-client</artifactId>
+            <version>2.0.0-RELEASE</version>
         </dependency>
         <dependency>
             <groupId>com.google.guava</groupId>
