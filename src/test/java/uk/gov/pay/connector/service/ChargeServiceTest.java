@@ -13,6 +13,7 @@ import uk.gov.pay.connector.app.LinksConfig;
 import uk.gov.pay.connector.dao.ChargeDao;
 import uk.gov.pay.connector.dao.TokenDao;
 import uk.gov.pay.connector.model.ChargeResponse;
+import uk.gov.pay.connector.model.api.ExternalChargeRefundAvailability;
 import uk.gov.pay.connector.model.domain.ChargeEntity;
 import uk.gov.pay.connector.model.domain.ChargeStatus;
 import uk.gov.pay.connector.model.domain.GatewayAccountEntity;
@@ -60,6 +61,8 @@ public class ChargeServiceTest {
     private UriInfo uriInfo;
     @Mock
     private LinksConfig linksConfig;
+    @Mock
+    private ChargeRefundService mockChargeRefundService;
 
     private ChargeService service;
     private Map<String, String> chargeRequest = new HashMap<String, String>() {{
@@ -81,7 +84,7 @@ public class ChargeServiceTest {
         when(this.uriInfo.getBaseUriBuilder())
                 .thenReturn(UriBuilder.fromUri(SERVICE_HOST));
 
-        service = new ChargeService(tokenDao, chargeDao, config);
+        service = new ChargeService(tokenDao, chargeDao, config, mockChargeRefundService);
     }
 
     @Test
@@ -100,6 +103,8 @@ public class ChargeServiceTest {
             externalChargeId[0] = chargeEntityBeingPersisted.getExternalId();
             return null;
         }).when(chargeDao).persist(any(ChargeEntity.class));
+
+        when(mockChargeRefundService.estabishChargeRefundAvailability(any(ChargeEntity.class))).thenReturn(ExternalChargeRefundAvailability.EXTERNAL_PENDING);
 
         // When
         ChargeResponse response = service.create(chargeRequest, gatewayAccount, uriInfo);
@@ -160,6 +165,7 @@ public class ChargeServiceTest {
 
         String externalId = newCharge.getExternalId();
         when(chargeDao.findByExternalIdAndGatewayAccount(externalId, accountId)).thenReturn(chargeEntity);
+        when(mockChargeRefundService.estabishChargeRefundAvailability(chargeEntity.get())).thenReturn(ExternalChargeRefundAvailability.EXTERNAL_PENDING);
 
         Optional<ChargeResponse> chargeResponseForAccount = service.findChargeForAccount(externalId, accountId, uriInfo);
 
@@ -199,6 +205,7 @@ public class ChargeServiceTest {
 
         String externalId = newCharge.getExternalId();
         when(chargeDao.findByExternalIdAndGatewayAccount(externalId, accountId)).thenReturn(chargeEntity);
+        when(mockChargeRefundService.estabishChargeRefundAvailability(chargeEntity.get())).thenReturn(ExternalChargeRefundAvailability.EXTERNAL_PENDING);
 
         Optional<ChargeResponse> chargeResponseForAccount = service.findChargeForAccount(externalId, accountId, uriInfo);
 
@@ -215,6 +222,7 @@ public class ChargeServiceTest {
         expectedChargeResponse.withLink("next_url_post", POST, new URI("http://payments.com/secure"), "application/x-www-form-urlencoded", new HashMap<String, Object>() {{
             put("chargeTokenId", tokenEntity.getToken());
         }});
+        expectedChargeResponse.withLink("refunds", GET, new URI(SERVICE_HOST + "/v1/api/accounts/1/charges/" + externalId + "/refunds"));
 
         assertThat(chargeResponseForAccount.get(), is(expectedChargeResponse.build()));
 
@@ -239,6 +247,7 @@ public class ChargeServiceTest {
 
         String externalId = newCharge.getExternalId();
         when(chargeDao.findByExternalIdAndGatewayAccount(externalId, accountId)).thenReturn(chargeEntity);
+        when(mockChargeRefundService.estabishChargeRefundAvailability(chargeEntity.get())).thenReturn(ExternalChargeRefundAvailability.EXTERNAL_PENDING);
 
         Optional<ChargeResponse> chargeResponseForAccount = service.findChargeForAccount(externalId, accountId, uriInfo);
 

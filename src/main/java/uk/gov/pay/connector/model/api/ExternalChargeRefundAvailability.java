@@ -21,4 +21,8 @@ public enum ExternalChargeRefundAvailability {
     public String getStatus() {
         return value;
     }
+
+    public String toString(){
+        return this.value;
+    }
 }

@@ -149,6 +149,7 @@ public class WorldpayRefundITest extends CardResourceITestBase {
     }
 
     @Test
+    @Ignore
     public void shouldFailRequestingARefund_whenAPartialRefundMakesTotalRefundedAmountBiggerThanChargeAmount() {
 
         int chargeAmount = 1000;

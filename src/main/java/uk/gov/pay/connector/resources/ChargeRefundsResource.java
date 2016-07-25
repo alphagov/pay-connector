@@ -47,20 +47,4 @@ public class ChargeRefundsResource {
     public Response getRefund(@PathParam("accountId") String accountId, @PathParam("chargeId") String chargeId, @PathParam("refundId") String refundId) {
         throw new UnsupportedOperationException("Not implemented yet");
     }
-
-    @POST
-    @Path(FRONTEND_CHARGE_REFUNDS_API_PATH)
-    @Consumes(APPLICATION_JSON)
-    @Produces(APPLICATION_JSON)
-    public Response submitRefund(@PathParam("chargeId") String chargeId, RefundRequest refund) {
-        throw new UnsupportedOperationException("Not implemented yet");
-    }
-
-    @GET
-    @Path(FRONTEND_CHARGE_REFUND_API_PATH)
-    @Consumes(APPLICATION_JSON)
-    @Produces(APPLICATION_JSON)
-    public Response getRefund(@PathParam("chargeId") String chargeId, @PathParam("refundId") String refundId) {
-        throw new UnsupportedOperationException("Not implemented yet");
-    }
 }

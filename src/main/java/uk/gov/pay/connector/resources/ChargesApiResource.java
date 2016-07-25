@@ -16,6 +16,7 @@ import uk.gov.pay.connector.model.ChargeResponse;
 import uk.gov.pay.connector.model.domain.ChargeEntity;
 import uk.gov.pay.connector.model.domain.ChargeStatus;
 import uk.gov.pay.connector.service.ChargeExpiryService;
+import uk.gov.pay.connector.service.ChargeRefundService;
 import uk.gov.pay.connector.service.ChargeService;
 import uk.gov.pay.connector.util.ResponseUtil;
 
@@ -29,6 +30,7 @@ import java.util.*;
 import java.util.Optional;
 import java.util.stream.Collectors;
 
+import static com.google.common.collect.Maps.newHashMap;
 import static fj.data.Either.reduce;
 import static java.lang.String.format;
 import static javax.ws.rs.core.MediaType.APPLICATION_JSON;
@@ -60,12 +62,16 @@ public class ChargesApiResource {
     private static final String ACCOUNT_ID = "accountId";
     private static final String PAGE = "page";
     private static final String DISPLAY_SIZE = "display_size";
+    public static final String REFUND_STATUS = "status";
+    public static final String REFUND_AMOUNT_SUBMITTED = "amount_submitted";
+    public static final String REFUND_AMOUNT_AVAILABLE = "amount_available";
 
     private final ChargeDao chargeDao;
     private final GatewayAccountDao gatewayAccountDao;
     private final ChargeService chargeService;
     private final ConnectorConfiguration configuration;
     private final ChargeExpiryService chargeExpiryService;
+    private final ChargeRefundService chargeRefundService;
 
     private static final int ONE_HOUR = 3600;
     private static final String CHARGE_EXPIRY_WINDOW = "CHARGE_EXPIRY_WINDOW_SECONDS";
@@ -78,12 +84,13 @@ public class ChargesApiResource {
 
     @Inject
     public ChargesApiResource(ChargeDao chargeDao, GatewayAccountDao gatewayAccountDao,
-                              ChargeService chargeService, ChargeExpiryService chargeExpiryService,
+                              ChargeService chargeService, ChargeExpiryService chargeExpiryService, ChargeRefundService chargeRefundService,
                               ConnectorConfiguration configuration) {
         this.chargeDao = chargeDao;
         this.gatewayAccountDao = gatewayAccountDao;
         this.chargeService = chargeService;
         this.chargeExpiryService = chargeExpiryService;
+        this.chargeRefundService = chargeRefundService;
         this.configuration = configuration;
     }
 
@@ -215,6 +222,7 @@ public class ChargesApiResource {
                                 .withReturnUrl(charge.getReturnUrl())
                                 .withEmail(charge.getEmail())
                                 .withProviderName(charge.getGatewayAccount().getGatewayName())
+                                .withRefunds(buildRefunds(charge))
                                 .build()
                         ).collect(Collectors.toList());
 
@@ -223,6 +231,14 @@ public class ChargesApiResource {
                         .withChargeResponses(chargesResponse)
                         .withTotalCount(totalCount)
                         .buildResponse();
+    }
+
+    private ChargeResponse.Refund buildRefunds(ChargeEntity charge) {
+        ChargeResponse.Refund refund = new ChargeResponse.Refund();
+        refund.setStatus(chargeRefundService.estabishChargeRefundAvailability(charge).getStatus());
+        refund.setAmountSubmitted(chargeRefundService.getRefundedAmount(charge));
+        refund.setAmountAvailable(chargeRefundService.getRefundAmountAvailable(charge));
+        return refund;
     }
 
     private Optional<List<String>> checkInvalidSizeFields(Map<String, String> inputData) {

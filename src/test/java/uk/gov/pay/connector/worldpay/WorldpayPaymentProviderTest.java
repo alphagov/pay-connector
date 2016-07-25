@@ -179,7 +179,7 @@ public class WorldpayPaymentProviderTest {
 
         when(gatewayAccountEntity.getCredentials()).thenReturn(credentialsMap);
 
-        String notificationPayload = notificationPayloadForTransaction("transaction-id", "UNKNOWN STATUS");
+        String notificationPayload = notificationPayloadForTransaction("transaction-id", "UNKNOWN REFUND_STATUS");
         StatusUpdates statusResponse = connector.handleNotification(
                 notificationPayload,
                 payloadChecks -> true,

@@ -82,6 +82,32 @@ public class ChargeRefundService {
         };
     }
 
+    public ExternalChargeRefundAvailability estabishChargeRefundAvailability(ChargeEntity chargeEntity) {
+        if (chargeEntity.hasStatus(PENDING_STATUS)) {
+            return ExternalChargeRefundAvailability.EXTERNAL_PENDING;
+        }
+        if (chargeEntity.hasStatus(CAPTURED)) {
+            long refundedAmount = getRefundedAmount(chargeEntity);
+            if (chargeEntity.getAmount() >= refundedAmount) {
+                return EXTERNAL_AVAILABLE;
+            }
+            return EXTERNAL_FULL;
+        }
+        return EXTERNAL_UNAVAILABLE;
+    }
+
+    public Long getRefundAmountAvailable(ChargeEntity charge) {
+        return charge.getAmount() - getRefundedAmount(charge);
+    }
+
+    public Long getRefundedAmount(ChargeEntity chargeEntity) {
+        return chargeEntity.getRefunds()
+                        .stream()
+                        .filter(p -> p.hasStatus(RefundStatus.CREATED, RefundStatus.REFUND_SUBMITTED, RefundStatus.REFUNDED))
+                        .mapToLong(RefundEntity::getAmount)
+                        .sum();
+    }
+
     private NonTransactionalOperation<TransactionContext, GatewayResponse> doGatewayRefund(PaymentProviders providers) {
         return context -> {
             RefundEntity refundEntity = context.get(RefundEntity.class);
@@ -101,27 +127,5 @@ public class ChargeRefundService {
             refundEntity.setStatus(newStatus);
             return refundResponse;
         };
-    }
-
-    protected ExternalChargeRefundAvailability estabishChargeRefundAvailability(ChargeEntity chargeEntity) {
-        if (chargeEntity.hasStatus(PENDING_STATUS)) {
-            return ExternalChargeRefundAvailability.EXTERNAL_PENDING;
-        }
-
-        if (chargeEntity.hasStatus(CAPTURED)) {
-            long refundedAmount = chargeEntity.getRefunds()
-                    .stream()
-                    .filter(p -> p.hasStatus(RefundStatus.CREATED, RefundStatus.REFUND_SUBMITTED, RefundStatus.REFUNDED))
-                    .mapToLong(RefundEntity::getAmount)
-                    .sum();
-
-            if (chargeEntity.getAmount() >= refundedAmount) {
-                return EXTERNAL_AVAILABLE;
-            }
-
-            return EXTERNAL_FULL;
-        }
-
-        return EXTERNAL_UNAVAILABLE;
     }
 }

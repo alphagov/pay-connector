@@ -1,6 +1,7 @@
 package uk.gov.pay.connector.util;
 
 import com.google.common.collect.ImmutableMap;
+import uk.gov.pay.connector.model.ChargeResponse;
 import uk.gov.pay.connector.model.api.ExternalChargeState;
 
 import java.net.URI;
@@ -21,6 +22,7 @@ public abstract class AbstractChargeResponseBuilder<T extends AbstractChargeResp
     protected String reference;
     protected String providerName;
     protected String email;
+    protected ChargeResponse.Refund refunds;
 
     protected abstract T thisObject();
 
@@ -92,6 +94,11 @@ public abstract class AbstractChargeResponseBuilder<T extends AbstractChargeResp
 
     public T withProviderName(String providerName) {
         this.providerName = providerName;
+        return thisObject();
+    }
+
+    public T withRefunds(ChargeResponse.Refund refunds) {
+        this.refunds = refunds;
         return thisObject();
     }
 
