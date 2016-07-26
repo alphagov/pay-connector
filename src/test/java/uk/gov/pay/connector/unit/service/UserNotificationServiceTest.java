@@ -4,44 +4,40 @@ import com.google.common.collect.ImmutableMap;
 import org.junit.Before;
 import org.junit.Test;
 import org.junit.runner.RunWith;
-import org.mockito.ArgumentMatcher;
 import org.mockito.Mock;
 import org.mockito.runners.MockitoJUnitRunner;
-import uk.gov.notifications.client.api.GovNotifyApiClient;
-import uk.gov.notifications.client.model.EmailRequest;
-import uk.gov.notifications.client.model.NotificationCreatedResponse;
-import uk.gov.notifications.client.model.StatusResponse;
+
 import uk.gov.pay.connector.app.ConnectorConfiguration;
 import uk.gov.pay.connector.app.NotifyConfiguration;
 import uk.gov.pay.connector.model.domain.ChargeEntity;
 import uk.gov.pay.connector.model.domain.ChargeEntityFixture;
-import uk.gov.pay.connector.model.domain.ChargeStatus;
 import uk.gov.pay.connector.service.NotifyClientProvider;
 import uk.gov.pay.connector.service.UserNotificationService;
+import uk.gov.service.notify.Notification;
+import uk.gov.service.notify.NotificationClient;
+import uk.gov.service.notify.NotificationResponse;
 
 import java.time.ZoneId;
 import java.time.ZonedDateTime;
-import java.util.Collections;
-import java.util.Map;
+import java.util.HashMap;
 
 import static junit.framework.TestCase.fail;
 import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertNull;
 import static org.mockito.Matchers.any;
 import static org.mockito.Mockito.*;
 
 @RunWith(MockitoJUnitRunner.class)
 public class UserNotificationServiceTest {
     @Mock
-    private GovNotifyApiClient mockNotifyClient;
+    private NotificationClient mockNotifyClient;
     @Mock
     private NotifyClientProvider mockNotifyClientProvider;
     @Mock
-    private NotificationCreatedResponse mockNotificationCreatedResponse;
-    @Mock
-    private StatusResponse mockStatusResponse;
-    @Mock
     private ConnectorConfiguration mockConfig;
+    @Mock
+    NotificationResponse mockNotificationCreatedResponse;
+    @Mock
+    Notification mockNotification;
     @Mock
     private NotifyConfiguration mockNotifyConfiguration;
 
@@ -58,22 +54,42 @@ public class UserNotificationServiceTest {
     @Test
     public void shouldSendEmail() throws Exception {
         when(mockNotifyClientProvider.get()).thenReturn(mockNotifyClient);
-        when(mockNotifyClient.sendEmail(any(EmailRequest.class))).thenReturn(mockNotificationCreatedResponse);
-        when(mockNotificationCreatedResponse.getId()).thenReturn("100");
+        when(mockNotifyClient.sendEmail(any(), any(), any())).thenReturn(mockNotificationCreatedResponse);
+        when(mockNotificationCreatedResponse.getNotificationId()).thenReturn("100");
 
+        ChargeEntity charge = ChargeEntityFixture.aValidChargeEntity()
+                .withCreatedDate(ZonedDateTime.of(2016, 1, 1, 1, 1, 0, 0, ZoneId.of("UTC")))
+                .build();
         userNotificationService = new UserNotificationService(mockNotifyClientProvider, mockConfig);
-        userNotificationService.notifyPaymentSuccessEmail(ChargeEntityFixture.aValidChargeEntity().build());
-        verify(mockNotifyClient).sendEmail(any(EmailRequest.class));
+        userNotificationService.notifyPaymentSuccessEmail(charge);
+        HashMap<String, String> map = new HashMap<>();
+
+        map.put("serviceReference", "This is a reference");
+        map.put("date", "1 January 2016");
+        map.put("description", "This is a description");
+        map.put("serviceName", "MyService");
+        map.put("customParagraph", "template body");
+        map.put("amount", "5.00");
+
+
+
+        verify(mockNotifyClient).sendEmail(
+                mockNotifyConfiguration.getEmailTemplateId(),
+                charge.getEmail(),
+                map
+        );
     }
 
     @Test
     public void testEmailSendingStatus() throws Exception {
+
+        when(mockNotifyClient.getNotificationById(any())).thenReturn(mockNotification);
         when(mockNotifyClientProvider.get()).thenReturn(mockNotifyClient);
 
         userNotificationService = new UserNotificationService(mockNotifyClientProvider, mockConfig);
         userNotificationService.checkDeliveryStatus("100");
 
-        verify(mockNotifyClient).checkStatus("100");
+        verify(mockNotifyClient).getNotificationById("100");
     }
 
     @Test
@@ -87,85 +103,16 @@ public class UserNotificationServiceTest {
             assertEquals("config property 'emailTemplateId' is missing or not set, which needs to point to the email template on the notify", e.getMessage());
         }
     }
-    @Test
-    public void testEmailRequestBuilderWithPersonalisation() {
-        userNotificationService = new UserNotificationService(mockNotifyClientProvider, mockConfig);
-        EmailRequest emailRequest = userNotificationService.buildRequest("test@email.com", "1234", personalisationMap);
-        assertEquals(personalisationMap, emailRequest.getPersonalisation().asMap());
-    }
-
-    @Test
-    public void testEmailRequestBuilderWithoutPersonalisation() {
-        userNotificationService = new UserNotificationService(mockNotifyClientProvider, mockConfig);
-        EmailRequest emailRequest = userNotificationService.buildRequest("test@email.com", "1234", Collections.EMPTY_MAP);
-        assertNull(emailRequest.getPersonalisation());
-    }
-
-
-    @Test
-    public void shouldSendEmailWithPersonalisation() throws Exception {
-        long chargeId = 123456L;
-        long amount = 1000L;
-        String description = "Description";
-        String reference = "Reference";
-
-        ChargeEntity charge = ChargeEntityFixture
-                .aValidChargeEntity()
-                .withId(chargeId)
-                .withStatus(ChargeStatus.CAPTURED)
-                .withAmount(amount)
-                .withDescription(description)
-                .withReference(reference)
-                .withCreatedDate(ZonedDateTime.of(2016, 1, 1, 1, 1, 0, 0, ZoneId.of("UTC")))
-                .build();
-
-        charge.getGatewayAccount().setServiceName("MyService");
-
-        Map<String, String> expectedParameters = new ImmutableMap.Builder<String, String>()
-                .put("serviceReference", reference)
-                .put("date", "1 January 2016")
-                .put("amount", "10.00")
-                .put("description", charge.getDescription())
-                .put("customParagraph", "template body")
-                .put("serviceName", charge.getGatewayAccount().getServiceName())
-                .build();
-
-        when(mockNotifyConfiguration.getEmailTemplateId()).thenReturn("some-template");
-        when(mockNotifyClientProvider.get()).thenReturn(mockNotifyClient);
-        when(mockNotifyClient.sendEmail(any(EmailRequest.class))).thenReturn(mockNotificationCreatedResponse);
-        when(mockNotificationCreatedResponse.getId()).thenReturn("100");
-
-        userNotificationService = new UserNotificationService(mockNotifyClientProvider, mockConfig);
-
-        assertEquals("100", userNotificationService.notifyPaymentSuccessEmail(charge).get());
-
-        verify(mockNotifyClient).sendEmail(argThat(new IsEmailRequestWithParameters(expectedParameters)));
-    }
 
     @Test
     public void testEmailSendWhenEmailsNotifyDisabled() throws Exception {
         when(mockNotifyConfiguration.isEmailNotifyEnabled()).thenReturn(false);
         when(mockNotifyClientProvider.get()).thenReturn(mockNotifyClient);
-        when(mockNotifyClient.sendEmail(any(EmailRequest.class))).thenReturn(mockNotificationCreatedResponse);
-        when(mockNotificationCreatedResponse.getId()).thenReturn("100");
+        when(mockNotifyClient.sendEmail(any(), any(), any())).thenReturn(mockNotificationCreatedResponse);
+        when(mockNotificationCreatedResponse.getNotificationId()).thenReturn("100");
 
         userNotificationService = new UserNotificationService(mockNotifyClientProvider, mockConfig);
         userNotificationService.notifyPaymentSuccessEmail(ChargeEntityFixture.aValidChargeEntity().build());
         verifyZeroInteractions(mockNotifyClient);
-    }
-
-    class IsEmailRequestWithParameters extends ArgumentMatcher<EmailRequest> {
-        private final Map<String, String> expectedParameters;
-
-        public IsEmailRequestWithParameters(Map<String, String> expectedParameters) {
-            this.expectedParameters = expectedParameters;
-        }
-
-        public boolean matches(Object actualEmailRequest) {
-            return ((EmailRequest) actualEmailRequest)
-                    .getPersonalisation()
-                    .asMap()
-                    .equals(expectedParameters);
-        }
     }
 }

@@ -2,12 +2,10 @@ package uk.gov.pay.connector.service;
 
 import com.google.inject.Inject;
 import com.google.inject.Provider;
-import uk.gov.notifications.client.api.ClientConfiguration;
-import uk.gov.notifications.client.api.GovNotifyApiClient;
-import uk.gov.notifications.client.http.ApacheGovNotifyHttpClient;
 import uk.gov.pay.connector.app.ConnectorConfiguration;
+import uk.gov.service.notify.NotificationClient;
 
-public class NotifyClientProvider implements Provider<GovNotifyApiClient> {
+public class NotifyClientProvider implements Provider<NotificationClient> {
 
     private ConnectorConfiguration configuration;
 
@@ -17,15 +15,12 @@ public class NotifyClientProvider implements Provider<GovNotifyApiClient> {
     }
 
     @Override
-    public GovNotifyApiClient get() {
-        ClientConfiguration config = new ClientConfiguration.Builder()
-                .serviceId(configuration.getNotifyConfiguration().getServiceId())
-                .baseUrl(configuration.getNotifyConfiguration().getNotificationBaseURL())
-                .secret(configuration.getNotifyConfiguration().getSecret())
-                .build();
+    public NotificationClient get() {
 
-        ApacheGovNotifyHttpClient client = new ApacheGovNotifyHttpClient();
-        return new GovNotifyApiClient(config, client);
+        return new NotificationClient(configuration.getNotifyConfiguration().getSecret(),
+                configuration.getNotifyConfiguration().getServiceId(),
+                configuration.getNotifyConfiguration().getNotificationBaseURL()
+        );
     }
 
 }

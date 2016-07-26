@@ -12,8 +12,12 @@
     </properties>
     <repositories>
         <repository>
-            <id>local-repo</id>
-            <url>file://${basedir}/repo</url>
+            <snapshots>
+                <enabled>false</enabled>
+            </snapshots>
+            <id>bintray-gov-uk-notify-maven</id>
+            <name>bintray</name>
+            <url>http://dl.bintray.com/gov-uk-notify/maven</url>
         </repository>
     </repositories>
     <dependencies>
@@ -74,9 +78,9 @@
             <version>9.4-1201-jdbc41</version>
         </dependency>
         <dependency>
-            <groupId>govuk.notify</groupId>
-            <artifactId>notifyClient</artifactId>
-            <version>1.2</version>
+            <groupId>uk.gov.service.notify</groupId>
+            <artifactId>notifications-java-client</artifactId>
+            <version>2.0.0-RELEASE</version>
         </dependency>
         <dependency>
             <groupId>com.google.guava</groupId>
