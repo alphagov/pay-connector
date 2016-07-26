@@ -86,6 +86,8 @@ public class ConnectorApp extends Application<ConnectorConfiguration> {
         environment.healthChecks().register("ping", new Ping());
         environment.healthChecks().register("database", injector.getInstance(DatabaseHealthCheck.class));
         environment.healthChecks().register("cardExecutorService", injector.getInstance(CardExecutorServiceHealthCheck.class));
+
+        setGlobalProxies(configuration);
     }
 
     private void setupSmartpayBasicAuth(Environment environment, SmartpayCredentialsConfig smartpayConfig) {
@@ -102,8 +104,13 @@ public class ConnectorApp extends Application<ConnectorConfiguration> {
 
     public static void main(String[] args) throws Exception {
         new ConnectorApp().run(args);
+    }
 
+    private void setGlobalProxies(ConnectorConfiguration configuration) {
         SSLSocketFactory socketFactory = new TrustingSSLSocketFactory();
         HttpsURLConnection.setDefaultSSLSocketFactory(socketFactory);
+
+        System.setProperty("https.proxyHost", configuration.getClientConfiguration().getProxyConfiguration().getHost());
+        System.setProperty("https.proxyPort", configuration.getClientConfiguration().getProxyConfiguration().getPort().toString());
     }
 }
