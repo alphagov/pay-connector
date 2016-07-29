@@ -139,12 +139,21 @@ public class DatabaseTestHelper {
     }
 
     public List<Map<String, Object>> getRefund(long refundId) {
-
         List<Map<String, Object>> ret = jdbi.withHandle(h ->
                 h.createQuery("SELECT external_id, amount, status, created_date, charge_id " +
                         "FROM refunds " +
                         "WHERE id = :refund_id")
                         .bind("refund_id", refundId)
+                        .list());
+        return ret;
+    }
+
+    public List<Map<String, Object>> getRefundsByChargeId(long chargeId) {
+        List<Map<String, Object>> ret = jdbi.withHandle(h ->
+                h.createQuery("SELECT external_id, amount, status, created_date, charge_id " +
+                        "FROM refunds r " +
+                        "WHERE charge_id = :charge_id")
+                        .bind("charge_id", chargeId)
                         .list());
         return ret;
     }

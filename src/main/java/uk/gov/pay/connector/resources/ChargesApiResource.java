@@ -27,16 +27,13 @@ import javax.ws.rs.core.Response;
 import javax.ws.rs.core.UriInfo;
 import java.time.ZonedDateTime;
 import java.util.*;
-import java.util.Optional;
 import java.util.stream.Collectors;
 
-import static com.google.common.collect.Maps.newHashMap;
 import static fj.data.Either.reduce;
 import static java.lang.String.format;
 import static javax.ws.rs.core.MediaType.APPLICATION_JSON;
 import static javax.ws.rs.core.Response.created;
 import static org.apache.commons.lang3.StringUtils.isNotBlank;
-import static uk.gov.pay.connector.model.ChargeResponse.aChargeResponse;
 import static uk.gov.pay.connector.model.domain.ChargeStatus.*;
 import static uk.gov.pay.connector.resources.ApiPaths.*;
 import static uk.gov.pay.connector.resources.ApiValidators.validateGatewayAccountReference;
@@ -211,19 +208,7 @@ public class ChargesApiResource {
         List<ChargeEntity> charges = chargeDao.findAllBy(searchParams);
         List<ChargeResponse> chargesResponse =
                 charges.stream()
-                        .map(charge -> aChargeResponse()
-                                .withChargeId(charge.getExternalId())
-                                .withAmount(charge.getAmount())
-                                .withReference(charge.getReference())
-                                .withDescription(charge.getDescription())
-                                .withState(ChargeStatus.fromString(charge.getStatus()).toExternal())
-                                .withGatewayTransactionId(charge.getGatewayTransactionId())
-                                .withCreatedDate(charge.getCreatedDate())
-                                .withReturnUrl(charge.getReturnUrl())
-                                .withEmail(charge.getEmail())
-                                .withProviderName(charge.getGatewayAccount().getGatewayName())
-                                .withRefunds(buildRefunds(charge))
-                                .build()
+                        .map(charge -> chargeService.buildChargeResponse(uriInfo, charge)
                         ).collect(Collectors.toList());
 
         return success ->
@@ -231,14 +216,6 @@ public class ChargesApiResource {
                         .withChargeResponses(chargesResponse)
                         .withTotalCount(totalCount)
                         .buildResponse();
-    }
-
-    private ChargeResponse.Refund buildRefunds(ChargeEntity charge) {
-        ChargeResponse.Refund refund = new ChargeResponse.Refund();
-        refund.setStatus(chargeRefundService.estabishChargeRefundAvailability(charge).getStatus());
-        refund.setAmountSubmitted(chargeRefundService.getRefundedAmount(charge));
-        refund.setAmountAvailable(chargeRefundService.getRefundAmountAvailable(charge));
-        return refund;
     }
 
     private Optional<List<String>> checkInvalidSizeFields(Map<String, String> inputData) {

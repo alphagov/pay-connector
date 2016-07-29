@@ -36,4 +36,12 @@ public class RefundStatusTest {
         assertThat(RefundStatus.REFUND_SUBMITTED.toString(), is("REFUND SUBMITTED"));
         assertThat(RefundStatus.REFUNDED.toString(), is("REFUNDED"));
     }
+
+    @Test
+    public void shouldGetEnumFromStringValue() {
+        assertThat(RefundStatus.CREATED, is(RefundStatus.fromString("CREATED")));
+        assertThat(RefundStatus.REFUND_SUBMITTED, is(RefundStatus.fromString("REFUND SUBMITTED")));
+        assertThat(RefundStatus.REFUND_ERROR, is(RefundStatus.fromString("REFUND ERROR")));
+        assertThat(RefundStatus.REFUNDED, is(RefundStatus.fromString("REFUNDED")));
+    }
 }

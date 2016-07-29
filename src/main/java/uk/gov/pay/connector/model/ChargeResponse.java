@@ -3,12 +3,8 @@ package uk.gov.pay.connector.model;
 import com.fasterxml.jackson.annotation.JsonFormat;
 import com.fasterxml.jackson.annotation.JsonInclude;
 import com.fasterxml.jackson.annotation.JsonProperty;
-import org.apache.commons.lang3.builder.EqualsBuilder;
-import org.apache.commons.lang3.builder.HashCodeBuilder;
-import org.apache.commons.lang3.builder.ToStringBuilder;
-import uk.gov.pay.connector.model.api.ExternalChargeRefundAvailability;
 import uk.gov.pay.connector.model.api.ExternalChargeState;
-import uk.gov.pay.connector.util.AbstractChargeResponseBuilder;
+import uk.gov.pay.connector.model.builder.AbstractChargeResponseBuilder;
 import uk.gov.pay.connector.util.DateTimeUtils;
 
 import java.net.URI;
@@ -56,6 +52,37 @@ public class ChargeResponse {
 
         public String getStatus() {
             return status;
+        }
+
+        @Override
+        public boolean equals(Object o) {
+            if (this == o) return true;
+            if (o == null || getClass() != o.getClass()) return false;
+
+            Refund refund = (Refund) o;
+
+            if (status != null ? !status.equals(refund.status) : refund.status != null) return false;
+            if (amountAvailable != null ? !amountAvailable.equals(refund.amountAvailable) : refund.amountAvailable != null)
+                return false;
+            return !(amountSubmitted != null ? !amountSubmitted.equals(refund.amountSubmitted) : refund.amountSubmitted != null);
+
+        }
+
+        @Override
+        public int hashCode() {
+            int result = status != null ? status.hashCode() : 0;
+            result = 31 * result + (amountAvailable != null ? amountAvailable.hashCode() : 0);
+            result = 31 * result + (amountSubmitted != null ? amountSubmitted.hashCode() : 0);
+            return result;
+        }
+
+        @Override
+        public String toString() {
+            return "Refund{" +
+                    "status='" + status + '\'' +
+                    ", amountAvailable=" + amountAvailable +
+                    ", amountSubmitted=" + amountSubmitted +
+                    '}';
         }
     }
 
@@ -141,34 +168,59 @@ public class ChargeResponse {
     @Override
     public boolean equals(Object o) {
         if (this == o) return true;
-        if (o instanceof ChargeResponse) {
-            ChargeResponse that = (ChargeResponse)o;
-            return new EqualsBuilder()
-                    .append(this.dataLinks, that.dataLinks)
-                    .append(this.chargeId, that.chargeId)
-                    .append(this.amount, that.amount)
-                    .append(this.state, that.state)
-                    .append(this.gatewayTransactionId, that.gatewayTransactionId)
-                    .append(this.returnUrl, that.returnUrl)
-                    .append(this.email, that.email)
-                    .append(this.description, that.description)
-                    .append(this.reference, that.reference)
-                    .append(this.providerName, that.providerName)
-                    .append(this.createdDate, that.createdDate)
-                    .build();
-        }
+        if (o == null || getClass() != o.getClass()) return false;
 
-        return false;
+        ChargeResponse that = (ChargeResponse) o;
+
+        if (dataLinks != null ? !dataLinks.equals(that.dataLinks) : that.dataLinks != null) return false;
+        if (chargeId != null ? !chargeId.equals(that.chargeId) : that.chargeId != null) return false;
+        if (amount != null ? !amount.equals(that.amount) : that.amount != null) return false;
+        if (state != that.state) return false;
+        if (gatewayTransactionId != null ? !gatewayTransactionId.equals(that.gatewayTransactionId) : that.gatewayTransactionId != null)
+            return false;
+        if (returnUrl != null ? !returnUrl.equals(that.returnUrl) : that.returnUrl != null) return false;
+        if (email != null ? !email.equals(that.email) : that.email != null) return false;
+        if (description != null ? !description.equals(that.description) : that.description != null) return false;
+        if (reference != null ? !reference.equals(that.reference) : that.reference != null) return false;
+        if (providerName != null ? !providerName.equals(that.providerName) : that.providerName != null) return false;
+        if (createdDate != null ? !createdDate.equals(that.createdDate) : that.createdDate != null) return false;
+        return !(refunds != null ? !refunds.equals(that.refunds) : that.refunds != null);
+
     }
 
     @Override
     public int hashCode() {
-        return new HashCodeBuilder().reflectionHashCode(this);
+        int result = dataLinks != null ? dataLinks.hashCode() : 0;
+        result = 31 * result + (chargeId != null ? chargeId.hashCode() : 0);
+        result = 31 * result + (amount != null ? amount.hashCode() : 0);
+        result = 31 * result + (state != null ? state.hashCode() : 0);
+        result = 31 * result + (gatewayTransactionId != null ? gatewayTransactionId.hashCode() : 0);
+        result = 31 * result + (returnUrl != null ? returnUrl.hashCode() : 0);
+        result = 31 * result + (email != null ? email.hashCode() : 0);
+        result = 31 * result + (description != null ? description.hashCode() : 0);
+        result = 31 * result + (reference != null ? reference.hashCode() : 0);
+        result = 31 * result + (providerName != null ? providerName.hashCode() : 0);
+        result = 31 * result + (createdDate != null ? createdDate.hashCode() : 0);
+        result = 31 * result + (refunds != null ? refunds.hashCode() : 0);
+        return result;
     }
 
     @Override
     public String toString() {
-        return new ToStringBuilder(this).reflectionToString(this);
+        return "ChargeResponse{" +
+                "dataLinks=" + dataLinks +
+                ", chargeId='" + chargeId + '\'' +
+                ", amount=" + amount +
+                ", state=" + state +
+                ", gatewayTransactionId='" + gatewayTransactionId + '\'' +
+                ", returnUrl='" + returnUrl + '\'' +
+                ", email='" + email + '\'' +
+                ", description='" + description + '\'' +
+                ", reference='" + reference + '\'' +
+                ", providerName='" + providerName + '\'' +
+                ", createdDate=" + createdDate +
+                ", refunds=" + refunds +
+                '}';
     }
 }
 

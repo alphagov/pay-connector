@@ -15,16 +15,41 @@ import uk.gov.pay.connector.model.domain.ChargeEntity;
 import uk.gov.pay.connector.model.domain.ChargeStatus;
 import uk.gov.pay.connector.model.domain.RefundEntity;
 import uk.gov.pay.connector.model.domain.RefundStatus;
+import uk.gov.pay.connector.resources.HalResourceBuilder;
 import uk.gov.pay.connector.service.transaction.*;
+import uk.gov.pay.connector.util.DateTimeUtils;
 
 import javax.inject.Inject;
+import javax.ws.rs.core.UriInfo;
+import java.net.URI;
 import java.util.Optional;
 
 import static java.lang.String.format;
 import static uk.gov.pay.connector.model.api.ExternalChargeRefundAvailability.*;
 import static uk.gov.pay.connector.model.domain.ChargeStatus.*;
+import static uk.gov.pay.connector.resources.ApiPaths.CHARGE_API_PATH;
+import static uk.gov.pay.connector.resources.ApiPaths.REFUND_API_PATH;
 
 public class ChargeRefundService {
+
+    public class Response {
+
+        private RefundGatewayResponse refundGatewayResponse;
+        private RefundEntity refundEntity;
+
+        public Response(RefundGatewayResponse refundGatewayResponse, RefundEntity refundEntity) {
+            this.refundGatewayResponse = refundGatewayResponse;
+            this.refundEntity = refundEntity;
+        }
+
+        public RefundGatewayResponse getRefundGatewayResponse() {
+            return refundGatewayResponse;
+        }
+
+        public RefundEntity getRefundEntity() {
+            return refundEntity;
+        }
+    }
 
     private final Logger logger = LoggerFactory.getLogger(getClass());
 
@@ -36,30 +61,30 @@ public class ChargeRefundService {
     private final RefundDao refundDao;
     private final PaymentProviders providers;
     private final Provider<TransactionFlow> transactionFlowProvider;
+    private final HalResourceBuilder halBuilder;
 
     @Inject
     public ChargeRefundService(ChargeDao chargeDao, RefundDao refundDao, PaymentProviders providers,
-                               Provider<TransactionFlow> transactionFlowProvider) {
+                               Provider<TransactionFlow> transactionFlowProvider, HalResourceBuilder halBuilder) {
         this.chargeDao = chargeDao;
         this.refundDao = refundDao;
         this.providers = providers;
         this.transactionFlowProvider = transactionFlowProvider;
+        this.halBuilder = halBuilder;
     }
 
-    public Optional<GatewayResponse> doRefund(Long accountId, String chargeId, Long amount) {
+    public Optional<Response> doRefund(Long accountId, String chargeId, Long amount) {
         return chargeDao.findByExternalIdAndGatewayAccount(chargeId, accountId)
                 .map(chargeEntity -> refundWithGateway(chargeEntity, amount))
                 .orElseThrow(() -> new ChargeNotFoundRuntimeException(chargeId));
     }
 
-    private Optional<GatewayResponse> refundWithGateway(ChargeEntity charge, Long amount) {
+    private Optional<Response> refundWithGateway(ChargeEntity charge, Long amount) {
         return Optional.ofNullable(transactionFlowProvider.get()
                 .executeNext(prepareForRefund(charge, amount))
                 .executeNext(doGatewayRefund(providers))
                 .executeNext(finishRefund())
-                .complete()
-                .get(RefundGatewayResponse.class));
-
+                .complete().get(Response.class));
     }
 
     private PreTransactionalOperation<TransactionContext, RefundEntity> prepareForRefund(ChargeEntity chargeEntity, Long amount) {
@@ -79,6 +104,27 @@ public class ChargeRefundService {
             refundDao.persist(refundEntity);
 
             return refundEntity;
+        };
+    }
+
+    private NonTransactionalOperation<TransactionContext, GatewayResponse> doGatewayRefund(PaymentProviders providers) {
+        return context -> {
+            RefundEntity refundEntity = context.get(RefundEntity.class);
+            return providers.resolve(refundEntity.getChargeEntity().getGatewayAccount().getGatewayName())
+                    .refund(RefundGatewayRequest.valueOf(refundEntity.getChargeEntity(), refundEntity.getAmount()));
+        };
+    }
+
+    private TransactionalOperation<TransactionContext, Response> finishRefund() {
+        return context -> {
+            RefundEntity refundEntity = refundDao.merge(context.get(RefundEntity.class));
+
+            RefundGatewayResponse gatewayResponse = context.get(RefundGatewayResponse.class);
+            RefundStatus newStatus = gatewayResponse.isSuccessful() ? RefundStatus.REFUND_SUBMITTED : RefundStatus.REFUND_ERROR;
+            logger.info("Refund status to update - from: {}, to: {} for Charge ID: {}, Refund ID: {}, amount: {}",
+                    refundEntity.getStatus(), newStatus, refundEntity.getChargeEntity().getId(), refundEntity.getId(), refundEntity.getAmount());
+            refundEntity.setStatus(newStatus);
+            return new Response(gatewayResponse, refundEntity);
         };
     }
 
@@ -102,30 +148,32 @@ public class ChargeRefundService {
 
     public Long getRefundedAmount(ChargeEntity chargeEntity) {
         return chargeEntity.getRefunds()
-                        .stream()
-                        .filter(p -> p.hasStatus(RefundStatus.CREATED, RefundStatus.REFUND_SUBMITTED, RefundStatus.REFUNDED))
-                        .mapToLong(RefundEntity::getAmount)
-                        .sum();
+                .stream()
+                .filter(p -> p.hasStatus(RefundStatus.CREATED, RefundStatus.REFUND_SUBMITTED, RefundStatus.REFUNDED))
+                .mapToLong(RefundEntity::getAmount)
+                .sum();
     }
 
-    private NonTransactionalOperation<TransactionContext, GatewayResponse> doGatewayRefund(PaymentProviders providers) {
-        return context -> {
-            RefundEntity refundEntity = context.get(RefundEntity.class);
-            return providers.resolve(refundEntity.getChargeEntity().getGatewayAccount().getGatewayName())
-                    .refund(RefundGatewayRequest.valueOf(refundEntity.getChargeEntity(), refundEntity.getAmount()));
-        };
+    public HalResourceBuilder createHalResourceBuilderFor(RefundEntity refund, UriInfo uriInfo) {
+        String accountId = refund.getChargeEntity().getGatewayAccount().getId().toString();
+        String externalChargeId = refund.getChargeEntity().getExternalId();
+        String externalRefundId = refund.getExternalId();
+
+        URI selfLink = uriInfo.getBaseUriBuilder()
+                .path(REFUND_API_PATH)
+                .build(accountId, externalChargeId, externalRefundId);
+
+        URI paymentLink = uriInfo.getBaseUriBuilder()
+                .path(CHARGE_API_PATH)
+                .build(accountId, externalChargeId);
+
+        return halBuilder
+                .withProperty("refund_id", externalRefundId)
+                .withProperty("amount", refund.getAmount())
+                .withProperty("status", refund.getStatus().toExternal().getStatus())
+                .withProperty("created_date", DateTimeUtils.toUTCDateString(refund.getCreatedDate()))
+                        .withSelfLink(selfLink)
+                        .withLink("payment", paymentLink);
     }
 
-    private TransactionalOperation<TransactionContext, GatewayResponse> finishRefund() {
-        return context -> {
-            RefundEntity refundEntity = refundDao.merge(context.get(RefundEntity.class));
-
-            GatewayResponse refundResponse = context.get(RefundGatewayResponse.class);
-            RefundStatus newStatus = refundResponse.isSuccessful() ? RefundStatus.REFUND_SUBMITTED : RefundStatus.REFUND_ERROR;
-            logger.info("Refund status to update - from: {}, to: {} for Charge ID: {}, Refund ID: {}, amount: {}",
-                    refundEntity.getStatus(), newStatus, refundEntity.getChargeEntity().getId(), refundEntity.getId(), refundEntity.getAmount());
-            refundEntity.setStatus(newStatus);
-            return refundResponse;
-        };
-    }
 }

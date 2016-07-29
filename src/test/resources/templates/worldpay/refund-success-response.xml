@@ -4,9 +4,10 @@
 <paymentService version="1.4" merchantCode="MERCHANTCODE">
     <reply>
         <ok>
-            <captureReceived orderCode="{{transactionId}}">
+            <refundReceived orderCode="fd80a5c3-f51d-41ba-847d-6d7e531f2c30">
                 <amount value="500" currencyCode="GBP" exponent="2" debitCreditIndicator="credit"/>
-            </captureReceived>
+            </refundReceived>
         </ok>
     </reply>
 </paymentService>
+

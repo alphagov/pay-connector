@@ -1,6 +1,5 @@
 package uk.gov.pay.connector.service;
 
-import com.google.common.collect.ImmutableMap;
 import com.google.inject.persist.Transactional;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -9,7 +8,7 @@ import uk.gov.pay.connector.app.LinksConfig;
 import uk.gov.pay.connector.dao.ChargeDao;
 import uk.gov.pay.connector.dao.TokenDao;
 import uk.gov.pay.connector.model.ChargeResponse;
-import uk.gov.pay.connector.model.PatchRequestBuilder;
+import uk.gov.pay.connector.model.builder.PatchRequestBuilder;
 import uk.gov.pay.connector.model.domain.ChargeEntity;
 import uk.gov.pay.connector.model.domain.ChargeStatus;
 import uk.gov.pay.connector.model.domain.GatewayAccountEntity;
@@ -30,14 +29,9 @@ import static uk.gov.pay.connector.model.ChargeResponse.ChargeResponseBuilder;
 import static uk.gov.pay.connector.model.ChargeResponse.aChargeResponse;
 import static uk.gov.pay.connector.resources.ApiPaths.CHARGE_API_PATH;
 import static uk.gov.pay.connector.resources.ApiPaths.REFUNDS_API_PATH;
-import static uk.gov.pay.connector.resources.ApiPaths.REFUND_API_PATH;
 
 public class ChargeService {
     private static final Logger logger = LoggerFactory.getLogger(ChargeService.class);
-
-    public static final String REFUND_STATUS = "status";
-    public static final String REFUND_AMOUNT_SUBMITTED = "amount_submitted";
-    public static final String REFUND_AMOUNT_AVAILABLE = "amount_available";
 
     private ChargeDao chargeDao;
     private TokenDao tokenDao;
@@ -70,11 +64,15 @@ public class ChargeService {
     public Optional<ChargeResponse> findChargeForAccount(String chargeId, Long accountId, UriInfo uriInfo) {
         return chargeDao.findByExternalIdAndGatewayAccount(chargeId, accountId)
                 .map(chargeEntity -> {
-                    if (!ChargeStatus.fromString(chargeEntity.getStatus()).toExternal().isFinished()) {
-                        return chargeResponseBuilder(uriInfo, chargeEntity, createNewChargeEntityToken(chargeEntity)).build();
-                    }
-                    return chargeResponseBuilder(uriInfo, chargeEntity).build();
+                    return buildChargeResponse(uriInfo, chargeEntity);
                 });
+    }
+
+    public ChargeResponse buildChargeResponse(UriInfo uriInfo, ChargeEntity chargeEntity) {
+        if (!ChargeStatus.fromString(chargeEntity.getStatus()).toExternal().isFinished()) {
+            return chargeResponseBuilder(uriInfo, chargeEntity, createNewChargeEntityToken(chargeEntity)).build();
+        }
+        return chargeResponseBuilder(uriInfo, chargeEntity).build();
     }
 
     @Transactional
@@ -112,8 +110,7 @@ public class ChargeService {
                 .withLink("next_url", GET, nextUrl(token.getToken()))
                 .withLink("next_url_post", POST, nextUrl(), APPLICATION_FORM_URLENCODED, new HashMap<String, Object>() {{
                     put("chargeTokenId", token.getToken());
-                }})
-                .withLink("refunds", GET, refundsUriFor(uriInfo, charge.getGatewayAccount().getId(), charge.getExternalId()));
+                }});
     }
 
     private ChargeResponseBuilder chargeResponseBuilder(UriInfo uriInfo, ChargeEntity charge) {
@@ -130,7 +127,8 @@ public class ChargeService {
                 .withReturnUrl(charge.getReturnUrl())
                 .withEmail(charge.getEmail())
                 .withRefunds(buildRefunds(charge))
-                .withLink("self", GET, selfUriFor(uriInfo, charge.getGatewayAccount().getId(), chargeId));
+                .withLink("self", GET, selfUriFor(uriInfo, charge.getGatewayAccount().getId(), chargeId))
+                .withLink("refunds", GET, refundsUriFor(uriInfo, charge.getGatewayAccount().getId(), charge.getExternalId()));
     }
 
     private ChargeResponse.Refund buildRefunds(ChargeEntity charge) {

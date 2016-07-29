@@ -10,7 +10,6 @@ import static org.apache.commons.lang3.StringUtils.trim;
 @XmlRootElement(name = "paymentService")
 public class WorldpayRefundResponse {
 
-
     @XmlPath("reply/ok/refundReceived/@orderCode")
     private String transationIdForOk;
 

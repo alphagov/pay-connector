@@ -36,6 +36,11 @@ public class ResponseUtil {
         return notFoundResponse(message);
     }
 
+    public static Response responseWithRefundNotFound(String refundId) {
+        String message = format("Refund with id [%s] not found.", refundId);
+        return notFoundResponse(message);
+    }
+
     public static Response badRequestResponse(String message) {
         logger.error(message);
         return responseWithMessageMap(BAD_REQUEST, message);

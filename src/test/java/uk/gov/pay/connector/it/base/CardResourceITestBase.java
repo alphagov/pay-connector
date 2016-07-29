@@ -31,10 +31,12 @@ import static uk.gov.pay.connector.util.JsonEncoder.toJson;
 public class CardResourceITestBase {
     private RestAssuredClient connectorRestApi;
 
-    @Rule
-    public DropwizardAppWithPostgresRule app;
-
     private int port = PortFactory.findFreePort();
+
+    @Rule
+    public DropwizardAppWithPostgresRule app = new DropwizardAppWithPostgresRule(
+                config("worldpay.url", "http://localhost:" + port + "/jsp/merchant/xml/paymentService.jsp"),
+                config("smartpay.url", "http://localhost:" + port + "/pal/servlet/soap/Payment"));
 
     @Rule
     public WireMockRule wireMockRule = new WireMockRule(port);
@@ -51,9 +53,6 @@ public class CardResourceITestBase {
         this.paymentProvider = paymentProvider;
         this.accountId = String.valueOf(RandomUtils.nextInt());
 
-        app = new DropwizardAppWithPostgresRule(
-                config("worldpay.url", "http://localhost:" + port + "/jsp/merchant/xml/paymentService.jsp"),
-                config("smartpay.url", "http://localhost:" + port + "/pal/servlet/soap/Payment"));
         connectorRestApi = new RestAssuredClient(app, accountId);
     }
 

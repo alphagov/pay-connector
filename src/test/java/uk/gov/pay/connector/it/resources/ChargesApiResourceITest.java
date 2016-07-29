@@ -135,7 +135,10 @@ public class ChargesApiResourceITest {
                 .body(JSON_DESCRIPTION_KEY, is(expectedDescription))
                 .body(JSON_STATE_KEY, is(CREATED.toExternal().getStatus()))
                 .body(JSON_RETURN_URL_KEY, is(returnUrl))
-                .body(JSON_EMAIL_KEY, is(email));
+                .body(JSON_EMAIL_KEY, is(email))
+                .body("refunds.amount_submitted", is(0))
+                .body("refunds.amount_available", isNumber(AMOUNT))
+                .body("refunds.status", is("pending"));
 
 
         // Reload the charge token which as it should have changed

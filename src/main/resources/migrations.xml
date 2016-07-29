@@ -327,7 +327,7 @@
             <column name="amount" type="bigint">
                 <constraints nullable="false"/>
             </column>
-            <column name="status" type="varchar(15)">
+            <column name="status" type="varchar(25)">
                 <constraints nullable="false"/>
             </column>
             <column name="charge_id" type="bigserial">

@@ -5,6 +5,7 @@ import uk.gov.pay.connector.model.domain.CardTypeEntity.Type;
 import uk.gov.pay.connector.model.domain.ChargeStatus;
 import uk.gov.pay.connector.model.domain.RefundStatus;
 import uk.gov.pay.connector.util.DatabaseTestHelper;
+import uk.gov.pay.connector.util.RandomIdGenerator;
 
 import java.time.ZoneId;
 import java.time.ZonedDateTime;
@@ -103,7 +104,7 @@ public class DatabaseFixtures {
 
     public class TestCharge {
         Long chargeId = RandomUtils.nextLong(1, 99999);
-        String externalChargeId = "charge_" + chargeId;
+        String externalChargeId = RandomIdGenerator.newId();
         long amount = 101L;
         ChargeStatus chargeStatus = ChargeStatus.CREATED;
         String returnUrl = "http://service.com/success-page";
@@ -224,7 +225,7 @@ public class DatabaseFixtures {
 
     public class TestRefund {
         Long id = RandomUtils.nextLong(1, 99999);
-        String externalRefundId = "refund_" + id;
+        String externalRefundId = RandomIdGenerator.newId();
         long amount = 101L;
         RefundStatus status = CREATED;
         ZonedDateTime createdDate = ZonedDateTime.now(ZoneId.of("UTC"));

@@ -22,8 +22,13 @@ import uk.gov.pay.connector.model.domain.ChargeEntity;
 import uk.gov.pay.connector.model.domain.GatewayAccountEntity;
 import uk.gov.pay.connector.model.domain.RefundEntity;
 import uk.gov.pay.connector.model.domain.RefundStatus;
+import uk.gov.pay.connector.resources.HalResourceBuilder;
 import uk.gov.pay.connector.service.transaction.TransactionFlow;
+import uk.gov.pay.connector.util.DateTimeUtils;
 
+import javax.ws.rs.core.UriBuilder;
+import javax.ws.rs.core.UriInfo;
+import java.net.URI;
 import java.util.Arrays;
 import java.util.Optional;
 
@@ -38,6 +43,8 @@ import static uk.gov.pay.connector.model.api.ExternalChargeRefundAvailability.*;
 import static uk.gov.pay.connector.model.domain.ChargeEntityFixture.aValidChargeEntity;
 import static uk.gov.pay.connector.model.domain.ChargeStatus.*;
 import static uk.gov.pay.connector.model.domain.RefundEntityFixture.aValidRefundEntity;
+import static uk.gov.pay.connector.resources.ApiPaths.CHARGE_API_PATH;
+import static uk.gov.pay.connector.resources.ApiPaths.REFUND_API_PATH;
 
 @RunWith(MockitoJUnitRunner.class)
 public class ChargeRefundServiceTest {
@@ -55,10 +62,14 @@ public class ChargeRefundServiceTest {
     private PaymentProviders mockProviders;
     @Mock
     private PaymentProvider mockProvider;
+    @Mock
+    private HalResourceBuilder mockHalResourceBuilder;
+    @Mock
+    private UriInfo mockUriInfo;
 
     @Before
     public void setUp() throws Exception {
-        chargeRefundService = new ChargeRefundService(mockChargeDao, mockRefundDao, mockProviders, () -> new TransactionFlow());
+        chargeRefundService = new ChargeRefundService(mockChargeDao, mockRefundDao, mockProviders, () -> new TransactionFlow(), mockHalResourceBuilder);
     }
 
     @Test
@@ -90,12 +101,13 @@ public class ChargeRefundServiceTest {
 
         when(mockRefundDao.merge(any(RefundEntity.class))).thenReturn(spiedRefundEntity);
 
-        GatewayResponse gatewayResponse = chargeRefundService.doRefund(accountId, externalChargeId, amount).get();
+        ChargeRefundService.Response gatewayResponse = chargeRefundService.doRefund(accountId, externalChargeId, amount).get();
 
-        assertThat(gatewayResponse.isSuccessful(), is(true));
-        assertThat(gatewayResponse.isFailed(), is(false));
-        assertThat(gatewayResponse.getError(), is(nullValue()));
-        assertThat(gatewayResponse.isInProgress(), is(false));
+        assertThat(gatewayResponse.getRefundGatewayResponse().isSuccessful(), is(true));
+        assertThat(gatewayResponse.getRefundGatewayResponse().isFailed(), is(false));
+        assertThat(gatewayResponse.getRefundGatewayResponse().getError(), is(nullValue()));
+        assertThat(gatewayResponse.getRefundGatewayResponse().isInProgress(), is(false));
+        assertThat(gatewayResponse.getRefundEntity(), is(spiedRefundEntity));
 
         verify(mockChargeDao).findByExternalIdAndGatewayAccount(externalChargeId, accountId);
         verify(mockChargeDao).merge(charge);
@@ -108,7 +120,7 @@ public class ChargeRefundServiceTest {
     }
 
     @Test
-    public void shouldFail_whenChargeNotFound() {
+    public void shouldFailWhenChargeNotFound() {
         String externalChargeId = "chargeId";
         Long accountId = 2L;
 
@@ -127,7 +139,7 @@ public class ChargeRefundServiceTest {
     }
 
     @Test
-    public void shouldFail_whenChargeRefundIsNotAvailable() {
+    public void shouldFailWhenChargeRefundIsNotAvailable() {
         String externalChargeId = "chargeId";
         Long accountId = 2L;
         GatewayAccountEntity account = new GatewayAccountEntity("testpay", newHashMap());
@@ -180,13 +192,13 @@ public class ChargeRefundServiceTest {
         when(mockRefundDao.merge(any(RefundEntity.class))).thenReturn(spiedRefundEntity);
         when(mockChargeDao.merge(capturedCharge)).thenReturn(capturedCharge);
 
-        GatewayResponse gatewayResponse = chargeRefundService.doRefund(accountId, externalChargeId, amount).get();
+        ChargeRefundService.Response gatewayResponse = chargeRefundService.doRefund(accountId, externalChargeId, amount).get();
 
-        assertThat(gatewayResponse.isSuccessful(), is(false));
-        assertThat(gatewayResponse.isFailed(), is(true));
-        assertThat(gatewayResponse.getError().getMessage(), is("Error"));
-        assertThat(gatewayResponse.getError().getErrorType(), is(ErrorType.GENERIC_GATEWAY_ERROR));
-        assertThat(gatewayResponse.isInProgress(), is(false));
+        assertThat(gatewayResponse.getRefundGatewayResponse().isSuccessful(), is(false));
+        assertThat(gatewayResponse.getRefundGatewayResponse().isFailed(), is(true));
+        assertThat(gatewayResponse.getRefundGatewayResponse().getError().getMessage(), is("Error"));
+        assertThat(gatewayResponse.getRefundGatewayResponse().getError().getErrorType(), is(ErrorType.GENERIC_GATEWAY_ERROR));
+        assertThat(gatewayResponse.getRefundGatewayResponse().isInProgress(), is(false));
 
         verify(mockChargeDao).findByExternalIdAndGatewayAccount(externalChargeId, accountId);
         verify(mockChargeDao).merge(capturedCharge);
@@ -301,5 +313,36 @@ public class ChargeRefundServiceTest {
             public void describeTo(Description description) {
             }
         };
+    }
+
+    @Test
+    public void testCreateHalResourceBuilderFor() throws Exception {
+        UriBuilder mockUriBuilder = mock(UriBuilder.class);
+        URI paymentUri = URI.create("/uri");
+        URI selfUri = URI.create("/uri");
+
+        RefundEntity refundEntity = aValidRefundEntity().withStatus(RefundStatus.CREATED).withAmount(100L).build();
+        String accountId = refundEntity.getChargeEntity().getGatewayAccount().getId().toString();
+        String externalChargeId = refundEntity.getChargeEntity().getExternalId();
+        String externalRefundId = refundEntity.getExternalId();
+
+        when(mockUriInfo.getBaseUriBuilder()).thenReturn(mockUriBuilder);
+        when(mockUriBuilder.path(REFUND_API_PATH)).thenReturn(mockUriBuilder);
+        when(mockUriBuilder.path(CHARGE_API_PATH)).thenReturn(mockUriBuilder);
+        when(mockUriBuilder.build(accountId, externalChargeId, externalRefundId)).thenReturn(selfUri);
+        when(mockUriBuilder.build(accountId, externalChargeId)).thenReturn(paymentUri);
+
+        when(mockHalResourceBuilder.withProperty(anyString(), anyObject())).thenReturn(mockHalResourceBuilder);
+        when(mockHalResourceBuilder.withSelfLink(any(URI.class))).thenReturn(mockHalResourceBuilder);
+        when(mockHalResourceBuilder.withLink(anyString(), any(URI.class))).thenReturn(mockHalResourceBuilder);
+
+        chargeRefundService.createHalResourceBuilderFor(refundEntity, mockUriInfo);
+
+        verify(mockHalResourceBuilder).withProperty("refund_id", refundEntity.getExternalId());
+        verify(mockHalResourceBuilder).withProperty("amount", refundEntity.getAmount());
+        verify(mockHalResourceBuilder).withProperty("status", refundEntity.getStatus().toExternal().getStatus());
+        verify(mockHalResourceBuilder).withProperty("created_date", DateTimeUtils.toUTCDateString(refundEntity.getCreatedDate()));
+        verify(mockHalResourceBuilder).withSelfLink(selfUri);
+        verify(mockHalResourceBuilder).withLink("payment", paymentUri);
     }
 }

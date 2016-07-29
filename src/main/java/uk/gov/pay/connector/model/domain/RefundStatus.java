@@ -1,5 +1,6 @@
 package uk.gov.pay.connector.model.domain;
 
+import org.apache.commons.lang3.StringUtils;
 import uk.gov.pay.connector.model.api.ExternalRefundStatus;
 
 import static uk.gov.pay.connector.model.api.ExternalRefundStatus.*;
@@ -29,5 +30,14 @@ public enum RefundStatus {
 
     public ExternalRefundStatus toExternal() {
         return externalStatus;
+    }
+
+    public static RefundStatus fromString(String status) {
+        for (RefundStatus stat : values()) {
+            if (StringUtils.equals(stat.getValue(), status)) {
+                return stat;
+            }
+        }
+        throw new IllegalArgumentException("Refund status not recognized: " + status);
     }
 }

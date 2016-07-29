@@ -1,4 +1,4 @@
-package uk.gov.pay.connector.util;
+package uk.gov.pay.connector.model.builder;
 
 import com.google.common.collect.ImmutableMap;
 import uk.gov.pay.connector.model.ChargeResponse;

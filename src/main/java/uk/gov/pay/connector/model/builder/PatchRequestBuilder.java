@@ -1,4 +1,4 @@
-package uk.gov.pay.connector.model;
+package uk.gov.pay.connector.model.builder;
 
 import java.util.List;
 import java.util.Map;

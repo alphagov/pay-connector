@@ -5,8 +5,8 @@ import org.apache.commons.lang3.builder.EqualsBuilder;
 import org.apache.commons.lang3.builder.HashCodeBuilder;
 import org.apache.commons.lang3.builder.ToStringBuilder;
 import uk.gov.pay.connector.model.api.ExternalChargeState;
+import uk.gov.pay.connector.model.builder.AbstractChargeResponseBuilder;
 import uk.gov.pay.connector.model.domain.ChargeStatus;
-import uk.gov.pay.connector.util.AbstractChargeResponseBuilder;
 
 import java.time.ZonedDateTime;
 import java.util.List;

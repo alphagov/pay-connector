@@ -6,6 +6,7 @@ import uk.gov.pay.connector.dao.RefundDao;
 import uk.gov.pay.connector.model.domain.ChargeEntity;
 import uk.gov.pay.connector.model.domain.ChargeStatus;
 import uk.gov.pay.connector.model.domain.RefundEntity;
+import uk.gov.pay.connector.model.domain.RefundStatus;
 
 import java.util.Map;
 import java.util.Optional;
@@ -101,6 +102,7 @@ public class RefundDaoJpaITest extends DaoITestBase {
         chargeEntity.setId(chargeTestRecord.getChargeId());
 
         RefundEntity refundEntity = new RefundEntity(chargeEntity, 100L);
+        refundEntity.setStatus(RefundStatus.REFUND_SUBMITTED);
 
         refundDao.persist(refundEntity);
 
@@ -112,7 +114,7 @@ public class RefundDaoJpaITest extends DaoITestBase {
                 allOf(
                         org.hamcrest.Matchers.hasEntry("external_id", refundEntity.getExternalId()),
                         org.hamcrest.Matchers.hasEntry("amount", (Object) refundEntity.getAmount()),
-                        org.hamcrest.Matchers.hasEntry("status", refundEntity.getStatus().toString()),
+                        org.hamcrest.Matchers.hasEntry("status", refundEntity.getStatus().getValue()),
                         org.hamcrest.Matchers.hasEntry("charge_id", (Object) refundEntity.getChargeEntity().getId()),
                         org.hamcrest.Matchers.hasEntry("created_date", (Object) java.sql.Timestamp.from(refundEntity.getCreatedDate().toInstant()))
                 )));

@@ -1,6 +1,5 @@
 package uk.gov.pay.connector.model.domain;
 
-import com.fasterxml.jackson.annotation.JsonIgnore;
 import uk.gov.pay.connector.util.RandomIdGenerator;
 
 import javax.persistence.*;
@@ -21,10 +20,8 @@ public class RefundEntity extends AbstractEntity {
 
     private Long amount;
 
-    @Enumerated(EnumType.STRING)
-    private RefundStatus status;
+    private String status;
 
-    @JsonIgnore
     @ManyToOne
     @JoinColumn(name = "charge_id", updatable = false)
     private ChargeEntity chargeEntity;
@@ -41,7 +38,7 @@ public class RefundEntity extends AbstractEntity {
         this.externalId = RandomIdGenerator.newId();
         this.chargeEntity = chargeEntity;
         this.amount = amount;
-        this.status = RefundStatus.CREATED;
+        setStatus(RefundStatus.CREATED);
         this.createdDate = ZonedDateTime.now(ZoneId.of("UTC"));
     }
 
@@ -58,7 +55,7 @@ public class RefundEntity extends AbstractEntity {
     }
 
     public RefundStatus getStatus() {
-        return status;
+        return RefundStatus.fromString(status);
     }
 
     public ZonedDateTime getCreatedDate() {
@@ -70,7 +67,7 @@ public class RefundEntity extends AbstractEntity {
     }
 
     public void setStatus(RefundStatus status) {
-        this.status = status;
+        this.status = status.getValue();
     }
 
     public void setChargeEntity(ChargeEntity chargeEntity) {
