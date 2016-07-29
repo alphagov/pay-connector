@@ -84,6 +84,6 @@ public class DateTimeUtilsTest {
 
         String result = DateTimeUtils.toUserFriendlyDate(zonedDateTime.get());
 
-        assertThat(result, is("8 July 2016"));
+        assertThat(result, is("8 July 2016 - 00:24:48"));
     }
 }
