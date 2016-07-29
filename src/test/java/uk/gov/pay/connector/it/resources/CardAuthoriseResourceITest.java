@@ -1,7 +1,7 @@
 package uk.gov.pay.connector.it.resources;
 
 import org.junit.Test;
-import uk.gov.pay.connector.app.CardExecutorServiceConfig;
+import uk.gov.pay.connector.app.ExecutorServiceConfig;
 import uk.gov.pay.connector.it.base.CardResourceITestBase;
 
 import java.lang.reflect.Field;
@@ -168,7 +168,7 @@ public class CardAuthoriseResourceITest extends CardResourceITestBase {
 
     @Test
     public void shouldReturn202_WhenGatewayAuthorisationResponseIsDelayed() throws NoSuchFieldException, IllegalAccessException {
-        CardExecutorServiceConfig conf = app.getConf().getExecutorServiceConfig();
+        ExecutorServiceConfig conf = app.getConf().getExecutorServiceConfig();
         Field timeoutInSeconds = conf.getClass().getDeclaredField("timeoutInSeconds");
         timeoutInSeconds.setAccessible(true);
         timeoutInSeconds.setInt(conf, 0);

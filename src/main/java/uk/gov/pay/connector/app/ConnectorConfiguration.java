@@ -16,7 +16,7 @@ public class ConnectorConfiguration extends Configuration {
 
     @Valid
     @NotNull
-    private CardExecutorServiceConfig executorServiceConfig = new CardExecutorServiceConfig();
+    private ExecutorServiceConfig executorServiceConfig = new ExecutorServiceConfig();
 
     @Valid
     @NotNull
@@ -78,7 +78,7 @@ public class ConnectorConfiguration extends Configuration {
         return jpaConfiguration;
     }
 
-    public CardExecutorServiceConfig getExecutorServiceConfig() {
+    public ExecutorServiceConfig getExecutorServiceConfig() {
         return executorServiceConfig;
     }
 

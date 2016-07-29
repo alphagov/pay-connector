@@ -7,6 +7,7 @@ import org.junit.runner.RunWith;
 import org.mockito.Mock;
 import org.mockito.runners.MockitoJUnitRunner;
 
+import uk.gov.pay.connector.app.ExecutorServiceConfig;
 import uk.gov.pay.connector.app.ConnectorConfiguration;
 import uk.gov.pay.connector.app.NotifyConfiguration;
 import uk.gov.pay.connector.model.domain.ChargeEntity;
@@ -20,6 +21,9 @@ import uk.gov.service.notify.NotificationResponse;
 import java.time.ZoneId;
 import java.time.ZonedDateTime;
 import java.util.HashMap;
+import java.util.Optional;
+import java.util.concurrent.Future;
+import java.util.concurrent.TimeUnit;
 
 import static junit.framework.TestCase.fail;
 import static org.junit.Assert.assertEquals;
@@ -40,6 +44,8 @@ public class UserNotificationServiceTest {
     Notification mockNotification;
     @Mock
     private NotifyConfiguration mockNotifyConfiguration;
+    @Mock
+    private ExecutorServiceConfig mockExecutorConfiguration;
 
     private UserNotificationService userNotificationService;
     private ImmutableMap<String, String> personalisationMap = ImmutableMap.of("key-1", "value-1", "key-2", "value-2");
@@ -49,10 +55,14 @@ public class UserNotificationServiceTest {
         when(mockConfig.getNotifyConfiguration()).thenReturn(mockNotifyConfiguration);
         when(mockNotifyConfiguration.getEmailTemplateId()).thenReturn("some-template");
         when(mockNotifyConfiguration.isEmailNotifyEnabled()).thenReturn(true);
+
+        when(mockConfig.getExecutorServiceConfig()).thenReturn(mockExecutorConfiguration);
+        when(mockExecutorConfiguration.getThreadsPerCpu()).thenReturn(2);
     }
 
     @Test
-    public void shouldSendEmail() throws Exception {
+    public void shouldSendEmailIfEmailNotifyIsEnabled() throws Exception {
+        when(mockConfig.getNotifyConfiguration().isEmailNotifyEnabled()).thenReturn(true);
         when(mockNotifyClientProvider.get()).thenReturn(mockNotifyClient);
         when(mockNotifyClient.sendEmail(any(), any(), any())).thenReturn(mockNotificationCreatedResponse);
         when(mockNotificationCreatedResponse.getNotificationId()).thenReturn("100");
@@ -61,7 +71,9 @@ public class UserNotificationServiceTest {
                 .withCreatedDate(ZonedDateTime.of(2016, 1, 1, 10, 23, 12, 0, ZoneId.of("UTC")))
                 .build();
         userNotificationService = new UserNotificationService(mockNotifyClientProvider, mockConfig);
-        userNotificationService.notifyPaymentSuccessEmail(charge);
+        Future<Optional<String>> idF = userNotificationService.notifyPaymentSuccessEmail(charge);
+        idF.get(1000, TimeUnit.SECONDS);
+
         HashMap<String, String> map = new HashMap<>();
 
         map.put("serviceReference", "This is a reference");
@@ -70,8 +82,6 @@ public class UserNotificationServiceTest {
         map.put("serviceName", "MyService");
         map.put("customParagraph", "template body");
         map.put("amount", "5.00");
-
-
 
         verify(mockNotifyClient).sendEmail(
                 mockNotifyConfiguration.getEmailTemplateId(),
@@ -88,6 +98,12 @@ public class UserNotificationServiceTest {
 
         userNotificationService = new UserNotificationService(mockNotifyClientProvider, mockConfig);
         userNotificationService.checkDeliveryStatus("100");
+
+        ChargeEntity charge = ChargeEntityFixture.aValidChargeEntity()
+                .withCreatedDate(ZonedDateTime.of(2016, 1, 1, 1, 1, 0, 0, ZoneId.of("UTC")))
+                .build();
+        userNotificationService = new UserNotificationService(mockNotifyClientProvider, mockConfig);
+        userNotificationService.notifyPaymentSuccessEmail(charge);
 
         verify(mockNotifyClient).getNotificationById("100");
     }
@@ -112,7 +128,9 @@ public class UserNotificationServiceTest {
         when(mockNotificationCreatedResponse.getNotificationId()).thenReturn("100");
 
         userNotificationService = new UserNotificationService(mockNotifyClientProvider, mockConfig);
-        userNotificationService.notifyPaymentSuccessEmail(ChargeEntityFixture.aValidChargeEntity().build());
+        Future<Optional<String>> idF = userNotificationService.notifyPaymentSuccessEmail(ChargeEntityFixture.aValidChargeEntity().build());
+        idF.get(1000, TimeUnit.SECONDS);
+
         verifyZeroInteractions(mockNotifyClient);
     }
 
