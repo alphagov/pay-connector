@@ -58,14 +58,14 @@ public class UserNotificationServiceTest {
         when(mockNotificationCreatedResponse.getNotificationId()).thenReturn("100");
 
         ChargeEntity charge = ChargeEntityFixture.aValidChargeEntity()
-                .withCreatedDate(ZonedDateTime.of(2016, 1, 1, 1, 1, 0, 0, ZoneId.of("UTC")))
+                .withCreatedDate(ZonedDateTime.of(2016, 1, 1, 10, 23, 12, 0, ZoneId.of("UTC")))
                 .build();
         userNotificationService = new UserNotificationService(mockNotifyClientProvider, mockConfig);
         userNotificationService.notifyPaymentSuccessEmail(charge);
         HashMap<String, String> map = new HashMap<>();
 
         map.put("serviceReference", "This is a reference");
-        map.put("date", "1 January 2016");
+        map.put("date", "1 January 2016 - 10:23:12");
         map.put("description", "This is a description");
         map.put("serviceName", "MyService");
         map.put("customParagraph", "template body");
