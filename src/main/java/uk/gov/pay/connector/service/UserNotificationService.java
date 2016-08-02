@@ -22,7 +22,7 @@ import java.util.Optional;
 public class UserNotificationService {
 
     private String emailTemplateId;
-    private boolean emailNotifyEnabled;
+    private boolean emailNotifyGloballyEnabled;
 
     protected final Logger logger = LoggerFactory.getLogger(getClass());
     private NotificationClient notificationClient;
@@ -30,13 +30,13 @@ public class UserNotificationService {
     @Inject
     public UserNotificationService(NotifyClientProvider notifyClientProvider, ConnectorConfiguration configuration) {
         readEmailConfig(configuration);
-        if (emailNotifyEnabled) {
+        if (emailNotifyGloballyEnabled) {
             this.notificationClient = notifyClientProvider.get();
         }
     }
 
     public Optional<String> notifyPaymentSuccessEmail(ChargeEntity chargeEntity) {
-        if (emailNotifyEnabled) {
+        if (emailNotifyGloballyEnabled && chargeEntity.getGatewayAccount().hasEmailNotificationsEnabled()) {
             String emailAddress = chargeEntity.getEmail();
 
             try {
@@ -58,13 +58,13 @@ public class UserNotificationService {
     }
 
     private void readEmailConfig(ConnectorConfiguration configuration) {
-        emailNotifyEnabled = configuration.getNotifyConfiguration().isEmailNotifyEnabled();
+        emailNotifyGloballyEnabled = configuration.getNotifyConfiguration().isEmailNotifyEnabled();
         emailTemplateId = configuration.getNotifyConfiguration().getEmailTemplateId();
 
-        if (!emailNotifyEnabled) {
+        if (!emailNotifyGloballyEnabled) {
             logger.warn("Email notifications is disabled by configuration");
         }
-        if (emailNotifyEnabled && StringUtils.isBlank(emailTemplateId)) {
+        if (emailNotifyGloballyEnabled && StringUtils.isBlank(emailTemplateId)) {
             throw new RuntimeException("config property 'emailTemplateId' is missing or not set, which needs to point to the email template on the notify");
         }
     }

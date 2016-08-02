@@ -98,4 +98,8 @@ public class GatewayAccountEntity extends AbstractEntity {
                 "gateway_account_id", String.valueOf(super.getId()),
                 "payment_provider", gatewayName);
     }
+
+    public boolean hasEmailNotificationsEnabled() {
+        return emailNotification != null && emailNotification.isEnabled();
+    }
 }

@@ -115,4 +115,19 @@ public class UserNotificationServiceTest {
         userNotificationService.notifyPaymentSuccessEmail(ChargeEntityFixture.aValidChargeEntity().build());
         verifyZeroInteractions(mockNotifyClient);
     }
+
+    @Test
+    public void whenEmailNotificationsAreDisabledForService_emailShouldNotBeSent() throws Exception {
+        when(mockNotifyConfiguration.isEmailNotifyEnabled()).thenReturn(true);
+        when(mockNotifyClientProvider.get()).thenReturn(mockNotifyClient);
+        when(mockNotifyClient.sendEmail(any(), any(), any())).thenReturn(mockNotificationCreatedResponse);
+        when(mockNotificationCreatedResponse.getNotificationId()).thenReturn("100");
+
+        ChargeEntity chargeEntity = ChargeEntityFixture.aValidChargeEntity().build();
+        chargeEntity.getGatewayAccount().getEmailNotification().setEnabled(false);
+
+        userNotificationService = new UserNotificationService(mockNotifyClientProvider, mockConfig);
+        userNotificationService.notifyPaymentSuccessEmail(chargeEntity);
+        verifyZeroInteractions(mockNotifyClient);
+    }
 }
