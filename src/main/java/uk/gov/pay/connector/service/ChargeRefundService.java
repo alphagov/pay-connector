@@ -15,20 +15,14 @@ import uk.gov.pay.connector.model.domain.ChargeEntity;
 import uk.gov.pay.connector.model.domain.ChargeStatus;
 import uk.gov.pay.connector.model.domain.RefundEntity;
 import uk.gov.pay.connector.model.domain.RefundStatus;
-import uk.gov.pay.connector.resources.HalResourceBuilder;
 import uk.gov.pay.connector.service.transaction.*;
-import uk.gov.pay.connector.util.DateTimeUtils;
 
 import javax.inject.Inject;
-import javax.ws.rs.core.UriInfo;
-import java.net.URI;
 import java.util.Optional;
 
 import static java.lang.String.format;
 import static uk.gov.pay.connector.model.api.ExternalChargeRefundAvailability.*;
 import static uk.gov.pay.connector.model.domain.ChargeStatus.*;
-import static uk.gov.pay.connector.resources.ApiPaths.CHARGE_API_PATH;
-import static uk.gov.pay.connector.resources.ApiPaths.REFUND_API_PATH;
 
 public class ChargeRefundService {
 
@@ -61,16 +55,14 @@ public class ChargeRefundService {
     private final RefundDao refundDao;
     private final PaymentProviders providers;
     private final Provider<TransactionFlow> transactionFlowProvider;
-    private final HalResourceBuilder halBuilder;
 
     @Inject
     public ChargeRefundService(ChargeDao chargeDao, RefundDao refundDao, PaymentProviders providers,
-                               Provider<TransactionFlow> transactionFlowProvider, HalResourceBuilder halBuilder) {
+                               Provider<TransactionFlow> transactionFlowProvider) {
         this.chargeDao = chargeDao;
         this.refundDao = refundDao;
         this.providers = providers;
         this.transactionFlowProvider = transactionFlowProvider;
-        this.halBuilder = halBuilder;
     }
 
     public Optional<Response> doRefund(Long accountId, String chargeId, Long amount) {
@@ -153,27 +145,4 @@ public class ChargeRefundService {
                 .mapToLong(RefundEntity::getAmount)
                 .sum();
     }
-
-    public HalResourceBuilder createHalResourceBuilderFor(RefundEntity refund, UriInfo uriInfo) {
-        String accountId = refund.getChargeEntity().getGatewayAccount().getId().toString();
-        String externalChargeId = refund.getChargeEntity().getExternalId();
-        String externalRefundId = refund.getExternalId();
-
-        URI selfLink = uriInfo.getBaseUriBuilder()
-                .path(REFUND_API_PATH)
-                .build(accountId, externalChargeId, externalRefundId);
-
-        URI paymentLink = uriInfo.getBaseUriBuilder()
-                .path(CHARGE_API_PATH)
-                .build(accountId, externalChargeId);
-
-        return halBuilder
-                .withProperty("refund_id", externalRefundId)
-                .withProperty("amount", refund.getAmount())
-                .withProperty("status", refund.getStatus().toExternal().getStatus())
-                .withProperty("created_date", DateTimeUtils.toUTCDateString(refund.getCreatedDate()))
-                        .withSelfLink(selfLink)
-                        .withLink("payment", paymentLink);
-    }
-
 }

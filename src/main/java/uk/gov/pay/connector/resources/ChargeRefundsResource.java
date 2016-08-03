@@ -4,8 +4,9 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import uk.gov.pay.connector.dao.ChargeDao;
 import uk.gov.pay.connector.model.RefundRequest;
+import uk.gov.pay.connector.model.RefundResponse;
+import uk.gov.pay.connector.model.RefundsResponse;
 import uk.gov.pay.connector.model.domain.ChargeEntity;
-import uk.gov.pay.connector.model.domain.RefundEntity;
 import uk.gov.pay.connector.service.ChargeRefundService;
 
 import javax.inject.Inject;
@@ -41,7 +42,7 @@ public class ChargeRefundsResource {
         return refundService.doRefund(Long.valueOf(accountId), chargeId, refund.getAmount())
                 .map((refundServiceResponse) -> {
                     if (refundServiceResponse.getRefundGatewayResponse().isSuccessful()) {
-                        return Response.accepted(refundService.createHalResourceBuilderFor(refundServiceResponse.getRefundEntity(), uriInfo).build()).build();
+                        return Response.accepted(RefundResponse.valueOf(refundServiceResponse.getRefundEntity(), uriInfo).serialize()).build();
                     }
                     return serviceErrorResponse(refundServiceResponse.getRefundGatewayResponse().getError().getMessage());
                 })
@@ -53,7 +54,6 @@ public class ChargeRefundsResource {
 
     @GET
     @Path(REFUND_API_PATH)
-    @Consumes(APPLICATION_JSON)
     @Produces(APPLICATION_JSON)
     public Response getRefund(@PathParam("accountId") Long accountId, @PathParam("chargeId") String chargeId, @PathParam("refundId") String refundId, @Context UriInfo uriInfo) {
         return chargeDao.findByExternalIdAndGatewayAccount(chargeId, accountId)
@@ -61,16 +61,20 @@ public class ChargeRefundsResource {
                 .orElseGet(() -> responseWithChargeNotFound(chargeId));
     }
 
+    @GET
+    @Path(REFUNDS_API_PATH)
+    @Produces(APPLICATION_JSON)
+    public Response getRefunds(@PathParam("accountId") Long accountId, @PathParam("chargeId") String chargeId, @Context UriInfo uriInfo) {
+        return chargeDao.findByExternalIdAndGatewayAccount(chargeId, accountId)
+                .map(chargeEntity -> Response.ok(RefundsResponse.valueOf(chargeEntity, uriInfo).serialize()).build())
+                .orElseGet(() -> responseWithChargeNotFound(chargeId));
+    }
+
     private Response getRefundResponse(ChargeEntity chargeEntity, String refundId, UriInfo uriInfo) {
         return chargeEntity.getRefunds().stream()
                 .filter(refundEntity -> refundEntity.getExternalId().equals(refundId))
                 .findFirst()
-                .map(refundEntity -> buildOkRefundResponse(uriInfo, refundEntity))
+                .map(refundEntity -> Response.ok(RefundResponse.valueOf(refundEntity, uriInfo).serialize()).build())
                 .orElseGet(() -> responseWithRefundNotFound(refundId));
-    }
-
-    private Response buildOkRefundResponse(UriInfo uriInfo, RefundEntity refundEntity) {
-        String halResponseString = refundService.createHalResourceBuilderFor(refundEntity, uriInfo).build();
-        return Response.ok(halResponseString).build();
     }
 }

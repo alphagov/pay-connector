@@ -9,6 +9,8 @@ import uk.gov.pay.connector.it.dao.DatabaseFixtures;
 import uk.gov.pay.connector.model.domain.RefundStatus;
 import uk.gov.pay.connector.util.DatabaseTestHelper;
 
+import java.time.ZoneId;
+import java.time.ZonedDateTime;
 import java.util.Map;
 
 import static java.lang.String.format;
@@ -17,7 +19,7 @@ import static javax.ws.rs.core.Response.Status.*;
 import static org.hamcrest.CoreMatchers.allOf;
 import static org.hamcrest.CoreMatchers.notNullValue;
 import static org.hamcrest.MatcherAssert.assertThat;
-import static org.hamcrest.Matchers.containsInAnyOrder;
+import static org.hamcrest.Matchers.*;
 import static org.hamcrest.core.Is.is;
 import static org.hamcrest.text.MatchesPattern.matchesPattern;
 import static uk.gov.pay.connector.matcher.ZoneDateTimeAsStringWithinMatcher.isWithin;
@@ -87,16 +89,16 @@ public class WorldpayRefundITest extends CardResourceITestBase {
         assertThat(refundsFoundByChargeId.size(), is(2));
         assertThat(refundsFoundByChargeId, containsInAnyOrder(
                 allOf(
-                        org.hamcrest.Matchers.hasEntry("external_id", firstRefundId),
-                        org.hamcrest.Matchers.hasEntry("amount", (Object) firstRefundAmount),
-                        org.hamcrest.Matchers.hasEntry("status", RefundStatus.REFUND_SUBMITTED.getValue()),
-                        org.hamcrest.Matchers.hasEntry("charge_id", (Object) defaultTestCharge.getChargeId())
+                        hasEntry("external_id", firstRefundId),
+                        hasEntry("amount", (Object) firstRefundAmount),
+                        hasEntry("status", RefundStatus.REFUND_SUBMITTED.getValue()),
+                        hasEntry("charge_id", (Object) defaultTestCharge.getChargeId())
                 ),
                 allOf(
-                        org.hamcrest.Matchers.hasEntry("external_id", secondRefundId),
-                        org.hamcrest.Matchers.hasEntry("amount", (Object) secondRefundAmount),
-                        org.hamcrest.Matchers.hasEntry("status", RefundStatus.REFUND_SUBMITTED.getValue()),
-                        org.hamcrest.Matchers.hasEntry("charge_id", (Object) defaultTestCharge.getChargeId())
+                        hasEntry("external_id", secondRefundId),
+                        hasEntry("amount", (Object) secondRefundAmount),
+                        hasEntry("status", RefundStatus.REFUND_SUBMITTED.getValue()),
+                        hasEntry("charge_id", (Object) defaultTestCharge.getChargeId())
                 )));
     }
 
@@ -143,6 +145,57 @@ public class WorldpayRefundITest extends CardResourceITestBase {
         String refundId = assertRefundResponseWith(testRefund.getAmount(), validatableResponse, OK.getStatusCode());
 
         assertRefundDatabaseRecord(testRefund.getAmount(), refundId);
+    }
+
+    @Test
+    public void shouldBeAbleToRetrieveAllRefundsForACharge() {
+
+        DatabaseFixtures.TestRefund testRefund1 = DatabaseFixtures
+                .withDatabaseTestHelper(databaseTestHelper)
+                .aTestRefund()
+                .withAmount(10L)
+                .withCreatedDate(ZonedDateTime.of(2016, 8, 1, 0, 0, 0, 0, ZoneId.of("UTC")))
+                .withTestCharge(defaultTestCharge)
+                .withType(RefundStatus.REFUND_SUBMITTED)
+                .insert();
+
+        DatabaseFixtures.TestRefund testRefund2 = DatabaseFixtures
+                .withDatabaseTestHelper(databaseTestHelper)
+                .aTestRefund()
+                .withAmount(20L)
+                .withCreatedDate(ZonedDateTime.of(2016, 8, 2, 0, 0, 0, 0, ZoneId.of("UTC")))
+                .withTestCharge(defaultTestCharge)
+                .withType(RefundStatus.REFUND_SUBMITTED)
+                .insert();
+
+        String paymentUrl = format("http://localhost:%s/v1/api/accounts/%s/charges/%s",
+                app.getLocalPort(), defaultTestAccount.getAccountId(), defaultTestCharge.getExternalChargeId());
+
+        ValidatableResponse validatableResponse = getRefundsFor(defaultTestAccount.getAccountId(),
+                defaultTestCharge.getExternalChargeId())
+                .statusCode(OK.getStatusCode());
+
+        String body = validatableResponse.extract().body().asString();
+
+        System.out.println("body = " + body);
+
+        validatableResponse
+                .body("payment_id", is(defaultTestCharge.getExternalChargeId()))
+                .body("_links.self.href", is(paymentUrl + "/refunds"))
+                .body("_links.payment.href", is(paymentUrl))
+                .body("_embedded.refunds", hasSize(2))
+                .body("_embedded.refunds[0].refund_id", is(testRefund1.getExternalRefundId()))
+                .body("_embedded.refunds[0].amount", is(10))
+                .body("_embedded.refunds[0].status", is("submitted"))
+                .body("_embedded.refunds[0].created_date", is("2016-08-01T00:00:00Z"))
+                .body("_embedded.refunds[0]._links.self.href", is(paymentUrl + "/refunds/" + testRefund1.getExternalRefundId()))
+                .body("_embedded.refunds[0]._links.payment.href", is(paymentUrl))
+                .body("_embedded.refunds[1].refund_id", is(testRefund2.getExternalRefundId()))
+                .body("_embedded.refunds[1].amount", is(20))
+                .body("_embedded.refunds[1].status", is("submitted"))
+                .body("_embedded.refunds[1].created_date", is("2016-08-02T00:00:00Z"))
+                .body("_embedded.refunds[1]._links.self.href", is(paymentUrl + "/refunds/" + testRefund2.getExternalRefundId()))
+                .body("_embedded.refunds[1]._links.payment.href", is(paymentUrl));
     }
 
     @Test
@@ -211,6 +264,17 @@ public class WorldpayRefundITest extends CardResourceITestBase {
                 .then();
     }
 
+    private ValidatableResponse getRefundsFor(Long accountId, String chargeId) {
+        worldpay.mockRefundResponse();
+        return givenSetup()
+                .accept(ContentType.JSON)
+                .contentType(ContentType.JSON)
+                .get(REFUNDS_API_PATH
+                        .replace("{accountId}", accountId.toString())
+                        .replace("{chargeId}", chargeId))
+                .then();
+    }
+
     private ValidatableResponse getRefundFor(Long accountId, String chargeId, String refundId) {
         worldpay.mockRefundResponse();
         return givenSetup()
@@ -248,10 +312,10 @@ public class WorldpayRefundITest extends CardResourceITestBase {
         assertThat(refundsFoundByChargeId.size(), is(1));
         assertThat(refundsFoundByChargeId, containsInAnyOrder(
                 allOf(
-                        org.hamcrest.Matchers.hasEntry("external_id", refundId),
-                        org.hamcrest.Matchers.hasEntry("amount", (Object)refundAmount),
-                        org.hamcrest.Matchers.hasEntry("status", RefundStatus.REFUND_SUBMITTED.getValue()),
-                        org.hamcrest.Matchers.hasEntry("charge_id", (Object) defaultTestCharge.getChargeId())
+                        hasEntry("external_id", refundId),
+                        hasEntry("amount", (Object) refundAmount),
+                        hasEntry("status", RefundStatus.REFUND_SUBMITTED.getValue()),
+                        hasEntry("charge_id", (Object) defaultTestCharge.getChargeId())
                 )));
     }
 }

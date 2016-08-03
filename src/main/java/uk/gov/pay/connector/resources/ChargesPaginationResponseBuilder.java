@@ -1,5 +1,6 @@
 package uk.gov.pay.connector.resources;
 
+import black.door.hate.HalRepresentation;
 import uk.gov.pay.connector.dao.ChargeSearchParams;
 import uk.gov.pay.connector.model.ChargeResponse;
 
@@ -46,19 +47,25 @@ public class ChargesPaginationResponseBuilder {
         double lastPage = Math.ceil(new Double(totalCount) / searchParams.getDisplaySize());
         buildLinks(lastPage);
 
-        String halString = new HalResourceBuilder()
-                .withProperty("results", chargeResponses)
-                .withProperty("count", chargeResponses.size())
-                .withProperty("total", totalCount)
-                .withProperty("page", selfPageNum)
-                .withSelfLink(selfLink)
-                .withLink("first_page", firstLink)
-                .withLink("last_page", lastLink)
-                .withLink("prev_page", prevLink)
-                .withLink("next_page", nextLink)
-                .build();
+        HalRepresentation.HalRepresentationBuilder halRepresentationBuilder = HalRepresentation.builder()
+                .addProperty("results", chargeResponses)
+                .addProperty("count", chargeResponses.size())
+                .addProperty("total", totalCount)
+                .addProperty("page", selfPageNum)
+                .addLink("self", selfLink)
+                .addLink("first_page", firstLink)
+                .addLink("last_page", lastLink);
 
-        return ok(halString).build();
+        addLinkNotNull(halRepresentationBuilder, "prev_page", prevLink);
+        addLinkNotNull(halRepresentationBuilder, "next_page", nextLink);
+
+        return ok(halRepresentationBuilder.build().toString()).build();
+    }
+
+    private void addLinkNotNull(HalRepresentation.HalRepresentationBuilder halRepresentationBuilder, String name, URI uri) {
+        if (uri != null) {
+            halRepresentationBuilder.addLink(name, uri);
+        }
     }
 
     private void buildLinks(double lastPage) {

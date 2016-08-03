@@ -232,16 +232,6 @@ public class DatabaseFixtures {
 
         TestCharge testCharge;
 
-        public TestRefund withRefundId(Long id) {
-            this.id = id;
-            return this;
-        }
-
-        public TestRefund withExternalRefundId(String id) {
-            this.externalRefundId = id;
-            return this;
-        }
-
         public TestRefund withTestCharge(TestCharge charge) {
             this.testCharge = charge;
             return this;
