@@ -160,7 +160,7 @@ public class WorldpayPaymentProvider implements PaymentProvider {
                             status.getValue() != notification.getChargeStatus().get()) {
                         logger.error(format("Inquiry status '%s' did not match notification status '%s'",
                                 status.getValue(),
-                                notification.getChargeStatus()));
+                                notification.getStatus()));
                     }
                 });
     }
