@@ -38,8 +38,8 @@ public class ChargeRefundsResource {
     @Path(REFUNDS_API_PATH)
     @Consumes(APPLICATION_JSON)
     @Produces(APPLICATION_JSON)
-    public Response submitRefund(@PathParam("accountId") String accountId, @PathParam("chargeId") String chargeId, RefundRequest refund, @Context UriInfo uriInfo) {
-        return refundService.doRefund(Long.valueOf(accountId), chargeId, refund.getAmount())
+    public Response submitRefund(@PathParam("accountId") Long accountId, @PathParam("chargeId") String chargeId, RefundRequest refund, @Context UriInfo uriInfo) {
+        return refundService.doRefund(accountId, chargeId, refund.getAmount())
                 .map((refundServiceResponse) -> {
                     if (refundServiceResponse.getRefundGatewayResponse().isSuccessful()) {
                         return Response.accepted(RefundResponse.valueOf(refundServiceResponse.getRefundEntity(), uriInfo).serialize()).build();

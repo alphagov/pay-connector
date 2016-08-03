@@ -29,7 +29,7 @@ public class FrontendChargeResponse extends ChargeResponse {
 
         @Override
         public FrontendChargeResponse build() {
-            return new FrontendChargeResponse(chargeId, amount, state, gatewayTransactionId, returnUrl, email, description, reference, providerName, createdDate, links, status, refunds);
+            return new FrontendChargeResponse(chargeId, amount, state, gatewayTransactionId, returnUrl, email, description, reference, providerName, createdDate, links, status, refundSummary);
         }
     }
 
@@ -40,8 +40,8 @@ public class FrontendChargeResponse extends ChargeResponse {
     @JsonProperty
     private String status;
 
-    private FrontendChargeResponse(String chargeId, Long amount, ExternalChargeState state, String gatewayTransactionId, String returnUrl, String email, String description, String reference, String providerName, ZonedDateTime createdDate, List<Map<String, Object>> dataLinks, String status, Refund refunds) {
-        super(chargeId, amount, state, gatewayTransactionId, returnUrl, email, description, reference, providerName, createdDate, dataLinks, refunds);
+    private FrontendChargeResponse(String chargeId, Long amount, ExternalChargeState state, String gatewayTransactionId, String returnUrl, String email, String description, String reference, String providerName, ZonedDateTime createdDate, List<Map<String, Object>> dataLinks, String status, RefundSummary refundSummary) {
+        super(chargeId, amount, state, gatewayTransactionId, returnUrl, email, description, reference, providerName, createdDate, dataLinks, refundSummary);
         this.status = status;
     }
 

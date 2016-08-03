@@ -86,10 +86,10 @@ public class ChargeRefundService {
             RefundEntity refundEntity = new RefundEntity(reloadedCharge, amount);
             reloadedCharge.getRefunds().add(refundEntity);
 
-            ExternalChargeRefundAvailability refundAvailablitiy = estabishChargeRefundAvailability(reloadedCharge);
-            if (EXTERNAL_AVAILABLE != refundAvailablitiy) {
+            ExternalChargeRefundAvailability refundAvailability = estabishChargeRefundAvailability(reloadedCharge);
+            if (EXTERNAL_AVAILABLE != refundAvailability) {
                 logger.error(format("Charge with id [%s], status [%s] has refund availability: [%s]",
-                        reloadedCharge.getId(), reloadedCharge.getStatus(), refundAvailablitiy));
+                        reloadedCharge.getId(), reloadedCharge.getStatus(), refundAvailability));
                 throw new RefundNotAvailableRuntimeException(reloadedCharge.getExternalId());
             }
 

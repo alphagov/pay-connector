@@ -303,7 +303,7 @@ public class ChargeServiceTest {
      */
     @Deprecated
     private ChargeResponseBuilder chargeResponseBuilderOf(ChargeEntity chargeEntity) throws URISyntaxException {
-        ChargeResponse.Refund refunds = new ChargeResponse.Refund();
+        ChargeResponse.RefundSummary refunds = new ChargeResponse.RefundSummary();
         refunds.setAmountAvailable(REFUND_AMOUNT_AVAILABLE);
         refunds.setAmountSubmitted(REFUNDED_AMOUNT);
         refunds.setStatus(EXTERNAL_PENDING.getStatus());

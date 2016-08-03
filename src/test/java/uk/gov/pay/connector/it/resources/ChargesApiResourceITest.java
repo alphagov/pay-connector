@@ -100,9 +100,9 @@ public class ChargesApiResourceITest {
                 .body(JSON_PROVIDER_KEY, is(PROVIDER_NAME))
                 .body(JSON_RETURN_URL_KEY, is(returnUrl))
                 .body(JSON_EMAIL_KEY, is(email))
-                .body("refunds.amount_submitted", is(0))
-                .body("refunds.amount_available", isNumber(AMOUNT))
-                .body("refunds.status", is("pending"))
+                .body("refund_summary.amount_submitted", is(0))
+                .body("refund_summary.amount_available", isNumber(AMOUNT))
+                .body("refund_summary.status", is("pending"))
                 .body("created_date", matchesPattern("^\\d{4}-\\d{2}-\\d{2}T\\d{2}:\\d{2}:\\d{2}.\\d{3}Z"))
                 .body("created_date", isWithin(10, SECONDS))
                 .contentType(JSON);
@@ -136,9 +136,9 @@ public class ChargesApiResourceITest {
                 .body(JSON_STATE_KEY, is(CREATED.toExternal().getStatus()))
                 .body(JSON_RETURN_URL_KEY, is(returnUrl))
                 .body(JSON_EMAIL_KEY, is(email))
-                .body("refunds.amount_submitted", is(0))
-                .body("refunds.amount_available", isNumber(AMOUNT))
-                .body("refunds.status", is("pending"));
+                .body("refund_summary.amount_submitted", is(0))
+                .body("refund_summary.amount_available", isNumber(AMOUNT))
+                .body("refund_summary.status", is("pending"));
 
 
         // Reload the charge token which as it should have changed

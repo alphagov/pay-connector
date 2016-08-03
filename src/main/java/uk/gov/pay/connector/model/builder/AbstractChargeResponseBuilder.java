@@ -22,7 +22,7 @@ public abstract class AbstractChargeResponseBuilder<T extends AbstractChargeResp
     protected String reference;
     protected String providerName;
     protected String email;
-    protected ChargeResponse.Refund refunds;
+    protected ChargeResponse.RefundSummary refundSummary;
 
     protected abstract T thisObject();
 
@@ -97,8 +97,8 @@ public abstract class AbstractChargeResponseBuilder<T extends AbstractChargeResp
         return thisObject();
     }
 
-    public T withRefunds(ChargeResponse.Refund refunds) {
-        this.refunds = refunds;
+    public T withRefunds(ChargeResponse.RefundSummary refundSummary) {
+        this.refundSummary = refundSummary;
         return thisObject();
     }
 

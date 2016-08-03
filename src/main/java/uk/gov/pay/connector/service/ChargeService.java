@@ -126,13 +126,13 @@ public class ChargeService {
                 .withCreatedDate(charge.getCreatedDate())
                 .withReturnUrl(charge.getReturnUrl())
                 .withEmail(charge.getEmail())
-                .withRefunds(buildRefunds(charge))
+                .withRefunds(buildRefundSummary(charge))
                 .withLink("self", GET, selfUriFor(uriInfo, charge.getGatewayAccount().getId(), chargeId))
                 .withLink("refunds", GET, refundsUriFor(uriInfo, charge.getGatewayAccount().getId(), charge.getExternalId()));
     }
 
-    private ChargeResponse.Refund buildRefunds(ChargeEntity charge) {
-        ChargeResponse.Refund refund = new ChargeResponse.Refund();
+    private ChargeResponse.RefundSummary buildRefundSummary(ChargeEntity charge) {
+        ChargeResponse.RefundSummary refund = new ChargeResponse.RefundSummary();
         refund.setStatus(chargeRefundService.estabishChargeRefundAvailability(charge).getStatus());
         refund.setAmountSubmitted(chargeRefundService.getRefundedAmount(charge));
         refund.setAmountAvailable(chargeRefundService.getRefundAmountAvailable(charge));

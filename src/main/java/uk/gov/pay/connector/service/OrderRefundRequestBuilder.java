@@ -29,7 +29,6 @@ public class OrderRefundRequestBuilder {
 
     public OrderRefundRequestBuilder withMerchantCode(String merchantCode) {
         this.merchantCode = merchantCode;
-
         return this;
     }
 

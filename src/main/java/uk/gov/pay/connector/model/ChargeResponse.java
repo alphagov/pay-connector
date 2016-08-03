@@ -20,7 +20,7 @@ import static com.fasterxml.jackson.annotation.JsonInclude.Include;
 public class ChargeResponse {
 
     @JsonFormat(shape = JsonFormat.Shape.OBJECT)
-    static public class Refund {
+    static public class RefundSummary {
         @JsonProperty("status")
         public String status;
 
@@ -59,26 +59,25 @@ public class ChargeResponse {
             if (this == o) return true;
             if (o == null || getClass() != o.getClass()) return false;
 
-            Refund refund = (Refund) o;
+            RefundSummary that = (RefundSummary) o;
 
-            if (status != null ? !status.equals(refund.status) : refund.status != null) return false;
-            if (amountAvailable != null ? !amountAvailable.equals(refund.amountAvailable) : refund.amountAvailable != null)
-                return false;
-            return !(amountSubmitted != null ? !amountSubmitted.equals(refund.amountSubmitted) : refund.amountSubmitted != null);
+            if (!status.equals(that.status)) return false;
+            if (!amountAvailable.equals(that.amountAvailable)) return false;
+            return amountSubmitted.equals(that.amountSubmitted);
 
         }
 
         @Override
         public int hashCode() {
-            int result = status != null ? status.hashCode() : 0;
-            result = 31 * result + (amountAvailable != null ? amountAvailable.hashCode() : 0);
-            result = 31 * result + (amountSubmitted != null ? amountSubmitted.hashCode() : 0);
+            int result = status.hashCode();
+            result = 31 * result + amountAvailable.hashCode();
+            result = 31 * result + amountSubmitted.hashCode();
             return result;
         }
 
         @Override
         public String toString() {
-            return "Refund{" +
+            return "RefundSummary{" +
                     "status='" + status + '\'' +
                     ", amountAvailable=" + amountAvailable +
                     ", amountSubmitted=" + amountSubmitted +
@@ -94,7 +93,7 @@ public class ChargeResponse {
 
         @Override
         public ChargeResponse build() {
-            return new ChargeResponse(chargeId, amount, state, gatewayTransactionId, returnUrl, email, description, reference, providerName, createdDate, links, refunds);
+            return new ChargeResponse(chargeId, amount, state, gatewayTransactionId, returnUrl, email, description, reference, providerName, createdDate, links, refundSummary);
         }
     }
 
@@ -139,10 +138,10 @@ public class ChargeResponse {
         return DateTimeUtils.toUTCDateString(createdDate);
     }
 
-    @JsonProperty("refunds")
-    public Refund refunds;
+    @JsonProperty("refund_summary")
+    public RefundSummary refundSummary;
 
-    protected ChargeResponse(String chargeId, Long amount, ExternalChargeState state, String gatewayTransactionId, String returnUrl, String email, String description, String reference, String providerName, ZonedDateTime createdDate, List<Map<String, Object>> dataLinks, Refund refund) {
+    protected ChargeResponse(String chargeId, Long amount, ExternalChargeState state, String gatewayTransactionId, String returnUrl, String email, String description, String reference, String providerName, ZonedDateTime createdDate, List<Map<String, Object>> dataLinks, RefundSummary refundSummary) {
         this.dataLinks = dataLinks;
         this.chargeId = chargeId;
         this.amount = amount;
@@ -154,7 +153,7 @@ public class ChargeResponse {
         this.providerName = providerName;
         this.createdDate = createdDate;
         this.email = email;
-        this.refunds = refund;
+        this.refundSummary = refundSummary;
     }
 
     public URI getLink(String rel) {
@@ -184,7 +183,7 @@ public class ChargeResponse {
         if (reference != null ? !reference.equals(that.reference) : that.reference != null) return false;
         if (providerName != null ? !providerName.equals(that.providerName) : that.providerName != null) return false;
         if (createdDate != null ? !createdDate.equals(that.createdDate) : that.createdDate != null) return false;
-        return !(refunds != null ? !refunds.equals(that.refunds) : that.refunds != null);
+        return !(refundSummary != null ? !refundSummary.equals(that.refundSummary) : that.refundSummary != null);
 
     }
 
@@ -201,7 +200,7 @@ public class ChargeResponse {
         result = 31 * result + (reference != null ? reference.hashCode() : 0);
         result = 31 * result + (providerName != null ? providerName.hashCode() : 0);
         result = 31 * result + (createdDate != null ? createdDate.hashCode() : 0);
-        result = 31 * result + (refunds != null ? refunds.hashCode() : 0);
+        result = 31 * result + (refundSummary != null ? refundSummary.hashCode() : 0);
         return result;
     }
 
@@ -219,7 +218,7 @@ public class ChargeResponse {
                 ", reference='" + reference + '\'' +
                 ", providerName='" + providerName + '\'' +
                 ", createdDate=" + createdDate +
-                ", refunds=" + refunds +
+                ", refundSummary=" + refundSummary +
                 '}';
     }
 }
