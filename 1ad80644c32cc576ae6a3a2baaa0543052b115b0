@@ -27,3 +27,5 @@ staging-0.alpha_staging-0-15.status=failed
 release.tag=alpha_release-16
 
 release.alpha_release-16.date=2016-07-29:13:26:54
+
+staging-0.tag=alpha_staging-0-15
