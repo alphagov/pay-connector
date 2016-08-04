@@ -41,6 +41,7 @@ import static org.mockito.ArgumentCaptor.forClass;
 import static org.mockito.Mockito.*;
 import static uk.gov.pay.connector.model.ChargeResponse.ChargeResponseBuilder;
 import static uk.gov.pay.connector.model.ChargeResponse.aChargeResponse;
+import static uk.gov.pay.connector.model.api.ExternalChargeRefundAvailability.EXTERNAL_PENDING;
 import static uk.gov.pay.connector.model.domain.ChargeEntityFixture.aValidChargeEntity;
 import static uk.gov.pay.connector.model.domain.ChargeStatus.*;
 
@@ -51,15 +52,17 @@ public class ChargeServiceTest {
     private static final String SERVICE_HOST = "http://my-service";
 
     @Mock
-    private TokenDao tokenDao;
+    private TokenDao mockedTokenDao;
     @Mock
-    private ChargeDao chargeDao;
+    private ChargeDao mockedChargeDao;
     @Mock
-    private ConnectorConfiguration config;
+    private ConnectorConfiguration mockedConfig;
     @Mock
-    private UriInfo uriInfo;
+    private UriInfo mockedUriInfo;
     @Mock
-    private LinksConfig linksConfig;
+    private LinksConfig mockedLinksConfig;
+    @Mock
+    private ChargeRefundService mockedChargeRefundService;
 
     private ChargeService service;
     private Map<String, String> chargeRequest = new HashMap<String, String>() {{
@@ -69,19 +72,27 @@ public class ChargeServiceTest {
         put("reference", "Pay reference");
     }};
 
+    private Long REFUNDED_AMOUNT = 0L;
+    private Long REFUND_AMOUNT_AVAILABLE = 100L;
+
     @Before
     public void setUp() throws Exception {
 
-        when(config.getLinks())
-                .thenReturn(linksConfig);
+        when(mockedConfig.getLinks())
+                .thenReturn(mockedLinksConfig);
 
-        when(linksConfig.getFrontendUrl())
+        when(mockedLinksConfig.getFrontendUrl())
                 .thenReturn("http://payments.com");
 
-        when(this.uriInfo.getBaseUriBuilder())
-                .thenReturn(UriBuilder.fromUri(SERVICE_HOST));
+        doAnswer(invocation -> {
+            return UriBuilder.fromUri(SERVICE_HOST);
+        }).when(this.mockedUriInfo).getBaseUriBuilder();
 
-        service = new ChargeService(tokenDao, chargeDao, config);
+        when(mockedChargeRefundService.estabishChargeRefundAvailability(any(ChargeEntity.class))).thenReturn(EXTERNAL_PENDING);
+        when(mockedChargeRefundService.getRefundedAmount(any(ChargeEntity.class))).thenReturn(REFUNDED_AMOUNT);
+        when(mockedChargeRefundService.getRefundAmountAvailable(any(ChargeEntity.class))).thenReturn(REFUND_AMOUNT_AVAILABLE);
+
+        service = new ChargeService(mockedTokenDao, mockedChargeDao, mockedConfig, mockedChargeRefundService);
     }
 
     @Test
@@ -99,14 +110,14 @@ public class ChargeServiceTest {
             chargeEntityBeingPersisted.setId(chargeEntityId);
             externalChargeId[0] = chargeEntityBeingPersisted.getExternalId();
             return null;
-        }).when(chargeDao).persist(any(ChargeEntity.class));
+        }).when(mockedChargeDao).persist(any(ChargeEntity.class));
 
         // When
-        ChargeResponse response = service.create(chargeRequest, gatewayAccount, uriInfo);
+        ChargeResponse response = service.create(chargeRequest, gatewayAccount, mockedUriInfo);
 
         // Then - a chargeEntity is created
         ArgumentCaptor<ChargeEntity> chargeEntityArgumentCaptor = forClass(ChargeEntity.class);
-        verify(chargeDao).persist(chargeEntityArgumentCaptor.capture());
+        verify(mockedChargeDao).persist(chargeEntityArgumentCaptor.capture());
 
         ChargeEntity createdChargeEntity = chargeEntityArgumentCaptor.getValue();
         assertThat(createdChargeEntity.getId(), is(chargeEntityId));
@@ -123,7 +134,7 @@ public class ChargeServiceTest {
 
         // Then - a TokenEntity is created
         ArgumentCaptor<TokenEntity> tokenEntityArgumentCaptor = forClass(TokenEntity.class);
-        verify(tokenDao).persist(tokenEntityArgumentCaptor.capture());
+        verify(mockedTokenDao).persist(tokenEntityArgumentCaptor.capture());
 
         TokenEntity tokenEntity = tokenEntityArgumentCaptor.getValue();
         assertThat(tokenEntity.getChargeEntity().getId(), is(createdChargeEntity.getId()));
@@ -133,6 +144,7 @@ public class ChargeServiceTest {
         ChargeResponseBuilder expectedChargeResponse = chargeResponseBuilderOf(createdChargeEntity);
 
         expectedChargeResponse.withLink("self", GET, new URI(SERVICE_HOST + "/v1/api/accounts/1/charges/" + externalChargeId[0]));
+        expectedChargeResponse.withLink("refunds", GET, new URI(SERVICE_HOST + "/v1/api/accounts/1/charges/" + createdChargeEntity.getExternalId() + "/refunds"));
         expectedChargeResponse.withLink("next_url", GET, new URI("http://payments.com/secure/" + tokenEntity.getToken()));
         expectedChargeResponse.withLink("next_url_post", POST, new URI("http://payments.com/secure"), "application/x-www-form-urlencoded", new HashMap<String, Object>() {{
             put("chargeTokenId", tokenEntity.getToken());
@@ -159,12 +171,13 @@ public class ChargeServiceTest {
         Optional<ChargeEntity> chargeEntity = Optional.of(newCharge);
 
         String externalId = newCharge.getExternalId();
-        when(chargeDao.findByExternalIdAndGatewayAccount(externalId, accountId)).thenReturn(chargeEntity);
+        when(mockedChargeDao.findByExternalIdAndGatewayAccount(externalId, accountId)).thenReturn(chargeEntity);
+        when(mockedChargeRefundService.estabishChargeRefundAvailability(chargeEntity.get())).thenReturn(EXTERNAL_PENDING);
 
-        Optional<ChargeResponse> chargeResponseForAccount = service.findChargeForAccount(externalId, accountId, uriInfo);
+        Optional<ChargeResponse> chargeResponseForAccount = service.findChargeForAccount(externalId, accountId, mockedUriInfo);
 
         ArgumentCaptor<TokenEntity> tokenEntityArgumentCaptor = ArgumentCaptor.forClass(TokenEntity.class);
-        verify(tokenDao).persist(tokenEntityArgumentCaptor.capture());
+        verify(mockedTokenDao).persist(tokenEntityArgumentCaptor.capture());
 
         TokenEntity tokenEntity = tokenEntityArgumentCaptor.getValue();
         assertThat(tokenEntity.getChargeEntity().getId(), is(newCharge.getId()));
@@ -172,6 +185,7 @@ public class ChargeServiceTest {
 
         ChargeResponseBuilder expectedChargeResponse = chargeResponseBuilderOf(chargeEntity.get());
         expectedChargeResponse.withLink("self", GET, new URI(SERVICE_HOST + "/v1/api/accounts/1/charges/" + externalId));
+        expectedChargeResponse.withLink("refunds", GET, new URI(SERVICE_HOST + "/v1/api/accounts/1/charges/" + externalId + "/refunds"));
         expectedChargeResponse.withLink("next_url", GET, new URI("http://payments.com/secure/" + tokenEntity.getToken()));
         expectedChargeResponse.withLink("next_url_post", POST, new URI("http://payments.com/secure"), "application/x-www-form-urlencoded", new HashMap<String, Object>() {{
             put("chargeTokenId", tokenEntity.getToken());
@@ -198,12 +212,13 @@ public class ChargeServiceTest {
         Optional<ChargeEntity> chargeEntity = Optional.of(newCharge);
 
         String externalId = newCharge.getExternalId();
-        when(chargeDao.findByExternalIdAndGatewayAccount(externalId, accountId)).thenReturn(chargeEntity);
+        when(mockedChargeDao.findByExternalIdAndGatewayAccount(externalId, accountId)).thenReturn(chargeEntity);
+        when(mockedChargeRefundService.estabishChargeRefundAvailability(chargeEntity.get())).thenReturn(EXTERNAL_PENDING);
 
-        Optional<ChargeResponse> chargeResponseForAccount = service.findChargeForAccount(externalId, accountId, uriInfo);
+        Optional<ChargeResponse> chargeResponseForAccount = service.findChargeForAccount(externalId, accountId, mockedUriInfo);
 
         ArgumentCaptor<TokenEntity> tokenEntityArgumentCaptor = ArgumentCaptor.forClass(TokenEntity.class);
-        verify(tokenDao).persist(tokenEntityArgumentCaptor.capture());
+        verify(mockedTokenDao).persist(tokenEntityArgumentCaptor.capture());
 
         TokenEntity tokenEntity = tokenEntityArgumentCaptor.getValue();
         assertThat(tokenEntity.getChargeEntity().getId(), is(newCharge.getId()));
@@ -211,6 +226,7 @@ public class ChargeServiceTest {
 
         ChargeResponseBuilder expectedChargeResponse = chargeResponseBuilderOf(chargeEntity.get());
         expectedChargeResponse.withLink("self", GET, new URI(SERVICE_HOST + "/v1/api/accounts/1/charges/" + externalId));
+        expectedChargeResponse.withLink("refunds", GET, new URI(SERVICE_HOST + "/v1/api/accounts/1/charges/" + externalId + "/refunds"));
         expectedChargeResponse.withLink("next_url", GET, new URI("http://payments.com/secure/" + tokenEntity.getToken()));
         expectedChargeResponse.withLink("next_url_post", POST, new URI("http://payments.com/secure"), "application/x-www-form-urlencoded", new HashMap<String, Object>() {{
             put("chargeTokenId", tokenEntity.getToken());
@@ -238,14 +254,16 @@ public class ChargeServiceTest {
         Optional<ChargeEntity> chargeEntity = Optional.of(newCharge);
 
         String externalId = newCharge.getExternalId();
-        when(chargeDao.findByExternalIdAndGatewayAccount(externalId, accountId)).thenReturn(chargeEntity);
+        when(mockedChargeDao.findByExternalIdAndGatewayAccount(externalId, accountId)).thenReturn(chargeEntity);
+        when(mockedChargeRefundService.estabishChargeRefundAvailability(chargeEntity.get())).thenReturn(EXTERNAL_PENDING);
 
-        Optional<ChargeResponse> chargeResponseForAccount = service.findChargeForAccount(externalId, accountId, uriInfo);
+        Optional<ChargeResponse> chargeResponseForAccount = service.findChargeForAccount(externalId, accountId, mockedUriInfo);
 
-        verify(tokenDao, never()).persist(any());
+        verify(mockedTokenDao, never()).persist(any());
 
         ChargeResponseBuilder expectedChargeResponse = chargeResponseBuilderOf(chargeEntity.get());
         expectedChargeResponse.withLink("self", GET, new URI(SERVICE_HOST + "/v1/api/accounts/1/charges/" + externalId));
+        expectedChargeResponse.withLink("refunds", GET, new URI(SERVICE_HOST + "/v1/api/accounts/1/charges/" + externalId + "/refunds"));
 
         assertThat(chargeResponseForAccount.get(), is(expectedChargeResponse.build()));
     }
@@ -257,9 +275,9 @@ public class ChargeServiceTest {
         Long accountId = 10L;
         Optional<ChargeEntity> nonExistingCharge = Optional.empty();
 
-        when(chargeDao.findByExternalIdAndGatewayAccount(externalChargeId, accountId)).thenReturn(nonExistingCharge);
+        when(mockedChargeDao.findByExternalIdAndGatewayAccount(externalChargeId, accountId)).thenReturn(nonExistingCharge);
 
-        Optional<ChargeResponse> chargeForAccount = service.findChargeForAccount(externalChargeId, accountId, uriInfo);
+        Optional<ChargeResponse> chargeForAccount = service.findChargeForAccount(externalChargeId, accountId, mockedUriInfo);
 
         assertThat(chargeForAccount.isPresent(), is(false));
     }
@@ -271,13 +289,13 @@ public class ChargeServiceTest {
 
         service.updateStatus(asList(chargeEntity1, chargeEntity2), ChargeStatus.ENTERING_CARD_DETAILS);
 
-        InOrder inOrder = inOrder(chargeEntity1, chargeEntity2, chargeDao);
+        InOrder inOrder = inOrder(chargeEntity1, chargeEntity2, mockedChargeDao);
 
         inOrder.verify(chargeEntity1).setStatus(ChargeStatus.ENTERING_CARD_DETAILS);
-        inOrder.verify(chargeDao).mergeAndNotifyStatusHasChanged(chargeEntity1);
+        inOrder.verify(mockedChargeDao).mergeAndNotifyStatusHasChanged(chargeEntity1);
 
         inOrder.verify(chargeEntity2).setStatus(ChargeStatus.ENTERING_CARD_DETAILS);
-        inOrder.verify(chargeDao).mergeAndNotifyStatusHasChanged(chargeEntity2);
+        inOrder.verify(mockedChargeDao).mergeAndNotifyStatusHasChanged(chargeEntity2);
     }
 
     /**
@@ -285,6 +303,11 @@ public class ChargeServiceTest {
      */
     @Deprecated
     private ChargeResponseBuilder chargeResponseBuilderOf(ChargeEntity chargeEntity) throws URISyntaxException {
+        ChargeResponse.RefundSummary refunds = new ChargeResponse.RefundSummary();
+        refunds.setAmountAvailable(REFUND_AMOUNT_AVAILABLE);
+        refunds.setAmountSubmitted(REFUNDED_AMOUNT);
+        refunds.setStatus(EXTERNAL_PENDING.getStatus());
+
         return aChargeResponse()
                 .withChargeId(chargeEntity.getExternalId())
                 .withAmount(chargeEntity.getAmount())
@@ -295,6 +318,7 @@ public class ChargeServiceTest {
                 .withProviderName(chargeEntity.getGatewayAccount().getGatewayName())
                 .withCreatedDate(chargeEntity.getCreatedDate())
                 .withEmail(chargeEntity.getEmail())
+                .withRefunds(refunds)
                 .withReturnUrl(chargeEntity.getReturnUrl());
     }
 }

@@ -4,18 +4,17 @@ import static uk.gov.pay.connector.model.GatewayResponse.ResponseStatus.*;
 
 public abstract class GatewayResponse {
 
-
     public enum ResponseStatus {
         IN_PROGRESS,
         SUCCEDED,
-        FAILED;
+        FAILED
     }
-    protected ResponseStatus responseStatus = null;
 
-    public abstract ErrorResponse getError();
+    protected ErrorResponse error;
+    protected ResponseStatus responseStatus;
 
-    public ResponseStatus getResponseStatus() {
-        return responseStatus;
+    public ErrorResponse getError() {
+        return error;
     }
 
     public boolean isSuccessful() {

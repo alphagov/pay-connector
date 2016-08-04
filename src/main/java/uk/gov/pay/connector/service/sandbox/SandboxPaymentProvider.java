@@ -17,7 +17,7 @@ import java.util.function.Consumer;
 import java.util.function.Function;
 
 import static uk.gov.pay.connector.model.CancelGatewayResponse.successfulCancelResponse;
-import static uk.gov.pay.connector.model.CaptureResponse.successfulCaptureResponse;
+import static uk.gov.pay.connector.model.CaptureGatewayResponse.successfulCaptureResponse;
 import static uk.gov.pay.connector.model.ErrorType.GENERIC_GATEWAY_ERROR;
 import static uk.gov.pay.connector.model.GatewayResponse.ResponseStatus.FAILED;
 import static uk.gov.pay.connector.model.GatewayResponse.ResponseStatus.SUCCEDED;
@@ -35,31 +35,36 @@ public class SandboxPaymentProvider implements PaymentProvider {
     }
 
     @Override
-    public AuthorisationResponse authorise(AuthorisationRequest request) {
+    public AuthorisationGatewayResponse authorise(AuthorisationGatewayRequest request) {
 
         String cardNumber = request.getCard().getCardNo();
         String transactionId = UUID.randomUUID().toString();
 
         if (isInvalidCard(cardNumber)) {
             CardError errorInfo = cardErrorFor(cardNumber);
-            return new AuthorisationResponse(FAILED, new ErrorResponse(errorInfo.getErrorMessage(), GENERIC_GATEWAY_ERROR), errorInfo.getNewErrorStatus(), transactionId);
+            return new AuthorisationGatewayResponse(FAILED, new ErrorResponse(errorInfo.getErrorMessage(), GENERIC_GATEWAY_ERROR), errorInfo.getNewErrorStatus(), transactionId);
         }
 
         if (isValidCard(cardNumber)) {
-            return new AuthorisationResponse(SUCCEDED, null, AUTHORISATION_SUCCESS, transactionId);
+            return new AuthorisationGatewayResponse(SUCCEDED, null, AUTHORISATION_SUCCESS, transactionId);
         }
 
-        return new AuthorisationResponse(FAILED, new ErrorResponse("Unsupported card details.", GENERIC_GATEWAY_ERROR), AUTHORISATION_ERROR, transactionId);
+        return new AuthorisationGatewayResponse(FAILED, new ErrorResponse("Unsupported card details.", GENERIC_GATEWAY_ERROR), AUTHORISATION_ERROR, transactionId);
     }
 
     @Override
-    public CaptureResponse capture(CaptureRequest request) {
+    public CaptureGatewayResponse capture(CaptureGatewayRequest request) {
         return successfulCaptureResponse(CAPTURE_SUBMITTED);
     }
 
     @Override
-    public CancelGatewayResponse cancel(CancelRequest request) {
+    public CancelGatewayResponse cancel(CancelGatewayRequest request) {
         return successfulCancelResponse(SYSTEM_CANCELLED);
+    }
+
+    @Override
+    public RefundGatewayResponse refund(RefundGatewayRequest request) {
+        throw new UnsupportedOperationException("Operation not supported");
     }
 
     @Override

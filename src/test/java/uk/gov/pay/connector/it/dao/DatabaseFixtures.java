@@ -3,13 +3,18 @@ package uk.gov.pay.connector.it.dao;
 import org.apache.commons.lang3.RandomUtils;
 import uk.gov.pay.connector.model.domain.CardTypeEntity.Type;
 import uk.gov.pay.connector.model.domain.ChargeStatus;
+import uk.gov.pay.connector.model.domain.RefundStatus;
 import uk.gov.pay.connector.util.DatabaseTestHelper;
+import uk.gov.pay.connector.util.RandomIdGenerator;
 
+import java.time.ZoneId;
 import java.time.ZonedDateTime;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.UUID;
+
+import static uk.gov.pay.connector.model.domain.RefundStatus.CREATED;
 
 public class DatabaseFixtures {
 
@@ -33,6 +38,10 @@ public class DatabaseFixtures {
 
     public TestToken aTestToken() {
         return new TestToken();
+    }
+
+    public TestRefund aTestRefund() {
+        return new TestRefund();
     }
 
     public TestCardType aMastercardCreditCardType() {
@@ -95,13 +104,13 @@ public class DatabaseFixtures {
 
     public class TestCharge {
         Long chargeId = RandomUtils.nextLong(1, 99999);
-        String externalChargeId = "charge_" + chargeId;
+        String externalChargeId = RandomIdGenerator.newId();
         long amount = 101L;
         ChargeStatus chargeStatus = ChargeStatus.CREATED;
         String returnUrl = "http://service.com/success-page";
         String transactionId;
         String reference = "Test reference";
-        ZonedDateTime createdDate = ZonedDateTime.now();
+        ZonedDateTime createdDate = ZonedDateTime.now(ZoneId.of("UTC"));
 
         TestAccount testAccount;
 
@@ -211,6 +220,67 @@ public class DatabaseFixtures {
 
         public String getSecureRedirectToken() {
             return secureRedirectToken;
+        }
+    }
+
+    public class TestRefund {
+        Long id = RandomUtils.nextLong(1, 99999);
+        String externalRefundId = RandomIdGenerator.newId();
+        long amount = 101L;
+        RefundStatus status = CREATED;
+        ZonedDateTime createdDate = ZonedDateTime.now(ZoneId.of("UTC"));
+
+        TestCharge testCharge;
+
+        public TestRefund withTestCharge(TestCharge charge) {
+            this.testCharge = charge;
+            return this;
+        }
+
+        public TestRefund withAmount(long amount) {
+            this.amount = amount;
+            return this;
+        }
+
+        public TestRefund withType(RefundStatus status) {
+            this.status = status;
+            return this;
+        }
+
+        public TestRefund withCreatedDate(ZonedDateTime createdDate) {
+            this.createdDate = createdDate;
+            return this;
+        }
+
+        public TestRefund insert() {
+            if (testCharge == null)
+                throw new IllegalStateException("Test charge must be provided.");
+            databaseTestHelper.addRefund(id, externalRefundId, amount, status.toString(), testCharge.getChargeId(), createdDate);
+            return this;
+        }
+
+        public long getId() {
+            return id;
+        }
+
+        public String getExternalRefundId() {
+            return externalRefundId;
+        }
+
+        public long getAmount() {
+            return amount;
+        }
+
+        public RefundStatus getStatus() {
+            return status;
+        }
+
+        public ZonedDateTime getCreatedDate() {
+            return createdDate;
+        }
+
+        public TestCharge getTestCharge() {
+            return testCharge;
         }
     }
 

@@ -3,7 +3,7 @@ package uk.gov.pay.connector.resources;
 import fj.data.Either;
 import org.apache.commons.lang3.tuple.Pair;
 import uk.gov.pay.connector.dao.GatewayAccountDao;
-import uk.gov.pay.connector.model.PatchRequestBuilder;
+import uk.gov.pay.connector.model.builder.PatchRequestBuilder;
 import uk.gov.pay.connector.util.DateTimeUtils;
 
 import java.util.HashMap;

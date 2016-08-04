@@ -2,7 +2,9 @@ package uk.gov.pay.connector.model.domain;
 
 import java.time.ZoneId;
 import java.time.ZonedDateTime;
+import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.List;
 
 public class ChargeEntityFixture {
 
@@ -16,6 +18,7 @@ public class ChargeEntityFixture {
     private GatewayAccountEntity gatewayAccountEntity = defaultGatewayAccountEntity();
     private String transactionId;
     private ZonedDateTime createdDate = ZonedDateTime.now(ZoneId.of("UTC"));
+    private List<RefundEntity> refunds = new ArrayList<>();
 
     public static ChargeEntityFixture aValidChargeEntity() {
         return new ChargeEntityFixture();
@@ -25,6 +28,7 @@ public class ChargeEntityFixture {
         ChargeEntity chargeEntity = new ChargeEntity(amount, status ,returnUrl, description, reference, gatewayAccountEntity, email, createdDate);
         chargeEntity.setId(id);
         chargeEntity.setGatewayTransactionId(transactionId);
+        chargeEntity.getRefunds().addAll(refunds);
         return chargeEntity;
     }
 
@@ -65,6 +69,11 @@ public class ChargeEntityFixture {
 
     public ChargeEntityFixture withStatus(ChargeStatus status) {
         this.status = status;
+        return this;
+    }
+
+    public ChargeEntityFixture withRefunds(List<RefundEntity> refunds) {
+        this.refunds = refunds;
         return this;
     }
 

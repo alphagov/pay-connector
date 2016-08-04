@@ -16,6 +16,7 @@ import uk.gov.pay.connector.model.ChargeResponse;
 import uk.gov.pay.connector.model.domain.ChargeEntity;
 import uk.gov.pay.connector.model.domain.ChargeStatus;
 import uk.gov.pay.connector.service.ChargeExpiryService;
+import uk.gov.pay.connector.service.ChargeRefundService;
 import uk.gov.pay.connector.service.ChargeService;
 import uk.gov.pay.connector.util.ResponseUtil;
 
@@ -26,7 +27,6 @@ import javax.ws.rs.core.Response;
 import javax.ws.rs.core.UriInfo;
 import java.time.ZonedDateTime;
 import java.util.*;
-import java.util.Optional;
 import java.util.stream.Collectors;
 
 import static fj.data.Either.reduce;
@@ -34,7 +34,6 @@ import static java.lang.String.format;
 import static javax.ws.rs.core.MediaType.APPLICATION_JSON;
 import static javax.ws.rs.core.Response.created;
 import static org.apache.commons.lang3.StringUtils.isNotBlank;
-import static uk.gov.pay.connector.model.ChargeResponse.aChargeResponse;
 import static uk.gov.pay.connector.model.domain.ChargeStatus.*;
 import static uk.gov.pay.connector.resources.ApiPaths.*;
 import static uk.gov.pay.connector.resources.ApiValidators.validateGatewayAccountReference;
@@ -60,12 +59,16 @@ public class ChargesApiResource {
     private static final String ACCOUNT_ID = "accountId";
     private static final String PAGE = "page";
     private static final String DISPLAY_SIZE = "display_size";
+    public static final String REFUND_STATUS = "status";
+    public static final String REFUND_AMOUNT_SUBMITTED = "amount_submitted";
+    public static final String REFUND_AMOUNT_AVAILABLE = "amount_available";
 
     private final ChargeDao chargeDao;
     private final GatewayAccountDao gatewayAccountDao;
     private final ChargeService chargeService;
     private final ConnectorConfiguration configuration;
     private final ChargeExpiryService chargeExpiryService;
+    private final ChargeRefundService chargeRefundService;
 
     private static final int ONE_HOUR = 3600;
     private static final String CHARGE_EXPIRY_WINDOW = "CHARGE_EXPIRY_WINDOW_SECONDS";
@@ -78,12 +81,13 @@ public class ChargesApiResource {
 
     @Inject
     public ChargesApiResource(ChargeDao chargeDao, GatewayAccountDao gatewayAccountDao,
-                              ChargeService chargeService, ChargeExpiryService chargeExpiryService,
+                              ChargeService chargeService, ChargeExpiryService chargeExpiryService, ChargeRefundService chargeRefundService,
                               ConnectorConfiguration configuration) {
         this.chargeDao = chargeDao;
         this.gatewayAccountDao = gatewayAccountDao;
         this.chargeService = chargeService;
         this.chargeExpiryService = chargeExpiryService;
+        this.chargeRefundService = chargeRefundService;
         this.configuration = configuration;
     }
 
@@ -204,18 +208,7 @@ public class ChargesApiResource {
         List<ChargeEntity> charges = chargeDao.findAllBy(searchParams);
         List<ChargeResponse> chargesResponse =
                 charges.stream()
-                        .map(charge -> aChargeResponse()
-                                .withChargeId(charge.getExternalId())
-                                .withAmount(charge.getAmount())
-                                .withReference(charge.getReference())
-                                .withDescription(charge.getDescription())
-                                .withState(ChargeStatus.fromString(charge.getStatus()).toExternal())
-                                .withGatewayTransactionId(charge.getGatewayTransactionId())
-                                .withCreatedDate(charge.getCreatedDate())
-                                .withReturnUrl(charge.getReturnUrl())
-                                .withEmail(charge.getEmail())
-                                .withProviderName(charge.getGatewayAccount().getGatewayName())
-                                .build()
+                        .map(charge -> chargeService.buildChargeResponse(uriInfo, charge)
                         ).collect(Collectors.toList());
 
         return success ->

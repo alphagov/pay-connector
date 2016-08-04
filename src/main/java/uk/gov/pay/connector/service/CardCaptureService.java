@@ -3,8 +3,8 @@ package uk.gov.pay.connector.service;
 import com.google.inject.persist.Transactional;
 import uk.gov.pay.connector.dao.ChargeDao;
 import uk.gov.pay.connector.exception.ChargeNotFoundRuntimeException;
-import uk.gov.pay.connector.model.CaptureRequest;
-import uk.gov.pay.connector.model.CaptureResponse;
+import uk.gov.pay.connector.model.CaptureGatewayRequest;
+import uk.gov.pay.connector.model.CaptureGatewayResponse;
 import uk.gov.pay.connector.model.GatewayResponse;
 import uk.gov.pay.connector.model.domain.ChargeEntity;
 import uk.gov.pay.connector.model.domain.ChargeStatus;
@@ -49,17 +49,17 @@ public class CardCaptureService extends CardService implements TransactionalGate
     @Override
     public GatewayResponse operation(ChargeEntity chargeEntity) {
         return getPaymentProviderFor(chargeEntity)
-                .capture(CaptureRequest.valueOf(chargeEntity));
+                .capture(CaptureGatewayRequest.valueOf(chargeEntity));
     }
 
     @Transactional
     @Override
     public GatewayResponse postOperation(ChargeEntity chargeEntity, GatewayResponse operationResponse) {
-        CaptureResponse captureResponse = (CaptureResponse) operationResponse;
-        logger.info(format("Card captured response received - status = %s, charge_external_id = %s", captureResponse.getStatus(), chargeEntity.getExternalId()));
+        CaptureGatewayResponse captureGatewayResponse = (CaptureGatewayResponse) operationResponse;
+        logger.info(format("Card captured response received - status = %s, charge_external_id = %s", captureGatewayResponse.getStatus(), chargeEntity.getExternalId()));
 
         ChargeEntity reloadedCharge = chargeDao.merge(chargeEntity);
-        reloadedCharge.setStatus(captureResponse.getStatus());
+        reloadedCharge.setStatus(captureGatewayResponse.getStatus());
         chargeDao.mergeAndNotifyStatusHasChanged(reloadedCharge);
 
         if (operationResponse.isSuccessful()) {

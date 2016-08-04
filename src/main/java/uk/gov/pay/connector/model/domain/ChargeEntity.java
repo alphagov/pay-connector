@@ -1,5 +1,6 @@
 package uk.gov.pay.connector.model.domain;
 
+import org.eclipse.persistence.annotations.FetchAttribute;
 import uk.gov.pay.connector.exception.InvalidStateTransitionException;
 import uk.gov.pay.connector.model.api.ExternalChargeState;
 import uk.gov.pay.connector.util.RandomIdGenerator;
@@ -41,6 +42,9 @@ public class ChargeEntity extends AbstractEntity {
     @ManyToOne
     @JoinColumn(name = "gateway_account_id", updatable = false)
     private GatewayAccountEntity gatewayAccount;
+
+    @OneToMany(mappedBy = "chargeEntity", fetch = FetchType.EAGER)
+    private List<RefundEntity> refunds = new ArrayList<>();
 
     @OneToMany(mappedBy = "chargeEntity")
     private List<ChargeEventEntity> events = new ArrayList<>();
@@ -131,6 +135,10 @@ public class ChargeEntity extends AbstractEntity {
 
     public boolean isAssociatedTo(Long accountId) {
         return this.getGatewayAccount().getId().equals(accountId);
+    }
+
+    public List<RefundEntity> getRefunds() {
+        return refunds;
     }
 
     public List<ChargeEventEntity> getEvents() {

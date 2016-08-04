@@ -22,16 +22,20 @@ import static fj.data.Either.reduce;
 import static java.lang.String.format;
 import static java.util.UUID.randomUUID;
 import static javax.ws.rs.core.Response.Status.OK;
-import static uk.gov.pay.connector.model.AuthorisationResponse.*;
+import static uk.gov.pay.connector.model.AuthorisationGatewayResponse.*;
 import static uk.gov.pay.connector.model.CancelGatewayResponse.cancelFailureResponse;
 import static uk.gov.pay.connector.model.CancelGatewayResponse.successfulCancelResponse;
-import static uk.gov.pay.connector.model.CaptureResponse.captureFailureResponse;
-import static uk.gov.pay.connector.model.CaptureResponse.successfulCaptureResponse;
+import static uk.gov.pay.connector.model.CaptureGatewayResponse.captureFailureResponse;
+import static uk.gov.pay.connector.model.CaptureGatewayResponse.successfulCaptureResponse;
 import static uk.gov.pay.connector.model.ErrorResponse.baseError;
-import static uk.gov.pay.connector.model.InquiryResponse.*;
+import static uk.gov.pay.connector.model.InquiryGatewayResponse.*;
+import static uk.gov.pay.connector.model.RefundGatewayResponse.failureResponse;
+import static uk.gov.pay.connector.model.RefundGatewayResponse.successfulResponse;
 import static uk.gov.pay.connector.model.domain.ChargeStatus.*;
 import static uk.gov.pay.connector.model.domain.GatewayAccount.CREDENTIALS_MERCHANT_ID;
+import static uk.gov.pay.connector.model.domain.RefundStatus.REFUND_SUBMITTED;
 import static uk.gov.pay.connector.service.OrderCaptureRequestBuilder.aWorldpayOrderCaptureRequest;
+import static uk.gov.pay.connector.service.OrderRefundRequestBuilder.aWorldpayOrderRefundRequest;
 import static uk.gov.pay.connector.service.OrderSubmitRequestBuilder.aWorldpayOrderSubmitRequest;
 import static uk.gov.pay.connector.service.worldpay.OrderInquiryRequestBuilder.anOrderInquiryRequest;
 import static uk.gov.pay.connector.service.worldpay.WorldpayOrderCancelRequestBuilder.aWorldpayOrderCancelRequest;
@@ -50,33 +54,45 @@ public class WorldpayPaymentProvider implements PaymentProvider {
     }
 
     @Override
-    public AuthorisationResponse authorise(AuthorisationRequest request) {
+    public AuthorisationGatewayResponse authorise(AuthorisationGatewayRequest request) {
         String gatewayTransactionId = generateTransactionId();
         return reduce(
                 client
                         .postXMLRequestFor(request.getGatewayAccount(), buildOrderSubmitFor(request, gatewayTransactionId))
                         .bimap(
-                                AuthorisationResponse::authorisationFailureResponse,
+                                AuthorisationGatewayResponse::authorisationFailureResponse,
                                 (response) -> mapToCardAuthorisationResponse(response, gatewayTransactionId)
                         )
         );
     }
 
     @Override
-    public CaptureResponse capture(CaptureRequest request) {
+    public CaptureGatewayResponse capture(CaptureGatewayRequest request) {
         String requestString = buildOrderCaptureFor(request);
         return reduce(
                 client
                         .postXMLRequestFor(request.getGatewayAccount(), requestString)
                         .bimap(
-                                CaptureResponse::captureFailureResponse,
+                                CaptureGatewayResponse::captureFailureResponse,
                                 this::mapToCaptureResponse
                         )
         );
     }
 
+    public RefundGatewayResponse refund(RefundGatewayRequest request) {
+        String requestString = buildOrderRefundFor(request);
+        return reduce(
+                client
+                        .postXMLRequestFor(request.getGatewayAccount(), requestString)
+                        .bimap(
+                                RefundGatewayResponse::failureResponse,
+                                this::mapToRefundResponse
+                        )
+        );
+    }
+
     @Override
-    public CancelGatewayResponse cancel(CancelRequest request) {
+    public CancelGatewayResponse cancel(CancelGatewayRequest request) {
         String requestString = buildCancelOrderFor(request);
         return reduce(
                 client
@@ -140,19 +156,19 @@ public class WorldpayPaymentProvider implements PaymentProvider {
                 .stream()
                 .findFirst()
                 .ifPresent(status -> {
-                    if(!notification.getChargeStatus().isPresent() ||
+                    if (!notification.getChargeStatus().isPresent() ||
                             status.getValue() != notification.getChargeStatus().get()) {
                         logger.error(format("Inquiry status '%s' did not match notification status '%s'",
                                 status.getValue(),
                                 notification.getChargeStatus()));
                     }
-        });
+                });
     }
 
     private StatusUpdates confirmStatus(GatewayAccountEntity gatewayAccount, String transactionId) {
-        InquiryResponse inquiryResponse = inquire(transactionId, gatewayAccount);
-        String worldpayStatus = inquiryResponse.getNewStatus();
-        if (!inquiryResponse.isSuccessful() || StringUtils.isBlank(worldpayStatus)) {
+        InquiryGatewayResponse inquiryGatewayResponse = inquire(transactionId, gatewayAccount);
+        String worldpayStatus = inquiryGatewayResponse.getNewStatus();
+        if (!inquiryGatewayResponse.isSuccessful() || StringUtils.isBlank(worldpayStatus)) {
             logger.error("Could not look up status from worldpay for worldpay charge id " + transactionId);
             return StatusUpdates.failed();
         }
@@ -160,7 +176,7 @@ public class WorldpayPaymentProvider implements PaymentProvider {
         return WorldpayStatusesMapper
                 .mapToChargeStatus(worldpayStatus)
                 .map(chargeStatus -> {
-                    Pair<String, ChargeStatus> update = Pair.of(inquiryResponse.getTransactionId(), chargeStatus);
+                    Pair<String, ChargeStatus> update = Pair.of(inquiryGatewayResponse.getTransactionId(), chargeStatus);
                     return StatusUpdates.withUpdate(NOTIFICATION_ACKNOWLEDGED, ImmutableList.of(update));
                 })
                 .orElseGet(() -> {
@@ -170,20 +186,20 @@ public class WorldpayPaymentProvider implements PaymentProvider {
     }
 
 
-    private InquiryResponse inquire(String transactionId, GatewayAccountEntity gatewayAccount) {
+    private InquiryGatewayResponse inquire(String transactionId, GatewayAccountEntity gatewayAccount) {
         return reduce(
                 client
                         .postXMLRequestFor(gatewayAccount, buildOrderInquiryFor(gatewayAccount, transactionId))
                         .bimap(
-                                InquiryResponse::inquiryFailureResponse,
+                                InquiryGatewayResponse::inquiryFailureResponse,
                                 (response) -> response.getStatus() == OK.getStatusCode() ?
                                         mapToInquiryResponse(response) :
-                                        errorInquiryResponse(logger, response)
+                                        errorInquiryResponse(response)
                         )
         );
     }
 
-    private String buildOrderCaptureFor(CaptureRequest request) {
+    private String buildOrderCaptureFor(CaptureGatewayRequest request) {
         return aWorldpayOrderCaptureRequest()
                 .withMerchantCode(request.getGatewayAccount().getCredentials().get(CREDENTIALS_MERCHANT_ID))
                 .withTransactionId(request.getTransactionId())
@@ -192,7 +208,15 @@ public class WorldpayPaymentProvider implements PaymentProvider {
                 .build();
     }
 
-    private String buildOrderSubmitFor(AuthorisationRequest request, String gatewayTransactionId) {
+    private String buildOrderRefundFor(RefundGatewayRequest request) {
+        return aWorldpayOrderRefundRequest()
+                .withMerchantCode(request.getGatewayAccount().getCredentials().get(CREDENTIALS_MERCHANT_ID))
+                .withTransactionId(request.getTransactionId())
+                .withAmount(request.getAmount())
+                .build();
+    }
+
+    private String buildOrderSubmitFor(AuthorisationGatewayRequest request, String gatewayTransactionId) {
         return aWorldpayOrderSubmitRequest()
                 .withMerchantCode(request.getGatewayAccount().getCredentials().get(CREDENTIALS_MERCHANT_ID))
                 .withTransactionId(gatewayTransactionId)
@@ -202,7 +226,7 @@ public class WorldpayPaymentProvider implements PaymentProvider {
                 .build();
     }
 
-    private String buildCancelOrderFor(CancelRequest request) {
+    private String buildCancelOrderFor(CancelGatewayRequest request) {
         return aWorldpayOrderCancelRequest()
                 .withMerchantCode(request.getGatewayAccount().getCredentials().get(CREDENTIALS_MERCHANT_ID))
                 .withTransactionId(request.getTransactionId())
@@ -216,40 +240,52 @@ public class WorldpayPaymentProvider implements PaymentProvider {
                 .build();
     }
 
-    private AuthorisationResponse mapToCardAuthorisationResponse(GatewayClient.Response response, String gatewayTransactionId) {
+    private AuthorisationGatewayResponse mapToCardAuthorisationResponse(GatewayClient.Response response, String gatewayTransactionId) {
         return reduce(
                 client.unmarshallResponse(response, WorldpayOrderStatusResponse.class)
                         .bimap(
-                                AuthorisationResponse::authorisationFailureResponse,
+                                AuthorisationGatewayResponse::authorisationFailureResponse,
                                 (wResponse) -> {
                                     if (wResponse.isError()) {
-                                        return authorisationFailureNotUpdateResponse(logger, gatewayTransactionId, wResponse.getErrorMessage());
+                                        return authorisationFailureNotUpdateResponse(gatewayTransactionId, wResponse.getErrorMessage());
                                     }
                                     return wResponse.isAuthorised() ?
                                             successfulAuthorisationResponse(AUTHORISATION_SUCCESS, gatewayTransactionId) :
-                                            authorisationFailureResponse(logger, gatewayTransactionId, "Unauthorised");
+                                            authorisationFailureResponse(gatewayTransactionId, "Unauthorised");
                                 }
                         )
         );
     }
 
-    private CaptureResponse mapToCaptureResponse(GatewayClient.Response response) {
+    private CaptureGatewayResponse mapToCaptureResponse(GatewayClient.Response response) {
         return reduce(
                 client.unmarshallResponse(response, WorldpayCaptureResponse.class)
                         .bimap(
-                                CaptureResponse::captureFailureResponse,
+                                CaptureGatewayResponse::captureFailureResponse,
                                 (wResponse) -> wResponse.isCaptured() ?
                                         successfulCaptureResponse(CAPTURE_SUBMITTED) :
-                                        captureFailureResponse(logger, wResponse.getErrorMessage())
+                                        captureFailureResponse(wResponse.getErrorMessage())
                         )
         );
     }
 
-    private InquiryResponse mapToInquiryResponse(GatewayClient.Response response) {
+    private RefundGatewayResponse mapToRefundResponse(GatewayClient.Response response) {
+        return reduce(
+                client.unmarshallResponse(response, WorldpayRefundResponse.class)
+                        .bimap(
+                                RefundGatewayResponse::failureResponse,
+                                (wResponse) -> wResponse.isRefunded() ?
+                                        successfulResponse(REFUND_SUBMITTED) :
+                                        failureResponse(wResponse.getErrorMessage())
+                        )
+        );
+    }
+
+    private InquiryGatewayResponse mapToInquiryResponse(GatewayClient.Response response) {
         return reduce(
                 client.unmarshallResponse(response, WorldpayOrderStatusResponse.class)
                         .bimap(
-                                InquiryResponse::inquiryFailureResponse,
+                                InquiryGatewayResponse::inquiryFailureResponse,
                                 (wResponse) -> wResponse.isError() ?
                                         inquiryFailureResponse(baseError(wResponse.getErrorMessage())) :
                                         inquiryStatusUpdate(wResponse.getTransactionId(), wResponse.getLastEvent())
@@ -263,9 +299,14 @@ public class WorldpayPaymentProvider implements PaymentProvider {
                 client.unmarshallResponse(response, WorldpayCancelResponse.class)
                         .bimap(
                                 CancelGatewayResponse::cancelFailureResponse,
-                                (wResponse) -> wResponse.isCancelled() ?
-                                        successfulCancelResponse(SYSTEM_CANCELLED) :
-                                        cancelFailureResponse(logger, wResponse.getErrorMessage())
+                                (wResponse) -> {
+                                    if (wResponse.isCancelled()) {
+                                        return successfulCancelResponse(SYSTEM_CANCELLED);
+                                    } else {
+                                        logger.error(format("Failed to cancel charge: %s", wResponse.getErrorMessage()));
+                                        return cancelFailureResponse(baseError(wResponse.getErrorMessage()));
+                                    }
+                                }
                         )
         );
     }

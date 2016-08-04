@@ -23,11 +23,13 @@ import java.util.function.Consumer;
 
 import static com.google.common.io.Resources.getResource;
 import static java.util.UUID.randomUUID;
-import static org.hamcrest.CoreMatchers.hasItem;
+import static org.hamcrest.CoreMatchers.*;
 import static org.junit.Assert.*;
 import static org.mockito.Mockito.mock;
 import static uk.gov.pay.connector.model.domain.ChargeEntityFixture.aValidChargeEntity;
 import static uk.gov.pay.connector.model.domain.ChargeStatus.AUTHORISATION_SUCCESS;
+import static uk.gov.pay.connector.model.domain.ChargeStatus.CAPTURE_SUBMITTED;
+import static uk.gov.pay.connector.model.domain.RefundStatus.REFUND_SUBMITTED;
 import static uk.gov.pay.connector.service.GatewayClient.createGatewayClient;
 import static uk.gov.pay.connector.util.CardUtils.aValidCard;
 import static uk.gov.pay.connector.util.SystemUtils.envOrThrow;
@@ -35,14 +37,14 @@ import static uk.gov.pay.connector.util.SystemUtils.envOrThrow;
 public class WorldpayPaymentProviderTest {
 
     private GatewayAccountEntity validGatewayAccount;
-    private Map<String, String> validCredentails;
+    private Map<String, String> validCredentials;
 
     @Before
     public void checkThatWorldpayIsUp() {
         try {
             new URL(getWorldpayConfig().getUrl()).openConnection().connect();
 
-            validCredentails = ImmutableMap.of(
+            validCredentials = ImmutableMap.of(
                     "merchant_id", "MERCHANTCODE",
                     "username", envOrThrow("GDS_CONNECTOR_WORLDPAY_USER"),
                     "password", envOrThrow("GDS_CONNECTOR_WORLDPAY_PASSWORD"));
@@ -50,7 +52,7 @@ public class WorldpayPaymentProviderTest {
             validGatewayAccount = new GatewayAccountEntity();
             validGatewayAccount.setId(1234L);
             validGatewayAccount.setGatewayName("worldpay");
-            validGatewayAccount.setCredentials(validCredentails);
+            validGatewayAccount.setCredentials(validCredentials);
 
         } catch (IOException ex) {
             Assume.assumeTrue(false);
@@ -76,23 +78,49 @@ public class WorldpayPaymentProviderTest {
                 .withGatewayAccountEntity(validGatewayAccount)
                 .build();
 
-        CaptureResponse response = connector.capture(CaptureRequest.valueOf(charge));
+        CaptureGatewayResponse response = connector.capture(CaptureGatewayRequest.valueOf(charge));
 
         assertTrue(response.isSuccessful());
     }
 
     @Test
+    public void shouldBeAbleToSubmitAPartialRefundAfterACaptureHasBeenSubmitted() throws InterruptedException {
+
+        WorldpayPaymentProvider connector = getValidWorldpayPaymentProvider();
+
+        AuthorisationGatewayResponse authorisationResponse = successfulWorldpayCardAuth(connector);
+
+        assertThat(authorisationResponse.isSuccessful(), is(true));
+        assertThat(authorisationResponse.getTransactionId(), is(not(nullValue())));
+
+        ChargeEntity charge = aValidChargeEntity()
+                .withTransactionId(authorisationResponse.getTransactionId())
+                .withGatewayAccountEntity(validGatewayAccount)
+                .build();
+
+        CaptureGatewayResponse captureResponse = connector.capture(CaptureGatewayRequest.valueOf(charge));
+
+        assertThat(captureResponse.isSuccessful(), is(true));
+        assertThat(captureResponse.getStatus(), is(CAPTURE_SUBMITTED));
+
+        RefundGatewayResponse refundGatewayResponse = connector.refund(RefundGatewayRequest.valueOf(charge));
+
+        assertTrue(refundGatewayResponse.isSuccessful());
+        assertThat(refundGatewayResponse.getStatus(), is(REFUND_SUBMITTED));
+    }
+
+    @Test
     public void shouldBeAbleToSendCancelRequestForMerchant() throws Exception {
         WorldpayPaymentProvider connector = getValidWorldpayPaymentProvider();
-        AuthorisationResponse response = successfulWorldpayCardAuth(connector);
+        AuthorisationGatewayResponse response = successfulWorldpayCardAuth(connector);
 
         ChargeEntity charge = aValidChargeEntity()
                 .withTransactionId(response.getTransactionId())
                 .withGatewayAccountEntity(validGatewayAccount)
                 .build();
 
-        CancelRequest cancelRequest = CancelRequest.valueOf(charge);
-        CancelGatewayResponse cancelResponse = connector.cancel(cancelRequest);
+        CancelGatewayRequest cancelGatewayRequest = CancelGatewayRequest.valueOf(charge);
+        CancelGatewayResponse cancelResponse = connector.cancel(cancelGatewayRequest);
 
         assertTrue(cancelResponse.isSuccessful());
         assertNull(cancelResponse.getError());
@@ -101,7 +129,7 @@ public class WorldpayPaymentProviderTest {
     @Test
     public void handleNotification_shouldOnlyUpdateChargeStatusOnce() throws Exception {
         WorldpayPaymentProvider connector = getValidWorldpayPaymentProvider();
-        AuthorisationResponse response = successfulWorldpayCardAuth(connector);
+        AuthorisationGatewayResponse response = successfulWorldpayCardAuth(connector);
 
         Consumer<StatusUpdates> mockAccountUpdater = mock(Consumer.class);
 
@@ -139,23 +167,23 @@ public class WorldpayPaymentProviderTest {
                 .withGatewayAccountEntity(gatewayAccountEntity)
                 .build();
 
-        AuthorisationRequest request = new AuthorisationRequest(charge, aValidCard());
-        AuthorisationResponse response = connector.authorise(request);
+        AuthorisationGatewayRequest request = new AuthorisationGatewayRequest(charge, aValidCard());
+        AuthorisationGatewayResponse response = connector.authorise(request);
 
         assertFalse(response.isSuccessful());
     }
 
-    private AuthorisationRequest getCardAuthorisationRequest() {
+    private AuthorisationGatewayRequest getCardAuthorisationRequest() {
         Card card = aValidCard();
         ChargeEntity charge = aValidChargeEntity()
                 .withGatewayAccountEntity(validGatewayAccount)
                 .build();
-        return new AuthorisationRequest(charge, card);
+        return new AuthorisationGatewayRequest(charge, card);
     }
 
-    private AuthorisationResponse successfulWorldpayCardAuth(WorldpayPaymentProvider connector) {
-        AuthorisationRequest request = getCardAuthorisationRequest();
-        AuthorisationResponse response = connector.authorise(request);
+    private AuthorisationGatewayResponse successfulWorldpayCardAuth(WorldpayPaymentProvider connector) {
+        AuthorisationGatewayRequest request = getCardAuthorisationRequest();
+        AuthorisationGatewayResponse response = connector.authorise(request);
 
         assertTrue(response.isSuccessful());
 

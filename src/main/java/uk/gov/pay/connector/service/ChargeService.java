@@ -8,15 +8,12 @@ import uk.gov.pay.connector.app.LinksConfig;
 import uk.gov.pay.connector.dao.ChargeDao;
 import uk.gov.pay.connector.dao.TokenDao;
 import uk.gov.pay.connector.model.ChargeResponse;
-import uk.gov.pay.connector.model.PatchRequestBuilder;
+import uk.gov.pay.connector.model.builder.PatchRequestBuilder;
 import uk.gov.pay.connector.model.domain.ChargeEntity;
 import uk.gov.pay.connector.model.domain.ChargeStatus;
 import uk.gov.pay.connector.model.domain.GatewayAccountEntity;
 import uk.gov.pay.connector.model.domain.TokenEntity;
 import uk.gov.pay.connector.resources.ChargesApiResource;
-
-import static java.lang.String.format;
-import static uk.gov.pay.connector.model.ChargeResponse.ChargeResponseBuilder;
 
 import javax.inject.Inject;
 import javax.ws.rs.core.UriBuilder;
@@ -24,11 +21,14 @@ import javax.ws.rs.core.UriInfo;
 import java.net.URI;
 import java.util.*;
 
+import static java.lang.String.format;
 import static javax.ws.rs.HttpMethod.GET;
 import static javax.ws.rs.HttpMethod.POST;
 import static javax.ws.rs.core.MediaType.APPLICATION_FORM_URLENCODED;
+import static uk.gov.pay.connector.model.ChargeResponse.ChargeResponseBuilder;
 import static uk.gov.pay.connector.model.ChargeResponse.aChargeResponse;
 import static uk.gov.pay.connector.resources.ApiPaths.CHARGE_API_PATH;
+import static uk.gov.pay.connector.resources.ApiPaths.REFUNDS_API_PATH;
 
 public class ChargeService {
     private static final Logger logger = LoggerFactory.getLogger(ChargeService.class);
@@ -36,12 +36,14 @@ public class ChargeService {
     private ChargeDao chargeDao;
     private TokenDao tokenDao;
     private LinksConfig linksConfig;
+    private ChargeRefundService chargeRefundService;
 
     @Inject
-    public ChargeService(TokenDao tokenDao, ChargeDao chargeDao, ConnectorConfiguration config) {
+    public ChargeService(TokenDao tokenDao, ChargeDao chargeDao, ConnectorConfiguration config, ChargeRefundService chargeRefundService) {
         this.tokenDao = tokenDao;
         this.chargeDao = chargeDao;
         this.linksConfig = config.getLinks();
+        this.chargeRefundService = chargeRefundService;
     }
 
     @Transactional
@@ -53,7 +55,7 @@ public class ChargeService {
                 chargeRequest.get("reference"),
                 gatewayAccount,
                 email
-                );
+        );
         chargeDao.persist(chargeEntity);
         return chargeResponseBuilder(uriInfo, chargeEntity, createNewChargeEntityToken(chargeEntity)).build();
     }
@@ -62,11 +64,15 @@ public class ChargeService {
     public Optional<ChargeResponse> findChargeForAccount(String chargeId, Long accountId, UriInfo uriInfo) {
         return chargeDao.findByExternalIdAndGatewayAccount(chargeId, accountId)
                 .map(chargeEntity -> {
-                    if ( !ChargeStatus.fromString(chargeEntity.getStatus()).toExternal().isFinished() ) {
-                        return chargeResponseBuilder(uriInfo, chargeEntity, createNewChargeEntityToken(chargeEntity)).build();
-                    }
-                    return chargeResponseBuilder(uriInfo, chargeEntity).build();
+                    return buildChargeResponse(uriInfo, chargeEntity);
                 });
+    }
+
+    public ChargeResponse buildChargeResponse(UriInfo uriInfo, ChargeEntity chargeEntity) {
+        if (!ChargeStatus.fromString(chargeEntity.getStatus()).toExternal().isFinished()) {
+            return chargeResponseBuilder(uriInfo, chargeEntity, createNewChargeEntityToken(chargeEntity)).build();
+        }
+        return chargeResponseBuilder(uriInfo, chargeEntity).build();
     }
 
     @Transactional
@@ -120,12 +126,28 @@ public class ChargeService {
                 .withCreatedDate(charge.getCreatedDate())
                 .withReturnUrl(charge.getReturnUrl())
                 .withEmail(charge.getEmail())
-                .withLink("self", GET, selfUriFor(uriInfo, charge.getGatewayAccount().getId(), chargeId));
+                .withRefunds(buildRefundSummary(charge))
+                .withLink("self", GET, selfUriFor(uriInfo, charge.getGatewayAccount().getId(), chargeId))
+                .withLink("refunds", GET, refundsUriFor(uriInfo, charge.getGatewayAccount().getId(), charge.getExternalId()));
+    }
+
+    private ChargeResponse.RefundSummary buildRefundSummary(ChargeEntity charge) {
+        ChargeResponse.RefundSummary refund = new ChargeResponse.RefundSummary();
+        refund.setStatus(chargeRefundService.estabishChargeRefundAvailability(charge).getStatus());
+        refund.setAmountSubmitted(chargeRefundService.getRefundedAmount(charge));
+        refund.setAmountAvailable(chargeRefundService.getRefundAmountAvailable(charge));
+        return refund;
     }
 
     private URI selfUriFor(UriInfo uriInfo, Long accountId, String chargeId) {
         return uriInfo.getBaseUriBuilder()
                 .path(CHARGE_API_PATH)
+                .build(accountId, chargeId);
+    }
+
+    private URI refundsUriFor(UriInfo uriInfo, Long accountId, String chargeId) {
+        return uriInfo.getBaseUriBuilder()
+                .path(REFUNDS_API_PATH)
                 .build(accountId, chargeId);
     }
 

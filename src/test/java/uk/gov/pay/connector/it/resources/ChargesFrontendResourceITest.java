@@ -2,7 +2,6 @@ package uk.gov.pay.connector.it.resources;
 
 import com.google.common.collect.ImmutableMap;
 import com.jayway.restassured.response.ValidatableResponse;
-import org.apache.commons.lang.RandomStringUtils;
 import org.junit.Before;
 import org.junit.Rule;
 import org.junit.Test;
@@ -25,7 +24,7 @@ import static javax.ws.rs.HttpMethod.POST;
 import static javax.ws.rs.core.MediaType.APPLICATION_JSON;
 import static javax.ws.rs.core.Response.Status;
 import static javax.ws.rs.core.Response.Status.*;
-import static org.apache.commons.lang.RandomStringUtils.*;
+import static org.apache.commons.lang.RandomStringUtils.randomAlphanumeric;
 import static org.hamcrest.Matchers.*;
 import static org.hamcrest.core.Is.is;
 import static org.hamcrest.text.MatchesPattern.matchesPattern;
@@ -55,7 +54,7 @@ public class ChargesFrontendResourceITest {
     }
 
     @Test
-    public void getChargeShouldIncludeCardAuthAndCardCaptureLinkButNotGatewayAccountId() throws Exception {
+    public void getChargeShouldIncludeExpectedLinksButNotGatewayAccountId() throws Exception {
 
         String chargeId = postToCreateACharge(expectedAmount);
         String expectedLocation = "http://localhost:" + app.getLocalPort() + "/v1/frontend/charges/" + chargeId;

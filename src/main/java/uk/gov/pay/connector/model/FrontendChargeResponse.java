@@ -5,8 +5,8 @@ import org.apache.commons.lang3.builder.EqualsBuilder;
 import org.apache.commons.lang3.builder.HashCodeBuilder;
 import org.apache.commons.lang3.builder.ToStringBuilder;
 import uk.gov.pay.connector.model.api.ExternalChargeState;
+import uk.gov.pay.connector.model.builder.AbstractChargeResponseBuilder;
 import uk.gov.pay.connector.model.domain.ChargeStatus;
-import uk.gov.pay.connector.util.AbstractChargeResponseBuilder;
 
 import java.time.ZonedDateTime;
 import java.util.List;
@@ -29,7 +29,7 @@ public class FrontendChargeResponse extends ChargeResponse {
 
         @Override
         public FrontendChargeResponse build() {
-            return new FrontendChargeResponse(chargeId, amount, state, gatewayTransactionId, returnUrl, email, description, reference, providerName, createdDate, links, status);
+            return new FrontendChargeResponse(chargeId, amount, state, gatewayTransactionId, returnUrl, email, description, reference, providerName, createdDate, links, status, refundSummary);
         }
     }
 
@@ -40,8 +40,8 @@ public class FrontendChargeResponse extends ChargeResponse {
     @JsonProperty
     private String status;
 
-    private FrontendChargeResponse(String chargeId, Long amount, ExternalChargeState state, String gatewayTransactionId, String returnUrl, String email, String description, String reference, String providerName, ZonedDateTime createdDate, List<Map<String, Object>> dataLinks, String status) {
-        super(chargeId, amount, state, gatewayTransactionId, returnUrl, email, description, reference, providerName, createdDate, dataLinks);
+    private FrontendChargeResponse(String chargeId, Long amount, ExternalChargeState state, String gatewayTransactionId, String returnUrl, String email, String description, String reference, String providerName, ZonedDateTime createdDate, List<Map<String, Object>> dataLinks, String status, RefundSummary refundSummary) {
+        super(chargeId, amount, state, gatewayTransactionId, returnUrl, email, description, reference, providerName, createdDate, dataLinks, refundSummary);
         this.status = status;
     }
 

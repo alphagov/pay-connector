@@ -100,6 +100,9 @@ public class ChargesApiResourceITest {
                 .body(JSON_PROVIDER_KEY, is(PROVIDER_NAME))
                 .body(JSON_RETURN_URL_KEY, is(returnUrl))
                 .body(JSON_EMAIL_KEY, is(email))
+                .body("refund_summary.amount_submitted", is(0))
+                .body("refund_summary.amount_available", isNumber(AMOUNT))
+                .body("refund_summary.status", is("pending"))
                 .body("created_date", matchesPattern("^\\d{4}-\\d{2}-\\d{2}T\\d{2}:\\d{2}:\\d{2}.\\d{3}Z"))
                 .body("created_date", isWithin(10, SECONDS))
                 .contentType(JSON);
@@ -112,8 +115,9 @@ public class ChargesApiResourceITest {
         String hrefNextUrlPost = "http://Frontend" + FRONTEND_CARD_DETAILS_URL;
 
         response.header("Location", is(documentLocation))
-                .body("links", hasSize(3))
+                .body("links", hasSize(4))
                 .body("links", containsLink("self", "GET", documentLocation))
+                .body("links", containsLink("refunds", "GET", documentLocation + "/refunds"))
                 .body("links", containsLink("next_url", "GET", hrefNextUrl))
                 .body("links", containsLink("next_url_post", "POST", hrefNextUrlPost, "application/x-www-form-urlencoded", new HashMap<String, Object>() {{
                     put("chargeTokenId", chargeTokenId);
@@ -131,7 +135,10 @@ public class ChargesApiResourceITest {
                 .body(JSON_DESCRIPTION_KEY, is(expectedDescription))
                 .body(JSON_STATE_KEY, is(CREATED.toExternal().getStatus()))
                 .body(JSON_RETURN_URL_KEY, is(returnUrl))
-                .body(JSON_EMAIL_KEY, is(email));
+                .body(JSON_EMAIL_KEY, is(email))
+                .body("refund_summary.amount_submitted", is(0))
+                .body("refund_summary.amount_available", isNumber(AMOUNT))
+                .body("refund_summary.status", is("pending"));
 
 
         // Reload the charge token which as it should have changed
@@ -139,13 +146,15 @@ public class ChargesApiResourceITest {
 
         String newHrefNextUrl = "http://Frontend" + FRONTEND_CARD_DETAILS_URL + "/" + newChargeTokenId;
 
-        getChargeResponse.body("links", hasSize(3))
-                .body("links", hasSize(3))
+        getChargeResponse
+                .body("links", hasSize(4))
                 .body("links", containsLink("self", "GET", documentLocation))
+                .body("links", containsLink("refunds", "GET", documentLocation + "/refunds"))
                 .body("links", containsLink("next_url", "GET", newHrefNextUrl))
                 .body("links", containsLink("next_url_post", "POST", hrefNextUrlPost, "application/x-www-form-urlencoded", new HashMap<String, Object>() {{
                     put("chargeTokenId", newChargeTokenId);
                 }}));
+        
     }
 
     @Test
