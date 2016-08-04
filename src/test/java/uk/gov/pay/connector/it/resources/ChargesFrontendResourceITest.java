@@ -281,7 +281,21 @@ public class ChargesFrontendResourceITest {
         response.statusCode(BAD_REQUEST.getStatusCode())
                 .contentType(JSON)
                 .body("message", is("Invalid patch parameters{op=replace, path=email, value=@ab.c}"));
+    }
 
+    @Test
+    public void patchTooLongEmailOnCharge_shouldReturnBadRequest() {
+        String chargeId = postToCreateACharge(expectedAmount);
+        String tooLongEmail = randomAlphanumeric(243) + "@example.com";
+        String patchBody = createPatch("replace", "email", tooLongEmail);
+
+        ValidatableResponse response = connectorRestApi
+                .withChargeId(chargeId)
+                .patchCharge(patchBody);
+
+        response.statusCode(BAD_REQUEST.getStatusCode())
+                .contentType(JSON)
+                .body("message", is(format("Invalid patch parameters{op=replace, path=email, value=%s}", tooLongEmail)));
     }
 
     @Test
