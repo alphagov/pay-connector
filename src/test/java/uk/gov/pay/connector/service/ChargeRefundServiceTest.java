@@ -25,7 +25,6 @@ import uk.gov.pay.connector.model.domain.RefundStatus;
 import uk.gov.pay.connector.service.transaction.TransactionFlow;
 
 import javax.ws.rs.core.UriInfo;
-import java.util.Arrays;
 import java.util.Optional;
 
 import static com.google.common.collect.Maps.newHashMap;
@@ -35,9 +34,9 @@ import static org.junit.Assert.*;
 import static org.mockito.Matchers.argThat;
 import static org.mockito.Mockito.*;
 import static uk.gov.pay.connector.model.RefundGatewayResponse.failureResponse;
-import static uk.gov.pay.connector.model.api.ExternalChargeRefundAvailability.*;
 import static uk.gov.pay.connector.model.domain.ChargeEntityFixture.aValidChargeEntity;
-import static uk.gov.pay.connector.model.domain.ChargeStatus.*;
+import static uk.gov.pay.connector.model.domain.ChargeStatus.AUTHORISATION_SUCCESS;
+import static uk.gov.pay.connector.model.domain.ChargeStatus.CAPTURED;
 import static uk.gov.pay.connector.model.domain.RefundEntityFixture.aValidRefundEntity;
 
 @RunWith(MockitoJUnitRunner.class)
@@ -200,81 +199,6 @@ public class ChargeRefundServiceTest {
         verify(mockRefundDao).merge(any(RefundEntity.class));
         verify(spiedRefundEntity).setStatus(RefundStatus.REFUND_ERROR);
         verifyNoMoreInteractions(mockChargeDao, mockRefundDao, mockProviders, mockProvider);
-    }
-
-    @Test
-    public void testGetChargeRefundAvailabilityReturnsPending() {
-        assertEquals(EXTERNAL_PENDING, chargeRefundService.estabishChargeRefundAvailability(aValidChargeEntity()
-                .withStatus(CREATED).build()));
-        assertEquals(EXTERNAL_PENDING, chargeRefundService.estabishChargeRefundAvailability(aValidChargeEntity()
-                .withStatus(ENTERING_CARD_DETAILS).build()));
-        assertEquals(EXTERNAL_PENDING, chargeRefundService.estabishChargeRefundAvailability(aValidChargeEntity()
-                .withStatus(AUTHORISATION_READY).build()));
-        assertEquals(EXTERNAL_PENDING, chargeRefundService.estabishChargeRefundAvailability(aValidChargeEntity()
-                .withStatus(AUTHORISATION_SUCCESS).build()));
-        assertEquals(EXTERNAL_PENDING, chargeRefundService.estabishChargeRefundAvailability(aValidChargeEntity()
-                .withStatus(CAPTURE_READY).build()));
-        assertEquals(EXTERNAL_PENDING, chargeRefundService.estabishChargeRefundAvailability(aValidChargeEntity()
-                .withStatus(CAPTURE_SUBMITTED).build()));
-    }
-
-    @Test
-    public void testGetChargeRefundAvailabilityReturnsUnavailable() {
-        assertEquals(EXTERNAL_UNAVAILABLE, chargeRefundService.estabishChargeRefundAvailability(aValidChargeEntity()
-                .withStatus(AUTHORISATION_REJECTED).build()));
-        assertEquals(EXTERNAL_UNAVAILABLE, chargeRefundService.estabishChargeRefundAvailability(aValidChargeEntity()
-                .withStatus(AUTHORISATION_ERROR).build()));
-        assertEquals(EXTERNAL_UNAVAILABLE, chargeRefundService.estabishChargeRefundAvailability(aValidChargeEntity()
-                .withStatus(EXPIRED).build()));
-        assertEquals(EXTERNAL_UNAVAILABLE, chargeRefundService.estabishChargeRefundAvailability(aValidChargeEntity()
-                .withStatus(CAPTURE_ERROR).build()));
-        assertEquals(EXTERNAL_UNAVAILABLE, chargeRefundService.estabishChargeRefundAvailability(aValidChargeEntity()
-                .withStatus(EXPIRE_CANCEL_READY).build()));
-        assertEquals(EXTERNAL_UNAVAILABLE, chargeRefundService.estabishChargeRefundAvailability(aValidChargeEntity()
-                .withStatus(EXPIRE_CANCEL_FAILED).build()));
-        assertEquals(EXTERNAL_UNAVAILABLE, chargeRefundService.estabishChargeRefundAvailability(aValidChargeEntity()
-                .withStatus(SYSTEM_CANCEL_READY).build()));
-        assertEquals(EXTERNAL_UNAVAILABLE, chargeRefundService.estabishChargeRefundAvailability(aValidChargeEntity()
-                .withStatus(SYSTEM_CANCEL_ERROR).build()));
-        assertEquals(EXTERNAL_UNAVAILABLE, chargeRefundService.estabishChargeRefundAvailability(aValidChargeEntity()
-                .withStatus(SYSTEM_CANCELLED).build()));
-        assertEquals(EXTERNAL_UNAVAILABLE, chargeRefundService.estabishChargeRefundAvailability(aValidChargeEntity()
-                .withStatus(USER_CANCEL_READY).build()));
-        assertEquals(EXTERNAL_UNAVAILABLE, chargeRefundService.estabishChargeRefundAvailability(aValidChargeEntity()
-                .withStatus(USER_CANCELLED).build()));
-        assertEquals(EXTERNAL_UNAVAILABLE, chargeRefundService.estabishChargeRefundAvailability(aValidChargeEntity()
-                .withStatus(USER_CANCEL_ERROR).build()));
-    }
-
-    @Test
-    public void testGetChargeRefundAvailabilityReturnsAvailable() {
-        RefundEntity[] refunds = new RefundEntity[]{
-                aValidRefundEntity().withStatus(RefundStatus.CREATED).withAmount(100L).build(),
-                aValidRefundEntity().withStatus(RefundStatus.REFUND_SUBMITTED).withAmount(200L).build(),
-                aValidRefundEntity().withStatus(RefundStatus.REFUND_ERROR).withAmount(100L).build(),
-                aValidRefundEntity().withStatus(RefundStatus.REFUNDED).withAmount(200L).build()
-        };
-
-        assertEquals(EXTERNAL_AVAILABLE, chargeRefundService.estabishChargeRefundAvailability(aValidChargeEntity()
-                .withStatus(CAPTURED)
-                .withAmount(500L)
-                .withRefunds(Arrays.asList(refunds))
-                .build()));
-    }
-
-    @Test
-    public void testGetChargeRefundAvailabilityReturnsFull() {
-        RefundEntity[] refunds = new RefundEntity[]{
-                aValidRefundEntity().withStatus(RefundStatus.CREATED).withAmount(100L).build(),
-                aValidRefundEntity().withStatus(RefundStatus.REFUND_SUBMITTED).withAmount(200L).build(),
-                aValidRefundEntity().withStatus(RefundStatus.REFUNDED).withAmount(201L).build()
-        };
-
-        assertEquals(EXTERNAL_FULL, chargeRefundService.estabishChargeRefundAvailability(aValidChargeEntity()
-                .withStatus(CAPTURED)
-                .withAmount(500L)
-                .withRefunds(Arrays.asList(refunds))
-                .build()));
     }
 
     private Matcher<RefundEntity> aRefundEntity(long amount, ChargeEntity chargeEntity) {
