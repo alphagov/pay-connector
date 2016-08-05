@@ -13,12 +13,12 @@ import uk.gov.pay.connector.app.LinksConfig;
 import uk.gov.pay.connector.dao.ChargeDao;
 import uk.gov.pay.connector.dao.TokenDao;
 import uk.gov.pay.connector.model.ChargeResponse;
+import uk.gov.pay.connector.model.api.ExternalChargeRefundAvailability;
 import uk.gov.pay.connector.model.domain.ChargeEntity;
 import uk.gov.pay.connector.model.domain.ChargeStatus;
 import uk.gov.pay.connector.model.domain.GatewayAccountEntity;
 import uk.gov.pay.connector.model.domain.TokenEntity;
 
-import javax.ws.rs.core.UriBuilder;
 import javax.ws.rs.core.UriInfo;
 import java.net.URI;
 import java.net.URISyntaxException;
@@ -33,6 +33,7 @@ import static java.util.Arrays.asList;
 import static java.util.Collections.emptyMap;
 import static javax.ws.rs.HttpMethod.GET;
 import static javax.ws.rs.HttpMethod.POST;
+import static javax.ws.rs.core.UriBuilder.fromUri;
 import static org.hamcrest.core.Is.is;
 import static org.hamcrest.core.IsNull.notNullValue;
 import static org.hamcrest.core.IsNull.nullValue;
@@ -61,8 +62,6 @@ public class ChargeServiceTest {
     private UriInfo mockedUriInfo;
     @Mock
     private LinksConfig mockedLinksConfig;
-    @Mock
-    private ChargeRefundService mockedChargeRefundService;
 
     private ChargeService service;
     private Map<String, String> chargeRequest = new HashMap<String, String>() {{
@@ -71,9 +70,6 @@ public class ChargeServiceTest {
         put("description", "This is a description");
         put("reference", "Pay reference");
     }};
-
-    private Long REFUNDED_AMOUNT = 0L;
-    private Long REFUND_AMOUNT_AVAILABLE = 100L;
 
     @Before
     public void setUp() throws Exception {
@@ -84,15 +80,11 @@ public class ChargeServiceTest {
         when(mockedLinksConfig.getFrontendUrl())
                 .thenReturn("http://payments.com");
 
-        doAnswer(invocation -> {
-            return UriBuilder.fromUri(SERVICE_HOST);
-        }).when(this.mockedUriInfo).getBaseUriBuilder();
+        doAnswer(invocation -> fromUri(SERVICE_HOST))
+                .when(this.mockedUriInfo)
+                .getBaseUriBuilder();
 
-        when(mockedChargeRefundService.estabishChargeRefundAvailability(any(ChargeEntity.class))).thenReturn(EXTERNAL_PENDING);
-        when(mockedChargeRefundService.getRefundedAmount(any(ChargeEntity.class))).thenReturn(REFUNDED_AMOUNT);
-        when(mockedChargeRefundService.getRefundAmountAvailable(any(ChargeEntity.class))).thenReturn(REFUND_AMOUNT_AVAILABLE);
-
-        service = new ChargeService(mockedTokenDao, mockedChargeDao, mockedConfig, mockedChargeRefundService);
+        service = new ChargeService(mockedTokenDao, mockedChargeDao, mockedConfig);
     }
 
     @Test
@@ -172,7 +164,6 @@ public class ChargeServiceTest {
 
         String externalId = newCharge.getExternalId();
         when(mockedChargeDao.findByExternalIdAndGatewayAccount(externalId, accountId)).thenReturn(chargeEntity);
-        when(mockedChargeRefundService.estabishChargeRefundAvailability(chargeEntity.get())).thenReturn(EXTERNAL_PENDING);
 
         Optional<ChargeResponse> chargeResponseForAccount = service.findChargeForAccount(externalId, accountId, mockedUriInfo);
 
@@ -203,6 +194,9 @@ public class ChargeServiceTest {
         GatewayAccountEntity gatewayAccount = new GatewayAccountEntity("provider", new HashMap<>());
         gatewayAccount.setId(1L);
 
+        //when(mockedChargeRefundService.getRefundedAmount(any(ChargeEntity.class))).thenReturn(REFUNDED_AMOUNT);
+        //when(mockedChargeRefundService.getRefundAmountAvailable(any(ChargeEntity.class))).thenReturn(REFUND_AMOUNT_AVAILABLE);
+
         ChargeEntity newCharge = aValidChargeEntity()
                 .withId(chargeId)
                 .withGatewayAccountEntity(gatewayAccount)
@@ -213,7 +207,6 @@ public class ChargeServiceTest {
 
         String externalId = newCharge.getExternalId();
         when(mockedChargeDao.findByExternalIdAndGatewayAccount(externalId, accountId)).thenReturn(chargeEntity);
-        when(mockedChargeRefundService.estabishChargeRefundAvailability(chargeEntity.get())).thenReturn(EXTERNAL_PENDING);
 
         Optional<ChargeResponse> chargeResponseForAccount = service.findChargeForAccount(externalId, accountId, mockedUriInfo);
 
@@ -255,7 +248,6 @@ public class ChargeServiceTest {
 
         String externalId = newCharge.getExternalId();
         when(mockedChargeDao.findByExternalIdAndGatewayAccount(externalId, accountId)).thenReturn(chargeEntity);
-        when(mockedChargeRefundService.estabishChargeRefundAvailability(chargeEntity.get())).thenReturn(EXTERNAL_PENDING);
 
         Optional<ChargeResponse> chargeResponseForAccount = service.findChargeForAccount(externalId, accountId, mockedUriInfo);
 
@@ -304,9 +296,9 @@ public class ChargeServiceTest {
     @Deprecated
     private ChargeResponseBuilder chargeResponseBuilderOf(ChargeEntity chargeEntity) throws URISyntaxException {
         ChargeResponse.RefundSummary refunds = new ChargeResponse.RefundSummary();
-        refunds.setAmountAvailable(REFUND_AMOUNT_AVAILABLE);
-        refunds.setAmountSubmitted(REFUNDED_AMOUNT);
-        refunds.setStatus(EXTERNAL_PENDING.getStatus());
+        refunds.setAmountAvailable(chargeEntity.getAmount());
+        refunds.setAmountSubmitted(0L);
+        refunds.setStatus(ExternalChargeRefundAvailability.valueOf(chargeEntity).getStatus());
 
         return aChargeResponse()
                 .withChargeId(chargeEntity.getExternalId())

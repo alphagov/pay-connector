@@ -1,6 +1,5 @@
 package uk.gov.pay.connector.model.domain;
 
-import org.eclipse.persistence.annotations.FetchAttribute;
 import uk.gov.pay.connector.exception.InvalidStateTransitionException;
 import uk.gov.pay.connector.model.api.ExternalChargeState;
 import uk.gov.pay.connector.util.RandomIdGenerator;
@@ -113,6 +112,22 @@ public class ChargeEntity extends AbstractEntity {
         return createdDate;
     }
 
+    public List<RefundEntity> getRefunds() {
+        return refunds;
+    }
+
+    public List<ChargeEventEntity> getEvents() {
+        return events;
+    }
+
+    public String getExternalId() {
+        return externalId;
+    }
+
+    public String getEmail() {
+        return email;
+    }
+
     public void setStatus(ChargeStatus status) throws InvalidStateTransitionException {
         if (StateTransitions.transitionTo(ChargeStatus.fromString(this.status), status)) {
             this.status = status.getValue();
@@ -133,20 +148,12 @@ public class ChargeEntity extends AbstractEntity {
         this.gatewayAccount = gatewayAccount;
     }
 
+    public void setEmail(String email) {
+        this.email = email;
+    }
+
     public boolean isAssociatedTo(Long accountId) {
         return this.getGatewayAccount().getId().equals(accountId);
-    }
-
-    public List<RefundEntity> getRefunds() {
-        return refunds;
-    }
-
-    public List<ChargeEventEntity> getEvents() {
-        return events;
-    }
-
-    public String getExternalId() {
-        return externalId;
     }
 
     public boolean hasStatus(ChargeStatus... status) {
@@ -157,11 +164,14 @@ public class ChargeEntity extends AbstractEntity {
         return Arrays.stream(state).anyMatch(s -> ChargeStatus.fromString(getStatus()).toExternal().equals(s));
     }
 
-    public String getEmail() {
-        return email;
+    public long getTotalAmountToBeRefunded() {
+        return this.amount - getRefundedAmount();
     }
 
-    public void setEmail(String email) {
-        this.email = email;
+    public long getRefundedAmount() {
+        return this.refunds.stream()
+                .filter(p -> p.hasStatus(RefundStatus.CREATED, RefundStatus.REFUND_SUBMITTED, RefundStatus.REFUNDED))
+                .mapToLong(RefundEntity::getAmount)
+                .sum();
     }
 }

@@ -12,7 +12,6 @@ import uk.gov.pay.connector.model.RefundGatewayRequest;
 import uk.gov.pay.connector.model.RefundGatewayResponse;
 import uk.gov.pay.connector.model.api.ExternalChargeRefundAvailability;
 import uk.gov.pay.connector.model.domain.ChargeEntity;
-import uk.gov.pay.connector.model.domain.ChargeStatus;
 import uk.gov.pay.connector.model.domain.RefundEntity;
 import uk.gov.pay.connector.model.domain.RefundStatus;
 import uk.gov.pay.connector.service.transaction.*;
@@ -21,8 +20,7 @@ import javax.inject.Inject;
 import java.util.Optional;
 
 import static java.lang.String.format;
-import static uk.gov.pay.connector.model.api.ExternalChargeRefundAvailability.*;
-import static uk.gov.pay.connector.model.domain.ChargeStatus.*;
+import static uk.gov.pay.connector.model.api.ExternalChargeRefundAvailability.EXTERNAL_AVAILABLE;
 
 public class ChargeRefundService {
 
@@ -46,10 +44,6 @@ public class ChargeRefundService {
     }
 
     private final Logger logger = LoggerFactory.getLogger(getClass());
-
-    public static final ChargeStatus[] PENDING_STATUS = new ChargeStatus[]{
-            CREATED, ENTERING_CARD_DETAILS, AUTHORISATION_READY, AUTHORISATION_SUCCESS, CAPTURE_READY, CAPTURE_SUBMITTED
-    };
 
     private final ChargeDao chargeDao;
     private final RefundDao refundDao;
@@ -86,11 +80,14 @@ public class ChargeRefundService {
             RefundEntity refundEntity = new RefundEntity(reloadedCharge, amount);
             reloadedCharge.getRefunds().add(refundEntity);
 
-            ExternalChargeRefundAvailability refundAvailability = estabishChargeRefundAvailability(reloadedCharge);
+            ExternalChargeRefundAvailability refundAvailability = ExternalChargeRefundAvailability.valueOf(reloadedCharge);
+
             if (EXTERNAL_AVAILABLE != refundAvailability) {
+
                 logger.error(format("Charge with id [%s], status [%s] has refund availability: [%s]",
                         reloadedCharge.getId(), reloadedCharge.getStatus(), refundAvailability));
-                throw new RefundNotAvailableRuntimeException(reloadedCharge.getExternalId());
+
+                throw new RefundNotAvailableRuntimeException(reloadedCharge.getExternalId(), refundAvailability);
             }
 
             refundDao.persist(refundEntity);
@@ -118,31 +115,5 @@ public class ChargeRefundService {
             refundEntity.setStatus(newStatus);
             return new Response(gatewayResponse, refundEntity);
         };
-    }
-
-    public ExternalChargeRefundAvailability estabishChargeRefundAvailability(ChargeEntity chargeEntity) {
-        if (chargeEntity.hasStatus(PENDING_STATUS)) {
-            return ExternalChargeRefundAvailability.EXTERNAL_PENDING;
-        }
-        if (chargeEntity.hasStatus(CAPTURED)) {
-            long refundedAmount = getRefundedAmount(chargeEntity);
-            if (chargeEntity.getAmount() >= refundedAmount) {
-                return EXTERNAL_AVAILABLE;
-            }
-            return EXTERNAL_FULL;
-        }
-        return EXTERNAL_UNAVAILABLE;
-    }
-
-    public Long getRefundAmountAvailable(ChargeEntity charge) {
-        return charge.getAmount() - getRefundedAmount(charge);
-    }
-
-    public Long getRefundedAmount(ChargeEntity chargeEntity) {
-        return chargeEntity.getRefunds()
-                .stream()
-                .filter(p -> p.hasStatus(RefundStatus.CREATED, RefundStatus.REFUND_SUBMITTED, RefundStatus.REFUNDED))
-                .mapToLong(RefundEntity::getAmount)
-                .sum();
     }
 }

@@ -8,6 +8,7 @@ import uk.gov.pay.connector.app.LinksConfig;
 import uk.gov.pay.connector.dao.ChargeDao;
 import uk.gov.pay.connector.dao.TokenDao;
 import uk.gov.pay.connector.model.ChargeResponse;
+import uk.gov.pay.connector.model.api.ExternalChargeRefundAvailability;
 import uk.gov.pay.connector.model.builder.PatchRequestBuilder;
 import uk.gov.pay.connector.model.domain.ChargeEntity;
 import uk.gov.pay.connector.model.domain.ChargeStatus;
@@ -31,19 +32,18 @@ import static uk.gov.pay.connector.resources.ApiPaths.CHARGE_API_PATH;
 import static uk.gov.pay.connector.resources.ApiPaths.REFUNDS_API_PATH;
 
 public class ChargeService {
+
     private static final Logger logger = LoggerFactory.getLogger(ChargeService.class);
 
     private ChargeDao chargeDao;
     private TokenDao tokenDao;
     private LinksConfig linksConfig;
-    private ChargeRefundService chargeRefundService;
 
     @Inject
-    public ChargeService(TokenDao tokenDao, ChargeDao chargeDao, ConnectorConfiguration config, ChargeRefundService chargeRefundService) {
+    public ChargeService(TokenDao tokenDao, ChargeDao chargeDao, ConnectorConfiguration config) {
         this.tokenDao = tokenDao;
         this.chargeDao = chargeDao;
         this.linksConfig = config.getLinks();
-        this.chargeRefundService = chargeRefundService;
     }
 
     @Transactional
@@ -133,9 +133,9 @@ public class ChargeService {
 
     private ChargeResponse.RefundSummary buildRefundSummary(ChargeEntity charge) {
         ChargeResponse.RefundSummary refund = new ChargeResponse.RefundSummary();
-        refund.setStatus(chargeRefundService.estabishChargeRefundAvailability(charge).getStatus());
-        refund.setAmountSubmitted(chargeRefundService.getRefundedAmount(charge));
-        refund.setAmountAvailable(chargeRefundService.getRefundAmountAvailable(charge));
+        refund.setStatus(ExternalChargeRefundAvailability.valueOf(charge).getStatus());
+        refund.setAmountSubmitted(charge.getRefundedAmount());
+        refund.setAmountAvailable(charge.getTotalAmountToBeRefunded());
         return refund;
     }
 

@@ -14,7 +14,7 @@ import static javax.ws.rs.core.Response.Status.*;
 
 public class ResponseUtil {
     protected static final Logger logger = LoggerFactory.getLogger(ResponseUtil.class);
-    public static final Joiner COMMA_JOINER = Joiner.on(", ");
+    private static final Joiner COMMA_JOINER = Joiner.on(", ");
 
     public static Response fieldsMissingResponse(List<String> missingFields) {
         String message = format("Field(s) missing: [%s]", COMMA_JOINER.join(missingFields));
@@ -46,6 +46,11 @@ public class ResponseUtil {
         return responseWithMessageMap(BAD_REQUEST, message);
     }
 
+    public static Response badRequestResponse(String code, String message) {
+        logger.error(message);
+        return responseWith(BAD_REQUEST, message, code);
+    }
+
     public static Response badRequestResponse(List message) {
         logger.error(message.toString());
         return responseWithMessageMap(BAD_REQUEST, message);
@@ -73,6 +78,10 @@ public class ResponseUtil {
 
     private static Response responseWithMessageMap(Status status, String message) {
         return responseWithEntity(status, ImmutableMap.of("message", message));
+    }
+
+    private static Response responseWith(Status status, String message, String reason) {
+        return responseWithEntity(status, ImmutableMap.of("reason", reason, "message", message));
     }
 
     private static Response responseWithMessageMap(Status status, Object entity) {
