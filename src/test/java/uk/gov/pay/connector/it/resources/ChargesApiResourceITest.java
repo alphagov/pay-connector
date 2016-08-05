@@ -154,7 +154,7 @@ public class ChargesApiResourceITest {
                 .body("links", containsLink("next_url_post", "POST", hrefNextUrlPost, "application/x-www-form-urlencoded", new HashMap<String, Object>() {{
                     put("chargeTokenId", newChargeTokenId);
                 }}));
-        
+
     }
 
     @Test
@@ -299,6 +299,7 @@ public class ChargesApiResourceITest {
 
     @Test
     public void shouldFilterTransactionsBasedOnFromAndToDates() throws Exception {
+
         addCharge(CREATED, "ref-1", now());
         addCharge(AUTHORISATION_READY, "ref-2", now());
         addCharge(CAPTURED, "ref-3", now().minusDays(2));
@@ -311,7 +312,13 @@ public class ChargesApiResourceITest {
                 .getTransactions()
                 .statusCode(OK.getStatusCode())
                 .contentType(JSON)
-                .body("results.size()", is(2));
+                .body("results.size()", is(2))
+                .body("results[0].refund_summary.amount_submitted", is(0))
+                .body("results[0].refund_summary.amount_available", isNumber(AMOUNT))
+                .body("results[0].refund_summary.status", is("pending"))
+                .body("results[1].refund_summary.amount_submitted", is(0))
+                .body("results[1].refund_summary.amount_available", isNumber(AMOUNT))
+                .body("results[1].refund_summary.status", is("pending"));
 
         List<Map<String, Object>> results = response.extract().body().jsonPath().getList("results");
         List<String> references = collect(results, "reference");

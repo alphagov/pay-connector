@@ -59,9 +59,6 @@ public class ChargesApiResource {
     private static final String ACCOUNT_ID = "accountId";
     private static final String PAGE = "page";
     private static final String DISPLAY_SIZE = "display_size";
-    public static final String REFUND_STATUS = "status";
-    public static final String REFUND_AMOUNT_SUBMITTED = "amount_submitted";
-    public static final String REFUND_AMOUNT_AVAILABLE = "amount_available";
 
     private final ChargeDao chargeDao;
     private final GatewayAccountDao gatewayAccountDao;

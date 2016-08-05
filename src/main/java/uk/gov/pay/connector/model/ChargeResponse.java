@@ -20,15 +20,14 @@ import static com.fasterxml.jackson.annotation.JsonInclude.Include;
 public class ChargeResponse {
 
     @JsonFormat(shape = JsonFormat.Shape.OBJECT)
-    static public class RefundSummary {
+    public static class RefundSummary {
+
         @JsonProperty("status")
-        public String status;
-
+        private String status;
         @JsonProperty("amount_available")
-        public   Long amountAvailable;
-
+        private Long amountAvailable;
         @JsonProperty("amount_submitted")
-        public   Long amountSubmitted;
+        private Long amountSubmitted;
 
         public void setStatus(String status) {
             this.status = status;
@@ -64,7 +63,6 @@ public class ChargeResponse {
             if (!status.equals(that.status)) return false;
             if (!amountAvailable.equals(that.amountAvailable)) return false;
             return amountSubmitted.equals(that.amountSubmitted);
-
         }
 
         @Override
@@ -133,13 +131,13 @@ public class ChargeResponse {
 
     private ZonedDateTime createdDate;
 
+    @JsonProperty("refund_summary")
+    private RefundSummary refundSummary;
+
     @JsonProperty("created_date")
     public String getCreatedDate() {
         return DateTimeUtils.toUTCDateString(createdDate);
     }
-
-    @JsonProperty("refund_summary")
-    public RefundSummary refundSummary;
 
     protected ChargeResponse(String chargeId, Long amount, ExternalChargeState state, String gatewayTransactionId, String returnUrl, String email, String description, String reference, String providerName, ZonedDateTime createdDate, List<Map<String, Object>> dataLinks, RefundSummary refundSummary) {
         this.dataLinks = dataLinks;
