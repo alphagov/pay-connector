@@ -24,11 +24,29 @@ public class WorldpayOrderStatusResponse {
     @XmlPath("reply/orderStatus/payment/ISO8583ReturnCode/@code")
     private String refusedReturnCode;
 
-    @XmlPath("reply/error/@code")
     private String errorCode;
 
-    @XmlPath("reply/error/text()")
     private String errorMessage;
+
+    @XmlPath("reply/error/@code")
+    public void setErrorCode(String errorCode) {
+        this.errorCode = errorCode;
+    }
+
+    @XmlPath("reply/orderStatus/error/@code")
+    public void setOrderStatusErrorCode(String errorCode) {
+        this.errorCode = errorCode;
+    }
+
+    @XmlPath("reply/error/text()")
+    public void setErrorMessage(String errorMessage) {
+        this.errorMessage = errorMessage;
+    }
+
+    @XmlPath("reply/orderStatus/error/text()")
+    public void setOrderStatusErrorMessage(String errorMessage) {
+        this.errorMessage = errorMessage;
+    }
 
     public String getLastEvent() {
         return lastEvent;

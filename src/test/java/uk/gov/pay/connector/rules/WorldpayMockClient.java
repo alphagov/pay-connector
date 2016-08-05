@@ -15,10 +15,15 @@ public class WorldpayMockClient {
     public WorldpayMockClient() {
     }
 
-    public void mockInquiryResponse(String gatewayTransactionId, String status) {
+    public void mockInquirySucccess(String gatewayTransactionId, String status) {
         String inquiryResponse = loadFromTemplate("inquiry-success-response.xml", gatewayTransactionId)
                 .replace("{{status}}", status);
         paymentServiceResponse(inquiryResponse);
+    }
+
+    public void mockInquiryError() {
+        String errorResponse = loadFromTemplate("inquiry-error-response.xml", "");
+        paymentServiceResponse(errorResponse);
     }
 
     public void mockAuthorisationSuccess() {
@@ -33,30 +38,19 @@ public class WorldpayMockClient {
         paymentServiceResponse(authoriseResponse);
     }
 
-    public void mockCaptureResponse() {
+    public void mockCaptureSuccess() {
         String gatewayTransactionId = randomId();
         String captureResponse = loadFromTemplate("capture-success-response.xml", gatewayTransactionId);
         paymentServiceResponse(captureResponse);
     }
 
-    public void mockRefundResponse() {
-        String gatewayTransactionId = randomId();
-        String refundResponse = loadFromTemplate("refund-success-response.xml", gatewayTransactionId);
-        paymentServiceResponse(refundResponse);
-    }
-
-    public void mockCancelResponse(String gatewayTransactionId) {
+    public void mockCancelSuccess(String gatewayTransactionId) {
         String cancelResponse = loadFromTemplate("cancel-success-response.xml", gatewayTransactionId);
         paymentServiceResponse(cancelResponse);
     }
 
-    public void mockErrorResponse() {
-        String errorResponse = loadFromTemplate("error-response.xml", "");
-        paymentServiceResponse(errorResponse);
-    }
-
-    public void mockCancelFailResponse() {
-        String cancelResponse = loadFromTemplate("cancel-failed-response.xml","");
+    public void mockCancelError() {
+        String cancelResponse = loadFromTemplate("cancel-error-response.xml","");
         paymentServiceResponse(cancelResponse);
     }
 
@@ -65,6 +59,18 @@ public class WorldpayMockClient {
         String bodyMatchXpath = "//orderModification[@orderCode = '" + gatewayTransactionId + "']";
         bodyMatchingPaymentServiceResponse(bodyMatchXpath, cancelSuccessResponse);
 
+    }
+
+    public void mockRefundSuccess() {
+        String gatewayTransactionId = randomId();
+        String refundResponse = loadFromTemplate("refund-success-response.xml", gatewayTransactionId);
+        paymentServiceResponse(refundResponse);
+    }
+
+    public void mockRefundError() {
+        String gatewayTransactionId = randomId();
+        String refundResponse = loadFromTemplate("refund-error-response.xml", gatewayTransactionId);
+        paymentServiceResponse(refundResponse);
     }
 
     private void paymentServiceResponse(String responseBody) {

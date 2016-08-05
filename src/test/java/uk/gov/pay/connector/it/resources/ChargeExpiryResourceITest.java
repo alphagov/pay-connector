@@ -36,7 +36,7 @@ public class ChargeExpiryResourceITest extends CardResourceITestBase {
         String extChargeId2 = addCharge(AUTHORISATION_SUCCESS, "ref", ZonedDateTime.now().minusHours(1), "gatewayTransactionId2");
         String extChargeId3 = addCharge(CAPTURE_SUBMITTED, "ref", ZonedDateTime.now().minusHours(1), "gatewayTransactionId3"); //should not get picked
 
-        worldpay.mockCancelResponse("gatewayTransactionId2");
+        worldpay.mockCancelSuccess("gatewayTransactionId2");
 
         getChargeApi
                 .postChargeExpiryTask()
@@ -73,7 +73,7 @@ public class ChargeExpiryResourceITest extends CardResourceITestBase {
         String extChargeId1 = addCharge(AUTHORISATION_SUCCESS, "ref", ZonedDateTime.now().minusHours(1), "gatewayTransactionId1");
         String extChargeId2 = addCharge(CAPTURE_SUBMITTED, "ref", ZonedDateTime.now().minusHours(1), "gatewayTransactionId2"); //should not get picked
 
-        worldpay.mockCancelFailResponse();
+        worldpay.mockCancelError();
 
         getChargeApi
                 .postChargeExpiryTask()
