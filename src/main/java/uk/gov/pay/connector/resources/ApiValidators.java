@@ -19,12 +19,13 @@ import static fj.data.Either.right;
 import static java.lang.String.format;
 import static org.apache.commons.lang3.StringUtils.isNotBlank;
 import static uk.gov.pay.connector.resources.ChargesApiResource.EMAIL_KEY;
+import static uk.gov.pay.connector.resources.ChargesApiResource.MAXIMUM_FIELDS_SIZE;
 
 class ApiValidators {
     private enum ChargeParamValidator {
         EMAIL(EMAIL_KEY){
             boolean validate(String email) {
-                return Pattern.matches(".+@.+\\..+", email);
+                return Pattern.matches(".+@.+\\..+", email) && email.length() <= MAXIMUM_FIELDS_SIZE.get(EMAIL_KEY);
             }
         };
 
@@ -34,7 +35,7 @@ class ApiValidators {
 
         abstract boolean validate(String candidate);
 
-        private static final Map<String, ChargeParamValidator> stringToEnum = new HashMap<String, ChargeParamValidator>();
+        private static final Map<String, ChargeParamValidator> stringToEnum = new HashMap<>();
         static{
             for(ChargeParamValidator val: values()){
                 stringToEnum.put(val.toString(), val);

@@ -3,6 +3,7 @@ package uk.gov.pay.connector.it.resources;
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableMap;
 import com.jayway.restassured.response.ValidatableResponse;
+import org.apache.commons.lang.RandomStringUtils;
 import org.apache.commons.lang.math.RandomUtils;
 import org.junit.Before;
 import org.junit.Rule;
@@ -459,6 +460,7 @@ public class ChargesApiResourceITest {
                 JSON_AMOUNT_KEY, AMOUNT,
                 JSON_REFERENCE_KEY, "Test reference",
                 JSON_DESCRIPTION_KEY, "Test description",
+                JSON_EMAIL_KEY, email,
                 JSON_RETURN_URL_KEY, returnUrl));
 
         createChargeApi
@@ -473,19 +475,20 @@ public class ChargesApiResourceITest {
 
     @Test
     public void cannotMakeChargeForInvalidSizeOfFields() throws Exception {
-        String postBody = toJson(ImmutableMap.of(
-                JSON_AMOUNT_KEY, AMOUNT,
-                JSON_REFERENCE_KEY, randomAlphabetic(256),
-                JSON_DESCRIPTION_KEY, randomAlphanumeric(256),
-                JSON_GATEWAY_ACC_KEY, accountId,
-                JSON_RETURN_URL_KEY, returnUrl));
+        String postBody = toJson(ImmutableMap.builder()
+                        .put(JSON_AMOUNT_KEY, AMOUNT)
+                        .put(JSON_REFERENCE_KEY, randomAlphabetic(256))
+                        .put(JSON_DESCRIPTION_KEY, randomAlphanumeric(256))
+                        .put(JSON_EMAIL_KEY, randomAlphanumeric(255))
+                        .put(JSON_GATEWAY_ACC_KEY, accountId)
+                        .put(JSON_RETURN_URL_KEY, returnUrl).build());
 
         createChargeApi.postCreateCharge(postBody)
                 .statusCode(BAD_REQUEST.getStatusCode())
                 .contentType(JSON)
                 .header("Location", is(nullValue()))
                 .body(JSON_CHARGE_KEY, is(nullValue()))
-                .body(JSON_MESSAGE_KEY, is("Field(s) are too big: [description, reference]"));
+                .body(JSON_MESSAGE_KEY, is("Field(s) are too big: [description, reference, email]"));
     }
 
     @Test

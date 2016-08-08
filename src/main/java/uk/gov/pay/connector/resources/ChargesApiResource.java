@@ -48,9 +48,10 @@ public class ChargesApiResource {
     public static final String EMAIL_KEY = "email";
 
     private static final String[] REQUIRED_FIELDS = {AMOUNT_KEY, DESCRIPTION_KEY, REFERENCE_KEY, RETURN_URL_KEY};
-    private static final Map<String, Integer> MAXIMUM_FIELDS_SIZE = ImmutableMap.of(
+    static final Map<String, Integer> MAXIMUM_FIELDS_SIZE = ImmutableMap.of(
             DESCRIPTION_KEY, 255,
-            REFERENCE_KEY, 255
+            REFERENCE_KEY, 255,
+            EMAIL_KEY, 254
     );
 
     private static final String STATE_KEY = "state";
@@ -227,8 +228,8 @@ public class ChargesApiResource {
     }
 
     private boolean isFieldSizeValid(Map<String, String> chargeRequest, String fieldName, int fieldSize) {
-        String value = chargeRequest.get(fieldName);
-        return value.length() <= fieldSize;
+        Optional<String> value = Optional.ofNullable(chargeRequest.get(fieldName));
+        return !value.isPresent() || value.get().length() <= fieldSize; //already checked that mandatory fields are already there
     }
 
     private static F<String, Response> handleError =
