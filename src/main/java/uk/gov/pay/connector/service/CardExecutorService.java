@@ -5,7 +5,7 @@ import com.google.inject.Inject;
 import org.apache.commons.lang3.tuple.Pair;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import uk.gov.pay.connector.app.CardExecutorServiceConfig;
+import uk.gov.pay.connector.app.ExecutorServiceConfig;
 import uk.gov.pay.connector.app.ConnectorConfiguration;
 
 import javax.ws.rs.WebApplicationException;
@@ -21,7 +21,7 @@ public class CardExecutorService<T> {
     private static final Logger logger = LoggerFactory.getLogger(CardExecutorService.class);
     private static final int QUEUE_WAIT_WARN_THRESHOLD_MILLIS = 10000;
 
-    private CardExecutorServiceConfig config;
+    private ExecutorServiceConfig config;
     private ExecutorService executor;
 
     public enum ExecutionStatus {

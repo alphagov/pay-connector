@@ -17,39 +17,50 @@ import javax.inject.Inject;
 import java.math.BigDecimal;
 import java.util.HashMap;
 import java.util.Optional;
+import java.util.concurrent.CompletableFuture;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
+import java.util.concurrent.Future;
+
+import static java.lang.Runtime.getRuntime;
 
 
 public class UserNotificationService {
 
     private String emailTemplateId;
     private boolean emailNotifyGloballyEnabled;
-
+    private int numberOfThreads;
     protected final Logger logger = LoggerFactory.getLogger(getClass());
     private NotificationClient notificationClient;
+    private ExecutorService executorService;
 
     @Inject
     public UserNotificationService(NotifyClientProvider notifyClientProvider, ConnectorConfiguration configuration) {
         readEmailConfig(configuration);
         if (emailNotifyGloballyEnabled) {
             this.notificationClient = notifyClientProvider.get();
+            numberOfThreads = configuration.getExecutorServiceConfig().getThreadsPerCpu() * getRuntime().availableProcessors();
+            executorService = Executors.newFixedThreadPool(numberOfThreads);
         }
     }
 
-    public Optional<String> notifyPaymentSuccessEmail(ChargeEntity chargeEntity) {
-        if (emailNotifyGloballyEnabled && chargeEntity.getGatewayAccount().hasEmailNotificationsEnabled()) {
+    public Future<Optional<String>> notifyPaymentSuccessEmail(ChargeEntity chargeEntity) {
+            if (emailNotifyGloballyEnabled && chargeEntity.getGatewayAccount().hasEmailNotificationsEnabled()) {
             String emailAddress = chargeEntity.getEmail();
 
-            try {
-                NotificationResponse response = notificationClient.sendEmail(
-                    this.emailTemplateId, emailAddress, buildEmailPersonalisationFromCharge(chargeEntity)
-                );
-
-                return Optional.of(response.getNotificationId());
-            } catch (NotificationClientException e) {
-                logger.error(String.format("failed to send confirmation email at %s", emailAddress), e);
-            }
+            return executorService.submit(() -> {
+                try {
+                    NotificationResponse response = notificationClient.sendEmail(
+                            this.emailTemplateId, emailAddress, buildEmailPersonalisationFromCharge(chargeEntity)
+                    );
+                    return Optional.of(response.getNotificationId());
+                } catch (NotificationClientException e) {
+                    logger.error(String.format("failed to send confirmation email at %s", emailAddress), e);
+                    return Optional.empty();
+                }
+            });
         }
-        return Optional.empty();
+        return CompletableFuture.completedFuture(Optional.empty());
     }
 
     public String checkDeliveryStatus(String notificationId) throws NotificationClientException {
