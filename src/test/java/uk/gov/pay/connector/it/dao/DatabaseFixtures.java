@@ -104,6 +104,7 @@ public class DatabaseFixtures {
 
     public class TestCharge {
         Long chargeId = RandomUtils.nextLong(1, 99999);
+        String email = "alice.111@mail.fake";
         String externalChargeId = RandomIdGenerator.newId();
         long amount = 101L;
         ChargeStatus chargeStatus = ChargeStatus.CREATED;
@@ -134,6 +135,11 @@ public class DatabaseFixtures {
             return this;
         }
 
+        public TestCharge withEmail(String email) {
+            this.email = email;
+            return this;
+        }
+
         public TestCharge withChargeStatus(ChargeStatus chargeStatus) {
             this.chargeStatus = chargeStatus;
             return this;
@@ -157,7 +163,7 @@ public class DatabaseFixtures {
         public TestCharge insert() {
             if (testAccount == null)
                 throw new IllegalStateException("Test Account must be provided.");
-            databaseTestHelper.addCharge(chargeId, externalChargeId, String.valueOf(testAccount.getAccountId()), amount, chargeStatus, returnUrl, transactionId, reference, createdDate);
+            databaseTestHelper.addCharge(chargeId, externalChargeId, String.valueOf(testAccount.getAccountId()), amount, chargeStatus, returnUrl, transactionId, reference, createdDate, email);
             return this;
         }
 
@@ -187,6 +193,10 @@ public class DatabaseFixtures {
 
         public String getReference() {
             return reference;
+        }
+
+        public String getEmail() {
+            return email;
         }
 
         public ZonedDateTime getCreatedDate() {
