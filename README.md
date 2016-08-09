@@ -322,10 +322,11 @@ Accept application/json
 
 | Field                    | required | Description                               |
 | ------------------------ |:--------:| ----------------------------------------- |
-| `reference`              | X | There (partial or full) reference issued by the government service for this payment. |
-| `status`                 | X | The transaction status |
-| `from_date`               | X | The initial date to search transactions |
-| `to_date`                 | X | The end date we should search transactions|
+| `email`                  | X        | The end-user email used in the charge.    |
+| `reference`              | X        | There (partial or full) reference issued by the government service for this payment. |
+| `status`                 | X        | The transaction status |
+| `from_date`              | X        | The initial date to search transactions |
+| `to_date`                | X        | The end date we should search transactions|
 
 #### Response example
 
