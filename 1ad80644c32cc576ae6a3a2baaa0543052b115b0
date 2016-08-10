@@ -41,3 +41,5 @@ alpha_release-16.approve-date=2016-08-10:14:05:32
 staging-0.tag=alpha_staging-0-16
 
 staging-0.alpha_staging-0-16.date=2016-08-10:13:37:20
+
+staging-0.alpha_staging-0-16.status=success
