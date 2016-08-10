@@ -102,6 +102,7 @@ public class ChargesApiResource {
     @Path(CHARGES_API_PATH)
     @Produces(APPLICATION_JSON)
     public Response getChargesJson(@PathParam(ACCOUNT_ID) Long accountId,
+                                   @QueryParam(EMAIL_KEY) String email,
                                    @QueryParam(REFERENCE_KEY) String reference,
                                    @QueryParam(STATE_KEY) String state,
                                    @QueryParam(FROM_DATE_KEY) String fromDate,
@@ -120,6 +121,7 @@ public class ChargesApiResource {
                         .bimap(handleError,
                                 listCharges(new ChargeSearchParams()
                                         .withGatewayAccountId(accountId)
+                                        .withEmailLike(email)
                                         .withReferenceLike(reference)
                                         .withExternalChargeState(state)
                                         .withFromDate(parseDate(fromDate))

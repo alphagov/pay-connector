@@ -25,6 +25,7 @@ public class ChargeDao extends JpaDao<ChargeEntity> {
     private static final String CREATED_DATE = "createdDate";
     private static final String GATEWAY_ACCOUNT = "gatewayAccount";
     private static final String REFERENCE = "reference";
+    private static final String EMAIL = "email";
 
     private EventDao eventDao;
 
@@ -131,6 +132,8 @@ public class ChargeDao extends JpaDao<ChargeEntity> {
             predicates.add(cb.equal(charge.get(GATEWAY_ACCOUNT).get("id"), params.getGatewayAccountId()));
         if (params.getReference() != null)
             predicates.add(cb.like(charge.get(REFERENCE), '%' + params.getReference() + '%'));
+        if (params.getEmail() != null)
+            predicates.add(cb.like(charge.get(EMAIL), '%' + params.getEmail() + '%'));
         if (params.getChargeStatuses() != null && !params.getChargeStatuses().isEmpty())
             predicates.add(charge.get(STATUS).in(params.getChargeStatuses()));
         if (params.getFromDate() != null)

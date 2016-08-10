@@ -77,6 +77,52 @@ public class ChargeDaoITest extends DaoITestBase {
     }
 
     @Test
+    public void searchChargesByFullEmailMatch() throws Exception {
+        // given
+        insertTestCharge();
+        ChargeSearchParams params = new ChargeSearchParams()
+                .withEmailLike(defaultTestCharge.getEmail());
+
+        // when
+        List<ChargeEntity> charges = chargeDao.findAllBy(params);
+
+        // then
+        assertThat(charges.size(), is(1));
+        ChargeEntity charge = charges.get(0);
+        assertThat(charge.getId(), is(defaultTestCharge.getChargeId()));
+        assertThat(charge.getAmount(), is(defaultTestCharge.getAmount()));
+        assertThat(charge.getReference(), is(defaultTestCharge.getReference()));
+        assertThat(charge.getEmail(), is(defaultTestCharge.getEmail()));
+        assertThat(charge.getDescription(), is(DESCRIPTION));
+        assertThat(charge.getStatus(), is(defaultTestCharge.getChargeStatus().toString()));
+
+        assertDateMatch(charge.getCreatedDate().toString());
+    }
+
+    @Test
+    public void searchChargesByPartialEmailMatch() throws Exception {
+        // given
+        insertTestCharge();
+        ChargeSearchParams params = new ChargeSearchParams()
+                .withEmailLike("alice");
+
+        // when
+        List<ChargeEntity> charges = chargeDao.findAllBy(params);
+
+        // then
+        assertThat(charges.size(), is(1));
+        ChargeEntity charge = charges.get(0);
+        assertThat(charge.getId(), is(defaultTestCharge.getChargeId()));
+        assertThat(charge.getAmount(), is(defaultTestCharge.getAmount()));
+        assertThat(charge.getReference(), is(defaultTestCharge.getReference()));
+        assertThat(charge.getEmail(), is(defaultTestCharge.getEmail()));
+        assertThat(charge.getDescription(), is(DESCRIPTION));
+        assertThat(charge.getStatus(), is(defaultTestCharge.getChargeStatus().toString()));
+
+        assertDateMatch(charge.getCreatedDate().toString());
+    }
+
+    @Test
     public void searchChargesWithDefaultSizeAndPage_shouldGetChargesInCreationDateOrder() throws Exception {
         // given
         insertNewChargeWithId(700L, now().plusHours(1));

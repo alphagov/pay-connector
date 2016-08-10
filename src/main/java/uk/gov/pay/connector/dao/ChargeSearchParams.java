@@ -15,6 +15,7 @@ public class ChargeSearchParams {
 
     private Long gatewayAccountId;
     private String reference;
+    private String email;
     private ZonedDateTime fromDate;
     private ZonedDateTime toDate;
     private Long page;
@@ -28,6 +29,11 @@ public class ChargeSearchParams {
 
     public ChargeSearchParams withGatewayAccountId(Long gatewayAccountId) {
         this.gatewayAccountId = gatewayAccountId;
+        return this;
+    }
+
+    public ChargeSearchParams withEmailLike(String email) {
+        this.email = email;
         return this;
     }
 
@@ -48,6 +54,10 @@ public class ChargeSearchParams {
 
     public String getReference() {
         return reference;
+    }
+
+    public String getEmail() {
+        return email;
     }
 
     public ChargeSearchParams withReferenceLike(String reference) {
@@ -101,6 +111,8 @@ public class ChargeSearchParams {
 
         if (isNotBlank(reference))
             builder.append("&reference=" + reference);
+        if (email != null)
+            builder.append("&email=" + email);
         if (fromDate != null)
             builder.append("&from_date=" + fromDate);
         if (toDate != null)

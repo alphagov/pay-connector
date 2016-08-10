@@ -18,11 +18,12 @@ public class ChargeSearchParamsTest {
     public static final String TO_DATE = "2012-07-30T12:30:40Z[GMT]";
     public static final String EXPECTED_QUERY_STRING =
             "reference=ref" +
-                    "&from_date=" + FROM_DATE +
-                    "&to_date=" + TO_DATE +
-                    "&page=%s" +
-                    "&display_size=%s" +
-                    "&state=created";
+            "&email=alice" +
+            "&from_date=" + FROM_DATE +
+            "&to_date=" + TO_DATE +
+            "&page=%s" +
+            "&display_size=%s" +
+            "&state=created";
 
     @Test
     public void shouldBuildQueryParamsForChargeSearch() throws Exception {
@@ -32,6 +33,7 @@ public class ChargeSearchParamsTest {
                 .withGatewayAccountId(111L)
                 .withPage(2L)
                 .withReferenceLike("ref")
+                .withEmailLike("alice")
                 .withFromDate(ZonedDateTime.parse(FROM_DATE))
                 .withToDate(ZonedDateTime.parse(TO_DATE));
 

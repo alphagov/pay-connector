@@ -344,6 +344,24 @@ public class ChargesApiResourceITest {
     }
 
     @Test
+    public void shouldFilterTransactionsByEmail() throws Exception {
+
+        addCharge(CREATED, "ref-1", now());
+        addCharge(AUTHORISATION_READY, "ref-2", now());
+        addCharge(CAPTURED, "ref-3", now().minusDays(2));
+
+        ValidatableResponse response = getChargeApi
+                .withAccountId(accountId)
+                .withQueryParam("email", "@example.com")
+                .withHeader(HttpHeaders.ACCEPT, APPLICATION_JSON)
+                .getTransactions()
+                .statusCode(OK.getStatusCode())
+                .contentType(JSON)
+                .body("results.size()", is(3))
+                .body("results[0].email", endsWith("example.com"));
+    }
+
+    @Test
     public void shouldShowTotalCountResultsAndHalLinksForCharges() throws Exception {
         addCharge(CREATED, "ref-1", now());
         addCharge(AUTHORISATION_READY, "ref-2", now().minusDays(1));

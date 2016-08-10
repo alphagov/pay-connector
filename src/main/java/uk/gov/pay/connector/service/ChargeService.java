@@ -62,10 +62,9 @@ public class ChargeService {
 
     @Transactional
     public Optional<ChargeResponse> findChargeForAccount(String chargeId, Long accountId, UriInfo uriInfo) {
-        return chargeDao.findByExternalIdAndGatewayAccount(chargeId, accountId)
-                .map(chargeEntity -> {
-                    return buildChargeResponse(uriInfo, chargeEntity);
-                });
+        return chargeDao
+                .findByExternalIdAndGatewayAccount(chargeId, accountId)
+                .map(chargeEntity -> buildChargeResponse(uriInfo, chargeEntity));
     }
 
     public ChargeResponse buildChargeResponse(UriInfo uriInfo, ChargeEntity chargeEntity) {
