@@ -37,3 +37,5 @@ staging-0.alpha_staging-0-15.status=failed
 alpha_release-16.approver=silvia.mandala@digital.cabinet-office.gov.uk
 
 alpha_release-16.approve-date=2016-08-10:14:05:32
+
+staging-0.tag=alpha_staging-0-16
