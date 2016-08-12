@@ -2,6 +2,7 @@ package uk.gov.pay.connector.dao;
 
 import com.google.inject.Provider;
 import com.google.inject.persist.Transactional;
+import org.apache.commons.lang3.StringUtils;
 import uk.gov.pay.connector.model.domain.ChargeEntity;
 import uk.gov.pay.connector.model.domain.ChargeEventEntity;
 import uk.gov.pay.connector.model.domain.ChargeStatus;
@@ -130,9 +131,9 @@ public class ChargeDao extends JpaDao<ChargeEntity> {
         List<Predicate> predicates = new ArrayList<>();
         if (params.getGatewayAccountId() != null)
             predicates.add(cb.equal(charge.get(GATEWAY_ACCOUNT).get("id"), params.getGatewayAccountId()));
-        if (params.getReference() != null)
+        if (StringUtils.isNotBlank(params.getReference()))
             predicates.add(cb.like(charge.get(REFERENCE), '%' + params.getReference() + '%'));
-        if (params.getEmail() != null)
+        if (StringUtils.isNotBlank(params.getEmail()))
             predicates.add(cb.like(charge.get(EMAIL), '%' + params.getEmail() + '%'));
         if (params.getChargeStatuses() != null && !params.getChargeStatuses().isEmpty())
             predicates.add(charge.get(STATUS).in(params.getChargeStatuses()));
