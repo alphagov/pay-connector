@@ -19,3 +19,5 @@ alpha_staging-0-26.approve-date=2016-08-15:13:48:32
 production-0.tag=alpha_production-0-26
 
 production-0.alpha_production-0-26.date=2016-08-15:13:22:44
+
+production-0.alpha_production-0-26.status=success
