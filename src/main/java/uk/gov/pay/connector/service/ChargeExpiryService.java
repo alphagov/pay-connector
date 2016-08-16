@@ -6,10 +6,9 @@ import org.apache.commons.lang3.tuple.Pair;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import uk.gov.pay.connector.dao.ChargeDao;
-import uk.gov.pay.connector.model.CancelGatewayResponse;
-import uk.gov.pay.connector.model.GatewayResponse;
 import uk.gov.pay.connector.model.domain.ChargeEntity;
 import uk.gov.pay.connector.model.domain.ChargeStatus;
+import uk.gov.pay.connector.model.gateway.GatewayResponse;
 import uk.gov.pay.connector.service.transaction.TransactionContext;
 import uk.gov.pay.connector.service.transaction.TransactionFlow;
 import uk.gov.pay.connector.service.transaction.TransactionalOperation;
@@ -21,7 +20,6 @@ import java.util.stream.Collectors;
 
 import static com.google.common.collect.Lists.newArrayList;
 import static java.lang.String.format;
-import static org.apache.commons.lang3.BooleanUtils.negate;
 import static uk.gov.pay.connector.model.domain.ChargeStatus.EXPIRED;
 import static uk.gov.pay.connector.model.domain.ChargeStatus.EXPIRE_CANCEL_FAILED;
 import static uk.gov.pay.connector.service.CancelServiceFunctions.*;
@@ -62,7 +60,7 @@ public class ChargeExpiryService {
     private int expireChargesWithCancellationNotRequired(List<ChargeEntity> nonAuthSuccessCharges) {
         List<ChargeEntity> processedEntities = nonAuthSuccessCharges
                 .stream().map(chargeEntity -> transactionFlowProvider.get()
-                        .executeNext(changeStatusTo(chargeDao,chargeEntity, EXPIRED))
+                        .executeNext(changeStatusTo(chargeDao, chargeEntity, EXPIRED))
                         .complete()
                         .get(ChargeEntity.class))
                 .collect(Collectors.toList());
@@ -78,7 +76,7 @@ public class ChargeExpiryService {
 
         gatewayAuthorizedCharges.forEach(chargeEntity -> {
             ChargeEntity processedEntity = transactionFlowProvider.get()
-                    .executeNext(prepareForTerminate(chargeDao,chargeEntity, EXPIRE_FLOW))
+                    .executeNext(prepareForTerminate(chargeDao, chargeEntity, EXPIRE_FLOW))
                     .executeNext(doGatewayCancel(providers))
                     .executeNext(finishExpireCancel())
                     .complete().get(ChargeEntity.class);
@@ -99,8 +97,8 @@ public class ChargeExpiryService {
         });
 
         unexpectedStatuses.forEach(chargeEntity ->
-                logger.error("ChargeEntity with id {} returned with unexpected status {} during expiry",
-                        chargeEntity.getExternalId(), chargeEntity.getStatus())
+                        logger.error("ChargeEntity with id {} returned with unexpected status {} during expiry",
+                                chargeEntity.getExternalId(), chargeEntity.getStatus())
         );
 
         return Pair.of(
@@ -112,9 +110,9 @@ public class ChargeExpiryService {
     private TransactionalOperation<TransactionContext, ChargeEntity> finishExpireCancel() {
         return context -> {
             ChargeEntity chargeEntity = context.get(ChargeEntity.class);
-            GatewayResponse gatewayResponse = context.get(CancelGatewayResponse.class);
+            GatewayResponse gatewayResponse = context.get(GatewayResponse.class);
             ChargeStatus status;
-            if (responseIsNotSuccessful(gatewayResponse)) {
+            if (gatewayResponse.isFailed()) {
                 logUnsuccessfulResponseReasons(chargeEntity, gatewayResponse);
                 status = EXPIRE_CANCEL_FAILED;
             } else {
@@ -128,15 +126,9 @@ public class ChargeExpiryService {
     }
 
     private void logUnsuccessfulResponseReasons(ChargeEntity chargeEntity, GatewayResponse gatewayResponse) {
-        if (gatewayResponse.isFailed()) {
-            logger.error(format("gateway error: %s %s, while cancelling the charge ID %s",
-                    gatewayResponse.getError().getMessage(),
-                    gatewayResponse.getError().getErrorType(),
-                    chargeEntity.getId()));
-        }
-    }
-
-    private boolean responseIsNotSuccessful(GatewayResponse gatewayResponse) {
-        return negate(gatewayResponse.isSuccessful());
+        gatewayResponse.getGatewayError().ifPresent(error ->
+                logger.error(format("gateway error: %s, while cancelling the charge ID %s",
+                        error,
+                        chargeEntity.getId())));
     }
 }

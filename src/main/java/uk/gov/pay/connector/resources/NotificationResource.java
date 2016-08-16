@@ -7,10 +7,7 @@ import uk.gov.pay.connector.model.StatusUpdates;
 import uk.gov.pay.connector.model.domain.ChargeEntity;
 import uk.gov.pay.connector.model.domain.ChargeStatus;
 import uk.gov.pay.connector.model.domain.GatewayAccountEntity;
-import uk.gov.pay.connector.service.ChargeService;
-import uk.gov.pay.connector.service.ChargeStatusBlacklist;
-import uk.gov.pay.connector.service.PaymentProvider;
-import uk.gov.pay.connector.service.PaymentProviders;
+import uk.gov.pay.connector.service.*;
 import uk.gov.pay.connector.util.NotificationUtil;
 
 import javax.annotation.security.PermitAll;
@@ -71,7 +68,7 @@ public class NotificationResource {
 
         logger.info("Received notification from " + provider + ": " + notification);
 
-        PaymentProvider paymentProvider = providers.resolve(provider);
+        PaymentProvider<BaseResponse> paymentProvider = providers.resolve(provider);
         StatusUpdates statusUpdates = paymentProvider.handleNotification(notification, notificationUtil::payloadChecks, findAccountByTransactionId(provider), accountUpdater(provider));
 
         if (!statusUpdates.successful()) {

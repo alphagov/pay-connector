@@ -6,11 +6,17 @@ import org.apache.commons.lang3.tuple.Pair;
 import org.junit.Assert;
 import org.junit.Before;
 import org.junit.Test;
-import uk.gov.pay.connector.model.*;
+import uk.gov.pay.connector.model.CaptureGatewayRequest;
+import uk.gov.pay.connector.model.GatewayError;
+import uk.gov.pay.connector.model.StatusUpdates;
 import uk.gov.pay.connector.model.domain.Address;
 import uk.gov.pay.connector.model.domain.Card;
 import uk.gov.pay.connector.model.domain.ChargeEntity;
 import uk.gov.pay.connector.model.domain.GatewayAccountEntity;
+import uk.gov.pay.connector.model.gateway.AuthorisationGatewayRequest;
+import uk.gov.pay.connector.model.gateway.GatewayResponse;
+import uk.gov.pay.connector.service.worldpay.WorldpayCaptureResponse;
+import uk.gov.pay.connector.service.worldpay.WorldpayOrderStatusResponse;
 import uk.gov.pay.connector.service.worldpay.WorldpayPaymentProvider;
 
 import javax.ws.rs.client.Client;
@@ -61,8 +67,8 @@ public class WorldpayPaymentProviderTest {
     }
 
     @Test
-    public void shouldSendSuccessfullyAOrderForMerchant() throws Exception {
-        AuthorisationGatewayResponse response = connector.authorise(getCardAuthorisationRequest());
+    public void shouldSendSuccessfullyAnOrderForMerchant() throws Exception {
+        GatewayResponse<WorldpayOrderStatusResponse> response = connector.authorise(getCardAuthorisationRequest());
         assertTrue(response.isSuccessful());
     }
 
@@ -70,35 +76,37 @@ public class WorldpayPaymentProviderTest {
     public void shouldCaptureAPaymentSuccessfully() throws Exception {
         mockWorldpaySuccessfulCaptureResponse();
 
-        CaptureGatewayResponse response = connector.capture(getCaptureRequest());
+        GatewayResponse response = connector.capture(getCaptureRequest());
         assertTrue(response.isSuccessful());
     }
 
     @Test
     public void shouldErrorIfAuthorisationIsUnsuccessful() {
         mockWorldpayErrorResponse(401);
-        AuthorisationGatewayResponse response = connector.authorise(getCardAuthorisationRequest());
+        GatewayResponse<WorldpayOrderStatusResponse> response = connector.authorise(getCardAuthorisationRequest());
 
-        assertThat(response.isSuccessful(), is(false));
-        assertEquals(response.getError(), new ErrorResponse("Unexpected Response Code From Gateway", UNEXPECTED_STATUS_CODE_FROM_GATEWAY));
+        assertThat(response.isFailed(), is(true));
+        assertThat(response.getGatewayError().isPresent(), is(true));
+        assertEquals(response.getGatewayError().get(), new GatewayError("Unexpected Response Code From Gateway", UNEXPECTED_STATUS_CODE_FROM_GATEWAY));
     }
 
     @Test
     public void shouldErrorIfOrderReferenceNotKnownInCapture() {
         mockWorldpayErrorResponse(200);
-        CaptureGatewayResponse response = connector.capture(getCaptureRequest());
+        GatewayResponse<WorldpayCaptureResponse> response = connector.capture(getCaptureRequest());
 
-        assertThat(response.isSuccessful(), is(false));
-        assertEquals(response.getError(), new ErrorResponse("Order has already been paid", GENERIC_GATEWAY_ERROR));
+        assertThat(response.isFailed(), is(true));
+        assertThat(response.getGatewayError().isPresent(), is(true));
+        assertEquals(response.getGatewayError().get(), new GatewayError("[5] Order has already been paid", GENERIC_GATEWAY_ERROR));
     }
 
     @Test
     public void shouldErrorIfWorldpayResponseIsNot200() {
         mockWorldpayErrorResponse(400);
-        CaptureGatewayResponse response = connector.capture(getCaptureRequest());
-
-        assertThat(response.isSuccessful(), is(false));
-        assertEquals(response.getError(), new ErrorResponse("Unexpected Response Code From Gateway", UNEXPECTED_STATUS_CODE_FROM_GATEWAY));
+        GatewayResponse<WorldpayCaptureResponse> response = connector.capture(getCaptureRequest());
+        assertThat(response.isFailed(), is(true));
+        assertThat(response.getGatewayError().isPresent(), is(true));
+        assertEquals(response.getGatewayError().get(), new GatewayError("Unexpected Response Code From Gateway", UNEXPECTED_STATUS_CODE_FROM_GATEWAY));
     }
 
     @Test
@@ -291,11 +299,10 @@ public class WorldpayPaymentProviderTest {
         return gatewayAccount;
     }
 
-    private void assertEquals(ErrorResponse actual, ErrorResponse expected) {
+    private void assertEquals(GatewayError actual, GatewayError expected) {
         assertNotNull(actual);
         assertThat(actual.getMessage(), is(expected.getMessage()));
         assertThat(actual.getErrorType(), is(expected.getErrorType()));
-
     }
 
     private CaptureGatewayRequest getCaptureRequest() {

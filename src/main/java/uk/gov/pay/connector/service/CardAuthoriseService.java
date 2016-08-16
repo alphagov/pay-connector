@@ -1,27 +1,27 @@
 package uk.gov.pay.connector.service;
 
 import com.google.inject.persist.Transactional;
+import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.lang3.tuple.Pair;
 import uk.gov.pay.connector.dao.ChargeDao;
 import uk.gov.pay.connector.exception.ChargeNotFoundRuntimeException;
 import uk.gov.pay.connector.exception.GenericGatewayRuntimeException;
-import uk.gov.pay.connector.model.AuthorisationGatewayRequest;
-import uk.gov.pay.connector.model.AuthorisationGatewayResponse;
-import uk.gov.pay.connector.model.GatewayResponse;
+import uk.gov.pay.connector.exception.OperationAlreadyInProgressRuntimeException;
 import uk.gov.pay.connector.model.domain.Card;
 import uk.gov.pay.connector.model.domain.ChargeEntity;
 import uk.gov.pay.connector.model.domain.ChargeStatus;
+import uk.gov.pay.connector.model.gateway.AuthorisationGatewayRequest;
+import uk.gov.pay.connector.model.gateway.GatewayResponse;
 
 import javax.inject.Inject;
 import java.util.Optional;
 import java.util.function.Supplier;
 
 import static java.lang.String.format;
-import static uk.gov.pay.connector.model.GatewayResponse.ResponseStatus.IN_PROGRESS;
-import static uk.gov.pay.connector.model.domain.ChargeStatus.ENTERING_CARD_DETAILS;
+import static uk.gov.pay.connector.model.domain.ChargeStatus.*;
 import static uk.gov.pay.connector.service.CardExecutorService.ExecutionStatus;
 
-public class CardAuthoriseService extends CardService implements TransactionalGatewayOperation {
+public class CardAuthoriseService extends CardService<BaseAuthoriseResponse> implements TransactionalGatewayOperation<BaseAuthoriseResponse> {
 
     private static ChargeStatus[] legalStates = new ChargeStatus[]{
             ENTERING_CARD_DETAILS
@@ -46,7 +46,7 @@ public class CardAuthoriseService extends CardService implements TransactionalGa
                 case COMPLETED:
                     return executeResult.getRight();
                 case IN_PROGRESS:
-                    return inProgressGatewayResponse(ChargeStatus.fromString(chargeEntity.get().getStatus()), chargeId);
+                    throw new OperationAlreadyInProgressRuntimeException(OperationType.AUTHORISATION.getValue(), chargeId);
                 default:
                     throw new GenericGatewayRuntimeException("Exception occurred while doing authorisation");
             }
@@ -58,29 +58,40 @@ public class CardAuthoriseService extends CardService implements TransactionalGa
     @Transactional
     @Override
     public ChargeEntity preOperation(ChargeEntity chargeEntity) {
-        return preOperation(chargeEntity, OperationType.AUTHORISATION, legalStates, ChargeStatus.AUTHORISATION_READY);
+        chargeEntity = preOperation(chargeEntity, OperationType.AUTHORISATION, legalStates, AUTHORISATION_READY);
+        getPaymentProviderFor(chargeEntity).generateTransactionId().ifPresent(chargeEntity::setGatewayTransactionId);
+
+        logger.info(format("Card authorisation request sent - charge_external_id = %s, transaction_id = %s, status = %s",
+                chargeEntity.getExternalId(), chargeEntity.getGatewayTransactionId(), fromString(chargeEntity.getStatus())));
+
+        return chargeEntity;
     }
 
     @Override
-    public GatewayResponse operation(ChargeEntity chargeEntity) {
+    public GatewayResponse<BaseAuthoriseResponse> operation(ChargeEntity chargeEntity) {
         return getPaymentProviderFor(chargeEntity)
                 .authorise(AuthorisationGatewayRequest.valueOf(chargeEntity, this.cardDetails));
     }
 
-    private GatewayResponse inProgressGatewayResponse(ChargeStatus chargeStatus, String id) {
-        return new AuthorisationGatewayResponse(IN_PROGRESS, null, chargeStatus, id);
-    }
-
     @Transactional
     @Override
-    public GatewayResponse postOperation(ChargeEntity chargeEntity, GatewayResponse operationResponse) {
-        AuthorisationGatewayResponse authorisationGatewayResponse = (AuthorisationGatewayResponse) operationResponse;
-
-        logger.info(format("Card authorisation response received - status = %s, charge_external_id = %s", authorisationGatewayResponse.getNewChargeStatus(), chargeEntity.getExternalId()));
-
+    public GatewayResponse<BaseAuthoriseResponse> postOperation(ChargeEntity chargeEntity, GatewayResponse<BaseAuthoriseResponse> operationResponse) {
         ChargeEntity reloadedCharge = chargeDao.merge(chargeEntity);
-        reloadedCharge.setStatus(authorisationGatewayResponse.getNewChargeStatus());
-        reloadedCharge.setGatewayTransactionId(authorisationGatewayResponse.getTransactionId());
+
+        ChargeStatus status = operationResponse.getBaseResponse()
+                .map(response -> response.isAuthorised() ? AUTHORISATION_SUCCESS : AUTHORISATION_REJECTED)
+                .orElse(AUTHORISATION_ERROR);
+        String transactionId = operationResponse.getBaseResponse()
+                .map(BaseAuthoriseResponse::getTransactionId).orElse("");
+
+        logger.info(format("Card authorisation response received - charge_external_id = %s, transaction_id = %s, status = %s",
+                chargeEntity.getExternalId(), transactionId, status));
+        reloadedCharge.setStatus(status);
+        if (StringUtils.isBlank(transactionId)) {
+            logger.warn("Card authorisation response received with no transaction id.");
+        } else {
+            reloadedCharge.setGatewayTransactionId(transactionId);
+        }
 
         chargeDao.mergeAndNotifyStatusHasChanged(reloadedCharge);
 

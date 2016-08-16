@@ -13,7 +13,6 @@ import java.nio.charset.Charset;
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.nullValue;
 import static org.hamcrest.core.Is.is;
-import static org.junit.Assert.assertTrue;
 import static org.mockserver.integration.ClientAndServer.startClientAndServer;
 import static org.mockserver.model.HttpRequest.request;
 import static org.mockserver.model.HttpResponse.response;
@@ -35,7 +34,6 @@ public class XMLUnmarshallerTest {
     public void shouldUnmarshallXmlIgnoringDTD() throws Exception {
 
         String successPayload = Resources.toString(Resources.getResource("templates/it/worldpay-cancel-notfication-example-it-dtd-validation-disabled.xml"), Charset.defaultCharset())
-                .replace("{{transactionId}}", "MyTransactionId")
                 .replace("{{port}}", String.valueOf(MOCKSERVER_PORT));
 
         mockServer
@@ -44,7 +42,8 @@ public class XMLUnmarshallerTest {
 
         WorldpayCancelResponse response = XMLUnmarshaller.unmarshall(successPayload, WorldpayCancelResponse.class);
 
-        assertTrue(response.isCancelled());
+        assertThat(response.getTransactionId(), is("transaction-id"));
+        assertThat(response.getErrorCode(), is(nullValue()));
         assertThat(response.getErrorMessage(), is(nullValue()));
 
         mockServer.verify(request().withPath("/paymentService_v1.dtd"), exactly(0));

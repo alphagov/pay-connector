@@ -7,6 +7,9 @@ import org.slf4j.LoggerFactory;
 import uk.gov.pay.connector.model.*;
 import uk.gov.pay.connector.model.domain.ChargeStatus;
 import uk.gov.pay.connector.model.domain.GatewayAccountEntity;
+import uk.gov.pay.connector.model.gateway.AuthorisationGatewayRequest;
+import uk.gov.pay.connector.model.gateway.GatewayResponse;
+import uk.gov.pay.connector.service.BaseResponse;
 import uk.gov.pay.connector.service.GatewayClient;
 import uk.gov.pay.connector.service.PaymentProvider;
 
@@ -17,75 +20,50 @@ import java.util.function.Consumer;
 import java.util.function.Function;
 import java.util.stream.Collectors;
 
-import static fj.data.Either.reduce;
 import static java.lang.String.format;
-import static uk.gov.pay.connector.model.AuthorisationGatewayResponse.authorisationFailureResponse;
-import static uk.gov.pay.connector.model.AuthorisationGatewayResponse.successfulAuthorisationResponse;
-import static uk.gov.pay.connector.model.CancelGatewayResponse.cancelFailureResponse;
-import static uk.gov.pay.connector.model.CancelGatewayResponse.successfulCancelResponse;
-import static uk.gov.pay.connector.model.CaptureGatewayResponse.captureFailureResponse;
-import static uk.gov.pay.connector.model.CaptureGatewayResponse.successfulCaptureResponse;
-import static uk.gov.pay.connector.model.ErrorResponse.baseError;
-import static uk.gov.pay.connector.model.domain.ChargeStatus.*;
 import static uk.gov.pay.connector.service.OrderCaptureRequestBuilder.aSmartpayOrderCaptureRequest;
 import static uk.gov.pay.connector.service.OrderSubmitRequestBuilder.aSmartpayOrderSubmitRequest;
 import static uk.gov.pay.connector.service.smartpay.SmartpayOrderCancelRequestBuilder.aSmartpayOrderCancelRequest;
 
-public class SmartpayPaymentProvider implements PaymentProvider {
+public class SmartpayPaymentProvider extends BasePaymentProvider implements PaymentProvider<BaseResponse> {
     private static final String MERCHANT_CODE = "MerchantAccount";
     public static final String ACCEPTED = "[accepted]";
     private final Logger logger = LoggerFactory.getLogger(SmartpayPaymentProvider.class);
-
-    private final GatewayClient client;
-    private ObjectMapper objectMapper;
+    private final ObjectMapper objectMapper;
 
     public SmartpayPaymentProvider(GatewayClient client, ObjectMapper objectMapper) {
-        this.client = client;
+        super(client);
         this.objectMapper = objectMapper;
     }
 
     @Override
-    public AuthorisationGatewayResponse authorise(AuthorisationGatewayRequest request) {
-        String requestString = buildOrderSubmitFor(request);
-
-        return reduce(
-                client
-                        .postXMLRequestFor(request.getGatewayAccount(), requestString)
-                        .bimap(
-                                AuthorisationGatewayResponse::authorisationFailureResponse,
-                                this::mapToCardAuthorisationResponse
-                        )
-        );
+    public Optional<String> generateTransactionId() {
+        return Optional.empty();
     }
 
     @Override
-    public CaptureGatewayResponse capture(CaptureGatewayRequest request) {
-        String captureRequestString = buildOrderCaptureFor(request);
-
-        return reduce(
-                client
-                        .postXMLRequestFor(request.getGatewayAccount(), captureRequestString)
-                        .bimap(
-                                CaptureGatewayResponse::captureFailureResponse,
-                                this::mapToCaptureResponse
-                        )
-        );
+    public GatewayResponse authorise(AuthorisationGatewayRequest request) {
+        return sendReceive(request, buildSubmitOrderFor(), SmartpayAuthorisationResponse.class);
     }
 
     @Override
-    public CancelGatewayResponse cancel(CancelGatewayRequest request) {
-        return reduce(
-                client
-                        .postXMLRequestFor(request.getGatewayAccount(), buildCancelOrderFor(request))
-                        .bimap(
-                                CancelGatewayResponse::cancelFailureResponse,
-                                this::mapToCancelResponse
-                        )
-        );
+    public GatewayResponse capture(CaptureGatewayRequest request) {
+        return sendReceive(request, buildCaptureOrderFor(), SmartpayCaptureResponse.class);
     }
 
     @Override
-    public RefundGatewayResponse refund(RefundGatewayRequest request) {
+    public GatewayResponse refund(RefundGatewayRequest request) {
+        throw new UnsupportedOperationException("Operation not supported");
+    }
+
+    @Override
+    public GatewayResponse cancel(CancelGatewayRequest request) {
+        return sendReceive(request, buildCancelOrderFor(), SmartpayCancelResponse.class);
+
+    }
+
+    @Override
+    public GatewayResponse inquire(String transactionId, GatewayAccountEntity gatewayAccount) {
         throw new UnsupportedOperationException("Operation not supported");
     }
 
@@ -137,48 +115,8 @@ public class SmartpayPaymentProvider implements PaymentProvider {
         return Pair.of(notification.getTransactionId(), notification.getChargeStatus().get());
     }
 
-    private AuthorisationGatewayResponse mapToCardAuthorisationResponse(GatewayClient.Response response) {
-        return reduce(
-                client.unmarshallResponse(response, SmartpayAuthorisationResponse.class)
-                        .bimap(
-                                AuthorisationGatewayResponse::authorisationFailureResponse,
-                                (sResponse) -> sResponse.isAuthorised() ?
-                                        successfulAuthorisationResponse(AUTHORISATION_SUCCESS, sResponse.getPspReference()) :
-                                        authorisationFailureResponse(sResponse.getPspReference(), sResponse.getErrorMessage())
-                        )
-        );
-    }
-
-    private CaptureGatewayResponse mapToCaptureResponse(GatewayClient.Response response) {
-        return reduce(
-                client.unmarshallResponse(response, SmartpayCaptureResponse.class)
-                        .bimap(
-                                CaptureGatewayResponse::captureFailureResponse,
-                                (sResponse) -> sResponse.isCaptured() ?
-                                        successfulCaptureResponse(CAPTURE_SUBMITTED) :
-                                        captureFailureResponse(sResponse.getErrorMessage(), sResponse.getPspReference())
-                        )
-        );
-    }
-
-    private CancelGatewayResponse mapToCancelResponse(GatewayClient.Response response) {
-        return reduce(
-                client.unmarshallResponse(response, SmartpayCancelResponse.class)
-                        .bimap(
-                                CancelGatewayResponse::cancelFailureResponse,
-                                (sResponse) -> {
-                                    if (sResponse.isCancelled()) {
-                                        return successfulCancelResponse(SYSTEM_CANCELLED);
-                                    } else {
-                                        logger.error(format("Failed to cancel charge: %s", sResponse.getErrorMessage()));
-                                        return cancelFailureResponse(baseError(sResponse.getErrorMessage()));
-                                    }
-                                })
-        );
-    }
-
-    private String buildOrderSubmitFor(AuthorisationGatewayRequest request) {
-        return aSmartpayOrderSubmitRequest()
+    private Function<AuthorisationGatewayRequest, String> buildSubmitOrderFor() {
+        return request -> aSmartpayOrderSubmitRequest()
                 .withMerchantCode(MERCHANT_CODE)
                 .withPaymentPlatformReference(request.getChargeId())
                 .withDescription(request.getDescription())
@@ -187,18 +125,18 @@ public class SmartpayPaymentProvider implements PaymentProvider {
                 .build();
     }
 
-    private String buildCancelOrderFor(CancelGatewayRequest request) {
-        return aSmartpayOrderCancelRequest()
-                .withMerchantCode(MERCHANT_CODE)
-                .withTransactionId(request.getTransactionId())
-                .build();
-    }
-
-    private String buildOrderCaptureFor(CaptureGatewayRequest request) {
-        return aSmartpayOrderCaptureRequest()
+    private Function<CaptureGatewayRequest, String> buildCaptureOrderFor() {
+        return request -> aSmartpayOrderCaptureRequest()
                 .withMerchantCode(MERCHANT_CODE)
                 .withTransactionId(request.getTransactionId())
                 .withAmount(request.getAmount())
+                .build();
+    }
+
+    private Function<CancelGatewayRequest, String> buildCancelOrderFor() {
+        return request -> aSmartpayOrderCancelRequest()
+                .withMerchantCode(MERCHANT_CODE)
+                .withTransactionId(request.getTransactionId())
                 .build();
     }
 }

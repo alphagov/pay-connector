@@ -179,7 +179,7 @@ public class WorldpayRefundITest extends CardResourceITestBase {
         worldpay.mockRefundError();
         postRefundFor(defaultTestCharge.getExternalChargeId(), refundAmount)
                 .statusCode(INTERNAL_SERVER_ERROR.getStatusCode())
-                .body("message", is("Something went wrong."));
+                .body("message", is("[2] Something went wrong."));
 
         java.util.List<Map<String, Object>> refundsFoundByChargeId = databaseTestHelper.getRefundsByChargeId(defaultTestCharge.getChargeId());
         assertThat(refundsFoundByChargeId.size(), is(1));

@@ -62,9 +62,8 @@ public class ChargeCancelFrontendResourceITest extends CardResourceITestBase {
 
     @Test
     public void respondWith204WithLockingState_whenCancellationAfterAuth() {
-        String gatewayTransactionId = "gatewayTransactionId";
-        String chargeId = addCharge(AUTHORISATION_SUCCESS, "ref", ZonedDateTime.now().minusHours(1), gatewayTransactionId);
-        worldpay.mockCancelSuccess(gatewayTransactionId);
+        String chargeId = addCharge(AUTHORISATION_SUCCESS, "ref", ZonedDateTime.now().minusHours(1), "transaction-id");
+        worldpay.mockCancelSuccess();
 
         userCancelChargeAndCheckApiStatus(chargeId, USER_CANCELLED, NO_CONTENT.getStatusCode());
 

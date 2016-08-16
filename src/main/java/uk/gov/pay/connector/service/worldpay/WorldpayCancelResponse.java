@@ -1,26 +1,23 @@
 package uk.gov.pay.connector.service.worldpay;
 
 import org.eclipse.persistence.oxm.annotations.XmlPath;
+import uk.gov.pay.connector.service.BaseCancelResponse;
 
 import javax.xml.bind.annotation.XmlRootElement;
 
-import static org.apache.commons.lang3.StringUtils.isNotBlank;
-import static org.apache.commons.lang3.StringUtils.trim;
-
 @XmlRootElement(name = "paymentService")
-public class WorldpayCancelResponse {
+public class WorldpayCancelResponse extends WorldpayBaseResponse implements BaseCancelResponse {
 
     @XmlPath("reply/ok/cancelReceived/@orderCode")
-    private String transactionIdForOk;
+    private String transactionId;
 
-    @XmlPath("reply/error/text()")
-    private String errorMessage;
-
-    public boolean isCancelled() {
-        return isNotBlank(transactionIdForOk);
+    @Override
+    public String getTransactionId() {
+        return transactionId;
     }
 
-    public String getErrorMessage() {
-        return trim(errorMessage);
+    public void setTransactionId(String transactionId) {
+        this.transactionId = transactionId;
     }
+
 }

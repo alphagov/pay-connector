@@ -1,14 +1,14 @@
 package uk.gov.pay.connector.service;
 
 import uk.gov.pay.connector.exception.ConflictRuntimeException;
-import uk.gov.pay.connector.model.GatewayResponse;
 import uk.gov.pay.connector.model.domain.ChargeEntity;
+import uk.gov.pay.connector.model.gateway.GatewayResponse;
 
 import javax.persistence.OptimisticLockException;
 
-interface TransactionalGatewayOperation {
+interface TransactionalGatewayOperation<T extends BaseResponse> {
 
-    default GatewayResponse executeGatewayOperationFor(ChargeEntity chargeEntity) {
+    default GatewayResponse<T> executeGatewayOperationFor(ChargeEntity chargeEntity) {
         ChargeEntity preOperationResponse;
         try {
             preOperationResponse = preOperation(chargeEntity);
@@ -16,15 +16,14 @@ interface TransactionalGatewayOperation {
             throw new ConflictRuntimeException(chargeEntity.getExternalId());
         }
 
-        GatewayResponse operationResponse = operation(preOperationResponse);
-        GatewayResponse postOperationResponse = postOperation(preOperationResponse, operationResponse);
+        GatewayResponse<T> operationResponse = operation(preOperationResponse);
 
-        return postOperationResponse;
+        return postOperation(preOperationResponse, operationResponse);
     }
 
     ChargeEntity preOperation(ChargeEntity chargeEntity);
 
-    GatewayResponse operation(ChargeEntity chargeEntity);
+    GatewayResponse<T> operation(ChargeEntity chargeEntity);
 
-    GatewayResponse postOperation(ChargeEntity chargeEntity, GatewayResponse operationResponse);
+    GatewayResponse<T> postOperation(ChargeEntity chargeEntity, GatewayResponse<T> operationResponse);
 }

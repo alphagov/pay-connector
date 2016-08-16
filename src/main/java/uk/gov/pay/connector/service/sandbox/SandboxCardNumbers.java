@@ -15,7 +15,11 @@ public class SandboxCardNumbers {
         return GOOD_CARDS.contains(cardNumber);
     }
 
-    public static boolean isInvalidCard(String cardNumber) {
+    public static boolean isRejectedCard(String cardNumber) {
+        return REJECTED_CARDS.containsKey(cardNumber);
+    }
+
+    public static boolean isErrorCard(String cardNumber) {
         return ERROR_CARDS.containsKey(cardNumber);
     }
 
@@ -41,8 +45,10 @@ public class SandboxCardNumbers {
     private static final String PROCESSING_ERROR_CARD_NUMBER = "4000000000000119";
 
     private static final Map<String, CardError> ERROR_CARDS = ImmutableMap.of(
+            PROCESSING_ERROR_CARD_NUMBER, new CardError(AUTHORISATION_ERROR, "This transaction could be not be processed."));
+
+    private static final Map<String, CardError> REJECTED_CARDS = ImmutableMap.of(
             DECLINED_CARD_NUMBER, new CardError(AUTHORISATION_REJECTED, "This transaction was declined."),
-            PROCESSING_ERROR_CARD_NUMBER, new CardError(AUTHORISATION_ERROR, "This transaction could be not be processed."),
             EXPIRED_CARD_NUMBER, new CardError(AUTHORISATION_REJECTED, "The card is expired."),
             CVC_ERROR_CARD_NUMBER, new CardError(AUTHORISATION_REJECTED, "The CVC code is incorrect."));
 }

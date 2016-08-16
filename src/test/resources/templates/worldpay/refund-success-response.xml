@@ -4,7 +4,7 @@
 <paymentService version="1.4" merchantCode="MERCHANTCODE">
     <reply>
         <ok>
-            <refundReceived orderCode="fd80a5c3-f51d-41ba-847d-6d7e531f2c30">
+            <refundReceived orderCode="transaction-id">
                 <amount value="500" currencyCode="GBP" exponent="2" debitCreditIndicator="credit"/>
             </refundReceived>
         </ok>

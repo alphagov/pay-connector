@@ -39,7 +39,7 @@ public class SmartpayMockClient {
     }
 
     public void mockErrorResponse() {
-        String errorResponse = loadFromTemplate("error-response.xml", "");
+        String errorResponse = loadFromTemplate("authorisation-error-response.xml", "");
         paymentServiceResponse(errorResponse);
     }
 

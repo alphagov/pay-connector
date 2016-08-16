@@ -6,18 +6,19 @@ import org.junit.Test;
 import org.junit.rules.ExpectedException;
 import org.junit.runner.RunWith;
 import org.mockito.ArgumentCaptor;
+import org.mockito.InOrder;
 import org.mockito.Mock;
+import org.mockito.Mockito;
 import org.mockito.runners.MockitoJUnitRunner;
 import uk.gov.pay.connector.exception.ChargeNotFoundRuntimeException;
 import uk.gov.pay.connector.exception.ConflictRuntimeException;
 import uk.gov.pay.connector.exception.IllegalStateRuntimeException;
 import uk.gov.pay.connector.exception.OperationAlreadyInProgressRuntimeException;
 import uk.gov.pay.connector.model.CaptureGatewayRequest;
-import uk.gov.pay.connector.model.CaptureGatewayResponse;
-import uk.gov.pay.connector.model.ErrorResponse;
-import uk.gov.pay.connector.model.GatewayResponse;
 import uk.gov.pay.connector.model.domain.ChargeEntity;
 import uk.gov.pay.connector.model.domain.ChargeStatus;
+import uk.gov.pay.connector.model.gateway.GatewayResponse;
+import uk.gov.pay.connector.service.worldpay.WorldpayCaptureResponse;
 
 import javax.persistence.OptimisticLockException;
 import java.util.Optional;
@@ -40,27 +41,41 @@ public class CardCaptureServiceTest extends CardServiceTest {
     private CardCaptureService cardCaptureService;
 
     @Before
-    public void beforeTest(){
+    public void beforeTest() {
         cardCaptureService = new CardCaptureService(mockedChargeDao, mockedProviders, mockUserNotificationService);
+    }
+
+    public void setupPaymentProviderMock(String transactionId, String errorCode) {
+        WorldpayCaptureResponse worldpayResponse = mock(WorldpayCaptureResponse.class);
+        when(worldpayResponse.getTransactionId()).thenReturn(transactionId);
+        when(worldpayResponse.getErrorCode()).thenReturn(errorCode);
+        GatewayResponse captureResponse = GatewayResponse.with(worldpayResponse);
+        when(mockedPaymentProvider.capture(any())).thenReturn(captureResponse);
     }
 
     @Test
     public void shouldCaptureACharge() throws Exception {
-        Long chargeId = 1L;
         String gatewayTxId = "theTxId";
 
-        ChargeEntity charge = createNewChargeWith(chargeId, AUTHORISATION_SUCCESS);
+        ChargeEntity charge = createNewChargeWith(1L, AUTHORISATION_SUCCESS);
         charge.setGatewayTransactionId(gatewayTxId);
 
+        ChargeEntity reloadedCharge = spy(charge);
         when(mockedChargeDao.findByExternalId(charge.getExternalId()))
                 .thenReturn(Optional.of(charge));
         when(mockedChargeDao.merge(any()))
-                .thenReturn(charge);
+                .thenReturn(reloadedCharge)
+                .thenReturn(reloadedCharge);
 
-        mockSuccessfulCapture();
+        setupPaymentProviderMock(gatewayTxId, null);
+        when(mockedProviders.resolve(charge.getGatewayAccount().getGatewayName())).thenReturn(mockedPaymentProvider);
         GatewayResponse response = cardCaptureService.doCapture(charge.getExternalId());
 
-        assertThat(response, is(aSuccessfulResponse()));
+        assertThat(response.isSuccessful(), is(true));
+        InOrder inOrder = Mockito.inOrder(reloadedCharge);
+        inOrder.verify(reloadedCharge).setStatus(CAPTURE_READY);
+        inOrder.verify(reloadedCharge).setStatus(CAPTURE_SUBMITTED);
+
         ArgumentCaptor<ChargeEntity> argumentCaptor = ArgumentCaptor.forClass(ChargeEntity.class);
         verify(mockedChargeDao).mergeAndNotifyStatusHasChanged(argumentCaptor.capture());
 
@@ -71,7 +86,7 @@ public class CardCaptureServiceTest extends CardServiceTest {
         assertThat(request.getValue().getTransactionId(), is(gatewayTxId));
 
         // verify an email notification is sent for a successful capture
-        verify(mockUserNotificationService).notifyPaymentSuccessEmail(charge);
+        verify(mockUserNotificationService).notifyPaymentSuccessEmail(reloadedCharge);
     }
 
     @Test(expected = ChargeNotFoundRuntimeException.class)
@@ -132,37 +147,28 @@ public class CardCaptureServiceTest extends CardServiceTest {
 
     @Test
     public void shouldUpdateChargeWithCaptureErrorWhenCaptureFails() {
-        Long chargeId = 1L;
         String gatewayTxId = "theTxId";
-        ChargeEntity charge = createNewChargeWith(chargeId, AUTHORISATION_SUCCESS);
+        ChargeEntity charge = createNewChargeWith(1L, AUTHORISATION_SUCCESS);
         charge.setGatewayTransactionId(gatewayTxId);
-        ChargeEntity reloadedCharge = mock(ChargeEntity.class);
+        ChargeEntity reloadedCharge = spy(charge);
 
         when(mockedChargeDao.findByExternalId(charge.getExternalId()))
                 .thenReturn(Optional.of(charge));
         when(mockedChargeDao.merge(any()))
-                .thenReturn(charge)
+                .thenReturn(reloadedCharge)
                 .thenReturn(reloadedCharge);
-        mockUnsuccessfulCapture();
+
+        setupPaymentProviderMock(gatewayTxId, "error-code");
+        when(mockedProviders.resolve(charge.getGatewayAccount().getGatewayName())).thenReturn(mockedPaymentProvider);
+
         GatewayResponse response = cardCaptureService.doCapture(charge.getExternalId());
-        assertThat(response, is(anUnSuccessfulResponse()));
-        verify(reloadedCharge, times(1)).setStatus(CAPTURE_ERROR);
+        assertThat(response.isFailed(), is(true));
+
+        InOrder inOrder = Mockito.inOrder(reloadedCharge);
+        inOrder.verify(reloadedCharge).setStatus(CAPTURE_READY);
+        inOrder.verify(reloadedCharge).setStatus(CAPTURE_ERROR);
 
         // verify an email notification is not sent when an unsuccessful capture
         verifyZeroInteractions(mockUserNotificationService);
-    }
-
-    private void mockSuccessfulCapture() {
-        when(mockedProviders.resolve(providerName))
-                .thenReturn(mockedPaymentProvider);
-        when(mockedPaymentProvider.capture(any()))
-                .thenReturn(CaptureGatewayResponse.successfulCaptureResponse(CAPTURE_SUBMITTED));
-    }
-
-    private void mockUnsuccessfulCapture() {
-        when(mockedProviders.resolve(providerName))
-                .thenReturn(mockedPaymentProvider);
-        when(mockedPaymentProvider.capture(any()))
-                .thenReturn(CaptureGatewayResponse.captureFailureResponse(ErrorResponse.baseError("error")));
     }
 }

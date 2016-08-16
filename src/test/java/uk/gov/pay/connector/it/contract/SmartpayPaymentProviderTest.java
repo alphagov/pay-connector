@@ -4,19 +4,26 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import com.google.common.collect.ImmutableMap;
 import com.google.common.io.Resources;
 import org.apache.commons.lang3.tuple.Pair;
+import org.hamcrest.CoreMatchers;
 import org.junit.Assume;
 import org.junit.Before;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.mockito.runners.MockitoJUnitRunner;
-import uk.gov.pay.connector.model.*;
+import uk.gov.pay.connector.model.CancelGatewayRequest;
+import uk.gov.pay.connector.model.CaptureGatewayRequest;
+import uk.gov.pay.connector.model.StatusUpdates;
 import uk.gov.pay.connector.model.domain.Address;
 import uk.gov.pay.connector.model.domain.Card;
 import uk.gov.pay.connector.model.domain.ChargeEntity;
 import uk.gov.pay.connector.model.domain.GatewayAccountEntity;
+import uk.gov.pay.connector.model.gateway.AuthorisationGatewayRequest;
+import uk.gov.pay.connector.model.gateway.GatewayResponse;
 import uk.gov.pay.connector.service.GatewayClient;
 import uk.gov.pay.connector.service.PaymentProvider;
+import uk.gov.pay.connector.service.smartpay.SmartpayAuthorisationResponse;
 import uk.gov.pay.connector.service.smartpay.SmartpayPaymentProvider;
+import uk.gov.pay.connector.service.worldpay.WorldpayCaptureResponse;
 import uk.gov.pay.connector.util.TestClientFactory;
 
 import javax.ws.rs.client.Client;
@@ -28,7 +35,7 @@ import java.util.Optional;
 import java.util.function.Consumer;
 
 import static com.google.common.io.Resources.getResource;
-import static org.hamcrest.CoreMatchers.hasItem;
+import static org.hamcrest.CoreMatchers.*;
 import static org.hamcrest.collection.IsIterableContainingInOrder.contains;
 import static org.hamcrest.core.Is.is;
 import static org.junit.Assert.*;
@@ -85,52 +92,64 @@ public class SmartpayPaymentProviderTest {
         ));
         accountWithInvalidCredentials.setType(TEST);
 
+        String transactionId = "transaction-id";
+
         AuthorisationGatewayRequest request = getCardAuthorisationRequest(accountWithInvalidCredentials);
-        AuthorisationGatewayResponse response = paymentProvider.authorise(request);
+        GatewayResponse<SmartpayAuthorisationResponse> response = paymentProvider.authorise(request);
 
         assertFalse(response.isSuccessful());
-        assertNotNull(response.getError());
+        assertNotNull(response.getGatewayError());
     }
 
     @Test
     public void shouldSuccessfullySendACaptureRequest() throws Exception {
         PaymentProvider paymentProvider = getSmartpayPaymentProvider();
-        AuthorisationGatewayResponse response = testCardAuthorisation(paymentProvider, validGatewayAccount);
+        GatewayResponse<SmartpayAuthorisationResponse> response = testCardAuthorisation(paymentProvider, validGatewayAccount);
+
+        assertThat(response.getBaseResponse().isPresent(), CoreMatchers.is(true));
+        String transactionId = response.getBaseResponse().get().getPspReference();
+        assertThat(transactionId, CoreMatchers.is(not(nullValue())));
 
         ChargeEntity chargeEntity = aValidChargeEntity()
-                .withTransactionId(response.getTransactionId())
+                .withTransactionId(transactionId)
                 .withGatewayAccountEntity(validGatewayAccount)
                 .build();
 
-        CaptureGatewayResponse captureGatewayResponse = paymentProvider.capture(CaptureGatewayRequest.valueOf(chargeEntity));
+        GatewayResponse<WorldpayCaptureResponse> captureGatewayResponse = paymentProvider.capture(CaptureGatewayRequest.valueOf(chargeEntity));
         assertTrue(captureGatewayResponse.isSuccessful());
-        assertNull(captureGatewayResponse.getError());
     }
 
     @Test
     public void shouldSuccessfullySendACancelRequest() throws Exception {
         PaymentProvider paymentProvider = getSmartpayPaymentProvider();
-        AuthorisationGatewayResponse response = testCardAuthorisation(paymentProvider, validGatewayAccount);
+        GatewayResponse<SmartpayAuthorisationResponse> response = testCardAuthorisation(paymentProvider, validGatewayAccount);
+
+        assertThat(response.getBaseResponse().isPresent(), CoreMatchers.is(true));
+        String transactionId = response.getBaseResponse().get().getPspReference();
+        assertThat(transactionId, CoreMatchers.is(not(nullValue())));
 
         ChargeEntity chargeEntity = aValidChargeEntity()
-                .withTransactionId(response.getTransactionId())
+                .withTransactionId(transactionId)
                 .withGatewayAccountEntity(validGatewayAccount)
                 .build();
 
-        CancelGatewayResponse cancelResponse = paymentProvider.cancel(CancelGatewayRequest.valueOf(chargeEntity));
-        assertTrue(cancelResponse.isSuccessful());
-        assertNull(cancelResponse.getError());
+        GatewayResponse cancelResponse = paymentProvider.cancel(CancelGatewayRequest.valueOf(chargeEntity));
+        assertThat(cancelResponse.isSuccessful(), is(true));
 
     }
 
     @Test
     public void shouldBeAbleToHandleNotification() throws Exception {
         PaymentProvider paymentProvider = getSmartpayPaymentProvider();
-        AuthorisationGatewayResponse response = testCardAuthorisation(paymentProvider, validGatewayAccount);
+        GatewayResponse<SmartpayAuthorisationResponse> response = testCardAuthorisation(paymentProvider, validGatewayAccount);
 
         Consumer<StatusUpdates> accountUpdater = mockAccountUpdater();
 
-        String transactionId = response.getTransactionId();
+
+        assertThat(response.getBaseResponse().isPresent(), CoreMatchers.is(true));
+        String transactionId = response.getBaseResponse().get().getPspReference();
+        assertThat(transactionId, CoreMatchers.is(not(nullValue())));
+
         StatusUpdates statusResponse = paymentProvider.handleNotification(
                 notificationPayloadForTransaction(transactionId),
                 x -> true,
@@ -144,11 +163,14 @@ public class SmartpayPaymentProviderTest {
     @Test
     public void handleNotification_shouldNotUpdateChargeStatusForUnknownProviderStatusButAcceptNotification() throws Exception {
         PaymentProvider paymentProvider = getSmartpayPaymentProvider();
-        AuthorisationGatewayResponse response = testCardAuthorisation(paymentProvider, validGatewayAccount);
+        GatewayResponse<SmartpayAuthorisationResponse> response = testCardAuthorisation(paymentProvider, validGatewayAccount);
 
         Consumer<StatusUpdates> accountUpdater = mockAccountUpdater();
 
-        String transactionId = response.getTransactionId();
+        assertThat(response.getBaseResponse().isPresent(), CoreMatchers.is(true));
+        String transactionId = response.getBaseResponse().get().getPspReference();
+        assertThat(transactionId, CoreMatchers.is(not(nullValue())));
+
         StatusUpdates statusResponse = paymentProvider.handleNotification(
                 notificationPayloadForTransactionWithUnknownStatus(transactionId),
                 x -> true,
@@ -164,11 +186,11 @@ public class SmartpayPaymentProviderTest {
     @Test
     public void handleNotification_shouldProcessNotificationsInOrderOfNotificationDate() throws Exception {
         PaymentProvider paymentProvider = getSmartpayPaymentProvider();
-        AuthorisationGatewayResponse response = testCardAuthorisation(paymentProvider, validGatewayAccount);
+        String transactionId = "tx-id-1";
 
         Consumer<StatusUpdates> accountUpdater = mockAccountUpdater();
 
-        String transactionId = response.getTransactionId();
+
         String transactionId2 = "tx-id-2";
         StatusUpdates statusResponse = paymentProvider.handleNotification(
                 multipleNotificationPayloadForTransactions(transactionId, transactionId2),
@@ -180,9 +202,9 @@ public class SmartpayPaymentProviderTest {
         assertThat(statusResponse.getStatusUpdates(), contains(Pair.of(transactionId, CAPTURED), Pair.of(transactionId2, AUTHORISATION_SUCCESS)));
     }
 
-    private AuthorisationGatewayResponse testCardAuthorisation(PaymentProvider paymentProvider, GatewayAccountEntity gatewayAccountEntity) {
+    private GatewayResponse testCardAuthorisation(PaymentProvider paymentProvider, GatewayAccountEntity gatewayAccountEntity) {
         AuthorisationGatewayRequest request = getCardAuthorisationRequest(gatewayAccountEntity);
-        AuthorisationGatewayResponse response = paymentProvider.authorise(request);
+        GatewayResponse<SmartpayAuthorisationResponse> response = paymentProvider.authorise(request);
         assertTrue(response.isSuccessful());
 
         return response;

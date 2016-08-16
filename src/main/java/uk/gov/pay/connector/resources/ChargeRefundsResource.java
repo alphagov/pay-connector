@@ -3,10 +3,13 @@ package uk.gov.pay.connector.resources;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import uk.gov.pay.connector.dao.ChargeDao;
+import uk.gov.pay.connector.model.GatewayError;
 import uk.gov.pay.connector.model.RefundRequest;
 import uk.gov.pay.connector.model.RefundResponse;
 import uk.gov.pay.connector.model.RefundsResponse;
 import uk.gov.pay.connector.model.domain.ChargeEntity;
+import uk.gov.pay.connector.model.gateway.GatewayResponse;
+import uk.gov.pay.connector.service.BaseRefundResponse;
 import uk.gov.pay.connector.service.ChargeRefundService;
 
 import javax.inject.Inject;
@@ -14,6 +17,7 @@ import javax.ws.rs.*;
 import javax.ws.rs.core.Context;
 import javax.ws.rs.core.Response;
 import javax.ws.rs.core.UriInfo;
+import java.util.Optional;
 
 import static java.lang.String.format;
 import static javax.ws.rs.core.MediaType.APPLICATION_JSON;
@@ -41,10 +45,15 @@ public class ChargeRefundsResource {
     public Response submitRefund(@PathParam("accountId") Long accountId, @PathParam("chargeId") String chargeId, RefundRequest refund, @Context UriInfo uriInfo) {
         return refundService.doRefund(accountId, chargeId, refund.getAmount())
                 .map((refundServiceResponse) -> {
-                    if (refundServiceResponse.getRefundGatewayResponse().isSuccessful()) {
+                    GatewayResponse<BaseRefundResponse> response = refundServiceResponse.getRefundGatewayResponse();
+                    if (response.isSuccessful()) {
                         return Response.accepted(RefundResponse.valueOf(refundServiceResponse.getRefundEntity(), uriInfo).serialize()).build();
                     }
-                    return serviceErrorResponse(refundServiceResponse.getRefundGatewayResponse().getError().getMessage());
+                    Optional<GatewayError> errorMaybe = response.getGatewayError();
+                    String errorMessage = errorMaybe
+                            .map(error -> errorMaybe.get().getMessage())
+                            .orElse("unknown error");
+                    return serviceErrorResponse(errorMessage);
                 })
                 .orElseGet(() -> {
                     logger.error("Error during refund of charge {} - RefundService did not return a Response", chargeId);

@@ -1,12 +1,12 @@
 package uk.gov.pay.connector.service.smartpay;
 
 import org.eclipse.persistence.oxm.annotations.XmlPath;
+import uk.gov.pay.connector.service.BaseAuthoriseResponse;
 
 import javax.xml.bind.annotation.XmlRootElement;
 
-
-@XmlRootElement(name = "Envelope", namespace="http://schemas.xmlsoap.org/soap/envelope/")
-public class SmartpayAuthorisationResponse {
+@XmlRootElement(name = "Envelope", namespace = "http://schemas.xmlsoap.org/soap/envelope/")
+public class SmartpayAuthorisationResponse extends SmartpayBaseResponse implements BaseAuthoriseResponse {
 
     private static final String AUTHORISED = "Authorised";
 
@@ -16,9 +16,6 @@ public class SmartpayAuthorisationResponse {
     @XmlPath("soap:Body/ns1:authoriseResponse/ns1:paymentResult/ns1:pspReference/text()")
     private String pspReference;
 
-    @XmlPath("soap:Body/ns1:authoriseResponse/ns1:paymentResult/ns1:refusalReason/text()")
-    private String errorMessage;
-
     public String getPspReference() {
         return pspReference;
     }
@@ -27,7 +24,8 @@ public class SmartpayAuthorisationResponse {
         return AUTHORISED.equals(result);
     }
 
-    public String getErrorMessage() {
-        return errorMessage;
+    @Override
+    public String getTransactionId() {
+        return pspReference;
     }
 }

@@ -1,8 +1,11 @@
-package uk.gov.pay.connector.model;
+package uk.gov.pay.connector.model.gateway;
 
+import uk.gov.pay.connector.model.GatewayRequest;
 import uk.gov.pay.connector.model.domain.Card;
 import uk.gov.pay.connector.model.domain.ChargeEntity;
 import uk.gov.pay.connector.model.domain.GatewayAccountEntity;
+
+import java.util.Optional;
 
 public class AuthorisationGatewayRequest implements GatewayRequest {
     private Card card;
@@ -11,6 +14,10 @@ public class AuthorisationGatewayRequest implements GatewayRequest {
     public AuthorisationGatewayRequest(ChargeEntity charge, Card card) {
         this.charge = charge;
         this.card = card;
+    }
+
+    public Optional<String> getTransactionId() {
+        return Optional.ofNullable(charge.getGatewayTransactionId());
     }
 
     public Card getCard() {

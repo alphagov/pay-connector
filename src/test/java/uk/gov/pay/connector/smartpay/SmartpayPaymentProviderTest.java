@@ -2,17 +2,20 @@ package uk.gov.pay.connector.smartpay;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.google.common.collect.ImmutableMap;
+import org.hamcrest.CoreMatchers;
+import org.junit.Assert;
 import org.junit.Before;
 import org.junit.Test;
-import uk.gov.pay.connector.model.AuthorisationGatewayRequest;
-import uk.gov.pay.connector.model.AuthorisationGatewayResponse;
 import uk.gov.pay.connector.model.CaptureGatewayRequest;
-import uk.gov.pay.connector.model.CaptureGatewayResponse;
 import uk.gov.pay.connector.model.domain.Address;
 import uk.gov.pay.connector.model.domain.Card;
 import uk.gov.pay.connector.model.domain.ChargeEntity;
 import uk.gov.pay.connector.model.domain.GatewayAccountEntity;
+import uk.gov.pay.connector.model.gateway.AuthorisationGatewayRequest;
+import uk.gov.pay.connector.model.gateway.GatewayResponse;
+import uk.gov.pay.connector.service.smartpay.SmartpayAuthorisationResponse;
 import uk.gov.pay.connector.service.smartpay.SmartpayPaymentProvider;
+import uk.gov.pay.connector.service.worldpay.WorldpayCaptureResponse;
 
 import javax.ws.rs.client.Client;
 import javax.ws.rs.client.Entity;
@@ -21,9 +24,8 @@ import javax.ws.rs.client.WebTarget;
 import javax.ws.rs.core.Response;
 
 import static javax.ws.rs.core.MediaType.APPLICATION_XML;
-import static org.hamcrest.CoreMatchers.notNullValue;
-import static org.hamcrest.MatcherAssert.assertThat;
-import static org.hamcrest.core.Is.is;
+import static org.hamcrest.CoreMatchers.not;
+import static org.hamcrest.CoreMatchers.nullValue;
 import static org.junit.Assert.assertTrue;
 import static org.mockito.Matchers.*;
 import static org.mockito.Mockito.mock;
@@ -56,10 +58,12 @@ public class SmartpayPaymentProviderTest {
                 .withGatewayAccountEntity(aServiceAccount())
                 .build();
 
-        AuthorisationGatewayResponse response = provider.authorise(new AuthorisationGatewayRequest(chargeEntity, card));
+        GatewayResponse<SmartpayAuthorisationResponse> response = provider.authorise(new AuthorisationGatewayRequest(chargeEntity, card));
 
         assertTrue(response.isSuccessful());
-        assertThat(response.getTransactionId(), is(notNullValue()));
+        Assert.assertThat(response.getBaseResponse().isPresent(), CoreMatchers.is(true));
+        String transactionId = response.getBaseResponse().get().getPspReference();
+        Assert.assertThat(transactionId, CoreMatchers.is(not(nullValue())));
     }
 
     @Test
@@ -71,7 +75,7 @@ public class SmartpayPaymentProviderTest {
                 .withGatewayAccountEntity(aServiceAccount())
                 .build();
 
-        CaptureGatewayResponse response = provider.capture(CaptureGatewayRequest.valueOf(chargeEntity));
+        GatewayResponse<WorldpayCaptureResponse> response = provider.capture(CaptureGatewayRequest.valueOf(chargeEntity));
         assertTrue(response.isSuccessful());
     }
 

@@ -1,10 +1,6 @@
 package uk.gov.pay.connector.service;
 
-import org.hamcrest.Description;
-import org.hamcrest.Matcher;
-import org.hamcrest.TypeSafeMatcher;
 import uk.gov.pay.connector.dao.ChargeDao;
-import uk.gov.pay.connector.model.GatewayResponse;
 import uk.gov.pay.connector.model.domain.ChargeEntity;
 import uk.gov.pay.connector.model.domain.ChargeEntityFixture;
 import uk.gov.pay.connector.model.domain.ChargeStatus;
@@ -25,39 +21,5 @@ public abstract class CardServiceTest {
                 .withId(chargeId)
                 .withStatus(status)
                 .build();
-    }
-
-    protected Matcher<GatewayResponse> aSuccessfulResponse() {
-        return new TypeSafeMatcher<GatewayResponse>() {
-            private GatewayResponse gatewayResponse;
-
-            @Override
-            protected boolean matchesSafely(GatewayResponse gatewayResponse) {
-                this.gatewayResponse = gatewayResponse;
-                return gatewayResponse.isSuccessful() && gatewayResponse.getError() == null;
-            }
-
-            @Override
-            public void describeTo(Description description) {
-                description.appendText("Success, but response was not successful: " + gatewayResponse.getError().getMessage());
-            }
-        };
-    }
-
-    protected Matcher<GatewayResponse> anUnSuccessfulResponse() {
-        return new TypeSafeMatcher<GatewayResponse>() {
-            private GatewayResponse gatewayResponse;
-
-            @Override
-            protected boolean matchesSafely(GatewayResponse gatewayResponse) {
-                this.gatewayResponse = gatewayResponse;
-                return !gatewayResponse.isSuccessful() && gatewayResponse.getError() != null;
-            }
-
-            @Override
-            public void describeTo(Description description) {
-                description.appendText("Response Error : " + gatewayResponse.getError().getMessage());
-            }
-        };
     }
 }

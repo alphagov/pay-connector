@@ -6,9 +6,9 @@ import uk.gov.pay.connector.dao.ChargeDao;
 import uk.gov.pay.connector.exception.IllegalStateRuntimeException;
 import uk.gov.pay.connector.exception.OperationAlreadyInProgressRuntimeException;
 import uk.gov.pay.connector.model.CancelGatewayRequest;
-import uk.gov.pay.connector.model.GatewayResponse;
 import uk.gov.pay.connector.model.domain.ChargeEntity;
 import uk.gov.pay.connector.model.domain.ChargeStatus;
+import uk.gov.pay.connector.model.gateway.GatewayResponse;
 import uk.gov.pay.connector.service.transaction.NonTransactionalOperation;
 import uk.gov.pay.connector.service.transaction.PreTransactionalOperation;
 import uk.gov.pay.connector.service.transaction.TransactionContext;
@@ -18,6 +18,7 @@ import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
 import static java.lang.String.format;
+import static uk.gov.pay.connector.model.domain.ChargeStatus.fromString;
 
 /**
  * Bunch of reusable functions and possibly sharable between Cancel/Expire
@@ -48,6 +49,10 @@ class CancelServiceFunctions {
                 throw new IllegalStateRuntimeException(reloadedCharge.getExternalId());
             }
             reloadedCharge.setStatus(statusFlow.getLockState());
+
+            logger.info(format("Card cancel request sent - charge_external_id = %s, transaction_id = %s, status = %s",
+                    chargeEntity.getExternalId(), chargeEntity.getGatewayTransactionId(), fromString(chargeEntity.getStatus())));
+
             return chargeDao.mergeAndNotifyStatusHasChanged(reloadedCharge);
         };
     }

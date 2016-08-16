@@ -49,24 +49,6 @@ public class CardAuthoriseResourceITest extends CardResourceITestBase {
 
     @Test
     public void shouldNotAuthoriseCard_ForSpecificCardNumber2() throws Exception {
-        String cardDetailsToReject = buildJsonCardDetailsFor("4000000000000069");
-
-        String expectedErrorMessage = "The card is expired.";
-        String expectedChargeStatus = AUTHORISATION_REJECTED.getValue();
-        shouldReturnErrorForCardDetailsWithMessage(cardDetailsToReject, expectedErrorMessage, expectedChargeStatus);
-    }
-
-    @Test
-    public void shouldNotAuthoriseCard_ForSpecificCardNumber3() throws Exception {
-        String cardDetailsToReject = buildJsonCardDetailsFor("4000000000000127");
-
-        String expectedErrorMessage = "The CVC code is incorrect.";
-        String expectedChargeStatus = AUTHORISATION_REJECTED.getValue();
-        shouldReturnErrorForCardDetailsWithMessage(cardDetailsToReject, expectedErrorMessage, expectedChargeStatus);
-    }
-
-    @Test
-    public void shouldNotAuthoriseCard_ForSpecificCardNumber4() throws Exception {
         String cardDetailsToReject = buildJsonCardDetailsFor("4000000000000119");
 
         String expectedErrorMessage = "This transaction could be not be processed.";
@@ -87,7 +69,7 @@ public class CardAuthoriseResourceITest extends CardResourceITestBase {
     }
 
     @Test
-    public void shouldRejectRandomCardNumber() throws Exception {
+    public void shouldReturnError_WhenRandomCardNumber() throws Exception {
         String chargeId = createNewChargeWith(ENTERING_CARD_DETAILS, null);
         String randomCardNumberDetails = buildJsonCardDetailsFor("1111111111111119234");
 
@@ -174,7 +156,7 @@ public class CardAuthoriseResourceITest extends CardResourceITestBase {
         timeoutInSeconds.setInt(conf, 0);
 
         String chargeId = createNewChargeWith(ENTERING_CARD_DETAILS, null);
-        String message = "Request in progress";
+        String message = format("Authorisation for charge already in progress, %s", chargeId);
         authoriseAndVerifyFor(chargeId, validCardDetails, message, 202);
     }
 
