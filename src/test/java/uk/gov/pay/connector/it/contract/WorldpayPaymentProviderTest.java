@@ -44,7 +44,7 @@ public class WorldpayPaymentProviderTest {
 
     private GatewayAccountEntity validGatewayAccount;
     private Map<String, String> validCredentials;
-
+    private ChargeEntity chargeEntity;
     @Before
     public void checkThatWorldpayIsUp() {
         try {
@@ -61,6 +61,10 @@ public class WorldpayPaymentProviderTest {
             validGatewayAccount.setCredentials(validCredentials);
             validGatewayAccount.setType(TEST);
 
+            chargeEntity = aValidChargeEntity()
+                    .withTransactionId(randomUUID().toString())
+                    .withGatewayAccountEntity(validGatewayAccount)
+                    .build();
         } catch (IOException ex) {
             Assume.assumeTrue(false);
         }
@@ -79,13 +83,7 @@ public class WorldpayPaymentProviderTest {
     @Test
     public void shouldBeAbleToSendCaptureRequestForMerchant() throws Exception {
         WorldpayPaymentProvider connector = getValidWorldpayPaymentProvider();
-
-        ChargeEntity charge = aValidChargeEntity()
-                .withTransactionId(randomUUID().toString())
-                .withGatewayAccountEntity(validGatewayAccount)
-                .build();
-
-        GatewayResponse response = connector.capture(CaptureGatewayRequest.valueOf(charge));
+        GatewayResponse response = connector.capture(CaptureGatewayRequest.valueOf(chargeEntity));
 
         assertTrue(response.isSuccessful());
     }
@@ -103,16 +101,13 @@ public class WorldpayPaymentProviderTest {
         assertThat(response.isSuccessful(), is(true));
         assertThat(transactionId, is(not(nullValue())));
 
-        ChargeEntity charge = aValidChargeEntity()
-                .withTransactionId(transactionId)
-                .withGatewayAccountEntity(validGatewayAccount)
-                .build();
+        chargeEntity.setGatewayTransactionId(transactionId);
 
-        GatewayResponse<WorldpayCaptureResponse> captureResponse = connector.capture(CaptureGatewayRequest.valueOf(charge));
+        GatewayResponse<WorldpayCaptureResponse> captureResponse = connector.capture(CaptureGatewayRequest.valueOf(chargeEntity));
 
         assertThat(captureResponse.isSuccessful(), is(true));
 
-        GatewayResponse refundGatewayResponse = connector.refund(RefundGatewayRequest.valueOf(charge));
+        GatewayResponse refundGatewayResponse = connector.refund(RefundGatewayRequest.valueOf(chargeEntity));
 
         assertTrue(refundGatewayResponse.isSuccessful());
     }
@@ -126,12 +121,9 @@ public class WorldpayPaymentProviderTest {
         String transactionId = response.getBaseResponse().get().getTransactionId();
         assertThat(transactionId, is(not(nullValue())));
 
-        ChargeEntity charge = aValidChargeEntity()
-                .withTransactionId(transactionId)
-                .withGatewayAccountEntity(validGatewayAccount)
-                .build();
+        chargeEntity.setGatewayTransactionId(transactionId);
 
-        CancelGatewayRequest cancelGatewayRequest = CancelGatewayRequest.valueOf(charge);
+        CancelGatewayRequest cancelGatewayRequest = CancelGatewayRequest.valueOf(chargeEntity);
         GatewayResponse cancelResponse = connector.cancel(cancelGatewayRequest);
 
         assertThat(cancelResponse.isSuccessful(), is(true));
@@ -146,12 +138,14 @@ public class WorldpayPaymentProviderTest {
 
         assertThat(response.getBaseResponse().isPresent(), is(true));
         String transactionId = response.getBaseResponse().get().getTransactionId();
+
+        chargeEntity.setGatewayTransactionId(transactionId);
         assertThat(transactionId, is(not(nullValue())));
 
         StatusUpdates statusResponse = connector.handleNotification(
                 notificationPayloadForTransaction(transactionId, "AUTHORISED"),
                 payloadChecks -> true,
-                accoundFinder -> Optional.of(validGatewayAccount),
+                accoundFinder -> Optional.of(chargeEntity),
                 mockAccountUpdater
         );
 

@@ -8,10 +8,11 @@ import org.joda.time.DateTimeZone;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import uk.gov.pay.connector.model.*;
+import uk.gov.pay.connector.model.domain.ChargeEntity;
 import uk.gov.pay.connector.model.domain.ChargeStatus;
-import uk.gov.pay.connector.model.domain.GatewayAccountEntity;
 import uk.gov.pay.connector.model.gateway.AuthorisationGatewayRequest;
 import uk.gov.pay.connector.model.gateway.GatewayResponse;
+import uk.gov.pay.connector.model.InquiryGatewayRequest;
 import uk.gov.pay.connector.service.BaseInquiryResponse;
 import uk.gov.pay.connector.service.BaseResponse;
 import uk.gov.pay.connector.service.GatewayClient;
@@ -23,7 +24,6 @@ import java.util.Optional;
 import java.util.function.Consumer;
 import java.util.function.Function;
 
-import static fj.data.Either.reduce;
 import static java.lang.String.format;
 import static java.util.UUID.randomUUID;
 import static uk.gov.pay.connector.model.domain.GatewayAccount.CREDENTIALS_MERCHANT_ID;
@@ -74,32 +74,14 @@ public class WorldpayPaymentProvider<T extends BaseResponse> extends BasePayment
     }
 
     @Override
-    public GatewayResponse inquire(String transactionId, GatewayAccountEntity gatewayAccount) {
-        return reduce(
-                client
-                        .postXMLRequestFor(gatewayAccount, buildInquiryOrderFor(gatewayAccount, transactionId))
-                        .bimap(
-                                GatewayResponse::with,
-                                this::mapToInquiryResponse
-                        )
-        );
-    }
-
-    private GatewayResponse mapToInquiryResponse(GatewayClient.Response response) {
-        return reduce(
-                client.unmarshallResponse(response, WorldpayOrderStatusResponse.class)
-                        .bimap(
-                                GatewayResponse::with,
-                                GatewayResponse::with
-
-                        )
-        );
+    public GatewayResponse inquire(InquiryGatewayRequest request) {
+        return sendReceive(request, buildInquiryOrderFor(), WorldpayOrderStatusResponse.class);
     }
 
     @Override
     public StatusUpdates handleNotification(String notificationPayload,
                                             Function<ChargeStatusRequest, Boolean> payloadChecks,
-                                            Function<String, Optional<GatewayAccountEntity>> accountFinder,
+                                            Function<String, Optional<ChargeEntity>> accountFinder,
                                             Consumer<StatusUpdates> accountUpdater) {
 
         Optional<WorldpayNotification> notificationMaybe = parseNotification(notificationPayload);
@@ -111,8 +93,8 @@ public class WorldpayPaymentProvider<T extends BaseResponse> extends BasePayment
                     }
 
                     return accountFinder.apply(notification.getTransactionId())
-                            .map(gatewayAccount -> {
-                                StatusUpdates statusUpdates = confirmStatus(gatewayAccount, notification.getTransactionId());
+                            .map(chargeEntity-> {
+                                StatusUpdates statusUpdates = confirmStatus(chargeEntity, notification.getTransactionId());
                                 processInquiryStatus(accountUpdater, notification, statusUpdates);
                                 return statusUpdates;
                             })
@@ -158,8 +140,8 @@ public class WorldpayPaymentProvider<T extends BaseResponse> extends BasePayment
     }
 
     //todo :(
-    private StatusUpdates confirmStatus(GatewayAccountEntity gatewayAccount, String transactionId) {
-        GatewayResponse<BaseInquiryResponse> inquiryGatewayResponse = inquire(transactionId, gatewayAccount);
+    private StatusUpdates confirmStatus(ChargeEntity chargeEntity, String transactionId) {
+        GatewayResponse<BaseInquiryResponse> inquiryGatewayResponse = inquire(InquiryGatewayRequest.valueOf(chargeEntity));
 
         String worldpayStatus = null;
         Optional<BaseInquiryResponse> baseResponse = inquiryGatewayResponse.getBaseResponse();
@@ -219,10 +201,10 @@ public class WorldpayPaymentProvider<T extends BaseResponse> extends BasePayment
                 .build();
     }
 
-    private String buildInquiryOrderFor(GatewayAccountEntity gatewayAccount, String transactionId) {
-        return anOrderInquiryRequest()
-                .withMerchantCode(gatewayAccount.getCredentials().get(CREDENTIALS_MERCHANT_ID))
-                .withTransactionId(transactionId)
+    private Function<InquiryGatewayRequest, String> buildInquiryOrderFor() {
+        return request -> anOrderInquiryRequest()
+                .withMerchantCode(request.getGatewayAccount().getCredentials().get(CREDENTIALS_MERCHANT_ID))
+                .withTransactionId(request.getTransactionId())
                 .build();
     }
 }

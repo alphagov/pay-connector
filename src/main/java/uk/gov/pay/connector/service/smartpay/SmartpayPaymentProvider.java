@@ -5,10 +5,11 @@ import org.apache.commons.lang3.tuple.Pair;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import uk.gov.pay.connector.model.*;
+import uk.gov.pay.connector.model.domain.ChargeEntity;
 import uk.gov.pay.connector.model.domain.ChargeStatus;
-import uk.gov.pay.connector.model.domain.GatewayAccountEntity;
 import uk.gov.pay.connector.model.gateway.AuthorisationGatewayRequest;
 import uk.gov.pay.connector.model.gateway.GatewayResponse;
+import uk.gov.pay.connector.model.InquiryGatewayRequest;
 import uk.gov.pay.connector.service.BaseResponse;
 import uk.gov.pay.connector.service.GatewayClient;
 import uk.gov.pay.connector.service.PaymentProvider;
@@ -63,14 +64,14 @@ public class SmartpayPaymentProvider extends BasePaymentProvider implements Paym
     }
 
     @Override
-    public GatewayResponse inquire(String transactionId, GatewayAccountEntity gatewayAccount) {
+    public GatewayResponse inquire(InquiryGatewayRequest request) {
         throw new UnsupportedOperationException("Operation not supported");
     }
 
     @Override
     public StatusUpdates handleNotification(String inboundNotification,
                                             Function<ChargeStatusRequest, Boolean> payloadChecks,
-                                            Function<String, Optional<GatewayAccountEntity>> accountFinder,
+                                            Function<String, Optional<ChargeEntity>> accountFinder,
                                             Consumer<StatusUpdates> accountUpdater) {
         try {
             List<SmartpayNotification> notifications = objectMapper.readValue(inboundNotification, SmartpayNotificationList.class).getNotifications();

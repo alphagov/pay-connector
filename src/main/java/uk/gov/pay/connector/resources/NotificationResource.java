@@ -83,15 +83,14 @@ public class NotificationResource {
                 statusUpdates.getStatusUpdates().forEach(update -> updateCharge(provider, update.getKey(), update.getValue()));
     }
 
-    private Function<String, Optional<GatewayAccountEntity>> findAccountByTransactionId(String provider) {
+    private Function<String, Optional<ChargeEntity>> findAccountByTransactionId(String provider) {
         return transactionId ->
-                chargeDao.findByProviderAndTransactionId(provider, transactionId)
-                        .map((chargeEntity) ->
-                                Optional.of(chargeEntity.getGatewayAccount()))
-                        .orElseGet(() -> {
-                            logger.error("Could not find account for transaction id " + transactionId);
-                            return Optional.empty();
-                        });
+                Optional.ofNullable(
+                        chargeDao.findByProviderAndTransactionId(provider, transactionId)
+                                .orElseGet(() -> {
+                                    logger.error("Could not find account for transaction id " + transactionId);
+                                    return null;
+                                }));
     }
 
     private void updateCharge(String provider, String transactionId, ChargeStatus status) {

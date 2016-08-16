@@ -1,9 +1,8 @@
 package uk.gov.pay.connector.service;
 
 import uk.gov.pay.connector.model.*;
-import uk.gov.pay.connector.model.domain.GatewayAccountEntity;
-import uk.gov.pay.connector.model.gateway.AuthorisationGatewayRequest;
-import uk.gov.pay.connector.model.gateway.GatewayResponse;
+import uk.gov.pay.connector.model.domain.ChargeEntity;
+import uk.gov.pay.connector.model.gateway.*;
 
 import java.util.Optional;
 import java.util.function.Consumer;
@@ -21,10 +20,10 @@ public interface PaymentProvider<T extends BaseResponse> {
 
     GatewayResponse<T> cancel(CancelGatewayRequest request);
 
-    GatewayResponse<T> inquire(String transactionId, GatewayAccountEntity gatewayAccount);
+    GatewayResponse<T> inquire(InquiryGatewayRequest request);
 
     StatusUpdates handleNotification(String notificationPayload,
                                      Function<ChargeStatusRequest, Boolean> payloadChecks,
-                                     Function<String, Optional<GatewayAccountEntity>> accountFinder,
+                                     Function<String, Optional<ChargeEntity>> accountFinder,
                                      Consumer<StatusUpdates> accountUpdater);
 }
