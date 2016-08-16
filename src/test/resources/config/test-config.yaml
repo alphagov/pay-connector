@@ -19,10 +19,14 @@ links:
   frontendUrl: http://Frontend/
 
 worldpay:
-  url: http://dummy.com
+  urls:
+    test: http://dummy.com
+    live: http://dummy.com
 
 smartpay:
-  url: http://testsmartpay.com
+  urls:
+    test: http://testsmartpay.com
+    live: http://testsmartpay.com
   notification:
     username: smartpay_notification_username
     password: smartpay_notification_password

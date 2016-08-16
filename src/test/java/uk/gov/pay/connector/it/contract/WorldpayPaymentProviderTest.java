@@ -29,6 +29,7 @@ import static org.mockito.Mockito.mock;
 import static uk.gov.pay.connector.model.domain.ChargeEntityFixture.aValidChargeEntity;
 import static uk.gov.pay.connector.model.domain.ChargeStatus.AUTHORISATION_SUCCESS;
 import static uk.gov.pay.connector.model.domain.ChargeStatus.CAPTURE_SUBMITTED;
+import static uk.gov.pay.connector.model.domain.GatewayAccountEntity.Type.TEST;
 import static uk.gov.pay.connector.model.domain.RefundStatus.REFUND_SUBMITTED;
 import static uk.gov.pay.connector.service.GatewayClient.createGatewayClient;
 import static uk.gov.pay.connector.util.CardUtils.aValidCard;
@@ -42,7 +43,7 @@ public class WorldpayPaymentProviderTest {
     @Before
     public void checkThatWorldpayIsUp() {
         try {
-            new URL(getWorldpayConfig().getUrl()).openConnection().connect();
+            new URL(getWorldpayConfig().getUrls().get(TEST.toString())).openConnection().connect();
 
             validCredentials = ImmutableMap.of(
                     "merchant_id", "MERCHANTCODE",
@@ -53,6 +54,7 @@ public class WorldpayPaymentProviderTest {
             validGatewayAccount.setId(1234L);
             validGatewayAccount.setGatewayName("worldpay");
             validGatewayAccount.setCredentials(validCredentials);
+            validGatewayAccount.setType(TEST);
 
         } catch (IOException ex) {
             Assume.assumeTrue(false);
@@ -146,10 +148,9 @@ public class WorldpayPaymentProviderTest {
 
     @Test
     public void shouldFailRequestAuthorisationIfCredentialsAreNotCorrect() throws Exception {
-        String worldpayUrl = getWorldpayConfig().getUrl();
 
         WorldpayPaymentProvider connector = new WorldpayPaymentProvider(
-                createGatewayClient(ClientBuilder.newClient(), worldpayUrl)
+                createGatewayClient(ClientBuilder.newClient(), getWorldpayConfig().getUrls())
         );
 
         Long gatewayAccountId = 112233L;
@@ -160,7 +161,7 @@ public class WorldpayPaymentProviderTest {
                 "password", "non-existent-password"
         );
 
-        GatewayAccountEntity gatewayAccountEntity = new GatewayAccountEntity(providerName, credentials);
+        GatewayAccountEntity gatewayAccountEntity = new GatewayAccountEntity(providerName, credentials, TEST);
         gatewayAccountEntity.setId(gatewayAccountId);
 
         ChargeEntity charge = aValidChargeEntity()
@@ -195,7 +196,7 @@ public class WorldpayPaymentProviderTest {
         return new WorldpayPaymentProvider(
                 createGatewayClient(
                         ClientBuilder.newClient(),
-                        config.getUrl()
+                        config.getUrls()
                 )
         );
     }
@@ -206,8 +207,8 @@ public class WorldpayPaymentProviderTest {
 
     private static final GatewayCredentialsConfig WORLDPAY_CREDENTIALS = new GatewayCredentialsConfig() {
         @Override
-        public String getUrl() {
-            return "https://secure-test.worldpay.com/jsp/merchant/xml/paymentService.jsp";
+        public Map<String, String> getUrls() {
+            return ImmutableMap.of(TEST.toString(), "https://secure-test.worldpay.com/jsp/merchant/xml/paymentService.jsp");
         }
     };
 

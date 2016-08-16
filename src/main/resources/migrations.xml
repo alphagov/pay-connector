@@ -349,4 +349,13 @@
         </createIndex>
     </changeSet>
 
+    <changeSet id="add type(TEST/LIVE) column to gateway_accounts table" author="shakespeare">
+        <addColumn tableName="gateway_accounts">
+            <column name="type" type="varchar(10)" defaultValue="TEST" remarks="possible values (TEST/LIVE)">
+                <constraints nullable="false" unique="false"/>
+            </column>
+        </addColumn>
+        <addUniqueConstraint tableName="gateway_accounts" columnNames="payment_provider, type"/>
+    </changeSet>
+
 </databaseChangeLog>

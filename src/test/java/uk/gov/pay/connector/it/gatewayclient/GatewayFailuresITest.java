@@ -33,7 +33,7 @@ public class GatewayFailuresITest {
 
     @Rule
     public DropwizardAppWithPostgresRule app = new DropwizardAppWithPostgresRule(
-            config("smartpay.url", "http://localhost:" + port + "/pal/servlet/soap/Payment")
+            config("smartpay.urls.test", "http://localhost:" + port + "/pal/servlet/soap/Payment")
     );
 
     private GatewayStub gatewayStub;

@@ -35,7 +35,7 @@ public class PaymentProviders {
     private PaymentProvider createWorldpayProvider(ClientFactory clientFactory,
                                                    GatewayCredentialsConfig config) {
         return new WorldpayPaymentProvider(
-                createGatewayClient(clientFactory.createWithDropwizardClient("WORLD_PAY"), config.getUrl())
+                createGatewayClient(clientFactory.createWithDropwizardClient("WORLD_PAY"), config.getUrls())
         );
     }
 
@@ -43,7 +43,7 @@ public class PaymentProviders {
                                                    GatewayCredentialsConfig config,
                                                    ObjectMapper objectMapper) {
         return new SmartpayPaymentProvider(
-                createGatewayClient(clientFactory.createWithDropwizardClient("SMART_PAY"), config.getUrl()),
+                createGatewayClient(clientFactory.createWithDropwizardClient("SMART_PAY"), config.getUrls()),
                 objectMapper
         );
     }
@@ -54,7 +54,7 @@ public class PaymentProviders {
                 return worldpayProvider;
             case SMARTPAY_PROVIDER:
                 return smartpayProvider;
-            case DEFAULT_PROVIDER:
+            case SANDBOX_PROVIDER:
                 return sandboxProvider;
             default:
                 throw new RuntimeException(format("Unsupported PaymentProvider %s", paymentProviderName));

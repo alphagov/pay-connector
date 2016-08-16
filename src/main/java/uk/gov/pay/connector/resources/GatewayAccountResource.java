@@ -30,6 +30,8 @@ import java.util.stream.Collectors;
 import static com.google.common.collect.Maps.newHashMap;
 import static java.lang.String.format;
 import static javax.ws.rs.core.MediaType.APPLICATION_JSON;
+import static uk.gov.pay.connector.model.domain.GatewayAccountEntity.Type;
+import static uk.gov.pay.connector.model.domain.GatewayAccountEntity.Type.TEST;
 import static uk.gov.pay.connector.resources.ApiPaths.*;
 import static uk.gov.pay.connector.resources.PaymentProviderValidator.*;
 import static uk.gov.pay.connector.util.ResponseUtil.*;
@@ -43,6 +45,7 @@ public class GatewayAccountResource {
     private static final String SERVICE_NAME_FIELD_NAME = "service_name";
     private static final String CARD_TYPES_FIELD_NAME = "card_types";
     private static final int SERVICE_NAME_FIELD_LENGTH = 50;
+    public static final String PROVIDER_ACCOUNT_TYPE = "type";
 
     private final GatewayAccountDao gatewayDao;
     private final CardTypeDao cardTypeDao;
@@ -102,15 +105,19 @@ public class GatewayAccountResource {
     @Consumes(APPLICATION_JSON)
     @Produces(APPLICATION_JSON)
     public Response createNewGatewayAccount(JsonNode node, @Context UriInfo uriInfo) {
-
-        String provider = node.has(PAYMENT_PROVIDER_KEY) ? node.get(PAYMENT_PROVIDER_KEY).textValue() : DEFAULT_PROVIDER;
-
+        String provider = node.has(PAYMENT_PROVIDER_KEY) ? node.get(PAYMENT_PROVIDER_KEY).textValue() : SANDBOX_PROVIDER;
+        String accountType = node.has(PROVIDER_ACCOUNT_TYPE) ? node.get(PROVIDER_ACCOUNT_TYPE).textValue() : TEST.toString();
+        Type type;
+        try {
+            type = GatewayAccountEntity.Type.fromString(accountType);
+        } catch (IllegalArgumentException iae) {
+            return badRequestResponse(format("Unsupported payment provider account type '%s', should be one of (test, live)", accountType));
+        }
         if (!isValidProvider(provider)) {
             return badRequestResponse(format("Unsupported payment provider %s.", provider));
         }
-
-        logger.info("Creating new gateway account using the {} provider", provider);
-        GatewayAccountEntity entity = new GatewayAccountEntity(provider, newHashMap());
+        logger.info("Creating new gateway account using the {} provider pointing to {}", provider, accountType);
+        GatewayAccountEntity entity = new GatewayAccountEntity(provider, newHashMap(), type);
         gatewayDao.persist(entity);
 
         URI newLocation = uriInfo.
@@ -119,6 +126,7 @@ public class GatewayAccountResource {
 
         Map<String, Object> account = newHashMap();
         account.put("gateway_account_id", String.valueOf(entity.getId()));
+        account.put(PROVIDER_ACCOUNT_TYPE, entity.getType());
         addSelfLink(newLocation, account);
 
         return Response.created(newLocation).entity(account).build();

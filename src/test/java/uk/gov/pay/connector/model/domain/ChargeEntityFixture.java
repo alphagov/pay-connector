@@ -6,6 +6,8 @@ import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 
+import static uk.gov.pay.connector.model.domain.GatewayAccountEntity.Type.TEST;
+
 public class ChargeEntityFixture {
 
     private Long id = 1L;
@@ -83,7 +85,7 @@ public class ChargeEntityFixture {
     }
 
     private GatewayAccountEntity defaultGatewayAccountEntity() {
-        GatewayAccountEntity accountEntity = new GatewayAccountEntity("provider", new HashMap<>());
+        GatewayAccountEntity accountEntity = new GatewayAccountEntity("provider", new HashMap<>(), TEST);
 
         accountEntity.setId(1L);
         accountEntity.setServiceName("MyService");

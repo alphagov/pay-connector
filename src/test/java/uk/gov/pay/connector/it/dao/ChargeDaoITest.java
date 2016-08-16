@@ -32,6 +32,7 @@ import static uk.gov.pay.connector.model.api.ExternalChargeState.EXTERNAL_CREATE
 import static uk.gov.pay.connector.model.api.ExternalChargeState.EXTERNAL_STARTED;
 import static uk.gov.pay.connector.model.domain.ChargeEntityFixture.aValidChargeEntity;
 import static uk.gov.pay.connector.model.domain.ChargeStatus.*;
+import static uk.gov.pay.connector.model.domain.GatewayAccountEntity.Type.TEST;
 
 public class ChargeDaoITest extends DaoITestBase {
 
@@ -414,39 +415,30 @@ public class ChargeDaoITest extends DaoITestBase {
 
     @Test
     public void searchChargesShouldBeOrderedByCreationDateDescending() {
-
         // given
-        insertTestCharge();
-        long accountId = 123;
-        DatabaseFixtures.TestAccount account = DatabaseFixtures
-                .withDatabaseTestHelper(databaseTestHelper)
-                .aTestAccount()
-                .withAccountId(accountId)
-                .insert();
-
         DatabaseFixtures
                 .withDatabaseTestHelper(databaseTestHelper)
                 .aTestCharge()
                 .withChargeId(555L)
-                .withTestAccount(account)
+                .withTestAccount(defaultTestAccount)
                 .insert();
 
         DatabaseFixtures
                 .withDatabaseTestHelper(databaseTestHelper)
                 .aTestCharge()
                 .withChargeId(557L)
-                .withTestAccount(account)
+                .withTestAccount(defaultTestAccount)
                 .insert();
 
         DatabaseFixtures
                 .withDatabaseTestHelper(databaseTestHelper)
                 .aTestCharge()
                 .withChargeId(556L)
-                .withTestAccount(account)
+                .withTestAccount(defaultTestAccount)
                 .insert();
 
         ChargeSearchParams params = new ChargeSearchParams()
-                .withGatewayAccountId(accountId);
+                .withGatewayAccountId(defaultTestAccount.getAccountId());
 
         // when
         List<ChargeEntity> charges = chargeDao.findAllBy(params);
@@ -573,7 +565,7 @@ public class ChargeDaoITest extends DaoITestBase {
     public void invalidSizeOfReference() throws Exception {
         expectedEx.expect(RuntimeException.class);
 
-        GatewayAccountEntity gatewayAccount = new GatewayAccountEntity(defaultTestAccount.getPaymentProvider(), new HashMap<>());
+        GatewayAccountEntity gatewayAccount = new GatewayAccountEntity(defaultTestAccount.getPaymentProvider(), new HashMap<>(), TEST);
         gatewayAccount.setId(defaultTestAccount.getAccountId());
         chargeDao.persist(aValidChargeEntity().withReference(RandomStringUtils.randomAlphanumeric(255)).build());
     }
@@ -581,7 +573,7 @@ public class ChargeDaoITest extends DaoITestBase {
     @Test
     public void shouldCreateANewCharge() {
 
-        GatewayAccountEntity gatewayAccount = new GatewayAccountEntity(defaultTestAccount.getPaymentProvider(), new HashMap<>());
+        GatewayAccountEntity gatewayAccount = new GatewayAccountEntity(defaultTestAccount.getPaymentProvider(), new HashMap<>(), TEST);
         gatewayAccount.setId(defaultTestAccount.getAccountId());
 
         ChargeEntity chargeEntity = aValidChargeEntity()

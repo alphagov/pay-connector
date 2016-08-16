@@ -42,9 +42,9 @@ import static org.mockito.ArgumentCaptor.forClass;
 import static org.mockito.Mockito.*;
 import static uk.gov.pay.connector.model.ChargeResponse.ChargeResponseBuilder;
 import static uk.gov.pay.connector.model.ChargeResponse.aChargeResponse;
-import static uk.gov.pay.connector.model.api.ExternalChargeRefundAvailability.EXTERNAL_PENDING;
 import static uk.gov.pay.connector.model.domain.ChargeEntityFixture.aValidChargeEntity;
 import static uk.gov.pay.connector.model.domain.ChargeStatus.*;
+import static uk.gov.pay.connector.model.domain.GatewayAccountEntity.Type.TEST;
 
 
 @RunWith(MockitoJUnitRunner.class)
@@ -91,7 +91,7 @@ public class ChargeServiceTest {
     public void shouldCreateACharge() throws Exception {
 
         // Given - existing gateway account
-        GatewayAccountEntity gatewayAccount = new GatewayAccountEntity("provider", new HashMap<>());
+        GatewayAccountEntity gatewayAccount = new GatewayAccountEntity("provider", new HashMap<>(), TEST);
         gatewayAccount.setId(1L);
 
         // Given - persisting a ChargeEntity, it will be populated with an id
@@ -151,7 +151,7 @@ public class ChargeServiceTest {
         Long chargeId = 101L;
         Long accountId = 10L;
 
-        GatewayAccountEntity gatewayAccount = new GatewayAccountEntity("provider", new HashMap<>());
+        GatewayAccountEntity gatewayAccount = new GatewayAccountEntity("provider", new HashMap<>(), TEST);
         gatewayAccount.setId(1L);
 
         ChargeEntity newCharge = aValidChargeEntity()
@@ -191,7 +191,7 @@ public class ChargeServiceTest {
         Long chargeId = 101L;
         Long accountId = 10L;
 
-        GatewayAccountEntity gatewayAccount = new GatewayAccountEntity("provider", new HashMap<>());
+        GatewayAccountEntity gatewayAccount = new GatewayAccountEntity("provider", new HashMap<>(), TEST);
         gatewayAccount.setId(1L);
 
         //when(mockedChargeRefundService.getRefundedAmount(any(ChargeEntity.class))).thenReturn(REFUNDED_AMOUNT);
@@ -235,7 +235,7 @@ public class ChargeServiceTest {
         Long chargeId = 101L;
         Long accountId = 10L;
 
-        GatewayAccountEntity gatewayAccount = new GatewayAccountEntity("provider", new HashMap<>());
+        GatewayAccountEntity gatewayAccount = new GatewayAccountEntity("provider", new HashMap<>(), TEST);
         gatewayAccount.setId(1L);
 
         ChargeEntity newCharge = aValidChargeEntity()

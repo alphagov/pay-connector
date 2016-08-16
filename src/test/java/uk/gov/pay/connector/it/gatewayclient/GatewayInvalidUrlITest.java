@@ -31,7 +31,7 @@ public class GatewayInvalidUrlITest {
 
     @Rule
     public DropwizardAppWithPostgresRule app = new DropwizardAppWithPostgresRule(
-            config("smartpay.url", "http://gobbledygook.invalid.url")
+            config("smartpay.urls.test", "http://gobbledygook.invalid.url")
     );
 
     private GatewayStub gatewayStub;

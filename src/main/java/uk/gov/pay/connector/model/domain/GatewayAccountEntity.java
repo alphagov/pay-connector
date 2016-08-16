@@ -13,12 +13,37 @@ import java.util.Map;
 @SequenceGenerator(name="gateway_accounts_gateway_account_id_seq", sequenceName="gateway_accounts_gateway_account_id_seq", allocationSize=1)
 public class GatewayAccountEntity extends AbstractEntity {
 
-    public GatewayAccountEntity() {
+    public enum Type {
+        TEST("test"), LIVE("live");
+
+        private final String value;
+        Type(String value) {
+            this.value = value;
+        }
+
+        public String toString() {
+            return value;
+        }
+
+        public static Type fromString(String type) {
+            for (Type typeEnum: Type.values()) {
+                if (typeEnum.toString().equalsIgnoreCase(type)) {
+                    return typeEnum;
+                }
+            }
+            throw new IllegalArgumentException("gateway account type has to be one of (test, live)");
+        }
     }
+
+    public GatewayAccountEntity() {}
 
     //TODO: Should we rename the columns to be more consistent?
     @Column(name = "payment_provider")
     private String gatewayName;
+
+    @Column(name = "type", nullable = false)
+    @Enumerated(EnumType.STRING)
+    private Type type;
 
     //TODO: Revisit this to map to a java.util.Map
     @Column(name = "credentials", columnDefinition = "json")
@@ -40,9 +65,10 @@ public class GatewayAccountEntity extends AbstractEntity {
     )
     private List<CardTypeEntity> cardTypes;
 
-    public GatewayAccountEntity(String gatewayName, Map<String, String> credentials) {
+    public GatewayAccountEntity(String gatewayName, Map<String, String> credentials, Type type) {
         this.gatewayName = gatewayName;
         this.credentials = credentials;
+        this.type = type;
     }
 
     @Override
@@ -58,6 +84,11 @@ public class GatewayAccountEntity extends AbstractEntity {
 
     public Map<String, String> getCredentials() {
         return credentials;
+    }
+
+    @JsonProperty("type")
+    public String getType() {
+        return type.value;
     }
 
     @JsonProperty("service_name")
@@ -93,10 +124,15 @@ public class GatewayAccountEntity extends AbstractEntity {
         this.emailNotification = emailNotification;
     }
 
+    public void setType(Type type) {
+        this.type = type;
+    }
+
     public Map<String, String> withoutCredentials() {
         return ImmutableMap.of(
                 "gateway_account_id", String.valueOf(super.getId()),
-                "payment_provider", gatewayName);
+                "payment_provider", gatewayName,
+                "type", getType());
     }
 
     public boolean hasEmailNotificationsEnabled() {

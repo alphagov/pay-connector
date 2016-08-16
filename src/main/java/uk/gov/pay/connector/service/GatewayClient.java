@@ -14,6 +14,7 @@ import javax.ws.rs.client.Entity;
 import java.net.SocketException;
 import java.net.SocketTimeoutException;
 import java.net.UnknownHostException;
+import java.util.Map;
 
 import static fj.data.Either.left;
 import static fj.data.Either.right;
@@ -30,20 +31,22 @@ public class GatewayClient {
     private final Logger logger = LoggerFactory.getLogger(GatewayClient.class);
 
     private final Client client;
-    private final String gatewayUrl;
+    private final Map<String, String> gatewayUrlMap;
 
-    private GatewayClient(Client client, String gatewayUrl) {
-        this.gatewayUrl = gatewayUrl;
+    private GatewayClient(Client client, Map<String, String> gatewayUrlMap) {
+        this.gatewayUrlMap = gatewayUrlMap;
         this.client = client;
     }
 
-    public static GatewayClient createGatewayClient(Client client, String gatewayUrl) {
-        return new GatewayClient(client, gatewayUrl);
+    public static GatewayClient createGatewayClient(Client client, Map<String, String> gatewayUrlMap) {
+        return new GatewayClient(client, gatewayUrlMap);
     }
 
     public Either<ErrorResponse, GatewayClient.Response> postXMLRequestFor(GatewayAccountEntity account, String request) {
         javax.ws.rs.core.Response response = null;
+        String gatewayUrl = gatewayUrlMap.get(account.getType());
         try {
+            logger.info("POSTing request for account '{}' with type '{}'", account.getGatewayName(), account.getType());
             response = client.target(gatewayUrl)
                     .request(APPLICATION_XML)
                     .header(AUTHORIZATION, encode(
@@ -54,7 +57,7 @@ public class GatewayClient {
             if (statusCode == OK.getStatusCode()) {
                 return right(new GatewayClient.Response(response));
             } else {
-                logger.error(format("Gateway returned unexpected status code: %d, for gateway url=%s", statusCode, gatewayUrl));
+                logger.error("Gateway returned unexpected status code: {}, for gateway url={} with type {}", statusCode, gatewayUrl, account.getType());
                 return left(unexpectedStatusCodeFromGateway("Unexpected Response Code From Gateway"));
             }
         } catch (ProcessingException pe) {
