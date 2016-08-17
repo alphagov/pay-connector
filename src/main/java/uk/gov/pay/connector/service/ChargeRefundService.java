@@ -19,6 +19,7 @@ import javax.inject.Inject;
 import java.util.Optional;
 
 import static java.lang.String.format;
+import static uk.gov.pay.connector.model.api.ExternalChargeRefundAvailability.*;
 import static uk.gov.pay.connector.model.api.ExternalChargeRefundAvailability.EXTERNAL_AVAILABLE;
 import static uk.gov.pay.connector.model.domain.ChargeStatus.fromString;
 
@@ -73,23 +74,28 @@ public class ChargeRefundService {
                 .complete().get(Response.class));
     }
 
-    private PreTransactionalOperation<TransactionContext, RefundEntity> prepareForRefund(ChargeEntity chargeEntity, Long amount) {
+    private PreTransactionalOperation<TransactionContext, RefundEntity> prepareForRefund(ChargeEntity chargeEntity, Long amountToBeRefunded) {
         return context -> {
+
             ChargeEntity reloadedCharge = chargeDao.merge(chargeEntity);
-
-            RefundEntity refundEntity = new RefundEntity(reloadedCharge, amount);
-            reloadedCharge.getRefunds().add(refundEntity);
-
-            ExternalChargeRefundAvailability refundAvailability = ExternalChargeRefundAvailability.valueOf(reloadedCharge);
+            ExternalChargeRefundAvailability refundAvailability = valueOf(reloadedCharge);
 
             if (EXTERNAL_AVAILABLE != refundAvailability) {
-
-                logger.error(format("Charge with id [%s], status [%s] has refund availability: [%s]",
+                logger.error(format("ChargeId=%s, status=%s, refundStatus=%s, message=Not available for refund",
                         reloadedCharge.getId(), reloadedCharge.getStatus(), refundAvailability));
-
                 throw new RefundNotAvailableRuntimeException(reloadedCharge.getExternalId(), refundAvailability);
             }
 
+            long totalAmountToBeRefunded = reloadedCharge.getTotalAmountToBeRefunded();
+
+            if (totalAmountToBeRefunded - amountToBeRefunded < 0) {
+                logger.error(format("ChargeId=%s, status=%s, refundStatus=%s, message=doesn't have sufficient amount for refund ([%s]), amount requested for refund is [%s]",
+                        reloadedCharge.getId(), reloadedCharge.getStatus(), refundAvailability, totalAmountToBeRefunded, amountToBeRefunded));
+                throw new RefundNotAvailableRuntimeException(reloadedCharge.getExternalId(), EXTERNAL_FULL);
+            }
+
+            RefundEntity refundEntity = new RefundEntity(reloadedCharge, amountToBeRefunded);
+            reloadedCharge.getRefunds().add(refundEntity);
             refundDao.persist(refundEntity);
 
             logger.info(format("Card refund request sent - charge_external_id=%s, transaction_id=%s, status=%s",

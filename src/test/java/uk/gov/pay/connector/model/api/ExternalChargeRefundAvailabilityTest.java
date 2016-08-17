@@ -66,7 +66,7 @@ public class ExternalChargeRefundAvailabilityTest {
                 aValidRefundEntity().withStatus(RefundStatus.CREATED).withAmount(100L).build(),
                 aValidRefundEntity().withStatus(RefundStatus.REFUND_SUBMITTED).withAmount(200L).build(),
                 aValidRefundEntity().withStatus(RefundStatus.REFUND_ERROR).withAmount(100L).build(),
-                aValidRefundEntity().withStatus(RefundStatus.REFUNDED).withAmount(200L).build()
+                aValidRefundEntity().withStatus(RefundStatus.REFUNDED).withAmount(199L).build()
         };
 
         assertEquals(EXTERNAL_AVAILABLE, ExternalChargeRefundAvailability.valueOf(aValidChargeEntity()
@@ -81,7 +81,7 @@ public class ExternalChargeRefundAvailabilityTest {
         RefundEntity[] refunds = new RefundEntity[]{
                 aValidRefundEntity().withStatus(RefundStatus.CREATED).withAmount(100L).build(),
                 aValidRefundEntity().withStatus(RefundStatus.REFUND_SUBMITTED).withAmount(200L).build(),
-                aValidRefundEntity().withStatus(RefundStatus.REFUNDED).withAmount(201L).build()
+                aValidRefundEntity().withStatus(RefundStatus.REFUNDED).withAmount(200L).build()
         };
 
         assertEquals(EXTERNAL_FULL, ExternalChargeRefundAvailability.valueOf(aValidChargeEntity()

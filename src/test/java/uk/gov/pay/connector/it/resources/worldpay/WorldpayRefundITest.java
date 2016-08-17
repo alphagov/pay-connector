@@ -11,6 +11,7 @@ import uk.gov.pay.connector.it.base.CardResourceITestBase;
 import uk.gov.pay.connector.it.dao.DatabaseFixtures;
 import uk.gov.pay.connector.model.domain.RefundStatus;
 import uk.gov.pay.connector.util.DatabaseTestHelper;
+import uk.gov.pay.connector.util.RestAssuredClient;
 
 import java.time.ZoneId;
 import java.time.ZonedDateTime;
@@ -38,6 +39,7 @@ public class WorldpayRefundITest extends CardResourceITestBase {
     private DatabaseFixtures.TestAccount defaultTestAccount;
     private DatabaseFixtures.TestCharge defaultTestCharge;
     private DatabaseTestHelper databaseTestHelper;
+    private RestAssuredClient getChargeApi = new RestAssuredClient(app, accountId);
 
     public WorldpayRefundITest() {
         super("worldpay");
@@ -88,7 +90,7 @@ public class WorldpayRefundITest extends CardResourceITestBase {
     }
 
     @Test
-    public void shouldBeAbleToRequestARefund_multiplePartialAmounts() {
+    public void shouldBeAbleToRequestARefund_multiplePartialAmounts_andRefundShouldBeInFullStatus() {
 
         Long firstRefundAmount = 80L;
         Long secondRefundAmount = 20L;
@@ -109,6 +111,13 @@ public class WorldpayRefundITest extends CardResourceITestBase {
         assertThat(refundsFoundByChargeId, hasItems(
                 aRefundMatching(firstRefundId, chargeId, firstRefundAmount, "REFUND SUBMITTED"),
                 aRefundMatching(secondRefundId, chargeId, secondRefundAmount, "REFUND SUBMITTED")));
+
+        getChargeApi.withChargeId(externalChargeId)
+                .getCharge()
+                .statusCode(200)
+                .body("refund_summary.status", is("full"))
+                .body("refund_summary.amount_available", is(0))
+                .body("refund_summary.amount_submitted", is(100));
     }
 
     @Test
