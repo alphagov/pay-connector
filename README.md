@@ -116,7 +116,8 @@ POST /v1/api/accounts
 Content-Type: application/json
 
 {
-    "payment_provider": "sandbox"
+    "payment_provider": "sandbox",
+    "type: "test"
 }
 ```
 
@@ -124,7 +125,8 @@ Content-Type: application/json
 
 | Field                    | required | Description                               | Supported Values     |
 | ------------------------ |:--------:| ----------------------------------------- |----------------------|
-| `payment_provider`                 | X | The payment provider for which this account is created.       | sandbox, worldpay, smartpay |
+| `payment_provider`       | X        | The payment provider for which this account is created.       | sandbox, worldpay, smartpay |
+| `type`                   |          | Account type for this provider.             | test, live (defaults to test if missing) |
 
 #### Response example
 
@@ -134,8 +136,8 @@ Content-Type: application/json
 Location: http://connector.service/v1/api/accounts/1
 
 {
-    "payment_provider": "sandbox",
-    "gateway_account_id": "1" 
+    "gateway_account_id": "1",
+    "type": "live"
     "links": [{
         "href": "http://connector.service/v1/api/accounts/1",
         "rel" : "self",
@@ -150,7 +152,7 @@ Location: http://connector.service/v1/api/accounts/1
 | Field                    | always present | Description                               |
 | ------------------------ |:--------:| ----------------------------------------- |
 | `gateway_account_id`                 | X | The account Id created by the connector       |
-| `payment_provider`                 | X | The payment provider for which this account is created.       |
+| `type`                 | X | Account type for this provider (test/live)|
 | `links`                 | X | HTTP self link containing resource reference to the account.       |
 
 -----------------------------------------------------------------------------------------------------------
@@ -173,7 +175,8 @@ GET /v1/api/accounts/1
 Content-Type: application/json
 {
     "payment_provider": "sandbox",
-    "gateway_account_id": "1" 
+    "gateway_account_id": "1",
+    "type": "live"
 }
 ```
 
@@ -182,6 +185,7 @@ Content-Type: application/json
 | Field                    | always present | Description                               |
 | ------------------------ |:--------:| ----------------------------------------- |
 | `gateway_account_id`                 | X | The account Id        |
+| `type`                 | X | Account type for this provider (test/live)|
 | `payment_provider`                 | X | The payment provider for which this account is created.       |
 
 -----------------------------------------------------------------------------------------------------------
