@@ -26,6 +26,14 @@ Important configurations.
 
 `NOTIFY_BASE_URL`: Base URL of GOV.UK Notify API to be used, defaults to `https://api.notifications.service.gov.uk`.
 
+`GDS_CONNECTOR_WORLDPAY_TEST_URL`: Pointing to the TEST gateway URL of Worldpay payment provider.
+
+`GDS_CONNECTOR_WORLDPAY_LIVE_URL`: Pointing to the LIVE gateway URL of Worldpay payment provider.
+
+`GDS_CONNECTOR_SMARTPAY_TEST_URL`: Pointing to the TEST gateway URL of Smartpay payment provider.
+
+`GDS_CONNECTOR_SMARTPAY_LIVE_URL`: Pointing to the LIVE gateway URL of Smartpay payment provider.
+
 ## Integration tests
 
 To run the integration tests, the `DOCKER_HOST` and `DOCKER_CERT_PATH` environment variables must be set up correctly. On OS X the environment can be set up with:
