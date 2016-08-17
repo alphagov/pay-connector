@@ -19,9 +19,9 @@ import javax.inject.Inject;
 import java.util.Optional;
 
 import static java.lang.String.format;
-import static uk.gov.pay.connector.model.api.ExternalChargeRefundAvailability.*;
+import static uk.gov.pay.connector.exception.RefundNotAvailableRuntimeException.ErrorCode.NOT_SUFFICIENT_AMOUNT_AVAILABLE;
 import static uk.gov.pay.connector.model.api.ExternalChargeRefundAvailability.EXTERNAL_AVAILABLE;
-import static uk.gov.pay.connector.model.domain.ChargeStatus.fromString;
+import static uk.gov.pay.connector.model.api.ExternalChargeRefundAvailability.valueOf;
 
 public class ChargeRefundService {
 
@@ -91,7 +91,7 @@ public class ChargeRefundService {
             if (totalAmountToBeRefunded - amountToBeRefunded < 0) {
                 logger.error(format("ChargeId=%s, status=%s, refundStatus=%s, message=doesn't have sufficient amount for refund ([%s]), amount requested for refund is [%s]",
                         reloadedCharge.getId(), reloadedCharge.getStatus(), refundAvailability, totalAmountToBeRefunded, amountToBeRefunded));
-                throw new RefundNotAvailableRuntimeException(reloadedCharge.getExternalId(), EXTERNAL_FULL);
+                throw new RefundNotAvailableRuntimeException(reloadedCharge.getExternalId(), NOT_SUFFICIENT_AMOUNT_AVAILABLE);
             }
 
             RefundEntity refundEntity = new RefundEntity(reloadedCharge, amountToBeRefunded);

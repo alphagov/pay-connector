@@ -47,6 +47,7 @@ public class WorldpayRefundITest extends CardResourceITestBase {
 
     @Before
     public void setUp() throws Exception {
+
         databaseTestHelper = app.getDatabaseTestHelper();
         defaultTestAccount = DatabaseFixtures
                 .withDatabaseTestHelper(databaseTestHelper)
@@ -144,13 +145,33 @@ public class WorldpayRefundITest extends CardResourceITestBase {
     }
 
     @Test
+    public void shouldFailRequestingARefund_whenChargeRefundIsFull() {
+
+        Long refundAmount = defaultTestCharge.getAmount();
+        String externalChargeId = defaultTestCharge.getExternalChargeId();
+        Long chargeId = defaultTestCharge.getChargeId();
+
+        postRefundFor(externalChargeId, refundAmount)
+                .statusCode(ACCEPTED.getStatusCode());
+
+        postRefundFor(externalChargeId, 1L)
+                .statusCode(BAD_REQUEST.getStatusCode())
+                .body("reason", is("full"))
+                .body("message", is(format("Charge with id [%s] not available for refund.", externalChargeId)));
+
+        List<Map<String, Object>> refundsFoundByChargeId = databaseTestHelper.getRefundsByChargeId(chargeId);
+        assertThat(refundsFoundByChargeId.size(), is(1));
+    }
+
+    @Test
     public void shouldFailRequestingARefund_whenAmountIsBiggerThanChargeAmount() {
+
         Long refundAmount = defaultTestCharge.getAmount() + 20;
 
         worldpay.mockRefundSuccess();
         postRefundFor(defaultTestCharge.getExternalChargeId(), refundAmount)
                 .statusCode(BAD_REQUEST.getStatusCode())
-                .body("reason", is("full"))
+                .body("reason", is("amount_not_available"))
                 .body("message", is(format("Charge with id [%s] not available for refund.", defaultTestCharge.getExternalChargeId())));
 
         List<Map<String, Object>> refundsFoundByChargeId = databaseTestHelper.getRefundsByChargeId(defaultTestCharge.getChargeId());
@@ -173,7 +194,7 @@ public class WorldpayRefundITest extends CardResourceITestBase {
         worldpay.mockRefundSuccess();
         postRefundFor(defaultTestCharge.getExternalChargeId(), secondRefundAmount)
                 .statusCode(400)
-                .body("reason", is("full"))
+                .body("reason", is("amount_not_available"))
                 .body("message", is(format("Charge with id [%s] not available for refund.", defaultTestCharge.getExternalChargeId())));
 
         List<Map<String, Object>> refundsFoundByChargeId1 = databaseTestHelper.getRefundsByChargeId(defaultTestCharge.getChargeId());
