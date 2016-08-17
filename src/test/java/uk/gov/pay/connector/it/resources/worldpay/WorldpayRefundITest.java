@@ -110,8 +110,8 @@ public class WorldpayRefundITest extends CardResourceITestBase {
         assertThat(refundsFoundByChargeId.size(), is(2));
 
         assertThat(refundsFoundByChargeId, hasItems(
-                aRefundMatching(firstRefundId, chargeId, firstRefundAmount, "REFUND SUBMITTED"),
-                aRefundMatching(secondRefundId, chargeId, secondRefundAmount, "REFUND SUBMITTED")));
+                aRefundMatching(secondRefundId, chargeId, secondRefundAmount, "REFUND SUBMITTED"),
+                aRefundMatching(firstRefundId, chargeId, firstRefundAmount, "REFUND SUBMITTED")));
 
         getChargeApi.withChargeId(externalChargeId)
                 .getCharge()

@@ -3,7 +3,6 @@ package uk.gov.pay.connector.it.resources;
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableMap;
 import com.jayway.restassured.response.ValidatableResponse;
-import org.apache.commons.lang.RandomStringUtils;
 import org.apache.commons.lang.math.RandomUtils;
 import org.junit.Before;
 import org.junit.Rule;
@@ -103,7 +102,7 @@ public class ChargesApiResourceITest {
                 .body(JSON_EMAIL_KEY, is(email))
                 .body("refund_summary.amount_submitted", is(0))
                 .body("refund_summary.amount_available", isNumber(AMOUNT))
-                .body("refund_summary.status", is("pending"))
+                .body("refund_summary.status", is("unavailable"))
                 .body("created_date", matchesPattern("^\\d{4}-\\d{2}-\\d{2}T\\d{2}:\\d{2}:\\d{2}.\\d{3}Z"))
                 .body("created_date", isWithin(10, SECONDS))
                 .contentType(JSON);
@@ -139,7 +138,7 @@ public class ChargesApiResourceITest {
                 .body(JSON_EMAIL_KEY, is(email))
                 .body("refund_summary.amount_submitted", is(0))
                 .body("refund_summary.amount_available", isNumber(AMOUNT))
-                .body("refund_summary.status", is("pending"));
+                .body("refund_summary.status", is("unavailable"));
 
 
         // Reload the charge token which as it should have changed
@@ -316,10 +315,10 @@ public class ChargesApiResourceITest {
                 .body("results.size()", is(2))
                 .body("results[0].refund_summary.amount_submitted", is(0))
                 .body("results[0].refund_summary.amount_available", isNumber(AMOUNT))
-                .body("results[0].refund_summary.status", is("pending"))
+                .body("results[0].refund_summary.status", is("unavailable"))
                 .body("results[1].refund_summary.amount_submitted", is(0))
                 .body("results[1].refund_summary.amount_available", isNumber(AMOUNT))
-                .body("results[1].refund_summary.status", is("pending"));
+                .body("results[1].refund_summary.status", is("unavailable"));
 
         List<Map<String, Object>> results = response.extract().body().jsonPath().getList("results");
         List<String> references = collect(results, "reference");
@@ -749,5 +748,4 @@ public class ChargesApiResourceITest {
                 + CHARGES_API_PATH.replace("{accountId}", accountId)
                 + queryParams;
     }
-
 }

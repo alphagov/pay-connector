@@ -72,10 +72,11 @@ public class ChargeRefundServiceTest {
 
     @Test
     public void shouldRefundSucessfully() {
+
         String externalChargeId = "chargeId";
         Long amount = 100L;
         Long accountId = 2L;
-        String providerName = "testpay";
+        String providerName = "worldpay";
 
         GatewayAccountEntity account = new GatewayAccountEntity(providerName, newHashMap(), TEST);
         account.setId(accountId);
@@ -165,10 +166,11 @@ public class ChargeRefundServiceTest {
 
     @Test
     public void shouldUpdateRefundRecordToFailWhenRefundFails() {
+
         String externalChargeId = "chargeId";
         Long amount = 100L;
         Long accountId = 2L;
-        String providerName = "testpay";
+        String providerName = "worldpay";
 
         GatewayAccountEntity account = new GatewayAccountEntity(providerName, newHashMap(), TEST);
         account.setId(accountId);
