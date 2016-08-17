@@ -2,14 +2,25 @@ package uk.gov.pay.connector.model.domain;
 
 import com.fasterxml.jackson.annotation.JsonProperty;
 
+import javax.persistence.Column;
+import javax.persistence.Embeddable;
+
+@Embeddable
 public class Address {
 
+    @Column(name = "address_line1")
     private String line1;
+    @Column(name = "address_line2")
     private String line2;
+    @Column(name = "address_postcode")
     private String postcode;
+    @Column(name = "address_city")
     private String city;
+    @Column(name = "address_county")
     private String county;
+    @Column(name = "address_country")
     private String country;
+
 
     public static Address anAddress() {
         return new Address();
