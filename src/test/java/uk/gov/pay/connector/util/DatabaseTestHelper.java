@@ -130,6 +130,25 @@ public class DatabaseTestHelper {
         );
     }
 
+    public void addConfirmationDetails(long id, Long chargeId, String lastDigitsCardNumber, String cardHolderName, String expiryDate,
+                                       String line1, String line2, String postcode, String city, String county, String country) {
+        jdbi.withHandle(handle ->
+                handle
+                        .createStatement("INSERT INTO confirmation_details(id, charge_id, last_digits_card_number, cardholder_name, expiry_date, address_line1, address_line2, address_postcode, address_city, address_county, address_country) VALUES (:id, :charge_id, :last_digits_card_number, :cardholder_name, :expiry_date, :address_line1, :address_line2, :address_postcode, :address_city, :address_county, :address_country)")
+                        .bind("id", id)
+                        .bind("charge_id", chargeId)
+                        .bind("last_digits_card_number", lastDigitsCardNumber)
+                        .bind("cardholder_name", cardHolderName)
+                        .bind("expiry_date", expiryDate)
+                        .bind("address_line1", line1)
+                        .bind("address_line2", line2)
+                        .bind("address_postcode", postcode)
+                        .bind("address_city", city)
+                        .bind("address_county", county)
+                        .bind("address_country", country)
+                        .execute()
+        );
+    }
     public String getChargeTokenId(Long chargeId) {
 
         return jdbi.withHandle(h ->
@@ -157,6 +176,16 @@ public class DatabaseTestHelper {
                         "WHERE charge_id = :charge_id")
                         .bind("charge_id", chargeId)
                         .list());
+        return ret;
+    }
+
+    public Map<String, Object> getConfirmationDetails(long confirmationDetailsId) {
+        Map<String, Object> ret = jdbi.withHandle(h ->
+                h.createQuery("SELECT charge_id, last_digits_card_number, cardholder_name, expiry_date, address_line1, address_line2, address_postcode, address_city, address_county, address_country " +
+                        "FROM confirmation_details " +
+                        "WHERE id = :confirmation_details_id")
+                        .bind("confirmation_details_id", confirmationDetailsId)
+                        .first());
         return ret;
     }
 

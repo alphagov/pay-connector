@@ -39,6 +39,7 @@ public class ChargeEntity extends AbstractEntity {
     @Column(name = "email")
     private String email;
 
+    //todo is persist needed?
     @JsonBackReference
     @OneToOne(mappedBy="chargeEntity", cascade = CascadeType.PERSIST)
     private ConfirmationDetailsEntity confirmationDetailsEntity;

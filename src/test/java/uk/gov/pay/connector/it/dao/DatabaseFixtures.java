@@ -1,12 +1,20 @@
 package uk.gov.pay.connector.it.dao;
 
+import com.fasterxml.jackson.annotation.JsonManagedReference;
+import com.fasterxml.jackson.annotation.JsonProperty;
 import org.apache.commons.lang3.RandomUtils;
+import uk.gov.pay.connector.model.domain.Address;
 import uk.gov.pay.connector.model.domain.CardTypeEntity.Type;
+import uk.gov.pay.connector.model.domain.ChargeEntity;
 import uk.gov.pay.connector.model.domain.ChargeStatus;
 import uk.gov.pay.connector.model.domain.RefundStatus;
 import uk.gov.pay.connector.util.DatabaseTestHelper;
 import uk.gov.pay.connector.util.RandomIdGenerator;
 
+import javax.persistence.Column;
+import javax.persistence.Embedded;
+import javax.persistence.JoinColumn;
+import javax.persistence.OneToOne;
 import java.time.ZoneId;
 import java.time.ZonedDateTime;
 import java.util.ArrayList;
@@ -45,6 +53,10 @@ public class DatabaseFixtures {
         return new TestRefund();
     }
 
+    public TestConfirmationDetails aTestConfirmationDetails() {
+        return new TestConfirmationDetails();
+    }
+
     public TestCardType aMastercardCreditCardType() {
         return new TestCardType().withLabel("MasterCard").withType(Type.CREDIT).withBrand("mastercard");
     }
@@ -65,6 +77,104 @@ public class DatabaseFixtures {
         return new TestEmailNotification();
     }
 
+    public class TestAddress {
+        private String line1 = "line1";
+        private String line2 = "line2";
+        private String postcode = "postcode";
+        private String city = "city";
+        private String county = "county";
+        private String country = "country";
+
+        public String getLine1() {
+            return line1;
+        }
+
+        public String getLine2() {
+            return line2;
+        }
+
+        public String getPostcode() {
+            return postcode;
+        }
+
+        public String getCity() {
+            return city;
+        }
+
+        public String getCounty() {
+            return county;
+        }
+
+        public String getCountry() {
+            return country;
+        }
+    }
+
+    public class TestConfirmationDetails {
+        Long id = RandomUtils.nextLong(1, 99999);
+        private String lastDigitsCardNumber = "1234";
+        private String cardHolderName = "Mr. Pay McPayment";
+        private String expiryDate = "02/17";
+        private TestAddress billingAddress = new TestAddress();
+        private TestCharge chargeEntity;
+
+        public Long getId() {
+            return id;
+        }
+
+        public TestConfirmationDetails withLastDigitsOfCardNumber(String lastDigitsCardNumber) {
+            this.lastDigitsCardNumber = lastDigitsCardNumber;
+            return this;
+        }
+
+        public TestConfirmationDetails withCardHolderName(String cardHolderName) {
+            this.cardHolderName = cardHolderName;
+            return this;
+        }
+
+        public TestConfirmationDetails withExpiryDate(String expiryDate) {
+            this.expiryDate = expiryDate;
+            return this;
+        }
+
+        public TestConfirmationDetails withBillingAddress(TestAddress billingAddress) {
+            this.billingAddress = billingAddress;
+            return this;
+        }
+
+        public TestConfirmationDetails withChargeEntity(TestCharge chargeEntity) {
+            this.chargeEntity = chargeEntity;
+            return this;
+        }
+
+        public String getLastDigitsCardNumber() {
+            return lastDigitsCardNumber;
+        }
+
+        public String getCardHolderName() {
+            return cardHolderName;
+        }
+
+        public String getExpiryDate() {
+            return expiryDate;
+        }
+
+        public TestAddress getBillingAddress() {
+            return billingAddress;
+        }
+
+        public TestCharge getChargeEntity() {
+            return chargeEntity;
+        }
+
+        public TestConfirmationDetails insert() {
+            if (chargeEntity == null)
+                throw new IllegalStateException("Test charge must be provided.");
+            databaseTestHelper.addConfirmationDetails(id, chargeEntity.getChargeId(), lastDigitsCardNumber, cardHolderName, expiryDate, billingAddress.getLine1(), billingAddress.getLine2(), billingAddress.getPostcode(), billingAddress.getCity(), billingAddress.getCounty(), billingAddress.getCountry());
+            return this;
+        }
+
+    }
     public class TestAccount {
         long accountId = RandomUtils.nextLong(1, 99999);
         String paymentProvider = "test_provider";
