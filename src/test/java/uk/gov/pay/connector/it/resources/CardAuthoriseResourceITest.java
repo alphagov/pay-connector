@@ -1,13 +1,19 @@
 package uk.gov.pay.connector.it.resources;
 
+import org.apache.commons.lang3.StringUtils;
 import org.junit.Test;
 import uk.gov.pay.connector.app.ExecutorServiceConfig;
 import uk.gov.pay.connector.it.base.CardResourceITestBase;
+import uk.gov.pay.connector.model.domain.ChargeEntity;
+import uk.gov.pay.connector.model.domain.ConfirmationDetailsEntity;
 
 import java.lang.reflect.Field;
+import java.util.Map;
 
 import static com.jayway.restassured.http.ContentType.JSON;
 import static java.lang.String.format;
+import static org.hamcrest.MatcherAssert.assertThat;
+import static org.hamcrest.Matchers.hasEntry;
 import static org.hamcrest.Matchers.is;
 import static uk.gov.pay.connector.model.domain.ChargeStatus.*;
 
@@ -36,6 +42,14 @@ public class CardAuthoriseResourceITest extends CardResourceITestBase {
         for (String cardNo : VALID_SANDBOX_CARD_LIST) {
             shouldAuthoriseChargeFor(buildJsonCardDetailsFor(cardNo));
         }
+    }
+
+    @Test
+    public void shouldStoreCardDetailsForAuthorisedCharge() throws Exception {
+        String chargeId = shouldAuthoriseChargeFor(buildJsonCardDetailsFor("4444333322221111"));
+        Map<String, Object> detailsEntity = app.getDatabaseTestHelper()
+                .getConfirmationDetailsByChargeId(Long.valueOf(StringUtils.removeStart(chargeId, "charge-")));
+        assertThat(detailsEntity, hasEntry("last_digits_card_number", "1111"));
     }
 
     @Test
@@ -69,7 +83,7 @@ public class CardAuthoriseResourceITest extends CardResourceITestBase {
     }
 
     @Test
-    public void shouldReturnError_WhenRandomCardNumber() throws Exception {
+    public void shouldRejectRandomCardNumber() throws Exception {
         String chargeId = createNewChargeWith(ENTERING_CARD_DETAILS, null);
         String randomCardNumberDetails = buildJsonCardDetailsFor("1111111111111119234");
 
@@ -105,7 +119,7 @@ public class CardAuthoriseResourceITest extends CardResourceITestBase {
         assertFrontendChargeStatusIs(chargeId, CREATED.getValue());
     }
 
-    private void shouldAuthoriseChargeFor(String cardDetails) throws Exception {
+    private String shouldAuthoriseChargeFor(String cardDetails) throws Exception {
         String chargeId = createNewChargeWith(ENTERING_CARD_DETAILS, null);
 
         givenSetup()
@@ -115,6 +129,7 @@ public class CardAuthoriseResourceITest extends CardResourceITestBase {
                 .statusCode(204);
 
         assertFrontendChargeStatusIs(chargeId, AUTHORISATION_SUCCESS.getValue());
+        return chargeId;
     }
 
     @Test
@@ -156,7 +171,7 @@ public class CardAuthoriseResourceITest extends CardResourceITestBase {
         timeoutInSeconds.setInt(conf, 0);
 
         String chargeId = createNewChargeWith(ENTERING_CARD_DETAILS, null);
-        String message = format("Authorisation for charge already in progress, %s", chargeId);
+        String message = "Request in progress";
         authoriseAndVerifyFor(chargeId, validCardDetails, message, 202);
     }
 

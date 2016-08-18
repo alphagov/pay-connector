@@ -39,7 +39,6 @@ public class ChargeEntity extends AbstractEntity {
     @Column(name = "email")
     private String email;
 
-    //todo is persist needed?
     @JsonBackReference
     @OneToOne(mappedBy="chargeEntity", cascade = CascadeType.PERSIST)
     private ConfirmationDetailsEntity confirmationDetailsEntity;
@@ -179,5 +178,12 @@ public class ChargeEntity extends AbstractEntity {
                 .filter(p -> p.hasStatus(RefundStatus.CREATED, RefundStatus.REFUND_SUBMITTED, RefundStatus.REFUNDED))
                 .mapToLong(RefundEntity::getAmount)
                 .sum();
+    }
+    public ConfirmationDetailsEntity getConfirmationDetailsEntity() {
+        return confirmationDetailsEntity;
+    }
+
+    public void setConfirmationDetailsEntity(ConfirmationDetailsEntity confirmationDetailsEntity) {
+        this.confirmationDetailsEntity = confirmationDetailsEntity;
     }
 }

@@ -39,9 +39,6 @@ public class ConfirmationDetailsEntity extends AbstractEntity {
     @JsonManagedReference
     private ChargeEntity chargeEntity;
 
-    public static ConfirmationDetailsEntity someConfirmationDetails() {
-        return new ConfirmationDetailsEntity(null);
-    }
 
     public String getLastDigitsCardNumber() {
         return lastDigitsCardNumber;

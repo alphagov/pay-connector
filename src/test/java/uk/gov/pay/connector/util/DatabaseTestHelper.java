@@ -5,8 +5,10 @@ import org.apache.commons.lang3.RandomUtils;
 import org.postgresql.util.PGobject;
 import org.skife.jdbi.v2.DBI;
 import org.skife.jdbi.v2.util.StringMapper;
+import uk.gov.pay.connector.model.domain.ChargeEntity;
 import uk.gov.pay.connector.model.domain.ChargeStatus;
 import uk.gov.pay.connector.model.domain.GatewayAccountEntity;
+import uk.gov.pay.connector.model.domain.ConfirmationDetailsEntity;
 
 import java.sql.SQLException;
 import java.sql.Timestamp;
@@ -176,6 +178,16 @@ public class DatabaseTestHelper {
                         "WHERE charge_id = :charge_id")
                         .bind("charge_id", chargeId)
                         .list());
+        return ret;
+    }
+
+    public Map<String, Object>  getConfirmationDetailsByChargeId(Long chargeId) {
+        Map<String, Object> ret = jdbi.withHandle(h ->
+                h.createQuery("SELECT charge_id, last_digits_card_number, cardholder_name, expiry_date, address_line1, address_line2, address_postcode, address_city, address_county, address_country " +
+                        "FROM confirmation_details " +
+                        "WHERE charge_id = :charge_id")
+                        .bind("charge_id", chargeId)
+                        .first());
         return ret;
     }
 

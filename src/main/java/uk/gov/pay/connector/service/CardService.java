@@ -19,6 +19,7 @@ public abstract class CardService<T extends BaseResponse> {
     protected final PaymentProviders providers;
     protected final Logger logger = LoggerFactory.getLogger(getClass());
     protected CardExecutorService cardExecutorService;
+    protected ConfirmationDetailsService confirmationDetailsService;
 
     protected enum OperationType {
         CAPTURE("Capture"),
@@ -41,10 +42,11 @@ public abstract class CardService<T extends BaseResponse> {
         this.providers = providers;
     }
 
-    public CardService(ChargeDao chargeDao, PaymentProviders providers, CardExecutorService cardExecutorService) {
+    public CardService(ChargeDao chargeDao, PaymentProviders providers, CardExecutorService cardExecutorService, ConfirmationDetailsService confirmationDetailsService) {
         this.chargeDao = chargeDao;
         this.providers = providers;
         this.cardExecutorService = cardExecutorService;
+        this.confirmationDetailsService = confirmationDetailsService;
     }
 
     public ChargeEntity preOperation(ChargeEntity chargeEntity, OperationType operationType, ChargeStatus[] legalStatuses, ChargeStatus lockingStatus) {

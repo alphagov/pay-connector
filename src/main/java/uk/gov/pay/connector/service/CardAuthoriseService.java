@@ -10,6 +10,7 @@ import uk.gov.pay.connector.exception.OperationAlreadyInProgressRuntimeException
 import uk.gov.pay.connector.model.domain.Card;
 import uk.gov.pay.connector.model.domain.ChargeEntity;
 import uk.gov.pay.connector.model.domain.ChargeStatus;
+import uk.gov.pay.connector.model.domain.ConfirmationDetailsEntity;
 import uk.gov.pay.connector.model.gateway.AuthorisationGatewayRequest;
 import uk.gov.pay.connector.model.gateway.GatewayResponse;
 
@@ -30,8 +31,11 @@ public class CardAuthoriseService extends CardService<BaseAuthoriseResponse> imp
     private Card cardDetails;
 
     @Inject
-    public CardAuthoriseService(ChargeDao chargeDao, PaymentProviders providers, CardExecutorService cardExecutorService) {
-        super(chargeDao, providers, cardExecutorService);
+    public CardAuthoriseService(ChargeDao chargeDao,
+                                PaymentProviders providers,
+                                CardExecutorService cardExecutorService,
+                                ConfirmationDetailsService confirmationDetailsService) {
+        super(chargeDao, providers, cardExecutorService, confirmationDetailsService);
     }
 
     public GatewayResponse doAuthorise(String chargeId, Card cardDetails) {
@@ -94,7 +98,9 @@ public class CardAuthoriseService extends CardService<BaseAuthoriseResponse> imp
         }
 
         chargeDao.mergeAndNotifyStatusHasChanged(reloadedCharge);
-
+        if (status.equals(AUTHORISATION_SUCCESS)) {
+            confirmationDetailsService.doStore(reloadedCharge.getExternalId(), cardDetails);
+        }
         return operationResponse;
     }
 }
