@@ -35,8 +35,8 @@ public class CardResourceITestBase {
 
     @Rule
     public DropwizardAppWithPostgresRule app = new DropwizardAppWithPostgresRule(
-                config("worldpay.url", "http://localhost:" + port + "/jsp/merchant/xml/paymentService.jsp"),
-                config("smartpay.url", "http://localhost:" + port + "/pal/servlet/soap/Payment"));
+                config("worldpay.urls.test", "http://localhost:" + port + "/jsp/merchant/xml/paymentService.jsp"),
+                config("smartpay.urls.test", "http://localhost:" + port + "/pal/servlet/soap/Payment"));
 
     @Rule
     public WireMockRule wireMockRule = new WireMockRule(port);

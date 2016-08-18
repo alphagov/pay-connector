@@ -10,6 +10,8 @@ import static java.lang.String.format;
 import static javax.ws.rs.core.Response.Status.NOT_FOUND;
 import static org.hamcrest.Matchers.is;
 import static org.hamcrest.Matchers.nullValue;
+import static uk.gov.pay.connector.model.domain.GatewayAccountEntity.Type.LIVE;
+import static uk.gov.pay.connector.model.domain.GatewayAccountEntity.Type.TEST;
 import static uk.gov.pay.connector.util.JsonEncoder.toJson;
 
 public class GatewayAccountResourceITest extends GatewayAccountResourceTestBase {
@@ -39,18 +41,52 @@ public class GatewayAccountResourceITest extends GatewayAccountResourceTestBase 
 
     @Test
     public void createGatewayAccountWithoutPaymentProviderDefaultsToSandbox() throws Exception {
-
         String payload = toJson(ImmutableMap.of("name", "test account"));
-
         ValidatableResponse response = givenSetup()
                 .body(payload)
                 .post(ACCOUNTS_API_URL)
                 .then()
                 .statusCode(201);
 
-        assertCorrectAccountLocationIn(response);
+        assertCorrectCreateResponse(response);
+        assertGettingAccountReturnsProviderName(response, "sandbox", TEST);
+    }
 
-        assertGettingAccountReturnsProviderName(response, "sandbox");
+    @Test
+    public void createGatewayAccountWithProviderUrlTypeLive() {
+        String payload = toJson(ImmutableMap.of("payment_provider", "worldpay", "type", LIVE.toString()));
+        ValidatableResponse response = givenSetup()
+                .body(payload)
+                .post(ACCOUNTS_API_URL)
+                .then()
+                .statusCode(201);
+
+        assertCorrectCreateResponse(response, LIVE);
+        assertGettingAccountReturnsProviderName(response, "worldpay", LIVE);
+    }
+
+    @Test
+    public void createGatewayAccountWithMissingProviderUrlTypeCreatesTestType() {
+        String payload = toJson(ImmutableMap.of("payment_provider", "worldpay"));
+        ValidatableResponse response = givenSetup()
+                .body(payload)
+                .post(ACCOUNTS_API_URL)
+                .then()
+                .statusCode(201);
+
+        assertCorrectCreateResponse(response, TEST);
+        assertGettingAccountReturnsProviderName(response, "worldpay", TEST);
+    }
+
+    @Test
+    public void createGatewayAccountWithIncorrectProviderUrlType() {
+        String payload = toJson(ImmutableMap.of("payment_provider", "worldpay", "type", "incorrect-type"));
+        ValidatableResponse response = givenSetup()
+                .body(payload)
+                .post(ACCOUNTS_API_URL)
+                .then()
+                .statusCode(400)
+                .body("message", is("Unsupported payment provider account type 'incorrect-type', should be one of (test, live)"));
     }
 
     @Test

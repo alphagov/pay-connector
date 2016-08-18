@@ -17,6 +17,7 @@ import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.*;
 import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertTrue;
+import static uk.gov.pay.connector.model.domain.GatewayAccountEntity.Type.TEST;
 
 public class GatewayAccountDaoITest extends DaoITestBase {
 
@@ -36,7 +37,7 @@ public class GatewayAccountDaoITest extends DaoITestBase {
         createAccountRecord(mastercardCreditCardTypeRecord, visaDebitCardTypeRecord);
 
         String paymentProvider = "test provider";
-        GatewayAccountEntity account = new GatewayAccountEntity(paymentProvider, new HashMap<>());
+        GatewayAccountEntity account = new GatewayAccountEntity(paymentProvider, new HashMap<>(), TEST);
 
         CardTypeEntity masterCardCreditCardType = new CardTypeEntity();
         masterCardCreditCardType.setId(mastercardCreditCardTypeRecord.getId());

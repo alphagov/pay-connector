@@ -19,11 +19,15 @@ links:
   frontendUrl: http://Frontend/
 
 worldpay:
-  url: http://localhost:10107/jsp/merchant/xml/paymentService.jsp
+  urls:
+    test: http://localhost:10107/jsp/merchant/xml/paymentService.jsp
+    live: http://localhost:10107/jsp/merchant/xml/paymentService.jsp
   credentials: ['username','password','merchant_id']
 
 smartpay:
-  url: http://localhost:10106/pal/servlet/soap/Payment
+  urls:
+    test: http://localhost:10106/pal/servlet/soap/Payment
+    live: http://localhost:10106/pal/servlet/soap/Payment
   notification:
     username: smartpay_test_username
     password: smartpay_test_password

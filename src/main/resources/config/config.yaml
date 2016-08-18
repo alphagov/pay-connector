@@ -19,11 +19,15 @@ links:
   frontendUrl: ${FRONTEND_URL}
 
 worldpay:
-  url: ${GDS_CONNECTOR_WORLDPAY_URL}
+  urls:
+    test: ${GDS_CONNECTOR_WORLDPAY_TEST_URL}
+    live: ${GDS_CONNECTOR_WORLDPAY_LIVE_URL}
   credentials: ['username','password','merchant_id']
 
 smartpay:
-  url: ${GDS_CONNECTOR_SMARTPAY_URL}
+  urls:
+    test: ${GDS_CONNECTOR_SMARTPAY_TEST_URL}
+    live: ${GDS_CONNECTOR_SMARTPAY_LIVE_URL}
   notification:
     username: ${GDS_CONNECTOR_SMARTPAY_NOTIFICATION_USER}
     password: ${GDS_CONNECTOR_SMARTPAY_NOTIFICATION_PASSWORD}

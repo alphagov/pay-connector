@@ -6,6 +6,7 @@ import com.jayway.restassured.specification.RequestSpecification;
 import org.junit.Before;
 import org.junit.Rule;
 import uk.gov.pay.connector.it.dao.DatabaseFixtures;
+import uk.gov.pay.connector.model.domain.GatewayAccountEntity;
 import uk.gov.pay.connector.rules.DropwizardAppWithPostgresRule;
 
 import java.util.Arrays;
@@ -46,31 +47,34 @@ public class GatewayAccountResourceTestBase {
                 .statusCode(201)
                 .contentType(JSON);
 
-        assertCorrectAccountLocationIn(response);
-
-        assertGettingAccountReturnsProviderName(response, testProvider);
-
+        assertCorrectCreateResponse(response);
+        assertGettingAccountReturnsProviderName(response, testProvider, GatewayAccountEntity.Type.TEST);
         assertGatewayAccountCredentialsAreEmptyInDB(response);
-
         return response.extract().path("gateway_account_id");
     }
 
-    protected void assertGettingAccountReturnsProviderName(ValidatableResponse response, String providerName) {
+    protected void assertGettingAccountReturnsProviderName(ValidatableResponse response, String providerName, GatewayAccountEntity.Type providerUrlType) {
         givenSetup()
                 .get(response.extract().header("Location"))
                 .then()
                 .statusCode(200)
                 .contentType(JSON)
                 .body("payment_provider", is(providerName))
-                .body("gateway_account_id", is(notNullValue()));
+                .body("gateway_account_id", is(notNullValue()))
+                .body("type", is(providerUrlType.toString()));
     }
 
-    protected void assertCorrectAccountLocationIn(ValidatableResponse response) {
+    protected void assertCorrectCreateResponse(ValidatableResponse response) {
+        assertCorrectCreateResponse(response, GatewayAccountEntity.Type.TEST);
+    }
+
+    protected void assertCorrectCreateResponse(ValidatableResponse response, GatewayAccountEntity.Type type) {
         String accountId = response.extract().path("gateway_account_id");
         String urlSlug = "api/accounts/" + accountId;
 
         response.header("Location", containsString(urlSlug))
                 .body("gateway_account_id", containsString(accountId))
+                .body("type", is(type.toString()))
                 .body("links[0].href", containsString(urlSlug))
                 .body("links[0].rel", is("self"))
                 .body("links[0].method", is("GET"));

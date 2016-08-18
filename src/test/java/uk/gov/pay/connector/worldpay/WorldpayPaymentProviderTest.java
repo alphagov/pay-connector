@@ -43,6 +43,7 @@ import static uk.gov.pay.connector.model.domain.Address.anAddress;
 import static uk.gov.pay.connector.model.domain.ChargeEntityFixture.aValidChargeEntity;
 import static uk.gov.pay.connector.model.domain.ChargeStatus.AUTHORISATION_SUCCESS;
 import static uk.gov.pay.connector.model.domain.GatewayAccount.*;
+import static uk.gov.pay.connector.model.domain.GatewayAccountEntity.Type.TEST;
 import static uk.gov.pay.connector.service.GatewayClient.createGatewayClient;
 import static uk.gov.pay.connector.util.CardUtils.buildCardDetails;
 
@@ -56,8 +57,7 @@ public class WorldpayPaymentProviderTest {
         mockWorldpaySuccessfulOrderSubmitResponse();
 
         connector = new WorldpayPaymentProvider(
-                createGatewayClient(client, "http://worldpay.url")
-        );
+                createGatewayClient(client, ImmutableMap.of(TEST.toString(), "http://worldpay.url")));
     }
 
     @Test
@@ -287,6 +287,7 @@ public class WorldpayPaymentProviderTest {
                 CREDENTIALS_USERNAME, "worldpay-password",
                 CREDENTIALS_PASSWORD, "password"
         ));
+        gatewayAccount.setType(TEST);
         return gatewayAccount;
     }
 

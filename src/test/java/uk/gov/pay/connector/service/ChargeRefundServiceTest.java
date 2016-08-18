@@ -37,6 +37,7 @@ import static uk.gov.pay.connector.model.RefundGatewayResponse.failureResponse;
 import static uk.gov.pay.connector.model.domain.ChargeEntityFixture.aValidChargeEntity;
 import static uk.gov.pay.connector.model.domain.ChargeStatus.AUTHORISATION_SUCCESS;
 import static uk.gov.pay.connector.model.domain.ChargeStatus.CAPTURED;
+import static uk.gov.pay.connector.model.domain.GatewayAccountEntity.Type.TEST;
 import static uk.gov.pay.connector.model.domain.RefundEntityFixture.aValidRefundEntity;
 
 @RunWith(MockitoJUnitRunner.class)
@@ -70,7 +71,7 @@ public class ChargeRefundServiceTest {
         Long accountId = 2L;
         String providerName = "testpay";
 
-        GatewayAccountEntity account = new GatewayAccountEntity(providerName, newHashMap());
+        GatewayAccountEntity account = new GatewayAccountEntity(providerName, newHashMap(), TEST);
         account.setId(accountId);
         ChargeEntity charge = aValidChargeEntity()
                 .withGatewayAccountEntity(account)
@@ -133,7 +134,7 @@ public class ChargeRefundServiceTest {
     public void shouldFailWhenChargeRefundIsNotAvailable() {
         String externalChargeId = "chargeId";
         Long accountId = 2L;
-        GatewayAccountEntity account = new GatewayAccountEntity("testpay", newHashMap());
+        GatewayAccountEntity account = new GatewayAccountEntity("testpay", newHashMap(), TEST);
         account.setId(accountId);
         ChargeEntity charge = aValidChargeEntity()
                 .withGatewayAccountEntity(account)
@@ -164,7 +165,7 @@ public class ChargeRefundServiceTest {
         Long accountId = 2L;
         String providerName = "testpay";
 
-        GatewayAccountEntity account = new GatewayAccountEntity(providerName, newHashMap());
+        GatewayAccountEntity account = new GatewayAccountEntity(providerName, newHashMap(), TEST);
         account.setId(accountId);
         ChargeEntity capturedCharge = aValidChargeEntity()
                 .withGatewayAccountEntity(account)

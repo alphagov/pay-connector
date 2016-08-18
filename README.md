@@ -26,6 +26,14 @@ Important configurations.
 
 `NOTIFY_BASE_URL`: Base URL of GOV.UK Notify API to be used, defaults to `https://api.notifications.service.gov.uk`.
 
+`GDS_CONNECTOR_WORLDPAY_TEST_URL`: Pointing to the TEST gateway URL of Worldpay payment provider.
+
+`GDS_CONNECTOR_WORLDPAY_LIVE_URL`: Pointing to the LIVE gateway URL of Worldpay payment provider.
+
+`GDS_CONNECTOR_SMARTPAY_TEST_URL`: Pointing to the TEST gateway URL of Smartpay payment provider.
+
+`GDS_CONNECTOR_SMARTPAY_LIVE_URL`: Pointing to the LIVE gateway URL of Smartpay payment provider.
+
 ## Integration tests
 
 To run the integration tests, the `DOCKER_HOST` and `DOCKER_CERT_PATH` environment variables must be set up correctly. On OS X the environment can be set up with:
@@ -116,7 +124,8 @@ POST /v1/api/accounts
 Content-Type: application/json
 
 {
-    "payment_provider": "sandbox"
+    "payment_provider": "sandbox",
+    "type: "test"
 }
 ```
 
@@ -124,7 +133,8 @@ Content-Type: application/json
 
 | Field                    | required | Description                               | Supported Values     |
 | ------------------------ |:--------:| ----------------------------------------- |----------------------|
-| `payment_provider`                 | X | The payment provider for which this account is created.       | sandbox, worldpay, smartpay |
+| `payment_provider`       | X        | The payment provider for which this account is created.       | sandbox, worldpay, smartpay |
+| `type`                   |          | Account type for this provider.             | test, live (defaults to test if missing) |
 
 #### Response example
 
@@ -134,8 +144,8 @@ Content-Type: application/json
 Location: http://connector.service/v1/api/accounts/1
 
 {
-    "payment_provider": "sandbox",
-    "gateway_account_id": "1" 
+    "gateway_account_id": "1",
+    "type": "live"
     "links": [{
         "href": "http://connector.service/v1/api/accounts/1",
         "rel" : "self",
@@ -150,7 +160,7 @@ Location: http://connector.service/v1/api/accounts/1
 | Field                    | always present | Description                               |
 | ------------------------ |:--------:| ----------------------------------------- |
 | `gateway_account_id`                 | X | The account Id created by the connector       |
-| `payment_provider`                 | X | The payment provider for which this account is created.       |
+| `type`                 | X | Account type for this provider (test/live)|
 | `links`                 | X | HTTP self link containing resource reference to the account.       |
 
 -----------------------------------------------------------------------------------------------------------
@@ -173,7 +183,8 @@ GET /v1/api/accounts/1
 Content-Type: application/json
 {
     "payment_provider": "sandbox",
-    "gateway_account_id": "1" 
+    "gateway_account_id": "1",
+    "type": "live"
 }
 ```
 
@@ -182,6 +193,7 @@ Content-Type: application/json
 | Field                    | always present | Description                               |
 | ------------------------ |:--------:| ----------------------------------------- |
 | `gateway_account_id`                 | X | The account Id        |
+| `type`                 | X | Account type for this provider (test/live)|
 | `payment_provider`                 | X | The payment provider for which this account is created.       |
 
 -----------------------------------------------------------------------------------------------------------

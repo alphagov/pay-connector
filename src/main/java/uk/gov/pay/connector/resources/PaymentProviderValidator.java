@@ -8,7 +8,7 @@ public class PaymentProviderValidator {
 
     public static final String PAYMENT_PROVIDER_KEY = "payment_provider";
 
-    public static final String DEFAULT_PROVIDER = "sandbox";
+    public static final String SANDBOX_PROVIDER = "sandbox";
 
     public static final String WORLDPAY_PROVIDER = "worldpay";
 
@@ -18,7 +18,7 @@ public class PaymentProviderValidator {
         return VALID_PROVIDERS.contains(provider);
     }
     private static final List<String> VALID_PROVIDERS = asList(
-            DEFAULT_PROVIDER,
+            SANDBOX_PROVIDER,
             WORLDPAY_PROVIDER,
             SMARTPAY_PROVIDER
     );

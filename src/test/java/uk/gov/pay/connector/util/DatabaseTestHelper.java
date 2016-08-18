@@ -6,6 +6,7 @@ import org.postgresql.util.PGobject;
 import org.skife.jdbi.v2.DBI;
 import org.skife.jdbi.v2.util.StringMapper;
 import uk.gov.pay.connector.model.domain.ChargeStatus;
+import uk.gov.pay.connector.model.domain.GatewayAccountEntity;
 
 import java.sql.SQLException;
 import java.sql.Timestamp;
@@ -15,6 +16,7 @@ import java.util.Map;
 import java.util.UUID;
 
 import static java.time.ZonedDateTime.now;
+import static uk.gov.pay.connector.model.domain.GatewayAccountEntity.Type.TEST;
 
 public class DatabaseTestHelper {
 
@@ -24,7 +26,7 @@ public class DatabaseTestHelper {
         this.jdbi = jdbi;
     }
 
-    public void addGatewayAccount(String accountId, String paymentGateway, Map<String, String> credentials, String serviceName) {
+    public void addGatewayAccount(String accountId, String paymentGateway, Map<String, String> credentials, String serviceName, GatewayAccountEntity.Type providerUrlType) {
         try {
             PGobject jsonObject = new PGobject();
             jsonObject.setType("json");
@@ -34,8 +36,8 @@ public class DatabaseTestHelper {
                 jsonObject.setValue(new Gson().toJson(credentials));
             }
             jdbi.withHandle(h ->
-                    h.update("INSERT INTO gateway_accounts(id, payment_provider, credentials, service_name) VALUES(?, ?, ?, ?)",
-                            Long.valueOf(accountId), paymentGateway, jsonObject, serviceName)
+                    h.update("INSERT INTO gateway_accounts(id, payment_provider, credentials, service_name, type) VALUES(?, ?, ?, ?, ?)",
+                            Long.valueOf(accountId), paymentGateway, jsonObject, serviceName, providerUrlType)
             );
         } catch (SQLException e) {
             throw new RuntimeException(e);
@@ -43,11 +45,11 @@ public class DatabaseTestHelper {
     }
 
     public void addGatewayAccount(String accountId, String paymentProvider, Map<String, String> credentials) {
-        addGatewayAccount(accountId, paymentProvider, credentials, null);
+        addGatewayAccount(accountId, paymentProvider, credentials, null, TEST);
     }
 
     public void addGatewayAccount(String accountId, String paymentProvider) {
-        addGatewayAccount(accountId, paymentProvider, null, null);
+        addGatewayAccount(accountId, paymentProvider, null, null, TEST);
     }
 
     public void addCharge(Long chargeId, String externalChargeId, String gatewayAccountId, long amount, ChargeStatus status, String returnUrl, String transactionId) {

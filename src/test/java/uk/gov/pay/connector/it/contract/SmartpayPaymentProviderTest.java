@@ -37,6 +37,7 @@ import static org.mockito.Mockito.verifyZeroInteractions;
 import static uk.gov.pay.connector.model.domain.ChargeEntityFixture.aValidChargeEntity;
 import static uk.gov.pay.connector.model.domain.ChargeStatus.AUTHORISATION_SUCCESS;
 import static uk.gov.pay.connector.model.domain.ChargeStatus.CAPTURED;
+import static uk.gov.pay.connector.model.domain.GatewayAccountEntity.Type.TEST;
 import static uk.gov.pay.connector.service.GatewayClient.createGatewayClient;
 import static uk.gov.pay.connector.util.CardUtils.buildCardDetails;
 import static uk.gov.pay.connector.util.SystemUtils.envOrThrow;
@@ -60,6 +61,7 @@ public class SmartpayPaymentProviderTest {
             validGatewayAccount.setId(123L);
             validGatewayAccount.setGatewayName("smartpay");
             validGatewayAccount.setCredentials(validSmartPayCredentials);
+            validGatewayAccount.setType(TEST);
         } catch (IOException ex) {
             Assume.assumeTrue(false);
         }
@@ -81,6 +83,7 @@ public class SmartpayPaymentProviderTest {
                 "username", "wrong-username",
                 "password", "wrong-password"
         ));
+        accountWithInvalidCredentials.setType(TEST);
 
         AuthorisationGatewayRequest request = getCardAuthorisationRequest(accountWithInvalidCredentials);
         AuthorisationGatewayResponse response = paymentProvider.authorise(request);
@@ -187,7 +190,7 @@ public class SmartpayPaymentProviderTest {
 
     private PaymentProvider getSmartpayPaymentProvider() throws Exception {
         Client client = TestClientFactory.createJerseyClient();
-        GatewayClient gatewayClient = createGatewayClient(client, url);
+        GatewayClient gatewayClient = createGatewayClient(client, ImmutableMap.of(TEST.toString(), url));
         return new SmartpayPaymentProvider(gatewayClient, new ObjectMapper());
     }
 
