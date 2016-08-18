@@ -50,7 +50,7 @@ class CancelServiceFunctions {
             }
             reloadedCharge.setStatus(statusFlow.getLockState());
 
-            logger.info(format("Card cancel request sent - charge_external_id = %s, transaction_id = %s, status = %s",
+            logger.info(format("Card cancel request sent - charge_external_id=%s, transaction_id=%s, status=%s",
                     chargeEntity.getExternalId(), chargeEntity.getGatewayTransactionId(), fromString(chargeEntity.getStatus())));
 
             return chargeDao.mergeAndNotifyStatusHasChanged(reloadedCharge);

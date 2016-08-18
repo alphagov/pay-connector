@@ -39,7 +39,7 @@ public class CardCaptureService extends CardService implements TransactionalGate
     @Transactional
     @Override
     public ChargeEntity preOperation(ChargeEntity chargeEntity) {
-        logger.info(format("Card capture request sent - charge_external_id = %s, transaction_id = %s, status = %s",
+        logger.info(format("Card capture request sent - charge_external_id=%s, transaction_id=%s, status=%s",
                 chargeEntity.getExternalId(), chargeEntity.getGatewayTransactionId(), fromString(chargeEntity.getStatus())));
         return preOperation(chargeEntity, CardService.OperationType.CAPTURE, legalStatuses, ChargeStatus.CAPTURE_READY);
     }
@@ -59,7 +59,7 @@ public class CardCaptureService extends CardService implements TransactionalGate
         String transactionId = operationResponse.getBaseResponse()
                 .map(BaseCaptureResponse::getTransactionId).orElse("");
 
-        logger.info(format("Card capture response received - charge_external_id = %s, transaction_id = %s, status = %s",
+        logger.info(format("Card capture response received - charge_external_id=%s, transaction_id=%s, status=%s",
                 chargeEntity.getExternalId(), transactionId, status));
 
         reloadedCharge.setStatus(status);

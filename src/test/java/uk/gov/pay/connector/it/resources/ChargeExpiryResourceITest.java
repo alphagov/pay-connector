@@ -34,7 +34,6 @@ public class ChargeExpiryResourceITest extends CardResourceITestBase {
     public void shouldExpireChargesBeforeAndAfterAuthorisationAndShouldHaveTheRightEvents() {
         String extChargeId1 = addCharge(CREATED, "ref", ZonedDateTime.now().minusHours(1), "gatewayTransactionId1");
         String extChargeId2 = addCharge(AUTHORISATION_SUCCESS, "ref", ZonedDateTime.now().minusHours(1), "transaction-id");
-//        String extChargeId3 = addCharge(CAPTURE_SUBMITTED, "ref", ZonedDateTime.now().minusHours(1), "gatewayTransactionId3"); //should not get picked
 
         worldpay.mockCancelSuccess();
 

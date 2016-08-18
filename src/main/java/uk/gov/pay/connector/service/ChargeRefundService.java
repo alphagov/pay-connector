@@ -92,7 +92,7 @@ public class ChargeRefundService {
 
             refundDao.persist(refundEntity);
 
-            logger.info(format("Card refund request sent - charge_external_id = %s, transaction_id = %s, status = %s",
+            logger.info(format("Card refund request sent - charge_external_id=%s, transaction_id=%s, status=%s",
                     chargeEntity.getExternalId(), chargeEntity.getGatewayTransactionId(), fromString(chargeEntity.getStatus())));
 
             return refundEntity;
@@ -115,7 +115,7 @@ public class ChargeRefundService {
             RefundStatus status = gatewayResponse.isSuccessful() ? RefundStatus.REFUND_SUBMITTED : RefundStatus.REFUND_ERROR;
             ChargeEntity chargeEntity = refundEntity.getChargeEntity();
 
-            logger.info(format("Card refund response received - charge_external_id = %s, transaction_id = %s, status = %s",
+            logger.info(format("Card refund response received - charge_external_id=%s, transaction_id=%s, status=%s",
                     chargeEntity.getExternalId(), chargeEntity.getGatewayTransactionId(), status));
             logger.info("Refund status to update - from: {}, to: {} for Charge ID: {}, Refund ID: {}, amount: {}",
                     refundEntity.getStatus(), status, chargeEntity.getId(), refundEntity.getId(), refundEntity.getAmount());

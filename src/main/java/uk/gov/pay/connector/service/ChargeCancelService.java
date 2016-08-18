@@ -79,7 +79,7 @@ public class ChargeCancelService {
             ChargeEntity chargeEntity = context.get(ChargeEntity.class);
             GatewayResponse cancelResponse = context.get(GatewayResponse.class);
             ChargeStatus status = determineTerminalState(cancelResponse, statusFlow);
-            logger.info(format("Card refund response received - charge_external_id = %s, transaction_id = %s, status = %s",
+            logger.info(format("Card refund response received - charge_external_id=%s, transaction_id=%s, status=%s",
                     chargeEntity.getExternalId(), chargeEntity.getGatewayTransactionId(), status));
             logger.info("charge status to update - from: {}, to: {} for Charge ID: {}",
                     chargeEntity.getStatus(), status, chargeEntity.getId());

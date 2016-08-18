@@ -61,7 +61,7 @@ public class CardAuthoriseService extends CardService<BaseAuthoriseResponse> imp
         chargeEntity = preOperation(chargeEntity, OperationType.AUTHORISATION, legalStates, AUTHORISATION_READY);
         getPaymentProviderFor(chargeEntity).generateTransactionId().ifPresent(chargeEntity::setGatewayTransactionId);
 
-        logger.info(format("Card authorisation request sent - charge_external_id = %s, transaction_id = %s, status = %s",
+        logger.info(format("Card authorisation request sent - charge_external_id=%s, transaction_id=%s, status=%s",
                 chargeEntity.getExternalId(), chargeEntity.getGatewayTransactionId(), fromString(chargeEntity.getStatus())));
 
         return chargeEntity;
@@ -84,7 +84,7 @@ public class CardAuthoriseService extends CardService<BaseAuthoriseResponse> imp
         String transactionId = operationResponse.getBaseResponse()
                 .map(BaseAuthoriseResponse::getTransactionId).orElse("");
 
-        logger.info(format("Card authorisation response received - charge_external_id = %s, transaction_id = %s, status = %s",
+        logger.info(format("Card authorisation response received - charge_external_id=%s, transaction_id=%s, status=%s",
                 chargeEntity.getExternalId(), transactionId, status));
         reloadedCharge.setStatus(status);
         if (StringUtils.isBlank(transactionId)) {
