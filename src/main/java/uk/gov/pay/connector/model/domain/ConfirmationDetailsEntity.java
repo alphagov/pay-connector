@@ -1,5 +1,6 @@
 package uk.gov.pay.connector.model.domain;
 
+import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonManagedReference;
 import com.fasterxml.jackson.annotation.JsonProperty;
 
@@ -21,6 +22,7 @@ public class ConfirmationDetailsEntity extends AbstractEntity {
     private String expiryDate;
 
     @Embedded
+    @JsonProperty("billing_address")
     private Address billingAddress;
 
     public ChargeEntity getChargeEntity() {
@@ -35,7 +37,8 @@ public class ConfirmationDetailsEntity extends AbstractEntity {
     }
 
     @OneToOne
-    @JoinColumn(name = "charge_id", nullable = false)
+    @JsonIgnore
+    @JoinColumn(name = "charge_id", nullable = false, unique=true)
     @JsonManagedReference
     private ChargeEntity chargeEntity;
 
@@ -70,5 +73,30 @@ public class ConfirmationDetailsEntity extends AbstractEntity {
 
     public void setBillingAddress(Address billingAddress) {
         this.billingAddress = billingAddress;
+    }
+
+    @Override
+    public boolean equals(Object o) {
+        if (this == o) return true;
+        if (o == null || getClass() != o.getClass()) return false;
+
+        ConfirmationDetailsEntity that = (ConfirmationDetailsEntity) o;
+
+        if (!lastDigitsCardNumber.equals(that.lastDigitsCardNumber)) return false;
+        if (!cardHolderName.equals(that.cardHolderName)) return false;
+        if (!expiryDate.equals(that.expiryDate)) return false;
+        if (!billingAddress.equals(that.billingAddress)) return false;
+        return chargeEntity.equals(that.chargeEntity);
+
+    }
+
+    @Override
+    public int hashCode() {
+        int result = lastDigitsCardNumber.hashCode();
+        result = 31 * result + cardHolderName.hashCode();
+        result = 31 * result + expiryDate.hashCode();
+        result = 31 * result + billingAddress.hashCode();
+        result = 31 * result + chargeEntity.hashCode();
+        return result;
     }
 }

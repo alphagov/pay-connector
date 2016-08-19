@@ -7,6 +7,7 @@ import org.apache.commons.lang3.builder.ToStringBuilder;
 import uk.gov.pay.connector.model.api.ExternalChargeState;
 import uk.gov.pay.connector.model.builder.AbstractChargeResponseBuilder;
 import uk.gov.pay.connector.model.domain.ChargeStatus;
+import uk.gov.pay.connector.model.domain.ConfirmationDetailsEntity;
 
 import java.time.ZonedDateTime;
 import java.util.List;
@@ -15,10 +16,16 @@ import java.util.Map;
 public class FrontendChargeResponse extends ChargeResponse {
     public static class FrontendChargeResponseBuilder extends AbstractChargeResponseBuilder<FrontendChargeResponseBuilder, FrontendChargeResponse> {
         private String status;
+        private ConfirmationDetailsEntity confirmationDetails;
 
         public FrontendChargeResponseBuilder withStatus(String status) {
             this.status = status;
             super.withState(ChargeStatus.fromString(status).toExternal());
+            return this;
+        }
+
+        public FrontendChargeResponseBuilder withConfirmationDetails(ConfirmationDetailsEntity confirmationDetailsEntity) {
+            this.confirmationDetails = confirmationDetailsEntity;
             return this;
         }
 
@@ -29,7 +36,7 @@ public class FrontendChargeResponse extends ChargeResponse {
 
         @Override
         public FrontendChargeResponse build() {
-            return new FrontendChargeResponse(chargeId, amount, state, gatewayTransactionId, returnUrl, email, description, reference, providerName, createdDate, links, status, refundSummary);
+            return new FrontendChargeResponse(chargeId, amount, state, gatewayTransactionId, returnUrl, email, description, reference, providerName, createdDate, links, status, refundSummary, confirmationDetails);
         }
     }
 
@@ -40,28 +47,34 @@ public class FrontendChargeResponse extends ChargeResponse {
     @JsonProperty
     private String status;
 
-    private FrontendChargeResponse(String chargeId, Long amount, ExternalChargeState state, String gatewayTransactionId, String returnUrl, String email, String description, String reference, String providerName, ZonedDateTime createdDate, List<Map<String, Object>> dataLinks, String status, RefundSummary refundSummary) {
+    @JsonProperty(value="confirmation_details")
+    private ConfirmationDetailsEntity confirmationDetails;
+
+    private FrontendChargeResponse(String chargeId, Long amount, ExternalChargeState state, String gatewayTransactionId, String returnUrl, String email, String description, String reference, String providerName, ZonedDateTime createdDate, List<Map<String, Object>> dataLinks, String status, RefundSummary refundSummary, ConfirmationDetailsEntity confirmationDetails) {
         super(chargeId, amount, state, gatewayTransactionId, returnUrl, email, description, reference, providerName, createdDate, dataLinks, refundSummary);
         this.status = status;
+        this.confirmationDetails = confirmationDetails;
     }
 
     @Override
     public boolean equals(Object o) {
         if (this == o) return true;
-        if (o instanceof FrontendChargeResponse) {
-            FrontendChargeResponse that = (FrontendChargeResponse)o;
-            return new EqualsBuilder()
-                .appendSuper(super.equals(that))
-                .append(this.status, that.status)
-                .isEquals();
-        }
+        if (o == null || getClass() != o.getClass()) return false;
+        if (!super.equals(o)) return false;
 
-        return false;
+        FrontendChargeResponse that = (FrontendChargeResponse) o;
+
+        if (!status.equals(that.status)) return false;
+        return confirmationDetails != null ? confirmationDetails.equals(that.confirmationDetails) : that.confirmationDetails == null;
+
     }
 
     @Override
     public int hashCode() {
-        return new HashCodeBuilder().appendSuper(super.hashCode()).append(this.status).build();
+        int result = super.hashCode();
+        result = 31 * result + status.hashCode();
+        result = 31 * result + (confirmationDetails != null ? confirmationDetails.hashCode() : 0);
+        return result;
     }
 
     @Override

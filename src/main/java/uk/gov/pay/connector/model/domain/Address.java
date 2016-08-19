@@ -80,4 +80,30 @@ public class Address {
         return city;
     }
 
+    @Override
+    public boolean equals(Object o) {
+        if (this == o) return true;
+        if (o == null || getClass() != o.getClass()) return false;
+
+        Address address = (Address) o;
+
+        if (!line1.equals(address.line1)) return false;
+        if (line2 != null ? !line2.equals(address.line2) : address.line2 != null) return false;
+        if (!postcode.equals(address.postcode)) return false;
+        if (!city.equals(address.city)) return false;
+        if (county != null ? !county.equals(address.county) : address.county != null) return false;
+        return country.equals(address.country);
+
+    }
+
+    @Override
+    public int hashCode() {
+        int result = line1.hashCode();
+        result = 31 * result + (line2 != null ? line2.hashCode() : 0);
+        result = 31 * result + postcode.hashCode();
+        result = 31 * result + city.hashCode();
+        result = 31 * result + (county != null ? county.hashCode() : 0);
+        result = 31 * result + country.hashCode();
+        return result;
+    }
 }

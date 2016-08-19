@@ -1,20 +1,12 @@
 package uk.gov.pay.connector.it.dao;
 
-import com.fasterxml.jackson.annotation.JsonManagedReference;
-import com.fasterxml.jackson.annotation.JsonProperty;
 import org.apache.commons.lang3.RandomUtils;
-import uk.gov.pay.connector.model.domain.Address;
 import uk.gov.pay.connector.model.domain.CardTypeEntity.Type;
-import uk.gov.pay.connector.model.domain.ChargeEntity;
 import uk.gov.pay.connector.model.domain.ChargeStatus;
 import uk.gov.pay.connector.model.domain.RefundStatus;
 import uk.gov.pay.connector.util.DatabaseTestHelper;
 import uk.gov.pay.connector.util.RandomIdGenerator;
 
-import javax.persistence.Column;
-import javax.persistence.Embedded;
-import javax.persistence.JoinColumn;
-import javax.persistence.OneToOne;
 import java.time.ZoneId;
 import java.time.ZonedDateTime;
 import java.util.ArrayList;
@@ -122,6 +114,10 @@ public class DatabaseFixtures {
             return id;
         }
 
+        public TestConfirmationDetails withId(Long id) {
+            this.id = id;
+            return this;
+        }
         public TestConfirmationDetails withLastDigitsOfCardNumber(String lastDigitsCardNumber) {
             this.lastDigitsCardNumber = lastDigitsCardNumber;
             return this;

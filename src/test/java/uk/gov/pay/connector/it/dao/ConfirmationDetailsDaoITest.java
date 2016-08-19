@@ -20,37 +20,38 @@ import static uk.gov.pay.connector.model.domain.AddressFixture.aValidAddress;
 
 public class ConfirmationDetailsDaoITest extends DaoITestBase {
     private ConfirmationDetailsDao confirmationDetailsDao;
-
-    private DatabaseFixtures.TestCharge chargeTestRecord;
-    private DatabaseFixtures.TestConfirmationDetails confirmationDetailsTestRecord;
-    private DatabaseFixtures.TestConfirmationDetails testConfirmationDetails;
+    private DatabaseFixtures.TestAccount testAccount;
     @Before
     public void setUp() throws Exception {
         confirmationDetailsDao = env.getInstance(ConfirmationDetailsDao.class);
 
-        DatabaseFixtures.TestAccount testAccount = DatabaseFixtures
+        testAccount = DatabaseFixtures
                 .withDatabaseTestHelper(databaseTestHelper)
                 .aTestAccount();
+        testAccount.insert();
+    }
 
+    private DatabaseFixtures.TestConfirmationDetails createConfirmationDetailsForChargeWithId(long chargeId) {
         DatabaseFixtures.TestCharge testCharge = DatabaseFixtures
                 .withDatabaseTestHelper(databaseTestHelper)
                 .aTestCharge()
+                .withChargeId(chargeId)
                 .withTestAccount(testAccount)
                 .withChargeStatus(ChargeStatus.CAPTURE_SUBMITTED);
 
-        testConfirmationDetails = DatabaseFixtures
+        DatabaseFixtures.TestConfirmationDetails testConfirmationDetails = DatabaseFixtures
                 .withDatabaseTestHelper(databaseTestHelper)
                 .aTestConfirmationDetails()
                 .withChargeEntity(testCharge);
 
-        testAccount.insert();
-        this.chargeTestRecord = testCharge.insert();
-        this.confirmationDetailsTestRecord = testConfirmationDetails.insert();
+        testCharge.insert();
+        testConfirmationDetails.insert();
+        return testConfirmationDetails;
     }
-
 
     @Test
     public void findById_shouldFindConfirmationDetails() {
+        DatabaseFixtures.TestConfirmationDetails confirmationDetailsTestRecord = createConfirmationDetailsForChargeWithId(123L);
         Optional<ConfirmationDetailsEntity> confirmationDetailsEntityMaybe = confirmationDetailsDao.findById(confirmationDetailsTestRecord.getId());
 
         assertThat(confirmationDetailsEntityMaybe.isPresent(), is(true));
@@ -81,7 +82,9 @@ public class ConfirmationDetailsDaoITest extends DaoITestBase {
 
     @Test
     public void findByChargeId_shouldFindConfirmationDetails() {
-        Optional<ConfirmationDetailsEntity> confirmationDetailsEntityMaybe = confirmationDetailsDao.findByChargeId(chargeTestRecord.getChargeId());
+        long chargeId = 123L;
+        DatabaseFixtures.TestConfirmationDetails confirmationDetailsTestRecord = createConfirmationDetailsForChargeWithId(chargeId);
+        Optional<ConfirmationDetailsEntity> confirmationDetailsEntityMaybe = confirmationDetailsDao.findByChargeId(chargeId);
 
         assertThat(confirmationDetailsEntityMaybe.isPresent(), is(true));
 
@@ -111,11 +114,18 @@ public class ConfirmationDetailsDaoITest extends DaoITestBase {
 
     @Test
     public void persist_shouldCreateConfirmationDetails() {
-        ChargeEntity chargeEntity = new ChargeEntity();
-        chargeEntity.setId(chargeTestRecord.getChargeId());
+        DatabaseFixtures.TestCharge testCharge = DatabaseFixtures
+                .withDatabaseTestHelper(databaseTestHelper)
+                .aTestCharge()
+                .withChargeId(10L)
+                .withTestAccount(testAccount)
+                .withChargeStatus(ChargeStatus.CAPTURE_SUBMITTED);
+        testCharge.insert();
 
         Address billingAddress = aValidAddress().build();
 
+        ChargeEntity chargeEntity = new ChargeEntity();
+        chargeEntity.setId(testCharge.getChargeId());
         ConfirmationDetailsEntity confirmationDetailsEntity = new ConfirmationDetailsEntity(chargeEntity);
         confirmationDetailsEntity.setBillingAddress(billingAddress);
         confirmationDetailsEntity.setCardHolderName("Mr. Pay Mc Payment");
@@ -140,6 +150,8 @@ public class ConfirmationDetailsDaoITest extends DaoITestBase {
 
     @Test(expected = Exception.class)
     public void shouldNotInsertTwiceConfirmationDetailsForSameChargeId() {
-        testConfirmationDetails.withId(787L).insert();
+        long chargeId = 123L;
+        createConfirmationDetailsForChargeWithId(chargeId);
+        createConfirmationDetailsForChargeWithId(chargeId);
     }
 }

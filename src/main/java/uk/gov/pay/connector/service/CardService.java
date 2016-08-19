@@ -68,7 +68,7 @@ public abstract class CardService<T extends BaseResponse> {
             throw new IllegalStateRuntimeException(reloadedCharge.getExternalId());
         }
         reloadedCharge.setStatus(lockingStatus);
-
+        //todo do we want to store info in case capture fails? Then we might have to move this to postOperation
         confirmationDetailsService.doRemove(reloadedCharge);
         return reloadedCharge;
     }
