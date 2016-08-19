@@ -2,7 +2,6 @@ package uk.gov.pay.connector.it.contract;
 
 import com.google.common.collect.ImmutableMap;
 import com.google.common.io.Resources;
-import org.apache.commons.lang3.tuple.Pair;
 import org.junit.Assume;
 import org.junit.Before;
 import org.junit.Test;
@@ -30,11 +29,16 @@ import java.util.function.Consumer;
 
 import static com.google.common.io.Resources.getResource;
 import static java.util.UUID.randomUUID;
-import static org.hamcrest.CoreMatchers.*;
-import static org.junit.Assert.*;
+import static org.hamcrest.CoreMatchers.not;
+import static org.hamcrest.CoreMatchers.nullValue;
+import static org.hamcrest.MatcherAssert.assertThat;
+import static org.hamcrest.Matchers.empty;
+import static org.hamcrest.core.Is.is;
+import static org.junit.Assert.assertFalse;
+import static org.junit.Assert.assertTrue;
 import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.verifyZeroInteractions;
 import static uk.gov.pay.connector.model.domain.ChargeEntityFixture.aValidChargeEntity;
-import static uk.gov.pay.connector.model.domain.ChargeStatus.AUTHORISATION_SUCCESS;
 import static uk.gov.pay.connector.model.domain.GatewayAccountEntity.Type.TEST;
 import static uk.gov.pay.connector.service.GatewayClient.createGatewayClient;
 import static uk.gov.pay.connector.util.CardUtils.aValidCard;
@@ -130,7 +134,7 @@ public class WorldpayPaymentProviderTest {
     }
 
     @Test
-    public void handleNotification_shouldOnlyUpdateChargeStatusOnce() throws Exception {
+    public void handleNotification_shouldEnquiryToVerifyTheStatus() throws Exception {
         WorldpayPaymentProvider connector = getValidWorldpayPaymentProvider();
         GatewayResponse<WorldpayOrderStatusResponse> response = successfulWorldpayCardAuth(connector);
 
@@ -140,16 +144,24 @@ public class WorldpayPaymentProviderTest {
         String transactionId = response.getBaseResponse().get().getTransactionId();
 
         chargeEntity.setGatewayTransactionId(transactionId);
+
+        GatewayResponse<WorldpayCaptureResponse> captureResponse = connector.capture(CaptureGatewayRequest.valueOf(chargeEntity));
+
+        assertThat(captureResponse.isSuccessful(), is(true));
+
+        chargeEntity.setGatewayTransactionId(transactionId);
         assertThat(transactionId, is(not(nullValue())));
 
         StatusUpdates statusResponse = connector.handleNotification(
-                notificationPayloadForTransaction(transactionId, "AUTHORISED"),
+                notificationPayloadForTransaction(transactionId, "CAPTURED"),
                 payloadChecks -> true,
                 accoundFinder -> Optional.of(chargeEntity),
                 mockAccountUpdater
         );
 
-        assertThat(statusResponse.getStatusUpdates(), hasItem(Pair.of(transactionId, AUTHORISATION_SUCCESS)));
+        assertThat(statusResponse.successful(), is(true));
+        assertThat(statusResponse.getStatusUpdates(), is(empty()));
+        verifyZeroInteractions(mockAccountUpdater);
     }
 
     @Test

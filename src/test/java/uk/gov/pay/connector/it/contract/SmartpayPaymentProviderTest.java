@@ -42,7 +42,6 @@ import static org.junit.Assert.*;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.verifyZeroInteractions;
 import static uk.gov.pay.connector.model.domain.ChargeEntityFixture.aValidChargeEntity;
-import static uk.gov.pay.connector.model.domain.ChargeStatus.AUTHORISATION_SUCCESS;
 import static uk.gov.pay.connector.model.domain.ChargeStatus.CAPTURED;
 import static uk.gov.pay.connector.model.domain.GatewayAccountEntity.Type.TEST;
 import static uk.gov.pay.connector.service.GatewayClient.createGatewayClient;
@@ -185,8 +184,6 @@ public class SmartpayPaymentProviderTest {
 
         Consumer<StatusUpdates> accountUpdater = mockAccountUpdater();
 
-
-
         String transactionId2 = "tx-id-2";
         StatusUpdates statusResponse = paymentProvider.handleNotification(
                 multipleNotificationPayloadForTransactions(transactionId, transactionId2),
@@ -195,7 +192,7 @@ public class SmartpayPaymentProviderTest {
                 accountUpdater
         );
 
-        assertThat(statusResponse.getStatusUpdates(), contains(Pair.of(transactionId, CAPTURED), Pair.of(transactionId2, AUTHORISATION_SUCCESS)));
+        assertThat(statusResponse.getStatusUpdates(), contains(Pair.of(transactionId, CAPTURED)));
     }
 
     private GatewayResponse testCardAuthorisation(PaymentProvider paymentProvider, ChargeEntity chargeEntity) {

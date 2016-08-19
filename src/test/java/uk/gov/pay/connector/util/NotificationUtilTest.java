@@ -4,7 +4,6 @@ import org.junit.Before;
 import org.junit.Test;
 import uk.gov.pay.connector.model.ChargeStatusRequest;
 import uk.gov.pay.connector.model.domain.ChargeStatus;
-import uk.gov.pay.connector.service.ChargeStatusBlacklist;
 
 import java.util.Optional;
 
@@ -15,12 +14,10 @@ import static org.mockito.Mockito.when;
 public class NotificationUtilTest {
 
     private NotificationUtil notificationUtil;
-    private ChargeStatusBlacklist chargeStatusBlacklist;
 
     @Before
     public void setup() {
-        chargeStatusBlacklist = mock(ChargeStatusBlacklist.class);
-        notificationUtil = new NotificationUtil(chargeStatusBlacklist);
+        notificationUtil = new NotificationUtil();
     }
 
     @Test
@@ -32,19 +29,9 @@ public class NotificationUtilTest {
     }
 
     @Test
-    public void payLoadChecks_ShouldReturnFalseWhenChargeStatusIsBlackListed() {
-        ChargeStatusRequest chargeStatusRequest = mock(ChargeStatusRequest.class);
-        when(chargeStatusRequest.getChargeStatus()).thenReturn(Optional.of(ChargeStatus.AUTHORISATION_REJECTED));
-        when(chargeStatusBlacklist.has(ChargeStatus.AUTHORISATION_REJECTED)).thenReturn(true);
-
-        assertFalse(notificationUtil.payloadChecks(chargeStatusRequest));
-    }
-
-    @Test
     public void payLoadChecks_ShouldReturnFalseWhenTransactionIdIsEmptyString() {
         ChargeStatusRequest chargeStatusRequest = mock(ChargeStatusRequest.class);
         when(chargeStatusRequest.getChargeStatus()).thenReturn(Optional.of(ChargeStatus.CAPTURED));
-        when(chargeStatusBlacklist.has(ChargeStatus.CAPTURED)).thenReturn(false);
         when(chargeStatusRequest.getTransactionId()).thenReturn("");
 
         assertFalse(notificationUtil.payloadChecks(chargeStatusRequest));
@@ -54,7 +41,6 @@ public class NotificationUtilTest {
     public void payLoadChecks_ShouldReturnFalseWhenTransactionIdIsNull() {
         ChargeStatusRequest chargeStatusRequest = mock(ChargeStatusRequest.class);
         when(chargeStatusRequest.getChargeStatus()).thenReturn(Optional.of(ChargeStatus.CAPTURED));
-        when(chargeStatusBlacklist.has(ChargeStatus.CAPTURED)).thenReturn(false);
         when(chargeStatusRequest.getTransactionId()).thenReturn(null);
 
         assertFalse(notificationUtil.payloadChecks(chargeStatusRequest));

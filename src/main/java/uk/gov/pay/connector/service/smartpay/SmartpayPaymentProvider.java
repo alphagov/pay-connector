@@ -9,10 +9,10 @@ import uk.gov.pay.connector.model.domain.ChargeEntity;
 import uk.gov.pay.connector.model.domain.ChargeStatus;
 import uk.gov.pay.connector.model.gateway.AuthorisationGatewayRequest;
 import uk.gov.pay.connector.model.gateway.GatewayResponse;
-import uk.gov.pay.connector.model.InquiryGatewayRequest;
 import uk.gov.pay.connector.service.BaseResponse;
 import uk.gov.pay.connector.service.GatewayClient;
 import uk.gov.pay.connector.service.PaymentProvider;
+import uk.gov.pay.connector.service.StatusMapper;
 
 import java.io.IOException;
 import java.util.List;
@@ -106,9 +106,25 @@ public class SmartpayPaymentProvider extends BasePaymentProvider implements Paym
         }
     }
 
+    private Optional<ChargeStatus> mapStatus(Pair<String, Boolean> status) {
+        StatusMapper.Status<ChargeStatus> mappedStatus = SmartpayStatusMapper.from(status);
+
+        if (mappedStatus.isUnknown()) {
+            logger.warn(format("Smartpay notification with unknown status %s ignored.", status));
+            return Optional.empty();
+        }
+
+
+        if (mappedStatus.isIgnored()) {
+            logger.info(format("Smartpay notification with status %s ignored.", status));
+            return Optional.empty();
+        }
+        return Optional.of(mappedStatus.get());
+    }
+
     private SmartpayNotification extendInternalStatus(SmartpayNotification notification) {
-        notification.setChargeStatus(SmartpayStatusMapper.mapToChargeStatus(
-                notification.getEventCode(), notification.isSuccessFull()));
+        notification.setChargeStatus(mapStatus(Pair.of(
+                notification.getEventCode(), notification.isSuccessFull())));
         return notification;
     }
 

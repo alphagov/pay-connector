@@ -15,7 +15,6 @@ import static javax.ws.rs.core.MediaType.APPLICATION_JSON;
 import static javax.ws.rs.core.MediaType.TEXT_XML;
 import static org.hamcrest.Matchers.is;
 import static org.junit.Assert.assertThat;
-import static uk.gov.pay.connector.it.resources.worldpay.WorldpayPaymentStatus.REFUSED;
 import static uk.gov.pay.connector.model.domain.ChargeStatus.*;
 import static uk.gov.pay.connector.resources.PaymentProviderValidator.WORLDPAY_PROVIDER;
 import static uk.gov.pay.connector.util.TransactionId.randomId;
@@ -32,9 +31,9 @@ public class WorldpayNotificationResourceITest extends CardResourceITestBase {
     @Test
     public void shouldHandleAWorldpayNotification() throws Exception {
         String transactionId = "transaction-id";
-        String chargeId = createNewChargeWith(AUTHORISATION_READY, transactionId);
+        String chargeId = createNewChargeWith(CAPTURE_SUBMITTED, transactionId);
 
-        worldpay.mockInquirySucccess(REFUSED.value());
+        worldpay.mockInquirySucccess(WorldpayPaymentStatus.CAPTURED.value());
 
         String response = notifyConnector(transactionId, WorldpayPaymentStatus.CAPTURED.value())
                 .statusCode(200)
@@ -43,7 +42,7 @@ public class WorldpayNotificationResourceITest extends CardResourceITestBase {
 
         assertThat(response, is(RESPONSE_EXPECTED_BY_WORLDPAY));
 
-        assertFrontendChargeStatusIs(chargeId, AUTHORISATION_REJECTED.getValue());
+        assertFrontendChargeStatusIs(chargeId, CAPTURED.getValue());
     }
 
     @Test
@@ -88,7 +87,7 @@ public class WorldpayNotificationResourceITest extends CardResourceITestBase {
         worldpay.mockInquirySucccess("PAID IN FULL WITH CABBAGES");
 
         notifyConnector(transactionId, WorldpayPaymentStatus.CAPTURED.value())
-                .statusCode(500)
+                .statusCode(200)
                 .extract().body()
                 .asString();
 
@@ -109,7 +108,7 @@ public class WorldpayNotificationResourceITest extends CardResourceITestBase {
 
         assertThat(response, is(RESPONSE_EXPECTED_BY_WORLDPAY));
 
-        assertFrontendChargeStatusIs(chargeId, CAPTURED.getValue());
+        assertFrontendChargeStatusIs(chargeId, CAPTURE_SUBMITTED.getValue());
     }
 
     @Test
@@ -120,7 +119,7 @@ public class WorldpayNotificationResourceITest extends CardResourceITestBase {
         worldpay.mockInquirySucccess(WorldpayPaymentStatus.CAPTURED.value());
 
         notifyConnector("unknown-transation-id", "GARBAGE")
-                .statusCode(500)
+                .statusCode(200)
                 .extract().body()
                 .asString();
 
@@ -128,14 +127,14 @@ public class WorldpayNotificationResourceITest extends CardResourceITestBase {
     }
 
     @Test
-    public void shouldReturnErrorIfInquiryForChargeStatusFails() throws Exception {
+    public void shouldNotUpdateStatusToDatabaseIfInquiryForChargeStatusFails() throws Exception {
         String transactionId = randomId();
         String chargeId = createNewChargeWith(AUTHORISATION_SUCCESS, transactionId);
 
         worldpay.mockInquiryError();
 
         notifyConnector(transactionId, "GARBAGE")
-                .statusCode(500);
+                .statusCode(200);
 
         assertFrontendChargeStatusIs(chargeId, AUTHORISATION_SUCCESS.getValue());
     }

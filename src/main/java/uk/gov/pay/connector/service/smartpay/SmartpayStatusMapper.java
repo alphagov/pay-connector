@@ -1,30 +1,38 @@
 package uk.gov.pay.connector.service.smartpay;
 
-import com.google.common.collect.ImmutableMap;
+import org.apache.commons.lang3.tuple.Pair;
 import uk.gov.pay.connector.model.domain.ChargeStatus;
+import uk.gov.pay.connector.service.StatusMapper;
+import uk.gov.pay.connector.service.StatusMapper.Status;
 
-import java.util.Collections;
-import java.util.Map;
-import java.util.Optional;
-
-import static java.util.Optional.ofNullable;
-import static uk.gov.pay.connector.model.domain.ChargeStatus.*;
+import static uk.gov.pay.connector.model.domain.ChargeStatus.CAPTURED;
 
 public class SmartpayStatusMapper {
 
-    private static final Map<String, Map<Boolean, ChargeStatus>> smartpayStatuses = ImmutableMap.<String, Map<Boolean, ChargeStatus>>builder().
-            put("AUTHORISATION", ImmutableMap.of(true, AUTHORISATION_SUCCESS, false, AUTHORISATION_REJECTED)).
-            put("CAPTURE", ImmutableMap.of(true, CAPTURED)).
-            put("CANCELLATION", Collections.emptyMap()).
-            put("REFUND", Collections.emptyMap()).
-            put("REQUEST_FOR_INFORMATION", Collections.emptyMap()).
-            put("NOTIFICATION_OF_CHARGEBACK", Collections.emptyMap()).
-            put("CHARGEBACK", Collections.emptyMap()).
-            put("CHARGEBACK_REVERSED", Collections.emptyMap()).
-            put("REPORT_AVAILABLE", Collections.emptyMap()).
-            build();
+        private static final StatusMapper<Pair<String, Boolean>, ChargeStatus> statusMapper =
+                StatusMapper
+                        .<Pair<String, Boolean>, ChargeStatus>builder()
+                        .ignore(Pair.of("AUTHORISATION", true))
+                        .ignore(Pair.of("AUTHORISATION", false))
+                        .map(Pair.of("CAPTURE", true), CAPTURED)
+                        .ignore(Pair.of("CAPTURE", false))
+                        .ignore(Pair.of("CANCELLATION", true))
+                        .ignore(Pair.of("CANCELLATION", false))
+                        .ignore(Pair.of("REFUND", true))
+                        .ignore(Pair.of("REFUND", false))
+                        .ignore(Pair.of("REQUEST_FOR_INFORMATION", true))
+                        .ignore(Pair.of("REQUEST_FOR_INFORMATION", false))
+                        .ignore(Pair.of("NOTIFICATION_OF_CHARGEBACK", true))
+                        .ignore(Pair.of("NOTIFICATION_OF_CHARGEBACK", false))
+                        .ignore(Pair.of("CHARGEBACK", true))
+                        .ignore(Pair.of("CHARGEBACK", false))
+                        .ignore(Pair.of("CHARGEBACK_REVERSED", true))
+                        .ignore(Pair.of("CHARGEBACK_REVERSED", false))
+                        .ignore(Pair.of("REPORT_AVAILABLE", true))
+                        .ignore(Pair.of("REPORT_AVAILABLE", false))
+                        .build();
 
-    public static Optional<ChargeStatus> mapToChargeStatus(String smartpayStatus, Boolean successFull) {
-        return ofNullable(smartpayStatuses.get(smartpayStatus)).map(m -> m.get(successFull));
-    }
+        public static Status<ChargeStatus> from(Pair<String, Boolean> status) {
+                return statusMapper.from(status);
+        }
 }
