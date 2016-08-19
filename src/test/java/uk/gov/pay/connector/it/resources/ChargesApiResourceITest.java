@@ -251,6 +251,44 @@ public class ChargesApiResourceITest {
     }
 
     @Test
+    public void shouldReturn400WhenAmountIsOverMaxAmount() {
+
+        String expectedReference = "Test reference";
+        String expectedDescription = "Test description";
+        String postBody = toJson(ImmutableMap.builder()
+                .put(JSON_AMOUNT_KEY, 10000001)
+                .put(JSON_REFERENCE_KEY, expectedReference)
+                .put(JSON_DESCRIPTION_KEY, expectedDescription)
+                .put(JSON_GATEWAY_ACC_KEY, accountId)
+                .put(JSON_RETURN_URL_KEY, returnUrl)
+                .put(JSON_EMAIL_KEY, email).build());
+
+       createChargeApi
+                .postCreateCharge(postBody)
+                .statusCode(Status.BAD_REQUEST.getStatusCode());
+
+    }
+
+    @Test
+    public void shouldReturn400WhenAmountIsLessThanMinAmount() {
+
+        String expectedReference = "Test reference";
+        String expectedDescription = "Test description";
+        String postBody = toJson(ImmutableMap.builder()
+                .put(JSON_AMOUNT_KEY, 0)
+                .put(JSON_REFERENCE_KEY, expectedReference)
+                .put(JSON_DESCRIPTION_KEY, expectedDescription)
+                .put(JSON_GATEWAY_ACC_KEY, accountId)
+                .put(JSON_RETURN_URL_KEY, returnUrl)
+                .put(JSON_EMAIL_KEY, email).build());
+
+        createChargeApi
+                .postCreateCharge(postBody)
+                .statusCode(Status.BAD_REQUEST.getStatusCode());
+
+    }
+
+    @Test
     public void shouldFilterChargeStatusToReturnInProgressIfInternalStatusIsAuthorised() throws Exception {
 
         long chargeId = RandomUtils.nextInt();

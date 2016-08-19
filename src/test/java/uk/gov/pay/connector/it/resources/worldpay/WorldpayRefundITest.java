@@ -151,6 +151,7 @@ public class WorldpayRefundITest extends CardResourceITestBase {
         String externalChargeId = defaultTestCharge.getExternalChargeId();
         Long chargeId = defaultTestCharge.getChargeId();
 
+        worldpay.mockRefundSuccess();
         postRefundFor(externalChargeId, refundAmount)
                 .statusCode(ACCEPTED.getStatusCode());
 
@@ -172,7 +173,35 @@ public class WorldpayRefundITest extends CardResourceITestBase {
         postRefundFor(defaultTestCharge.getExternalChargeId(), refundAmount)
                 .statusCode(BAD_REQUEST.getStatusCode())
                 .body("reason", is("amount_not_available"))
-                .body("message", is(format("Charge with id [%s] not available for refund.", defaultTestCharge.getExternalChargeId())));
+                .body("message", is("Not sufficient amount available for refund"));
+
+        List<Map<String, Object>> refundsFoundByChargeId = databaseTestHelper.getRefundsByChargeId(defaultTestCharge.getChargeId());
+        assertThat(refundsFoundByChargeId.size(), is(0));
+    }
+
+    @Test
+    public void shouldFailRequestingARefund_whenAmountIsBiggerThanAllowedChargeAmount() {
+
+        Long refundAmount = 10000001L;
+
+        postRefundFor(defaultTestCharge.getExternalChargeId(), refundAmount)
+                .statusCode(BAD_REQUEST.getStatusCode())
+                .body("reason", is("amount_not_available"))
+                .body("message", is("Not sufficient amount available for refund"));
+
+        List<Map<String, Object>> refundsFoundByChargeId = databaseTestHelper.getRefundsByChargeId(defaultTestCharge.getChargeId());
+        assertThat(refundsFoundByChargeId.size(), is(0));
+    }
+
+    @Test
+    public void shouldFailRequestingARefund_whenAmountIsLessThanOnePence() {
+
+        Long refundAmount = 0L;
+
+        postRefundFor(defaultTestCharge.getExternalChargeId(), refundAmount)
+                .statusCode(BAD_REQUEST.getStatusCode())
+                .body("reason", is("amount_min_validation"))
+                .body("message", is("Validation error for amount. Minimum amount for a refund is 1"));
 
         List<Map<String, Object>> refundsFoundByChargeId = databaseTestHelper.getRefundsByChargeId(defaultTestCharge.getChargeId());
         assertThat(refundsFoundByChargeId.size(), is(0));
@@ -195,7 +224,7 @@ public class WorldpayRefundITest extends CardResourceITestBase {
         postRefundFor(defaultTestCharge.getExternalChargeId(), secondRefundAmount)
                 .statusCode(400)
                 .body("reason", is("amount_not_available"))
-                .body("message", is(format("Charge with id [%s] not available for refund.", defaultTestCharge.getExternalChargeId())));
+                .body("message", is("Not sufficient amount available for refund"));
 
         List<Map<String, Object>> refundsFoundByChargeId1 = databaseTestHelper.getRefundsByChargeId(defaultTestCharge.getChargeId());
         assertThat(refundsFoundByChargeId1.size(), is(1));
@@ -220,8 +249,6 @@ public class WorldpayRefundITest extends CardResourceITestBase {
                         hasEntry("charge_id", (Object) defaultTestCharge.getChargeId())
                 )));
     }
-
-
 
     @Test
     public void shouldBeAbleRetrieveARefund() {

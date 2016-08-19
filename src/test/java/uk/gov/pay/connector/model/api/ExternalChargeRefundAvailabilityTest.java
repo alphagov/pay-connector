@@ -14,11 +14,12 @@ import static uk.gov.pay.connector.model.api.ExternalChargeRefundAvailability.*;
 import static uk.gov.pay.connector.model.domain.ChargeEntityFixture.aValidChargeEntity;
 import static uk.gov.pay.connector.model.domain.ChargeStatus.*;
 import static uk.gov.pay.connector.model.domain.ChargeStatus.CAPTURED;
+import static uk.gov.pay.connector.model.domain.GatewayAccountEntity.*;
 import static uk.gov.pay.connector.model.domain.RefundEntityFixture.aValidRefundEntity;
 
 public class ExternalChargeRefundAvailabilityTest {
 
-    private GatewayAccountEntity worldpayGateway = new GatewayAccountEntity("worldpay", newHashMap());
+    private GatewayAccountEntity worldpayGateway = new GatewayAccountEntity("worldpay", newHashMap(), Type.TEST);
 
     @Test
     public void testGetChargeRefundAvailabilityReturnsPending() {
@@ -103,7 +104,7 @@ public class ExternalChargeRefundAvailabilityTest {
     @Test
     public void shouldGetChargeRefundAvailabilityAsUnavailable_whenGatewayProviderIsSandbox() {
 
-        GatewayAccountEntity sandboxGateway = new GatewayAccountEntity("sandbox", newHashMap());
+        GatewayAccountEntity sandboxGateway = new GatewayAccountEntity("sandbox", newHashMap(), Type.TEST);
 
         assertThat(ExternalChargeRefundAvailability.valueOf(aValidChargeEntity()
                 .withStatus(CAPTURED)
@@ -116,7 +117,7 @@ public class ExternalChargeRefundAvailabilityTest {
     @Test
     public void shouldGetChargeRefundAvailabilityAsUnavailable_whenGatewayProviderIsSmartpay() {
 
-        GatewayAccountEntity smartpayGateway = new GatewayAccountEntity("smartpay", newHashMap());
+        GatewayAccountEntity smartpayGateway = new GatewayAccountEntity("smartpay", newHashMap(), Type.TEST);
 
         assertThat(ExternalChargeRefundAvailability.valueOf(aValidChargeEntity()
                 .withStatus(CAPTURED)

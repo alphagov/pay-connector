@@ -13,7 +13,7 @@ import org.mockito.runners.MockitoJUnitRunner;
 import uk.gov.pay.connector.dao.ChargeDao;
 import uk.gov.pay.connector.dao.RefundDao;
 import uk.gov.pay.connector.exception.ChargeNotFoundRuntimeException;
-import uk.gov.pay.connector.exception.RefundNotAvailableRuntimeException;
+import uk.gov.pay.connector.exception.RefundException;
 import uk.gov.pay.connector.model.ErrorType;
 import uk.gov.pay.connector.model.RefundGatewayRequest;
 import uk.gov.pay.connector.model.domain.ChargeEntity;
@@ -156,7 +156,7 @@ public class ChargeRefundServiceTest {
             chargeRefundService.doRefund(accountId, externalChargeId, 100L);
             fail("Should throw an exception here");
         } catch (Exception e) {
-            assertEquals(e.getClass(), RefundNotAvailableRuntimeException.class);
+            assertEquals(e.getClass(), RefundException.class);
         }
 
         verify(mockChargeDao).findByExternalIdAndGatewayAccount(externalChargeId, accountId);

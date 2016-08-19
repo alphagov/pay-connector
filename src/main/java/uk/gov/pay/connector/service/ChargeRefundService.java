@@ -6,7 +6,7 @@ import org.slf4j.LoggerFactory;
 import uk.gov.pay.connector.dao.ChargeDao;
 import uk.gov.pay.connector.dao.RefundDao;
 import uk.gov.pay.connector.exception.ChargeNotFoundRuntimeException;
-import uk.gov.pay.connector.exception.RefundNotAvailableRuntimeException;
+import uk.gov.pay.connector.exception.RefundException;
 import uk.gov.pay.connector.model.RefundGatewayRequest;
 import uk.gov.pay.connector.model.api.ExternalChargeRefundAvailability;
 import uk.gov.pay.connector.model.domain.ChargeEntity;
@@ -19,9 +19,10 @@ import javax.inject.Inject;
 import java.util.Optional;
 
 import static java.lang.String.format;
-import static uk.gov.pay.connector.exception.RefundNotAvailableRuntimeException.ErrorCode.NOT_SUFFICIENT_AMOUNT_AVAILABLE;
+import static uk.gov.pay.connector.exception.RefundException.ErrorCode.NOT_SUFFICIENT_AMOUNT_AVAILABLE;
 import static uk.gov.pay.connector.model.api.ExternalChargeRefundAvailability.EXTERNAL_AVAILABLE;
 import static uk.gov.pay.connector.model.api.ExternalChargeRefundAvailability.valueOf;
+import static uk.gov.pay.connector.model.domain.ChargeStatus.fromString;
 
 public class ChargeRefundService {
 
@@ -83,7 +84,7 @@ public class ChargeRefundService {
             if (EXTERNAL_AVAILABLE != refundAvailability) {
                 logger.error(format("ChargeId=%s, status=%s, refundStatus=%s, message=Not available for refund",
                         reloadedCharge.getId(), reloadedCharge.getStatus(), refundAvailability));
-                throw new RefundNotAvailableRuntimeException(reloadedCharge.getExternalId(), refundAvailability);
+                throw RefundException.notAvailableForRefundException(reloadedCharge.getExternalId(), refundAvailability);
             }
 
             long totalAmountToBeRefunded = reloadedCharge.getTotalAmountToBeRefunded();
@@ -91,7 +92,7 @@ public class ChargeRefundService {
             if (totalAmountToBeRefunded - amountToBeRefunded < 0) {
                 logger.error(format("ChargeId=%s, status=%s, refundStatus=%s, message=doesn't have sufficient amount for refund ([%s]), amount requested for refund is [%s]",
                         reloadedCharge.getId(), reloadedCharge.getStatus(), refundAvailability, totalAmountToBeRefunded, amountToBeRefunded));
-                throw new RefundNotAvailableRuntimeException(reloadedCharge.getExternalId(), NOT_SUFFICIENT_AMOUNT_AVAILABLE);
+                throw RefundException.refundException("Not sufficient amount available for refund", NOT_SUFFICIENT_AMOUNT_AVAILABLE);
             }
 
             RefundEntity refundEntity = new RefundEntity(reloadedCharge, amountToBeRefunded);
