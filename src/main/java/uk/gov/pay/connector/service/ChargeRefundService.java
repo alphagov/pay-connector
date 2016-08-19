@@ -7,13 +7,12 @@ import uk.gov.pay.connector.dao.ChargeDao;
 import uk.gov.pay.connector.dao.RefundDao;
 import uk.gov.pay.connector.exception.ChargeNotFoundRuntimeException;
 import uk.gov.pay.connector.exception.RefundNotAvailableRuntimeException;
-import uk.gov.pay.connector.model.GatewayResponse;
 import uk.gov.pay.connector.model.RefundGatewayRequest;
-import uk.gov.pay.connector.model.RefundGatewayResponse;
 import uk.gov.pay.connector.model.api.ExternalChargeRefundAvailability;
 import uk.gov.pay.connector.model.domain.ChargeEntity;
 import uk.gov.pay.connector.model.domain.RefundEntity;
 import uk.gov.pay.connector.model.domain.RefundStatus;
+import uk.gov.pay.connector.model.gateway.GatewayResponse;
 import uk.gov.pay.connector.service.transaction.*;
 
 import javax.inject.Inject;
@@ -21,20 +20,21 @@ import java.util.Optional;
 
 import static java.lang.String.format;
 import static uk.gov.pay.connector.model.api.ExternalChargeRefundAvailability.EXTERNAL_AVAILABLE;
+import static uk.gov.pay.connector.model.domain.ChargeStatus.fromString;
 
 public class ChargeRefundService {
 
     public class Response {
 
-        private RefundGatewayResponse refundGatewayResponse;
+        private GatewayResponse<BaseRefundResponse> refundGatewayResponse;
         private RefundEntity refundEntity;
 
-        public Response(RefundGatewayResponse refundGatewayResponse, RefundEntity refundEntity) {
+        public Response(GatewayResponse<BaseRefundResponse> refundGatewayResponse, RefundEntity refundEntity) {
             this.refundGatewayResponse = refundGatewayResponse;
             this.refundEntity = refundEntity;
         }
 
-        public RefundGatewayResponse getRefundGatewayResponse() {
+        public GatewayResponse<BaseRefundResponse> getRefundGatewayResponse() {
             return refundGatewayResponse;
         }
 
@@ -92,6 +92,9 @@ public class ChargeRefundService {
 
             refundDao.persist(refundEntity);
 
+            logger.info(format("Card refund request sent - charge_external_id=%s, transaction_id=%s, status=%s",
+                    chargeEntity.getExternalId(), chargeEntity.getGatewayTransactionId(), fromString(chargeEntity.getStatus())));
+
             return refundEntity;
         };
     }
@@ -108,11 +111,16 @@ public class ChargeRefundService {
         return context -> {
             RefundEntity refundEntity = refundDao.merge(context.get(RefundEntity.class));
 
-            RefundGatewayResponse gatewayResponse = context.get(RefundGatewayResponse.class);
-            RefundStatus newStatus = gatewayResponse.isSuccessful() ? RefundStatus.REFUND_SUBMITTED : RefundStatus.REFUND_ERROR;
+            GatewayResponse gatewayResponse = context.get(GatewayResponse.class);
+            RefundStatus status = gatewayResponse.isSuccessful() ? RefundStatus.REFUND_SUBMITTED : RefundStatus.REFUND_ERROR;
+            ChargeEntity chargeEntity = refundEntity.getChargeEntity();
+
+            logger.info(format("Card refund response received - charge_external_id=%s, transaction_id=%s, status=%s",
+                    chargeEntity.getExternalId(), chargeEntity.getGatewayTransactionId(), status));
             logger.info("Refund status to update - from: {}, to: {} for Charge ID: {}, Refund ID: {}, amount: {}",
-                    refundEntity.getStatus(), newStatus, refundEntity.getChargeEntity().getId(), refundEntity.getId(), refundEntity.getAmount());
-            refundEntity.setStatus(newStatus);
+                    refundEntity.getStatus(), status, chargeEntity.getId(), refundEntity.getId(), refundEntity.getAmount());
+            refundEntity.setStatus(status);
+
             return new Response(gatewayResponse, refundEntity);
         };
     }

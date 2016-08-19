@@ -3,10 +3,8 @@
         "http://dtd.worldpay.com/paymentService_v1.dtd">
 <paymentService version="1.4" merchantCode="MERCHANTCODE">
     <reply>
-        <orderStatus orderCode="MyUniqueTransactionId!">
-            <error code="5">
-                <![CDATA[Could not find payment for order]]>
-            </error>
-        </orderStatus>
+        <error code="2">
+            <![CDATA[Something went wrong.]]>
+        </error>
     </reply>
 </paymentService>

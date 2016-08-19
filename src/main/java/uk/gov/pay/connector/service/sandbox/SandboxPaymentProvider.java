@@ -7,24 +7,22 @@ import org.apache.commons.lang3.tuple.Pair;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import uk.gov.pay.connector.model.*;
+import uk.gov.pay.connector.model.domain.ChargeEntity;
 import uk.gov.pay.connector.model.domain.ChargeStatus;
-import uk.gov.pay.connector.model.domain.GatewayAccountEntity;
-import uk.gov.pay.connector.service.PaymentProvider;
+import uk.gov.pay.connector.model.gateway.AuthorisationGatewayRequest;
+import uk.gov.pay.connector.model.gateway.GatewayResponse;
+import uk.gov.pay.connector.model.InquiryGatewayRequest;
+import uk.gov.pay.connector.service.*;
 
 import java.util.Optional;
-import java.util.UUID;
 import java.util.function.Consumer;
 import java.util.function.Function;
 
-import static uk.gov.pay.connector.model.CancelGatewayResponse.successfulCancelResponse;
-import static uk.gov.pay.connector.model.CaptureGatewayResponse.successfulCaptureResponse;
+import static java.util.UUID.randomUUID;
 import static uk.gov.pay.connector.model.ErrorType.GENERIC_GATEWAY_ERROR;
-import static uk.gov.pay.connector.model.GatewayResponse.ResponseStatus.FAILED;
-import static uk.gov.pay.connector.model.GatewayResponse.ResponseStatus.SUCCEDED;
-import static uk.gov.pay.connector.model.domain.ChargeStatus.*;
 import static uk.gov.pay.connector.service.sandbox.SandboxCardNumbers.*;
 
-public class SandboxPaymentProvider implements PaymentProvider {
+public class SandboxPaymentProvider implements PaymentProvider<BaseResponse> {
 
     private final static Logger LOGGER = LoggerFactory.getLogger(SandboxPaymentProvider.class);
 
@@ -34,41 +32,114 @@ public class SandboxPaymentProvider implements PaymentProvider {
         this.objectMapper = objectMapper;
     }
 
-    @Override
-    public AuthorisationGatewayResponse authorise(AuthorisationGatewayRequest request) {
+    public GatewayResponse<BaseAuthoriseResponse> createGatewayBaseAuthoriseResponse(boolean isAuthorised) {
+        return GatewayResponse.with(new BaseAuthoriseResponse() {
+            @Override
+            public boolean isAuthorised() {
+                return isAuthorised;
+            }
 
+            @Override
+            public String getTransactionId() {
+                return randomUUID().toString();
+            }
+
+            @Override
+            public String getErrorCode() {
+                return null;
+            }
+
+            @Override
+            public String getErrorMessage() {
+                return null;
+            }
+        });
+    }
+
+    public GatewayResponse<BaseCancelResponse> createGatewayBaseCancelResponse() {
+        return GatewayResponse.with(new BaseCancelResponse() {
+            @Override
+            public String getErrorCode() {
+                return null;
+            }
+
+            @Override
+            public String getErrorMessage() {
+                return null;
+            }
+
+            @Override
+            public String getTransactionId() {
+                return randomUUID().toString();
+            }
+        });
+    }
+
+    public GatewayResponse<BaseCaptureResponse> createGatewayBaseCaptureResponse() {
+        return GatewayResponse.with(new BaseCaptureResponse() {
+            @Override
+            public String getErrorCode() {
+                return null;
+            }
+
+            @Override
+            public String getErrorMessage() {
+                return null;
+            }
+
+            @Override
+            public String getTransactionId() {
+                return randomUUID().toString();
+            }
+        });
+    }
+
+    @Override
+    public GatewayResponse authorise(AuthorisationGatewayRequest request) {
         String cardNumber = request.getCard().getCardNo();
-        String transactionId = UUID.randomUUID().toString();
 
-        if (isInvalidCard(cardNumber)) {
+        if (isErrorCard(cardNumber)) {
             CardError errorInfo = cardErrorFor(cardNumber);
-            return new AuthorisationGatewayResponse(FAILED, new ErrorResponse(errorInfo.getErrorMessage(), GENERIC_GATEWAY_ERROR), errorInfo.getNewErrorStatus(), transactionId);
+            return GatewayResponse.with(new GatewayError(errorInfo.getErrorMessage(), GENERIC_GATEWAY_ERROR));
+        } else if (isRejectedCard(cardNumber)) {
+            return createGatewayBaseAuthoriseResponse(false);
+        } else if (isValidCard(cardNumber)) {
+            return createGatewayBaseAuthoriseResponse(true);
         }
 
-        if (isValidCard(cardNumber)) {
-            return new AuthorisationGatewayResponse(SUCCEDED, null, AUTHORISATION_SUCCESS, transactionId);
-        }
-
-        return new AuthorisationGatewayResponse(FAILED, new ErrorResponse("Unsupported card details.", GENERIC_GATEWAY_ERROR), AUTHORISATION_ERROR, transactionId);
+        return GatewayResponse.with(new GatewayError("Unsupported card details.", GENERIC_GATEWAY_ERROR));
     }
 
     @Override
-    public CaptureGatewayResponse capture(CaptureGatewayRequest request) {
-        return successfulCaptureResponse(CAPTURE_SUBMITTED);
+    public Optional<String> generateTransactionId() {
+        return Optional.of(randomUUID().toString());
     }
 
     @Override
-    public CancelGatewayResponse cancel(CancelGatewayRequest request) {
-        return successfulCancelResponse(SYSTEM_CANCELLED);
+    public GatewayResponse capture(CaptureGatewayRequest request) {
+        return createGatewayBaseCaptureResponse();
     }
 
     @Override
-    public RefundGatewayResponse refund(RefundGatewayRequest request) {
+    public GatewayResponse cancel(CancelGatewayRequest request) {
+        return createGatewayBaseCancelResponse();
+    }
+
+    @Override
+    public GatewayResponse refund(RefundGatewayRequest request) {
         throw new UnsupportedOperationException("Operation not supported");
     }
 
     @Override
-    public StatusUpdates handleNotification(String inboundNotification, Function<ChargeStatusRequest, Boolean> payloadChecks, Function<String, Optional<GatewayAccountEntity>> accountFinder, Consumer<StatusUpdates> accountUpdater) {
+    public GatewayResponse inquire(InquiryGatewayRequest request) {
+        throw new UnsupportedOperationException("Operation not supported");
+    }
+
+    @Override
+    public StatusUpdates handleNotification(String inboundNotification,
+                                            Function<ChargeStatusRequest, Boolean> payloadChecks,
+                                            Function<String, Optional<ChargeEntity>> accountFinder,
+                                            Consumer<StatusUpdates> accountUpdater) {
         try {
             JsonNode node = objectMapper.readValue(inboundNotification, JsonNode.class);
 

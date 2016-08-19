@@ -13,10 +13,9 @@ public class WorldpayChargeCancelResourceITest extends CardResourceITestBase {
 
     @Test
     public void cancelCharge_inWorldpaySystem() {
-        String gatewayTransactionId = "irrelevant";
-        String chargeId = createNewChargeWith(ChargeStatus.AUTHORISATION_SUCCESS, gatewayTransactionId );
+        String chargeId = createNewChargeWith(ChargeStatus.AUTHORISATION_SUCCESS, "transaction-id");
 
-        worldpay.mockCancelResponse(gatewayTransactionId);
+        worldpay.mockCancelSuccess();
         givenSetup()
                 .contentType(ContentType.JSON)
                 .post(cancelChargeUrlFor(accountId, chargeId))

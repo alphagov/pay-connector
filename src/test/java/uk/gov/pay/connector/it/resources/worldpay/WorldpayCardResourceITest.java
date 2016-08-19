@@ -44,7 +44,7 @@ public class WorldpayCardResourceITest extends CardResourceITestBase {
     public void shouldCaptureCardPayment_IfChargeWasPreviouslyAuthorised() {
         String chargeId = authoriseNewCharge();
 
-        worldpay.mockCaptureResponse();
+        worldpay.mockCaptureSuccess();
 
         givenSetup()
                 .post(captureChargeUrlFor(chargeId))

@@ -2,12 +2,11 @@ package uk.gov.pay.connector.resources;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import uk.gov.pay.connector.model.ErrorResponse;
-import uk.gov.pay.connector.model.GatewayResponse;
+import uk.gov.pay.connector.model.GatewayError;
 import uk.gov.pay.connector.model.domain.Card;
-import uk.gov.pay.connector.service.ChargeCancelService;
-import uk.gov.pay.connector.service.CardAuthoriseService;
-import uk.gov.pay.connector.service.CardCaptureService;
+import uk.gov.pay.connector.model.gateway.GatewayResponse;
+import uk.gov.pay.connector.service.*;
+import uk.gov.pay.connector.util.ResponseUtil;
 
 import javax.inject.Inject;
 import javax.ws.rs.*;
@@ -18,7 +17,8 @@ import static java.lang.String.format;
 import static javax.ws.rs.core.MediaType.APPLICATION_JSON;
 import static uk.gov.pay.connector.resources.ApiPaths.*;
 import static uk.gov.pay.connector.resources.CardDetailsValidator.isWellFormattedCardDetails;
-import static uk.gov.pay.connector.util.ResponseUtil.*;
+import static uk.gov.pay.connector.util.ResponseUtil.badRequestResponse;
+import static uk.gov.pay.connector.util.ResponseUtil.serviceErrorResponse;
 
 @Path("/")
 public class CardResource {
@@ -43,7 +43,14 @@ public class CardResource {
         if (!isWellFormattedCardDetails(cardDetails)) {
             return badRequestResponse("Values do not match expected format/length.");
         }
-        return handleGatewayResponse(cardAuthoriseService.doAuthorise(chargeId, cardDetails));
+        GatewayResponse<BaseAuthoriseResponse> response = cardAuthoriseService.doAuthorise(chargeId, cardDetails);
+
+        Optional<BaseAuthoriseResponse> baseResponse = response.getBaseResponse();
+        if (baseResponse.isPresent() && !baseResponse.get().isAuthorised()) {
+            return badRequestResponse("This transaction was declined.");
+        }
+
+        return handleGatewayResponse(response);
     }
 
     @POST
@@ -68,7 +75,7 @@ public class CardResource {
         return handleGatewayResponse(chargeCancelService.doUserCancel(chargeId), chargeId);
     }
 
-    private Response handleError(ErrorResponse error) {
+    private Response handleError(GatewayError error) {
         switch (error.getErrorType()) {
             case UNEXPECTED_STATUS_CODE_FROM_GATEWAY:
             case MALFORMED_RESPONSE_RECEIVED_FROM_GATEWAY:
@@ -84,19 +91,18 @@ public class CardResource {
         return badRequestResponse(error.getMessage());
     }
 
-    private Response handleGatewayResponse(Optional<GatewayResponse> gatewayResponse, String chargeId) {
-        return gatewayResponse
+    private Response handleGatewayResponse(GatewayResponse<? extends BaseResponse> response) {
+        return response.getGatewayError()
+                .map(this::handleError)
+                .orElseGet(ResponseUtil::noContentResponse);
+    }
+
+    private Response handleGatewayResponse(Optional<GatewayResponse<BaseCancelResponse>> responseMaybe, String chargeId) {
+        return responseMaybe
                 .map(this::handleGatewayResponse)
                 .orElseGet(() -> {
                     logger.error("Error during cancellation of charge {} - CancelService did not return a GatewayResponse", chargeId);
                     return serviceErrorResponse(format("something went wrong during cancellation of charge %s", chargeId));
                 });
     }
-
-    private Response handleGatewayResponse(GatewayResponse response) {
-        return response.isSuccessful() ? noContentResponse() :
-                response.isInProgress() ? acceptedResponse("Request in progress") :
-                        handleError(response.getError());
-    }
-
 }

@@ -33,10 +33,9 @@ public class ChargeExpiryResourceITest extends CardResourceITestBase {
     @Test
     public void shouldExpireChargesBeforeAndAfterAuthorisationAndShouldHaveTheRightEvents() {
         String extChargeId1 = addCharge(CREATED, "ref", ZonedDateTime.now().minusHours(1), "gatewayTransactionId1");
-        String extChargeId2 = addCharge(AUTHORISATION_SUCCESS, "ref", ZonedDateTime.now().minusHours(1), "gatewayTransactionId2");
-        String extChargeId3 = addCharge(CAPTURE_SUBMITTED, "ref", ZonedDateTime.now().minusHours(1), "gatewayTransactionId3"); //should not get picked
+        String extChargeId2 = addCharge(AUTHORISATION_SUCCESS, "ref", ZonedDateTime.now().minusHours(1), "transaction-id");
 
-        worldpay.mockCancelResponse("gatewayTransactionId2");
+        worldpay.mockCancelSuccess();
 
         getChargeApi
                 .postChargeExpiryTask()
@@ -45,16 +44,15 @@ public class ChargeExpiryResourceITest extends CardResourceITestBase {
                 .body("expiry-success", is(2))
                 .body("expiry-failed", is(0));
 
-        asList(extChargeId1, extChargeId2).forEach(chargeId -> {
-            getChargeApi
-                    .withAccountId(accountId)
-                    .withChargeId(chargeId)
-                    .getCharge()
-                    .statusCode(OK.getStatusCode())
-                    .contentType(JSON)
-                    .body(JSON_CHARGE_KEY, is(chargeId))
-                    .body(JSON_STATE_KEY, is(EXPIRED.toExternal().getStatus()));
-        });
+        asList(extChargeId1, extChargeId2).forEach(chargeId ->
+                getChargeApi
+                        .withAccountId(accountId)
+                        .withChargeId(chargeId)
+                        .getCharge()
+                        .statusCode(OK.getStatusCode())
+                        .contentType(JSON)
+                        .body(JSON_CHARGE_KEY, is(chargeId))
+                        .body(JSON_STATE_KEY, is(EXPIRED.toExternal().getStatus())));
 
         List<String> events1 = app.getDatabaseTestHelper().getInternalEvents(extChargeId1);
         List<String> events2 = app.getDatabaseTestHelper().getInternalEvents(extChargeId2);
@@ -73,7 +71,7 @@ public class ChargeExpiryResourceITest extends CardResourceITestBase {
         String extChargeId1 = addCharge(AUTHORISATION_SUCCESS, "ref", ZonedDateTime.now().minusHours(1), "gatewayTransactionId1");
         String extChargeId2 = addCharge(CAPTURE_SUBMITTED, "ref", ZonedDateTime.now().minusHours(1), "gatewayTransactionId2"); //should not get picked
 
-        worldpay.mockCancelFailResponse();
+        worldpay.mockCancelError();
 
         getChargeApi
                 .postChargeExpiryTask()

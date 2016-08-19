@@ -1,14 +1,15 @@
 package uk.gov.pay.connector.service.worldpay;
 
 import org.eclipse.persistence.oxm.annotations.XmlPath;
+import uk.gov.pay.connector.service.BaseAuthoriseResponse;
+import uk.gov.pay.connector.service.BaseInquiryResponse;
 
 import javax.xml.bind.annotation.XmlRootElement;
 
-import static org.apache.commons.lang3.StringUtils.isNotBlank;
 import static org.apache.commons.lang3.StringUtils.trim;
 
 @XmlRootElement(name = "paymentService")
-public class WorldpayOrderStatusResponse {
+public class WorldpayOrderStatusResponse implements BaseAuthoriseResponse, BaseInquiryResponse {
 
     private static final String AUTHORISED = "AUTHORISED";
 
@@ -24,11 +25,29 @@ public class WorldpayOrderStatusResponse {
     @XmlPath("reply/orderStatus/payment/ISO8583ReturnCode/@code")
     private String refusedReturnCode;
 
-    @XmlPath("reply/error/@code")
     private String errorCode;
 
-    @XmlPath("reply/error/text()")
     private String errorMessage;
+
+    @XmlPath("reply/error/@code")
+    public void setErrorCode(String errorCode) {
+        this.errorCode = errorCode;
+    }
+
+    @XmlPath("reply/orderStatus/error/@code")
+    public void setOrderStatusErrorCode(String errorCode) {
+        this.errorCode = errorCode;
+    }
+
+    @XmlPath("reply/error/text()")
+    public void setErrorMessage(String errorMessage) {
+        this.errorMessage = errorMessage;
+    }
+
+    @XmlPath("reply/orderStatus/error/text()")
+    public void setOrderStatusErrorMessage(String errorMessage) {
+        this.errorMessage = errorMessage;
+    }
 
     public String getLastEvent() {
         return lastEvent;
@@ -42,25 +61,23 @@ public class WorldpayOrderStatusResponse {
         return refusedReturnCode;
     }
 
-    //TODO: what define a authorised request
+    @Override
     public boolean isAuthorised() {
         return AUTHORISED.equals(lastEvent);
     }
 
-    //TODO: what define an error response
-    public boolean isError() {
-        return isNotBlank(errorCode) || isNotBlank(errorMessage);
-    }
-
-    public String getErrorCode() {
-        return errorCode;
-    }
-
-    public String getErrorMessage() {
-        return trim(errorMessage);
-    }
-
+    @Override
     public String getTransactionId() {
         return transactionId;
+    }
+
+    @Override
+    public String getErrorCode() {
+        return trim(errorCode);
+    }
+
+    @Override
+    public String getErrorMessage() {
+        return trim(errorMessage);
     }
 }

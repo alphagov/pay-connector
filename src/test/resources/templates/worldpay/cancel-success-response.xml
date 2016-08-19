@@ -4,7 +4,7 @@
 <paymentService version="1.4" merchantCode="MERCHANTCODE">
     <reply>
         <ok>
-            <cancelReceived orderCode="{{transactionId}}"/>
+            <cancelReceived orderCode="transaction-id"/>
         </ok>
     </reply>
 </paymentService>

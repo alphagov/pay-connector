@@ -5,21 +5,19 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import uk.gov.pay.connector.dao.ChargeDao;
 import uk.gov.pay.connector.exception.ChargeNotFoundRuntimeException;
-import uk.gov.pay.connector.model.CancelGatewayResponse;
-import uk.gov.pay.connector.model.GatewayResponse;
 import uk.gov.pay.connector.model.domain.ChargeEntity;
 import uk.gov.pay.connector.model.domain.ChargeStatus;
+import uk.gov.pay.connector.model.gateway.GatewayResponse;
 import uk.gov.pay.connector.service.transaction.TransactionContext;
 import uk.gov.pay.connector.service.transaction.TransactionFlow;
 import uk.gov.pay.connector.service.transaction.TransactionalOperation;
+import uk.gov.pay.connector.service.worldpay.WorldpayCancelResponse;
 
 import javax.inject.Inject;
 import java.util.Optional;
 
 import static java.lang.String.format;
-import static uk.gov.pay.connector.model.CancelGatewayResponse.successfulCancelResponse;
-import static uk.gov.pay.connector.model.ErrorResponse.baseError;
-import static uk.gov.pay.connector.model.GatewayResponse.ResponseStatus.FAILED;
+import static uk.gov.pay.connector.model.GatewayError.baseError;
 import static uk.gov.pay.connector.model.domain.ChargeStatus.CREATED;
 import static uk.gov.pay.connector.model.domain.ChargeStatus.ENTERING_CARD_DETAILS;
 import static uk.gov.pay.connector.service.CancelServiceFunctions.*;
@@ -47,19 +45,19 @@ public class ChargeCancelService {
         this.transactionFlowProvider = transactionFlowProvider;
     }
 
-    public Optional<GatewayResponse> doSystemCancel(String chargeId, Long accountId) {
+    public Optional<GatewayResponse<BaseCancelResponse>> doSystemCancel(String chargeId, Long accountId) {
         return chargeDao.findByExternalIdAndGatewayAccount(chargeId, accountId)
                 .map(chargeEntity -> doCancel(chargeEntity, SYSTEM_CANCELLATION_FLOW))
                 .orElseThrow(() -> new ChargeNotFoundRuntimeException(chargeId));
     }
 
-    public Optional<GatewayResponse> doUserCancel(String chargeId) {
+    public Optional<GatewayResponse<BaseCancelResponse>> doUserCancel(String chargeId) {
         return chargeDao.findByExternalId(chargeId)
                 .map(chargeEntity -> doCancel(chargeEntity, USER_CANCELLATION_FLOW))
                 .orElseThrow(() -> new ChargeNotFoundRuntimeException(chargeId));
     }
 
-    private Optional<GatewayResponse> doCancel(ChargeEntity chargeEntity, StatusFlow statusFlow) {
+    private Optional<GatewayResponse<BaseCancelResponse>> doCancel(ChargeEntity chargeEntity, StatusFlow statusFlow) {
         if (chargeEntity.hasStatus(nonGatewayStatuses)) {
             return Optional.of(nonGatewayCancel(chargeEntity, statusFlow));
         } else {
@@ -67,24 +65,25 @@ public class ChargeCancelService {
         }
     }
 
-    private Optional<GatewayResponse> cancelChargeWithGatewayCleanup(ChargeEntity charge, StatusFlow statusFlow) {
+    private Optional<GatewayResponse<BaseCancelResponse>> cancelChargeWithGatewayCleanup(ChargeEntity charge, StatusFlow statusFlow) {
         return Optional.ofNullable(transactionFlowProvider.get()
                 .executeNext(prepareForTerminate(chargeDao, charge, statusFlow))
                 .executeNext(doGatewayCancel(providers))
                 .executeNext(finishCancel(statusFlow))
                 .complete()
-                .get(CancelGatewayResponse.class));
-
+                .get(GatewayResponse.class));
     }
 
-    private TransactionalOperation<TransactionContext, GatewayResponse> finishCancel(StatusFlow statusFlow) {
+    private TransactionalOperation<TransactionContext, GatewayResponse<BaseCancelResponse>> finishCancel(StatusFlow statusFlow) {
         return context -> {
             ChargeEntity chargeEntity = context.get(ChargeEntity.class);
-            GatewayResponse cancelResponse = context.get(CancelGatewayResponse.class);
-            ChargeStatus updateTo = determineTerminalState(cancelResponse, statusFlow);
+            GatewayResponse cancelResponse = context.get(GatewayResponse.class);
+            ChargeStatus status = determineTerminalState(cancelResponse, statusFlow);
+            logger.info(format("Card refund response received - charge_external_id=%s, transaction_id=%s, status=%s",
+                    chargeEntity.getExternalId(), chargeEntity.getGatewayTransactionId(), status));
             logger.info("charge status to update - from: {}, to: {} for Charge ID: {}",
-                    chargeEntity.getStatus(), updateTo, chargeEntity.getId());
-            chargeEntity.setStatus(updateTo);
+                    chargeEntity.getStatus(), status, chargeEntity.getId());
+            chargeEntity.setStatus(status);
             chargeDao.mergeAndNotifyStatusHasChanged(chargeEntity);
             return cancelResponse;
         };
@@ -94,7 +93,7 @@ public class ChargeCancelService {
         return cancelResponse.isSuccessful() ? statusFlow.getSuccessTerminalState() : statusFlow.getFailureTerminalState();
     }
 
-    private GatewayResponse nonGatewayCancel(ChargeEntity chargeEntity, StatusFlow statusFlow) {
+    private GatewayResponse<BaseCancelResponse> nonGatewayCancel(ChargeEntity chargeEntity, StatusFlow statusFlow) {
         ChargeStatus completeStatus = statusFlow.getSuccessTerminalState();
         ChargeEntity processedCharge = transactionFlowProvider.get()
                 .executeNext(changeStatusTo(chargeDao, chargeEntity, completeStatus))
@@ -102,14 +101,14 @@ public class ChargeCancelService {
                 .get(ChargeEntity.class);
 
         if (completeStatus.getValue().equals(processedCharge.getStatus())) {
-            return successfulCancelResponse(completeStatus);
+            return GatewayResponse.with(new WorldpayCancelResponse());
         } else {
             String errorMsg = format("Could not update chargeId [%s] to status [%s]. Current state [%s]",
                     processedCharge.getExternalId(),
                     completeStatus,
                     processedCharge.getStatus());
             logger.error(errorMsg);
-            return new CancelGatewayResponse(FAILED, baseError(errorMsg), statusFlow.getFailureTerminalState());
+            return GatewayResponse.with(baseError(errorMsg));
         }
     }
 

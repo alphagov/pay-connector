@@ -4,7 +4,7 @@
     <ns1:captureResponse xmlns:ns1="http://payment.services.adyen.com">
         <ns1:captureResult>
             <additionalData xmlns="http://payment.services.adyen.com" xsi:nil="true"/>
-            <pspReference xmlns="http://payment.services.adyen.com">{{transactionId}}</pspReference>
+            <pspReference xmlns="http://payment.services.adyen.com">7914435254138159</pspReference>
             <response xmlns="http://payment.services.adyen.com">[capture-received]</response>
         </ns1:captureResult>
     </ns1:captureResponse>

@@ -31,11 +31,10 @@ public class WorldpayNotificationResourceITest extends CardResourceITestBase {
 
     @Test
     public void shouldHandleAWorldpayNotification() throws Exception {
-
-        String transactionId = randomId();
+        String transactionId = "transaction-id";
         String chargeId = createNewChargeWith(AUTHORISATION_READY, transactionId);
 
-        worldpay.mockInquiryResponse(transactionId, REFUSED.value());
+        worldpay.mockInquirySucccess(REFUSED.value());
 
         String response = notifyConnector(transactionId, WorldpayPaymentStatus.CAPTURED.value())
                 .statusCode(200)
@@ -49,10 +48,10 @@ public class WorldpayNotificationResourceITest extends CardResourceITestBase {
 
     @Test
     public void shouldUpdateTheLatestStatusToDatabase() throws Exception {
-        String transactionId = randomId();
+        String transactionId = "transaction-id";
         String chargeId = createNewChargeWith(CAPTURE_SUBMITTED, transactionId);
 
-        worldpay.mockInquiryResponse(transactionId, WorldpayPaymentStatus.CAPTURED.value());
+        worldpay.mockInquirySucccess(WorldpayPaymentStatus.CAPTURED.value());
 
         String response = notifyConnector(transactionId, WorldpayPaymentStatus.CAPTURED.value())
                 .statusCode(200)
@@ -66,11 +65,10 @@ public class WorldpayNotificationResourceITest extends CardResourceITestBase {
 
     @Test
     public void shouldIgnoreAuthorisedNotification() throws Exception {
-
-        String transactionId = randomId();
+        String transactionId = "transaction-id";
         String chargeId = createNewChargeWith(CAPTURED, transactionId);
 
-        worldpay.mockInquiryResponse(transactionId, WorldpayPaymentStatus.AUTHORISED.value());
+        worldpay.mockInquirySucccess(WorldpayPaymentStatus.AUTHORISED.value());
 
         String response = notifyConnector(transactionId, WorldpayPaymentStatus.AUTHORISED.value())
                 .statusCode(200)
@@ -84,10 +82,10 @@ public class WorldpayNotificationResourceITest extends CardResourceITestBase {
 
     @Test
     public void shouldNotAddUnknownStatusToDatabaseFromAnInquiry() throws Exception {
-        String transactionId = randomId();
+        String transactionId = "transaction-id";
         String chargeId = createNewChargeWith(AUTHORISATION_SUCCESS, transactionId);
 
-        worldpay.mockInquiryResponse(transactionId, "PAID IN FULL WITH CABBAGES");
+        worldpay.mockInquirySucccess("PAID IN FULL WITH CABBAGES");
 
         notifyConnector(transactionId, WorldpayPaymentStatus.CAPTURED.value())
                 .statusCode(500)
@@ -99,10 +97,10 @@ public class WorldpayNotificationResourceITest extends CardResourceITestBase {
 
     @Test
     public void shouldNotAddUnknownStatusToDatabaseFromANotification() throws Exception {
-        String transactionId = randomId();
+        String transactionId = "transaction-id";
         String chargeId = createNewChargeWith(CAPTURE_SUBMITTED, transactionId);
 
-        worldpay.mockInquiryResponse(transactionId, WorldpayPaymentStatus.CAPTURED.value());
+        worldpay.mockInquirySucccess(WorldpayPaymentStatus.CAPTURED.value());
 
         String response = notifyConnector(transactionId, "GARBAGE")
                 .statusCode(200)
@@ -116,10 +114,10 @@ public class WorldpayNotificationResourceITest extends CardResourceITestBase {
 
     @Test
     public void shouldNotUpdateStatusToDatabaseIfGatewayAccountIsNotFound() throws Exception {
-        String transactionId = randomId();
+        String transactionId = "transaction-id";
         String chargeId = createNewChargeWith(AUTHORISATION_SUCCESS, transactionId);
 
-        worldpay.mockInquiryResponse(transactionId, WorldpayPaymentStatus.CAPTURED.value());
+        worldpay.mockInquirySucccess(WorldpayPaymentStatus.CAPTURED.value());
 
         notifyConnector("unknown-transation-id", "GARBAGE")
                 .statusCode(500)
@@ -134,7 +132,7 @@ public class WorldpayNotificationResourceITest extends CardResourceITestBase {
         String transactionId = randomId();
         String chargeId = createNewChargeWith(AUTHORISATION_SUCCESS, transactionId);
 
-        worldpay.mockErrorResponse();
+        worldpay.mockInquiryError();
 
         notifyConnector(transactionId, "GARBAGE")
                 .statusCode(500);

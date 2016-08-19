@@ -1,35 +1,18 @@
 package uk.gov.pay.connector.service.worldpay;
 
 import org.eclipse.persistence.oxm.annotations.XmlPath;
+import uk.gov.pay.connector.service.BaseCaptureResponse;
 
 import javax.xml.bind.annotation.XmlRootElement;
 
-import static org.apache.commons.lang3.StringUtils.isNotBlank;
-import static org.apache.commons.lang3.StringUtils.trim;
-
 @XmlRootElement(name = "paymentService")
-public class WorldpayCaptureResponse {
-
+public class WorldpayCaptureResponse extends WorldpayBaseResponse implements BaseCaptureResponse {
 
     @XmlPath("reply/ok/captureReceived/@orderCode")
-    private String transationIdForOk;
+    private String transactionId;
 
-    @XmlPath("reply/error/@code")
-    private String errorCode;
-
-    @XmlPath("reply/error/text()")
-    private String errorMessage;
-
-    //TODO: what define a capture failure response?
-    public boolean isCaptured() {
-        return isNotBlank(transationIdForOk);
-    }
-
-    public String getErrorCode() {
-        return errorCode;
-    }
-
-    public String getErrorMessage() {
-        return trim(errorMessage);
+    @Override
+    public String getTransactionId() {
+        return transactionId;
     }
 }

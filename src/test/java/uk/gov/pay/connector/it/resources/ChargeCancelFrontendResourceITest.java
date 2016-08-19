@@ -62,9 +62,8 @@ public class ChargeCancelFrontendResourceITest extends CardResourceITestBase {
 
     @Test
     public void respondWith204WithLockingState_whenCancellationAfterAuth() {
-        String gatewayTransactionId = "gatewayTransactionId";
-        String chargeId = addCharge(AUTHORISATION_SUCCESS, "ref", ZonedDateTime.now().minusHours(1), gatewayTransactionId);
-        worldpay.mockCancelResponse(gatewayTransactionId);
+        String chargeId = addCharge(AUTHORISATION_SUCCESS, "ref", ZonedDateTime.now().minusHours(1), "transaction-id");
+        worldpay.mockCancelSuccess();
 
         userCancelChargeAndCheckApiStatus(chargeId, USER_CANCELLED, NO_CONTENT.getStatusCode());
 
@@ -92,7 +91,7 @@ public class ChargeCancelFrontendResourceITest extends CardResourceITestBase {
     public void respondWith204WithLockingState_whenCancelFailsAfterAuth() {
 
         String gatewayTransactionId = "gatewayTransactionId";
-        worldpay.mockCancelFailResponse();
+        worldpay.mockCancelError();
         String chargeId = addCharge(AUTHORISATION_SUCCESS, "ref", ZonedDateTime.now().minusHours(1), gatewayTransactionId);
 
         userCancelChargeAndCheckApiStatus(chargeId, USER_CANCEL_ERROR, 400); //FIXME: this doesn't sound like a BAD REQUEST scenario

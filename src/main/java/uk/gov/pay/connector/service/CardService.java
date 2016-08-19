@@ -14,7 +14,7 @@ import java.util.stream.Stream;
 
 import static java.lang.String.format;
 
-public abstract class CardService {
+public abstract class CardService<T extends BaseResponse> {
     protected final ChargeDao chargeDao;
     protected final PaymentProviders providers;
     protected final Logger logger = LoggerFactory.getLogger(getClass());
@@ -75,7 +75,7 @@ public abstract class CardService {
         return Stream.of(legalStatuses).map(ChargeStatus::toString).collect(Collectors.joining(", "));
     }
 
-    public PaymentProvider getPaymentProviderFor(ChargeEntity chargeEntity) {
+    public PaymentProvider<T> getPaymentProviderFor(ChargeEntity chargeEntity) {
         return providers.resolve(chargeEntity.getGatewayAccount().getGatewayName());
     }
 }

@@ -1,39 +1,35 @@
 package uk.gov.pay.connector.service;
 
 import com.google.inject.persist.Transactional;
+import org.apache.commons.lang3.StringUtils;
 import uk.gov.pay.connector.dao.ChargeDao;
 import uk.gov.pay.connector.exception.ChargeNotFoundRuntimeException;
 import uk.gov.pay.connector.model.CaptureGatewayRequest;
-import uk.gov.pay.connector.model.CaptureGatewayResponse;
-import uk.gov.pay.connector.model.GatewayResponse;
 import uk.gov.pay.connector.model.domain.ChargeEntity;
 import uk.gov.pay.connector.model.domain.ChargeStatus;
+import uk.gov.pay.connector.model.gateway.GatewayResponse;
 
 import javax.inject.Inject;
 
-import java.util.Optional;
-
 import static java.lang.String.format;
-import static uk.gov.pay.connector.model.domain.ChargeStatus.AUTHORISATION_SUCCESS;
+import static uk.gov.pay.connector.model.domain.ChargeStatus.*;
 
-public class CardCaptureService extends CardService implements TransactionalGatewayOperation {
+public class CardCaptureService extends CardService implements TransactionalGatewayOperation<BaseCaptureResponse> {
 
     private static ChargeStatus[] legalStatuses = new ChargeStatus[]{
             AUTHORISATION_SUCCESS
     };
 
-    private final PaymentProviders providers;
     private final UserNotificationService userNotificationService;
 
 
     @Inject
     public CardCaptureService(ChargeDao chargeDao, PaymentProviders providers, UserNotificationService userNotificationService) {
         super(chargeDao, providers);
-        this.providers = providers;
         this.userNotificationService = userNotificationService;
     }
 
-    public GatewayResponse doCapture(String chargeId) {
+    public GatewayResponse<BaseCaptureResponse> doCapture(String chargeId) {
         return chargeDao
                 .findByExternalId(chargeId)
                 .map(TransactionalGatewayOperation.super::executeGatewayOperationFor)
@@ -43,23 +39,35 @@ public class CardCaptureService extends CardService implements TransactionalGate
     @Transactional
     @Override
     public ChargeEntity preOperation(ChargeEntity chargeEntity) {
+        logger.info(format("Card capture request sent - charge_external_id=%s, transaction_id=%s, status=%s",
+                chargeEntity.getExternalId(), chargeEntity.getGatewayTransactionId(), fromString(chargeEntity.getStatus())));
         return preOperation(chargeEntity, CardService.OperationType.CAPTURE, legalStatuses, ChargeStatus.CAPTURE_READY);
     }
 
     @Override
-    public GatewayResponse operation(ChargeEntity chargeEntity) {
+    public GatewayResponse<BaseCaptureResponse> operation(ChargeEntity chargeEntity) {
         return getPaymentProviderFor(chargeEntity)
                 .capture(CaptureGatewayRequest.valueOf(chargeEntity));
     }
 
     @Transactional
     @Override
-    public GatewayResponse postOperation(ChargeEntity chargeEntity, GatewayResponse operationResponse) {
-        CaptureGatewayResponse captureGatewayResponse = (CaptureGatewayResponse) operationResponse;
-        logger.info(format("Card captured response received - status = %s, charge_external_id = %s", captureGatewayResponse.getStatus(), chargeEntity.getExternalId()));
-
+    public GatewayResponse<BaseCaptureResponse> postOperation(ChargeEntity chargeEntity, GatewayResponse<BaseCaptureResponse> operationResponse) {
         ChargeEntity reloadedCharge = chargeDao.merge(chargeEntity);
-        reloadedCharge.setStatus(captureGatewayResponse.getStatus());
+
+        ChargeStatus status = operationResponse.isSuccessful() ? CAPTURE_SUBMITTED : CAPTURE_ERROR;
+        String transactionId = operationResponse.getBaseResponse()
+                .map(BaseCaptureResponse::getTransactionId).orElse("");
+
+        logger.info(format("Card capture response received - charge_external_id=%s, transaction_id=%s, status=%s",
+                chargeEntity.getExternalId(), transactionId, status));
+
+        reloadedCharge.setStatus(status);
+
+        if (StringUtils.isBlank(transactionId)) {
+            logger.warn("Card capture response received with no transaction id.");
+        }
+
         chargeDao.mergeAndNotifyStatusHasChanged(reloadedCharge);
 
         if (operationResponse.isSuccessful()) {
