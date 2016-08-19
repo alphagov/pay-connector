@@ -36,7 +36,10 @@ class CancelServiceFunctions {
         };
     }
 
-    static PreTransactionalOperation<TransactionContext, ChargeEntity> prepareForTerminate(ChargeDao chargeDao, ChargeEntity chargeEntity, StatusFlow statusFlow) {
+    static PreTransactionalOperation<TransactionContext, ChargeEntity> prepareForTerminate(ChargeDao chargeDao,
+                                                                                           ChargeEntity chargeEntity,
+                                                                                           StatusFlow statusFlow,
+                                                                                           ConfirmationDetailsService confirmationDetailsService) {
         return context -> {
             ChargeEntity reloadedCharge = chargeDao.merge(chargeEntity);
 
@@ -53,7 +56,9 @@ class CancelServiceFunctions {
             logger.info(format("Card cancel request sent - charge_external_id=%s, transaction_id=%s, status=%s",
                     chargeEntity.getExternalId(), chargeEntity.getGatewayTransactionId(), fromString(chargeEntity.getStatus())));
 
-            return chargeDao.mergeAndNotifyStatusHasChanged(reloadedCharge);
+            ChargeEntity reloadedEntity = chargeDao.mergeAndNotifyStatusHasChanged(reloadedCharge);
+            confirmationDetailsService.doRemove(reloadedEntity);
+            return reloadedEntity;
         };
     }
 

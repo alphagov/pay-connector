@@ -35,14 +35,18 @@ public class ChargeCancelService {
     private final ChargeDao chargeDao;
     private final PaymentProviders providers;
     private final Provider<TransactionFlow> transactionFlowProvider;
+    private final ConfirmationDetailsService confirmationDetailsService;
 
 
     @Inject
-    public ChargeCancelService(ChargeDao chargeDao, PaymentProviders providers,
-                               Provider<TransactionFlow> transactionFlowProvider) {
+    public ChargeCancelService(ChargeDao chargeDao,
+                               PaymentProviders providers,
+                               Provider<TransactionFlow> transactionFlowProvider,
+                               ConfirmationDetailsService confirmationDetailsService) {
         this.chargeDao = chargeDao;
         this.providers = providers;
         this.transactionFlowProvider = transactionFlowProvider;
+        this.confirmationDetailsService = confirmationDetailsService;
     }
 
     public Optional<GatewayResponse<BaseCancelResponse>> doSystemCancel(String chargeId, Long accountId) {
@@ -67,7 +71,7 @@ public class ChargeCancelService {
 
     private Optional<GatewayResponse<BaseCancelResponse>> cancelChargeWithGatewayCleanup(ChargeEntity charge, StatusFlow statusFlow) {
         return Optional.ofNullable(transactionFlowProvider.get()
-                .executeNext(prepareForTerminate(chargeDao, charge, statusFlow))
+                .executeNext(prepareForTerminate(chargeDao, charge, statusFlow, confirmationDetailsService))
                 .executeNext(doGatewayCancel(providers))
                 .executeNext(finishCancel(statusFlow))
                 .complete()

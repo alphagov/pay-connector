@@ -1,12 +1,10 @@
 package uk.gov.pay.connector.it.dao;
 
+import com.google.inject.persist.Transactional;
 import org.junit.Before;
 import org.junit.Test;
 import uk.gov.pay.connector.dao.ConfirmationDetailsDao;
-import uk.gov.pay.connector.model.domain.Address;
-import uk.gov.pay.connector.model.domain.ChargeEntity;
-import uk.gov.pay.connector.model.domain.ChargeStatus;
-import uk.gov.pay.connector.model.domain.ConfirmationDetailsEntity;
+import uk.gov.pay.connector.model.domain.*;
 
 import java.util.Map;
 import java.util.Optional;
@@ -15,7 +13,9 @@ import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.hasEntry;
 import static org.hamcrest.core.Is.is;
 import static org.junit.Assert.assertNotNull;
+import static org.junit.Assert.assertNull;
 import static uk.gov.pay.connector.model.domain.Address.anAddress;
+import static uk.gov.pay.connector.model.domain.AddressFixture.*;
 
 
 public class ConfirmationDetailsDaoITest extends DaoITestBase {
@@ -112,11 +112,7 @@ public class ConfirmationDetailsDaoITest extends DaoITestBase {
         ChargeEntity chargeEntity = new ChargeEntity();
         chargeEntity.setId(chargeTestRecord.getChargeId());
 
-        Address billingAddress = anAddress();
-        billingAddress.setLine1("line1");
-        billingAddress.setCity("city");
-        billingAddress.setPostcode("postcode");
-        billingAddress.setCountry("country");
+        Address billingAddress = aValidAddress().build();
 
         ConfirmationDetailsEntity confirmationDetailsEntity = new ConfirmationDetailsEntity(chargeEntity);
         confirmationDetailsEntity.setBillingAddress(billingAddress);

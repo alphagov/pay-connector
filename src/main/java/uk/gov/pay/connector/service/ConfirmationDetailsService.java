@@ -29,7 +29,6 @@ public class ConfirmationDetailsService {
 
     @Transactional
     public ConfirmationDetailsEntity doStore(String externalId, Card cardDetails) {
-        logger.info("storing confirmation details for charge ID: {}", externalId);
         ChargeEntity chargeEntity = chargeDao.
                 findByExternalId(externalId).
                 orElseThrow(() -> new ChargeNotFoundRuntimeException(externalId));
@@ -45,6 +44,22 @@ public class ConfirmationDetailsService {
         detailsEntity.setLastDigitsCardNumber(StringUtils.right(cardDetails.getCardNo(), 4));
         chargeEntity.setConfirmationDetailsEntity(detailsEntity);
         confirmationDetailsDao.persist(detailsEntity);
+        logger.info("stored confirmation details for charge ID: {}", externalId);
         return detailsEntity;
+    }
+
+    @Transactional
+    public void doRemove(ChargeEntity chargeEntity) {
+        if (chargeEntity.getStatus().equals(ChargeStatus.AUTHORISATION_SUCCESS.getValue())) {
+            throw new IllegalStateRuntimeException(chargeEntity.getExternalId());
+        }
+        ConfirmationDetailsEntity entity = chargeEntity.getConfirmationDetailsEntity();
+        if (entity != null) {
+            chargeEntity.setConfirmationDetailsEntity(null);
+            ConfirmationDetailsEntity reloadedEntity = confirmationDetailsDao.merge(entity);
+            confirmationDetailsDao.remove(reloadedEntity);
+            logger.info("removed confirmation details for charge ID: {}", chargeEntity.getExternalId());
+        }
+
     }
 }

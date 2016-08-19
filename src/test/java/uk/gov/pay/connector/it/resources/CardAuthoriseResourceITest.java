@@ -171,7 +171,7 @@ public class CardAuthoriseResourceITest extends CardResourceITestBase {
         timeoutInSeconds.setInt(conf, 0);
 
         String chargeId = createNewChargeWith(ENTERING_CARD_DETAILS, null);
-        String message = "Request in progress";
+        String message = format("Authorisation for charge already in progress, %s", chargeId);
         authoriseAndVerifyFor(chargeId, validCardDetails, message, 202);
     }
 

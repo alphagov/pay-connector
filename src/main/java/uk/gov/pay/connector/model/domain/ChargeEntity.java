@@ -40,7 +40,7 @@ public class ChargeEntity extends AbstractEntity {
     private String email;
 
     @JsonBackReference
-    @OneToOne(mappedBy="chargeEntity", cascade = CascadeType.PERSIST)
+    @OneToOne(mappedBy="chargeEntity", cascade = CascadeType.ALL)
     private ConfirmationDetailsEntity confirmationDetailsEntity;
 
     @ManyToOne

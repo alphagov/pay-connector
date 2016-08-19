@@ -1,13 +1,16 @@
 package uk.gov.pay.connector.it.resources;
 
+import org.apache.commons.lang.StringUtils;
 import org.junit.Before;
 import org.junit.Test;
 import uk.gov.pay.connector.it.base.CardResourceITestBase;
+import uk.gov.pay.connector.model.domain.CardFixture;
 import uk.gov.pay.connector.model.domain.ChargeStatus;
 import uk.gov.pay.connector.util.RestAssuredClient;
 
 import java.time.ZonedDateTime;
 import java.util.List;
+import java.util.Map;
 
 import static com.jayway.restassured.http.ContentType.JSON;
 import static java.lang.String.format;
@@ -16,6 +19,7 @@ import static javax.ws.rs.core.Response.Status.*;
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.hasItems;
 import static org.hamcrest.Matchers.is;
+import static org.hamcrest.Matchers.nullValue;
 import static uk.gov.pay.connector.model.domain.ChargeStatus.*;
 import static uk.gov.pay.connector.model.domain.ChargeStatus.CREATED;
 
@@ -43,6 +47,22 @@ public class ChargeCancelResourceITest extends CardResourceITestBase {
             assertThat(events.size(), is(2));
             assertThat(events, hasItems(status.getValue(), SYSTEM_CANCELLED.getValue()));
         });
+    }
+
+    @Test
+    public void shouldRemoveCardConfirmationDetailsIfCancelled() throws Exception {
+        String externalChargeId = addCharge(ChargeStatus.AUTHORISATION_SUCCESS, "ref", ZonedDateTime.now().minusHours(1), "irrelavant");
+        Long chargeId = Long.valueOf(StringUtils.removeStart(externalChargeId, "charge"));
+
+        worldpay.mockCancelSuccess();
+
+        Map<String, Object> confirmationDetails = app.getDatabaseTestHelper().getConfirmationDetailsByChargeId(chargeId);
+        assertThat(confirmationDetails.isEmpty(), is(false));
+
+        cancelChargeAndCheckApiStatus(externalChargeId, SYSTEM_CANCELLED, 204);
+
+        confirmationDetails = app.getDatabaseTestHelper().getConfirmationDetailsByChargeId(chargeId);
+        assertThat(confirmationDetails, is(nullValue()));
     }
 
     @Test

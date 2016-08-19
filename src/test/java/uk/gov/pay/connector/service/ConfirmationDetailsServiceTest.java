@@ -9,10 +9,7 @@ import org.mockito.runners.MockitoJUnitRunner;
 import uk.gov.pay.connector.dao.ConfirmationDetailsDao;
 import uk.gov.pay.connector.exception.ChargeNotFoundRuntimeException;
 import uk.gov.pay.connector.exception.IllegalStateRuntimeException;
-import uk.gov.pay.connector.model.domain.Card;
-import uk.gov.pay.connector.model.domain.CardFixture;
-import uk.gov.pay.connector.model.domain.ChargeEntity;
-import uk.gov.pay.connector.model.domain.ConfirmationDetailsEntity;
+import uk.gov.pay.connector.model.domain.*;
 
 import java.util.Optional;
 
@@ -26,6 +23,7 @@ import static uk.gov.pay.connector.model.domain.CardFixture.*;
 import static uk.gov.pay.connector.model.domain.CardFixture.aValidCard;
 import static uk.gov.pay.connector.model.domain.ChargeStatus.AUTHORISATION_SUCCESS;
 import static uk.gov.pay.connector.model.domain.ChargeStatus.CAPTURE_READY;
+import static uk.gov.pay.connector.model.domain.ChargeStatus.SYSTEM_CANCEL_READY;
 
 @RunWith(MockitoJUnitRunner.class)
 public class ConfirmationDetailsServiceTest extends CardServiceTest {
@@ -40,7 +38,7 @@ public class ConfirmationDetailsServiceTest extends CardServiceTest {
     }
 
     @Test
-    public void shouldStoreConfirmationDetailsWhenChargeStatusIsAuthorisationSuccess() throws Exception {
+    public void shouldStoreConfirmationDetails_ifChargeStatusIsAuthorisationSuccess() throws Exception {
         ChargeEntity charge = createNewChargeWith(1L, AUTHORISATION_SUCCESS);
 
         Card cardDetails = aValidCard().withCardNo("11111111111111234").build();
@@ -59,7 +57,7 @@ public class ConfirmationDetailsServiceTest extends CardServiceTest {
     }
 
     @Test(expected = ChargeNotFoundRuntimeException.class)
-    public void shouldThrowAnExceptionWhenChargeIsNotFound() throws Exception {
+    public void shouldThrowAnExceptionWhenStoringDetails_ifChargeIsNotFound() throws Exception {
         when(mockedChargeDao.findByExternalId(any()))
                 .thenReturn(Optional.empty());
 
@@ -67,7 +65,7 @@ public class ConfirmationDetailsServiceTest extends CardServiceTest {
     }
 
     @Test(expected = IllegalStateRuntimeException.class)
-    public void shouldThrowAnExceptionWhenChargeStatusIsDifferentFromAuthorisationSuccess() throws Exception {
+    public void shouldThrowAnExceptionWhenStoringDetails_ifChargeStatusIsNotAuthorisationSuccess() throws Exception {
         ChargeEntity charge = createNewChargeWith(1L, CAPTURE_READY);
 
         Card cardDetails = aValidCard().withCardNo("11111111111111234").build();
@@ -76,5 +74,18 @@ public class ConfirmationDetailsServiceTest extends CardServiceTest {
                 .thenReturn(Optional.of(charge));
 
         confirmationDetailsService.doStore(charge.getExternalId(), cardDetails);
+    }
+
+    @Test
+    public void shouldRemoveConfirmationDetails_ifChargeStatusIsSystemCancelReady() throws Exception {
+        ChargeEntity charge = createNewChargeWith(1L, SYSTEM_CANCEL_READY);
+        confirmationDetailsService.doRemove(charge);
+        verify(mockedConfirmationDetailsDao, times(1)).remove(any());
+    }
+
+    @Test(expected = IllegalStateRuntimeException.class)
+    public void shouldThrowAnExceptionWhenRemovingDetails_ifChargeStatusIsAuthorisationSuccess() throws Exception {
+        ChargeEntity charge = createNewChargeWith(1L, AUTHORISATION_SUCCESS);
+        confirmationDetailsService.doRemove(charge);
     }
 }
