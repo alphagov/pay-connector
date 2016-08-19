@@ -363,7 +363,7 @@
                 <constraints primaryKey="true" nullable="false"/>
             </column>
             <column name="charge_id" type="bigserial">
-                <constraints foreignKeyName="fk__confirmation_details_charges" referencedTableName="charges"
+                <constraints foreignKeyName="fk__confirmation_details_charges" unique="true" referencedTableName="charges"
                              referencedColumnNames="id" nullable="false"/>
             </column>
             <column name="last_digits_card_number" type="char(4)">

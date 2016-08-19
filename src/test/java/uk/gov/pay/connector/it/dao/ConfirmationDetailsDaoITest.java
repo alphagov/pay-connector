@@ -1,10 +1,12 @@
 package uk.gov.pay.connector.it.dao;
 
-import com.google.inject.persist.Transactional;
 import org.junit.Before;
 import org.junit.Test;
 import uk.gov.pay.connector.dao.ConfirmationDetailsDao;
-import uk.gov.pay.connector.model.domain.*;
+import uk.gov.pay.connector.model.domain.Address;
+import uk.gov.pay.connector.model.domain.ChargeEntity;
+import uk.gov.pay.connector.model.domain.ChargeStatus;
+import uk.gov.pay.connector.model.domain.ConfirmationDetailsEntity;
 
 import java.util.Map;
 import java.util.Optional;
@@ -13,9 +15,7 @@ import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.hasEntry;
 import static org.hamcrest.core.Is.is;
 import static org.junit.Assert.assertNotNull;
-import static org.junit.Assert.assertNull;
-import static uk.gov.pay.connector.model.domain.Address.anAddress;
-import static uk.gov.pay.connector.model.domain.AddressFixture.*;
+import static uk.gov.pay.connector.model.domain.AddressFixture.aValidAddress;
 
 
 public class ConfirmationDetailsDaoITest extends DaoITestBase {
@@ -23,6 +23,7 @@ public class ConfirmationDetailsDaoITest extends DaoITestBase {
 
     private DatabaseFixtures.TestCharge chargeTestRecord;
     private DatabaseFixtures.TestConfirmationDetails confirmationDetailsTestRecord;
+    private DatabaseFixtures.TestConfirmationDetails testConfirmationDetails;
     @Before
     public void setUp() throws Exception {
         confirmationDetailsDao = env.getInstance(ConfirmationDetailsDao.class);
@@ -37,7 +38,7 @@ public class ConfirmationDetailsDaoITest extends DaoITestBase {
                 .withTestAccount(testAccount)
                 .withChargeStatus(ChargeStatus.CAPTURE_SUBMITTED);
 
-        DatabaseFixtures.TestConfirmationDetails testConfirmationDetails = DatabaseFixtures
+        testConfirmationDetails = DatabaseFixtures
                 .withDatabaseTestHelper(databaseTestHelper)
                 .aTestConfirmationDetails()
                 .withChargeEntity(testCharge);
@@ -46,6 +47,7 @@ public class ConfirmationDetailsDaoITest extends DaoITestBase {
         this.chargeTestRecord = testCharge.insert();
         this.confirmationDetailsTestRecord = testConfirmationDetails.insert();
     }
+
 
     @Test
     public void findById_shouldFindConfirmationDetails() {
@@ -134,5 +136,10 @@ public class ConfirmationDetailsDaoITest extends DaoITestBase {
         assertThat(confirmationDetailsByIdFound, hasEntry("address_city", confirmationDetailsEntity.getBillingAddress().getCity()));
         assertThat(confirmationDetailsByIdFound, hasEntry("address_county", confirmationDetailsEntity.getBillingAddress().getCounty()));
         assertThat(confirmationDetailsByIdFound, hasEntry("address_country", confirmationDetailsEntity.getBillingAddress().getCountry()));
+    }
+
+    @Test(expected = Exception.class)
+    public void shouldNotInsertTwiceConfirmationDetailsForSameChargeId() {
+        testConfirmationDetails.withId(787L).insert();
     }
 }

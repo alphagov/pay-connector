@@ -37,16 +37,15 @@ public abstract class CardService<T extends BaseResponse> {
         }
     }
 
-    public CardService(ChargeDao chargeDao, PaymentProviders providers) {
+    public CardService(ChargeDao chargeDao, PaymentProviders providers, ConfirmationDetailsService confirmationDetailsService) {
         this.chargeDao = chargeDao;
         this.providers = providers;
+        this.confirmationDetailsService = confirmationDetailsService;
     }
 
-    public CardService(ChargeDao chargeDao, PaymentProviders providers, CardExecutorService cardExecutorService, ConfirmationDetailsService confirmationDetailsService) {
-        this.chargeDao = chargeDao;
-        this.providers = providers;
+    public CardService(ChargeDao chargeDao, PaymentProviders providers, ConfirmationDetailsService confirmationDetailsService, CardExecutorService cardExecutorService) {
+        this(chargeDao, providers, confirmationDetailsService);
         this.cardExecutorService = cardExecutorService;
-        this.confirmationDetailsService = confirmationDetailsService;
     }
 
     public ChargeEntity preOperation(ChargeEntity chargeEntity, OperationType operationType, ChargeStatus[] legalStatuses, ChargeStatus lockingStatus) {
@@ -70,6 +69,7 @@ public abstract class CardService<T extends BaseResponse> {
         }
         reloadedCharge.setStatus(lockingStatus);
 
+        confirmationDetailsService.doRemove(reloadedCharge);
         return reloadedCharge;
     }
 

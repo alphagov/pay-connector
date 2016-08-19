@@ -15,10 +15,12 @@ import uk.gov.pay.connector.exception.ConflictRuntimeException;
 import uk.gov.pay.connector.exception.IllegalStateRuntimeException;
 import uk.gov.pay.connector.exception.OperationAlreadyInProgressRuntimeException;
 import uk.gov.pay.connector.model.CaptureGatewayRequest;
+import uk.gov.pay.connector.model.domain.Card;
 import uk.gov.pay.connector.model.domain.ChargeEntity;
 import uk.gov.pay.connector.model.domain.ChargeStatus;
 import uk.gov.pay.connector.model.gateway.GatewayResponse;
 import uk.gov.pay.connector.service.worldpay.WorldpayCaptureResponse;
+import uk.gov.pay.connector.util.CardUtils;
 
 import javax.persistence.OptimisticLockException;
 import java.util.Optional;
@@ -35,14 +37,15 @@ public class CardCaptureServiceTest extends CardServiceTest {
 
     @Rule
     public final ExpectedException exception = ExpectedException.none();
-
+    @Mock
+    private ConfirmationDetailsService mockConfirmationDetailsService;
     @Mock
     private UserNotificationService mockUserNotificationService;
     private CardCaptureService cardCaptureService;
 
     @Before
     public void beforeTest() {
-        cardCaptureService = new CardCaptureService(mockedChargeDao, mockedProviders, mockUserNotificationService);
+        cardCaptureService = new CardCaptureService(mockedChargeDao, mockedProviders, mockConfirmationDetailsService, mockUserNotificationService);
     }
 
     public void setupPaymentProviderMock(String transactionId, String errorCode) {
@@ -57,15 +60,10 @@ public class CardCaptureServiceTest extends CardServiceTest {
     public void shouldCaptureACharge() throws Exception {
         String gatewayTxId = "theTxId";
 
-        ChargeEntity charge = createNewChargeWith(1L, AUTHORISATION_SUCCESS);
-        charge.setGatewayTransactionId(gatewayTxId);
+        ChargeEntity charge = createNewChargeWith(1L, AUTHORISATION_SUCCESS, gatewayTxId);
 
         ChargeEntity reloadedCharge = spy(charge);
-        when(mockedChargeDao.findByExternalId(charge.getExternalId()))
-                .thenReturn(Optional.of(charge));
-        when(mockedChargeDao.merge(any()))
-                .thenReturn(reloadedCharge)
-                .thenReturn(reloadedCharge);
+        mockChargeDaoOperations(charge, reloadedCharge);
 
         setupPaymentProviderMock(gatewayTxId, null);
         when(mockedProviders.resolve(charge.getGatewayAccount().getGatewayName())).thenReturn(mockedPaymentProvider);
@@ -87,6 +85,14 @@ public class CardCaptureServiceTest extends CardServiceTest {
 
         // verify an email notification is sent for a successful capture
         verify(mockUserNotificationService).notifyPaymentSuccessEmail(reloadedCharge);
+    }
+
+    private void mockChargeDaoOperations(ChargeEntity charge, ChargeEntity reloadedCharge) {
+        when(mockedChargeDao.findByExternalId(charge.getExternalId()))
+                .thenReturn(Optional.of(charge));
+        when(mockedChargeDao.merge(any()))
+                .thenReturn(reloadedCharge)
+                .thenReturn(reloadedCharge);
     }
 
     @Test(expected = ChargeNotFoundRuntimeException.class)
@@ -148,15 +154,10 @@ public class CardCaptureServiceTest extends CardServiceTest {
     @Test
     public void shouldUpdateChargeWithCaptureErrorWhenCaptureFails() {
         String gatewayTxId = "theTxId";
-        ChargeEntity charge = createNewChargeWith(1L, AUTHORISATION_SUCCESS);
-        charge.setGatewayTransactionId(gatewayTxId);
+        ChargeEntity charge = createNewChargeWith(1L, AUTHORISATION_SUCCESS, gatewayTxId);
         ChargeEntity reloadedCharge = spy(charge);
 
-        when(mockedChargeDao.findByExternalId(charge.getExternalId()))
-                .thenReturn(Optional.of(charge));
-        when(mockedChargeDao.merge(any()))
-                .thenReturn(reloadedCharge)
-                .thenReturn(reloadedCharge);
+        mockChargeDaoOperations(charge, reloadedCharge);
 
         setupPaymentProviderMock(gatewayTxId, "error-code");
         when(mockedProviders.resolve(charge.getGatewayAccount().getGatewayName())).thenReturn(mockedPaymentProvider);
@@ -170,5 +171,32 @@ public class CardCaptureServiceTest extends CardServiceTest {
 
         // verify an email notification is not sent when an unsuccessful capture
         verifyZeroInteractions(mockUserNotificationService);
+    }
+
+    @Test
+    public void shouldRemoveConfirmationDetailsIfCaptureReady() {
+        String gatewayTxId = "theTxId";
+
+        ChargeEntity charge = createNewChargeWith(1L, AUTHORISATION_SUCCESS, gatewayTxId);
+
+        ChargeEntity reloadedCharge = spy(charge);
+        mockChargeDaoOperations(charge, reloadedCharge);
+        setupPaymentProviderMock(gatewayTxId, null);
+        when(mockedProviders.resolve(charge.getGatewayAccount().getGatewayName())).thenReturn(mockedPaymentProvider);
+        cardCaptureService.doCapture(charge.getExternalId());
+        verify(mockConfirmationDetailsService, times(1)).doRemove(reloadedCharge);
+    }
+
+    @Test
+    public void shouldRemoveConfirmationDetailsIfCaptureFails() {
+        String gatewayTxId = "theTxId";
+        ChargeEntity charge = createNewChargeWith(1L, AUTHORISATION_SUCCESS, gatewayTxId);
+
+        ChargeEntity reloadedCharge = spy(charge);
+        mockChargeDaoOperations(charge, reloadedCharge);
+        setupPaymentProviderMock(gatewayTxId, "error-code");
+        when(mockedProviders.resolve(charge.getGatewayAccount().getGatewayName())).thenReturn(mockedPaymentProvider);
+        cardCaptureService.doCapture(charge.getExternalId());
+        verify(mockConfirmationDetailsService, times(1)).doRemove(reloadedCharge);
     }
 }

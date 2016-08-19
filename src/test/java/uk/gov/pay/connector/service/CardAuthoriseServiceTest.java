@@ -135,8 +135,7 @@ public class CardAuthoriseServiceTest extends CardServiceTest {
         ChargeEntity reloadedCharge = spy(charge);
 
         anAuthorisationRejectedResponse(charge, reloadedCharge);
-
-        verifyZeroInteractions(mockConfirmationDetailsService);
+        verify(mockConfirmationDetailsService, never()).doStore(any(), any());
     }
 
     @Test
@@ -145,7 +144,7 @@ public class CardAuthoriseServiceTest extends CardServiceTest {
         ChargeEntity reloadedCharge = spy(charge);
 
         anAuthorisationErrorResponse(charge, reloadedCharge);
-        verifyZeroInteractions(mockConfirmationDetailsService);
+        verify(mockConfirmationDetailsService, never()).doStore(any(), any());
     }
     @Test
     public void authoriseShouldThrowAnOperationAlreadyInProgressRuntimeExceptionWhenTimeout() throws Exception {

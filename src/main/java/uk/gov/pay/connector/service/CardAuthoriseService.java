@@ -35,7 +35,7 @@ public class CardAuthoriseService extends CardService<BaseAuthoriseResponse> imp
                                 PaymentProviders providers,
                                 CardExecutorService cardExecutorService,
                                 ConfirmationDetailsService confirmationDetailsService) {
-        super(chargeDao, providers, cardExecutorService, confirmationDetailsService);
+        super(chargeDao, providers, confirmationDetailsService, cardExecutorService);
     }
 
     public GatewayResponse doAuthorise(String chargeId, Card cardDetails) {
