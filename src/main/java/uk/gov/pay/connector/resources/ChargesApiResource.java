@@ -41,18 +41,20 @@ import static uk.gov.pay.connector.util.ResponseUtil.*;
 
 @Path("/")
 public class ChargesApiResource {
-    private static final String AMOUNT_KEY = "amount";
+    static final String AMOUNT_KEY = "amount";
     private static final String DESCRIPTION_KEY = "description";
     private static final String RETURN_URL_KEY = "return_url";
     private static final String REFERENCE_KEY = "reference";
     public static final String EMAIL_KEY = "email";
-
     private static final String[] REQUIRED_FIELDS = {AMOUNT_KEY, DESCRIPTION_KEY, REFERENCE_KEY, RETURN_URL_KEY};
     static final Map<String, Integer> MAXIMUM_FIELDS_SIZE = ImmutableMap.of(
             DESCRIPTION_KEY, 255,
             REFERENCE_KEY, 255,
             EMAIL_KEY, 254
     );
+
+    static int MIN_AMOUNT = 1;
+    static int MAX_AMOUNT = 10000000;
 
     private static final String STATE_KEY = "state";
     private static final String FROM_DATE_KEY = "from_date";
@@ -66,7 +68,6 @@ public class ChargesApiResource {
     private final ChargeService chargeService;
     private final ConnectorConfiguration configuration;
     private final ChargeExpiryService chargeExpiryService;
-    private final ChargeRefundService chargeRefundService;
 
     private static final int ONE_HOUR = 3600;
     private static final String CHARGE_EXPIRY_WINDOW = "CHARGE_EXPIRY_WINDOW_SECONDS";
@@ -79,13 +80,12 @@ public class ChargesApiResource {
 
     @Inject
     public ChargesApiResource(ChargeDao chargeDao, GatewayAccountDao gatewayAccountDao,
-                              ChargeService chargeService, ChargeExpiryService chargeExpiryService, ChargeRefundService chargeRefundService,
+                              ChargeService chargeService, ChargeExpiryService chargeExpiryService,
                               ConnectorConfiguration configuration) {
         this.chargeDao = chargeDao;
         this.gatewayAccountDao = gatewayAccountDao;
         this.chargeService = chargeService;
         this.chargeExpiryService = chargeExpiryService;
-        this.chargeRefundService = chargeRefundService;
         this.configuration = configuration;
     }
 

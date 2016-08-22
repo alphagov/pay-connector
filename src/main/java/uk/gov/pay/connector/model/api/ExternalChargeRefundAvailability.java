@@ -6,6 +6,7 @@ import uk.gov.pay.connector.model.domain.ChargeEntity;
 import uk.gov.pay.connector.model.domain.ChargeStatus;
 
 import static uk.gov.pay.connector.model.domain.ChargeStatus.*;
+import static uk.gov.pay.connector.resources.PaymentProviderValidator.WORLDPAY_PROVIDER;
 
 @JsonInclude(JsonInclude.Include.NON_NULL)
 @JsonFormat(shape = JsonFormat.Shape.OBJECT)
@@ -38,17 +39,20 @@ public enum ExternalChargeRefundAvailability {
 
         ExternalChargeRefundAvailability refundAvailabilityStatusResult = EXTERNAL_UNAVAILABLE;
 
-        if (charge.hasStatus(PENDING_FOR_REFUND_STATUS)) {
-            refundAvailabilityStatusResult = EXTERNAL_PENDING;
+        if (charge.getGatewayAccount().getGatewayName().equals(WORLDPAY_PROVIDER)) {
+            if (charge.hasStatus(PENDING_FOR_REFUND_STATUS)) {
+                refundAvailabilityStatusResult = EXTERNAL_PENDING;
 
-        } else if (charge.hasStatus(CAPTURED)) {
-            if (charge.getTotalAmountToBeRefunded() >= 0) {
-                refundAvailabilityStatusResult = EXTERNAL_AVAILABLE;
-            } else {
-                refundAvailabilityStatusResult = EXTERNAL_FULL;
+            } else if (charge.hasStatus(CAPTURED)) {
+                if (charge.getTotalAmountToBeRefunded() > 0) {
+                    refundAvailabilityStatusResult = EXTERNAL_AVAILABLE;
+                } else {
+                    refundAvailabilityStatusResult = EXTERNAL_FULL;
+                }
             }
         }
 
         return refundAvailabilityStatusResult;
     }
+
 }

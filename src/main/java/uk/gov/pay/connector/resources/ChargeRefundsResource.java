@@ -3,6 +3,8 @@ package uk.gov.pay.connector.resources;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import uk.gov.pay.connector.dao.ChargeDao;
+import uk.gov.pay.connector.exception.RefundException;
+import uk.gov.pay.connector.exception.RefundException.ErrorCode;
 import uk.gov.pay.connector.model.GatewayError;
 import uk.gov.pay.connector.model.RefundRequest;
 import uk.gov.pay.connector.model.RefundResponse;
@@ -21,8 +23,11 @@ import java.util.Optional;
 
 import static java.lang.String.format;
 import static javax.ws.rs.core.MediaType.APPLICATION_JSON;
+import static uk.gov.pay.connector.exception.RefundException.ErrorCode.NOT_SUFFICIENT_AMOUNT_AVAILABLE;
 import static uk.gov.pay.connector.resources.ApiPaths.REFUNDS_API_PATH;
 import static uk.gov.pay.connector.resources.ApiPaths.REFUND_API_PATH;
+import static uk.gov.pay.connector.resources.ChargesApiResource.MAX_AMOUNT;
+import static uk.gov.pay.connector.resources.ChargesApiResource.MIN_AMOUNT;
 import static uk.gov.pay.connector.util.ResponseUtil.*;
 
 @Path("/")
@@ -43,6 +48,7 @@ public class ChargeRefundsResource {
     @Consumes(APPLICATION_JSON)
     @Produces(APPLICATION_JSON)
     public Response submitRefund(@PathParam("accountId") Long accountId, @PathParam("chargeId") String chargeId, RefundRequest refund, @Context UriInfo uriInfo) {
+        validateAmount(refund.getAmount());
         return refundService.doRefund(accountId, chargeId, refund.getAmount())
                 .map((refundServiceResponse) -> {
                     GatewayResponse<BaseRefundResponse> response = refundServiceResponse.getRefundGatewayResponse();
@@ -59,6 +65,15 @@ public class ChargeRefundsResource {
                     logger.error("Error during refund of charge {} - RefundService did not return a Response", chargeId);
                     return serviceErrorResponse(format("something went wrong during refund of charge %s", chargeId));
                 });
+    }
+
+    private void validateAmount(long amount) {
+        if (MAX_AMOUNT < amount) {
+            throw RefundException.refundException("Not sufficient amount available for refund", NOT_SUFFICIENT_AMOUNT_AVAILABLE);
+        }
+        if (MIN_AMOUNT > amount) {
+            throw RefundException.refundException("Validation error for amount. Minimum amount for a refund is " + MIN_AMOUNT, ErrorCode.MINIMUM_AMOUNT);
+        }
     }
 
     @GET

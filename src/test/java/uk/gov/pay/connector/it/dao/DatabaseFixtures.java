@@ -66,7 +66,7 @@ public class DatabaseFixtures {
     }
 
     public class TestAccount {
-        long accountId = 564532435L;
+        long accountId = RandomUtils.nextLong(1, 99999);
         String paymentProvider = "test_provider";
         String serviceName = "service_name";
         String selectedPaymentCategory = null;

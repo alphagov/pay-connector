@@ -18,17 +18,23 @@ import static fj.data.Either.left;
 import static fj.data.Either.right;
 import static java.lang.String.format;
 import static org.apache.commons.lang3.StringUtils.isNotBlank;
-import static uk.gov.pay.connector.resources.ChargesApiResource.EMAIL_KEY;
-import static uk.gov.pay.connector.resources.ChargesApiResource.MAXIMUM_FIELDS_SIZE;
+import static uk.gov.pay.connector.resources.ChargesApiResource.*;
 
 class ApiValidators {
+
     private enum ChargeParamValidator {
         EMAIL(EMAIL_KEY){
             boolean validate(String email) {
                 return Pattern.matches(".+@.+\\..+", email) && email.length() <= MAXIMUM_FIELDS_SIZE.get(EMAIL_KEY);
             }
+        },
+        AMOUNT(ChargesApiResource.AMOUNT_KEY){
+            @Override
+            boolean validate(String amount) {
+                Integer amountValue = Integer.valueOf(amount);
+                return MIN_AMOUNT <= amountValue && MAX_AMOUNT >= amountValue;
+            }
         };
-
         private final String type;
         ChargeParamValidator(String type){this.type = type;}
         @Override public String toString(){return type;}
@@ -50,20 +56,18 @@ class ApiValidators {
     static Optional<List> validateQueryParams(List<Pair<String, String>> dateParams, List<Pair<String, Long>> nonNegativePairMap) {
         Map<String, String> invalidQueryParams = new HashMap<>();
 
-        dateParams.stream()
-                .forEach(param -> {
-                    String dateString = param.getRight();
-                    if (isNotBlank(dateString) && !DateTimeUtils.toUTCZonedDateTime(dateString).isPresent()) {
-                        invalidQueryParams.put(param.getLeft(), "query param '%s' not in correct format");
-                    }
-                });
+        dateParams.forEach(param -> {
+            String dateString = param.getRight();
+            if (isNotBlank(dateString) && !DateTimeUtils.toUTCZonedDateTime(dateString).isPresent()) {
+                invalidQueryParams.put(param.getLeft(), "query param '%s' not in correct format");
+            }
+        });
 
-        nonNegativePairMap.stream()
-                .forEach(param -> {
-                    if (param.getRight() != null && param.getRight() < 1) {
-                        invalidQueryParams.put(param.getLeft(), "query param '%s' should be a non zero positive integer");
-                    }
-                });
+        nonNegativePairMap.forEach(param -> {
+            if (param.getRight() != null && param.getRight() < 1) {
+                invalidQueryParams.put(param.getLeft(), "query param '%s' should be a non zero positive integer");
+            }
+        });
 
         if (!invalidQueryParams.isEmpty()) {
             List<String> invalidResponse = newArrayList();
@@ -96,7 +100,7 @@ class ApiValidators {
                 : Optional.of(invalid);
     }
 
-    public static boolean validateChargePatchParams(PatchRequestBuilder.PatchRequest chargePatchRequest) {
+    static boolean validateChargePatchParams(PatchRequestBuilder.PatchRequest chargePatchRequest) {
         boolean invalid = ChargeParamValidator.fromString(chargePatchRequest.getPath())
                         .map(validator -> !validator.validate(chargePatchRequest.getValue()))
                         .orElse(false);

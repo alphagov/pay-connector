@@ -11,6 +11,7 @@ import uk.gov.pay.connector.it.base.CardResourceITestBase;
 import uk.gov.pay.connector.it.dao.DatabaseFixtures;
 import uk.gov.pay.connector.model.domain.RefundStatus;
 import uk.gov.pay.connector.util.DatabaseTestHelper;
+import uk.gov.pay.connector.util.RestAssuredClient;
 
 import java.time.ZoneId;
 import java.time.ZonedDateTime;
@@ -38,6 +39,7 @@ public class WorldpayRefundITest extends CardResourceITestBase {
     private DatabaseFixtures.TestAccount defaultTestAccount;
     private DatabaseFixtures.TestCharge defaultTestCharge;
     private DatabaseTestHelper databaseTestHelper;
+    private RestAssuredClient getChargeApi = new RestAssuredClient(app, accountId);
 
     public WorldpayRefundITest() {
         super("worldpay");
@@ -45,6 +47,7 @@ public class WorldpayRefundITest extends CardResourceITestBase {
 
     @Before
     public void setUp() throws Exception {
+
         databaseTestHelper = app.getDatabaseTestHelper();
         defaultTestAccount = DatabaseFixtures
                 .withDatabaseTestHelper(databaseTestHelper)
@@ -88,7 +91,7 @@ public class WorldpayRefundITest extends CardResourceITestBase {
     }
 
     @Test
-    public void shouldBeAbleToRequestARefund_multiplePartialAmounts() {
+    public void shouldBeAbleToRequestARefund_multiplePartialAmounts_andRefundShouldBeInFullStatus() {
 
         Long firstRefundAmount = 80L;
         Long secondRefundAmount = 20L;
@@ -107,8 +110,15 @@ public class WorldpayRefundITest extends CardResourceITestBase {
         assertThat(refundsFoundByChargeId.size(), is(2));
 
         assertThat(refundsFoundByChargeId, hasItems(
-                aRefundMatching(firstRefundId, chargeId, firstRefundAmount, "REFUND SUBMITTED"),
-                aRefundMatching(secondRefundId, chargeId, secondRefundAmount, "REFUND SUBMITTED")));
+                aRefundMatching(secondRefundId, chargeId, secondRefundAmount, "REFUND SUBMITTED"),
+                aRefundMatching(firstRefundId, chargeId, firstRefundAmount, "REFUND SUBMITTED")));
+
+        getChargeApi.withChargeId(externalChargeId)
+                .getCharge()
+                .statusCode(200)
+                .body("refund_summary.status", is("full"))
+                .body("refund_summary.amount_available", is(0))
+                .body("refund_summary.amount_submitted", is(100));
     }
 
     @Test
@@ -135,14 +145,63 @@ public class WorldpayRefundITest extends CardResourceITestBase {
     }
 
     @Test
+    public void shouldFailRequestingARefund_whenChargeRefundIsFull() {
+
+        Long refundAmount = defaultTestCharge.getAmount();
+        String externalChargeId = defaultTestCharge.getExternalChargeId();
+        Long chargeId = defaultTestCharge.getChargeId();
+
+        worldpay.mockRefundSuccess();
+        postRefundFor(externalChargeId, refundAmount)
+                .statusCode(ACCEPTED.getStatusCode());
+
+        postRefundFor(externalChargeId, 1L)
+                .statusCode(BAD_REQUEST.getStatusCode())
+                .body("reason", is("full"))
+                .body("message", is(format("Charge with id [%s] not available for refund.", externalChargeId)));
+
+        List<Map<String, Object>> refundsFoundByChargeId = databaseTestHelper.getRefundsByChargeId(chargeId);
+        assertThat(refundsFoundByChargeId.size(), is(1));
+    }
+
+    @Test
     public void shouldFailRequestingARefund_whenAmountIsBiggerThanChargeAmount() {
+
         Long refundAmount = defaultTestCharge.getAmount() + 20;
 
         worldpay.mockRefundSuccess();
         postRefundFor(defaultTestCharge.getExternalChargeId(), refundAmount)
                 .statusCode(BAD_REQUEST.getStatusCode())
-                .body("reason", is("full"))
-                .body("message", is(format("Charge with id [%s] not available for refund.", defaultTestCharge.getExternalChargeId())));
+                .body("reason", is("amount_not_available"))
+                .body("message", is("Not sufficient amount available for refund"));
+
+        List<Map<String, Object>> refundsFoundByChargeId = databaseTestHelper.getRefundsByChargeId(defaultTestCharge.getChargeId());
+        assertThat(refundsFoundByChargeId.size(), is(0));
+    }
+
+    @Test
+    public void shouldFailRequestingARefund_whenAmountIsBiggerThanAllowedChargeAmount() {
+
+        Long refundAmount = 10000001L;
+
+        postRefundFor(defaultTestCharge.getExternalChargeId(), refundAmount)
+                .statusCode(BAD_REQUEST.getStatusCode())
+                .body("reason", is("amount_not_available"))
+                .body("message", is("Not sufficient amount available for refund"));
+
+        List<Map<String, Object>> refundsFoundByChargeId = databaseTestHelper.getRefundsByChargeId(defaultTestCharge.getChargeId());
+        assertThat(refundsFoundByChargeId.size(), is(0));
+    }
+
+    @Test
+    public void shouldFailRequestingARefund_whenAmountIsLessThanOnePence() {
+
+        Long refundAmount = 0L;
+
+        postRefundFor(defaultTestCharge.getExternalChargeId(), refundAmount)
+                .statusCode(BAD_REQUEST.getStatusCode())
+                .body("reason", is("amount_min_validation"))
+                .body("message", is("Validation error for amount. Minimum amount for a refund is 1"));
 
         List<Map<String, Object>> refundsFoundByChargeId = databaseTestHelper.getRefundsByChargeId(defaultTestCharge.getChargeId());
         assertThat(refundsFoundByChargeId.size(), is(0));
@@ -164,8 +223,8 @@ public class WorldpayRefundITest extends CardResourceITestBase {
         worldpay.mockRefundSuccess();
         postRefundFor(defaultTestCharge.getExternalChargeId(), secondRefundAmount)
                 .statusCode(400)
-                .body("reason", is("full"))
-                .body("message", is(format("Charge with id [%s] not available for refund.", defaultTestCharge.getExternalChargeId())));
+                .body("reason", is("amount_not_available"))
+                .body("message", is("Not sufficient amount available for refund"));
 
         List<Map<String, Object>> refundsFoundByChargeId1 = databaseTestHelper.getRefundsByChargeId(defaultTestCharge.getChargeId());
         assertThat(refundsFoundByChargeId1.size(), is(1));
@@ -190,8 +249,6 @@ public class WorldpayRefundITest extends CardResourceITestBase {
                         hasEntry("charge_id", (Object) defaultTestCharge.getChargeId())
                 )));
     }
-
-
 
     @Test
     public void shouldBeAbleRetrieveARefund() {
