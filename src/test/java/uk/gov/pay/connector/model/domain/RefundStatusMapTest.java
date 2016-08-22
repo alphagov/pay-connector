@@ -6,7 +6,7 @@ import uk.gov.pay.connector.model.api.ExternalRefundStatus;
 import static org.hamcrest.core.Is.is;
 import static org.junit.Assert.assertThat;
 
-public class RefundStatusTest {
+public class RefundStatusMapTest {
 
     @Test
     public void shouldHaveCorrectNumberOfStatuses() {

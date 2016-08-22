@@ -12,11 +12,7 @@ import uk.gov.pay.connector.model.domain.ChargeEntity;
 import uk.gov.pay.connector.model.domain.ChargeStatus;
 import uk.gov.pay.connector.model.gateway.AuthorisationGatewayRequest;
 import uk.gov.pay.connector.model.gateway.GatewayResponse;
-import uk.gov.pay.connector.model.InquiryGatewayRequest;
-import uk.gov.pay.connector.service.BaseInquiryResponse;
-import uk.gov.pay.connector.service.BaseResponse;
-import uk.gov.pay.connector.service.GatewayClient;
-import uk.gov.pay.connector.service.PaymentProvider;
+import uk.gov.pay.connector.service.*;
 import uk.gov.pay.connector.service.smartpay.BasePaymentProvider;
 import uk.gov.pay.connector.util.XMLUnmarshallerException;
 
@@ -37,7 +33,6 @@ import static uk.gov.pay.connector.util.XMLUnmarshaller.unmarshall;
 public class WorldpayPaymentProvider<T extends BaseResponse> extends BasePaymentProvider implements PaymentProvider<T> {
     public static final String NOTIFICATION_ACKNOWLEDGED = "[OK]";
     public static final StatusUpdates NO_UPDATE = StatusUpdates.noUpdate(NOTIFICATION_ACKNOWLEDGED);
-    public static final StatusUpdates FAILED = StatusUpdates.failed();
     private final Logger logger = LoggerFactory.getLogger(WorldpayPaymentProvider.class);
     private final GatewayClient client;
 
@@ -93,14 +88,30 @@ public class WorldpayPaymentProvider<T extends BaseResponse> extends BasePayment
                     }
 
                     return accountFinder.apply(notification.getTransactionId())
-                            .map(chargeEntity-> {
+                            .map(chargeEntity -> {
                                 StatusUpdates statusUpdates = confirmStatus(chargeEntity, notification.getTransactionId());
                                 processInquiryStatus(accountUpdater, notification, statusUpdates);
                                 return statusUpdates;
                             })
-                            .orElseGet(() -> FAILED);
+                            .orElseGet(() -> NO_UPDATE);
                 })
-                .orElseGet(() -> FAILED);
+                .orElseGet(() -> NO_UPDATE);
+    }
+
+    private Optional<ChargeStatus> mapStatusForNotification(String status) {
+        StatusMapper.Status<ChargeStatus> mappedStatus = WorldpayStatusMapper.from(status);
+
+        if (mappedStatus.isUnknown()) {
+            logger.warn(format("Worldpay notification with unknown status %s ignored.", status));
+            return Optional.empty();
+        }
+
+
+        if (mappedStatus.isIgnored()) {
+            logger.info(format("Worldpay notification with status %s ignored.", status));
+            return Optional.empty();
+        }
+        return Optional.of(mappedStatus.get());
     }
 
     private Optional<WorldpayNotification> parseNotification(String inboundNotification) {
@@ -109,7 +120,12 @@ public class WorldpayPaymentProvider<T extends BaseResponse> extends BasePayment
 
             return Optional.ofNullable(chargeNotification)
                     .map(notification -> {
-                        notification.setChargeStatus(WorldpayStatusesMapper.mapToChargeStatus(notification.getStatus()));
+                        Optional<ChargeStatus> chargeStatus = mapStatusForNotification(notification.getStatus());
+                        if (!chargeStatus.isPresent()) {
+                            return null;
+                        }
+
+                        notification.setChargeStatus(chargeStatus);
                         return notification;
                     });
         } catch (XMLUnmarshallerException e) {
@@ -119,7 +135,7 @@ public class WorldpayPaymentProvider<T extends BaseResponse> extends BasePayment
     }
 
     private void processInquiryStatus(Consumer<StatusUpdates> accountUpdater, WorldpayNotification notification, StatusUpdates statusUpdates) {
-        if (statusUpdates.successful()) {
+        if (statusUpdates.successful() && (statusUpdates.getStatusUpdates().size() > 0)) {
             logMismatchingStatuses(notification, statusUpdates);
             accountUpdater.accept(statusUpdates);
         }
@@ -139,6 +155,23 @@ public class WorldpayPaymentProvider<T extends BaseResponse> extends BasePayment
                 });
     }
 
+    private Optional<ChargeStatus> mapStatusForInquiry(String status) {
+        StatusMapper.Status<ChargeStatus> mappedStatus = WorldpayStatusMapper.from(status);
+
+        if (mappedStatus.isUnknown()) {
+            logger.warn(format("Worldpay inquiry response with unknown status %s ignored.", status));
+            return Optional.empty();
+        }
+
+
+        if (mappedStatus.isIgnored()) {
+            logger.info(format("Worldpay inquiry response with status %s ignored.", status));
+            return Optional.empty();
+        }
+        return Optional.of(mappedStatus.get());
+    }
+
+
     //todo :(
     private StatusUpdates confirmStatus(ChargeEntity chargeEntity, String transactionId) {
         GatewayResponse<BaseInquiryResponse> inquiryGatewayResponse = inquire(InquiryGatewayRequest.valueOf(chargeEntity));
@@ -153,17 +186,14 @@ public class WorldpayPaymentProvider<T extends BaseResponse> extends BasePayment
             logger.error("Could not look up status from worldpay for worldpay charge id " + transactionId);
             return StatusUpdates.failed();
         }
-        final String status = worldpayStatus;
 
-        return WorldpayStatusesMapper
-                .mapToChargeStatus(worldpayStatus)
+        return mapStatusForInquiry(worldpayStatus)
                 .map(chargeStatus -> {
                     Pair<String, ChargeStatus> update = Pair.of(baseResponse.get().getTransactionId(), chargeStatus);
                     return StatusUpdates.withUpdate(NOTIFICATION_ACKNOWLEDGED, ImmutableList.of(update));
                 })
                 .orElseGet(() -> {
-                    logger.error(format("Could not map worldpay status %s to our internal status.", status));
-                    return FAILED;
+                    return NO_UPDATE;
                 });
     }
 
