@@ -19,6 +19,9 @@ public class WorldpayNotification implements ChargeStatusRequest {
     @XmlPath("notify/orderStatusEvent/@orderCode")
     private String transactionId;
 
+    @XmlPath("notify/orderStatusEvent/journal/journalReference/@reference")
+    private String reference;
+
     private Optional<ChargeStatus> chargeStatus = Optional.empty();
 
     @Override
@@ -41,5 +44,9 @@ public class WorldpayNotification implements ChargeStatusRequest {
 
     public String getMerchantCode() {
         return merchantCode;
+    }
+
+    public String getReference() {
+        return reference;
     }
 }

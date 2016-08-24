@@ -4,11 +4,19 @@ import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableMap;
 import com.google.common.io.Resources;
 import fj.data.Either;
+import org.apache.commons.lang3.tuple.Pair;
+import fj.data.Either;
 import org.junit.Assert;
 import org.junit.Before;
 import org.junit.Test;
+import org.junit.runner.RunWith;
+import org.mockito.Mock;
+import org.mockito.runners.MockitoJUnitRunner;
 import uk.gov.pay.connector.model.CaptureGatewayRequest;
 import uk.gov.pay.connector.model.GatewayError;
+import uk.gov.pay.connector.model.RefundGatewayRequest;
+import uk.gov.pay.connector.model.StatusUpdates;
+import uk.gov.pay.connector.model.domain.*;
 import uk.gov.pay.connector.model.Notification;
 import uk.gov.pay.connector.model.Notifications;
 import uk.gov.pay.connector.model.domain.Address;
@@ -17,6 +25,7 @@ import uk.gov.pay.connector.model.domain.ChargeEntity;
 import uk.gov.pay.connector.model.domain.GatewayAccountEntity;
 import uk.gov.pay.connector.model.gateway.AuthorisationGatewayRequest;
 import uk.gov.pay.connector.model.gateway.GatewayResponse;
+import uk.gov.pay.connector.service.GatewayClient;
 import uk.gov.pay.connector.service.worldpay.WorldpayCaptureResponse;
 import uk.gov.pay.connector.service.worldpay.WorldpayOrderStatusResponse;
 import uk.gov.pay.connector.service.worldpay.WorldpayPaymentProvider;
@@ -30,8 +39,11 @@ import javax.ws.rs.core.Response;
 import java.io.IOException;
 import java.net.URL;
 import java.nio.charset.Charset;
+import java.util.Map;
 
 import static com.google.common.io.Resources.getResource;
+import static fj.data.Either.left;
+import static fj.data.Either.right;
 import static javax.ws.rs.core.MediaType.APPLICATION_XML;
 import static org.hamcrest.CoreMatchers.startsWith;
 import static org.hamcrest.MatcherAssert.assertThat;
@@ -41,9 +53,11 @@ import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertTrue;
 import static org.mockito.Matchers.*;
 import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 import static uk.gov.pay.connector.model.ErrorType.GENERIC_GATEWAY_ERROR;
 import static uk.gov.pay.connector.model.ErrorType.UNEXPECTED_STATUS_CODE_FROM_GATEWAY;
+import static uk.gov.pay.connector.model.GatewayError.unexpectedStatusCodeFromGateway;
 import static uk.gov.pay.connector.model.domain.Address.anAddress;
 import static uk.gov.pay.connector.model.domain.ChargeEntityFixture.aValidChargeEntity;
 import static uk.gov.pay.connector.model.domain.GatewayAccount.*;
@@ -51,10 +65,16 @@ import static uk.gov.pay.connector.model.domain.GatewayAccountEntity.Type.TEST;
 import static uk.gov.pay.connector.service.GatewayClient.createGatewayClient;
 import static uk.gov.pay.connector.util.CardUtils.buildCardDetails;
 
+@RunWith(MockitoJUnitRunner.class)
 public class WorldpayPaymentProviderTest {
 
     private WorldpayPaymentProvider provider;
     private Client client;
+
+    @Mock
+    private GatewayClient mockGatewayClient;
+    @Mock
+    GatewayAccountEntity mockGatewayAccountEntity;
 
     @Before
     public void setup() throws Exception {
@@ -73,6 +93,39 @@ public class WorldpayPaymentProviderTest {
     @Test
     public void shouldGetStatusMapper() {
         Assert.assertThat(provider.getStatusMapper(), sameInstance(WorldpayStatusMapper.get()));
+    }
+
+    @Test
+    public void testRefundRequestContainsReference() {
+        ChargeEntity chargeEntity = ChargeEntityFixture.aValidChargeEntity().build();
+        RefundEntity refundEntity = RefundEntityFixture.aValidRefundEntity().build();
+        chargeEntity.setGatewayTransactionId("transaction-id");
+        chargeEntity.setGatewayAccount(mockGatewayAccountEntity);
+        refundEntity.setChargeEntity(chargeEntity);
+
+        Map<String, String> credentialsMap = ImmutableMap.of("merchant_id", "MERCHANTCODE");
+        when(mockGatewayAccountEntity.getCredentials()).thenReturn(credentialsMap);
+        when(mockGatewayClient.postXMLRequestFor(any(GatewayAccountEntity.class), anyString())).thenReturn(left(unexpectedStatusCodeFromGateway("Unexpected Response Code From Gateway")));
+
+        WorldpayPaymentProvider worldpayPaymentProvider = new WorldpayPaymentProvider(mockGatewayClient);
+        worldpayPaymentProvider.refund(RefundGatewayRequest.valueOf(refundEntity));
+
+        String expectedRefundRequest =
+                "<?xml version=\"1.0\" encoding=\"UTF-8\"?>\n" +
+                "<!DOCTYPE paymentService PUBLIC \"-//WorldPay//DTD WorldPay PaymentService v1//EN\"\n" +
+                "        \"http://dtd.worldpay.com/paymentService_v1.dtd\">\n" +
+                "<paymentService version=\"1.4\" merchantCode=\"MERCHANTCODE\">\n" +
+                "    <modify>\n" +
+                "        <orderModification orderCode=\"transaction-id\">\n" +
+                "            <refund reference=\"" +refundEntity.getExternalId()+ "\">\n" +
+                "                <amount currencyCode=\"GBP\" exponent=\"2\" value=\"500\"/>\n" +
+                "            </refund>\n" +
+                "        </orderModification>\n" +
+                "    </modify>\n" +
+                "</paymentService>\n" +
+                "";
+
+        verify(mockGatewayClient).postXMLRequestFor(mockGatewayAccountEntity, expectedRefundRequest);
     }
 
     @Test

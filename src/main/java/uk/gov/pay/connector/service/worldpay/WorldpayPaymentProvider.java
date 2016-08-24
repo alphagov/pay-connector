@@ -106,6 +106,7 @@ public class WorldpayPaymentProvider extends BasePaymentProvider<BaseResponse> {
                 .withMerchantCode(request.getGatewayAccount().getCredentials().get(CREDENTIALS_MERCHANT_ID))
                 .withTransactionId(request.getTransactionId())
                 .withAmount(request.getAmount())
+                .withReference(request.getReference())
                 .build();
     }
 

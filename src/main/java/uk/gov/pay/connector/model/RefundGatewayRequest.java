@@ -9,21 +9,13 @@ public class RefundGatewayRequest implements GatewayRequest {
     private final GatewayAccountEntity gatewayAccountEntity;
     private final String amount;
     private final String transactionId;
-    private final String refundReference;
+    private final String reference;
 
-    private RefundGatewayRequest(ChargeEntity charge) {
-        this(charge, new RefundEntity(charge, charge.getAmount()));
-    }
-
-    private RefundGatewayRequest(ChargeEntity charge, RefundEntity refundEntity) {
-        this(charge, String.valueOf(refundEntity.getAmount()), refundEntity.getExternalId());
-    }
-
-    private RefundGatewayRequest(ChargeEntity charge, String amount, String refundReference) {
-        this.transactionId = charge.getGatewayTransactionId();
-        this.gatewayAccountEntity = charge.getGatewayAccount();
+    private RefundGatewayRequest(String transactionId, GatewayAccountEntity gatewayAccount, String amount, String reference) {
+        this.transactionId = transactionId;
+        this.gatewayAccountEntity = gatewayAccount;
         this.amount = amount;
-        this.refundReference = refundReference;
+        this.reference = reference;
     }
 
     public String getAmount() {
@@ -39,11 +31,15 @@ public class RefundGatewayRequest implements GatewayRequest {
         return gatewayAccountEntity;
     }
 
-    public static RefundGatewayRequest valueOf(ChargeEntity charge) {
-        return new RefundGatewayRequest(charge);
+    public static RefundGatewayRequest valueOf(RefundEntity refundEntity) {
+        return new RefundGatewayRequest(
+                refundEntity.getChargeEntity().getGatewayTransactionId(),
+                refundEntity.getChargeEntity().getGatewayAccount(),
+                String.valueOf(refundEntity.getAmount()),
+                refundEntity.getExternalId());
     }
 
-    public static RefundGatewayRequest valueOf(ChargeEntity charge, RefundEntity refundEntity) {
-        return new RefundGatewayRequest(charge, refundEntity);
+    public String getReference() {
+        return reference;
     }
 }

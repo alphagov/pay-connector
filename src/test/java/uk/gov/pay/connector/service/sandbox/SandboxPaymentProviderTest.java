@@ -10,10 +10,7 @@ import org.junit.Rule;
 import org.junit.Test;
 import org.junit.rules.ExpectedException;
 import uk.gov.pay.connector.model.*;
-import uk.gov.pay.connector.model.domain.Card;
-import uk.gov.pay.connector.model.domain.ChargeEntity;
-import uk.gov.pay.connector.model.domain.ChargeEntityFixture;
-import uk.gov.pay.connector.model.domain.GatewayAccountEntity;
+import uk.gov.pay.connector.model.domain.*;
 import uk.gov.pay.connector.model.gateway.AuthorisationGatewayRequest;
 import uk.gov.pay.connector.model.gateway.GatewayResponse;
 import uk.gov.pay.connector.service.BaseAuthoriseResponse;
@@ -202,9 +199,7 @@ public class SandboxPaymentProviderTest {
 
     @Test
     public void refund_shouldFailWhenRefundingAnyCharge() {
-
         expectedException.expect(UnsupportedOperationException.class);
-
-        provider.refund(RefundGatewayRequest.valueOf(ChargeEntityFixture.aValidChargeEntity().build()));
+        provider.refund(RefundGatewayRequest.valueOf(new RefundEntity(ChargeEntityFixture.aValidChargeEntity().build(), 1L)));
     }
 }

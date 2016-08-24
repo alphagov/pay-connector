@@ -11,6 +11,7 @@ import uk.gov.pay.connector.model.RefundGatewayRequest;
 import uk.gov.pay.connector.model.domain.Card;
 import uk.gov.pay.connector.model.domain.ChargeEntity;
 import uk.gov.pay.connector.model.domain.GatewayAccountEntity;
+import uk.gov.pay.connector.model.domain.RefundEntity;
 import uk.gov.pay.connector.model.gateway.AuthorisationGatewayRequest;
 import uk.gov.pay.connector.model.gateway.GatewayResponse;
 import uk.gov.pay.connector.service.worldpay.WorldpayCaptureResponse;
@@ -86,9 +87,7 @@ public class WorldpayPaymentProviderTest {
 
     @Test
     public void shouldBeAbleToSubmitAPartialRefundAfterACaptureHasBeenSubmitted() throws InterruptedException {
-
         WorldpayPaymentProvider connector = getValidWorldpayPaymentProvider();
-
         GatewayResponse<WorldpayOrderStatusResponse> response = successfulWorldpayCardAuth(connector);
 
         assertThat(response.getBaseResponse().isPresent(), is(true));
@@ -98,12 +97,13 @@ public class WorldpayPaymentProviderTest {
         assertThat(transactionId, is(not(nullValue())));
 
         chargeEntity.setGatewayTransactionId(transactionId);
-
         GatewayResponse<WorldpayCaptureResponse> captureResponse = connector.capture(CaptureGatewayRequest.valueOf(chargeEntity));
 
         assertThat(captureResponse.isSuccessful(), is(true));
 
-        GatewayResponse refundGatewayResponse = connector.refund(RefundGatewayRequest.valueOf(chargeEntity));
+        RefundEntity refundEntity = new RefundEntity(chargeEntity, 1L);
+
+        GatewayResponse refundGatewayResponse = connector.refund(RefundGatewayRequest.valueOf(refundEntity));
 
         assertTrue(refundGatewayResponse.isSuccessful());
     }

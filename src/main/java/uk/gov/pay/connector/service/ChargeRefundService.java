@@ -110,7 +110,7 @@ public class ChargeRefundService {
         return context -> {
             RefundEntity refundEntity = context.get(RefundEntity.class);
             return providers.byName(refundEntity.getChargeEntity().getPaymentGatewayName())
-                    .refund(RefundGatewayRequest.valueOf(refundEntity.getChargeEntity(), refundEntity.getAmount()));
+                    .refund(RefundGatewayRequest.valueOf(new RefundEntity(refundEntity.getChargeEntity(), refundEntity.getAmount())));
         };
     }
 

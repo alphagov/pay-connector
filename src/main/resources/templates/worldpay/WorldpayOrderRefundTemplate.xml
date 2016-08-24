@@ -4,7 +4,7 @@
 <paymentService version="1.4" merchantCode="${merchantCode}">
     <modify>
         <orderModification orderCode="${transactionId}">
-            <refund>
+            <refund reference="${reference}">
                 <amount currencyCode="GBP" exponent="2" value="${amount}"/>
             </refund>
         </orderModification>

@@ -40,12 +40,14 @@ public class WorldpayXMLUnmarshallerTest {
         String status = "CAPTURED";
         String successPayload = readPayload("templates/worldpay/notification.xml")
                 .replace("{{transactionId}}", transactionId)
-                .replace("{{status}}", status);
+                .replace("{{status}}", status)
+                .replace("{{refund-ref}}", "REFUND-REF");
 
         WorldpayNotification response = XMLUnmarshaller.unmarshall(successPayload, WorldpayNotification.class);
         assertThat(response.getStatus(), is(status));
         assertThat(response.getTransactionId(), is(transactionId));
         assertThat(response.getMerchantCode(), is("MERCHANTCODE"));
+        assertThat(response.getReference(), is("REFUND-REF"));
     }
 
     @Test
