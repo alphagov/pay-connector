@@ -6,7 +6,7 @@ public class BaseNotification<T> implements Notification {
     private String transactionId;
     private T status;
 
-    public BaseNotification(String reference, String transactionId, T status) {
+    public BaseNotification(String transactionId, String reference, T status) {
         this.reference = reference;
         this.transactionId = transactionId;
         this.status = status;

@@ -136,8 +136,7 @@ public class NotificationService {
         }
 
         private <T> void updateRefundStatus(ExtendedNotification<T> notification, Enum newStatus) {
-            Optional<RefundEntity> optionalRefundEntity = refundDao.findByProviderAndTransactionIdAndExternalId(
-                    paymentProvider.getPaymentProviderName(), notification.getTransactionId(), notification.getReference());
+            Optional<RefundEntity> optionalRefundEntity = refundDao.findByExternalId(notification.getReference());
             if (!optionalRefundEntity.isPresent()) {
                 logger.error(format("Notification with transaction id=%s and reference=%s failed updating refund status to: %s",
                         notification.getTransactionId(), notification.getReference(), newStatus));

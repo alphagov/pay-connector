@@ -2,7 +2,7 @@ package uk.gov.pay.connector.resources;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import uk.gov.pay.connector.service.*;
+import uk.gov.pay.connector.service.NotificationService;
 
 import javax.annotation.security.PermitAll;
 import javax.inject.Inject;
@@ -50,37 +50,17 @@ public class NotificationResource {
     }
 
     private Response handleNotification(String provider, String notification) {
-
         logger.info("Received notification from provider=" + provider + ", notification=" + notification);
 
         notificationService.acceptNotificationFor(provider, notification);
 
-        //StatusUpdates statusUpdates = paymentProvider.handleNotification(notification, notificationUtil::payloadChecks, findAccountByTransactionId(provider), accountUpdater(provider));
-
-        return Response.ok().build();
+        return Response.ok(getResponseFor(provider)).build();
     }
 
-   /* private Consumer<StatusUpdates> accountUpdater(String provider) {
-        return statusUpdates ->
-                statusUpdates.getStatusUpdates().forEach(update -> updateCharge(provider, update.getKey(), update.getValue()));
-    }
-
-    private Function<String, Optional<ChargeEntity>> findAccountByTransactionId(String provider) {
-        return transactionId ->
-                Optional.ofNullable(
-                        chargeDao.findByProviderAndTransactionId(provider, transactionId)
-                                .orElseGet(() -> {
-                                    logger.error("Could not find account for transaction id " + transactionId);
-                                    return null;
-                                }));
-    }*/
-
-   /* private void updateCharge(String provider, String transactionId, ChargeStatus status) {
-        Optional<ChargeEntity> charge = chargeDao.findByProviderAndTransactionId(provider, transactionId);
-        if (charge.isPresent()) {
-            chargeService.updateStatus(singletonList(charge.get()), status);
-        } else {
-            logger.error("Error when trying to update transaction id " + transactionId + " to status " + status);
+    private String getResponseFor(String provider) {
+        if ("smartpay".equals(provider)) {
+            return "[accepted]";
         }
-    }*/
+        return "[OK]";
+    }
 }

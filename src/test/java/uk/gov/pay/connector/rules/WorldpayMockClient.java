@@ -15,18 +15,6 @@ public class WorldpayMockClient {
     public WorldpayMockClient() {
     }
 
-    public void mockInquirySucccess(String status) {
-        String inquiryResponse = loadFromTemplate("inquiry-success-response.xml")
-                .replace("{{status}}", status);
-        paymentServiceResponse(inquiryResponse);
-    }
-
-    //fixme transaction id is not null anymore
-    public void mockInquiryError() {
-        String errorResponse = loadFromTemplate("inquiry-error-response.xml");
-        paymentServiceResponse(errorResponse);
-    }
-
     public void mockAuthorisationSuccess() {
         String gatewayTransactionId = randomId();
         String authoriseResponse = loadFromTemplate("authorisation-success-response.xml");

@@ -186,12 +186,12 @@ public class NotificationServiceTest {
         when(mockedPaymentProvider.getPaymentProviderName()).thenReturn(paymentProviderName);
         when(mockedPaymentProviders.resolve(paymentProviderName)).thenReturn(mockedPaymentProvider);
 
-        when(mockedRefundDao.findByProviderAndTransactionIdAndExternalId(paymentProviderName, transactionId, reference))
+        when(mockedRefundDao.findByExternalId(reference))
                 .thenReturn(Optional.empty());
 
         notificationService.acceptNotificationFor(paymentProviderName, "payload");
 
-        verify(mockedRefundDao).findByProviderAndTransactionIdAndExternalId(paymentProviderName, transactionId, reference);
+        verify(mockedRefundDao).findByExternalId(reference);
         verifyNoMoreInteractions(mockedChargeDao);
     }
 
@@ -254,12 +254,11 @@ public class NotificationServiceTest {
         when(mockedPaymentProviders.resolve(paymentProviderName)).thenReturn(mockedPaymentProvider);
 
         RefundEntity mockedRefundEntity = mock(RefundEntity.class);
-        when(mockedRefundDao.findByProviderAndTransactionIdAndExternalId(paymentProviderName, transactionId, reference))
-                .thenReturn(Optional.of(mockedRefundEntity));
+        when(mockedRefundDao.findByExternalId(reference)).thenReturn(Optional.of(mockedRefundEntity));
 
         notificationService.acceptNotificationFor(paymentProviderName, "payload");
 
-        verify(mockedRefundDao).findByProviderAndTransactionIdAndExternalId(paymentProviderName, transactionId, reference);
+        verify(mockedRefundDao).findByExternalId(reference);
         verify(mockedRefundEntity).setStatus(REFUNDED);
         verifyNoMoreInteractions(mockedChargeDao);
     }
