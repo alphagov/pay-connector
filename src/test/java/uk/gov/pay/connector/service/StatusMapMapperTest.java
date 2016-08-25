@@ -1,7 +1,7 @@
 package uk.gov.pay.connector.service;
 
 import org.junit.Test;
-import uk.gov.pay.connector.service.StatusMapper.Status;
+import uk.gov.pay.connector.service.BaseStatusMapper.Status;
 
 import static org.hamcrest.core.Is.is;
 import static org.junit.Assert.assertThat;
@@ -12,14 +12,14 @@ public class StatusMapMapperTest {
         STATUS_1
     }
 
-    StatusMapper<String, TestStatus> statusMapper = StatusMapper.<String, TestStatus>builder()
+    BaseStatusMapper<String> baseStatusMapper = BaseStatusMapper.<String>builder()
             .map("status_1", TestStatus.STATUS_1)
             .ignore("status_2")
             .build();
 
     @Test
-    public void shouldReturnAStatus() throws Exception {
-        Status<TestStatus> status = statusMapper.from("status_1");
+    public void shouldReturnAStatus() {
+        Status status = baseStatusMapper.from("status_1");
 
         assertThat(status.isMapped(), is(true));
         assertThat(status.isIgnored(), is(false));
@@ -28,8 +28,8 @@ public class StatusMapMapperTest {
     }
 
     @Test
-    public void shouldReturnEmptyWhenStatusIsUnknown() throws Exception {
-        Status<TestStatus> status = statusMapper.from("status_3");
+    public void shouldReturnEmptyWhenStatusIsUnknown() {
+        Status status = baseStatusMapper.from("status_3");
 
         assertThat(status.isMapped(), is(false));
         assertThat(status.isIgnored(), is(false));
@@ -37,8 +37,8 @@ public class StatusMapMapperTest {
     }
 
     @Test
-    public void shouldReturnEmptyWhenStatusIsIgnored() throws Exception {
-        Status<TestStatus> status = statusMapper.from("status_2");
+    public void shouldReturnEmptyWhenStatusIsIgnored() {
+        Status status = baseStatusMapper.from("status_2");
 
         assertThat(status.isMapped(), is(false));
         assertThat(status.isIgnored(), is(true));

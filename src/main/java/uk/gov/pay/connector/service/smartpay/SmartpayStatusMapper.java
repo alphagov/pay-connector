@@ -1,17 +1,16 @@
 package uk.gov.pay.connector.service.smartpay;
 
 import org.apache.commons.lang3.tuple.Pair;
-import uk.gov.pay.connector.model.domain.ChargeStatus;
+import uk.gov.pay.connector.service.BaseStatusMapper;
 import uk.gov.pay.connector.service.StatusMapper;
-import uk.gov.pay.connector.service.StatusMapper.Status;
 
 import static uk.gov.pay.connector.model.domain.ChargeStatus.CAPTURED;
 
 public class SmartpayStatusMapper {
 
-        private static final StatusMapper<Pair<String, Boolean>, ChargeStatus> statusMapper =
-                StatusMapper
-                        .<Pair<String, Boolean>, ChargeStatus>builder()
+        private static final BaseStatusMapper<Pair<String, Boolean>> STATUS_MAPPER =
+                BaseStatusMapper
+                        .<Pair<String, Boolean>>builder()
                         .ignore(Pair.of("AUTHORISATION", true))
                         .ignore(Pair.of("AUTHORISATION", false))
                         .map(Pair.of("CAPTURE", true), CAPTURED)
@@ -32,7 +31,7 @@ public class SmartpayStatusMapper {
                         .ignore(Pair.of("REPORT_AVAILABLE", false))
                         .build();
 
-        public static Status<ChargeStatus> from(Pair<String, Boolean> status) {
-                return statusMapper.from(status);
+        public static StatusMapper<Pair<String, Boolean>> get() {
+                return STATUS_MAPPER;
         }
 }

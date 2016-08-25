@@ -1,15 +1,14 @@
-package uk.gov.pay.connector.service.smartpay;
+package uk.gov.pay.connector.service;
 
 import uk.gov.pay.connector.model.GatewayRequest;
 import uk.gov.pay.connector.model.gateway.GatewayResponse;
-import uk.gov.pay.connector.service.BaseResponse;
-import uk.gov.pay.connector.service.GatewayClient;
 
 import java.util.function.Function;
 
 import static fj.data.Either.reduce;
 
-public class BasePaymentProvider {
+abstract public class BasePaymentProvider<T extends BaseResponse> implements PaymentProvider<T> {
+
     private GatewayClient client;
 
     public BasePaymentProvider(GatewayClient client) {

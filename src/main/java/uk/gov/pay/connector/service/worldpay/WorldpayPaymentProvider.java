@@ -13,7 +13,7 @@ import uk.gov.pay.connector.model.domain.ChargeStatus;
 import uk.gov.pay.connector.model.gateway.AuthorisationGatewayRequest;
 import uk.gov.pay.connector.model.gateway.GatewayResponse;
 import uk.gov.pay.connector.service.*;
-import uk.gov.pay.connector.service.smartpay.BasePaymentProvider;
+import uk.gov.pay.connector.service.BasePaymentProvider;
 import uk.gov.pay.connector.util.XMLUnmarshallerException;
 
 import java.util.Optional;
@@ -30,7 +30,8 @@ import static uk.gov.pay.connector.service.worldpay.OrderInquiryRequestBuilder.a
 import static uk.gov.pay.connector.service.worldpay.WorldpayOrderCancelRequestBuilder.aWorldpayOrderCancelRequest;
 import static uk.gov.pay.connector.util.XMLUnmarshaller.unmarshall;
 
-public class WorldpayPaymentProvider<T extends BaseResponse> extends BasePaymentProvider implements PaymentProvider<T> {
+public class WorldpayPaymentProvider extends BasePaymentProvider<BaseResponse> {
+
     public static final String NOTIFICATION_ACKNOWLEDGED = "[OK]";
     public static final StatusUpdates NO_UPDATE = StatusUpdates.noUpdate(NOTIFICATION_ACKNOWLEDGED);
     private final Logger logger = LoggerFactory.getLogger(WorldpayPaymentProvider.class);
@@ -99,7 +100,7 @@ public class WorldpayPaymentProvider<T extends BaseResponse> extends BasePayment
     }
 
     private Optional<ChargeStatus> mapStatusForNotification(String status) {
-        StatusMapper.Status<ChargeStatus> mappedStatus = WorldpayStatusMapper.from(status);
+        Status<ChargeStatus> mappedStatus = WorldpayStatusMapper.from(status);
 
         if (mappedStatus.isUnknown()) {
             logger.warn(format("Worldpay notification with unknown status %s ignored.", status));
@@ -156,7 +157,7 @@ public class WorldpayPaymentProvider<T extends BaseResponse> extends BasePayment
     }
 
     private Optional<ChargeStatus> mapStatusForInquiry(String status) {
-        StatusMapper.Status<ChargeStatus> mappedStatus = WorldpayStatusMapper.from(status);
+        Status<ChargeStatus> mappedStatus = WorldpayStatusMapper.from(status);
 
         if (mappedStatus.isUnknown()) {
             logger.warn(format("Worldpay inquiry response with unknown status %s ignored.", status));

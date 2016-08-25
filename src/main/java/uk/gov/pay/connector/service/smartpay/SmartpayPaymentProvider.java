@@ -9,10 +9,7 @@ import uk.gov.pay.connector.model.domain.ChargeEntity;
 import uk.gov.pay.connector.model.domain.ChargeStatus;
 import uk.gov.pay.connector.model.gateway.AuthorisationGatewayRequest;
 import uk.gov.pay.connector.model.gateway.GatewayResponse;
-import uk.gov.pay.connector.service.BaseResponse;
-import uk.gov.pay.connector.service.GatewayClient;
-import uk.gov.pay.connector.service.PaymentProvider;
-import uk.gov.pay.connector.service.StatusMapper;
+import uk.gov.pay.connector.service.*;
 
 import java.io.IOException;
 import java.util.List;
@@ -26,7 +23,8 @@ import static uk.gov.pay.connector.service.OrderCaptureRequestBuilder.aSmartpayO
 import static uk.gov.pay.connector.service.OrderSubmitRequestBuilder.aSmartpayOrderSubmitRequest;
 import static uk.gov.pay.connector.service.smartpay.SmartpayOrderCancelRequestBuilder.aSmartpayOrderCancelRequest;
 
-public class SmartpayPaymentProvider extends BasePaymentProvider implements PaymentProvider<BaseResponse> {
+public class SmartpayPaymentProvider extends BasePaymentProvider<BaseResponse> {
+
     private static final String MERCHANT_CODE = "MerchantAccount";
     public static final String ACCEPTED = "[accepted]";
     private final Logger logger = LoggerFactory.getLogger(SmartpayPaymentProvider.class);
@@ -107,7 +105,7 @@ public class SmartpayPaymentProvider extends BasePaymentProvider implements Paym
     }
 
     private Optional<ChargeStatus> mapStatus(Pair<String, Boolean> status) {
-        StatusMapper.Status<ChargeStatus> mappedStatus = SmartpayStatusMapper.from(status);
+       Status<ChargeStatus> mappedStatus = SmartpayStatusMapper.from(status);
 
         if (mappedStatus.isUnknown()) {
             logger.warn(format("Smartpay notification with unknown status %s ignored.", status));
