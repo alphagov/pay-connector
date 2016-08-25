@@ -133,7 +133,7 @@ public class WorldpayPaymentProviderTest {
         assertThat(cancelResponse.isSuccessful(), is(true));
     }
 
-    @Test
+   /* @Test
     public void handleNotification_shouldEnquiryToVerifyTheStatus() throws Exception {
         WorldpayPaymentProvider connector = getValidWorldpayPaymentProvider();
         GatewayResponse<WorldpayOrderStatusResponse> response = successfulWorldpayCardAuth(connector);
@@ -162,7 +162,7 @@ public class WorldpayPaymentProviderTest {
         assertThat(statusResponse.successful(), is(true));
         assertThat(statusResponse.getStatusUpdates(), is(empty()));
         verifyZeroInteractions(mockAccountUpdater);
-    }
+    }*/
 
     @Test
     public void shouldFailRequestAuthorisationIfCredentialsAreNotCorrect() throws Exception {

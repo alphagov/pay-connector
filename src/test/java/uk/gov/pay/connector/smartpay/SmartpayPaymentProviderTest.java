@@ -3,7 +3,6 @@ package uk.gov.pay.connector.smartpay;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.google.common.collect.ImmutableMap;
 import org.hamcrest.CoreMatchers;
-import org.junit.Assert;
 import org.junit.Before;
 import org.junit.Test;
 import uk.gov.pay.connector.model.CaptureGatewayRequest;
@@ -15,6 +14,7 @@ import uk.gov.pay.connector.model.gateway.AuthorisationGatewayRequest;
 import uk.gov.pay.connector.model.gateway.GatewayResponse;
 import uk.gov.pay.connector.service.smartpay.SmartpayAuthorisationResponse;
 import uk.gov.pay.connector.service.smartpay.SmartpayPaymentProvider;
+import uk.gov.pay.connector.service.smartpay.SmartpayStatusMapper;
 import uk.gov.pay.connector.service.worldpay.WorldpayCaptureResponse;
 
 import javax.ws.rs.client.Client;
@@ -26,6 +26,9 @@ import javax.ws.rs.core.Response;
 import static javax.ws.rs.core.MediaType.APPLICATION_XML;
 import static org.hamcrest.CoreMatchers.not;
 import static org.hamcrest.CoreMatchers.nullValue;
+import static org.hamcrest.core.Is.is;
+import static org.hamcrest.core.IsSame.sameInstance;
+import static org.junit.Assert.assertThat;
 import static org.junit.Assert.assertTrue;
 import static org.mockito.Matchers.*;
 import static org.mockito.Mockito.mock;
@@ -50,6 +53,16 @@ public class SmartpayPaymentProviderTest {
     }
 
     @Test
+    public void shouldGetPaymentProviderName() {
+        assertThat(provider.getPaymentProviderName(), is("smartpay"));
+    }
+
+    @Test
+    public void shouldGetStatusMapper() {
+        assertThat(provider.getStatusMapper(), sameInstance(SmartpayStatusMapper.get()));
+    }
+
+    @Test
     public void shouldSendSuccessfullyAOrderForMerchant() throws Exception {
 
         Card card = getValidTestCard();
@@ -61,9 +74,9 @@ public class SmartpayPaymentProviderTest {
         GatewayResponse<SmartpayAuthorisationResponse> response = provider.authorise(new AuthorisationGatewayRequest(chargeEntity, card));
 
         assertTrue(response.isSuccessful());
-        Assert.assertThat(response.getBaseResponse().isPresent(), CoreMatchers.is(true));
+        assertThat(response.getBaseResponse().isPresent(), CoreMatchers.is(true));
         String transactionId = response.getBaseResponse().get().getPspReference();
-        Assert.assertThat(transactionId, CoreMatchers.is(not(nullValue())));
+        assertThat(transactionId, CoreMatchers.is(not(nullValue())));
     }
 
     @Test

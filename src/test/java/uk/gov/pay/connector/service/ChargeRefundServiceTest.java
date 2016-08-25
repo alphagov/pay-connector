@@ -58,7 +58,7 @@ public class ChargeRefundServiceTest {
     private UriInfo mockUriInfo;
 
     @Before
-    public void setUp() throws Exception {
+    public void setUp() {
         chargeRefundService = new ChargeRefundService(mockChargeDao, mockRefundDao, mockProviders, () -> new TransactionFlow());
     }
 

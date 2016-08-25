@@ -55,7 +55,7 @@ public class NotificationServiceTest {
 
     private StatusMapper createMockedStatusMapper(boolean isUnknownStatus, boolean isIgnoredStatus, Enum status) {
         StatusMapper mockedStatusMapper = mock(StatusMapper.class);
-        BaseStatusMapper.Status mockedStatus = mock(BaseStatusMapper.Status.class);
+        Status mockedStatus = mock(Status.class);
 
         when(mockedStatus.isUnknown()).thenReturn(isUnknownStatus);
         when(mockedStatus.isIgnored()).thenReturn(isIgnoredStatus);

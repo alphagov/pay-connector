@@ -29,7 +29,6 @@ import java.util.stream.Collectors;
 import static java.lang.String.format;
 import static org.apache.commons.lang3.StringUtils.isBlank;
 import static org.apache.commons.lang3.StringUtils.isNotBlank;
-import static uk.gov.pay.connector.service.BaseStatusMapper.Status;
 
 public class NotificationService {
 

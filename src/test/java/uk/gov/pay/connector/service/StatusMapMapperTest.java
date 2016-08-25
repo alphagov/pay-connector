@@ -1,7 +1,6 @@
 package uk.gov.pay.connector.service;
 
 import org.junit.Test;
-import uk.gov.pay.connector.service.BaseStatusMapper.Status;
 
 import static org.hamcrest.core.Is.is;
 import static org.junit.Assert.assertThat;

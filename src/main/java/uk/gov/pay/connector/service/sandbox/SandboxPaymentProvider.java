@@ -1,34 +1,29 @@
 package uk.gov.pay.connector.service.sandbox;
 
-import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
-import com.google.common.collect.ImmutableList;
-import org.apache.commons.lang3.tuple.Pair;
+import fj.data.Either;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import uk.gov.pay.connector.model.*;
-import uk.gov.pay.connector.model.domain.ChargeEntity;
-import uk.gov.pay.connector.model.domain.ChargeStatus;
 import uk.gov.pay.connector.model.gateway.AuthorisationGatewayRequest;
 import uk.gov.pay.connector.model.gateway.GatewayResponse;
-import uk.gov.pay.connector.model.InquiryGatewayRequest;
 import uk.gov.pay.connector.service.*;
 
 import java.util.Optional;
-import java.util.function.Consumer;
-import java.util.function.Function;
 
 import static java.util.UUID.randomUUID;
 import static uk.gov.pay.connector.model.ErrorType.GENERIC_GATEWAY_ERROR;
+import static uk.gov.pay.connector.resources.PaymentProviderValidator.SANDBOX_PROVIDER;
 import static uk.gov.pay.connector.service.sandbox.SandboxCardNumbers.*;
 
-public class SandboxPaymentProvider implements PaymentProvider<BaseResponse> {
+public class SandboxPaymentProvider extends BasePaymentProvider<BaseResponse> implements PaymentProvider<BaseResponse> {
 
     private final static Logger LOGGER = LoggerFactory.getLogger(SandboxPaymentProvider.class);
 
     private final ObjectMapper objectMapper;
 
     public SandboxPaymentProvider(ObjectMapper objectMapper) {
+        super(null);
         this.objectMapper = objectMapper;
     }
 
@@ -111,6 +106,11 @@ public class SandboxPaymentProvider implements PaymentProvider<BaseResponse> {
     }
 
     @Override
+    public String getPaymentProviderName() {
+        return SANDBOX_PROVIDER;
+    }
+
+    @Override
     public Optional<String> generateTransactionId() {
         return Optional.of(randomUUID().toString());
     }
@@ -131,11 +131,16 @@ public class SandboxPaymentProvider implements PaymentProvider<BaseResponse> {
     }
 
     @Override
-    public GatewayResponse inquire(InquiryGatewayRequest request) {
+    public <R> Either<String, Notifications<R>> parseNotification(String payload) {
         throw new UnsupportedOperationException("Operation not supported");
     }
 
     @Override
+    public StatusMapper getStatusMapper() {
+        return SandboxStatusMapper.get();
+    }
+
+    /*@Override
     public StatusUpdates handleNotification(String inboundNotification,
                                             Function<ChargeStatusRequest, Boolean> payloadChecks,
                                             Function<String, Optional<ChargeEntity>> accountFinder,
@@ -153,6 +158,6 @@ public class SandboxPaymentProvider implements PaymentProvider<BaseResponse> {
             LOGGER.error("Error understanding sandbox notification: " + inboundNotification, e);
             return StatusUpdates.noUpdate("OK");
         }
-    }
+    }*/
 
 }

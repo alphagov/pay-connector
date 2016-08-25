@@ -2,7 +2,7 @@ package uk.gov.pay.connector.service.smartpay;
 
 import org.apache.commons.lang3.tuple.Pair;
 import org.junit.Test;
-import uk.gov.pay.connector.service.BaseStatusMapper.Status;
+import uk.gov.pay.connector.service.Status;
 
 import static org.hamcrest.core.Is.is;
 import static org.junit.Assert.assertThat;

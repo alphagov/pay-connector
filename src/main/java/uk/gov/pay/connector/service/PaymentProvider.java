@@ -1,14 +1,15 @@
 package uk.gov.pay.connector.service;
 
+import fj.data.Either;
 import uk.gov.pay.connector.model.*;
-import uk.gov.pay.connector.model.domain.ChargeEntity;
-import uk.gov.pay.connector.model.gateway.*;
+import uk.gov.pay.connector.model.gateway.AuthorisationGatewayRequest;
+import uk.gov.pay.connector.model.gateway.GatewayResponse;
 
 import java.util.Optional;
-import java.util.function.Consumer;
-import java.util.function.Function;
 
 public interface PaymentProvider<T extends BaseResponse> {
+
+    String getPaymentProviderName();
 
     Optional<String> generateTransactionId();
 
@@ -20,10 +21,7 @@ public interface PaymentProvider<T extends BaseResponse> {
 
     GatewayResponse<T> cancel(CancelGatewayRequest request);
 
-    GatewayResponse<T> inquire(InquiryGatewayRequest request);
+    <R> Either<String, Notifications<R>> parseNotification(String payload);
 
-    StatusUpdates handleNotification(String notificationPayload,
-                                     Function<ChargeStatusRequest, Boolean> payloadChecks,
-                                     Function<String, Optional<ChargeEntity>> accountFinder,
-                                     Consumer<StatusUpdates> accountUpdater);
+    StatusMapper getStatusMapper();
 }
