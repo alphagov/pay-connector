@@ -1,4 +1,4 @@
-package uk.gov.pay.connector.worldpay;
+package uk.gov.pay.connector.service.worldpay;
 
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableMap;

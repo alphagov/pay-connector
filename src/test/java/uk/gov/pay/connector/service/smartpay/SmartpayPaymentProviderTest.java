@@ -1,4 +1,4 @@
-package uk.gov.pay.connector.smartpay;
+package uk.gov.pay.connector.service.smartpay;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.google.common.collect.ImmutableList;
