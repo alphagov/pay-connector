@@ -1,5 +1,6 @@
 package uk.gov.pay.connector.resources;
 
+import com.fasterxml.jackson.annotation.JsonView;
 import com.google.common.collect.ImmutableList;
 import io.dropwizard.jersey.PATCH;
 import org.slf4j.Logger;
@@ -9,6 +10,7 @@ import uk.gov.pay.connector.model.ChargeResponse;
 import uk.gov.pay.connector.model.builder.PatchRequestBuilder;
 import uk.gov.pay.connector.model.domain.ChargeEntity;
 import uk.gov.pay.connector.model.domain.ChargeStatus;
+import uk.gov.pay.connector.model.domain.GatewayAccountEntity;
 import uk.gov.pay.connector.service.ChargeService;
 
 import javax.inject.Inject;
@@ -52,6 +54,7 @@ public class ChargesFrontendResource {
     @GET
     @Path(FRONTEND_CHARGE_API_PATH)
     @Produces(APPLICATION_JSON)
+    @JsonView(GatewayAccountEntity.Views.PartialView.class)
     public Response getCharge(@PathParam("chargeId") String chargeId, @Context UriInfo uriInfo) {
 
         Optional<ChargeEntity> maybeCharge = chargeDao.findByExternalId(chargeId);
@@ -65,6 +68,7 @@ public class ChargesFrontendResource {
     @PATCH
     @Path(FRONTEND_CHARGE_API_PATH)
     @Produces(APPLICATION_JSON)
+    @JsonView(GatewayAccountEntity.Views.PartialView.class)
     public Response patchCharge(@PathParam("chargeId") String chargeId, Map<String,String> chargePatchMap, @Context UriInfo uriInfo) {
         PatchRequestBuilder.PatchRequest chargePatchRequest;
 
@@ -97,6 +101,7 @@ public class ChargesFrontendResource {
     @PUT
     @Path(FRONTEND_CHARGE_STATUS_API_PATH)
     @Produces(APPLICATION_JSON)
+    @JsonView(GatewayAccountEntity.Views.PartialView.class)
     public Response updateChargeStatus(@PathParam("chargeId") String chargeId, Map newStatusMap) {
         if (invalidInput(newStatusMap)) {
             return fieldsMissingResponse(ImmutableList.of("new_status"));
@@ -144,6 +149,7 @@ public class ChargesFrontendResource {
                 .withReturnUrl(charge.getReturnUrl())
                 .withEmail(charge.getEmail())
                 .withConfirmationDetails(charge.getConfirmationDetailsEntity())
+                .withGatewayAccount(charge.getGatewayAccount())
                 .withLink("self", GET, locationUriFor(FRONTEND_CHARGE_API_PATH, uriInfo, chargeId))
                 .withLink("cardAuth", POST, locationUriFor(FRONTEND_CHARGE_AUTHORIZE_API_PATH, uriInfo, chargeId))
                 .withLink("cardCapture", POST, locationUriFor(FRONTEND_CHARGE_CAPTURE_API_PATH, uriInfo, chargeId)).build();

@@ -7,7 +7,6 @@ import org.junit.Rule;
 import org.junit.Test;
 import uk.gov.pay.connector.model.api.ExternalChargeState;
 import uk.gov.pay.connector.model.domain.ChargeStatus;
-import uk.gov.pay.connector.model.domain.ConfirmationDetailsEntity;
 import uk.gov.pay.connector.rules.DropwizardAppWithPostgresRule;
 import uk.gov.pay.connector.util.RandomIdGenerator;
 import uk.gov.pay.connector.util.RestAssuredClient;
@@ -44,7 +43,7 @@ public class ChargesFrontendResourceITest {
     private String description = "Test description";
     private String returnUrl = "http://whatever.com";
     private String email = randomAlphanumeric(242) + "@example.com";
-
+    private String serviceName = "a service name";
     private long expectedAmount = 6234L;
 
     private RestAssuredClient connectorRestApi = new RestAssuredClient(app, accountId);
@@ -55,7 +54,7 @@ public class ChargesFrontendResourceITest {
     }
 
     @Test
-    public void getChargeShouldIncludeExpectedLinksButNotGatewayAccountId() throws Exception {
+    public void getChargeShouldIncludeExpectedLinksAndGatewayAccountButNotGatewayAccountId() throws Exception {
 
         String chargeId = postToCreateACharge(expectedAmount);
         String expectedLocation = "http://localhost:" + app.getLocalPort() + "/v1/frontend/charges/" + chargeId;
@@ -64,7 +63,7 @@ public class ChargesFrontendResourceITest {
                 .body("links", hasSize(3))
                 .body("links", containsLink("self", GET, expectedLocation))
                 .body("links", containsLink("cardAuth", POST, expectedLocation + "/cards"))
-                .body("links", containsLink("cardCapture", POST, expectedLocation + "/capture"));
+                .body("links", containsLink("cardCapture", POST, expectedLocation + "/capture")).extract().response();
     }
 
 
@@ -74,9 +73,8 @@ public class ChargesFrontendResourceITest {
         Long chargeId = 123456L;
 
         app.getDatabaseTestHelper().addCharge(chargeId, externalChargeId, accountId, expectedAmount, AUTHORISATION_SUCCESS, returnUrl, null, "ref", null, email);
-        validateGetCharge(expectedAmount, externalChargeId, AUTHORISATION_SUCCESS);
-
         app.getDatabaseTestHelper().addConfirmationDetails(chargeId, "1234", "Mr. McPayment",  "03/18", "line1", null, "postcode", "city", null, "country");
+        validateGetCharge(expectedAmount, externalChargeId, AUTHORISATION_SUCCESS);
         validateConfirmationDetails(externalChargeId);
     }
 
@@ -352,7 +350,7 @@ public class ChargesFrontendResourceITest {
     }
 
     private ValidatableResponse validateGetCharge(long expectedAmount, String chargeId, ChargeStatus chargeStatus) {
-
+        boolean shouldHaveConfirmationDetails = chargeStatus.equals(ChargeStatus.AUTHORISATION_SUCCESS);
         return connectorRestApi
                 .withChargeId(chargeId)
                 .getFrontendCharge()
@@ -363,10 +361,14 @@ public class ChargesFrontendResourceITest {
                 .body("description", is(description))
                 .body("amount", isNumber(expectedAmount))
                 .body("containsKey('gateway_account_id')", is(false))
+                .body("containsKey('gateway_account')", is(true))
+                .body("gateway_account.gateway_account_id", is(nullValue()))
+                .body("gateway_account.service_name", is(serviceName))
+//                .body("gateway_account.card_types", is(""))
                 .body("status", is(chargeStatus.getValue()))
                 .body("return_url", is(returnUrl))
                 .body("email", is(email))
-                .body("confirmation_details", is(nullValue()))
+                .body("containsKey('confirmation_details')", is(shouldHaveConfirmationDetails))
                 .body("created_date", is(notNullValue()))
                 .body("created_date", matchesPattern("^\\d{4}-\\d{2}-\\d{2}T\\d{2}:\\d{2}:\\d{2}.\\d{3}Z"))
                 .body("created_date", isWithin(10, SECONDS));

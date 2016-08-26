@@ -8,6 +8,8 @@ import uk.gov.pay.connector.model.api.ExternalChargeState;
 import uk.gov.pay.connector.model.builder.AbstractChargeResponseBuilder;
 import uk.gov.pay.connector.model.domain.ChargeStatus;
 import uk.gov.pay.connector.model.domain.ConfirmationDetailsEntity;
+import uk.gov.pay.connector.model.domain.GatewayAccount;
+import uk.gov.pay.connector.model.domain.GatewayAccountEntity;
 
 import java.time.ZonedDateTime;
 import java.util.List;
@@ -17,6 +19,7 @@ public class FrontendChargeResponse extends ChargeResponse {
     public static class FrontendChargeResponseBuilder extends AbstractChargeResponseBuilder<FrontendChargeResponseBuilder, FrontendChargeResponse> {
         private String status;
         private ConfirmationDetailsEntity confirmationDetails;
+        private GatewayAccountEntity gatewayAccount;
 
         public FrontendChargeResponseBuilder withStatus(String status) {
             this.status = status;
@@ -28,6 +31,10 @@ public class FrontendChargeResponse extends ChargeResponse {
             this.confirmationDetails = confirmationDetailsEntity;
             return this;
         }
+        public FrontendChargeResponseBuilder withGatewayAccount(GatewayAccountEntity gatewayAccountEntity) {
+            this.gatewayAccount = gatewayAccountEntity;
+            return this;
+        }
 
         @Override
         protected FrontendChargeResponseBuilder thisObject() {
@@ -36,7 +43,7 @@ public class FrontendChargeResponse extends ChargeResponse {
 
         @Override
         public FrontendChargeResponse build() {
-            return new FrontendChargeResponse(chargeId, amount, state, gatewayTransactionId, returnUrl, email, description, reference, providerName, createdDate, links, status, refundSummary, confirmationDetails);
+            return new FrontendChargeResponse(chargeId, amount, state, gatewayTransactionId, returnUrl, email, description, reference, providerName, createdDate, links, status, refundSummary, confirmationDetails, gatewayAccount);
         }
     }
 
@@ -50,10 +57,14 @@ public class FrontendChargeResponse extends ChargeResponse {
     @JsonProperty(value="confirmation_details")
     private ConfirmationDetailsEntity confirmationDetails;
 
-    private FrontendChargeResponse(String chargeId, Long amount, ExternalChargeState state, String gatewayTransactionId, String returnUrl, String email, String description, String reference, String providerName, ZonedDateTime createdDate, List<Map<String, Object>> dataLinks, String status, RefundSummary refundSummary, ConfirmationDetailsEntity confirmationDetails) {
+    @JsonProperty(value="gateway_account")
+    private GatewayAccountEntity gatewayAccount;
+
+    private FrontendChargeResponse(String chargeId, Long amount, ExternalChargeState state, String gatewayTransactionId, String returnUrl, String email, String description, String reference, String providerName, ZonedDateTime createdDate, List<Map<String, Object>> dataLinks, String status, RefundSummary refundSummary, ConfirmationDetailsEntity confirmationDetails, GatewayAccountEntity gatewayAccount) {
         super(chargeId, amount, state, gatewayTransactionId, returnUrl, email, description, reference, providerName, createdDate, dataLinks, refundSummary);
         this.status = status;
         this.confirmationDetails = confirmationDetails;
+        this.gatewayAccount = gatewayAccount;
     }
 
     @Override
@@ -65,7 +76,9 @@ public class FrontendChargeResponse extends ChargeResponse {
         FrontendChargeResponse that = (FrontendChargeResponse) o;
 
         if (!status.equals(that.status)) return false;
-        return confirmationDetails != null ? confirmationDetails.equals(that.confirmationDetails) : that.confirmationDetails == null;
+        if (confirmationDetails != null ? !confirmationDetails.equals(that.confirmationDetails) : that.confirmationDetails != null)
+            return false;
+        return gatewayAccount.equals(that.gatewayAccount);
 
     }
 
@@ -74,6 +87,7 @@ public class FrontendChargeResponse extends ChargeResponse {
         int result = super.hashCode();
         result = 31 * result + status.hashCode();
         result = 31 * result + (confirmationDetails != null ? confirmationDetails.hashCode() : 0);
+        result = 31 * result + gatewayAccount.hashCode();
         return result;
     }
 
