@@ -278,6 +278,111 @@ public class ChargeDaoITest extends DaoITestBase {
     }
 
     @Test
+    public void searchChargesByReferenceAndEmail_with_under_score() throws Exception {
+        // since '_' have special meaning in like queries of postgres this was resulting in undesired results
+        DatabaseFixtures
+                .withDatabaseTestHelper(databaseTestHelper)
+                .aTestCharge()
+                .withTestAccount(defaultTestAccount)
+                .withReference("under_score_ref")
+                .withEmail("under_score@mail.com")
+                .insert();
+
+        DatabaseFixtures
+                .withDatabaseTestHelper(databaseTestHelper)
+                .aTestCharge()
+                .withTestAccount(defaultTestAccount)
+                .withReference("understand")
+                .withEmail("undertaker@mail.com")
+                .insert();
+
+        ChargeSearchParams params = new ChargeSearchParams()
+                .withGatewayAccountId(defaultTestAccount.getAccountId())
+                .withReferenceLike("under_")
+                .withEmailLike("under_");
+
+        // when
+        List<ChargeEntity> charges = chargeDao.findAllBy(params);
+
+        // then
+        assertThat(charges.size(), is(1));
+
+        ChargeEntity charge = charges.get(0);
+        assertThat(charge.getReference(), is("under_score_ref"));
+        assertThat(charge.getEmail(), is("under_score@mail.com"));
+    }
+
+    @Test
+    public void searchChargesByReferenceWithPercentSign() throws Exception {
+        // since '%' have special meaning in like queries of postgres this was resulting in undesired results
+        DatabaseFixtures
+                .withDatabaseTestHelper(databaseTestHelper)
+                .aTestCharge()
+                .withTestAccount(defaultTestAccount)
+                .withReference("percent%ref")
+                .insert();
+
+        DatabaseFixtures
+                .withDatabaseTestHelper(databaseTestHelper)
+                .aTestCharge()
+                .withTestAccount(defaultTestAccount)
+                .withReference("percentref")
+                .insert();
+
+        ChargeSearchParams params = new ChargeSearchParams()
+                .withGatewayAccountId(defaultTestAccount.getAccountId())
+                .withReferenceLike("percent%");
+
+        // when
+        List<ChargeEntity> charges = chargeDao.findAllBy(params);
+
+        // then
+        assertThat(charges.size(), is(1));
+
+        ChargeEntity charge = charges.get(0);
+        assertThat(charge.getReference(), is("percent%ref"));
+    }
+
+    @Test
+    public void searchChargesByReferenceAndEmailShouldBeCaseInsensitive() throws Exception {
+        // fix that the reference and email searches should be case insensitive
+        DatabaseFixtures
+                .withDatabaseTestHelper(databaseTestHelper)
+                .aTestCharge()
+                .withTestAccount(defaultTestAccount)
+                .withEmail("email-id@mail.com")
+                .withReference("case-Insensitive-ref")
+                .insert();
+
+        DatabaseFixtures
+                .withDatabaseTestHelper(databaseTestHelper)
+                .aTestCharge()
+                .withTestAccount(defaultTestAccount)
+                .withEmail("EMAIL-ID@MAIL.COM")
+                .withReference("Case-inSENSITIVE-Ref")
+                .insert();
+
+        ChargeSearchParams params = new ChargeSearchParams()
+                .withGatewayAccountId(defaultTestAccount.getAccountId())
+                .withReferenceLike("cASe-insEnsiTIve")
+                .withEmailLike("EMAIL-ID@mail.com");
+
+        // when
+        List<ChargeEntity> charges = chargeDao.findAllBy(params);
+
+        // then
+        assertThat(charges.size(), is(2));
+
+        ChargeEntity charge = charges.get(0);
+        assertThat(charge.getReference(), is("Case-inSENSITIVE-Ref"));
+        assertThat(charge.getEmail(), is("EMAIL-ID@MAIL.COM"));
+
+        charge = charges.get(1);
+        assertThat(charge.getReference(), is("case-Insensitive-ref"));
+        assertThat(charge.getEmail(), is("email-id@mail.com"));
+    }
+
+    @Test
     public void aBasicTestAgainstSqlInjection() throws Exception {
         // given
         insertTestCharge();

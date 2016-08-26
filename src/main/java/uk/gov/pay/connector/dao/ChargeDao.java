@@ -10,10 +10,7 @@ import uk.gov.pay.connector.model.domain.ChargeStatus;
 import javax.inject.Inject;
 import javax.persistence.EntityManager;
 import javax.persistence.Query;
-import javax.persistence.criteria.CriteriaBuilder;
-import javax.persistence.criteria.CriteriaQuery;
-import javax.persistence.criteria.Predicate;
-import javax.persistence.criteria.Root;
+import javax.persistence.criteria.*;
 import java.time.ZonedDateTime;
 import java.util.ArrayList;
 import java.util.List;
@@ -27,6 +24,7 @@ public class ChargeDao extends JpaDao<ChargeEntity> {
     private static final String GATEWAY_ACCOUNT = "gatewayAccount";
     private static final String REFERENCE = "reference";
     private static final String EMAIL = "email";
+    public static final String SQL_ESCAPE_SEQ = "\\\\";
 
     private EventDao eventDao;
 
@@ -132,9 +130,9 @@ public class ChargeDao extends JpaDao<ChargeEntity> {
         if (params.getGatewayAccountId() != null)
             predicates.add(cb.equal(charge.get(GATEWAY_ACCOUNT).get("id"), params.getGatewayAccountId()));
         if (StringUtils.isNotBlank(params.getReference()))
-            predicates.add(cb.like(charge.get(REFERENCE), '%' + params.getReference() + '%'));
+            predicates.add(likePredicate(cb, charge.get(REFERENCE), params.getReference()));
         if (StringUtils.isNotBlank(params.getEmail()))
-            predicates.add(cb.like(charge.get(EMAIL), '%' + params.getEmail() + '%'));
+            predicates.add(likePredicate(cb, charge.get(EMAIL), params.getEmail()));
         if (params.getChargeStatuses() != null && !params.getChargeStatuses().isEmpty())
             predicates.add(charge.get(STATUS).in(params.getChargeStatuses()));
         if (params.getFromDate() != null)
@@ -143,5 +141,13 @@ public class ChargeDao extends JpaDao<ChargeEntity> {
             predicates.add(cb.lessThan(charge.get(CREATED_DATE), params.getToDate()));
 
         return predicates;
+    }
+
+    private Predicate likePredicate(CriteriaBuilder cb, Path<String> expression, String element) {
+        String escapedReference = element
+                .replaceAll("_", SQL_ESCAPE_SEQ + "_")
+                .replaceAll("%", SQL_ESCAPE_SEQ + "%");
+
+        return cb.like(cb.lower(expression), '%' + escapedReference.toLowerCase() + '%');
     }
 }
