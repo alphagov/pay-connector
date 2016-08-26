@@ -13,6 +13,7 @@ import uk.gov.pay.connector.model.domain.ChargeEntity;
 import uk.gov.pay.connector.model.domain.ChargeStatus;
 import uk.gov.pay.connector.model.domain.RefundEntity;
 import uk.gov.pay.connector.model.domain.RefundStatus;
+import uk.gov.pay.connector.resources.PaymentGatewayName;
 import uk.gov.pay.connector.service.transaction.NonTransactionalOperation;
 import uk.gov.pay.connector.service.transaction.TransactionContext;
 import uk.gov.pay.connector.service.transaction.TransactionFlow;
@@ -47,8 +48,8 @@ public class NotificationService {
         this.transactionFlowProvider = transactionFlowProvider;
     }
 
-    public void acceptNotificationFor(String paymentProviderName, String payload) {
-        new Handler(paymentProviders.resolve(paymentProviderName)).execute(payload);
+    public void acceptNotificationFor(PaymentGatewayName paymentGatewayName, String payload) {
+        new Handler(paymentProviders.byName(paymentGatewayName)).execute(payload);
     }
 
     private class Handler {
@@ -121,7 +122,7 @@ public class NotificationService {
 
         private <T> void updateChargeStatus(ExtendedNotification<T> notification, Enum newStatus) {
             Optional<ChargeEntity> optionalChargeEntity = chargeDao.findByProviderAndTransactionId(
-                    paymentProvider.getPaymentProviderName(), notification.getTransactionId());
+                    paymentProvider.getPaymentGatewayName(), notification.getTransactionId());
             if (!optionalChargeEntity.isPresent()) {
                 logger.error(format("Notification with transaction id=%s failed updating charge status to: %s",
                         notification.getTransactionId(), newStatus));

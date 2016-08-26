@@ -91,7 +91,7 @@ public class ChargeServiceTest {
     public void shouldCreateACharge() throws Exception {
 
         // Given - existing gateway account
-        GatewayAccountEntity gatewayAccount = new GatewayAccountEntity("provider", new HashMap<>(), TEST);
+        GatewayAccountEntity gatewayAccount = new GatewayAccountEntity("sandbox", new HashMap<>(), TEST);
         gatewayAccount.setId(1L);
 
         // Given - persisting a ChargeEntity, it will be populated with an id
@@ -117,7 +117,7 @@ public class ChargeServiceTest {
         assertThat(createdChargeEntity.getGatewayAccount().getId(), is(1L));
         assertThat(createdChargeEntity.getExternalId(), is(externalChargeId[0]));
         assertThat(createdChargeEntity.getGatewayAccount().getCredentials(), is(emptyMap()));
-        assertThat(createdChargeEntity.getGatewayAccount().getGatewayName(), is("provider"));
+        assertThat(createdChargeEntity.getGatewayAccount().getGatewayName(), is("sandbox"));
         assertThat(createdChargeEntity.getReference(), is("Pay reference"));
         assertThat(createdChargeEntity.getDescription(), is("This is a description"));
         assertThat(createdChargeEntity.getAmount(), is(100L));
@@ -151,7 +151,7 @@ public class ChargeServiceTest {
         Long chargeId = 101L;
         Long accountId = 10L;
 
-        GatewayAccountEntity gatewayAccount = new GatewayAccountEntity("provider", new HashMap<>(), TEST);
+        GatewayAccountEntity gatewayAccount = new GatewayAccountEntity("sandbox", new HashMap<>(), TEST);
         gatewayAccount.setId(1L);
 
         ChargeEntity newCharge = aValidChargeEntity()
@@ -191,11 +191,8 @@ public class ChargeServiceTest {
         Long chargeId = 101L;
         Long accountId = 10L;
 
-        GatewayAccountEntity gatewayAccount = new GatewayAccountEntity("provider", new HashMap<>(), TEST);
+        GatewayAccountEntity gatewayAccount = new GatewayAccountEntity("sandbox", new HashMap<>(), TEST);
         gatewayAccount.setId(1L);
-
-        //when(mockedChargeRefundService.getRefundedAmount(any(ChargeEntity.class))).thenReturn(REFUNDED_AMOUNT);
-        //when(mockedChargeRefundService.getRefundAmountAvailable(any(ChargeEntity.class))).thenReturn(REFUND_AMOUNT_AVAILABLE);
 
         ChargeEntity newCharge = aValidChargeEntity()
                 .withId(chargeId)
@@ -235,7 +232,7 @@ public class ChargeServiceTest {
         Long chargeId = 101L;
         Long accountId = 10L;
 
-        GatewayAccountEntity gatewayAccount = new GatewayAccountEntity("provider", new HashMap<>(), TEST);
+        GatewayAccountEntity gatewayAccount = new GatewayAccountEntity("sandbox", new HashMap<>(), TEST);
         gatewayAccount.setId(1L);
 
         ChargeEntity newCharge = aValidChargeEntity()

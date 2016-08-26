@@ -20,6 +20,7 @@ import static org.mockito.Matchers.any;
 import static org.mockito.Mockito.*;
 import static uk.gov.pay.connector.model.domain.ChargeStatus.CAPTURED;
 import static uk.gov.pay.connector.model.domain.RefundStatus.REFUNDED;
+import static uk.gov.pay.connector.resources.PaymentGatewayName.*;
 
 @RunWith(MockitoJUnitRunner.class)
 public class NotificationServiceTest {
@@ -68,20 +69,17 @@ public class NotificationServiceTest {
 
     @Test
     public void shouldIgnoreNotificationWhenPayloadParsingFails() {
-        String paymentProviderName = "payment-provider-name";
-        String transactionId = "transaction-id";
 
         when(mockedPaymentProvider.parseNotification(any())).thenReturn(Either.left("Error"));
-        when(mockedPaymentProviders.resolve(paymentProviderName)).thenReturn(mockedPaymentProvider);
+        when(mockedPaymentProviders.byName(SANDBOX)).thenReturn(mockedPaymentProvider);
 
-        notificationService.acceptNotificationFor(paymentProviderName, "payload");
+        notificationService.acceptNotificationFor(SANDBOX, "payload");
 
         verifyNoMoreInteractions(mockedChargeDao);
     }
 
     @Test
     public void shouldIgnoreNotificationWhenStatusIsMappedAsUnknown() {
-        String paymentProviderName = "payment-provider-name";
         String transactionId = "transaction-id";
 
         Notifications<Pair<String, Boolean>> notifications = createNotificationFor(transactionId, null, Pair.of("CAPTURE", true));
@@ -89,16 +87,15 @@ public class NotificationServiceTest {
 
         StatusMapper mockedStatusMapper = createMockedStatusMapper(true, false, null);
         when(mockedPaymentProvider.getStatusMapper()).thenReturn(mockedStatusMapper);
-        when(mockedPaymentProviders.resolve(paymentProviderName)).thenReturn(mockedPaymentProvider);
+        when(mockedPaymentProviders.byName(SANDBOX)).thenReturn(mockedPaymentProvider);
 
-        notificationService.acceptNotificationFor(paymentProviderName, "payload");
+        notificationService.acceptNotificationFor(SANDBOX, "payload");
 
         verifyNoMoreInteractions(mockedChargeDao);
     }
 
     @Test
     public void shouldIgnoreNotificationWhenStatusIsMappedAsIgnored() {
-        String paymentProviderName = "payment-provider-name";
         String transactionId = "transaction-id";
 
         Notifications<Pair<String, Boolean>> notifications = createNotificationFor(transactionId, null, Pair.of("AUTHORISATION", true));
@@ -106,32 +103,30 @@ public class NotificationServiceTest {
 
         StatusMapper mockedStatusMapper = createMockedStatusMapper(false, true, null);
         when(mockedPaymentProvider.getStatusMapper()).thenReturn(mockedStatusMapper);
-        when(mockedPaymentProviders.resolve(paymentProviderName)).thenReturn(mockedPaymentProvider);
+        when(mockedPaymentProviders.byName(SANDBOX)).thenReturn(mockedPaymentProvider);
 
-        notificationService.acceptNotificationFor(paymentProviderName, "payload");
+        notificationService.acceptNotificationFor(SANDBOX, "payload");
 
         verifyNoMoreInteractions(mockedChargeDao);
     }
 
     @Test
     public void shouldIgnoreNotificationWhenNoTransactionId() {
-        String paymentProviderName = "payment-provider-name";
 
         Notifications<Pair<String, Boolean>> notifications = createNotificationFor("", null, Pair.of("CAPTURE", true));
         when(mockedPaymentProvider.parseNotification(any())).thenReturn(Either.right(notifications));
 
         StatusMapper mockedStatusMapper = createMockedStatusMapper(false, false, CAPTURED);
         when(mockedPaymentProvider.getStatusMapper()).thenReturn(mockedStatusMapper);
-        when(mockedPaymentProviders.resolve(paymentProviderName)).thenReturn(mockedPaymentProvider);
+        when(mockedPaymentProviders.byName(SANDBOX)).thenReturn(mockedPaymentProvider);
 
-        notificationService.acceptNotificationFor(paymentProviderName, "payload");
+        notificationService.acceptNotificationFor(SANDBOX, "payload");
 
         verifyNoMoreInteractions(mockedChargeDao);
     }
 
     @Test
     public void shouldIgnoreNotificationWhenWrongTransactionId() {
-        String paymentProviderName = "payment-provider-name";
         String transactionId = "unknown-transaction-id";
 
         Notifications<Pair<String, Boolean>> notifications = createNotificationFor(transactionId, null, Pair.of("CAPTURE", true));
@@ -140,21 +135,20 @@ public class NotificationServiceTest {
         StatusMapper mockedStatusMapper = createMockedStatusMapper(false, false, CAPTURED);
         when(mockedPaymentProvider.getStatusMapper()).thenReturn(mockedStatusMapper);
 
-        when(mockedPaymentProvider.getPaymentProviderName()).thenReturn(paymentProviderName);
-        when(mockedPaymentProviders.resolve(paymentProviderName)).thenReturn(mockedPaymentProvider);
+        when(mockedPaymentProvider.getPaymentGatewayName()).thenReturn(SANDBOX.getName());
+        when(mockedPaymentProviders.byName(SANDBOX)).thenReturn(mockedPaymentProvider);
 
-        when(mockedChargeDao.findByProviderAndTransactionId(paymentProviderName, transactionId))
+        when(mockedChargeDao.findByProviderAndTransactionId(SANDBOX.getName(), transactionId))
                 .thenReturn(Optional.empty());
 
-        notificationService.acceptNotificationFor(paymentProviderName, "payload");
+        notificationService.acceptNotificationFor(SANDBOX, "payload");
 
-        verify(mockedChargeDao).findByProviderAndTransactionId(paymentProviderName, transactionId);
+        verify(mockedChargeDao).findByProviderAndTransactionId(SANDBOX.getName(), transactionId);
         verifyNoMoreInteractions(mockedChargeDao);
     }
 
     @Test
     public void shouldIgnoreNotificationWhenNoReference() {
-        String paymentProviderName = "payment-provider-name";
         String transactionId = "transaction-id";
 
         Notifications<Pair<String, Boolean>> notifications = createNotificationFor(transactionId, null, Pair.of("REFUND", true));
@@ -163,17 +157,16 @@ public class NotificationServiceTest {
         StatusMapper mockedStatusMapper = createMockedStatusMapper(false, false, REFUNDED);
         when(mockedPaymentProvider.getStatusMapper()).thenReturn(mockedStatusMapper);
 
-        when(mockedPaymentProvider.getPaymentProviderName()).thenReturn(paymentProviderName);
-        when(mockedPaymentProviders.resolve(paymentProviderName)).thenReturn(mockedPaymentProvider);
+        when(mockedPaymentProvider.getPaymentGatewayName()).thenReturn(SANDBOX.getName());
+        when(mockedPaymentProviders.byName(SANDBOX)).thenReturn(mockedPaymentProvider);
 
-        notificationService.acceptNotificationFor(paymentProviderName, "payload");
+        notificationService.acceptNotificationFor(SANDBOX, "payload");
 
         verifyNoMoreInteractions(mockedChargeDao);
     }
 
     @Test
     public void shouldIgnoreNotificationWhenWrongReference() {
-        String paymentProviderName = "payment-provider-name";
         String transactionId = "transaction-id";
         String reference = "reference";
 
@@ -183,13 +176,13 @@ public class NotificationServiceTest {
         StatusMapper mockedStatusMapper = createMockedStatusMapper(false, false, REFUNDED);
         when(mockedPaymentProvider.getStatusMapper()).thenReturn(mockedStatusMapper);
 
-        when(mockedPaymentProvider.getPaymentProviderName()).thenReturn(paymentProviderName);
-        when(mockedPaymentProviders.resolve(paymentProviderName)).thenReturn(mockedPaymentProvider);
+        when(mockedPaymentProvider.getPaymentGatewayName()).thenReturn(SANDBOX.getName());
+        when(mockedPaymentProviders.byName(SANDBOX)).thenReturn(mockedPaymentProvider);
 
         when(mockedRefundDao.findByExternalId(reference))
                 .thenReturn(Optional.empty());
 
-        notificationService.acceptNotificationFor(paymentProviderName, "payload");
+        notificationService.acceptNotificationFor(SANDBOX, "payload");
 
         verify(mockedRefundDao).findByExternalId(reference);
         verifyNoMoreInteractions(mockedChargeDao);
@@ -197,7 +190,6 @@ public class NotificationServiceTest {
 
     @Test
     public void shouldIgnoreNotificationWhenNeitherOfTypeChargeOrRefund() {
-        String paymentProviderName = "payment-provider-name";
         String transactionId = "transaction-id";
 
         Notifications<Pair<String, Boolean>> notifications = createNotificationFor(transactionId, null, Pair.of("CAPTURE", true));
@@ -205,16 +197,15 @@ public class NotificationServiceTest {
 
         StatusMapper mockedStatusMapper = createMockedStatusMapper(false, false, UnknownType.STATUS);
         when(mockedPaymentProvider.getStatusMapper()).thenReturn(mockedStatusMapper);
-        when(mockedPaymentProviders.resolve(paymentProviderName)).thenReturn(mockedPaymentProvider);
+        when(mockedPaymentProviders.byName(SANDBOX)).thenReturn(mockedPaymentProvider);
 
-        notificationService.acceptNotificationFor(paymentProviderName, "payload");
+        notificationService.acceptNotificationFor(SANDBOX, "payload");
 
         verifyNoMoreInteractions(mockedChargeDao);
     }
 
     @Test
     public void shouldAcceptNotificationForCapture() {
-        String paymentProviderName = "payment-provider-name";
         String transactionId = "transaction-id";
 
         Notifications<Pair<String, Boolean>> notifications = createNotificationFor(transactionId, null, Pair.of("CAPTURE", true));
@@ -223,16 +214,16 @@ public class NotificationServiceTest {
         StatusMapper mockedStatusMapper = createMockedStatusMapper(false, false, CAPTURED);
         when(mockedPaymentProvider.getStatusMapper()).thenReturn(mockedStatusMapper);
 
-        when(mockedPaymentProvider.getPaymentProviderName()).thenReturn(paymentProviderName);
-        when(mockedPaymentProviders.resolve(paymentProviderName)).thenReturn(mockedPaymentProvider);
+        when(mockedPaymentProvider.getPaymentGatewayName()).thenReturn(SANDBOX.getName());
+        when(mockedPaymentProviders.byName(SANDBOX)).thenReturn(mockedPaymentProvider);
 
         ChargeEntity mockedChargeEntity = mock(ChargeEntity.class);
-        when(mockedChargeDao.findByProviderAndTransactionId(paymentProviderName, transactionId))
+        when(mockedChargeDao.findByProviderAndTransactionId(SANDBOX.getName(), transactionId))
                 .thenReturn(Optional.of(mockedChargeEntity));
 
-        notificationService.acceptNotificationFor(paymentProviderName, "payload");
+        notificationService.acceptNotificationFor(SANDBOX, "payload");
 
-        verify(mockedChargeDao).findByProviderAndTransactionId(paymentProviderName, transactionId);
+        verify(mockedChargeDao).findByProviderAndTransactionId(SANDBOX.getName(), transactionId);
         verify(mockedChargeEntity).setStatus(CAPTURED);
         verify(mockedChargeDao).mergeAndNotifyStatusHasChanged(mockedChargeEntity);
         verifyNoMoreInteractions(mockedChargeDao);
@@ -240,7 +231,6 @@ public class NotificationServiceTest {
 
     @Test
     public void shouldAcceptNotificationForRefund() {
-        String paymentProviderName = "payment-provider-name";
         String reference = "reference";
         String transactionId = "transaction-id";
 
@@ -250,13 +240,13 @@ public class NotificationServiceTest {
         StatusMapper mockedStatusMapper = createMockedStatusMapper(false, false, REFUNDED);
         when(mockedPaymentProvider.getStatusMapper()).thenReturn(mockedStatusMapper);
 
-        when(mockedPaymentProvider.getPaymentProviderName()).thenReturn(paymentProviderName);
-        when(mockedPaymentProviders.resolve(paymentProviderName)).thenReturn(mockedPaymentProvider);
+        when(mockedPaymentProvider.getPaymentGatewayName()).thenReturn(SANDBOX.getName());
+        when(mockedPaymentProviders.byName(SANDBOX)).thenReturn(mockedPaymentProvider);
 
         RefundEntity mockedRefundEntity = mock(RefundEntity.class);
         when(mockedRefundDao.findByExternalId(reference)).thenReturn(Optional.of(mockedRefundEntity));
 
-        notificationService.acceptNotificationFor(paymentProviderName, "payload");
+        notificationService.acceptNotificationFor(SANDBOX, "payload");
 
         verify(mockedRefundDao).findByExternalId(reference);
         verify(mockedRefundEntity).setStatus(REFUNDED);

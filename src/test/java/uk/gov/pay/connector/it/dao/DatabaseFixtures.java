@@ -169,7 +169,7 @@ public class DatabaseFixtures {
     }
     public class TestAccount {
         long accountId = RandomUtils.nextLong(1, 99999);
-        String paymentProvider = "test_provider";
+        String paymentProvider = "sandbox";
         String serviceName = "service_name";
         private List<TestCardType> cardTypes = new ArrayList<>();
 

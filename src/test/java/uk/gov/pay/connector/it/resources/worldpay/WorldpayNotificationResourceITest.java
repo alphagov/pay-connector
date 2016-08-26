@@ -16,8 +16,6 @@ import static javax.ws.rs.core.MediaType.TEXT_XML;
 import static org.hamcrest.Matchers.is;
 import static org.junit.Assert.assertThat;
 import static uk.gov.pay.connector.model.domain.ChargeStatus.*;
-import static uk.gov.pay.connector.resources.PaymentProviderValidator.WORLDPAY_PROVIDER;
-import static uk.gov.pay.connector.util.TransactionId.randomId;
 
 public class WorldpayNotificationResourceITest extends CardResourceITestBase {
 
@@ -25,7 +23,7 @@ public class WorldpayNotificationResourceITest extends CardResourceITestBase {
     private static final String NOTIFICATION_PATH = "/v1/api/notifications/worldpay";
 
     public WorldpayNotificationResourceITest() {
-        super(WORLDPAY_PROVIDER);
+        super("worldpay");
     }
 
     @Test

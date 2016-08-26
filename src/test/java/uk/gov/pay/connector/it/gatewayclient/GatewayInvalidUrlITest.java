@@ -16,7 +16,6 @@ import static org.junit.Assert.assertThat;
 import static uk.gov.pay.connector.model.domain.ChargeStatus.AUTHORISATION_SUCCESS;
 import static uk.gov.pay.connector.model.domain.ChargeStatus.CAPTURE_ERROR;
 import static uk.gov.pay.connector.resources.ApiPaths.FRONTEND_CHARGE_CAPTURE_API_PATH;
-import static uk.gov.pay.connector.resources.PaymentProviderValidator.SMARTPAY_PROVIDER;
 
 public class GatewayInvalidUrlITest {
     private static final String ACCOUNT_ID = "12341234";
@@ -66,7 +65,7 @@ public class GatewayInvalidUrlITest {
     }
 
     private void setupForCapture() {
-        db.addGatewayAccount(ACCOUNT_ID, SMARTPAY_PROVIDER);
+        db.addGatewayAccount(ACCOUNT_ID, "smartpay");
         long amount = 3333;
         db.addCharge(CHARGE_ID, EXTERNAL_CHARGE_ID, ACCOUNT_ID, amount, AUTHORISATION_SUCCESS, "return_url", TRANSACTION_ID);
     }

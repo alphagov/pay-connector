@@ -85,7 +85,7 @@ public class ChargeEntityFixture {
     }
 
     private GatewayAccountEntity defaultGatewayAccountEntity() {
-        GatewayAccountEntity accountEntity = new GatewayAccountEntity("provider", new HashMap<>(), TEST);
+        GatewayAccountEntity accountEntity = new GatewayAccountEntity("sandbox", new HashMap<>(), TEST);
 
         accountEntity.setId(1L);
         accountEntity.setServiceName("MyService");

@@ -1,7 +1,6 @@
 package uk.gov.pay.connector.service.worldpay;
 
 import fj.data.Either;
-import org.apache.commons.lang3.tuple.Pair;
 import org.joda.time.DateTime;
 import org.joda.time.DateTimeZone;
 import uk.gov.pay.connector.model.CancelGatewayRequest;
@@ -10,11 +9,11 @@ import uk.gov.pay.connector.model.Notifications;
 import uk.gov.pay.connector.model.RefundGatewayRequest;
 import uk.gov.pay.connector.model.gateway.AuthorisationGatewayRequest;
 import uk.gov.pay.connector.model.gateway.GatewayResponse;
+import uk.gov.pay.connector.resources.PaymentGatewayName;
 import uk.gov.pay.connector.service.BasePaymentProvider;
 import uk.gov.pay.connector.service.BaseResponse;
 import uk.gov.pay.connector.service.GatewayClient;
 import uk.gov.pay.connector.service.StatusMapper;
-import uk.gov.pay.connector.service.smartpay.SmartpayNotificationList;
 import uk.gov.pay.connector.util.XMLUnmarshallerException;
 
 import java.util.Optional;
@@ -24,7 +23,6 @@ import static fj.data.Either.left;
 import static fj.data.Either.right;
 import static java.util.UUID.randomUUID;
 import static uk.gov.pay.connector.model.domain.GatewayAccount.CREDENTIALS_MERCHANT_ID;
-import static uk.gov.pay.connector.resources.PaymentProviderValidator.WORLDPAY_PROVIDER;
 import static uk.gov.pay.connector.service.OrderCaptureRequestBuilder.aWorldpayOrderCaptureRequest;
 import static uk.gov.pay.connector.service.OrderRefundRequestBuilder.aWorldpayOrderRefundRequest;
 import static uk.gov.pay.connector.service.OrderSubmitRequestBuilder.aWorldpayOrderSubmitRequest;
@@ -38,8 +36,8 @@ public class WorldpayPaymentProvider extends BasePaymentProvider<BaseResponse> {
     }
 
     @Override
-    public String getPaymentProviderName() {
-        return WORLDPAY_PROVIDER;
+    public String getPaymentGatewayName() {
+        return PaymentGatewayName.WORLDPAY.getName();
     }
 
     @Override
@@ -73,7 +71,7 @@ public class WorldpayPaymentProvider extends BasePaymentProvider<BaseResponse> {
         try {
             Notifications.Builder<String> builder = Notifications.builder();
             WorldpayNotification worldpayNotification = unmarshall(payload, WorldpayNotification.class);
-            builder.addNotificationFor(worldpayNotification.getTransactionId(),"",worldpayNotification.getStatus());
+            builder.addNotificationFor(worldpayNotification.getTransactionId(), "", worldpayNotification.getStatus());
             return right(builder.build());
         } catch (Exception e) {
             return left(e.getMessage());

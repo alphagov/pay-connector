@@ -2,7 +2,6 @@ package uk.gov.pay.connector.sandbox;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.google.common.collect.ImmutableMap;
-import org.apache.commons.lang3.tuple.Pair;
 import org.junit.Assert;
 import org.junit.Test;
 import uk.gov.pay.connector.model.StatusUpdates;
@@ -16,12 +15,10 @@ import java.util.Optional;
 import java.util.function.Consumer;
 
 import static org.hamcrest.MatcherAssert.assertThat;
-import static org.hamcrest.Matchers.empty;
 import static org.hamcrest.Matchers.hasItem;
 import static org.hamcrest.core.Is.is;
 import static org.hamcrest.core.IsSame.sameInstance;
 import static org.mockito.Mockito.mock;
-import static uk.gov.pay.connector.model.domain.ChargeStatus.AUTHORISATION_REJECTED;
 import static uk.gov.pay.connector.util.JsonEncoder.toJson;
 
 public class SandboxPaymentProviderTest {
@@ -32,7 +29,7 @@ public class SandboxPaymentProviderTest {
 
     @Test
     public void shouldGetPaymentProviderName() {
-        Assert.assertThat(provider.getPaymentProviderName(), is("sandbox"));
+        Assert.assertThat(provider.getPaymentGatewayName(), is("sandbox"));
     }
 
     @Test

@@ -7,13 +7,13 @@ import org.slf4j.LoggerFactory;
 import uk.gov.pay.connector.model.*;
 import uk.gov.pay.connector.model.gateway.AuthorisationGatewayRequest;
 import uk.gov.pay.connector.model.gateway.GatewayResponse;
+import uk.gov.pay.connector.resources.PaymentGatewayName;
 import uk.gov.pay.connector.service.*;
 
 import java.util.Optional;
 
 import static java.util.UUID.randomUUID;
 import static uk.gov.pay.connector.model.ErrorType.GENERIC_GATEWAY_ERROR;
-import static uk.gov.pay.connector.resources.PaymentProviderValidator.SANDBOX_PROVIDER;
 import static uk.gov.pay.connector.service.sandbox.SandboxCardNumbers.*;
 
 public class SandboxPaymentProvider extends BasePaymentProvider<BaseResponse> implements PaymentProvider<BaseResponse> {
@@ -106,8 +106,8 @@ public class SandboxPaymentProvider extends BasePaymentProvider<BaseResponse> im
     }
 
     @Override
-    public String getPaymentProviderName() {
-        return SANDBOX_PROVIDER;
+    public String getPaymentGatewayName() {
+        return PaymentGatewayName.SANDBOX.getName();
     }
 
     @Override

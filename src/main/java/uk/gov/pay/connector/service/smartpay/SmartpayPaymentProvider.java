@@ -5,21 +5,24 @@ import fj.data.Either;
 import org.apache.commons.lang3.tuple.Pair;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import uk.gov.pay.connector.model.*;
+import uk.gov.pay.connector.model.CancelGatewayRequest;
+import uk.gov.pay.connector.model.CaptureGatewayRequest;
+import uk.gov.pay.connector.model.Notifications;
 import uk.gov.pay.connector.model.Notifications.Builder;
-import uk.gov.pay.connector.model.domain.ChargeEntity;
+import uk.gov.pay.connector.model.RefundGatewayRequest;
 import uk.gov.pay.connector.model.gateway.AuthorisationGatewayRequest;
 import uk.gov.pay.connector.model.gateway.GatewayResponse;
-import uk.gov.pay.connector.service.*;
+import uk.gov.pay.connector.resources.PaymentGatewayName;
+import uk.gov.pay.connector.service.BasePaymentProvider;
+import uk.gov.pay.connector.service.BaseResponse;
+import uk.gov.pay.connector.service.GatewayClient;
+import uk.gov.pay.connector.service.StatusMapper;
 
 import java.util.Optional;
-import java.util.function.Consumer;
 import java.util.function.Function;
 
 import static fj.data.Either.left;
 import static fj.data.Either.right;
-import static java.lang.String.format;
-import static uk.gov.pay.connector.resources.PaymentProviderValidator.SMARTPAY_PROVIDER;
 import static uk.gov.pay.connector.service.OrderCaptureRequestBuilder.aSmartpayOrderCaptureRequest;
 import static uk.gov.pay.connector.service.OrderSubmitRequestBuilder.aSmartpayOrderSubmitRequest;
 import static uk.gov.pay.connector.service.smartpay.SmartpayOrderCancelRequestBuilder.aSmartpayOrderCancelRequest;
@@ -37,8 +40,8 @@ public class SmartpayPaymentProvider extends BasePaymentProvider<BaseResponse> {
     }
 
     @Override
-    public String getPaymentProviderName() {
-        return SMARTPAY_PROVIDER;
+    public String getPaymentGatewayName() {
+        return PaymentGatewayName.SMARTPAY.getName();
     }
 
     @Override

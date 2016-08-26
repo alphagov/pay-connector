@@ -109,7 +109,7 @@ public class ChargeRefundService {
     private NonTransactionalOperation<TransactionContext, GatewayResponse> doGatewayRefund(PaymentProviders providers) {
         return context -> {
             RefundEntity refundEntity = context.get(RefundEntity.class);
-            return providers.resolve(refundEntity.getChargeEntity().getGatewayAccount().getGatewayName())
+            return providers.byName(refundEntity.getChargeEntity().getPaymentGatewayName())
                     .refund(RefundGatewayRequest.valueOf(refundEntity.getChargeEntity(), refundEntity.getAmount()));
         };
     }

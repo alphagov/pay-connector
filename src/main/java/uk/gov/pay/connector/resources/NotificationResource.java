@@ -14,6 +14,7 @@ import java.io.IOException;
 
 import static javax.ws.rs.core.MediaType.APPLICATION_JSON;
 import static javax.ws.rs.core.MediaType.TEXT_XML;
+import static uk.gov.pay.connector.resources.PaymentGatewayName.SMARTPAY;
 
 @Path("/")
 public class NotificationResource {
@@ -49,16 +50,15 @@ public class NotificationResource {
         return handleNotification("worldpay", notification);
     }
 
-    private Response handleNotification(String provider, String notification) {
-        logger.info("Received notification from provider=" + provider + ", notification=" + notification);
-
-        notificationService.acceptNotificationFor(provider, notification);
-
-        return Response.ok(getResponseFor(provider)).build();
+    private Response handleNotification(String name, String notification) {
+        logger.info("Received notification from provider=" + name + ", notification=" + notification);
+        PaymentGatewayName paymentGatewayName = PaymentGatewayName.valueFrom(name);
+        notificationService.acceptNotificationFor(paymentGatewayName, notification);
+        return Response.ok(getResponseFor(paymentGatewayName)).build();
     }
 
-    private String getResponseFor(String provider) {
-        if ("smartpay".equals(provider)) {
+    private String getResponseFor(PaymentGatewayName provider) {
+        if (provider == SMARTPAY) {
             return "[accepted]";
         }
         return "[OK]";

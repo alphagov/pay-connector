@@ -1,7 +1,10 @@
 package uk.gov.pay.connector.service;
 
 import fj.data.Either;
-import uk.gov.pay.connector.model.*;
+import uk.gov.pay.connector.model.CancelGatewayRequest;
+import uk.gov.pay.connector.model.CaptureGatewayRequest;
+import uk.gov.pay.connector.model.Notifications;
+import uk.gov.pay.connector.model.RefundGatewayRequest;
 import uk.gov.pay.connector.model.gateway.AuthorisationGatewayRequest;
 import uk.gov.pay.connector.model.gateway.GatewayResponse;
 
@@ -9,7 +12,7 @@ import java.util.Optional;
 
 public interface PaymentProvider<T extends BaseResponse> {
 
-    String getPaymentProviderName();
+    String getPaymentGatewayName();
 
     Optional<String> generateTransactionId();
 

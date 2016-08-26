@@ -1,14 +1,16 @@
 package uk.gov.pay.connector.worldpay;
 
+import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableMap;
 import com.google.common.io.Resources;
-import org.apache.commons.lang3.tuple.Pair;
+import fj.data.Either;
 import org.junit.Assert;
 import org.junit.Before;
 import org.junit.Test;
 import uk.gov.pay.connector.model.CaptureGatewayRequest;
 import uk.gov.pay.connector.model.GatewayError;
-import uk.gov.pay.connector.model.StatusUpdates;
+import uk.gov.pay.connector.model.Notification;
+import uk.gov.pay.connector.model.Notifications;
 import uk.gov.pay.connector.model.domain.Address;
 import uk.gov.pay.connector.model.domain.Card;
 import uk.gov.pay.connector.model.domain.ChargeEntity;
@@ -28,17 +30,15 @@ import javax.ws.rs.core.Response;
 import java.io.IOException;
 import java.net.URL;
 import java.nio.charset.Charset;
-import java.util.Map;
-import java.util.Optional;
-import java.util.function.Consumer;
 
 import static com.google.common.io.Resources.getResource;
 import static javax.ws.rs.core.MediaType.APPLICATION_XML;
 import static org.hamcrest.CoreMatchers.hasItem;
+import static org.hamcrest.CoreMatchers.startsWith;
 import static org.hamcrest.MatcherAssert.assertThat;
-import static org.hamcrest.Matchers.empty;
 import static org.hamcrest.core.Is.is;
 import static org.hamcrest.core.IsSame.sameInstance;
+import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertTrue;
 import static org.mockito.Matchers.any;
@@ -49,7 +49,6 @@ import static uk.gov.pay.connector.model.ErrorType.GENERIC_GATEWAY_ERROR;
 import static uk.gov.pay.connector.model.ErrorType.UNEXPECTED_STATUS_CODE_FROM_GATEWAY;
 import static uk.gov.pay.connector.model.domain.Address.anAddress;
 import static uk.gov.pay.connector.model.domain.ChargeEntityFixture.aValidChargeEntity;
-import static uk.gov.pay.connector.model.domain.ChargeStatus.CAPTURED;
 import static uk.gov.pay.connector.model.domain.GatewayAccount.*;
 import static uk.gov.pay.connector.model.domain.GatewayAccountEntity.Type.TEST;
 import static uk.gov.pay.connector.service.GatewayClient.createGatewayClient;
@@ -71,7 +70,7 @@ public class WorldpayPaymentProviderTest {
 
     @Test
     public void shouldGetPaymentProviderName() {
-        Assert.assertThat(provider.getPaymentProviderName(), is("worldpay"));
+        Assert.assertThat(provider.getPaymentGatewayName(), is("worldpay"));
     }
 
     @Test
@@ -122,233 +121,31 @@ public class WorldpayPaymentProviderTest {
         assertEquals(response.getGatewayError().get(), new GatewayError("Unexpected Response Code From Gateway", UNEXPECTED_STATUS_CODE_FROM_GATEWAY));
     }
 
-  /*  @Test
-    public void handleNotification_shouldOnlyUpdateChargeStatusOnce() throws Exception {
-        Consumer<StatusUpdates> accountUpdater = mock(Consumer.class);
-        GatewayAccountEntity gatewayAccountEntity = mock(GatewayAccountEntity.class);
-        String transactionId = "transaction-id";
-        mockWorldpayInquiryResponse(transactionId, "CAPTURED");
-
-        Map<String, String> credentialsMap = ImmutableMap.of(
-                "merchant_id", "MERCHANTCODE");
-
-        when(gatewayAccountEntity.getCredentials()).thenReturn(credentialsMap);
-
-        chargeEntity.setGatewayTransactionId(transactionId);
-        chargeEntity.setGatewayAccount(gatewayAccountEntity);
-        String notificationPayload = notificationPayloadForTransaction(transactionId, "CAPTURED");
-        StatusUpdates statusResponse = provider.handleNotification(
-                notificationPayload,
-                payloadChecks -> true,
-                accoundFinder -> Optional.of(chargeEntity),
-                accountUpdater
-        );
-
-        Assert.assertThat(statusResponse.getStatusUpdates(), hasItem(Pair.of(transactionId, CAPTURED)));
-        verify(accountUpdater, times(1)).accept(statusResponse);
-    }*/
-
-/*    @Test
-    public void handleNotification_shouldReturnAcknowledgedWhenInvalidGatewayAccount() throws Exception {
-
-        Consumer<StatusUpdates> accountUpdater = mock(Consumer.class);
-        Optional<GatewayAccountEntity> nonExistentGatewayAccount = Optional.empty();
-
-        String notificationPayload = notificationPayloadForTransaction("transaction-id", "AUTHORISED");
-
-        StatusUpdates statusResponse = provider.handleNotification(
-                notificationPayload,
-                payloadChecks -> true,
-                accountFinder -> nonExistentGatewayAccount,
-                accountUpdater
-        );
-
-        assertThat(statusResponse.getStatusUpdates(), is(empty()));
-        assertThat(statusResponse.successful(), is(true));
-        verifyZeroInteractions(accountUpdater);
-    }*/
-
- /*   @Test
-    public void handleNotification_shouldReturnAcknowledgedWhenInquiryFailed() throws Exception {
-        Consumer<StatusUpdates> accountUpdater = mock(Consumer.class);
-        GatewayAccountEntity gatewayAccountEntity = mock(GatewayAccountEntity.class);
-        mockWorldpayErrorResponse(500);
-
-        Map<String, String> credentialsMap = ImmutableMap.of(
-                "merchant_id", "MERCHANTCODE");
-
-        when(gatewayAccountEntity.getCredentials()).thenReturn(credentialsMap);
-        String transactionId = "an-unknown-transaction-id";
-
-        chargeEntity.setGatewayTransactionId(transactionId);
-        chargeEntity.setGatewayAccount(gatewayAccountEntity);
-
-        StatusUpdates statusResponse = provider.handleNotification(
-                notificationPayloadForTransaction(transactionId, "AUTHORISED"),
-                x -> true,
-                x -> Optional.of(chargeEntity),
-                accountUpdater
-        );
-
-        Assert.assertThat(statusResponse.successful(), is(true));
-        Assert.assertThat(statusResponse.getStatusUpdates(), is(empty()));
-        verifyZeroInteractions(accountUpdater);
+    @Test
+    public void parseNotification_shouldReturnErrorIfUnparsableXml() {
+        Either<String, Notifications<String>> response = provider.parseNotification("not valid xml");
+        assertThat(response.isLeft(), is(true));
+        assertThat(response.left().value(), startsWith("javax.xml.bind.UnmarshalException"));
     }
 
     @Test
-    public void handleNotification_shouldReturnAcknowledgedWhenNotificationStatusIsUnknown() throws Exception {
-        Consumer<StatusUpdates> accountUpdater = mock(Consumer.class);
-        GatewayAccountEntity gatewayAccountEntity = mock(GatewayAccountEntity.class);
+    public void parseNotification_shouldReturnNotificationsIfValidXml() throws IOException {
         String transactionId = "transaction-id";
-        mockWorldpayInquiryResponse(transactionId, "AUTHORISED");
+        String status = "CHARGED";
 
-        Map<String, String> credentialsMap = ImmutableMap.of(
-                "merchant_id", "MERCHANTCODE");
+        Either<String, Notifications<String>> response = provider.parseNotification(notificationPayloadForTransaction(transactionId, status));
+        assertThat(response.isRight(), is(true));
 
-        when(gatewayAccountEntity.getCredentials()).thenReturn(credentialsMap);
+        ImmutableList<Notification<String>> notifications = response.right().value().get();
 
-        chargeEntity.setGatewayTransactionId(transactionId);
-        chargeEntity.setGatewayAccount(gatewayAccountEntity);
-        String notificationPayload = notificationPayloadForTransaction(transactionId, "UNKNOWN");
-        StatusUpdates statusResponse = provider.handleNotification(
-                notificationPayload,
-                payloadChecks -> true,
-                accoundFinder -> Optional.of(chargeEntity),
-                accountUpdater
-        );
+        assertThat(notifications.size(), is(1));
 
-        assertThat(statusResponse.successful(), is(true));
-        assertThat(statusResponse.getStatusUpdates(), is(empty()));
-        verifyZeroInteractions(accountUpdater);
+        Notification<String> worldpayNotification = notifications.get(0);
+
+        assertThat(worldpayNotification.getTransactionId(), is(transactionId));
+        assertThat(worldpayNotification.getStatus(), is(status));
     }
 
-    @Test
-    public void handleNotification_shouldReturnAcknowledgedWhenNotificationStatusIsIgnored() throws Exception {
-        Consumer<StatusUpdates> accountUpdater = mock(Consumer.class);
-        GatewayAccountEntity gatewayAccountEntity = mock(GatewayAccountEntity.class);
-        String transactionId = "transaction-id";
-        mockWorldpayInquiryResponse(transactionId, "AUTHORISED");
-
-        Map<String, String> credentialsMap = ImmutableMap.of(
-                "merchant_id", "MERCHANTCODE");
-
-        when(gatewayAccountEntity.getCredentials()).thenReturn(credentialsMap);
-
-        chargeEntity.setGatewayTransactionId(transactionId);
-        chargeEntity.setGatewayAccount(gatewayAccountEntity);
-        String notificationPayload = notificationPayloadForTransaction(transactionId, "AUTHORISED");
-        StatusUpdates statusResponse = provider.handleNotification(
-                notificationPayload,
-                payloadChecks -> true,
-                accoundFinder -> Optional.of(chargeEntity),
-                accountUpdater
-        );
-
-        assertThat(statusResponse.successful(), is(true));
-        assertThat(statusResponse.getStatusUpdates(), is(empty()));
-        verifyZeroInteractions(accountUpdater);
-    }
-
-    @Test
-    public void handleNotification_shouldReturnAcknowledgedWhenEnquiryResponseStatusIsUnknown() throws Exception {
-        Consumer<StatusUpdates> accountUpdater = mock(Consumer.class);
-        GatewayAccountEntity gatewayAccountEntity = mock(GatewayAccountEntity.class);
-        String transactionId = "transaction-id";
-        mockWorldpayInquiryResponse(transactionId, "UNKNOWN");
-
-        Map<String, String> credentialsMap = ImmutableMap.of(
-                "merchant_id", "MERCHANTCODE");
-
-        when(gatewayAccountEntity.getCredentials()).thenReturn(credentialsMap);
-
-        chargeEntity.setGatewayTransactionId(transactionId);
-        chargeEntity.setGatewayAccount(gatewayAccountEntity);
-        String notificationPayload = notificationPayloadForTransaction(transactionId, "CAPTURED");
-        StatusUpdates statusResponse = provider.handleNotification(
-                notificationPayload,
-                payloadChecks -> true,
-                accoundFinder -> Optional.of(chargeEntity),
-                accountUpdater
-        );
-
-        assertThat(statusResponse.successful(), is(true));
-        assertThat(statusResponse.getStatusUpdates(), is(empty()));
-        verifyZeroInteractions(accountUpdater);
-    }
-
-    @Test
-    public void handleNotification_shouldReturnAcknowledgedWhenEnquiryResponseStatusIsIgnored() throws Exception {
-        Consumer<StatusUpdates> accountUpdater = mock(Consumer.class);
-        GatewayAccountEntity gatewayAccountEntity = mock(GatewayAccountEntity.class);
-        String transactionId = "transaction-id";
-        mockWorldpayInquiryResponse(transactionId, "AUTHORISED");
-
-        Map<String, String> credentialsMap = ImmutableMap.of(
-                "merchant_id", "MERCHANTCODE");
-
-        when(gatewayAccountEntity.getCredentials()).thenReturn(credentialsMap);
-
-        chargeEntity.setGatewayTransactionId(transactionId);
-        chargeEntity.setGatewayAccount(gatewayAccountEntity);
-        String notificationPayload = notificationPayloadForTransaction(transactionId, "CAPTURED");
-        StatusUpdates statusResponse = provider.handleNotification(
-                notificationPayload,
-                payloadChecks -> true,
-                accoundFinder -> Optional.of(chargeEntity),
-                accountUpdater
-        );
-
-        assertThat(statusResponse.successful(), is(true));
-        assertThat(statusResponse.getStatusUpdates(), is(empty()));
-        verifyZeroInteractions(accountUpdater);
-    }
-
-    @Test
-    public void handleNotification_shouldReturnAcknowledgedStatusWhenInquiryStatusCannotBeParsed() throws Exception {
-        Consumer<StatusUpdates> accountUpdater = mock(Consumer.class);
-        GatewayAccountEntity gatewayAccountEntity = mock(GatewayAccountEntity.class);
-        String transactionId = "transaction-id";
-        mockWorldpayInquiryResponse(transactionId, "BANANAS");
-
-        Map<String, String> credentialsMap = ImmutableMap.of(
-                "merchant_id", "MERCHANTCODE");
-
-        when(gatewayAccountEntity.getCredentials()).thenReturn(credentialsMap);
-        chargeEntity.setGatewayTransactionId(transactionId);
-        chargeEntity.setGatewayAccount(gatewayAccountEntity);
-        String notificationPayload = notificationPayloadForTransaction(transactionId, "CAPTURED");
-        StatusUpdates statusResponse = provider.handleNotification(
-                notificationPayload,
-                payloadChecks -> true,
-                accoundFinder -> Optional.of(chargeEntity),
-                accountUpdater
-        );
-        assertThat(statusResponse.successful(), is(true));
-        assertThat(statusResponse.getStatusUpdates(), is(empty()));
-        verifyZeroInteractions(accountUpdater);
-    }
-
-    @Test
-    public void handleNotification_shouldReturnAcknowledgedStatusWhenNotificationCannotBeParsed() throws Exception {
-        Consumer<StatusUpdates> accountUpdater = mock(Consumer.class);
-        GatewayAccountEntity gatewayAccountEntity = mock(GatewayAccountEntity.class);
-
-        String notificationPayload = "un-parsable-notification-payload";
-        chargeEntity.setGatewayTransactionId("transaction-id");
-        chargeEntity.setGatewayAccount(gatewayAccountEntity);
-
-        StatusUpdates statusResponse = provider.handleNotification(
-                notificationPayload,
-                payloadChecks -> true,
-                accoundFinder -> Optional.of(chargeEntity),
-                accountUpdater
-        );
-
-        assertThat(statusResponse.successful(), is(true));
-        assertThat(statusResponse.getStatusUpdates(), is(empty()));
-        verifyZeroInteractions(accountUpdater);
-    }
-*/
     private String notificationPayloadForTransaction(String transactionId, String status) throws IOException {
         URL resource = getResource("templates/worldpay/notification.xml");
         return Resources.toString(resource, Charset.defaultCharset())

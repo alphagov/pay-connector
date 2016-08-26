@@ -78,6 +78,6 @@ public abstract class CardService<T extends BaseResponse> {
     }
 
     public PaymentProvider<T> getPaymentProviderFor(ChargeEntity chargeEntity) {
-        return providers.resolve(chargeEntity.getGatewayAccount().getGatewayName());
+        return providers.byName(chargeEntity.getPaymentGatewayName());
     }
 }

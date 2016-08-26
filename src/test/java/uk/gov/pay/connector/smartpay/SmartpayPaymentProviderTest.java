@@ -54,7 +54,7 @@ public class SmartpayPaymentProviderTest {
 
     @Test
     public void shouldGetPaymentProviderName() {
-        assertThat(provider.getPaymentProviderName(), is("smartpay"));
+        assertThat(provider.getPaymentGatewayName(), is("smartpay"));
     }
 
     @Test

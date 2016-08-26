@@ -3,6 +3,7 @@ package uk.gov.pay.connector.model.domain;
 import com.fasterxml.jackson.annotation.JsonBackReference;
 import uk.gov.pay.connector.exception.InvalidStateTransitionException;
 import uk.gov.pay.connector.model.api.ExternalChargeState;
+import uk.gov.pay.connector.resources.PaymentGatewayName;
 import uk.gov.pay.connector.util.RandomIdGenerator;
 
 import javax.persistence.*;
@@ -14,6 +15,7 @@ import java.util.List;
 
 import static org.apache.commons.lang3.StringUtils.equalsIgnoreCase;
 import static uk.gov.pay.connector.model.domain.ChargeStatus.CREATED;
+import static uk.gov.pay.connector.resources.PaymentGatewayName.*;
 
 @Entity
 @Table(name = "charges")
@@ -179,11 +181,16 @@ public class ChargeEntity extends AbstractEntity {
                 .mapToLong(RefundEntity::getAmount)
                 .sum();
     }
+
     public ConfirmationDetailsEntity getConfirmationDetailsEntity() {
         return confirmationDetailsEntity;
     }
 
     public void setConfirmationDetailsEntity(ConfirmationDetailsEntity confirmationDetailsEntity) {
         this.confirmationDetailsEntity = confirmationDetailsEntity;
+    }
+
+    public PaymentGatewayName getPaymentGatewayName(){
+        return valueFrom(gatewayAccount.getGatewayName());
     }
 }
