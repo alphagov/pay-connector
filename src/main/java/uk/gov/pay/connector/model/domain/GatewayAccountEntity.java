@@ -107,7 +107,8 @@ public class GatewayAccountEntity extends AbstractEntity {
         return serviceName;
     }
 
-    @JsonView(value = {Views.FullView.class, Views.PartialView.class})
+    @JsonView(Views.PartialView.class)
+    @JsonProperty("card_types")
     public List<CardTypeEntity> getCardTypes() {
         return cardTypes;
     }

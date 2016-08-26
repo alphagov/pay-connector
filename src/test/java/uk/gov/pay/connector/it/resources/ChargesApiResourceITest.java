@@ -19,6 +19,7 @@ import java.time.ZonedDateTime;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.UUID;
 import java.util.stream.Collectors;
 
 import static com.google.common.collect.Lists.newArrayList;
@@ -139,7 +140,8 @@ public class ChargesApiResourceITest {
                 .body(JSON_STATE_KEY, is(CREATED.toExternal().getStatus()))
                 .body(JSON_RETURN_URL_KEY, is(returnUrl))
                 .body(JSON_EMAIL_KEY, is(email))
-                .body("confirmation_details", is(nullValue()))
+                .body("containsKey('confirmation_details')", is(false))
+                .body("containsKey('gateway_account')", is(false))
                 .body("refund_summary.amount_submitted", is(0))
                 .body("refund_summary.amount_available", isNumber(AMOUNT))
                 .body("refund_summary.status", is("unavailable"));
@@ -183,7 +185,8 @@ public class ChargesApiResourceITest {
                 .body(JSON_DESCRIPTION_KEY, is(expectedDescription))
                 .body(JSON_PROVIDER_KEY, is(PROVIDER_NAME))
                 .body(JSON_RETURN_URL_KEY, is(returnUrl))
-                .body("confirmation_details", is(nullValue()))
+                .body("containsKey('confirmation_details')", is(false))
+                .body("containsKey('gateway_account')", is(false))
                 .body("created_date", matchesPattern("^\\d{4}-\\d{2}-\\d{2}T\\d{2}:\\d{2}:\\d{2}.\\d{3}Z"))
                 .body("created_date", isWithin(10, SECONDS))
                 .contentType(JSON);
@@ -320,6 +323,9 @@ public class ChargesApiResourceITest {
 
         ChargeStatus chargeStatus = AUTHORISATION_SUCCESS;
         ZonedDateTime createdDate = ZonedDateTime.of(2016, 1, 26, 13, 45, 32, 123, ZoneId.of("UTC"));
+        UUID card = UUID.randomUUID();
+        app.getDatabaseTestHelper().addCardType(card, "label", "type", "brand");
+        app.getDatabaseTestHelper().addAcceptedCardType(Long.valueOf(accountId), card);
         app.getDatabaseTestHelper().addCharge(chargeId, externalChargeId, accountId, AMOUNT, chargeStatus, returnUrl, null, "My reference", createdDate);
         app.getDatabaseTestHelper().addConfirmationDetails(chargeId, "1234", "Mr. McPayment",  "03/18", "line1", null, "postcode", "city", null, "country");
         app.getDatabaseTestHelper().addToken(chargeId, "tokenId");
@@ -334,6 +340,7 @@ public class ChargesApiResourceITest {
                 .body("results[0].state.status", is(EXTERNAL_SUBMITTED.getStatus()))
                 .body("results[0].amount", is(6234))
                 .body("results[0].confirmation_details", nullValue())
+                .body("results[0].gateway_account", nullValue())
                 .body("results[0].reference", is("My reference"))
                 .body("results[0].return_url", is(returnUrl))
                 .body("results[0].description", is("Test description"))
@@ -357,7 +364,6 @@ public class ChargesApiResourceITest {
                 .statusCode(OK.getStatusCode())
                 .contentType(JSON)
                 .body("results.size()", is(2))
-                .body("results[0].confirmation_details", is(nullValue()))
                 .body("results[0].refund_summary.amount_submitted", is(0))
                 .body("results[0].refund_summary.amount_available", isNumber(AMOUNT))
                 .body("results[0].refund_summary.status", is("unavailable"))

@@ -5,6 +5,7 @@ import com.jayway.restassured.response.ValidatableResponse;
 import org.junit.Before;
 import org.junit.Rule;
 import org.junit.Test;
+import uk.gov.pay.connector.it.dao.DatabaseFixtures;
 import uk.gov.pay.connector.model.api.ExternalChargeState;
 import uk.gov.pay.connector.model.domain.ChargeStatus;
 import uk.gov.pay.connector.rules.DropwizardAppWithPostgresRule;
@@ -50,7 +51,12 @@ public class ChargesFrontendResourceITest {
 
     @Before
     public void setupGatewayAccount() {
+        DatabaseFixtures databaseFixtures = DatabaseFixtures.withDatabaseTestHelper(app.getDatabaseTestHelper());
+        DatabaseFixtures.TestCardType mastercard = databaseFixtures.aMastercardDebitCardType().insert();
+        DatabaseFixtures.TestCardType visa = databaseFixtures.aVisaCreditCardType().insert();
         app.getDatabaseTestHelper().addGatewayAccount(accountId, "sandbox");
+        app.getDatabaseTestHelper().addAcceptedCardType(Long.valueOf(accountId), mastercard.getId());
+        app.getDatabaseTestHelper().addAcceptedCardType(Long.valueOf(accountId), visa.getId());
     }
 
     @Test
@@ -68,14 +74,13 @@ public class ChargesFrontendResourceITest {
 
 
     @Test
-    public void shouldReturnInternalChargeStatusAndConfirmationDetailsIfStatusIsAuthorised() throws Exception {
+    public void shouldReturnInternalChargeStatusIfStatusIsAuthorised() throws Exception {
         String externalChargeId = RandomIdGenerator.newId();
         Long chargeId = 123456L;
 
         app.getDatabaseTestHelper().addCharge(chargeId, externalChargeId, accountId, expectedAmount, AUTHORISATION_SUCCESS, returnUrl, null, "ref", null, email);
         app.getDatabaseTestHelper().addConfirmationDetails(chargeId, "1234", "Mr. McPayment",  "03/18", "line1", null, "postcode", "city", null, "country");
         validateGetCharge(expectedAmount, externalChargeId, AUTHORISATION_SUCCESS);
-        validateConfirmationDetails(externalChargeId);
     }
 
     @Test
@@ -350,8 +355,7 @@ public class ChargesFrontendResourceITest {
     }
 
     private ValidatableResponse validateGetCharge(long expectedAmount, String chargeId, ChargeStatus chargeStatus) {
-        boolean shouldHaveConfirmationDetails = chargeStatus.equals(ChargeStatus.AUTHORISATION_SUCCESS);
-        return connectorRestApi
+        ValidatableResponse response = connectorRestApi
                 .withChargeId(chargeId)
                 .getFrontendCharge()
                 .statusCode(OK.getStatusCode())
@@ -360,39 +364,51 @@ public class ChargesFrontendResourceITest {
                 .body("containsKey('reference')", is(false))
                 .body("description", is(description))
                 .body("amount", isNumber(expectedAmount))
+                .body("status", is(chargeStatus.getValue()))
+                .body("return_url", is(returnUrl))
+                .body("email", is(email))
+                .body("created_date", is(notNullValue()))
+                .body("created_date", matchesPattern("^\\d{4}-\\d{2}-\\d{2}T\\d{2}:\\d{2}:\\d{2}.\\d{3}Z"))
+                .body("created_date", isWithin(10, SECONDS));
+        validateGatewayAccount(response);
+        validateConfirmationDetails(response, chargeStatus);
+        return response;
+    }
+
+    private void validateGatewayAccount(ValidatableResponse response) {
+        response
                 .body("containsKey('gateway_account_id')", is(false))
                 .body("containsKey('gateway_account')", is(true))
                 .body("gateway_account.gateway_account_id", is(nullValue()))
                 .body("gateway_account.service_name", is(serviceName))
-//                .body("gateway_account.card_types", is(""))
-                .body("status", is(chargeStatus.getValue()))
-                .body("return_url", is(returnUrl))
-                .body("email", is(email))
-                .body("containsKey('confirmation_details')", is(shouldHaveConfirmationDetails))
-                .body("created_date", is(notNullValue()))
-                .body("created_date", matchesPattern("^\\d{4}-\\d{2}-\\d{2}T\\d{2}:\\d{2}:\\d{2}.\\d{3}Z"))
-                .body("created_date", isWithin(10, SECONDS));
+                .body("gateway_account.card_types", is(notNullValue()))
+                .body("gateway_account.card_types[0].id", is(notNullValue()))
+                .body("gateway_account.card_types[0].label", is("MasterCard"))
+                .body("gateway_account.card_types[0].type", is("DEBIT"))
+                .body("gateway_account.card_types[0].brand", is("mastercard"))
+                .body("gateway_account.card_types[1].id", is(notNullValue()))
+                .body("gateway_account.card_types[1].label", is("Visa"))
+                .body("gateway_account.card_types[1].type", is("CREDIT"))
+                .body("gateway_account.card_types[1].brand", is("visa"));
     }
-    private ValidatableResponse validateConfirmationDetails(String externalChargeId) {
-
-        return connectorRestApi
-                .withChargeId(externalChargeId)
-                .getFrontendCharge()
-                .statusCode(OK.getStatusCode())
-                .contentType(JSON)
-                .body("confirmation_details", is(notNullValue()))
-                .body("confirmation_details.charge_id", is(nullValue()))
-                .body("confirmation_details.last_digits_card_number", is("1234"))
-                .body("confirmation_details.cardholder_name", is("Mr. McPayment"))
-                .body("confirmation_details.expiry_date", is("03/18"))
-                .body("confirmation_details.billing_address", is(notNullValue()))
-                .body("confirmation_details.billing_address.line1", is("line1"))
-                .body("confirmation_details.billing_address.line2", is(nullValue()))
-                .body("confirmation_details.billing_address.city", is("city"))
-                .body("confirmation_details.billing_address.postcode", is("postcode"))
-                .body("confirmation_details.billing_address.country", is("country"))
-                .body("confirmation_details.billing_address.county", is(nullValue()));
-
+    private void validateConfirmationDetails(ValidatableResponse response, ChargeStatus status) {
+        if (status.equals(ChargeStatus.AUTHORISATION_SUCCESS)){
+            response
+                    .body("confirmation_details", is(notNullValue()))
+                    .body("confirmation_details.charge_id", is(nullValue()))
+                    .body("confirmation_details.last_digits_card_number", is("1234"))
+                    .body("confirmation_details.cardholder_name", is("Mr. McPayment"))
+                    .body("confirmation_details.expiry_date", is("03/18"))
+                    .body("confirmation_details.billing_address", is(notNullValue()))
+                    .body("confirmation_details.billing_address.line1", is("line1"))
+                    .body("confirmation_details.billing_address.line2", is(nullValue()))
+                    .body("confirmation_details.billing_address.city", is("city"))
+                    .body("confirmation_details.billing_address.postcode", is("postcode"))
+                    .body("confirmation_details.billing_address.country", is("country"))
+                    .body("confirmation_details.billing_address.county", is(nullValue()));
+        } else {
+            response.body("containsKey('confirmation_details')", is(false));
+        }
     }
     private static void setupLifeCycleEventsFor(DropwizardAppWithPostgresRule app, Long chargeId, List<ChargeStatus> statuses) {
         statuses.stream().forEach(
