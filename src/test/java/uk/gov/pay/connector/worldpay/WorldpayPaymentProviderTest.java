@@ -33,18 +33,15 @@ import java.nio.charset.Charset;
 
 import static com.google.common.io.Resources.getResource;
 import static javax.ws.rs.core.MediaType.APPLICATION_XML;
-import static org.hamcrest.CoreMatchers.hasItem;
 import static org.hamcrest.CoreMatchers.startsWith;
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.core.Is.is;
 import static org.hamcrest.core.IsSame.sameInstance;
-import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertTrue;
-import static org.mockito.Matchers.any;
-import static org.mockito.Matchers.anyObject;
-import static org.mockito.Matchers.anyString;
-import static org.mockito.Mockito.*;
+import static org.mockito.Matchers.*;
+import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.when;
 import static uk.gov.pay.connector.model.ErrorType.GENERIC_GATEWAY_ERROR;
 import static uk.gov.pay.connector.model.ErrorType.UNEXPECTED_STATUS_CODE_FROM_GATEWAY;
 import static uk.gov.pay.connector.model.domain.Address.anAddress;
@@ -55,9 +52,10 @@ import static uk.gov.pay.connector.service.GatewayClient.createGatewayClient;
 import static uk.gov.pay.connector.util.CardUtils.buildCardDetails;
 
 public class WorldpayPaymentProviderTest {
+
     private WorldpayPaymentProvider provider;
     private Client client;
-    private ChargeEntity chargeEntity;
+
     @Before
     public void setup() throws Exception {
         client = mock(Client.class);
@@ -65,7 +63,6 @@ public class WorldpayPaymentProviderTest {
 
         provider = new WorldpayPaymentProvider(
                 createGatewayClient(client, ImmutableMap.of(TEST.toString(), "http://worldpay.url")));
-        chargeEntity = aValidChargeEntity().build();
     }
 
     @Test
@@ -122,7 +119,7 @@ public class WorldpayPaymentProviderTest {
     }
 
     @Test
-    public void parseNotification_shouldReturnErrorIfUnparsableXml() {
+    public void parseNotification_shouldReturnErrorIfUnparseableXml() {
         Either<String, Notifications<String>> response = provider.parseNotification("not valid xml");
         assertThat(response.isLeft(), is(true));
         assertThat(response.left().value(), startsWith("javax.xml.bind.UnmarshalException"));
@@ -151,14 +148,6 @@ public class WorldpayPaymentProviderTest {
         return Resources.toString(resource, Charset.defaultCharset())
                 .replace("{{transactionId}}", transactionId)
                 .replace("{{status}}", status);
-    }
-
-    private String sampleInquiryResponse(String transactionId, String status) throws IOException {
-        URL resource = getResource("templates/worldpay/inquiry-success-response.xml");
-        return Resources.toString(resource, Charset.defaultCharset())
-                .replace("{{transactionId}}", transactionId)
-                .replace("{{status}}", status);
-
     }
 
     private AuthorisationGatewayRequest getCardAuthorisationRequest() {
@@ -205,10 +194,6 @@ public class WorldpayPaymentProviderTest {
 
     private void mockWorldpaySuccessfulOrderSubmitResponse() {
         mockWorldpayResponse(200, successAuthoriseResponse());
-    }
-
-    private void mockWorldpayInquiryResponse(String transactionId, String status) throws IOException {
-        mockWorldpayResponse(200, sampleInquiryResponse(transactionId, status));
     }
 
     private void mockWorldpayResponse(int httpStatus, String responsePayload) {

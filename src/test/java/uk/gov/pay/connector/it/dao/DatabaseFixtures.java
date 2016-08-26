@@ -237,6 +237,11 @@ public class DatabaseFixtures {
             return this;
         }
 
+        public TestCharge withEmail(String email) {
+            this.email = email;
+            return this;
+        }
+
         public TestCharge withChargeStatus(ChargeStatus chargeStatus) {
             this.chargeStatus = chargeStatus;
             return this;

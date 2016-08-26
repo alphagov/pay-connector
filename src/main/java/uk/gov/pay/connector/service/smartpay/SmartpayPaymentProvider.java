@@ -3,8 +3,6 @@ package uk.gov.pay.connector.service.smartpay;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import fj.data.Either;
 import org.apache.commons.lang3.tuple.Pair;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 import uk.gov.pay.connector.model.CancelGatewayRequest;
 import uk.gov.pay.connector.model.CaptureGatewayRequest;
 import uk.gov.pay.connector.model.Notifications;
@@ -30,8 +28,6 @@ import static uk.gov.pay.connector.service.smartpay.SmartpayOrderCancelRequestBu
 public class SmartpayPaymentProvider extends BasePaymentProvider<BaseResponse> {
 
     private static final String MERCHANT_CODE = "MerchantAccount";
-    public static final String ACCEPTED = "[accepted]";
-    private static final Logger logger = LoggerFactory.getLogger(SmartpayPaymentProvider.class);
     private final ObjectMapper objectMapper;
 
     public SmartpayPaymentProvider(GatewayClient client, ObjectMapper objectMapper) {
@@ -73,7 +69,7 @@ public class SmartpayPaymentProvider extends BasePaymentProvider<BaseResponse> {
     @Override
     public Either<String, Notifications<Pair<String, Boolean>>> parseNotification(String payload) {
         try {
-            Builder<Pair<String, Boolean>> builder = Notifications.<Pair<String, Boolean>>builder();
+            Builder<Pair<String, Boolean>> builder = Notifications.builder();
 
             objectMapper.readValue(payload, SmartpayNotificationList.class)
                     .getNotifications()

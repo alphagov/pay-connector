@@ -49,26 +49,6 @@ public class WorldpayXMLUnmarshallerTest {
     }
 
     @Test
-    public void shouldUnmarshallAInquirySuccessResponse() throws Exception {
-        String status = "CAPTURED";
-
-        String successPayload = readPayload("templates/worldpay/inquiry-success-response.xml")
-                .replace("{{status}}", status);
-
-        WorldpayOrderStatusResponse response = XMLUnmarshaller.unmarshall(successPayload, WorldpayOrderStatusResponse.class);
-        assertThat(response.getLastEvent(), is(status));
-        assertThat(response.getTransactionId(), is("transaction-id"));
-    }
-
-    @Test
-    public void shouldUnmarshallAInquiryErrorResponse() throws Exception {
-        String errorPayload = readPayload("templates/worldpay/inquiry-error-response.xml");
-        WorldpayOrderStatusResponse response = XMLUnmarshaller.unmarshall(errorPayload, WorldpayOrderStatusResponse.class);
-        assertThat(response.getErrorCode(), is("5"));
-        assertThat(response.getErrorMessage(), is("Could not find payment for order"));
-    }
-
-    @Test
     public void shouldUnmarshallACaptureSuccessResponse() throws Exception {
         String successPayload = readPayload("templates/worldpay/capture-success-response.xml");
         WorldpayCaptureResponse response = XMLUnmarshaller.unmarshall(successPayload, WorldpayCaptureResponse.class);

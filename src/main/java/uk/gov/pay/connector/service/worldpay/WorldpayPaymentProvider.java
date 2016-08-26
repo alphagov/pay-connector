@@ -14,7 +14,6 @@ import uk.gov.pay.connector.service.BasePaymentProvider;
 import uk.gov.pay.connector.service.BaseResponse;
 import uk.gov.pay.connector.service.GatewayClient;
 import uk.gov.pay.connector.service.StatusMapper;
-import uk.gov.pay.connector.util.XMLUnmarshallerException;
 
 import java.util.Optional;
 import java.util.function.Function;

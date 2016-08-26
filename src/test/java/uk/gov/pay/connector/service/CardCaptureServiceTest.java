@@ -182,7 +182,7 @@ public class CardCaptureServiceTest extends CardServiceTest {
         ChargeEntity reloadedCharge = spy(charge);
         mockChargeDaoOperations(charge, reloadedCharge);
         setupPaymentProviderMock(gatewayTxId, null);
-        when(mockedProviders.resolve(charge.getGatewayAccount().getGatewayName())).thenReturn(mockedPaymentProvider);
+        when(mockedProviders.byName(charge.getPaymentGatewayName())).thenReturn(mockedPaymentProvider);
         cardCaptureService.doCapture(charge.getExternalId());
         verify(mockConfirmationDetailsService, times(1)).doRemove(reloadedCharge);
     }
@@ -195,7 +195,7 @@ public class CardCaptureServiceTest extends CardServiceTest {
         ChargeEntity reloadedCharge = spy(charge);
         mockChargeDaoOperations(charge, reloadedCharge);
         setupPaymentProviderMock(gatewayTxId, "error-code");
-        when(mockedProviders.resolve(charge.getGatewayAccount().getGatewayName())).thenReturn(mockedPaymentProvider);
+        when(mockedProviders.byName(charge.getPaymentGatewayName())).thenReturn(mockedPaymentProvider);
         cardCaptureService.doCapture(charge.getExternalId());
         verify(mockConfirmationDetailsService, times(1)).doRemove(reloadedCharge);
     }
