@@ -1,12 +1,17 @@
 package uk.gov.pay.connector.it.resources;
 
+import org.apache.commons.lang3.StringUtils;
 import org.junit.Test;
 import uk.gov.pay.connector.it.base.CardResourceITestBase;
+
+import java.util.Map;
 
 import static com.jayway.restassured.http.ContentType.JSON;
 import static java.lang.String.format;
 import static java.util.UUID.randomUUID;
+import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.is;
+import static org.hamcrest.Matchers.nullValue;
 import static uk.gov.pay.connector.model.api.ExternalChargeState.EXTERNAL_SUCCESS;
 import static uk.gov.pay.connector.model.api.ExternalChargeState.EXTERNAL_ERROR_GATEWAY;
 import static uk.gov.pay.connector.model.domain.ChargeStatus.*;
@@ -68,6 +73,23 @@ public class CardCaptureResourceITest extends CardResourceITestBase {
         String message = format("Capture for charge failed as already expired, %s", chargeId);
         captureAndVerifyFor(chargeId, 400, message);
         assertFrontendChargeStatusIs(chargeId, EXPIRED.getValue());
+    }
+
+    @Test
+    public void shouldRemoveConfirmationDetails_IfCaptureReady() throws Exception {
+        String externalChargeId = authoriseNewCharge();
+        Long chargeId = Long.valueOf(StringUtils.removeStart(externalChargeId, "charge-"));
+
+        Map<String, Object> confirmationDetails = app.getDatabaseTestHelper().getConfirmationDetailsByChargeId(chargeId);
+        assertThat(confirmationDetails.isEmpty(), is(false));
+
+        givenSetup()
+                .post(captureChargeUrlFor(externalChargeId))
+                .then()
+                .statusCode(204);
+
+        confirmationDetails = app.getDatabaseTestHelper().getConfirmationDetailsByChargeId(chargeId);
+        assertThat(confirmationDetails, is(nullValue()));
     }
 
     private void captureAndVerifyFor(String chargeId, int expectedStatusCode, String message) {

@@ -7,6 +7,7 @@ import org.junit.Rule;
 import org.junit.Test;
 import uk.gov.pay.connector.model.api.ExternalChargeState;
 import uk.gov.pay.connector.model.domain.ChargeStatus;
+import uk.gov.pay.connector.model.domain.ConfirmationDetailsEntity;
 import uk.gov.pay.connector.rules.DropwizardAppWithPostgresRule;
 import uk.gov.pay.connector.util.RandomIdGenerator;
 import uk.gov.pay.connector.util.RestAssuredClient;
@@ -66,13 +67,17 @@ public class ChargesFrontendResourceITest {
                 .body("links", containsLink("cardCapture", POST, expectedLocation + "/capture"));
     }
 
+
     @Test
-    public void shouldReturnInternalChargeStatusIfInternalStatusIsAuthorised() throws Exception {
+    public void shouldReturnInternalChargeStatusAndConfirmationDetailsIfStatusIsAuthorised() throws Exception {
+        String externalChargeId = RandomIdGenerator.newId();
+        Long chargeId = 123456L;
 
-        String chargeId = RandomIdGenerator.newId();
-        app.getDatabaseTestHelper().addCharge((long) 123456, chargeId, accountId, expectedAmount, AUTHORISATION_SUCCESS, returnUrl, null, "ref", null, email);
+        app.getDatabaseTestHelper().addCharge(chargeId, externalChargeId, accountId, expectedAmount, AUTHORISATION_SUCCESS, returnUrl, null, "ref", null, email);
+        validateGetCharge(expectedAmount, externalChargeId, AUTHORISATION_SUCCESS);
 
-        validateGetCharge(expectedAmount, chargeId, AUTHORISATION_SUCCESS);
+        app.getDatabaseTestHelper().addConfirmationDetails(chargeId, "1234", "Mr. McPayment",  "03/18", "line1", null, "postcode", "city", null, "country");
+        validateConfirmationDetails(externalChargeId);
     }
 
     @Test
@@ -361,11 +366,32 @@ public class ChargesFrontendResourceITest {
                 .body("status", is(chargeStatus.getValue()))
                 .body("return_url", is(returnUrl))
                 .body("email", is(email))
+                .body("confirmation_details", is(nullValue()))
                 .body("created_date", is(notNullValue()))
                 .body("created_date", matchesPattern("^\\d{4}-\\d{2}-\\d{2}T\\d{2}:\\d{2}:\\d{2}.\\d{3}Z"))
                 .body("created_date", isWithin(10, SECONDS));
     }
+    private ValidatableResponse validateConfirmationDetails(String externalChargeId) {
 
+        return connectorRestApi
+                .withChargeId(externalChargeId)
+                .getFrontendCharge()
+                .statusCode(OK.getStatusCode())
+                .contentType(JSON)
+                .body("confirmation_details", is(notNullValue()))
+                .body("confirmation_details.charge_id", is(nullValue()))
+                .body("confirmation_details.last_digits_card_number", is("1234"))
+                .body("confirmation_details.cardholder_name", is("Mr. McPayment"))
+                .body("confirmation_details.expiry_date", is("03/18"))
+                .body("confirmation_details.billing_address", is(notNullValue()))
+                .body("confirmation_details.billing_address.line1", is("line1"))
+                .body("confirmation_details.billing_address.line2", is(nullValue()))
+                .body("confirmation_details.billing_address.city", is("city"))
+                .body("confirmation_details.billing_address.postcode", is("postcode"))
+                .body("confirmation_details.billing_address.country", is("country"))
+                .body("confirmation_details.billing_address.county", is(nullValue()));
+
+    }
     private static void setupLifeCycleEventsFor(DropwizardAppWithPostgresRule app, Long chargeId, List<ChargeStatus> statuses) {
         statuses.stream().forEach(
                 st -> app.getDatabaseTestHelper().addEvent(chargeId, st.getValue())

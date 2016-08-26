@@ -357,4 +357,46 @@
         </addColumn>
     </changeSet>
 
+    <changeSet id="build confirmation_details table" author="">
+        <createTable tableName="confirmation_details">
+            <column name="id" type="bigserial" autoIncrement="true">
+                <constraints primaryKey="true" nullable="false"/>
+            </column>
+            <column name="charge_id" type="bigserial">
+                <constraints foreignKeyName="fk__confirmation_details_charges" unique="true" referencedTableName="charges"
+                             referencedColumnNames="id" nullable="false"/>
+            </column>
+            <column name="last_digits_card_number" type="char(4)">
+                <constraints nullable="false"/>
+            </column>
+            <column name="cardholder_name" type="varchar(255)">
+                <constraints nullable="false"/>
+            </column>
+            <column name="expiry_date" type="varchar(6)">
+                <constraints nullable="false"/>
+            </column>
+            <column name="address_line1" type="varchar(255)">
+                <constraints nullable="false"/>
+            </column>
+            <column name="address_line2" type="varchar(255)">
+                <constraints nullable="true"/>
+            </column>
+            <column name="address_postcode" type="varchar(25)">
+                <constraints nullable="false"/>
+            </column>
+            <column name="address_city" type="varchar(255)">
+                <constraints nullable="false"/>
+            </column>
+            <column name="address_county" type="varchar(255)">
+                <constraints nullable="true"/>
+            </column>
+            <column name="address_country" type="varchar(255)">
+                <constraints nullable="false"/>
+            </column>
+            <column name="version" type="bigint" defaultValue="0">
+                <constraints nullable="false"/>
+            </column>
+        </createTable>
+    </changeSet>
+
 </databaseChangeLog>

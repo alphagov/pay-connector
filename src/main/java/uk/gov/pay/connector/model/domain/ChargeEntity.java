@@ -1,5 +1,6 @@
 package uk.gov.pay.connector.model.domain;
 
+import com.fasterxml.jackson.annotation.JsonBackReference;
 import uk.gov.pay.connector.exception.InvalidStateTransitionException;
 import uk.gov.pay.connector.model.api.ExternalChargeState;
 import uk.gov.pay.connector.util.RandomIdGenerator;
@@ -37,6 +38,10 @@ public class ChargeEntity extends AbstractEntity {
 
     @Column(name = "email")
     private String email;
+
+    @JsonBackReference
+    @OneToOne(mappedBy="chargeEntity", cascade = CascadeType.ALL)
+    private ConfirmationDetailsEntity confirmationDetailsEntity;
 
     @ManyToOne
     @JoinColumn(name = "gateway_account_id", updatable = false)
@@ -173,5 +178,12 @@ public class ChargeEntity extends AbstractEntity {
                 .filter(p -> p.hasStatus(RefundStatus.CREATED, RefundStatus.REFUND_SUBMITTED, RefundStatus.REFUNDED))
                 .mapToLong(RefundEntity::getAmount)
                 .sum();
+    }
+    public ConfirmationDetailsEntity getConfirmationDetailsEntity() {
+        return confirmationDetailsEntity;
+    }
+
+    public void setConfirmationDetailsEntity(ConfirmationDetailsEntity confirmationDetailsEntity) {
+        this.confirmationDetailsEntity = confirmationDetailsEntity;
     }
 }

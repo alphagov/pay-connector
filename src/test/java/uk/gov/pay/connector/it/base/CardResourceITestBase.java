@@ -7,6 +7,7 @@ import com.jayway.restassured.specification.RequestSpecification;
 import org.apache.commons.lang.math.RandomUtils;
 import org.junit.Before;
 import org.junit.Rule;
+import uk.gov.pay.connector.model.domain.CardFixture;
 import uk.gov.pay.connector.model.domain.ChargeStatus;
 import uk.gov.pay.connector.rules.DropwizardAppWithPostgresRule;
 import uk.gov.pay.connector.rules.SmartpayMockClient;
@@ -125,6 +126,9 @@ public class CardResourceITestBase {
         long chargeId = RandomUtils.nextInt();
         String externalChargeId = "charge-" + chargeId;
         app.getDatabaseTestHelper().addCharge(chargeId, externalChargeId, accountId, 6234L, status, "returnUrl", gatewayTransactionId);
+        app.getDatabaseTestHelper().addConfirmationDetails(
+                chargeId,
+                CardFixture.aValidCard().withCardNo("1234").build());
         return externalChargeId;
     }
 
@@ -198,6 +202,9 @@ public class CardResourceITestBase {
         app.getDatabaseTestHelper().addCharge(chargeId, externalChargeId, accountId, AMOUNT, chargeStatus, "http://somereturn.gov.uk", gatewayTransactionId, reference, fromDate);
         app.getDatabaseTestHelper().addToken(chargeId, "tokenId");
         app.getDatabaseTestHelper().addEvent(chargeId, chargeStatus.getValue());
+        app.getDatabaseTestHelper().addConfirmationDetails(
+                chargeId,
+                CardFixture.aValidCard().withCardNo("1234").build());
         return externalChargeId;
     }
 }

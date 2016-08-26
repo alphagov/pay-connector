@@ -19,6 +19,7 @@ public abstract class CardService<T extends BaseResponse> {
     protected final PaymentProviders providers;
     protected final Logger logger = LoggerFactory.getLogger(getClass());
     protected CardExecutorService cardExecutorService;
+    protected ConfirmationDetailsService confirmationDetailsService;
 
     protected enum OperationType {
         CAPTURE("Capture"),
@@ -36,14 +37,14 @@ public abstract class CardService<T extends BaseResponse> {
         }
     }
 
-    public CardService(ChargeDao chargeDao, PaymentProviders providers) {
+    public CardService(ChargeDao chargeDao, PaymentProviders providers, ConfirmationDetailsService confirmationDetailsService) {
         this.chargeDao = chargeDao;
         this.providers = providers;
+        this.confirmationDetailsService = confirmationDetailsService;
     }
 
-    public CardService(ChargeDao chargeDao, PaymentProviders providers, CardExecutorService cardExecutorService) {
-        this.chargeDao = chargeDao;
-        this.providers = providers;
+    public CardService(ChargeDao chargeDao, PaymentProviders providers, ConfirmationDetailsService confirmationDetailsService, CardExecutorService cardExecutorService) {
+        this(chargeDao, providers, confirmationDetailsService);
         this.cardExecutorService = cardExecutorService;
     }
 
@@ -67,7 +68,8 @@ public abstract class CardService<T extends BaseResponse> {
             throw new IllegalStateRuntimeException(reloadedCharge.getExternalId());
         }
         reloadedCharge.setStatus(lockingStatus);
-
+        //todo do we want to store info in case capture fails? Then we might have to move this to postOperation
+        confirmationDetailsService.doRemove(reloadedCharge);
         return reloadedCharge;
     }
 

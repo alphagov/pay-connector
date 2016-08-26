@@ -7,6 +7,7 @@ import uk.gov.pay.connector.exception.ChargeNotFoundRuntimeException;
 import uk.gov.pay.connector.model.CaptureGatewayRequest;
 import uk.gov.pay.connector.model.domain.ChargeEntity;
 import uk.gov.pay.connector.model.domain.ChargeStatus;
+import uk.gov.pay.connector.model.domain.ConfirmationDetailsEntity;
 import uk.gov.pay.connector.model.gateway.GatewayResponse;
 
 import javax.inject.Inject;
@@ -24,8 +25,8 @@ public class CardCaptureService extends CardService implements TransactionalGate
 
 
     @Inject
-    public CardCaptureService(ChargeDao chargeDao, PaymentProviders providers, UserNotificationService userNotificationService) {
-        super(chargeDao, providers);
+    public CardCaptureService(ChargeDao chargeDao, PaymentProviders providers, ConfirmationDetailsService confirmationDetailsService, UserNotificationService userNotificationService) {
+        super(chargeDao, providers, confirmationDetailsService);
         this.userNotificationService = userNotificationService;
     }
 

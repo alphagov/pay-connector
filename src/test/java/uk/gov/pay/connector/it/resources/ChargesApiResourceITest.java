@@ -34,6 +34,7 @@ import static org.apache.commons.lang3.RandomStringUtils.randomAlphanumeric;
 import static org.exparity.hamcrest.date.ZonedDateTimeMatchers.within;
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.*;
+import static org.hamcrest.core.Is.is;
 import static org.hamcrest.text.MatchesPattern.matchesPattern;
 import static uk.gov.pay.connector.matcher.ResponseContainsLinkMatcher.containsLink;
 import static uk.gov.pay.connector.matcher.ZoneDateTimeAsStringWithinMatcher.isWithin;
@@ -100,6 +101,7 @@ public class ChargesApiResourceITest {
                 .body(JSON_PROVIDER_KEY, is(PROVIDER_NAME))
                 .body(JSON_RETURN_URL_KEY, is(returnUrl))
                 .body(JSON_EMAIL_KEY, is(email))
+                .body("confirmation_details", is(nullValue()))
                 .body("refund_summary.amount_submitted", is(0))
                 .body("refund_summary.amount_available", isNumber(AMOUNT))
                 .body("refund_summary.status", is("unavailable"))
@@ -136,6 +138,7 @@ public class ChargesApiResourceITest {
                 .body(JSON_STATE_KEY, is(CREATED.toExternal().getStatus()))
                 .body(JSON_RETURN_URL_KEY, is(returnUrl))
                 .body(JSON_EMAIL_KEY, is(email))
+                .body("confirmation_details", is(nullValue()))
                 .body("refund_summary.amount_submitted", is(0))
                 .body("refund_summary.amount_available", isNumber(AMOUNT))
                 .body("refund_summary.status", is("unavailable"));
@@ -179,6 +182,7 @@ public class ChargesApiResourceITest {
                 .body(JSON_DESCRIPTION_KEY, is(expectedDescription))
                 .body(JSON_PROVIDER_KEY, is(PROVIDER_NAME))
                 .body(JSON_RETURN_URL_KEY, is(returnUrl))
+                .body("confirmation_details", is(nullValue()))
                 .body("created_date", matchesPattern("^\\d{4}-\\d{2}-\\d{2}T\\d{2}:\\d{2}:\\d{2}.\\d{3}Z"))
                 .body("created_date", isWithin(10, SECONDS))
                 .contentType(JSON);
@@ -316,31 +320,32 @@ public class ChargesApiResourceITest {
         ChargeStatus chargeStatus = AUTHORISATION_SUCCESS;
         ZonedDateTime createdDate = ZonedDateTime.of(2016, 1, 26, 13, 45, 32, 123, ZoneId.of("UTC"));
         app.getDatabaseTestHelper().addCharge(chargeId, externalChargeId, accountId, AMOUNT, chargeStatus, returnUrl, null, "My reference", createdDate);
+        app.getDatabaseTestHelper().addConfirmationDetails(chargeId, "1234", "Mr. McPayment",  "03/18", "line1", null, "postcode", "city", null, "country");
         app.getDatabaseTestHelper().addToken(chargeId, "tokenId");
         app.getDatabaseTestHelper().addEvent(chargeId, chargeStatus.getValue());
-
         getChargeApi
                 .withAccountId(accountId)
                 .withHeader(HttpHeaders.ACCEPT, APPLICATION_JSON)
                 .getTransactions()
                 .statusCode(OK.getStatusCode())
                 .contentType(JSON)
-                .body("results.charge_id", hasItem(externalChargeId))
-                .body("results.state.status", hasItem(EXTERNAL_SUBMITTED.getStatus()))
-                .body("results.amount", hasItem(6234))
-                .body("results.reference", hasItem("My reference"))
-                .body("results.return_url", hasItem(returnUrl))
-                .body("results.description", hasItem("Test description"))
-                .body("results.created_date", hasItem("2016-01-26T13:45:32Z"))
-                .body("results.payment_provider", hasItem(PROVIDER_NAME));
+                .body("results[0].charge_id", is(externalChargeId))
+                .body("results[0].state.status", is(EXTERNAL_SUBMITTED.getStatus()))
+                .body("results[0].amount", is(6234))
+                .body("results[0].confirmation_details", nullValue())
+                .body("results[0].reference", is("My reference"))
+                .body("results[0].return_url", is(returnUrl))
+                .body("results[0].description", is("Test description"))
+                .body("results[0].created_date", is("2016-01-26T13:45:32Z"))
+                .body("results[0].payment_provider", is(PROVIDER_NAME));
     }
 
     @Test
     public void shouldFilterTransactionsBasedOnFromAndToDates() throws Exception {
 
-        addCharge(CREATED, "ref-1", now());
-        addCharge(AUTHORISATION_READY, "ref-2", now());
-        addCharge(CAPTURED, "ref-3", now().minusDays(2));
+        addChargeAndConfirmationDetails(CREATED, "ref-1", now());
+        addChargeAndConfirmationDetails(AUTHORISATION_READY, "ref-2", now());
+        addChargeAndConfirmationDetails(CAPTURED, "ref-3", now().minusDays(2));
 
         ValidatableResponse response = getChargeApi
                 .withAccountId(accountId)
@@ -351,6 +356,7 @@ public class ChargesApiResourceITest {
                 .statusCode(OK.getStatusCode())
                 .contentType(JSON)
                 .body("results.size()", is(2))
+                .body("results[0].confirmation_details", is(nullValue()))
                 .body("results[0].refund_summary.amount_submitted", is(0))
                 .body("results[0].refund_summary.amount_available", isNumber(AMOUNT))
                 .body("results[0].refund_summary.status", is("unavailable"))
@@ -383,9 +389,9 @@ public class ChargesApiResourceITest {
     @Test
     public void shouldFilterTransactionsByEmail() throws Exception {
 
-        addCharge(CREATED, "ref-1", now());
-        addCharge(AUTHORISATION_READY, "ref-2", now());
-        addCharge(CAPTURED, "ref-3", now().minusDays(2));
+        addChargeAndConfirmationDetails(CREATED, "ref-1", now());
+        addChargeAndConfirmationDetails(AUTHORISATION_READY, "ref-2", now());
+        addChargeAndConfirmationDetails(CAPTURED, "ref-3", now().minusDays(2));
 
         ValidatableResponse response = getChargeApi
                 .withAccountId(accountId)
@@ -400,11 +406,11 @@ public class ChargesApiResourceITest {
 
     @Test
     public void shouldShowTotalCountResultsAndHalLinksForCharges() throws Exception {
-        addCharge(CREATED, "ref-1", now());
-        addCharge(AUTHORISATION_READY, "ref-2", now().minusDays(1));
-        addCharge(CAPTURED, "ref-3", now().minusDays(2));
-        addCharge(CAPTURED, "ref-4", now().minusDays(3));
-        addCharge(CAPTURED, "ref-5", now().minusDays(4));
+        addChargeAndConfirmationDetails(CREATED, "ref-1", now());
+        addChargeAndConfirmationDetails(AUTHORISATION_READY, "ref-2", now().minusDays(1));
+        addChargeAndConfirmationDetails(CAPTURED, "ref-3", now().minusDays(2));
+        addChargeAndConfirmationDetails(CAPTURED, "ref-4", now().minusDays(3));
+        addChargeAndConfirmationDetails(CAPTURED, "ref-5", now().minusDays(4));
 
         assertResultsWhenPageAndDisplaySizeNotSet();
         assertResultsAndJustSelfLinkWhenJustOneResult();
@@ -438,11 +444,11 @@ public class ChargesApiResourceITest {
 
     @Test
     public void shouldGetAllTransactionsForDefault_page_1_size_100_inCreationDateOrder() throws Exception {
-        String id_1 = addCharge(CREATED, "ref-1", now());
-        String id_2 = addCharge(AUTHORISATION_READY, "ref-2", now().plusHours(1));
-        String id_3 = addCharge(CREATED, "ref-3", now().plusHours(2));
-        String id_4 = addCharge(CREATED, "ref-4", now().plusHours(3));
-        String id_5 = addCharge(CREATED, "ref-5", now().plusHours(4));
+        String id_1 = addChargeAndConfirmationDetails(CREATED, "ref-1", now());
+        String id_2 = addChargeAndConfirmationDetails(AUTHORISATION_READY, "ref-2", now().plusHours(1));
+        String id_3 = addChargeAndConfirmationDetails(CREATED, "ref-3", now().plusHours(2));
+        String id_4 = addChargeAndConfirmationDetails(CREATED, "ref-4", now().plusHours(3));
+        String id_5 = addChargeAndConfirmationDetails(CREATED, "ref-5", now().plusHours(4));
 
         ValidatableResponse response = getChargeApi
                 .withAccountId(accountId)
@@ -459,11 +465,11 @@ public class ChargesApiResourceITest {
 
     @Test
     public void shouldGetTransactionsForPageAndSizeParams_inCreationDateOrder() throws Exception {
-        String id_1 = addCharge(CREATED, "ref-1", now());
-        String id_2 = addCharge(CREATED, "ref-2", now().plusHours(1));
-        String id_3 = addCharge(CREATED, "ref-3", now().plusHours(2));
-        String id_4 = addCharge(CREATED, "ref-4", now().plusHours(3));
-        String id_5 = addCharge(CREATED, "ref-5", now().plusHours(4));
+        String id_1 = addChargeAndConfirmationDetails(CREATED, "ref-1", now());
+        String id_2 = addChargeAndConfirmationDetails(CREATED, "ref-2", now().plusHours(1));
+        String id_3 = addChargeAndConfirmationDetails(CREATED, "ref-3", now().plusHours(2));
+        String id_4 = addChargeAndConfirmationDetails(CREATED, "ref-4", now().plusHours(3));
+        String id_5 = addChargeAndConfirmationDetails(CREATED, "ref-5", now().plusHours(4));
 
         ValidatableResponse response = getChargeApi
                 .withAccountId(accountId)
@@ -571,7 +577,7 @@ public class ChargesApiResourceITest {
     @Test
     public void shouldGetSuccessAndFailedResponseForExpiryChargeTask() {
         //create charge
-        String extChargeId = addCharge(CREATED, "ref", ZonedDateTime.now().minusHours(1));
+        String extChargeId = addChargeAndConfirmationDetails(CREATED, "ref", ZonedDateTime.now().minusHours(1));
 
         // run expiry task
         getChargeApi
@@ -761,13 +767,14 @@ public class ChargesApiResourceITest {
         return dateTimes;
     }
 
-    private String addCharge(ChargeStatus status, String reference, ZonedDateTime fromDate) {
+    private String addChargeAndConfirmationDetails(ChargeStatus status, String reference, ZonedDateTime fromDate) {
         long chargeId = RandomUtils.nextInt();
         String externalChargeId = "charge" + chargeId;
         ChargeStatus chargeStatus = status != null ? status : AUTHORISATION_SUCCESS;
         app.getDatabaseTestHelper().addCharge(chargeId, externalChargeId, accountId, AMOUNT, chargeStatus, returnUrl, null, reference, fromDate, email);
         app.getDatabaseTestHelper().addToken(chargeId, "tokenId");
         app.getDatabaseTestHelper().addEvent(chargeId, chargeStatus.getValue());
+        app.getDatabaseTestHelper().addConfirmationDetails(chargeId, "1234", "Mr. McPayment",  "03/18", "line1", null, "postcode", "city", null, "country");
         return externalChargeId;
     }
 
