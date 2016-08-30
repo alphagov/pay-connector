@@ -4,32 +4,17 @@ import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableMap;
 import com.google.common.io.Resources;
 import fj.data.Either;
-import org.apache.commons.lang3.tuple.Pair;
-import fj.data.Either;
 import org.junit.Assert;
 import org.junit.Before;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.mockito.Mock;
 import org.mockito.runners.MockitoJUnitRunner;
-import uk.gov.pay.connector.model.CaptureGatewayRequest;
-import uk.gov.pay.connector.model.GatewayError;
-import uk.gov.pay.connector.model.RefundGatewayRequest;
-import uk.gov.pay.connector.model.StatusUpdates;
+import uk.gov.pay.connector.model.*;
 import uk.gov.pay.connector.model.domain.*;
-import uk.gov.pay.connector.model.Notification;
-import uk.gov.pay.connector.model.Notifications;
-import uk.gov.pay.connector.model.domain.Address;
-import uk.gov.pay.connector.model.domain.Card;
-import uk.gov.pay.connector.model.domain.ChargeEntity;
-import uk.gov.pay.connector.model.domain.GatewayAccountEntity;
 import uk.gov.pay.connector.model.gateway.AuthorisationGatewayRequest;
 import uk.gov.pay.connector.model.gateway.GatewayResponse;
 import uk.gov.pay.connector.service.GatewayClient;
-import uk.gov.pay.connector.service.worldpay.WorldpayCaptureResponse;
-import uk.gov.pay.connector.service.worldpay.WorldpayOrderStatusResponse;
-import uk.gov.pay.connector.service.worldpay.WorldpayPaymentProvider;
-import uk.gov.pay.connector.service.worldpay.WorldpayStatusMapper;
 
 import javax.ws.rs.client.Client;
 import javax.ws.rs.client.Entity;
@@ -43,7 +28,6 @@ import java.util.Map;
 
 import static com.google.common.io.Resources.getResource;
 import static fj.data.Either.left;
-import static fj.data.Either.right;
 import static javax.ws.rs.core.MediaType.APPLICATION_XML;
 import static org.hamcrest.CoreMatchers.startsWith;
 import static org.hamcrest.MatcherAssert.assertThat;
@@ -51,10 +35,10 @@ import static org.hamcrest.core.Is.is;
 import static org.hamcrest.core.IsSame.sameInstance;
 import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertTrue;
-import static org.mockito.Matchers.*;
-import static org.mockito.Mockito.mock;
-import static org.mockito.Mockito.verify;
-import static org.mockito.Mockito.when;
+import static org.mockito.Matchers.any;
+import static org.mockito.Matchers.anyObject;
+import static org.mockito.Matchers.anyString;
+import static org.mockito.Mockito.*;
 import static uk.gov.pay.connector.model.ErrorType.GENERIC_GATEWAY_ERROR;
 import static uk.gov.pay.connector.model.ErrorType.UNEXPECTED_STATUS_CODE_FROM_GATEWAY;
 import static uk.gov.pay.connector.model.GatewayError.unexpectedStatusCodeFromGateway;
@@ -181,9 +165,10 @@ public class WorldpayPaymentProviderTest {
     @Test
     public void parseNotification_shouldReturnNotificationsIfValidXml() throws IOException {
         String transactionId = "transaction-id";
+        String referenceId = "reference-id";
         String status = "CHARGED";
 
-        Either<String, Notifications<String>> response = provider.parseNotification(notificationPayloadForTransaction(transactionId, status));
+        Either<String, Notifications<String>> response = provider.parseNotification(notificationPayloadForTransaction(transactionId, referenceId, status));
         assertThat(response.isRight(), is(true));
 
         ImmutableList<Notification<String>> notifications = response.right().value().get();
@@ -193,13 +178,15 @@ public class WorldpayPaymentProviderTest {
         Notification<String> worldpayNotification = notifications.get(0);
 
         assertThat(worldpayNotification.getTransactionId(), is(transactionId));
+        assertThat(worldpayNotification.getReference(), is(referenceId));
         assertThat(worldpayNotification.getStatus(), is(status));
     }
 
-    private String notificationPayloadForTransaction(String transactionId, String status) throws IOException {
+    private String notificationPayloadForTransaction(String transactionId, String referenceId, String status) throws IOException {
         URL resource = getResource("templates/worldpay/notification.xml");
         return Resources.toString(resource, Charset.defaultCharset())
                 .replace("{{transactionId}}", transactionId)
+                .replace("{{refund-ref}}", referenceId)
                 .replace("{{status}}", status);
     }
 
