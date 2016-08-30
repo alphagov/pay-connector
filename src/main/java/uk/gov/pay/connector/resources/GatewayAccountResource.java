@@ -124,8 +124,9 @@ public class GatewayAccountResource {
         }
         logger.info("Creating new gateway account using the {} provider pointing to {}", provider, accountType);
         GatewayAccountEntity entity = new GatewayAccountEntity(provider, newHashMap(), type);
+        logger.info("Setting the new account to accept all card types by default", provider, accountType);
+        entity.setCardTypes(cardTypeDao.findAll());
         gatewayDao.persist(entity);
-
         URI newLocation = uriInfo.
                 getBaseUriBuilder().
                 path("/v1/api/accounts/{accountId}").build(entity.getId());

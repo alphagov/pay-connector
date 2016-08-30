@@ -2,6 +2,7 @@ package uk.gov.pay.connector.it.resources;
 
 import com.google.common.collect.ImmutableMap;
 import com.google.gson.Gson;
+import com.jayway.restassured.response.ExtractableResponse;
 import com.jayway.restassured.response.Response;
 import org.hamcrest.MatcherAssert;
 import org.junit.Test;
@@ -15,12 +16,15 @@ import static java.lang.String.format;
 import static javax.ws.rs.core.Response.Status.NOT_FOUND;
 import static org.hamcrest.CoreMatchers.allOf;
 import static org.hamcrest.CoreMatchers.nullValue;
+import static org.hamcrest.Matchers.contains;
 import static org.hamcrest.Matchers.containsInAnyOrder;
+import static org.hamcrest.Matchers.notNullValue;
 import static org.hamcrest.core.Is.is;
 import static org.junit.Assert.assertThat;
 import static org.junit.Assert.assertTrue;
 
 public class GatewayAccountFrontendResourceITest extends GatewayAccountResourceTestBase {
+    private static final String ACCOUNTS_CARD_TYPE_FRONTEND_URL = "v1/frontend/accounts/{accountId}/card-types";
 
     static public class GatewayAccountPayload {
         String userName;
@@ -118,6 +122,20 @@ public class GatewayAccountFrontendResourceITest extends GatewayAccountResourceT
                 .body("credentials.password", is(nullValue()))
                 .body("credentials.merchant_id", is(gatewayAccountPayload.getMerchantId()))
                 .body("service_name", is(gatewayAccountPayload.getServiceName()));
+    }
+
+    @Test
+    public void shouldAcceptAllCardTypesForNewlyCreatedAccount() {
+        String accountId = createAGatewayAccountFor("worldpay");
+        String frontendCardTypeUrl = ACCOUNTS_CARD_TYPE_FRONTEND_URL.replace("{accountId}", accountId);
+        GatewayAccountPayload gatewayAccountPayload = GatewayAccountPayload.createDefault().withMerchantId("a-merchant-id");
+        app.getDatabaseTestHelper().updateCredentialsFor(Long.valueOf(accountId), gson.toJson(gatewayAccountPayload.getCredentials()));
+        app.getDatabaseTestHelper().updateServiceNameFor(Long.valueOf(accountId), gatewayAccountPayload.getServiceName());
+        givenSetup().accept(JSON)
+                .get(frontendCardTypeUrl)
+                .then()
+                .statusCode(200)
+                .body("card_types", is(notNullValue()));
     }
 
     @Test
