@@ -9,6 +9,7 @@ import org.mockito.Mock;
 import org.mockito.runners.MockitoJUnitRunner;
 import uk.gov.pay.connector.dao.ChargeDao;
 import uk.gov.pay.connector.dao.RefundDao;
+import uk.gov.pay.connector.exception.InvalidStateTransitionException;
 import uk.gov.pay.connector.model.Notifications;
 import uk.gov.pay.connector.model.domain.ChargeEntity;
 import uk.gov.pay.connector.model.domain.RefundEntity;
@@ -20,7 +21,7 @@ import static org.mockito.Matchers.any;
 import static org.mockito.Mockito.*;
 import static uk.gov.pay.connector.model.domain.ChargeStatus.CAPTURED;
 import static uk.gov.pay.connector.model.domain.RefundStatus.REFUNDED;
-import static uk.gov.pay.connector.resources.PaymentGatewayName.*;
+import static uk.gov.pay.connector.resources.PaymentGatewayName.SANDBOX;
 
 @RunWith(MockitoJUnitRunner.class)
 public class NotificationServiceTest {
@@ -127,7 +128,7 @@ public class NotificationServiceTest {
 
     @Test
     public void shouldIgnoreNotificationWhenWrongTransactionId() {
-        String transactionId = "unknown-transaction-id";
+        String transactionId = "transaction-id";
 
         Notifications<Pair<String, Boolean>> notifications = createNotificationFor(transactionId, null, Pair.of("CAPTURE", true));
         when(mockedPaymentProvider.parseNotification(any())).thenReturn(Either.right(notifications));
@@ -144,6 +145,33 @@ public class NotificationServiceTest {
         notificationService.acceptNotificationFor(SANDBOX, "payload");
 
         verify(mockedChargeDao).findByProviderAndTransactionId(SANDBOX.getName(), transactionId);
+        verifyNoMoreInteractions(mockedChargeDao);
+    }
+
+    @Test
+    public void shouldIgnoreNotificationWhenIllegalStateTransition() {
+        String transactionId = "unknown-transaction-id";
+
+        Notifications<Pair<String, Boolean>> notifications = createNotificationFor(transactionId, null, Pair.of("CAPTURE", true));
+        when(mockedPaymentProvider.parseNotification(any())).thenReturn(Either.right(notifications));
+
+        StatusMapper mockedStatusMapper = createMockedStatusMapper(false, false, CAPTURED);
+        when(mockedPaymentProvider.getStatusMapper()).thenReturn(mockedStatusMapper);
+
+        when(mockedPaymentProvider.getPaymentGatewayName()).thenReturn(SANDBOX.getName());
+        when(mockedPaymentProviders.byName(SANDBOX)).thenReturn(mockedPaymentProvider);
+
+        ChargeEntity mockedChargeEntity = mock(ChargeEntity.class);
+        when(mockedChargeDao.findByProviderAndTransactionId(SANDBOX.getName(), transactionId))
+                .thenReturn(Optional.of(mockedChargeEntity));
+
+        doThrow(new InvalidStateTransitionException("AUTHORISATION SUCCESS", "CAPTURED"))
+                .when(mockedChargeEntity).setStatus(CAPTURED);
+
+        notificationService.acceptNotificationFor(SANDBOX, "payload");
+
+        verify(mockedChargeDao).findByProviderAndTransactionId(SANDBOX.getName(), transactionId);
+        verify(mockedChargeEntity).getStatus();
         verifyNoMoreInteractions(mockedChargeDao);
     }
 

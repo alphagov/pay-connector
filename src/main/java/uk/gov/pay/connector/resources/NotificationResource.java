@@ -51,10 +51,12 @@ public class NotificationResource {
     }
 
     private Response handleNotification(String name, String notification) {
-        logger.info("Received notification from provider=" + name + ", notification=" + notification);
+        logger.info("Received notification from provider={}, notification={}", name, notification);
         PaymentGatewayName paymentGatewayName = PaymentGatewayName.valueFrom(name);
         notificationService.acceptNotificationFor(paymentGatewayName, notification);
-        return Response.ok(getResponseFor(paymentGatewayName)).build();
+        String response = getResponseFor(paymentGatewayName);
+        logger.info("Responding to notification from provider={} with 200 {}", name, response);
+        return Response.ok(response).build();
     }
 
     private String getResponseFor(PaymentGatewayName provider) {

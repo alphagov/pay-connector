@@ -6,6 +6,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import uk.gov.pay.connector.dao.ChargeDao;
 import uk.gov.pay.connector.dao.RefundDao;
+import uk.gov.pay.connector.exception.InvalidStateTransitionException;
 import uk.gov.pay.connector.model.ExtendedNotification;
 import uk.gov.pay.connector.model.Notification;
 import uk.gov.pay.connector.model.Notifications;
@@ -124,15 +125,23 @@ public class NotificationService {
             Optional<ChargeEntity> optionalChargeEntity = chargeDao.findByProviderAndTransactionId(
                     paymentProvider.getPaymentGatewayName(), notification.getTransactionId());
             if (!optionalChargeEntity.isPresent()) {
-                logger.error(format("Notification with transaction id=%s failed updating charge status to: %s",
+                logger.error(format("Notification with transaction id=%s failed updating charge status to: %s. Unable to find charge.",
                         notification.getTransactionId(), newStatus));
                 return;
             }
             ChargeEntity chargeEntity = optionalChargeEntity.get();
+            String oldStatus = chargeEntity.getStatus();
+
+            try {
+                chargeEntity.setStatus((ChargeStatus) newStatus);
+            } catch (InvalidStateTransitionException e) {
+                logger.error(format("Notification with transaction id=%s failed updating charge status to: %s. Error: %s",
+                        notification.getTransactionId(), newStatus, e.getMessage()));
+                return;
+            }
 
             logger.info(format("Notification with transaction id=%s updated charge status - from=%s, to=%s",
-                    notification.getTransactionId(), chargeEntity.getStatus(), newStatus));
-            chargeEntity.setStatus((ChargeStatus) newStatus);
+                    notification.getTransactionId(), oldStatus, newStatus));
             chargeDao.mergeAndNotifyStatusHasChanged(chargeEntity);
         }
 
