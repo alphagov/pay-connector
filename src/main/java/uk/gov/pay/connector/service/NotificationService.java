@@ -130,9 +130,9 @@ public class NotificationService {
             }
             ChargeEntity chargeEntity = optionalChargeEntity.get();
 
-            chargeEntity.setStatus((ChargeStatus) newStatus);
             logger.info(format("Notification with transaction id=%s updated charge status - from=%s, to=%s",
                     notification.getTransactionId(), chargeEntity.getStatus(), newStatus));
+            chargeEntity.setStatus((ChargeStatus) newStatus);
             chargeDao.mergeAndNotifyStatusHasChanged(chargeEntity);
         }
 
