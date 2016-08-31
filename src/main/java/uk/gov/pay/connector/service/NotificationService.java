@@ -125,7 +125,7 @@ public class NotificationService {
             Optional<ChargeEntity> optionalChargeEntity = chargeDao.findByProviderAndTransactionId(
                     paymentProvider.getPaymentGatewayName(), notification.getTransactionId());
             if (!optionalChargeEntity.isPresent()) {
-                logger.error(format("Notification with transaction id=%s failed updating charge status to: %s. Unable to find charge.",
+                logger.error(format("Notification with transaction id=%s failed updating charge status to: %s. Unable to find charge entity.",
                         notification.getTransactionId(), newStatus));
                 return;
             }
@@ -148,7 +148,7 @@ public class NotificationService {
         private <T> void updateRefundStatus(ExtendedNotification<T> notification, Enum newStatus) {
             Optional<RefundEntity> optionalRefundEntity = refundDao.findByExternalId(notification.getReference());
             if (!optionalRefundEntity.isPresent()) {
-                logger.error(format("Notification with transaction id=%s and reference=%s failed updating refund status to: %s",
+                logger.error(format("Notification with transaction id=%s and reference=%s failed updating refund status to: %s. Unable to find refund entity.",
                         notification.getTransactionId(), notification.getReference(), newStatus));
                 return;
             }
