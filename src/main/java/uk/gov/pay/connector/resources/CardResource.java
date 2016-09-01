@@ -13,7 +13,6 @@ import javax.ws.rs.*;
 import javax.ws.rs.core.Response;
 import java.util.Optional;
 
-import static java.lang.String.format;
 import static javax.ws.rs.core.MediaType.APPLICATION_JSON;
 import static uk.gov.pay.connector.resources.ApiPaths.*;
 import static uk.gov.pay.connector.resources.CardDetailsValidator.isWellFormattedCardDetails;
@@ -65,14 +64,14 @@ public class CardResource {
     @Path(CHARGE_CANCEL_API_PATH)
     @Produces(APPLICATION_JSON)
     public Response cancelCharge(@PathParam("accountId") Long accountId, @PathParam("chargeId") String chargeId) {
-        return handleGatewayResponse(chargeCancelService.doSystemCancel(chargeId, accountId), chargeId);
+        return handleGatewayCancelResponse(chargeCancelService.doSystemCancel(chargeId, accountId), chargeId);
     }
 
     @POST
     @Path(FRONTEND_CHARGE_CANCEL_API_PATH)
     @Produces(APPLICATION_JSON)
     public Response userCancelCharge(@PathParam("chargeId") String chargeId) {
-        return handleGatewayResponse(chargeCancelService.doUserCancel(chargeId), chargeId);
+        return handleGatewayCancelResponse(chargeCancelService.doUserCancel(chargeId), chargeId);
     }
 
     private Response handleError(GatewayError error) {
@@ -84,25 +83,26 @@ public class CardResource {
             case GATEWAY_CONNECTION_SOCKET_ERROR:
                 return serviceErrorResponse(error.getMessage());
         }
-        /* FIXME: This state doesn't sound right here. particularly when cancelling and
-         gateway sends a valid but cancellation could not be done, why are we responding caller as BAD REQUEST? (Request was fine)
-         Either way if we got this far it cannot be a BAD REQUEST !!!
-         */
+
         return badRequestResponse(error.getMessage());
+    }
+
+    private Response handleGatewayCancelResponse(Optional<GatewayResponse<BaseCancelResponse>> responseMaybe, String chargeId) {
+        if (responseMaybe.isPresent()) {
+            Optional<GatewayError> error = responseMaybe.get().getGatewayError();
+            if (error.isPresent()) {
+                logger.error(error.get().getMessage());
+            }
+        } else {
+            logger.error("Error during cancellation of charge {} - CancelService did not return a GatewayResponse", chargeId);
+        }
+
+        return ResponseUtil.noContentResponse();
     }
 
     private Response handleGatewayResponse(GatewayResponse<? extends BaseResponse> response) {
         return response.getGatewayError()
                 .map(this::handleError)
                 .orElseGet(ResponseUtil::noContentResponse);
-    }
-
-    private Response handleGatewayResponse(Optional<GatewayResponse<BaseCancelResponse>> responseMaybe, String chargeId) {
-        return responseMaybe
-                .map(this::handleGatewayResponse)
-                .orElseGet(() -> {
-                    logger.error("Error during cancellation of charge {} - CancelService did not return a GatewayResponse", chargeId);
-                    return serviceErrorResponse(format("something went wrong during cancellation of charge %s", chargeId));
-                });
     }
 }

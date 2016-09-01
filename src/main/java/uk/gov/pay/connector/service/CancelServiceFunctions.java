@@ -3,6 +3,7 @@ package uk.gov.pay.connector.service;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import uk.gov.pay.connector.dao.ChargeDao;
+import uk.gov.pay.connector.exception.ConflictRuntimeException;
 import uk.gov.pay.connector.exception.IllegalStateRuntimeException;
 import uk.gov.pay.connector.exception.OperationAlreadyInProgressRuntimeException;
 import uk.gov.pay.connector.model.CancelGatewayRequest;
@@ -46,6 +47,8 @@ class CancelServiceFunctions {
             if (!reloadedCharge.hasStatus(statusFlow.getTerminatableStatuses())) {
                 if (reloadedCharge.hasStatus(statusFlow.getLockState())) {
                     throw new OperationAlreadyInProgressRuntimeException(statusFlow.getName(), reloadedCharge.getExternalId());
+                } else if (reloadedCharge.hasStatus(ChargeStatus.AUTHORISATION_READY)) {
+                    throw new ConflictRuntimeException(chargeEntity.getExternalId());
                 }
                 logger.error(format("Charge with id [%s] and with status [%s] should be in one of the following legal states, [%s]",
                         reloadedCharge.getId(), reloadedCharge.getStatus(), getLegalStatusNames(statusFlow.getTerminatableStatuses())));

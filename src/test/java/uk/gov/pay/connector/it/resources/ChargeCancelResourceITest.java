@@ -80,12 +80,12 @@ public class ChargeCancelResourceITest extends CardResourceITestBase {
     }
 
     @Test
-    public void shouldRespondWith400WithLockingStatus_IfCancelFailedAfterAuth() {
+    public void shouldRespondWith204WithLockingStatus_IfCancelFailedAfterAuth() {
 
         String chargeId = addCharge(AUTHORISATION_SUCCESS, "ref", ZonedDateTime.now().minusHours(1), "irrelavant");
         worldpay.mockCancelError();
 
-        cancelChargeAndCheckApiStatus(chargeId, SYSTEM_CANCEL_ERROR, 400); //FIXME this doesn't sound like a BAD REQUEST
+        cancelChargeAndCheckApiStatus(chargeId, SYSTEM_CANCEL_ERROR, 204);
 
         List<String> events = app.getDatabaseTestHelper().getInternalEvents(chargeId);
         assertThat(events.size(), is(3));

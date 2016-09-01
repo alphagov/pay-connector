@@ -94,7 +94,7 @@ public class ChargeCancelFrontendResourceITest extends CardResourceITestBase {
         worldpay.mockCancelError();
         String chargeId = addCharge(AUTHORISATION_SUCCESS, "ref", ZonedDateTime.now().minusHours(1), gatewayTransactionId);
 
-        userCancelChargeAndCheckApiStatus(chargeId, USER_CANCEL_ERROR, 400); //FIXME: this doesn't sound like a BAD REQUEST scenario
+        userCancelChargeAndCheckApiStatus(chargeId, USER_CANCEL_ERROR, 204);
         List<String> events = app.getDatabaseTestHelper().getInternalEvents(chargeId);
         assertThat(events.size(), is(3));
         assertThat(events, hasItems(AUTHORISATION_SUCCESS.getValue(),
@@ -132,6 +132,22 @@ public class ChargeCancelFrontendResourceITest extends CardResourceITestBase {
                 .and()
                 .contentType(JSON)
                 .body("message", is("Charge with id [" + unknownChargeId + "] not found."));
+    }
+
+    @Test
+    public void respondWith409_whenCancellationDuringAuthReady() {
+        String chargeId = addCharge(AUTHORISATION_READY, "ref", ZonedDateTime.now().minusHours(1), "transaction-id");
+        worldpay.mockCancelSuccess();
+
+        connectorRestApi
+                .withChargeId(chargeId)
+                .postFrontendChargeCancellation()
+                .statusCode(409);
+
+        connectorRestApi
+                .withChargeId(chargeId)
+                .getCharge()
+                .body("state.status", is("started"));
     }
 
     @Test
