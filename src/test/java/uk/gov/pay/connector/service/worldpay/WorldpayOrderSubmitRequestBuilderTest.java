@@ -63,18 +63,6 @@ public class WorldpayOrderSubmitRequestBuilderTest {
 
     }
 
-    @Test
-    public void shouldGenerateValidOrderInquiryPayload() throws Exception {
-
-        String actualRequest = anOrderInquiryRequest()
-                .withMerchantCode("MERCHANTCODE")
-                .withTransactionId("MyUniqueTransactionId!")
-                .build();
-
-        assertXMLEqual(expectedOrderSubmitPayload("valid-order-inquiry.xml"), actualRequest);
-
-    }
-
     private Card getValidTestCard(Address address) {
         return buildCardDetails("Mr. Payment", "4111111111111111", "123", "12/15", address);
     }

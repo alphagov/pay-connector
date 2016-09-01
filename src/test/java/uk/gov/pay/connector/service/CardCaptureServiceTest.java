@@ -66,7 +66,7 @@ public class CardCaptureServiceTest extends CardServiceTest {
         mockChargeDaoOperations(charge, reloadedCharge);
 
         setupPaymentProviderMock(gatewayTxId, null);
-        when(mockedProviders.resolve(charge.getGatewayAccount().getGatewayName())).thenReturn(mockedPaymentProvider);
+        when(mockedProviders.byName(charge.getPaymentGatewayName())).thenReturn(mockedPaymentProvider);
         GatewayResponse response = cardCaptureService.doCapture(charge.getExternalId());
 
         assertThat(response.isSuccessful(), is(true));
@@ -160,7 +160,7 @@ public class CardCaptureServiceTest extends CardServiceTest {
         mockChargeDaoOperations(charge, reloadedCharge);
 
         setupPaymentProviderMock(gatewayTxId, "error-code");
-        when(mockedProviders.resolve(charge.getGatewayAccount().getGatewayName())).thenReturn(mockedPaymentProvider);
+        when(mockedProviders.byName(charge.getPaymentGatewayName())).thenReturn(mockedPaymentProvider);
 
         GatewayResponse response = cardCaptureService.doCapture(charge.getExternalId());
         assertThat(response.isFailed(), is(true));
@@ -182,7 +182,7 @@ public class CardCaptureServiceTest extends CardServiceTest {
         ChargeEntity reloadedCharge = spy(charge);
         mockChargeDaoOperations(charge, reloadedCharge);
         setupPaymentProviderMock(gatewayTxId, null);
-        when(mockedProviders.resolve(charge.getGatewayAccount().getGatewayName())).thenReturn(mockedPaymentProvider);
+        when(mockedProviders.byName(charge.getPaymentGatewayName())).thenReturn(mockedPaymentProvider);
         cardCaptureService.doCapture(charge.getExternalId());
         verify(mockConfirmationDetailsService, times(1)).doRemove(reloadedCharge);
     }
@@ -195,7 +195,7 @@ public class CardCaptureServiceTest extends CardServiceTest {
         ChargeEntity reloadedCharge = spy(charge);
         mockChargeDaoOperations(charge, reloadedCharge);
         setupPaymentProviderMock(gatewayTxId, "error-code");
-        when(mockedProviders.resolve(charge.getGatewayAccount().getGatewayName())).thenReturn(mockedPaymentProvider);
+        when(mockedProviders.byName(charge.getPaymentGatewayName())).thenReturn(mockedPaymentProvider);
         cardCaptureService.doCapture(charge.getExternalId());
         verify(mockConfirmationDetailsService, times(1)).doRemove(reloadedCharge);
     }

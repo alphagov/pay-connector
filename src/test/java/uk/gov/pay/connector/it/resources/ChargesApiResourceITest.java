@@ -60,7 +60,7 @@ public class ChargesApiResourceITest {
     private static final String JSON_MESSAGE_KEY = "message";
     private static final String JSON_EMAIL_KEY = "email";
     private static final String JSON_PROVIDER_KEY = "payment_provider";
-    private static final String PROVIDER_NAME = "test_gateway";
+    private static final String PROVIDER_NAME = "sandbox";
     private static final long AMOUNT = 6234L;
 
     @Rule

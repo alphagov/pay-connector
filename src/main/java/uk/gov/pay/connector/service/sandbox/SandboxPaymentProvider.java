@@ -2,96 +2,32 @@ package uk.gov.pay.connector.service.sandbox;
 
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
-import com.google.common.collect.ImmutableList;
-import org.apache.commons.lang3.tuple.Pair;
+import fj.data.Either;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import uk.gov.pay.connector.model.*;
-import uk.gov.pay.connector.model.domain.ChargeEntity;
-import uk.gov.pay.connector.model.domain.ChargeStatus;
 import uk.gov.pay.connector.model.gateway.AuthorisationGatewayRequest;
 import uk.gov.pay.connector.model.gateway.GatewayResponse;
-import uk.gov.pay.connector.model.InquiryGatewayRequest;
+import uk.gov.pay.connector.resources.PaymentGatewayName;
 import uk.gov.pay.connector.service.*;
 
 import java.util.Optional;
-import java.util.function.Consumer;
-import java.util.function.Function;
 
+import static fj.data.Either.left;
+import static fj.data.Either.right;
 import static java.util.UUID.randomUUID;
 import static uk.gov.pay.connector.model.ErrorType.GENERIC_GATEWAY_ERROR;
 import static uk.gov.pay.connector.service.sandbox.SandboxCardNumbers.*;
 
-public class SandboxPaymentProvider implements PaymentProvider<BaseResponse> {
+public class SandboxPaymentProvider extends BasePaymentProvider<BaseResponse> {
 
     private final static Logger LOGGER = LoggerFactory.getLogger(SandboxPaymentProvider.class);
 
     private final ObjectMapper objectMapper;
 
     public SandboxPaymentProvider(ObjectMapper objectMapper) {
+        super(null);
         this.objectMapper = objectMapper;
-    }
-
-    public GatewayResponse<BaseAuthoriseResponse> createGatewayBaseAuthoriseResponse(boolean isAuthorised) {
-        return GatewayResponse.with(new BaseAuthoriseResponse() {
-            @Override
-            public boolean isAuthorised() {
-                return isAuthorised;
-            }
-
-            @Override
-            public String getTransactionId() {
-                return randomUUID().toString();
-            }
-
-            @Override
-            public String getErrorCode() {
-                return null;
-            }
-
-            @Override
-            public String getErrorMessage() {
-                return null;
-            }
-        });
-    }
-
-    public GatewayResponse<BaseCancelResponse> createGatewayBaseCancelResponse() {
-        return GatewayResponse.with(new BaseCancelResponse() {
-            @Override
-            public String getErrorCode() {
-                return null;
-            }
-
-            @Override
-            public String getErrorMessage() {
-                return null;
-            }
-
-            @Override
-            public String getTransactionId() {
-                return randomUUID().toString();
-            }
-        });
-    }
-
-    public GatewayResponse<BaseCaptureResponse> createGatewayBaseCaptureResponse() {
-        return GatewayResponse.with(new BaseCaptureResponse() {
-            @Override
-            public String getErrorCode() {
-                return null;
-            }
-
-            @Override
-            public String getErrorMessage() {
-                return null;
-            }
-
-            @Override
-            public String getTransactionId() {
-                return randomUUID().toString();
-            }
-        });
     }
 
     @Override
@@ -108,6 +44,11 @@ public class SandboxPaymentProvider implements PaymentProvider<BaseResponse> {
         }
 
         return GatewayResponse.with(new GatewayError("Unsupported card details.", GENERIC_GATEWAY_ERROR));
+    }
+
+    @Override
+    public String getPaymentGatewayName() {
+        return PaymentGatewayName.SANDBOX.getName();
     }
 
     @Override
@@ -131,28 +72,86 @@ public class SandboxPaymentProvider implements PaymentProvider<BaseResponse> {
     }
 
     @Override
-    public GatewayResponse inquire(InquiryGatewayRequest request) {
-        throw new UnsupportedOperationException("Operation not supported");
-    }
-
-    @Override
-    public StatusUpdates handleNotification(String inboundNotification,
-                                            Function<ChargeStatusRequest, Boolean> payloadChecks,
-                                            Function<String, Optional<ChargeEntity>> accountFinder,
-                                            Consumer<StatusUpdates> accountUpdater) {
+    public Either<String, Notifications<String>> parseNotification(String payload) {
         try {
-            JsonNode node = objectMapper.readValue(inboundNotification, JsonNode.class);
+            JsonNode node = objectMapper.readValue(payload, JsonNode.class);
 
-            String transaction_id = node.get("transaction_id").textValue();
-            String newStatus = node.get("status").textValue();
+            String transactionId = node.get("transaction_id").textValue();
+            String status = node.get("status").textValue();
 
-            StatusUpdates statusUpdates = StatusUpdates.withUpdate("OK", ImmutableList.of(Pair.of(transaction_id, ChargeStatus.fromString(newStatus))));
-            accountUpdater.accept(statusUpdates);
-            return statusUpdates;
+            Notifications.Builder<String> builder = Notifications.builder();
+            builder.addNotificationFor(transactionId, "", status);
+            return right(builder.build());
         } catch (Exception e) {
-            LOGGER.error("Error understanding sandbox notification: " + inboundNotification, e);
-            return StatusUpdates.noUpdate("OK");
+            LOGGER.error("Error understanding sandbox notification: " + payload, e);
+            return left("Error understanding sandbox notification: " + payload);
         }
     }
 
+    @Override
+    public StatusMapper getStatusMapper() {
+        return SandboxStatusMapper.get();
+    }
+
+    private GatewayResponse<BaseAuthoriseResponse> createGatewayBaseAuthoriseResponse(boolean isAuthorised) {
+        return GatewayResponse.with(new BaseAuthoriseResponse() {
+            @Override
+            public boolean isAuthorised() {
+                return isAuthorised;
+            }
+
+            @Override
+            public String getTransactionId() {
+                return randomUUID().toString();
+            }
+
+            @Override
+            public String getErrorCode() {
+                return null;
+            }
+
+            @Override
+            public String getErrorMessage() {
+                return null;
+            }
+        });
+    }
+
+    private GatewayResponse<BaseCancelResponse> createGatewayBaseCancelResponse() {
+        return GatewayResponse.with(new BaseCancelResponse() {
+            @Override
+            public String getErrorCode() {
+                return null;
+            }
+
+            @Override
+            public String getErrorMessage() {
+                return null;
+            }
+
+            @Override
+            public String getTransactionId() {
+                return randomUUID().toString();
+            }
+        });
+    }
+
+    private GatewayResponse<BaseCaptureResponse> createGatewayBaseCaptureResponse() {
+        return GatewayResponse.with(new BaseCaptureResponse() {
+            @Override
+            public String getErrorCode() {
+                return null;
+            }
+
+            @Override
+            public String getErrorMessage() {
+                return null;
+            }
+
+            @Override
+            public String getTransactionId() {
+                return randomUUID().toString();
+            }
+        });
+    }
 }

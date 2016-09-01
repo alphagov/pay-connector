@@ -132,7 +132,7 @@ public class SmartpayPaymentProviderTest {
 
     }
 
-    @Test
+   /* @Test
     public void shouldBeAbleToHandleNotification() throws Exception {
         PaymentProvider paymentProvider = getSmartpayPaymentProvider();
         GatewayResponse<SmartpayAuthorisationResponse> response = testCardAuthorisation(paymentProvider, chargeEntity);
@@ -193,7 +193,7 @@ public class SmartpayPaymentProviderTest {
         );
 
         assertThat(statusResponse.getStatusUpdates(), contains(Pair.of(transactionId, CAPTURED)));
-    }
+    }*/
 
     private GatewayResponse testCardAuthorisation(PaymentProvider paymentProvider, ChargeEntity chargeEntity) {
         AuthorisationGatewayRequest request = getCardAuthorisationRequest(chargeEntity);

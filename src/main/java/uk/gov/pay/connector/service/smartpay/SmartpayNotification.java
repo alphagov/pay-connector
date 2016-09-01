@@ -5,6 +5,7 @@ import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import com.google.common.collect.ImmutableSet;
 import com.google.common.collect.Sets;
+import org.apache.commons.lang3.tuple.Pair;
 import org.joda.time.DateTime;
 import uk.gov.pay.connector.model.ChargeStatusRequest;
 import uk.gov.pay.connector.model.domain.ChargeStatus;
@@ -45,11 +46,6 @@ public class SmartpayNotification implements ChargeStatusRequest, Comparable<Sma
     }
 
     @Override
-    public String getTransactionId() {
-        return transactionId;
-    }
-
-    @Override
     public Optional<ChargeStatus> getChargeStatus() {
         return chargeStatus;
     }
@@ -73,5 +69,14 @@ public class SmartpayNotification implements ChargeStatusRequest, Comparable<Sma
     @Override
     public int compareTo(SmartpayNotification other) {
         return this.eventDate.compareTo(other.eventDate);
+    }
+
+    @Override
+    public String getTransactionId() {
+        return transactionId;
+    }
+
+    public Pair<String, Boolean> getStatus() {
+        return Pair.of(eventCode, isSuccessFull());
     }
 }

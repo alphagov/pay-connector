@@ -51,7 +51,7 @@ public class ChargesFrontendResourceITest {
 
     @Before
     public void setupGatewayAccount() {
-        app.getDatabaseTestHelper().addGatewayAccount(accountId, "test gateway");
+        app.getDatabaseTestHelper().addGatewayAccount(accountId, "sandbox");
     }
 
     @Test
@@ -156,7 +156,7 @@ public class ChargesFrontendResourceITest {
 
         String anotherAccountId = "5454545";
         Long chargeId3 = 5001L;
-        app.getDatabaseTestHelper().addGatewayAccount(anotherAccountId, "another test gateway");
+        app.getDatabaseTestHelper().addGatewayAccount(anotherAccountId, "worldpay");
         app.getDatabaseTestHelper().addCharge(chargeId3, "charge5001", anotherAccountId, 200, AUTHORISATION_READY, returnUrl, "transaction-id-2");
 
         List<ChargeStatus> statuses = asList(CREATED, ENTERING_CARD_DETAILS, AUTHORISATION_READY, AUTHORISATION_SUCCESS);

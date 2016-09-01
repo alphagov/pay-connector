@@ -53,10 +53,6 @@ public class DatabaseFixtures {
         return new TestCardType().withLabel("MasterCard").withType(Type.CREDIT).withBrand("mastercard");
     }
 
-    public TestCardType aMastercardDebitCardType() {
-        return new TestCardType().withLabel("MasterCard").withType(Type.DEBIT).withBrand("mastercard");
-    }
-
     public TestCardType aVisaCreditCardType() {
         return new TestCardType().withLabel("Visa").withType(Type.CREDIT).withBrand("visa");
     }
@@ -173,9 +169,8 @@ public class DatabaseFixtures {
     }
     public class TestAccount {
         long accountId = RandomUtils.nextLong(1, 99999);
-        String paymentProvider = "test_provider";
+        String paymentProvider = "sandbox";
         String serviceName = "service_name";
-        String selectedPaymentCategory = null;
         private List<TestCardType> cardTypes = new ArrayList<>();
 
         public long getAccountId() {
@@ -309,10 +304,6 @@ public class DatabaseFixtures {
         public ZonedDateTime getCreatedDate() {
             return createdDate;
         }
-
-        public TestAccount getAccount() {
-            return testAccount;
-        }
     }
 
     public class TestToken {
@@ -329,10 +320,6 @@ public class DatabaseFixtures {
                 throw new IllegalStateException("Test Charge must be provided.");
             databaseTestHelper.addToken(testCharge.getChargeId(), secureRedirectToken);
             return this;
-        }
-
-        public TestCharge getTestCharge() {
-            return testCharge;
         }
 
         public String getSecureRedirectToken() {
@@ -421,10 +408,6 @@ public class DatabaseFixtures {
         public TestAccount getTestAccount() {
             return testAccount;
         }
-
-        public String getTemplate() {
-            return template;
-        }
     }
 
     public class TestCardType {
@@ -471,10 +454,6 @@ public class DatabaseFixtures {
             return label;
         }
 
-        public void setLabel(String label) {
-            this.label = label;
-        }
-
         public Type getType() {
             return type;
         }
@@ -485,10 +464,6 @@ public class DatabaseFixtures {
 
         public String getBrand() {
             return brand;
-        }
-
-        public void setBrand(String brand) {
-            this.brand = brand;
         }
     }
 }

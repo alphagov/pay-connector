@@ -33,7 +33,6 @@ import static javax.ws.rs.core.MediaType.APPLICATION_JSON;
 import static uk.gov.pay.connector.model.domain.GatewayAccountEntity.Type;
 import static uk.gov.pay.connector.model.domain.GatewayAccountEntity.Type.TEST;
 import static uk.gov.pay.connector.resources.ApiPaths.*;
-import static uk.gov.pay.connector.resources.PaymentProviderValidator.*;
 import static uk.gov.pay.connector.util.ResponseUtil.*;
 
 @Path("/")
@@ -45,7 +44,8 @@ public class GatewayAccountResource {
     private static final String SERVICE_NAME_FIELD_NAME = "service_name";
     private static final String CARD_TYPES_FIELD_NAME = "card_types";
     private static final int SERVICE_NAME_FIELD_LENGTH = 50;
-    public static final String PROVIDER_ACCOUNT_TYPE = "type";
+    private static final String PROVIDER_ACCOUNT_TYPE = "type";
+    private static final String PAYMENT_PROVIDER_KEY = "payment_provider";
 
     private final GatewayAccountDao gatewayDao;
     private final CardTypeDao cardTypeDao;
@@ -105,7 +105,6 @@ public class GatewayAccountResource {
     @Consumes(APPLICATION_JSON)
     @Produces(APPLICATION_JSON)
     public Response createNewGatewayAccount(JsonNode node, @Context UriInfo uriInfo) {
-        String provider = node.has(PAYMENT_PROVIDER_KEY) ? node.get(PAYMENT_PROVIDER_KEY).textValue() : SANDBOX_PROVIDER;
         String accountType = node.has(PROVIDER_ACCOUNT_TYPE) ? node.get(PROVIDER_ACCOUNT_TYPE).textValue() : TEST.toString();
         Type type;
         try {
@@ -113,7 +112,10 @@ public class GatewayAccountResource {
         } catch (IllegalArgumentException iae) {
             return badRequestResponse(format("Unsupported payment provider account type '%s', should be one of (test, live)", accountType));
         }
-        if (!isValidProvider(provider)) {
+
+        String provider = node.has(PAYMENT_PROVIDER_KEY) ? node.get(PAYMENT_PROVIDER_KEY).textValue() : PaymentGatewayName.SANDBOX.getName();
+
+        if (!PaymentGatewayName.isValidPaymentGateway(provider)) {
             return badRequestResponse(format("Unsupported payment provider %s.", provider));
         }
         logger.info("Creating new gateway account using the {} provider pointing to {}", provider, accountType);

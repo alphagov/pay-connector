@@ -1,51 +1,48 @@
 package uk.gov.pay.connector.service.worldpay;
 
-import com.google.common.collect.ImmutableList;
-import org.apache.commons.lang3.StringUtils;
-import org.apache.commons.lang3.tuple.Pair;
+import fj.data.Either;
 import org.joda.time.DateTime;
 import org.joda.time.DateTimeZone;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
-import uk.gov.pay.connector.model.*;
-import uk.gov.pay.connector.model.domain.ChargeEntity;
-import uk.gov.pay.connector.model.domain.ChargeStatus;
+import uk.gov.pay.connector.model.CancelGatewayRequest;
+import uk.gov.pay.connector.model.CaptureGatewayRequest;
+import uk.gov.pay.connector.model.Notifications;
+import uk.gov.pay.connector.model.RefundGatewayRequest;
 import uk.gov.pay.connector.model.gateway.AuthorisationGatewayRequest;
 import uk.gov.pay.connector.model.gateway.GatewayResponse;
-import uk.gov.pay.connector.service.*;
-import uk.gov.pay.connector.service.smartpay.BasePaymentProvider;
-import uk.gov.pay.connector.util.XMLUnmarshallerException;
+import uk.gov.pay.connector.resources.PaymentGatewayName;
+import uk.gov.pay.connector.service.BasePaymentProvider;
+import uk.gov.pay.connector.service.BaseResponse;
+import uk.gov.pay.connector.service.GatewayClient;
+import uk.gov.pay.connector.service.StatusMapper;
 
 import java.util.Optional;
-import java.util.function.Consumer;
 import java.util.function.Function;
 
-import static java.lang.String.format;
+import static fj.data.Either.left;
+import static fj.data.Either.right;
 import static java.util.UUID.randomUUID;
 import static uk.gov.pay.connector.model.domain.GatewayAccount.CREDENTIALS_MERCHANT_ID;
 import static uk.gov.pay.connector.service.OrderCaptureRequestBuilder.aWorldpayOrderCaptureRequest;
 import static uk.gov.pay.connector.service.OrderRefundRequestBuilder.aWorldpayOrderRefundRequest;
 import static uk.gov.pay.connector.service.OrderSubmitRequestBuilder.aWorldpayOrderSubmitRequest;
-import static uk.gov.pay.connector.service.worldpay.OrderInquiryRequestBuilder.anOrderInquiryRequest;
 import static uk.gov.pay.connector.service.worldpay.WorldpayOrderCancelRequestBuilder.aWorldpayOrderCancelRequest;
 import static uk.gov.pay.connector.util.XMLUnmarshaller.unmarshall;
 
-public class WorldpayPaymentProvider<T extends BaseResponse> extends BasePaymentProvider implements PaymentProvider<T> {
-    public static final String NOTIFICATION_ACKNOWLEDGED = "[OK]";
-    public static final StatusUpdates NO_UPDATE = StatusUpdates.noUpdate(NOTIFICATION_ACKNOWLEDGED);
-    private final Logger logger = LoggerFactory.getLogger(WorldpayPaymentProvider.class);
-    private final GatewayClient client;
+public class WorldpayPaymentProvider extends BasePaymentProvider<BaseResponse> {
 
     public WorldpayPaymentProvider(GatewayClient client) {
         super(client);
-        this.client = client;
+    }
+
+    @Override
+    public String getPaymentGatewayName() {
+        return PaymentGatewayName.WORLDPAY.getName();
     }
 
     @Override
     public Optional<String> generateTransactionId() {
         return Optional.of(randomUUID().toString());
     }
-
 
     @Override
     public GatewayResponse authorise(AuthorisationGatewayRequest request) {
@@ -69,132 +66,20 @@ public class WorldpayPaymentProvider<T extends BaseResponse> extends BasePayment
     }
 
     @Override
-    public GatewayResponse inquire(InquiryGatewayRequest request) {
-        return sendReceive(request, buildInquiryOrderFor(), WorldpayOrderStatusResponse.class);
+    public Either<String, Notifications<String>> parseNotification(String payload) {
+        try {
+            Notifications.Builder<String> builder = Notifications.builder();
+            WorldpayNotification worldpayNotification = unmarshall(payload, WorldpayNotification.class);
+            builder.addNotificationFor(worldpayNotification.getTransactionId(), worldpayNotification.getReference(), worldpayNotification.getStatus());
+            return right(builder.build());
+        } catch (Exception e) {
+            return left(e.getMessage());
+        }
     }
 
     @Override
-    public StatusUpdates handleNotification(String notificationPayload,
-                                            Function<ChargeStatusRequest, Boolean> payloadChecks,
-                                            Function<String, Optional<ChargeEntity>> accountFinder,
-                                            Consumer<StatusUpdates> accountUpdater) {
-
-        Optional<WorldpayNotification> notificationMaybe = parseNotification(notificationPayload);
-
-        return notificationMaybe
-                .map(notification -> {
-                    if (!payloadChecks.apply(notification)) {
-                        return NO_UPDATE;
-                    }
-
-                    return accountFinder.apply(notification.getTransactionId())
-                            .map(chargeEntity -> {
-                                StatusUpdates statusUpdates = confirmStatus(chargeEntity, notification.getTransactionId());
-                                processInquiryStatus(accountUpdater, notification, statusUpdates);
-                                return statusUpdates;
-                            })
-                            .orElseGet(() -> NO_UPDATE);
-                })
-                .orElseGet(() -> NO_UPDATE);
-    }
-
-    private Optional<ChargeStatus> mapStatusForNotification(String status) {
-        StatusMapper.Status<ChargeStatus> mappedStatus = WorldpayStatusMapper.from(status);
-
-        if (mappedStatus.isUnknown()) {
-            logger.warn(format("Worldpay notification with unknown status %s ignored.", status));
-            return Optional.empty();
-        }
-
-
-        if (mappedStatus.isIgnored()) {
-            logger.info(format("Worldpay notification with status %s ignored.", status));
-            return Optional.empty();
-        }
-        return Optional.of(mappedStatus.get());
-    }
-
-    private Optional<WorldpayNotification> parseNotification(String inboundNotification) {
-        try {
-            WorldpayNotification chargeNotification = unmarshall(inboundNotification, WorldpayNotification.class);
-
-            return Optional.ofNullable(chargeNotification)
-                    .map(notification -> {
-                        Optional<ChargeStatus> chargeStatus = mapStatusForNotification(notification.getStatus());
-                        if (!chargeStatus.isPresent()) {
-                            return null;
-                        }
-
-                        notification.setChargeStatus(chargeStatus);
-                        return notification;
-                    });
-        } catch (XMLUnmarshallerException e) {
-            logger.error(format("Could not deserialise worldpay response %s", inboundNotification), e);
-            return Optional.empty();
-        }
-    }
-
-    private void processInquiryStatus(Consumer<StatusUpdates> accountUpdater, WorldpayNotification notification, StatusUpdates statusUpdates) {
-        if (statusUpdates.successful() && (statusUpdates.getStatusUpdates().size() > 0)) {
-            logMismatchingStatuses(notification, statusUpdates);
-            accountUpdater.accept(statusUpdates);
-        }
-    }
-
-    private void logMismatchingStatuses(WorldpayNotification notification, StatusUpdates statusUpdates) {
-        statusUpdates.getStatusUpdates()
-                .stream()
-                .findFirst()
-                .ifPresent(status -> {
-                    if (!notification.getChargeStatus().isPresent() ||
-                            status.getValue() != notification.getChargeStatus().get()) {
-                        logger.error(format("Inquiry status '%s' did not match notification status '%s'",
-                                status.getValue(),
-                                notification.getStatus()));
-                    }
-                });
-    }
-
-    private Optional<ChargeStatus> mapStatusForInquiry(String status) {
-        StatusMapper.Status<ChargeStatus> mappedStatus = WorldpayStatusMapper.from(status);
-
-        if (mappedStatus.isUnknown()) {
-            logger.warn(format("Worldpay inquiry response with unknown status %s ignored.", status));
-            return Optional.empty();
-        }
-
-
-        if (mappedStatus.isIgnored()) {
-            logger.info(format("Worldpay inquiry response with status %s ignored.", status));
-            return Optional.empty();
-        }
-        return Optional.of(mappedStatus.get());
-    }
-
-
-    //todo :(
-    private StatusUpdates confirmStatus(ChargeEntity chargeEntity, String transactionId) {
-        GatewayResponse<BaseInquiryResponse> inquiryGatewayResponse = inquire(InquiryGatewayRequest.valueOf(chargeEntity));
-
-        String worldpayStatus = null;
-        Optional<BaseInquiryResponse> baseResponse = inquiryGatewayResponse.getBaseResponse();
-        if (baseResponse.isPresent()) {
-            worldpayStatus = baseResponse.get().getLastEvent();
-        }
-
-        if (StringUtils.isBlank(worldpayStatus)) {
-            logger.error("Could not look up status from worldpay for worldpay charge id " + transactionId);
-            return StatusUpdates.failed();
-        }
-
-        return mapStatusForInquiry(worldpayStatus)
-                .map(chargeStatus -> {
-                    Pair<String, ChargeStatus> update = Pair.of(baseResponse.get().getTransactionId(), chargeStatus);
-                    return StatusUpdates.withUpdate(NOTIFICATION_ACKNOWLEDGED, ImmutableList.of(update));
-                })
-                .orElseGet(() -> {
-                    return NO_UPDATE;
-                });
+    public StatusMapper getStatusMapper() {
+        return WorldpayStatusMapper.get();
     }
 
     private Function<AuthorisationGatewayRequest, String> buildAuthoriseOrderFor() {
@@ -221,18 +106,12 @@ public class WorldpayPaymentProvider<T extends BaseResponse> extends BasePayment
                 .withMerchantCode(request.getGatewayAccount().getCredentials().get(CREDENTIALS_MERCHANT_ID))
                 .withTransactionId(request.getTransactionId())
                 .withAmount(request.getAmount())
+                .withReference(request.getReference())
                 .build();
     }
 
     private Function<CancelGatewayRequest, String> buildCancelOrderFor() {
         return request -> aWorldpayOrderCancelRequest()
-                .withMerchantCode(request.getGatewayAccount().getCredentials().get(CREDENTIALS_MERCHANT_ID))
-                .withTransactionId(request.getTransactionId())
-                .build();
-    }
-
-    private Function<InquiryGatewayRequest, String> buildInquiryOrderFor() {
-        return request -> anOrderInquiryRequest()
                 .withMerchantCode(request.getGatewayAccount().getCredentials().get(CREDENTIALS_MERCHANT_ID))
                 .withTransactionId(request.getTransactionId())
                 .build();

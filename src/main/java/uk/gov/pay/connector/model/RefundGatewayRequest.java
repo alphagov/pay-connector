@@ -1,26 +1,20 @@
 package uk.gov.pay.connector.model;
 
-import uk.gov.pay.connector.model.domain.ChargeEntity;
 import uk.gov.pay.connector.model.domain.GatewayAccountEntity;
+import uk.gov.pay.connector.model.domain.RefundEntity;
 
 public class RefundGatewayRequest implements GatewayRequest {
 
     private final GatewayAccountEntity gatewayAccountEntity;
     private final String amount;
     private final String transactionId;
+    private final String reference;
 
-    private RefundGatewayRequest(ChargeEntity charge) {
-        this(charge, String.valueOf(charge.getAmount()));
-    }
-
-    private RefundGatewayRequest(ChargeEntity charge, long partialAmount) {
-        this(charge, String.valueOf(partialAmount));
-    }
-
-    private RefundGatewayRequest(ChargeEntity charge, String amount) {
-        this.transactionId = charge.getGatewayTransactionId();
-        this.gatewayAccountEntity = charge.getGatewayAccount();
+    private RefundGatewayRequest(String transactionId, GatewayAccountEntity gatewayAccount, String amount, String reference) {
+        this.transactionId = transactionId;
+        this.gatewayAccountEntity = gatewayAccount;
         this.amount = amount;
+        this.reference = reference;
     }
 
     public String getAmount() {
@@ -36,11 +30,15 @@ public class RefundGatewayRequest implements GatewayRequest {
         return gatewayAccountEntity;
     }
 
-    public static RefundGatewayRequest valueOf(ChargeEntity charge) {
-        return new RefundGatewayRequest(charge);
+    public static RefundGatewayRequest valueOf(RefundEntity refundEntity) {
+        return new RefundGatewayRequest(
+                refundEntity.getChargeEntity().getGatewayTransactionId(),
+                refundEntity.getChargeEntity().getGatewayAccount(),
+                String.valueOf(refundEntity.getAmount()),
+                refundEntity.getExternalId());
     }
 
-    public static RefundGatewayRequest valueOf(ChargeEntity charge, long partialAmount) {
-        return new RefundGatewayRequest(charge, partialAmount);
+    public String getReference() {
+        return reference;
     }
 }

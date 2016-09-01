@@ -13,6 +13,7 @@ public class OrderRefundRequestBuilder {
     private final TemplateStringBuilder templateStringBuilder;
     private String merchantCode;
     private String transactionId;
+    private String reference;
     private String amount;
 
     public static OrderRefundRequestBuilder aWorldpayOrderRefundRequest() {
@@ -42,11 +43,17 @@ public class OrderRefundRequestBuilder {
         return this;
     }
 
+    public OrderRefundRequestBuilder withReference(String reference) {
+        this.reference = reference;
+        return this;
+    }
+
     public String build() {
         Map<String, Object> templateData = newHashMap();
         templateData.put("merchantCode", merchantCode);
         templateData.put("transactionId", transactionId);
         templateData.put("amount", amount);
+        templateData.put("reference", reference);
         return templateStringBuilder.buildWith(templateData);
     }
 }

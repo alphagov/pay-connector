@@ -1,33 +1,31 @@
-package uk.gov.pay.connector.it.resources.worldpay;
+package uk.gov.pay.connector.it.resources.sandbox;
 
-import com.google.common.io.Resources;
+import com.google.common.collect.ImmutableMap;
 import com.jayway.restassured.response.ValidatableResponse;
 import org.junit.Test;
 import uk.gov.pay.connector.it.base.CardResourceITestBase;
 
 import java.io.IOException;
-import java.net.URL;
-import java.nio.charset.Charset;
 
-import static com.google.common.io.Resources.getResource;
 import static com.jayway.restassured.RestAssured.given;
 import static javax.ws.rs.core.MediaType.APPLICATION_JSON;
 import static javax.ws.rs.core.MediaType.TEXT_XML;
 import static org.hamcrest.Matchers.is;
 import static org.junit.Assert.assertThat;
 import static uk.gov.pay.connector.model.domain.ChargeStatus.*;
+import static uk.gov.pay.connector.util.JsonEncoder.toJson;
 
-public class WorldpayNotificationResourceITest extends CardResourceITestBase {
+public class SandboxNotificationResourceITest extends CardResourceITestBase {
 
-    private static final String RESPONSE_EXPECTED_BY_WORLDPAY = "[OK]";
-    private static final String NOTIFICATION_PATH = "/v1/api/notifications/worldpay";
+    private static final String RESPONSE_EXPECTED_BY_SANDBOX = "[OK]";
+    private static final String NOTIFICATION_PATH = "/v1/api/notifications/sandbox";
 
-    public WorldpayNotificationResourceITest() {
-        super("worldpay");
+    public SandboxNotificationResourceITest() {
+        super("sandbox");
     }
 
     @Test
-    public void shouldHandleAWorldpayNotification() throws Exception {
+    public void shouldHandleANotification() throws Exception {
 
         String transactionId = "transaction-id";
         String chargeId = createNewChargeWith(CAPTURE_SUBMITTED, transactionId);
@@ -37,7 +35,7 @@ public class WorldpayNotificationResourceITest extends CardResourceITestBase {
                 .extract().body()
                 .asString();
 
-        assertThat(response, is(RESPONSE_EXPECTED_BY_WORLDPAY));
+        assertThat(response, is(RESPONSE_EXPECTED_BY_SANDBOX));
 
         assertFrontendChargeStatusIs(chargeId, CAPTURED.getValue());
     }
@@ -53,13 +51,14 @@ public class WorldpayNotificationResourceITest extends CardResourceITestBase {
                 .extract().body()
                 .asString();
 
-        assertThat(response, is(RESPONSE_EXPECTED_BY_WORLDPAY));
+        assertThat(response, is(RESPONSE_EXPECTED_BY_SANDBOX));
 
         assertFrontendChargeStatusIs(chargeId, CAPTURED.getValue());
     }
 
     @Test
     public void shouldNotAddUnknownStatusToDatabaseFromANotification() throws Exception {
+
         String transactionId = "transaction-id";
         String chargeId = createNewChargeWith(CAPTURE_SUBMITTED, transactionId);
 
@@ -68,7 +67,27 @@ public class WorldpayNotificationResourceITest extends CardResourceITestBase {
                 .extract().body()
                 .asString();
 
-        assertThat(response, is(RESPONSE_EXPECTED_BY_WORLDPAY));
+        assertThat(response, is(RESPONSE_EXPECTED_BY_SANDBOX));
+
+        assertFrontendChargeStatusIs(chargeId, CAPTURE_SUBMITTED.getValue());
+    }
+
+    @Test
+    public void shouldIgnoreMalformedNotification() throws Exception {
+
+        String transactionId = "transaction-id";
+        String chargeId = createNewChargeWith(CAPTURE_SUBMITTED, transactionId);
+
+        String response = given().port(app.getLocalPort())
+                .body("whatever")
+                .contentType(APPLICATION_JSON)
+                .post(NOTIFICATION_PATH)
+                .then()
+                .statusCode(200)
+                .extract().body()
+                .asString();
+
+        assertThat(response, is(RESPONSE_EXPECTED_BY_SANDBOX));
 
         assertFrontendChargeStatusIs(chargeId, CAPTURE_SUBMITTED.getValue());
     }
@@ -91,7 +110,7 @@ public class WorldpayNotificationResourceITest extends CardResourceITestBase {
     public void shouldFailWhenUnexpectedContentType() throws Exception {
         given().port(app.getLocalPort())
                 .body(notificationPayloadForTransaction("any", "WHATEVER"))
-                .contentType(APPLICATION_JSON)
+                .contentType(TEXT_XML)
                 .post(NOTIFICATION_PATH)
                 .then()
                 .statusCode(415);
@@ -101,15 +120,14 @@ public class WorldpayNotificationResourceITest extends CardResourceITestBase {
     private ValidatableResponse notifyConnector(String transactionId, String status) throws IOException {
         return given().port(app.getLocalPort())
                 .body(notificationPayloadForTransaction(transactionId, status))
-                .contentType(TEXT_XML)
+                .contentType(APPLICATION_JSON)
                 .post(NOTIFICATION_PATH)
                 .then();
     }
 
     private String notificationPayloadForTransaction(String transactionId, String status) throws IOException {
-        URL resource = getResource("templates/worldpay/notification.xml");
-        return Resources.toString(resource, Charset.defaultCharset())
-                .replace("{{transactionId}}", transactionId)
-                .replace("{{status}}", status);
+        return toJson(ImmutableMap.of(
+                "transaction_id", transactionId,
+                "status", status));
     }
 }

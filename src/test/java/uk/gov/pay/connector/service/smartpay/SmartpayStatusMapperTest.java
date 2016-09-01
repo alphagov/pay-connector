@@ -2,9 +2,7 @@ package uk.gov.pay.connector.service.smartpay;
 
 import org.apache.commons.lang3.tuple.Pair;
 import org.junit.Test;
-import uk.gov.pay.connector.model.domain.ChargeStatus;
-import uk.gov.pay.connector.service.StatusMapper.Status;
-import uk.gov.pay.connector.service.worldpay.WorldpayStatusMapper;
+import uk.gov.pay.connector.service.Status;
 
 import static org.hamcrest.core.Is.is;
 import static org.junit.Assert.assertThat;
@@ -15,7 +13,7 @@ public class SmartpayStatusMapperTest {
     @Test
     public void shouldReturnAStatus() throws Exception {
         Pair<String, Boolean> value = Pair.of("CAPTURE", true);
-        Status<ChargeStatus> status = SmartpayStatusMapper.from(value);
+        Status status = SmartpayStatusMapper.get().from(value);
 
         assertThat(status.isMapped(), is(true));
         assertThat(status.isIgnored(), is(false));
@@ -25,7 +23,7 @@ public class SmartpayStatusMapperTest {
 
     @Test
     public void shouldReturnEmptyWhenStatusIsUnknown() throws Exception {
-        Status<ChargeStatus> status = WorldpayStatusMapper.from("unknown");
+        Status status = SmartpayStatusMapper.get().from(Pair.of("UNKNOWN", true));
 
         assertThat(status.isMapped(), is(false));
         assertThat(status.isIgnored(), is(false));
@@ -34,7 +32,7 @@ public class SmartpayStatusMapperTest {
 
     @Test
     public void shouldReturnEmptyWhenStatusIsIgnored() throws Exception {
-        Status<ChargeStatus> status = WorldpayStatusMapper.from("AUTHORISED");
+        Status status = SmartpayStatusMapper.get().from(Pair.of("AUTHORISATION", true));
 
         assertThat(status.isMapped(), is(false));
         assertThat(status.isIgnored(), is(true));

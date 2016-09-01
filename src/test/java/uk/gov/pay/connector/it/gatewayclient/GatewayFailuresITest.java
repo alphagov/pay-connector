@@ -16,7 +16,6 @@ import static org.junit.Assert.assertThat;
 import static uk.gov.pay.connector.model.domain.ChargeStatus.*;
 import static uk.gov.pay.connector.resources.ApiPaths.FRONTEND_CHARGE_AUTHORIZE_API_PATH;
 import static uk.gov.pay.connector.resources.ApiPaths.FRONTEND_CHARGE_CAPTURE_API_PATH;
-import static uk.gov.pay.connector.resources.PaymentProviderValidator.SMARTPAY_PROVIDER;
 import static uk.gov.pay.connector.util.CardUtils.aValidCard;
 
 public class GatewayFailuresITest {
@@ -44,7 +43,7 @@ public class GatewayFailuresITest {
         gatewayStub = new GatewayStub(TRANSACTION_ID);
         db = app.getDatabaseTestHelper();
 
-        db.addGatewayAccount(ACCOUNT_ID, SMARTPAY_PROVIDER);
+        db.addGatewayAccount(ACCOUNT_ID, "smartpay");
     }
 
     @Test

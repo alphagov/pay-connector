@@ -1,12 +1,19 @@
-package uk.gov.pay.connector.smartpay;
+package uk.gov.pay.connector.service.smartpay;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
+import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableMap;
+import com.google.common.io.Resources;
+import fj.data.Either;
+import org.apache.commons.lang3.tuple.Pair;
 import org.hamcrest.CoreMatchers;
-import org.junit.Assert;
+import org.hamcrest.MatcherAssert;
 import org.junit.Before;
 import org.junit.Test;
+import org.mockito.Matchers;
 import uk.gov.pay.connector.model.CaptureGatewayRequest;
+import uk.gov.pay.connector.model.Notification;
+import uk.gov.pay.connector.model.Notifications;
 import uk.gov.pay.connector.model.domain.Address;
 import uk.gov.pay.connector.model.domain.Card;
 import uk.gov.pay.connector.model.domain.ChargeEntity;
@@ -15,6 +22,7 @@ import uk.gov.pay.connector.model.gateway.AuthorisationGatewayRequest;
 import uk.gov.pay.connector.model.gateway.GatewayResponse;
 import uk.gov.pay.connector.service.smartpay.SmartpayAuthorisationResponse;
 import uk.gov.pay.connector.service.smartpay.SmartpayPaymentProvider;
+import uk.gov.pay.connector.service.smartpay.SmartpayStatusMapper;
 import uk.gov.pay.connector.service.worldpay.WorldpayCaptureResponse;
 
 import javax.ws.rs.client.Client;
@@ -23,9 +31,16 @@ import javax.ws.rs.client.Invocation;
 import javax.ws.rs.client.WebTarget;
 import javax.ws.rs.core.Response;
 
+import java.io.IOException;
+import java.net.URL;
+import java.nio.charset.Charset;
+
+import static com.google.common.io.Resources.getResource;
 import static javax.ws.rs.core.MediaType.APPLICATION_XML;
-import static org.hamcrest.CoreMatchers.not;
-import static org.hamcrest.CoreMatchers.nullValue;
+import static org.hamcrest.CoreMatchers.*;
+import static org.hamcrest.core.Is.is;
+import static org.hamcrest.core.IsSame.sameInstance;
+import static org.junit.Assert.assertThat;
 import static org.junit.Assert.assertTrue;
 import static org.mockito.Matchers.*;
 import static org.mockito.Mockito.mock;
@@ -37,16 +52,25 @@ import static uk.gov.pay.connector.service.GatewayClient.createGatewayClient;
 import static uk.gov.pay.connector.util.CardUtils.buildCardDetails;
 
 public class SmartpayPaymentProviderTest {
+
     private Client client;
     private SmartpayPaymentProvider provider;
-
-    private String pspReference = "12345678";
 
     @Before
     public void setup() throws Exception {
         client = mock(Client.class);
         mockSmartpaySuccessfulOrderSubmitResponse();
         provider = new SmartpayPaymentProvider(createGatewayClient(client, ImmutableMap.of(TEST.toString(), "http://smartpay.url")), new ObjectMapper());
+    }
+
+    @Test
+    public void shouldGetPaymentProviderName() {
+        assertThat(provider.getPaymentGatewayName(), is("smartpay"));
+    }
+
+    @Test
+    public void shouldGetStatusMapper() {
+        assertThat(provider.getStatusMapper(), sameInstance(SmartpayStatusMapper.get()));
     }
 
     @Test
@@ -61,9 +85,9 @@ public class SmartpayPaymentProviderTest {
         GatewayResponse<SmartpayAuthorisationResponse> response = provider.authorise(new AuthorisationGatewayRequest(chargeEntity, card));
 
         assertTrue(response.isSuccessful());
-        Assert.assertThat(response.getBaseResponse().isPresent(), CoreMatchers.is(true));
+        assertThat(response.getBaseResponse().isPresent(), CoreMatchers.is(true));
         String transactionId = response.getBaseResponse().get().getPspReference();
-        Assert.assertThat(transactionId, CoreMatchers.is(not(nullValue())));
+        assertThat(transactionId, CoreMatchers.is(not(nullValue())));
     }
 
     @Test
@@ -77,6 +101,33 @@ public class SmartpayPaymentProviderTest {
 
         GatewayResponse<WorldpayCaptureResponse> response = provider.capture(CaptureGatewayRequest.valueOf(chargeEntity));
         assertTrue(response.isSuccessful());
+    }
+
+    @Test
+    public void parseNotification_shouldReturnErrorIfUnparseableSoapMessage() {
+        Either<String, Notifications<Pair<String, Boolean>>> response = provider.parseNotification("not valid soap message");
+        assertThat(response.isLeft(), is(true));
+        assertThat(response.left().value(), containsString("not valid soap message"));
+    }
+
+    @Test
+    public void parseNotification_shouldReturnNotificationsIfValidSoapMessage() throws IOException {
+        String transactionId = "transaction-id";
+
+        Either<String, Notifications<Pair<String, Boolean>>> response = provider.parseNotification(notificationPayloadForTransaction(transactionId, "notification-capture"));
+        
+        assertThat(response.isRight(), is(true));
+        ImmutableList<Notification<Pair<String, Boolean>>> notifications = response.right().value().get();
+
+        assertThat(notifications.size(), is(1));
+
+        Notification<Pair<String, Boolean>> smartpayNotification = notifications.get(0);
+
+        assertThat(smartpayNotification.getTransactionId(), is(transactionId));
+
+        Pair<String, Boolean> status = smartpayNotification.getStatus();
+        assertThat(status.getLeft(), is("CAPTURE"));
+        assertThat(status.getRight(), is(true));
     }
 
     private GatewayAccountEntity aServiceAccount() {
@@ -109,7 +160,7 @@ public class SmartpayPaymentProviderTest {
 
         Response response = mock(Response.class);
         when(response.readEntity(String.class)).thenReturn(responsePayload);
-        when(mockBuilder.post(any(Entity.class))).thenReturn(response);
+        when(mockBuilder.post(Matchers.any(Entity.class))).thenReturn(response);
 
         when(response.getStatus()).thenReturn(httpStatus);
     }
@@ -128,7 +179,7 @@ public class SmartpayPaymentProviderTest {
                 "                <issuerUrl xmlns=\"http://payment.services.adyen.com\" xsi:nil=\"true\"/>\n" +
                 "                <md xmlns=\"http://payment.services.adyen.com\" xsi:nil=\"true\"/>\n" +
                 "                <paRequest xmlns=\"http://payment.services.adyen.com\" xsi:nil=\"true\"/>\n" +
-                "                <pspReference xmlns=\"http://payment.services.adyen.com\">" + pspReference + "</pspReference>\n" +
+                "                <pspReference xmlns=\"http://payment.services.adyen.com\">12345678</pspReference>\n" +
                 "                <refusalReason xmlns=\"http://payment.services.adyen.com\" xsi:nil=\"true\"/>\n" +
                 "                <resultCode xmlns=\"http://payment.services.adyen.com\">Authorised</resultCode>\n" +
                 "            </ns1:paymentResult>\n" +
@@ -161,5 +212,11 @@ public class SmartpayPaymentProviderTest {
         address.setCountry("GB");
 
         return buildCardDetails("Mr. Payment", "4111111111111111", "123", "12/15", address);
+    }
+
+    private String notificationPayloadForTransaction(String transactionId, String fileName) throws IOException {
+        URL resource = getResource("templates/smartpay/"+fileName+".json");
+        return Resources.toString(resource, Charset.defaultCharset())
+                .replace("{{transactionId}}", transactionId);
     }
 }

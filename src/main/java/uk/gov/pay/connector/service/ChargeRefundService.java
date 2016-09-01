@@ -109,8 +109,8 @@ public class ChargeRefundService {
     private NonTransactionalOperation<TransactionContext, GatewayResponse> doGatewayRefund(PaymentProviders providers) {
         return context -> {
             RefundEntity refundEntity = context.get(RefundEntity.class);
-            return providers.resolve(refundEntity.getChargeEntity().getGatewayAccount().getGatewayName())
-                    .refund(RefundGatewayRequest.valueOf(refundEntity.getChargeEntity(), refundEntity.getAmount()));
+            return providers.byName(refundEntity.getChargeEntity().getPaymentGatewayName())
+                    .refund(RefundGatewayRequest.valueOf(refundEntity));
         };
     }
 
@@ -124,8 +124,8 @@ public class ChargeRefundService {
 
             logger.info(format("Card refund response received - charge_external_id=%s, transaction_id=%s, status=%s",
                     chargeEntity.getExternalId(), chargeEntity.getGatewayTransactionId(), status));
-            logger.info("Refund status to update - from: {}, to: {} for Charge ID: {}, Refund ID: {}, amount: {}",
-                    refundEntity.getStatus(), status, chargeEntity.getId(), refundEntity.getId(), refundEntity.getAmount());
+            logger.info("Refund status to update - from={}, to={} for charge_id={}, charge_external_id={}, refund_id={}, refund_external_id={}, amount={}",
+                    refundEntity.getStatus(), status, chargeEntity.getId(), chargeEntity.getExternalId(), refundEntity.getId(), refundEntity.getExternalId(), refundEntity.getAmount());
             refundEntity.setStatus(status);
 
             return new Response(gatewayResponse, refundEntity);

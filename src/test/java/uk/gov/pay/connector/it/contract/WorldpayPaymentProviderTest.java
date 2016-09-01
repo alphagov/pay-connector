@@ -1,7 +1,6 @@
 package uk.gov.pay.connector.it.contract;
 
 import com.google.common.collect.ImmutableMap;
-import com.google.common.io.Resources;
 import org.junit.Assume;
 import org.junit.Before;
 import org.junit.Test;
@@ -9,10 +8,10 @@ import uk.gov.pay.connector.app.GatewayCredentialsConfig;
 import uk.gov.pay.connector.model.CancelGatewayRequest;
 import uk.gov.pay.connector.model.CaptureGatewayRequest;
 import uk.gov.pay.connector.model.RefundGatewayRequest;
-import uk.gov.pay.connector.model.StatusUpdates;
 import uk.gov.pay.connector.model.domain.Card;
 import uk.gov.pay.connector.model.domain.ChargeEntity;
 import uk.gov.pay.connector.model.domain.GatewayAccountEntity;
+import uk.gov.pay.connector.model.domain.RefundEntity;
 import uk.gov.pay.connector.model.gateway.AuthorisationGatewayRequest;
 import uk.gov.pay.connector.model.gateway.GatewayResponse;
 import uk.gov.pay.connector.service.worldpay.WorldpayCaptureResponse;
@@ -22,22 +21,15 @@ import uk.gov.pay.connector.service.worldpay.WorldpayPaymentProvider;
 import javax.ws.rs.client.ClientBuilder;
 import java.io.IOException;
 import java.net.URL;
-import java.nio.charset.Charset;
 import java.util.Map;
-import java.util.Optional;
-import java.util.function.Consumer;
 
-import static com.google.common.io.Resources.getResource;
 import static java.util.UUID.randomUUID;
 import static org.hamcrest.CoreMatchers.not;
 import static org.hamcrest.CoreMatchers.nullValue;
 import static org.hamcrest.MatcherAssert.assertThat;
-import static org.hamcrest.Matchers.empty;
 import static org.hamcrest.core.Is.is;
 import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertTrue;
-import static org.mockito.Mockito.mock;
-import static org.mockito.Mockito.verifyZeroInteractions;
 import static uk.gov.pay.connector.model.domain.ChargeEntityFixture.aValidChargeEntity;
 import static uk.gov.pay.connector.model.domain.GatewayAccountEntity.Type.TEST;
 import static uk.gov.pay.connector.service.GatewayClient.createGatewayClient;
@@ -49,6 +41,7 @@ public class WorldpayPaymentProviderTest {
     private GatewayAccountEntity validGatewayAccount;
     private Map<String, String> validCredentials;
     private ChargeEntity chargeEntity;
+
     @Before
     public void checkThatWorldpayIsUp() {
         try {
@@ -94,9 +87,7 @@ public class WorldpayPaymentProviderTest {
 
     @Test
     public void shouldBeAbleToSubmitAPartialRefundAfterACaptureHasBeenSubmitted() throws InterruptedException {
-
         WorldpayPaymentProvider connector = getValidWorldpayPaymentProvider();
-
         GatewayResponse<WorldpayOrderStatusResponse> response = successfulWorldpayCardAuth(connector);
 
         assertThat(response.getBaseResponse().isPresent(), is(true));
@@ -106,12 +97,13 @@ public class WorldpayPaymentProviderTest {
         assertThat(transactionId, is(not(nullValue())));
 
         chargeEntity.setGatewayTransactionId(transactionId);
-
         GatewayResponse<WorldpayCaptureResponse> captureResponse = connector.capture(CaptureGatewayRequest.valueOf(chargeEntity));
 
         assertThat(captureResponse.isSuccessful(), is(true));
 
-        GatewayResponse refundGatewayResponse = connector.refund(RefundGatewayRequest.valueOf(chargeEntity));
+        RefundEntity refundEntity = new RefundEntity(chargeEntity, 1L);
+
+        GatewayResponse refundGatewayResponse = connector.refund(RefundGatewayRequest.valueOf(refundEntity));
 
         assertTrue(refundGatewayResponse.isSuccessful());
     }
@@ -131,37 +123,6 @@ public class WorldpayPaymentProviderTest {
         GatewayResponse cancelResponse = connector.cancel(cancelGatewayRequest);
 
         assertThat(cancelResponse.isSuccessful(), is(true));
-    }
-
-    @Test
-    public void handleNotification_shouldEnquiryToVerifyTheStatus() throws Exception {
-        WorldpayPaymentProvider connector = getValidWorldpayPaymentProvider();
-        GatewayResponse<WorldpayOrderStatusResponse> response = successfulWorldpayCardAuth(connector);
-
-        Consumer<StatusUpdates> mockAccountUpdater = mock(Consumer.class);
-
-        assertThat(response.getBaseResponse().isPresent(), is(true));
-        String transactionId = response.getBaseResponse().get().getTransactionId();
-
-        chargeEntity.setGatewayTransactionId(transactionId);
-
-        GatewayResponse<WorldpayCaptureResponse> captureResponse = connector.capture(CaptureGatewayRequest.valueOf(chargeEntity));
-
-        assertThat(captureResponse.isSuccessful(), is(true));
-
-        chargeEntity.setGatewayTransactionId(transactionId);
-        assertThat(transactionId, is(not(nullValue())));
-
-        StatusUpdates statusResponse = connector.handleNotification(
-                notificationPayloadForTransaction(transactionId, "CAPTURED"),
-                payloadChecks -> true,
-                accoundFinder -> Optional.of(chargeEntity),
-                mockAccountUpdater
-        );
-
-        assertThat(statusResponse.successful(), is(true));
-        assertThat(statusResponse.getStatusUpdates(), is(empty()));
-        verifyZeroInteractions(mockAccountUpdater);
     }
 
     @Test
@@ -230,11 +191,4 @@ public class WorldpayPaymentProviderTest {
             return ImmutableMap.of(TEST.toString(), "https://secure-test.worldpay.com/jsp/merchant/xml/paymentService.jsp");
         }
     };
-
-    private String notificationPayloadForTransaction(String transactionId, String status) throws IOException {
-        URL resource = getResource("templates/worldpay/notification.xml");
-        return Resources.toString(resource, Charset.defaultCharset())
-                .replace("{{transactionId}}", transactionId)
-                .replace("{{status}}", status);
-    }
 }

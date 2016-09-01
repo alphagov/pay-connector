@@ -16,7 +16,6 @@ import static javax.ws.rs.core.MediaType.TEXT_XML;
 import static org.hamcrest.Matchers.is;
 import static org.junit.Assert.assertThat;
 import static uk.gov.pay.connector.model.domain.ChargeStatus.*;
-import static uk.gov.pay.connector.resources.PaymentProviderValidator.SMARTPAY_PROVIDER;
 import static uk.gov.pay.connector.util.TransactionId.randomId;
 
 public class SmartpayNotificationResourceITest extends CardResourceITestBase {
@@ -25,7 +24,7 @@ public class SmartpayNotificationResourceITest extends CardResourceITestBase {
     private static final String RESPONSE_EXPECTED_BY_SMARTPAY = "[accepted]";
 
     public SmartpayNotificationResourceITest() {
-        super(SMARTPAY_PROVIDER);
+        super("smartpay");
     }
 
     @Test

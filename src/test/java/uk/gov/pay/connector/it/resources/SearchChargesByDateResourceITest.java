@@ -28,7 +28,7 @@ public class SearchChargesByDateResourceITest {
 
     @Before
     public void setupGatewayAccount() {
-        app.getDatabaseTestHelper().addGatewayAccount(accountId, "test gateway");
+        app.getDatabaseTestHelper().addGatewayAccount(accountId, "sandbox");
     }
 
     @Test

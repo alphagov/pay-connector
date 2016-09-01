@@ -83,7 +83,7 @@ public class CardAuthoriseServiceTest extends CardServiceTest {
         setupMockExecutorServiceMock();
         setupPaymentProviderMock(providerTransactionId, true, null);
 
-        when(mockedProviders.resolve(charge.getGatewayAccount().getGatewayName())).thenReturn(mockedPaymentProvider);
+        when(mockedProviders.byName(charge.getPaymentGatewayName())).thenReturn(mockedPaymentProvider);
         when(mockedPaymentProvider.generateTransactionId()).thenReturn(Optional.of(generatedTransactionId));
 
         GatewayResponse response = cardAuthorisationService.doAuthorise(charge.getExternalId(), CardUtils.aValidCard());
@@ -221,7 +221,7 @@ public class CardAuthoriseServiceTest extends CardServiceTest {
         setupMockExecutorServiceMock();
         setupPaymentProviderMock(transactionId, false, null);
 
-        when(mockedProviders.resolve(charge.getGatewayAccount().getGatewayName())).thenReturn(mockedPaymentProvider);
+        when(mockedProviders.byName(charge.getPaymentGatewayName())).thenReturn(mockedPaymentProvider);
         when(mockedPaymentProvider.generateTransactionId()).thenReturn(Optional.empty());
 
         return cardAuthorisationService.doAuthorise(charge.getExternalId(), CardUtils.aValidCard());
@@ -238,7 +238,7 @@ public class CardAuthoriseServiceTest extends CardServiceTest {
         setupMockExecutorServiceMock();
         setupPaymentProviderMock(transactionId, true, null);
 
-        when(mockedProviders.resolve(charge.getGatewayAccount().getGatewayName())).thenReturn(mockedPaymentProvider);
+        when(mockedProviders.byName(charge.getPaymentGatewayName())).thenReturn(mockedPaymentProvider);
         when(mockedPaymentProvider.generateTransactionId()).thenReturn(Optional.empty());
 
         return cardAuthorisationService.doAuthorise(charge.getExternalId(), cardDetails);
@@ -251,7 +251,7 @@ public class CardAuthoriseServiceTest extends CardServiceTest {
         setupMockExecutorServiceMock();
         setupPaymentProviderMock(null, false, "error-code");
 
-        when(mockedProviders.resolve(charge.getGatewayAccount().getGatewayName())).thenReturn(mockedPaymentProvider);
+        when(mockedProviders.byName(charge.getPaymentGatewayName())).thenReturn(mockedPaymentProvider);
         when(mockedPaymentProvider.generateTransactionId()).thenReturn(Optional.empty());
 
         return cardAuthorisationService.doAuthorise(charge.getExternalId(), CardUtils.aValidCard());

@@ -8,6 +8,7 @@ import org.junit.rules.ExpectedException;
 import uk.gov.pay.connector.app.ConnectorConfiguration;
 import uk.gov.pay.connector.app.GatewayCredentialsConfig;
 import uk.gov.pay.connector.app.SmartpayCredentialsConfig;
+import uk.gov.pay.connector.resources.PaymentGatewayName;
 import uk.gov.pay.connector.service.sandbox.SandboxPaymentProvider;
 import uk.gov.pay.connector.service.smartpay.SmartpayPaymentProvider;
 import uk.gov.pay.connector.service.worldpay.WorldpayPaymentProvider;
@@ -37,29 +38,19 @@ public class PaymentProvidersTest {
 
     @Test
     public void shouldResolveSandboxPaymentProvider() throws Exception {
-        PaymentProvider sandbox = providers.resolve("sandbox");
+        PaymentProvider sandbox = providers.byName(PaymentGatewayName.SANDBOX);
         assertThat(sandbox, is(instanceOf(SandboxPaymentProvider.class)));
     }
 
     @Test
     public void shouldResolveWorldpayPaymentProvider() throws Exception {
-        PaymentProvider worldpay = providers.resolve("worldpay");
+        PaymentProvider worldpay = providers.byName(PaymentGatewayName.WORLDPAY);
         assertThat(worldpay, is(instanceOf(WorldpayPaymentProvider.class)));
     }
 
     @Test
     public void shouldResolveSmartpayPaymentProvider() throws Exception {
-        PaymentProvider smartpay = providers.resolve("smartpay");
+        PaymentProvider smartpay = providers.byName(PaymentGatewayName.SMARTPAY);
         assertThat(smartpay, is(instanceOf(SmartpayPaymentProvider.class)));
-    }
-
-    @Test
-    public void shouldResolveToEmptyForUnknownPaymentProvider() throws Exception {
-        String paymentProviderName = "providerNotImplemented";
-
-        expectedException.expect(RuntimeException.class);
-        expectedException.expectMessage("Unsupported PaymentProvider " + paymentProviderName);
-
-        providers.resolve(paymentProviderName);
     }
 }

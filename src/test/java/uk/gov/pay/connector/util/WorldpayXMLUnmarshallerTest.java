@@ -40,32 +40,14 @@ public class WorldpayXMLUnmarshallerTest {
         String status = "CAPTURED";
         String successPayload = readPayload("templates/worldpay/notification.xml")
                 .replace("{{transactionId}}", transactionId)
-                .replace("{{status}}", status);
+                .replace("{{status}}", status)
+                .replace("{{refund-ref}}", "REFUND-REF");
 
         WorldpayNotification response = XMLUnmarshaller.unmarshall(successPayload, WorldpayNotification.class);
         assertThat(response.getStatus(), is(status));
         assertThat(response.getTransactionId(), is(transactionId));
         assertThat(response.getMerchantCode(), is("MERCHANTCODE"));
-    }
-
-    @Test
-    public void shouldUnmarshallAInquirySuccessResponse() throws Exception {
-        String status = "CAPTURED";
-
-        String successPayload = readPayload("templates/worldpay/inquiry-success-response.xml")
-                .replace("{{status}}", status);
-
-        WorldpayOrderStatusResponse response = XMLUnmarshaller.unmarshall(successPayload, WorldpayOrderStatusResponse.class);
-        assertThat(response.getLastEvent(), is(status));
-        assertThat(response.getTransactionId(), is("transaction-id"));
-    }
-
-    @Test
-    public void shouldUnmarshallAInquiryErrorResponse() throws Exception {
-        String errorPayload = readPayload("templates/worldpay/inquiry-error-response.xml");
-        WorldpayOrderStatusResponse response = XMLUnmarshaller.unmarshall(errorPayload, WorldpayOrderStatusResponse.class);
-        assertThat(response.getErrorCode(), is("5"));
-        assertThat(response.getErrorMessage(), is("Could not find payment for order"));
+        assertThat(response.getReference(), is("REFUND-REF"));
     }
 
     @Test
