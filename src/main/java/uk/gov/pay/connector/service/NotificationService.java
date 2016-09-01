@@ -69,6 +69,7 @@ public class NotificationService {
 
         private <T> NonTransactionalOperation<TransactionContext, List<ExtendedNotification<T>>> prepare(String payload) {
             return context -> {
+
                 Either<String, Notifications<T>> notifications = paymentProvider.parseNotification(payload);
 
                 if (notifications.isLeft()) {
@@ -105,7 +106,7 @@ public class NotificationService {
 
                             if (notification.isOfRefundType()) {
                                 if (isBlank(notification.getReference())) {
-                                    logger.info(format("Notification with transaction id=%s and no reference ignored.",
+                                    logger.error(format("Notification with transaction id=%s of type refund with no reference ignored.",
                                             notification.getTransactionId()));
                                     return;
                                 }
@@ -168,7 +169,7 @@ public class NotificationService {
         private <T> Predicate<ExtendedNotification<T>> isValid() {
             return notification -> {
                 if (!isNotBlank(notification.getTransactionId())) {
-                    logger.warn("Notification with no transaction id ignored.");
+                    logger.error("Notification with no transaction id ignored.");
                     return false;
                 }
                 return true;
@@ -179,7 +180,7 @@ public class NotificationService {
             Status mappedStatus = paymentProvider.getStatusMapper().from(status);
 
             if (mappedStatus.isUnknown()) {
-                logger.warn(format("Notification with unknown status %s.", status));
+                logger.error(format("Notification with unknown status %s.", status));
                 return Optional.empty();
             }
 
