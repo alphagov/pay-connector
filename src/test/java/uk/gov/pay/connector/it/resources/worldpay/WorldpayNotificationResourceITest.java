@@ -28,7 +28,6 @@ public class WorldpayNotificationResourceITest extends CardResourceITestBase {
 
     @Test
     public void shouldHandleAWorldpayNotification() throws Exception {
-
         String transactionId = "transaction-id";
         String chargeId = createNewChargeWith(CAPTURE_SUBMITTED, transactionId);
 
@@ -56,6 +55,17 @@ public class WorldpayNotificationResourceITest extends CardResourceITestBase {
         assertThat(response, is(RESPONSE_EXPECTED_BY_WORLDPAY));
 
         assertFrontendChargeStatusIs(chargeId, CAPTURED.getValue());
+    }
+
+    @Test
+    public void shouldReturnForbiddenIfNotificationIpDoesNotBelongToWorldpay() throws Exception {
+        given().port(app.getLocalPort())
+                .body(notificationPayloadForTransaction("transaction-id", "CAPTURED"))
+                .contentType(TEXT_XML)
+                .header("X-Real-IP", "8.8.8.8")
+                .post(NOTIFICATION_PATH)
+                .then()
+                .statusCode(403);
     }
 
     @Test
@@ -102,6 +112,7 @@ public class WorldpayNotificationResourceITest extends CardResourceITestBase {
         return given().port(app.getLocalPort())
                 .body(notificationPayloadForTransaction(transactionId, status))
                 .contentType(TEXT_XML)
+                .header("X-Real-IP", "195.35.90.1")
                 .post(NOTIFICATION_PATH)
                 .then();
     }

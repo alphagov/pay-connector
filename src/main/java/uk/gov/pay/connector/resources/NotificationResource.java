@@ -3,18 +3,19 @@ package uk.gov.pay.connector.resources;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import uk.gov.pay.connector.service.NotificationService;
+import uk.gov.pay.connector.util.DnsUtils;
+import uk.gov.pay.connector.util.NotificationUtil;
 
 import javax.annotation.security.PermitAll;
 import javax.inject.Inject;
-import javax.ws.rs.Consumes;
-import javax.ws.rs.POST;
-import javax.ws.rs.Path;
+import javax.ws.rs.*;
 import javax.ws.rs.core.Response;
 import java.io.IOException;
 
 import static javax.ws.rs.core.MediaType.APPLICATION_JSON;
 import static javax.ws.rs.core.MediaType.TEXT_XML;
 import static uk.gov.pay.connector.resources.PaymentGatewayName.SMARTPAY;
+import static uk.gov.pay.connector.util.ResponseUtil.forbiddenErrorResponse;
 
 @Path("/")
 public class NotificationResource {
@@ -22,6 +23,7 @@ public class NotificationResource {
     private static final Logger logger = LoggerFactory.getLogger(NotificationResource.class);
 
     private final NotificationService notificationService;
+    private NotificationUtil notificationUtil = new NotificationUtil();
 
     @Inject
     public NotificationResource(NotificationService notificationService) {
@@ -39,7 +41,12 @@ public class NotificationResource {
     @POST
     @Consumes(TEXT_XML)
     @Path("v1/api/notifications/worldpay")
-    public Response authoriseWorldpayNotifications(String notification) throws IOException {
+    @Produces({TEXT_XML, APPLICATION_JSON})
+    public Response authoriseWorldpayNotifications(String notification, @HeaderParam("X-Real-IP") String ipAddress) throws IOException {
+        if (!notificationUtil.notificationIpBelongsToDomain(ipAddress, "worldpay.com")) {
+            logger.error("Received notification from domain different than 'worldpay.com'");
+            return forbiddenErrorResponse("forbidden");
+        }
         return handleNotification("worldpay", notification);
     }
 
