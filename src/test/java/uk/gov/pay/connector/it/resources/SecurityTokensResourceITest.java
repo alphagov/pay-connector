@@ -56,8 +56,6 @@ public class SecurityTokensResourceITest {
         tokenGetsStatusCode
                 .body("externalId", is(defaultTestCharge.getExternalChargeId()))
                 .body("status", is(CREATED.getValue()))
-                .body("gatewayAccount.gateway_account_id", is(Long.valueOf(defaultTestAccount.getAccountId()).intValue()))
-                .body("gatewayAccount.payment_provider", is(defaultTestAccount.getPaymentProvider()))
                 .body("gatewayAccount.service_name", is(defaultTestAccount.getServiceName()));
     }
 

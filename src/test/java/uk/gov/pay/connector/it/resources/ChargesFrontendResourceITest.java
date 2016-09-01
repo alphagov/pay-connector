@@ -44,7 +44,7 @@ public class ChargesFrontendResourceITest {
     private String description = "Test description";
     private String returnUrl = "http://whatever.com";
     private String email = randomAlphanumeric(242) + "@example.com";
-    private String serviceName = "a service name";
+    private String serviceName = "a cool service";
     private long expectedAmount = 6234L;
 
     private RestAssuredClient connectorRestApi = new RestAssuredClient(app, accountId);
@@ -377,9 +377,11 @@ public class ChargesFrontendResourceITest {
 
     private void validateGatewayAccount(ValidatableResponse response) {
         response
-                .body("containsKey('gateway_account_id')", is(false))
                 .body("containsKey('gateway_account')", is(true))
-                .body("gateway_account.gateway_account_id", is(nullValue()))
+                .body("gateway_account.containsKey('gateway_account_id')", is(false))
+                .body("gateway_account.containsKey('type')", is(false))
+                .body("gateway_account.containsKey('payment_provider')", is(false))
+                .body("gateway_account.containsKey('credentials')", is(false))
                 .body("gateway_account.service_name", is(serviceName))
                 .body("gateway_account.card_types", is(notNullValue()))
                 .body("gateway_account.card_types[0].id", is(notNullValue()))
