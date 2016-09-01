@@ -153,10 +153,11 @@ public class NotificationService {
                 return;
             }
             RefundEntity refundEntity = optionalRefundEntity.get();
+            RefundStatus oldStatus = refundEntity.getStatus();
 
             refundEntity.setStatus((RefundStatus) newStatus);
             logger.info(format("Notification with transaction id=%s and reference=%s updated refund status - from=%s, to=%s",
-                    notification.getTransactionId(), notification.getReference(), refundEntity.getStatus(), newStatus));
+                    notification.getTransactionId(), notification.getReference(), oldStatus, newStatus));
         }
 
         private <T> Function<Notification<T>, ExtendedNotification<T>> toExtendedNotification() {
