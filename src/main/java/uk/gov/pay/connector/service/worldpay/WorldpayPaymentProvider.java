@@ -31,7 +31,10 @@ import static uk.gov.pay.connector.util.XMLUnmarshaller.unmarshall;
 public class WorldpayPaymentProvider extends BasePaymentProvider<BaseResponse> {
 
     public WorldpayPaymentProvider(GatewayClient client) {
-        super(client);
+        super(client, false, null);
+    }
+    public WorldpayPaymentProvider(GatewayClient client, boolean isNotificationEndpointSecured, String notificationDomain) {
+        super(client, isNotificationEndpointSecured, notificationDomain);
     }
 
     @Override
@@ -63,6 +66,16 @@ public class WorldpayPaymentProvider extends BasePaymentProvider<BaseResponse> {
     public GatewayResponse cancel(CancelGatewayRequest request) {
         return sendReceive(request, buildCancelOrderFor(), WorldpayCancelResponse.class);
 
+    }
+
+    @Override
+    public Boolean isNotificationEndpointSecured() {
+        return this.isNotificationEndpointSecured;
+    }
+
+    @Override
+    public String getNotificationDomain() {
+        return this.notificationDomain;
     }
 
     @Override

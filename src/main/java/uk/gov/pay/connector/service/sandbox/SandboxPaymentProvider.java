@@ -56,6 +56,16 @@ public class SandboxPaymentProvider extends BasePaymentProvider<BaseResponse> {
     }
 
     @Override
+    public Boolean isNotificationEndpointSecured() {
+        return false;
+    }
+
+    @Override
+    public String getNotificationDomain() {
+        return null;
+    }
+
+    @Override
     public GatewayResponse refund(RefundGatewayRequest request) {
         return createGatewayBaseRefundResponse();
     }

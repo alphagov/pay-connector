@@ -12,7 +12,7 @@ public class ConnectorConfiguration extends Configuration {
 
     @Valid
     @NotNull
-    private GatewayCredentialsConfig worldpayConfig;
+    private WorldpayNotificationConfig worldpayConfig;
 
     @Valid
     @NotNull
@@ -64,7 +64,7 @@ public class ConnectorConfiguration extends Configuration {
     }
 
     @JsonProperty("worldpay")
-    public GatewayCredentialsConfig getWorldpayConfig() {
+    public WorldpayNotificationConfig getWorldpayConfig() {
         return worldpayConfig;
     }
 

@@ -3,8 +3,6 @@ package uk.gov.pay.connector.resources;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import uk.gov.pay.connector.service.NotificationService;
-import uk.gov.pay.connector.util.DnsUtils;
-import uk.gov.pay.connector.util.NotificationUtil;
 
 import javax.annotation.security.PermitAll;
 import javax.inject.Inject;
@@ -23,7 +21,6 @@ public class NotificationResource {
     private static final Logger logger = LoggerFactory.getLogger(NotificationResource.class);
 
     private final NotificationService notificationService;
-    private NotificationUtil notificationUtil = new NotificationUtil();
 
     @Inject
     public NotificationResource(NotificationService notificationService) {
@@ -35,7 +32,14 @@ public class NotificationResource {
     @PermitAll
     @Path("v1/api/notifications/smartpay")
     public Response authoriseSmartpayNotifications(String notification) throws IOException {
-        return handleNotification("smartpay", notification);
+        return handleNotification("not-required", "smartpay", notification);
+    }
+
+    @POST
+    @Consumes(APPLICATION_JSON)
+    @Path("v1/api/notifications/sandbox")
+    public Response authoriseSandboxNotifications(String notification) throws IOException {
+        return handleNotification("not-required", "sandbox", notification);
     }
 
     @POST
@@ -43,17 +47,15 @@ public class NotificationResource {
     @Path("v1/api/notifications/worldpay")
     @Produces({TEXT_XML, APPLICATION_JSON})
     public Response authoriseWorldpayNotifications(String notification, @HeaderParam("X-Real-IP") String ipAddress) throws IOException {
-        if (!notificationUtil.notificationIpBelongsToDomain(ipAddress, "worldpay.com")) {
-            logger.error("Received notification from domain different than 'worldpay.com'");
-            return forbiddenErrorResponse("forbidden");
-        }
-        return handleNotification("worldpay", notification);
+        return handleNotification(ipAddress, "worldpay", notification);
     }
 
-    private Response handleNotification(String name, String notification) {
+    private Response handleNotification(String ipAddress, String name, String notification) {
         logger.info("Received notification from provider={}, notification={}", name, notification);
         PaymentGatewayName paymentGatewayName = PaymentGatewayName.valueFrom(name);
-        notificationService.acceptNotificationFor(paymentGatewayName, notification);
+        if (!notificationService.handleNotificationFor(ipAddress, paymentGatewayName, notification)) {
+            return forbiddenErrorResponse("forbidden");
+        }
         String response = getResponseFor(paymentGatewayName);
         logger.info("Responding to notification from provider={} with 200 {}", name, response);
         return Response.ok(response).build();

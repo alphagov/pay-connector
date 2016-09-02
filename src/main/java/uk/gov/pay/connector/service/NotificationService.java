@@ -19,6 +19,7 @@ import uk.gov.pay.connector.service.transaction.NonTransactionalOperation;
 import uk.gov.pay.connector.service.transaction.TransactionContext;
 import uk.gov.pay.connector.service.transaction.TransactionFlow;
 import uk.gov.pay.connector.service.transaction.TransactionalOperation;
+import uk.gov.pay.connector.util.DnsUtils;
 
 import javax.inject.Inject;
 import java.util.ArrayList;
@@ -40,17 +41,32 @@ public class NotificationService {
     private final RefundDao refundDao;
     private final PaymentProviders paymentProviders;
     private Provider<TransactionFlow> transactionFlowProvider;
+    private final DnsUtils dnsUtils;
 
     @Inject
-    public NotificationService(ChargeDao chargeDao, RefundDao refundDao, PaymentProviders paymentProviders, Provider<TransactionFlow> transactionFlowProvider) {
+    public NotificationService(
+            ChargeDao chargeDao,
+            RefundDao refundDao,
+            PaymentProviders paymentProviders,
+            Provider<TransactionFlow> transactionFlowProvider,
+            DnsUtils dnsUtils) {
         this.chargeDao = chargeDao;
         this.refundDao = refundDao;
         this.paymentProviders = paymentProviders;
         this.transactionFlowProvider = transactionFlowProvider;
+        this.dnsUtils = dnsUtils;
     }
 
-    public void acceptNotificationFor(PaymentGatewayName paymentGatewayName, String payload) {
-        new Handler(paymentProviders.byName(paymentGatewayName)).execute(payload);
+
+    public boolean handleNotificationFor(String ipAddress, PaymentGatewayName paymentGatewayName, String payload) {
+        PaymentProvider paymentProvider = paymentProviders.byName(paymentGatewayName);
+        Handler handler = new Handler(paymentProvider);
+        if (handler.hasSecuredEndpoint() && !handler.matchesIpWithDomain(ipAddress)) {
+            logger.error(format("received notification from domain different than '%s'", paymentProvider.getNotificationDomain()));
+            return false;
+        }
+        handler.execute(payload);
+        return true;
     }
 
     private class Handler {
@@ -58,6 +74,13 @@ public class NotificationService {
 
         public Handler(PaymentProvider paymentProvider) {
             this.paymentProvider = paymentProvider;
+        }
+
+        public boolean hasSecuredEndpoint() {
+            return paymentProvider.isNotificationEndpointSecured();
+        }
+        public boolean matchesIpWithDomain(String ipAddress) {
+            return (dnsUtils.ipMatchesDomain(ipAddress, paymentProvider.getNotificationDomain()));
         }
 
         public void execute(String payload) {

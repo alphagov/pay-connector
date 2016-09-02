@@ -4,6 +4,7 @@ import com.google.common.io.Resources;
 import com.jayway.restassured.response.ValidatableResponse;
 import org.junit.Test;
 import uk.gov.pay.connector.it.base.CardResourceITestBase;
+import uk.gov.pay.connector.util.DnsUtils;
 
 import java.io.IOException;
 import java.net.URL;
@@ -58,17 +59,6 @@ public class WorldpayNotificationResourceITest extends CardResourceITestBase {
     }
 
     @Test
-    public void shouldReturnForbiddenIfNotificationIpDoesNotBelongToWorldpay() throws Exception {
-        given().port(app.getLocalPort())
-                .body(notificationPayloadForTransaction("transaction-id", "CAPTURED"))
-                .contentType(TEXT_XML)
-                .header("X-Real-IP", "8.8.8.8")
-                .post(NOTIFICATION_PATH)
-                .then()
-                .statusCode(403);
-    }
-
-    @Test
     public void shouldNotAddUnknownStatusToDatabaseFromANotification() throws Exception {
         String transactionId = "transaction-id";
         String chargeId = createNewChargeWith(CAPTURE_SUBMITTED, transactionId);
@@ -98,6 +88,17 @@ public class WorldpayNotificationResourceITest extends CardResourceITestBase {
     }
 
     @Test
+    public void shouldReturnForbiddenIfRequestComesFromUnknownIp() throws Exception {
+        given().port(app.getLocalPort())
+                .body(notificationPayloadForTransaction("any", "WHATEVER"))
+                .header("X-Real-IP", "8.8.8.8")
+                .contentType(TEXT_XML)
+                .post(NOTIFICATION_PATH)
+                .then()
+                .statusCode(403);
+    }
+
+    @Test
     public void shouldFailWhenUnexpectedContentType() throws Exception {
         given().port(app.getLocalPort())
                 .body(notificationPayloadForTransaction("any", "WHATEVER"))
@@ -105,14 +106,14 @@ public class WorldpayNotificationResourceITest extends CardResourceITestBase {
                 .post(NOTIFICATION_PATH)
                 .then()
                 .statusCode(415);
-
     }
 
-    private ValidatableResponse notifyConnector(String transactionId, String status) throws IOException {
+    private ValidatableResponse notifyConnector(String transactionId, String status) throws Exception {
+        String validIp = new DnsUtils().dnsLookup("build.ci.pymnt.uk").get();
         return given().port(app.getLocalPort())
                 .body(notificationPayloadForTransaction(transactionId, status))
+                .header("X-Real-IP", validIp)
                 .contentType(TEXT_XML)
-                .header("X-Real-IP", "195.35.90.1")
                 .post(NOTIFICATION_PATH)
                 .then();
     }

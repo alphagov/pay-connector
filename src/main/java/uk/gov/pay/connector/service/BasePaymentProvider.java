@@ -10,9 +10,17 @@ import static fj.data.Either.reduce;
 abstract public class BasePaymentProvider<T extends BaseResponse> implements PaymentProvider<T> {
 
     private GatewayClient client;
+    protected boolean isNotificationEndpointSecured;
+    protected String notificationDomain;
 
     public BasePaymentProvider(GatewayClient client) {
+        this(client, false, null);
+    }
+
+    public BasePaymentProvider(GatewayClient client, boolean isNotificationEndpointSecured, String notificationDomain) {
         this.client = client;
+        this.isNotificationEndpointSecured = isNotificationEndpointSecured;
+        this.notificationDomain = notificationDomain;
     }
 
     protected <U extends GatewayRequest> GatewayResponse sendReceive(U request, Function<U, String> order, Class<? extends BaseResponse> clazz) {

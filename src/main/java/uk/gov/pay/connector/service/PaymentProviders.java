@@ -3,16 +3,15 @@ package uk.gov.pay.connector.service;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import uk.gov.pay.connector.app.ConnectorConfiguration;
 import uk.gov.pay.connector.app.GatewayCredentialsConfig;
+import uk.gov.pay.connector.app.WorldpayNotificationConfig;
 import uk.gov.pay.connector.resources.PaymentGatewayName;
 import uk.gov.pay.connector.service.sandbox.SandboxPaymentProvider;
 import uk.gov.pay.connector.service.smartpay.SmartpayPaymentProvider;
 import uk.gov.pay.connector.service.worldpay.WorldpayPaymentProvider;
 
 import javax.inject.Inject;
-
 import java.util.Map;
 
-import static java.lang.String.format;
 import static jersey.repackaged.com.google.common.collect.Maps.newHashMap;
 import static uk.gov.pay.connector.resources.PaymentGatewayName.*;
 import static uk.gov.pay.connector.service.GatewayClient.createGatewayClient;
@@ -38,7 +37,9 @@ public class PaymentProviders {
     private PaymentProvider createWorldpayProvider(ClientFactory clientFactory,
                                                    GatewayCredentialsConfig config) {
         return new WorldpayPaymentProvider(
-                createGatewayClient(clientFactory.createWithDropwizardClient("WORLD_PAY"), config.getUrls())
+                createGatewayClient(clientFactory.createWithDropwizardClient("WORLD_PAY"), config.getUrls()),
+                ((WorldpayNotificationConfig) config).isSecureNotificationEnabled(),
+                ((WorldpayNotificationConfig) config).getNotificationDomain()
         );
     }
 

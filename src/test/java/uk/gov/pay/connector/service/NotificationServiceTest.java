@@ -14,19 +14,26 @@ import uk.gov.pay.connector.model.Notifications;
 import uk.gov.pay.connector.model.domain.ChargeEntity;
 import uk.gov.pay.connector.model.domain.RefundEntity;
 import uk.gov.pay.connector.service.transaction.TransactionFlow;
+import uk.gov.pay.connector.util.DnsUtils;
 
 import java.util.Optional;
 
+import static org.hamcrest.Matchers.is;
+import static org.junit.Assert.assertThat;
 import static org.mockito.Matchers.any;
 import static org.mockito.Mockito.*;
 import static uk.gov.pay.connector.model.domain.ChargeStatus.CAPTURED;
 import static uk.gov.pay.connector.model.domain.RefundStatus.REFUNDED;
 import static uk.gov.pay.connector.resources.PaymentGatewayName.SANDBOX;
+import static uk.gov.pay.connector.resources.PaymentGatewayName.WORLDPAY;
 
 @RunWith(MockitoJUnitRunner.class)
 public class NotificationServiceTest {
 
     private NotificationService notificationService;
+
+    @Mock
+    private DnsUtils mockDnsUtils;
 
     @Mock
     private ChargeDao mockedChargeDao;
@@ -46,7 +53,7 @@ public class NotificationServiceTest {
 
     @Before
     public void setUp() {
-        notificationService = new NotificationService(mockedChargeDao, mockedRefundDao, mockedPaymentProviders, () -> new TransactionFlow());
+        notificationService = new NotificationService(mockedChargeDao, mockedRefundDao, mockedPaymentProviders, () -> new TransactionFlow(), mockDnsUtils);
     }
 
     private Notifications<Pair<String, Boolean>> createNotificationFor(String transactionId, String reference, Pair<String, Boolean> status) {
@@ -74,7 +81,7 @@ public class NotificationServiceTest {
         when(mockedPaymentProvider.parseNotification(any())).thenReturn(Either.left("Error"));
         when(mockedPaymentProviders.byName(SANDBOX)).thenReturn(mockedPaymentProvider);
 
-        notificationService.acceptNotificationFor(SANDBOX, "payload");
+        notificationService.handleNotificationFor("", SANDBOX, "payload");
 
         verifyNoMoreInteractions(mockedChargeDao);
     }
@@ -90,7 +97,7 @@ public class NotificationServiceTest {
         when(mockedPaymentProvider.getStatusMapper()).thenReturn(mockedStatusMapper);
         when(mockedPaymentProviders.byName(SANDBOX)).thenReturn(mockedPaymentProvider);
 
-        notificationService.acceptNotificationFor(SANDBOX, "payload");
+        notificationService.handleNotificationFor("", SANDBOX, "payload");
 
         verifyNoMoreInteractions(mockedChargeDao);
     }
@@ -106,7 +113,7 @@ public class NotificationServiceTest {
         when(mockedPaymentProvider.getStatusMapper()).thenReturn(mockedStatusMapper);
         when(mockedPaymentProviders.byName(SANDBOX)).thenReturn(mockedPaymentProvider);
 
-        notificationService.acceptNotificationFor(SANDBOX, "payload");
+        notificationService.handleNotificationFor("", SANDBOX, "payload");
 
         verifyNoMoreInteractions(mockedChargeDao);
     }
@@ -121,7 +128,7 @@ public class NotificationServiceTest {
         when(mockedPaymentProvider.getStatusMapper()).thenReturn(mockedStatusMapper);
         when(mockedPaymentProviders.byName(SANDBOX)).thenReturn(mockedPaymentProvider);
 
-        notificationService.acceptNotificationFor(SANDBOX, "payload");
+        notificationService.handleNotificationFor("", SANDBOX, "payload");
 
         verifyNoMoreInteractions(mockedChargeDao);
     }
@@ -142,7 +149,7 @@ public class NotificationServiceTest {
         when(mockedChargeDao.findByProviderAndTransactionId(SANDBOX.getName(), transactionId))
                 .thenReturn(Optional.empty());
 
-        notificationService.acceptNotificationFor(SANDBOX, "payload");
+        notificationService.handleNotificationFor("", SANDBOX, "payload");
 
         verify(mockedChargeDao).findByProviderAndTransactionId(SANDBOX.getName(), transactionId);
         verifyNoMoreInteractions(mockedChargeDao);
@@ -168,7 +175,7 @@ public class NotificationServiceTest {
         doThrow(new InvalidStateTransitionException("AUTHORISATION SUCCESS", "CAPTURED"))
                 .when(mockedChargeEntity).setStatus(CAPTURED);
 
-        notificationService.acceptNotificationFor(SANDBOX, "payload");
+        notificationService.handleNotificationFor("", SANDBOX, "payload");
 
         verify(mockedChargeDao).findByProviderAndTransactionId(SANDBOX.getName(), transactionId);
         verify(mockedChargeEntity).getStatus();
@@ -188,7 +195,7 @@ public class NotificationServiceTest {
         when(mockedPaymentProvider.getPaymentGatewayName()).thenReturn(SANDBOX.getName());
         when(mockedPaymentProviders.byName(SANDBOX)).thenReturn(mockedPaymentProvider);
 
-        notificationService.acceptNotificationFor(SANDBOX, "payload");
+        notificationService.handleNotificationFor("", SANDBOX, "payload");
 
         verifyNoMoreInteractions(mockedChargeDao);
     }
@@ -210,7 +217,7 @@ public class NotificationServiceTest {
         when(mockedRefundDao.findByExternalId(reference))
                 .thenReturn(Optional.empty());
 
-        notificationService.acceptNotificationFor(SANDBOX, "payload");
+        notificationService.handleNotificationFor("", SANDBOX, "payload");
 
         verify(mockedRefundDao).findByExternalId(reference);
         verifyNoMoreInteractions(mockedChargeDao);
@@ -227,7 +234,7 @@ public class NotificationServiceTest {
         when(mockedPaymentProvider.getStatusMapper()).thenReturn(mockedStatusMapper);
         when(mockedPaymentProviders.byName(SANDBOX)).thenReturn(mockedPaymentProvider);
 
-        notificationService.acceptNotificationFor(SANDBOX, "payload");
+        notificationService.handleNotificationFor("", SANDBOX, "payload");
 
         verifyNoMoreInteractions(mockedChargeDao);
     }
@@ -249,7 +256,7 @@ public class NotificationServiceTest {
         when(mockedChargeDao.findByProviderAndTransactionId(SANDBOX.getName(), transactionId))
                 .thenReturn(Optional.of(mockedChargeEntity));
 
-        notificationService.acceptNotificationFor(SANDBOX, "payload");
+        notificationService.handleNotificationFor("", SANDBOX, "payload");
 
         verify(mockedChargeDao).findByProviderAndTransactionId(SANDBOX.getName(), transactionId);
         verify(mockedChargeEntity).setStatus(CAPTURED);
@@ -274,11 +281,38 @@ public class NotificationServiceTest {
         RefundEntity mockedRefundEntity = mock(RefundEntity.class);
         when(mockedRefundDao.findByExternalId(reference)).thenReturn(Optional.of(mockedRefundEntity));
 
-        notificationService.acceptNotificationFor(SANDBOX, "payload");
+        notificationService.handleNotificationFor("", SANDBOX, "payload");
 
         verify(mockedRefundDao).findByExternalId(reference);
         verify(mockedRefundEntity).setStatus(REFUNDED);
         verifyNoMoreInteractions(mockedChargeDao);
     }
 
+    @Test
+    public void whenSecureNotificationEndpointIsEnabled_shouldRejectNotificationIfIpIsNotValid() throws Exception {
+        when(mockedPaymentProviders.byName(WORLDPAY)).thenReturn(mockedPaymentProvider);
+        when(mockedPaymentProvider.isNotificationEndpointSecured()).thenReturn(true);
+        when(mockDnsUtils.reverseDnsLookup(anyString())).thenReturn(Optional.empty());
+
+        assertThat(notificationService.handleNotificationFor("", WORLDPAY, "payload"), is(false));
+        verifyZeroInteractions(mockedChargeDao);
+    }
+
+    @Test
+    public void whenSecureNotificationEndpointIsEnabled_shouldHandleNotificationIfIpBelongsToDomain() throws Exception {
+        String ipAddress = "ip-address";
+        String domain = "worldpay.com";
+        Notifications<Pair<String, Boolean>> notifications = createNotificationFor("", null, Pair.of("CAPTURE", true));
+        when(mockedPaymentProvider.parseNotification(any())).thenReturn(Either.right(notifications));
+
+        StatusMapper mockedStatusMapper = createMockedStatusMapper(false, false, CAPTURED);
+        when(mockedPaymentProvider.getStatusMapper()).thenReturn(mockedStatusMapper);
+        when(mockedPaymentProviders.byName(WORLDPAY)).thenReturn(mockedPaymentProvider);
+
+        when(mockDnsUtils.ipMatchesDomain(ipAddress, domain)).thenReturn(true);
+        when(mockedPaymentProvider.isNotificationEndpointSecured()).thenReturn(true);
+        when(mockedPaymentProvider.getNotificationDomain()).thenReturn(domain);
+
+        assertThat(notificationService.handleNotificationFor(ipAddress, WORLDPAY, "payload"), is(true));
+    }
 }

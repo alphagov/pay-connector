@@ -16,18 +16,10 @@ import static org.mockito.Mockito.when;
 public class NotificationUtilTest {
 
     private NotificationUtil notificationUtil;
-    private DnsUtils mockDnsUtils = mock(DnsUtils.class);
+
     @Before
     public void setup() {
-        notificationUtil = new NotificationUtil(mockDnsUtils);
-    }
-
-    @Test
-    public void checksIfIpBelongsToDomain() throws Exception {
-        when(mockDnsUtils.reverseDnsLookup(anyString())).thenReturn(Optional.of("blablabla.worldpay.com."));
-        assertThat(notificationUtil.notificationIpBelongsToDomain("195.35.90.1", "worldpay.com"), is(true));
-        when(mockDnsUtils.reverseDnsLookup(anyString())).thenReturn(Optional.empty());
-        assertThat(notificationUtil.notificationIpBelongsToDomain("195.35.90.1", "worldpay.com"), is(false));
+        notificationUtil = new NotificationUtil();
     }
 
     @Test
