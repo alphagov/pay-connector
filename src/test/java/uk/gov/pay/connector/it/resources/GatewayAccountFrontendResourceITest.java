@@ -3,7 +3,9 @@ package uk.gov.pay.connector.it.resources;
 import com.google.common.collect.ImmutableMap;
 import com.google.gson.Gson;
 import com.jayway.restassured.response.Response;
+import com.jayway.restassured.response.ValidatableResponse;
 import org.hamcrest.MatcherAssert;
+import org.hamcrest.Matchers;
 import org.junit.Test;
 import uk.gov.pay.connector.it.dao.DatabaseFixtures;
 
@@ -12,15 +14,15 @@ import java.util.stream.Collectors;
 
 import static com.jayway.restassured.http.ContentType.JSON;
 import static java.lang.String.format;
+import static java.lang.String.join;
 import static javax.ws.rs.core.Response.Status.NOT_FOUND;
-import static org.hamcrest.CoreMatchers.allOf;
-import static org.hamcrest.CoreMatchers.nullValue;
-import static org.hamcrest.Matchers.containsInAnyOrder;
+import static org.hamcrest.Matchers.*;
 import static org.hamcrest.core.Is.is;
 import static org.junit.Assert.assertThat;
 import static org.junit.Assert.assertTrue;
 
 public class GatewayAccountFrontendResourceITest extends GatewayAccountResourceTestBase {
+    private static final String ACCOUNTS_CARD_TYPE_FRONTEND_URL = "v1/frontend/accounts/{accountId}/card-types";
 
     static public class GatewayAccountPayload {
         String userName;
@@ -118,6 +120,35 @@ public class GatewayAccountFrontendResourceITest extends GatewayAccountResourceT
                 .body("credentials.password", is(nullValue()))
                 .body("credentials.merchant_id", is(gatewayAccountPayload.getMerchantId()))
                 .body("service_name", is(gatewayAccountPayload.getServiceName()));
+    }
+
+    private void validateCardType(ValidatableResponse response, String brand, String label, String... type) {
+        response
+                .body(format("card_types.find { it.brand == '%s' }.id", brand), is(notNullValue()))
+                .body(format("card_types.find { it.brand == '%s' }.label", brand), is(label))
+                .body(format("card_types.findAll { it.brand == '%s' }.type", brand), Matchers.hasItems(type));
+    }
+
+    @Test
+    public void shouldAcceptAllCardTypesForNewlyCreatedAccount() {
+        String accountId = createAGatewayAccountFor("worldpay");
+        String frontendCardTypeUrl = ACCOUNTS_CARD_TYPE_FRONTEND_URL.replace("{accountId}", accountId);
+        GatewayAccountPayload gatewayAccountPayload = GatewayAccountPayload.createDefault().withMerchantId("a-merchant-id");
+        app.getDatabaseTestHelper().updateCredentialsFor(Long.valueOf(accountId), gson.toJson(gatewayAccountPayload.getCredentials()));
+        app.getDatabaseTestHelper().updateServiceNameFor(Long.valueOf(accountId), gatewayAccountPayload.getServiceName());
+        ValidatableResponse response = givenSetup().accept(JSON)
+                .get(frontendCardTypeUrl)
+                .then()
+                .statusCode(200)
+                .body("containsKey('card_types')", is(true));
+
+        validateCardType(response, "visa", "Visa", "DEBIT", "CREDIT");
+        validateCardType(response, "master-card", "Mastercard", "DEBIT", "CREDIT");
+        validateCardType(response, "american-express", "American Express", "CREDIT");
+        validateCardType(response, "diners-club", "Diners Club", "CREDIT");
+        validateCardType(response, "discover", "Discover", "CREDIT");
+        validateCardType(response, "jcb", "Jcb", "CREDIT");
+        validateCardType(response, "unionpay", "Union Pay", "CREDIT");
     }
 
     @Test
@@ -368,13 +399,13 @@ public class GatewayAccountFrontendResourceITest extends GatewayAccountResourceT
 
         MatcherAssert.assertThat(acceptedCardTypes, containsInAnyOrder(
                 allOf(
-                        org.hamcrest.Matchers.hasEntry("label", mastercardCreditCardTypeRecord.getLabel()),
-                        org.hamcrest.Matchers.hasEntry("type", mastercardCreditCardTypeRecord.getType().toString()),
-                        org.hamcrest.Matchers.hasEntry("brand", mastercardCreditCardTypeRecord.getBrand())
+                        hasEntry("label", mastercardCreditCardTypeRecord.getLabel()),
+                        hasEntry("type", mastercardCreditCardTypeRecord.getType().toString()),
+                        hasEntry("brand", mastercardCreditCardTypeRecord.getBrand())
                 ), allOf(
-                        org.hamcrest.Matchers.hasEntry("label", visaDebitCardTypeRecord.getLabel()),
-                        org.hamcrest.Matchers.hasEntry("type", visaDebitCardTypeRecord.getType().toString()),
-                        org.hamcrest.Matchers.hasEntry("brand", visaDebitCardTypeRecord.getBrand())
+                        hasEntry("label", visaDebitCardTypeRecord.getLabel()),
+                        hasEntry("type", visaDebitCardTypeRecord.getType().toString()),
+                        hasEntry("brand", visaDebitCardTypeRecord.getBrand())
                 )));
     }
 
@@ -426,6 +457,6 @@ public class GatewayAccountFrontendResourceITest extends GatewayAccountResourceT
                 .map(cardType -> "\"" + cardType.getId().toString() + "\"")
                 .collect(Collectors.toList());
 
-        return format("{\"card_types\": [%s]}", String.join(",", cardTypeIds));
+        return format("{\"card_types\": [%s]}", join(",", cardTypeIds));
     }
 }

@@ -2,6 +2,7 @@ package uk.gov.pay.connector.model.domain;
 
 import com.fasterxml.jackson.annotation.JsonBackReference;
 import com.fasterxml.jackson.annotation.JsonProperty;
+import com.fasterxml.jackson.annotation.JsonView;
 import com.google.common.collect.ImmutableMap;
 
 import javax.persistence.*;
@@ -12,6 +13,11 @@ import java.util.Map;
 @Table(name = "gateway_accounts")
 @SequenceGenerator(name="gateway_accounts_gateway_account_id_seq", sequenceName="gateway_accounts_gateway_account_id_seq", allocationSize=1)
 public class GatewayAccountEntity extends AbstractEntity {
+
+    public class Views {
+        public class FullView { }
+        public class PartialView {}
+    }
 
     public enum Type {
         TEST("test"), LIVE("live");
@@ -73,33 +79,41 @@ public class GatewayAccountEntity extends AbstractEntity {
 
     @Override
     @JsonProperty("gateway_account_id")
+    @JsonView(Views.FullView.class)
     public Long getId() {
         return super.getId();
     }
 
     @JsonProperty("payment_provider")
+    @JsonView(Views.FullView.class)
     public String getGatewayName() {
         return gatewayName;
     }
 
+    @JsonView(Views.FullView.class)
     public Map<String, String> getCredentials() {
         return credentials;
     }
 
     @JsonProperty("type")
+    @JsonView(Views.FullView.class)
     public String getType() {
         return type.value;
     }
 
     @JsonProperty("service_name")
+    @JsonView(value = {Views.FullView.class, Views.PartialView.class})
     public String getServiceName() {
         return serviceName;
     }
 
+    @JsonView(Views.PartialView.class)
+    @JsonProperty("card_types")
     public List<CardTypeEntity> getCardTypes() {
         return cardTypes;
     }
 
+    @JsonView(Views.FullView.class)
     public EmailNotificationEntity getEmailNotification() {
         return emailNotification;
     }

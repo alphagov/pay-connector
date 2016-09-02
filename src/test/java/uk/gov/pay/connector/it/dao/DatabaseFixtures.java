@@ -53,6 +53,10 @@ public class DatabaseFixtures {
         return new TestCardType().withLabel("MasterCard").withType(Type.CREDIT).withBrand("mastercard");
     }
 
+    public TestCardType aMastercardDebitCardType() {
+        return new TestCardType().withLabel("MasterCard").withType(Type.DEBIT).withBrand("mastercard");
+    }
+
     public TestCardType aVisaCreditCardType() {
         return new TestCardType().withLabel("Visa").withType(Type.CREDIT).withBrand("visa");
     }

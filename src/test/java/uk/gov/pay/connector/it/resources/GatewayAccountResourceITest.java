@@ -40,6 +40,18 @@ public class GatewayAccountResourceITest extends GatewayAccountResourceTestBase 
     }
 
     @Test
+    public void getAccountShouldNotReturnCardTypes() throws Exception {
+
+        String gatewayAccountId = createAGatewayAccountFor("worldpay");
+
+        givenSetup()
+                .get(ACCOUNTS_API_URL + gatewayAccountId)
+                .then()
+                .statusCode(200)
+                .body("card_types", is(nullValue()));
+    }
+
+    @Test
     public void createGatewayAccountWithoutPaymentProviderDefaultsToSandbox() throws Exception {
         String payload = toJson(ImmutableMap.of("name", "test account"));
         ValidatableResponse response = givenSetup()

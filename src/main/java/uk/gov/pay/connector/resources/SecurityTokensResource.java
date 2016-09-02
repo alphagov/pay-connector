@@ -1,11 +1,13 @@
 package uk.gov.pay.connector.resources;
 
+import com.fasterxml.jackson.annotation.JsonView;
 import com.google.inject.persist.Transactional;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import uk.gov.pay.connector.dao.ChargeDao;
 import uk.gov.pay.connector.dao.TokenDao;
 import uk.gov.pay.connector.model.domain.ChargeEntity;
+import uk.gov.pay.connector.model.domain.GatewayAccountEntity;
 
 import javax.inject.Inject;
 import javax.ws.rs.*;
@@ -33,6 +35,7 @@ public class SecurityTokensResource {
     @GET
     @Path(GET_CHARGE_BY_TOKEN_PATH)
     @Produces(APPLICATION_JSON)
+    @JsonView(GatewayAccountEntity.Views.PartialView.class)
     public Response getChargeForToken(@PathParam("chargeTokenId") String chargeTokenId) {
         logger.debug("get charge for token {}", chargeTokenId);
         Optional<ChargeEntity> chargeOpt = chargeDao.findByTokenId(chargeTokenId);
