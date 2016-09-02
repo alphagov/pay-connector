@@ -9,12 +9,12 @@ import java.util.List;
 import static com.google.common.collect.ImmutableList.of;
 import static uk.gov.pay.connector.model.domain.ChargeStatus.*;
 
-public class StateTransitionsTestBase {
+public class SandboxStateTransitionsTestBase {
 
     protected final ChargeStatus state;
     protected final List<ChargeStatus> validTransitions;
 
-    public StateTransitionsTestBase(ChargeStatus state, List<ChargeStatus> validTransitions) {
+    public SandboxStateTransitionsTestBase(ChargeStatus state, List<ChargeStatus> validTransitions) {
         this.state = state;
         this.validTransitions = validTransitions;
     }
@@ -27,11 +27,10 @@ public class StateTransitionsTestBase {
         params.add(new Object[]{ENTERING_CARD_DETAILS, of(AUTHORISATION_READY, EXPIRED, USER_CANCELLED, SYSTEM_CANCELLED)});
         params.add(new Object[]{AUTHORISATION_READY, of(AUTHORISATION_SUCCESS, AUTHORISATION_REJECTED, AUTHORISATION_ERROR)});
         params.add(new Object[]{AUTHORISATION_SUCCESS, of(CAPTURE_READY, SYSTEM_CANCEL_READY, USER_CANCEL_READY, EXPIRE_CANCEL_READY)});
-        params.add(new Object[]{CAPTURE_READY, of(CAPTURE_SUBMITTED, CAPTURE_ERROR)});
+        params.add(new Object[]{CAPTURE_READY, of(CAPTURED)});
         params.add(new Object[]{EXPIRE_CANCEL_READY, of(EXPIRE_CANCEL_FAILED, EXPIRED)});
         params.add(new Object[]{SYSTEM_CANCEL_READY, of(SYSTEM_CANCEL_ERROR, SYSTEM_CANCELLED)});
         params.add(new Object[]{USER_CANCEL_READY, of(USER_CANCEL_ERROR, USER_CANCELLED)});
         return params;
     }
-
 }

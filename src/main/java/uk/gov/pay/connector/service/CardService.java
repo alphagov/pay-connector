@@ -21,7 +21,7 @@ public abstract class CardService<T extends BaseResponse> {
     protected CardExecutorService cardExecutorService;
     protected ConfirmationDetailsService confirmationDetailsService;
 
-    protected enum OperationType {
+    public enum OperationType {
         CAPTURE("Capture"),
         AUTHORISATION("Authorisation"),
         CANCELLATION("Cancellation");

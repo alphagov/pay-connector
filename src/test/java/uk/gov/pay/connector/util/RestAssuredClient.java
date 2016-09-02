@@ -14,6 +14,7 @@ public class RestAssuredClient {
     private final DropwizardAppWithPostgresRule app;
     private String accountId;
     private String chargeId;
+    private String refundId;
     private Map<String, String> queryParams;
     private Map<String, String> headers;
 
@@ -49,16 +50,6 @@ public class RestAssuredClient {
                 .replace("{accountId}", accountId);
 
         return given().port(app.getLocalPort())
-                .contentType(JSON)
-                .body(postBody)
-                .post(requestPath)
-                .then();
-    }
-
-    public ValidatableResponse postAdminTask(String postBody, String task) {
-        String requestPath = "/tasks/"+task;
-
-        return given().port(app.getAdminPort())
                 .contentType(JSON)
                 .body(postBody)
                 .post(requestPath)
@@ -141,6 +132,17 @@ public class RestAssuredClient {
                 .then();
     }
 
+    public ValidatableResponse getRefund() {
+        String requestPath = REFUND_API_PATH
+                .replace("{accountId}", accountId)
+                .replace("{chargeId}", chargeId)
+                .replace("{refundId}", refundId);
+        return given()
+                .port(app.getLocalPort())
+                .get(requestPath)
+                .then();
+    }
+
     public ValidatableResponse postFrontendChargeCancellation() {
         String requestPath = FRONTEND_CHARGE_CANCEL_API_PATH
                 .replace("{accountId}", accountId)
@@ -155,5 +157,10 @@ public class RestAssuredClient {
         return given().port(app.getLocalPort())
                 .get(requestPath)
                 .then();
+    }
+
+    public RestAssuredClient withRefundId(String refundId) {
+        this.refundId = refundId;
+        return this;
     }
 }

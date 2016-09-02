@@ -1,10 +1,6 @@
 package uk.gov.pay.connector.service.sandbox;
 
-import com.fasterxml.jackson.databind.JsonNode;
-import com.fasterxml.jackson.databind.ObjectMapper;
 import fj.data.Either;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 import uk.gov.pay.connector.model.*;
 import uk.gov.pay.connector.model.gateway.AuthorisationGatewayRequest;
 import uk.gov.pay.connector.model.gateway.GatewayResponse;
@@ -13,21 +9,14 @@ import uk.gov.pay.connector.service.*;
 
 import java.util.Optional;
 
-import static fj.data.Either.left;
-import static fj.data.Either.right;
 import static java.util.UUID.randomUUID;
 import static uk.gov.pay.connector.model.ErrorType.GENERIC_GATEWAY_ERROR;
 import static uk.gov.pay.connector.service.sandbox.SandboxCardNumbers.*;
 
 public class SandboxPaymentProvider extends BasePaymentProvider<BaseResponse> {
 
-    private final static Logger LOGGER = LoggerFactory.getLogger(SandboxPaymentProvider.class);
-
-    private final ObjectMapper objectMapper;
-
-    public SandboxPaymentProvider(ObjectMapper objectMapper) {
+    public SandboxPaymentProvider() {
         super(null);
-        this.objectMapper = objectMapper;
     }
 
     @Override
@@ -68,24 +57,12 @@ public class SandboxPaymentProvider extends BasePaymentProvider<BaseResponse> {
 
     @Override
     public GatewayResponse refund(RefundGatewayRequest request) {
-        throw new UnsupportedOperationException("Operation not supported");
+        return createGatewayBaseRefundResponse();
     }
 
     @Override
     public Either<String, Notifications<String>> parseNotification(String payload) {
-        try {
-            JsonNode node = objectMapper.readValue(payload, JsonNode.class);
-
-            String transactionId = node.get("transaction_id").textValue();
-            String status = node.get("status").textValue();
-
-            Notifications.Builder<String> builder = Notifications.builder();
-            builder.addNotificationFor(transactionId, "", status);
-            return right(builder.build());
-        } catch (Exception e) {
-            LOGGER.error("Error understanding sandbox notification: " + payload, e);
-            return left("Error understanding sandbox notification: " + payload);
-        }
+        throw new UnsupportedOperationException("Sandbox account does not support notifications");
     }
 
     @Override
@@ -138,6 +115,25 @@ public class SandboxPaymentProvider extends BasePaymentProvider<BaseResponse> {
 
     private GatewayResponse<BaseCaptureResponse> createGatewayBaseCaptureResponse() {
         return GatewayResponse.with(new BaseCaptureResponse() {
+            @Override
+            public String getErrorCode() {
+                return null;
+            }
+
+            @Override
+            public String getErrorMessage() {
+                return null;
+            }
+
+            @Override
+            public String getTransactionId() {
+                return randomUUID().toString();
+            }
+        });
+    }
+
+    private GatewayResponse<BaseRefundResponse> createGatewayBaseRefundResponse() {
+        return GatewayResponse.with(new BaseRefundResponse() {
             @Override
             public String getErrorCode() {
                 return null;

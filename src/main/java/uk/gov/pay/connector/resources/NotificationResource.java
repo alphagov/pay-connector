@@ -37,13 +37,6 @@ public class NotificationResource {
     }
 
     @POST
-    @Consumes(APPLICATION_JSON)
-    @Path("v1/api/notifications/sandbox")
-    public Response authoriseSandboxNotifications(String notification) throws IOException {
-        return handleNotification("sandbox", notification);
-    }
-
-    @POST
     @Consumes(TEXT_XML)
     @Path("v1/api/notifications/worldpay")
     public Response authoriseWorldpayNotifications(String notification) throws IOException {

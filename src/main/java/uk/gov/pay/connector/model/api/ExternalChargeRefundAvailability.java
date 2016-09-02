@@ -4,7 +4,11 @@ import com.fasterxml.jackson.annotation.JsonFormat;
 import com.fasterxml.jackson.annotation.JsonInclude;
 import uk.gov.pay.connector.model.domain.ChargeEntity;
 import uk.gov.pay.connector.model.domain.ChargeStatus;
+import uk.gov.pay.connector.resources.PaymentGatewayName;
 
+import java.util.List;
+
+import static com.google.common.collect.Lists.newArrayList;
 import static uk.gov.pay.connector.model.domain.ChargeStatus.*;
 import static uk.gov.pay.connector.resources.PaymentGatewayName.*;
 
@@ -35,11 +39,13 @@ public enum ExternalChargeRefundAvailability {
             CREATED, ENTERING_CARD_DETAILS, AUTHORISATION_READY, AUTHORISATION_SUCCESS, CAPTURE_READY, CAPTURE_SUBMITTED
     };
 
+    private static final List<PaymentGatewayName> PROVIDERS_AVAILABLE_FOR_REFUNDS = newArrayList(WORLDPAY, SANDBOX);
+
     public static ExternalChargeRefundAvailability valueOf(ChargeEntity charge) {
 
         ExternalChargeRefundAvailability refundAvailabilityStatusResult = EXTERNAL_UNAVAILABLE;
 
-        if (charge.getPaymentGatewayName() == WORLDPAY) {
+        if (PROVIDERS_AVAILABLE_FOR_REFUNDS.contains(charge.getPaymentGatewayName())) {
             if (charge.hasStatus(PENDING_FOR_REFUND_STATUS)) {
                 refundAvailabilityStatusResult = EXTERNAL_PENDING;
 

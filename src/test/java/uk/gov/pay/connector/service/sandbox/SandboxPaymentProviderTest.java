@@ -1,48 +1,41 @@
 package uk.gov.pay.connector.service.sandbox;
 
-import com.fasterxml.jackson.databind.ObjectMapper;
-import com.google.common.collect.ImmutableList;
-import com.google.common.collect.ImmutableMap;
-import fj.data.Either;
 import org.junit.Assert;
 import org.junit.Before;
 import org.junit.Rule;
 import org.junit.Test;
 import org.junit.rules.ExpectedException;
-import uk.gov.pay.connector.model.*;
-import uk.gov.pay.connector.model.domain.*;
+import uk.gov.pay.connector.model.CancelGatewayRequest;
+import uk.gov.pay.connector.model.CaptureGatewayRequest;
+import uk.gov.pay.connector.model.GatewayError;
+import uk.gov.pay.connector.model.RefundGatewayRequest;
+import uk.gov.pay.connector.model.domain.Card;
+import uk.gov.pay.connector.model.domain.ChargeEntityFixture;
+import uk.gov.pay.connector.model.domain.RefundEntityFixture;
 import uk.gov.pay.connector.model.gateway.AuthorisationGatewayRequest;
 import uk.gov.pay.connector.model.gateway.GatewayResponse;
 import uk.gov.pay.connector.service.BaseAuthoriseResponse;
 import uk.gov.pay.connector.service.BaseCancelResponse;
 import uk.gov.pay.connector.service.BaseCaptureResponse;
-import uk.gov.pay.connector.service.sandbox.SandboxPaymentProvider;
-import uk.gov.pay.connector.service.sandbox.SandboxStatusMapper;
-import uk.gov.pay.connector.service.worldpay.WorldpayStatusMapper;
-
-import java.util.HashMap;
-import java.util.Optional;
-import java.util.function.Consumer;
+import uk.gov.pay.connector.service.BaseRefundResponse;
 
 import static org.hamcrest.CoreMatchers.notNullValue;
 import static org.hamcrest.CoreMatchers.nullValue;
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.core.Is.is;
 import static org.hamcrest.core.IsSame.sameInstance;
-import static org.mockito.Mockito.mock;
 import static uk.gov.pay.connector.model.ErrorType.GENERIC_GATEWAY_ERROR;
-import static uk.gov.pay.connector.util.JsonEncoder.toJson;
 
 public class SandboxPaymentProviderTest {
 
     private SandboxPaymentProvider provider;
 
     @Rule
-    public ExpectedException expectedException =  ExpectedException.none();
+    public ExpectedException expectedException = ExpectedException.none();
 
     @Before
     public void setup() {
-        provider = new SandboxPaymentProvider(new ObjectMapper());
+        provider = new SandboxPaymentProvider();
     }
 
     @Test
@@ -61,32 +54,14 @@ public class SandboxPaymentProviderTest {
     }
 
     @Test
-    public void parseNotification_shouldSuccessfullyParse() throws Exception {
+    public void parseNotification_shouldFailParsingNotification() throws Exception {
 
-        String notification = "{\"transaction_id\":\"1\",\"status\":\"BOOM\"}";
+        String notification = "{\"transaction_id\":\"1\",\"status\":\"BOOM\", \"reference\":\"abc\"}";
 
-        Either<String, Notifications<String>> parsedNotification = provider.parseNotification(notification);
+        expectedException.expect(UnsupportedOperationException.class);
+        expectedException.expectMessage(is("Sandbox account does not support notifications"));
 
-        assertThat(parsedNotification.isRight(), is(true));
-
-        ImmutableList<Notification<String>> notifications = parsedNotification.right().value().get();
-
-        assertThat(notifications.size(), is(1));
-        Notification<String> sandboxNotification = notifications.get(0);
-
-        assertThat(sandboxNotification.getStatus(), is("BOOM"));
-        assertThat(sandboxNotification.getTransactionId(), is("1"));
-    }
-
-    @Test
-    public void parseNotification_shouldFailWhenNotificationIsInvalid() {
-
-        String notification = "What is this!!!";
-
-        Either<String, Notifications<String>> parsedNotification = provider.parseNotification(notification);
-
-        assertThat(parsedNotification.isLeft(), is(true));
-        assertThat(parsedNotification.left().value(), is("Error understanding sandbox notification: What is this!!!"));
+        provider.parseNotification(notification);
     }
 
     @Test
@@ -198,8 +173,19 @@ public class SandboxPaymentProviderTest {
     }
 
     @Test
-    public void refund_shouldFailWhenRefundingAnyCharge() {
-        expectedException.expect(UnsupportedOperationException.class);
-        provider.refund(RefundGatewayRequest.valueOf(new RefundEntity(ChargeEntityFixture.aValidChargeEntity().build(), 1L)));
+    public void refund_shouldSucceedWhenRefundingAnyCharge() {
+
+        GatewayResponse gatewayResponse = provider.refund(RefundGatewayRequest.valueOf(RefundEntityFixture.aValidRefundEntity().build()));
+
+        assertThat(gatewayResponse.isSuccessful(), is(true));
+        assertThat(gatewayResponse.isFailed(), is(false));
+        assertThat(gatewayResponse.getGatewayError().isPresent(), is(false));
+        assertThat(gatewayResponse.getBaseResponse().isPresent(), is(true));
+        assertThat(gatewayResponse.getBaseResponse().get() instanceof BaseRefundResponse, is(true));
+
+        BaseRefundResponse refundResponse = (BaseRefundResponse) gatewayResponse.getBaseResponse().get();
+        assertThat(refundResponse.getTransactionId(), is(notNullValue()));
+        assertThat(refundResponse.getErrorCode(), is(nullValue()));
+        assertThat(refundResponse.getErrorMessage(), is(nullValue()));
     }
 }

@@ -12,9 +12,11 @@ import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertTrue;
 
 @RunWith(Parameterized.class)
-public class StateTransitionsTest extends StateTransitionsTestBase {
+public class SandboxStateTransitionsTest extends SandboxStateTransitionsTestBase {
 
-    public StateTransitionsTest(ChargeStatus state, List<ChargeStatus> validTransitions) {
+    private StateTransitions sandboxStateTransitions = new SandboxStateTransitions();
+
+    public SandboxStateTransitionsTest(ChargeStatus state, List<ChargeStatus> validTransitions) {
         super(state, validTransitions);
     }
 
@@ -23,7 +25,7 @@ public class StateTransitionsTest extends StateTransitionsTestBase {
 
         validTransitions.forEach(targetState ->
                 assertTrue(format("Charge transition [%s] -> [%s] assumes valid, but not!", state, targetState),
-                        StateTransitions.transitionTo(state, targetState))
+                        sandboxStateTransitions.isValidTransition(state, targetState))
         );
 
     }
@@ -35,7 +37,7 @@ public class StateTransitionsTest extends StateTransitionsTestBase {
                 .filter(s -> !validTransitions.contains(s))
                 .forEach(targetState ->
                         assertFalse(format("ChargeStatus transition [%s] -> [%s] is not a valid", state, targetState),
-                                StateTransitions.transitionTo(state, targetState))
+                                sandboxStateTransitions.isValidTransition(state, targetState))
                 );
     }
 }

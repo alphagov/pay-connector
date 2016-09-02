@@ -36,7 +36,7 @@ public class CardCaptureResourceITest extends CardResourceITestBase {
                 .then()
                 .statusCode(204);
 
-        assertFrontendChargeStatusIs(chargeId, CAPTURE_SUBMITTED.getValue());
+        assertFrontendChargeStatusIs(chargeId, CAPTURED.getValue());
         assertApiStateIs(chargeId, EXTERNAL_SUCCESS.getStatus());
     }
 

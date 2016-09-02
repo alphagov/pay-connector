@@ -57,10 +57,10 @@ public class CardCaptureServiceTest extends CardServiceTest {
     }
 
     @Test
-    public void shouldCaptureACharge() throws Exception {
+    public void shouldCaptureAChargeForANonSandboxAccount() throws Exception {
         String gatewayTxId = "theTxId";
 
-        ChargeEntity charge = createNewChargeWith(1L, AUTHORISATION_SUCCESS, gatewayTxId);
+        ChargeEntity charge = createNewChargeWith("worldpay",1L, AUTHORISATION_SUCCESS, gatewayTxId);
 
         ChargeEntity reloadedCharge = spy(charge);
         mockChargeDaoOperations(charge, reloadedCharge);
@@ -78,6 +78,37 @@ public class CardCaptureServiceTest extends CardServiceTest {
         verify(mockedChargeDao).mergeAndNotifyStatusHasChanged(argumentCaptor.capture());
 
         assertThat(argumentCaptor.getValue().getStatus(), is(CAPTURE_SUBMITTED.getValue()));
+
+        ArgumentCaptor<CaptureGatewayRequest> request = ArgumentCaptor.forClass(CaptureGatewayRequest.class);
+        verify(mockedPaymentProvider, times(1)).capture(request.capture());
+        assertThat(request.getValue().getTransactionId(), is(gatewayTxId));
+
+        // verify an email notification is sent for a successful capture
+        verify(mockUserNotificationService).notifyPaymentSuccessEmail(reloadedCharge);
+    }
+
+    @Test
+    public void shouldCaptureAChargeForASandboxAccount() throws Exception {
+        String gatewayTxId = "theTxId";
+
+        ChargeEntity charge = createNewChargeWith("sandbox",1L, AUTHORISATION_SUCCESS, gatewayTxId);
+
+        ChargeEntity reloadedCharge = spy(charge);
+        mockChargeDaoOperations(charge, reloadedCharge);
+
+        setupPaymentProviderMock(gatewayTxId, null);
+        when(mockedProviders.byName(charge.getPaymentGatewayName())).thenReturn(mockedPaymentProvider);
+        GatewayResponse response = cardCaptureService.doCapture(charge.getExternalId());
+
+        assertThat(response.isSuccessful(), is(true));
+        InOrder inOrder = Mockito.inOrder(reloadedCharge);
+        inOrder.verify(reloadedCharge).setStatus(CAPTURE_READY);
+        inOrder.verify(reloadedCharge).setStatus(CAPTURED);
+
+        ArgumentCaptor<ChargeEntity> argumentCaptor = ArgumentCaptor.forClass(ChargeEntity.class);
+        verify(mockedChargeDao).mergeAndNotifyStatusHasChanged(argumentCaptor.capture());
+
+        assertThat(argumentCaptor.getValue().getStatus(), is(CAPTURED.getValue()));
 
         ArgumentCaptor<CaptureGatewayRequest> request = ArgumentCaptor.forClass(CaptureGatewayRequest.class);
         verify(mockedPaymentProvider, times(1)).capture(request.capture());
@@ -154,7 +185,7 @@ public class CardCaptureServiceTest extends CardServiceTest {
     @Test
     public void shouldUpdateChargeWithCaptureErrorWhenCaptureFails() {
         String gatewayTxId = "theTxId";
-        ChargeEntity charge = createNewChargeWith(1L, AUTHORISATION_SUCCESS, gatewayTxId);
+        ChargeEntity charge = createNewChargeWith("worldpay", 1L, AUTHORISATION_SUCCESS, gatewayTxId);
         ChargeEntity reloadedCharge = spy(charge);
 
         mockChargeDaoOperations(charge, reloadedCharge);
@@ -177,7 +208,7 @@ public class CardCaptureServiceTest extends CardServiceTest {
     public void shouldRemoveConfirmationDetailsIfCaptureReady() {
         String gatewayTxId = "theTxId";
 
-        ChargeEntity charge = createNewChargeWith(1L, AUTHORISATION_SUCCESS, gatewayTxId);
+        ChargeEntity charge = createNewChargeWith("worldpay", 1L, AUTHORISATION_SUCCESS, gatewayTxId);
 
         ChargeEntity reloadedCharge = spy(charge);
         mockChargeDaoOperations(charge, reloadedCharge);
@@ -190,7 +221,7 @@ public class CardCaptureServiceTest extends CardServiceTest {
     @Test
     public void shouldRemoveConfirmationDetailsIfCaptureFails() {
         String gatewayTxId = "theTxId";
-        ChargeEntity charge = createNewChargeWith(1L, AUTHORISATION_SUCCESS, gatewayTxId);
+        ChargeEntity charge = createNewChargeWith("worldpay", 1L, AUTHORISATION_SUCCESS, gatewayTxId);
 
         ChargeEntity reloadedCharge = spy(charge);
         mockChargeDaoOperations(charge, reloadedCharge);

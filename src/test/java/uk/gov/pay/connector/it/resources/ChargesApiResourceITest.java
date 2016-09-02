@@ -106,7 +106,7 @@ public class ChargesApiResourceITest {
                 .body("containsKey('gateway_account')", is(false))
                 .body("refund_summary.amount_submitted", is(0))
                 .body("refund_summary.amount_available", isNumber(AMOUNT))
-                .body("refund_summary.status", is("unavailable"))
+                .body("refund_summary.status", is("pending"))
                 .body("created_date", matchesPattern("^\\d{4}-\\d{2}-\\d{2}T\\d{2}:\\d{2}:\\d{2}.\\d{3}Z"))
                 .body("created_date", isWithin(10, SECONDS))
                 .contentType(JSON);
@@ -144,7 +144,7 @@ public class ChargesApiResourceITest {
                 .body("containsKey('gateway_account')", is(false))
                 .body("refund_summary.amount_submitted", is(0))
                 .body("refund_summary.amount_available", isNumber(AMOUNT))
-                .body("refund_summary.status", is("unavailable"));
+                .body("refund_summary.status", is("pending"));
 
 
         // Reload the charge token which as it should have changed
@@ -366,10 +366,10 @@ public class ChargesApiResourceITest {
                 .body("results.size()", is(2))
                 .body("results[0].refund_summary.amount_submitted", is(0))
                 .body("results[0].refund_summary.amount_available", isNumber(AMOUNT))
-                .body("results[0].refund_summary.status", is("unavailable"))
+                .body("results[0].refund_summary.status", is("pending"))
                 .body("results[1].refund_summary.amount_submitted", is(0))
                 .body("results[1].refund_summary.amount_available", isNumber(AMOUNT))
-                .body("results[1].refund_summary.status", is("unavailable"));
+                .body("results[1].refund_summary.status", is("pending"));
 
         List<Map<String, Object>> results = response.extract().body().jsonPath().getList("results");
         List<String> references = collect(results, "reference");

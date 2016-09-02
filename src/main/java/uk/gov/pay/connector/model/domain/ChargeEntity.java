@@ -15,7 +15,9 @@ import java.util.List;
 
 import static org.apache.commons.lang3.StringUtils.equalsIgnoreCase;
 import static uk.gov.pay.connector.model.domain.ChargeStatus.CREATED;
-import static uk.gov.pay.connector.resources.PaymentGatewayName.*;
+import static uk.gov.pay.connector.model.domain.ChargeStatus.fromString;
+import static uk.gov.pay.connector.model.domain.PaymentGatewayStateTransitions.stateTransitionsFor;
+import static uk.gov.pay.connector.resources.PaymentGatewayName.valueFrom;
 
 @Entity
 @Table(name = "charges")
@@ -42,7 +44,7 @@ public class ChargeEntity extends AbstractEntity {
     private String email;
 
     @JsonBackReference
-    @OneToOne(mappedBy="chargeEntity", cascade = CascadeType.ALL)
+    @OneToOne(mappedBy = "chargeEntity", cascade = CascadeType.ALL)
     private ConfirmationDetailsEntity confirmationDetailsEntity;
 
     @ManyToOne
@@ -135,11 +137,11 @@ public class ChargeEntity extends AbstractEntity {
         return email;
     }
 
-    public void setStatus(ChargeStatus status) throws InvalidStateTransitionException {
-        if (StateTransitions.transitionTo(ChargeStatus.fromString(this.status), status)) {
-            this.status = status.getValue();
+    public void setStatus(ChargeStatus targetStatus) throws InvalidStateTransitionException {
+        if (stateTransitionsFor(getPaymentGatewayName()).isValidTransition(fromString(this.status), targetStatus)) {
+            this.status = targetStatus.getValue();
         } else {
-            throw new InvalidStateTransitionException(this.status, status.getValue());
+            throw new InvalidStateTransitionException(this.status, targetStatus.getValue());
         }
     }
 
@@ -168,7 +170,7 @@ public class ChargeEntity extends AbstractEntity {
     }
 
     public boolean hasExternalStatus(ExternalChargeState... state) {
-        return Arrays.stream(state).anyMatch(s -> ChargeStatus.fromString(getStatus()).toExternal().equals(s));
+        return Arrays.stream(state).anyMatch(s -> fromString(getStatus()).toExternal().equals(s));
     }
 
     public long getTotalAmountToBeRefunded() {
@@ -190,7 +192,7 @@ public class ChargeEntity extends AbstractEntity {
         this.confirmationDetailsEntity = confirmationDetailsEntity;
     }
 
-    public PaymentGatewayName getPaymentGatewayName(){
+    public PaymentGatewayName getPaymentGatewayName() {
         return valueFrom(gatewayAccount.getGatewayName());
     }
 }
