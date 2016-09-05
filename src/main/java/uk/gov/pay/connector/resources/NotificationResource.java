@@ -54,7 +54,7 @@ public class NotificationResource {
         logger.info("Received notification from provider={}, notification={}", name, notification);
         PaymentGatewayName paymentGatewayName = PaymentGatewayName.valueFrom(name);
         if (!notificationService.handleNotificationFor(ipAddress, paymentGatewayName, notification)) {
-            return forbiddenErrorResponse("forbidden");
+            return forbiddenErrorResponse("Unknown Domain");
         }
         String response = getResponseFor(paymentGatewayName);
         logger.info("Responding to notification from provider={} with 200 {}", name, response);

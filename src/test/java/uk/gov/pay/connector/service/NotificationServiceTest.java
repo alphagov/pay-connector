@@ -292,6 +292,7 @@ public class NotificationServiceTest {
     public void whenSecureNotificationEndpointIsEnabled_shouldRejectNotificationIfIpIsNotValid() throws Exception {
         when(mockedPaymentProviders.byName(WORLDPAY)).thenReturn(mockedPaymentProvider);
         when(mockedPaymentProvider.isNotificationEndpointSecured()).thenReturn(true);
+        when(mockedPaymentProvider.getNotificationDomain()).thenReturn("something.com");
         when(mockDnsUtils.reverseDnsLookup(anyString())).thenReturn(Optional.empty());
 
         assertThat(notificationService.handleNotificationFor("", WORLDPAY, "payload"), is(false));

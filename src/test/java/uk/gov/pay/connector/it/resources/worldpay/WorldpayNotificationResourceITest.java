@@ -88,7 +88,7 @@ public class WorldpayNotificationResourceITest extends CardResourceITestBase {
     }
 
     @Test
-    public void shouldReturnForbiddenIfRequestComesFromUnknownIp() throws Exception {
+    public void shouldReturnForbiddenIfRequestComesFromUnexpectedIp() throws Exception {
         given().port(app.getLocalPort())
                 .body(notificationPayloadForTransaction("any", "WHATEVER"))
                 .header("X-Real-IP", "8.8.8.8")
