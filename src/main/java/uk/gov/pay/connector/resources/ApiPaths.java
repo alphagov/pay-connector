@@ -29,4 +29,8 @@ public interface ApiPaths {
     String REFUND_API_PATH = CHARGE_API_PATH + "/refunds/{refundId}";
 
     String CARD_TYPES_API_PATH = API_VERSION_PATH + "/api/card-types";
+
+    String NOTIFICATIONS_WORLDPAY_API_PATH = API_VERSION_PATH + "/api/notifications/worldpay";
+    String NOTIFICATIONS_SMARTPAY_API_PATH = API_VERSION_PATH + "/api/notifications/smartpay";
+    String NOTIFICATIONS_SANDBOX_API_PATH = API_VERSION_PATH + "/api/notifications/sandbox";
 }

@@ -91,7 +91,7 @@ public class WorldpayNotificationResourceITest extends CardResourceITestBase {
     public void shouldReturnForbiddenIfRequestComesFromUnexpectedIp() throws Exception {
         given().port(app.getLocalPort())
                 .body(notificationPayloadForTransaction("any", "WHATEVER"))
-                .header("X-Real-IP", "8.8.8.8")
+                .header("X-Forwarded-For", "8.8.8.8")
                 .contentType(TEXT_XML)
                 .post(NOTIFICATION_PATH)
                 .then()
@@ -112,7 +112,7 @@ public class WorldpayNotificationResourceITest extends CardResourceITestBase {
         String validIp = new DnsUtils().dnsLookup("build.ci.pymnt.uk").get();
         return given().port(app.getLocalPort())
                 .body(notificationPayloadForTransaction(transactionId, status))
-                .header("X-Real-IP", validIp)
+                .header("X-Forwarded-For", validIp)
                 .contentType(TEXT_XML)
                 .post(NOTIFICATION_PATH)
                 .then();
