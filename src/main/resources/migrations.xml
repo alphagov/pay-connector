@@ -429,4 +429,10 @@
         </addColumn>
     </changeSet>
 
+    <changeSet id="update password lenghth to 100 characters" author="">
+        <modifyDataType columnName="password"
+                        newDataType="varchar(100)"
+                        tableName="notification_credentials"/>
+    </changeSet>
+
 </databaseChangeLog>

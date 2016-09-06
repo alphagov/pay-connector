@@ -7,6 +7,7 @@ public interface ApiPaths {
     String GATEWAY_ACCOUNTS_API_PATH = API_VERSION_PATH +"/api/accounts";
     String GATEWAY_ACCOUNT_API_PATH = API_VERSION_PATH +"/api/accounts/{accountId}";
     String GATEWAY_ACCOUNTS_API_EMAIL_NOTIFICATION = API_VERSION_PATH +"/api/accounts/{accountId}/email-notification";
+    String GATEWAY_ACCOUNTS_NOTIFICATION_CREDENTIALS = API_VERSION_PATH +"/api/accounts/{accountId}/notification-credentials";
 
     String FRONTEND_GATEWAY_ACCOUNT_API_PATH = API_VERSION_PATH +"/frontend/accounts/{accountId}";
     String FRONTEND_CHARGE_API_PATH = API_VERSION_PATH +"/frontend/charges/{chargeId}";

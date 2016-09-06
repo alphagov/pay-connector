@@ -122,6 +122,23 @@ public class GatewayAccountFrontendResourceITest extends GatewayAccountResourceT
                 .body("service_name", is(gatewayAccountPayload.getServiceName()));
     }
 
+    @Test
+    public void shouldGetNotificationCredentialsWhenTheyExistForGatewayAccount() {
+        String accountId = createAGatewayAccountFor("smartpay");
+        GatewayAccountPayload gatewayAccountPayload = GatewayAccountPayload.createDefault();
+        app.getDatabaseTestHelper().updateCredentialsFor(Long.valueOf(accountId), gson.toJson(gatewayAccountPayload.getCredentials()));
+        app.getDatabaseTestHelper().addNotificationCredentialsFor(Long.valueOf(accountId), "bob", "bobssecret");
+
+        givenSetup().accept(JSON)
+                .get(ACCOUNTS_FRONTEND_URL + accountId)
+                .then()
+                .statusCode(200)
+                .body("payment_provider", is("smartpay"))
+                .body("gateway_account_id", is(Integer.parseInt(accountId)))
+                .body("notificationCredentials.userName", is("bob"))
+                .body("notificationCredentials.password", is(nullValue()));
+    }
+    
     private void validateCardType(ValidatableResponse response, String brand, String label, String... type) {
         response
                 .body(format("card_types.find { it.brand == '%s' }.id", brand), is(notNullValue()))
@@ -431,19 +448,10 @@ public class GatewayAccountFrontendResourceITest extends GatewayAccountResourceT
                 .patch(ACCOUNTS_FRONTEND_URL + accountId + "/credentials");
     }
 
-    private Response updateGatewayAccountCredentialsWith(long accountId, Map<String, Object> credentials) {
-        return updateGatewayAccountCredentialsWith(accountId, credentials);
-    }
-
-
     private Response updateGatewayAccountServiceNameWith(String accountId, Map<String, String> serviceName) {
         return givenSetup().accept(JSON)
                 .body(serviceName)
                 .patch(ACCOUNTS_FRONTEND_URL + accountId + "/servicename");
-    }
-
-    private Response updateGatewayAccountServiceNameWith(long accountId, Map<String, String> serviceName) {
-        return updateGatewayAccountServiceNameWith(accountId, serviceName);
     }
 
     private Response updateGatewayAccountCardTypesWith(long accountId, String body) {
