@@ -63,6 +63,9 @@ public class GatewayAccountEntity extends AbstractEntity {
     @OneToOne(mappedBy="accountEntity", cascade = CascadeType.PERSIST)
     private EmailNotificationEntity emailNotification;
 
+    @OneToOne(mappedBy="accountEntity", cascade = CascadeType.PERSIST)
+    private NotificationCredentials notificationCredentials;
+
     @ManyToMany
     @JoinTable(
             name = "accepted_card_types",
@@ -116,6 +119,15 @@ public class GatewayAccountEntity extends AbstractEntity {
     @JsonView(Views.FullView.class)
     public EmailNotificationEntity getEmailNotification() {
         return emailNotification;
+    }
+
+    @JsonView(Views.FullView.class)
+    public NotificationCredentials getNotificationCredentials() {
+        return notificationCredentials;
+    }
+
+    public void setNotificationCredentials(NotificationCredentials notificationCredentials) {
+        this.notificationCredentials = notificationCredentials;
     }
 
     public void setGatewayName(String gatewayName) {
