@@ -10,7 +10,6 @@ import javax.naming.directory.InitialDirContext;
 import java.net.InetAddress;
 import java.util.*;
 
-import static java.lang.String.format;
 import static java.lang.String.join;
 
 public class DnsUtils {
@@ -22,13 +21,12 @@ public class DnsUtils {
                 throw new Exception("Host not found");
             }
             if (!host.get().endsWith(domain + ".")) {
-                logger.error(
-                        format("Reverse DNS lookup on ip %s - resolved domain: %s does not match %s", ipAddress, host.get(), domain));
+                logger.error("Reverse DNS lookup on ip {} - resolved domain {} does not match {}", ipAddress, host.get(), domain);
                 return false;
             }
             return true;
         } catch (Exception e) {
-            logger.error(format("Reverse DNS Lookup failed: didn't find any host for ip address %s", ipAddress));
+            logger.error("Reverse DNS Lookup failed: didn't find any host for ip address {}", ipAddress);
             return false;
         }
     }

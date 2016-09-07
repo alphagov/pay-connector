@@ -76,9 +76,8 @@ public class ResponseUtil {
         return responseWithMessageMap(CONFLICT, message);
     }
 
-    public static Response forbiddenErrorResponse(String message) {
-        logger.error(message);
-        return responseWithMessageMap(FORBIDDEN, message);
+    public static Response forbiddenErrorResponse() {
+        return status(Status.FORBIDDEN).build();
     }
 
     private static Response responseWithMessageMap(Status status, String message) {

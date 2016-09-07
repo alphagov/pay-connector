@@ -10,6 +10,7 @@ import javax.ws.rs.*;
 import javax.ws.rs.core.Response;
 import java.io.IOException;
 
+import static java.lang.String.*;
 import static javax.ws.rs.core.MediaType.APPLICATION_JSON;
 import static javax.ws.rs.core.MediaType.TEXT_XML;
 import static uk.gov.pay.connector.resources.ApiPaths.*;
@@ -55,7 +56,8 @@ public class NotificationResource {
         logger.info("Received notification from provider={}, notification={}", name, notification);
         PaymentGatewayName paymentGatewayName = PaymentGatewayName.valueFrom(name);
         if (!notificationService.handleNotificationFor(ipAddress, paymentGatewayName, notification)) {
-            return forbiddenErrorResponse("Unknown Domain");
+            logger.error("Rejected notification for ip {}", ipAddress);
+            return forbiddenErrorResponse();
         }
         String response = getResponseFor(paymentGatewayName);
         logger.info("Responding to notification from provider={} with 200 {}", name, response);
