@@ -399,4 +399,25 @@
         </createTable>
     </changeSet>
 
+    <changeSet id="build notification_credentials table" author="">
+        <createTable tableName="notification_credentials">
+            <column name="id" type="bigserial" autoIncrement="true">
+                <constraints primaryKey="true" nullable="false"/>
+            </column>
+            <column name="account_id" type="bigint">
+                <constraints foreignKeyName="fk__notification_credentials_gateway_accounts"
+                             referencedTableName="gateway_accounts"
+                             referencedColumnNames="id" nullable="false"/>
+            </column>
+            <column name="username" type="varchar(25)">
+                <constraints nullable="false"/>
+            </column>
+            <column name="password" type="varchar(25)">
+                <constraints nullable="false"/>
+            </column>
+            <column name="version" type="bigint" defaultValue="0">
+                <constraints nullable="false"/>
+            </column>
+        </createTable>
+    </changeSet>
 </databaseChangeLog>

@@ -7,6 +7,7 @@ import org.junit.Test;
 import uk.gov.pay.connector.dao.GatewayAccountDao;
 import uk.gov.pay.connector.model.domain.CardTypeEntity;
 import uk.gov.pay.connector.model.domain.GatewayAccountEntity;
+import uk.gov.pay.connector.model.domain.NotificationCredentials;
 
 import java.io.IOException;
 import java.util.*;
@@ -16,6 +17,7 @@ import static org.hamcrest.CoreMatchers.allOf;
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.*;
 import static org.junit.Assert.assertNotNull;
+import static org.junit.Assert.assertNull;
 import static org.junit.Assert.assertTrue;
 import static uk.gov.pay.connector.model.domain.GatewayAccountEntity.Type.TEST;
 
@@ -53,6 +55,7 @@ public class GatewayAccountDaoITest extends DaoITestBase {
         assertNotNull(account.getEmailNotification());
         assertThat(account.getEmailNotification().getAccountEntity().getId(), is(account.getId()));
         assertThat(account.getEmailNotification().isEnabled(), is(true));
+        assertNull(account.getNotificationCredentials());
 
         databaseTestHelper.getAccountCredentials(account.getId());
 
@@ -221,6 +224,28 @@ public class GatewayAccountDaoITest extends DaoITestBase {
         Map<String, String> accountCredentials = gatewayAccount.get().getCredentials();
         assertThat(accountCredentials, hasEntry("username", "Username"));
         assertThat(accountCredentials, hasEntry("password", "Password"));
+    }
+
+    @Test
+    public void shouldSaveNotificationCredentials() {
+        String paymentProvider = "test provider";
+        String accountId = "88888";
+        databaseTestHelper.addGatewayAccount(accountId, paymentProvider);
+
+        GatewayAccountEntity gatewayAccount = gatewayAccountDao.findById(Long.valueOf(accountId)).get();
+
+        NotificationCredentials notificationCredentials = new NotificationCredentials(gatewayAccount);
+        notificationCredentials.setPassword("password");
+        notificationCredentials.setUserName("username");
+        gatewayAccount.setNotificationCredentials(notificationCredentials);
+
+        gatewayAccountDao.merge(gatewayAccount);
+
+        GatewayAccountEntity retrievedGatewayAccount = gatewayAccountDao.findById(Long.valueOf(accountId)).get();
+
+        assertNotNull(retrievedGatewayAccount.getNotificationCredentials());
+        assertThat(retrievedGatewayAccount.getNotificationCredentials().getUserName(), is("username"));
+        assertThat(retrievedGatewayAccount.getNotificationCredentials().getPassword(), is("password"));
     }
 
     public DatabaseFixtures.TestCardType createMastercardCreditCardTypeRecord() {
