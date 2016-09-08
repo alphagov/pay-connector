@@ -86,13 +86,11 @@ public class ChargeEntityFixture {
 
     public static GatewayAccountEntity defaultGatewayAccountEntity() {
         GatewayAccountEntity accountEntity = new GatewayAccountEntity("sandbox", new HashMap<>(), TEST);
-
         accountEntity.setId(1L);
         accountEntity.setServiceName("MyService");
         EmailNotificationEntity emailNotificationEntity = new EmailNotificationEntity(accountEntity);
         emailNotificationEntity.setTemplateBody("template body");
         accountEntity.setEmailNotification(emailNotificationEntity);
-
         return accountEntity;
     }
 }

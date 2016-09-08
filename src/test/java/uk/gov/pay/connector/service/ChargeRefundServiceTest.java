@@ -72,7 +72,7 @@ public class ChargeRefundServiceTest {
     }
 
     @Test
-    public void shouldRefundSucessfully() {
+    public void shouldRefundSuccessfully() {
 
         String externalChargeId = "chargeId";
         Long amount = 100L;
@@ -88,7 +88,7 @@ public class ChargeRefundServiceTest {
                 .withStatus(CAPTURED)
                 .build();
 
-        RefundEntity spiedRefundEntity = spy(aValidRefundEntity().build());
+        RefundEntity spiedRefundEntity = spy(aValidRefundEntity().withCharge(charge).build());
 
         when(mockChargeDao.findByExternalIdAndGatewayAccount(externalChargeId, accountId))
                 .thenReturn(Optional.of(charge));
@@ -115,6 +115,53 @@ public class ChargeRefundServiceTest {
         verify(mockProvider).refund(argThat(aRefundRequestWith(charge, amount)));
         verify(mockRefundDao).merge(any(RefundEntity.class));
         verify(spiedRefundEntity).setStatus(RefundStatus.REFUND_SUBMITTED);
+        verifyNoMoreInteractions(mockChargeDao, mockRefundDao, mockProviders, mockProvider);
+    }
+
+    @Test
+    public void shouldRefundSuccessfullyForSandbox() {
+
+        String externalChargeId = "chargeId";
+        Long amount = 100L;
+        Long accountId = 2L;
+        String providerName = "sandbox";
+
+        GatewayAccountEntity account = new GatewayAccountEntity(providerName, newHashMap(), TEST);
+        account.setId(accountId);
+        String transactionId = "transactionId";
+        ChargeEntity charge = aValidChargeEntity()
+                .withGatewayAccountEntity(account)
+                .withTransactionId(transactionId)
+                .withStatus(CAPTURED)
+                .build();
+
+        RefundEntity spiedRefundEntity = spy(aValidRefundEntity().withCharge(charge).build());
+
+        when(mockChargeDao.findByExternalIdAndGatewayAccount(externalChargeId, accountId))
+                .thenReturn(Optional.of(charge));
+
+        when(mockChargeDao.merge(charge)).thenReturn(charge);
+
+        when(mockProviders.byName(SANDBOX)).thenReturn(mockProvider);
+
+        setupPaymentProviderMock(transactionId, null);
+
+        when(mockRefundDao.merge(any(RefundEntity.class))).thenReturn(spiedRefundEntity);
+
+        ChargeRefundService.Response gatewayResponse = chargeRefundService.doRefund(accountId, externalChargeId, amount).get();
+
+        assertThat(gatewayResponse.getRefundGatewayResponse().isSuccessful(), is(true));
+        assertThat(gatewayResponse.getRefundGatewayResponse().getGatewayError().isPresent(), is(false));
+
+        assertThat(gatewayResponse.getRefundEntity(), is(spiedRefundEntity));
+
+        verify(mockChargeDao).findByExternalIdAndGatewayAccount(externalChargeId, accountId);
+        verify(mockChargeDao).merge(charge);
+        verify(mockRefundDao).persist(argThat(aRefundEntity(amount, charge)));
+        verify(mockProviders).byName(SANDBOX);
+        verify(mockProvider).refund(argThat(aRefundRequestWith(charge, amount)));
+        verify(mockRefundDao).merge(any(RefundEntity.class));
+        verify(spiedRefundEntity).setStatus(RefundStatus.REFUNDED);
         verifyNoMoreInteractions(mockChargeDao, mockRefundDao, mockProviders, mockProvider);
     }
 

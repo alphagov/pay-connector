@@ -13,6 +13,7 @@ import uk.gov.pay.connector.model.domain.ChargeEntity;
 import uk.gov.pay.connector.model.domain.RefundEntity;
 import uk.gov.pay.connector.model.domain.RefundStatus;
 import uk.gov.pay.connector.model.gateway.GatewayResponse;
+import uk.gov.pay.connector.resources.PaymentGatewayName;
 import uk.gov.pay.connector.service.transaction.*;
 
 import javax.inject.Inject;
@@ -117,18 +118,29 @@ public class ChargeRefundService {
     private TransactionalOperation<TransactionContext, Response> finishRefund() {
         return context -> {
             RefundEntity refundEntity = refundDao.merge(context.get(RefundEntity.class));
-
+            RefundStatus status = RefundStatus.REFUND_ERROR;
             GatewayResponse gatewayResponse = context.get(GatewayResponse.class);
-            RefundStatus status = gatewayResponse.isSuccessful() ? RefundStatus.REFUND_SUBMITTED : RefundStatus.REFUND_ERROR;
             ChargeEntity chargeEntity = refundEntity.getChargeEntity();
+
+            if (gatewayResponse.isSuccessful()) {
+                status = refundFinishSuccessStatusOf(chargeEntity.getPaymentGatewayName());
+            }
 
             logger.info(format("Card refund response received - charge_external_id=%s, transaction_id=%s, status=%s",
                     chargeEntity.getExternalId(), chargeEntity.getGatewayTransactionId(), status));
             logger.info("Refund status to update - from={}, to={} for charge_id={}, charge_external_id={}, refund_id={}, refund_external_id={}, amount={}",
                     refundEntity.getStatus(), status, chargeEntity.getId(), chargeEntity.getExternalId(), refundEntity.getId(), refundEntity.getExternalId(), refundEntity.getAmount());
+
             refundEntity.setStatus(status);
 
             return new Response(gatewayResponse, refundEntity);
         };
+    }
+
+    private RefundStatus refundFinishSuccessStatusOf(PaymentGatewayName paymentGatewayName) {
+        if (paymentGatewayName == PaymentGatewayName.SANDBOX) {
+            return RefundStatus.REFUNDED;
+        }
+        return RefundStatus.REFUND_SUBMITTED;
     }
 }

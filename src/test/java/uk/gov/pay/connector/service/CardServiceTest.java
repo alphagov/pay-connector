@@ -1,10 +1,7 @@
 package uk.gov.pay.connector.service;
 
 import uk.gov.pay.connector.dao.ChargeDao;
-import uk.gov.pay.connector.model.domain.ChargeEntity;
-import uk.gov.pay.connector.model.domain.ChargeEntityFixture;
-import uk.gov.pay.connector.model.domain.ChargeStatus;
-import uk.gov.pay.connector.model.domain.ConfirmationDetailsEntity;
+import uk.gov.pay.connector.model.domain.*;
 
 import static org.mockito.Mockito.mock;
 
@@ -26,9 +23,13 @@ public abstract class CardServiceTest {
         return entity;
 
     }
-    protected ChargeEntity createNewChargeWith(Long chargeId, ChargeStatus status, String gatewayTransactionId) {
+
+    protected ChargeEntity createNewChargeWith(String provider, Long chargeId, ChargeStatus status, String gatewayTransactionId) {
+        GatewayAccountEntity gatewayAccountEntity = ChargeEntityFixture.defaultGatewayAccountEntity();
+        gatewayAccountEntity.setGatewayName(provider);
         ChargeEntity entity = ChargeEntityFixture
                 .aValidChargeEntity()
+                .withGatewayAccountEntity(gatewayAccountEntity)
                 .withId(chargeId)
                 .withStatus(status)
                 .build();

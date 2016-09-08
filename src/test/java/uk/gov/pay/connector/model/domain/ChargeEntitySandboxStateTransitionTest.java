@@ -16,18 +16,17 @@ import static org.hamcrest.CoreMatchers.is;
 import static org.hamcrest.MatcherAssert.assertThat;
 
 @RunWith(Parameterized.class)
-public class ChargeEntityStateTransitionTest extends StateTransitionsTestBase {
+public class ChargeEntitySandboxStateTransitionTest extends SandboxStateTransitionsTestBase {
 
     @Rule
     public ExpectedException thrown = ExpectedException.none();
 
-    public ChargeEntityStateTransitionTest(ChargeStatus state, List<ChargeStatus> validTransitions) {
+    public ChargeEntitySandboxStateTransitionTest(ChargeStatus state, List<ChargeStatus> validTransitions) {
         super(state, validTransitions);
     }
 
-
     @Test
-    public void shouldAllowCorrectStateTransitions() throws Exception {
+    public void shouldAllowCorrectStateTransitionsForWorldpay() throws Exception {
         validTransitions.forEach(targetState -> {
             ChargeEntity chargeCreated = ChargeEntityFixture.aValidChargeEntity().withStatus(state).build();
             try {
@@ -41,7 +40,7 @@ public class ChargeEntityStateTransitionTest extends StateTransitionsTestBase {
     }
 
     @Test
-    public void shouldErrorInvalidStateTransitions() throws Exception {
+    public void shouldErrorInvalidStateTransitionsForWorldpay() throws Exception {
 
         EnumSet.allOf(ChargeStatus.class).stream()
                 .filter(s -> !validTransitions.contains(s))
@@ -55,8 +54,5 @@ public class ChargeEntityStateTransitionTest extends StateTransitionsTestBase {
 
                     fail(format("Charge state transition [%s] -> [%s] should not have been allowed", state, targetState));
                 });
-
-
     }
-
 }

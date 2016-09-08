@@ -32,7 +32,7 @@ public class PaymentProviders {
     public PaymentProviders(ConnectorConfiguration config, ClientFactory clientFactory, ObjectMapper objectMapper) {
         this.paymentProviders.put(WORLDPAY, createWorldpayProvider(clientFactory, config.getWorldpayConfig()));
         this.paymentProviders.put(SMARTPAY, createSmartPayProvider(clientFactory, config.getSmartpayConfig(), objectMapper));
-        this.paymentProviders.put(SANDBOX, new SandboxPaymentProvider(objectMapper));
+        this.paymentProviders.put(SANDBOX, new SandboxPaymentProvider());
     }
 
     private PaymentProvider createWorldpayProvider(ClientFactory clientFactory,

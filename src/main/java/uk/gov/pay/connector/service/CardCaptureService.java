@@ -7,8 +7,8 @@ import uk.gov.pay.connector.exception.ChargeNotFoundRuntimeException;
 import uk.gov.pay.connector.model.CaptureGatewayRequest;
 import uk.gov.pay.connector.model.domain.ChargeEntity;
 import uk.gov.pay.connector.model.domain.ChargeStatus;
-import uk.gov.pay.connector.model.domain.ConfirmationDetailsEntity;
 import uk.gov.pay.connector.model.gateway.GatewayResponse;
+import uk.gov.pay.connector.resources.PaymentGatewayName;
 
 import javax.inject.Inject;
 
@@ -55,8 +55,12 @@ public class CardCaptureService extends CardService implements TransactionalGate
     @Override
     public GatewayResponse<BaseCaptureResponse> postOperation(ChargeEntity chargeEntity, GatewayResponse<BaseCaptureResponse> operationResponse) {
         ChargeEntity reloadedCharge = chargeDao.merge(chargeEntity);
+        ChargeStatus status = CAPTURE_ERROR;
 
-        ChargeStatus status = operationResponse.isSuccessful() ? CAPTURE_SUBMITTED : CAPTURE_ERROR;
+        if (operationResponse.isSuccessful()) {
+            status = capturePostOperationSuccessOf(chargeEntity.getPaymentGatewayName());
+        }
+
         String transactionId = operationResponse.getBaseResponse()
                 .map(BaseCaptureResponse::getTransactionId).orElse("");
 
@@ -77,4 +81,10 @@ public class CardCaptureService extends CardService implements TransactionalGate
         return operationResponse;
     }
 
+    private ChargeStatus capturePostOperationSuccessOf(PaymentGatewayName paymentGatewayName) {
+        if (paymentGatewayName == PaymentGatewayName.SANDBOX) {
+            return CAPTURED;
+        }
+        return CAPTURE_SUBMITTED;
+    }
 }

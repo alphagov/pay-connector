@@ -3,16 +3,19 @@ package uk.gov.pay.connector.model.domain;
 import static uk.gov.pay.connector.model.domain.ChargeEntityFixture.aValidChargeEntity;
 
 public class RefundEntityFixture {
+
     private Long amount = 500L;
     private RefundStatus status = RefundStatus.CREATED;
     private GatewayAccountEntity gatewayAccountEntity = ChargeEntityFixture.defaultGatewayAccountEntity();
+    private ChargeEntity charge;
 
     public static RefundEntityFixture aValidRefundEntity() {
         return new RefundEntityFixture();
     }
 
     public RefundEntity build() {
-        RefundEntity refundEntity = new RefundEntity(buildChargeEntity(), amount);
+        ChargeEntity chargeEntity = charge == null ? buildChargeEntity() : charge;
+        RefundEntity refundEntity = new RefundEntity(chargeEntity, amount);
         refundEntity.setStatus(status);
         return refundEntity;
     }
@@ -38,5 +41,10 @@ public class RefundEntityFixture {
 
     private ChargeEntity buildChargeEntity() {
         return aValidChargeEntity().withGatewayAccountEntity(gatewayAccountEntity).build();
+    }
+
+    public RefundEntityFixture withCharge(ChargeEntity charge) {
+        this.charge = charge;
+        return this;
     }
 }
