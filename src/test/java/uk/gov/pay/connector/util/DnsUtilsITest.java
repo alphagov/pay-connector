@@ -29,19 +29,26 @@ public class DnsUtilsITest {
     }
 
     @Test
-    public void shouldNotReturnAnIpAddressForAnInvalidHostname() throws Exception {
-        assertThat(dnsUtils.dnsLookup("asdasd").isPresent(), is(false));
+    public void reverseDnsShouldCorrectlyMatchValidForwardedHeaderToDomain() throws Exception {
+        assertThat(dnsUtils.ipMatchesDomain("195.35.90.1, 8.8.8.8", "worldpay.com"), is(true));
+        assertThat(dnsUtils.ipMatchesDomain("8.8.8.8, 8.8.8.8", "worldpay.com"), is(false));
     }
+
     @Test
-    public void reverseDnsShouldCorrectlyMatchIpToDomain() throws Exception {
-        assertThat(dnsUtils.ipMatchesDomain("195.35.90.1", "worldpay.com"), is(true));
-        assertThat(dnsUtils.ipMatchesDomain("8.8.8.8", "worldpay.com"), is(false));
+    public void reverseDnsShouldFailGracefullyIfForwardedHeaderIsNotValid() {
+        assertThat(dnsUtils.ipMatchesDomain("not-an-ip", "worldpay.com"), is(false));
+        assertThat(dnsUtils.ipMatchesDomain(null, "worldpay.com"), is(false));
     }
 
     @Test
     public void reverseDnsShouldReturnHostIfIpIsValid() throws Exception {
         assertThat(dnsUtils.reverseDnsLookup("195.35.90.1").isPresent(), is(true));
         assertThat(dnsUtils.reverseDnsLookup("195.35.90.1").get(), is("hello.worldpay.com."));
+    }
+
+    @Test
+    public void shouldNotReturnAnIpAddressForAnInvalidHostname() throws Exception {
+        assertThat(dnsUtils.dnsLookup("asdasd").isPresent(), is(false));
     }
 
     @Test

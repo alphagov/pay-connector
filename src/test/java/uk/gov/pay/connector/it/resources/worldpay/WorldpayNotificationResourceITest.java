@@ -12,6 +12,7 @@ import java.nio.charset.Charset;
 
 import static com.google.common.io.Resources.getResource;
 import static com.jayway.restassured.RestAssured.given;
+import static java.lang.String.*;
 import static javax.ws.rs.core.MediaType.APPLICATION_JSON;
 import static javax.ws.rs.core.MediaType.TEXT_XML;
 import static org.hamcrest.Matchers.is;
@@ -91,7 +92,28 @@ public class WorldpayNotificationResourceITest extends CardResourceITestBase {
     public void shouldReturnForbiddenIfRequestComesFromUnexpectedIp() throws Exception {
         given().port(app.getLocalPort())
                 .body(notificationPayloadForTransaction("any", "WHATEVER"))
-                .header("X-Forwarded-For", "8.8.8.8")
+                .header("X-Forwarded-For", "8.8.8.8, 123.1.23.32")
+                .contentType(TEXT_XML)
+                .post(NOTIFICATION_PATH)
+                .then()
+                .statusCode(403);
+    }
+
+    @Test
+    public void shouldReturnForbiddenIfXForwardedForHeaderIsMalformed() throws Exception {
+        given().port(app.getLocalPort())
+                .body(notificationPayloadForTransaction("any", "WHATEVER"))
+                .header("X-Forwarded-For", "something is wrong, 8.8.8.8")
+                .contentType(TEXT_XML)
+                .post(NOTIFICATION_PATH)
+                .then()
+                .statusCode(403);
+    }
+
+    @Test
+    public void shouldReturnForbiddenIfXForwardedForHeaderIsMissing() throws Exception {
+        given().port(app.getLocalPort())
+                .body(notificationPayloadForTransaction("any", "WHATEVER"))
                 .contentType(TEXT_XML)
                 .post(NOTIFICATION_PATH)
                 .then()
@@ -110,9 +132,10 @@ public class WorldpayNotificationResourceITest extends CardResourceITestBase {
 
     private ValidatableResponse notifyConnector(String transactionId, String status) throws Exception {
         String validIp = new DnsUtils().dnsLookup("build.ci.pymnt.uk").get();
+        String xForwardedForHeader = format("%s, %s", validIp, "8.8.8.8");
         return given().port(app.getLocalPort())
                 .body(notificationPayloadForTransaction(transactionId, status))
-                .header("X-Forwarded-For", validIp)
+                .header("X-Forwarded-For", xForwardedForHeader)
                 .contentType(TEXT_XML)
                 .post(NOTIFICATION_PATH)
                 .then();

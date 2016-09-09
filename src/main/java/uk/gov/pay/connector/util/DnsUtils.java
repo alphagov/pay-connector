@@ -10,23 +10,31 @@ import javax.naming.directory.InitialDirContext;
 import java.net.InetAddress;
 import java.util.*;
 
+import static java.lang.String.*;
 import static java.lang.String.join;
 
 public class DnsUtils {
     private static final Logger logger = LoggerFactory.getLogger(DnsUtils.class);
-    public boolean ipMatchesDomain(String ipAddress, String domain) {
+
+    private String extractForwardedIp(String forwardedAddress) {
+        String extractedIp = forwardedAddress.split(",")[0];
+        logger.debug("Extracted ip {} from X-Forwarded-For '{}'", extractedIp, forwardedAddress);
+        return extractedIp;
+    }
+    public boolean ipMatchesDomain(String forwardedAddress, String domain) {
         try {
+            String ipAddress = extractForwardedIp(forwardedAddress);
             Optional<String> host = reverseDnsLookup(ipAddress);
             if (!host.isPresent()) {
-                throw new Exception("Host not found");
+                throw new Exception(format("Host not found for ip address '%s'", ipAddress));
             }
             if (!host.get().endsWith(domain + ".")) {
-                logger.error("Reverse DNS lookup on ip {} - resolved domain {} does not match {}", ipAddress, host.get(), domain);
+                logger.error("Reverse DNS lookup on ip '{}' - resolved domain '{}' does not match '{}'", ipAddress, host.get(), domain);
                 return false;
             }
             return true;
         } catch (Exception e) {
-            logger.error("Reverse DNS Lookup failed: didn't find any host for ip address {}", ipAddress);
+            logger.error("Reverse DNS Lookup failed: {}", e.getLocalizedMessage());
             return false;
         }
     }
