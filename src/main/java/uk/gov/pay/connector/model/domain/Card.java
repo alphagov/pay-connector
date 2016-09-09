@@ -11,6 +11,8 @@ public class Card {
 
     private Address address;
 
+    private String cardTypeId;
+
     public static Card aCard() {
         return new Card();
     }
@@ -18,6 +20,11 @@ public class Card {
     @JsonProperty("card_number")
     public void setCardNo(String cardNo) {
         this.cardNo = cardNo;
+    }
+
+    @JsonProperty("card_type_id")
+    public void setCardTypeId(String cardTypeId) {
+        this.cardTypeId = cardTypeId;
     }
 
     @JsonProperty("cardholder_name")
@@ -58,5 +65,9 @@ public class Card {
 
     public Address getAddress() {
         return address;
+    }
+
+    public String getCardTypeId() {
+        return cardTypeId;
     }
 }
