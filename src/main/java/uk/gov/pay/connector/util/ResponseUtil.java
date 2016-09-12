@@ -76,6 +76,10 @@ public class ResponseUtil {
         return responseWithMessageMap(CONFLICT, message);
     }
 
+    public static Response forbiddenErrorResponse() {
+        return status(Status.FORBIDDEN).build();
+    }
+
     private static Response responseWithMessageMap(Status status, String message) {
         return responseWithEntity(status, ImmutableMap.of("message", message));
     }

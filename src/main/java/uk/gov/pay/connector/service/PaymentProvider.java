@@ -14,6 +14,8 @@ public interface PaymentProvider<T extends BaseResponse> {
 
     String getPaymentGatewayName();
 
+    StatusMapper getStatusMapper();
+
     Optional<String> generateTransactionId();
 
     GatewayResponse<T> authorise(AuthorisationGatewayRequest request);
@@ -24,7 +26,12 @@ public interface PaymentProvider<T extends BaseResponse> {
 
     GatewayResponse<T> cancel(CancelGatewayRequest request);
 
+
     <R> Either<String, Notifications<R>> parseNotification(String payload);
 
-    StatusMapper getStatusMapper();
+    Boolean isNotificationEndpointSecured();
+
+    String getNotificationDomain();
+
+
 }

@@ -22,6 +22,8 @@ worldpay:
   urls:
     test: http://localhost:10107/jsp/merchant/xml/paymentService.jsp
     live: http://localhost:10107/jsp/merchant/xml/paymentService.jsp
+  secureNotificationEnabled: true
+  notificationDomain: "amazonaws.com"
   credentials: ['username','password','merchant_id']
 
 smartpay:

@@ -4,6 +4,7 @@ import com.google.common.io.Resources;
 import com.jayway.restassured.response.ValidatableResponse;
 import org.junit.Test;
 import uk.gov.pay.connector.it.base.CardResourceITestBase;
+import uk.gov.pay.connector.util.DnsUtils;
 
 import java.io.IOException;
 import java.net.URL;
@@ -11,6 +12,7 @@ import java.nio.charset.Charset;
 
 import static com.google.common.io.Resources.getResource;
 import static com.jayway.restassured.RestAssured.given;
+import static java.lang.String.*;
 import static javax.ws.rs.core.MediaType.APPLICATION_JSON;
 import static javax.ws.rs.core.MediaType.TEXT_XML;
 import static org.hamcrest.Matchers.is;
@@ -28,7 +30,6 @@ public class WorldpayNotificationResourceITest extends CardResourceITestBase {
 
     @Test
     public void shouldHandleAWorldpayNotification() throws Exception {
-
         String transactionId = "transaction-id";
         String chargeId = createNewChargeWith(CAPTURE_SUBMITTED, transactionId);
 
@@ -88,6 +89,38 @@ public class WorldpayNotificationResourceITest extends CardResourceITestBase {
     }
 
     @Test
+    public void shouldReturnForbiddenIfRequestComesFromUnexpectedIp() throws Exception {
+        given().port(app.getLocalPort())
+                .body(notificationPayloadForTransaction("any", "WHATEVER"))
+                .header("X-Forwarded-For", "8.8.8.8, 123.1.23.32")
+                .contentType(TEXT_XML)
+                .post(NOTIFICATION_PATH)
+                .then()
+                .statusCode(403);
+    }
+
+    @Test
+    public void shouldReturnForbiddenIfXForwardedForHeaderIsMalformed() throws Exception {
+        given().port(app.getLocalPort())
+                .body(notificationPayloadForTransaction("any", "WHATEVER"))
+                .header("X-Forwarded-For", "something is wrong, 8.8.8.8")
+                .contentType(TEXT_XML)
+                .post(NOTIFICATION_PATH)
+                .then()
+                .statusCode(403);
+    }
+
+    @Test
+    public void shouldReturnForbiddenIfXForwardedForHeaderIsMissing() throws Exception {
+        given().port(app.getLocalPort())
+                .body(notificationPayloadForTransaction("any", "WHATEVER"))
+                .contentType(TEXT_XML)
+                .post(NOTIFICATION_PATH)
+                .then()
+                .statusCode(403);
+    }
+
+    @Test
     public void shouldFailWhenUnexpectedContentType() throws Exception {
         given().port(app.getLocalPort())
                 .body(notificationPayloadForTransaction("any", "WHATEVER"))
@@ -95,12 +128,14 @@ public class WorldpayNotificationResourceITest extends CardResourceITestBase {
                 .post(NOTIFICATION_PATH)
                 .then()
                 .statusCode(415);
-
     }
 
-    private ValidatableResponse notifyConnector(String transactionId, String status) throws IOException {
+    private ValidatableResponse notifyConnector(String transactionId, String status) throws Exception {
+        String validIp = new DnsUtils().dnsLookup("build.ci.pymnt.uk").get();
+        String xForwardedForHeader = format("%s, %s", validIp, "8.8.8.8");
         return given().port(app.getLocalPort())
                 .body(notificationPayloadForTransaction(transactionId, status))
+                .header("X-Forwarded-For", xForwardedForHeader)
                 .contentType(TEXT_XML)
                 .post(NOTIFICATION_PATH)
                 .then();

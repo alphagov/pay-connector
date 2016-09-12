@@ -7,7 +7,9 @@ import uk.gov.pay.connector.model.domain.ChargeStatus;
 
 import java.util.Optional;
 
-import static org.junit.Assert.assertFalse;
+import static org.hamcrest.Matchers.is;
+import static org.junit.Assert.assertThat;
+import static org.mockito.Matchers.anyString;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
 
@@ -25,7 +27,7 @@ public class NotificationUtilTest {
         ChargeStatusRequest chargeStatusRequest = mock(ChargeStatusRequest.class);
         when(chargeStatusRequest.getChargeStatus()).thenReturn(Optional.empty());
 
-        assertFalse(notificationUtil.payloadChecks(chargeStatusRequest));
+        assertThat(notificationUtil.payloadChecks(chargeStatusRequest), is(false));
     }
 
     @Test
@@ -34,7 +36,7 @@ public class NotificationUtilTest {
         when(chargeStatusRequest.getChargeStatus()).thenReturn(Optional.of(ChargeStatus.CAPTURED));
         when(chargeStatusRequest.getTransactionId()).thenReturn("");
 
-        assertFalse(notificationUtil.payloadChecks(chargeStatusRequest));
+        assertThat(notificationUtil.payloadChecks(chargeStatusRequest), is(false));
     }
 
     @Test
@@ -43,7 +45,7 @@ public class NotificationUtilTest {
         when(chargeStatusRequest.getChargeStatus()).thenReturn(Optional.of(ChargeStatus.CAPTURED));
         when(chargeStatusRequest.getTransactionId()).thenReturn(null);
 
-        assertFalse(notificationUtil.payloadChecks(chargeStatusRequest));
+        assertThat(notificationUtil.payloadChecks(chargeStatusRequest), is(false));
     }
 
 }

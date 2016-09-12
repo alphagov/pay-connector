@@ -16,6 +16,10 @@ Important configurations.
 
 `AUTH_READ_TIMEOUT_SECONDS`:  The env variable AUTH_READ_TIMEOUT_SECONDS can be passed into the app to override the default value of 10     seconds, i.e. the timeout before the resource responds with an awaited auth response (202), so that frontend can choose to show a spinner and poll for auth response.
 
+`SECURE_WORLDPAY_NOTIFICATION_ENABLED`: The env variable to enable ip filtering of incoming notifications; they will be rejected with a 403 unless they come from Worldpay. Defaults to false.
+
+`SECURE_WORLDPAY_NOTIFICATION_DOMAIN`: The env variable of the domain we might filter notifications with. Defaults to `worldpay.com`.
+
 `NOTIFY_EMAIL_ENABLED`: The env variable to enable confirmation emails to be sent over by GOV.UK Notify, defaults to false.
 
 `NOTIFY_PAYMENT_RECEIPT_EMAIL_TEMPLATE_ID`: ID of the email template specified in the GOV.UK Notify to be used for sending emails, there are no defaults for this one. An email template can accept personalisation (placeholder values which are passed in by the code).

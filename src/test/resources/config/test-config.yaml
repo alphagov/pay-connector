@@ -22,7 +22,8 @@ worldpay:
   urls:
     test: http://dummy.com
     live: http://dummy.com
-
+  secureNotificationEnabled: ${SECURE_WORLDPAY_NOTIFICATIONS_ENABLED:-false}
+  notificationDomain: ${SECURE_WORLDPAY_NOTIFICATION_DOMAIN:-"worldpay.com"}
 smartpay:
   urls:
     test: http://testsmartpay.com

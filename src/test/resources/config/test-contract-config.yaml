@@ -22,6 +22,8 @@ worldpay:
   urls:
     test: https://secure-test.worldpay.com/jsp/merchant/xml/paymentService.jsp
     live: https://secure-test.worldpay.com/jsp/merchant/xml/paymentService.jsp
+  secureNotificationEnabled: false
+  notificationDomain: "worldpay.com"
   credentials: ['username','password','merchant_id']
 
 smartpay:

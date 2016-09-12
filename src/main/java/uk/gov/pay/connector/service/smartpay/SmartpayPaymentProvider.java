@@ -67,6 +67,16 @@ public class SmartpayPaymentProvider extends BasePaymentProvider<BaseResponse> {
     }
 
     @Override
+    public Boolean isNotificationEndpointSecured() {
+        return false;
+    }
+
+    @Override
+    public String getNotificationDomain() {
+        return null;
+    }
+
+    @Override
     public Either<String, Notifications<Pair<String, Boolean>>> parseNotification(String payload) {
         try {
             Builder<Pair<String, Boolean>> builder = Notifications.builder();

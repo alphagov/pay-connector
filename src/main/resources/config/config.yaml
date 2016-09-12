@@ -22,6 +22,8 @@ worldpay:
   urls:
     test: ${GDS_CONNECTOR_WORLDPAY_TEST_URL}
     live: ${GDS_CONNECTOR_WORLDPAY_LIVE_URL}
+  secureNotificationEnabled: ${SECURE_WORLDPAY_NOTIFICATION_ENABLED:-false}
+  notificationDomain: ${SECURE_WORLDPAY_NOTIFICATION_DOMAIN:-worldpay.com}
   credentials: ['username','password','merchant_id']
 
 smartpay:
