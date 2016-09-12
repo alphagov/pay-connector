@@ -322,7 +322,7 @@ public class WorldpayPaymentProviderTest {
         address.setCounty("London state");
         address.setCountry("GB");
 
-        return buildCardDetails("Mr. Payment", "4111111111111111", "123", "12/15", address);
+        return buildCardDetails("Mr. Payment", "4111111111111111", "123", "12/15", "visa", address);
     }
 
 }

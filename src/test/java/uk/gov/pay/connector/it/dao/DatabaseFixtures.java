@@ -118,6 +118,7 @@ public class DatabaseFixtures {
             this.id = id;
             return this;
         }
+
         public TestConfirmationDetails withLastDigitsOfCardNumber(String lastDigitsCardNumber) {
             this.lastDigitsCardNumber = lastDigitsCardNumber;
             return this;
@@ -171,6 +172,7 @@ public class DatabaseFixtures {
         }
 
     }
+
     public class TestAccount {
         long accountId = RandomUtils.nextLong(1, 99999);
         String paymentProvider = "sandbox";
@@ -217,6 +219,8 @@ public class DatabaseFixtures {
         String returnUrl = "http://service.com/success-page";
         String transactionId;
         String reference = "Test reference";
+        String cardBrand;
+
         ZonedDateTime createdDate = ZonedDateTime.now(ZoneId.of("UTC"));
 
         TestAccount testAccount;
@@ -238,6 +242,11 @@ public class DatabaseFixtures {
 
         public TestCharge withReference(String reference) {
             this.reference = reference;
+            return this;
+        }
+
+        public TestCharge withCardBrand(String cardBrand) {
+            this.cardBrand = cardBrand;
             return this;
         }
 
@@ -269,7 +278,8 @@ public class DatabaseFixtures {
         public TestCharge insert() {
             if (testAccount == null)
                 throw new IllegalStateException("Test Account must be provided.");
-            databaseTestHelper.addCharge(chargeId, externalChargeId, String.valueOf(testAccount.getAccountId()), amount, chargeStatus, returnUrl, transactionId, reference, createdDate, email);
+
+            databaseTestHelper.addCharge(chargeId, externalChargeId, String.valueOf(testAccount.getAccountId()), amount, chargeStatus, returnUrl, transactionId, reference, createdDate, email, cardBrand);
             return this;
         }
 
@@ -307,6 +317,10 @@ public class DatabaseFixtures {
 
         public ZonedDateTime getCreatedDate() {
             return createdDate;
+        }
+
+        public String getCardBrand() {
+            return cardBrand;
         }
     }
 
@@ -439,7 +453,6 @@ public class DatabaseFixtures {
             this.brand = brand;
             return this;
         }
-
 
         public TestCardType insert() {
             databaseTestHelper.addCardType(id, label, type.toString(), brand);

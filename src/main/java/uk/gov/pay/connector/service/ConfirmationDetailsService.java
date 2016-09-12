@@ -37,6 +37,8 @@ public class ConfirmationDetailsService {
             throw new IllegalStateRuntimeException(chargeEntity.getExternalId());
         }
 
+        chargeEntity.setCardBrand(cardDetails.getCardBrand());
+
         ConfirmationDetailsEntity detailsEntity = new ConfirmationDetailsEntity(chargeEntity);
         detailsEntity.setBillingAddress(cardDetails.getAddress());
         detailsEntity.setCardHolderName(cardDetails.getCardHolder());

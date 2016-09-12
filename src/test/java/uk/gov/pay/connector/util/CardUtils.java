@@ -9,19 +9,20 @@ public class CardUtils {
 
     public static Card aValidCard() {
         String validSandboxCard = "4242424242424242";
-        return buildCardDetails(validSandboxCard, "123", "12/17");
+        return buildCardDetails(validSandboxCard, "123", "12/17", "card-brand");
     }
 
-    public static Card buildCardDetails(String cardNumber, String cvc, String expiryDate) {
-        return buildCardDetails("Mr. Payment", cardNumber, cvc, expiryDate, goodAddress());
+    public static Card buildCardDetails(String cardNumber, String cvc, String expiryDate, String cardBrand) {
+        return buildCardDetails("Mr. Payment", cardNumber, cvc, expiryDate, cardBrand, goodAddress());
     }
 
-    public static Card buildCardDetails(String cardholderName, String cardNumber, String cvc, String expiryDate, Address address) {
+    public static Card buildCardDetails(String cardholderName, String cardNumber, String cvc, String expiryDate, String cardBrand, Address address) {
         Card cardDetails = aCard();
         cardDetails.setCvc(cvc);
         cardDetails.setCardHolder(cardholderName);
         cardDetails.setEndDate(expiryDate);
         cardDetails.setCardNo(cardNumber);
+        cardDetails.setCardBrand(cardBrand);
         cardDetails.setAddress(address);
         return cardDetails;
     }

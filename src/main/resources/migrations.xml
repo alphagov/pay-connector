@@ -420,4 +420,13 @@
             </column>
         </createTable>
     </changeSet>
+
+    <changeSet id="add card_brand columns to charges table" author="">
+        <addColumn tableName="charges">
+            <column name="card_brand" type="text">
+                <constraints nullable="true"/>
+            </column>
+        </addColumn>
+    </changeSet>
+
 </databaseChangeLog>

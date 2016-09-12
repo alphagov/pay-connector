@@ -5,9 +5,11 @@ import com.google.common.collect.ImmutableList;
 import io.dropwizard.jersey.PATCH;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import uk.gov.pay.connector.dao.CardTypeDao;
 import uk.gov.pay.connector.dao.ChargeDao;
 import uk.gov.pay.connector.model.ChargeResponse;
 import uk.gov.pay.connector.model.builder.PatchRequestBuilder;
+import uk.gov.pay.connector.model.domain.CardTypeEntity;
 import uk.gov.pay.connector.model.domain.ChargeEntity;
 import uk.gov.pay.connector.model.domain.ChargeStatus;
 import uk.gov.pay.connector.model.domain.GatewayAccountEntity;
@@ -44,11 +46,13 @@ public class ChargesFrontendResource {
     private static final List<ChargeStatus> CURRENT_STATUSES_ALLOWING_UPDATE_TO_NEW_STATUS = newArrayList(CREATED, ENTERING_CARD_DETAILS);
     private final ChargeDao chargeDao;
     private final ChargeService chargeService;
+    private CardTypeDao cardTypeDao;
 
     @Inject
-    public ChargesFrontendResource(ChargeDao chargeDao, ChargeService chargeService) {
+    public ChargesFrontendResource(ChargeDao chargeDao, ChargeService chargeService, CardTypeDao cardTypeDao) {
         this.chargeDao = chargeDao;
         this.chargeService = chargeService;
+        this.cardTypeDao = cardTypeDao;
     }
 
     @GET
@@ -69,7 +73,7 @@ public class ChargesFrontendResource {
     @Path(FRONTEND_CHARGE_API_PATH)
     @Produces(APPLICATION_JSON)
     @JsonView(GatewayAccountEntity.Views.PartialView.class)
-    public Response patchCharge(@PathParam("chargeId") String chargeId, Map<String,String> chargePatchMap, @Context UriInfo uriInfo) {
+    public Response patchCharge(@PathParam("chargeId") String chargeId, Map<String, String> chargePatchMap, @Context UriInfo uriInfo) {
         PatchRequestBuilder.PatchRequest chargePatchRequest;
 
         try {
@@ -92,8 +96,8 @@ public class ChargesFrontendResource {
         return maybeCharge
                 .map(chargeEntity ->
                         Response.ok(buildChargeResponse(
-                                uriInfo,
-                                chargeService.updateCharge(chargeEntity, chargePatchRequest))
+                                        uriInfo,
+                                        chargeService.updateCharge(chargeEntity, chargePatchRequest))
                         ).build())
                 .orElseGet(() -> responseWithChargeNotFound(chargeId));
     }
@@ -137,12 +141,26 @@ public class ChargesFrontendResource {
         return newChargeStatus.equals(ENTERING_CARD_DETAILS);
     }
 
+    private String findCardBrandLabel(String cardBrand) {
+        if (cardBrand == null) {
+            return "";
+        }
+
+        return cardTypeDao.findByBrand(cardBrand)
+                .stream()
+                .findFirst()
+                .map(CardTypeEntity::getLabel)
+                .orElse("");
+    }
+
     private ChargeResponse buildChargeResponse(UriInfo uriInfo, ChargeEntity charge) {
         String chargeId = charge.getExternalId();
+
         return aFrontendChargeResponse()
                 .withStatus(charge.getStatus())
                 .withChargeId(chargeId)
                 .withAmount(charge.getAmount())
+                .withCardBrand(findCardBrandLabel(charge.getCardBrand()))
                 .withDescription(charge.getDescription())
                 .withGatewayTransactionId(charge.getGatewayTransactionId())
                 .withCreatedDate(charge.getCreatedDate())

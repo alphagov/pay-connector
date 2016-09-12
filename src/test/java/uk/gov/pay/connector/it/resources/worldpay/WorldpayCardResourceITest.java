@@ -8,7 +8,7 @@ import static uk.gov.pay.connector.model.domain.ChargeStatus.*;
 
 public class WorldpayCardResourceITest extends CardResourceITestBase {
 
-    private String validCardDetails = buildJsonCardDetailsFor("4444333322221111");
+    private String validCardDetails = buildJsonCardDetailsFor("4444333322221111", "visa");
 
     public WorldpayCardResourceITest() {
         super("worldpay");
@@ -31,7 +31,7 @@ public class WorldpayCardResourceITest extends CardResourceITestBase {
 
     @Test
     public void shouldNotAuthorise_AWorldpayErrorCard() throws Exception {
-        String cardDetailsRejectedByWorldpay = buildJsonCardDetailsFor("REFUSED", "4444333322221111");
+        String cardDetailsRejectedByWorldpay = buildJsonCardDetailsFor("REFUSED", "4444333322221111", "visa");
 
         worldpay.mockAuthorisationFailure();
 

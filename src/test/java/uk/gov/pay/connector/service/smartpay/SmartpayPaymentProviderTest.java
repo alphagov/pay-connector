@@ -7,7 +7,6 @@ import com.google.common.io.Resources;
 import fj.data.Either;
 import org.apache.commons.lang3.tuple.Pair;
 import org.hamcrest.CoreMatchers;
-import org.hamcrest.MatcherAssert;
 import org.junit.Before;
 import org.junit.Test;
 import org.mockito.Matchers;
@@ -20,9 +19,6 @@ import uk.gov.pay.connector.model.domain.ChargeEntity;
 import uk.gov.pay.connector.model.domain.GatewayAccountEntity;
 import uk.gov.pay.connector.model.gateway.AuthorisationGatewayRequest;
 import uk.gov.pay.connector.model.gateway.GatewayResponse;
-import uk.gov.pay.connector.service.smartpay.SmartpayAuthorisationResponse;
-import uk.gov.pay.connector.service.smartpay.SmartpayPaymentProvider;
-import uk.gov.pay.connector.service.smartpay.SmartpayStatusMapper;
 import uk.gov.pay.connector.service.worldpay.WorldpayCaptureResponse;
 
 import javax.ws.rs.client.Client;
@@ -30,7 +26,6 @@ import javax.ws.rs.client.Entity;
 import javax.ws.rs.client.Invocation;
 import javax.ws.rs.client.WebTarget;
 import javax.ws.rs.core.Response;
-
 import java.io.IOException;
 import java.net.URL;
 import java.nio.charset.Charset;
@@ -42,7 +37,8 @@ import static org.hamcrest.core.Is.is;
 import static org.hamcrest.core.IsSame.sameInstance;
 import static org.junit.Assert.assertThat;
 import static org.junit.Assert.assertTrue;
-import static org.mockito.Matchers.*;
+import static org.mockito.Matchers.anyObject;
+import static org.mockito.Matchers.anyString;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
 import static uk.gov.pay.connector.model.domain.Address.anAddress;
@@ -211,7 +207,7 @@ public class SmartpayPaymentProviderTest {
         address.setCounty("London state");
         address.setCountry("GB");
 
-        return buildCardDetails("Mr. Payment", "4111111111111111", "123", "12/15", address);
+        return buildCardDetails("Mr. Payment", "4111111111111111", "123", "12/15", "visa", address);
     }
 
     private String notificationPayloadForTransaction(String transactionId, String fileName) throws IOException {

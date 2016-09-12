@@ -91,7 +91,7 @@ public class ChargeResponse {
 
         @Override
         public ChargeResponse build() {
-            return new ChargeResponse(chargeId, amount, state, gatewayTransactionId, returnUrl, email, description, reference, providerName, createdDate, links, refundSummary);
+            return new ChargeResponse(chargeId, amount, state, cardBrand, gatewayTransactionId, returnUrl, email, description, reference, providerName, createdDate, links, refundSummary);
         }
     }
 
@@ -110,6 +110,9 @@ public class ChargeResponse {
 
     @JsonProperty
     private ExternalChargeState state;
+
+    @JsonProperty("card_brand")
+    private String cardBrand;
 
     @JsonProperty("gateway_transaction_id")
     private String gatewayTransactionId;
@@ -139,11 +142,12 @@ public class ChargeResponse {
         return DateTimeUtils.toUTCDateString(createdDate);
     }
 
-    protected ChargeResponse(String chargeId, Long amount, ExternalChargeState state, String gatewayTransactionId, String returnUrl, String email, String description, String reference, String providerName, ZonedDateTime createdDate, List<Map<String, Object>> dataLinks, RefundSummary refundSummary) {
+    protected ChargeResponse(String chargeId, Long amount, ExternalChargeState state, String cardBrand, String gatewayTransactionId, String returnUrl, String email, String description, String reference, String providerName, ZonedDateTime createdDate, List<Map<String, Object>> dataLinks, RefundSummary refundSummary) {
         this.dataLinks = dataLinks;
         this.chargeId = chargeId;
         this.amount = amount;
         this.state = state;
+        this.cardBrand = cardBrand;
         this.gatewayTransactionId = gatewayTransactionId;
         this.returnUrl = returnUrl;
         this.description = description;
@@ -173,6 +177,7 @@ public class ChargeResponse {
         if (chargeId != null ? !chargeId.equals(that.chargeId) : that.chargeId != null) return false;
         if (amount != null ? !amount.equals(that.amount) : that.amount != null) return false;
         if (state != that.state) return false;
+        if (cardBrand != null ? !cardBrand.equals(that.cardBrand) : that.cardBrand != null) return false;
         if (gatewayTransactionId != null ? !gatewayTransactionId.equals(that.gatewayTransactionId) : that.gatewayTransactionId != null)
             return false;
         if (returnUrl != null ? !returnUrl.equals(that.returnUrl) : that.returnUrl != null) return false;
@@ -191,6 +196,7 @@ public class ChargeResponse {
         result = 31 * result + (chargeId != null ? chargeId.hashCode() : 0);
         result = 31 * result + (amount != null ? amount.hashCode() : 0);
         result = 31 * result + (state != null ? state.hashCode() : 0);
+        result = 31 * result + (cardBrand != null ? cardBrand.hashCode() : 0);
         result = 31 * result + (gatewayTransactionId != null ? gatewayTransactionId.hashCode() : 0);
         result = 31 * result + (returnUrl != null ? returnUrl.hashCode() : 0);
         result = 31 * result + (email != null ? email.hashCode() : 0);
@@ -209,6 +215,7 @@ public class ChargeResponse {
                 ", chargeId='" + chargeId + '\'' +
                 ", amount=" + amount +
                 ", state=" + state +
+                ", cardBrand='" + cardBrand + '\'' +
                 ", gatewayTransactionId='" + gatewayTransactionId + '\'' +
                 ", returnUrl='" + returnUrl + '\'' +
                 ", email='" + email + '\'' +

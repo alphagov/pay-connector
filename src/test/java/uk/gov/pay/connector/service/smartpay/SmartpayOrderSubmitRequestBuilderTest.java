@@ -25,7 +25,7 @@ public class SmartpayOrderSubmitRequestBuilderTest {
         address.setPostcode("EC2A 1AE");
         address.setCountry("GB");
 
-        Card card = buildCardDetails("Mr. Payment", "5555444433331111", "737", "08/18", address);
+        Card card = buildCardDetails("Mr. Payment", "5555444433331111", "737", "08/18", "visa", address);
 
         String actualRequest = aSmartpayOrderSubmitRequest()
                 .withMerchantCode("MerchantAccount")

@@ -12,7 +12,6 @@ import static com.google.common.io.Resources.getResource;
 import static org.custommonkey.xmlunit.XMLAssert.assertXMLEqual;
 import static uk.gov.pay.connector.model.domain.Address.anAddress;
 import static uk.gov.pay.connector.service.OrderSubmitRequestBuilder.aWorldpayOrderSubmitRequest;
-import static uk.gov.pay.connector.service.worldpay.OrderInquiryRequestBuilder.anOrderInquiryRequest;
 import static uk.gov.pay.connector.util.CardUtils.buildCardDetails;
 
 public class WorldpayOrderSubmitRequestBuilderTest {
@@ -64,7 +63,7 @@ public class WorldpayOrderSubmitRequestBuilderTest {
     }
 
     private Card getValidTestCard(Address address) {
-        return buildCardDetails("Mr. Payment", "4111111111111111", "123", "12/15", address);
+        return buildCardDetails("Mr. Payment", "4111111111111111", "123", "12/15", "visa", address);
     }
 
     private String expectedOrderSubmitPayload(final String expectedTemplate) throws IOException {
