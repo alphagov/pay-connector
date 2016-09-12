@@ -92,11 +92,11 @@ public class CardResourceITestBase {
     }
 
     protected String buildJsonCardDetailsFor(String cardHolderName, String cardNumber) {
-        return buildJsonCardDetailsFor(cardHolderName, cardNumber, "123", "11/99", null, "London", null);
+        return buildJsonCardDetailsFor(cardHolderName, cardNumber, "123", "11/99", "The Money Pool", null, "London", null, "DO11 4RS", "GB");
     }
 
     protected String buildJsonCardDetailsFor(String cardNumber, String cvc, String expiryDate) {
-        return buildJsonCardDetailsFor("Mr. Payment", cardNumber, cvc, expiryDate, null, "London", null);
+        return buildJsonCardDetailsFor("Mr. Payment", cardNumber, cvc, expiryDate, "The Money Pool", null, "London", null, "DO11 4RS", "GB");
     }
 
     protected void assertFrontendChargeStatusIs(String chargeId, String status) {
@@ -143,21 +143,24 @@ public class CardResourceITestBase {
                 "4242424242424242",
                 "123",
                 "11/99",
+                "The Money Pool",
                 "Moneybags Avenue",
                 "London",
-                "Greater London"
+                "Greater London",
+                "DO11 4RS",
+                "GB"
         );
     }
 
-    protected String buildJsonCardDetailsFor(String cardHolderName, String cardNumber, String cvc, String expiryDate, String line2, String city, String county) {
+    protected String buildJsonCardDetailsFor(String cardHolderName, String cardNumber, String cvc, String expiryDate, String line1, String line2, String city, String county, String postCode, String countryCode) {
         JsonObject addressObject = new JsonObject();
 
-        addressObject.addProperty("line1", "The Money Pool");
+        addressObject.addProperty("line1", line1);
         addressObject.addProperty("line2", line2);
         addressObject.addProperty("city", city);
         addressObject.addProperty("county", county);
-        addressObject.addProperty("postcode", "DO11 4RS");
-        addressObject.addProperty("country", "GB");
+        addressObject.addProperty("postcode", postCode);
+        addressObject.addProperty("country", countryCode);
 
         JsonObject cardDetails = new JsonObject();
         cardDetails.addProperty("card_number", cardNumber);
