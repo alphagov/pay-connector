@@ -5,16 +5,17 @@ import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.lang3.tuple.Pair;
 import uk.gov.pay.connector.dao.ChargeDao;
 import uk.gov.pay.connector.exception.ChargeNotFoundRuntimeException;
+import uk.gov.pay.connector.exception.ConflictRuntimeException;
 import uk.gov.pay.connector.exception.GenericGatewayRuntimeException;
 import uk.gov.pay.connector.exception.OperationAlreadyInProgressRuntimeException;
 import uk.gov.pay.connector.model.domain.Card;
 import uk.gov.pay.connector.model.domain.ChargeEntity;
 import uk.gov.pay.connector.model.domain.ChargeStatus;
-import uk.gov.pay.connector.model.domain.ConfirmationDetailsEntity;
 import uk.gov.pay.connector.model.gateway.AuthorisationGatewayRequest;
 import uk.gov.pay.connector.model.gateway.GatewayResponse;
 
 import javax.inject.Inject;
+import javax.persistence.OptimisticLockException;
 import java.util.Optional;
 import java.util.function.Supplier;
 
@@ -22,13 +23,11 @@ import static java.lang.String.format;
 import static uk.gov.pay.connector.model.domain.ChargeStatus.*;
 import static uk.gov.pay.connector.service.CardExecutorService.ExecutionStatus;
 
-public class CardAuthoriseService extends CardService<BaseAuthoriseResponse> implements TransactionalGatewayOperation<BaseAuthoriseResponse> {
+public class CardAuthoriseService extends CardService<BaseAuthoriseResponse> {
 
     private static ChargeStatus[] legalStates = new ChargeStatus[]{
             ENTERING_CARD_DETAILS
     };
-
-    private Card cardDetails;
 
     @Inject
     public CardAuthoriseService(ChargeDao chargeDao,
@@ -39,11 +38,24 @@ public class CardAuthoriseService extends CardService<BaseAuthoriseResponse> imp
     }
 
     public GatewayResponse doAuthorise(String chargeId, Card cardDetails) {
-        this.cardDetails = cardDetails;
-        Optional<ChargeEntity> chargeEntity = chargeDao.findByExternalId(chargeId);
 
-        if (chargeEntity.isPresent()) {
-            Supplier<GatewayResponse> authorisationSupplier = () -> executeGatewayOperationFor(chargeEntity.get());
+        Optional<ChargeEntity> chargeEntityOptional = chargeDao.findByExternalId(chargeId);
+
+        if (chargeEntityOptional.isPresent()) {
+            Supplier<GatewayResponse> authorisationSupplier = () -> {
+                ChargeEntity chargeEntity = chargeEntityOptional.get();
+                ChargeEntity preOperationResponse;
+                try {
+                    preOperationResponse = preOperation(chargeEntity);
+                } catch (OptimisticLockException e) {
+                    throw new ConflictRuntimeException(chargeEntity.getExternalId());
+                }
+
+                GatewayResponse<BaseAuthoriseResponse> operationResponse = operation(preOperationResponse, cardDetails);
+
+                return postOperation(preOperationResponse, cardDetails, operationResponse);
+            };
+
             Pair<ExecutionStatus, GatewayResponse> executeResult = cardExecutorService.execute(authorisationSupplier);
 
             switch (executeResult.getLeft()) {
@@ -60,7 +72,6 @@ public class CardAuthoriseService extends CardService<BaseAuthoriseResponse> imp
     }
 
     @Transactional
-    @Override
     public ChargeEntity preOperation(ChargeEntity chargeEntity) {
         chargeEntity = preOperation(chargeEntity, OperationType.AUTHORISATION, legalStates, AUTHORISATION_READY);
         getPaymentProviderFor(chargeEntity).generateTransactionId().ifPresent(chargeEntity::setGatewayTransactionId);
@@ -71,15 +82,13 @@ public class CardAuthoriseService extends CardService<BaseAuthoriseResponse> imp
         return chargeEntity;
     }
 
-    @Override
-    public GatewayResponse<BaseAuthoriseResponse> operation(ChargeEntity chargeEntity) {
+    public GatewayResponse<BaseAuthoriseResponse> operation(ChargeEntity chargeEntity, Card cardDetails) {
         return getPaymentProviderFor(chargeEntity)
-                .authorise(AuthorisationGatewayRequest.valueOf(chargeEntity, this.cardDetails));
+                .authorise(AuthorisationGatewayRequest.valueOf(chargeEntity, cardDetails));
     }
 
     @Transactional
-    @Override
-    public GatewayResponse<BaseAuthoriseResponse> postOperation(ChargeEntity chargeEntity, GatewayResponse<BaseAuthoriseResponse> operationResponse) {
+    public GatewayResponse<BaseAuthoriseResponse> postOperation(ChargeEntity chargeEntity, Card cardDetails, GatewayResponse<BaseAuthoriseResponse> operationResponse) {
         ChargeEntity reloadedCharge = chargeDao.merge(chargeEntity);
 
         ChargeStatus status = operationResponse.getBaseResponse()

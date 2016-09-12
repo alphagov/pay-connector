@@ -1,21 +1,29 @@
 package uk.gov.pay.connector.it.resources;
 
+import com.jayway.restassured.response.ValidatableResponse;
+import com.jayway.restassured.specification.RequestSpecification;
 import org.apache.commons.lang3.StringUtils;
 import org.junit.Test;
 import uk.gov.pay.connector.app.ExecutorServiceConfig;
 import uk.gov.pay.connector.it.base.CardResourceITestBase;
-import uk.gov.pay.connector.model.domain.ChargeEntity;
-import uk.gov.pay.connector.model.domain.ConfirmationDetailsEntity;
 
 import java.lang.reflect.Field;
+import java.util.Arrays;
+import java.util.List;
 import java.util.Map;
+import java.util.concurrent.Callable;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
+import java.util.stream.Collectors;
 
 import static com.jayway.restassured.http.ContentType.JSON;
 import static java.lang.String.format;
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.hasEntry;
 import static org.hamcrest.Matchers.is;
+import static org.junit.Assert.fail;
 import static uk.gov.pay.connector.model.domain.ChargeStatus.*;
+import static uk.gov.pay.connector.resources.ApiPaths.FRONTEND_CHARGE_API_PATH;
 
 public class CardAuthoriseResourceITest extends CardResourceITestBase {
 
@@ -181,6 +189,96 @@ public class CardAuthoriseResourceITest extends CardResourceITestBase {
         String message = format("Authorisation for charge already in progress, %s", chargeId);
         authoriseAndVerifyFor(chargeId, validCardDetails, message, 202);
         assertFrontendChargeStatusIs(chargeId, AUTHORISATION_READY.getValue());
+    }
+
+    @Test
+    public void shouldSaveExpectedConfirmationDetailsFromMultipleRequests() throws Exception {
+
+        String charge1 = createNewChargeWith(ENTERING_CARD_DETAILS, null);
+        String charge2 = createNewChargeWith(ENTERING_CARD_DETAILS, null);
+
+        RequestSpecification firstChargeAuthorize = givenSetup()
+                .body(buildJsonCardDetailsFor(
+                        "Charge1 Name",
+                        "4242424242424242",
+                        "123",
+                        "10/99",
+                        "Charge1 Line1",
+                        "Charge1 Line2",
+                        "Charge1 City",
+                        "Charge1 County",
+                        "DO11 4RS",
+                        "GB"
+                ));
+
+        RequestSpecification secondChargeAuthorize = givenSetup()
+                .body(buildJsonCardDetailsFor(
+                        "Charge2 Name",
+                        "4444333322221111",
+                        "456",
+                        "11/99",
+                        "Charge2 Line1",
+                        "Charge2 Line2",
+                        "Charge2 City",
+                        "Charge2 County",
+                        "W2 3AF",
+                        "DE"
+                ));
+
+
+        List<Callable<ValidatableResponse>> authoriseTasks = Arrays.asList(
+                () -> firstChargeAuthorize.post(authoriseChargeUrlFor(charge1)).then(),
+                () -> secondChargeAuthorize.post(authoriseChargeUrlFor(charge2)).then());
+
+        invokeAll(authoriseTasks);
+
+        assertFrontendChargeStatusIs(charge1, AUTHORISATION_SUCCESS.getValue());
+        assertFrontendChargeStatusIs(charge2, AUTHORISATION_SUCCESS.getValue());
+
+        givenSetup()
+                .get(FRONTEND_CHARGE_API_PATH.replace("{chargeId}", charge1))
+                .then()
+                .statusCode(200)
+                .contentType(JSON)
+                .body("confirmation_details.last_digits_card_number", is("4242"))
+                .body("confirmation_details.cardholder_name", is("Charge1 Name"))
+                .body("confirmation_details.expiry_date", is("10/99"))
+                .body("confirmation_details.billing_address.line1.", is("Charge1 Line1"))
+                .body("confirmation_details.billing_address.line2.", is("Charge1 Line2"))
+                .body("confirmation_details.billing_address.postcode.", is("DO11 4RS"))
+                .body("confirmation_details.billing_address.city.", is("Charge1 City"))
+                .body("confirmation_details.billing_address.county.", is("Charge1 County"))
+                .body("confirmation_details.billing_address.country.", is("GB"));
+
+        givenSetup()
+                .get(FRONTEND_CHARGE_API_PATH.replace("{chargeId}", charge2))
+                .then()
+                .statusCode(200)
+                .contentType(JSON)
+                .body("confirmation_details.last_digits_card_number", is("1111"))
+                .body("confirmation_details.cardholder_name", is("Charge2 Name"))
+                .body("confirmation_details.expiry_date", is("11/99"))
+                .body("confirmation_details.billing_address.line1.", is("Charge2 Line1"))
+                .body("confirmation_details.billing_address.line2.", is("Charge2 Line2"))
+                .body("confirmation_details.billing_address.postcode.", is("W2 3AF"))
+                .body("confirmation_details.billing_address.city.", is("Charge2 City"))
+                .body("confirmation_details.billing_address.county.", is("Charge2 County"))
+                .body("confirmation_details.billing_address.country.", is("DE"));
+    }
+
+    private List<ValidatableResponse> invokeAll(List<Callable<ValidatableResponse>> tasks) throws InterruptedException {
+        ExecutorService executor = Executors.newFixedThreadPool(2);
+        return executor.invokeAll(tasks)
+                .stream()
+                .map(future -> {
+                    try {
+                        return future.get();
+                    } catch (Exception e) {
+                        fail("Test fail with exception calling resource");
+                        return null;
+                    }
+                })
+                .collect(Collectors.toList());
     }
 
     private void shouldReturnErrorFor(String chargeId, String randomCardNumber, String expectedMessage) {
