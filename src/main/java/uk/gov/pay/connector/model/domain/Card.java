@@ -11,7 +11,7 @@ public class Card {
 
     private Address address;
 
-    private String cardTypeId;
+    private String cardBrand;
 
     public static Card aCard() {
         return new Card();
@@ -22,9 +22,9 @@ public class Card {
         this.cardNo = cardNo;
     }
 
-    @JsonProperty("card_type_id")
-    public void setCardTypeId(String cardTypeId) {
-        this.cardTypeId = cardTypeId;
+    @JsonProperty("card_brand")
+    public void setCardBrand(String cardBrand) {
+        this.cardBrand = cardBrand;
     }
 
     @JsonProperty("cardholder_name")
@@ -67,7 +67,7 @@ public class Card {
         return address;
     }
 
-    public String getCardTypeId() {
-        return cardTypeId;
+    public String getCardBrand() {
+        return cardBrand;
     }
 }
