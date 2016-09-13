@@ -230,7 +230,8 @@ Content-Type: application/json
     "state": {
       "status": "created",
       "finished": false
-    }
+    },
+    "card_brand": "Visa",
     "return_url": "http://example.service/return_from_payments" 
     "links": [
         {
@@ -258,6 +259,7 @@ Content-Type: application/json
 | `gateway_account_id`     | X | The ID of the gateway account to use with this charge       |
 | `gateway_transaction_id` | X | The gateway transaction reference associated to this charge       |
 | `status`                 | X | The current external status of the charge       |
+| `card_brand`              |   | The brand label of the card                 |
 | `return_url`             | X | The url to return the user to after the payment process has completed.|
 | `links`                  | X | Array of relevant resource references related to this charge|
 
@@ -781,6 +783,7 @@ Content-Type: application/json
 {
     "amount": 5000,
     "status": "CREATED",
+    "card_brand": "Visa",
     "links": [{
                 "href": "http://connector.service/v1/frontend/charges/1",
                 "rel" : "self",
@@ -805,6 +808,7 @@ Content-Type: application/json
 | ------------------------ |:--------:| ----------------------------------------- |
 | `amount`                 | X | The amount (in minor units) of the charge       |
 | `status`                 | X | The current (internal) status of the charge |
+| `card_brand`              |   | The brand label of the card                 |
 
 -----------------------------------------------------------------------------------------------------------
 
@@ -820,6 +824,7 @@ Content-Type: application/json
 
 {
     "card_number": "4242424242424242",
+    "card_brand": "visa",
     "cvc": "123",
     "expiry_date": "11/17"
     "address" : 
@@ -837,6 +842,7 @@ Content-Type: application/json
 | Field                    | required | Description                               |
 | ------------------------ |:--------:| ----------------------------------------- |
 | `card_number`                 | X | The card number (16 digits)       |
+| `card_brand`                 | X | The card brand                     |
 | `cvc`     | X | The cvc of the card (3 digits) |
 | `expiry_date`     | X | The expiry date (no validation other than format being mm/yy) |
 | `address`     | X | The billing address associated to this charge. Mandatory Address fields are `line1, city, postcode, country`. Optional Address fields are `line2, county`  |
