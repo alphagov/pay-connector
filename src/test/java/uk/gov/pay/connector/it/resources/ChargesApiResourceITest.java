@@ -274,7 +274,7 @@ public class ChargesApiResourceITest {
                 .put(JSON_RETURN_URL_KEY, returnUrl)
                 .put(JSON_EMAIL_KEY, email).build());
 
-       createChargeApi
+        createChargeApi
                 .postCreateCharge(postBody)
                 .statusCode(Status.BAD_REQUEST.getStatusCode());
 
@@ -370,7 +370,7 @@ public class ChargesApiResourceITest {
         app.getDatabaseTestHelper().addCardType(card, "label", "type", "brand");
         app.getDatabaseTestHelper().addAcceptedCardType(Long.valueOf(accountId), card);
         app.getDatabaseTestHelper().addCharge(chargeId, externalChargeId, accountId, AMOUNT, chargeStatus, returnUrl, null, "My reference", createdDate);
-        app.getDatabaseTestHelper().addConfirmationDetails(chargeId, "1234", "Mr. McPayment",  "03/18", "line1", null, "postcode", "city", null, "country");
+        app.getDatabaseTestHelper().addConfirmationDetails(chargeId, "1234", "Mr. McPayment", "03/18", "line1", null, "postcode", "city", null, "country");
         app.getDatabaseTestHelper().addToken(chargeId, "tokenId");
         app.getDatabaseTestHelper().addEvent(chargeId, chargeStatus.getValue());
         getChargeApi
@@ -430,7 +430,7 @@ public class ChargesApiResourceITest {
 
         List<String> createdDateStrings = collect(results, "created_date");
         datesFrom(createdDateStrings).forEach(createdDate ->
-                assertThat(createdDate, is(within(1, DAYS, now())))
+                        assertThat(createdDate, is(within(1, DAYS, now())))
         );
         List<String> emails = collect(results, "email");
         assertThat(emails, contains(email, email));
@@ -452,6 +452,26 @@ public class ChargesApiResourceITest {
                 .contentType(JSON)
                 .body("results.size()", is(3))
                 .body("results[0].email", endsWith("example.com"));
+    }
+
+    @Test
+    public void shouldFilterTransactionsByCardBrand() throws Exception {
+        String searchedCardBrand = "visa";
+
+        addChargeAndConfirmationDetails(CREATED, "ref-1", now(), searchedCardBrand);
+        addChargeAndConfirmationDetails(AUTHORISATION_READY, "ref-2", now(), "mastercard");
+        addChargeAndConfirmationDetails(CAPTURED, "ref-3", now().minusDays(2), searchedCardBrand);
+
+        getChargeApi
+                .withAccountId(accountId)
+                .withQueryParam("card_brand", searchedCardBrand)
+                .withHeader(HttpHeaders.ACCEPT, APPLICATION_JSON)
+                .getTransactions()
+                .statusCode(OK.getStatusCode())
+                .contentType(JSON)
+                .body("results.size()", is(2))
+                .body("results[0].card_brand", endsWith("Visa"))
+                .body("results[1].card_brand", endsWith("Visa"));
     }
 
     @Test
@@ -587,12 +607,12 @@ public class ChargesApiResourceITest {
     @Test
     public void cannotMakeChargeForInvalidSizeOfFields() throws Exception {
         String postBody = toJson(ImmutableMap.builder()
-                        .put(JSON_AMOUNT_KEY, AMOUNT)
-                        .put(JSON_REFERENCE_KEY, randomAlphabetic(256))
-                        .put(JSON_DESCRIPTION_KEY, randomAlphanumeric(256))
-                        .put(JSON_EMAIL_KEY, randomAlphanumeric(255))
-                        .put(JSON_GATEWAY_ACC_KEY, accountId)
-                        .put(JSON_RETURN_URL_KEY, returnUrl).build());
+                .put(JSON_AMOUNT_KEY, AMOUNT)
+                .put(JSON_REFERENCE_KEY, randomAlphabetic(256))
+                .put(JSON_DESCRIPTION_KEY, randomAlphanumeric(256))
+                .put(JSON_EMAIL_KEY, randomAlphanumeric(255))
+                .put(JSON_GATEWAY_ACC_KEY, accountId)
+                .put(JSON_RETURN_URL_KEY, returnUrl).build());
 
         createChargeApi.postCreateCharge(postBody)
                 .statusCode(BAD_REQUEST.getStatusCode())
@@ -690,7 +710,7 @@ public class ChargesApiResourceITest {
                 .getTransactions()
                 .statusCode(OK.getStatusCode())
                 .contentType(JSON)
-                // then no prev and next link
+                        // then no prev and next link
                 .body("results.size()", is(1))
                 .body("total", is(1))
                 .body("count", is(1))
@@ -714,7 +734,7 @@ public class ChargesApiResourceITest {
                 .getTransactions()
                 .statusCode(OK.getStatusCode())
                 .contentType(JSON)
-                // then no prev and next link
+                        // then no prev and next link
                 .body("results.size()", is(1))
                 .body("total", is(1))
                 .body("count", is(1))
@@ -741,7 +761,7 @@ public class ChargesApiResourceITest {
                 .getTransactions()
                 .statusCode(OK.getStatusCode())
                 .contentType(JSON)
-                // then no prev link
+                        // then no prev link
                 .body("results.size()", is(2))
                 .body("total", is(5))
                 .body("count", is(2))
@@ -768,7 +788,7 @@ public class ChargesApiResourceITest {
                 .getTransactions()
                 .statusCode(OK.getStatusCode())
                 .contentType(JSON)
-                // then all links present
+                        // then all links present
                 .body("results.size()", is(2))
                 .body("total", is(5))
                 .body("count", is(2))
@@ -795,7 +815,7 @@ public class ChargesApiResourceITest {
                 .getTransactions()
                 .statusCode(OK.getStatusCode())
                 .contentType(JSON)
-                // then no next link
+                        // then no next link
                 .body("results.size()", is(1))
                 .body("total", is(5))
                 .body("count", is(1))
@@ -818,13 +838,18 @@ public class ChargesApiResourceITest {
     }
 
     private String addChargeAndConfirmationDetails(ChargeStatus status, String reference, ZonedDateTime fromDate) {
+        return addChargeAndConfirmationDetails(status, reference, fromDate, "");
+
+    }
+
+    private String addChargeAndConfirmationDetails(ChargeStatus status, String reference, ZonedDateTime fromDate, String cardBrand) {
         long chargeId = RandomUtils.nextInt();
         String externalChargeId = "charge" + chargeId;
         ChargeStatus chargeStatus = status != null ? status : AUTHORISATION_SUCCESS;
-        app.getDatabaseTestHelper().addCharge(chargeId, externalChargeId, accountId, AMOUNT, chargeStatus, returnUrl, null, reference, fromDate, email, null);
+        app.getDatabaseTestHelper().addCharge(chargeId, externalChargeId, accountId, AMOUNT, chargeStatus, returnUrl, null, reference, fromDate, email, cardBrand);
         app.getDatabaseTestHelper().addToken(chargeId, "tokenId");
         app.getDatabaseTestHelper().addEvent(chargeId, chargeStatus.getValue());
-        app.getDatabaseTestHelper().addConfirmationDetails(chargeId, "1234", "Mr. McPayment",  "03/18", "line1", null, "postcode", "city", null, "country");
+        app.getDatabaseTestHelper().addConfirmationDetails(chargeId, "1234", "Mr. McPayment", "03/18", "line1", null, "postcode", "city", null, "country");
         return externalChargeId;
     }
 

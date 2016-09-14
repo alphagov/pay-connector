@@ -16,7 +16,6 @@ import uk.gov.pay.connector.model.ChargeResponse;
 import uk.gov.pay.connector.model.domain.ChargeEntity;
 import uk.gov.pay.connector.model.domain.ChargeStatus;
 import uk.gov.pay.connector.service.ChargeExpiryService;
-import uk.gov.pay.connector.service.ChargeRefundService;
 import uk.gov.pay.connector.service.ChargeService;
 import uk.gov.pay.connector.util.ResponseUtil;
 
@@ -57,6 +56,7 @@ public class ChargesApiResource {
     static int MAX_AMOUNT = 10000000;
 
     private static final String STATE_KEY = "state";
+    private static final String CARD_BRAND_KEY = "card_brand";
     private static final String FROM_DATE_KEY = "from_date";
     private static final String TO_DATE_KEY = "to_date";
     private static final String ACCOUNT_ID = "accountId";
@@ -105,6 +105,7 @@ public class ChargesApiResource {
                                    @QueryParam(EMAIL_KEY) String email,
                                    @QueryParam(REFERENCE_KEY) String reference,
                                    @QueryParam(STATE_KEY) String state,
+                                   @QueryParam(CARD_BRAND_KEY) String cardBrand,
                                    @QueryParam(FROM_DATE_KEY) String fromDate,
                                    @QueryParam(TO_DATE_KEY) String toDate,
                                    @QueryParam(PAGE) Long pageNumber,
@@ -124,6 +125,7 @@ public class ChargesApiResource {
                                         .withEmailLike(email)
                                         .withReferenceLike(reference)
                                         .withExternalChargeState(state)
+                                        .withCardBrand(cardBrand)
                                         .withFromDate(parseDate(fromDate))
                                         .withToDate(parseDate(toDate))
                                         .withDisplaySize(displaySize != null ? displaySize : configuration.getTransactionsPaginationConfig().getDisplayPageSize())
