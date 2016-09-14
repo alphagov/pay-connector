@@ -43,26 +43,28 @@ public class CardAuthoriseResourceITest extends CardResourceITestBase {
             "6011000990139424",
             "36148900647913"};
 
-    private String validCardDetails = buildJsonCardDetailsFor(VALID_SANDBOX_CARD_LIST[0]);
+    private String validCardDetails = buildJsonCardDetailsFor(VALID_SANDBOX_CARD_LIST[0], "visa");
 
     @Test
     public void shouldAuthoriseCharge_ForValidCards() throws Exception {
         for (String cardNo : VALID_SANDBOX_CARD_LIST) {
-            shouldAuthoriseChargeFor(buildJsonCardDetailsFor(cardNo));
+            shouldAuthoriseChargeFor(buildJsonCardDetailsFor(cardNo, "visa"));
         }
     }
 
     @Test
     public void shouldStoreCardDetailsForAuthorisedCharge() throws Exception {
-        String chargeId = shouldAuthoriseChargeFor(buildJsonCardDetailsFor("4444333322221111"));
-        Map<String, Object> detailsEntity = app.getDatabaseTestHelper()
-                .getConfirmationDetailsByChargeId(Long.valueOf(StringUtils.removeStart(chargeId, "charge-")));
-        assertThat(detailsEntity, hasEntry("last_digits_card_number", "1111"));
+        String cardBrand = "visa";
+        String externalChargeId = shouldAuthoriseChargeFor(buildJsonCardDetailsFor("4444333322221111", cardBrand));
+        Long chargeId = Long.valueOf(StringUtils.removeStart(externalChargeId, "charge-"));
+        Map<String, Object> confirmationDetails = app.getDatabaseTestHelper().getConfirmationDetailsByChargeId(chargeId);
+        assertThat(confirmationDetails, hasEntry("last_digits_card_number", "1111"));
+        assertThat(app.getDatabaseTestHelper().getChargeCardBrand(chargeId), is(cardBrand));
     }
 
     @Test
     public void shouldNotAuthoriseCard_ForSpecificCardNumber1() throws Exception {
-        String cardDetailsToReject = buildJsonCardDetailsFor("4000000000000002");
+        String cardDetailsToReject = buildJsonCardDetailsFor("4000000000000002", "visa");
 
         String expectedErrorMessage = "This transaction was declined.";
         String expectedChargeStatus = AUTHORISATION_REJECTED.getValue();
@@ -71,7 +73,7 @@ public class CardAuthoriseResourceITest extends CardResourceITestBase {
 
     @Test
     public void shouldNotAuthoriseCard_ForSpecificCardNumber2() throws Exception {
-        String cardDetailsToReject = buildJsonCardDetailsFor("4000000000000119");
+        String cardDetailsToReject = buildJsonCardDetailsFor("4000000000000119", "visa");
 
         String expectedErrorMessage = "This transaction could be not be processed.";
         String expectedChargeStatus = AUTHORISATION_ERROR.getValue();
@@ -80,7 +82,7 @@ public class CardAuthoriseResourceITest extends CardResourceITestBase {
 
     @Test
     public void shouldAuthoriseCharge_WithMinimalAddress() throws Exception {
-        String cardDetails = cardDetailsWithMinimalAddress(VALID_SANDBOX_CARD_LIST[0]);
+        String cardDetails = cardDetailsWithMinimalAddress(VALID_SANDBOX_CARD_LIST[0], "visa");
         shouldAuthoriseChargeFor(cardDetails);
     }
 
@@ -93,7 +95,7 @@ public class CardAuthoriseResourceITest extends CardResourceITestBase {
     @Test
     public void shouldRejectRandomCardNumber() throws Exception {
         String chargeId = createNewChargeWith(ENTERING_CARD_DETAILS, null);
-        String randomCardNumberDetails = buildJsonCardDetailsFor("1111111111111119234");
+        String randomCardNumberDetails = buildJsonCardDetailsFor("1111111111111119234", "visa");
 
         shouldReturnErrorFor(chargeId, randomCardNumberDetails, "Unsupported card details.");
         assertFrontendChargeStatusIs(chargeId, AUTHORISATION_ERROR.getValue());
@@ -102,7 +104,7 @@ public class CardAuthoriseResourceITest extends CardResourceITestBase {
     @Test
     public void shouldReturnError_WhenCardNumberLongerThanMaximumExpected() throws Exception {
         String chargeId = createNewChargeWith(ENTERING_CARD_DETAILS, null);
-        String randomCardNumberDetails = buildJsonCardDetailsFor("11111111111111192345");
+        String randomCardNumberDetails = buildJsonCardDetailsFor("11111111111111192345", "visa");
 
         shouldReturnErrorFor(chargeId, randomCardNumberDetails, "Values do not match expected format/length.");
         assertFrontendChargeStatusIs(chargeId, ENTERING_CARD_DETAILS.getValue());
@@ -111,7 +113,7 @@ public class CardAuthoriseResourceITest extends CardResourceITestBase {
     @Test
     public void shouldReturnError_WhenCardNumberShorterThanMinimumExpected() throws Exception {
         String chargeId = createNewChargeWith(ENTERING_CARD_DETAILS, null);
-        String randomCardNumberDetails = buildJsonCardDetailsFor("1111111111111");
+        String randomCardNumberDetails = buildJsonCardDetailsFor("1111111111111", "visa");
 
         shouldReturnErrorFor(chargeId, randomCardNumberDetails, "Values do not match expected format/length.");
         assertFrontendChargeStatusIs(chargeId, ENTERING_CARD_DETAILS.getValue());
@@ -203,6 +205,7 @@ public class CardAuthoriseResourceITest extends CardResourceITestBase {
                         "4242424242424242",
                         "123",
                         "10/99",
+                        "visa",
                         "Charge1 Line1",
                         "Charge1 Line2",
                         "Charge1 City",
@@ -217,6 +220,7 @@ public class CardAuthoriseResourceITest extends CardResourceITestBase {
                         "4444333322221111",
                         "456",
                         "11/99",
+                        "visa",
                         "Charge2 Line1",
                         "Charge2 Line2",
                         "Charge2 City",

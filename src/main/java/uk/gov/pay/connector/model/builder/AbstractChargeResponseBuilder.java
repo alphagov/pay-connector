@@ -14,6 +14,7 @@ public abstract class AbstractChargeResponseBuilder<T extends AbstractChargeResp
     protected String chargeId;
     protected Long amount;
     protected ExternalChargeState state;
+    protected String cardBrand;
     protected String gatewayTransactionId;
     protected String returnUrl;
     protected String description;
@@ -38,6 +39,11 @@ public abstract class AbstractChargeResponseBuilder<T extends AbstractChargeResp
 
     public T withState(ExternalChargeState state) {
         this.state = state;
+        return thisObject();
+    }
+
+    public T withCardBrand(String cardBrand) {
+        this.cardBrand = cardBrand;
         return thisObject();
     }
 

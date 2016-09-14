@@ -70,7 +70,7 @@ public class CardResourceITestBase {
         app.getDatabaseTestHelper().addGatewayAccount(accountId, paymentProvider, credentials);
     }
 
-    protected String cardDetailsWithMinimalAddress(String cardNumber) {
+    protected String cardDetailsWithMinimalAddress(String cardNumber, String cardBrand) {
         JsonObject addressObject = new JsonObject();
 
         addressObject.addProperty("line1", "The Money Pool");
@@ -83,20 +83,21 @@ public class CardResourceITestBase {
         cardDetails.addProperty("cvc", "123");
         cardDetails.addProperty("expiry_date", "12/21");
         cardDetails.addProperty("cardholder_name", "Mr. Payment");
+        cardDetails.addProperty("card_brand", cardBrand);
         cardDetails.add("address", addressObject);
         return toJson(cardDetails);
     }
 
-    protected String buildJsonCardDetailsFor(String cardNumber) {
-        return buildJsonCardDetailsFor(cardNumber, "123", "11/99");
+    protected String buildJsonCardDetailsFor(String cardNumber, String cardBrand) {
+        return buildJsonCardDetailsFor(cardNumber, "123", "11/99", cardBrand);
     }
 
-    protected String buildJsonCardDetailsFor(String cardHolderName, String cardNumber) {
-        return buildJsonCardDetailsFor(cardHolderName, cardNumber, "123", "11/99", "The Money Pool", null, "London", null, "DO11 4RS", "GB");
+    protected String buildJsonCardDetailsFor(String cardHolderName, String cardNumber, String cardBrand) {
+        return buildJsonCardDetailsFor(cardHolderName, cardNumber, "123", "11/99", cardBrand, "The Money Pool", null, "London", null, "DO11 4RS", "GB");
     }
 
-    protected String buildJsonCardDetailsFor(String cardNumber, String cvc, String expiryDate) {
-        return buildJsonCardDetailsFor("Mr. Payment", cardNumber, cvc, expiryDate, "The Money Pool", null, "London", null, "DO11 4RS", "GB");
+    protected String buildJsonCardDetailsFor(String cardNumber, String cvc, String expiryDate, String cardBrand) {
+        return buildJsonCardDetailsFor("Mr. Payment", cardNumber, cvc, expiryDate, cardBrand, "The Money Pool", null, "London", null, "DO11 4RS", "GB");
     }
 
     protected void assertFrontendChargeStatusIs(String chargeId, String status) {
@@ -143,6 +144,7 @@ public class CardResourceITestBase {
                 "4242424242424242",
                 "123",
                 "11/99",
+                "cardBrand",
                 "The Money Pool",
                 "Moneybags Avenue",
                 "London",
@@ -152,7 +154,7 @@ public class CardResourceITestBase {
         );
     }
 
-    protected String buildJsonCardDetailsFor(String cardHolderName, String cardNumber, String cvc, String expiryDate, String line1, String line2, String city, String county, String postCode, String countryCode) {
+    protected String buildJsonCardDetailsFor(String cardHolderName, String cardNumber, String cvc, String expiryDate, String cardBrand, String line1, String line2, String city, String county, String postCode, String countryCode) {
         JsonObject addressObject = new JsonObject();
 
         addressObject.addProperty("line1", line1);
@@ -166,6 +168,7 @@ public class CardResourceITestBase {
         cardDetails.addProperty("card_number", cardNumber);
         cardDetails.addProperty("cvc", cvc);
         cardDetails.addProperty("expiry_date", expiryDate);
+        cardDetails.addProperty("card_brand", cardBrand);
         cardDetails.addProperty("cardholder_name", cardHolderName);
         cardDetails.add("address", addressObject);
         return toJson(cardDetails);

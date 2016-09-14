@@ -1,7 +1,6 @@
 package uk.gov.pay.connector.model.domain;
 
 import com.fasterxml.jackson.annotation.JsonIgnore;
-import com.fasterxml.jackson.annotation.JsonProperty;
 
 import javax.persistence.*;
 import java.io.Serializable;
@@ -26,12 +25,10 @@ public abstract class AbstractEntity implements Serializable {
         return version;
     }
 
-    @JsonProperty
     public Long getId() {
         return id;
     }
 
-    @JsonIgnore
     public void setId(Long id) {
         this.id = id;
     }

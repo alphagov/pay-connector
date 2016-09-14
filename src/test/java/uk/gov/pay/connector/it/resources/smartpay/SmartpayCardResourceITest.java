@@ -94,6 +94,7 @@ public class SmartpayCardResourceITest extends CardResourceITestBase {
                 "5555444433331111",
                 cvc,
                 "08/18",
+                "visa",
                 "The Money Pool", "line 2",
                 "London",
                 null, "DO11 4RS", "GB");

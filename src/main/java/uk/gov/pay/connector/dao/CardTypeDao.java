@@ -29,4 +29,14 @@ public class CardTypeDao extends JpaDao<CardTypeEntity> {
                 .createQuery(query, CardTypeEntity.class)
                 .getResultList();
     }
+
+    public List<CardTypeEntity> findByBrand(String brand) {
+        String query = "SELECT ct FROM CardTypeEntity ct " +
+                "WHERE ct.brand = :brand ";
+
+        return entityManager.get()
+                .createQuery(query, CardTypeEntity.class)
+                .setParameter("brand", brand)
+                .getResultList();
+    }
 }

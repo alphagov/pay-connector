@@ -3,7 +3,6 @@ package uk.gov.pay.connector.it.contract;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.google.common.collect.ImmutableMap;
 import com.google.common.io.Resources;
-import org.apache.commons.lang3.tuple.Pair;
 import org.hamcrest.CoreMatchers;
 import org.junit.Assume;
 import org.junit.Before;
@@ -12,7 +11,6 @@ import org.junit.runner.RunWith;
 import org.mockito.runners.MockitoJUnitRunner;
 import uk.gov.pay.connector.model.CancelGatewayRequest;
 import uk.gov.pay.connector.model.CaptureGatewayRequest;
-import uk.gov.pay.connector.model.StatusUpdates;
 import uk.gov.pay.connector.model.domain.Address;
 import uk.gov.pay.connector.model.domain.Card;
 import uk.gov.pay.connector.model.domain.ChargeEntity;
@@ -31,18 +29,15 @@ import java.io.IOException;
 import java.net.URL;
 import java.nio.charset.Charset;
 import java.util.Map;
-import java.util.Optional;
 import java.util.function.Consumer;
 
 import static com.google.common.io.Resources.getResource;
-import static org.hamcrest.CoreMatchers.*;
-import static org.hamcrest.collection.IsIterableContainingInOrder.contains;
+import static org.hamcrest.CoreMatchers.not;
+import static org.hamcrest.CoreMatchers.nullValue;
 import static org.hamcrest.core.Is.is;
 import static org.junit.Assert.*;
 import static org.mockito.Mockito.mock;
-import static org.mockito.Mockito.verifyZeroInteractions;
 import static uk.gov.pay.connector.model.domain.ChargeEntityFixture.aValidChargeEntity;
-import static uk.gov.pay.connector.model.domain.ChargeStatus.CAPTURED;
 import static uk.gov.pay.connector.model.domain.GatewayAccountEntity.Type.TEST;
 import static uk.gov.pay.connector.service.GatewayClient.createGatewayClient;
 import static uk.gov.pay.connector.util.CardUtils.buildCardDetails;
@@ -243,7 +238,7 @@ public class SmartpayPaymentProviderTest {
 
     public static Card aValidSmartpayCard() {
         String validSandboxCard = "5555444433331111";
-        return buildCardDetails(validSandboxCard, "737", "08/18");
+        return buildCardDetails(validSandboxCard, "737", "08/18", "visa");
     }
 
     @SuppressWarnings("unchecked")

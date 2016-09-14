@@ -5,15 +5,13 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import uk.gov.pay.connector.app.ConnectorConfiguration;
 import uk.gov.pay.connector.app.LinksConfig;
+import uk.gov.pay.connector.dao.CardTypeDao;
 import uk.gov.pay.connector.dao.ChargeDao;
 import uk.gov.pay.connector.dao.TokenDao;
 import uk.gov.pay.connector.model.ChargeResponse;
 import uk.gov.pay.connector.model.api.ExternalChargeRefundAvailability;
 import uk.gov.pay.connector.model.builder.PatchRequestBuilder;
-import uk.gov.pay.connector.model.domain.ChargeEntity;
-import uk.gov.pay.connector.model.domain.ChargeStatus;
-import uk.gov.pay.connector.model.domain.GatewayAccountEntity;
-import uk.gov.pay.connector.model.domain.TokenEntity;
+import uk.gov.pay.connector.model.domain.*;
 import uk.gov.pay.connector.resources.ChargesApiResource;
 
 import javax.inject.Inject;
@@ -36,13 +34,15 @@ public class ChargeService {
     private static final Logger logger = LoggerFactory.getLogger(ChargeService.class);
 
     private ChargeDao chargeDao;
+    private CardTypeDao cardTypeDao;
     private TokenDao tokenDao;
     private LinksConfig linksConfig;
 
     @Inject
-    public ChargeService(TokenDao tokenDao, ChargeDao chargeDao, ConnectorConfiguration config) {
+    public ChargeService(TokenDao tokenDao, ChargeDao chargeDao, ConnectorConfiguration config, CardTypeDao cardTypeDao) {
         this.tokenDao = tokenDao;
         this.chargeDao = chargeDao;
+        this.cardTypeDao = cardTypeDao;
         this.linksConfig = config.getLinks();
     }
 
@@ -112,6 +112,18 @@ public class ChargeService {
                 }});
     }
 
+    private Optional<String> findCardBrandLabel(String cardBrand) {
+        if (cardBrand == null) {
+            return Optional.empty();
+        }
+
+        return cardTypeDao.findByBrand(cardBrand)
+                .stream()
+                .findFirst()
+                .map(CardTypeEntity::getLabel);
+    }
+
+
     private ChargeResponseBuilder chargeResponseBuilder(UriInfo uriInfo, ChargeEntity charge) {
         String chargeId = charge.getExternalId();
         return aChargeResponse()
@@ -120,6 +132,7 @@ public class ChargeService {
                 .withReference(charge.getReference())
                 .withDescription(charge.getDescription())
                 .withState(ChargeStatus.fromString(charge.getStatus()).toExternal())
+                .withCardBrand(findCardBrandLabel(charge.getCardBrand()).orElse(""))
                 .withGatewayTransactionId(charge.getGatewayTransactionId())
                 .withProviderName(charge.getGatewayAccount().getGatewayName())
                 .withCreatedDate(charge.getCreatedDate())

@@ -10,6 +10,7 @@ import org.mockito.Mock;
 import org.mockito.runners.MockitoJUnitRunner;
 import uk.gov.pay.connector.app.ConnectorConfiguration;
 import uk.gov.pay.connector.app.LinksConfig;
+import uk.gov.pay.connector.dao.CardTypeDao;
 import uk.gov.pay.connector.dao.ChargeDao;
 import uk.gov.pay.connector.dao.TokenDao;
 import uk.gov.pay.connector.model.ChargeResponse;
@@ -57,6 +58,8 @@ public class ChargeServiceTest {
     @Mock
     private ChargeDao mockedChargeDao;
     @Mock
+    private CardTypeDao mockedCardTypeDao;
+    @Mock
     private ConnectorConfiguration mockedConfig;
     @Mock
     private UriInfo mockedUriInfo;
@@ -84,7 +87,7 @@ public class ChargeServiceTest {
                 .when(this.mockedUriInfo)
                 .getBaseUriBuilder();
 
-        service = new ChargeService(mockedTokenDao, mockedChargeDao, mockedConfig);
+        service = new ChargeService(mockedTokenDao, mockedChargeDao, mockedConfig, mockedCardTypeDao);
     }
 
     @Test
@@ -303,6 +306,7 @@ public class ChargeServiceTest {
                 .withReference(chargeEntity.getReference())
                 .withDescription(chargeEntity.getDescription())
                 .withState(ChargeStatus.fromString(chargeEntity.getStatus()).toExternal())
+                .withCardBrand("")
                 .withGatewayTransactionId(chargeEntity.getGatewayTransactionId())
                 .withProviderName(chargeEntity.getGatewayAccount().getGatewayName())
                 .withCreatedDate(chargeEntity.getCreatedDate())

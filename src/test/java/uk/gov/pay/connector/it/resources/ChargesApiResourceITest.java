@@ -7,6 +7,7 @@ import org.apache.commons.lang.math.RandomUtils;
 import org.junit.Before;
 import org.junit.Rule;
 import org.junit.Test;
+import uk.gov.pay.connector.it.dao.DatabaseFixtures;
 import uk.gov.pay.connector.model.domain.ChargeStatus;
 import uk.gov.pay.connector.rules.DropwizardAppWithPostgresRule;
 import uk.gov.pay.connector.util.DateTimeUtils;
@@ -58,6 +59,7 @@ public class ChargesApiResourceITest {
     private static final String JSON_RETURN_URL_KEY = "return_url";
     private static final String JSON_CHARGE_KEY = "charge_id";
     private static final String JSON_STATE_KEY = "state.status";
+    private static final String JSON_CARD_BRAND = "card_brand";
     private static final String JSON_MESSAGE_KEY = "message";
     private static final String JSON_EMAIL_KEY = "email";
     private static final String JSON_PROVIDER_KEY = "payment_provider";
@@ -138,6 +140,7 @@ public class ChargesApiResourceITest {
                 .body(JSON_REFERENCE_KEY, is(expectedReference))
                 .body(JSON_DESCRIPTION_KEY, is(expectedDescription))
                 .body(JSON_STATE_KEY, is(CREATED.toExternal().getStatus()))
+                .body(JSON_CARD_BRAND, is(""))
                 .body(JSON_RETURN_URL_KEY, is(returnUrl))
                 .body(JSON_EMAIL_KEY, is(email))
                 .body("containsKey('confirmation_details')", is(false))
@@ -313,6 +316,46 @@ public class ChargesApiResourceITest {
                 .contentType(JSON)
                 .body(JSON_CHARGE_KEY, is(externalChargeId))
                 .body(JSON_STATE_KEY, is(EXTERNAL_SUBMITTED.getStatus()));
+    }
+
+    @Test
+    public void shouldReturnCardBrandLabelWhenChargeIsAuthorised() throws Exception {
+
+        long chargeId = RandomUtils.nextInt();
+        String externalChargeId = "charge1";
+
+        DatabaseFixtures.TestCardType testCardType = DatabaseFixtures
+                .withDatabaseTestHelper(app.getDatabaseTestHelper())
+                .aMastercardCreditCardType()
+                .insert();
+        app.getDatabaseTestHelper().addCharge(chargeId, externalChargeId, accountId, AMOUNT, AUTHORISATION_SUCCESS, returnUrl, null, "ref", null, email, testCardType.getBrand());
+        app.getDatabaseTestHelper().addToken(chargeId, "tokenId");
+
+        getChargeApi
+                .withAccountId(accountId)
+                .withChargeId(externalChargeId)
+                .getCharge()
+                .statusCode(OK.getStatusCode())
+                .contentType(JSON)
+                .body(JSON_CARD_BRAND, is(testCardType.getLabel()));
+    }
+
+    @Test
+    public void shouldReturnEmptyCardBrandLabelWhenChargeIsAuthorisedAndBrandUnknown() throws Exception {
+
+        long chargeId = RandomUtils.nextInt();
+        String externalChargeId = "charge1";
+
+        app.getDatabaseTestHelper().addCharge(chargeId, externalChargeId, accountId, AMOUNT, AUTHORISATION_SUCCESS, returnUrl, null, "ref", null, email, "unknown-brand");
+        app.getDatabaseTestHelper().addToken(chargeId, "tokenId");
+
+        getChargeApi
+                .withAccountId(accountId)
+                .withChargeId(externalChargeId)
+                .getCharge()
+                .statusCode(OK.getStatusCode())
+                .contentType(JSON)
+                .body(JSON_CARD_BRAND, is(""));
     }
 
     @Test
@@ -778,7 +821,7 @@ public class ChargesApiResourceITest {
         long chargeId = RandomUtils.nextInt();
         String externalChargeId = "charge" + chargeId;
         ChargeStatus chargeStatus = status != null ? status : AUTHORISATION_SUCCESS;
-        app.getDatabaseTestHelper().addCharge(chargeId, externalChargeId, accountId, AMOUNT, chargeStatus, returnUrl, null, reference, fromDate, email);
+        app.getDatabaseTestHelper().addCharge(chargeId, externalChargeId, accountId, AMOUNT, chargeStatus, returnUrl, null, reference, fromDate, email, null);
         app.getDatabaseTestHelper().addToken(chargeId, "tokenId");
         app.getDatabaseTestHelper().addEvent(chargeId, chargeStatus.getValue());
         app.getDatabaseTestHelper().addConfirmationDetails(chargeId, "1234", "Mr. McPayment",  "03/18", "line1", null, "postcode", "city", null, "country");

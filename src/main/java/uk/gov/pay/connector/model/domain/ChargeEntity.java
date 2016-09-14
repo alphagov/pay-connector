@@ -43,6 +43,9 @@ public class ChargeEntity extends AbstractEntity {
     @Column(name = "email")
     private String email;
 
+    @Column(name = "card_brand")
+    private String cardBrand;
+
     @JsonBackReference
     @OneToOne(mappedBy = "chargeEntity", cascade = CascadeType.ALL)
     private ConfirmationDetailsEntity confirmationDetailsEntity;
@@ -121,6 +124,10 @@ public class ChargeEntity extends AbstractEntity {
         return createdDate;
     }
 
+    public String getCardBrand() {
+        return cardBrand;
+    }
+
     public List<RefundEntity> getRefunds() {
         return refunds;
     }
@@ -192,7 +199,12 @@ public class ChargeEntity extends AbstractEntity {
         this.confirmationDetailsEntity = confirmationDetailsEntity;
     }
 
+    public void setCardBrand(String cardBrand) {
+        this.cardBrand = cardBrand;
+    }
+
     public PaymentGatewayName getPaymentGatewayName() {
         return valueFrom(gatewayAccount.getGatewayName());
     }
+
 }
