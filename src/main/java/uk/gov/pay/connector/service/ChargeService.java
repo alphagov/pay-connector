@@ -112,16 +112,15 @@ public class ChargeService {
                 }});
     }
 
-    private String findCardBrandLabel(String cardBrand) {
+    private Optional<String> findCardBrandLabel(String cardBrand) {
         if (cardBrand == null) {
-            return "";
+            return Optional.empty();
         }
 
         return cardTypeDao.findByBrand(cardBrand)
                 .stream()
                 .findFirst()
-                .map(CardTypeEntity::getLabel)
-                .orElse("");
+                .map(CardTypeEntity::getLabel);
     }
 
 
@@ -133,7 +132,7 @@ public class ChargeService {
                 .withReference(charge.getReference())
                 .withDescription(charge.getDescription())
                 .withState(ChargeStatus.fromString(charge.getStatus()).toExternal())
-                .withCardBrand(findCardBrandLabel(charge.getCardBrand()))
+                .withCardBrand(findCardBrandLabel(charge.getCardBrand()).orElse(""))
                 .withGatewayTransactionId(charge.getGatewayTransactionId())
                 .withProviderName(charge.getGatewayAccount().getGatewayName())
                 .withCreatedDate(charge.getCreatedDate())

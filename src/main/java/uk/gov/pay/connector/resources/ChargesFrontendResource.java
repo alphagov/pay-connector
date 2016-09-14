@@ -141,16 +141,15 @@ public class ChargesFrontendResource {
         return newChargeStatus.equals(ENTERING_CARD_DETAILS);
     }
 
-    private String findCardBrandLabel(String cardBrand) {
+    private Optional<String> findCardBrandLabel(String cardBrand) {
         if (cardBrand == null) {
-            return "";
+            return Optional.empty();
         }
 
         return cardTypeDao.findByBrand(cardBrand)
                 .stream()
                 .findFirst()
-                .map(CardTypeEntity::getLabel)
-                .orElse("");
+                .map(CardTypeEntity::getLabel);
     }
 
     private ChargeResponse buildChargeResponse(UriInfo uriInfo, ChargeEntity charge) {
@@ -160,7 +159,7 @@ public class ChargesFrontendResource {
                 .withStatus(charge.getStatus())
                 .withChargeId(chargeId)
                 .withAmount(charge.getAmount())
-                .withCardBrand(findCardBrandLabel(charge.getCardBrand()))
+                .withCardBrand(findCardBrandLabel(charge.getCardBrand()).orElse(""))
                 .withDescription(charge.getDescription())
                 .withGatewayTransactionId(charge.getGatewayTransactionId())
                 .withCreatedDate(charge.getCreatedDate())
