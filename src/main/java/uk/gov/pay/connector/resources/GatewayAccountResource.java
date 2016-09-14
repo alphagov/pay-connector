@@ -12,12 +12,9 @@ import org.slf4j.LoggerFactory;
 import uk.gov.pay.connector.app.ConnectorConfiguration;
 import uk.gov.pay.connector.dao.CardTypeDao;
 import uk.gov.pay.connector.dao.GatewayAccountDao;
-import uk.gov.pay.connector.model.builder.EntityBuilder;
 import uk.gov.pay.connector.model.domain.CardTypeEntity;
-import uk.gov.pay.connector.model.domain.GatewayAccount;
 import uk.gov.pay.connector.model.domain.GatewayAccountEntity;
-import uk.gov.pay.connector.model.domain.NotificationCredentials;
-import uk.gov.pay.connector.util.HashUtil;
+import uk.gov.pay.connector.service.GatewayAccountNotificationCredentialsService;
 
 import javax.inject.Inject;
 import javax.ws.rs.*;
@@ -55,16 +52,15 @@ public class GatewayAccountResource {
     private final GatewayAccountDao gatewayDao;
     private final CardTypeDao cardTypeDao;
     private final Map<String, List<String>> providerCredentialFields;
-    private final EntityBuilder entityBuilder;
-    private final HashUtil hashUtil;
+    private final GatewayAccountNotificationCredentialsService gatewayAccountNotificationCredentialsService;
+
 
     @Inject
-    public GatewayAccountResource(GatewayAccountDao gatewayDao, CardTypeDao cardTypeDao, EntityBuilder entityBuilder,
-                                  ConnectorConfiguration conf, HashUtil hashUtil) {
+    public GatewayAccountResource(GatewayAccountDao gatewayDao, CardTypeDao cardTypeDao, ConnectorConfiguration conf,
+                                  GatewayAccountNotificationCredentialsService gatewayAccountNotificationCredentialsService) {
         this.gatewayDao = gatewayDao;
         this.cardTypeDao = cardTypeDao;
-        this.entityBuilder = entityBuilder;
-        this.hashUtil = hashUtil;
+        this.gatewayAccountNotificationCredentialsService = gatewayAccountNotificationCredentialsService;
         providerCredentialFields = newHashMap();
         providerCredentialFields.put("worldpay", conf.getWorldpayConfig().getCredentials());
         providerCredentialFields.put("smartpay", conf.getSmartpayConfig().getCredentials());
@@ -251,16 +247,10 @@ public class GatewayAccountResource {
         }
 
         return gatewayDao.findById(gatewayAccountId)
-                .map(gatewayAccountEntity -> {
+                .map((gatewayAccountEntity) -> {
+                    gatewayAccountNotificationCredentialsService.setCredentialsForAccount(notificationCredentials,
+                            gatewayAccountEntity);
 
-                    NotificationCredentials existingCredentials = Optional.ofNullable(gatewayAccountEntity.getNotificationCredentials())
-                            .orElseGet(() -> entityBuilder.newNotificationCredentials(gatewayAccountEntity));
-
-                    existingCredentials.setUserName(notificationCredentials.get("username"));
-                    existingCredentials.setPassword(hashUtil.hash(notificationCredentials.get("password")));
-                    gatewayAccountEntity.setNotificationCredentials(existingCredentials);
-
-                    gatewayDao.merge(gatewayAccountEntity);
                     return Response.ok().build();
 
                 })
