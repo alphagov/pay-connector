@@ -4,19 +4,33 @@ import com.google.common.base.Optional;
 import io.dropwizard.auth.AuthenticationException;
 import io.dropwizard.auth.Authenticator;
 import io.dropwizard.auth.basic.BasicCredentials;
-import uk.gov.pay.connector.app.NotificationCredentials;
+import uk.gov.pay.connector.dao.GatewayAccountDao;
+import uk.gov.pay.connector.model.domain.GatewayAccountEntity;
+import uk.gov.pay.connector.util.HashUtil;
 
 public class SmartpayAuthenticator implements Authenticator<BasicCredentials, BasicAuthUser> {
-    private NotificationCredentials creds;
+    private GatewayAccountDao gatewayAccountDao;
+    private HashUtil hashUtil;
+    public SmartpayAuthenticator(GatewayAccountDao gatewayAccountDao, HashUtil hashUtil) {
+        this.gatewayAccountDao = gatewayAccountDao;
+        this.hashUtil = hashUtil;
 
-    public SmartpayAuthenticator(NotificationCredentials creds) {
-        this.creds = creds;
     }
 
     @Override
     public Optional<BasicAuthUser> authenticate(BasicCredentials basicCredentials) throws AuthenticationException {
-        return creds.asBasicCredentials().equals(basicCredentials)
-               ? Optional.of( new BasicAuthUser(creds.getUsername()) )
-               : Optional.absent();
+
+        java.util.Optional<GatewayAccountEntity> gatewayAccountEntityMaybe = gatewayAccountDao
+                .findByNotificationCredentialsUsername(basicCredentials.getUsername());
+
+        if (gatewayAccountEntityMaybe.isPresent()) {
+            GatewayAccountEntity gatewayAccountEntity = gatewayAccountEntityMaybe.get();
+            if (hashUtil.check(basicCredentials.getPassword(),
+                    gatewayAccountEntity.getNotificationCredentials().getPassword())) {
+                return Optional.of(gatewayAccountEntity.getNotificationCredentials().toBasicAuthUser());
+            }
+        }
+
+        return Optional.absent();
     }
 }
