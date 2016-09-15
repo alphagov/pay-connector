@@ -17,3 +17,5 @@ alpha_staging-1-48.approver=ian.maddison@digital.cabinet-office.gov.uk
 alpha_staging-1-48.approve-date=2016-09-15:16:00:25
 
 production-1.tag=alpha_production-1-48
+
+production-1.alpha_production-1-48.date=2016-09-15:17:28:56
