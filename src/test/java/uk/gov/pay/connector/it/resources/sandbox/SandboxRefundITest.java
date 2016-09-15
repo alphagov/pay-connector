@@ -2,9 +2,6 @@ package uk.gov.pay.connector.it.resources.sandbox;
 
 import com.jayway.restassured.http.ContentType;
 import com.jayway.restassured.response.ValidatableResponse;
-import org.hamcrest.Description;
-import org.hamcrest.Matcher;
-import org.hamcrest.TypeSafeMatcher;
 import org.junit.Before;
 import org.junit.Ignore;
 import org.junit.Test;
@@ -18,12 +15,14 @@ import java.util.Map;
 
 import static java.lang.String.format;
 import static java.time.temporal.ChronoUnit.SECONDS;
-import static javax.ws.rs.core.Response.Status.*;
+import static javax.ws.rs.core.Response.Status.ACCEPTED;
+import static javax.ws.rs.core.Response.Status.BAD_REQUEST;
 import static org.hamcrest.CoreMatchers.hasItems;
 import static org.hamcrest.CoreMatchers.notNullValue;
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.core.Is.is;
 import static org.hamcrest.text.MatchesPattern.matchesPattern;
+import static uk.gov.pay.connector.matcher.RefundsMatcher.aRefundMatching;
 import static uk.gov.pay.connector.matcher.ZoneDateTimeAsStringWithinMatcher.isWithin;
 import static uk.gov.pay.connector.model.domain.ChargeStatus.CAPTURED;
 import static uk.gov.pay.connector.model.domain.ChargeStatus.ENTERING_CARD_DETAILS;
@@ -246,26 +245,5 @@ public class SandboxRefundITest extends CardResourceITestBase {
                 .body("_links.payment.href", is(paymentUrl));
 
         return refundId;
-    }
-
-    private static Matcher<Map<String, Object>> aRefundMatching(String externalId, long chargeId, long amount, String status) {
-        return new TypeSafeMatcher<Map<String, Object>>() {
-
-            @Override
-            public void describeTo(Description description) {
-                description.appendText("{amount=").appendValue(amount).appendText(", ");
-                description.appendText("charge_id=").appendValue(chargeId).appendText(", ");
-                description.appendText("external_id=").appendValue(externalId).appendText(", ");
-                description.appendText("status=").appendValue(status).appendText("}");
-            }
-
-            @Override
-            protected boolean matchesSafely(Map<String, Object> record) {
-                return record.get("external_id").equals(externalId) &&
-                        record.get("amount").equals(amount) &&
-                        record.get("status").equals(status) &&
-                        record.get("charge_id").equals(chargeId);
-            }
-        };
     }
 }
