@@ -14,6 +14,7 @@ import uk.gov.pay.connector.dao.CardTypeDao;
 import uk.gov.pay.connector.dao.GatewayAccountDao;
 import uk.gov.pay.connector.model.domain.CardTypeEntity;
 import uk.gov.pay.connector.model.domain.GatewayAccountEntity;
+import uk.gov.pay.connector.service.GatewayAccountNotificationCredentialsService;
 
 import javax.inject.Inject;
 import javax.ws.rs.*;
@@ -22,10 +23,7 @@ import javax.ws.rs.core.Response;
 import javax.ws.rs.core.UriInfo;
 import java.io.IOException;
 import java.net.URI;
-import java.util.Arrays;
-import java.util.List;
-import java.util.Map;
-import java.util.UUID;
+import java.util.*;
 import java.util.stream.Collectors;
 
 import static com.google.common.collect.Maps.newHashMap;
@@ -47,15 +45,22 @@ public class GatewayAccountResource {
     private static final int SERVICE_NAME_FIELD_LENGTH = 50;
     private static final String PROVIDER_ACCOUNT_TYPE = "type";
     private static final String PAYMENT_PROVIDER_KEY = "payment_provider";
+    private static final String USERNAME_KEY = "username";
+    private static final String PASSWORD_KEY = "password";
+
 
     private final GatewayAccountDao gatewayDao;
     private final CardTypeDao cardTypeDao;
     private final Map<String, List<String>> providerCredentialFields;
+    private final GatewayAccountNotificationCredentialsService gatewayAccountNotificationCredentialsService;
+
 
     @Inject
-    public GatewayAccountResource(GatewayAccountDao gatewayDao, CardTypeDao cardTypeDao, ConnectorConfiguration conf) {
+    public GatewayAccountResource(GatewayAccountDao gatewayDao, CardTypeDao cardTypeDao, ConnectorConfiguration conf,
+                                  GatewayAccountNotificationCredentialsService gatewayAccountNotificationCredentialsService) {
         this.gatewayDao = gatewayDao;
         this.cardTypeDao = cardTypeDao;
+        this.gatewayAccountNotificationCredentialsService = gatewayAccountNotificationCredentialsService;
         providerCredentialFields = newHashMap();
         providerCredentialFields.put("worldpay", conf.getWorldpayConfig().getCredentials());
         providerCredentialFields.put("smartpay", conf.getSmartpayConfig().getCredentials());
@@ -226,6 +231,32 @@ public class GatewayAccountResource {
                 .orElseGet(() ->
                         notFoundResponse(format("The gateway account id '%s' does not exist", gatewayAccountId)));
     }
+
+    @POST
+    @Path(GATEWAY_ACCOUNTS_NOTIFICATION_CREDENTIALS)
+    @Consumes(APPLICATION_JSON)
+    @Produces(APPLICATION_JSON)
+    @Transactional
+    public Response createOrUpdateGatewayAccountNotificationCredentials(@PathParam("accountId") Long gatewayAccountId, Map<String,String> notificationCredentials) {
+        if (!notificationCredentials.containsKey(USERNAME_KEY)) {
+            return fieldsMissingResponse(Collections.singletonList(USERNAME_KEY));
+        }
+
+        if (!notificationCredentials.containsKey(PASSWORD_KEY)) {
+            return fieldsMissingResponse(Collections.singletonList(PASSWORD_KEY));
+        }
+
+        return gatewayDao.findById(gatewayAccountId)
+                .map((gatewayAccountEntity) -> {
+                    gatewayAccountNotificationCredentialsService.setCredentialsForAccount(notificationCredentials,
+                            gatewayAccountEntity);
+
+                    return Response.ok().build();
+
+                })
+                .orElseGet(() -> notFoundResponse(format("The gateway account id '%s' does not exist", gatewayAccountId)));
+    }
+
 
     private Map<String, Object> addSelfLink(URI chargeId, Map<String, Object> charge) {
         List<Map<String, Object>> links = ImmutableList.of(ImmutableMap.of("href", chargeId, "rel", "self", "method", "GET"));

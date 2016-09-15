@@ -7,7 +7,9 @@ import org.junit.Test;
 
 import static com.jayway.restassured.http.ContentType.JSON;
 import static java.lang.String.format;
+import static javax.ws.rs.core.Response.Status.BAD_REQUEST;
 import static javax.ws.rs.core.Response.Status.NOT_FOUND;
+import static javax.ws.rs.core.Response.Status.OK;
 import static org.hamcrest.Matchers.is;
 import static org.hamcrest.Matchers.nullValue;
 import static uk.gov.pay.connector.model.domain.GatewayAccountEntity.Type.LIVE;
@@ -147,4 +149,25 @@ public class GatewayAccountResourceITest extends GatewayAccountResourceTestBase 
         createAGatewayAccountFor("smartpay");
     }
 
+    @Test
+    public void createValidNotificationCredentials_responseShouldBe200_Ok() {
+        String gatewayAccountId = createAGatewayAccountFor("smartpay");
+
+        givenSetup()
+                .body(toJson(ImmutableMap.of("username", "bob", "password", "bobsbigsecret")))
+                .post("/v1/api/accounts/" + gatewayAccountId + "/notification-credentials")
+                .then()
+                .statusCode(OK.getStatusCode());
+    }
+
+    @Test
+    public void whenNotificationCredentialsInvalid_shouldReturn400() {
+        String gatewayAccountId = createAGatewayAccountFor("smartpay");
+
+        givenSetup()
+                .body(toJson(ImmutableMap.of("bob", "bob", "bobby", "bobsbigsecret")))
+                .post("/v1/api/accounts/" + gatewayAccountId + "/notification-credentials")
+                .then()
+                .statusCode(BAD_REQUEST.getStatusCode());
+    }
 }

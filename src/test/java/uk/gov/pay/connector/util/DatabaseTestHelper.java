@@ -400,6 +400,16 @@ public class DatabaseTestHelper {
         );
     }
 
+    public void addNotificationCredentialsFor(long accountId, String username, String password) {
+        jdbi.withHandle(handle ->
+                handle.createStatement("INSERT INTO notification_credentials(account_id, username, password, version) VALUES (:accountId, :username, :password, 1)")
+                        .bind("accountId", accountId)
+                        .bind("username", username)
+                        .bind("password", password)
+                        .execute()
+        );
+    }
+
     public void addEvent(Long chargeId, String chargeStatus) {
         jdbi.withHandle(
                 h -> h.update("INSERT INTO charge_events(charge_id,status) values(?,?)",
