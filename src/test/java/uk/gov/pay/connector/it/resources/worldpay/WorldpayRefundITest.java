@@ -10,6 +10,7 @@ import org.junit.Ignore;
 import org.junit.Test;
 import uk.gov.pay.connector.it.base.CardResourceITestBase;
 import uk.gov.pay.connector.it.dao.DatabaseFixtures;
+import uk.gov.pay.connector.matcher.RefundsMatcher;
 import uk.gov.pay.connector.model.domain.RefundStatus;
 import uk.gov.pay.connector.util.DatabaseTestHelper;
 import uk.gov.pay.connector.util.RestAssuredClient;
@@ -29,6 +30,7 @@ import static org.hamcrest.Matchers.*;
 import static org.hamcrest.core.AllOf.allOf;
 import static org.hamcrest.core.Is.is;
 import static org.hamcrest.text.MatchesPattern.matchesPattern;
+import static uk.gov.pay.connector.matcher.RefundsMatcher.aRefundMatching;
 import static uk.gov.pay.connector.matcher.ZoneDateTimeAsStringWithinMatcher.isWithin;
 import static uk.gov.pay.connector.model.domain.ChargeStatus.CAPTURED;
 import static uk.gov.pay.connector.model.domain.ChargeStatus.ENTERING_CARD_DETAILS;
@@ -427,24 +429,4 @@ public class WorldpayRefundITest extends CardResourceITestBase {
         return refundId;
     }
 
-    private static Matcher<Map<String, Object>> aRefundMatching(String externalId, long chargeId, long amount, String status) {
-        return new TypeSafeMatcher<Map<String, Object>>() {
-
-            @Override
-            public void describeTo(Description description) {
-                description.appendText("{amount=").appendValue(amount).appendText(", ");
-                description.appendText("charge_id=").appendValue(chargeId).appendText(", ");
-                description.appendText("external_id=").appendValue(externalId).appendText(", ");
-                description.appendText("status=").appendValue(status).appendText("}");
-            }
-
-            @Override
-            protected boolean matchesSafely(Map<String, Object> record) {
-                return record.get("external_id").equals(externalId) &&
-                        record.get("amount").equals(amount) &&
-                        record.get("status").equals(status) &&
-                        record.get("charge_id").equals(chargeId);
-            }
-        };
-    }
 }
