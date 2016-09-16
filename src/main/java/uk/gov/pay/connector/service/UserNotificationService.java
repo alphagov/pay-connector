@@ -55,7 +55,7 @@ public class UserNotificationService {
                     );
                     return Optional.of(response.getNotificationId());
                 } catch (NotificationClientException e) {
-                    logger.error(String.format("failed to send confirmation email at %s", emailAddress), e);
+                    logger.error("Failed to send confirmation email - charge_external_id=" + chargeEntity.getExternalId(), e);
                     return Optional.empty();
                 }
             });
