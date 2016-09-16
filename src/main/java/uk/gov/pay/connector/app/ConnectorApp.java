@@ -5,7 +5,9 @@ import com.google.inject.Injector;
 import io.dropwizard.Application;
 import io.dropwizard.auth.AuthDynamicFeature;
 import io.dropwizard.auth.AuthValueFactoryProvider;
+import io.dropwizard.auth.Authenticator;
 import io.dropwizard.auth.basic.BasicCredentialAuthFilter;
+import io.dropwizard.auth.basic.BasicCredentials;
 import io.dropwizard.configuration.EnvironmentVariableSubstitutor;
 import io.dropwizard.configuration.SubstitutingSourceProvider;
 import io.dropwizard.db.DataSourceFactory;
@@ -15,14 +17,12 @@ import io.dropwizard.setup.Environment;
 import org.glassfish.jersey.server.filter.RolesAllowedDynamicFeature;
 import uk.gov.pay.connector.auth.BasicAuthUser;
 import uk.gov.pay.connector.auth.SmartpayAuthenticator;
-import uk.gov.pay.connector.dao.GatewayAccountDao;
 import uk.gov.pay.connector.filters.LoggingFilter;
 import uk.gov.pay.connector.healthcheck.CardExecutorServiceHealthCheck;
 import uk.gov.pay.connector.healthcheck.DatabaseHealthCheck;
 import uk.gov.pay.connector.healthcheck.Ping;
 import uk.gov.pay.connector.resources.*;
 import uk.gov.pay.connector.util.DependentResourceWaitCommand;
-import uk.gov.pay.connector.util.HashUtil;
 import uk.gov.pay.connector.util.TrustingSSLSocketFactory;
 
 import javax.net.ssl.HttpsURLConnection;
@@ -71,7 +71,8 @@ public class ConnectorApp extends Application<ConnectorConfiguration> {
         environment.jersey().register(injector.getInstance(CardTypesResource.class));
         environment.jersey().register(injector.getInstance(HealthCheckResource.class));
         environment.jersey().register(injector.getInstance(EmailNotificationResource.class));
-        setupSmartpayBasicAuth(environment, injector.getInstance(GatewayAccountDao.class), injector.getInstance(HashUtil.class));
+        SmartpayAuthenticator smartpayAuthenticator = new SmartpayAuthenticator(configuration.getSmartpayConfig().getNotification());
+        setupSmartpayBasicAuth(environment, smartpayAuthenticator);
 
         environment.servlets().addFilter("LoggingFilter", injector.getInstance(LoggingFilter.class))
                 .addMappingForUrlPatterns(of(REQUEST), true, ApiPaths.API_VERSION_PATH + "/*");
@@ -83,11 +84,10 @@ public class ConnectorApp extends Application<ConnectorConfiguration> {
         setGlobalProxies(configuration);
     }
 
-    private void setupSmartpayBasicAuth(Environment environment, GatewayAccountDao gatewayAccountDao, HashUtil hashUtil) {
-        SmartpayAuthenticator smartpayAuthenticator = new SmartpayAuthenticator(gatewayAccountDao, hashUtil);
+    private void setupSmartpayBasicAuth(Environment environment, Authenticator<BasicCredentials, BasicAuthUser> authenticator) {
         BasicCredentialAuthFilter<BasicAuthUser> basicCredentialAuthFilter =
                 new BasicCredentialAuthFilter.Builder<BasicAuthUser>()
-                        .setAuthenticator(smartpayAuthenticator)
+                        .setAuthenticator(authenticator)
                         .buildAuthFilter();
 
         environment.jersey().register(RolesAllowedDynamicFeature.class);

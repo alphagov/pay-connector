@@ -1,7 +1,10 @@
 package uk.gov.pay.connector.it.resources.smartpay;
 
+import com.google.common.collect.ImmutableMap;
 import com.google.common.io.Resources;
 import com.jayway.restassured.response.Response;
+import org.junit.Before;
+import org.junit.Ignore;
 import org.junit.Test;
 import uk.gov.pay.connector.it.base.CardResourceITestBase;
 
@@ -13,27 +16,46 @@ import static com.google.common.io.Resources.getResource;
 import static com.jayway.restassured.RestAssured.given;
 import static javax.ws.rs.core.MediaType.APPLICATION_JSON;
 import static javax.ws.rs.core.MediaType.TEXT_XML;
+import static javax.ws.rs.core.Response.Status.OK;
 import static org.hamcrest.Matchers.is;
 import static org.junit.Assert.assertThat;
 import static uk.gov.pay.connector.model.domain.ChargeStatus.*;
+import static uk.gov.pay.connector.util.JsonEncoder.toJson;
 import static uk.gov.pay.connector.util.TransactionId.randomId;
 
-public class SmartpayNotificationResourceITest extends CardResourceITestBase {
+@Ignore("This should be enabled when we have transitioned to using account specific authentication for smartpay notifications")
+public class SmartpayNotificationResourceWithAccountSpecificAuthITest extends CardResourceITestBase {
 
     private static final String NOTIFICATION_PATH = "/v1/api/notifications/smartpay";
     private static final String RESPONSE_EXPECTED_BY_SMARTPAY = "[accepted]";
 
-    public SmartpayNotificationResourceITest() {
+    public SmartpayNotificationResourceWithAccountSpecificAuthITest() {
         super("smartpay");
     }
 
+    @Before
+    public void setUpAuthForEndpoint() {
+        givenSetup()
+                .body(toJson(ImmutableMap.of("username", "bob", "password", "bobsbigsecret")))
+                .post("/v1/api/accounts/" + accountId + "/notification-credentials")
+                .then()
+                .statusCode(OK.getStatusCode());
+    }
+
     @Test
-    public void shouldHandleASmartpayNotification() throws Exception {
+    public void shouldHandleASmartpayNotificationWithCorrectCredentials() throws Exception {
+        givenSetup()
+                .body(toJson(ImmutableMap.of("username", "bob", "password", "bobsnewbigsecret")))
+                .post("/v1/api/accounts/" + accountId + "/notification-credentials")
+                .then()
+                .statusCode(OK.getStatusCode());
 
         String transactionId = randomId();
         String chargeId = createNewChargeWith(CAPTURE_SUBMITTED, transactionId);
 
-        String response = notifyConnector(notificationPayloadForTransaction(transactionId, "notification-capture"))
+        String response = notifyConnectorWithCredentials(
+                notificationPayloadForTransaction(transactionId, "notification-capture"),
+                "bob", "bobsnewbigsecret")
                 .then()
                 .statusCode(200)
                 .extract().body().asString();
@@ -44,7 +66,31 @@ public class SmartpayNotificationResourceITest extends CardResourceITestBase {
     }
 
     @Test
+    public void shouldNotPermitASmartpayNotificationWithIncorrectCredentials() throws Exception {
+        givenSetup()
+                .body(toJson(ImmutableMap.of("username", "bob", "password", "bobsnewbigsecret")))
+                .post("/v1/api/accounts/" + accountId + "/notification-credentials")
+                .then()
+                .statusCode(OK.getStatusCode());
+
+        String transactionId = randomId();
+
+        notifyConnectorWithCredentials(
+                notificationPayloadForTransaction(transactionId, "notification-capture"),
+                "bob", "bobsnewwrongbigsecret")
+                .then()
+                .statusCode(401)
+                .extract().body().asString();
+    }
+
+
+    @Test
     public void shouldIgnoreAuthorisedNotification() throws Exception {
+        givenSetup()
+                .body(toJson(ImmutableMap.of("username", "bob", "password", "bobsbigsecret")))
+                .post("/v1/api/accounts/" + accountId + "/notification-credentials")
+                .then()
+                .statusCode(OK.getStatusCode());
 
         String transactionId = randomId();
         String chargeId = createNewChargeWith(CAPTURED, transactionId);
@@ -124,7 +170,16 @@ public class SmartpayNotificationResourceITest extends CardResourceITestBase {
     private Response notifyConnector(String payload) throws IOException {
         return given()
                 .port(app.getLocalPort())
-                .auth().basic("smartpay_test_username", "smartpay_test_password")
+                .auth().basic("bob", "bobsbigsecret")
+                .body(payload)
+                .contentType(APPLICATION_JSON)
+                .post(NOTIFICATION_PATH);
+    }
+
+    private Response notifyConnectorWithCredentials(String payload, String username, String password) throws IOException {
+        return given()
+                .port(app.getLocalPort())
+                .auth().basic(username, password)
                 .body(payload)
                 .contentType(APPLICATION_JSON)
                 .post(NOTIFICATION_PATH);
