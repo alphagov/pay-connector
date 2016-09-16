@@ -1,14 +1,11 @@
 package uk.gov.pay.connector.util;
 
-import java.text.SimpleDateFormat;
 import java.time.LocalDateTime;
 import java.time.ZoneId;
 import java.time.ZonedDateTime;
 import java.time.format.DateTimeFormatter;
-import java.time.format.DateTimeFormatterBuilder;
 import java.time.format.DateTimeParseException;
 import java.util.Optional;
-import java.util.TimeZone;
 
 public class DateTimeUtils {
 

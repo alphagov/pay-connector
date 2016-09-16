@@ -5,7 +5,7 @@ import uk.gov.pay.connector.model.domain.ChargeStatus;
 import java.util.Optional;
 
 public interface ChargeStatusRequest {
-    public String getTransactionId();
+    String getTransactionId();
 
     Optional<ChargeStatus> getChargeStatus();
 

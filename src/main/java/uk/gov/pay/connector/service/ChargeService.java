@@ -78,8 +78,8 @@ public class ChargeService {
     public List<ChargeEntity> updateStatus(List<ChargeEntity> chargeEntities, ChargeStatus status) {
         List<ChargeEntity> mergedCharges = new ArrayList<>();
         chargeEntities.stream().forEach(chargeEntity -> {
-            logger.info(format("Charge status to update - from=%s, to=%s, charge_external_id=%s",
-                    chargeEntity.getStatus(), status, chargeEntity.getExternalId()));
+            logger.info("Charge status to update - charge_external_id={}, status={}, to_status={}",
+                    chargeEntity.getExternalId(), chargeEntity.getStatus(), status);
             chargeEntity.setStatus(status);
             ChargeEntity mergedEnt = chargeDao.mergeAndNotifyStatusHasChanged(chargeEntity);
             mergedCharges.add(mergedEnt);

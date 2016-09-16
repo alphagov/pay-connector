@@ -87,7 +87,7 @@ public class ChargeExpiryService {
 
             if (processedEntity == null) {
                 //this shouldn't happen, but don't break the expiry job
-                logger.error("Transaction context did not return a processed ChargeEntity during expiry of charge {}",
+                logger.error("Transaction context did not return a processed ChargeEntity during expiry of charge - charge_external_id={}",
                         chargeEntity.getExternalId());
             } else {
                 if (EXPIRED.getValue().equals(processedEntity.getStatus())) {
@@ -101,8 +101,8 @@ public class ChargeExpiryService {
         });
 
         unexpectedStatuses.forEach(chargeEntity ->
-                        logger.error("ChargeEntity with id {} returned with unexpected status {} during expiry",
-                                chargeEntity.getExternalId(), chargeEntity.getStatus())
+                logger.error("ChargeEntity returned with unexpected status during expiry - charge_external_id={}, status={}",
+                        chargeEntity.getExternalId(), chargeEntity.getStatus())
         );
 
         return Pair.of(
@@ -122,8 +122,8 @@ public class ChargeExpiryService {
             } else {
                 status = EXPIRED;
             }
-            logger.info("charge status to update - from: {}, to: {} for Charge ID: {}",
-                    chargeEntity.getStatus(), status, chargeEntity.getId());
+            logger.info("Charge status to update - charge_external_id={}, status={}, to_status={}",
+                    chargeEntity.getExternalId(), chargeEntity.getStatus(), status);
             chargeEntity.setStatus(status);
             return chargeDao.mergeAndNotifyStatusHasChanged(chargeEntity);
         };
@@ -131,8 +131,7 @@ public class ChargeExpiryService {
 
     private void logUnsuccessfulResponseReasons(ChargeEntity chargeEntity, GatewayResponse gatewayResponse) {
         gatewayResponse.getGatewayError().ifPresent(error ->
-                logger.error(format("gateway error: %s, while cancelling the charge ID %s",
-                        error,
-                        chargeEntity.getId())));
+                logger.error("Gateway error while cancelling the Charge - charge_external_id={}, gateway_error={}",
+                        chargeEntity.getExternalId(), error));
     }
 }

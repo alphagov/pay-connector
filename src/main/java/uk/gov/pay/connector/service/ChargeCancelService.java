@@ -83,10 +83,13 @@ public class ChargeCancelService {
             ChargeEntity chargeEntity = context.get(ChargeEntity.class);
             GatewayResponse cancelResponse = context.get(GatewayResponse.class);
             ChargeStatus status = determineTerminalState(cancelResponse, statusFlow);
-            logger.info(format("Card refund response received - charge_external_id=%s, transaction_id=%s, status=%s",
-                    chargeEntity.getExternalId(), chargeEntity.getGatewayTransactionId(), status));
-            logger.info("charge status to update - from: {}, to: {} for Charge ID: {}",
-                    chargeEntity.getStatus(), status, chargeEntity.getId());
+
+            logger.info("Card cancel response received - charge_external_id={}, transaction_id={}, status={}",
+                    chargeEntity.getExternalId(), chargeEntity.getGatewayTransactionId(), status);
+
+            logger.info("Charge status to update - charge_external_id={}, status={}, to_status={}",
+                    chargeEntity.getExternalId(), chargeEntity.getStatus(), status);
+
             chargeEntity.setStatus(status);
             chargeDao.mergeAndNotifyStatusHasChanged(chargeEntity);
             return cancelResponse;
@@ -111,7 +114,8 @@ public class ChargeCancelService {
                     processedCharge.getExternalId(),
                     completeStatus,
                     processedCharge.getStatus());
-            logger.error(errorMsg);
+            logger.error("Could not update charge - charge_external-id={}, status={}, to_status={}",
+                    processedCharge.getExternalId(), processedCharge.getStatus(), completeStatus);
             return GatewayResponse.with(baseError(errorMsg));
         }
     }

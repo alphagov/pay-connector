@@ -76,8 +76,8 @@ public class CardAuthoriseService extends CardService<BaseAuthoriseResponse> {
         chargeEntity = preOperation(chargeEntity, OperationType.AUTHORISATION, legalStates, AUTHORISATION_READY);
         getPaymentProviderFor(chargeEntity).generateTransactionId().ifPresent(chargeEntity::setGatewayTransactionId);
 
-        logger.info(format("Card authorisation request sent - charge_external_id=%s, transaction_id=%s, status=%s",
-                chargeEntity.getExternalId(), chargeEntity.getGatewayTransactionId(), fromString(chargeEntity.getStatus())));
+        logger.info("Card authorisation request sent - charge_external_id={}, transaction_id={}, provider={}, status={}",
+                chargeEntity.getExternalId(), chargeEntity.getGatewayTransactionId(), chargeEntity.getGatewayAccount().getGatewayName(), fromString(chargeEntity.getStatus()));
 
         return chargeEntity;
     }
@@ -97,11 +97,13 @@ public class CardAuthoriseService extends CardService<BaseAuthoriseResponse> {
         String transactionId = operationResponse.getBaseResponse()
                 .map(BaseAuthoriseResponse::getTransactionId).orElse("");
 
-        logger.info(format("Card authorisation response received - charge_external_id=%s, transaction_id=%s, status=%s",
-                chargeEntity.getExternalId(), transactionId, status));
+        logger.info("Card authorisation response received - charge_external_id={}, transaction_id={}, status={}",
+                chargeEntity.getExternalId(), transactionId, status);
+
         reloadedCharge.setStatus(status);
+
         if (StringUtils.isBlank(transactionId)) {
-            logger.warn("Card authorisation response received with no transaction id.");
+            logger.warn("Card authorisation response received with no transaction id. -  charge_external_id={}", reloadedCharge.getExternalId());
         } else {
             reloadedCharge.setGatewayTransactionId(transactionId);
         }
