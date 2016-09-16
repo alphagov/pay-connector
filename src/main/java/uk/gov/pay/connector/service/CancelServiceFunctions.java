@@ -18,7 +18,6 @@ import uk.gov.pay.connector.service.transaction.TransactionalOperation;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
-import static java.lang.String.format;
 import static uk.gov.pay.connector.model.domain.ChargeStatus.fromString;
 
 /**
@@ -30,8 +29,8 @@ class CancelServiceFunctions {
 
     static TransactionalOperation<TransactionContext, ChargeEntity> changeStatusTo(ChargeDao chargeDao, ChargeEntity chargeEntity, ChargeStatus targetStatus) {
         return context -> {
-            logger.info("charge status to update - from: {}, to: {} for Charge ID: {}",
-                    chargeEntity.getStatus(), targetStatus, chargeEntity.getId());
+            logger.info("Charge status to update - charge_external_id={}, status={}, to_status={}",
+                    chargeEntity.getExternalId(), chargeEntity.getStatus(), targetStatus);
             chargeEntity.setStatus(targetStatus);
             return chargeDao.mergeAndNotifyStatusHasChanged(chargeEntity);
         };
@@ -50,14 +49,16 @@ class CancelServiceFunctions {
                 } else if (reloadedCharge.hasStatus(ChargeStatus.AUTHORISATION_READY)) {
                     throw new ConflictRuntimeException(chargeEntity.getExternalId());
                 }
-                logger.error(format("Charge with id [%s] and with status [%s] should be in one of the following legal states, [%s]",
-                        reloadedCharge.getId(), reloadedCharge.getStatus(), getLegalStatusNames(statusFlow.getTerminatableStatuses())));
+
+                logger.error("Charge is not in one of the legal states. charge_external_id={}, status={}, legal_states={}",
+                        reloadedCharge.getExternalId(), reloadedCharge.getStatus(), getLegalStatusNames(statusFlow.getTerminatableStatuses()));
+
                 throw new IllegalStateRuntimeException(reloadedCharge.getExternalId());
             }
             reloadedCharge.setStatus(statusFlow.getLockState());
 
-            logger.info(format("Card cancel request sent - charge_external_id=%s, transaction_id=%s, status=%s",
-                    chargeEntity.getExternalId(), chargeEntity.getGatewayTransactionId(), fromString(chargeEntity.getStatus())));
+            logger.info("Card cancel request sent - charge_external_id={}, transaction_id={}, provider={}, status={}",
+                    chargeEntity.getExternalId(), chargeEntity.getGatewayTransactionId(), chargeEntity.getGatewayAccount().getGatewayName(), fromString(chargeEntity.getStatus()));
 
             ChargeEntity reloadedEntity = chargeDao.mergeAndNotifyStatusHasChanged(reloadedCharge);
             confirmationDetailsService.doRemove(reloadedEntity);

@@ -46,7 +46,7 @@ public class ConfirmationDetailsService {
         detailsEntity.setLastDigitsCardNumber(StringUtils.right(cardDetails.getCardNo(), 4));
         chargeEntity.setConfirmationDetailsEntity(detailsEntity);
         confirmationDetailsDao.persist(detailsEntity);
-        logger.info("stored confirmation details for charge ID: {}", externalId);
+        logger.info("Stored confirmation details for charge - charge_external_id={}", externalId);
         return detailsEntity;
     }
 
@@ -60,8 +60,7 @@ public class ConfirmationDetailsService {
             chargeEntity.setConfirmationDetailsEntity(null);
             ConfirmationDetailsEntity reloadedEntity = confirmationDetailsDao.merge(entity);
             confirmationDetailsDao.remove(reloadedEntity);
-            logger.info("removed confirmation details for charge ID: {}", chargeEntity.getExternalId());
+            logger.info("Removed confirmation details for charge - charge_external_id={}", chargeEntity.getExternalId());
         }
-
     }
 }

@@ -12,11 +12,9 @@ import uk.gov.pay.connector.model.domain.ChargeStatus;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
-import static java.lang.String.format;
-
 public abstract class CardService<T extends BaseResponse> {
     protected final ChargeDao chargeDao;
-    protected final PaymentProviders providers;
+    private final PaymentProviders providers;
     protected final Logger logger = LoggerFactory.getLogger(getClass());
     protected CardExecutorService cardExecutorService;
     protected ConfirmationDetailsService confirmationDetailsService;
@@ -51,10 +49,11 @@ public abstract class CardService<T extends BaseResponse> {
     public ChargeEntity preOperation(ChargeEntity chargeEntity, OperationType operationType, ChargeStatus[] legalStatuses, ChargeStatus lockingStatus) {
         ChargeEntity reloadedCharge = chargeDao.merge(chargeEntity);
 
-        logger.info(format("Card pre-operation - operation_type=%s, charge_external_id=%s, locking_status=%s",
-                operationType.getValue(),
+        logger.info("Card pre-operation - charge_external_id={}, operation_type={},  provider={}, locking_status={}",
                 chargeEntity.getExternalId(),
-                lockingStatus));
+                operationType.getValue(),
+                chargeEntity.getGatewayAccount().getGatewayName(),
+                lockingStatus);
 
         if (reloadedCharge.hasStatus(ChargeStatus.EXPIRED)) {
             throw new ChargeExpiredRuntimeException(operationType.getValue(), reloadedCharge.getExternalId());
@@ -63,8 +62,8 @@ public abstract class CardService<T extends BaseResponse> {
             if (reloadedCharge.hasStatus(lockingStatus)) {
                 throw new OperationAlreadyInProgressRuntimeException(operationType.getValue(), reloadedCharge.getExternalId());
             }
-            logger.error(format("Charge with id [%s] and with status [%s] should be in one of the following legal states, [%s]",
-                    reloadedCharge.getExternalId(), reloadedCharge.getStatus(), getLegalStatusNames(legalStatuses)));
+            logger.error("Charge is not in a legal status to do the pre-operation - charge_external_id={}, status={}, legal_states={}",
+                    reloadedCharge.getExternalId(), reloadedCharge.getStatus(), getLegalStatusNames(legalStatuses));
             throw new IllegalStateRuntimeException(reloadedCharge.getExternalId());
         }
         reloadedCharge.setStatus(lockingStatus);

@@ -83,16 +83,16 @@ public class ChargeRefundService {
             ExternalChargeRefundAvailability refundAvailability = valueOf(reloadedCharge);
 
             if (EXTERNAL_AVAILABLE != refundAvailability) {
-                logger.error(format("ChargeId=%s, status=%s, refundStatus=%s, message=Not available for refund",
-                        reloadedCharge.getId(), reloadedCharge.getStatus(), refundAvailability));
+                logger.error("Charge not available for refund - charge_external_id={}, status={}, refund_status={}",
+                        reloadedCharge.getId(), reloadedCharge.getStatus(), refundAvailability, reloadedCharge.getGatewayAccount().getGatewayName());
                 throw RefundException.notAvailableForRefundException(reloadedCharge.getExternalId(), refundAvailability);
             }
 
             long totalAmountToBeRefunded = reloadedCharge.getTotalAmountToBeRefunded();
 
             if (totalAmountToBeRefunded - amountToBeRefunded < 0) {
-                logger.error(format("ChargeId=%s, status=%s, refundStatus=%s, message=doesn't have sufficient amount for refund ([%s]), amount requested for refund is [%s]",
-                        reloadedCharge.getId(), reloadedCharge.getStatus(), refundAvailability, totalAmountToBeRefunded, amountToBeRefunded));
+                logger.error("Charge doesn't have sufficient amount for refund - charge_external_id={}, status={}, refund_status={} amount_for_refund={}, refund_amount_requested={}",
+                        reloadedCharge.getExternalId(), reloadedCharge.getStatus(), refundAvailability, totalAmountToBeRefunded, amountToBeRefunded);
                 throw RefundException.refundException("Not sufficient amount available for refund", NOT_SUFFICIENT_AMOUNT_AVAILABLE);
             }
 
@@ -100,8 +100,8 @@ public class ChargeRefundService {
             reloadedCharge.getRefunds().add(refundEntity);
             refundDao.persist(refundEntity);
 
-            logger.info(format("Card refund request sent - charge_external_id=%s, transaction_id=%s, status=%s",
-                    chargeEntity.getExternalId(), chargeEntity.getGatewayTransactionId(), fromString(chargeEntity.getStatus())));
+            logger.info("Card refund request sent - charge_external_id={}, transaction_id={}, provider={}, status={}",
+                    chargeEntity.getExternalId(), chargeEntity.getGatewayTransactionId(), chargeEntity.getGatewayAccount().getGatewayName(), fromString(chargeEntity.getStatus()));
 
             return refundEntity;
         };
@@ -126,10 +126,10 @@ public class ChargeRefundService {
                 status = refundFinishSuccessStatusOf(chargeEntity.getPaymentGatewayName());
             }
 
-            logger.info(format("Card refund response received - charge_external_id=%s, transaction_id=%s, status=%s",
-                    chargeEntity.getExternalId(), chargeEntity.getGatewayTransactionId(), status));
-            logger.info("Refund status to update - from={}, to={} for charge_id={}, charge_external_id={}, refund_id={}, refund_external_id={}, amount={}",
-                    refundEntity.getStatus(), status, chargeEntity.getId(), chargeEntity.getExternalId(), refundEntity.getId(), refundEntity.getExternalId(), refundEntity.getAmount());
+            logger.info("Card refund response received - charge_external_id={}, transaction_id={}, status={}",
+                    chargeEntity.getExternalId(), chargeEntity.getGatewayTransactionId(), status);
+            logger.info("Refund status to update - charge_external_id={}, status={}, to_status={} for charge_id={}, refund_id={}, refund_external_id={}, amount={}",
+                    chargeEntity.getExternalId(), refundEntity.getStatus(), status, chargeEntity.getId(), refundEntity.getId(), refundEntity.getExternalId(), refundEntity.getAmount());
 
             refundEntity.setStatus(status);
 

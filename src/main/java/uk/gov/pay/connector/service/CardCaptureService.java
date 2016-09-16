@@ -40,8 +40,8 @@ public class CardCaptureService extends CardService implements TransactionalGate
     @Transactional
     @Override
     public ChargeEntity preOperation(ChargeEntity chargeEntity) {
-        logger.info(format("Card capture request sent - charge_external_id=%s, transaction_id=%s, status=%s",
-                chargeEntity.getExternalId(), chargeEntity.getGatewayTransactionId(), fromString(chargeEntity.getStatus())));
+        logger.info(format("Card capture request sent - charge_external_id=%s, transaction_id=%s, provider=%s, status=%s",
+                chargeEntity.getExternalId(), chargeEntity.getGatewayTransactionId(), chargeEntity.getGatewayAccount().getGatewayName(),fromString(chargeEntity.getStatus())));
         return preOperation(chargeEntity, CardService.OperationType.CAPTURE, legalStatuses, ChargeStatus.CAPTURE_READY);
     }
 
@@ -64,13 +64,13 @@ public class CardCaptureService extends CardService implements TransactionalGate
         String transactionId = operationResponse.getBaseResponse()
                 .map(BaseCaptureResponse::getTransactionId).orElse("");
 
-        logger.info(format("Card capture response received - charge_external_id=%s, transaction_id=%s, status=%s",
-                chargeEntity.getExternalId(), transactionId, status));
+        logger.info("Card capture response received - charge_external_id={}, transaction_id={}, status={}",
+                chargeEntity.getExternalId(), transactionId, status);
 
         reloadedCharge.setStatus(status);
 
         if (StringUtils.isBlank(transactionId)) {
-            logger.warn("Card capture response received with no transaction id.");
+            logger.warn("Card capture response received with no transaction id. - charge_external_id={}", reloadedCharge.getExternalId());
         }
 
         chargeDao.mergeAndNotifyStatusHasChanged(reloadedCharge);
