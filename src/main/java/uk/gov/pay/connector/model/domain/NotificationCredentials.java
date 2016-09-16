@@ -2,6 +2,7 @@ package uk.gov.pay.connector.model.domain;
 
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonManagedReference;
+import uk.gov.pay.connector.auth.BasicAuthUser;
 
 import javax.persistence.*;
 
@@ -52,5 +53,9 @@ public class NotificationCredentials extends AbstractEntity {
 
     public void setPassword(String password) {
         this.password = password;
+    }
+
+    public BasicAuthUser toBasicAuthUser() {
+        return new BasicAuthUser(getUserName());
     }
 }
