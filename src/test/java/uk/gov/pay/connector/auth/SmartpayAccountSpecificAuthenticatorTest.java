@@ -79,5 +79,4 @@ public class SmartpayAccountSpecificAuthenticatorTest {
 
         assertFalse(authenticate.isPresent());
     }
-
 }
