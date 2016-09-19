@@ -710,7 +710,6 @@ public class ChargesApiResourceITest {
                 .getTransactions()
                 .statusCode(OK.getStatusCode())
                 .contentType(JSON)
-                        // then no prev and next link
                 .body("results.size()", is(1))
                 .body("total", is(1))
                 .body("count", is(1))
@@ -734,7 +733,6 @@ public class ChargesApiResourceITest {
                 .getTransactions()
                 .statusCode(OK.getStatusCode())
                 .contentType(JSON)
-                        // then no prev and next link
                 .body("results.size()", is(1))
                 .body("total", is(1))
                 .body("count", is(1))
@@ -761,7 +759,6 @@ public class ChargesApiResourceITest {
                 .getTransactions()
                 .statusCode(OK.getStatusCode())
                 .contentType(JSON)
-                        // then no prev link
                 .body("results.size()", is(2))
                 .body("total", is(5))
                 .body("count", is(2))
@@ -788,7 +785,6 @@ public class ChargesApiResourceITest {
                 .getTransactions()
                 .statusCode(OK.getStatusCode())
                 .contentType(JSON)
-                        // then all links present
                 .body("results.size()", is(2))
                 .body("total", is(5))
                 .body("count", is(2))
@@ -815,7 +811,6 @@ public class ChargesApiResourceITest {
                 .getTransactions()
                 .statusCode(OK.getStatusCode())
                 .contentType(JSON)
-                        // then no next link
                 .body("results.size()", is(1))
                 .body("total", is(5))
                 .body("count", is(1))
