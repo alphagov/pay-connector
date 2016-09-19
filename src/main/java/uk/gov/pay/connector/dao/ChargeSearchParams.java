@@ -22,6 +22,7 @@ public class ChargeSearchParams {
     private Long displaySize;
     private Set<ChargeStatus> chargeStatuses = new HashSet<>();
     private String externalChargeState;
+    private String cardBrand;
 
     public Long getGatewayAccountId() {
         return gatewayAccountId;
@@ -49,6 +50,11 @@ public class ChargeSearchParams {
                 this.chargeStatuses.addAll(ChargeStatus.fromExternal(externalState));
             }
         }
+        return this;
+    }
+
+    public ChargeSearchParams withCardBrand(String cardBrand) {
+        this.cardBrand = cardBrand;
         return this;
     }
 
@@ -106,6 +112,10 @@ public class ChargeSearchParams {
         return this;
     }
 
+    public String getCardBrand() {
+        return cardBrand;
+    }
+
     public String buildQueryParams() {
         StringBuilder builder = new StringBuilder();
 
@@ -123,6 +133,9 @@ public class ChargeSearchParams {
             builder.append("&display_size=" + displaySize);
         if (isNotBlank(externalChargeState)) {
             builder.append("&state=" + externalChargeState);
+        }
+        if (isNotBlank(cardBrand)) {
+            builder.append("&card_brand=" + cardBrand);
         }
         return builder.toString().replaceFirst("&", "");
     }

@@ -127,6 +127,30 @@ public class ChargeDaoITest extends DaoITestBase {
     }
 
     @Test
+    public void searchChargesByCardBrandOnly() throws Exception {
+        // given
+        insertTestCharge();
+        ChargeSearchParams params = new ChargeSearchParams()
+                .withCardBrand(defaultTestCharge.getCardBrand());
+
+        // when
+        List<ChargeEntity> charges = chargeDao.findAllBy(params);
+
+        // then
+        assertThat(charges.size(), is(1));
+        ChargeEntity charge = charges.get(0);
+        assertThat(charge.getId(), is(defaultTestCharge.getChargeId()));
+        assertThat(charge.getAmount(), is(defaultTestCharge.getAmount()));
+        assertThat(charge.getReference(), is(defaultTestCharge.getReference()));
+        assertThat(charge.getEmail(), is(defaultTestCharge.getEmail()));
+        assertThat(charge.getDescription(), is(DESCRIPTION));
+        assertThat(charge.getStatus(), is(defaultTestCharge.getChargeStatus().toString()));
+        assertThat(charge.getCardBrand(), is(defaultTestCharge.getCardBrand()));
+
+        assertDateMatch(charge.getCreatedDate().toString());
+    }
+
+    @Test
     public void searchChargesWithDefaultSizeAndPage_shouldGetChargesInCreationDateOrder() throws Exception {
         // given
         insertNewChargeWithId(700L, now().plusHours(1));
@@ -278,6 +302,7 @@ public class ChargeDaoITest extends DaoITestBase {
             assertThat(charge.getDescription(), is(DESCRIPTION));
             assertThat(charge.getStatus(), is(defaultTestCharge.getChargeStatus().toString()));
             assertDateMatch(charge.getCreatedDate().toString());
+            assertThat(charge.getCardBrand(), is(defaultTestCharge.getCardBrand()));
         }
     }
 
@@ -429,6 +454,7 @@ public class ChargeDaoITest extends DaoITestBase {
         assertThat(charge.getReference(), is(defaultTestCharge.getReference()));
         assertThat(charge.getDescription(), is(DESCRIPTION));
         assertThat(charge.getStatus(), is(defaultTestCharge.getChargeStatus().toString()));
+        assertThat(charge.getCardBrand(), is(defaultTestCharge.getCardBrand()));
         assertDateMatch(charge.getCreatedDate().toString());
     }
 
@@ -456,6 +482,7 @@ public class ChargeDaoITest extends DaoITestBase {
         assertThat(charge.getReference(), is(defaultTestCharge.getReference()));
         assertThat(charge.getDescription(), is(DESCRIPTION));
         assertThat(charge.getStatus(), is(defaultTestCharge.getChargeStatus().toString()));
+        assertThat(charge.getCardBrand(), is(defaultTestCharge.getCardBrand()));
         assertDateMatch(charge.getCreatedDate().toString());
     }
 
@@ -482,6 +509,7 @@ public class ChargeDaoITest extends DaoITestBase {
         assertThat(charge.getReference(), is(defaultTestCharge.getReference()));
         assertThat(charge.getDescription(), is(DESCRIPTION));
         assertThat(charge.getStatus(), is(defaultTestCharge.getChargeStatus().toString()));
+        assertThat(charge.getCardBrand(), is(defaultTestCharge.getCardBrand()));
 
         assertDateMatch(charge.getCreatedDate().toString());
     }
@@ -560,6 +588,35 @@ public class ChargeDaoITest extends DaoITestBase {
     }
 
     @Test
+    public void searchChargeByReferenceAndStatusAndEmailAndCardBrandAndFromDateAndToDate() throws Exception {
+        // given
+        insertTestCharge();
+        ChargeSearchParams params = new ChargeSearchParams()
+                .withGatewayAccountId(defaultTestAccount.getAccountId())
+                .withReferenceLike(defaultTestCharge.getReference())
+                .withExternalChargeState(EXTERNAL_CREATED.getStatus())
+                .withCardBrand(defaultTestCharge.getCardBrand())
+                .withEmailLike(defaultTestCharge.getEmail())
+                .withFromDate(ZonedDateTime.parse(FROM_DATE))
+                .withToDate(ZonedDateTime.parse(TO_DATE));
+
+        // when
+        List<ChargeEntity> charges = chargeDao.findAllBy(params);
+
+        // then
+        assertThat(charges.size(), is(1));
+        ChargeEntity charge = charges.get(0);
+
+        assertThat(charge.getId(), is(defaultTestCharge.getChargeId()));
+        assertThat(charge.getAmount(), is(defaultTestCharge.getAmount()));
+        assertThat(charge.getReference(), is(defaultTestCharge.getReference()));
+        assertThat(charge.getDescription(), is(DESCRIPTION));
+        assertThat(charge.getStatus(), is(defaultTestCharge.getChargeStatus().toString()));
+        assertThat(charge.getCardBrand(), is(defaultTestCharge.getCardBrand()));
+        assertDateMatch(charge.getCreatedDate().toString());
+    }
+
+    @Test
     public void searchChargeByReferenceAndStatusAndToDate() throws Exception {
 
         // given
@@ -582,6 +639,7 @@ public class ChargeDaoITest extends DaoITestBase {
         assertThat(charge.getReference(), is(defaultTestCharge.getReference()));
         assertThat(charge.getDescription(), is(DESCRIPTION));
         assertThat(charge.getStatus(), is(defaultTestCharge.getChargeStatus().toString()));
+        assertThat(charge.getCardBrand(), is(defaultTestCharge.getCardBrand()));
         assertDateMatch(charge.getCreatedDate().toString());
     }
 

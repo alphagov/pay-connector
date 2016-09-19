@@ -23,13 +23,15 @@ public class ChargeSearchParamsTest {
             "&to_date=" + TO_DATE +
             "&page=%s" +
             "&display_size=%s" +
-            "&state=created";
+            "&state=created" +
+            "&card_brand=visa";
 
     @Test
     public void shouldBuildQueryParamsForChargeSearch() throws Exception {
         ChargeSearchParams params = new ChargeSearchParams()
                 .withDisplaySize(5L)
                 .withExternalChargeState(EXTERNAL_CREATED.getStatus())
+                .withCardBrand("visa")
                 .withGatewayAccountId(111L)
                 .withPage(2L)
                 .withReferenceLike("ref")
