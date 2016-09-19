@@ -1,6 +1,7 @@
 package uk.gov.pay.connector.it.resources;
 
 import com.google.common.collect.ImmutableMap;
+import com.jayway.restassured.http.ContentType;
 import com.jayway.restassured.response.ValidatableResponse;
 import org.hamcrest.core.Is;
 import org.junit.Test;
@@ -161,7 +162,7 @@ public class GatewayAccountResourceITest extends GatewayAccountResourceTestBase 
     }
 
     @Test
-    public void whenNotificationCredentialsInvalid_shouldReturn400() {
+    public void whenNotificationCredentialsInvalidKeys_shouldReturn400() {
         String gatewayAccountId = createAGatewayAccountFor("smartpay");
 
         givenSetup()
@@ -169,5 +170,18 @@ public class GatewayAccountResourceITest extends GatewayAccountResourceTestBase 
                 .post("/v1/api/accounts/" + gatewayAccountId + "/notification-credentials")
                 .then()
                 .statusCode(BAD_REQUEST.getStatusCode());
+    }
+
+    @Test
+    public void whenNotificationCredentialsInvalidValues_shouldReturn400() {
+        String gatewayAccountId = createAGatewayAccountFor("smartpay");
+
+        givenSetup()
+                .body(toJson(ImmutableMap.of("username", "bob", "password", "tooshort")))
+                .post("/v1/api/accounts/" + gatewayAccountId + "/notification-credentials")
+                .then()
+                .contentType(ContentType.JSON)
+                .statusCode(BAD_REQUEST.getStatusCode())
+                .body("message", is("Credentials update failure: Invalid password length"));
     }
 }
