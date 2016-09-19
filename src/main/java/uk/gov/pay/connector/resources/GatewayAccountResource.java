@@ -12,6 +12,7 @@ import org.slf4j.LoggerFactory;
 import uk.gov.pay.connector.app.ConnectorConfiguration;
 import uk.gov.pay.connector.dao.CardTypeDao;
 import uk.gov.pay.connector.dao.GatewayAccountDao;
+import uk.gov.pay.connector.exception.CredentialsException;
 import uk.gov.pay.connector.model.domain.CardTypeEntity;
 import uk.gov.pay.connector.model.domain.GatewayAccountEntity;
 import uk.gov.pay.connector.service.GatewayAccountNotificationCredentialsService;
@@ -248,8 +249,12 @@ public class GatewayAccountResource {
 
         return gatewayDao.findById(gatewayAccountId)
                 .map((gatewayAccountEntity) -> {
-                    gatewayAccountNotificationCredentialsService.setCredentialsForAccount(notificationCredentials,
-                            gatewayAccountEntity);
+                    try {
+                        gatewayAccountNotificationCredentialsService.setCredentialsForAccount(notificationCredentials,
+                                gatewayAccountEntity);
+                    } catch (CredentialsException e) {
+                        return badRequestResponse("Credentials update failure: "+ e.getMessage());
+                    }
 
                     return Response.ok().build();
 

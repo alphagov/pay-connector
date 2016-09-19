@@ -2,17 +2,19 @@ package uk.gov.pay.connector.service;
 
 import com.google.common.collect.ImmutableMap;
 import org.junit.Before;
+import org.junit.Rule;
 import org.junit.Test;
+import org.junit.rules.ExpectedException;
 import org.junit.runner.RunWith;
 import org.mockito.InOrder;
 import org.mockito.Mock;
 import org.mockito.Mockito;
 import org.mockito.runners.MockitoJUnitRunner;
 import uk.gov.pay.connector.app.ConnectorConfiguration;
-import uk.gov.pay.connector.app.GatewayCredentialsConfig;
 import uk.gov.pay.connector.app.SmartpayCredentialsConfig;
 import uk.gov.pay.connector.dao.CardTypeDao;
 import uk.gov.pay.connector.dao.GatewayAccountDao;
+import uk.gov.pay.connector.exception.CredentialsException;
 import uk.gov.pay.connector.model.builder.EntityBuilder;
 import uk.gov.pay.connector.model.domain.GatewayAccountEntity;
 import uk.gov.pay.connector.model.domain.NotificationCredentials;
@@ -28,6 +30,9 @@ import static org.mockito.Mockito.*;
 public class GatewayAccountNotificationCredentialsServiceTest {
 
     private GatewayAccountNotificationCredentialsService gatewayAccountNotificationCredentialsService;
+
+    @Rule
+    public ExpectedException expectedException = ExpectedException.none();
 
     @Mock
     GatewayAccountDao gatewayDao;
@@ -55,7 +60,7 @@ public class GatewayAccountNotificationCredentialsServiceTest {
     }
 
     @Test
-    public void shouldCreateNotificationCredentialsIfNotPresent() {
+    public void shouldCreateNotificationCredentialsIfNotPresent() throws CredentialsException {
         GatewayAccountEntity gatewayAccount = mock(GatewayAccountEntity.class);
         NotificationCredentials notificationCredentials = mock(NotificationCredentials.class);
         Map<String, String> credentials = ImmutableMap.of("username", "bob", "password", "bobssecret");
@@ -72,7 +77,7 @@ public class GatewayAccountNotificationCredentialsServiceTest {
 
 
     @Test
-    public void shouldEncryptPasswordWhenCreatingNotificationCredentials() {
+    public void shouldEncryptPasswordWhenCreatingNotificationCredentials() throws CredentialsException {
         GatewayAccountEntity gatewayAccount = mock(GatewayAccountEntity.class);
         NotificationCredentials notificationCredentials = mock(NotificationCredentials.class);
         Map<String, String> credentials = ImmutableMap.of("username", "bob", "password", "bobssecret");
@@ -91,7 +96,7 @@ public class GatewayAccountNotificationCredentialsServiceTest {
     }
 
     @Test
-    public void shouldUpdateExistingNotificationCredentialIfPresent() {
+    public void shouldUpdateExistingNotificationCredentialIfPresent() throws CredentialsException {
         GatewayAccountEntity gatewayAccount = mock(GatewayAccountEntity.class);
         NotificationCredentials notificationCredentials = mock(NotificationCredentials.class);
         Map<String, String> credentials = ImmutableMap.of("username", "bob", "password", "bobssecret");
@@ -107,6 +112,25 @@ public class GatewayAccountNotificationCredentialsServiceTest {
         inOrder.verify(notificationCredentials).setPassword("bobshashedsecret");
         inOrder.verify(gatewayAccount).setNotificationCredentials(notificationCredentials);
 
+        verifyZeroInteractions(entityBuilder);
+    }
+
+    @Test
+    public void shouldValidateThatPasswordisAtLeaset10Characters() throws CredentialsException {
+        expectedException.expect(CredentialsException.class);
+        expectedException.expectMessage("Invalid password length");
+
+        GatewayAccountEntity gatewayAccount = mock(GatewayAccountEntity.class);
+        NotificationCredentials notificationCredentials = mock(NotificationCredentials.class);
+        Map<String, String> credentials = ImmutableMap.of("username", "bob", "password", "bobsecret");
+
+        when(gatewayAccount.getNotificationCredentials()).thenReturn(null);
+        when(entityBuilder.newNotificationCredentials(gatewayAccount)).thenReturn(notificationCredentials);
+        when(hashUtil.hash("bobsecret")).thenReturn("bobshashedsecret");
+
+        gatewayAccountNotificationCredentialsService.setCredentialsForAccount(credentials, gatewayAccount);
+
+        verifyZeroInteractions(hashUtil);
         verifyZeroInteractions(entityBuilder);
     }
 }
