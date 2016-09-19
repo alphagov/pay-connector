@@ -6,6 +6,7 @@ import io.dropwizard.auth.AuthenticationException;
 import io.dropwizard.auth.Authenticator;
 import io.dropwizard.auth.basic.BasicCredentials;
 import uk.gov.pay.connector.dao.GatewayAccountDao;
+import uk.gov.pay.connector.model.domain.GatewayAccountEntity;
 import uk.gov.pay.connector.util.HashUtil;
 
 public class SmartpayAccountSpecificAuthenticator implements Authenticator<BasicCredentials, BasicAuthUser> {
@@ -23,15 +24,13 @@ public class SmartpayAccountSpecificAuthenticator implements Authenticator<Basic
     public Optional<BasicAuthUser> authenticate(BasicCredentials basicCredentials) throws AuthenticationException {
 
         return gatewayAccountDao.findByNotificationCredentialsUsername(basicCredentials.getUsername())
-                .map(gatewayAccountEntity -> {
-                    BasicAuthUser basicAuthUser = null;
-                    if (hashUtil.check(basicCredentials.getPassword(),
-                            gatewayAccountEntity.getNotificationCredentials().getPassword())) {
-                        basicAuthUser = gatewayAccountEntity.getNotificationCredentials().toBasicAuthUser();
-                    }
-                    return basicAuthUser;
-                })
+                .filter((gatewayAccountEntity) -> matchCredentials(basicCredentials, gatewayAccountEntity))
+                .map(gatewayAccountEntity -> gatewayAccountEntity.getNotificationCredentials().toBasicAuthUser())
                 .map(Optional::fromNullable)
                 .orElseGet(Optional::absent);
+    }
+
+    private boolean matchCredentials(BasicCredentials basicCredentials, GatewayAccountEntity gatewayAccountEntity) {
+        return hashUtil.check(basicCredentials.getPassword(), gatewayAccountEntity.getNotificationCredentials().getPassword());
     }
 }
