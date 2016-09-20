@@ -22,7 +22,13 @@ public class CardDetailsValidatorTest {
     }
 
     @Test
-    public void validationSucceedFor14digitsCardNumber() {
+    public void validationSucceedForCVCwith4Digits() {
+        Card cardDetails = buildCardDetailsFor("12345678901234", "1234", validExpiryDate, cardBrand);
+        assertTrue(CardDetailsValidator.isWellFormattedCardDetails(cardDetails));
+    }
+
+    @Test
+    public void validationSucceedFor4digitsCardNumber() {
         Card cardDetails = buildCardDetailsFor("12345678901234", validCVC, validExpiryDate, cardBrand);
         assertTrue(CardDetailsValidator.isWellFormattedCardDetails(cardDetails));
     }
@@ -76,8 +82,14 @@ public class CardDetailsValidatorTest {
     }
 
     @Test
-    public void validationFailsForCVCwithMoreThan3Digits() {
-        Card cardDetails = buildCardDetailsFor(validCardNumber, "4444", validExpiryDate, cardBrand);
+    public void validationFailsForCVCwithMoreThan4Digits() {
+        Card cardDetails = buildCardDetailsFor(validCardNumber, "12345", validExpiryDate, cardBrand);
+        assertFalse(CardDetailsValidator.isWellFormattedCardDetails(cardDetails));
+    }
+
+    @Test
+    public void validationFailsForCVCwithLessThan3Digits() {
+        Card cardDetails = buildCardDetailsFor(validCardNumber, "12", validExpiryDate, cardBrand);
         assertFalse(CardDetailsValidator.isWellFormattedCardDetails(cardDetails));
     }
 
