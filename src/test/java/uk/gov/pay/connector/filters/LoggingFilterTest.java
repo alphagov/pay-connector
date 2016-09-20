@@ -7,6 +7,7 @@ import ch.qos.logback.classic.spi.LoggingEvent;
 import ch.qos.logback.core.Appender;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.lang3.math.NumberUtils;
+import org.apache.log4j.MDC;
 import org.junit.Before;
 import org.junit.Test;
 import org.junit.runner.RunWith;
@@ -80,6 +81,8 @@ public class LoggingFilterTest {
         String[] timeTaken = StringUtils.substringsBetween(endLogMessage, "total time ", "ms");
         assertTrue(NumberUtils.isNumber(timeTaken[0]));
         verify(mockFilterChain).doFilter(mockRequest, mockResponse);
+
+        assertThat(MDC.get(LoggingFilter.HEADER_REQUEST_ID),is(requestId));
     }
 
     @Test

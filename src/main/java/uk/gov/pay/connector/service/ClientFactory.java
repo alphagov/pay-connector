@@ -17,6 +17,7 @@ import org.glassfish.jersey.apache.connector.ApacheClientProperties;
 import org.glassfish.jersey.apache.connector.ApacheConnectorProvider;
 import org.glassfish.jersey.client.ClientProperties;
 import uk.gov.pay.connector.app.ConnectorConfiguration;
+import uk.gov.pay.connector.filters.RestClientLoggingFilter;
 import uk.gov.pay.connector.util.TrustStoreLoader;
 
 import javax.inject.Inject;
@@ -51,7 +52,9 @@ public class ClientFactory {
                 .withProperty(ClientProperties.PROXY_URI, proxyUrl(clientConfiguration.getProxyConfiguration()));
         }
 
-        return defaultClientBuilder.build(name);
+        Client client = defaultClientBuilder.build(name);
+        client.register(RestClientLoggingFilter.class);
+        return client;
     }
 
     private HttpClientConnectionManager createConnectionManager() {
