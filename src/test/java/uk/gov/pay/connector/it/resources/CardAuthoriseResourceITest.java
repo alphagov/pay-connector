@@ -53,6 +53,11 @@ public class CardAuthoriseResourceITest extends CardResourceITestBase {
     }
 
     @Test
+    public void shouldAuthoriseCharge_ForAValidAmericanExpress() throws Exception {
+        shouldAuthoriseChargeFor(buildJsonCardDetailsFor("371449635398431", "1234", "11/99", "american-express"));
+    }
+
+    @Test
     public void shouldStoreCardDetailsForAuthorisedCharge() throws Exception {
         String cardBrand = "visa";
         String externalChargeId = shouldAuthoriseChargeFor(buildJsonCardDetailsFor("4444333322221111", cardBrand));
@@ -105,6 +110,24 @@ public class CardAuthoriseResourceITest extends CardResourceITestBase {
     public void shouldReturnError_WhenCardNumberLongerThanMaximumExpected() throws Exception {
         String chargeId = createNewChargeWith(ENTERING_CARD_DETAILS, null);
         String randomCardNumberDetails = buildJsonCardDetailsFor("11111111111111192345", "visa");
+
+        shouldReturnErrorFor(chargeId, randomCardNumberDetails, "Values do not match expected format/length.");
+        assertFrontendChargeStatusIs(chargeId, ENTERING_CARD_DETAILS.getValue());
+    }
+
+    @Test
+    public void shouldReturnError_WhenCvcIsMoreThan4Digits() throws Exception {
+        String chargeId = createNewChargeWith(ENTERING_CARD_DETAILS, null);
+        String randomCardNumberDetails = buildJsonCardDetailsFor("4444333322221111", "12345", "11/99", "visa");
+
+        shouldReturnErrorFor(chargeId, randomCardNumberDetails, "Values do not match expected format/length.");
+        assertFrontendChargeStatusIs(chargeId, ENTERING_CARD_DETAILS.getValue());
+    }
+
+    @Test
+    public void shouldReturnError_WhenCvcIsLessThan3Digits() throws Exception {
+        String chargeId = createNewChargeWith(ENTERING_CARD_DETAILS, null);
+        String randomCardNumberDetails = buildJsonCardDetailsFor("4444333322221111", "12", "11/99", "visa");
 
         shouldReturnErrorFor(chargeId, randomCardNumberDetails, "Values do not match expected format/length.");
         assertFrontendChargeStatusIs(chargeId, ENTERING_CARD_DETAILS.getValue());

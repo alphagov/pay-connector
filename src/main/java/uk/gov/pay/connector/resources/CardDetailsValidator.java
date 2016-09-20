@@ -11,7 +11,7 @@ public class CardDetailsValidator {
 
     public static boolean isWellFormattedCardDetails(Card cardDetails) {
         return isValidCardNumberLength(cardDetails.getCardNo()) &&
-                is3Digits(cardDetails.getCvc()) &&
+                isBetween3To4Digits(cardDetails.getCvc()) &&
                 hasExpiryDateFormat(cardDetails.getEndDate()) &&
                 hasAddress(cardDetails.getAddress()) &&
                 hasCardBrand(cardDetails.getCardBrand());
@@ -37,7 +37,7 @@ public class CardDetailsValidator {
         return number != null && number.toString().matches("[0-9]{14,19}");
     }
 
-    private static boolean is3Digits(Object number) {
-        return number != null && number.toString().matches("[0-9]{3}");
+    private static boolean isBetween3To4Digits(Object number) {
+        return number != null && number.toString().matches("[0-9]{3,4}");
     }
 }
