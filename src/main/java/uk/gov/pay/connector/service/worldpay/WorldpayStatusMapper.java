@@ -19,6 +19,7 @@ public class WorldpayStatusMapper {
                     .ignore("REFUSED_BY_BANK")
                     .ignore("SENT_FOR_AUTHORISATION")
                     .map("REFUNDED", REFUNDED)
+                    .map("REFUNDED_BY_MERCHANT", REFUNDED)
                     .map("REFUND_FAILED", REFUND_ERROR)
                     .build();
 

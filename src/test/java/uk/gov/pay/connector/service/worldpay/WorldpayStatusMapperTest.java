@@ -21,8 +21,18 @@ public class WorldpayStatusMapperTest {
     }
 
     @Test
-    public void shouldReturnARefundStatus() throws Exception {
+    public void shouldReturnARefundStatusFromRefunded() throws Exception {
         Status status = WorldpayStatusMapper.get().from("REFUNDED");
+
+        assertThat(status.isMapped(), is(true));
+        assertThat(status.isIgnored(), is(false));
+        assertThat(status.isUnknown(), is(false));
+        assertThat(status.get(), is(REFUNDED));
+    }
+
+    @Test
+    public void shouldReturnARefundStatusFromRefundedByMerchant() throws Exception {
+        Status status = WorldpayStatusMapper.get().from("REFUNDED_BY_MERCHANT");
 
         assertThat(status.isMapped(), is(true));
         assertThat(status.isIgnored(), is(false));
