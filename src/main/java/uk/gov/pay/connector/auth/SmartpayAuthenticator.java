@@ -4,10 +4,15 @@ import com.google.common.base.Optional;
 import io.dropwizard.auth.AuthenticationException;
 import io.dropwizard.auth.Authenticator;
 import io.dropwizard.auth.basic.BasicCredentials;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import uk.gov.pay.connector.app.NotificationCredentials;
+
+import static java.lang.String.format;
 
 public class SmartpayAuthenticator implements Authenticator<BasicCredentials, BasicAuthUser> {
     private NotificationCredentials creds;
+    private static final Logger logger = LoggerFactory.getLogger(SmartpayAuthenticator.class);
 
     public SmartpayAuthenticator(NotificationCredentials creds) {
         this.creds = creds;
@@ -15,8 +20,11 @@ public class SmartpayAuthenticator implements Authenticator<BasicCredentials, Ba
 
     @Override
     public Optional<BasicAuthUser> authenticate(BasicCredentials basicCredentials) throws AuthenticationException {
-        return creds.asBasicCredentials().equals(basicCredentials)
-               ? Optional.of( new BasicAuthUser(creds.getUsername()) )
-               : Optional.absent();
+        if (creds.asBasicCredentials().equals(basicCredentials)) {
+            return Optional.of(new BasicAuthUser(creds.getUsername()));
+        }
+
+        logger.error(format("Authentication failure: failed for smartpay username %s", basicCredentials));
+        return Optional.absent();
     }
 }

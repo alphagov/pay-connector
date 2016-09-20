@@ -5,13 +5,18 @@ import com.google.inject.Inject;
 import io.dropwizard.auth.AuthenticationException;
 import io.dropwizard.auth.Authenticator;
 import io.dropwizard.auth.basic.BasicCredentials;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import uk.gov.pay.connector.dao.GatewayAccountDao;
 import uk.gov.pay.connector.model.domain.GatewayAccountEntity;
 import uk.gov.pay.connector.util.HashUtil;
 
+import static java.lang.String.format;
+
 public class SmartpayAccountSpecificAuthenticator implements Authenticator<BasicCredentials, BasicAuthUser> {
     private GatewayAccountDao gatewayAccountDao;
     private HashUtil hashUtil;
+    private static final Logger logger = LoggerFactory.getLogger(SmartpayAccountSpecificAuthenticator.class);
 
     @Inject
     public SmartpayAccountSpecificAuthenticator(GatewayAccountDao gatewayAccountDao, HashUtil hashUtil) {
@@ -25,9 +30,11 @@ public class SmartpayAccountSpecificAuthenticator implements Authenticator<Basic
 
         return gatewayAccountDao.findByNotificationCredentialsUsername(basicCredentials.getUsername())
                 .filter((gatewayAccountEntity) -> matchCredentials(basicCredentials, gatewayAccountEntity))
-                .map(gatewayAccountEntity -> gatewayAccountEntity.getNotificationCredentials().toBasicAuthUser())
-                .map(Optional::fromNullable)
-                .orElseGet(Optional::absent);
+                .map(gatewayAccountEntity -> Optional.fromNullable(gatewayAccountEntity.getNotificationCredentials().toBasicAuthUser()))
+                .orElseGet(() -> {
+                    logger.error(format("Authentication failure: failed for smartpay username %s", basicCredentials));
+                    return Optional.absent();
+                });
     }
 
     private boolean matchCredentials(BasicCredentials basicCredentials, GatewayAccountEntity gatewayAccountEntity) {
