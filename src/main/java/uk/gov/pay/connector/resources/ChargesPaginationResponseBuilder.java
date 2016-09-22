@@ -44,7 +44,9 @@ public class ChargesPaginationResponseBuilder {
     }
 
     public Response buildResponse() {
-        double lastPage = Math.ceil(new Double(totalCount) / searchParams.getDisplaySize());
+        long lastPage = totalCount / searchParams.getDisplaySize() +
+                (totalCount % searchParams.getDisplaySize() != 0 ? 1 : 0);
+
         buildLinks(lastPage);
 
         HalRepresentation.HalRepresentationBuilder halRepresentationBuilder = HalRepresentation.builder()
@@ -68,11 +70,11 @@ public class ChargesPaginationResponseBuilder {
         }
     }
 
-    private void buildLinks(double lastPage) {
+    private void buildLinks(long lastPage) {
         searchParams.withPage(1L);
         firstLink = uriWithParams(searchParams.buildQueryParams());
 
-        searchParams.withPage((long) lastPage);
+        searchParams.withPage(lastPage);
         lastLink = uriWithParams(searchParams.buildQueryParams());
 
         searchParams.withPage(selfPageNum - 1);

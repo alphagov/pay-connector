@@ -54,15 +54,15 @@ public class GatewayResponse<T extends BaseResponse> {
 
     public Optional<T> getBaseResponse() {
         return response.either(
-                e -> Optional.empty(),
-                Optional::of
+                e -> Optional.<T>empty(),
+                Optional::<T>of
         );
     }
 
     public Optional<GatewayError> getGatewayError() {
         return response.either(
-                Optional::of,
-                r -> Optional.empty()
+                Optional::<GatewayError>of,
+                r -> Optional.<GatewayError>empty()
         );
     }
 
