@@ -1,6 +1,7 @@
 package uk.gov.pay.connector.filters;
 
 import com.google.common.base.Stopwatch;
+import org.apache.commons.lang3.StringUtils;
 import org.jboss.logging.MDC;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -29,8 +30,8 @@ public class LoggingFilter implements Filter {
 
         String requestURL = ((HttpServletRequest) servletRequest).getRequestURI();
         String requestMethod = ((HttpServletRequest) servletRequest).getMethod();
-        Optional<String> requestIdMaybe = Optional.ofNullable(((HttpServletRequest) servletRequest).getHeader(HEADER_REQUEST_ID));
-        String requestId = requestIdMaybe.orElse("");
+        String requestId = StringUtils.defaultString(((HttpServletRequest) servletRequest).getHeader(HEADER_REQUEST_ID));
+
 
         MDC.put(HEADER_REQUEST_ID, requestId);
         logger.info(format("[%s] - %s to %s began", requestId, requestMethod, requestURL));
