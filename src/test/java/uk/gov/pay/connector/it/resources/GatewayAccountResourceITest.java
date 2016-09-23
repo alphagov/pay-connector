@@ -171,10 +171,10 @@ public class GatewayAccountResourceITest extends GatewayAccountResourceTestBase 
     @Test
     public void getAccountShouldReturn404IfAccountIdIsNotNumeric() throws Exception {
 
-        String unknownAcocuntId = "92348739wsx673hdg";
+        String unknownAccountId = "92348739wsx673hdg";
 
         givenSetup()
-                .get(ACCOUNTS_API_URL + unknownAcocuntId)
+                .get(ACCOUNTS_API_URL + unknownAccountId)
                 .then()
                 .contentType(JSON)
                 .statusCode(NOT_FOUND.getStatusCode())
@@ -211,6 +211,75 @@ public class GatewayAccountResourceITest extends GatewayAccountResourceTestBase 
                 .statusCode(OK.getStatusCode());
     }
 
+    @Test
+    public void patchGatewayAccountAnalyticsId_responseShouldBe200_Ok() {
+        String gatewayAccountId = createAGatewayAccountFor("worldpay", "old-desc", "old-id");
+
+        givenSetup()
+                .body(toJson(ImmutableMap.of("analytics_id", "new-id")))
+                .patch("/v1/api/accounts/" + gatewayAccountId + "/description-analytics-id")
+                .then()
+                .statusCode(OK.getStatusCode());
+
+        givenSetup()
+                .get("/v1/api/accounts/" + gatewayAccountId)
+                .then()
+                .body("description", is("old-desc"))
+                .body("analytics_id", is("new-id"));
+    }
+
+    @Test
+    public void patchGatewayAccountDescription_responseShouldBe200_Ok() {
+        String gatewayAccountId = createAGatewayAccountFor("worldpay", "old-desc", "old-id");
+
+
+        givenSetup()
+                .body(toJson(ImmutableMap.of("description", "new-desc")))
+                .patch("/v1/api/accounts/" + gatewayAccountId + "/description-analytics-id")
+                .then()
+                .statusCode(OK.getStatusCode());
+
+        givenSetup()
+                .get("/v1/api/accounts/" + gatewayAccountId)
+                .then()
+                .body("description", is("new-desc"))
+                .body("analytics_id", is("old-id"));
+    }
+
+    @Test
+    public void patchGatewayAccountDescriptionAndAnalyticsId_responseShouldBe200_Ok() {
+        String gatewayAccountId = createAGatewayAccountFor("worldpay", "old-desc", "old-id");
+
+        givenSetup()
+                .body(toJson(ImmutableMap.of("analytics_id", "new-id", "description", "new-desc")))
+                .patch("/v1/api/accounts/" + gatewayAccountId + "/description-analytics-id")
+                .then()
+                .statusCode(OK.getStatusCode());
+
+        givenSetup()
+                .get("/v1/api/accounts/" + gatewayAccountId)
+                .then()
+                .statusCode(200)
+                .body("description", is("new-desc"))
+                .body("analytics_id", is("new-id"));
+    }
+
+    @Test
+    public void patchGatewayAccountDescriptionAndAnalyticsIdEmpty_responseShouldReturn400() {
+        String gatewayAccountId = createAGatewayAccountFor("worldpay", "old-desc", "old-id");
+
+        givenSetup()
+                .body(toJson(ImmutableMap.of()))
+                .patch("/v1/api/accounts/" + gatewayAccountId + "/description-analytics-id")
+                .then()
+                .statusCode(BAD_REQUEST.getStatusCode());
+
+        givenSetup()
+                .get("/v1/api/accounts/" + gatewayAccountId)
+                .then()
+                .body("description", is("old-desc"))
+                .body("analytics_id", is("old-id"));
+    }
     @Test
     public void whenNotificationCredentialsInvalidKeys_shouldReturn400() {
         String gatewayAccountId = createAGatewayAccountFor("smartpay");

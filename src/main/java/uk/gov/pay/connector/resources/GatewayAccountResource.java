@@ -274,6 +274,25 @@ public class GatewayAccountResource {
                 .orElseGet(() -> notFoundResponse(format("The gateway account id '%s' does not exist", gatewayAccountId)));
     }
 
+    @PATCH
+    @Path(GATEWAY_ACCOUNTS_DESCRIPTION_ANALYTICS_ID)
+    @Consumes(APPLICATION_JSON)
+    @Produces(APPLICATION_JSON)
+    @Transactional
+    public Response updateDescriptionAndOrAnalyticsID(@PathParam("accountId") Long gatewayAccountId, Map<String,String> payload) {
+        if (!payload.containsKey(DESCRIPTION_FIELD_NAME) && !payload.containsKey(ANALYTICS_ID_FIELD_NAME)) {
+            return fieldsMissingResponse(Arrays.asList(DESCRIPTION_FIELD_NAME, ANALYTICS_ID_FIELD_NAME));
+        }
+        Optional<String> descriptionMaybe = Optional.ofNullable(payload.get(DESCRIPTION_FIELD_NAME));
+        Optional<String> analyticsIdMaybe = Optional.ofNullable(payload.get(ANALYTICS_ID_FIELD_NAME));
+        return gatewayDao.findById(gatewayAccountId)
+                .map((gatewayAccountEntity) -> {
+                    descriptionMaybe.ifPresent(gatewayAccountEntity::setDescription);
+                    analyticsIdMaybe.ifPresent(gatewayAccountEntity::setAnalyticsId);
+                    return Response.ok().build();
+                })
+                .orElseGet(() -> notFoundResponse(format("The gateway account id '%s' does not exist", gatewayAccountId)));
+    }
 
     private Map<String, Object> addSelfLink(URI chargeId, Map<String, Object> charge) {
         List<Map<String, Object>> links = ImmutableList.of(ImmutableMap.of("href", chargeId, "rel", "self", "method", "GET"));

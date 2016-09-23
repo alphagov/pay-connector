@@ -81,6 +81,7 @@ The command to run all the tests is:
 |[```/v1/api/accounts/{accountId}/email-notification```](#post-v1apiaccountsaccountidchargeschargeidcancel)  | POST    |  Updates an email notification template body for account `accountId`           |
 |[```/v1/api/accounts/{accountId}/email-notification```](#post-v1apiaccountsaccountidchargeschargeidevents)  | GET     |  Retrieves the email notification template body for the given account `accountId`           |
 |[```/v1/api/accounts/{accountId}/email-notification```](#post-v1apiaccountsaccountidchargeschargeidevents)  | PATCH   |  Enables/Disables email notifications for the given account `accountId`           |
+|[```/v1/api/accounts/{accountId}/description-analytics-id```](#patch-v1apiaccountsdescriptionanalyticsid)  | PATCH   |  Allows editing description and/or analyticsId for the given account `accountId`           |
 
 ## FRONTEND NAMESPACE
 
@@ -606,6 +607,37 @@ Content-Type: application/json
 
 -----------------------------------------------------------------------------------------------------------
 
+### PATCH /v1/api/accounts/{accountId}/description-analytics-id
+
+Allows editing description and/or analyticsId for the given account `accountId`
+
+#### Request example
+
+```
+PATCH /v1/api/accounts/123/description-analytics-id
+Content-Type: application/json
+{
+    "description":"desc", "analytics_id":"id"
+}
+```
+
+#### Response when update is successful
+
+```
+200 {}
+```
+
+#### Response if all fields are missing
+
+```
+HTTP/1.1 400 Bad Request
+Content-Type: application/json
+
+{
+    "message": "The following fields are missing: [description, analytics_id]"
+}
+
+-----------------------------------------------------------------------------------------------------------
 
 ### PUT /v1/frontend/charges/{chargeId}/status
 
