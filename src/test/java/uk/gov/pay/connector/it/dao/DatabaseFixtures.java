@@ -177,6 +177,8 @@ public class DatabaseFixtures {
         long accountId = RandomUtils.nextLong(1, 99999);
         String paymentProvider = "sandbox";
         String serviceName = "service_name";
+        String description = "a description";
+        String analyticsId = "an analytics id";
         private List<TestCardType> cardTypes = new ArrayList<>();
 
         public long getAccountId() {
@@ -191,6 +193,14 @@ public class DatabaseFixtures {
             return serviceName;
         }
 
+        public String getDescription() {
+            return description;
+        }
+
+        public String getAnalyticsId() {
+            return analyticsId;
+        }
+
         public TestAccount withAccountId(long accountId) {
             this.accountId = accountId;
             return this;
@@ -202,7 +212,14 @@ public class DatabaseFixtures {
         }
 
         public TestAccount insert() {
-            databaseTestHelper.addGatewayAccount(String.valueOf(accountId), paymentProvider, new HashMap<String, String>(), serviceName, TEST);
+            databaseTestHelper.addGatewayAccount(
+                    String.valueOf(accountId),
+                    paymentProvider,
+                    new HashMap<>(),
+                    serviceName,
+                    TEST,
+                    description,
+                    analyticsId);
             for (TestCardType cardType : cardTypes) {
                 databaseTestHelper.addAcceptedCardType(this.getAccountId(), cardType.getId());
             }

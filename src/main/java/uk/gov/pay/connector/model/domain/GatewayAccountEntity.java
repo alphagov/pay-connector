@@ -3,11 +3,12 @@ package uk.gov.pay.connector.model.domain;
 import com.fasterxml.jackson.annotation.JsonBackReference;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import com.fasterxml.jackson.annotation.JsonView;
-import com.google.common.collect.ImmutableMap;
 
 import javax.persistence.*;
 import java.util.List;
 import java.util.Map;
+
+import static com.google.common.collect.Maps.newHashMap;
 
 @Entity
 @Table(name = "gateway_accounts")
@@ -59,6 +60,12 @@ public class GatewayAccountEntity extends AbstractEntity {
     @Column(name = "service_name")
     private String serviceName;
 
+    @Column(name = "description")
+    private String description;
+
+    @Column(name = "analytics_id")
+    private String analyticsId;
+
     @JsonBackReference
     @OneToOne(mappedBy="accountEntity", cascade = CascadeType.PERSIST)
     private EmailNotificationEntity emailNotification;
@@ -98,6 +105,17 @@ public class GatewayAccountEntity extends AbstractEntity {
         return credentials;
     }
 
+    @JsonView(Views.FullView.class)
+    public String getDescription() {
+        return description;
+    }
+
+    @JsonView(Views.FullView.class)
+    @JsonProperty("analytics_id")
+    public String getAnalyticsId() {
+        return analyticsId;
+    }
+
     @JsonProperty("type")
     @JsonView(Views.FullView.class)
     public String getType() {
@@ -130,6 +148,14 @@ public class GatewayAccountEntity extends AbstractEntity {
         this.notificationCredentials = notificationCredentials;
     }
 
+    public void setDescription(String description) {
+        this.description = description;
+    }
+
+    public void setAnalyticsId(String analyticsId) {
+        this.analyticsId = analyticsId;
+    }
+
     public void setGatewayName(String gatewayName) {
         this.gatewayName = gatewayName;
     }
@@ -155,10 +181,17 @@ public class GatewayAccountEntity extends AbstractEntity {
     }
 
     public Map<String, String> withoutCredentials() {
-        return ImmutableMap.of(
-                "gateway_account_id", String.valueOf(super.getId()),
-                "payment_provider", gatewayName,
-                "type", getType());
+        Map<String, String> account = newHashMap();
+        account.put("gateway_account_id", String.valueOf(super.getId()));
+        account.put("payment_provider", getGatewayName());
+        account.put("type", getType());
+        if (getDescription() != null) {
+            account.put("description", getDescription());
+        }
+        if (getAnalyticsId() != null) {
+            account.put("analytics_id", getAnalyticsId());
+        }
+        return account;
     }
 
     public boolean hasEmailNotificationsEnabled() {

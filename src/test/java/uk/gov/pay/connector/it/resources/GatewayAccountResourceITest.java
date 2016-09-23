@@ -55,6 +55,44 @@ public class GatewayAccountResourceITest extends GatewayAccountResourceTestBase 
     }
 
     @Test
+    public void getAccountShouldReturnDescriptionAndAnalyticsId() throws Exception {
+
+        String gatewayAccountId = createAGatewayAccountFor("worldpay", "desc", "id");
+
+        givenSetup()
+                .get(ACCOUNTS_API_URL + gatewayAccountId)
+                .then()
+                .statusCode(200)
+                .body("analytics_id", is("id"))
+                .body("description", is("desc"));
+    }
+
+    @Test
+    public void getAccountShouldReturnAnalyticsId() throws Exception {
+
+        String gatewayAccountId = createAGatewayAccountFor("worldpay", null, "id");
+
+        givenSetup()
+                .get(ACCOUNTS_API_URL + gatewayAccountId)
+                .then()
+                .statusCode(200)
+                .body("analytics_id", is("id"))
+                .body("description", is(nullValue()));
+    }
+    @Test
+    public void getAccountShouldReturnDescription() throws Exception {
+
+        String gatewayAccountId = createAGatewayAccountFor("worldpay", "desc", null);
+
+        givenSetup()
+                .get(ACCOUNTS_API_URL + gatewayAccountId)
+                .then()
+                .statusCode(200)
+                .body("analytics_id", is(nullValue()))
+                .body("description", is("desc"));
+    }
+
+    @Test
     public void createGatewayAccountWithoutPaymentProviderDefaultsToSandbox() throws Exception {
         String payload = toJson(ImmutableMap.of("name", "test account"));
         ValidatableResponse response = givenSetup()
@@ -81,6 +119,18 @@ public class GatewayAccountResourceITest extends GatewayAccountResourceTestBase 
     }
 
     @Test
+    public void createGatewayAccountWithDescriptionAndAnalyticsId() {
+        String payload = toJson(ImmutableMap.of("description", "desc", "analytics_id", "analytics-id"));
+        ValidatableResponse response = givenSetup()
+                .body(payload)
+                .post(ACCOUNTS_API_URL)
+                .then()
+                .statusCode(201);
+
+        assertCorrectCreateResponse(response, TEST, "desc", "analytics-id");
+        assertGettingAccountReturnsProviderName(response, "sandbox", TEST);
+    }
+    @Test
     public void createGatewayAccountWithMissingProviderUrlTypeCreatesTestType() {
         String payload = toJson(ImmutableMap.of("payment_provider", "worldpay"));
         ValidatableResponse response = givenSetup()
@@ -96,7 +146,7 @@ public class GatewayAccountResourceITest extends GatewayAccountResourceTestBase 
     @Test
     public void createGatewayAccountWithIncorrectProviderUrlType() {
         String payload = toJson(ImmutableMap.of("payment_provider", "worldpay", "type", "incorrect-type"));
-        ValidatableResponse response = givenSetup()
+        givenSetup()
                 .body(payload)
                 .post(ACCOUNTS_API_URL)
                 .then()

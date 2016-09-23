@@ -24,13 +24,13 @@ import static org.junit.Assert.assertTrue;
 public class GatewayAccountFrontendResourceITest extends GatewayAccountResourceTestBase {
     private static final String ACCOUNTS_CARD_TYPE_FRONTEND_URL = "v1/frontend/accounts/{accountId}/card-types";
 
-    static public class GatewayAccountPayload {
+    static class GatewayAccountPayload {
         String userName;
         String password;
         String merchantId;
         String serviceName;
 
-        static public GatewayAccountPayload createDefault() {
+        static GatewayAccountPayload createDefault() {
             return new GatewayAccountPayload()
                     .withUsername("a-username")
                     .withPassword("a-password")
@@ -58,7 +58,7 @@ public class GatewayAccountFrontendResourceITest extends GatewayAccountResourceT
         }
 
         public Map<String, String> getCredentials() {
-            HashMap<String, String> credentials = new HashMap();
+            HashMap<String, String> credentials = new HashMap<>();
 
             if (this.userName != null) {
                 credentials.put("username", userName);
@@ -75,27 +75,27 @@ public class GatewayAccountFrontendResourceITest extends GatewayAccountResourceT
             return credentials;
         }
 
-        public Map<String, Object> buildCredentialsPayload() {
+        Map<String, Object> buildCredentialsPayload() {
             return ImmutableMap.of("credentials", getCredentials());
         }
 
-        public Map buildServiceNamePayload() {
+        Map buildServiceNamePayload() {
             return ImmutableMap.of("service_name", serviceName);
         }
 
-        public String getServiceName() {
+        String getServiceName() {
             return serviceName;
         }
 
-        public String getPassword() {
+        String getPassword() {
             return password;
         }
 
-        public String getUserName() {
+        String getUserName() {
             return userName;
         }
 
-        public String getMerchantId() {
+        String getMerchantId() {
             return merchantId;
         }
 
@@ -119,7 +119,22 @@ public class GatewayAccountFrontendResourceITest extends GatewayAccountResourceT
                 .body("credentials.username", is(gatewayAccountPayload.getUserName()))
                 .body("credentials.password", is(nullValue()))
                 .body("credentials.merchant_id", is(gatewayAccountPayload.getMerchantId()))
+                .body("description", is(nullValue()))
+                .body("analytics_id", is(nullValue()))
                 .body("service_name", is(gatewayAccountPayload.getServiceName()));
+    }
+
+    @Test
+    public void shouldGetGatewayAccountWithDescriptionAndAnalyticsId() {
+        String accountId = createAGatewayAccountFor("worldpay", "a-description", "an-analytics-id");
+        givenSetup().accept(JSON)
+                .get(ACCOUNTS_FRONTEND_URL + accountId)
+                .then()
+                .statusCode(200)
+                .body("payment_provider", is("worldpay"))
+                .body("gateway_account_id", is(Integer.parseInt(accountId)))
+                .body("analytics_id", is("an-analytics-id"))
+                .body("description", is("a-description"));
     }
 
     @Test
