@@ -291,21 +291,6 @@ public class ChargesFrontendResourceITest {
                 .body("message", is("Bad patch parameters{op=delete, path=email, value=a@b.c}"));
     }
 
-
-    @Test
-    public void patchInvalidEmailOnCharge_shouldReturnBadRequest() {
-        String chargeId = postToCreateACharge(expectedAmount);
-        String patchBody = createPatch("replace", "email", "@ab.c");
-
-        ValidatableResponse response = connectorRestApi
-                .withChargeId(chargeId)
-                .patchCharge(patchBody);
-
-        response.statusCode(BAD_REQUEST.getStatusCode())
-                .contentType(JSON)
-                .body("message", is("Invalid patch parameters{op=replace, path=email, value=@ab.c}"));
-    }
-
     @Test
     public void patchTooLongEmailOnCharge_shouldReturnBadRequest() {
         String chargeId = postToCreateACharge(expectedAmount);
