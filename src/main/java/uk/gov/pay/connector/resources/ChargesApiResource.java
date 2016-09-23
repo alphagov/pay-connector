@@ -201,7 +201,9 @@ public class ChargesApiResource {
     private F<Boolean, Response> listCharges(ChargeSearchParams searchParams, UriInfo uriInfo) {
         Long totalCount = chargeDao.getTotalFor(searchParams);
         if (totalCount > 0) {
-            double lastPage = Math.ceil(new Double(totalCount) / searchParams.getDisplaySize());
+            long lastPage = totalCount / searchParams.getDisplaySize() +
+                (totalCount % searchParams.getDisplaySize() != 0 ? 1 : 0);
+
             if (searchParams.getPage() > lastPage || searchParams.getPage() < 1) {
                 return success -> notFoundResponse("the requested page not found");
             }

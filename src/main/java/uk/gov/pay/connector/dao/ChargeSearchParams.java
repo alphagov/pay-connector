@@ -103,6 +103,10 @@ public class ChargeSearchParams {
     }
 
     public ChargeSearchParams withDisplaySize(Long displaySize) {
+        if (displaySize <= 0) {
+            throw new IllegalArgumentException("displaySize must be a positive integer");
+        }
+
         this.displaySize = displaySize;
         return this;
     }
