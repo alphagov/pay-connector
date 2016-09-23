@@ -6,11 +6,12 @@ import uk.gov.pay.connector.dao.GatewayAccountDao;
 import uk.gov.pay.connector.model.builder.PatchRequestBuilder;
 import uk.gov.pay.connector.util.DateTimeUtils;
 
+import javax.mail.internet.AddressException;
+import javax.mail.internet.InternetAddress;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
-import java.util.regex.Pattern;
 import java.util.stream.Collectors;
 
 import static com.google.common.collect.Lists.newArrayList;
@@ -25,7 +26,7 @@ class ApiValidators {
     private enum ChargeParamValidator {
         EMAIL(EMAIL_KEY){
             boolean validate(String email) {
-                return Pattern.matches(".+@.+\\..+", email) && email.length() <= MAXIMUM_FIELDS_SIZE.get(EMAIL_KEY);
+                return email.length() <= MAXIMUM_FIELDS_SIZE.get(EMAIL_KEY);
             }
         },
         AMOUNT(ChargesApiResource.AMOUNT_KEY){

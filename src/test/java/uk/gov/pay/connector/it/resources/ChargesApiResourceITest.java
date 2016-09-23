@@ -197,27 +197,6 @@ public class ChargesApiResourceITest {
     }
 
     @Test
-    public void makeChargeInvalidEmail_shouldReturnBadRequest() throws Exception {
-        String expectedReference = "Test reference";
-        String expectedDescription = "Test description";
-        String postBody = toJson(ImmutableMap.builder()
-                .put(JSON_AMOUNT_KEY, AMOUNT)
-                .put(JSON_REFERENCE_KEY, expectedReference)
-                .put(JSON_DESCRIPTION_KEY, expectedDescription)
-                .put(JSON_GATEWAY_ACC_KEY, accountId)
-                .put(JSON_EMAIL_KEY, "invalidemail...")
-                .put(JSON_RETURN_URL_KEY, returnUrl).build());
-
-        createChargeApi
-                .postCreateCharge(postBody)
-                .contentType(JSON)
-                .statusCode(BAD_REQUEST.getStatusCode())
-                .header("Location", is(nullValue()))
-                .body(JSON_CHARGE_KEY, is(nullValue()))
-                .body(JSON_MESSAGE_KEY, is("Field(s) are invalid: [email]"));
-    }
-
-    @Test
     public void shouldReturn404WhenCreatingChargeAccountIdIsNonNumeric() {
 
         String postBody = toJson(ImmutableMap.of(
