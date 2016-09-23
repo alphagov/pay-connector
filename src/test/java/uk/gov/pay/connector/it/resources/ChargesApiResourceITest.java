@@ -38,6 +38,7 @@ import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.*;
 import static org.hamcrest.core.Is.is;
 import static org.hamcrest.text.MatchesPattern.matchesPattern;
+import static org.junit.Assert.assertTrue;
 import static uk.gov.pay.connector.matcher.ResponseContainsLinkMatcher.containsLink;
 import static uk.gov.pay.connector.matcher.ZoneDateTimeAsStringWithinMatcher.isWithin;
 import static uk.gov.pay.connector.model.api.ExternalChargeState.EXTERNAL_SUBMITTED;
@@ -482,6 +483,7 @@ public class ChargesApiResourceITest {
         addChargeAndConfirmationDetails(CAPTURED, "ref-4", now().minusDays(3));
         addChargeAndConfirmationDetails(CAPTURED, "ref-5", now().minusDays(4));
 
+        assertNavigationLinksWhenNoResultFound();
         assertResultsWhenPageAndDisplaySizeNotSet();
         assertResultsAndJustSelfLinkWhenJustOneResult();
         assertResultsAndNoPrevLinkWhenOnFirstPage();
@@ -705,7 +707,7 @@ public class ChargesApiResourceITest {
                 .withAccountId(accountId)
                 .withQueryParam("reference", "ref-1")
                 .withQueryParam("page", "1")
-                .withQueryParam("display_size", "2")
+                .withQueryParam("display_size", "1")
                 .withHeader(HttpHeaders.ACCEPT, APPLICATION_JSON)
                 .getTransactions()
                 .statusCode(OK.getStatusCode())
@@ -715,9 +717,9 @@ public class ChargesApiResourceITest {
                 .body("count", is(1))
                 .body("_links.next_page", isEmptyOrNullString())
                 .body("_links.prev_page", isEmptyOrNullString())
-                .body("_links.first_page.href", is(expectedChargesLocationFor(accountId, "?reference=ref-1&page=1&display_size=2")))
-                .body("_links.last_page.href", is(expectedChargesLocationFor(accountId, "?reference=ref-1&page=1&display_size=2")))
-                .body("_links.self.href", is(expectedChargesLocationFor(accountId, "?reference=ref-1&page=1&display_size=2")));
+                .body("_links.first_page.href", is(expectedChargesLocationFor(accountId, "?reference=ref-1&page=1&display_size=1")))
+                .body("_links.last_page.href", is(expectedChargesLocationFor(accountId, "?reference=ref-1&page=1&display_size=1")))
+                .body("_links.self.href", is(expectedChargesLocationFor(accountId, "?reference=ref-1&page=1&display_size=1")));
 
         List<Map<String, Object>> results = response.extract().body().jsonPath().getList("results");
         List<String> references = collect(results, "reference");
@@ -746,6 +748,28 @@ public class ChargesApiResourceITest {
         List<String> references = collect(results, "reference");
         assertThat(references, containsInAnyOrder("ref-1"));
         assertThat(references, not(contains("ref-1", "ref-3", "ref-4", "ref-5")));
+    }
+
+    private void assertNavigationLinksWhenNoResultFound() {
+        ValidatableResponse response = getChargeApi
+                .withAccountId(accountId)
+                .withQueryParam("reference", "junk-yard")
+                .withHeader(HttpHeaders.ACCEPT, APPLICATION_JSON)
+                .getTransactions()
+                .statusCode(OK.getStatusCode())
+                .contentType(JSON)
+                .body("results.size()", is(0))
+                .body("total", is(0))
+                .body("count", is(0))
+                .body("_links.next_page", isEmptyOrNullString())
+                .body("_links.prev_page", isEmptyOrNullString())
+                .body("_links.first_page.href", is(expectedChargesLocationFor(accountId, "?reference=junk-yard&page=1&display_size=500")))
+                .body("_links.last_page.href", is(expectedChargesLocationFor(accountId, "?reference=junk-yard&page=1&display_size=500")))
+                .body("_links.self.href", is(expectedChargesLocationFor(accountId, "?reference=junk-yard&page=1&display_size=500")));
+
+        List<Map<String, Object>> results = response.extract().body().jsonPath().getList("results");
+        List<String> references = collect(results, "reference");
+        assertTrue(results.isEmpty());
     }
 
     private void assertResultsAndNoPrevLinkWhenOnFirstPage() {
