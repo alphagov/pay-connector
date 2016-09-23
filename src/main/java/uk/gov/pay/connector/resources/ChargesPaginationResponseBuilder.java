@@ -44,9 +44,8 @@ public class ChargesPaginationResponseBuilder {
     }
 
     public Response buildResponse() {
-        long lastPage = totalCount / searchParams.getDisplaySize() +
-                (totalCount % searchParams.getDisplaySize() != 0 ? 1 : 0);
-
+        Long size = searchParams.getDisplaySize();
+        long lastPage = totalCount > 0 ? (totalCount + size - 1) / size : 1;
         buildLinks(lastPage);
 
         HalRepresentation.HalRepresentationBuilder halRepresentationBuilder = HalRepresentation.builder()
