@@ -40,6 +40,8 @@ public class GatewayAccountResource {
 
     private static final Logger logger = LoggerFactory.getLogger(GatewayAccountResource.class);
 
+    private static final String DESCRIPTION_FIELD_NAME = "description";
+    private static final String ANALYTICS_ID_FIELD_NAME = "analytics_id";
     private static final String CREDENTIALS_FIELD_NAME = "credentials";
     private static final String SERVICE_NAME_FIELD_NAME = "service_name";
     private static final String CARD_TYPES_FIELD_NAME = "card_types";
@@ -128,10 +130,17 @@ public class GatewayAccountResource {
         if (!PaymentGatewayName.isValidPaymentGateway(provider)) {
             return badRequestResponse(format("Unsupported payment provider %s.", provider));
         }
+
         logger.info("Creating new gateway account using the {} provider pointing to {}", provider, accountType);
         GatewayAccountEntity entity = new GatewayAccountEntity(provider, newHashMap(), type);
         logger.info("Setting the new account to accept all card types by default", provider, accountType);
         entity.setCardTypes(cardTypeDao.findAll());
+        if (node.has(DESCRIPTION_FIELD_NAME)) {
+            entity.setDescription(node.get(DESCRIPTION_FIELD_NAME).textValue());
+        }
+        if (node.has(ANALYTICS_ID_FIELD_NAME)) {
+            entity.setAnalyticsId(node.get(ANALYTICS_ID_FIELD_NAME).textValue());
+        }
         gatewayDao.persist(entity);
         URI newLocation = uriInfo.
                 getBaseUriBuilder().
@@ -140,6 +149,9 @@ public class GatewayAccountResource {
         Map<String, Object> account = newHashMap();
         account.put("gateway_account_id", String.valueOf(entity.getId()));
         account.put(PROVIDER_ACCOUNT_TYPE, entity.getType());
+        account.put(DESCRIPTION_FIELD_NAME, entity.getDescription());
+        account.put(ANALYTICS_ID_FIELD_NAME, entity.getAnalyticsId());
+
         addSelfLink(newLocation, account);
 
         return Response.created(newLocation).entity(account).build();
@@ -262,6 +274,25 @@ public class GatewayAccountResource {
                 .orElseGet(() -> notFoundResponse(format("The gateway account id '%s' does not exist", gatewayAccountId)));
     }
 
+    @PATCH
+    @Path(GATEWAY_ACCOUNTS_DESCRIPTION_ANALYTICS_ID)
+    @Consumes(APPLICATION_JSON)
+    @Produces(APPLICATION_JSON)
+    @Transactional
+    public Response updateDescriptionAndOrAnalyticsID(@PathParam("accountId") Long gatewayAccountId, Map<String,String> payload) {
+        if (!payload.containsKey(DESCRIPTION_FIELD_NAME) && !payload.containsKey(ANALYTICS_ID_FIELD_NAME)) {
+            return fieldsMissingResponse(Arrays.asList(DESCRIPTION_FIELD_NAME, ANALYTICS_ID_FIELD_NAME));
+        }
+        Optional<String> descriptionMaybe = Optional.ofNullable(payload.get(DESCRIPTION_FIELD_NAME));
+        Optional<String> analyticsIdMaybe = Optional.ofNullable(payload.get(ANALYTICS_ID_FIELD_NAME));
+        return gatewayDao.findById(gatewayAccountId)
+                .map((gatewayAccountEntity) -> {
+                    descriptionMaybe.ifPresent(gatewayAccountEntity::setDescription);
+                    analyticsIdMaybe.ifPresent(gatewayAccountEntity::setAnalyticsId);
+                    return Response.ok().build();
+                })
+                .orElseGet(() -> notFoundResponse(format("The gateway account id '%s' does not exist", gatewayAccountId)));
+    }
 
     private Map<String, Object> addSelfLink(URI chargeId, Map<String, Object> charge) {
         List<Map<String, Object>> links = ImmutableList.of(ImmutableMap.of("href", chargeId, "rel", "self", "method", "GET"));

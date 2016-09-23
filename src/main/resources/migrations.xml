@@ -435,4 +435,14 @@
                         tableName="notification_credentials"/>
     </changeSet>
 
+    <changeSet id="add analytics_id and description to gateway_accounts table" author="">
+        <addColumn tableName="gateway_accounts">
+            <column name="description" type="text">
+                <constraints nullable="true"/>
+            </column>
+            <column name="analytics_id" type="text">
+                <constraints nullable="true"/>
+            </column>
+        </addColumn>
+    </changeSet>
 </databaseChangeLog>

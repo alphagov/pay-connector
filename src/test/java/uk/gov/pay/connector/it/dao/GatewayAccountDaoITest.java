@@ -17,7 +17,6 @@ import static org.hamcrest.CoreMatchers.allOf;
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.*;
 import static org.junit.Assert.assertNotNull;
-import static org.junit.Assert.assertNull;
 import static org.junit.Assert.assertTrue;
 import static uk.gov.pay.connector.model.domain.GatewayAccountEntity.Type.TEST;
 
@@ -51,11 +50,13 @@ public class GatewayAccountDaoITest extends DaoITestBase {
 
         gatewayAccountDao.persist(account);
 
-        assertNotNull(account.getId());
-        assertNotNull(account.getEmailNotification());
+        assertThat(account.getId(), is(notNullValue()));
+        assertThat(account.getEmailNotification(), is(notNullValue()));
+        assertThat(account.getDescription(), is(nullValue()));
+        assertThat(account.getAnalyticsId(), is(nullValue()));
         assertThat(account.getEmailNotification().getAccountEntity().getId(), is(account.getId()));
         assertThat(account.getEmailNotification().isEnabled(), is(true));
-        assertNull(account.getNotificationCredentials());
+        assertThat(account.getNotificationCredentials(), is(nullValue()));
 
         databaseTestHelper.getAccountCredentials(account.getId());
 
@@ -74,7 +75,7 @@ public class GatewayAccountDaoITest extends DaoITestBase {
     }
 
     @Test
-    public void findById_shouldNotFindAnUnexistentGatewayAccount() throws Exception {
+    public void findById_shouldNotFindANonexistentGatewayAccount() throws Exception {
         assertThat(gatewayAccountDao.findById(GatewayAccountEntity.class, 1234L).isPresent(), is(false));
     }
 
@@ -92,8 +93,10 @@ public class GatewayAccountDaoITest extends DaoITestBase {
         assertThat(gatewayAccount.getGatewayName(), is(accountRecord.getPaymentProvider()));
         Map<String, String> credentialsMap = gatewayAccount.getCredentials();
         assertThat(credentialsMap.size(), is(0));
-
-        assertThat(gatewayAccount.getCardTypes(), containsInAnyOrder(
+        assertThat(gatewayAccount.getServiceName(), is(accountRecord.getServiceName()));
+        assertThat(gatewayAccount.getDescription(), is(accountRecord.getDescription()));
+        assertThat(gatewayAccount.getAnalyticsId(), is(accountRecord.getAnalyticsId()));
+        assertThat(gatewayAccount.getCardTypes(), contains(
                 allOf(
                         hasProperty("id", is(Matchers.notNullValue())),
                         hasProperty("label", is(mastercardCreditCardTypeRecord.getLabel())),
@@ -132,7 +135,7 @@ public class GatewayAccountDaoITest extends DaoITestBase {
 
         List<Map<String, Object>> acceptedCardTypesByAccountId = databaseTestHelper.getAcceptedCardTypesByAccountId(accountRecord.getAccountId());
 
-        assertThat(acceptedCardTypesByAccountId, containsInAnyOrder(
+        assertThat(acceptedCardTypesByAccountId, contains(
                 allOf(
                         org.hamcrest.Matchers.hasEntry("label", mastercardCreditCardTypeRecord.getLabel()),
                         org.hamcrest.Matchers.hasEntry("type", mastercardCreditCardTypeRecord.getType().toString()),
@@ -248,19 +251,19 @@ public class GatewayAccountDaoITest extends DaoITestBase {
         assertThat(retrievedGatewayAccount.getNotificationCredentials().getPassword(), is("password"));
     }
 
-    public DatabaseFixtures.TestCardType createMastercardCreditCardTypeRecord() {
+    private DatabaseFixtures.TestCardType createMastercardCreditCardTypeRecord() {
         return databaseFixtures.aMastercardCreditCardType().insert();
     }
 
-    public DatabaseFixtures.TestCardType createVisaDebitCardTypeRecord() {
+    private DatabaseFixtures.TestCardType createVisaDebitCardTypeRecord() {
         return databaseFixtures.aVisaDebitCardType().insert();
     }
 
-    public DatabaseFixtures.TestCardType createVisaCreditCardTypeRecord() {
+    private DatabaseFixtures.TestCardType createVisaCreditCardTypeRecord() {
         return databaseFixtures.aVisaCreditCardType().insert();
     }
 
-    public DatabaseFixtures.TestAccount createAccountRecord(DatabaseFixtures.TestCardType... cardTypes) {
+    private DatabaseFixtures.TestAccount createAccountRecord(DatabaseFixtures.TestCardType... cardTypes) {
         return databaseFixtures
                 .aTestAccount()
                 .withCardTypes(Arrays.asList(cardTypes))
