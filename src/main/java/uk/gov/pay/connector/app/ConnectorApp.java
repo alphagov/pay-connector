@@ -16,6 +16,7 @@ import io.dropwizard.setup.Bootstrap;
 import io.dropwizard.setup.Environment;
 import org.glassfish.jersey.server.filter.RolesAllowedDynamicFeature;
 import uk.gov.pay.connector.auth.BasicAuthUser;
+import uk.gov.pay.connector.auth.SmartpayAccountSpecificAuthenticator;
 import uk.gov.pay.connector.auth.SmartpayAuthenticator;
 import uk.gov.pay.connector.filters.LoggingFilter;
 import uk.gov.pay.connector.healthcheck.CardExecutorServiceHealthCheck;
@@ -71,8 +72,7 @@ public class ConnectorApp extends Application<ConnectorConfiguration> {
         environment.jersey().register(injector.getInstance(CardTypesResource.class));
         environment.jersey().register(injector.getInstance(HealthCheckResource.class));
         environment.jersey().register(injector.getInstance(EmailNotificationResource.class));
-        SmartpayAuthenticator smartpayAuthenticator = new SmartpayAuthenticator(configuration.getSmartpayConfig().getNotification());
-        setupSmartpayBasicAuth(environment, smartpayAuthenticator);
+        setupSmartpayBasicAuth(environment, injector.getInstance(SmartpayAccountSpecificAuthenticator.class));
 
         environment.servlets().addFilter("LoggingFilter", injector.getInstance(LoggingFilter.class))
                 .addMappingForUrlPatterns(of(REQUEST), true, ApiPaths.API_VERSION_PATH + "/*");

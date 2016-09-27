@@ -23,7 +23,6 @@ import static uk.gov.pay.connector.model.domain.ChargeStatus.*;
 import static uk.gov.pay.connector.util.JsonEncoder.toJson;
 import static uk.gov.pay.connector.util.TransactionId.randomId;
 
-@Ignore("This should be enabled when we have transitioned to using account specific authentication for smartpay notifications")
 public class SmartpayNotificationResourceWithAccountSpecificAuthITest extends CardResourceITestBase {
 
     private static final String NOTIFICATION_PATH = "/v1/api/notifications/smartpay";
