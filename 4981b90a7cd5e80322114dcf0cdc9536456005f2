@@ -3,3 +3,5 @@ release.tag=alpha_release-64
 release.alpha_release-64.date=2016-09-28:11:20:15
 
 alpha_release-64.approver=till.wirth@digital.cabinet-office.gov.uk
+
+alpha_release-64.approve-date=2016-09-28:13:55:44
