@@ -25,3 +25,5 @@ alpha_staging-1-64.approve-date=2016-09-28:17:55:14
 production-1.tag=FAILED-64
 
 production-1.FAILED-64.date=
+
+production-1.FAILED-64.status=failed
