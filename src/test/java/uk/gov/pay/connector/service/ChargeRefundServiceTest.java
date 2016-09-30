@@ -16,6 +16,7 @@ import uk.gov.pay.connector.exception.ChargeNotFoundRuntimeException;
 import uk.gov.pay.connector.exception.RefundException;
 import uk.gov.pay.connector.model.ErrorType;
 import uk.gov.pay.connector.model.RefundGatewayRequest;
+import uk.gov.pay.connector.model.RefundRequest;
 import uk.gov.pay.connector.model.domain.ChargeEntity;
 import uk.gov.pay.connector.model.domain.GatewayAccountEntity;
 import uk.gov.pay.connector.model.domain.RefundEntity;
@@ -101,7 +102,7 @@ public class ChargeRefundServiceTest {
 
         when(mockRefundDao.merge(any(RefundEntity.class))).thenReturn(spiedRefundEntity);
 
-        ChargeRefundService.Response gatewayResponse = chargeRefundService.doRefund(accountId, externalChargeId, amount).get();
+        ChargeRefundService.Response gatewayResponse = chargeRefundService.doRefund(accountId, externalChargeId, new RefundRequest(amount, charge.getAmount())).get();
 
         assertThat(gatewayResponse.getRefundGatewayResponse().isSuccessful(), is(true));
         assertThat(gatewayResponse.getRefundGatewayResponse().getGatewayError().isPresent(), is(false));
@@ -148,7 +149,7 @@ public class ChargeRefundServiceTest {
 
         when(mockRefundDao.merge(any(RefundEntity.class))).thenReturn(spiedRefundEntity);
 
-        ChargeRefundService.Response gatewayResponse = chargeRefundService.doRefund(accountId, externalChargeId, amount).get();
+        ChargeRefundService.Response gatewayResponse = chargeRefundService.doRefund(accountId, externalChargeId, new RefundRequest(amount, charge.getAmount())).get();
 
         assertThat(gatewayResponse.getRefundGatewayResponse().isSuccessful(), is(true));
         assertThat(gatewayResponse.getRefundGatewayResponse().getGatewayError().isPresent(), is(false));
@@ -174,7 +175,7 @@ public class ChargeRefundServiceTest {
                 .thenReturn(Optional.empty());
 
         try {
-            chargeRefundService.doRefund(accountId, externalChargeId, 100L);
+            chargeRefundService.doRefund(accountId, externalChargeId, new RefundRequest(100L, 0));
             fail("Should throw an exception here");
         } catch (Exception e) {
             assertEquals(e.getClass(), ChargeNotFoundRuntimeException.class);
@@ -201,7 +202,7 @@ public class ChargeRefundServiceTest {
         when(mockChargeDao.merge(charge)).thenReturn(charge);
 
         try {
-            chargeRefundService.doRefund(accountId, externalChargeId, 100L);
+            chargeRefundService.doRefund(accountId, externalChargeId, new RefundRequest(100L, 0));
             fail("Should throw an exception here");
         } catch (Exception e) {
             assertEquals(e.getClass(), RefundException.class);
@@ -240,7 +241,7 @@ public class ChargeRefundServiceTest {
         when(mockRefundDao.merge(any(RefundEntity.class))).thenReturn(spiedRefundEntity);
         when(mockChargeDao.merge(capturedCharge)).thenReturn(capturedCharge);
 
-        ChargeRefundService.Response gatewayResponse = chargeRefundService.doRefund(accountId, externalChargeId, amount).get();
+        ChargeRefundService.Response gatewayResponse = chargeRefundService.doRefund(accountId, externalChargeId, new RefundRequest(amount, capturedCharge.getAmount())).get();
 
         assertThat(gatewayResponse.getRefundGatewayResponse().isFailed(), is(true));
         assertThat(gatewayResponse.getRefundGatewayResponse().getGatewayError().isPresent(), is(true));

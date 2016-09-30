@@ -6,11 +6,12 @@ import javax.ws.rs.WebApplicationException;
 
 import static java.lang.String.format;
 import static uk.gov.pay.connector.util.ResponseUtil.badRequestResponse;
+import static uk.gov.pay.connector.util.ResponseUtil.preconditionFailedResponse;
 
 public class RefundException extends WebApplicationException {
 
-    public static RefundException notAvailableForRefundException(String chargeId, ExternalChargeRefundAvailability currentAvailability) {
-        return new RefundException(format("Charge with id [%s] not available for refund.", chargeId), currentAvailability);
+    public static RefundException refundAmountAvailableMismatchException(String message){
+        return new RefundException(message);
     }
 
     public static RefundException refundException(String message, ErrorCode code) {
@@ -23,6 +24,14 @@ public class RefundException extends WebApplicationException {
 
     private RefundException(String message, ErrorCode errorCode) {
         super(badRequestResponse(errorCode.getValue(), message));
+    }
+
+    private RefundException(String message) {
+        super(preconditionFailedResponse(message));
+    }
+
+    public static RefundException notAvailableForRefundException(String chargeId, ExternalChargeRefundAvailability currentAvailability) {
+        return new RefundException(format("Charge with id [%s] not available for refund.", chargeId), currentAvailability);
     }
 
     public enum ErrorCode {
