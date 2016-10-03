@@ -57,7 +57,7 @@ public class ResponseUtil {
     }
 
     public static Response preconditionFailedResponse(String message) {
-        logger.warn(message.toString());
+        logger.info(message.toString());
         return responseWithMessageMap(PRECONDITION_FAILED, message);
     }
 
