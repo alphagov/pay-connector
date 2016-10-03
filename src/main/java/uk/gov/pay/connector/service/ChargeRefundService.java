@@ -11,6 +11,7 @@ import uk.gov.pay.connector.model.RefundGatewayRequest;
 import uk.gov.pay.connector.model.RefundRequest;
 import uk.gov.pay.connector.model.api.ExternalChargeRefundAvailability;
 import uk.gov.pay.connector.model.domain.ChargeEntity;
+import uk.gov.pay.connector.model.domain.GatewayAccountEntity;
 import uk.gov.pay.connector.model.domain.RefundEntity;
 import uk.gov.pay.connector.model.domain.RefundStatus;
 import uk.gov.pay.connector.model.gateway.GatewayResponse;
@@ -82,10 +83,18 @@ public class ChargeRefundService {
 
             ChargeEntity reloadedCharge = chargeDao.merge(chargeEntity);
             ExternalChargeRefundAvailability refundAvailability = valueOf(reloadedCharge);
+            GatewayAccountEntity gatewayAccount = reloadedCharge.getGatewayAccount();
 
             if (EXTERNAL_AVAILABLE != refundAvailability) {
-                logger.info("Charge not available for refund - charge_external_id={}, status={}, refund_status={}",
-                        reloadedCharge.getId(), reloadedCharge.getStatus(), refundAvailability, reloadedCharge.getGatewayAccount().getGatewayName());
+
+                logger.warn("Charge not available for refund - charge_external_id={}, status={}, refund_status={}, account_id={}, operation_type=Refund, provider={}, provider_type={}",
+                        reloadedCharge.getId(),
+                        fromString(reloadedCharge.getStatus()),
+                        refundAvailability,
+                        gatewayAccount.getId(),
+                        gatewayAccount.getGatewayName(),
+                        gatewayAccount.getType());
+
                 throw RefundException.notAvailableForRefundException(reloadedCharge.getExternalId(), refundAvailability);
             }
 
@@ -97,8 +106,17 @@ public class ChargeRefundService {
             }
 
             if (totalAmountToBeRefunded - refundRequest.getAmount() < 0) {
-                logger.info("Charge doesn't have sufficient amount for refund - charge_external_id={}, status={}, refund_status={} amount_for_refund={}, refund_amount_requested={}",
-                        reloadedCharge.getExternalId(), reloadedCharge.getStatus(), refundAvailability, totalAmountToBeRefunded, refundRequest);
+
+                logger.info("Charge doesn't have sufficient amount for refund - charge_external_id={}, status={}, refund_status={}, account_id={}, operation_type=Refund, provider={}, provider_type={}, amount_available_refund={}, amount_requested_refund={}",
+                        reloadedCharge.getExternalId(),
+                        fromString(reloadedCharge.getStatus()),
+                        refundAvailability,
+                        gatewayAccount.getId(),
+                        gatewayAccount.getGatewayName(),
+                        gatewayAccount.getType(),
+                        totalAmountToBeRefunded,
+                        refundRequest.getAmount());
+
                 throw RefundException.refundException("Not sufficient amount available for refund", NOT_SUFFICIENT_AMOUNT_AVAILABLE);
             }
 
@@ -106,8 +124,16 @@ public class ChargeRefundService {
             reloadedCharge.getRefunds().add(refundEntity);
             refundDao.persist(refundEntity);
 
-            logger.info("Card refund request sent - charge_external_id={}, transaction_id={}, provider={}, status={}",
-                    chargeEntity.getExternalId(), chargeEntity.getGatewayTransactionId(), chargeEntity.getGatewayAccount().getGatewayName(), fromString(chargeEntity.getStatus()));
+            logger.info("Card refund request sent - charge_external_id={}, status={}, amount={}, transaction_id={}, account_id={}, operation_type=Refund, amount_available_refund={}, amount_requested_refund={}, provider={}, provider_type={}",
+                    chargeEntity.getExternalId(),
+                    fromString(chargeEntity.getStatus()),
+                    chargeEntity.getAmount(),
+                    chargeEntity.getGatewayTransactionId(),
+                    gatewayAccount.getId(),
+                    totalAmountToBeRefunded,
+                    refundRequest.getAmount(),
+                    gatewayAccount.getGatewayName(),
+                    gatewayAccount.getType());
 
             return refundEntity;
         };

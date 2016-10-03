@@ -8,9 +8,12 @@ import uk.gov.pay.connector.exception.IllegalStateRuntimeException;
 import uk.gov.pay.connector.exception.OperationAlreadyInProgressRuntimeException;
 import uk.gov.pay.connector.model.domain.ChargeEntity;
 import uk.gov.pay.connector.model.domain.ChargeStatus;
+import uk.gov.pay.connector.model.domain.GatewayAccountEntity;
 
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
+
+import static uk.gov.pay.connector.model.domain.ChargeStatus.fromString;
 
 public abstract class CardService<T extends BaseResponse> {
     protected final ChargeDao chargeDao;
@@ -48,11 +51,16 @@ public abstract class CardService<T extends BaseResponse> {
 
     public ChargeEntity preOperation(ChargeEntity chargeEntity, OperationType operationType, ChargeStatus[] legalStatuses, ChargeStatus lockingStatus) {
         ChargeEntity reloadedCharge = chargeDao.merge(chargeEntity);
+        GatewayAccountEntity gatewayAccount = chargeEntity.getGatewayAccount();
 
-        logger.info("Card pre-operation - charge_external_id={}, operation_type={},  provider={}, locking_status={}",
+        logger.info("Card pre-operation - charge_external_id={}, charge_status={}, account_id={}, amount={}, operation_type={}, provider={}, provider_type={}, locking_status={}",
                 chargeEntity.getExternalId(),
+                fromString(chargeEntity.getStatus()),
+                gatewayAccount.getId(),
+                chargeEntity.getAmount(),
                 operationType.getValue(),
-                chargeEntity.getGatewayAccount().getGatewayName(),
+                gatewayAccount.getGatewayName(),
+                gatewayAccount.getType(),
                 lockingStatus);
 
         if (reloadedCharge.hasStatus(ChargeStatus.EXPIRED)) {

@@ -9,7 +9,9 @@ import uk.gov.pay.connector.exception.OperationAlreadyInProgressRuntimeException
 import uk.gov.pay.connector.model.CancelGatewayRequest;
 import uk.gov.pay.connector.model.domain.ChargeEntity;
 import uk.gov.pay.connector.model.domain.ChargeStatus;
+import uk.gov.pay.connector.model.domain.GatewayAccountEntity;
 import uk.gov.pay.connector.model.gateway.GatewayResponse;
+import uk.gov.pay.connector.service.CardService.OperationType;
 import uk.gov.pay.connector.service.transaction.NonTransactionalOperation;
 import uk.gov.pay.connector.service.transaction.PreTransactionalOperation;
 import uk.gov.pay.connector.service.transaction.TransactionContext;
@@ -56,9 +58,18 @@ class CancelServiceFunctions {
                 throw new IllegalStateRuntimeException(reloadedCharge.getExternalId());
             }
             reloadedCharge.setStatus(statusFlow.getLockState());
+            GatewayAccountEntity gatewayAccount = chargeEntity.getGatewayAccount();
 
-            logger.info("Card cancel request sent - charge_external_id={}, transaction_id={}, provider={}, status={}",
-                    chargeEntity.getExternalId(), chargeEntity.getGatewayTransactionId(), chargeEntity.getGatewayAccount().getGatewayName(), fromString(chargeEntity.getStatus()));
+            logger.info("Card cancel request sent - charge_external_id={}, charge_status={}, account_id={}, transaction_id={}, amount={}, operation_type={}, provider={}, provider_type={}, locking_status={}",
+                    chargeEntity.getExternalId(),
+                    fromString(chargeEntity.getStatus()),
+                    gatewayAccount.getId(),
+                    chargeEntity.getGatewayTransactionId(),
+                    chargeEntity.getAmount(),
+                    OperationType.CANCELLATION.getValue(),
+                    gatewayAccount.getGatewayName(),
+                    gatewayAccount.getType(),
+                    statusFlow.getLockState());
 
             ChargeEntity reloadedEntity = chargeDao.mergeAndNotifyStatusHasChanged(reloadedCharge);
             confirmationDetailsService.doRemove(reloadedEntity);

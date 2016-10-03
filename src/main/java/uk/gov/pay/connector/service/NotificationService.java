@@ -10,10 +10,7 @@ import uk.gov.pay.connector.exception.InvalidStateTransitionException;
 import uk.gov.pay.connector.model.ExtendedNotification;
 import uk.gov.pay.connector.model.Notification;
 import uk.gov.pay.connector.model.Notifications;
-import uk.gov.pay.connector.model.domain.ChargeEntity;
-import uk.gov.pay.connector.model.domain.ChargeStatus;
-import uk.gov.pay.connector.model.domain.RefundEntity;
-import uk.gov.pay.connector.model.domain.RefundStatus;
+import uk.gov.pay.connector.model.domain.*;
 import uk.gov.pay.connector.resources.PaymentGatewayName;
 import uk.gov.pay.connector.service.transaction.NonTransactionalOperation;
 import uk.gov.pay.connector.service.transaction.TransactionContext;
@@ -32,6 +29,7 @@ import java.util.stream.Collectors;
 import static java.lang.String.format;
 import static org.apache.commons.lang3.StringUtils.isBlank;
 import static org.apache.commons.lang3.StringUtils.isNotBlank;
+import static uk.gov.pay.connector.model.domain.ChargeStatus.fromString;
 
 public class NotificationService {
 
@@ -115,7 +113,7 @@ public class NotificationService {
                 notifications.forEach(
                         notification -> {
                             if (!notification.getInternalStatus().isPresent()) {
-                                logger.info(format("Notification with transaction id=%s ignored.",
+                                logger.info(format("Notification with transaction_id=%s ignored.",
                                         notification.getTransactionId()));
                                 return;
                             }
@@ -129,7 +127,7 @@ public class NotificationService {
 
                             if (notification.isOfRefundType()) {
                                 if (isBlank(notification.getReference())) {
-                                    logger.error(format("Notification with transaction id=%s of type refund with no reference ignored.",
+                                    logger.error(format("Notification with transaction_id=%s of type refund with no reference ignored.",
                                             notification.getTransactionId()));
                                     return;
                                 }
@@ -137,7 +135,7 @@ public class NotificationService {
                                 return;
                             }
 
-                            logger.error(format("Notification with transaction id=%s and status=%s is neither of type charge nor refund",
+                            logger.error(format("Notification with transaction_id=%s and status=%s is neither of type charge nor refund",
                                     notification.getTransactionId(), notification.getInternalStatus()));
                             return;
                         });
@@ -149,7 +147,7 @@ public class NotificationService {
             Optional<ChargeEntity> optionalChargeEntity = chargeDao.findByProviderAndTransactionId(
                     paymentProvider.getPaymentGatewayName(), notification.getTransactionId());
             if (!optionalChargeEntity.isPresent()) {
-                logger.error(format("Notification with transaction id=%s failed updating charge status to: %s. Unable to find charge entity.",
+                logger.error(format("Notification with transaction_id=%s failed updating charge status to: %s. Unable to find charge entity.",
                         notification.getTransactionId(), newStatus));
                 return;
             }
@@ -164,15 +162,23 @@ public class NotificationService {
                 return;
             }
 
-            logger.info(format("Notification with transaction id=%s updated charge status - from=%s, to=%s",
-                    notification.getTransactionId(), oldStatus, newStatus));
+            GatewayAccountEntity gatewayAccount = chargeEntity.getGatewayAccount();
+            logger.info("Notification received. Updating charge - charge_external_id={}, status={}, status_to={}, transaction_id={}, account_id={}, provider={}, provider_type={}",
+                    chargeEntity.getExternalId(),
+                    oldStatus,
+                    newStatus,
+                    notification.getTransactionId(),
+                    gatewayAccount.getId(),
+                    gatewayAccount.getGatewayName(),
+                    gatewayAccount.getType());
+
             chargeDao.mergeAndNotifyStatusHasChanged(chargeEntity);
         }
 
         private <T> void updateRefundStatus(ExtendedNotification<T> notification, Enum newStatus) {
             Optional<RefundEntity> optionalRefundEntity = refundDao.findByExternalId(notification.getReference());
             if (!optionalRefundEntity.isPresent()) {
-                logger.error(format("Notification with transaction id=%s and reference=%s failed updating refund status to: %s. Unable to find refund entity.",
+                logger.error(format("Notification with transaction_id=%s and reference=%s failed updating refund status to: %s. Unable to find refund entity.",
                         notification.getTransactionId(), notification.getReference(), newStatus));
                 return;
             }
@@ -180,8 +186,17 @@ public class NotificationService {
             RefundStatus oldStatus = refundEntity.getStatus();
 
             refundEntity.setStatus((RefundStatus) newStatus);
-            logger.info(format("Notification with transaction id=%s and reference=%s updated refund status - from=%s, to=%s",
-                    notification.getTransactionId(), notification.getReference(), oldStatus, newStatus));
+
+            GatewayAccountEntity gatewayAccount = refundEntity.getChargeEntity().getGatewayAccount();
+            logger.info("Notification received for refund. Updating refund - charge_external_id={}, refund_reference={}, transaction_id={}, status={}, status_to={}, account_id={}, provider={}, provider_type={}",
+                    refundEntity.getChargeEntity().getExternalId(),
+                    notification.getReference(),
+                    notification.getTransactionId(),
+                    oldStatus,
+                    newStatus,
+                    gatewayAccount.getId(),
+                    gatewayAccount.getGatewayName(),
+                    gatewayAccount.getType());
         }
 
         private <T> Function<Notification<T>, ExtendedNotification<T>> toExtendedNotification() {
