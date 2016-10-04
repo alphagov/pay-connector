@@ -190,7 +190,9 @@ Content-Type: application/json
 {
     "payment_provider": "sandbox",
     "gateway_account_id": "1",
-    "type": "live"
+    "type": "live",
+    "description": "Sample Service",
+    "analytics_id": "some identifier"
 }
 ```
 
@@ -201,7 +203,8 @@ Content-Type: application/json
 | `gateway_account_id`                 | X | The account Id        |
 | `type`                 | X | Account type for this provider (test/live)|
 | `payment_provider`                 | X | The payment provider for which this account is created.       |
-
+| `description`            | X | An internal description to identify the gateway account. The default value is `null`.      |
+| `analytics_id`           | X | An identifier used to identify the service in Google Analytics. The default value is `null`.      |
 -----------------------------------------------------------------------------------------------------------
 
 ### GET /v1/api/accounts/{accountId}/charges/{chargeId}
@@ -552,7 +555,7 @@ Content-Type: application/json
 {
     "message": "The following fields are missing: [custom-email-text]"
 }
-
+```
 -----------------------------------------------------------------------------------------------------------
 
 ### PATCH /v1/api/accounts/{accountId}/email-notification
@@ -604,7 +607,7 @@ Content-Type: application/json
 {
     "message": "The following fields are missing: [enabled]"
 }
-
+```
 -----------------------------------------------------------------------------------------------------------
 
 ### PATCH /v1/api/accounts/{accountId}/description-analytics-id
@@ -636,7 +639,7 @@ Content-Type: application/json
 {
     "message": "The following fields are missing: [description, analytics_id]"
 }
-
+```
 -----------------------------------------------------------------------------------------------------------
 
 ### PUT /v1/frontend/charges/{chargeId}/status
@@ -721,6 +724,8 @@ Content-Type: application/json
 {
     "payment_provider": "sandbox",
     "gateway_account_id": "111222333",
+    "description": "Sample Service",
+    "analytics_id": "some identifier",
     "credentials: {
       "username:" "Username"
     }
@@ -734,7 +739,8 @@ Content-Type: application/json
 | `gateway_account_id`     | X | The account Id        |
 | `payment_provider`       | X | The payment provider for which this account is created.       |
 | `credentials`            | X | The payment provider credentials. Password is not returned. The default value is the empty JSON document {}      |
-
+| `description`            | X | An internal description to identify the gateway account. The default value is `null`.      |
+| `analytics_id`           | X | An identifier used to identify the service in Google Analytics. The default value is `null`.      |
 -----------------------------------------------------------------------------------------------------------
 
 ### PUT /v1/frontend/accounts/{accountId}
