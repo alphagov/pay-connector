@@ -555,7 +555,7 @@ Content-Type: application/json
 {
     "message": "The following fields are missing: [custom-email-text]"
 }
-
+```
 -----------------------------------------------------------------------------------------------------------
 
 ### PATCH /v1/api/accounts/{accountId}/email-notification
@@ -607,7 +607,7 @@ Content-Type: application/json
 {
     "message": "The following fields are missing: [enabled]"
 }
-
+```
 -----------------------------------------------------------------------------------------------------------
 
 ### PATCH /v1/api/accounts/{accountId}/description-analytics-id
@@ -639,7 +639,7 @@ Content-Type: application/json
 {
     "message": "The following fields are missing: [description, analytics_id]"
 }
-
+```
 -----------------------------------------------------------------------------------------------------------
 
 ### PUT /v1/frontend/charges/{chargeId}/status
