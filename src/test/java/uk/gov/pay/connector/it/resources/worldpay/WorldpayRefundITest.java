@@ -1,16 +1,13 @@
 package uk.gov.pay.connector.it.resources.worldpay;
 
+import com.google.common.collect.ImmutableMap;
+import com.google.gson.Gson;
 import com.jayway.restassured.http.ContentType;
 import com.jayway.restassured.response.ValidatableResponse;
-import org.hamcrest.Description;
-import org.hamcrest.Matcher;
-import org.hamcrest.TypeSafeMatcher;
 import org.junit.Before;
-import org.junit.Ignore;
 import org.junit.Test;
 import uk.gov.pay.connector.it.base.CardResourceITestBase;
 import uk.gov.pay.connector.it.dao.DatabaseFixtures;
-import uk.gov.pay.connector.matcher.RefundsMatcher;
 import uk.gov.pay.connector.model.domain.RefundStatus;
 import uk.gov.pay.connector.util.DatabaseTestHelper;
 import uk.gov.pay.connector.util.RestAssuredClient;
@@ -37,7 +34,6 @@ import static uk.gov.pay.connector.model.domain.ChargeStatus.ENTERING_CARD_DETAI
 import static uk.gov.pay.connector.resources.ApiPaths.REFUNDS_API_PATH;
 import static uk.gov.pay.connector.resources.ApiPaths.REFUND_API_PATH;
 
-@Ignore("These tests are failing randomly. Investigation in progress, should be fixed soon")
 public class WorldpayRefundITest extends CardResourceITestBase {
 
     private DatabaseFixtures.TestAccount defaultTestAccount;
@@ -72,7 +68,7 @@ public class WorldpayRefundITest extends CardResourceITestBase {
         Long refundAmount = 50L;
 
         worldpay.mockRefundSuccess();
-        ValidatableResponse validatableResponse = postRefundFor(defaultTestCharge.getExternalChargeId(), refundAmount);
+        ValidatableResponse validatableResponse = postRefundFor(defaultTestCharge.getExternalChargeId(), refundAmount, defaultTestCharge.getAmount());
         String refundId = assertRefundResponseWith(refundAmount, validatableResponse, ACCEPTED.getStatusCode());
 
         List<Map<String, Object>> refundsFoundByChargeId = databaseTestHelper.getRefundsByChargeId(defaultTestCharge.getChargeId());
@@ -86,7 +82,7 @@ public class WorldpayRefundITest extends CardResourceITestBase {
         Long refundAmount = defaultTestCharge.getAmount();
 
         worldpay.mockRefundSuccess();
-        ValidatableResponse validatableResponse = postRefundFor(defaultTestCharge.getExternalChargeId(), refundAmount);
+        ValidatableResponse validatableResponse = postRefundFor(defaultTestCharge.getExternalChargeId(), refundAmount, defaultTestCharge.getAmount());
         String refundId = assertRefundResponseWith(refundAmount, validatableResponse, ACCEPTED.getStatusCode());
 
         List<Map<String, Object>> refundsFoundByChargeId = databaseTestHelper.getRefundsByChargeId(defaultTestCharge.getChargeId());
@@ -103,11 +99,11 @@ public class WorldpayRefundITest extends CardResourceITestBase {
         String externalChargeId = defaultTestCharge.getExternalChargeId();
 
         worldpay.mockRefundSuccess();
-        ValidatableResponse firstValidatableResponse = postRefundFor(externalChargeId, firstRefundAmount);
+        ValidatableResponse firstValidatableResponse = postRefundFor(externalChargeId, firstRefundAmount, defaultTestCharge.getAmount());
         String firstRefundId = assertRefundResponseWith(firstRefundAmount, firstValidatableResponse, ACCEPTED.getStatusCode());
 
         worldpay.mockRefundSuccess();
-        ValidatableResponse secondValidatableResponse = postRefundFor(externalChargeId, secondRefundAmount);
+        ValidatableResponse secondValidatableResponse = postRefundFor(externalChargeId, secondRefundAmount, defaultTestCharge.getAmount() - firstRefundAmount);
         String secondRefundId = assertRefundResponseWith(secondRefundAmount, secondValidatableResponse, ACCEPTED.getStatusCode());
 
         List<Map<String, Object>> refundsFoundByChargeId = databaseTestHelper.getRefundsByChargeId(chargeId);
@@ -139,7 +135,7 @@ public class WorldpayRefundITest extends CardResourceITestBase {
         Long refundAmount = 20L;
 
         worldpay.mockRefundSuccess();
-        postRefundFor(testCharge.getExternalChargeId(), refundAmount)
+        postRefundFor(testCharge.getExternalChargeId(), refundAmount, defaultTestCharge.getAmount())
                 .statusCode(BAD_REQUEST.getStatusCode())
                 .body("reason", is("pending"))
                 .body("message", is(format("Charge with id [%s] not available for refund.", testCharge.getExternalChargeId())));
@@ -156,10 +152,10 @@ public class WorldpayRefundITest extends CardResourceITestBase {
         Long chargeId = defaultTestCharge.getChargeId();
 
         worldpay.mockRefundSuccess();
-        postRefundFor(externalChargeId, refundAmount)
+        postRefundFor(externalChargeId, refundAmount, defaultTestCharge.getAmount())
                 .statusCode(ACCEPTED.getStatusCode());
 
-        postRefundFor(externalChargeId, 1L)
+        postRefundFor(externalChargeId, 1L, 0L)
                 .statusCode(BAD_REQUEST.getStatusCode())
                 .body("reason", is("full"))
                 .body("message", is(format("Charge with id [%s] not available for refund.", externalChargeId)));
@@ -170,11 +166,9 @@ public class WorldpayRefundITest extends CardResourceITestBase {
 
     @Test
     public void shouldFailRequestingARefund_whenAmountIsBiggerThanChargeAmount() {
-
         Long refundAmount = defaultTestCharge.getAmount() + 20;
-
         worldpay.mockRefundSuccess();
-        postRefundFor(defaultTestCharge.getExternalChargeId(), refundAmount)
+        postRefundFor(defaultTestCharge.getExternalChargeId(), refundAmount, defaultTestCharge.getAmount())
                 .statusCode(BAD_REQUEST.getStatusCode())
                 .body("reason", is("amount_not_available"))
                 .body("message", is("Not sufficient amount available for refund"));
@@ -188,7 +182,7 @@ public class WorldpayRefundITest extends CardResourceITestBase {
 
         Long refundAmount = 10000001L;
 
-        postRefundFor(defaultTestCharge.getExternalChargeId(), refundAmount)
+        postRefundFor(defaultTestCharge.getExternalChargeId(), refundAmount, defaultTestCharge.getAmount())
                 .statusCode(BAD_REQUEST.getStatusCode())
                 .body("reason", is("amount_not_available"))
                 .body("message", is("Not sufficient amount available for refund"));
@@ -202,7 +196,7 @@ public class WorldpayRefundITest extends CardResourceITestBase {
 
         Long refundAmount = 0L;
 
-        postRefundFor(defaultTestCharge.getExternalChargeId(), refundAmount)
+        postRefundFor(defaultTestCharge.getExternalChargeId(), refundAmount, defaultTestCharge.getAmount())
                 .statusCode(BAD_REQUEST.getStatusCode())
                 .body("reason", is("amount_min_validation"))
                 .body("message", is("Validation error for amount. Minimum amount for a refund is 1"));
@@ -217,7 +211,7 @@ public class WorldpayRefundITest extends CardResourceITestBase {
         Long secondRefundAmount = 30L; // 10 more than available
 
         worldpay.mockRefundSuccess();
-        ValidatableResponse validatableResponse = postRefundFor(defaultTestCharge.getExternalChargeId(), firstRefundAmount);
+        ValidatableResponse validatableResponse = postRefundFor(defaultTestCharge.getExternalChargeId(), firstRefundAmount, defaultTestCharge.getAmount());
         String firstRefundId = assertRefundResponseWith(firstRefundAmount, validatableResponse, ACCEPTED.getStatusCode());
 
         List<Map<String, Object>> refundsFoundByChargeId = databaseTestHelper.getRefundsByChargeId(defaultTestCharge.getChargeId());
@@ -225,7 +219,7 @@ public class WorldpayRefundITest extends CardResourceITestBase {
         assertThat(refundsFoundByChargeId, hasItems(aRefundMatching(firstRefundId, defaultTestCharge.getChargeId(), firstRefundAmount, "REFUND SUBMITTED")));
 
         worldpay.mockRefundSuccess();
-        postRefundFor(defaultTestCharge.getExternalChargeId(), secondRefundAmount)
+        postRefundFor(defaultTestCharge.getExternalChargeId(), secondRefundAmount, defaultTestCharge.getAmount() - firstRefundAmount)
                 .statusCode(400)
                 .body("reason", is("amount_not_available"))
                 .body("message", is("Not sufficient amount available for refund"));
@@ -240,7 +234,7 @@ public class WorldpayRefundITest extends CardResourceITestBase {
         Long refundAmount = defaultTestCharge.getAmount();
 
         worldpay.mockRefundError();
-        postRefundFor(defaultTestCharge.getExternalChargeId(), refundAmount)
+        postRefundFor(defaultTestCharge.getExternalChargeId(), refundAmount, defaultTestCharge.getAmount())
                 .statusCode(INTERNAL_SERVER_ERROR.getStatusCode())
                 .body("message", is("[2] Something went wrong."));
 
@@ -378,9 +372,12 @@ public class WorldpayRefundITest extends CardResourceITestBase {
                 .body("message", is(format("Refund with id [%s] not found.", nonExistentRefundId)));
     }
 
-    private ValidatableResponse postRefundFor(String chargeId, Long refundAmount) {
+    private ValidatableResponse postRefundFor(String chargeId, Long refundAmount, Long refundAmountAvlbl) {
+        ImmutableMap<String, Long> refundData = ImmutableMap.of("amount", refundAmount, "refund_amount_available", refundAmountAvlbl);
+        String refundPayload = new Gson().toJson(refundData);
+
         return givenSetup()
-                .body("{\"amount\": " + refundAmount + "}")
+                .body(refundPayload)
                 .accept(ContentType.JSON)
                 .contentType(ContentType.JSON)
                 .post(REFUNDS_API_PATH

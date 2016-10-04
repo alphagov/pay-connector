@@ -1,5 +1,7 @@
 package uk.gov.pay.connector.it.resources.sandbox;
 
+import com.google.common.collect.ImmutableMap;
+import com.google.gson.Gson;
 import com.jayway.restassured.http.ContentType;
 import com.jayway.restassured.response.ValidatableResponse;
 import org.junit.Before;
@@ -17,6 +19,7 @@ import static java.lang.String.format;
 import static java.time.temporal.ChronoUnit.SECONDS;
 import static javax.ws.rs.core.Response.Status.ACCEPTED;
 import static javax.ws.rs.core.Response.Status.BAD_REQUEST;
+import static javax.ws.rs.core.Response.Status.PRECONDITION_FAILED;
 import static org.hamcrest.CoreMatchers.hasItems;
 import static org.hamcrest.CoreMatchers.notNullValue;
 import static org.hamcrest.MatcherAssert.assertThat;
@@ -28,9 +31,9 @@ import static uk.gov.pay.connector.model.domain.ChargeStatus.CAPTURED;
 import static uk.gov.pay.connector.model.domain.ChargeStatus.ENTERING_CARD_DETAILS;
 import static uk.gov.pay.connector.resources.ApiPaths.REFUNDS_API_PATH;
 
-@Ignore("These tests are failing randomly. Investigation in progress, should be fixed soon")
 public class SandboxRefundITest extends CardResourceITestBase {
 
+    public static final long REFUND_AMOUNT_AVLBL = 10000L;
     private DatabaseFixtures.TestAccount defaultTestAccount;
     private DatabaseFixtures.TestCharge defaultTestCharge;
     private DatabaseTestHelper databaseTestHelper;
@@ -61,9 +64,41 @@ public class SandboxRefundITest extends CardResourceITestBase {
     @Test
     public void shouldBeAbleToRequestARefund_partialAmount() {
         Long refundAmount = 50L;
+        ValidatableResponse validatableResponse = postRefundFor(defaultTestCharge.getExternalChargeId(), refundAmount, defaultTestCharge.getAmount());
 
-        ValidatableResponse validatableResponse = postRefundFor(defaultTestCharge.getExternalChargeId(), refundAmount);
         String refundId = assertRefundResponseWith(refundAmount, validatableResponse, ACCEPTED.getStatusCode());
+        List<Map<String, Object>> refundsFoundByChargeId = databaseTestHelper.getRefundsByChargeId(defaultTestCharge.getChargeId());
+        assertThat(refundsFoundByChargeId.size(), is(1));
+        assertThat(refundsFoundByChargeId, hasItems(aRefundMatching(refundId, defaultTestCharge.getChargeId(), refundAmount, "REFUNDED")));
+    }
+
+    @Test
+    public void shouldBeAbleToRefundTwoRequestsWhereAmountAvailableMatch() {
+        Long refundAmount = 50L;
+        //first refund request
+        ValidatableResponse validatableResponse = postRefundFor(defaultTestCharge.getExternalChargeId(), refundAmount, defaultTestCharge.getAmount());
+        String refundId = assertRefundResponseWith(refundAmount, validatableResponse, ACCEPTED.getStatusCode());
+
+        //second refund request with updated refundAmountAvailable
+        validatableResponse = postRefundFor(defaultTestCharge.getExternalChargeId(), refundAmount, defaultTestCharge.getAmount() - refundAmount);
+        String refundId_2 = assertRefundResponseWith(refundAmount, validatableResponse, ACCEPTED.getStatusCode());
+
+        List<Map<String, Object>> refundsFoundByChargeId = databaseTestHelper.getRefundsByChargeId(defaultTestCharge.getChargeId());
+        assertThat(refundsFoundByChargeId.size(), is(2));
+        assertThat(refundsFoundByChargeId, hasItems(aRefundMatching(refundId, defaultTestCharge.getChargeId(), refundAmount, "REFUNDED")));
+        assertThat(refundsFoundByChargeId, hasItems(aRefundMatching(refundId_2, defaultTestCharge.getChargeId(), refundAmount, "REFUNDED")));
+    }
+
+    @Test
+    public void shouldRespond_412_WhenSecondRefundRequestAmountAvailableMismatches() {
+        Long refundAmount = 50L;
+        //first refund request
+        ValidatableResponse validatableResponse = postRefundFor(defaultTestCharge.getExternalChargeId(), refundAmount, defaultTestCharge.getAmount());
+        String refundId = assertRefundResponseWith(refundAmount, validatableResponse, ACCEPTED.getStatusCode());
+
+        //second refund request with wrong refundAmountAvailable
+        validatableResponse = postRefundFor(defaultTestCharge.getExternalChargeId(), refundAmount, defaultTestCharge.getAmount());
+        validatableResponse.statusCode(PRECONDITION_FAILED.getStatusCode());
 
         List<Map<String, Object>> refundsFoundByChargeId = databaseTestHelper.getRefundsByChargeId(defaultTestCharge.getChargeId());
         assertThat(refundsFoundByChargeId.size(), is(1));
@@ -75,7 +110,7 @@ public class SandboxRefundITest extends CardResourceITestBase {
 
         Long refundAmount = defaultTestCharge.getAmount();
 
-        ValidatableResponse validatableResponse = postRefundFor(defaultTestCharge.getExternalChargeId(), refundAmount);
+        ValidatableResponse validatableResponse = postRefundFor(defaultTestCharge.getExternalChargeId(), refundAmount, defaultTestCharge.getAmount());
         String refundId = assertRefundResponseWith(refundAmount, validatableResponse, ACCEPTED.getStatusCode());
 
         List<Map<String, Object>> refundsFoundByChargeId = databaseTestHelper.getRefundsByChargeId(defaultTestCharge.getChargeId());
@@ -85,16 +120,15 @@ public class SandboxRefundITest extends CardResourceITestBase {
 
     @Test
     public void shouldBeAbleToRequestARefund_multiplePartialAmounts_andRefundShouldBeInFullStatus() {
-
         Long firstRefundAmount = 80L;
         Long secondRefundAmount = 20L;
         Long chargeId = defaultTestCharge.getChargeId();
         String externalChargeId = defaultTestCharge.getExternalChargeId();
 
-        ValidatableResponse firstValidatableResponse = postRefundFor(externalChargeId, firstRefundAmount);
+        ValidatableResponse firstValidatableResponse = postRefundFor(externalChargeId, firstRefundAmount, defaultTestCharge.getAmount());
         String firstRefundId = assertRefundResponseWith(firstRefundAmount, firstValidatableResponse, ACCEPTED.getStatusCode());
 
-        ValidatableResponse secondValidatableResponse = postRefundFor(externalChargeId, secondRefundAmount);
+        ValidatableResponse secondValidatableResponse = postRefundFor(externalChargeId, secondRefundAmount, defaultTestCharge.getAmount() - firstRefundAmount);
         String secondRefundId = assertRefundResponseWith(secondRefundAmount, secondValidatableResponse, ACCEPTED.getStatusCode());
 
         List<Map<String, Object>> refundsFoundByChargeId = databaseTestHelper.getRefundsByChargeId(chargeId);
@@ -125,7 +159,7 @@ public class SandboxRefundITest extends CardResourceITestBase {
 
         Long refundAmount = 20L;
 
-        postRefundFor(testCharge.getExternalChargeId(), refundAmount)
+        postRefundFor(testCharge.getExternalChargeId(), refundAmount, defaultTestCharge.getAmount())
                 .statusCode(BAD_REQUEST.getStatusCode())
                 .body("reason", is("pending"))
                 .body("message", is(format("Charge with id [%s] not available for refund.", testCharge.getExternalChargeId())));
@@ -141,10 +175,10 @@ public class SandboxRefundITest extends CardResourceITestBase {
         String externalChargeId = defaultTestCharge.getExternalChargeId();
         Long chargeId = defaultTestCharge.getChargeId();
 
-        postRefundFor(externalChargeId, refundAmount)
+        postRefundFor(externalChargeId, refundAmount, defaultTestCharge.getAmount())
                 .statusCode(ACCEPTED.getStatusCode());
 
-        postRefundFor(externalChargeId, 1L)
+        postRefundFor(externalChargeId, 1L, defaultTestCharge.getAmount() - refundAmount)
                 .statusCode(BAD_REQUEST.getStatusCode())
                 .body("reason", is("full"))
                 .body("message", is(format("Charge with id [%s] not available for refund.", externalChargeId)));
@@ -155,10 +189,9 @@ public class SandboxRefundITest extends CardResourceITestBase {
 
     @Test
     public void shouldFailRequestingARefund_whenAmountIsBiggerThanChargeAmount() {
-
         Long refundAmount = defaultTestCharge.getAmount() + 20;
 
-        postRefundFor(defaultTestCharge.getExternalChargeId(), refundAmount)
+        postRefundFor(defaultTestCharge.getExternalChargeId(), refundAmount, defaultTestCharge.getAmount())
                 .statusCode(BAD_REQUEST.getStatusCode())
                 .body("reason", is("amount_not_available"))
                 .body("message", is("Not sufficient amount available for refund"));
@@ -172,7 +205,7 @@ public class SandboxRefundITest extends CardResourceITestBase {
 
         Long refundAmount = 10000001L;
 
-        postRefundFor(defaultTestCharge.getExternalChargeId(), refundAmount)
+        postRefundFor(defaultTestCharge.getExternalChargeId(), refundAmount, defaultTestCharge.getAmount())
                 .statusCode(BAD_REQUEST.getStatusCode())
                 .body("reason", is("amount_not_available"))
                 .body("message", is("Not sufficient amount available for refund"));
@@ -186,7 +219,7 @@ public class SandboxRefundITest extends CardResourceITestBase {
 
         Long refundAmount = 0L;
 
-        postRefundFor(defaultTestCharge.getExternalChargeId(), refundAmount)
+        postRefundFor(defaultTestCharge.getExternalChargeId(), refundAmount, defaultTestCharge.getAmount())
                 .statusCode(BAD_REQUEST.getStatusCode())
                 .body("reason", is("amount_min_validation"))
                 .body("message", is("Validation error for amount. Minimum amount for a refund is 1"));
@@ -200,14 +233,14 @@ public class SandboxRefundITest extends CardResourceITestBase {
         Long firstRefundAmount = 80L;
         Long secondRefundAmount = 30L; // 10 more than available
 
-        ValidatableResponse validatableResponse = postRefundFor(defaultTestCharge.getExternalChargeId(), firstRefundAmount);
+        ValidatableResponse validatableResponse = postRefundFor(defaultTestCharge.getExternalChargeId(), firstRefundAmount, defaultTestCharge.getAmount());
         String firstRefundId = assertRefundResponseWith(firstRefundAmount, validatableResponse, ACCEPTED.getStatusCode());
 
         List<Map<String, Object>> refundsFoundByChargeId = databaseTestHelper.getRefundsByChargeId(defaultTestCharge.getChargeId());
         assertThat(refundsFoundByChargeId.size(), is(1));
         assertThat(refundsFoundByChargeId, hasItems(aRefundMatching(firstRefundId, defaultTestCharge.getChargeId(), firstRefundAmount, "REFUNDED")));
 
-        postRefundFor(defaultTestCharge.getExternalChargeId(), secondRefundAmount)
+        postRefundFor(defaultTestCharge.getExternalChargeId(), secondRefundAmount, defaultTestCharge.getAmount() - firstRefundAmount)
                 .statusCode(400)
                 .body("reason", is("amount_not_available"))
                 .body("message", is("Not sufficient amount available for refund"));
@@ -217,9 +250,12 @@ public class SandboxRefundITest extends CardResourceITestBase {
         assertThat(refundsFoundByChargeId1, hasItems(aRefundMatching(firstRefundId, defaultTestCharge.getChargeId(), firstRefundAmount, "REFUNDED")));
     }
 
-    private ValidatableResponse postRefundFor(String chargeId, Long refundAmount) {
+    private ValidatableResponse postRefundFor(String chargeId, Long refundAmount, long refundAmountAvlbl) {
+        ImmutableMap<String, Long> refundData = ImmutableMap.of("amount", refundAmount, "refund_amount_available", refundAmountAvlbl);
+        String refundPayload = new Gson().toJson(refundData);
+
         return givenSetup()
-                .body("{\"amount\": " + refundAmount + "}")
+                .body(refundPayload)
                 .accept(ContentType.JSON)
                 .contentType(ContentType.JSON)
                 .post(REFUNDS_API_PATH

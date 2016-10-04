@@ -47,9 +47,9 @@ public class ChargeRefundsResource {
     @Path(REFUNDS_API_PATH)
     @Consumes(APPLICATION_JSON)
     @Produces(APPLICATION_JSON)
-    public Response submitRefund(@PathParam("accountId") Long accountId, @PathParam("chargeId") String chargeId, RefundRequest refund, @Context UriInfo uriInfo) {
-        validateAmount(refund.getAmount());
-        return refundService.doRefund(accountId, chargeId, refund.getAmount())
+    public Response submitRefund(@PathParam("accountId") Long accountId, @PathParam("chargeId") String chargeId, RefundRequest refundRequest, @Context UriInfo uriInfo) {
+        validateRefundRequest(refundRequest.getAmount());
+        return refundService.doRefund(accountId, chargeId, refundRequest)
                 .map((refundServiceResponse) -> {
                     GatewayResponse<BaseRefundResponse> response = refundServiceResponse.getRefundGatewayResponse();
                     if (response.isSuccessful()) {
@@ -67,7 +67,7 @@ public class ChargeRefundsResource {
                 });
     }
 
-    private void validateAmount(long amount) {
+    private void validateRefundRequest(long amount) {
         if (MAX_AMOUNT < amount) {
             throw RefundException.refundException("Not sufficient amount available for refund", NOT_SUFFICIENT_AMOUNT_AVAILABLE);
         }

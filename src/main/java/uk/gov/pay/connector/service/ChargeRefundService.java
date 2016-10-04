@@ -8,6 +8,7 @@ import uk.gov.pay.connector.dao.RefundDao;
 import uk.gov.pay.connector.exception.ChargeNotFoundRuntimeException;
 import uk.gov.pay.connector.exception.RefundException;
 import uk.gov.pay.connector.model.RefundGatewayRequest;
+import uk.gov.pay.connector.model.RefundRequest;
 import uk.gov.pay.connector.model.api.ExternalChargeRefundAvailability;
 import uk.gov.pay.connector.model.domain.ChargeEntity;
 import uk.gov.pay.connector.model.domain.RefundEntity;
@@ -62,41 +63,46 @@ public class ChargeRefundService {
         this.transactionFlowProvider = transactionFlowProvider;
     }
 
-    public Optional<Response> doRefund(Long accountId, String chargeId, Long amount) {
+    public Optional<Response> doRefund(Long accountId, String chargeId, RefundRequest refundRequest) {
         return chargeDao.findByExternalIdAndGatewayAccount(chargeId, accountId)
-                .map(chargeEntity -> refundWithGateway(chargeEntity, amount))
+                .map(chargeEntity -> refundWithGateway(chargeEntity, refundRequest))
                 .orElseThrow(() -> new ChargeNotFoundRuntimeException(chargeId));
     }
 
-    private Optional<Response> refundWithGateway(ChargeEntity charge, Long amount) {
+    private Optional<Response> refundWithGateway(ChargeEntity charge, RefundRequest refundRequest) {
         return Optional.ofNullable(transactionFlowProvider.get()
-                .executeNext(prepareForRefund(charge, amount))
+                .executeNext(prepareForRefund(charge, refundRequest))
                 .executeNext(doGatewayRefund(providers))
                 .executeNext(finishRefund())
                 .complete().get(Response.class));
     }
 
-    private PreTransactionalOperation<TransactionContext, RefundEntity> prepareForRefund(ChargeEntity chargeEntity, Long amountToBeRefunded) {
+    private PreTransactionalOperation<TransactionContext, RefundEntity> prepareForRefund(ChargeEntity chargeEntity, RefundRequest refundRequest) {
         return context -> {
 
             ChargeEntity reloadedCharge = chargeDao.merge(chargeEntity);
             ExternalChargeRefundAvailability refundAvailability = valueOf(reloadedCharge);
 
             if (EXTERNAL_AVAILABLE != refundAvailability) {
-                logger.error("Charge not available for refund - charge_external_id={}, status={}, refund_status={}",
+                logger.info("Charge not available for refund - charge_external_id={}, status={}, refund_status={}",
                         reloadedCharge.getId(), reloadedCharge.getStatus(), refundAvailability, reloadedCharge.getGatewayAccount().getGatewayName());
                 throw RefundException.notAvailableForRefundException(reloadedCharge.getExternalId(), refundAvailability);
             }
 
             long totalAmountToBeRefunded = reloadedCharge.getTotalAmountToBeRefunded();
+            if (totalAmountToBeRefunded != refundRequest.getAmountAvailableForRefund()) {
+                logger.info("Refund request has a mismatch on amount available for refund - charge_external_id={}, amount_actually_available_for_refund={}, refund_amount_available_in_request={}",
+                        reloadedCharge.getExternalId(), totalAmountToBeRefunded, refundRequest.getAmountAvailableForRefund());
+                throw RefundException.refundAmountAvailableMismatchException("Refund Amount Available Mismatch");
+            }
 
-            if (totalAmountToBeRefunded - amountToBeRefunded < 0) {
-                logger.error("Charge doesn't have sufficient amount for refund - charge_external_id={}, status={}, refund_status={} amount_for_refund={}, refund_amount_requested={}",
-                        reloadedCharge.getExternalId(), reloadedCharge.getStatus(), refundAvailability, totalAmountToBeRefunded, amountToBeRefunded);
+            if (totalAmountToBeRefunded - refundRequest.getAmount() < 0) {
+                logger.info("Charge doesn't have sufficient amount for refund - charge_external_id={}, status={}, refund_status={} amount_for_refund={}, refund_amount_requested={}",
+                        reloadedCharge.getExternalId(), reloadedCharge.getStatus(), refundAvailability, totalAmountToBeRefunded, refundRequest);
                 throw RefundException.refundException("Not sufficient amount available for refund", NOT_SUFFICIENT_AMOUNT_AVAILABLE);
             }
 
-            RefundEntity refundEntity = new RefundEntity(reloadedCharge, amountToBeRefunded);
+            RefundEntity refundEntity = new RefundEntity(reloadedCharge, refundRequest.getAmount());
             reloadedCharge.getRefunds().add(refundEntity);
             refundDao.persist(refundEntity);
 

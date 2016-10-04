@@ -3,19 +3,27 @@ package uk.gov.pay.connector.model;
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import com.fasterxml.jackson.annotation.JsonProperty;
 
-
-// FIXME this Json ignore is for backward compatibilty for Jira PP-1224, to be removed at a later state
-@JsonIgnoreProperties(ignoreUnknown = true)
 public class RefundRequest {
 
     @JsonProperty("amount")
     private long amount;
 
+    @JsonProperty("refund_amount_available")
+    private long amountAvailableForRefund;
+
+    public RefundRequest() {}
+
+    public RefundRequest(long amount, long amountAvailableForRefund) {
+        this.amount = amount;
+        this.amountAvailableForRefund = amountAvailableForRefund;
+    }
+
     public long getAmount() {
         return amount;
     }
 
-    public void setAmount(long amount) {
-        this.amount = amount;
+    public long getAmountAvailableForRefund() {
+        return amountAvailableForRefund;
     }
+
 }

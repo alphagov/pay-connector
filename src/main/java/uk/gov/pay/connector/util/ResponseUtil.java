@@ -56,6 +56,11 @@ public class ResponseUtil {
         return responseWithMessageMap(BAD_REQUEST, message);
     }
 
+    public static Response preconditionFailedResponse(String message) {
+        logger.info(message.toString());
+        return responseWithMessageMap(PRECONDITION_FAILED, message);
+    }
+
     public static Response notFoundResponse(String message) {
         logger.error(message);
         return responseWithMessageMap(NOT_FOUND, message);
