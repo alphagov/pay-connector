@@ -1,6 +1,5 @@
 package uk.gov.pay.connector.model;
 
-import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import com.fasterxml.jackson.annotation.JsonProperty;
 
 public class RefundRequest {
