@@ -39,6 +39,11 @@ public class ChargeEvent {
         return DateTimeUtils.toUTCDateString(updated);
     }
 
+    @JsonIgnore
+    public ZonedDateTime getTimeUpdate() {
+        return updated;
+    }
+
     @Override
     public String toString() {
         return "ChargeEvent{" +

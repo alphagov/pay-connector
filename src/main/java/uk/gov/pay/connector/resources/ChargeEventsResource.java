@@ -1,10 +1,10 @@
 package uk.gov.pay.connector.resources;
 
 import com.google.common.collect.ImmutableMap;
+import com.google.common.collect.Lists;
 import com.google.inject.Inject;
 import uk.gov.pay.connector.dao.ChargeDao;
 import uk.gov.pay.connector.model.ChargeEvent;
-import uk.gov.pay.connector.model.domain.ChargeEntity;
 import uk.gov.pay.connector.model.domain.ChargeEventEntity;
 
 import javax.ws.rs.GET;
@@ -12,9 +12,7 @@ import javax.ws.rs.Path;
 import javax.ws.rs.PathParam;
 import javax.ws.rs.Produces;
 import javax.ws.rs.core.Response;
-import java.util.Collections;
 import java.util.List;
-import java.util.ListIterator;
 
 import static java.util.stream.Collectors.toList;
 import static javax.ws.rs.core.MediaType.APPLICATION_JSON;
@@ -60,15 +58,9 @@ public class ChargeEventsResource {
     }
 
     private List<ChargeEvent> getNonRepeatingChargeEvents(List<ChargeEvent> externalEvents) {
-        ListIterator<ChargeEvent> iterator = externalEvents.listIterator();
-        ChargeEvent prev = null;
-        while (iterator.hasNext()) {
-            ChargeEvent current = iterator.next();
-            if (current.equals(prev)) { // remove any immediately repeating statuses
-                iterator.remove();
-            }
-            prev = current;
-        }
-        return externalEvents;
+        return externalEvents.stream()
+                .distinct()
+                .sorted((e1, e2) -> e2.getTimeUpdate().compareTo(e1.getTimeUpdate()))
+                .collect(toList());
     }
 }
