@@ -17,7 +17,6 @@ import io.dropwizard.setup.Environment;
 import org.glassfish.jersey.server.filter.RolesAllowedDynamicFeature;
 import uk.gov.pay.connector.auth.BasicAuthUser;
 import uk.gov.pay.connector.auth.SmartpayAccountSpecificAuthenticator;
-import uk.gov.pay.connector.auth.SmartpayAuthenticator;
 import uk.gov.pay.connector.filters.LoggingFilter;
 import uk.gov.pay.connector.healthcheck.CardExecutorServiceHealthCheck;
 import uk.gov.pay.connector.healthcheck.DatabaseHealthCheck;

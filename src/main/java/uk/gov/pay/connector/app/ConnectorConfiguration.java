@@ -30,7 +30,7 @@ public class ConnectorConfiguration extends Configuration {
 
     @Valid
     @NotNull
-    private SmartpayCredentialsConfig smartpayConfig;
+    private GatewayCredentialsConfig smartpayConfig;
 
     @Valid
     @NotNull
@@ -69,7 +69,7 @@ public class ConnectorConfiguration extends Configuration {
     }
 
     @JsonProperty("smartpay")
-    public SmartpayCredentialsConfig getSmartpayConfig() {
+    public GatewayCredentialsConfig getSmartpayConfig() {
         return smartpayConfig;
     }
 

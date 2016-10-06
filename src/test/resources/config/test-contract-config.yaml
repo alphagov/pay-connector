@@ -30,9 +30,6 @@ smartpay:
   urls:
     test: https://pal-test.barclaycardsmartpay.com/pal/servlet/soap/Payment
     live: https://pal-test.barclaycardsmartpay.com/pal/servlet/soap/Payment
-  notification:
-    username: not-contract-tested
-    password: not-contract-tested
 
 database:
   driverClass: org.postgresql.Driver

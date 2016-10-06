@@ -30,9 +30,6 @@ smartpay:
   urls:
     test: ${GDS_CONNECTOR_SMARTPAY_TEST_URL}
     live: ${GDS_CONNECTOR_SMARTPAY_LIVE_URL}
-  notification:
-    username: ${GDS_CONNECTOR_SMARTPAY_NOTIFICATION_USER}
-    password: ${GDS_CONNECTOR_SMARTPAY_NOTIFICATION_PASSWORD}
   credentials: ['username','password']
 
 executorServiceConfig:
