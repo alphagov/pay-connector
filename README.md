@@ -82,6 +82,9 @@ The command to run all the tests is:
 |[```/v1/api/accounts/{accountId}/email-notification```](#post-v1apiaccountsaccountidchargeschargeidevents)  | GET     |  Retrieves the email notification template body for the given account `accountId`           |
 |[```/v1/api/accounts/{accountId}/email-notification```](#post-v1apiaccountsaccountidchargeschargeidevents)  | PATCH   |  Enables/Disables email notifications for the given account `accountId`           |
 |[```/v1/api/accounts/{accountId}/description-analytics-id```](#patch-v1apiaccountsdescriptionanalyticsid)  | PATCH   |  Allows editing description and/or analyticsId for the given account `accountId`           |
+|[```/v1/api/accounts/{accountId}/charges/{chargeId}/refunds```](#post-v1apiaccountschargesrefunds)  | POST   |  Submits a refund for a given charge `chargeId` and a given `accountId`           |
+|[```/v1/api/accounts/{accountId}/charges/{chargeId}/refunds```](#get-v1apiaccountschargesrefunds)  | GET   |  Retrieves all refunds associated to a charge `chargeId` and a given `accountId`           |
+|[```/v1/api/accounts/{accountId}/charges/{chargeId}/refunds/{refundId}```](#get-v1apiaccountschargesrefundsrefundid)  | GET   |  Retrieves a refund by `refundId` for a given charge `chargeId` and a given `accountId`           |
 
 ## FRONTEND NAMESPACE
 
@@ -236,7 +239,12 @@ Content-Type: application/json
       "finished": false
     },
     "card_brand": "Visa",
-    "return_url": "http://example.service/return_from_payments" 
+    "return_url": "http://example.service/return_from_payments",
+    "refund_summary": {
+            "amount_available": 5000,
+            "amount_submitted": 0,
+            "status": "available"
+    },
     "links": [
         {
             "rel": "self",
@@ -247,6 +255,11 @@ Content-Type: application/json
             "rel": "next_url",
             "method": "GET",
             "href": "http://frontend/charges/1?chargeTokenId=82347"
+        },
+        {
+            "href": "https://connector.service/v1/api/accounts/1/charges/uqu4s24383qkod35rsb06gv3cn/refunds",
+            "method": "GET",
+            "rel": "refunds"
         }
     ],
 }
@@ -263,9 +276,10 @@ Content-Type: application/json
 | `gateway_account_id`     | X | The ID of the gateway account to use with this charge       |
 | `gateway_transaction_id` | X | The gateway transaction reference associated to this charge       |
 | `status`                 | X | The current external status of the charge       |
-| `card_brand`              |   | The brand label of the card                 |
+| `card_brand`             |   | The brand label of the card                 |
 | `return_url`             | X | The url to return the user to after the payment process has completed.|
 | `links`                  | X | Array of relevant resource references related to this charge|
+| `refund_summary`         | X | Provides a refund summary of the total refund amount still available and how much has already been refunded, plus a refund status|
 
 -----------------------------------------------------------------------------------------------------------
 
@@ -366,7 +380,24 @@ Content-Type: application/json
         "gateway_account_id": "10",
         "gateway_transaction_id": "DFG98-FG8J-R78HJ-8JUG9",
         "status": "CREATED",
-        "return_url": "http://example.service/return_from_payments"
+        "return_url": "http://example.service/return_from_payments",
+        "links": [
+            {
+                "href": "https://connector.pymnt.localdomain/v1/api/accounts/1/charges/uqu4s24383qkod35rsb06gv3cn",
+                "method": "GET",
+                "rel": "self"
+            },
+            {
+                "href": "https://connector.pymnt.localdomain/v1/api/accounts/1/charges/uqu4s24383qkod35rsb06gv3cn/refunds",
+                "method": "GET",
+                "rel": "refunds"
+            }
+        ],
+        "refund_summary": {
+            "amount_available": 5000,
+            "amount_submitted": 0,
+            "status": "available"
+        },
      }]
 }
 ```
@@ -384,6 +415,7 @@ Content-Type: application/json
 | `gateway_transaction_id` | X | The gateway transaction reference associated to this charge       |
 | `status`                 | X | The current external status of the charge       |
 | `return_url`             | X | The url to return the user to after the payment process has completed.|
+| `refund_summary`         | X | Provides a refund summary of the total refund amount still available and how much has already been refunded, plus a refund status|
 
 -----------------------------------------------------------------------------------------------------------
 
@@ -1228,3 +1260,267 @@ We try and validate the source of a notification in three ways:
 3. All notification requests into the platform must be https.
 
 The connector only deals with the first consideration.
+
+------------------------------------------------------------------------------------------------
+### POST /v1/api/accounts/{accountId}/charges/{chargeId}/refunds
+
+Submits a refund for a given `accountId` and `chargeId`
+
+#### Request example
+
+```
+POST /v1/api/accounts/1/charges/uqu4s24383qkod35rsb06gv3cn/refunds
+{
+    "amount": 25000,
+    "refund_amount_available": 30000
+}
+```
+
+##### Request description
+
+
+| Field                    | required | Description                                             |
+| ------------------------ |:--------:| ------------------------------------------------------- |
+| `amount`                 | Yes      | Amount to refund in pence                               |
+| `refund_amount_available`| Yes      | Total amount still available before issuing the refund  |
+
+#### Refund created response
+
+```
+HTTP/1.1 202 Accepted
+Content-Type: application/json
+
+{
+    "amount":3444,
+    "created_date":"2016-10-05T14:15:34.096Z",
+    "refund_id":"vijjk08adovg10gfqc46joem2l",
+    "status":"success",
+    "_links":{
+        "self":{"href":"https://connector.pymnt.localdomain/v1/api/accounts/1/charges/uqu4s24383qkod35rsb06gv3cn/refunds/vijjk08adovg10gfqc46joem2l"},
+        "payment":{"href":"https://connector.pymnt.localdomain/v1/api/accounts/1/charges/uqu4s24383qkod35rsb06gv3cn"}
+    }
+}
+```
+
+##### Response fields description
+
+| Field                  | Description                               |
+| ---------------------- | ----------------------------------------- |
+| `refund_id`            | The ID of the refund created             |
+| `amount`               | Amount of refund in pence                |
+| `status`               | Current status of the refund             |
+| `created_date`         | The creation date for this refund        |
+| `_links.self`          | Link to this refund                      |
+| `_links.payment`       | Link to the payment this refund relates to|
+
+#### POST Charge Refunds response errors
+
+##### Refund not available for charge
+
+```
+HTTP/1.1 400 Bad Request
+Content-Type: application/json
+
+{
+    "message": "Charge with id [123123qwe123] not available for refund."
+}
+```
+
+##### Validation error for amount
+
+```
+HTTP/1.1 400 Bad Request
+Content-Type: application/json
+
+{
+    "message": "Validation error for amount. Minimum amount for a refund is 1."
+}
+```
+
+##### No sufficient amount available for refund
+
+```
+HTTP/1.1 400 Bad Request
+Content-Type: application/json
+
+{
+    "message": "Not sufficient amount available for refund"
+}
+```
+
+##### Refund amount available mismatch
+
+```
+HTTP/1.1 412 Precondition Failed
+Content-Type: application/json
+
+{
+    "message": "Refund Amount Available Mismatch"
+}
+```
+
+##### Something went wrong error
+
+```
+HTTP/1.1 500 Internal Server Error
+Content-Type: application/json
+
+{
+    "message": "something went wrong during refund of charge 123123qwe123"
+}
+```
+
+
+##### Unknown error
+
+```
+HTTP/1.1 500 Internal Server Error
+Content-Type: application/json
+
+{
+    "message": "unknown error"
+}
+```
+
+
+
+------------------------------------------------------------------------------------------------
+### GET /v1/api/accounts/{accountId}/charges/{chargeId}/refunds
+
+Returns all the refunds associated with a charge.
+
+#### Request example
+
+```
+GET /v1/api/accounts/1/charges/asdwa32wd23442rwe24/refunds
+```
+
+
+#### Charge refunds response
+
+```
+HTTP/1.1 200 OK
+Content-Type: application/json
+{
+    "_embedded": {
+        "refunds": [
+            {
+                "_links": {
+                    "payment": {
+                        "href": "https://connector.pymnt.localdomain/v1/api/accounts/1/charges/uqu4s24383qkod35rsb06gv3cn"
+                    },
+                    "self": {
+                        "href": "https://connector.pymnt.localdomain/v1/api/accounts/1/charges/uqu4s24383qkod35rsb06gv3cn/refunds/vijjk08adovg10gfqc46joem2l"
+                    }
+                },
+                "amount": 3444,
+                "created_date": "2016-10-05T14:15:34.096Z",
+                "refund_id": "vijjk08adovg10gfqc46joem2l",
+                "status": "success"
+            }
+        ]
+    },
+    "_links": {
+        "payment": {
+            "href": "https://connector.pymnt.localdomain/v1/api/accounts/1/charges/uqu4s24383qkod35rsb06gv3cn"
+        },
+        "self": {
+            "href": "https://connector.pymnt.localdomain/v1/api/accounts/1/charges/uqu4s24383qkod35rsb06gv3cn/refunds"
+        }
+    },
+    "payment_id": "uqu4s24383qkod35rsb06gv3cn"
+}
+```
+
+##### Response field description
+
+| Field                  | Description                               |
+| ---------------------- | ----------------------------------------- |
+| `payment_id`           | The ID of the created payment             |
+| `_embedded.refunds.payment_id`               | The ID of this refund                    |
+| `_embedded.refunds.amount`          | The amount of refund                       |
+| `_embedded.refunds.status`               | Current status of the refund (submitted/success)             |
+| `_embedded.refunds.created_date`           | Date when the refund was created    |
+| `_links.self`          | Link to this refund                      |
+| `_links.payment`       | Link to the payment this refund relates to|
+
+#### GET Charge Refunds response errors
+
+##### Payment not found
+
+```
+HTTP/1.1 404 Not Found
+Content-Type: application/json
+
+{
+    "code" : "P0800"
+    "description": "Not found"
+}
+```                                            
+------------------------------------------------------------------------------------------------
+### GET /v1/api/accounts/{accountId}/charges/{chargeId}/refunds/{refundId}
+
+Retrieves a refund for a given `accountId` and `chargeId`.
+
+#### Request example
+
+```
+GET /v1/api/accounts/1/charges/asdwa32wd23442rwe24/refunds/123
+```
+
+
+#### Refund by Id response
+
+```
+HTTP/1.1 200 OK
+Content-Type: application/json
+{
+    "_links": {
+            "payment": {
+                "href": "https://connector.pymnt.localdomain/v1/api/accounts/2/charges/uqu4s24383qkod35rsb06gv3cn"
+            },
+            "self": {
+                "href": "https://connector.pymnt.localdomain/v1/api/accounts/2/charges/uqu4s24383qkod35rsb06gv3cn/refunds/vijjk08adovg10gfqc46joem2l"
+            }
+        },
+    "amount": 3444,
+    "created_date": "2016-10-05T14:15:34.096Z",
+    "refund_id": "vijjk08adovg10gfqc46joem2l",
+    "status": "success"
+}
+```
+
+##### Response field description
+
+| Field                  | Description                               |
+| ---------------------- | ----------------------------------------- |
+| `refund_id`           | The ID of the created payment             |
+| `amount`          | The amount of refund                       |
+| `status`               | Current status of the refund (submitted/success)             |
+| `created_date`           | Date when the refund was created    |
+| `_links.self`          | Link to this refund                      |
+| `_links.payment`       | Link to the payment this refund relates to|
+
+#### GET Refund response errors
+
+##### Charge not found
+
+```
+HTTP/1.1 404 Not Found
+Content-Type: application/json
+
+{
+    "message" : "Charge with id [1] not found."
+}
+```   
+
+##### Refund not found
+
+```
+HTTP/1.1 404 Not Found
+Content-Type: application/json
+
+{
+    "message" : "Refund with id [123] not found."
+}
+```
