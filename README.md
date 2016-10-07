@@ -192,7 +192,8 @@ Content-Type: application/json
     "gateway_account_id": "1",
     "type": "live",
     "description": "Sample Service",
-    "analytics_id": "some identifier"
+    "analytics_id": "some identifier",
+    "service_name": "service name"
 }
 ```
 
@@ -200,12 +201,86 @@ Content-Type: application/json
 
 | Field                    | always present | Description                               |
 | ------------------------ |:--------:| ----------------------------------------- |
-| `gateway_account_id`                 | X | The account Id        |
-| `type`                 | X | Account type for this provider (test/live)|
-| `payment_provider`                 | X | The payment provider for which this account is created.       |
-| `description`            | X | An internal description to identify the gateway account. The default value is `null`.      |
-| `analytics_id`           | X | An identifier used to identify the service in Google Analytics. The default value is `null`.      |
------------------------------------------------------------------------------------------------------------
+| `gateway_account_id`      | X | The account Id        |
+| `type`                    | X | Account type for this provider (test/live)|
+| `payment_provider`        | X | The payment provider for which this account is created.       |
+| `description`             | X | An internal description to identify the gateway account. The default value is `null`.      |
+| `analytics_id`            | X | An identifier used to identify the service in Google Analytics. The default value is `null`.      |
+| `service_name`            |   | The service name that is saved for this account, present if not empty.      |
+
+---------------------------------------------------------------------------------------------------------------
+### GET /v1/api/accounts
+
+Retrieves a collection of all the accounts
+
+#### Request example
+
+```
+GET /v1/api/accounts
+```
+
+#### Response example
+
+```
+200 OK
+Content-Type: application/json
+{
+  "accounts": [
+    {
+      "type": "test",
+      "description": "a description",
+      "gateway_account_id": 100,
+      "payment_provider": "sandbox",
+      "service_name": "service_name",
+      "analytics_id": "an analytics id",
+      "_links": {
+        "self": {
+          "href": "http://connector.service/v1/api/accounts/100"
+        }
+      }
+    },
+    {
+      "type": "live",
+      "description": "a description",
+      "gateway_account_id": 200,
+      "payment_provider": "sandbox",
+      "service_name": "service_name",
+      "analytics_id": "an analytics id",
+      "_links": {
+        "self": {
+          "href": "http://connector.service/v1/api/accounts/200"
+        }
+      }
+    },
+    {
+      "type": "test",
+      "description": "a description",
+      "gateway_account_id": 400,
+      "payment_provider": "worldpay",
+      "analytics_id": "an analytics id",
+      "_links": {
+        "self": {
+          "href": "http://connector.service/v1/api/accounts/400"
+        }
+      }
+    }
+  ]
+}
+```
+
+##### Response field description
+
+| Field                    | always present | Description                               |
+| ------------------------ |:--------:| ----------------------------------------- |
+| `accounts`                | X | The collection of accounts        |
+| `gateway_account_id`      | X | The account Id        |
+| `type`                    | X | Account type for this provider (test/live)|
+| `payment_provider`        | X | The payment provider for which this account is created.       |
+| `description`             | X | An internal description to identify the gateway account. The default value is `null`.      |
+| `analytics_id`            | X | An identifier used to identify the service in Google Analytics. The default value is `null`.      |
+| `service_name`            |   | The service name that is saved for this account, present if not empty.      |
+| `_links.self`             | X | A self link to get this account resource by account-id.      |
+------------------------------------------------------------------------------------------------
 
 ### GET /v1/api/accounts/{accountId}/charges/{chargeId}
 
