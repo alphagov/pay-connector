@@ -3,12 +3,14 @@ package uk.gov.pay.connector.model.domain;
 import com.fasterxml.jackson.annotation.JsonBackReference;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import com.fasterxml.jackson.annotation.JsonView;
+import org.apache.commons.lang3.StringUtils;
 
 import javax.persistence.*;
 import java.util.List;
 import java.util.Map;
 
 import static com.google.common.collect.Maps.newHashMap;
+import static org.apache.commons.lang3.StringUtils.isNotBlank;
 
 @Entity
 @Table(name = "gateway_accounts")
@@ -185,11 +187,14 @@ public class GatewayAccountEntity extends AbstractEntity {
         account.put("gateway_account_id", String.valueOf(super.getId()));
         account.put("payment_provider", getGatewayName());
         account.put("type", getType());
-        if (getDescription() != null) {
+        if (isNotBlank(getDescription())) {
             account.put("description", getDescription());
         }
-        if (getAnalyticsId() != null) {
+        if (isNotBlank(getAnalyticsId())) {
             account.put("analytics_id", getAnalyticsId());
+        }
+        if (isNotBlank(getServiceName()))  {
+            account.put("service_name", getServiceName());
         }
         return account;
     }

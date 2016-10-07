@@ -3,6 +3,7 @@ package uk.gov.pay.connector.it.dao;
 import org.apache.commons.lang3.RandomUtils;
 import uk.gov.pay.connector.model.domain.CardTypeEntity.Type;
 import uk.gov.pay.connector.model.domain.ChargeStatus;
+import uk.gov.pay.connector.model.domain.GatewayAccountEntity;
 import uk.gov.pay.connector.model.domain.RefundStatus;
 import uk.gov.pay.connector.util.DatabaseTestHelper;
 import uk.gov.pay.connector.util.RandomIdGenerator;
@@ -175,11 +176,13 @@ public class DatabaseFixtures {
 
     public class TestAccount {
         long accountId = RandomUtils.nextLong(1, 99999);
-        String paymentProvider = "sandbox";
-        String serviceName = "service_name";
-        String description = "a description";
-        String analyticsId = "an analytics id";
+        private String paymentProvider = "sandbox";
+        private String serviceName = "service_name";
+        private String description = "a description";
+        private String analyticsId = "an analytics id";
+        private GatewayAccountEntity.Type type = TEST;
         private List<TestCardType> cardTypes = new ArrayList<>();
+
 
         public long getAccountId() {
             return accountId;
@@ -211,13 +214,28 @@ public class DatabaseFixtures {
             return this;
         }
 
+        public TestAccount withPaymentProvider(String provider) {
+            this.paymentProvider = provider;
+            return this;
+        }
+
+        public TestAccount withServiceName(String serviceName) {
+            this.serviceName = serviceName;
+            return this;
+        }
+
+        public TestAccount withType(GatewayAccountEntity.Type type) {
+            this.type = type;
+            return this;
+        }
+
         public TestAccount insert() {
             databaseTestHelper.addGatewayAccount(
                     String.valueOf(accountId),
                     paymentProvider,
                     new HashMap<>(),
                     serviceName,
-                    TEST,
+                    type,
                     description,
                     analyticsId);
             for (TestCardType cardType : cardTypes) {

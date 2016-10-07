@@ -7,6 +7,7 @@ import org.junit.Test;
 import uk.gov.pay.connector.dao.GatewayAccountDao;
 import uk.gov.pay.connector.model.domain.CardTypeEntity;
 import uk.gov.pay.connector.model.domain.GatewayAccountEntity;
+import uk.gov.pay.connector.model.domain.GatewayAccountResourceDTO;
 import uk.gov.pay.connector.model.domain.NotificationCredentials;
 
 import java.io.IOException;
@@ -16,8 +17,7 @@ import static java.util.Collections.emptyMap;
 import static org.hamcrest.CoreMatchers.allOf;
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.*;
-import static org.junit.Assert.assertNotNull;
-import static org.junit.Assert.assertTrue;
+import static org.junit.Assert.*;
 import static uk.gov.pay.connector.model.domain.GatewayAccountEntity.Type.TEST;
 
 public class GatewayAccountDaoITest extends DaoITestBase {
@@ -149,7 +149,6 @@ public class GatewayAccountDaoITest extends DaoITestBase {
 
     @Test
     public void findById_shouldUpdateEmptyCredentials() throws IOException {
-
         String paymentProvider = "test provider";
         Long accountId = 888L;
         databaseTestHelper.addGatewayAccount(accountId.toString(), paymentProvider);
@@ -174,7 +173,6 @@ public class GatewayAccountDaoITest extends DaoITestBase {
 
     @Test
     public void findById_shouldUpdateAndRetrieveCredentialsWithSpecialCharacters() throws Exception {
-
         String paymentProvider = "test provider";
         String accountId = "333";
         databaseTestHelper.addGatewayAccount(accountId, paymentProvider);
@@ -197,7 +195,6 @@ public class GatewayAccountDaoITest extends DaoITestBase {
 
     @Test
     public void findById_shouldFindAccountInfoByIdWhenFindingByIdReturningGatewayAccount() throws Exception {
-
         String paymentProvider = "test provider";
         String accountId = "12345";
         databaseTestHelper.addGatewayAccount(accountId, paymentProvider);
@@ -212,7 +209,6 @@ public class GatewayAccountDaoITest extends DaoITestBase {
 
     @Test
     public void findById_shouldGetCredentialsWhenFindingGatewayAccountById() {
-
         String paymentProvider = "test provider";
         String accountId = "786";
         HashMap<String, String> credentials = new HashMap<>();
@@ -249,6 +245,28 @@ public class GatewayAccountDaoITest extends DaoITestBase {
         assertNotNull(retrievedGatewayAccount.getNotificationCredentials());
         assertThat(retrievedGatewayAccount.getNotificationCredentials().getUserName(), is("username"));
         assertThat(retrievedGatewayAccount.getNotificationCredentials().getPassword(), is("password"));
+    }
+
+    @Test
+    public void shouldListAllAccounts() throws Exception {
+        databaseTestHelper.addGatewayAccount("123", "provider-1", ImmutableMap.of("user", "fuser", "password", "word"), "service-name-1", TEST, "description-1", "analytics-id-1");
+        databaseTestHelper.addGatewayAccount("456", "provider-2", null, "service-name-2", TEST, "description-2", "analytics-id-2");
+        databaseTestHelper.addGatewayAccount("789", "provider-3", null, "service-name-3", GatewayAccountEntity.Type.LIVE, "description-3", "analytics-id-3");
+
+        List<GatewayAccountResourceDTO> gatewayAccounts = gatewayAccountDao.listAll();
+
+        assertEquals(3, gatewayAccounts.size());
+        assertThat(gatewayAccounts.get(0).getAccountId(), is(123L));
+        assertEquals("provider-1", gatewayAccounts.get(0).getPaymentProvider());
+        assertEquals("description-1", gatewayAccounts.get(0).getDescription());
+        assertEquals("service-name-1", gatewayAccounts.get(0).getServiceName());
+        assertEquals(TEST.toString(), gatewayAccounts.get(0).getType());
+        assertEquals("analytics-id-1", gatewayAccounts.get(0).getAnalyticsId());
+
+        assertEquals("provider-2", gatewayAccounts.get(1).getPaymentProvider());
+        assertEquals("provider-3", gatewayAccounts.get(2).getPaymentProvider());
+        assertThat(gatewayAccounts.get(1).getAccountId(), is(456L));
+        assertThat(gatewayAccounts.get(2).getAccountId(), is(789L));
     }
 
     private DatabaseFixtures.TestCardType createMastercardCreditCardTypeRecord() {
