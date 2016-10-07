@@ -58,6 +58,7 @@ public class ChargeEntity extends AbstractEntity {
     private List<RefundEntity> refunds = new ArrayList<>();
 
     @OneToMany(mappedBy = "chargeEntity")
+    @OrderBy("updated DESC")
     private List<ChargeEventEntity> events = new ArrayList<>();
 
     @Column(name = "description")

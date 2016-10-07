@@ -103,7 +103,7 @@ public class ChargeEventsResourceITest {
         ChargeStatus chargeStatus = AUTHORISATION_SUCCESS;
         app.getDatabaseTestHelper().addCharge(chargeId, externalChargeId, accountId, 100L, chargeStatus, "returnUrl", null);
         app.getDatabaseTestHelper().addToken(chargeId, "tokenId");
-        List<ChargeStatus> statuses = asList(ChargeStatus.CREATED, ENTERING_CARD_DETAILS, AUTHORISATION_READY, SYSTEM_CANCELLED, ENTERING_CARD_DETAILS);
+        List<ChargeStatus> statuses = asList(ChargeStatus.CREATED, ENTERING_CARD_DETAILS, AUTHORISATION_READY, SYSTEM_CANCELLED);
         setupLifeCycleEventsFor(app, chargeId, statuses);
 
         connectorApi

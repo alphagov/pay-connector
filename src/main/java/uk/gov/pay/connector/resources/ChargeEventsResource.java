@@ -1,7 +1,6 @@
 package uk.gov.pay.connector.resources;
 
 import com.google.common.collect.ImmutableMap;
-import com.google.common.collect.Lists;
 import com.google.inject.Inject;
 import uk.gov.pay.connector.dao.ChargeDao;
 import uk.gov.pay.connector.model.ChargeEvent;
@@ -60,7 +59,6 @@ public class ChargeEventsResource {
     private List<ChargeEvent> getNonRepeatingChargeEvents(List<ChargeEvent> externalEvents) {
         return externalEvents.stream()
                 .distinct()
-                .sorted((e1, e2) -> e2.getTimeUpdate().compareTo(e1.getTimeUpdate()))
                 .collect(toList());
     }
 }
