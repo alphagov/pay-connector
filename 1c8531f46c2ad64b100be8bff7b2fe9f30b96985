@@ -25,3 +25,5 @@ release.alpha_release-71.date=2016-10-07:13:29:14
 staging-1.tag=FAILED-70
 
 staging-1.FAILED-70.date=
+
+staging-1.FAILED-70.status=failed
