@@ -11,7 +11,6 @@ import org.mockito.Mock;
 import org.mockito.Mockito;
 import org.mockito.runners.MockitoJUnitRunner;
 import uk.gov.pay.connector.app.ConnectorConfiguration;
-import uk.gov.pay.connector.app.SmartpayCredentialsConfig;
 import uk.gov.pay.connector.dao.CardTypeDao;
 import uk.gov.pay.connector.dao.GatewayAccountDao;
 import uk.gov.pay.connector.exception.CredentialsException;
@@ -22,7 +21,6 @@ import uk.gov.pay.connector.util.HashUtil;
 
 import java.util.Map;
 
-import static com.google.common.collect.Lists.newArrayList;
 import static org.mockito.Mockito.*;
 
 
@@ -51,11 +49,6 @@ public class GatewayAccountNotificationCredentialsServiceTest {
 
     @Before
     public void setup() {
-        SmartpayCredentialsConfig smartpayCredentialsConfig = mock(SmartpayCredentialsConfig.class);
-
-        when(conf.getSmartpayConfig()).thenReturn(smartpayCredentialsConfig);
-        when(smartpayCredentialsConfig.getCredentials()).thenReturn(newArrayList());
-
         gatewayAccountNotificationCredentialsService = new GatewayAccountNotificationCredentialsService(gatewayDao, entityBuilder, hashUtil);
     }
 

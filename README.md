@@ -1200,9 +1200,8 @@ Content-Type: text/plain
 
 This endpoint handles a notification from Barclays Smartpay's Notification mechanism as descrbied in the [Barclaycard SmartPay Notifications Guide](http://www.barclaycard.co.uk/business/files/SmartPay_Notifications_Guide.pdf)
 
-At the moment, the basic auth username and password that have to be entered into smartpay's web management UI need to be provided to the app as environment variables:
-* GDS_CONNECTOR_SMARTPAY_NOTIFICATION_USERNAME for the username
-* GDS_CONNECTOR_SMARTPAY_NOTIFICATION_PASSWORD for the password
+Smartpay notification credentials are specific to the accounts. The credentials can be chanegd through selfservice. For the test accounts these credentails are configured when
+the test accounts are setup.
 
 #### Request example
 

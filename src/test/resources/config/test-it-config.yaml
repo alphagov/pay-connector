@@ -30,9 +30,6 @@ smartpay:
   urls:
     test: http://localhost:10106/pal/servlet/soap/Payment
     live: http://localhost:10106/pal/servlet/soap/Payment
-  notification:
-    username: smartpay_test_username
-    password: smartpay_test_password
   credentials: ['username','password']
 
 executorServiceConfig:

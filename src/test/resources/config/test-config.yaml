@@ -28,9 +28,6 @@ smartpay:
   urls:
     test: http://testsmartpay.com
     live: http://testsmartpay.com
-  notification:
-    username: smartpay_notification_username
-    password: smartpay_notification_password
 
 database:
   driverClass: org.postgresql.Driver
