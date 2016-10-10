@@ -15,6 +15,7 @@ import uk.gov.pay.connector.dao.GatewayAccountDao;
 import uk.gov.pay.connector.exception.CredentialsException;
 import uk.gov.pay.connector.model.domain.CardTypeEntity;
 import uk.gov.pay.connector.model.domain.GatewayAccountEntity;
+import uk.gov.pay.connector.model.domain.GatewayAccountResourceDTO;
 import uk.gov.pay.connector.service.GatewayAccountNotificationCredentialsService;
 
 import javax.inject.Inject;
@@ -30,6 +31,7 @@ import java.util.stream.Collectors;
 import static com.google.common.collect.Maps.newHashMap;
 import static java.lang.String.format;
 import static javax.ws.rs.core.MediaType.APPLICATION_JSON;
+import static javax.ws.rs.core.Response.ok;
 import static uk.gov.pay.connector.model.domain.GatewayAccountEntity.Type;
 import static uk.gov.pay.connector.model.domain.GatewayAccountEntity.Type.TEST;
 import static uk.gov.pay.connector.resources.ApiPaths.*;
@@ -71,16 +73,35 @@ public class GatewayAccountResource {
 
     @GET
     @Path(GATEWAY_ACCOUNT_API_PATH)
-    @Consumes(APPLICATION_JSON)
     @Produces(APPLICATION_JSON)
     @JsonView(GatewayAccountEntity.Views.FullView.class)
     public Response getGatewayAccount(@PathParam("accountId") Long accountId) {
-        logger.info("Getting gateway account for account id {}", accountId);
+        logger.debug("Getting gateway account for account id {}", accountId);
         return gatewayDao
                 .findById(GatewayAccountEntity.class, accountId)
                 .map(gatewayAccount -> Response.ok().entity(gatewayAccount.withoutCredentials()).build())
                 .orElseGet(() -> notFoundResponse(format("Account with id %s not found.", accountId)));
 
+    }
+
+    @GET
+    @Path(GATEWAY_ACCOUNTS_API_PATH)
+    @Produces(APPLICATION_JSON)
+    public Response getGatewayAccounts(@Context UriInfo uriInfo) {
+        logger.debug("Getting all gateway accounts");
+        List<GatewayAccountResourceDTO> gatewayAccountResourceDTOList = gatewayDao.listAll();
+        gatewayAccountResourceDTOList.forEach(account ->
+            account.addLink("self", buildUri(uriInfo, account.getAccountId()))
+        );
+        return Response
+                .ok(ImmutableMap.of("accounts", gatewayAccountResourceDTOList))
+                .build();
+    }
+
+    private URI buildUri(UriInfo uriInfo, long accountId) {
+        return uriInfo.getBaseUriBuilder()
+                .path(GATEWAY_ACCOUNT_API_PATH)
+                .build(accountId);
     }
 
     @GET

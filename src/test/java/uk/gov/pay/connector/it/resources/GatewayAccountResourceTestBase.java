@@ -9,6 +9,7 @@ import uk.gov.pay.connector.it.dao.DatabaseFixtures;
 import uk.gov.pay.connector.model.domain.GatewayAccountEntity;
 import uk.gov.pay.connector.resources.ApiPaths;
 import uk.gov.pay.connector.rules.DropwizardAppWithPostgresRule;
+import uk.gov.pay.connector.util.DatabaseTestHelper;
 
 import java.util.Arrays;
 import java.util.HashMap;
@@ -24,6 +25,7 @@ public class GatewayAccountResourceTestBase {
 
     public static final String ACCOUNTS_API_URL = "/v1/api/accounts/";
     public static final String ACCOUNTS_FRONTEND_URL = "/v1/frontend/accounts/";
+    protected DatabaseTestHelper databaseTestHelper;
 
     @Rule
     public DropwizardAppWithPostgresRule app = new DropwizardAppWithPostgresRule();
@@ -31,7 +33,8 @@ public class GatewayAccountResourceTestBase {
 
     @Before
     public void setUp() {
-        databaseFixtures = DatabaseFixtures.withDatabaseTestHelper(app.getDatabaseTestHelper());
+        databaseTestHelper = app.getDatabaseTestHelper();
+        databaseFixtures = DatabaseFixtures.withDatabaseTestHelper(databaseTestHelper);
     }
 
     protected RequestSpecification givenSetup() {

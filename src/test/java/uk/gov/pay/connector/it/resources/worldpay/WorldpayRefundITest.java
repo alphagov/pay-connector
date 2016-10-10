@@ -47,7 +47,6 @@ public class WorldpayRefundITest extends CardResourceITestBase {
 
     @Before
     public void setUp() throws Exception {
-
         databaseTestHelper = app.getDatabaseTestHelper();
         defaultTestAccount = DatabaseFixtures
                 .withDatabaseTestHelper(databaseTestHelper)
