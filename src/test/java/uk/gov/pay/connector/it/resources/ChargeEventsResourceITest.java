@@ -103,21 +103,19 @@ public class ChargeEventsResourceITest {
         ChargeStatus chargeStatus = AUTHORISATION_SUCCESS;
         app.getDatabaseTestHelper().addCharge(chargeId, externalChargeId, accountId, 100L, chargeStatus, "returnUrl", null);
         app.getDatabaseTestHelper().addToken(chargeId, "tokenId");
-        List<ChargeStatus> statuses = asList(ChargeStatus.CREATED, ENTERING_CARD_DETAILS, AUTHORISATION_READY, SYSTEM_CANCELLED, ENTERING_CARD_DETAILS);
+        List<ChargeStatus> statuses = asList(ChargeStatus.CREATED, ENTERING_CARD_DETAILS, AUTHORISATION_READY, SYSTEM_CANCELLED);
         setupLifeCycleEventsFor(app, chargeId, statuses);
 
         connectorApi
                 .getEvents(externalChargeId)
                 .body("charge_id", Matchers.is(externalChargeId))
-                .body("events.state", hasSize(4))
-                .body("events.state[0].status", Matchers.is(EXTERNAL_CREATED.getStatus()))
+                .body("events.state", hasSize(3))
+                .body("events.state[0].status", Matchers.is(EXTERNAL_CANCELLED.getStatus()))
                 .body("events.state[1].status", Matchers.is(EXTERNAL_STARTED.getStatus()))
-                .body("events.state[2].status", Matchers.is(EXTERNAL_CANCELLED.getStatus()))
-                .body("events.state[3].status", Matchers.is(EXTERNAL_STARTED.getStatus()))
+                .body("events.state[2].status", Matchers.is(EXTERNAL_CREATED.getStatus()))
                 .body("events.chargeId[0]", isEmptyOrNullString())
                 .body("events.chargeId[1]", isEmptyOrNullString())
-                .body("events.chargeId[2]", isEmptyOrNullString())
-                .body("events.chargeId[3]", isEmptyOrNullString()); // chargeId should not be there in json response for every event
+                .body("events.chargeId[2]", isEmptyOrNullString());
     }
 
     @Test
