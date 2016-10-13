@@ -58,7 +58,7 @@ public class ChargesFrontendResource {
     @GET
     @Path(FRONTEND_CHARGE_API_PATH)
     @Produces(APPLICATION_JSON)
-    @JsonView(GatewayAccountEntity.Views.PartialView.class)
+    @JsonView(GatewayAccountEntity.Views.FrontendView.class)
     public Response getCharge(@PathParam("chargeId") String chargeId, @Context UriInfo uriInfo) {
 
         Optional<ChargeEntity> maybeCharge = chargeDao.findByExternalId(chargeId);
@@ -72,7 +72,7 @@ public class ChargesFrontendResource {
     @PATCH
     @Path(FRONTEND_CHARGE_API_PATH)
     @Produces(APPLICATION_JSON)
-    @JsonView(GatewayAccountEntity.Views.PartialView.class)
+    @JsonView(GatewayAccountEntity.Views.FrontendView.class)
     public Response patchCharge(@PathParam("chargeId") String chargeId, Map<String, String> chargePatchMap, @Context UriInfo uriInfo) {
         PatchRequestBuilder.PatchRequest chargePatchRequest;
 
@@ -105,7 +105,7 @@ public class ChargesFrontendResource {
     @PUT
     @Path(FRONTEND_CHARGE_STATUS_API_PATH)
     @Produces(APPLICATION_JSON)
-    @JsonView(GatewayAccountEntity.Views.PartialView.class)
+    @JsonView(GatewayAccountEntity.Views.FrontendView.class)
     public Response updateChargeStatus(@PathParam("chargeId") String chargeId, Map newStatusMap) {
         if (invalidInput(newStatusMap)) {
             return fieldsMissingResponse(ImmutableList.of("new_status"));

@@ -18,8 +18,8 @@ import static org.apache.commons.lang3.StringUtils.isNotBlank;
 public class GatewayAccountEntity extends AbstractEntity {
 
     public class Views {
-        public class FullView { }
-        public class PartialView {}
+        public class ApiView { }
+        public class FrontendView {}
     }
 
     public enum Type {
@@ -91,57 +91,57 @@ public class GatewayAccountEntity extends AbstractEntity {
 
     @Override
     @JsonProperty("gateway_account_id")
-    @JsonView(Views.FullView.class)
+    @JsonView(Views.ApiView.class)
     public Long getId() {
         return super.getId();
     }
 
     @JsonProperty("payment_provider")
-    @JsonView(Views.FullView.class)
+    @JsonView(value = {Views.ApiView.class, Views.FrontendView.class})
     public String getGatewayName() {
         return gatewayName;
     }
 
-    @JsonView(Views.FullView.class)
+    @JsonView(Views.ApiView.class)
     public Map<String, String> getCredentials() {
         return credentials;
     }
 
-    @JsonView(Views.FullView.class)
+    @JsonView(Views.ApiView.class)
     public String getDescription() {
         return description;
     }
 
-    @JsonView(Views.FullView.class)
+    @JsonView(value = {Views.ApiView.class, Views.FrontendView.class})
     @JsonProperty("analytics_id")
     public String getAnalyticsId() {
         return analyticsId;
     }
 
     @JsonProperty("type")
-    @JsonView(Views.FullView.class)
+    @JsonView(value = {Views.ApiView.class, Views.FrontendView.class})
     public String getType() {
         return type.value;
     }
 
     @JsonProperty("service_name")
-    @JsonView(value = {Views.FullView.class, Views.PartialView.class})
+    @JsonView(value = {Views.ApiView.class, Views.FrontendView.class})
     public String getServiceName() {
         return serviceName;
     }
 
-    @JsonView(Views.PartialView.class)
+    @JsonView(Views.FrontendView.class)
     @JsonProperty("card_types")
     public List<CardTypeEntity> getCardTypes() {
         return cardTypes;
     }
 
-    @JsonView(Views.FullView.class)
+    @JsonView(Views.ApiView.class)
     public EmailNotificationEntity getEmailNotification() {
         return emailNotification;
     }
 
-    @JsonView(Views.FullView.class)
+    @JsonView(Views.ApiView.class)
     public NotificationCredentials getNotificationCredentials() {
         return notificationCredentials;
     }

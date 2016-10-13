@@ -58,7 +58,7 @@ public class DatabaseTestHelper {
     }
 
     public void addGatewayAccount(String accountId, String paymentProvider, String description, String analyticsId) {
-        addGatewayAccount(accountId, paymentProvider, null, "a service", TEST, description, analyticsId);
+        addGatewayAccount(accountId, paymentProvider, null, "a cool service", TEST, description, analyticsId);
     }
 
     public void addCharge(Long chargeId, String externalChargeId, String gatewayAccountId, long amount, ChargeStatus status, String returnUrl, String transactionId) {

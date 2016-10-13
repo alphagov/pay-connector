@@ -74,7 +74,7 @@ public class GatewayAccountResource {
     @GET
     @Path(GATEWAY_ACCOUNT_API_PATH)
     @Produces(APPLICATION_JSON)
-    @JsonView(GatewayAccountEntity.Views.FullView.class)
+    @JsonView(GatewayAccountEntity.Views.ApiView.class)
     public Response getGatewayAccount(@PathParam("accountId") Long accountId) {
         logger.debug("Getting gateway account for account id {}", accountId);
         return gatewayDao
@@ -107,7 +107,7 @@ public class GatewayAccountResource {
     @GET
     @Path(FRONTEND_GATEWAY_ACCOUNT_API_PATH)
     @Produces(APPLICATION_JSON)
-    @JsonView(GatewayAccountEntity.Views.FullView.class)
+    @JsonView(GatewayAccountEntity.Views.ApiView.class)
     public Response getGatewayAccountWithCredentials(@PathParam("accountId") Long gatewayAccountId) throws IOException {
 
         return gatewayDao.findById(gatewayAccountId)
@@ -123,7 +123,7 @@ public class GatewayAccountResource {
     @Path(FRONTEND_ACCOUNT_CARDTYPES_API_PATH)
     @Consumes(APPLICATION_JSON)
     @Produces(APPLICATION_JSON)
-    @JsonView(GatewayAccountEntity.Views.FullView.class)
+    @JsonView(GatewayAccountEntity.Views.ApiView.class)
     public Response getGatewayAccountAcceptedCardTypes(@PathParam("accountId") Long accountId) {
         logger.info("Getting accepted card types for gateway account with account id {}", accountId);
         return gatewayDao
@@ -183,7 +183,7 @@ public class GatewayAccountResource {
     @Consumes(APPLICATION_JSON)
     @Produces(APPLICATION_JSON)
     @Transactional
-    @JsonView(GatewayAccountEntity.Views.FullView.class)
+    @JsonView(GatewayAccountEntity.Views.ApiView.class)
     public Response updateGatewayAccountCredentials(@PathParam("accountId") Long gatewayAccountId, Map<String, Object> gatewayAccountPayload) {
         if (!gatewayAccountPayload.containsKey(CREDENTIALS_FIELD_NAME)) {
             return fieldsMissingResponse(Arrays.asList(CREDENTIALS_FIELD_NAME));

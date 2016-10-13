@@ -35,7 +35,7 @@ public class SecurityTokensResource {
     @GET
     @Path(GET_CHARGE_BY_TOKEN_PATH)
     @Produces(APPLICATION_JSON)
-    @JsonView(GatewayAccountEntity.Views.PartialView.class)
+    @JsonView(GatewayAccountEntity.Views.FrontendView.class)
     public Response getChargeForToken(@PathParam("chargeTokenId") String chargeTokenId) {
         logger.debug("get charge for token {}", chargeTokenId);
         Optional<ChargeEntity> chargeOpt = chargeDao.findByTokenId(chargeTokenId);
