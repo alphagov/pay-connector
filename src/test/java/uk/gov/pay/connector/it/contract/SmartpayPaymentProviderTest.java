@@ -55,6 +55,7 @@ public class SmartpayPaymentProviderTest {
         try {
             new URL(url).openConnection().connect();
             Map<String, String> validSmartPayCredentials = ImmutableMap.of(
+                    "merchant_id", "MerchantAccount",
                     "username", username,
                     "password", password);
             GatewayAccountEntity validGatewayAccount = new GatewayAccountEntity();
