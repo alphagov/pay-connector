@@ -3,11 +3,8 @@ package uk.gov.pay.connector.service.smartpay;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import fj.data.Either;
 import org.apache.commons.lang3.tuple.Pair;
-import uk.gov.pay.connector.model.CancelGatewayRequest;
-import uk.gov.pay.connector.model.CaptureGatewayRequest;
-import uk.gov.pay.connector.model.Notifications;
+import uk.gov.pay.connector.model.*;
 import uk.gov.pay.connector.model.Notifications.Builder;
-import uk.gov.pay.connector.model.RefundGatewayRequest;
 import uk.gov.pay.connector.model.gateway.AuthorisationGatewayRequest;
 import uk.gov.pay.connector.model.gateway.GatewayResponse;
 import uk.gov.pay.connector.resources.PaymentGatewayName;
@@ -21,13 +18,16 @@ import java.util.function.Function;
 
 import static fj.data.Either.left;
 import static fj.data.Either.right;
+import static uk.gov.pay.connector.model.domain.GatewayAccount.CREDENTIALS_MERCHANT_ID;
 import static uk.gov.pay.connector.service.OrderCaptureRequestBuilder.aSmartpayOrderCaptureRequest;
 import static uk.gov.pay.connector.service.OrderSubmitRequestBuilder.aSmartpayOrderSubmitRequest;
 import static uk.gov.pay.connector.service.smartpay.SmartpayOrderCancelRequestBuilder.aSmartpayOrderCancelRequest;
 
 public class SmartpayPaymentProvider extends BasePaymentProvider<BaseResponse> {
 
+    //TODO: Leaving for backward compatibility. TO remove later
     private static final String MERCHANT_CODE = "MerchantAccount";
+
     private final ObjectMapper objectMapper;
 
     public SmartpayPaymentProvider(GatewayClient client, ObjectMapper objectMapper) {
@@ -98,7 +98,7 @@ public class SmartpayPaymentProvider extends BasePaymentProvider<BaseResponse> {
 
     private Function<AuthorisationGatewayRequest, String> buildSubmitOrderFor() {
         return request -> aSmartpayOrderSubmitRequest()
-                .withMerchantCode(MERCHANT_CODE)
+                .withMerchantCode(getMerchantCode(request))
                 .withPaymentPlatformReference(request.getChargeId())
                 .withDescription(request.getDescription())
                 .withAmount(request.getAmount())
@@ -108,7 +108,7 @@ public class SmartpayPaymentProvider extends BasePaymentProvider<BaseResponse> {
 
     private Function<CaptureGatewayRequest, String> buildCaptureOrderFor() {
         return request -> aSmartpayOrderCaptureRequest()
-                .withMerchantCode(MERCHANT_CODE)
+                .withMerchantCode(getMerchantCode(request))
                 .withTransactionId(request.getTransactionId())
                 .withAmount(request.getAmount())
                 .build();
@@ -116,8 +116,13 @@ public class SmartpayPaymentProvider extends BasePaymentProvider<BaseResponse> {
 
     private Function<CancelGatewayRequest, String> buildCancelOrderFor() {
         return request -> aSmartpayOrderCancelRequest()
-                .withMerchantCode(MERCHANT_CODE)
+                .withMerchantCode(getMerchantCode(request))
                 .withTransactionId(request.getTransactionId())
                 .build();
+    }
+
+    private String getMerchantCode(GatewayRequest request) {
+        //TODO: returning default merchant code, just for backward compatibility. Need to remove this later
+        return request.getGatewayAccount().getCredentials().getOrDefault(CREDENTIALS_MERCHANT_ID, MERCHANT_CODE);
     }
 }

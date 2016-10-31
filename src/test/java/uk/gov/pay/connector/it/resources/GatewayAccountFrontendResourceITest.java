@@ -34,6 +34,7 @@ public class GatewayAccountFrontendResourceITest extends GatewayAccountResourceT
             return new GatewayAccountPayload()
                     .withUsername("a-username")
                     .withPassword("a-password")
+                    .withMerchantId("a-mercahnt-id")
                     .withServiceName("a-service-name");
         }
 
@@ -153,7 +154,7 @@ public class GatewayAccountFrontendResourceITest extends GatewayAccountResourceT
                 .body("notificationCredentials.userName", is("bob"))
                 .body("notificationCredentials.password", is(nullValue()));
     }
-    
+
     private void validateCardType(ValidatableResponse response, String brand, String label, String... type) {
         response
                 .body(format("card_types.find { it.brand == '%s' }.id", brand), is(notNullValue()))
@@ -274,13 +275,19 @@ public class GatewayAccountFrontendResourceITest extends GatewayAccountResourceT
                 .then()
                 .statusCode(400)
                 .body("message", is("Field(s) missing: [password]"));
+        //TODO: For backward compatibility. Enable once the selfservice/e2e/acceptest changes are done
+//                .body("message", is("Field(s) missing: [password, merchant_id]"));
     }
 
     @Test
     public void updateCredentials_shouldNotUpdateGatewayAccountCredentialsIfAccountWith3RequiredCredentialsMisses1Credential() {
         String accountId = createAGatewayAccountFor("worldpay");
 
-        Map<String, Object> credentials = GatewayAccountPayload.createDefault().buildCredentialsPayload();
+        Map<String, Object> credentials = new GatewayAccountPayload()
+                .withUsername("a-username")
+                .withServiceName("a-service-name")
+                .withPassword("a-password")
+                .buildCredentialsPayload();
 
         updateGatewayAccountCredentialsWith(accountId, credentials)
                 .then()
