@@ -132,7 +132,8 @@ public class SmartpayPaymentProviderTest {
         gatewayAccount.setGatewayName("smartpay");
         gatewayAccount.setCredentials(ImmutableMap.of(
                 "username", "theUsername",
-                "password", "thePassword"
+                "password", "thePassword",
+                "merchant_id", "theMerchantCode"
         ));
         gatewayAccount.setType(TEST);
 

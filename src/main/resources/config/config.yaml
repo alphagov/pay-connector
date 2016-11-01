@@ -30,9 +30,7 @@ smartpay:
   urls:
     test: ${GDS_CONNECTOR_SMARTPAY_TEST_URL}
     live: ${GDS_CONNECTOR_SMARTPAY_LIVE_URL}
-  credentials: ['username','password',]
-#  TODO: backward compatibility; enable when ready
-#  credentials: ['username','password','merchant_id']
+  credentials: ['username','password','merchant_id']
 
 executorServiceConfig:
   timeoutInSeconds: ${AUTH_READ_TIMEOUT_SECONDS:-1}

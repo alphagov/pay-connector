@@ -84,6 +84,7 @@ public class SmartpayPaymentProviderTest {
         accountWithInvalidCredentials.setId(11L);
         accountWithInvalidCredentials.setGatewayName("smartpay");
         accountWithInvalidCredentials.setCredentials(ImmutableMap.of(
+                "merchant_id", "MerchantAccount",
                 "username", "wrong-username",
                 "password", "wrong-password"
         ));

@@ -1,12 +1,16 @@
 package uk.gov.pay.connector.it.gatewayclient;
 
 import com.github.tomakehurst.wiremock.junit.WireMockRule;
+import com.google.common.collect.ImmutableMap;
 import org.junit.Before;
 import org.junit.Rule;
 import org.junit.Test;
+import uk.gov.pay.connector.model.domain.GatewayAccountEntity;
 import uk.gov.pay.connector.rules.DropwizardAppWithPostgresRule;
 import uk.gov.pay.connector.util.DatabaseTestHelper;
 import uk.gov.pay.connector.util.PortFactory;
+
+import java.util.Map;
 
 import static com.jayway.restassured.RestAssured.given;
 import static com.jayway.restassured.http.ContentType.JSON;
@@ -22,6 +26,7 @@ public class GatewayInvalidUrlITest {
     private static final Long CHARGE_ID = 111L;
     private static final String EXTERNAL_CHARGE_ID = "abcd";
     private static final String TRANSACTION_ID = "7914440428682669";
+    private Map<String, String> defaultCredentials = ImmutableMap.of("username","a-user","password","a-password","merchant_id","aMerchantCode");
 
     private int port = PortFactory.findFreePort();
 
@@ -65,7 +70,7 @@ public class GatewayInvalidUrlITest {
     }
 
     private void setupForCapture() {
-        db.addGatewayAccount(ACCOUNT_ID, "smartpay");
+        db.addGatewayAccount(ACCOUNT_ID, "smartpay", defaultCredentials, "aGovService", GatewayAccountEntity.Type.TEST,"some description", "12345");
         long amount = 3333;
         db.addCharge(CHARGE_ID, EXTERNAL_CHARGE_ID, ACCOUNT_ID, amount, AUTHORISATION_SUCCESS, "return_url", TRANSACTION_ID);
     }
