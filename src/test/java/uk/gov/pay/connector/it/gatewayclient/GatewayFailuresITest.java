@@ -1,12 +1,16 @@
 package uk.gov.pay.connector.it.gatewayclient;
 
 import com.github.tomakehurst.wiremock.junit.WireMockRule;
+import com.google.common.collect.ImmutableMap;
 import org.junit.Before;
 import org.junit.Rule;
 import org.junit.Test;
+import uk.gov.pay.connector.model.domain.GatewayAccountEntity;
 import uk.gov.pay.connector.rules.DropwizardAppWithPostgresRule;
 import uk.gov.pay.connector.util.DatabaseTestHelper;
 import uk.gov.pay.connector.util.PortFactory;
+
+import java.util.Map;
 
 import static com.jayway.restassured.RestAssured.given;
 import static com.jayway.restassured.http.ContentType.JSON;
@@ -24,6 +28,7 @@ public class GatewayFailuresITest {
     private static final String EXTERNAL_CHARGE_ID = "abcd1234";
     private static final String TRANSACTION_ID = "7914440428682669";
     private static final long AMOUNT = 3333;
+    private Map<String, String> defaultCredentials = ImmutableMap.of("username","a-user","password","a-password","merchant_id","aMerchantCode");
 
     private int port = PortFactory.findFreePort();
 
@@ -42,8 +47,7 @@ public class GatewayFailuresITest {
     public void setup() {
         gatewayStub = new GatewayStub(TRANSACTION_ID);
         db = app.getDatabaseTestHelper();
-
-        db.addGatewayAccount(ACCOUNT_ID, "smartpay");
+        db.addGatewayAccount(ACCOUNT_ID, "smartpay", defaultCredentials, "aGovService", GatewayAccountEntity.Type.TEST,"some description", "12345");
     }
 
     @Test

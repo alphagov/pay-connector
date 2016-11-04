@@ -25,9 +25,6 @@ import static uk.gov.pay.connector.service.smartpay.SmartpayOrderCancelRequestBu
 
 public class SmartpayPaymentProvider extends BasePaymentProvider<BaseResponse> {
 
-    //TODO: Leaving for backward compatibility. TO remove later
-    private static final String MERCHANT_CODE = "MerchantAccount";
-
     private final ObjectMapper objectMapper;
 
     public SmartpayPaymentProvider(GatewayClient client, ObjectMapper objectMapper) {
@@ -122,7 +119,6 @@ public class SmartpayPaymentProvider extends BasePaymentProvider<BaseResponse> {
     }
 
     private String getMerchantCode(GatewayRequest request) {
-        //TODO: returning default merchant code, just for backward compatibility. Need to remove this later
-        return request.getGatewayAccount().getCredentials().getOrDefault(CREDENTIALS_MERCHANT_ID, MERCHANT_CODE);
+        return request.getGatewayAccount().getCredentials().get(CREDENTIALS_MERCHANT_ID);
     }
 }
