@@ -146,7 +146,7 @@ public class DatabaseTestHelper {
                                        String line1, String line2, String postcode, String city, String county, String country) {
         jdbi.withHandle(handle ->
                         handle
-                                .createStatement("INSERT INTO confirmation_details(id, charge_id, last_digits_card_number, cardholder_name, expiry_date, address_line1, address_line2, address_postcode, address_city, address_county, address_country) VALUES (:id, :charge_id, :last_digits_card_number, :cardholder_name, :expiry_date, :address_line1, :address_line2, :address_postcode, :address_city, :address_county, :address_country)")
+                                .createStatement("INSERT INTO charge_card_details(id, charge_id, last_digits_card_number, cardholder_name, expiry_date, address_line1, address_line2, address_postcode, address_city, address_county, address_country) VALUES (:id, :charge_id, :last_digits_card_number, :cardholder_name, :expiry_date, :address_line1, :address_line2, :address_postcode, :address_city, :address_county, :address_country)")
                                 .bind("id", id)
                                 .bind("charge_id", chargeId)
                                 .bind("last_digits_card_number", lastDigitsCardNumber)
@@ -213,7 +213,7 @@ public class DatabaseTestHelper {
     public Map<String, Object>  getConfirmationDetailsByChargeId(Long chargeId) {
         Map<String, Object> ret = jdbi.withHandle(h ->
                 h.createQuery("SELECT charge_id, last_digits_card_number, cardholder_name, expiry_date, address_line1, address_line2, address_postcode, address_city, address_county, address_country " +
-                        "FROM confirmation_details " +
+                        "FROM charge_card_details " +
                         "WHERE charge_id = :charge_id")
                         .bind("charge_id", chargeId)
                         .first());
@@ -222,7 +222,7 @@ public class DatabaseTestHelper {
 
     public void addConfirmationDetails(Long chargeId, Card cardDetails) {
         jdbi.withHandle(
-                h -> h.update("INSERT INTO confirmation_details(charge_id,last_digits_card_number, cardholder_name, expiry_date, address_line1, address_line2, address_postcode, address_city, address_county, address_country) values(?,?,?,?,?,?,?,?,?,?)",
+                h -> h.update("INSERT INTO charge_card_details(charge_id,last_digits_card_number, cardholder_name, expiry_date, address_line1, address_line2, address_postcode, address_city, address_county, address_country) values(?,?,?,?,?,?,?,?,?,?)",
                         chargeId,
                         cardDetails.getCardNo(),
                         cardDetails.getCardHolder(),
@@ -236,12 +236,12 @@ public class DatabaseTestHelper {
         );
     }
 
-    public Map<String, Object> getConfirmationDetails(long confirmationDetailsId) {
+    public Map<String, Object> getChargeCardDetails(long confirmationDetailsId) {
         Map<String, Object> ret = jdbi.withHandle(h ->
                 h.createQuery("SELECT charge_id, last_digits_card_number, cardholder_name, expiry_date, address_line1, address_line2, address_postcode, address_city, address_county, address_country " +
-                        "FROM confirmation_details " +
-                        "WHERE id = :confirmation_details_id")
-                        .bind("confirmation_details_id", confirmationDetailsId)
+                        "FROM charge_card_details " +
+                        "WHERE id = :charge_card_details_id")
+                        .bind("charge_card_details_id", confirmationDetailsId)
                         .first());
         return ret;
     }

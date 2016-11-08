@@ -6,12 +6,12 @@ import org.junit.runner.RunWith;
 import org.mockito.ArgumentCaptor;
 import org.mockito.Mock;
 import org.mockito.runners.MockitoJUnitRunner;
-import uk.gov.pay.connector.dao.ConfirmationDetailsDao;
+import uk.gov.pay.connector.dao.ChargeCardDetailsDao;
 import uk.gov.pay.connector.exception.ChargeNotFoundRuntimeException;
 import uk.gov.pay.connector.exception.IllegalStateRuntimeException;
 import uk.gov.pay.connector.model.domain.Card;
+import uk.gov.pay.connector.model.domain.ChargeCardDetailsEntity;
 import uk.gov.pay.connector.model.domain.ChargeEntity;
-import uk.gov.pay.connector.model.domain.ConfirmationDetailsEntity;
 
 import java.util.Optional;
 
@@ -28,11 +28,11 @@ public class ConfirmationDetailsServiceTest extends CardServiceTest {
     private ConfirmationDetailsService confirmationDetailsService;
 
     @Mock
-    private ConfirmationDetailsDao mockedConfirmationDetailsDao;
+    private ChargeCardDetailsDao mockedChargeCardDetailsDao;
 
     @Before
     public void beforeTest() {
-        confirmationDetailsService = new ConfirmationDetailsService(mockedConfirmationDetailsDao, mockedChargeDao);
+        confirmationDetailsService = new ConfirmationDetailsService(mockedChargeCardDetailsDao, mockedChargeDao);
     }
 
     @Test
@@ -51,8 +51,8 @@ public class ConfirmationDetailsServiceTest extends CardServiceTest {
                 .thenReturn(Optional.of(mockedChargeEntity));
 
         confirmationDetailsService.doStore(charge.getExternalId(), cardDetails);
-        ArgumentCaptor<ConfirmationDetailsEntity> capturedConfirmationDetailsEntity = ArgumentCaptor.forClass(ConfirmationDetailsEntity.class);
-        verify(mockedConfirmationDetailsDao, times(1)).persist(capturedConfirmationDetailsEntity.capture());
+        ArgumentCaptor<ChargeCardDetailsEntity> capturedConfirmationDetailsEntity = ArgumentCaptor.forClass(ChargeCardDetailsEntity.class);
+        verify(mockedChargeCardDetailsDao, times(1)).persist(capturedConfirmationDetailsEntity.capture());
         assertThat(capturedConfirmationDetailsEntity.getValue().getChargeEntity(), is(mockedChargeEntity));
         assertThat(capturedConfirmationDetailsEntity.getValue().getCardHolderName(), is(cardDetails.getCardHolder()));
         assertThat(capturedConfirmationDetailsEntity.getValue().getLastDigitsCardNumber(), is("1234"));
@@ -86,7 +86,7 @@ public class ConfirmationDetailsServiceTest extends CardServiceTest {
     public void shouldRemoveConfirmationDetails_ifChargeStatusIsSystemCancelReady() throws Exception {
         ChargeEntity charge = createNewChargeWith(1L, SYSTEM_CANCEL_READY);
         confirmationDetailsService.doRemove(charge);
-        verify(mockedConfirmationDetailsDao, times(1)).remove(any());
+        verify(mockedChargeCardDetailsDao, times(1)).remove(any());
     }
 
     @Test(expected = IllegalStateRuntimeException.class)

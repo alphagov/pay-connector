@@ -1,6 +1,6 @@
 package uk.gov.pay.connector.resources;
 
-import uk.gov.pay.connector.model.domain.Address;
+import uk.gov.pay.connector.model.domain.AddressEntity;
 import uk.gov.pay.connector.model.domain.Card;
 
 import static org.apache.commons.lang3.StringUtils.isNoneBlank;
@@ -17,7 +17,7 @@ public class CardDetailsValidator {
                 hasCardBrand(cardDetails.getCardBrand());
     }
 
-    private static boolean hasAddress(Address address) {
+    private static boolean hasAddress(AddressEntity address) {
         return address != null &&
                 isNotBlank(address.getCity()) &&
                 isNotBlank(address.getLine1()) &&

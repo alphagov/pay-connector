@@ -1,7 +1,7 @@
 package uk.gov.pay.connector.resources;
 
 import org.junit.Test;
-import uk.gov.pay.connector.model.domain.Address;
+import uk.gov.pay.connector.model.domain.AddressEntity;
 import uk.gov.pay.connector.model.domain.Card;
 
 import static org.junit.Assert.assertFalse;
@@ -109,30 +109,30 @@ public class CardDetailsValidatorTest {
 
     @Test
     public void validationFailsForMissingCityAddress() {
-        Address address = addressFor("L1", null, "WJWHE", "GB");
-        Card cardDetails = buildCardDetailsFor(validCardNumber, validCVC, "1290", cardBrand, address);
+        AddressEntity addressEntity = addressFor("L1", null, "WJWHE", "GB");
+        Card cardDetails = buildCardDetailsFor(validCardNumber, validCVC, "1290", cardBrand, addressEntity);
         assertFalse(CardDetailsValidator.isWellFormattedCardDetails(cardDetails));
     }
 
     @Test
     public void validationFailsForMissingLine1Address() {
-        Address address = addressFor(null, "London", "WJWHE", "GB");
-        Card cardDetails = buildCardDetailsFor(validCardNumber, validCVC, "1290", cardBrand, address);
+        AddressEntity addressEntity = addressFor(null, "London", "WJWHE", "GB");
+        Card cardDetails = buildCardDetailsFor(validCardNumber, validCVC, "1290", cardBrand, addressEntity);
         assertFalse(CardDetailsValidator.isWellFormattedCardDetails(cardDetails));
     }
 
     @Test
     public void validationFailsForMissingCountryAddress() {
-        Address address = addressFor("L1", "London", "WJWHE", null);
-        Card cardDetails = buildCardDetailsFor(validCardNumber, validCVC, "1290", cardBrand, address);
+        AddressEntity addressEntity = addressFor("L1", "London", "WJWHE", null);
+        Card cardDetails = buildCardDetailsFor(validCardNumber, validCVC, "1290", cardBrand, addressEntity);
         assertFalse(CardDetailsValidator.isWellFormattedCardDetails(cardDetails));
     }
 
     @Test
     public void validationFailsForMissingPostcodeAddress() {
-        Address address = addressFor("L1", "London", null, "GB");
+        AddressEntity addressEntity = addressFor("L1", "London", null, "GB");
         cardBrand = "card-brand";
-        Card cardDetails = buildCardDetailsFor(validCVC, "1290", cardBrand, cardBrand, address);
+        Card cardDetails = buildCardDetailsFor(validCVC, "1290", cardBrand, cardBrand, addressEntity);
         assertFalse(CardDetailsValidator.isWellFormattedCardDetails(cardDetails));
     }
 
@@ -140,7 +140,7 @@ public class CardDetailsValidatorTest {
         return buildCardDetailsFor(cardNo, cvc, expiry, cardBrand, goodAddress());
     }
 
-    private Card buildCardDetailsFor(String cardNo, String cvc, String expiry, String cardBrand, Address address) {
-        return buildCardDetails("Mr. Payment", cardNo, cvc, expiry, cardBrand, address);
+    private Card buildCardDetailsFor(String cardNo, String cvc, String expiry, String cardBrand, AddressEntity addressEntity) {
+        return buildCardDetails("Mr. Payment", cardNo, cvc, expiry, cardBrand, addressEntity);
     }
 }

@@ -7,9 +7,9 @@ import com.fasterxml.jackson.annotation.JsonProperty;
 import javax.persistence.*;
 
 @Entity
-@Table(name = "confirmation_details")
-@SequenceGenerator(name = "confirmation_details_id_seq", sequenceName = "confirmation_details_id_seq", allocationSize = 1)
-public class ConfirmationDetailsEntity extends AbstractEntity {
+@Table(name = "charge_card_details")
+@SequenceGenerator(name = "charge_card_details_seq", sequenceName = "charge_card_details_seq", allocationSize = 1)
+public class ChargeCardDetailsEntity extends AbstractEntity {
 
     @Column(name = "last_digits_card_number")
     @JsonProperty("last_digits_card_number")
@@ -23,16 +23,16 @@ public class ConfirmationDetailsEntity extends AbstractEntity {
 
     @Embedded
     @JsonProperty("billing_address")
-    private Address billingAddress;
+    private AddressEntity billingAddress;
 
     public ChargeEntity getChargeEntity() {
         return chargeEntity;
     }
 
-    protected ConfirmationDetailsEntity() {
+    protected ChargeCardDetailsEntity() {
     }
 
-    public ConfirmationDetailsEntity(ChargeEntity chargeEntity) {
+    public ChargeCardDetailsEntity(ChargeEntity chargeEntity) {
         this.chargeEntity = chargeEntity;
     }
 
@@ -67,11 +67,11 @@ public class ConfirmationDetailsEntity extends AbstractEntity {
         this.expiryDate = expiryDate;
     }
 
-    public Address getBillingAddress() {
+    public AddressEntity getBillingAddress() {
         return billingAddress;
     }
 
-    public void setBillingAddress(Address billingAddress) {
+    public void setBillingAddress(AddressEntity billingAddress) {
         this.billingAddress = billingAddress;
     }
 }

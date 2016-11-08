@@ -6,7 +6,7 @@ import javax.persistence.Column;
 import javax.persistence.Embeddable;
 
 @Embeddable
-public class Address {
+public class AddressEntity {
 
     @Column(name = "address_line1")
     private String line1;
@@ -22,8 +22,8 @@ public class Address {
     private String country;
 
 
-    public static Address anAddress() {
-        return new Address();
+    public static AddressEntity anAddress() {
+        return new AddressEntity();
     }
 
     @JsonProperty
@@ -85,14 +85,14 @@ public class Address {
         if (this == o) return true;
         if (o == null || getClass() != o.getClass()) return false;
 
-        Address address = (Address) o;
+        AddressEntity addressEntity = (AddressEntity) o;
 
-        if (!line1.equals(address.line1)) return false;
-        if (line2 != null ? !line2.equals(address.line2) : address.line2 != null) return false;
-        if (!postcode.equals(address.postcode)) return false;
-        if (!city.equals(address.city)) return false;
-        if (county != null ? !county.equals(address.county) : address.county != null) return false;
-        return country.equals(address.country);
+        if (!line1.equals(addressEntity.line1)) return false;
+        if (line2 != null ? !line2.equals(addressEntity.line2) : addressEntity.line2 != null) return false;
+        if (!postcode.equals(addressEntity.postcode)) return false;
+        if (!city.equals(addressEntity.city)) return false;
+        if (county != null ? !county.equals(addressEntity.county) : addressEntity.county != null) return false;
+        return country.equals(addressEntity.country);
 
     }
 

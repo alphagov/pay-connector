@@ -4,14 +4,14 @@ import com.google.inject.persist.Transactional;
 import org.apache.commons.lang3.StringUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import uk.gov.pay.connector.dao.ChargeCardDetailsDao;
 import uk.gov.pay.connector.dao.ChargeDao;
-import uk.gov.pay.connector.dao.ConfirmationDetailsDao;
 import uk.gov.pay.connector.exception.ChargeNotFoundRuntimeException;
 import uk.gov.pay.connector.exception.IllegalStateRuntimeException;
 import uk.gov.pay.connector.model.domain.Card;
+import uk.gov.pay.connector.model.domain.ChargeCardDetailsEntity;
 import uk.gov.pay.connector.model.domain.ChargeEntity;
 import uk.gov.pay.connector.model.domain.ChargeStatus;
-import uk.gov.pay.connector.model.domain.ConfirmationDetailsEntity;
 
 import javax.inject.Inject;
 
@@ -19,16 +19,16 @@ public class ConfirmationDetailsService {
     private final Logger logger = LoggerFactory.getLogger(getClass());
 
     private ChargeDao chargeDao;
-    private ConfirmationDetailsDao confirmationDetailsDao;
+    private ChargeCardDetailsDao chargeCardDetailsDao;
 
     @Inject
-    public ConfirmationDetailsService(ConfirmationDetailsDao confirmationDetailsDao, ChargeDao chargeDao) {
-        this.confirmationDetailsDao = confirmationDetailsDao;
+    public ConfirmationDetailsService(ChargeCardDetailsDao chargeCardDetailsDao, ChargeDao chargeDao) {
+        this.chargeCardDetailsDao = chargeCardDetailsDao;
         this.chargeDao = chargeDao;
     }
 
     @Transactional
-    public ConfirmationDetailsEntity doStore(String externalId, Card cardDetails) {
+    public ChargeCardDetailsEntity doStore(String externalId, Card cardDetails) {
         ChargeEntity chargeEntity = chargeDao.
                 findByExternalId(externalId).
                 orElseThrow(() -> new ChargeNotFoundRuntimeException(externalId));
@@ -39,13 +39,13 @@ public class ConfirmationDetailsService {
 
         chargeEntity.setCardBrand(cardDetails.getCardBrand());
 
-        ConfirmationDetailsEntity detailsEntity = new ConfirmationDetailsEntity(chargeEntity);
+        ChargeCardDetailsEntity detailsEntity = new ChargeCardDetailsEntity(chargeEntity);
         detailsEntity.setBillingAddress(cardDetails.getAddress());
         detailsEntity.setCardHolderName(cardDetails.getCardHolder());
         detailsEntity.setExpiryDate(cardDetails.getEndDate());
         detailsEntity.setLastDigitsCardNumber(StringUtils.right(cardDetails.getCardNo(), 4));
-        chargeEntity.setConfirmationDetailsEntity(detailsEntity);
-        confirmationDetailsDao.persist(detailsEntity);
+        chargeEntity.setChargeCardDetailsEntity(detailsEntity);
+        chargeCardDetailsDao.persist(detailsEntity);
         logger.info("Stored confirmation details for charge - charge_external_id={}", externalId);
         return detailsEntity;
     }
@@ -55,11 +55,11 @@ public class ConfirmationDetailsService {
         if (chargeEntity.getStatus().equals(ChargeStatus.AUTHORISATION_SUCCESS.getValue())) {
             throw new IllegalStateRuntimeException(chargeEntity.getExternalId());
         }
-        ConfirmationDetailsEntity entity = chargeEntity.getConfirmationDetailsEntity();
+        ChargeCardDetailsEntity entity = chargeEntity.getChargeCardDetailsEntity();
         if (entity != null) {
-            chargeEntity.setConfirmationDetailsEntity(null);
-            ConfirmationDetailsEntity reloadedEntity = confirmationDetailsDao.merge(entity);
-            confirmationDetailsDao.remove(reloadedEntity);
+            chargeEntity.setChargeCardDetailsEntity(null);
+            ChargeCardDetailsEntity reloadedEntity = chargeCardDetailsDao.merge(entity);
+            chargeCardDetailsDao.remove(reloadedEntity);
             logger.info("Removed confirmation details for charge - charge_external_id={}", chargeEntity.getExternalId());
         }
     }

@@ -48,7 +48,7 @@ public class ChargeEntity extends AbstractEntity {
 
     @JsonBackReference
     @OneToOne(mappedBy = "chargeEntity", cascade = CascadeType.ALL)
-    private ConfirmationDetailsEntity confirmationDetailsEntity;
+    private ChargeCardDetailsEntity chargeCardDetailsEntity;
 
     @ManyToOne
     @JoinColumn(name = "gateway_account_id", updatable = false)
@@ -192,12 +192,12 @@ public class ChargeEntity extends AbstractEntity {
                 .sum();
     }
 
-    public ConfirmationDetailsEntity getConfirmationDetailsEntity() {
-        return confirmationDetailsEntity;
+    public ChargeCardDetailsEntity getChargeCardDetailsEntity() {
+        return chargeCardDetailsEntity;
     }
 
-    public void setConfirmationDetailsEntity(ConfirmationDetailsEntity confirmationDetailsEntity) {
-        this.confirmationDetailsEntity = confirmationDetailsEntity;
+    public void setChargeCardDetailsEntity(ChargeCardDetailsEntity chargeCardDetailsEntity) {
+        this.chargeCardDetailsEntity = chargeCardDetailsEntity;
     }
 
     public void setCardBrand(String cardBrand) {

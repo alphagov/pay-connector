@@ -42,7 +42,7 @@ import static org.mockito.Mockito.*;
 import static uk.gov.pay.connector.model.ErrorType.GENERIC_GATEWAY_ERROR;
 import static uk.gov.pay.connector.model.ErrorType.UNEXPECTED_STATUS_CODE_FROM_GATEWAY;
 import static uk.gov.pay.connector.model.GatewayError.unexpectedStatusCodeFromGateway;
-import static uk.gov.pay.connector.model.domain.Address.anAddress;
+import static uk.gov.pay.connector.model.domain.AddressEntity.anAddress;
 import static uk.gov.pay.connector.model.domain.ChargeEntityFixture.aValidChargeEntity;
 import static uk.gov.pay.connector.model.domain.GatewayAccount.*;
 import static uk.gov.pay.connector.model.domain.GatewayAccountEntity.Type.TEST;
@@ -314,15 +314,15 @@ public class WorldpayPaymentProviderTest {
     }
 
     private Card getValidTestCard() {
-        Address address = anAddress();
-        address.setLine1("123 My Street");
-        address.setLine2("This road");
-        address.setPostcode("SW8URR");
-        address.setCity("London");
-        address.setCounty("London state");
-        address.setCountry("GB");
+        AddressEntity addressEntity = anAddress();
+        addressEntity.setLine1("123 My Street");
+        addressEntity.setLine2("This road");
+        addressEntity.setPostcode("SW8URR");
+        addressEntity.setCity("London");
+        addressEntity.setCounty("London state");
+        addressEntity.setCountry("GB");
 
-        return buildCardDetails("Mr. Payment", "4111111111111111", "123", "12/15", "visa", address);
+        return buildCardDetails("Mr. Payment", "4111111111111111", "123", "12/15", "visa", addressEntity);
     }
 
 }

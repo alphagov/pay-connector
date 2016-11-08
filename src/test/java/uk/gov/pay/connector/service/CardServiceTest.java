@@ -19,7 +19,7 @@ public abstract class CardServiceTest {
                 .withId(chargeId)
                 .withStatus(status)
                 .build();
-        entity.setConfirmationDetailsEntity(new ConfirmationDetailsEntity(entity));
+        entity.setChargeCardDetailsEntity(new ChargeCardDetailsEntity(entity));
         return entity;
 
     }

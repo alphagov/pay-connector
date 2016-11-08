@@ -165,7 +165,7 @@ public class ChargesFrontendResource {
                 .withCreatedDate(charge.getCreatedDate())
                 .withReturnUrl(charge.getReturnUrl())
                 .withEmail(charge.getEmail())
-                .withConfirmationDetails(charge.getConfirmationDetailsEntity())
+                .withConfirmationDetails(charge.getChargeCardDetailsEntity())
                 .withGatewayAccount(charge.getGatewayAccount())
                 .withLink("self", GET, locationUriFor(FRONTEND_CHARGE_API_PATH, uriInfo, chargeId))
                 .withLink("cardAuth", POST, locationUriFor(FRONTEND_CHARGE_AUTHORIZE_API_PATH, uriInfo, chargeId))
