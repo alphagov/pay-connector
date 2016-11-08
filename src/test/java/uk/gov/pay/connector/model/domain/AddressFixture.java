@@ -12,15 +12,15 @@ public class AddressFixture {
         return new AddressFixture();
     }
 
-    public AddressEntity build() {
-        AddressEntity addressEntity = new AddressEntity();
-        addressEntity.setLine1(line1);
-        addressEntity.setLine2(line2);
-        addressEntity.setPostcode(postcode);
-        addressEntity.setCity(city);
-        addressEntity.setCounty(county);
-        addressEntity.setCountry(country);
-        return addressEntity;
+    public Address build() {
+        Address address = new Address();
+        address.setLine1(line1);
+        address.setLine2(line2);
+        address.setPostcode(postcode);
+        address.setCity(city);
+        address.setCounty(county);
+        address.setCountry(country);
+        return address;
     }
 
     public AddressFixture withLine1(String line1) {

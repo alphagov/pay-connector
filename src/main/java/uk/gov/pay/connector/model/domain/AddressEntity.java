@@ -1,7 +1,5 @@
 package uk.gov.pay.connector.model.domain;
 
-import com.fasterxml.jackson.annotation.JsonProperty;
-
 import javax.persistence.Column;
 import javax.persistence.Embeddable;
 
@@ -21,37 +19,54 @@ public class AddressEntity {
     @Column(name = "address_country")
     private String country;
 
+    public AddressEntity() {
+        //for jpa
+    }
+
+    public AddressEntity(Address address) {
+        this.line1 = address.getLine1();
+        this.line2 = address.getLine2();
+        this.postcode = address.getPostcode();
+        this.city = address.getCity();
+        this.county = address.getCounty();
+        this.country = address.getCountry();
+    }
+
+    public Address toAddress(){
+        Address address = new Address();
+        address.setLine1(line1);
+        address.setLine2(line2);
+        address.setPostcode(postcode);
+        address.setCity(city);
+        address.setCounty(county);
+        address.setCountry(country);
+        return address;
+    }
 
     public static AddressEntity anAddress() {
         return new AddressEntity();
     }
 
-    @JsonProperty
     public void setLine1(String line1) {
         this.line1 = line1;
     }
 
-    @JsonProperty
     public void setLine2(String line2) {
         this.line2 = line2;
     }
 
-    @JsonProperty
     public void setPostcode(String postcode) {
         this.postcode = postcode;
     }
 
-    @JsonProperty
     public void setCity(String city) {
         this.city = city;
     }
 
-    @JsonProperty
     public void setCounty(String county) {
         this.county = county;
     }
 
-    @JsonProperty
     public void setCountry(String country) {
         this.country = country;
     }
@@ -80,30 +95,4 @@ public class AddressEntity {
         return city;
     }
 
-    @Override
-    public boolean equals(Object o) {
-        if (this == o) return true;
-        if (o == null || getClass() != o.getClass()) return false;
-
-        AddressEntity addressEntity = (AddressEntity) o;
-
-        if (!line1.equals(addressEntity.line1)) return false;
-        if (line2 != null ? !line2.equals(addressEntity.line2) : addressEntity.line2 != null) return false;
-        if (!postcode.equals(addressEntity.postcode)) return false;
-        if (!city.equals(addressEntity.city)) return false;
-        if (county != null ? !county.equals(addressEntity.county) : addressEntity.county != null) return false;
-        return country.equals(addressEntity.country);
-
-    }
-
-    @Override
-    public int hashCode() {
-        int result = line1.hashCode();
-        result = 31 * result + (line2 != null ? line2.hashCode() : 0);
-        result = 31 * result + postcode.hashCode();
-        result = 31 * result + city.hashCode();
-        result = 31 * result + (county != null ? county.hashCode() : 0);
-        result = 31 * result + country.hashCode();
-        return result;
-    }
 }

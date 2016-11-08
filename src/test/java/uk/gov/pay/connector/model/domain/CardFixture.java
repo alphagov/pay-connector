@@ -9,7 +9,7 @@ public class CardFixture {
     private String endDate = "02/18";
     private String cardBrand = "card-brand";
 
-    private AddressEntity addressEntity = aValidAddress().build();
+    private Address address = aValidAddress().build();
 
     public static CardFixture aValidCard() {
         return new CardFixture();
@@ -17,7 +17,7 @@ public class CardFixture {
 
     public Card build() {
         Card card = new Card();
-        card.setAddress(addressEntity);
+        card.setAddress(address);
         card.setCardHolder(cardHolder);
         card.setCardNo(cardNo);
         card.setCvc(cvc);
@@ -49,8 +49,8 @@ public class CardFixture {
 
     }
 
-    public CardFixture withAddress(AddressEntity addressEntity) {
-        this.addressEntity = addressEntity;
+    public CardFixture withAddress(Address address) {
+        this.address = address;
         return this;
     }
 

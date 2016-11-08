@@ -11,7 +11,7 @@ import org.junit.runner.RunWith;
 import org.mockito.runners.MockitoJUnitRunner;
 import uk.gov.pay.connector.model.CancelGatewayRequest;
 import uk.gov.pay.connector.model.CaptureGatewayRequest;
-import uk.gov.pay.connector.model.domain.AddressEntity;
+import uk.gov.pay.connector.model.domain.Address;
 import uk.gov.pay.connector.model.domain.Card;
 import uk.gov.pay.connector.model.domain.ChargeEntity;
 import uk.gov.pay.connector.model.domain.GatewayAccountEntity;
@@ -224,7 +224,7 @@ public class SmartpayPaymentProviderTest {
     }
 
     public static AuthorisationGatewayRequest getCardAuthorisationRequest(ChargeEntity chargeEntity) {
-        AddressEntity address = AddressEntity.anAddress();
+        Address address = Address.anAddress();
         address.setLine1("41");
         address.setLine2("Scala Street");
         address.setCity("London");

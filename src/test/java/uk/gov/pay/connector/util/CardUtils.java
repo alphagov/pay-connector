@@ -1,6 +1,6 @@
 package uk.gov.pay.connector.util;
 
-import uk.gov.pay.connector.model.domain.AddressEntity;
+import uk.gov.pay.connector.model.domain.Address;
 import uk.gov.pay.connector.model.domain.Card;
 
 import static uk.gov.pay.connector.model.domain.Card.aCard;
@@ -16,28 +16,28 @@ public class CardUtils {
         return buildCardDetails("Mr. Payment", cardNumber, cvc, expiryDate, cardBrand, goodAddress());
     }
 
-    public static Card buildCardDetails(String cardholderName, String cardNumber, String cvc, String expiryDate, String cardBrand, AddressEntity addressEntity) {
+    public static Card buildCardDetails(String cardholderName, String cardNumber, String cvc, String expiryDate, String cardBrand, Address address) {
         Card cardDetails = aCard();
         cardDetails.setCvc(cvc);
         cardDetails.setCardHolder(cardholderName);
         cardDetails.setEndDate(expiryDate);
         cardDetails.setCardNo(cardNumber);
         cardDetails.setCardBrand(cardBrand);
-        cardDetails.setAddress(addressEntity);
+        cardDetails.setAddress(address);
         return cardDetails;
     }
 
-    public static AddressEntity goodAddress() {
+    public static Address goodAddress() {
         return addressFor("The Money Pool", "London", "DO11 4RS", "GB");
     }
 
-    public static AddressEntity addressFor(String line1, String city, String postcode, String country) {
-        AddressEntity addressEntity = AddressEntity.anAddress();
-        addressEntity.setLine1(line1);
-        addressEntity.setLine2(line1);
-        addressEntity.setCity(city);
-        addressEntity.setPostcode(postcode);
-        addressEntity.setCountry(country);
-        return addressEntity;
+    public static Address addressFor(String line1, String city, String postcode, String country) {
+        Address address = Address.anAddress();
+        address.setLine1(line1);
+        address.setLine2(line1);
+        address.setCity(city);
+        address.setPostcode(postcode);
+        address.setCountry(country);
+        return address;
     }
 }

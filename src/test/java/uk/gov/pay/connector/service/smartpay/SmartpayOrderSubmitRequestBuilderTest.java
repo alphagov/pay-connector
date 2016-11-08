@@ -2,7 +2,7 @@ package uk.gov.pay.connector.service.smartpay;
 
 import com.google.common.io.Resources;
 import org.junit.Test;
-import uk.gov.pay.connector.model.domain.AddressEntity;
+import uk.gov.pay.connector.model.domain.Address;
 import uk.gov.pay.connector.model.domain.Card;
 
 import java.io.IOException;
@@ -17,15 +17,15 @@ public class SmartpayOrderSubmitRequestBuilderTest {
 
     @Test
     public void shouldGenerateValidOrderSubmitPayloadForAddressWithAllFields() throws Exception {
-        AddressEntity addressEntity = AddressEntity.anAddress();
-        addressEntity.setLine1("41");
-        addressEntity.setLine2("Scala Street");
-        addressEntity.setCity("London");
-        addressEntity.setCounty("London");
-        addressEntity.setPostcode("EC2A 1AE");
-        addressEntity.setCountry("GB");
+        Address address = Address.anAddress();
+        address.setLine1("41");
+        address.setLine2("Scala Street");
+        address.setCity("London");
+        address.setCounty("London");
+        address.setPostcode("EC2A 1AE");
+        address.setCountry("GB");
 
-        Card card = buildCardDetails("Mr. Payment", "5555444433331111", "737", "08/18", "visa", addressEntity);
+        Card card = buildCardDetails("Mr. Payment", "5555444433331111", "737", "08/18", "visa", address);
 
         String actualRequest = aSmartpayOrderSubmitRequest()
                 .withMerchantCode("MerchantAccount")

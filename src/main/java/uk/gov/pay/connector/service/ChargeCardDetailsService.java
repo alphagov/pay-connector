@@ -8,10 +8,7 @@ import uk.gov.pay.connector.dao.ChargeCardDetailsDao;
 import uk.gov.pay.connector.dao.ChargeDao;
 import uk.gov.pay.connector.exception.ChargeNotFoundRuntimeException;
 import uk.gov.pay.connector.exception.IllegalStateRuntimeException;
-import uk.gov.pay.connector.model.domain.Card;
-import uk.gov.pay.connector.model.domain.ChargeCardDetailsEntity;
-import uk.gov.pay.connector.model.domain.ChargeEntity;
-import uk.gov.pay.connector.model.domain.ChargeStatus;
+import uk.gov.pay.connector.model.domain.*;
 
 import javax.inject.Inject;
 
@@ -46,7 +43,7 @@ public class ChargeCardDetailsService {
         chargeEntity.setCardBrand(cardDetails.getCardBrand());
 
         ChargeCardDetailsEntity detailsEntity = new ChargeCardDetailsEntity(chargeEntity);
-        detailsEntity.setBillingAddress(cardDetails.getAddress());
+        detailsEntity.setBillingAddress(new AddressEntity(cardDetails.getAddress()));
         detailsEntity.setCardHolderName(cardDetails.getCardHolder());
         detailsEntity.setExpiryDate(cardDetails.getEndDate());
         detailsEntity.setLastDigitsCardNumber(StringUtils.right(cardDetails.getCardNo(), 4));

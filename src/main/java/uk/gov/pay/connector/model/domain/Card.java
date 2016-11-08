@@ -9,7 +9,7 @@ public class Card {
     private String cvc;
     private String endDate;
 
-    private AddressEntity address;
+    private Address address;
 
     private String cardBrand;
 
@@ -43,7 +43,7 @@ public class Card {
     }
 
     @JsonProperty("address")
-    public void setAddress(AddressEntity address) {
+    public void setAddress(Address address) {
         this.address = address;
     }
 
@@ -63,7 +63,7 @@ public class Card {
         return endDate;
     }
 
-    public AddressEntity getAddress() {
+    public Address getAddress() {
         return address;
     }
 

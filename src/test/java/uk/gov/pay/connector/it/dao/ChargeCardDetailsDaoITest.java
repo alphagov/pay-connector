@@ -3,10 +3,7 @@ package uk.gov.pay.connector.it.dao;
 import org.junit.Before;
 import org.junit.Test;
 import uk.gov.pay.connector.dao.ChargeCardDetailsDao;
-import uk.gov.pay.connector.model.domain.AddressEntity;
-import uk.gov.pay.connector.model.domain.ChargeCardDetailsEntity;
-import uk.gov.pay.connector.model.domain.ChargeEntity;
-import uk.gov.pay.connector.model.domain.ChargeStatus;
+import uk.gov.pay.connector.model.domain.*;
 
 import java.util.Map;
 import java.util.Optional;
@@ -122,12 +119,12 @@ public class ChargeCardDetailsDaoITest extends DaoITestBase {
                 .withChargeStatus(ChargeStatus.CAPTURE_SUBMITTED);
         testCharge.insert();
 
-        AddressEntity billingAddress = aValidAddress().build();
+        Address billingAddress = aValidAddress().build();
 
         ChargeEntity chargeEntity = new ChargeEntity();
         chargeEntity.setId(testCharge.getChargeId());
         ChargeCardDetailsEntity chargeCardDetailsEntity = new ChargeCardDetailsEntity(chargeEntity);
-        chargeCardDetailsEntity.setBillingAddress(billingAddress);
+        chargeCardDetailsEntity.setBillingAddress(new AddressEntity(billingAddress));
         chargeCardDetailsEntity.setCardHolderName("Mr. Pay Mc Payment");
         chargeCardDetailsEntity.setExpiryDate("03/09");
         chargeCardDetailsEntity.setLastDigitsCardNumber("1258");

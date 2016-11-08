@@ -21,7 +21,8 @@ import static org.mockito.Matchers.any;
 import static org.mockito.Mockito.*;
 import static org.mockito.internal.verification.VerificationModeFactory.times;
 import static uk.gov.pay.connector.model.domain.CardFixture.aValidCard;
-import static uk.gov.pay.connector.model.domain.ChargeStatus.*;
+import static uk.gov.pay.connector.model.domain.ChargeStatus.AUTHORISATION_SUCCESS;
+import static uk.gov.pay.connector.model.domain.ChargeStatus.CAPTURE_READY;
 
 @RunWith(MockitoJUnitRunner.class)
 public class ChargeCardDetailsServiceTest extends CardServiceTest {
@@ -57,7 +58,7 @@ public class ChargeCardDetailsServiceTest extends CardServiceTest {
         assertThat(capturedConfirmationDetailsEntity.getValue().getCardHolderName(), is(cardDetails.getCardHolder()));
         assertThat(capturedConfirmationDetailsEntity.getValue().getLastDigitsCardNumber(), is("1234"));
         assertThat(capturedConfirmationDetailsEntity.getValue().getExpiryDate(), is(cardDetails.getEndDate()));
-        assertThat(capturedConfirmationDetailsEntity.getValue().getBillingAddress(), is(cardDetails.getAddress()));
+        assertThat(capturedConfirmationDetailsEntity.getValue().getBillingAddress().toAddress(), is(cardDetails.getAddress()));
 
         verify(mockedChargeEntity).setCardBrand(cardDetails.getCardBrand());
     }

@@ -4,7 +4,6 @@ import org.apache.commons.lang.StringUtils;
 import org.junit.Before;
 import org.junit.Test;
 import uk.gov.pay.connector.it.base.CardResourceITestBase;
-import uk.gov.pay.connector.model.domain.CardFixture;
 import uk.gov.pay.connector.model.domain.ChargeStatus;
 import uk.gov.pay.connector.util.RestAssuredClient;
 
@@ -17,9 +16,7 @@ import static java.lang.String.format;
 import static java.util.Arrays.asList;
 import static javax.ws.rs.core.Response.Status.*;
 import static org.hamcrest.MatcherAssert.assertThat;
-import static org.hamcrest.Matchers.hasItems;
-import static org.hamcrest.Matchers.is;
-import static org.hamcrest.Matchers.nullValue;
+import static org.hamcrest.Matchers.*;
 import static uk.gov.pay.connector.model.domain.ChargeStatus.*;
 import static uk.gov.pay.connector.model.domain.ChargeStatus.CREATED;
 
@@ -50,7 +47,7 @@ public class ChargeCancelResourceITest extends CardResourceITestBase {
     }
 
     @Test
-    public void shouldRemoveCardConfirmationDetailsIfCancelled() throws Exception {
+    public void shouldPreserveCardConfirmationDetailsIfCancelled() throws Exception {
         String externalChargeId = addCharge(ChargeStatus.AUTHORISATION_SUCCESS, "ref", ZonedDateTime.now().minusHours(1), "irrelavant");
         Long chargeId = Long.valueOf(StringUtils.removeStart(externalChargeId, "charge"));
 
@@ -62,7 +59,8 @@ public class ChargeCancelResourceITest extends CardResourceITestBase {
         cancelChargeAndCheckApiStatus(externalChargeId, SYSTEM_CANCELLED, 204);
 
         confirmationDetails = app.getDatabaseTestHelper().getConfirmationDetailsByChargeId(chargeId);
-        assertThat(confirmationDetails, is(nullValue()));
+        assertThat(confirmationDetails, is(notNullValue()));
+        assertThat(confirmationDetails.get("charge_id"), is(chargeId));
     }
 
     @Test
