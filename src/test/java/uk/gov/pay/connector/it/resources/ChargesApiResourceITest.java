@@ -8,6 +8,7 @@ import org.junit.Before;
 import org.junit.Rule;
 import org.junit.Test;
 import uk.gov.pay.connector.it.dao.DatabaseFixtures;
+import uk.gov.pay.connector.model.domain.CardFixture;
 import uk.gov.pay.connector.model.domain.ChargeStatus;
 import uk.gov.pay.connector.rules.DropwizardAppWithPostgresRule;
 import uk.gov.pay.connector.util.DateTimeUtils;
@@ -277,6 +278,25 @@ public class ChargesApiResourceITest {
                 .postCreateCharge(postBody)
                 .statusCode(Status.BAD_REQUEST.getStatusCode());
 
+    }
+
+    @Test
+    public void shouldGetCardDetails_ifStatusIsBeyondAuthorised() throws Exception {
+        long chargeId = RandomUtils.nextInt();
+        String externalChargeId = "charge1";
+
+        app.getDatabaseTestHelper().addCharge(chargeId, externalChargeId, accountId, AMOUNT, AUTHORISATION_SUCCESS, returnUrl, null);
+        app.getDatabaseTestHelper().addChargeCardDetails(chargeId, CardFixture.aValidCard().withCardNo("1234").build());
+        app.getDatabaseTestHelper().addToken(chargeId, "tokenId");
+
+        getChargeApi
+                .withAccountId(accountId)
+                .withChargeId(externalChargeId)
+                .getCharge()
+                .statusCode(OK.getStatusCode())
+                .contentType(JSON)
+                .body("card_details",is(notNullValue()))
+                .body("card_details.last_digits_card_number",is("1234"));
     }
 
     @Test

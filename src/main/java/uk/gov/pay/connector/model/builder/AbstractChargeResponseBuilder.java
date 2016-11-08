@@ -3,6 +3,7 @@ package uk.gov.pay.connector.model.builder;
 import com.google.common.collect.ImmutableMap;
 import uk.gov.pay.connector.model.ChargeResponse;
 import uk.gov.pay.connector.model.api.ExternalChargeState;
+import uk.gov.pay.connector.model.domain.PersistedCard;
 
 import java.net.URI;
 import java.time.ZonedDateTime;
@@ -24,6 +25,7 @@ public abstract class AbstractChargeResponseBuilder<T extends AbstractChargeResp
     protected String providerName;
     protected String email;
     protected ChargeResponse.RefundSummary refundSummary;
+    protected PersistedCard cardDetails;
 
     protected abstract T thisObject();
 
@@ -105,6 +107,11 @@ public abstract class AbstractChargeResponseBuilder<T extends AbstractChargeResp
 
     public T withRefunds(ChargeResponse.RefundSummary refundSummary) {
         this.refundSummary = refundSummary;
+        return thisObject();
+    }
+
+    public T withCardDetails(PersistedCard cardDetails){
+        this.cardDetails = cardDetails;
         return thisObject();
     }
 

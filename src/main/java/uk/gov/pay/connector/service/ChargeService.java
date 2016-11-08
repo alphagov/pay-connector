@@ -139,6 +139,7 @@ public class ChargeService {
                 .withReturnUrl(charge.getReturnUrl())
                 .withEmail(charge.getEmail())
                 .withRefunds(buildRefundSummary(charge))
+                .withCardDetails(charge.getChargeCardDetailsEntity() == null ? null : charge.getChargeCardDetailsEntity().toCard())
                 .withLink("self", GET, selfUriFor(uriInfo, charge.getGatewayAccount().getId(), chargeId))
                 .withLink("refunds", GET, refundsUriFor(uriInfo, charge.getGatewayAccount().getId(), charge.getExternalId()));
     }

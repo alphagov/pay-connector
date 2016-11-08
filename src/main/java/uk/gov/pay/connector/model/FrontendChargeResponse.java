@@ -64,16 +64,12 @@ public class FrontendChargeResponse extends ChargeResponse {
     @JsonProperty(value = "confirmation_details")
     private ChargeCardDetailsEntity confirmationDetails;
 
-    @JsonProperty(value = "card_details")
-    private PersistedCard persistedCard;
-
     @JsonProperty(value = "gateway_account")
     private GatewayAccountEntity gatewayAccount;
 
     private FrontendChargeResponse(String chargeId, Long amount, ExternalChargeState state, String cardBrand, String gatewayTransactionId, String returnUrl, String email, String description, String reference, String providerName, ZonedDateTime createdDate, List<Map<String, Object>> dataLinks, String status, RefundSummary refundSummary, ChargeCardDetailsEntity confirmationDetails, PersistedCard chargeCardDetails, GatewayAccountEntity gatewayAccount) {
-        super(chargeId, amount, state, cardBrand, gatewayTransactionId, returnUrl, email, description, reference, providerName, createdDate, dataLinks, refundSummary);
+        super(chargeId, amount, state, cardBrand, gatewayTransactionId, returnUrl, email, description, reference, providerName, createdDate, dataLinks, refundSummary, chargeCardDetails);
         this.status = status;
-        this.persistedCard = chargeCardDetails;
         this.confirmationDetails = confirmationDetails;
         this.gatewayAccount = gatewayAccount;
     }
@@ -90,7 +86,7 @@ public class FrontendChargeResponse extends ChargeResponse {
         //TODO: leaving for backward compatibility
         if (confirmationDetails != null ? !confirmationDetails.equals(that.confirmationDetails) : that.confirmationDetails != null)
             return false;
-        if (persistedCard != null ? !persistedCard.equals(that.persistedCard) : that.persistedCard != null)
+        if (cardDetails != null ? !cardDetails.equals(that.cardDetails) : that.cardDetails != null)
             return false;
         return gatewayAccount != null ? gatewayAccount.equals(that.gatewayAccount) : that.gatewayAccount == null;
 
@@ -102,7 +98,7 @@ public class FrontendChargeResponse extends ChargeResponse {
         result = 31 * result + (status != null ? status.hashCode() : 0);
         //TODO: leaving for backward compatibility
         result = 31 * result + (confirmationDetails != null ? confirmationDetails.hashCode() : 0);
-        result = 31 * result + (persistedCard != null ? persistedCard.hashCode() : 0);
+        result = 31 * result + (cardDetails != null ? cardDetails.hashCode() : 0);
         result = 31 * result + (gatewayAccount != null ? gatewayAccount.hashCode() : 0);
         return result;
     }

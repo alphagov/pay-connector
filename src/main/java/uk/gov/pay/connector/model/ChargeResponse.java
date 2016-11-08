@@ -5,6 +5,7 @@ import com.fasterxml.jackson.annotation.JsonInclude;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import uk.gov.pay.connector.model.api.ExternalChargeState;
 import uk.gov.pay.connector.model.builder.AbstractChargeResponseBuilder;
+import uk.gov.pay.connector.model.domain.PersistedCard;
 import uk.gov.pay.connector.util.DateTimeUtils;
 
 import java.net.URI;
@@ -91,7 +92,7 @@ public class ChargeResponse {
 
         @Override
         public ChargeResponse build() {
-            return new ChargeResponse(chargeId, amount, state, cardBrand, gatewayTransactionId, returnUrl, email, description, reference, providerName, createdDate, links, refundSummary);
+            return new ChargeResponse(chargeId, amount, state, cardBrand, gatewayTransactionId, returnUrl, email, description, reference, providerName, createdDate, links, refundSummary, cardDetails);
         }
     }
 
@@ -137,12 +138,15 @@ public class ChargeResponse {
     @JsonProperty("refund_summary")
     private RefundSummary refundSummary;
 
+    @JsonProperty("card_details")
+    protected PersistedCard cardDetails;
+
     @JsonProperty("created_date")
     public String getCreatedDate() {
         return DateTimeUtils.toUTCDateString(createdDate);
     }
 
-    protected ChargeResponse(String chargeId, Long amount, ExternalChargeState state, String cardBrand, String gatewayTransactionId, String returnUrl, String email, String description, String reference, String providerName, ZonedDateTime createdDate, List<Map<String, Object>> dataLinks, RefundSummary refundSummary) {
+    protected ChargeResponse(String chargeId, Long amount, ExternalChargeState state, String cardBrand, String gatewayTransactionId, String returnUrl, String email, String description, String reference, String providerName, ZonedDateTime createdDate, List<Map<String, Object>> dataLinks, RefundSummary refundSummary, PersistedCard cardDetails) {
         this.dataLinks = dataLinks;
         this.chargeId = chargeId;
         this.amount = amount;
@@ -156,6 +160,7 @@ public class ChargeResponse {
         this.createdDate = createdDate;
         this.email = email;
         this.refundSummary = refundSummary;
+        this.cardDetails = cardDetails;
     }
 
     public URI getLink(String rel) {
@@ -185,8 +190,9 @@ public class ChargeResponse {
         if (description != null ? !description.equals(that.description) : that.description != null) return false;
         if (reference != null ? !reference.equals(that.reference) : that.reference != null) return false;
         if (providerName != null ? !providerName.equals(that.providerName) : that.providerName != null) return false;
-        if (createdDate != null ? !createdDate.equals(that.createdDate) : that.createdDate != null) return false;
-        return !(refundSummary != null ? !refundSummary.equals(that.refundSummary) : that.refundSummary != null);
+        if (refundSummary != null ? !refundSummary.equals(that.refundSummary) : that.refundSummary != null)
+            return false;
+        return cardDetails != null ? cardDetails.equals(that.cardDetails) : that.cardDetails == null;
 
     }
 
@@ -203,8 +209,8 @@ public class ChargeResponse {
         result = 31 * result + (description != null ? description.hashCode() : 0);
         result = 31 * result + (reference != null ? reference.hashCode() : 0);
         result = 31 * result + (providerName != null ? providerName.hashCode() : 0);
-        result = 31 * result + (createdDate != null ? createdDate.hashCode() : 0);
         result = 31 * result + (refundSummary != null ? refundSummary.hashCode() : 0);
+        result = 31 * result + (cardDetails != null ? cardDetails.hashCode() : 0);
         return result;
     }
 
@@ -224,8 +230,10 @@ public class ChargeResponse {
                 ", providerName='" + providerName + '\'' +
                 ", createdDate=" + createdDate +
                 ", refundSummary=" + refundSummary +
+                ", cardDetails=" + cardDetails +
                 '}';
     }
+
 }
 
 
