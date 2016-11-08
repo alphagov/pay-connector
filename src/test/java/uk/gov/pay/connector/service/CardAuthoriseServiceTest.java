@@ -39,7 +39,7 @@ import static uk.gov.pay.connector.service.CardExecutorService.ExecutionStatus.I
 @RunWith(MockitoJUnitRunner.class)
 public class CardAuthoriseServiceTest extends CardServiceTest {
 
-    private final CardAuthoriseService cardAuthorisationService = new CardAuthoriseService(mockedChargeDao, mockedProviders, mockExecutorService, mockConfirmationDetailsService);
+    private final CardAuthoriseService cardAuthorisationService = new CardAuthoriseService(mockedChargeDao, mockedProviders, mockExecutorService, mockChargeCardDetailsService);
 
     @Mock
     private Future<Either<Error, GatewayResponse>> mockFutureResponse;
@@ -126,7 +126,7 @@ public class CardAuthoriseServiceTest extends CardServiceTest {
         Card cardDetails = CardUtils.aValidCard();
         anAuthorisationSuccessResponse(charge, reloadedCharge, transactionId, cardDetails);
 
-        verify(mockConfirmationDetailsService, times(1)).doStore(charge.getExternalId(), cardDetails);
+        verify(mockChargeCardDetailsService, times(1)).doStore(charge.getExternalId(), cardDetails);
     }
 
     @Test
@@ -135,7 +135,7 @@ public class CardAuthoriseServiceTest extends CardServiceTest {
         ChargeEntity reloadedCharge = spy(charge);
 
         anAuthorisationRejectedResponse(charge, reloadedCharge);
-        verify(mockConfirmationDetailsService, never()).doStore(any(), any());
+        verify(mockChargeCardDetailsService, never()).doStore(any(), any());
     }
 
     @Test
@@ -144,7 +144,7 @@ public class CardAuthoriseServiceTest extends CardServiceTest {
         ChargeEntity reloadedCharge = spy(charge);
 
         anAuthorisationErrorResponse(charge, reloadedCharge);
-        verify(mockConfirmationDetailsService, never()).doStore(any(), any());
+        verify(mockChargeCardDetailsService, never()).doStore(any(), any());
     }
     @Test
     public void authoriseShouldThrowAnOperationAlreadyInProgressRuntimeExceptionWhenTimeout() throws Exception {

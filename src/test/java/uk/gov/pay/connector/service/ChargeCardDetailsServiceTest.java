@@ -24,15 +24,15 @@ import static uk.gov.pay.connector.model.domain.CardFixture.aValidCard;
 import static uk.gov.pay.connector.model.domain.ChargeStatus.*;
 
 @RunWith(MockitoJUnitRunner.class)
-public class ConfirmationDetailsServiceTest extends CardServiceTest {
-    private ConfirmationDetailsService confirmationDetailsService;
+public class ChargeCardDetailsServiceTest extends CardServiceTest {
+    private ChargeCardDetailsService chargeCardDetailsService;
 
     @Mock
     private ChargeCardDetailsDao mockedChargeCardDetailsDao;
 
     @Before
     public void beforeTest() {
-        confirmationDetailsService = new ConfirmationDetailsService(mockedChargeCardDetailsDao, mockedChargeDao);
+        chargeCardDetailsService = new ChargeCardDetailsService(mockedChargeCardDetailsDao, mockedChargeDao);
     }
 
     @Test
@@ -50,7 +50,7 @@ public class ConfirmationDetailsServiceTest extends CardServiceTest {
         when(mockedChargeDao.findByExternalId(charge.getExternalId()))
                 .thenReturn(Optional.of(mockedChargeEntity));
 
-        confirmationDetailsService.doStore(charge.getExternalId(), cardDetails);
+        chargeCardDetailsService.doStore(charge.getExternalId(), cardDetails);
         ArgumentCaptor<ChargeCardDetailsEntity> capturedConfirmationDetailsEntity = ArgumentCaptor.forClass(ChargeCardDetailsEntity.class);
         verify(mockedChargeCardDetailsDao, times(1)).persist(capturedConfirmationDetailsEntity.capture());
         assertThat(capturedConfirmationDetailsEntity.getValue().getChargeEntity(), is(mockedChargeEntity));
@@ -67,7 +67,7 @@ public class ConfirmationDetailsServiceTest extends CardServiceTest {
         when(mockedChargeDao.findByExternalId(any()))
                 .thenReturn(Optional.empty());
 
-        confirmationDetailsService.doStore("", aValidCard().build());
+        chargeCardDetailsService.doStore("", aValidCard().build());
     }
 
     @Test(expected = IllegalStateRuntimeException.class)
@@ -79,19 +79,7 @@ public class ConfirmationDetailsServiceTest extends CardServiceTest {
         when(mockedChargeDao.findByExternalId(charge.getExternalId()))
                 .thenReturn(Optional.of(charge));
 
-        confirmationDetailsService.doStore(charge.getExternalId(), cardDetails);
+        chargeCardDetailsService.doStore(charge.getExternalId(), cardDetails);
     }
 
-    @Test
-    public void shouldRemoveConfirmationDetails_ifChargeStatusIsSystemCancelReady() throws Exception {
-        ChargeEntity charge = createNewChargeWith(1L, SYSTEM_CANCEL_READY);
-        confirmationDetailsService.doRemove(charge);
-        verify(mockedChargeCardDetailsDao, times(1)).remove(any());
-    }
-
-    @Test(expected = IllegalStateRuntimeException.class)
-    public void shouldThrowAnExceptionWhenRemovingDetails_ifChargeStatusIsAuthorisationSuccess() throws Exception {
-        ChargeEntity charge = createNewChargeWith(1L, AUTHORISATION_SUCCESS);
-        confirmationDetailsService.doRemove(charge);
-    }
 }

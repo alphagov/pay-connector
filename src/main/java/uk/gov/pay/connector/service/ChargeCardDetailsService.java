@@ -15,14 +15,20 @@ import uk.gov.pay.connector.model.domain.ChargeStatus;
 
 import javax.inject.Inject;
 
-public class ConfirmationDetailsService {
+/**
+ * TODO: not sure if this service is necessary or the DAO.
+ * Given that we can treat ChargeCardDetails as a child entity we should be able to manage this through charge as there is no special business logic here
+ * Will probably refactor out this later
+ */
+
+public class ChargeCardDetailsService {
     private final Logger logger = LoggerFactory.getLogger(getClass());
 
     private ChargeDao chargeDao;
     private ChargeCardDetailsDao chargeCardDetailsDao;
 
     @Inject
-    public ConfirmationDetailsService(ChargeCardDetailsDao chargeCardDetailsDao, ChargeDao chargeDao) {
+    public ChargeCardDetailsService(ChargeCardDetailsDao chargeCardDetailsDao, ChargeDao chargeDao) {
         this.chargeCardDetailsDao = chargeCardDetailsDao;
         this.chargeDao = chargeDao;
     }
@@ -48,19 +54,5 @@ public class ConfirmationDetailsService {
         chargeCardDetailsDao.persist(detailsEntity);
         logger.info("Stored confirmation details for charge - charge_external_id={}", externalId);
         return detailsEntity;
-    }
-
-    @Transactional
-    public void doRemove(ChargeEntity chargeEntity) {
-        if (chargeEntity.getStatus().equals(ChargeStatus.AUTHORISATION_SUCCESS.getValue())) {
-            throw new IllegalStateRuntimeException(chargeEntity.getExternalId());
-        }
-        ChargeCardDetailsEntity entity = chargeEntity.getChargeCardDetailsEntity();
-        if (entity != null) {
-            chargeEntity.setChargeCardDetailsEntity(null);
-            ChargeCardDetailsEntity reloadedEntity = chargeCardDetailsDao.merge(entity);
-            chargeCardDetailsDao.remove(reloadedEntity);
-            logger.info("Removed confirmation details for charge - charge_external_id={}", chargeEntity.getExternalId());
-        }
     }
 }

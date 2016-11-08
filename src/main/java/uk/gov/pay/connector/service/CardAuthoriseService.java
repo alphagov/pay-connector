@@ -33,8 +33,8 @@ public class CardAuthoriseService extends CardService<BaseAuthoriseResponse> {
     public CardAuthoriseService(ChargeDao chargeDao,
                                 PaymentProviders providers,
                                 CardExecutorService cardExecutorService,
-                                ConfirmationDetailsService confirmationDetailsService) {
-        super(chargeDao, providers, confirmationDetailsService, cardExecutorService);
+                                ChargeCardDetailsService chargeCardDetailsService) {
+        super(chargeDao, providers, chargeCardDetailsService, cardExecutorService);
     }
 
     public GatewayResponse doAuthorise(String chargeId, Card cardDetails) {
@@ -106,7 +106,7 @@ public class CardAuthoriseService extends CardService<BaseAuthoriseResponse> {
 
         chargeDao.mergeAndNotifyStatusHasChanged(reloadedCharge);
         if (status.equals(AUTHORISATION_SUCCESS)) {
-            confirmationDetailsService.doStore(reloadedCharge.getExternalId(), cardDetails);
+            chargeCardDetailsService.doStore(reloadedCharge.getExternalId(), cardDetails);
         }
         return operationResponse;
     }

@@ -15,12 +15,10 @@ import uk.gov.pay.connector.exception.ConflictRuntimeException;
 import uk.gov.pay.connector.exception.IllegalStateRuntimeException;
 import uk.gov.pay.connector.exception.OperationAlreadyInProgressRuntimeException;
 import uk.gov.pay.connector.model.CaptureGatewayRequest;
-import uk.gov.pay.connector.model.domain.Card;
 import uk.gov.pay.connector.model.domain.ChargeEntity;
 import uk.gov.pay.connector.model.domain.ChargeStatus;
 import uk.gov.pay.connector.model.gateway.GatewayResponse;
 import uk.gov.pay.connector.service.worldpay.WorldpayCaptureResponse;
-import uk.gov.pay.connector.util.CardUtils;
 
 import javax.persistence.OptimisticLockException;
 import java.util.Optional;
@@ -38,14 +36,14 @@ public class CardCaptureServiceTest extends CardServiceTest {
     @Rule
     public final ExpectedException exception = ExpectedException.none();
     @Mock
-    private ConfirmationDetailsService mockConfirmationDetailsService;
+    private ChargeCardDetailsService mockChargeCardDetailsService;
     @Mock
     private UserNotificationService mockUserNotificationService;
     private CardCaptureService cardCaptureService;
 
     @Before
     public void beforeTest() {
-        cardCaptureService = new CardCaptureService(mockedChargeDao, mockedProviders, mockConfirmationDetailsService, mockUserNotificationService);
+        cardCaptureService = new CardCaptureService(mockedChargeDao, mockedProviders, mockChargeCardDetailsService, mockUserNotificationService);
     }
 
     public void setupPaymentProviderMock(String transactionId, String errorCode) {
@@ -215,7 +213,6 @@ public class CardCaptureServiceTest extends CardServiceTest {
         setupPaymentProviderMock(gatewayTxId, null);
         when(mockedProviders.byName(charge.getPaymentGatewayName())).thenReturn(mockedPaymentProvider);
         cardCaptureService.doCapture(charge.getExternalId());
-        verify(mockConfirmationDetailsService, times(1)).doRemove(reloadedCharge);
     }
 
     @Test
@@ -228,6 +225,5 @@ public class CardCaptureServiceTest extends CardServiceTest {
         setupPaymentProviderMock(gatewayTxId, "error-code");
         when(mockedProviders.byName(charge.getPaymentGatewayName())).thenReturn(mockedPaymentProvider);
         cardCaptureService.doCapture(charge.getExternalId());
-        verify(mockConfirmationDetailsService, times(1)).doRemove(reloadedCharge);
     }
 }

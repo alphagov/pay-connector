@@ -350,7 +350,7 @@ public class ChargesApiResourceITest {
         app.getDatabaseTestHelper().addCardType(card, "label", "type", "brand");
         app.getDatabaseTestHelper().addAcceptedCardType(Long.valueOf(accountId), card);
         app.getDatabaseTestHelper().addCharge(chargeId, externalChargeId, accountId, AMOUNT, chargeStatus, returnUrl, null, "My reference", createdDate);
-        app.getDatabaseTestHelper().addConfirmationDetails(chargeId, "1234", "Mr. McPayment", "03/18", "line1", null, "postcode", "city", null, "country");
+        app.getDatabaseTestHelper().addChargeCardDetails(chargeId, "1234", "Mr. McPayment", "03/18", "line1", null, "postcode", "city", null, "country");
         app.getDatabaseTestHelper().addToken(chargeId, "tokenId");
         app.getDatabaseTestHelper().addEvent(chargeId, chargeStatus.getValue());
         getChargeApi
@@ -847,7 +847,7 @@ public class ChargesApiResourceITest {
         app.getDatabaseTestHelper().addCharge(chargeId, externalChargeId, accountId, AMOUNT, chargeStatus, returnUrl, null, reference, fromDate, email, cardBrand);
         app.getDatabaseTestHelper().addToken(chargeId, "tokenId");
         app.getDatabaseTestHelper().addEvent(chargeId, chargeStatus.getValue());
-        app.getDatabaseTestHelper().addConfirmationDetails(chargeId, "1234", "Mr. McPayment", "03/18", "line1", null, "postcode", "city", null, "country");
+        app.getDatabaseTestHelper().addChargeCardDetails(chargeId, "1234", "Mr. McPayment", "03/18", "line1", null, "postcode", "city", null, "country");
         return externalChargeId;
     }
 

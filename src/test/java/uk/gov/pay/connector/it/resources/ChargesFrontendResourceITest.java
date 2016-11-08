@@ -87,7 +87,7 @@ public class ChargesFrontendResourceITest {
                 .insert();
 
         app.getDatabaseTestHelper().addCharge(chargeId, externalChargeId, accountId, expectedAmount, AUTHORISATION_SUCCESS, returnUrl, null, "ref", null, email, testCardType.getBrand());
-        app.getDatabaseTestHelper().addConfirmationDetails(chargeId, "1234", "Mr. McPayment",  "03/18", "line1", null, "postcode", "city", null, "country");
+        app.getDatabaseTestHelper().addChargeCardDetails(chargeId, "1234", "Mr. McPayment",  "03/18", "line1", null, "postcode", "city", null, "country");
         validateGetCharge(expectedAmount, externalChargeId, AUTHORISATION_SUCCESS, testCardType.getLabel());
     }
 
@@ -97,7 +97,7 @@ public class ChargesFrontendResourceITest {
         Long chargeId = 123456L;
 
         app.getDatabaseTestHelper().addCharge(chargeId, externalChargeId, accountId, expectedAmount, AUTHORISATION_SUCCESS, returnUrl, null, "ref", null, email, "unknown");
-        app.getDatabaseTestHelper().addConfirmationDetails(chargeId, "1234", "Mr. McPayment", "03/18", "line1", null, "postcode", "city", null, "country");
+        app.getDatabaseTestHelper().addChargeCardDetails(chargeId, "1234", "Mr. McPayment", "03/18", "line1", null, "postcode", "city", null, "country");
         validateGetCharge(expectedAmount, externalChargeId, AUTHORISATION_SUCCESS, "");
     }
 

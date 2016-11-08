@@ -142,8 +142,8 @@ public class DatabaseTestHelper {
         );
     }
 
-    public void addConfirmationDetails(long id, Long chargeId, String lastDigitsCardNumber, String cardHolderName, String expiryDate,
-                                       String line1, String line2, String postcode, String city, String county, String country) {
+    public void addChargeCardDetails(long id, Long chargeId, String lastDigitsCardNumber, String cardHolderName, String expiryDate,
+                                     String line1, String line2, String postcode, String city, String county, String country) {
         jdbi.withHandle(handle ->
                         handle
                                 .createStatement("INSERT INTO charge_card_details(id, charge_id, last_digits_card_number, cardholder_name, expiry_date, address_line1, address_line2, address_postcode, address_city, address_county, address_country) VALUES (:id, :charge_id, :last_digits_card_number, :cardholder_name, :expiry_date, :address_line1, :address_line2, :address_postcode, :address_city, :address_county, :address_country)")
@@ -165,9 +165,9 @@ public class DatabaseTestHelper {
 
 
 
-    public void addConfirmationDetails(Long chargeId, String lastDigitsCardNumber, String cardHolderName, String expiryDate,
-                                       String line1, String line2, String postcode, String city, String county, String country) {
-        addConfirmationDetails(
+    public void addChargeCardDetails(Long chargeId, String lastDigitsCardNumber, String cardHolderName, String expiryDate,
+                                     String line1, String line2, String postcode, String city, String county, String country) {
+        addChargeCardDetails(
                 RandomUtils.nextLong(1, 99999),
                 chargeId,
                 lastDigitsCardNumber,
@@ -220,7 +220,7 @@ public class DatabaseTestHelper {
         return ret;
     }
 
-    public void addConfirmationDetails(Long chargeId, Card cardDetails) {
+    public void addChargeCardDetails(Long chargeId, Card cardDetails) {
         jdbi.withHandle(
                 h -> h.update("INSERT INTO charge_card_details(charge_id,last_digits_card_number, cardholder_name, expiry_date, address_line1, address_line2, address_postcode, address_city, address_county, address_country) values(?,?,?,?,?,?,?,?,?,?)",
                         chargeId,

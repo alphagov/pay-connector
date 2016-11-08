@@ -168,7 +168,7 @@ public class DatabaseFixtures {
         public TestConfirmationDetails insert() {
             if (chargeEntity == null)
                 throw new IllegalStateException("Test charge must be provided.");
-            databaseTestHelper.addConfirmationDetails(id, chargeEntity.getChargeId(), lastDigitsCardNumber, cardHolderName, expiryDate, billingAddress.getLine1(), billingAddress.getLine2(), billingAddress.getPostcode(), billingAddress.getCity(), billingAddress.getCounty(), billingAddress.getCountry());
+            databaseTestHelper.addChargeCardDetails(id, chargeEntity.getChargeId(), lastDigitsCardNumber, cardHolderName, expiryDate, billingAddress.getLine1(), billingAddress.getLine2(), billingAddress.getPostcode(), billingAddress.getCity(), billingAddress.getCounty(), billingAddress.getCountry());
             return this;
         }
 

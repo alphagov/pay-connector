@@ -9,7 +9,7 @@ public abstract class CardServiceTest {
     protected final PaymentProvider mockedPaymentProvider = mock(PaymentProvider.class);
     protected PaymentProviders mockedProviders = mock(PaymentProviders.class);
 
-    protected ConfirmationDetailsService mockConfirmationDetailsService = mock(ConfirmationDetailsService.class);
+    protected ChargeCardDetailsService mockChargeCardDetailsService = mock(ChargeCardDetailsService.class);
     protected ChargeDao mockedChargeDao = mock(ChargeDao.class);
     protected CardExecutorService mockExecutorService = mock(CardExecutorService.class);
 

@@ -35,17 +35,17 @@ public class ChargeExpiryService {
     private final ChargeDao chargeDao;
     private final PaymentProviders providers;
     private Provider<TransactionFlow> transactionFlowProvider;
-    private final ConfirmationDetailsService confirmationDetailsService;
+    private final ChargeCardDetailsService chargeCardDetailsService;
 
     @Inject
     public ChargeExpiryService(ChargeDao chargeDao,
                                PaymentProviders providers,
                                Provider<TransactionFlow> transactionFlowProvider,
-                               ConfirmationDetailsService confirmationDetailsService) {
+                               ChargeCardDetailsService chargeCardDetailsService) {
         this.chargeDao = chargeDao;
         this.providers = providers;
         this.transactionFlowProvider = transactionFlowProvider;
-        this.confirmationDetailsService = confirmationDetailsService;
+        this.chargeCardDetailsService = chargeCardDetailsService;
     }
 
     public Map<String, Integer> expire(List<ChargeEntity> charges) {
@@ -80,7 +80,7 @@ public class ChargeExpiryService {
 
         gatewayAuthorizedCharges.forEach(chargeEntity -> {
             ChargeEntity processedEntity = transactionFlowProvider.get()
-                    .executeNext(prepareForTerminate(chargeDao, chargeEntity, EXPIRE_FLOW, confirmationDetailsService))
+                    .executeNext(prepareForTerminate(chargeDao, chargeEntity, EXPIRE_FLOW, chargeCardDetailsService))
                     .executeNext(doGatewayCancel(providers))
                     .executeNext(finishExpireCancel())
                     .complete().get(ChargeEntity.class);

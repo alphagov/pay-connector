@@ -41,7 +41,7 @@ class CancelServiceFunctions {
     static PreTransactionalOperation<TransactionContext, ChargeEntity> prepareForTerminate(ChargeDao chargeDao,
                                                                                            ChargeEntity chargeEntity,
                                                                                            StatusFlow statusFlow,
-                                                                                           ConfirmationDetailsService confirmationDetailsService) {
+                                                                                           ChargeCardDetailsService chargeCardDetailsService) {
         return context -> {
             ChargeEntity reloadedCharge = chargeDao.merge(chargeEntity);
 
@@ -71,9 +71,7 @@ class CancelServiceFunctions {
                     gatewayAccount.getType(),
                     statusFlow.getLockState());
 
-            ChargeEntity reloadedEntity = chargeDao.mergeAndNotifyStatusHasChanged(reloadedCharge);
-            confirmationDetailsService.doRemove(reloadedEntity);
-            return reloadedEntity;
+            return chargeDao.mergeAndNotifyStatusHasChanged(reloadedCharge);
         };
     }
 
