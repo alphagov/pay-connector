@@ -11,9 +11,9 @@ import static java.lang.String.format;
 import static java.util.UUID.randomUUID;
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.is;
-import static org.hamcrest.Matchers.nullValue;
-import static uk.gov.pay.connector.model.api.ExternalChargeState.EXTERNAL_SUCCESS;
+import static org.hamcrest.Matchers.notNullValue;
 import static uk.gov.pay.connector.model.api.ExternalChargeState.EXTERNAL_ERROR_GATEWAY;
+import static uk.gov.pay.connector.model.api.ExternalChargeState.EXTERNAL_SUCCESS;
 import static uk.gov.pay.connector.model.domain.ChargeStatus.*;
 
 public class CardCaptureResourceITest extends CardResourceITestBase {
@@ -76,11 +76,11 @@ public class CardCaptureResourceITest extends CardResourceITestBase {
     }
 
     @Test
-    public void shouldRemoveConfirmationDetails_IfCaptureReady() throws Exception {
+    public void shouldPreserveConfirmationDetails_IfCaptureReady() throws Exception {
         String externalChargeId = authoriseNewCharge();
         Long chargeId = Long.valueOf(StringUtils.removeStart(externalChargeId, "charge-"));
 
-        Map<String, Object> confirmationDetails = app.getDatabaseTestHelper().getConfirmationDetailsByChargeId(chargeId);
+        Map<String, Object> confirmationDetails = app.getDatabaseTestHelper().getChargeCardDetailsByChargeId(chargeId);
         assertThat(confirmationDetails.isEmpty(), is(false));
 
         givenSetup()
@@ -88,8 +88,11 @@ public class CardCaptureResourceITest extends CardResourceITestBase {
                 .then()
                 .statusCode(204);
 
-        confirmationDetails = app.getDatabaseTestHelper().getConfirmationDetailsByChargeId(chargeId);
-        assertThat(confirmationDetails, is(nullValue()));
+        confirmationDetails = app.getDatabaseTestHelper().getChargeCardDetailsByChargeId(chargeId);
+        assertThat(confirmationDetails, is(notNullValue()));
+        assertThat(confirmationDetails.get("charge_id"), is(chargeId));
+        assertThat(confirmationDetails.get("last_digits_card_number"), is(notNullValue()));
+        assertThat(confirmationDetails.get("expiry_date"), is(notNullValue()));
     }
 
     private void captureAndVerifyFor(String chargeId, int expectedStatusCode, String message) {

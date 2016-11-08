@@ -115,7 +115,11 @@ public class CardResourceITestBase {
     }
 
     protected String authoriseNewCharge() {
-        return createNewChargeWith(AUTHORISATION_SUCCESS, "");
+        String externalChargeId = createNewChargeWith(AUTHORISATION_SUCCESS, "");
+        app.getDatabaseTestHelper().addChargeCardDetails(
+                Long.parseLong(externalChargeId.replace("charge-","")),
+                CardFixture.aValidCard().withCardNo("1234").build());
+        return externalChargeId;
     }
 
 

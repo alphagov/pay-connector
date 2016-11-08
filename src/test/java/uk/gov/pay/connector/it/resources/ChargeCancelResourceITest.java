@@ -53,12 +53,12 @@ public class ChargeCancelResourceITest extends CardResourceITestBase {
 
         worldpay.mockCancelSuccess();
 
-        Map<String, Object> confirmationDetails = app.getDatabaseTestHelper().getConfirmationDetailsByChargeId(chargeId);
+        Map<String, Object> confirmationDetails = app.getDatabaseTestHelper().getChargeCardDetailsByChargeId(chargeId);
         assertThat(confirmationDetails.isEmpty(), is(false));
 
         cancelChargeAndCheckApiStatus(externalChargeId, SYSTEM_CANCELLED, 204);
 
-        confirmationDetails = app.getDatabaseTestHelper().getConfirmationDetailsByChargeId(chargeId);
+        confirmationDetails = app.getDatabaseTestHelper().getChargeCardDetailsByChargeId(chargeId);
         assertThat(confirmationDetails, is(notNullValue()));
         assertThat(confirmationDetails.get("charge_id"), is(chargeId));
     }

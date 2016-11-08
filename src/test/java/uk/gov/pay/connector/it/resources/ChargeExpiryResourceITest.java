@@ -3,8 +3,6 @@ package uk.gov.pay.connector.it.resources;
 import org.apache.commons.lang.StringUtils;
 import org.junit.Test;
 import uk.gov.pay.connector.it.base.CardResourceITestBase;
-import uk.gov.pay.connector.model.domain.CardFixture;
-import uk.gov.pay.connector.model.domain.ChargeStatus;
 import uk.gov.pay.connector.util.RestAssuredClient;
 
 import java.time.ZonedDateTime;
@@ -17,7 +15,7 @@ import static javax.ws.rs.core.Response.Status.OK;
 import static org.apache.commons.collections4.CollectionUtils.isEqualCollection;
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.is;
-import static org.hamcrest.Matchers.nullValue;
+import static org.hamcrest.Matchers.notNullValue;
 import static org.hamcrest.collection.IsIterableContainingInAnyOrder.containsInAnyOrder;
 import static org.junit.Assert.assertTrue;
 import static uk.gov.pay.connector.model.domain.ChargeStatus.*;
@@ -146,21 +144,22 @@ public class ChargeExpiryResourceITest extends CardResourceITestBase {
     }
 
     @Test
-    public void shouldRemoveCardConfirmationDetailsIfChargeExpires() throws Exception {
+    public void shouldPreserveCardDetailsIfChargeExpires() throws Exception {
         String externalChargeId = addCharge(AUTHORISATION_SUCCESS, "ref", ZonedDateTime.now().minusHours(1), "transaction-id");
         Long chargeId = Long.valueOf(StringUtils.removeStart(externalChargeId, "charge"));
 
         worldpay.mockCancelSuccess();
 
-        Map<String, Object> confirmationDetails = app.getDatabaseTestHelper().getConfirmationDetailsByChargeId(chargeId);
-        assertThat(confirmationDetails.isEmpty(), is(false));
+        Map<String, Object> chargeCardDetails = app.getDatabaseTestHelper().getChargeCardDetailsByChargeId(chargeId);
+        assertThat(chargeCardDetails.isEmpty(), is(false));
 
         getChargeApi
                 .postChargeExpiryTask()
                 .statusCode(OK.getStatusCode());
 
-        confirmationDetails = app.getDatabaseTestHelper().getConfirmationDetailsByChargeId(chargeId);
-        assertThat(confirmationDetails, is(nullValue()));
+        chargeCardDetails = app.getDatabaseTestHelper().getChargeCardDetailsByChargeId(chargeId);
+        assertThat(chargeCardDetails, is(notNullValue()));
+        assertThat(chargeCardDetails.get("charge_id"), is(chargeId));
     }
 
 }

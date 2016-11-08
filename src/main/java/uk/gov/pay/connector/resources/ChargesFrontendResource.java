@@ -9,10 +9,7 @@ import uk.gov.pay.connector.dao.CardTypeDao;
 import uk.gov.pay.connector.dao.ChargeDao;
 import uk.gov.pay.connector.model.ChargeResponse;
 import uk.gov.pay.connector.model.builder.PatchRequestBuilder;
-import uk.gov.pay.connector.model.domain.CardTypeEntity;
-import uk.gov.pay.connector.model.domain.ChargeEntity;
-import uk.gov.pay.connector.model.domain.ChargeStatus;
-import uk.gov.pay.connector.model.domain.GatewayAccountEntity;
+import uk.gov.pay.connector.model.domain.*;
 import uk.gov.pay.connector.service.ChargeService;
 
 import javax.inject.Inject;
@@ -96,8 +93,8 @@ public class ChargesFrontendResource {
         return maybeCharge
                 .map(chargeEntity ->
                         Response.ok(buildChargeResponse(
-                                        uriInfo,
-                                        chargeService.updateCharge(chargeEntity, chargePatchRequest))
+                                uriInfo,
+                                chargeService.updateCharge(chargeEntity, chargePatchRequest))
                         ).build())
                 .orElseGet(() -> responseWithChargeNotFound(chargeId));
     }
@@ -155,6 +152,7 @@ public class ChargesFrontendResource {
     private ChargeResponse buildChargeResponse(UriInfo uriInfo, ChargeEntity charge) {
         String chargeId = charge.getExternalId();
 
+        ChargeCardDetailsEntity chargeCardDetailsEntity = charge.getChargeCardDetailsEntity();
         return aFrontendChargeResponse()
                 .withStatus(charge.getStatus())
                 .withChargeId(chargeId)
@@ -165,7 +163,9 @@ public class ChargesFrontendResource {
                 .withCreatedDate(charge.getCreatedDate())
                 .withReturnUrl(charge.getReturnUrl())
                 .withEmail(charge.getEmail())
-                .withConfirmationDetails(charge.getChargeCardDetailsEntity())
+                //TODO: leaving for backward compatibility
+                .withConfirmationDetails(chargeCardDetailsEntity)
+                .withChargeCardDetails(chargeCardDetailsEntity == null ? null : chargeCardDetailsEntity.toCard())
                 .withGatewayAccount(charge.getGatewayAccount())
                 .withLink("self", GET, locationUriFor(FRONTEND_CHARGE_API_PATH, uriInfo, chargeId))
                 .withLink("cardAuth", POST, locationUriFor(FRONTEND_CHARGE_AUTHORIZE_API_PATH, uriInfo, chargeId))

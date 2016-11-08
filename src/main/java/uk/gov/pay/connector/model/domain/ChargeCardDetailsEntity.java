@@ -38,10 +38,18 @@ public class ChargeCardDetailsEntity extends AbstractEntity {
 
     @OneToOne
     @JsonIgnore
-    @JoinColumn(name = "charge_id", nullable = false, unique=true)
+    @JoinColumn(name = "charge_id", nullable = false, unique = true)
     @JsonManagedReference
     private ChargeEntity chargeEntity;
 
+    public PersistedCard toCard() {
+        PersistedCard card = new PersistedCard();
+        card.setLastDigitsCardNumber(lastDigitsCardNumber);
+        card.setBillingAddress(billingAddress.toAddress());
+        card.setExpiryDate(expiryDate);
+        card.setCardHolderName(cardHolderName);
+        return card;
+    }
 
     public String getLastDigitsCardNumber() {
         return lastDigitsCardNumber;

@@ -210,7 +210,7 @@ public class DatabaseTestHelper {
         return ret;
     }
 
-    public Map<String, Object>  getConfirmationDetailsByChargeId(Long chargeId) {
+    public Map<String, Object> getChargeCardDetailsByChargeId(Long chargeId) {
         Map<String, Object> ret = jdbi.withHandle(h ->
                 h.createQuery("SELECT charge_id, last_digits_card_number, cardholder_name, expiry_date, address_line1, address_line2, address_postcode, address_city, address_county, address_country " +
                         "FROM charge_card_details " +
