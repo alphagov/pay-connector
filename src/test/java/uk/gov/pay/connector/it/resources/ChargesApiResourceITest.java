@@ -286,7 +286,7 @@ public class ChargesApiResourceITest {
         String externalChargeId = "charge1";
 
         app.getDatabaseTestHelper().addCharge(chargeId, externalChargeId, accountId, AMOUNT, AUTHORISATION_SUCCESS, returnUrl, null);
-        app.getDatabaseTestHelper().addChargeCardDetails(chargeId, CardFixture.aValidCard().withCardNo("1234").build());
+        app.getDatabaseTestHelper().updateChargeCardDetails(chargeId, CardFixture.aValidCard().withCardNo("1234").build());
         app.getDatabaseTestHelper().addToken(chargeId, "tokenId");
 
         getChargeApi
@@ -295,8 +295,8 @@ public class ChargesApiResourceITest {
                 .getCharge()
                 .statusCode(OK.getStatusCode())
                 .contentType(JSON)
-                .body("card_details",is(notNullValue()))
-                .body("card_details.last_digits_card_number",is("1234"));
+                .body("card_details", is(notNullValue()))
+                .body("card_details.last_digits_card_number", is("1234"));
     }
 
     @Test
@@ -328,7 +328,9 @@ public class ChargesApiResourceITest {
                 .withDatabaseTestHelper(app.getDatabaseTestHelper())
                 .aMastercardCreditCardType()
                 .insert();
-        app.getDatabaseTestHelper().addCharge(chargeId, externalChargeId, accountId, AMOUNT, AUTHORISATION_SUCCESS, returnUrl, null, "ref", null, email, testCardType.getBrand());
+        app.getDatabaseTestHelper().addCharge(chargeId, externalChargeId, accountId, AMOUNT, AUTHORISATION_SUCCESS, returnUrl, null, "ref", null, email);
+        app.getDatabaseTestHelper().updateChargeCardDetails(chargeId, testCardType.getBrand(), "1234", "Mr. McPayment", "03/18", "line1", null, "postcode", "city", null, "country");
+
         app.getDatabaseTestHelper().addToken(chargeId, "tokenId");
 
         getChargeApi
@@ -346,7 +348,8 @@ public class ChargesApiResourceITest {
         long chargeId = RandomUtils.nextInt();
         String externalChargeId = "charge1";
 
-        app.getDatabaseTestHelper().addCharge(chargeId, externalChargeId, accountId, AMOUNT, AUTHORISATION_SUCCESS, returnUrl, null, "ref", null, email, "unknown-brand");
+        app.getDatabaseTestHelper().addCharge(chargeId, externalChargeId, accountId, AMOUNT, AUTHORISATION_SUCCESS, returnUrl, null, "ref", null, email);
+        app.getDatabaseTestHelper().updateChargeCardDetails(chargeId, "unknown-brand", "1234", "Mr. McPayment", "03/18", "line1", null, "postcode", "city", null, "country");
         app.getDatabaseTestHelper().addToken(chargeId, "tokenId");
 
         getChargeApi
@@ -370,7 +373,7 @@ public class ChargesApiResourceITest {
         app.getDatabaseTestHelper().addCardType(card, "label", "type", "brand");
         app.getDatabaseTestHelper().addAcceptedCardType(Long.valueOf(accountId), card);
         app.getDatabaseTestHelper().addCharge(chargeId, externalChargeId, accountId, AMOUNT, chargeStatus, returnUrl, null, "My reference", createdDate);
-        app.getDatabaseTestHelper().addChargeCardDetails(chargeId, "1234", "Mr. McPayment", "03/18", "line1", null, "postcode", "city", null, "country");
+        app.getDatabaseTestHelper().updateChargeCardDetails(chargeId, "VISA", "1234", "Mr. McPayment", "03/18", "line1", null, "postcode", "city", null, "country");
         app.getDatabaseTestHelper().addToken(chargeId, "tokenId");
         app.getDatabaseTestHelper().addEvent(chargeId, chargeStatus.getValue());
         getChargeApi
@@ -430,7 +433,7 @@ public class ChargesApiResourceITest {
 
         List<String> createdDateStrings = collect(results, "created_date");
         datesFrom(createdDateStrings).forEach(createdDate ->
-                        assertThat(createdDate, is(within(1, DAYS, now())))
+                assertThat(createdDate, is(within(1, DAYS, now())))
         );
         List<String> emails = collect(results, "email");
         assertThat(emails, contains(email, email));
@@ -864,10 +867,10 @@ public class ChargesApiResourceITest {
         long chargeId = RandomUtils.nextInt();
         String externalChargeId = "charge" + chargeId;
         ChargeStatus chargeStatus = status != null ? status : AUTHORISATION_SUCCESS;
-        app.getDatabaseTestHelper().addCharge(chargeId, externalChargeId, accountId, AMOUNT, chargeStatus, returnUrl, null, reference, fromDate, email, cardBrand);
+        app.getDatabaseTestHelper().addCharge(chargeId, externalChargeId, accountId, AMOUNT, chargeStatus, returnUrl, null, reference, fromDate, email);
         app.getDatabaseTestHelper().addToken(chargeId, "tokenId");
         app.getDatabaseTestHelper().addEvent(chargeId, chargeStatus.getValue());
-        app.getDatabaseTestHelper().addChargeCardDetails(chargeId, "1234", "Mr. McPayment", "03/18", "line1", null, "postcode", "city", null, "country");
+        app.getDatabaseTestHelper().updateChargeCardDetails(chargeId, cardBrand, "1234", "Mr. McPayment", "03/18", "line1", null, "postcode", "city", null, "country");
         return externalChargeId;
     }
 

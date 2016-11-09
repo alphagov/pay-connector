@@ -20,7 +20,6 @@ public abstract class CardService<T extends BaseResponse> {
     private final PaymentProviders providers;
     protected final Logger logger = LoggerFactory.getLogger(getClass());
     protected CardExecutorService cardExecutorService;
-    protected ChargeCardDetailsService chargeCardDetailsService;
 
     public enum OperationType {
         CAPTURE("Capture"),
@@ -38,14 +37,13 @@ public abstract class CardService<T extends BaseResponse> {
         }
     }
 
-    public CardService(ChargeDao chargeDao, PaymentProviders providers, ChargeCardDetailsService chargeCardDetailsService) {
+    public CardService(ChargeDao chargeDao, PaymentProviders providers) {
         this.chargeDao = chargeDao;
         this.providers = providers;
-        this.chargeCardDetailsService = chargeCardDetailsService;
     }
 
-    public CardService(ChargeDao chargeDao, PaymentProviders providers, ChargeCardDetailsService chargeCardDetailsService, CardExecutorService cardExecutorService) {
-        this(chargeDao, providers, chargeCardDetailsService);
+    public CardService(ChargeDao chargeDao, PaymentProviders providers, CardExecutorService cardExecutorService) {
+        this(chargeDao, providers);
         this.cardExecutorService = cardExecutorService;
     }
 

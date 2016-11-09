@@ -4,7 +4,7 @@ import com.fasterxml.jackson.annotation.JsonProperty;
 import org.apache.commons.lang3.builder.ToStringBuilder;
 import uk.gov.pay.connector.model.api.ExternalChargeState;
 import uk.gov.pay.connector.model.builder.AbstractChargeResponseBuilder;
-import uk.gov.pay.connector.model.domain.ChargeCardDetailsEntity;
+import uk.gov.pay.connector.model.domain.CardDetailsEntity;
 import uk.gov.pay.connector.model.domain.ChargeStatus;
 import uk.gov.pay.connector.model.domain.GatewayAccountEntity;
 import uk.gov.pay.connector.model.domain.PersistedCard;
@@ -16,7 +16,7 @@ import java.util.Map;
 public class FrontendChargeResponse extends ChargeResponse {
     public static class FrontendChargeResponseBuilder extends AbstractChargeResponseBuilder<FrontendChargeResponseBuilder, FrontendChargeResponse> {
         private String status;
-        private ChargeCardDetailsEntity confirmationDetails;
+        private CardDetailsEntity confirmationDetails;
         private PersistedCard persistedCard;
         private GatewayAccountEntity gatewayAccount;
 
@@ -27,8 +27,8 @@ public class FrontendChargeResponse extends ChargeResponse {
         }
 
         //TODO: leaving for backward compatibility. To remove later
-        public FrontendChargeResponseBuilder withConfirmationDetails(ChargeCardDetailsEntity chargeCardDetailsEntity) {
-            this.confirmationDetails = chargeCardDetailsEntity;
+        public FrontendChargeResponseBuilder withConfirmationDetails(CardDetailsEntity cardDetailsEntity) {
+            this.confirmationDetails = cardDetailsEntity;
             return this;
         }
 
@@ -62,12 +62,12 @@ public class FrontendChargeResponse extends ChargeResponse {
 
     //TODO: leaving for backward compatibility
     @JsonProperty(value = "confirmation_details")
-    private ChargeCardDetailsEntity confirmationDetails;
+    private CardDetailsEntity confirmationDetails;
 
     @JsonProperty(value = "gateway_account")
     private GatewayAccountEntity gatewayAccount;
 
-    private FrontendChargeResponse(String chargeId, Long amount, ExternalChargeState state, String cardBrand, String gatewayTransactionId, String returnUrl, String email, String description, String reference, String providerName, ZonedDateTime createdDate, List<Map<String, Object>> dataLinks, String status, RefundSummary refundSummary, ChargeCardDetailsEntity confirmationDetails, PersistedCard chargeCardDetails, GatewayAccountEntity gatewayAccount) {
+    private FrontendChargeResponse(String chargeId, Long amount, ExternalChargeState state, String cardBrand, String gatewayTransactionId, String returnUrl, String email, String description, String reference, String providerName, ZonedDateTime createdDate, List<Map<String, Object>> dataLinks, String status, RefundSummary refundSummary, CardDetailsEntity confirmationDetails, PersistedCard chargeCardDetails, GatewayAccountEntity gatewayAccount) {
         super(chargeId, amount, state, cardBrand, gatewayTransactionId, returnUrl, email, description, reference, providerName, createdDate, dataLinks, refundSummary, chargeCardDetails);
         this.status = status;
         this.confirmationDetails = confirmationDetails;

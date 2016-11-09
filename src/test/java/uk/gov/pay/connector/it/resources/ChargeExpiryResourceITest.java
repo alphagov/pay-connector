@@ -159,7 +159,14 @@ public class ChargeExpiryResourceITest extends CardResourceITestBase {
 
         chargeCardDetails = app.getDatabaseTestHelper().getChargeCardDetailsByChargeId(chargeId);
         assertThat(chargeCardDetails, is(notNullValue()));
-        assertThat(chargeCardDetails.get("charge_id"), is(chargeId));
+        assertThat(chargeCardDetails.get("card_brand"), is(notNullValue()));
+        assertThat(chargeCardDetails.get("last_digits_card_number"), is(notNullValue()));
+        assertThat(chargeCardDetails.get("expiry_date"), is(notNullValue()));
+        assertThat(chargeCardDetails.get("cardholder_name"), is(notNullValue()));
+        assertThat(chargeCardDetails.get("address_line1"), is(notNullValue()));
+        assertThat(chargeCardDetails.get("address_line2"), is(notNullValue()));
+        assertThat(chargeCardDetails.get("address_postcode"), is(notNullValue()));
+        assertThat(chargeCardDetails.get("address_country"), is(notNullValue()));
     }
 
 }

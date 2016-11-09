@@ -90,9 +90,14 @@ public class CardCaptureResourceITest extends CardResourceITestBase {
 
         confirmationDetails = app.getDatabaseTestHelper().getChargeCardDetailsByChargeId(chargeId);
         assertThat(confirmationDetails, is(notNullValue()));
-        assertThat(confirmationDetails.get("charge_id"), is(chargeId));
         assertThat(confirmationDetails.get("last_digits_card_number"), is(notNullValue()));
         assertThat(confirmationDetails.get("expiry_date"), is(notNullValue()));
+        assertThat(confirmationDetails.get("card_brand"), is(notNullValue()));
+        assertThat(confirmationDetails.get("cardholder_name"), is(notNullValue()));
+        assertThat(confirmationDetails.get("address_line1"), is(notNullValue()));
+        assertThat(confirmationDetails.get("address_line2"), is(notNullValue()));
+        assertThat(confirmationDetails.get("address_postcode"), is(notNullValue()));
+        assertThat(confirmationDetails.get("address_country"), is(notNullValue()));
     }
 
     private void captureAndVerifyFor(String chargeId, int expectedStatusCode, String message) {

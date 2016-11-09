@@ -53,14 +53,22 @@ public class ChargeCancelResourceITest extends CardResourceITestBase {
 
         worldpay.mockCancelSuccess();
 
-        Map<String, Object> confirmationDetails = app.getDatabaseTestHelper().getChargeCardDetailsByChargeId(chargeId);
-        assertThat(confirmationDetails.isEmpty(), is(false));
+        Map<String, Object> cardDetails = app.getDatabaseTestHelper().getChargeCardDetailsByChargeId(chargeId);
+        assertThat(cardDetails.isEmpty(), is(false));
 
         cancelChargeAndCheckApiStatus(externalChargeId, SYSTEM_CANCELLED, 204);
 
-        confirmationDetails = app.getDatabaseTestHelper().getChargeCardDetailsByChargeId(chargeId);
-        assertThat(confirmationDetails, is(notNullValue()));
-        assertThat(confirmationDetails.get("charge_id"), is(chargeId));
+        cardDetails = app.getDatabaseTestHelper().getChargeCardDetailsByChargeId(chargeId);
+        assertThat(cardDetails, is(notNullValue()));
+        assertThat(cardDetails.get("card_brand"), is(notNullValue()));
+        assertThat(cardDetails.get("last_digits_card_number"), is(notNullValue()));
+        assertThat(cardDetails.get("expiry_date"), is(notNullValue()));
+        assertThat(cardDetails.get("cardholder_name"), is(notNullValue()));
+        assertThat(cardDetails.get("address_line1"), is(notNullValue()));
+        assertThat(cardDetails.get("address_line2"), is(notNullValue()));
+        assertThat(cardDetails.get("address_postcode"), is(notNullValue()));
+        assertThat(cardDetails.get("address_country"), is(notNullValue()));
+
     }
 
     @Test

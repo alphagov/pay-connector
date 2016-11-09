@@ -9,7 +9,6 @@ public abstract class CardServiceTest {
     protected final PaymentProvider mockedPaymentProvider = mock(PaymentProvider.class);
     protected PaymentProviders mockedProviders = mock(PaymentProviders.class);
 
-    protected ChargeCardDetailsService mockChargeCardDetailsService = mock(ChargeCardDetailsService.class);
     protected ChargeDao mockedChargeDao = mock(ChargeDao.class);
     protected CardExecutorService mockExecutorService = mock(CardExecutorService.class);
 
@@ -19,7 +18,7 @@ public abstract class CardServiceTest {
                 .withId(chargeId)
                 .withStatus(status)
                 .build();
-        entity.setChargeCardDetailsEntity(new ChargeCardDetailsEntity(entity));
+        entity.setCardDetails(new CardDetailsEntity());
         return entity;
 
     }

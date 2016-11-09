@@ -86,8 +86,8 @@ public class ChargesFrontendResourceITest {
                 .aMastercardCreditCardType()
                 .insert();
 
-        app.getDatabaseTestHelper().addCharge(chargeId, externalChargeId, accountId, expectedAmount, AUTHORISATION_SUCCESS, returnUrl, null, "ref", null, email, testCardType.getBrand());
-        app.getDatabaseTestHelper().addChargeCardDetails(chargeId, "1234", "Mr. McPayment",  "03/18", "line1", null, "postcode", "city", null, "country");
+        app.getDatabaseTestHelper().addCharge(chargeId, externalChargeId, accountId, expectedAmount, AUTHORISATION_SUCCESS, returnUrl, null, "ref", null, email);
+        app.getDatabaseTestHelper().updateChargeCardDetails(chargeId, testCardType.getBrand(), "1234", "Mr. McPayment", "03/18", "line1", null, "postcode", "city", null, "country");
         validateGetCharge(expectedAmount, externalChargeId, AUTHORISATION_SUCCESS, testCardType.getLabel());
     }
 
@@ -96,8 +96,8 @@ public class ChargesFrontendResourceITest {
         String externalChargeId = RandomIdGenerator.newId();
         Long chargeId = 123456L;
 
-        app.getDatabaseTestHelper().addCharge(chargeId, externalChargeId, accountId, expectedAmount, AUTHORISATION_SUCCESS, returnUrl, null, "ref", null, email, "unknown");
-        app.getDatabaseTestHelper().addChargeCardDetails(chargeId, "1234", "Mr. McPayment", "03/18", "line1", null, "postcode", "city", null, "country");
+        app.getDatabaseTestHelper().addCharge(chargeId, externalChargeId, accountId, expectedAmount, AUTHORISATION_SUCCESS, returnUrl, null, "ref", null, email);
+        app.getDatabaseTestHelper().updateChargeCardDetails(chargeId, "unknown", "1234", "Mr. McPayment", "03/18", "line1", null, "postcode", "city", null, "country");
         validateGetCharge(expectedAmount, externalChargeId, AUTHORISATION_SUCCESS, "");
     }
 
@@ -398,8 +398,9 @@ public class ChargesFrontendResourceITest {
                 .body("gateway_account.card_types[1].type", is("CREDIT"))
                 .body("gateway_account.card_types[1].brand", is("visa"));
     }
+
     private void validateConfirmationDetails(ValidatableResponse response, ChargeStatus status) {
-        if (status.equals(ChargeStatus.AUTHORISATION_SUCCESS)){
+        if (status.equals(ChargeStatus.AUTHORISATION_SUCCESS)) {
             response
                     .body("card_details", is(notNullValue()))
                     .body("card_details.charge_id", is(nullValue()))
@@ -417,6 +418,7 @@ public class ChargesFrontendResourceITest {
             response.body("containsKey('card_details')", is(false));
         }
     }
+
     private static void setupLifeCycleEventsFor(DropwizardAppWithPostgresRule app, Long chargeId, List<ChargeStatus> statuses) {
         statuses.stream().forEach(
                 st -> app.getDatabaseTestHelper().addEvent(chargeId, st.getValue())

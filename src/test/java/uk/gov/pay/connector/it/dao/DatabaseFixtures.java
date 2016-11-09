@@ -46,8 +46,8 @@ public class DatabaseFixtures {
         return new TestRefund();
     }
 
-    public TestConfirmationDetails aTestConfirmationDetails() {
-        return new TestConfirmationDetails();
+    public TestCardDetails aTestCardDetails() {
+        return new TestCardDetails();
     }
 
     public TestCardType aMastercardCreditCardType() {
@@ -68,6 +68,10 @@ public class DatabaseFixtures {
 
     public TestEmailNotification anEmailNotification() {
         return new TestEmailNotification();
+    }
+
+    public  TestCardDetails validTestCardDetails() {
+        return  new TestCardDetails();
     }
 
     public class TestAddress {
@@ -103,45 +107,41 @@ public class DatabaseFixtures {
         }
     }
 
-    public class TestConfirmationDetails {
-        Long id = RandomUtils.nextLong(1, 99999);
+    public class TestCardDetails {
         private String lastDigitsCardNumber = "1234";
         private String cardHolderName = "Mr. Pay McPayment";
         private String expiryDate = "02/17";
         private TestAddress billingAddress = new TestAddress();
-        private TestCharge chargeEntity;
+        private Long chargeId;
+        private String cardBrand = "VISA";
 
-        public Long getId() {
-            return id;
-        }
-
-        public TestConfirmationDetails withId(Long id) {
-            this.id = id;
-            return this;
-        }
-
-        public TestConfirmationDetails withLastDigitsOfCardNumber(String lastDigitsCardNumber) {
+        public TestCardDetails withLastDigitsOfCardNumber(String lastDigitsCardNumber) {
             this.lastDigitsCardNumber = lastDigitsCardNumber;
             return this;
         }
 
-        public TestConfirmationDetails withCardHolderName(String cardHolderName) {
+        public TestCardDetails withCardHolderName(String cardHolderName) {
             this.cardHolderName = cardHolderName;
             return this;
         }
 
-        public TestConfirmationDetails withExpiryDate(String expiryDate) {
+        public TestCardDetails withExpiryDate(String expiryDate) {
             this.expiryDate = expiryDate;
             return this;
         }
 
-        public TestConfirmationDetails withBillingAddress(TestAddress billingAddress) {
+        public TestCardDetails withBillingAddress(TestAddress billingAddress) {
             this.billingAddress = billingAddress;
             return this;
         }
 
-        public TestConfirmationDetails withChargeEntity(TestCharge chargeEntity) {
-            this.chargeEntity = chargeEntity;
+        public TestCardDetails withCardBrand(String cardBrand) {
+            this.cardBrand = cardBrand;
+            return this;
+        }
+
+        public TestCardDetails withChargeId(Long chargeId) {
+            this.chargeId = chargeId;
             return this;
         }
 
@@ -161,17 +161,14 @@ public class DatabaseFixtures {
             return billingAddress;
         }
 
-        public TestCharge getChargeEntity() {
-            return chargeEntity;
-        }
-
-        public TestConfirmationDetails insert() {
-            if (chargeEntity == null)
-                throw new IllegalStateException("Test charge must be provided.");
-            databaseTestHelper.addChargeCardDetails(id, chargeEntity.getChargeId(), lastDigitsCardNumber, cardHolderName, expiryDate, billingAddress.getLine1(), billingAddress.getLine2(), billingAddress.getPostcode(), billingAddress.getCity(), billingAddress.getCounty(), billingAddress.getCountry());
+        public TestCardDetails update() {
+            databaseTestHelper.updateChargeCardDetails(chargeId, cardBrand, lastDigitsCardNumber, cardHolderName, expiryDate, billingAddress.getLine1(), billingAddress.getLine2(), billingAddress.getPostcode(), billingAddress.getCity(), billingAddress.getCounty(), billingAddress.getCountry());
             return this;
         }
 
+        public String getCardBrand() {
+            return cardBrand;
+        }
     }
 
     public class TestAccount {
@@ -254,11 +251,11 @@ public class DatabaseFixtures {
         String returnUrl = "http://service.com/success-page";
         String transactionId;
         String reference = "Test reference";
-        String cardBrand;
 
         ZonedDateTime createdDate = ZonedDateTime.now(ZoneId.of("UTC"));
 
         TestAccount testAccount;
+        TestCardDetails cardDetails;
 
         public TestCharge withTestAccount(TestAccount account) {
             this.testAccount = account;
@@ -277,11 +274,6 @@ public class DatabaseFixtures {
 
         public TestCharge withReference(String reference) {
             this.reference = reference;
-            return this;
-        }
-
-        public TestCharge withCardBrand(String cardBrand) {
-            this.cardBrand = cardBrand;
             return this;
         }
 
@@ -314,7 +306,11 @@ public class DatabaseFixtures {
             if (testAccount == null)
                 throw new IllegalStateException("Test Account must be provided.");
 
-            databaseTestHelper.addCharge(chargeId, externalChargeId, String.valueOf(testAccount.getAccountId()), amount, chargeStatus, returnUrl, transactionId, reference, createdDate, email, cardBrand);
+            databaseTestHelper.addCharge(chargeId, externalChargeId, String.valueOf(testAccount.getAccountId()), amount, chargeStatus, returnUrl, transactionId, reference, createdDate, email);
+
+            if (cardDetails != null) {
+                cardDetails.update();
+            }
             return this;
         }
 
@@ -354,8 +350,9 @@ public class DatabaseFixtures {
             return createdDate;
         }
 
-        public String getCardBrand() {
-            return cardBrand;
+        public TestCharge withCardDetails(TestCardDetails testCardDetails) {
+            cardDetails = testCardDetails;
+            return this;
         }
     }
 

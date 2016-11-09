@@ -35,15 +35,14 @@ public class CardCaptureServiceTest extends CardServiceTest {
 
     @Rule
     public final ExpectedException exception = ExpectedException.none();
-    @Mock
-    private ChargeCardDetailsService mockChargeCardDetailsService;
+
     @Mock
     private UserNotificationService mockUserNotificationService;
     private CardCaptureService cardCaptureService;
 
     @Before
     public void beforeTest() {
-        cardCaptureService = new CardCaptureService(mockedChargeDao, mockedProviders, mockChargeCardDetailsService, mockUserNotificationService);
+        cardCaptureService = new CardCaptureService(mockedChargeDao, mockedProviders, mockUserNotificationService);
     }
 
     public void setupPaymentProviderMock(String transactionId, String errorCode) {

@@ -24,8 +24,8 @@ public class CardCaptureService extends CardService implements TransactionalGate
 
 
     @Inject
-    public CardCaptureService(ChargeDao chargeDao, PaymentProviders providers, ChargeCardDetailsService chargeCardDetailsService, UserNotificationService userNotificationService) {
-        super(chargeDao, providers, chargeCardDetailsService);
+    public CardCaptureService(ChargeDao chargeDao, PaymentProviders providers, UserNotificationService userNotificationService) {
+        super(chargeDao, providers);
         this.userNotificationService = userNotificationService;
     }
 

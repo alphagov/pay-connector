@@ -40,8 +40,7 @@ class CancelServiceFunctions {
 
     static PreTransactionalOperation<TransactionContext, ChargeEntity> prepareForTerminate(ChargeDao chargeDao,
                                                                                            ChargeEntity chargeEntity,
-                                                                                           StatusFlow statusFlow,
-                                                                                           ChargeCardDetailsService chargeCardDetailsService) {
+                                                                                           StatusFlow statusFlow) {
         return context -> {
             ChargeEntity reloadedCharge = chargeDao.merge(chargeEntity);
 

@@ -20,9 +20,9 @@ import java.util.Optional;
 public class ChargeDao extends JpaDao<ChargeEntity> {
 
     private static final String STATUS = "status";
-    private static final String CARD_BRAND = "cardBrand";
     private static final String CREATED_DATE = "createdDate";
     private static final String GATEWAY_ACCOUNT = "gatewayAccount";
+    private static final String CARD_DETAILS = "cardDetails";
     private static final String REFERENCE = "reference";
     private static final String EMAIL = "email";
     public static final String SQL_ESCAPE_SEQ = "\\\\";
@@ -137,7 +137,7 @@ public class ChargeDao extends JpaDao<ChargeEntity> {
         if (params.getChargeStatuses() != null && !params.getChargeStatuses().isEmpty())
             predicates.add(charge.get(STATUS).in(params.getChargeStatuses()));
         if (StringUtils.isNotBlank(params.getCardBrand()))
-            predicates.add(charge.get(CARD_BRAND).in(params.getCardBrand()));
+            predicates.add(charge.get(CARD_DETAILS).get("cardBrand").in(params.getCardBrand()));
         if (params.getFromDate() != null)
             predicates.add(cb.greaterThanOrEqualTo(charge.get(CREATED_DATE), params.getFromDate()));
         if (params.getToDate() != null)

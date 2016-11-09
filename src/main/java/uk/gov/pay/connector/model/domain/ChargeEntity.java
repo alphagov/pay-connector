@@ -1,6 +1,5 @@
 package uk.gov.pay.connector.model.domain;
 
-import com.fasterxml.jackson.annotation.JsonBackReference;
 import uk.gov.pay.connector.exception.InvalidStateTransitionException;
 import uk.gov.pay.connector.model.api.ExternalChargeState;
 import uk.gov.pay.connector.resources.PaymentGatewayName;
@@ -43,12 +42,8 @@ public class ChargeEntity extends AbstractEntity {
     @Column(name = "email")
     private String email;
 
-    @Column(name = "card_brand")
-    private String cardBrand;
-
-    @JsonBackReference
-    @OneToOne(mappedBy = "chargeEntity", cascade = CascadeType.ALL)
-    private ChargeCardDetailsEntity chargeCardDetailsEntity;
+    @Embedded
+    private CardDetailsEntity cardDetails;
 
     @ManyToOne
     @JoinColumn(name = "gateway_account_id", updatable = false)
@@ -125,10 +120,6 @@ public class ChargeEntity extends AbstractEntity {
         return createdDate;
     }
 
-    public String getCardBrand() {
-        return cardBrand;
-    }
-
     public List<RefundEntity> getRefunds() {
         return refunds;
     }
@@ -192,16 +183,12 @@ public class ChargeEntity extends AbstractEntity {
                 .sum();
     }
 
-    public ChargeCardDetailsEntity getChargeCardDetailsEntity() {
-        return chargeCardDetailsEntity;
+    public CardDetailsEntity getCardDetails() {
+        return cardDetails;
     }
 
-    public void setChargeCardDetailsEntity(ChargeCardDetailsEntity chargeCardDetailsEntity) {
-        this.chargeCardDetailsEntity = chargeCardDetailsEntity;
-    }
-
-    public void setCardBrand(String cardBrand) {
-        this.cardBrand = cardBrand;
+    public void setCardDetails(CardDetailsEntity cardDetailsEntity) {
+        this.cardDetails = cardDetailsEntity;
     }
 
     public PaymentGatewayName getPaymentGatewayName() {
