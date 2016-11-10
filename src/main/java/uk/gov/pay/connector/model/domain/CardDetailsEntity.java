@@ -34,7 +34,7 @@ public class CardDetailsEntity {
     public PersistedCard toCard() {
         PersistedCard card = new PersistedCard();
         card.setLastDigitsCardNumber(lastDigitsCardNumber);
-        card.setBillingAddress(billingAddress.toAddress());
+        card.setBillingAddress(billingAddress != null ? billingAddress.toAddress() : null);
         card.setExpiryDate(expiryDate);
         card.setCardHolderName(cardHolderName);
         return card;
