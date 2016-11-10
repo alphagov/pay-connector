@@ -20,7 +20,6 @@ import javax.ws.rs.core.UriInfo;
 import java.net.URI;
 import java.util.*;
 
-import static java.lang.String.format;
 import static javax.ws.rs.HttpMethod.GET;
 import static javax.ws.rs.HttpMethod.POST;
 import static javax.ws.rs.core.MediaType.APPLICATION_FORM_URLENCODED;
@@ -126,19 +125,24 @@ public class ChargeService {
 
     private ChargeResponseBuilder chargeResponseBuilder(UriInfo uriInfo, ChargeEntity charge) {
         String chargeId = charge.getExternalId();
+        String cardBrand = "";
+        if (charge.getCardDetails() != null) {
+            cardBrand = charge.getCardDetails().getCardBrand();
+        }
         return aChargeResponse()
                 .withChargeId(chargeId)
                 .withAmount(charge.getAmount())
                 .withReference(charge.getReference())
                 .withDescription(charge.getDescription())
                 .withState(ChargeStatus.fromString(charge.getStatus()).toExternal())
-                .withCardBrand(findCardBrandLabel(charge.getCardBrand()).orElse(""))
+                .withCardBrand(findCardBrandLabel(cardBrand).orElse(""))
                 .withGatewayTransactionId(charge.getGatewayTransactionId())
                 .withProviderName(charge.getGatewayAccount().getGatewayName())
                 .withCreatedDate(charge.getCreatedDate())
                 .withReturnUrl(charge.getReturnUrl())
                 .withEmail(charge.getEmail())
                 .withRefunds(buildRefundSummary(charge))
+                .withCardDetails(charge.getCardDetails() == null ? null : charge.getCardDetails().toCard())
                 .withLink("self", GET, selfUriFor(uriInfo, charge.getGatewayAccount().getId(), chargeId))
                 .withLink("refunds", GET, refundsUriFor(uriInfo, charge.getGatewayAccount().getId(), charge.getExternalId()));
     }

@@ -115,7 +115,11 @@ public class CardResourceITestBase {
     }
 
     protected String authoriseNewCharge() {
-        return createNewChargeWith(AUTHORISATION_SUCCESS, "");
+        String externalChargeId = createNewChargeWith(AUTHORISATION_SUCCESS, "");
+        app.getDatabaseTestHelper().updateChargeCardDetails(
+                Long.parseLong(externalChargeId.replace("charge-","")),
+                CardFixture.aValidCard().withCardNo("1234").build());
+        return externalChargeId;
     }
 
 
@@ -127,9 +131,6 @@ public class CardResourceITestBase {
         long chargeId = RandomUtils.nextInt();
         String externalChargeId = "charge-" + chargeId;
         app.getDatabaseTestHelper().addCharge(chargeId, externalChargeId, accountId, 6234L, status, "returnUrl", gatewayTransactionId);
-        app.getDatabaseTestHelper().addConfirmationDetails(
-                chargeId,
-                CardFixture.aValidCard().withCardNo("1234").build());
         return externalChargeId;
     }
 
@@ -208,7 +209,7 @@ public class CardResourceITestBase {
         app.getDatabaseTestHelper().addCharge(chargeId, externalChargeId, accountId, AMOUNT, chargeStatus, "http://somereturn.gov.uk", gatewayTransactionId, reference, fromDate);
         app.getDatabaseTestHelper().addToken(chargeId, "tokenId");
         app.getDatabaseTestHelper().addEvent(chargeId, chargeStatus.getValue());
-        app.getDatabaseTestHelper().addConfirmationDetails(
+        app.getDatabaseTestHelper().updateChargeCardDetails(
                 chargeId,
                 CardFixture.aValidCard().withCardNo("1234").build());
         return externalChargeId;

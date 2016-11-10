@@ -4,7 +4,6 @@ import org.apache.commons.lang.StringUtils;
 import org.junit.Before;
 import org.junit.Test;
 import uk.gov.pay.connector.it.base.CardResourceITestBase;
-import uk.gov.pay.connector.model.domain.CardFixture;
 import uk.gov.pay.connector.model.domain.ChargeStatus;
 import uk.gov.pay.connector.util.RestAssuredClient;
 
@@ -17,9 +16,7 @@ import static java.lang.String.format;
 import static java.util.Arrays.asList;
 import static javax.ws.rs.core.Response.Status.*;
 import static org.hamcrest.MatcherAssert.assertThat;
-import static org.hamcrest.Matchers.hasItems;
-import static org.hamcrest.Matchers.is;
-import static org.hamcrest.Matchers.nullValue;
+import static org.hamcrest.Matchers.*;
 import static uk.gov.pay.connector.model.domain.ChargeStatus.*;
 import static uk.gov.pay.connector.model.domain.ChargeStatus.CREATED;
 
@@ -50,19 +47,28 @@ public class ChargeCancelResourceITest extends CardResourceITestBase {
     }
 
     @Test
-    public void shouldRemoveCardConfirmationDetailsIfCancelled() throws Exception {
+    public void shouldPreserveCardConfirmationDetailsIfCancelled() throws Exception {
         String externalChargeId = addCharge(ChargeStatus.AUTHORISATION_SUCCESS, "ref", ZonedDateTime.now().minusHours(1), "irrelavant");
         Long chargeId = Long.valueOf(StringUtils.removeStart(externalChargeId, "charge"));
 
         worldpay.mockCancelSuccess();
 
-        Map<String, Object> confirmationDetails = app.getDatabaseTestHelper().getConfirmationDetailsByChargeId(chargeId);
-        assertThat(confirmationDetails.isEmpty(), is(false));
+        Map<String, Object> cardDetails = app.getDatabaseTestHelper().getChargeCardDetailsByChargeId(chargeId);
+        assertThat(cardDetails.isEmpty(), is(false));
 
         cancelChargeAndCheckApiStatus(externalChargeId, SYSTEM_CANCELLED, 204);
 
-        confirmationDetails = app.getDatabaseTestHelper().getConfirmationDetailsByChargeId(chargeId);
-        assertThat(confirmationDetails, is(nullValue()));
+        cardDetails = app.getDatabaseTestHelper().getChargeCardDetailsByChargeId(chargeId);
+        assertThat(cardDetails, is(notNullValue()));
+        assertThat(cardDetails.get("card_brand"), is(notNullValue()));
+        assertThat(cardDetails.get("last_digits_card_number"), is(notNullValue()));
+        assertThat(cardDetails.get("expiry_date"), is(notNullValue()));
+        assertThat(cardDetails.get("cardholder_name"), is(notNullValue()));
+        assertThat(cardDetails.get("address_line1"), is(notNullValue()));
+        assertThat(cardDetails.get("address_line2"), is(notNullValue()));
+        assertThat(cardDetails.get("address_postcode"), is(notNullValue()));
+        assertThat(cardDetails.get("address_country"), is(notNullValue()));
+
     }
 
     @Test

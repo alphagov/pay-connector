@@ -1,83 +1,64 @@
 package uk.gov.pay.connector.model.domain;
 
-import com.fasterxml.jackson.annotation.JsonProperty;
-
-import javax.persistence.Column;
-import javax.persistence.Embeddable;
-
-@Embeddable
 public class Address {
 
-    @Column(name = "address_line1")
     private String line1;
-    @Column(name = "address_line2")
     private String line2;
-    @Column(name = "address_postcode")
     private String postcode;
-    @Column(name = "address_city")
     private String city;
-    @Column(name = "address_county")
     private String county;
-    @Column(name = "address_country")
     private String country;
-
 
     public static Address anAddress() {
         return new Address();
-    }
-
-    @JsonProperty
-    public void setLine1(String line1) {
-        this.line1 = line1;
-    }
-
-    @JsonProperty
-    public void setLine2(String line2) {
-        this.line2 = line2;
-    }
-
-    @JsonProperty
-    public void setPostcode(String postcode) {
-        this.postcode = postcode;
-    }
-
-    @JsonProperty
-    public void setCity(String city) {
-        this.city = city;
-    }
-
-    @JsonProperty
-    public void setCounty(String county) {
-        this.county = county;
-    }
-
-    @JsonProperty
-    public void setCountry(String country) {
-        this.country = country;
-    }
-
-    public String getCountry() {
-        return country;
-    }
-
-    public String getCounty() {
-        return county;
     }
 
     public String getLine1() {
         return line1;
     }
 
+    public void setLine1(String line1) {
+        this.line1 = line1;
+    }
+
     public String getLine2() {
         return line2;
+    }
+
+    public void setLine2(String line2) {
+        this.line2 = line2;
     }
 
     public String getPostcode() {
         return postcode;
     }
 
+    public void setPostcode(String postcode) {
+        this.postcode = postcode;
+    }
+
     public String getCity() {
         return city;
+    }
+
+    public void setCity(String city) {
+        this.city = city;
+    }
+
+    public String getCounty() {
+        return county;
+    }
+
+    public void setCounty(String county) {
+        this.county = county;
+    }
+
+    public String getCountry() {
+        return country;
+    }
+
+    public void setCountry(String country) {
+        this.country = country;
     }
 
     @Override
@@ -87,23 +68,23 @@ public class Address {
 
         Address address = (Address) o;
 
-        if (!line1.equals(address.line1)) return false;
+        if (line1 != null ? !line1.equals(address.line1) : address.line1 != null) return false;
         if (line2 != null ? !line2.equals(address.line2) : address.line2 != null) return false;
-        if (!postcode.equals(address.postcode)) return false;
-        if (!city.equals(address.city)) return false;
+        if (postcode != null ? !postcode.equals(address.postcode) : address.postcode != null) return false;
+        if (city != null ? !city.equals(address.city) : address.city != null) return false;
         if (county != null ? !county.equals(address.county) : address.county != null) return false;
-        return country.equals(address.country);
+        return country != null ? country.equals(address.country) : address.country == null;
 
     }
 
     @Override
     public int hashCode() {
-        int result = line1.hashCode();
+        int result = line1 != null ? line1.hashCode() : 0;
         result = 31 * result + (line2 != null ? line2.hashCode() : 0);
-        result = 31 * result + postcode.hashCode();
-        result = 31 * result + city.hashCode();
+        result = 31 * result + (postcode != null ? postcode.hashCode() : 0);
+        result = 31 * result + (city != null ? city.hashCode() : 0);
         result = 31 * result + (county != null ? county.hashCode() : 0);
-        result = 31 * result + country.hashCode();
+        result = 31 * result + (country != null ? country.hashCode() : 0);
         return result;
     }
 }

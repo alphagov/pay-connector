@@ -12,7 +12,6 @@ import uk.gov.pay.connector.resources.PaymentGatewayName;
 
 import javax.inject.Inject;
 
-import static java.lang.String.format;
 import static uk.gov.pay.connector.model.domain.ChargeStatus.*;
 
 public class CardCaptureService extends CardService implements TransactionalGatewayOperation<BaseCaptureResponse> {
@@ -25,8 +24,8 @@ public class CardCaptureService extends CardService implements TransactionalGate
 
 
     @Inject
-    public CardCaptureService(ChargeDao chargeDao, PaymentProviders providers, ConfirmationDetailsService confirmationDetailsService, UserNotificationService userNotificationService) {
-        super(chargeDao, providers, confirmationDetailsService);
+    public CardCaptureService(ChargeDao chargeDao, PaymentProviders providers, UserNotificationService userNotificationService) {
+        super(chargeDao, providers);
         this.userNotificationService = userNotificationService;
     }
 

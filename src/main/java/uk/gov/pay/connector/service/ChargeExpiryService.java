@@ -19,7 +19,6 @@ import java.util.Map;
 import java.util.stream.Collectors;
 
 import static com.google.common.collect.Lists.newArrayList;
-import static java.lang.String.format;
 import static uk.gov.pay.connector.model.domain.ChargeStatus.EXPIRED;
 import static uk.gov.pay.connector.model.domain.ChargeStatus.EXPIRE_CANCEL_FAILED;
 import static uk.gov.pay.connector.service.CancelServiceFunctions.*;
@@ -35,17 +34,14 @@ public class ChargeExpiryService {
     private final ChargeDao chargeDao;
     private final PaymentProviders providers;
     private Provider<TransactionFlow> transactionFlowProvider;
-    private final ConfirmationDetailsService confirmationDetailsService;
 
     @Inject
     public ChargeExpiryService(ChargeDao chargeDao,
                                PaymentProviders providers,
-                               Provider<TransactionFlow> transactionFlowProvider,
-                               ConfirmationDetailsService confirmationDetailsService) {
+                               Provider<TransactionFlow> transactionFlowProvider) {
         this.chargeDao = chargeDao;
         this.providers = providers;
         this.transactionFlowProvider = transactionFlowProvider;
-        this.confirmationDetailsService = confirmationDetailsService;
     }
 
     public Map<String, Integer> expire(List<ChargeEntity> charges) {
@@ -80,7 +76,7 @@ public class ChargeExpiryService {
 
         gatewayAuthorizedCharges.forEach(chargeEntity -> {
             ChargeEntity processedEntity = transactionFlowProvider.get()
-                    .executeNext(prepareForTerminate(chargeDao, chargeEntity, EXPIRE_FLOW, confirmationDetailsService))
+                    .executeNext(prepareForTerminate(chargeDao, chargeEntity, EXPIRE_FLOW))
                     .executeNext(doGatewayCancel(providers))
                     .executeNext(finishExpireCancel())
                     .complete().get(ChargeEntity.class);

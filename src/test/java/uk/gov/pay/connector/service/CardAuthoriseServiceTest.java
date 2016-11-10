@@ -14,6 +14,7 @@ import uk.gov.pay.connector.exception.ConflictRuntimeException;
 import uk.gov.pay.connector.exception.IllegalStateRuntimeException;
 import uk.gov.pay.connector.exception.OperationAlreadyInProgressRuntimeException;
 import uk.gov.pay.connector.model.domain.Card;
+import uk.gov.pay.connector.model.domain.CardDetailsEntity;
 import uk.gov.pay.connector.model.domain.ChargeEntity;
 import uk.gov.pay.connector.model.domain.ChargeStatus;
 import uk.gov.pay.connector.model.gateway.GatewayResponse;
@@ -39,7 +40,7 @@ import static uk.gov.pay.connector.service.CardExecutorService.ExecutionStatus.I
 @RunWith(MockitoJUnitRunner.class)
 public class CardAuthoriseServiceTest extends CardServiceTest {
 
-    private final CardAuthoriseService cardAuthorisationService = new CardAuthoriseService(mockedChargeDao, mockedProviders, mockExecutorService, mockConfirmationDetailsService);
+    private final CardAuthoriseService cardAuthorisationService = new CardAuthoriseService(mockedChargeDao, mockedProviders, mockExecutorService);
 
     @Mock
     private Future<Either<Error, GatewayResponse>> mockFutureResponse;
@@ -63,11 +64,14 @@ public class CardAuthoriseServiceTest extends CardServiceTest {
         String transactionId = "transaction-id";
         ChargeEntity charge = createNewChargeWith(1L, ENTERING_CARD_DETAILS);
         ChargeEntity reloadedCharge = spy(charge);
-        GatewayResponse response = anAuthorisationSuccessResponse(charge, reloadedCharge, transactionId, CardUtils.aValidCard());
+        Card cardDetails = CardUtils.aValidCard();
+
+        GatewayResponse response = anAuthorisationSuccessResponse(charge, reloadedCharge, transactionId, cardDetails);
 
         assertThat(response.isSuccessful(), is(true));
         verify(reloadedCharge).setStatus(AUTHORISATION_SUCCESS);
         verify(reloadedCharge).setGatewayTransactionId(transactionId);
+        verify(reloadedCharge).setCardDetails(any(CardDetailsEntity.class));
     }
 
     @Test
@@ -126,26 +130,27 @@ public class CardAuthoriseServiceTest extends CardServiceTest {
         Card cardDetails = CardUtils.aValidCard();
         anAuthorisationSuccessResponse(charge, reloadedCharge, transactionId, cardDetails);
 
-        verify(mockConfirmationDetailsService, times(1)).doStore(charge.getExternalId(), cardDetails);
+        verify(reloadedCharge, times(1)).setCardDetails(any(CardDetailsEntity.class));
     }
 
     @Test
-    public void shouldNotStoreConfirmationDetailsIfAuthorisationRejected() {
+    public void shouldStoreConfirmationDetailsEvenIfAuthorisationRejected() {
         ChargeEntity charge = createNewChargeWith(1L, ENTERING_CARD_DETAILS);
         ChargeEntity reloadedCharge = spy(charge);
 
         anAuthorisationRejectedResponse(charge, reloadedCharge);
-        verify(mockConfirmationDetailsService, never()).doStore(any(), any());
+        verify(reloadedCharge, times(1)).setCardDetails(any(CardDetailsEntity.class));
     }
 
     @Test
-    public void shouldNotStoreConfirmationDetailsIfAuthorisationError() {
+    public void shouldStoreConfirmationDetailsEvenIfInAuthorisationError() {
         ChargeEntity charge = createNewChargeWith(1L, ENTERING_CARD_DETAILS);
         ChargeEntity reloadedCharge = spy(charge);
 
         anAuthorisationErrorResponse(charge, reloadedCharge);
-        verify(mockConfirmationDetailsService, never()).doStore(any(), any());
+        verify(reloadedCharge, times(1)).setCardDetails(any(CardDetailsEntity.class));
     }
+
     @Test
     public void authoriseShouldThrowAnOperationAlreadyInProgressRuntimeExceptionWhenTimeout() throws Exception {
         ChargeEntity charge = createNewChargeWith(1L, ENTERING_CARD_DETAILS);
@@ -162,7 +167,6 @@ public class CardAuthoriseServiceTest extends CardServiceTest {
             assertThat(e.getResponse().getEntity(), is(expectedMessage));
         }
     }
-
     @Test(expected = ChargeNotFoundRuntimeException.class)
     public void shouldThrowAChargeNotFoundRuntimeExceptionWhenChargeDoesNotExist() {
         String chargeId = "jgk3erq5sv2i4cds6qqa9f1a8a";

@@ -123,8 +123,8 @@ public class CardDetailsValidatorTest {
 
     @Test
     public void validationFailsForMissingCountryAddress() {
-        Address address = addressFor("L1", "London", "WJWHE", null);
-        Card cardDetails = buildCardDetailsFor(validCardNumber, validCVC, "1290", cardBrand, address);
+        Address addressEntity = addressFor("L1", "London", "WJWHE", null);
+        Card cardDetails = buildCardDetailsFor(validCardNumber, validCVC, "1290", cardBrand, addressEntity);
         assertFalse(CardDetailsValidator.isWellFormattedCardDetails(cardDetails));
     }
 

@@ -8,9 +8,7 @@ import uk.gov.pay.connector.exception.ChargeNotFoundRuntimeException;
 import uk.gov.pay.connector.exception.ConflictRuntimeException;
 import uk.gov.pay.connector.exception.GenericGatewayRuntimeException;
 import uk.gov.pay.connector.exception.OperationAlreadyInProgressRuntimeException;
-import uk.gov.pay.connector.model.domain.Card;
-import uk.gov.pay.connector.model.domain.ChargeEntity;
-import uk.gov.pay.connector.model.domain.ChargeStatus;
+import uk.gov.pay.connector.model.domain.*;
 import uk.gov.pay.connector.model.gateway.AuthorisationGatewayRequest;
 import uk.gov.pay.connector.model.gateway.GatewayResponse;
 
@@ -19,7 +17,6 @@ import javax.persistence.OptimisticLockException;
 import java.util.Optional;
 import java.util.function.Supplier;
 
-import static java.lang.String.format;
 import static uk.gov.pay.connector.model.domain.ChargeStatus.*;
 import static uk.gov.pay.connector.service.CardExecutorService.ExecutionStatus;
 
@@ -32,9 +29,8 @@ public class CardAuthoriseService extends CardService<BaseAuthoriseResponse> {
     @Inject
     public CardAuthoriseService(ChargeDao chargeDao,
                                 PaymentProviders providers,
-                                CardExecutorService cardExecutorService,
-                                ConfirmationDetailsService confirmationDetailsService) {
-        super(chargeDao, providers, confirmationDetailsService, cardExecutorService);
+                                CardExecutorService cardExecutorService) {
+        super(chargeDao, providers, cardExecutorService);
     }
 
     public GatewayResponse doAuthorise(String chargeId, Card cardDetails) {
@@ -104,10 +100,19 @@ public class CardAuthoriseService extends CardService<BaseAuthoriseResponse> {
             reloadedCharge.setGatewayTransactionId(transactionId);
         }
 
+        appendCardDetails(reloadedCharge, cardDetails);
         chargeDao.mergeAndNotifyStatusHasChanged(reloadedCharge);
-        if (status.equals(AUTHORISATION_SUCCESS)) {
-            confirmationDetailsService.doStore(reloadedCharge.getExternalId(), cardDetails);
-        }
         return operationResponse;
+    }
+
+    private void appendCardDetails(ChargeEntity chargeEntity, Card cardDetails) {
+        CardDetailsEntity detailsEntity = new CardDetailsEntity();
+        detailsEntity.setCardBrand(cardDetails.getCardBrand());
+        detailsEntity.setBillingAddress(new AddressEntity(cardDetails.getAddress()));
+        detailsEntity.setCardHolderName(cardDetails.getCardHolder());
+        detailsEntity.setExpiryDate(cardDetails.getEndDate());
+        detailsEntity.setLastDigitsCardNumber(StringUtils.right(cardDetails.getCardNo(), 4));
+        chargeEntity.setCardDetails(detailsEntity);
+        logger.info("Stored confirmation details for charge - charge_external_id={}", chargeEntity.getExternalId());
     }
 }

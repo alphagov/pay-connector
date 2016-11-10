@@ -86,8 +86,8 @@ public class ChargesFrontendResourceITest {
                 .aMastercardCreditCardType()
                 .insert();
 
-        app.getDatabaseTestHelper().addCharge(chargeId, externalChargeId, accountId, expectedAmount, AUTHORISATION_SUCCESS, returnUrl, null, "ref", null, email, testCardType.getBrand());
-        app.getDatabaseTestHelper().addConfirmationDetails(chargeId, "1234", "Mr. McPayment",  "03/18", "line1", null, "postcode", "city", null, "country");
+        app.getDatabaseTestHelper().addCharge(chargeId, externalChargeId, accountId, expectedAmount, AUTHORISATION_SUCCESS, returnUrl, null, "ref", null, email);
+        app.getDatabaseTestHelper().updateChargeCardDetails(chargeId, testCardType.getBrand(), "1234", "Mr. McPayment", "03/18", "line1", null, "postcode", "city", null, "country");
         validateGetCharge(expectedAmount, externalChargeId, AUTHORISATION_SUCCESS, testCardType.getLabel());
     }
 
@@ -96,8 +96,8 @@ public class ChargesFrontendResourceITest {
         String externalChargeId = RandomIdGenerator.newId();
         Long chargeId = 123456L;
 
-        app.getDatabaseTestHelper().addCharge(chargeId, externalChargeId, accountId, expectedAmount, AUTHORISATION_SUCCESS, returnUrl, null, "ref", null, email, "unknown");
-        app.getDatabaseTestHelper().addConfirmationDetails(chargeId, "1234", "Mr. McPayment", "03/18", "line1", null, "postcode", "city", null, "country");
+        app.getDatabaseTestHelper().addCharge(chargeId, externalChargeId, accountId, expectedAmount, AUTHORISATION_SUCCESS, returnUrl, null, "ref", null, email);
+        app.getDatabaseTestHelper().updateChargeCardDetails(chargeId, "unknown", "1234", "Mr. McPayment", "03/18", "line1", null, "postcode", "city", null, "country");
         validateGetCharge(expectedAmount, externalChargeId, AUTHORISATION_SUCCESS, "");
     }
 
@@ -398,25 +398,27 @@ public class ChargesFrontendResourceITest {
                 .body("gateway_account.card_types[1].type", is("CREDIT"))
                 .body("gateway_account.card_types[1].brand", is("visa"));
     }
+
     private void validateConfirmationDetails(ValidatableResponse response, ChargeStatus status) {
-        if (status.equals(ChargeStatus.AUTHORISATION_SUCCESS)){
+        if (status.equals(ChargeStatus.AUTHORISATION_SUCCESS)) {
             response
-                    .body("confirmation_details", is(notNullValue()))
-                    .body("confirmation_details.charge_id", is(nullValue()))
-                    .body("confirmation_details.last_digits_card_number", is("1234"))
-                    .body("confirmation_details.cardholder_name", is("Mr. McPayment"))
-                    .body("confirmation_details.expiry_date", is("03/18"))
-                    .body("confirmation_details.billing_address", is(notNullValue()))
-                    .body("confirmation_details.billing_address.line1", is("line1"))
-                    .body("confirmation_details.billing_address.line2", is(nullValue()))
-                    .body("confirmation_details.billing_address.city", is("city"))
-                    .body("confirmation_details.billing_address.postcode", is("postcode"))
-                    .body("confirmation_details.billing_address.country", is("country"))
-                    .body("confirmation_details.billing_address.county", is(nullValue()));
+                    .body("card_details", is(notNullValue()))
+                    .body("card_details.charge_id", is(nullValue()))
+                    .body("card_details.last_digits_card_number", is("1234"))
+                    .body("card_details.cardholder_name", is("Mr. McPayment"))
+                    .body("card_details.expiry_date", is("03/18"))
+                    .body("card_details.billing_address", is(notNullValue()))
+                    .body("card_details.billing_address.line1", is("line1"))
+                    .body("card_details.billing_address.line2", is(nullValue()))
+                    .body("card_details.billing_address.city", is("city"))
+                    .body("card_details.billing_address.postcode", is("postcode"))
+                    .body("card_details.billing_address.country", is("country"))
+                    .body("card_details.billing_address.county", is(nullValue()));
         } else {
-            response.body("containsKey('confirmation_details')", is(false));
+            response.body("containsKey('card_details')", is(false));
         }
     }
+
     private static void setupLifeCycleEventsFor(DropwizardAppWithPostgresRule app, Long chargeId, List<ChargeStatus> statuses) {
         statuses.stream().forEach(
                 st -> app.getDatabaseTestHelper().addEvent(chargeId, st.getValue())

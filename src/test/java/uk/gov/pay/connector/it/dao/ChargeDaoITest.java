@@ -48,10 +48,12 @@ public class ChargeDaoITest extends DaoITestBase {
     private DatabaseFixtures.TestAccount defaultTestAccount;
     private DatabaseFixtures.TestRefund defaultTestRefund;
     private DatabaseFixtures.TestCharge defaultTestCharge;
+    private DatabaseFixtures.TestCardDetails defaultTestCardDetails;
 
     @Before
     public void setUp() throws Exception {
         chargeDao = env.getInstance(ChargeDao.class);
+        defaultTestCardDetails = new DatabaseFixtures(databaseTestHelper).validTestCardDetails();
         insertTestAccount();
     }
 
@@ -73,7 +75,7 @@ public class ChargeDaoITest extends DaoITestBase {
         assertThat(charge.getReference(), is(defaultTestCharge.getReference()));
         assertThat(charge.getDescription(), is(DESCRIPTION));
         assertThat(charge.getStatus(), is(defaultTestCharge.getChargeStatus().toString()));
-        assertThat(charge.getCardBrand(), is(defaultTestCharge.getCardBrand()));
+        assertThat(charge.getCardDetails().getCardBrand(), is(defaultTestCardDetails.getCardBrand()));
 
         assertDateMatch(charge.getCreatedDate().toString());
     }
@@ -97,7 +99,7 @@ public class ChargeDaoITest extends DaoITestBase {
         assertThat(charge.getEmail(), is(defaultTestCharge.getEmail()));
         assertThat(charge.getDescription(), is(DESCRIPTION));
         assertThat(charge.getStatus(), is(defaultTestCharge.getChargeStatus().toString()));
-        assertThat(charge.getCardBrand(), is(defaultTestCharge.getCardBrand()));
+        assertThat(charge.getCardDetails().getCardBrand(), is(defaultTestCardDetails.getCardBrand()));
 
         assertDateMatch(charge.getCreatedDate().toString());
     }
@@ -121,7 +123,7 @@ public class ChargeDaoITest extends DaoITestBase {
         assertThat(charge.getEmail(), is(defaultTestCharge.getEmail()));
         assertThat(charge.getDescription(), is(DESCRIPTION));
         assertThat(charge.getStatus(), is(defaultTestCharge.getChargeStatus().toString()));
-        assertThat(charge.getCardBrand(), is(defaultTestCharge.getCardBrand()));
+        assertThat(charge.getCardDetails().getCardBrand(), is(defaultTestCardDetails.getCardBrand()));
 
         assertDateMatch(charge.getCreatedDate().toString());
     }
@@ -131,7 +133,7 @@ public class ChargeDaoITest extends DaoITestBase {
         // given
         insertTestCharge();
         ChargeSearchParams params = new ChargeSearchParams()
-                .withCardBrand(defaultTestCharge.getCardBrand());
+                .withCardBrand(defaultTestCardDetails.getCardBrand());
 
         // when
         List<ChargeEntity> charges = chargeDao.findAllBy(params);
@@ -145,7 +147,7 @@ public class ChargeDaoITest extends DaoITestBase {
         assertThat(charge.getEmail(), is(defaultTestCharge.getEmail()));
         assertThat(charge.getDescription(), is(DESCRIPTION));
         assertThat(charge.getStatus(), is(defaultTestCharge.getChargeStatus().toString()));
-        assertThat(charge.getCardBrand(), is(defaultTestCharge.getCardBrand()));
+        assertThat(charge.getCardDetails().getCardBrand(), is(defaultTestCardDetails.getCardBrand()));
 
         assertDateMatch(charge.getCreatedDate().toString());
     }
@@ -261,7 +263,7 @@ public class ChargeDaoITest extends DaoITestBase {
         assertThat(charge.getReference(), is(defaultTestCharge.getReference()));
         assertThat(charge.getDescription(), is(DESCRIPTION));
         assertThat(charge.getStatus(), is(defaultTestCharge.getChargeStatus().toString()));
-        assertThat(charge.getCardBrand(), is(defaultTestCharge.getCardBrand()));
+        assertThat(charge.getCardDetails().getCardBrand(), is(defaultTestCardDetails.getCardBrand()));
 
         assertDateMatch(charge.getCreatedDate().toString());
     }
@@ -278,6 +280,7 @@ public class ChargeDaoITest extends DaoITestBase {
                 .withDatabaseTestHelper(databaseTestHelper)
                 .aTestCharge()
                 .withTestAccount(defaultTestAccount)
+                .withCardDetails(defaultTestCardDetails.withChargeId(chargeId))
                 .withChargeId(chargeId)
                 .withExternalChargeId(externalChargeId)
                 .withReference(paymentReference)
@@ -302,7 +305,7 @@ public class ChargeDaoITest extends DaoITestBase {
             assertThat(charge.getDescription(), is(DESCRIPTION));
             assertThat(charge.getStatus(), is(defaultTestCharge.getChargeStatus().toString()));
             assertDateMatch(charge.getCreatedDate().toString());
-            assertThat(charge.getCardBrand(), is(defaultTestCharge.getCardBrand()));
+            assertThat(charge.getCardDetails().getCardBrand(), is(defaultTestCardDetails.getCardBrand()));
         }
     }
 
@@ -454,7 +457,7 @@ public class ChargeDaoITest extends DaoITestBase {
         assertThat(charge.getReference(), is(defaultTestCharge.getReference()));
         assertThat(charge.getDescription(), is(DESCRIPTION));
         assertThat(charge.getStatus(), is(defaultTestCharge.getChargeStatus().toString()));
-        assertThat(charge.getCardBrand(), is(defaultTestCharge.getCardBrand()));
+        assertThat(charge.getCardDetails().getCardBrand(), is(defaultTestCardDetails.getCardBrand()));
         assertDateMatch(charge.getCreatedDate().toString());
     }
 
@@ -482,7 +485,7 @@ public class ChargeDaoITest extends DaoITestBase {
         assertThat(charge.getReference(), is(defaultTestCharge.getReference()));
         assertThat(charge.getDescription(), is(DESCRIPTION));
         assertThat(charge.getStatus(), is(defaultTestCharge.getChargeStatus().toString()));
-        assertThat(charge.getCardBrand(), is(defaultTestCharge.getCardBrand()));
+        assertThat(charge.getCardDetails().getCardBrand(), is(defaultTestCardDetails.getCardBrand()));
         assertDateMatch(charge.getCreatedDate().toString());
     }
 
@@ -509,7 +512,7 @@ public class ChargeDaoITest extends DaoITestBase {
         assertThat(charge.getReference(), is(defaultTestCharge.getReference()));
         assertThat(charge.getDescription(), is(DESCRIPTION));
         assertThat(charge.getStatus(), is(defaultTestCharge.getChargeStatus().toString()));
-        assertThat(charge.getCardBrand(), is(defaultTestCharge.getCardBrand()));
+        assertThat(charge.getCardDetails().getCardBrand(), is(defaultTestCardDetails.getCardBrand()));
 
         assertDateMatch(charge.getCreatedDate().toString());
     }
@@ -595,7 +598,7 @@ public class ChargeDaoITest extends DaoITestBase {
                 .withGatewayAccountId(defaultTestAccount.getAccountId())
                 .withReferenceLike(defaultTestCharge.getReference())
                 .withExternalChargeState(EXTERNAL_CREATED.getStatus())
-                .withCardBrand(defaultTestCharge.getCardBrand())
+                .withCardBrand(defaultTestCardDetails.getCardBrand())
                 .withEmailLike(defaultTestCharge.getEmail())
                 .withFromDate(ZonedDateTime.parse(FROM_DATE))
                 .withToDate(ZonedDateTime.parse(TO_DATE));
@@ -612,7 +615,7 @@ public class ChargeDaoITest extends DaoITestBase {
         assertThat(charge.getReference(), is(defaultTestCharge.getReference()));
         assertThat(charge.getDescription(), is(DESCRIPTION));
         assertThat(charge.getStatus(), is(defaultTestCharge.getChargeStatus().toString()));
-        assertThat(charge.getCardBrand(), is(defaultTestCharge.getCardBrand()));
+        assertThat(charge.getCardDetails().getCardBrand(), is(defaultTestCardDetails.getCardBrand()));
         assertDateMatch(charge.getCreatedDate().toString());
     }
 
@@ -639,7 +642,7 @@ public class ChargeDaoITest extends DaoITestBase {
         assertThat(charge.getReference(), is(defaultTestCharge.getReference()));
         assertThat(charge.getDescription(), is(DESCRIPTION));
         assertThat(charge.getStatus(), is(defaultTestCharge.getChargeStatus().toString()));
-        assertThat(charge.getCardBrand(), is(defaultTestCharge.getCardBrand()));
+        assertThat(charge.getCardDetails().getCardBrand(), is(defaultTestCardDetails.getCardBrand()));
         assertDateMatch(charge.getCreatedDate().toString());
     }
 
@@ -769,13 +772,12 @@ public class ChargeDaoITest extends DaoITestBase {
     public void shouldFindChargeEntityByProviderAndTransactionId() {
 
         // given
-        insertTestCharge();
         String transactionId = "7826782163";
         ZonedDateTime createdDate = now(ZoneId.of("UTC"));
         Long chargeId = 9999L;
         String externalChargeId = "charge9999";
 
-        DatabaseFixtures
+        DatabaseFixtures.TestCharge testCharge = DatabaseFixtures
                 .withDatabaseTestHelper(databaseTestHelper)
                 .aTestCharge()
                 .withTestAccount(defaultTestAccount)
@@ -784,6 +786,10 @@ public class ChargeDaoITest extends DaoITestBase {
                 .withExternalChargeId(externalChargeId)
                 .withTransactionId(transactionId)
                 .insert();
+        DatabaseFixtures.TestCardDetails testCardDetails = DatabaseFixtures.withDatabaseTestHelper(databaseTestHelper)
+                .validTestCardDetails()
+                .withChargeId(chargeId)
+                .update();
 
         // when
         Optional<ChargeEntity> chargeOptional = chargeDao.findByProviderAndTransactionId(defaultTestAccount.getPaymentProvider(), transactionId);
@@ -794,13 +800,13 @@ public class ChargeDaoITest extends DaoITestBase {
         ChargeEntity charge = chargeOptional.get();
         assertThat(charge.getId(), is(chargeId));
         assertThat(charge.getGatewayTransactionId(), is(transactionId));
-        assertThat(charge.getReturnUrl(), is(defaultTestCharge.getReturnUrl()));
+        assertThat(charge.getReturnUrl(), is(testCharge.getReturnUrl()));
         assertThat(charge.getStatus(), is(CREATED.getValue()));
         assertThat(charge.getDescription(), is(DESCRIPTION));
         assertThat(charge.getCreatedDate(), is(createdDate));
-        assertThat(charge.getReference(), is(defaultTestCharge.getReference()));
+        assertThat(charge.getReference(), is(testCharge.getReference()));
         assertThat(charge.getGatewayAccount(), is(notNullValue()));
-        assertThat(charge.getCardBrand(), is(defaultTestCharge.getCardBrand()));
+        assertThat(charge.getCardDetails().getCardBrand(), is(testCardDetails.getCardBrand()));
     }
 
     @Test
@@ -831,13 +837,12 @@ public class ChargeDaoITest extends DaoITestBase {
 
     @Test
     public void shouldGetChargeByChargeIdWithCorrectAssociatedAccountId() {
-        insertTestCharge();
         String transactionId = "7826782163";
         ZonedDateTime createdDate = now(ZoneId.of("UTC"));
         Long chargeId = 876786L;
         String externalChargeId = "charge876786";
 
-        DatabaseFixtures
+        DatabaseFixtures.TestCharge testCharge = DatabaseFixtures
                 .withDatabaseTestHelper(databaseTestHelper)
                 .aTestCharge()
                 .withTestAccount(defaultTestAccount)
@@ -846,19 +851,23 @@ public class ChargeDaoITest extends DaoITestBase {
                 .withExternalChargeId(externalChargeId)
                 .withTransactionId(transactionId)
                 .insert();
+        DatabaseFixtures.TestCardDetails testCardDetails = DatabaseFixtures.withDatabaseTestHelper(databaseTestHelper)
+                .validTestCardDetails()
+                .withChargeId(chargeId)
+                .update();
 
         ChargeEntity charge = chargeDao.findByExternalIdAndGatewayAccount(externalChargeId, defaultTestAccount.getAccountId()).get();
 
         assertThat(charge.getId(), is(chargeId));
         assertThat(charge.getGatewayTransactionId(), is(transactionId));
-        assertThat(charge.getReturnUrl(), is(defaultTestCharge.getReturnUrl()));
-        assertThat(charge.getStatus(), is(defaultTestCharge.getChargeStatus().toString()));
+        assertThat(charge.getReturnUrl(), is(testCharge.getReturnUrl()));
+        assertThat(charge.getStatus(), is(testCharge.getChargeStatus().toString()));
         assertThat(charge.getDescription(), is(DESCRIPTION));
         assertThat(charge.getCreatedDate(), is(createdDate));
-        assertThat(charge.getReference(), is(defaultTestCharge.getReference()));
+        assertThat(charge.getReference(), is(testCharge.getReference()));
         assertThat(charge.getGatewayAccount(), is(notNullValue()));
         assertThat(charge.getGatewayAccount().getId(), is(defaultTestAccount.getAccountId()));
-        assertThat(charge.getCardBrand(), is(defaultTestCharge.getCardBrand()));
+        assertThat(charge.getCardDetails().getCardBrand(), is(testCardDetails.getCardBrand()));
     }
 
     @Test
@@ -887,7 +896,7 @@ public class ChargeDaoITest extends DaoITestBase {
         assertThat(charge.getGatewayAccount().getId(), is(defaultTestAccount.getAccountId()));
         assertThat(charge.getReturnUrl(), is(defaultTestCharge.getReturnUrl()));
         assertThat(charge.getCreatedDate(), is(defaultTestCharge.getCreatedDate()));
-        assertThat(charge.getCardBrand(), is(defaultTestCharge.getCardBrand()));
+        assertThat(charge.getCardDetails().getCardBrand(), is(defaultTestCardDetails.getCardBrand()));
 
         assertThat(charge.getRefunds().size(), is(1));
         RefundEntity refund = charge.getRefunds().get(0);
@@ -1002,6 +1011,9 @@ public class ChargeDaoITest extends DaoITestBase {
                 .aTestCharge()
                 .withTestAccount(defaultTestAccount)
                 .insert();
+        defaultTestCardDetails
+                .withChargeId(defaultTestCharge.chargeId)
+                .update();
     }
 
     private void insertTestRefund() {
