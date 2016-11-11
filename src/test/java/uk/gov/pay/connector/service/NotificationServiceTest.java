@@ -12,7 +12,6 @@ import uk.gov.pay.connector.dao.RefundDao;
 import uk.gov.pay.connector.exception.InvalidStateTransitionException;
 import uk.gov.pay.connector.model.Notifications;
 import uk.gov.pay.connector.model.domain.ChargeEntity;
-import uk.gov.pay.connector.model.domain.GatewayAccount;
 import uk.gov.pay.connector.model.domain.GatewayAccountEntity;
 import uk.gov.pay.connector.model.domain.RefundEntity;
 import uk.gov.pay.connector.service.transaction.TransactionFlow;
@@ -216,12 +215,12 @@ public class NotificationServiceTest {
         when(mockedPaymentProvider.getPaymentGatewayName()).thenReturn(SANDBOX.getName());
         when(mockedPaymentProviders.byName(SANDBOX)).thenReturn(mockedPaymentProvider);
 
-        when(mockedRefundDao.findByExternalId(reference))
+        when(mockedRefundDao.findByReference(reference))
                 .thenReturn(Optional.empty());
 
         notificationService.handleNotificationFor("", SANDBOX, "payload");
 
-        verify(mockedRefundDao).findByExternalId(reference);
+        verify(mockedRefundDao).findByReference(reference);
         verifyNoMoreInteractions(mockedChargeDao);
     }
 
@@ -287,13 +286,13 @@ public class NotificationServiceTest {
         ChargeEntity mockedChargeEntity = mock(ChargeEntity.class);
         GatewayAccountEntity mockedGatewayAccount = mock(GatewayAccountEntity.class);
 
-        when(mockedRefundDao.findByExternalId(reference)).thenReturn(Optional.of(mockedRefundEntity));
+        when(mockedRefundDao.findByReference(reference)).thenReturn(Optional.of(mockedRefundEntity));
         when(mockedRefundEntity.getChargeEntity()).thenReturn(mockedChargeEntity);
         when(mockedChargeEntity.getGatewayAccount()).thenReturn(mockedGatewayAccount);
 
         notificationService.handleNotificationFor("", SANDBOX, "payload");
 
-        verify(mockedRefundDao).findByExternalId(reference);
+        verify(mockedRefundDao).findByReference(reference);
         verify(mockedRefundEntity).setStatus(REFUNDED);
         verifyNoMoreInteractions(mockedChargeDao);
     }

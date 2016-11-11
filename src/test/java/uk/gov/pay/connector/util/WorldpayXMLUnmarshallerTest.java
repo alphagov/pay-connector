@@ -8,6 +8,7 @@ import java.io.IOException;
 import java.nio.charset.Charset;
 
 import static org.hamcrest.core.Is.is;
+import static org.hamcrest.core.IsNull.notNullValue;
 import static org.hamcrest.core.IsNull.nullValue;
 import static org.junit.Assert.assertNull;
 import static org.junit.Assert.assertThat;
@@ -115,7 +116,8 @@ public class WorldpayXMLUnmarshallerTest {
         String successPayload = readPayload("templates/worldpay/refund-success-response.xml");
         WorldpayRefundResponse response = XMLUnmarshaller.unmarshall(successPayload, WorldpayRefundResponse.class);
 
-        assertThat(response.getTransactionId(), is("transaction-id"));
+        assertThat(response.getReference(), is(notNullValue()));
+        assertThat(response.getReference().isPresent(), is(false));
         assertThat(response.getErrorCode(), is(nullValue()));
         assertThat(response.getErrorMessage(), is(nullValue()));
     }
@@ -125,7 +127,8 @@ public class WorldpayXMLUnmarshallerTest {
         String errorPayload = readPayload("templates/worldpay/refund-error-response.xml");
         WorldpayRefundResponse response = XMLUnmarshaller.unmarshall(errorPayload, WorldpayRefundResponse.class);
 
-        assertThat(response.getTransactionId(), is(nullValue()));
+        assertThat(response.getReference(), is(notNullValue()));
+        assertThat(response.getReference().isPresent(), is(false));
         assertThat(response.getErrorCode(), is("2"));
         assertThat(response.getErrorMessage(), is("Something went wrong."));
     }

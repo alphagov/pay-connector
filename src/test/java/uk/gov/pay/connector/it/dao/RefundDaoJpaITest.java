@@ -74,14 +74,15 @@ public class RefundDaoJpaITest extends DaoITestBase {
     }
 
     @Test
-    public void findByExternalId_shouldFindRefund() {
-        Optional<RefundEntity> refundEntityOptional = refundDao.findByExternalId(refundTestRecord.getExternalRefundId());
+    public void findByReference_shouldFindRefund() {
+        Optional<RefundEntity> refundEntityOptional = refundDao.findByReference(refundTestRecord.getReference());
 
         assertThat(refundEntityOptional.isPresent(), is(true));
 
         RefundEntity refundEntity = refundEntityOptional.get();
 
         assertNotNull(refundEntity.getId());
+        assertThat(refundEntity.getExternalId(), is(refundTestRecord.getExternalRefundId()));
         assertThat(refundEntity.getAmount(), is(refundTestRecord.getAmount()));
         assertThat(refundEntity.getStatus(), is(refundTestRecord.getStatus()));
         assertNotNull(refundEntity.getChargeEntity());
@@ -91,9 +92,9 @@ public class RefundDaoJpaITest extends DaoITestBase {
     }
 
     @Test
-    public void findByExternalId_shouldNotFindRefund() {
-        String noExistingExternalRefundId = "refund_0";
-        assertThat(refundDao.findByExternalId(noExistingExternalRefundId).isPresent(), is(false));
+    public void findByReference_shouldNotFindRefund() {
+        String noExistingReference = "refund_0";
+        assertThat(refundDao.findByReference(noExistingReference).isPresent(), is(false));
     }
 
     @Test

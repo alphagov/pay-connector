@@ -19,8 +19,7 @@ import uk.gov.pay.connector.service.BaseCancelResponse;
 import uk.gov.pay.connector.service.BaseCaptureResponse;
 import uk.gov.pay.connector.service.BaseRefundResponse;
 
-import static org.hamcrest.CoreMatchers.notNullValue;
-import static org.hamcrest.CoreMatchers.nullValue;
+import static org.hamcrest.CoreMatchers.*;
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.core.Is.is;
 import static org.hamcrest.core.IsSame.sameInstance;
@@ -49,8 +48,15 @@ public class SandboxPaymentProviderTest {
     }
 
     @Test
-    public void generateTransactionId_shouldGenerateANonNullValue() {
-        assertThat(provider.generateTransactionId(), is(notNullValue()));
+    public void shouldGenerateTransactionId() {
+        Assert.assertThat(provider.generateTransactionId().isPresent(), is(true));
+        Assert.assertThat(provider.generateTransactionId().get(), is(instanceOf(String.class)));
+    }
+
+    @Test
+    public void shouldGenerateRefundReference() {
+        Assert.assertThat(provider.generateRefundReference().isPresent(), is(true));
+        Assert.assertThat(provider.generateRefundReference().get(), is(instanceOf(String.class)));
     }
 
     @Test
@@ -141,15 +147,14 @@ public class SandboxPaymentProviderTest {
     @Test
     public void capture_shouldSucceedWhenCapturingAnyCharge() {
 
-        GatewayResponse gatewayResponse = provider.capture(CaptureGatewayRequest.valueOf(ChargeEntityFixture.aValidChargeEntity().build()));
+        GatewayResponse<BaseCaptureResponse> gatewayResponse = provider.capture(CaptureGatewayRequest.valueOf(ChargeEntityFixture.aValidChargeEntity().build()));
 
         assertThat(gatewayResponse.isSuccessful(), is(true));
         assertThat(gatewayResponse.isFailed(), is(false));
         assertThat(gatewayResponse.getGatewayError().isPresent(), is(false));
         assertThat(gatewayResponse.getBaseResponse().isPresent(), is(true));
-        assertThat(gatewayResponse.getBaseResponse().get() instanceof BaseCaptureResponse, is(true));
 
-        BaseCaptureResponse captureResponse = (BaseCaptureResponse) gatewayResponse.getBaseResponse().get();
+        BaseCaptureResponse captureResponse = gatewayResponse.getBaseResponse().get();
         assertThat(captureResponse.getTransactionId(), is(notNullValue()));
         assertThat(captureResponse.getErrorCode(), is(nullValue()));
         assertThat(captureResponse.getErrorMessage(), is(nullValue()));
@@ -158,15 +163,14 @@ public class SandboxPaymentProviderTest {
     @Test
     public void capture_shouldSucceedWhenCancellingAnyCharge() {
 
-        GatewayResponse gatewayResponse = provider.cancel(CancelGatewayRequest.valueOf(ChargeEntityFixture.aValidChargeEntity().build()));
+        GatewayResponse<BaseCancelResponse> gatewayResponse = provider.cancel(CancelGatewayRequest.valueOf(ChargeEntityFixture.aValidChargeEntity().build()));
 
         assertThat(gatewayResponse.isSuccessful(), is(true));
         assertThat(gatewayResponse.isFailed(), is(false));
         assertThat(gatewayResponse.getGatewayError().isPresent(), is(false));
         assertThat(gatewayResponse.getBaseResponse().isPresent(), is(true));
-        assertThat(gatewayResponse.getBaseResponse().get() instanceof BaseCancelResponse, is(true));
 
-        BaseCancelResponse cancelResponse = (BaseCancelResponse) gatewayResponse.getBaseResponse().get();
+        BaseCancelResponse cancelResponse = gatewayResponse.getBaseResponse().get();
         assertThat(cancelResponse.getTransactionId(), is(notNullValue()));
         assertThat(cancelResponse.getErrorCode(), is(nullValue()));
         assertThat(cancelResponse.getErrorMessage(), is(nullValue()));
@@ -175,16 +179,15 @@ public class SandboxPaymentProviderTest {
     @Test
     public void refund_shouldSucceedWhenRefundingAnyCharge() {
 
-        GatewayResponse gatewayResponse = provider.refund(RefundGatewayRequest.valueOf(RefundEntityFixture.aValidRefundEntity().build()));
+        GatewayResponse<BaseRefundResponse> gatewayResponse = provider.refund(RefundGatewayRequest.valueOf(RefundEntityFixture.aValidRefundEntity().build()));
 
         assertThat(gatewayResponse.isSuccessful(), is(true));
         assertThat(gatewayResponse.isFailed(), is(false));
         assertThat(gatewayResponse.getGatewayError().isPresent(), is(false));
         assertThat(gatewayResponse.getBaseResponse().isPresent(), is(true));
-        assertThat(gatewayResponse.getBaseResponse().get() instanceof BaseRefundResponse, is(true));
 
-        BaseRefundResponse refundResponse = (BaseRefundResponse) gatewayResponse.getBaseResponse().get();
-        assertThat(refundResponse.getTransactionId(), is(notNullValue()));
+        BaseRefundResponse refundResponse = gatewayResponse.getBaseResponse().get();
+        assertThat(refundResponse.getReference(), is(notNullValue()));
         assertThat(refundResponse.getErrorCode(), is(nullValue()));
         assertThat(refundResponse.getErrorMessage(), is(nullValue()));
     }

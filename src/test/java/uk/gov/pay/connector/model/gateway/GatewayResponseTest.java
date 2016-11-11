@@ -86,10 +86,6 @@ public class GatewayResponseTest {
 
     private static BaseResponse createBaseResponseWith(String errorCode, String errorMessage) {
         return new BaseResponse() {
-            @Override
-            public String getTransactionId() {
-                return null;
-            }
 
             @Override
             public String getErrorCode() {

@@ -478,4 +478,18 @@
         </addColumn>
     </changeSet>
 
+    <changeSet id="add reference column to refunds table" author="">
+        <addColumn tableName="refunds">
+            <column name="reference" type="text">
+                <constraints nullable="true"/>
+            </column>
+        </addColumn>
+    </changeSet>
+
+    <changeSet id="migrate existing refund external ids" author="">
+        <sql>
+            UPDATE refunds SET reference = external_id;
+        </sql>
+    </changeSet>
+
 </databaseChangeLog>

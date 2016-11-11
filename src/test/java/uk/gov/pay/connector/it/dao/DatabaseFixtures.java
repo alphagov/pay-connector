@@ -380,6 +380,7 @@ public class DatabaseFixtures {
     public class TestRefund {
         Long id = RandomUtils.nextLong(1, 99999);
         String externalRefundId = RandomIdGenerator.newId();
+        String reference = RandomIdGenerator.newId();
         long amount = 101L;
         RefundStatus status = CREATED;
         ZonedDateTime createdDate = ZonedDateTime.now(ZoneId.of("UTC"));
@@ -409,7 +410,7 @@ public class DatabaseFixtures {
         public TestRefund insert() {
             if (testCharge == null)
                 throw new IllegalStateException("Test charge must be provided.");
-            databaseTestHelper.addRefund(id, externalRefundId, amount, status.toString(), testCharge.getChargeId(), createdDate);
+            databaseTestHelper.addRefund(id, externalRefundId, reference, amount, status.toString(), testCharge.getChargeId(), createdDate);
             return this;
         }
 
@@ -419,6 +420,10 @@ public class DatabaseFixtures {
 
         public String getExternalRefundId() {
             return externalRefundId;
+        }
+
+        public String getReference() {
+            return reference;
         }
 
         public long getAmount() {

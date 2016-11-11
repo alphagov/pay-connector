@@ -18,6 +18,9 @@ public class RefundEntity extends AbstractEntity {
     @Column(name = "external_id")
     private String externalId;
 
+    @Column(name = "reference")
+    private String reference;
+
     private Long amount;
 
     private String status;
@@ -46,6 +49,10 @@ public class RefundEntity extends AbstractEntity {
         return externalId;
     }
 
+    public String getReference() {
+        return reference;
+    }
+
     public ChargeEntity getChargeEntity() {
         return chargeEntity;
     }
@@ -60,6 +67,10 @@ public class RefundEntity extends AbstractEntity {
 
     public ZonedDateTime getCreatedDate() {
         return createdDate;
+    }
+
+    public void setReference(String reference) {
+        this.reference = reference;
     }
 
     public void setAmount(Long amount) {

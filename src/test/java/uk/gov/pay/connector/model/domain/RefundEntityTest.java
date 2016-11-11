@@ -3,6 +3,7 @@ package uk.gov.pay.connector.model.domain;
 import org.junit.Test;
 
 import static org.hamcrest.core.Is.is;
+import static org.hamcrest.core.IsNull.nullValue;
 import static org.junit.Assert.*;
 import static uk.gov.pay.connector.model.domain.ChargeEntityFixture.aValidChargeEntity;
 import static uk.gov.pay.connector.model.domain.RefundEntityFixture.aValidRefundEntity;
@@ -19,6 +20,7 @@ public class RefundEntityTest {
 
         assertNotNull(refundEntity.getExternalId());
         assertThat(refundEntity.getChargeEntity(), is(chargeEntity));
+        assertThat(refundEntity.getReference(), is(nullValue()));
         assertThat(refundEntity.getAmount(), is(amount));
         assertThat(refundEntity.getStatus(), is(RefundStatus.CREATED));
         assertNotNull(refundEntity.getCreatedDate());

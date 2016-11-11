@@ -21,4 +21,5 @@ abstract public class SmartpayBaseResponse implements BaseResponse {
         return trim(errorMessage);
     }
 
+
 }

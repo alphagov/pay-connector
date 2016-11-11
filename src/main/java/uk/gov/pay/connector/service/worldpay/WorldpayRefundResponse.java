@@ -1,17 +1,15 @@
 package uk.gov.pay.connector.service.worldpay;
 
-import org.eclipse.persistence.oxm.annotations.XmlPath;
+import uk.gov.pay.connector.service.BaseRefundResponse;
 
 import javax.xml.bind.annotation.XmlRootElement;
+import java.util.Optional;
 
 @XmlRootElement(name = "paymentService")
-public class WorldpayRefundResponse extends WorldpayBaseResponse {
-
-    @XmlPath("reply/ok/refundReceived/@orderCode")
-    private String transactionId;
+public class WorldpayRefundResponse extends WorldpayBaseResponse implements BaseRefundResponse {
 
     @Override
-    public String getTransactionId() {
-        return transactionId;
+    public Optional<String> getReference() {
+        return Optional.empty();
     }
 }

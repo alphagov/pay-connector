@@ -7,6 +7,7 @@ import com.google.common.io.Resources;
 import fj.data.Either;
 import org.apache.commons.lang3.tuple.Pair;
 import org.hamcrest.CoreMatchers;
+import org.junit.Assert;
 import org.junit.Before;
 import org.junit.Test;
 import org.mockito.Matchers;
@@ -70,6 +71,16 @@ public class SmartpayPaymentProviderTest {
     }
 
     @Test
+    public void shouldGenerateTransactionId() {
+        Assert.assertThat(provider.generateTransactionId().isPresent(), is(false));
+    }
+
+    @Test
+    public void shouldGenerateRefundReference() {
+        Assert.assertThat(provider.generateRefundReference().isPresent(), is(false));
+    }
+
+    @Test
     public void shouldSendSuccessfullyAOrderForMerchant() throws Exception {
 
         Card card = getValidTestCard();
@@ -108,10 +119,13 @@ public class SmartpayPaymentProviderTest {
 
     @Test
     public void parseNotification_shouldReturnNotificationsIfValidSoapMessage() throws IOException {
-        String transactionId = "transaction-id";
+        String originalReference = "originalReference";
+        String pspReference = "pspReference";
+        String merchantReference = "merchantReference";
 
-        Either<String, Notifications<Pair<String, Boolean>>> response = provider.parseNotification(notificationPayloadForTransaction(transactionId, "notification-capture"));
-        
+        Either<String, Notifications<Pair<String, Boolean>>> response = provider.parseNotification(
+                notificationPayloadForTransaction(originalReference, pspReference, merchantReference, "notification-capture"));
+
         assertThat(response.isRight(), is(true));
         ImmutableList<Notification<Pair<String, Boolean>>> notifications = response.right().value().get();
 
@@ -119,7 +133,8 @@ public class SmartpayPaymentProviderTest {
 
         Notification<Pair<String, Boolean>> smartpayNotification = notifications.get(0);
 
-        assertThat(smartpayNotification.getTransactionId(), is(transactionId));
+        assertThat(smartpayNotification.getTransactionId(), is(pspReference));
+        assertThat(smartpayNotification.getReference(), is(pspReference));
 
         Pair<String, Boolean> status = smartpayNotification.getStatus();
         assertThat(status.getLeft(), is("CAPTURE"));
@@ -211,9 +226,11 @@ public class SmartpayPaymentProviderTest {
         return buildCardDetails("Mr. Payment", "4111111111111111", "123", "12/15", "visa", address);
     }
 
-    private String notificationPayloadForTransaction(String transactionId, String fileName) throws IOException {
-        URL resource = getResource("templates/smartpay/"+fileName+".json");
+    private String notificationPayloadForTransaction(String originalReference, String pspReference, String merchantReference, String fileName) throws IOException {
+        URL resource = getResource("templates/smartpay/" + fileName + ".json");
         return Resources.toString(resource, Charset.defaultCharset())
-                .replace("{{transactionId}}", transactionId);
+                .replace("{{originalReference}}", originalReference)
+                .replace("{{pspReference}}", pspReference)
+                .replace("{{merchantReference}}", merchantReference);
     }
 }

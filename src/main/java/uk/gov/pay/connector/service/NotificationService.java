@@ -29,7 +29,6 @@ import java.util.stream.Collectors;
 import static java.lang.String.format;
 import static org.apache.commons.lang3.StringUtils.isBlank;
 import static org.apache.commons.lang3.StringUtils.isNotBlank;
-import static uk.gov.pay.connector.model.domain.ChargeStatus.fromString;
 
 public class NotificationService {
 
@@ -113,8 +112,8 @@ public class NotificationService {
                 notifications.forEach(
                         notification -> {
                             if (!notification.getInternalStatus().isPresent()) {
-                                logger.info(format("Notification with transaction_id=%s ignored.",
-                                        notification.getTransactionId()));
+                                logger.info(format("Notification with status=%s, transaction_id=%s and reference=%s ignored.",
+                                        notification.getStatus(), notification.getTransactionId(), notification.getReference()));
                                 return;
                             }
 
@@ -176,7 +175,7 @@ public class NotificationService {
         }
 
         private <T> void updateRefundStatus(ExtendedNotification<T> notification, Enum newStatus) {
-            Optional<RefundEntity> optionalRefundEntity = refundDao.findByExternalId(notification.getReference());
+            Optional<RefundEntity> optionalRefundEntity = refundDao.findByReference(notification.getReference());
             if (!optionalRefundEntity.isPresent()) {
                 logger.error(format("Notification with transaction_id=%s and reference=%s failed updating refund status to: %s. Unable to find refund entity.",
                         notification.getTransactionId(), notification.getReference(), newStatus));

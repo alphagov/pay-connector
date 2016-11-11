@@ -48,6 +48,11 @@ public class WorldpayPaymentProvider extends BasePaymentProvider<BaseResponse> {
     }
 
     @Override
+    public Optional<String> generateRefundReference() {
+        return Optional.of(randomUUID().toString());
+    }
+
+    @Override
     public GatewayResponse authorise(AuthorisationGatewayRequest request) {
         return sendReceive(request, buildAuthoriseOrderFor(), WorldpayOrderStatusResponse.class);
     }

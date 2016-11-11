@@ -23,7 +23,7 @@ import static uk.gov.pay.connector.service.GatewayClient.createGatewayClient;
  * - We are currently not sure of the state in Dropwizard's Jersey Client wrapper and if so this may lead to multi-threading issues
  * - Potential refactoring after a performance test
  */
-public class PaymentProviders {
+public class PaymentProviders<T extends BaseResponse> {
 
     private final Map<PaymentGatewayName, PaymentProvider> paymentProviders = newHashMap();
 
@@ -52,7 +52,7 @@ public class PaymentProviders {
         );
     }
 
-    public PaymentProvider byName(PaymentGatewayName name) {
+    public PaymentProvider<T> byName(PaymentGatewayName name) {
         return paymentProviders.get(name);
     }
 }

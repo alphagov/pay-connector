@@ -5,11 +5,13 @@ import org.junit.Test;
 import uk.gov.pay.connector.service.smartpay.SmartpayAuthorisationResponse;
 import uk.gov.pay.connector.service.smartpay.SmartpayCancelResponse;
 import uk.gov.pay.connector.service.smartpay.SmartpayCaptureResponse;
+import uk.gov.pay.connector.service.smartpay.SmartpayRefundResponse;
 
 import java.io.IOException;
 import java.nio.charset.Charset;
 
 import static org.hamcrest.core.Is.is;
+import static org.hamcrest.core.IsNull.notNullValue;
 import static org.hamcrest.core.IsNull.nullValue;
 import static org.junit.Assert.assertThat;
 
@@ -89,6 +91,28 @@ public class SmartpayXMLUnmarshallerTest {
         assertThat(response.getTransactionId(), nullValue());
         assertThat(response.getErrorCode(), is("soap:Server"));
         assertThat(response.getErrorMessage(), is("validation 168 Original pspReference required for this operation"));
+    }
+
+    @Test
+    public void shouldUnmarshallARefundSuccessResponse() throws Exception {
+        String successPayload = readPayload("templates/smartpay/refund-success-response.xml");
+        SmartpayRefundResponse response = XMLUnmarshaller.unmarshall(successPayload, SmartpayRefundResponse.class);
+
+        assertThat(response.getReference(), is(notNullValue()));
+        assertThat(response.getReference().get(), is("8514774917520978"));
+        assertThat(response.getErrorCode(), is(nullValue()));
+        assertThat(response.getErrorMessage(), is(nullValue()));
+    }
+
+    @Test
+    public void shouldUnmarshallARefundErrorResponse() throws Exception {
+        String errorPayload = readPayload("templates/smartpay/refund-error-response.xml");
+        SmartpayRefundResponse response = XMLUnmarshaller.unmarshall(errorPayload, SmartpayRefundResponse.class);
+
+        assertThat(response.getReference(), is(notNullValue()));
+        assertThat(response.getReference().isPresent(), is(false));
+        assertThat(response.getErrorCode(), is("soap:Server"));
+        assertThat(response.getErrorMessage(), is("security 901 Invalid Merchant Account"));
     }
 
     private String readPayload(String path) throws IOException {

@@ -4,7 +4,6 @@ import com.google.common.collect.ImmutableMap;
 import com.google.common.io.Resources;
 import com.jayway.restassured.response.Response;
 import org.junit.Before;
-import org.junit.Ignore;
 import org.junit.Test;
 import uk.gov.pay.connector.it.base.CardResourceITestBase;
 

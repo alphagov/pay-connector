@@ -8,7 +8,6 @@ import java.nio.charset.Charset;
 import static com.github.tomakehurst.wiremock.client.WireMock.*;
 import static javax.ws.rs.core.HttpHeaders.CONTENT_TYPE;
 import static javax.ws.rs.core.MediaType.TEXT_XML;
-import static uk.gov.pay.connector.util.TransactionId.randomId;
 
 public class SmartpayMockClient {
 
@@ -16,31 +15,38 @@ public class SmartpayMockClient {
     }
 
     public void mockAuthorisationSuccess() {
-        String gatewayTransactionId = randomId();
-        String authoriseResponse = loadFromTemplate("authorisation-success-response.xml", gatewayTransactionId);
+        String authoriseResponse = loadFromTemplate("authorisation-success-response.xml");
         paymentServiceResponse(authoriseResponse);
     }
 
     public void mockAuthorisationFailure() {
-        String gatewayTransactionId = randomId();
-        String authoriseResponse = loadFromTemplate("authorisation-failed-response.xml", gatewayTransactionId);
+        String authoriseResponse = loadFromTemplate("authorisation-failed-response.xml");
         paymentServiceResponse(authoriseResponse);
     }
 
     public void mockCaptureResponse() {
-        String gatewayTransactionId = randomId();
-        String captureResponse = loadFromTemplate("capture-success-response.xml", gatewayTransactionId);
+        String captureResponse = loadFromTemplate("capture-success-response.xml");
         paymentServiceResponse(captureResponse);
     }
 
-    public void mockCancelResponse(String gatewayTransactionId) {
-        String cancelResponse = loadFromTemplate("cancel-success-response.xml", gatewayTransactionId);
+    public void mockCancelResponse() {
+        String cancelResponse = loadFromTemplate("cancel-success-response.xml");
         paymentServiceResponse(cancelResponse);
     }
 
     public void mockErrorResponse() {
-        String errorResponse = loadFromTemplate("authorisation-error-response.xml", "");
+        String errorResponse = loadFromTemplate("authorisation-error-response.xml");
         paymentServiceResponse(errorResponse);
+    }
+
+    public void mockRefundSuccess() {
+        String refundResponse = loadFromTemplate("refund-success-response.xml");
+        paymentServiceResponse(refundResponse);
+    }
+
+    public void mockRefundError() {
+        String refundResponse = loadFromTemplate("refund-error-response.xml");
+        paymentServiceResponse(refundResponse);
     }
 
     private void paymentServiceResponse(String responseBody) {
@@ -55,10 +61,9 @@ public class SmartpayMockClient {
         );
     }
 
-    private String loadFromTemplate(String fileName, String gatewayTransactionId) {
+    private String loadFromTemplate(String fileName) {
         try {
-            return Resources.toString(Resources.getResource("templates/smartpay/" + fileName), Charset.defaultCharset())
-                    .replace("{{transactionId}}", gatewayTransactionId);
+            return Resources.toString(Resources.getResource("templates/smartpay/" + fileName), Charset.defaultCharset());
         } catch (IOException e) {
             throw new RuntimeException("Could not load template", e);
         }

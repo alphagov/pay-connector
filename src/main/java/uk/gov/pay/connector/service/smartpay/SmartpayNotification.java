@@ -20,7 +20,8 @@ public class SmartpayNotification implements ChargeStatusRequest, Comparable<Sma
 
     private final DateTime eventDate;
     private String eventCode;
-    private String transactionId;
+    private String originalReference;
+    private String pspReference;
     private String success;
 
     private Optional<ChargeStatus> chargeStatus = Optional.empty();
@@ -30,10 +31,8 @@ public class SmartpayNotification implements ChargeStatusRequest, Comparable<Sma
         verify(notification, MANDATORY_FIELDS);
 
         this.eventCode = (String) notification.get("eventCode");
-        this.transactionId = (String) notification.get("originalReference");
-        if (this.transactionId == null) {
-            this.transactionId = (String) notification.get("pspReference");
-        }
+        this.originalReference = (String) notification.get("originalReference");
+        this.pspReference = (String) notification.get("pspReference");
         this.success = (String) notification.get("success");
         this.eventDate = DateTime.parse((String) notification.get("eventDate"));
     }
@@ -43,6 +42,11 @@ public class SmartpayNotification implements ChargeStatusRequest, Comparable<Sma
         if (!missingFields.isEmpty()) {
             throw new IllegalArgumentException("Missing fields: " + missingFields);
         }
+    }
+
+    @Override
+    public String getTransactionId() {
+        return pspReference;
     }
 
     @Override
@@ -71,12 +75,15 @@ public class SmartpayNotification implements ChargeStatusRequest, Comparable<Sma
         return this.eventDate.compareTo(other.eventDate);
     }
 
-    @Override
-    public String getTransactionId() {
-        return transactionId;
-    }
-
     public Pair<String, Boolean> getStatus() {
         return Pair.of(eventCode, isSuccessFull());
+    }
+
+    public String getOriginalReference() {
+        return originalReference;
+    }
+
+    public String getPspReference() {
+        return pspReference;
     }
 }

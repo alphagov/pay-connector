@@ -29,6 +29,7 @@ import java.util.Map;
 import static com.google.common.io.Resources.getResource;
 import static fj.data.Either.left;
 import static javax.ws.rs.core.MediaType.APPLICATION_XML;
+import static org.hamcrest.CoreMatchers.instanceOf;
 import static org.hamcrest.CoreMatchers.startsWith;
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.core.Is.is;
@@ -77,6 +78,18 @@ public class WorldpayPaymentProviderTest {
     @Test
     public void shouldGetStatusMapper() {
         Assert.assertThat(provider.getStatusMapper(), sameInstance(WorldpayStatusMapper.get()));
+    }
+
+    @Test
+    public void shouldGenerateTransactionId() {
+        Assert.assertThat(provider.generateTransactionId().isPresent(), is(true));
+        Assert.assertThat(provider.generateTransactionId().get(), is(instanceOf(String.class)));
+    }
+
+    @Test
+    public void shouldGenerateRefundReference() {
+        Assert.assertThat(provider.generateRefundReference().isPresent(), is(true));
+        Assert.assertThat(provider.generateRefundReference().get(), is(instanceOf(String.class)));
     }
 
     @Test

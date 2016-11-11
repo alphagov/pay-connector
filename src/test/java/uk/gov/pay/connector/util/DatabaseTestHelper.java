@@ -125,12 +125,13 @@ public class DatabaseTestHelper {
         );
     }
 
-    public void addRefund(long id, String externalId, long amount, String status, Long chargeId, ZonedDateTime createdDate) {
+    public void addRefund(long id, String externalId, String reference, long amount, String status, Long chargeId, ZonedDateTime createdDate) {
         jdbi.withHandle(handle ->
                 handle
-                        .createStatement("INSERT INTO refunds(id, external_id, amount, status, charge_id, created_date) VALUES (:id, :external_id, :amount, :status, :charge_id, :created_date)")
+                        .createStatement("INSERT INTO refunds(id, external_id, reference, amount, status, charge_id, created_date) VALUES (:id, :external_id, :reference, :amount, :status, :charge_id, :created_date)")
                         .bind("id", id)
                         .bind("external_id", externalId)
+                        .bind("reference", reference)
                         .bind("amount", amount)
                         .bind("status", status)
                         .bind("charge_id", chargeId)
@@ -171,7 +172,7 @@ public class DatabaseTestHelper {
 
     public List<Map<String, Object>> getRefund(long refundId) {
         List<Map<String, Object>> ret = jdbi.withHandle(h ->
-                h.createQuery("SELECT external_id, amount, status, created_date, charge_id " +
+                h.createQuery("SELECT external_id, reference, amount, status, created_date, charge_id " +
                         "FROM refunds " +
                         "WHERE id = :refund_id")
                         .bind("refund_id", refundId)
@@ -181,7 +182,7 @@ public class DatabaseTestHelper {
 
     public List<Map<String, Object>> getRefundsByChargeId(long chargeId) {
         List<Map<String, Object>> ret = jdbi.withHandle(h ->
-                h.createQuery("SELECT external_id, amount, status, created_date, charge_id " +
+                h.createQuery("SELECT external_id, reference, amount, status, created_date, charge_id " +
                         "FROM refunds r " +
                         "WHERE charge_id = :charge_id")
                         .bind("charge_id", chargeId)
