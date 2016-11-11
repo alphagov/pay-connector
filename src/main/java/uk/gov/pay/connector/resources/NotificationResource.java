@@ -41,7 +41,7 @@ public class NotificationResource {
     @Consumes(APPLICATION_JSON)
     @Path(NOTIFICATIONS_SANDBOX_API_PATH)
     public Response authoriseSandboxNotifications(String notification) throws IOException {
-        return handleNotification("not-required", "sandbox", notification);
+        return Response.ok().build();
     }
 
     @POST
