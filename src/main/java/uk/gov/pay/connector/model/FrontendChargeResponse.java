@@ -16,19 +16,12 @@ import java.util.Map;
 public class FrontendChargeResponse extends ChargeResponse {
     public static class FrontendChargeResponseBuilder extends AbstractChargeResponseBuilder<FrontendChargeResponseBuilder, FrontendChargeResponse> {
         private String status;
-        private CardDetailsEntity confirmationDetails;
         private PersistedCard persistedCard;
         private GatewayAccountEntity gatewayAccount;
 
         public FrontendChargeResponseBuilder withStatus(String status) {
             this.status = status;
             super.withState(ChargeStatus.fromString(status).toExternal());
-            return this;
-        }
-
-        //TODO: leaving for backward compatibility. To remove later
-        public FrontendChargeResponseBuilder withConfirmationDetails(CardDetailsEntity cardDetailsEntity) {
-            this.confirmationDetails = cardDetailsEntity;
             return this;
         }
 
@@ -49,7 +42,7 @@ public class FrontendChargeResponse extends ChargeResponse {
 
         @Override
         public FrontendChargeResponse build() {
-            return new FrontendChargeResponse(chargeId, amount, state, cardBrand, gatewayTransactionId, returnUrl, email, description, reference, providerName, createdDate, links, status, refundSummary, confirmationDetails, persistedCard, gatewayAccount);
+            return new FrontendChargeResponse(chargeId, amount, state, cardBrand, gatewayTransactionId, returnUrl, email, description, reference, providerName, createdDate, links, status, refundSummary, persistedCard, gatewayAccount);
         }
     }
 
@@ -62,15 +55,15 @@ public class FrontendChargeResponse extends ChargeResponse {
 
     //TODO: leaving for backward compatibility
     @JsonProperty(value = "confirmation_details")
-    private CardDetailsEntity confirmationDetails;
+    private PersistedCard confirmationDetails;
 
     @JsonProperty(value = "gateway_account")
     private GatewayAccountEntity gatewayAccount;
 
-    private FrontendChargeResponse(String chargeId, Long amount, ExternalChargeState state, String cardBrand, String gatewayTransactionId, String returnUrl, String email, String description, String reference, String providerName, ZonedDateTime createdDate, List<Map<String, Object>> dataLinks, String status, RefundSummary refundSummary, CardDetailsEntity confirmationDetails, PersistedCard chargeCardDetails, GatewayAccountEntity gatewayAccount) {
+    private FrontendChargeResponse(String chargeId, Long amount, ExternalChargeState state, String cardBrand, String gatewayTransactionId, String returnUrl, String email, String description, String reference, String providerName, ZonedDateTime createdDate, List<Map<String, Object>> dataLinks, String status, RefundSummary refundSummary, PersistedCard chargeCardDetails, GatewayAccountEntity gatewayAccount) {
         super(chargeId, amount, state, cardBrand, gatewayTransactionId, returnUrl, email, description, reference, providerName, createdDate, dataLinks, refundSummary, chargeCardDetails);
+        this.confirmationDetails = chargeCardDetails;
         this.status = status;
-        this.confirmationDetails = confirmationDetails;
         this.gatewayAccount = gatewayAccount;
     }
 

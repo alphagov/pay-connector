@@ -151,25 +151,38 @@ public class ChargesFrontendResource {
 
     private ChargeResponse buildChargeResponse(UriInfo uriInfo, ChargeEntity charge) {
         String chargeId = charge.getExternalId();
-
-        CardDetailsEntity cardDetailsEntity = charge.getCardDetails();
+        PersistedCard persistedCard = resolvePersistedCard(charge);
         return aFrontendChargeResponse()
                 .withStatus(charge.getStatus())
                 .withChargeId(chargeId)
                 .withAmount(charge.getAmount())
-                .withCardBrand(findCardBrandLabel(cardDetailsEntity == null ? "" : cardDetailsEntity.getCardBrand()).orElse(""))
+                .withCardBrand(findCardBrandLabel(persistedCard == null ? "" : persistedCard.getCardBrand()).orElse(""))
                 .withDescription(charge.getDescription())
                 .withGatewayTransactionId(charge.getGatewayTransactionId())
                 .withCreatedDate(charge.getCreatedDate())
                 .withReturnUrl(charge.getReturnUrl())
                 .withEmail(charge.getEmail())
-                //TODO: leaving for backward compatibility
-                .withConfirmationDetails(cardDetailsEntity)
-                .withChargeCardDetails(cardDetailsEntity == null ? null : cardDetailsEntity.toCard())
+                .withChargeCardDetails(persistedCard)
                 .withGatewayAccount(charge.getGatewayAccount())
                 .withLink("self", GET, locationUriFor(FRONTEND_CHARGE_API_PATH, uriInfo, chargeId))
                 .withLink("cardAuth", POST, locationUriFor(FRONTEND_CHARGE_AUTHORIZE_API_PATH, uriInfo, chargeId))
                 .withLink("cardCapture", POST, locationUriFor(FRONTEND_CHARGE_CAPTURE_API_PATH, uriInfo, chargeId)).build();
+    }
+
+    /**
+     * Leaving for backward compatibility
+     * @param charge
+     * @return
+     */
+    @Deprecated
+    private PersistedCard resolvePersistedCard(ChargeEntity charge) {
+        CardDetailsEntity cardDetails = charge.getCardDetails();
+        if (charge.getConfirmationDetailsEntity() != null) {
+            return charge.getConfirmationDetailsEntity().toCard(cardDetails != null ? cardDetails.getCardBrand() : "");
+        } else if (cardDetails != null) {
+            return cardDetails.toCard();
+        }
+        return null;
     }
 
     private URI locationUriFor(String path, UriInfo uriInfo, String chargeId) {

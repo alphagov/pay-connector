@@ -14,7 +14,10 @@ public class PersistedCard {
     private String expiryDate;
 
     @JsonProperty("billing_address")
-    private Address address;
+    private Address billingAddress;
+
+    @JsonProperty("card_brand")
+    private String cardBrand;
 
     public String getLastDigitsCardNumber() {
         return lastDigitsCardNumber;
@@ -41,10 +44,18 @@ public class PersistedCard {
     }
 
     public Address getBillingAddress() {
-        return address;
+        return billingAddress;
     }
 
     public void setBillingAddress(Address billingAddress) {
-        this.address = billingAddress;
+        this.billingAddress = billingAddress;
+    }
+
+    public String getCardBrand() {
+        return cardBrand;
+    }
+
+    public void setCardBrand(String cardBrand) {
+        this.cardBrand = cardBrand;
     }
 }
