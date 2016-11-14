@@ -151,7 +151,7 @@ public class ChargesFrontendResource {
 
     private ChargeResponse buildChargeResponse(UriInfo uriInfo, ChargeEntity charge) {
         String chargeId = charge.getExternalId();
-        PersistedCard persistedCard = resolvePersistedCard(charge);
+        PersistedCard persistedCard = charge.getCardDetails() != null ? charge.getCardDetails().toCard() : null;
         return aFrontendChargeResponse()
                 .withStatus(charge.getStatus())
                 .withChargeId(chargeId)
@@ -167,22 +167,6 @@ public class ChargesFrontendResource {
                 .withLink("self", GET, locationUriFor(FRONTEND_CHARGE_API_PATH, uriInfo, chargeId))
                 .withLink("cardAuth", POST, locationUriFor(FRONTEND_CHARGE_AUTHORIZE_API_PATH, uriInfo, chargeId))
                 .withLink("cardCapture", POST, locationUriFor(FRONTEND_CHARGE_CAPTURE_API_PATH, uriInfo, chargeId)).build();
-    }
-
-    /**
-     * Leaving for backward compatibility
-     * @param charge
-     * @return
-     */
-    @Deprecated
-    private PersistedCard resolvePersistedCard(ChargeEntity charge) {
-        CardDetailsEntity cardDetails = charge.getCardDetails();
-        if (charge.getConfirmationDetailsEntity() != null) {
-            return charge.getConfirmationDetailsEntity().toCard(cardDetails != null ? cardDetails.getCardBrand() : "");
-        } else if (cardDetails != null) {
-            return cardDetails.toCard();
-        }
-        return null;
     }
 
     private URI locationUriFor(String path, UriInfo uriInfo, String chargeId) {

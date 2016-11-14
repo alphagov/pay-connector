@@ -46,7 +46,7 @@ public class ChargeEntity extends AbstractEntity {
     private CardDetailsEntity cardDetails;
 
     @Deprecated
-    @OneToOne(mappedBy = "chargeEntity", cascade = CascadeType.REFRESH)
+    @OneToOne(mappedBy = "chargeEntity", cascade = CascadeType.ALL)
     private ConfirmationDetailsEntity confirmationDetailsEntity;
 
     @ManyToOne
@@ -201,5 +201,9 @@ public class ChargeEntity extends AbstractEntity {
 
     public ConfirmationDetailsEntity getConfirmationDetailsEntity() {
         return confirmationDetailsEntity;
+    }
+
+    public void setConfirmationDetailsEntity(ConfirmationDetailsEntity confirmationDetailsEntity) {
+        this.confirmationDetailsEntity = confirmationDetailsEntity;
     }
 }
