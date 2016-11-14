@@ -76,4 +76,13 @@ public class ConfirmationDetailsEntity extends AbstractEntity {
         this.billingAddress = billingAddress;
     }
 
+    public PersistedCard toCard(String cardBrand) {
+        PersistedCard card = new PersistedCard();
+        card.setLastDigitsCardNumber(lastDigitsCardNumber);
+        card.setCardBrand(cardBrand);
+        card.setBillingAddress(billingAddress != null ? billingAddress.toAddress() : null);
+        card.setExpiryDate(expiryDate);
+        card.setCardHolderName(cardHolderName);
+        return card;
+    }
 }

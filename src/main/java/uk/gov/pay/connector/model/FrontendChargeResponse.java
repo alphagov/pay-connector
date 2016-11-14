@@ -4,7 +4,6 @@ import com.fasterxml.jackson.annotation.JsonProperty;
 import org.apache.commons.lang3.builder.ToStringBuilder;
 import uk.gov.pay.connector.model.api.ExternalChargeState;
 import uk.gov.pay.connector.model.builder.AbstractChargeResponseBuilder;
-import uk.gov.pay.connector.model.domain.CardDetailsEntity;
 import uk.gov.pay.connector.model.domain.ChargeStatus;
 import uk.gov.pay.connector.model.domain.GatewayAccountEntity;
 import uk.gov.pay.connector.model.domain.PersistedCard;
