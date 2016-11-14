@@ -398,4 +398,16 @@ public class DatabaseTestHelper {
                         .list()
         );
     }
+
+    //TODO: for backward compatible test only
+    @Deprecated
+    public Map<String, Object> getConfirmationDetailsByChargeId(Long chargeId) {
+        Map<String, Object> ret = jdbi.withHandle(h ->
+                h.createQuery("SELECT charge_id, last_digits_card_number, cardholder_name, expiry_date, address_line1, address_line2, address_postcode, address_city, address_county, address_country " +
+                        "FROM confirmation_details " +
+                        "WHERE charge_id = :charge_id")
+                        .bind("charge_id", chargeId)
+                        .first());
+        return ret;
+    }
 }

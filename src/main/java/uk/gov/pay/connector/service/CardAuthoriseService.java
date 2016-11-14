@@ -113,6 +113,16 @@ public class CardAuthoriseService extends CardService<BaseAuthoriseResponse> {
         detailsEntity.setExpiryDate(cardDetails.getEndDate());
         detailsEntity.setLastDigitsCardNumber(StringUtils.right(cardDetails.getCardNo(), 4));
         chargeEntity.setCardDetails(detailsEntity);
+
+        //TODO: for backward compatibility
+        ConfirmationDetailsEntity confirmationDetailsEntity = new ConfirmationDetailsEntity(chargeEntity);
+        confirmationDetailsEntity.setBillingAddress(new AddressEntity(cardDetails.getAddress()));
+        confirmationDetailsEntity.setCardHolderName(cardDetails.getCardHolder());
+        confirmationDetailsEntity.setExpiryDate(cardDetails.getEndDate());
+        confirmationDetailsEntity.setLastDigitsCardNumber(StringUtils.right(cardDetails.getCardNo(), 4));
+        chargeEntity.setConfirmationDetailsEntity(confirmationDetailsEntity);
+        //TODO: end backward compatible changes
+
         logger.info("Stored confirmation details for charge - charge_external_id={}", chargeEntity.getExternalId());
     }
 }

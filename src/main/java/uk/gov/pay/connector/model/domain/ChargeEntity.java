@@ -45,6 +45,10 @@ public class ChargeEntity extends AbstractEntity {
     @Embedded
     private CardDetailsEntity cardDetails;
 
+    @Deprecated
+    @OneToOne(mappedBy = "chargeEntity", cascade = CascadeType.ALL)
+    private ConfirmationDetailsEntity confirmationDetailsEntity;
+
     @ManyToOne
     @JoinColumn(name = "gateway_account_id", updatable = false)
     private GatewayAccountEntity gatewayAccount;
@@ -195,4 +199,11 @@ public class ChargeEntity extends AbstractEntity {
         return valueFrom(gatewayAccount.getGatewayName());
     }
 
+    public ConfirmationDetailsEntity getConfirmationDetailsEntity() {
+        return confirmationDetailsEntity;
+    }
+
+    public void setConfirmationDetailsEntity(ConfirmationDetailsEntity confirmationDetailsEntity) {
+        this.confirmationDetailsEntity = confirmationDetailsEntity;
+    }
 }

@@ -67,6 +67,39 @@ public class CardAuthoriseResourceITest extends CardResourceITestBase {
         assertThat(app.getDatabaseTestHelper().getChargeCardBrand(chargeId), is(cardBrand));
     }
 
+    //TODO: testing backward compatible changes
+    @Test
+    @Deprecated
+    public void shouldStoreCardDetailsInConfirmationDetailsForAuthorisedCharge() throws Exception {
+        String cardBrand = "visa";
+        String externalChargeId = shouldAuthoriseChargeFor(buildJsonCardDetailsFor("Mr Payment", "4444333322221111", "123", "12/20", cardBrand, "line 1", "line 2", "the city", "the county", "NR256EG", "GB"));
+        Long chargeId = Long.valueOf(StringUtils.removeStart(externalChargeId, "charge-"));
+
+        Map<String, Object> confirmationDetails = app.getDatabaseTestHelper().getConfirmationDetailsByChargeId(chargeId);
+        assertThat(confirmationDetails, hasEntry("last_digits_card_number", "1111"));
+        assertThat(confirmationDetails, hasEntry("cardholder_name", "Mr Payment"));
+        assertThat(confirmationDetails, hasEntry("expiry_date", "12/20"));
+        assertThat(app.getDatabaseTestHelper().getChargeCardBrand(chargeId), is(cardBrand));
+        assertThat(confirmationDetails, hasEntry("address_line1", "line 1"));
+        assertThat(confirmationDetails, hasEntry("address_line2", "line 2"));
+        assertThat(confirmationDetails, hasEntry("address_postcode", "NR256EG"));
+        assertThat(confirmationDetails, hasEntry("address_city", "the city"));
+        assertThat(confirmationDetails, hasEntry("address_county", "the county"));
+        assertThat(confirmationDetails, hasEntry("address_country", "GB"));
+
+        //Making sure its in charges table too
+        Map<String, Object> cardDetails = app.getDatabaseTestHelper().getChargeCardDetailsByChargeId(chargeId);
+        assertThat(cardDetails, hasEntry("last_digits_card_number", "1111"));
+        assertThat(cardDetails, hasEntry("cardholder_name", "Mr Payment"));
+        assertThat(cardDetails, hasEntry("expiry_date", "12/20"));
+        assertThat(cardDetails, hasEntry("address_line1", "line 1"));
+        assertThat(cardDetails, hasEntry("address_line2", "line 2"));
+        assertThat(cardDetails, hasEntry("address_postcode", "NR256EG"));
+        assertThat(cardDetails, hasEntry("address_city", "the city"));
+        assertThat(cardDetails, hasEntry("address_county", "the county"));
+        assertThat(cardDetails, hasEntry("address_country", "GB"));
+    }
+
     @Test
     public void shouldNotAuthoriseCard_ForSpecificCardNumber1() throws Exception {
         String cardDetailsToReject = buildJsonCardDetailsFor("4000000000000002", "visa");
