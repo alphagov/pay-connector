@@ -119,14 +119,12 @@ public class ExternalChargeRefundAvailabilityGatewayAccountRefundsEnabledTest {
     }
 
     @Test
-    public void shouldGetChargeRefundAvailabilityAsUnavailable_whenGatewayProviderIsSmartpay() {
-
-        GatewayAccountEntity smartpayGateway = new GatewayAccountEntity("smartpay", newHashMap(), Type.TEST);
+    public void shouldGetChargeRefundAvailabilityAsUnavailable_whenChargeStatusIsInANonRefundableState() {
 
         assertThat(ExternalChargeRefundAvailability.valueOf(aValidChargeEntity()
-                .withStatus(CAPTURED)
+                .withStatus(EXPIRED)
                 .withAmount(500L)
-                .withGatewayAccountEntity(smartpayGateway)
+                .withGatewayAccountEntity(gatewayAccount)
                 .build()), is(EXTERNAL_UNAVAILABLE));
     }
 

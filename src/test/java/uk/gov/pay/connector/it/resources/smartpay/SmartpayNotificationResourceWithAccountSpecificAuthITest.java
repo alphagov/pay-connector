@@ -186,13 +186,13 @@ public class SmartpayNotificationResourceWithAccountSpecificAuthITest extends Ca
     private String notificationPayloadForTransaction(String transactionId, String fileName) throws IOException {
         URL resource = getResource("templates/smartpay/"+fileName+".json");
         return Resources.toString(resource, Charset.defaultCharset())
-                .replace("{{transactionId}}", transactionId);
+                .replace("{{pspReference}}", transactionId);
     }
 
     private String multipleNotifications(String transactionId, String transactionId2) throws IOException {
         URL resource = getResource("templates/smartpay/multiple-notifications.json");
         return Resources.toString(resource, Charset.defaultCharset())
-                .replace("{{transactionId}}", transactionId)
-                .replace("{{transactionId2}}", transactionId2);
+                .replace("{{pspReference1}}", transactionId)
+                .replace("{{pspReference2}}", transactionId2);
     }
 }

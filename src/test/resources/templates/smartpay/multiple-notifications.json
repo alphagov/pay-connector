@@ -10,10 +10,10 @@
         "eventCode": "CAPTURE",
         "eventDate": "2015-10-08T13:48:35+02:00",
         "merchantAccountCode": "MerchantAccount",
-        "merchantReference": "{{transactionId}}-merchant",
-        "originalReference": "{{transactionId}}",
+        "merchantReference": "{{pspReference1}}-merchant",
+        "originalReference": "{{pspReference1}}",
         "paymentMethod": "visa",
-        "pspReference": "8614443049106308",
+        "pspReference": "{{pspReference1}}",
         "success": "true"
       }
     },
@@ -26,10 +26,10 @@
         "eventCode": "AUTHORISATION",
         "eventDate": "2015-10-08T13:48:30+02:00",
         "merchantAccountCode": "MerchantAccount",
-        "merchantReference": "{{transactionId2}}-merchant",
-        "originalReference": "{{transactionId2}}",
+        "merchantReference": "{{pspReference2}}-merchant",
+        "originalReference": "{{pspReference2}}",
         "paymentMethod": "visa",
-        "pspReference": "8614443049106309",
+        "pspReference": "{{pspReference2}}",
         "success": "true"
       }
     }
