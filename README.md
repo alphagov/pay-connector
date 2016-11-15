@@ -135,16 +135,20 @@ Content-Type: application/json
 
 {
     "payment_provider": "sandbox",
+    "description": "This is an account for the GOV.UK Pay team",
+    "analytics_id": "PAY-GA-123",
     "type: "test"
 }
 ```
 
 ##### Request body description
 
-| Field                    | required | Description                               | Supported Values     |
-| ------------------------ |:--------:| ----------------------------------------- |----------------------|
-| `payment_provider`       | X        | The payment provider for which this account is created.       | sandbox, worldpay, smartpay |
-| `type`                   |          | Account type for this provider.             | test, live (defaults to test if missing) |
+| Field                    | required | Description                                                      | Supported Values     |
+| ------------------------ |:--------:| ---------------------------------------------------------------- |----------------------|
+| `payment_provider`       | X        | The payment provider for which this account is created.          | sandbox, worldpay, smartpay |
+| `type`                   |          | Account type for this provider.                                  | test, live (defaults to test if missing) |
+| `description`            |          | Some useful non-ambiguiuos description about the gateway account | |
+| `analytics_id`           |          | Google Analytics (GA) unique ID for the GOV.UK Pay platform      | |
 
 #### Response example
 
@@ -155,23 +159,26 @@ Location: http://connector.service/v1/api/accounts/1
 
 {
     "gateway_account_id": "1",
-    "type": "live"
+    "type": "live",
+    "description": "This is an account for the GOV.UK Pay team",
+    "analytics_id": "PAY-GA-123",
     "links": [{
         "href": "http://connector.service/v1/api/accounts/1",
         "rel" : "self",
         "method" : "GET"
-        }
-      ]
+    }]
 }
 ```
 
 ##### Response field description
 
-| Field                    | always present | Description                               |
-| ------------------------ |:--------:| ----------------------------------------- |
-| `gateway_account_id`                 | X | The account Id created by the connector       |
-| `type`                 | X | Account type for this provider (test/live)|
-| `links`                 | X | HTTP self link containing resource reference to the account.       |
+| Field                    | always present | Description                                   |
+| ------------------------ |:--------------:| --------------------------------------------- |
+| `gateway_account_id`     | X              | The account Id created by the connector       |
+| `type`                   | X              | Account type for this provider (test/live)    |
+| `description`            | X              | Some useful non-ambiguiuos description about the gateway account |
+| `analytics_id`           | X              | Google Analytics (GA) unique ID for the GOV.UK Pay platform      |
+| `links`                  | X              | HTTP self link containing resource reference to the account.     |
 
 -----------------------------------------------------------------------------------------------------------
 
