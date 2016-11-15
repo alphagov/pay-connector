@@ -21,3 +21,5 @@ staging-1.alpha_staging-1-80.status=success
 staging-1.tag=FAILED-80
 
 staging-1.FAILED-80.date=
+
+staging-1.FAILED-80.status=failed
