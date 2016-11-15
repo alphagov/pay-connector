@@ -51,3 +51,5 @@ staging-1.FAILED-76.status=failed
 staging-1.tag=alpha_staging-1-76
 
 staging-1.alpha_staging-1-76.date=2016-11-15:11:11:15
+
+staging-1.alpha_staging-1-76.status=success
