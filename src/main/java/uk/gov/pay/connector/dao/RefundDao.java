@@ -20,14 +20,14 @@ public class RefundDao extends JpaDao<RefundEntity> {
         return super.findById(RefundEntity.class, id);
     }
 
-    public Optional<RefundEntity> findByExternalId(String externalId) {
+    public Optional<RefundEntity> findByReference(String reference) {
 
         String query = "SELECT r FROM RefundEntity r " +
-                "WHERE r.externalId = :externalId";
+                "WHERE r.reference = :reference";
 
         return entityManager.get()
                 .createQuery(query, RefundEntity.class)
-                .setParameter("externalId", externalId)
+                .setParameter("reference", reference)
                 .getResultList().stream().findFirst();
     }
 }

@@ -24,9 +24,14 @@ public class SmartpayNotificationTest {
     @Test
     public void simpleFieldsShould_simplyMap() {
         SmartpayNotification smartpayNotification = aNotificationWith(
+                "originalReference", "originalReference",
+                "pspReference", "pspReference",
                 "eventCode", "eventCode",
                 "success", "true",
                 "eventDate", "2015-10-08T13:48:30+02:00");
+        assertThat(smartpayNotification.getTransactionId(), is("pspReference"));
+        assertThat(smartpayNotification.getOriginalReference(), is("originalReference"));
+        assertThat(smartpayNotification.getPspReference(), is("pspReference"));
         assertThat(smartpayNotification.getEventCode(), is("eventCode"));
         assertThat(smartpayNotification.isSuccessFull(), is(true));
         assertThat(smartpayNotification.getEventDate(), is(new DateTime(2015, 10, 8, 13, 48, 30, forOffsetHours(2))));
@@ -36,21 +41,6 @@ public class SmartpayNotificationTest {
     public void successValuesThatArentTrueShouldBeFalse() {
         SmartpayNotification smartpayNotification = aNotificationWith("success", "sausages");
         assertThat(smartpayNotification.isSuccessFull(), is(false));
-    }
-
-    @Test
-    public void ifAnOriginalReferenceIsPresent_thatShouldBeTheTransactionId() {
-        SmartpayNotification smartpayNotification = aNotificationWith(
-                "originalReference", "original",
-                "pspReference", "not a useful transaction id");
-        assertThat(smartpayNotification.getTransactionId(), is("original"));
-    }
-
-    @Test
-    public void ifAnOriginalReferenceIsNotPresent_thePspReferenceShouldBeTheTransactionId() {
-        SmartpayNotification smartpayNotification = aNotificationWith(
-                "pspReference", "now's my chance to shine");
-        assertThat(smartpayNotification.getTransactionId(), is("now's my chance to shine"));
     }
 
     @Test

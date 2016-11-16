@@ -151,12 +151,14 @@ public class ChargesFrontendResource {
 
     private ChargeResponse buildChargeResponse(UriInfo uriInfo, ChargeEntity charge) {
         String chargeId = charge.getExternalId();
+        //TODO: for backward compatibility
         PersistedCard persistedCard = resolvePersistedCard(charge);
         return aFrontendChargeResponse()
                 .withStatus(charge.getStatus())
                 .withChargeId(chargeId)
                 .withAmount(charge.getAmount())
-                .withCardBrand(findCardBrandLabel(persistedCard == null ? "" : persistedCard.getCardBrand()).orElse(""))
+                //TODO: leaving for backward compatibility
+                .withCardBrand(persistedCard != null ? persistedCard.getCardBrand() : "")
                 .withDescription(charge.getDescription())
                 .withGatewayTransactionId(charge.getGatewayTransactionId())
                 .withCreatedDate(charge.getCreatedDate())
@@ -171,18 +173,31 @@ public class ChargesFrontendResource {
 
     /**
      * Leaving for backward compatibility
+     *
      * @param charge
      * @return
      */
     @Deprecated
     private PersistedCard resolvePersistedCard(ChargeEntity charge) {
         CardDetailsEntity cardDetails = charge.getCardDetails();
+        String resolvedCardBrand = findCardBrandLabel(persistedCardBrandOrEmpty(cardDetails)).orElse("");
         if (charge.getConfirmationDetailsEntity() != null) {
-            return charge.getConfirmationDetailsEntity().toCard(cardDetails != null ? cardDetails.getCardBrand() : "");
+            return charge.getConfirmationDetailsEntity().toCard(resolvedCardBrand);
         } else if (cardDetails != null) {
-            return cardDetails.toCard();
+            PersistedCard persistedCard = cardDetails.toCard();
+            persistedCard.setCardBrand(resolvedCardBrand);
+            return persistedCard;
         }
         return null;
+    }
+
+    private String persistedCardBrandOrEmpty(CardDetailsEntity cardDetails) {
+        if (cardDetails != null) {
+            if (cardDetails.getCardBrand() != null) {
+                return cardDetails.getCardBrand();
+            }
+        }
+        return "";
     }
 
     private URI locationUriFor(String path, UriInfo uriInfo, String chargeId) {

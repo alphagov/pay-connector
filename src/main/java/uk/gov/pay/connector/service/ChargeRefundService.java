@@ -21,7 +21,6 @@ import uk.gov.pay.connector.service.transaction.*;
 import javax.inject.Inject;
 import java.util.Optional;
 
-import static java.lang.String.format;
 import static uk.gov.pay.connector.exception.RefundException.ErrorCode.NOT_SUFFICIENT_AMOUNT_AVAILABLE;
 import static uk.gov.pay.connector.model.api.ExternalChargeRefundAvailability.EXTERNAL_AVAILABLE;
 import static uk.gov.pay.connector.model.api.ExternalChargeRefundAvailability.valueOf;
@@ -31,10 +30,10 @@ public class ChargeRefundService {
 
     public class Response {
 
-        private GatewayResponse<BaseRefundResponse> refundGatewayResponse;
+        private GatewayResponse refundGatewayResponse;
         private RefundEntity refundEntity;
 
-        public Response(GatewayResponse<BaseRefundResponse> refundGatewayResponse, RefundEntity refundEntity) {
+        public Response(GatewayResponse refundGatewayResponse, RefundEntity refundEntity) {
             this.refundGatewayResponse = refundGatewayResponse;
             this.refundEntity = refundEntity;
         }
@@ -72,57 +71,26 @@ public class ChargeRefundService {
 
     private Optional<Response> refundWithGateway(ChargeEntity charge, RefundRequest refundRequest) {
         return Optional.ofNullable(transactionFlowProvider.get()
-                .executeNext(prepareForRefund(charge, refundRequest))
+                .executeNext(prepareForRefund(providers, charge, refundRequest))
                 .executeNext(doGatewayRefund(providers))
                 .executeNext(finishRefund())
                 .complete().get(Response.class));
     }
 
-    private PreTransactionalOperation<TransactionContext, RefundEntity> prepareForRefund(ChargeEntity chargeEntity, RefundRequest refundRequest) {
+    private PreTransactionalOperation<TransactionContext, RefundEntity> prepareForRefund(PaymentProviders providers, ChargeEntity chargeEntity, RefundRequest refundRequest) {
         return context -> {
 
             ChargeEntity reloadedCharge = chargeDao.merge(chargeEntity);
             ExternalChargeRefundAvailability refundAvailability = valueOf(reloadedCharge);
             GatewayAccountEntity gatewayAccount = reloadedCharge.getGatewayAccount();
-
-            if (EXTERNAL_AVAILABLE != refundAvailability) {
-
-                logger.warn("Charge not available for refund - charge_external_id={}, status={}, refund_status={}, account_id={}, operation_type=Refund, provider={}, provider_type={}",
-                        reloadedCharge.getId(),
-                        fromString(reloadedCharge.getStatus()),
-                        refundAvailability,
-                        gatewayAccount.getId(),
-                        gatewayAccount.getGatewayName(),
-                        gatewayAccount.getType());
-
-                throw RefundException.notAvailableForRefundException(reloadedCharge.getExternalId(), refundAvailability);
-            }
+            checkIfChargeIsRefundableOrTerminate(reloadedCharge, refundAvailability, gatewayAccount);
 
             long totalAmountToBeRefunded = reloadedCharge.getTotalAmountToBeRefunded();
-            if (totalAmountToBeRefunded != refundRequest.getAmountAvailableForRefund()) {
-                logger.info("Refund request has a mismatch on amount available for refund - charge_external_id={}, amount_actually_available_for_refund={}, refund_amount_available_in_request={}",
-                        reloadedCharge.getExternalId(), totalAmountToBeRefunded, refundRequest.getAmountAvailableForRefund());
-                throw RefundException.refundAmountAvailableMismatchException("Refund Amount Available Mismatch");
-            }
+            checkIfRefundRequestIsInConflictOrTerminate(refundRequest, reloadedCharge, totalAmountToBeRefunded);
 
-            if (totalAmountToBeRefunded - refundRequest.getAmount() < 0) {
+            checkIfRefundAmountWithinLimitOrTerminate(refundRequest, reloadedCharge, refundAvailability, gatewayAccount, totalAmountToBeRefunded);
 
-                logger.info("Charge doesn't have sufficient amount for refund - charge_external_id={}, status={}, refund_status={}, account_id={}, operation_type=Refund, provider={}, provider_type={}, amount_available_refund={}, amount_requested_refund={}",
-                        reloadedCharge.getExternalId(),
-                        fromString(reloadedCharge.getStatus()),
-                        refundAvailability,
-                        gatewayAccount.getId(),
-                        gatewayAccount.getGatewayName(),
-                        gatewayAccount.getType(),
-                        totalAmountToBeRefunded,
-                        refundRequest.getAmount());
-
-                throw RefundException.refundException("Not sufficient amount available for refund", NOT_SUFFICIENT_AMOUNT_AVAILABLE);
-            }
-
-            RefundEntity refundEntity = new RefundEntity(reloadedCharge, refundRequest.getAmount());
-            reloadedCharge.getRefunds().add(refundEntity);
-            refundDao.persist(refundEntity);
+            RefundEntity refundEntity = completePrepareRefund(providers, chargeEntity, refundRequest, reloadedCharge);
 
             logger.info("Card refund request sent - charge_external_id={}, status={}, amount={}, transaction_id={}, account_id={}, operation_type=Refund, amount_available_refund={}, amount_requested_refund={}, provider={}, provider_type={}",
                     chargeEntity.getExternalId(),
@@ -142,37 +110,103 @@ public class ChargeRefundService {
     private NonTransactionalOperation<TransactionContext, GatewayResponse> doGatewayRefund(PaymentProviders providers) {
         return context -> {
             RefundEntity refundEntity = context.get(RefundEntity.class);
-            return providers.byName(refundEntity.getChargeEntity().getPaymentGatewayName())
-                    .refund(RefundGatewayRequest.valueOf(refundEntity));
+            return getPaymentProviderFor(providers, refundEntity.getChargeEntity()).refund(RefundGatewayRequest.valueOf(refundEntity));
         };
     }
 
     private TransactionalOperation<TransactionContext, Response> finishRefund() {
         return context -> {
             RefundEntity refundEntity = refundDao.merge(context.get(RefundEntity.class));
-            RefundStatus status = RefundStatus.REFUND_ERROR;
-            GatewayResponse gatewayResponse = context.get(GatewayResponse.class);
+            GatewayResponse<BaseRefundResponse> gatewayResponse = context.get(GatewayResponse.class);
             ChargeEntity chargeEntity = refundEntity.getChargeEntity();
 
-            if (gatewayResponse.isSuccessful()) {
-                status = refundFinishSuccessStatusOf(chargeEntity.getPaymentGatewayName());
-            }
+            RefundStatus status = determineRefundStatus(gatewayResponse, chargeEntity);
+            String reference = getRefundReference(refundEntity,gatewayResponse);
 
-            logger.info("Card refund response received - charge_external_id={}, transaction_id={}, status={}",
-                    chargeEntity.getExternalId(), chargeEntity.getGatewayTransactionId(), status);
-            logger.info("Refund status to update - charge_external_id={}, status={}, to_status={} for charge_id={}, refund_id={}, refund_external_id={}, amount={}",
-                    chargeEntity.getExternalId(), refundEntity.getStatus(), status, chargeEntity.getId(), refundEntity.getId(), refundEntity.getExternalId(), refundEntity.getAmount());
+            logger.info("Card refund response received -  transaction_id={}, charge_id={}, charge_external_id={}, refund_id={}, refund_external_id={}, refund_reference={}, refund_status={}, refund_amount={}",
+                    chargeEntity.getGatewayTransactionId(), chargeEntity.getId(), chargeEntity.getExternalId(), refundEntity.getId(), refundEntity.getExternalId(), reference, refundEntity.getStatus(), refundEntity.getAmount());
+            logger.info("Refund status to update - status={}, to_status={} for transaction_id={}, charge_id={}, charge_external_id={}, refund_id={}, refund_external_id={}, refund_reference={}, refund_status={}, refund_amount={}",
+                    refundEntity.getStatus(), status, chargeEntity.getGatewayTransactionId(), chargeEntity.getId(), chargeEntity.getExternalId(), refundEntity.getId(), refundEntity.getExternalId(), reference, refundEntity.getStatus(), refundEntity.getAmount());
 
             refundEntity.setStatus(status);
-
+            refundEntity.setReference(reference);
             return new Response(gatewayResponse, refundEntity);
         };
     }
 
+    private RefundEntity completePrepareRefund(PaymentProviders providers, ChargeEntity chargeEntity, RefundRequest refundRequest, ChargeEntity reloadedCharge) {
+        RefundEntity refundEntity = new RefundEntity(reloadedCharge, refundRequest.getAmount());
+        getPaymentProviderFor(providers, chargeEntity).generateRefundReference().ifPresent(
+                refundEntity::setReference);
+        reloadedCharge.getRefunds().add(refundEntity);
+        refundDao.persist(refundEntity);
+        return refundEntity;
+    }
+
+    private void checkIfRefundRequestIsInConflictOrTerminate(RefundRequest refundRequest, ChargeEntity reloadedCharge, long totalAmountToBeRefunded) {
+        if (totalAmountToBeRefunded != refundRequest.getAmountAvailableForRefund()) {
+            logger.info("Refund request has a mismatch on amount available for refund - charge_external_id={}, amount_actually_available_for_refund={}, refund_amount_available_in_request={}",
+                    reloadedCharge.getExternalId(), totalAmountToBeRefunded, refundRequest.getAmountAvailableForRefund());
+            throw RefundException.refundAmountAvailableMismatchException("Refund Amount Available Mismatch");
+        }
+    }
+
+    private void checkIfRefundAmountWithinLimitOrTerminate(RefundRequest refundRequest, ChargeEntity reloadedCharge, ExternalChargeRefundAvailability refundAvailability, GatewayAccountEntity gatewayAccount, long totalAmountToBeRefunded) {
+        if (totalAmountToBeRefunded - refundRequest.getAmount() < 0) {
+
+            logger.info("Charge doesn't have sufficient amount for refund - charge_external_id={}, status={}, refund_status={}, account_id={}, operation_type=Refund, provider={}, provider_type={}, amount_available_refund={}, amount_requested_refund={}",
+                    reloadedCharge.getExternalId(),
+                    fromString(reloadedCharge.getStatus()),
+                    refundAvailability,
+                    gatewayAccount.getId(),
+                    gatewayAccount.getGatewayName(),
+                    gatewayAccount.getType(),
+                    totalAmountToBeRefunded,
+                    refundRequest.getAmount());
+
+            throw RefundException.refundException("Not sufficient amount available for refund", NOT_SUFFICIENT_AMOUNT_AVAILABLE);
+        }
+    }
+
+    private void checkIfChargeIsRefundableOrTerminate(ChargeEntity reloadedCharge, ExternalChargeRefundAvailability refundAvailability, GatewayAccountEntity gatewayAccount) {
+        if (EXTERNAL_AVAILABLE != refundAvailability) {
+
+            logger.warn("Charge not available for refund - charge_external_id={}, status={}, refund_status={}, account_id={}, operation_type=Refund, provider={}, provider_type={}",
+                    reloadedCharge.getId(),
+                    fromString(reloadedCharge.getStatus()),
+                    refundAvailability,
+                    gatewayAccount.getId(),
+                    gatewayAccount.getGatewayName(),
+                    gatewayAccount.getType());
+
+            throw RefundException.notAvailableForRefundException(reloadedCharge.getExternalId(), refundAvailability);
+        }
+    }
+
+    private String getRefundReference(RefundEntity refundEntity, GatewayResponse<BaseRefundResponse> gatewayResponse) {
+        if (gatewayResponse.isSuccessful()) {
+            return gatewayResponse.getBaseResponse().get().getReference().orElse(refundEntity.getReference());
+        }
+        return refundEntity.getReference();
+    }
+
+    private RefundStatus determineRefundStatus(GatewayResponse<BaseRefundResponse> gatewayResponse, ChargeEntity chargeEntity) {
+        if (gatewayResponse.isSuccessful()) {
+            return refundFinishSuccessStatusOf(chargeEntity.getPaymentGatewayName());
+        }
+        return RefundStatus.REFUND_ERROR;
+    }
+
+    // TODO: this will be removed as part of PP-1063
     private RefundStatus refundFinishSuccessStatusOf(PaymentGatewayName paymentGatewayName) {
         if (paymentGatewayName == PaymentGatewayName.SANDBOX) {
             return RefundStatus.REFUNDED;
         }
         return RefundStatus.REFUND_SUBMITTED;
+    }
+
+    public PaymentProvider<BaseRefundResponse> getPaymentProviderFor(PaymentProviders providers, ChargeEntity chargeEntity) {
+        PaymentProvider paymentProvider = providers.byName(chargeEntity.getPaymentGatewayName());
+        return paymentProvider;
     }
 }

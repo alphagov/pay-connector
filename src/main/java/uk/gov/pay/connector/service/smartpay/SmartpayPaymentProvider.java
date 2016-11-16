@@ -20,6 +20,7 @@ import static fj.data.Either.left;
 import static fj.data.Either.right;
 import static uk.gov.pay.connector.model.domain.GatewayAccount.CREDENTIALS_MERCHANT_ID;
 import static uk.gov.pay.connector.service.OrderCaptureRequestBuilder.aSmartpayOrderCaptureRequest;
+import static uk.gov.pay.connector.service.OrderRefundRequestBuilder.aSmartpayOrderRefundRequest;
 import static uk.gov.pay.connector.service.OrderSubmitRequestBuilder.aSmartpayOrderSubmitRequest;
 import static uk.gov.pay.connector.service.smartpay.SmartpayOrderCancelRequestBuilder.aSmartpayOrderCancelRequest;
 
@@ -43,6 +44,11 @@ public class SmartpayPaymentProvider extends BasePaymentProvider<BaseResponse> {
     }
 
     @Override
+    public Optional<String> generateRefundReference() {
+        return Optional.empty();
+    }
+
+    @Override
     public GatewayResponse authorise(AuthorisationGatewayRequest request) {
         return sendReceive(request, buildSubmitOrderFor(), SmartpayAuthorisationResponse.class);
     }
@@ -54,7 +60,7 @@ public class SmartpayPaymentProvider extends BasePaymentProvider<BaseResponse> {
 
     @Override
     public GatewayResponse refund(RefundGatewayRequest request) {
-        throw new UnsupportedOperationException("Operation not supported");
+        return sendReceive(request, buildRefundOrderFor(), SmartpayRefundResponse.class);
     }
 
     @Override
@@ -80,7 +86,8 @@ public class SmartpayPaymentProvider extends BasePaymentProvider<BaseResponse> {
 
             objectMapper.readValue(payload, SmartpayNotificationList.class)
                     .getNotifications()
-                    .forEach(notification -> builder.addNotificationFor(notification.getTransactionId(), "", notification.getStatus()));
+                    .forEach(notification -> builder.addNotificationFor(
+                            notification.getPspReference(), notification.getPspReference(), notification.getStatus()));
 
             return right(builder.build());
         } catch (Exception e) {
@@ -115,6 +122,15 @@ public class SmartpayPaymentProvider extends BasePaymentProvider<BaseResponse> {
         return request -> aSmartpayOrderCancelRequest()
                 .withMerchantCode(getMerchantCode(request))
                 .withTransactionId(request.getTransactionId())
+                .build();
+    }
+
+    private Function<RefundGatewayRequest, String> buildRefundOrderFor() {
+        return request -> aSmartpayOrderRefundRequest()
+                .withMerchantCode(getMerchantCode(request))
+                .withTransactionId(request.getTransactionId())
+                .withAmount(request.getAmount())
+                .withReference(request.getReference())
                 .build();
     }
 

@@ -5,7 +5,6 @@ import com.google.gson.Gson;
 import com.jayway.restassured.http.ContentType;
 import com.jayway.restassured.response.ValidatableResponse;
 import org.junit.Before;
-import org.junit.Ignore;
 import org.junit.Test;
 import uk.gov.pay.connector.it.base.CardResourceITestBase;
 import uk.gov.pay.connector.it.dao.DatabaseFixtures;
@@ -17,12 +16,10 @@ import java.util.Map;
 
 import static java.lang.String.format;
 import static java.time.temporal.ChronoUnit.SECONDS;
-import static javax.ws.rs.core.Response.Status.ACCEPTED;
-import static javax.ws.rs.core.Response.Status.BAD_REQUEST;
-import static javax.ws.rs.core.Response.Status.PRECONDITION_FAILED;
+import static javax.ws.rs.core.Response.Status.*;
 import static org.hamcrest.CoreMatchers.hasItems;
-import static org.hamcrest.CoreMatchers.notNullValue;
 import static org.hamcrest.MatcherAssert.assertThat;
+import static org.hamcrest.Matchers.notNullValue;
 import static org.hamcrest.core.Is.is;
 import static org.hamcrest.text.MatchesPattern.matchesPattern;
 import static uk.gov.pay.connector.matcher.RefundsMatcher.aRefundMatching;
@@ -33,7 +30,6 @@ import static uk.gov.pay.connector.resources.ApiPaths.REFUNDS_API_PATH;
 
 public class SandboxRefundITest extends CardResourceITestBase {
 
-    public static final long REFUND_AMOUNT_AVLBL = 10000L;
     private DatabaseFixtures.TestAccount defaultTestAccount;
     private DatabaseFixtures.TestCharge defaultTestCharge;
     private DatabaseTestHelper databaseTestHelper;
@@ -69,7 +65,7 @@ public class SandboxRefundITest extends CardResourceITestBase {
         String refundId = assertRefundResponseWith(refundAmount, validatableResponse, ACCEPTED.getStatusCode());
         List<Map<String, Object>> refundsFoundByChargeId = databaseTestHelper.getRefundsByChargeId(defaultTestCharge.getChargeId());
         assertThat(refundsFoundByChargeId.size(), is(1));
-        assertThat(refundsFoundByChargeId, hasItems(aRefundMatching(refundId, defaultTestCharge.getChargeId(), refundAmount, "REFUNDED")));
+        assertThat(refundsFoundByChargeId, hasItems(aRefundMatching(refundId, is(notNullValue()), defaultTestCharge.getChargeId(), refundAmount, "REFUNDED")));
     }
 
     @Test
@@ -85,8 +81,8 @@ public class SandboxRefundITest extends CardResourceITestBase {
 
         List<Map<String, Object>> refundsFoundByChargeId = databaseTestHelper.getRefundsByChargeId(defaultTestCharge.getChargeId());
         assertThat(refundsFoundByChargeId.size(), is(2));
-        assertThat(refundsFoundByChargeId, hasItems(aRefundMatching(refundId, defaultTestCharge.getChargeId(), refundAmount, "REFUNDED")));
-        assertThat(refundsFoundByChargeId, hasItems(aRefundMatching(refundId_2, defaultTestCharge.getChargeId(), refundAmount, "REFUNDED")));
+        assertThat(refundsFoundByChargeId, hasItems(aRefundMatching(refundId, is(notNullValue()), defaultTestCharge.getChargeId(), refundAmount, "REFUNDED")));
+        assertThat(refundsFoundByChargeId, hasItems(aRefundMatching(refundId_2, is(notNullValue()), defaultTestCharge.getChargeId(), refundAmount, "REFUNDED")));
     }
 
     @Test
@@ -102,7 +98,7 @@ public class SandboxRefundITest extends CardResourceITestBase {
 
         List<Map<String, Object>> refundsFoundByChargeId = databaseTestHelper.getRefundsByChargeId(defaultTestCharge.getChargeId());
         assertThat(refundsFoundByChargeId.size(), is(1));
-        assertThat(refundsFoundByChargeId, hasItems(aRefundMatching(refundId, defaultTestCharge.getChargeId(), refundAmount, "REFUNDED")));
+        assertThat(refundsFoundByChargeId, hasItems(aRefundMatching(refundId, is(notNullValue()), defaultTestCharge.getChargeId(), refundAmount, "REFUNDED")));
     }
 
     @Test
@@ -115,7 +111,7 @@ public class SandboxRefundITest extends CardResourceITestBase {
 
         List<Map<String, Object>> refundsFoundByChargeId = databaseTestHelper.getRefundsByChargeId(defaultTestCharge.getChargeId());
         assertThat(refundsFoundByChargeId.size(), is(1));
-        assertThat(refundsFoundByChargeId, hasItems(aRefundMatching(refundId, defaultTestCharge.getChargeId(), refundAmount, "REFUNDED")));
+        assertThat(refundsFoundByChargeId, hasItems(aRefundMatching(refundId, is(notNullValue()), defaultTestCharge.getChargeId(), refundAmount, "REFUNDED")));
     }
 
     @Test
@@ -135,8 +131,8 @@ public class SandboxRefundITest extends CardResourceITestBase {
         assertThat(refundsFoundByChargeId.size(), is(2));
 
         assertThat(refundsFoundByChargeId, hasItems(
-                aRefundMatching(secondRefundId, chargeId, secondRefundAmount, "REFUNDED"),
-                aRefundMatching(firstRefundId, chargeId, firstRefundAmount, "REFUNDED")));
+                aRefundMatching(secondRefundId, is(notNullValue()), chargeId, secondRefundAmount, "REFUNDED"),
+                aRefundMatching(firstRefundId, is(notNullValue()), chargeId, firstRefundAmount, "REFUNDED")));
 
         getChargeApi.withChargeId(externalChargeId)
                 .getCharge()
@@ -238,7 +234,7 @@ public class SandboxRefundITest extends CardResourceITestBase {
 
         List<Map<String, Object>> refundsFoundByChargeId = databaseTestHelper.getRefundsByChargeId(defaultTestCharge.getChargeId());
         assertThat(refundsFoundByChargeId.size(), is(1));
-        assertThat(refundsFoundByChargeId, hasItems(aRefundMatching(firstRefundId, defaultTestCharge.getChargeId(), firstRefundAmount, "REFUNDED")));
+        assertThat(refundsFoundByChargeId, hasItems(aRefundMatching(firstRefundId, is(notNullValue()), defaultTestCharge.getChargeId(), firstRefundAmount, "REFUNDED")));
 
         postRefundFor(defaultTestCharge.getExternalChargeId(), secondRefundAmount, defaultTestCharge.getAmount() - firstRefundAmount)
                 .statusCode(400)
@@ -247,7 +243,7 @@ public class SandboxRefundITest extends CardResourceITestBase {
 
         List<Map<String, Object>> refundsFoundByChargeId1 = databaseTestHelper.getRefundsByChargeId(defaultTestCharge.getChargeId());
         assertThat(refundsFoundByChargeId1.size(), is(1));
-        assertThat(refundsFoundByChargeId1, hasItems(aRefundMatching(firstRefundId, defaultTestCharge.getChargeId(), firstRefundAmount, "REFUNDED")));
+        assertThat(refundsFoundByChargeId1, hasItems(aRefundMatching(firstRefundId, is(notNullValue()), defaultTestCharge.getChargeId(), firstRefundAmount, "REFUNDED")));
     }
 
     private ValidatableResponse postRefundFor(String chargeId, Long refundAmount, long refundAmountAvlbl) {

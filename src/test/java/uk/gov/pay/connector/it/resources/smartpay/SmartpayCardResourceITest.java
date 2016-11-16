@@ -65,7 +65,7 @@ public class SmartpayCardResourceITest extends CardResourceITestBase {
         String gatewayTransactionId = randomId();
         String chargeId = createNewChargeWith(AUTHORISATION_SUCCESS, gatewayTransactionId);
 
-        smartpay.mockCancelResponse(gatewayTransactionId);
+        smartpay.mockCancelResponse();
 
         givenSetup()
                 .contentType(ContentType.JSON)
