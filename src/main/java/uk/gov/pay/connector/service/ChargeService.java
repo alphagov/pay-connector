@@ -125,26 +125,53 @@ public class ChargeService {
 
     private ChargeResponseBuilder chargeResponseBuilder(UriInfo uriInfo, ChargeEntity charge) {
         String chargeId = charge.getExternalId();
-        String cardBrand = "";
-        if (charge.getCardDetails() != null) {
-            cardBrand = charge.getCardDetails().getCardBrand();
-        }
+        PersistedCard persistedCard = resolvePersistedCard(charge);
         return aChargeResponse()
                 .withChargeId(chargeId)
                 .withAmount(charge.getAmount())
                 .withReference(charge.getReference())
                 .withDescription(charge.getDescription())
                 .withState(ChargeStatus.fromString(charge.getStatus()).toExternal())
-                .withCardBrand(findCardBrandLabel(cardBrand).orElse(""))
+                .withCardBrand(persistedCard != null ? persistedCard.getCardBrand() : "")
                 .withGatewayTransactionId(charge.getGatewayTransactionId())
                 .withProviderName(charge.getGatewayAccount().getGatewayName())
                 .withCreatedDate(charge.getCreatedDate())
                 .withReturnUrl(charge.getReturnUrl())
                 .withEmail(charge.getEmail())
                 .withRefunds(buildRefundSummary(charge))
-                .withCardDetails(charge.getCardDetails() == null ? null : charge.getCardDetails().toCard())
+                .withCardDetails(persistedCard)
                 .withLink("self", GET, selfUriFor(uriInfo, charge.getGatewayAccount().getId(), chargeId))
                 .withLink("refunds", GET, refundsUriFor(uriInfo, charge.getGatewayAccount().getId(), charge.getExternalId()));
+    }
+
+    /**
+     * Leaving for backward compatibility
+     *
+     * @param charge
+     * @return
+     */
+    @Deprecated
+    private PersistedCard resolvePersistedCard(ChargeEntity charge) {
+        CardDetailsEntity cardDetails = charge.getCardDetails();
+        String resolvedCardBrand = findCardBrandLabel(persistedCardBrandOrEmpty(cardDetails)).orElse("");
+        if (charge.getConfirmationDetailsEntity() != null) {
+            return charge.getConfirmationDetailsEntity().toCard(resolvedCardBrand);
+        } else if (cardDetails != null) {
+            PersistedCard persistedCard = cardDetails.toCard();
+            persistedCard.setCardBrand(resolvedCardBrand);
+            return persistedCard;
+        }
+        return null;
+    }
+
+    @Deprecated
+    private String persistedCardBrandOrEmpty(CardDetailsEntity cardDetails) {
+        if (cardDetails != null) {
+            if (cardDetails.getCardBrand() != null) {
+                return cardDetails.getCardBrand();
+            }
+        }
+        return "";
     }
 
     private ChargeResponse.RefundSummary buildRefundSummary(ChargeEntity charge) {
