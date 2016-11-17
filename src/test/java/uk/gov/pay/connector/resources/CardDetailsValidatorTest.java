@@ -64,8 +64,8 @@ public class CardDetailsValidatorTest {
     }
 
     @Test
-    public void validationFailsFor13digitsCardNumber() {
-        Card cardDetails = buildCardDetailsFor("1234567890123", validCVC, validExpiryDate, cardBrand);
+    public void validationFailsFor11digitsCardNumber() {
+        Card cardDetails = buildCardDetailsFor("12345678901", validCVC, validExpiryDate, cardBrand);
         assertFalse(CardDetailsValidator.isWellFormattedCardDetails(cardDetails));
     }
 

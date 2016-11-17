@@ -169,7 +169,7 @@ public class CardAuthoriseResourceITest extends CardResourceITestBase {
     @Test
     public void shouldReturnError_WhenCardNumberShorterThanMinimumExpected() throws Exception {
         String chargeId = createNewChargeWith(ENTERING_CARD_DETAILS, null);
-        String randomCardNumberDetails = buildJsonCardDetailsFor("1111111111111", "visa");
+        String randomCardNumberDetails = buildJsonCardDetailsFor("11111111111", "visa");
 
         shouldReturnErrorFor(chargeId, randomCardNumberDetails, "Values do not match expected format/length.");
         assertFrontendChargeStatusIs(chargeId, ENTERING_CARD_DETAILS.getValue());
