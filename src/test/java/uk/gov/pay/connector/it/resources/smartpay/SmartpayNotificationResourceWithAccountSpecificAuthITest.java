@@ -3,22 +3,31 @@ package uk.gov.pay.connector.it.resources.smartpay;
 import com.google.common.collect.ImmutableMap;
 import com.google.common.io.Resources;
 import com.jayway.restassured.response.Response;
+import org.apache.commons.lang3.StringUtils;
+import org.hamcrest.Description;
+import org.hamcrest.Matcher;
+import org.hamcrest.TypeSafeMatcher;
 import org.junit.Before;
 import org.junit.Test;
 import uk.gov.pay.connector.it.base.CardResourceITestBase;
+import uk.gov.pay.connector.model.domain.ChargeStatus;
 
 import java.io.IOException;
 import java.net.URL;
 import java.nio.charset.Charset;
+import java.util.List;
+import java.util.Map;
 
 import static com.google.common.io.Resources.getResource;
 import static com.jayway.restassured.RestAssured.given;
+import static java.lang.String.format;
 import static javax.ws.rs.core.MediaType.APPLICATION_JSON;
 import static javax.ws.rs.core.MediaType.TEXT_XML;
 import static javax.ws.rs.core.Response.Status.OK;
 import static org.hamcrest.Matchers.is;
 import static org.junit.Assert.assertThat;
 import static uk.gov.pay.connector.model.domain.ChargeStatus.*;
+import static uk.gov.pay.connector.model.domain.RefundStatus.REFUND_SUBMITTED;
 import static uk.gov.pay.connector.util.JsonEncoder.toJson;
 import static uk.gov.pay.connector.util.TransactionId.randomId;
 
@@ -48,11 +57,11 @@ public class SmartpayNotificationResourceWithAccountSpecificAuthITest extends Ca
                 .then()
                 .statusCode(OK.getStatusCode());
 
-        String transactionId = randomId();
-        String chargeId = createNewChargeWith(CAPTURE_SUBMITTED, transactionId);
+        String pspReference = randomId();
+        String externalChargeId = createNewChargeWith(CAPTURE_SUBMITTED, pspReference);
 
         String response = notifyConnectorWithCredentials(
-                notificationPayloadForTransaction(transactionId, "notification-capture"),
+                notificationPayloadForTransaction(pspReference, "notification-capture"),
                 "bob", "bobsnewbigsecret")
                 .then()
                 .statusCode(200)
@@ -60,7 +69,10 @@ public class SmartpayNotificationResourceWithAccountSpecificAuthITest extends Ca
 
         assertThat(response, is(RESPONSE_EXPECTED_BY_SMARTPAY));
 
-        assertFrontendChargeStatusIs(chargeId, "CAPTURED");
+        assertFrontendChargeStatusIs(externalChargeId, "CAPTURED");
+        long chargeId = Long.parseLong(StringUtils.removeStart(externalChargeId, "charge-"));
+        List<Map<String, Object>> chargeEvents = app.getDatabaseTestHelper().getChargeEvents(chargeId);
+        assertThat(chargeEvents, hasEventWithStatusAndTransactionId(CAPTURED, pspReference));
     }
 
     @Test
@@ -81,7 +93,6 @@ public class SmartpayNotificationResourceWithAccountSpecificAuthITest extends Ca
                 .extract().body().asString();
     }
 
-
     @Test
     public void shouldIgnoreAuthorisedNotification() throws Exception {
         givenSetup()
@@ -101,6 +112,32 @@ public class SmartpayNotificationResourceWithAccountSpecificAuthITest extends Ca
         assertThat(response, is(RESPONSE_EXPECTED_BY_SMARTPAY));
 
         assertFrontendChargeStatusIs(chargeId, "CAPTURED");
+    }
+
+
+    @Test
+    public void shouldHandleRefundNotificationsCorrectly() throws Exception {
+
+        givenSetup()
+                .body(toJson(ImmutableMap.of("username", "bob", "password", "bobsbigsecret")))
+                .post("/v1/api/accounts/" + accountId + "/notification-credentials")
+                .then()
+                .statusCode(OK.getStatusCode());
+
+        String transactionId = randomId();
+        String externalChargeId = createNewChargeWith(CAPTURED, transactionId);
+        Long chargeId = Long.parseLong(StringUtils.removeStart(externalChargeId, "charge-"));
+        String externalRefundId = createNewRefundWith(REFUND_SUBMITTED, 10L, chargeId, transactionId);
+
+        String response = notifyConnector(notificationPayloadForTransaction(transactionId, "notification-refund"))
+                .then()
+                .statusCode(200)
+                .extract().body().asString();
+
+        assertThat(response, is(RESPONSE_EXPECTED_BY_SMARTPAY));
+
+        assertFrontendChargeStatusIs(externalChargeId, "CAPTURED");
+        assertRefundStatusIs(externalRefundId, "REFUNDED");
     }
 
     @Test
@@ -194,5 +231,28 @@ public class SmartpayNotificationResourceWithAccountSpecificAuthITest extends Ca
         return Resources.toString(resource, Charset.defaultCharset())
                 .replace("{{pspReference1}}", transactionId)
                 .replace("{{pspReference2}}", transactionId2);
+    }
+
+    private void assertRefundStatusIs(String externalRefundId, String expectedStatus) {
+        long refundId = Long.parseLong(StringUtils.removeStart(externalRefundId, "refund-"));
+        List<Map<String, Object>> refund = app.getDatabaseTestHelper().getRefund(refundId);
+        assertThat(refund.get(0).get("status"), is(expectedStatus));
+    }
+
+    private Matcher<? super List<Map<String, Object>>> hasEventWithStatusAndTransactionId(ChargeStatus chargeStatus, String transactionId) {
+        return new TypeSafeMatcher<List<Map<String, Object>>>() {
+            @Override
+            protected boolean matchesSafely(List<Map<String, Object>> chargeEvents) {
+                return chargeEvents.stream()
+                        .anyMatch(chargeEvent ->
+                                chargeStatus.getValue().equals(chargeEvent.get("status")) && transactionId.equals(chargeEvent.get("gateway_transaction_id"))
+                        );
+            }
+
+            @Override
+            public void describeTo(Description description) {
+                description.appendText(format("no matching charge event with status [%s] with transactionId [%s]", chargeStatus.getValue(), transactionId));
+            }
+        };
     }
 }

@@ -9,6 +9,7 @@ import org.junit.Before;
 import org.junit.Rule;
 import uk.gov.pay.connector.model.domain.CardFixture;
 import uk.gov.pay.connector.model.domain.ChargeStatus;
+import uk.gov.pay.connector.model.domain.RefundStatus;
 import uk.gov.pay.connector.rules.DropwizardAppWithPostgresRule;
 import uk.gov.pay.connector.rules.SmartpayMockClient;
 import uk.gov.pay.connector.rules.WorldpayMockClient;
@@ -125,6 +126,13 @@ public class CardResourceITestBase {
 
     protected String createNewCharge() {
         return createNewChargeWith(CREATED, "");
+    }
+
+    protected String createNewRefundWith(RefundStatus refundStatus, Long amount,Long chargeId, String transactionId) {
+        long refundId = RandomUtils.nextInt();
+        String externalRefundId = "refund-" + refundId;
+        app.getDatabaseTestHelper().addRefund(refundId,externalRefundId,transactionId, amount,refundStatus.getValue(),chargeId, ZonedDateTime.now());
+        return externalRefundId;
     }
 
     protected String createNewChargeWith(ChargeStatus status, String gatewayTransactionId) {
