@@ -315,6 +315,7 @@ Content-Type: application/json
     "description": "Breathing licence",
     "reference": "Ref-1234",
     "amount": 5000,
+    "payment_provider": "sandbox",
     "gateway_account_id": "10",
     "gateway_transaction_id": "DFG98-FG8J-R78HJ-8JUG9",
     "state": {
@@ -322,6 +323,19 @@ Content-Type: application/json
       "finished": false
     },
     "card_brand": "Visa",
+    "card_details": {
+            "billing_address": {
+                "city": "TEST",
+                "country": "GB",
+                "line1": "TEST",
+                "line2": "TEST - DO NOT PROCESS",
+                "postcode": "SE1 3UZ"
+            },
+            "card_brand": "Visa",
+            "cardholder_name": "TEST",
+            "expiry_date": "12/19",
+            "last_digits_card_number": "4242"
+    },
     "return_url": "http://example.service/return_from_payments",
     "refund_summary": {
             "amount_available": 5000,
@@ -360,6 +374,16 @@ Content-Type: application/json
 | `gateway_transaction_id` | X | The gateway transaction reference associated to this charge       |
 | `status`                 | X | The current external status of the charge       |
 | `card_brand`             |   | The brand label of the card                 |
+| `card_details.card_brand`      |           | The card brand used for this payment                    |
+| `card_details.cardholder_name` |           | The card card holder name of this payment               |
+| `card_details.expiry_date`     |           | The expiry date of this card                            |
+| `card_details.last_digits_card_number`  |  | The last 4 digits of this card                          |
+| `card_details.billing_address.line1`    |  | The line 1 of the billing address                       |
+| `card_details.billing_address.line2`    |  | The line 2 of the billing address                       |
+| `card_details.billing_address.postcode` |  | The postcode of the billing address                     |
+| `card_details.billing_address.city`     |  | The city of the billing address                         |
+| `card_details.billing_address.country`  |  | The country of the billing address                      |
+| `payment_provider`       | X | The gateway provider used by this transaction                         |
 | `return_url`             | X | The url to return the user to after the payment process has completed.|
 | `links`                  | X | Array of relevant resource references related to this charge|
 | `refund_summary`         | X | Provides a refund summary of the total refund amount still available and how much has already been refunded, plus a refund status|
@@ -463,6 +487,21 @@ Content-Type: application/json
         "gateway_account_id": "10",
         "gateway_transaction_id": "DFG98-FG8J-R78HJ-8JUG9",
         "status": "CREATED",
+        "card_brand": "Visa",
+        "card_details": {
+            "billing_address": {
+                "city": "TEST",
+                "country": "GB",
+                "line1": "TEST",
+                "line2": "TEST - DO NOT PROCESS",
+                "postcode": "SE1 3UZ"
+            },
+            "card_brand": "Visa",
+            "cardholder_name": "TEST",
+            "expiry_date": "12/19",
+            "last_digits_card_number": "4242"
+        },
+        "payment_provider": "sandbox",
         "return_url": "http://example.service/return_from_payments",
         "links": [
             {
@@ -497,6 +536,17 @@ Content-Type: application/json
 | `gateway_account_id`     | X | The ID of the gateway account to use with this charge       |
 | `gateway_transaction_id` | X | The gateway transaction reference associated to this charge       |
 | `status`                 | X | The current external status of the charge       |
+| `card_brand`             |   | The brand label of the card                 |
+| `card_details.card_brand`      |           | The card brand used for this payment                    |
+| `card_details.cardholder_name` |           | The card card holder name of this payment               |
+| `card_details.expiry_date`     |           | The expiry date of this card                            |
+| `card_details.last_digits_card_number`  |  | The last 4 digits of this card                          |
+| `card_details.billing_address.line1`    |  | The line 1 of the billing address                       |
+| `card_details.billing_address.line2`    |  | The line 2 of the billing address                       |
+| `card_details.billing_address.postcode` |  | The postcode of the billing address                     |
+| `card_details.billing_address.city`     |  | The city of the billing address                         |
+| `card_details.billing_address.country`  |  | The country of the billing address                      |
+| `payment_provider`       | X | The gateway provider used by this transaction                         |
 | `return_url`             | X | The url to return the user to after the payment process has completed.|
 | `refund_summary`         | X | Provides a refund summary of the total refund amount still available and how much has already been refunded, plus a refund status|
 
@@ -998,7 +1048,7 @@ Content-Type: application/json
 | `card_brand`                 | X | The card brand                     |
 | `cvc`     | X | The cvc of the card (3 digits) |
 | `expiry_date`     | X | The expiry date (no validation other than format being mm/yy) |
-| `address`     | X | The billing address associated to this charge. Mandatory Address fields are `line1, city, postcode, country`. Optional Address fields are `line2, county`  |
+| `address`     | X | The billing address associated to this charge. Mandatory Address fields are `line1, city, postcode, country`. Optional Address fields are `line2` only  |
 
 #### Valid card numbers (inspired from Stripe)
 
@@ -1155,6 +1205,19 @@ Content-Type: application/json
     "credentials": {},
     "gateway_account_id": 111,
     "payment_provider": "sandbox"
+  },
+  "card_details": {
+      "billing_address": {
+          "city": "TEST",
+          "country": "GB",
+          "line1": "TEST",
+          "line2": "TEST - DO NOT PROCESS",
+          "postcode": "SE1 3UZ"
+      },
+      "card_brand": "Visa",
+      "cardholder_name": "TEST",
+      "expiry_date": "12/19",
+      "last_digits_card_number": "4242"
   },
   "events": [
     {
