@@ -327,7 +327,6 @@ Content-Type: application/json
             "billing_address": {
                 "city": "TEST",
                 "country": "GB",
-                "county": null,
                 "line1": "TEST",
                 "line2": "TEST - DO NOT PROCESS",
                 "postcode": "SE1 3UZ"
@@ -493,7 +492,6 @@ Content-Type: application/json
             "billing_address": {
                 "city": "TEST",
                 "country": "GB",
-                "county": null,
                 "line1": "TEST",
                 "line2": "TEST - DO NOT PROCESS",
                 "postcode": "SE1 3UZ"
@@ -1050,7 +1048,7 @@ Content-Type: application/json
 | `card_brand`                 | X | The card brand                     |
 | `cvc`     | X | The cvc of the card (3 digits) |
 | `expiry_date`     | X | The expiry date (no validation other than format being mm/yy) |
-| `address`     | X | The billing address associated to this charge. Mandatory Address fields are `line1, city, postcode, country`. Optional Address fields are `line2, county`  |
+| `address`     | X | The billing address associated to this charge. Mandatory Address fields are `line1, city, postcode, country`. Optional Address fields are `line2` only  |
 
 #### Valid card numbers (inspired from Stripe)
 
@@ -1212,7 +1210,6 @@ Content-Type: application/json
       "billing_address": {
           "city": "TEST",
           "country": "GB",
-          "county": null,
           "line1": "TEST",
           "line2": "TEST - DO NOT PROCESS",
           "postcode": "SE1 3UZ"
