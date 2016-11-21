@@ -11,7 +11,7 @@
                 <issuerUrl xmlns="http://payment.services.adyen.com" xsi:nil="true"/>
                 <md xmlns="http://payment.services.adyen.com" xsi:nil="true"/>
                 <paRequest xmlns="http://payment.services.adyen.com" xsi:nil="true"/>
-                <pspReference xmlns="http://payment.services.adyen.com">7914435254138158</pspReference>
+                <pspReference xmlns="http://payment.services.adyen.com">{{pspReference}}</pspReference>
                 <refusalReason xmlns="http://payment.services.adyen.com" xsi:nil="true"/>
                 <resultCode xmlns="http://payment.services.adyen.com">Authorised</resultCode>
             </ns1:paymentResult>

@@ -4,13 +4,9 @@ import com.google.common.collect.ImmutableMap;
 import com.google.common.io.Resources;
 import com.jayway.restassured.response.Response;
 import org.apache.commons.lang3.StringUtils;
-import org.hamcrest.Description;
-import org.hamcrest.Matcher;
-import org.hamcrest.TypeSafeMatcher;
 import org.junit.Before;
 import org.junit.Test;
 import uk.gov.pay.connector.it.base.CardResourceITestBase;
-import uk.gov.pay.connector.model.domain.ChargeStatus;
 
 import java.io.IOException;
 import java.net.URL;
@@ -20,7 +16,6 @@ import java.util.Map;
 
 import static com.google.common.io.Resources.getResource;
 import static com.jayway.restassured.RestAssured.given;
-import static java.lang.String.format;
 import static javax.ws.rs.core.MediaType.APPLICATION_JSON;
 import static javax.ws.rs.core.MediaType.TEXT_XML;
 import static javax.ws.rs.core.Response.Status.OK;
@@ -237,22 +232,5 @@ public class SmartpayNotificationResourceWithAccountSpecificAuthITest extends Ca
         long refundId = Long.parseLong(StringUtils.removeStart(externalRefundId, "refund-"));
         List<Map<String, Object>> refund = app.getDatabaseTestHelper().getRefund(refundId);
         assertThat(refund.get(0).get("status"), is(expectedStatus));
-    }
-
-    private Matcher<? super List<Map<String, Object>>> hasEventWithStatusAndTransactionId(ChargeStatus chargeStatus, String transactionId) {
-        return new TypeSafeMatcher<List<Map<String, Object>>>() {
-            @Override
-            protected boolean matchesSafely(List<Map<String, Object>> chargeEvents) {
-                return chargeEvents.stream()
-                        .anyMatch(chargeEvent ->
-                                chargeStatus.getValue().equals(chargeEvent.get("status")) && transactionId.equals(chargeEvent.get("gateway_transaction_id"))
-                        );
-            }
-
-            @Override
-            public void describeTo(Description description) {
-                description.appendText(format("no matching charge event with status [%s] with transactionId [%s]", chargeStatus.getValue(), transactionId));
-            }
-        };
     }
 }

@@ -5,6 +5,9 @@ import com.google.common.collect.ImmutableMap;
 import com.google.gson.JsonObject;
 import com.jayway.restassured.specification.RequestSpecification;
 import org.apache.commons.lang.math.RandomUtils;
+import org.hamcrest.Description;
+import org.hamcrest.Matcher;
+import org.hamcrest.TypeSafeMatcher;
 import org.junit.Before;
 import org.junit.Rule;
 import uk.gov.pay.connector.model.domain.CardFixture;
@@ -18,11 +21,13 @@ import uk.gov.pay.connector.util.RestAssuredClient;
 
 import java.io.IOException;
 import java.time.ZonedDateTime;
+import java.util.List;
 import java.util.Map;
 
 import static com.jayway.restassured.RestAssured.given;
 import static com.jayway.restassured.http.ContentType.JSON;
 import static io.dropwizard.testing.ConfigOverride.config;
+import static java.lang.String.format;
 import static javax.ws.rs.core.Response.Status.BAD_REQUEST;
 import static org.hamcrest.Matchers.is;
 import static uk.gov.pay.connector.model.domain.ChargeStatus.*;
@@ -221,5 +226,22 @@ public class CardResourceITestBase {
                 chargeId,
                 CardFixture.aValidCard().withCardNo("1234").build());
         return externalChargeId;
+    }
+
+    protected Matcher<? super List<Map<String, Object>>> hasEventWithStatusAndTransactionId(ChargeStatus chargeStatus, String transactionId) {
+        return new TypeSafeMatcher<List<Map<String, Object>>>() {
+            @Override
+            protected boolean matchesSafely(List<Map<String, Object>> chargeEvents) {
+                return chargeEvents.stream()
+                        .anyMatch(chargeEvent ->
+                                chargeStatus.getValue().equals(chargeEvent.get("status")) && transactionId.equals(chargeEvent.get("gateway_transaction_id"))
+                        );
+            }
+
+            @Override
+            public void describeTo(Description description) {
+                description.appendText(format("no matching charge event with status [%s] with transactionId [%s]", chargeStatus.getValue(), transactionId));
+            }
+        };
     }
 }

@@ -6,17 +6,20 @@ import java.io.IOException;
 import java.nio.charset.Charset;
 
 import static com.github.tomakehurst.wiremock.client.WireMock.*;
+import static java.util.UUID.randomUUID;
 import static javax.ws.rs.core.HttpHeaders.CONTENT_TYPE;
 import static javax.ws.rs.core.MediaType.TEXT_XML;
 
 public class SmartpayMockClient {
 
-    public SmartpayMockClient() {
+    public void mockAuthorisationWithTransactionId(String transactionId) {
+        String authoriseResponse = loadFromTemplate("authorisation-success-response.xml")
+                .replace("{{pspReference}}", transactionId);
+        paymentServiceResponse(authoriseResponse);
     }
 
     public void mockAuthorisationSuccess() {
-        String authoriseResponse = loadFromTemplate("authorisation-success-response.xml");
-        paymentServiceResponse(authoriseResponse);
+        mockAuthorisationWithTransactionId(randomUUID().toString());
     }
 
     public void mockAuthorisationFailure() {
@@ -25,7 +28,12 @@ public class SmartpayMockClient {
     }
 
     public void mockCaptureResponse() {
-        String captureResponse = loadFromTemplate("capture-success-response.xml");
+        mockCaptureResponseWithTransactionId(randomUUID().toString());
+    }
+
+    public void mockCaptureResponseWithTransactionId(String transactionId) {
+        String captureResponse = loadFromTemplate("capture-success-response.xml")
+                .replace("{{pspReference}}", transactionId);
         paymentServiceResponse(captureResponse);
     }
 

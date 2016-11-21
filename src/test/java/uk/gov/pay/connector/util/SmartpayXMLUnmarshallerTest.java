@@ -19,11 +19,12 @@ public class SmartpayXMLUnmarshallerTest {
 
     @Test
     public void shouldUnmarshallAnAuthorisationSuccessResponse() throws Exception {
-        String successPayload = readPayload("templates/smartpay/authorisation-success-response.xml");
+        String transactionId = "7914435254138158";
+        String successPayload = readPayload("templates/smartpay/authorisation-success-response.xml").replace("{{pspReference}}", transactionId);
         SmartpayAuthorisationResponse response = XMLUnmarshaller.unmarshall(successPayload, SmartpayAuthorisationResponse.class);
 
         assertThat(response.isAuthorised(), is(true));
-        assertThat(response.getTransactionId(), is("7914435254138158"));
+        assertThat(response.getTransactionId(), is(transactionId));
 
         assertThat(response.getErrorCode(), is(nullValue()));
         assertThat(response.getErrorMessage(), is(nullValue()));
@@ -55,10 +56,11 @@ public class SmartpayXMLUnmarshallerTest {
 
     @Test
     public void shouldUnmarshallACaptureSuccessResponse() throws Exception {
-        String successPayload = readPayload("templates/smartpay/capture-success-response.xml");
+        String transactionId = "7914435254138159";
+        String successPayload = readPayload("templates/smartpay/capture-success-response.xml").replace("{{pspReference}}", transactionId);
         SmartpayCaptureResponse response = XMLUnmarshaller.unmarshall(successPayload, SmartpayCaptureResponse.class);
 
-        assertThat(response.getTransactionId(), is("7914435254138159"));
+        assertThat(response.getTransactionId(), is(transactionId));
         assertThat(response.getErrorCode(), is(nullValue()));
         assertThat(response.getErrorMessage(), is(nullValue()));
     }

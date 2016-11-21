@@ -1,11 +1,17 @@
 package uk.gov.pay.connector.it.resources.smartpay;
 
 import com.jayway.restassured.http.ContentType;
+import org.apache.commons.lang3.StringUtils;
 import org.junit.Test;
 import uk.gov.pay.connector.it.base.CardResourceITestBase;
 import uk.gov.pay.connector.model.domain.ChargeStatus;
 
+import java.util.List;
+import java.util.Map;
+import java.util.UUID;
+
 import static org.hamcrest.Matchers.is;
+import static org.junit.Assert.assertThat;
 import static uk.gov.pay.connector.model.api.ExternalChargeState.EXTERNAL_SUCCESS;
 import static uk.gov.pay.connector.model.domain.ChargeStatus.*;
 import static uk.gov.pay.connector.util.TransactionId.randomId;
@@ -61,6 +67,35 @@ public class SmartpayCardResourceITest extends CardResourceITestBase {
     }
 
     @Test
+    public void shouldPersistTransactionIds_duringAuthorisationAndCapture() throws Exception {
+        String externalChargeId = createNewChargeWith(ChargeStatus.ENTERING_CARD_DETAILS, null);
+        String pspReference1 = "pspRef1-" + UUID.randomUUID().toString();
+        smartpay.mockAuthorisationWithTransactionId(pspReference1);
+
+        givenSetup()
+                .body(validCardDetails)
+                .post(authoriseChargeUrlFor(externalChargeId))
+                .then()
+                .statusCode(204);
+
+        assertFrontendChargeStatusIs(externalChargeId, AUTHORISATION_SUCCESS.getValue());
+
+        String pspReference2 = "pspRef2-" + UUID.randomUUID().toString();
+        smartpay.mockCaptureResponseWithTransactionId(pspReference2);
+
+        givenSetup()
+                .post(captureChargeUrlFor(externalChargeId))
+                .then()
+                .statusCode(204);
+        assertApiStateIs(externalChargeId, EXTERNAL_SUCCESS.getStatus());
+        long chargeId = Long.parseLong(StringUtils.removeStart(externalChargeId, "charge-"));
+        List<Map<String, Object>> chargeEvents = app.getDatabaseTestHelper().getChargeEvents(chargeId);
+
+        assertThat(chargeEvents, hasEventWithStatusAndTransactionId(AUTHORISATION_SUCCESS, pspReference1));
+        assertThat(chargeEvents, hasEventWithStatusAndTransactionId(CAPTURE_SUBMITTED, pspReference2));
+    }
+
+    @Test
     public void shouldCancelCharge() {
         String gatewayTransactionId = randomId();
         String chargeId = createNewChargeWith(AUTHORISATION_SUCCESS, gatewayTransactionId);
@@ -69,7 +104,7 @@ public class SmartpayCardResourceITest extends CardResourceITestBase {
 
         givenSetup()
                 .contentType(ContentType.JSON)
-                .post(cancelChargeUrlFor(accountId ,chargeId))
+                .post(cancelChargeUrlFor(accountId, chargeId))
                 .then()
                 .statusCode(204);
     }
