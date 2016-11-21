@@ -12,11 +12,7 @@ import org.mockito.runners.MockitoJUnitRunner;
 import uk.gov.pay.connector.model.CancelGatewayRequest;
 import uk.gov.pay.connector.model.CaptureGatewayRequest;
 import uk.gov.pay.connector.model.RefundGatewayRequest;
-import uk.gov.pay.connector.model.domain.Address;
-import uk.gov.pay.connector.model.domain.Card;
-import uk.gov.pay.connector.model.domain.ChargeEntity;
-import uk.gov.pay.connector.model.domain.GatewayAccountEntity;
-import uk.gov.pay.connector.model.domain.RefundEntity;
+import uk.gov.pay.connector.model.domain.*;
 import uk.gov.pay.connector.model.gateway.AuthorisationGatewayRequest;
 import uk.gov.pay.connector.model.gateway.GatewayResponse;
 import uk.gov.pay.connector.service.GatewayClient;
@@ -131,69 +127,6 @@ public class SmartpayPaymentProviderTest {
         assertThat(cancelResponse.isSuccessful(), is(true));
 
     }
-
-   /* @Test
-    public void shouldBeAbleToHandleNotification() throws Exception {
-        PaymentProvider paymentProvider = getSmartpayPaymentProvider();
-        GatewayResponse<SmartpayAuthorisationResponse> response = testCardAuthorisation(paymentProvider, chargeEntity);
-
-        Consumer<StatusUpdates> accountUpdater = mockAccountUpdater();
-
-
-        assertThat(response.getBaseResponse().isPresent(), CoreMatchers.is(true));
-        String transactionId = response.getBaseResponse().get().getPspReference();
-        assertThat(transactionId, CoreMatchers.is(not(nullValue())));
-
-        StatusUpdates statusResponse = paymentProvider.handleNotification(
-                notificationPayloadForTransaction(transactionId),
-                x -> true,
-                x -> Optional.of(chargeEntity),
-                accountUpdater
-        );
-
-        assertThat(statusResponse.getStatusUpdates(), hasItem(Pair.of(transactionId, CAPTURED)));
-    }
-
-    @Test
-    public void handleNotification_shouldNotUpdateChargeStatusForUnknownProviderStatusButAcceptNotification() throws Exception {
-        PaymentProvider paymentProvider = getSmartpayPaymentProvider();
-        GatewayResponse<SmartpayAuthorisationResponse> response = testCardAuthorisation(paymentProvider, chargeEntity);
-
-        Consumer<StatusUpdates> accountUpdater = mockAccountUpdater();
-
-        assertThat(response.getBaseResponse().isPresent(), CoreMatchers.is(true));
-        String transactionId = response.getBaseResponse().get().getPspReference();
-        assertThat(transactionId, CoreMatchers.is(not(nullValue())));
-
-        StatusUpdates statusResponse = paymentProvider.handleNotification(
-                notificationPayloadForTransactionWithUnknownStatus(transactionId),
-                x -> true,
-                x -> Optional.of(chargeEntity),
-                accountUpdater
-        );
-
-        verifyZeroInteractions(accountUpdater);
-        assertThat(statusResponse.successful(), is(true));
-        assertThat(statusResponse.getResponseForProvider(), is(SmartpayPaymentProvider.ACCEPTED));
-    }
-
-    @Test
-    public void handleNotification_shouldProcessNotificationsInOrderOfNotificationDate() throws Exception {
-        PaymentProvider paymentProvider = getSmartpayPaymentProvider();
-        String transactionId = "tx-id-1";
-
-        Consumer<StatusUpdates> accountUpdater = mockAccountUpdater();
-
-        String transactionId2 = "tx-id-2";
-        StatusUpdates statusResponse = paymentProvider.handleNotification(
-                multipleNotificationPayloadForTransactions(transactionId, transactionId2),
-                x -> true,
-                x -> Optional.of(chargeEntity),
-                accountUpdater
-        );
-
-        assertThat(statusResponse.getStatusUpdates(), contains(Pair.of(transactionId, CAPTURED)));
-    }*/
 
     @Test
     public void shouldRefundToAnExistingPaymentSuccessfully() throws Exception {

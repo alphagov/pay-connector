@@ -8,10 +8,10 @@ import javax.inject.Inject;
 import javax.persistence.EntityManager;
 
 @Transactional
-public class EventDao extends JpaDao<ChargeEventEntity> {
+public class ChargeEventDao extends JpaDao<ChargeEventEntity> {
 
     @Inject
-    public EventDao(final Provider<EntityManager> entityManager) {
+    public ChargeEventDao(final Provider<EntityManager> entityManager) {
         super(entityManager);
     }
 }

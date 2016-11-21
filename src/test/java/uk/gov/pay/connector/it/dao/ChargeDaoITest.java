@@ -693,6 +693,21 @@ public class ChargeDaoITest extends DaoITestBase {
         };
     }
 
+    private Matcher<? super List<ChargeEventEntity>> shouldIncludeTransactionIdForStatus(ChargeStatus chargeStatus, String transactionId) {
+        return new TypeSafeMatcher<List<ChargeEventEntity>>() {
+            @Override
+            protected boolean matchesSafely(List<ChargeEventEntity> chargeEvents) {
+                return chargeEvents.stream()
+                        .anyMatch(chargeEvent -> chargeStatus.equals(chargeEvent.getStatus()) && transactionId.equals(chargeEvent.getGatewayTransactionId()));
+            }
+
+            @Override
+            public void describeTo(Description description) {
+                description.appendText(String.format("does not contain a status [%s] with transaction id [%s]", chargeStatus, transactionId));
+            }
+        };
+    }
+
     private void assertDateMatch(String createdDateString) {
         assertDateMatch(DateTimeUtils.toUTCZonedDateTime(createdDateString).get());
     }
@@ -704,6 +719,49 @@ public class ChargeDaoITest extends DaoITestBase {
     @Test
     public void shouldUpdateEventsWhenMergeWithChargeEntityWithNewStatus() {
 
+        Long chargeId = 56735L;
+        String externalChargeId = "charge456";
+
+        String transactionId = "345654";
+        String transactionId2 = "345655";
+        String transactionId3 = "345656";
+
+        DatabaseFixtures
+                .withDatabaseTestHelper(databaseTestHelper)
+                .aTestCharge()
+                .withTestAccount(defaultTestAccount)
+                .withChargeId(chargeId)
+                .withExternalChargeId(externalChargeId)
+                .withTransactionId(transactionId)
+                .insert();
+
+        Optional<ChargeEntity> charge = chargeDao.findById(chargeId);
+        ChargeEntity entity = charge.get();
+        entity.setStatus(ENTERING_CARD_DETAILS);
+
+        entity = chargeDao.mergeAndNotifyStatusHasChanged(entity);
+
+        //move status to AUTHORISED 
+        entity.setStatus(AUTHORISATION_READY);
+        entity.setStatus(AUTHORISATION_SUCCESS);
+        entity.setGatewayTransactionId(transactionId2);
+        entity = chargeDao.mergeAndNotifyStatusHasChanged(entity);
+
+        entity.setStatus(CAPTURE_READY);
+        entity.setGatewayTransactionId(transactionId3);
+        chargeDao.mergeAndNotifyStatusHasChanged(entity);
+
+        List<ChargeEventEntity> events = chargeDao.findById(chargeId).get().getEvents();
+
+        assertThat(events, hasSize(3));
+        assertThat(events, shouldIncludeStatus(ENTERING_CARD_DETAILS));
+        assertThat(events, shouldIncludeTransactionIdForStatus(AUTHORISATION_SUCCESS, transactionId2));
+        assertThat(events, shouldIncludeTransactionIdForStatus(CAPTURE_READY, transactionId3));
+        assertDateMatch(events.get(0).getUpdated());
+    }
+
+    @Test
+    public void chargeEvents_shouldRecordTransactionIdWithEachStatusChange() throws Exception {
         Long chargeId = 56735L;
         String externalChargeId = "charge456";
 
@@ -722,13 +780,6 @@ public class ChargeDaoITest extends DaoITestBase {
         ChargeEntity entity = charge.get();
         entity.setStatus(ENTERING_CARD_DETAILS);
 
-        chargeDao.mergeAndNotifyStatusHasChanged(entity);
-
-        List<ChargeEventEntity> events = chargeDao.findById(chargeId).get().getEvents();
-
-        assertThat(events, hasSize(1));
-        assertThat(events, shouldIncludeStatus(ENTERING_CARD_DETAILS));
-        assertDateMatch(events.get(0).getUpdated());
     }
 
     @Test

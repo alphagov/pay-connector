@@ -492,4 +492,12 @@
         </sql>
     </changeSet>
 
+    <changeSet id="add gateway transaction id column to charge_events table" author="">
+        <addColumn tableName="charge_events">
+            <column name="gateway_transaction_id" type="text">
+                <constraints nullable="true"/>
+            </column>
+        </addColumn>
+    </changeSet>
+
 </databaseChangeLog>

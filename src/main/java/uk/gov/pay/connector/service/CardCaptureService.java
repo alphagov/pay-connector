@@ -1,7 +1,6 @@
 package uk.gov.pay.connector.service;
 
 import com.google.inject.persist.Transactional;
-import org.apache.commons.lang3.StringUtils;
 import uk.gov.pay.connector.dao.ChargeDao;
 import uk.gov.pay.connector.exception.ChargeNotFoundRuntimeException;
 import uk.gov.pay.connector.model.CaptureGatewayRequest;
@@ -12,6 +11,7 @@ import uk.gov.pay.connector.resources.PaymentGatewayName;
 
 import javax.inject.Inject;
 
+import static org.apache.commons.lang3.StringUtils.isBlank;
 import static uk.gov.pay.connector.model.domain.ChargeStatus.*;
 
 public class CardCaptureService extends CardService implements TransactionalGatewayOperation<BaseCaptureResponse> {
@@ -65,8 +65,10 @@ public class CardCaptureService extends CardService implements TransactionalGate
                 chargeEntity.getExternalId(), OperationType.CAPTURE.getValue(), transactionId, status);
 
         reloadedCharge.setStatus(status);
-
-        if (StringUtils.isBlank(transactionId)) {
+        //update the charge with the new transaction id from gateway, if present.
+        if (!isBlank(transactionId)) {
+            reloadedCharge.setGatewayTransactionId(transactionId);
+        } else {
             logger.warn("Card capture response received with no transaction id. - charge_external_id={}", reloadedCharge.getExternalId());
         }
 

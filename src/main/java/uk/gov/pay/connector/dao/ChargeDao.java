@@ -27,12 +27,12 @@ public class ChargeDao extends JpaDao<ChargeEntity> {
     private static final String EMAIL = "email";
     public static final String SQL_ESCAPE_SEQ = "\\\\";
 
-    private EventDao eventDao;
+    private ChargeEventDao chargeEventDao;
 
     @Inject
-    public ChargeDao(final Provider<EntityManager> entityManager, EventDao eventDao) {
+    public ChargeDao(final Provider<EntityManager> entityManager, ChargeEventDao chargeEventDao) {
         super(entityManager);
-        this.eventDao = eventDao;
+        this.chargeEventDao = chargeEventDao;
     }
 
     public Optional<ChargeEntity> findById(Long chargeId) {
@@ -77,10 +77,9 @@ public class ChargeDao extends JpaDao<ChargeEntity> {
                 .setParameter("provider", provider).getResultList().stream().findFirst();
     }
 
-    // Temporary methods until notification listeners are in place
     public void persist(ChargeEntity chargeEntity) {
         super.persist(chargeEntity);
-        eventDao.persist(ChargeEventEntity.from(chargeEntity, ChargeStatus.CREATED, chargeEntity.getCreatedDate()));
+        chargeEventDao.persist(ChargeEventEntity.from(chargeEntity, ChargeStatus.CREATED, chargeEntity.getCreatedDate()));
     }
 
     public List<ChargeEntity> findBeforeDateWithStatusIn(ZonedDateTime date, List<ChargeStatus> statuses) {
@@ -122,7 +121,7 @@ public class ChargeDao extends JpaDao<ChargeEntity> {
 
     public ChargeEntity mergeAndNotifyStatusHasChanged(ChargeEntity chargeEntity) {
         ChargeEntity mergedCharge = super.merge(chargeEntity);
-        eventDao.persist(ChargeEventEntity.from(chargeEntity, ChargeStatus.fromString(chargeEntity.getStatus()), ZonedDateTime.now()));
+        chargeEventDao.persist(ChargeEventEntity.from(chargeEntity, ChargeStatus.fromString(chargeEntity.getStatus()), ZonedDateTime.now()));
         return mergedCharge;
     }
 
