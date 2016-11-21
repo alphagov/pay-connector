@@ -698,7 +698,7 @@ public class ChargeDaoITest extends DaoITestBase {
             @Override
             protected boolean matchesSafely(List<ChargeEventEntity> chargeEvents) {
                 return chargeEvents.stream()
-                        .anyMatch(chargeEvent -> chargeStatus.equals(chargeEvent.getStatus()) && transactionId.equals(chargeEvent.getGatewayTransctionId()));
+                        .anyMatch(chargeEvent -> chargeStatus.equals(chargeEvent.getStatus()) && transactionId.equals(chargeEvent.getGatewayTransactionId()));
             }
 
             @Override
