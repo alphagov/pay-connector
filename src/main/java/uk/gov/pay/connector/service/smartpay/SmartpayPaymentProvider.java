@@ -103,7 +103,7 @@ public class SmartpayPaymentProvider extends BasePaymentProvider<BaseResponse> {
     private Function<AuthorisationGatewayRequest, String> buildSubmitOrderFor() {
         return request -> aSmartpayOrderSubmitRequest()
                 .withMerchantCode(getMerchantCode(request))
-                .withPaymentPlatformReference(request.getChargeId())
+                .withPaymentPlatformReference(request.getChargeExternalId())
                 .withDescription(request.getDescription())
                 .withAmount(request.getAmount())
                 .withCard(request.getCard())
