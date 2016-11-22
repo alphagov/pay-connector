@@ -306,7 +306,6 @@ public class ChargeServiceTest {
                 .withReference(chargeEntity.getReference())
                 .withDescription(chargeEntity.getDescription())
                 .withState(ChargeStatus.fromString(chargeEntity.getStatus()).toExternal())
-                .withCardBrand("")
                 .withGatewayTransactionId(chargeEntity.getGatewayTransactionId())
                 .withProviderName(chargeEntity.getGatewayAccount().getGatewayName())
                 .withCreatedDate(chargeEntity.getCreatedDate())

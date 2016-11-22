@@ -68,7 +68,7 @@ public class ChargesFrontendResourceITest {
         String chargeId = postToCreateACharge(expectedAmount);
         String expectedLocation = "http://localhost:" + app.getLocalPort() + "/v1/frontend/charges/" + chargeId;
 
-        validateGetCharge(expectedAmount, chargeId, CREATED, "")
+        validateGetCharge(expectedAmount, chargeId, CREATED)
                 .body("links", hasSize(3))
                 .body("links", containsLink("self", GET, expectedLocation))
                 .body("links", containsLink("cardAuth", POST, expectedLocation + "/cards"))
@@ -88,7 +88,7 @@ public class ChargesFrontendResourceITest {
 
         app.getDatabaseTestHelper().addCharge(chargeId, externalChargeId, accountId, expectedAmount, AUTHORISATION_SUCCESS, returnUrl, null, "ref", null, email);
         app.getDatabaseTestHelper().updateChargeCardDetails(chargeId, testCardType.getBrand(), "1234", "Mr. McPayment", "03/18", "line1", null, "postcode", "city", null, "country");
-        validateGetCharge(expectedAmount, externalChargeId, AUTHORISATION_SUCCESS, testCardType.getLabel());
+        validateGetCharge(expectedAmount, externalChargeId, AUTHORISATION_SUCCESS);
     }
 
     @Test
@@ -98,7 +98,7 @@ public class ChargesFrontendResourceITest {
 
         app.getDatabaseTestHelper().addCharge(chargeId, externalChargeId, accountId, expectedAmount, AUTHORISATION_SUCCESS, returnUrl, null, "ref", null, email);
         app.getDatabaseTestHelper().updateChargeCardDetails(chargeId, "unknown", "1234", "Mr. McPayment", "03/18", "line1", null, "postcode", "city", null, "country");
-        validateGetCharge(expectedAmount, externalChargeId, AUTHORISATION_SUCCESS, "");
+        validateGetCharge(expectedAmount, externalChargeId, AUTHORISATION_SUCCESS);
     }
 
     @Test
@@ -114,7 +114,7 @@ public class ChargesFrontendResourceITest {
                 .statusCode(NO_CONTENT.getStatusCode())
                 .body(isEmptyOrNullString());
 
-        validateGetCharge(expectedAmount, chargeId, ENTERING_CARD_DETAILS, "");
+        validateGetCharge(expectedAmount, chargeId, ENTERING_CARD_DETAILS);
     }
 
     @Test
@@ -129,7 +129,7 @@ public class ChargesFrontendResourceITest {
                 .body(is("{\"message\":\"Field(s) missing: [new_status]\"}"));
 
         //charge status should remain CREATED
-        validateGetCharge(expectedAmount, chargeId, CREATED, "");
+        validateGetCharge(expectedAmount, chargeId, CREATED);
     }
 
     @Test
@@ -145,7 +145,7 @@ public class ChargesFrontendResourceITest {
                 .body(is("{\"message\":\"charge status not recognized: junk\"}"));
 
         //charge status should remain CREATED
-        validateGetCharge(expectedAmount, chargeId, CREATED, "");
+        validateGetCharge(expectedAmount, chargeId, CREATED);
     }
 
     @Test
@@ -357,7 +357,7 @@ public class ChargesFrontendResourceITest {
         return response.extract().path("charge_id");
     }
 
-    private ValidatableResponse validateGetCharge(long expectedAmount, String chargeId, ChargeStatus chargeStatus, String cardBrand) {
+    private ValidatableResponse validateGetCharge(long expectedAmount, String chargeId, ChargeStatus chargeStatus) {
         ValidatableResponse response = connectorRestApi
                 .withChargeId(chargeId)
                 .getFrontendCharge()
@@ -368,7 +368,6 @@ public class ChargesFrontendResourceITest {
                 .body("description", is(description))
                 .body("amount", isNumber(expectedAmount))
                 .body("status", is(chargeStatus.getValue()))
-                .body("card_brand", is(cardBrand))
                 .body("return_url", is(returnUrl))
                 .body("email", is(email))
                 .body("created_date", is(notNullValue()))

@@ -67,39 +67,6 @@ public class CardAuthoriseResourceITest extends CardResourceITestBase {
         assertThat(app.getDatabaseTestHelper().getChargeCardBrand(chargeId), is(cardBrand));
     }
 
-    //TODO: testing backward compatible changes
-    @Test
-    @Deprecated
-    public void shouldStoreCardDetailsInConfirmationDetailsForAuthorisedCharge() throws Exception {
-        String cardBrand = "visa";
-        String externalChargeId = shouldAuthoriseChargeFor(buildJsonCardDetailsFor("Mr Payment", "4444333322221111", "123", "12/20", cardBrand, "line 1", "line 2", "the city", "the county", "NR256EG", "GB"));
-        Long chargeId = Long.valueOf(StringUtils.removeStart(externalChargeId, "charge-"));
-
-        Map<String, Object> confirmationDetails = app.getDatabaseTestHelper().getConfirmationDetailsByChargeId(chargeId);
-        assertThat(confirmationDetails, hasEntry("last_digits_card_number", "1111"));
-        assertThat(confirmationDetails, hasEntry("cardholder_name", "Mr Payment"));
-        assertThat(confirmationDetails, hasEntry("expiry_date", "12/20"));
-        assertThat(app.getDatabaseTestHelper().getChargeCardBrand(chargeId), is(cardBrand));
-        assertThat(confirmationDetails, hasEntry("address_line1", "line 1"));
-        assertThat(confirmationDetails, hasEntry("address_line2", "line 2"));
-        assertThat(confirmationDetails, hasEntry("address_postcode", "NR256EG"));
-        assertThat(confirmationDetails, hasEntry("address_city", "the city"));
-        assertThat(confirmationDetails, hasEntry("address_county", "the county"));
-        assertThat(confirmationDetails, hasEntry("address_country", "GB"));
-
-        //Making sure its in charges table too
-        Map<String, Object> cardDetails = app.getDatabaseTestHelper().getChargeCardDetailsByChargeId(chargeId);
-        assertThat(cardDetails, hasEntry("last_digits_card_number", "1111"));
-        assertThat(cardDetails, hasEntry("cardholder_name", "Mr Payment"));
-        assertThat(cardDetails, hasEntry("expiry_date", "12/20"));
-        assertThat(cardDetails, hasEntry("address_line1", "line 1"));
-        assertThat(cardDetails, hasEntry("address_line2", "line 2"));
-        assertThat(cardDetails, hasEntry("address_postcode", "NR256EG"));
-        assertThat(cardDetails, hasEntry("address_city", "the city"));
-        assertThat(cardDetails, hasEntry("address_county", "the county"));
-        assertThat(cardDetails, hasEntry("address_country", "GB"));
-    }
-
     @Test
     public void shouldNotAuthoriseCard_ForSpecificCardNumber1() throws Exception {
         String cardDetailsToReject = buildJsonCardDetailsFor("4000000000000002", "visa");
@@ -300,30 +267,30 @@ public class CardAuthoriseResourceITest extends CardResourceITestBase {
                 .then()
                 .statusCode(200)
                 .contentType(JSON)
-                .body("confirmation_details.last_digits_card_number", is("4242"))
-                .body("confirmation_details.cardholder_name", is("Charge1 Name"))
-                .body("confirmation_details.expiry_date", is("10/99"))
-                .body("confirmation_details.billing_address.line1.", is("Charge1 Line1"))
-                .body("confirmation_details.billing_address.line2.", is("Charge1 Line2"))
-                .body("confirmation_details.billing_address.postcode.", is("DO11 4RS"))
-                .body("confirmation_details.billing_address.city.", is("Charge1 City"))
-                .body("confirmation_details.billing_address.county.", is("Charge1 County"))
-                .body("confirmation_details.billing_address.country.", is("GB"));
+                .body("card_details.last_digits_card_number", is("4242"))
+                .body("card_details.cardholder_name", is("Charge1 Name"))
+                .body("card_details.expiry_date", is("10/99"))
+                .body("card_details.billing_address.line1.", is("Charge1 Line1"))
+                .body("card_details.billing_address.line2.", is("Charge1 Line2"))
+                .body("card_details.billing_address.postcode.", is("DO11 4RS"))
+                .body("card_details.billing_address.city.", is("Charge1 City"))
+                .body("card_details.billing_address.county.", is("Charge1 County"))
+                .body("card_details.billing_address.country.", is("GB"));
 
         givenSetup()
                 .get(FRONTEND_CHARGE_API_PATH.replace("{chargeId}", charge2))
                 .then()
                 .statusCode(200)
                 .contentType(JSON)
-                .body("confirmation_details.last_digits_card_number", is("1111"))
-                .body("confirmation_details.cardholder_name", is("Charge2 Name"))
-                .body("confirmation_details.expiry_date", is("11/99"))
-                .body("confirmation_details.billing_address.line1.", is("Charge2 Line1"))
-                .body("confirmation_details.billing_address.line2.", is("Charge2 Line2"))
-                .body("confirmation_details.billing_address.postcode.", is("W2 3AF"))
-                .body("confirmation_details.billing_address.city.", is("Charge2 City"))
-                .body("confirmation_details.billing_address.county.", is("Charge2 County"))
-                .body("confirmation_details.billing_address.country.", is("DE"));
+                .body("card_details.last_digits_card_number", is("1111"))
+                .body("card_details.cardholder_name", is("Charge2 Name"))
+                .body("card_details.expiry_date", is("11/99"))
+                .body("card_details.billing_address.line1.", is("Charge2 Line1"))
+                .body("card_details.billing_address.line2.", is("Charge2 Line2"))
+                .body("card_details.billing_address.postcode.", is("W2 3AF"))
+                .body("card_details.billing_address.city.", is("Charge2 City"))
+                .body("card_details.billing_address.county.", is("Charge2 County"))
+                .body("card_details.billing_address.country.", is("DE"));
     }
 
     private List<ValidatableResponse> invokeAll(List<Callable<ValidatableResponse>> tasks) throws InterruptedException {
