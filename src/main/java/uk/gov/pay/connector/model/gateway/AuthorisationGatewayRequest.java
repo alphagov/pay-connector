@@ -32,8 +32,8 @@ public class AuthorisationGatewayRequest implements GatewayRequest {
         return charge.getDescription();
     }
 
-    public String getChargeId() {
-        return String.valueOf(charge.getId());
+    public String getChargeExternalId() {
+        return String.valueOf(charge.getExternalId());
     }
 
     @Override

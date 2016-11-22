@@ -2,7 +2,7 @@
 <soap:Envelope xmlns:soap="http://schemas.xmlsoap.org/soap/envelope/"
         >
     <soap:Body>
-        <ns1:refund xmlns:ns1="http://payment.services.barclaycardsmartpay.com">
+        <ns1:refund xmlns:ns1="http://payment.services.adyen.com">
             <ns1:modificationRequest>
                 <merchantAccount xmlns="http://payment.services.adyen.com">${merchantCode}</merchantAccount>
                 <modificationAmount xmlns="http://payment.services.adyen.com">
