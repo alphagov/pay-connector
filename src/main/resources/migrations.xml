@@ -500,4 +500,9 @@
         </addColumn>
     </changeSet>
 
+    <changeSet author="" id="dropTable-confirmation-details-table">
+        <dropTable cascadeConstraints="true"
+                   tableName="confirmation_details"/>
+    </changeSet>
+
 </databaseChangeLog>
