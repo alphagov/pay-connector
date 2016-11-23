@@ -62,8 +62,8 @@ public class CardAuthoriseResourceITest extends CardResourceITestBase {
         String cardBrand = "visa";
         String externalChargeId = shouldAuthoriseChargeFor(buildJsonCardDetailsFor("4444333322221111", cardBrand));
         Long chargeId = Long.valueOf(StringUtils.removeStart(externalChargeId, "charge-"));
-        Map<String, Object> confirmationDetails = app.getDatabaseTestHelper().getChargeCardDetailsByChargeId(chargeId);
-        assertThat(confirmationDetails, hasEntry("last_digits_card_number", "1111"));
+        Map<String, Object> chargeCardDetails = app.getDatabaseTestHelper().getChargeCardDetailsByChargeId(chargeId);
+        assertThat(chargeCardDetails, hasEntry("last_digits_card_number", "1111"));
         assertThat(app.getDatabaseTestHelper().getChargeCardBrand(chargeId), is(cardBrand));
     }
 
