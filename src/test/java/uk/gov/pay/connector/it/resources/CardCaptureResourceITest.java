@@ -80,24 +80,24 @@ public class CardCaptureResourceITest extends CardResourceITestBase {
         String externalChargeId = authoriseNewCharge();
         Long chargeId = Long.valueOf(StringUtils.removeStart(externalChargeId, "charge-"));
 
-        Map<String, Object> confirmationDetails = app.getDatabaseTestHelper().getChargeCardDetailsByChargeId(chargeId);
-        assertThat(confirmationDetails.isEmpty(), is(false));
+        Map<String, Object> chargeCardDetails = app.getDatabaseTestHelper().getChargeCardDetailsByChargeId(chargeId);
+        assertThat(chargeCardDetails.isEmpty(), is(false));
 
         givenSetup()
                 .post(captureChargeUrlFor(externalChargeId))
                 .then()
                 .statusCode(204);
 
-        confirmationDetails = app.getDatabaseTestHelper().getChargeCardDetailsByChargeId(chargeId);
-        assertThat(confirmationDetails, is(notNullValue()));
-        assertThat(confirmationDetails.get("last_digits_card_number"), is(notNullValue()));
-        assertThat(confirmationDetails.get("expiry_date"), is(notNullValue()));
-        assertThat(confirmationDetails.get("card_brand"), is(notNullValue()));
-        assertThat(confirmationDetails.get("cardholder_name"), is(notNullValue()));
-        assertThat(confirmationDetails.get("address_line1"), is(notNullValue()));
-        assertThat(confirmationDetails.get("address_line2"), is(notNullValue()));
-        assertThat(confirmationDetails.get("address_postcode"), is(notNullValue()));
-        assertThat(confirmationDetails.get("address_country"), is(notNullValue()));
+        chargeCardDetails = app.getDatabaseTestHelper().getChargeCardDetailsByChargeId(chargeId);
+        assertThat(chargeCardDetails, is(notNullValue()));
+        assertThat(chargeCardDetails.get("last_digits_card_number"), is(notNullValue()));
+        assertThat(chargeCardDetails.get("expiry_date"), is(notNullValue()));
+        assertThat(chargeCardDetails.get("card_brand"), is(notNullValue()));
+        assertThat(chargeCardDetails.get("cardholder_name"), is(notNullValue()));
+        assertThat(chargeCardDetails.get("address_line1"), is(notNullValue()));
+        assertThat(chargeCardDetails.get("address_line2"), is(notNullValue()));
+        assertThat(chargeCardDetails.get("address_postcode"), is(notNullValue()));
+        assertThat(chargeCardDetails.get("address_country"), is(notNullValue()));
     }
 
     private void captureAndVerifyFor(String chargeId, int expectedStatusCode, String message) {

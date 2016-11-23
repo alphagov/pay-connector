@@ -52,16 +52,11 @@ public class FrontendChargeResponse extends ChargeResponse {
     @JsonProperty
     private String status;
 
-    //TODO: leaving for backward compatibility
-    @JsonProperty(value = "confirmation_details")
-    private PersistedCard confirmationDetails;
-
     @JsonProperty(value = "gateway_account")
     private GatewayAccountEntity gatewayAccount;
 
     private FrontendChargeResponse(String chargeId, Long amount, ExternalChargeState state, String cardBrand, String gatewayTransactionId, String returnUrl, String email, String description, String reference, String providerName, ZonedDateTime createdDate, List<Map<String, Object>> dataLinks, String status, RefundSummary refundSummary, PersistedCard chargeCardDetails, GatewayAccountEntity gatewayAccount) {
         super(chargeId, amount, state, cardBrand, gatewayTransactionId, returnUrl, email, description, reference, providerName, createdDate, dataLinks, refundSummary, chargeCardDetails);
-        this.confirmationDetails = chargeCardDetails;
         this.status = status;
         this.gatewayAccount = gatewayAccount;
     }
@@ -75,11 +70,7 @@ public class FrontendChargeResponse extends ChargeResponse {
         FrontendChargeResponse that = (FrontendChargeResponse) o;
 
         if (status != null ? !status.equals(that.status) : that.status != null) return false;
-        //TODO: leaving for backward compatibility
-        if (confirmationDetails != null ? !confirmationDetails.equals(that.confirmationDetails) : that.confirmationDetails != null)
-            return false;
-        if (cardDetails != null ? !cardDetails.equals(that.cardDetails) : that.cardDetails != null)
-            return false;
+        if (cardDetails != null ? !cardDetails.equals(that.cardDetails) : that.cardDetails != null) return false;
         return gatewayAccount != null ? gatewayAccount.equals(that.gatewayAccount) : that.gatewayAccount == null;
 
     }
@@ -88,8 +79,6 @@ public class FrontendChargeResponse extends ChargeResponse {
     public int hashCode() {
         int result = super.hashCode();
         result = 31 * result + (status != null ? status.hashCode() : 0);
-        //TODO: leaving for backward compatibility
-        result = 31 * result + (confirmationDetails != null ? confirmationDetails.hashCode() : 0);
         result = 31 * result + (cardDetails != null ? cardDetails.hashCode() : 0);
         result = 31 * result + (gatewayAccount != null ? gatewayAccount.hashCode() : 0);
         return result;

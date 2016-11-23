@@ -4,6 +4,7 @@ import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableMap;
 import com.jayway.restassured.response.ValidatableResponse;
 import org.apache.commons.lang.math.RandomUtils;
+import org.hamcrest.Matchers;
 import org.junit.Before;
 import org.junit.Rule;
 import org.junit.Test;
@@ -61,7 +62,6 @@ public class ChargesApiResourceITest {
     private static final String JSON_RETURN_URL_KEY = "return_url";
     private static final String JSON_CHARGE_KEY = "charge_id";
     private static final String JSON_STATE_KEY = "state.status";
-    private static final String JSON_CARD_BRAND = "card_brand";
     private static final String JSON_MESSAGE_KEY = "message";
     private static final String JSON_EMAIL_KEY = "email";
     private static final String JSON_PROVIDER_KEY = "payment_provider";
@@ -106,7 +106,7 @@ public class ChargesApiResourceITest {
                 .body(JSON_PROVIDER_KEY, is(PROVIDER_NAME))
                 .body(JSON_RETURN_URL_KEY, is(returnUrl))
                 .body(JSON_EMAIL_KEY, is(email))
-                .body("containsKey('confirmation_details')", is(false))
+                .body("containsKey('card_details')", is(false))
                 .body("containsKey('gateway_account')", is(false))
                 .body("refund_summary.amount_submitted", is(0))
                 .body("refund_summary.amount_available", isNumber(AMOUNT))
@@ -142,10 +142,9 @@ public class ChargesApiResourceITest {
                 .body(JSON_REFERENCE_KEY, is(expectedReference))
                 .body(JSON_DESCRIPTION_KEY, is(expectedDescription))
                 .body(JSON_STATE_KEY, is(CREATED.toExternal().getStatus()))
-                .body(JSON_CARD_BRAND, is(""))
                 .body(JSON_RETURN_URL_KEY, is(returnUrl))
                 .body(JSON_EMAIL_KEY, is(email))
-                .body("containsKey('confirmation_details')", is(false))
+                .body("containsKey('card_details')", is(false))
                 .body("containsKey('gateway_account')", is(false))
                 .body("refund_summary.amount_submitted", is(0))
                 .body("refund_summary.amount_available", isNumber(AMOUNT))
@@ -190,7 +189,7 @@ public class ChargesApiResourceITest {
                 .body(JSON_DESCRIPTION_KEY, is(expectedDescription))
                 .body(JSON_PROVIDER_KEY, is(PROVIDER_NAME))
                 .body(JSON_RETURN_URL_KEY, is(returnUrl))
-                .body("containsKey('confirmation_details')", is(false))
+                .body("containsKey('card_details')", is(false))
                 .body("containsKey('gateway_account')", is(false))
                 .body("created_date", matchesPattern("^\\d{4}-\\d{2}-\\d{2}T\\d{2}:\\d{2}:\\d{2}.\\d{3}Z"))
                 .body("created_date", isWithin(10, SECONDS))
@@ -339,7 +338,7 @@ public class ChargesApiResourceITest {
                 .getCharge()
                 .statusCode(OK.getStatusCode())
                 .contentType(JSON)
-                .body(JSON_CARD_BRAND, is(testCardType.getLabel()));
+                .body("card_details.card_brand", is(testCardType.getLabel()));
     }
 
     @Test
@@ -358,7 +357,7 @@ public class ChargesApiResourceITest {
                 .getCharge()
                 .statusCode(OK.getStatusCode())
                 .contentType(JSON)
-                .body(JSON_CARD_BRAND, is(""));
+                .body("card_details.card_brand", is(""));
     }
 
     @Test
@@ -385,7 +384,7 @@ public class ChargesApiResourceITest {
                 .body("results[0].charge_id", is(externalChargeId))
                 .body("results[0].state.status", is(EXTERNAL_SUBMITTED.getStatus()))
                 .body("results[0].amount", is(6234))
-                .body("results[0].confirmation_details", nullValue())
+                .body("results[0].card_details", notNullValue())
                 .body("results[0].gateway_account", nullValue())
                 .body("results[0].reference", is("My reference"))
                 .body("results[0].return_url", is(returnUrl))
@@ -473,8 +472,8 @@ public class ChargesApiResourceITest {
                 .statusCode(OK.getStatusCode())
                 .contentType(JSON)
                 .body("results.size()", is(2))
-                .body("results[0].card_brand", endsWith("Visa"))
-                .body("results[1].card_brand", endsWith("Visa"));
+                .body("results[0].card_details.card_brand", endsWith("Visa"))
+                .body("results[1].card_details.card_brand", endsWith("Visa"));
     }
 
     @Test

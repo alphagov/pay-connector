@@ -224,13 +224,11 @@ public class ChargeResponse {
                 ", cardBrand='" + cardBrand + '\'' +
                 ", gatewayTransactionId='" + gatewayTransactionId + '\'' +
                 ", returnUrl='" + returnUrl + '\'' +
-                ", email='" + email + '\'' +
                 ", description='" + description + '\'' +
                 ", reference='" + reference + '\'' +
                 ", providerName='" + providerName + '\'' +
                 ", createdDate=" + createdDate +
                 ", refundSummary=" + refundSummary +
-                ", cardDetails=" + cardDetails +
                 '}';
     }
 

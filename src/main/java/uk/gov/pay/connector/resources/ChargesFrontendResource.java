@@ -151,14 +151,16 @@ public class ChargesFrontendResource {
 
     private ChargeResponse buildChargeResponse(UriInfo uriInfo, ChargeEntity charge) {
         String chargeId = charge.getExternalId();
-        //TODO: for backward compatibility
-        PersistedCard persistedCard = resolvePersistedCard(charge);
+        PersistedCard persistedCard = null;
+        if (charge.getCardDetails() != null) {
+            persistedCard = charge.getCardDetails().toCard();
+            persistedCard.setCardBrand(findCardBrandLabel(charge.getCardDetails().getCardBrand()).orElse(""));
+        }
+
         return aFrontendChargeResponse()
                 .withStatus(charge.getStatus())
                 .withChargeId(chargeId)
                 .withAmount(charge.getAmount())
-                //TODO: leaving for backward compatibility
-                .withCardBrand(persistedCard != null ? persistedCard.getCardBrand() : "")
                 .withDescription(charge.getDescription())
                 .withGatewayTransactionId(charge.getGatewayTransactionId())
                 .withCreatedDate(charge.getCreatedDate())
@@ -169,35 +171,6 @@ public class ChargesFrontendResource {
                 .withLink("self", GET, locationUriFor(FRONTEND_CHARGE_API_PATH, uriInfo, chargeId))
                 .withLink("cardAuth", POST, locationUriFor(FRONTEND_CHARGE_AUTHORIZE_API_PATH, uriInfo, chargeId))
                 .withLink("cardCapture", POST, locationUriFor(FRONTEND_CHARGE_CAPTURE_API_PATH, uriInfo, chargeId)).build();
-    }
-
-    /**
-     * Leaving for backward compatibility
-     *
-     * @param charge
-     * @return
-     */
-    @Deprecated
-    private PersistedCard resolvePersistedCard(ChargeEntity charge) {
-        CardDetailsEntity cardDetails = charge.getCardDetails();
-        String resolvedCardBrand = findCardBrandLabel(persistedCardBrandOrEmpty(cardDetails)).orElse("");
-        if (charge.getConfirmationDetailsEntity() != null) {
-            return charge.getConfirmationDetailsEntity().toCard(resolvedCardBrand);
-        } else if (cardDetails != null) {
-            PersistedCard persistedCard = cardDetails.toCard();
-            persistedCard.setCardBrand(resolvedCardBrand);
-            return persistedCard;
-        }
-        return null;
-    }
-
-    private String persistedCardBrandOrEmpty(CardDetailsEntity cardDetails) {
-        if (cardDetails != null) {
-            if (cardDetails.getCardBrand() != null) {
-                return cardDetails.getCardBrand();
-            }
-        }
-        return "";
     }
 
     private URI locationUriFor(String path, UriInfo uriInfo, String chargeId) {
