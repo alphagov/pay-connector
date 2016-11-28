@@ -54,6 +54,12 @@ public class ConnectorConfiguration extends Configuration {
     @JsonProperty("customJerseyClient")
     private CustomJerseyClientConfiguration customJerseyClient;
 
+    @NotNull
+    private String graphiteHost;
+
+    @NotNull
+    private String graphitePort;
+
     @JsonProperty("database")
     public DataSourceFactory getDataSourceFactory() {
         return dataSourceFactory;
@@ -96,5 +102,13 @@ public class ConnectorConfiguration extends Configuration {
 
     public CustomJerseyClientConfiguration getCustomJerseyClient() {
         return customJerseyClient;
+    }
+
+    public String getGraphiteHost() {
+        return graphiteHost;
+    }
+
+    public String getGraphitePort() {
+        return graphitePort;
     }
 }

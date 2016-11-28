@@ -1,5 +1,8 @@
 package uk.gov.pay.connector.app;
 
+import com.codahale.metrics.graphite.GraphiteReporter;
+import com.codahale.metrics.graphite.GraphiteSender;
+import com.codahale.metrics.graphite.GraphiteUDP;
 import com.google.inject.Guice;
 import com.google.inject.Injector;
 import io.dropwizard.Application;
@@ -28,12 +31,17 @@ import uk.gov.pay.connector.util.TrustingSSLSocketFactory;
 import javax.net.ssl.HttpsURLConnection;
 import javax.net.ssl.SSLSocketFactory;
 
+import java.util.concurrent.TimeUnit;
+
 import static java.util.EnumSet.of;
 import static javax.servlet.DispatcherType.REQUEST;
 
 public class ConnectorApp extends Application<ConnectorConfiguration> {
 
     public static final boolean NON_STRICT_VARIABLE_SUBSTITUTOR = false;
+
+    private static final String SERVICE_METRICS_NODE = "connector";
+    private static final int GRAPHITE_SENDING_PERIOD_SECONDS = 10;
 
     @Override
     public void initialize(Bootstrap<ConnectorConfiguration> bootstrap) {
@@ -59,6 +67,8 @@ public class ConnectorApp extends Application<ConnectorConfiguration> {
         final Injector injector = Guice.createInjector(new ConnectorModule(configuration, environment));
 
         injector.getInstance(PersistenceServiceInitialiser.class);
+
+        initialiseMetrics(configuration, environment);
 
         environment.jersey().register(injector.getInstance(GatewayAccountResource.class));
         environment.jersey().register(injector.getInstance(ChargeEventsResource.class));
@@ -92,6 +102,15 @@ public class ConnectorApp extends Application<ConnectorConfiguration> {
         environment.jersey().register(RolesAllowedDynamicFeature.class);
         environment.jersey().register(new AuthDynamicFeature(basicCredentialAuthFilter));
         environment.jersey().register(new AuthValueFactoryProvider.Binder<>(BasicAuthUser.class));
+    }
+
+    private void initialiseMetrics(ConnectorConfiguration configuration, Environment environment) {
+        GraphiteSender graphiteUDP = new GraphiteUDP(configuration.getGraphiteHost(), Integer.valueOf(configuration.getGraphitePort()));
+        GraphiteReporter.forRegistry(environment.metrics())
+                .prefixedWith(SERVICE_METRICS_NODE)
+                .build(graphiteUDP)
+                .start(GRAPHITE_SENDING_PERIOD_SECONDS, TimeUnit.SECONDS);
+
     }
 
     public static void main(String[] args) throws Exception {

@@ -107,3 +107,6 @@ notifyConfig:
   secret: ${NOTIFY_SECRET}
   notificationBaseURL: ${NOTIFY_BASE_URL:-https://api.notifications.service.gov.uk}
   emailNotifyEnabled: ${NOTIFY_EMAIL_ENABLED:-false}
+
+graphiteHost: ${METRICS_HOST:-localhost}
+graphitePort: ${METRICS_PORT:-8092}
