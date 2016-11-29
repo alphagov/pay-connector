@@ -67,7 +67,7 @@ public class SmartpayNotificationResourceWithAccountSpecificAuthITest extends Ca
         assertFrontendChargeStatusIs(externalChargeId, "CAPTURED");
         long chargeId = Long.parseLong(StringUtils.removeStart(externalChargeId, "charge-"));
         List<Map<String, Object>> chargeEvents = app.getDatabaseTestHelper().getChargeEvents(chargeId);
-        assertThat(chargeEvents, hasEventWithStatusAndTransactionId(CAPTURED, pspReference));
+        assertThat(chargeEvents, hasEvent(CAPTURED));
     }
 
     @Test
@@ -233,4 +233,5 @@ public class SmartpayNotificationResourceWithAccountSpecificAuthITest extends Ca
         List<Map<String, Object>> refund = app.getDatabaseTestHelper().getRefund(refundId);
         assertThat(refund.get(0).get("status"), is(expectedStatus));
     }
+
 }

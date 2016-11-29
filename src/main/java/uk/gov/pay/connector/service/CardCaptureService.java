@@ -66,9 +66,7 @@ public class CardCaptureService extends CardService implements TransactionalGate
 
         reloadedCharge.setStatus(status);
         //update the charge with the new transaction id from gateway, if present.
-        if (!isBlank(transactionId)) {
-            reloadedCharge.setGatewayTransactionId(transactionId);
-        } else {
+        if (isBlank(transactionId)) {
             logger.warn("Card capture response received with no transaction id. - charge_external_id={}", reloadedCharge.getExternalId());
         }
 

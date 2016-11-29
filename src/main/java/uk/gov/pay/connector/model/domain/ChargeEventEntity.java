@@ -18,9 +18,6 @@ public class ChargeEventEntity extends AbstractEntity {
     @Convert(converter = ChargeStatusConverter.class)
     private ChargeStatus status;
 
-    @Column(name = "gateway_transaction_id")
-    private String gatewayTransactionId;
-
     @Convert(converter = UTCDateTimeConverter.class)
     private ZonedDateTime updated;
 
@@ -31,7 +28,6 @@ public class ChargeEventEntity extends AbstractEntity {
         this.chargeEntity = chargeEntity;
         this.status = chargeStatus;
         this.updated = updated;
-        this.gatewayTransactionId = chargeEntity.getGatewayTransactionId();
     }
 
     public ChargeStatus getStatus() {
@@ -44,10 +40,6 @@ public class ChargeEventEntity extends AbstractEntity {
 
     public ChargeEntity getChargeEntity() {
         return chargeEntity;
-    }
-
-    public String getGatewayTransactionId() {
-        return gatewayTransactionId;
     }
 
     public static ChargeEventEntity from(ChargeEntity chargeEntity, ChargeStatus chargeStatus, ZonedDateTime updated) {

@@ -12,6 +12,7 @@ import org.junit.rules.ExpectedException;
 import uk.gov.pay.connector.dao.ChargeDao;
 import uk.gov.pay.connector.dao.ChargeSearchParams;
 import uk.gov.pay.connector.model.domain.*;
+import uk.gov.pay.connector.model.domain.ChargeStatus;
 import uk.gov.pay.connector.util.DateTimeUtils;
 
 import java.time.ZoneId;
@@ -693,21 +694,6 @@ public class ChargeDaoITest extends DaoITestBase {
         };
     }
 
-    private Matcher<? super List<ChargeEventEntity>> shouldIncludeTransactionIdForStatus(ChargeStatus chargeStatus, String transactionId) {
-        return new TypeSafeMatcher<List<ChargeEventEntity>>() {
-            @Override
-            protected boolean matchesSafely(List<ChargeEventEntity> chargeEvents) {
-                return chargeEvents.stream()
-                        .anyMatch(chargeEvent -> chargeStatus.equals(chargeEvent.getStatus()) && transactionId.equals(chargeEvent.getGatewayTransactionId()));
-            }
-
-            @Override
-            public void describeTo(Description description) {
-                description.appendText(String.format("does not contain a status [%s] with transaction id [%s]", chargeStatus, transactionId));
-            }
-        };
-    }
-
     private void assertDateMatch(String createdDateString) {
         assertDateMatch(DateTimeUtils.toUTCZonedDateTime(createdDateString).get());
     }
@@ -755,8 +741,8 @@ public class ChargeDaoITest extends DaoITestBase {
 
         assertThat(events, hasSize(3));
         assertThat(events, shouldIncludeStatus(ENTERING_CARD_DETAILS));
-        assertThat(events, shouldIncludeTransactionIdForStatus(AUTHORISATION_SUCCESS, transactionId2));
-        assertThat(events, shouldIncludeTransactionIdForStatus(CAPTURE_READY, transactionId3));
+        assertThat(events, shouldIncludeStatus(AUTHORISATION_SUCCESS));
+        assertThat(events, shouldIncludeStatus(CAPTURE_READY));
         assertDateMatch(events.get(0).getUpdated());
     }
 

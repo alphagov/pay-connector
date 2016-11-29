@@ -228,20 +228,21 @@ public class CardResourceITestBase {
         return externalChargeId;
     }
 
-    protected Matcher<? super List<Map<String, Object>>> hasEventWithStatusAndTransactionId(ChargeStatus chargeStatus, String transactionId) {
+    protected Matcher<? super List<Map<String, Object>>> hasEvent(ChargeStatus chargeStatus) {
         return new TypeSafeMatcher<List<Map<String, Object>>>() {
             @Override
             protected boolean matchesSafely(List<Map<String, Object>> chargeEvents) {
                 return chargeEvents.stream()
                         .anyMatch(chargeEvent ->
-                                chargeStatus.getValue().equals(chargeEvent.get("status")) && transactionId.equals(chargeEvent.get("gateway_transaction_id"))
+                                chargeStatus.getValue().equals(chargeEvent.get("status"))
                         );
             }
 
             @Override
             public void describeTo(Description description) {
-                description.appendText(format("no matching charge event with status [%s] with transactionId [%s]", chargeStatus.getValue(), transactionId));
+                description.appendText(format("no matching charge event with status [%s]", chargeStatus.getValue()));
             }
         };
     }
+
 }

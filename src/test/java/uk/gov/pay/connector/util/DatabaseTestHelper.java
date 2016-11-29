@@ -271,7 +271,7 @@ public class DatabaseTestHelper {
 
     public List<Map<String, Object>> getChargeEvents(long chargeId) {
         List<Map<String, Object>> ret = jdbi.withHandle(h ->
-                h.createQuery("SELECT ce.id, ce.charge_id, ce.status, ce.updated, ce.gateway_transaction_id " +
+                h.createQuery("SELECT ce.id, ce.charge_id, ce.status, ce.updated " +
                         "FROM charge_events ce " +
                         "WHERE ce.charge_id = :chargeId")
                         .bind("chargeId", chargeId)
