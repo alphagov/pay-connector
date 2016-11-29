@@ -105,3 +105,5 @@ notifyConfig:
   notificationBaseURL: https://stubs.pymnt.localdomain
   emailNotifyEnabled: false
 
+graphiteHost: ${METRICS_HOST:-localhost}
+graphitePort: ${METRICS_PORT:-8092}
