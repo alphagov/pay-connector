@@ -394,6 +394,36 @@ public class ChargesApiResourceITest {
     }
 
     @Test
+    public void shouldGetChargeLegacyTransactions() throws Exception {
+
+        long chargeId = RandomUtils.nextInt();
+        String externalChargeId = "charge3";
+
+        ChargeStatus chargeStatus = AUTHORISATION_SUCCESS;
+        ZonedDateTime createdDate = ZonedDateTime.of(2016, 1, 26, 13, 45, 32, 123, ZoneId.of("UTC"));
+        UUID card = UUID.randomUUID();
+        app.getDatabaseTestHelper().addCardType(card, "label", "type", "brand");
+        app.getDatabaseTestHelper().addAcceptedCardType(Long.valueOf(accountId), card);
+        app.getDatabaseTestHelper().addCharge(chargeId, externalChargeId, accountId, AMOUNT, chargeStatus, returnUrl, null, "My reference", createdDate);
+        app.getDatabaseTestHelper().updateChargeCardDetails(chargeId, "visa", null, null, null, null, null, null, null, null, null);
+        app.getDatabaseTestHelper().addToken(chargeId, "tokenId");
+        app.getDatabaseTestHelper().addEvent(chargeId, chargeStatus.getValue());
+        getChargeApi
+                .withAccountId(accountId)
+                .withHeader(HttpHeaders.ACCEPT, APPLICATION_JSON)
+                .getTransactions()
+                .statusCode(OK.getStatusCode())
+                .contentType(JSON)
+                .body("results[0].charge_id", is(externalChargeId))
+                .body("results[0].amount", is(6234))
+                .body("results[0].card_details", notNullValue())
+                .body("results[0].card_details.card_brand", is("Visa"))
+                .body("results[0].card_details.cardholder_name", nullValue())
+                .body("results[0].card_details.last_digits_card_number", nullValue())
+                .body("results[0].card_details.expiry_date", nullValue());
+    }
+
+    @Test
     public void shouldFilterTransactionsBasedOnFromAndToDates() throws Exception {
 
         addChargeAndConfirmationDetails(CREATED, "ref-1", now());
