@@ -42,8 +42,8 @@ public class CardResourceITestBase {
 
     @Rule
     public DropwizardAppWithPostgresRule app = new DropwizardAppWithPostgresRule(
-                config("worldpay.urls.test", "http://localhost:" + port + "/jsp/merchant/xml/paymentService.jsp"),
-                config("smartpay.urls.test", "http://localhost:" + port + "/pal/servlet/soap/Payment"));
+            config("worldpay.urls.test", "http://localhost:" + port + "/jsp/merchant/xml/paymentService.jsp"),
+            config("smartpay.urls.test", "http://localhost:" + port + "/pal/servlet/soap/Payment"));
 
     @Rule
     public WireMockRule wireMockRule = new WireMockRule(port);
@@ -123,7 +123,7 @@ public class CardResourceITestBase {
     protected String authoriseNewCharge() {
         String externalChargeId = createNewChargeWith(AUTHORISATION_SUCCESS, "");
         app.getDatabaseTestHelper().updateChargeCardDetails(
-                Long.parseLong(externalChargeId.replace("charge-","")),
+                Long.parseLong(externalChargeId.replace("charge-", "")),
                 CardFixture.aValidCard().withCardNo("1234").build());
         return externalChargeId;
     }
@@ -133,10 +133,10 @@ public class CardResourceITestBase {
         return createNewChargeWith(CREATED, "");
     }
 
-    protected String createNewRefundWith(RefundStatus refundStatus, Long amount,Long chargeId, String transactionId) {
+    protected String createNewRefundWith(RefundStatus refundStatus, Long amount, Long chargeId, String transactionId) {
         long refundId = RandomUtils.nextInt();
         String externalRefundId = "refund-" + refundId;
-        app.getDatabaseTestHelper().addRefund(refundId,externalRefundId,transactionId, amount,refundStatus.getValue(),chargeId, ZonedDateTime.now());
+        app.getDatabaseTestHelper().addRefund(refundId, externalRefundId, transactionId, amount, refundStatus.getValue(), chargeId, ZonedDateTime.now());
         return externalRefundId;
     }
 

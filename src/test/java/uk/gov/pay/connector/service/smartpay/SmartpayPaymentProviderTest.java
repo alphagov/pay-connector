@@ -133,7 +133,7 @@ public class SmartpayPaymentProviderTest {
 
         Notification<Pair<String, Boolean>> smartpayNotification = notifications.get(0);
 
-        assertThat(smartpayNotification.getTransactionId(), is(pspReference));
+        assertThat(smartpayNotification.getTransactionId(), is(originalReference));
         assertThat(smartpayNotification.getReference(), is(pspReference));
 
         Pair<String, Boolean> status = smartpayNotification.getStatus();
