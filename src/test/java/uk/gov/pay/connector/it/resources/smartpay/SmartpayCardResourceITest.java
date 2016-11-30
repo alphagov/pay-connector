@@ -91,8 +91,8 @@ public class SmartpayCardResourceITest extends CardResourceITestBase {
         long chargeId = Long.parseLong(StringUtils.removeStart(externalChargeId, "charge-"));
         List<Map<String, Object>> chargeEvents = app.getDatabaseTestHelper().getChargeEvents(chargeId);
 
-        assertThat(chargeEvents, hasEventWithStatusAndTransactionId(AUTHORISATION_SUCCESS, pspReference1));
-        assertThat(chargeEvents, hasEventWithStatusAndTransactionId(CAPTURE_SUBMITTED, pspReference2));
+        assertThat(chargeEvents, hasEvent(AUTHORISATION_SUCCESS));
+        assertThat(chargeEvents, hasEvent(CAPTURE_SUBMITTED));
     }
 
     @Test
