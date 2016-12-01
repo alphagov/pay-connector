@@ -52,11 +52,12 @@ public class SmartpayNotificationResourceWithAccountSpecificAuthITest extends Ca
                 .then()
                 .statusCode(OK.getStatusCode());
 
+        String smartpayPaymentReference = randomId();
         String pspReference = randomId();
-        String externalChargeId = createNewChargeWith(CAPTURE_SUBMITTED, pspReference);
+        String externalChargeId = createNewChargeWith(CAPTURE_SUBMITTED, smartpayPaymentReference);
 
         String response = notifyConnectorWithCredentials(
-                notificationPayloadForTransaction(pspReference, "notification-capture"),
+                notificationPayloadForTransaction(externalChargeId, smartpayPaymentReference, pspReference, "notification-capture"),
                 "bob", "bobsnewbigsecret")
                 .then()
                 .statusCode(200)
@@ -78,10 +79,8 @@ public class SmartpayNotificationResourceWithAccountSpecificAuthITest extends Ca
                 .then()
                 .statusCode(OK.getStatusCode());
 
-        String transactionId = randomId();
-
         notifyConnectorWithCredentials(
-                notificationPayloadForTransaction(transactionId, "notification-capture"),
+                notificationPayloadForTransaction(randomId(), randomId(), randomId(), "notification-capture"),
                 "bob", "bobsnewwrongbigsecret")
                 .then()
                 .statusCode(401)
@@ -97,16 +96,16 @@ public class SmartpayNotificationResourceWithAccountSpecificAuthITest extends Ca
                 .statusCode(OK.getStatusCode());
 
         String transactionId = randomId();
-        String chargeId = createNewChargeWith(CAPTURED, transactionId);
+        String externalChargeId = createNewChargeWith(CAPTURED, transactionId);
 
-        String response = notifyConnector(notificationPayloadForTransaction(transactionId, "notification-authorisation"))
+        String response = notifyConnector(notificationPayloadForTransaction(randomId(), transactionId, randomId(), "notification-authorisation"))
                 .then()
                 .statusCode(200)
                 .extract().body().asString();
 
         assertThat(response, is(RESPONSE_EXPECTED_BY_SMARTPAY));
 
-        assertFrontendChargeStatusIs(chargeId, "CAPTURED");
+        assertFrontendChargeStatusIs(externalChargeId, "CAPTURED");
     }
 
 
@@ -119,12 +118,13 @@ public class SmartpayNotificationResourceWithAccountSpecificAuthITest extends Ca
                 .then()
                 .statusCode(OK.getStatusCode());
 
+        String reference = randomId();
         String transactionId = randomId();
         String externalChargeId = createNewChargeWith(CAPTURED, transactionId);
         Long chargeId = Long.parseLong(StringUtils.removeStart(externalChargeId, "charge-"));
-        String externalRefundId = createNewRefundWith(REFUND_SUBMITTED, 10L, chargeId, transactionId);
+        String externalRefundId = createNewRefundWith(REFUND_SUBMITTED, 10L, chargeId, reference);
 
-        String response = notifyConnector(notificationPayloadForTransaction(transactionId, "notification-refund"))
+        String response = notifyConnector(notificationPayloadForTransaction(externalRefundId, transactionId, reference, "notification-refund"))
                 .then()
                 .statusCode(200)
                 .extract().body().asString();
@@ -176,7 +176,7 @@ public class SmartpayNotificationResourceWithAccountSpecificAuthITest extends Ca
 
         given()
                 .port(app.getLocalPort())
-                .body(notificationPayloadForTransaction(transactionId, "notification-capture"))
+                .body(notificationPayloadForTransaction(randomId(), transactionId, randomId(), "notification-capture"))
                 .contentType(APPLICATION_JSON)
                 .post(NOTIFICATION_PATH)
                 .then()
@@ -190,7 +190,7 @@ public class SmartpayNotificationResourceWithAccountSpecificAuthITest extends Ca
 
         given()
                 .port(app.getLocalPort())
-                .body(notificationPayloadForTransaction(transactionId, "notification-capture"))
+                .body(notificationPayloadForTransaction(randomId(), transactionId, randomId(), "notification-capture"))
                 .contentType(TEXT_XML)
                 .post(NOTIFICATION_PATH)
                 .then()
@@ -215,10 +215,12 @@ public class SmartpayNotificationResourceWithAccountSpecificAuthITest extends Ca
                 .post(NOTIFICATION_PATH);
     }
 
-    private String notificationPayloadForTransaction(String transactionId, String fileName) throws IOException {
-        URL resource = getResource("templates/smartpay/"+fileName+".json");
+    private String notificationPayloadForTransaction(String merchantReference, String originalReference, String pspReference, String fileName) throws IOException {
+        URL resource = getResource("templates/smartpay/" + fileName + ".json");
         return Resources.toString(resource, Charset.defaultCharset())
-                .replace("{{pspReference}}", transactionId);
+                .replace("{{merchantReference}}", merchantReference)
+                .replace("{{originalReference}}", originalReference)
+                .replace("{{pspReference}}", pspReference);
     }
 
     private String multipleNotifications(String transactionId, String transactionId2) throws IOException {
