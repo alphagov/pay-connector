@@ -5,3 +5,5 @@ release.alpha_release-90.date=2016-12-01:12:53:18
 alpha_release-90.approver=rory.smith@digital.cabinet-office.gov.uk
 
 alpha_release-90.approve-date=2016-12-02:09:49:20
+
+staging-1.tag=alpha_staging-1-90
