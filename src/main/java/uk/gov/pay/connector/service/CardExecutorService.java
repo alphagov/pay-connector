@@ -44,6 +44,10 @@ public class CardExecutorService<T> {
         addShutdownHook();
     }
 
+    public MetricRegistry getMetricRegistry() {
+        return metricRegistry;
+    }
+
     private void addShutdownHook() {
         Runtime.getRuntime().addShutdownHook(new Thread() {
             public void run() {
