@@ -1,5 +1,6 @@
 package uk.gov.pay.connector.service;
 
+import com.codahale.metrics.MetricRegistry;
 import com.google.common.util.concurrent.ThreadFactoryBuilder;
 import com.google.inject.Inject;
 import org.apache.commons.lang3.tuple.Pair;
@@ -20,6 +21,7 @@ public class CardExecutorService<T> {
 
     private static final Logger logger = LoggerFactory.getLogger(CardExecutorService.class);
     private static final int QUEUE_WAIT_WARN_THRESHOLD_MILLIS = 10000;
+    private final MetricRegistry metricRegistry;
 
     private ExecutorServiceConfig config;
     private ExecutorService executor;
@@ -31,11 +33,11 @@ public class CardExecutorService<T> {
     }
 
     @Inject
-    public CardExecutorService(ConnectorConfiguration configuration) {
+    public CardExecutorService(ConnectorConfiguration configuration, MetricRegistry metricsRegistry) {
         final ThreadFactory threadFactory = new ThreadFactoryBuilder()
                 .setNameFormat("CardExecutorService-%d")
                 .build();
-
+        this.metricRegistry = metricsRegistry;
         this.config = configuration.getExecutorServiceConfig();
         int numberOfThreads = config.getThreadsPerCpu() * getRuntime().availableProcessors();
         this.executor = Executors.newFixedThreadPool(numberOfThreads, threadFactory);
@@ -75,6 +77,7 @@ public class CardExecutorService<T> {
             if (totalWaitTime > QUEUE_WAIT_WARN_THRESHOLD_MILLIS) {
                 logger.warn("CardExecutor Service delay - queue_wait_time={}", totalWaitTime);
             }
+            metricRegistry.histogram("card_executor.delay").update(totalWaitTime);
             return task.call();
         });
 
