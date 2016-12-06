@@ -31,9 +31,9 @@ public class CardExecutorServiceHealthCheck extends HealthCheck {
     }
 
     private void captureMetrics() {
-        metricRegistry.histogram("card_executor.active-threads").update(threadPoolExecutor.getActiveCount());
-        metricRegistry.histogram("card_executor.pool-size").update(threadPoolExecutor.getPoolSize());
-        metricRegistry.histogram("card_executor.core-pool-size").update(threadPoolExecutor.getCorePoolSize());
-        metricRegistry.histogram("card_executor.queue-size").update(threadPoolExecutor.getQueue() == null ? 0 : threadPoolExecutor.getQueue().size());
+        metricRegistry.histogram("card-executor.active-threads").update(threadPoolExecutor.getActiveCount());
+        metricRegistry.histogram("card-executor.pool-size").update(threadPoolExecutor.getPoolSize());
+        metricRegistry.histogram("card-executor.core-pool-size").update(threadPoolExecutor.getCorePoolSize());
+        metricRegistry.histogram("card-executor.queue-size").update(threadPoolExecutor.getQueue() == null ? 0 : threadPoolExecutor.getQueue().size());
     }
 }

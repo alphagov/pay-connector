@@ -3,6 +3,7 @@ package uk.gov.pay.connector.service;
 import com.codahale.metrics.MetricRegistry;
 import com.google.common.util.concurrent.ThreadFactoryBuilder;
 import com.google.inject.Inject;
+import io.dropwizard.setup.Environment;
 import org.apache.commons.lang3.tuple.Pair;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -33,11 +34,11 @@ public class CardExecutorService<T> {
     }
 
     @Inject
-    public CardExecutorService(ConnectorConfiguration configuration, MetricRegistry metricsRegistry) {
+    public CardExecutorService(ConnectorConfiguration configuration, Environment environment) {
         final ThreadFactory threadFactory = new ThreadFactoryBuilder()
                 .setNameFormat("CardExecutorService-%d")
                 .build();
-        this.metricRegistry = metricsRegistry;
+        this.metricRegistry = environment.metrics();
         this.config = configuration.getExecutorServiceConfig();
         int numberOfThreads = config.getThreadsPerCpu() * getRuntime().availableProcessors();
         this.executor = Executors.newFixedThreadPool(numberOfThreads, threadFactory);
@@ -81,7 +82,7 @@ public class CardExecutorService<T> {
             if (totalWaitTime > QUEUE_WAIT_WARN_THRESHOLD_MILLIS) {
                 logger.warn("CardExecutor Service delay - queue_wait_time={}", totalWaitTime);
             }
-            metricRegistry.histogram("card_executor.delay").update(totalWaitTime);
+            metricRegistry.histogram("card-executor.delay").update(totalWaitTime);
             return task.call();
         });
 
