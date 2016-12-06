@@ -4,7 +4,6 @@ import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableMap;
 import com.jayway.restassured.response.ValidatableResponse;
 import org.apache.commons.lang.math.RandomUtils;
-import org.hamcrest.Matchers;
 import org.junit.Before;
 import org.junit.Rule;
 import org.junit.Test;
@@ -426,9 +425,9 @@ public class ChargesApiResourceITest {
     @Test
     public void shouldFilterTransactionsBasedOnFromAndToDates() throws Exception {
 
-        addChargeAndConfirmationDetails(CREATED, "ref-1", now());
-        addChargeAndConfirmationDetails(AUTHORISATION_READY, "ref-2", now());
-        addChargeAndConfirmationDetails(CAPTURED, "ref-3", now().minusDays(2));
+        addChargeAndCardDetails(CREATED, "ref-1", now());
+        addChargeAndCardDetails(AUTHORISATION_READY, "ref-2", now());
+        addChargeAndCardDetails(CAPTURED, "ref-3", now().minusDays(2));
 
         ValidatableResponse response = getChargeApi
                 .withAccountId(accountId)
@@ -471,9 +470,9 @@ public class ChargesApiResourceITest {
     @Test
     public void shouldFilterTransactionsByEmail() throws Exception {
 
-        addChargeAndConfirmationDetails(CREATED, "ref-1", now());
-        addChargeAndConfirmationDetails(AUTHORISATION_READY, "ref-2", now());
-        addChargeAndConfirmationDetails(CAPTURED, "ref-3", now().minusDays(2));
+        addChargeAndCardDetails(CREATED, "ref-1", now());
+        addChargeAndCardDetails(AUTHORISATION_READY, "ref-2", now());
+        addChargeAndCardDetails(CAPTURED, "ref-3", now().minusDays(2));
 
         ValidatableResponse response = getChargeApi
                 .withAccountId(accountId)
@@ -490,9 +489,9 @@ public class ChargesApiResourceITest {
     public void shouldFilterTransactionsByCardBrand() throws Exception {
         String searchedCardBrand = "visa";
 
-        addChargeAndConfirmationDetails(CREATED, "ref-1", now(), searchedCardBrand);
-        addChargeAndConfirmationDetails(AUTHORISATION_READY, "ref-2", now(), "mastercard");
-        addChargeAndConfirmationDetails(CAPTURED, "ref-3", now().minusDays(2), searchedCardBrand);
+        addChargeAndCardDetails(CREATED, "ref-1", now(), searchedCardBrand);
+        addChargeAndCardDetails(AUTHORISATION_READY, "ref-2", now(), "mastercard");
+        addChargeAndCardDetails(CAPTURED, "ref-3", now().minusDays(2), searchedCardBrand);
 
         getChargeApi
                 .withAccountId(accountId)
@@ -508,11 +507,11 @@ public class ChargesApiResourceITest {
 
     @Test
     public void shouldShowTotalCountResultsAndHalLinksForCharges() throws Exception {
-        addChargeAndConfirmationDetails(CREATED, "ref-1", now());
-        addChargeAndConfirmationDetails(AUTHORISATION_READY, "ref-2", now().minusDays(1));
-        addChargeAndConfirmationDetails(CAPTURED, "ref-3", now().minusDays(2));
-        addChargeAndConfirmationDetails(CAPTURED, "ref-4", now().minusDays(3));
-        addChargeAndConfirmationDetails(CAPTURED, "ref-5", now().minusDays(4));
+        addChargeAndCardDetails(CREATED, "ref-1", now());
+        addChargeAndCardDetails(AUTHORISATION_READY, "ref-2", now().minusDays(1));
+        addChargeAndCardDetails(CAPTURED, "ref-3", now().minusDays(2));
+        addChargeAndCardDetails(CAPTURED, "ref-4", now().minusDays(3));
+        addChargeAndCardDetails(CAPTURED, "ref-5", now().minusDays(4));
 
         assertNavigationLinksWhenNoResultFound();
         assertResultsWhenPageAndDisplaySizeNotSet();
@@ -547,11 +546,11 @@ public class ChargesApiResourceITest {
 
     @Test
     public void shouldGetAllTransactionsForDefault_page_1_size_100_inCreationDateOrder() throws Exception {
-        String id_1 = addChargeAndConfirmationDetails(CREATED, "ref-1", now());
-        String id_2 = addChargeAndConfirmationDetails(AUTHORISATION_READY, "ref-2", now().plusHours(1));
-        String id_3 = addChargeAndConfirmationDetails(CREATED, "ref-3", now().plusHours(2));
-        String id_4 = addChargeAndConfirmationDetails(CREATED, "ref-4", now().plusHours(3));
-        String id_5 = addChargeAndConfirmationDetails(CREATED, "ref-5", now().plusHours(4));
+        String id_1 = addChargeAndCardDetails(CREATED, "ref-1", now());
+        String id_2 = addChargeAndCardDetails(AUTHORISATION_READY, "ref-2", now().plusHours(1));
+        String id_3 = addChargeAndCardDetails(CREATED, "ref-3", now().plusHours(2));
+        String id_4 = addChargeAndCardDetails(CREATED, "ref-4", now().plusHours(3));
+        String id_5 = addChargeAndCardDetails(CREATED, "ref-5", now().plusHours(4));
 
         ValidatableResponse response = getChargeApi
                 .withAccountId(accountId)
@@ -568,11 +567,11 @@ public class ChargesApiResourceITest {
 
     @Test
     public void shouldGetTransactionsForPageAndSizeParams_inCreationDateOrder() throws Exception {
-        String id_1 = addChargeAndConfirmationDetails(CREATED, "ref-1", now());
-        String id_2 = addChargeAndConfirmationDetails(CREATED, "ref-2", now().plusHours(1));
-        String id_3 = addChargeAndConfirmationDetails(CREATED, "ref-3", now().plusHours(2));
-        String id_4 = addChargeAndConfirmationDetails(CREATED, "ref-4", now().plusHours(3));
-        String id_5 = addChargeAndConfirmationDetails(CREATED, "ref-5", now().plusHours(4));
+        String id_1 = addChargeAndCardDetails(CREATED, "ref-1", now());
+        String id_2 = addChargeAndCardDetails(CREATED, "ref-2", now().plusHours(1));
+        String id_3 = addChargeAndCardDetails(CREATED, "ref-3", now().plusHours(2));
+        String id_4 = addChargeAndCardDetails(CREATED, "ref-4", now().plusHours(3));
+        String id_5 = addChargeAndCardDetails(CREATED, "ref-5", now().plusHours(4));
 
         ValidatableResponse response = getChargeApi
                 .withAccountId(accountId)
@@ -680,7 +679,7 @@ public class ChargesApiResourceITest {
     @Test
     public void shouldGetSuccessAndFailedResponseForExpiryChargeTask() {
         //create charge
-        String extChargeId = addChargeAndConfirmationDetails(CREATED, "ref", ZonedDateTime.now().minusHours(1));
+        String extChargeId = addChargeAndCardDetails(CREATED, "ref", ZonedDateTime.now().minusHours(1));
 
         // run expiry task
         getChargeApi
@@ -887,12 +886,12 @@ public class ChargesApiResourceITest {
         return dateTimes;
     }
 
-    private String addChargeAndConfirmationDetails(ChargeStatus status, String reference, ZonedDateTime fromDate) {
-        return addChargeAndConfirmationDetails(status, reference, fromDate, "");
+    private String addChargeAndCardDetails(ChargeStatus status, String reference, ZonedDateTime fromDate) {
+        return addChargeAndCardDetails(status, reference, fromDate, "");
 
     }
 
-    private String addChargeAndConfirmationDetails(ChargeStatus status, String reference, ZonedDateTime fromDate, String cardBrand) {
+    private String addChargeAndCardDetails(ChargeStatus status, String reference, ZonedDateTime fromDate, String cardBrand) {
         long chargeId = RandomUtils.nextInt();
         String externalChargeId = "charge" + chargeId;
         ChargeStatus chargeStatus = status != null ? status : AUTHORISATION_SUCCESS;

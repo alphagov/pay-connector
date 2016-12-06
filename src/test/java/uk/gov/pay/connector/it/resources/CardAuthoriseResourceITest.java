@@ -217,7 +217,7 @@ public class CardAuthoriseResourceITest extends CardResourceITestBase {
     }
 
     @Test
-    public void shouldSaveExpectedConfirmationDetailsFromMultipleRequests() throws Exception {
+    public void shouldSaveExpectedCardDetailsFromMultipleRequests() throws Exception {
 
         String charge1 = createNewChargeWith(ENTERING_CARD_DETAILS, null);
         String charge2 = createNewChargeWith(ENTERING_CARD_DETAILS, null);

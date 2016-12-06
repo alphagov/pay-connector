@@ -53,7 +53,7 @@ public class ChargeDaoCardDetailsITest extends DaoITestBase {
     }
 
     @Test
-    public void findById_shouldFindConfirmationDetails() {
+    public void findById_shouldFindCardDetails() {
         long chargeId = 123L;
         DatabaseFixtures.TestCardDetails testCardDetails = createCardDetailsForChargeWithId(chargeId);
         Optional<ChargeEntity> chargeDaoOptional = chargeDao.findById(chargeId);
@@ -76,7 +76,7 @@ public class ChargeDaoCardDetailsITest extends DaoITestBase {
     }
 
     @Test
-    public void persist_shouldStoreConfirmationDetails() {
+    public void persist_shouldStoreCardDetails() {
         GatewayAccountEntity testAccount = new GatewayAccountEntity("sandbox", new HashMap<>(), GatewayAccountEntity.Type.TEST);
         gatewayAccountDao.persist(testAccount);
 
