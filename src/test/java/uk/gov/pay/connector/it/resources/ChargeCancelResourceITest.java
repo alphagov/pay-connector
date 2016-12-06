@@ -47,7 +47,7 @@ public class ChargeCancelResourceITest extends CardResourceITestBase {
     }
 
     @Test
-    public void shouldPreserveCardConfirmationDetailsIfCancelled() throws Exception {
+    public void shouldPreserveCardDetailsIfCancelled() throws Exception {
         String externalChargeId = addCharge(ChargeStatus.AUTHORISATION_SUCCESS, "ref", ZonedDateTime.now().minusHours(1), "irrelavant");
         Long chargeId = Long.valueOf(StringUtils.removeStart(externalChargeId, "charge"));
 

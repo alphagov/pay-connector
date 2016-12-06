@@ -123,7 +123,7 @@ public class CardAuthoriseServiceTest extends CardServiceTest {
     }
 
     @Test
-    public void shouldStoreConfirmationDetailsIfAuthorisationSuccess() {
+    public void shouldStoreCardDetailsIfAuthorisationSuccess() {
         String transactionId = "transaction-id";
         ChargeEntity charge = createNewChargeWith(1L, ENTERING_CARD_DETAILS);
         ChargeEntity reloadedCharge = spy(charge);
@@ -134,7 +134,7 @@ public class CardAuthoriseServiceTest extends CardServiceTest {
     }
 
     @Test
-    public void shouldStoreConfirmationDetailsEvenIfAuthorisationRejected() {
+    public void shouldStoreCardDetailsEvenIfAuthorisationRejected() {
         ChargeEntity charge = createNewChargeWith(1L, ENTERING_CARD_DETAILS);
         ChargeEntity reloadedCharge = spy(charge);
 
@@ -143,7 +143,7 @@ public class CardAuthoriseServiceTest extends CardServiceTest {
     }
 
     @Test
-    public void shouldStoreConfirmationDetailsEvenIfInAuthorisationError() {
+    public void shouldStoreCardDetailsEvenIfInAuthorisationError() {
         ChargeEntity charge = createNewChargeWith(1L, ENTERING_CARD_DETAILS);
         ChargeEntity reloadedCharge = spy(charge);
 

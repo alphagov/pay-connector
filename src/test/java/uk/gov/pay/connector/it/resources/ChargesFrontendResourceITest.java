@@ -374,7 +374,7 @@ public class ChargesFrontendResourceITest {
                 .body("created_date", matchesPattern("^\\d{4}-\\d{2}-\\d{2}T\\d{2}:\\d{2}:\\d{2}.\\d{3}Z"))
                 .body("created_date", isWithin(10, SECONDS));
         validateGatewayAccount(response);
-        validateConfirmationDetails(response, chargeStatus);
+        validateCardDetails(response, chargeStatus);
         return response;
     }
 
@@ -398,7 +398,7 @@ public class ChargesFrontendResourceITest {
                 .body("gateway_account.card_types[1].brand", is("visa"));
     }
 
-    private void validateConfirmationDetails(ValidatableResponse response, ChargeStatus status) {
+    private void validateCardDetails(ValidatableResponse response, ChargeStatus status) {
         if (status.equals(ChargeStatus.AUTHORISATION_SUCCESS)) {
             response
                     .body("card_details", is(notNullValue()))

@@ -76,7 +76,7 @@ public class CardCaptureResourceITest extends CardResourceITestBase {
     }
 
     @Test
-    public void shouldPreserveConfirmationDetails_IfCaptureReady() throws Exception {
+    public void shouldPreserveCardDetails_IfCaptureReady() throws Exception {
         String externalChargeId = authoriseNewCharge();
         Long chargeId = Long.valueOf(StringUtils.removeStart(externalChargeId, "charge-"));
 

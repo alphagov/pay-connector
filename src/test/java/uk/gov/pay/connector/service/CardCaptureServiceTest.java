@@ -201,28 +201,4 @@ public class CardCaptureServiceTest extends CardServiceTest {
         verifyZeroInteractions(mockUserNotificationService);
     }
 
-    @Test
-    public void shouldRemoveConfirmationDetailsIfCaptureReady() {
-        String gatewayTxId = "theTxId";
-
-        ChargeEntity charge = createNewChargeWith("worldpay", 1L, AUTHORISATION_SUCCESS, gatewayTxId);
-
-        ChargeEntity reloadedCharge = spy(charge);
-        mockChargeDaoOperations(charge, reloadedCharge);
-        setupPaymentProviderMock(gatewayTxId, null);
-        when(mockedProviders.byName(charge.getPaymentGatewayName())).thenReturn(mockedPaymentProvider);
-        cardCaptureService.doCapture(charge.getExternalId());
-    }
-
-    @Test
-    public void shouldRemoveConfirmationDetailsIfCaptureFails() {
-        String gatewayTxId = "theTxId";
-        ChargeEntity charge = createNewChargeWith("worldpay", 1L, AUTHORISATION_SUCCESS, gatewayTxId);
-
-        ChargeEntity reloadedCharge = spy(charge);
-        mockChargeDaoOperations(charge, reloadedCharge);
-        setupPaymentProviderMock(gatewayTxId, "error-code");
-        when(mockedProviders.byName(charge.getPaymentGatewayName())).thenReturn(mockedPaymentProvider);
-        cardCaptureService.doCapture(charge.getExternalId());
-    }
 }
