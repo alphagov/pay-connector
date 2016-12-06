@@ -2,8 +2,9 @@ package uk.gov.pay.connector.resources;
 
 public interface ApiPaths {
 
-    String API_VERSION_PATH = "/v1";
-    
+    String API_VERSION = "v1";
+    String API_VERSION_PATH = "/" + API_VERSION;
+
     String GATEWAY_ACCOUNTS_API_PATH = API_VERSION_PATH +"/api/accounts";
     String GATEWAY_ACCOUNT_API_PATH = API_VERSION_PATH +"/api/accounts/{accountId}";
     String GATEWAY_ACCOUNTS_API_EMAIL_NOTIFICATION = API_VERSION_PATH +"/api/accounts/{accountId}/email-notification";
