@@ -5,3 +5,5 @@ release.alpha_release-92.date=2016-12-06:16:29:54
 alpha_release-92.approver=sara.bowley@digital.cabinet-office.gov.uk
 
 alpha_release-92.approve-date=2016-12-07:10:12:46
+
+staging-1.tag=alpha_staging-1-92
