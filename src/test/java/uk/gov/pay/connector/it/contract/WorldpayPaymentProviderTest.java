@@ -1,9 +1,13 @@
 package uk.gov.pay.connector.it.contract;
 
+import com.codahale.metrics.Histogram;
+import com.codahale.metrics.MetricRegistry;
+import com.codahale.metrics.SharedMetricRegistries;
 import com.google.common.collect.ImmutableMap;
 import org.junit.Assume;
 import org.junit.Before;
 import org.junit.Test;
+import org.mockito.Mockito;
 import uk.gov.pay.connector.app.GatewayCredentialsConfig;
 import uk.gov.pay.connector.model.CancelGatewayRequest;
 import uk.gov.pay.connector.model.CaptureGatewayRequest;
@@ -30,6 +34,7 @@ import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.core.Is.is;
 import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertTrue;
+import static org.mockito.Mockito.*;
 import static uk.gov.pay.connector.model.domain.ChargeEntityFixture.aValidChargeEntity;
 import static uk.gov.pay.connector.model.domain.GatewayAccountEntity.Type.TEST;
 import static uk.gov.pay.connector.service.GatewayClient.createGatewayClient;
@@ -41,7 +46,8 @@ public class WorldpayPaymentProviderTest {
     private GatewayAccountEntity validGatewayAccount;
     private Map<String, String> validCredentials;
     private ChargeEntity chargeEntity;
-
+    private MetricRegistry mockMetricRegistry;
+    private Histogram mockHistogram;
     @Before
     public void checkThatWorldpayIsUp() {
         try {
@@ -57,6 +63,10 @@ public class WorldpayPaymentProviderTest {
             validGatewayAccount.setGatewayName("worldpay");
             validGatewayAccount.setCredentials(validCredentials);
             validGatewayAccount.setType(TEST);
+
+            mockMetricRegistry = mock(MetricRegistry.class);
+            mockHistogram = mock(Histogram.class);
+            when(mockMetricRegistry.histogram(anyString())).thenReturn(mockHistogram);
 
             chargeEntity = aValidChargeEntity()
                     .withTransactionId(randomUUID().toString())
@@ -129,7 +139,7 @@ public class WorldpayPaymentProviderTest {
     public void shouldFailRequestAuthorisationIfCredentialsAreNotCorrect() throws Exception {
 
         WorldpayPaymentProvider connector = new WorldpayPaymentProvider(
-                createGatewayClient(ClientBuilder.newClient(), getWorldpayConfig().getUrls())
+                createGatewayClient(ClientBuilder.newClient(), getWorldpayConfig().getUrls(), mockMetricRegistry)
         );
 
         Long gatewayAccountId = 112233L;
@@ -176,7 +186,8 @@ public class WorldpayPaymentProviderTest {
         return new WorldpayPaymentProvider(
                 createGatewayClient(
                         ClientBuilder.newClient(),
-                        config.getUrls()
+                        config.getUrls(),
+                        mockMetricRegistry
                 )
         );
     }

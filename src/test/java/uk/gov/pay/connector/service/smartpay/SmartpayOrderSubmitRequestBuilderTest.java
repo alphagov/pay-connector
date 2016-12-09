@@ -27,7 +27,7 @@ public class SmartpayOrderSubmitRequestBuilderTest {
 
         Card card = buildCardDetails("Mr. Payment", "5555444433331111", "737", "08/18", "visa", address);
 
-        String actualRequest = aSmartpayOrderSubmitRequest()
+        String actualRequest = aSmartpayOrderSubmitRequest("authorise")
                 .withMerchantCode("MerchantAccount")
                 .withTransactionId("MyTransactionId")
                 .withDescription("MyDescription")

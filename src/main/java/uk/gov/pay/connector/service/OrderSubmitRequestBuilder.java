@@ -17,17 +17,19 @@ public class OrderSubmitRequestBuilder {
     private Card card;
     private String amount;
     private String paymentPlatformReference;
+    private String orderType;
 
-    public static OrderSubmitRequestBuilder aWorldpayOrderSubmitRequest() {
-        return new OrderSubmitRequestBuilder("/worldpay/WorldpayOrderSubmitTemplate.xml");
+    public static OrderSubmitRequestBuilder aWorldpayOrderSubmitRequest(String orderType) {
+        return new OrderSubmitRequestBuilder("/worldpay/WorldpayOrderSubmitTemplate.xml", orderType);
     }
 
-    public static OrderSubmitRequestBuilder aSmartpayOrderSubmitRequest() {
-        return new OrderSubmitRequestBuilder("/smartpay/SmartpayOrderSubmitTemplate.xml");
+    public static OrderSubmitRequestBuilder aSmartpayOrderSubmitRequest(String orderType) {
+        return new OrderSubmitRequestBuilder("/smartpay/SmartpayOrderSubmitTemplate.xml", orderType);
     }
 
-    public OrderSubmitRequestBuilder(String templatePath) {
-        templateStringBuilder = new TemplateStringBuilder(templatePath);
+    public OrderSubmitRequestBuilder(String templatePath, String orderType) {
+        this.orderType = orderType;
+        this.templateStringBuilder = new TemplateStringBuilder(templatePath);
     }
 
     public OrderSubmitRequestBuilder withMerchantCode(String merchantCode) {
@@ -59,6 +61,16 @@ public class OrderSubmitRequestBuilder {
     public OrderSubmitRequestBuilder withAmount(String amount) {
         this.amount = amount;
         return this;
+    }
+    public GatewayOrder buildOrder() {
+        Map<String, Object> templateData = newHashMap();
+        templateData.put("merchantCode", merchantCode);
+        templateData.put("transactionId", transactionId);
+        templateData.put("paymentPlatformReference", paymentPlatformReference);
+        templateData.put("description", description);
+        templateData.put("amount", amount);
+        templateData.put("card", card);
+        return new GatewayOrder(orderType, templateStringBuilder.buildWith(templateData));
     }
 
     public String build() {

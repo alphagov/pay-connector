@@ -26,7 +26,7 @@ public class WorldpayOrderSubmitRequestBuilderTest {
 
         Card card = getValidTestCard(minAddress);
 
-        String actualRequest = aWorldpayOrderSubmitRequest()
+        String actualRequest = aWorldpayOrderSubmitRequest("authorise")
                 .withMerchantCode("MERCHANTCODE")
                 .withTransactionId("MyUniqueTransactionId!")
                 .withDescription("This is the description")
@@ -50,7 +50,7 @@ public class WorldpayOrderSubmitRequestBuilderTest {
 
         Card card = getValidTestCard(fullAddress);
 
-        String actualRequest = aWorldpayOrderSubmitRequest()
+        String actualRequest = aWorldpayOrderSubmitRequest("capture")
                 .withMerchantCode("MERCHANTCODE")
                 .withTransactionId("MyUniqueTransactionId!")
                 .withDescription("This is the description")

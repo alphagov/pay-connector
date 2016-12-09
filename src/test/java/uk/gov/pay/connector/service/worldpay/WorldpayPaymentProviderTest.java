@@ -1,5 +1,7 @@
 package uk.gov.pay.connector.service.worldpay;
 
+import com.codahale.metrics.Histogram;
+import com.codahale.metrics.MetricRegistry;
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableMap;
 import com.google.common.io.Resources;
@@ -8,6 +10,7 @@ import org.junit.Assert;
 import org.junit.Before;
 import org.junit.Test;
 import org.junit.runner.RunWith;
+import org.mockito.ArgumentMatcher;
 import org.mockito.Mock;
 import org.mockito.runners.MockitoJUnitRunner;
 import uk.gov.pay.connector.model.*;
@@ -15,6 +18,7 @@ import uk.gov.pay.connector.model.domain.*;
 import uk.gov.pay.connector.model.gateway.AuthorisationGatewayRequest;
 import uk.gov.pay.connector.model.gateway.GatewayResponse;
 import uk.gov.pay.connector.service.GatewayClient;
+import uk.gov.pay.connector.service.GatewayOrder;
 
 import javax.ws.rs.client.Client;
 import javax.ws.rs.client.Entity;
@@ -60,14 +64,18 @@ public class WorldpayPaymentProviderTest {
     private GatewayClient mockGatewayClient;
     @Mock
     GatewayAccountEntity mockGatewayAccountEntity;
+    @Mock
+    MetricRegistry mockMetricRegistry;
+    @Mock
+    Histogram mockHistogram;
 
     @Before
     public void setup() throws Exception {
         client = mock(Client.class);
         mockWorldpaySuccessfulOrderSubmitResponse();
-
+        when(mockMetricRegistry.histogram(anyString())).thenReturn(mockHistogram);
         provider = new WorldpayPaymentProvider(
-                createGatewayClient(client, ImmutableMap.of(TEST.toString(), "http://worldpay.url")));
+                createGatewayClient(client, ImmutableMap.of(TEST.toString(), "http://worldpay.url"), mockMetricRegistry));
     }
 
     @Test
@@ -102,7 +110,7 @@ public class WorldpayPaymentProviderTest {
 
         Map<String, String> credentialsMap = ImmutableMap.of("merchant_id", "MERCHANTCODE");
         when(mockGatewayAccountEntity.getCredentials()).thenReturn(credentialsMap);
-        when(mockGatewayClient.postXMLRequestFor(any(GatewayAccountEntity.class), anyString())).thenReturn(left(unexpectedStatusCodeFromGateway("Unexpected Response Code From Gateway")));
+        when(mockGatewayClient.postXMLRequestFor(any(GatewayAccountEntity.class), any(GatewayOrder.class))).thenReturn(left(unexpectedStatusCodeFromGateway("Unexpected Response Code From Gateway")));
 
         WorldpayPaymentProvider worldpayPaymentProvider = new WorldpayPaymentProvider(mockGatewayClient);
         worldpayPaymentProvider.refund(RefundGatewayRequest.valueOf(refundEntity));
@@ -122,7 +130,13 @@ public class WorldpayPaymentProviderTest {
                 "</paymentService>\n" +
                 "";
 
-        verify(mockGatewayClient).postXMLRequestFor(mockGatewayAccountEntity, expectedRefundRequest);
+        verify(mockGatewayClient).postXMLRequestFor(eq(mockGatewayAccountEntity), argThat(new ArgumentMatcher<GatewayOrder>() {
+            @Override
+            public boolean matches(Object argument) {
+                return ((GatewayOrder) argument).getPayload().equals(expectedRefundRequest) &&
+                        ((GatewayOrder) argument).getType().equals("refund");
+            }
+        }));
     }
 
     @Test

@@ -1,5 +1,7 @@
 package uk.gov.pay.connector.service;
 
+import com.codahale.metrics.MetricRegistry;
+import com.google.common.base.Stopwatch;
 import fj.data.Either;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -15,6 +17,7 @@ import java.net.SocketException;
 import java.net.SocketTimeoutException;
 import java.net.UnknownHostException;
 import java.util.Map;
+import java.util.concurrent.TimeUnit;
 
 import static fj.data.Either.left;
 import static fj.data.Either.right;
@@ -32,19 +35,23 @@ public class GatewayClient {
 
     private final Client client;
     private final Map<String, String> gatewayUrlMap;
+    private final MetricRegistry metricRegistry;
 
-    private GatewayClient(Client client, Map<String, String> gatewayUrlMap) {
+    private GatewayClient(Client client, Map<String, String> gatewayUrlMap, MetricRegistry metricRegistry) {
         this.gatewayUrlMap = gatewayUrlMap;
         this.client = client;
+        this.metricRegistry = metricRegistry;
     }
 
-    public static GatewayClient createGatewayClient(Client client, Map<String, String> gatewayUrlMap) {
-        return new GatewayClient(client, gatewayUrlMap);
+    public static GatewayClient createGatewayClient(Client client, Map<String, String> gatewayUrlMap, MetricRegistry metricRegistry) {
+        return new GatewayClient(client, gatewayUrlMap, metricRegistry);
     }
 
-    public Either<GatewayError, GatewayClient.Response> postXMLRequestFor(GatewayAccountEntity account, String request) {
+    public Either<GatewayError, GatewayClient.Response> postXMLRequestFor(GatewayAccountEntity account, GatewayOrder request) {
+        String metricsPrefix = String.format("gateway-operations.%s.%s", account.getGatewayName(), account.getType());
         javax.ws.rs.core.Response response = null;
         String gatewayUrl = gatewayUrlMap.get(account.getType());
+        Stopwatch responseTimeStopwatch = Stopwatch.createStarted();
         try {
             logger.info("POSTing request for account '{}' with type '{}'", account.getGatewayName(), account.getType());
             response = client.target(gatewayUrl)
@@ -52,7 +59,7 @@ public class GatewayClient {
                     .header(AUTHORIZATION, encode(
                             account.getCredentials().get(CREDENTIALS_USERNAME),
                             account.getCredentials().get(CREDENTIALS_PASSWORD)))
-                    .post(Entity.xml(request));
+                    .post(Entity.xml(request.getPayload()));
             int statusCode = response.getStatus();
             if (statusCode == OK.getStatusCode()) {
                 return right(new GatewayClient.Response(response));
@@ -61,6 +68,7 @@ public class GatewayClient {
                 return left(unexpectedStatusCodeFromGateway("Unexpected Response Code From Gateway"));
             }
         } catch (ProcessingException pe) {
+            incrementFailureCounter(metricRegistry, metricsPrefix);
             if (pe.getCause() != null) {
                 if (pe.getCause() instanceof UnknownHostException) {
                     logger.error(format("DNS resolution error for gateway url=%s", gatewayUrl), pe);
@@ -78,9 +86,13 @@ public class GatewayClient {
             logger.error(format("Exception for gateway url=%s", gatewayUrl), pe);
             return left(baseError(pe.getMessage()));
         } catch (Exception e) {
+            incrementFailureCounter(metricRegistry, metricsPrefix);
             logger.error(format("Exception for gateway url=%s", gatewayUrl), e);
             return left(baseError(e.getMessage()));
         } finally {
+            responseTimeStopwatch.elapsed(TimeUnit.MILLISECONDS);
+            responseTimeStopwatch.stop();
+            metricRegistry.histogram(metricsPrefix + ".response_time").update(responseTimeStopwatch.elapsed(TimeUnit.MILLISECONDS));
             if (response != null) {
                 response.close();
             }
@@ -99,6 +111,9 @@ public class GatewayClient {
         }
     }
 
+    private void incrementFailureCounter(MetricRegistry metricRegistry, String metricsPrefix) {
+        metricRegistry.counter(metricsPrefix + ".failures").inc();
+    }
     static public class Response {
         private final int status;
         private final String entity;
