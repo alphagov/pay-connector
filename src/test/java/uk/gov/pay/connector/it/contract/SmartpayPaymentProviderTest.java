@@ -1,5 +1,8 @@
 package uk.gov.pay.connector.it.contract;
 
+import com.codahale.metrics.Counter;
+import com.codahale.metrics.Histogram;
+import com.codahale.metrics.MetricRegistry;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.google.common.collect.ImmutableMap;
 import com.google.common.io.Resources;
@@ -34,7 +37,9 @@ import static org.hamcrest.CoreMatchers.not;
 import static org.hamcrest.CoreMatchers.nullValue;
 import static org.hamcrest.core.Is.is;
 import static org.junit.Assert.*;
+import static org.mockito.Matchers.anyString;
 import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.when;
 import static uk.gov.pay.connector.model.domain.ChargeEntityFixture.aValidChargeEntity;
 import static uk.gov.pay.connector.model.domain.GatewayAccountEntity.Type.TEST;
 import static uk.gov.pay.connector.service.GatewayClient.createGatewayClient;
@@ -48,6 +53,9 @@ public class SmartpayPaymentProviderTest {
     private String username = envOrThrow("GDS_CONNECTOR_SMARTPAY_USER");
     private String password = envOrThrow("GDS_CONNECTOR_SMARTPAY_PASSWORD");
     private ChargeEntity chargeEntity;
+    private MetricRegistry mockMetricRegistry;
+    private Histogram mockHistogram;
+    private Counter mockCounter;
 
     @Before
     public void setUpAndCheckThatSmartpayIsUp() {
@@ -65,6 +73,12 @@ public class SmartpayPaymentProviderTest {
 
             chargeEntity = aValidChargeEntity()
                     .withGatewayAccountEntity(validGatewayAccount).build();
+
+            mockMetricRegistry = mock(MetricRegistry.class);
+            mockHistogram = mock(Histogram.class);
+            mockCounter = mock(Counter.class);
+            when(mockMetricRegistry.histogram(anyString())).thenReturn(mockHistogram);
+            when(mockMetricRegistry.counter(anyString())).thenReturn(mockCounter);
         } catch (IOException ex) {
             Assume.assumeTrue(false);
         }
@@ -158,7 +172,7 @@ public class SmartpayPaymentProviderTest {
 
     private PaymentProvider getSmartpayPaymentProvider() throws Exception {
         Client client = TestClientFactory.createJerseyClient();
-        GatewayClient gatewayClient = createGatewayClient(client, ImmutableMap.of(TEST.toString(), url));
+        GatewayClient gatewayClient = createGatewayClient(client, ImmutableMap.of(TEST.toString(), url), mockMetricRegistry);
         return new SmartpayPaymentProvider(gatewayClient, new ObjectMapper());
     }
 

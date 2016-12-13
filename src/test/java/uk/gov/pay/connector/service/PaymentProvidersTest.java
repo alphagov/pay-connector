@@ -1,6 +1,8 @@
 package uk.gov.pay.connector.service;
 
+import com.codahale.metrics.MetricRegistry;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import io.dropwizard.setup.Environment;
 import org.junit.Before;
 import org.junit.Rule;
 import org.junit.Test;
@@ -30,10 +32,11 @@ public class PaymentProvidersTest {
     public void setup() {
         ConnectorConfiguration config = mock(ConnectorConfiguration.class);
         ClientFactory client = mock(ClientFactory.class);
+        Environment environment = mock(Environment.class);
         when(config.getSmartpayConfig()).thenReturn(mock(GatewayCredentialsConfig.class));
         when(config.getWorldpayConfig()).thenReturn(mock(WorldpayNotificationConfig.class));
 
-        providers = new PaymentProviders(config, client, new ObjectMapper());
+        providers = new PaymentProviders(config, client, new ObjectMapper(), environment);
     }
 
     @Test

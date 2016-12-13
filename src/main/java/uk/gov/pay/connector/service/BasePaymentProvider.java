@@ -23,7 +23,7 @@ abstract public class BasePaymentProvider<T extends BaseResponse> implements Pay
         this.notificationDomain = notificationDomain;
     }
 
-    protected <U extends GatewayRequest> GatewayResponse sendReceive(U request, Function<U, String> order, Class<? extends BaseResponse> clazz) {
+    protected <U extends GatewayRequest> GatewayResponse sendReceive(U request, Function<U, GatewayOrder> order, Class<? extends BaseResponse> clazz) {
         return reduce(
                 client
                         .postXMLRequestFor(request.getGatewayAccount(), order.apply(request))

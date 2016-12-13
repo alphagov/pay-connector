@@ -1,6 +1,7 @@
 package uk.gov.pay.connector.service.worldpay;
 
 
+import uk.gov.pay.connector.service.GatewayOrder;
 import uk.gov.pay.connector.util.templates.TemplateStringBuilder;
 
 import java.util.Map;
@@ -12,12 +13,14 @@ public class WorldpayOrderCancelRequestBuilder {
     private final TemplateStringBuilder templateStringBuilder;
     private String merchantCode;
     private String transactionId;
+    private String orderType;
 
-    public static WorldpayOrderCancelRequestBuilder aWorldpayOrderCancelRequest() {
-        return new WorldpayOrderCancelRequestBuilder();
+    public static WorldpayOrderCancelRequestBuilder aWorldpayOrderCancelRequest(String orderType) {
+        return new WorldpayOrderCancelRequestBuilder(orderType);
     }
 
-    private WorldpayOrderCancelRequestBuilder() {
+    private WorldpayOrderCancelRequestBuilder(String orderType) {
+        this.orderType = orderType;
         this.templateStringBuilder = new TemplateStringBuilder("/worldpay/WorldpayOrderCancelTemplate.xml");
     }
 
@@ -36,5 +39,12 @@ public class WorldpayOrderCancelRequestBuilder {
         templateData.put("merchantCode", merchantCode);
         templateData.put("transactionId", transactionId);
         return templateStringBuilder.buildWith(templateData);
+    }
+
+    public GatewayOrder buildOrder() {
+        Map<String, Object> templateData = newHashMap();
+        templateData.put("merchantCode", merchantCode);
+        templateData.put("transactionId", transactionId);
+        return new GatewayOrder(orderType, templateStringBuilder.buildWith(templateData));
     }
 }

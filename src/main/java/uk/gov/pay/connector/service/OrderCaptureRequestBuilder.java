@@ -16,16 +16,18 @@ public class OrderCaptureRequestBuilder {
     private String transactionId;
     private String amount;
     private DateTime date;
+    private String orderType;
 
-    public static OrderCaptureRequestBuilder aWorldpayOrderCaptureRequest() {
-        return new OrderCaptureRequestBuilder("/worldpay/WorldpayOrderCaptureTemplate.xml");
+    public static OrderCaptureRequestBuilder aWorldpayOrderCaptureRequest(String orderType) {
+        return new OrderCaptureRequestBuilder("/worldpay/WorldpayOrderCaptureTemplate.xml", orderType);
     }
 
-    public static OrderCaptureRequestBuilder aSmartpayOrderCaptureRequest() {
-        return new OrderCaptureRequestBuilder("/smartpay/SmartpayOrderCaptureTemplate.xml");
+    public static OrderCaptureRequestBuilder aSmartpayOrderCaptureRequest(String orderType) {
+        return new OrderCaptureRequestBuilder("/smartpay/SmartpayOrderCaptureTemplate.xml", orderType);
     }
 
-    public OrderCaptureRequestBuilder(String templatePath) {
+    public OrderCaptureRequestBuilder(String templatePath, String orderType) {
+        this.orderType = orderType;
         this.templateStringBuilder = new TemplateStringBuilder(templatePath);
     }
 
@@ -57,5 +59,14 @@ public class OrderCaptureRequestBuilder {
         templateData.put("captureDate", date); //not used for smartpay
         templateData.put("amount", amount);
         return templateStringBuilder.buildWith(templateData);
+    }
+
+    public GatewayOrder buildOrder() {
+        Map<String, Object> templateData = newHashMap();
+        templateData.put("merchantCode", merchantCode);
+        templateData.put("transactionId", transactionId);
+        templateData.put("captureDate", date); //not used for smartpay
+        templateData.put("amount", amount);
+        return new GatewayOrder(orderType, templateStringBuilder.buildWith(templateData));
     }
 }

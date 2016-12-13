@@ -19,7 +19,7 @@ public class WorldpayOrderCaptureRequestBuilderTest {
 
         DateTime date = new DateTime(2013, 2, 23, 0, 0);
 
-        String actualRequest = aWorldpayOrderCaptureRequest()
+        String actualRequest = aWorldpayOrderCaptureRequest("capture")
                 .withMerchantCode("MERCHANTCODE")
                 .withTransactionId("MyUniqueTransactionId!")
                 .withAmount("500")

@@ -10,10 +10,7 @@ import uk.gov.pay.connector.model.RefundGatewayRequest;
 import uk.gov.pay.connector.model.gateway.AuthorisationGatewayRequest;
 import uk.gov.pay.connector.model.gateway.GatewayResponse;
 import uk.gov.pay.connector.resources.PaymentGatewayName;
-import uk.gov.pay.connector.service.BasePaymentProvider;
-import uk.gov.pay.connector.service.BaseResponse;
-import uk.gov.pay.connector.service.GatewayClient;
-import uk.gov.pay.connector.service.StatusMapper;
+import uk.gov.pay.connector.service.*;
 
 import java.util.Optional;
 import java.util.function.Function;
@@ -100,38 +97,38 @@ public class WorldpayPaymentProvider extends BasePaymentProvider<BaseResponse> {
         return WorldpayStatusMapper.get();
     }
 
-    private Function<AuthorisationGatewayRequest, String> buildAuthoriseOrderFor() {
-        return request -> aWorldpayOrderSubmitRequest()
+    private Function<AuthorisationGatewayRequest, GatewayOrder> buildAuthoriseOrderFor() {
+        return request -> aWorldpayOrderSubmitRequest("authorise")
                 .withMerchantCode(request.getGatewayAccount().getCredentials().get(CREDENTIALS_MERCHANT_ID))
                 .withTransactionId(request.getTransactionId().orElse(""))
                 .withDescription(request.getDescription())
                 .withAmount(request.getAmount())
                 .withCard(request.getCard())
-                .build();
+                .buildOrder();
     }
 
-    private Function<CaptureGatewayRequest, String> buildCaptureOrderFor() {
-        return request -> aWorldpayOrderCaptureRequest()
+    private Function<CaptureGatewayRequest, GatewayOrder> buildCaptureOrderFor() {
+        return request -> aWorldpayOrderCaptureRequest("capture")
                 .withMerchantCode(request.getGatewayAccount().getCredentials().get(CREDENTIALS_MERCHANT_ID))
                 .withTransactionId(request.getTransactionId())
                 .withAmount(request.getAmount())
                 .withDate(DateTime.now(DateTimeZone.UTC))
-                .build();
+                .buildOrder();
     }
 
-    private Function<RefundGatewayRequest, String> buildRefundOrderFor() {
-        return request -> aWorldpayOrderRefundRequest()
+    private Function<RefundGatewayRequest, GatewayOrder> buildRefundOrderFor() {
+        return request -> aWorldpayOrderRefundRequest("refund")
                 .withMerchantCode(request.getGatewayAccount().getCredentials().get(CREDENTIALS_MERCHANT_ID))
                 .withTransactionId(request.getTransactionId())
                 .withAmount(request.getAmount())
                 .withReference(request.getReference())
-                .build();
+                .buildOrder();
     }
 
-    private Function<CancelGatewayRequest, String> buildCancelOrderFor() {
-        return request -> aWorldpayOrderCancelRequest()
+    private Function<CancelGatewayRequest, GatewayOrder> buildCancelOrderFor() {
+        return request -> aWorldpayOrderCancelRequest("cancel")
                 .withMerchantCode(request.getGatewayAccount().getCredentials().get(CREDENTIALS_MERCHANT_ID))
                 .withTransactionId(request.getTransactionId())
-                .build();
+                .buildOrder();
     }
 }

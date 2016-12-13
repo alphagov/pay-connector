@@ -14,7 +14,7 @@ public class SmartpayOrderCaptureRequestBuilderTest {
 
     @Test
     public void shouldGenerateValidOrderCapturePayload() throws Exception {
-        String actualRequest = aSmartpayOrderCaptureRequest()
+        String actualRequest = aSmartpayOrderCaptureRequest("capture")
                 .withMerchantCode("MerchantAccount")
                 .withTransactionId("MyTransactionId")
                 .withAmount("2000")

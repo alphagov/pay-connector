@@ -15,16 +15,18 @@ public class OrderRefundRequestBuilder {
     private String transactionId;
     private String reference;
     private String amount;
+    private String orderType;
 
-    public static OrderRefundRequestBuilder aWorldpayOrderRefundRequest() {
-        return new OrderRefundRequestBuilder("/worldpay/WorldpayOrderRefundTemplate.xml");
+    public static OrderRefundRequestBuilder aWorldpayOrderRefundRequest(String orderType) {
+        return new OrderRefundRequestBuilder("/worldpay/WorldpayOrderRefundTemplate.xml", orderType);
     }
 
-    public static OrderRefundRequestBuilder aSmartpayOrderRefundRequest() {
-        return new OrderRefundRequestBuilder("/smartpay/SmartpayOrderRefundTemplate.xml");
+    public static OrderRefundRequestBuilder aSmartpayOrderRefundRequest(String orderType) {
+        return new OrderRefundRequestBuilder("/smartpay/SmartpayOrderRefundTemplate.xml", orderType);
     }
 
-    public OrderRefundRequestBuilder(String templatePath) {
+    public OrderRefundRequestBuilder(String templatePath, String orderType) {
+        this.orderType = orderType;
         this.templateStringBuilder = new TemplateStringBuilder(templatePath);
     }
 
@@ -55,5 +57,14 @@ public class OrderRefundRequestBuilder {
         templateData.put("amount", amount);
         templateData.put("reference", reference);
         return templateStringBuilder.buildWith(templateData);
+    }
+
+    public GatewayOrder buildOrder() {
+        Map<String, Object> templateData = newHashMap();
+        templateData.put("merchantCode", merchantCode);
+        templateData.put("transactionId", transactionId);
+        templateData.put("amount", amount);
+        templateData.put("reference", reference);
+        return new GatewayOrder(orderType, templateStringBuilder.buildWith(templateData));
     }
 }
