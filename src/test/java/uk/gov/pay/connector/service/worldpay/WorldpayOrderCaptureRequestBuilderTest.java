@@ -26,11 +26,26 @@ public class WorldpayOrderCaptureRequestBuilderTest {
                 .withDate(date)
                 .build();
 
-        assertXMLEqual(expectedOrderSubmitPayload(), actualRequest);
+        assertXMLEqual(expectedOrderSubmitPayload("templates/worldpay/valid-capture-worldpay-request.xml"), actualRequest);
     }
 
+    @Test
+    public void shouldGenerateValidOrderCapturePayload_withSpecialCharactersInStrings() throws Exception {
 
-    private String expectedOrderSubmitPayload() throws IOException {
-        return Resources.toString(getResource("templates/worldpay/valid-capture-worldpay-request.xml"), Charset.defaultCharset());
+
+        DateTime date = new DateTime(2013, 2, 23, 0, 0);
+
+        String actualRequest = aWorldpayOrderCaptureRequest("capture")
+                .withMerchantCode("MERCHANTCODE")
+                .withTransactionId("MyUniqueTransactionId <!-- & > ")
+                .withAmount("500")
+                .withDate(date)
+                .build();
+
+        assertXMLEqual(expectedOrderSubmitPayload("templates/worldpay/special-char-valid-capture-worldpay-request.xml"), actualRequest);
+    }
+
+    private String expectedOrderSubmitPayload(String resourceName) throws IOException {
+        return Resources.toString(getResource(resourceName), Charset.defaultCharset());
     }
 }

@@ -3,7 +3,7 @@
         "http://dtd.worldpay.com/paymentService_v1.dtd">
 <paymentService version="1.4" merchantCode="${merchantCode}">
     <modify>
-        <orderModification orderCode="${transactionId}">
+        <orderModification orderCode="${transactionId?xml}">
             <cancel immediate="yes"/>
         </orderModification>
     </modify>

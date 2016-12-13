@@ -3,6 +3,6 @@
         "http://dtd.worldpay.com/paymentService_v1.dtd">
 <paymentService merchantCode="${merchantCode}" version="1.4">
     <inquiry>
-        <orderInquiry orderCode="${transactionId}"/>
+        <orderInquiry orderCode="${transactionId?xml}"/>
     </inquiry>
 </paymentService>

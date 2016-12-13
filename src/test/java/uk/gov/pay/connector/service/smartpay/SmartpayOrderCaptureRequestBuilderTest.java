@@ -20,10 +20,21 @@ public class SmartpayOrderCaptureRequestBuilderTest {
                 .withAmount("2000")
                 .build();
 
-        assertXMLEqual(expectedOrderSubmitPayload(), actualRequest);
+        assertXMLEqual(expectedOrderSubmitPayload("templates/smartpay/valid-capture-smartpay-request.xml"), actualRequest);
     }
 
-    private String expectedOrderSubmitPayload() throws IOException {
-        return Resources.toString(getResource("templates/smartpay/valid-capture-smartpay-request.xml"), Charset.defaultCharset());
+    @Test
+    public void shouldGenerateValidOrderCapturePayload_withSpecialCharactersInStrings() throws Exception {
+        String actualRequest = aSmartpayOrderCaptureRequest("capture")
+                .withMerchantCode("MerchantAccount")
+                .withTransactionId("MyTransactionId & <!-- >")
+                .withAmount("2000")
+                .build();
+
+        assertXMLEqual(expectedOrderSubmitPayload("templates/smartpay/special-char-valid-capture-smartpay-request.xml"), actualRequest);
+    }
+
+    private String expectedOrderSubmitPayload(String resourceName) throws IOException {
+        return Resources.toString(getResource(resourceName), Charset.defaultCharset());
     }
 }
