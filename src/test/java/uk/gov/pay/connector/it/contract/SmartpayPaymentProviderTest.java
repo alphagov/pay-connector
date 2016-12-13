@@ -1,5 +1,6 @@
 package uk.gov.pay.connector.it.contract;
 
+import com.codahale.metrics.Counter;
 import com.codahale.metrics.Histogram;
 import com.codahale.metrics.MetricRegistry;
 import com.fasterxml.jackson.databind.ObjectMapper;
@@ -54,6 +55,8 @@ public class SmartpayPaymentProviderTest {
     private ChargeEntity chargeEntity;
     private MetricRegistry mockMetricRegistry;
     private Histogram mockHistogram;
+    private Counter mockCounter;
+
     @Before
     public void setUpAndCheckThatSmartpayIsUp() {
         try {
@@ -73,7 +76,9 @@ public class SmartpayPaymentProviderTest {
 
             mockMetricRegistry = mock(MetricRegistry.class);
             mockHistogram = mock(Histogram.class);
+            mockCounter = mock(Counter.class);
             when(mockMetricRegistry.histogram(anyString())).thenReturn(mockHistogram);
+            when(mockMetricRegistry.counter(anyString())).thenReturn(mockCounter);
         } catch (IOException ex) {
             Assume.assumeTrue(false);
         }

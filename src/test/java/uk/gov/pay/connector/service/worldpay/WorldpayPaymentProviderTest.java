@@ -1,5 +1,6 @@
 package uk.gov.pay.connector.service.worldpay;
 
+import com.codahale.metrics.Counter;
 import com.codahale.metrics.Histogram;
 import com.codahale.metrics.MetricRegistry;
 import com.google.common.collect.ImmutableList;
@@ -68,12 +69,15 @@ public class WorldpayPaymentProviderTest {
     MetricRegistry mockMetricRegistry;
     @Mock
     Histogram mockHistogram;
+    @Mock
+    Counter mockCounter;
 
     @Before
     public void setup() throws Exception {
         client = mock(Client.class);
         mockWorldpaySuccessfulOrderSubmitResponse();
         when(mockMetricRegistry.histogram(anyString())).thenReturn(mockHistogram);
+        when(mockMetricRegistry.counter(anyString())).thenReturn(mockCounter);
         provider = new WorldpayPaymentProvider(
                 createGatewayClient(client, ImmutableMap.of(TEST.toString(), "http://worldpay.url"), mockMetricRegistry));
     }

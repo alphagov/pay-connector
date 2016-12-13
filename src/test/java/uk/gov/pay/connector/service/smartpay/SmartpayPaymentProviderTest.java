@@ -1,5 +1,6 @@
 package uk.gov.pay.connector.service.smartpay;
 
+import com.codahale.metrics.Counter;
 import com.codahale.metrics.Histogram;
 import com.codahale.metrics.MetricRegistry;
 import com.fasterxml.jackson.databind.ObjectMapper;
@@ -56,13 +57,16 @@ public class SmartpayPaymentProviderTest {
     private SmartpayPaymentProvider provider;
     private MetricRegistry mockMetricRegistry;
     private Histogram mockHistogram;
+    private Counter mockCounter;
 
     @Before
     public void setup() throws Exception {
         client = mock(Client.class);
         mockMetricRegistry = mock(MetricRegistry.class);
         mockHistogram = mock(Histogram.class);
+        mockCounter = mock(Counter.class);
         when(mockMetricRegistry.histogram(anyString())).thenReturn(mockHistogram);
+        when(mockMetricRegistry.counter(anyString())).thenReturn(mockCounter);
         mockSmartpaySuccessfulOrderSubmitResponse();
         provider = new SmartpayPaymentProvider(createGatewayClient(client, ImmutableMap.of(TEST.toString(), "http://smartpay.url"), mockMetricRegistry), new ObjectMapper());
     }

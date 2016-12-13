@@ -1,5 +1,6 @@
 package uk.gov.pay.connector.it.contract;
 
+import com.codahale.metrics.Counter;
 import com.codahale.metrics.Histogram;
 import com.codahale.metrics.MetricRegistry;
 import com.codahale.metrics.SharedMetricRegistries;
@@ -48,6 +49,8 @@ public class WorldpayPaymentProviderTest {
     private ChargeEntity chargeEntity;
     private MetricRegistry mockMetricRegistry;
     private Histogram mockHistogram;
+    private Counter mockCounter;
+
     @Before
     public void checkThatWorldpayIsUp() {
         try {
@@ -66,7 +69,9 @@ public class WorldpayPaymentProviderTest {
 
             mockMetricRegistry = mock(MetricRegistry.class);
             mockHistogram = mock(Histogram.class);
+            mockCounter = mock(Counter.class);
             when(mockMetricRegistry.histogram(anyString())).thenReturn(mockHistogram);
+            when(mockMetricRegistry.counter(anyString())).thenReturn(mockCounter);
 
             chargeEntity = aValidChargeEntity()
                     .withTransactionId(randomUUID().toString())
