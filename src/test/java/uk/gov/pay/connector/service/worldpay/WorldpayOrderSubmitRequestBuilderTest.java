@@ -62,6 +62,29 @@ public class WorldpayOrderSubmitRequestBuilderTest {
 
     }
 
+    @Test
+    public void shouldGenerateValidOrderSubmitPayloadWhenSpecialCharactersInUserInput() throws Exception {
+
+        Address address = anAddress();
+        address.setLine1("123 & My Street");
+        address.setLine2("This road -->");
+        address.setPostcode("SW8 > URR");
+        address.setCity("London !>");
+        address.setCountry("GB");
+
+        Card card = getValidTestCard(address);
+
+        String actualRequest = aWorldpayOrderSubmitRequest("authorise")
+                .withMerchantCode("MERCHANTCODE")
+                .withTransactionId("MyUniqueTransactionId!")
+                .withDescription("This is the description with <!-- ")
+                .withAmount("500")
+                .withCard(card)
+                .build();
+
+        assertXMLEqual(expectedOrderSubmitPayload("special-char-valid-order-submit-worldpay-request-address.xml"), actualRequest);
+    }
+
     private Card getValidTestCard(Address address) {
         return buildCardDetails("Mr. Payment", "4111111111111111", "123", "12/15", "visa", address);
     }

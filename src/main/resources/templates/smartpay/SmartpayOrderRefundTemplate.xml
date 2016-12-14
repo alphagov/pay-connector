@@ -9,8 +9,8 @@
                     <currency xmlns="http://common.services.adyen.com">GBP</currency>
                     <value xmlns="http://common.services.adyen.com">${amount}</value>
                 </modificationAmount>
-                <originalReference xmlns="http://payment.services.adyen.com">${transactionId}</originalReference>
-                <reference xmlns="http://payment.services.adyen.com">${reference}</reference>
+                <originalReference xmlns="http://payment.services.adyen.com">${transactionId?xml}</originalReference>
+                <reference xmlns="http://payment.services.adyen.com">${reference?xml}</reference>
             </ns1:modificationRequest>
         </ns1:refund>
     </soap:Body>

@@ -3,8 +3,8 @@
         "http://dtd.worldpay.com/paymentService_v1.dtd">
 <paymentService version="1.4" merchantCode="${merchantCode}">
     <submit>
-        <order orderCode="${transactionId}">
-            <description>${description}</description>
+        <order orderCode="${transactionId?xml}">
+            <description>${description?xml}</description>
             <amount currencyCode="GBP" exponent="2" value="${amount}"/>
             <paymentDetails>
                 <VISA-SSL>
@@ -12,20 +12,20 @@
                     <expiryDate>
                         <date month="${card.endDate?split('/')?first}" year="20${card.endDate?split('/')?last}"/>
                     </expiryDate>
-                    <cardHolderName>${card.cardHolder}</cardHolderName>
+                    <cardHolderName>${card.cardHolder?xml}</cardHolderName>
                     <cvc>${card.cvc}</cvc>
                     <cardAddress>
                         <address>
-                            <address1>${card.address.line1}</address1>
+                            <address1>${card.address.line1?xml}</address1>
                             <#if card.address.line2??>
-                            <address2>${card.address.line2}</address2>
+                            <address2>${card.address.line2?xml}</address2>
                             </#if>
-                            <postalCode>${card.address.postcode}</postalCode>
-                            <city>${card.address.city}</city>
+                            <postalCode>${card.address.postcode?xml}</postalCode>
+                            <city>${card.address.city?xml}</city>
                             <#if card.address.county??>
-                            <state>${card.address.county}</state>
+                            <state>${card.address.county?xml}</state>
                             </#if>
-                            <countryCode>${card.address.country}</countryCode>
+                            <countryCode>${card.address.country?xml}</countryCode>
                         </address>
                     </cardAddress>
                 </VISA-SSL>

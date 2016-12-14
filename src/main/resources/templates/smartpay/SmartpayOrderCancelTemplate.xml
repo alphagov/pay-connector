@@ -2,12 +2,12 @@
 <soap:Envelope
         xmlns:soap="http://schemas.xmlsoap.org/soap/envelope/"
         xmlns:ns1="http://payment.services.adyen.com"
-        xmlns:ns2="http://common.services.adyen.com">
+>
     <soap:Body>
         <ns1:cancel>
             <ns1:modificationRequest>
                 <ns1:merchantAccount>${merchantCode}</ns1:merchantAccount>
-                <ns1:originalReference>${transactionId}</ns1:originalReference>
+                <ns1:originalReference>${transactionId?xml}</ns1:originalReference>
             </ns1:modificationRequest>
         </ns1:cancel>
     </soap:Body>

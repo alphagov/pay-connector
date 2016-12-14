@@ -3,7 +3,7 @@
         "http://dtd.worldpay.com/paymentService_v1.dtd">
 <paymentService version="1.4" merchantCode="${merchantCode}">
     <modify>
-        <orderModification orderCode="${transactionId}">
+        <orderModification orderCode="${transactionId?xml}">
             <capture>
                 <date dayOfMonth="${captureDate.dayOfMonth().get()?string('00')}" month="${captureDate.monthOfYear().get()?string('00')}" year="${captureDate.year().get()?string('0000')}"/>
                 <amount currencyCode="GBP" exponent="2" value="${amount}"/>

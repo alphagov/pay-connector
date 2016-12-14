@@ -3,8 +3,8 @@
         "http://dtd.worldpay.com/paymentService_v1.dtd">
 <paymentService version="1.4" merchantCode="${merchantCode}">
     <modify>
-        <orderModification orderCode="${transactionId}">
-            <refund reference="${reference}">
+        <orderModification orderCode="${transactionId?xml}">
+            <refund reference="${reference?xml}">
                 <amount currencyCode="GBP" exponent="2" value="${amount}"/>
             </refund>
         </orderModification>
