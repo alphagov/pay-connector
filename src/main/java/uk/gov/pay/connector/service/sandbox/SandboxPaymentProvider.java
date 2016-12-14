@@ -46,11 +46,6 @@ public class SandboxPaymentProvider extends BasePaymentProvider<BaseResponse> {
     }
 
     @Override
-    public Optional<String> generateRefundReference() {
-        return Optional.of(randomUUID().toString());
-    }
-
-    @Override
     public GatewayResponse capture(CaptureGatewayRequest request) {
         return createGatewayBaseCaptureResponse();
     }
@@ -72,7 +67,7 @@ public class SandboxPaymentProvider extends BasePaymentProvider<BaseResponse> {
 
     @Override
     public GatewayResponse refund(RefundGatewayRequest request) {
-        return createGatewayBaseRefundResponse();
+        return createGatewayBaseRefundResponse(request);
     }
 
     @Override
@@ -147,11 +142,11 @@ public class SandboxPaymentProvider extends BasePaymentProvider<BaseResponse> {
         });
     }
 
-    private GatewayResponse<BaseRefundResponse> createGatewayBaseRefundResponse() {
+    private GatewayResponse<BaseRefundResponse> createGatewayBaseRefundResponse(RefundGatewayRequest request) {
         return GatewayResponse.with(new BaseRefundResponse() {
             @Override
             public Optional<String> getReference() {
-                return Optional.of(randomUUID().toString());
+                return Optional.of(request.getReference());
             }
 
             @Override

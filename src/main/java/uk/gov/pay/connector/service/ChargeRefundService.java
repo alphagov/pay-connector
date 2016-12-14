@@ -90,7 +90,7 @@ public class ChargeRefundService {
 
             checkIfRefundAmountWithinLimitOrTerminate(refundRequest, reloadedCharge, refundAvailability, gatewayAccount, totalAmountToBeRefunded);
 
-            RefundEntity refundEntity = completePrepareRefund(providers, chargeEntity, refundRequest, reloadedCharge);
+            RefundEntity refundEntity = completePrepareRefund(refundRequest, reloadedCharge);
 
             logger.info("Card refund request sent - charge_external_id={}, status={}, amount={}, transaction_id={}, account_id={}, operation_type=Refund, amount_available_refund={}, amount_requested_refund={}, provider={}, provider_type={}",
                     chargeEntity.getExternalId(),
@@ -134,10 +134,8 @@ public class ChargeRefundService {
         };
     }
 
-    private RefundEntity completePrepareRefund(PaymentProviders providers, ChargeEntity chargeEntity, RefundRequest refundRequest, ChargeEntity reloadedCharge) {
+    private RefundEntity completePrepareRefund(RefundRequest refundRequest, ChargeEntity reloadedCharge) {
         RefundEntity refundEntity = new RefundEntity(reloadedCharge, refundRequest.getAmount());
-        getPaymentProviderFor(providers, chargeEntity).generateRefundReference().ifPresent(
-                refundEntity::setReference);
         reloadedCharge.getRefunds().add(refundEntity);
         refundDao.persist(refundEntity);
         return refundEntity;
@@ -183,11 +181,21 @@ public class ChargeRefundService {
         }
     }
 
+    /**
+     * <p>Smartpay -> We get the pspReference returned by them</p>
+     * <p>Worldpay -> Worldpay doesn't return reference. We use our externalId as thats what we sent in the request as our reference.</p>
+     * @see RefundGatewayRequest valueOf()
+     */
     private String getRefundReference(RefundEntity refundEntity, GatewayResponse<BaseRefundResponse> gatewayResponse) {
         if (gatewayResponse.isSuccessful()) {
-            return gatewayResponse.getBaseResponse().get().getReference().orElse(refundEntity.getReference());
+
+            return gatewayResponse.getBaseResponse().get().getReference().orElse(refundEntity.getExternalId());
         }
-        return refundEntity.getReference();
+        /**
+         * if not successful (and the fact that we have got a proper response from Gateway, we have to assume
+         * no refund has not gone through and no reference returned(or needed) to be stored.
+         */
+        return "";
     }
 
     private RefundStatus determineRefundStatus(GatewayResponse<BaseRefundResponse> gatewayResponse, ChargeEntity chargeEntity) {

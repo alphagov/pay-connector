@@ -18,8 +18,6 @@ public interface PaymentProvider<T extends BaseResponse> {
 
     Optional<String> generateTransactionId();
 
-    Optional<String> generateRefundReference();
-
     GatewayResponse<T> authorise(AuthorisationGatewayRequest request);
 
     GatewayResponse<T> capture(CaptureGatewayRequest request);

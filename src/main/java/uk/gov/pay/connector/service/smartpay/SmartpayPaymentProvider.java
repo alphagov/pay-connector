@@ -41,11 +41,6 @@ public class SmartpayPaymentProvider extends BasePaymentProvider<BaseResponse> {
     }
 
     @Override
-    public Optional<String> generateRefundReference() {
-        return Optional.empty();
-    }
-
-    @Override
     public GatewayResponse authorise(AuthorisationGatewayRequest request) {
         return sendReceive(request, buildSubmitOrderFor(), SmartpayAuthorisationResponse.class);
     }
