@@ -18,13 +18,9 @@
                     <ns1:number>${card.cardNo}</ns1:number>
                     <ns1:billingAddress>
                         <ns2:houseNumberOrName>${card.address.line1?xml}</ns2:houseNumberOrName>
-                        <#if card.address.line2??>
-                        <ns2:street>${card.address.line2?xml}</ns2:street>
-                        </#if>
+                        <ns2:street><#if card.address.line2??>${card.address.line2?xml}</#if></ns2:street>
                         <ns2:postalCode>${card.address.postcode?xml}</ns2:postalCode>
-                        <#if card.address.county??>
-                        <ns2:stateOrProvince>${card.address.county?xml}</ns2:stateOrProvince>
-                        </#if>
+                        <ns2:stateOrProvince><#if card.address.county??>${card.address.county?xml}</#if></ns2:stateOrProvince>
                         <ns2:city>${card.address.city?xml}</ns2:city>
                         <ns2:country>${card.address.country?xml}</ns2:country>
                     </ns1:billingAddress>
