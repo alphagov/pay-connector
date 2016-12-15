@@ -48,7 +48,7 @@ public class GatewayClient {
     }
 
     public Either<GatewayError, GatewayClient.Response> postXMLRequestFor(GatewayAccountEntity account, GatewayOrder request) {
-        String metricsPrefix = String.format("gateway-operations.%s.%s", account.getGatewayName(), account.getType());
+        String metricsPrefix = String.format("gateway-operations.%s.%s.%s", account.getGatewayName(), account.getType(), request.getType());
         javax.ws.rs.core.Response response = null;
         String gatewayUrl = gatewayUrlMap.get(account.getType());
         Stopwatch responseTimeStopwatch = Stopwatch.createStarted();
