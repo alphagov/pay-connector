@@ -5,7 +5,7 @@ import com.jayway.restassured.specification.RequestSpecification;
 import org.apache.commons.lang3.StringUtils;
 import org.junit.Test;
 import uk.gov.pay.connector.app.ExecutorServiceConfig;
-import uk.gov.pay.connector.it.base.CardResourceITestBase;
+import uk.gov.pay.connector.it.base.ChargingITestBase;
 
 import java.lang.reflect.Field;
 import java.util.Arrays;
@@ -25,7 +25,7 @@ import static org.junit.Assert.fail;
 import static uk.gov.pay.connector.model.domain.ChargeStatus.*;
 import static uk.gov.pay.connector.resources.ApiPaths.FRONTEND_CHARGE_API_PATH;
 
-public class CardAuthoriseResourceITest extends CardResourceITestBase {
+public class CardAuthoriseResourceITest extends ChargingITestBase {
 
     public CardAuthoriseResourceITest() {
         super("sandbox");

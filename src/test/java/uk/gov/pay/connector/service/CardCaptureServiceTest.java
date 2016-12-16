@@ -91,7 +91,9 @@ public class CardCaptureServiceTest extends CardServiceTest {
         ChargeEntity charge = createNewChargeWith("sandbox",1L, AUTHORISATION_SUCCESS, gatewayTxId);
 
         ChargeEntity reloadedCharge = spy(charge);
+
         mockChargeDaoOperations(charge, reloadedCharge);
+        when(mockedChargeDao.mergeAndNotifyStatusHasChanged(any())).thenReturn(reloadedCharge);
 
         setupPaymentProviderMock(gatewayTxId, null);
         when(mockedProviders.byName(charge.getPaymentGatewayName())).thenReturn(mockedPaymentProvider);
@@ -100,11 +102,13 @@ public class CardCaptureServiceTest extends CardServiceTest {
         assertThat(response.isSuccessful(), is(true));
         InOrder inOrder = Mockito.inOrder(reloadedCharge);
         inOrder.verify(reloadedCharge).setStatus(CAPTURE_READY);
+        inOrder.verify(reloadedCharge).setStatus(CAPTURE_SUBMITTED);
         inOrder.verify(reloadedCharge).setStatus(CAPTURED);
 
         ArgumentCaptor<ChargeEntity> argumentCaptor = ArgumentCaptor.forClass(ChargeEntity.class);
-        verify(mockedChargeDao).mergeAndNotifyStatusHasChanged(argumentCaptor.capture());
+        verify(mockedChargeDao, times(2)).mergeAndNotifyStatusHasChanged(argumentCaptor.capture());
 
+        // sandbox progresses to CAPTURED
         assertThat(argumentCaptor.getValue().getStatus(), is(CAPTURED.getValue()));
 
         ArgumentCaptor<CaptureGatewayRequest> request = ArgumentCaptor.forClass(CaptureGatewayRequest.class);
@@ -119,7 +123,8 @@ public class CardCaptureServiceTest extends CardServiceTest {
         when(mockedChargeDao.findByExternalId(charge.getExternalId()))
                 .thenReturn(Optional.of(charge));
         when(mockedChargeDao.merge(any()))
-                .thenReturn(reloadedCharge)
+                .thenReturn(reloadedCharge);
+        when(mockedChargeDao.mergeAndNotifyStatusHasChanged(any()))
                 .thenReturn(reloadedCharge);
     }
 

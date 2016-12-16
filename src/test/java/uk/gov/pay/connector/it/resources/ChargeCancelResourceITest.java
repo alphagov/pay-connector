@@ -3,7 +3,7 @@ package uk.gov.pay.connector.it.resources;
 import org.apache.commons.lang.StringUtils;
 import org.junit.Before;
 import org.junit.Test;
-import uk.gov.pay.connector.it.base.CardResourceITestBase;
+import uk.gov.pay.connector.it.base.ChargingITestBase;
 import uk.gov.pay.connector.model.domain.ChargeStatus;
 import uk.gov.pay.connector.util.RestAssuredClient;
 
@@ -20,7 +20,7 @@ import static org.hamcrest.Matchers.*;
 import static uk.gov.pay.connector.model.domain.ChargeStatus.*;
 import static uk.gov.pay.connector.model.domain.ChargeStatus.CREATED;
 
-public class ChargeCancelResourceITest extends CardResourceITestBase {
+public class ChargeCancelResourceITest extends ChargingITestBase {
 
     private RestAssuredClient restApiCall;
 

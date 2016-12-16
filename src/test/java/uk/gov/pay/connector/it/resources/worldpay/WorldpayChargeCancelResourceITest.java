@@ -2,10 +2,10 @@ package uk.gov.pay.connector.it.resources.worldpay;
 
 import com.jayway.restassured.http.ContentType;
 import org.junit.Test;
-import uk.gov.pay.connector.it.base.CardResourceITestBase;
+import uk.gov.pay.connector.it.base.ChargingITestBase;
 import uk.gov.pay.connector.model.domain.ChargeStatus;
 
-public class WorldpayChargeCancelResourceITest extends CardResourceITestBase {
+public class WorldpayChargeCancelResourceITest extends ChargingITestBase {
 
     public WorldpayChargeCancelResourceITest() {
         super("worldpay");

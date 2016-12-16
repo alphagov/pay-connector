@@ -142,6 +142,7 @@ public class ChargeService {
                 .withReturnUrl(charge.getReturnUrl())
                 .withEmail(charge.getEmail())
                 .withRefunds(buildRefundSummary(charge))
+                .withSettlement(buildSettlementSummary(charge))
                 .withCardDetails(persistedCard)
                 .withLink("self", GET, selfUriFor(uriInfo, charge.getGatewayAccount().getId(), chargeId))
                 .withLink("refunds", GET, refundsUriFor(uriInfo, charge.getGatewayAccount().getId(), charge.getExternalId()));
@@ -153,6 +154,15 @@ public class ChargeService {
         refund.setAmountSubmitted(charge.getRefundedAmount());
         refund.setAmountAvailable(charge.getTotalAmountToBeRefunded());
         return refund;
+    }
+
+    private ChargeResponse.SettlementSummary buildSettlementSummary(ChargeEntity charge) {
+        ChargeResponse.SettlementSummary settlement = new ChargeResponse.SettlementSummary();
+
+        settlement.setCaptureSubmitTime(charge.getCaptureSubmitTime());
+        settlement.setCapturedTime(charge.getCapturedTime());
+
+        return settlement;
     }
 
     private URI selfUriFor(UriInfo uriInfo, Long accountId, String chargeId) {

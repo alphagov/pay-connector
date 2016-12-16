@@ -300,6 +300,10 @@ public class ChargeServiceTest {
         refunds.setAmountSubmitted(0L);
         refunds.setStatus(ExternalChargeRefundAvailability.valueOf(chargeEntity).getStatus());
 
+        ChargeResponse.SettlementSummary settlement = new ChargeResponse.SettlementSummary();
+        settlement.setCapturedTime(null);
+        settlement.setCaptureSubmitTime(null);
+
         return aChargeResponse()
                 .withChargeId(chargeEntity.getExternalId())
                 .withAmount(chargeEntity.getAmount())
@@ -311,6 +315,7 @@ public class ChargeServiceTest {
                 .withCreatedDate(chargeEntity.getCreatedDate())
                 .withEmail(chargeEntity.getEmail())
                 .withRefunds(refunds)
+                .withSettlement(settlement)
                 .withReturnUrl(chargeEntity.getReturnUrl());
     }
 }

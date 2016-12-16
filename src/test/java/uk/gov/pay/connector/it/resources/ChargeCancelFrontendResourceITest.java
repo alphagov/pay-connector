@@ -3,7 +3,7 @@ package uk.gov.pay.connector.it.resources;
 import com.google.common.collect.ImmutableList;
 import org.junit.Before;
 import org.junit.Test;
-import uk.gov.pay.connector.it.base.CardResourceITestBase;
+import uk.gov.pay.connector.it.base.ChargingITestBase;
 import uk.gov.pay.connector.model.domain.ChargeStatus;
 import uk.gov.pay.connector.util.RestAssuredClient;
 
@@ -17,7 +17,7 @@ import static org.hamcrest.Matchers.hasItems;
 import static org.hamcrest.Matchers.is;
 import static uk.gov.pay.connector.model.domain.ChargeStatus.*;
 
-public class ChargeCancelFrontendResourceITest extends CardResourceITestBase {
+public class ChargeCancelFrontendResourceITest extends ChargingITestBase {
 
     private RestAssuredClient connectorRestApi;
     private RestAssuredClient restFrontendCall;

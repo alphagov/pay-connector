@@ -1,12 +1,12 @@
 package uk.gov.pay.connector.it.resources.worldpay;
 
 import org.junit.Test;
-import uk.gov.pay.connector.it.base.CardResourceITestBase;
+import uk.gov.pay.connector.it.base.ChargingITestBase;
 
 import static uk.gov.pay.connector.model.api.ExternalChargeState.EXTERNAL_SUCCESS;
 import static uk.gov.pay.connector.model.domain.ChargeStatus.*;
 
-public class WorldpayCardResourceITest extends CardResourceITestBase {
+public class WorldpayCardResourceITest extends ChargingITestBase {
 
     private String validCardDetails = buildJsonCardDetailsFor("4444333322221111", "visa");
 

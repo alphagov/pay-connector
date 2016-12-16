@@ -2,11 +2,17 @@ package uk.gov.pay.connector.it.resources;
 
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableMap;
+import com.google.inject.matcher.AbstractMatcher;
 import com.jayway.restassured.response.ValidatableResponse;
 import org.apache.commons.lang.math.RandomUtils;
+import org.hamcrest.BaseMatcher;
+import org.hamcrest.Description;
+import org.hamcrest.Matcher;
+import org.hamcrest.Matchers;
 import org.junit.Before;
 import org.junit.Rule;
 import org.junit.Test;
+import uk.gov.pay.connector.it.base.ChargingITestBase;
 import uk.gov.pay.connector.it.dao.DatabaseFixtures;
 import uk.gov.pay.connector.model.domain.CardFixture;
 import uk.gov.pay.connector.model.domain.ChargeStatus;
@@ -43,6 +49,7 @@ import static org.junit.Assert.assertTrue;
 import static uk.gov.pay.connector.matcher.ResponseContainsLinkMatcher.containsLink;
 import static uk.gov.pay.connector.matcher.ZoneDateTimeAsStringWithinMatcher.isWithin;
 import static uk.gov.pay.connector.model.api.ExternalChargeState.EXTERNAL_SUBMITTED;
+import static uk.gov.pay.connector.model.api.ExternalChargeState.EXTERNAL_SUCCESS;
 import static uk.gov.pay.connector.model.domain.ChargeStatus.*;
 import static uk.gov.pay.connector.model.domain.ChargeStatus.CREATED;
 import static uk.gov.pay.connector.resources.ApiPaths.CHARGES_API_PATH;
@@ -51,7 +58,7 @@ import static uk.gov.pay.connector.util.DateTimeUtils.toUTCZonedDateTime;
 import static uk.gov.pay.connector.util.JsonEncoder.toJson;
 import static uk.gov.pay.connector.util.NumberMatcher.isNumber;
 
-public class ChargesApiResourceITest {
+public class ChargesApiResourceITest extends ChargingITestBase {
 
     private static final String FRONTEND_CARD_DETAILS_URL = "/secure";
     private static final String JSON_AMOUNT_KEY = "amount";
@@ -67,19 +74,14 @@ public class ChargesApiResourceITest {
     private static final String PROVIDER_NAME = "sandbox";
     private static final long AMOUNT = 6234L;
 
-    @Rule
-    public DropwizardAppWithPostgresRule app = new DropwizardAppWithPostgresRule();
-
-    private String accountId = "72332423443245";
     private String returnUrl = "http://service.url/success-page/";
     private String email = randomAlphanumeric(242) + "@example.com";
 
     private RestAssuredClient createChargeApi = new RestAssuredClient(app, accountId);
     private RestAssuredClient getChargeApi = new RestAssuredClient(app, accountId);
 
-    @Before
-    public void setupGatewayAccount() {
-        app.getDatabaseTestHelper().addGatewayAccount(accountId, PROVIDER_NAME);
+    public ChargesApiResourceITest() {
+        super(PROVIDER_NAME);
     }
 
     @Test
@@ -110,6 +112,8 @@ public class ChargesApiResourceITest {
                 .body("refund_summary.amount_submitted", is(0))
                 .body("refund_summary.amount_available", isNumber(AMOUNT))
                 .body("refund_summary.status", is("pending"))
+                .body("settlement_summary.capture_submit_time", nullValue())
+                .body("settlement_summary.captured_time", nullValue())
                 .body("created_date", matchesPattern("^\\d{4}-\\d{2}-\\d{2}T\\d{2}:\\d{2}:\\d{2}.\\d{3}Z"))
                 .body("created_date", isWithin(10, SECONDS))
                 .contentType(JSON);
@@ -145,6 +149,8 @@ public class ChargesApiResourceITest {
                 .body(JSON_EMAIL_KEY, is(email))
                 .body("containsKey('card_details')", is(false))
                 .body("containsKey('gateway_account')", is(false))
+                .body("settlement_summary.capture_submit_time", nullValue())
+                .body("settlement_summary.captured_time", nullValue())
                 .body("refund_summary.amount_submitted", is(0))
                 .body("refund_summary.amount_available", isNumber(AMOUNT))
                 .body("refund_summary.status", is("pending"));
@@ -164,6 +170,23 @@ public class ChargesApiResourceITest {
                     put("chargeTokenId", newChargeTokenId);
                 }}));
 
+    }
+
+    @Test
+    public void makeChargeSubmitCaptureAndCheckSettlementSummary() {
+        String chargeId = authoriseNewCharge();
+
+        givenSetup()
+                .post(captureChargeUrlFor(chargeId))
+                .then()
+                .statusCode(204);
+
+        getCharge(chargeId)
+            .body("settlement_summary.capture_submit_time", matchesPattern("^\\d{4}-\\d{2}-\\d{2}T\\d{2}:\\d{2}:\\d{2}.\\d{3}Z"))
+            .body("settlement_summary.capture_submit_time", isWithin(10, SECONDS))
+            .body("settlement_summary.captured_time", matchesPattern("^\\d{4}-\\d{2}-\\d{2}T\\d{2}:\\d{2}:\\d{2}.\\d{3}Z"))
+            .body("settlement_summary.captured_time", isWithin(10, SECONDS))
+        ;
     }
 
     @Test
@@ -438,12 +461,17 @@ public class ChargesApiResourceITest {
                 .statusCode(OK.getStatusCode())
                 .contentType(JSON)
                 .body("results.size()", is(2))
+                .body("results[0].settlement_summary.capture_submit_time", nullValue())
+                .body("results[0].settlement_summary.captured_time", nullValue())
                 .body("results[0].refund_summary.amount_submitted", is(0))
                 .body("results[0].refund_summary.amount_available", isNumber(AMOUNT))
                 .body("results[0].refund_summary.status", is("pending"))
+                .body("results[1].settlement_summary.capture_submit_time", nullValue())
+                .body("results[1].settlement_summary.captured_time", nullValue())
                 .body("results[1].refund_summary.amount_submitted", is(0))
                 .body("results[1].refund_summary.amount_available", isNumber(AMOUNT))
                 .body("results[1].refund_summary.status", is("pending"));
+
 
         List<Map<String, Object>> results = response.extract().body().jsonPath().getList("results");
         List<String> references = collect(results, "reference");
