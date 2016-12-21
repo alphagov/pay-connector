@@ -87,11 +87,6 @@ public class SmartpayPaymentProviderTest {
     }
 
     @Test
-    public void shouldGenerateRefundReference() {
-        Assert.assertThat(provider.generateRefundReference().isPresent(), is(false));
-    }
-
-    @Test
     public void shouldSendSuccessfullyAOrderForMerchant() throws Exception {
 
         Card card = getValidTestCard();

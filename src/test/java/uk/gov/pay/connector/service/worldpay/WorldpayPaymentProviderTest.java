@@ -44,6 +44,8 @@ import static org.junit.Assert.assertTrue;
 import static org.mockito.Matchers.any;
 import static org.mockito.Matchers.anyObject;
 import static org.mockito.Matchers.anyString;
+import static org.mockito.Mockito.argThat;
+import static org.mockito.Mockito.eq;
 import static org.mockito.Mockito.*;
 import static uk.gov.pay.connector.model.ErrorType.GENERIC_GATEWAY_ERROR;
 import static uk.gov.pay.connector.model.ErrorType.UNEXPECTED_STATUS_CODE_FROM_GATEWAY;
@@ -96,12 +98,6 @@ public class WorldpayPaymentProviderTest {
     public void shouldGenerateTransactionId() {
         Assert.assertThat(provider.generateTransactionId().isPresent(), is(true));
         Assert.assertThat(provider.generateTransactionId().get(), is(instanceOf(String.class)));
-    }
-
-    @Test
-    public void shouldGenerateRefundReference() {
-        Assert.assertThat(provider.generateRefundReference().isPresent(), is(true));
-        Assert.assertThat(provider.generateRefundReference().get(), is(instanceOf(String.class)));
     }
 
     @Test

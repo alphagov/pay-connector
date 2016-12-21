@@ -54,12 +54,6 @@ public class SandboxPaymentProviderTest {
     }
 
     @Test
-    public void shouldGenerateRefundReference() {
-        Assert.assertThat(provider.generateRefundReference().isPresent(), is(true));
-        Assert.assertThat(provider.generateRefundReference().get(), is(instanceOf(String.class)));
-    }
-
-    @Test
     public void parseNotification_shouldFailParsingNotification() throws Exception {
 
         String notification = "{\"transaction_id\":\"1\",\"status\":\"BOOM\", \"reference\":\"abc\"}";
