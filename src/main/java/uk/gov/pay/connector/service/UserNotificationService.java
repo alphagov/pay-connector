@@ -1,5 +1,7 @@
 package uk.gov.pay.connector.service;
 
+import com.codahale.metrics.MetricRegistry;
+import com.google.common.base.Stopwatch;
 import org.apache.commons.lang3.StringUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -17,10 +19,7 @@ import javax.inject.Inject;
 import java.math.BigDecimal;
 import java.util.HashMap;
 import java.util.Optional;
-import java.util.concurrent.CompletableFuture;
-import java.util.concurrent.ExecutorService;
-import java.util.concurrent.Executors;
-import java.util.concurrent.Future;
+import java.util.concurrent.*;
 
 import static java.lang.Runtime.getRuntime;
 
@@ -29,25 +28,26 @@ public class UserNotificationService {
 
     private String emailTemplateId;
     private boolean emailNotifyGloballyEnabled;
-    private int numberOfThreads;
     protected final Logger logger = LoggerFactory.getLogger(getClass());
     private NotificationClient notificationClient;
     private ExecutorService executorService;
+    private final MetricRegistry metricRegistry;
 
     @Inject
-    public UserNotificationService(NotifyClientProvider notifyClientProvider, ConnectorConfiguration configuration) {
+    public UserNotificationService(NotifyClientProvider notifyClientProvider, ConnectorConfiguration configuration, MetricRegistry metricRegistry) {
         readEmailConfig(configuration);
         if (emailNotifyGloballyEnabled) {
             this.notificationClient = notifyClientProvider.get();
-            numberOfThreads = configuration.getExecutorServiceConfig().getThreadsPerCpu() * getRuntime().availableProcessors();
+            int numberOfThreads = configuration.getExecutorServiceConfig().getThreadsPerCpu() * getRuntime().availableProcessors();
             executorService = Executors.newFixedThreadPool(numberOfThreads);
         }
+        this.metricRegistry = metricRegistry;
     }
 
     public Future<Optional<String>> notifyPaymentSuccessEmail(ChargeEntity chargeEntity) {
-            if (emailNotifyGloballyEnabled && chargeEntity.getGatewayAccount().hasEmailNotificationsEnabled()) {
+        if (emailNotifyGloballyEnabled && chargeEntity.getGatewayAccount().hasEmailNotificationsEnabled()) {
             String emailAddress = chargeEntity.getEmail();
-
+            Stopwatch responseTimeStopwatch = Stopwatch.createStarted();
             return executorService.submit(() -> {
                 try {
                     NotificationResponse response = notificationClient.sendEmail(
@@ -56,7 +56,11 @@ public class UserNotificationService {
                     return Optional.of(response.getNotificationId());
                 } catch (NotificationClientException e) {
                     logger.error("Failed to send confirmation email - charge_external_id=" + chargeEntity.getExternalId(), e);
+                    metricRegistry.counter("notify-operations.failures").inc();
                     return Optional.empty();
+                } finally {
+                    responseTimeStopwatch.stop();
+                    metricRegistry.histogram("notify-operations.response_time").update(responseTimeStopwatch.elapsed(TimeUnit.MILLISECONDS));
                 }
             });
         }

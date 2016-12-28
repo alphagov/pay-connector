@@ -91,7 +91,6 @@ public class GatewayClient {
             logger.error(format("Exception for gateway url=%s", gatewayUrl), e);
             return left(baseError(e.getMessage()));
         } finally {
-            responseTimeStopwatch.elapsed(TimeUnit.MILLISECONDS);
             responseTimeStopwatch.stop();
             metricRegistry.histogram(metricsPrefix + ".response_time").update(responseTimeStopwatch.elapsed(TimeUnit.MILLISECONDS));
             if (response != null) {
