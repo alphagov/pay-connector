@@ -1,11 +1,16 @@
 package uk.gov.pay.connector.service;
 
+import com.codahale.metrics.Counter;
+import com.codahale.metrics.Histogram;
+import com.codahale.metrics.MetricRegistry;
 import com.github.tomakehurst.wiremock.junit.WireMockRule;
 import com.google.common.collect.ImmutableMap;
 import org.junit.Before;
 import org.junit.Ignore;
 import org.junit.Rule;
 import org.junit.Test;
+import org.mockito.Mock;
+import org.mockito.Mockito;
 import uk.gov.pay.connector.app.ConnectorConfiguration;
 import uk.gov.pay.connector.it.mock.NotifyEmailMock;
 import uk.gov.pay.connector.model.domain.ChargeEntity;
@@ -23,6 +28,7 @@ import static com.github.tomakehurst.wiremock.core.WireMockConfiguration.wireMoc
 import static io.dropwizard.testing.ConfigOverride.config;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
+import static org.mockito.Mockito.*;
 
 public class UserNotificationServiceIntTest {
 
@@ -39,7 +45,9 @@ public class UserNotificationServiceIntTest {
 
     private UserNotificationService userNotificationService;
     private NotifyEmailMock notifyEmailMock = new NotifyEmailMock();
-
+    private MetricRegistry mockMetricRegistry;
+    private Histogram mockHistogram;
+    private Counter mockCounter;
     private NotifyClientProvider notifyClientProvider;
 
 
@@ -91,7 +99,12 @@ public class UserNotificationServiceIntTest {
     public void before() {
         ConnectorConfiguration configuration = app.getConf();
         NotifyClientProvider notifyClientProvider = new NotifyClientProvider(configuration);
-        userNotificationService = new UserNotificationService(notifyClientProvider, configuration);
+        mockMetricRegistry = mock(MetricRegistry.class);
+        mockHistogram = mock(Histogram.class);
+        mockCounter = mock(Counter.class);
+        userNotificationService = new UserNotificationService(notifyClientProvider, configuration, mockMetricRegistry);
+        when(mockMetricRegistry.histogram(anyString())).thenReturn(mockHistogram);
+        when(mockMetricRegistry.counter(anyString())).thenReturn(mockCounter);
     }
 
     @Test

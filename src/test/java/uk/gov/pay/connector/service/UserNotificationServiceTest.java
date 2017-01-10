@@ -1,5 +1,8 @@
 package uk.gov.pay.connector.unit.service;
 
+import com.codahale.metrics.Counter;
+import com.codahale.metrics.Histogram;
+import com.codahale.metrics.MetricRegistry;
 import com.google.common.collect.ImmutableMap;
 import org.junit.Before;
 import org.junit.Test;
@@ -16,6 +19,7 @@ import uk.gov.pay.connector.service.NotifyClientProvider;
 import uk.gov.pay.connector.service.UserNotificationService;
 import uk.gov.service.notify.Notification;
 import uk.gov.service.notify.NotificationClient;
+import uk.gov.service.notify.NotificationClientException;
 import uk.gov.service.notify.NotificationResponse;
 
 import java.time.ZoneId;
@@ -46,7 +50,12 @@ public class UserNotificationServiceTest {
     private NotifyConfiguration mockNotifyConfiguration;
     @Mock
     private ExecutorServiceConfig mockExecutorConfiguration;
-
+    @Mock
+    private MetricRegistry mockMetricRegistry;
+    @Mock
+    private Histogram mockHistogram;
+    @Mock
+    private Counter mockCounter;
     private UserNotificationService userNotificationService;
     private ImmutableMap<String, String> personalisationMap = ImmutableMap.of("key-1", "value-1", "key-2", "value-2");
 
@@ -66,11 +75,13 @@ public class UserNotificationServiceTest {
         when(mockNotifyClientProvider.get()).thenReturn(mockNotifyClient);
         when(mockNotifyClient.sendEmail(any(), any(), any())).thenReturn(mockNotificationCreatedResponse);
         when(mockNotificationCreatedResponse.getNotificationId()).thenReturn("100");
+        when(mockMetricRegistry.histogram(anyString())).thenReturn(mockHistogram);
+        when(mockMetricRegistry.counter(anyString())).thenReturn(mockCounter);
 
         ChargeEntity charge = ChargeEntityFixture.aValidChargeEntity()
                 .withCreatedDate(ZonedDateTime.of(2016, 1, 1, 10, 23, 12, 0, ZoneId.of("UTC")))
                 .build();
-        userNotificationService = new UserNotificationService(mockNotifyClientProvider, mockConfig);
+        userNotificationService = new UserNotificationService(mockNotifyClientProvider, mockConfig, mockMetricRegistry);
         Future<Optional<String>> idF = userNotificationService.notifyPaymentSuccessEmail(charge);
         idF.get(1000, TimeUnit.SECONDS);
 
@@ -96,13 +107,13 @@ public class UserNotificationServiceTest {
         when(mockNotifyClient.getNotificationById(any())).thenReturn(mockNotification);
         when(mockNotifyClientProvider.get()).thenReturn(mockNotifyClient);
 
-        userNotificationService = new UserNotificationService(mockNotifyClientProvider, mockConfig);
+        userNotificationService = new UserNotificationService(mockNotifyClientProvider, mockConfig, mockMetricRegistry);
         userNotificationService.checkDeliveryStatus("100");
 
         ChargeEntity charge = ChargeEntityFixture.aValidChargeEntity()
                 .withCreatedDate(ZonedDateTime.of(2016, 1, 1, 1, 1, 0, 0, ZoneId.of("UTC")))
                 .build();
-        userNotificationService = new UserNotificationService(mockNotifyClientProvider, mockConfig);
+        userNotificationService = new UserNotificationService(mockNotifyClientProvider, mockConfig, mockMetricRegistry);
         userNotificationService.notifyPaymentSuccessEmail(charge);
 
         verify(mockNotifyClient).getNotificationById("100");
@@ -113,7 +124,7 @@ public class UserNotificationServiceTest {
         try {
             reset(mockNotifyConfiguration);
             when(mockNotifyConfiguration.isEmailNotifyEnabled()).thenReturn(true);
-            userNotificationService = new UserNotificationService(mockNotifyClientProvider, mockConfig);
+            userNotificationService = new UserNotificationService(mockNotifyClientProvider, mockConfig, mockMetricRegistry);
             fail("this method should throw an ex");
         } catch(Exception e) {
             assertEquals("config property 'emailTemplateId' is missing or not set, which needs to point to the email template on the notify", e.getMessage());
@@ -127,7 +138,7 @@ public class UserNotificationServiceTest {
         when(mockNotifyClient.sendEmail(any(), any(), any())).thenReturn(mockNotificationCreatedResponse);
         when(mockNotificationCreatedResponse.getNotificationId()).thenReturn("100");
 
-        userNotificationService = new UserNotificationService(mockNotifyClientProvider, mockConfig);
+        userNotificationService = new UserNotificationService(mockNotifyClientProvider, mockConfig, mockMetricRegistry);
         Future<Optional<String>> idF = userNotificationService.notifyPaymentSuccessEmail(ChargeEntityFixture.aValidChargeEntity().build());
         idF.get(1000, TimeUnit.SECONDS);
 
@@ -144,8 +155,47 @@ public class UserNotificationServiceTest {
         ChargeEntity chargeEntity = ChargeEntityFixture.aValidChargeEntity().build();
         chargeEntity.getGatewayAccount().getEmailNotification().setEnabled(false);
 
-        userNotificationService = new UserNotificationService(mockNotifyClientProvider, mockConfig);
+        userNotificationService = new UserNotificationService(mockNotifyClientProvider, mockConfig, mockMetricRegistry);
         userNotificationService.notifyPaymentSuccessEmail(chargeEntity);
         verifyZeroInteractions(mockNotifyClient);
+    }
+
+    @Test
+    public void shouldRecordNotifyResponseTimesWhenSendEmailSucceeds() throws Exception {
+        when(mockNotifyClientProvider.get()).thenReturn(mockNotifyClient);
+        when(mockNotifyClient.sendEmail(any(), any(), any())).thenReturn(mockNotificationCreatedResponse);
+        when(mockNotificationCreatedResponse.getNotificationId()).thenReturn("100");
+        when(mockMetricRegistry.histogram(anyString())).thenReturn(mockHistogram);
+        when(mockMetricRegistry.counter(anyString())).thenReturn(mockCounter);
+
+        ChargeEntity charge = ChargeEntityFixture.aValidChargeEntity()
+                .withCreatedDate(ZonedDateTime.of(2016, 1, 1, 10, 23, 12, 0, ZoneId.of("UTC")))
+                .build();
+        userNotificationService = new UserNotificationService(mockNotifyClientProvider, mockConfig, mockMetricRegistry);
+
+        Future<Optional<String>> idF = userNotificationService.notifyPaymentSuccessEmail(charge);
+        idF.get(1000, TimeUnit.SECONDS);
+        verify(mockMetricRegistry).histogram("notify-operations.response_time");
+        verify(mockHistogram).update(anyLong());
+        verifyNoMoreInteractions(mockCounter);
+    }
+    @Test
+    public void shouldRecordNotifyResponseTimesAndFailureWhenSendEmailFails() throws Exception {
+        when(mockNotifyClientProvider.get()).thenReturn(mockNotifyClient);
+        when(mockNotifyClient.sendEmail(any(), any(), any())).thenThrow(NotificationClientException.class);
+        when(mockNotificationCreatedResponse.getNotificationId()).thenReturn("100");
+        when(mockMetricRegistry.histogram(anyString())).thenReturn(mockHistogram);
+        when(mockMetricRegistry.counter(anyString())).thenReturn(mockCounter);
+
+        ChargeEntity charge = ChargeEntityFixture.aValidChargeEntity()
+                .withCreatedDate(ZonedDateTime.of(2016, 1, 1, 10, 23, 12, 0, ZoneId.of("UTC")))
+                .build();
+        userNotificationService = new UserNotificationService(mockNotifyClientProvider, mockConfig, mockMetricRegistry);
+
+        Future<Optional<String>> idF = userNotificationService.notifyPaymentSuccessEmail(charge);
+        idF.get(1000, TimeUnit.SECONDS);
+        verify(mockMetricRegistry).histogram("notify-operations.response_time");
+        verify(mockHistogram).update(anyLong());
+        verify(mockCounter).inc();
     }
 }
