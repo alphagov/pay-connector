@@ -5,6 +5,7 @@ import com.codahale.metrics.Histogram;
 import com.codahale.metrics.MetricRegistry;
 import com.github.tomakehurst.wiremock.junit.WireMockRule;
 import com.google.common.collect.ImmutableMap;
+import io.dropwizard.setup.Environment;
 import org.junit.Before;
 import org.junit.Ignore;
 import org.junit.Rule;
@@ -46,6 +47,7 @@ public class UserNotificationServiceIntTest {
     private UserNotificationService userNotificationService;
     private NotifyEmailMock notifyEmailMock = new NotifyEmailMock();
     private MetricRegistry mockMetricRegistry;
+    private Environment mockEnvironment;
     private Histogram mockHistogram;
     private Counter mockCounter;
     private NotifyClientProvider notifyClientProvider;
@@ -99,10 +101,12 @@ public class UserNotificationServiceIntTest {
     public void before() {
         ConnectorConfiguration configuration = app.getConf();
         NotifyClientProvider notifyClientProvider = new NotifyClientProvider(configuration);
+        mockEnvironment = mock(Environment.class);
         mockMetricRegistry = mock(MetricRegistry.class);
         mockHistogram = mock(Histogram.class);
         mockCounter = mock(Counter.class);
-        userNotificationService = new UserNotificationService(notifyClientProvider, configuration, mockMetricRegistry);
+        userNotificationService = new UserNotificationService(notifyClientProvider, configuration, mockEnvironment);
+        when(mockEnvironment.metrics()).thenReturn(mockMetricRegistry);
         when(mockMetricRegistry.histogram(anyString())).thenReturn(mockHistogram);
         when(mockMetricRegistry.counter(anyString())).thenReturn(mockCounter);
     }
