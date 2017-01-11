@@ -1,5 +1,7 @@
 package uk.gov.pay.connector.model;
 
+import java.time.ZonedDateTime;
+
 public interface Notification<T> {
 
     String getTransactionId();
@@ -7,5 +9,7 @@ public interface Notification<T> {
     String getReference();
 
     T getStatus();
+
+    ZonedDateTime getGenerationTime();
 
 }

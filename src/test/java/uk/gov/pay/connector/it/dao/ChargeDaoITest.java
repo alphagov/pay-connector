@@ -725,17 +725,17 @@ public class ChargeDaoITest extends DaoITestBase {
         ChargeEntity entity = charge.get();
         entity.setStatus(ENTERING_CARD_DETAILS);
 
-        entity = chargeDao.mergeAndNotifyStatusHasChanged(entity);
+        entity = chargeDao.mergeAndNotifyStatusHasChanged(entity, Optional.empty());
 
         //move status to AUTHORISED 
         entity.setStatus(AUTHORISATION_READY);
         entity.setStatus(AUTHORISATION_SUCCESS);
         entity.setGatewayTransactionId(transactionId2);
-        entity = chargeDao.mergeAndNotifyStatusHasChanged(entity);
+        entity = chargeDao.mergeAndNotifyStatusHasChanged(entity, Optional.empty());
 
         entity.setStatus(CAPTURE_READY);
         entity.setGatewayTransactionId(transactionId3);
-        chargeDao.mergeAndNotifyStatusHasChanged(entity);
+        chargeDao.mergeAndNotifyStatusHasChanged(entity, Optional.empty());
 
         List<ChargeEventEntity> events = chargeDao.findById(chargeId).get().getEvents();
 

@@ -101,7 +101,7 @@ public class CardAuthoriseService extends CardService<BaseAuthoriseResponse> {
         }
 
         appendCardDetails(reloadedCharge, cardDetails);
-        chargeDao.mergeAndNotifyStatusHasChanged(reloadedCharge);
+        chargeDao.mergeAndNotifyStatusHasChanged(reloadedCharge, Optional.empty());
         return operationResponse;
     }
 

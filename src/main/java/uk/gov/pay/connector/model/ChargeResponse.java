@@ -9,6 +9,7 @@ import uk.gov.pay.connector.model.domain.PersistedCard;
 import uk.gov.pay.connector.util.DateTimeUtils;
 
 import java.net.URI;
+import java.time.LocalDate;
 import java.time.ZonedDateTime;
 import java.util.ArrayList;
 import java.util.List;
@@ -94,15 +95,15 @@ public class ChargeResponse {
 
         @JsonProperty("capture_submit_time")
         public String getCaptureSubmitTime() {
-            return (captureSubmitTime != null) ? DateTimeUtils.toUTCDateString(captureSubmitTime) : null;
+            return (captureSubmitTime != null) ? DateTimeUtils.toUTCDateTimeString(captureSubmitTime) : null;
         }
 
         public void setCapturedTime(ZonedDateTime capturedTime) {
             this.capturedTime = capturedTime;
         }
 
-        @JsonProperty("captured_time")
-        public String getCapturedTime() {
+        @JsonProperty("captured_date")
+        public String getCapturedDate() {
             return (capturedTime != null) ? DateTimeUtils.toUTCDateString(capturedTime) : null;
         }
 
@@ -215,7 +216,7 @@ public class ChargeResponse {
 
     @JsonProperty("created_date")
     public String getCreatedDate() {
-        return DateTimeUtils.toUTCDateString(createdDate);
+        return DateTimeUtils.toUTCDateTimeString(createdDate);
     }
 
     protected ChargeResponse(String chargeId, Long amount, ExternalChargeState state, String cardBrand, String gatewayTransactionId, String returnUrl, String email, String description, String reference, String providerName, ZonedDateTime createdDate, List<Map<String, Object>> dataLinks, RefundSummary refundSummary, SettlementSummary settlementSummary, PersistedCard cardDetails) {

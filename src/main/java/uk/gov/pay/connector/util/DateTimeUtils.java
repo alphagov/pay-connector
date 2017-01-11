@@ -1,8 +1,6 @@
 package uk.gov.pay.connector.util;
 
-import java.time.LocalDateTime;
-import java.time.ZoneId;
-import java.time.ZonedDateTime;
+import java.time.*;
 import java.time.format.DateTimeFormatter;
 import java.time.format.DateTimeParseException;
 import java.util.Optional;
@@ -12,6 +10,7 @@ public class DateTimeUtils {
     private static final ZoneId UTC = ZoneId.of("Z");
     private static DateTimeFormatter dateTimeFormatterUTC = DateTimeFormatter.ISO_INSTANT.withZone(UTC);
     private static DateTimeFormatter dateTimeFormatterAny = DateTimeFormatter.ISO_ZONED_DATE_TIME;
+    private static DateTimeFormatter localDateFormatter = DateTimeFormatter.ISO_DATE;
 
     /**
      * Converts any valid ZonedDateTime String (ISO_8601) representation to a UTC ZonedDateTime
@@ -48,18 +47,25 @@ public class DateTimeUtils {
      * @param dateTime
      * @return UTC ISO_8601 date string
      */
-    public static String toUTCDateString(ZonedDateTime dateTime) {
+    public static String toUTCDateTimeString(ZonedDateTime dateTime) {
         return dateTime.format(dateTimeFormatterUTC);
     }
 
-
-    public static String toLondonZone(ZonedDateTime zonedDateTime) {
-        DateTimeFormatter dateTimeFormatter = DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss");
-
-        LocalDateTime localDateTime = zonedDateTime.withZoneSameInstant(ZoneId.of("Europe/London")).toLocalDateTime();
-
-        return localDateTime.format(dateTimeFormatter);
+    /**
+     * Converts a LocalDateTime to a UTC ISO_8601 string representation
+     * <p>
+     * e.g. <br/>
+     * 1. LocalDateTime("2010-01-01") ==> "2010-12-01" <br/>
+     * 2. LocalDateTime("2010-12-31") ==> "2010-12-31" <br/>
+     * </p>
+     *
+     * @param zonedDateTime
+     * @return UTC ISO_8601 date string
+     */
+    public static String toUTCDateString(ZonedDateTime zonedDateTime) {
+        return zonedDateTime.withZoneSameInstant(ZoneOffset.UTC).toLocalDate().format(localDateFormatter);
     }
+
 
     public static String toUserFriendlyDate(ZonedDateTime zonedDateTime) {
         DateTimeFormatter dateTimeFormatter = DateTimeFormatter.ofPattern("d MMMM yyyy - HH:mm:ss");

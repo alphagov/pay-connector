@@ -1,5 +1,7 @@
 package uk.gov.pay.connector.service;
 
+import org.hamcrest.BaseMatcher;
+import org.hamcrest.Description;
 import org.junit.Before;
 import org.junit.Rule;
 import org.junit.Test;
@@ -23,9 +25,11 @@ import uk.gov.pay.connector.service.worldpay.WorldpayCaptureResponse;
 import javax.persistence.OptimisticLockException;
 import java.util.Optional;
 
+import static junit.framework.TestCase.assertTrue;
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.core.Is.is;
 import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertFalse;
 import static org.mockito.Matchers.any;
 import static org.mockito.Mockito.*;
 import static uk.gov.pay.connector.model.domain.ChargeStatus.*;
@@ -53,6 +57,18 @@ public class CardCaptureServiceTest extends CardServiceTest {
         when(mockedPaymentProvider.capture(any())).thenReturn(captureResponse);
     }
 
+    class EmptyOptionalMatcher extends BaseMatcher<Optional<?>> {
+        @Override
+        public boolean matches(Object item) {
+            return !((Optional)item).isPresent();
+        }
+
+        @Override
+        public void describeTo(Description description) {
+            description.appendText("An empty optional");
+        }
+    }
+
     @Test
     public void shouldCaptureAChargeForANonSandboxAccount() throws Exception {
         String gatewayTxId = "theTxId";
@@ -71,10 +87,13 @@ public class CardCaptureServiceTest extends CardServiceTest {
         inOrder.verify(reloadedCharge).setStatus(CAPTURE_READY);
         inOrder.verify(reloadedCharge).setStatus(CAPTURE_SUBMITTED);
 
-        ArgumentCaptor<ChargeEntity> argumentCaptor = ArgumentCaptor.forClass(ChargeEntity.class);
-        verify(mockedChargeDao).mergeAndNotifyStatusHasChanged(argumentCaptor.capture());
+        ArgumentCaptor<ChargeEntity> chargeEntityCaptor = ArgumentCaptor.forClass(ChargeEntity.class);
+        ArgumentCaptor<Optional> generatedTimeCaptor = ArgumentCaptor.forClass(Optional.class);
 
-        assertThat(argumentCaptor.getValue().getStatus(), is(CAPTURE_SUBMITTED.getValue()));
+        verify(mockedChargeDao).mergeAndNotifyStatusHasChanged(chargeEntityCaptor.capture(), generatedTimeCaptor.capture());
+
+        assertThat(chargeEntityCaptor.getValue().getStatus(), is(CAPTURE_SUBMITTED.getValue()));
+        assertFalse(generatedTimeCaptor.getValue().isPresent());
 
         ArgumentCaptor<CaptureGatewayRequest> request = ArgumentCaptor.forClass(CaptureGatewayRequest.class);
         verify(mockedPaymentProvider, times(1)).capture(request.capture());
@@ -93,7 +112,7 @@ public class CardCaptureServiceTest extends CardServiceTest {
         ChargeEntity reloadedCharge = spy(charge);
 
         mockChargeDaoOperations(charge, reloadedCharge);
-        when(mockedChargeDao.mergeAndNotifyStatusHasChanged(any())).thenReturn(reloadedCharge);
+        when(mockedChargeDao.mergeAndNotifyStatusHasChanged(any(), any())).thenReturn(reloadedCharge);
 
         setupPaymentProviderMock(gatewayTxId, null);
         when(mockedProviders.byName(charge.getPaymentGatewayName())).thenReturn(mockedPaymentProvider);
@@ -105,11 +124,16 @@ public class CardCaptureServiceTest extends CardServiceTest {
         inOrder.verify(reloadedCharge).setStatus(CAPTURE_SUBMITTED);
         inOrder.verify(reloadedCharge).setStatus(CAPTURED);
 
-        ArgumentCaptor<ChargeEntity> argumentCaptor = ArgumentCaptor.forClass(ChargeEntity.class);
-        verify(mockedChargeDao, times(2)).mergeAndNotifyStatusHasChanged(argumentCaptor.capture());
+        ArgumentCaptor<ChargeEntity> chargeEntityCaptor = ArgumentCaptor.forClass(ChargeEntity.class);
+        ArgumentCaptor<Optional> generatedTimeCaptor = ArgumentCaptor.forClass(Optional.class);
 
-        // sandbox progresses to CAPTURED
-        assertThat(argumentCaptor.getValue().getStatus(), is(CAPTURED.getValue()));
+        // sandbox progresses from CAPTURE_SUBMITTED to CAPTURED, so two calls
+        verify(mockedChargeDao, times(2)).mergeAndNotifyStatusHasChanged(chargeEntityCaptor.capture(), generatedTimeCaptor.capture());
+        assertThat(chargeEntityCaptor.getValue().getStatus(), is(CAPTURED.getValue()));
+
+        // only the CAPTURED has a generatedTime
+        assertFalse(generatedTimeCaptor.getAllValues().get(0).isPresent());
+        assertTrue(generatedTimeCaptor.getAllValues().get(1).isPresent());
 
         ArgumentCaptor<CaptureGatewayRequest> request = ArgumentCaptor.forClass(CaptureGatewayRequest.class);
         verify(mockedPaymentProvider, times(1)).capture(request.capture());
@@ -124,7 +148,7 @@ public class CardCaptureServiceTest extends CardServiceTest {
                 .thenReturn(Optional.of(charge));
         when(mockedChargeDao.merge(any()))
                 .thenReturn(reloadedCharge);
-        when(mockedChargeDao.mergeAndNotifyStatusHasChanged(any()))
+        when(mockedChargeDao.mergeAndNotifyStatusHasChanged(any(), any()))
                 .thenReturn(reloadedCharge);
     }
 

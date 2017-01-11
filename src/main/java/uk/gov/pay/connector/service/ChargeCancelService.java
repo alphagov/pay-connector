@@ -88,7 +88,7 @@ public class ChargeCancelService {
                     chargeEntity.getExternalId(), chargeEntity.getStatus(), status);
 
             chargeEntity.setStatus(status);
-            chargeDao.mergeAndNotifyStatusHasChanged(chargeEntity);
+            chargeDao.mergeAndNotifyStatusHasChanged(chargeEntity, Optional.empty());
             return cancelResponse;
         };
     }
@@ -100,7 +100,7 @@ public class ChargeCancelService {
     private GatewayResponse<BaseCancelResponse> nonGatewayCancel(ChargeEntity chargeEntity, StatusFlow statusFlow) {
         ChargeStatus completeStatus = statusFlow.getSuccessTerminalState();
         ChargeEntity processedCharge = transactionFlowProvider.get()
-                .executeNext(changeStatusTo(chargeDao, chargeEntity, completeStatus))
+                .executeNext(changeStatusTo(chargeDao, chargeEntity, completeStatus, Optional.empty()))
                 .complete()
                 .get(ChargeEntity.class);
 

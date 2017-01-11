@@ -2,8 +2,7 @@ package uk.gov.pay.connector.util;
 
 import org.junit.Test;
 
-import java.time.ZoneId;
-import java.time.ZonedDateTime;
+import java.time.*;
 import java.util.Optional;
 
 import static org.hamcrest.core.Is.is;
@@ -17,7 +16,7 @@ public class DateTimeUtilsTest {
     public void shouldConvertUTCZonedDateTimeToAISO_8601_UTCString() throws Exception {
         ZonedDateTime localDateTime = ZonedDateTime.of(2010, 11, 13, 12, 0, 0, 0, ZoneId.of("Z"));
 
-        String dateString = DateTimeUtils.toUTCDateString(localDateTime);
+        String dateString = DateTimeUtils.toUTCDateTimeString(localDateTime);
         assertThat(dateString, is("2010-11-13T12:00:00Z"));
     }
 
@@ -25,7 +24,7 @@ public class DateTimeUtilsTest {
     public void shouldConvertNonUTCZonedDateTimeToAISO_8601_UTCString() throws Exception {
         ZonedDateTime localDateTime = ZonedDateTime.of(2010, 11, 13, 12, 0, 0, 0, ZoneId.of("Europe/Paris"));
 
-        String dateString = DateTimeUtils.toUTCDateString(localDateTime);
+        String dateString = DateTimeUtils.toUTCDateTimeString(localDateTime);
         assertThat(dateString, is("2010-11-13T11:00:00Z"));
     }
 
@@ -67,17 +66,6 @@ public class DateTimeUtilsTest {
     }
 
     @Test
-    public void shouldConvertZoneDateTimeToLondonTimeZone() {
-        String aDate = "2016-07-07T17:24:48Z";
-        Optional<ZonedDateTime> zonedDateTime = DateTimeUtils.toUTCZonedDateTime(aDate);
-
-        String result = DateTimeUtils.toLondonZone(zonedDateTime.get());
-
-        assertThat(result, is("2016-07-07 18:24:48"));
-
-    }
-
-    @Test
     public void toUserFriendlyDateShouldFormatAsDateInLondonTimezone() {
         String aDate = "2016-07-07T23:24:48Z";
         Optional<ZonedDateTime> zonedDateTime = DateTimeUtils.toUTCZonedDateTime(aDate);
@@ -85,5 +73,16 @@ public class DateTimeUtilsTest {
         String result = DateTimeUtils.toUserFriendlyDate(zonedDateTime.get());
 
         assertThat(result, is("8 July 2016 - 00:24:48"));
+    }
+
+    @Test
+    public void toDateFormatShouldNotProduceDateWithOffset() {
+        ZonedDateTime now1 = ZonedDateTime.of(LocalDate.of(2016, 12, 23), LocalTime.of(12, 34), ZoneOffset.UTC);
+        String output1 = DateTimeUtils.toUTCDateString(now1);
+        assertThat(output1, is("2016-12-23"));
+
+        ZonedDateTime now2 = ZonedDateTime.of(LocalDate.of(2016, 6, 19), LocalTime.of(0, 22), ZoneId.of("Europe/London"));
+        String output2 = DateTimeUtils.toUTCDateString(now2);
+        assertThat(output2, is("2016-06-18"));
     }
 }

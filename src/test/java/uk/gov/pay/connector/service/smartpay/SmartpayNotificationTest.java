@@ -3,17 +3,17 @@ package uk.gov.pay.connector.service.smartpay;
 import com.google.common.base.Joiner;
 import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.Maps;
-import org.joda.time.DateTime;
 import org.junit.Rule;
 import org.junit.Test;
 import org.junit.rules.ExpectedException;
 
+import java.time.ZoneOffset;
+import java.time.ZonedDateTime;
 import java.util.Map;
 
 import static java.util.Collections.emptyMap;
 import static org.hamcrest.CoreMatchers.containsString;
 import static org.hamcrest.Matchers.*;
-import static org.joda.time.DateTimeZone.forOffsetHours;
 import static org.junit.Assert.assertThat;
 
 public class SmartpayNotificationTest {
@@ -34,7 +34,8 @@ public class SmartpayNotificationTest {
         assertThat(smartpayNotification.getPspReference(), is("pspReference"));
         assertThat(smartpayNotification.getEventCode(), is("eventCode"));
         assertThat(smartpayNotification.isSuccessFull(), is(true));
-        assertThat(smartpayNotification.getEventDate(), is(new DateTime(2015, 10, 8, 13, 48, 30, forOffsetHours(2))));
+
+        assertThat(smartpayNotification.getEventDate(), is(ZonedDateTime.of(2015, 10, 8, 13, 48, 30, 0, ZoneOffset.ofHours(2))));
     }
 
     @Test

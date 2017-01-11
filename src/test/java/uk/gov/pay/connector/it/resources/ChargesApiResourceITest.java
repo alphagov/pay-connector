@@ -2,27 +2,21 @@ package uk.gov.pay.connector.it.resources;
 
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableMap;
-import com.google.inject.matcher.AbstractMatcher;
 import com.jayway.restassured.response.ValidatableResponse;
 import org.apache.commons.lang.math.RandomUtils;
-import org.hamcrest.BaseMatcher;
-import org.hamcrest.Description;
-import org.hamcrest.Matcher;
-import org.hamcrest.Matchers;
-import org.junit.Before;
-import org.junit.Rule;
+import org.hamcrest.core.IsEqual;
 import org.junit.Test;
 import uk.gov.pay.connector.it.base.ChargingITestBase;
 import uk.gov.pay.connector.it.dao.DatabaseFixtures;
 import uk.gov.pay.connector.model.domain.CardFixture;
 import uk.gov.pay.connector.model.domain.ChargeStatus;
-import uk.gov.pay.connector.rules.DropwizardAppWithPostgresRule;
 import uk.gov.pay.connector.util.DateTimeUtils;
 import uk.gov.pay.connector.util.RestAssuredClient;
 
 import javax.ws.rs.core.HttpHeaders;
 import javax.ws.rs.core.Response.Status;
 import java.time.ZoneId;
+import java.time.ZoneOffset;
 import java.time.ZonedDateTime;
 import java.util.HashMap;
 import java.util.List;
@@ -49,7 +43,6 @@ import static org.junit.Assert.assertTrue;
 import static uk.gov.pay.connector.matcher.ResponseContainsLinkMatcher.containsLink;
 import static uk.gov.pay.connector.matcher.ZoneDateTimeAsStringWithinMatcher.isWithin;
 import static uk.gov.pay.connector.model.api.ExternalChargeState.EXTERNAL_SUBMITTED;
-import static uk.gov.pay.connector.model.api.ExternalChargeState.EXTERNAL_SUCCESS;
 import static uk.gov.pay.connector.model.domain.ChargeStatus.*;
 import static uk.gov.pay.connector.model.domain.ChargeStatus.CREATED;
 import static uk.gov.pay.connector.resources.ApiPaths.CHARGES_API_PATH;
@@ -174,6 +167,9 @@ public class ChargesApiResourceITest extends ChargingITestBase {
 
     @Test
     public void makeChargeSubmitCaptureAndCheckSettlementSummary() {
+        ZonedDateTime startOfTest = ZonedDateTime.now().withZoneSameInstant(ZoneOffset.UTC);
+        String expectedDayOfCapture = DateTimeUtils.toUTCDateString(startOfTest);
+
         String chargeId = authoriseNewCharge();
 
         givenSetup()
@@ -184,8 +180,7 @@ public class ChargesApiResourceITest extends ChargingITestBase {
         getCharge(chargeId)
             .body("settlement_summary.capture_submit_time", matchesPattern("^\\d{4}-\\d{2}-\\d{2}T\\d{2}:\\d{2}:\\d{2}.\\d{3}Z"))
             .body("settlement_summary.capture_submit_time", isWithin(10, SECONDS))
-            .body("settlement_summary.captured_time", matchesPattern("^\\d{4}-\\d{2}-\\d{2}T\\d{2}:\\d{2}:\\d{2}.\\d{3}Z"))
-            .body("settlement_summary.captured_time", isWithin(10, SECONDS))
+            .body("settlement_summary.captured_date", equalTo(expectedDayOfCapture))
         ;
     }
 
@@ -454,8 +449,8 @@ public class ChargesApiResourceITest extends ChargingITestBase {
 
         ValidatableResponse response = getChargeApi
                 .withAccountId(accountId)
-                .withQueryParam("from_date", DateTimeUtils.toUTCDateString(now().minusDays(1)))
-                .withQueryParam("to_date", DateTimeUtils.toUTCDateString(now().plusDays(1)))
+                .withQueryParam("from_date", DateTimeUtils.toUTCDateTimeString(now().minusDays(1)))
+                .withQueryParam("to_date", DateTimeUtils.toUTCDateTimeString(now().plusDays(1)))
                 .withHeader(HttpHeaders.ACCEPT, APPLICATION_JSON)
                 .getTransactions()
                 .statusCode(OK.getStatusCode())

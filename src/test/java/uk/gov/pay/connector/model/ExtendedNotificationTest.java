@@ -3,6 +3,7 @@ package uk.gov.pay.connector.model;
 
 import org.junit.Test;
 
+import java.time.ZonedDateTime;
 import java.util.Optional;
 
 import static org.hamcrest.core.Is.is;
@@ -18,8 +19,9 @@ public class ExtendedNotificationTest {
         String reference = "reference";
         String status = "status";
         Optional<Enum> internalStatus = Optional.of(CAPTURED);
+        ZonedDateTime now = ZonedDateTime.now();
 
-        BaseNotification baseNotification = new BaseNotification<>(transactionId, reference, status);
+        BaseNotification baseNotification = new BaseNotification<>(transactionId, reference, status, now);
 
         ExtendedNotification extendedNotification = ExtendedNotification.extend(baseNotification, internalStatus);
 
@@ -28,6 +30,7 @@ public class ExtendedNotificationTest {
         assertThat(extendedNotification.getInternalStatus(), is(internalStatus));
         assertThat(extendedNotification.isOfChargeType(), is(true));
         assertThat(extendedNotification.isOfRefundType(), is(false));
+        assertThat(extendedNotification.getGenerationTime(), is(now));
     }
 
     @Test
@@ -36,8 +39,9 @@ public class ExtendedNotificationTest {
         String reference = "reference";
         String status = "status";
         Optional<Enum> internalStatus = Optional.of(REFUNDED);
+        ZonedDateTime now = ZonedDateTime.now();
 
-        BaseNotification baseNotification = new BaseNotification<>(transactionId, reference, status);
+        BaseNotification baseNotification = new BaseNotification<>(transactionId, reference, status, now);
 
         ExtendedNotification extendedNotification = ExtendedNotification.extend(baseNotification, internalStatus);
 
@@ -46,6 +50,7 @@ public class ExtendedNotificationTest {
         assertThat(extendedNotification.getInternalStatus(), is(internalStatus));
         assertThat(extendedNotification.isOfChargeType(), is(false));
         assertThat(extendedNotification.isOfRefundType(), is(true));
+        assertThat(extendedNotification.getGenerationTime(), is(now));
     }
 
 }

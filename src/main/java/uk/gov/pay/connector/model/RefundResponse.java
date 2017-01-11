@@ -34,7 +34,7 @@ public class RefundResponse extends HalResourceResponse {
                 .addProperty("refund_id", refundEntity.getExternalId())
                 .addProperty("amount", refundEntity.getAmount())
                 .addProperty("status", refundEntity.getStatus().toExternal().getStatus())
-                .addProperty("created_date", DateTimeUtils.toUTCDateString(refundEntity.getCreatedDate()))
+                .addProperty("created_date", DateTimeUtils.toUTCDateTimeString(refundEntity.getCreatedDate()))
                 .addLink("self", selfLink)
                 .addLink("payment", paymentLink), selfLink);
     }

@@ -18,6 +18,8 @@ import javax.inject.Inject;
 import javax.ws.rs.core.UriBuilder;
 import javax.ws.rs.core.UriInfo;
 import java.net.URI;
+import java.time.LocalDate;
+import java.time.ZonedDateTime;
 import java.util.*;
 
 import static javax.ws.rs.HttpMethod.GET;
@@ -74,13 +76,13 @@ public class ChargeService {
     }
 
     @Transactional
-    public List<ChargeEntity> updateStatus(List<ChargeEntity> chargeEntities, ChargeStatus status) {
+    public List<ChargeEntity> updateStatus(List<ChargeEntity> chargeEntities, ChargeStatus status, Optional<ZonedDateTime> generatedTime) {
         List<ChargeEntity> mergedCharges = new ArrayList<>();
         chargeEntities.stream().forEach(chargeEntity -> {
             logger.info("Charge status to update - charge_external_id={}, status={}, to_status={}",
                     chargeEntity.getExternalId(), chargeEntity.getStatus(), status);
             chargeEntity.setStatus(status);
-            ChargeEntity mergedEnt = chargeDao.mergeAndNotifyStatusHasChanged(chargeEntity);
+            ChargeEntity mergedEnt = chargeDao.mergeAndNotifyStatusHasChanged(chargeEntity, generatedTime);
             mergedCharges.add(mergedEnt);
         });
         return mergedCharges;

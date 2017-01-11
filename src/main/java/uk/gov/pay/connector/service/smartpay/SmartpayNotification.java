@@ -6,10 +6,10 @@ import com.fasterxml.jackson.annotation.JsonProperty;
 import com.google.common.collect.ImmutableSet;
 import com.google.common.collect.Sets;
 import org.apache.commons.lang3.tuple.Pair;
-import org.joda.time.DateTime;
 import uk.gov.pay.connector.model.ChargeStatusRequest;
 import uk.gov.pay.connector.model.domain.ChargeStatus;
 
+import java.time.ZonedDateTime;
 import java.util.Map;
 import java.util.Optional;
 import java.util.Set;
@@ -18,7 +18,7 @@ import java.util.Set;
 public class SmartpayNotification implements ChargeStatusRequest, Comparable<SmartpayNotification> {
     private final static Set<String> MANDATORY_FIELDS = ImmutableSet.of("eventCode", "eventDate", "pspReference");
 
-    private final DateTime eventDate;
+    private final ZonedDateTime eventDate;
     private String eventCode;
     private String originalReference;
     private String pspReference;
@@ -34,7 +34,7 @@ public class SmartpayNotification implements ChargeStatusRequest, Comparable<Sma
         this.originalReference = (String) notification.get("originalReference");
         this.pspReference = (String) notification.get("pspReference");
         this.success = (String) notification.get("success");
-        this.eventDate = DateTime.parse((String) notification.get("eventDate"));
+        this.eventDate = ZonedDateTime.parse((String) notification.get("eventDate"));
     }
 
     private void verify(Map<String, Object> notification, Set<String> mandatoryFields) {
@@ -66,7 +66,7 @@ public class SmartpayNotification implements ChargeStatusRequest, Comparable<Sma
         return "true".equals(success);
     }
 
-    public DateTime getEventDate() {
+    public ZonedDateTime getEventDate() {
         return eventDate;
     }
 

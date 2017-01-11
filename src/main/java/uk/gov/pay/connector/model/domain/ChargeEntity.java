@@ -6,6 +6,7 @@ import uk.gov.pay.connector.resources.PaymentGatewayName;
 import uk.gov.pay.connector.util.RandomIdGenerator;
 
 import javax.persistence.*;
+import java.time.LocalDate;
 import java.time.ZoneId;
 import java.time.ZonedDateTime;
 import java.util.ArrayList;
@@ -196,7 +197,8 @@ public class ChargeEntity extends AbstractEntity {
         return this.events.stream()
                 .filter(e -> e.getStatus().equals(CAPTURED))
                 .findFirst()
-                .map(e -> e.getUpdated())
+                // use updated for old CAPTURED events that do not have a generated time recorded
+                .map(e -> e.getGenerated().orElse(e.getUpdated()))
                 .orElse(null)
                 ;
     }

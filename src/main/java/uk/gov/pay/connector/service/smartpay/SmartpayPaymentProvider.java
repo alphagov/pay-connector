@@ -84,7 +84,11 @@ public class SmartpayPaymentProvider extends BasePaymentProvider<BaseResponse> {
             objectMapper.readValue(payload, SmartpayNotificationList.class)
                     .getNotifications()
                     .forEach(notification -> builder.addNotificationFor(
-                            notification.getOriginalReference(), notification.getPspReference(), notification.getStatus()));
+                            notification.getOriginalReference(),
+                            notification.getPspReference(),
+                            notification.getStatus(),
+                            notification.getEventDate()
+                    ));
 
             return right(builder.build());
         } catch (Exception e) {
