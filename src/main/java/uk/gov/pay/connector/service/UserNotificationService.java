@@ -2,6 +2,7 @@ package uk.gov.pay.connector.service;
 
 import com.codahale.metrics.MetricRegistry;
 import com.google.common.base.Stopwatch;
+import io.dropwizard.setup.Environment;
 import org.apache.commons.lang3.StringUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -34,14 +35,14 @@ public class UserNotificationService {
     private final MetricRegistry metricRegistry;
 
     @Inject
-    public UserNotificationService(NotifyClientProvider notifyClientProvider, ConnectorConfiguration configuration, MetricRegistry metricRegistry) {
+    public UserNotificationService(NotifyClientProvider notifyClientProvider, ConnectorConfiguration configuration, Environment environment) {
         readEmailConfig(configuration);
         if (emailNotifyGloballyEnabled) {
             this.notificationClient = notifyClientProvider.get();
             int numberOfThreads = configuration.getExecutorServiceConfig().getThreadsPerCpu() * getRuntime().availableProcessors();
             executorService = Executors.newFixedThreadPool(numberOfThreads);
         }
-        this.metricRegistry = metricRegistry;
+        this.metricRegistry = environment.metrics();
     }
 
     public Future<Optional<String>> notifyPaymentSuccessEmail(ChargeEntity chargeEntity) {
