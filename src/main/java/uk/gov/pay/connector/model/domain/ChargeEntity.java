@@ -6,13 +6,11 @@ import uk.gov.pay.connector.resources.PaymentGatewayName;
 import uk.gov.pay.connector.util.RandomIdGenerator;
 
 import javax.persistence.*;
-import java.time.LocalDate;
 import java.time.ZoneId;
 import java.time.ZonedDateTime;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
-import java.util.Optional;
 
 import static org.apache.commons.lang3.StringUtils.equalsIgnoreCase;
 import static uk.gov.pay.connector.model.domain.ChargeStatus.*;
@@ -188,9 +186,8 @@ public class ChargeEntity extends AbstractEntity {
         return this.events.stream()
                 .filter(e -> e.getStatus().equals(CAPTURE_SUBMITTED))
                 .findFirst()
-                .map(e -> e.getUpdated())
-                .orElse(null)
-                ;
+                .map(ChargeEventEntity::getUpdated)
+                .orElse(null);
     }
 
     public ZonedDateTime getCapturedTime() {
@@ -198,9 +195,8 @@ public class ChargeEntity extends AbstractEntity {
                 .filter(e -> e.getStatus().equals(CAPTURED))
                 .findFirst()
                 // use updated for old CAPTURED events that do not have a generated time recorded
-                .map(e -> e.getGenerated().orElse(e.getUpdated()))
-                .orElse(null)
-                ;
+                .map(e -> e.getGatewayEventDate().orElse(e.getUpdated()))
+                .orElse(null);
     }
 
     public CardDetailsEntity getCardDetails() {

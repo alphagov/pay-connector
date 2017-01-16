@@ -90,7 +90,7 @@ public class WorldpayPaymentProvider extends BasePaymentProvider<BaseResponse> {
                 worldpayNotification.getTransactionId(),
                 worldpayNotification.getReference(),
                 worldpayNotification.getStatus(),
-                worldpayNotification.getBookedDate().atStartOfDay(ZoneOffset.UTC)
+                worldpayNotification.getBookingDate().atStartOfDay(ZoneOffset.UTC)
             );
 
             return right(builder.build());

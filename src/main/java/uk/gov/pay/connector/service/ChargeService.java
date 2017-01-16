@@ -76,13 +76,13 @@ public class ChargeService {
     }
 
     @Transactional
-    public List<ChargeEntity> updateStatus(List<ChargeEntity> chargeEntities, ChargeStatus status, Optional<ZonedDateTime> generatedTime) {
+    public List<ChargeEntity> updateStatus(List<ChargeEntity> chargeEntities, ChargeStatus status, Optional<ZonedDateTime> gatewayEventDate) {
         List<ChargeEntity> mergedCharges = new ArrayList<>();
         chargeEntities.stream().forEach(chargeEntity -> {
             logger.info("Charge status to update - charge_external_id={}, status={}, to_status={}",
                     chargeEntity.getExternalId(), chargeEntity.getStatus(), status);
             chargeEntity.setStatus(status);
-            ChargeEntity mergedEnt = chargeDao.mergeAndNotifyStatusHasChanged(chargeEntity, generatedTime);
+            ChargeEntity mergedEnt = chargeDao.mergeAndNotifyStatusHasChanged(chargeEntity, gatewayEventDate);
             mergedCharges.add(mergedEnt);
         });
         return mergedCharges;

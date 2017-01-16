@@ -6,6 +6,7 @@ import uk.gov.pay.connector.service.worldpay.*;
 
 import java.io.IOException;
 import java.nio.charset.Charset;
+import java.time.LocalDate;
 
 import static org.hamcrest.core.Is.is;
 import static org.hamcrest.core.IsNull.notNullValue;
@@ -42,13 +43,16 @@ public class WorldpayXMLUnmarshallerTest {
         String successPayload = readPayload("templates/worldpay/notification.xml")
                 .replace("{{transactionId}}", transactionId)
                 .replace("{{status}}", status)
-                .replace("{{refund-ref}}", "REFUND-REF");
-
+                .replace("{{refund-ref}}", "REFUND-REF")
+                .replace("{{bookingDateDay}}", "10")
+                .replace("{{bookingDateMonth}}", "01")
+                .replace("{{bookingDateYear}}", "2017");
         WorldpayNotification response = XMLUnmarshaller.unmarshall(successPayload, WorldpayNotification.class);
         assertThat(response.getStatus(), is(status));
         assertThat(response.getTransactionId(), is(transactionId));
         assertThat(response.getMerchantCode(), is("MERCHANTCODE"));
         assertThat(response.getReference(), is("REFUND-REF"));
+        assertThat(response.getBookingDate(), is(LocalDate.parse("2017-01-10")));
     }
 
     @Test

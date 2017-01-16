@@ -30,7 +30,7 @@ public class ExtendedNotificationTest {
         assertThat(extendedNotification.getInternalStatus(), is(internalStatus));
         assertThat(extendedNotification.isOfChargeType(), is(true));
         assertThat(extendedNotification.isOfRefundType(), is(false));
-        assertThat(extendedNotification.getGenerationTime(), is(now));
+        assertThat(extendedNotification.getGatewayEventDate(), is(now));
     }
 
     @Test
@@ -50,7 +50,7 @@ public class ExtendedNotificationTest {
         assertThat(extendedNotification.getInternalStatus(), is(internalStatus));
         assertThat(extendedNotification.isOfChargeType(), is(false));
         assertThat(extendedNotification.isOfRefundType(), is(true));
-        assertThat(extendedNotification.getGenerationTime(), is(now));
+        assertThat(extendedNotification.getGatewayEventDate(), is(now));
     }
 
 }

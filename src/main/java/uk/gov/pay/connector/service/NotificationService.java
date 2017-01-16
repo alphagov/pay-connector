@@ -171,7 +171,7 @@ public class NotificationService {
                     gatewayAccount.getGatewayName(),
                     gatewayAccount.getType());
 
-            chargeDao.mergeAndNotifyStatusHasChanged(chargeEntity, Optional.of(notification.getGenerationTime()));
+            chargeDao.mergeAndNotifyStatusHasChanged(chargeEntity, Optional.of(notification.getGatewayEventDate()));
         }
 
         private <T> void updateRefundStatus(ExtendedNotification<T> notification, Enum newStatus) {

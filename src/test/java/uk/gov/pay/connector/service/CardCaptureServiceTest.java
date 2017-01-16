@@ -88,12 +88,12 @@ public class CardCaptureServiceTest extends CardServiceTest {
         inOrder.verify(reloadedCharge).setStatus(CAPTURE_SUBMITTED);
 
         ArgumentCaptor<ChargeEntity> chargeEntityCaptor = ArgumentCaptor.forClass(ChargeEntity.class);
-        ArgumentCaptor<Optional> generatedTimeCaptor = ArgumentCaptor.forClass(Optional.class);
+        ArgumentCaptor<Optional> bookingDateCaptor = ArgumentCaptor.forClass(Optional.class);
 
-        verify(mockedChargeDao).mergeAndNotifyStatusHasChanged(chargeEntityCaptor.capture(), generatedTimeCaptor.capture());
+        verify(mockedChargeDao).mergeAndNotifyStatusHasChanged(chargeEntityCaptor.capture(), bookingDateCaptor.capture());
 
         assertThat(chargeEntityCaptor.getValue().getStatus(), is(CAPTURE_SUBMITTED.getValue()));
-        assertFalse(generatedTimeCaptor.getValue().isPresent());
+        assertFalse(bookingDateCaptor.getValue().isPresent());
 
         ArgumentCaptor<CaptureGatewayRequest> request = ArgumentCaptor.forClass(CaptureGatewayRequest.class);
         verify(mockedPaymentProvider, times(1)).capture(request.capture());
@@ -125,15 +125,15 @@ public class CardCaptureServiceTest extends CardServiceTest {
         inOrder.verify(reloadedCharge).setStatus(CAPTURED);
 
         ArgumentCaptor<ChargeEntity> chargeEntityCaptor = ArgumentCaptor.forClass(ChargeEntity.class);
-        ArgumentCaptor<Optional> generatedTimeCaptor = ArgumentCaptor.forClass(Optional.class);
+        ArgumentCaptor<Optional> bookingDateCaptor = ArgumentCaptor.forClass(Optional.class);
 
         // sandbox progresses from CAPTURE_SUBMITTED to CAPTURED, so two calls
-        verify(mockedChargeDao, times(2)).mergeAndNotifyStatusHasChanged(chargeEntityCaptor.capture(), generatedTimeCaptor.capture());
+        verify(mockedChargeDao, times(2)).mergeAndNotifyStatusHasChanged(chargeEntityCaptor.capture(), bookingDateCaptor.capture());
         assertThat(chargeEntityCaptor.getValue().getStatus(), is(CAPTURED.getValue()));
 
-        // only the CAPTURED has a generatedTime
-        assertFalse(generatedTimeCaptor.getAllValues().get(0).isPresent());
-        assertTrue(generatedTimeCaptor.getAllValues().get(1).isPresent());
+        // only the CAPTURED has a bookingDate
+        assertFalse(bookingDateCaptor.getAllValues().get(0).isPresent());
+        assertTrue(bookingDateCaptor.getAllValues().get(1).isPresent());
 
         ArgumentCaptor<CaptureGatewayRequest> request = ArgumentCaptor.forClass(CaptureGatewayRequest.class);
         verify(mockedPaymentProvider, times(1)).capture(request.capture());

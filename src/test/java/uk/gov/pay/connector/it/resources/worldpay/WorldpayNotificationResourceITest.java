@@ -145,6 +145,9 @@ public class WorldpayNotificationResourceITest extends ChargingITestBase {
         URL resource = getResource("templates/worldpay/notification.xml");
         return Resources.toString(resource, Charset.defaultCharset())
                 .replace("{{transactionId}}", transactionId)
-                .replace("{{status}}", status);
+                .replace("{{status}}", status)
+                .replace("{{bookingDateDay}}", "10")
+                .replace("{{bookingDateMonth}}", "01")
+                .replace("{{bookingDateYear}}", "2017");
     }
 }

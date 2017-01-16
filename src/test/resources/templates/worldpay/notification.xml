@@ -21,7 +21,7 @@
             </payment>
             <journal journalType="{{status}}">
                 <bookingDate>
-                    <date dayOfMonth="02" month="10" year="2015"/>
+                    <date dayOfMonth="{{bookingDateDay}}" month="{{bookingDateMonth}}" year="{{bookingDateYear}}"/>
                 </bookingDate>
                 <accountTx accountType="IN_PROCESS_AUTHORISED" batchId="23">
                     <amount value="5000" currencyCode="GBP" exponent="2" debitCreditIndicator="debit"/>

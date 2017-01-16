@@ -25,11 +25,11 @@ public class NotificationsTest {
         assertThat(notifications.get().get(0).getTransactionId(), is("transaction-id-1"));
         assertThat(notifications.get().get(0).getReference(), is("reference-1"));
         assertThat(notifications.get().get(0).getStatus(), is("status-1"));
-        assertThat(notifications.get().get(0).getGenerationTime(), is(now));
+        assertThat(notifications.get().get(0).getGatewayEventDate(), is(now));
         assertThat(notifications.get().get(1).getTransactionId(), is("transaction-id-2"));
         assertThat(notifications.get().get(1).getReference(), is("reference-2"));
         assertThat(notifications.get().get(1).getStatus(), is("status-2"));
-        assertThat(notifications.get().get(1).getGenerationTime(), is(now));
+        assertThat(notifications.get().get(1).getGatewayEventDate(), is(now));
     }
 
 }

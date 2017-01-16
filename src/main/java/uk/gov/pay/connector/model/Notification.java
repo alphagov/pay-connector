@@ -10,6 +10,6 @@ public interface Notification<T> {
 
     T getStatus();
 
-    ZonedDateTime getGenerationTime();
+    ZonedDateTime getGatewayEventDate();
 
 }

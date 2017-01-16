@@ -3,7 +3,6 @@ package uk.gov.pay.connector.model.domain;
 import com.fasterxml.jackson.annotation.JsonIgnore;
 
 import javax.persistence.*;
-import java.time.LocalDate;
 import java.time.ZonedDateTime;
 import java.util.Optional;
 
@@ -20,8 +19,9 @@ public class ChargeEventEntity extends AbstractEntity {
     @Convert(converter = ChargeStatusConverter.class)
     private ChargeStatus status;
 
+    @Column(name = "gateway_event_date")
     @Convert(converter = UTCDateTimeConverter.class)
-    private ZonedDateTime generated;
+    private ZonedDateTime gatewayEventDate;
 
     @Convert(converter = UTCDateTimeConverter.class)
     private ZonedDateTime updated;
@@ -29,10 +29,10 @@ public class ChargeEventEntity extends AbstractEntity {
     protected ChargeEventEntity() {
     }
 
-    public ChargeEventEntity(ChargeEntity chargeEntity, ChargeStatus chargeStatus, ZonedDateTime updated, Optional<ZonedDateTime> generated) {
+    public ChargeEventEntity(ChargeEntity chargeEntity, ChargeStatus chargeStatus, ZonedDateTime updated, Optional<ZonedDateTime> gatewayEventDate) {
         this.chargeEntity = chargeEntity;
         this.status = chargeStatus;
-        this.generated = generated.orElse(null);
+        this.gatewayEventDate = gatewayEventDate.orElse(null);
         this.updated = updated;
     }
 
@@ -40,8 +40,8 @@ public class ChargeEventEntity extends AbstractEntity {
         return status;
     }
 
-    public Optional<ZonedDateTime> getGenerated() {
-        return Optional.ofNullable(generated);
+    public Optional<ZonedDateTime> getGatewayEventDate() {
+        return Optional.ofNullable(gatewayEventDate);
     }
 
     public ZonedDateTime getUpdated() {
@@ -52,7 +52,7 @@ public class ChargeEventEntity extends AbstractEntity {
         return chargeEntity;
     }
 
-    public static ChargeEventEntity from(ChargeEntity chargeEntity, ChargeStatus chargeStatus, ZonedDateTime updated, Optional<ZonedDateTime> generated) {
-        return new ChargeEventEntity(chargeEntity, chargeStatus, updated, generated);
+    public static ChargeEventEntity from(ChargeEntity chargeEntity, ChargeStatus chargeStatus, ZonedDateTime updated, Optional<ZonedDateTime> gatewayEventDate) {
+        return new ChargeEventEntity(chargeEntity, chargeStatus, updated, gatewayEventDate);
     }
 }

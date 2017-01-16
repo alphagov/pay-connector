@@ -61,7 +61,7 @@ public class WorldpayNotification implements ChargeStatusRequest {
         return reference;
     }
 
-    public LocalDate getBookedDate() {
+    public LocalDate getBookingDate() {
         return LocalDate.of(year, month, dayOfMonth);
     }
 }
