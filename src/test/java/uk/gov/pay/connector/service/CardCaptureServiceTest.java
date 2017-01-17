@@ -88,12 +88,10 @@ public class CardCaptureServiceTest extends CardServiceTest {
         inOrder.verify(reloadedCharge).setStatus(CAPTURE_SUBMITTED);
 
         ArgumentCaptor<ChargeEntity> chargeEntityCaptor = ArgumentCaptor.forClass(ChargeEntity.class);
-        ArgumentCaptor<Optional> bookingDateCaptor = ArgumentCaptor.forClass(Optional.class);
 
-        verify(mockedChargeDao).mergeAndNotifyStatusHasChanged(chargeEntityCaptor.capture(), bookingDateCaptor.capture());
+        verify(mockedChargeDao).mergeAndNotifyStatusHasChanged(chargeEntityCaptor.capture(), eq(Optional.empty()));
 
         assertThat(chargeEntityCaptor.getValue().getStatus(), is(CAPTURE_SUBMITTED.getValue()));
-        assertFalse(bookingDateCaptor.getValue().isPresent());
 
         ArgumentCaptor<CaptureGatewayRequest> request = ArgumentCaptor.forClass(CaptureGatewayRequest.class);
         verify(mockedPaymentProvider, times(1)).capture(request.capture());

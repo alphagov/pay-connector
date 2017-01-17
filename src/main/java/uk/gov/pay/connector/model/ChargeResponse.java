@@ -114,37 +114,19 @@ public class ChargeResponse {
 
             SettlementSummary that = (SettlementSummary) o;
 
-            if (captureSubmitTime != null) {
-                if (!captureSubmitTime.equals(that.captureSubmitTime)) return false;
-            }
-            else {
-                if (that.captureSubmitTime != null) return false;
-            }
+            if (captureSubmitTime != null ? !captureSubmitTime.equals(that.captureSubmitTime) : that.captureSubmitTime != null)
+                return false;
+            return capturedTime != null ? capturedTime.equals(that.capturedTime) : that.capturedTime == null;
 
-            if (capturedTime != null) {
-                if (!capturedTime.equals(that.capturedTime)) return false;
-            }
-            else {
-                if (that.capturedTime != null) return false;
-            }
-
-            return true;
         }
 
         @Override
         public int hashCode() {
-            int result = 1;
-            if (captureSubmitTime != null) {
-                result = 31 * result + captureSubmitTime.hashCode();
-            }
-
-            if (capturedTime != null) {
-                result = 31 * result + capturedTime.hashCode();
-            }
-
+            int result = captureSubmitTime != null ? captureSubmitTime.hashCode() : 0;
+            result = 31 * result + (capturedTime != null ? capturedTime.hashCode() : 0);
             return result;
         }
-
+        
         @Override
         public String toString() {
             return "SettlementSummary{" +
