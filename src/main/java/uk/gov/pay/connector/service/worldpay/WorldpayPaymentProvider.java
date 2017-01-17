@@ -12,6 +12,7 @@ import uk.gov.pay.connector.model.gateway.GatewayResponse;
 import uk.gov.pay.connector.resources.PaymentGatewayName;
 import uk.gov.pay.connector.service.*;
 
+import java.time.ZoneOffset;
 import java.util.Optional;
 import java.util.function.Function;
 
@@ -80,7 +81,13 @@ public class WorldpayPaymentProvider extends BasePaymentProvider<BaseResponse> {
         try {
             Notifications.Builder<String> builder = Notifications.builder();
             WorldpayNotification worldpayNotification = unmarshall(payload, WorldpayNotification.class);
-            builder.addNotificationFor(worldpayNotification.getTransactionId(), worldpayNotification.getReference(), worldpayNotification.getStatus());
+            builder.addNotificationFor(
+                worldpayNotification.getTransactionId(),
+                worldpayNotification.getReference(),
+                worldpayNotification.getStatus(),
+                worldpayNotification.getBookingDate().atStartOfDay(ZoneOffset.UTC)
+            );
+
             return right(builder.build());
         } catch (Exception e) {
             return left(e.getMessage());

@@ -25,6 +25,7 @@ public abstract class AbstractChargeResponseBuilder<T extends AbstractChargeResp
     protected String providerName;
     protected String email;
     protected ChargeResponse.RefundSummary refundSummary;
+    protected ChargeResponse.SettlementSummary settlementSummary;
     protected PersistedCard cardDetails;
 
     protected abstract T thisObject();
@@ -107,6 +108,11 @@ public abstract class AbstractChargeResponseBuilder<T extends AbstractChargeResp
 
     public T withRefunds(ChargeResponse.RefundSummary refundSummary) {
         this.refundSummary = refundSummary;
+        return thisObject();
+    }
+
+    public T withSettlement(ChargeResponse.SettlementSummary settlementSummary) {
+        this.settlementSummary = settlementSummary;
         return thisObject();
     }
 

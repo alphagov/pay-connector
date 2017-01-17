@@ -9,6 +9,7 @@ import uk.gov.pay.connector.model.domain.PersistedCard;
 import uk.gov.pay.connector.util.DateTimeUtils;
 
 import java.net.URI;
+import java.time.LocalDate;
 import java.time.ZonedDateTime;
 import java.util.ArrayList;
 import java.util.List;
@@ -84,6 +85,57 @@ public class ChargeResponse {
         }
     }
 
+    @JsonFormat(shape = JsonFormat.Shape.OBJECT)
+    public static class SettlementSummary {
+        private ZonedDateTime captureSubmitTime, capturedTime;
+
+        public void setCaptureSubmitTime(ZonedDateTime captureSubmitTime) {
+            this.captureSubmitTime = captureSubmitTime;
+        }
+
+        @JsonProperty("capture_submit_time")
+        public String getCaptureSubmitTime() {
+            return (captureSubmitTime != null) ? DateTimeUtils.toUTCDateTimeString(captureSubmitTime) : null;
+        }
+
+        public void setCapturedTime(ZonedDateTime capturedTime) {
+            this.capturedTime = capturedTime;
+        }
+
+        @JsonProperty("captured_date")
+        public String getCapturedDate() {
+            return (capturedTime != null) ? DateTimeUtils.toUTCDateString(capturedTime) : null;
+        }
+
+        @Override
+        public boolean equals(Object o) {
+            if (this == o) return true;
+            if (o == null || getClass() != o.getClass()) return false;
+
+            SettlementSummary that = (SettlementSummary) o;
+
+            if (captureSubmitTime != null ? !captureSubmitTime.equals(that.captureSubmitTime) : that.captureSubmitTime != null)
+                return false;
+            return capturedTime != null ? capturedTime.equals(that.capturedTime) : that.capturedTime == null;
+
+        }
+
+        @Override
+        public int hashCode() {
+            int result = captureSubmitTime != null ? captureSubmitTime.hashCode() : 0;
+            result = 31 * result + (capturedTime != null ? capturedTime.hashCode() : 0);
+            return result;
+        }
+        
+        @Override
+        public String toString() {
+            return "SettlementSummary{" +
+                    ", captureSubmitTime=" + captureSubmitTime +
+                    ", capturedTime=" + capturedTime +
+                    '}';
+        }
+    }
+
     public static class ChargeResponseBuilder extends AbstractChargeResponseBuilder<ChargeResponseBuilder, ChargeResponse> {
         @Override
         protected ChargeResponseBuilder thisObject() {
@@ -92,7 +144,7 @@ public class ChargeResponse {
 
         @Override
         public ChargeResponse build() {
-            return new ChargeResponse(chargeId, amount, state, cardBrand, gatewayTransactionId, returnUrl, email, description, reference, providerName, createdDate, links, refundSummary, cardDetails);
+            return new ChargeResponse(chargeId, amount, state, cardBrand, gatewayTransactionId, returnUrl, email, description, reference, providerName, createdDate, links, refundSummary, settlementSummary, cardDetails);
         }
     }
 
@@ -138,15 +190,18 @@ public class ChargeResponse {
     @JsonProperty("refund_summary")
     private RefundSummary refundSummary;
 
+    @JsonProperty("settlement_summary")
+    private SettlementSummary settlementSummary;
+
     @JsonProperty("card_details")
     protected PersistedCard cardDetails;
 
     @JsonProperty("created_date")
     public String getCreatedDate() {
-        return DateTimeUtils.toUTCDateString(createdDate);
+        return DateTimeUtils.toUTCDateTimeString(createdDate);
     }
 
-    protected ChargeResponse(String chargeId, Long amount, ExternalChargeState state, String cardBrand, String gatewayTransactionId, String returnUrl, String email, String description, String reference, String providerName, ZonedDateTime createdDate, List<Map<String, Object>> dataLinks, RefundSummary refundSummary, PersistedCard cardDetails) {
+    protected ChargeResponse(String chargeId, Long amount, ExternalChargeState state, String cardBrand, String gatewayTransactionId, String returnUrl, String email, String description, String reference, String providerName, ZonedDateTime createdDate, List<Map<String, Object>> dataLinks, RefundSummary refundSummary, SettlementSummary settlementSummary, PersistedCard cardDetails) {
         this.dataLinks = dataLinks;
         this.chargeId = chargeId;
         this.amount = amount;
@@ -160,6 +215,7 @@ public class ChargeResponse {
         this.createdDate = createdDate;
         this.email = email;
         this.refundSummary = refundSummary;
+        this.settlementSummary = settlementSummary;
         this.cardDetails = cardDetails;
     }
 
@@ -192,6 +248,8 @@ public class ChargeResponse {
         if (providerName != null ? !providerName.equals(that.providerName) : that.providerName != null) return false;
         if (refundSummary != null ? !refundSummary.equals(that.refundSummary) : that.refundSummary != null)
             return false;
+        if (settlementSummary != null ? !settlementSummary.equals(that.settlementSummary) : that.settlementSummary != null)
+            return false;
         return cardDetails != null ? cardDetails.equals(that.cardDetails) : that.cardDetails == null;
 
     }
@@ -210,6 +268,7 @@ public class ChargeResponse {
         result = 31 * result + (reference != null ? reference.hashCode() : 0);
         result = 31 * result + (providerName != null ? providerName.hashCode() : 0);
         result = 31 * result + (refundSummary != null ? refundSummary.hashCode() : 0);
+        result = 31 * result + (settlementSummary != null ? settlementSummary.hashCode() : 0);
         result = 31 * result + (cardDetails != null ? cardDetails.hashCode() : 0);
         return result;
     }
@@ -229,6 +288,7 @@ public class ChargeResponse {
                 ", providerName='" + providerName + '\'' +
                 ", createdDate=" + createdDate +
                 ", refundSummary=" + refundSummary +
+                ", settlementSummary=" + settlementSummary +
                 '}';
     }
 

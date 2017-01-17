@@ -13,8 +13,7 @@ import java.util.Arrays;
 import java.util.List;
 
 import static org.apache.commons.lang3.StringUtils.equalsIgnoreCase;
-import static uk.gov.pay.connector.model.domain.ChargeStatus.CREATED;
-import static uk.gov.pay.connector.model.domain.ChargeStatus.fromString;
+import static uk.gov.pay.connector.model.domain.ChargeStatus.*;
 import static uk.gov.pay.connector.model.domain.PaymentGatewayStateTransitions.stateTransitionsFor;
 import static uk.gov.pay.connector.resources.PaymentGatewayName.valueFrom;
 
@@ -181,6 +180,23 @@ public class ChargeEntity extends AbstractEntity {
                 .filter(p -> p.hasStatus(RefundStatus.CREATED, RefundStatus.REFUND_SUBMITTED, RefundStatus.REFUNDED))
                 .mapToLong(RefundEntity::getAmount)
                 .sum();
+    }
+
+    public ZonedDateTime getCaptureSubmitTime() {
+        return this.events.stream()
+                .filter(e -> e.getStatus().equals(CAPTURE_SUBMITTED))
+                .findFirst()
+                .map(ChargeEventEntity::getUpdated)
+                .orElse(null);
+    }
+
+    public ZonedDateTime getCapturedTime() {
+        return this.events.stream()
+                .filter(e -> e.getStatus().equals(CAPTURED))
+                .findFirst()
+                // use updated for old CAPTURED events that do not have a generated time recorded
+                .map(e -> e.getGatewayEventDate().orElse(e.getUpdated()))
+                .orElse(null);
     }
 
     public CardDetailsEntity getCardDetails() {

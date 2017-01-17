@@ -18,6 +18,8 @@ import javax.inject.Inject;
 import javax.ws.rs.core.UriBuilder;
 import javax.ws.rs.core.UriInfo;
 import java.net.URI;
+import java.time.LocalDate;
+import java.time.ZonedDateTime;
 import java.util.*;
 
 import static javax.ws.rs.HttpMethod.GET;
@@ -74,13 +76,13 @@ public class ChargeService {
     }
 
     @Transactional
-    public List<ChargeEntity> updateStatus(List<ChargeEntity> chargeEntities, ChargeStatus status) {
+    public List<ChargeEntity> updateStatus(List<ChargeEntity> chargeEntities, ChargeStatus status, Optional<ZonedDateTime> gatewayEventDate) {
         List<ChargeEntity> mergedCharges = new ArrayList<>();
         chargeEntities.stream().forEach(chargeEntity -> {
             logger.info("Charge status to update - charge_external_id={}, status={}, to_status={}",
                     chargeEntity.getExternalId(), chargeEntity.getStatus(), status);
             chargeEntity.setStatus(status);
-            ChargeEntity mergedEnt = chargeDao.mergeAndNotifyStatusHasChanged(chargeEntity);
+            ChargeEntity mergedEnt = chargeDao.mergeAndNotifyStatusHasChanged(chargeEntity, gatewayEventDate);
             mergedCharges.add(mergedEnt);
         });
         return mergedCharges;
@@ -142,6 +144,7 @@ public class ChargeService {
                 .withReturnUrl(charge.getReturnUrl())
                 .withEmail(charge.getEmail())
                 .withRefunds(buildRefundSummary(charge))
+                .withSettlement(buildSettlementSummary(charge))
                 .withCardDetails(persistedCard)
                 .withLink("self", GET, selfUriFor(uriInfo, charge.getGatewayAccount().getId(), chargeId))
                 .withLink("refunds", GET, refundsUriFor(uriInfo, charge.getGatewayAccount().getId(), charge.getExternalId()));
@@ -153,6 +156,15 @@ public class ChargeService {
         refund.setAmountSubmitted(charge.getRefundedAmount());
         refund.setAmountAvailable(charge.getTotalAmountToBeRefunded());
         return refund;
+    }
+
+    private ChargeResponse.SettlementSummary buildSettlementSummary(ChargeEntity charge) {
+        ChargeResponse.SettlementSummary settlement = new ChargeResponse.SettlementSummary();
+
+        settlement.setCaptureSubmitTime(charge.getCaptureSubmitTime());
+        settlement.setCapturedTime(charge.getCapturedTime());
+
+        return settlement;
     }
 
     private URI selfUriFor(UriInfo uriInfo, Long accountId, String chargeId) {

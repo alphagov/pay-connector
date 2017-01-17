@@ -20,6 +20,7 @@ public class ChargeEntityFixture {
     private GatewayAccountEntity gatewayAccountEntity = defaultGatewayAccountEntity();
     private String transactionId;
     private ZonedDateTime createdDate = ZonedDateTime.now(ZoneId.of("UTC"));
+    private List<ChargeEventEntity> events = new ArrayList<>();
     private List<RefundEntity> refunds = new ArrayList<>();
 
     public static ChargeEntityFixture aValidChargeEntity() {
@@ -30,6 +31,7 @@ public class ChargeEntityFixture {
         ChargeEntity chargeEntity = new ChargeEntity(amount, status ,returnUrl, description, reference, gatewayAccountEntity, email, createdDate);
         chargeEntity.setId(id);
         chargeEntity.setGatewayTransactionId(transactionId);
+        chargeEntity.getEvents().addAll(events);
         chargeEntity.getRefunds().addAll(refunds);
         return chargeEntity;
     }
@@ -71,6 +73,11 @@ public class ChargeEntityFixture {
 
     public ChargeEntityFixture withStatus(ChargeStatus status) {
         this.status = status;
+        return this;
+    }
+
+    public ChargeEntityFixture withEvents(List<ChargeEventEntity> events) {
+        this.events = events;
         return this;
     }
 

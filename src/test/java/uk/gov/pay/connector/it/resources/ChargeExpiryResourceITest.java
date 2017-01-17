@@ -2,7 +2,7 @@ package uk.gov.pay.connector.it.resources;
 
 import org.apache.commons.lang.StringUtils;
 import org.junit.Test;
-import uk.gov.pay.connector.it.base.CardResourceITestBase;
+import uk.gov.pay.connector.it.base.ChargingITestBase;
 import uk.gov.pay.connector.util.RestAssuredClient;
 
 import java.time.ZonedDateTime;
@@ -20,7 +20,7 @@ import static org.hamcrest.collection.IsIterableContainingInAnyOrder.containsInA
 import static org.junit.Assert.assertTrue;
 import static uk.gov.pay.connector.model.domain.ChargeStatus.*;
 
-public class ChargeExpiryResourceITest extends CardResourceITestBase {
+public class ChargeExpiryResourceITest extends ChargingITestBase {
 
     private static final String JSON_CHARGE_KEY = "charge_id";
     private static final String JSON_STATE_KEY = "state.status";

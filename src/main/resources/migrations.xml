@@ -505,4 +505,12 @@
                    tableName="confirmation_details"/>
     </changeSet>
 
+    <changeSet id="add gateway event date time column to charge_events table" author="">
+        <addColumn tableName="charge_events">
+            <column name="gateway_event_date" type="timestamp without timezone">
+                <constraints nullable="true"/>
+            </column>
+        </addColumn>
+    </changeSet>
+
 </databaseChangeLog>

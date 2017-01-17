@@ -3,7 +3,7 @@ package uk.gov.pay.connector.it.resources.worldpay;
 import com.google.common.io.Resources;
 import com.jayway.restassured.response.ValidatableResponse;
 import org.junit.Test;
-import uk.gov.pay.connector.it.base.CardResourceITestBase;
+import uk.gov.pay.connector.it.base.ChargingITestBase;
 import uk.gov.pay.connector.util.DnsUtils;
 
 import java.io.IOException;
@@ -19,7 +19,7 @@ import static org.hamcrest.Matchers.is;
 import static org.junit.Assert.assertThat;
 import static uk.gov.pay.connector.model.domain.ChargeStatus.*;
 
-public class WorldpayNotificationResourceITest extends CardResourceITestBase {
+public class WorldpayNotificationResourceITest extends ChargingITestBase {
 
     private static final String RESPONSE_EXPECTED_BY_WORLDPAY = "[OK]";
     private static final String NOTIFICATION_PATH = "/v1/api/notifications/worldpay";
@@ -145,6 +145,9 @@ public class WorldpayNotificationResourceITest extends CardResourceITestBase {
         URL resource = getResource("templates/worldpay/notification.xml");
         return Resources.toString(resource, Charset.defaultCharset())
                 .replace("{{transactionId}}", transactionId)
-                .replace("{{status}}", status);
+                .replace("{{status}}", status)
+                .replace("{{bookingDateDay}}", "10")
+                .replace("{{bookingDateMonth}}", "01")
+                .replace("{{bookingDateYear}}", "2017");
     }
 }

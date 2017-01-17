@@ -16,6 +16,7 @@ import uk.gov.pay.connector.service.transaction.TransactionalOperation;
 import javax.inject.Inject;
 import java.util.List;
 import java.util.Map;
+import java.util.Optional;
 import java.util.stream.Collectors;
 
 import static com.google.common.collect.Lists.newArrayList;
@@ -60,7 +61,7 @@ public class ChargeExpiryService {
     private int expireChargesWithCancellationNotRequired(List<ChargeEntity> nonAuthSuccessCharges) {
         List<ChargeEntity> processedEntities = nonAuthSuccessCharges
                 .stream().map(chargeEntity -> transactionFlowProvider.get()
-                        .executeNext(changeStatusTo(chargeDao, chargeEntity, EXPIRED))
+                        .executeNext(changeStatusTo(chargeDao, chargeEntity, EXPIRED, Optional.empty()))
                         .complete()
                         .get(ChargeEntity.class))
                 .collect(Collectors.toList());
@@ -121,7 +122,7 @@ public class ChargeExpiryService {
             logger.info("Charge status to update - charge_external_id={}, status={}, to_status={}",
                     chargeEntity.getExternalId(), chargeEntity.getStatus(), status);
             chargeEntity.setStatus(status);
-            return chargeDao.mergeAndNotifyStatusHasChanged(chargeEntity);
+            return chargeDao.mergeAndNotifyStatusHasChanged(chargeEntity, Optional.empty());
         };
     }
 

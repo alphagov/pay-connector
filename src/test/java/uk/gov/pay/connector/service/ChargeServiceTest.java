@@ -279,15 +279,15 @@ public class ChargeServiceTest {
         ChargeEntity chargeEntity1 = mock(ChargeEntity.class);
         ChargeEntity chargeEntity2 = mock(ChargeEntity.class);
 
-        service.updateStatus(asList(chargeEntity1, chargeEntity2), ChargeStatus.ENTERING_CARD_DETAILS);
+        service.updateStatus(asList(chargeEntity1, chargeEntity2), ChargeStatus.ENTERING_CARD_DETAILS, Optional.empty());
 
         InOrder inOrder = inOrder(chargeEntity1, chargeEntity2, mockedChargeDao);
 
         inOrder.verify(chargeEntity1).setStatus(ChargeStatus.ENTERING_CARD_DETAILS);
-        inOrder.verify(mockedChargeDao).mergeAndNotifyStatusHasChanged(chargeEntity1);
+        inOrder.verify(mockedChargeDao).mergeAndNotifyStatusHasChanged(chargeEntity1, Optional.empty());
 
         inOrder.verify(chargeEntity2).setStatus(ChargeStatus.ENTERING_CARD_DETAILS);
-        inOrder.verify(mockedChargeDao).mergeAndNotifyStatusHasChanged(chargeEntity2);
+        inOrder.verify(mockedChargeDao).mergeAndNotifyStatusHasChanged(chargeEntity2, Optional.empty());
     }
 
     /**
@@ -300,6 +300,10 @@ public class ChargeServiceTest {
         refunds.setAmountSubmitted(0L);
         refunds.setStatus(ExternalChargeRefundAvailability.valueOf(chargeEntity).getStatus());
 
+        ChargeResponse.SettlementSummary settlement = new ChargeResponse.SettlementSummary();
+        settlement.setCapturedTime(null);
+        settlement.setCaptureSubmitTime(null);
+
         return aChargeResponse()
                 .withChargeId(chargeEntity.getExternalId())
                 .withAmount(chargeEntity.getAmount())
@@ -311,6 +315,7 @@ public class ChargeServiceTest {
                 .withCreatedDate(chargeEntity.getCreatedDate())
                 .withEmail(chargeEntity.getEmail())
                 .withRefunds(refunds)
+                .withSettlement(settlement)
                 .withReturnUrl(chargeEntity.getReturnUrl());
     }
 }

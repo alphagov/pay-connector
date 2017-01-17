@@ -10,7 +10,12 @@ import java.time.ZonedDateTime;
 public class UTCDateTimeConverter implements AttributeConverter<ZonedDateTime, Timestamp> {
     @Override
     public Timestamp convertToDatabaseColumn(ZonedDateTime dateTime) {
-        return Timestamp.from(dateTime.toInstant());
+        if (dateTime == null) {
+            return null;
+        }
+        else {
+            return Timestamp.from(dateTime.toInstant());
+        }
     }
 
     @Override

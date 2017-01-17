@@ -36,7 +36,7 @@ public class ChargeEvent {
 
     @JsonProperty("updated")
     public String getUpdated() {
-        return DateTimeUtils.toUTCDateString(updated);
+        return DateTimeUtils.toUTCDateTimeString(updated);
     }
 
     @JsonIgnore

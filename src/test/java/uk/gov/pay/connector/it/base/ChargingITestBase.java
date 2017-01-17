@@ -3,6 +3,7 @@ package uk.gov.pay.connector.it.base;
 import com.github.tomakehurst.wiremock.junit.WireMockRule;
 import com.google.common.collect.ImmutableMap;
 import com.google.gson.JsonObject;
+import com.jayway.restassured.response.ValidatableResponse;
 import com.jayway.restassured.specification.RequestSpecification;
 import org.apache.commons.lang.math.RandomUtils;
 import org.hamcrest.Description;
@@ -35,7 +36,7 @@ import static uk.gov.pay.connector.model.domain.GatewayAccount.*;
 import static uk.gov.pay.connector.resources.ApiPaths.*;
 import static uk.gov.pay.connector.util.JsonEncoder.toJson;
 
-public class CardResourceITestBase {
+public class ChargingITestBase {
     private RestAssuredClient connectorRestApi;
 
     private int port = PortFactory.findFreePort();
@@ -56,7 +57,7 @@ public class CardResourceITestBase {
     protected final String accountId;
     private final String paymentProvider;
 
-    public CardResourceITestBase(String paymentProvider) {
+    public ChargingITestBase(String paymentProvider) {
         this.paymentProvider = paymentProvider;
         this.accountId = String.valueOf(RandomUtils.nextInt());
 
@@ -106,6 +107,12 @@ public class CardResourceITestBase {
         return buildJsonCardDetailsFor("Mr. Payment", cardNumber, cvc, expiryDate, cardBrand, "The Money Pool", null, "London", null, "DO11 4RS", "GB");
     }
 
+    protected ValidatableResponse getCharge(String chargeId) {
+        return connectorRestApi
+                .withChargeId(chargeId)
+                .getCharge();
+    }
+
     protected void assertFrontendChargeStatusIs(String chargeId, String status) {
         connectorRestApi
                 .withChargeId(chargeId)
@@ -114,10 +121,7 @@ public class CardResourceITestBase {
     }
 
     protected void assertApiStateIs(String chargeId, String stateString) {
-        connectorRestApi
-                .withChargeId(chargeId)
-                .getCharge()
-                .body("state.status", is(stateString));
+        getCharge(chargeId).body("state.status", is(stateString));
     }
 
     protected String authoriseNewCharge() {

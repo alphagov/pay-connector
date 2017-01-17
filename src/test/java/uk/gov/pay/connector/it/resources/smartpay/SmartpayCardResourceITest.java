@@ -3,7 +3,7 @@ package uk.gov.pay.connector.it.resources.smartpay;
 import com.jayway.restassured.http.ContentType;
 import org.apache.commons.lang3.StringUtils;
 import org.junit.Test;
-import uk.gov.pay.connector.it.base.CardResourceITestBase;
+import uk.gov.pay.connector.it.base.ChargingITestBase;
 import uk.gov.pay.connector.model.domain.ChargeStatus;
 
 import java.util.List;
@@ -16,7 +16,7 @@ import static uk.gov.pay.connector.model.api.ExternalChargeState.EXTERNAL_SUCCES
 import static uk.gov.pay.connector.model.domain.ChargeStatus.*;
 import static uk.gov.pay.connector.util.TransactionId.randomId;
 
-public class SmartpayCardResourceITest extends CardResourceITestBase {
+public class SmartpayCardResourceITest extends ChargingITestBase {
 
     private String validCardDetails = buildCardDetailsWith("737");
 

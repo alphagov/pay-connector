@@ -17,6 +17,8 @@ import uk.gov.pay.connector.service.transaction.PreTransactionalOperation;
 import uk.gov.pay.connector.service.transaction.TransactionContext;
 import uk.gov.pay.connector.service.transaction.TransactionalOperation;
 
+import java.time.ZonedDateTime;
+import java.util.Optional;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
@@ -29,12 +31,12 @@ class CancelServiceFunctions {
 
     private static final Logger logger = LoggerFactory.getLogger(CancelServiceFunctions.class);
 
-    static TransactionalOperation<TransactionContext, ChargeEntity> changeStatusTo(ChargeDao chargeDao, ChargeEntity chargeEntity, ChargeStatus targetStatus) {
+    static TransactionalOperation<TransactionContext, ChargeEntity> changeStatusTo(ChargeDao chargeDao, ChargeEntity chargeEntity, ChargeStatus targetStatus, Optional<ZonedDateTime> generationTime) {
         return context -> {
             logger.info("Charge status to update - charge_external_id={}, status={}, to_status={}",
                     chargeEntity.getExternalId(), chargeEntity.getStatus(), targetStatus);
             chargeEntity.setStatus(targetStatus);
-            return chargeDao.mergeAndNotifyStatusHasChanged(chargeEntity);
+            return chargeDao.mergeAndNotifyStatusHasChanged(chargeEntity, generationTime);
         };
     }
 
@@ -70,7 +72,7 @@ class CancelServiceFunctions {
                     gatewayAccount.getType(),
                     statusFlow.getLockState());
 
-            return chargeDao.mergeAndNotifyStatusHasChanged(reloadedCharge);
+            return chargeDao.mergeAndNotifyStatusHasChanged(reloadedCharge, Optional.empty());
         };
     }
 

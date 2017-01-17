@@ -2,7 +2,7 @@ package uk.gov.pay.connector.it.resources;
 
 import org.apache.commons.lang3.StringUtils;
 import org.junit.Test;
-import uk.gov.pay.connector.it.base.CardResourceITestBase;
+import uk.gov.pay.connector.it.base.ChargingITestBase;
 
 import java.util.Map;
 
@@ -16,7 +16,7 @@ import static uk.gov.pay.connector.model.api.ExternalChargeState.EXTERNAL_ERROR_
 import static uk.gov.pay.connector.model.api.ExternalChargeState.EXTERNAL_SUCCESS;
 import static uk.gov.pay.connector.model.domain.ChargeStatus.*;
 
-public class CardCaptureResourceITest extends CardResourceITestBase {
+public class CardCaptureResourceITest extends ChargingITestBase {
 
     public CardCaptureResourceITest() {
         super("sandbox");

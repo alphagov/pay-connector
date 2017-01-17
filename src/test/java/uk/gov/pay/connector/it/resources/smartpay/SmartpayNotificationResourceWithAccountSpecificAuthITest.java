@@ -6,7 +6,7 @@ import com.jayway.restassured.response.Response;
 import org.apache.commons.lang3.StringUtils;
 import org.junit.Before;
 import org.junit.Test;
-import uk.gov.pay.connector.it.base.CardResourceITestBase;
+import uk.gov.pay.connector.it.base.ChargingITestBase;
 
 import java.io.IOException;
 import java.net.URL;
@@ -26,7 +26,7 @@ import static uk.gov.pay.connector.model.domain.RefundStatus.REFUND_SUBMITTED;
 import static uk.gov.pay.connector.util.JsonEncoder.toJson;
 import static uk.gov.pay.connector.util.TransactionId.randomId;
 
-public class SmartpayNotificationResourceWithAccountSpecificAuthITest extends CardResourceITestBase {
+public class SmartpayNotificationResourceWithAccountSpecificAuthITest extends ChargingITestBase {
 
     private static final String NOTIFICATION_PATH = "/v1/api/notifications/smartpay";
     private static final String RESPONSE_EXPECTED_BY_SMARTPAY = "[accepted]";

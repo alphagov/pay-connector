@@ -1,15 +1,19 @@
 package uk.gov.pay.connector.model;
 
+import java.time.ZonedDateTime;
+
 public class BaseNotification<T> implements Notification {
 
     private String reference;
     private String transactionId;
     private T status;
+    private ZonedDateTime gatewayEventDate;
 
-    public BaseNotification(String transactionId, String reference, T status) {
+    public BaseNotification(String transactionId, String reference, T status, ZonedDateTime gatewayEventDate) {
         this.reference = reference;
         this.transactionId = transactionId;
         this.status = status;
+        this.gatewayEventDate = gatewayEventDate;
     }
 
     @Override
@@ -25,5 +29,10 @@ public class BaseNotification<T> implements Notification {
     @Override
     public T getStatus() {
         return this.status;
+    }
+
+    @Override
+    public ZonedDateTime getGatewayEventDate() {
+        return gatewayEventDate;
     }
 }

@@ -18,6 +18,8 @@ import javax.ws.rs.core.Context;
 import javax.ws.rs.core.Response;
 import javax.ws.rs.core.UriInfo;
 import java.net.URI;
+import java.time.LocalDate;
+import java.time.ZonedDateTime;
 import java.util.Collections;
 import java.util.List;
 import java.util.Map;
@@ -108,7 +110,7 @@ public class ChargesFrontendResource {
             return fieldsMissingResponse(ImmutableList.of("new_status"));
         }
         try {
-            return updateStatus(chargeId, ChargeStatus.fromString(newStatusMap.get("new_status").toString()));
+            return updateStatus(chargeId, ChargeStatus.fromString(newStatusMap.get("new_status").toString()), Optional.empty());
         } catch (IllegalArgumentException e) {
             logger.error(e.getMessage(), e);
             return badRequestResponse(e.getMessage());
@@ -119,7 +121,7 @@ public class ChargesFrontendResource {
         return newStatusMap == null || newStatusMap.get("new_status") == null;
     }
 
-    private Response updateStatus(String chargeId, ChargeStatus newChargeStatus) {
+    private Response updateStatus(String chargeId, ChargeStatus newChargeStatus, Optional<ZonedDateTime> generatedTime) {
         if (!isValidStateTransition(newChargeStatus)) {
             return badRequestResponse("charge with id: " + chargeId + " cant be updated to the new state: " + newChargeStatus.getValue());
         }
@@ -127,7 +129,7 @@ public class ChargesFrontendResource {
                 .map(chargeEntity -> {
                     if (CURRENT_STATUSES_ALLOWING_UPDATE_TO_NEW_STATUS.contains(ChargeStatus.fromString(chargeEntity.getStatus()))) {
                         chargeEntity.setStatus(newChargeStatus);
-                        chargeDao.mergeAndNotifyStatusHasChanged(chargeEntity);
+                        chargeDao.mergeAndNotifyStatusHasChanged(chargeEntity, generatedTime);
                         return noContentResponse();
                     }
                     return badRequestResponse("charge with id: " + chargeId + " cant be updated to the new state: " + newChargeStatus.getValue());

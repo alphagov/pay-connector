@@ -5,6 +5,8 @@ import uk.gov.pay.connector.model.ChargeStatusRequest;
 import uk.gov.pay.connector.model.domain.ChargeStatus;
 
 import javax.xml.bind.annotation.XmlRootElement;
+import java.time.LocalDate;
+import java.time.ZonedDateTime;
 import java.util.Optional;
 
 @XmlRootElement(name = "paymentService")
@@ -15,6 +17,15 @@ public class WorldpayNotification implements ChargeStatusRequest {
 
     @XmlPath("notify/orderStatusEvent/journal/@journalType")
     private String status;
+
+    @XmlPath("notify/orderStatusEvent/journal/bookingDate/date/@dayOfMonth")
+    private int dayOfMonth;
+
+    @XmlPath("notify/orderStatusEvent/journal/bookingDate/date/@month")
+    private int month;
+
+    @XmlPath("notify/orderStatusEvent/journal/bookingDate/date/@year")
+    private int year;
 
     @XmlPath("notify/orderStatusEvent/@orderCode")
     private String transactionId;
@@ -48,5 +59,9 @@ public class WorldpayNotification implements ChargeStatusRequest {
 
     public String getReference() {
         return reference;
+    }
+
+    public LocalDate getBookingDate() {
+        return LocalDate.of(year, month, dayOfMonth);
     }
 }

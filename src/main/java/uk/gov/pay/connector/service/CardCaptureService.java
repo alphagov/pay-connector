@@ -11,6 +11,10 @@ import uk.gov.pay.connector.resources.PaymentGatewayName;
 
 import javax.inject.Inject;
 
+import java.time.LocalDate;
+import java.time.ZonedDateTime;
+import java.util.Optional;
+
 import static org.apache.commons.lang3.StringUtils.isBlank;
 import static uk.gov.pay.connector.model.domain.ChargeStatus.*;
 
@@ -55,7 +59,7 @@ public class CardCaptureService extends CardService implements TransactionalGate
         ChargeStatus status = CAPTURE_ERROR;
 
         if (operationResponse.isSuccessful()) {
-            status = capturePostOperationSuccessOf(chargeEntity.getPaymentGatewayName());
+            status = CAPTURE_SUBMITTED;
         }
 
         String transactionId = operationResponse.getBaseResponse()
@@ -70,18 +74,18 @@ public class CardCaptureService extends CardService implements TransactionalGate
             logger.warn("Card capture response received with no transaction id. - charge_external_id={}", reloadedCharge.getExternalId());
         }
 
-        chargeDao.mergeAndNotifyStatusHasChanged(reloadedCharge);
+        reloadedCharge = chargeDao.mergeAndNotifyStatusHasChanged(reloadedCharge, Optional.empty());
 
         if (operationResponse.isSuccessful()) {
             userNotificationService.notifyPaymentSuccessEmail(reloadedCharge);
         }
-        return operationResponse;
-    }
 
-    private ChargeStatus capturePostOperationSuccessOf(PaymentGatewayName paymentGatewayName) {
-        if (paymentGatewayName == PaymentGatewayName.SANDBOX) {
-            return CAPTURED;
+        //for sandbox, immediately move from CAPTURE_SUBMITTED to CAPTURED, as there will be no external notification
+        if (chargeEntity.getPaymentGatewayName() == PaymentGatewayName.SANDBOX) {
+            reloadedCharge.setStatus(CAPTURED);
+            chargeDao.mergeAndNotifyStatusHasChanged(reloadedCharge, Optional.of(ZonedDateTime.now()));
         }
-        return CAPTURE_SUBMITTED;
+
+        return operationResponse;
     }
 }

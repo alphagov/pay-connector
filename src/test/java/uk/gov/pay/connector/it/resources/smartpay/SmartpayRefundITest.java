@@ -6,7 +6,7 @@ import com.jayway.restassured.http.ContentType;
 import com.jayway.restassured.response.ValidatableResponse;
 import org.junit.Before;
 import org.junit.Test;
-import uk.gov.pay.connector.it.base.CardResourceITestBase;
+import uk.gov.pay.connector.it.base.ChargingITestBase;
 import uk.gov.pay.connector.it.dao.DatabaseFixtures;
 import uk.gov.pay.connector.model.domain.RefundStatus;
 import uk.gov.pay.connector.util.DatabaseTestHelper;
@@ -34,7 +34,7 @@ import static uk.gov.pay.connector.model.domain.ChargeStatus.ENTERING_CARD_DETAI
 import static uk.gov.pay.connector.resources.ApiPaths.REFUNDS_API_PATH;
 import static uk.gov.pay.connector.resources.ApiPaths.REFUND_API_PATH;
 
-public class SmartpayRefundITest extends CardResourceITestBase {
+public class SmartpayRefundITest extends ChargingITestBase {
 
     private DatabaseFixtures.TestAccount defaultTestAccount;
     private DatabaseFixtures.TestCharge defaultTestCharge;

@@ -29,10 +29,12 @@ import javax.ws.rs.core.Response;
 import java.io.IOException;
 import java.net.URL;
 import java.nio.charset.Charset;
+import java.time.ZonedDateTime;
 import java.util.Map;
 
 import static com.google.common.io.Resources.getResource;
 import static fj.data.Either.left;
+import static java.lang.String.*;
 import static javax.ws.rs.core.MediaType.APPLICATION_XML;
 import static org.hamcrest.CoreMatchers.instanceOf;
 import static org.hamcrest.CoreMatchers.startsWith;
@@ -194,8 +196,10 @@ public class WorldpayPaymentProviderTest {
         String transactionId = "transaction-id";
         String referenceId = "reference-id";
         String status = "CHARGED";
-
-        Either<String, Notifications<String>> response = provider.parseNotification(notificationPayloadForTransaction(transactionId, referenceId, status));
+        String bookingDateDay = "10";
+        String bookingDateMonth = "03";
+        String bookingDateYear = "2017";
+        Either<String, Notifications<String>> response = provider.parseNotification(notificationPayloadForTransaction(transactionId, referenceId, status, bookingDateDay, bookingDateMonth, bookingDateYear));
         assertThat(response.isRight(), is(true));
 
         ImmutableList<Notification<String>> notifications = response.right().value().get();
@@ -207,14 +211,24 @@ public class WorldpayPaymentProviderTest {
         assertThat(worldpayNotification.getTransactionId(), is(transactionId));
         assertThat(worldpayNotification.getReference(), is(referenceId));
         assertThat(worldpayNotification.getStatus(), is(status));
+        assertThat(worldpayNotification.getGatewayEventDate(), is(ZonedDateTime.parse(format("%s-%s-%sT00:00Z", bookingDateYear, bookingDateMonth, bookingDateDay))));
     }
 
-    private String notificationPayloadForTransaction(String transactionId, String referenceId, String status) throws IOException {
+    private String notificationPayloadForTransaction(
+            String transactionId,
+            String referenceId,
+            String status,
+            String bookingDateDay,
+            String bookingDateMonth,
+            String bookingDateYear) throws IOException {
         URL resource = getResource("templates/worldpay/notification.xml");
         return Resources.toString(resource, Charset.defaultCharset())
                 .replace("{{transactionId}}", transactionId)
                 .replace("{{refund-ref}}", referenceId)
-                .replace("{{status}}", status);
+                .replace("{{status}}", status)
+                .replace("{{bookingDateDay}}", bookingDateDay)
+                .replace("{{bookingDateMonth}}", bookingDateMonth)
+                .replace("{{bookingDateYear}}", bookingDateYear);
     }
 
     private AuthorisationGatewayRequest getCardAuthorisationRequest() {

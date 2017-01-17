@@ -4,19 +4,19 @@ import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableMap;
 import com.jayway.restassured.response.ValidatableResponse;
 import org.apache.commons.lang.math.RandomUtils;
-import org.junit.Before;
-import org.junit.Rule;
+import org.hamcrest.core.IsEqual;
 import org.junit.Test;
+import uk.gov.pay.connector.it.base.ChargingITestBase;
 import uk.gov.pay.connector.it.dao.DatabaseFixtures;
 import uk.gov.pay.connector.model.domain.CardFixture;
 import uk.gov.pay.connector.model.domain.ChargeStatus;
-import uk.gov.pay.connector.rules.DropwizardAppWithPostgresRule;
 import uk.gov.pay.connector.util.DateTimeUtils;
 import uk.gov.pay.connector.util.RestAssuredClient;
 
 import javax.ws.rs.core.HttpHeaders;
 import javax.ws.rs.core.Response.Status;
 import java.time.ZoneId;
+import java.time.ZoneOffset;
 import java.time.ZonedDateTime;
 import java.util.HashMap;
 import java.util.List;
@@ -51,7 +51,7 @@ import static uk.gov.pay.connector.util.DateTimeUtils.toUTCZonedDateTime;
 import static uk.gov.pay.connector.util.JsonEncoder.toJson;
 import static uk.gov.pay.connector.util.NumberMatcher.isNumber;
 
-public class ChargesApiResourceITest {
+public class ChargesApiResourceITest extends ChargingITestBase {
 
     private static final String FRONTEND_CARD_DETAILS_URL = "/secure";
     private static final String JSON_AMOUNT_KEY = "amount";
@@ -67,19 +67,14 @@ public class ChargesApiResourceITest {
     private static final String PROVIDER_NAME = "sandbox";
     private static final long AMOUNT = 6234L;
 
-    @Rule
-    public DropwizardAppWithPostgresRule app = new DropwizardAppWithPostgresRule();
-
-    private String accountId = "72332423443245";
     private String returnUrl = "http://service.url/success-page/";
     private String email = randomAlphanumeric(242) + "@example.com";
 
     private RestAssuredClient createChargeApi = new RestAssuredClient(app, accountId);
     private RestAssuredClient getChargeApi = new RestAssuredClient(app, accountId);
 
-    @Before
-    public void setupGatewayAccount() {
-        app.getDatabaseTestHelper().addGatewayAccount(accountId, PROVIDER_NAME);
+    public ChargesApiResourceITest() {
+        super(PROVIDER_NAME);
     }
 
     @Test
@@ -110,6 +105,8 @@ public class ChargesApiResourceITest {
                 .body("refund_summary.amount_submitted", is(0))
                 .body("refund_summary.amount_available", isNumber(AMOUNT))
                 .body("refund_summary.status", is("pending"))
+                .body("settlement_summary.capture_submit_time", nullValue())
+                .body("settlement_summary.captured_time", nullValue())
                 .body("created_date", matchesPattern("^\\d{4}-\\d{2}-\\d{2}T\\d{2}:\\d{2}:\\d{2}.\\d{3}Z"))
                 .body("created_date", isWithin(10, SECONDS))
                 .contentType(JSON);
@@ -145,6 +142,8 @@ public class ChargesApiResourceITest {
                 .body(JSON_EMAIL_KEY, is(email))
                 .body("containsKey('card_details')", is(false))
                 .body("containsKey('gateway_account')", is(false))
+                .body("settlement_summary.capture_submit_time", nullValue())
+                .body("settlement_summary.captured_time", nullValue())
                 .body("refund_summary.amount_submitted", is(0))
                 .body("refund_summary.amount_available", isNumber(AMOUNT))
                 .body("refund_summary.status", is("pending"));
@@ -164,6 +163,25 @@ public class ChargesApiResourceITest {
                     put("chargeTokenId", newChargeTokenId);
                 }}));
 
+    }
+
+    @Test
+    public void makeChargeSubmitCaptureAndCheckSettlementSummary() {
+        ZonedDateTime startOfTest = ZonedDateTime.now().withZoneSameInstant(ZoneOffset.UTC);
+        String expectedDayOfCapture = DateTimeUtils.toUTCDateString(startOfTest);
+
+        String chargeId = authoriseNewCharge();
+
+        givenSetup()
+                .post(captureChargeUrlFor(chargeId))
+                .then()
+                .statusCode(204);
+
+        getCharge(chargeId)
+            .body("settlement_summary.capture_submit_time", matchesPattern("^\\d{4}-\\d{2}-\\d{2}T\\d{2}:\\d{2}:\\d{2}.\\d{3}Z"))
+            .body("settlement_summary.capture_submit_time", isWithin(10, SECONDS))
+            .body("settlement_summary.captured_date", equalTo(expectedDayOfCapture))
+        ;
     }
 
     @Test
@@ -431,19 +449,24 @@ public class ChargesApiResourceITest {
 
         ValidatableResponse response = getChargeApi
                 .withAccountId(accountId)
-                .withQueryParam("from_date", DateTimeUtils.toUTCDateString(now().minusDays(1)))
-                .withQueryParam("to_date", DateTimeUtils.toUTCDateString(now().plusDays(1)))
+                .withQueryParam("from_date", DateTimeUtils.toUTCDateTimeString(now().minusDays(1)))
+                .withQueryParam("to_date", DateTimeUtils.toUTCDateTimeString(now().plusDays(1)))
                 .withHeader(HttpHeaders.ACCEPT, APPLICATION_JSON)
                 .getTransactions()
                 .statusCode(OK.getStatusCode())
                 .contentType(JSON)
                 .body("results.size()", is(2))
+                .body("results[0].settlement_summary.capture_submit_time", nullValue())
+                .body("results[0].settlement_summary.captured_time", nullValue())
                 .body("results[0].refund_summary.amount_submitted", is(0))
                 .body("results[0].refund_summary.amount_available", isNumber(AMOUNT))
                 .body("results[0].refund_summary.status", is("pending"))
+                .body("results[1].settlement_summary.capture_submit_time", nullValue())
+                .body("results[1].settlement_summary.captured_time", nullValue())
                 .body("results[1].refund_summary.amount_submitted", is(0))
                 .body("results[1].refund_summary.amount_available", isNumber(AMOUNT))
                 .body("results[1].refund_summary.status", is("pending"));
+
 
         List<Map<String, Object>> results = response.extract().body().jsonPath().getList("results");
         List<String> references = collect(results, "reference");

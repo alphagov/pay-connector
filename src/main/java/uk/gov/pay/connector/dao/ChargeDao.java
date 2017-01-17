@@ -11,6 +11,7 @@ import javax.inject.Inject;
 import javax.persistence.EntityManager;
 import javax.persistence.Query;
 import javax.persistence.criteria.*;
+import java.time.LocalDate;
 import java.time.ZonedDateTime;
 import java.util.ArrayList;
 import java.util.List;
@@ -79,7 +80,7 @@ public class ChargeDao extends JpaDao<ChargeEntity> {
 
     public void persist(ChargeEntity chargeEntity) {
         super.persist(chargeEntity);
-        chargeEventDao.persist(ChargeEventEntity.from(chargeEntity, ChargeStatus.CREATED, chargeEntity.getCreatedDate()));
+        chargeEventDao.persist(ChargeEventEntity.from(chargeEntity, ChargeStatus.CREATED, chargeEntity.getCreatedDate(), Optional.empty()));
     }
 
     public List<ChargeEntity> findBeforeDateWithStatusIn(ZonedDateTime date, List<ChargeStatus> statuses) {
@@ -119,9 +120,9 @@ public class ChargeDao extends JpaDao<ChargeEntity> {
         return entityManager.get().createQuery(cq).getSingleResult();
     }
 
-    public ChargeEntity mergeAndNotifyStatusHasChanged(ChargeEntity chargeEntity) {
+    public ChargeEntity mergeAndNotifyStatusHasChanged(ChargeEntity chargeEntity, Optional<ZonedDateTime> gatewayEventDate) {
         ChargeEntity mergedCharge = super.merge(chargeEntity);
-        chargeEventDao.persist(ChargeEventEntity.from(chargeEntity, ChargeStatus.fromString(chargeEntity.getStatus()), ZonedDateTime.now()));
+        chargeEventDao.persist(ChargeEventEntity.from(chargeEntity, ChargeStatus.fromString(chargeEntity.getStatus()), ZonedDateTime.now(), gatewayEventDate));
         return mergedCharge;
     }
 

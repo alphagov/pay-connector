@@ -41,7 +41,7 @@ public class FrontendChargeResponse extends ChargeResponse {
 
         @Override
         public FrontendChargeResponse build() {
-            return new FrontendChargeResponse(chargeId, amount, state, cardBrand, gatewayTransactionId, returnUrl, email, description, reference, providerName, createdDate, links, status, refundSummary, persistedCard, gatewayAccount);
+            return new FrontendChargeResponse(chargeId, amount, state, cardBrand, gatewayTransactionId, returnUrl, email, description, reference, providerName, createdDate, links, status, refundSummary, settlementSummary, persistedCard, gatewayAccount);
         }
     }
 
@@ -55,8 +55,8 @@ public class FrontendChargeResponse extends ChargeResponse {
     @JsonProperty(value = "gateway_account")
     private GatewayAccountEntity gatewayAccount;
 
-    private FrontendChargeResponse(String chargeId, Long amount, ExternalChargeState state, String cardBrand, String gatewayTransactionId, String returnUrl, String email, String description, String reference, String providerName, ZonedDateTime createdDate, List<Map<String, Object>> dataLinks, String status, RefundSummary refundSummary, PersistedCard chargeCardDetails, GatewayAccountEntity gatewayAccount) {
-        super(chargeId, amount, state, cardBrand, gatewayTransactionId, returnUrl, email, description, reference, providerName, createdDate, dataLinks, refundSummary, chargeCardDetails);
+    private FrontendChargeResponse(String chargeId, Long amount, ExternalChargeState state, String cardBrand, String gatewayTransactionId, String returnUrl, String email, String description, String reference, String providerName, ZonedDateTime createdDate, List<Map<String, Object>> dataLinks, String status, RefundSummary refundSummary, SettlementSummary settlementSummary, PersistedCard chargeCardDetails, GatewayAccountEntity gatewayAccount) {
+        super(chargeId, amount, state, cardBrand, gatewayTransactionId, returnUrl, email, description, reference, providerName, createdDate, dataLinks, refundSummary, settlementSummary, chargeCardDetails);
         this.status = status;
         this.gatewayAccount = gatewayAccount;
     }
