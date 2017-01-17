@@ -1,0 +1,115 @@
+package uk.gov.pay.connector.service;
+
+
+import uk.gov.pay.connector.model.OrderRequestType;
+import uk.gov.pay.connector.model.domain.Card;
+import uk.gov.pay.connector.util.templates.PayloadBuilder;
+
+import static org.apache.commons.lang3.StringUtils.defaultString;
+
+abstract public class OrderRequestBuilder {
+    static public class TemplateData {
+        private String transactionId;
+        private String merchantCode;
+        private String description;
+        private Card card;
+        private String amount;
+        private String paymentPlatformReference;
+
+        public String getTransactionId() {
+            return transactionId;
+        }
+
+        public void setTransactionId(String transactionId) {
+            this.transactionId = transactionId;
+        }
+
+        public String getMerchantCode() {
+            return merchantCode;
+        }
+
+        public void setMerchantCode(String merchantCode) {
+            this.merchantCode = merchantCode;
+        }
+
+        public String getDescription() {
+            return description;
+        }
+
+        public void setDescription(String description) {
+            this.description = description;
+        }
+
+        public Card getCard() {
+            return card;
+        }
+
+        public void setCard(Card card) {
+            this.card = card;
+        }
+
+        public String getAmount() {
+            return amount;
+        }
+
+        public void setAmount(String amount) {
+            this.amount = amount;
+        }
+
+        public String getPaymentPlatformReference() {
+            return paymentPlatformReference;
+        }
+
+        public void setPaymentPlatformReference(String paymentPlatformReference) {
+            this.paymentPlatformReference = paymentPlatformReference;
+        }
+    }
+
+    private final TemplateData templateData;
+
+    private PayloadBuilder payloadBuilder;
+    private OrderRequestType orderRequestType;
+
+    public OrderRequestBuilder(TemplateData templateData, PayloadBuilder payloadBuilder, OrderRequestType orderRequestType) {
+        this.templateData = templateData;
+        this.payloadBuilder = payloadBuilder;
+        this.orderRequestType = orderRequestType;
+    }
+
+    public OrderRequestBuilder withTransactionId(String transactionId) {
+        templateData.setTransactionId(defaultString(transactionId));
+        return this;
+    }
+
+    public OrderRequestBuilder withMerchantCode(String merchantCode) {
+        templateData.setMerchantCode(merchantCode);
+        return this;
+    }
+
+    public OrderRequestBuilder withPaymentPlatformReference(String reference) {
+        templateData.setPaymentPlatformReference(reference);
+        return this;
+    }
+
+
+    public OrderRequestBuilder withDescription(String description) {
+        templateData.setDescription(description);
+        return this;
+    }
+
+    public OrderRequestBuilder withCard(Card card) {
+        templateData.setCard(card);
+        return this;
+    }
+
+    public OrderRequestBuilder withAmount(String amount) {
+        templateData.setAmount(amount);
+        return this;
+    }
+
+    public GatewayOrder build() {
+        return new GatewayOrder(
+                orderRequestType,
+                payloadBuilder.buildWith(templateData));
+    }
+}

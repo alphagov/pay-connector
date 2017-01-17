@@ -1,16 +1,19 @@
 package uk.gov.pay.connector.service;
 
+import uk.gov.pay.connector.model.OrderRequestType;
+
 public class GatewayOrder {
 
-    private String type;
+    private OrderRequestType orderRequestType;
     private String payload;
 
-    public GatewayOrder(String type, String payload) {
-        this.type = type;
+    public GatewayOrder(OrderRequestType orderRequestType, String payload) {
+        this.orderRequestType = orderRequestType;
         this.payload = payload;
     }
-    public String getType() {
-        return type;
+
+    public OrderRequestType getOrderRequestType() {
+        return orderRequestType;
     }
 
     public String getPayload() {

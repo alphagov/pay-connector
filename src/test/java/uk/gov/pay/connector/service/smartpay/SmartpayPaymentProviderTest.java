@@ -29,13 +29,13 @@ import javax.ws.rs.client.Client;
 import javax.ws.rs.client.Entity;
 import javax.ws.rs.client.Invocation;
 import javax.ws.rs.client.WebTarget;
+import javax.ws.rs.core.MediaType;
 import javax.ws.rs.core.Response;
 import java.io.IOException;
 import java.net.URL;
 import java.nio.charset.Charset;
 
 import static com.google.common.io.Resources.getResource;
-import static javax.ws.rs.core.MediaType.APPLICATION_XML;
 import static org.hamcrest.CoreMatchers.*;
 import static org.hamcrest.core.Is.is;
 import static org.hamcrest.core.IsSame.sameInstance;
@@ -68,7 +68,7 @@ public class SmartpayPaymentProviderTest {
         when(mockMetricRegistry.histogram(anyString())).thenReturn(mockHistogram);
         when(mockMetricRegistry.counter(anyString())).thenReturn(mockCounter);
         mockSmartpaySuccessfulOrderSubmitResponse();
-        provider = new SmartpayPaymentProvider(createGatewayClient(client, ImmutableMap.of(TEST.toString(), "http://smartpay.url"), mockMetricRegistry), new ObjectMapper());
+        provider = new SmartpayPaymentProvider(createGatewayClient(client, ImmutableMap.of(TEST.toString(), "http://smartpay.url"), MediaType.APPLICATION_XML_TYPE, mockMetricRegistry), new ObjectMapper());
     }
 
     @Test
@@ -173,7 +173,7 @@ public class SmartpayPaymentProviderTest {
         WebTarget mockTarget = mock(WebTarget.class);
         when(client.target(anyString())).thenReturn(mockTarget);
         Invocation.Builder mockBuilder = mock(Invocation.Builder.class);
-        when(mockTarget.request(APPLICATION_XML)).thenReturn(mockBuilder);
+        when(mockTarget.request()).thenReturn(mockBuilder);
         when(mockBuilder.header(anyString(), anyObject())).thenReturn(mockBuilder);
 
         Response response = mock(Response.class);

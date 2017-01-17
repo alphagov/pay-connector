@@ -1,0 +1,1 @@
+AMOUNT=${amount}&CARDNO=${card.cardNo}&CURRENCY=GBP&CVC=${card.cvc}&ED=${card.endDate}&OPERATION=RES&ORDERID=${orderId}&PSPID=${pspId}&PSWD=${password}&USERID=${userId}&SHASIGN=${shaSign}

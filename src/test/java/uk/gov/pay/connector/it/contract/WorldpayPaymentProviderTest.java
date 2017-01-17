@@ -3,12 +3,10 @@ package uk.gov.pay.connector.it.contract;
 import com.codahale.metrics.Counter;
 import com.codahale.metrics.Histogram;
 import com.codahale.metrics.MetricRegistry;
-import com.codahale.metrics.SharedMetricRegistries;
 import com.google.common.collect.ImmutableMap;
 import org.junit.Assume;
 import org.junit.Before;
 import org.junit.Test;
-import org.mockito.Mockito;
 import uk.gov.pay.connector.app.GatewayCredentialsConfig;
 import uk.gov.pay.connector.model.CancelGatewayRequest;
 import uk.gov.pay.connector.model.CaptureGatewayRequest;
@@ -24,6 +22,7 @@ import uk.gov.pay.connector.service.worldpay.WorldpayOrderStatusResponse;
 import uk.gov.pay.connector.service.worldpay.WorldpayPaymentProvider;
 
 import javax.ws.rs.client.ClientBuilder;
+import javax.ws.rs.core.MediaType;
 import java.io.IOException;
 import java.net.URL;
 import java.util.Map;
@@ -144,7 +143,7 @@ public class WorldpayPaymentProviderTest {
     public void shouldFailRequestAuthorisationIfCredentialsAreNotCorrect() throws Exception {
 
         WorldpayPaymentProvider connector = new WorldpayPaymentProvider(
-                createGatewayClient(ClientBuilder.newClient(), getWorldpayConfig().getUrls(), mockMetricRegistry)
+                createGatewayClient(ClientBuilder.newClient(), getWorldpayConfig().getUrls(), MediaType.APPLICATION_XML_TYPE, mockMetricRegistry)
         );
 
         Long gatewayAccountId = 112233L;
@@ -192,6 +191,7 @@ public class WorldpayPaymentProviderTest {
                 createGatewayClient(
                         ClientBuilder.newClient(),
                         config.getUrls(),
+                        MediaType.APPLICATION_XML_TYPE,
                         mockMetricRegistry
                 )
         );

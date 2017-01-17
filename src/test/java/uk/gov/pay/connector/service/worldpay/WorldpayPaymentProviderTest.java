@@ -25,6 +25,7 @@ import javax.ws.rs.client.Client;
 import javax.ws.rs.client.Entity;
 import javax.ws.rs.client.Invocation;
 import javax.ws.rs.client.WebTarget;
+import javax.ws.rs.core.MediaType;
 import javax.ws.rs.core.Response;
 import java.io.IOException;
 import java.net.URL;
@@ -34,8 +35,7 @@ import java.util.Map;
 
 import static com.google.common.io.Resources.getResource;
 import static fj.data.Either.left;
-import static java.lang.String.*;
-import static javax.ws.rs.core.MediaType.APPLICATION_XML;
+import static java.lang.String.format;
 import static org.hamcrest.CoreMatchers.instanceOf;
 import static org.hamcrest.CoreMatchers.startsWith;
 import static org.hamcrest.MatcherAssert.assertThat;
@@ -48,6 +48,7 @@ import static org.mockito.Matchers.anyObject;
 import static org.mockito.Matchers.anyString;
 import static org.mockito.Mockito.argThat;
 import static org.mockito.Mockito.eq;
+import static org.mockito.Mockito.isNull;
 import static org.mockito.Mockito.*;
 import static uk.gov.pay.connector.model.ErrorType.GENERIC_GATEWAY_ERROR;
 import static uk.gov.pay.connector.model.ErrorType.UNEXPECTED_STATUS_CODE_FROM_GATEWAY;
@@ -83,7 +84,7 @@ public class WorldpayPaymentProviderTest {
         when(mockMetricRegistry.histogram(anyString())).thenReturn(mockHistogram);
         when(mockMetricRegistry.counter(anyString())).thenReturn(mockCounter);
         provider = new WorldpayPaymentProvider(
-                createGatewayClient(client, ImmutableMap.of(TEST.toString(), "http://worldpay.url"), mockMetricRegistry));
+                createGatewayClient(client, ImmutableMap.of(TEST.toString(), "http://worldpay.url"), MediaType.APPLICATION_XML_TYPE, mockMetricRegistry));
     }
 
     @Test
@@ -112,7 +113,7 @@ public class WorldpayPaymentProviderTest {
 
         Map<String, String> credentialsMap = ImmutableMap.of("merchant_id", "MERCHANTCODE");
         when(mockGatewayAccountEntity.getCredentials()).thenReturn(credentialsMap);
-        when(mockGatewayClient.postXMLRequestFor(any(GatewayAccountEntity.class), any(GatewayOrder.class))).thenReturn(left(unexpectedStatusCodeFromGateway("Unexpected Response Code From Gateway")));
+        when(mockGatewayClient.postRequestFor(isNull(String.class), any(GatewayAccountEntity.class), any(GatewayOrder.class))).thenReturn(left(unexpectedStatusCodeFromGateway("Unexpected Response Code From Gateway")));
 
         WorldpayPaymentProvider worldpayPaymentProvider = new WorldpayPaymentProvider(mockGatewayClient);
         worldpayPaymentProvider.refund(RefundGatewayRequest.valueOf(refundEntity));
@@ -132,11 +133,11 @@ public class WorldpayPaymentProviderTest {
                 "</paymentService>\n" +
                 "";
 
-        verify(mockGatewayClient).postXMLRequestFor(eq(mockGatewayAccountEntity), argThat(new ArgumentMatcher<GatewayOrder>() {
+        verify(mockGatewayClient).postRequestFor(eq(null), eq(mockGatewayAccountEntity), argThat(new ArgumentMatcher<GatewayOrder>() {
             @Override
             public boolean matches(Object argument) {
                 return ((GatewayOrder) argument).getPayload().equals(expectedRefundRequest) &&
-                        ((GatewayOrder) argument).getType().equals("refund");
+                        ((GatewayOrder) argument).getOrderRequestType().equals(OrderRequestType.REFUND);
             }
         }));
     }
@@ -281,7 +282,7 @@ public class WorldpayPaymentProviderTest {
         WebTarget mockTarget = mock(WebTarget.class);
         when(client.target(anyString())).thenReturn(mockTarget);
         Invocation.Builder mockBuilder = mock(Invocation.Builder.class);
-        when(mockTarget.request(APPLICATION_XML)).thenReturn(mockBuilder);
+        when(mockTarget.request()).thenReturn(mockBuilder);
         when(mockBuilder.header(anyString(), anyObject())).thenReturn(mockBuilder);
 
         Response response = mock(Response.class);
