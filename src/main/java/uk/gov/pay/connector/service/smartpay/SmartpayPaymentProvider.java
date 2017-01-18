@@ -16,10 +16,7 @@ import java.util.function.Function;
 import static fj.data.Either.left;
 import static fj.data.Either.right;
 import static uk.gov.pay.connector.model.domain.GatewayAccount.CREDENTIALS_MERCHANT_ID;
-import static uk.gov.pay.connector.service.OrderCaptureRequestBuilder.aSmartpayOrderCaptureRequest;
-import static uk.gov.pay.connector.service.OrderRefundRequestBuilder.aSmartpayOrderRefundRequest;
-import static uk.gov.pay.connector.service.OrderSubmitRequestBuilder.aSmartpayOrderSubmitRequest;
-import static uk.gov.pay.connector.service.smartpay.SmartpayOrderCancelRequestBuilder.aSmartpayOrderCancelRequest;
+import static uk.gov.pay.connector.service.smartpay.SmartpayOrderRequestBuilder.*;
 
 public class SmartpayPaymentProvider extends BasePaymentProvider<BaseResponse> {
 
@@ -42,7 +39,7 @@ public class SmartpayPaymentProvider extends BasePaymentProvider<BaseResponse> {
 
     @Override
     public GatewayResponse authorise(AuthorisationGatewayRequest request) {
-        return sendReceive(request, buildSubmitOrderFor(), SmartpayAuthorisationResponse.class);
+        return sendReceive(request, buildAuthoriseOrderFor(), SmartpayAuthorisationResponse.class);
     }
 
     @Override
@@ -96,38 +93,38 @@ public class SmartpayPaymentProvider extends BasePaymentProvider<BaseResponse> {
         return SmartpayStatusMapper.get();
     }
 
-    private Function<AuthorisationGatewayRequest, GatewayOrder> buildSubmitOrderFor() {
-        return request -> aSmartpayOrderSubmitRequest("authorisation")
+    private Function<AuthorisationGatewayRequest, GatewayOrder> buildAuthoriseOrderFor() {
+        return request -> aSmartpayAuthoriseOrderRequestBuilder()
                 .withMerchantCode(getMerchantCode(request))
                 .withPaymentPlatformReference(request.getChargeExternalId())
                 .withDescription(request.getDescription())
                 .withAmount(request.getAmount())
                 .withCard(request.getCard())
-                .buildOrder();
+                .build();
     }
 
     private Function<CaptureGatewayRequest, GatewayOrder> buildCaptureOrderFor() {
-        return request -> aSmartpayOrderCaptureRequest("capture")
-                .withMerchantCode(getMerchantCode(request))
+        return request -> aSmartpayCaptureOrderRequestBuilder()
                 .withTransactionId(request.getTransactionId())
+                .withMerchantCode(getMerchantCode(request))
                 .withAmount(request.getAmount())
-                .buildOrder();
+                .build();
     }
 
     private Function<CancelGatewayRequest, GatewayOrder> buildCancelOrderFor() {
-        return request -> aSmartpayOrderCancelRequest("cancel")
-                .withMerchantCode(getMerchantCode(request))
+        return request -> aSmartpayCancelOrderRequestBuilder()
                 .withTransactionId(request.getTransactionId())
-                .buildOrder();
+                .withMerchantCode(getMerchantCode(request))
+                .build();
     }
 
     private Function<RefundGatewayRequest, GatewayOrder> buildRefundOrderFor() {
-        return request -> aSmartpayOrderRefundRequest("refund")
-                .withMerchantCode(getMerchantCode(request))
-                .withTransactionId(request.getTransactionId())
-                .withAmount(request.getAmount())
+        return request -> aSmartpayRefundOrderRequestBuilder()
                 .withReference(request.getReference())
-                .buildOrder();
+                .withTransactionId(request.getTransactionId())
+                .withMerchantCode(getMerchantCode(request))
+                .withAmount(request.getAmount())
+                .build();
     }
 
     private String getMerchantCode(GatewayRequest request) {

@@ -1,0 +1,14 @@
+<?xml version="1.0"?>
+<soap:Envelope
+        xmlns:soap="http://schemas.xmlsoap.org/soap/envelope/"
+        xmlns:ns1="http://payment.services.adyen.com"
+        >
+    <soap:Body>
+        <ns1:cancel>
+            <ns1:modificationRequest>
+                <ns1:merchantAccount>MerchantAccount</ns1:merchantAccount>
+                <ns1:originalReference>MyTransactionId</ns1:originalReference>
+            </ns1:modificationRequest>
+        </ns1:cancel>
+    </soap:Body>
+</soap:Envelope>

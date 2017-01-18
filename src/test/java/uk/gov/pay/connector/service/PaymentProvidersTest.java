@@ -1,6 +1,5 @@
 package uk.gov.pay.connector.service;
 
-import com.codahale.metrics.MetricRegistry;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import io.dropwizard.setup.Environment;
 import org.junit.Before;

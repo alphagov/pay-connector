@@ -13,6 +13,7 @@ import uk.gov.pay.connector.util.XMLUnmarshallerException;
 import javax.ws.rs.ProcessingException;
 import javax.ws.rs.client.Client;
 import javax.ws.rs.client.Entity;
+import javax.ws.rs.core.MediaType;
 import java.net.SocketException;
 import java.net.SocketTimeoutException;
 import java.net.UnknownHostException;
@@ -23,7 +24,6 @@ import static fj.data.Either.left;
 import static fj.data.Either.right;
 import static java.lang.String.format;
 import static javax.ws.rs.core.HttpHeaders.AUTHORIZATION;
-import static javax.ws.rs.core.MediaType.APPLICATION_XML;
 import static javax.ws.rs.core.Response.Status.OK;
 import static uk.gov.pay.connector.model.GatewayError.*;
 import static uk.gov.pay.connector.model.domain.GatewayAccount.CREDENTIALS_PASSWORD;
@@ -36,30 +36,41 @@ public class GatewayClient {
     private final Client client;
     private final Map<String, String> gatewayUrlMap;
     private final MetricRegistry metricRegistry;
+    private final MediaType mediaType;
 
-    private GatewayClient(Client client, Map<String, String> gatewayUrlMap, MetricRegistry metricRegistry) {
+    private GatewayClient(Client client, Map<String, String> gatewayUrlMap, MediaType mediaType, MetricRegistry metricRegistry) {
         this.gatewayUrlMap = gatewayUrlMap;
         this.client = client;
         this.metricRegistry = metricRegistry;
+        this.mediaType = mediaType;
     }
 
-    public static GatewayClient createGatewayClient(Client client, Map<String, String> gatewayUrlMap, MetricRegistry metricRegistry) {
-        return new GatewayClient(client, gatewayUrlMap, metricRegistry);
+    public static GatewayClient createGatewayClient(Client client, Map<String, String> gatewayUrlMap, MediaType mediaType, MetricRegistry metricRegistry) {
+        return new GatewayClient(client, gatewayUrlMap, mediaType, metricRegistry);
     }
 
-    public Either<GatewayError, GatewayClient.Response> postXMLRequestFor(GatewayAccountEntity account, GatewayOrder request) {
-        String metricsPrefix = String.format("gateway-operations.%s.%s.%s", account.getGatewayName(), account.getType(), request.getType());
+    public Either<GatewayError, GatewayClient.Response> postRequestFor(GatewayAccountEntity account, GatewayOrder request) {
+        return postRequestFor(null, account, request);
+    }
+
+    public Either<GatewayError, GatewayClient.Response> postRequestFor(String route, GatewayAccountEntity account, GatewayOrder request) {
+        String metricsPrefix = String.format("gateway-operations.%s.%s.%s", account.getGatewayName(), account.getType(), request.getOrderRequestType());
         javax.ws.rs.core.Response response = null;
+
         String gatewayUrl = gatewayUrlMap.get(account.getType());
+        if (route != null) {
+            gatewayUrl = String.format("%s/%s", gatewayUrl, route);
+        }
+
         Stopwatch responseTimeStopwatch = Stopwatch.createStarted();
         try {
             logger.info("POSTing request for account '{}' with type '{}'", account.getGatewayName(), account.getType());
             response = client.target(gatewayUrl)
-                    .request(APPLICATION_XML)
+                    .request()
                     .header(AUTHORIZATION, encode(
                             account.getCredentials().get(CREDENTIALS_USERNAME),
                             account.getCredentials().get(CREDENTIALS_PASSWORD)))
-                    .post(Entity.xml(request.getPayload()));
+                    .post(Entity.entity(request.getPayload(), mediaType));
             int statusCode = response.getStatus();
             if (statusCode == OK.getStatusCode()) {
                 return right(new GatewayClient.Response(response));

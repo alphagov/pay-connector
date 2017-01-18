@@ -24,9 +24,13 @@ abstract public class BasePaymentProvider<T extends BaseResponse> implements Pay
     }
 
     protected <U extends GatewayRequest> GatewayResponse sendReceive(U request, Function<U, GatewayOrder> order, Class<? extends BaseResponse> clazz) {
+        return sendReceive(null, request, order, clazz);
+    }
+
+    protected <U extends GatewayRequest> GatewayResponse sendReceive(String target, U request, Function<U, GatewayOrder> order, Class<? extends BaseResponse> clazz) {
         return reduce(
                 client
-                        .postXMLRequestFor(request.getGatewayAccount(), order.apply(request))
+                        .postRequestFor(target, request.getGatewayAccount(), order.apply(request))
                         .bimap(
                                 GatewayResponse::with,
                                 r -> mapToResponse(r, clazz)

@@ -4,26 +4,26 @@ import freemarker.template.Configuration;
 import freemarker.template.Template;
 import freemarker.template.TemplateException;
 import freemarker.template.TemplateExceptionHandler;
+import uk.gov.pay.connector.service.OrderRequestBuilder.TemplateData;
 
 import java.io.IOException;
 import java.io.StringWriter;
 import java.io.Writer;
 import java.util.Locale;
-import java.util.Map;
 
 import static freemarker.template.Configuration.VERSION_2_3_20;
 
-public class TemplateStringBuilder {
+public class TemplateBuilder implements PayloadBuilder {
     private Template template;
 
-    public TemplateStringBuilder(String templatePath) {
+    public TemplateBuilder(String templatePath) {
         templateSetup("/templates", templatePath);
     }
 
-    public String buildWith(Map<String, Object> input) {
+    public String buildWith(TemplateData templateData) {
         Writer responseWriter = new StringWriter();
         try {
-            template.process(input, responseWriter);
+            template.process(templateData, responseWriter);
         } catch (TemplateException | IOException e) {
             throw new RuntimeException("Could not render template " + template.getName(), e);
         }
@@ -35,7 +35,7 @@ public class TemplateStringBuilder {
         cfg.setDefaultEncoding("UTF-8");
         cfg.setLocale(Locale.ENGLISH);
         cfg.setTemplateExceptionHandler(TemplateExceptionHandler.RETHROW_HANDLER);
-        cfg.setClassForTemplateLoading(TemplateStringBuilder.class, templateDir);
+        cfg.setClassForTemplateLoading(TemplateBuilder.class, templateDir);
 
         try {
             template = cfg.getTemplate(templateName);

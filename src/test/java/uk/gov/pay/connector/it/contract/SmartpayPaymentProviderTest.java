@@ -26,6 +26,7 @@ import uk.gov.pay.connector.service.worldpay.WorldpayCaptureResponse;
 import uk.gov.pay.connector.util.TestClientFactory;
 
 import javax.ws.rs.client.Client;
+import javax.ws.rs.core.MediaType;
 import java.io.IOException;
 import java.net.URL;
 import java.nio.charset.Charset;
@@ -172,7 +173,7 @@ public class SmartpayPaymentProviderTest {
 
     private PaymentProvider getSmartpayPaymentProvider() throws Exception {
         Client client = TestClientFactory.createJerseyClient();
-        GatewayClient gatewayClient = createGatewayClient(client, ImmutableMap.of(TEST.toString(), url), mockMetricRegistry);
+        GatewayClient gatewayClient = createGatewayClient(client, ImmutableMap.of(TEST.toString(), url), MediaType.APPLICATION_XML_TYPE, mockMetricRegistry);
         return new SmartpayPaymentProvider(gatewayClient, new ObjectMapper());
     }
 
