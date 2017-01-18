@@ -342,6 +342,10 @@ Content-Type: application/json
             "amount_submitted": 0,
             "status": "available"
     },
+    "settlement_summary": {
+            "capture_submit_time": null,
+            "captured_date": null
+    },
     "links": [
         {
             "rel": "self",
@@ -387,6 +391,7 @@ Content-Type: application/json
 | `return_url`             | X | The url to return the user to after the payment process has completed.|
 | `links`                  | X | Array of relevant resource references related to this charge|
 | `refund_summary`         | X | Provides a refund summary of the total refund amount still available and how much has already been refunded, plus a refund status|
+| `settlement_summary`         | X | Provides a settlement summary of the charge containing date and time of capture, if present.|
 
 -----------------------------------------------------------------------------------------------------------
 
@@ -486,7 +491,7 @@ Content-Type: application/json
         "amount": 5000,
         "gateway_account_id": "10",
         "gateway_transaction_id": "DFG98-FG8J-R78HJ-8JUG9",
-        "status": "CREATED",
+        "status": "CAPTURED",
         "card_brand": "Visa",
         "card_details": {
             "billing_address": {
@@ -520,6 +525,10 @@ Content-Type: application/json
             "amount_submitted": 0,
             "status": "available"
         },
+        "settlement_summary": {
+                "capture_submit_time": "2016-01-02T15:02:00Z",
+                "captured_date": "2016-01-02"
+        }
      }]
 }
 ```
@@ -549,6 +558,7 @@ Content-Type: application/json
 | `payment_provider`       | X | The gateway provider used by this transaction                         |
 | `return_url`             | X | The url to return the user to after the payment process has completed.|
 | `refund_summary`         | X | Provides a refund summary of the total refund amount still available and how much has already been refunded, plus a refund status|
+| `settlement_summary`         | X | Provides a settlement summary of the charge containing date and time of capture, if present.|
 
 -----------------------------------------------------------------------------------------------------------
 
