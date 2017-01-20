@@ -513,4 +513,27 @@
         </addColumn>
     </changeSet>
 
+    <changeSet id="createIndex charge_events.charge_id" author="">
+        <createIndex indexName="idx_charge_events_charge_id"
+                     tableName="charge_events"
+                     unique="false">
+            <column name="charge_id" type="bigserial"/>
+        </createIndex>
+    </changeSet>
+
+    <changeSet id="createIndex refunds.charge_id" author="">
+        <createIndex indexName="idx_refunds_charge_id"
+                     tableName="refunds"
+                     unique="false">
+            <column name="charge_id" type="bigserial"/>
+        </createIndex>
+    </changeSet>
+
+    <changeSet id="createIndex card_types.brand" author="">
+        <createIndex indexName="idx_card_types_brand"
+                     tableName="card_types"
+                     unique="false">
+            <column name="brand" type="text"/>
+        </createIndex>
+    </changeSet>
 </databaseChangeLog>
