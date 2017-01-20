@@ -49,6 +49,7 @@ public class ChargeEntity extends AbstractEntity {
     private GatewayAccountEntity gatewayAccount;
 
     @OneToMany(mappedBy = "chargeEntity", fetch = FetchType.EAGER)
+    @OrderBy("createdDate")
     private List<RefundEntity> refunds = new ArrayList<>();
 
     @OneToMany(mappedBy = "chargeEntity")
