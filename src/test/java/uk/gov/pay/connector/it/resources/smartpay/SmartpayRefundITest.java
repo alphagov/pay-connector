@@ -410,8 +410,7 @@ public class SmartpayRefundITest extends ChargingITestBase {
                 .body("refund_id", is(notNullValue()))
                 .body("amount", is(refundAmount.intValue()))
                 .body("status", is("submitted"))
-                .body("created_date", matchesPattern("^\\d{4}-\\d{2}-\\d{2}T\\d{2}:\\d{2}:\\d{2}.\\d{3}Z"))
-                .body("created_date", isWithin(10, SECONDS));
+                .body("created_date", is(notNullValue()));
 
         String paymentUrl = format("http://localhost:%s/v1/api/accounts/%s/charges/%s",
                 app.getLocalPort(), defaultTestAccount.getAccountId(), defaultTestCharge.getExternalChargeId());
