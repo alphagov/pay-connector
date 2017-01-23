@@ -11,3 +11,5 @@ staging-1.FAILED-105.status=failed
 alpha_release-105.approver=F04F02A1
 
 alpha_release-105.approve-date=2017-01-23:10:18:17
+
+staging-1.tag=FAILED-105
