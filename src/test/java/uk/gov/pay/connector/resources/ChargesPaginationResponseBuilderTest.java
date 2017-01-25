@@ -53,11 +53,11 @@ public class ChargesPaginationResponseBuilderTest {
                 .assertThat("$.total", is(500))
                 .assertThat("$.count", is(0))
                 .assertThat("$.page", is(2))
-                .assertThat("$._links.next_page.href", is("http://app.com/v1/api/accounts/1/charges?page=3&display_size=100"))
-                .assertThat("$._links.prev_page.href", is("http://app.com/v1/api/accounts/1/charges?page=1&display_size=100"))
-                .assertThat("$._links.last_page.href", is("http://app.com/v1/api/accounts/1/charges?page=5&display_size=100"))
-                .assertThat("$._links.first_page.href", is("http://app.com/v1/api/accounts/1/charges?page=1&display_size=100"))
-                .assertThat("$._links.self.href", is("http://app.com/v1/api/accounts/1/charges?page=2&display_size=100"))
+                .assertThat("$._links.next_page.href", is("https://app.com/v1/api/accounts/1/charges?page=3&display_size=100"))
+                .assertThat("$._links.prev_page.href", is("https://app.com/v1/api/accounts/1/charges?page=1&display_size=100"))
+                .assertThat("$._links.last_page.href", is("https://app.com/v1/api/accounts/1/charges?page=5&display_size=100"))
+                .assertThat("$._links.first_page.href", is("https://app.com/v1/api/accounts/1/charges?page=1&display_size=100"))
+                .assertThat("$._links.self.href", is("https://app.com/v1/api/accounts/1/charges?page=2&display_size=100"))
                 .assertThat("$.results.*", hasSize(0));
     }
 }

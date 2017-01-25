@@ -1,6 +1,8 @@
 package uk.gov.pay.connector.resources;
 
 import black.door.hate.HalRepresentation;
+import org.apache.http.conn.scheme.Scheme;
+import org.eclipse.jetty.http.HttpScheme;
 import uk.gov.pay.connector.dao.ChargeSearchParams;
 import uk.gov.pay.connector.model.ChargeResponse;
 
@@ -10,6 +12,7 @@ import java.net.URI;
 import java.util.List;
 
 import static javax.ws.rs.core.Response.ok;
+import static org.eclipse.jetty.http.HttpScheme.*;
 import static uk.gov.pay.connector.resources.ApiPaths.CHARGES_API_PATH;
 
 public class ChargesPaginationResponseBuilder {
@@ -85,6 +88,7 @@ public class ChargesPaginationResponseBuilder {
 
     private URI uriWithParams(String params) {
         return uriInfo.getBaseUriBuilder()
+                .scheme(HTTPS.asString())
                 .path(CHARGES_API_PATH)
                 .replaceQuery(params)
                 .build(searchParams.getGatewayAccountId());
