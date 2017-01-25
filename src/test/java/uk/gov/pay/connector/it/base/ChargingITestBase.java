@@ -77,7 +77,7 @@ public class ChargingITestBase {
         app.getDatabaseTestHelper().addGatewayAccount(accountId, paymentProvider, credentials);
     }
 
-    protected String cardDetailsWithMinimalAddress(String cardNumber, String cardBrand) {
+    protected String authorisationDetailsWithMinimalAddress(String cardNumber, String cardBrand) {
         JsonObject addressObject = new JsonObject();
 
         addressObject.addProperty("line1", "The Money Pool");
@@ -85,26 +85,28 @@ public class ChargingITestBase {
         addressObject.addProperty("postcode", "DO11 4RS");
         addressObject.addProperty("country", "GB");
 
-        JsonObject cardDetails = new JsonObject();
-        cardDetails.addProperty("card_number", cardNumber);
-        cardDetails.addProperty("cvc", "123");
-        cardDetails.addProperty("expiry_date", "12/21");
-        cardDetails.addProperty("cardholder_name", "Mr. Payment");
-        cardDetails.addProperty("card_brand", cardBrand);
-        cardDetails.add("address", addressObject);
-        return toJson(cardDetails);
+        JsonObject authorisationDetails = new JsonObject();
+        authorisationDetails.addProperty("card_number", cardNumber);
+        authorisationDetails.addProperty("cvc", "123");
+        authorisationDetails.addProperty("expiry_date", "12/21");
+        authorisationDetails.addProperty("cardholder_name", "Mr. Payment");
+        authorisationDetails.addProperty("card_brand", cardBrand);
+        authorisationDetails.add("address", addressObject);
+        authorisationDetails.addProperty("accept_header", "text/html");
+        authorisationDetails.addProperty("user_agent_header", "Mozilla/5.0");
+        return toJson(authorisationDetails);
     }
 
-    protected String buildJsonCardDetailsFor(String cardNumber, String cardBrand) {
-        return buildJsonCardDetailsFor(cardNumber, "123", "11/99", cardBrand);
+    protected String buildJsonAuthorisationDetailsFor(String cardNumber, String cardBrand) {
+        return buildJsonAuthorisationDetailsFor(cardNumber, "123", "11/99", cardBrand);
     }
 
-    protected String buildJsonCardDetailsFor(String cardHolderName, String cardNumber, String cardBrand) {
-        return buildJsonCardDetailsFor(cardHolderName, cardNumber, "123", "11/99", cardBrand, "The Money Pool", null, "London", null, "DO11 4RS", "GB");
+    protected String buildJsonAuthorisationDetailsFor(String cardHolderName, String cardNumber, String cardBrand) {
+        return buildJsonAuthorisationDetailsFor(cardHolderName, cardNumber, "123", "11/99", cardBrand, "The Money Pool", null, "London", null, "DO11 4RS", "GB");
     }
 
-    protected String buildJsonCardDetailsFor(String cardNumber, String cvc, String expiryDate, String cardBrand) {
-        return buildJsonCardDetailsFor("Mr. Payment", cardNumber, cvc, expiryDate, cardBrand, "The Money Pool", null, "London", null, "DO11 4RS", "GB");
+    protected String buildJsonAuthorisationDetailsFor(String cardNumber, String cvc, String expiryDate, String cardBrand) {
+        return buildJsonAuthorisationDetailsFor("Mr. Payment", cardNumber, cvc, expiryDate, cardBrand, "The Money Pool", null, "London", null, "DO11 4RS", "GB");
     }
 
     protected ValidatableResponse getCharge(String chargeId) {
@@ -156,8 +158,8 @@ public class ChargingITestBase {
                 .contentType(JSON);
     }
 
-    protected String buildJsonCardDetailsWithFullAddress() {
-        return buildJsonCardDetailsFor(
+    protected String buildJsonAuthorisationDetailsWithFullAddress() {
+        return buildJsonAuthorisationDetailsFor(
                 "Scrooge McDuck",
                 "4242424242424242",
                 "123",
@@ -172,7 +174,8 @@ public class ChargingITestBase {
         );
     }
 
-    protected String buildJsonCardDetailsFor(String cardHolderName, String cardNumber, String cvc, String expiryDate, String cardBrand, String line1, String line2, String city, String county, String postCode, String countryCode) {
+    protected String buildJsonAuthorisationDetailsFor(String cardHolderName, String cardNumber, String cvc, String expiryDate, String cardBrand,
+                                                      String line1, String line2, String city, String county, String postCode, String countryCode) {
         JsonObject addressObject = new JsonObject();
 
         addressObject.addProperty("line1", line1);
@@ -182,22 +185,24 @@ public class ChargingITestBase {
         addressObject.addProperty("postcode", postCode);
         addressObject.addProperty("country", countryCode);
 
-        JsonObject cardDetails = new JsonObject();
-        cardDetails.addProperty("card_number", cardNumber);
-        cardDetails.addProperty("cvc", cvc);
-        cardDetails.addProperty("expiry_date", expiryDate);
-        cardDetails.addProperty("card_brand", cardBrand);
-        cardDetails.addProperty("cardholder_name", cardHolderName);
-        cardDetails.add("address", addressObject);
-        return toJson(cardDetails);
+        JsonObject authorisationDetails = new JsonObject();
+        authorisationDetails.addProperty("card_number", cardNumber);
+        authorisationDetails.addProperty("cvc", cvc);
+        authorisationDetails.addProperty("expiry_date", expiryDate);
+        authorisationDetails.addProperty("card_brand", cardBrand);
+        authorisationDetails.addProperty("cardholder_name", cardHolderName);
+        authorisationDetails.add("address", addressObject);
+        authorisationDetails.addProperty("accept_header", "text/html");
+        authorisationDetails.addProperty("user_agent_header", "Mozilla/5.0");
+        return toJson(authorisationDetails);
     }
 
-    protected void shouldReturnErrorForCardDetailsWithMessage(String cardDetails, String errorMessage, String status) throws Exception {
+    protected void shouldReturnErrorForAuthorisationDetailsWithMessage(String authorisationDetails, String errorMessage, String status) throws Exception {
 
         String chargeId = createNewChargeWith(ENTERING_CARD_DETAILS, null);
 
         givenSetup()
-                .body(cardDetails)
+                .body(authorisationDetails)
                 .post(authoriseChargeUrlFor(chargeId))
                 .then()
                 .statusCode(BAD_REQUEST.getStatusCode())

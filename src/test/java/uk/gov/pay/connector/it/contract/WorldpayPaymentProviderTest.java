@@ -11,7 +11,7 @@ import uk.gov.pay.connector.app.GatewayCredentialsConfig;
 import uk.gov.pay.connector.model.CancelGatewayRequest;
 import uk.gov.pay.connector.model.CaptureGatewayRequest;
 import uk.gov.pay.connector.model.RefundGatewayRequest;
-import uk.gov.pay.connector.model.domain.Card;
+import uk.gov.pay.connector.model.domain.AuthorisationDetails;
 import uk.gov.pay.connector.model.domain.ChargeEntity;
 import uk.gov.pay.connector.model.domain.GatewayAccountEntity;
 import uk.gov.pay.connector.model.domain.RefundEntity;
@@ -38,7 +38,7 @@ import static org.mockito.Mockito.*;
 import static uk.gov.pay.connector.model.domain.ChargeEntityFixture.aValidChargeEntity;
 import static uk.gov.pay.connector.model.domain.GatewayAccountEntity.Type.TEST;
 import static uk.gov.pay.connector.service.GatewayClient.createGatewayClient;
-import static uk.gov.pay.connector.util.CardUtils.aValidCard;
+import static uk.gov.pay.connector.util.CardUtils.aValidAuthorisationDetails;
 import static uk.gov.pay.connector.util.SystemUtils.envOrThrow;
 
 public class WorldpayPaymentProviderTest {
@@ -161,19 +161,19 @@ public class WorldpayPaymentProviderTest {
                 .withGatewayAccountEntity(gatewayAccountEntity)
                 .build();
 
-        AuthorisationGatewayRequest request = new AuthorisationGatewayRequest(charge, aValidCard());
+        AuthorisationGatewayRequest request = new AuthorisationGatewayRequest(charge, aValidAuthorisationDetails());
         GatewayResponse<WorldpayOrderStatusResponse> response = connector.authorise(request);
 
         assertFalse(response.isSuccessful());
     }
 
     private AuthorisationGatewayRequest getCardAuthorisationRequest() {
-        Card card = aValidCard();
+        AuthorisationDetails authorisationDetails = aValidAuthorisationDetails();
         ChargeEntity charge = aValidChargeEntity()
                 .withTransactionId(randomUUID().toString())
                 .withGatewayAccountEntity(validGatewayAccount)
                 .build();
-        return new AuthorisationGatewayRequest(charge, card);
+        return new AuthorisationGatewayRequest(charge, authorisationDetails);
     }
 
     private GatewayResponse<WorldpayOrderStatusResponse> successfulWorldpayCardAuth(WorldpayPaymentProvider connector) {

@@ -43,24 +43,24 @@ public class CardAuthoriseResourceITest extends ChargingITestBase {
             "6011000990139424",
             "36148900647913"};
 
-    private String validCardDetails = buildJsonCardDetailsFor(VALID_SANDBOX_CARD_LIST[0], "visa");
+    private String validCardDetails = buildJsonAuthorisationDetailsFor(VALID_SANDBOX_CARD_LIST[0], "visa");
 
     @Test
     public void shouldAuthoriseCharge_ForValidCards() throws Exception {
         for (String cardNo : VALID_SANDBOX_CARD_LIST) {
-            shouldAuthoriseChargeFor(buildJsonCardDetailsFor(cardNo, "visa"));
+            shouldAuthoriseChargeFor(buildJsonAuthorisationDetailsFor(cardNo, "visa"));
         }
     }
 
     @Test
     public void shouldAuthoriseCharge_ForAValidAmericanExpress() throws Exception {
-        shouldAuthoriseChargeFor(buildJsonCardDetailsFor("371449635398431", "1234", "11/99", "american-express"));
+        shouldAuthoriseChargeFor(buildJsonAuthorisationDetailsFor("371449635398431", "1234", "11/99", "american-express"));
     }
 
     @Test
     public void shouldStoreCardDetailsForAuthorisedCharge() throws Exception {
         String cardBrand = "visa";
-        String externalChargeId = shouldAuthoriseChargeFor(buildJsonCardDetailsFor("4444333322221111", cardBrand));
+        String externalChargeId = shouldAuthoriseChargeFor(buildJsonAuthorisationDetailsFor("4444333322221111", cardBrand));
         Long chargeId = Long.valueOf(StringUtils.removeStart(externalChargeId, "charge-"));
         Map<String, Object> chargeCardDetails = app.getDatabaseTestHelper().getChargeCardDetailsByChargeId(chargeId);
         assertThat(chargeCardDetails, hasEntry("last_digits_card_number", "1111"));
@@ -69,38 +69,38 @@ public class CardAuthoriseResourceITest extends ChargingITestBase {
 
     @Test
     public void shouldNotAuthoriseCard_ForSpecificCardNumber1() throws Exception {
-        String cardDetailsToReject = buildJsonCardDetailsFor("4000000000000002", "visa");
+        String cardDetailsToReject = buildJsonAuthorisationDetailsFor("4000000000000002", "visa");
 
         String expectedErrorMessage = "This transaction was declined.";
         String expectedChargeStatus = AUTHORISATION_REJECTED.getValue();
-        shouldReturnErrorForCardDetailsWithMessage(cardDetailsToReject, expectedErrorMessage, expectedChargeStatus);
+        shouldReturnErrorForAuthorisationDetailsWithMessage(cardDetailsToReject, expectedErrorMessage, expectedChargeStatus);
     }
 
     @Test
     public void shouldNotAuthoriseCard_ForSpecificCardNumber2() throws Exception {
-        String cardDetailsToReject = buildJsonCardDetailsFor("4000000000000119", "visa");
+        String cardDetailsToReject = buildJsonAuthorisationDetailsFor("4000000000000119", "visa");
 
         String expectedErrorMessage = "This transaction could be not be processed.";
         String expectedChargeStatus = AUTHORISATION_ERROR.getValue();
-        shouldReturnErrorForCardDetailsWithMessage(cardDetailsToReject, expectedErrorMessage, expectedChargeStatus);
+        shouldReturnErrorForAuthorisationDetailsWithMessage(cardDetailsToReject, expectedErrorMessage, expectedChargeStatus);
     }
 
     @Test
     public void shouldAuthoriseCharge_WithMinimalAddress() throws Exception {
-        String cardDetails = cardDetailsWithMinimalAddress(VALID_SANDBOX_CARD_LIST[0], "visa");
+        String cardDetails = authorisationDetailsWithMinimalAddress(VALID_SANDBOX_CARD_LIST[0], "visa");
         shouldAuthoriseChargeFor(cardDetails);
     }
 
     @Test
     public void shouldAuthoriseCharge_ForValidCardWithFullAddress() throws Exception {
-        String validCardDetails = buildJsonCardDetailsWithFullAddress();
+        String validCardDetails = buildJsonAuthorisationDetailsWithFullAddress();
         shouldAuthoriseChargeFor(validCardDetails);
     }
 
     @Test
     public void shouldRejectRandomCardNumber() throws Exception {
         String chargeId = createNewChargeWith(ENTERING_CARD_DETAILS, null);
-        String randomCardNumberDetails = buildJsonCardDetailsFor("1111111111111119234", "visa");
+        String randomCardNumberDetails = buildJsonAuthorisationDetailsFor("1111111111111119234", "visa");
 
         shouldReturnErrorFor(chargeId, randomCardNumberDetails, "Unsupported card details.");
         assertFrontendChargeStatusIs(chargeId, AUTHORISATION_ERROR.getValue());
@@ -109,7 +109,7 @@ public class CardAuthoriseResourceITest extends ChargingITestBase {
     @Test
     public void shouldReturnError_WhenCardNumberLongerThanMaximumExpected() throws Exception {
         String chargeId = createNewChargeWith(ENTERING_CARD_DETAILS, null);
-        String randomCardNumberDetails = buildJsonCardDetailsFor("11111111111111192345", "visa");
+        String randomCardNumberDetails = buildJsonAuthorisationDetailsFor("11111111111111192345", "visa");
 
         shouldReturnErrorFor(chargeId, randomCardNumberDetails, "Values do not match expected format/length.");
         assertFrontendChargeStatusIs(chargeId, ENTERING_CARD_DETAILS.getValue());
@@ -118,7 +118,7 @@ public class CardAuthoriseResourceITest extends ChargingITestBase {
     @Test
     public void shouldReturnError_WhenCvcIsMoreThan4Digits() throws Exception {
         String chargeId = createNewChargeWith(ENTERING_CARD_DETAILS, null);
-        String randomCardNumberDetails = buildJsonCardDetailsFor("4444333322221111", "12345", "11/99", "visa");
+        String randomCardNumberDetails = buildJsonAuthorisationDetailsFor("4444333322221111", "12345", "11/99", "visa");
 
         shouldReturnErrorFor(chargeId, randomCardNumberDetails, "Values do not match expected format/length.");
         assertFrontendChargeStatusIs(chargeId, ENTERING_CARD_DETAILS.getValue());
@@ -127,7 +127,7 @@ public class CardAuthoriseResourceITest extends ChargingITestBase {
     @Test
     public void shouldReturnError_WhenCvcIsLessThan3Digits() throws Exception {
         String chargeId = createNewChargeWith(ENTERING_CARD_DETAILS, null);
-        String randomCardNumberDetails = buildJsonCardDetailsFor("4444333322221111", "12", "11/99", "visa");
+        String randomCardNumberDetails = buildJsonAuthorisationDetailsFor("4444333322221111", "12", "11/99", "visa");
 
         shouldReturnErrorFor(chargeId, randomCardNumberDetails, "Values do not match expected format/length.");
         assertFrontendChargeStatusIs(chargeId, ENTERING_CARD_DETAILS.getValue());
@@ -136,7 +136,7 @@ public class CardAuthoriseResourceITest extends ChargingITestBase {
     @Test
     public void shouldReturnError_WhenCardNumberShorterThanMinimumExpected() throws Exception {
         String chargeId = createNewChargeWith(ENTERING_CARD_DETAILS, null);
-        String randomCardNumberDetails = buildJsonCardDetailsFor("11111111111", "visa");
+        String randomCardNumberDetails = buildJsonAuthorisationDetailsFor("11111111111", "visa");
 
         shouldReturnErrorFor(chargeId, randomCardNumberDetails, "Values do not match expected format/length.");
         assertFrontendChargeStatusIs(chargeId, ENTERING_CARD_DETAILS.getValue());
@@ -145,7 +145,7 @@ public class CardAuthoriseResourceITest extends ChargingITestBase {
     @Test
     public void shouldReturnErrorAndDoNotUpdateChargeStatus_IfCardDetailsAreInvalid() throws Exception {
         String chargeId = createNewCharge();
-        String detailsWithInvalidExpiryDate = buildJsonCardDetailsFor("4242424242424242", "123", "1299");
+        String detailsWithInvalidExpiryDate = buildJsonAuthorisationDetailsFor("4242424242424242", "123", "1299");
 
         shouldReturnErrorFor(chargeId, detailsWithInvalidExpiryDate, "Values do not match expected format/length.");
 
@@ -223,7 +223,7 @@ public class CardAuthoriseResourceITest extends ChargingITestBase {
         String charge2 = createNewChargeWith(ENTERING_CARD_DETAILS, null);
 
         RequestSpecification firstChargeAuthorize = givenSetup()
-                .body(buildJsonCardDetailsFor(
+                .body(buildJsonAuthorisationDetailsFor(
                         "Charge1 Name",
                         "4242424242424242",
                         "123",
@@ -238,7 +238,7 @@ public class CardAuthoriseResourceITest extends ChargingITestBase {
                 ));
 
         RequestSpecification secondChargeAuthorize = givenSetup()
-                .body(buildJsonCardDetailsFor(
+                .body(buildJsonAuthorisationDetailsFor(
                         "Charge2 Name",
                         "4444333322221111",
                         "456",

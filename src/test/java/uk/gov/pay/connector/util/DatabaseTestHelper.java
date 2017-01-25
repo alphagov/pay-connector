@@ -5,7 +5,7 @@ import org.apache.commons.lang3.RandomUtils;
 import org.postgresql.util.PGobject;
 import org.skife.jdbi.v2.DBI;
 import org.skife.jdbi.v2.util.StringMapper;
-import uk.gov.pay.connector.model.domain.Card;
+import uk.gov.pay.connector.model.domain.AuthorisationDetails;
 import uk.gov.pay.connector.model.domain.ChargeStatus;
 import uk.gov.pay.connector.model.domain.GatewayAccountEntity;
 
@@ -200,10 +200,10 @@ public class DatabaseTestHelper {
         return ret;
     }
 
-    public void updateChargeCardDetails(Long chargeId, Card cardDetails) {
-        updateChargeCardDetails(chargeId, cardDetails.getCardBrand(), cardDetails.getCardNo(), cardDetails.getCardHolder(), cardDetails.getEndDate(),
-                cardDetails.getAddress().getLine1(), cardDetails.getAddress().getLine2(), cardDetails.getAddress().getPostcode(),
-                cardDetails.getAddress().getCity(), cardDetails.getAddress().getCounty(), cardDetails.getAddress().getCountry());
+    public void updateChargeCardDetails(Long chargeId, AuthorisationDetails authorisationDetails) {
+        updateChargeCardDetails(chargeId, authorisationDetails.getCardBrand(), authorisationDetails.getCardNo(), authorisationDetails.getCardHolder(), authorisationDetails.getEndDate(),
+                authorisationDetails.getAddress().getLine1(), authorisationDetails.getAddress().getLine2(), authorisationDetails.getAddress().getPostcode(),
+                authorisationDetails.getAddress().getCity(), authorisationDetails.getAddress().getCounty(), authorisationDetails.getAddress().getCountry());
     }
 
     public Map<String, Object> getChargeCardDetails(long chargeId) {

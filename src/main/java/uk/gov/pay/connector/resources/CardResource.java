@@ -3,7 +3,7 @@ package uk.gov.pay.connector.resources;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import uk.gov.pay.connector.model.GatewayError;
-import uk.gov.pay.connector.model.domain.Card;
+import uk.gov.pay.connector.model.domain.AuthorisationDetails;
 import uk.gov.pay.connector.model.gateway.GatewayResponse;
 import uk.gov.pay.connector.service.*;
 import uk.gov.pay.connector.util.ResponseUtil;
@@ -15,7 +15,7 @@ import java.util.Optional;
 
 import static javax.ws.rs.core.MediaType.APPLICATION_JSON;
 import static uk.gov.pay.connector.resources.ApiPaths.*;
-import static uk.gov.pay.connector.resources.CardDetailsValidator.isWellFormattedCardDetails;
+import static uk.gov.pay.connector.resources.AuthorisationDetailsValidator.isWellFormatted;
 import static uk.gov.pay.connector.util.ResponseUtil.badRequestResponse;
 import static uk.gov.pay.connector.util.ResponseUtil.serviceErrorResponse;
 
@@ -37,12 +37,12 @@ public class CardResource {
     @Path(FRONTEND_CHARGE_AUTHORIZE_API_PATH)
     @Consumes(APPLICATION_JSON)
     @Produces(APPLICATION_JSON)
-    public Response authoriseCharge(@PathParam("chargeId") String chargeId, Card cardDetails) {
+    public Response authoriseCharge(@PathParam("chargeId") String chargeId, AuthorisationDetails authorisationDetails) {
 
-        if (!isWellFormattedCardDetails(cardDetails)) {
+        if (!isWellFormatted(authorisationDetails)) {
             return badRequestResponse("Values do not match expected format/length.");
         }
-        GatewayResponse<BaseAuthoriseResponse> response = cardAuthoriseService.doAuthorise(chargeId, cardDetails);
+        GatewayResponse<BaseAuthoriseResponse> response = cardAuthoriseService.doAuthorise(chargeId, authorisationDetails);
 
         Optional<BaseAuthoriseResponse> baseResponse = response.getBaseResponse();
         if (baseResponse.isPresent() && !baseResponse.get().isAuthorised()) {

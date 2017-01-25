@@ -2,7 +2,7 @@ package uk.gov.pay.connector.service;
 
 
 import uk.gov.pay.connector.model.OrderRequestType;
-import uk.gov.pay.connector.model.domain.Card;
+import uk.gov.pay.connector.model.domain.AuthorisationDetails;
 import uk.gov.pay.connector.util.templates.PayloadBuilder;
 
 import static org.apache.commons.lang3.StringUtils.defaultString;
@@ -12,7 +12,7 @@ abstract public class OrderRequestBuilder {
         private String transactionId;
         private String merchantCode;
         private String description;
-        private Card card;
+        private AuthorisationDetails authorisationDetails;
         private String amount;
         private String paymentPlatformReference;
 
@@ -40,12 +40,12 @@ abstract public class OrderRequestBuilder {
             this.description = description;
         }
 
-        public Card getCard() {
-            return card;
+        public AuthorisationDetails getAuthorisationDetails() {
+            return authorisationDetails;
         }
 
-        public void setCard(Card card) {
-            this.card = card;
+        public void setAuthorisationDetails(AuthorisationDetails authorisationDetails) {
+            this.authorisationDetails = authorisationDetails;
         }
 
         public String getAmount() {
@@ -97,8 +97,8 @@ abstract public class OrderRequestBuilder {
         return this;
     }
 
-    public OrderRequestBuilder withCard(Card card) {
-        templateData.setCard(card);
+    public OrderRequestBuilder withAuthorisationDetails(AuthorisationDetails authorisationDetails) {
+        templateData.setAuthorisationDetails(authorisationDetails);
         return this;
     }
 

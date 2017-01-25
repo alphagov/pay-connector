@@ -8,28 +8,35 @@
             <amount currencyCode="GBP" exponent="2" value="${amount}"/>
             <paymentDetails>
                 <VISA-SSL>
-                    <cardNumber>${card.cardNo}</cardNumber>
+                    <cardNumber>${authorisationDetails.cardNo}</cardNumber>
                     <expiryDate>
-                        <date month="${card.endDate?split('/')?first}" year="20${card.endDate?split('/')?last}"/>
+                        <date month="${authorisationDetails.endDate?split('/')?first}" year="20${authorisationDetails.endDate?split('/')?last}"/>
                     </expiryDate>
-                    <cardHolderName>${card.cardHolder?xml}</cardHolderName>
-                    <cvc>${card.cvc}</cvc>
+                    <cardHolderName>${authorisationDetails.cardHolder?xml}</cardHolderName>
+                    <cvc>${authorisationDetails.cvc}</cvc>
                     <cardAddress>
                         <address>
-                            <address1>${card.address.line1?xml}</address1>
-                            <#if card.address.line2??>
-                            <address2>${card.address.line2?xml}</address2>
+                            <address1>${authorisationDetails.address.line1?xml}</address1>
+                            <#if authorisationDetails.address.line2??>
+                            <address2>${authorisationDetails.address.line2?xml}</address2>
                             </#if>
-                            <postalCode>${card.address.postcode?xml}</postalCode>
-                            <city>${card.address.city?xml}</city>
-                            <#if card.address.county??>
-                            <state>${card.address.county?xml}</state>
+                            <postalCode>${authorisationDetails.address.postcode?xml}</postalCode>
+                            <city>${authorisationDetails.address.city?xml}</city>
+                            <#if authorisationDetails.address.county??>
+                            <state>${authorisationDetails.address.county?xml}</state>
                             </#if>
-                            <countryCode>${card.address.country?xml}</countryCode>
+                            <countryCode>${authorisationDetails.address.country?xml}</countryCode>
                         </address>
                     </cardAddress>
                 </VISA-SSL>
+                <session id="${sessionId?xml}"/>
             </paymentDetails>
+            <shopper>
+                <browser>
+                    <acceptHeader>${authorisationDetails.acceptHeader?xml}</acceptHeader>
+                    <userAgentHeader>${authorisationDetails.userAgentHeader?xml}</userAgentHeader>
+                </browser>
+            </shopper>
         </order>
     </submit>
 </paymentService>

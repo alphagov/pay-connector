@@ -1,22 +1,20 @@
 package uk.gov.pay.connector.model.domain;
 
-import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import com.fasterxml.jackson.annotation.JsonProperty;
 
-@JsonIgnoreProperties(ignoreUnknown = true)
-public class Card {
+public class AuthorisationDetails {
 
     private String cardNo;
     private String cardHolder;
     private String cvc;
     private String endDate;
-
     private Address address;
-
     private String cardBrand;
+    private String userAgentHeader;
+    private String acceptHeader;
 
-    public static Card aCard() {
-        return new Card();
+    public static AuthorisationDetails anAuthorisationDetails() {
+        return new AuthorisationDetails();
     }
 
     @JsonProperty("card_number")
@@ -49,6 +47,16 @@ public class Card {
         this.address = address;
     }
 
+    @JsonProperty("user_agent_header")
+    public void setUserAgentHeader(String userAgentHeader) {
+        this.userAgentHeader = userAgentHeader;
+    }
+
+    @JsonProperty("accept_header")
+    public void setAcceptHeader(String acceptHeader) {
+        this.acceptHeader = acceptHeader;
+    }
+
     public String getCardNo() {
         return cardNo;
     }
@@ -71,5 +79,13 @@ public class Card {
 
     public String getCardBrand() {
         return cardBrand;
+    }
+
+    public String getUserAgentHeader() {
+        return userAgentHeader;
+    }
+
+    public String getAcceptHeader() {
+        return acceptHeader;
     }
 }

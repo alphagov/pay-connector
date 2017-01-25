@@ -48,7 +48,7 @@ public class SmartpayCardResourceITest extends ChargingITestBase {
 
         String expectedErrorMessage = "This transaction was declined.";
         String expectedChargeStatus = AUTHORISATION_REJECTED.getValue();
-        shouldReturnErrorForCardDetailsWithMessage(cardWithWrongCVC, expectedErrorMessage, expectedChargeStatus);
+        shouldReturnErrorForAuthorisationDetailsWithMessage(cardWithWrongCVC, expectedErrorMessage, expectedChargeStatus);
     }
 
     @Test
@@ -124,7 +124,7 @@ public class SmartpayCardResourceITest extends ChargingITestBase {
 
     private String buildCardDetailsWith(String cvc) {
 
-        return buildJsonCardDetailsFor(
+        return buildJsonAuthorisationDetailsFor(
                 "Mr.Payment",
                 "5555444433331111",
                 cvc,

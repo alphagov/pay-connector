@@ -11,20 +11,20 @@
                     <ns2:value>${amount}</ns2:value>
                 </ns1:amount>
                 <ns1:card>
-                    <ns1:cvc>${card.cvc}</ns1:cvc>
-                    <ns1:expiryMonth>${card.endDate?split('/')?first}</ns1:expiryMonth>
-                    <ns1:expiryYear>20${card.endDate?split('/')?last}</ns1:expiryYear>
-                    <ns1:holderName>${card.cardHolder?xml}</ns1:holderName>
-                    <ns1:number>${card.cardNo}</ns1:number>
+                    <ns1:cvc>${authorisationDetails.cvc}</ns1:cvc>
+                    <ns1:expiryMonth>${authorisationDetails.endDate?split('/')?first}</ns1:expiryMonth>
+                    <ns1:expiryYear>20${authorisationDetails.endDate?split('/')?last}</ns1:expiryYear>
+                    <ns1:holderName>${authorisationDetails.cardHolder?xml}</ns1:holderName>
+                    <ns1:number>${authorisationDetails.cardNo}</ns1:number>
                     <ns1:billingAddress>
-                        <ns2:houseNumberOrName>${card.address.line1?xml}</ns2:houseNumberOrName>
-                        <ns2:street><#if card.address.line2??>${card.address.line2?xml}</#if></ns2:street>
-                        <ns2:postalCode>${card.address.postcode?xml}</ns2:postalCode>
-                        <ns2:stateOrProvince><#if card.address.county??>${card.address.county?xml}</#if></ns2:stateOrProvince>
-                        <ns2:city>${card.address.city?xml}</ns2:city>
-                        <ns2:country>${card.address.country?xml}</ns2:country>
+                        <ns2:houseNumberOrName>${authorisationDetails.address.line1?xml}</ns2:houseNumberOrName>
+                        <ns2:street><#if authorisationDetails.address.line2??>${authorisationDetails.address.line2?xml}</#if></ns2:street>
+                        <ns2:postalCode>${authorisationDetails.address.postcode?xml}</ns2:postalCode>
+                        <ns2:stateOrProvince><#if authorisationDetails.address.county??>${authorisationDetails.address.county?xml}</#if></ns2:stateOrProvince>
+                        <ns2:city>${authorisationDetails.address.city?xml}</ns2:city>
+                        <ns2:country>${authorisationDetails.address.country?xml}</ns2:country>
                     </ns1:billingAddress>
-                </ns1:card>
+                  </ns1:card>
                 <ns1:merchantAccount>${merchantCode}</ns1:merchantAccount>
                 <ns1:reference>${paymentPlatformReference?xml}</ns1:reference>
                 <ns1:shopperReference>${description?xml}</ns1:shopperReference>

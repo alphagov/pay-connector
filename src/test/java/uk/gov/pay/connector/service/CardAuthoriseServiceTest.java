@@ -13,7 +13,7 @@ import uk.gov.pay.connector.exception.ChargeNotFoundRuntimeException;
 import uk.gov.pay.connector.exception.ConflictRuntimeException;
 import uk.gov.pay.connector.exception.IllegalStateRuntimeException;
 import uk.gov.pay.connector.exception.OperationAlreadyInProgressRuntimeException;
-import uk.gov.pay.connector.model.domain.Card;
+import uk.gov.pay.connector.model.domain.AuthorisationDetails;
 import uk.gov.pay.connector.model.domain.CardDetailsEntity;
 import uk.gov.pay.connector.model.domain.ChargeEntity;
 import uk.gov.pay.connector.model.domain.ChargeStatus;
@@ -64,9 +64,9 @@ public class CardAuthoriseServiceTest extends CardServiceTest {
         String transactionId = "transaction-id";
         ChargeEntity charge = createNewChargeWith(1L, ENTERING_CARD_DETAILS);
         ChargeEntity reloadedCharge = spy(charge);
-        Card cardDetails = CardUtils.aValidCard();
+        AuthorisationDetails authorisationDetails = CardUtils.aValidAuthorisationDetails();
 
-        GatewayResponse response = anAuthorisationSuccessResponse(charge, reloadedCharge, transactionId, cardDetails);
+        GatewayResponse response = anAuthorisationSuccessResponse(charge, reloadedCharge, transactionId, authorisationDetails);
 
         assertThat(response.isSuccessful(), is(true));
         verify(reloadedCharge).setStatus(AUTHORISATION_SUCCESS);
@@ -90,7 +90,7 @@ public class CardAuthoriseServiceTest extends CardServiceTest {
         when(mockedProviders.byName(charge.getPaymentGatewayName())).thenReturn(mockedPaymentProvider);
         when(mockedPaymentProvider.generateTransactionId()).thenReturn(Optional.of(generatedTransactionId));
 
-        GatewayResponse response = cardAuthorisationService.doAuthorise(charge.getExternalId(), CardUtils.aValidCard());
+        GatewayResponse response = cardAuthorisationService.doAuthorise(charge.getExternalId(), CardUtils.aValidAuthorisationDetails());
 
         assertThat(response.isSuccessful(), is(true));
         verify(reloadedCharge).setStatus(AUTHORISATION_SUCCESS);
@@ -127,8 +127,8 @@ public class CardAuthoriseServiceTest extends CardServiceTest {
         String transactionId = "transaction-id";
         ChargeEntity charge = createNewChargeWith(1L, ENTERING_CARD_DETAILS);
         ChargeEntity reloadedCharge = spy(charge);
-        Card cardDetails = CardUtils.aValidCard();
-        anAuthorisationSuccessResponse(charge, reloadedCharge, transactionId, cardDetails);
+        AuthorisationDetails authorisationDetails = CardUtils.aValidAuthorisationDetails();
+        anAuthorisationSuccessResponse(charge, reloadedCharge, transactionId, authorisationDetails);
 
         verify(reloadedCharge, times(1)).setCardDetails(any(CardDetailsEntity.class));
     }
@@ -160,7 +160,7 @@ public class CardAuthoriseServiceTest extends CardServiceTest {
         when(mockExecutorService.execute(any())).thenReturn(Pair.of(IN_PROGRESS, null));
 
         try {
-            cardAuthorisationService.doAuthorise(charge.getExternalId(), CardUtils.aValidCard());
+            cardAuthorisationService.doAuthorise(charge.getExternalId(), CardUtils.aValidAuthorisationDetails());
             fail("Exception not thrown.");
         } catch (OperationAlreadyInProgressRuntimeException e) {
             Map<String, String> expectedMessage = ImmutableMap.of("message", format("Authorisation for charge already in progress, %s", charge.getExternalId()));
@@ -174,7 +174,7 @@ public class CardAuthoriseServiceTest extends CardServiceTest {
         when(mockedChargeDao.findByExternalId(chargeId))
                 .thenReturn(Optional.empty());
 
-        cardAuthorisationService.doAuthorise(chargeId, CardUtils.aValidCard());
+        cardAuthorisationService.doAuthorise(chargeId, CardUtils.aValidAuthorisationDetails());
     }
 
     @Test(expected = OperationAlreadyInProgressRuntimeException.class)
@@ -186,7 +186,7 @@ public class CardAuthoriseServiceTest extends CardServiceTest {
 
         setupMockExecutorServiceMock();
 
-        cardAuthorisationService.doAuthorise(charge.getExternalId(), CardUtils.aValidCard());
+        cardAuthorisationService.doAuthorise(charge.getExternalId(), CardUtils.aValidAuthorisationDetails());
         verifyNoMoreInteractions(mockedChargeDao, mockedProviders);
     }
 
@@ -199,7 +199,7 @@ public class CardAuthoriseServiceTest extends CardServiceTest {
 
         setupMockExecutorServiceMock();
 
-        cardAuthorisationService.doAuthorise(charge.getExternalId(), CardUtils.aValidCard());
+        cardAuthorisationService.doAuthorise(charge.getExternalId(), CardUtils.aValidAuthorisationDetails());
         verifyNoMoreInteractions(mockedChargeDao, mockedProviders);
     }
 
@@ -212,7 +212,7 @@ public class CardAuthoriseServiceTest extends CardServiceTest {
 
         setupMockExecutorServiceMock();
 
-        cardAuthorisationService.doAuthorise(charge.getExternalId(), CardUtils.aValidCard());
+        cardAuthorisationService.doAuthorise(charge.getExternalId(), CardUtils.aValidAuthorisationDetails());
         verifyNoMoreInteractions(mockedChargeDao, mockedProviders);
     }
 
@@ -228,10 +228,10 @@ public class CardAuthoriseServiceTest extends CardServiceTest {
         when(mockedProviders.byName(charge.getPaymentGatewayName())).thenReturn(mockedPaymentProvider);
         when(mockedPaymentProvider.generateTransactionId()).thenReturn(Optional.empty());
 
-        return cardAuthorisationService.doAuthorise(charge.getExternalId(), CardUtils.aValidCard());
+        return cardAuthorisationService.doAuthorise(charge.getExternalId(), CardUtils.aValidAuthorisationDetails());
     }
 
-    private GatewayResponse anAuthorisationSuccessResponse(ChargeEntity charge, ChargeEntity reloadedCharge, String transactionId, Card cardDetails) {
+    private GatewayResponse anAuthorisationSuccessResponse(ChargeEntity charge, ChargeEntity reloadedCharge, String transactionId, AuthorisationDetails authorisationDetails) {
 
         when(mockedChargeDao.findByExternalId(charge.getExternalId()))
                 .thenReturn(Optional.of(charge));
@@ -245,7 +245,7 @@ public class CardAuthoriseServiceTest extends CardServiceTest {
         when(mockedProviders.byName(charge.getPaymentGatewayName())).thenReturn(mockedPaymentProvider);
         when(mockedPaymentProvider.generateTransactionId()).thenReturn(Optional.empty());
 
-        return cardAuthorisationService.doAuthorise(charge.getExternalId(), cardDetails);
+        return cardAuthorisationService.doAuthorise(charge.getExternalId(), authorisationDetails);
     }
 
     private GatewayResponse anAuthorisationErrorResponse(ChargeEntity charge, ChargeEntity reloadedCharge) {
@@ -258,6 +258,6 @@ public class CardAuthoriseServiceTest extends CardServiceTest {
         when(mockedProviders.byName(charge.getPaymentGatewayName())).thenReturn(mockedPaymentProvider);
         when(mockedPaymentProvider.generateTransactionId()).thenReturn(Optional.empty());
 
-        return cardAuthorisationService.doAuthorise(charge.getExternalId(), CardUtils.aValidCard());
+        return cardAuthorisationService.doAuthorise(charge.getExternalId(), CardUtils.aValidAuthorisationDetails());
     }
 }
