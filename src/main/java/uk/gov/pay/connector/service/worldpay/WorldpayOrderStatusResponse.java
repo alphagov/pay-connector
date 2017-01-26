@@ -11,7 +11,7 @@ import static org.apache.commons.lang3.StringUtils.trim;
 @XmlRootElement(name = "paymentService")
 public class WorldpayOrderStatusResponse implements BaseAuthoriseResponse, BaseInquiryResponse {
 
-    private static final String AUTHORISED = "AUTHORISED";
+    private static final String WORLDPAY_AUTHORISED_EVENT = "WORLDPAY_AUTHORISED_EVENT";
 
     @XmlPath("reply/orderStatus/@orderCode")
     private String transactionId;
@@ -28,6 +28,9 @@ public class WorldpayOrderStatusResponse implements BaseAuthoriseResponse, BaseI
     private String errorCode;
 
     private String errorMessage;
+
+    private String paRequest;
+    private String issuerUrl;
 
     @XmlPath("reply/error/@code")
     public void setErrorCode(String errorCode) {
@@ -49,6 +52,16 @@ public class WorldpayOrderStatusResponse implements BaseAuthoriseResponse, BaseI
         this.errorMessage = errorMessage;
     }
 
+    @XmlPath("/reply/orderStatus/requestInfo/request3DSecure/paRequest/text()")
+    public void set3dsPaRequest(String paRequest) {
+        this.paRequest = paRequest;
+    }
+
+    @XmlPath("/reply/orderStatus/requestInfo/request3DSecure/issuerURL/text()")
+    public void set3dsIssuerUrl(String issuerUrl) {
+        this.issuerUrl = issuerUrl;
+    }
+
     public String getLastEvent() {
         return lastEvent;
     }
@@ -63,7 +76,24 @@ public class WorldpayOrderStatusResponse implements BaseAuthoriseResponse, BaseI
 
     @Override
     public boolean isAuthorised() {
-        return AUTHORISED.equals(lastEvent);
+        return WORLDPAY_AUTHORISED_EVENT.equals(lastEvent);
+    }
+
+    @Override
+    public AuthoriseStatus authoriseStatus() {
+        if (paRequest != null && issuerUrl != null) {
+            return AuthoriseStatus.REQUIRES_3D;
+        }
+
+        if (lastEvent == null) {
+            return AuthoriseStatus.ERROR;
+        }
+
+        if (WORLDPAY_AUTHORISED_EVENT.equals(lastEvent)) {
+            return AuthoriseStatus.AUTHORISED;
+        }
+
+        return AuthoriseStatus.REJECTED;
     }
 
     @Override
@@ -79,5 +109,13 @@ public class WorldpayOrderStatusResponse implements BaseAuthoriseResponse, BaseI
     @Override
     public String getErrorMessage() {
         return trim(errorMessage);
+    }
+
+    public String getPaRequest() {
+        return paRequest;
+    }
+
+    public String getIssuerUrl() {
+        return issuerUrl;
     }
 }

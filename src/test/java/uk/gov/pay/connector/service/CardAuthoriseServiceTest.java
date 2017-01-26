@@ -32,6 +32,7 @@ import java.util.function.Supplier;
 
 import static java.lang.String.format;
 import static org.hamcrest.MatcherAssert.assertThat;
+import static org.hamcrest.Matchers.notNullValue;
 import static org.hamcrest.core.Is.is;
 import static org.junit.Assert.fail;
 import static org.mockito.Matchers.any;
@@ -71,6 +72,14 @@ public class CardAuthoriseServiceTest extends CardServiceTest {
         when(mockedPaymentProvider.authorise(any())).thenReturn(authorisationResponse);
     }
 
+    public void setupPaymentProviderMockFor3ds() {
+        WorldpayOrderStatusResponse worldpayResponse = new WorldpayOrderStatusResponse();
+        worldpayResponse.set3dsPaRequest("pa-req-value-from-provider");
+        worldpayResponse.set3dsIssuerUrl("issuer-url-from-provider");
+        GatewayResponse worldpay3dsResponse = GatewayResponse.with(worldpayResponse);
+        when(mockedPaymentProvider.authorise(any())).thenReturn(worldpay3dsResponse);
+    }
+
     @Test
     public void shouldRespondAuthorisationSuccess() throws Exception {
         String transactionId = "transaction-id";
@@ -84,6 +93,20 @@ public class CardAuthoriseServiceTest extends CardServiceTest {
         verify(reloadedCharge).setStatus(AUTHORISATION_SUCCESS);
         verify(reloadedCharge).setGatewayTransactionId(transactionId);
         verify(reloadedCharge).setCardDetails(any(CardDetailsEntity.class));
+    }
+
+    @Test
+    public void shouldRespondWith3dsResponseFor3dsOrders() {
+        String transactionId = "transaction-id";
+        ChargeEntity charge = createNewChargeWith(1L, ENTERING_CARD_DETAILS);
+        AuthorisationDetails authorisationDetails = CardUtils.aValidAuthorisationDetails();
+
+        GatewayResponse response = anAuthorisation3dsRequiredResponse(charge, transactionId, authorisationDetails);
+
+        assertThat(response.isSuccessful(), is(true));
+        assertThat(charge.getStatus(), is(AUTHORISATION_3DS_REQUIRED.toString()));
+        assertThat(charge.getGatewayTransactionId(), is(transactionId));
+        assertThat(charge.getCardDetails(), is(notNullValue()));
     }
 
     @Test
@@ -256,6 +279,22 @@ public class CardAuthoriseServiceTest extends CardServiceTest {
 
         when(mockedProviders.byName(charge.getPaymentGatewayName())).thenReturn(mockedPaymentProvider);
         when(mockedPaymentProvider.generateTransactionId()).thenReturn(Optional.empty());
+
+        return cardAuthorisationService.doAuthorise(charge.getExternalId(), authorisationDetails);
+    }
+
+    private GatewayResponse anAuthorisation3dsRequiredResponse(ChargeEntity charge, String transactionId, AuthorisationDetails authorisationDetails) {
+
+        when(mockedChargeDao.findByExternalId(charge.getExternalId()))
+                .thenReturn(Optional.of(charge));
+        when(mockedChargeDao.merge(any()))
+                .thenReturn(charge);
+
+        setupMockExecutorServiceMock();
+        setupPaymentProviderMockFor3ds();
+
+        when(mockedProviders.byName(charge.getPaymentGatewayName())).thenReturn(mockedPaymentProvider);
+        when(mockedPaymentProvider.generateTransactionId()).thenReturn(Optional.of(transactionId));
 
         return cardAuthorisationService.doAuthorise(charge.getExternalId(), authorisationDetails);
     }

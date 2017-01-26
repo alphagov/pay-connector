@@ -88,6 +88,11 @@ public class SandboxPaymentProvider extends BasePaymentProvider<BaseResponse> {
             }
 
             @Override
+            public AuthoriseStatus authoriseStatus() {
+                return null;
+            }
+
+            @Override
             public String getTransactionId() {
                 return randomUUID().toString();
             }

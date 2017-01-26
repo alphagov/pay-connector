@@ -13,7 +13,7 @@ final class DefaultStateTransitions extends StateTransitions {
 
             .put(CREATED,               validTransitions(ENTERING_CARD_DETAILS, SYSTEM_CANCELLED, EXPIRED))
             .put(ENTERING_CARD_DETAILS, validTransitions(AUTHORISATION_READY, EXPIRED, USER_CANCELLED, SYSTEM_CANCELLED))
-            .put(AUTHORISATION_READY,   validTransitions(AUTHORISATION_SUCCESS, AUTHORISATION_REJECTED, AUTHORISATION_ERROR))
+            .put(AUTHORISATION_READY,   validTransitions(AUTHORISATION_SUCCESS, AUTHORISATION_REJECTED, AUTHORISATION_ERROR, AUTHORISATION_3DS_REQUIRED))
             .put(AUTHORISATION_SUCCESS, validTransitions(CAPTURE_READY, SYSTEM_CANCEL_READY, USER_CANCEL_READY, EXPIRE_CANCEL_READY))
             .put(CAPTURE_READY,         validTransitions(CAPTURE_SUBMITTED, CAPTURE_ERROR))
             .put(CAPTURE_SUBMITTED,     validTransitions(CAPTURED)) // can this ever be a capture error?

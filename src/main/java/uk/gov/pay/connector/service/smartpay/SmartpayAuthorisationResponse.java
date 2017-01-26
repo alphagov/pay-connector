@@ -25,6 +25,11 @@ public class SmartpayAuthorisationResponse extends SmartpayBaseResponse implemen
     }
 
     @Override
+    public AuthoriseStatus authoriseStatus() {
+        return null;
+    }
+
+    @Override
     public String getTransactionId() {
         return pspReference;
     }

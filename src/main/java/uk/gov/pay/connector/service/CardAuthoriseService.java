@@ -90,8 +90,9 @@ public class CardAuthoriseService extends CardService<BaseAuthoriseResponse> {
         ChargeEntity reloadedCharge = chargeDao.merge(chargeEntity);
 
         ChargeStatus status = operationResponse.getBaseResponse()
-                .map(response -> response.isAuthorised() ? AUTHORISATION_SUCCESS : AUTHORISATION_REJECTED)
-                .orElse(AUTHORISATION_ERROR);
+                .map(BaseAuthoriseResponse::authoriseStatus)
+                .map(BaseAuthoriseResponse.AuthoriseStatus::getMappedChargeStatus)
+                .orElse(ChargeStatus.AUTHORISATION_ERROR);
         String transactionId = operationResponse.getBaseResponse()
                 .map(BaseAuthoriseResponse::getTransactionId).orElse("");
 
