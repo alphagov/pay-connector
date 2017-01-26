@@ -145,7 +145,7 @@ public class GatewayAccountResourceITest extends GatewayAccountResourceTestBase 
                 .body("accounts[0].description", is("a description"))
                 .body("accounts[0].service_name", is("service_name"))
                 .body("accounts[0].analytics_id", is("an analytics id"))
-                .body("accounts[0]._links.self.href", is("http://localhost:" + app.getLocalPort() + ACCOUNTS_API_URL + 100))
+                .body("accounts[0]._links.self.href", is("https://localhost:" + app.getLocalPort() + ACCOUNTS_API_URL + 100))
                 // and credentials should be missing
                 .body("accounts[0].credentials", nullValue())
 
@@ -155,7 +155,7 @@ public class GatewayAccountResourceITest extends GatewayAccountResourceTestBase 
                 .body("accounts[2].description", is("a description"))
                 .body("accounts[2].service_name", is("service_name"))
                 .body("accounts[2].analytics_id", is("an analytics id"))
-                .body("accounts[2]._links.self.href", is("http://localhost:" + app.getLocalPort() + ACCOUNTS_API_URL + 300))
+                .body("accounts[2]._links.self.href", is("https://localhost:" + app.getLocalPort() + ACCOUNTS_API_URL + 300))
                 // and credentials should be missing
                 .body("accounts[2].credentials", nullValue())
 

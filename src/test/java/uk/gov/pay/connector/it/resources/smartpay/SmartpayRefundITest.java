@@ -18,7 +18,6 @@ import java.util.List;
 import java.util.Map;
 
 import static java.lang.String.format;
-import static java.time.temporal.ChronoUnit.SECONDS;
 import static javax.ws.rs.core.Response.Status.*;
 import static org.hamcrest.CoreMatchers.hasItems;
 import static org.hamcrest.CoreMatchers.notNullValue;
@@ -26,9 +25,7 @@ import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.*;
 import static org.hamcrest.core.AllOf.allOf;
 import static org.hamcrest.core.Is.is;
-import static org.hamcrest.text.MatchesPattern.matchesPattern;
 import static uk.gov.pay.connector.matcher.RefundsMatcher.aRefundMatching;
-import static uk.gov.pay.connector.matcher.ZoneDateTimeAsStringWithinMatcher.isWithin;
 import static uk.gov.pay.connector.model.domain.ChargeStatus.CAPTURED;
 import static uk.gov.pay.connector.model.domain.ChargeStatus.ENTERING_CARD_DETAILS;
 import static uk.gov.pay.connector.resources.ApiPaths.REFUNDS_API_PATH;
@@ -287,7 +284,7 @@ public class SmartpayRefundITest extends ChargingITestBase {
                 .withType(RefundStatus.REFUND_SUBMITTED)
                 .insert();
 
-        String paymentUrl = format("http://localhost:%s/v1/api/accounts/%s/charges/%s",
+        String paymentUrl = format("https://localhost:%s/v1/api/accounts/%s/charges/%s",
                 app.getLocalPort(), defaultTestAccount.getAccountId(), defaultTestCharge.getExternalChargeId());
 
         ValidatableResponse validatableResponse = getRefundsFor(defaultTestAccount.getAccountId(),
@@ -412,7 +409,7 @@ public class SmartpayRefundITest extends ChargingITestBase {
                 .body("status", is("submitted"))
                 .body("created_date", is(notNullValue()));
 
-        String paymentUrl = format("http://localhost:%s/v1/api/accounts/%s/charges/%s",
+        String paymentUrl = format("https://localhost:%s/v1/api/accounts/%s/charges/%s",
                 app.getLocalPort(), defaultTestAccount.getAccountId(), defaultTestCharge.getExternalChargeId());
 
         String refundId = response.extract().path("refund_id");

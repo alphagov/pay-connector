@@ -269,7 +269,7 @@ public class SandboxRefundITest extends ChargingITestBase {
                 .body("created_date", matchesPattern("^\\d{4}-\\d{2}-\\d{2}T\\d{2}:\\d{2}:\\d{2}.\\d{3}Z"))
                 .body("created_date", isWithin(10, SECONDS));
 
-        String paymentUrl = format("http://localhost:%s/v1/api/accounts/%s/charges/%s",
+        String paymentUrl = format("https://localhost:%s/v1/api/accounts/%s/charges/%s",
                 app.getLocalPort(), defaultTestAccount.getAccountId(), defaultTestCharge.getExternalChargeId());
 
         String refundId = response.extract().path("refund_id");

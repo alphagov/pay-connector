@@ -88,10 +88,8 @@ public class ChargesPaginationResponseBuilder {
 
     private URI uriWithParams(String params) {
         return uriInfo.getBaseUriBuilder()
-                .scheme(HTTPS.asString())
                 .path(CHARGES_API_PATH)
                 .replaceQuery(params)
                 .build(searchParams.getGatewayAccountId());
     }
-
 }
