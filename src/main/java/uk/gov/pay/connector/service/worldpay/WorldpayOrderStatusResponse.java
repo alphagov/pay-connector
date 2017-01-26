@@ -11,7 +11,7 @@ import static org.apache.commons.lang3.StringUtils.trim;
 @XmlRootElement(name = "paymentService")
 public class WorldpayOrderStatusResponse implements BaseAuthoriseResponse, BaseInquiryResponse {
 
-    private static final String WORLDPAY_AUTHORISED_EVENT = "WORLDPAY_AUTHORISED_EVENT";
+    private static final String WORLDPAY_AUTHORISED_EVENT = "AUTHORISED";
 
     @XmlPath("reply/orderStatus/@orderCode")
     private String transactionId;

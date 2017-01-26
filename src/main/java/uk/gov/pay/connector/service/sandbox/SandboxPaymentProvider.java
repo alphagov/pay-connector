@@ -89,7 +89,7 @@ public class SandboxPaymentProvider extends BasePaymentProvider<BaseResponse> {
 
             @Override
             public AuthoriseStatus authoriseStatus() {
-                return null;
+                return isAuthorised ? AuthoriseStatus.AUTHORISED : AuthoriseStatus.REJECTED;
             }
 
             @Override

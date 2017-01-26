@@ -26,7 +26,7 @@ public class SmartpayAuthorisationResponse extends SmartpayBaseResponse implemen
 
     @Override
     public AuthoriseStatus authoriseStatus() {
-        return null;
+        return AUTHORISED.equals(result) ? AuthoriseStatus.AUTHORISED : AuthoriseStatus.REJECTED;
     }
 
     @Override
