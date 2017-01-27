@@ -44,12 +44,11 @@ public class CardResource {
         }
         GatewayResponse<BaseAuthoriseResponse> response = cardAuthoriseService.doAuthorise(chargeId, authorisationDetails);
 
-        Optional<BaseAuthoriseResponse> baseResponse = response.getBaseResponse();
-        if (baseResponse.isPresent() && !baseResponse.get().isAuthorised()) {
-            return badRequestResponse("This transaction was declined.");
-        }
+        boolean transactionDeclined = response.getBaseResponse()
+                .map(baseResponse -> baseResponse.authoriseStatus() != BaseAuthoriseResponse.AuthoriseStatus.AUTHORISED)
+                .orElse(false);
 
-        return handleGatewayResponse(response);
+        return transactionDeclined ? badRequestResponse("This transaction was declined.") : handleGatewayResponse(response);
     }
 
     @POST
