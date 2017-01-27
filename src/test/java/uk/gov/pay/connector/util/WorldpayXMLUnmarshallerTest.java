@@ -90,6 +90,23 @@ public class WorldpayXMLUnmarshallerTest {
     }
 
     @Test
+    public void shouldUnmarshall3dsResponse() throws Exception {
+        String successPayload = readPayload("templates/worldpay/3ds-response.xml");
+        WorldpayOrderStatusResponse response = XMLUnmarshaller.unmarshall(successPayload, WorldpayOrderStatusResponse.class);
+
+        assertNull(response.getLastEvent());
+        assertNull(response.getRefusedReturnCode());
+        assertNull(response.getRefusedReturnCodeDescription());
+        assertNull(response.getErrorCode());
+        assertNull(response.getErrorMessage());
+
+        assertThat(response.getPaRequest(), is("eJxVUsFuwjAM/ZWK80aSUgpFJogNpHEo2hjTzl"));
+        assertThat(response.getIssuerUrl(), is("https://secure-test.worldpay.com/jsp/test/shopper/ThreeDResponseSimulator.jsp"));
+
+        assertThat(response.authoriseStatus(), is(AuthoriseStatus.REQUIRES_3D));
+    }
+
+    @Test
     public void shouldUnmarshallAAuthorisationFailedResponse() throws Exception {
         String failedPayload = readPayload("templates/worldpay/authorisation-failed-response.xml");
         WorldpayOrderStatusResponse response = XMLUnmarshaller.unmarshall(failedPayload, WorldpayOrderStatusResponse.class);

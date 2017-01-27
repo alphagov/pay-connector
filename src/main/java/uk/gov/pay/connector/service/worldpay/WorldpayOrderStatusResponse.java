@@ -1,5 +1,6 @@
 package uk.gov.pay.connector.service.worldpay;
 
+import org.eclipse.persistence.oxm.annotations.XmlCDATA;
 import org.eclipse.persistence.oxm.annotations.XmlPath;
 import uk.gov.pay.connector.service.BaseAuthoriseResponse;
 import uk.gov.pay.connector.service.BaseInquiryResponse;
@@ -60,7 +61,7 @@ public class WorldpayOrderStatusResponse implements BaseAuthoriseResponse, BaseI
 
     @XmlPath("/reply/orderStatus/requestInfo/request3DSecure/issuerURL/text()")
     public void set3dsIssuerUrl(String issuerUrl) {
-        this.issuerUrl = issuerUrl;
+        this.issuerUrl = issuerUrl != null ? issuerUrl.trim() : null;
     }
 
     public String getLastEvent() {
