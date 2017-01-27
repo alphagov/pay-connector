@@ -66,7 +66,7 @@ public class ChargesFrontendResourceITest {
     public void getChargeShouldIncludeExpectedLinksAndGatewayAccountButNotGatewayAccountId() throws Exception {
 
         String chargeId = postToCreateACharge(expectedAmount);
-        String expectedLocation = "http://localhost:" + app.getLocalPort() + "/v1/frontend/charges/" + chargeId;
+        String expectedLocation = "https://localhost:" + app.getLocalPort() + "/v1/frontend/charges/" + chargeId;
 
         validateGetCharge(expectedAmount, chargeId, CREATED)
                 .body("links", hasSize(3))

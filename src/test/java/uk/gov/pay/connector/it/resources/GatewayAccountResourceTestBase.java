@@ -72,7 +72,7 @@ public class GatewayAccountResourceTestBase {
     }
     void assertGettingAccountReturnsProviderName(ValidatableResponse response, String providerName, GatewayAccountEntity.Type providerUrlType) {
         givenSetup()
-                .get(response.extract().header("Location"))
+                .get(response.extract().header("Location").replace("https", "http")) //Scheme on links back are forced to be https
                 .then()
                 .statusCode(200)
                 .contentType(JSON)

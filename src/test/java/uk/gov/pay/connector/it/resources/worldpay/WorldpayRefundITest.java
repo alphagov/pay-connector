@@ -287,7 +287,7 @@ public class WorldpayRefundITest extends ChargingITestBase {
                 .withType(RefundStatus.REFUND_SUBMITTED)
                 .insert();
 
-        String paymentUrl = format("http://localhost:%s/v1/api/accounts/%s/charges/%s",
+        String paymentUrl = format("https://localhost:%s/v1/api/accounts/%s/charges/%s",
                 app.getLocalPort(), defaultTestAccount.getAccountId(), defaultTestCharge.getExternalChargeId());
 
         ValidatableResponse validatableResponse = getRefundsFor(defaultTestAccount.getAccountId(),
@@ -414,7 +414,7 @@ public class WorldpayRefundITest extends ChargingITestBase {
                 .body("status", is("submitted"))
                 .body("created_date", is(notNullValue()));
 
-        String paymentUrl = format("http://localhost:%s/v1/api/accounts/%s/charges/%s",
+        String paymentUrl = format("https://localhost:%s/v1/api/accounts/%s/charges/%s",
                 app.getLocalPort(), defaultTestAccount.getAccountId(), defaultTestCharge.getExternalChargeId());
 
         String refundId = response.extract().path("refund_id");

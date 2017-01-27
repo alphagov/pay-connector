@@ -21,6 +21,7 @@ import org.glassfish.jersey.server.filter.RolesAllowedDynamicFeature;
 import uk.gov.pay.connector.auth.BasicAuthUser;
 import uk.gov.pay.connector.auth.SmartpayAccountSpecificAuthenticator;
 import uk.gov.pay.connector.filters.LoggingFilter;
+import uk.gov.pay.connector.filters.SchemeRewriteFilter;
 import uk.gov.pay.connector.healthcheck.CardExecutorServiceHealthCheck;
 import uk.gov.pay.connector.healthcheck.DatabaseHealthCheck;
 import uk.gov.pay.connector.healthcheck.Ping;
@@ -81,6 +82,8 @@ public class ConnectorApp extends Application<ConnectorConfiguration> {
         environment.jersey().register(injector.getInstance(CardTypesResource.class));
         environment.jersey().register(injector.getInstance(HealthCheckResource.class));
         environment.jersey().register(injector.getInstance(EmailNotificationResource.class));
+        environment.jersey().register(injector.getInstance(SchemeRewriteFilter.class));
+
         setupSmartpayBasicAuth(environment, injector.getInstance(SmartpayAccountSpecificAuthenticator.class));
 
         environment.servlets().addFilter("LoggingFilter", injector.getInstance(LoggingFilter.class))

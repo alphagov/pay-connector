@@ -930,7 +930,7 @@ public class ChargesApiResourceITest extends ChargingITestBase {
     }
 
     private String expectedChargeLocationFor(String accountId, String chargeId) {
-        return "http://localhost:" + app.getLocalPort() + CHARGE_API_PATH
+        return "https://localhost:" + app.getLocalPort() + CHARGE_API_PATH
                 .replace("{accountId}", accountId)
                 .replace("{chargeId}", chargeId);
     }
