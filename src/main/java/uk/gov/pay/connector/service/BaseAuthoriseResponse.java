@@ -6,15 +6,14 @@ public interface BaseAuthoriseResponse extends BaseResponse {
 
     String getTransactionId();
 
-    boolean isAuthorised();
-
     AuthoriseStatus authoriseStatus();
 
     enum AuthoriseStatus {
         AUTHORISED(ChargeStatus.AUTHORISATION_SUCCESS),
         REJECTED(ChargeStatus.AUTHORISATION_REJECTED),
         REQUIRES_3D(ChargeStatus.AUTHORISATION_3DS_REQUIRED),
-        ERROR(ChargeStatus.AUTHORISATION_ERROR);
+        ERROR(ChargeStatus.AUTHORISATION_ERROR),
+        REFUSED(ChargeStatus.AUTHORISATION_REJECTED);
 
         ChargeStatus mappedChargeStatus;
 

@@ -12,6 +12,7 @@ import static org.apache.commons.lang3.StringUtils.trim;
 public class WorldpayOrderStatusResponse implements BaseAuthoriseResponse, BaseInquiryResponse {
 
     private static final String WORLDPAY_AUTHORISED_EVENT = "AUTHORISED";
+    private static final String WORLDPAY_REFUSED_EVENT = "REFUSED";
 
     @XmlPath("reply/orderStatus/@orderCode")
     private String transactionId;
@@ -75,11 +76,6 @@ public class WorldpayOrderStatusResponse implements BaseAuthoriseResponse, BaseI
     }
 
     @Override
-    public boolean isAuthorised() {
-        return WORLDPAY_AUTHORISED_EVENT.equals(lastEvent);
-    }
-
-    @Override
     public AuthoriseStatus authoriseStatus() {
         if (paRequest != null && issuerUrl != null) {
             return AuthoriseStatus.REQUIRES_3D;
@@ -91,6 +87,10 @@ public class WorldpayOrderStatusResponse implements BaseAuthoriseResponse, BaseI
 
         if (WORLDPAY_AUTHORISED_EVENT.equals(lastEvent)) {
             return AuthoriseStatus.AUTHORISED;
+        }
+
+        if(WORLDPAY_REFUSED_EVENT.equals(lastEvent)) {
+            return AuthoriseStatus.REFUSED;
         }
 
         return AuthoriseStatus.REJECTED;

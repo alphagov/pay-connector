@@ -20,10 +20,6 @@ public class SmartpayAuthorisationResponse extends SmartpayBaseResponse implemen
         return pspReference;
     }
 
-    public boolean isAuthorised() {
-        return AUTHORISED.equals(result);
-    }
-
     @Override
     public AuthoriseStatus authoriseStatus() {
         return AUTHORISED.equals(result) ? AuthoriseStatus.AUTHORISED : AuthoriseStatus.REJECTED;

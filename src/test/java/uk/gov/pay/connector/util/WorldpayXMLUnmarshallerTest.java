@@ -2,6 +2,7 @@ package uk.gov.pay.connector.util;
 
 import com.google.common.io.Resources;
 import org.junit.Test;
+import uk.gov.pay.connector.service.BaseAuthoriseResponse.AuthoriseStatus;
 import uk.gov.pay.connector.service.worldpay.*;
 
 import java.io.IOException;
@@ -81,7 +82,7 @@ public class WorldpayXMLUnmarshallerTest {
         assertNull(response.getRefusedReturnCode());
         assertNull(response.getRefusedReturnCodeDescription());
 
-        assertThat(response.isAuthorised(), is(true));
+        assertThat(response.authoriseStatus(), is(AuthoriseStatus.AUTHORISED));
         assertThat(response.getTransactionId(), is("transaction-id"));
 
         assertThat(response.getErrorCode(), is(nullValue()));
@@ -96,7 +97,7 @@ public class WorldpayXMLUnmarshallerTest {
         assertThat(response.getRefusedReturnCode(), is("5"));
         assertThat(response.getRefusedReturnCodeDescription(), is("REFUSED"));
 
-        assertThat(response.isAuthorised(), is(false));
+        assertThat(response.authoriseStatus(), is(AuthoriseStatus.REFUSED));
         assertThat(response.getTransactionId(), is("MyUniqueTransactionId!12"));
 
         assertThat(response.getErrorCode(), is(nullValue()));
@@ -108,7 +109,7 @@ public class WorldpayXMLUnmarshallerTest {
         String errorPayload = readPayload("templates/worldpay/authorisation-error-response.xml");
         WorldpayOrderStatusResponse response = XMLUnmarshaller.unmarshall(errorPayload, WorldpayOrderStatusResponse.class);
 
-        assertThat(response.isAuthorised(), is(false));
+        assertThat(response.authoriseStatus(), is(AuthoriseStatus.ERROR));
         assertThat(response.getTransactionId(), is(nullValue()));
 
         assertThat(response.getErrorCode(), is("2"));

@@ -82,10 +82,6 @@ public class SandboxPaymentProvider extends BasePaymentProvider<BaseResponse> {
 
     private GatewayResponse<BaseAuthoriseResponse> createGatewayBaseAuthoriseResponse(boolean isAuthorised) {
         return GatewayResponse.with(new BaseAuthoriseResponse() {
-            @Override
-            public boolean isAuthorised() {
-                return isAuthorised;
-            }
 
             @Override
             public AuthoriseStatus authoriseStatus() {

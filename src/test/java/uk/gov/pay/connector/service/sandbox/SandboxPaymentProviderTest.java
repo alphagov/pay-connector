@@ -15,6 +15,7 @@ import uk.gov.pay.connector.model.domain.RefundEntityFixture;
 import uk.gov.pay.connector.model.gateway.AuthorisationGatewayRequest;
 import uk.gov.pay.connector.model.gateway.GatewayResponse;
 import uk.gov.pay.connector.service.BaseAuthoriseResponse;
+import uk.gov.pay.connector.service.BaseAuthoriseResponse.AuthoriseStatus;
 import uk.gov.pay.connector.service.BaseCancelResponse;
 import uk.gov.pay.connector.service.BaseCaptureResponse;
 import uk.gov.pay.connector.service.BaseRefundResponse;
@@ -78,7 +79,7 @@ public class SandboxPaymentProviderTest {
         assertThat(gatewayResponse.getBaseResponse().get() instanceof BaseAuthoriseResponse, is(true));
 
         BaseAuthoriseResponse authoriseResponse = (BaseAuthoriseResponse) gatewayResponse.getBaseResponse().get();
-        assertThat(authoriseResponse.isAuthorised(), is(true));
+        assertThat(authoriseResponse.authoriseStatus(), is(AuthoriseStatus.AUTHORISED));
         assertThat(authoriseResponse.getTransactionId(), is(notNullValue()));
         assertThat(authoriseResponse.getErrorCode(), is(nullValue()));
         assertThat(authoriseResponse.getErrorMessage(), is(nullValue()));
@@ -98,7 +99,7 @@ public class SandboxPaymentProviderTest {
         assertThat(gatewayResponse.getBaseResponse().get() instanceof BaseAuthoriseResponse, is(true));
 
         BaseAuthoriseResponse authoriseResponse = (BaseAuthoriseResponse) gatewayResponse.getBaseResponse().get();
-        assertThat(authoriseResponse.isAuthorised(), is(false));
+        assertThat(authoriseResponse.authoriseStatus(), is(AuthoriseStatus.REJECTED));
         assertThat(authoriseResponse.getTransactionId(), is(notNullValue()));
         assertThat(authoriseResponse.getErrorCode(), is(nullValue()));
         assertThat(authoriseResponse.getErrorMessage(), is(nullValue()));
