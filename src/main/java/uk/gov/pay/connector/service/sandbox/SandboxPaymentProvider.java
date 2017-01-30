@@ -102,6 +102,16 @@ public class SandboxPaymentProvider extends BasePaymentProvider<BaseResponse> {
             public String getErrorMessage() {
                 return null;
             }
+
+            @Override
+            public String get3dsPaRequest() {
+                return null;
+            }
+
+            @Override
+            public String get3dsIssuerUrl() {
+                return null;
+            }
         });
     }
 

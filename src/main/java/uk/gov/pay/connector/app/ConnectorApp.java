@@ -26,6 +26,7 @@ import uk.gov.pay.connector.healthcheck.CardExecutorServiceHealthCheck;
 import uk.gov.pay.connector.healthcheck.DatabaseHealthCheck;
 import uk.gov.pay.connector.healthcheck.Ping;
 import uk.gov.pay.connector.resources.*;
+import uk.gov.pay.connector.service.Auth3dsDetailsFactory;
 import uk.gov.pay.connector.util.DependentResourceWaitCommand;
 import uk.gov.pay.connector.util.TrustingSSLSocketFactory;
 
@@ -83,6 +84,7 @@ public class ConnectorApp extends Application<ConnectorConfiguration> {
         environment.jersey().register(injector.getInstance(HealthCheckResource.class));
         environment.jersey().register(injector.getInstance(EmailNotificationResource.class));
         environment.jersey().register(injector.getInstance(SchemeRewriteFilter.class));
+        environment.jersey().register(injector.getInstance(Auth3dsDetailsFactory.class));
 
         setupSmartpayBasicAuth(environment, injector.getInstance(SmartpayAccountSpecificAuthenticator.class));
 

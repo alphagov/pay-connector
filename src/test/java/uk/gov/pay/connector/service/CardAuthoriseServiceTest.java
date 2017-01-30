@@ -46,6 +46,12 @@ import static uk.gov.pay.connector.service.CardExecutorService.ExecutionStatus.I
 
 @RunWith(MockitoJUnitRunner.class)
 public class CardAuthoriseServiceTest extends CardServiceTest {
+
+    public static final String PA_REQ_VALUE_FROM_PROVIDER = "pa-req-value-from-provider";
+    public static final String ISSUER_URL_FROM_PROVIDER = "issuer-url-from-provider";
+
+    private final Auth3dsDetailsFactory auth3dsDetailsFactory = new Auth3dsDetailsFactory();
+
     @Mock
     private Future<Either<Error, GatewayResponse>> mockFutureResponse;
 
@@ -61,7 +67,8 @@ public class CardAuthoriseServiceTest extends CardServiceTest {
         Counter mockCounter = mock(Counter.class);
         when(mockMetricRegistry.counter(anyString())).thenReturn(mockCounter);
 
-        cardAuthorisationService = new CardAuthoriseService(mockedChargeDao, mockedProviders, mockExecutorService, mockMetricRegistry);
+        cardAuthorisationService = new CardAuthoriseService(mockedChargeDao, mockedProviders, mockExecutorService,
+                auth3dsDetailsFactory, mockMetricRegistry);
     }
 
     public void setupMockExecutorServiceMock() {
@@ -80,8 +87,8 @@ public class CardAuthoriseServiceTest extends CardServiceTest {
 
     public void setupPaymentProviderMockFor3ds() {
         WorldpayOrderStatusResponse worldpayResponse = new WorldpayOrderStatusResponse();
-        worldpayResponse.set3dsPaRequest("pa-req-value-from-provider");
-        worldpayResponse.set3dsIssuerUrl("issuer-url-from-provider");
+        worldpayResponse.set3dsPaRequest(PA_REQ_VALUE_FROM_PROVIDER);
+        worldpayResponse.set3dsIssuerUrl(ISSUER_URL_FROM_PROVIDER);
         GatewayResponse worldpay3dsResponse = GatewayResponse.with(worldpayResponse);
         when(mockedPaymentProvider.authorise(any())).thenReturn(worldpay3dsResponse);
     }
@@ -108,6 +115,8 @@ public class CardAuthoriseServiceTest extends CardServiceTest {
         assertThat(response.isSuccessful(), is(true));
         assertThat(reloadedCharge.getStatus(), is(AUTHORISATION_3DS_REQUIRED.toString()));
         assertThat(reloadedCharge.getGatewayTransactionId(), is(transactionId));
+        assertThat(reloadedCharge.get3dsDetails().getPaRequest(), is(PA_REQ_VALUE_FROM_PROVIDER));
+        assertThat(reloadedCharge.get3dsDetails().getIssuerUrl(), is(ISSUER_URL_FROM_PROVIDER));
     }
 
     @Test

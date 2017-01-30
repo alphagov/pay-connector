@@ -1,6 +1,5 @@
 package uk.gov.pay.connector.service.worldpay;
 
-import org.eclipse.persistence.oxm.annotations.XmlCDATA;
 import org.eclipse.persistence.oxm.annotations.XmlPath;
 import uk.gov.pay.connector.service.BaseAuthoriseResponse;
 import uk.gov.pay.connector.service.BaseInquiryResponse;
@@ -79,7 +78,7 @@ public class WorldpayOrderStatusResponse implements BaseAuthoriseResponse, BaseI
     @Override
     public AuthoriseStatus authoriseStatus() {
         if (paRequest != null && issuerUrl != null) {
-            return AuthoriseStatus.REQUIRES_3D;
+            return AuthoriseStatus.REQUIRES_3DS;
         }
 
         if (lastEvent == null) {
@@ -112,11 +111,13 @@ public class WorldpayOrderStatusResponse implements BaseAuthoriseResponse, BaseI
         return trim(errorMessage);
     }
 
-    public String getPaRequest() {
+    @Override
+    public String get3dsPaRequest() {
         return paRequest;
     }
 
-    public String getIssuerUrl() {
+    @Override
+    public String get3dsIssuerUrl() {
         return issuerUrl;
     }
 }

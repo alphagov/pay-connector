@@ -100,10 +100,10 @@ public class WorldpayXMLUnmarshallerTest {
         assertNull(response.getErrorCode());
         assertNull(response.getErrorMessage());
 
-        assertThat(response.getPaRequest(), is("eJxVUsFuwjAM/ZWK80aSUgpFJogNpHEo2hjTzl"));
-        assertThat(response.getIssuerUrl(), is("https://secure-test.worldpay.com/jsp/test/shopper/ThreeDResponseSimulator.jsp"));
+        assertThat(response.get3dsPaRequest(), is("eJxVUsFuwjAM/ZWK80aSUgpFJogNpHEo2hjTzl"));
+        assertThat(response.get3dsIssuerUrl(), is("https://secure-test.worldpay.com/jsp/test/shopper/ThreeDResponseSimulator.jsp"));
 
-        assertThat(response.authoriseStatus(), is(AuthoriseStatus.REQUIRES_3D));
+        assertThat(response.authoriseStatus(), is(AuthoriseStatus.REQUIRES_3DS));
     }
 
     @Test

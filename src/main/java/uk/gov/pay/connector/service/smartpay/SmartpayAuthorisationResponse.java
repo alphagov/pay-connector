@@ -29,4 +29,14 @@ public class SmartpayAuthorisationResponse extends SmartpayBaseResponse implemen
     public String getTransactionId() {
         return pspReference;
     }
+
+    @Override
+    public String get3dsPaRequest() {
+        return null;
+    }
+
+    @Override
+    public String get3dsIssuerUrl() {
+        return null;
+    }
 }

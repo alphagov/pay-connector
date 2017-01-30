@@ -22,6 +22,8 @@ public class ChargeEntityFixture {
     private ZonedDateTime createdDate = ZonedDateTime.now(ZoneId.of("UTC"));
     private List<ChargeEventEntity> events = new ArrayList<>();
     private List<RefundEntity> refunds = new ArrayList<>();
+    private String paRequest;
+    private String issuerUrl;
 
     public static ChargeEntityFixture aValidChargeEntity() {
         return new ChargeEntityFixture();
@@ -33,6 +35,13 @@ public class ChargeEntityFixture {
         chargeEntity.setGatewayTransactionId(transactionId);
         chargeEntity.getEvents().addAll(events);
         chargeEntity.getRefunds().addAll(refunds);
+        if(paRequest != null && issuerUrl != null) {
+            Auth3dsDetailsEntity auth3dsDetailsEntity = new Auth3dsDetailsEntity();
+            auth3dsDetailsEntity.setIssuerUrl(issuerUrl);
+            auth3dsDetailsEntity.setPaRequest(paRequest);
+
+            chargeEntity.set3dsDetails(auth3dsDetailsEntity);
+        }
         return chargeEntity;
     }
 
@@ -88,6 +97,16 @@ public class ChargeEntityFixture {
 
     public ChargeEntityFixture withCreatedDate(ZonedDateTime createdDate) {
         this.createdDate = createdDate;
+        return this;
+    }
+
+    public ChargeEntityFixture withPaRequest(String paRequest) {
+        this.paRequest = paRequest;
+        return this;
+    }
+
+    public ChargeEntityFixture withIssuerUrl(String issuerUrl) {
+        this.issuerUrl = issuerUrl;
         return this;
     }
 
