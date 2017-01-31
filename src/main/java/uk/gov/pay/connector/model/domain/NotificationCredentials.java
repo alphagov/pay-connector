@@ -12,9 +12,8 @@ import javax.persistence.*;
 public class NotificationCredentials extends AbstractEntity {
 
     @OneToOne
-    @JsonIgnore
     @JoinColumn(name = "account_id", nullable = false)
-    @JsonManagedReference
+    @JsonIgnore
     private GatewayAccountEntity accountEntity;
 
     @Column(name = "username", nullable = false)

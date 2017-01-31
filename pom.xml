@@ -5,7 +5,7 @@
     <version>0.1-SNAPSHOT</version>
     <artifactId>pay-connector</artifactId>
     <properties>
-        <dropwizard.version>0.9.2</dropwizard.version>
+        <dropwizard.version>0.9.3</dropwizard.version>
         <wiremock.version>1.57</wiremock.version>
         <jpa.version>2.6.2</jpa.version>
         <guice.version>4.0</guice.version>
