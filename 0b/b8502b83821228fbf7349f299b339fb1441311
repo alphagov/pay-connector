@@ -13,3 +13,5 @@ alpha_release-111.approve-date=2017-01-31:14:28:02
 staging-1.tag=alpha_staging-1-111
 
 staging-1.alpha_staging-1-111.date=2017-01-31:14:45:38
+
+staging-1.alpha_staging-1-111.status=success
