@@ -26,10 +26,10 @@ public class EpdqPayloadDefinitionForNewOrder implements PayloadDefinition<EpdqT
         // Keep this list in alphabetical order
         return newParameterBuilder()
                 .add(AMOUNT_KEY, templateData.getAmount())
-                .add(CARD_NO_KEY, templateData.getCard().getCardNo())
+                .add(CARD_NO_KEY, templateData.getAuthorisationDetails().getCardNo())
                 .add(CURRENCY_KEY, "GBP")
-                .add(CVC_KEY, templateData.getCard().getCvc())
-                .add(ED_KEY, templateData.getCard().getEndDate())
+                .add(CVC_KEY, templateData.getAuthorisationDetails().getCvc())
+                .add(ED_KEY, templateData.getAuthorisationDetails().getEndDate())
                 .add(OPERATION_KEY, templateData.getOperationType())
                 .add(ORDER_ID_KEY, templateData.getOrderId())
                 .add(PSPID_KEY, templateData.getPspId())

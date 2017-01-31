@@ -33,7 +33,7 @@ public class CardAuthoriseService extends CardService<BaseAuthoriseResponse> {
         super(chargeDao, providers, cardExecutorService);
     }
 
-    public GatewayResponse doAuthorise(String chargeId, Card cardDetails) {
+    public GatewayResponse doAuthorise(String chargeId, AuthorisationDetails authorisationDetails) {
 
         Optional<ChargeEntity> chargeEntityOptional = chargeDao.findByExternalId(chargeId);
 
@@ -47,9 +47,9 @@ public class CardAuthoriseService extends CardService<BaseAuthoriseResponse> {
                     throw new ConflictRuntimeException(chargeEntity.getExternalId());
                 }
 
-                GatewayResponse<BaseAuthoriseResponse> operationResponse = operation(preOperationResponse, cardDetails);
+                GatewayResponse<BaseAuthoriseResponse> operationResponse = operation(preOperationResponse, authorisationDetails);
 
-                return postOperation(preOperationResponse, cardDetails, operationResponse);
+                return postOperation(preOperationResponse, authorisationDetails, operationResponse);
             };
 
             Pair<ExecutionStatus, GatewayResponse> executeResult = cardExecutorService.execute(authorisationSupplier);
@@ -74,13 +74,13 @@ public class CardAuthoriseService extends CardService<BaseAuthoriseResponse> {
         return chargeEntity;
     }
 
-    public GatewayResponse<BaseAuthoriseResponse> operation(ChargeEntity chargeEntity, Card cardDetails) {
+    public GatewayResponse<BaseAuthoriseResponse> operation(ChargeEntity chargeEntity, AuthorisationDetails authorisationDetails) {
         return getPaymentProviderFor(chargeEntity)
-                .authorise(AuthorisationGatewayRequest.valueOf(chargeEntity, cardDetails));
+                .authorise(AuthorisationGatewayRequest.valueOf(chargeEntity, authorisationDetails));
     }
 
     @Transactional
-    public GatewayResponse<BaseAuthoriseResponse> postOperation(ChargeEntity chargeEntity, Card cardDetails, GatewayResponse<BaseAuthoriseResponse> operationResponse) {
+    public GatewayResponse<BaseAuthoriseResponse> postOperation(ChargeEntity chargeEntity, AuthorisationDetails authorisationDetails, GatewayResponse<BaseAuthoriseResponse> operationResponse) {
         ChargeEntity reloadedCharge = chargeDao.merge(chargeEntity);
 
         ChargeStatus status = operationResponse.getBaseResponse()
@@ -89,29 +89,29 @@ public class CardAuthoriseService extends CardService<BaseAuthoriseResponse> {
         String transactionId = operationResponse.getBaseResponse()
                 .map(BaseAuthoriseResponse::getTransactionId).orElse("");
 
-        logger.info("Card authorisation response received - charge_external_id={}, operation_type={}, transaction_id={}, status={}",
+        logger.info("AuthorisationDetails authorisation response received - charge_external_id={}, operation_type={}, transaction_id={}, status={}",
                 chargeEntity.getExternalId(), OperationType.AUTHORISATION.getValue(), transactionId, status);
 
         reloadedCharge.setStatus(status);
 
         if (StringUtils.isBlank(transactionId)) {
-            logger.warn("Card authorisation response received with no transaction id. -  charge_external_id={}", reloadedCharge.getExternalId());
+            logger.warn("AuthorisationDetails authorisation response received with no transaction id. -  charge_external_id={}", reloadedCharge.getExternalId());
         } else {
             reloadedCharge.setGatewayTransactionId(transactionId);
         }
 
-        appendCardDetails(reloadedCharge, cardDetails);
+        appendCardDetails(reloadedCharge, authorisationDetails);
         chargeDao.mergeAndNotifyStatusHasChanged(reloadedCharge, Optional.empty());
         return operationResponse;
     }
 
-    private void appendCardDetails(ChargeEntity chargeEntity, Card cardDetails) {
+    private void appendCardDetails(ChargeEntity chargeEntity, AuthorisationDetails authorisationDetails) {
         CardDetailsEntity detailsEntity = new CardDetailsEntity();
-        detailsEntity.setCardBrand(cardDetails.getCardBrand());
-        detailsEntity.setBillingAddress(new AddressEntity(cardDetails.getAddress()));
-        detailsEntity.setCardHolderName(cardDetails.getCardHolder());
-        detailsEntity.setExpiryDate(cardDetails.getEndDate());
-        detailsEntity.setLastDigitsCardNumber(StringUtils.right(cardDetails.getCardNo(), 4));
+        detailsEntity.setCardBrand(authorisationDetails.getCardBrand());
+        detailsEntity.setBillingAddress(new AddressEntity(authorisationDetails.getAddress()));
+        detailsEntity.setCardHolderName(authorisationDetails.getCardHolder());
+        detailsEntity.setExpiryDate(authorisationDetails.getEndDate());
+        detailsEntity.setLastDigitsCardNumber(StringUtils.right(authorisationDetails.getCardNo(), 4));
         chargeEntity.setCardDetails(detailsEntity);
         logger.info("Stored confirmation details for charge - charge_external_id={}", chargeEntity.getExternalId());
     }

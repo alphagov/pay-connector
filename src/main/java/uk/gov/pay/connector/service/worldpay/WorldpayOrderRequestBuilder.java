@@ -11,6 +11,9 @@ public class WorldpayOrderRequestBuilder extends OrderRequestBuilder {
         private String reference;
         private String amount;
         private DateTime captureDate;
+        private String sessionId;
+        private String acceptHeader;
+        private String userAgentHeader;
 
         public String getReference() {
             return reference;
@@ -36,6 +39,30 @@ public class WorldpayOrderRequestBuilder extends OrderRequestBuilder {
 
         public void setCaptureDate(DateTime captureDate) {
             this.captureDate = captureDate;
+        }
+
+        public String getSessionId() {
+            return sessionId;
+        }
+
+        public void setSessionId(String sessionId) {
+            this.sessionId = sessionId;
+        }
+
+        public String getAcceptHeader() {
+            return acceptHeader;
+        }
+
+        public void setAcceptHeader(String acceptHeader) {
+            this.acceptHeader = acceptHeader;
+        }
+
+        public String getUserAgentHeader() {
+            return userAgentHeader;
+        }
+
+        public void setUserAgentHeader(String userAgentHeader) {
+            this.userAgentHeader = userAgentHeader;
         }
     }
 
@@ -79,6 +106,21 @@ public class WorldpayOrderRequestBuilder extends OrderRequestBuilder {
 
     public WorldpayOrderRequestBuilder withDate(DateTime date) {
         worldpayTemplateData.setCaptureDate(date);
+        return this;
+    }
+
+    public WorldpayOrderRequestBuilder withSessionId(String sessionId) {
+        worldpayTemplateData.setSessionId(sessionId);
+        return this;
+    }
+
+    public WorldpayOrderRequestBuilder withAcceptHeader(String acceptHeader) {
+        worldpayTemplateData.setAcceptHeader(acceptHeader);
+        return this;
+    }
+
+    public WorldpayOrderRequestBuilder withUserAgentHeader(String userAgentHeader) {
+        worldpayTemplateData.setUserAgentHeader(userAgentHeader);
         return this;
     }
 }

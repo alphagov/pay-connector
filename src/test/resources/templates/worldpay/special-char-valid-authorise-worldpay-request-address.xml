@@ -24,7 +24,14 @@
                         </address>
                     </cardAddress>
                 </VISA-SSL>
+                <session id="uniqueSessionId"/>
             </paymentDetails>
+            <shopper>
+                <browser>
+                    <acceptHeader>text/html</acceptHeader>
+                    <userAgentHeader>Mozilla/5.0</userAgentHeader>
+                </browser>
+            </shopper>
         </order>
     </submit>
 </paymentService>

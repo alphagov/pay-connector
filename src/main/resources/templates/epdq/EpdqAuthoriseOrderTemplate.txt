@@ -1,1 +1,1 @@
-AMOUNT=${amount}&CARDNO=${card.cardNo}&CURRENCY=GBP&CVC=${card.cvc}&ED=${card.endDate}&OPERATION=RES&ORDERID=${orderId}&PSPID=${pspId}&PSWD=${password}&USERID=${userId}&SHASIGN=${shaSign}
+AMOUNT=${amount}&CARDNO=${authorisationDetails.cardNo}&CURRENCY=GBP&CVC=${authorisationDetails.cvc}&ED=${authorisationDetails.endDate}&OPERATION=RES&ORDERID=${orderId}&PSPID=${pspId}&PSWD=${password}&USERID=${userId}&SHASIGN=${shaSign}

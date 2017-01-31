@@ -8,20 +8,20 @@ import static uk.gov.pay.connector.model.domain.ChargeStatus.*;
 
 public class WorldpayCardResourceITest extends ChargingITestBase {
 
-    private String validCardDetails = buildJsonCardDetailsFor("4444333322221111", "visa");
+    private String validAuthorisationDetails = buildJsonAuthorisationDetailsFor("4444333322221111", "visa");
 
     public WorldpayCardResourceITest() {
         super("worldpay");
     }
 
     @Test
-    public void shouldAuthoriseCharge_ForValidCardDetails() throws Exception {
+    public void shouldAuthoriseCharge_ForValidAuthorisationDetails() throws Exception {
 
         String chargeId = createNewChargeWith(ENTERING_CARD_DETAILS, null);
         worldpay.mockAuthorisationSuccess();
 
         givenSetup()
-                .body(validCardDetails)
+                .body(validAuthorisationDetails)
                 .post(authoriseChargeUrlFor(chargeId))
                 .then()
                 .statusCode(204);
@@ -31,13 +31,13 @@ public class WorldpayCardResourceITest extends ChargingITestBase {
 
     @Test
     public void shouldNotAuthorise_AWorldpayErrorCard() throws Exception {
-        String cardDetailsRejectedByWorldpay = buildJsonCardDetailsFor("REFUSED", "4444333322221111", "visa");
+        String cardDetailsRejectedByWorldpay = buildJsonAuthorisationDetailsFor("REFUSED", "4444333322221111", "visa");
 
         worldpay.mockAuthorisationFailure();
 
         String expectedErrorMessage = "This transaction was declined.";
         String expectedChargeStatus = AUTHORISATION_REJECTED.getValue();
-        shouldReturnErrorForCardDetailsWithMessage(cardDetailsRejectedByWorldpay, expectedErrorMessage, expectedChargeStatus);
+        shouldReturnErrorForAuthorisationDetailsWithMessage(cardDetailsRejectedByWorldpay, expectedErrorMessage, expectedChargeStatus);
     }
 
     @Test

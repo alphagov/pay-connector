@@ -15,15 +15,15 @@ public class CardFixture {
         return new CardFixture();
     }
 
-    public Card build() {
-        Card card = new Card();
-        card.setAddress(address);
-        card.setCardHolder(cardHolder);
-        card.setCardNo(cardNo);
-        card.setCvc(cvc);
-        card.setEndDate(endDate);
-        card.setCardBrand(cardBrand);
-        return card;
+    public AuthorisationDetails build() {
+        AuthorisationDetails authorisationDetails = new AuthorisationDetails();
+        authorisationDetails.setAddress(address);
+        authorisationDetails.setCardHolder(cardHolder);
+        authorisationDetails.setCardNo(cardNo);
+        authorisationDetails.setCvc(cvc);
+        authorisationDetails.setEndDate(endDate);
+        authorisationDetails.setCardBrand(cardBrand);
+        return authorisationDetails;
     }
 
     public CardFixture withCardNo(String cardNo) {

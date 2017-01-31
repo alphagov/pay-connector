@@ -58,7 +58,7 @@ import static uk.gov.pay.connector.model.domain.ChargeEntityFixture.aValidCharge
 import static uk.gov.pay.connector.model.domain.GatewayAccount.*;
 import static uk.gov.pay.connector.model.domain.GatewayAccountEntity.Type.TEST;
 import static uk.gov.pay.connector.service.GatewayClient.createGatewayClient;
-import static uk.gov.pay.connector.util.CardUtils.buildCardDetails;
+import static uk.gov.pay.connector.util.CardUtils.buildAuthorisationDetails;
 
 @RunWith(MockitoJUnitRunner.class)
 public class WorldpayPaymentProviderTest {
@@ -233,11 +233,11 @@ public class WorldpayPaymentProviderTest {
     }
 
     private AuthorisationGatewayRequest getCardAuthorisationRequest() {
-        Card card = getValidTestCard();
+        AuthorisationDetails authorisationDetails = getValidTestCard();
         ChargeEntity chargeEntity = aValidChargeEntity()
                 .withGatewayAccountEntity(aServiceAccount())
                 .build();
-        return new AuthorisationGatewayRequest(chargeEntity, card);
+        return new AuthorisationGatewayRequest(chargeEntity, authorisationDetails);
     }
 
     private GatewayAccountEntity aServiceAccount() {
@@ -355,7 +355,7 @@ public class WorldpayPaymentProviderTest {
                 "</paymentService>";
     }
 
-    private Card getValidTestCard() {
+    private AuthorisationDetails getValidTestCard() {
         Address address = anAddress();
         address.setLine1("123 My Street");
         address.setLine2("This road");
@@ -364,7 +364,7 @@ public class WorldpayPaymentProviderTest {
         address.setCounty("London state");
         address.setCountry("GB");
 
-        return buildCardDetails("Mr. Payment", "4111111111111111", "123", "12/15", "visa", address);
+        return buildAuthorisationDetails("Mr. Payment", "4111111111111111", "123", "12/15", "visa", address);
     }
 
 }
