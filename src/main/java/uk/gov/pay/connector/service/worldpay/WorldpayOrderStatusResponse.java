@@ -81,19 +81,15 @@ public class WorldpayOrderStatusResponse implements BaseAuthoriseResponse, BaseI
             return AuthoriseStatus.REQUIRES_3DS;
         }
 
-        if (lastEvent == null) {
-            return AuthoriseStatus.ERROR;
-        }
-
         if (WORLDPAY_AUTHORISED_EVENT.equals(lastEvent)) {
             return AuthoriseStatus.AUTHORISED;
         }
 
         if(WORLDPAY_REFUSED_EVENT.equals(lastEvent)) {
-            return AuthoriseStatus.REFUSED;
+            return AuthoriseStatus.REJECTED;
         }
 
-        return AuthoriseStatus.REJECTED;
+        return AuthoriseStatus.ERROR;
     }
 
     @Override

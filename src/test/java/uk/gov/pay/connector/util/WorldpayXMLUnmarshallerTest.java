@@ -114,7 +114,7 @@ public class WorldpayXMLUnmarshallerTest {
         assertThat(response.getRefusedReturnCode(), is("5"));
         assertThat(response.getRefusedReturnCodeDescription(), is("REFUSED"));
 
-        assertThat(response.authoriseStatus(), is(AuthoriseStatus.REFUSED));
+        assertThat(response.authoriseStatus(), is(AuthoriseStatus.REJECTED));
         assertThat(response.getTransactionId(), is("MyUniqueTransactionId!12"));
 
         assertThat(response.getErrorCode(), is(nullValue()));

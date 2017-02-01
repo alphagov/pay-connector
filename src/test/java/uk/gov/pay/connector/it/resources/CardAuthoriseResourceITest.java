@@ -159,7 +159,7 @@ public class CardAuthoriseResourceITest extends ChargingITestBase {
                 .body(cardDetails)
                 .post(authoriseChargeUrlFor(chargeId))
                 .then()
-                .statusCode(204);
+                .statusCode(200);
 
         assertFrontendChargeStatusIs(chargeId, AUTHORISATION_SUCCESS.getValue());
         return chargeId;

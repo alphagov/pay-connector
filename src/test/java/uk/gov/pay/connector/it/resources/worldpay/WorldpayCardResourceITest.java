@@ -24,7 +24,7 @@ public class WorldpayCardResourceITest extends ChargingITestBase {
                 .body(validAuthorisationDetails)
                 .post(authoriseChargeUrlFor(chargeId))
                 .then()
-                .statusCode(204);
+                .statusCode(200);
 
         assertFrontendChargeStatusIs(chargeId, AUTHORISATION_SUCCESS.getValue());
     }

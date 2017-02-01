@@ -1,11 +1,13 @@
 package uk.gov.pay.connector.resources;
 
+import com.google.common.collect.ImmutableMap;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import uk.gov.pay.connector.model.GatewayError;
 import uk.gov.pay.connector.model.domain.AuthorisationDetails;
 import uk.gov.pay.connector.model.gateway.GatewayResponse;
 import uk.gov.pay.connector.service.*;
+import uk.gov.pay.connector.service.BaseAuthoriseResponse.AuthoriseStatus;
 import uk.gov.pay.connector.util.ResponseUtil;
 
 import javax.inject.Inject;
@@ -45,10 +47,10 @@ public class CardResource {
         GatewayResponse<BaseAuthoriseResponse> response = cardAuthoriseService.doAuthorise(chargeId, authorisationDetails);
 
         boolean transactionDeclined = response.getBaseResponse()
-                .map(baseResponse -> baseResponse.authoriseStatus() != BaseAuthoriseResponse.AuthoriseStatus.AUTHORISED)
+                .map(baseResponse -> (baseResponse.authoriseStatus() == AuthoriseStatus.REJECTED || baseResponse.authoriseStatus() == AuthoriseStatus.ERROR))
                 .orElse(false);
 
-        return transactionDeclined ? badRequestResponse("This transaction was declined.") : handleGatewayResponse(response);
+        return transactionDeclined ? badRequestResponse("This transaction was declined.") : handleGatewayAuthoriseResponse(response);
     }
 
     @POST
@@ -97,6 +99,14 @@ public class CardResource {
         }
 
         return ResponseUtil.noContentResponse();
+    }
+
+    private Response handleGatewayAuthoriseResponse(GatewayResponse<? extends BaseAuthoriseResponse> response) {
+        return response.getGatewayError()
+                .map(this::handleError)
+                .orElseGet(() -> response.getBaseResponse()
+                        .map(r -> ResponseUtil.successResponseWithEntity(ImmutableMap.of("status", r.authoriseStatus())))
+                        .orElseGet(() -> ResponseUtil.serviceErrorResponse("Status not found for Gateway response")));
     }
 
     private Response handleGatewayResponse(GatewayResponse<? extends BaseResponse> response) {
