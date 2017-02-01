@@ -68,6 +68,9 @@ public class GatewayAccountEntity extends AbstractEntity {
     @Column(name = "analytics_id")
     private String analyticsId;
 
+    @Column(name = "requires_3ds")
+    private boolean requires3ds;
+
     @JsonBackReference
     @OneToOne(mappedBy="accountEntity", cascade = CascadeType.PERSIST)
     private EmailNotificationEntity emailNotification;
@@ -146,6 +149,10 @@ public class GatewayAccountEntity extends AbstractEntity {
         return notificationCredentials;
     }
 
+    public boolean isRequires3ds() {
+        return requires3ds;
+    }
+
     public void setNotificationCredentials(NotificationCredentials notificationCredentials) {
         this.notificationCredentials = notificationCredentials;
     }
@@ -176,6 +183,10 @@ public class GatewayAccountEntity extends AbstractEntity {
 
     public void setEmailNotification(EmailNotificationEntity emailNotification) {
         this.emailNotification = emailNotification;
+    }
+
+    public void setRequires3ds(boolean requires3ds) {
+        this.requires3ds = requires3ds;
     }
 
     public void setType(Type type) {

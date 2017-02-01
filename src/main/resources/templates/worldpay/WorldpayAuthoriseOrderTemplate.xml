@@ -29,14 +29,18 @@
                         </address>
                     </cardAddress>
                 </VISA-SSL>
+                <#if requires3ds>
                 <session id="${sessionId?xml}"/>
+                </#if>
             </paymentDetails>
+            <#if requires3ds>
             <shopper>
                 <browser>
                     <acceptHeader>${authorisationDetails.acceptHeader?xml}</acceptHeader>
                     <userAgentHeader>${authorisationDetails.userAgentHeader?xml}</userAgentHeader>
                 </browser>
             </shopper>
+            </#if>
         </order>
     </submit>
 </paymentService>

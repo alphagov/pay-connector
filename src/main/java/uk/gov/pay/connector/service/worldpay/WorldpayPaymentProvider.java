@@ -99,6 +99,7 @@ public class WorldpayPaymentProvider extends BasePaymentProvider<BaseResponse> {
     private Function<AuthorisationGatewayRequest, GatewayOrder> buildAuthoriseOrderFor() {
         return request -> aWorldpayAuthoriseOrderRequestBuilder()
                 .withSessionId(request.getChargeExternalId())
+                .with3dsRequired(request.getGatewayAccount().isRequires3ds())
                 .withTransactionId(request.getTransactionId().orElse(""))
                 .withMerchantCode(request.getGatewayAccount().getCredentials().get(CREDENTIALS_MERCHANT_ID))
                 .withDescription(request.getDescription())
