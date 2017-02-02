@@ -132,6 +132,14 @@ public class ChargeService {
             persistedCard = charge.getCardDetails().toCard();
             persistedCard.setCardBrand(findCardBrandLabel(charge.getCardDetails().getCardBrand()).orElse(""));
         }
+
+        ChargeResponse.Auth3dsData auth3dsData = null;
+        if(charge.get3dsDetails() != null) {
+            auth3dsData = new ChargeResponse.Auth3dsData();
+            auth3dsData.setPaRequest(charge.get3dsDetails().getPaRequest());
+            auth3dsData.setIssuerUrl(charge.get3dsDetails().getIssuerUrl());
+        }
+
         return aChargeResponse()
                 .withChargeId(chargeId)
                 .withAmount(charge.getAmount())
@@ -146,6 +154,7 @@ public class ChargeService {
                 .withRefunds(buildRefundSummary(charge))
                 .withSettlement(buildSettlementSummary(charge))
                 .withCardDetails(persistedCard)
+                .withAuth3dsData(auth3dsData)
                 .withLink("self", GET, selfUriFor(uriInfo, charge.getGatewayAccount().getId(), chargeId))
                 .withLink("refunds", GET, refundsUriFor(uriInfo, charge.getGatewayAccount().getId(), charge.getExternalId()));
     }

@@ -160,6 +160,17 @@ public class DatabaseTestHelper {
         );
     }
 
+    public void updateCharge3dsDetails(Long chargeId, String issuerUrl, String paRequest) {
+        jdbi.withHandle(handle ->
+                handle
+                        .createStatement("UPDATE charges SET pa_request_3ds=:pa_request_3ds, issuer_url_3ds=:issuer_url_3ds WHERE id=:id")
+                        .bind("id", chargeId)
+                        .bind("pa_request_3ds", paRequest)
+                        .bind("issuer_url_3ds", issuerUrl)
+                        .execute()
+        );
+    }
+
     public String getChargeTokenId(Long chargeId) {
 
         return jdbi.withHandle(h ->

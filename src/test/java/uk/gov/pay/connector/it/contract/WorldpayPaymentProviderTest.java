@@ -6,6 +6,7 @@ import com.codahale.metrics.MetricRegistry;
 import com.google.common.collect.ImmutableMap;
 import org.junit.Assume;
 import org.junit.Before;
+import org.junit.Ignore;
 import org.junit.Test;
 import uk.gov.pay.connector.app.GatewayCredentialsConfig;
 import uk.gov.pay.connector.model.CancelGatewayRequest;
@@ -67,8 +68,8 @@ public class WorldpayPaymentProviderTest {
 
             validCredentials3ds = ImmutableMap.of(
                     "merchant_id", "MERCHANTCODETEST3DS",
-                    "username", "USERNAME",
-                    "password", "14Sorrow24joy");
+                    "username", "TBD",
+                    "password", "TBD");
 
             validGatewayAccount = new GatewayAccountEntity();
             validGatewayAccount.setId(1234L);
@@ -104,6 +105,7 @@ public class WorldpayPaymentProviderTest {
     }
 
     @Test
+    @Ignore
     public void shouldBeAbleToSendAuthorisationRequestForMerchantUsing3ds() throws Exception {
         WorldpayPaymentProvider connector = getValidWorldpayPaymentProvider();
         successfulWorldpayCardAuthFor3ds(connector);
