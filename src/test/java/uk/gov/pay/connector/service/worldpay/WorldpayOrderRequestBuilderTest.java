@@ -47,6 +47,33 @@ public class WorldpayOrderRequestBuilderTest {
     }
 
     @Test
+    public void shouldGenerateValidAuthoriseOrderRequestForAddressWithMinimumFieldsWhen3dsEnabled() throws Exception {
+
+        Address minAddress = anAddress();
+        minAddress.setLine1("123 My Street");
+        minAddress.setPostcode("SW8URR");
+        minAddress.setCity("London");
+        minAddress.setCountry("GB");
+
+        AuthorisationDetails authorisationDetails = getValidTestCard(minAddress);
+
+        GatewayOrder actualRequest = aWorldpayAuthoriseOrderRequestBuilder()
+                .withSessionId("uniqueSessionId")
+                .with3dsRequired(true)
+                .withAcceptHeader("text/html")
+                .withUserAgentHeader("Mozilla/5.0")
+                .withTransactionId("MyUniqueTransactionId!")
+                .withMerchantCode("MERCHANTCODE")
+                .withDescription("This is the description")
+                .withAmount("500")
+                .withAuthorisationDetails(authorisationDetails)
+                .build();
+
+        assertXMLEqual(expectedOrderSubmitPayload("valid-authorise-worldpay-3ds-request-min-address.xml"), actualRequest.getPayload());
+        assertEquals(OrderRequestType.AUTHORISE, actualRequest.getOrderRequestType());
+    }
+
+    @Test
     public void shouldGenerateValidAuthoriseOrderRequestForAddressWithAllFields() throws Exception {
 
         Address fullAddress = anAddress();

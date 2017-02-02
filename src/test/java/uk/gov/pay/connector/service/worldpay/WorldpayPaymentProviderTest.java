@@ -11,6 +11,7 @@ import org.junit.Assert;
 import org.junit.Before;
 import org.junit.Test;
 import org.junit.runner.RunWith;
+import org.mockito.ArgumentCaptor;
 import org.mockito.ArgumentMatcher;
 import org.mockito.Mock;
 import org.mockito.runners.MockitoJUnitRunner;
@@ -36,6 +37,7 @@ import java.util.Map;
 import static com.google.common.io.Resources.getResource;
 import static fj.data.Either.left;
 import static java.lang.String.format;
+import static org.custommonkey.xmlunit.XMLAssert.assertXMLEqual;
 import static org.hamcrest.CoreMatchers.instanceOf;
 import static org.hamcrest.CoreMatchers.startsWith;
 import static org.hamcrest.MatcherAssert.assertThat;
@@ -143,6 +145,58 @@ public class WorldpayPaymentProviderTest {
     }
 
     @Test
+    public void shouldNotInclude3dsElementsWhen3dsToggleDisabled() throws Exception {
+        ChargeEntity chargeEntity = ChargeEntityFixture.aValidChargeEntity().build();
+        chargeEntity.setGatewayTransactionId("transaction-id");
+        chargeEntity.setGatewayAccount(mockGatewayAccountEntity);
+
+        Map<String, String> credentialsMap = ImmutableMap.of("merchant_id", "MERCHANTCODE");
+        when(mockGatewayAccountEntity.getCredentials()).thenReturn(credentialsMap);
+        when(mockGatewayAccountEntity.isRequires3ds()).thenReturn(false);
+        when(mockGatewayClient.postRequestFor(isNull(String.class), any(GatewayAccountEntity.class), any(GatewayOrder.class))).thenReturn(left(unexpectedStatusCodeFromGateway("Unexpected Response Code From Gateway")));
+
+        WorldpayPaymentProvider worldpayPaymentProvider = new WorldpayPaymentProvider(mockGatewayClient);
+
+        worldpayPaymentProvider.authorise(getCardAuthorisationRequest(chargeEntity));
+
+        ArgumentCaptor<GatewayOrder> gatewayOrderArgumentCaptor = ArgumentCaptor.forClass(GatewayOrder.class);
+
+        verify(mockGatewayClient).postRequestFor(eq(null), eq(mockGatewayAccountEntity), gatewayOrderArgumentCaptor.capture());
+
+        assertXMLEqual(expectedOrderSubmitPayload("valid-authorise-worldpay-request-excluding-3ds.xml"), gatewayOrderArgumentCaptor.getValue().getPayload());
+    }
+
+    @Test
+    public void shouldInclude3dsElementsWhen3dsToggleEnabled() throws Exception {
+        ChargeEntity chargeEntity = ChargeEntityFixture.aValidChargeEntity().build();
+        chargeEntity.setGatewayTransactionId("transaction-id");
+
+        chargeEntity.setGatewayAccount(mockGatewayAccountEntity);
+        ChargeEntity mockChargeEntity = mock(ChargeEntity.class);
+
+        when(mockChargeEntity.getGatewayAccount()).thenReturn(mockGatewayAccountEntity);
+        when(mockChargeEntity.getExternalId()).thenReturn("uniqueSessionId");
+        when(mockChargeEntity.getAmount()).thenReturn(500L);
+        when(mockChargeEntity.getDescription()).thenReturn("This is a description");
+        when(mockChargeEntity.getGatewayTransactionId()).thenReturn("transaction-id");
+
+        Map<String, String> credentialsMap = ImmutableMap.of("merchant_id", "MERCHANTCODE");
+        when(mockGatewayAccountEntity.getCredentials()).thenReturn(credentialsMap);
+        when(mockGatewayAccountEntity.isRequires3ds()).thenReturn(true);
+        when(mockGatewayClient.postRequestFor(isNull(String.class), any(GatewayAccountEntity.class), any(GatewayOrder.class))).thenReturn(left(unexpectedStatusCodeFromGateway("Unexpected Response Code From Gateway")));
+
+        WorldpayPaymentProvider worldpayPaymentProvider = new WorldpayPaymentProvider(mockGatewayClient);
+
+        worldpayPaymentProvider.authorise(getCardAuthorisationRequest(mockChargeEntity));
+
+        ArgumentCaptor<GatewayOrder> gatewayOrderArgumentCaptor = ArgumentCaptor.forClass(GatewayOrder.class);
+
+        verify(mockGatewayClient).postRequestFor(eq(null), eq(mockGatewayAccountEntity), gatewayOrderArgumentCaptor.capture());
+
+        assertXMLEqual(expectedOrderSubmitPayload("valid-authorise-worldpay-request-including-3ds.xml"), gatewayOrderArgumentCaptor.getValue().getPayload());
+    }
+
+    @Test
     public void shouldSendSuccessfullyAnOrderForMerchant() throws Exception {
         GatewayResponse<WorldpayOrderStatusResponse> response = provider.authorise(getCardAuthorisationRequest());
         assertTrue(response.isSuccessful());
@@ -233,17 +287,27 @@ public class WorldpayPaymentProviderTest {
     }
 
     private AuthorisationGatewayRequest getCardAuthorisationRequest() {
+        return getCardAuthorisationRequest(aServiceAccount());
+    }
+
+    private AuthorisationGatewayRequest getCardAuthorisationRequest(ChargeEntity chargeEntity) {
         AuthorisationDetails authorisationDetails = getValidTestCard();
-        ChargeEntity chargeEntity = aValidChargeEntity()
-                .withGatewayAccountEntity(aServiceAccount())
-                .build();
         return new AuthorisationGatewayRequest(chargeEntity, authorisationDetails);
     }
+
+    private AuthorisationGatewayRequest getCardAuthorisationRequest(GatewayAccountEntity accountEntity) {
+        ChargeEntity chargeEntity = aValidChargeEntity()
+                .withGatewayAccountEntity(accountEntity)
+                .build();
+        return getCardAuthorisationRequest(chargeEntity);
+    }
+
 
     private GatewayAccountEntity aServiceAccount() {
         GatewayAccountEntity gatewayAccount = new GatewayAccountEntity();
         gatewayAccount.setId(1L);
         gatewayAccount.setGatewayName("worldpay");
+        gatewayAccount.setRequires3ds(false);
         gatewayAccount.setCredentials(ImmutableMap.of(
                 CREDENTIALS_MERCHANT_ID, "worlpay-merchant",
                 CREDENTIALS_USERNAME, "worldpay-password",
@@ -365,6 +429,10 @@ public class WorldpayPaymentProviderTest {
         address.setCountry("GB");
 
         return buildAuthorisationDetails("Mr. Payment", "4111111111111111", "123", "12/15", "visa", address);
+    }
+
+    private String expectedOrderSubmitPayload(final String expectedTemplate) throws IOException {
+        return Resources.toString(getResource("templates/worldpay/" + expectedTemplate), Charset.defaultCharset());
     }
 
 }

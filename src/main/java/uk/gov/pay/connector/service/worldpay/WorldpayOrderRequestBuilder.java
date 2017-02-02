@@ -14,6 +14,7 @@ public class WorldpayOrderRequestBuilder extends OrderRequestBuilder {
         private String sessionId;
         private String acceptHeader;
         private String userAgentHeader;
+        private boolean requires3ds;
 
         public String getReference() {
             return reference;
@@ -63,6 +64,14 @@ public class WorldpayOrderRequestBuilder extends OrderRequestBuilder {
 
         public void setUserAgentHeader(String userAgentHeader) {
             this.userAgentHeader = userAgentHeader;
+        }
+
+        public boolean isRequires3ds() {
+            return requires3ds;
+        }
+
+        public void setRequires3ds(boolean requires3ds) {
+            this.requires3ds = requires3ds;
         }
     }
 
@@ -121,6 +130,11 @@ public class WorldpayOrderRequestBuilder extends OrderRequestBuilder {
 
     public WorldpayOrderRequestBuilder withUserAgentHeader(String userAgentHeader) {
         worldpayTemplateData.setUserAgentHeader(userAgentHeader);
+        return this;
+    }
+
+    public WorldpayOrderRequestBuilder with3dsRequired(boolean requires3ds) {
+        worldpayTemplateData.setRequires3ds(requires3ds);
         return this;
     }
 }

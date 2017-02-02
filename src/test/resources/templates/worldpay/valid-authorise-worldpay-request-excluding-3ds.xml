@@ -3,8 +3,8 @@
         "http://dtd.worldpay.com/paymentService_v1.dtd">
 <paymentService version="1.4" merchantCode="MERCHANTCODE">
     <submit>
-        <order orderCode="MyUniqueTransactionId!">
-            <description>This is the description with &lt;!-- </description>
+        <order orderCode="transaction-id">
+            <description>This is a description</description>
             <amount currencyCode="GBP" exponent="2" value="500"/>
             <paymentDetails>
                 <VISA-SSL>
@@ -16,10 +16,11 @@
                     <cvc>123</cvc>
                     <cardAddress>
                         <address>
-                            <address1>123 &amp; My Street</address1>
-                            <address2>This road --&gt;</address2>
-                            <postalCode>SW8 &gt; URR</postalCode>
-                            <city>London !&gt;</city>
+                            <address1>123 My Street</address1>
+                            <address2>This road</address2>
+                            <postalCode>SW8URR</postalCode>
+                            <city>London</city>
+                            <state>London state</state>
                             <countryCode>GB</countryCode>
                         </address>
                     </cardAddress>
