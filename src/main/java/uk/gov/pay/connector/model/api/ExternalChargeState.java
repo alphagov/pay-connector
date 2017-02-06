@@ -14,6 +14,7 @@ public enum ExternalChargeState {
     EXTERNAL_CREATED("created", false),
 
     EXTERNAL_STARTED("started", false),
+    EXTERNAL_3DS_STARTED("3DS started", false),
     EXTERNAL_SUBMITTED("submitted", false),
 
     EXTERNAL_SUCCESS("success", true),
