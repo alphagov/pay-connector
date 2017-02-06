@@ -1,5 +1,6 @@
 package uk.gov.pay.connector.service;
 
+import com.codahale.metrics.MetricRegistry;
 import com.google.inject.persist.Transactional;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.lang3.tuple.Pair;
@@ -25,12 +26,16 @@ public class CardAuthoriseService extends CardService<BaseAuthoriseResponse> {
     private static ChargeStatus[] legalStates = new ChargeStatus[]{
             ENTERING_CARD_DETAILS
     };
+    private final MetricRegistry metrics;
 
     @Inject
     public CardAuthoriseService(ChargeDao chargeDao,
                                 PaymentProviders providers,
-                                CardExecutorService cardExecutorService) {
+                                CardExecutorService cardExecutorService,
+                                MetricRegistry metricRegistry) {
         super(chargeDao, providers, cardExecutorService);
+
+        this.metrics = metricRegistry;
     }
 
     public GatewayResponse doAuthorise(String chargeId, AuthorisationDetails authorisationDetails) {
@@ -91,6 +96,11 @@ public class CardAuthoriseService extends CardService<BaseAuthoriseResponse> {
 
         logger.info("AuthorisationDetails authorisation response received - charge_external_id={}, operation_type={}, transaction_id={}, status={}",
                 chargeEntity.getExternalId(), OperationType.AUTHORISATION.getValue(), transactionId, status);
+
+        GatewayAccountEntity account = chargeEntity.getGatewayAccount();
+
+        metrics.counter(String.format("gateway-operations.%s.%s.authorise.result.%s", account.getGatewayName(), account.getType(), status.toString())).inc();
+        metrics.counter(String.format("service-operations.%s.%s.authorise.result.%s", account.getServiceName(), account.getType(), status.toString())).inc();
 
         reloadedCharge.setStatus(status);
 

@@ -1,8 +1,11 @@
 package uk.gov.pay.connector.service;
 
+import com.codahale.metrics.Counter;
+import com.codahale.metrics.MetricRegistry;
 import com.google.common.collect.ImmutableMap;
 import fj.data.Either;
 import org.apache.commons.lang3.tuple.Pair;
+import org.junit.Before;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.mockito.InOrder;
@@ -39,11 +42,22 @@ import static uk.gov.pay.connector.service.CardExecutorService.ExecutionStatus.I
 
 @RunWith(MockitoJUnitRunner.class)
 public class CardAuthoriseServiceTest extends CardServiceTest {
-
-    private final CardAuthoriseService cardAuthorisationService = new CardAuthoriseService(mockedChargeDao, mockedProviders, mockExecutorService);
+    @Mock
+    private MetricRegistry mockMetricRegistry;
 
     @Mock
     private Future<Either<Error, GatewayResponse>> mockFutureResponse;
+
+    private CardAuthoriseService cardAuthorisationService;
+
+    @Before
+    public void setUpCardAuthorisationService() {
+        mockMetricRegistry = mock(MetricRegistry.class);
+        Counter mockCounter = mock(Counter.class);
+        when(mockMetricRegistry.counter(anyString())).thenReturn(mockCounter);
+
+        cardAuthorisationService = new CardAuthoriseService(mockedChargeDao, mockedProviders, mockExecutorService, mockMetricRegistry);
+    }
 
     public void setupMockExecutorServiceMock() {
         doAnswer(invocation -> Pair.of(COMPLETED, ((Supplier) invocation.getArguments()[0]).get()))
