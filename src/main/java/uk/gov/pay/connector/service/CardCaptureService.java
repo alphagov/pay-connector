@@ -1,17 +1,18 @@
 package uk.gov.pay.connector.service;
 
+import com.codahale.metrics.MetricRegistry;
 import com.google.inject.persist.Transactional;
 import uk.gov.pay.connector.dao.ChargeDao;
 import uk.gov.pay.connector.exception.ChargeNotFoundRuntimeException;
 import uk.gov.pay.connector.model.CaptureGatewayRequest;
 import uk.gov.pay.connector.model.domain.ChargeEntity;
 import uk.gov.pay.connector.model.domain.ChargeStatus;
+import uk.gov.pay.connector.model.domain.GatewayAccountEntity;
 import uk.gov.pay.connector.model.gateway.GatewayResponse;
 import uk.gov.pay.connector.resources.PaymentGatewayName;
 
 import javax.inject.Inject;
 
-import java.time.LocalDate;
 import java.time.ZonedDateTime;
 import java.util.Optional;
 
@@ -28,8 +29,8 @@ public class CardCaptureService extends CardService implements TransactionalGate
 
 
     @Inject
-    public CardCaptureService(ChargeDao chargeDao, PaymentProviders providers, UserNotificationService userNotificationService) {
-        super(chargeDao, providers);
+    public CardCaptureService(ChargeDao chargeDao, PaymentProviders providers, UserNotificationService userNotificationService, MetricRegistry metricRegistry) {
+        super(chargeDao, providers, metricRegistry);
         this.userNotificationService = userNotificationService;
     }
 
@@ -73,6 +74,11 @@ public class CardCaptureService extends CardService implements TransactionalGate
         if (isBlank(transactionId)) {
             logger.warn("Card capture response received with no transaction id. - charge_external_id={}", reloadedCharge.getExternalId());
         }
+
+        GatewayAccountEntity account = chargeEntity.getGatewayAccount();
+
+        metricRegistry.counter(String.format("gateway-operations.%s.%s.capture.result.%s", account.getGatewayName(), account.getType(), status.toString())).inc();
+        metricRegistry.counter(String.format("service-operations.%s.%s.capture.result.%s", account.getServiceName(), account.getType(), status.toString())).inc();
 
         reloadedCharge = chargeDao.mergeAndNotifyStatusHasChanged(reloadedCharge, Optional.empty());
 

@@ -1,5 +1,6 @@
 package uk.gov.pay.connector.service;
 
+import com.codahale.metrics.MetricRegistry;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import uk.gov.pay.connector.dao.ChargeDao;
@@ -19,7 +20,7 @@ public abstract class CardService<T extends BaseResponse> {
     protected final ChargeDao chargeDao;
     private final PaymentProviders providers;
     protected final Logger logger = LoggerFactory.getLogger(getClass());
-    protected CardExecutorService cardExecutorService;
+    protected MetricRegistry metricRegistry;
 
     public enum OperationType {
         CAPTURE("Capture"),
@@ -37,14 +38,10 @@ public abstract class CardService<T extends BaseResponse> {
         }
     }
 
-    public CardService(ChargeDao chargeDao, PaymentProviders providers) {
+    protected CardService(ChargeDao chargeDao, PaymentProviders providers, MetricRegistry metricRegistry) {
         this.chargeDao = chargeDao;
         this.providers = providers;
-    }
-
-    public CardService(ChargeDao chargeDao, PaymentProviders providers, CardExecutorService cardExecutorService) {
-        this(chargeDao, providers);
-        this.cardExecutorService = cardExecutorService;
+        this.metricRegistry = metricRegistry;
     }
 
     public ChargeEntity preOperation(ChargeEntity chargeEntity, OperationType operationType, ChargeStatus[] legalStatuses, ChargeStatus lockingStatus) {

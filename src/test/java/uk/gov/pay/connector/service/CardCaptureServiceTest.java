@@ -1,5 +1,7 @@
 package uk.gov.pay.connector.service;
 
+import com.codahale.metrics.Counter;
+import com.codahale.metrics.MetricRegistry;
 import org.hamcrest.BaseMatcher;
 import org.hamcrest.Description;
 import org.junit.Before;
@@ -46,7 +48,11 @@ public class CardCaptureServiceTest extends CardServiceTest {
 
     @Before
     public void beforeTest() {
-        cardCaptureService = new CardCaptureService(mockedChargeDao, mockedProviders, mockUserNotificationService);
+        mockMetricRegistry = mock(MetricRegistry.class);
+        Counter mockCounter = mock(Counter.class);
+        when(mockMetricRegistry.counter(anyString())).thenReturn(mockCounter);
+
+        cardCaptureService = new CardCaptureService(mockedChargeDao, mockedProviders, mockUserNotificationService, mockMetricRegistry);
     }
 
     public void setupPaymentProviderMock(String transactionId, String errorCode) {
