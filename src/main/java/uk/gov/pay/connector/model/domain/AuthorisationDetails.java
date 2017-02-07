@@ -2,7 +2,7 @@ package uk.gov.pay.connector.model.domain;
 
 import com.fasterxml.jackson.annotation.JsonProperty;
 
-public class AuthorisationDetails {
+public class AuthorisationDetails implements GatewayAuthRequest {
 
     private String cardNo;
     private String cardHolder;

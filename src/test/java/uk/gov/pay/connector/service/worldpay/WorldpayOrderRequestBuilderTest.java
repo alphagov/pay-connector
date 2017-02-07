@@ -129,6 +129,20 @@ public class WorldpayOrderRequestBuilderTest {
     }
 
     @Test
+    public void shouldGenerateValidAuth3dsResponseOrderRequest() throws Exception {
+
+        GatewayOrder actualRequest = aWorldpay3dsResponseAuthOrderRequestBuilder()
+                .withPaResponse3ds("I am an opaque 3D Secure PA response from the card issuer")
+                .withSessionId("uniqueSessionId")
+                .withTransactionId("MyUniqueTransactionId!")
+                .withMerchantCode("MERCHANTCODE")
+                .build();
+
+        assertXMLEqual(expectedOrderSubmitPayload("valid-3ds-response-auth-worldpay-request.xml"), actualRequest.getPayload());
+        assertEquals(OrderRequestType.AUTHORISE_3DS, actualRequest.getOrderRequestType());
+    }
+
+    @Test
     public void shouldGenerateValidCaptureOrderRequest() throws Exception {
 
         DateTime date = new DateTime(2013, 2, 23, 0, 0);

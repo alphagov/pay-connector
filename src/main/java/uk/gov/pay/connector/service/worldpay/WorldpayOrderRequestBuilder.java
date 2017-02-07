@@ -15,6 +15,7 @@ public class WorldpayOrderRequestBuilder extends OrderRequestBuilder {
         private String acceptHeader;
         private String userAgentHeader;
         private boolean requires3ds;
+        private String paResponse3ds;
 
         public String getReference() {
             return reference;
@@ -73,9 +74,18 @@ public class WorldpayOrderRequestBuilder extends OrderRequestBuilder {
         public void setRequires3ds(boolean requires3ds) {
             this.requires3ds = requires3ds;
         }
+
+        public String getPaResponse3ds() {
+            return paResponse3ds;
+        }
+
+        public void setPaResponse3ds(String paResponse3ds) {
+            this.paResponse3ds = paResponse3ds;
+        }
     }
 
     public static TemplateBuilder AUTHORISE_ORDER_TEMPLATE_BUILDER = new TemplateBuilder("/worldpay/WorldpayAuthoriseOrderTemplate.xml");
+    public static TemplateBuilder AUTH_3DS_RESPONSE_ORDER_TEMPLATE_BUILDER = new TemplateBuilder("/worldpay/Worldpay3dsResponseAuthOrderTemplate.xml");
     public static TemplateBuilder CAPTURE_ORDER_TEMPLATE_BUILDER = new TemplateBuilder("/worldpay/WorldpayCaptureOrderTemplate.xml");
     public static TemplateBuilder CANCEL_ORDER_TEMPLATE_BUILDER = new TemplateBuilder("/worldpay/WorldpayCancelOrderTemplate.xml");
     public static TemplateBuilder REFUND_ORDER_TEMPLATE_BUILDER = new TemplateBuilder("/worldpay/WorldpayRefundOrderTemplate.xml");
@@ -84,6 +94,10 @@ public class WorldpayOrderRequestBuilder extends OrderRequestBuilder {
 
     public static WorldpayOrderRequestBuilder aWorldpayAuthoriseOrderRequestBuilder() {
         return new WorldpayOrderRequestBuilder(new WorldpayTemplateData(), AUTHORISE_ORDER_TEMPLATE_BUILDER, OrderRequestType.AUTHORISE);
+    }
+
+    public static WorldpayOrderRequestBuilder aWorldpay3dsResponseAuthOrderRequestBuilder() {
+        return new WorldpayOrderRequestBuilder(new WorldpayTemplateData(), AUTH_3DS_RESPONSE_ORDER_TEMPLATE_BUILDER, OrderRequestType.AUTHORISE_3DS);
     }
 
     public static WorldpayOrderRequestBuilder aWorldpayCaptureOrderRequestBuilder() {
@@ -135,6 +149,11 @@ public class WorldpayOrderRequestBuilder extends OrderRequestBuilder {
 
     public WorldpayOrderRequestBuilder with3dsRequired(boolean requires3ds) {
         worldpayTemplateData.setRequires3ds(requires3ds);
+        return this;
+    }
+
+    public WorldpayOrderRequestBuilder withPaResponse3ds(String paResponse) {
+        worldpayTemplateData.setPaResponse3ds(paResponse);
         return this;
     }
 }

@@ -2,6 +2,7 @@ package uk.gov.pay.connector.service.sandbox;
 
 import fj.data.Either;
 import uk.gov.pay.connector.model.*;
+import uk.gov.pay.connector.model.gateway.Auth3dsResponseGatewayRequest;
 import uk.gov.pay.connector.model.gateway.AuthorisationGatewayRequest;
 import uk.gov.pay.connector.model.gateway.GatewayResponse;
 import uk.gov.pay.connector.resources.PaymentGatewayName;
@@ -33,6 +34,11 @@ public class SandboxPaymentProvider extends BasePaymentProvider<BaseResponse> {
         }
 
         return GatewayResponse.with(new GatewayError("Unsupported card details.", GENERIC_GATEWAY_ERROR));
+    }
+
+    @Override
+    public GatewayResponse<BaseResponse> authorise3dsResponse(Auth3dsResponseGatewayRequest request) {
+        return GatewayResponse.with(new GatewayError("3D Secure not implemented for Sandbox", GENERIC_GATEWAY_ERROR));
     }
 
     @Override
