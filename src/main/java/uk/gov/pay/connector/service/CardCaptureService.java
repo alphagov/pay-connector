@@ -77,8 +77,7 @@ public class CardCaptureService extends CardService implements TransactionalGate
 
         GatewayAccountEntity account = chargeEntity.getGatewayAccount();
 
-        metricRegistry.counter(String.format("gateway-operations.%s.%s.capture.result.%s", account.getGatewayName(), account.getType(), status.toString())).inc();
-        metricRegistry.counter(String.format("service-operations.%s.%s.capture.result.%s", account.getServiceName(), account.getType(), status.toString())).inc();
+        metricRegistry.counter(String.format("gateway-operations.%s.%s.%s.capture.result.%s", account.getGatewayName(), account.getType(), account.getId(), status.toString())).inc();
 
         reloadedCharge = chargeDao.mergeAndNotifyStatusHasChanged(reloadedCharge, Optional.empty());
 

@@ -100,8 +100,7 @@ public class CardAuthoriseService extends CardService<BaseAuthoriseResponse> {
 
         GatewayAccountEntity account = chargeEntity.getGatewayAccount();
 
-        metricRegistry.counter(String.format("gateway-operations.%s.%s.authorise.result.%s", account.getGatewayName(), account.getType(), status.toString())).inc();
-        metricRegistry.counter(String.format("service-operations.%s.%s.authorise.result.%s", account.getServiceName(), account.getType(), status.toString())).inc();
+        metricRegistry.counter(String.format("gateway-operations.%s.%s.%s.authorise.result.%s", account.getGatewayName(), account.getType(), account.getId(), status.toString())).inc();
 
         reloadedCharge.setStatus(status);
 
