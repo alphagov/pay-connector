@@ -4,6 +4,7 @@ import com.google.common.collect.ImmutableMap;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import uk.gov.pay.connector.model.GatewayError;
+import uk.gov.pay.connector.model.domain.Auth3dsResponse;
 import uk.gov.pay.connector.model.domain.AuthorisationDetails;
 import uk.gov.pay.connector.model.gateway.GatewayResponse;
 import uk.gov.pay.connector.service.*;
@@ -25,12 +26,15 @@ import static uk.gov.pay.connector.util.ResponseUtil.serviceErrorResponse;
 public class CardResource {
     private final Logger logger = LoggerFactory.getLogger(getClass());
     private final CardAuthoriseService cardAuthoriseService;
+    private final Card3dsResponseAuthService card3dsResponseAuthService;
     private final CardCaptureService cardCaptureService;
     private final ChargeCancelService chargeCancelService;
 
     @Inject
-    public CardResource(CardAuthoriseService cardAuthoriseService, CardCaptureService cardCaptureService, ChargeCancelService chargeCancelService) {
+    public CardResource(CardAuthoriseService cardAuthoriseService, Card3dsResponseAuthService card3dsResponseAuthService,
+                        CardCaptureService cardCaptureService, ChargeCancelService chargeCancelService) {
         this.cardAuthoriseService = cardAuthoriseService;
+        this.card3dsResponseAuthService = card3dsResponseAuthService;
         this.cardCaptureService = cardCaptureService;
         this.chargeCancelService = chargeCancelService;
     }
@@ -51,6 +55,15 @@ public class CardResource {
                 .orElse(false);
 
         return transactionDeclined ? badRequestResponse("This transaction was declined.") : handleGatewayAuthoriseResponse(response);
+    }
+
+    @POST
+    @Path(FRONTEND_CHARGE_3DS_AUTHORIZE_API_PATH)
+    @Consumes(APPLICATION_JSON)
+    @Produces(APPLICATION_JSON)
+    public Response authorise3dsCharge(@PathParam("chargeId") String chargeId, Auth3dsResponse auth3dsResponse) {
+        // handle different statuses
+        return handleGatewayResponse(card3dsResponseAuthService.doAuthorise(chargeId, auth3dsResponse));
     }
 
     @POST

@@ -25,6 +25,7 @@ public abstract class CardService<T extends BaseResponse> {
     public enum OperationType {
         CAPTURE("Capture"),
         AUTHORISATION("Authorisation"),
+        AUTHORISATION_3DS("3D Secure Response Authorisation"),
         CANCELLATION("Cancellation");
 
         private String value;

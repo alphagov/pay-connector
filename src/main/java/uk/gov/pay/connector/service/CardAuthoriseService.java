@@ -21,15 +21,9 @@ import java.util.function.Supplier;
 import static uk.gov.pay.connector.model.domain.ChargeStatus.*;
 import static uk.gov.pay.connector.service.CardExecutorService.ExecutionStatus;
 
-public class CardAuthoriseService extends CardService<BaseAuthoriseResponse> {
+public class CardAuthoriseService extends CardAuthoriseBaseService<AuthorisationDetails> {
 
-    private static ChargeStatus[] legalStates = new ChargeStatus[]{
-            ENTERING_CARD_DETAILS
-    };
-
-    private final CardExecutorService cardExecutorService;
-
-    final Auth3dsDetailsFactory auth3dsDetailsFactory;
+    private final Auth3dsDetailsFactory auth3dsDetailsFactory;
 
     @Inject
     public CardAuthoriseService(ChargeDao chargeDao,
@@ -37,56 +31,21 @@ public class CardAuthoriseService extends CardService<BaseAuthoriseResponse> {
                                 CardExecutorService cardExecutorService,
                                 Auth3dsDetailsFactory auth3dsDetailsFactory,
                                 MetricRegistry metricRegistry) {
-        super(chargeDao, providers, metricRegistry);
+        super(chargeDao, providers, cardExecutorService, metricRegistry);
 
-        this.cardExecutorService = cardExecutorService;
         this.auth3dsDetailsFactory = auth3dsDetailsFactory;
-    }
-
-    public GatewayResponse doAuthorise(String chargeId, AuthorisationDetails authorisationDetails) {
-
-        Optional<ChargeEntity> chargeEntityOptional = chargeDao.findByExternalId(chargeId);
-
-        if (chargeEntityOptional.isPresent()) {
-            Supplier<GatewayResponse> authorisationSupplier = () -> {
-                ChargeEntity chargeEntity = chargeEntityOptional.get();
-                ChargeEntity preOperationResponse;
-                try {
-                    preOperationResponse = preOperation(chargeEntity);
-                } catch (OptimisticLockException e) {
-                    throw new ConflictRuntimeException(chargeEntity.getExternalId());
-                }
-
-                GatewayResponse<BaseAuthoriseResponse> operationResponse = operation(preOperationResponse, authorisationDetails);
-
-                return postOperation(preOperationResponse, authorisationDetails, operationResponse);
-            };
-
-            Pair<ExecutionStatus, GatewayResponse> executeResult = cardExecutorService.execute(authorisationSupplier);
-
-            switch (executeResult.getLeft()) {
-                case COMPLETED:
-                    return executeResult.getRight();
-                case IN_PROGRESS:
-                    throw new OperationAlreadyInProgressRuntimeException(OperationType.AUTHORISATION.getValue(), chargeId);
-                default:
-                    throw new GenericGatewayRuntimeException("Exception occurred while doing authorisation");
-            }
-        } else {
-            throw new ChargeNotFoundRuntimeException(chargeId);
-        }
-    }
-
-    @Transactional
-    public ChargeEntity preOperation(ChargeEntity chargeEntity) {
-        chargeEntity = preOperation(chargeEntity, OperationType.AUTHORISATION, legalStates, AUTHORISATION_READY);
-        getPaymentProviderFor(chargeEntity).generateTransactionId().ifPresent(chargeEntity::setGatewayTransactionId);
-        return chargeEntity;
     }
 
     public GatewayResponse<BaseAuthoriseResponse> operation(ChargeEntity chargeEntity, AuthorisationDetails authorisationDetails) {
         return getPaymentProviderFor(chargeEntity)
                 .authorise(AuthorisationGatewayRequest.valueOf(chargeEntity, authorisationDetails));
+    }
+
+    @Override
+    protected ChargeStatus[] getLegalStates() {
+        return new ChargeStatus[]{
+                ENTERING_CARD_DETAILS
+        };
     }
 
     @Transactional

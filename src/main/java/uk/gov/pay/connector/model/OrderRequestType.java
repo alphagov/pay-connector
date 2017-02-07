@@ -2,6 +2,7 @@ package uk.gov.pay.connector.model;
 
 public enum OrderRequestType {
     AUTHORISE("authorise"),
+    AUTHORISE_3DS("authorise3DS"),
     CAPTURE("capture"),
     CANCEL("cancel"),
     REFUND("refund");
