@@ -6,7 +6,7 @@ import uk.gov.pay.connector.model.OrderRequestType;
 import uk.gov.pay.connector.model.domain.Address;
 import uk.gov.pay.connector.model.domain.AuthCardDetails;
 import uk.gov.pay.connector.service.GatewayOrder;
-import uk.gov.pay.connector.util.CardUtils;
+import uk.gov.pay.connector.util.AuthUtils;
 
 import java.io.IOException;
 import java.nio.charset.Charset;
@@ -29,7 +29,7 @@ public class SmartpayOrderRequestBuilderTest {
         address.setPostcode("EC2A 1AE");
         address.setCountry("GB");
 
-        AuthCardDetails authCardDetails = CardUtils.buildAuthCardDetails("Mr. Payment", "5555444433331111", "737", "08/18", "visa", address);
+        AuthCardDetails authCardDetails = AuthUtils.buildAuthCardDetails("Mr. Payment", "5555444433331111", "737", "08/18", "visa", address);
 
         GatewayOrder actualRequest = aSmartpayAuthoriseOrderRequestBuilder()
                 .withMerchantCode("MerchantAccount")
@@ -54,7 +54,7 @@ public class SmartpayOrderRequestBuilderTest {
         address.setPostcode("EC2A 1AE");
         address.setCountry("GB");
 
-        AuthCardDetails authCardDetails = CardUtils.buildAuthCardDetails("Mr. Payment", "5555444433331111", "737", "08/18", "visa", address);
+        AuthCardDetails authCardDetails = AuthUtils.buildAuthCardDetails("Mr. Payment", "5555444433331111", "737", "08/18", "visa", address);
 
         GatewayOrder actualRequest = aSmartpayAuthoriseOrderRequestBuilder()
                 .withMerchantCode("MerchantAccount")
@@ -77,7 +77,7 @@ public class SmartpayOrderRequestBuilderTest {
         address.setPostcode("EC2A 1AE");
         address.setCountry("GB");
 
-        AuthCardDetails authCardDetails = CardUtils.buildAuthCardDetails("Mr. Payment", "5555444433331111", "737", "08/18", "visa", address);
+        AuthCardDetails authCardDetails = AuthUtils.buildAuthCardDetails("Mr. Payment", "5555444433331111", "737", "08/18", "visa", address);
 
         GatewayOrder actualRequest = aSmartpayAuthoriseOrderRequestBuilder()
                 .withMerchantCode("MerchantAccount")

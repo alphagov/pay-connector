@@ -6,7 +6,7 @@ import uk.gov.pay.connector.model.domain.AuthCardDetails;
 
 import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertTrue;
-import static uk.gov.pay.connector.util.CardUtils.*;
+import static uk.gov.pay.connector.util.AuthUtils.*;
 
 public class AuthCardDetailsValidatorTest {
 
