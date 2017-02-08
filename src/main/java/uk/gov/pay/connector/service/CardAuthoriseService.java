@@ -26,16 +26,17 @@ public class CardAuthoriseService extends CardService<BaseAuthoriseResponse> {
     private static ChargeStatus[] legalStates = new ChargeStatus[]{
             ENTERING_CARD_DETAILS
     };
-    private final MetricRegistry metrics;
+
+    private final CardExecutorService cardExecutorService;
 
     @Inject
     public CardAuthoriseService(ChargeDao chargeDao,
                                 PaymentProviders providers,
                                 CardExecutorService cardExecutorService,
                                 MetricRegistry metricRegistry) {
-        super(chargeDao, providers, cardExecutorService);
+        super(chargeDao, providers, metricRegistry);
 
-        this.metrics = metricRegistry;
+        this.cardExecutorService = cardExecutorService;
     }
 
     public GatewayResponse doAuthorise(String chargeId, AuthorisationDetails authorisationDetails) {
@@ -99,8 +100,7 @@ public class CardAuthoriseService extends CardService<BaseAuthoriseResponse> {
 
         GatewayAccountEntity account = chargeEntity.getGatewayAccount();
 
-        metrics.counter(String.format("gateway-operations.%s.%s.authorise.result.%s", account.getGatewayName(), account.getType(), status.toString())).inc();
-        metrics.counter(String.format("service-operations.%s.%s.authorise.result.%s", account.getServiceName(), account.getType(), status.toString())).inc();
+        metricRegistry.counter(String.format("gateway-operations.%s.%s.%s.authorise.result.%s", account.getGatewayName(), account.getType(), account.getId(), status.toString())).inc();
 
         reloadedCharge.setStatus(status);
 

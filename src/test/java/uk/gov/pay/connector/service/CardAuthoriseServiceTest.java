@@ -43,12 +43,10 @@ import static uk.gov.pay.connector.service.CardExecutorService.ExecutionStatus.I
 @RunWith(MockitoJUnitRunner.class)
 public class CardAuthoriseServiceTest extends CardServiceTest {
     @Mock
-    private MetricRegistry mockMetricRegistry;
-
-    @Mock
     private Future<Either<Error, GatewayResponse>> mockFutureResponse;
 
     private CardAuthoriseService cardAuthorisationService;
+    private CardExecutorService mockExecutorService = mock(CardExecutorService.class);
 
     @Before
     public void setUpCardAuthorisationService() {
