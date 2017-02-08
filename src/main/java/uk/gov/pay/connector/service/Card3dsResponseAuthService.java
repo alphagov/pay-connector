@@ -3,7 +3,7 @@ package uk.gov.pay.connector.service;
 import com.codahale.metrics.MetricRegistry;
 import com.google.inject.persist.Transactional;
 import uk.gov.pay.connector.dao.ChargeDao;
-import uk.gov.pay.connector.model.domain.Auth3dsResponse;
+import uk.gov.pay.connector.model.domain.Auth3dsDetails;
 import uk.gov.pay.connector.model.domain.ChargeEntity;
 import uk.gov.pay.connector.model.domain.ChargeStatus;
 import uk.gov.pay.connector.model.gateway.Auth3dsResponseGatewayRequest;
@@ -13,7 +13,7 @@ import javax.inject.Inject;
 
 import static uk.gov.pay.connector.model.domain.ChargeStatus.ENTERING_CARD_DETAILS;
 
-public class Card3dsResponseAuthService extends CardAuthoriseBaseService<Auth3dsResponse> {
+public class Card3dsResponseAuthService extends CardAuthoriseBaseService<Auth3dsDetails> {
 
     @Inject
     public Card3dsResponseAuthService(ChargeDao chargeDao,
@@ -24,14 +24,14 @@ public class Card3dsResponseAuthService extends CardAuthoriseBaseService<Auth3ds
     }
 
 
-    public GatewayResponse<BaseAuthoriseResponse> operation(ChargeEntity chargeEntity, Auth3dsResponse auth3dsResponse) {
+    public GatewayResponse<BaseAuthoriseResponse> operation(ChargeEntity chargeEntity, Auth3dsDetails auth3DsDetails) {
         return getPaymentProviderFor(chargeEntity)
-                .authorise3dsResponse(Auth3dsResponseGatewayRequest.valueOf(chargeEntity, auth3dsResponse));
+                .authorise3dsResponse(Auth3dsResponseGatewayRequest.valueOf(chargeEntity, auth3DsDetails));
     }
 
     @Transactional
     public GatewayResponse<BaseAuthoriseResponse> postOperation(ChargeEntity chargeEntity,
-                                                                Auth3dsResponse auth3dsResponse,
+                                                                Auth3dsDetails auth3DsDetails,
                                                                 GatewayResponse<BaseAuthoriseResponse> operationResponse) {
         // work out what to do
         return operationResponse;

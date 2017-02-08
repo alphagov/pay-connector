@@ -1,7 +1,7 @@
 package uk.gov.pay.connector.model.gateway;
 
 import uk.gov.pay.connector.model.GatewayRequest;
-import uk.gov.pay.connector.model.domain.Auth3dsResponse;
+import uk.gov.pay.connector.model.domain.Auth3dsDetails;
 import uk.gov.pay.connector.model.domain.ChargeEntity;
 import uk.gov.pay.connector.model.domain.GatewayAccountEntity;
 
@@ -10,16 +10,16 @@ import java.util.Optional;
 public class Auth3dsResponseGatewayRequest implements GatewayRequest {
 
     private final ChargeEntity charge;
-    private final Auth3dsResponse auth3dsResponse;
+    private final Auth3dsDetails auth3DsDetails;
 
 
-    public Auth3dsResponseGatewayRequest(ChargeEntity charge, Auth3dsResponse auth3dsResponse) {
+    public Auth3dsResponseGatewayRequest(ChargeEntity charge, Auth3dsDetails auth3DsDetails) {
         this.charge = charge;
-        this.auth3dsResponse = auth3dsResponse;
+        this.auth3DsDetails = auth3DsDetails;
     }
 
-    public Auth3dsResponse getAuth3dsResponse() {
-        return auth3dsResponse;
+    public Auth3dsDetails getAuth3DsDetails() {
+        return auth3DsDetails;
     }
 
     public Optional<String> getTransactionId() {
@@ -35,7 +35,7 @@ public class Auth3dsResponseGatewayRequest implements GatewayRequest {
         return charge.getGatewayAccount();
     }
 
-    public static Auth3dsResponseGatewayRequest valueOf(ChargeEntity charge, Auth3dsResponse auth3dsResponse) {
-        return new Auth3dsResponseGatewayRequest(charge, auth3dsResponse);
+    public static Auth3dsResponseGatewayRequest valueOf(ChargeEntity charge, Auth3dsDetails auth3DsDetails) {
+        return new Auth3dsResponseGatewayRequest(charge, auth3DsDetails);
     }
 }

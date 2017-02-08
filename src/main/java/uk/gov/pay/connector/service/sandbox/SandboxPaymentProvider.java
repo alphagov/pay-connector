@@ -22,7 +22,7 @@ public class SandboxPaymentProvider extends BasePaymentProvider<BaseResponse> {
 
     @Override
     public GatewayResponse authorise(AuthorisationGatewayRequest request) {
-        String cardNumber = request.getAuthorisationDetails().getCardNo();
+        String cardNumber = request.getAuthCardDetails().getCardNo();
 
         if (isErrorCard(cardNumber)) {
             CardError errorInfo = cardErrorFor(cardNumber);

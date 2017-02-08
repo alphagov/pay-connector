@@ -3,25 +3,17 @@ package uk.gov.pay.connector.service;
 import com.codahale.metrics.MetricRegistry;
 import com.google.inject.persist.Transactional;
 import org.apache.commons.lang3.StringUtils;
-import org.apache.commons.lang3.tuple.Pair;
 import uk.gov.pay.connector.dao.ChargeDao;
-import uk.gov.pay.connector.exception.ChargeNotFoundRuntimeException;
-import uk.gov.pay.connector.exception.ConflictRuntimeException;
-import uk.gov.pay.connector.exception.GenericGatewayRuntimeException;
-import uk.gov.pay.connector.exception.OperationAlreadyInProgressRuntimeException;
 import uk.gov.pay.connector.model.domain.*;
 import uk.gov.pay.connector.model.gateway.AuthorisationGatewayRequest;
 import uk.gov.pay.connector.model.gateway.GatewayResponse;
 
 import javax.inject.Inject;
-import javax.persistence.OptimisticLockException;
 import java.util.Optional;
-import java.util.function.Supplier;
 
 import static uk.gov.pay.connector.model.domain.ChargeStatus.*;
-import static uk.gov.pay.connector.service.CardExecutorService.ExecutionStatus;
 
-public class CardAuthoriseService extends CardAuthoriseBaseService<AuthorisationDetails> {
+public class CardAuthoriseService extends CardAuthoriseBaseService<AuthCardDetails> {
 
     private final Auth3dsDetailsFactory auth3dsDetailsFactory;
 
@@ -36,9 +28,9 @@ public class CardAuthoriseService extends CardAuthoriseBaseService<Authorisation
         this.auth3dsDetailsFactory = auth3dsDetailsFactory;
     }
 
-    public GatewayResponse<BaseAuthoriseResponse> operation(ChargeEntity chargeEntity, AuthorisationDetails authorisationDetails) {
+    public GatewayResponse<BaseAuthoriseResponse> operation(ChargeEntity chargeEntity, AuthCardDetails authCardDetails) {
         return getPaymentProviderFor(chargeEntity)
-                .authorise(AuthorisationGatewayRequest.valueOf(chargeEntity, authorisationDetails));
+                .authorise(AuthorisationGatewayRequest.valueOf(chargeEntity, authCardDetails));
     }
 
     @Override
@@ -49,7 +41,7 @@ public class CardAuthoriseService extends CardAuthoriseBaseService<Authorisation
     }
 
     @Transactional
-    public GatewayResponse<BaseAuthoriseResponse> postOperation(ChargeEntity chargeEntity, AuthorisationDetails authorisationDetails, GatewayResponse<BaseAuthoriseResponse> operationResponse) {
+    public GatewayResponse<BaseAuthoriseResponse> postOperation(ChargeEntity chargeEntity, AuthCardDetails authCardDetails, GatewayResponse<BaseAuthoriseResponse> operationResponse) {
         ChargeEntity reloadedCharge = chargeDao.merge(chargeEntity);
 
         ChargeStatus status = operationResponse.getBaseResponse()
@@ -60,7 +52,7 @@ public class CardAuthoriseService extends CardAuthoriseBaseService<Authorisation
         String transactionId = operationResponse.getBaseResponse()
                 .map(BaseAuthoriseResponse::getTransactionId).orElse("");
 
-        logger.info("AuthorisationDetails authorisation response received - charge_external_id={}, operation_type={}, transaction_id={}, status={}",
+        logger.info("AuthCardDetails authorisation response received - charge_external_id={}, operation_type={}, transaction_id={}, status={}",
                 chargeEntity.getExternalId(), OperationType.AUTHORISATION.getValue(), transactionId, status);
 
         GatewayAccountEntity account = chargeEntity.getGatewayAccount();
@@ -71,23 +63,23 @@ public class CardAuthoriseService extends CardAuthoriseBaseService<Authorisation
         operationResponse.getBaseResponse().ifPresent(response -> auth3dsDetailsFactory.create(response).ifPresent(reloadedCharge::set3dsDetails));
 
         if (StringUtils.isBlank(transactionId)) {
-            logger.warn("AuthorisationDetails authorisation response received with no transaction id. -  charge_external_id={}", reloadedCharge.getExternalId());
+            logger.warn("AuthCardDetails authorisation response received with no transaction id. -  charge_external_id={}", reloadedCharge.getExternalId());
         } else {
             reloadedCharge.setGatewayTransactionId(transactionId);
         }
 
-        appendCardDetails(reloadedCharge, authorisationDetails);
+        appendCardDetails(reloadedCharge, authCardDetails);
         chargeDao.mergeAndNotifyStatusHasChanged(reloadedCharge, Optional.empty());
         return operationResponse;
     }
 
-    private void appendCardDetails(ChargeEntity chargeEntity, AuthorisationDetails authorisationDetails) {
+    private void appendCardDetails(ChargeEntity chargeEntity, AuthCardDetails authCardDetails) {
         CardDetailsEntity detailsEntity = new CardDetailsEntity();
-        detailsEntity.setCardBrand(authorisationDetails.getCardBrand());
-        detailsEntity.setBillingAddress(new AddressEntity(authorisationDetails.getAddress()));
-        detailsEntity.setCardHolderName(authorisationDetails.getCardHolder());
-        detailsEntity.setExpiryDate(authorisationDetails.getEndDate());
-        detailsEntity.setLastDigitsCardNumber(StringUtils.right(authorisationDetails.getCardNo(), 4));
+        detailsEntity.setCardBrand(authCardDetails.getCardBrand());
+        detailsEntity.setBillingAddress(new AddressEntity(authCardDetails.getAddress()));
+        detailsEntity.setCardHolderName(authCardDetails.getCardHolder());
+        detailsEntity.setExpiryDate(authCardDetails.getEndDate());
+        detailsEntity.setLastDigitsCardNumber(StringUtils.right(authCardDetails.getCardNo(), 4));
         chargeEntity.setCardDetails(detailsEntity);
         logger.info("Stored confirmation details for charge - charge_external_id={}", chargeEntity.getExternalId());
     }

@@ -9,7 +9,7 @@ import uk.gov.pay.connector.model.CancelGatewayRequest;
 import uk.gov.pay.connector.model.CaptureGatewayRequest;
 import uk.gov.pay.connector.model.GatewayError;
 import uk.gov.pay.connector.model.RefundGatewayRequest;
-import uk.gov.pay.connector.model.domain.AuthorisationDetails;
+import uk.gov.pay.connector.model.domain.AuthCardDetails;
 import uk.gov.pay.connector.model.domain.ChargeEntityFixture;
 import uk.gov.pay.connector.model.domain.RefundEntityFixture;
 import uk.gov.pay.connector.model.gateway.AuthorisationGatewayRequest;
@@ -68,9 +68,9 @@ public class SandboxPaymentProviderTest {
     @Test
     public void authorise_shouldBeAuthorisedWhenCardNumIsExpectedToSucceedForAuthorisation() {
 
-        AuthorisationDetails authorisationDetails = new AuthorisationDetails();
-        authorisationDetails.setCardNo("4242424242424242");
-        GatewayResponse gatewayResponse = provider.authorise(new AuthorisationGatewayRequest(ChargeEntityFixture.aValidChargeEntity().build(), authorisationDetails));
+        AuthCardDetails authCardDetails = new AuthCardDetails();
+        authCardDetails.setCardNo("4242424242424242");
+        GatewayResponse gatewayResponse = provider.authorise(new AuthorisationGatewayRequest(ChargeEntityFixture.aValidChargeEntity().build(), authCardDetails));
 
         assertThat(gatewayResponse.isSuccessful(), is(true));
         assertThat(gatewayResponse.isFailed(), is(false));
@@ -88,9 +88,9 @@ public class SandboxPaymentProviderTest {
     @Test
     public void authorise_shouldNotBeAuthorisedWhenCardNumIsExpectedToBeRejectedForAuthorisation() {
 
-        AuthorisationDetails authorisationDetails = new AuthorisationDetails();
-        authorisationDetails.setCardNo("4000000000000069");
-        GatewayResponse gatewayResponse = provider.authorise(new AuthorisationGatewayRequest(ChargeEntityFixture.aValidChargeEntity().build(), authorisationDetails));
+        AuthCardDetails authCardDetails = new AuthCardDetails();
+        authCardDetails.setCardNo("4000000000000069");
+        GatewayResponse gatewayResponse = provider.authorise(new AuthorisationGatewayRequest(ChargeEntityFixture.aValidChargeEntity().build(), authCardDetails));
 
         assertThat(gatewayResponse.isSuccessful(), is(true));
         assertThat(gatewayResponse.isFailed(), is(false));
@@ -108,9 +108,9 @@ public class SandboxPaymentProviderTest {
     @Test
     public void authorise_shouldGetGatewayErrorWhenCardNumIsExpectedToFailForAuthorisation() {
 
-        AuthorisationDetails authorisationDetails = new AuthorisationDetails();
-        authorisationDetails.setCardNo("4000000000000119");
-        GatewayResponse gatewayResponse = provider.authorise(new AuthorisationGatewayRequest(ChargeEntityFixture.aValidChargeEntity().build(), authorisationDetails));
+        AuthCardDetails authCardDetails = new AuthCardDetails();
+        authCardDetails.setCardNo("4000000000000119");
+        GatewayResponse gatewayResponse = provider.authorise(new AuthorisationGatewayRequest(ChargeEntityFixture.aValidChargeEntity().build(), authCardDetails));
 
         assertThat(gatewayResponse.isSuccessful(), is(false));
         assertThat(gatewayResponse.isFailed(), is(true));
@@ -125,9 +125,9 @@ public class SandboxPaymentProviderTest {
     @Test
     public void authorise_shouldGetGatewayErrorWhenCardNumDoesNotExistForAuthorisation() {
 
-        AuthorisationDetails authorisationDetails = new AuthorisationDetails();
-        authorisationDetails.setCardNo("3456789987654567");
-        GatewayResponse gatewayResponse = provider.authorise(new AuthorisationGatewayRequest(ChargeEntityFixture.aValidChargeEntity().build(), authorisationDetails));
+        AuthCardDetails authCardDetails = new AuthCardDetails();
+        authCardDetails.setCardNo("3456789987654567");
+        GatewayResponse gatewayResponse = provider.authorise(new AuthorisationGatewayRequest(ChargeEntityFixture.aValidChargeEntity().build(), authCardDetails));
 
         assertThat(gatewayResponse.isSuccessful(), is(false));
         assertThat(gatewayResponse.isFailed(), is(true));

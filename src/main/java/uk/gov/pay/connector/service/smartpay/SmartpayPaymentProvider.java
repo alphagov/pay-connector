@@ -106,7 +106,7 @@ public class SmartpayPaymentProvider extends BasePaymentProvider<BaseResponse> {
                 .withPaymentPlatformReference(request.getChargeExternalId())
                 .withDescription(request.getDescription())
                 .withAmount(request.getAmount())
-                .withAuthorisationDetails(request.getAuthorisationDetails())
+                .withAuthorisationDetails(request.getAuthCardDetails())
                 .build();
     }
 

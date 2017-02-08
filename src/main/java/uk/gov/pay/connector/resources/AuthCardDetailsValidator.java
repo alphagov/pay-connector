@@ -1,20 +1,19 @@
 package uk.gov.pay.connector.resources;
 
 import uk.gov.pay.connector.model.domain.Address;
-import uk.gov.pay.connector.model.domain.AuthorisationDetails;
+import uk.gov.pay.connector.model.domain.AuthCardDetails;
 
 import static org.apache.commons.lang3.StringUtils.isNoneBlank;
 import static org.apache.commons.lang3.StringUtils.isNotBlank;
 
-public class AuthorisationDetailsValidator {
+public class AuthCardDetailsValidator {
 
-
-    public static boolean isWellFormatted(AuthorisationDetails authorisationDetails) {
-        return isValidCardNumberLength(authorisationDetails.getCardNo()) &&
-                isBetween3To4Digits(authorisationDetails.getCvc()) &&
-                hasExpiryDateFormat(authorisationDetails.getEndDate()) &&
-                hasAddress(authorisationDetails.getAddress()) &&
-                hasCardBrand(authorisationDetails.getCardBrand());
+    public static boolean isWellFormatted(AuthCardDetails authCardDetails) {
+        return isValidCardNumberLength(authCardDetails.getCardNo()) &&
+                isBetween3To4Digits(authCardDetails.getCvc()) &&
+                hasExpiryDateFormat(authCardDetails.getEndDate()) &&
+                hasAddress(authCardDetails.getAddress()) &&
+                hasCardBrand(authCardDetails.getCardBrand());
     }
 
     private static boolean hasAddress(Address address) {

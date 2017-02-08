@@ -10,7 +10,7 @@ import uk.gov.pay.connector.exception.GenericGatewayRuntimeException;
 import uk.gov.pay.connector.exception.OperationAlreadyInProgressRuntimeException;
 import uk.gov.pay.connector.model.domain.ChargeEntity;
 import uk.gov.pay.connector.model.domain.ChargeStatus;
-import uk.gov.pay.connector.model.domain.GatewayAuthRequest;
+import uk.gov.pay.connector.model.domain.AuthorisationDetails;
 import uk.gov.pay.connector.model.gateway.GatewayResponse;
 
 import javax.persistence.OptimisticLockException;
@@ -18,10 +18,9 @@ import java.util.Optional;
 import java.util.function.Supplier;
 
 import static uk.gov.pay.connector.model.domain.ChargeStatus.AUTHORISATION_READY;
-import static uk.gov.pay.connector.model.domain.ChargeStatus.ENTERING_CARD_DETAILS;
 import static uk.gov.pay.connector.service.CardExecutorService.ExecutionStatus;
 
-public abstract class CardAuthoriseBaseService<T extends GatewayAuthRequest> extends CardService<BaseAuthoriseResponse> {
+public abstract class CardAuthoriseBaseService<T extends AuthorisationDetails> extends CardService<BaseAuthoriseResponse> {
 
     private final CardExecutorService cardExecutorService;
 

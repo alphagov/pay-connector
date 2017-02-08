@@ -1,37 +1,37 @@
 package uk.gov.pay.connector.util;
 
 import uk.gov.pay.connector.model.domain.Address;
-import uk.gov.pay.connector.model.domain.AuthorisationDetails;
+import uk.gov.pay.connector.model.domain.AuthCardDetails;
 
-import static uk.gov.pay.connector.model.domain.AuthorisationDetails.anAuthorisationDetails;
+import static uk.gov.pay.connector.model.domain.AuthCardDetails.anAuthCardDetails;
 
 public class CardUtils {
 
-    public static AuthorisationDetails aValidAuthorisationDetails() {
+    public static AuthCardDetails aValidAuthorisationDetails() {
         String validSandboxCard = "4242424242424242";
-        return buildAuthorisationDetails(validSandboxCard, "123", "12/17", "card-brand");
+        return buildAuthCardDetails(validSandboxCard, "123", "12/17", "card-brand");
     }
 
-    public static AuthorisationDetails buildAuthorisationDetails(String cardHolderName) {
+    public static AuthCardDetails buildAuthCardDetails(String cardHolderName) {
         String validSandboxCard = "4242424242424242";
-        return buildAuthorisationDetails(cardHolderName, validSandboxCard, "123", "12/21", "card-brand", goodAddress());
+        return buildAuthCardDetails(cardHolderName, validSandboxCard, "123", "12/21", "card-brand", goodAddress());
     }
 
-    public static AuthorisationDetails buildAuthorisationDetails(String cardNumber, String cvc, String expiryDate, String cardBrand) {
-        return buildAuthorisationDetails("Mr. Payment", cardNumber, cvc, expiryDate, cardBrand, goodAddress());
+    public static AuthCardDetails buildAuthCardDetails(String cardNumber, String cvc, String expiryDate, String cardBrand) {
+        return buildAuthCardDetails("Mr. Payment", cardNumber, cvc, expiryDate, cardBrand, goodAddress());
     }
 
-    public static AuthorisationDetails buildAuthorisationDetails(String cardholderName, String cardNumber, String cvc, String expiryDate, String cardBrand, Address address) {
-        AuthorisationDetails authorisationDetails = anAuthorisationDetails();
-        authorisationDetails.setCvc(cvc);
-        authorisationDetails.setCardHolder(cardholderName);
-        authorisationDetails.setEndDate(expiryDate);
-        authorisationDetails.setCardNo(cardNumber);
-        authorisationDetails.setCardBrand(cardBrand);
-        authorisationDetails.setAddress(address);
-        authorisationDetails.setAcceptHeader("text/html");
-        authorisationDetails.setUserAgentHeader("Mozilla/5.0");
-        return authorisationDetails;
+    public static AuthCardDetails buildAuthCardDetails(String cardholderName, String cardNumber, String cvc, String expiryDate, String cardBrand, Address address) {
+        AuthCardDetails authCardDetails = anAuthCardDetails();
+        authCardDetails.setCvc(cvc);
+        authCardDetails.setCardHolder(cardholderName);
+        authCardDetails.setEndDate(expiryDate);
+        authCardDetails.setCardNo(cardNumber);
+        authCardDetails.setCardBrand(cardBrand);
+        authCardDetails.setAddress(address);
+        authCardDetails.setAcceptHeader("text/html");
+        authCardDetails.setUserAgentHeader("Mozilla/5.0");
+        return authCardDetails;
     }
 
     public static Address goodAddress() {

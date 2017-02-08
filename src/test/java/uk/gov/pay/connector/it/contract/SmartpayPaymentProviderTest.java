@@ -44,7 +44,7 @@ import static org.mockito.Mockito.when;
 import static uk.gov.pay.connector.model.domain.ChargeEntityFixture.aValidChargeEntity;
 import static uk.gov.pay.connector.model.domain.GatewayAccountEntity.Type.TEST;
 import static uk.gov.pay.connector.service.GatewayClient.createGatewayClient;
-import static uk.gov.pay.connector.util.CardUtils.buildAuthorisationDetails;
+import static uk.gov.pay.connector.util.CardUtils.buildAuthCardDetails;
 import static uk.gov.pay.connector.util.SystemUtils.envOrThrow;
 
 @RunWith(MockitoJUnitRunner.class)
@@ -203,15 +203,15 @@ public class SmartpayPaymentProviderTest {
         address.setPostcode("EC2A 1AE");
         address.setCountry("GB");
 
-        AuthorisationDetails authorisationDetails = aValidSmartpayCard();
-        authorisationDetails.setAddress(address);
+        AuthCardDetails authCardDetails = aValidSmartpayCard();
+        authCardDetails.setAddress(address);
 
-        return new AuthorisationGatewayRequest(chargeEntity, authorisationDetails);
+        return new AuthorisationGatewayRequest(chargeEntity, authCardDetails);
     }
 
-    public static AuthorisationDetails aValidSmartpayCard() {
+    public static AuthCardDetails aValidSmartpayCard() {
         String validSandboxCard = "5555444433331111";
-        return buildAuthorisationDetails(validSandboxCard, "737", "08/18", "visa");
+        return buildAuthCardDetails(validSandboxCard, "737", "08/18", "visa");
     }
 
     @SuppressWarnings("unchecked")
