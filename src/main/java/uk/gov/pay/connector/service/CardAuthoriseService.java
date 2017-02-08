@@ -29,14 +29,18 @@ public class CardAuthoriseService extends CardService<BaseAuthoriseResponse> {
 
     private final CardExecutorService cardExecutorService;
 
+    final Auth3dsDetailsFactory auth3dsDetailsFactory;
+
     @Inject
     public CardAuthoriseService(ChargeDao chargeDao,
                                 PaymentProviders providers,
                                 CardExecutorService cardExecutorService,
+                                Auth3dsDetailsFactory auth3dsDetailsFactory,
                                 MetricRegistry metricRegistry) {
         super(chargeDao, providers, metricRegistry);
 
         this.cardExecutorService = cardExecutorService;
+        this.auth3dsDetailsFactory = auth3dsDetailsFactory;
     }
 
     public GatewayResponse doAuthorise(String chargeId, AuthorisationDetails authorisationDetails) {
@@ -90,8 +94,10 @@ public class CardAuthoriseService extends CardService<BaseAuthoriseResponse> {
         ChargeEntity reloadedCharge = chargeDao.merge(chargeEntity);
 
         ChargeStatus status = operationResponse.getBaseResponse()
-                .map(response -> response.isAuthorised() ? AUTHORISATION_SUCCESS : AUTHORISATION_REJECTED)
-                .orElse(AUTHORISATION_ERROR);
+                .map(BaseAuthoriseResponse::authoriseStatus)
+                .map(BaseAuthoriseResponse.AuthoriseStatus::getMappedChargeStatus)
+                .orElse(ChargeStatus.AUTHORISATION_ERROR);
+
         String transactionId = operationResponse.getBaseResponse()
                 .map(BaseAuthoriseResponse::getTransactionId).orElse("");
 
@@ -103,6 +109,7 @@ public class CardAuthoriseService extends CardService<BaseAuthoriseResponse> {
         metricRegistry.counter(String.format("gateway-operations.%s.%s.%s.authorise.result.%s", account.getGatewayName(), account.getType(), account.getId(), status.toString())).inc();
 
         reloadedCharge.setStatus(status);
+        operationResponse.getBaseResponse().ifPresent(response -> auth3dsDetailsFactory.create(response).ifPresent(reloadedCharge::set3dsDetails));
 
         if (StringUtils.isBlank(transactionId)) {
             logger.warn("AuthorisationDetails authorisation response received with no transaction id. -  charge_external_id={}", reloadedCharge.getExternalId());

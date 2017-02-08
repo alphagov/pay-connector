@@ -102,6 +102,26 @@ public class ChargesFrontendResourceITest {
     }
 
     @Test
+    public void shouldIncludeAuth3dsDataInResponse() {
+        String externalChargeId = RandomIdGenerator.newId();
+        Long chargeId = 98765L;
+        String issuerUrl = "https://issuer.example.com/3ds";
+        String paRequest = "test-pa-request";
+
+        app.getDatabaseTestHelper().addCharge(chargeId, externalChargeId, accountId, expectedAmount, AUTHORISATION_3DS_REQUIRED, returnUrl, null, "ref", null, email);
+        app.getDatabaseTestHelper().updateChargeCardDetails(chargeId, "unknown", "1234", "Mr. McPayment", "03/18", "line1", null, "postcode", "city", null, "country");
+        app.getDatabaseTestHelper().updateCharge3dsDetails(chargeId, issuerUrl, paRequest);
+
+        connectorRestApi
+                .withChargeId(externalChargeId)
+                .getFrontendCharge()
+                .statusCode(OK.getStatusCode())
+                .contentType(JSON)
+                .body("auth_3ds_data.paRequest", is(paRequest))
+                .body("auth_3ds_data.issuerUrl", is(issuerUrl));
+    }
+
+    @Test
     public void shouldUpdateChargeStatusToEnteringCardDetails() {
 
         String chargeId = postToCreateACharge(expectedAmount);

@@ -82,9 +82,10 @@ public class SandboxPaymentProvider extends BasePaymentProvider<BaseResponse> {
 
     private GatewayResponse<BaseAuthoriseResponse> createGatewayBaseAuthoriseResponse(boolean isAuthorised) {
         return GatewayResponse.with(new BaseAuthoriseResponse() {
+
             @Override
-            public boolean isAuthorised() {
-                return isAuthorised;
+            public AuthoriseStatus authoriseStatus() {
+                return isAuthorised ? AuthoriseStatus.AUTHORISED : AuthoriseStatus.REJECTED;
             }
 
             @Override
@@ -99,6 +100,16 @@ public class SandboxPaymentProvider extends BasePaymentProvider<BaseResponse> {
 
             @Override
             public String getErrorMessage() {
+                return null;
+            }
+
+            @Override
+            public String get3dsPaRequest() {
+                return null;
+            }
+
+            @Override
+            public String get3dsIssuerUrl() {
                 return null;
             }
         });

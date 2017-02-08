@@ -159,6 +159,13 @@ public class ChargesFrontendResource {
             persistedCard.setCardBrand(findCardBrandLabel(charge.getCardDetails().getCardBrand()).orElse(""));
         }
 
+        ChargeResponse.Auth3dsData auth3dsData = null;
+        if (charge.get3dsDetails() != null) {
+            auth3dsData = new ChargeResponse.Auth3dsData();
+            auth3dsData.setPaRequest(charge.get3dsDetails().getPaRequest());
+            auth3dsData.setIssuerUrl(charge.get3dsDetails().getIssuerUrl());
+        }
+
         return aFrontendChargeResponse()
                 .withStatus(charge.getStatus())
                 .withChargeId(chargeId)
@@ -169,6 +176,7 @@ public class ChargesFrontendResource {
                 .withReturnUrl(charge.getReturnUrl())
                 .withEmail(charge.getEmail())
                 .withChargeCardDetails(persistedCard)
+                .withAuth3dsData(auth3dsData)
                 .withGatewayAccount(charge.getGatewayAccount())
                 .withLink("self", GET, locationUriFor(FRONTEND_CHARGE_API_PATH, uriInfo, chargeId))
                 .withLink("cardAuth", POST, locationUriFor(FRONTEND_CHARGE_AUTHORIZE_API_PATH, uriInfo, chargeId))

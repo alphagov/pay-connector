@@ -44,6 +44,9 @@ public class ChargeEntity extends AbstractEntity {
     @Embedded
     private CardDetailsEntity cardDetails;
 
+    @Embedded
+    private Auth3dsDetailsEntity auth3dsDetails;
+
     @ManyToOne
     @JoinColumn(name = "gateway_account_id", updatable = false)
     private GatewayAccountEntity gatewayAccount;
@@ -210,5 +213,13 @@ public class ChargeEntity extends AbstractEntity {
 
     public PaymentGatewayName getPaymentGatewayName() {
         return valueFrom(gatewayAccount.getGatewayName());
+    }
+
+    public Auth3dsDetailsEntity get3dsDetails() {
+        return auth3dsDetails;
+    }
+
+    public void set3dsDetails(Auth3dsDetailsEntity auth3dsDetails) {
+        this.auth3dsDetails = auth3dsDetails;
     }
 }

@@ -798,6 +798,30 @@ public class ChargeDaoITest extends DaoITestBase {
     }
 
     @Test
+    public void shouldCreateANewChargeWith3dsDetails() {
+        GatewayAccountEntity gatewayAccount = new GatewayAccountEntity(defaultTestAccount.getPaymentProvider(), new HashMap<>(), TEST);
+        gatewayAccount.setId(defaultTestAccount.getAccountId());
+
+        String paRequest = "3dsPaRequest";
+        String issuerUrl = "https://issuer.example.com/3ds";
+        ChargeEntity chargeEntity = aValidChargeEntity()
+                .withId(null)
+                .withGatewayAccountEntity(gatewayAccount)
+                .withPaRequest(paRequest)
+                .withIssuerUrl(issuerUrl)
+                .build();
+
+        assertThat(chargeEntity.getId(), is(nullValue()));
+
+        chargeDao.persist(chargeEntity);
+
+        Optional<ChargeEntity> charge = chargeDao.findById(chargeEntity.getId());
+
+        assertThat(charge.get().get3dsDetails().getPaRequest(), is(paRequest));
+        assertThat(charge.get().get3dsDetails().getIssuerUrl(), is(issuerUrl));
+    }
+
+    @Test
     public void shouldReturnNullFindingByIdWhenChargeDoesNotExist() {
 
         Optional<ChargeEntity> charge = chargeDao.findById(5686541L);

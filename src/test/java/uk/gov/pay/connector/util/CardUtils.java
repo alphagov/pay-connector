@@ -12,6 +12,11 @@ public class CardUtils {
         return buildAuthorisationDetails(validSandboxCard, "123", "12/17", "card-brand");
     }
 
+    public static AuthorisationDetails buildAuthorisationDetails(String cardHolderName) {
+        String validSandboxCard = "4242424242424242";
+        return buildAuthorisationDetails(cardHolderName, validSandboxCard, "123", "12/21", "card-brand", goodAddress());
+    }
+
     public static AuthorisationDetails buildAuthorisationDetails(String cardNumber, String cvc, String expiryDate, String cardBrand) {
         return buildAuthorisationDetails("Mr. Payment", cardNumber, cvc, expiryDate, cardBrand, goodAddress());
     }

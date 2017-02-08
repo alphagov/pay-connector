@@ -27,6 +27,7 @@ public abstract class AbstractChargeResponseBuilder<T extends AbstractChargeResp
     protected ChargeResponse.RefundSummary refundSummary;
     protected ChargeResponse.SettlementSummary settlementSummary;
     protected PersistedCard cardDetails;
+    protected ChargeResponse.Auth3dsData auth3dsData;
 
     protected abstract T thisObject();
 
@@ -118,6 +119,11 @@ public abstract class AbstractChargeResponseBuilder<T extends AbstractChargeResp
 
     public T withCardDetails(PersistedCard cardDetails){
         this.cardDetails = cardDetails;
+        return thisObject();
+    }
+
+    public T withAuth3dsData(ChargeResponse.Auth3dsData auth3dsData) {
+        this.auth3dsData = auth3dsData;
         return thisObject();
     }
 

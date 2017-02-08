@@ -20,12 +20,23 @@ public class SmartpayAuthorisationResponse extends SmartpayBaseResponse implemen
         return pspReference;
     }
 
-    public boolean isAuthorised() {
-        return AUTHORISED.equals(result);
+    @Override
+    public AuthoriseStatus authoriseStatus() {
+        return AUTHORISED.equals(result) ? AuthoriseStatus.AUTHORISED : AuthoriseStatus.REJECTED;
     }
 
     @Override
     public String getTransactionId() {
         return pspReference;
+    }
+
+    @Override
+    public String get3dsPaRequest() {
+        return null;
+    }
+
+    @Override
+    public String get3dsIssuerUrl() {
+        return null;
     }
 }

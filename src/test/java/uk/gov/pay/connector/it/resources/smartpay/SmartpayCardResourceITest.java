@@ -35,7 +35,7 @@ public class SmartpayCardResourceITest extends ChargingITestBase {
                 .body(validCardDetails)
                 .post(authoriseChargeUrlFor(chargeId))
                 .then()
-                .statusCode(204);
+                .statusCode(200);
 
         assertFrontendChargeStatusIs(chargeId, AUTHORISATION_SUCCESS.getValue());
     }
@@ -76,7 +76,7 @@ public class SmartpayCardResourceITest extends ChargingITestBase {
                 .body(validCardDetails)
                 .post(authoriseChargeUrlFor(externalChargeId))
                 .then()
-                .statusCode(204);
+                .statusCode(200);
 
         assertFrontendChargeStatusIs(externalChargeId, AUTHORISATION_SUCCESS.getValue());
 

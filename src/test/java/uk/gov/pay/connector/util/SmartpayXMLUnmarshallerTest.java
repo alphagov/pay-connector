@@ -2,6 +2,7 @@ package uk.gov.pay.connector.util;
 
 import com.google.common.io.Resources;
 import org.junit.Test;
+import uk.gov.pay.connector.service.BaseAuthoriseResponse.AuthoriseStatus;
 import uk.gov.pay.connector.service.smartpay.SmartpayAuthorisationResponse;
 import uk.gov.pay.connector.service.smartpay.SmartpayCancelResponse;
 import uk.gov.pay.connector.service.smartpay.SmartpayCaptureResponse;
@@ -23,7 +24,7 @@ public class SmartpayXMLUnmarshallerTest {
         String successPayload = readPayload("templates/smartpay/authorisation-success-response.xml").replace("{{pspReference}}", transactionId);
         SmartpayAuthorisationResponse response = XMLUnmarshaller.unmarshall(successPayload, SmartpayAuthorisationResponse.class);
 
-        assertThat(response.isAuthorised(), is(true));
+        assertThat(response.authoriseStatus(), is(AuthoriseStatus.AUTHORISED));
         assertThat(response.getTransactionId(), is(transactionId));
 
         assertThat(response.getErrorCode(), is(nullValue()));
@@ -35,7 +36,7 @@ public class SmartpayXMLUnmarshallerTest {
         String successPayload = readPayload("templates/smartpay/authorisation-failed-response.xml");
         SmartpayAuthorisationResponse response = XMLUnmarshaller.unmarshall(successPayload, SmartpayAuthorisationResponse.class);
 
-        assertThat(response.isAuthorised(), is(false));
+        assertThat(response.authoriseStatus(), is(AuthoriseStatus.REJECTED));
         assertThat(response.getTransactionId(), is("8814436101583280"));
 
         assertThat(response.getErrorCode(), is(nullValue()));
@@ -47,7 +48,7 @@ public class SmartpayXMLUnmarshallerTest {
         String errorPayload = readPayload("templates/smartpay/authorisation-error-response.xml");
         SmartpayAuthorisationResponse response = XMLUnmarshaller.unmarshall(errorPayload, SmartpayAuthorisationResponse.class);
 
-        assertThat(response.isAuthorised(), is(false));
+        assertThat(response.authoriseStatus(), is(AuthoriseStatus.REJECTED));
         assertThat(response.getTransactionId(), nullValue());
 
         assertThat(response.getErrorCode(), is("soap:Server"));

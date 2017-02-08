@@ -136,6 +136,59 @@ public class ChargeResponse {
         }
     }
 
+    @JsonFormat(shape = JsonFormat.Shape.OBJECT)
+    public static class Auth3dsData {
+
+        @JsonProperty("paRequest")
+        private String paRequest;
+
+        @JsonProperty("issuerUrl")
+        private String issuerUrl;
+
+        public String getPaRequest() {
+            return paRequest;
+        }
+
+        public void setPaRequest(String paRequest) {
+            this.paRequest = paRequest;
+        }
+
+        public String getIssuerUrl() {
+            return issuerUrl;
+        }
+
+        public void setIssuerUrl(String issuerUrl) {
+            this.issuerUrl = issuerUrl;
+        }
+
+        @Override
+        public boolean equals(Object o) {
+            if (this == o) return true;
+            if (o == null || getClass() != o.getClass()) return false;
+
+            Auth3dsData that = (Auth3dsData) o;
+
+            if (paRequest != null ? !paRequest.equals(that.paRequest) : that.paRequest != null) return false;
+            return issuerUrl != null ? issuerUrl.equals(that.issuerUrl) : that.issuerUrl == null;
+
+        }
+
+        @Override
+        public int hashCode() {
+            int result = paRequest != null ? paRequest.hashCode() : 0;
+            result = 31 * result + (issuerUrl != null ? issuerUrl.hashCode() : 0);
+            return result;
+        }
+
+        @Override
+        public String toString() {
+            return "Auth3dsData{" +
+                    "paRequest='" + paRequest + '\'' +
+                    ", issuerUrl='" + issuerUrl + '\'' +
+                    '}';
+        }
+    }
+
     public static class ChargeResponseBuilder extends AbstractChargeResponseBuilder<ChargeResponseBuilder, ChargeResponse> {
         @Override
         protected ChargeResponseBuilder thisObject() {
@@ -144,7 +197,8 @@ public class ChargeResponse {
 
         @Override
         public ChargeResponse build() {
-            return new ChargeResponse(chargeId, amount, state, cardBrand, gatewayTransactionId, returnUrl, email, description, reference, providerName, createdDate, links, refundSummary, settlementSummary, cardDetails);
+            return new ChargeResponse(chargeId, amount, state, cardBrand, gatewayTransactionId, returnUrl, email,
+                    description, reference, providerName, createdDate, links, refundSummary, settlementSummary, cardDetails, auth3dsData);
         }
     }
 
@@ -193,6 +247,9 @@ public class ChargeResponse {
     @JsonProperty("settlement_summary")
     private SettlementSummary settlementSummary;
 
+    @JsonProperty("auth_3ds_data")
+    private Auth3dsData auth3dsData;
+
     @JsonProperty("card_details")
     protected PersistedCard cardDetails;
 
@@ -201,7 +258,7 @@ public class ChargeResponse {
         return DateTimeUtils.toUTCDateTimeString(createdDate);
     }
 
-    protected ChargeResponse(String chargeId, Long amount, ExternalChargeState state, String cardBrand, String gatewayTransactionId, String returnUrl, String email, String description, String reference, String providerName, ZonedDateTime createdDate, List<Map<String, Object>> dataLinks, RefundSummary refundSummary, SettlementSummary settlementSummary, PersistedCard cardDetails) {
+    protected ChargeResponse(String chargeId, Long amount, ExternalChargeState state, String cardBrand, String gatewayTransactionId, String returnUrl, String email, String description, String reference, String providerName, ZonedDateTime createdDate, List<Map<String, Object>> dataLinks, RefundSummary refundSummary, SettlementSummary settlementSummary, PersistedCard cardDetails, Auth3dsData auth3dsData) {
         this.dataLinks = dataLinks;
         this.chargeId = chargeId;
         this.amount = amount;
@@ -217,6 +274,7 @@ public class ChargeResponse {
         this.refundSummary = refundSummary;
         this.settlementSummary = settlementSummary;
         this.cardDetails = cardDetails;
+        this.auth3dsData = auth3dsData;
     }
 
     public URI getLink(String rel) {
@@ -246,10 +304,12 @@ public class ChargeResponse {
         if (description != null ? !description.equals(that.description) : that.description != null) return false;
         if (reference != null ? !reference.equals(that.reference) : that.reference != null) return false;
         if (providerName != null ? !providerName.equals(that.providerName) : that.providerName != null) return false;
+        if (createdDate != null ? !createdDate.equals(that.createdDate) : that.createdDate != null) return false;
         if (refundSummary != null ? !refundSummary.equals(that.refundSummary) : that.refundSummary != null)
             return false;
         if (settlementSummary != null ? !settlementSummary.equals(that.settlementSummary) : that.settlementSummary != null)
             return false;
+        if (auth3dsData != null ? !auth3dsData.equals(that.auth3dsData) : that.auth3dsData != null) return false;
         return cardDetails != null ? cardDetails.equals(that.cardDetails) : that.cardDetails == null;
 
     }
@@ -267,8 +327,10 @@ public class ChargeResponse {
         result = 31 * result + (description != null ? description.hashCode() : 0);
         result = 31 * result + (reference != null ? reference.hashCode() : 0);
         result = 31 * result + (providerName != null ? providerName.hashCode() : 0);
+        result = 31 * result + (createdDate != null ? createdDate.hashCode() : 0);
         result = 31 * result + (refundSummary != null ? refundSummary.hashCode() : 0);
         result = 31 * result + (settlementSummary != null ? settlementSummary.hashCode() : 0);
+        result = 31 * result + (auth3dsData != null ? auth3dsData.hashCode() : 0);
         result = 31 * result + (cardDetails != null ? cardDetails.hashCode() : 0);
         return result;
     }
@@ -289,6 +351,7 @@ public class ChargeResponse {
                 ", createdDate=" + createdDate +
                 ", refundSummary=" + refundSummary +
                 ", settlementSummary=" + settlementSummary +
+                ", auth3dsData=" + auth3dsData +
                 '}';
     }
 

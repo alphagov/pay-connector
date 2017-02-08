@@ -6,6 +6,7 @@ import com.codahale.metrics.MetricRegistry;
 import com.google.common.collect.ImmutableMap;
 import org.junit.Assume;
 import org.junit.Before;
+import org.junit.Ignore;
 import org.junit.Test;
 import uk.gov.pay.connector.app.GatewayCredentialsConfig;
 import uk.gov.pay.connector.model.CancelGatewayRequest;
@@ -39,12 +40,17 @@ import static uk.gov.pay.connector.model.domain.ChargeEntityFixture.aValidCharge
 import static uk.gov.pay.connector.model.domain.GatewayAccountEntity.Type.TEST;
 import static uk.gov.pay.connector.service.GatewayClient.createGatewayClient;
 import static uk.gov.pay.connector.util.CardUtils.aValidAuthorisationDetails;
+import static uk.gov.pay.connector.util.CardUtils.buildAuthorisationDetails;
 import static uk.gov.pay.connector.util.SystemUtils.envOrThrow;
 
 public class WorldpayPaymentProviderTest {
 
+    private static final String MAGIC_CARDHOLDER_NAME_THAT_MAKES_WORLDPAY_TEST_REQUIRE_3DS = "3D";
+
     private GatewayAccountEntity validGatewayAccount;
+    private GatewayAccountEntity validGatewayAccountFor3ds;
     private Map<String, String> validCredentials;
+    private Map<String, String> validCredentials3ds;
     private ChargeEntity chargeEntity;
     private MetricRegistry mockMetricRegistry;
     private Histogram mockHistogram;
@@ -60,11 +66,22 @@ public class WorldpayPaymentProviderTest {
                     "username", envOrThrow("GDS_CONNECTOR_WORLDPAY_USER"),
                     "password", envOrThrow("GDS_CONNECTOR_WORLDPAY_PASSWORD"));
 
+            validCredentials3ds = ImmutableMap.of(
+                    "merchant_id", "MERCHANTCODETEST3DS",
+                    "username", "TBD",
+                    "password", "TBD");
+
             validGatewayAccount = new GatewayAccountEntity();
             validGatewayAccount.setId(1234L);
             validGatewayAccount.setGatewayName("worldpay");
             validGatewayAccount.setCredentials(validCredentials);
             validGatewayAccount.setType(TEST);
+
+            validGatewayAccountFor3ds = new GatewayAccountEntity();
+            validGatewayAccountFor3ds.setId(1234L);
+            validGatewayAccountFor3ds.setGatewayName("worldpay");
+            validGatewayAccountFor3ds.setCredentials(validCredentials3ds);
+            validGatewayAccountFor3ds.setType(TEST);
 
             mockMetricRegistry = mock(MetricRegistry.class);
             mockHistogram = mock(Histogram.class);
@@ -85,6 +102,13 @@ public class WorldpayPaymentProviderTest {
     public void shouldBeAbleToSendAuthorisationRequestForMerchant() throws Exception {
         WorldpayPaymentProvider connector = getValidWorldpayPaymentProvider();
         successfulWorldpayCardAuth(connector);
+    }
+
+    @Test
+    @Ignore
+    public void shouldBeAbleToSendAuthorisationRequestForMerchantUsing3ds() throws Exception {
+        WorldpayPaymentProvider connector = getValidWorldpayPaymentProvider();
+        successfulWorldpayCardAuthFor3ds(connector);
     }
 
     /**
@@ -176,8 +200,26 @@ public class WorldpayPaymentProviderTest {
         return new AuthorisationGatewayRequest(charge, authorisationDetails);
     }
 
+    private AuthorisationGatewayRequest getCardAuthorisationRequestWithRequired3ds() {
+        AuthorisationDetails authorisationDetails = buildAuthorisationDetails(MAGIC_CARDHOLDER_NAME_THAT_MAKES_WORLDPAY_TEST_REQUIRE_3DS);
+        ChargeEntity charge = aValidChargeEntity()
+                .withTransactionId(randomUUID().toString())
+                .withGatewayAccountEntity(validGatewayAccountFor3ds)
+                .build();
+        return new AuthorisationGatewayRequest(charge, authorisationDetails);
+    }
+
     private GatewayResponse<WorldpayOrderStatusResponse> successfulWorldpayCardAuth(WorldpayPaymentProvider connector) {
         AuthorisationGatewayRequest request = getCardAuthorisationRequest();
+        GatewayResponse<WorldpayOrderStatusResponse> response = connector.authorise(request);
+
+        assertTrue(response.isSuccessful());
+
+        return response;
+    }
+
+    private GatewayResponse<WorldpayOrderStatusResponse> successfulWorldpayCardAuthFor3ds(WorldpayPaymentProvider connector) {
+        AuthorisationGatewayRequest request = getCardAuthorisationRequestWithRequired3ds();
         GatewayResponse<WorldpayOrderStatusResponse> response = connector.authorise(request);
 
         assertTrue(response.isSuccessful());
