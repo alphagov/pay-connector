@@ -21,7 +21,7 @@ import uk.gov.pay.connector.model.gateway.GatewayResponse;
 import uk.gov.pay.connector.service.worldpay.WorldpayCaptureResponse;
 import uk.gov.pay.connector.service.worldpay.WorldpayOrderStatusResponse;
 import uk.gov.pay.connector.service.worldpay.WorldpayPaymentProvider;
-import uk.gov.pay.connector.util.CardUtils;
+import uk.gov.pay.connector.util.AuthUtils;
 
 import javax.ws.rs.client.ClientBuilder;
 import javax.ws.rs.core.MediaType;
@@ -40,7 +40,7 @@ import static org.mockito.Mockito.*;
 import static uk.gov.pay.connector.model.domain.ChargeEntityFixture.aValidChargeEntity;
 import static uk.gov.pay.connector.model.domain.GatewayAccountEntity.Type.TEST;
 import static uk.gov.pay.connector.service.GatewayClient.createGatewayClient;
-import static uk.gov.pay.connector.util.CardUtils.aValidAuthorisationDetails;
+import static uk.gov.pay.connector.util.AuthUtils.aValidAuthorisationDetails;
 
 import static uk.gov.pay.connector.util.SystemUtils.envOrThrow;
 
@@ -202,7 +202,7 @@ public class WorldpayPaymentProviderTest {
     }
 
     private AuthorisationGatewayRequest getCardAuthorisationRequestWithRequired3ds() {
-        AuthCardDetails authCardDetails = CardUtils.buildAuthCardDetails(MAGIC_CARDHOLDER_NAME_THAT_MAKES_WORLDPAY_TEST_REQUIRE_3DS);
+        AuthCardDetails authCardDetails = AuthUtils.buildAuthCardDetails(MAGIC_CARDHOLDER_NAME_THAT_MAKES_WORLDPAY_TEST_REQUIRE_3DS);
         ChargeEntity charge = aValidChargeEntity()
                 .withTransactionId(randomUUID().toString())
                 .withGatewayAccountEntity(validGatewayAccountFor3ds)

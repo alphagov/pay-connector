@@ -29,12 +29,6 @@ public abstract class CardAuthoriseBaseService<T extends AuthorisationDetails> e
         this.cardExecutorService = cardExecutorService;
     }
 
-    @Transactional
-    public ChargeEntity preOperation(ChargeEntity chargeEntity) {
-        chargeEntity = preOperation(chargeEntity, OperationType.AUTHORISATION, getLegalStates(), AUTHORISATION_READY);
-        getPaymentProviderFor(chargeEntity).generateTransactionId().ifPresent(chargeEntity::setGatewayTransactionId);
-        return chargeEntity;
-    }
 
     public GatewayResponse doAuthorise(String chargeId, T gatewayAuthRequest) {
 
@@ -69,6 +63,8 @@ public abstract class CardAuthoriseBaseService<T extends AuthorisationDetails> e
             throw new ChargeNotFoundRuntimeException(chargeId);
         }
     }
+
+    protected abstract ChargeEntity preOperation(ChargeEntity chargeEntity);
 
     protected abstract GatewayResponse postOperation(ChargeEntity preOperationResponse, T gatewayAuthRequest, GatewayResponse<BaseAuthoriseResponse> operationResponse);
 

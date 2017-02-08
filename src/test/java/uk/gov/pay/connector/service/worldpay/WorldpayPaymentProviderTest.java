@@ -21,7 +21,7 @@ import uk.gov.pay.connector.model.gateway.AuthorisationGatewayRequest;
 import uk.gov.pay.connector.model.gateway.GatewayResponse;
 import uk.gov.pay.connector.service.GatewayClient;
 import uk.gov.pay.connector.service.GatewayOrder;
-import uk.gov.pay.connector.util.CardUtils;
+import uk.gov.pay.connector.util.AuthUtils;
 
 import javax.ws.rs.client.Client;
 import javax.ws.rs.client.Entity;
@@ -428,7 +428,7 @@ public class WorldpayPaymentProviderTest {
         address.setCounty("London state");
         address.setCountry("GB");
 
-        return CardUtils.buildAuthCardDetails("Mr. Payment", "4111111111111111", "123", "12/15", "visa", address);
+        return AuthUtils.buildAuthCardDetails("Mr. Payment", "4111111111111111", "123", "12/15", "visa", address);
     }
 
     private String expectedOrderSubmitPayload(final String expectedTemplate) throws IOException {

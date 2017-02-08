@@ -1,11 +1,12 @@
 package uk.gov.pay.connector.util;
 
 import uk.gov.pay.connector.model.domain.Address;
+import uk.gov.pay.connector.model.domain.Auth3dsDetails;
 import uk.gov.pay.connector.model.domain.AuthCardDetails;
 
 import static uk.gov.pay.connector.model.domain.AuthCardDetails.anAuthCardDetails;
 
-public class CardUtils {
+public class AuthUtils {
 
     public static AuthCardDetails aValidAuthorisationDetails() {
         String validSandboxCard = "4242424242424242";
@@ -46,5 +47,12 @@ public class CardUtils {
         address.setPostcode(postcode);
         address.setCountry(country);
         return address;
+    }
+
+    public static Auth3dsDetails buildAuth3dsDetails() {
+        Auth3dsDetails auth3dsDetails = new Auth3dsDetails();
+        auth3dsDetails.setPaRequest("sample-pa-response");
+
+        return auth3dsDetails;
     }
 }

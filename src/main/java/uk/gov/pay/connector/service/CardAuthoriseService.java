@@ -28,6 +28,13 @@ public class CardAuthoriseService extends CardAuthoriseBaseService<AuthCardDetai
         this.auth3dsDetailsFactory = auth3dsDetailsFactory;
     }
 
+    @Transactional
+    public ChargeEntity preOperation(ChargeEntity chargeEntity) {
+        chargeEntity = preOperation(chargeEntity, OperationType.AUTHORISATION, getLegalStates(), AUTHORISATION_READY);
+        getPaymentProviderFor(chargeEntity).generateTransactionId().ifPresent(chargeEntity::setGatewayTransactionId);
+        return chargeEntity;
+    }
+
     public GatewayResponse<BaseAuthoriseResponse> operation(ChargeEntity chargeEntity, AuthCardDetails authCardDetails) {
         return getPaymentProviderFor(chargeEntity)
                 .authorise(AuthorisationGatewayRequest.valueOf(chargeEntity, authCardDetails));
