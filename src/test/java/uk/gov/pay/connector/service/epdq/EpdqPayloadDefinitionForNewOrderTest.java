@@ -7,7 +7,7 @@ import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.mockito.Mock;
 import org.mockito.runners.MockitoJUnitRunner;
-import uk.gov.pay.connector.model.domain.AuthorisationDetails;
+import uk.gov.pay.connector.model.domain.AuthCardDetails;
 
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.core.Is.is;
@@ -31,16 +31,16 @@ public class EpdqPayloadDefinitionForNewOrderTest {
     @Mock
     private EpdqOrderRequestBuilder.EpdqTemplateData mockTemplateData;
     @Mock
-    private AuthorisationDetails mockAuthorisationDetails;
+    private AuthCardDetails mockAuthCardDetails;
 
     private final EpdqPayloadDefinitionForNewOrder epdqPayloadDefinitionForNewOrder = new EpdqPayloadDefinitionForNewOrder();
 
     @Test
     public void shouldExtractParametersFromTemplate() {
-        when(mockTemplateData.getAuthorisationDetails()).thenReturn(mockAuthorisationDetails);
-        when(mockAuthorisationDetails.getCardNo()).thenReturn(CARD_NO);
-        when(mockAuthorisationDetails.getCvc()).thenReturn(CVC);
-        when(mockAuthorisationDetails.getEndDate()).thenReturn(END_DATE);
+        when(mockTemplateData.getAuthCardDetails()).thenReturn(mockAuthCardDetails);
+        when(mockAuthCardDetails.getCardNo()).thenReturn(CARD_NO);
+        when(mockAuthCardDetails.getCvc()).thenReturn(CVC);
+        when(mockAuthCardDetails.getEndDate()).thenReturn(END_DATE);
 
         when(mockTemplateData.getAmount()).thenReturn(AMOUNT);
         when(mockTemplateData.getOperationType()).thenReturn(OPERATION_TYPE);

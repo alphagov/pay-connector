@@ -4,8 +4,9 @@ import com.google.common.io.Resources;
 import org.junit.Test;
 import uk.gov.pay.connector.model.OrderRequestType;
 import uk.gov.pay.connector.model.domain.Address;
-import uk.gov.pay.connector.model.domain.AuthorisationDetails;
+import uk.gov.pay.connector.model.domain.AuthCardDetails;
 import uk.gov.pay.connector.service.GatewayOrder;
+import uk.gov.pay.connector.util.CardUtils;
 
 import java.io.IOException;
 import java.nio.charset.Charset;
@@ -13,7 +14,6 @@ import java.nio.charset.Charset;
 import static com.google.common.io.Resources.getResource;
 import static org.junit.Assert.assertEquals;
 import static uk.gov.pay.connector.service.epdq.EpdqOrderRequestBuilder.*;
-import static uk.gov.pay.connector.util.CardUtils.buildAuthorisationDetails;
 
 public class EpdqOrderRequestBuilderTest {
 
@@ -27,7 +27,7 @@ public class EpdqOrderRequestBuilderTest {
         address.setPostcode("EC2A 1AE");
         address.setCountry("GB");
 
-        AuthorisationDetails authorisationDetails = buildAuthorisationDetails("Mr. Payment", "5555444433331111", "737", "08/18", "visa", address);
+        AuthCardDetails authCardDetails = CardUtils.buildAuthCardDetails("Mr. Payment", "5555444433331111", "737", "08/18", "visa", address);
 
         GatewayOrder actualRequest = anEpdqAuthoriseOrderRequestBuilder()
                 .withOrderId("MyTransactionId")
@@ -39,7 +39,7 @@ public class EpdqOrderRequestBuilderTest {
                 .withDescription("MyDescription")
                 .withPaymentPlatformReference("MyPlatformReference")
                 .withAmount("2000")
-                .withAuthorisationDetails(authorisationDetails)
+                .withAuthorisationDetails(authCardDetails)
                 .build();
 
         assertEquals(expectedOrderSubmitPayload("valid-authorise-epdq-request.txt"), actualRequest.getPayload());

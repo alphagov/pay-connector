@@ -4,8 +4,8 @@ import com.google.common.collect.ImmutableMap;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import uk.gov.pay.connector.model.GatewayError;
-import uk.gov.pay.connector.model.domain.Auth3dsResponse;
-import uk.gov.pay.connector.model.domain.AuthorisationDetails;
+import uk.gov.pay.connector.model.domain.Auth3dsDetails;
+import uk.gov.pay.connector.model.domain.AuthCardDetails;
 import uk.gov.pay.connector.model.gateway.GatewayResponse;
 import uk.gov.pay.connector.service.*;
 import uk.gov.pay.connector.service.BaseAuthoriseResponse.AuthoriseStatus;
@@ -18,7 +18,7 @@ import java.util.Optional;
 
 import static javax.ws.rs.core.MediaType.APPLICATION_JSON;
 import static uk.gov.pay.connector.resources.ApiPaths.*;
-import static uk.gov.pay.connector.resources.AuthorisationDetailsValidator.isWellFormatted;
+import static uk.gov.pay.connector.resources.AuthCardDetailsValidator.isWellFormatted;
 import static uk.gov.pay.connector.util.ResponseUtil.badRequestResponse;
 import static uk.gov.pay.connector.util.ResponseUtil.serviceErrorResponse;
 
@@ -43,12 +43,12 @@ public class CardResource {
     @Path(FRONTEND_CHARGE_AUTHORIZE_API_PATH)
     @Consumes(APPLICATION_JSON)
     @Produces(APPLICATION_JSON)
-    public Response authoriseCharge(@PathParam("chargeId") String chargeId, AuthorisationDetails authorisationDetails) {
+    public Response authoriseCharge(@PathParam("chargeId") String chargeId, AuthCardDetails authCardDetails) {
 
-        if (!isWellFormatted(authorisationDetails)) {
+        if (!isWellFormatted(authCardDetails)) {
             return badRequestResponse("Values do not match expected format/length.");
         }
-        GatewayResponse<BaseAuthoriseResponse> response = cardAuthoriseService.doAuthorise(chargeId, authorisationDetails);
+        GatewayResponse<BaseAuthoriseResponse> response = cardAuthoriseService.doAuthorise(chargeId, authCardDetails);
 
         boolean transactionDeclined = response.getBaseResponse()
                 .map(baseResponse -> (baseResponse.authoriseStatus() == AuthoriseStatus.REJECTED || baseResponse.authoriseStatus() == AuthoriseStatus.ERROR))
@@ -61,9 +61,9 @@ public class CardResource {
     @Path(FRONTEND_CHARGE_3DS_AUTHORIZE_API_PATH)
     @Consumes(APPLICATION_JSON)
     @Produces(APPLICATION_JSON)
-    public Response authorise3dsCharge(@PathParam("chargeId") String chargeId, Auth3dsResponse auth3dsResponse) {
+    public Response authorise3dsCharge(@PathParam("chargeId") String chargeId, Auth3dsDetails auth3DsDetails) {
         // handle different statuses
-        return handleGatewayResponse(card3dsResponseAuthService.doAuthorise(chargeId, auth3dsResponse));
+        return handleGatewayResponse(card3dsResponseAuthService.doAuthorise(chargeId, auth3DsDetails));
     }
 
     @POST

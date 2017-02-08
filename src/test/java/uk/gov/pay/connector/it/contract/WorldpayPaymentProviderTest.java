@@ -12,7 +12,7 @@ import uk.gov.pay.connector.app.GatewayCredentialsConfig;
 import uk.gov.pay.connector.model.CancelGatewayRequest;
 import uk.gov.pay.connector.model.CaptureGatewayRequest;
 import uk.gov.pay.connector.model.RefundGatewayRequest;
-import uk.gov.pay.connector.model.domain.AuthorisationDetails;
+import uk.gov.pay.connector.model.domain.AuthCardDetails;
 import uk.gov.pay.connector.model.domain.ChargeEntity;
 import uk.gov.pay.connector.model.domain.GatewayAccountEntity;
 import uk.gov.pay.connector.model.domain.RefundEntity;
@@ -21,6 +21,7 @@ import uk.gov.pay.connector.model.gateway.GatewayResponse;
 import uk.gov.pay.connector.service.worldpay.WorldpayCaptureResponse;
 import uk.gov.pay.connector.service.worldpay.WorldpayOrderStatusResponse;
 import uk.gov.pay.connector.service.worldpay.WorldpayPaymentProvider;
+import uk.gov.pay.connector.util.CardUtils;
 
 import javax.ws.rs.client.ClientBuilder;
 import javax.ws.rs.core.MediaType;
@@ -40,7 +41,7 @@ import static uk.gov.pay.connector.model.domain.ChargeEntityFixture.aValidCharge
 import static uk.gov.pay.connector.model.domain.GatewayAccountEntity.Type.TEST;
 import static uk.gov.pay.connector.service.GatewayClient.createGatewayClient;
 import static uk.gov.pay.connector.util.CardUtils.aValidAuthorisationDetails;
-import static uk.gov.pay.connector.util.CardUtils.buildAuthorisationDetails;
+
 import static uk.gov.pay.connector.util.SystemUtils.envOrThrow;
 
 public class WorldpayPaymentProviderTest {
@@ -192,21 +193,21 @@ public class WorldpayPaymentProviderTest {
     }
 
     private AuthorisationGatewayRequest getCardAuthorisationRequest() {
-        AuthorisationDetails authorisationDetails = aValidAuthorisationDetails();
+        AuthCardDetails authCardDetails = aValidAuthorisationDetails();
         ChargeEntity charge = aValidChargeEntity()
                 .withTransactionId(randomUUID().toString())
                 .withGatewayAccountEntity(validGatewayAccount)
                 .build();
-        return new AuthorisationGatewayRequest(charge, authorisationDetails);
+        return new AuthorisationGatewayRequest(charge, authCardDetails);
     }
 
     private AuthorisationGatewayRequest getCardAuthorisationRequestWithRequired3ds() {
-        AuthorisationDetails authorisationDetails = buildAuthorisationDetails(MAGIC_CARDHOLDER_NAME_THAT_MAKES_WORLDPAY_TEST_REQUIRE_3DS);
+        AuthCardDetails authCardDetails = CardUtils.buildAuthCardDetails(MAGIC_CARDHOLDER_NAME_THAT_MAKES_WORLDPAY_TEST_REQUIRE_3DS);
         ChargeEntity charge = aValidChargeEntity()
                 .withTransactionId(randomUUID().toString())
                 .withGatewayAccountEntity(validGatewayAccountFor3ds)
                 .build();
-        return new AuthorisationGatewayRequest(charge, authorisationDetails);
+        return new AuthorisationGatewayRequest(charge, authCardDetails);
     }
 
     private GatewayResponse<WorldpayOrderStatusResponse> successfulWorldpayCardAuth(WorldpayPaymentProvider connector) {

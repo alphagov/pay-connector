@@ -110,13 +110,13 @@ public class WorldpayPaymentProvider extends BasePaymentProvider<BaseResponse> {
                 .withMerchantCode(request.getGatewayAccount().getCredentials().get(CREDENTIALS_MERCHANT_ID))
                 .withDescription(request.getDescription())
                 .withAmount(request.getAmount())
-                .withAuthorisationDetails(request.getAuthorisationDetails())
+                .withAuthorisationDetails(request.getAuthCardDetails())
                 .build();
     }
 
     private Function<Auth3dsResponseGatewayRequest, GatewayOrder> build3dsResponseAuthOrderFor() {
         return request -> aWorldpay3dsResponseAuthOrderRequestBuilder()
-                .withPaResponse3ds(request.getAuth3dsResponse().getPaResponse())
+                .withPaResponse3ds(request.getAuth3DsDetails().getPaResponse())
                 .withSessionId(request.getChargeExternalId())
                 .withTransactionId(request.getTransactionId().orElse(""))
                 .withMerchantCode(request.getGatewayAccount().getCredentials().get(CREDENTIALS_MERCHANT_ID))

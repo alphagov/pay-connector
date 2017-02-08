@@ -8,16 +8,13 @@ import org.apache.commons.lang3.tuple.Pair;
 import org.junit.Before;
 import org.junit.Test;
 import org.junit.runner.RunWith;
-import org.mockito.InOrder;
 import org.mockito.Mock;
-import org.mockito.Mockito;
 import org.mockito.runners.MockitoJUnitRunner;
 import uk.gov.pay.connector.exception.ChargeNotFoundRuntimeException;
 import uk.gov.pay.connector.exception.ConflictRuntimeException;
 import uk.gov.pay.connector.exception.IllegalStateRuntimeException;
 import uk.gov.pay.connector.exception.OperationAlreadyInProgressRuntimeException;
-import uk.gov.pay.connector.model.domain.AuthorisationDetails;
-import uk.gov.pay.connector.model.domain.CardDetailsEntity;
+import uk.gov.pay.connector.model.domain.AuthCardDetails;
 import uk.gov.pay.connector.model.domain.ChargeEntity;
 import uk.gov.pay.connector.model.domain.ChargeStatus;
 import uk.gov.pay.connector.model.gateway.GatewayResponse;
@@ -26,7 +23,6 @@ import uk.gov.pay.connector.service.worldpay.WorldpayOrderStatusResponse;
 import uk.gov.pay.connector.util.CardUtils;
 
 import javax.persistence.OptimisticLockException;
-import java.io.IOException;
 import java.util.Map;
 import java.util.Optional;
 import java.util.concurrent.Future;
@@ -96,9 +92,9 @@ public class CardAuthoriseServiceTest extends CardServiceTest {
     @Test
     public void shouldRespondAuthorisationSuccess() throws Exception {
         String transactionId = "transaction-id";
-        AuthorisationDetails authorisationDetails = CardUtils.aValidAuthorisationDetails();
+        AuthCardDetails authCardDetails = CardUtils.aValidAuthorisationDetails();
 
-        GatewayResponse response = anAuthorisationSuccessResponse(charge, reloadedCharge, transactionId, authorisationDetails);
+        GatewayResponse response = anAuthorisationSuccessResponse(charge, reloadedCharge, transactionId, authCardDetails);
 
         assertThat(response.isSuccessful(), is(true));
         assertThat(reloadedCharge.getStatus(), is(AUTHORISATION_SUCCESS.toString()));
@@ -108,9 +104,9 @@ public class CardAuthoriseServiceTest extends CardServiceTest {
     @Test
     public void shouldRespondWith3dsResponseFor3dsOrders() {
         String transactionId = "transaction-id";
-        AuthorisationDetails authorisationDetails = CardUtils.aValidAuthorisationDetails();
+        AuthCardDetails authCardDetails = CardUtils.aValidAuthorisationDetails();
 
-        GatewayResponse response = anAuthorisation3dsRequiredResponse(charge, reloadedCharge, transactionId, authorisationDetails);
+        GatewayResponse response = anAuthorisation3dsRequiredResponse(charge, reloadedCharge, transactionId, authCardDetails);
 
         assertThat(response.isSuccessful(), is(true));
         assertThat(reloadedCharge.getStatus(), is(AUTHORISATION_3DS_REQUIRED.toString()));
@@ -189,8 +185,8 @@ public class CardAuthoriseServiceTest extends CardServiceTest {
     @Test
     public void shouldStoreCardDetailsIfAuthorisationSuccess() {
         String transactionId = "transaction-id";
-        AuthorisationDetails authorisationDetails = CardUtils.aValidAuthorisationDetails();
-        anAuthorisationSuccessResponse(charge, reloadedCharge, transactionId, authorisationDetails);
+        AuthCardDetails authCardDetails = CardUtils.aValidAuthorisationDetails();
+        anAuthorisationSuccessResponse(charge, reloadedCharge, transactionId, authCardDetails);
 
         assertThat(reloadedCharge.getCardDetails(), is(notNullValue()));
     }
@@ -284,7 +280,7 @@ public class CardAuthoriseServiceTest extends CardServiceTest {
         return cardAuthorisationService.doAuthorise(charge.getExternalId(), CardUtils.aValidAuthorisationDetails());
     }
 
-    private GatewayResponse anAuthorisationSuccessResponse(ChargeEntity charge, ChargeEntity reloadedCharge, String transactionId, AuthorisationDetails authorisationDetails) {
+    private GatewayResponse anAuthorisationSuccessResponse(ChargeEntity charge, ChargeEntity reloadedCharge, String transactionId, AuthCardDetails authCardDetails) {
 
         when(mockedChargeDao.findByExternalId(charge.getExternalId()))
                 .thenReturn(Optional.of(charge));
@@ -297,10 +293,10 @@ public class CardAuthoriseServiceTest extends CardServiceTest {
         when(mockedProviders.byName(charge.getPaymentGatewayName())).thenReturn(mockedPaymentProvider);
         when(mockedPaymentProvider.generateTransactionId()).thenReturn(Optional.empty());
 
-        return cardAuthorisationService.doAuthorise(charge.getExternalId(), authorisationDetails);
+        return cardAuthorisationService.doAuthorise(charge.getExternalId(), authCardDetails);
     }
 
-    private GatewayResponse anAuthorisation3dsRequiredResponse(ChargeEntity charge, ChargeEntity reloadedCharge, String transactionId, AuthorisationDetails authorisationDetails) {
+    private GatewayResponse anAuthorisation3dsRequiredResponse(ChargeEntity charge, ChargeEntity reloadedCharge, String transactionId, AuthCardDetails authCardDetails) {
 
         when(mockedChargeDao.findByExternalId(charge.getExternalId()))
                 .thenReturn(Optional.of(charge));
@@ -313,7 +309,7 @@ public class CardAuthoriseServiceTest extends CardServiceTest {
         when(mockedProviders.byName(charge.getPaymentGatewayName())).thenReturn(mockedPaymentProvider);
         when(mockedPaymentProvider.generateTransactionId()).thenReturn(Optional.of(transactionId));
 
-        return cardAuthorisationService.doAuthorise(charge.getExternalId(), authorisationDetails);
+        return cardAuthorisationService.doAuthorise(charge.getExternalId(), authCardDetails);
     }
 
     private GatewayResponse anAuthorisationErrorResponse(ChargeEntity charge, ChargeEntity reloadedCharge) {

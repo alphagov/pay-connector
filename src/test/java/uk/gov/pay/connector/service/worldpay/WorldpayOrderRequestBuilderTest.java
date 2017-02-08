@@ -5,8 +5,9 @@ import org.joda.time.DateTime;
 import org.junit.Test;
 import uk.gov.pay.connector.model.OrderRequestType;
 import uk.gov.pay.connector.model.domain.Address;
-import uk.gov.pay.connector.model.domain.AuthorisationDetails;
+import uk.gov.pay.connector.model.domain.AuthCardDetails;
 import uk.gov.pay.connector.service.GatewayOrder;
+import uk.gov.pay.connector.util.CardUtils;
 
 import java.io.IOException;
 import java.nio.charset.Charset;
@@ -16,7 +17,6 @@ import static org.custommonkey.xmlunit.XMLAssert.assertXMLEqual;
 import static org.junit.Assert.assertEquals;
 import static uk.gov.pay.connector.model.domain.Address.anAddress;
 import static uk.gov.pay.connector.service.worldpay.WorldpayOrderRequestBuilder.*;
-import static uk.gov.pay.connector.util.CardUtils.buildAuthorisationDetails;
 
 public class WorldpayOrderRequestBuilderTest {
 
@@ -29,7 +29,7 @@ public class WorldpayOrderRequestBuilderTest {
         minAddress.setCity("London");
         minAddress.setCountry("GB");
 
-        AuthorisationDetails authorisationDetails = getValidTestCard(minAddress);
+        AuthCardDetails authCardDetails = getValidTestCard(minAddress);
 
         GatewayOrder actualRequest = aWorldpayAuthoriseOrderRequestBuilder()
                 .withSessionId("uniqueSessionId")
@@ -39,7 +39,7 @@ public class WorldpayOrderRequestBuilderTest {
                 .withMerchantCode("MERCHANTCODE")
                 .withDescription("This is the description")
                 .withAmount("500")
-                .withAuthorisationDetails(authorisationDetails)
+                .withAuthorisationDetails(authCardDetails)
                 .build();
 
         assertXMLEqual(expectedOrderSubmitPayload("valid-authorise-worldpay-request-min-address.xml"), actualRequest.getPayload());
@@ -55,7 +55,7 @@ public class WorldpayOrderRequestBuilderTest {
         minAddress.setCity("London");
         minAddress.setCountry("GB");
 
-        AuthorisationDetails authorisationDetails = getValidTestCard(minAddress);
+        AuthCardDetails authCardDetails = getValidTestCard(minAddress);
 
         GatewayOrder actualRequest = aWorldpayAuthoriseOrderRequestBuilder()
                 .withSessionId("uniqueSessionId")
@@ -66,7 +66,7 @@ public class WorldpayOrderRequestBuilderTest {
                 .withMerchantCode("MERCHANTCODE")
                 .withDescription("This is the description")
                 .withAmount("500")
-                .withAuthorisationDetails(authorisationDetails)
+                .withAuthorisationDetails(authCardDetails)
                 .build();
 
         assertXMLEqual(expectedOrderSubmitPayload("valid-authorise-worldpay-3ds-request-min-address.xml"), actualRequest.getPayload());
@@ -84,7 +84,7 @@ public class WorldpayOrderRequestBuilderTest {
         fullAddress.setCounty("London county");
         fullAddress.setCountry("GB");
 
-        AuthorisationDetails authorisationDetails = getValidTestCard(fullAddress);
+        AuthCardDetails authCardDetails = getValidTestCard(fullAddress);
 
         GatewayOrder actualRequest = aWorldpayAuthoriseOrderRequestBuilder()
                 .withSessionId("uniqueSessionId")
@@ -94,7 +94,7 @@ public class WorldpayOrderRequestBuilderTest {
                 .withMerchantCode("MERCHANTCODE")
                 .withDescription("This is the description")
                 .withAmount("500")
-                .withAuthorisationDetails(authorisationDetails)
+                .withAuthorisationDetails(authCardDetails)
                 .build();
 
         assertXMLEqual(expectedOrderSubmitPayload("valid-authorise-worldpay-request-full-address.xml"), actualRequest.getPayload());
@@ -111,7 +111,7 @@ public class WorldpayOrderRequestBuilderTest {
         address.setCity("London !>");
         address.setCountry("GB");
 
-        AuthorisationDetails authorisationDetails = getValidTestCard(address);
+        AuthCardDetails authCardDetails = getValidTestCard(address);
 
         GatewayOrder actualRequest = aWorldpayAuthoriseOrderRequestBuilder()
                 .withSessionId("uniqueSessionId")
@@ -121,7 +121,7 @@ public class WorldpayOrderRequestBuilderTest {
                 .withMerchantCode("MERCHANTCODE")
                 .withDescription("This is the description with <!-- ")
                 .withAmount("500")
-                .withAuthorisationDetails(authorisationDetails)
+                .withAuthorisationDetails(authCardDetails)
                 .build();
 
         assertXMLEqual(expectedOrderSubmitPayload("special-char-valid-authorise-worldpay-request-address.xml"), actualRequest.getPayload());
@@ -200,8 +200,8 @@ public class WorldpayOrderRequestBuilderTest {
         assertEquals(OrderRequestType.REFUND, actualRequest.getOrderRequestType());
     }
 
-    private AuthorisationDetails getValidTestCard(Address address) {
-        return buildAuthorisationDetails("Mr. Payment", "4111111111111111", "123", "12/15", "visa", address);
+    private AuthCardDetails getValidTestCard(Address address) {
+        return CardUtils.buildAuthCardDetails("Mr. Payment", "4111111111111111", "123", "12/15", "visa", address);
     }
 
     private String expectedOrderSubmitPayload(final String expectedTemplate) throws IOException {

@@ -18,7 +18,7 @@ import uk.gov.pay.connector.model.CaptureGatewayRequest;
 import uk.gov.pay.connector.model.Notification;
 import uk.gov.pay.connector.model.Notifications;
 import uk.gov.pay.connector.model.domain.Address;
-import uk.gov.pay.connector.model.domain.AuthorisationDetails;
+import uk.gov.pay.connector.model.domain.AuthCardDetails;
 import uk.gov.pay.connector.model.domain.ChargeEntity;
 import uk.gov.pay.connector.model.domain.GatewayAccountEntity;
 import uk.gov.pay.connector.model.gateway.AuthorisationGatewayRequest;
@@ -50,7 +50,6 @@ import static uk.gov.pay.connector.model.domain.Address.anAddress;
 import static uk.gov.pay.connector.model.domain.ChargeEntityFixture.aValidChargeEntity;
 import static uk.gov.pay.connector.model.domain.GatewayAccountEntity.Type.TEST;
 import static uk.gov.pay.connector.service.GatewayClient.createGatewayClient;
-import static uk.gov.pay.connector.util.CardUtils.buildAuthorisationDetails;
 
 public class SmartpayPaymentProviderTest {
 
@@ -90,13 +89,13 @@ public class SmartpayPaymentProviderTest {
     @Test
     public void shouldSendSuccessfullyAOrderForMerchant() throws Exception {
 
-        AuthorisationDetails authorisationDetails = getValidTestCard();
+        AuthCardDetails authCardDetails = getValidTestCard();
 
         ChargeEntity chargeEntity = aValidChargeEntity()
                 .withGatewayAccountEntity(aServiceAccount())
                 .build();
 
-        GatewayResponse<SmartpayAuthorisationResponse> response = provider.authorise(new AuthorisationGatewayRequest(chargeEntity, authorisationDetails));
+        GatewayResponse<SmartpayAuthorisationResponse> response = provider.authorise(new AuthorisationGatewayRequest(chargeEntity, authCardDetails));
 
         assertTrue(response.isSuccessful());
         assertThat(response.getBaseResponse().isPresent(), CoreMatchers.is(true));
@@ -221,7 +220,7 @@ public class SmartpayPaymentProviderTest {
                 "</ns0:Envelope>";
     }
 
-    private AuthorisationDetails getValidTestCard() {
+    private AuthCardDetails getValidTestCard() {
         Address address = anAddress();
         address.setLine1("123 My Street");
         address.setLine2("This road");
@@ -230,7 +229,7 @@ public class SmartpayPaymentProviderTest {
         address.setCounty("London state");
         address.setCountry("GB");
 
-        return buildAuthorisationDetails("Mr. Payment", "4111111111111111", "123", "12/15", "visa", address);
+        return CardUtils.buildAuthCardDetails("Mr. Payment", "4111111111111111", "123", "12/15", "visa", address);
     }
 
     private String notificationPayloadForTransaction(String originalReference, String pspReference, String merchantReference, String fileName) throws IOException {
