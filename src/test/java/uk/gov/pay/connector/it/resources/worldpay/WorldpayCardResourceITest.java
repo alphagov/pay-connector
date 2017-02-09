@@ -1,5 +1,6 @@
 package uk.gov.pay.connector.it.resources.worldpay;
 
+import org.hamcrest.Matchers;
 import org.junit.Test;
 import uk.gov.pay.connector.it.base.ChargingITestBase;
 
@@ -24,9 +25,25 @@ public class WorldpayCardResourceITest extends ChargingITestBase {
                 .body(validAuthorisationDetails)
                 .post(authoriseChargeUrlFor(chargeId))
                 .then()
+                .body("status", Matchers.is(AUTHORISATION_SUCCESS.toString()))
                 .statusCode(200);
 
-        assertFrontendChargeStatusIs(chargeId, AUTHORISATION_SUCCESS.getValue());
+        assertFrontendChargeStatusIs(chargeId, AUTHORISATION_SUCCESS.toString());
+    }
+
+    @Test
+    public void shouldReturnStatusAsRequires3ds() {
+        String chargeId = createNewChargeWith(ENTERING_CARD_DETAILS, null);
+        worldpay.mockAuthorisationRequires3ds();
+
+        givenSetup()
+                .body(validAuthorisationDetails)
+                .post(authoriseChargeUrlFor(chargeId))
+                .then()
+                .body("status", Matchers.is(AUTHORISATION_3DS_REQUIRED.toString()))
+                .statusCode(200);
+
+        assertFrontendChargeStatusIs(chargeId, AUTHORISATION_3DS_REQUIRED.toString());
     }
 
     @Test

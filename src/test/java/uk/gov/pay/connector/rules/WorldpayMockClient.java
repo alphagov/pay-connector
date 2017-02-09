@@ -21,6 +21,11 @@ public class WorldpayMockClient {
         paymentServiceResponse(authoriseResponse);
     }
 
+    public void mockAuthorisationRequires3ds() {
+        String authorise3dsResponse = loadFromTemplate("3ds-response.xml");
+        paymentServiceResponse(authorise3dsResponse);
+    }
+
     public void mockAuthorisationFailure() {
         String gatewayTransactionId = randomId();
         String authoriseResponse = loadFromTemplate("authorisation-failed-response.xml");
