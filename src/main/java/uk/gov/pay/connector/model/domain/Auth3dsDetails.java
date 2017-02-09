@@ -7,7 +7,7 @@ public class Auth3dsDetails implements AuthorisationDetails {
     private String paResponse;
 
     @JsonProperty("pa_response")
-    public void setPaRequest(String paResponse) {
+    public void setPaResponse(String paResponse) {
             this.paResponse = paResponse;
         }
 

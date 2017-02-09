@@ -71,4 +71,18 @@ public class WorldpayCardResourceITest extends ChargingITestBase {
         assertFrontendChargeStatusIs(chargeId, CAPTURE_SUBMITTED.getValue());
         assertApiStateIs(chargeId, EXTERNAL_SUCCESS.getStatus());
     }
+
+    @Test
+    public void shouldAuthoriseCharge_For3dsRequiredCharge() {
+        String chargeId = createNewChargeWith(AUTHORISATION_3DS_REQUIRED, null);
+        worldpay.mockAuthorisationSuccess();
+
+        givenSetup()
+                .body(buildJsonWithPaResponse())
+                .post(authorise3dsChargeUrlFor(chargeId))
+                .then()
+                .statusCode(200);
+
+        assertFrontendChargeStatusIs(chargeId, AUTHORISATION_SUCCESS.getValue());
+    }
 }

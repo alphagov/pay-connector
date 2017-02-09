@@ -63,7 +63,8 @@ public class CardResource {
     @Produces(APPLICATION_JSON)
     public Response authorise3dsCharge(@PathParam("chargeId") String chargeId, Auth3dsDetails auth3DsDetails) {
         // handle different statuses
-        return handleGatewayResponse(card3dsResponseAuthService.doAuthorise(chargeId, auth3DsDetails));
+        GatewayResponse<BaseAuthoriseResponse> response = card3dsResponseAuthService.doAuthorise(chargeId, auth3DsDetails);
+        return handleGatewayAuthoriseResponse(response);
     }
 
     @POST

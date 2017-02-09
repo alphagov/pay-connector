@@ -101,6 +101,13 @@ public class ChargingITestBase {
         return buildJsonAuthorisationDetailsFor(cardNumber, "123", "11/99", cardBrand);
     }
 
+    protected String buildJsonWithPaResponse() {
+        JsonObject auth3dsDetails = new JsonObject();
+        auth3dsDetails.addProperty("pa_response", "this-is-a-test-pa-response");
+
+        return auth3dsDetails.toString();
+    }
+
     protected String buildJsonAuthorisationDetailsFor(String cardHolderName, String cardNumber, String cardBrand) {
         return buildJsonAuthorisationDetailsFor(cardHolderName, cardNumber, "123", "11/99", cardBrand, "The Money Pool", null, "London", null, "DO11 4RS", "GB");
     }
@@ -214,6 +221,10 @@ public class ChargingITestBase {
 
     protected String authoriseChargeUrlFor(String chargeId) {
         return FRONTEND_CHARGE_AUTHORIZE_API_PATH.replace("{chargeId}", chargeId);
+    }
+
+    protected String authorise3dsChargeUrlFor(String chargeId) {
+        return FRONTEND_CHARGE_3DS_AUTHORIZE_API_PATH.replace("{chargeId}", chargeId);
     }
 
     protected String captureChargeUrlFor(String chargeId) {
