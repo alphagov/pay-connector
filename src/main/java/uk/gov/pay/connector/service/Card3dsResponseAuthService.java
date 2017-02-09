@@ -36,7 +36,6 @@ public class Card3dsResponseAuthService extends CardAuthoriseBaseService<Auth3ds
     @Transactional
     public ChargeEntity preOperation(ChargeEntity chargeEntity) {
         chargeEntity = preOperation(chargeEntity, OperationType.AUTHORISATION_3DS, getLegalStates(), AUTHORISATION_3DS_READY);
-        getPaymentProviderFor(chargeEntity).generateTransactionId().ifPresent(chargeEntity::setGatewayTransactionId);
         return chargeEntity;
     }
 
@@ -55,22 +54,20 @@ public class Card3dsResponseAuthService extends CardAuthoriseBaseService<Auth3ds
                 .map(BaseAuthoriseResponse::getTransactionId).orElse("");
 
         logger.info("AuthCardDetails authorisation response received - charge_external_id={}, operation_type={}, transaction_id={}, status={}",
-                chargeEntity.getExternalId(), OperationType.AUTHORISATION.getValue(), transactionId, status);
+                chargeEntity.getExternalId(), OperationType.AUTHORISATION_3DS.getValue(), transactionId, status);
 
         GatewayAccountEntity account = chargeEntity.getGatewayAccount();
 
         metricRegistry.counter(String.format("gateway-operations.%s.%s.%s.authorise.result.%s", account.getGatewayName(), account.getType(), account.getId(), status.toString())).inc();
 
         reloadedCharge.setStatus(status);
-//        operationResponse.getBaseResponse().ifPresent(response -> auth3dsDetailsFactory.create(response).ifPresent(reloadedCharge::set3dsDetails));
 
         if (StringUtils.isBlank(transactionId)) {
-            logger.warn("AuthCardDetails authorisation response received with no transaction id. -  charge_external_id={}", reloadedCharge.getExternalId());
+            logger.warn("Auth3DSDetails authorisation response received with no transaction id. -  charge_external_id={}", reloadedCharge.getExternalId());
         } else {
             reloadedCharge.setGatewayTransactionId(transactionId);
         }
 
-//        appendCardDetails(reloadedCharge, authCardDetails);
         chargeDao.mergeAndNotifyStatusHasChanged(reloadedCharge, Optional.empty());
         return operationResponse;
     }
