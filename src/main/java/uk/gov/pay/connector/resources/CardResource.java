@@ -49,12 +49,7 @@ public class CardResource {
             return badRequestResponse("Values do not match expected format/length.");
         }
         GatewayResponse<BaseAuthoriseResponse> response = cardAuthoriseService.doAuthorise(chargeId, authCardDetails);
-
-        boolean transactionDeclined = response.getBaseResponse()
-                .map(baseResponse -> (baseResponse.authoriseStatus() == AuthoriseStatus.REJECTED || baseResponse.authoriseStatus() == AuthoriseStatus.ERROR))
-                .orElse(false);
-
-        return transactionDeclined ? badRequestResponse("This transaction was declined.") : handleGatewayAuthoriseResponse(response);
+        return transactionDeclined(response) ? badRequestResponse("This transaction was declined.") : handleGatewayAuthoriseResponse(response);
     }
 
     @POST
@@ -62,9 +57,8 @@ public class CardResource {
     @Consumes(APPLICATION_JSON)
     @Produces(APPLICATION_JSON)
     public Response authorise3dsCharge(@PathParam("chargeId") String chargeId, Auth3dsDetails auth3DsDetails) {
-        // handle different statuses
         GatewayResponse<BaseAuthoriseResponse> response = card3dsResponseAuthService.doAuthorise(chargeId, auth3DsDetails);
-        return handleGatewayAuthoriseResponse(response);
+        return transactionDeclined(response) ? badRequestResponse("This transaction was declined.") : handleGatewayAuthoriseResponse(response);
     }
 
     @POST
@@ -127,5 +121,11 @@ public class CardResource {
         return response.getGatewayError()
                 .map(this::handleError)
                 .orElseGet(ResponseUtil::noContentResponse);
+    }
+
+    private static boolean transactionDeclined(GatewayResponse<BaseAuthoriseResponse> response) {
+        return response.getBaseResponse()
+                .map(baseResponse -> (baseResponse.authoriseStatus() == AuthoriseStatus.REJECTED || baseResponse.authoriseStatus() == AuthoriseStatus.ERROR))
+                .orElse(false);
     }
 }

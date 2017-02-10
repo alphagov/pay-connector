@@ -153,6 +153,14 @@ public class ChargingITestBase {
         return externalRefundId;
     }
 
+    protected String createNewChargeWithNoTransactionId(ChargeStatus status) {
+        return createNewChargeWith(status, null);
+    }
+
+    protected String createNewCharge(ChargeStatus status) {
+        return createNewChargeWith(status, "transaction-id");
+    }
+
     protected String createNewChargeWith(ChargeStatus status, String gatewayTransactionId) {
         long chargeId = RandomUtils.nextInt();
         String externalChargeId = "charge-" + chargeId;
