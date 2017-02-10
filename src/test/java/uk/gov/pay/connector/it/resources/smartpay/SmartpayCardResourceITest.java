@@ -27,7 +27,7 @@ public class SmartpayCardResourceITest extends ChargingITestBase {
     @Test
     public void shouldAuthoriseCharge_ForValidCardDetails() throws Exception {
 
-        String chargeId = createNewChargeWith(ChargeStatus.ENTERING_CARD_DETAILS, null);
+        String chargeId = createNewChargeWithNoTransactionId(ChargeStatus.ENTERING_CARD_DETAILS);
 
         smartpay.mockAuthorisationSuccess();
 
@@ -68,7 +68,7 @@ public class SmartpayCardResourceITest extends ChargingITestBase {
 
     @Test
     public void shouldPersistTransactionIds_duringAuthorisationAndCapture() throws Exception {
-        String externalChargeId = createNewChargeWith(ChargeStatus.ENTERING_CARD_DETAILS, null);
+        String externalChargeId = createNewChargeWithNoTransactionId(ChargeStatus.ENTERING_CARD_DETAILS);
         String pspReference1 = "pspRef1-" + UUID.randomUUID().toString();
         smartpay.mockAuthorisationWithTransactionId(pspReference1);
 
@@ -97,8 +97,7 @@ public class SmartpayCardResourceITest extends ChargingITestBase {
 
     @Test
     public void shouldCancelCharge() {
-        String gatewayTransactionId = randomId();
-        String chargeId = createNewChargeWith(AUTHORISATION_SUCCESS, gatewayTransactionId);
+        String chargeId = createNewCharge(AUTHORISATION_SUCCESS);
 
         smartpay.mockCancelResponse();
 
@@ -111,7 +110,7 @@ public class SmartpayCardResourceITest extends ChargingITestBase {
 
     @Test
     public void shouldBadRequest_ASmartpayError() {
-        String chargeId = createNewChargeWith(AUTHORISATION_SUCCESS, randomId());
+        String chargeId = createNewCharge(AUTHORISATION_SUCCESS);
 
         smartpay.mockErrorResponse();
 

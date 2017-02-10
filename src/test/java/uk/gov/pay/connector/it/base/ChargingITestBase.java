@@ -19,6 +19,7 @@ import uk.gov.pay.connector.rules.SmartpayMockClient;
 import uk.gov.pay.connector.rules.WorldpayMockClient;
 import uk.gov.pay.connector.util.PortFactory;
 import uk.gov.pay.connector.util.RestAssuredClient;
+import uk.gov.pay.connector.util.TransactionId;
 
 import java.io.IOException;
 import java.time.ZonedDateTime;
@@ -35,6 +36,7 @@ import static uk.gov.pay.connector.model.domain.ChargeStatus.*;
 import static uk.gov.pay.connector.model.domain.GatewayAccount.*;
 import static uk.gov.pay.connector.resources.ApiPaths.*;
 import static uk.gov.pay.connector.util.JsonEncoder.toJson;
+import static uk.gov.pay.connector.util.TransactionId.randomId;
 
 public class ChargingITestBase {
     private RestAssuredClient connectorRestApi;
@@ -134,7 +136,7 @@ public class ChargingITestBase {
     }
 
     protected String authoriseNewCharge() {
-        String externalChargeId = createNewChargeWith(AUTHORISATION_SUCCESS, "");
+        String externalChargeId = createNewChargeWithNoTransactionId(AUTHORISATION_SUCCESS);
         app.getDatabaseTestHelper().updateChargeCardDetails(
                 Long.parseLong(externalChargeId.replace("charge-", "")),
                 CardFixture.aValidCard().withCardNo("1234").build());
@@ -158,7 +160,7 @@ public class ChargingITestBase {
     }
 
     protected String createNewCharge(ChargeStatus status) {
-        return createNewChargeWith(status, "transaction-id");
+        return createNewChargeWith(status, randomId());
     }
 
     protected String createNewChargeWith(ChargeStatus status, String gatewayTransactionId) {
@@ -214,7 +216,7 @@ public class ChargingITestBase {
 
     protected void shouldReturnErrorForAuthorisationDetailsWithMessage(String authorisationDetails, String errorMessage, String status) throws Exception {
 
-        String chargeId = createNewChargeWith(ENTERING_CARD_DETAILS, null);
+        String chargeId = createNewChargeWithNoTransactionId(ENTERING_CARD_DETAILS);
 
         givenSetup()
                 .body(authorisationDetails)

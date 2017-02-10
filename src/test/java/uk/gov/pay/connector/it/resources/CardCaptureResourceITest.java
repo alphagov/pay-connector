@@ -24,7 +24,7 @@ public class CardCaptureResourceITest extends ChargingITestBase {
 
     @Test
     public void shouldFailPayment_IfCaptureStatusIsUnknown() {
-        String failedChargeId = createNewChargeWith(CAPTURE_ERROR, randomUUID().toString());
+        String failedChargeId = createNewCharge(CAPTURE_ERROR);
         assertApiStateIs(failedChargeId, EXTERNAL_ERROR_GATEWAY.getStatus());
     }
 
@@ -50,7 +50,7 @@ public class CardCaptureResourceITest extends ChargingITestBase {
 
     @Test
     public void shouldReturnErrorWithoutChangingChargeState_IfOriginalStateIsNotAuthorised() {
-        String chargeId = createNewChargeWith(ENTERING_CARD_DETAILS, null);
+        String chargeId = createNewChargeWithNoTransactionId(ENTERING_CARD_DETAILS);
         String message = "Charge not in correct state to be processed, " + chargeId;
         captureAndVerifyFor(chargeId, 400, message);
 
@@ -59,7 +59,7 @@ public class CardCaptureResourceITest extends ChargingITestBase {
 
     @Test
     public void shouldReturnErrorAndDoNotUpdateChargeStatus_IfCaptureAlreadyInProgress() throws Exception {
-        String chargeId = createNewChargeWith(CAPTURE_READY, null);
+        String chargeId = createNewChargeWithNoTransactionId(CAPTURE_READY);
 
         String message = format("Capture for charge already in progress, %s", chargeId);
         captureAndVerifyFor(chargeId, 202, message);
@@ -69,7 +69,7 @@ public class CardCaptureResourceITest extends ChargingITestBase {
 
     @Test
     public void shouldReturnCaptureError_IfChargeExpired() throws Exception {
-        String chargeId = createNewChargeWith(EXPIRED, null);
+        String chargeId = createNewChargeWithNoTransactionId(EXPIRED);
         String message = format("Capture for charge failed as already expired, %s", chargeId);
         captureAndVerifyFor(chargeId, 400, message);
         assertFrontendChargeStatusIs(chargeId, EXPIRED.getValue());

@@ -99,7 +99,7 @@ public class CardAuthoriseResourceITest extends ChargingITestBase {
 
     @Test
     public void shouldRejectRandomCardNumber() throws Exception {
-        String chargeId = createNewChargeWith(ENTERING_CARD_DETAILS, null);
+        String chargeId = createNewChargeWithNoTransactionId(ENTERING_CARD_DETAILS);
         String randomCardNumberDetails = buildJsonAuthorisationDetailsFor("1111111111111119234", "visa");
 
         shouldReturnErrorFor(chargeId, randomCardNumberDetails, "Unsupported card details.");
@@ -108,7 +108,7 @@ public class CardAuthoriseResourceITest extends ChargingITestBase {
 
     @Test
     public void shouldReturnError_WhenCardNumberLongerThanMaximumExpected() throws Exception {
-        String chargeId = createNewChargeWith(ENTERING_CARD_DETAILS, null);
+        String chargeId = createNewChargeWithNoTransactionId(ENTERING_CARD_DETAILS);
         String randomCardNumberDetails = buildJsonAuthorisationDetailsFor("11111111111111192345", "visa");
 
         shouldReturnErrorFor(chargeId, randomCardNumberDetails, "Values do not match expected format/length.");
@@ -117,7 +117,7 @@ public class CardAuthoriseResourceITest extends ChargingITestBase {
 
     @Test
     public void shouldReturnError_WhenCvcIsMoreThan4Digits() throws Exception {
-        String chargeId = createNewChargeWith(ENTERING_CARD_DETAILS, null);
+        String chargeId = createNewChargeWithNoTransactionId(ENTERING_CARD_DETAILS);
         String randomCardNumberDetails = buildJsonAuthorisationDetailsFor("4444333322221111", "12345", "11/99", "visa");
 
         shouldReturnErrorFor(chargeId, randomCardNumberDetails, "Values do not match expected format/length.");
@@ -126,7 +126,7 @@ public class CardAuthoriseResourceITest extends ChargingITestBase {
 
     @Test
     public void shouldReturnError_WhenCvcIsLessThan3Digits() throws Exception {
-        String chargeId = createNewChargeWith(ENTERING_CARD_DETAILS, null);
+        String chargeId = createNewChargeWithNoTransactionId(ENTERING_CARD_DETAILS);
         String randomCardNumberDetails = buildJsonAuthorisationDetailsFor("4444333322221111", "12", "11/99", "visa");
 
         shouldReturnErrorFor(chargeId, randomCardNumberDetails, "Values do not match expected format/length.");
@@ -135,7 +135,7 @@ public class CardAuthoriseResourceITest extends ChargingITestBase {
 
     @Test
     public void shouldReturnError_WhenCardNumberShorterThanMinimumExpected() throws Exception {
-        String chargeId = createNewChargeWith(ENTERING_CARD_DETAILS, null);
+        String chargeId = createNewChargeWithNoTransactionId(ENTERING_CARD_DETAILS);
         String randomCardNumberDetails = buildJsonAuthorisationDetailsFor("11111111111", "visa");
 
         shouldReturnErrorFor(chargeId, randomCardNumberDetails, "Values do not match expected format/length.");
@@ -153,7 +153,7 @@ public class CardAuthoriseResourceITest extends ChargingITestBase {
     }
 
     private String shouldAuthoriseChargeFor(String cardDetails) throws Exception {
-        String chargeId = createNewChargeWith(ENTERING_CARD_DETAILS, null);
+        String chargeId = createNewChargeWithNoTransactionId(ENTERING_CARD_DETAILS);
 
         givenSetup()
                 .body(cardDetails)
@@ -167,7 +167,7 @@ public class CardAuthoriseResourceITest extends ChargingITestBase {
 
     @Test
     public void shouldReturnAuthError_IfChargeExpired() throws Exception {
-        String chargeId = createNewChargeWith(EXPIRED, null);
+        String chargeId = createNewChargeWithNoTransactionId(EXPIRED);
         authoriseAndVerifyFor(chargeId, validCardDetails, format("Authorisation for charge failed as already expired, %s", chargeId), 400);
         assertFrontendChargeStatusIs(chargeId, EXPIRED.getValue());
     }
@@ -186,7 +186,7 @@ public class CardAuthoriseResourceITest extends ChargingITestBase {
 
     @Test
     public void shouldReturnErrorWithoutChangingChargeState_IfOriginalStateIsNotEnteringCardDetails() throws Exception {
-        String chargeId = createNewChargeWith(AUTHORISATION_SUCCESS, null);
+        String chargeId = createNewChargeWithNoTransactionId(AUTHORISATION_SUCCESS);
 
         assertFrontendChargeStatusIs(chargeId, AUTHORISATION_SUCCESS.getValue());
 
@@ -203,14 +203,14 @@ public class CardAuthoriseResourceITest extends ChargingITestBase {
         timeoutInSeconds.setAccessible(true);
         timeoutInSeconds.setInt(conf, 0);
 
-        String chargeId = createNewChargeWith(ENTERING_CARD_DETAILS, null);
+        String chargeId = createNewChargeWithNoTransactionId(ENTERING_CARD_DETAILS);
         String message = format("Authorisation for charge already in progress, %s", chargeId);
         authoriseAndVerifyFor(chargeId, validCardDetails, message, 202);
     }
 
     @Test
     public void shouldReturnErrorAndDoNotUpdateChargeStatus_IfAuthorisationAlreadyInProgress() throws Exception {
-        String chargeId = createNewChargeWith(AUTHORISATION_READY, null);
+        String chargeId = createNewChargeWithNoTransactionId(AUTHORISATION_READY);
         String message = format("Authorisation for charge already in progress, %s", chargeId);
         authoriseAndVerifyFor(chargeId, validCardDetails, message, 202);
         assertFrontendChargeStatusIs(chargeId, AUTHORISATION_READY.getValue());
@@ -219,8 +219,8 @@ public class CardAuthoriseResourceITest extends ChargingITestBase {
     @Test
     public void shouldSaveExpectedCardDetailsFromMultipleRequests() throws Exception {
 
-        String charge1 = createNewChargeWith(ENTERING_CARD_DETAILS, null);
-        String charge2 = createNewChargeWith(ENTERING_CARD_DETAILS, null);
+        String charge1 = createNewChargeWithNoTransactionId(ENTERING_CARD_DETAILS);
+        String charge2 = createNewChargeWithNoTransactionId(ENTERING_CARD_DETAILS);
 
         RequestSpecification firstChargeAuthorize = givenSetup()
                 .body(buildJsonAuthorisationDetailsFor(
