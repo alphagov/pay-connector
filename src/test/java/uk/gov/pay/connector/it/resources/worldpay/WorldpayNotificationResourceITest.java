@@ -76,9 +76,7 @@ public class WorldpayNotificationResourceITest extends ChargingITestBase {
 
     @Test
     public void shouldNotUpdateStatusToDatabaseIfGatewayAccountIsNotFound() throws Exception {
-
-        String transactionId = "transaction-id";
-        String chargeId = createNewChargeWith(AUTHORISATION_SUCCESS, transactionId);
+        String chargeId = createNewCharge(AUTHORISATION_SUCCESS);
 
         notifyConnector("unknown-transation-id", "GARBAGE")
                 .statusCode(200)

@@ -13,7 +13,7 @@ public class WorldpayChargeCancelResourceITest extends ChargingITestBase {
 
     @Test
     public void cancelCharge_inWorldpaySystem() {
-        String chargeId = createNewChargeWith(ChargeStatus.AUTHORISATION_SUCCESS, "transaction-id");
+        String chargeId = createNewCharge(ChargeStatus.AUTHORISATION_SUCCESS);
 
         worldpay.mockCancelSuccess();
         givenSetup()
