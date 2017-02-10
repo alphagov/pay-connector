@@ -8,12 +8,14 @@ import uk.gov.pay.connector.model.domain.ChargeStatus;
 import uk.gov.pay.connector.model.domain.RefundEntity;
 import uk.gov.pay.connector.model.domain.RefundStatus;
 
+import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 
 import static org.hamcrest.CoreMatchers.allOf;
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.containsInAnyOrder;
+import static org.hamcrest.Matchers.hasEntry;
 import static org.hamcrest.core.Is.is;
 import static org.junit.Assert.assertNotNull;
 
@@ -109,15 +111,13 @@ public class RefundDaoJpaITest extends DaoITestBase {
 
         assertNotNull(refundEntity.getId());
 
-        java.util.List<Map<String, Object>> refundByIdFound = databaseTestHelper.getRefund(refundEntity.getId());
+        List<Map<String, Object>> refundByIdFound = databaseTestHelper.getRefund(refundEntity.getId());
 
-        assertThat(refundByIdFound, containsInAnyOrder(
-                allOf(
-                        org.hamcrest.Matchers.hasEntry("external_id", refundEntity.getExternalId()),
-                        org.hamcrest.Matchers.hasEntry("amount", (Object) refundEntity.getAmount()),
-                        org.hamcrest.Matchers.hasEntry("status", refundEntity.getStatus().getValue()),
-                        org.hamcrest.Matchers.hasEntry("charge_id", (Object) refundEntity.getChargeEntity().getId()),
-                        org.hamcrest.Matchers.hasEntry("created_date", (Object) java.sql.Timestamp.from(refundEntity.getCreatedDate().toInstant()))
-                )));
+        assertThat(refundByIdFound.size(), is(1));
+        assertThat(refundByIdFound.get(0), hasEntry("external_id", refundEntity.getExternalId()));
+        assertThat(refundByIdFound.get(0), hasEntry("amount", refundEntity.getAmount()));
+        assertThat(refundByIdFound.get(0), hasEntry("status", refundEntity.getStatus().getValue()));
+        assertThat(refundByIdFound.get(0), hasEntry("charge_id", refundEntity.getChargeEntity().getId()));
+        assertThat(refundByIdFound.get(0), hasEntry("created_date", java.sql.Timestamp.from(refundEntity.getCreatedDate().toInstant())));
     }
 }
