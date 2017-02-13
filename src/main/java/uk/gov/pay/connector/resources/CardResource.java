@@ -125,7 +125,8 @@ public class CardResource {
 
     private static boolean transactionDeclined(GatewayResponse<BaseAuthoriseResponse> response) {
         return response.getBaseResponse()
-                .map(baseResponse -> (baseResponse.authoriseStatus() == AuthoriseStatus.REJECTED || baseResponse.authoriseStatus() == AuthoriseStatus.ERROR))
-                .orElse(false);
+                .filter(baseResponse -> baseResponse.authoriseStatus() == AuthoriseStatus.REJECTED ||
+                                        baseResponse.authoriseStatus() == AuthoriseStatus.ERROR)
+                .isPresent();
     }
 }

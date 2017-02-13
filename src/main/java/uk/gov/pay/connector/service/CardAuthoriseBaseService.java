@@ -31,12 +31,8 @@ public abstract class CardAuthoriseBaseService<T extends AuthorisationDetails> e
 
 
     public GatewayResponse doAuthorise(String chargeId, T gatewayAuthRequest) {
-
-        Optional<ChargeEntity> chargeEntityOptional = chargeDao.findByExternalId(chargeId);
-
-        if (chargeEntityOptional.isPresent()) {
+        return chargeDao.findByExternalId(chargeId).map(chargeEntity -> {
             Supplier<GatewayResponse> authorisationSupplier = () -> {
-                ChargeEntity chargeEntity = chargeEntityOptional.get();
                 ChargeEntity preOperationResponse;
                 try {
                     preOperationResponse = preOperation(chargeEntity);
@@ -59,9 +55,7 @@ public abstract class CardAuthoriseBaseService<T extends AuthorisationDetails> e
                 default:
                     throw new GenericGatewayRuntimeException("Exception occurred while doing authorisation");
             }
-        } else {
-            throw new ChargeNotFoundRuntimeException(chargeId);
-        }
+        }).orElseThrow(() -> new ChargeNotFoundRuntimeException(chargeId));
     }
 
     protected abstract ChargeEntity preOperation(ChargeEntity chargeEntity);
