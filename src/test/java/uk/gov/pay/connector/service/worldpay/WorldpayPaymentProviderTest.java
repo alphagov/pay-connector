@@ -21,6 +21,7 @@ import uk.gov.pay.connector.model.gateway.AuthorisationGatewayRequest;
 import uk.gov.pay.connector.model.gateway.GatewayResponse;
 import uk.gov.pay.connector.service.GatewayClient;
 import uk.gov.pay.connector.service.GatewayOrder;
+import uk.gov.pay.connector.util.AuthUtils;
 
 import javax.ws.rs.client.Client;
 import javax.ws.rs.client.Entity;
@@ -60,7 +61,6 @@ import static uk.gov.pay.connector.model.domain.ChargeEntityFixture.aValidCharge
 import static uk.gov.pay.connector.model.domain.GatewayAccount.*;
 import static uk.gov.pay.connector.model.domain.GatewayAccountEntity.Type.TEST;
 import static uk.gov.pay.connector.service.GatewayClient.createGatewayClient;
-import static uk.gov.pay.connector.util.CardUtils.buildAuthorisationDetails;
 
 @RunWith(MockitoJUnitRunner.class)
 public class WorldpayPaymentProviderTest {
@@ -291,8 +291,8 @@ public class WorldpayPaymentProviderTest {
     }
 
     private AuthorisationGatewayRequest getCardAuthorisationRequest(ChargeEntity chargeEntity) {
-        AuthorisationDetails authorisationDetails = getValidTestCard();
-        return new AuthorisationGatewayRequest(chargeEntity, authorisationDetails);
+        AuthCardDetails authCardDetails = getValidTestCard();
+        return new AuthorisationGatewayRequest(chargeEntity, authCardDetails);
     }
 
     private AuthorisationGatewayRequest getCardAuthorisationRequest(GatewayAccountEntity accountEntity) {
@@ -419,7 +419,7 @@ public class WorldpayPaymentProviderTest {
                 "</paymentService>";
     }
 
-    private AuthorisationDetails getValidTestCard() {
+    private AuthCardDetails getValidTestCard() {
         Address address = anAddress();
         address.setLine1("123 My Street");
         address.setLine2("This road");
@@ -428,7 +428,7 @@ public class WorldpayPaymentProviderTest {
         address.setCounty("London state");
         address.setCountry("GB");
 
-        return buildAuthorisationDetails("Mr. Payment", "4111111111111111", "123", "12/15", "visa", address);
+        return AuthUtils.buildAuthCardDetails("Mr. Payment", "4111111111111111", "123", "12/15", "visa", address);
     }
 
     private String expectedOrderSubmitPayload(final String expectedTemplate) throws IOException {

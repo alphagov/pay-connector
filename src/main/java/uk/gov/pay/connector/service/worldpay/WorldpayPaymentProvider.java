@@ -7,6 +7,7 @@ import uk.gov.pay.connector.model.CancelGatewayRequest;
 import uk.gov.pay.connector.model.CaptureGatewayRequest;
 import uk.gov.pay.connector.model.Notifications;
 import uk.gov.pay.connector.model.RefundGatewayRequest;
+import uk.gov.pay.connector.model.gateway.Auth3dsResponseGatewayRequest;
 import uk.gov.pay.connector.model.gateway.AuthorisationGatewayRequest;
 import uk.gov.pay.connector.model.gateway.GatewayResponse;
 import uk.gov.pay.connector.resources.PaymentGatewayName;
@@ -45,6 +46,11 @@ public class WorldpayPaymentProvider extends BasePaymentProvider<BaseResponse> {
     @Override
     public GatewayResponse authorise(AuthorisationGatewayRequest request) {
         return sendReceive(request, buildAuthoriseOrderFor(), WorldpayOrderStatusResponse.class);
+    }
+
+    @Override
+    public GatewayResponse<BaseResponse> authorise3dsResponse(Auth3dsResponseGatewayRequest request) {
+        return sendReceive(request, build3dsResponseAuthOrderFor(), WorldpayOrderStatusResponse.class);
     }
 
     @Override
@@ -104,7 +110,16 @@ public class WorldpayPaymentProvider extends BasePaymentProvider<BaseResponse> {
                 .withMerchantCode(request.getGatewayAccount().getCredentials().get(CREDENTIALS_MERCHANT_ID))
                 .withDescription(request.getDescription())
                 .withAmount(request.getAmount())
-                .withAuthorisationDetails(request.getAuthorisationDetails())
+                .withAuthorisationDetails(request.getAuthCardDetails())
+                .build();
+    }
+
+    private Function<Auth3dsResponseGatewayRequest, GatewayOrder> build3dsResponseAuthOrderFor() {
+        return request -> aWorldpay3dsResponseAuthOrderRequestBuilder()
+                .withPaResponse3ds(request.getAuth3DsDetails().getPaResponse())
+                .withSessionId(request.getChargeExternalId())
+                .withTransactionId(request.getTransactionId().orElse(""))
+                .withMerchantCode(request.getGatewayAccount().getCredentials().get(CREDENTIALS_MERCHANT_ID))
                 .build();
     }
 

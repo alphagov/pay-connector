@@ -5,6 +5,7 @@ import fj.data.Either;
 import org.apache.commons.lang3.tuple.Pair;
 import uk.gov.pay.connector.model.*;
 import uk.gov.pay.connector.model.Notifications.Builder;
+import uk.gov.pay.connector.model.gateway.Auth3dsResponseGatewayRequest;
 import uk.gov.pay.connector.model.gateway.AuthorisationGatewayRequest;
 import uk.gov.pay.connector.model.gateway.GatewayResponse;
 import uk.gov.pay.connector.resources.PaymentGatewayName;
@@ -15,6 +16,7 @@ import java.util.function.Function;
 
 import static fj.data.Either.left;
 import static fj.data.Either.right;
+import static uk.gov.pay.connector.model.ErrorType.GENERIC_GATEWAY_ERROR;
 import static uk.gov.pay.connector.model.domain.GatewayAccount.CREDENTIALS_MERCHANT_ID;
 import static uk.gov.pay.connector.service.smartpay.SmartpayOrderRequestBuilder.*;
 
@@ -40,6 +42,11 @@ public class SmartpayPaymentProvider extends BasePaymentProvider<BaseResponse> {
     @Override
     public GatewayResponse authorise(AuthorisationGatewayRequest request) {
         return sendReceive(request, buildAuthoriseOrderFor(), SmartpayAuthorisationResponse.class);
+    }
+
+    @Override
+    public GatewayResponse<BaseResponse> authorise3dsResponse(Auth3dsResponseGatewayRequest request) {
+        return GatewayResponse.with(new GatewayError("3D Secure not implemented for SmartPay", GENERIC_GATEWAY_ERROR));
     }
 
     @Override
@@ -99,7 +106,7 @@ public class SmartpayPaymentProvider extends BasePaymentProvider<BaseResponse> {
                 .withPaymentPlatformReference(request.getChargeExternalId())
                 .withDescription(request.getDescription())
                 .withAmount(request.getAmount())
-                .withAuthorisationDetails(request.getAuthorisationDetails())
+                .withAuthorisationDetails(request.getAuthCardDetails())
                 .build();
     }
 

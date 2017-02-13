@@ -8,24 +8,24 @@
             <amount currencyCode="GBP" exponent="2" value="${amount}"/>
             <paymentDetails>
                 <VISA-SSL>
-                    <cardNumber>${authorisationDetails.cardNo}</cardNumber>
+                    <cardNumber>${authCardDetails.cardNo}</cardNumber>
                     <expiryDate>
-                        <date month="${authorisationDetails.endDate?split('/')?first}" year="20${authorisationDetails.endDate?split('/')?last}"/>
+                        <date month="${authCardDetails.endDate?split('/')?first}" year="20${authCardDetails.endDate?split('/')?last}"/>
                     </expiryDate>
-                    <cardHolderName>${authorisationDetails.cardHolder?xml}</cardHolderName>
-                    <cvc>${authorisationDetails.cvc}</cvc>
+                    <cardHolderName>${authCardDetails.cardHolder?xml}</cardHolderName>
+                    <cvc>${authCardDetails.cvc}</cvc>
                     <cardAddress>
                         <address>
-                            <address1>${authorisationDetails.address.line1?xml}</address1>
-                            <#if authorisationDetails.address.line2??>
-                            <address2>${authorisationDetails.address.line2?xml}</address2>
+                            <address1>${authCardDetails.address.line1?xml}</address1>
+                            <#if authCardDetails.address.line2??>
+                            <address2>${authCardDetails.address.line2?xml}</address2>
                             </#if>
-                            <postalCode>${authorisationDetails.address.postcode?xml}</postalCode>
-                            <city>${authorisationDetails.address.city?xml}</city>
-                            <#if authorisationDetails.address.county??>
-                            <state>${authorisationDetails.address.county?xml}</state>
+                            <postalCode>${authCardDetails.address.postcode?xml}</postalCode>
+                            <city>${authCardDetails.address.city?xml}</city>
+                            <#if authCardDetails.address.county??>
+                            <state>${authCardDetails.address.county?xml}</state>
                             </#if>
-                            <countryCode>${authorisationDetails.address.country?xml}</countryCode>
+                            <countryCode>${authCardDetails.address.country?xml}</countryCode>
                         </address>
                     </cardAddress>
                 </VISA-SSL>
@@ -36,8 +36,8 @@
             <#if requires3ds>
             <shopper>
                 <browser>
-                    <acceptHeader>${authorisationDetails.acceptHeader?xml}</acceptHeader>
-                    <userAgentHeader>${authorisationDetails.userAgentHeader?xml}</userAgentHeader>
+                    <acceptHeader>${authCardDetails.acceptHeader?xml}</acceptHeader>
+                    <userAgentHeader>${authCardDetails.userAgentHeader?xml}</userAgentHeader>
                 </browser>
             </shopper>
             </#if>

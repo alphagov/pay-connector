@@ -4,7 +4,8 @@ import com.google.common.collect.ImmutableMap;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import uk.gov.pay.connector.model.GatewayError;
-import uk.gov.pay.connector.model.domain.AuthorisationDetails;
+import uk.gov.pay.connector.model.domain.Auth3dsDetails;
+import uk.gov.pay.connector.model.domain.AuthCardDetails;
 import uk.gov.pay.connector.model.gateway.GatewayResponse;
 import uk.gov.pay.connector.service.*;
 import uk.gov.pay.connector.service.BaseAuthoriseResponse.AuthoriseStatus;
@@ -17,7 +18,7 @@ import java.util.Optional;
 
 import static javax.ws.rs.core.MediaType.APPLICATION_JSON;
 import static uk.gov.pay.connector.resources.ApiPaths.*;
-import static uk.gov.pay.connector.resources.AuthorisationDetailsValidator.isWellFormatted;
+import static uk.gov.pay.connector.resources.AuthCardDetailsValidator.isWellFormatted;
 import static uk.gov.pay.connector.util.ResponseUtil.badRequestResponse;
 import static uk.gov.pay.connector.util.ResponseUtil.serviceErrorResponse;
 
@@ -25,12 +26,15 @@ import static uk.gov.pay.connector.util.ResponseUtil.serviceErrorResponse;
 public class CardResource {
     private final Logger logger = LoggerFactory.getLogger(getClass());
     private final CardAuthoriseService cardAuthoriseService;
+    private final Card3dsResponseAuthService card3dsResponseAuthService;
     private final CardCaptureService cardCaptureService;
     private final ChargeCancelService chargeCancelService;
 
     @Inject
-    public CardResource(CardAuthoriseService cardAuthoriseService, CardCaptureService cardCaptureService, ChargeCancelService chargeCancelService) {
+    public CardResource(CardAuthoriseService cardAuthoriseService, Card3dsResponseAuthService card3dsResponseAuthService,
+                        CardCaptureService cardCaptureService, ChargeCancelService chargeCancelService) {
         this.cardAuthoriseService = cardAuthoriseService;
+        this.card3dsResponseAuthService = card3dsResponseAuthService;
         this.cardCaptureService = cardCaptureService;
         this.chargeCancelService = chargeCancelService;
     }
@@ -39,18 +43,22 @@ public class CardResource {
     @Path(FRONTEND_CHARGE_AUTHORIZE_API_PATH)
     @Consumes(APPLICATION_JSON)
     @Produces(APPLICATION_JSON)
-    public Response authoriseCharge(@PathParam("chargeId") String chargeId, AuthorisationDetails authorisationDetails) {
+    public Response authoriseCharge(@PathParam("chargeId") String chargeId, AuthCardDetails authCardDetails) {
 
-        if (!isWellFormatted(authorisationDetails)) {
+        if (!isWellFormatted(authCardDetails)) {
             return badRequestResponse("Values do not match expected format/length.");
         }
-        GatewayResponse<BaseAuthoriseResponse> response = cardAuthoriseService.doAuthorise(chargeId, authorisationDetails);
+        GatewayResponse<BaseAuthoriseResponse> response = cardAuthoriseService.doAuthorise(chargeId, authCardDetails);
+        return transactionDeclined(response) ? badRequestResponse("This transaction was declined.") : handleGatewayAuthoriseResponse(response);
+    }
 
-        boolean transactionDeclined = response.getBaseResponse()
-                .map(baseResponse -> (baseResponse.authoriseStatus() == AuthoriseStatus.REJECTED || baseResponse.authoriseStatus() == AuthoriseStatus.ERROR))
-                .orElse(false);
-
-        return transactionDeclined ? badRequestResponse("This transaction was declined.") : handleGatewayAuthoriseResponse(response);
+    @POST
+    @Path(FRONTEND_CHARGE_3DS_AUTHORIZE_API_PATH)
+    @Consumes(APPLICATION_JSON)
+    @Produces(APPLICATION_JSON)
+    public Response authorise3dsCharge(@PathParam("chargeId") String chargeId, Auth3dsDetails auth3DsDetails) {
+        GatewayResponse<BaseAuthoriseResponse> response = card3dsResponseAuthService.doAuthorise(chargeId, auth3DsDetails);
+        return transactionDeclined(response) ? badRequestResponse("This transaction was declined.") : handleGatewayAuthoriseResponse(response);
     }
 
     @POST
@@ -113,5 +121,12 @@ public class CardResource {
         return response.getGatewayError()
                 .map(this::handleError)
                 .orElseGet(ResponseUtil::noContentResponse);
+    }
+
+    private static boolean transactionDeclined(GatewayResponse<BaseAuthoriseResponse> response) {
+        return response.getBaseResponse()
+                .filter(baseResponse -> baseResponse.authoriseStatus() == AuthoriseStatus.REJECTED ||
+                                        baseResponse.authoriseStatus() == AuthoriseStatus.ERROR)
+                .isPresent();
     }
 }

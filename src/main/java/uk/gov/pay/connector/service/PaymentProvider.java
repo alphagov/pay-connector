@@ -5,6 +5,7 @@ import uk.gov.pay.connector.model.CancelGatewayRequest;
 import uk.gov.pay.connector.model.CaptureGatewayRequest;
 import uk.gov.pay.connector.model.Notifications;
 import uk.gov.pay.connector.model.RefundGatewayRequest;
+import uk.gov.pay.connector.model.gateway.Auth3dsResponseGatewayRequest;
 import uk.gov.pay.connector.model.gateway.AuthorisationGatewayRequest;
 import uk.gov.pay.connector.model.gateway.GatewayResponse;
 
@@ -19,6 +20,8 @@ public interface PaymentProvider<T extends BaseResponse> {
     Optional<String> generateTransactionId();
 
     GatewayResponse<T> authorise(AuthorisationGatewayRequest request);
+
+    GatewayResponse<T> authorise3dsResponse(Auth3dsResponseGatewayRequest request);
 
     GatewayResponse<T> capture(CaptureGatewayRequest request);
 
