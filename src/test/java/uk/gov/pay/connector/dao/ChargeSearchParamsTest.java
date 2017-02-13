@@ -44,14 +44,15 @@ public class ChargeSearchParamsTest {
     }
 
     @Test
-    public void shouldPopulateAllInternalStateFromExternalState() {
+    public void shouldPopulateAllInternalStateFromValueAssociatedWithExternalState() {
         ChargeSearchParams params = new ChargeSearchParams()
                 .withDisplaySize(5L)
-                .withExternalChargeState(ExternalChargeState.EXTERNAL_FAILED_CANCELLED.getStatus());
+                .withExternalChargeState(ExternalChargeState.EXTERNAL_FAILED_CANCELLED.getStatus()); // value = "failed"
 
-        assertEquals(7, params.getChargeStatuses().size());
         assertThat(params.getChargeStatuses(), containsInAnyOrder(
-                USER_CANCEL_READY,USER_CANCEL_ERROR, USER_CANCELLED, EXPIRE_CANCEL_READY, EXPIRED, EXPIRE_CANCEL_FAILED, AUTHORISATION_REJECTED));
+                USER_CANCEL_READY,USER_CANCEL_ERROR, USER_CANCELLED, EXPIRE_CANCEL_READY, EXPIRED, EXPIRE_CANCEL_FAILED,
+                AUTHORISATION_REJECTED, AUTHORISATION_CANCELLED));
+        assertEquals(8, params.getChargeStatuses().size());
 
     }
 }
