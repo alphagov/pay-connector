@@ -69,8 +69,8 @@ public class WorldpayPaymentProviderTest {
 
             validCredentials3ds = ImmutableMap.of(
                     "merchant_id", "MERCHANTCODETEST3DS",
-                    "username", "TBD",
-                    "password", "TBD");
+                    "username", envOrThrow("GDS_CONNECTOR_WORLDPAY_USER_3DS"),
+                    "password", envOrThrow("GDS_CONNECTOR_WORLDPAY_PASSWORD_3DS"));
 
             validGatewayAccount = new GatewayAccountEntity();
             validGatewayAccount.setId(1234L);
@@ -106,7 +106,6 @@ public class WorldpayPaymentProviderTest {
     }
 
     @Test
-    @Ignore
     public void shouldBeAbleToSendAuthorisationRequestForMerchantUsing3ds() throws Exception {
         WorldpayPaymentProvider connector = getValidWorldpayPaymentProvider();
         successfulWorldpayCardAuthFor3ds(connector);
