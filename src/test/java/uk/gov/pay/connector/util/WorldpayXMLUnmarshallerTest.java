@@ -122,6 +122,21 @@ public class WorldpayXMLUnmarshallerTest {
     }
 
     @Test
+    public void shouldUnmarshallCanceledAuthorisations() throws Exception {
+        String failedPayload = readPayload("templates/worldpay/authorisation-cancelled-response.xml");
+        WorldpayOrderStatusResponse response = XMLUnmarshaller.unmarshall(failedPayload, WorldpayOrderStatusResponse.class);
+        assertThat(response.getLastEvent(), is("CANCELLED"));
+        assertThat(response.getRefusedReturnCode(), is("5"));
+        assertThat(response.getRefusedReturnCodeDescription(), is("CANCELLED"));
+
+        assertThat(response.authoriseStatus(), is(AuthoriseStatus.CANCELLED));
+        assertThat(response.getTransactionId(), is("MyUniqueTransactionId!12"));
+
+        assertThat(response.getErrorCode(), is(nullValue()));
+        assertThat(response.getErrorMessage(), is(nullValue()));
+    }
+
+    @Test
     public void shouldUnmarshallAAuthorisationErrorResponse() throws Exception {
         String errorPayload = readPayload("templates/worldpay/authorisation-error-response.xml");
         WorldpayOrderStatusResponse response = XMLUnmarshaller.unmarshall(errorPayload, WorldpayOrderStatusResponse.class);
