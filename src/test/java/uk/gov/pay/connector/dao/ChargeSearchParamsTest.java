@@ -44,10 +44,10 @@ public class ChargeSearchParamsTest {
     }
 
     @Test
-    public void shouldPopulateAllInternalStateFromValueAssociatedWithExternalState() {
+    public void shouldPopulateAllInternalStateFromValueAsFailedAssociatedWithExternalState() {
         ChargeSearchParams params = new ChargeSearchParams()
                 .withDisplaySize(5L)
-                .withExternalChargeState(ExternalChargeState.EXTERNAL_FAILED_CANCELLED.getStatus()); // value = "failed"
+                .withExternalChargeState(ExternalChargeState.EXTERNAL_FAILED_CANCELLED.getStatus());
 
         assertThat(params.getChargeStatuses(), containsInAnyOrder(
                 USER_CANCEL_READY,USER_CANCEL_ERROR, USER_CANCELLED, EXPIRE_CANCEL_READY, EXPIRED, EXPIRE_CANCEL_FAILED,
