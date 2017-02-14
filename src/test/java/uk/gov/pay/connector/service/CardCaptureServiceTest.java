@@ -2,6 +2,7 @@ package uk.gov.pay.connector.service;
 
 import com.codahale.metrics.Counter;
 import com.codahale.metrics.MetricRegistry;
+import io.dropwizard.setup.Environment;
 import org.hamcrest.BaseMatcher;
 import org.hamcrest.Description;
 import org.junit.Before;
@@ -48,11 +49,13 @@ public class CardCaptureServiceTest extends CardServiceTest {
 
     @Before
     public void beforeTest() {
+        Environment mockEnvironment = mock(Environment.class);
         mockMetricRegistry = mock(MetricRegistry.class);
         Counter mockCounter = mock(Counter.class);
+        when(mockEnvironment.metrics()).thenReturn(mockMetricRegistry);
         when(mockMetricRegistry.counter(anyString())).thenReturn(mockCounter);
 
-        cardCaptureService = new CardCaptureService(mockedChargeDao, mockedProviders, mockUserNotificationService, mockMetricRegistry);
+        cardCaptureService = new CardCaptureService(mockedChargeDao, mockedProviders, mockUserNotificationService, mockEnvironment);
     }
 
     public void setupPaymentProviderMock(String transactionId, String errorCode) {

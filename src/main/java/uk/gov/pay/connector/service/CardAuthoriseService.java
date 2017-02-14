@@ -1,7 +1,7 @@
 package uk.gov.pay.connector.service;
 
-import com.codahale.metrics.MetricRegistry;
 import com.google.inject.persist.Transactional;
+import io.dropwizard.setup.Environment;
 import org.apache.commons.lang3.StringUtils;
 import uk.gov.pay.connector.dao.ChargeDao;
 import uk.gov.pay.connector.model.domain.*;
@@ -11,7 +11,8 @@ import uk.gov.pay.connector.model.gateway.GatewayResponse;
 import javax.inject.Inject;
 import java.util.Optional;
 
-import static uk.gov.pay.connector.model.domain.ChargeStatus.*;
+import static uk.gov.pay.connector.model.domain.ChargeStatus.AUTHORISATION_READY;
+import static uk.gov.pay.connector.model.domain.ChargeStatus.ENTERING_CARD_DETAILS;
 
 public class CardAuthoriseService extends CardAuthoriseBaseService<AuthCardDetails> {
 
@@ -22,8 +23,8 @@ public class CardAuthoriseService extends CardAuthoriseBaseService<AuthCardDetai
                                 PaymentProviders providers,
                                 CardExecutorService cardExecutorService,
                                 Auth3dsDetailsFactory auth3dsDetailsFactory,
-                                MetricRegistry metricRegistry) {
-        super(chargeDao, providers, cardExecutorService, metricRegistry);
+                                Environment environment) {
+        super(chargeDao, providers, cardExecutorService, environment);
 
         this.auth3dsDetailsFactory = auth3dsDetailsFactory;
     }

@@ -1,7 +1,7 @@
 package uk.gov.pay.connector.service;
 
-import com.codahale.metrics.MetricRegistry;
 import com.google.inject.persist.Transactional;
+import io.dropwizard.setup.Environment;
 import uk.gov.pay.connector.dao.ChargeDao;
 import uk.gov.pay.connector.exception.ChargeNotFoundRuntimeException;
 import uk.gov.pay.connector.model.CaptureGatewayRequest;
@@ -12,7 +12,6 @@ import uk.gov.pay.connector.model.gateway.GatewayResponse;
 import uk.gov.pay.connector.resources.PaymentGatewayName;
 
 import javax.inject.Inject;
-
 import java.time.ZonedDateTime;
 import java.util.Optional;
 
@@ -29,8 +28,8 @@ public class CardCaptureService extends CardService implements TransactionalGate
 
 
     @Inject
-    public CardCaptureService(ChargeDao chargeDao, PaymentProviders providers, UserNotificationService userNotificationService, MetricRegistry metricRegistry) {
-        super(chargeDao, providers, metricRegistry);
+    public CardCaptureService(ChargeDao chargeDao, PaymentProviders providers, UserNotificationService userNotificationService, Environment environment) {
+        super(chargeDao, providers, environment);
         this.userNotificationService = userNotificationService;
     }
 
