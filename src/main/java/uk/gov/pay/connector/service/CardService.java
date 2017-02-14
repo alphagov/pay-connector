@@ -1,6 +1,7 @@
 package uk.gov.pay.connector.service;
 
 import com.codahale.metrics.MetricRegistry;
+import io.dropwizard.setup.Environment;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import uk.gov.pay.connector.dao.ChargeDao;
@@ -39,10 +40,10 @@ public abstract class CardService<T extends BaseResponse> {
         }
     }
 
-    protected CardService(ChargeDao chargeDao, PaymentProviders providers, MetricRegistry metricRegistry) {
+    protected CardService(ChargeDao chargeDao, PaymentProviders providers, Environment environment) {
         this.chargeDao = chargeDao;
         this.providers = providers;
-        this.metricRegistry = metricRegistry;
+        this.metricRegistry = environment.metrics();
     }
 
     public ChargeEntity preOperation(ChargeEntity chargeEntity, OperationType operationType, ChargeStatus[] legalStatuses, ChargeStatus lockingStatus) {

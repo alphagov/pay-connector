@@ -4,6 +4,7 @@ import com.codahale.metrics.Counter;
 import com.codahale.metrics.MetricRegistry;
 import com.google.common.collect.ImmutableMap;
 import fj.data.Either;
+import io.dropwizard.setup.Environment;
 import org.apache.commons.lang3.tuple.Pair;
 import org.junit.Before;
 import org.junit.Test;
@@ -59,12 +60,14 @@ public class CardAuthoriseServiceTest extends CardServiceTest {
 
     @Before
     public void setUpCardAuthorisationService() {
+        Environment mockEnvironment = mock(Environment.class);
         mockMetricRegistry = mock(MetricRegistry.class);
         Counter mockCounter = mock(Counter.class);
         when(mockMetricRegistry.counter(anyString())).thenReturn(mockCounter);
+        when(mockEnvironment.metrics()).thenReturn(mockMetricRegistry);
 
         cardAuthorisationService = new CardAuthoriseService(mockedChargeDao, mockedProviders, mockExecutorService,
-                auth3dsDetailsFactory, mockMetricRegistry);
+                auth3dsDetailsFactory, mockEnvironment);
     }
 
     public void setupMockExecutorServiceMock() {

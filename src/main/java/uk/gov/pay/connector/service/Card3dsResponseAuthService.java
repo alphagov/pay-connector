@@ -1,7 +1,7 @@
 package uk.gov.pay.connector.service;
 
-import com.codahale.metrics.MetricRegistry;
 import com.google.inject.persist.Transactional;
+import io.dropwizard.setup.Environment;
 import org.apache.commons.lang3.StringUtils;
 import uk.gov.pay.connector.dao.ChargeDao;
 import uk.gov.pay.connector.model.domain.Auth3dsDetails;
@@ -24,8 +24,8 @@ public class Card3dsResponseAuthService extends CardAuthoriseBaseService<Auth3ds
     public Card3dsResponseAuthService(ChargeDao chargeDao,
                                       PaymentProviders providers,
                                       CardExecutorService cardExecutorService,
-                                      MetricRegistry metricRegistry) {
-        super(chargeDao, providers, cardExecutorService, metricRegistry);
+                                      Environment environment) {
+        super(chargeDao, providers, cardExecutorService, environment);
     }
 
     public GatewayResponse<BaseAuthoriseResponse> operation(ChargeEntity chargeEntity, Auth3dsDetails auth3DsDetails) {
@@ -58,7 +58,7 @@ public class Card3dsResponseAuthService extends CardAuthoriseBaseService<Auth3ds
 
         GatewayAccountEntity account = chargeEntity.getGatewayAccount();
 
-        metricRegistry.counter(String.format("gateway-operations.%s.%s.%s.authorise.result.%s", account.getGatewayName(), account.getType(), account.getId(), status.toString())).inc();
+        metricRegistry.counter(String.format("gateway-operations.%s.%s.%s.authorise-3ds.result.%s", account.getGatewayName(), account.getType(), account.getId(), status.toString())).inc();
 
         reloadedCharge.setStatus(status);
 

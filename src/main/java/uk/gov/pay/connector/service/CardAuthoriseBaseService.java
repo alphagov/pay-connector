@@ -1,31 +1,28 @@
 package uk.gov.pay.connector.service;
 
-import com.codahale.metrics.MetricRegistry;
-import com.google.inject.persist.Transactional;
+import io.dropwizard.setup.Environment;
 import org.apache.commons.lang3.tuple.Pair;
 import uk.gov.pay.connector.dao.ChargeDao;
 import uk.gov.pay.connector.exception.ChargeNotFoundRuntimeException;
 import uk.gov.pay.connector.exception.ConflictRuntimeException;
 import uk.gov.pay.connector.exception.GenericGatewayRuntimeException;
 import uk.gov.pay.connector.exception.OperationAlreadyInProgressRuntimeException;
+import uk.gov.pay.connector.model.domain.AuthorisationDetails;
 import uk.gov.pay.connector.model.domain.ChargeEntity;
 import uk.gov.pay.connector.model.domain.ChargeStatus;
-import uk.gov.pay.connector.model.domain.AuthorisationDetails;
 import uk.gov.pay.connector.model.gateway.GatewayResponse;
 
 import javax.persistence.OptimisticLockException;
-import java.util.Optional;
 import java.util.function.Supplier;
 
-import static uk.gov.pay.connector.model.domain.ChargeStatus.AUTHORISATION_READY;
 import static uk.gov.pay.connector.service.CardExecutorService.ExecutionStatus;
 
 public abstract class CardAuthoriseBaseService<T extends AuthorisationDetails> extends CardService<BaseAuthoriseResponse> {
 
     private final CardExecutorService cardExecutorService;
 
-    public CardAuthoriseBaseService(ChargeDao chargeDao, PaymentProviders providers, CardExecutorService cardExecutorService, MetricRegistry metricRegistry) {
-        super(chargeDao, providers, metricRegistry);
+    public CardAuthoriseBaseService(ChargeDao chargeDao, PaymentProviders providers, CardExecutorService cardExecutorService, Environment environment) {
+        super(chargeDao, providers, environment);
         this.cardExecutorService = cardExecutorService;
     }
 

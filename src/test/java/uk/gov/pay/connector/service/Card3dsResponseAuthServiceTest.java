@@ -3,6 +3,7 @@ package uk.gov.pay.connector.service;
 import com.codahale.metrics.Counter;
 import com.codahale.metrics.MetricRegistry;
 import com.google.common.collect.ImmutableMap;
+import io.dropwizard.setup.Environment;
 import org.apache.commons.lang3.tuple.Pair;
 import org.junit.Before;
 import org.junit.Test;
@@ -47,11 +48,13 @@ public class Card3dsResponseAuthServiceTest extends CardServiceTest {
 
     @Before
     public void setUpCardAuthorisationService() {
+        Environment mockEnvironment = mock(Environment.class);
         mockMetricRegistry = mock(MetricRegistry.class);
         Counter mockCounter = mock(Counter.class);
+        when(mockEnvironment.metrics()).thenReturn(mockMetricRegistry);
         when(mockMetricRegistry.counter(anyString())).thenReturn(mockCounter);
 
-        card3dsResponseAuthService = new Card3dsResponseAuthService(mockedChargeDao, mockedProviders, mockExecutorService, mockMetricRegistry);
+        card3dsResponseAuthService = new Card3dsResponseAuthService(mockedChargeDao, mockedProviders, mockExecutorService, mockEnvironment);
     }
 
     public void setupMockExecutorServiceMock() {
