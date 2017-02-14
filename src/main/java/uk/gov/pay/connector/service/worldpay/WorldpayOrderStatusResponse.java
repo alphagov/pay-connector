@@ -13,6 +13,7 @@ public class WorldpayOrderStatusResponse implements BaseAuthoriseResponse, BaseI
 
     private static final String WORLDPAY_AUTHORISED_EVENT = "AUTHORISED";
     private static final String WORLDPAY_REFUSED_EVENT = "REFUSED";
+    private static final String WORLDPAY_CANCELLED_EVENT = "CANCELLED";
 
     @XmlPath("reply/orderStatus/@orderCode")
     private String transactionId;
@@ -87,6 +88,10 @@ public class WorldpayOrderStatusResponse implements BaseAuthoriseResponse, BaseI
 
         if(WORLDPAY_REFUSED_EVENT.equals(lastEvent)) {
             return AuthoriseStatus.REJECTED;
+        }
+
+        if(WORLDPAY_CANCELLED_EVENT.equals(lastEvent)) {
+            return AuthoriseStatus.CANCELLED;
         }
 
         return AuthoriseStatus.ERROR;

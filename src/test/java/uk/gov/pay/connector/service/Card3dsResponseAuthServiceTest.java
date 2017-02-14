@@ -3,13 +3,11 @@ package uk.gov.pay.connector.service;
 import com.codahale.metrics.Counter;
 import com.codahale.metrics.MetricRegistry;
 import com.google.common.collect.ImmutableMap;
-import fj.data.Either;
 import org.apache.commons.lang3.tuple.Pair;
 import org.junit.Before;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.mockito.ArgumentCaptor;
-import org.mockito.Mock;
 import org.mockito.runners.MockitoJUnitRunner;
 import uk.gov.pay.connector.exception.*;
 import uk.gov.pay.connector.model.domain.Auth3dsDetails;
@@ -24,7 +22,6 @@ import uk.gov.pay.connector.util.AuthUtils;
 import javax.persistence.OptimisticLockException;
 import java.util.Map;
 import java.util.Optional;
-import java.util.concurrent.Future;
 import java.util.function.Supplier;
 
 import static java.lang.String.format;
@@ -40,16 +37,7 @@ import static uk.gov.pay.connector.service.CardExecutorService.ExecutionStatus.I
 
 @RunWith(MockitoJUnitRunner.class)
 public class Card3dsResponseAuthServiceTest extends CardServiceTest {
-
-    public static final String PA_REQ_VALUE_FROM_PROVIDER = "pa-req-value-from-provider";
-    public static final String ISSUER_URL_FROM_PROVIDER = "issuer-url-from-provider";
     private static final String GENERATED_TRANSACTION_ID = "generated-transaction-id";
-
-
-    private final Auth3dsDetailsFactory auth3dsDetailsFactory = new Auth3dsDetailsFactory();
-
-    @Mock
-    private Future<Either<Error, GatewayResponse>> mockFutureResponse;
 
     private ChargeEntity charge = createNewChargeWith("worldpay", 1L, AUTHORISATION_3DS_REQUIRED, GENERATED_TRANSACTION_ID);
     private ChargeEntity reloadedCharge = spy(charge);
