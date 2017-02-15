@@ -6,7 +6,6 @@ import com.codahale.metrics.MetricRegistry;
 import com.google.common.collect.ImmutableMap;
 import org.junit.Assume;
 import org.junit.Before;
-import org.junit.Ignore;
 import org.junit.Test;
 import uk.gov.pay.connector.app.GatewayCredentialsConfig;
 import uk.gov.pay.connector.model.CancelGatewayRequest;
@@ -30,8 +29,7 @@ import java.net.URL;
 import java.util.Map;
 
 import static java.util.UUID.randomUUID;
-import static org.hamcrest.CoreMatchers.not;
-import static org.hamcrest.CoreMatchers.nullValue;
+import static org.hamcrest.CoreMatchers.*;
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.core.Is.is;
 import static org.junit.Assert.assertFalse;
@@ -41,7 +39,6 @@ import static uk.gov.pay.connector.model.domain.ChargeEntityFixture.aValidCharge
 import static uk.gov.pay.connector.model.domain.GatewayAccountEntity.Type.TEST;
 import static uk.gov.pay.connector.service.GatewayClient.createGatewayClient;
 import static uk.gov.pay.connector.util.AuthUtils.aValidAuthorisationDetails;
-
 import static uk.gov.pay.connector.util.SystemUtils.envOrThrow;
 
 public class WorldpayPaymentProviderTest {
@@ -108,7 +105,13 @@ public class WorldpayPaymentProviderTest {
     @Test
     public void shouldBeAbleToSendAuthorisationRequestForMerchantUsing3ds() throws Exception {
         WorldpayPaymentProvider connector = getValidWorldpayPaymentProvider();
-        successfulWorldpayCardAuthFor3ds(connector);
+        GatewayResponse<WorldpayOrderStatusResponse> response = successfulWorldpayCardAuthFor3ds(connector);
+
+        assertTrue(response.getBaseResponse().isPresent());
+        response.getBaseResponse().ifPresent(res -> {
+            assertThat(res.get3dsPaRequest(), is(notNullValue()));
+            assertThat(res.get3dsIssuerUrl(), is(notNullValue()));
+        });
     }
 
     /**
@@ -206,6 +209,7 @@ public class WorldpayPaymentProviderTest {
                 .withTransactionId(randomUUID().toString())
                 .withGatewayAccountEntity(validGatewayAccountFor3ds)
                 .build();
+        charge.getGatewayAccount().setRequires3ds(true);
         return new AuthorisationGatewayRequest(charge, authCardDetails);
     }
 
