@@ -123,6 +123,21 @@ public class Card3dsResponseAuthServiceTest extends CardServiceTest {
     }
 
     @Test
+    public void shouldRespondAuthorisationCancelled() throws Exception {
+        ChargeEntity charge = createNewChargeWith("worldpay", 1L, AUTHORISATION_3DS_REQUIRED, GENERATED_TRANSACTION_ID);
+        ChargeEntity reloadedCharge = spy(charge);
+        ArgumentCaptor<Auth3dsResponseGatewayRequest> argumentCaptor = ArgumentCaptor.forClass(Auth3dsResponseGatewayRequest.class);
+
+        GatewayResponse response = anAuthorisationCancelledResponse(charge, reloadedCharge, charge.getGatewayTransactionId(), argumentCaptor);
+
+        assertThat(response.isSuccessful(), is(true));
+        assertThat(reloadedCharge.getStatus(), is(AUTHORISATION_CANCELLED.toString()));
+        assertThat(reloadedCharge.getGatewayTransactionId(), is(GENERATED_TRANSACTION_ID));
+        assertTrue(argumentCaptor.getValue().getTransactionId().isPresent());
+        assertThat(argumentCaptor.getValue().getTransactionId().get(), is(GENERATED_TRANSACTION_ID));
+    }
+
+    @Test
     public void shouldRespondAuthorisationError() throws Exception {
         ArgumentCaptor<Auth3dsResponseGatewayRequest> argumentCaptor = ArgumentCaptor.forClass(Auth3dsResponseGatewayRequest.class);
         GatewayResponse response = anAuthorisationErrorResponse(charge, reloadedCharge, argumentCaptor);
@@ -210,12 +225,24 @@ public class Card3dsResponseAuthServiceTest extends CardServiceTest {
     private GatewayResponse anAuthorisationRejectedResponse(ChargeEntity charge, ChargeEntity reloadedCharge,
                                                             String transactionId,
                                                             ArgumentCaptor<Auth3dsResponseGatewayRequest> argumentCaptor) {
+        return anAuthorisedFailedResponse(charge, reloadedCharge, transactionId, AuthoriseStatus.REJECTED, argumentCaptor);
+    }
+
+    private GatewayResponse anAuthorisationCancelledResponse(ChargeEntity charge, ChargeEntity reloadedCharge,
+                                                            String transactionId,
+                                                            ArgumentCaptor<Auth3dsResponseGatewayRequest> argumentCaptor) {
+        return anAuthorisedFailedResponse(charge, reloadedCharge, transactionId, AuthoriseStatus.CANCELLED, argumentCaptor);
+    }
+
+    private GatewayResponse anAuthorisedFailedResponse(ChargeEntity charge, ChargeEntity reloadedCharge,
+                                                       String transactionId, AuthoriseStatus authoriseStatus,
+                                                       ArgumentCaptor<Auth3dsResponseGatewayRequest> argumentCaptor) {
         when(mockedChargeDao.findByExternalId(charge.getExternalId())).thenReturn(Optional.of(charge));
         when(mockedChargeDao.merge(charge)).thenReturn(reloadedCharge);
         when(mockedChargeDao.merge(reloadedCharge)).thenReturn(reloadedCharge);
 
         setupMockExecutorServiceMock();
-        setupPaymentProviderMock(transactionId, AuthoriseStatus.REJECTED, null, argumentCaptor);
+        setupPaymentProviderMock(transactionId, authoriseStatus, null, argumentCaptor);
 
         when(mockedProviders.byName(charge.getPaymentGatewayName())).thenReturn(mockedPaymentProvider);
         when(mockedPaymentProvider.generateTransactionId()).thenReturn(Optional.empty());

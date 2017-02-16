@@ -177,6 +177,18 @@ public class CardAuthoriseServiceTest extends CardServiceTest {
     }
 
     @Test
+    public void shouldRespondAuthorisationCancelled() throws Exception {
+        String transactionId = "transaction-id";
+        ChargeEntity charge = createNewChargeWith(1L, ENTERING_CARD_DETAILS);
+        ChargeEntity reloadedCharge = spy(charge);
+        GatewayResponse response = anAuthorisationCancelledResponse(charge, reloadedCharge);
+
+        assertThat(response.isSuccessful(), is(true));
+        assertThat(reloadedCharge.getStatus(), is(AUTHORISATION_CANCELLED.toString()));
+        assertThat(reloadedCharge.getGatewayTransactionId(), is(transactionId));
+    }
+
+    @Test
     public void shouldRespondAuthorisationError() throws Exception {
         GatewayResponse response = anAuthorisationErrorResponse(charge, reloadedCharge);
 
@@ -268,6 +280,14 @@ public class CardAuthoriseServiceTest extends CardServiceTest {
     }
 
     private GatewayResponse anAuthorisationRejectedResponse(ChargeEntity charge, ChargeEntity reloadedCharge) {
+        return authorisationResponse(charge, reloadedCharge, AuthoriseStatus.REJECTED);
+    }
+
+    private GatewayResponse anAuthorisationCancelledResponse(ChargeEntity charge, ChargeEntity reloadedCharge) {
+        return authorisationResponse(charge, reloadedCharge, AuthoriseStatus.CANCELLED);
+    }
+
+    private GatewayResponse authorisationResponse(ChargeEntity charge, ChargeEntity reloadedCharge, AuthoriseStatus authoriseStatus) {
         String transactionId = "transaction-id";
 
         when(mockedChargeDao.findByExternalId(charge.getExternalId())).thenReturn(Optional.of(charge));
@@ -275,7 +295,7 @@ public class CardAuthoriseServiceTest extends CardServiceTest {
         when(mockedChargeDao.merge(reloadedCharge)).thenReturn(reloadedCharge);
 
         setupMockExecutorServiceMock();
-        setupPaymentProviderMock(transactionId, AuthoriseStatus.REJECTED, null);
+        setupPaymentProviderMock(transactionId, authoriseStatus, null);
 
         when(mockedProviders.byName(charge.getPaymentGatewayName())).thenReturn(mockedPaymentProvider);
         when(mockedPaymentProvider.generateTransactionId()).thenReturn(Optional.empty());
