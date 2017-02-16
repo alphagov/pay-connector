@@ -51,38 +51,41 @@ import static uk.gov.pay.connector.util.SystemUtils.envOrThrow;
 public class SmartpayPaymentProviderTest {
 
     private String url = "https://pal-test.barclaycardsmartpay.com/pal/servlet/soap/Payment";
-    private String username = envOrThrow("GDS_CONNECTOR_SMARTPAY_USER");
-    private String password = envOrThrow("GDS_CONNECTOR_SMARTPAY_PASSWORD");
+    private String username;
+    private String password;
     private ChargeEntity chargeEntity;
     private MetricRegistry mockMetricRegistry;
     private Histogram mockHistogram;
     private Counter mockCounter;
 
     @Before
-    public void setUpAndCheckThatSmartpayIsUp() {
+    public void setUpAndCheckThatSmartpayIsUp() throws IOException {
         try {
-            new URL(url).openConnection().connect();
-            Map<String, String> validSmartPayCredentials = ImmutableMap.of(
-                    "merchant_id", "DCOTest",
-                    "username", username,
-                    "password", password);
-            GatewayAccountEntity validGatewayAccount = new GatewayAccountEntity();
-            validGatewayAccount.setId(123L);
-            validGatewayAccount.setGatewayName("smartpay");
-            validGatewayAccount.setCredentials(validSmartPayCredentials);
-            validGatewayAccount.setType(TEST);
-
-            chargeEntity = aValidChargeEntity()
-                    .withGatewayAccountEntity(validGatewayAccount).build();
-
-            mockMetricRegistry = mock(MetricRegistry.class);
-            mockHistogram = mock(Histogram.class);
-            mockCounter = mock(Counter.class);
-            when(mockMetricRegistry.histogram(anyString())).thenReturn(mockHistogram);
-            when(mockMetricRegistry.counter(anyString())).thenReturn(mockCounter);
-        } catch (IOException ex) {
-            Assume.assumeTrue(false);
+            username = envOrThrow("GDS_CONNECTOR_SMARTPAY_USER");
+            password = envOrThrow("GDS_CONNECTOR_SMARTPAY_PASSWORD");
+        } catch (IllegalStateException ex) {
+            Assume.assumeTrue("Ignoring test since credentials not configured", false);
         }
+
+        new URL(url).openConnection().connect();
+        Map<String, String> validSmartPayCredentials = ImmutableMap.of(
+                "merchant_id", "DCOTest",
+                "username", username,
+                "password", password);
+        GatewayAccountEntity validGatewayAccount = new GatewayAccountEntity();
+        validGatewayAccount.setId(123L);
+        validGatewayAccount.setGatewayName("smartpay");
+        validGatewayAccount.setCredentials(validSmartPayCredentials);
+        validGatewayAccount.setType(TEST);
+
+        chargeEntity = aValidChargeEntity()
+                .withGatewayAccountEntity(validGatewayAccount).build();
+
+        mockMetricRegistry = mock(MetricRegistry.class);
+        mockHistogram = mock(Histogram.class);
+        mockCounter = mock(Counter.class);
+        when(mockMetricRegistry.histogram(anyString())).thenReturn(mockHistogram);
+        when(mockMetricRegistry.counter(anyString())).thenReturn(mockCounter);
     }
 
     @Test

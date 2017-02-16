@@ -55,10 +55,8 @@ public class WorldpayPaymentProviderTest {
     private Counter mockCounter;
 
     @Before
-    public void checkThatWorldpayIsUp() {
+    public void checkThatWorldpayIsUp() throws IOException {
         try {
-            new URL(getWorldpayConfig().getUrls().get(TEST.toString())).openConnection().connect();
-
             validCredentials = ImmutableMap.of(
                     "merchant_id", "MERCHANTCODE",
                     "username", envOrThrow("GDS_CONNECTOR_WORLDPAY_USER"),
@@ -68,32 +66,34 @@ public class WorldpayPaymentProviderTest {
                     "merchant_id", "MERCHANTCODETEST3DS",
                     "username", envOrThrow("GDS_CONNECTOR_WORLDPAY_USER_3DS"),
                     "password", envOrThrow("GDS_CONNECTOR_WORLDPAY_PASSWORD_3DS"));
-
-            validGatewayAccount = new GatewayAccountEntity();
-            validGatewayAccount.setId(1234L);
-            validGatewayAccount.setGatewayName("worldpay");
-            validGatewayAccount.setCredentials(validCredentials);
-            validGatewayAccount.setType(TEST);
-
-            validGatewayAccountFor3ds = new GatewayAccountEntity();
-            validGatewayAccountFor3ds.setId(1234L);
-            validGatewayAccountFor3ds.setGatewayName("worldpay");
-            validGatewayAccountFor3ds.setCredentials(validCredentials3ds);
-            validGatewayAccountFor3ds.setType(TEST);
-
-            mockMetricRegistry = mock(MetricRegistry.class);
-            mockHistogram = mock(Histogram.class);
-            mockCounter = mock(Counter.class);
-            when(mockMetricRegistry.histogram(anyString())).thenReturn(mockHistogram);
-            when(mockMetricRegistry.counter(anyString())).thenReturn(mockCounter);
-
-            chargeEntity = aValidChargeEntity()
-                    .withTransactionId(randomUUID().toString())
-                    .withGatewayAccountEntity(validGatewayAccount)
-                    .build();
-        } catch (IOException ex) {
-            Assume.assumeTrue(false);
+        } catch (IllegalStateException ex) {
+            Assume.assumeTrue("Ignoring test since credentials not configured", false);
         }
+
+        new URL(getWorldpayConfig().getUrls().get(TEST.toString())).openConnection().connect();
+
+        validGatewayAccount = new GatewayAccountEntity();
+        validGatewayAccount.setId(1234L);
+        validGatewayAccount.setGatewayName("worldpay");
+        validGatewayAccount.setCredentials(validCredentials);
+        validGatewayAccount.setType(TEST);
+
+        validGatewayAccountFor3ds = new GatewayAccountEntity();
+        validGatewayAccountFor3ds.setId(1234L);
+        validGatewayAccountFor3ds.setGatewayName("worldpay");
+        validGatewayAccountFor3ds.setCredentials(validCredentials3ds);
+        validGatewayAccountFor3ds.setType(TEST);
+
+        mockMetricRegistry = mock(MetricRegistry.class);
+        mockHistogram = mock(Histogram.class);
+        mockCounter = mock(Counter.class);
+        when(mockMetricRegistry.histogram(anyString())).thenReturn(mockHistogram);
+        when(mockMetricRegistry.counter(anyString())).thenReturn(mockCounter);
+
+        chargeEntity = aValidChargeEntity()
+                .withTransactionId(randomUUID().toString())
+                .withGatewayAccountEntity(validGatewayAccount)
+                .build();
     }
 
     @Test
