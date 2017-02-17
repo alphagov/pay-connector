@@ -724,6 +724,28 @@ public class ChargesApiResourceITest extends ChargingITestBase {
 
     }
 
+    @Test
+    public void shouldGetSuccessResponseForExpiryChargeTaskFor3dsRequiredPayments() {
+        String extChargeId = addChargeAndCardDetails(ChargeStatus.AUTHORISATION_3DS_REQUIRED, "ref", ZonedDateTime.now().minusHours(1));
+
+        getChargeApi
+                .postChargeExpiryTask()
+                .statusCode(OK.getStatusCode())
+                .contentType(JSON)
+                .body("expiry-success", is(1))
+                .body("expiry-failed", is(0));
+
+        getChargeApi
+                .withAccountId(accountId)
+                .withChargeId(extChargeId)
+                .getCharge()
+                .statusCode(OK.getStatusCode())
+                .contentType(JSON)
+                .body(JSON_CHARGE_KEY, is(extChargeId))
+                .body(JSON_STATE_KEY, is(EXPIRED.toExternal().getStatus()));
+
+    }
+
     private void assert404WhenRequestingInvalidPage() {
         // when 5 charges are there, page is 10, display-size is 2
         ValidatableResponse response = getChargeApi

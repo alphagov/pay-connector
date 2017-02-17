@@ -1,6 +1,7 @@
 package uk.gov.pay.connector.service;
 
 import com.google.common.collect.ImmutableMap;
+import com.google.common.collect.Lists;
 import com.google.inject.Provider;
 import org.apache.commons.lang3.tuple.Pair;
 import org.slf4j.Logger;
@@ -14,14 +15,16 @@ import uk.gov.pay.connector.service.transaction.TransactionFlow;
 import uk.gov.pay.connector.service.transaction.TransactionalOperation;
 
 import javax.inject.Inject;
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 import java.util.stream.Collectors;
 
 import static com.google.common.collect.Lists.newArrayList;
-import static uk.gov.pay.connector.model.domain.ChargeStatus.EXPIRED;
-import static uk.gov.pay.connector.model.domain.ChargeStatus.EXPIRE_CANCEL_FAILED;
+import static uk.gov.pay.connector.model.domain.ChargeStatus.*;
+import static uk.gov.pay.connector.model.domain.ChargeStatus.AUTHORISATION_3DS_REQUIRED;
+import static uk.gov.pay.connector.model.domain.ChargeStatus.AUTHORISATION_SUCCESS;
 import static uk.gov.pay.connector.service.CancelServiceFunctions.*;
 import static uk.gov.pay.connector.service.StatusFlow.EXPIRE_FLOW;
 
@@ -31,6 +34,12 @@ public class ChargeExpiryService {
 
     public static final String EXPIRY_SUCCESS = "expiry-success";
     public static final String EXPIRY_FAILED = "expiry-failed";
+
+    public static final ArrayList<ChargeStatus> EXPIRABLE_STATUSES = Lists.newArrayList(
+            CREATED,
+            ENTERING_CARD_DETAILS,
+            AUTHORISATION_3DS_REQUIRED,
+            AUTHORISATION_SUCCESS);
 
     private final ChargeDao chargeDao;
     private final PaymentProviders providers;

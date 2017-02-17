@@ -36,6 +36,7 @@ import static org.apache.commons.lang3.StringUtils.isNotBlank;
 import static uk.gov.pay.connector.model.domain.ChargeStatus.*;
 import static uk.gov.pay.connector.resources.ApiPaths.*;
 import static uk.gov.pay.connector.resources.ApiValidators.validateGatewayAccountReference;
+import static uk.gov.pay.connector.service.ChargeExpiryService.EXPIRABLE_STATUSES;
 import static uk.gov.pay.connector.util.ResponseUtil.*;
 
 @Path("/")
@@ -71,10 +72,6 @@ public class ChargesApiResource {
 
     private static final int ONE_HOUR = 3600;
     private static final String CHARGE_EXPIRY_WINDOW = "CHARGE_EXPIRY_WINDOW_SECONDS";
-    private static final ArrayList<ChargeStatus> NON_TERMINAL_STATUSES = Lists.newArrayList(
-            CREATED,
-            ENTERING_CARD_DETAILS,
-            AUTHORISATION_SUCCESS);
 
     private static final Logger logger = LoggerFactory.getLogger(ChargesApiResource.class);
 
@@ -164,7 +161,7 @@ public class ChargesApiResource {
     @Path(CHARGES_EXPIRE_CHARGES_TASK_API_PATH)
     @Produces(APPLICATION_JSON)
     public Response expireCharges(@Context UriInfo uriInfo) {
-        List<ChargeEntity> charges = chargeDao.findBeforeDateWithStatusIn(getExpiryDate(), NON_TERMINAL_STATUSES);
+        List<ChargeEntity> charges = chargeDao.findBeforeDateWithStatusIn(getExpiryDate(), EXPIRABLE_STATUSES);
         logger.info(format("Charges found for expiry - number_of_charges=%s, since_date=%s", charges.size(), getExpiryDate()));
         Map<String, Integer> resultMap = chargeExpiryService.expire(charges);
         return successResponseWithEntity(resultMap);
