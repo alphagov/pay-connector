@@ -1,5 +1,6 @@
 package uk.gov.pay.connector.service.worldpay;
 
+import org.apache.log4j.Logger;
 import org.joda.time.DateTime;
 import uk.gov.pay.connector.model.OrderRequestType;
 import uk.gov.pay.connector.service.OrderRequestBuilder;
@@ -7,6 +8,8 @@ import uk.gov.pay.connector.util.templates.PayloadBuilder;
 import uk.gov.pay.connector.util.templates.TemplateBuilder;
 
 public class WorldpayOrderRequestBuilder extends OrderRequestBuilder {
+    Logger logger = Logger.getLogger(WorldpayOrderRequestBuilder.class);
+
     static public class WorldpayTemplateData extends TemplateData {
         private String reference;
         private String amount;
@@ -148,6 +151,7 @@ public class WorldpayOrderRequestBuilder extends OrderRequestBuilder {
     }
 
     public WorldpayOrderRequestBuilder with3dsRequired(boolean requires3ds) {
+        logger.info("3DS requirement is: "+ requires3ds +" for "+ worldpayTemplateData.sessionId);
         worldpayTemplateData.setRequires3ds(requires3ds);
         return this;
     }
