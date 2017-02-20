@@ -31,7 +31,6 @@ import java.util.stream.Collectors;
 import static com.google.common.collect.Maps.newHashMap;
 import static java.lang.String.format;
 import static javax.ws.rs.core.MediaType.APPLICATION_JSON;
-import static javax.ws.rs.core.Response.ok;
 import static uk.gov.pay.connector.model.domain.GatewayAccountEntity.Type;
 import static uk.gov.pay.connector.model.domain.GatewayAccountEntity.Type.TEST;
 import static uk.gov.pay.connector.resources.ApiPaths.*;
@@ -46,6 +45,7 @@ public class GatewayAccountResource {
     private static final String ANALYTICS_ID_FIELD_NAME = "analytics_id";
     private static final String CREDENTIALS_FIELD_NAME = "credentials";
     private static final String SERVICE_NAME_FIELD_NAME = "service_name";
+    private static final String REQUIRES_3DS_FIELD_NAME = "toggle_3ds";
     private static final String CARD_TYPES_FIELD_NAME = "card_types";
     private static final int SERVICE_NAME_FIELD_LENGTH = 50;
     private static final String PROVIDER_ACCOUNT_TYPE = "type";
@@ -225,6 +225,27 @@ public class GatewayAccountResource {
                 .map(gatewayAccount ->
                         {
                             gatewayAccount.setServiceName(serviceName);
+                            return Response.ok().build();
+                        }
+                )
+                .orElseGet(() ->
+                        notFoundResponse(format("The gateway account id '%s' does not exist", gatewayAccountId)));
+    }
+
+    @PATCH
+    @Path(FRONTEND_ACCOUNT_TOGGLE_3DS_API_PATH)
+    @Consumes(APPLICATION_JSON)
+    @Produces(APPLICATION_JSON)
+    @Transactional
+    public Response updateGatewayAccount3dsToggle(@PathParam("accountId") Long gatewayAccountId, Map<String, String> gatewayAccountPayload) {
+        if (!gatewayAccountPayload.containsKey(REQUIRES_3DS_FIELD_NAME)) {
+            return fieldsMissingResponse(Arrays.asList(REQUIRES_3DS_FIELD_NAME));
+        }
+
+        return gatewayDao.findById(gatewayAccountId)
+                .map(gatewayAccount ->
+                        {
+                            gatewayAccount.setRequires3ds(Boolean.parseBoolean(gatewayAccountPayload.get(REQUIRES_3DS_FIELD_NAME)));
                             return Response.ok().build();
                         }
                 )
