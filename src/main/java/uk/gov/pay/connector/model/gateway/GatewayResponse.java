@@ -21,8 +21,11 @@ public class GatewayResponse<T extends BaseResponse> {
 
     protected Either<GatewayError, T> response;
 
-    private GatewayResponse(T baseResponse) {
+    private String responseIdentifier;
+
+    private GatewayResponse(T baseResponse, String responseIdentifier) {
         this.response = right(baseResponse);
+        this.responseIdentifier = responseIdentifier;
     }
 
     private GatewayResponse(GatewayError error) {
@@ -35,6 +38,10 @@ public class GatewayResponse<T extends BaseResponse> {
 
     public boolean isFailed() {
         return response.isLeft();
+    }
+
+    public Optional<String> getResponseIdentifier() {
+        return Optional.ofNullable(responseIdentifier);
     }
 
     static public <T extends BaseResponse> Optional<String> getErrorCode(T baseResponse) {
@@ -66,23 +73,55 @@ public class GatewayResponse<T extends BaseResponse> {
         );
     }
 
-    static public <T extends BaseResponse> GatewayResponse<T> with(T baseResponse) {
-        Optional<String> errorCode = getErrorCode(baseResponse);
-        Optional<String> errorMessage = getErrorMessage(baseResponse);
-
-        if (errorCode.isPresent() || errorMessage.isPresent()) {
-            StringBuilder sb = new StringBuilder();
-            sb.append(errorCode.map(e -> format("[%s] ", e)).orElse(""));
-            sb.append(errorMessage.orElse(""));
-            return GatewayResponse.with(baseError(trim(sb.toString())));
-        }
-
-        return new GatewayResponse<>(baseResponse);
-    }
-
     static public <T extends BaseResponse> GatewayResponse<T> with(GatewayError gatewayError) {
         logger.error(format("Error received from gateway: %s", gatewayError));
         return new GatewayResponse<>(gatewayError);
+    }
+
+    public static class GatewayResponseBuilder<T extends BaseResponse> {
+        private T response;
+        private String responseIdentifier;
+        private GatewayError gatewayError;
+
+        private GatewayResponseBuilder() {
+        }
+
+        public static <T extends BaseResponse> GatewayResponseBuilder<T> responseBuilder() {
+            return new GatewayResponseBuilder<T>();
+        }
+
+        public GatewayResponseBuilder<T> withResponse(T response) {
+            this.response = response;
+            return this;
+        }
+
+        public GatewayResponseBuilder<T> withResponseIdentifier(String responseIdentifier) {
+            this.responseIdentifier = responseIdentifier;
+            return this;
+        }
+
+        public GatewayResponseBuilder<T> withGatewayError(GatewayError gatewayError) {
+            this.gatewayError = gatewayError;
+            return this;
+        }
+
+        public GatewayResponse<T> build() {
+            if(gatewayError != null) {
+                return new GatewayResponse<>(gatewayError);
+            }
+
+            Optional<String> errorCode = getErrorCode(response);
+            Optional<String> errorMessage = getErrorMessage(response);
+
+            if (errorCode.isPresent() || errorMessage.isPresent()) {
+                StringBuilder sb = new StringBuilder();
+                sb.append(errorCode.map(e -> format("[%s] ", e)).orElse(""));
+                sb.append(errorMessage.orElse(""));
+                return new GatewayResponse<>(baseError(trim(sb.toString())));
+            }
+
+            return new GatewayResponse<>(response, responseIdentifier);
+        }
     }
 }
 

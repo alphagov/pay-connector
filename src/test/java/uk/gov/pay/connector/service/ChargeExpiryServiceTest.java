@@ -14,6 +14,7 @@ import uk.gov.pay.connector.model.domain.ChargeEntityFixture;
 import uk.gov.pay.connector.model.domain.ChargeStatus;
 import uk.gov.pay.connector.model.domain.GatewayAccountEntity;
 import uk.gov.pay.connector.model.gateway.GatewayResponse;
+import uk.gov.pay.connector.model.gateway.GatewayResponse.GatewayResponseBuilder;
 import uk.gov.pay.connector.resources.PaymentGatewayName;
 import uk.gov.pay.connector.service.transaction.TransactionFlow;
 import uk.gov.pay.connector.service.worldpay.WorldpayBaseResponse;
@@ -25,6 +26,7 @@ import static org.hamcrest.core.Is.is;
 import static org.junit.Assert.assertThat;
 import static org.mockito.Matchers.any;
 import static org.mockito.Mockito.*;
+import static uk.gov.pay.connector.model.gateway.GatewayResponse.GatewayResponseBuilder.responseBuilder;
 import static uk.gov.pay.connector.service.ChargeExpiryService.EXPIRABLE_STATUSES;
 
 @RunWith(MockitoJUnitRunner.class)
@@ -61,7 +63,8 @@ public class ChargeExpiryServiceTest {
                 .withGatewayAccountEntity(gatewayAccount)
                 .build();
 
-        GatewayResponse<WorldpayBaseResponse> gatewayResponse = GatewayResponse.with(mockWorldpayBaseResponse);
+        GatewayResponseBuilder<WorldpayBaseResponse> gatewayResponseBuilder = responseBuilder();
+        GatewayResponse<WorldpayBaseResponse> gatewayResponse = gatewayResponseBuilder.withResponse(mockWorldpayBaseResponse).build();
 
         when(mockChargeDao.merge(chargeEntity)).thenReturn(chargeEntity);
         when(mockPaymentProviders.byName(PaymentGatewayName.WORLDPAY)).thenReturn(mockPaymentProvider);
@@ -83,7 +86,8 @@ public class ChargeExpiryServiceTest {
         GatewayAccountEntity gatewayAccount = ChargeEntityFixture.defaultGatewayAccountEntity();
         gatewayAccount.setGatewayName("worldpay");
 
-        GatewayResponse<WorldpayBaseResponse> gatewayResponse = GatewayResponse.with(mockWorldpayBaseResponse);
+        GatewayResponseBuilder<WorldpayBaseResponse> gatewayResponseBuilder = responseBuilder();
+        GatewayResponse<WorldpayBaseResponse> gatewayResponse = gatewayResponseBuilder.withResponse(mockWorldpayBaseResponse).build();
         when(mockPaymentProviders.byName(PaymentGatewayName.WORLDPAY)).thenReturn(mockPaymentProvider);
         when(mockPaymentProvider.cancel(any())).thenReturn(gatewayResponse);
 
@@ -121,7 +125,10 @@ public class ChargeExpiryServiceTest {
                 .build();
 
         GatewayError mockGatewayError = mock(GatewayError.class);
-        GatewayResponse<WorldpayBaseResponse> gatewayResponse = GatewayResponse.with(mockGatewayError);
+        GatewayResponseBuilder<WorldpayBaseResponse> gatewayResponseBuilder = responseBuilder();
+        GatewayResponse<WorldpayBaseResponse> gatewayResponse = gatewayResponseBuilder
+                .withGatewayError(mockGatewayError)
+                .build();
 
         when(mockChargeDao.merge(chargeEntity)).thenReturn(chargeEntity);
         when(mockPaymentProviders.byName(PaymentGatewayName.WORLDPAY)).thenReturn(mockPaymentProvider);

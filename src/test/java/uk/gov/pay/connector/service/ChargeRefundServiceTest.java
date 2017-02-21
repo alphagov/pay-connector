@@ -22,6 +22,7 @@ import uk.gov.pay.connector.model.domain.GatewayAccountEntity;
 import uk.gov.pay.connector.model.domain.RefundEntity;
 import uk.gov.pay.connector.model.domain.RefundStatus;
 import uk.gov.pay.connector.model.gateway.GatewayResponse;
+import uk.gov.pay.connector.model.gateway.GatewayResponse.GatewayResponseBuilder;
 import uk.gov.pay.connector.service.smartpay.SmartpayRefundResponse;
 import uk.gov.pay.connector.service.transaction.TransactionFlow;
 import uk.gov.pay.connector.service.worldpay.WorldpayRefundResponse;
@@ -39,6 +40,7 @@ import static uk.gov.pay.connector.model.domain.ChargeStatus.AUTHORISATION_SUCCE
 import static uk.gov.pay.connector.model.domain.ChargeStatus.CAPTURED;
 import static uk.gov.pay.connector.model.domain.GatewayAccountEntity.Type.TEST;
 import static uk.gov.pay.connector.model.domain.RefundEntityFixture.aValidRefundEntity;
+import static uk.gov.pay.connector.model.gateway.GatewayResponse.GatewayResponseBuilder.responseBuilder;
 import static uk.gov.pay.connector.resources.PaymentGatewayName.*;
 
 @RunWith(MockitoJUnitRunner.class)
@@ -69,7 +71,10 @@ public class ChargeRefundServiceTest {
         WorldpayRefundResponse worldpayResponse = mock(WorldpayRefundResponse.class);
         when(worldpayResponse.getReference()).thenReturn(Optional.ofNullable(reference));
         when(worldpayResponse.getErrorCode()).thenReturn(errorCode);
-        GatewayResponse refundResponse = GatewayResponse.with(worldpayResponse);
+        GatewayResponseBuilder<WorldpayRefundResponse> gatewayResponseBuilder = responseBuilder();
+        GatewayResponse refundResponse = gatewayResponseBuilder
+                .withResponse(worldpayResponse)
+                .build();
         when(mockProvider.refund(any())).thenReturn(refundResponse);
     }
 
@@ -77,7 +82,10 @@ public class ChargeRefundServiceTest {
         SmartpayRefundResponse smartpayRefundResponse = mock(SmartpayRefundResponse.class);
         when(smartpayRefundResponse.getReference()).thenReturn(Optional.ofNullable(reference));
         when(smartpayRefundResponse.getErrorCode()).thenReturn(errorCode);
-        GatewayResponse refundResponse = GatewayResponse.with(smartpayRefundResponse);
+        GatewayResponseBuilder<SmartpayRefundResponse> gatewayResponseBuilder = responseBuilder();
+        GatewayResponse refundResponse = gatewayResponseBuilder
+                .withResponse(smartpayRefundResponse)
+                .build();
         when(mockProvider.refund(any())).thenReturn(refundResponse);
     }
 

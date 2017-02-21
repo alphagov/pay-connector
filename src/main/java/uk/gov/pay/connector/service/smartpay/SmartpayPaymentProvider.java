@@ -41,7 +41,7 @@ public class SmartpayPaymentProvider extends BasePaymentProvider<BaseResponse> {
 
     @Override
     public GatewayResponse authorise(AuthorisationGatewayRequest request) {
-        return sendReceive(request, buildAuthoriseOrderFor(), SmartpayAuthorisationResponse.class);
+        return sendReceive(request, buildAuthoriseOrderFor(), SmartpayAuthorisationResponse.class, extractResponseIdentifier());
     }
 
     @Override
@@ -51,17 +51,17 @@ public class SmartpayPaymentProvider extends BasePaymentProvider<BaseResponse> {
 
     @Override
     public GatewayResponse capture(CaptureGatewayRequest request) {
-        return sendReceive(request, buildCaptureOrderFor(), SmartpayCaptureResponse.class);
+        return sendReceive(request, buildCaptureOrderFor(), SmartpayCaptureResponse.class, extractResponseIdentifier());
     }
 
     @Override
     public GatewayResponse refund(RefundGatewayRequest request) {
-        return sendReceive(request, buildRefundOrderFor(), SmartpayRefundResponse.class);
+        return sendReceive(request, buildRefundOrderFor(), SmartpayRefundResponse.class, extractResponseIdentifier());
     }
 
     @Override
     public GatewayResponse cancel(CancelGatewayRequest request) {
-        return sendReceive(request, buildCancelOrderFor(), SmartpayCancelResponse.class);
+        return sendReceive(request, buildCancelOrderFor(), SmartpayCancelResponse.class, extractResponseIdentifier());
 
     }
 
@@ -136,5 +136,12 @@ public class SmartpayPaymentProvider extends BasePaymentProvider<BaseResponse> {
 
     private String getMerchantCode(GatewayRequest request) {
         return request.getGatewayAccount().getCredentials().get(CREDENTIALS_MERCHANT_ID);
+    }
+
+    private Function<GatewayClient.Response, Optional<String>> extractResponseIdentifier() {
+        return response -> {
+            Optional<String> emptyResponseIdentifierForSmartpay = Optional.empty();
+            return emptyResponseIdentifierForSmartpay;
+        };
     }
 }

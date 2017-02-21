@@ -26,6 +26,8 @@ import static uk.gov.pay.connector.util.XMLUnmarshaller.unmarshall;
 
 public class WorldpayPaymentProvider extends BasePaymentProvider<BaseResponse> {
 
+    private static final String WORLDPAY_MACHINE_COOKIE_NAME = "machine";
+
     public WorldpayPaymentProvider(GatewayClient client) {
         super(client, false, null);
     }
@@ -45,27 +47,27 @@ public class WorldpayPaymentProvider extends BasePaymentProvider<BaseResponse> {
 
     @Override
     public GatewayResponse authorise(AuthorisationGatewayRequest request) {
-        return sendReceive(request, buildAuthoriseOrderFor(), WorldpayOrderStatusResponse.class);
+        return sendReceive(request, buildAuthoriseOrderFor(), WorldpayOrderStatusResponse.class, extractResponseIdentifier());
     }
 
     @Override
     public GatewayResponse<BaseResponse> authorise3dsResponse(Auth3dsResponseGatewayRequest request) {
-        return sendReceive(request, build3dsResponseAuthOrderFor(), WorldpayOrderStatusResponse.class);
+        return sendReceive(request, build3dsResponseAuthOrderFor(), WorldpayOrderStatusResponse.class, extractResponseIdentifier());
     }
 
     @Override
     public GatewayResponse capture(CaptureGatewayRequest request) {
-        return sendReceive(request, buildCaptureOrderFor(), WorldpayCaptureResponse.class);
+        return sendReceive(request, buildCaptureOrderFor(), WorldpayCaptureResponse.class, extractResponseIdentifier());
     }
 
     @Override
     public GatewayResponse refund(RefundGatewayRequest request) {
-        return sendReceive(request, buildRefundOrderFor(), WorldpayRefundResponse.class);
+        return sendReceive(request, buildRefundOrderFor(), WorldpayRefundResponse.class, extractResponseIdentifier());
     }
 
     @Override
     public GatewayResponse cancel(CancelGatewayRequest request) {
-        return sendReceive(request, buildCancelOrderFor(), WorldpayCancelResponse.class);
+        return sendReceive(request, buildCancelOrderFor(), WorldpayCancelResponse.class, extractResponseIdentifier());
 
     }
 
@@ -146,5 +148,14 @@ public class WorldpayPaymentProvider extends BasePaymentProvider<BaseResponse> {
                 .withTransactionId(request.getTransactionId())
                 .withMerchantCode(request.getGatewayAccount().getCredentials().get(CREDENTIALS_MERCHANT_ID))
                 .build();
+    }
+
+    private Function<GatewayClient.Response, Optional<String>> extractResponseIdentifier() {
+        return response -> {
+            if(response.getResponseCookies().containsKey(WORLDPAY_MACHINE_COOKIE_NAME)) {
+                return Optional.ofNullable(response.getResponseCookies().get(WORLDPAY_MACHINE_COOKIE_NAME));
+            }
+            return Optional.empty();
+        };
     }
 }

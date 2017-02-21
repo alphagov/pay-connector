@@ -17,6 +17,7 @@ import javax.ws.rs.core.MediaType;
 import java.net.SocketException;
 import java.net.SocketTimeoutException;
 import java.net.UnknownHostException;
+import java.util.HashMap;
 import java.util.Map;
 import java.util.concurrent.TimeUnit;
 
@@ -128,10 +129,14 @@ public class GatewayClient {
     static public class Response {
         private final int status;
         private final String entity;
+        private final Map<String, String> responseCookies = new HashMap<>();
 
         protected Response(final javax.ws.rs.core.Response delegate) {
             this.status = delegate.getStatus();
             this.entity = delegate.readEntity(String.class);
+            delegate.getCookies().entrySet().forEach(cookie -> {
+                responseCookies.put(cookie.getKey(), cookie.getValue().getValue());
+            });
         }
 
         public int getStatus() {
@@ -141,5 +146,10 @@ public class GatewayClient {
         public String getEntity() {
             return entity;
         }
+
+        public Map<String, String> getResponseCookies() {
+            return responseCookies;
+        }
+
     }
 }
