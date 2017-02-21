@@ -207,6 +207,7 @@ public class GatewayAccountEntity extends AbstractEntity {
         if (isNotBlank(getServiceName()))  {
             account.put("service_name", getServiceName());
         }
+        account.put("toggle_3ds", String.valueOf(isRequires3ds()));
         return account;
     }
 

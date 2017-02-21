@@ -351,6 +351,37 @@ public class GatewayAccountResourceITest extends GatewayAccountResourceTestBase 
                 .body("description", is("old-desc"))
                 .body("analytics_id", is("old-id"));
     }
+
+    @Test
+    public void shouldToggle3dsToTrue() {
+        String gatewayAccountId = createAGatewayAccountFor("worldpay", "old-desc", "old-id");
+        givenSetup()
+                .body(toJson(ImmutableMap.of("toggle_3ds", true)))
+                .patch("/v1/frontend/accounts/" + gatewayAccountId + "/3ds-toggle")
+                .then()
+                .statusCode(OK.getStatusCode());
+
+        givenSetup()
+                .get("/v1/api/accounts/" + gatewayAccountId)
+                .then()
+                .body("toggle_3ds", is("true"));
+    }
+
+    @Test
+    public void shouldToggle3dsToFalse() {
+        String gatewayAccountId = createAGatewayAccountFor("worldpay", "old-desc", "old-id");
+        givenSetup()
+                .body(toJson(ImmutableMap.of("toggle_3ds", false)))
+                .patch("/v1/frontend/accounts/" + gatewayAccountId + "/3ds-toggle")
+                .then()
+                .statusCode(OK.getStatusCode());
+
+        givenSetup()
+                .get("/v1/api/accounts/" + gatewayAccountId)
+                .then()
+                .body("toggle_3ds", is("false"));
+    }
+
     @Test
     public void whenNotificationCredentialsInvalidKeys_shouldReturn400() {
         String gatewayAccountId = createAGatewayAccountFor("smartpay");

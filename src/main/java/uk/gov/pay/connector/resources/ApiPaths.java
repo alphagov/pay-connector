@@ -21,6 +21,7 @@ public interface ApiPaths {
 
     String FRONTEND_ACCOUNT_CREDENTIALS_API_PATH = API_VERSION_PATH +"/frontend/accounts/{accountId}/credentials";
     String FRONTEND_ACCOUNT_SERVICENAME_API_PATH = API_VERSION_PATH +"/frontend/accounts/{accountId}/servicename";
+    String FRONTEND_ACCOUNT_TOGGLE_3DS_API_PATH = API_VERSION_PATH +"/frontend/accounts/{accountId}/3ds-toggle";
     String FRONTEND_ACCOUNT_CARDTYPES_API_PATH = API_VERSION_PATH + "/frontend/accounts/{accountId}/card-types";
 
     String CHARGES_API_PATH = API_VERSION_PATH +"/api/accounts/{accountId}/charges";
