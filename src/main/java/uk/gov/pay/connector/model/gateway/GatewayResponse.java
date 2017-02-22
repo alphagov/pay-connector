@@ -21,11 +21,11 @@ public class GatewayResponse<T extends BaseResponse> {
 
     protected Either<GatewayError, T> response;
 
-    private String responseIdentifier;
+    private String sessionIdentifier;
 
-    private GatewayResponse(T baseResponse, String responseIdentifier) {
+    private GatewayResponse(T baseResponse, String sessionIdentifier) {
         this.response = right(baseResponse);
-        this.responseIdentifier = responseIdentifier;
+        this.sessionIdentifier = sessionIdentifier;
     }
 
     private GatewayResponse(GatewayError error) {
@@ -40,8 +40,8 @@ public class GatewayResponse<T extends BaseResponse> {
         return response.isLeft();
     }
 
-    public Optional<String> getResponseIdentifier() {
-        return Optional.ofNullable(responseIdentifier);
+    public Optional<String> getSessionIdentifier() {
+        return Optional.ofNullable(sessionIdentifier);
     }
 
     static public <T extends BaseResponse> Optional<String> getErrorCode(T baseResponse) {
@@ -80,7 +80,7 @@ public class GatewayResponse<T extends BaseResponse> {
 
     public static class GatewayResponseBuilder<T extends BaseResponse> {
         private T response;
-        private String responseIdentifier;
+        private String sessionIdentifier;
         private GatewayError gatewayError;
 
         private GatewayResponseBuilder() {
@@ -95,8 +95,8 @@ public class GatewayResponse<T extends BaseResponse> {
             return this;
         }
 
-        public GatewayResponseBuilder<T> withResponseIdentifier(String responseIdentifier) {
-            this.responseIdentifier = responseIdentifier;
+        public GatewayResponseBuilder<T> withSessionIdentifier(String responseIdentifier) {
+            this.sessionIdentifier = responseIdentifier;
             return this;
         }
 
@@ -115,12 +115,12 @@ public class GatewayResponse<T extends BaseResponse> {
 
             if (errorCode.isPresent() || errorMessage.isPresent()) {
                 StringBuilder sb = new StringBuilder();
-                sb.append(errorCode.map(e -> format("[%s] ", e)).orElse(""));
-                sb.append(errorMessage.orElse(""));
+                errorCode.ifPresent(e -> sb.append(format("[%s] ", e)));
+                errorMessage.ifPresent(sb::append);
                 return new GatewayResponse<>(baseError(trim(sb.toString())));
             }
 
-            return new GatewayResponse<>(response, responseIdentifier);
+            return new GatewayResponse<>(response, sessionIdentifier);
         }
     }
 }

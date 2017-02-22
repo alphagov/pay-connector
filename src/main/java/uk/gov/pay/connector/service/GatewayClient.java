@@ -134,8 +134,8 @@ public class GatewayClient {
         protected Response(final javax.ws.rs.core.Response delegate) {
             this.status = delegate.getStatus();
             this.entity = delegate.readEntity(String.class);
-            delegate.getCookies().entrySet().forEach(cookie -> {
-                responseCookies.put(cookie.getKey(), cookie.getValue().getValue());
+            delegate.getCookies().forEach((name,cookie) -> {
+                responseCookies.put(name, cookie.getValue());
             });
         }
 

@@ -28,11 +28,13 @@ import javax.ws.rs.client.Entity;
 import javax.ws.rs.client.Invocation;
 import javax.ws.rs.client.WebTarget;
 import javax.ws.rs.core.MediaType;
+import javax.ws.rs.core.NewCookie;
 import javax.ws.rs.core.Response;
 import java.io.IOException;
 import java.net.URL;
 import java.nio.charset.Charset;
 import java.time.ZonedDateTime;
+import java.util.HashMap;
 import java.util.Map;
 
 import static com.google.common.io.Resources.getResource;
@@ -44,6 +46,7 @@ import static org.hamcrest.CoreMatchers.startsWith;
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.core.Is.is;
 import static org.hamcrest.core.IsSame.sameInstance;
+import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertTrue;
 import static org.mockito.Matchers.any;
@@ -61,6 +64,7 @@ import static uk.gov.pay.connector.model.domain.ChargeEntityFixture.aValidCharge
 import static uk.gov.pay.connector.model.domain.GatewayAccount.*;
 import static uk.gov.pay.connector.model.domain.GatewayAccountEntity.Type.TEST;
 import static uk.gov.pay.connector.service.GatewayClient.createGatewayClient;
+import static uk.gov.pay.connector.service.worldpay.WorldpayPaymentProvider.WORLDPAY_MACHINE_COOKIE_NAME;
 
 @RunWith(MockitoJUnitRunner.class)
 public class WorldpayPaymentProviderTest {
@@ -200,6 +204,7 @@ public class WorldpayPaymentProviderTest {
     public void shouldSendSuccessfullyAnOrderForMerchant() throws Exception {
         GatewayResponse<WorldpayOrderStatusResponse> response = provider.authorise(getCardAuthorisationRequest());
         assertTrue(response.isSuccessful());
+        assertTrue(response.getSessionIdentifier().isPresent());
     }
 
     @Test
@@ -216,6 +221,7 @@ public class WorldpayPaymentProviderTest {
         GatewayResponse<WorldpayOrderStatusResponse> response = provider.authorise(getCardAuthorisationRequest());
 
         assertThat(response.isFailed(), is(true));
+        assertFalse(response.getSessionIdentifier().isPresent());
         assertThat(response.getGatewayError().isPresent(), is(true));
         assertEquals(response.getGatewayError().get(), new GatewayError("Unexpected Response Code From Gateway", UNEXPECTED_STATUS_CODE_FROM_GATEWAY));
     }
@@ -349,9 +355,13 @@ public class WorldpayPaymentProviderTest {
         when(mockTarget.request()).thenReturn(mockBuilder);
         when(mockBuilder.header(anyString(), anyObject())).thenReturn(mockBuilder);
 
+        Map<String, NewCookie> responseCookies = new HashMap<>();
+        responseCookies.put(WORLDPAY_MACHINE_COOKIE_NAME, NewCookie.valueOf("value-from-worldpay"));
+
         Response response = mock(Response.class);
         when(response.readEntity(String.class)).thenReturn(responsePayload);
         when(mockBuilder.post(any(Entity.class))).thenReturn(response);
+        when(response.getCookies()).thenReturn(responseCookies);
 
         when(response.getStatus()).thenReturn(httpStatus);
     }

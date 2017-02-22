@@ -26,7 +26,7 @@ import static uk.gov.pay.connector.util.XMLUnmarshaller.unmarshall;
 
 public class WorldpayPaymentProvider extends BasePaymentProvider<BaseResponse> {
 
-    private static final String WORLDPAY_MACHINE_COOKIE_NAME = "machine";
+    public static final String WORLDPAY_MACHINE_COOKIE_NAME = "machine";
 
     public WorldpayPaymentProvider(GatewayClient client) {
         super(client, false, null);
@@ -151,11 +151,6 @@ public class WorldpayPaymentProvider extends BasePaymentProvider<BaseResponse> {
     }
 
     private Function<GatewayClient.Response, Optional<String>> extractResponseIdentifier() {
-        return response -> {
-            if(response.getResponseCookies().containsKey(WORLDPAY_MACHINE_COOKIE_NAME)) {
-                return Optional.ofNullable(response.getResponseCookies().get(WORLDPAY_MACHINE_COOKIE_NAME));
-            }
-            return Optional.empty();
-        };
+        return response -> Optional.ofNullable(response.getResponseCookies().get(WORLDPAY_MACHINE_COOKIE_NAME));
     }
 }

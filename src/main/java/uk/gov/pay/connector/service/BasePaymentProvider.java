@@ -59,7 +59,7 @@ abstract public class BasePaymentProvider<T extends BaseResponse> implements Pay
         );
 
         responseIdentifier.apply(response)
-                .ifPresent(responseBuilder::withResponseIdentifier);
+                .ifPresent(responseBuilder::withSessionIdentifier);
 
         return responseBuilder.build();
 
