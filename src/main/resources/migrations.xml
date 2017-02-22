@@ -554,4 +554,12 @@
         </addColumn>
     </changeSet>
 
+    <changeSet id="add provider session id to charge table" author="">
+        <addColumn tableName="charges">
+            <column name="provider_session_id" type="text">
+                <constraints nullable="true"/>
+            </column>
+        </addColumn>
+    </changeSet>
+
 </databaseChangeLog>

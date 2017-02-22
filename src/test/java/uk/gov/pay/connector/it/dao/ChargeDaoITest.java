@@ -822,6 +822,27 @@ public class ChargeDaoITest extends DaoITestBase {
     }
 
     @Test
+    public void shouldCreateANewChargeWithProviderSessionId() {
+        GatewayAccountEntity gatewayAccount = new GatewayAccountEntity(defaultTestAccount.getPaymentProvider(), new HashMap<>(), TEST);
+        gatewayAccount.setId(defaultTestAccount.getAccountId());
+
+        String providerSessionId = "provider-session-id-value";
+        ChargeEntity chargeEntity = aValidChargeEntity()
+                .withId(null)
+                .withGatewayAccountEntity(gatewayAccount)
+                .withProviderSessionId(providerSessionId)
+                .build();
+
+        assertThat(chargeEntity.getId(), is(nullValue()));
+
+        chargeDao.persist(chargeEntity);
+
+        Optional<ChargeEntity> charge = chargeDao.findById(chargeEntity.getId());
+
+        assertThat(charge.get().getProviderSessionId(), is(providerSessionId));
+    }
+
+    @Test
     public void shouldReturnNullFindingByIdWhenChargeDoesNotExist() {
 
         Optional<ChargeEntity> charge = chargeDao.findById(5686541L);
