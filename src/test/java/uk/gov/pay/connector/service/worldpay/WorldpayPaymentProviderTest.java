@@ -34,7 +34,7 @@ import java.io.IOException;
 import java.net.URL;
 import java.nio.charset.Charset;
 import java.time.ZonedDateTime;
-import java.util.HashMap;
+import java.util.Collections;
 import java.util.Map;
 
 import static com.google.common.io.Resources.getResource;
@@ -46,9 +46,7 @@ import static org.hamcrest.CoreMatchers.startsWith;
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.core.Is.is;
 import static org.hamcrest.core.IsSame.sameInstance;
-import static org.junit.Assert.assertFalse;
-import static org.junit.Assert.assertNotNull;
-import static org.junit.Assert.assertTrue;
+import static org.junit.Assert.*;
 import static org.mockito.Matchers.any;
 import static org.mockito.Matchers.anyObject;
 import static org.mockito.Matchers.anyString;
@@ -355,8 +353,8 @@ public class WorldpayPaymentProviderTest {
         when(mockTarget.request()).thenReturn(mockBuilder);
         when(mockBuilder.header(anyString(), anyObject())).thenReturn(mockBuilder);
 
-        Map<String, NewCookie> responseCookies = new HashMap<>();
-        responseCookies.put(WORLDPAY_MACHINE_COOKIE_NAME, NewCookie.valueOf("value-from-worldpay"));
+        Map<String, NewCookie> responseCookies =
+                Collections.singletonMap(WORLDPAY_MACHINE_COOKIE_NAME, NewCookie.valueOf("value-from-worldpay"));
 
         Response response = mock(Response.class);
         when(response.readEntity(String.class)).thenReturn(responsePayload);
