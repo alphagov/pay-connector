@@ -2,11 +2,13 @@ package uk.gov.pay.connector.model.gateway;
 
 import org.junit.Test;
 import uk.gov.pay.connector.model.GatewayError;
+import uk.gov.pay.connector.model.gateway.GatewayResponse.GatewayResponseBuilder;
 import uk.gov.pay.connector.service.BaseResponse;
 
 import static org.hamcrest.Matchers.is;
 import static org.junit.Assert.assertThat;
 import static uk.gov.pay.connector.model.ErrorType.GENERIC_GATEWAY_ERROR;
+import static uk.gov.pay.connector.model.gateway.GatewayResponse.GatewayResponseBuilder.responseBuilder;
 
 public class GatewayResponseTest {
 
@@ -16,7 +18,10 @@ public class GatewayResponseTest {
                 "an error message",
                 GENERIC_GATEWAY_ERROR);
 
-        GatewayResponse<BaseResponse> gatewayResponse = GatewayResponse.with(error);
+        GatewayResponseBuilder<BaseResponse> gatewayResponseBuilder = responseBuilder();
+        GatewayResponse<BaseResponse> gatewayResponse = gatewayResponseBuilder
+                .withGatewayError(error)
+                .build();
         assertThat(gatewayResponse.isFailed(), is(true));
         assertThat(gatewayResponse.isSuccessful(), is(false));
         assertThat(gatewayResponse.getBaseResponse().isPresent(), is(false));
@@ -28,7 +33,10 @@ public class GatewayResponseTest {
     @Test
     public void shouldHandleAValidGatewayResponse() {
         BaseResponse baseResponse = createBaseResponseWith(null, null);
-        GatewayResponse<BaseResponse> gatewayResponse = GatewayResponse.with(baseResponse);
+        GatewayResponseBuilder<BaseResponse> gatewayResponseBuilder = responseBuilder();
+        GatewayResponse<BaseResponse> gatewayResponse = gatewayResponseBuilder
+                .withResponse(baseResponse)
+                .build();
         assertThat(gatewayResponse.isFailed(), is(false));
         assertThat(gatewayResponse.isSuccessful(), is(true));
         assertThat(gatewayResponse.getBaseResponse().isPresent(), is(true));
@@ -43,7 +51,10 @@ public class GatewayResponseTest {
                 GENERIC_GATEWAY_ERROR);
 
         BaseResponse baseResponse = createBaseResponseWith("errorCode", null);
-        GatewayResponse<BaseResponse> gatewayResponse = GatewayResponse.with(baseResponse);
+        GatewayResponseBuilder<BaseResponse> gatewayResponseBuilder = responseBuilder();
+        GatewayResponse<BaseResponse> gatewayResponse = gatewayResponseBuilder
+                .withResponse(baseResponse)
+                .build();
         assertThat(gatewayResponse.isFailed(), is(true));
         assertThat(gatewayResponse.isSuccessful(), is(false));
         assertThat(gatewayResponse.getBaseResponse().isPresent(), is(false));
@@ -59,7 +70,10 @@ public class GatewayResponseTest {
                 GENERIC_GATEWAY_ERROR);
 
         BaseResponse baseResponse = createBaseResponseWith(null, "an error");
-        GatewayResponse<BaseResponse> gatewayResponse = GatewayResponse.with(baseResponse);
+        GatewayResponseBuilder<BaseResponse> gatewayResponseBuilder = responseBuilder();
+        GatewayResponse<BaseResponse> gatewayResponse = gatewayResponseBuilder
+                .withResponse(baseResponse)
+                .build();
         assertThat(gatewayResponse.isFailed(), is(true));
         assertThat(gatewayResponse.isSuccessful(), is(false));
         assertThat(gatewayResponse.getBaseResponse().isPresent(), is(false));
@@ -75,7 +89,10 @@ public class GatewayResponseTest {
                 GENERIC_GATEWAY_ERROR);
 
         BaseResponse baseResponse = createBaseResponseWith("123", "oops, something went wrong");
-        GatewayResponse<BaseResponse> gatewayResponse = GatewayResponse.with(baseResponse);
+        GatewayResponseBuilder<BaseResponse> gatewayResponseBuilder = responseBuilder();
+        GatewayResponse<BaseResponse> gatewayResponse = gatewayResponseBuilder
+                .withResponse(baseResponse)
+                .build();
         assertThat(gatewayResponse.isFailed(), is(true));
         assertThat(gatewayResponse.isSuccessful(), is(false));
         assertThat(gatewayResponse.getBaseResponse().isPresent(), is(false));

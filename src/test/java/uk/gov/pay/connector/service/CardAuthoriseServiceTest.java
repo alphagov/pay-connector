@@ -19,6 +19,7 @@ import uk.gov.pay.connector.model.domain.AuthCardDetails;
 import uk.gov.pay.connector.model.domain.ChargeEntity;
 import uk.gov.pay.connector.model.domain.ChargeStatus;
 import uk.gov.pay.connector.model.gateway.GatewayResponse;
+import uk.gov.pay.connector.model.gateway.GatewayResponse.GatewayResponseBuilder;
 import uk.gov.pay.connector.service.BaseAuthoriseResponse.AuthoriseStatus;
 import uk.gov.pay.connector.service.worldpay.WorldpayOrderStatusResponse;
 import uk.gov.pay.connector.util.AuthUtils;
@@ -38,6 +39,7 @@ import static org.junit.Assert.fail;
 import static org.mockito.Matchers.any;
 import static org.mockito.Mockito.*;
 import static uk.gov.pay.connector.model.domain.ChargeStatus.*;
+import static uk.gov.pay.connector.model.gateway.GatewayResponse.GatewayResponseBuilder.responseBuilder;
 import static uk.gov.pay.connector.service.CardExecutorService.ExecutionStatus.COMPLETED;
 import static uk.gov.pay.connector.service.CardExecutorService.ExecutionStatus.IN_PROGRESS;
 
@@ -80,7 +82,10 @@ public class CardAuthoriseServiceTest extends CardServiceTest {
         when(worldpayResponse.getTransactionId()).thenReturn(transactionId);
         when(worldpayResponse.authoriseStatus()).thenReturn(authoriseStatus);
         when(worldpayResponse.getErrorCode()).thenReturn(errorCode);
-        GatewayResponse authorisationResponse = GatewayResponse.with(worldpayResponse);
+        GatewayResponseBuilder<WorldpayOrderStatusResponse> gatewayResponseBuilder = responseBuilder();
+        GatewayResponse authorisationResponse = gatewayResponseBuilder
+                .withResponse(worldpayResponse)
+                .build();
         when(mockedPaymentProvider.authorise(any())).thenReturn(authorisationResponse);
     }
 
@@ -88,7 +93,10 @@ public class CardAuthoriseServiceTest extends CardServiceTest {
         WorldpayOrderStatusResponse worldpayResponse = new WorldpayOrderStatusResponse();
         worldpayResponse.set3dsPaRequest(PA_REQ_VALUE_FROM_PROVIDER);
         worldpayResponse.set3dsIssuerUrl(ISSUER_URL_FROM_PROVIDER);
-        GatewayResponse worldpay3dsResponse = GatewayResponse.with(worldpayResponse);
+        GatewayResponseBuilder<WorldpayOrderStatusResponse> gatewayResponseBuilder = responseBuilder();
+        GatewayResponse worldpay3dsResponse = gatewayResponseBuilder
+                .withResponse(worldpayResponse)
+                .build();
         when(mockedPaymentProvider.authorise(any())).thenReturn(worldpay3dsResponse);
     }
 

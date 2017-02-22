@@ -110,6 +110,7 @@ public class WorldpayPaymentProviderTest {
         GatewayResponse<WorldpayOrderStatusResponse> response = successfulWorldpayCardAuthFor3ds(connector);
 
         assertTrue(response.getBaseResponse().isPresent());
+        assertTrue(response.getSessionIdentifier().isPresent());
         response.getBaseResponse().ifPresent(res -> {
             assertThat(res.get3dsPaRequest(), is(notNullValue()));
             assertThat(res.get3dsIssuerUrl(), is(notNullValue()));
@@ -126,6 +127,7 @@ public class WorldpayPaymentProviderTest {
         GatewayResponse response = connector.capture(CaptureGatewayRequest.valueOf(chargeEntity));
 
         assertTrue(response.isSuccessful());
+        assertTrue(response.getSessionIdentifier().isPresent());
     }
 
     @Test

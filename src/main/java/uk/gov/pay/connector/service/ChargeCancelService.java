@@ -8,6 +8,7 @@ import uk.gov.pay.connector.exception.ChargeNotFoundRuntimeException;
 import uk.gov.pay.connector.model.domain.ChargeEntity;
 import uk.gov.pay.connector.model.domain.ChargeStatus;
 import uk.gov.pay.connector.model.gateway.GatewayResponse;
+import uk.gov.pay.connector.model.gateway.GatewayResponse.GatewayResponseBuilder;
 import uk.gov.pay.connector.service.transaction.TransactionContext;
 import uk.gov.pay.connector.service.transaction.TransactionFlow;
 import uk.gov.pay.connector.service.transaction.TransactionalOperation;
@@ -20,6 +21,7 @@ import static java.lang.String.format;
 import static uk.gov.pay.connector.model.GatewayError.baseError;
 import static uk.gov.pay.connector.model.domain.ChargeStatus.CREATED;
 import static uk.gov.pay.connector.model.domain.ChargeStatus.ENTERING_CARD_DETAILS;
+import static uk.gov.pay.connector.model.gateway.GatewayResponse.GatewayResponseBuilder.responseBuilder;
 import static uk.gov.pay.connector.service.CancelServiceFunctions.*;
 import static uk.gov.pay.connector.service.StatusFlow.SYSTEM_CANCELLATION_FLOW;
 import static uk.gov.pay.connector.service.StatusFlow.USER_CANCELLATION_FLOW;
@@ -103,9 +105,12 @@ public class ChargeCancelService {
                 .executeNext(changeStatusTo(chargeDao, chargeEntity, completeStatus, Optional.empty()))
                 .complete()
                 .get(ChargeEntity.class);
+        GatewayResponseBuilder<BaseCancelResponse> gatewayResponseBuilder = responseBuilder();
 
         if (completeStatus.getValue().equals(processedCharge.getStatus())) {
-            return GatewayResponse.with(new WorldpayCancelResponse());
+            return gatewayResponseBuilder
+                    .withResponse(new WorldpayCancelResponse())
+                    .build();
         } else {
             String errorMsg = format("Could not update chargeId [%s] to status [%s]. Current state [%s]",
                     processedCharge.getExternalId(),
@@ -113,7 +118,9 @@ public class ChargeCancelService {
                     processedCharge.getStatus());
             logger.error("Could not update charge - charge_external-id={}, status={}, to_status={}",
                     processedCharge.getExternalId(), processedCharge.getStatus(), completeStatus);
-            return GatewayResponse.with(baseError(errorMsg));
+            return gatewayResponseBuilder
+                    .withGatewayError(baseError(errorMsg))
+                    .build();
         }
     }
 

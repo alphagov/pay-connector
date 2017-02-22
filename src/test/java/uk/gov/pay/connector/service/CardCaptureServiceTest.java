@@ -23,6 +23,7 @@ import uk.gov.pay.connector.model.CaptureGatewayRequest;
 import uk.gov.pay.connector.model.domain.ChargeEntity;
 import uk.gov.pay.connector.model.domain.ChargeStatus;
 import uk.gov.pay.connector.model.gateway.GatewayResponse;
+import uk.gov.pay.connector.model.gateway.GatewayResponse.GatewayResponseBuilder;
 import uk.gov.pay.connector.service.worldpay.WorldpayCaptureResponse;
 
 import javax.persistence.OptimisticLockException;
@@ -36,6 +37,7 @@ import static org.junit.Assert.assertFalse;
 import static org.mockito.Matchers.any;
 import static org.mockito.Mockito.*;
 import static uk.gov.pay.connector.model.domain.ChargeStatus.*;
+import static uk.gov.pay.connector.model.gateway.GatewayResponse.GatewayResponseBuilder.responseBuilder;
 
 @RunWith(MockitoJUnitRunner.class)
 public class CardCaptureServiceTest extends CardServiceTest {
@@ -62,7 +64,8 @@ public class CardCaptureServiceTest extends CardServiceTest {
         WorldpayCaptureResponse worldpayResponse = mock(WorldpayCaptureResponse.class);
         when(worldpayResponse.getTransactionId()).thenReturn(transactionId);
         when(worldpayResponse.getErrorCode()).thenReturn(errorCode);
-        GatewayResponse captureResponse = GatewayResponse.with(worldpayResponse);
+        GatewayResponseBuilder<WorldpayCaptureResponse> gatewayResponseBuilder = responseBuilder();
+        GatewayResponse captureResponse = gatewayResponseBuilder.withResponse(worldpayResponse).build();
         when(mockedPaymentProvider.capture(any())).thenReturn(captureResponse);
     }
 
