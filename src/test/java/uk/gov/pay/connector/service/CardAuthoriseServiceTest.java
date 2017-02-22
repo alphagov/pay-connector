@@ -35,6 +35,7 @@ import static org.hamcrest.CoreMatchers.nullValue;
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.notNullValue;
 import static org.hamcrest.core.Is.is;
+import static org.junit.Assert.assertNull;
 import static org.junit.Assert.fail;
 import static org.mockito.Matchers.any;
 import static org.mockito.Mockito.*;
@@ -48,6 +49,7 @@ public class CardAuthoriseServiceTest extends CardServiceTest {
 
     public static final String PA_REQ_VALUE_FROM_PROVIDER = "pa-req-value-from-provider";
     public static final String ISSUER_URL_FROM_PROVIDER = "issuer-url-from-provider";
+    public static final String SESSION_IDENTIFIER = "session-identifier";
 
     private final Auth3dsDetailsFactory auth3dsDetailsFactory = new Auth3dsDetailsFactory();
 
@@ -85,6 +87,7 @@ public class CardAuthoriseServiceTest extends CardServiceTest {
         GatewayResponseBuilder<WorldpayOrderStatusResponse> gatewayResponseBuilder = responseBuilder();
         GatewayResponse authorisationResponse = gatewayResponseBuilder
                 .withResponse(worldpayResponse)
+                .withSessionIdentifier(SESSION_IDENTIFIER)
                 .build();
         when(mockedPaymentProvider.authorise(any())).thenReturn(authorisationResponse);
     }
@@ -224,6 +227,31 @@ public class CardAuthoriseServiceTest extends CardServiceTest {
     public void shouldStoreCardDetailsEvenIfInAuthorisationError() {
         anAuthorisationErrorResponse(charge, reloadedCharge);
         assertThat(reloadedCharge.getCardDetails(), is(notNullValue()));
+    }
+
+    @Test
+    public void shouldStoreProviderSessionIdIfAuthorisationSuccess() {
+        String transactionId = "transaction-id";
+        AuthCardDetails authCardDetails = AuthUtils.aValidAuthorisationDetails();
+        anAuthorisationSuccessResponse(charge, reloadedCharge, transactionId, authCardDetails);
+
+        assertThat(reloadedCharge.getProviderSessionId(), is(SESSION_IDENTIFIER));
+    }
+
+    @Test
+    public void shouldStoreProviderSessionIdIfAuthorisationRejected() {
+        anAuthorisationRejectedResponse(charge, reloadedCharge);
+
+        assertThat(reloadedCharge.getCardDetails(), is(notNullValue()));
+        assertThat(reloadedCharge.getProviderSessionId(), is(SESSION_IDENTIFIER));
+    }
+
+    @Test
+    public void shouldNotProviderSessionIdEvenIfInAuthorisationError() {
+        anAuthorisationErrorResponse(charge, reloadedCharge);
+
+        assertThat(reloadedCharge.getCardDetails(), is(notNullValue()));
+        assertNull(reloadedCharge.getProviderSessionId());
     }
 
     @Test
