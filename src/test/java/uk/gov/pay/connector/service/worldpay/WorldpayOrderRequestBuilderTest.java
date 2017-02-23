@@ -14,7 +14,9 @@ import java.nio.charset.Charset;
 
 import static com.google.common.io.Resources.getResource;
 import static org.custommonkey.xmlunit.XMLAssert.assertXMLEqual;
+import static org.hamcrest.core.Is.is;
 import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertThat;
 import static uk.gov.pay.connector.model.domain.Address.anAddress;
 import static uk.gov.pay.connector.service.worldpay.WorldpayOrderRequestBuilder.*;
 
@@ -131,15 +133,18 @@ public class WorldpayOrderRequestBuilderTest {
     @Test
     public void shouldGenerateValidAuth3dsResponseOrderRequest() throws Exception {
 
+        String providerSessionId = "provider-session-id";
         GatewayOrder actualRequest = aWorldpay3dsResponseAuthOrderRequestBuilder()
                 .withPaResponse3ds("I am an opaque 3D Secure PA response from the card issuer")
                 .withSessionId("uniqueSessionId")
                 .withTransactionId("MyUniqueTransactionId!")
                 .withMerchantCode("MERCHANTCODE")
+                .withProviderSessionId(providerSessionId)
                 .build();
 
         assertXMLEqual(expectedOrderSubmitPayload("valid-3ds-response-auth-worldpay-request.xml"), actualRequest.getPayload());
         assertEquals(OrderRequestType.AUTHORISE_3DS, actualRequest.getOrderRequestType());
+        assertThat(actualRequest.getProviderSessionId().get(), is(providerSessionId));
     }
 
     @Test

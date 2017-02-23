@@ -3,6 +3,7 @@ package uk.gov.pay.connector.service;
 import com.codahale.metrics.MetricRegistry;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import io.dropwizard.setup.Environment;
+import org.apache.commons.lang3.StringUtils;
 import uk.gov.pay.connector.app.ConnectorConfiguration;
 import uk.gov.pay.connector.app.GatewayCredentialsConfig;
 import uk.gov.pay.connector.app.WorldpayNotificationConfig;
@@ -42,7 +43,10 @@ public class PaymentProviders<T extends BaseResponse> {
                                                    GatewayCredentialsConfig config,
                                                    MetricRegistry metricRegistry) {
         return new WorldpayPaymentProvider(
-                createGatewayClient(clientFactory.createWithDropwizardClient("WORLD_PAY"), config.getUrls(), MediaType.APPLICATION_XML_TYPE, metricRegistry),
+                createGatewayClient(
+                        clientFactory.createWithDropwizardClient(
+                                "WORLD_PAY"), config.getUrls(), MediaType.APPLICATION_XML_TYPE,
+                                WorldpayPaymentProvider.WORLDPAY_MACHINE_COOKIE_NAME, metricRegistry),
                 ((WorldpayNotificationConfig) config).isSecureNotificationEnabled(),
                 ((WorldpayNotificationConfig) config).getNotificationDomain()
         );
@@ -53,7 +57,9 @@ public class PaymentProviders<T extends BaseResponse> {
                                                    ObjectMapper objectMapper,
                                                    MetricRegistry metricRegistry) {
         return new SmartpayPaymentProvider(
-                createGatewayClient(clientFactory.createWithDropwizardClient("SMART_PAY"), config.getUrls(), MediaType.APPLICATION_XML_TYPE, metricRegistry),
+                createGatewayClient(clientFactory.createWithDropwizardClient(
+                        "SMART_PAY"), config.getUrls(), MediaType.APPLICATION_XML_TYPE,
+                        StringUtils.EMPTY, metricRegistry),
                 objectMapper
         );
     }

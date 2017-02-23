@@ -17,6 +17,7 @@ import org.mockito.Mock;
 import org.mockito.runners.MockitoJUnitRunner;
 import uk.gov.pay.connector.model.*;
 import uk.gov.pay.connector.model.domain.*;
+import uk.gov.pay.connector.model.gateway.Auth3dsResponseGatewayRequest;
 import uk.gov.pay.connector.model.gateway.AuthorisationGatewayRequest;
 import uk.gov.pay.connector.model.gateway.GatewayResponse;
 import uk.gov.pay.connector.service.GatewayClient;
@@ -88,7 +89,8 @@ public class WorldpayPaymentProviderTest {
         when(mockMetricRegistry.histogram(anyString())).thenReturn(mockHistogram);
         when(mockMetricRegistry.counter(anyString())).thenReturn(mockCounter);
         provider = new WorldpayPaymentProvider(
-                createGatewayClient(client, ImmutableMap.of(TEST.toString(), "http://worldpay.url"), MediaType.APPLICATION_XML_TYPE, mockMetricRegistry));
+                createGatewayClient(client, ImmutableMap.of(TEST.toString(), "http://worldpay.url"),
+                        MediaType.APPLICATION_XML_TYPE, WorldpayPaymentProvider.WORLDPAY_MACHINE_COOKIE_NAME, mockMetricRegistry));
     }
 
     @Test
@@ -198,6 +200,63 @@ public class WorldpayPaymentProviderTest {
         assertXMLEqual(expectedOrderSubmitPayload("valid-authorise-worldpay-request-including-3ds.xml"), gatewayOrderArgumentCaptor.getValue().getPayload());
     }
 
+
+    @Test
+    public void shouldIncludePaResponseIn3dsSecondOrder() throws Exception {
+        ChargeEntity mockChargeEntity = mock(ChargeEntity.class);
+
+        when(mockChargeEntity.getGatewayAccount()).thenReturn(mockGatewayAccountEntity);
+        when(mockChargeEntity.getExternalId()).thenReturn("uniqueSessionId");
+        when(mockChargeEntity.getAmount()).thenReturn(500L);
+        when(mockChargeEntity.getDescription()).thenReturn("This is a description");
+        when(mockChargeEntity.getGatewayTransactionId()).thenReturn("MyUniqueTransactionId!");
+
+        Map<String, String> credentialsMap = ImmutableMap.of("merchant_id", "MERCHANTCODE");
+        when(mockGatewayAccountEntity.getCredentials()).thenReturn(credentialsMap);
+        when(mockGatewayAccountEntity.isRequires3ds()).thenReturn(true);
+        when(mockGatewayClient.postRequestFor(isNull(String.class), any(GatewayAccountEntity.class), any(GatewayOrder.class))).thenReturn(left(unexpectedStatusCodeFromGateway("Unexpected Response Code From Gateway")));
+
+        WorldpayPaymentProvider worldpayPaymentProvider = new WorldpayPaymentProvider(mockGatewayClient);
+
+        worldpayPaymentProvider.authorise3dsResponse(get3dsResponseGatewayRequest(mockChargeEntity));
+
+        ArgumentCaptor<GatewayOrder> gatewayOrderArgumentCaptor = ArgumentCaptor.forClass(GatewayOrder.class);
+
+        verify(mockGatewayClient).postRequestFor(eq(null), eq(mockGatewayAccountEntity), gatewayOrderArgumentCaptor.capture());
+
+        assertXMLEqual(expectedOrderSubmitPayload("valid-3ds-response-auth-worldpay-request.xml"), gatewayOrderArgumentCaptor.getValue().getPayload());
+    }
+
+
+    @Test
+    public void shouldIncludeProviderSessionIdWhenAvailableForCharge() {
+        String providerSessionId = "provider-session-id";
+        ChargeEntity mockChargeEntity = mock(ChargeEntity.class);
+
+        when(mockChargeEntity.getGatewayAccount()).thenReturn(mockGatewayAccountEntity);
+        when(mockChargeEntity.getExternalId()).thenReturn("uniqueSessionId");
+        when(mockChargeEntity.getAmount()).thenReturn(500L);
+        when(mockChargeEntity.getDescription()).thenReturn("This is a description");
+        when(mockChargeEntity.getGatewayTransactionId()).thenReturn("MyUniqueTransactionId!");
+        when(mockChargeEntity.getProviderSessionId()).thenReturn(providerSessionId);
+
+        Map<String, String> credentialsMap = ImmutableMap.of("merchant_id", "MERCHANTCODE");
+        when(mockGatewayAccountEntity.getCredentials()).thenReturn(credentialsMap);
+        when(mockGatewayAccountEntity.isRequires3ds()).thenReturn(true);
+        when(mockGatewayClient.postRequestFor(isNull(String.class), any(GatewayAccountEntity.class), any(GatewayOrder.class))).thenReturn(left(unexpectedStatusCodeFromGateway("Unexpected Response Code From Gateway")));
+
+        WorldpayPaymentProvider worldpayPaymentProvider = new WorldpayPaymentProvider(mockGatewayClient);
+
+        worldpayPaymentProvider.authorise3dsResponse(get3dsResponseGatewayRequest(mockChargeEntity));
+
+        ArgumentCaptor<GatewayOrder> gatewayOrderArgumentCaptor = ArgumentCaptor.forClass(GatewayOrder.class);
+
+        verify(mockGatewayClient).postRequestFor(eq(null), eq(mockGatewayAccountEntity), gatewayOrderArgumentCaptor.capture());
+
+        assertTrue(gatewayOrderArgumentCaptor.getValue().getProviderSessionId().isPresent());
+        assertThat(gatewayOrderArgumentCaptor.getValue().getProviderSessionId().get(), is(providerSessionId));
+    }
+
     @Test
     public void shouldSendSuccessfullyAnOrderForMerchant() throws Exception {
         GatewayResponse<WorldpayOrderStatusResponse> response = provider.authorise(getCardAuthorisationRequest());
@@ -297,6 +356,12 @@ public class WorldpayPaymentProviderTest {
     private AuthorisationGatewayRequest getCardAuthorisationRequest(ChargeEntity chargeEntity) {
         AuthCardDetails authCardDetails = getValidTestCard();
         return new AuthorisationGatewayRequest(chargeEntity, authCardDetails);
+    }
+
+    private Auth3dsResponseGatewayRequest get3dsResponseGatewayRequest(ChargeEntity chargeEntity) {
+        Auth3dsDetails auth3dsDetails = new Auth3dsDetails();
+        auth3dsDetails.setPaResponse("I am an opaque 3D Secure PA response from the card issuer");
+        return new Auth3dsResponseGatewayRequest(chargeEntity, auth3dsDetails);
     }
 
     private AuthorisationGatewayRequest getCardAuthorisationRequest(GatewayAccountEntity accountEntity) {

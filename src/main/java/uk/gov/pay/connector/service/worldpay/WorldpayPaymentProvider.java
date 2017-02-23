@@ -121,6 +121,7 @@ public class WorldpayPaymentProvider extends BasePaymentProvider<BaseResponse> {
                 .withPaResponse3ds(request.getAuth3DsDetails().getPaResponse())
                 .withSessionId(request.getChargeExternalId())
                 .withTransactionId(request.getTransactionId().orElse(""))
+                .withProviderSessionId(request.getProviderSessionid().orElse(""))
                 .withMerchantCode(request.getGatewayAccount().getCredentials().get(CREDENTIALS_MERCHANT_ID))
                 .build();
     }
