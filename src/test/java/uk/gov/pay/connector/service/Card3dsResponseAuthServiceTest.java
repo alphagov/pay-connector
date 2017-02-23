@@ -121,8 +121,8 @@ public class Card3dsResponseAuthServiceTest extends CardServiceTest {
 
         anAuthorisationSuccessResponse(charge, reloadedCharge, charge.getGatewayTransactionId(), auth3dsDetails, argumentCaptor);
 
-        assertTrue(argumentCaptor.getValue().getProviderSessionid().isPresent());
-        assertThat(argumentCaptor.getValue().getProviderSessionid().get(), is(providerSessionId));
+        assertTrue(argumentCaptor.getValue().getProviderSessionId().isPresent());
+        assertThat(argumentCaptor.getValue().getProviderSessionId().get(), is(providerSessionId));
     }
 
     @Test

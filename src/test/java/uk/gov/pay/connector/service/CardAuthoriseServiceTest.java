@@ -231,10 +231,7 @@ public class CardAuthoriseServiceTest extends CardServiceTest {
 
     @Test
     public void shouldStoreProviderSessionIdIfAuthorisationSuccess() {
-        String transactionId = "transaction-id";
-        AuthCardDetails authCardDetails = AuthUtils.aValidAuthorisationDetails();
-        anAuthorisationSuccessResponse(charge, reloadedCharge, transactionId, authCardDetails);
-
+        anAuthorisationSuccessResponseWithTransaction(charge, reloadedCharge);
         assertThat(reloadedCharge.getProviderSessionId(), is(SESSION_IDENTIFIER));
     }
 
@@ -340,7 +337,6 @@ public class CardAuthoriseServiceTest extends CardServiceTest {
     }
 
     private GatewayResponse anAuthorisationSuccessResponse(ChargeEntity charge, ChargeEntity reloadedCharge, String transactionId, AuthCardDetails authCardDetails) {
-
         when(mockedChargeDao.findByExternalId(charge.getExternalId()))
                 .thenReturn(Optional.of(charge));
         when(mockedChargeDao.merge(any()))
@@ -354,6 +350,14 @@ public class CardAuthoriseServiceTest extends CardServiceTest {
 
         return cardAuthorisationService.doAuthorise(charge.getExternalId(), authCardDetails);
     }
+
+    private GatewayResponse anAuthorisationSuccessResponseWithTransaction(ChargeEntity charge, ChargeEntity reloadedCharge) {
+        String transactionId = "transaction-id";
+        AuthCardDetails authCardDetails = AuthUtils.aValidAuthorisationDetails();
+
+        return anAuthorisationSuccessResponse(charge, reloadedCharge, transactionId, authCardDetails);
+    }
+
 
     private GatewayResponse anAuthorisation3dsRequiredResponse(ChargeEntity charge, ChargeEntity reloadedCharge, String transactionId, AuthCardDetails authCardDetails) {
 
