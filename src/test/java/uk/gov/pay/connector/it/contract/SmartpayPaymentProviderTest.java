@@ -6,6 +6,7 @@ import com.codahale.metrics.MetricRegistry;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.google.common.collect.ImmutableMap;
 import com.google.common.io.Resources;
+import org.apache.commons.lang3.StringUtils;
 import org.hamcrest.CoreMatchers;
 import org.junit.Assume;
 import org.junit.Before;
@@ -178,7 +179,8 @@ public class SmartpayPaymentProviderTest {
 
     private PaymentProvider getSmartpayPaymentProvider() throws Exception {
         Client client = TestClientFactory.createJerseyClient();
-        GatewayClient gatewayClient = createGatewayClient(client, ImmutableMap.of(TEST.toString(), url), MediaType.APPLICATION_XML_TYPE, mockMetricRegistry);
+        GatewayClient gatewayClient = createGatewayClient(client, ImmutableMap.of(TEST.toString(), url), MediaType.APPLICATION_XML_TYPE,
+                StringUtils.EMPTY, mockMetricRegistry);
         return new SmartpayPaymentProvider(gatewayClient, new ObjectMapper());
     }
 

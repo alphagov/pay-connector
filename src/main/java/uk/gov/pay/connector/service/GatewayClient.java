@@ -13,6 +13,7 @@ import uk.gov.pay.connector.util.XMLUnmarshallerException;
 import javax.ws.rs.ProcessingException;
 import javax.ws.rs.client.Client;
 import javax.ws.rs.client.Entity;
+import javax.ws.rs.client.Invocation.Builder;
 import javax.ws.rs.core.MediaType;
 import java.net.SocketException;
 import java.net.SocketTimeoutException;
@@ -38,16 +39,20 @@ public class GatewayClient {
     private final Map<String, String> gatewayUrlMap;
     private final MetricRegistry metricRegistry;
     private final MediaType mediaType;
+    private final String sessionIdentifierName;
 
-    private GatewayClient(Client client, Map<String, String> gatewayUrlMap, MediaType mediaType, MetricRegistry metricRegistry) {
+    private GatewayClient(Client client, Map<String, String> gatewayUrlMap, MediaType mediaType,
+                          String sessionIdentifierName, MetricRegistry metricRegistry) {
         this.gatewayUrlMap = gatewayUrlMap;
         this.client = client;
         this.metricRegistry = metricRegistry;
         this.mediaType = mediaType;
+        this.sessionIdentifierName = sessionIdentifierName;
     }
 
-    public static GatewayClient createGatewayClient(Client client, Map<String, String> gatewayUrlMap, MediaType mediaType, MetricRegistry metricRegistry) {
-        return new GatewayClient(client, gatewayUrlMap, mediaType, metricRegistry);
+    public static GatewayClient createGatewayClient(Client client, Map<String, String> gatewayUrlMap,
+                                                    MediaType mediaType, String sessionIdentifierName, MetricRegistry metricRegistry) {
+        return new GatewayClient(client, gatewayUrlMap, mediaType, sessionIdentifierName, metricRegistry);
     }
 
     public Either<GatewayError, GatewayClient.Response> postRequestFor(GatewayAccountEntity account, GatewayOrder request) {
@@ -66,12 +71,17 @@ public class GatewayClient {
         Stopwatch responseTimeStopwatch = Stopwatch.createStarted();
         try {
             logger.info("POSTing request for account '{}' with type '{}'", account.getGatewayName(), account.getType());
-            response = client.target(gatewayUrl)
+            Builder requestBuilder = client.target(gatewayUrl)
                     .request()
                     .header(AUTHORIZATION, encode(
                             account.getCredentials().get(CREDENTIALS_USERNAME),
-                            account.getCredentials().get(CREDENTIALS_PASSWORD)))
-                    .post(Entity.entity(request.getPayload(), mediaType));
+                            account.getCredentials().get(CREDENTIALS_PASSWORD)));
+
+                    response = request.getProviderSessionId()
+                            .map(sessionId -> requestBuilder.cookie(sessionIdentifierName, sessionId))
+                            .orElseGet(() -> requestBuilder)
+                            .post(Entity.entity(request.getPayload(), mediaType));
+
             int statusCode = response.getStatus();
             if (statusCode == OK.getStatusCode()) {
                 return right(new GatewayClient.Response(response));

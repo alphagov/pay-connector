@@ -60,6 +60,8 @@ public class CardAuthoriseService extends CardAuthoriseBaseService<AuthCardDetai
         String transactionId = operationResponse.getBaseResponse()
                 .map(BaseAuthoriseResponse::getTransactionId).orElse("");
 
+        operationResponse.getSessionIdentifier().ifPresent(chargeEntity::setProviderSessionId);
+
         logger.info("AuthCardDetails authorisation response received - charge_external_id={}, operation_type={}, transaction_id={}, status={}",
                 chargeEntity.getExternalId(), OperationType.AUTHORISATION.getValue(), transactionId, status);
 

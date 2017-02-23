@@ -30,6 +30,10 @@ public class Auth3dsResponseGatewayRequest implements GatewayRequest {
         return String.valueOf(charge.getExternalId());
     }
 
+    public Optional<String> getProviderSessionId() {
+        return Optional.ofNullable(charge.getProviderSessionId());
+    }
+
     @Override
     public GatewayAccountEntity getGatewayAccount() {
         return charge.getGatewayAccount();

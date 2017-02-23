@@ -113,6 +113,19 @@ public class Card3dsResponseAuthServiceTest extends CardServiceTest {
     }
 
     @Test
+    public void shouldPopulateTheProviderSessionId() {
+        Auth3dsDetails auth3dsDetails = AuthUtils.buildAuth3dsDetails();
+        String providerSessionId = "provider-session-id";
+        reloadedCharge.setProviderSessionId(providerSessionId);
+        ArgumentCaptor<Auth3dsResponseGatewayRequest> argumentCaptor = ArgumentCaptor.forClass(Auth3dsResponseGatewayRequest.class);
+
+        anAuthorisationSuccessResponse(charge, reloadedCharge, charge.getGatewayTransactionId(), auth3dsDetails, argumentCaptor);
+
+        assertTrue(argumentCaptor.getValue().getProviderSessionId().isPresent());
+        assertThat(argumentCaptor.getValue().getProviderSessionId().get(), is(providerSessionId));
+    }
+
+    @Test
     public void shouldRespondAuthorisationRejected() throws Exception {
         ChargeEntity charge = createNewChargeWith("worldpay", 1L, AUTHORISATION_3DS_REQUIRED, GENERATED_TRANSACTION_ID);
         ChargeEntity reloadedCharge = spy(charge);

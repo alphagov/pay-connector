@@ -65,6 +65,9 @@ public class ChargeEntity extends AbstractEntity {
     @Column(name = "reference")
     private String reference;
 
+    @Column(name = "provider_session_id")
+    private String providerSessionId;
+
     @Column(name = "created_date")
     @Convert(converter = UTCDateTimeConverter.class)
     private ZonedDateTime createdDate;
@@ -139,6 +142,10 @@ public class ChargeEntity extends AbstractEntity {
         return email;
     }
 
+    public String getProviderSessionId() {
+        return providerSessionId;
+    }
+
     public void setStatus(ChargeStatus targetStatus) throws InvalidStateTransitionException {
         if (stateTransitionsFor(getPaymentGatewayName()).isValidTransition(fromString(this.status), targetStatus)) {
             this.status = targetStatus.getValue();
@@ -161,6 +168,10 @@ public class ChargeEntity extends AbstractEntity {
 
     public void setEmail(String email) {
         this.email = email;
+    }
+
+    public void setProviderSessionId(String providerSessionId) {
+        this.providerSessionId = providerSessionId;
     }
 
     public boolean isAssociatedTo(Long accountId) {

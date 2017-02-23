@@ -8,6 +8,7 @@ import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableMap;
 import com.google.common.io.Resources;
 import fj.data.Either;
+import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.lang3.tuple.Pair;
 import org.hamcrest.CoreMatchers;
 import org.junit.Assert;
@@ -68,7 +69,8 @@ public class SmartpayPaymentProviderTest {
         when(mockMetricRegistry.histogram(anyString())).thenReturn(mockHistogram);
         when(mockMetricRegistry.counter(anyString())).thenReturn(mockCounter);
         mockSmartpaySuccessfulOrderSubmitResponse();
-        provider = new SmartpayPaymentProvider(createGatewayClient(client, ImmutableMap.of(TEST.toString(), "http://smartpay.url"), MediaType.APPLICATION_XML_TYPE, mockMetricRegistry), new ObjectMapper());
+        provider = new SmartpayPaymentProvider(createGatewayClient(client, ImmutableMap.of(TEST.toString(), "http://smartpay.url"),
+                MediaType.APPLICATION_XML_TYPE, StringUtils.EMPTY, mockMetricRegistry), new ObjectMapper());
     }
 
     @Test

@@ -24,6 +24,7 @@ public class ChargeEntityFixture {
     private List<RefundEntity> refunds = new ArrayList<>();
     private String paRequest;
     private String issuerUrl;
+    private String providerSessionId;
 
     public static ChargeEntityFixture aValidChargeEntity() {
         return new ChargeEntityFixture();
@@ -35,6 +36,7 @@ public class ChargeEntityFixture {
         chargeEntity.setGatewayTransactionId(transactionId);
         chargeEntity.getEvents().addAll(events);
         chargeEntity.getRefunds().addAll(refunds);
+        chargeEntity.setProviderSessionId(providerSessionId);
         if(paRequest != null && issuerUrl != null) {
             Auth3dsDetailsEntity auth3dsDetailsEntity = new Auth3dsDetailsEntity();
             auth3dsDetailsEntity.setIssuerUrl(issuerUrl);
@@ -107,6 +109,11 @@ public class ChargeEntityFixture {
 
     public ChargeEntityFixture withIssuerUrl(String issuerUrl) {
         this.issuerUrl = issuerUrl;
+        return this;
+    }
+
+    public ChargeEntityFixture withProviderSessionId(String providerSessionId) {
+        this.providerSessionId = providerSessionId;
         return this;
     }
 

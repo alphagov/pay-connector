@@ -174,7 +174,8 @@ public class WorldpayPaymentProviderTest {
     public void shouldFailRequestAuthorisationIfCredentialsAreNotCorrect() throws Exception {
 
         WorldpayPaymentProvider connector = new WorldpayPaymentProvider(
-                createGatewayClient(ClientBuilder.newClient(), getWorldpayConfig().getUrls(), MediaType.APPLICATION_XML_TYPE, mockMetricRegistry)
+                createGatewayClient(ClientBuilder.newClient(), getWorldpayConfig().getUrls(), MediaType.APPLICATION_XML_TYPE,
+                        WorldpayPaymentProvider.WORLDPAY_MACHINE_COOKIE_NAME, mockMetricRegistry)
         );
 
         Long gatewayAccountId = 112233L;
@@ -242,6 +243,7 @@ public class WorldpayPaymentProviderTest {
                         ClientBuilder.newClient(),
                         config.getUrls(),
                         MediaType.APPLICATION_XML_TYPE,
+                        WorldpayPaymentProvider.WORLDPAY_MACHINE_COOKIE_NAME,
                         mockMetricRegistry
                 )
         );
