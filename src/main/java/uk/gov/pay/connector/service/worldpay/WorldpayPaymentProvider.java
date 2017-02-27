@@ -3,18 +3,17 @@ package uk.gov.pay.connector.service.worldpay;
 import fj.data.Either;
 import org.joda.time.DateTime;
 import org.joda.time.DateTimeZone;
-import uk.gov.pay.connector.model.CancelGatewayRequest;
-import uk.gov.pay.connector.model.CaptureGatewayRequest;
-import uk.gov.pay.connector.model.Notifications;
-import uk.gov.pay.connector.model.RefundGatewayRequest;
+import uk.gov.pay.connector.model.*;
 import uk.gov.pay.connector.model.gateway.Auth3dsResponseGatewayRequest;
 import uk.gov.pay.connector.model.gateway.AuthorisationGatewayRequest;
 import uk.gov.pay.connector.model.gateway.GatewayResponse;
 import uk.gov.pay.connector.resources.PaymentGatewayName;
 import uk.gov.pay.connector.service.*;
 
+import javax.ws.rs.client.Invocation.Builder;
 import java.time.ZoneOffset;
 import java.util.Optional;
+import java.util.function.BiFunction;
 import java.util.function.Function;
 
 import static fj.data.Either.left;
@@ -102,6 +101,13 @@ public class WorldpayPaymentProvider extends BasePaymentProvider<BaseResponse> {
     @Override
     public StatusMapper getStatusMapper() {
         return WorldpayStatusMapper.get();
+    }
+
+    public static BiFunction<GatewayOrder, Builder, Builder> includeSessionIdentifier() {
+        return (order, builder) ->
+            order.getProviderSessionId()
+                    .map(sessionId -> builder.cookie(WORLDPAY_MACHINE_COOKIE_NAME, sessionId))
+                    .orElseGet(() -> builder);
     }
 
     private Function<AuthorisationGatewayRequest, GatewayOrder> buildAuthoriseOrderFor() {

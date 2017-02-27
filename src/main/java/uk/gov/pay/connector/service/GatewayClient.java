@@ -21,6 +21,7 @@ import java.net.UnknownHostException;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.concurrent.TimeUnit;
+import java.util.function.BiFunction;
 
 import static fj.data.Either.left;
 import static fj.data.Either.right;
@@ -39,20 +40,21 @@ public class GatewayClient {
     private final Map<String, String> gatewayUrlMap;
     private final MetricRegistry metricRegistry;
     private final MediaType mediaType;
-    private final String sessionIdentifierName;
+    private final BiFunction<GatewayOrder, Builder, Builder> sessionIdentifier;
 
     private GatewayClient(Client client, Map<String, String> gatewayUrlMap, MediaType mediaType,
-                          String sessionIdentifierName, MetricRegistry metricRegistry) {
+                          BiFunction<GatewayOrder, Builder, Builder> sessionIdentifier, MetricRegistry metricRegistry) {
         this.gatewayUrlMap = gatewayUrlMap;
         this.client = client;
         this.metricRegistry = metricRegistry;
         this.mediaType = mediaType;
-        this.sessionIdentifierName = sessionIdentifierName;
+        this.sessionIdentifier = sessionIdentifier;
     }
 
     public static GatewayClient createGatewayClient(Client client, Map<String, String> gatewayUrlMap,
-                                                    MediaType mediaType, String sessionIdentifierName, MetricRegistry metricRegistry) {
-        return new GatewayClient(client, gatewayUrlMap, mediaType, sessionIdentifierName, metricRegistry);
+                                                    MediaType mediaType,
+                                                    BiFunction<GatewayOrder, Builder, Builder> sessionIdentier, MetricRegistry metricRegistry) {
+        return new GatewayClient(client, gatewayUrlMap, mediaType, sessionIdentier, metricRegistry);
     }
 
     public Either<GatewayError, GatewayClient.Response> postRequestFor(GatewayAccountEntity account, GatewayOrder request) {
@@ -77,9 +79,7 @@ public class GatewayClient {
                             account.getCredentials().get(CREDENTIALS_USERNAME),
                             account.getCredentials().get(CREDENTIALS_PASSWORD)));
 
-                    response = request.getProviderSessionId()
-                            .map(sessionId -> requestBuilder.cookie(sessionIdentifierName, sessionId))
-                            .orElseGet(() -> requestBuilder)
+                    response = sessionIdentifier.apply(request, requestBuilder)
                             .post(Entity.entity(request.getPayload(), mediaType));
 
             int statusCode = response.getStatus();

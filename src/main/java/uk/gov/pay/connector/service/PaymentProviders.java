@@ -46,7 +46,7 @@ public class PaymentProviders<T extends BaseResponse> {
                 createGatewayClient(
                         clientFactory.createWithDropwizardClient(
                                 "WORLD_PAY"), config.getUrls(), MediaType.APPLICATION_XML_TYPE,
-                                WorldpayPaymentProvider.WORLDPAY_MACHINE_COOKIE_NAME, metricRegistry),
+                                WorldpayPaymentProvider.includeSessionIdentifier(), metricRegistry),
                 ((WorldpayNotificationConfig) config).isSecureNotificationEnabled(),
                 ((WorldpayNotificationConfig) config).getNotificationDomain()
         );
@@ -59,7 +59,7 @@ public class PaymentProviders<T extends BaseResponse> {
         return new SmartpayPaymentProvider(
                 createGatewayClient(clientFactory.createWithDropwizardClient(
                         "SMART_PAY"), config.getUrls(), MediaType.APPLICATION_XML_TYPE,
-                        StringUtils.EMPTY, metricRegistry),
+                        SmartpayPaymentProvider.includeSessionIdentifier(), metricRegistry),
                 objectMapper
         );
     }
