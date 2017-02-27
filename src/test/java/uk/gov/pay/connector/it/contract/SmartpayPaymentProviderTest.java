@@ -180,7 +180,7 @@ public class SmartpayPaymentProviderTest {
     private PaymentProvider getSmartpayPaymentProvider() throws Exception {
         Client client = TestClientFactory.createJerseyClient();
         GatewayClient gatewayClient = createGatewayClient(client, ImmutableMap.of(TEST.toString(), url), MediaType.APPLICATION_XML_TYPE,
-                StringUtils.EMPTY, mockMetricRegistry);
+                SmartpayPaymentProvider.includeSessionIdentifier(), mockMetricRegistry);
         return new SmartpayPaymentProvider(gatewayClient, new ObjectMapper());
     }
 

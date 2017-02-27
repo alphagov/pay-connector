@@ -11,7 +11,9 @@ import uk.gov.pay.connector.model.gateway.GatewayResponse;
 import uk.gov.pay.connector.resources.PaymentGatewayName;
 import uk.gov.pay.connector.service.*;
 
+import javax.ws.rs.client.Invocation;
 import java.util.Optional;
+import java.util.function.BiFunction;
 import java.util.function.Function;
 
 import static fj.data.Either.left;
@@ -98,6 +100,10 @@ public class SmartpayPaymentProvider extends BasePaymentProvider<BaseResponse> {
     @Override
     public StatusMapper getStatusMapper() {
         return SmartpayStatusMapper.get();
+    }
+
+    public static BiFunction<GatewayOrder, Invocation.Builder, Invocation.Builder> includeSessionIdentifier() {
+        return (order, builder) -> builder;
     }
 
     private Function<AuthorisationGatewayRequest, GatewayOrder> buildAuthoriseOrderFor() {

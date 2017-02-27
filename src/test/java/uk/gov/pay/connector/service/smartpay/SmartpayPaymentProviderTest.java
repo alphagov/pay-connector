@@ -8,7 +8,6 @@ import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableMap;
 import com.google.common.io.Resources;
 import fj.data.Either;
-import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.lang3.tuple.Pair;
 import org.hamcrest.CoreMatchers;
 import org.junit.Assert;
@@ -24,18 +23,20 @@ import uk.gov.pay.connector.model.domain.ChargeEntity;
 import uk.gov.pay.connector.model.domain.GatewayAccountEntity;
 import uk.gov.pay.connector.model.gateway.AuthorisationGatewayRequest;
 import uk.gov.pay.connector.model.gateway.GatewayResponse;
+import uk.gov.pay.connector.service.GatewayOrder;
 import uk.gov.pay.connector.service.worldpay.WorldpayCaptureResponse;
 import uk.gov.pay.connector.util.AuthUtils;
 
 import javax.ws.rs.client.Client;
 import javax.ws.rs.client.Entity;
-import javax.ws.rs.client.Invocation;
+import javax.ws.rs.client.Invocation.Builder;
 import javax.ws.rs.client.WebTarget;
 import javax.ws.rs.core.MediaType;
 import javax.ws.rs.core.Response;
 import java.io.IOException;
 import java.net.URL;
 import java.nio.charset.Charset;
+import java.util.function.BiFunction;
 
 import static com.google.common.io.Resources.getResource;
 import static org.hamcrest.CoreMatchers.*;
@@ -45,6 +46,7 @@ import static org.junit.Assert.assertThat;
 import static org.junit.Assert.assertTrue;
 import static org.mockito.Matchers.anyObject;
 import static org.mockito.Matchers.anyString;
+import static org.mockito.Matchers.eq;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
 import static uk.gov.pay.connector.model.domain.Address.anAddress;
@@ -59,6 +61,7 @@ public class SmartpayPaymentProviderTest {
     private MetricRegistry mockMetricRegistry;
     private Histogram mockHistogram;
     private Counter mockCounter;
+    private BiFunction<GatewayOrder, Builder, Builder> mockSessionIdentifier;
 
     @Before
     public void setup() throws Exception {
@@ -66,11 +69,12 @@ public class SmartpayPaymentProviderTest {
         mockMetricRegistry = mock(MetricRegistry.class);
         mockHistogram = mock(Histogram.class);
         mockCounter = mock(Counter.class);
+        mockSessionIdentifier = mock(BiFunction.class);
         when(mockMetricRegistry.histogram(anyString())).thenReturn(mockHistogram);
         when(mockMetricRegistry.counter(anyString())).thenReturn(mockCounter);
         mockSmartpaySuccessfulOrderSubmitResponse();
         provider = new SmartpayPaymentProvider(createGatewayClient(client, ImmutableMap.of(TEST.toString(), "http://smartpay.url"),
-                MediaType.APPLICATION_XML_TYPE, StringUtils.EMPTY, mockMetricRegistry), new ObjectMapper());
+                MediaType.APPLICATION_XML_TYPE, mockSessionIdentifier, mockMetricRegistry), new ObjectMapper());
     }
 
     @Test
@@ -174,9 +178,10 @@ public class SmartpayPaymentProviderTest {
     private void mockSmartpayResponse(int httpStatus, String responsePayload) {
         WebTarget mockTarget = mock(WebTarget.class);
         when(client.target(anyString())).thenReturn(mockTarget);
-        Invocation.Builder mockBuilder = mock(Invocation.Builder.class);
+        Builder mockBuilder = mock(Builder.class);
         when(mockTarget.request()).thenReturn(mockBuilder);
         when(mockBuilder.header(anyString(), anyObject())).thenReturn(mockBuilder);
+        when(mockSessionIdentifier.apply(Matchers.any(GatewayOrder.class), eq(mockBuilder))).thenReturn(mockBuilder);
 
         Response response = mock(Response.class);
         when(response.readEntity(String.class)).thenReturn(responsePayload);

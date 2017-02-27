@@ -90,7 +90,7 @@ public class WorldpayPaymentProviderTest {
         when(mockMetricRegistry.counter(anyString())).thenReturn(mockCounter);
         provider = new WorldpayPaymentProvider(
                 createGatewayClient(client, ImmutableMap.of(TEST.toString(), "http://worldpay.url"),
-                        MediaType.APPLICATION_XML_TYPE, WorldpayPaymentProvider.WORLDPAY_MACHINE_COOKIE_NAME, mockMetricRegistry));
+                        MediaType.APPLICATION_XML_TYPE, WorldpayPaymentProvider.includeSessionIdentifier(), mockMetricRegistry));
     }
 
     @Test

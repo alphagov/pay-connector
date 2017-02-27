@@ -175,7 +175,7 @@ public class WorldpayPaymentProviderTest {
 
         WorldpayPaymentProvider connector = new WorldpayPaymentProvider(
                 createGatewayClient(ClientBuilder.newClient(), getWorldpayConfig().getUrls(), MediaType.APPLICATION_XML_TYPE,
-                        WorldpayPaymentProvider.WORLDPAY_MACHINE_COOKIE_NAME, mockMetricRegistry)
+                        WorldpayPaymentProvider.includeSessionIdentifier(), mockMetricRegistry)
         );
 
         Long gatewayAccountId = 112233L;
@@ -243,7 +243,7 @@ public class WorldpayPaymentProviderTest {
                         ClientBuilder.newClient(),
                         config.getUrls(),
                         MediaType.APPLICATION_XML_TYPE,
-                        WorldpayPaymentProvider.WORLDPAY_MACHINE_COOKIE_NAME,
+                        WorldpayPaymentProvider.includeSessionIdentifier(),
                         mockMetricRegistry
                 )
         );

@@ -29,6 +29,7 @@ import java.util.Collections;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.Optional;
+import java.util.function.BiFunction;
 
 import static javax.ws.rs.core.HttpHeaders.AUTHORIZATION;
 import static org.junit.Assert.assertFalse;
@@ -60,6 +61,9 @@ public class GatewayClientTest {
 
     @Mock GatewayOrder mockGatewayOrder;
 
+    @Mock
+    BiFunction<GatewayOrder, Builder, Builder> mockSessionIdentifier;
+
     @Before
     public void setup() {
         Map<String, String> urlMap = Collections.singletonMap("worldpay", WORLDPAY_API_ENDPOINT);
@@ -68,7 +72,7 @@ public class GatewayClientTest {
         credentialMap.put(CREDENTIALS_PASSWORD, "password");
 
         gatewayClient = GatewayClient.createGatewayClient(mockClient, urlMap, MediaType.APPLICATION_XML_TYPE,
-                WorldpayPaymentProvider.WORLDPAY_MACHINE_COOKIE_NAME, mockMetricRegistry);
+                mockSessionIdentifier, mockMetricRegistry);
         when(mockMetricRegistry.histogram(anyString())).thenReturn(mockHistogram);
         when(mockMetricRegistry.counter(anyString())).thenReturn(mockCounter);
         doAnswer(invocationOnMock -> null).when(mockHistogram).update(anyInt());
@@ -79,7 +83,7 @@ public class GatewayClientTest {
         when(mockClient.target(WORLDPAY_API_ENDPOINT)).thenReturn(mockWebTarget);
         when(mockWebTarget.request()).thenReturn(mockBuilder).thenReturn(mockBuilder);
         when(mockBuilder.header(AUTHORIZATION, encode("user", "password"))).thenReturn(mockBuilder);
-        when(mockBuilder.cookie(any(Cookie.class))).thenReturn(mockBuilder);
+        when(mockSessionIdentifier.apply(mockGatewayOrder, mockBuilder)).thenReturn(mockBuilder);
         when(mockBuilder.post(Entity.entity(orderPayload, MediaType.APPLICATION_XML_TYPE))).thenReturn(mockResponse);
 
         when(mockGatewayAccountEntity.getGatewayName()).thenReturn("worldpay");
@@ -132,8 +136,8 @@ public class GatewayClientTest {
 
         gatewayClient.postRequestFor(null, mockGatewayAccountEntity, mockGatewayOrder);
 
-        InOrder inOrder = Mockito.inOrder(mockBuilder);
-        inOrder.verify(mockBuilder).cookie(WorldpayPaymentProvider.WORLDPAY_MACHINE_COOKIE_NAME, providerSessionid);
+        InOrder inOrder = Mockito.inOrder(mockSessionIdentifier, mockBuilder);
+        inOrder.verify(mockSessionIdentifier).apply(mockGatewayOrder, mockBuilder);
         inOrder.verify(mockBuilder).post(Entity.entity(orderPayload, MediaType.APPLICATION_XML_TYPE));
     }
 }
