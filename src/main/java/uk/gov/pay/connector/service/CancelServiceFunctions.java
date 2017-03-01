@@ -22,6 +22,7 @@ import java.util.Optional;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
+import static uk.gov.pay.connector.model.domain.ChargeStatus.AUTHORISATION_3DS_READY;
 import static uk.gov.pay.connector.model.domain.ChargeStatus.fromString;
 
 /**
@@ -49,7 +50,7 @@ class CancelServiceFunctions {
             if (!reloadedCharge.hasStatus(statusFlow.getTerminatableStatuses())) {
                 if (reloadedCharge.hasStatus(statusFlow.getLockState())) {
                     throw new OperationAlreadyInProgressRuntimeException(statusFlow.getName(), reloadedCharge.getExternalId());
-                } else if (reloadedCharge.hasStatus(ChargeStatus.AUTHORISATION_READY)) {
+                } else if (reloadedCharge.hasStatus(ChargeStatus.AUTHORISATION_READY, AUTHORISATION_3DS_READY)) {
                     throw new ConflictRuntimeException(chargeEntity.getExternalId());
                 }
 

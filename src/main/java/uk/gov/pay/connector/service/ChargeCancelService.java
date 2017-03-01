@@ -19,6 +19,7 @@ import java.util.Optional;
 
 import static java.lang.String.format;
 import static uk.gov.pay.connector.model.GatewayError.baseError;
+import static uk.gov.pay.connector.model.domain.ChargeStatus.AUTHORISATION_3DS_REQUIRED;
 import static uk.gov.pay.connector.model.domain.ChargeStatus.CREATED;
 import static uk.gov.pay.connector.model.domain.ChargeStatus.ENTERING_CARD_DETAILS;
 import static uk.gov.pay.connector.model.gateway.GatewayResponse.GatewayResponseBuilder.responseBuilder;
@@ -31,7 +32,7 @@ public class ChargeCancelService {
     private final Logger logger = LoggerFactory.getLogger(getClass());
 
     private static ChargeStatus[] nonGatewayStatuses = new ChargeStatus[]{
-            CREATED, ENTERING_CARD_DETAILS
+            CREATED, ENTERING_CARD_DETAILS, AUTHORISATION_3DS_REQUIRED
     };
 
     private final ChargeDao chargeDao;
