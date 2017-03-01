@@ -102,6 +102,32 @@ public class ChargeCancelFrontendResourceITest extends ChargingITestBase {
                 USER_CANCEL_ERROR.getValue()));
     }
 
+    @Test
+    public void respondWith204With3DSRequeirdState_whenCancellationBeforeAuth() {
+
+        String chargeId = addCharge(AUTHORISATION_3DS_REQUIRED, "ref", ZonedDateTime.now().minusHours(1), "irrelvant");
+        userCancelChargeAndCheckApiStatus(chargeId, USER_CANCELLED, 204);
+        List<String> events = app.getDatabaseTestHelper().getInternalEvents(chargeId);
+        assertThat(events.size(), is(2));
+        assertThat(events, hasItems(AUTHORISATION_3DS_REQUIRED.getValue(), USER_CANCELLED.getValue()));
+    }
+
+    @Test
+    public void respondWith409_whenCancellationDuringAuth3DSReady() {
+        String chargeId = addCharge(AUTHORISATION_3DS_READY, "ref", ZonedDateTime.now().minusHours(1), "transaction-id");
+        worldpay.mockCancelSuccess();
+
+        connectorRestApi
+                .withChargeId(chargeId)
+                .postFrontendChargeCancellation()
+                .statusCode(409);
+
+        connectorRestApi
+                .withChargeId(chargeId)
+                .getCharge()
+                .body("state.status", is("started"));
+    }
+
     private String userCancelChargeAndCheckApiStatus(String chargeId, ChargeStatus targetState, int httpStatusCode) {
         connectorRestApi
                 .withChargeId(chargeId)
