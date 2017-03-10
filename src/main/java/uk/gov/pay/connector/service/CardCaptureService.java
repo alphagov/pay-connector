@@ -33,11 +33,11 @@ public class CardCaptureService extends CardService implements TransactionalGate
         this.userNotificationService = userNotificationService;
     }
 
-    public GatewayResponse<BaseCaptureResponse> doCapture(String chargeId) {
+    public GatewayResponse<BaseCaptureResponse> doCapture(String externalId) {
         return chargeDao
-                .findByExternalId(chargeId)
+                .findByExternalId(externalId)
                 .map(TransactionalGatewayOperation.super::executeGatewayOperationFor)
-                .orElseThrow(() -> new ChargeNotFoundRuntimeException(chargeId));
+                .orElseThrow(() -> new ChargeNotFoundRuntimeException(externalId));
     }
 
     @Transactional
