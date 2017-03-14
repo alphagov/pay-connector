@@ -12,6 +12,7 @@ import uk.gov.pay.connector.resources.PaymentGatewayName;
 import uk.gov.pay.connector.service.*;
 
 import javax.ws.rs.client.Invocation;
+import java.util.EnumMap;
 import java.util.Optional;
 import java.util.function.BiFunction;
 import java.util.function.Function;
@@ -26,8 +27,8 @@ public class SmartpayPaymentProvider extends BasePaymentProvider<BaseResponse> {
 
     private final ObjectMapper objectMapper;
 
-    public SmartpayPaymentProvider(GatewayClient client, ObjectMapper objectMapper) {
-        super(client);
+    public SmartpayPaymentProvider(EnumMap<GatewayOperation, GatewayClient> clients, ObjectMapper objectMapper) {
+        super(clients);
         this.objectMapper = objectMapper;
     }
 

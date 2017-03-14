@@ -34,7 +34,7 @@ public class ClientFactory {
         this.conf = conf;
     }
 
-    public Client createWithDropwizardClient(String name) {
+    public Client createWithDropwizardClient(String clientName) {
         JerseyClientConfiguration clientConfiguration = conf.getClientConfiguration();
 
         Duration readTimeout = conf.getCustomJerseyClient().getReadTimeout();
@@ -52,7 +52,7 @@ public class ClientFactory {
                 .withProperty(ClientProperties.PROXY_URI, proxyUrl(clientConfiguration.getProxyConfiguration()));
         }
 
-        Client client = defaultClientBuilder.build(name);
+        Client client = defaultClientBuilder.build(clientName);
         client.register(RestClientLoggingFilter.class);
         return client;
     }

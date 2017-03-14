@@ -4,6 +4,7 @@ import uk.gov.pay.connector.model.GatewayRequest;
 import uk.gov.pay.connector.model.domain.Auth3dsDetails;
 import uk.gov.pay.connector.model.domain.ChargeEntity;
 import uk.gov.pay.connector.model.domain.GatewayAccountEntity;
+import uk.gov.pay.connector.service.GatewayOperation;
 
 import java.util.Optional;
 
@@ -37,6 +38,11 @@ public class Auth3dsResponseGatewayRequest implements GatewayRequest {
     @Override
     public GatewayAccountEntity getGatewayAccount() {
         return charge.getGatewayAccount();
+    }
+
+    @Override
+    public GatewayOperation getRequestType() {
+        return GatewayOperation.AUTHORISE;
     }
 
     public static Auth3dsResponseGatewayRequest valueOf(ChargeEntity charge, Auth3dsDetails auth3DsDetails) {

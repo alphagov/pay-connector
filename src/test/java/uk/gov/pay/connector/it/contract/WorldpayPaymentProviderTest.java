@@ -18,6 +18,9 @@ import uk.gov.pay.connector.model.domain.GatewayAccountEntity;
 import uk.gov.pay.connector.model.domain.RefundEntity;
 import uk.gov.pay.connector.model.gateway.AuthorisationGatewayRequest;
 import uk.gov.pay.connector.model.gateway.GatewayResponse;
+import uk.gov.pay.connector.service.GatewayClient;
+import uk.gov.pay.connector.service.GatewayOperation;
+import uk.gov.pay.connector.service.GatewayOperationClientBuilder;
 import uk.gov.pay.connector.service.worldpay.WorldpayCaptureResponse;
 import uk.gov.pay.connector.service.worldpay.WorldpayOrderStatusResponse;
 import uk.gov.pay.connector.service.worldpay.WorldpayPaymentProvider;
@@ -27,6 +30,7 @@ import javax.ws.rs.client.ClientBuilder;
 import javax.ws.rs.core.MediaType;
 import java.io.IOException;
 import java.net.URL;
+import java.util.EnumMap;
 import java.util.Map;
 
 import static java.util.UUID.randomUUID;
@@ -173,10 +177,7 @@ public class WorldpayPaymentProviderTest {
     @Test
     public void shouldFailRequestAuthorisationIfCredentialsAreNotCorrect() throws Exception {
 
-        WorldpayPaymentProvider connector = new WorldpayPaymentProvider(
-                createGatewayClient(ClientBuilder.newClient(), getWorldpayConfig().getUrls(), MediaType.APPLICATION_XML_TYPE,
-                        WorldpayPaymentProvider.includeSessionIdentifier(), mockMetricRegistry)
-        );
+        WorldpayPaymentProvider connector = getValidWorldpayPaymentProvider();
 
         Long gatewayAccountId = 112233L;
         String providerName = "worldpay";
@@ -237,16 +238,20 @@ public class WorldpayPaymentProviderTest {
     }
 
     private WorldpayPaymentProvider getValidWorldpayPaymentProvider() {
-        GatewayCredentialsConfig config = getWorldpayConfig();
-        return new WorldpayPaymentProvider(
-                createGatewayClient(
-                        ClientBuilder.newClient(),
-                        config.getUrls(),
-                        MediaType.APPLICATION_XML_TYPE,
-                        WorldpayPaymentProvider.includeSessionIdentifier(),
-                        mockMetricRegistry
-                )
+        GatewayClient gatewayClient = createGatewayClient(
+                ClientBuilder.newClient(),
+                getWorldpayConfig().getUrls(),
+                MediaType.APPLICATION_XML_TYPE,
+                WorldpayPaymentProvider.includeSessionIdentifier(),
+                mockMetricRegistry
         );
+        EnumMap<GatewayOperation, GatewayClient> gatewayClientEnumMap = GatewayOperationClientBuilder.builder()
+                .authClient(gatewayClient)
+                .captureClient(gatewayClient)
+                .cancelClient(gatewayClient)
+                .refundClient(gatewayClient)
+                .build();
+        return new WorldpayPaymentProvider(gatewayClientEnumMap, false, null);
     }
 
     private GatewayCredentialsConfig getWorldpayConfig() {

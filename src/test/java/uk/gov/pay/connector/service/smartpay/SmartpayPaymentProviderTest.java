@@ -23,6 +23,9 @@ import uk.gov.pay.connector.model.domain.ChargeEntity;
 import uk.gov.pay.connector.model.domain.GatewayAccountEntity;
 import uk.gov.pay.connector.model.gateway.AuthorisationGatewayRequest;
 import uk.gov.pay.connector.model.gateway.GatewayResponse;
+import uk.gov.pay.connector.service.GatewayClient;
+import uk.gov.pay.connector.service.GatewayOperation;
+import uk.gov.pay.connector.service.GatewayOperationClientBuilder;
 import uk.gov.pay.connector.service.GatewayOrder;
 import uk.gov.pay.connector.service.worldpay.WorldpayCaptureResponse;
 import uk.gov.pay.connector.util.AuthUtils;
@@ -36,6 +39,7 @@ import javax.ws.rs.core.Response;
 import java.io.IOException;
 import java.net.URL;
 import java.nio.charset.Charset;
+import java.util.EnumMap;
 import java.util.function.BiFunction;
 
 import static com.google.common.io.Resources.getResource;
@@ -73,8 +77,17 @@ public class SmartpayPaymentProviderTest {
         when(mockMetricRegistry.histogram(anyString())).thenReturn(mockHistogram);
         when(mockMetricRegistry.counter(anyString())).thenReturn(mockCounter);
         mockSmartpaySuccessfulOrderSubmitResponse();
-        provider = new SmartpayPaymentProvider(createGatewayClient(client, ImmutableMap.of(TEST.toString(), "http://smartpay.url"),
-                MediaType.APPLICATION_XML_TYPE, mockSessionIdentifier, mockMetricRegistry), new ObjectMapper());
+        GatewayClient gatewayClient = createGatewayClient(client, ImmutableMap.of(TEST.toString(), "http://smartpay.url"),
+                MediaType.APPLICATION_XML_TYPE, mockSessionIdentifier, mockMetricRegistry);
+
+        EnumMap<GatewayOperation, GatewayClient> gatewayClients = GatewayOperationClientBuilder.builder()
+                .authClient(gatewayClient)
+                .captureClient(gatewayClient)
+                .cancelClient(gatewayClient)
+                .refundClient(gatewayClient)
+                .build();
+
+        provider = new SmartpayPaymentProvider(gatewayClients, new ObjectMapper());
     }
 
     @Test

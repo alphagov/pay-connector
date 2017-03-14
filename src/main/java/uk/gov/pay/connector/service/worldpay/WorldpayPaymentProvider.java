@@ -12,6 +12,7 @@ import uk.gov.pay.connector.service.*;
 
 import javax.ws.rs.client.Invocation.Builder;
 import java.time.ZoneOffset;
+import java.util.EnumMap;
 import java.util.Optional;
 import java.util.function.BiFunction;
 import java.util.function.Function;
@@ -27,11 +28,8 @@ public class WorldpayPaymentProvider extends BasePaymentProvider<BaseResponse> {
 
     public static final String WORLDPAY_MACHINE_COOKIE_NAME = "machine";
 
-    public WorldpayPaymentProvider(GatewayClient client) {
-        super(client, false, null);
-    }
-    public WorldpayPaymentProvider(GatewayClient client, boolean isNotificationEndpointSecured, String notificationDomain) {
-        super(client, isNotificationEndpointSecured, notificationDomain);
+    public WorldpayPaymentProvider(EnumMap<GatewayOperation, GatewayClient> clients, boolean isNotificationEndpointSecured, String notificationDomain) {
+        super(clients, isNotificationEndpointSecured, notificationDomain);
     }
 
     @Override

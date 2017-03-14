@@ -14,6 +14,7 @@ import uk.gov.pay.connector.service.worldpay.WorldpayPaymentProvider;
 
 import javax.inject.Inject;
 import javax.ws.rs.core.MediaType;
+import java.util.EnumMap;
 import java.util.Map;
 
 import static jersey.repackaged.com.google.common.collect.Maps.newHashMap;
@@ -42,24 +43,42 @@ public class PaymentProviders<T extends BaseResponse> {
     private PaymentProvider createWorldpayProvider(ClientFactory clientFactory,
                                                    GatewayCredentialsConfig config,
                                                    MetricRegistry metricRegistry) {
+        GatewayClient gatewayClient = createGatewayClient(
+                clientFactory.createWithDropwizardClient(
+                        "WORLD_PAY"), config.getUrls(), MediaType.APPLICATION_XML_TYPE,
+                WorldpayPaymentProvider.includeSessionIdentifier(), metricRegistry);
+
+        EnumMap<GatewayOperation, GatewayClient> gatewayClientEnumMap = GatewayOperationClientBuilder.builder()
+                .authClient(gatewayClient)
+                .cancelClient(gatewayClient)
+                .captureClient(gatewayClient)
+                .refundClient(gatewayClient).build();
+
         return new WorldpayPaymentProvider(
-                createGatewayClient(
-                        clientFactory.createWithDropwizardClient(
-                                "WORLD_PAY"), config.getUrls(), MediaType.APPLICATION_XML_TYPE,
-                                WorldpayPaymentProvider.includeSessionIdentifier(), metricRegistry),
+                gatewayClientEnumMap,
                 ((WorldpayNotificationConfig) config).isSecureNotificationEnabled(),
                 ((WorldpayNotificationConfig) config).getNotificationDomain()
         );
+
     }
 
     private PaymentProvider createSmartPayProvider(ClientFactory clientFactory,
                                                    GatewayCredentialsConfig config,
                                                    ObjectMapper objectMapper,
                                                    MetricRegistry metricRegistry) {
+        GatewayClient gatewayClient = createGatewayClient(clientFactory.createWithDropwizardClient(
+                "SMART_PAY"), config.getUrls(), MediaType.APPLICATION_XML_TYPE,
+                SmartpayPaymentProvider.includeSessionIdentifier(), metricRegistry);
+
+        EnumMap<GatewayOperation, GatewayClient> gatewayClients = GatewayOperationClientBuilder.builder()
+                .authClient(gatewayClient)
+                .captureClient(gatewayClient)
+                .cancelClient(gatewayClient)
+                .refundClient(gatewayClient)
+                .build();
+
         return new SmartpayPaymentProvider(
-                createGatewayClient(clientFactory.createWithDropwizardClient(
-                        "SMART_PAY"), config.getUrls(), MediaType.APPLICATION_XML_TYPE,
-                        SmartpayPaymentProvider.includeSessionIdentifier(), metricRegistry),
+                gatewayClients,
                 objectMapper
         );
     }

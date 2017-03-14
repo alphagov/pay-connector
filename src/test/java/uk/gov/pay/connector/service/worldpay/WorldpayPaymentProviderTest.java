@@ -21,6 +21,8 @@ import uk.gov.pay.connector.model.gateway.Auth3dsResponseGatewayRequest;
 import uk.gov.pay.connector.model.gateway.AuthorisationGatewayRequest;
 import uk.gov.pay.connector.model.gateway.GatewayResponse;
 import uk.gov.pay.connector.service.GatewayClient;
+import uk.gov.pay.connector.service.GatewayOperation;
+import uk.gov.pay.connector.service.GatewayOperationClientBuilder;
 import uk.gov.pay.connector.service.GatewayOrder;
 import uk.gov.pay.connector.util.AuthUtils;
 
@@ -36,6 +38,7 @@ import java.net.URL;
 import java.nio.charset.Charset;
 import java.time.ZonedDateTime;
 import java.util.Collections;
+import java.util.EnumMap;
 import java.util.Map;
 
 import static com.google.common.io.Resources.getResource;
@@ -70,6 +73,7 @@ public class WorldpayPaymentProviderTest {
 
     private WorldpayPaymentProvider provider;
     private Client client;
+    EnumMap<GatewayOperation, GatewayClient> gatewayClients;
 
     @Mock
     private GatewayClient mockGatewayClient;
@@ -88,9 +92,26 @@ public class WorldpayPaymentProviderTest {
         mockWorldpaySuccessfulOrderSubmitResponse();
         when(mockMetricRegistry.histogram(anyString())).thenReturn(mockHistogram);
         when(mockMetricRegistry.counter(anyString())).thenReturn(mockCounter);
-        provider = new WorldpayPaymentProvider(
-                createGatewayClient(client, ImmutableMap.of(TEST.toString(), "http://worldpay.url"),
-                        MediaType.APPLICATION_XML_TYPE, WorldpayPaymentProvider.includeSessionIdentifier(), mockMetricRegistry));
+
+        GatewayClient gatewayClient = createGatewayClient(client, ImmutableMap.of(TEST.toString(), "http://worldpay.url"),
+                MediaType.APPLICATION_XML_TYPE, WorldpayPaymentProvider.includeSessionIdentifier(), mockMetricRegistry);
+
+        EnumMap<GatewayOperation, GatewayClient> mockGatewayClients = GatewayOperationClientBuilder.builder()
+                .authClient(gatewayClient)
+                .captureClient(gatewayClient)
+                .cancelClient(gatewayClient)
+                .refundClient(gatewayClient)
+                .build();
+
+        gatewayClients = GatewayOperationClientBuilder.builder()
+                .authClient(mockGatewayClient)
+                .captureClient(mockGatewayClient)
+                .cancelClient(mockGatewayClient)
+                .refundClient(mockGatewayClient)
+                .build();
+
+
+        provider = new WorldpayPaymentProvider(mockGatewayClients, false, null);
     }
 
     @Test
@@ -121,7 +142,7 @@ public class WorldpayPaymentProviderTest {
         when(mockGatewayAccountEntity.getCredentials()).thenReturn(credentialsMap);
         when(mockGatewayClient.postRequestFor(isNull(String.class), any(GatewayAccountEntity.class), any(GatewayOrder.class))).thenReturn(left(unexpectedStatusCodeFromGateway("Unexpected Response Code From Gateway")));
 
-        WorldpayPaymentProvider worldpayPaymentProvider = new WorldpayPaymentProvider(mockGatewayClient);
+        WorldpayPaymentProvider worldpayPaymentProvider = new WorldpayPaymentProvider(gatewayClients, false, null);
         worldpayPaymentProvider.refund(RefundGatewayRequest.valueOf(refundEntity));
 
         String expectedRefundRequest =
@@ -159,7 +180,7 @@ public class WorldpayPaymentProviderTest {
         when(mockGatewayAccountEntity.isRequires3ds()).thenReturn(false);
         when(mockGatewayClient.postRequestFor(isNull(String.class), any(GatewayAccountEntity.class), any(GatewayOrder.class))).thenReturn(left(unexpectedStatusCodeFromGateway("Unexpected Response Code From Gateway")));
 
-        WorldpayPaymentProvider worldpayPaymentProvider = new WorldpayPaymentProvider(mockGatewayClient);
+        WorldpayPaymentProvider worldpayPaymentProvider = new WorldpayPaymentProvider(gatewayClients, false, null);
 
         worldpayPaymentProvider.authorise(getCardAuthorisationRequest(chargeEntity));
 
@@ -189,7 +210,7 @@ public class WorldpayPaymentProviderTest {
         when(mockGatewayAccountEntity.isRequires3ds()).thenReturn(true);
         when(mockGatewayClient.postRequestFor(isNull(String.class), any(GatewayAccountEntity.class), any(GatewayOrder.class))).thenReturn(left(unexpectedStatusCodeFromGateway("Unexpected Response Code From Gateway")));
 
-        WorldpayPaymentProvider worldpayPaymentProvider = new WorldpayPaymentProvider(mockGatewayClient);
+        WorldpayPaymentProvider worldpayPaymentProvider = new WorldpayPaymentProvider(gatewayClients, false, null);
 
         worldpayPaymentProvider.authorise(getCardAuthorisationRequest(mockChargeEntity));
 
@@ -216,7 +237,7 @@ public class WorldpayPaymentProviderTest {
         when(mockGatewayAccountEntity.isRequires3ds()).thenReturn(true);
         when(mockGatewayClient.postRequestFor(isNull(String.class), any(GatewayAccountEntity.class), any(GatewayOrder.class))).thenReturn(left(unexpectedStatusCodeFromGateway("Unexpected Response Code From Gateway")));
 
-        WorldpayPaymentProvider worldpayPaymentProvider = new WorldpayPaymentProvider(mockGatewayClient);
+        WorldpayPaymentProvider worldpayPaymentProvider = new WorldpayPaymentProvider(gatewayClients, false, null);
 
         worldpayPaymentProvider.authorise3dsResponse(get3dsResponseGatewayRequest(mockChargeEntity));
 
@@ -245,7 +266,7 @@ public class WorldpayPaymentProviderTest {
         when(mockGatewayAccountEntity.isRequires3ds()).thenReturn(true);
         when(mockGatewayClient.postRequestFor(isNull(String.class), any(GatewayAccountEntity.class), any(GatewayOrder.class))).thenReturn(left(unexpectedStatusCodeFromGateway("Unexpected Response Code From Gateway")));
 
-        WorldpayPaymentProvider worldpayPaymentProvider = new WorldpayPaymentProvider(mockGatewayClient);
+        WorldpayPaymentProvider worldpayPaymentProvider = new WorldpayPaymentProvider(gatewayClients, false, null);
 
         worldpayPaymentProvider.authorise3dsResponse(get3dsResponseGatewayRequest(mockChargeEntity));
 
