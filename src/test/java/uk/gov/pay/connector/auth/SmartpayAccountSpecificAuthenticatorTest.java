@@ -54,7 +54,7 @@ public class SmartpayAccountSpecificAuthenticatorTest {
 
         when(hashUtil.check(password, hashedPassword)).thenReturn(true);
 
-        com.google.common.base.Optional<BasicAuthUser> authenticate = smartpayAccountSpecificAuthenticator.authenticate(new BasicCredentials(username, password));
+        Optional<BasicAuthUser> authenticate = smartpayAccountSpecificAuthenticator.authenticate(new BasicCredentials(username, password));
 
         assertTrue(authenticate.isPresent());
     }
@@ -64,7 +64,7 @@ public class SmartpayAccountSpecificAuthenticatorTest {
 
         when(hashUtil.check(password, hashedPassword)).thenReturn(false);
 
-        com.google.common.base.Optional<BasicAuthUser> authenticate = smartpayAccountSpecificAuthenticator.authenticate(new BasicCredentials(username, password));
+        Optional<BasicAuthUser> authenticate = smartpayAccountSpecificAuthenticator.authenticate(new BasicCredentials(username, password));
 
         assertFalse(authenticate.isPresent());
     }
@@ -75,7 +75,7 @@ public class SmartpayAccountSpecificAuthenticatorTest {
 
         when(gatewayAccountDao.findByNotificationCredentialsUsername(username)).thenReturn(gatewayAccountEntityMayBe);
 
-        com.google.common.base.Optional<BasicAuthUser> authenticate = smartpayAccountSpecificAuthenticator.authenticate(new BasicCredentials(username, password));
+        Optional<BasicAuthUser> authenticate = smartpayAccountSpecificAuthenticator.authenticate(new BasicCredentials(username, password));
 
         assertFalse(authenticate.isPresent());
     }

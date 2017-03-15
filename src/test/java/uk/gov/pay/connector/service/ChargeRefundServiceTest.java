@@ -1,13 +1,11 @@
 package uk.gov.pay.connector.service;
 
-import org.hamcrest.Description;
-import org.hamcrest.Matcher;
-import org.hamcrest.TypeSafeMatcher;
 import org.junit.Before;
 import org.junit.Rule;
 import org.junit.Test;
 import org.junit.rules.ExpectedException;
 import org.junit.runner.RunWith;
+import org.mockito.ArgumentMatcher;
 import org.mockito.Mock;
 import org.mockito.runners.MockitoJUnitRunner;
 import uk.gov.pay.connector.dao.ChargeDao;
@@ -33,7 +31,6 @@ import java.util.Optional;
 import static com.google.common.collect.Maps.newHashMap;
 import static org.hamcrest.core.Is.is;
 import static org.junit.Assert.*;
-import static org.mockito.Matchers.argThat;
 import static org.mockito.Mockito.*;
 import static uk.gov.pay.connector.model.domain.ChargeEntityFixture.aValidChargeEntity;
 import static uk.gov.pay.connector.model.domain.ChargeStatus.AUTHORISATION_SUCCESS;
@@ -385,33 +382,21 @@ public class ChargeRefundServiceTest {
         verifyNoMoreInteractions(mockChargeDao, mockRefundDao, mockProviders, mockProvider);
     }
 
-    private Matcher<RefundEntity> aRefundEntity(long amount, ChargeEntity chargeEntity) {
-        return new TypeSafeMatcher<RefundEntity>() {
-            @Override
-            protected boolean matchesSafely(RefundEntity refundEntity) {
-                return refundEntity.getAmount() == amount &&
-                        refundEntity.getChargeEntity().equals(chargeEntity);
 
-            }
-
-            @Override
-            public void describeTo(Description description) {
-            }
+    private ArgumentMatcher<RefundEntity> aRefundEntity(long amount, ChargeEntity chargeEntity) {
+        return object -> {
+            RefundEntity refundEntity = ((RefundEntity) object);
+            return refundEntity.getAmount() == amount &&
+                    refundEntity.getChargeEntity().equals(chargeEntity);
         };
     }
 
-    private Matcher<RefundGatewayRequest> aRefundRequestWith(ChargeEntity capturedCharge, long amountInPence) {
-        return new TypeSafeMatcher<RefundGatewayRequest>() {
-            @Override
-            protected boolean matchesSafely(RefundGatewayRequest refundGatewayRequest) {
-                return refundGatewayRequest.getGatewayAccount().equals(capturedCharge.getGatewayAccount()) &&
-                        refundGatewayRequest.getTransactionId().equals(capturedCharge.getGatewayTransactionId()) &&
-                        refundGatewayRequest.getAmount().equals(String.valueOf(amountInPence));
-            }
-
-            @Override
-            public void describeTo(Description description) {
-            }
+    private ArgumentMatcher<RefundGatewayRequest> aRefundRequestWith(ChargeEntity capturedCharge, long amountInPence) {
+        return object -> {
+            RefundGatewayRequest refundGatewayRequest = ((RefundGatewayRequest) object);
+            return refundGatewayRequest.getGatewayAccount().equals(capturedCharge.getGatewayAccount()) &&
+                    refundGatewayRequest.getTransactionId().equals(capturedCharge.getGatewayTransactionId()) &&
+                    refundGatewayRequest.getAmount().equals(String.valueOf(amountInPence));
         };
     }
 }

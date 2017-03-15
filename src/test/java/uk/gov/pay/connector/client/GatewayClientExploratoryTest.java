@@ -18,8 +18,8 @@ import static com.github.tomakehurst.wiremock.client.WireMock.*;
 import static com.github.tomakehurst.wiremock.core.WireMockConfiguration.wireMockConfig;
 import static javax.ws.rs.core.HttpHeaders.AUTHORIZATION;
 import static javax.ws.rs.core.MediaType.APPLICATION_XML;
-import static org.hamcrest.core.Is.is;
-import static org.junit.Assert.*;
+import static org.junit.Assert.assertTrue;
+import static org.junit.Assert.fail;
 import static uk.gov.pay.connector.util.AuthUtil.encode;
 import static uk.gov.pay.connector.util.TestClientFactory.createClientWithApacheConnectorAndTimeout;
 import static uk.gov.pay.connector.util.TestClientFactory.createJerseyClient;
@@ -35,8 +35,7 @@ public class GatewayClientExploratoryTest {
             fail("Exception not thrown!");
         } catch (Exception e) {
             assertTrue(e instanceof ProcessingException);
-            assertTrue(e.getCause() instanceof IllegalStateException);
-            assertThat(e.getMessage(), is("Already connected"));
+            assertTrue(e.getCause() instanceof UnknownHostException);
         }
     }
 

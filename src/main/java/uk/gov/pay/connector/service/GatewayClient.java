@@ -79,12 +79,13 @@ public class GatewayClient {
                             account.getCredentials().get(CREDENTIALS_USERNAME),
                             account.getCredentials().get(CREDENTIALS_PASSWORD)));
 
-                    response = sessionIdentifier.apply(request, requestBuilder)
-                            .post(Entity.entity(request.getPayload(), mediaType));
+            response = sessionIdentifier.apply(request, requestBuilder)
+                    .post(Entity.entity(request.getPayload(), mediaType));
 
             int statusCode = response.getStatus();
+            Response gatewayResponse = new Response(response);
             if (statusCode == OK.getStatusCode()) {
-                return right(new GatewayClient.Response(response));
+                return right(gatewayResponse);
             } else {
                 logger.error("Gateway returned unexpected status code: {}, for gateway url={} with type {}", statusCode, gatewayUrl, account.getType());
                 incrementFailureCounter(metricRegistry, metricsPrefix);
@@ -136,6 +137,7 @@ public class GatewayClient {
     private void incrementFailureCounter(MetricRegistry metricRegistry, String metricsPrefix) {
         metricRegistry.counter(metricsPrefix + ".failures").inc();
     }
+
     static public class Response {
         private final int status;
         private final String entity;
@@ -144,7 +146,7 @@ public class GatewayClient {
         protected Response(final javax.ws.rs.core.Response delegate) {
             this.status = delegate.getStatus();
             this.entity = delegate.readEntity(String.class);
-            delegate.getCookies().forEach((name,cookie) -> {
+            delegate.getCookies().forEach((name, cookie) -> {
                 responseCookies.put(name, cookie.getValue());
             });
         }

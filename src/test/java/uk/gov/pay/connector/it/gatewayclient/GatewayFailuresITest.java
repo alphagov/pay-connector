@@ -2,6 +2,7 @@ package uk.gov.pay.connector.it.gatewayclient;
 
 import com.github.tomakehurst.wiremock.junit.WireMockRule;
 import com.google.common.collect.ImmutableMap;
+import com.jayway.restassured.RestAssured;
 import org.junit.Before;
 import org.junit.Rule;
 import org.junit.Test;
@@ -13,6 +14,7 @@ import uk.gov.pay.connector.util.PortFactory;
 import java.util.Map;
 
 import static com.jayway.restassured.RestAssured.given;
+import static com.jayway.restassured.config.ConnectionConfig.connectionConfig;
 import static com.jayway.restassured.http.ContentType.JSON;
 import static io.dropwizard.testing.ConfigOverride.config;
 import static org.hamcrest.Matchers.is;
@@ -59,7 +61,7 @@ public class GatewayFailuresITest {
         String errorMessage = "Unexpected Response Code From Gateway";
         String cardAuthUrl = FRONTEND_CHARGE_AUTHORIZE_API_PATH.replace("{chargeId}", EXTERNAL_CHARGE_ID);
 
-        given()
+        given().config(RestAssured.config().connectionConfig(connectionConfig().closeIdleConnectionsAfterEachResponse()))
                 .port(app.getLocalPort())
                 .contentType(JSON)
                 .when()
