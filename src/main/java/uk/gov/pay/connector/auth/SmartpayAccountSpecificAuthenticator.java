@@ -1,6 +1,5 @@
 package uk.gov.pay.connector.auth;
 
-import com.google.common.base.Optional;
 import com.google.inject.Inject;
 import io.dropwizard.auth.AuthenticationException;
 import io.dropwizard.auth.Authenticator;
@@ -10,6 +9,8 @@ import org.slf4j.LoggerFactory;
 import uk.gov.pay.connector.dao.GatewayAccountDao;
 import uk.gov.pay.connector.model.domain.GatewayAccountEntity;
 import uk.gov.pay.connector.util.HashUtil;
+
+import java.util.Optional;
 
 import static java.lang.String.format;
 
@@ -30,10 +31,10 @@ public class SmartpayAccountSpecificAuthenticator implements Authenticator<Basic
 
         return gatewayAccountDao.findByNotificationCredentialsUsername(basicCredentials.getUsername())
                 .filter((gatewayAccountEntity) -> matchCredentials(basicCredentials, gatewayAccountEntity))
-                .map(gatewayAccountEntity -> Optional.fromNullable(gatewayAccountEntity.getNotificationCredentials().toBasicAuthUser()))
+                .map(gatewayAccountEntity -> Optional.ofNullable(gatewayAccountEntity.getNotificationCredentials().toBasicAuthUser()))
                 .orElseGet(() -> {
                     logger.error(format("Authentication failure: failed for smartpay username %s", basicCredentials));
-                    return Optional.absent();
+                    return Optional.empty();
                 });
     }
 

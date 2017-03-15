@@ -2,9 +2,6 @@ package uk.gov.pay.connector.service;
 
 import fj.data.Either;
 import org.apache.commons.lang3.tuple.Pair;
-import org.exparity.hamcrest.date.ZonedDateTimeMatchers;
-import org.hamcrest.BaseMatcher;
-import org.hamcrest.Description;
 import org.junit.Before;
 import org.junit.Test;
 import org.junit.runner.RunWith;
@@ -25,7 +22,6 @@ import java.time.ZonedDateTime;
 import java.time.temporal.ChronoUnit;
 import java.util.Optional;
 
-import static java.time.temporal.ChronoUnit.SECONDS;
 import static junit.framework.TestCase.assertTrue;
 import static org.hamcrest.Matchers.is;
 import static org.junit.Assert.assertThat;
@@ -274,9 +270,9 @@ public class NotificationServiceTest {
         verify(mockedChargeEntity).setStatus(CAPTURED);
 
         ArgumentCaptor<Optional> generatedTimeCaptor = ArgumentCaptor.forClass(Optional.class);
-        verify(mockedChargeDao).mergeAndNotifyStatusHasChanged(argThat(is(mockedChargeEntity)), generatedTimeCaptor.capture());
+        verify(mockedChargeDao).mergeAndNotifyStatusHasChanged(argThat(obj -> mockedChargeEntity.equals(obj)), generatedTimeCaptor.capture());
 
-        assertTrue(ChronoUnit.SECONDS.between((ZonedDateTime)generatedTimeCaptor.getValue().get(), ZonedDateTime.now()) < 10);
+        assertTrue(ChronoUnit.SECONDS.between((ZonedDateTime) generatedTimeCaptor.getValue().get(), ZonedDateTime.now()) < 10);
 
         verifyNoMoreInteractions(mockedChargeDao);
     }

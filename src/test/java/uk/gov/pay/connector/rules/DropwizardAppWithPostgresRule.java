@@ -1,6 +1,7 @@
 package uk.gov.pay.connector.rules;
 
 import com.google.inject.persist.jpa.JpaPersistModule;
+import com.spotify.docker.client.exceptions.DockerException;
 import io.dropwizard.db.DataSourceFactory;
 import io.dropwizard.setup.Environment;
 import io.dropwizard.testing.ConfigOverride;
@@ -45,7 +46,11 @@ public class DropwizardAppWithPostgresRule implements TestRule {
 
     public DropwizardAppWithPostgresRule(String configPath, ConfigOverride... configOverrides) {
         configFilePath = resourceFilePath(configPath);
-        postgres = new PostgresDockerRule();
+        try {
+            postgres = new PostgresDockerRule();
+        } catch (DockerException e) {
+            throw new RuntimeException(e);
+        }
         List<ConfigOverride> cfgOverrideList = newArrayList(configOverrides);
         cfgOverrideList.add(config("database.url", postgres.getConnectionUrl()));
         cfgOverrideList.add(config("database.user", postgres.getUsername()));
