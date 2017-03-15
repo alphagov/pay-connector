@@ -8,7 +8,7 @@ import org.junit.Assume;
 import org.junit.Before;
 import org.junit.Ignore;
 import org.junit.Test;
-import uk.gov.pay.connector.app.GatewayCredentialsConfig;
+import uk.gov.pay.connector.app.GatewayConfig;
 import uk.gov.pay.connector.model.CancelGatewayRequest;
 import uk.gov.pay.connector.model.CaptureGatewayRequest;
 import uk.gov.pay.connector.model.RefundGatewayRequest;
@@ -254,11 +254,11 @@ public class WorldpayPaymentProviderTest {
         return new WorldpayPaymentProvider(gatewayClientEnumMap, false, null);
     }
 
-    private GatewayCredentialsConfig getWorldpayConfig() {
+    private GatewayConfig getWorldpayConfig() {
         return WORLDPAY_CREDENTIALS;
     }
 
-    private static final GatewayCredentialsConfig WORLDPAY_CREDENTIALS = new GatewayCredentialsConfig() {
+    private static final GatewayConfig WORLDPAY_CREDENTIALS = new GatewayConfig() {
         @Override
         public Map<String, String> getUrls() {
             return ImmutableMap.of(TEST.toString(), "https://secure-test.worldpay.com/jsp/merchant/xml/paymentService.jsp");

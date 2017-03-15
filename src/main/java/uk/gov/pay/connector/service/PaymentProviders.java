@@ -3,10 +3,9 @@ package uk.gov.pay.connector.service;
 import com.codahale.metrics.MetricRegistry;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import io.dropwizard.setup.Environment;
-import org.apache.commons.lang3.StringUtils;
 import uk.gov.pay.connector.app.ConnectorConfiguration;
-import uk.gov.pay.connector.app.GatewayCredentialsConfig;
-import uk.gov.pay.connector.app.WorldpayNotificationConfig;
+import uk.gov.pay.connector.app.GatewayConfig;
+import uk.gov.pay.connector.app.WorldpayConfig;
 import uk.gov.pay.connector.resources.PaymentGatewayName;
 import uk.gov.pay.connector.service.sandbox.SandboxPaymentProvider;
 import uk.gov.pay.connector.service.smartpay.SmartpayPaymentProvider;
@@ -41,7 +40,7 @@ public class PaymentProviders<T extends BaseResponse> {
     }
 
     private PaymentProvider createWorldpayProvider(ClientFactory clientFactory,
-                                                   GatewayCredentialsConfig config,
+                                                   GatewayConfig config,
                                                    MetricRegistry metricRegistry) {
         GatewayClient gatewayClient = createGatewayClient(
                 clientFactory.createWithDropwizardClient(
@@ -56,14 +55,14 @@ public class PaymentProviders<T extends BaseResponse> {
 
         return new WorldpayPaymentProvider(
                 gatewayClientEnumMap,
-                ((WorldpayNotificationConfig) config).isSecureNotificationEnabled(),
-                ((WorldpayNotificationConfig) config).getNotificationDomain()
+                ((WorldpayConfig) config).isSecureNotificationEnabled(),
+                ((WorldpayConfig) config).getNotificationDomain()
         );
 
     }
 
     private PaymentProvider createSmartPayProvider(ClientFactory clientFactory,
-                                                   GatewayCredentialsConfig config,
+                                                   GatewayConfig config,
                                                    ObjectMapper objectMapper,
                                                    MetricRegistry metricRegistry) {
         GatewayClient gatewayClient = createGatewayClient(clientFactory.createWithDropwizardClient(

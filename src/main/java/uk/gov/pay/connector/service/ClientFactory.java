@@ -37,13 +37,11 @@ public class ClientFactory {
     public Client createWithDropwizardClient(String clientName) {
         JerseyClientConfiguration clientConfiguration = conf.getClientConfiguration();
 
-        Duration readTimeout = conf.getCustomJerseyClient().getReadTimeout();
-        int readTimeoutInMillis = (int) (readTimeout.toMilliseconds());
-
         JerseyClientBuilder defaultClientBuilder = new JerseyClientBuilder(environment)
                 .using(new ApacheConnectorProvider())
                 .using(clientConfiguration)
-                .withProperty(ClientProperties.READ_TIMEOUT, readTimeoutInMillis)
+                .withProperty(ClientProperties.READ_TIMEOUT, getReadTimeoutInMillis())
+
                 .withProperty(ApacheClientProperties.CONNECTION_MANAGER, createConnectionManager());
 
         // optionally set proxy; see comment below why this has to be done
@@ -55,6 +53,11 @@ public class ClientFactory {
         Client client = defaultClientBuilder.build(clientName);
         client.register(RestClientLoggingFilter.class);
         return client;
+    }
+
+    private int getReadTimeoutInMillis() {
+        Duration readTimeout = conf.getCustomJerseyClient().getReadTimeout();
+        return (int) (readTimeout.toMilliseconds());
     }
 
     private HttpClientConnectionManager createConnectionManager() {

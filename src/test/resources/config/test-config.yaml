@@ -28,6 +28,8 @@ worldpay:
   jerseyClientOverrides:
     auth:
       timeout: 111ms
+      readTimeout: 222ms
+      connectionTimeout: 333ms
 
 smartpay:
   urls:

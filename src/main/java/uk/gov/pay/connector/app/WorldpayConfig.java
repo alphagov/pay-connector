@@ -1,6 +1,6 @@
 package uk.gov.pay.connector.app;
 
-public class WorldpayNotificationConfig extends GatewayCredentialsConfig {
+public class WorldpayConfig extends GatewayConfig {
     private boolean secureNotificationEnabled;
     private String notificationDomain;
 

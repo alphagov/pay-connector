@@ -7,13 +7,18 @@ import javax.validation.constraints.NotNull;
 import java.util.List;
 import java.util.Map;
 
-public class GatewayCredentialsConfig extends Configuration {
+public class GatewayConfig extends Configuration {
 
     @Valid
     @NotNull
     private Map<String, String> urls;
     private List<String> credentials;
-    private Map<String, Map<String, String>> jerseyClientOverrides;
+
+    private JerseyClientOverrides jerseyClientOverrides;
+
+    public JerseyClientOverrides getJerseyClientOverrides() {
+        return jerseyClientOverrides;
+    }
 
     public List<String> getCredentials() {
         return credentials;
@@ -21,9 +26,5 @@ public class GatewayCredentialsConfig extends Configuration {
 
     public Map<String, String> getUrls() {
         return urls;
-    }
-
-    public Map<String, Map<String, String>> getJerseyClientOverrides() {
-        return jerseyClientOverrides;
     }
 }
