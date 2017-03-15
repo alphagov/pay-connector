@@ -17,6 +17,7 @@ import org.glassfish.jersey.apache.connector.ApacheClientProperties;
 import org.glassfish.jersey.apache.connector.ApacheConnectorProvider;
 import org.glassfish.jersey.client.ClientProperties;
 import uk.gov.pay.connector.app.ConnectorConfiguration;
+import uk.gov.pay.connector.app.OperationOverrides;
 import uk.gov.pay.connector.filters.RestClientLoggingFilter;
 import uk.gov.pay.connector.util.TrustStoreLoader;
 
@@ -34,14 +35,12 @@ public class ClientFactory {
         this.conf = conf;
     }
 
-    public Client createWithDropwizardClient(String clientName) {
-        JerseyClientConfiguration clientConfiguration = conf.getClientConfiguration();
-
+    public Client createWithDropwizardClient(String clientName, GatewayOperation operation) {
+        JerseyClientConfiguration clientConfiguration = clientConfigurationWithOverrides(operation);
         JerseyClientBuilder defaultClientBuilder = new JerseyClientBuilder(environment)
                 .using(new ApacheConnectorProvider())
                 .using(clientConfiguration)
-                .withProperty(ClientProperties.READ_TIMEOUT, getReadTimeoutInMillis())
-
+                .withProperty(ClientProperties.READ_TIMEOUT, getReadTimeoutInMillis(operation))
                 .withProperty(ApacheClientProperties.CONNECTION_MANAGER, createConnectionManager());
 
         // optionally set proxy; see comment below why this has to be done
@@ -55,9 +54,37 @@ public class ClientFactory {
         return client;
     }
 
-    private int getReadTimeoutInMillis() {
-        Duration readTimeout = conf.getCustomJerseyClient().getReadTimeout();
-        return (int) (readTimeout.toMilliseconds());
+    private JerseyClientConfiguration clientConfigurationWithOverrides(GatewayOperation operation) {
+        JerseyClientConfiguration clientConfiguration = conf.getClientConfiguration();
+
+        if (getOverridesFor(operation) != null) {
+            Duration timeout = getOverridesFor(operation).getTimeout();
+            if (timeout != null) {
+                clientConfiguration.setTimeout(timeout);
+            }
+
+            Duration connectionTimeout = getOverridesFor(operation).getConnectionTimeout();
+            if (connectionTimeout != null) {
+                clientConfiguration.setConnectionTimeout(connectionTimeout);
+            }
+        }
+
+        return clientConfiguration;
+    }
+
+    private int getReadTimeoutInMillis(GatewayOperation operation) {
+        OperationOverrides overrides = getOverridesFor(operation);
+        if (overrides != null && overrides.getReadTimeout() != null) {
+            return (int) overrides.getReadTimeout().toMilliseconds();
+        }
+        return (int) conf.getCustomJerseyClient().getReadTimeout().toMilliseconds();
+    }
+
+    private OperationOverrides getOverridesFor(GatewayOperation operation) {
+        if (conf.getWorldpayConfig().getJerseyClientOverrides() != null) {
+            return conf.getWorldpayConfig().getJerseyClientOverrides().getOverridesFor(operation);
+        }
+        return null;
     }
 
     private HttpClientConnectionManager createConnectionManager() {

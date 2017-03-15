@@ -11,6 +11,7 @@ import org.mockserver.integration.ClientAndProxy;
 import org.mockserver.integration.ClientAndServer;
 import uk.gov.pay.connector.rules.DropwizardAppWithPostgresRule;
 import uk.gov.pay.connector.service.ClientFactory;
+import uk.gov.pay.connector.service.GatewayOperation;
 
 import javax.ws.rs.client.Client;
 import java.util.Arrays;
@@ -74,7 +75,7 @@ public class ClientFactoryTest {
 
 
         Client client = new ClientFactory(app.getEnvironment(), app.getConf())
-                .createWithDropwizardClient("SANDBOX");
+                .createWithDropwizardClient("SANDBOX", GatewayOperation.AUTHORISE);
 
         client.target(serverUrl).path("hello").request().get();
 
