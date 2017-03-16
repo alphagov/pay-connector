@@ -1,0 +1,116 @@
+server:
+  applicationConnectors:
+    - type: http
+      port: 0
+  adminConnectors:
+    - type: http
+      port: 0
+
+logging:
+    level: INFO
+    appenders:
+      - type: console
+        threshold: ALL
+        timeZone: UTC
+        target: stdout
+        logFormat: "[%thread] %highlight(%-5level) %cyan(%logger{15}) - %msg %n"
+
+worldpay:
+  urls:
+    test: http://localhost:10107/not/used
+    live: http://localhost:10107/not/used
+  secureNotificationEnabled: true
+  notificationDomain: ""
+  credentials: ['username','password','merchant_id']
+
+  jerseyClientOverrides:
+    auth:
+      readTimeout: 20ms
+    cancel:
+      readTimeout: 2000ms
+    refund:
+      readTimeout: 2000ms
+    capture:
+      readTimeout: 2000ms
+
+smartpay:
+  urls:
+    test: http://localhost:10107/not/used
+    live: http://localhost:10107/not/used
+  credentials: ['username','password']
+
+jerseyClient:
+  timeout: 500ms
+  connectionTimeout: 500ms
+  timeToLive: 1h
+  cookiesEnabled: false
+  maxConnections: 1024
+  maxConnectionsPerRoute: 1024
+  keepAlive: 0ms
+  retries: 0
+  userAgent: connector
+  gzipEnabledForRequests: false
+  proxy:
+      host: localhost
+      port: 1234
+      scheme : http
+      nonProxyHosts:
+        - localhost
+
+customJerseyClient:
+  readTimeout: 50000ms
+  enableProxy: false
+
+executorServiceConfig:
+  timeoutInSeconds: ${AUTH_READ_TIMEOUT_SECONDS:-1}
+  threadsPerCpu: ${NUMBER_OF_THREADS_PER_CPU:-100}
+
+transactionsPaginationServiceConfig:
+  displayPageSize: ${TRANSACTION_LIST_DISPLAY_SIZE:-500}
+
+database:
+  driverClass: org.postgresql.Driver
+  user: postgres
+  password: mysecretpassword
+  url:
+
+  # the maximum amount of time to wait on an empty pool before throwing an exception
+  maxWaitForConnection: 1s
+
+  # the SQL query to run when validating a connection's liveness
+  validationQuery: "SELECT '1'"
+
+  # the timeout before a connection validation queries fail
+  validationQueryTimeout: 3s
+
+  # the minimum number of connections to keep open
+  minSize: 8
+
+  # the maximum number of connections to keep open
+  maxSize: 32
+
+  # whether or not idle connections should be validated
+  checkConnectionWhileIdle: false
+
+  # the amount of time to sleep between runs of the idle connection validation, abandoned cleaner and idle pool resizing
+  evictionInterval: 10s
+
+  # the minimum amount of time an connection must sit idle in the pool before it is eligible for eviction
+  minIdleTime: 1 minute
+
+jpa:
+  jpaLoggingLevel: WARNING
+  sqlLoggingLevel: WARNING
+  ddlGenerationOutputMode: database
+  queryResultsCache: false
+  cacheSharedDefault: false
+
+notifyConfig:
+  emailTemplateId: test-template-id
+  serviceId: test-service-id
+  secret: 11111111-1111-1111-1111-111111111111
+  notificationBaseURL: https://stubs.pymnt.localdomain
+  emailNotifyEnabled: false
+
+graphiteHost: ${METRICS_HOST:-localhost}
+graphitePort: ${METRICS_PORT:-8092}

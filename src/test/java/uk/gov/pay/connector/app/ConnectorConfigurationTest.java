@@ -21,13 +21,9 @@ public class ConnectorConfigurationTest {
     public void shouldParseConfiguration() {
         JerseyClientOverrides jerseyClientOverrides = RULE.getConfiguration().getWorldpayConfig().getJerseyClientOverrides();
 
-        Duration authTimeout = jerseyClientOverrides.getAuth().getTimeout();
         Duration authReadTimeout = jerseyClientOverrides.getAuth().getReadTimeout();
-        Duration authConnectionTimeout = jerseyClientOverrides.getAuth().getConnectionTimeout();
 
-        assertThat(authTimeout, is(Duration.milliseconds(111)));
         assertThat(authReadTimeout, is(Duration.milliseconds(222)));
-        assertThat(authConnectionTimeout, is(Duration.milliseconds(333)));
     }
 
 }

@@ -4,7 +4,6 @@ import io.dropwizard.client.JerseyClientBuilder;
 import io.dropwizard.client.JerseyClientConfiguration;
 import io.dropwizard.client.proxy.ProxyConfiguration;
 import io.dropwizard.setup.Environment;
-import io.dropwizard.util.Duration;
 import org.apache.http.config.RegistryBuilder;
 import org.apache.http.conn.HttpClientConnectionManager;
 import org.apache.http.conn.socket.ConnectionSocketFactory;
@@ -35,12 +34,12 @@ public class ClientFactory {
         this.conf = conf;
     }
 
-    public Client createWithDropwizardClient(String clientName, GatewayOperation operation) {
-        JerseyClientConfiguration clientConfiguration = clientConfigurationWithOverrides(operation);
+    public Client createWithDropwizardClient(SupportedPaymentGateway gateway, GatewayOperation operation) {
+        JerseyClientConfiguration clientConfiguration = conf.getClientConfiguration();
         JerseyClientBuilder defaultClientBuilder = new JerseyClientBuilder(environment)
                 .using(new ApacheConnectorProvider())
                 .using(clientConfiguration)
-                .withProperty(ClientProperties.READ_TIMEOUT, getReadTimeoutInMillis(operation))
+                .withProperty(ClientProperties.READ_TIMEOUT, getReadTimeoutInMillis(operation, gateway))
                 .withProperty(ApacheClientProperties.CONNECTION_MANAGER, createConnectionManager());
 
         // optionally set proxy; see comment below why this has to be done
@@ -49,41 +48,25 @@ public class ClientFactory {
                 .withProperty(ClientProperties.PROXY_URI, proxyUrl(clientConfiguration.getProxyConfiguration()));
         }
 
-        Client client = defaultClientBuilder.build(clientName);
+        Client client = defaultClientBuilder.build(gateway.getGatewayName());
         client.register(RestClientLoggingFilter.class);
         return client;
     }
 
-    private JerseyClientConfiguration clientConfigurationWithOverrides(GatewayOperation operation) {
-        JerseyClientConfiguration clientConfiguration = conf.getClientConfiguration();
-
-        if (getOverridesFor(operation) != null) {
-            Duration timeout = getOverridesFor(operation).getTimeout();
-            if (timeout != null) {
-                clientConfiguration.setTimeout(timeout);
-            }
-
-            Duration connectionTimeout = getOverridesFor(operation).getConnectionTimeout();
-            if (connectionTimeout != null) {
-                clientConfiguration.setConnectionTimeout(connectionTimeout);
-            }
-        }
-
-        return clientConfiguration;
-    }
-
-    private int getReadTimeoutInMillis(GatewayOperation operation) {
-        OperationOverrides overrides = getOverridesFor(operation);
+    private int getReadTimeoutInMillis(GatewayOperation operation, SupportedPaymentGateway gateway) {
+        OperationOverrides overrides = getOverridesFor(operation, gateway);
         if (overrides != null && overrides.getReadTimeout() != null) {
             return (int) overrides.getReadTimeout().toMilliseconds();
         }
         return (int) conf.getCustomJerseyClient().getReadTimeout().toMilliseconds();
     }
 
-    private OperationOverrides getOverridesFor(GatewayOperation operation) {
-        if (conf.getWorldpayConfig().getJerseyClientOverrides() != null) {
-            return conf.getWorldpayConfig().getJerseyClientOverrides().getOverridesFor(operation);
+    private OperationOverrides getOverridesFor(GatewayOperation operation, SupportedPaymentGateway gateway) {
+
+        if (conf.getGatewayConfigFor(gateway).getJerseyClientOverrides() != null) {
+            return conf.getGatewayConfigFor(gateway).getJerseyClientOverrides().getOverridesFor(operation);
         }
+
         return null;
     }
 

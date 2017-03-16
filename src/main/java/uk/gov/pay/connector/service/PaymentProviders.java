@@ -44,7 +44,7 @@ public class PaymentProviders<T extends BaseResponse> {
                                                    MetricRegistry metricRegistry) {
         GatewayClient gatewayClient = createGatewayClient(
                 clientFactory.createWithDropwizardClient(
-                        "WORLD_PAY", GatewayOperation.AUTHORISE), config.getUrls(), MediaType.APPLICATION_XML_TYPE,
+                        SupportedPaymentGateway.WORLDPAY, GatewayOperation.AUTHORISE), config.getUrls(), MediaType.APPLICATION_XML_TYPE,
                 WorldpayPaymentProvider.includeSessionIdentifier(), metricRegistry);
 
         EnumMap<GatewayOperation, GatewayClient> gatewayClientEnumMap = GatewayOperationClientBuilder.builder()
@@ -66,7 +66,7 @@ public class PaymentProviders<T extends BaseResponse> {
                                                    ObjectMapper objectMapper,
                                                    MetricRegistry metricRegistry) {
         GatewayClient gatewayClient = createGatewayClient(clientFactory.createWithDropwizardClient(
-                "SMART_PAY", GatewayOperation.AUTHORISE), config.getUrls(), MediaType.APPLICATION_XML_TYPE,
+                SupportedPaymentGateway.SMARTPAY, GatewayOperation.AUTHORISE), config.getUrls(), MediaType.APPLICATION_XML_TYPE,
                 SmartpayPaymentProvider.includeSessionIdentifier(), metricRegistry);
 
         EnumMap<GatewayOperation, GatewayClient> gatewayClients = GatewayOperationClientBuilder.builder()

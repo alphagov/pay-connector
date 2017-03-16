@@ -3,31 +3,21 @@ package uk.gov.pay.connector.it.gatewayclient;
 import io.dropwizard.testing.ConfigOverride;
 import io.dropwizard.testing.DropwizardTestSupport;
 import io.dropwizard.testing.ResourceHelpers;
-import io.dropwizard.testing.junit.DropwizardAppRule;
-import jdk.nashorn.internal.runtime.regexp.joni.Config;
 import org.glassfish.jersey.client.ClientProperties;
-import org.hamcrest.core.IsInstanceOf;
 import org.junit.After;
 import org.junit.Before;
-import org.junit.Rule;
 import org.junit.Test;
-import org.junit.runner.RunWith;
-import org.junit.runners.Parameterized;
-import org.mockito.verification.VerificationMode;
 import org.mockserver.integration.ClientAndProxy;
 import org.mockserver.integration.ClientAndServer;
 import uk.gov.pay.connector.app.ConnectorApp;
 import uk.gov.pay.connector.app.ConnectorConfiguration;
-import uk.gov.pay.connector.rules.DropwizardAppWithPostgresRule;
 import uk.gov.pay.connector.service.ClientFactory;
 import uk.gov.pay.connector.service.GatewayOperation;
+import uk.gov.pay.connector.service.SupportedPaymentGateway;
 
 import javax.ws.rs.client.Client;
 import javax.ws.rs.client.Invocation;
 import java.net.SocketTimeoutException;
-import java.util.Arrays;
-import java.util.Collection;
-import java.util.Map;
 import java.util.concurrent.TimeUnit;
 
 import static io.dropwizard.testing.ConfigOverride.config;
@@ -37,13 +27,14 @@ import static org.hamcrest.core.IsInstanceOf.instanceOf;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertThat;
 import static org.junit.Assert.fail;
-import static org.mockito.Mockito.never;
 import static org.mockserver.integration.ClientAndServer.startClientAndServer;
 import static org.mockserver.model.HttpRequest.request;
 import static org.mockserver.model.HttpResponse.response;
 import static org.mockserver.socket.PortFactory.findFreePort;
 import static org.mockserver.verify.VerificationTimes.exactly;
 import static org.mockserver.verify.VerificationTimes.once;
+import static uk.gov.pay.connector.service.SupportedPaymentGateway.SMARTPAY;
+import static uk.gov.pay.connector.service.SupportedPaymentGateway.WORLDPAY;
 
 public class ClientFactoryTest {
 
@@ -77,7 +68,7 @@ public class ClientFactoryTest {
 
 
         Client client = new ClientFactory(app.getEnvironment(), app.getConfiguration())
-                .createWithDropwizardClient("SANDBOX", GatewayOperation.AUTHORISE);
+                .createWithDropwizardClient(WORLDPAY, GatewayOperation.AUTHORISE);
 
         client.target(serverUrl).path("hello").request().get();
 
@@ -96,7 +87,7 @@ public class ClientFactoryTest {
                 .respond(response("world").withStatusCode(200));
 
         Client client = new ClientFactory(app.getEnvironment(), app.getConfiguration())
-                .createWithDropwizardClient("SANDBOX", GatewayOperation.AUTHORISE);
+                .createWithDropwizardClient(WORLDPAY, GatewayOperation.AUTHORISE);
 
         client.target(serverUrl).path("hello").request().get();
 
@@ -118,7 +109,7 @@ public class ClientFactoryTest {
                 .respond(response("world").withStatusCode(200).withDelay(TimeUnit.MILLISECONDS, 2000));
 
         Client client = new ClientFactory(app.getEnvironment(), app.getConfiguration())
-                .createWithDropwizardClient("WORLDPAY", GatewayOperation.AUTHORISE);
+                .createWithDropwizardClient(WORLDPAY, GatewayOperation.AUTHORISE);
 
         Invocation.Builder request = client.target(serverUrl).path(path).request();
         long startTime = System.currentTimeMillis();
@@ -172,6 +163,78 @@ public class ClientFactoryTest {
                     + connectionOverheadInMillis;
 
             long actualDuration = endTime - startTime;
+
+            assertThat(actualDuration, lessThan(expectedTimeout));
+        }
+    }
+
+    @Test
+    public void shouldUseGatewaySpecificReadTimeoutOverride_whenSpecified() throws Exception {
+        app = new DropwizardTestSupport<>(ConnectorApp.class,
+                ResourceHelpers.resourceFilePath("config/client-factory-test-config-with-worldpay-timeout-override.yaml"));
+        app.before();
+
+        String path = "/hello";
+        mockServer
+                .when(request().withMethod("GET").withPath(path))
+                .respond(response("world").withStatusCode(200).withDelay(TimeUnit.MILLISECONDS, 2000));
+
+        Client client = new ClientFactory(app.getEnvironment(), app.getConfiguration())
+                .createWithDropwizardClient(WORLDPAY, GatewayOperation.AUTHORISE);
+
+        Invocation.Builder request = client.target(serverUrl).path(path).request();
+        long startTime = System.currentTimeMillis();
+        try {
+            request.get();
+            fail();
+        } catch (javax.ws.rs.ProcessingException e) {
+            long endTime = System.currentTimeMillis();
+
+            Throwable timeoutException = e.getCause();
+            assertThat(timeoutException, instanceOf(SocketTimeoutException.class));
+
+            final long connectionOverheadInMillis = 1000;
+            long expectedTimeout = app.getConfiguration().getWorldpayConfig().getJerseyClientOverrides().getAuth().getReadTimeout().toMilliseconds()
+                    + connectionOverheadInMillis;
+
+            long actualDuration = endTime - startTime;
+            System.out.println(actualDuration);
+
+            assertThat(actualDuration, lessThan(expectedTimeout));
+        }
+    }
+
+    @Test
+    public void shouldUseGatewaySpecificReadTimeoutOverrideForSmartpay_whenSpecified() throws Exception {
+        app = new DropwizardTestSupport<>(ConnectorApp.class,
+                ResourceHelpers.resourceFilePath("config/client-factory-test-config-with-smartpay-timeout-override.yaml"));
+        app.before();
+
+        String path = "/hello";
+        mockServer
+                .when(request().withMethod("GET").withPath(path))
+                .respond(response("world").withStatusCode(200).withDelay(TimeUnit.MILLISECONDS, 2000));
+
+        Client client = new ClientFactory(app.getEnvironment(), app.getConfiguration())
+                .createWithDropwizardClient(SMARTPAY, GatewayOperation.AUTHORISE);
+
+        Invocation.Builder request = client.target(serverUrl).path(path).request();
+        long startTime = System.currentTimeMillis();
+        try {
+            request.get();
+            fail();
+        } catch (javax.ws.rs.ProcessingException e) {
+            long endTime = System.currentTimeMillis();
+
+            Throwable timeoutException = e.getCause();
+            assertThat(timeoutException, instanceOf(SocketTimeoutException.class));
+
+            final long connectionOverheadInMillis = 1000;
+            long expectedTimeout = app.getConfiguration().getSmartpayConfig().getJerseyClientOverrides().getAuth().getReadTimeout().toMilliseconds()
+                    + connectionOverheadInMillis;
+
+            long actualDuration = endTime - startTime;
+            System.out.println(actualDuration);
 
             assertThat(actualDuration, lessThan(expectedTimeout));
         }
