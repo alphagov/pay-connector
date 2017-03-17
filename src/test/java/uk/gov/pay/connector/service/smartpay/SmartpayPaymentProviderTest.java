@@ -13,7 +13,10 @@ import org.hamcrest.CoreMatchers;
 import org.junit.Assert;
 import org.junit.Before;
 import org.junit.Test;
+import org.junit.runner.RunWith;
 import org.mockito.Matchers;
+import org.mockito.Mock;
+import org.mockito.runners.MockitoJUnitRunner;
 import uk.gov.pay.connector.model.CaptureGatewayRequest;
 import uk.gov.pay.connector.model.Notification;
 import uk.gov.pay.connector.model.Notifications;
@@ -23,10 +26,7 @@ import uk.gov.pay.connector.model.domain.ChargeEntity;
 import uk.gov.pay.connector.model.domain.GatewayAccountEntity;
 import uk.gov.pay.connector.model.gateway.AuthorisationGatewayRequest;
 import uk.gov.pay.connector.model.gateway.GatewayResponse;
-import uk.gov.pay.connector.service.GatewayClient;
-import uk.gov.pay.connector.service.GatewayOperation;
-import uk.gov.pay.connector.service.GatewayOperationClientBuilder;
-import uk.gov.pay.connector.service.GatewayOrder;
+import uk.gov.pay.connector.service.*;
 import uk.gov.pay.connector.service.worldpay.WorldpayCaptureResponse;
 import uk.gov.pay.connector.util.AuthUtils;
 
@@ -40,6 +40,7 @@ import java.io.IOException;
 import java.net.URL;
 import java.nio.charset.Charset;
 import java.util.EnumMap;
+import java.util.Map;
 import java.util.function.BiFunction;
 
 import static com.google.common.io.Resources.getResource;
@@ -48,43 +49,64 @@ import static org.hamcrest.core.Is.is;
 import static org.hamcrest.core.IsSame.sameInstance;
 import static org.junit.Assert.assertThat;
 import static org.junit.Assert.assertTrue;
-import static org.mockito.Matchers.anyObject;
-import static org.mockito.Matchers.anyString;
-import static org.mockito.Matchers.eq;
+import static org.mockito.Matchers.*;
+import static org.mockito.Matchers.any;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
 import static uk.gov.pay.connector.model.domain.Address.anAddress;
 import static uk.gov.pay.connector.model.domain.ChargeEntityFixture.aValidChargeEntity;
 import static uk.gov.pay.connector.model.domain.GatewayAccountEntity.Type.TEST;
-import static uk.gov.pay.connector.service.GatewayClient.createGatewayClient;
 
+@RunWith(MockitoJUnitRunner.class)
 public class SmartpayPaymentProviderTest {
 
-    private Client client;
     private SmartpayPaymentProvider provider;
+    private GatewayClientFactory gatewayClientFactory;
+    private Map<String, String> urlMap = ImmutableMap.of(TEST.toString(), "http://smartpay.url");
+
+    @Mock
+    private Client mockClient;
+    @Mock
     private MetricRegistry mockMetricRegistry;
+    @Mock
     private Histogram mockHistogram;
+    @Mock
     private Counter mockCounter;
+    @Mock
     private BiFunction<GatewayOrder, Builder, Builder> mockSessionIdentifier;
+    @Mock
+    private ClientFactory mockClientFactory;
+    @Mock
+    private GatewayClient mockGatewayClient;
 
     @Before
     public void setup() throws Exception {
-        client = mock(Client.class);
-        mockMetricRegistry = mock(MetricRegistry.class);
-        mockHistogram = mock(Histogram.class);
-        mockCounter = mock(Counter.class);
-        mockSessionIdentifier = mock(BiFunction.class);
+        gatewayClientFactory = new GatewayClientFactory(mockClientFactory);
+
         when(mockMetricRegistry.histogram(anyString())).thenReturn(mockHistogram);
         when(mockMetricRegistry.counter(anyString())).thenReturn(mockCounter);
+        when(mockClientFactory.createWithDropwizardClient(
+                eq(SupportedPaymentGateway.SMARTPAY), any(GatewayOperation.class))
+        )
+        .thenReturn(mockClient);
+
         mockSmartpaySuccessfulOrderSubmitResponse();
-        GatewayClient gatewayClient = createGatewayClient(client, ImmutableMap.of(TEST.toString(), "http://smartpay.url"),
-                MediaType.APPLICATION_XML_TYPE, mockSessionIdentifier, mockMetricRegistry);
+
+        GatewayClient authClient = gatewayClientFactory.createGatewayClient(SupportedPaymentGateway.SMARTPAY, GatewayOperation.AUTHORISE,
+                urlMap, MediaType.APPLICATION_XML_TYPE, mockSessionIdentifier, mockMetricRegistry);
+        GatewayClient cancelClient = gatewayClientFactory.createGatewayClient(SupportedPaymentGateway.SMARTPAY, GatewayOperation.CANCEL,
+                urlMap, MediaType.APPLICATION_XML_TYPE, mockSessionIdentifier, mockMetricRegistry);
+        GatewayClient refundClient = gatewayClientFactory.createGatewayClient(SupportedPaymentGateway.SMARTPAY, GatewayOperation.REFUND,
+                urlMap, MediaType.APPLICATION_XML_TYPE, mockSessionIdentifier, mockMetricRegistry);
+        GatewayClient captureClient = gatewayClientFactory.createGatewayClient(SupportedPaymentGateway.SMARTPAY, GatewayOperation.CAPTURE,
+                urlMap, MediaType.APPLICATION_XML_TYPE, mockSessionIdentifier, mockMetricRegistry);
+
 
         EnumMap<GatewayOperation, GatewayClient> gatewayClients = GatewayOperationClientBuilder.builder()
-                .authClient(gatewayClient)
-                .captureClient(gatewayClient)
-                .cancelClient(gatewayClient)
-                .refundClient(gatewayClient)
+                .authClient(authClient)
+                .captureClient(captureClient)
+                .cancelClient(cancelClient)
+                .refundClient(refundClient)
                 .build();
 
         provider = new SmartpayPaymentProvider(gatewayClients, new ObjectMapper());
@@ -190,7 +212,7 @@ public class SmartpayPaymentProviderTest {
 
     private void mockSmartpayResponse(int httpStatus, String responsePayload) {
         WebTarget mockTarget = mock(WebTarget.class);
-        when(client.target(anyString())).thenReturn(mockTarget);
+        when(mockClient.target(anyString())).thenReturn(mockTarget);
         Builder mockBuilder = mock(Builder.class);
         when(mockTarget.request()).thenReturn(mockBuilder);
         when(mockBuilder.header(anyString(), anyObject())).thenReturn(mockBuilder);

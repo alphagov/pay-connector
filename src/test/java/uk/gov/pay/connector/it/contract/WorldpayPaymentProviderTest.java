@@ -42,7 +42,6 @@ import static org.junit.Assert.assertTrue;
 import static org.mockito.Mockito.*;
 import static uk.gov.pay.connector.model.domain.ChargeEntityFixture.aValidChargeEntity;
 import static uk.gov.pay.connector.model.domain.GatewayAccountEntity.Type.TEST;
-import static uk.gov.pay.connector.service.GatewayClient.createGatewayClient;
 import static uk.gov.pay.connector.util.AuthUtils.aValidAuthorisationDetails;
 import static uk.gov.pay.connector.util.SystemUtils.envOrThrow;
 
@@ -238,7 +237,7 @@ public class WorldpayPaymentProviderTest {
     }
 
     private WorldpayPaymentProvider getValidWorldpayPaymentProvider() {
-        GatewayClient gatewayClient = createGatewayClient(
+        GatewayClient gatewayClient = new GatewayClient(
                 ClientBuilder.newClient(),
                 getWorldpayConfig().getUrls(),
                 MediaType.APPLICATION_XML_TYPE,

@@ -42,23 +42,13 @@ public class GatewayClient {
     private final MediaType mediaType;
     private final BiFunction<GatewayOrder, Builder, Builder> sessionIdentifier;
 
-    private GatewayClient(Client client, Map<String, String> gatewayUrlMap, MediaType mediaType,
+    public GatewayClient(Client client, Map<String, String> gatewayUrlMap, MediaType mediaType,
                           BiFunction<GatewayOrder, Builder, Builder> sessionIdentifier, MetricRegistry metricRegistry) {
         this.gatewayUrlMap = gatewayUrlMap;
         this.client = client;
         this.metricRegistry = metricRegistry;
         this.mediaType = mediaType;
         this.sessionIdentifier = sessionIdentifier;
-    }
-
-    public static GatewayClient createGatewayClient(Client client, Map<String, String> gatewayUrlMap,
-                                                    MediaType mediaType,
-                                                    BiFunction<GatewayOrder, Builder, Builder> sessionIdentier, MetricRegistry metricRegistry) {
-        return new GatewayClient(client, gatewayUrlMap, mediaType, sessionIdentier, metricRegistry);
-    }
-
-    public Either<GatewayError, GatewayClient.Response> postRequestFor(GatewayAccountEntity account, GatewayOrder request) {
-        return postRequestFor(null, account, request);
     }
 
     public Either<GatewayError, GatewayClient.Response> postRequestFor(String route, GatewayAccountEntity account, GatewayOrder request) {
