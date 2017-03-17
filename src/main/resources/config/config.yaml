@@ -27,21 +27,13 @@ worldpay:
   credentials: ['username','password','merchant_id']
   jerseyClientOverrides:
     auth:
-      timeout: 2000ms
-      readTimeout: 2000ms
-      connectionTimeout: 2000ms
+      readTimeout: 90000ms
     cancel:
-      timeout: 2000ms
-      readTimeout: 2000ms
-      connectionTimeout: 2000ms
+      readTimeout: 90000ms
     refund:
-      timeout: 2000ms
-      readTimeout: 2000ms
-      connectionTimeout: 2000ms
+      readTimeout: 90000ms
     capture:
-      timeout: 2000ms
-      readTimeout: 2000ms
-      connectionTimeout: 2000ms
+      readTimeout: 10000ms
 
 smartpay:
   urls:
