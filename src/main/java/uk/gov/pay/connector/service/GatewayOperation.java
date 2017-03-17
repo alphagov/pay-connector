@@ -2,9 +2,9 @@ package uk.gov.pay.connector.service;
 
 public enum GatewayOperation {
     AUTHORISE("auth"),
-    CAPTURE("cancel"),
+    CAPTURE("capture"),
     REFUND("refund"),
-    CANCEL("capture");
+    CANCEL("cancel");
 
 
     private final String description;
