@@ -42,7 +42,7 @@ public class CardCaptureProcessTest {
         verify(mockChargeDao).findAllBy(searchParamsArgumentCaptor.capture());
 
         assertThat(searchParamsArgumentCaptor.getValue().getDisplaySize(),
-                is(CardCaptureProcess.NUMBER_OF_CHARGES_TO_CAPTURE));
+                is(CardCaptureProcess.BATCH_SIZE));
         assertThat(searchParamsArgumentCaptor.getValue().getChargeStatuses(), hasItem(CAPTURE_APPROVED));
         assertThat(searchParamsArgumentCaptor.getValue().getPage(), is(1L));
     }

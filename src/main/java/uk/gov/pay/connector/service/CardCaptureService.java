@@ -5,6 +5,7 @@ import io.dropwizard.setup.Environment;
 import uk.gov.pay.connector.dao.ChargeDao;
 import uk.gov.pay.connector.exception.ChargeNotFoundRuntimeException;
 import uk.gov.pay.connector.model.CaptureGatewayRequest;
+import uk.gov.pay.connector.model.ErrorType;
 import uk.gov.pay.connector.model.domain.ChargeEntity;
 import uk.gov.pay.connector.model.domain.ChargeStatus;
 import uk.gov.pay.connector.model.domain.GatewayAccountEntity;
@@ -56,19 +57,16 @@ public class CardCaptureService extends CardService implements TransactionalGate
     @Override
     public GatewayResponse<BaseCaptureResponse> postOperation(ChargeEntity chargeEntity, GatewayResponse<BaseCaptureResponse> operationResponse) {
         ChargeEntity reloadedCharge = chargeDao.merge(chargeEntity);
-        ChargeStatus status = CAPTURE_ERROR;
 
-        if (operationResponse.isSuccessful()) {
-            status = CAPTURE_SUBMITTED;
-        }
+        ChargeStatus nextStatus = determineNextStatus(operationResponse);
 
         String transactionId = operationResponse.getBaseResponse()
                 .map(BaseCaptureResponse::getTransactionId).orElse("");
 
         logger.info("Card capture response received - charge_external_id={}, operation_type={}, transaction_id={}, status={}",
-                chargeEntity.getExternalId(), OperationType.CAPTURE.getValue(), transactionId, status);
+                chargeEntity.getExternalId(), OperationType.CAPTURE.getValue(), transactionId, nextStatus);
 
-        reloadedCharge.setStatus(status);
+        reloadedCharge.setStatus(nextStatus);
         //update the charge with the new transaction id from gateway, if present.
         if (isBlank(transactionId)) {
             logger.warn("Card capture response received with no transaction id. - charge_external_id={}", reloadedCharge.getExternalId());
@@ -76,7 +74,7 @@ public class CardCaptureService extends CardService implements TransactionalGate
 
         GatewayAccountEntity account = chargeEntity.getGatewayAccount();
 
-        metricRegistry.counter(String.format("gateway-operations.%s.%s.%s.capture.result.%s", account.getGatewayName(), account.getType(), account.getId(), status.toString())).inc();
+        metricRegistry.counter(String.format("gateway-operations.%s.%s.%s.capture.result.%s", account.getGatewayName(), account.getType(), account.getId(), nextStatus.toString())).inc();
 
         reloadedCharge = chargeDao.mergeAndNotifyStatusHasChanged(reloadedCharge, Optional.empty());
 
@@ -91,5 +89,15 @@ public class CardCaptureService extends CardService implements TransactionalGate
         }
 
         return operationResponse;
+    }
+
+    private ChargeStatus determineNextStatus(GatewayResponse<BaseCaptureResponse> operationResponse) {
+        if (operationResponse.isSuccessful()) {
+            return CAPTURE_SUBMITTED;
+        } else {
+            return operationResponse.getGatewayError()
+                    .map(timeoutError -> CAPTURE_APPROVED)
+                    .orElse(CAPTURE_ERROR);
+        }
     }
 }

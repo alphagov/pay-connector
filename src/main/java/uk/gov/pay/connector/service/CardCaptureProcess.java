@@ -10,7 +10,7 @@ import static uk.gov.pay.connector.model.domain.ChargeStatus.CAPTURE_APPROVED;
 
 public class CardCaptureProcess {
 
-    static final long NUMBER_OF_CHARGES_TO_CAPTURE = 10;
+    static final long BATCH_SIZE = 10;
     private final ChargeDao chargeDao;
     private final CardCaptureService captureService;
 
@@ -29,7 +29,7 @@ public class CardCaptureProcess {
     private ChargeSearchParams chargeSearchCriteriaForCapture() {
         ChargeSearchParams chargeSearchParams = new ChargeSearchParams();
         chargeSearchParams.withInternalChargeStatuses(Collections.singletonList(CAPTURE_APPROVED));
-        chargeSearchParams.withDisplaySize(CardCaptureProcess.NUMBER_OF_CHARGES_TO_CAPTURE);
+        chargeSearchParams.withDisplaySize(CardCaptureProcess.BATCH_SIZE);
         chargeSearchParams.withPage(1L);
         return chargeSearchParams;
     }
