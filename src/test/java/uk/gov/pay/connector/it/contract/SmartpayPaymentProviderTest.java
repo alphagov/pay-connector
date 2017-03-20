@@ -21,6 +21,8 @@ import uk.gov.pay.connector.model.domain.*;
 import uk.gov.pay.connector.model.gateway.AuthorisationGatewayRequest;
 import uk.gov.pay.connector.model.gateway.GatewayResponse;
 import uk.gov.pay.connector.service.GatewayClient;
+import uk.gov.pay.connector.service.GatewayOperation;
+import uk.gov.pay.connector.service.GatewayOperationClientBuilder;
 import uk.gov.pay.connector.service.PaymentProvider;
 import uk.gov.pay.connector.service.smartpay.SmartpayAuthorisationResponse;
 import uk.gov.pay.connector.service.smartpay.SmartpayPaymentProvider;
@@ -32,6 +34,7 @@ import javax.ws.rs.core.MediaType;
 import java.io.IOException;
 import java.net.URL;
 import java.nio.charset.Charset;
+import java.util.EnumMap;
 import java.util.Map;
 import java.util.function.Consumer;
 
@@ -45,7 +48,6 @@ import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
 import static uk.gov.pay.connector.model.domain.ChargeEntityFixture.aValidChargeEntity;
 import static uk.gov.pay.connector.model.domain.GatewayAccountEntity.Type.TEST;
-import static uk.gov.pay.connector.service.GatewayClient.createGatewayClient;
 import static uk.gov.pay.connector.util.AuthUtils.buildAuthCardDetails;
 import static uk.gov.pay.connector.util.SystemUtils.envOrThrow;
 
@@ -179,9 +181,15 @@ public class SmartpayPaymentProviderTest {
 
     private PaymentProvider getSmartpayPaymentProvider() throws Exception {
         Client client = TestClientFactory.createJerseyClient();
-        GatewayClient gatewayClient = createGatewayClient(client, ImmutableMap.of(TEST.toString(), url), MediaType.APPLICATION_XML_TYPE,
+        GatewayClient gatewayClient = new GatewayClient(client, ImmutableMap.of(TEST.toString(), url), MediaType.APPLICATION_XML_TYPE,
                 SmartpayPaymentProvider.includeSessionIdentifier(), mockMetricRegistry);
-        return new SmartpayPaymentProvider(gatewayClient, new ObjectMapper());
+        EnumMap<GatewayOperation, GatewayClient> gatewayClients = GatewayOperationClientBuilder.builder()
+                .authClient(gatewayClient)
+                .captureClient(gatewayClient)
+                .cancelClient(gatewayClient)
+                .refundClient(gatewayClient)
+                .build();
+        return new SmartpayPaymentProvider(gatewayClients, new ObjectMapper());
     }
 
     private String notificationPayloadForTransaction(String transactionId) throws IOException {

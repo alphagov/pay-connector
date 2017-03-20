@@ -4,7 +4,6 @@ import io.dropwizard.client.JerseyClientBuilder;
 import io.dropwizard.client.JerseyClientConfiguration;
 import io.dropwizard.client.proxy.ProxyConfiguration;
 import io.dropwizard.setup.Environment;
-import io.dropwizard.util.Duration;
 import org.apache.http.config.RegistryBuilder;
 import org.apache.http.conn.HttpClientConnectionManager;
 import org.apache.http.conn.socket.ConnectionSocketFactory;
@@ -17,6 +16,7 @@ import org.glassfish.jersey.apache.connector.ApacheClientProperties;
 import org.glassfish.jersey.apache.connector.ApacheConnectorProvider;
 import org.glassfish.jersey.client.ClientProperties;
 import uk.gov.pay.connector.app.ConnectorConfiguration;
+import uk.gov.pay.connector.app.OperationOverrides;
 import uk.gov.pay.connector.filters.RestClientLoggingFilter;
 import uk.gov.pay.connector.util.TrustStoreLoader;
 
@@ -34,16 +34,12 @@ public class ClientFactory {
         this.conf = conf;
     }
 
-    public Client createWithDropwizardClient(String name) {
+    public Client createWithDropwizardClient(SupportedPaymentGateway gateway, GatewayOperation operation) {
         JerseyClientConfiguration clientConfiguration = conf.getClientConfiguration();
-
-        Duration readTimeout = conf.getCustomJerseyClient().getReadTimeout();
-        int readTimeoutInMillis = (int) (readTimeout.toMilliseconds());
-
         JerseyClientBuilder defaultClientBuilder = new JerseyClientBuilder(environment)
                 .using(new ApacheConnectorProvider())
                 .using(clientConfiguration)
-                .withProperty(ClientProperties.READ_TIMEOUT, readTimeoutInMillis)
+                .withProperty(ClientProperties.READ_TIMEOUT, getReadTimeoutInMillis(operation, gateway))
                 .withProperty(ApacheClientProperties.CONNECTION_MANAGER, createConnectionManager());
 
         // optionally set proxy; see comment below why this has to be done
@@ -52,9 +48,24 @@ public class ClientFactory {
                 .withProperty(ClientProperties.PROXY_URI, proxyUrl(clientConfiguration.getProxyConfiguration()));
         }
 
-        Client client = defaultClientBuilder.build(name);
+        Client client = defaultClientBuilder.build(gateway.getGatewayName());
         client.register(RestClientLoggingFilter.class);
         return client;
+    }
+
+    private int getReadTimeoutInMillis(GatewayOperation operation, SupportedPaymentGateway gateway) {
+        OperationOverrides overrides = getOverridesFor(operation, gateway);
+        if (overrides != null && overrides.getReadTimeout() != null) {
+            return (int) overrides.getReadTimeout().toMilliseconds();
+        }
+        return (int) conf.getCustomJerseyClient().getReadTimeout().toMilliseconds();
+    }
+
+    private OperationOverrides getOverridesFor(GatewayOperation operation, SupportedPaymentGateway gateway) {
+        return conf.getGatewayConfigFor(gateway)
+                .getJerseyClientOverrides()
+                .map(jerseyClientOverrides -> jerseyClientOverrides.getOverridesFor(operation))
+                .orElse(null);
     }
 
     private HttpClientConnectionManager createConnectionManager() {

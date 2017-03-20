@@ -1,25 +1,39 @@
 package uk.gov.pay.connector.service;
 
+import com.codahale.metrics.MetricRegistry;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import io.dropwizard.setup.Environment;
 import org.junit.Before;
 import org.junit.Rule;
 import org.junit.Test;
 import org.junit.rules.ExpectedException;
+import org.junit.runner.RunWith;
+import org.mockito.Mock;
+import org.mockito.runners.MockitoJUnitRunner;
 import uk.gov.pay.connector.app.ConnectorConfiguration;
-import uk.gov.pay.connector.app.GatewayCredentialsConfig;
-import uk.gov.pay.connector.app.WorldpayNotificationConfig;
+import uk.gov.pay.connector.app.GatewayConfig;
+import uk.gov.pay.connector.app.WorldpayConfig;
 import uk.gov.pay.connector.resources.PaymentGatewayName;
 import uk.gov.pay.connector.service.sandbox.SandboxPaymentProvider;
 import uk.gov.pay.connector.service.smartpay.SmartpayPaymentProvider;
 import uk.gov.pay.connector.service.worldpay.WorldpayPaymentProvider;
 
+import javax.ws.rs.client.Invocation.Builder;
+import javax.ws.rs.core.MediaType;
+import java.util.Map;
+import java.util.function.BiFunction;
+
 import static org.hamcrest.core.Is.is;
 import static org.hamcrest.core.IsInstanceOf.instanceOf;
 import static org.junit.Assert.assertThat;
 import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
+import static uk.gov.pay.connector.service.GatewayOperation.*;
+import static uk.gov.pay.connector.service.SupportedPaymentGateway.SMARTPAY;
+import static uk.gov.pay.connector.service.SupportedPaymentGateway.WORLDPAY;
 
+@RunWith(MockitoJUnitRunner.class)
 public class PaymentProvidersTest {
 
     @Rule
@@ -27,15 +41,42 @@ public class PaymentProvidersTest {
 
     private PaymentProviders providers;
 
+    @Mock
+    GatewayClientFactory gatewayClientFactory;
+
+    @Mock
+    ConnectorConfiguration config;
+
+    @Mock
+    WorldpayConfig worldpayConfig;
+
+    @Mock
+    GatewayConfig smartpayConfig;
+
+    @Mock
+    Map<String, String> worldpayUrlMap;
+
+    @Mock
+    Map<String, String> smartpayUrlMap;
+
+    @Mock
+    BiFunction<GatewayOrder, Builder, Builder> sessionIdentifier;
+
+    @Mock
+    MetricRegistry metricRegistry;
+
     @Before
     public void setup() {
-        ConnectorConfiguration config = mock(ConnectorConfiguration.class);
-        ClientFactory client = mock(ClientFactory.class);
         Environment environment = mock(Environment.class);
-        when(config.getSmartpayConfig()).thenReturn(mock(GatewayCredentialsConfig.class));
-        when(config.getWorldpayConfig()).thenReturn(mock(WorldpayNotificationConfig.class));
+        when(config.getSmartpayConfig()).thenReturn(smartpayConfig);
+        when(config.getWorldpayConfig()).thenReturn(worldpayConfig);
+        when(config.getGatewayConfigFor(SupportedPaymentGateway.WORLDPAY)).thenReturn(worldpayConfig);
+        when(config.getGatewayConfigFor(SupportedPaymentGateway.SMARTPAY)).thenReturn(smartpayConfig);
+        when(worldpayConfig.getUrls()).thenReturn(worldpayUrlMap);
+        when(smartpayConfig.getUrls()).thenReturn(smartpayUrlMap);
+        when(environment.metrics()).thenReturn(metricRegistry);
 
-        providers = new PaymentProviders(config, client, new ObjectMapper(), environment);
+        providers = new PaymentProviders(config, gatewayClientFactory, new ObjectMapper(), environment);
     }
 
     @Test
@@ -54,5 +95,27 @@ public class PaymentProvidersTest {
     public void shouldResolveSmartpayPaymentProvider() throws Exception {
         PaymentProvider smartpay = providers.byName(PaymentGatewayName.SMARTPAY);
         assertThat(smartpay, is(instanceOf(SmartpayPaymentProvider.class)));
+    }
+
+    @Test
+    public void shouldSetupGatewayClientForGatewayOperations() {
+        verify(gatewayClientFactory).createGatewayClient(WORLDPAY, AUTHORISE, worldpayUrlMap, MediaType.APPLICATION_XML_TYPE,
+                WorldpayPaymentProvider.includeSessionIdentifier(), metricRegistry);
+        verify(gatewayClientFactory).createGatewayClient(WORLDPAY, CANCEL, worldpayUrlMap, MediaType.APPLICATION_XML_TYPE,
+                WorldpayPaymentProvider.includeSessionIdentifier(), metricRegistry);
+        verify(gatewayClientFactory).createGatewayClient(WORLDPAY, CAPTURE, worldpayUrlMap, MediaType.APPLICATION_XML_TYPE,
+                WorldpayPaymentProvider.includeSessionIdentifier(), metricRegistry);
+        verify(gatewayClientFactory).createGatewayClient(WORLDPAY, REFUND, worldpayUrlMap, MediaType.APPLICATION_XML_TYPE,
+                WorldpayPaymentProvider.includeSessionIdentifier(), metricRegistry);
+
+        verify(gatewayClientFactory).createGatewayClient(SMARTPAY, AUTHORISE, smartpayUrlMap, MediaType.APPLICATION_XML_TYPE,
+                SmartpayPaymentProvider.includeSessionIdentifier(), metricRegistry);
+        verify(gatewayClientFactory).createGatewayClient(SMARTPAY, CANCEL, smartpayUrlMap, MediaType.APPLICATION_XML_TYPE,
+                SmartpayPaymentProvider.includeSessionIdentifier(), metricRegistry);
+        verify(gatewayClientFactory).createGatewayClient(SMARTPAY, CAPTURE, smartpayUrlMap, MediaType.APPLICATION_XML_TYPE,
+                SmartpayPaymentProvider.includeSessionIdentifier(), metricRegistry);
+        verify(gatewayClientFactory).createGatewayClient(SMARTPAY, REFUND, smartpayUrlMap, MediaType.APPLICATION_XML_TYPE,
+                SmartpayPaymentProvider.includeSessionIdentifier(), metricRegistry);
+
     }
 }

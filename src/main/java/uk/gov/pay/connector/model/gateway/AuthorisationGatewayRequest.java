@@ -4,6 +4,7 @@ import uk.gov.pay.connector.model.GatewayRequest;
 import uk.gov.pay.connector.model.domain.AuthCardDetails;
 import uk.gov.pay.connector.model.domain.ChargeEntity;
 import uk.gov.pay.connector.model.domain.GatewayAccountEntity;
+import uk.gov.pay.connector.service.GatewayOperation;
 
 import java.util.Optional;
 
@@ -38,6 +39,11 @@ public class AuthorisationGatewayRequest implements GatewayRequest {
 
     @Override
     public GatewayAccountEntity getGatewayAccount() {return charge.getGatewayAccount();
+    }
+
+    @Override
+    public GatewayOperation getRequestType() {
+        return GatewayOperation.AUTHORISE;
     }
 
     public static AuthorisationGatewayRequest valueOf(ChargeEntity charge, AuthCardDetails authCardDetails) {

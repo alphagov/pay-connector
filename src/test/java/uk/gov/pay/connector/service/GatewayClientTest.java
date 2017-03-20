@@ -71,7 +71,7 @@ public class GatewayClientTest {
         credentialMap.put(CREDENTIALS_USERNAME, "user");
         credentialMap.put(CREDENTIALS_PASSWORD, "password");
 
-        gatewayClient = GatewayClient.createGatewayClient(mockClient, urlMap, MediaType.APPLICATION_XML_TYPE,
+        gatewayClient = new GatewayClient(mockClient, urlMap, MediaType.APPLICATION_XML_TYPE,
                 mockSessionIdentifier, mockMetricRegistry);
         when(mockMetricRegistry.histogram(anyString())).thenReturn(mockHistogram);
         when(mockMetricRegistry.counter(anyString())).thenReturn(mockCounter);

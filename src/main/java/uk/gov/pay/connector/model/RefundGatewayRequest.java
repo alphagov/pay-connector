@@ -2,6 +2,7 @@ package uk.gov.pay.connector.model;
 
 import uk.gov.pay.connector.model.domain.GatewayAccountEntity;
 import uk.gov.pay.connector.model.domain.RefundEntity;
+import uk.gov.pay.connector.service.GatewayOperation;
 
 public class RefundGatewayRequest implements GatewayRequest {
 
@@ -28,6 +29,11 @@ public class RefundGatewayRequest implements GatewayRequest {
     @Override
     public GatewayAccountEntity getGatewayAccount() {
         return gatewayAccountEntity;
+    }
+
+    @Override
+    public GatewayOperation getRequestType() {
+        return GatewayOperation.REFUND;
     }
 
     /**

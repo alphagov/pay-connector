@@ -25,6 +25,15 @@ worldpay:
   secureNotificationEnabled: ${SECURE_WORLDPAY_NOTIFICATION_ENABLED:-false}
   notificationDomain: ${SECURE_WORLDPAY_NOTIFICATION_DOMAIN:-worldpay.com}
   credentials: ['username','password','merchant_id']
+  jerseyClientOverrides:
+    auth:
+      readTimeout: 90000ms
+    cancel:
+      readTimeout: 90000ms
+    refund:
+      readTimeout: 90000ms
+    capture:
+      readTimeout: 10000ms
 
 smartpay:
   urls:
@@ -40,7 +49,12 @@ transactionsPaginationServiceConfig:
   displayPageSize: ${TRANSACTION_LIST_DISPLAY_SIZE:-500}
 
 jerseyClient:
+  # Defines the socket timeout (SO_TIMEOUT), which is the
+  # timeout for waiting for data or, put differently, a maximum period inactivity
+  # between two consecutive data packets).
   timeout: 25500ms
+
+  # Determines the timeout until a connection is established
   connectionTimeout: 25500ms
   timeToLive: 1h
   cookiesEnabled: false
@@ -58,6 +72,12 @@ jerseyClient:
         - localhost
 
 customJerseyClient:
+  # Sets the read timeout to a specified timeout, in
+  # milliseconds. A non-zero value specifies the timeout when
+  # reading from Input stream when a connection is established to a
+  # resource. If the timeout expires before there is data available
+  # for read, a java.net.SocketTimeoutException is raised. A
+  # timeout of zero is interpreted as an infinite timeout.
   readTimeout: 90000ms
   enableProxy: ${HTTP_PROXY_ENABLED}
 

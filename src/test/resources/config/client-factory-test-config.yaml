@@ -15,21 +15,48 @@ logging:
         target: stdout
         logFormat: "[%thread] %highlight(%-5level) %cyan(%logger{15}) - %msg %n"
 
-links:
-  frontendUrl: http://Frontend
-
 worldpay:
   urls:
-    test: https://secure-test.worldpay.com/jsp/merchant/xml/paymentService.jsp
-    live: https://secure-test.worldpay.com/jsp/merchant/xml/paymentService.jsp
-  secureNotificationEnabled: false
-  notificationDomain: "worldpay.com"
+    test: http://localhost:10107/not/used
+    live: http://localhost:10107/not/used
+  secureNotificationEnabled: true
+  notificationDomain: ""
   credentials: ['username','password','merchant_id']
 
 smartpay:
   urls:
-    test: https://pal-test.barclaycardsmartpay.com/pal/servlet/soap/Payment
-    live: https://pal-test.barclaycardsmartpay.com/pal/servlet/soap/Payment
+    test: http://localhost:10107/not/used
+    live: http://localhost:10107/not/used
+  credentials: ['username','password']
+
+jerseyClient:
+  timeout: 500ms
+  connectionTimeout: 500ms
+  timeToLive: 1h
+  cookiesEnabled: false
+  maxConnections: 1024
+  maxConnectionsPerRoute: 1024
+  keepAlive: 0ms
+  retries: 0
+  userAgent: connector
+  gzipEnabledForRequests: false
+  proxy:
+      host: localhost
+      port: 1234
+      scheme : http
+      nonProxyHosts:
+        - localhost
+
+customJerseyClient:
+  readTimeout: 500ms
+  enableProxy: false
+
+executorServiceConfig:
+  timeoutInSeconds: ${AUTH_READ_TIMEOUT_SECONDS:-1}
+  threadsPerCpu: ${NUMBER_OF_THREADS_PER_CPU:-100}
+
+transactionsPaginationServiceConfig:
+  displayPageSize: ${TRANSACTION_LIST_DISPLAY_SIZE:-500}
 
 database:
   driverClass: org.postgresql.Driver
@@ -67,6 +94,13 @@ jpa:
   ddlGenerationOutputMode: database
   queryResultsCache: false
   cacheSharedDefault: false
+
+notifyConfig:
+  emailTemplateId: test-template-id
+  serviceId: test-service-id
+  secret: 11111111-1111-1111-1111-111111111111
+  notificationBaseURL: https://stubs.pymnt.localdomain
+  emailNotifyEnabled: false
 
 graphiteHost: ${METRICS_HOST:-localhost}
 graphitePort: ${METRICS_PORT:-8092}
