@@ -6,6 +6,7 @@ import javax.validation.Valid;
 import javax.validation.constraints.NotNull;
 import java.util.List;
 import java.util.Map;
+import java.util.Optional;
 
 public class GatewayConfig extends Configuration {
 
@@ -16,8 +17,8 @@ public class GatewayConfig extends Configuration {
 
     private JerseyClientOverrides jerseyClientOverrides;
 
-    public JerseyClientOverrides getJerseyClientOverrides() {
-        return jerseyClientOverrides;
+    public Optional<JerseyClientOverrides> getJerseyClientOverrides() {
+        return Optional.ofNullable(jerseyClientOverrides);
     }
 
     public List<String> getCredentials() {

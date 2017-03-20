@@ -6,7 +6,7 @@ public class GatewayOperationClientBuilder {
 
     EnumMap<GatewayOperation, GatewayClient> operationGatewayClientEnumMap;
 
-    public GatewayOperationClientBuilder() {
+    private GatewayOperationClientBuilder() {
         operationGatewayClientEnumMap = new EnumMap<>(GatewayOperation.class);
     }
 

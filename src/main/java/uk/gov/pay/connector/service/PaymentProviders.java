@@ -43,7 +43,7 @@ public class PaymentProviders<T extends BaseResponse> {
         this.config = config;
 
         this.paymentProviders.put(WORLDPAY, createWorldpayProvider());
-        this.paymentProviders.put(SMARTPAY, createSmartPayProvider(config.getSmartpayConfig(), objectMapper));
+        this.paymentProviders.put(SMARTPAY, createSmartPayProvider(objectMapper));
         this.paymentProviders.put(SANDBOX, new SandboxPaymentProvider());
     }
 
@@ -70,8 +70,7 @@ public class PaymentProviders<T extends BaseResponse> {
                 environment.metrics());
     }
 
-    private PaymentProvider createSmartPayProvider(GatewayConfig config,
-                                                   ObjectMapper objectMapper) {
+    private PaymentProvider createSmartPayProvider(ObjectMapper objectMapper) {
         EnumMap<GatewayOperation, GatewayClient> gatewayClients = GatewayOperationClientBuilder
                 .builder()
                 .authClient(gatewayClientForOperation(SupportedPaymentGateway.SMARTPAY, AUTHORISE, SmartpayPaymentProvider.includeSessionIdentifier()))

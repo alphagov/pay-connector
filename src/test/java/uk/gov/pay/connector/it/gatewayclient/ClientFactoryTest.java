@@ -13,7 +13,6 @@ import uk.gov.pay.connector.app.ConnectorApp;
 import uk.gov.pay.connector.app.ConnectorConfiguration;
 import uk.gov.pay.connector.service.ClientFactory;
 import uk.gov.pay.connector.service.GatewayOperation;
-import uk.gov.pay.connector.service.SupportedPaymentGateway;
 
 import javax.ws.rs.client.Client;
 import javax.ws.rs.client.Invocation;
@@ -183,25 +182,11 @@ public class ClientFactoryTest {
                 .createWithDropwizardClient(WORLDPAY, GatewayOperation.AUTHORISE);
 
         Invocation.Builder request = client.target(serverUrl).path(path).request();
-        long startTime = System.currentTimeMillis();
-        try {
-            request.get();
-            fail();
-        } catch (javax.ws.rs.ProcessingException e) {
-            long endTime = System.currentTimeMillis();
 
-            Throwable timeoutException = e.getCause();
-            assertThat(timeoutException, instanceOf(SocketTimeoutException.class));
-
-            final long connectionOverheadInMillis = 1000;
-            long expectedTimeout = app.getConfiguration().getWorldpayConfig().getJerseyClientOverrides().getAuth().getReadTimeout().toMilliseconds()
-                    + connectionOverheadInMillis;
-
-            long actualDuration = endTime - startTime;
-            System.out.println(actualDuration);
-
-            assertThat(actualDuration, lessThan(expectedTimeout));
-        }
+        Long authOverriddenTimeout = app.getConfiguration().getWorldpayConfig().getJerseyClientOverrides()
+                .map(override -> override.getAuth().getReadTimeout().toMicroseconds())
+                .orElse(0L);
+        assertGatewayFailure(request, authOverriddenTimeout);
     }
 
     @Test
@@ -219,7 +204,16 @@ public class ClientFactoryTest {
                 .createWithDropwizardClient(SMARTPAY, GatewayOperation.AUTHORISE);
 
         Invocation.Builder request = client.target(serverUrl).path(path).request();
+        Long authOverriddenTimeout = app.getConfiguration().getSmartpayConfig().getJerseyClientOverrides()
+                .map(override -> override.getAuth().getReadTimeout().toMicroseconds())
+                .orElse(0L);
+
+        assertGatewayFailure(request, authOverriddenTimeout);
+    }
+
+    private void assertGatewayFailure(Invocation.Builder request, Long authOverriddenTimeout) {
         long startTime = System.currentTimeMillis();
+
         try {
             request.get();
             fail();
@@ -230,14 +224,15 @@ public class ClientFactoryTest {
             assertThat(timeoutException, instanceOf(SocketTimeoutException.class));
 
             final long connectionOverheadInMillis = 1000;
-            long expectedTimeout = app.getConfiguration().getSmartpayConfig().getJerseyClientOverrides().getAuth().getReadTimeout().toMilliseconds()
-                    + connectionOverheadInMillis;
+
+            long expectedTimeout = authOverriddenTimeout + connectionOverheadInMillis;
 
             long actualDuration = endTime - startTime;
             System.out.println(actualDuration);
 
             assertThat(actualDuration, lessThan(expectedTimeout));
         }
+
     }
 
     private DropwizardTestSupport<ConnectorConfiguration> startAppWithProxy(boolean proxyEnabled) {

@@ -62,12 +62,10 @@ public class ClientFactory {
     }
 
     private OperationOverrides getOverridesFor(GatewayOperation operation, SupportedPaymentGateway gateway) {
-
-        if (conf.getGatewayConfigFor(gateway).getJerseyClientOverrides() != null) {
-            return conf.getGatewayConfigFor(gateway).getJerseyClientOverrides().getOverridesFor(operation);
-        }
-
-        return null;
+        return conf.getGatewayConfigFor(gateway)
+                .getJerseyClientOverrides()
+                .map(jerseyClientOverrides -> jerseyClientOverrides.getOverridesFor(operation))
+                .orElse(null);
     }
 
     private HttpClientConnectionManager createConnectionManager() {

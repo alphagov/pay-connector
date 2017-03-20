@@ -19,7 +19,7 @@ public class ConnectorConfigurationTest {
 
     @Test
     public void shouldParseConfiguration() {
-        JerseyClientOverrides jerseyClientOverrides = RULE.getConfiguration().getWorldpayConfig().getJerseyClientOverrides();
+        JerseyClientOverrides jerseyClientOverrides = RULE.getConfiguration().getWorldpayConfig().getJerseyClientOverrides().get();
 
         Duration authReadTimeout = jerseyClientOverrides.getAuth().getReadTimeout();
 
