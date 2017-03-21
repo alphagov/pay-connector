@@ -1,9 +1,12 @@
 package uk.gov.pay.connector.service;
 
+import com.codahale.metrics.Histogram;
+import com.codahale.metrics.MetricRegistry;
+import io.dropwizard.setup.Environment;
+import org.junit.Before;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.mockito.ArgumentCaptor;
-import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.runners.MockitoJUnitRunner;
 import uk.gov.pay.connector.dao.ChargeDao;
@@ -15,15 +18,13 @@ import static org.hamcrest.CoreMatchers.hasItem;
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.core.Is.is;
 import static org.mockito.Matchers.any;
-import static org.mockito.Mockito.mock;
-import static org.mockito.Mockito.verify;
-import static org.mockito.Mockito.when;
+import static org.mockito.Matchers.anyString;
+import static org.mockito.Mockito.*;
 import static uk.gov.pay.connector.model.domain.ChargeStatus.CAPTURE_APPROVED;
 
 @RunWith(MockitoJUnitRunner.class)
 public class CardCaptureProcessTest {
 
-    @InjectMocks
     CardCaptureProcess cardCaptureProcess;
 
     @Mock
@@ -32,6 +33,17 @@ public class CardCaptureProcessTest {
     @Mock
     CardCaptureService mockCardCaptureService;
 
+    @Mock
+    Environment mockEnvironment;
+
+    @Before
+    public void setup() {
+        MetricRegistry mockMetricRegistry = mock(MetricRegistry.class);
+        Histogram mockHistogram = mock(Histogram.class);
+        when(mockMetricRegistry.histogram(anyString())).thenReturn(mockHistogram);
+        when(mockEnvironment.metrics()).thenReturn(mockMetricRegistry);
+        cardCaptureProcess = new CardCaptureProcess(mockEnvironment, mockChargeDao, mockCardCaptureService);
+    }
 
     @Test
     public void shouldRetrieveASpecifiedNumberOfChargesApprovedForCapture() {

@@ -27,6 +27,8 @@ import uk.gov.pay.connector.healthcheck.DatabaseHealthCheck;
 import uk.gov.pay.connector.healthcheck.Ping;
 import uk.gov.pay.connector.resources.*;
 import uk.gov.pay.connector.service.Auth3dsDetailsFactory;
+import uk.gov.pay.connector.service.CaptureProcessScheduler;
+import uk.gov.pay.connector.service.CardCaptureProcess;
 import uk.gov.pay.connector.util.DependentResourceWaitCommand;
 import uk.gov.pay.connector.util.TrustingSSLSocketFactory;
 
@@ -86,6 +88,8 @@ public class ConnectorApp extends Application<ConnectorConfiguration> {
         environment.jersey().register(injector.getInstance(SchemeRewriteFilter.class));
         environment.jersey().register(injector.getInstance(Auth3dsDetailsFactory.class));
 
+        setupSchedulers(environment, injector);
+
         setupSmartpayBasicAuth(environment, injector.getInstance(SmartpayAccountSpecificAuthenticator.class));
 
         environment.servlets().addFilter("LoggingFilter", injector.getInstance(LoggingFilter.class))
@@ -128,5 +132,10 @@ public class ConnectorApp extends Application<ConnectorConfiguration> {
 
         System.setProperty("https.proxyHost", configuration.getClientConfiguration().getProxyConfiguration().getHost());
         System.setProperty("https.proxyPort", configuration.getClientConfiguration().getProxyConfiguration().getPort().toString());
+    }
+
+    private void setupSchedulers(Environment environment, Injector injector) {
+        CaptureProcessScheduler captureProcessScheduler = new CaptureProcessScheduler(environment, injector.getInstance(CardCaptureProcess.class));
+        environment.lifecycle().manage(captureProcessScheduler);
     }
 }
