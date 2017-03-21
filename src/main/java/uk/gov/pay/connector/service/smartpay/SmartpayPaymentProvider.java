@@ -8,7 +8,6 @@ import uk.gov.pay.connector.model.Notifications.Builder;
 import uk.gov.pay.connector.model.gateway.Auth3dsResponseGatewayRequest;
 import uk.gov.pay.connector.model.gateway.AuthorisationGatewayRequest;
 import uk.gov.pay.connector.model.gateway.GatewayResponse;
-import uk.gov.pay.connector.resources.PaymentGatewayName;
 import uk.gov.pay.connector.service.*;
 
 import javax.ws.rs.client.Invocation;

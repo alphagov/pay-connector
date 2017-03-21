@@ -86,19 +86,19 @@ public class SmartpayPaymentProviderTest {
         when(mockMetricRegistry.histogram(anyString())).thenReturn(mockHistogram);
         when(mockMetricRegistry.counter(anyString())).thenReturn(mockCounter);
         when(mockClientFactory.createWithDropwizardClient(
-                eq(SupportedPaymentGateway.SMARTPAY), any(GatewayOperation.class))
+                eq(PaymentGatewayName.SMARTPAY), any(GatewayOperation.class))
         )
         .thenReturn(mockClient);
 
         mockSmartpaySuccessfulOrderSubmitResponse();
 
-        GatewayClient authClient = gatewayClientFactory.createGatewayClient(SupportedPaymentGateway.SMARTPAY, GatewayOperation.AUTHORISE,
+        GatewayClient authClient = gatewayClientFactory.createGatewayClient(PaymentGatewayName.SMARTPAY, GatewayOperation.AUTHORISE,
                 urlMap, MediaType.APPLICATION_XML_TYPE, mockSessionIdentifier, mockMetricRegistry);
-        GatewayClient cancelClient = gatewayClientFactory.createGatewayClient(SupportedPaymentGateway.SMARTPAY, GatewayOperation.CANCEL,
+        GatewayClient cancelClient = gatewayClientFactory.createGatewayClient(PaymentGatewayName.SMARTPAY, GatewayOperation.CANCEL,
                 urlMap, MediaType.APPLICATION_XML_TYPE, mockSessionIdentifier, mockMetricRegistry);
-        GatewayClient refundClient = gatewayClientFactory.createGatewayClient(SupportedPaymentGateway.SMARTPAY, GatewayOperation.REFUND,
+        GatewayClient refundClient = gatewayClientFactory.createGatewayClient(PaymentGatewayName.SMARTPAY, GatewayOperation.REFUND,
                 urlMap, MediaType.APPLICATION_XML_TYPE, mockSessionIdentifier, mockMetricRegistry);
-        GatewayClient captureClient = gatewayClientFactory.createGatewayClient(SupportedPaymentGateway.SMARTPAY, GatewayOperation.CAPTURE,
+        GatewayClient captureClient = gatewayClientFactory.createGatewayClient(PaymentGatewayName.SMARTPAY, GatewayOperation.CAPTURE,
                 urlMap, MediaType.APPLICATION_XML_TYPE, mockSessionIdentifier, mockMetricRegistry);
 
 

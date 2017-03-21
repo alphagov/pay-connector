@@ -32,10 +32,10 @@ public class GatewayClientFactoryTest {
         BiFunction<GatewayOrder, Builder, Builder> sessionIdentifier = (GatewayOrder o, Builder b) -> mockBuilder;
         MetricRegistry mockMetricRegistry = mock(MetricRegistry.class);
 
-        GatewayClient gatewayClient = gatewayClientFactory.createGatewayClient(SupportedPaymentGateway.WORLDPAY, GatewayOperation.AUTHORISE,
+        GatewayClient gatewayClient = gatewayClientFactory.createGatewayClient(PaymentGatewayName.WORLDPAY, GatewayOperation.AUTHORISE,
                 gatewayUrlMap, MediaType.TEXT_XML_TYPE, sessionIdentifier, mockMetricRegistry);
 
         assertNotNull(gatewayClient);
-        verify(mockClientFactory).createWithDropwizardClient(SupportedPaymentGateway.WORLDPAY, GatewayOperation.AUTHORISE);
+        verify(mockClientFactory).createWithDropwizardClient(PaymentGatewayName.WORLDPAY, GatewayOperation.AUTHORISE);
     }
 }

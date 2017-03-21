@@ -11,7 +11,6 @@ import uk.gov.pay.connector.model.ExtendedNotification;
 import uk.gov.pay.connector.model.Notification;
 import uk.gov.pay.connector.model.Notifications;
 import uk.gov.pay.connector.model.domain.*;
-import uk.gov.pay.connector.resources.PaymentGatewayName;
 import uk.gov.pay.connector.service.transaction.NonTransactionalOperation;
 import uk.gov.pay.connector.service.transaction.TransactionContext;
 import uk.gov.pay.connector.service.transaction.TransactionFlow;

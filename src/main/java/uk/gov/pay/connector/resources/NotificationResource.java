@@ -3,6 +3,7 @@ package uk.gov.pay.connector.resources;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import uk.gov.pay.connector.service.NotificationService;
+import uk.gov.pay.connector.service.PaymentGatewayName;
 
 import javax.annotation.security.PermitAll;
 import javax.inject.Inject;
@@ -10,11 +11,10 @@ import javax.ws.rs.*;
 import javax.ws.rs.core.Response;
 import java.io.IOException;
 
-import static java.lang.String.*;
 import static javax.ws.rs.core.MediaType.APPLICATION_JSON;
 import static javax.ws.rs.core.MediaType.TEXT_XML;
 import static uk.gov.pay.connector.resources.ApiPaths.*;
-import static uk.gov.pay.connector.resources.PaymentGatewayName.SMARTPAY;
+import static uk.gov.pay.connector.service.PaymentGatewayName.SMARTPAY;
 import static uk.gov.pay.connector.util.ResponseUtil.forbiddenErrorResponse;
 
 @Path("/")

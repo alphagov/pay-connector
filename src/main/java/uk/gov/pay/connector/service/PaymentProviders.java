@@ -3,9 +3,7 @@ package uk.gov.pay.connector.service;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import io.dropwizard.setup.Environment;
 import uk.gov.pay.connector.app.ConnectorConfiguration;
-import uk.gov.pay.connector.app.GatewayConfig;
 import uk.gov.pay.connector.app.WorldpayConfig;
-import uk.gov.pay.connector.resources.PaymentGatewayName;
 import uk.gov.pay.connector.service.sandbox.SandboxPaymentProvider;
 import uk.gov.pay.connector.service.smartpay.SmartpayPaymentProvider;
 import uk.gov.pay.connector.service.worldpay.WorldpayPaymentProvider;
@@ -18,8 +16,10 @@ import java.util.Map;
 import java.util.function.BiFunction;
 
 import static jersey.repackaged.com.google.common.collect.Maps.newHashMap;
-import static uk.gov.pay.connector.resources.PaymentGatewayName.*;
 import static uk.gov.pay.connector.service.GatewayOperation.*;
+import static uk.gov.pay.connector.service.PaymentGatewayName.SANDBOX;
+import static uk.gov.pay.connector.service.PaymentGatewayName.SMARTPAY;
+import static uk.gov.pay.connector.service.PaymentGatewayName.WORLDPAY;
 import static uk.gov.pay.connector.service.worldpay.WorldpayPaymentProvider.includeSessionIdentifier;
 
 /**
@@ -49,10 +49,10 @@ public class PaymentProviders<T extends BaseResponse> {
 
     private PaymentProvider createWorldpayProvider() {
         EnumMap<GatewayOperation, GatewayClient> gatewayClientEnumMap = GatewayOperationClientBuilder.builder()
-                .authClient(gatewayClientForOperation(SupportedPaymentGateway.WORLDPAY, AUTHORISE, includeSessionIdentifier()))
-                .cancelClient(gatewayClientForOperation(SupportedPaymentGateway.WORLDPAY, CANCEL, includeSessionIdentifier()))
-                .captureClient(gatewayClientForOperation(SupportedPaymentGateway.WORLDPAY, CAPTURE, includeSessionIdentifier()))
-                .refundClient(gatewayClientForOperation(SupportedPaymentGateway.WORLDPAY, REFUND, includeSessionIdentifier()))
+                .authClient(gatewayClientForOperation(WORLDPAY, AUTHORISE, includeSessionIdentifier()))
+                .cancelClient(gatewayClientForOperation(WORLDPAY, CANCEL, includeSessionIdentifier()))
+                .captureClient(gatewayClientForOperation(WORLDPAY, CAPTURE, includeSessionIdentifier()))
+                .refundClient(gatewayClientForOperation(WORLDPAY, REFUND, includeSessionIdentifier()))
                 .build();
 
         WorldpayConfig worldpayConfig = config.getWorldpayConfig();
@@ -61,7 +61,7 @@ public class PaymentProviders<T extends BaseResponse> {
                 gatewayClientEnumMap,worldpayConfig.isSecureNotificationEnabled(),worldpayConfig.getNotificationDomain());
     }
 
-    private GatewayClient gatewayClientForOperation(SupportedPaymentGateway gateway,
+    private GatewayClient gatewayClientForOperation(PaymentGatewayName gateway,
                                                     GatewayOperation operation,
                                                     BiFunction<GatewayOrder, Invocation.Builder, Invocation.Builder> sessionIdentifier) {
         return gatewayClientFactory.createGatewayClient(
@@ -73,10 +73,10 @@ public class PaymentProviders<T extends BaseResponse> {
     private PaymentProvider createSmartPayProvider(ObjectMapper objectMapper) {
         EnumMap<GatewayOperation, GatewayClient> gatewayClients = GatewayOperationClientBuilder
                 .builder()
-                .authClient(gatewayClientForOperation(SupportedPaymentGateway.SMARTPAY, AUTHORISE, SmartpayPaymentProvider.includeSessionIdentifier()))
-                .captureClient(gatewayClientForOperation(SupportedPaymentGateway.SMARTPAY, CAPTURE, SmartpayPaymentProvider.includeSessionIdentifier()))
-                .cancelClient(gatewayClientForOperation(SupportedPaymentGateway.SMARTPAY, CANCEL, SmartpayPaymentProvider.includeSessionIdentifier()))
-                .refundClient(gatewayClientForOperation(SupportedPaymentGateway.SMARTPAY, REFUND, SmartpayPaymentProvider.includeSessionIdentifier()))
+                .authClient(gatewayClientForOperation(SMARTPAY, AUTHORISE, SmartpayPaymentProvider.includeSessionIdentifier()))
+                .captureClient(gatewayClientForOperation(SMARTPAY, CAPTURE, SmartpayPaymentProvider.includeSessionIdentifier()))
+                .cancelClient(gatewayClientForOperation(SMARTPAY, CANCEL, SmartpayPaymentProvider.includeSessionIdentifier()))
+                .refundClient(gatewayClientForOperation(SMARTPAY, REFUND, SmartpayPaymentProvider.includeSessionIdentifier()))
                 .build();
 
         return new SmartpayPaymentProvider(
@@ -85,7 +85,7 @@ public class PaymentProviders<T extends BaseResponse> {
         );
     }
 
-    public PaymentProvider<T> byName(PaymentGatewayName name) {
-        return paymentProviders.get(name);
+    public PaymentProvider<T> byName(PaymentGatewayName gateway) {
+        return paymentProviders.get(gateway);
     }
 }
