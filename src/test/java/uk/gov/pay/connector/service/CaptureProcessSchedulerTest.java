@@ -6,16 +6,21 @@ import io.dropwizard.setup.Environment;
 import org.junit.Before;
 import org.junit.Test;
 import org.junit.runner.RunWith;
+import org.mockito.ArgumentCaptor;
 import org.mockito.Mock;
 import org.mockito.runners.MockitoJUnitRunner;
 
 import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.TimeUnit;
 
+import static org.hamcrest.MatcherAssert.assertThat;
+import static org.hamcrest.Matchers.greaterThanOrEqualTo;
+import static org.hamcrest.Matchers.lessThan;
+import static org.hamcrest.core.CombinableMatcher.both;
+import static org.hamcrest.core.Is.is;
 import static org.mockito.Matchers.anyString;
 import static org.mockito.Mockito.*;
-import static uk.gov.pay.connector.service.CaptureProcessScheduler.CAPTURE_PROCESS_SCHEDULER_NAME;
-import static uk.gov.pay.connector.service.CaptureProcessScheduler.SCHEDULER_THREADS;
+import static uk.gov.pay.connector.service.CaptureProcessScheduler.*;
 
 @RunWith(MockitoJUnitRunner.class)
 public class CaptureProcessSchedulerTest {
@@ -64,7 +69,10 @@ public class CaptureProcessSchedulerTest {
     public void shouldScheduleCaptureProcess() {
         captureProcessScheduler.start();
 
-        verify(scheduledExecutorService).scheduleAtFixedRate(any(Runnable.class), eq(1L), eq(2L), eq(TimeUnit.MINUTES));
+        ArgumentCaptor<Long> delay = ArgumentCaptor.forClass(Long.class);
+
+        verify(scheduledExecutorService).scheduleAtFixedRate(any(Runnable.class), eq(INITIAL_DELAY_IN_SECONDS), delay.capture(), eq(TimeUnit.SECONDS));
+        assertThat(delay.getValue(), both(greaterThanOrEqualTo(RANDOM_INTERVAL_MINIMUM_IN_SECONDS)).and(lessThan(RANDOM_INTERVAL_MAXIMUM_IN_SECONDS)));
     }
 
     @Test
