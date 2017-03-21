@@ -1,5 +1,6 @@
 package uk.gov.pay.connector.service;
 
+import com.google.common.collect.ImmutableList;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import uk.gov.pay.connector.dao.ChargeDao;
@@ -18,6 +19,7 @@ import uk.gov.pay.connector.service.transaction.TransactionContext;
 import uk.gov.pay.connector.service.transaction.TransactionalOperation;
 
 import java.time.ZonedDateTime;
+import java.util.List;
 import java.util.Optional;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
@@ -48,9 +50,9 @@ class CancelServiceFunctions {
             ChargeEntity reloadedCharge = chargeDao.merge(chargeEntity);
 
             if (!reloadedCharge.hasStatus(statusFlow.getTerminatableStatuses())) {
-                if (reloadedCharge.hasStatus(statusFlow.getLockState())) {
+                if (reloadedCharge.hasStatus(ImmutableList.of(statusFlow.getLockState()))) {
                     throw new OperationAlreadyInProgressRuntimeException(statusFlow.getName(), reloadedCharge.getExternalId());
-                } else if (reloadedCharge.hasStatus(ChargeStatus.AUTHORISATION_READY, AUTHORISATION_3DS_READY)) {
+                } else if (reloadedCharge.hasStatus(ImmutableList.of( ChargeStatus.AUTHORISATION_READY, AUTHORISATION_3DS_READY ))) {
                     throw new ConflictRuntimeException(chargeEntity.getExternalId());
                 }
 
@@ -85,7 +87,7 @@ class CancelServiceFunctions {
         };
     }
 
-    static String getLegalStatusNames(ChargeStatus[] legalStatuses) {
-        return Stream.of(legalStatuses).map(ChargeStatus::toString).collect(Collectors.joining(", "));
+    static String getLegalStatusNames(List<ChargeStatus> legalStatuses) {
+        return legalStatuses.stream().map(ChargeStatus::toString).collect(Collectors.joining(", "));
     }
 }

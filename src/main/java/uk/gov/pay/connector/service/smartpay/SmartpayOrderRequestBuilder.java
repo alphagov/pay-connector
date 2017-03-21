@@ -18,10 +18,10 @@ public class SmartpayOrderRequestBuilder extends OrderRequestBuilder {
         }
     }
 
-    public static TemplateBuilder AUTHORISE_ORDER_TEMPLATE_BUILDER = new TemplateBuilder("/smartpay/SmartpayAuthoriseOrderTemplate.xml");
-    public static TemplateBuilder CAPTURE_ORDER_TEMPLATE_BUILDER = new TemplateBuilder("/smartpay/SmartpayCaptureOrderTemplate.xml");
-    public static TemplateBuilder CANCEL_ORDER_TEMPLATE_BUILDER = new TemplateBuilder("/smartpay/SmartpayCancelOrderTemplate.xml");
-    public static TemplateBuilder REFUND_ORDER_TEMPLATE_BUILDER = new TemplateBuilder("/smartpay/SmartpayRefundOrderTemplate.xml");
+    final public static TemplateBuilder AUTHORISE_ORDER_TEMPLATE_BUILDER = new TemplateBuilder("/smartpay/SmartpayAuthoriseOrderTemplate.xml");
+    final public static TemplateBuilder CAPTURE_ORDER_TEMPLATE_BUILDER = new TemplateBuilder("/smartpay/SmartpayCaptureOrderTemplate.xml");
+    final public static TemplateBuilder CANCEL_ORDER_TEMPLATE_BUILDER = new TemplateBuilder("/smartpay/SmartpayCancelOrderTemplate.xml");
+    final public static TemplateBuilder REFUND_ORDER_TEMPLATE_BUILDER = new TemplateBuilder("/smartpay/SmartpayRefundOrderTemplate.xml");
 
     private SmartpayTemplateData smartpayTemplateData;
 

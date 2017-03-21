@@ -1,5 +1,6 @@
 package uk.gov.pay.connector.service;
 
+import com.google.common.collect.ImmutableList;
 import com.google.inject.Provider;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -15,6 +16,7 @@ import uk.gov.pay.connector.service.transaction.TransactionalOperation;
 import uk.gov.pay.connector.service.worldpay.WorldpayCancelResponse;
 
 import javax.inject.Inject;
+import java.util.List;
 import java.util.Optional;
 
 import static java.lang.String.format;
@@ -31,9 +33,9 @@ public class ChargeCancelService {
 
     private final Logger logger = LoggerFactory.getLogger(getClass());
 
-    private static ChargeStatus[] nonGatewayStatuses = new ChargeStatus[]{
+    private static List<ChargeStatus> nonGatewayStatuses = ImmutableList.of(
             CREATED, ENTERING_CARD_DETAILS, AUTHORISATION_3DS_REQUIRED
-    };
+    );
 
     private final ChargeDao chargeDao;
     private final PaymentProviders providers;

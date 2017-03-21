@@ -1,5 +1,6 @@
 package uk.gov.pay.connector.service;
 
+import com.google.common.collect.ImmutableList;
 import com.google.inject.persist.Transactional;
 import io.dropwizard.setup.Environment;
 import uk.gov.pay.connector.dao.ChargeDao;
@@ -13,6 +14,7 @@ import uk.gov.pay.connector.resources.PaymentGatewayName;
 
 import javax.inject.Inject;
 import java.time.ZonedDateTime;
+import java.util.List;
 import java.util.Optional;
 
 import static org.apache.commons.lang3.StringUtils.isBlank;
@@ -20,9 +22,9 @@ import static uk.gov.pay.connector.model.domain.ChargeStatus.*;
 
 public class CardCaptureService extends CardService implements TransactionalGatewayOperation<BaseCaptureResponse> {
 
-    private static ChargeStatus[] legalStatuses = new ChargeStatus[]{
+    private static List<ChargeStatus> legalStatuses = ImmutableList.of(
             AUTHORISATION_SUCCESS
-    };
+    );
 
     private final UserNotificationService userNotificationService;
 

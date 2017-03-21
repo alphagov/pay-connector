@@ -1,5 +1,6 @@
 package uk.gov.pay.connector.model.domain;
 
+import com.google.common.collect.ImmutableList;
 import org.junit.Test;
 
 import static org.junit.Assert.assertFalse;
@@ -12,15 +13,15 @@ public class ChargeEntityTest {
 
     @Test
     public void shouldHaveTheGivenStatus() {
-        assertTrue(aValidChargeEntity().withStatus(CREATED).build().hasStatus(CREATED));
-        assertTrue(aValidChargeEntity().withStatus(ENTERING_CARD_DETAILS).build().hasStatus(ENTERING_CARD_DETAILS));
+        assertTrue(aValidChargeEntity().withStatus(CREATED).build().hasStatus(ImmutableList.of(CREATED)));
+        assertTrue(aValidChargeEntity().withStatus(ENTERING_CARD_DETAILS).build().hasStatus(ImmutableList.of(ENTERING_CARD_DETAILS)));
     }
 
 
     @Test
     public void shouldHaveAtLeastOneOfTheGivenStatuses() {
-        assertTrue(aValidChargeEntity().withStatus(CREATED).build().hasStatus(CREATED, ENTERING_CARD_DETAILS));
-        assertTrue(aValidChargeEntity().withStatus(ENTERING_CARD_DETAILS).build().hasStatus(CAPTURED, ENTERING_CARD_DETAILS));
+        assertTrue(aValidChargeEntity().withStatus(CREATED).build().hasStatus(ImmutableList.of(CREATED, ENTERING_CARD_DETAILS)));
+        assertTrue(aValidChargeEntity().withStatus(ENTERING_CARD_DETAILS).build().hasStatus(ImmutableList.of(CAPTURED, ENTERING_CARD_DETAILS)));
     }
 
 

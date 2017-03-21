@@ -82,9 +82,9 @@ public class EpdqOrderRequestBuilder extends OrderRequestBuilder {
 
     private static EpdqSignedPayloadDefinitionFactory signedPayloadDefinitionFactory = anEpdqSignedPayloadDefinitionFactory(new EpdqSha512SignatureGenerator());
 
-    public static PayloadBuilder AUTHORISE_ORDER_TEMPLATE_BUILDER = createPayloadBuilderForNewOrder();
-    public static PayloadBuilder CAPTURE_ORDER_TEMPLATE_BUILDER = createPayloadBuilderForMaintenanceOrder();
-    public static PayloadBuilder CANCEL_ORDER_TEMPLATE_BUILDER = createPayloadBuilderForMaintenanceOrder();
+    final public static PayloadBuilder AUTHORISE_ORDER_TEMPLATE_BUILDER = createPayloadBuilderForNewOrder();
+    final public static PayloadBuilder CAPTURE_ORDER_TEMPLATE_BUILDER = createPayloadBuilderForMaintenanceOrder();
+    final public static PayloadBuilder CANCEL_ORDER_TEMPLATE_BUILDER = createPayloadBuilderForMaintenanceOrder();
 
     private EpdqTemplateData epdqTemplateData;
 

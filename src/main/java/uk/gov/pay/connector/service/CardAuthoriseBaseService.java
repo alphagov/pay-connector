@@ -13,6 +13,7 @@ import uk.gov.pay.connector.model.domain.ChargeStatus;
 import uk.gov.pay.connector.model.gateway.GatewayResponse;
 
 import javax.persistence.OptimisticLockException;
+import java.util.List;
 import java.util.function.Supplier;
 
 import static uk.gov.pay.connector.service.CardExecutorService.ExecutionStatus;
@@ -61,6 +62,6 @@ public abstract class CardAuthoriseBaseService<T extends AuthorisationDetails> e
 
     protected abstract GatewayResponse<BaseAuthoriseResponse> operation(ChargeEntity preOperationResponse, T gatewayAuthRequest);
 
-    protected abstract ChargeStatus[] getLegalStates();
+    protected abstract List<ChargeStatus> getLegalStates();
 
 }
