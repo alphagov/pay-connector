@@ -244,6 +244,8 @@ public class CardCaptureServiceTest extends CardServiceTest {
         inOrder.verify(reloadedCharge).setStatus(CAPTURE_READY);
         inOrder.verify(reloadedCharge).setStatus(CAPTURE_APPROVED);
 
+        verify(mockedChargeDao).mergeAndNotifyStatusHasChanged(reloadedCharge, Optional.empty());
+
         // verify an email notification is not sent when an unsuccessful capture
         verifyZeroInteractions(mockUserNotificationService);
     }
