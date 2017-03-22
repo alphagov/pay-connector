@@ -182,6 +182,10 @@ public class ChargeEntity extends AbstractEntity {
         return Arrays.stream(status).anyMatch(s -> equalsIgnoreCase(s.getValue(), getStatus()));
     }
 
+    public boolean hasStatus(List<ChargeStatus> status) {
+        return hasStatus(status.toArray(new ChargeStatus[0]));
+    }
+
     public boolean hasExternalStatus(ExternalChargeState... state) {
         return Arrays.stream(state).anyMatch(s -> fromString(getStatus()).toExternal().equals(s));
     }

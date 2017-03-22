@@ -1,6 +1,7 @@
 package uk.gov.pay.connector.service;
 
 import com.codahale.metrics.MetricRegistry;
+import com.google.common.collect.ImmutableList;
 import io.dropwizard.setup.Environment;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -12,6 +13,7 @@ import uk.gov.pay.connector.model.domain.ChargeEntity;
 import uk.gov.pay.connector.model.domain.ChargeStatus;
 import uk.gov.pay.connector.model.domain.GatewayAccountEntity;
 
+import java.util.List;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
@@ -46,7 +48,7 @@ public abstract class CardService<T extends BaseResponse> {
         this.metricRegistry = environment.metrics();
     }
 
-    public ChargeEntity preOperation(ChargeEntity chargeEntity, OperationType operationType, ChargeStatus[] legalStatuses, ChargeStatus lockingStatus) {
+    public ChargeEntity preOperation(ChargeEntity chargeEntity, OperationType operationType, List<ChargeStatus> legalStatuses, ChargeStatus lockingStatus) {
         ChargeEntity reloadedCharge = chargeDao.merge(chargeEntity);
         GatewayAccountEntity gatewayAccount = chargeEntity.getGatewayAccount();
 
@@ -75,8 +77,8 @@ public abstract class CardService<T extends BaseResponse> {
         return reloadedCharge;
     }
 
-    private String getLegalStatusNames(ChargeStatus[] legalStatuses) {
-        return Stream.of(legalStatuses).map(ChargeStatus::toString).collect(Collectors.joining(", "));
+    private String getLegalStatusNames(List<ChargeStatus> legalStatuses) {
+        return legalStatuses.stream().map(ChargeStatus::toString).collect(Collectors.joining(", "));
     }
 
     public PaymentProvider<T> getPaymentProviderFor(ChargeEntity chargeEntity) {

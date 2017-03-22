@@ -1,5 +1,6 @@
 package uk.gov.pay.connector.service;
 
+import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.Lists;
 import com.google.inject.Provider;
@@ -35,7 +36,7 @@ public class ChargeExpiryService {
     public static final String EXPIRY_SUCCESS = "expiry-success";
     public static final String EXPIRY_FAILED = "expiry-failed";
 
-    public static final ArrayList<ChargeStatus> EXPIRABLE_STATUSES = Lists.newArrayList(
+    public static final List<ChargeStatus> EXPIRABLE_STATUSES = ImmutableList.of(
             CREATED,
             ENTERING_CARD_DETAILS,
             AUTHORISATION_3DS_REQUIRED,

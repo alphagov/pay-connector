@@ -1,5 +1,6 @@
 package uk.gov.pay.connector.service;
 
+import com.google.common.collect.ImmutableList;
 import com.google.inject.persist.Transactional;
 import io.dropwizard.setup.Environment;
 import org.apache.commons.lang3.StringUtils;
@@ -9,6 +10,7 @@ import uk.gov.pay.connector.model.gateway.AuthorisationGatewayRequest;
 import uk.gov.pay.connector.model.gateway.GatewayResponse;
 
 import javax.inject.Inject;
+import java.util.List;
 import java.util.Optional;
 
 import static uk.gov.pay.connector.model.domain.ChargeStatus.AUTHORISATION_READY;
@@ -42,10 +44,10 @@ public class CardAuthoriseService extends CardAuthoriseBaseService<AuthCardDetai
     }
 
     @Override
-    protected ChargeStatus[] getLegalStates() {
-        return new ChargeStatus[]{
+    protected List<ChargeStatus> getLegalStates() {
+        return ImmutableList.of(
                 ENTERING_CARD_DETAILS
-        };
+        );
     }
 
     @Transactional

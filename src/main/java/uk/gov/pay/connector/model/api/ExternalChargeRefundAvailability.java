@@ -2,8 +2,11 @@ package uk.gov.pay.connector.model.api;
 
 import com.fasterxml.jackson.annotation.JsonFormat;
 import com.fasterxml.jackson.annotation.JsonInclude;
+import com.google.common.collect.ImmutableList;
 import uk.gov.pay.connector.model.domain.ChargeEntity;
 import uk.gov.pay.connector.model.domain.ChargeStatus;
+
+import java.util.List;
 
 import static uk.gov.pay.connector.model.domain.ChargeStatus.*;
 
@@ -30,9 +33,9 @@ public enum ExternalChargeRefundAvailability {
         return this.value;
     }
 
-    private static final ChargeStatus[] PENDING_FOR_REFUND_STATUS = new ChargeStatus[]{
+    private static final List<ChargeStatus> PENDING_FOR_REFUND_STATUS = ImmutableList.of(
             CREATED, ENTERING_CARD_DETAILS, AUTHORISATION_READY, AUTHORISATION_SUCCESS, CAPTURE_READY, CAPTURE_SUBMITTED
-    };
+    );
 
     public static ExternalChargeRefundAvailability valueOf(ChargeEntity charge) {
 
