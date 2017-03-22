@@ -74,6 +74,36 @@ public class DatabaseFixtures {
         return  new TestCardDetails();
     }
 
+    public TestChargeEvent aTestChargeEvent() {
+        return new TestChargeEvent();
+    }
+
+    public class TestChargeEvent {
+        private long chargeId;
+        private ChargeStatus chargeStatus;
+        private ZonedDateTime updated;
+
+        public TestChargeEvent withChargeId(long chargeId) {
+            this.chargeId = chargeId;
+            return this;
+        }
+
+        public TestChargeEvent withChargeStatus(ChargeStatus chargeStatus) {
+            this.chargeStatus = chargeStatus;
+            return this;
+        }
+
+        public TestChargeEvent withDate(ZonedDateTime updated) {
+            this.updated = updated;
+            return this;
+        }
+
+
+        public void insert() {
+            databaseTestHelper.addEvent(chargeId, chargeStatus.getValue(), updated);
+        }
+    }
+
     public class TestAddress {
         private String line1 = "line1";
         private String line2 = "line2";

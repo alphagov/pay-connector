@@ -11,11 +11,14 @@ import javax.inject.Inject;
 import javax.persistence.EntityManager;
 import javax.persistence.Query;
 import javax.persistence.criteria.*;
-import java.time.LocalDate;
+import java.time.Duration;
 import java.time.ZonedDateTime;
+import java.time.temporal.ChronoUnit;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
+
+import static uk.gov.pay.connector.model.domain.ChargeStatus.CAPTURE_APPROVED;
 
 @Transactional
 public class ChargeDao extends JpaDao<ChargeEntity> {
@@ -153,4 +156,26 @@ public class ChargeDao extends JpaDao<ChargeEntity> {
 
         return cb.like(cb.lower(expression), '%' + escapedReference.toLowerCase() + '%');
     }
+
+    public List<ChargeEntity> findChargesForCapture(int maxNumberOfCharges, Duration notAttemptedWithin) {
+        String query = "SELECT c FROM ChargeEntity c WHERE " +
+                "c.status=:status AND " +
+                "NOT EXISTS (" +
+                "  SELECT ce FROM ChargeEventEntity ce WHERE " +
+                "    ce.chargeEntity = c AND " +
+                "    ce.status = :eventStatus AND " +
+                "    ce.updated >= :cutoffDate " +
+                ") " +
+                "ORDER BY c.createdDate ASC";
+
+        return entityManager.get()
+                .createQuery(query, ChargeEntity.class)
+                .setMaxResults(maxNumberOfCharges)
+                .setParameter("status", CAPTURE_APPROVED.getValue())
+                .setParameter("eventStatus", CAPTURE_APPROVED)
+                .setParameter("cutoffDate", ZonedDateTime.now().minus(notAttemptedWithin))
+                .getResultList();
+    }
+
+
 }
