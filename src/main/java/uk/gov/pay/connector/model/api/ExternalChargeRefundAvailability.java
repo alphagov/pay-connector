@@ -44,7 +44,7 @@ public enum ExternalChargeRefundAvailability {
         if (charge.hasStatus(PENDING_FOR_REFUND_STATUS)) {
             refundAvailabilityStatusResult = EXTERNAL_PENDING;
 
-        } else if (charge.hasStatus(ImmutableList.of(CAPTURED))) {
+        } else if (charge.hasStatus(CAPTURED)) {
             if (charge.getTotalAmountToBeRefunded() > 0) {
                 refundAvailabilityStatusResult = EXTERNAL_AVAILABLE;
             } else {

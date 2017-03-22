@@ -62,11 +62,11 @@ public abstract class CardService<T extends BaseResponse> {
                 gatewayAccount.getType(),
                 lockingStatus);
 
-        if (reloadedCharge.hasStatus(ImmutableList.of(ChargeStatus.EXPIRED))) {
+        if (reloadedCharge.hasStatus(ChargeStatus.EXPIRED)) {
             throw new ChargeExpiredRuntimeException(operationType.getValue(), reloadedCharge.getExternalId());
         }
         if (!reloadedCharge.hasStatus(legalStatuses)) {
-            if (reloadedCharge.hasStatus(ImmutableList.of(lockingStatus))) {
+            if (reloadedCharge.hasStatus(lockingStatus)) {
                 throw new OperationAlreadyInProgressRuntimeException(operationType.getValue(), reloadedCharge.getExternalId());
             }
             logger.error("Charge is not in a legal status to do the pre-operation - charge_external_id={}, status={}, legal_states={}",
