@@ -1,5 +1,6 @@
 package uk.gov.pay.connector.service;
 
+import com.codahale.metrics.Counter;
 import com.codahale.metrics.Histogram;
 import com.codahale.metrics.MetricRegistry;
 import io.dropwizard.setup.Environment;
@@ -40,7 +41,9 @@ public class CardCaptureProcessTest {
     public void setup() {
         MetricRegistry mockMetricRegistry = mock(MetricRegistry.class);
         Histogram mockHistogram = mock(Histogram.class);
+        Counter mockCounter = mock(Counter.class);
         when(mockMetricRegistry.histogram(anyString())).thenReturn(mockHistogram);
+        when(mockMetricRegistry.counter(anyString())).thenReturn(mockCounter);
         when(mockEnvironment.metrics()).thenReturn(mockMetricRegistry);
         cardCaptureProcess = new CardCaptureProcess(mockEnvironment, mockChargeDao, mockCardCaptureService);
     }

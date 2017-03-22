@@ -37,6 +37,7 @@ public class CardCaptureProcess {
             List<ChargeEntity> chargesToCapture = chargeDao
                     .findAllBy(chargeSearchCriteriaForCapture());
             logger.info("Capturing : "+ chargesToCapture.size() + " charges");
+            metricRegistry.counter("gateway-operations.capture-process.count").inc();
 
             chargesToCapture
                 .forEach((charge) ->  captureService.doCapture(charge.getExternalId()));
@@ -44,7 +45,7 @@ public class CardCaptureProcess {
             logger.error("Exception when running capture", e);
         } finally {
             responseTimeStopwatch.stop();
-            metricRegistry.histogram("capture-process.response_time").update(responseTimeStopwatch.elapsed(TimeUnit.MILLISECONDS));
+            metricRegistry.histogram("gateway-operations.capture-process.running_time").update(responseTimeStopwatch.elapsed(TimeUnit.MILLISECONDS));
         }
     }
 
