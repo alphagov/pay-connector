@@ -1,5 +1,6 @@
 package uk.gov.pay.connector.service;
 
+import com.codahale.metrics.Gauge;
 import com.codahale.metrics.MetricRegistry;
 import com.google.common.base.Stopwatch;
 import io.dropwizard.setup.Environment;
@@ -23,30 +24,38 @@ public class CardCaptureProcess {
     private final ChargeDao chargeDao;
     private final CardCaptureService captureService;
     private final MetricRegistry metricRegistry;
+    private volatile long queueSize;
 
     @Inject
     public CardCaptureProcess(Environment environment, ChargeDao chargeDao, CardCaptureService cardCaptureService) {
         this.chargeDao = chargeDao;
         this.captureService = cardCaptureService;
         metricRegistry = environment.metrics();
+
+        metricRegistry.register("gateway-operations.capture-process.queue-size", (Gauge<Long>) this::getQueueSize);
     }
 
     public void runCapture() {
         Stopwatch responseTimeStopwatch = Stopwatch.createStarted();
         try {
-            List<ChargeEntity> chargesToCapture = chargeDao
-                    .findAllBy(chargeSearchCriteriaForCapture());
-            logger.info("Capturing : "+ chargesToCapture.size() + " charges");
+            queueSize = chargeDao.getTotalFor(chargeSearchCriteriaForCapture());
+
+            List<ChargeEntity> chargesToCapture = chargeDao.findAllBy(chargeSearchCriteriaForCapture());
+
+            logger.info("Capturing : "+ chargesToCapture.size() + " of " + queueSize + " charges");
             metricRegistry.counter("gateway-operations.capture-process.count").inc();
 
-            chargesToCapture
-                .forEach((charge) ->  captureService.doCapture(charge.getExternalId()));
+            chargesToCapture.forEach((charge) ->  captureService.doCapture(charge.getExternalId()));
         } catch (Exception e) {
             logger.error("Exception when running capture", e);
         } finally {
             responseTimeStopwatch.stop();
             metricRegistry.histogram("gateway-operations.capture-process.running_time").update(responseTimeStopwatch.elapsed(TimeUnit.MILLISECONDS));
         }
+    }
+
+    public long getQueueSize() {
+        return queueSize;
     }
 
     private ChargeSearchParams chargeSearchCriteriaForCapture() {

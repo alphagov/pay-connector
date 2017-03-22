@@ -18,6 +18,7 @@ import static java.util.Arrays.asList;
 import static org.hamcrest.CoreMatchers.hasItem;
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.core.Is.is;
+import static org.junit.Assert.assertEquals;
 import static org.mockito.Matchers.any;
 import static org.mockito.Matchers.anyString;
 import static org.mockito.Mockito.*;
@@ -42,9 +43,11 @@ public class CardCaptureProcessTest {
         MetricRegistry mockMetricRegistry = mock(MetricRegistry.class);
         Histogram mockHistogram = mock(Histogram.class);
         Counter mockCounter = mock(Counter.class);
+
         when(mockMetricRegistry.histogram(anyString())).thenReturn(mockHistogram);
         when(mockMetricRegistry.counter(anyString())).thenReturn(mockCounter);
         when(mockEnvironment.metrics()).thenReturn(mockMetricRegistry);
+        when(mockMetricRegistry.counter(anyString())).thenReturn(mockCounter);
         cardCaptureProcess = new CardCaptureProcess(mockEnvironment, mockChargeDao, mockCardCaptureService);
     }
 
@@ -60,6 +63,15 @@ public class CardCaptureProcessTest {
                 is(CardCaptureProcess.BATCH_SIZE));
         assertThat(searchParamsArgumentCaptor.getValue().getChargeStatuses(), hasItem(CAPTURE_APPROVED));
         assertThat(searchParamsArgumentCaptor.getValue().getPage(), is(1L));
+    }
+
+    @Test
+    public void shouldRecordTheQueueSizeOnEveryRun() {
+        when(mockChargeDao.getTotalFor(any())).thenReturn(15L);
+
+        cardCaptureProcess.runCapture();
+
+        assertEquals(cardCaptureProcess.getQueueSize(), 15L);
     }
 
     @Test
