@@ -188,4 +188,15 @@ public class ChargeDao extends JpaDao<ChargeEntity> {
     }
 
 
+    public int countCaptureRetriesForCharge(long chargeId) {
+        String query = "SELECT count(ce) FROM ChargeEventEntity ce WHERE " +
+                "    ce.chargeEntity.id = :chargeId AND " +
+                "    ce.status = :status";
+
+        return ((Number) entityManager.get()
+                .createQuery(query)
+                .setParameter("chargeId", chargeId)
+                .setParameter("status", CAPTURE_APPROVED)
+                .getSingleResult()).intValue();
+    }
 }

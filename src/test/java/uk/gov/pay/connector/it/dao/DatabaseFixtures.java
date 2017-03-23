@@ -81,7 +81,7 @@ public class DatabaseFixtures {
     public class TestChargeEvent {
         private long chargeId;
         private ChargeStatus chargeStatus;
-        private ZonedDateTime updated;
+        private ZonedDateTime updated = ZonedDateTime.now();
 
         public TestChargeEvent withChargeId(long chargeId) {
             this.chargeId = chargeId;
