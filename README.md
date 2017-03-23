@@ -62,47 +62,49 @@ The command to run all the tests is:
 
 ## API Specification
 
+The [API Specification](docs/api_specification.md) provides more detail on the paths and operations including examples.
+
 ### TASKS NAMESPACE
 
 | Path                          | Supported Methods | Description                        |
 | ----------------------------- | ----------------- | ---------------------------------- |
-|[```/v1/tasks/expired-charges-sweep```](doc/api_specification.md#post-v1tasksexpired-charges-sweep)  | POST    |  Spawns a task to expire charges with a default window of 1 Hr |   
+|[```/v1/tasks/expired-charges-sweep```](docs/api_specification.md#post-v1tasksexpired-charges-sweep)  | POST    |  Spawns a task to expire charges with a default window of 1 Hr |   
 
 ### API NAMESPACE
 
 | Path                          | Supported Methods | Description                        |
 | ----------------------------- | ----------------- | ---------------------------------- |
-|[```/v1/api/accounts```](doc/api_specification.md#post-v1apiaccounts)              | POST    |  Create a new account to associate charges with            |
-|[```/v1/api/accounts```](doc/api_specification.md#get-v1apiaccounts)              | GET    |  Retrieves a collection of all the accounts |
-|[```/v1/api/accounts/{gatewayAccountId}```](doc/api_specification.md#get-v1apiaccountsaccountsid)     | GET    |  Retrieves an existing account without the provider credentials  |
-|[```/v1/api/accounts/{accountId}/charges/{chargeId}```](doc/api_specification.md#get-v1apiaccountsaccountidchargeschargeid)                 | GET    |  Returns the charge with `chargeId`  belongs to account `accountId` |
-|[```/v1/api/accounts/{accountId}/charges```](doc/api_specification.md#post-v1apiaccountsaccountidcharges)                                  | POST    |  Create a new charge for this account `accountId`           |
-|[```/v1/api/accounts/{accountId}/charges```](doc/api_specification.md#get-v1apiaccountsaccountidcharges)                                  | GET    |  Searches transactions for this account `accountId` returns JSON or CSV as requested           |
-|[```/v1/api/notifications/worldpay```](doc/api_specification.md#post-v1apinotificationsworldpay)                                  | POST |  Handle charge update notifications from Worldpay.            |
-|[```/v1/api/notifications/smartpay```](doc/api_specification.md#post-v1apinotificationssmartpay)                                  | POST |  Handle charge update notifications from Smartpay.            |
-|[```/v1/api/accounts/{accountId}/charges/{chargeId}/cancel```](doc/api_specification.md#post-v1apiaccountsaccountidchargeschargeidcancel)  | POST    |  Cancels the charge with `chargeId` for account `accountId`           |
-|[```/v1/api/accounts/{accountId}/charges/{chargeId}/events```](doc/api_specification.md#post-v1apiaccountsaccountidchargeschargeidevents)  | GET     |  Retrieves all the transaction history for the given `chargeId` of account `accountId`           |
-|[```/v1/api/accounts/{accountId}/email-notification```](doc/api_specification.md#post-v1apiaccountsaccountidchargeschargeidcancel)  | POST    |  Updates an email notification template body for account `accountId`           |
-|[```/v1/api/accounts/{accountId}/email-notification```](doc/api_specification.md#post-v1apiaccountsaccountidchargeschargeidevents)  | GET     |  Retrieves the email notification template body for the given account `accountId`           |
-|[```/v1/api/accounts/{accountId}/email-notification```](doc/api_specification.md#post-v1apiaccountsaccountidchargeschargeidevents)  | PATCH   |  Enables/Disables email notifications for the given account `accountId`           |
-|[```/v1/api/accounts/{accountId}/description-analytics-id```](doc/api_specification.md#patch-v1apiaccountsdescriptionanalyticsid)  | PATCH   |  Allows editing description and/or analyticsId for the given account `accountId`           |
-|[```/v1/api/accounts/{accountId}/charges/{chargeId}/refunds```](doc/api_specification.md#post-v1apiaccountschargesrefunds)  | POST   |  Submits a refund for a given charge `chargeId` and a given `accountId`           |
-|[```/v1/api/accounts/{accountId}/charges/{chargeId}/refunds```](doc/api_specification.md#get-v1apiaccountschargesrefunds)  | GET   |  Retrieves all refunds associated to a charge `chargeId` and a given `accountId`           |
-|[```/v1/api/accounts/{accountId}/charges/{chargeId}/refunds/{refundId}```](doc/api_specification.md#get-v1apiaccountschargesrefundsrefundid)  | GET   |  Retrieves a refund by `refundId` for a given charge `chargeId` and a given `accountId`           |
+|[```/v1/api/accounts```](docs/api_specification.md#post-v1apiaccounts)              | POST    |  Create a new account to associate charges with            |
+|[```/v1/api/accounts```](docs/api_specification.md#get-v1apiaccounts)              | GET    |  Retrieves a collection of all the accounts |
+|[```/v1/api/accounts/{gatewayAccountId}```](docs/api_specification.md#get-v1apiaccountsaccountsid)     | GET    |  Retrieves an existing account without the provider credentials  |
+|[```/v1/api/accounts/{accountId}/charges/{chargeId}```](docs/api_specification.md#get-v1apiaccountsaccountidchargeschargeid)                 | GET    |  Returns the charge with `chargeId`  belongs to account `accountId` |
+|[```/v1/api/accounts/{accountId}/charges```](docs/api_specification.md#post-v1apiaccountsaccountidcharges)                                  | POST    |  Create a new charge for this account `accountId`           |
+|[```/v1/api/accounts/{accountId}/charges```](docs/api_specification.md#get-v1apiaccountsaccountidcharges)                                  | GET    |  Searches transactions for this account `accountId` returns JSON or CSV as requested           |
+|[```/v1/api/notifications/worldpay```](docs/api_specification.md#post-v1apinotificationsworldpay)                                  | POST |  Handle charge update notifications from Worldpay.            |
+|[```/v1/api/notifications/smartpay```](docs/api_specification.md#post-v1apinotificationssmartpay)                                  | POST |  Handle charge update notifications from Smartpay.            |
+|[```/v1/api/accounts/{accountId}/charges/{chargeId}/cancel```](docs/api_specification.md#post-v1apiaccountsaccountidchargeschargeidcancel)  | POST    |  Cancels the charge with `chargeId` for account `accountId`           |
+|[```/v1/api/accounts/{accountId}/charges/{chargeId}/events```](docs/api_specification.md#post-v1apiaccountsaccountidchargeschargeidevents)  | GET     |  Retrieves all the transaction history for the given `chargeId` of account `accountId`           |
+|[```/v1/api/accounts/{accountId}/email-notification```](docs/api_specification.md#post-v1apiaccountsaccountidchargeschargeidcancel)  | POST    |  Updates an email notification template body for account `accountId`           |
+|[```/v1/api/accounts/{accountId}/email-notification```](docs/api_specification.md#post-v1apiaccountsaccountidchargeschargeidevents)  | GET     |  Retrieves the email notification template body for the given account `accountId`           |
+|[```/v1/api/accounts/{accountId}/email-notification```](docs/api_specification.md#post-v1apiaccountsaccountidchargeschargeidevents)  | PATCH   |  Enables/Disables email notifications for the given account `accountId`           |
+|[```/v1/api/accounts/{accountId}/description-analytics-id```](docs/api_specification.md#patch-v1apiaccountsdescriptionanalyticsid)  | PATCH   |  Allows editing description and/or analyticsId for the given account `accountId`           |
+|[```/v1/api/accounts/{accountId}/charges/{chargeId}/refunds```](docs/api_specification.md#post-v1apiaccountschargesrefunds)  | POST   |  Submits a refund for a given charge `chargeId` and a given `accountId`           |
+|[```/v1/api/accounts/{accountId}/charges/{chargeId}/refunds```](docs/api_specification.md#get-v1apiaccountschargesrefunds)  | GET   |  Retrieves all refunds associated to a charge `chargeId` and a given `accountId`           |
+|[```/v1/api/accounts/{accountId}/charges/{chargeId}/refunds/{refundId}```](docs/api_specification.md#get-v1apiaccountschargesrefundsrefundid)  | GET   |  Retrieves a refund by `refundId` for a given charge `chargeId` and a given `accountId`           |
 
 ### FRONTEND NAMESPACE
 
 | Path                          | Supported Methods | Description                        |
 | ----------------------------- | ----------------- | ---------------------------------- |
-|[```/v1/frontend/accounts/{accountId}```](doc/api_specification.md#get-v1frontendaccountsaccountid)              | GET    |  Retrieves an existing account together with the provider credentials             |
-|[```/v1/frontend/accounts/{accountId}```](doc/api_specification.md#put-v1frontendaccountsaccountid)              | PUT    |  Update gateway credentials associated with this account             |
-|[```/v1/frontend/charges/{chargeId}/status```](doc/api_specification.md#put-v1frontendchargeschargeidstatus)         | PUT    |  Update status of the charge     |
-|[```/v1/frontend/charges/{chargeId}```](doc/api_specification.md#get-v1frontendchargeschargeid)                                  | GET |  Find out the status of a charge            |
-|[```/v1/frontend/charges/{chargeId}/cards```](doc/api_specification.md#post-v1frontendchargeschargeidcards)                      | POST |  Authorise the charge with the card details            |
-|[```/v1/frontend/charges/{chargeId}/capture```](doc/api_specification.md#post-v1frontendchargeschargeidcapture)                      | POST |  Confirm a card charge that was previously authorised successfully.            |
-|[```/v1/frontend/charges?gatewayAccountId={gatewayAccountId}```](doc/api_specification.md#get-v1frontendchargesgatewayAccountIdgatewayAccountId)    | GET |  List all transactions for a gateway account     |
-|[```/v1/frontend/tokens/{chargeTokenId}/charge```](doc/api_specification.md#get-v1frontendtokenschargetokenid)                                  | GET |  Retrieve information about a secure redirect token.            |
-|[```/v1/frontend/tokens/{chargeTokenId}```](doc/api_specification.md#delete-v1frontendtokenschargetokenid)                                  | DELETE |  Delete the secure redirect token.            |
+|[```/v1/frontend/accounts/{accountId}```](docs/api_specification.md#get-v1frontendaccountsaccountid)              | GET    |  Retrieves an existing account together with the provider credentials             |
+|[```/v1/frontend/accounts/{accountId}```](docs/api_specification.md#put-v1frontendaccountsaccountid)              | PUT    |  Update gateway credentials associated with this account             |
+|[```/v1/frontend/charges/{chargeId}/status```](docs/api_specification.md#put-v1frontendchargeschargeidstatus)         | PUT    |  Update status of the charge     |
+|[```/v1/frontend/charges/{chargeId}```](docs/api_specification.md#get-v1frontendchargeschargeid)                                  | GET |  Find out the status of a charge            |
+|[```/v1/frontend/charges/{chargeId}/cards```](docs/api_specification.md#post-v1frontendchargeschargeidcards)                      | POST |  Authorise the charge with the card details            |
+|[```/v1/frontend/charges/{chargeId}/capture```](docs/api_specification.md#post-v1frontendchargeschargeidcapture)                      | POST |  Confirm a card charge that was previously authorised successfully.            |
+|[```/v1/frontend/charges?gatewayAccountId={gatewayAccountId}```](docs/api_specification.md#get-v1frontendchargesgatewayAccountIdgatewayAccountId)    | GET |  List all transactions for a gateway account     |
+|[```/v1/frontend/tokens/{chargeTokenId}/charge```](docs/api_specification.md#get-v1frontendtokenschargetokenid)                                  | GET |  Retrieve information about a secure redirect token.            |
+|[```/v1/frontend/tokens/{chargeTokenId}```](docs/api_specification.md#delete-v1frontendtokenschargetokenid)                                  | DELETE |  Delete the secure redirect token.            |
 
 ## Licence
 

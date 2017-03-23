@@ -58,7 +58,7 @@ partial refunds, there's a race condition where an inquiry could return
 information about a different refund.
 
 Conducting an inquiry after a notification adds significant complexity to the
-codebase. In particular it opens up the possibility of a lot of edge cases
+codebase. In particular it opens up the possqibility of a lot of edge cases
 where, for example, an enquiry might indicate a different status than a
 notification. This could in theory be legitimate if two status changes occured
 in quick succession but only the first notification has been delivered. Or it
