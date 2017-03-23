@@ -22,8 +22,12 @@ public class ConnectorConfigurationTest {
         JerseyClientOverrides jerseyClientOverrides = RULE.getConfiguration().getWorldpayConfig().getJerseyClientOverrides().get();
 
         Duration authReadTimeout = jerseyClientOverrides.getAuth().getReadTimeout();
-
         assertThat(authReadTimeout, is(Duration.milliseconds(222)));
+
+        CaptureProcessConfig captureProcessConfig = RULE.getConfiguration().getCaptureProcessConfig();
+        assertThat(captureProcessConfig.getRetryFailuresEvery(), is(Duration.minutes(60)));
+        assertThat(captureProcessConfig.getRetryFailuresEveryAsJavaDuration(), is(java.time.Duration.ofMinutes(60)));
+        assertThat(captureProcessConfig.getBatchSize(), is(10));
     }
 
 }
