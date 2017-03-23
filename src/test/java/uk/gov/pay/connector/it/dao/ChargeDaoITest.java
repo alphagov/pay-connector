@@ -1177,6 +1177,21 @@ public class ChargeDaoITest extends DaoITestBase {
         assertEquals(charges.get(0).getId(), new Long(chargeId1));
     }
 
+    @Test
+    public void countChargesForCapture_shouldReturnNumberOfChargesInCaptureApprovedState() throws Exception {
+        DatabaseFixtures
+                .withDatabaseTestHelper(databaseTestHelper)
+                .aTestCharge()
+                .withTestAccount(defaultTestAccount)
+                .withChargeId(101L)
+                .withExternalChargeId("ext-id1")
+                .withCreatedDate(now().minusHours(2))
+                .withChargeStatus(CAPTURE_APPROVED)
+                .insert();
+
+        assertThat(chargeDao.countChargesForCapture(), is(1));
+    }
+
     private void insertTestAccount() {
         this.defaultTestAccount = DatabaseFixtures
                 .withDatabaseTestHelper(databaseTestHelper)

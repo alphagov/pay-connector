@@ -157,6 +157,16 @@ public class ChargeDao extends JpaDao<ChargeEntity> {
         return cb.like(cb.lower(expression), '%' + escapedReference.toLowerCase() + '%');
     }
 
+    public int countChargesForCapture() {
+        String query = "SELECT count(c) FROM ChargeEntity c WHERE c.status=:status";
+
+        Number count = (Number) entityManager.get()
+                .createQuery(query)
+                .setParameter("status", CAPTURE_APPROVED.getValue())
+                .getSingleResult();
+        return count.intValue();
+    }
+
     public List<ChargeEntity> findChargesForCapture(int maxNumberOfCharges, Duration notAttemptedWithin) {
         String query = "SELECT c FROM ChargeEntity c WHERE " +
                 "c.status=:status AND " +
