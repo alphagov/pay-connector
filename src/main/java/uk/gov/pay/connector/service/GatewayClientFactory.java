@@ -22,7 +22,7 @@ public class GatewayClientFactory {
                                              MediaType mediaType,
                                              BiFunction<GatewayOrder, Invocation.Builder, Invocation.Builder> sessionIdentier, MetricRegistry metricRegistry) {
 
-        Client client = clientFactory.createWithDropwizardClient(gateway, operation);
+        Client client = clientFactory.createWithDropwizardClient(gateway, operation, metricRegistry);
         return new GatewayClient(client, gatewayUrlMap, mediaType, sessionIdentier, metricRegistry);
     }
 

@@ -1,5 +1,7 @@
 package uk.gov.pay.connector.service;
 
+import com.codahale.metrics.MetricRegistry;
+import com.codahale.metrics.httpclient.InstrumentedHttpClientConnectionManager;
 import io.dropwizard.client.JerseyClientBuilder;
 import io.dropwizard.client.JerseyClientConfiguration;
 import io.dropwizard.client.proxy.ProxyConfiguration;
@@ -11,6 +13,7 @@ import org.apache.http.conn.socket.PlainConnectionSocketFactory;
 import org.apache.http.conn.ssl.SSLConnectionSocketFactory;
 import org.apache.http.impl.conn.ManagedHttpClientConnectionFactory;
 import org.apache.http.impl.conn.PoolingHttpClientConnectionManager;
+import org.apache.http.impl.conn.SystemDefaultDnsResolver;
 import org.glassfish.jersey.SslConfigurator;
 import org.glassfish.jersey.apache.connector.ApacheClientProperties;
 import org.glassfish.jersey.apache.connector.ApacheConnectorProvider;
@@ -23,6 +26,9 @@ import uk.gov.pay.connector.util.TrustStoreLoader;
 import javax.inject.Inject;
 import javax.net.ssl.HostnameVerifier;
 import javax.ws.rs.client.Client;
+import java.util.concurrent.TimeUnit;
+
+import static java.lang.String.*;
 
 public class ClientFactory {
     private final Environment environment;
@@ -34,18 +40,18 @@ public class ClientFactory {
         this.conf = conf;
     }
 
-    public Client createWithDropwizardClient(PaymentGatewayName gateway, GatewayOperation operation) {
+    public Client createWithDropwizardClient(PaymentGatewayName gateway, GatewayOperation operation, MetricRegistry metricRegistry) {
         JerseyClientConfiguration clientConfiguration = conf.getClientConfiguration();
         JerseyClientBuilder defaultClientBuilder = new JerseyClientBuilder(environment)
                 .using(new ApacheConnectorProvider())
                 .using(clientConfiguration)
                 .withProperty(ClientProperties.READ_TIMEOUT, getReadTimeoutInMillis(operation, gateway))
-                .withProperty(ApacheClientProperties.CONNECTION_MANAGER, createConnectionManager());
+                .withProperty(ApacheClientProperties.CONNECTION_MANAGER, createConnectionManager(gateway.getName(), operation.getConfigKey(), metricRegistry));
 
         // optionally set proxy; see comment below why this has to be done
         if (conf.getCustomJerseyClient().isProxyEnabled()) {
             defaultClientBuilder
-                .withProperty(ClientProperties.PROXY_URI, proxyUrl(clientConfiguration.getProxyConfiguration()));
+                    .withProperty(ClientProperties.PROXY_URI, proxyUrl(clientConfiguration.getProxyConfiguration()));
         }
 
         Client client = defaultClientBuilder.build(gateway.getName());
@@ -68,23 +74,29 @@ public class ClientFactory {
                 .orElse(null);
     }
 
-    private HttpClientConnectionManager createConnectionManager() {
-        return new PoolingHttpClientConnectionManager(
-            RegistryBuilder.<ConnectionSocketFactory>create()
-                    .register("http", PlainConnectionSocketFactory.getSocketFactory())
-                    .register("https",
-                        new SSLConnectionSocketFactory(
-                            SslConfigurator
-                                .newInstance()
-                                .trustStore(TrustStoreLoader.getTrustStore())
-                                .createSSLContext(),
-                            new String[] { "TLSv1.2" },
-                            null,
-                            (HostnameVerifier) null
+    private HttpClientConnectionManager createConnectionManager(String gatewayName, String operation, MetricRegistry metricRegistry) {
+        return new InstrumentedHttpClientConnectionManager(
+                metricRegistry,
+                RegistryBuilder.<ConnectionSocketFactory>create()
+                        .register("http", PlainConnectionSocketFactory.getSocketFactory())
+                        .register("https",
+                                new SSLConnectionSocketFactory(
+                                        SslConfigurator
+                                                .newInstance()
+                                                .trustStore(TrustStoreLoader.getTrustStore())
+                                                .createSSLContext(),
+                                        new String[] { "TLSv1.2" },
+                                        null,
+                                        (HostnameVerifier) null
+                                )
                         )
-                    )
-                    .build(),
-            new ManagedHttpClientConnectionFactory()
+                        .build(),
+                new ManagedHttpClientConnectionFactory(),
+                null,
+                SystemDefaultDnsResolver.INSTANCE,
+                -1,
+                TimeUnit.MILLISECONDS,
+                format("%s.%s", gatewayName, operation)
         );
     }
 
@@ -104,7 +116,7 @@ public class ClientFactory {
      * @return proxy server URL
      */
     private String proxyUrl(ProxyConfiguration proxyConfig) {
-        return String.format("%s://%s:%s",
+        return format("%s://%s:%s",
                 proxyConfig.getScheme(),
                 proxyConfig.getHost(),
                 proxyConfig.getPort()
