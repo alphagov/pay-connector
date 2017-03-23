@@ -1,6 +1,7 @@
 package uk.gov.pay.connector.service;
 
 import com.codahale.metrics.Gauge;
+import com.codahale.metrics.Meter;
 import com.codahale.metrics.MetricRegistry;
 import com.google.common.base.Stopwatch;
 import io.dropwizard.setup.Environment;
@@ -23,6 +24,7 @@ public class CardCaptureProcess {
     private final MetricRegistry metricRegistry;
     private final CaptureProcessConfig captureConfig;
     private volatile long queueSize;
+    private final Meter captureQueue;
 
     @Inject
     public CardCaptureProcess(Environment environment, ChargeDao chargeDao, CardCaptureService cardCaptureService, ConnectorConfiguration connectorConfiguration) {
@@ -31,18 +33,18 @@ public class CardCaptureProcess {
         this.captureConfig = connectorConfiguration.getCaptureProcessConfig();
         metricRegistry = environment.metrics();
 
-        metricRegistry.register("gateway-operations.capture-process.queue-size", (Gauge<Long>) this::getQueueSize);
+        captureQueue = metricRegistry.meter("gateway-operations.capture-process.queue-size");
     }
 
     public void runCapture() {
         Stopwatch responseTimeStopwatch = Stopwatch.createStarted();
         try {
             queueSize = chargeDao.countChargesForCapture();
+            captureQueue.mark(queueSize);
 
             List<ChargeEntity> chargesToCapture = chargeDao.findChargesForCapture(captureConfig.getBatchSize(), captureConfig.getRetryFailuresEveryAsJavaDuration());
 
             logger.info("Capturing : "+ chargesToCapture.size() + " of " + queueSize + " charges");
-            metricRegistry.counter("gateway-operations.capture-process").inc();
 
             chargesToCapture.forEach((charge) ->  captureService.doCapture(charge.getExternalId()));
         } catch (Exception e) {
