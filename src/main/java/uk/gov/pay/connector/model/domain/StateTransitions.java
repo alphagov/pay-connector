@@ -1,14 +1,11 @@
 package uk.gov.pay.connector.model.domain;
 
 import com.google.common.collect.ImmutableList;
-import com.google.common.collect.ImmutableMap;
-import uk.gov.pay.connector.resources.PaymentGatewayName;
 
 import java.util.List;
 import java.util.Map;
 
 import static java.util.Collections.emptyList;
-import static uk.gov.pay.connector.model.domain.ChargeStatus.*;
 
 abstract class StateTransitions {
     private Map<ChargeStatus, List<ChargeStatus>> transitionTable;

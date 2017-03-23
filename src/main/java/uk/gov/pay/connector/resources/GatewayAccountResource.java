@@ -17,6 +17,7 @@ import uk.gov.pay.connector.model.domain.CardTypeEntity;
 import uk.gov.pay.connector.model.domain.GatewayAccountEntity;
 import uk.gov.pay.connector.model.domain.GatewayAccountResourceDTO;
 import uk.gov.pay.connector.service.GatewayAccountNotificationCredentialsService;
+import uk.gov.pay.connector.service.PaymentGatewayName;
 
 import javax.inject.Inject;
 import javax.ws.rs.*;

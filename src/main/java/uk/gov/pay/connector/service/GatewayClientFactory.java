@@ -18,9 +18,9 @@ public class GatewayClientFactory {
         this.clientFactory = clientFactory;
     }
 
-    public GatewayClient createGatewayClient(SupportedPaymentGateway gateway, GatewayOperation operation, Map<String, String> gatewayUrlMap,
-                                                    MediaType mediaType,
-                                                    BiFunction<GatewayOrder, Invocation.Builder, Invocation.Builder> sessionIdentier, MetricRegistry metricRegistry) {
+    public GatewayClient createGatewayClient(PaymentGatewayName gateway, GatewayOperation operation, Map<String, String> gatewayUrlMap,
+                                             MediaType mediaType,
+                                             BiFunction<GatewayOrder, Invocation.Builder, Invocation.Builder> sessionIdentier, MetricRegistry metricRegistry) {
 
         Client client = clientFactory.createWithDropwizardClient(gateway, operation);
         return new GatewayClient(client, gatewayUrlMap, mediaType, sessionIdentier, metricRegistry);

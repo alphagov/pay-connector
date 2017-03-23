@@ -38,7 +38,9 @@ import static uk.gov.pay.connector.model.domain.ChargeStatus.CAPTURED;
 import static uk.gov.pay.connector.model.domain.GatewayAccountEntity.Type.TEST;
 import static uk.gov.pay.connector.model.domain.RefundEntityFixture.aValidRefundEntity;
 import static uk.gov.pay.connector.model.gateway.GatewayResponse.GatewayResponseBuilder.responseBuilder;
-import static uk.gov.pay.connector.resources.PaymentGatewayName.*;
+import static uk.gov.pay.connector.service.PaymentGatewayName.SANDBOX;
+import static uk.gov.pay.connector.service.PaymentGatewayName.SMARTPAY;
+import static uk.gov.pay.connector.service.PaymentGatewayName.WORLDPAY;
 
 @RunWith(MockitoJUnitRunner.class)
 public class ChargeRefundServiceTest {

@@ -13,7 +13,6 @@ import org.mockito.runners.MockitoJUnitRunner;
 import uk.gov.pay.connector.app.ConnectorConfiguration;
 import uk.gov.pay.connector.app.GatewayConfig;
 import uk.gov.pay.connector.app.WorldpayConfig;
-import uk.gov.pay.connector.resources.PaymentGatewayName;
 import uk.gov.pay.connector.service.sandbox.SandboxPaymentProvider;
 import uk.gov.pay.connector.service.smartpay.SmartpayPaymentProvider;
 import uk.gov.pay.connector.service.worldpay.WorldpayPaymentProvider;
@@ -30,8 +29,8 @@ import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 import static uk.gov.pay.connector.service.GatewayOperation.*;
-import static uk.gov.pay.connector.service.SupportedPaymentGateway.SMARTPAY;
-import static uk.gov.pay.connector.service.SupportedPaymentGateway.WORLDPAY;
+import static uk.gov.pay.connector.service.PaymentGatewayName.SMARTPAY;
+import static uk.gov.pay.connector.service.PaymentGatewayName.WORLDPAY;
 
 @RunWith(MockitoJUnitRunner.class)
 public class PaymentProvidersTest {
@@ -70,8 +69,8 @@ public class PaymentProvidersTest {
         Environment environment = mock(Environment.class);
         when(config.getSmartpayConfig()).thenReturn(smartpayConfig);
         when(config.getWorldpayConfig()).thenReturn(worldpayConfig);
-        when(config.getGatewayConfigFor(SupportedPaymentGateway.WORLDPAY)).thenReturn(worldpayConfig);
-        when(config.getGatewayConfigFor(SupportedPaymentGateway.SMARTPAY)).thenReturn(smartpayConfig);
+        when(config.getGatewayConfigFor(PaymentGatewayName.WORLDPAY)).thenReturn(worldpayConfig);
+        when(config.getGatewayConfigFor(PaymentGatewayName.SMARTPAY)).thenReturn(smartpayConfig);
         when(worldpayConfig.getUrls()).thenReturn(worldpayUrlMap);
         when(smartpayConfig.getUrls()).thenReturn(smartpayUrlMap);
         when(environment.metrics()).thenReturn(metricRegistry);

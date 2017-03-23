@@ -4,8 +4,7 @@ import com.fasterxml.jackson.annotation.JsonProperty;
 import io.dropwizard.Configuration;
 import io.dropwizard.client.JerseyClientConfiguration;
 import io.dropwizard.db.DataSourceFactory;
-import uk.gov.pay.connector.service.GatewayOperation;
-import uk.gov.pay.connector.service.SupportedPaymentGateway;
+import uk.gov.pay.connector.service.PaymentGatewayName;
 
 import javax.validation.Valid;
 import javax.validation.constraints.NotNull;
@@ -81,16 +80,16 @@ public class ConnectorConfiguration extends Configuration {
         return smartpayConfig;
     }
 
-    public GatewayConfig getGatewayConfigFor(SupportedPaymentGateway gateway) {
-        if (gateway == SupportedPaymentGateway.WORLDPAY) {
+    public GatewayConfig getGatewayConfigFor(PaymentGatewayName gateway) {
+        if (gateway == PaymentGatewayName.WORLDPAY) {
             return getWorldpayConfig();
         }
 
-        if (gateway == SupportedPaymentGateway.SMARTPAY) {
+        if (gateway == PaymentGatewayName.SMARTPAY) {
             return getSmartpayConfig();
         }
 
-        throw new SupportedPaymentGateway.Unsupported();
+        throw new PaymentGatewayName.Unsupported();
     }
 
     @JsonProperty("jpa")

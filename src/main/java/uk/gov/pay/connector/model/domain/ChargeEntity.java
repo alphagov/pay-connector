@@ -2,7 +2,7 @@ package uk.gov.pay.connector.model.domain;
 
 import uk.gov.pay.connector.exception.InvalidStateTransitionException;
 import uk.gov.pay.connector.model.api.ExternalChargeState;
-import uk.gov.pay.connector.resources.PaymentGatewayName;
+import uk.gov.pay.connector.service.PaymentGatewayName;
 import uk.gov.pay.connector.util.RandomIdGenerator;
 
 import javax.persistence.*;
@@ -15,7 +15,6 @@ import java.util.List;
 import static org.apache.commons.lang3.StringUtils.equalsIgnoreCase;
 import static uk.gov.pay.connector.model.domain.ChargeStatus.*;
 import static uk.gov.pay.connector.model.domain.PaymentGatewayStateTransitions.stateTransitionsFor;
-import static uk.gov.pay.connector.resources.PaymentGatewayName.valueFrom;
 
 @Entity
 @Table(name = "charges")
@@ -227,7 +226,7 @@ public class ChargeEntity extends AbstractEntity {
     }
 
     public PaymentGatewayName getPaymentGatewayName() {
-        return valueFrom(gatewayAccount.getGatewayName());
+        return PaymentGatewayName.valueFrom(gatewayAccount.getGatewayName());
     }
 
     public Auth3dsDetailsEntity get3dsDetails() {

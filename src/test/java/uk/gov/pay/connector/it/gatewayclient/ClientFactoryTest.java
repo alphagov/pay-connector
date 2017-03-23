@@ -32,8 +32,8 @@ import static org.mockserver.model.HttpResponse.response;
 import static org.mockserver.socket.PortFactory.findFreePort;
 import static org.mockserver.verify.VerificationTimes.exactly;
 import static org.mockserver.verify.VerificationTimes.once;
-import static uk.gov.pay.connector.service.SupportedPaymentGateway.SMARTPAY;
-import static uk.gov.pay.connector.service.SupportedPaymentGateway.WORLDPAY;
+import static uk.gov.pay.connector.service.PaymentGatewayName.SMARTPAY;
+import static uk.gov.pay.connector.service.PaymentGatewayName.WORLDPAY;
 
 public class ClientFactoryTest {
 

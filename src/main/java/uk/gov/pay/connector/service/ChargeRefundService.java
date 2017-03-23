@@ -15,7 +15,6 @@ import uk.gov.pay.connector.model.domain.GatewayAccountEntity;
 import uk.gov.pay.connector.model.domain.RefundEntity;
 import uk.gov.pay.connector.model.domain.RefundStatus;
 import uk.gov.pay.connector.model.gateway.GatewayResponse;
-import uk.gov.pay.connector.resources.PaymentGatewayName;
 import uk.gov.pay.connector.service.transaction.*;
 
 import javax.inject.Inject;

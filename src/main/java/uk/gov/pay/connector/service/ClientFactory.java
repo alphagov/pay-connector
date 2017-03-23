@@ -34,7 +34,7 @@ public class ClientFactory {
         this.conf = conf;
     }
 
-    public Client createWithDropwizardClient(SupportedPaymentGateway gateway, GatewayOperation operation) {
+    public Client createWithDropwizardClient(PaymentGatewayName gateway, GatewayOperation operation) {
         JerseyClientConfiguration clientConfiguration = conf.getClientConfiguration();
         JerseyClientBuilder defaultClientBuilder = new JerseyClientBuilder(environment)
                 .using(new ApacheConnectorProvider())
@@ -48,12 +48,12 @@ public class ClientFactory {
                 .withProperty(ClientProperties.PROXY_URI, proxyUrl(clientConfiguration.getProxyConfiguration()));
         }
 
-        Client client = defaultClientBuilder.build(gateway.getGatewayName());
+        Client client = defaultClientBuilder.build(gateway.getName());
         client.register(RestClientLoggingFilter.class);
         return client;
     }
 
-    private int getReadTimeoutInMillis(GatewayOperation operation, SupportedPaymentGateway gateway) {
+    private int getReadTimeoutInMillis(GatewayOperation operation, PaymentGatewayName gateway) {
         OperationOverrides overrides = getOverridesFor(operation, gateway);
         if (overrides != null && overrides.getReadTimeout() != null) {
             return (int) overrides.getReadTimeout().toMilliseconds();
@@ -61,7 +61,7 @@ public class ClientFactory {
         return (int) conf.getCustomJerseyClient().getReadTimeout().toMilliseconds();
     }
 
-    private OperationOverrides getOverridesFor(GatewayOperation operation, SupportedPaymentGateway gateway) {
+    private OperationOverrides getOverridesFor(GatewayOperation operation, PaymentGatewayName gateway) {
         return conf.getGatewayConfigFor(gateway)
                 .getJerseyClientOverrides()
                 .map(jerseyClientOverrides -> jerseyClientOverrides.getOverridesFor(operation))

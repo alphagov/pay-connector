@@ -29,8 +29,8 @@ import static org.mockito.Matchers.any;
 import static org.mockito.Mockito.*;
 import static uk.gov.pay.connector.model.domain.ChargeStatus.CAPTURED;
 import static uk.gov.pay.connector.model.domain.RefundStatus.REFUNDED;
-import static uk.gov.pay.connector.resources.PaymentGatewayName.SANDBOX;
-import static uk.gov.pay.connector.resources.PaymentGatewayName.WORLDPAY;
+import static uk.gov.pay.connector.service.PaymentGatewayName.SANDBOX;
+import static uk.gov.pay.connector.service.PaymentGatewayName.WORLDPAY;
 
 @RunWith(MockitoJUnitRunner.class)
 public class NotificationServiceTest {

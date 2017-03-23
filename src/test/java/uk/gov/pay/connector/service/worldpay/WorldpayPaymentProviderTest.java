@@ -96,17 +96,17 @@ public class WorldpayPaymentProviderTest {
         when(mockMetricRegistry.histogram(anyString())).thenReturn(mockHistogram);
         when(mockMetricRegistry.counter(anyString())).thenReturn(mockCounter);
         when(mockClientFactory.createWithDropwizardClient(
-                eq(SupportedPaymentGateway.WORLDPAY), any(GatewayOperation.class))
+                eq(PaymentGatewayName.WORLDPAY), any(GatewayOperation.class))
         )
                 .thenReturn(mockClient);
 
-        GatewayClient authClient = gatewayClientFactory.createGatewayClient(SupportedPaymentGateway.WORLDPAY, GatewayOperation.AUTHORISE,
+        GatewayClient authClient = gatewayClientFactory.createGatewayClient(PaymentGatewayName.WORLDPAY, GatewayOperation.AUTHORISE,
                 urlMap, MediaType.APPLICATION_XML_TYPE, includeSessionIdentifier(), mockMetricRegistry);
-        GatewayClient cancelClient = gatewayClientFactory.createGatewayClient(SupportedPaymentGateway.WORLDPAY, GatewayOperation.CANCEL,
+        GatewayClient cancelClient = gatewayClientFactory.createGatewayClient(PaymentGatewayName.WORLDPAY, GatewayOperation.CANCEL,
                 urlMap, MediaType.APPLICATION_XML_TYPE, includeSessionIdentifier(), mockMetricRegistry);
-        GatewayClient refundClient = gatewayClientFactory.createGatewayClient(SupportedPaymentGateway.WORLDPAY, GatewayOperation.REFUND,
+        GatewayClient refundClient = gatewayClientFactory.createGatewayClient(PaymentGatewayName.WORLDPAY, GatewayOperation.REFUND,
                 urlMap, MediaType.APPLICATION_XML_TYPE, includeSessionIdentifier(), mockMetricRegistry);
-        GatewayClient captureClient = gatewayClientFactory.createGatewayClient(SupportedPaymentGateway.WORLDPAY, GatewayOperation.CAPTURE,
+        GatewayClient captureClient = gatewayClientFactory.createGatewayClient(PaymentGatewayName.WORLDPAY, GatewayOperation.CAPTURE,
                 urlMap, MediaType.APPLICATION_XML_TYPE, includeSessionIdentifier(), mockMetricRegistry);
 
         gatewayClients = GatewayOperationClientBuilder.builder()
