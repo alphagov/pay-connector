@@ -42,7 +42,7 @@ public class CardCaptureProcess {
             List<ChargeEntity> chargesToCapture = chargeDao.findChargesForCapture(captureConfig.getBatchSize(), captureConfig.getRetryFailuresEveryAsJavaDuration());
 
             logger.info("Capturing : "+ chargesToCapture.size() + " of " + queueSize + " charges");
-            metricRegistry.counter("gateway-operations.capture-process.count").inc();
+            metricRegistry.counter("gateway-operations.capture-process").inc();
 
             chargesToCapture.forEach((charge) ->  captureService.doCapture(charge.getExternalId()));
         } catch (Exception e) {
