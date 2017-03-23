@@ -56,6 +56,7 @@ executorServiceConfig:
 captureProcessConfig:
   batchSize: ${CAPTURE_PROCESS_BATCH_SIZE:-10}
   retryFailuresEvery: ${CAPTURE_PROCESS_RETRY_FAILURES_EVERY:-60 minutes}
+  maximumRetries: ${CAPTURE_PROCESS_MAXIMUM_RETRIES:-24}
 
 transactionsPaginationServiceConfig:
   displayPageSize: ${TRANSACTION_LIST_DISPLAY_SIZE:-500}

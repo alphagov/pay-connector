@@ -6,6 +6,7 @@ import io.dropwizard.util.Duration;
 public class CaptureProcessConfig extends Configuration {
     private int batchSize;
     private Duration retryFailuresEvery;
+    private int maximumRetries;
 
     public int getBatchSize() {
         return batchSize;
@@ -17,5 +18,9 @@ public class CaptureProcessConfig extends Configuration {
 
     public java.time.Duration getRetryFailuresEveryAsJavaDuration() {
         return java.time.Duration.ofMillis(retryFailuresEvery.toMilliseconds());
+    }
+
+    public int getMaximumRetries() {
+        return maximumRetries;
     }
 }
