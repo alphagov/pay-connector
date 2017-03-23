@@ -7,22 +7,19 @@ import io.dropwizard.setup.Environment;
 import org.junit.Before;
 import org.junit.Test;
 import org.junit.runner.RunWith;
-import org.mockito.ArgumentCaptor;
 import org.mockito.Mock;
 import org.mockito.runners.MockitoJUnitRunner;
+import uk.gov.pay.connector.app.CaptureProcessConfig;
+import uk.gov.pay.connector.app.ConnectorConfiguration;
 import uk.gov.pay.connector.dao.ChargeDao;
-import uk.gov.pay.connector.dao.ChargeSearchParams;
 import uk.gov.pay.connector.model.domain.ChargeEntity;
 
+import java.time.Duration;
+
 import static java.util.Arrays.asList;
-import static org.hamcrest.CoreMatchers.hasItem;
-import static org.hamcrest.MatcherAssert.assertThat;
-import static org.hamcrest.core.Is.is;
 import static org.junit.Assert.assertEquals;
-import static org.mockito.Matchers.any;
 import static org.mockito.Matchers.anyString;
 import static org.mockito.Mockito.*;
-import static uk.gov.pay.connector.model.domain.ChargeStatus.CAPTURE_APPROVED;
 
 @RunWith(MockitoJUnitRunner.class)
 public class CardCaptureProcessTest {
@@ -38,40 +35,40 @@ public class CardCaptureProcessTest {
     @Mock
     Environment mockEnvironment;
 
+    @Mock
+    private ConnectorConfiguration mockConnectorConfiguration;
+
     @Before
     public void setup() {
         MetricRegistry mockMetricRegistry = mock(MetricRegistry.class);
         Histogram mockHistogram = mock(Histogram.class);
         Counter mockCounter = mock(Counter.class);
+        CaptureProcessConfig mockCaptureConfiguration = mock(CaptureProcessConfig.class);
 
         when(mockMetricRegistry.histogram(anyString())).thenReturn(mockHistogram);
         when(mockMetricRegistry.counter(anyString())).thenReturn(mockCounter);
         when(mockEnvironment.metrics()).thenReturn(mockMetricRegistry);
         when(mockMetricRegistry.counter(anyString())).thenReturn(mockCounter);
-        cardCaptureProcess = new CardCaptureProcess(mockEnvironment, mockChargeDao, mockCardCaptureService);
+        when(mockCaptureConfiguration.getBatchSize()).thenReturn(10);
+        when(mockCaptureConfiguration.getRetryFailuresEveryAsJavaDuration()).thenReturn(Duration.ofMinutes(60));
+        when(mockConnectorConfiguration.getCaptureProcessConfig()).thenReturn(mockCaptureConfiguration);
+        cardCaptureProcess = new CardCaptureProcess(mockEnvironment, mockChargeDao, mockCardCaptureService, mockConnectorConfiguration);
     }
 
     @Test
     public void shouldRetrieveASpecifiedNumberOfChargesApprovedForCapture() {
-        ArgumentCaptor<ChargeSearchParams> searchParamsArgumentCaptor = ArgumentCaptor.forClass(ChargeSearchParams.class);
-
         cardCaptureProcess.runCapture();
 
-        verify(mockChargeDao).findAllBy(searchParamsArgumentCaptor.capture());
-
-        assertThat(searchParamsArgumentCaptor.getValue().getDisplaySize(),
-                is(CardCaptureProcess.BATCH_SIZE));
-        assertThat(searchParamsArgumentCaptor.getValue().getChargeStatuses(), hasItem(CAPTURE_APPROVED));
-        assertThat(searchParamsArgumentCaptor.getValue().getPage(), is(1L));
+        verify(mockChargeDao).findChargesForCapture(10, Duration.ofMinutes(60));
     }
 
     @Test
     public void shouldRecordTheQueueSizeOnEveryRun() {
-        when(mockChargeDao.getTotalFor(any())).thenReturn(15L);
+        when(mockChargeDao.countChargesForCapture()).thenReturn(15);
 
         cardCaptureProcess.runCapture();
 
-        assertEquals(cardCaptureProcess.getQueueSize(), 15L);
+        assertEquals(cardCaptureProcess.getQueueSize(), 15);
     }
 
     @Test
@@ -79,7 +76,7 @@ public class CardCaptureProcessTest {
         ChargeEntity mockCharge1 = mock(ChargeEntity.class);
         ChargeEntity mockCharge2 = mock(ChargeEntity.class);
 
-        when(mockChargeDao.findAllBy(any(ChargeSearchParams.class))).thenReturn(asList(mockCharge1, mockCharge2));
+        when(mockChargeDao.findChargesForCapture(10, Duration.ofMinutes(60))).thenReturn(asList(mockCharge1, mockCharge2));
         when(mockCharge1.getExternalId()).thenReturn("my-charge-1");
         when(mockCharge2.getExternalId()).thenReturn("my-charge-2");
 
