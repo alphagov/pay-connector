@@ -46,7 +46,14 @@ public class CardCaptureProcess {
 
             logger.info("Capturing : "+ chargesToCapture.size() + " of " + queueSize + " charges");
 
-            chargesToCapture.forEach((charge) ->  captureService.doCapture(charge.getExternalId()));
+            chargesToCapture.forEach((charge) ->  {
+                int numberOfRetires = chargeDao.countCaptureRetriesForCharge(charge.getId());
+                if(numberOfRetires < captureConfig.getMaximumRetries()) {
+                    captureService.doCapture(charge.getExternalId());
+                } else {
+                    captureService.markChargeAsCaptureError(charge);
+                }
+            });
         } catch (Exception e) {
             logger.error("Exception when running capture", e);
         } finally {

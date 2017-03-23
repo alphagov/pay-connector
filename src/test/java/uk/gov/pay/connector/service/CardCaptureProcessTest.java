@@ -15,8 +15,10 @@ import uk.gov.pay.connector.dao.ChargeDao;
 import uk.gov.pay.connector.model.domain.ChargeEntity;
 
 import java.time.Duration;
+import java.util.Collections;
 
 import static java.util.Arrays.asList;
+import static java.util.Collections.singletonList;
 import static org.junit.Assert.assertEquals;
 import static org.mockito.Matchers.anyString;
 import static org.mockito.Mockito.*;
@@ -24,6 +26,7 @@ import static org.mockito.Mockito.*;
 @RunWith(MockitoJUnitRunner.class)
 public class CardCaptureProcessTest {
 
+    public static final int MAXIMUM_RERTRIES = 10;
     CardCaptureProcess cardCaptureProcess;
 
     @Mock
@@ -50,6 +53,7 @@ public class CardCaptureProcessTest {
         when(mockEnvironment.metrics()).thenReturn(mockMetricRegistry);
         when(mockCaptureConfiguration.getBatchSize()).thenReturn(10);
         when(mockCaptureConfiguration.getRetryFailuresEveryAsJavaDuration()).thenReturn(Duration.ofMinutes(60));
+        when(mockCaptureConfiguration.getMaximumRetries()).thenReturn(MAXIMUM_RERTRIES);
         when(mockConnectorConfiguration.getCaptureProcessConfig()).thenReturn(mockCaptureConfiguration);
         cardCaptureProcess = new CardCaptureProcess(mockEnvironment, mockChargeDao, mockCardCaptureService, mockConnectorConfiguration);
     }
@@ -83,6 +87,43 @@ public class CardCaptureProcessTest {
 
         verify(mockCardCaptureService).doCapture("my-charge-1");
         verify(mockCardCaptureService).doCapture("my-charge-2");
+    }
+
+    @Test
+    public void shouldNotCaptureAChargeIfRetriesExceeded() {
+        ChargeEntity mockCharge1 = mock(ChargeEntity.class);
+        ChargeEntity mockCharge2 = mock(ChargeEntity.class);
+
+        when(mockChargeDao.findChargesForCapture(10, Duration.ofMinutes(60))).thenReturn(asList(mockCharge1, mockCharge2));
+        when(mockCharge1.getExternalId()).thenReturn("my-charge-1");
+        when(mockCharge2.getExternalId()).thenReturn("my-charge-2");
+        when(mockCharge1.getId()).thenReturn(1L);
+        when(mockCharge2.getId()).thenReturn(2L);
+
+
+        when(mockChargeDao.countCaptureRetriesForCharge(1L)).thenReturn(MAXIMUM_RERTRIES);
+        when(mockChargeDao.countCaptureRetriesForCharge(2L)).thenReturn(2);
+
+        cardCaptureProcess.runCapture();
+
+        verify(mockCardCaptureService, never()).doCapture("my-charge-1");
+        verify(mockCardCaptureService).doCapture("my-charge-2");
+    }
+
+    @Test
+    public void shouldMarkCaptureAsErrorWhenChargeRetriesExceeded() {
+        ChargeEntity mockCharge1 = mock(ChargeEntity.class);
+
+        when(mockChargeDao.findChargesForCapture(10, Duration.ofMinutes(60))).thenReturn(singletonList(mockCharge1));
+        when(mockCharge1.getExternalId()).thenReturn("my-charge-1");
+        when(mockCharge1.getId()).thenReturn(1L);
+
+
+        when(mockChargeDao.countCaptureRetriesForCharge(1L)).thenReturn(MAXIMUM_RERTRIES);
+
+        cardCaptureProcess.runCapture();
+
+        verify(mockCardCaptureService).markChargeAsCaptureError(mockCharge1);
 
     }
 }

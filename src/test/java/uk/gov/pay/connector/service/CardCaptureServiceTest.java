@@ -268,4 +268,16 @@ public class CardCaptureServiceTest extends CardServiceTest {
         verify(mockedPaymentProvider, times(1)).capture(any());
     }
 
+    @Test
+    public void markChargeAsCaptureError_shouldSetChargeStatusToCaptureErrorAndWriteChargeEvent() {
+        ChargeEntity charge = createNewChargeWith("worldpay", 1L, CAPTURE_APPROVED, "gatewayTxId");
+        ChargeEntity reloadedCharge = spy(charge);
+        when(mockedChargeDao.merge(charge)).thenReturn(reloadedCharge);
+        when(mockedChargeDao.mergeAndNotifyStatusHasChanged(reloadedCharge, Optional.empty())).thenReturn(reloadedCharge);
+
+        ChargeEntity result = cardCaptureService.markChargeAsCaptureError(charge);
+
+        assertThat(result.getStatus(), is(CAPTURE_ERROR.getValue()));
+        verify(mockedChargeDao).mergeAndNotifyStatusHasChanged(reloadedCharge, Optional.empty());
+    }
 }

@@ -48,6 +48,14 @@ public class CardCaptureService extends CardService implements TransactionalGate
         return preOperation(chargeEntity, CardService.OperationType.CAPTURE, legalStatuses, ChargeStatus.CAPTURE_READY);
     }
 
+    @Transactional
+    public ChargeEntity markChargeAsCaptureError(ChargeEntity chargeEntity) {
+        ChargeEntity reloadedCharge = chargeDao.merge(chargeEntity);
+
+        reloadedCharge.setStatus(CAPTURE_ERROR);
+        return chargeDao.mergeAndNotifyStatusHasChanged(reloadedCharge, Optional.empty());
+    }
+
     @Override
     public GatewayResponse<BaseCaptureResponse> operation(ChargeEntity chargeEntity) {
         return getPaymentProviderFor(chargeEntity)
