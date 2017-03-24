@@ -30,7 +30,6 @@ import static org.hamcrest.core.Is.is;
 import static org.junit.Assert.assertThat;
 import static org.junit.Assert.assertTrue;
 import static org.mockito.Mockito.*;
-import static uk.gov.pay.connector.filters.LoggingFilter.HEADER_REQUEST_ID;
 
 @RunWith(MockitoJUnitRunner.class)
 public class RestClientLoggingFilterTest {
@@ -57,31 +56,8 @@ public class RestClientLoggingFilterTest {
     }
 
     @Test
-    public void shouldLogRestClientStartEventWithRequestId() throws Exception {
+    public void shouldLogEntryAndExitPointsOfEndPoints() throws Exception {
 
-        String requestId = UUID.randomUUID().toString();
-        URI requestUrl = URI.create("/connector-request");
-        String requestMethod = "GET";
-        MultivaluedMap<String, Object> mockHeaders = new MultivaluedHashMap<>();
-
-        when(clientRequestContext.getUri()).thenReturn(requestUrl);
-        when(clientRequestContext.getMethod()).thenReturn(requestMethod);
-        when(clientRequestContext.getHeaders()).thenReturn(mockHeaders);
-        MDC.put(HEADER_REQUEST_ID,requestId);
-
-        loggingFilter.filter(clientRequestContext);
-
-        verify(mockAppender, times(1)).doAppend(loggingEventArgumentCaptor.capture());
-        List<LoggingEvent> loggingEvents = loggingEventArgumentCaptor.getAllValues();
-
-        assertThat(loggingEvents.get(0).getFormattedMessage(), is(format("[%s] - %s to %s began", requestId, requestMethod, requestUrl)));
-
-    }
-
-    @Test
-    public void shouldLogRestClientEndEventWithRequestIdAndElapsedTime() throws Exception {
-
-        String requestId = UUID.randomUUID().toString();
         URI requestUrl = URI.create("/connector-request");
         String requestMethod = "GET";
 
@@ -92,7 +68,6 @@ public class RestClientLoggingFilterTest {
 
         when(clientRequestContext.getHeaders()).thenReturn(mockHeaders);
         when(clientResponseContext.getHeaders()).thenReturn(mockHeaders2);
-        MDC.put(HEADER_REQUEST_ID,requestId);
         loggingFilter.filter(clientRequestContext);
 
         loggingFilter.filter(clientRequestContext,clientResponseContext);
@@ -100,9 +75,9 @@ public class RestClientLoggingFilterTest {
         verify(mockAppender, times(2)).doAppend(loggingEventArgumentCaptor.capture());
         List<LoggingEvent> loggingEvents = loggingEventArgumentCaptor.getAllValues();
 
-        assertThat(loggingEvents.get(0).getFormattedMessage(), is(format("[%s] - %s to %s began", requestId, requestMethod, requestUrl)));
+        assertThat(loggingEvents.get(0).getFormattedMessage(), is(format("%s to %s began", requestMethod, requestUrl)));
         String endLogMessage = loggingEvents.get(1).getFormattedMessage();
-        assertThat(endLogMessage, containsString(format("[%s] - %s to %s ended - total time ", requestId, requestMethod, requestUrl)));
+        assertThat(endLogMessage, containsString(format("%s to %s ended - total time ", requestMethod, requestUrl)));
         String[] timeTaken = StringUtils.substringsBetween(endLogMessage, "total time ", "ms");
         assertTrue(NumberUtils.isNumber(timeTaken[0]));
 
