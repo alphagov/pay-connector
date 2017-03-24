@@ -29,6 +29,24 @@ Important configurations.
 | `GDS_CONNECTOR_SMARTPAY_TEST_URL` | - | Pointing to the TEST gateway URL of Smartpay payment provider. |
 | `GDS_CONNECTOR_SMARTPAY_LIVE_URL` | - | Pointing to the LIVE gateway URL of Smartpay payment provider. |
 
+### Background captures
+
+The background capture mechanism will capture all payments in the `CAPTURE_APPROVED` state. 
+
+A background thread managed by dropwizard runs on all connector nodes. It polls the database periodically to check for payments which need to be captured.
+
+The polling interval is a random value between 150-200 seconds.
+
+If a capture attempt fails it will be retried again after a specified delay (`CAPTURE_PROCESS_RETRY_FAILURES_EVERY`).
+
+The following variables control the background process: 
+
+| Varible | Default | Purpose |
+|---------|---------|---------|
+| `CAPTURE_PROCESS_BATCH_SIZE` | `10` | limits the batch window size processed at each polling attempt. If connector is not managing to clear the queue of captures, increase this value. |
+| `CAPTURE_PROCESS_RETRY_FAILURES_EVERY` | `60 minutes` | a failed capture attempt will be returned to the queue, and will not be retried until this time has passed |
+| `CAPTURE_PROCESS_MAXIMUM_RETRIES` | `24` | connector keeps track of the number of times capture has been attempted for each charge. If a charge fails this number of times or more it will be marked as a permanent failure. An error log message will be written as well. This should *never* happen and if it does it should be investigated. |
+
 ## Integration tests
 
 To run the integration tests, the `DOCKER_HOST` and `DOCKER_CERT_PATH` environment variables must be set up correctly. On OS X the environment can be set up with:
