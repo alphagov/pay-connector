@@ -1,6 +1,9 @@
 package uk.gov.pay.connector.service.smartpay;
 
 import com.google.common.io.Resources;
+import org.custommonkey.xmlunit.XMLUnit;
+import org.junit.After;
+import org.junit.Before;
 import org.junit.Test;
 import uk.gov.pay.connector.model.OrderRequestType;
 import uk.gov.pay.connector.model.domain.Address;
@@ -18,6 +21,18 @@ import static uk.gov.pay.connector.service.smartpay.SmartpayOrderRequestBuilder.
 
 
 public class SmartpayOrderRequestBuilderTest {
+    private boolean oldIgnoreWhitespace;
+
+    @Before
+    public void setup() {
+        oldIgnoreWhitespace = XMLUnit.getIgnoreWhitespace();
+        XMLUnit.setIgnoreWhitespace(true);
+    }
+
+    @After
+    public void tearDown() {
+        XMLUnit.setIgnoreWhitespace(oldIgnoreWhitespace);
+    }
 
     @Test
     public void shouldGenerateValidAuthoriseOrderRequestForAddressWithAllFields() throws Exception {
