@@ -1,6 +1,5 @@
 package uk.gov.pay.connector.service;
 
-import com.codahale.metrics.Gauge;
 import com.codahale.metrics.Meter;
 import com.codahale.metrics.MetricRegistry;
 import com.google.common.base.Stopwatch;
@@ -46,9 +45,8 @@ public class CardCaptureProcess {
 
             logger.info("Capturing : "+ chargesToCapture.size() + " of " + queueSize + " charges");
 
-            chargesToCapture.forEach((charge) ->  {
-                int numberOfRetires = chargeDao.countCaptureRetriesForCharge(charge.getId());
-                if(numberOfRetires < captureConfig.getMaximumRetries()) {
+            chargesToCapture.forEach((charge) -> {
+                if(shouldRetry(charge)) {
                     captureService.doCapture(charge.getExternalId());
                 } else {
                     captureService.markChargeAsCaptureError(charge);
@@ -60,6 +58,10 @@ public class CardCaptureProcess {
             responseTimeStopwatch.stop();
             metricRegistry.histogram("gateway-operations.capture-process.running_time").update(responseTimeStopwatch.elapsed(TimeUnit.MILLISECONDS));
         }
+    }
+
+    private boolean shouldRetry(ChargeEntity charge) {
+        return chargeDao.countCaptureRetriesForCharge(charge.getId()) < captureConfig.getMaximumRetries();
     }
 
     public long getQueueSize() {
