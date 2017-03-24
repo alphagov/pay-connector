@@ -30,13 +30,16 @@ public class CaptureProcessScheduler implements Managed {
     }
 
     public void start() {
+        long interval = randomTimeInterval();
+        logger.info("Scheduling CardCaptureProcess to run every {} seconds (will start in {} seconds)", interval, INITIAL_DELAY_IN_SECONDS);
+
         scheduledExecutorService.scheduleAtFixedRate(() -> {
             try {
                 cardCaptureProcess.runCapture();
             } catch (Exception e) {
                 logger.error("Unexpected error running capture operations", e);
             }
-        }, INITIAL_DELAY_IN_SECONDS, randomTimeInterval(), TimeUnit.SECONDS);
+        }, INITIAL_DELAY_IN_SECONDS, interval, TimeUnit.SECONDS);
     }
 
     private long randomTimeInterval() {
