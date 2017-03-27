@@ -247,4 +247,23 @@ public class CardCaptureServiceTest extends CardServiceTest {
         // verify an email notification is not sent when an unsuccessful capture
         verifyZeroInteractions(mockUserNotificationService);
     }
+
+    @Test
+    public void shouldBeAbleToCaptureAChargeInCaptureApprovedStatus() {
+        String gatewayTxId = "theTxId";
+        ChargeEntity charge = createNewChargeWith("worldpay", 1L, CAPTURE_APPROVED, gatewayTxId);
+        ChargeEntity reloadedCharge = spy(charge);
+        mockChargeDaoOperations(charge, reloadedCharge);
+        worldpayWillRespondWithSuccess(gatewayTxId, null);
+        when(mockedProviders.byName(charge.getPaymentGatewayName())).thenReturn(mockedPaymentProvider);
+
+        GatewayResponse response = cardCaptureService.doCapture(charge.getExternalId());
+        assertThat(response.isSuccessful(), is(true));
+
+        ArgumentCaptor<ChargeEntity> chargeEntityCaptor = ArgumentCaptor.forClass(ChargeEntity.class);
+        verify(mockedChargeDao).mergeAndNotifyStatusHasChanged(chargeEntityCaptor.capture(), eq(Optional.empty()));
+        assertThat(chargeEntityCaptor.getValue().getStatus(), is(CAPTURE_SUBMITTED.getValue()));
+        verify(mockedPaymentProvider, times(1)).capture(any());
+    }
+
 }
