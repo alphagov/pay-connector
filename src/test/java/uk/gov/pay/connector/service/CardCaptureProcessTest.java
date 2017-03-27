@@ -15,7 +15,6 @@ import uk.gov.pay.connector.dao.ChargeDao;
 import uk.gov.pay.connector.model.domain.ChargeEntity;
 
 import java.time.Duration;
-import java.util.Collections;
 
 import static java.util.Arrays.asList;
 import static java.util.Collections.singletonList;
@@ -26,7 +25,7 @@ import static org.mockito.Mockito.*;
 @RunWith(MockitoJUnitRunner.class)
 public class CardCaptureProcessTest {
 
-    public static final int MAXIMUM_RERTRIES = 10;
+    public static final int MAXIMUM_RETRIES = 10;
     CardCaptureProcess cardCaptureProcess;
 
     @Mock
@@ -53,7 +52,7 @@ public class CardCaptureProcessTest {
         when(mockEnvironment.metrics()).thenReturn(mockMetricRegistry);
         when(mockCaptureConfiguration.getBatchSize()).thenReturn(10);
         when(mockCaptureConfiguration.getRetryFailuresEveryAsJavaDuration()).thenReturn(Duration.ofMinutes(60));
-        when(mockCaptureConfiguration.getMaximumRetries()).thenReturn(MAXIMUM_RERTRIES);
+        when(mockCaptureConfiguration.getMaximumRetries()).thenReturn(MAXIMUM_RETRIES);
         when(mockConnectorConfiguration.getCaptureProcessConfig()).thenReturn(mockCaptureConfiguration);
         cardCaptureProcess = new CardCaptureProcess(mockEnvironment, mockChargeDao, mockCardCaptureService, mockConnectorConfiguration);
     }
@@ -101,7 +100,7 @@ public class CardCaptureProcessTest {
         when(mockCharge2.getId()).thenReturn(2L);
 
 
-        when(mockChargeDao.countCaptureRetriesForCharge(1L)).thenReturn(MAXIMUM_RERTRIES);
+        when(mockChargeDao.countCaptureRetriesForCharge(1L)).thenReturn(MAXIMUM_RETRIES);
         when(mockChargeDao.countCaptureRetriesForCharge(2L)).thenReturn(2);
 
         cardCaptureProcess.runCapture();
@@ -119,7 +118,7 @@ public class CardCaptureProcessTest {
         when(mockCharge1.getId()).thenReturn(1L);
 
 
-        when(mockChargeDao.countCaptureRetriesForCharge(1L)).thenReturn(MAXIMUM_RERTRIES);
+        when(mockChargeDao.countCaptureRetriesForCharge(1L)).thenReturn(MAXIMUM_RETRIES);
 
         cardCaptureProcess.runCapture();
 
