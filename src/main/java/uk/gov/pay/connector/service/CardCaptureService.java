@@ -22,7 +22,8 @@ import static uk.gov.pay.connector.model.domain.ChargeStatus.*;
 public class CardCaptureService extends CardService implements TransactionalGatewayOperation<BaseCaptureResponse> {
 
     private static List<ChargeStatus> legalStatuses = ImmutableList.of(
-            AUTHORISATION_SUCCESS
+            AUTHORISATION_SUCCESS,
+            CAPTURE_APPROVED
     );
 
     private final UserNotificationService userNotificationService;
