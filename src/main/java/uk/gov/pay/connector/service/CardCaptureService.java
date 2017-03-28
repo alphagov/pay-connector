@@ -1,10 +1,12 @@
 package uk.gov.pay.connector.service;
 
+import com.google.common.base.Function;
 import com.google.common.collect.ImmutableList;
 import com.google.inject.persist.Transactional;
 import io.dropwizard.setup.Environment;
 import uk.gov.pay.connector.dao.ChargeDao;
 import uk.gov.pay.connector.exception.ChargeNotFoundRuntimeException;
+import uk.gov.pay.connector.exception.IllegalStateRuntimeException;
 import uk.gov.pay.connector.model.CaptureGatewayRequest;
 import uk.gov.pay.connector.model.domain.ChargeEntity;
 import uk.gov.pay.connector.model.domain.ChargeStatus;
@@ -46,6 +48,21 @@ public class CardCaptureService extends CardService implements TransactionalGate
     @Override
     public ChargeEntity preOperation(ChargeEntity chargeEntity) {
         return preOperation(chargeEntity, CardService.OperationType.CAPTURE, legalStatuses, ChargeStatus.CAPTURE_READY);
+    }
+
+    @Transactional
+    public ChargeEntity markChargeAsCaptureApproved(String externalId) {
+        return chargeDao.findByExternalId(externalId).map(charge -> {
+            if (!AUTHORISATION_SUCCESS.getValue().equals(charge.getStatus())) {
+                logger.error("Charge is not in the expect state of AUTHORISATION_SUCCESS to be marked as CAPTURE_APPROVED [charge_status={}]",
+                        charge.getStatus());
+                throw new IllegalStateRuntimeException(charge.getExternalId());
+            }
+
+            logger.info("CAPTURE_APPROVED for charge [charge_external_id={}]", externalId);
+            charge.setStatus(CAPTURE_APPROVED);
+            return chargeDao.mergeAndNotifyStatusHasChanged(charge, Optional.empty());
+        }).orElseThrow(() -> new ChargeNotFoundRuntimeException(externalId));
     }
 
     @Transactional
