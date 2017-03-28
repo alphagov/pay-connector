@@ -25,7 +25,7 @@ public class GeneralLoggingTest {
   public void shouldLogRequestIdForAnyLoggingInvocation() throws Exception {
 
     app = new DropwizardTestSupport<>(ConnectorApp.class,
-        ResourceHelpers.resourceFilePath("config/test-config.yaml"));
+        ResourceHelpers.resourceFilePath("config/config.yaml"));
     app.before();
 
     String requestId = UUID.randomUUID().toString();

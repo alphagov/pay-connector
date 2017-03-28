@@ -1,10 +1,10 @@
 server:
   applicationConnectors:
     - type: http
-      port: ${PORT}
+      port: ${PORT:-0}
   adminConnectors:
     - type: http
-      port: ${ADMIN_PORT}
+      port: ${ADMIN_PORT:-0}
 
 logging:
     level: INFO
@@ -78,9 +78,9 @@ jerseyClient:
   userAgent: connector
   gzipEnabledForRequests: false
   proxy:
-      host: ${HTTP_PROXY_HOST}
-      port: ${HTTP_PROXY_PORT}
-      scheme : ${HTTP_PROXY_SCHEME}
+      host: ${HTTP_PROXY_HOST:-0}
+      port: ${HTTP_PROXY_PORT:-0}
+      scheme : ${HTTP_PROXY_SCHEME:-https}
       nonProxyHosts:
         - localhost
 
