@@ -65,6 +65,11 @@ executorServiceConfig:
   timeoutInSeconds: ${AUTH_READ_TIMEOUT_SECONDS:-1}
   threadsPerCpu: ${NUMBER_OF_THREADS_PER_CPU:-100}
 
+captureProcessConfig:
+  batchSize: 10
+  retryFailuresEvery: 60 minutes
+  maximumRetries: ${CAPTURE_PROCESS_MAXIMUM_RETRIES:-24}
+
 transactionsPaginationServiceConfig:
   displayPageSize: ${TRANSACTION_LIST_DISPLAY_SIZE:-500}
 

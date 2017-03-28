@@ -1,20 +1,23 @@
 package uk.gov.pay.connector.service;
 
+import ch.qos.logback.classic.Logger;
+import ch.qos.logback.classic.spi.ILoggingEvent;
+import ch.qos.logback.classic.spi.LoggingEvent;
+import ch.qos.logback.core.Appender;
 import com.codahale.metrics.Counter;
 import com.codahale.metrics.MetricRegistry;
 import io.dropwizard.setup.Environment;
 import org.hamcrest.BaseMatcher;
 import org.hamcrest.Description;
+import org.junit.Assert;
 import org.junit.Before;
 import org.junit.Rule;
 import org.junit.Test;
 import org.junit.rules.ExpectedException;
 import org.junit.runner.RunWith;
-import org.mockito.ArgumentCaptor;
-import org.mockito.InOrder;
-import org.mockito.Mock;
-import org.mockito.Mockito;
+import org.mockito.*;
 import org.mockito.runners.MockitoJUnitRunner;
+import org.slf4j.LoggerFactory;
 import uk.gov.pay.connector.exception.ChargeNotFoundRuntimeException;
 import uk.gov.pay.connector.exception.ConflictRuntimeException;
 import uk.gov.pay.connector.exception.IllegalStateRuntimeException;
@@ -28,6 +31,7 @@ import uk.gov.pay.connector.model.gateway.GatewayResponse.GatewayResponseBuilder
 import uk.gov.pay.connector.service.worldpay.WorldpayCaptureResponse;
 
 import javax.persistence.OptimisticLockException;
+import java.util.List;
 import java.util.Optional;
 
 import static junit.framework.TestCase.assertTrue;
@@ -50,6 +54,12 @@ public class CardCaptureServiceTest extends CardServiceTest {
     private UserNotificationService mockUserNotificationService;
     private CardCaptureService cardCaptureService;
 
+    @Mock
+    private Appender<ILoggingEvent> mockAppender;
+
+    @Captor
+    ArgumentCaptor<LoggingEvent> loggingEventArgumentCaptor;
+
     @Before
     public void beforeTest() {
         Environment mockEnvironment = mock(Environment.class);
@@ -59,6 +69,9 @@ public class CardCaptureServiceTest extends CardServiceTest {
         when(mockMetricRegistry.counter(anyString())).thenReturn(mockCounter);
 
         cardCaptureService = new CardCaptureService(mockedChargeDao, mockedProviders, mockUserNotificationService, mockEnvironment);
+
+        Logger root = (Logger) LoggerFactory.getLogger(CardCaptureService.class);
+        root.addAppender(mockAppender);
     }
 
     private void worldpayWillRespondWithSuccess(String transactionId, String worldpayErrorCode) {
@@ -244,6 +257,8 @@ public class CardCaptureServiceTest extends CardServiceTest {
         inOrder.verify(reloadedCharge).setStatus(CAPTURE_READY);
         inOrder.verify(reloadedCharge).setStatus(CAPTURE_APPROVED);
 
+        verify(mockedChargeDao).mergeAndNotifyStatusHasChanged(reloadedCharge, Optional.empty());
+
         // verify an email notification is not sent when an unsuccessful capture
         verifyZeroInteractions(mockUserNotificationService);
     }
@@ -266,4 +281,22 @@ public class CardCaptureServiceTest extends CardServiceTest {
         verify(mockedPaymentProvider, times(1)).capture(any());
     }
 
+    @Test
+    public void markChargeAsCaptureError_shouldSetChargeStatusToCaptureErrorAndWriteChargeEvent() {
+        ChargeEntity charge = createNewChargeWith("worldpay", 1L, CAPTURE_APPROVED, "gatewayTxId");
+        ChargeEntity reloadedCharge = spy(charge);
+        when(mockedChargeDao.merge(charge)).thenReturn(reloadedCharge);
+        when(mockedChargeDao.mergeAndNotifyStatusHasChanged(reloadedCharge, Optional.empty())).thenReturn(reloadedCharge);
+
+        ChargeEntity result = cardCaptureService.markChargeAsCaptureError(charge);
+
+        assertThat(result.getStatus(), is(CAPTURE_ERROR.getValue()));
+        verify(mockedChargeDao).mergeAndNotifyStatusHasChanged(reloadedCharge, Optional.empty());
+
+        verify(mockAppender).doAppend(loggingEventArgumentCaptor.capture());
+
+        List<LoggingEvent> logStatement = loggingEventArgumentCaptor.getAllValues();
+        String expectedLogMessage = String.format("CAPTURE_ERROR for charge [charge_external_id=%s] - reached maximum number of capture attempts", charge.getExternalId());
+        Assert.assertThat(logStatement.get(0).getFormattedMessage(), is(expectedLogMessage));
+    }
 }

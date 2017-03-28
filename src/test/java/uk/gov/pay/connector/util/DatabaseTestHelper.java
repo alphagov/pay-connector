@@ -406,9 +406,13 @@ public class DatabaseTestHelper {
     }
 
     public void addEvent(Long chargeId, String chargeStatus) {
+        addEvent(chargeId, chargeStatus, ZonedDateTime.now());
+    }
+
+    public void addEvent(Long chargeId, String chargeStatus, ZonedDateTime updated) {
         jdbi.withHandle(
-                h -> h.update("INSERT INTO charge_events(charge_id,status,updated) values(?,?,(now() at time zone 'utc'))",
-                        chargeId, chargeStatus)
+                h -> h.update("INSERT INTO charge_events(charge_id,status,updated) values(?,?,?)",
+                        chargeId, chargeStatus, Timestamp.from(updated.toInstant()))
         );
     }
 

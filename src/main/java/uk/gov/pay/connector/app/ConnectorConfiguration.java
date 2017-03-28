@@ -21,6 +21,10 @@ public class ConnectorConfiguration extends Configuration {
 
     @Valid
     @NotNull
+    private CaptureProcessConfig captureProcessConfig;
+
+    @Valid
+    @NotNull
     @JsonProperty("transactionsPaginationServiceConfig")
     private TransactionsPaginationServiceConfig transactionsPaginationServiceConfig;
 
@@ -123,5 +127,9 @@ public class ConnectorConfiguration extends Configuration {
 
     public String getGraphitePort() {
         return graphitePort;
+    }
+
+    public CaptureProcessConfig getCaptureProcessConfig() {
+        return captureProcessConfig;
     }
 }

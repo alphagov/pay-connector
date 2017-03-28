@@ -11,11 +11,14 @@ import javax.inject.Inject;
 import javax.persistence.EntityManager;
 import javax.persistence.Query;
 import javax.persistence.criteria.*;
-import java.time.LocalDate;
+import java.time.Duration;
 import java.time.ZonedDateTime;
+import java.time.temporal.ChronoUnit;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
+
+import static uk.gov.pay.connector.model.domain.ChargeStatus.CAPTURE_APPROVED;
 
 @Transactional
 public class ChargeDao extends JpaDao<ChargeEntity> {
@@ -152,5 +155,48 @@ public class ChargeDao extends JpaDao<ChargeEntity> {
                 .replaceAll("%", SQL_ESCAPE_SEQ + "%");
 
         return cb.like(cb.lower(expression), '%' + escapedReference.toLowerCase() + '%');
+    }
+
+    public int countChargesForCapture() {
+        String query = "SELECT count(c) FROM ChargeEntity c WHERE c.status=:status";
+
+        Number count = (Number) entityManager.get()
+                .createQuery(query)
+                .setParameter("status", CAPTURE_APPROVED.getValue())
+                .getSingleResult();
+        return count.intValue();
+    }
+
+    public List<ChargeEntity> findChargesForCapture(int maxNumberOfCharges, Duration notAttemptedWithin) {
+        String query = "SELECT c FROM ChargeEntity c WHERE " +
+                "c.status=:status AND " +
+                "NOT EXISTS (" +
+                "  SELECT ce FROM ChargeEventEntity ce WHERE " +
+                "    ce.chargeEntity = c AND " +
+                "    ce.status = :eventStatus AND " +
+                "    ce.updated >= :cutoffDate " +
+                ") " +
+                "ORDER BY c.createdDate ASC";
+
+        return entityManager.get()
+                .createQuery(query, ChargeEntity.class)
+                .setMaxResults(maxNumberOfCharges)
+                .setParameter("status", CAPTURE_APPROVED.getValue())
+                .setParameter("eventStatus", CAPTURE_APPROVED)
+                .setParameter("cutoffDate", ZonedDateTime.now().minus(notAttemptedWithin))
+                .getResultList();
+    }
+
+
+    public int countCaptureRetriesForCharge(long chargeId) {
+        String query = "SELECT count(ce) FROM ChargeEventEntity ce WHERE " +
+                "    ce.chargeEntity.id = :chargeId AND " +
+                "    ce.status = :status";
+
+        return ((Number) entityManager.get()
+                .createQuery(query)
+                .setParameter("chargeId", chargeId)
+                .setParameter("status", CAPTURE_APPROVED)
+                .getSingleResult()).intValue();
     }
 }

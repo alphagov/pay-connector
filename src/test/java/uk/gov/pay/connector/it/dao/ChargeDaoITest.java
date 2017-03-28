@@ -15,6 +15,7 @@ import uk.gov.pay.connector.model.domain.*;
 import uk.gov.pay.connector.model.domain.ChargeStatus;
 import uk.gov.pay.connector.util.DateTimeUtils;
 
+import java.time.Duration;
 import java.time.ZoneId;
 import java.time.ZonedDateTime;
 import java.time.temporal.ChronoUnit;
@@ -1078,6 +1079,144 @@ public class ChargeDaoITest extends DaoITestBase {
 
         assertThat(chargeOpt.get().getGatewayAccount(), is(notNullValue()));
         assertThat(chargeOpt.get().getGatewayAccount().getId(), is(defaultTestAccount.getAccountId()));
+    }
+
+    @Test
+    public void findChargesForCapture_shouldReturnChargesInCaptureApprovedState() throws Exception {
+        DatabaseFixtures
+                .withDatabaseTestHelper(databaseTestHelper)
+                .aTestCharge()
+                .withTestAccount(defaultTestAccount)
+                .withChargeId(101L)
+                .withExternalChargeId("ext-id1")
+                .withCreatedDate(now().minusHours(2))
+                .withChargeStatus(CAPTURE_APPROVED)
+                .insert();
+
+        DatabaseFixtures
+                .withDatabaseTestHelper(databaseTestHelper)
+                .aTestCharge()
+                .withTestAccount(defaultTestAccount)
+                .withChargeId(102L)
+                .withExternalChargeId("ext-id2")
+                .withCreatedDate(now().minusHours(2))
+                .withChargeStatus(CAPTURE_READY)
+                .insert();
+
+        DatabaseFixtures
+                .withDatabaseTestHelper(databaseTestHelper)
+                .aTestCharge()
+                .withTestAccount(defaultTestAccount)
+                .withChargeId(103L)
+                .withExternalChargeId("ext-id3")
+                .withCreatedDate(now().minusHours(2))
+                .withChargeStatus(CAPTURE_SUBMITTED)
+                .insert();
+
+        DatabaseFixtures
+                .withDatabaseTestHelper(databaseTestHelper)
+                .aTestCharge()
+                .withTestAccount(defaultTestAccount)
+                .withChargeId(104L)
+                .withExternalChargeId("ext-id4")
+                .withCreatedDate(now().minusHours(2))
+                .withChargeStatus(CAPTURED)
+                .insert();
+
+        List<ChargeEntity> charges = chargeDao.findChargesForCapture(10, Duration.of(60, ChronoUnit.MINUTES));
+
+        assertThat(charges.size(), is(1));
+        assertEquals(charges.get(0).getId(), new Long(101));
+    }
+
+    @Test
+    public void findChargesForCapture_shouldNotReturnAChargeForWhichCaptureHasBeenAttemptedRecently() throws Exception {
+        final long chargeId1 = 101L;
+        final long chargeId2 = 102L;
+
+        DatabaseFixtures
+                .withDatabaseTestHelper(databaseTestHelper)
+                .aTestCharge()
+                .withTestAccount(defaultTestAccount)
+                .withChargeId(chargeId1)
+                .withExternalChargeId("ext-id1")
+                .withCreatedDate(now().minusHours(2))
+                .withChargeStatus(CAPTURE_APPROVED)
+                .insert();
+
+        DatabaseFixtures
+                .withDatabaseTestHelper(databaseTestHelper)
+                .aTestChargeEvent()
+                .withChargeId(chargeId1)
+                .withChargeStatus(CAPTURE_APPROVED)
+                .withDate(now().minusMinutes(61))
+                .insert();
+
+        DatabaseFixtures
+                .withDatabaseTestHelper(databaseTestHelper)
+                .aTestCharge()
+                .withTestAccount(defaultTestAccount)
+                .withChargeId(chargeId2)
+                .withExternalChargeId("ext-id2")
+                .withCreatedDate(now().minusHours(2))
+                .withChargeStatus(CAPTURE_APPROVED)
+                .insert();
+
+        DatabaseFixtures
+                .withDatabaseTestHelper(databaseTestHelper)
+                .aTestChargeEvent()
+                .withChargeId(chargeId2)
+                .withChargeStatus(CAPTURE_APPROVED)
+                .withDate(now().minusMinutes(58))
+                .insert();
+
+
+        List<ChargeEntity> charges = chargeDao.findChargesForCapture(10, Duration.of(60, ChronoUnit.MINUTES));
+
+        assertThat(charges.size(), is(1));
+        assertEquals(charges.get(0).getId(), new Long(chargeId1));
+    }
+
+    @Test
+    public void countChargesForCapture_shouldReturnNumberOfChargesInCaptureApprovedState() throws Exception {
+        DatabaseFixtures
+                .withDatabaseTestHelper(databaseTestHelper)
+                .aTestCharge()
+                .withTestAccount(defaultTestAccount)
+                .withChargeId(101L)
+                .withExternalChargeId("ext-id1")
+                .withCreatedDate(now().minusHours(2))
+                .withChargeStatus(CAPTURE_APPROVED)
+                .insert();
+
+        assertThat(chargeDao.countChargesForCapture(), is(1));
+    }
+
+    @Test
+    public void countCaptureRetriesForCharge_shouldReturnNumberOfRetries() throws Exception {
+        long chargeId = 101L;
+
+        DatabaseFixtures
+                .withDatabaseTestHelper(databaseTestHelper)
+                .aTestCharge()
+                .withTestAccount(defaultTestAccount)
+                .withChargeId(chargeId)
+                .withExternalChargeId("ext-id1")
+                .withCreatedDate(now().minusHours(2))
+                .withChargeStatus(CAPTURE_APPROVED)
+                .insert();
+
+        assertThat(chargeDao.countCaptureRetriesForCharge(chargeId), is(0));
+
+        DatabaseFixtures
+                .withDatabaseTestHelper(databaseTestHelper)
+                .aTestChargeEvent()
+                .withChargeId(chargeId)
+                .withChargeStatus(CAPTURE_APPROVED)
+                .insert();
+
+        assertThat(chargeDao.countCaptureRetriesForCharge(chargeId), is(1));
+
     }
 
     private void insertTestAccount() {
