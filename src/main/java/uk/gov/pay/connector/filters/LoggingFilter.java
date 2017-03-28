@@ -32,15 +32,15 @@ public class LoggingFilter implements Filter {
         String requestMethod = ((HttpServletRequest) servletRequest).getMethod();
         String requestId = StringUtils.defaultString(((HttpServletRequest) servletRequest).getHeader(HEADER_REQUEST_ID));
 
-
         MDC.put(HEADER_REQUEST_ID, requestId);
-        logger.info(format("[%s] - %s to %s began", requestId, requestMethod, requestURL));
+
+        logger.info(format("%s to %s began", requestMethod, requestURL));
         try {
             filterChain.doFilter(servletRequest, servletResponse);
         } catch (Throwable throwable) {
             logger.error("Exception - connector request - " + requestURL + " - exception - " + throwable.getMessage(), throwable);
         } finally {
-            logger.info(format("[%s] - %s to %s ended - total time %dms", requestId, requestMethod, requestURL,
+            logger.info(format("%s to %s ended - total time %dms", requestMethod, requestURL,
                     stopwatch.elapsed(TimeUnit.MILLISECONDS)));
             stopwatch.stop();
         }
