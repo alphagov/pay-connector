@@ -62,7 +62,7 @@ public class SmartpayCardResourceITest extends ChargingITestBase {
                 .then()
                 .statusCode(204);
 
-        assertFrontendChargeStatusIs(chargeId, CAPTURE_SUBMITTED.getValue());
+        assertFrontendChargeStatusIs(chargeId, CAPTURE_APPROVED.getValue());
         assertApiStateIs(chargeId, EXTERNAL_SUCCESS.getStatus());
     }
 
@@ -92,7 +92,7 @@ public class SmartpayCardResourceITest extends ChargingITestBase {
         List<Map<String, Object>> chargeEvents = app.getDatabaseTestHelper().getChargeEvents(chargeId);
 
         assertThat(chargeEvents, hasEvent(AUTHORISATION_SUCCESS));
-        assertThat(chargeEvents, hasEvent(CAPTURE_SUBMITTED));
+        assertThat(chargeEvents, hasEvent(CAPTURE_APPROVED));
     }
 
     @Test
@@ -106,19 +106,6 @@ public class SmartpayCardResourceITest extends ChargingITestBase {
                 .post(cancelChargeUrlFor(accountId, chargeId))
                 .then()
                 .statusCode(204);
-    }
-
-    @Test
-    public void shouldBadRequest_ASmartpayError() {
-        String chargeId = createNewCharge(AUTHORISATION_SUCCESS);
-
-        smartpay.mockErrorResponse();
-
-        givenSetup()
-                .post(captureChargeUrlFor(chargeId))
-                .then()
-                .statusCode(400)
-                .body("message", is("[soap:Server] validation 167 Original pspReference required for this operation"));
     }
 
     private String buildCardDetailsWith(String cvc) {
