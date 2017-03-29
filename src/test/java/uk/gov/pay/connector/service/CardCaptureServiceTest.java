@@ -315,9 +315,6 @@ public class CardCaptureServiceTest extends CardServiceTest {
         verify(mockedChargeDao).findByExternalId(chargeEntity.getExternalId());
         verify(chargeEntity, never()).setStatus(any());
         verify(mockAppender).doAppend(loggingEventArgumentCaptor.capture());
-        List<LoggingEvent> logStatement = loggingEventArgumentCaptor.getAllValues();
-        String expectedLogMessage = String.format("Charge is not in the expect state of AUTHORISATION_SUCCESS to be marked as CAPTURE_APPROVED [charge_status=%s]", chargeEntity.getStatus());
-        Assert.assertThat(logStatement.get(0).getFormattedMessage(), is(expectedLogMessage));
 
         verifyNoMoreInteractions(mockedChargeDao);
     }
@@ -335,8 +332,24 @@ public class CardCaptureServiceTest extends CardServiceTest {
         assertThat(result.getStatus(), is(CAPTURE_APPROVED.getValue()));
 
         verify(mockAppender).doAppend(loggingEventArgumentCaptor.capture());
+    }
+
+    @Test
+    public void markChargeAsCaptureError_shouldSetChargeStatusToCaptureErrorAndWriteChargeEvent() {
+        ChargeEntity charge = createNewChargeWith("worldpay", 1L, CAPTURE_APPROVED, "gatewayTxId");
+        ChargeEntity reloadedCharge = spy(charge);
+        when(mockedChargeDao.merge(charge)).thenReturn(reloadedCharge);
+        when(mockedChargeDao.mergeAndNotifyStatusHasChanged(reloadedCharge, Optional.empty())).thenReturn(reloadedCharge);
+
+        ChargeEntity result = cardCaptureService.markChargeAsCaptureError(charge);
+
+        assertThat(result.getStatus(), is(CAPTURE_ERROR.getValue()));
+        verify(mockedChargeDao).mergeAndNotifyStatusHasChanged(reloadedCharge, Optional.empty());
+
+        verify(mockAppender).doAppend(loggingEventArgumentCaptor.capture());
+
         List<LoggingEvent> logStatement = loggingEventArgumentCaptor.getAllValues();
-        String expectedLogMessage = String.format("CAPTURE_APPROVED for charge [charge_external_id=%s]", chargeEntity.getExternalId());
+        String expectedLogMessage = String.format("CAPTURE_ERROR for charge [charge_external_id=%s] - reached maximum number of capture attempts", charge.getExternalId());
         Assert.assertThat(logStatement.get(0).getFormattedMessage(), is(expectedLogMessage));
     }
 }

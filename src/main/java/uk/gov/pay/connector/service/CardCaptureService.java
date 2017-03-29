@@ -1,6 +1,5 @@
 package uk.gov.pay.connector.service;
 
-import com.google.common.base.Function;
 import com.google.common.collect.ImmutableList;
 import com.google.inject.persist.Transactional;
 import io.dropwizard.setup.Environment;
@@ -54,8 +53,8 @@ public class CardCaptureService extends CardService implements TransactionalGate
     public ChargeEntity markChargeAsCaptureApproved(String externalId) {
         return chargeDao.findByExternalId(externalId).map(charge -> {
             if (!AUTHORISATION_SUCCESS.getValue().equals(charge.getStatus())) {
-                logger.error("Charge is not in the expect state of AUTHORISATION_SUCCESS to be marked as CAPTURE_APPROVED [charge_status={}]",
-                        charge.getStatus());
+                logger.error("Charge is not in the expect state of AUTHORISATION_SUCCESS to be marked as CAPTURE_APPROVED [charge_external_id={}, charge_status={}]",
+                        charge.getExternalId(), charge.getStatus());
                 throw new IllegalStateRuntimeException(charge.getExternalId());
             }
 
