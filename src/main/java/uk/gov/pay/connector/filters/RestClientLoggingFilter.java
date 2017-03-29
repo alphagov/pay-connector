@@ -25,12 +25,13 @@ public class RestClientLoggingFilter implements ClientRequestFilter, ClientRespo
     @Override
     public void filter(ClientRequestContext requestContext) throws IOException {
         timer.set(Stopwatch.createStarted());
+
         Optional<String> requestIdMaybe = Optional.ofNullable(MDC.get(HEADER_REQUEST_ID));
         requestId.set(requestIdMaybe.orElse(""));
 
         requestContext.getHeaders().add(HEADER_REQUEST_ID, requestId.get());
-        logger.info(format("[%s] - %s to %s began",
-                requestId.get(),
+
+        logger.info(format("%s to %s began",
                 requestContext.getMethod(),
                 requestContext.getUri()));
 
@@ -39,9 +40,10 @@ public class RestClientLoggingFilter implements ClientRequestFilter, ClientRespo
     @Override
     public void filter(ClientRequestContext requestContext, ClientResponseContext responseContext) throws IOException {
         long elapsed = timer.get().elapsed(TimeUnit.MILLISECONDS);
+
         responseContext.getHeaders().add(HEADER_REQUEST_ID, requestId.get());
-        logger.info(format("[%s] - %s to %s ended - total time %dms",
-                requestId.get(),
+
+        logger.info(format("%s to %s ended - total time %dms",
                 requestContext.getMethod(),
                 requestContext.getUri(),
                 elapsed));
