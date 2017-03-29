@@ -24,18 +24,18 @@ public class GatewayClientFactoryTest {
 
     @Mock
     ClientFactory mockClientFactory;
-
+    @Mock
+    MetricRegistry mockMetricRegistry;
     @Test
     public void shouldBuildGatewayClient() {
         Map<String, String> gatewayUrlMap = mock(Map.class);
         Builder mockBuilder = mock(Builder.class);
         BiFunction<GatewayOrder, Builder, Builder> sessionIdentifier = (GatewayOrder o, Builder b) -> mockBuilder;
-        MetricRegistry mockMetricRegistry = mock(MetricRegistry.class);
 
         GatewayClient gatewayClient = gatewayClientFactory.createGatewayClient(PaymentGatewayName.WORLDPAY, GatewayOperation.AUTHORISE,
                 gatewayUrlMap, MediaType.TEXT_XML_TYPE, sessionIdentifier, mockMetricRegistry);
 
         assertNotNull(gatewayClient);
-        verify(mockClientFactory).createWithDropwizardClient(PaymentGatewayName.WORLDPAY, GatewayOperation.AUTHORISE);
+        verify(mockClientFactory).createWithDropwizardClient(PaymentGatewayName.WORLDPAY, GatewayOperation.AUTHORISE, mockMetricRegistry);
     }
 }

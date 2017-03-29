@@ -1,5 +1,6 @@
 package uk.gov.pay.connector.it.gatewayclient;
 
+import com.codahale.metrics.MetricRegistry;
 import io.dropwizard.testing.ConfigOverride;
 import io.dropwizard.testing.DropwizardTestSupport;
 import io.dropwizard.testing.ResourceHelpers;
@@ -7,6 +8,10 @@ import org.glassfish.jersey.client.ClientProperties;
 import org.junit.After;
 import org.junit.Before;
 import org.junit.Test;
+import org.junit.runner.RunWith;
+import org.mockito.Mock;
+import org.mockito.Mockito;
+import org.mockito.runners.MockitoJUnitRunner;
 import org.mockserver.integration.ClientAndProxy;
 import org.mockserver.integration.ClientAndServer;
 import uk.gov.pay.connector.app.ConnectorApp;
@@ -19,13 +24,13 @@ import javax.ws.rs.client.Invocation;
 import java.net.SocketTimeoutException;
 import java.util.concurrent.TimeUnit;
 
-import static io.dropwizard.testing.ConfigOverride.config;
 import static java.lang.String.format;
 import static org.hamcrest.Matchers.lessThan;
 import static org.hamcrest.core.IsInstanceOf.instanceOf;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertThat;
 import static org.junit.Assert.fail;
+import static org.mockito.Mockito.*;
 import static org.mockserver.integration.ClientAndServer.startClientAndServer;
 import static org.mockserver.model.HttpRequest.request;
 import static org.mockserver.model.HttpResponse.response;
@@ -35,6 +40,7 @@ import static org.mockserver.verify.VerificationTimes.once;
 import static uk.gov.pay.connector.service.PaymentGatewayName.SMARTPAY;
 import static uk.gov.pay.connector.service.PaymentGatewayName.WORLDPAY;
 
+@RunWith(MockitoJUnitRunner.class)
 public class ClientFactoryTest {
 
     DropwizardTestSupport<ConnectorConfiguration> app;
@@ -43,7 +49,8 @@ public class ClientFactoryTest {
     private int serverPort = findFreePort();
     private int proxyPort = findFreePort();
     private String serverUrl = format("http://localhost:%s", serverPort);
-
+    @Mock
+    MetricRegistry mockMetricRegistry;
     @Before
     public void setup() {
         proxy = new ClientAndProxy(proxyPort, "localhost", serverPort);
@@ -65,9 +72,9 @@ public class ClientFactoryTest {
                 .when(request().withMethod("GET").withPath("/hello"))
                 .respond(response("world").withStatusCode(200));
 
-
+        when(mockMetricRegistry.register(any(), any())).thenReturn(null);
         Client client = new ClientFactory(app.getEnvironment(), app.getConfiguration())
-                .createWithDropwizardClient(WORLDPAY, GatewayOperation.AUTHORISE);
+                .createWithDropwizardClient(WORLDPAY, GatewayOperation.AUTHORISE, mockMetricRegistry);
 
         client.target(serverUrl).path("hello").request().get();
 
@@ -84,9 +91,10 @@ public class ClientFactoryTest {
         mockServer
                 .when(request().withMethod("GET").withPath("/hello"))
                 .respond(response("world").withStatusCode(200));
+        when(mockMetricRegistry.register(any(), any())).thenReturn(null);
 
         Client client = new ClientFactory(app.getEnvironment(), app.getConfiguration())
-                .createWithDropwizardClient(WORLDPAY, GatewayOperation.AUTHORISE);
+                .createWithDropwizardClient(WORLDPAY, GatewayOperation.AUTHORISE, mockMetricRegistry);
 
         client.target(serverUrl).path("hello").request().get();
 
@@ -101,6 +109,7 @@ public class ClientFactoryTest {
         app = new DropwizardTestSupport<>(ConnectorApp.class,
                 ResourceHelpers.resourceFilePath("config/client-factory-test-config.yaml"));
         app.before();
+        when(mockMetricRegistry.register(any(), any())).thenReturn(null);
 
         String path = "/hello";
         mockServer
@@ -108,7 +117,7 @@ public class ClientFactoryTest {
                 .respond(response("world").withStatusCode(200).withDelay(TimeUnit.MILLISECONDS, 2000));
 
         Client client = new ClientFactory(app.getEnvironment(), app.getConfiguration())
-                .createWithDropwizardClient(WORLDPAY, GatewayOperation.AUTHORISE);
+                .createWithDropwizardClient(WORLDPAY, GatewayOperation.AUTHORISE, mockMetricRegistry);
 
         Invocation.Builder request = client.target(serverUrl).path(path).request();
         long startTime = System.currentTimeMillis();
@@ -172,6 +181,7 @@ public class ClientFactoryTest {
         app = new DropwizardTestSupport<>(ConnectorApp.class,
                 ResourceHelpers.resourceFilePath("config/client-factory-test-config-with-worldpay-timeout-override.yaml"));
         app.before();
+        when(mockMetricRegistry.register(any(), any())).thenReturn(null);
 
         String path = "/hello";
         mockServer
@@ -179,7 +189,7 @@ public class ClientFactoryTest {
                 .respond(response("world").withStatusCode(200).withDelay(TimeUnit.MILLISECONDS, 2000));
 
         Client client = new ClientFactory(app.getEnvironment(), app.getConfiguration())
-                .createWithDropwizardClient(WORLDPAY, GatewayOperation.AUTHORISE);
+                .createWithDropwizardClient(WORLDPAY, GatewayOperation.AUTHORISE, mockMetricRegistry);
 
         Invocation.Builder request = client.target(serverUrl).path(path).request();
 
@@ -194,6 +204,7 @@ public class ClientFactoryTest {
         app = new DropwizardTestSupport<>(ConnectorApp.class,
                 ResourceHelpers.resourceFilePath("config/client-factory-test-config-with-smartpay-timeout-override.yaml"));
         app.before();
+        when(mockMetricRegistry.register(any(), any())).thenReturn(null);
 
         String path = "/hello";
         mockServer
@@ -201,7 +212,7 @@ public class ClientFactoryTest {
                 .respond(response("world").withStatusCode(200).withDelay(TimeUnit.MILLISECONDS, 2000));
 
         Client client = new ClientFactory(app.getEnvironment(), app.getConfiguration())
-                .createWithDropwizardClient(SMARTPAY, GatewayOperation.AUTHORISE);
+                .createWithDropwizardClient(SMARTPAY, GatewayOperation.AUTHORISE, mockMetricRegistry);
 
         Invocation.Builder request = client.target(serverUrl).path(path).request();
         Long authOverriddenTimeout = app.getConfiguration().getSmartpayConfig().getJerseyClientOverrides()

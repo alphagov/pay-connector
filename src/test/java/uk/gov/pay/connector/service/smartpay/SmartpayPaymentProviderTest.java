@@ -86,7 +86,7 @@ public class SmartpayPaymentProviderTest {
         when(mockMetricRegistry.histogram(anyString())).thenReturn(mockHistogram);
         when(mockMetricRegistry.counter(anyString())).thenReturn(mockCounter);
         when(mockClientFactory.createWithDropwizardClient(
-                eq(PaymentGatewayName.SMARTPAY), any(GatewayOperation.class))
+                eq(PaymentGatewayName.SMARTPAY), any(GatewayOperation.class), any(MetricRegistry.class))
         )
         .thenReturn(mockClient);
 
