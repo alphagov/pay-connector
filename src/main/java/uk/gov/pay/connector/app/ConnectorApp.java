@@ -5,6 +5,7 @@ import com.codahale.metrics.graphite.GraphiteSender;
 import com.codahale.metrics.graphite.GraphiteUDP;
 import com.google.inject.Guice;
 import com.google.inject.Injector;
+import com.google.inject.Module;
 import io.dropwizard.Application;
 import io.dropwizard.auth.AuthDynamicFeature;
 import io.dropwizard.auth.AuthValueFactoryProvider;
@@ -34,7 +35,6 @@ import uk.gov.pay.connector.util.TrustingSSLSocketFactory;
 
 import javax.net.ssl.HttpsURLConnection;
 import javax.net.ssl.SSLSocketFactory;
-
 import java.util.concurrent.TimeUnit;
 
 import static java.util.EnumSet.of;
@@ -67,8 +67,7 @@ public class ConnectorApp extends Application<ConnectorConfiguration> {
 
     @Override
     public void run(ConnectorConfiguration configuration, Environment environment) throws Exception {
-
-        final Injector injector = Guice.createInjector(new ConnectorModule(configuration, environment));
+        final Injector injector = createInjector(environment, new ConnectorModule(configuration, environment));
 
         injector.getInstance(PersistenceServiceInitialiser.class);
 
@@ -100,6 +99,12 @@ public class ConnectorApp extends Application<ConnectorConfiguration> {
         environment.healthChecks().register("cardExecutorService", injector.getInstance(CardExecutorServiceHealthCheck.class));
 
         setGlobalProxies(configuration);
+    }
+
+    private Injector createInjector(Environment environment, Module module) {
+        final Injector injector = Guice.createInjector(module);
+        environment.lifecycle().manage(InjectorLookup.registerInjector(this, injector));
+        return injector;
     }
 
     private void setupSmartpayBasicAuth(Environment environment, Authenticator<BasicCredentials, BasicAuthUser> authenticator) {
