@@ -21,5 +21,5 @@ public interface AppRule<C extends Configuration> extends TestRule {
 
     Injector getInjector();
 
-    <T> T getBean(Class<T> type);
+    <T> T getInstanceFromGuiceContainer(Class<T> type);
 }

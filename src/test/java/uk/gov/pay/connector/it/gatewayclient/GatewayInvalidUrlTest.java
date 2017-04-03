@@ -31,7 +31,7 @@ public class GatewayInvalidUrlTest extends GatewayBaseITest {
     public void shouldFailCaptureWhenInvalidConnectorUrl() throws Exception {
         DatabaseFixtures.TestCharge testCharge = createTestCharge(app.getDatabaseTestHelper());
         setupGatewayStub().respondWithUnexpectedResponseCodeWhenCapture();
-        app.getBean(CardCaptureProcess.class).runCapture();
+        app.getInstanceFromGuiceContainer(CardCaptureProcess.class).runCapture();
 
         assertThatLastGatewayClientLoggingEventIs("DNS resolution error for gateway url=http://gobbledygook.invalid.url");
         Assert.assertThat(app.getDatabaseTestHelper().getChargeStatus(testCharge.getChargeId()), Matchers.is(CAPTURE_APPROVED_RETRY.getValue()));

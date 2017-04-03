@@ -29,7 +29,7 @@ public class GatewaySocketErrorITest extends GatewayBaseITest {
     @Test
     public void shouldFailCaptureWhenSocketErrorFromGateway() throws Exception {
         DatabaseFixtures.TestCharge testCharge = createTestCharge(app.getDatabaseTestHelper());
-        app.getBean(CardCaptureProcess.class).runCapture();
+        app.getInstanceFromGuiceContainer(CardCaptureProcess.class).runCapture();
 
         assertThatLastGatewayClientLoggingEventIs(
                 String.format("Gateway returned unexpected status code: 404, for gateway url=http://localhost:%s/pal/servlet/soap/Payment with type test", port));

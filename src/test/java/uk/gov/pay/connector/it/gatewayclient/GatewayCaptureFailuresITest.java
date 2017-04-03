@@ -31,7 +31,7 @@ public class GatewayCaptureFailuresITest extends GatewayBaseITest {
     public void shouldFailCaptureWhenUnexpectedResponseCodeFromGateway() throws Exception {
         DatabaseFixtures.TestCharge testCharge = createTestCharge(app.getDatabaseTestHelper());
         setupGatewayStub().respondWithUnexpectedResponseCodeWhenCapture();
-        app.getBean(CardCaptureProcess.class).runCapture();
+        app.getInstanceFromGuiceContainer(CardCaptureProcess.class).runCapture();
 
         assertThatLastGatewayClientLoggingEventIs(
                 String.format("Gateway returned unexpected status code: 999, for gateway url=http://localhost:%s/pal/servlet/soap/Payment with type test", port));
@@ -42,7 +42,7 @@ public class GatewayCaptureFailuresITest extends GatewayBaseITest {
     public void shouldFailCaptureWhenMalformedResponseFromGateway() throws Exception {
         DatabaseFixtures.TestCharge testCharge = createTestCharge(app.getDatabaseTestHelper());
         setupGatewayStub().respondWithMalformedBody_WhenCapture();
-        app.getBean(CardCaptureProcess.class).runCapture();
+        app.getInstanceFromGuiceContainer(CardCaptureProcess.class).runCapture();
 
         assertThatLastGatewayClientLoggingEventIs("Could not unmarshall response >>>|<malformed xml/>|<<<.");
         Assert.assertThat(app.getDatabaseTestHelper().getChargeStatus(testCharge.getChargeId()), Matchers.is(CAPTURE_APPROVED_RETRY.getValue()));
@@ -52,7 +52,7 @@ public class GatewayCaptureFailuresITest extends GatewayBaseITest {
     public void shouldSucceedCapture() {
         DatabaseFixtures.TestCharge testCharge = createTestCharge(app.getDatabaseTestHelper());
         setupGatewayStub().respondWithSuccessWhenCapture();
-        app.getBean(CardCaptureProcess.class).runCapture();
+        app.getInstanceFromGuiceContainer(CardCaptureProcess.class).runCapture();
         Assert.assertThat(app.getDatabaseTestHelper().getChargeStatus(testCharge.getChargeId()), Matchers.is(CAPTURE_SUBMITTED.getValue()));
     }
 }

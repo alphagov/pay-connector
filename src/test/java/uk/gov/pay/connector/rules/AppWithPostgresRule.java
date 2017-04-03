@@ -87,12 +87,12 @@ abstract public class AppWithPostgresRule implements TestRule {
         return application.getAdminPort();
     }
 
-    public Injector getInjector() {
+    public Injector getGuiceInjector() {
         return application.getInjector();
     }
 
-    public <T> T getBean(Class<T> type) {
-        return application.getBean(type);
+    public <T> T getInstanceFromGuiceContainer(Class<T> type) {
+        return application.getInstanceFromGuiceContainer(type);
     }
 
     public DatabaseTestHelper getDatabaseTestHelper() {

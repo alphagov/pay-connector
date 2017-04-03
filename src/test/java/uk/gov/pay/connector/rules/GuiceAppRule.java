@@ -81,7 +81,7 @@ public class GuiceAppRule<C extends Configuration> extends ExternalResource impl
     }
 
     @Override
-    public <T> T getBean(final Class<T> type) {
+    public <T> T getInstanceFromGuiceContainer(final Class<T> type) {
         return getInjector().getInstance(type);
     }
 

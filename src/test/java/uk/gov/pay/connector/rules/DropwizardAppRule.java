@@ -22,7 +22,7 @@ public class DropwizardAppRule<C extends Configuration> extends io.dropwizard.te
     }
 
     @Override
-    public <T> T getBean(final Class<T> type) {
+    public <T> T getInstanceFromGuiceContainer(final Class<T> type) {
         return getInjector().getInstance(type);
     }
 
