@@ -44,7 +44,7 @@ public class CardCaptureProcessITest extends CardCaptureProcessBaseITest {
         new SmartpayMockClient().mockCaptureError();
         app.getBean(CardCaptureProcess.class).runCapture();
 
-        Assert.assertThat(app.getDatabaseTestHelper().getChargeStatus(testCharge.getChargeId()), Matchers.is(CAPTURE_APPROVED.getValue()));
+        Assert.assertThat(app.getDatabaseTestHelper().getChargeStatus(testCharge.getChargeId()), Matchers.is(CAPTURE_APPROVED_RETRY.getValue()));
     }
 
     @Test

@@ -12,7 +12,7 @@ import uk.gov.pay.connector.rules.GuiceAppWithPostgresRule;
 import uk.gov.pay.connector.service.CardCaptureProcess;
 
 import static io.dropwizard.testing.ConfigOverride.config;
-import static uk.gov.pay.connector.model.domain.ChargeStatus.CAPTURE_APPROVED;
+import static uk.gov.pay.connector.model.domain.ChargeStatus.CAPTURE_APPROVED_RETRY;
 
 @RunWith(MockitoJUnitRunner.class)
 public class GatewaySocketErrorITest extends GatewayBaseITest {
@@ -33,6 +33,6 @@ public class GatewaySocketErrorITest extends GatewayBaseITest {
 
         assertThatLastGatewayClientLoggingEventIs(
                 String.format("Gateway returned unexpected status code: 404, for gateway url=http://localhost:%s/pal/servlet/soap/Payment with type test", port));
-        Assert.assertThat(app.getDatabaseTestHelper().getChargeStatus(testCharge.getChargeId()), Matchers.is(CAPTURE_APPROVED.getValue()));
+        Assert.assertThat(app.getDatabaseTestHelper().getChargeStatus(testCharge.getChargeId()), Matchers.is(CAPTURE_APPROVED_RETRY.getValue()));
     }
 }

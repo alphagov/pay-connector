@@ -18,6 +18,7 @@ import java.util.List;
 import java.util.Optional;
 
 import static uk.gov.pay.connector.model.domain.ChargeStatus.CAPTURE_APPROVED;
+import static uk.gov.pay.connector.model.domain.ChargeStatus.CAPTURE_APPROVED_RETRY;
 
 @Transactional
 public class ChargeDao extends JpaDao<ChargeEntity> {
@@ -157,19 +158,20 @@ public class ChargeDao extends JpaDao<ChargeEntity> {
     }
 
     public int countChargesForCapture() {
-        String query = "SELECT count(c) FROM ChargeEntity c WHERE c.status=:status";
+        String query = "SELECT count(c) FROM ChargeEntity c WHERE c.status=:captureApprovedStatus OR c.status=:captureApprovedRetryStatus";
 
         Number count = (Number) entityManager.get()
                 .createQuery(query)
-                .setParameter("status", CAPTURE_APPROVED.getValue())
+                .setParameter("captureApprovedStatus", CAPTURE_APPROVED.getValue())
+                .setParameter("captureApprovedRetryStatus", CAPTURE_APPROVED_RETRY.getValue())
                 .getSingleResult();
         return count.intValue();
     }
 
     public List<ChargeEntity> findChargesForCapture(int maxNumberOfCharges, Duration notAttemptedWithin) {
         String query = "SELECT c FROM ChargeEntity c WHERE " +
-                "c.status=:status AND " +
-                "NOT EXISTS (" +
+                "(c.status=:captureApprovedStatus OR c.status=:captureApprovedRetryStatus) " +
+                "AND NOT EXISTS (" +
                 "  SELECT ce FROM ChargeEventEntity ce WHERE " +
                 "    ce.chargeEntity = c AND " +
                 "    ce.status = :eventStatus AND " +
@@ -180,8 +182,9 @@ public class ChargeDao extends JpaDao<ChargeEntity> {
         return entityManager.get()
                 .createQuery(query, ChargeEntity.class)
                 .setMaxResults(maxNumberOfCharges)
-                .setParameter("status", CAPTURE_APPROVED.getValue())
-                .setParameter("eventStatus", CAPTURE_APPROVED)
+                .setParameter("captureApprovedStatus", CAPTURE_APPROVED.getValue())
+                .setParameter("captureApprovedRetryStatus", CAPTURE_APPROVED_RETRY.getValue())
+                .setParameter("eventStatus", CAPTURE_APPROVED_RETRY)
                 .setParameter("cutoffDate", ZonedDateTime.now().minus(notAttemptedWithin))
                 .getResultList();
     }
@@ -189,12 +192,13 @@ public class ChargeDao extends JpaDao<ChargeEntity> {
     public int countCaptureRetriesForCharge(long chargeId) {
         String query = "SELECT count(ce) FROM ChargeEventEntity ce WHERE " +
                 "    ce.chargeEntity.id = :chargeId AND " +
-                "    ce.status = :status";
+                "    (ce.status = :captureApprovedStatus OR ce.status = :captureApprovedRetryStatus)";
 
         return ((Number) entityManager.get()
                 .createQuery(query)
                 .setParameter("chargeId", chargeId)
-                .setParameter("status", CAPTURE_APPROVED)
+                .setParameter("captureApprovedStatus", CAPTURE_APPROVED)
+                .setParameter("captureApprovedRetryStatus", CAPTURE_APPROVED_RETRY)
                 .getSingleResult()).intValue();
     }
 }

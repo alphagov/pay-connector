@@ -23,8 +23,8 @@ import static uk.gov.pay.connector.model.domain.ChargeStatus.*;
 public class CardCaptureService extends CardService implements TransactionalGatewayOperation<BaseCaptureResponse> {
 
     private static List<ChargeStatus> legalStatuses = ImmutableList.of(
-            AUTHORISATION_SUCCESS,
-            CAPTURE_APPROVED
+            CAPTURE_APPROVED,
+            CAPTURE_APPROVED_RETRY
     );
 
     private final UserNotificationService userNotificationService;
@@ -123,7 +123,7 @@ public class CardCaptureService extends CardService implements TransactionalGate
             return CAPTURE_SUBMITTED;
         } else {
             return operationResponse.getGatewayError()
-                    .map(timeoutError -> CAPTURE_APPROVED)
+                    .map(timeoutError -> CAPTURE_APPROVED_RETRY)
                     .orElse(CAPTURE_ERROR);
         }
     }

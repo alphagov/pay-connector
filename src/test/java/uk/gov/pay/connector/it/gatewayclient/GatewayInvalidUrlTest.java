@@ -12,7 +12,7 @@ import uk.gov.pay.connector.rules.GuiceAppWithPostgresRule;
 import uk.gov.pay.connector.service.CardCaptureProcess;
 
 import static io.dropwizard.testing.ConfigOverride.config;
-import static uk.gov.pay.connector.model.domain.ChargeStatus.CAPTURE_APPROVED;
+import static uk.gov.pay.connector.model.domain.ChargeStatus.CAPTURE_APPROVED_RETRY;
 
 @RunWith(MockitoJUnitRunner.class)
 public class GatewayInvalidUrlTest extends GatewayBaseITest {
@@ -34,6 +34,6 @@ public class GatewayInvalidUrlTest extends GatewayBaseITest {
         app.getBean(CardCaptureProcess.class).runCapture();
 
         assertThatLastGatewayClientLoggingEventIs("DNS resolution error for gateway url=http://gobbledygook.invalid.url");
-        Assert.assertThat(app.getDatabaseTestHelper().getChargeStatus(testCharge.getChargeId()), Matchers.is(CAPTURE_APPROVED.getValue()));
+        Assert.assertThat(app.getDatabaseTestHelper().getChargeStatus(testCharge.getChargeId()), Matchers.is(CAPTURE_APPROVED_RETRY.getValue()));
     }
 }

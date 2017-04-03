@@ -12,7 +12,7 @@ import uk.gov.pay.connector.rules.GuiceAppWithPostgresRule;
 import uk.gov.pay.connector.service.CardCaptureProcess;
 
 import static io.dropwizard.testing.ConfigOverride.config;
-import static uk.gov.pay.connector.model.domain.ChargeStatus.CAPTURE_APPROVED;
+import static uk.gov.pay.connector.model.domain.ChargeStatus.CAPTURE_APPROVED_RETRY;
 import static uk.gov.pay.connector.model.domain.ChargeStatus.CAPTURE_SUBMITTED;
 
 @RunWith(MockitoJUnitRunner.class)
@@ -35,7 +35,7 @@ public class GatewayCaptureFailuresITest extends GatewayBaseITest {
 
         assertThatLastGatewayClientLoggingEventIs(
                 String.format("Gateway returned unexpected status code: 999, for gateway url=http://localhost:%s/pal/servlet/soap/Payment with type test", port));
-        Assert.assertThat(app.getDatabaseTestHelper().getChargeStatus(testCharge.getChargeId()), Matchers.is(CAPTURE_APPROVED.getValue()));
+        Assert.assertThat(app.getDatabaseTestHelper().getChargeStatus(testCharge.getChargeId()), Matchers.is(CAPTURE_APPROVED_RETRY.getValue()));
     }
 
     @Test
@@ -45,7 +45,7 @@ public class GatewayCaptureFailuresITest extends GatewayBaseITest {
         app.getBean(CardCaptureProcess.class).runCapture();
 
         assertThatLastGatewayClientLoggingEventIs("Could not unmarshall response >>>|<malformed xml/>|<<<.");
-        Assert.assertThat(app.getDatabaseTestHelper().getChargeStatus(testCharge.getChargeId()), Matchers.is(CAPTURE_APPROVED.getValue()));
+        Assert.assertThat(app.getDatabaseTestHelper().getChargeStatus(testCharge.getChargeId()), Matchers.is(CAPTURE_APPROVED_RETRY.getValue()));
     }
 
     @Test
