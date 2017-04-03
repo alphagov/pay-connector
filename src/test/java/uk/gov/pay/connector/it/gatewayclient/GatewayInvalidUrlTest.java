@@ -15,11 +15,12 @@ import static io.dropwizard.testing.ConfigOverride.config;
 import static uk.gov.pay.connector.model.domain.ChargeStatus.CAPTURE_APPROVED;
 
 @RunWith(MockitoJUnitRunner.class)
-public class GatewaySocketErrorITest extends GatewayBaseITest {
+public class GatewayInvalidUrlTest extends GatewayBaseITest {
 
     @Rule
     public GuiceAppWithPostgresRule app = new GuiceAppWithPostgresRule(
-            config("smartpay.urls.test", "http://localhost:" + port + "/pal/servlet/soap/Payment"));
+            config("smartpay.urls.test", "http://gobbledygook.invalid.url"));
+
 
     @Before
     public void setUp() throws Exception {
@@ -27,12 +28,12 @@ public class GatewaySocketErrorITest extends GatewayBaseITest {
     }
 
     @Test
-    public void shouldFailCaptureWhenSocketErrorFromGateway() throws Exception {
+    public void shouldFailCaptureWhenInvalidConnectorUrl() throws Exception {
         DatabaseFixtures.TestCharge testCharge = createTestCharge(app.getDatabaseTestHelper());
+        setupGatewayStub().respondWithUnexpectedResponseCodeWhenCapture();
         app.getBean(CardCaptureProcess.class).runCapture();
 
-        assertThatLastGatewayClientLoggingEventIs(
-                String.format("Gateway returned unexpected status code: 404, for gateway url=http://localhost:%s/pal/servlet/soap/Payment with type test", port));
+        assertThatLastGatewayClientLoggingEventIs("DNS resolution error for gateway url=http://gobbledygook.invalid.url");
         Assert.assertThat(app.getDatabaseTestHelper().getChargeStatus(testCharge.getChargeId()), Matchers.is(CAPTURE_APPROVED.getValue()));
     }
 }

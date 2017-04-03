@@ -10,11 +10,9 @@ import java.util.List;
 import java.util.Map;
 import java.util.UUID;
 
-import static org.hamcrest.Matchers.is;
 import static org.junit.Assert.assertThat;
 import static uk.gov.pay.connector.model.api.ExternalChargeState.EXTERNAL_SUCCESS;
 import static uk.gov.pay.connector.model.domain.ChargeStatus.*;
-import static uk.gov.pay.connector.util.TransactionId.randomId;
 
 public class SmartpayCardResourceITest extends ChargingITestBase {
 
@@ -55,7 +53,7 @@ public class SmartpayCardResourceITest extends ChargingITestBase {
     public void shouldCaptureCardPayment_IfChargeWasPreviouslyAuthorised() {
         String chargeId = authoriseNewCharge();
 
-        smartpay.mockCaptureResponse();
+        smartpay.mockCaptureSuccess();
 
         givenSetup()
                 .post(captureChargeUrlFor(chargeId))
@@ -81,7 +79,7 @@ public class SmartpayCardResourceITest extends ChargingITestBase {
         assertFrontendChargeStatusIs(externalChargeId, AUTHORISATION_SUCCESS.getValue());
 
         String pspReference2 = "pspRef2-" + UUID.randomUUID().toString();
-        smartpay.mockCaptureResponseWithTransactionId(pspReference2);
+        smartpay.mockCaptureSuccessWithTransactionId(pspReference2);
 
         givenSetup()
                 .post(captureChargeUrlFor(externalChargeId))
@@ -99,7 +97,7 @@ public class SmartpayCardResourceITest extends ChargingITestBase {
     public void shouldCancelCharge() {
         String chargeId = createNewCharge(AUTHORISATION_SUCCESS);
 
-        smartpay.mockCancelResponse();
+        smartpay.mockCancel();
 
         givenSetup()
                 .contentType(ContentType.JSON)

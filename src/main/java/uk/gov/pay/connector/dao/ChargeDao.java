@@ -13,7 +13,6 @@ import javax.persistence.Query;
 import javax.persistence.criteria.*;
 import java.time.Duration;
 import java.time.ZonedDateTime;
-import java.time.temporal.ChronoUnit;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
@@ -186,7 +185,6 @@ public class ChargeDao extends JpaDao<ChargeEntity> {
                 .setParameter("cutoffDate", ZonedDateTime.now().minus(notAttemptedWithin))
                 .getResultList();
     }
-
 
     public int countCaptureRetriesForCharge(long chargeId) {
         String query = "SELECT count(ce) FROM ChargeEventEntity ce WHERE " +

@@ -10,6 +10,7 @@ import uk.gov.pay.connector.it.base.ChargingITestBase;
 import uk.gov.pay.connector.it.dao.DatabaseFixtures;
 import uk.gov.pay.connector.model.domain.CardFixture;
 import uk.gov.pay.connector.model.domain.ChargeStatus;
+import uk.gov.pay.connector.service.CardCaptureProcess;
 import uk.gov.pay.connector.util.DateTimeUtils;
 import uk.gov.pay.connector.util.RestAssuredClient;
 
@@ -176,6 +177,9 @@ public class ChargesApiResourceITest extends ChargingITestBase {
                 .post(captureChargeUrlFor(chargeId))
                 .then()
                 .statusCode(204);
+
+        // Trigger the capture process programmatically which normally would be invoked by the scheduler.
+        app.getBean(CardCaptureProcess.class).runCapture();
 
         getCharge(chargeId)
             .body("settlement_summary.capture_submit_time", matchesPattern("^\\d{4}-\\d{2}-\\d{2}T\\d{2}:\\d{2}:\\d{2}.\\d{3}Z"))
