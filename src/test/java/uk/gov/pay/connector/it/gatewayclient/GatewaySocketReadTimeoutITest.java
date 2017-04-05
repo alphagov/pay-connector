@@ -15,7 +15,7 @@ import static io.dropwizard.testing.ConfigOverride.config;
 import static uk.gov.pay.connector.model.domain.ChargeStatus.CAPTURE_APPROVED_RETRY;
 
 @RunWith(MockitoJUnitRunner.class)
-public class GatewaySocketReadTimeoutITest extends GatewayBaseITest {
+public class GatewaySocketReadTimeoutITest extends BaseGatewayITest {
 
     @Rule
     public GuiceAppWithPostgresRule app = new GuiceAppWithPostgresRule(

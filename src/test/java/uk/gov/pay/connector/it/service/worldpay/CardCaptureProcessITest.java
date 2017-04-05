@@ -52,8 +52,9 @@ public class CardCaptureProcessITest extends CardCaptureProcessBaseITest {
         DatabaseFixtures.TestCharge testCharge = createTestCharge(PAYMENT_PROVIDER, CAPTURE_APPROVED);
 
         new WorldpayMockClient().mockCaptureError();
-        app.getInstanceFromGuiceContainer(CardCaptureProcess.class).runCapture();
-        app.getInstanceFromGuiceContainer(CardCaptureProcess.class).runCapture();
+        for (int i=0; i<CAPTURE_MAX_RETRIES+1; i++) {
+            app.getInstanceFromGuiceContainer(CardCaptureProcess.class).runCapture();
+        }
 
         Assert.assertThat(app.getDatabaseTestHelper().getChargeStatus(testCharge.getChargeId()), Matchers.is(CAPTURE_ERROR.getValue()));
     }

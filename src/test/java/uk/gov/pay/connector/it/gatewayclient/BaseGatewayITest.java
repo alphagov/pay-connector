@@ -31,7 +31,7 @@ import static uk.gov.pay.connector.model.domain.GatewayAccount.CREDENTIALS_PASSW
 import static uk.gov.pay.connector.model.domain.GatewayAccount.CREDENTIALS_USERNAME;
 
 @RunWith(MockitoJUnitRunner.class)
-abstract public class GatewayBaseITest {
+abstract public class BaseGatewayITest {
     private static final String TRANSACTION_ID = "7914440428682669";
     private static final Map<String, String> CREDENTIALS =
             ImmutableMap.of(

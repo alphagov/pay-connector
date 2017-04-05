@@ -16,7 +16,7 @@ import static uk.gov.pay.connector.model.domain.ChargeStatus.CAPTURE_APPROVED_RE
 import static uk.gov.pay.connector.model.domain.ChargeStatus.CAPTURE_SUBMITTED;
 
 @RunWith(MockitoJUnitRunner.class)
-public class GatewayCaptureFailuresITest extends GatewayBaseITest {
+public class GatewayCaptureFailuresITest extends BaseGatewayITest {
 
     @Rule
     public GuiceAppWithPostgresRule app = new GuiceAppWithPostgresRule(

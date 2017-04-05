@@ -26,7 +26,7 @@ abstract public class AppWithPostgresRule implements TestRule {
 
     private final String configFilePath;
     private final PostgresDockerRule postgres;
-    private final AppRule<ConnectorConfiguration> application;
+    private final AppRule<ConnectorConfiguration> appRule;
     private final RuleChain rules;
 
     private DatabaseTestHelper databaseTestHelper;
@@ -43,9 +43,9 @@ abstract public class AppWithPostgresRule implements TestRule {
             throw new RuntimeException(e);
         }
 
-        application = newApplication(configFilePath, overrideDatabaseConfig(configOverrides, postgres));
+        appRule = newApplication(configFilePath, overrideDatabaseConfig(configOverrides, postgres));
 
-        rules = RuleChain.outerRule(postgres).around(application);
+        rules = RuleChain.outerRule(postgres).around(appRule);
     }
 
     abstract protected AppRule<ConnectorConfiguration> newApplication(
@@ -58,12 +58,12 @@ abstract public class AppWithPostgresRule implements TestRule {
             @Override
             public void evaluate() throws Throwable {
                 logger.info("Clearing database.");
-                application.getApplication().run("db", "drop-all", "--confirm-delete-everything", configFilePath);
-                application.getApplication().run("db", "migrate", configFilePath);
+                appRule.getApplication().run("db", "drop-all", "--confirm-delete-everything", configFilePath);
+                appRule.getApplication().run("db", "migrate", configFilePath);
 
                 restoreDropwizardsLogging();
 
-                DataSourceFactory dataSourceFactory = application.getConfiguration().getDataSourceFactory();
+                DataSourceFactory dataSourceFactory = appRule.getConfiguration().getDataSourceFactory();
                 databaseTestHelper = new DatabaseTestHelper(new DBI(dataSourceFactory.getUrl(), dataSourceFactory.getUser(), dataSourceFactory.getPassword()));
 
                 base.evaluate();
@@ -72,27 +72,27 @@ abstract public class AppWithPostgresRule implements TestRule {
     }
 
     public ConnectorConfiguration getConf() {
-        return application.getConfiguration();
+        return appRule.getConfiguration();
     }
 
     public Environment getEnvironment() {
-        return application.getEnvironment();
+        return appRule.getEnvironment();
     }
 
     public int getLocalPort() {
-        return application.getLocalPort();
+        return appRule.getLocalPort();
     }
 
     public int getAdminPort() {
-        return application.getAdminPort();
+        return appRule.getAdminPort();
     }
 
     public Injector getGuiceInjector() {
-        return application.getInjector();
+        return appRule.getInjector();
     }
 
     public <T> T getInstanceFromGuiceContainer(Class<T> type) {
-        return application.getInstanceFromGuiceContainer(type);
+        return appRule.getInstanceFromGuiceContainer(type);
     }
 
     public DatabaseTestHelper getDatabaseTestHelper() {
@@ -112,7 +112,7 @@ abstract public class AppWithPostgresRule implements TestRule {
     }
 
     private void restoreDropwizardsLogging() {
-        application.getConfiguration().getLoggingFactory().configure(application.getEnvironment().metrics(),
-                application.getApplication().getName());
+        appRule.getConfiguration().getLoggingFactory().configure(appRule.getEnvironment().metrics(),
+                appRule.getApplication().getName());
     }
 }

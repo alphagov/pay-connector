@@ -313,8 +313,7 @@ public class CardCaptureServiceTest extends CardServiceTest {
             // ignore
         }
 
-        verify(mockedChargeDao).findByExternalId(nonExistingChargeExternalId);
-        verifyNoMoreInteractions(mockedChargeDao);
+        verify(mockedChargeDao, never()).mergeAndNotifyStatusHasChanged(any(), any());
     }
 
     @Test
