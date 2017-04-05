@@ -1,6 +1,6 @@
 package uk.gov.pay.connector.service;
 
-import com.codahale.metrics.Meter;
+import com.codahale.metrics.Counter;
 import com.codahale.metrics.MetricRegistry;
 import com.google.common.base.Stopwatch;
 import io.dropwizard.setup.Environment;
@@ -23,7 +23,7 @@ public class CardCaptureProcess {
     private final MetricRegistry metricRegistry;
     private final CaptureProcessConfig captureConfig;
     private volatile long queueSize;
-    private final Meter captureQueue;
+    private final Counter queueSizeMetric;
 
     @Inject
     public CardCaptureProcess(Environment environment, ChargeDao chargeDao, CardCaptureService cardCaptureService, ConnectorConfiguration connectorConfiguration) {
@@ -32,14 +32,15 @@ public class CardCaptureProcess {
         this.captureConfig = connectorConfiguration.getCaptureProcessConfig();
         metricRegistry = environment.metrics();
 
-        captureQueue = metricRegistry.meter("gateway-operations.capture-process.queue-size");
+        queueSizeMetric = metricRegistry.counter("gateway-operations.capture-process.queue-size");
     }
 
     public void runCapture() {
         Stopwatch responseTimeStopwatch = Stopwatch.createStarted();
         try {
             queueSize = chargeDao.countChargesForCapture();
-            captureQueue.mark(queueSize);
+
+            updateQueueSizeMetric(queueSize);
 
             List<ChargeEntity> chargesToCapture = chargeDao.findChargesForCapture(captureConfig.getBatchSize(), captureConfig.getRetryFailuresEveryAsJavaDuration());
 
@@ -62,6 +63,12 @@ public class CardCaptureProcess {
 
     private boolean shouldRetry(ChargeEntity charge) {
         return chargeDao.countCaptureRetriesForCharge(charge.getId()) < captureConfig.getMaximumRetries();
+    }
+
+    private void updateQueueSizeMetric(long newQueueSize) {
+        // Counters do not provide a set method to record a spot value, thus we need this workaround.
+        long currentQueueSizeCounter = queueSizeMetric.getCount();
+        queueSizeMetric.inc(newQueueSize - currentQueueSizeCounter); // if input<0, we get decrease
     }
 
     public long getQueueSize() {

@@ -1,5 +1,6 @@
 package uk.gov.pay.connector.service;
 
+import com.codahale.metrics.Counter;
 import com.codahale.metrics.Histogram;
 import com.codahale.metrics.Meter;
 import com.codahale.metrics.MetricRegistry;
@@ -47,8 +48,8 @@ public class CardCaptureProcessTest {
         CaptureProcessConfig mockCaptureConfiguration = mock(CaptureProcessConfig.class);
 
         when(mockMetricRegistry.histogram(anyString())).thenReturn(mockHistogram);
-        Meter mockMeter = mock(Meter.class);
-        when(mockMetricRegistry.meter(anyString())).thenReturn(mockMeter);
+        Counter mockCounter = mock(Counter.class);
+        when(mockMetricRegistry.counter(anyString())).thenReturn(mockCounter);
         when(mockEnvironment.metrics()).thenReturn(mockMetricRegistry);
         when(mockCaptureConfiguration.getBatchSize()).thenReturn(10);
         when(mockCaptureConfiguration.getRetryFailuresEveryAsJavaDuration()).thenReturn(Duration.ofMinutes(60));
