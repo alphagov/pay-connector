@@ -124,6 +124,5 @@ public class CardCaptureProcessTest {
         cardCaptureProcess.runCapture();
 
         verify(mockCardCaptureService).markChargeAsCaptureError(mockCharge1);
-
     }
 }
