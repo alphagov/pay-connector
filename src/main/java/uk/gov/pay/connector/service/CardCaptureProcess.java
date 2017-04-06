@@ -44,10 +44,12 @@ public class CardCaptureProcess {
 
             List<ChargeEntity> chargesToCapture = chargeDao.findChargesForCapture(captureConfig.getBatchSize(), captureConfig.getRetryFailuresEveryAsJavaDuration());
 
-            logger.info("Capturing : "+ chargesToCapture.size() + " of " + queueSize + " charges");
+            if (chargesToCapture.size() > 0) {
+                logger.info("Capturing : " + chargesToCapture.size() + " of " + queueSize + " charges");
+            }
 
             chargesToCapture.forEach((charge) -> {
-                if(shouldRetry(charge)) {
+                if (shouldRetry(charge)) {
                     captureService.doCapture(charge.getExternalId());
                 } else {
                     captureService.markChargeAsCaptureError(charge);

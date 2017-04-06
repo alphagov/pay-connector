@@ -88,7 +88,7 @@ public class ConnectorApp extends Application<ConnectorConfiguration> {
         environment.jersey().register(injector.getInstance(SchemeRewriteFilter.class));
         environment.jersey().register(injector.getInstance(Auth3dsDetailsFactory.class));
 
-        setupSchedulers(environment, injector);
+        setupSchedulers(configuration, environment, injector);
 
         setupSmartpayBasicAuth(environment, injector.getInstance(SmartpayAccountSpecificAuthenticator.class));
 
@@ -134,8 +134,8 @@ public class ConnectorApp extends Application<ConnectorConfiguration> {
         System.setProperty("https.proxyPort", configuration.getClientConfiguration().getProxyConfiguration().getPort().toString());
     }
 
-    private void setupSchedulers(Environment environment, Injector injector) {
-        CaptureProcessScheduler captureProcessScheduler = new CaptureProcessScheduler(environment, injector.getInstance(CardCaptureProcess.class));
+    private void setupSchedulers(ConnectorConfiguration configuration, Environment environment, Injector injector) {
+        CaptureProcessScheduler captureProcessScheduler = new CaptureProcessScheduler(configuration, environment, injector.getInstance(CardCaptureProcess.class));
         environment.lifecycle().manage(captureProcessScheduler);
     }
 }

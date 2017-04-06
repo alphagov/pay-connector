@@ -54,6 +54,10 @@ executorServiceConfig:
   threadsPerCpu: ${NUMBER_OF_THREADS_PER_CPU:-100}
 
 captureProcessConfig:
+  schedulerInitialDelayInSeconds: ${CAPTURE_PROCESS_SCHEDULER_INITIAL_DELAY_SECONDS:-20}
+  schedulerRandomIntervalMinimumInSeconds: ${CAPTURE_PROCESS_SCHEDULER_RANDOM_INTERVAL_MINIMUM_SECONDS:-150}
+  schedulerRandomIntervalMaximumInSeconds: ${CAPTURE_PROCESS_SCHEDULER_RANDOM_INTERVAL_MAXIMUM_SECONDS:-200}
+
   batchSize: ${CAPTURE_PROCESS_BATCH_SIZE:-10}
   retryFailuresEvery: ${CAPTURE_PROCESS_RETRY_FAILURES_EVERY:-60 minutes}
   maximumRetries: ${CAPTURE_PROCESS_MAXIMUM_RETRIES:-24}
