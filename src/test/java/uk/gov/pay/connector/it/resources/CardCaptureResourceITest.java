@@ -36,7 +36,7 @@ public class CardCaptureResourceITest extends ChargingITestBase {
                 .then()
                 .statusCode(204);
 
-        assertFrontendChargeStatusIs(chargeId, CAPTURED.getValue());
+        assertFrontendChargeStatusIs(chargeId, CAPTURE_APPROVED.getValue());
         assertApiStateIs(chargeId, EXTERNAL_SUCCESS.getStatus());
     }
 
@@ -49,28 +49,18 @@ public class CardCaptureResourceITest extends ChargingITestBase {
     }
 
     @Test
-    public void shouldReturnErrorWithoutChangingChargeState_IfOriginalStateIsNotAuthorised() {
-        String chargeId = createNewChargeWithNoTransactionId(ENTERING_CARD_DETAILS);
+    public void shouldReturnErrorWithoutChangingChargeState_IfChargeIsCaptureReady() {
+        String chargeId = createNewChargeWithNoTransactionId(CAPTURE_READY);
         String message = "Charge not in correct state to be processed, " + chargeId;
         captureAndVerifyFor(chargeId, 400, message);
-
-        assertFrontendChargeStatusIs(chargeId, ENTERING_CARD_DETAILS.getValue());
-    }
-
-    @Test
-    public void shouldReturnErrorAndDoNotUpdateChargeStatus_IfCaptureAlreadyInProgress() throws Exception {
-        String chargeId = createNewChargeWithNoTransactionId(CAPTURE_READY);
-
-        String message = format("Capture for charge already in progress, %s", chargeId);
-        captureAndVerifyFor(chargeId, 202, message);
 
         assertFrontendChargeStatusIs(chargeId, CAPTURE_READY.getValue());
     }
 
     @Test
-    public void shouldReturnCaptureError_IfChargeExpired() throws Exception {
+    public void shouldReturnErrorWithoutChangingChargeState_IfChargeIsExpired() throws Exception {
         String chargeId = createNewChargeWithNoTransactionId(EXPIRED);
-        String message = format("Capture for charge failed as already expired, %s", chargeId);
+        String message = format("Charge not in correct state to be processed, %s", chargeId);
         captureAndVerifyFor(chargeId, 400, message);
         assertFrontendChargeStatusIs(chargeId, EXPIRED.getValue());
     }

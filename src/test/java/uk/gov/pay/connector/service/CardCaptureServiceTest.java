@@ -39,6 +39,7 @@ import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.core.Is.is;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
+import static org.junit.Assert.fail;
 import static org.mockito.Matchers.any;
 import static org.mockito.Mockito.*;
 import static uk.gov.pay.connector.model.domain.ChargeStatus.*;
@@ -282,21 +283,60 @@ public class CardCaptureServiceTest extends CardServiceTest {
     }
 
     @Test
-    public void markChargeAsCaptureError_shouldSetChargeStatusToCaptureErrorAndWriteChargeEvent() {
-        ChargeEntity charge = createNewChargeWith("worldpay", 1L, CAPTURE_APPROVED, "gatewayTxId");
-        ChargeEntity reloadedCharge = spy(charge);
-        when(mockedChargeDao.merge(charge)).thenReturn(reloadedCharge);
-        when(mockedChargeDao.mergeAndNotifyStatusHasChanged(reloadedCharge, Optional.empty())).thenReturn(reloadedCharge);
+    public void markChargeAsCaptureApproved_shouldThrowAnExceptionWhenChargeIsNotFound() {
+        String nonExistingChargeExternalId = "non-existing-id";
 
-        ChargeEntity result = cardCaptureService.markChargeAsCaptureError(charge);
+        when(mockedChargeDao.findByExternalId(nonExistingChargeExternalId)).thenReturn(Optional.empty());
 
-        assertThat(result.getStatus(), is(CAPTURE_ERROR.getValue()));
-        verify(mockedChargeDao).mergeAndNotifyStatusHasChanged(reloadedCharge, Optional.empty());
+        try {
+            cardCaptureService.markChargeAsCaptureApproved(nonExistingChargeExternalId);
+            fail("expecting ChargeNotFoundRuntimeException");
+        } catch (ChargeNotFoundRuntimeException e) {
+            // ignore
+        }
+
+        verify(mockedChargeDao).findByExternalId(nonExistingChargeExternalId);
+        verifyNoMoreInteractions(mockedChargeDao);
+    }
+
+    @Test
+    public void markChargeAsCaptureApproved_shouldThrowAnIllegalStateRuntimeExceptionWhenChargeIsNotInAuthorisationSuccess() {
+        ChargeEntity chargeEntity = spy(createNewChargeWith("worldpay", 1L, CAPTURE_READY, "gatewayTxId"));
+
+        when(mockedChargeDao.findByExternalId(chargeEntity.getExternalId())).thenReturn(Optional.of(chargeEntity));
+
+        try {
+            cardCaptureService.markChargeAsCaptureApproved(chargeEntity.getExternalId());
+            fail("expecting IllegalStateRuntimeException");
+        } catch (IllegalStateRuntimeException e) {
+            // ignore
+        }
+
+        verify(mockedChargeDao).findByExternalId(chargeEntity.getExternalId());
+        verify(chargeEntity, never()).setStatus(any());
+        verify(mockAppender).doAppend(loggingEventArgumentCaptor.capture());
+        List<LoggingEvent> logStatement = loggingEventArgumentCaptor.getAllValues();
+        String expectedLogMessage = String.format("Charge is not in the expect state of AUTHORISATION_SUCCESS to be marked as CAPTURE_APPROVED [charge_status=%s]", chargeEntity.getStatus());
+        Assert.assertThat(logStatement.get(0).getFormattedMessage(), is(expectedLogMessage));
+
+        verifyNoMoreInteractions(mockedChargeDao);
+    }
+
+    @Test
+    public void markChargeAsCaptureApproved_shouldSetChargeStatusToCaptureApprovedAndWriteChargeEvent() {
+        ChargeEntity chargeEntity = spy(createNewChargeWith("worldpay", 1L, AUTHORISATION_SUCCESS, "gatewayTxId"));
+        when(mockedChargeDao.findByExternalId(chargeEntity.getExternalId())).thenReturn(Optional.of(chargeEntity));
+        when(mockedChargeDao.mergeAndNotifyStatusHasChanged(chargeEntity, Optional.empty())).thenReturn(chargeEntity);
+
+        ChargeEntity result = cardCaptureService.markChargeAsCaptureApproved(chargeEntity.getExternalId());
+
+        verify(chargeEntity).setStatus(CAPTURE_APPROVED);
+        verify(mockedChargeDao).mergeAndNotifyStatusHasChanged(chargeEntity, Optional.empty());
+        assertThat(result.getStatus(), is(CAPTURE_APPROVED.getValue()));
 
         verify(mockAppender).doAppend(loggingEventArgumentCaptor.capture());
-
         List<LoggingEvent> logStatement = loggingEventArgumentCaptor.getAllValues();
-        String expectedLogMessage = String.format("CAPTURE_ERROR for charge [charge_external_id=%s] - reached maximum number of capture attempts", charge.getExternalId());
+        String expectedLogMessage = String.format("CAPTURE_APPROVED for charge [charge_external_id=%s]", chargeEntity.getExternalId());
         Assert.assertThat(logStatement.get(0).getFormattedMessage(), is(expectedLogMessage));
     }
 }
