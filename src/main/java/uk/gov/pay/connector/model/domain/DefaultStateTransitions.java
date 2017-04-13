@@ -29,4 +29,9 @@ final class DefaultStateTransitions extends StateTransitions {
      DefaultStateTransitions() {
         super(TRANSITION_TABLE);
     }
+
+    public static StateTransitionGraphVizRenderer dumpGraphViz() {
+        return new StateTransitionGraphVizRenderer(TRANSITION_TABLE);
+    }
+
 }
