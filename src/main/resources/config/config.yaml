@@ -31,8 +31,9 @@ worldpay:
       # supports a polling mechanism. The background thread will wait for the auth request to complete and
       # make its status available to frontend. Median auth time is 1500ms. There are occasional spikes in the
       # auth time, up to 80 seconds. We don't want to leave a user waiting on a spinner for that long, so we'll
-      # cut off after 10 seconds and abort the auth attempt.
-      readTimeout: 10000ms
+      # cut off after 20 seconds and abort the auth attempt. We had services questioning about the increase in AUTHORISATION ERRORS after 
+      # rolling out the 10 second limit, so we are increasing it a bit to try and not get those outliers.
+      readTimeout: 20000ms
     cancel:
       # Cancel median time is 500ms and done synchronously. Leave a bit of headroom since we don't have retries on this.
       readTimeout: 2000ms
