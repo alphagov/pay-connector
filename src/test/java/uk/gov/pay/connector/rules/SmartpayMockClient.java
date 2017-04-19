@@ -27,24 +27,24 @@ public class SmartpayMockClient {
         paymentServiceResponse(authoriseResponse);
     }
 
-    public void mockCaptureSuccess() {
-        mockCaptureSuccessWithTransactionId(randomUUID().toString());
+    public void mockCaptureResponse() {
+        mockCaptureResponseWithTransactionId(randomUUID().toString());
     }
 
-    public void mockCaptureSuccessWithTransactionId(String transactionId) {
+    public void mockCaptureResponseWithTransactionId(String transactionId) {
         String captureResponse = loadFromTemplate("capture-success-response.xml")
                 .replace("{{pspReference}}", transactionId);
         paymentServiceResponse(captureResponse);
     }
 
-    public void mockCaptureError() {
-        String errorResponse = loadFromTemplate("capture-error-response.xml");
-        paymentServiceResponse(errorResponse);
-    }
-
-    public void mockCancel() {
+    public void mockCancelResponse() {
         String cancelResponse = loadFromTemplate("cancel-success-response.xml");
         paymentServiceResponse(cancelResponse);
+    }
+
+    public void mockErrorResponse() {
+        String errorResponse = loadFromTemplate("authorisation-error-response.xml");
+        paymentServiceResponse(errorResponse);
     }
 
     public void mockRefundSuccess() {
