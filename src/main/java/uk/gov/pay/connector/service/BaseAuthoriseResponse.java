@@ -13,6 +13,7 @@ public interface BaseAuthoriseResponse extends BaseResponse {
     String get3dsIssuerUrl();
 
     enum AuthoriseStatus {
+        SUBMITTED(ChargeStatus.AUTHORISATION_SUBMITTED),
         AUTHORISED(ChargeStatus.AUTHORISATION_SUCCESS),
         REJECTED(ChargeStatus.AUTHORISATION_REJECTED),
         REQUIRES_3DS(ChargeStatus.AUTHORISATION_3DS_REQUIRED),

@@ -1,12 +1,9 @@
 package uk.gov.pay.connector.util;
 
-import com.google.common.io.Resources;
 import org.junit.Test;
 import uk.gov.pay.connector.service.BaseAuthoriseResponse.AuthoriseStatus;
 import uk.gov.pay.connector.service.worldpay.*;
 
-import java.io.IOException;
-import java.nio.charset.Charset;
 import java.time.LocalDate;
 
 import static org.hamcrest.core.Is.is;
@@ -14,12 +11,13 @@ import static org.hamcrest.core.IsNull.notNullValue;
 import static org.hamcrest.core.IsNull.nullValue;
 import static org.junit.Assert.assertNull;
 import static org.junit.Assert.assertThat;
+import static uk.gov.pay.connector.util.TestTemplateResourceLoader.*;
 
 public class WorldpayXMLUnmarshallerTest {
 
     @Test
     public void shouldUnmarshallACancelSuccessResponse() throws Exception {
-        String successPayload = readPayload("templates/worldpay/cancel-success-response.xml");
+        String successPayload = TestTemplateResourceLoader.load(WORLDPAY_CANCEL_SUCCESS_RESPONSE);
         WorldpayCancelResponse response = XMLUnmarshaller.unmarshall(successPayload, WorldpayCancelResponse.class);
         assertThat(response.getTransactionId(), is("transaction-id"));
         assertThat(response.getErrorCode(), is(nullValue()));
@@ -29,7 +27,7 @@ public class WorldpayXMLUnmarshallerTest {
 
     @Test
     public void shouldUnmarshallACancelErrorResponse() throws Exception {
-        String errorPayload = readPayload("templates/worldpay/cancel-error-response.xml");
+        String errorPayload = TestTemplateResourceLoader.load(WORLDPAY_CANCEL_ERROR_RESPONSE);
 
         WorldpayCancelResponse response = XMLUnmarshaller.unmarshall(errorPayload, WorldpayCancelResponse.class);
         assertThat(response.getTransactionId(), is(nullValue()));
@@ -41,7 +39,7 @@ public class WorldpayXMLUnmarshallerTest {
     public void shouldUnmarshallANotification() throws Exception {
         String transactionId = "MyUniqueTransactionId!";
         String status = "CAPTURED";
-        String successPayload = readPayload("templates/worldpay/notification.xml")
+        String successPayload = TestTemplateResourceLoader.load(WORLDPAY_NOTIFICATION)
                 .replace("{{transactionId}}", transactionId)
                 .replace("{{status}}", status)
                 .replace("{{refund-ref}}", "REFUND-REF")
@@ -58,7 +56,7 @@ public class WorldpayXMLUnmarshallerTest {
 
     @Test
     public void shouldUnmarshallACaptureSuccessResponse() throws Exception {
-        String successPayload = readPayload("templates/worldpay/capture-success-response.xml");
+        String successPayload = TestTemplateResourceLoader.load(WORLDPAY_CAPTURE_SUCCESS_RESPONSE);
         WorldpayCaptureResponse response = XMLUnmarshaller.unmarshall(successPayload, WorldpayCaptureResponse.class);
         assertThat(response.getTransactionId(), is("transaction-id"));
         assertThat(response.getErrorCode(), is(nullValue()));
@@ -67,7 +65,7 @@ public class WorldpayXMLUnmarshallerTest {
 
     @Test
     public void shouldUnmarshallACaptureErrorResponse() throws Exception {
-        String errorPayload = readPayload("templates/worldpay/capture-error-response.xml");
+        String errorPayload = TestTemplateResourceLoader.load(WORLDPAY_CAPTURE_ERROR_RESPONSE);
         WorldpayCaptureResponse response = XMLUnmarshaller.unmarshall(errorPayload, WorldpayCaptureResponse.class);
         assertThat(response.getTransactionId(), is(nullValue()));
         assertThat(response.getErrorCode(), is("2"));
@@ -76,7 +74,7 @@ public class WorldpayXMLUnmarshallerTest {
 
     @Test
     public void shouldUnmarshallAAuthorisationSuccessResponse() throws Exception {
-        String successPayload = readPayload("templates/worldpay/authorisation-success-response.xml");
+        String successPayload = TestTemplateResourceLoader.load(WORLDPAY_AUTHORISATION_SUCCESS_RESPONSE);
         WorldpayOrderStatusResponse response = XMLUnmarshaller.unmarshall(successPayload, WorldpayOrderStatusResponse.class);
         assertThat(response.getLastEvent(), is("AUTHORISED"));
         assertNull(response.getRefusedReturnCode());
@@ -91,7 +89,7 @@ public class WorldpayXMLUnmarshallerTest {
 
     @Test
     public void shouldUnmarshall3dsResponse() throws Exception {
-        String successPayload = readPayload("templates/worldpay/3ds-response.xml");
+        String successPayload = TestTemplateResourceLoader.load(WORLDPAY_3DS_RESPONSE);
         WorldpayOrderStatusResponse response = XMLUnmarshaller.unmarshall(successPayload, WorldpayOrderStatusResponse.class);
 
         assertNull(response.getLastEvent());
@@ -108,7 +106,7 @@ public class WorldpayXMLUnmarshallerTest {
 
     @Test
     public void shouldUnmarshallAAuthorisationFailedResponse() throws Exception {
-        String failedPayload = readPayload("templates/worldpay/authorisation-failed-response.xml");
+        String failedPayload = TestTemplateResourceLoader.load(WORLDPAY_AUTHORISATION_FAILED_RESPONSE);
         WorldpayOrderStatusResponse response = XMLUnmarshaller.unmarshall(failedPayload, WorldpayOrderStatusResponse.class);
         assertThat(response.getLastEvent(), is("REFUSED"));
         assertThat(response.getRefusedReturnCode(), is("5"));
@@ -123,7 +121,7 @@ public class WorldpayXMLUnmarshallerTest {
 
     @Test
     public void shouldUnmarshallCanceledAuthorisations() throws Exception {
-        String failedPayload = readPayload("templates/worldpay/authorisation-cancelled-response.xml");
+        String failedPayload = TestTemplateResourceLoader.load(WORLDPAY_AUTHORISATION_CANCELLED_RESPONSE);
         WorldpayOrderStatusResponse response = XMLUnmarshaller.unmarshall(failedPayload, WorldpayOrderStatusResponse.class);
         assertThat(response.getLastEvent(), is("CANCELLED"));
         assertThat(response.getRefusedReturnCode(), is("5"));
@@ -138,7 +136,7 @@ public class WorldpayXMLUnmarshallerTest {
 
     @Test
     public void shouldUnmarshallAAuthorisationErrorResponse() throws Exception {
-        String errorPayload = readPayload("templates/worldpay/authorisation-error-response.xml");
+        String errorPayload = TestTemplateResourceLoader.load(WORLDPAY_AUTHORISATION_ERROR_RESPONSE);
         WorldpayOrderStatusResponse response = XMLUnmarshaller.unmarshall(errorPayload, WorldpayOrderStatusResponse.class);
 
         assertThat(response.authoriseStatus(), is(AuthoriseStatus.ERROR));
@@ -150,7 +148,7 @@ public class WorldpayXMLUnmarshallerTest {
 
     @Test
     public void shouldUnmarshallARefundSuccessResponse() throws Exception {
-        String successPayload = readPayload("templates/worldpay/refund-success-response.xml");
+        String successPayload = TestTemplateResourceLoader.load(WORLDPAY_REFUND_SUCCESS_RESPONSE);
         WorldpayRefundResponse response = XMLUnmarshaller.unmarshall(successPayload, WorldpayRefundResponse.class);
 
         assertThat(response.getReference(), is(notNullValue()));
@@ -161,16 +159,12 @@ public class WorldpayXMLUnmarshallerTest {
 
     @Test
     public void shouldUnmarshallARefundErrorResponse() throws Exception {
-        String errorPayload = readPayload("templates/worldpay/refund-error-response.xml");
+        String errorPayload = TestTemplateResourceLoader.load(WORLDPAY_REFUND_ERROR_RESPONSE);
         WorldpayRefundResponse response = XMLUnmarshaller.unmarshall(errorPayload, WorldpayRefundResponse.class);
 
         assertThat(response.getReference(), is(notNullValue()));
         assertThat(response.getReference().isPresent(), is(false));
         assertThat(response.getErrorCode(), is("2"));
         assertThat(response.getErrorMessage(), is("Something went wrong."));
-    }
-
-    private String readPayload(String path) throws IOException {
-        return Resources.toString(Resources.getResource(path), Charset.defaultCharset());
     }
 }

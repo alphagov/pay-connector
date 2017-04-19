@@ -1,14 +1,11 @@
 package uk.gov.pay.connector.rules;
 
-import com.google.common.io.Resources;
-
-import java.io.IOException;
-import java.nio.charset.Charset;
+import uk.gov.pay.connector.util.TestTemplateResourceLoader;
 
 import static com.github.tomakehurst.wiremock.client.WireMock.*;
 import static javax.ws.rs.core.HttpHeaders.CONTENT_TYPE;
 import static javax.ws.rs.core.MediaType.TEXT_XML;
-import static uk.gov.pay.connector.util.TransactionId.randomId;
+import static uk.gov.pay.connector.util.TestTemplateResourceLoader.*;
 
 public class WorldpayMockClient {
 
@@ -16,58 +13,54 @@ public class WorldpayMockClient {
     }
 
     public void mockAuthorisationSuccess() {
-        String gatewayTransactionId = randomId();
-        String authoriseResponse = loadFromTemplate("authorisation-success-response.xml");
+        String authoriseResponse = TestTemplateResourceLoader.load(WORLDPAY_AUTHORISATION_SUCCESS_RESPONSE);
         paymentServiceResponse(authoriseResponse);
     }
 
     public void mockAuthorisationRequires3ds() {
-        String authorise3dsResponse = loadFromTemplate("3ds-response.xml");
+        String authorise3dsResponse = TestTemplateResourceLoader.load(WORLDPAY_3DS_RESPONSE);
         paymentServiceResponse(authorise3dsResponse);
     }
 
     public void mockAuthorisationFailure() {
-        String gatewayTransactionId = randomId();
-        String authoriseResponse = loadFromTemplate("authorisation-failed-response.xml");
+        String authoriseResponse = TestTemplateResourceLoader.load(WORLDPAY_AUTHORISATION_FAILED_RESPONSE);
         paymentServiceResponse(authoriseResponse);
     }
 
     public void mockCaptureSuccess() {
-        String gatewayTransactionId = randomId();
-        String captureResponse = loadFromTemplate("capture-success-response.xml");
+        String captureResponse = TestTemplateResourceLoader.load(WORLDPAY_CAPTURE_SUCCESS_RESPONSE);
         paymentServiceResponse(captureResponse);
     }
 
     public void mockCaptureError() {
-        String gatewayTransactionId = randomId();
-        String captureResponse = loadFromTemplate("capture-error-response.xml");
+        String captureResponse = TestTemplateResourceLoader.load(WORLDPAY_CAPTURE_ERROR_RESPONSE);
         paymentServiceResponse(captureResponse);
     }
 
     public void mockCancelSuccess() {
-        String cancelResponse = loadFromTemplate("cancel-success-response.xml");
+        String cancelResponse = TestTemplateResourceLoader.load(WORLDPAY_CANCEL_SUCCESS_RESPONSE);
         paymentServiceResponse(cancelResponse);
     }
 
     public void mockCancelError() {
-        String cancelResponse = loadFromTemplate("cancel-error-response.xml");
+        String cancelResponse = TestTemplateResourceLoader.load(WORLDPAY_CANCEL_ERROR_RESPONSE);
         paymentServiceResponse(cancelResponse);
     }
 
     public void mockCancelSuccessOnlyFor(String gatewayTransactionId) {
-        String cancelSuccessResponse = loadFromTemplate("cancel-success-response.xml");
+        String cancelSuccessResponse = TestTemplateResourceLoader.load(WORLDPAY_CANCEL_SUCCESS_RESPONSE);
         String bodyMatchXpath = "//orderModification[@orderCode = '" + gatewayTransactionId + "']";
         bodyMatchingPaymentServiceResponse(bodyMatchXpath, cancelSuccessResponse);
 
     }
 
     public void mockRefundSuccess() {
-        String refundResponse = loadFromTemplate("refund-success-response.xml");
+        String refundResponse = TestTemplateResourceLoader.load(WORLDPAY_REFUND_SUCCESS_RESPONSE);
         paymentServiceResponse(refundResponse);
     }
 
     public void mockRefundError() {
-        String refundResponse = loadFromTemplate("refund-error-response.xml");
+        String refundResponse = TestTemplateResourceLoader.load(WORLDPAY_REFUND_ERROR_RESPONSE);
         paymentServiceResponse(refundResponse);
     }
 
@@ -95,13 +88,5 @@ public class WorldpayMockClient {
                                         .withBody(responseBody)
                         )
         );
-    }
-
-    private String loadFromTemplate(String fileName) {
-        try {
-            return Resources.toString(Resources.getResource("templates/worldpay/" + fileName), Charset.defaultCharset());
-        } catch (IOException e) {
-            throw new RuntimeException("Could not load template", e);
-        }
     }
 }

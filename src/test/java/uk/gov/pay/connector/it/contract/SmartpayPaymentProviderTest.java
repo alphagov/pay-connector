@@ -5,7 +5,6 @@ import com.codahale.metrics.Histogram;
 import com.codahale.metrics.MetricRegistry;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.google.common.collect.ImmutableMap;
-import com.google.common.io.Resources;
 import org.hamcrest.CoreMatchers;
 import org.junit.Assume;
 import org.junit.Before;
@@ -27,17 +26,16 @@ import uk.gov.pay.connector.service.smartpay.SmartpayAuthorisationResponse;
 import uk.gov.pay.connector.service.smartpay.SmartpayPaymentProvider;
 import uk.gov.pay.connector.service.worldpay.WorldpayCaptureResponse;
 import uk.gov.pay.connector.util.TestClientFactory;
+import uk.gov.pay.connector.util.TestTemplateResourceLoader;
 
 import javax.ws.rs.client.Client;
 import javax.ws.rs.core.MediaType;
 import java.io.IOException;
 import java.net.URL;
-import java.nio.charset.Charset;
 import java.util.EnumMap;
 import java.util.Map;
 import java.util.function.Consumer;
 
-import static com.google.common.io.Resources.getResource;
 import static org.hamcrest.CoreMatchers.not;
 import static org.hamcrest.CoreMatchers.nullValue;
 import static org.hamcrest.core.Is.is;
@@ -49,6 +47,7 @@ import static uk.gov.pay.connector.model.domain.ChargeEntityFixture.aValidCharge
 import static uk.gov.pay.connector.model.domain.GatewayAccountEntity.Type.TEST;
 import static uk.gov.pay.connector.util.AuthUtils.buildAuthCardDetails;
 import static uk.gov.pay.connector.util.SystemUtils.envOrThrow;
+import static uk.gov.pay.connector.util.TestTemplateResourceLoader.*;
 
 @Ignore("Ignoring as this test is failing in Jenkins because it's failing to locate the certificates - PP-1707")
 @RunWith(MockitoJUnitRunner.class)
@@ -192,18 +191,15 @@ public class SmartpayPaymentProviderTest {
     }
 
     private String notificationPayloadForTransaction(String transactionId) throws IOException {
-        URL resource = getResource("templates/smartpay/notification-capture.json");
-        return Resources.toString(resource, Charset.defaultCharset()).replace("{{transactionId}}", transactionId);
+        return TestTemplateResourceLoader.load(SMARTPAY_NOTIFICATION_CAPTURE).replace("{{transactionId}}", transactionId);
     }
 
     private String notificationPayloadForTransactionWithUnknownStatus(String transactionId) throws IOException {
-        URL resource = getResource("templates/smartpay/notification-capture.-with-unknown-status.json");
-        return Resources.toString(resource, Charset.defaultCharset()).replace("{{transactionId}}", transactionId);
+        return TestTemplateResourceLoader.load(SMARTPAY_NOTIFICATION_CAPTURE_WITH_UNKNOWN_STATUS).replace("{{transactionId}}", transactionId);
     }
 
     private String multipleNotificationPayloadForTransactions(String transactionId, String transactionId2) throws IOException {
-        URL resource = getResource("templates/smartpay/multiple-notifications-different-dates.json");
-        return Resources.toString(resource, Charset.defaultCharset())
+        return TestTemplateResourceLoader.load(SMARTPAY_MULTIPLE_NOTIFICATIONS_DIFFERENT_DATES)
                 .replace("{{transactionId}}", transactionId)
                 .replace("{{transactionId2}}", transactionId2);
     }

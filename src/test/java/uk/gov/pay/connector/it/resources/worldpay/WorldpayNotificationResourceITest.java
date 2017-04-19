@@ -1,23 +1,21 @@
 package uk.gov.pay.connector.it.resources.worldpay;
 
-import com.google.common.io.Resources;
 import com.jayway.restassured.response.ValidatableResponse;
 import org.junit.Test;
 import uk.gov.pay.connector.it.base.ChargingITestBase;
 import uk.gov.pay.connector.util.DnsUtils;
+import uk.gov.pay.connector.util.TestTemplateResourceLoader;
 
 import java.io.IOException;
-import java.net.URL;
-import java.nio.charset.Charset;
 
-import static com.google.common.io.Resources.getResource;
 import static com.jayway.restassured.RestAssured.given;
-import static java.lang.String.*;
+import static java.lang.String.format;
 import static javax.ws.rs.core.MediaType.APPLICATION_JSON;
 import static javax.ws.rs.core.MediaType.TEXT_XML;
 import static org.hamcrest.Matchers.is;
 import static org.junit.Assert.assertThat;
 import static uk.gov.pay.connector.model.domain.ChargeStatus.*;
+import static uk.gov.pay.connector.util.TestTemplateResourceLoader.WORLDPAY_NOTIFICATION;
 
 public class WorldpayNotificationResourceITest extends ChargingITestBase {
 
@@ -140,8 +138,7 @@ public class WorldpayNotificationResourceITest extends ChargingITestBase {
     }
 
     private String notificationPayloadForTransaction(String transactionId, String status) throws IOException {
-        URL resource = getResource("templates/worldpay/notification.xml");
-        return Resources.toString(resource, Charset.defaultCharset())
+        return TestTemplateResourceLoader.load(WORLDPAY_NOTIFICATION)
                 .replace("{{transactionId}}", transactionId)
                 .replace("{{status}}", status)
                 .replace("{{bookingDateDay}}", "10")
