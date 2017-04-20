@@ -3,6 +3,7 @@ package uk.gov.pay.connector.resources;
 import com.google.common.collect.ImmutableMap;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import uk.gov.pay.connector.app.ConnectorConfiguration;
 import uk.gov.pay.connector.model.GatewayError;
 import uk.gov.pay.connector.model.domain.Auth3dsDetails;
 import uk.gov.pay.connector.model.domain.AuthCardDetails;
@@ -29,14 +30,17 @@ public class CardResource {
     private final Card3dsResponseAuthService card3dsResponseAuthService;
     private final CardCaptureService cardCaptureService;
     private final ChargeCancelService chargeCancelService;
+    private ConnectorConfiguration configuration;
 
     @Inject
     public CardResource(CardAuthoriseService cardAuthoriseService, Card3dsResponseAuthService card3dsResponseAuthService,
-                        CardCaptureService cardCaptureService, ChargeCancelService chargeCancelService) {
+                        CardCaptureService cardCaptureService, ChargeCancelService chargeCancelService,
+                        ConnectorConfiguration configuration) {
         this.cardAuthoriseService = cardAuthoriseService;
         this.card3dsResponseAuthService = card3dsResponseAuthService;
         this.cardCaptureService = cardCaptureService;
         this.chargeCancelService = chargeCancelService;
+        this.configuration = configuration;
     }
 
     @POST
@@ -66,8 +70,13 @@ public class CardResource {
     @Consumes(APPLICATION_JSON)
     @Produces(APPLICATION_JSON)
     public Response captureCharge(@PathParam("chargeId") String chargeId) {
-        cardCaptureService.markChargeAsCaptureApproved(chargeId);
-        return ResponseUtil.noContentResponse();
+        if (configuration.isAsynchronousCapture()) {
+            logger.info("Capture of charge asynchronously [charge_external_id={}]", chargeId);
+            cardCaptureService.markChargeAsCaptureApproved(chargeId);
+            return ResponseUtil.noContentResponse();
+        }
+        logger.info("Capture of charge synchronously [charge_external_id={}]", chargeId);
+        return handleGatewayResponse(cardCaptureService.doCapture(chargeId));
     }
 
     @POST

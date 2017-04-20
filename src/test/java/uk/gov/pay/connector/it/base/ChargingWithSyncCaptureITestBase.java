@@ -7,7 +7,7 @@ import uk.gov.pay.connector.util.PortFactory;
 
 import static io.dropwizard.testing.ConfigOverride.config;
 
-public class ChargingITestBase extends ChargingITestCommon {
+public class ChargingWithSyncCaptureITestBase extends ChargingITestCommon {
 
     private int port = PortFactory.findFreePort();
 
@@ -18,9 +18,9 @@ public class ChargingITestBase extends ChargingITestCommon {
     public DropwizardAppWithPostgresRule app = new DropwizardAppWithPostgresRule(
             config("worldpay.urls.test", "http://localhost:" + port + "/jsp/merchant/xml/paymentService.jsp"),
             config("smartpay.urls.test", "http://localhost:" + port + "/pal/servlet/soap/Payment"),
-            config("asynchronousCapture", "true"));
+            config("asynchronousCapture", "false"));
 
-    public ChargingITestBase(String paymentProvider) {
+    public ChargingWithSyncCaptureITestBase(String paymentProvider) {
         super(paymentProvider);
     }
 

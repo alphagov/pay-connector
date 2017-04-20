@@ -19,6 +19,10 @@ public class ConnectorConfiguration extends Configuration {
     @NotNull
     private ExecutorServiceConfig executorServiceConfig = new ExecutorServiceConfig();
 
+    @NotNull
+    @JsonProperty
+    private boolean asynchronousCapture;
+
     @Valid
     @NotNull
     private CaptureProcessConfig captureProcessConfig;
@@ -131,5 +135,9 @@ public class ConnectorConfiguration extends Configuration {
 
     public CaptureProcessConfig getCaptureProcessConfig() {
         return captureProcessConfig;
+    }
+
+    public boolean isAsynchronousCapture() {
+        return asynchronousCapture;
     }
 }

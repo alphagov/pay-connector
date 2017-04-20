@@ -61,7 +61,7 @@ public class WorldpayCardResourceITest extends ChargingITestBase {
     }
 
     @Test
-    public void shouldCaptureCardPayment_IfChargeWasPreviouslyAuthorised() {
+    public void shouldDeferCaptureCardPayment_IfAsynchronousFeatureFlagIsOn() {
         String chargeId = authoriseNewCharge();
 
         worldpay.mockCaptureSuccess();
