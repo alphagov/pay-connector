@@ -1083,15 +1083,25 @@ public class ChargeDaoITest extends DaoITestBase {
 
     @Test
     public void findChargesForCapture_shouldReturnChargesInCaptureApprovedState() throws Exception {
+        final long chargeId1 = 101L;
+
         DatabaseFixtures
                 .withDatabaseTestHelper(databaseTestHelper)
                 .aTestCharge()
                 .withTestAccount(defaultTestAccount)
-                .withChargeId(101L)
+                .withChargeId(chargeId1)
                 .withExternalChargeId("ext-id1")
                 .withCreatedDate(now().minusHours(2))
                 .withChargeStatus(CAPTURE_APPROVED)
                 .insert();
+        DatabaseFixtures
+                .withDatabaseTestHelper(databaseTestHelper)
+                .aTestChargeEvent()
+                .withChargeId(chargeId1)
+                .withChargeStatus(CAPTURE_APPROVED)
+                .withDate(now().minusMinutes(61))
+                .insert();
+
 
         DatabaseFixtures
                 .withDatabaseTestHelper(databaseTestHelper)
@@ -1141,14 +1151,27 @@ public class ChargeDaoITest extends DaoITestBase {
                 .withChargeId(chargeId1)
                 .withExternalChargeId("ext-id1")
                 .withCreatedDate(now().minusHours(2))
-                .withChargeStatus(CAPTURE_APPROVED)
+                .withChargeStatus(CAPTURE_APPROVED_RETRY)
                 .insert();
-
         DatabaseFixtures
                 .withDatabaseTestHelper(databaseTestHelper)
                 .aTestChargeEvent()
                 .withChargeId(chargeId1)
                 .withChargeStatus(CAPTURE_APPROVED)
+                .withDate(now().minusMinutes(63))
+                .insert();
+        DatabaseFixtures
+                .withDatabaseTestHelper(databaseTestHelper)
+                .aTestChargeEvent()
+                .withChargeId(chargeId1)
+                .withChargeStatus(CAPTURE_APPROVED_RETRY)
+                .withDate(now().minusMinutes(62))
+                .insert();
+        DatabaseFixtures
+                .withDatabaseTestHelper(databaseTestHelper)
+                .aTestChargeEvent()
+                .withChargeId(chargeId1)
+                .withChargeStatus(CAPTURE_APPROVED_RETRY)
                 .withDate(now().minusMinutes(61))
                 .insert();
 
@@ -1159,15 +1182,28 @@ public class ChargeDaoITest extends DaoITestBase {
                 .withChargeId(chargeId2)
                 .withExternalChargeId("ext-id2")
                 .withCreatedDate(now().minusHours(2))
-                .withChargeStatus(CAPTURE_APPROVED)
+                .withChargeStatus(CAPTURE_APPROVED_RETRY)
                 .insert();
-
         DatabaseFixtures
                 .withDatabaseTestHelper(databaseTestHelper)
                 .aTestChargeEvent()
                 .withChargeId(chargeId2)
                 .withChargeStatus(CAPTURE_APPROVED)
-                .withDate(now().minusMinutes(58))
+                .withDate(now().minusMinutes(63))
+                .insert();
+        DatabaseFixtures
+                .withDatabaseTestHelper(databaseTestHelper)
+                .aTestChargeEvent()
+                .withChargeId(chargeId2)
+                .withChargeStatus(CAPTURE_APPROVED_RETRY)
+                .withDate(now().minusMinutes(62))
+                .insert();
+        DatabaseFixtures
+                .withDatabaseTestHelper(databaseTestHelper)
+                .aTestChargeEvent()
+                .withChargeId(chargeId2)
+                .withChargeStatus(CAPTURE_APPROVED_RETRY)
+                .withDate(now().minusMinutes(59))
                 .insert();
 
 
@@ -1188,8 +1224,17 @@ public class ChargeDaoITest extends DaoITestBase {
                 .withCreatedDate(now().minusHours(2))
                 .withChargeStatus(CAPTURE_APPROVED)
                 .insert();
+        DatabaseFixtures
+                .withDatabaseTestHelper(databaseTestHelper)
+                .aTestCharge()
+                .withTestAccount(defaultTestAccount)
+                .withChargeId(102L)
+                .withExternalChargeId("ext-id2")
+                .withCreatedDate(now().minusHours(2))
+                .withChargeStatus(CAPTURE_APPROVED_RETRY)
+                .insert();
 
-        assertThat(chargeDao.countChargesForCapture(), is(1));
+        assertThat(chargeDao.countChargesForCapture(), is(2));
     }
 
     @Test
@@ -1214,8 +1259,14 @@ public class ChargeDaoITest extends DaoITestBase {
                 .withChargeId(chargeId)
                 .withChargeStatus(CAPTURE_APPROVED)
                 .insert();
+        DatabaseFixtures
+                .withDatabaseTestHelper(databaseTestHelper)
+                .aTestChargeEvent()
+                .withChargeId(chargeId)
+                .withChargeStatus(CAPTURE_APPROVED_RETRY)
+                .insert();
 
-        assertThat(chargeDao.countCaptureRetriesForCharge(chargeId), is(1));
+        assertThat(chargeDao.countCaptureRetriesForCharge(chargeId), is(2));
 
     }
 

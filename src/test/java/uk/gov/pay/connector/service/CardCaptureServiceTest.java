@@ -39,6 +39,7 @@ import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.core.Is.is;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
+import static org.junit.Assert.fail;
 import static org.mockito.Matchers.any;
 import static org.mockito.Mockito.*;
 import static uk.gov.pay.connector.model.domain.ChargeStatus.*;
@@ -106,7 +107,7 @@ public class CardCaptureServiceTest extends CardServiceTest {
     public void shouldCaptureAChargeForANonSandboxAccount() throws Exception {
         String gatewayTxId = "theTxId";
 
-        ChargeEntity charge = createNewChargeWith("worldpay",1L, AUTHORISATION_SUCCESS, gatewayTxId);
+        ChargeEntity charge = createNewChargeWith("worldpay",1L, CAPTURE_APPROVED, gatewayTxId);
 
         ChargeEntity reloadedCharge = spy(charge);
         mockChargeDaoOperations(charge, reloadedCharge);
@@ -138,7 +139,7 @@ public class CardCaptureServiceTest extends CardServiceTest {
     public void shouldCaptureAChargeForASandboxAccount() throws Exception {
         String gatewayTxId = "theTxId";
 
-        ChargeEntity charge = createNewChargeWith("sandbox",1L, AUTHORISATION_SUCCESS, gatewayTxId);
+        ChargeEntity charge = createNewChargeWith("sandbox",1L, CAPTURE_APPROVED, gatewayTxId);
 
         ChargeEntity reloadedCharge = spy(charge);
 
@@ -209,9 +210,9 @@ public class CardCaptureServiceTest extends CardServiceTest {
     }
 
     @Test
-    public void shouldGetAIllegalErrorWhenInvalidStatus() throws Exception {
+    public void shouldGetAnIllegalErrorWhenInvalidStatus() throws Exception {
         Long chargeId = 1234L;
-        ChargeEntity charge = createNewChargeWith(chargeId, ChargeStatus.CREATED);
+        ChargeEntity charge = createNewChargeWith(chargeId, ChargeStatus.AUTHORISATION_SUCCESS);
         when(mockedChargeDao.findByExternalId(charge.getExternalId()))
                 .thenReturn(Optional.of(charge));
         when(mockedChargeDao.merge(any()))
@@ -240,9 +241,9 @@ public class CardCaptureServiceTest extends CardServiceTest {
     }
 
     @Test
-    public void shouldSetChargeStatusToCaptureApprovedOnError() {
+    public void shouldSetChargeStatusToCaptureApprovedRetryOnError() {
         String gatewayTxId = "theTxId";
-        ChargeEntity charge = createNewChargeWith("worldpay", 1L, AUTHORISATION_SUCCESS, gatewayTxId);
+        ChargeEntity charge = createNewChargeWith("worldpay", 1L, CAPTURE_APPROVED, gatewayTxId);
         ChargeEntity reloadedCharge = spy(charge);
 
         mockChargeDaoOperations(charge, reloadedCharge);
@@ -255,7 +256,7 @@ public class CardCaptureServiceTest extends CardServiceTest {
 
         InOrder inOrder = Mockito.inOrder(reloadedCharge);
         inOrder.verify(reloadedCharge).setStatus(CAPTURE_READY);
-        inOrder.verify(reloadedCharge).setStatus(CAPTURE_APPROVED);
+        inOrder.verify(reloadedCharge).setStatus(CAPTURE_APPROVED_RETRY);
 
         verify(mockedChargeDao).mergeAndNotifyStatusHasChanged(reloadedCharge, Optional.empty());
 
@@ -282,8 +283,77 @@ public class CardCaptureServiceTest extends CardServiceTest {
     }
 
     @Test
+    public void shouldBeAbleToCaptureAChargeInCaptureApprovedRetryStatus() {
+        String gatewayTxId = "theTxId";
+        ChargeEntity charge = createNewChargeWith("worldpay", 1L, CAPTURE_APPROVED_RETRY, gatewayTxId);
+        ChargeEntity reloadedCharge = spy(charge);
+        mockChargeDaoOperations(charge, reloadedCharge);
+        worldpayWillRespondWithSuccess(gatewayTxId, null);
+        when(mockedProviders.byName(charge.getPaymentGatewayName())).thenReturn(mockedPaymentProvider);
+
+        GatewayResponse response = cardCaptureService.doCapture(charge.getExternalId());
+        assertThat(response.isSuccessful(), is(true));
+
+        ArgumentCaptor<ChargeEntity> chargeEntityCaptor = ArgumentCaptor.forClass(ChargeEntity.class);
+        verify(mockedChargeDao).mergeAndNotifyStatusHasChanged(chargeEntityCaptor.capture(), eq(Optional.empty()));
+        assertThat(chargeEntityCaptor.getValue().getStatus(), is(CAPTURE_SUBMITTED.getValue()));
+        verify(mockedPaymentProvider, times(1)).capture(any());
+    }
+
+    @Test
+    public void markChargeAsCaptureApproved_shouldThrowAnExceptionWhenChargeIsNotFound() {
+        String nonExistingChargeExternalId = "non-existing-id";
+
+        when(mockedChargeDao.findByExternalId(nonExistingChargeExternalId)).thenReturn(Optional.empty());
+
+        try {
+            cardCaptureService.markChargeAsCaptureApproved(nonExistingChargeExternalId);
+            fail("expecting ChargeNotFoundRuntimeException");
+        } catch (ChargeNotFoundRuntimeException e) {
+            // ignore
+        }
+
+        verify(mockedChargeDao, never()).mergeAndNotifyStatusHasChanged(any(), any());
+    }
+
+    @Test
+    public void markChargeAsCaptureApproved_shouldThrowAnIllegalStateRuntimeExceptionWhenChargeIsNotInAuthorisationSuccess() {
+        ChargeEntity chargeEntity = spy(createNewChargeWith("worldpay", 1L, CAPTURE_READY, "gatewayTxId"));
+
+        when(mockedChargeDao.findByExternalId(chargeEntity.getExternalId())).thenReturn(Optional.of(chargeEntity));
+
+        try {
+            cardCaptureService.markChargeAsCaptureApproved(chargeEntity.getExternalId());
+            fail("expecting IllegalStateRuntimeException");
+        } catch (IllegalStateRuntimeException e) {
+            // ignore
+        }
+
+        verify(mockedChargeDao).findByExternalId(chargeEntity.getExternalId());
+        verify(chargeEntity, never()).setStatus(any());
+        verify(mockAppender).doAppend(loggingEventArgumentCaptor.capture());
+
+        verifyNoMoreInteractions(mockedChargeDao);
+    }
+
+    @Test
+    public void markChargeAsCaptureApproved_shouldSetChargeStatusToCaptureApprovedAndWriteChargeEvent() {
+        ChargeEntity chargeEntity = spy(createNewChargeWith("worldpay", 1L, AUTHORISATION_SUCCESS, "gatewayTxId"));
+        when(mockedChargeDao.findByExternalId(chargeEntity.getExternalId())).thenReturn(Optional.of(chargeEntity));
+        when(mockedChargeDao.mergeAndNotifyStatusHasChanged(chargeEntity, Optional.empty())).thenReturn(chargeEntity);
+
+        ChargeEntity result = cardCaptureService.markChargeAsCaptureApproved(chargeEntity.getExternalId());
+
+        verify(chargeEntity).setStatus(CAPTURE_APPROVED);
+        verify(mockedChargeDao).mergeAndNotifyStatusHasChanged(chargeEntity, Optional.empty());
+        assertThat(result.getStatus(), is(CAPTURE_APPROVED.getValue()));
+
+        verify(mockAppender).doAppend(loggingEventArgumentCaptor.capture());
+    }
+
+    @Test
     public void markChargeAsCaptureError_shouldSetChargeStatusToCaptureErrorAndWriteChargeEvent() {
-        ChargeEntity charge = createNewChargeWith("worldpay", 1L, CAPTURE_APPROVED, "gatewayTxId");
+        ChargeEntity charge = createNewChargeWith("worldpay", 1L, CAPTURE_APPROVED_RETRY, "gatewayTxId");
         ChargeEntity reloadedCharge = spy(charge);
         when(mockedChargeDao.merge(charge)).thenReturn(reloadedCharge);
         when(mockedChargeDao.mergeAndNotifyStatusHasChanged(reloadedCharge, Optional.empty())).thenReturn(reloadedCharge);

@@ -71,7 +71,7 @@ public class WorldpayCardResourceITest extends ChargingITestBase {
                 .then()
                 .statusCode(204);
 
-        assertFrontendChargeStatusIs(chargeId, CAPTURE_SUBMITTED.getValue());
+        assertFrontendChargeStatusIs(chargeId, CAPTURE_APPROVED.getValue());
         assertApiStateIs(chargeId, EXTERNAL_SUCCESS.getStatus());
     }
 
