@@ -13,12 +13,12 @@ import javax.persistence.Query;
 import javax.persistence.criteria.*;
 import java.time.Duration;
 import java.time.ZonedDateTime;
+import java.time.temporal.ChronoUnit;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
 
 import static uk.gov.pay.connector.model.domain.ChargeStatus.CAPTURE_APPROVED;
-import static uk.gov.pay.connector.model.domain.ChargeStatus.CAPTURE_APPROVED_RETRY;
 
 @Transactional
 public class ChargeDao extends JpaDao<ChargeEntity> {
@@ -158,20 +158,19 @@ public class ChargeDao extends JpaDao<ChargeEntity> {
     }
 
     public int countChargesForCapture() {
-        String query = "SELECT count(c) FROM ChargeEntity c WHERE c.status=:captureApprovedStatus OR c.status=:captureApprovedRetryStatus";
+        String query = "SELECT count(c) FROM ChargeEntity c WHERE c.status=:status";
 
         Number count = (Number) entityManager.get()
                 .createQuery(query)
-                .setParameter("captureApprovedStatus", CAPTURE_APPROVED.getValue())
-                .setParameter("captureApprovedRetryStatus", CAPTURE_APPROVED_RETRY.getValue())
+                .setParameter("status", CAPTURE_APPROVED.getValue())
                 .getSingleResult();
         return count.intValue();
     }
 
     public List<ChargeEntity> findChargesForCapture(int maxNumberOfCharges, Duration notAttemptedWithin) {
         String query = "SELECT c FROM ChargeEntity c WHERE " +
-                "(c.status=:captureApprovedStatus OR c.status=:captureApprovedRetryStatus) " +
-                "AND NOT EXISTS (" +
+                "c.status=:status AND " +
+                "NOT EXISTS (" +
                 "  SELECT ce FROM ChargeEventEntity ce WHERE " +
                 "    ce.chargeEntity = c AND " +
                 "    ce.status = :eventStatus AND " +
@@ -182,23 +181,22 @@ public class ChargeDao extends JpaDao<ChargeEntity> {
         return entityManager.get()
                 .createQuery(query, ChargeEntity.class)
                 .setMaxResults(maxNumberOfCharges)
-                .setParameter("captureApprovedStatus", CAPTURE_APPROVED.getValue())
-                .setParameter("captureApprovedRetryStatus", CAPTURE_APPROVED_RETRY.getValue())
-                .setParameter("eventStatus", CAPTURE_APPROVED_RETRY)
+                .setParameter("status", CAPTURE_APPROVED.getValue())
+                .setParameter("eventStatus", CAPTURE_APPROVED)
                 .setParameter("cutoffDate", ZonedDateTime.now().minus(notAttemptedWithin))
                 .getResultList();
     }
 
+
     public int countCaptureRetriesForCharge(long chargeId) {
         String query = "SELECT count(ce) FROM ChargeEventEntity ce WHERE " +
                 "    ce.chargeEntity.id = :chargeId AND " +
-                "    (ce.status = :captureApprovedStatus OR ce.status = :captureApprovedRetryStatus)";
+                "    ce.status = :status";
 
         return ((Number) entityManager.get()
                 .createQuery(query)
                 .setParameter("chargeId", chargeId)
-                .setParameter("captureApprovedStatus", CAPTURE_APPROVED)
-                .setParameter("captureApprovedRetryStatus", CAPTURE_APPROVED_RETRY)
+                .setParameter("status", CAPTURE_APPROVED)
                 .getSingleResult()).intValue();
     }
 }
