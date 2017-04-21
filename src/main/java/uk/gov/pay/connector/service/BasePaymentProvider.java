@@ -29,10 +29,17 @@ abstract public class BasePaymentProvider<T extends BaseResponse> implements Pay
     protected <U extends GatewayRequest> GatewayResponse sendReceive(U request, Function<U, GatewayOrder> order,
                                                                      Class<? extends BaseResponse> clazz,
                                                                      Function<GatewayClient.Response, Optional<String>> responseIdentifier) {
+
+        return sendReceive(null, request, order, clazz, responseIdentifier);
+    }
+
+    protected <U extends GatewayRequest> GatewayResponse sendReceive(String route, U request, Function<U, GatewayOrder> order,
+                                                                     Class<? extends BaseResponse> clazz,
+                                                                     Function<GatewayClient.Response, Optional<String>> responseIdentifier) {
         GatewayClient gatewayClient = gatewayOperationClientMap.get(request.getRequestType());
         return reduce(
                 gatewayClient
-                        .postRequestFor(null, request.getGatewayAccount(), order.apply(request))
+                        .postRequestFor(route, request.getGatewayAccount(), order.apply(request))
                         .bimap(
                                 GatewayResponse::with,
                                 r -> mapToResponse(r, clazz, responseIdentifier, gatewayClient)

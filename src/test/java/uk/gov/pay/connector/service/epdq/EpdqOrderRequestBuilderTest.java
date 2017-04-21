@@ -1,19 +1,16 @@
 package uk.gov.pay.connector.service.epdq;
 
-import com.google.common.io.Resources;
 import org.junit.Test;
 import uk.gov.pay.connector.model.OrderRequestType;
 import uk.gov.pay.connector.model.domain.Address;
 import uk.gov.pay.connector.model.domain.AuthCardDetails;
 import uk.gov.pay.connector.service.GatewayOrder;
 import uk.gov.pay.connector.util.AuthUtils;
+import uk.gov.pay.connector.util.TestTemplateResourceLoader;
 
-import java.io.IOException;
-import java.nio.charset.Charset;
-
-import static com.google.common.io.Resources.getResource;
 import static org.junit.Assert.assertEquals;
 import static uk.gov.pay.connector.service.epdq.EpdqOrderRequestBuilder.*;
+import static uk.gov.pay.connector.util.TestTemplateResourceLoader.*;
 
 public class EpdqOrderRequestBuilderTest {
 
@@ -42,7 +39,7 @@ public class EpdqOrderRequestBuilderTest {
                 .withAuthorisationDetails(authCardDetails)
                 .build();
 
-        assertEquals(expectedOrderSubmitPayload("valid-authorise-epdq-request.txt"), actualRequest.getPayload());
+        assertEquals(TestTemplateResourceLoader.load(EPDQ_AUTHORISATION_REQUEST), actualRequest.getPayload());
         assertEquals(OrderRequestType.AUTHORISE, actualRequest.getOrderRequestType());
     }
 
@@ -56,7 +53,7 @@ public class EpdqOrderRequestBuilderTest {
                 .withShaPassphrase("passphrase")
                 .build();
 
-        assertEquals(expectedOrderSubmitPayload("valid-capture-epdq-request.txt"), actualRequest.getPayload());
+        assertEquals(TestTemplateResourceLoader.load(EPDQ_CAPTURE_REQUEST), actualRequest.getPayload());
         assertEquals(OrderRequestType.CAPTURE, actualRequest.getOrderRequestType());
     }
 
@@ -70,11 +67,7 @@ public class EpdqOrderRequestBuilderTest {
                 .withShaPassphrase("passphrase")
                 .build();
 
-        assertEquals(expectedOrderSubmitPayload("valid-cancel-epdq-request.txt"), actualRequest.getPayload());
+        assertEquals(TestTemplateResourceLoader.load(EPDQ_CANCEL_REQUEST), actualRequest.getPayload());
         assertEquals(OrderRequestType.CANCEL, actualRequest.getOrderRequestType());
-    }
-
-    private String expectedOrderSubmitPayload(final String expectedTemplate) throws IOException {
-        return Resources.toString(getResource("templates/epdq/" + expectedTemplate), Charset.defaultCharset());
     }
 }

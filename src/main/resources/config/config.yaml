@@ -50,6 +50,22 @@ smartpay:
     live: ${GDS_CONNECTOR_SMARTPAY_LIVE_URL}
   credentials: ['username','password','merchant_id']
 
+epdq:
+  urls:
+    test: ${GDS_CONNECTOR_EPDQ_TEST_URL}
+    live: ${GDS_CONNECTOR_EPDQ_LIVE_URL}
+  # The Jersey Client timeouts are set to the same values as for Worldpay initially until we gather more metrics
+  # to be in a position to tweak more appropriately.
+  jerseyClientOverrides:
+    auth:
+      readTimeout: 20000ms
+    cancel:
+      readTimeout: 2000ms
+    refund:
+      readTimeout: 2000ms
+    capture:
+      readTimeout: 1000ms
+
 executorServiceConfig:
   timeoutInSeconds: ${AUTH_READ_TIMEOUT_SECONDS:-1}
   threadsPerCpu: ${NUMBER_OF_THREADS_PER_CPU:-100}

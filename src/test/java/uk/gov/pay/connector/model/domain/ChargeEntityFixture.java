@@ -1,5 +1,7 @@
 package uk.gov.pay.connector.model.domain;
 
+import uk.gov.pay.connector.util.RandomIdGenerator;
+
 import java.time.ZoneId;
 import java.time.ZonedDateTime;
 import java.util.ArrayList;
@@ -11,6 +13,7 @@ import static uk.gov.pay.connector.model.domain.GatewayAccountEntity.Type.TEST;
 public class ChargeEntityFixture {
 
     private Long id = 1L;
+    private String externalId = RandomIdGenerator.newId();
     private Long amount = 500L;
     private String returnUrl = "http://return.com";
     private String email = "test@email.com";
@@ -33,6 +36,7 @@ public class ChargeEntityFixture {
     public ChargeEntity build() {
         ChargeEntity chargeEntity = new ChargeEntity(amount, status ,returnUrl, description, reference, gatewayAccountEntity, email, createdDate);
         chargeEntity.setId(id);
+        chargeEntity.setExternalId(externalId);
         chargeEntity.setGatewayTransactionId(transactionId);
         chargeEntity.getEvents().addAll(events);
         chargeEntity.getRefunds().addAll(refunds);
@@ -49,6 +53,11 @@ public class ChargeEntityFixture {
 
     public ChargeEntityFixture withId(Long id) {
         this.id = id;
+        return this;
+    }
+
+    public ChargeEntityFixture withExternalId(String externalId) {
+        this.externalId = externalId;
         return this;
     }
 
