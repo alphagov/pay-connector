@@ -66,6 +66,8 @@ executorServiceConfig:
   timeoutInSeconds: ${AUTH_READ_TIMEOUT_SECONDS:-1}
   threadsPerCpu: ${NUMBER_OF_THREADS_PER_CPU:-100}
 
+asynchronousCapture: ${ASYNCHRONOUS_CAPTURE:-false}
+
 captureProcessConfig:
   schedulerInitialDelayInSeconds: ${CAPTURE_PROCESS_SCHEDULER_INITIAL_DELAY_SECONDS:-20}
   schedulerRandomIntervalMinimumInSeconds: ${CAPTURE_PROCESS_SCHEDULER_RANDOM_INTERVAL_MINIMUM_SECONDS:-150}
