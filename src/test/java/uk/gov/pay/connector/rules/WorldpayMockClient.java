@@ -38,6 +38,12 @@ public class WorldpayMockClient {
         paymentServiceResponse(captureResponse);
     }
 
+    public void mockCaptureError() {
+        String gatewayTransactionId = randomId();
+        String captureResponse = loadFromTemplate("capture-error-response.xml");
+        paymentServiceResponse(captureResponse);
+    }
+
     public void mockCancelSuccess() {
         String cancelResponse = loadFromTemplate("cancel-success-response.xml");
         paymentServiceResponse(cancelResponse);

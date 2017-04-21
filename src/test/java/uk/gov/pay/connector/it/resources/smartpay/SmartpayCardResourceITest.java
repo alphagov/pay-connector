@@ -10,11 +10,9 @@ import java.util.List;
 import java.util.Map;
 import java.util.UUID;
 
-import static org.hamcrest.Matchers.is;
 import static org.junit.Assert.assertThat;
 import static uk.gov.pay.connector.model.api.ExternalChargeState.EXTERNAL_SUCCESS;
 import static uk.gov.pay.connector.model.domain.ChargeStatus.*;
-import static uk.gov.pay.connector.util.TransactionId.randomId;
 
 public class SmartpayCardResourceITest extends ChargingITestBase {
 
@@ -55,14 +53,14 @@ public class SmartpayCardResourceITest extends ChargingITestBase {
     public void shouldCaptureCardPayment_IfChargeWasPreviouslyAuthorised() {
         String chargeId = authoriseNewCharge();
 
-        smartpay.mockCaptureResponse();
+        smartpay.mockCaptureSuccess();
 
         givenSetup()
                 .post(captureChargeUrlFor(chargeId))
                 .then()
                 .statusCode(204);
 
-        assertFrontendChargeStatusIs(chargeId, CAPTURE_SUBMITTED.getValue());
+        assertFrontendChargeStatusIs(chargeId, CAPTURE_APPROVED.getValue());
         assertApiStateIs(chargeId, EXTERNAL_SUCCESS.getStatus());
     }
 
@@ -81,7 +79,7 @@ public class SmartpayCardResourceITest extends ChargingITestBase {
         assertFrontendChargeStatusIs(externalChargeId, AUTHORISATION_SUCCESS.getValue());
 
         String pspReference2 = "pspRef2-" + UUID.randomUUID().toString();
-        smartpay.mockCaptureResponseWithTransactionId(pspReference2);
+        smartpay.mockCaptureSuccessWithTransactionId(pspReference2);
 
         givenSetup()
                 .post(captureChargeUrlFor(externalChargeId))
@@ -92,33 +90,20 @@ public class SmartpayCardResourceITest extends ChargingITestBase {
         List<Map<String, Object>> chargeEvents = app.getDatabaseTestHelper().getChargeEvents(chargeId);
 
         assertThat(chargeEvents, hasEvent(AUTHORISATION_SUCCESS));
-        assertThat(chargeEvents, hasEvent(CAPTURE_SUBMITTED));
+        assertThat(chargeEvents, hasEvent(CAPTURE_APPROVED));
     }
 
     @Test
     public void shouldCancelCharge() {
         String chargeId = createNewCharge(AUTHORISATION_SUCCESS);
 
-        smartpay.mockCancelResponse();
+        smartpay.mockCancel();
 
         givenSetup()
                 .contentType(ContentType.JSON)
                 .post(cancelChargeUrlFor(accountId, chargeId))
                 .then()
                 .statusCode(204);
-    }
-
-    @Test
-    public void shouldBadRequest_ASmartpayError() {
-        String chargeId = createNewCharge(AUTHORISATION_SUCCESS);
-
-        smartpay.mockErrorResponse();
-
-        givenSetup()
-                .post(captureChargeUrlFor(chargeId))
-                .then()
-                .statusCode(400)
-                .body("message", is("[soap:Server] validation 167 Original pspReference required for this operation"));
     }
 
     private String buildCardDetailsWith(String cvc) {

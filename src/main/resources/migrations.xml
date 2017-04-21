@@ -561,5 +561,12 @@
             </column>
         </addColumn>
     </changeSet>
+    <changeSet id="createIndex charges.status" author="">
+        <createIndex indexName="idx_charges_status"
+                     tableName="charges"
+                     unique="false">
+            <column name="status" type="text"/>
+        </createIndex>
+    </changeSet>
 
 </databaseChangeLog>

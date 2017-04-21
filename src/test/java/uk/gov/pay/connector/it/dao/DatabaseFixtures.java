@@ -10,10 +10,7 @@ import uk.gov.pay.connector.util.RandomIdGenerator;
 
 import java.time.ZoneId;
 import java.time.ZonedDateTime;
-import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.List;
-import java.util.UUID;
+import java.util.*;
 
 import static uk.gov.pay.connector.model.domain.GatewayAccountEntity.Type.TEST;
 import static uk.gov.pay.connector.model.domain.RefundStatus.CREATED;
@@ -204,6 +201,7 @@ public class DatabaseFixtures {
     public class TestAccount {
         long accountId = RandomUtils.nextLong(1, 99999);
         private String paymentProvider = "sandbox";
+        private Map<String, String> credentials = new HashMap<>();
         private String serviceName = "service_name";
         private String description = "a description";
         private String analyticsId = "an analytics id";
@@ -217,6 +215,10 @@ public class DatabaseFixtures {
 
         public String getPaymentProvider() {
             return paymentProvider;
+        }
+
+        public Map<String, String> getCredentials() {
+            return credentials;
         }
 
         public String getServiceName() {
@@ -246,6 +248,11 @@ public class DatabaseFixtures {
             return this;
         }
 
+        public TestAccount withCredentials(Map<String, String> credentials) {
+            this.credentials = credentials;
+            return this;
+        }
+
         public TestAccount withServiceName(String serviceName) {
             this.serviceName = serviceName;
             return this;
@@ -260,7 +267,7 @@ public class DatabaseFixtures {
             databaseTestHelper.addGatewayAccount(
                     String.valueOf(accountId),
                     paymentProvider,
-                    new HashMap<>(),
+                    credentials,
                     serviceName,
                     type,
                     description,
