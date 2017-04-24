@@ -61,7 +61,7 @@ public class WorldpayCardResourceITest extends ChargingITestBase {
     }
 
     @Test
-    public void shouldDeferCaptureCardPayment_IfAsynchronousFeatureFlagIsOn() {
+    public void shouldCaptureCardPayment_IfChargeWasPreviouslyAuthorised() {
         String chargeId = authoriseNewCharge();
 
         worldpay.mockCaptureSuccess();
@@ -71,7 +71,7 @@ public class WorldpayCardResourceITest extends ChargingITestBase {
                 .then()
                 .statusCode(204);
 
-        assertFrontendChargeStatusIs(chargeId, CAPTURE_APPROVED.getValue());
+        assertFrontendChargeStatusIs(chargeId, CAPTURE_SUBMITTED.getValue());
         assertApiStateIs(chargeId, EXTERNAL_SUCCESS.getStatus());
     }
 
