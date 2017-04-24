@@ -66,8 +66,7 @@ public class CardResource {
     @Consumes(APPLICATION_JSON)
     @Produces(APPLICATION_JSON)
     public Response captureCharge(@PathParam("chargeId") String chargeId) {
-        cardCaptureService.markChargeAsCaptureApproved(chargeId);
-        return ResponseUtil.noContentResponse();
+        return handleGatewayResponse(cardCaptureService.doCapture(chargeId));
     }
 
     @POST

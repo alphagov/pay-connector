@@ -5,7 +5,6 @@ import com.google.inject.persist.Transactional;
 import io.dropwizard.setup.Environment;
 import uk.gov.pay.connector.dao.ChargeDao;
 import uk.gov.pay.connector.exception.ChargeNotFoundRuntimeException;
-import uk.gov.pay.connector.exception.IllegalStateRuntimeException;
 import uk.gov.pay.connector.model.CaptureGatewayRequest;
 import uk.gov.pay.connector.model.domain.ChargeEntity;
 import uk.gov.pay.connector.model.domain.ChargeStatus;
@@ -23,8 +22,8 @@ import static uk.gov.pay.connector.model.domain.ChargeStatus.*;
 public class CardCaptureService extends CardService implements TransactionalGatewayOperation<BaseCaptureResponse> {
 
     private static List<ChargeStatus> legalStatuses = ImmutableList.of(
-            CAPTURE_APPROVED,
-            CAPTURE_APPROVED_RETRY
+            AUTHORISATION_SUCCESS,
+            CAPTURE_APPROVED
     );
 
     private final UserNotificationService userNotificationService;
@@ -47,21 +46,6 @@ public class CardCaptureService extends CardService implements TransactionalGate
     @Override
     public ChargeEntity preOperation(ChargeEntity chargeEntity) {
         return preOperation(chargeEntity, CardService.OperationType.CAPTURE, legalStatuses, ChargeStatus.CAPTURE_READY);
-    }
-
-    @Transactional
-    public ChargeEntity markChargeAsCaptureApproved(String externalId) {
-        return chargeDao.findByExternalId(externalId).map(charge -> {
-            if (!AUTHORISATION_SUCCESS.getValue().equals(charge.getStatus())) {
-                logger.error("Charge is not in the expect state of AUTHORISATION_SUCCESS to be marked as CAPTURE_APPROVED [charge_external_id={}, charge_status={}]",
-                        charge.getExternalId(), charge.getStatus());
-                throw new IllegalStateRuntimeException(charge.getExternalId());
-            }
-
-            logger.info("CAPTURE_APPROVED for charge [charge_external_id={}]", externalId);
-            charge.setStatus(CAPTURE_APPROVED);
-            return chargeDao.mergeAndNotifyStatusHasChanged(charge, Optional.empty());
-        }).orElseThrow(() -> new ChargeNotFoundRuntimeException(externalId));
     }
 
     @Transactional
@@ -123,7 +107,7 @@ public class CardCaptureService extends CardService implements TransactionalGate
             return CAPTURE_SUBMITTED;
         } else {
             return operationResponse.getGatewayError()
-                    .map(timeoutError -> CAPTURE_APPROVED_RETRY)
+                    .map(timeoutError -> CAPTURE_APPROVED)
                     .orElse(CAPTURE_ERROR);
         }
     }
