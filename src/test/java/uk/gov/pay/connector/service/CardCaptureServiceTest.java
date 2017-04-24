@@ -212,7 +212,7 @@ public class CardCaptureServiceTest extends CardServiceTest {
     @Test
     public void shouldGetAnIllegalErrorWhenInvalidStatus() throws Exception {
         Long chargeId = 1234L;
-        ChargeEntity charge = createNewChargeWith(chargeId, ChargeStatus.ENTERING_CARD_DETAILS);
+        ChargeEntity charge = createNewChargeWith(chargeId, ChargeStatus.AUTHORISATION_SUCCESS);
         when(mockedChargeDao.findByExternalId(charge.getExternalId()))
                 .thenReturn(Optional.of(charge));
         when(mockedChargeDao.merge(any()))
@@ -262,24 +262,6 @@ public class CardCaptureServiceTest extends CardServiceTest {
 
         // verify an email notification is not sent when an unsuccessful capture
         verifyZeroInteractions(mockUserNotificationService);
-    }
-
-    @Test
-    public void shouldBeAbleToCaptureAChargeInAuthorisationSuccessStatus() {
-        String gatewayTxId = "theTxId";
-        ChargeEntity charge = createNewChargeWith("worldpay", 1L, AUTHORISATION_SUCCESS, gatewayTxId);
-        ChargeEntity reloadedCharge = spy(charge);
-        mockChargeDaoOperations(charge, reloadedCharge);
-        worldpayWillRespondWithSuccess(gatewayTxId, null);
-        when(mockedProviders.byName(charge.getPaymentGatewayName())).thenReturn(mockedPaymentProvider);
-
-        GatewayResponse response = cardCaptureService.doCapture(charge.getExternalId());
-        assertThat(response.isSuccessful(), is(true));
-
-        ArgumentCaptor<ChargeEntity> chargeEntityCaptor = ArgumentCaptor.forClass(ChargeEntity.class);
-        verify(mockedChargeDao).mergeAndNotifyStatusHasChanged(chargeEntityCaptor.capture(), eq(Optional.empty()));
-        assertThat(chargeEntityCaptor.getValue().getStatus(), is(CAPTURE_SUBMITTED.getValue()));
-        verify(mockedPaymentProvider, times(1)).capture(any());
     }
 
     @Test
