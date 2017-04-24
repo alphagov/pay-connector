@@ -56,4 +56,22 @@ public class EpdqCardResourceITest extends ChargingITestBase {
         String expectedChargeStatus = AUTHORISATION_ERROR.getValue();
         shouldReturnErrorForAuthorisationDetailsWithMessage(authorisationDetails, expectedErrorMessage, expectedChargeStatus);
     }
+
+    @Test
+    public void shouldNotAuthorise_aTransactionInWaitingExternalState() throws Exception {
+        epdq.mockAuthorisationWaitingExternal();
+
+        String expectedErrorMessage = "This transaction was deferred.";
+        String expectedChargeStatus = AUTHORISATION_SUBMITTED.getValue();
+        shouldReturnErrorForAuthorisationDetailsWithMessage(authorisationDetails, expectedErrorMessage, expectedChargeStatus);
+    }
+
+    @Test
+    public void shouldNotAuthorise_aTransactionInWaitingState() throws Exception {
+        epdq.mockAuthorisationWaiting();
+
+        String expectedErrorMessage = "This transaction was deferred.";
+        String expectedChargeStatus = AUTHORISATION_SUBMITTED.getValue();
+        shouldReturnErrorForAuthorisationDetailsWithMessage(authorisationDetails, expectedErrorMessage, expectedChargeStatus);
+    }
 }

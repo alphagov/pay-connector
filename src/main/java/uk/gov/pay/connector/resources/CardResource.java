@@ -53,7 +53,12 @@ public class CardResource {
             return badRequestResponse("Values do not match expected format/length.");
         }
         GatewayResponse<BaseAuthoriseResponse> response = cardAuthoriseService.doAuthorise(chargeId, authCardDetails);
-        return transactionDeclined(response) ? badRequestResponse("This transaction was declined.") : handleGatewayAuthoriseResponse(response);
+
+        if (isAuthorisationSubmitted(response)) {
+            return badRequestResponse("This transaction was deferred.");
+        }
+
+        return isAuthorisationDeclined(response) ? badRequestResponse("This transaction was declined.") : handleGatewayAuthoriseResponse(response);
     }
 
     @POST
@@ -62,7 +67,7 @@ public class CardResource {
     @Produces(APPLICATION_JSON)
     public Response authorise3dsCharge(@PathParam("chargeId") String chargeId, Auth3dsDetails auth3DsDetails) {
         GatewayResponse<BaseAuthoriseResponse> response = card3dsResponseAuthService.doAuthorise(chargeId, auth3DsDetails);
-        return transactionDeclined(response) ? badRequestResponse("This transaction was declined.") : handleGatewayAuthoriseResponse(response);
+        return isAuthorisationDeclined(response) ? badRequestResponse("This transaction was declined.") : handleGatewayAuthoriseResponse(response);
     }
 
     @POST
@@ -133,7 +138,13 @@ public class CardResource {
                 .orElseGet(ResponseUtil::noContentResponse);
     }
 
-    private static boolean transactionDeclined(GatewayResponse<BaseAuthoriseResponse> response) {
+    private static boolean isAuthorisationSubmitted(GatewayResponse<BaseAuthoriseResponse> response) {
+        return response.getBaseResponse()
+                .filter(baseResponse -> baseResponse.authoriseStatus() == AuthoriseStatus.SUBMITTED)
+                .isPresent();
+    }
+
+    private static boolean isAuthorisationDeclined(GatewayResponse<BaseAuthoriseResponse> response) {
         return response.getBaseResponse()
                 .filter(baseResponse -> baseResponse.authoriseStatus() == AuthoriseStatus.REJECTED ||
                                         baseResponse.authoriseStatus() == AuthoriseStatus.ERROR)
