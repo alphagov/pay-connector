@@ -36,7 +36,7 @@ executorServiceConfig:
   timeoutInSeconds: ${AUTH_READ_TIMEOUT_SECONDS:-1}
   threadsPerCpu: ${NUMBER_OF_THREADS_PER_CPU:-100}
 
-asynchronousCapture: ${ASYNCHRONOUS_CAPTURE:-false}
+asynchronousCapture: ${ASYNCHRONOUS_CAPTURE:-true}
 
 captureProcessConfig:
   schedulerInitialDelayInSeconds: ${CAPTURE_PROCESS_SCHEDULER_INITIAL_DELAY_SECONDS:-20}
