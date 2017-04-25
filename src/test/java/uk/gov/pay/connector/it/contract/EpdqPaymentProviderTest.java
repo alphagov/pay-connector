@@ -3,7 +3,6 @@ package uk.gov.pay.connector.it.contract;
 import com.codahale.metrics.Counter;
 import com.codahale.metrics.Histogram;
 import com.codahale.metrics.MetricRegistry;
-import com.fasterxml.jackson.databind.ObjectMapper;
 import com.google.common.collect.ImmutableMap;
 import org.junit.Assume;
 import org.junit.Before;
@@ -11,8 +10,6 @@ import org.junit.Ignore;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.mockito.runners.MockitoJUnitRunner;
-import uk.gov.pay.connector.model.CancelGatewayRequest;
-import uk.gov.pay.connector.model.CaptureGatewayRequest;
 import uk.gov.pay.connector.model.domain.Address;
 import uk.gov.pay.connector.model.domain.AuthCardDetails;
 import uk.gov.pay.connector.model.domain.ChargeEntity;
@@ -24,7 +21,6 @@ import uk.gov.pay.connector.service.GatewayOperation;
 import uk.gov.pay.connector.service.GatewayOperationClientBuilder;
 import uk.gov.pay.connector.service.PaymentProvider;
 import uk.gov.pay.connector.service.epdq.EpdqAuthorisationResponse;
-import uk.gov.pay.connector.service.epdq.EpdqCaptureResponse;
 import uk.gov.pay.connector.service.epdq.EpdqPaymentProvider;
 import uk.gov.pay.connector.util.TestClientFactory;
 
@@ -34,13 +30,8 @@ import java.io.IOException;
 import java.net.URL;
 import java.util.EnumMap;
 import java.util.Map;
-import java.util.function.Consumer;
 
 import static java.util.UUID.randomUUID;
-import static org.hamcrest.CoreMatchers.not;
-import static org.hamcrest.CoreMatchers.nullValue;
-import static org.hamcrest.core.Is.is;
-import static org.junit.Assert.assertThat;
 import static org.junit.Assert.assertTrue;
 import static org.mockito.Matchers.anyString;
 import static org.mockito.Mockito.mock;
@@ -96,37 +87,6 @@ public class EpdqPaymentProviderTest {
         testCardAuthorisation(paymentProvider, chargeEntity);
     }
 
-    @Test
-    public void shouldSuccessfullySendACaptureRequest() throws Exception {
-        PaymentProvider paymentProvider = getEpdqPaymentProvider();
-        GatewayResponse<EpdqAuthorisationResponse> response = testCardAuthorisation(paymentProvider, chargeEntity);
-
-        assertThat(response.getBaseResponse().isPresent(), is(true));
-        String transactionId = response.getBaseResponse().get().getTransactionId();
-        assertThat(transactionId, is(not(nullValue())));
-
-        chargeEntity.setGatewayTransactionId(transactionId);
-
-        GatewayResponse<EpdqCaptureResponse> captureGatewayResponse = paymentProvider.capture(CaptureGatewayRequest.valueOf(chargeEntity));
-        assertTrue(captureGatewayResponse.isSuccessful());
-    }
-
-    @Test
-    public void shouldSuccessfullySendACancelRequest() throws Exception {
-        PaymentProvider paymentProvider = getEpdqPaymentProvider();
-        GatewayResponse<EpdqAuthorisationResponse> response = testCardAuthorisation(paymentProvider, chargeEntity);
-
-        assertThat(response.getBaseResponse().isPresent(), is(true));
-        String transactionId = response.getBaseResponse().get().getTransactionId();
-        assertThat(transactionId, is(not(nullValue())));
-
-        chargeEntity.setGatewayTransactionId(transactionId);
-
-        GatewayResponse cancelResponse = paymentProvider.cancel(CancelGatewayRequest.valueOf(chargeEntity));
-        assertThat(cancelResponse.isSuccessful(), is(true));
-
-    }
-
     private GatewayResponse testCardAuthorisation(PaymentProvider paymentProvider, ChargeEntity chargeEntity) {
         AuthorisationGatewayRequest request = getCardAuthorisationRequest(chargeEntity);
         GatewayResponse<EpdqAuthorisationResponse> response = paymentProvider.authorise(request);
@@ -165,10 +125,5 @@ public class EpdqPaymentProviderTest {
     public static AuthCardDetails aValidEpdqCard() {
         String validSandboxCard = "5555444433331111";
         return buildAuthCardDetails(validSandboxCard, "737", "08/18", "visa");
-    }
-
-    @SuppressWarnings("unchecked")
-    private <T> Consumer<T> mockAccountUpdater() {
-        return mock(Consumer.class);
     }
 }

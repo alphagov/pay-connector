@@ -50,7 +50,7 @@ public class EpdqPaymentProvider extends BasePaymentProvider<BaseResponse> {
 
     @Override
     public GatewayResponse capture(CaptureGatewayRequest request) {
-        return sendReceive(ROUTE_FOR_MAINTENANCE_ORDER, request, buildCaptureOrderFor(), EpdqCaptureResponse.class, extractResponseIdentifier());
+        throw new UnsupportedOperationException("Capture operation not supported.");
     }
 
     @Override

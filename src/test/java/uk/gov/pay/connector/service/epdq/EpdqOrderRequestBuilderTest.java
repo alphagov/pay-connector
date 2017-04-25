@@ -27,47 +27,19 @@ public class EpdqOrderRequestBuilderTest {
         AuthCardDetails authCardDetails = AuthUtils.buildAuthCardDetails("Mr. Payment", "5555444433331111", "737", "08/18", "visa", address);
 
         GatewayOrder actualRequest = anEpdqAuthoriseOrderRequestBuilder()
-                .withOrderId("MyTransactionId")
-                .withPspId("pspId")
+                .withOrderId("mq4ht90j2oir6am585afk58kml")
+                .withPspId("merchant-id")
                 .withPassword("password")
-                .withUserId("userId")
-                .withShaPassphrase("passphrase")
+                .withUserId("username")
+                .withShaPassphrase("sha-passphrase")
                 .withMerchantCode("MerchantAccount")
                 .withDescription("MyDescription")
                 .withPaymentPlatformReference("MyPlatformReference")
-                .withAmount("2000")
+                .withAmount("500")
                 .withAuthorisationDetails(authCardDetails)
                 .build();
 
         assertEquals(TestTemplateResourceLoader.load(EPDQ_AUTHORISATION_REQUEST), actualRequest.getPayload());
         assertEquals(OrderRequestType.AUTHORISE, actualRequest.getOrderRequestType());
-    }
-
-    @Test
-    public void shouldGenerateValidCaptureOrderRequest() throws Exception {
-        GatewayOrder actualRequest = anEpdqCaptureOrderRequestBuilder()
-                .withPayId("payId")
-                .withPspId("pspId")
-                .withPassword("password")
-                .withUserId("userId")
-                .withShaPassphrase("passphrase")
-                .build();
-
-        assertEquals(TestTemplateResourceLoader.load(EPDQ_CAPTURE_REQUEST), actualRequest.getPayload());
-        assertEquals(OrderRequestType.CAPTURE, actualRequest.getOrderRequestType());
-    }
-
-    @Test
-    public void shouldGenerateValidCancelOrderRequest() throws Exception {
-        GatewayOrder actualRequest = anEpdqCancelOrderRequestBuilder()
-                .withPayId("payId")
-                .withPspId("pspId")
-                .withPassword("password")
-                .withUserId("userId")
-                .withShaPassphrase("passphrase")
-                .build();
-
-        assertEquals(TestTemplateResourceLoader.load(EPDQ_CANCEL_REQUEST), actualRequest.getPayload());
-        assertEquals(OrderRequestType.CANCEL, actualRequest.getOrderRequestType());
     }
 }
