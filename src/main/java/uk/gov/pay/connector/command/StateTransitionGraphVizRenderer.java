@@ -1,6 +1,7 @@
-package uk.gov.pay.connector.model.domain;
+package uk.gov.pay.connector.command;
 
 import com.google.common.collect.ImmutableMap;
+import uk.gov.pay.connector.model.domain.ChargeStatus;
 
 import java.util.List;
 import java.util.Map;
@@ -41,11 +42,7 @@ public class StateTransitionGraphVizRenderer {
     }
 
     private String shapeFor(ChargeStatus c) {
-        if (c.toExternal().isFinished()) {
-            return "doubleoctagon";
-        }
-
-        return "box";
+        return c.toExternal().isFinished() ? "doubleoctagon" : "box";
     }
 
     private String colourFor(ChargeStatus c) {
@@ -70,9 +67,7 @@ public class StateTransitionGraphVizRenderer {
 
     private String printEntry(ChargeStatus from, List<ChargeStatus> toList) {
         return toList.stream()
-                .map(to -> {
-                    return String.format("%s -> %s", nameFor(from), nameFor(to));
-                })
+                .map(to -> String.format("%s -> %s", nameFor(from), nameFor(to)))
                 .collect(Collectors.joining("\n", "", "\n"));
     }
 

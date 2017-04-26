@@ -1,9 +1,10 @@
-package uk.gov.pay.connector.model.domain;
+package uk.gov.pay.connector.command;
 
 import io.dropwizard.cli.Command;
 import io.dropwizard.setup.Bootstrap;
 import net.sourceforge.argparse4j.inf.Namespace;
 import net.sourceforge.argparse4j.inf.Subparser;
+import uk.gov.pay.connector.model.domain.DefaultStateTransitions;
 
 import java.io.IOException;
 import java.nio.charset.Charset;
@@ -26,17 +27,19 @@ public class RenderStateTransitionGraphCommand extends Command {
     @Override
     public void run(Bootstrap<?> bootstrap, Namespace namespace) throws Exception {
         String data = DefaultStateTransitions.dumpGraphViz().toString();
-        writeToFile(data, "states.dot");
-    }
 
-    private void writeToFile(String data, String filename) throws IOException {
-        byte[] bytes = data.getBytes(Charset.forName("UTF-8"));
-        Files.write(Paths.get(filename), bytes, StandardOpenOption.CREATE);
+        Path path = Paths.get("states.dot");
+        writeToFile(data, path);
 
-        System.out.format("Wrote state transition graph to '%s'\n\n", Paths.get(filename));
+        System.out.format("Wrote state transition graph to '%s'\n\n", path);
         System.out.println("Render using: ");
         System.out.println("  $ dot -Tpng -O states.dot");
         System.out.println("");
         System.out.println("or upload to http://www.webgraphviz.com/");
+    }
+
+    private void writeToFile(String data, Path path) throws IOException {
+        byte[] bytes = data.getBytes(Charset.forName("UTF-8"));
+        Files.write(path, bytes, StandardOpenOption.CREATE);
     }
 }

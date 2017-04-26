@@ -1,13 +1,14 @@
 package uk.gov.pay.connector.model.domain;
 
 import com.google.common.collect.ImmutableMap;
+import uk.gov.pay.connector.command.StateTransitionGraphVizRenderer;
 
 import java.util.List;
 import java.util.Map;
 
 import static uk.gov.pay.connector.model.domain.ChargeStatus.*;
 
-final class DefaultStateTransitions extends StateTransitions {
+public final class DefaultStateTransitions extends StateTransitions {
 
     private static final Map<ChargeStatus, List<ChargeStatus>> TRANSITION_TABLE = ImmutableMap.<ChargeStatus, List<ChargeStatus>>builder()
 
@@ -26,7 +27,7 @@ final class DefaultStateTransitions extends StateTransitions {
             .put(USER_CANCEL_READY,             validTransitions(USER_CANCEL_ERROR, USER_CANCELLED))
             .build();
 
-     DefaultStateTransitions() {
+    DefaultStateTransitions() {
         super(TRANSITION_TABLE);
     }
 

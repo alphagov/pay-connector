@@ -26,7 +26,7 @@ import uk.gov.pay.connector.filters.SchemeRewriteFilter;
 import uk.gov.pay.connector.healthcheck.CardExecutorServiceHealthCheck;
 import uk.gov.pay.connector.healthcheck.DatabaseHealthCheck;
 import uk.gov.pay.connector.healthcheck.Ping;
-import uk.gov.pay.connector.model.domain.RenderStateTransitionGraphCommand;
+import uk.gov.pay.connector.command.RenderStateTransitionGraphCommand;
 import uk.gov.pay.connector.resources.*;
 import uk.gov.pay.connector.service.Auth3dsDetailsFactory;
 import uk.gov.pay.connector.service.CaptureProcessScheduler;
