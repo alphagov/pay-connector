@@ -28,6 +28,7 @@ Important configurations.
 | `GDS_CONNECTOR_WORLDPAY_LIVE_URL` | - | Pointing to the LIVE gateway URL of Worldpay payment provider. |
 | `GDS_CONNECTOR_SMARTPAY_TEST_URL` | - | Pointing to the TEST gateway URL of Smartpay payment provider. |
 | `GDS_CONNECTOR_SMARTPAY_LIVE_URL` | - | Pointing to the LIVE gateway URL of Smartpay payment provider. |
+| `ASYNCHRONOUS_CAPTURE` | true | whether to handle capture asynchronously. When asynchronous capture is enabled, capture requests are deferred and operated in batch by a background task  |
 
 ### Background captures
 
