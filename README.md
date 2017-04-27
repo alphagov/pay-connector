@@ -82,6 +82,24 @@ The [API Specification](docs/api_specification.md) provides more detail on the p
 | ----------------------------- | ----------------- | ---------------------------------- |
 |[```/v1/tasks/expired-charges-sweep```](docs/api_specification.md#post-v1tasksexpired-charges-sweep)  | POST    |  Spawns a task to expire charges with a default window of 1 Hr |   
 
+### Command line tasks
+
+There are a number of
+[commands](http://www.dropwizard.io/1.1.0/docs/manual/core.html#commands)
+which can run from the command line. Invoke the all-in-one jar to see a list
+of the commands:
+
+```
+$ java -jar target/pay-connector-0.1-SNAPSHOT-allinone.jar
+```
+
+* `waitOnDependencies [-h] [file]` - Waits for dependent resources to become available
+
+   positional arguments: `file` - application configuration file
+
+* `render-state-transition-graph` - Outputs a representation of the connector state 
+                                    transitions as a graphviz 'dot' file
+
 ### API NAMESPACE
 
 | Path                          | Supported Methods | Description                        |
