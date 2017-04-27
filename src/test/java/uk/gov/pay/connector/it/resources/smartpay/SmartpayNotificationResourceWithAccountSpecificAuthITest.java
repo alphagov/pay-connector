@@ -26,7 +26,6 @@ import static uk.gov.pay.connector.model.domain.ChargeStatus.*;
 import static uk.gov.pay.connector.model.domain.RefundStatus.REFUND_SUBMITTED;
 import static uk.gov.pay.connector.util.JsonEncoder.toJson;
 import static uk.gov.pay.connector.util.TestTemplateResourceLoader.SMARTPAY_MULTIPLE_NOTIFICATIONS;
-import static uk.gov.pay.connector.util.TestTemplateResourceLoader.SMARTPAY_NOTIFICATION_CAPTURE;
 import static uk.gov.pay.connector.util.TransactionId.randomId;
 
 public class SmartpayNotificationResourceWithAccountSpecificAuthITest extends ChargingITestBase {

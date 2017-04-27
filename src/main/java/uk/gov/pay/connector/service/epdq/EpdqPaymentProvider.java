@@ -80,7 +80,7 @@ public class EpdqPaymentProvider extends BasePaymentProvider<BaseResponse> {
 
     @Override
     public StatusMapper getStatusMapper() {
-        return SmartpayStatusMapper.get();
+        throw new UnsupportedOperationException();
     }
 
     private Function<AuthorisationGatewayRequest, GatewayOrder> buildAuthoriseOrderFor() {
@@ -93,26 +93,6 @@ public class EpdqPaymentProvider extends BasePaymentProvider<BaseResponse> {
                 .withDescription(request.getDescription())
                 .withAmount(request.getAmount())
                 .withAuthorisationDetails(request.getAuthCardDetails())
-                .build();
-    }
-
-    private Function<CaptureGatewayRequest, GatewayOrder> buildCaptureOrderFor() {
-        return request -> anEpdqCaptureOrderRequestBuilder()
-                .withPspId(request.getGatewayAccount().getCredentials().get(CREDENTIALS_MERCHANT_ID))
-                .withUserId(request.getGatewayAccount().getCredentials().get(CREDENTIALS_USERNAME))
-                .withPassword(request.getGatewayAccount().getCredentials().get(CREDENTIALS_PASSWORD))
-                .withShaPassphrase(request.getGatewayAccount().getCredentials().get(CREDENTIALS_SHA_PASSPHRASE))
-                .withPayId(request.getTransactionId())
-                .build();
-    }
-
-    private Function<CancelGatewayRequest, GatewayOrder> buildCancelOrderFor() {
-        return request -> anEpdqCancelOrderRequestBuilder()
-                .withPspId("gov6nh")
-                .withUserId("pp1471")
-                .withPassword("_1234567890Qwerty")
-                .withShaPassphrase("1234567890qwerty")
-                .withTransactionId(request.getTransactionId())
                 .build();
     }
 
