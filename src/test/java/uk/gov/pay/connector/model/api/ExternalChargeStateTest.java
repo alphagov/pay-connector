@@ -26,7 +26,7 @@ public class ExternalChargeStateTest {
         assertThat(AUTHORISATION_REJECTED.toExternal().getStatus(), is("failed"));
         assertThat(AUTHORISATION_ERROR.toExternal().getStatus(), is("error"));
 
-        assertThat(CAPTURE_READY.toExternal().getStatus(), is("submitted"));
+        assertThat(CAPTURE_READY.toExternal().getStatus(), is("success"));
         assertThat(CAPTURED.toExternal().getStatus(), is("success"));
         assertThat(CAPTURE_SUBMITTED.toExternal().getStatus(), is("success"));
         assertThat(CAPTURE_ERROR.toExternal().getStatus(), is("error"));
