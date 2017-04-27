@@ -35,6 +35,20 @@ smartpay:
     live: http://localhost:10106/pal/servlet/soap/Payment
   credentials: ['username','password']
 
+epdq:
+  urls:
+    test: ${GDS_CONNECTOR_EPDQ_TEST_URL}
+    live: ${GDS_CONNECTOR_EPDQ_LIVE_URL}
+  jerseyClientOverrides:
+    auth:
+      readTimeout: 20000ms
+    cancel:
+      readTimeout: 2000ms
+    refund:
+      readTimeout: 2000ms
+    capture:
+      readTimeout: 1000ms
+
 executorServiceConfig:
   timeoutInSeconds: ${AUTH_READ_TIMEOUT_SECONDS:-1}
   threadsPerCpu: ${NUMBER_OF_THREADS_PER_CPU:-100}

@@ -4,6 +4,7 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import io.dropwizard.setup.Environment;
 import uk.gov.pay.connector.app.ConnectorConfiguration;
 import uk.gov.pay.connector.app.WorldpayConfig;
+import uk.gov.pay.connector.service.epdq.EpdqPaymentProvider;
 import uk.gov.pay.connector.service.sandbox.SandboxPaymentProvider;
 import uk.gov.pay.connector.service.smartpay.SmartpayPaymentProvider;
 import uk.gov.pay.connector.service.worldpay.WorldpayPaymentProvider;
@@ -17,10 +18,7 @@ import java.util.function.BiFunction;
 
 import static jersey.repackaged.com.google.common.collect.Maps.newHashMap;
 import static uk.gov.pay.connector.service.GatewayOperation.*;
-import static uk.gov.pay.connector.service.PaymentGatewayName.SANDBOX;
-import static uk.gov.pay.connector.service.PaymentGatewayName.SMARTPAY;
-import static uk.gov.pay.connector.service.PaymentGatewayName.WORLDPAY;
-import static uk.gov.pay.connector.service.worldpay.WorldpayPaymentProvider.includeSessionIdentifier;
+import static uk.gov.pay.connector.service.PaymentGatewayName.*;
 
 /**
  * TODO: Currently, the usage of this class at runtime is a single instance instantiated by ConnectorApp.
@@ -45,20 +43,7 @@ public class PaymentProviders<T extends BaseResponse> {
         this.paymentProviders.put(WORLDPAY, createWorldpayProvider());
         this.paymentProviders.put(SMARTPAY, createSmartPayProvider(objectMapper));
         this.paymentProviders.put(SANDBOX, new SandboxPaymentProvider());
-    }
-
-    private PaymentProvider createWorldpayProvider() {
-        EnumMap<GatewayOperation, GatewayClient> gatewayClientEnumMap = GatewayOperationClientBuilder.builder()
-                .authClient(gatewayClientForOperation(WORLDPAY, AUTHORISE, includeSessionIdentifier()))
-                .cancelClient(gatewayClientForOperation(WORLDPAY, CANCEL, includeSessionIdentifier()))
-                .captureClient(gatewayClientForOperation(WORLDPAY, CAPTURE, includeSessionIdentifier()))
-                .refundClient(gatewayClientForOperation(WORLDPAY, REFUND, includeSessionIdentifier()))
-                .build();
-
-        WorldpayConfig worldpayConfig = config.getWorldpayConfig();
-
-        return new WorldpayPaymentProvider(
-                gatewayClientEnumMap,worldpayConfig.isSecureNotificationEnabled(),worldpayConfig.getNotificationDomain());
+        this.paymentProviders.put(EPDQ, createEpdqProvider());
     }
 
     private GatewayClient gatewayClientForOperation(PaymentGatewayName gateway,
@@ -68,6 +53,20 @@ public class PaymentProviders<T extends BaseResponse> {
                 gateway, operation, config.getGatewayConfigFor(gateway).getUrls(),
                 MediaType.APPLICATION_XML_TYPE, sessionIdentifier,
                 environment.metrics());
+    }
+
+    private PaymentProvider createWorldpayProvider() {
+        EnumMap<GatewayOperation, GatewayClient> gatewayClientEnumMap = GatewayOperationClientBuilder.builder()
+                .authClient(gatewayClientForOperation(WORLDPAY, AUTHORISE, WorldpayPaymentProvider.includeSessionIdentifier()))
+                .cancelClient(gatewayClientForOperation(WORLDPAY, CANCEL, WorldpayPaymentProvider.includeSessionIdentifier()))
+                .captureClient(gatewayClientForOperation(WORLDPAY, CAPTURE, WorldpayPaymentProvider.includeSessionIdentifier()))
+                .refundClient(gatewayClientForOperation(WORLDPAY, REFUND, WorldpayPaymentProvider.includeSessionIdentifier()))
+                .build();
+
+        WorldpayConfig worldpayConfig = config.getWorldpayConfig();
+
+        return new WorldpayPaymentProvider(
+                gatewayClientEnumMap,worldpayConfig.isSecureNotificationEnabled(),worldpayConfig.getNotificationDomain());
     }
 
     private PaymentProvider createSmartPayProvider(ObjectMapper objectMapper) {
@@ -83,6 +82,17 @@ public class PaymentProviders<T extends BaseResponse> {
                 gatewayClients,
                 objectMapper
         );
+    }
+
+    private PaymentProvider createEpdqProvider() {
+        EnumMap<GatewayOperation, GatewayClient> gatewayClientEnumMap = GatewayOperationClientBuilder.builder()
+                .authClient(gatewayClientForOperation(EPDQ, AUTHORISE, EpdqPaymentProvider.includeSessionIdentifier()))
+                .cancelClient(gatewayClientForOperation(EPDQ, CANCEL, EpdqPaymentProvider.includeSessionIdentifier()))
+                .captureClient(gatewayClientForOperation(EPDQ, CAPTURE, EpdqPaymentProvider.includeSessionIdentifier()))
+                .refundClient(gatewayClientForOperation(EPDQ, REFUND, EpdqPaymentProvider.includeSessionIdentifier()))
+                .build();
+
+        return new EpdqPaymentProvider(gatewayClientEnumMap);
     }
 
     public PaymentProvider<T> byName(PaymentGatewayName gateway) {

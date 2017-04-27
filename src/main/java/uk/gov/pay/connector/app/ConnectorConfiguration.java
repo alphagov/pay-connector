@@ -43,6 +43,10 @@ public class ConnectorConfiguration extends Configuration {
 
     @Valid
     @NotNull
+    private GatewayConfig epdqConfig;
+
+    @Valid
+    @NotNull
     private DataSourceFactory dataSourceFactory;
 
     @Valid
@@ -88,6 +92,11 @@ public class ConnectorConfiguration extends Configuration {
         return smartpayConfig;
     }
 
+    @JsonProperty("epdq")
+    public GatewayConfig getEpdqConfig() {
+        return epdqConfig;
+    }
+
     public GatewayConfig getGatewayConfigFor(PaymentGatewayName gateway) {
         if (gateway == PaymentGatewayName.WORLDPAY) {
             return getWorldpayConfig();
@@ -95,6 +104,10 @@ public class ConnectorConfiguration extends Configuration {
 
         if (gateway == PaymentGatewayName.SMARTPAY) {
             return getSmartpayConfig();
+        }
+
+        if (gateway == PaymentGatewayName.EPDQ) {
+            return getEpdqConfig();
         }
 
         throw new PaymentGatewayName.Unsupported();

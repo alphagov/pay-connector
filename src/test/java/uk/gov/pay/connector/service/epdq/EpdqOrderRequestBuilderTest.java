@@ -1,19 +1,16 @@
 package uk.gov.pay.connector.service.epdq;
 
-import com.google.common.io.Resources;
 import org.junit.Test;
 import uk.gov.pay.connector.model.OrderRequestType;
 import uk.gov.pay.connector.model.domain.Address;
 import uk.gov.pay.connector.model.domain.AuthCardDetails;
 import uk.gov.pay.connector.service.GatewayOrder;
 import uk.gov.pay.connector.util.AuthUtils;
+import uk.gov.pay.connector.util.TestTemplateResourceLoader;
 
-import java.io.IOException;
-import java.nio.charset.Charset;
-
-import static com.google.common.io.Resources.getResource;
 import static org.junit.Assert.assertEquals;
 import static uk.gov.pay.connector.service.epdq.EpdqOrderRequestBuilder.*;
+import static uk.gov.pay.connector.util.TestTemplateResourceLoader.*;
 
 public class EpdqOrderRequestBuilderTest {
 
@@ -30,51 +27,19 @@ public class EpdqOrderRequestBuilderTest {
         AuthCardDetails authCardDetails = AuthUtils.buildAuthCardDetails("Mr. Payment", "5555444433331111", "737", "08/18", "visa", address);
 
         GatewayOrder actualRequest = anEpdqAuthoriseOrderRequestBuilder()
-                .withOrderId("MyTransactionId")
-                .withPspId("pspId")
+                .withOrderId("mq4ht90j2oir6am585afk58kml")
+                .withPspId("merchant-id")
                 .withPassword("password")
-                .withUserId("userId")
-                .withShaPassphrase("passphrase")
+                .withUserId("username")
+                .withShaPassphrase("sha-passphrase")
                 .withMerchantCode("MerchantAccount")
                 .withDescription("MyDescription")
                 .withPaymentPlatformReference("MyPlatformReference")
-                .withAmount("2000")
+                .withAmount("500")
                 .withAuthorisationDetails(authCardDetails)
                 .build();
 
-        assertEquals(expectedOrderSubmitPayload("valid-authorise-epdq-request.txt"), actualRequest.getPayload());
+        assertEquals(TestTemplateResourceLoader.load(EPDQ_AUTHORISATION_REQUEST), actualRequest.getPayload());
         assertEquals(OrderRequestType.AUTHORISE, actualRequest.getOrderRequestType());
-    }
-
-    @Test
-    public void shouldGenerateValidCaptureOrderRequest() throws Exception {
-        GatewayOrder actualRequest = anEpdqCaptureOrderRequestBuilder()
-                .withPayId("payId")
-                .withPspId("pspId")
-                .withPassword("password")
-                .withUserId("userId")
-                .withShaPassphrase("passphrase")
-                .build();
-
-        assertEquals(expectedOrderSubmitPayload("valid-capture-epdq-request.txt"), actualRequest.getPayload());
-        assertEquals(OrderRequestType.CAPTURE, actualRequest.getOrderRequestType());
-    }
-
-    @Test
-    public void shouldGenerateValidCancelOrderRequest() throws Exception {
-        GatewayOrder actualRequest = anEpdqCancelOrderRequestBuilder()
-                .withPayId("payId")
-                .withPspId("pspId")
-                .withPassword("password")
-                .withUserId("userId")
-                .withShaPassphrase("passphrase")
-                .build();
-
-        assertEquals(expectedOrderSubmitPayload("valid-cancel-epdq-request.txt"), actualRequest.getPayload());
-        assertEquals(OrderRequestType.CANCEL, actualRequest.getOrderRequestType());
-    }
-
-    private String expectedOrderSubmitPayload(final String expectedTemplate) throws IOException {
-        return Resources.toString(getResource("templates/epdq/" + expectedTemplate), Charset.defaultCharset());
     }
 }

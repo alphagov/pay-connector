@@ -1,6 +1,5 @@
 package uk.gov.pay.connector.service.worldpay;
 
-import com.google.common.io.Resources;
 import org.joda.time.DateTime;
 import org.junit.Test;
 import uk.gov.pay.connector.model.OrderRequestType;
@@ -8,17 +7,15 @@ import uk.gov.pay.connector.model.domain.Address;
 import uk.gov.pay.connector.model.domain.AuthCardDetails;
 import uk.gov.pay.connector.service.GatewayOrder;
 import uk.gov.pay.connector.util.AuthUtils;
+import uk.gov.pay.connector.util.TestTemplateResourceLoader;
 
-import java.io.IOException;
-import java.nio.charset.Charset;
-
-import static com.google.common.io.Resources.getResource;
 import static org.custommonkey.xmlunit.XMLAssert.assertXMLEqual;
 import static org.hamcrest.core.Is.is;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertThat;
 import static uk.gov.pay.connector.model.domain.Address.anAddress;
 import static uk.gov.pay.connector.service.worldpay.WorldpayOrderRequestBuilder.*;
+import static uk.gov.pay.connector.util.TestTemplateResourceLoader.*;
 
 public class WorldpayOrderRequestBuilderTest {
 
@@ -44,7 +41,7 @@ public class WorldpayOrderRequestBuilderTest {
                 .withAuthorisationDetails(authCardDetails)
                 .build();
 
-        assertXMLEqual(expectedOrderSubmitPayload("valid-authorise-worldpay-request-min-address.xml"), actualRequest.getPayload());
+        assertXMLEqual(TestTemplateResourceLoader.load(WORLDPAY_VALID_AUTHORISE_WORLDPAY_REQUEST_MIN_ADDRESS), actualRequest.getPayload());
         assertEquals(OrderRequestType.AUTHORISE, actualRequest.getOrderRequestType());
     }
 
@@ -71,7 +68,7 @@ public class WorldpayOrderRequestBuilderTest {
                 .withAuthorisationDetails(authCardDetails)
                 .build();
 
-        assertXMLEqual(expectedOrderSubmitPayload("valid-authorise-worldpay-3ds-request-min-address.xml"), actualRequest.getPayload());
+        assertXMLEqual(TestTemplateResourceLoader.load(WORLDPAY_VALID_AUTHORISE_WORLDPAY_3DS_REQUEST_MIN_ADDRESS), actualRequest.getPayload());
         assertEquals(OrderRequestType.AUTHORISE, actualRequest.getOrderRequestType());
     }
 
@@ -99,7 +96,7 @@ public class WorldpayOrderRequestBuilderTest {
                 .withAuthorisationDetails(authCardDetails)
                 .build();
 
-        assertXMLEqual(expectedOrderSubmitPayload("valid-authorise-worldpay-request-full-address.xml"), actualRequest.getPayload());
+        assertXMLEqual(TestTemplateResourceLoader.load(WORLDPAY_VALID_AUTHORISE_WORLDPAY_REQUEST_FULL_ADDRESS), actualRequest.getPayload());
         assertEquals(OrderRequestType.AUTHORISE, actualRequest.getOrderRequestType());
     }
 
@@ -126,7 +123,7 @@ public class WorldpayOrderRequestBuilderTest {
                 .withAuthorisationDetails(authCardDetails)
                 .build();
 
-        assertXMLEqual(expectedOrderSubmitPayload("special-char-valid-authorise-worldpay-request-address.xml"), actualRequest.getPayload());
+        assertXMLEqual(TestTemplateResourceLoader.load(WORLDPAY_SPECIAL_CHAR_VALID_AUTHORISE_WORLDPAY_REQUEST_ADDRESS), actualRequest.getPayload());
         assertEquals(OrderRequestType.AUTHORISE, actualRequest.getOrderRequestType());
     }
 
@@ -142,7 +139,7 @@ public class WorldpayOrderRequestBuilderTest {
                 .withProviderSessionId(providerSessionId)
                 .build();
 
-        assertXMLEqual(expectedOrderSubmitPayload("valid-3ds-response-auth-worldpay-request.xml"), actualRequest.getPayload());
+        assertXMLEqual(TestTemplateResourceLoader.load(WORLDPAY_VALID_3DS_RESPONSE_AUTH_WORLDPAY_REQUEST), actualRequest.getPayload());
         assertEquals(OrderRequestType.AUTHORISE_3DS, actualRequest.getOrderRequestType());
         assertThat(actualRequest.getProviderSessionId().get(), is(providerSessionId));
     }
@@ -159,7 +156,7 @@ public class WorldpayOrderRequestBuilderTest {
                 .withTransactionId("MyUniqueTransactionId!")
                 .build();
 
-        assertXMLEqual(expectedOrderSubmitPayload("valid-capture-worldpay-request.xml"), actualRequest.getPayload());
+        assertXMLEqual(TestTemplateResourceLoader.load(WORLDPAY_VALID_CAPTURE_WORLDPAY_REQUEST), actualRequest.getPayload());
         assertEquals(OrderRequestType.CAPTURE, actualRequest.getOrderRequestType());
     }
 
@@ -175,7 +172,7 @@ public class WorldpayOrderRequestBuilderTest {
                 .withTransactionId("MyUniqueTransactionId <!-- & > ")
                 .build();
 
-        assertXMLEqual(expectedOrderSubmitPayload("special-char-valid-capture-worldpay-request.xml"), actualRequest.getPayload());
+        assertXMLEqual(TestTemplateResourceLoader.load(WORLDPAY_SPECIAL_CHAR_VALID_CAPTURE_WORLDPAY_REQUEST), actualRequest.getPayload());
         assertEquals(OrderRequestType.CAPTURE, actualRequest.getOrderRequestType());
     }
 
@@ -187,7 +184,7 @@ public class WorldpayOrderRequestBuilderTest {
                 .withTransactionId("MyUniqueTransactionId!")
                 .build();
 
-        assertXMLEqual(expectedOrderSubmitPayload("valid-cancel-worldpay-request.xml"), actualRequest.getPayload());
+        assertXMLEqual(TestTemplateResourceLoader.load(WORLDPAY_VALID_CANCEL_WORLDPAY_REQUEST), actualRequest.getPayload());
         assertEquals(OrderRequestType.CANCEL, actualRequest.getOrderRequestType());
     }
 
@@ -201,15 +198,11 @@ public class WorldpayOrderRequestBuilderTest {
                 .withTransactionId("MyUniqueTransactionId!")
                 .build();
 
-        assertXMLEqual(expectedOrderSubmitPayload("valid-refund-worldpay-request.xml"), actualRequest.getPayload());
+        assertXMLEqual(TestTemplateResourceLoader.load(WORLDPAY_VALID_REFUND_WORLDPAY_REQUEST), actualRequest.getPayload());
         assertEquals(OrderRequestType.REFUND, actualRequest.getOrderRequestType());
     }
 
     private AuthCardDetails getValidTestCard(Address address) {
         return AuthUtils.buildAuthCardDetails("Mr. Payment", "4111111111111111", "123", "12/15", "visa", address);
-    }
-
-    private String expectedOrderSubmitPayload(final String expectedTemplate) throws IOException {
-        return Resources.toString(getResource("templates/worldpay/" + expectedTemplate), Charset.defaultCharset());
     }
 }

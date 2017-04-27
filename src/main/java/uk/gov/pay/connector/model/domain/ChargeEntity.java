@@ -145,6 +145,10 @@ public class ChargeEntity extends AbstractEntity {
         return providerSessionId;
     }
 
+    public void setExternalId(String externalId) {
+        this.externalId = externalId;
+    }
+
     public void setStatus(ChargeStatus targetStatus) throws InvalidStateTransitionException {
         if (stateTransitionsFor(getPaymentGatewayName()).isValidTransition(fromString(this.status), targetStatus)) {
             this.status = targetStatus.getValue();

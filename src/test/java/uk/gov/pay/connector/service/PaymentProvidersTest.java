@@ -13,6 +13,7 @@ import org.mockito.runners.MockitoJUnitRunner;
 import uk.gov.pay.connector.app.ConnectorConfiguration;
 import uk.gov.pay.connector.app.GatewayConfig;
 import uk.gov.pay.connector.app.WorldpayConfig;
+import uk.gov.pay.connector.service.epdq.EpdqPaymentProvider;
 import uk.gov.pay.connector.service.sandbox.SandboxPaymentProvider;
 import uk.gov.pay.connector.service.smartpay.SmartpayPaymentProvider;
 import uk.gov.pay.connector.service.worldpay.WorldpayPaymentProvider;
@@ -29,6 +30,7 @@ import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 import static uk.gov.pay.connector.service.GatewayOperation.*;
+import static uk.gov.pay.connector.service.PaymentGatewayName.EPDQ;
 import static uk.gov.pay.connector.service.PaymentGatewayName.SMARTPAY;
 import static uk.gov.pay.connector.service.PaymentGatewayName.WORLDPAY;
 
@@ -53,10 +55,16 @@ public class PaymentProvidersTest {
     GatewayConfig smartpayConfig;
 
     @Mock
+    GatewayConfig epdqConfig;
+
+    @Mock
     Map<String, String> worldpayUrlMap;
 
     @Mock
     Map<String, String> smartpayUrlMap;
+
+    @Mock
+    Map<String, String> epdqUrlMap;
 
     @Mock
     BiFunction<GatewayOrder, Builder, Builder> sessionIdentifier;
@@ -69,10 +77,13 @@ public class PaymentProvidersTest {
         Environment environment = mock(Environment.class);
         when(config.getSmartpayConfig()).thenReturn(smartpayConfig);
         when(config.getWorldpayConfig()).thenReturn(worldpayConfig);
+        when(config.getEpdqConfig()).thenReturn(epdqConfig);
         when(config.getGatewayConfigFor(PaymentGatewayName.WORLDPAY)).thenReturn(worldpayConfig);
         when(config.getGatewayConfigFor(PaymentGatewayName.SMARTPAY)).thenReturn(smartpayConfig);
+        when(config.getGatewayConfigFor(EPDQ)).thenReturn(epdqConfig);
         when(worldpayConfig.getUrls()).thenReturn(worldpayUrlMap);
         when(smartpayConfig.getUrls()).thenReturn(smartpayUrlMap);
+        when(epdqConfig.getUrls()).thenReturn(epdqUrlMap);
         when(environment.metrics()).thenReturn(metricRegistry);
 
         providers = new PaymentProviders(config, gatewayClientFactory, new ObjectMapper(), environment);
@@ -97,6 +108,12 @@ public class PaymentProvidersTest {
     }
 
     @Test
+    public void shouldResolveEpdqPaymentProvider() throws Exception {
+        PaymentProvider epdq = providers.byName(EPDQ);
+        assertThat(epdq, is(instanceOf(EpdqPaymentProvider.class)));
+    }
+
+    @Test
     public void shouldSetupGatewayClientForGatewayOperations() {
         verify(gatewayClientFactory).createGatewayClient(WORLDPAY, AUTHORISE, worldpayUrlMap, MediaType.APPLICATION_XML_TYPE,
                 WorldpayPaymentProvider.includeSessionIdentifier(), metricRegistry);
@@ -115,6 +132,15 @@ public class PaymentProvidersTest {
                 SmartpayPaymentProvider.includeSessionIdentifier(), metricRegistry);
         verify(gatewayClientFactory).createGatewayClient(SMARTPAY, REFUND, smartpayUrlMap, MediaType.APPLICATION_XML_TYPE,
                 SmartpayPaymentProvider.includeSessionIdentifier(), metricRegistry);
+
+        verify(gatewayClientFactory).createGatewayClient(EPDQ, AUTHORISE, epdqUrlMap, MediaType.APPLICATION_XML_TYPE,
+                EpdqPaymentProvider.includeSessionIdentifier(), metricRegistry);
+        verify(gatewayClientFactory).createGatewayClient(EPDQ, CANCEL, epdqUrlMap, MediaType.APPLICATION_XML_TYPE,
+                EpdqPaymentProvider.includeSessionIdentifier(), metricRegistry);
+        verify(gatewayClientFactory).createGatewayClient(EPDQ, CAPTURE, epdqUrlMap, MediaType.APPLICATION_XML_TYPE,
+                EpdqPaymentProvider.includeSessionIdentifier(), metricRegistry);
+        verify(gatewayClientFactory).createGatewayClient(EPDQ, REFUND, epdqUrlMap, MediaType.APPLICATION_XML_TYPE,
+                EpdqPaymentProvider.includeSessionIdentifier(), metricRegistry);
 
     }
 }

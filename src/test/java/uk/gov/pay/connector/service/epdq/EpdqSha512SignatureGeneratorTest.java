@@ -7,6 +7,7 @@ import org.junit.Test;
 
 import java.util.List;
 
+import static org.assertj.core.api.Fail.fail;
 import static org.hamcrest.core.Is.is;
 import static org.junit.Assert.assertThat;
 
@@ -29,6 +30,40 @@ public class EpdqSha512SignatureGeneratorTest {
         String actual = epdqSha512SignatureGenerator.sign(params, passphrase);
 
         assertThat(actual, is(expected));
+    }
+
+    @Test
+    public void shouldThrowAnIllegalArgumentExceptionIfPassphraseIsBlank() {
+        List<NameValuePair> params = ImmutableList.of(
+                new BasicNameValuePair("Param1", "Value1"),
+                new BasicNameValuePair("Param2", "Value2"),
+                new BasicNameValuePair("Param3", "Value3"));
+
+        String passphrase = " ";
+
+        try {
+            epdqSha512SignatureGenerator.sign(params, passphrase);
+            fail("Expected exception to be thrown.");
+        } catch (IllegalArgumentException exception) {
+            assertThat(exception.getMessage(), is("Passphrase must not be blank."));
+        }
+    }
+
+    @Test
+    public void shouldThrowAnIllegalArgumentExceptionIfNull() {
+        List<NameValuePair> params = ImmutableList.of(
+                new BasicNameValuePair("Param1", "Value1"),
+                new BasicNameValuePair("Param2", "Value2"),
+                new BasicNameValuePair("Param3", "Value3"));
+
+        String passphrase = null;
+
+        try {
+            epdqSha512SignatureGenerator.sign(params, passphrase);
+            fail("Expected exception to be thrown.");
+        } catch (IllegalArgumentException exception) {
+            assertThat(exception.getMessage(), is("Passphrase must not be blank."));
+        }
     }
 
 }

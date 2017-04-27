@@ -1,7 +1,7 @@
 package uk.gov.pay.connector.service;
 
 public enum PaymentGatewayName {
-    SANDBOX("sandbox"), SMARTPAY("smartpay"), WORLDPAY("worldpay");
+    SANDBOX("sandbox"), SMARTPAY("smartpay"), WORLDPAY("worldpay"), EPDQ("epdq");
 
     private final String gatewayName;
 

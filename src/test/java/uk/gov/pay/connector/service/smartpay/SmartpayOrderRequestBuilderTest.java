@@ -1,6 +1,5 @@
 package uk.gov.pay.connector.service.smartpay;
 
-import com.google.common.io.Resources;
 import org.custommonkey.xmlunit.XMLUnit;
 import org.junit.After;
 import org.junit.Before;
@@ -10,14 +9,12 @@ import uk.gov.pay.connector.model.domain.Address;
 import uk.gov.pay.connector.model.domain.AuthCardDetails;
 import uk.gov.pay.connector.service.GatewayOrder;
 import uk.gov.pay.connector.util.AuthUtils;
+import uk.gov.pay.connector.util.TestTemplateResourceLoader;
 
-import java.io.IOException;
-import java.nio.charset.Charset;
-
-import static com.google.common.io.Resources.getResource;
 import static org.custommonkey.xmlunit.XMLAssert.assertXMLEqual;
 import static org.junit.Assert.assertEquals;
 import static uk.gov.pay.connector.service.smartpay.SmartpayOrderRequestBuilder.*;
+import static uk.gov.pay.connector.util.TestTemplateResourceLoader.*;
 
 
 public class SmartpayOrderRequestBuilderTest {
@@ -54,7 +51,7 @@ public class SmartpayOrderRequestBuilderTest {
                 .withAuthorisationDetails(authCardDetails)
                 .build();
 
-        assertXMLEqual(expectedOrderSubmitPayload("valid-authorise-smartpay-request.xml"), actualRequest.getPayload());
+        assertXMLEqual(TestTemplateResourceLoader.load(SMARTPAY_VALID_AUTHORISE_SMARTPAY_REQUEST), actualRequest.getPayload());
         assertEquals(OrderRequestType.AUTHORISE, actualRequest.getOrderRequestType());
     }
 
@@ -79,7 +76,7 @@ public class SmartpayOrderRequestBuilderTest {
                 .withAuthorisationDetails(authCardDetails)
                 .build();
 
-        assertXMLEqual(expectedOrderSubmitPayload("special-char-valid-authorise-smartpay-request.xml"), actualRequest.getPayload());
+        assertXMLEqual(TestTemplateResourceLoader.load(SMARTPAY_SPECIAL_CHAR_VALID_AUTHORISE_SMARTPAY_REQUEST), actualRequest.getPayload());
         assertEquals(OrderRequestType.AUTHORISE, actualRequest.getOrderRequestType());
     }
 
@@ -102,7 +99,7 @@ public class SmartpayOrderRequestBuilderTest {
                 .withAuthorisationDetails(authCardDetails)
                 .build();
 
-        assertXMLEqual(expectedOrderSubmitPayload("valid-authorise-smartpay-request-minimal.xml"), actualRequest.getPayload());
+        assertXMLEqual(TestTemplateResourceLoader.load(SMARTPAY_VALID_AUTHORISE_SMARTPAY_REQUEST_MINIMAL), actualRequest.getPayload());
         assertEquals(OrderRequestType.AUTHORISE, actualRequest.getOrderRequestType());
     }
 
@@ -114,7 +111,7 @@ public class SmartpayOrderRequestBuilderTest {
                 .withAmount("2000")
                 .build();
 
-        assertXMLEqual(expectedOrderSubmitPayload("valid-capture-smartpay-request.xml"), actualRequest.getPayload());
+        assertXMLEqual(TestTemplateResourceLoader.load(SMARTPAY_VALID_CAPTURE_SMARTPAY_REQUEST), actualRequest.getPayload());
         assertEquals(OrderRequestType.CAPTURE, actualRequest.getOrderRequestType());
     }
 
@@ -126,7 +123,7 @@ public class SmartpayOrderRequestBuilderTest {
                 .withAmount("2000")
                 .build();
 
-        assertXMLEqual(expectedOrderSubmitPayload("special-char-valid-capture-smartpay-request.xml"), actualRequest.getPayload());
+        assertXMLEqual(TestTemplateResourceLoader.load(SMARTPAY_SPECIAL_CHAR_VALID_CAPTURE_SMARTPAY_REQUEST), actualRequest.getPayload());
         assertEquals(OrderRequestType.CAPTURE, actualRequest.getOrderRequestType());
     }
 
@@ -137,7 +134,7 @@ public class SmartpayOrderRequestBuilderTest {
                 .withMerchantCode("MerchantAccount")
                 .build();
 
-        assertXMLEqual(expectedOrderSubmitPayload("valid-cancel-smartpay-request.xml"), actualRequest.getPayload());
+        assertXMLEqual(TestTemplateResourceLoader.load(SMARTPAY_VALID_CANCEL_SMARTPAY_REQUEST), actualRequest.getPayload());
         assertEquals(OrderRequestType.CANCEL, actualRequest.getOrderRequestType());
     }
 
@@ -150,11 +147,7 @@ public class SmartpayOrderRequestBuilderTest {
                 .withMerchantCode("MerchantAccount")
                 .build();
 
-        assertXMLEqual(expectedOrderSubmitPayload("valid-refund-smartpay-request.xml"), actualRequest.getPayload());
+        assertXMLEqual(TestTemplateResourceLoader.load(SMARTPAY_VALID_REFUND_SMARTPAY_REQUEST), actualRequest.getPayload());
         assertEquals(OrderRequestType.REFUND, actualRequest.getOrderRequestType());
-    }
-
-    private String expectedOrderSubmitPayload(final String expectedTemplate) throws IOException {
-        return Resources.toString(getResource("templates/smartpay/" + expectedTemplate), Charset.defaultCharset());
     }
 }

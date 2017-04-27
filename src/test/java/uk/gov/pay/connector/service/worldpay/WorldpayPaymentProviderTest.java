@@ -5,7 +5,6 @@ import com.codahale.metrics.Histogram;
 import com.codahale.metrics.MetricRegistry;
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableMap;
-import com.google.common.io.Resources;
 import fj.data.Either;
 import org.junit.Assert;
 import org.junit.Before;
@@ -22,6 +21,7 @@ import uk.gov.pay.connector.model.gateway.AuthorisationGatewayRequest;
 import uk.gov.pay.connector.model.gateway.GatewayResponse;
 import uk.gov.pay.connector.service.*;
 import uk.gov.pay.connector.util.AuthUtils;
+import uk.gov.pay.connector.util.TestTemplateResourceLoader;
 
 import javax.ws.rs.client.Client;
 import javax.ws.rs.client.Entity;
@@ -31,14 +31,11 @@ import javax.ws.rs.core.MediaType;
 import javax.ws.rs.core.NewCookie;
 import javax.ws.rs.core.Response;
 import java.io.IOException;
-import java.net.URL;
-import java.nio.charset.Charset;
 import java.time.ZonedDateTime;
 import java.util.Collections;
 import java.util.EnumMap;
 import java.util.Map;
 
-import static com.google.common.io.Resources.getResource;
 import static fj.data.Either.left;
 import static java.lang.String.format;
 import static org.custommonkey.xmlunit.XMLAssert.assertXMLEqual;
@@ -64,6 +61,7 @@ import static uk.gov.pay.connector.model.domain.GatewayAccount.*;
 import static uk.gov.pay.connector.model.domain.GatewayAccountEntity.Type.TEST;
 import static uk.gov.pay.connector.service.worldpay.WorldpayPaymentProvider.WORLDPAY_MACHINE_COOKIE_NAME;
 import static uk.gov.pay.connector.service.worldpay.WorldpayPaymentProvider.includeSessionIdentifier;
+import static uk.gov.pay.connector.util.TestTemplateResourceLoader.*;
 
 @RunWith(MockitoJUnitRunner.class)
 public class WorldpayPaymentProviderTest {
@@ -208,7 +206,7 @@ public class WorldpayPaymentProviderTest {
 
         verify(mockGatewayClient).postRequestFor(eq(null), eq(mockGatewayAccountEntity), gatewayOrderArgumentCaptor.capture());
 
-        assertXMLEqual(expectedOrderSubmitPayload("valid-authorise-worldpay-request-excluding-3ds.xml"), gatewayOrderArgumentCaptor.getValue().getPayload());
+        assertXMLEqual(TestTemplateResourceLoader.load(WORLDPAY_VALID_AUTHORISE_WORLDPAY_REQUEST_EXCLUDING_3DS), gatewayOrderArgumentCaptor.getValue().getPayload());
     }
 
     @Test
@@ -245,7 +243,7 @@ public class WorldpayPaymentProviderTest {
 
         verify(mockGatewayClient).postRequestFor(eq(null), eq(mockGatewayAccountEntity), gatewayOrderArgumentCaptor.capture());
 
-        assertXMLEqual(expectedOrderSubmitPayload("valid-authorise-worldpay-request-including-3ds.xml"), gatewayOrderArgumentCaptor.getValue().getPayload());
+        assertXMLEqual(TestTemplateResourceLoader.load(WORLDPAY_VALID_AUTHORISE_WORLDPAY_REQUEST_INCLUDING_3DS), gatewayOrderArgumentCaptor.getValue().getPayload());
     }
 
 
@@ -279,7 +277,7 @@ public class WorldpayPaymentProviderTest {
 
         verify(mockGatewayClient).postRequestFor(eq(null), eq(mockGatewayAccountEntity), gatewayOrderArgumentCaptor.capture());
 
-        assertXMLEqual(expectedOrderSubmitPayload("valid-3ds-response-auth-worldpay-request.xml"), gatewayOrderArgumentCaptor.getValue().getPayload());
+        assertXMLEqual(TestTemplateResourceLoader.load(WORLDPAY_VALID_3DS_RESPONSE_AUTH_WORLDPAY_REQUEST), gatewayOrderArgumentCaptor.getValue().getPayload());
     }
 
 
@@ -401,8 +399,7 @@ public class WorldpayPaymentProviderTest {
             String bookingDateDay,
             String bookingDateMonth,
             String bookingDateYear) throws IOException {
-        URL resource = getResource("templates/worldpay/notification.xml");
-        return Resources.toString(resource, Charset.defaultCharset())
+        return TestTemplateResourceLoader.load(WORLDPAY_NOTIFICATION)
                 .replace("{{transactionId}}", transactionId)
                 .replace("{{refund-ref}}", referenceId)
                 .replace("{{status}}", status)
@@ -565,9 +562,4 @@ public class WorldpayPaymentProviderTest {
 
         return AuthUtils.buildAuthCardDetails("Mr. Payment", "4111111111111111", "123", "12/15", "visa", address);
     }
-
-    private String expectedOrderSubmitPayload(final String expectedTemplate) throws IOException {
-        return Resources.toString(getResource("templates/worldpay/" + expectedTemplate), Charset.defaultCharset());
-    }
-
 }

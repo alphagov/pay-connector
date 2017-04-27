@@ -40,6 +40,20 @@ smartpay:
     capture:
       readTimeout: 2000ms
 
+epdq:
+  urls:
+    test: ${GDS_CONNECTOR_EPDQ_TEST_URL}
+    live: ${GDS_CONNECTOR_EPDQ_LIVE_URL}
+  jerseyClientOverrides:
+    auth:
+      readTimeout: 20000ms
+    cancel:
+      readTimeout: 2000ms
+    refund:
+      readTimeout: 2000ms
+    capture:
+      readTimeout: 1000ms
+
 jerseyClient:
   timeout: 500ms
   connectionTimeout: 500ms

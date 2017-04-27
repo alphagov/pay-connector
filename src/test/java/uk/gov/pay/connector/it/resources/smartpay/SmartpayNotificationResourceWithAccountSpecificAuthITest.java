@@ -7,6 +7,7 @@ import org.apache.commons.lang3.StringUtils;
 import org.junit.Before;
 import org.junit.Test;
 import uk.gov.pay.connector.it.base.ChargingITestBase;
+import uk.gov.pay.connector.util.TestTemplateResourceLoader;
 
 import java.io.IOException;
 import java.net.URL;
@@ -24,6 +25,7 @@ import static org.junit.Assert.assertThat;
 import static uk.gov.pay.connector.model.domain.ChargeStatus.*;
 import static uk.gov.pay.connector.model.domain.RefundStatus.REFUND_SUBMITTED;
 import static uk.gov.pay.connector.util.JsonEncoder.toJson;
+import static uk.gov.pay.connector.util.TestTemplateResourceLoader.SMARTPAY_MULTIPLE_NOTIFICATIONS;
 import static uk.gov.pay.connector.util.TransactionId.randomId;
 
 public class SmartpayNotificationResourceWithAccountSpecificAuthITest extends ChargingITestBase {
@@ -224,8 +226,7 @@ public class SmartpayNotificationResourceWithAccountSpecificAuthITest extends Ch
     }
 
     private String multipleNotifications(String transactionId, String transactionId2) throws IOException {
-        URL resource = getResource("templates/smartpay/multiple-notifications.json");
-        return Resources.toString(resource, Charset.defaultCharset())
+        return TestTemplateResourceLoader.load(SMARTPAY_MULTIPLE_NOTIFICATIONS)
                 .replace("{{pspReference1}}", transactionId)
                 .replace("{{pspReference2}}", transactionId2);
     }
