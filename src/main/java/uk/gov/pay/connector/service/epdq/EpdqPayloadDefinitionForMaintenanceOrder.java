@@ -20,8 +20,8 @@ public class EpdqPayloadDefinitionForMaintenanceOrder implements PayloadDefiniti
 
         // Keep this list in alphabetical order
         return newParameterBuilder().add(OPERATION_KEY, templateData.getOperationType())
-                .add(PAYID_KEY, templateData.getPayId())
-                .add(PSPID_KEY, templateData.getPspId())
+                .add(PAYID_KEY, templateData.getTransactionId())
+                .add(PSPID_KEY, templateData.getMerchantCode())
                 .add(PSWD_KEY, templateData.getPassword())
                 .add(USERID_KEY, templateData.getUserId())
                 .build();

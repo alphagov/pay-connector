@@ -45,7 +45,7 @@ public class EpdqPayloadDefinitionForNewOrderTest {
         when(mockTemplateData.getAmount()).thenReturn(AMOUNT);
         when(mockTemplateData.getOperationType()).thenReturn(OPERATION_TYPE);
         when(mockTemplateData.getOrderId()).thenReturn(ORDER_ID);
-        when(mockTemplateData.getPspId()).thenReturn(PSP_ID);
+        when(mockTemplateData.getMerchantCode()).thenReturn(PSP_ID);
         when(mockTemplateData.getPassword()).thenReturn(PASSWORD);
         when(mockTemplateData.getUserId()).thenReturn(USER_ID);
 

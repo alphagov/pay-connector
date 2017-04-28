@@ -30,8 +30,8 @@ public class EpdqPayloadDefinitionMaintenanceOrderTest {
     @Test
     public void shouldExtractParametersFromTemplate() {
         when(mockTemplateData.getOperationType()).thenReturn(OPERATION_TYPE);
-        when(mockTemplateData.getPayId()).thenReturn(PAY_ID);
-        when(mockTemplateData.getPspId()).thenReturn(PSP_ID);
+        when(mockTemplateData.getTransactionId()).thenReturn(PAY_ID);
+        when(mockTemplateData.getMerchantCode()).thenReturn(PSP_ID);
         when(mockTemplateData.getPassword()).thenReturn(PASSWORD);
         when(mockTemplateData.getUserId()).thenReturn(USER_ID);
 

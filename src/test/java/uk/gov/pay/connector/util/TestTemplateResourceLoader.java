@@ -85,6 +85,11 @@ public class TestTemplateResourceLoader {
     public static final String EPDQ_AUTHORISATION_OTHER_RESPONSE = EPDQ_BASE_NAME + "/authorisation-other-response.xml";
     public static final String EPDQ_AUTHORISATION_REQUEST = EPDQ_BASE_NAME + "/authorisation-request.txt";
 
+
+    public static final String EPDQ_CAPTURE_REQUEST = EPDQ_BASE_NAME + "/capture-request.txt";
+    public static final String EPDQ_CAPTURE_SUCCESS_RESPONSE = EPDQ_BASE_NAME + "/capture-success-response.xml";
+    public static final String EPDQ_CAPTURE_ERROR_RESPONSE = EPDQ_BASE_NAME + "/capture-error-response.xml";
+
     static public String load(String location) {
         try {
             return Resources.toString(Resources.getResource(location), Charset.defaultCharset());

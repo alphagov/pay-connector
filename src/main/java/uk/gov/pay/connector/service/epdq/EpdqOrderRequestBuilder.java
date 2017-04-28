@@ -13,8 +13,6 @@ public class EpdqOrderRequestBuilder extends OrderRequestBuilder {
     static public class EpdqTemplateData extends OrderRequestBuilder.TemplateData {
         private String operationType;
         private String orderId;
-        private String payId;
-        private String pspId;
         private String password;
         private String userId;
         private String shaPassphrase;
@@ -27,28 +25,12 @@ public class EpdqOrderRequestBuilder extends OrderRequestBuilder {
             this.operationType = operationType;
         }
 
-        public String getPayId() {
-            return payId;
-        }
-
-        public void setPayId(String payId) {
-            this.payId = payId;
-        }
-
         public String getOrderId() {
             return orderId;
         }
 
         public void setOrderId(String orderId) {
             this.orderId = orderId;
-        }
-
-        public String getPspId() {
-            return pspId;
-        }
-
-        public void setPspId(String pspId) {
-            this.pspId = pspId;
         }
 
         public String getPassword() {
@@ -118,16 +100,6 @@ public class EpdqOrderRequestBuilder extends OrderRequestBuilder {
 
     public EpdqOrderRequestBuilder withOrderId(String orderId) {
         epdqTemplateData.setOrderId(orderId);
-        return this;
-    }
-
-    public EpdqOrderRequestBuilder withPayId(String payId) {
-        epdqTemplateData.setPayId(payId);
-        return this;
-    }
-
-    public EpdqOrderRequestBuilder withPspId(String pspId) {
-        epdqTemplateData.setPspId(pspId);
         return this;
     }
 
