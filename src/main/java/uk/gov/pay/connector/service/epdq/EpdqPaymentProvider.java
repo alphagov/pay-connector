@@ -50,7 +50,7 @@ public class EpdqPaymentProvider extends BasePaymentProvider<BaseResponse> {
 
     @Override
     public GatewayResponse capture(CaptureGatewayRequest request) {
-        throw new UnsupportedOperationException("Capture operation not supported.");
+        return sendReceive(ROUTE_FOR_MAINTENANCE_ORDER, request, buildCaptureOrderFor(), EpdqCaptureResponse.class, extractResponseIdentifier());
     }
 
     @Override
@@ -86,13 +86,23 @@ public class EpdqPaymentProvider extends BasePaymentProvider<BaseResponse> {
     private Function<AuthorisationGatewayRequest, GatewayOrder> buildAuthoriseOrderFor() {
         return request -> anEpdqAuthoriseOrderRequestBuilder()
                 .withOrderId(request.getChargeExternalId())
-                .withPspId(request.getGatewayAccount().getCredentials().get(CREDENTIALS_MERCHANT_ID))
-                .withUserId(request.getGatewayAccount().getCredentials().get(CREDENTIALS_USERNAME))
                 .withPassword(request.getGatewayAccount().getCredentials().get(CREDENTIALS_PASSWORD))
                 .withShaPassphrase(request.getGatewayAccount().getCredentials().get(CREDENTIALS_SHA_PASSPHRASE))
+                .withUserId(request.getGatewayAccount().getCredentials().get(CREDENTIALS_USERNAME))
+                .withMerchantCode(request.getGatewayAccount().getCredentials().get(CREDENTIALS_MERCHANT_ID))
                 .withDescription(request.getDescription())
                 .withAmount(request.getAmount())
                 .withAuthorisationDetails(request.getAuthCardDetails())
+                .build();
+    }
+
+    private Function<CaptureGatewayRequest, GatewayOrder> buildCaptureOrderFor() {
+        return request -> anEpdqCaptureOrderRequestBuilder()
+                .withUserId(request.getGatewayAccount().getCredentials().get(CREDENTIALS_USERNAME))
+                .withPassword(request.getGatewayAccount().getCredentials().get(CREDENTIALS_PASSWORD))
+                .withShaPassphrase(request.getGatewayAccount().getCredentials().get(CREDENTIALS_SHA_PASSPHRASE))
+                .withMerchantCode(request.getGatewayAccount().getCredentials().get(CREDENTIALS_MERCHANT_ID))
+                .withTransactionId(request.getTransactionId())
                 .build();
     }
 

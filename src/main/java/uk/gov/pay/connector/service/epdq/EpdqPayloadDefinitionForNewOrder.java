@@ -32,7 +32,7 @@ public class EpdqPayloadDefinitionForNewOrder implements PayloadDefinition<EpdqT
                 .add(ED_KEY, templateData.getAuthCardDetails().getEndDate())
                 .add(OPERATION_KEY, templateData.getOperationType())
                 .add(ORDER_ID_KEY, templateData.getOrderId())
-                .add(PSPID_KEY, templateData.getPspId())
+                .add(PSPID_KEY, templateData.getMerchantCode())
                 .add(PSWD_KEY, templateData.getPassword())
                 .add(USERID_KEY, templateData.getUserId())
                 .build();

@@ -28,11 +28,10 @@ public class EpdqOrderRequestBuilderTest {
 
         GatewayOrder actualRequest = anEpdqAuthoriseOrderRequestBuilder()
                 .withOrderId("mq4ht90j2oir6am585afk58kml")
-                .withPspId("merchant-id")
                 .withPassword("password")
                 .withUserId("username")
                 .withShaPassphrase("sha-passphrase")
-                .withMerchantCode("MerchantAccount")
+                .withMerchantCode("merchant-id")
                 .withDescription("MyDescription")
                 .withPaymentPlatformReference("MyPlatformReference")
                 .withAmount("500")
@@ -41,5 +40,19 @@ public class EpdqOrderRequestBuilderTest {
 
         assertEquals(TestTemplateResourceLoader.load(EPDQ_AUTHORISATION_REQUEST), actualRequest.getPayload());
         assertEquals(OrderRequestType.AUTHORISE, actualRequest.getOrderRequestType());
+    }
+
+    @Test
+    public void shouldGenerateValidCaptureOrderRequest() throws Exception {
+        GatewayOrder actualRequest = anEpdqCaptureOrderRequestBuilder()
+                .withPassword("password")
+                .withUserId("username")
+                .withShaPassphrase("sha-passphrase")
+                .withMerchantCode("merchant-id")
+                .withTransactionId("payId")
+                .build();
+
+        assertEquals(TestTemplateResourceLoader.load(EPDQ_CAPTURE_REQUEST), actualRequest.getPayload());
+        assertEquals(OrderRequestType.CAPTURE, actualRequest.getOrderRequestType());
     }
 }

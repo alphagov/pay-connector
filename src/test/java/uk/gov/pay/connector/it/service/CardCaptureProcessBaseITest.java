@@ -21,7 +21,8 @@ abstract public class CardCaptureProcessBaseITest {
             ImmutableMap.of(
                     CREDENTIALS_MERCHANT_ID, "merchant-id",
                     CREDENTIALS_USERNAME, "test-user",
-                    CREDENTIALS_PASSWORD, "test-password"
+                    CREDENTIALS_PASSWORD, "test-password",
+                    CREDENTIALS_SHA_PASSPHRASE, "sha-passphraser"
             );
 
     protected int port = PortFactory.findFreePort();
@@ -33,6 +34,7 @@ abstract public class CardCaptureProcessBaseITest {
     public GuiceAppWithPostgresRule app = new GuiceAppWithPostgresRule(
             config("worldpay.urls.test", "http://localhost:" + port + "/jsp/merchant/xml/paymentService.jsp"),
             config("smartpay.urls.test", "http://localhost:" + port + "/pal/servlet/soap/Payment"),
+            config("epdq.urls.test", "http://localhost:" + port + "/epdq"),
             config("captureProcessConfig.maximumRetries", Integer.toString(CAPTURE_MAX_RETRIES)),
             config("captureProcessConfig.retryFailuresEvery", "0 minutes"));
 
