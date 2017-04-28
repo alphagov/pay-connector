@@ -1,15 +1,12 @@
 package uk.gov.pay.connector.util;
 
-import com.google.common.io.Resources;
 import org.junit.Test;
 import uk.gov.pay.connector.service.BaseAuthoriseResponse.AuthoriseStatus;
+import uk.gov.pay.connector.service.BaseCancelResponse;
 import uk.gov.pay.connector.service.smartpay.SmartpayAuthorisationResponse;
 import uk.gov.pay.connector.service.smartpay.SmartpayCancelResponse;
 import uk.gov.pay.connector.service.smartpay.SmartpayCaptureResponse;
 import uk.gov.pay.connector.service.smartpay.SmartpayRefundResponse;
-
-import java.io.IOException;
-import java.nio.charset.Charset;
 
 import static org.hamcrest.core.Is.is;
 import static org.hamcrest.core.IsNull.notNullValue;
@@ -82,6 +79,7 @@ public class SmartpayXMLUnmarshallerTest {
         String successPayload = TestTemplateResourceLoader.load(SMARTPAY_CANCEL_SUCCESS_RESPONSE);
         SmartpayCancelResponse response = XMLUnmarshaller.unmarshall(successPayload, SmartpayCancelResponse.class);
 
+        assertThat(response.cancelStatus(), is(BaseCancelResponse.CancelStatus.CANCELLED));
         assertThat(response.getTransactionId(), is("7914435254138149"));
         assertThat(response.getErrorCode(), is(nullValue()));
         assertThat(response.getErrorMessage(), is(nullValue()));
@@ -117,9 +115,5 @@ public class SmartpayXMLUnmarshallerTest {
         assertThat(response.getReference().isPresent(), is(false));
         assertThat(response.getErrorCode(), is("soap:Server"));
         assertThat(response.getErrorMessage(), is("security 901 Invalid Merchant Account"));
-    }
-
-    private String readPayload(String path) throws IOException {
-        return Resources.toString(Resources.getResource(path), Charset.defaultCharset());
     }
 }

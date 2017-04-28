@@ -148,6 +148,11 @@ public class SandboxPaymentProvider extends BasePaymentProvider<BaseResponse> {
             public String getTransactionId() {
                 return randomUUID().toString();
             }
+
+            @Override
+            public CancelStatus cancelStatus() {
+                return CancelStatus.CANCELLED;
+            }
         }).build();
     }
 

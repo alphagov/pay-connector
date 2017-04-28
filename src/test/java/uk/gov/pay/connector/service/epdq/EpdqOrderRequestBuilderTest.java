@@ -55,4 +55,18 @@ public class EpdqOrderRequestBuilderTest {
         assertEquals(TestTemplateResourceLoader.load(EPDQ_CAPTURE_REQUEST), actualRequest.getPayload());
         assertEquals(OrderRequestType.CAPTURE, actualRequest.getOrderRequestType());
     }
+
+    @Test
+    public void shouldGenerateValidCancelOrderRequest() throws Exception {
+        GatewayOrder actualRequest = anEpdqCancelOrderRequestBuilder()
+                .withPassword("password")
+                .withUserId("username")
+                .withShaPassphrase("sha-passphrase")
+                .withMerchantCode("merchant-id")
+                .withTransactionId("payId")
+                .build();
+
+        assertEquals(TestTemplateResourceLoader.load(EPDQ_CANCEL_REQUEST), actualRequest.getPayload());
+        assertEquals(OrderRequestType.CANCEL, actualRequest.getOrderRequestType());
+    }
 }

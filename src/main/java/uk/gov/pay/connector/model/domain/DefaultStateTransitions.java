@@ -23,9 +23,12 @@ public final class DefaultStateTransitions extends StateTransitions {
             .put(CAPTURE_APPROVED_RETRY,        validTransitions(CAPTURE_READY, CAPTURE_ERROR))
             .put(CAPTURE_READY,                 validTransitions(CAPTURE_SUBMITTED, CAPTURE_ERROR, CAPTURE_APPROVED_RETRY))
             .put(CAPTURE_SUBMITTED,             validTransitions(CAPTURED)) // can this ever be a capture error?
-            .put(EXPIRE_CANCEL_READY,           validTransitions(EXPIRE_CANCEL_FAILED, EXPIRED))
-            .put(SYSTEM_CANCEL_READY,           validTransitions(SYSTEM_CANCEL_ERROR, SYSTEM_CANCELLED))
-            .put(USER_CANCEL_READY,             validTransitions(USER_CANCEL_ERROR, USER_CANCELLED))
+            .put(EXPIRE_CANCEL_READY,           validTransitions(EXPIRE_CANCEL_FAILED, EXPIRED, EXPIRE_CANCEL_SUBMITTED))
+            .put(EXPIRE_CANCEL_SUBMITTED,       validTransitions(EXPIRE_CANCEL_FAILED, EXPIRED))
+            .put(SYSTEM_CANCEL_READY,           validTransitions(SYSTEM_CANCEL_ERROR, SYSTEM_CANCELLED, SYSTEM_CANCEL_SUBMITTED))
+            .put(SYSTEM_CANCEL_SUBMITTED,       validTransitions(SYSTEM_CANCEL_ERROR, SYSTEM_CANCELLED))
+            .put(USER_CANCEL_READY,             validTransitions(USER_CANCEL_ERROR, USER_CANCELLED, USER_CANCEL_SUBMITTED))
+            .put(USER_CANCEL_SUBMITTED,         validTransitions(USER_CANCEL_ERROR, USER_CANCELLED))
             .build();
 
     DefaultStateTransitions() {

@@ -2,7 +2,6 @@ package uk.gov.pay.connector.service;
 
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableMap;
-import com.google.common.collect.Lists;
 import com.google.inject.Provider;
 import org.apache.commons.lang3.tuple.Pair;
 import org.slf4j.Logger;
@@ -16,7 +15,6 @@ import uk.gov.pay.connector.service.transaction.TransactionFlow;
 import uk.gov.pay.connector.service.transaction.TransactionalOperation;
 
 import javax.inject.Inject;
-import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
@@ -118,17 +116,26 @@ public class ChargeExpiryService {
         );
     }
 
+    private ChargeStatus determineTerminalState(ChargeEntity chargeEntity, GatewayResponse<BaseCancelResponse> cancelResponse, StatusFlow statusFlow) {
+        if (!cancelResponse.isSuccessful() && !cancelResponse.getBaseResponse().isPresent()) {
+            logUnsuccessfulResponseReasons(chargeEntity, cancelResponse);
+            return statusFlow.getFailureTerminalState();
+        }
+
+        switch (cancelResponse.getBaseResponse().get().cancelStatus()) {
+            case CANCELLED:
+                return statusFlow.getSuccessTerminalState();
+            case SUBMITTED:
+                return statusFlow.getSubmittedState();
+        }
+        return statusFlow.getFailureTerminalState();
+    }
+
     private TransactionalOperation<TransactionContext, ChargeEntity> finishExpireCancel() {
         return context -> {
             ChargeEntity chargeEntity = context.get(ChargeEntity.class);
             GatewayResponse gatewayResponse = context.get(GatewayResponse.class);
-            ChargeStatus status;
-            if (gatewayResponse.isFailed()) {
-                logUnsuccessfulResponseReasons(chargeEntity, gatewayResponse);
-                status = EXPIRE_CANCEL_FAILED;
-            } else {
-                status = EXPIRED;
-            }
+            ChargeStatus status = determineTerminalState(chargeEntity, gatewayResponse, EXPIRE_FLOW);
             logger.info("Charge status to update - charge_external_id={}, status={}, to_status={}",
                     chargeEntity.getExternalId(), chargeEntity.getStatus(), status);
             chargeEntity.setStatus(status);

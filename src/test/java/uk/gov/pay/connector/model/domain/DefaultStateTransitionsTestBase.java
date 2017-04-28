@@ -33,9 +33,12 @@ public class DefaultStateTransitionsTestBase {
         params.add(new Object[]{CAPTURE_APPROVED_RETRY, of(CAPTURE_READY, CAPTURE_ERROR)});
         params.add(new Object[]{CAPTURE_READY, of(CAPTURE_SUBMITTED, CAPTURE_ERROR, CAPTURE_APPROVED_RETRY)});
         params.add(new Object[]{CAPTURE_SUBMITTED, of(CAPTURED)});
-        params.add(new Object[]{EXPIRE_CANCEL_READY, of(EXPIRE_CANCEL_FAILED, EXPIRED)});
-        params.add(new Object[]{SYSTEM_CANCEL_READY, of(SYSTEM_CANCEL_ERROR, SYSTEM_CANCELLED)});
-        params.add(new Object[]{USER_CANCEL_READY, of(USER_CANCEL_ERROR, USER_CANCELLED)});
+        params.add(new Object[]{EXPIRE_CANCEL_READY, of(EXPIRE_CANCEL_FAILED, EXPIRED, EXPIRE_CANCEL_SUBMITTED)});
+        params.add(new Object[]{EXPIRE_CANCEL_SUBMITTED, of(EXPIRE_CANCEL_FAILED, EXPIRED)});
+        params.add(new Object[]{SYSTEM_CANCEL_READY, of(SYSTEM_CANCEL_ERROR, SYSTEM_CANCELLED, SYSTEM_CANCEL_SUBMITTED)});
+        params.add(new Object[]{SYSTEM_CANCEL_SUBMITTED, of(SYSTEM_CANCEL_ERROR, SYSTEM_CANCELLED)});
+        params.add(new Object[]{USER_CANCEL_READY, of(USER_CANCEL_ERROR, USER_CANCELLED, USER_CANCEL_SUBMITTED)});
+        params.add(new Object[]{USER_CANCEL_SUBMITTED, of(USER_CANCEL_ERROR, USER_CANCELLED)});
         return params;
     }
 

@@ -16,4 +16,9 @@ public class SmartpayCancelResponse extends SmartpayBaseResponse implements Base
         return transactionId;
     }
 
+    @Override
+    public CancelStatus cancelStatus() {
+        return CancelStatus.CANCELLED;
+    }
+
 }
