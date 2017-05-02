@@ -1,9 +1,16 @@
 package uk.gov.pay.connector.it.resources.epdq;
 
-import com.jayway.restassured.http.ContentType;
+import org.apache.commons.lang.StringUtils;
 import org.junit.Test;
 import uk.gov.pay.connector.it.base.ChargingITestBase;
-import uk.gov.pay.connector.model.domain.ChargeStatus;
+
+import java.time.ZonedDateTime;
+import java.util.Map;
+
+import static org.hamcrest.CoreMatchers.is;
+import static org.junit.Assert.assertThat;
+import static uk.gov.pay.connector.model.domain.ChargeStatus.AUTHORISATION_SUCCESS;
+import static uk.gov.pay.connector.model.domain.ChargeStatus.SYSTEM_CANCELLED;
 
 public class EpdqChargeCancelResourceITest extends ChargingITestBase {
 
@@ -12,14 +19,16 @@ public class EpdqChargeCancelResourceITest extends ChargingITestBase {
     }
 
     @Test
-    public void shouldCancelACharge() {
-        String chargeId = createNewCharge(ChargeStatus.AUTHORISATION_SUCCESS);
+    public void shouldCancelACharge() throws Exception {
+        String externalChargeId = addCharge(AUTHORISATION_SUCCESS, "ref", ZonedDateTime.now().minusHours(1), "irrelavant");
 
-//        epdq.mockCancelSuccess();
-        givenSetup()
-                .contentType(ContentType.JSON)
-                .post(cancelChargeUrlFor(accountId, chargeId))
-                .then()
-                .statusCode(204);
+        Long chargeId = Long.valueOf(StringUtils.removeStart(externalChargeId, "charge"));
+
+        epdq.mockCancelSuccess();
+
+        Map<String, Object> cardDetails = app.getDatabaseTestHelper().getChargeCardDetailsByChargeId(chargeId);
+        assertThat(cardDetails.isEmpty(), is(false));
+
+        cancelChargeAndCheckApiStatus(externalChargeId, SYSTEM_CANCELLED, 204);
     }
 }
