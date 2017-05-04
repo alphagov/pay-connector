@@ -337,7 +337,7 @@ public class DatabaseTestHelper {
     public void deleteAllCardTypes() {
         jdbi.withHandle(handle ->
                 handle
-                        .createStatement("DELETE FROM card_types")
+                        .createStatement("DELETE FROM accepted_card_types; DELETE FROM card_types;")
                         .execute()
         );
     }
