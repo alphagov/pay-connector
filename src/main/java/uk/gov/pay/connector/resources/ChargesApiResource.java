@@ -2,6 +2,7 @@ package uk.gov.pay.connector.resources;
 
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableMap;
+import com.google.common.collect.ImmutableSet;
 import com.google.common.collect.Lists;
 import fj.F;
 import org.apache.commons.lang3.StringUtils;
@@ -30,6 +31,7 @@ import java.util.stream.Collectors;
 
 import static fj.data.Either.reduce;
 import static java.lang.String.format;
+import static java.util.Collections.singleton;
 import static javax.ws.rs.core.MediaType.APPLICATION_JSON;
 import static javax.ws.rs.core.Response.created;
 import static org.apache.commons.lang3.StringUtils.isNotBlank;
@@ -150,7 +152,8 @@ public class ChargesApiResource {
 
         return gatewayAccountDao.findById(accountId).map(
                 gatewayAccountEntity -> {
-                    logger.info("Creating new charge - {}", chargeRequest);
+                    // Some services put PII in the description, so remove it before logging
+                    logger.info("Creating new charge - {}", sanitizedMap(chargeRequest, singleton("description")));
                     ChargeResponse response = chargeService.create(chargeRequest, gatewayAccountEntity, uriInfo);
                     return created(response.getLink("self")).entity(response).build();
                 })
@@ -232,6 +235,12 @@ public class ChargesApiResource {
     private boolean isFieldSizeValid(Map<String, String> chargeRequest, String fieldName, int fieldSize) {
         Optional<String> value = Optional.ofNullable(chargeRequest.get(fieldName));
         return !value.isPresent() || value.get().length() <= fieldSize; //already checked that mandatory fields are already there
+    }
+
+    private static Map<String, String> sanitizedMap(Map<String, String> map, Set<String> keysToRemove) {
+        return map.entrySet().stream()
+                .filter(entry -> !keysToRemove.contains(entry.getKey()))
+                .collect(Collectors.toMap(entry -> entry.getKey(), entry -> entry.getValue()));
     }
 
     private static F<String, Response> handleError =
