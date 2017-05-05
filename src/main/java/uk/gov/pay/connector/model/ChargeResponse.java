@@ -337,6 +337,7 @@ public class ChargeResponse {
 
     @Override
     public String toString() {
+        // Some services put PII in the description, so don’t include it in the stringification
         return "ChargeResponse{" +
                 "dataLinks=" + dataLinks +
                 ", chargeId='" + chargeId + '\'' +
@@ -345,7 +346,6 @@ public class ChargeResponse {
                 ", cardBrand='" + cardBrand + '\'' +
                 ", gatewayTransactionId='" + gatewayTransactionId + '\'' +
                 ", returnUrl='" + returnUrl + '\'' +
-                ", description='" + description + '\'' +
                 ", reference='" + reference + '\'' +
                 ", providerName='" + providerName + '\'' +
                 ", createdDate=" + createdDate +
