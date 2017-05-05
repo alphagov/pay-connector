@@ -100,17 +100,16 @@ public class ChargeCancelService {
     }
 
     private ChargeStatus determineTerminalState(GatewayResponse<BaseCancelResponse> cancelResponse, StatusFlow statusFlow) {
-        if (!cancelResponse.isSuccessful() && !cancelResponse.getBaseResponse().isPresent()) {
-            return statusFlow.getFailureTerminalState();
-        }
-
-        switch (cancelResponse.getBaseResponse().get().cancelStatus()) {
-            case CANCELLED:
-                return statusFlow.getSuccessTerminalState();
-            case SUBMITTED:
-                return statusFlow.getSubmittedState();
-        }
-        return statusFlow.getFailureTerminalState();
+        return cancelResponse.getBaseResponse().map(response -> {
+            switch (response.cancelStatus()) {
+                case CANCELLED:
+                    return statusFlow.getSuccessTerminalState();
+                case SUBMITTED:
+                    return statusFlow.getSubmittedState();
+                default:
+                    return statusFlow.getFailureTerminalState();
+            }
+        }).orElse(statusFlow.getFailureTerminalState());
     }
 
     private GatewayResponse<BaseCancelResponse> nonGatewayCancel(ChargeEntity chargeEntity, StatusFlow statusFlow) {

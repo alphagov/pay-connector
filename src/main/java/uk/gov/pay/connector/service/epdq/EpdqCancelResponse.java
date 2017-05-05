@@ -28,14 +28,14 @@ public class EpdqCancelResponse extends EpdqBaseResponse implements BaseCancelRe
 
     @Override
     public CancelStatus cancelStatus() {
-        if (CANCELLED.equals(status)) {
-            return CancelStatus.CANCELLED;
+        switch(status) {
+            case CANCELLED:
+                return CancelStatus.CANCELLED;
+            case SUBMITTED:
+                return CancelStatus.SUBMITTED;
+            default:
+                return CancelStatus.ERROR;
         }
-
-        if (SUBMITTED.equals(status)) {
-            return CancelStatus.SUBMITTED;
-        }
-        return CancelStatus.ERROR;
     }
 
     @Override

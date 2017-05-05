@@ -117,18 +117,21 @@ public class ChargeExpiryService {
     }
 
     private ChargeStatus determineTerminalState(ChargeEntity chargeEntity, GatewayResponse<BaseCancelResponse> cancelResponse, StatusFlow statusFlow) {
-        if (!cancelResponse.isSuccessful() && !cancelResponse.getBaseResponse().isPresent()) {
-            logUnsuccessfulResponseReasons(chargeEntity, cancelResponse);
-            return statusFlow.getFailureTerminalState();
-        }
 
-        switch (cancelResponse.getBaseResponse().get().cancelStatus()) {
-            case CANCELLED:
-                return statusFlow.getSuccessTerminalState();
-            case SUBMITTED:
-                return statusFlow.getSubmittedState();
-        }
-        return statusFlow.getFailureTerminalState();
+      if (!cancelResponse.isSuccessful()) {
+        logUnsuccessfulResponseReasons(chargeEntity, cancelResponse);
+      }
+
+      return cancelResponse.getBaseResponse().map(response -> {
+          switch (response.cancelStatus()) {
+              case CANCELLED:
+                  return statusFlow.getSuccessTerminalState();
+              case SUBMITTED:
+                  return statusFlow.getSubmittedState();
+              default:
+                  return statusFlow.getFailureTerminalState();
+          }
+      }).orElse(statusFlow.getFailureTerminalState());
     }
 
     private TransactionalOperation<TransactionContext, ChargeEntity> finishExpireCancel() {
