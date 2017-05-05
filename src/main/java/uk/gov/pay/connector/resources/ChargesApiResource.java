@@ -2,8 +2,6 @@ package uk.gov.pay.connector.resources;
 
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableMap;
-import com.google.common.collect.ImmutableSet;
-import com.google.common.collect.Lists;
 import fj.F;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.lang3.tuple.Pair;
@@ -15,7 +13,6 @@ import uk.gov.pay.connector.dao.ChargeSearchParams;
 import uk.gov.pay.connector.dao.GatewayAccountDao;
 import uk.gov.pay.connector.model.ChargeResponse;
 import uk.gov.pay.connector.model.domain.ChargeEntity;
-import uk.gov.pay.connector.model.domain.ChargeStatus;
 import uk.gov.pay.connector.service.ChargeExpiryService;
 import uk.gov.pay.connector.service.ChargeService;
 import uk.gov.pay.connector.util.ResponseUtil;
@@ -31,11 +28,9 @@ import java.util.stream.Collectors;
 
 import static fj.data.Either.reduce;
 import static java.lang.String.format;
-import static java.util.Collections.singleton;
 import static javax.ws.rs.core.MediaType.APPLICATION_JSON;
 import static javax.ws.rs.core.Response.created;
 import static org.apache.commons.lang3.StringUtils.isNotBlank;
-import static uk.gov.pay.connector.model.domain.ChargeStatus.*;
 import static uk.gov.pay.connector.resources.ApiPaths.*;
 import static uk.gov.pay.connector.resources.ApiValidators.validateGatewayAccountReference;
 import static uk.gov.pay.connector.service.ChargeExpiryService.EXPIRABLE_STATUSES;
@@ -65,6 +60,8 @@ public class ChargesApiResource {
     private static final String ACCOUNT_ID = "accountId";
     private static final String PAGE = "page";
     private static final String DISPLAY_SIZE = "display_size";
+
+    private static final Set<String> CHARGE_REQUEST_KEYS_THAT_MAY_HAVE_PII = Collections.singleton("description");
 
     private final ChargeDao chargeDao;
     private final GatewayAccountDao gatewayAccountDao;
@@ -152,8 +149,7 @@ public class ChargesApiResource {
 
         return gatewayAccountDao.findById(accountId).map(
                 gatewayAccountEntity -> {
-                    // Some services put PII in the description, so remove it before logging
-                    logger.info("Creating new charge - {}", sanitizedMap(chargeRequest, singleton("description")));
+                    logger.info("Creating new charge - {}", stringifyChargeRequestWithoutPii(chargeRequest));
                     ChargeResponse response = chargeService.create(chargeRequest, gatewayAccountEntity, uriInfo);
                     return created(response.getLink("self")).entity(response).build();
                 })
@@ -237,10 +233,11 @@ public class ChargesApiResource {
         return !value.isPresent() || value.get().length() <= fieldSize; //already checked that mandatory fields are already there
     }
 
-    private static Map<String, String> sanitizedMap(Map<String, String> map, Set<String> keysToRemove) {
+    private static String stringifyChargeRequestWithoutPii(Map<String, String> map) {
         return map.entrySet().stream()
-                .filter(entry -> !keysToRemove.contains(entry.getKey()))
-                .collect(Collectors.toMap(entry -> entry.getKey(), entry -> entry.getValue()));
+                .filter(entry -> !CHARGE_REQUEST_KEYS_THAT_MAY_HAVE_PII.contains(entry.getKey()))
+                .collect(Collectors.toMap(entry -> entry.getKey(), entry -> entry.getValue()))
+                .toString();
     }
 
     private static F<String, Response> handleError =
