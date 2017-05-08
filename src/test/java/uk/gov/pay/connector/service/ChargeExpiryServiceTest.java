@@ -15,10 +15,12 @@ import uk.gov.pay.connector.model.domain.ChargeStatus;
 import uk.gov.pay.connector.model.domain.GatewayAccountEntity;
 import uk.gov.pay.connector.model.gateway.GatewayResponse;
 import uk.gov.pay.connector.model.gateway.GatewayResponse.GatewayResponseBuilder;
+import uk.gov.pay.connector.service.BaseCancelResponse.CancelStatus;
 import uk.gov.pay.connector.service.transaction.TransactionFlow;
 import uk.gov.pay.connector.service.worldpay.WorldpayBaseResponse;
 
 import java.time.ZonedDateTime;
+import uk.gov.pay.connector.service.worldpay.WorldpayCancelResponse;
 
 import static java.util.Collections.singletonList;
 import static org.hamcrest.core.Is.is;
@@ -43,7 +45,7 @@ public class ChargeExpiryServiceTest {
     PaymentProvider mockPaymentProvider;
 
     @Mock
-    WorldpayBaseResponse mockWorldpayBaseResponse;
+    WorldpayCancelResponse mockWorldpayCancelResponse;
 
 
     @Before
@@ -62,8 +64,10 @@ public class ChargeExpiryServiceTest {
                 .withGatewayAccountEntity(gatewayAccount)
                 .build();
 
-        GatewayResponseBuilder<WorldpayBaseResponse> gatewayResponseBuilder = responseBuilder();
-        GatewayResponse<WorldpayBaseResponse> gatewayResponse = gatewayResponseBuilder.withResponse(mockWorldpayBaseResponse).build();
+        GatewayResponseBuilder<BaseCancelResponse> gatewayResponseBuilder = responseBuilder();
+        GatewayResponse<BaseCancelResponse> gatewayResponse = gatewayResponseBuilder.withResponse(mockWorldpayCancelResponse).build();
+
+        when(mockWorldpayCancelResponse.cancelStatus()).thenReturn(CancelStatus.CANCELLED);
 
         when(mockChargeDao.merge(chargeEntity)).thenReturn(chargeEntity);
         when(mockPaymentProviders.byName(PaymentGatewayName.WORLDPAY)).thenReturn(mockPaymentProvider);
@@ -86,7 +90,8 @@ public class ChargeExpiryServiceTest {
         gatewayAccount.setGatewayName("worldpay");
 
         GatewayResponseBuilder<WorldpayBaseResponse> gatewayResponseBuilder = responseBuilder();
-        GatewayResponse<WorldpayBaseResponse> gatewayResponse = gatewayResponseBuilder.withResponse(mockWorldpayBaseResponse).build();
+        GatewayResponse<WorldpayBaseResponse> gatewayResponse = gatewayResponseBuilder.withResponse(
+            mockWorldpayCancelResponse).build();
         when(mockPaymentProviders.byName(PaymentGatewayName.WORLDPAY)).thenReturn(mockPaymentProvider);
         when(mockPaymentProvider.cancel(any())).thenReturn(gatewayResponse);
 

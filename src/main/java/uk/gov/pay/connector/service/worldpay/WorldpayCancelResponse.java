@@ -16,6 +16,11 @@ public class WorldpayCancelResponse extends WorldpayBaseResponse implements Base
         return transactionId;
     }
 
+    @Override
+    public CancelStatus cancelStatus() {
+        return CancelStatus.CANCELLED;
+    }
+
     public void setTransactionId(String transactionId) {
         this.transactionId = transactionId;
     }

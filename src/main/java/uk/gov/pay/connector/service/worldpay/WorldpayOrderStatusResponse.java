@@ -2,6 +2,7 @@ package uk.gov.pay.connector.service.worldpay;
 
 import org.eclipse.persistence.oxm.annotations.XmlPath;
 import uk.gov.pay.connector.service.BaseAuthoriseResponse;
+import uk.gov.pay.connector.service.BaseCancelResponse;
 import uk.gov.pay.connector.service.BaseInquiryResponse;
 
 import javax.xml.bind.annotation.XmlRootElement;
@@ -9,7 +10,7 @@ import javax.xml.bind.annotation.XmlRootElement;
 import static org.apache.commons.lang3.StringUtils.trim;
 
 @XmlRootElement(name = "paymentService")
-public class WorldpayOrderStatusResponse implements BaseAuthoriseResponse, BaseInquiryResponse {
+public class WorldpayOrderStatusResponse implements BaseAuthoriseResponse, BaseCancelResponse, BaseInquiryResponse {
 
     private static final String WORLDPAY_AUTHORISED_EVENT = "AUTHORISED";
     private static final String WORLDPAY_REFUSED_EVENT = "REFUSED";
@@ -95,6 +96,11 @@ public class WorldpayOrderStatusResponse implements BaseAuthoriseResponse, BaseI
         }
 
         return AuthoriseStatus.ERROR;
+    }
+
+    @Override
+    public CancelStatus cancelStatus() {
+        return CancelStatus.CANCELLED;
     }
 
     @Override

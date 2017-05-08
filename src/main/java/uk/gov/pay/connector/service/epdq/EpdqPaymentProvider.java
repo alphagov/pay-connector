@@ -60,7 +60,7 @@ public class EpdqPaymentProvider extends BasePaymentProvider<BaseResponse> {
 
     @Override
     public GatewayResponse cancel(CancelGatewayRequest request) {
-        throw new UnsupportedOperationException("Cancel operation not supported.");
+        return sendReceive(ROUTE_FOR_MAINTENANCE_ORDER, request, buildCancelOrderFor(), EpdqCancelResponse.class, extractResponseIdentifier());
     }
 
     @Override
@@ -98,6 +98,16 @@ public class EpdqPaymentProvider extends BasePaymentProvider<BaseResponse> {
 
     private Function<CaptureGatewayRequest, GatewayOrder> buildCaptureOrderFor() {
         return request -> anEpdqCaptureOrderRequestBuilder()
+                .withUserId(request.getGatewayAccount().getCredentials().get(CREDENTIALS_USERNAME))
+                .withPassword(request.getGatewayAccount().getCredentials().get(CREDENTIALS_PASSWORD))
+                .withShaPassphrase(request.getGatewayAccount().getCredentials().get(CREDENTIALS_SHA_PASSPHRASE))
+                .withMerchantCode(request.getGatewayAccount().getCredentials().get(CREDENTIALS_MERCHANT_ID))
+                .withTransactionId(request.getTransactionId())
+                .build();
+    }
+
+    private Function<CancelGatewayRequest, GatewayOrder> buildCancelOrderFor() {
+        return request -> anEpdqCancelOrderRequestBuilder()
                 .withUserId(request.getGatewayAccount().getCredentials().get(CREDENTIALS_USERNAME))
                 .withPassword(request.getGatewayAccount().getCredentials().get(CREDENTIALS_PASSWORD))
                 .withShaPassphrase(request.getGatewayAccount().getCredentials().get(CREDENTIALS_SHA_PASSPHRASE))

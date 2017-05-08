@@ -25,6 +25,7 @@ import static uk.gov.pay.connector.model.domain.ChargeStatus.AUTHORISATION_3DS_R
 import static uk.gov.pay.connector.model.domain.ChargeStatus.CREATED;
 import static uk.gov.pay.connector.model.domain.ChargeStatus.ENTERING_CARD_DETAILS;
 import static uk.gov.pay.connector.model.gateway.GatewayResponse.GatewayResponseBuilder.responseBuilder;
+import static uk.gov.pay.connector.service.BaseCancelResponse.CancelStatus.CANCELLED;
 import static uk.gov.pay.connector.service.CancelServiceFunctions.*;
 import static uk.gov.pay.connector.service.StatusFlow.SYSTEM_CANCELLATION_FLOW;
 import static uk.gov.pay.connector.service.StatusFlow.USER_CANCELLATION_FLOW;
@@ -98,8 +99,17 @@ public class ChargeCancelService {
         };
     }
 
-    private ChargeStatus determineTerminalState(GatewayResponse cancelResponse, StatusFlow statusFlow) {
-        return cancelResponse.isSuccessful() ? statusFlow.getSuccessTerminalState() : statusFlow.getFailureTerminalState();
+    private ChargeStatus determineTerminalState(GatewayResponse<BaseCancelResponse> cancelResponse, StatusFlow statusFlow) {
+        return cancelResponse.getBaseResponse().map(response -> {
+            switch (response.cancelStatus()) {
+                case CANCELLED:
+                    return statusFlow.getSuccessTerminalState();
+                case SUBMITTED:
+                    return statusFlow.getSubmittedState();
+                default:
+                    return statusFlow.getFailureTerminalState();
+            }
+        }).orElse(statusFlow.getFailureTerminalState());
     }
 
     private GatewayResponse<BaseCancelResponse> nonGatewayCancel(ChargeEntity chargeEntity, StatusFlow statusFlow) {

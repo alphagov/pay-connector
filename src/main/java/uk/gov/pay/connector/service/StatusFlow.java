@@ -16,6 +16,7 @@ public class StatusFlow {
             ),
             USER_CANCEL_READY,
             USER_CANCELLED,
+            USER_CANCEL_SUBMITTED,
             USER_CANCEL_ERROR
     );
 
@@ -27,6 +28,7 @@ public class StatusFlow {
             ),
             SYSTEM_CANCEL_READY,
             SYSTEM_CANCELLED,
+            SYSTEM_CANCEL_SUBMITTED,
             SYSTEM_CANCEL_ERROR
     );
 
@@ -38,6 +40,7 @@ public class StatusFlow {
             ),
             EXPIRE_CANCEL_READY,
             EXPIRED,
+            EXPIRE_CANCEL_SUBMITTED,
             EXPIRE_CANCEL_FAILED
     );
 
@@ -45,13 +48,15 @@ public class StatusFlow {
     private final List<ChargeStatus> terminatableStatuses;
     private final ChargeStatus lockState;
     private final ChargeStatus successTerminalState;
+    private final ChargeStatus submittedState;
     private final ChargeStatus failureTerminalState;
 
-    private StatusFlow(String name, List<ChargeStatus> terminatableStatuses, ChargeStatus lockState, ChargeStatus successTerminalState, ChargeStatus failureTerminalState) {
+    private StatusFlow(String name, List<ChargeStatus> terminatableStatuses, ChargeStatus lockState, ChargeStatus successTerminalState, ChargeStatus submittedState, ChargeStatus failureTerminalState) {
         this.name = name;
         this.terminatableStatuses = terminatableStatuses;
         this.lockState = lockState;
         this.successTerminalState = successTerminalState;
+        this.submittedState = submittedState;
         this.failureTerminalState = failureTerminalState;
     }
 
@@ -69,6 +74,10 @@ public class StatusFlow {
 
     public ChargeStatus getSuccessTerminalState() {
         return successTerminalState;
+    }
+
+    public ChargeStatus getSubmittedState() {
+        return submittedState;
     }
 
     public ChargeStatus getFailureTerminalState() {

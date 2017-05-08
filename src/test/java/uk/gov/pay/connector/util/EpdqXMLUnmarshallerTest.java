@@ -1,7 +1,9 @@
 package uk.gov.pay.connector.util;
 
 import org.junit.Test;
+import uk.gov.pay.connector.service.BaseCancelResponse;
 import uk.gov.pay.connector.service.epdq.EpdqAuthorisationResponse;
+import uk.gov.pay.connector.service.epdq.EpdqCancelResponse;
 import uk.gov.pay.connector.service.epdq.EpdqCaptureResponse;
 
 import static org.hamcrest.core.Is.is;
@@ -100,6 +102,42 @@ public class EpdqXMLUnmarshallerTest {
         EpdqCaptureResponse response = XMLUnmarshaller.unmarshall(errorPayload, EpdqCaptureResponse.class);
 
         assertThat(response.getTransactionId(), is("3014644340"));
+        assertThat(response.getErrorCode(), is("50001127"));
+        assertThat(response.getErrorMessage(), is("|this order is not authorized|"));
+    }
+
+    @Test
+    public void shouldUnmarshallACancelSuccessResponse() throws Exception {
+        String payload = TestTemplateResourceLoader.load(EPDQ_CANCEL_SUCCESS_RESPONSE);
+        EpdqCancelResponse response = XMLUnmarshaller.unmarshall(payload, EpdqCancelResponse.class);
+
+        assertThat(response.cancelStatus(), is(BaseCancelResponse.CancelStatus.CANCELLED));
+        assertThat(response.getTransactionId(), is("3014644340"));
+
+        assertThat(response.getErrorCode(), is(nullValue()));
+        assertThat(response.getErrorMessage(), is(nullValue()));
+    }
+
+    @Test
+    public void shouldUnmarshallACancelWaitingResponse() throws Exception {
+        String payload = TestTemplateResourceLoader.load(EPDQ_CANCEL_WAITING_RESPONSE);
+        EpdqCancelResponse response = XMLUnmarshaller.unmarshall(payload, EpdqCancelResponse.class);
+
+        assertThat(response.cancelStatus(), is(BaseCancelResponse.CancelStatus.SUBMITTED));
+        assertThat(response.getTransactionId(), is("3014644340"));
+
+        assertThat(response.getErrorCode(), is(nullValue()));
+        assertThat(response.getErrorMessage(), is(nullValue()));
+    }
+
+    @Test
+    public void shouldUnmarshallACancelErrorResponse() throws Exception {
+        String payload = TestTemplateResourceLoader.load(EPDQ_CANCEL_ERROR_RESPONSE);
+        EpdqCancelResponse response = XMLUnmarshaller.unmarshall(payload, EpdqCancelResponse.class);
+
+        assertThat(response.cancelStatus(), is(BaseCancelResponse.CancelStatus.ERROR));
+        assertThat(response.getTransactionId(), is("3014644340"));
+
         assertThat(response.getErrorCode(), is("50001127"));
         assertThat(response.getErrorMessage(), is("|this order is not authorized|"));
     }

@@ -10,6 +10,7 @@ import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.mockito.Mock;
 import org.mockito.runners.MockitoJUnitRunner;
+import uk.gov.pay.connector.model.CancelGatewayRequest;
 import uk.gov.pay.connector.model.CaptureGatewayRequest;
 import uk.gov.pay.connector.model.GatewayError;
 import uk.gov.pay.connector.model.domain.Address;
@@ -19,7 +20,6 @@ import uk.gov.pay.connector.model.domain.GatewayAccountEntity;
 import uk.gov.pay.connector.model.gateway.AuthorisationGatewayRequest;
 import uk.gov.pay.connector.model.gateway.GatewayResponse;
 import uk.gov.pay.connector.service.*;
-import uk.gov.pay.connector.service.worldpay.WorldpayCaptureResponse;
 import uk.gov.pay.connector.util.AuthUtils;
 import uk.gov.pay.connector.util.TestTemplateResourceLoader;
 
@@ -83,7 +83,7 @@ public class EpdqPaymentProviderTest {
         when(mockMetricRegistry.histogram(anyString())).thenReturn(mockHistogram);
         when(mockMetricRegistry.counter(anyString())).thenReturn(mockCounter);
         when(mockClientFactory.createWithDropwizardClient(
-                eq(PaymentGatewayName.EPDQ), any(GatewayOperation.class), any(MetricRegistry.class))
+                        eq(PaymentGatewayName.EPDQ), any(GatewayOperation.class), any(MetricRegistry.class))
         )
                 .thenReturn(mockClient);
 
@@ -119,7 +119,7 @@ public class EpdqPaymentProviderTest {
     @Test
     public void shouldAuthorise() {
         mockPaymentProviderResponse(200, successAuthResponse());
-        GatewayResponse<EpdqAuthorisationResponse> response = provider.authorise(buildTestAuthorisationGatewayRequest());
+        GatewayResponse<EpdqAuthorisationResponse> response = provider.authorise(buildTestAuthorisationRequest());
         verifyPaymentProviderRequest(successAuthRequest());
         assertTrue(response.isSuccessful());
         assertThat(response.getBaseResponse().get().getTransactionId(), is("3014644340"));
@@ -128,7 +128,7 @@ public class EpdqPaymentProviderTest {
     @Test
     public void shouldNotAuthoriseIfPaymentProviderReturnsUnexpectedStatusCode() {
         mockPaymentProviderResponse(400, errorAuthResponse());
-        GatewayResponse<EpdqAuthorisationResponse> response = provider.authorise(buildTestAuthorisationGatewayRequest());
+        GatewayResponse<EpdqAuthorisationResponse> response = provider.authorise(buildTestAuthorisationRequest());
         assertThat(response.isFailed(), is(true));
         assertThat(response.getGatewayError().isPresent(), is(true));
         assertEquals(response.getGatewayError().get(), new GatewayError("Unexpected Response Code From Gateway", UNEXPECTED_STATUS_CODE_FROM_GATEWAY));
@@ -137,7 +137,7 @@ public class EpdqPaymentProviderTest {
     @Test
     public void shouldCapture() {
         mockPaymentProviderResponse(200, successCaptureResponse());
-        GatewayResponse<EpdqCaptureResponse> response = provider.capture(buildTestCaptureGatewayRequest());
+        GatewayResponse<EpdqCaptureResponse> response = provider.capture(buildTestCaptureRequest());
         verifyPaymentProviderRequest(successCaptureRequest());
         assertTrue(response.isSuccessful());
         assertThat(response.getBaseResponse().get().getTransactionId(), is("3014644340"));
@@ -146,7 +146,25 @@ public class EpdqPaymentProviderTest {
     @Test
     public void shouldNotCaptureIfPaymentProviderReturnsUnexpectedStatusCode() {
         mockPaymentProviderResponse(400, errorAuthResponse());
-        GatewayResponse<EpdqCaptureResponse> response = provider.capture(buildTestCaptureGatewayRequest());
+        GatewayResponse<EpdqCaptureResponse> response = provider.capture(buildTestCaptureRequest());
+        assertThat(response.isFailed(), is(true));
+        assertThat(response.getGatewayError().isPresent(), is(true));
+        assertEquals(response.getGatewayError().get(), new GatewayError("Unexpected Response Code From Gateway", UNEXPECTED_STATUS_CODE_FROM_GATEWAY));
+    }
+
+    @Test
+    public void shouldCancel() {
+        mockPaymentProviderResponse(200, successCancelResponse());
+        GatewayResponse<EpdqCancelResponse> response = provider.cancel(buildTestCancelRequest());
+        verifyPaymentProviderRequest(successCancelRequest());
+        assertTrue(response.isSuccessful());
+        assertThat(response.getBaseResponse().get().getTransactionId(), is("3014644340"));
+    }
+
+    @Test
+    public void shouldNotCancelIfPaymentProviderReturnsUnexpectedStatusCode() {
+        mockPaymentProviderResponse(400, errorAuthResponse());
+        GatewayResponse<EpdqCaptureResponse> response = provider.cancel(buildTestCancelRequest());
         assertThat(response.isFailed(), is(true));
         assertThat(response.getGatewayError().isPresent(), is(true));
         assertEquals(response.getGatewayError().get(), new GatewayError("Unexpected Response Code From Gateway", UNEXPECTED_STATUS_CODE_FROM_GATEWAY));
@@ -167,28 +185,40 @@ public class EpdqPaymentProviderTest {
         return gatewayAccount;
     }
 
-    private AuthorisationGatewayRequest buildTestAuthorisationGatewayRequest() {
-        return buildTestAuthorisationGatewayRequest(buildTestGatewayAccountEntity());
+    private AuthorisationGatewayRequest buildTestAuthorisationRequest() {
+        return buildTestAuthorisationRequest(buildTestGatewayAccountEntity());
     }
 
-    private CaptureGatewayRequest buildTestCaptureGatewayRequest() {
-        return buildTestCaptureGatewayRequest(buildTestGatewayAccountEntity());
+    private CaptureGatewayRequest buildTestCaptureRequest() {
+        return buildTestCaptureRequest(buildTestGatewayAccountEntity());
     }
 
-    private AuthorisationGatewayRequest buildTestAuthorisationGatewayRequest(GatewayAccountEntity accountEntity) {
+    private CancelGatewayRequest buildTestCancelRequest() {
+        return buildTestCancelRequest(buildTestGatewayAccountEntity());
+    }
+
+    private AuthorisationGatewayRequest buildTestAuthorisationRequest(GatewayAccountEntity accountEntity) {
         ChargeEntity chargeEntity = aValidChargeEntity()
                 .withExternalId("mq4ht90j2oir6am585afk58kml")
                 .withGatewayAccountEntity(accountEntity)
                 .build();
-        return buildTestAuthorisationGatewayRequest(chargeEntity);
+        return buildTestAuthorisationRequest(chargeEntity);
     }
 
-    private CaptureGatewayRequest buildTestCaptureGatewayRequest(GatewayAccountEntity accountEntity) {
+    private CaptureGatewayRequest buildTestCaptureRequest(GatewayAccountEntity accountEntity) {
         ChargeEntity chargeEntity = aValidChargeEntity()
                 .withGatewayAccountEntity(accountEntity)
                 .withTransactionId("payId")
                 .build();
-        return buildTestCaptureGatewayRequest(chargeEntity);
+        return buildTestCaptureRequest(chargeEntity);
+    }
+
+    private CancelGatewayRequest buildTestCancelRequest(GatewayAccountEntity accountEntity) {
+        ChargeEntity chargeEntity = aValidChargeEntity()
+                .withGatewayAccountEntity(accountEntity)
+                .withTransactionId("payId")
+                .build();
+        return buildTestCancelRequest(chargeEntity);
     }
 
     private AuthCardDetails buildTestAuthCardDetails() {
@@ -203,12 +233,16 @@ public class EpdqPaymentProviderTest {
         return AuthUtils.buildAuthCardDetails("Mr. Payment", "5555444433331111", "737", "08/18", "visa", address);
     }
 
-    private AuthorisationGatewayRequest buildTestAuthorisationGatewayRequest(ChargeEntity chargeEntity) {
+    private AuthorisationGatewayRequest buildTestAuthorisationRequest(ChargeEntity chargeEntity) {
         return new AuthorisationGatewayRequest(chargeEntity, buildTestAuthCardDetails());
     }
 
-    private CaptureGatewayRequest buildTestCaptureGatewayRequest(ChargeEntity chargeEntity) {
+    private CaptureGatewayRequest buildTestCaptureRequest(ChargeEntity chargeEntity) {
         return CaptureGatewayRequest.valueOf(chargeEntity);
+    }
+
+    private CancelGatewayRequest buildTestCancelRequest(ChargeEntity chargeEntity) {
+        return CancelGatewayRequest.valueOf(chargeEntity);
     }
 
 
@@ -261,7 +295,12 @@ public class EpdqPaymentProviderTest {
         return TestTemplateResourceLoader.load(TestTemplateResourceLoader.EPDQ_CAPTURE_REQUEST);
     }
 
-    private String errorCaptureResponse() {
-        return TestTemplateResourceLoader.load(EPDQ_CAPTURE_ERROR_RESPONSE);
+    private String successCancelResponse() {
+        return TestTemplateResourceLoader.load(EPDQ_CANCEL_SUCCESS_RESPONSE);
+    }
+
+
+    private String successCancelRequest() {
+        return TestTemplateResourceLoader.load(EPDQ_CANCEL_REQUEST);
     }
 }

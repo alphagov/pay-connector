@@ -201,27 +201,6 @@ public class ChargeCancelResourceITest extends ChargingITestBase {
                 .body("message", is(expectedMessage));
     }
 
-    private String cancelChargeAndCheckApiStatus(String chargeId, ChargeStatus targetState, int targetHttpStatus) {
-
-        restApiCall
-                .withChargeId(chargeId)
-                .postChargeCancellation()
-                .statusCode(targetHttpStatus); //assertion
-
-        restApiCall
-                .withChargeId(chargeId)
-                .getCharge()
-                .body("state.status", is("cancelled"))
-                .body("state.message", is("Payment was cancelled by the service"))
-                .body("state.code", is("P0040"));
-
-        restApiCall
-                .withChargeId(chargeId)
-                .getFrontendCharge()
-                .body("status", is(targetState.getValue()));
-        return chargeId;
-    }
-
     private String createNewInPastChargeWithStatus(ChargeStatus status) {
         return addCharge(status, "ref", ZonedDateTime.now().minusHours(1), "irrelavant");
     }

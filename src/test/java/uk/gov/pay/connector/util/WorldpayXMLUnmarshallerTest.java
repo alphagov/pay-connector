@@ -2,6 +2,7 @@ package uk.gov.pay.connector.util;
 
 import org.junit.Test;
 import uk.gov.pay.connector.service.BaseAuthoriseResponse.AuthoriseStatus;
+import uk.gov.pay.connector.service.BaseCancelResponse;
 import uk.gov.pay.connector.service.worldpay.*;
 
 import java.time.LocalDate;
@@ -123,6 +124,7 @@ public class WorldpayXMLUnmarshallerTest {
     public void shouldUnmarshallCanceledAuthorisations() throws Exception {
         String failedPayload = TestTemplateResourceLoader.load(WORLDPAY_AUTHORISATION_CANCELLED_RESPONSE);
         WorldpayOrderStatusResponse response = XMLUnmarshaller.unmarshall(failedPayload, WorldpayOrderStatusResponse.class);
+        assertThat(response.cancelStatus(), is(BaseCancelResponse.CancelStatus.CANCELLED));
         assertThat(response.getLastEvent(), is("CANCELLED"));
         assertThat(response.getRefusedReturnCode(), is("5"));
         assertThat(response.getRefusedReturnCodeDescription(), is("CANCELLED"));

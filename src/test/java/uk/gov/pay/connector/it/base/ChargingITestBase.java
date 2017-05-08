@@ -8,6 +8,7 @@ import com.jayway.restassured.specification.RequestSpecification;
 import org.apache.commons.lang.math.RandomUtils;
 import org.hamcrest.Description;
 import org.hamcrest.Matcher;
+import org.hamcrest.Matchers;
 import org.hamcrest.TypeSafeMatcher;
 import org.junit.Before;
 import org.junit.Rule;
@@ -20,7 +21,6 @@ import uk.gov.pay.connector.rules.SmartpayMockClient;
 import uk.gov.pay.connector.rules.WorldpayMockClient;
 import uk.gov.pay.connector.util.PortFactory;
 import uk.gov.pay.connector.util.RestAssuredClient;
-import uk.gov.pay.connector.util.TransactionId;
 
 import java.io.IOException;
 import java.time.ZonedDateTime;
@@ -288,4 +288,25 @@ public class ChargingITestBase extends ChargingITestCommon{
         };
     }
 
+    protected String cancelChargeAndCheckApiStatus(String chargeId, ChargeStatus targetState, int targetHttpStatus) {
+
+        connectorRestApi
+                .withChargeId(chargeId)
+                .postChargeCancellation()
+                .statusCode(targetHttpStatus); //assertion
+
+        connectorRestApi
+                .withChargeId(chargeId)
+                .getCharge()
+                .body("state.status", Matchers.is("cancelled"))
+                .body("state.message", Matchers.is("Payment was cancelled by the service"))
+                .body("state.code", Matchers.is("P0040"));
+
+        connectorRestApi
+                .withChargeId(chargeId)
+                .getFrontendCharge()
+                .body("status", Matchers.is(targetState.getValue()));
+
+        return chargeId;
+    }
 }
