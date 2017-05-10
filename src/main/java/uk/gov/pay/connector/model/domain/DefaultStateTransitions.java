@@ -20,7 +20,7 @@ public final class DefaultStateTransitions extends StateTransitions {
             .put(AUTHORISATION_3DS_READY,       validTransitions(AUTHORISATION_SUCCESS, AUTHORISATION_REJECTED, AUTHORISATION_ERROR, AUTHORISATION_CANCELLED))
             .put(AUTHORISATION_SUCCESS,         validTransitions(CAPTURE_APPROVED, CAPTURE_READY, SYSTEM_CANCEL_READY, USER_CANCEL_READY, EXPIRE_CANCEL_READY))
             .put(CAPTURE_APPROVED,              validTransitions(CAPTURE_READY, CAPTURE_ERROR))
-            .put(CAPTURE_APPROVED_RETRY,        validTransitions(CAPTURE_READY, CAPTURE_ERROR))
+            .put(CAPTURE_APPROVED_RETRY,        validTransitions(CAPTURE_READY, CAPTURE_ERROR, CAPTURED))
             .put(CAPTURE_READY,                 validTransitions(CAPTURE_SUBMITTED, CAPTURE_ERROR, CAPTURE_APPROVED_RETRY))
             .put(CAPTURE_SUBMITTED,             validTransitions(CAPTURED)) // can this ever be a capture error?
             .put(EXPIRE_CANCEL_READY,           validTransitions(EXPIRE_CANCEL_SUBMITTED, EXPIRE_CANCEL_FAILED, EXPIRED))
