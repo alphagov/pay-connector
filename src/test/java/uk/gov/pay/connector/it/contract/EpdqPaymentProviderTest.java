@@ -4,6 +4,7 @@ import com.codahale.metrics.Counter;
 import com.codahale.metrics.Histogram;
 import com.codahale.metrics.MetricRegistry;
 import com.google.common.collect.ImmutableMap;
+import javax.ws.rs.core.MediaType;
 import org.junit.Assume;
 import org.junit.Before;
 import org.junit.Ignore;
@@ -28,7 +29,6 @@ import uk.gov.pay.connector.service.epdq.EpdqPaymentProvider;
 import uk.gov.pay.connector.util.TestClientFactory;
 
 import javax.ws.rs.client.Client;
-import javax.ws.rs.core.MediaType;
 import java.io.IOException;
 import java.net.URL;
 import java.util.EnumMap;
@@ -111,7 +111,8 @@ public class EpdqPaymentProviderTest {
 
     private PaymentProvider getEpdqPaymentProvider() throws Exception {
         Client client = TestClientFactory.createJerseyClient();
-        GatewayClient gatewayClient = new GatewayClient(client, ImmutableMap.of(TEST.toString(), url), MediaType.APPLICATION_FORM_URLENCODED_TYPE, EpdqPaymentProvider.includeSessionIdentifier(), mockMetricRegistry);
+        GatewayClient gatewayClient = new GatewayClient(client, ImmutableMap.of(TEST.toString(), url),
+            EpdqPaymentProvider.includeSessionIdentifier(), mockMetricRegistry);
         EnumMap<GatewayOperation, GatewayClient> gatewayClients = GatewayOperationClientBuilder.builder()
                 .authClient(gatewayClient)
                 .captureClient(gatewayClient)

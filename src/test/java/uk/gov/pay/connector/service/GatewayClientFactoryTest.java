@@ -8,7 +8,6 @@ import org.mockito.Mock;
 import org.mockito.runners.MockitoJUnitRunner;
 
 import javax.ws.rs.client.Invocation.Builder;
-import javax.ws.rs.core.MediaType;
 import java.util.Map;
 import java.util.function.BiFunction;
 
@@ -33,7 +32,7 @@ public class GatewayClientFactoryTest {
         BiFunction<GatewayOrder, Builder, Builder> sessionIdentifier = (GatewayOrder o, Builder b) -> mockBuilder;
 
         GatewayClient gatewayClient = gatewayClientFactory.createGatewayClient(PaymentGatewayName.WORLDPAY, GatewayOperation.AUTHORISE,
-                gatewayUrlMap, MediaType.TEXT_XML_TYPE, sessionIdentifier, mockMetricRegistry);
+                gatewayUrlMap, sessionIdentifier, mockMetricRegistry);
 
         assertNotNull(gatewayClient);
         verify(mockClientFactory).createWithDropwizardClient(PaymentGatewayName.WORLDPAY, GatewayOperation.AUTHORISE, mockMetricRegistry);

@@ -11,7 +11,6 @@ import uk.gov.pay.connector.service.worldpay.WorldpayPaymentProvider;
 
 import javax.inject.Inject;
 import javax.ws.rs.client.Invocation;
-import javax.ws.rs.core.MediaType;
 import java.util.EnumMap;
 import java.util.Map;
 import java.util.function.BiFunction;
@@ -50,9 +49,8 @@ public class PaymentProviders<T extends BaseResponse> {
                                                     GatewayOperation operation,
                                                     BiFunction<GatewayOrder, Invocation.Builder, Invocation.Builder> sessionIdentifier) {
         return gatewayClientFactory.createGatewayClient(
-                gateway, operation, config.getGatewayConfigFor(gateway).getUrls(),
-                MediaType.APPLICATION_XML_TYPE, sessionIdentifier,
-                environment.metrics());
+                gateway, operation, config.getGatewayConfigFor(gateway).getUrls(), sessionIdentifier, environment.metrics()
+        );
     }
 
     private PaymentProvider createWorldpayProvider() {

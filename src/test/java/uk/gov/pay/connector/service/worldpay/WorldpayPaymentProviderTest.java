@@ -27,7 +27,6 @@ import javax.ws.rs.client.Client;
 import javax.ws.rs.client.Entity;
 import javax.ws.rs.client.Invocation;
 import javax.ws.rs.client.WebTarget;
-import javax.ws.rs.core.MediaType;
 import javax.ws.rs.core.NewCookie;
 import javax.ws.rs.core.Response;
 import java.io.IOException;
@@ -99,13 +98,13 @@ public class WorldpayPaymentProviderTest {
                 .thenReturn(mockClient);
 
         GatewayClient authClient = gatewayClientFactory.createGatewayClient(PaymentGatewayName.WORLDPAY, GatewayOperation.AUTHORISE,
-                urlMap, MediaType.APPLICATION_XML_TYPE, includeSessionIdentifier(), mockMetricRegistry);
+                urlMap, includeSessionIdentifier(), mockMetricRegistry);
         GatewayClient cancelClient = gatewayClientFactory.createGatewayClient(PaymentGatewayName.WORLDPAY, GatewayOperation.CANCEL,
-                urlMap, MediaType.APPLICATION_XML_TYPE, includeSessionIdentifier(), mockMetricRegistry);
+                urlMap, includeSessionIdentifier(), mockMetricRegistry);
         GatewayClient refundClient = gatewayClientFactory.createGatewayClient(PaymentGatewayName.WORLDPAY, GatewayOperation.REFUND,
-                urlMap, MediaType.APPLICATION_XML_TYPE, includeSessionIdentifier(), mockMetricRegistry);
+                urlMap, includeSessionIdentifier(), mockMetricRegistry);
         GatewayClient captureClient = gatewayClientFactory.createGatewayClient(PaymentGatewayName.WORLDPAY, GatewayOperation.CAPTURE,
-                urlMap, MediaType.APPLICATION_XML_TYPE, includeSessionIdentifier(), mockMetricRegistry);
+                urlMap, includeSessionIdentifier(), mockMetricRegistry);
 
         gatewayClients = GatewayOperationClientBuilder.builder()
                 .authClient(authClient)

@@ -29,7 +29,6 @@ import uk.gov.pay.connector.util.TestClientFactory;
 import uk.gov.pay.connector.util.TestTemplateResourceLoader;
 
 import javax.ws.rs.client.Client;
-import javax.ws.rs.core.MediaType;
 import java.io.IOException;
 import java.net.URL;
 import java.util.EnumMap;
@@ -179,8 +178,8 @@ public class SmartpayPaymentProviderTest {
 
     private PaymentProvider getSmartpayPaymentProvider() throws Exception {
         Client client = TestClientFactory.createJerseyClient();
-        GatewayClient gatewayClient = new GatewayClient(client, ImmutableMap.of(TEST.toString(), url), MediaType.APPLICATION_XML_TYPE,
-                SmartpayPaymentProvider.includeSessionIdentifier(), mockMetricRegistry);
+        GatewayClient gatewayClient = new GatewayClient(client, ImmutableMap.of(TEST.toString(), url),
+            SmartpayPaymentProvider.includeSessionIdentifier(), mockMetricRegistry);
         EnumMap<GatewayOperation, GatewayClient> gatewayClients = GatewayOperationClientBuilder.builder()
                 .authClient(gatewayClient)
                 .captureClient(gatewayClient)

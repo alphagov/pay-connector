@@ -4,6 +4,7 @@ import com.codahale.metrics.Counter;
 import com.codahale.metrics.Histogram;
 import com.codahale.metrics.MetricRegistry;
 import com.google.common.collect.ImmutableMap;
+import javax.ws.rs.core.MediaType;
 import org.junit.Assert;
 import org.junit.Before;
 import org.junit.Test;
@@ -27,7 +28,6 @@ import javax.ws.rs.client.Client;
 import javax.ws.rs.client.Entity;
 import javax.ws.rs.client.Invocation;
 import javax.ws.rs.client.WebTarget;
-import javax.ws.rs.core.MediaType;
 import javax.ws.rs.core.Response;
 import java.util.EnumMap;
 import java.util.Map;
@@ -88,13 +88,13 @@ public class EpdqPaymentProviderTest {
                 .thenReturn(mockClient);
 
         GatewayClient authClient = gatewayClientFactory.createGatewayClient(PaymentGatewayName.EPDQ, GatewayOperation.AUTHORISE,
-                urlMap, MediaType.APPLICATION_XML_TYPE, includeSessionIdentifier(), mockMetricRegistry);
+                urlMap, includeSessionIdentifier(), mockMetricRegistry);
         GatewayClient cancelClient = gatewayClientFactory.createGatewayClient(PaymentGatewayName.EPDQ, GatewayOperation.CANCEL,
-                urlMap, MediaType.APPLICATION_XML_TYPE, includeSessionIdentifier(), mockMetricRegistry);
+                urlMap, includeSessionIdentifier(), mockMetricRegistry);
         GatewayClient refundClient = gatewayClientFactory.createGatewayClient(PaymentGatewayName.EPDQ, GatewayOperation.REFUND,
-                urlMap, MediaType.APPLICATION_XML_TYPE, includeSessionIdentifier(), mockMetricRegistry);
+                urlMap, includeSessionIdentifier(), mockMetricRegistry);
         GatewayClient captureClient = gatewayClientFactory.createGatewayClient(PaymentGatewayName.EPDQ, GatewayOperation.CAPTURE,
-                urlMap, MediaType.APPLICATION_XML_TYPE, includeSessionIdentifier(), mockMetricRegistry);
+                urlMap, includeSessionIdentifier(), mockMetricRegistry);
 
         gatewayClients = GatewayOperationClientBuilder.builder()
                 .authClient(authClient)
@@ -272,7 +272,8 @@ public class EpdqPaymentProviderTest {
     }
 
     private void verifyPaymentProviderRequest(String requestPayload) {
-        verify(mockClientInvocationBuilder).post(Entity.entity(requestPayload, "application/xml"));
+        verify(mockClientInvocationBuilder).post(Entity.entity(requestPayload,
+            MediaType.APPLICATION_FORM_URLENCODED));
     }
 
     private String successAuthRequest() {

@@ -1,6 +1,7 @@
 package uk.gov.pay.connector.service;
 
 
+import javax.ws.rs.core.MediaType;
 import uk.gov.pay.connector.model.OrderRequestType;
 import uk.gov.pay.connector.model.domain.AuthCardDetails;
 import uk.gov.pay.connector.util.templates.PayloadBuilder;
@@ -77,6 +78,8 @@ abstract public class OrderRequestBuilder {
         this.orderRequestType = orderRequestType;
     }
 
+    public abstract MediaType getMediaType();
+
     public OrderRequestBuilder withTransactionId(String transactionId) {
         templateData.setTransactionId(defaultString(transactionId));
         return this;
@@ -116,6 +119,6 @@ abstract public class OrderRequestBuilder {
     public GatewayOrder build() {
         return new GatewayOrder(
                 orderRequestType,
-                payloadBuilder.buildWith(templateData), providerSessionId);
+                payloadBuilder.buildWith(templateData), providerSessionId, getMediaType());
     }
 }

@@ -39,15 +39,13 @@ public class GatewayClient {
     private final Client client;
     private final Map<String, String> gatewayUrlMap;
     private final MetricRegistry metricRegistry;
-    private final MediaType mediaType;
     private final BiFunction<GatewayOrder, Builder, Builder> sessionIdentifier;
 
-    public GatewayClient(Client client, Map<String, String> gatewayUrlMap, MediaType mediaType,
-                          BiFunction<GatewayOrder, Builder, Builder> sessionIdentifier, MetricRegistry metricRegistry) {
+    public GatewayClient(Client client, Map<String, String> gatewayUrlMap,
+        BiFunction<GatewayOrder, Builder, Builder> sessionIdentifier, MetricRegistry metricRegistry) {
         this.gatewayUrlMap = gatewayUrlMap;
         this.client = client;
         this.metricRegistry = metricRegistry;
-        this.mediaType = mediaType;
         this.sessionIdentifier = sessionIdentifier;
     }
 
@@ -70,7 +68,7 @@ public class GatewayClient {
                             account.getCredentials().get(CREDENTIALS_PASSWORD)));
 
             response = sessionIdentifier.apply(request, requestBuilder)
-                    .post(Entity.entity(request.getPayload(), mediaType));
+                    .post(Entity.entity(request.getPayload(), request.getMediaType()));
 
             int statusCode = response.getStatus();
             Response gatewayResponse = new Response(response);
