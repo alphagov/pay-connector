@@ -1,5 +1,6 @@
 package uk.gov.pay.connector.service.smartpay;
 
+import javax.ws.rs.core.MediaType;
 import uk.gov.pay.connector.model.OrderRequestType;
 import uk.gov.pay.connector.service.OrderRequestBuilder;
 import uk.gov.pay.connector.util.templates.PayloadBuilder;
@@ -49,5 +50,10 @@ public class SmartpayOrderRequestBuilder extends OrderRequestBuilder {
     public SmartpayOrderRequestBuilder withReference(String reference) {
         smartpayTemplateData.setReference(reference);
         return this;
+    }
+
+    @Override
+    public MediaType getMediaType() {
+        return MediaType.APPLICATION_XML_TYPE;
     }
 }

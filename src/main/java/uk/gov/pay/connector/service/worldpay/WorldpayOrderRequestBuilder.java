@@ -1,5 +1,6 @@
 package uk.gov.pay.connector.service.worldpay;
 
+import javax.ws.rs.core.MediaType;
 import org.apache.log4j.Logger;
 import org.joda.time.DateTime;
 import uk.gov.pay.connector.model.OrderRequestType;
@@ -159,5 +160,10 @@ public class WorldpayOrderRequestBuilder extends OrderRequestBuilder {
     public WorldpayOrderRequestBuilder withPaResponse3ds(String paResponse) {
         worldpayTemplateData.setPaResponse3ds(paResponse);
         return this;
+    }
+
+    @Override
+    public MediaType getMediaType() {
+        return MediaType.APPLICATION_XML_TYPE;
     }
 }

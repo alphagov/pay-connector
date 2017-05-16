@@ -27,7 +27,6 @@ import uk.gov.pay.connector.service.worldpay.WorldpayPaymentProvider;
 import uk.gov.pay.connector.util.AuthUtils;
 
 import javax.ws.rs.client.ClientBuilder;
-import javax.ws.rs.core.MediaType;
 import java.io.IOException;
 import java.net.URL;
 import java.util.EnumMap;
@@ -240,8 +239,7 @@ public class WorldpayPaymentProviderTest {
         GatewayClient gatewayClient = new GatewayClient(
                 ClientBuilder.newClient(),
                 getWorldpayConfig().getUrls(),
-                MediaType.APPLICATION_XML_TYPE,
-                WorldpayPaymentProvider.includeSessionIdentifier(),
+            WorldpayPaymentProvider.includeSessionIdentifier(),
                 mockMetricRegistry
         );
         EnumMap<GatewayOperation, GatewayClient> gatewayClientEnumMap = GatewayOperationClientBuilder.builder()

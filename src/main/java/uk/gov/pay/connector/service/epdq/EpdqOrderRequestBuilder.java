@@ -1,5 +1,6 @@
 package uk.gov.pay.connector.service.epdq;
 
+import javax.ws.rs.core.MediaType;
 import uk.gov.pay.connector.model.OrderRequestType;
 import uk.gov.pay.connector.service.OrderRequestBuilder;
 import uk.gov.pay.connector.service.epdq.EpdqSignedPayloadDefinition.EpdqSignedPayloadDefinitionFactory;
@@ -116,5 +117,10 @@ public class EpdqOrderRequestBuilder extends OrderRequestBuilder {
     public EpdqOrderRequestBuilder withShaPassphrase(String shaPassphrase) {
         epdqTemplateData.setShaPassphrase(shaPassphrase);
         return this;
+    }
+
+    @Override
+    public MediaType getMediaType() {
+        return MediaType.APPLICATION_FORM_URLENCODED_TYPE;
     }
 }

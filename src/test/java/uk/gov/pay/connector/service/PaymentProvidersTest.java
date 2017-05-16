@@ -19,7 +19,6 @@ import uk.gov.pay.connector.service.smartpay.SmartpayPaymentProvider;
 import uk.gov.pay.connector.service.worldpay.WorldpayPaymentProvider;
 
 import javax.ws.rs.client.Invocation.Builder;
-import javax.ws.rs.core.MediaType;
 import java.util.Map;
 import java.util.function.BiFunction;
 
@@ -115,32 +114,32 @@ public class PaymentProvidersTest {
 
     @Test
     public void shouldSetupGatewayClientForGatewayOperations() {
-        verify(gatewayClientFactory).createGatewayClient(WORLDPAY, AUTHORISE, worldpayUrlMap, MediaType.APPLICATION_XML_TYPE,
-                WorldpayPaymentProvider.includeSessionIdentifier(), metricRegistry);
-        verify(gatewayClientFactory).createGatewayClient(WORLDPAY, CANCEL, worldpayUrlMap, MediaType.APPLICATION_XML_TYPE,
-                WorldpayPaymentProvider.includeSessionIdentifier(), metricRegistry);
-        verify(gatewayClientFactory).createGatewayClient(WORLDPAY, CAPTURE, worldpayUrlMap, MediaType.APPLICATION_XML_TYPE,
-                WorldpayPaymentProvider.includeSessionIdentifier(), metricRegistry);
-        verify(gatewayClientFactory).createGatewayClient(WORLDPAY, REFUND, worldpayUrlMap, MediaType.APPLICATION_XML_TYPE,
-                WorldpayPaymentProvider.includeSessionIdentifier(), metricRegistry);
+        verify(gatewayClientFactory).createGatewayClient(WORLDPAY, AUTHORISE, worldpayUrlMap,
+            WorldpayPaymentProvider.includeSessionIdentifier(), metricRegistry);
+        verify(gatewayClientFactory).createGatewayClient(WORLDPAY, CANCEL, worldpayUrlMap,
+            WorldpayPaymentProvider.includeSessionIdentifier(), metricRegistry);
+        verify(gatewayClientFactory).createGatewayClient(WORLDPAY, CAPTURE, worldpayUrlMap,
+            WorldpayPaymentProvider.includeSessionIdentifier(), metricRegistry);
+        verify(gatewayClientFactory).createGatewayClient(WORLDPAY, REFUND, worldpayUrlMap,
+            WorldpayPaymentProvider.includeSessionIdentifier(), metricRegistry);
 
-        verify(gatewayClientFactory).createGatewayClient(SMARTPAY, AUTHORISE, smartpayUrlMap, MediaType.APPLICATION_XML_TYPE,
-                SmartpayPaymentProvider.includeSessionIdentifier(), metricRegistry);
-        verify(gatewayClientFactory).createGatewayClient(SMARTPAY, CANCEL, smartpayUrlMap, MediaType.APPLICATION_XML_TYPE,
-                SmartpayPaymentProvider.includeSessionIdentifier(), metricRegistry);
-        verify(gatewayClientFactory).createGatewayClient(SMARTPAY, CAPTURE, smartpayUrlMap, MediaType.APPLICATION_XML_TYPE,
-                SmartpayPaymentProvider.includeSessionIdentifier(), metricRegistry);
-        verify(gatewayClientFactory).createGatewayClient(SMARTPAY, REFUND, smartpayUrlMap, MediaType.APPLICATION_XML_TYPE,
-                SmartpayPaymentProvider.includeSessionIdentifier(), metricRegistry);
+        verify(gatewayClientFactory).createGatewayClient(SMARTPAY, AUTHORISE, smartpayUrlMap,
+            SmartpayPaymentProvider.includeSessionIdentifier(), metricRegistry);
+        verify(gatewayClientFactory).createGatewayClient(SMARTPAY, CANCEL, smartpayUrlMap,
+            SmartpayPaymentProvider.includeSessionIdentifier(), metricRegistry);
+        verify(gatewayClientFactory).createGatewayClient(SMARTPAY, CAPTURE, smartpayUrlMap,
+            SmartpayPaymentProvider.includeSessionIdentifier(), metricRegistry);
+        verify(gatewayClientFactory).createGatewayClient(SMARTPAY, REFUND, smartpayUrlMap,
+            SmartpayPaymentProvider.includeSessionIdentifier(), metricRegistry);
 
-        verify(gatewayClientFactory).createGatewayClient(EPDQ, AUTHORISE, epdqUrlMap, MediaType.APPLICATION_XML_TYPE,
-                EpdqPaymentProvider.includeSessionIdentifier(), metricRegistry);
-        verify(gatewayClientFactory).createGatewayClient(EPDQ, CANCEL, epdqUrlMap, MediaType.APPLICATION_XML_TYPE,
-                EpdqPaymentProvider.includeSessionIdentifier(), metricRegistry);
-        verify(gatewayClientFactory).createGatewayClient(EPDQ, CAPTURE, epdqUrlMap, MediaType.APPLICATION_XML_TYPE,
-                EpdqPaymentProvider.includeSessionIdentifier(), metricRegistry);
-        verify(gatewayClientFactory).createGatewayClient(EPDQ, REFUND, epdqUrlMap, MediaType.APPLICATION_XML_TYPE,
-                EpdqPaymentProvider.includeSessionIdentifier(), metricRegistry);
+        verify(gatewayClientFactory).createGatewayClient(EPDQ, AUTHORISE, epdqUrlMap,
+            EpdqPaymentProvider.includeSessionIdentifier(), metricRegistry);
+        verify(gatewayClientFactory).createGatewayClient(EPDQ, CANCEL, epdqUrlMap,
+            EpdqPaymentProvider.includeSessionIdentifier(), metricRegistry);
+        verify(gatewayClientFactory).createGatewayClient(EPDQ, CAPTURE, epdqUrlMap,
+            EpdqPaymentProvider.includeSessionIdentifier(), metricRegistry);
+        verify(gatewayClientFactory).createGatewayClient(EPDQ, REFUND, epdqUrlMap,
+            EpdqPaymentProvider.includeSessionIdentifier(), metricRegistry);
 
     }
 }

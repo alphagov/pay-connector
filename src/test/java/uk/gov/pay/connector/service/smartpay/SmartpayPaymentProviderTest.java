@@ -34,7 +34,6 @@ import javax.ws.rs.client.Client;
 import javax.ws.rs.client.Entity;
 import javax.ws.rs.client.Invocation.Builder;
 import javax.ws.rs.client.WebTarget;
-import javax.ws.rs.core.MediaType;
 import javax.ws.rs.core.Response;
 import java.io.IOException;
 import java.net.URL;
@@ -93,13 +92,13 @@ public class SmartpayPaymentProviderTest {
         mockSmartpaySuccessfulOrderSubmitResponse();
 
         GatewayClient authClient = gatewayClientFactory.createGatewayClient(PaymentGatewayName.SMARTPAY, GatewayOperation.AUTHORISE,
-                urlMap, MediaType.APPLICATION_XML_TYPE, mockSessionIdentifier, mockMetricRegistry);
+                urlMap, mockSessionIdentifier, mockMetricRegistry);
         GatewayClient cancelClient = gatewayClientFactory.createGatewayClient(PaymentGatewayName.SMARTPAY, GatewayOperation.CANCEL,
-                urlMap, MediaType.APPLICATION_XML_TYPE, mockSessionIdentifier, mockMetricRegistry);
+                urlMap, mockSessionIdentifier, mockMetricRegistry);
         GatewayClient refundClient = gatewayClientFactory.createGatewayClient(PaymentGatewayName.SMARTPAY, GatewayOperation.REFUND,
-                urlMap, MediaType.APPLICATION_XML_TYPE, mockSessionIdentifier, mockMetricRegistry);
+                urlMap, mockSessionIdentifier, mockMetricRegistry);
         GatewayClient captureClient = gatewayClientFactory.createGatewayClient(PaymentGatewayName.SMARTPAY, GatewayOperation.CAPTURE,
-                urlMap, MediaType.APPLICATION_XML_TYPE, mockSessionIdentifier, mockMetricRegistry);
+                urlMap, mockSessionIdentifier, mockMetricRegistry);
 
 
         EnumMap<GatewayOperation, GatewayClient> gatewayClients = GatewayOperationClientBuilder.builder()

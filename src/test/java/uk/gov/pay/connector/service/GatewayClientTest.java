@@ -14,14 +14,12 @@ import org.mockito.runners.MockitoJUnitRunner;
 import uk.gov.pay.connector.model.GatewayError;
 import uk.gov.pay.connector.model.OrderRequestType;
 import uk.gov.pay.connector.model.domain.GatewayAccountEntity;
-import uk.gov.pay.connector.service.worldpay.WorldpayPaymentProvider;
 
 import javax.ws.rs.ProcessingException;
 import javax.ws.rs.client.Client;
 import javax.ws.rs.client.Entity;
 import javax.ws.rs.client.Invocation.Builder;
 import javax.ws.rs.client.WebTarget;
-import javax.ws.rs.core.Cookie;
 import javax.ws.rs.core.MediaType;
 import javax.ws.rs.core.Response;
 import java.net.SocketException;
@@ -49,6 +47,8 @@ public class GatewayClientTest {
 
     private String orderPayload = "a-sample-payload";
 
+    private MediaType mediaType = MediaType.APPLICATION_XML_TYPE;
+
     @Mock Client mockClient;
     @Mock Response mockResponse;
     @Mock Builder mockBuilder;
@@ -71,8 +71,8 @@ public class GatewayClientTest {
         credentialMap.put(CREDENTIALS_USERNAME, "user");
         credentialMap.put(CREDENTIALS_PASSWORD, "password");
 
-        gatewayClient = new GatewayClient(mockClient, urlMap, MediaType.APPLICATION_XML_TYPE,
-                mockSessionIdentifier, mockMetricRegistry);
+        gatewayClient = new GatewayClient(mockClient, urlMap,
+            mockSessionIdentifier, mockMetricRegistry);
         when(mockMetricRegistry.histogram(anyString())).thenReturn(mockHistogram);
         when(mockMetricRegistry.counter(anyString())).thenReturn(mockCounter);
         doAnswer(invocationOnMock -> null).when(mockHistogram).update(anyInt());
@@ -84,7 +84,7 @@ public class GatewayClientTest {
         when(mockWebTarget.request()).thenReturn(mockBuilder).thenReturn(mockBuilder);
         when(mockBuilder.header(AUTHORIZATION, encode("user", "password"))).thenReturn(mockBuilder);
         when(mockSessionIdentifier.apply(mockGatewayOrder, mockBuilder)).thenReturn(mockBuilder);
-        when(mockBuilder.post(Entity.entity(orderPayload, MediaType.APPLICATION_XML_TYPE))).thenReturn(mockResponse);
+        when(mockBuilder.post(Entity.entity(orderPayload, mediaType))).thenReturn(mockResponse);
 
         when(mockGatewayAccountEntity.getGatewayName()).thenReturn("worldpay");
         when(mockGatewayAccountEntity.getType()).thenReturn("worldpay");
@@ -93,6 +93,7 @@ public class GatewayClientTest {
         when(mockGatewayOrder.getOrderRequestType()).thenReturn(OrderRequestType.AUTHORISE);
         when(mockGatewayOrder.getPayload()).thenReturn(orderPayload);
         when(mockGatewayOrder.getProviderSessionId()).thenReturn(Optional.empty());
+        when(mockGatewayOrder.getMediaType()).thenReturn(mediaType);
     }
 
     @Test
@@ -119,7 +120,7 @@ public class GatewayClientTest {
 
     @Test
     public void shouldReturnGatewayErrorWhenProviderFailsWithAProcessingException() {
-        when(mockBuilder.post(Entity.entity(orderPayload, MediaType.APPLICATION_XML_TYPE))).thenThrow(new ProcessingException(new SocketException("socket failed")));
+        when(mockBuilder.post(Entity.entity(orderPayload, mediaType))).thenThrow(new ProcessingException(new SocketException("socket failed")));
 
         Either<GatewayError, GatewayClient.Response> gatewayResponse = gatewayClient.postRequestFor(null, mockGatewayAccountEntity, mockGatewayOrder);
 
@@ -138,6 +139,6 @@ public class GatewayClientTest {
 
         InOrder inOrder = Mockito.inOrder(mockSessionIdentifier, mockBuilder);
         inOrder.verify(mockSessionIdentifier).apply(mockGatewayOrder, mockBuilder);
-        inOrder.verify(mockBuilder).post(Entity.entity(orderPayload, MediaType.APPLICATION_XML_TYPE));
+        inOrder.verify(mockBuilder).post(Entity.entity(orderPayload, mediaType));
     }
 }
