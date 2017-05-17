@@ -14,7 +14,7 @@ import uk.gov.pay.connector.util.DateTimeUtils;
 import uk.gov.service.notify.Notification;
 import uk.gov.service.notify.NotificationClient;
 import uk.gov.service.notify.NotificationClientException;
-import uk.gov.service.notify.NotificationResponse;
+import uk.gov.service.notify.SendEmailResponse;
 
 import javax.inject.Inject;
 import java.math.BigDecimal;
@@ -51,10 +51,8 @@ public class UserNotificationService {
             Stopwatch responseTimeStopwatch = Stopwatch.createStarted();
             return executorService.submit(() -> {
                 try {
-                    NotificationResponse response = notificationClient.sendEmail(
-                            this.emailTemplateId, emailAddress, buildEmailPersonalisationFromCharge(chargeEntity)
-                    );
-                    return Optional.of(response.getNotificationId());
+                    SendEmailResponse response = notificationClient.sendEmail(emailTemplateId, emailAddress, buildEmailPersonalisationFromCharge(chargeEntity), null);
+                    return Optional.of(response.getNotificationId().toString());
                 } catch (NotificationClientException e) {
                     logger.error("Failed to send confirmation email - charge_external_id=" + chargeEntity.getExternalId(), e);
                     metricRegistry.counter("notify-operations.failures").inc();

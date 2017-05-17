@@ -4,13 +4,10 @@ import io.dropwizard.Configuration;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import java.util.Map;
-
 public class NotifyConfiguration extends Configuration {
 
     private String emailTemplateId;
-    private String serviceId;
-    private String secret;
+    private String apiKey;
     private String notificationBaseURL;
     private boolean emailNotifyEnabled;
 
@@ -20,12 +17,8 @@ public class NotifyConfiguration extends Configuration {
         return emailTemplateId;
     }
 
-    public String getServiceId() {
-        return serviceId;
-    }
-
-    public String getSecret() {
-        return secret;
+    public String getApiKey() {
+        return apiKey;
     }
 
     public String getNotificationBaseURL() {

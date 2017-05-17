@@ -21,8 +21,7 @@ Important configurations.
 | `SECURE_WORLDPAY_NOTIFICATION_DOMAIN` | `worldpay.com` | incoming requests will have a reverse DNS lookup done on their domain. They must resolve to a domain with this suffix (see `DnsUtils.ipMatchesDomain()`) |
 | `NOTIFY_EMAIL_ENABLED` | false | Whether confirmation emails will be sent using GOV.UK Notify |
 | `NOTIFY_PAYMENT_RECEIPT_EMAIL_TEMPLATE_ID` | - | ID of the email template specified in the GOV.UK Notify to be used for sending emails. An email template can accept personalisation (placeholder values which are passed in by the code). |
-| `NOTIFY_SERVICE_ID` | - | Service ID for the account created at GOV.UK Notify |
-| `NOTIFY_SECRET` | - | Secret for the account created at GOV.UK Notify |
+| `NOTIFY_API_KEY` | - | API Key for the account created at GOV.UK Notify |
 | `NOTIFY_BASE_URL` | `https://api.notifications.service.gov.uk` | Base URL of GOV.UK Notify API to be used|
 | `GDS_CONNECTOR_WORLDPAY_TEST_URL` | - | Pointing to the TEST gateway URL of Worldpay payment provider. |
 | `GDS_CONNECTOR_WORLDPAY_LIVE_URL` | - | Pointing to the LIVE gateway URL of Worldpay payment provider. |
