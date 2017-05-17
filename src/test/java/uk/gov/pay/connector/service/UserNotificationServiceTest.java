@@ -1,4 +1,4 @@
-package uk.gov.pay.connector.unit.service;
+package uk.gov.pay.connector.service;
 
 import com.codahale.metrics.Counter;
 import com.codahale.metrics.Histogram;
@@ -10,18 +10,15 @@ import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.mockito.Mock;
 import org.mockito.runners.MockitoJUnitRunner;
-
-import uk.gov.pay.connector.app.ExecutorServiceConfig;
 import uk.gov.pay.connector.app.ConnectorConfiguration;
+import uk.gov.pay.connector.app.ExecutorServiceConfig;
 import uk.gov.pay.connector.app.NotifyConfiguration;
 import uk.gov.pay.connector.model.domain.ChargeEntity;
 import uk.gov.pay.connector.model.domain.ChargeEntityFixture;
-import uk.gov.pay.connector.service.NotifyClientProvider;
-import uk.gov.pay.connector.service.UserNotificationService;
 import uk.gov.service.notify.Notification;
 import uk.gov.service.notify.NotificationClient;
 import uk.gov.service.notify.NotificationClientException;
-import uk.gov.service.notify.NotificationResponse;
+import uk.gov.service.notify.SendEmailResponse;
 
 import java.time.ZoneId;
 import java.time.ZonedDateTime;
@@ -30,6 +27,7 @@ import java.util.Optional;
 import java.util.concurrent.Future;
 import java.util.concurrent.TimeUnit;
 
+import static java.util.UUID.randomUUID;
 import static junit.framework.TestCase.fail;
 import static org.junit.Assert.assertEquals;
 import static org.mockito.Matchers.any;
@@ -44,7 +42,7 @@ public class UserNotificationServiceTest {
     @Mock
     private ConnectorConfiguration mockConfig;
     @Mock
-    NotificationResponse mockNotificationCreatedResponse;
+    SendEmailResponse mockNotificationCreatedResponse;
     @Mock
     Notification mockNotification;
     @Mock
@@ -77,8 +75,8 @@ public class UserNotificationServiceTest {
     public void shouldSendEmailIfEmailNotifyIsEnabled() throws Exception {
         when(mockConfig.getNotifyConfiguration().isEmailNotifyEnabled()).thenReturn(true);
         when(mockNotifyClientProvider.get()).thenReturn(mockNotifyClient);
-        when(mockNotifyClient.sendEmail(any(), any(), any())).thenReturn(mockNotificationCreatedResponse);
-        when(mockNotificationCreatedResponse.getNotificationId()).thenReturn("100");
+        when(mockNotifyClient.sendEmail(any(), any(), any(), any())).thenReturn(mockNotificationCreatedResponse);
+        when(mockNotificationCreatedResponse.getNotificationId()).thenReturn(randomUUID());
         when(mockMetricRegistry.histogram(anyString())).thenReturn(mockHistogram);
         when(mockMetricRegistry.counter(anyString())).thenReturn(mockCounter);
 
@@ -101,7 +99,7 @@ public class UserNotificationServiceTest {
         verify(mockNotifyClient).sendEmail(
                 mockNotifyConfiguration.getEmailTemplateId(),
                 charge.getEmail(),
-                map
+                map, null
         );
     }
 
@@ -130,7 +128,7 @@ public class UserNotificationServiceTest {
             when(mockNotifyConfiguration.isEmailNotifyEnabled()).thenReturn(true);
             userNotificationService = new UserNotificationService(mockNotifyClientProvider, mockConfig, mockEnvironment);
             fail("this method should throw an ex");
-        } catch(Exception e) {
+        } catch (Exception e) {
             assertEquals("config property 'emailTemplateId' is missing or not set, which needs to point to the email template on the notify", e.getMessage());
         }
     }
@@ -139,8 +137,8 @@ public class UserNotificationServiceTest {
     public void testEmailSendWhenEmailsNotifyDisabled() throws Exception {
         when(mockNotifyConfiguration.isEmailNotifyEnabled()).thenReturn(false);
         when(mockNotifyClientProvider.get()).thenReturn(mockNotifyClient);
-        when(mockNotifyClient.sendEmail(any(), any(), any())).thenReturn(mockNotificationCreatedResponse);
-        when(mockNotificationCreatedResponse.getNotificationId()).thenReturn("100");
+        when(mockNotifyClient.sendEmail(any(), any(), any(), any())).thenReturn(mockNotificationCreatedResponse);
+        when(mockNotificationCreatedResponse.getNotificationId()).thenReturn(randomUUID());
 
         userNotificationService = new UserNotificationService(mockNotifyClientProvider, mockConfig, mockEnvironment);
         Future<Optional<String>> idF = userNotificationService.notifyPaymentSuccessEmail(ChargeEntityFixture.aValidChargeEntity().build());
@@ -153,8 +151,8 @@ public class UserNotificationServiceTest {
     public void whenEmailNotificationsAreDisabledForService_emailShouldNotBeSent() throws Exception {
         when(mockNotifyConfiguration.isEmailNotifyEnabled()).thenReturn(true);
         when(mockNotifyClientProvider.get()).thenReturn(mockNotifyClient);
-        when(mockNotifyClient.sendEmail(any(), any(), any())).thenReturn(mockNotificationCreatedResponse);
-        when(mockNotificationCreatedResponse.getNotificationId()).thenReturn("100");
+        when(mockNotifyClient.sendEmail(any(), any(), any(), any())).thenReturn(mockNotificationCreatedResponse);
+        when(mockNotificationCreatedResponse.getNotificationId()).thenReturn(randomUUID());
 
         ChargeEntity chargeEntity = ChargeEntityFixture.aValidChargeEntity().build();
         chargeEntity.getGatewayAccount().getEmailNotification().setEnabled(false);
@@ -167,8 +165,8 @@ public class UserNotificationServiceTest {
     @Test
     public void shouldRecordNotifyResponseTimesWhenSendEmailSucceeds() throws Exception {
         when(mockNotifyClientProvider.get()).thenReturn(mockNotifyClient);
-        when(mockNotifyClient.sendEmail(any(), any(), any())).thenReturn(mockNotificationCreatedResponse);
-        when(mockNotificationCreatedResponse.getNotificationId()).thenReturn("100");
+        when(mockNotifyClient.sendEmail(any(), any(), any(), any())).thenReturn(mockNotificationCreatedResponse);
+        when(mockNotificationCreatedResponse.getNotificationId()).thenReturn(randomUUID());
         when(mockMetricRegistry.histogram(anyString())).thenReturn(mockHistogram);
         when(mockMetricRegistry.counter(anyString())).thenReturn(mockCounter);
 
@@ -183,11 +181,12 @@ public class UserNotificationServiceTest {
         verify(mockHistogram).update(anyLong());
         verifyNoMoreInteractions(mockCounter);
     }
+
     @Test
     public void shouldRecordNotifyResponseTimesAndFailureWhenSendEmailFails() throws Exception {
         when(mockNotifyClientProvider.get()).thenReturn(mockNotifyClient);
-        when(mockNotifyClient.sendEmail(any(), any(), any())).thenThrow(NotificationClientException.class);
-        when(mockNotificationCreatedResponse.getNotificationId()).thenReturn("100");
+        when(mockNotifyClient.sendEmail(any(), any(), any(), any())).thenThrow(NotificationClientException.class);
+        when(mockNotificationCreatedResponse.getNotificationId()).thenReturn(randomUUID());
         when(mockMetricRegistry.histogram(anyString())).thenReturn(mockHistogram);
         when(mockMetricRegistry.counter(anyString())).thenReturn(mockCounter);
 

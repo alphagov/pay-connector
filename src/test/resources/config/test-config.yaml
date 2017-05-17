@@ -127,8 +127,7 @@ jpa:
 
 notifyConfig:
   emailTemplateId: test-template-id
-  serviceId: test-service-id
-  secret: 11111111-1111-1111-1111-111111111111
+  apiKey: ${NOTIFY_API_KEY:-pay-notify-api-key}
   notificationBaseURL: https://stubs.pymnt.localdomain
   emailNotifyEnabled: false
 

@@ -10,8 +10,6 @@ import org.junit.Before;
 import org.junit.Ignore;
 import org.junit.Rule;
 import org.junit.Test;
-import org.mockito.Mock;
-import org.mockito.Mockito;
 import uk.gov.pay.connector.app.ConnectorConfiguration;
 import uk.gov.pay.connector.it.mock.NotifyEmailMock;
 import uk.gov.pay.connector.model.domain.ChargeEntity;
