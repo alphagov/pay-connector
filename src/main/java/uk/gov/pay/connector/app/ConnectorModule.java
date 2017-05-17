@@ -11,7 +11,6 @@ import uk.gov.pay.connector.model.builder.EntityBuilder;
 import uk.gov.pay.connector.service.CardExecutorService;
 import uk.gov.pay.connector.service.NotifyClientProvider;
 import uk.gov.pay.connector.service.PaymentProviders;
-import uk.gov.pay.connector.service.UserNotificationService;
 import uk.gov.pay.connector.util.HashUtil;
 
 import java.util.Properties;
