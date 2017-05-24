@@ -1,0 +1,1 @@
+orderID={{orderId}}&currency=GBP&amount=5&PM=CreditCard&ACCEPTANCE=testoff&STATUS={{status}}&CARDNO=XXXXXXXXXXXX4242&ED=0919&CN=&TRXDATE=05%2F23%2F17&PAYID={{payId}}&NCERROR=&BRAND=VISA&IP=&SHASIGN={{shaSign}}

@@ -26,7 +26,13 @@ import uk.gov.pay.connector.model.domain.ChargeEntity;
 import uk.gov.pay.connector.model.domain.GatewayAccountEntity;
 import uk.gov.pay.connector.model.gateway.AuthorisationGatewayRequest;
 import uk.gov.pay.connector.model.gateway.GatewayResponse;
-import uk.gov.pay.connector.service.*;
+import uk.gov.pay.connector.service.ClientFactory;
+import uk.gov.pay.connector.service.GatewayClient;
+import uk.gov.pay.connector.service.GatewayClientFactory;
+import uk.gov.pay.connector.service.GatewayOperation;
+import uk.gov.pay.connector.service.GatewayOperationClientBuilder;
+import uk.gov.pay.connector.service.GatewayOrder;
+import uk.gov.pay.connector.service.PaymentGatewayName;
 import uk.gov.pay.connector.service.worldpay.WorldpayCaptureResponse;
 import uk.gov.pay.connector.util.AuthUtils;
 
@@ -43,13 +49,17 @@ import java.util.Map;
 import java.util.function.BiFunction;
 
 import static com.google.common.io.Resources.getResource;
-import static org.hamcrest.CoreMatchers.*;
+import static org.hamcrest.CoreMatchers.containsString;
+import static org.hamcrest.CoreMatchers.not;
+import static org.hamcrest.CoreMatchers.nullValue;
 import static org.hamcrest.core.Is.is;
 import static org.hamcrest.core.IsSame.sameInstance;
 import static org.junit.Assert.assertThat;
 import static org.junit.Assert.assertTrue;
-import static org.mockito.Matchers.*;
 import static org.mockito.Matchers.any;
+import static org.mockito.Matchers.anyObject;
+import static org.mockito.Matchers.anyString;
+import static org.mockito.Matchers.eq;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
 import static uk.gov.pay.connector.model.domain.Address.anAddress;
@@ -127,6 +137,11 @@ public class SmartpayPaymentProviderTest {
     }
 
     @Test
+    public void shouldAlwaysVerifyNotification() {
+        Assert.assertThat(provider.verifyNotification(null, ""), is(true));
+    }
+
+    @Test
     public void shouldSendSuccessfullyAOrderForMerchant() throws Exception {
 
         AuthCardDetails authCardDetails = getValidTestCard();
@@ -185,6 +200,11 @@ public class SmartpayPaymentProviderTest {
         Pair<String, Boolean> status = smartpayNotification.getStatus();
         assertThat(status.getLeft(), is("CAPTURE"));
         assertThat(status.getRight(), is(true));
+    }
+
+    @Test
+    public void shouldTreatAllNotificationsAsVerified() {
+        assertThat(provider.verifyNotification(mock(Notification.class), "a passphrase"), is(true));
     }
 
     private GatewayAccountEntity aServiceAccount() {

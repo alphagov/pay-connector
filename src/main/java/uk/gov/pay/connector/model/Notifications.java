@@ -3,7 +3,6 @@ package uk.gov.pay.connector.model;
 import com.google.common.collect.ImmutableList;
 import org.apache.commons.lang3.StringUtils;
 
-import java.time.LocalDate;
 import java.time.ZonedDateTime;
 import java.util.ArrayList;
 import java.util.List;
@@ -19,8 +18,8 @@ public class Notifications<T> {
     public static class Builder<T> {
         List<Notification<T>> notifications = new ArrayList<>();
 
-        public Builder<T> addNotificationFor(String transactionId, String reference, T status, ZonedDateTime generationTime) {
-            notifications.add(new BaseNotification(transactionId, reference, status, generationTime));
+        public Builder<T> addNotificationFor(String transactionId, String reference, T status, ZonedDateTime generationTime, Object payload) {
+            notifications.add(new BaseNotification(transactionId, reference, status, generationTime, payload));
             return this;
         }
 

@@ -81,6 +81,11 @@ public class SandboxPaymentProvider extends BasePaymentProvider<BaseResponse> {
     }
 
     @Override
+    public boolean verifyNotification(Notification notification, String passphrase) {
+        return true;
+    }
+
+    @Override
     public GatewayResponse refund(RefundGatewayRequest request) {
         return createGatewayBaseRefundResponse(request);
     }

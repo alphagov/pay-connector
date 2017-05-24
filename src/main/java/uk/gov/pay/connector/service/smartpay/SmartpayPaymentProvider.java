@@ -78,6 +78,11 @@ public class SmartpayPaymentProvider extends BasePaymentProvider<BaseResponse> {
     }
 
     @Override
+    public boolean verifyNotification(Notification notification, String passphrase) {
+        return true;
+    }
+
+    @Override
     public Either<String, Notifications<Pair<String, Boolean>>> parseNotification(String payload) {
         try {
             Builder<Pair<String, Boolean>> builder = Notifications.builder();
@@ -88,7 +93,8 @@ public class SmartpayPaymentProvider extends BasePaymentProvider<BaseResponse> {
                             notification.getOriginalReference(),
                             notification.getPspReference(),
                             notification.getStatus(),
-                            notification.getEventDate()
+                            notification.getEventDate(),
+                            null
                     ));
 
             return right(builder.build());

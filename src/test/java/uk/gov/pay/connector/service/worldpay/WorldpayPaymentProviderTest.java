@@ -134,6 +134,11 @@ public class WorldpayPaymentProviderTest {
     }
 
     @Test
+    public void shouldAlwaysVerifyNotification() {
+        Assert.assertThat(provider.verifyNotification(null, ""), is(true));
+    }
+
+    @Test
     public void testRefundRequestContainsReference() {
         ChargeEntity chargeEntity = ChargeEntityFixture.aValidChargeEntity().build();
         RefundEntity refundEntity = RefundEntityFixture.aValidRefundEntity().build();
@@ -389,6 +394,11 @@ public class WorldpayPaymentProviderTest {
         assertThat(worldpayNotification.getReference(), is(referenceId));
         assertThat(worldpayNotification.getStatus(), is(status));
         assertThat(worldpayNotification.getGatewayEventDate(), is(ZonedDateTime.parse(format("%s-%s-%sT00:00Z", bookingDateYear, bookingDateMonth, bookingDateDay))));
+    }
+
+    @Test
+    public void shouldTreatAllNotificationsAsVerified() {
+        assertThat(provider.verifyNotification(mock(Notification.class), "a passphrase"), is(true));
     }
 
     private String notificationPayloadForTransaction(

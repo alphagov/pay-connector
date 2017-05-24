@@ -3,6 +3,7 @@ package uk.gov.pay.connector.service;
 import fj.data.Either;
 import uk.gov.pay.connector.model.CancelGatewayRequest;
 import uk.gov.pay.connector.model.CaptureGatewayRequest;
+import uk.gov.pay.connector.model.Notification;
 import uk.gov.pay.connector.model.Notifications;
 import uk.gov.pay.connector.model.RefundGatewayRequest;
 import uk.gov.pay.connector.model.gateway.Auth3dsResponseGatewayRequest;
@@ -36,5 +37,5 @@ public interface PaymentProvider<T extends BaseResponse> {
 
     String getNotificationDomain();
 
-
+    boolean verifyNotification(Notification notification, String passphrase);
 }

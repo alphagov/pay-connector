@@ -87,7 +87,7 @@ public class ChargingITestBase extends ChargingITestCommon{
                 CREDENTIALS_MERCHANT_ID, "merchant-id",
                 CREDENTIALS_USERNAME, "test-user",
                 CREDENTIALS_PASSWORD, "test-password",
-                CREDENTIALS_SHA_PASSPHRASE, "test-sha-passphrase"
+            CREDENTIALS_SHA_IN_PASSPHRASE, "test-sha-passphrase"
         );
         app.getDatabaseTestHelper().addGatewayAccount(accountId, paymentProvider, credentials);
     }

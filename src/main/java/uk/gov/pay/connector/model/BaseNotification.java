@@ -1,6 +1,7 @@
 package uk.gov.pay.connector.model;
 
 import java.time.ZonedDateTime;
+import java.util.Optional;
 
 public class BaseNotification<T> implements Notification {
 
@@ -8,12 +9,14 @@ public class BaseNotification<T> implements Notification {
     private String transactionId;
     private T status;
     private ZonedDateTime gatewayEventDate;
+    private Object payload;
 
-    public BaseNotification(String transactionId, String reference, T status, ZonedDateTime gatewayEventDate) {
+    public BaseNotification(String transactionId, String reference, T status, ZonedDateTime gatewayEventDate, Object payload) {
         this.reference = reference;
         this.transactionId = transactionId;
         this.status = status;
         this.gatewayEventDate = gatewayEventDate;
+        this.payload = payload;
     }
 
     @Override
@@ -34,6 +37,11 @@ public class BaseNotification<T> implements Notification {
     @Override
     public ZonedDateTime getGatewayEventDate() {
         return gatewayEventDate;
+    }
+
+    @Override
+    public Optional<?> getPayload() {
+        return Optional.ofNullable(payload);
     }
 
     @Override

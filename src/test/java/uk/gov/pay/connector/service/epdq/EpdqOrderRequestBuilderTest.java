@@ -30,7 +30,7 @@ public class EpdqOrderRequestBuilderTest {
                 .withOrderId("mq4ht90j2oir6am585afk58kml")
                 .withPassword("password")
                 .withUserId("username")
-                .withShaPassphrase("sha-passphrase")
+                .withShaInPassphrase("sha-passphrase")
                 .withMerchantCode("merchant-id")
                 .withDescription("MyDescription")
                 .withPaymentPlatformReference("MyPlatformReference")
@@ -47,7 +47,7 @@ public class EpdqOrderRequestBuilderTest {
         GatewayOrder actualRequest = anEpdqCaptureOrderRequestBuilder()
                 .withPassword("password")
                 .withUserId("username")
-                .withShaPassphrase("sha-passphrase")
+                .withShaInPassphrase("sha-passphrase")
                 .withMerchantCode("merchant-id")
                 .withTransactionId("payId")
                 .build();
@@ -61,7 +61,7 @@ public class EpdqOrderRequestBuilderTest {
         GatewayOrder actualRequest = anEpdqCancelOrderRequestBuilder()
                 .withPassword("password")
                 .withUserId("username")
-                .withShaPassphrase("sha-passphrase")
+                .withShaInPassphrase("sha-passphrase")
                 .withMerchantCode("merchant-id")
                 .withTransactionId("payId")
                 .build();

@@ -16,7 +16,7 @@ public class EpdqOrderRequestBuilder extends OrderRequestBuilder {
         private String orderId;
         private String password;
         private String userId;
-        private String shaPassphrase;
+        private String shaInPassphrase;
 
         public String getOperationType() {
             return operationType;
@@ -50,12 +50,12 @@ public class EpdqOrderRequestBuilder extends OrderRequestBuilder {
             this.userId = userId;
         }
 
-        public String getShaPassphrase() {
-            return shaPassphrase;
+        public String getShaInPassphrase() {
+            return shaInPassphrase;
         }
 
-        public void setShaPassphrase(String shaPassphrase) {
-            this.shaPassphrase = shaPassphrase;
+        public void setShaInPassphrase(String shaInPassphrase) {
+            this.shaInPassphrase = shaInPassphrase;
         }
     }
 
@@ -114,8 +114,8 @@ public class EpdqOrderRequestBuilder extends OrderRequestBuilder {
         return this;
     }
 
-    public EpdqOrderRequestBuilder withShaPassphrase(String shaPassphrase) {
-        epdqTemplateData.setShaPassphrase(shaPassphrase);
+    public EpdqOrderRequestBuilder withShaInPassphrase(String shaInPassphrase) {
+        epdqTemplateData.setShaInPassphrase(shaInPassphrase);
         return this;
     }
 

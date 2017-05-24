@@ -3,17 +3,26 @@ package uk.gov.pay.connector.service.epdq;
 import com.codahale.metrics.Counter;
 import com.codahale.metrics.Histogram;
 import com.codahale.metrics.MetricRegistry;
+import com.fasterxml.jackson.databind.introspect.TypeResolutionContext.Basic;
+import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableMap;
+import java.util.Arrays;
+import java.util.Collections;
+import java.util.List;
+import java.util.Optional;
 import javax.ws.rs.core.MediaType;
+
+import fj.data.Either;
+import org.apache.http.NameValuePair;
+import org.apache.http.message.BasicNameValuePair;
+import org.hamcrest.core.IsNull;
 import org.junit.Assert;
 import org.junit.Before;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.mockito.Mock;
 import org.mockito.runners.MockitoJUnitRunner;
-import uk.gov.pay.connector.model.CancelGatewayRequest;
-import uk.gov.pay.connector.model.CaptureGatewayRequest;
-import uk.gov.pay.connector.model.GatewayError;
+import uk.gov.pay.connector.model.*;
 import uk.gov.pay.connector.model.domain.Address;
 import uk.gov.pay.connector.model.domain.AuthCardDetails;
 import uk.gov.pay.connector.model.domain.ChargeEntity;
@@ -29,9 +38,11 @@ import javax.ws.rs.client.Entity;
 import javax.ws.rs.client.Invocation;
 import javax.ws.rs.client.WebTarget;
 import javax.ws.rs.core.Response;
+import java.io.IOException;
 import java.util.EnumMap;
 import java.util.Map;
 
+import static java.lang.String.format;
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.core.Is.is;
 import static org.junit.Assert.assertNotNull;
@@ -51,6 +62,12 @@ import static uk.gov.pay.connector.util.TestTemplateResourceLoader.*;
 
 @RunWith(MockitoJUnitRunner.class)
 public class EpdqPaymentProviderTest {
+
+    public static final String NOTIFICATION_ORDER_ID = "2jhqgrb71f47ftq9u1t5c1143o";
+    public static final String NOTIFICATION_STATUS = "9";
+    public static final String NOTIFICATION_PAY_ID = "3020450409";
+    public static final String NOTIFICATION_SHA_SIGN = "9537B9639F108CDF004459D8A690C598D97506CDF072C3926A60E39759A6402C5089161F6D7A8EA12BBC0FD6F899CE72D5A0C4ACC2913C56ACF6D01B034EEC32";
+
 
     private EpdqPaymentProvider provider;
     private GatewayClientFactory gatewayClientFactory;
@@ -72,6 +89,11 @@ public class EpdqPaymentProviderTest {
     Counter mockCounter;
     @Mock
     private ClientFactory mockClientFactory;
+    @Mock
+    private SignatureGenerator mockSignatureGenerator;
+
+    @Mock
+    private Notification mockNotification;
 
     private Invocation.Builder mockClientInvocationBuilder;
 
@@ -103,7 +125,7 @@ public class EpdqPaymentProviderTest {
                 .refundClient(refundClient)
                 .build();
 
-        provider = new EpdqPaymentProvider(gatewayClients);
+        provider = new EpdqPaymentProvider(gatewayClients, mockSignatureGenerator);
     }
 
     @Test
@@ -170,6 +192,71 @@ public class EpdqPaymentProviderTest {
         assertEquals(response.getGatewayError().get(), new GatewayError("Unexpected Response Code From Gateway", UNEXPECTED_STATUS_CODE_FROM_GATEWAY));
     }
 
+    @Test
+    public void shouldVerifyNotificationSignature() {
+        when(mockNotification.getPayload()).thenReturn(Optional.of(Arrays.asList(
+            new BasicNameValuePair("key1", "value1"),
+            new BasicNameValuePair( "SHASIGN", "signature")
+        )));
+
+        when(mockSignatureGenerator.sign(Collections.singletonList(new BasicNameValuePair
+            ("key1", "value1")), "passphrase")).thenReturn("signature");
+
+        assertThat(provider.verifyNotification(mockNotification, "passphrase"), is(true));
+    }
+
+    @Test
+    public void shouldVerifyNotificationSignatureIgnoringCase() {
+        when(mockNotification.getPayload()).thenReturn(Optional.of(Arrays.asList(
+            new BasicNameValuePair("key1", "value1"),
+            new BasicNameValuePair( "SHASIGN", "SIGNATURE")
+        )));
+
+        when(mockSignatureGenerator.sign(Collections.singletonList(new BasicNameValuePair
+            ("key1", "value1")), "passphrase")).thenReturn("signature");
+
+        assertThat(provider.verifyNotification(mockNotification, "passphrase"), is(true));
+    }
+
+    @Test
+    public void shouldNotVerifyNotificationIfWrongSignature() {
+        when(mockNotification.getPayload()).thenReturn(Optional.of(Arrays.asList(
+            new BasicNameValuePair("key1", "value1"),
+            new BasicNameValuePair( "SHASIGN", "signature")
+        )));
+
+        when(mockSignatureGenerator.sign(Collections.singletonList(new BasicNameValuePair
+            ("key1", "value1")), "passphrase")).thenReturn("wrong signature");
+
+        assertThat(provider.verifyNotification(mockNotification, "passphrase"), is(false));
+    }
+
+    @Test
+    public void shouldNotVerifyNotificationIfEmptyPayload() {
+        when(mockNotification.getPayload()).thenReturn(Optional.empty());
+
+        assertThat(provider.verifyNotification(mockNotification, "passphrase"), is(false));
+    }
+
+    @Test
+    public void parseNotification_shouldReturnNotificationsIfValidFormUrlEncoded() throws IOException  {
+        Either<String, Notifications<String>> response =
+            provider.parseNotification(notificationPayloadForTransaction(NOTIFICATION_ORDER_ID, NOTIFICATION_STATUS, NOTIFICATION_PAY_ID, NOTIFICATION_SHA_SIGN));
+
+        assertThat(response.isRight(), is(true));
+
+        ImmutableList<Notification<String>> notifications = response.right().value().get();
+
+        assertThat(notifications.size(), is(1));
+
+        Notification<String> notification = notifications.get(0);
+
+        assertThat(notification.getTransactionId(), is(NOTIFICATION_PAY_ID));
+        assertThat(notification.getReference(), is(NOTIFICATION_ORDER_ID));
+        assertThat(notification.getStatus(), is(NOTIFICATION_STATUS));
+        assertThat(notification.getGatewayEventDate(), IsNull.nullValue());
+    }
+
     private GatewayAccountEntity buildTestGatewayAccountEntity() {
         GatewayAccountEntity gatewayAccount = new GatewayAccountEntity();
         gatewayAccount.setId(1L);
@@ -179,7 +266,7 @@ public class EpdqPaymentProviderTest {
                 CREDENTIALS_MERCHANT_ID, "merchant-id",
                 CREDENTIALS_USERNAME, "username",
                 CREDENTIALS_PASSWORD, "password",
-                CREDENTIALS_SHA_PASSPHRASE, "sha-passphrase"
+            CREDENTIALS_SHA_IN_PASSPHRASE, "sha-passphrase"
         ));
         gatewayAccount.setType(TEST);
         return gatewayAccount;
@@ -300,8 +387,16 @@ public class EpdqPaymentProviderTest {
         return TestTemplateResourceLoader.load(EPDQ_CANCEL_SUCCESS_RESPONSE);
     }
 
-
     private String successCancelRequest() {
         return TestTemplateResourceLoader.load(EPDQ_CANCEL_REQUEST);
+    }
+
+    private String notificationPayloadForTransaction( String orderId, String status, String payId, String shaSign)
+        throws IOException {
+        return TestTemplateResourceLoader.load(EPDQ_CAPTURE_NOTIFICATION_TEMPLATE)
+                .replace("{{orderId}}", orderId)
+                .replace("{{status}}", status)
+                .replace("{{payId}}", payId)
+                .replace("{{shaSign}}", shaSign);
     }
 }

@@ -75,7 +75,7 @@ public class TestTemplateResourceLoader {
 
     // EPDQ
 
-    private static final String EPDQ_BASE_NAME = TEMPLATE_BASE_NAME + "/epdq";
+    public static final String EPDQ_BASE_NAME = TEMPLATE_BASE_NAME + "/epdq";
 
     public static final String EPDQ_AUTHORISATION_SUCCESS_RESPONSE = EPDQ_BASE_NAME + "/authorisation-success-response.xml";
     public static final String EPDQ_AUTHORISATION_ERROR_RESPONSE = EPDQ_BASE_NAME + "/authorisation-error-response.xml";
@@ -94,6 +94,8 @@ public class TestTemplateResourceLoader {
     public static final String EPDQ_CANCEL_SUCCESS_RESPONSE = EPDQ_BASE_NAME + "/cancel-success-response.xml";
     public static final String EPDQ_CANCEL_WAITING_RESPONSE = EPDQ_BASE_NAME + "/cancel-waiting-response.xml";
     public static final String EPDQ_CANCEL_ERROR_RESPONSE = EPDQ_BASE_NAME + "/cancel-error-response.xml";
+
+    public static final String EPDQ_CAPTURE_NOTIFICATION_TEMPLATE = EPDQ_BASE_NAME + "/notification-template.txt";
 
     static public String load(String location) {
         try {

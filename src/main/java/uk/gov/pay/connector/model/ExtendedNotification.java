@@ -35,6 +35,11 @@ public class ExtendedNotification<T> implements Notification {
 
     public ZonedDateTime getGatewayEventDate() { return notification.getGatewayEventDate(); }
 
+    @Override
+    public Optional<?> getPayload() {
+        return notification.getPayload();
+    }
+
     public Optional<Enum> getInternalStatus() {
         return internalStatus;
     }
