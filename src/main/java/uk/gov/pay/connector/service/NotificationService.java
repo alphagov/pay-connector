@@ -1,5 +1,6 @@
 package uk.gov.pay.connector.service;
 
+import com.google.common.collect.ImmutableList;
 import com.google.inject.Provider;
 import fj.data.Either;
 import org.slf4j.Logger;
@@ -89,14 +90,18 @@ public class NotificationService {
         private <T> NonTransactionalOperation<TransactionContext, List<ExtendedNotification<T>>> prepare(String payload) {
             return context -> {
 
-                Either<String, Notifications<T>> notifications = paymentProvider.parseNotification(payload);
+                Either<String, Notifications<T>> notificationsMaybe = paymentProvider.parseNotification(payload);
 
-                if (notifications.isLeft()) {
-                    logger.error(format("Notification parsing failed: %s", notifications.left().value()));
+                if (notificationsMaybe.isLeft()) {
+                    logger.error(format("Notification parsing failed: %s", notificationsMaybe.left().value()));
                     return new ArrayList();
                 }
 
-                List<ExtendedNotification<T>> extendedNotifications = notifications.right().value().get().stream()
+                ImmutableList<Notification<T>> notifications = notificationsMaybe.right().value().get();
+
+                logger.info("Handling notification from provider={}, notification={}", paymentProvider.getPaymentGatewayName(), notifications);
+
+                List<ExtendedNotification<T>> extendedNotifications = notifications.stream()
                         .map(toExtendedNotification())
                         .filter(isValid())
                         .collect(Collectors.toList());

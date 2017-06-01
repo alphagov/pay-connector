@@ -53,7 +53,6 @@ public class NotificationResource {
     }
 
     private Response handleNotification(String ipAddress, String name, String notification) {
-        logger.info("Received notification from provider={}, notification={}", name, notification);
         PaymentGatewayName paymentGatewayName = PaymentGatewayName.valueFrom(name);
         if (!notificationService.handleNotificationFor(ipAddress, paymentGatewayName, notification)) {
             logger.error("Rejected notification for ip '{}'", ipAddress);

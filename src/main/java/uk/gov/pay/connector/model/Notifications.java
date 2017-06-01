@@ -1,6 +1,7 @@
 package uk.gov.pay.connector.model;
 
 import com.google.common.collect.ImmutableList;
+import org.apache.commons.lang3.StringUtils;
 
 import java.time.LocalDate;
 import java.time.ZonedDateTime;
@@ -36,5 +37,8 @@ public class Notifications<T> {
         return notifications;
     }
 
-
+    @Override
+    public String toString() {
+        return String.format("Notifications [notifications=%s]", get());
+    }
 }

@@ -35,4 +35,20 @@ public class BaseNotification<T> implements Notification {
     public ZonedDateTime getGatewayEventDate() {
         return gatewayEventDate;
     }
+
+    @Override
+    public String toString() {
+        return new StringBuilder()
+                .append("Notification [")
+                .append("reference=")
+                .append(reference)
+                .append(", transactionId=")
+                .append(transactionId)
+                .append(", status=")
+                .append(status)
+                .append(", gatewayEventDate=")
+                .append(gatewayEventDate)
+                .append("]")
+                .toString();
+    }
 }
