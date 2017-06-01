@@ -39,6 +39,6 @@ public class Notifications<T> {
 
     @Override
     public String toString() {
-        return String.format("Notifications [notifications=[%s]]", StringUtils.join(get(), ", "));
+        return String.format("Notifications [notifications=%s]", get());
     }
 }

@@ -40,10 +40,14 @@ public class BaseNotification<T> implements Notification {
     public String toString() {
         return new StringBuilder()
                 .append("Notification [")
-                .append("reference=" + reference)
-                .append(", transactionId=" + transactionId)
-                .append(", status=" + status)
-                .append(", gatewayEventDate=" + gatewayEventDate)
+                .append("reference=")
+                .append(reference)
+                .append(", transactionId=")
+                .append(transactionId)
+                .append(", status=")
+                .append(status)
+                .append(", gatewayEventDate=")
+                .append(gatewayEventDate)
                 .append("]")
                 .toString();
     }
