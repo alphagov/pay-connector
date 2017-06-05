@@ -1,7 +1,7 @@
 package uk.gov.pay.connector.model;
 
 import com.google.common.collect.ImmutableList;
-import org.apache.commons.lang3.StringUtils;
+import org.apache.http.NameValuePair;
 
 import java.time.ZonedDateTime;
 import java.util.ArrayList;
@@ -18,18 +18,18 @@ public class Notifications<T> {
     public static class Builder<T> {
         List<Notification<T>> notifications = new ArrayList<>();
 
-        public Builder<T> addNotificationFor(String transactionId, String reference, T status, ZonedDateTime generationTime, Object payload) {
-            notifications.add(new BaseNotification(transactionId, reference, status, generationTime, payload));
+        public Builder<T> addNotificationFor(String transactionId, String reference, T status, ZonedDateTime generationTime, List<NameValuePair> payload) {
+            notifications.add(new BaseNotification<>(transactionId, reference, status, generationTime, payload));
             return this;
         }
 
         public Notifications<T> build() {
-            return new Notifications(ImmutableList.copyOf(notifications));
+            return new Notifications<T>(ImmutableList.copyOf(notifications));
         }
     }
 
     public static <T> Builder<T> builder() {
-        return new Builder();
+        return new Builder<>();
     }
 
     public ImmutableList<Notification<T>> get() {

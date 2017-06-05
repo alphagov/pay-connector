@@ -1,7 +1,6 @@
 package uk.gov.pay.connector.service;
 
 import com.codahale.metrics.MetricRegistry;
-import com.google.common.collect.ImmutableList;
 import io.dropwizard.setup.Environment;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -15,7 +14,6 @@ import uk.gov.pay.connector.model.domain.GatewayAccountEntity;
 
 import java.util.List;
 import java.util.stream.Collectors;
-import java.util.stream.Stream;
 
 import static uk.gov.pay.connector.model.domain.ChargeStatus.fromString;
 
@@ -81,7 +79,7 @@ public abstract class CardService<T extends BaseResponse> {
         return legalStatuses.stream().map(ChargeStatus::toString).collect(Collectors.joining(", "));
     }
 
-    public PaymentProvider<T> getPaymentProviderFor(ChargeEntity chargeEntity) {
+    public PaymentProvider<T, ?> getPaymentProviderFor(ChargeEntity chargeEntity) {
         return providers.byName(chargeEntity.getPaymentGatewayName());
     }
 }

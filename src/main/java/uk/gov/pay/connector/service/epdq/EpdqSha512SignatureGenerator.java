@@ -5,7 +5,6 @@ import org.apache.commons.lang3.StringUtils;
 import org.apache.http.NameValuePair;
 import org.apache.http.message.BasicNameValuePair;
 
-import java.util.Comparator;
 import java.util.List;
 import java.util.Locale;
 import java.util.StringJoiner;

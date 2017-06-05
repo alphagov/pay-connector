@@ -1,12 +1,14 @@
 package uk.gov.pay.connector.model;
 
+import org.apache.http.NameValuePair;
 import uk.gov.pay.connector.model.domain.ChargeStatus;
 import uk.gov.pay.connector.model.domain.RefundStatus;
 
 import java.time.ZonedDateTime;
+import java.util.List;
 import java.util.Optional;
 
-public class ExtendedNotification<T> implements Notification {
+public class ExtendedNotification<T> implements Notification<T> {
 
     private Notification<T> notification;
     private Optional<Enum> internalStatus = Optional.empty();
@@ -16,8 +18,8 @@ public class ExtendedNotification<T> implements Notification {
         this.internalStatus = internalStatus;
     }
 
-    public static <T, R> ExtendedNotification<T> extend(Notification<T> notification, Optional<R> internalStatus) {
-        return new ExtendedNotification(notification, internalStatus);
+    public static <T> ExtendedNotification<T> extend(Notification<T> notification, Optional<Enum> internalStatus) {
+        return new ExtendedNotification<T>(notification, internalStatus);
     }
 
     public String getTransactionId() {
@@ -36,7 +38,7 @@ public class ExtendedNotification<T> implements Notification {
     public ZonedDateTime getGatewayEventDate() { return notification.getGatewayEventDate(); }
 
     @Override
-    public Optional<?> getPayload() {
+    public Optional<List<NameValuePair>> getPayload() {
         return notification.getPayload();
     }
 

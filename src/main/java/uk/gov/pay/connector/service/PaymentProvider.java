@@ -12,7 +12,7 @@ import uk.gov.pay.connector.model.gateway.GatewayResponse;
 
 import java.util.Optional;
 
-public interface PaymentProvider<T extends BaseResponse> {
+public interface PaymentProvider<T extends BaseResponse, R> {
 
     String getPaymentGatewayName();
 
@@ -30,12 +30,11 @@ public interface PaymentProvider<T extends BaseResponse> {
 
     GatewayResponse<T> cancel(CancelGatewayRequest request);
 
-
-    <R> Either<String, Notifications<R>> parseNotification(String payload);
+    Either<String, Notifications<R>> parseNotification(String payload);
 
     Boolean isNotificationEndpointSecured();
 
     String getNotificationDomain();
 
-    boolean verifyNotification(Notification notification, String passphrase);
+    boolean verifyNotification(Notification<R> notification, String passphrase);
 }

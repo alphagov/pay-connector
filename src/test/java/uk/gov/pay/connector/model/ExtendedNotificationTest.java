@@ -1,11 +1,15 @@
 package uk.gov.pay.connector.model;
 
 
+import org.apache.http.NameValuePair;
+import org.apache.http.message.BasicNameValuePair;
 import org.junit.Test;
 
 import java.time.ZonedDateTime;
+import java.util.List;
 import java.util.Optional;
 
+import static java.util.Collections.singletonList;
 import static org.hamcrest.core.Is.is;
 import static org.junit.Assert.assertThat;
 import static uk.gov.pay.connector.model.domain.ChargeStatus.CAPTURED;
@@ -20,7 +24,7 @@ public class ExtendedNotificationTest {
         String status = "status";
         Optional<Enum> internalStatus = Optional.of(CAPTURED);
         ZonedDateTime now = ZonedDateTime.now();
-        Object payload = "payload";
+        List<NameValuePair> payload = singletonList(new BasicNameValuePair("my", "payload"));
 
         BaseNotification baseNotification = new BaseNotification<>(transactionId, reference, status, now, payload);
 
@@ -42,7 +46,7 @@ public class ExtendedNotificationTest {
         String status = "status";
         Optional<Enum> internalStatus = Optional.of(REFUNDED);
         ZonedDateTime now = ZonedDateTime.now();
-        Object payload = "payload";
+        List<NameValuePair> payload = singletonList(new BasicNameValuePair("my", "payload"));
 
         BaseNotification baseNotification = new BaseNotification<>(transactionId, reference, status, now, payload);
 

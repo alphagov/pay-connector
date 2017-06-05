@@ -1,12 +1,13 @@
 package uk.gov.pay.connector.service.epdq;
 
-import javax.ws.rs.core.MediaType;
 import uk.gov.pay.connector.model.OrderRequestType;
 import uk.gov.pay.connector.service.OrderRequestBuilder;
 import uk.gov.pay.connector.service.epdq.EpdqSignedPayloadDefinition.EpdqSignedPayloadDefinitionFactory;
 import uk.gov.pay.connector.util.templates.FormUrlEncodedStringBuilder;
 import uk.gov.pay.connector.util.templates.PayloadBuilder;
 import uk.gov.pay.connector.util.templates.PayloadDefinition;
+
+import javax.ws.rs.core.MediaType;
 
 import static uk.gov.pay.connector.service.epdq.EpdqSignedPayloadDefinition.EpdqSignedPayloadDefinitionFactory.anEpdqSignedPayloadDefinitionFactory;
 

@@ -212,8 +212,8 @@ public class ChargeRefundService {
         return RefundStatus.REFUND_SUBMITTED;
     }
 
-    public PaymentProvider<BaseRefundResponse> getPaymentProviderFor(PaymentProviders providers, ChargeEntity chargeEntity) {
-        PaymentProvider paymentProvider = providers.byName(chargeEntity.getPaymentGatewayName());
+    public PaymentProvider<BaseRefundResponse, ?> getPaymentProviderFor(PaymentProviders providers, ChargeEntity chargeEntity) {
+        PaymentProvider<BaseRefundResponse, ?> paymentProvider = providers.byName(chargeEntity.getPaymentGatewayName());
         return paymentProvider;
     }
 }

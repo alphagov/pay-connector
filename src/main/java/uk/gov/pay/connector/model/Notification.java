@@ -1,6 +1,9 @@
 package uk.gov.pay.connector.model;
 
+import org.apache.http.NameValuePair;
+
 import java.time.ZonedDateTime;
+import java.util.List;
 import java.util.Optional;
 
 public interface Notification<T> {
@@ -13,6 +16,6 @@ public interface Notification<T> {
 
     ZonedDateTime getGatewayEventDate();
 
-    Optional<?> getPayload();
+    Optional<List<NameValuePair>> getPayload();
 
 }

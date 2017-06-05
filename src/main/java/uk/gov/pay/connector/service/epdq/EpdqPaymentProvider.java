@@ -1,25 +1,6 @@
 package uk.gov.pay.connector.service.epdq;
 
-import static fj.data.Either.left;
-import static fj.data.Either.right;
-import static java.util.stream.Collectors.toList;
-import static uk.gov.pay.connector.model.ErrorType.GENERIC_GATEWAY_ERROR;
-import static uk.gov.pay.connector.model.domain.GatewayAccount.CREDENTIALS_MERCHANT_ID;
-import static uk.gov.pay.connector.model.domain.GatewayAccount.CREDENTIALS_PASSWORD;
-import static uk.gov.pay.connector.model.domain.GatewayAccount.CREDENTIALS_SHA_IN_PASSPHRASE;
-import static uk.gov.pay.connector.model.domain.GatewayAccount.CREDENTIALS_USERNAME;
-import static uk.gov.pay.connector.service.epdq.EpdqNotification.SHASIGN;
-import static uk.gov.pay.connector.service.epdq.EpdqOrderRequestBuilder.anEpdqAuthoriseOrderRequestBuilder;
-import static uk.gov.pay.connector.service.epdq.EpdqOrderRequestBuilder.anEpdqCancelOrderRequestBuilder;
-import static uk.gov.pay.connector.service.epdq.EpdqOrderRequestBuilder.anEpdqCaptureOrderRequestBuilder;
-
 import fj.data.Either;
-import java.util.EnumMap;
-import java.util.List;
-import java.util.Optional;
-import java.util.function.BiFunction;
-import java.util.function.Function;
-import javax.ws.rs.client.Invocation;
 import org.apache.http.NameValuePair;
 import uk.gov.pay.connector.model.CancelGatewayRequest;
 import uk.gov.pay.connector.model.CaptureGatewayRequest;
@@ -38,11 +19,32 @@ import uk.gov.pay.connector.service.GatewayOrder;
 import uk.gov.pay.connector.service.PaymentGatewayName;
 import uk.gov.pay.connector.service.StatusMapper;
 
+import javax.ws.rs.client.Invocation;
+import java.util.EnumMap;
+import java.util.List;
+import java.util.Optional;
+import java.util.function.BiFunction;
+import java.util.function.Function;
 
-public class EpdqPaymentProvider extends BasePaymentProvider<BaseResponse> {
+import static fj.data.Either.left;
+import static fj.data.Either.right;
+import static java.util.stream.Collectors.toList;
+import static uk.gov.pay.connector.model.ErrorType.GENERIC_GATEWAY_ERROR;
+import static uk.gov.pay.connector.model.domain.GatewayAccount.CREDENTIALS_MERCHANT_ID;
+import static uk.gov.pay.connector.model.domain.GatewayAccount.CREDENTIALS_PASSWORD;
+import static uk.gov.pay.connector.model.domain.GatewayAccount.CREDENTIALS_SHA_IN_PASSPHRASE;
+import static uk.gov.pay.connector.model.domain.GatewayAccount.CREDENTIALS_USERNAME;
+import static uk.gov.pay.connector.service.epdq.EpdqNotification.SHASIGN;
+import static uk.gov.pay.connector.service.epdq.EpdqOrderRequestBuilder.anEpdqAuthoriseOrderRequestBuilder;
+import static uk.gov.pay.connector.service.epdq.EpdqOrderRequestBuilder.anEpdqCancelOrderRequestBuilder;
+import static uk.gov.pay.connector.service.epdq.EpdqOrderRequestBuilder.anEpdqCaptureOrderRequestBuilder;
+
+
+public class EpdqPaymentProvider extends BasePaymentProvider<BaseResponse, String> {
 
     public static final String ROUTE_FOR_NEW_ORDER = "orderdirect.asp";
     public static final String ROUTE_FOR_MAINTENANCE_ORDER = "maintenancedirect.asp";
+
     private final SignatureGenerator signatureGenerator;
 
     public EpdqPaymentProvider(EnumMap<GatewayOperation, GatewayClient> clients, SignatureGenerator signatureGenerator) {
@@ -96,10 +98,10 @@ public class EpdqPaymentProvider extends BasePaymentProvider<BaseResponse> {
     }
 
     @Override
-    public boolean verifyNotification(Notification notification, String passphrase) {
+    public boolean verifyNotification(Notification<String> notification, String passphrase) {
         if (!notification.getPayload().isPresent()) return false;
 
-        List<NameValuePair> notificationParams = (List<NameValuePair>) notification.getPayload().get();
+        List<NameValuePair> notificationParams = notification.getPayload().get();
 
         List<NameValuePair> notificationParamsWithoutShaSign = notificationParams.stream()
             .filter(param -> !param.getName().equalsIgnoreCase(SHASIGN)).collect(toList());

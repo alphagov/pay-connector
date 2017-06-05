@@ -1,17 +1,21 @@
 package uk.gov.pay.connector.model;
 
+import org.apache.http.NameValuePair;
+
 import java.time.ZonedDateTime;
+import java.util.List;
 import java.util.Optional;
 
-public class BaseNotification<T> implements Notification {
+public class BaseNotification<T> implements Notification<T> {
 
     private String reference;
     private String transactionId;
     private T status;
     private ZonedDateTime gatewayEventDate;
-    private Object payload;
+    private List<NameValuePair> payload;
 
-    public BaseNotification(String transactionId, String reference, T status, ZonedDateTime gatewayEventDate, Object payload) {
+    public BaseNotification(String transactionId, String reference, T status, ZonedDateTime gatewayEventDate,
+                            List<NameValuePair> payload) {
         this.reference = reference;
         this.transactionId = transactionId;
         this.status = status;
@@ -40,7 +44,7 @@ public class BaseNotification<T> implements Notification {
     }
 
     @Override
-    public Optional<?> getPayload() {
+    public Optional<List<NameValuePair>> getPayload() {
         return Optional.ofNullable(payload);
     }
 

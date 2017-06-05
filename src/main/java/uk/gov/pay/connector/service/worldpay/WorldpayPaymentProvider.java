@@ -37,7 +37,7 @@ import static uk.gov.pay.connector.service.worldpay.WorldpayOrderRequestBuilder.
 import static uk.gov.pay.connector.service.worldpay.WorldpayOrderRequestBuilder.aWorldpayRefundOrderRequestBuilder;
 import static uk.gov.pay.connector.util.XMLUnmarshaller.unmarshall;
 
-public class WorldpayPaymentProvider extends BasePaymentProvider<BaseResponse> {
+public class WorldpayPaymentProvider extends BasePaymentProvider<BaseResponse, String> {
 
     public static final String WORLDPAY_MACHINE_COOKIE_NAME = "machine";
 
@@ -92,7 +92,7 @@ public class WorldpayPaymentProvider extends BasePaymentProvider<BaseResponse> {
     }
 
     @Override
-    public boolean verifyNotification(Notification notification, String passphrase) {
+    public boolean verifyNotification(Notification<String> notification, String passphrase) {
         return true;
     }
 

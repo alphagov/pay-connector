@@ -10,7 +10,7 @@ import java.util.function.Function;
 
 import static fj.data.Either.reduce;
 
-abstract public class BasePaymentProvider<T extends BaseResponse> implements PaymentProvider<T> {
+abstract public class BasePaymentProvider<T extends BaseResponse, R> implements PaymentProvider<T, R> {
 
     protected boolean isNotificationEndpointSecured;
     protected String notificationDomain;
