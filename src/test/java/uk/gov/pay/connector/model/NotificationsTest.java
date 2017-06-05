@@ -1,9 +1,9 @@
 package uk.gov.pay.connector.model;
 
-import java.util.Optional;
 import org.junit.Test;
 
 import java.time.ZonedDateTime;
+import java.util.Optional;
 
 import static org.hamcrest.Matchers.notNullValue;
 import static org.hamcrest.core.Is.is;
@@ -43,8 +43,8 @@ public class NotificationsTest {
 
         Notifications<String> notifications = Notifications
                 .<String>builder()
-                .addNotificationFor("transaction-id-1", "reference-1", "status-1", now)
-                .addNotificationFor("transaction-id-2", "reference-2", "status-2", now)
+                .addNotificationFor("transaction-id-1", "reference-1", "status-1", now, "my awesome payload 1")
+                .addNotificationFor("transaction-id-2", "reference-2", "status-2", now, "my awesome payload 2")
                 .build();
 
         assertThat(notifications.toString(),
