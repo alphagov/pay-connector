@@ -11,7 +11,11 @@ import uk.gov.pay.connector.exception.InvalidStateTransitionException;
 import uk.gov.pay.connector.model.ExtendedNotification;
 import uk.gov.pay.connector.model.Notification;
 import uk.gov.pay.connector.model.Notifications;
-import uk.gov.pay.connector.model.domain.*;
+import uk.gov.pay.connector.model.domain.ChargeEntity;
+import uk.gov.pay.connector.model.domain.ChargeStatus;
+import uk.gov.pay.connector.model.domain.GatewayAccountEntity;
+import uk.gov.pay.connector.model.domain.RefundEntity;
+import uk.gov.pay.connector.model.domain.RefundStatus;
 import uk.gov.pay.connector.service.transaction.NonTransactionalOperation;
 import uk.gov.pay.connector.service.transaction.TransactionContext;
 import uk.gov.pay.connector.service.transaction.TransactionFlow;
@@ -29,6 +33,7 @@ import java.util.stream.Collectors;
 import static java.lang.String.format;
 import static org.apache.commons.lang3.StringUtils.isBlank;
 import static org.apache.commons.lang3.StringUtils.isNotBlank;
+import static uk.gov.pay.connector.model.domain.GatewayAccount.CREDENTIALS_SHA_OUT_PASSPHRASE;
 
 public class NotificationService {
 
@@ -210,9 +215,15 @@ public class NotificationService {
         private <T> Predicate<ExtendedNotification<T>> isValid() {
             return notification -> {
                 if (!isNotBlank(notification.getTransactionId())) {
-                    logger.error("Notification with no transaction id ignored.");
+                    logger.error("{} notification with no transaction ID ignored.", paymentProvider.getPaymentGatewayName());
                     return false;
                 }
+
+                if (!paymentProvider.verifyNotification(notification, getPassphrase(notification))) {
+                    logger.error("{} notification with transaction ID {} ignored because it could not be verified.", paymentProvider.getPaymentGatewayName(), notification.getTransactionId());
+                    return false;
+                }
+
                 return true;
             };
         }
@@ -230,6 +241,17 @@ public class NotificationService {
                 return Optional.empty();
             }
             return Optional.of(mappedStatus.get());
+        }
+
+        private String getPassphrase(ExtendedNotification notification) {
+            Optional<ChargeEntity> optionalChargeEntity = chargeDao.findByProviderAndTransactionId(
+                paymentProvider.getPaymentGatewayName(), notification.getTransactionId());
+            if (!optionalChargeEntity.isPresent()) {
+                logger.error(format("Notification with transaction_id=%s. Unable to find charge entity.", notification.getTransactionId()));
+                return null;
+            }
+
+            return optionalChargeEntity.get().getGatewayAccount().getCredentials().get(CREDENTIALS_SHA_OUT_PASSPHRASE);
         }
     }
 }

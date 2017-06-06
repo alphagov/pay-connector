@@ -11,7 +11,10 @@ import uk.gov.pay.connector.util.PortFactory;
 import java.util.Map;
 
 import static io.dropwizard.testing.ConfigOverride.config;
-import static uk.gov.pay.connector.model.domain.GatewayAccount.*;
+import static uk.gov.pay.connector.model.domain.GatewayAccount.CREDENTIALS_MERCHANT_ID;
+import static uk.gov.pay.connector.model.domain.GatewayAccount.CREDENTIALS_PASSWORD;
+import static uk.gov.pay.connector.model.domain.GatewayAccount.CREDENTIALS_SHA_IN_PASSPHRASE;
+import static uk.gov.pay.connector.model.domain.GatewayAccount.CREDENTIALS_USERNAME;
 
 abstract public class CardCaptureProcessBaseITest {
 
@@ -22,7 +25,7 @@ abstract public class CardCaptureProcessBaseITest {
                     CREDENTIALS_MERCHANT_ID, "merchant-id",
                     CREDENTIALS_USERNAME, "test-user",
                     CREDENTIALS_PASSWORD, "test-password",
-                    CREDENTIALS_SHA_PASSPHRASE, "sha-passphraser"
+                CREDENTIALS_SHA_IN_PASSPHRASE, "sha-passphraser"
             );
 
     protected int port = PortFactory.findFreePort();

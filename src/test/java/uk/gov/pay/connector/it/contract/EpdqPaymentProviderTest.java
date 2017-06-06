@@ -4,7 +4,6 @@ import com.codahale.metrics.Counter;
 import com.codahale.metrics.Histogram;
 import com.codahale.metrics.MetricRegistry;
 import com.google.common.collect.ImmutableMap;
-import javax.ws.rs.core.MediaType;
 import org.junit.Assume;
 import org.junit.Before;
 import org.junit.Ignore;
@@ -26,6 +25,7 @@ import uk.gov.pay.connector.service.PaymentProvider;
 import uk.gov.pay.connector.service.epdq.EpdqAuthorisationResponse;
 import uk.gov.pay.connector.service.epdq.EpdqCaptureResponse;
 import uk.gov.pay.connector.service.epdq.EpdqPaymentProvider;
+import uk.gov.pay.connector.service.epdq.EpdqSha512SignatureGenerator;
 import uk.gov.pay.connector.util.TestClientFactory;
 
 import javax.ws.rs.client.Client;
@@ -55,7 +55,7 @@ public class EpdqPaymentProviderTest {
     private String merchantId = envOrThrow("GDS_CONNECTOR_EPDQ_MERCHANT_ID");
     private String username = envOrThrow("GDS_CONNECTOR_EPDQ_USER");
     private String password = envOrThrow("GDS_CONNECTOR_EPDQ_PASSWORD");
-    private String shaPassphrase = envOrThrow("GDS_CONNECTOR_EPDQ_SHA_PASSPHRASE");
+    private String shaInPassphrase = envOrThrow("GDS_CONNECTOR_EPDQ_SHA_IN_PASSPHRASE");
     private ChargeEntity chargeEntity;
     private MetricRegistry mockMetricRegistry;
     private Histogram mockHistogram;
@@ -69,7 +69,7 @@ public class EpdqPaymentProviderTest {
                     "merchant_id", merchantId,
                     "username", username,
                     "password", password,
-                    "sha_passphrase", shaPassphrase);
+                    "sha_in_passphrase", shaInPassphrase);
             GatewayAccountEntity validGatewayAccount = new GatewayAccountEntity();
             validGatewayAccount.setId(123L);
             validGatewayAccount.setGatewayName("epdq");
@@ -119,7 +119,7 @@ public class EpdqPaymentProviderTest {
                 .cancelClient(gatewayClient)
                 .refundClient(gatewayClient)
                 .build();
-        return new EpdqPaymentProvider(gatewayClients);
+        return new EpdqPaymentProvider(gatewayClients, new EpdqSha512SignatureGenerator());
     }
 
     public static AuthorisationGatewayRequest buildAuthorisationRequest(ChargeEntity chargeEntity) {

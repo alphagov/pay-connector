@@ -1,21 +1,36 @@
 package uk.gov.pay.connector.service.sandbox;
 
 import fj.data.Either;
-import uk.gov.pay.connector.model.*;
+import uk.gov.pay.connector.model.CancelGatewayRequest;
+import uk.gov.pay.connector.model.CaptureGatewayRequest;
+import uk.gov.pay.connector.model.GatewayError;
+import uk.gov.pay.connector.model.Notification;
+import uk.gov.pay.connector.model.Notifications;
+import uk.gov.pay.connector.model.RefundGatewayRequest;
 import uk.gov.pay.connector.model.gateway.Auth3dsResponseGatewayRequest;
 import uk.gov.pay.connector.model.gateway.AuthorisationGatewayRequest;
 import uk.gov.pay.connector.model.gateway.GatewayResponse;
 import uk.gov.pay.connector.model.gateway.GatewayResponse.GatewayResponseBuilder;
-import uk.gov.pay.connector.service.*;
+import uk.gov.pay.connector.service.BaseAuthoriseResponse;
+import uk.gov.pay.connector.service.BaseCancelResponse;
+import uk.gov.pay.connector.service.BaseCaptureResponse;
+import uk.gov.pay.connector.service.BasePaymentProvider;
+import uk.gov.pay.connector.service.BaseRefundResponse;
+import uk.gov.pay.connector.service.BaseResponse;
+import uk.gov.pay.connector.service.PaymentGatewayName;
+import uk.gov.pay.connector.service.StatusMapper;
 
 import java.util.Optional;
 
 import static java.util.UUID.randomUUID;
 import static uk.gov.pay.connector.model.ErrorType.GENERIC_GATEWAY_ERROR;
 import static uk.gov.pay.connector.model.gateway.GatewayResponse.GatewayResponseBuilder.responseBuilder;
-import static uk.gov.pay.connector.service.sandbox.SandboxCardNumbers.*;
+import static uk.gov.pay.connector.service.sandbox.SandboxCardNumbers.cardErrorFor;
+import static uk.gov.pay.connector.service.sandbox.SandboxCardNumbers.isErrorCard;
+import static uk.gov.pay.connector.service.sandbox.SandboxCardNumbers.isRejectedCard;
+import static uk.gov.pay.connector.service.sandbox.SandboxCardNumbers.isValidCard;
 
-public class SandboxPaymentProvider extends BasePaymentProvider<BaseResponse> {
+public class SandboxPaymentProvider extends BasePaymentProvider<BaseResponse, String> {
 
     public SandboxPaymentProvider() {
         super(null);
@@ -78,6 +93,11 @@ public class SandboxPaymentProvider extends BasePaymentProvider<BaseResponse> {
     @Override
     public String getNotificationDomain() {
         return null;
+    }
+
+    @Override
+    public boolean verifyNotification(Notification notification, String passphrase) {
+        return true;
     }
 
     @Override

@@ -9,8 +9,12 @@ import uk.gov.pay.connector.util.AuthUtils;
 import uk.gov.pay.connector.util.TestTemplateResourceLoader;
 
 import static org.junit.Assert.assertEquals;
-import static uk.gov.pay.connector.service.epdq.EpdqOrderRequestBuilder.*;
-import static uk.gov.pay.connector.util.TestTemplateResourceLoader.*;
+import static uk.gov.pay.connector.service.epdq.EpdqOrderRequestBuilder.anEpdqAuthoriseOrderRequestBuilder;
+import static uk.gov.pay.connector.service.epdq.EpdqOrderRequestBuilder.anEpdqCancelOrderRequestBuilder;
+import static uk.gov.pay.connector.service.epdq.EpdqOrderRequestBuilder.anEpdqCaptureOrderRequestBuilder;
+import static uk.gov.pay.connector.util.TestTemplateResourceLoader.EPDQ_AUTHORISATION_REQUEST;
+import static uk.gov.pay.connector.util.TestTemplateResourceLoader.EPDQ_CANCEL_REQUEST;
+import static uk.gov.pay.connector.util.TestTemplateResourceLoader.EPDQ_CAPTURE_REQUEST;
 
 public class EpdqOrderRequestBuilderTest {
 
@@ -30,7 +34,7 @@ public class EpdqOrderRequestBuilderTest {
                 .withOrderId("mq4ht90j2oir6am585afk58kml")
                 .withPassword("password")
                 .withUserId("username")
-                .withShaPassphrase("sha-passphrase")
+                .withShaInPassphrase("sha-passphrase")
                 .withMerchantCode("merchant-id")
                 .withDescription("MyDescription")
                 .withPaymentPlatformReference("MyPlatformReference")
@@ -47,7 +51,7 @@ public class EpdqOrderRequestBuilderTest {
         GatewayOrder actualRequest = anEpdqCaptureOrderRequestBuilder()
                 .withPassword("password")
                 .withUserId("username")
-                .withShaPassphrase("sha-passphrase")
+                .withShaInPassphrase("sha-passphrase")
                 .withMerchantCode("merchant-id")
                 .withTransactionId("payId")
                 .build();
@@ -61,7 +65,7 @@ public class EpdqOrderRequestBuilderTest {
         GatewayOrder actualRequest = anEpdqCancelOrderRequestBuilder()
                 .withPassword("password")
                 .withUserId("username")
-                .withShaPassphrase("sha-passphrase")
+                .withShaInPassphrase("sha-passphrase")
                 .withMerchantCode("merchant-id")
                 .withTransactionId("payId")
                 .build();

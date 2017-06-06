@@ -5,6 +5,7 @@ import io.dropwizard.setup.Environment;
 import uk.gov.pay.connector.app.ConnectorConfiguration;
 import uk.gov.pay.connector.app.WorldpayConfig;
 import uk.gov.pay.connector.service.epdq.EpdqPaymentProvider;
+import uk.gov.pay.connector.service.epdq.EpdqSha512SignatureGenerator;
 import uk.gov.pay.connector.service.sandbox.SandboxPaymentProvider;
 import uk.gov.pay.connector.service.smartpay.SmartpayPaymentProvider;
 import uk.gov.pay.connector.service.worldpay.WorldpayPaymentProvider;
@@ -16,8 +17,14 @@ import java.util.Map;
 import java.util.function.BiFunction;
 
 import static jersey.repackaged.com.google.common.collect.Maps.newHashMap;
-import static uk.gov.pay.connector.service.GatewayOperation.*;
-import static uk.gov.pay.connector.service.PaymentGatewayName.*;
+import static uk.gov.pay.connector.service.GatewayOperation.AUTHORISE;
+import static uk.gov.pay.connector.service.GatewayOperation.CANCEL;
+import static uk.gov.pay.connector.service.GatewayOperation.CAPTURE;
+import static uk.gov.pay.connector.service.GatewayOperation.REFUND;
+import static uk.gov.pay.connector.service.PaymentGatewayName.EPDQ;
+import static uk.gov.pay.connector.service.PaymentGatewayName.SANDBOX;
+import static uk.gov.pay.connector.service.PaymentGatewayName.SMARTPAY;
+import static uk.gov.pay.connector.service.PaymentGatewayName.WORLDPAY;
 
 /**
  * TODO: Currently, the usage of this class at runtime is a single instance instantiated by ConnectorApp.
@@ -90,10 +97,10 @@ public class PaymentProviders<T extends BaseResponse> {
                 .refundClient(gatewayClientForOperation(EPDQ, REFUND, EpdqPaymentProvider.includeSessionIdentifier()))
                 .build();
 
-        return new EpdqPaymentProvider(gatewayClientEnumMap);
+        return new EpdqPaymentProvider(gatewayClientEnumMap, new EpdqSha512SignatureGenerator());
     }
 
-    public PaymentProvider<T> byName(PaymentGatewayName gateway) {
+    public PaymentProvider<T, ?> byName(PaymentGatewayName gateway) {
         return paymentProviders.get(gateway);
     }
 }

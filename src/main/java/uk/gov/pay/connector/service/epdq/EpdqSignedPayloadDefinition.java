@@ -36,7 +36,7 @@ public class EpdqSignedPayloadDefinition implements PayloadDefinition<EpdqOrderR
         ImmutableList<NameValuePair> parameters = payloadDefinition.extract(templateData);
         return ImmutableList.<NameValuePair>builder()
                 .addAll(parameters)
-                .add(new BasicNameValuePair("SHASIGN", signatureGenerator.sign(parameters, templateData.getShaPassphrase())))
+                .add(new BasicNameValuePair("SHASIGN", signatureGenerator.sign(parameters, templateData.getShaInPassphrase())))
                 .build();
     }
 }
