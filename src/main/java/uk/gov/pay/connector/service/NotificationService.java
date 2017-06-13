@@ -14,6 +14,7 @@ import uk.gov.pay.connector.model.Notifications;
 import uk.gov.pay.connector.model.domain.ChargeEntity;
 import uk.gov.pay.connector.model.domain.ChargeStatus;
 import uk.gov.pay.connector.model.domain.GatewayAccountEntity;
+import uk.gov.pay.connector.model.domain.InternalExternalStatus;
 import uk.gov.pay.connector.model.domain.RefundEntity;
 import uk.gov.pay.connector.model.domain.RefundStatus;
 import uk.gov.pay.connector.service.transaction.NonTransactionalOperation;
@@ -120,38 +121,63 @@ public class NotificationService {
                 List<ExtendedNotification<T>> notifications = context.get(ArrayList.class);
                 notifications.forEach(
                         notification -> {
-                            if (!notification.getInternalStatus().isPresent()) {
-                                logger.info(format("Notification with status=%s, transaction_id=%s and reference=%s ignored.",
-                                        notification.getStatus(), notification.getTransactionId(), notification.getReference()));
+                            if (notification.getInterpretedStatus().isIgnored()) {
+                                logger.info(format("Notification ignored - paymentProvider=%s, status=%s, transaction_id=%s, reference=%s.",
+                                        paymentProvider.getPaymentGatewayName(), notification.getStatus(), notification.getTransactionId(), notification.getReference()));
+                                return;
+                            } else if (notification.getInterpretedStatus().isUnknown()) {
+                                logger.error(format("Notification unknown - paymentProvider=%s, status=%s, transaction_id=%s, reference=%s.",
+                                        paymentProvider.getPaymentGatewayName(), notification.getStatus(), notification.getTransactionId(), notification.getReference()));
                                 return;
                             }
 
-                            Enum newStatus = notification.getInternalStatus().get();
-
-                            if (notification.isOfChargeType()) {
-                                updateChargeStatus(notification, newStatus);
-                                return;
-                            }
-
-                            if (notification.isOfRefundType()) {
-                                if (isBlank(notification.getReference())) {
-                                    logger.error(format("Notification with transaction_id=%s of type refund with no reference ignored.",
-                                            notification.getTransactionId()));
-                                    return;
-                                }
-                                updateRefundStatus(notification, newStatus);
-                                return;
-                            }
-
-                            logger.error(format("Notification with transaction_id=%s and status=%s is neither of type charge nor refund",
-                                    notification.getTransactionId(), notification.getInternalStatus()));
-                            return;
+                            updateChargeStatusFromNotification(notification);
                         });
                 return null;
             };
         }
 
-        private <T> void updateChargeStatus(ExtendedNotification<T> notification, Enum newStatus) {
+        private void updateChargeStatusFromNotification(ExtendedNotification notification) {
+            Optional<InternalExternalStatus> newStatus =
+                notification.getInterpretedStatus().isDeferred() ?
+                    resolveDeferredInterpretedStatus(notification, (BaseStatusMapper.DeferredStatus) notification.getInterpretedStatus()) :
+                    notification.getInterpretedStatus().get();
+
+            newStatus.ifPresent(status -> {
+                if (notification.isOfChargeType()) {
+                    updateChargeStatus(notification, status);
+                    return;
+                }
+
+                if (notification.isOfRefundType()) {
+                    if (isBlank(notification.getReference())) {
+                        logger.error(format("Notification with transaction_id=%s of type refund with no reference ignored.",
+                            notification.getTransactionId()));
+                        return;
+                    }
+                    updateRefundStatus(notification, status);
+                    return;
+                }
+
+                logger.error(format("Notification with transaction_id=%s and status=%s is neither of type charge nor refund",
+                    notification.getTransactionId(), newStatus));
+                return;
+            });
+        }
+
+        private <T> Optional<InternalExternalStatus> resolveDeferredInterpretedStatus(ExtendedNotification<T> notification, BaseStatusMapper.DeferredStatus deferredStatus) {
+            Optional<ChargeEntity> optionalChargeEntity = chargeDao.findByProviderAndTransactionId(
+                    paymentProvider.getPaymentGatewayName(), notification.getTransactionId());
+            if (!optionalChargeEntity.isPresent()) {
+                logger.error(format("Notification could not be resolved (unable to find charge entity) - paymentProvider=%s, transaction_id=%s, status:%s.",
+                        paymentProvider.getPaymentGatewayName(), notification.getTransactionId(), notification.getInterpretedStatus().get().get()));
+                return Optional.empty();
+            }
+
+            return deferredStatus.getDeferredStatusResolver().resolve(optionalChargeEntity.get());
+        }
+
+        private <T> void updateChargeStatus(ExtendedNotification<T> notification, InternalExternalStatus newStatus) {
             Optional<ChargeEntity> optionalChargeEntity = chargeDao.findByProviderAndTransactionId(
                     paymentProvider.getPaymentGatewayName(), notification.getTransactionId());
             if (!optionalChargeEntity.isPresent()) {
@@ -183,7 +209,7 @@ public class NotificationService {
             chargeDao.mergeAndNotifyStatusHasChanged(chargeEntity, Optional.of(notification.getGatewayEventDate()));
         }
 
-        private <T> void updateRefundStatus(ExtendedNotification<T> notification, Enum newStatus) {
+        private <T> void updateRefundStatus(ExtendedNotification<T> notification, InternalExternalStatus newStatus) {
             Optional<RefundEntity> optionalRefundEntity = refundDao.findByReference(notification.getReference());
             if (!optionalRefundEntity.isPresent()) {
                 logger.error(format("Notification with transaction_id=%s and reference=%s failed updating refund status to: %s. Unable to find refund entity.",
@@ -208,8 +234,7 @@ public class NotificationService {
         }
 
         private <T> Function<Notification<T>, ExtendedNotification<T>> toExtendedNotification() {
-            return notification ->
-                    ExtendedNotification.extend(notification, mapStatus(notification.getStatus()));
+            return notification ->ExtendedNotification.extend(notification, paymentProvider.getStatusMapper().from(notification.getStatus()));
         }
 
         private <T> Predicate<ExtendedNotification<T>> isValid() {
@@ -228,21 +253,6 @@ public class NotificationService {
             };
         }
 
-        private <T> Optional<Enum> mapStatus(T status) {
-            Status mappedStatus = paymentProvider.getStatusMapper().from(status);
-
-            if (mappedStatus.isUnknown()) {
-                logger.error(format("Notification with unknown status %s.", status));
-                return Optional.empty();
-            }
-
-            if (mappedStatus.isIgnored()) {
-                logger.info(format("Notification with ignored status %s.", status));
-                return Optional.empty();
-            }
-            return Optional.of(mappedStatus.get());
-        }
-
         private String getPassphrase(ExtendedNotification notification) {
             Optional<ChargeEntity> optionalChargeEntity = chargeDao.findByProviderAndTransactionId(
                 paymentProvider.getPaymentGatewayName(), notification.getTransactionId());
@@ -253,5 +263,6 @@ public class NotificationService {
 
             return optionalChargeEntity.get().getGatewayAccount().getCredentials().get(CREDENTIALS_SHA_OUT_PASSPHRASE);
         }
+
     }
 }

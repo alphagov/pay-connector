@@ -132,8 +132,8 @@ public class EpdqPaymentProvider extends BasePaymentProvider<BaseResponse, Strin
     }
 
     @Override
-    public StatusMapper getStatusMapper() {
-        throw new UnsupportedOperationException();
+    public StatusMapper<String> getStatusMapper() {
+        return EpdqStatusMapper.get();
     }
 
     private Function<AuthorisationGatewayRequest, GatewayOrder> buildAuthoriseOrderFor() {

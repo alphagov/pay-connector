@@ -119,7 +119,7 @@ public class SmartpayPaymentProvider extends BasePaymentProvider<BaseResponse, P
     }
 
     @Override
-    public StatusMapper getStatusMapper() {
+    public StatusMapper<Pair<String, Boolean>> getStatusMapper() {
         return SmartpayStatusMapper.get();
     }
 

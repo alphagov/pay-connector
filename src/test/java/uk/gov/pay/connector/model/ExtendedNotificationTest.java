@@ -8,6 +8,10 @@ import org.junit.Test;
 import java.time.ZonedDateTime;
 import java.util.List;
 import java.util.Optional;
+import uk.gov.pay.connector.model.domain.ChargeStatus;
+import uk.gov.pay.connector.model.domain.RefundStatus;
+import uk.gov.pay.connector.service.BaseStatusMapper;
+import uk.gov.pay.connector.service.BaseStatusMapper.MappedStatus;
 
 import static java.util.Collections.singletonList;
 import static org.hamcrest.core.Is.is;
@@ -22,17 +26,17 @@ public class ExtendedNotificationTest {
         String transactionId = "transaction-id";
         String reference = "reference";
         String status = "status";
-        Optional<Enum> internalStatus = Optional.of(CAPTURED);
+        MappedStatus mappedStatus = new MappedStatus(ChargeStatus.CAPTURED);
         ZonedDateTime now = ZonedDateTime.now();
         List<NameValuePair> payload = singletonList(new BasicNameValuePair("my", "payload"));
 
         BaseNotification baseNotification = new BaseNotification<>(transactionId, reference, status, now, payload);
 
-        ExtendedNotification extendedNotification = ExtendedNotification.extend(baseNotification, internalStatus);
+        ExtendedNotification extendedNotification = ExtendedNotification.extend(baseNotification, mappedStatus);
 
         assertThat(extendedNotification.getTransactionId(), is(transactionId));
         assertThat(extendedNotification.getStatus(), is(status));
-        assertThat(extendedNotification.getInternalStatus(), is(internalStatus));
+        assertThat(extendedNotification.getInterpretedStatus(), is(mappedStatus));
         assertThat(extendedNotification.isOfChargeType(), is(true));
         assertThat(extendedNotification.isOfRefundType(), is(false));
         assertThat(extendedNotification.getGatewayEventDate(), is(now));
@@ -44,17 +48,17 @@ public class ExtendedNotificationTest {
         String transactionId = "transaction-id";
         String reference = "reference";
         String status = "status";
-        Optional<Enum> internalStatus = Optional.of(REFUNDED);
+        MappedStatus mappedStatus = new MappedStatus(RefundStatus.REFUNDED);
         ZonedDateTime now = ZonedDateTime.now();
         List<NameValuePair> payload = singletonList(new BasicNameValuePair("my", "payload"));
 
         BaseNotification baseNotification = new BaseNotification<>(transactionId, reference, status, now, payload);
 
-        ExtendedNotification extendedNotification = ExtendedNotification.extend(baseNotification, internalStatus);
+        ExtendedNotification extendedNotification = ExtendedNotification.extend(baseNotification, mappedStatus);
 
         assertThat(extendedNotification.getTransactionId(), is(transactionId));
         assertThat(extendedNotification.getStatus(), is(status));
-        assertThat(extendedNotification.getInternalStatus(), is(internalStatus));
+        assertThat(extendedNotification.getInterpretedStatus(), is(mappedStatus));
         assertThat(extendedNotification.isOfChargeType(), is(false));
         assertThat(extendedNotification.isOfRefundType(), is(true));
         assertThat(extendedNotification.getGatewayEventDate(), is(now));

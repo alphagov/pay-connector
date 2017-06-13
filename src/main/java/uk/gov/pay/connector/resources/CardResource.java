@@ -129,7 +129,7 @@ public class CardResource {
                 .map(this::handleError)
                 .orElseGet(() -> response.getBaseResponse()
                         .map(r -> ResponseUtil.successResponseWithEntity(ImmutableMap.of("status", r.authoriseStatus().getMappedChargeStatus().toString())))
-                        .orElseGet(() -> ResponseUtil.serviceErrorResponse("Status not found for Gateway response")));
+                        .orElseGet(() -> ResponseUtil.serviceErrorResponse("InterpretedStatus not found for Gateway response")));
     }
 
     private Response handleGatewayResponse(GatewayResponse<? extends BaseResponse> response) {
