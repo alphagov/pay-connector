@@ -1,5 +1,6 @@
 package uk.gov.pay.connector.resources;
 
+import javax.ws.rs.core.MediaType;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import uk.gov.pay.connector.service.NotificationService;
@@ -11,7 +12,9 @@ import javax.ws.rs.*;
 import javax.ws.rs.core.Response;
 import java.io.IOException;
 
+import static javax.ws.rs.core.MediaType.*;
 import static javax.ws.rs.core.MediaType.APPLICATION_JSON;
+import static javax.ws.rs.core.MediaType.TEXT_PLAIN;
 import static javax.ws.rs.core.MediaType.TEXT_XML;
 import static uk.gov.pay.connector.resources.ApiPaths.*;
 import static uk.gov.pay.connector.service.PaymentGatewayName.SMARTPAY;
@@ -50,6 +53,14 @@ public class NotificationResource {
     @Produces({TEXT_XML, APPLICATION_JSON})
     public Response authoriseWorldpayNotifications(String notification, @HeaderParam("X-Forwarded-For") String ipAddress) throws IOException {
         return handleNotification(ipAddress, "worldpay", notification);
+    }
+
+    @POST
+    @Consumes(APPLICATION_FORM_URLENCODED)
+    @Path(NOTIFICATIONS_EPDQ_API_PATH)
+    @Produces({TEXT_XML, APPLICATION_JSON})
+    public Response authoriseEpdqNotifications(String notification, @HeaderParam("X-Forwarded-For") String ipAddress) throws IOException {
+        return handleNotification(ipAddress, "epdq", notification);
     }
 
     private Response handleNotification(String ipAddress, String name, String notification) {
