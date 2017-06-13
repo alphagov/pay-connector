@@ -116,7 +116,7 @@ public class WorldpayPaymentProvider extends BasePaymentProvider<BaseResponse, S
     }
 
     @Override
-    public StatusMapper getStatusMapper() {
+    public StatusMapper<String> getStatusMapper() {
         return WorldpayStatusMapper.get();
     }
 

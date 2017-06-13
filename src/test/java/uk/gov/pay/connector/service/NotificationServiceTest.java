@@ -8,6 +8,7 @@ import org.junit.runner.RunWith;
 import org.mockito.Answers;
 import org.mockito.ArgumentCaptor;
 import org.mockito.Mock;
+import org.mockito.Mockito;
 import org.mockito.runners.MockitoJUnitRunner;
 import uk.gov.pay.connector.dao.ChargeDao;
 import uk.gov.pay.connector.dao.RefundDao;
@@ -15,8 +16,12 @@ import uk.gov.pay.connector.exception.InvalidStateTransitionException;
 import uk.gov.pay.connector.model.Notification;
 import uk.gov.pay.connector.model.Notifications;
 import uk.gov.pay.connector.model.domain.ChargeEntity;
+import uk.gov.pay.connector.model.domain.ChargeStatus;
 import uk.gov.pay.connector.model.domain.GatewayAccountEntity;
+import uk.gov.pay.connector.model.domain.InternalExternalStatus;
 import uk.gov.pay.connector.model.domain.RefundEntity;
+import uk.gov.pay.connector.model.domain.RefundStatus;
+import uk.gov.pay.connector.service.BaseStatusMapper.MappedStatus;
 import uk.gov.pay.connector.service.transaction.TransactionFlow;
 import uk.gov.pay.connector.util.DnsUtils;
 
@@ -68,10 +73,6 @@ public class NotificationServiceTest {
     @Mock(answer = Answers.RETURNS_DEEP_STUBS)
     private ChargeEntity mockedChargeEntity;
 
-    public enum UnknownType {
-        STATUS
-    }
-
     @Before
     public void setUp() {
         when(mockedPaymentProvider.getPaymentGatewayName()).thenReturn(SANDBOX.getName());
@@ -90,15 +91,18 @@ public class NotificationServiceTest {
                 .build();
     }
 
-    private StatusMapper createMockedStatusMapper(boolean isUnknownStatus, boolean isIgnoredStatus, Enum status) {
+    private StatusMapper createMockedStatusMapper(boolean isUnknownStatus, boolean isIgnoredStatus, InternalExternalStatus status) {
         StatusMapper mockedStatusMapper = mock(StatusMapper.class);
-        Status mockedStatus = mock(Status.class);
+        InterpretedStatus mockedStatus = mock(InterpretedStatus.class);
 
         when(mockedStatus.isUnknown()).thenReturn(isUnknownStatus);
         when(mockedStatus.isIgnored()).thenReturn(isIgnoredStatus);
-        when(mockedStatus.get()).thenReturn(status);
 
         when(mockedStatusMapper.from(any())).thenReturn(mockedStatus);
+
+        if (status != null) {
+            when(mockedStatus.get()).thenReturn(Optional.of(status));
+        }
 
         return mockedStatusMapper;
     }
@@ -238,19 +242,6 @@ public class NotificationServiceTest {
         notificationService.handleNotificationFor("", SANDBOX, "payload");
 
         verify(mockedRefundDao).findByReference(reference);
-        verifyNoMoreInteractions(ignoreStubs(mockedChargeDao));
-    }
-
-    @Test
-    public void shouldIgnoreNotificationWhenNeitherOfTypeChargeOrRefund() {
-        Notifications<Pair<String, Boolean>> notifications = createNotificationFor(TRANSACTION_ID, null, Pair.of("CAPTURE", true));
-        when(mockedPaymentProvider.parseNotification(any())).thenReturn(Either.right(notifications));
-
-        StatusMapper mockedStatusMapper = createMockedStatusMapper(false, false, UnknownType.STATUS);
-        when(mockedPaymentProvider.getStatusMapper()).thenReturn(mockedStatusMapper);
-
-        notificationService.handleNotificationFor("", SANDBOX, "payload");
-
         verifyNoMoreInteractions(ignoreStubs(mockedChargeDao));
     }
 

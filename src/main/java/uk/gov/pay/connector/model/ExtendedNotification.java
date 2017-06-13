@@ -3,6 +3,7 @@ package uk.gov.pay.connector.model;
 import org.apache.http.NameValuePair;
 import uk.gov.pay.connector.model.domain.ChargeStatus;
 import uk.gov.pay.connector.model.domain.RefundStatus;
+import uk.gov.pay.connector.service.InterpretedStatus;
 
 import java.time.ZonedDateTime;
 import java.util.List;
@@ -11,15 +12,15 @@ import java.util.Optional;
 public class ExtendedNotification<T> implements Notification<T> {
 
     private Notification<T> notification;
-    private Optional<Enum> internalStatus = Optional.empty();
+    private InterpretedStatus interpretedStatus;
 
-    private ExtendedNotification(Notification<T> notification, Optional<Enum> internalStatus) {
+    private ExtendedNotification(Notification<T> notification, InterpretedStatus interpretedStatus) {
         this.notification = notification;
-        this.internalStatus = internalStatus;
+        this.interpretedStatus = interpretedStatus;
     }
 
-    public static <T> ExtendedNotification<T> extend(Notification<T> notification, Optional<Enum> internalStatus) {
-        return new ExtendedNotification<T>(notification, internalStatus);
+    public static <T> ExtendedNotification<T> extend(Notification<T> notification, InterpretedStatus status) {
+        return new ExtendedNotification<T>(notification, status);
     }
 
     public String getTransactionId() {
@@ -42,21 +43,15 @@ public class ExtendedNotification<T> implements Notification<T> {
         return notification.getPayload();
     }
 
-    public Optional<Enum> getInternalStatus() {
-        return internalStatus;
+    public InterpretedStatus getInterpretedStatus() {
+        return interpretedStatus;
     }
 
     public boolean isOfChargeType() {
-        if (!internalStatus.isPresent()) {
-            return false;
-        }
-        return internalStatus.get() instanceof ChargeStatus;
+        return interpretedStatus.get().map(status -> status instanceof ChargeStatus).orElse(false);
     }
 
     public boolean isOfRefundType() {
-        if (!internalStatus.isPresent()) {
-            return false;
-        }
-        return internalStatus.get() instanceof RefundStatus;
+        return interpretedStatus.get().map(status -> status instanceof RefundStatus).orElse(false);
     }
 }
