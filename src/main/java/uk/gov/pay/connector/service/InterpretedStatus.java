@@ -1,8 +1,10 @@
 package uk.gov.pay.connector.service;
 
-import java.util.NoSuchElementException;
+import uk.gov.pay.connector.model.domain.Status;
 
-public interface Status {
+import java.util.Optional;
+
+public interface InterpretedStatus {
 
     default boolean isMapped() {
         return false;
@@ -16,7 +18,9 @@ public interface Status {
         return false;
     }
 
-    default Enum get() {
-        throw new NoSuchElementException("No status present");
+    default boolean isDeferred() { return false; }
+
+    default Optional<Status> get() {
+        return Optional.empty();
     }
 }
