@@ -1,7 +1,7 @@
 package uk.gov.pay.connector.service.worldpay;
 
 import org.junit.Test;
-import uk.gov.pay.connector.service.Status;
+import uk.gov.pay.connector.service.InterpretedStatus;
 
 import static org.hamcrest.core.Is.is;
 import static org.junit.Assert.assertThat;
@@ -12,51 +12,56 @@ public class WorldpayStatusMapperTest {
 
     @Test
     public void shouldReturnAChargeStatus() throws Exception {
-        Status status = WorldpayStatusMapper.get().from("CAPTURED");
+        InterpretedStatus status = WorldpayStatusMapper.get().from("CAPTURED");
 
         assertThat(status.isMapped(), is(true));
         assertThat(status.isIgnored(), is(false));
         assertThat(status.isUnknown(), is(false));
-        assertThat(status.get(), is(CAPTURED));
+        assertThat(status.isDeferred(), is(false));
+        assertThat(status.get().get(), is(CAPTURED));
     }
 
     @Test
     public void shouldReturnARefundStatusFromRefunded() throws Exception {
-        Status status = WorldpayStatusMapper.get().from("REFUNDED");
+        InterpretedStatus status = WorldpayStatusMapper.get().from("REFUNDED");
 
         assertThat(status.isMapped(), is(true));
         assertThat(status.isIgnored(), is(false));
         assertThat(status.isUnknown(), is(false));
-        assertThat(status.get(), is(REFUNDED));
+        assertThat(status.isDeferred(), is(false));
+        assertThat(status.get().get(), is(REFUNDED));
     }
 
     @Test
     public void shouldReturnARefundStatusFromRefundedByMerchant() throws Exception {
-        Status status = WorldpayStatusMapper.get().from("REFUNDED_BY_MERCHANT");
+        InterpretedStatus status = WorldpayStatusMapper.get().from("REFUNDED_BY_MERCHANT");
 
         assertThat(status.isMapped(), is(true));
         assertThat(status.isIgnored(), is(false));
         assertThat(status.isUnknown(), is(false));
-        assertThat(status.get(), is(REFUNDED));
+        assertThat(status.isDeferred(), is(false));
+        assertThat(status.get().get(), is(REFUNDED));
     }
 
 
     @Test
     public void shouldReturnEmptyWhenStatusIsUnknown() throws Exception {
-        Status status = WorldpayStatusMapper.get().from("unknown");
+        InterpretedStatus status = WorldpayStatusMapper.get().from("unknown");
 
         assertThat(status.isMapped(), is(false));
         assertThat(status.isIgnored(), is(false));
         assertThat(status.isUnknown(), is(true));
+        assertThat(status.isDeferred(), is(false));
     }
 
     @Test
     public void shouldReturnEmptyWhenStatusIsUnhandled() throws Exception {
-        Status status = WorldpayStatusMapper.get().from("AUTHORISED");
+        InterpretedStatus status = WorldpayStatusMapper.get().from("AUTHORISED");
 
         assertThat(status.isMapped(), is(false));
         assertThat(status.isIgnored(), is(true));
         assertThat(status.isUnknown(), is(false));
+        assertThat(status.isDeferred(), is(false));
     }
 
 }

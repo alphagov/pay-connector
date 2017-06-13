@@ -38,4 +38,5 @@ public interface ApiPaths {
     String NOTIFICATIONS_WORLDPAY_API_PATH = API_VERSION_PATH + "/api/notifications/worldpay";
     String NOTIFICATIONS_SMARTPAY_API_PATH = API_VERSION_PATH + "/api/notifications/smartpay";
     String NOTIFICATIONS_SANDBOX_API_PATH = API_VERSION_PATH + "/api/notifications/sandbox";
+    String NOTIFICATIONS_EPDQ_API_PATH = API_VERSION_PATH + "/api/notifications/epdq";
 }

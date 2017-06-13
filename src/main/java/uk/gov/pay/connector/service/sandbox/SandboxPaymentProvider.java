@@ -111,7 +111,7 @@ public class SandboxPaymentProvider extends BasePaymentProvider<BaseResponse, St
     }
 
     @Override
-    public StatusMapper getStatusMapper() {
+    public StatusMapper<String> getStatusMapper() {
         return SandboxStatusMapper.get();
     }
 
