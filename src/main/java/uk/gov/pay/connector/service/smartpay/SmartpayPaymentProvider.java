@@ -11,6 +11,7 @@ import uk.gov.pay.connector.model.Notification;
 import uk.gov.pay.connector.model.Notifications;
 import uk.gov.pay.connector.model.Notifications.Builder;
 import uk.gov.pay.connector.model.RefundGatewayRequest;
+import uk.gov.pay.connector.model.domain.GatewayAccountEntity;
 import uk.gov.pay.connector.model.gateway.Auth3dsResponseGatewayRequest;
 import uk.gov.pay.connector.model.gateway.AuthorisationGatewayRequest;
 import uk.gov.pay.connector.model.gateway.GatewayResponse;
@@ -93,7 +94,7 @@ public class SmartpayPaymentProvider extends BasePaymentProvider<BaseResponse, P
     }
 
     @Override
-    public boolean verifyNotification(Notification<Pair<String, Boolean>> notification, String passphrase) {
+    public boolean verifyNotification(Notification<Pair<String, Boolean>> notification, GatewayAccountEntity gatewayAccountEntity) {
         return true;
     }
 
@@ -104,6 +105,11 @@ public class SmartpayPaymentProvider extends BasePaymentProvider<BaseResponse, P
 
             objectMapper.readValue(payload, SmartpayNotificationList.class)
                     .getNotifications()
+                    // TODO for authorisation notifications, this does the wrong thing
+                    // Transaction ID is pspReference, not originalReference as the code below assumes
+                    // https://www.barclaycard.co.uk/business/files/SmartPay_Notifications_Guide.pdf
+                    // We will set the transaction ID to blank, which makes the notification effectively useless
+                    // This is OK at the moment because we ignore authorisation notifications for Smartpay
                     .forEach(notification -> builder.addNotificationFor(
                             notification.getOriginalReference(),
                             notification.getPspReference(),

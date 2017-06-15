@@ -8,6 +8,7 @@ import uk.gov.pay.connector.model.GatewayError;
 import uk.gov.pay.connector.model.Notification;
 import uk.gov.pay.connector.model.Notifications;
 import uk.gov.pay.connector.model.RefundGatewayRequest;
+import uk.gov.pay.connector.model.domain.GatewayAccountEntity;
 import uk.gov.pay.connector.model.gateway.Auth3dsResponseGatewayRequest;
 import uk.gov.pay.connector.model.gateway.AuthorisationGatewayRequest;
 import uk.gov.pay.connector.model.gateway.GatewayResponse;
@@ -33,6 +34,7 @@ import static uk.gov.pay.connector.model.ErrorType.GENERIC_GATEWAY_ERROR;
 import static uk.gov.pay.connector.model.domain.GatewayAccount.CREDENTIALS_MERCHANT_ID;
 import static uk.gov.pay.connector.model.domain.GatewayAccount.CREDENTIALS_PASSWORD;
 import static uk.gov.pay.connector.model.domain.GatewayAccount.CREDENTIALS_SHA_IN_PASSPHRASE;
+import static uk.gov.pay.connector.model.domain.GatewayAccount.CREDENTIALS_SHA_OUT_PASSPHRASE;
 import static uk.gov.pay.connector.model.domain.GatewayAccount.CREDENTIALS_USERNAME;
 import static uk.gov.pay.connector.service.epdq.EpdqNotification.SHASIGN;
 import static uk.gov.pay.connector.service.epdq.EpdqOrderRequestBuilder.anEpdqAuthoriseOrderRequestBuilder;
@@ -98,7 +100,7 @@ public class EpdqPaymentProvider extends BasePaymentProvider<BaseResponse, Strin
     }
 
     @Override
-    public boolean verifyNotification(Notification<String> notification, String passphrase) {
+    public boolean verifyNotification(Notification<String> notification, GatewayAccountEntity gatewayAccountEntity) {
         if (!notification.getPayload().isPresent()) return false;
 
         List<NameValuePair> notificationParams = notification.getPayload().get();
@@ -106,7 +108,7 @@ public class EpdqPaymentProvider extends BasePaymentProvider<BaseResponse, Strin
         List<NameValuePair> notificationParamsWithoutShaSign = notificationParams.stream()
             .filter(param -> !param.getName().equalsIgnoreCase(SHASIGN)).collect(toList());
 
-        String signature = signatureGenerator.sign(notificationParamsWithoutShaSign, passphrase);
+        String signature = signatureGenerator.sign(notificationParamsWithoutShaSign, gatewayAccountEntity.getCredentials().get(CREDENTIALS_SHA_OUT_PASSPHRASE));
 
         return getShaSignFromNotificationParams(notificationParams).equalsIgnoreCase(signature);
     }

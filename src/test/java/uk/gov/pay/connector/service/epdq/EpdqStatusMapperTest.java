@@ -1,67 +1,95 @@
 package uk.gov.pay.connector.service.epdq;
 
+import org.junit.Test;
+import uk.gov.pay.connector.service.InterpretedStatus;
+import uk.gov.pay.connector.service.MappedChargeStatus;
+
 import static org.hamcrest.core.Is.is;
 import static org.junit.Assert.assertThat;
 import static uk.gov.pay.connector.model.domain.ChargeStatus.AUTHORISATION_REJECTED;
+import static uk.gov.pay.connector.model.domain.ChargeStatus.AUTHORISATION_SUBMITTED;
 import static uk.gov.pay.connector.model.domain.ChargeStatus.AUTHORISATION_SUCCESS;
 import static uk.gov.pay.connector.model.domain.ChargeStatus.CAPTURED;
-import static uk.gov.pay.connector.model.domain.RefundStatus.REFUNDED;
-
-import org.junit.Test;
-import uk.gov.pay.connector.service.InterpretedStatus;
-import uk.gov.pay.connector.service.worldpay.WorldpayStatusMapper;
+import static uk.gov.pay.connector.model.domain.ChargeStatus.CAPTURE_SUBMITTED;
+import static uk.gov.pay.connector.model.domain.ChargeStatus.CREATED;
+import static uk.gov.pay.connector.model.domain.ChargeStatus.ENTERING_CARD_DETAILS;
+import static uk.gov.pay.connector.model.domain.ChargeStatus.EXPIRE_CANCEL_SUBMITTED;
+import static uk.gov.pay.connector.model.domain.ChargeStatus.SYSTEM_CANCEL_SUBMITTED;
+import static uk.gov.pay.connector.model.domain.ChargeStatus.USER_CANCEL_SUBMITTED;
+import static uk.gov.pay.connector.service.StatusFlow.EXPIRE_FLOW;
+import static uk.gov.pay.connector.service.StatusFlow.SYSTEM_CANCELLATION_FLOW;
+import static uk.gov.pay.connector.service.StatusFlow.USER_CANCELLATION_FLOW;
 
 public class EpdqStatusMapperTest {
 
     @Test
     public void shouldReturnAuthorisationRejectedStatusFromValue2() throws Exception {
-        InterpretedStatus status = EpdqStatusMapper.get().from("2");
+        InterpretedStatus status = EpdqStatusMapper.get().from("2", AUTHORISATION_SUBMITTED);
 
-        assertThat(status.isMapped(), is(true));
-        assertThat(status.isIgnored(), is(false));
-        assertThat(status.isUnknown(), is(false));
-        assertThat(status.isDeferred(), is(false));
-        assertThat(status.get().get(), is(AUTHORISATION_REJECTED));
+        assertThat(status.getType(), is(InterpretedStatus.Type.CHARGE_STATUS));
+        assertThat(((MappedChargeStatus) status).getChargeStatus(), is(AUTHORISATION_REJECTED));
     }
 
     @Test
     public void shouldReturnAuthorisationSuccessStatusFromValue5() throws Exception {
-        InterpretedStatus status = EpdqStatusMapper.get().from("5");
+        InterpretedStatus status = EpdqStatusMapper.get().from("5", AUTHORISATION_SUBMITTED);
 
-        assertThat(status.isMapped(), is(true));
-        assertThat(status.isIgnored(), is(false));
-        assertThat(status.isUnknown(), is(false));
-        assertThat(status.isDeferred(), is(false));
-        assertThat(status.get().get(), is(AUTHORISATION_SUCCESS));
+        assertThat(status.getType(), is(InterpretedStatus.Type.CHARGE_STATUS));
+        assertThat(((MappedChargeStatus) status).getChargeStatus(), is(AUTHORISATION_SUCCESS));
     }
 
     @Test
-    public void shouldDeferStatusFromValue6() throws Exception {
-        InterpretedStatus status = EpdqStatusMapper.get().from("6");
-        assertThat(status.isMapped(), is(false));
-        assertThat(status.isIgnored(), is(false));
-        assertThat(status.isUnknown(), is(false));
-        assertThat(status.isDeferred(), is(true));
+    public void shouldReturnUserCancelledFromValue6WhenCurrentStatusUserCancelSubmitted() throws Exception {
+        InterpretedStatus status = EpdqStatusMapper.get().from("6", USER_CANCEL_SUBMITTED);
+
+        assertThat(status.getType(), is(InterpretedStatus.Type.CHARGE_STATUS));
+        assertThat(((MappedChargeStatus) status).getChargeStatus(), is(USER_CANCELLATION_FLOW.getSuccessTerminalState()));
+    }
+
+    @Test
+    public void shouldReturnUserCancelledFromValue6WhenCurrentStatusSystemCancelSubmitted() throws Exception {
+        InterpretedStatus status = EpdqStatusMapper.get().from("6", SYSTEM_CANCEL_SUBMITTED);
+
+        assertThat(status.getType(), is(InterpretedStatus.Type.CHARGE_STATUS));
+        assertThat(((MappedChargeStatus) status).getChargeStatus(), is(SYSTEM_CANCELLATION_FLOW.getSuccessTerminalState()));
+    }
+
+    @Test
+    public void shouldReturnUserCancelledFromValue6WhenCurrentStatusExpireCancelSubmitted() throws Exception {
+        InterpretedStatus status = EpdqStatusMapper.get().from("6", EXPIRE_CANCEL_SUBMITTED);
+
+        assertThat(status.getType(), is(InterpretedStatus.Type.CHARGE_STATUS));
+        assertThat(((MappedChargeStatus) status).getChargeStatus(), is(EXPIRE_FLOW.getSuccessTerminalState()));
+    }
+
+    @Test
+    public void shouldReturnUserCancelledFromValue6WhenCurrentStatusCreated() throws Exception {
+        InterpretedStatus status = EpdqStatusMapper.get().from("6", CREATED);
+
+        assertThat(status.getType(), is(InterpretedStatus.Type.CHARGE_STATUS));
+        assertThat(((MappedChargeStatus) status).getChargeStatus(), is(SYSTEM_CANCELLATION_FLOW.getSuccessTerminalState()));
+    }
+
+    @Test
+    public void shouldReturnUserCancelledFromValue6WhenCurrentStatusEnteringCardDetails() throws Exception {
+        InterpretedStatus status = EpdqStatusMapper.get().from("6", ENTERING_CARD_DETAILS);
+
+        assertThat(status.getType(), is(InterpretedStatus.Type.CHARGE_STATUS));
+        assertThat(((MappedChargeStatus) status).getChargeStatus(), is(SYSTEM_CANCELLATION_FLOW.getSuccessTerminalState()));
     }
 
     @Test
     public void shouldReturnCapturedStatusFromValue9() throws Exception {
-        InterpretedStatus status = EpdqStatusMapper.get().from("9");
+        InterpretedStatus status = EpdqStatusMapper.get().from("9", CAPTURE_SUBMITTED);
 
-        assertThat(status.isMapped(), is(true));
-        assertThat(status.isIgnored(), is(false));
-        assertThat(status.isUnknown(), is(false));
-        assertThat(status.isDeferred(), is(false));
-        assertThat(status.get().get(), is(CAPTURED));
+        assertThat(status.getType(), is(InterpretedStatus.Type.CHARGE_STATUS));
+        assertThat(((MappedChargeStatus) status).getChargeStatus(), is(CAPTURED));
     }
 
     @Test
     public void shouldReturnUnknownStatusFromUnknownValue() throws Exception {
-        InterpretedStatus status = EpdqStatusMapper.get().from("unknown");
+        InterpretedStatus status = EpdqStatusMapper.get().from("unknown", AUTHORISATION_SUCCESS);
 
-        assertThat(status.isMapped(), is(false));
-        assertThat(status.isIgnored(), is(false));
-        assertThat(status.isUnknown(), is(true));
-        assertThat(status.isDeferred(), is(false));
+        assertThat(status.getType(), is(InterpretedStatus.Type.UNKNOWN));
     }
 }

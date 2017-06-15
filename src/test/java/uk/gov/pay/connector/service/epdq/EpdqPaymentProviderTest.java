@@ -3,17 +3,9 @@ package uk.gov.pay.connector.service.epdq;
 import com.codahale.metrics.Counter;
 import com.codahale.metrics.Histogram;
 import com.codahale.metrics.MetricRegistry;
-import com.fasterxml.jackson.databind.introspect.TypeResolutionContext.Basic;
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableMap;
-import java.util.Arrays;
-import java.util.Collections;
-import java.util.List;
-import java.util.Optional;
-import javax.ws.rs.core.MediaType;
-
 import fj.data.Either;
-import org.apache.http.NameValuePair;
 import org.apache.http.message.BasicNameValuePair;
 import org.hamcrest.core.IsNull;
 import org.junit.Assert;
@@ -22,14 +14,23 @@ import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.mockito.Mock;
 import org.mockito.runners.MockitoJUnitRunner;
-import uk.gov.pay.connector.model.*;
+import uk.gov.pay.connector.model.CancelGatewayRequest;
+import uk.gov.pay.connector.model.CaptureGatewayRequest;
+import uk.gov.pay.connector.model.GatewayError;
+import uk.gov.pay.connector.model.Notification;
+import uk.gov.pay.connector.model.Notifications;
 import uk.gov.pay.connector.model.domain.Address;
 import uk.gov.pay.connector.model.domain.AuthCardDetails;
 import uk.gov.pay.connector.model.domain.ChargeEntity;
 import uk.gov.pay.connector.model.domain.GatewayAccountEntity;
 import uk.gov.pay.connector.model.gateway.AuthorisationGatewayRequest;
 import uk.gov.pay.connector.model.gateway.GatewayResponse;
-import uk.gov.pay.connector.service.*;
+import uk.gov.pay.connector.service.ClientFactory;
+import uk.gov.pay.connector.service.GatewayClient;
+import uk.gov.pay.connector.service.GatewayClientFactory;
+import uk.gov.pay.connector.service.GatewayOperation;
+import uk.gov.pay.connector.service.GatewayOperationClientBuilder;
+import uk.gov.pay.connector.service.PaymentGatewayName;
 import uk.gov.pay.connector.util.AuthUtils;
 import uk.gov.pay.connector.util.TestTemplateResourceLoader;
 
@@ -37,12 +38,15 @@ import javax.ws.rs.client.Client;
 import javax.ws.rs.client.Entity;
 import javax.ws.rs.client.Invocation;
 import javax.ws.rs.client.WebTarget;
+import javax.ws.rs.core.MediaType;
 import javax.ws.rs.core.Response;
 import java.io.IOException;
+import java.util.Arrays;
+import java.util.Collections;
 import java.util.EnumMap;
 import java.util.Map;
+import java.util.Optional;
 
-import static java.lang.String.format;
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.core.Is.is;
 import static org.junit.Assert.assertNotNull;
@@ -51,14 +55,25 @@ import static org.mockito.Matchers.any;
 import static org.mockito.Matchers.anyObject;
 import static org.mockito.Matchers.anyString;
 import static org.mockito.Mockito.eq;
-import static org.mockito.Mockito.*;
+import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.verify;
+import static org.mockito.Mockito.when;
 import static uk.gov.pay.connector.model.ErrorType.UNEXPECTED_STATUS_CODE_FROM_GATEWAY;
 import static uk.gov.pay.connector.model.domain.Address.anAddress;
 import static uk.gov.pay.connector.model.domain.ChargeEntityFixture.aValidChargeEntity;
-import static uk.gov.pay.connector.model.domain.GatewayAccount.*;
+import static uk.gov.pay.connector.model.domain.GatewayAccount.CREDENTIALS_MERCHANT_ID;
+import static uk.gov.pay.connector.model.domain.GatewayAccount.CREDENTIALS_PASSWORD;
+import static uk.gov.pay.connector.model.domain.GatewayAccount.CREDENTIALS_SHA_IN_PASSPHRASE;
+import static uk.gov.pay.connector.model.domain.GatewayAccount.CREDENTIALS_SHA_OUT_PASSPHRASE;
+import static uk.gov.pay.connector.model.domain.GatewayAccount.CREDENTIALS_USERNAME;
 import static uk.gov.pay.connector.model.domain.GatewayAccountEntity.Type.TEST;
 import static uk.gov.pay.connector.service.worldpay.WorldpayPaymentProvider.includeSessionIdentifier;
-import static uk.gov.pay.connector.util.TestTemplateResourceLoader.*;
+import static uk.gov.pay.connector.util.TestTemplateResourceLoader.EPDQ_AUTHORISATION_ERROR_RESPONSE;
+import static uk.gov.pay.connector.util.TestTemplateResourceLoader.EPDQ_AUTHORISATION_SUCCESS_RESPONSE;
+import static uk.gov.pay.connector.util.TestTemplateResourceLoader.EPDQ_CANCEL_REQUEST;
+import static uk.gov.pay.connector.util.TestTemplateResourceLoader.EPDQ_CANCEL_SUCCESS_RESPONSE;
+import static uk.gov.pay.connector.util.TestTemplateResourceLoader.EPDQ_CAPTURE_NOTIFICATION_TEMPLATE;
+import static uk.gov.pay.connector.util.TestTemplateResourceLoader.EPDQ_CAPTURE_SUCCESS_RESPONSE;
 
 @RunWith(MockitoJUnitRunner.class)
 public class EpdqPaymentProviderTest {
@@ -77,8 +92,6 @@ public class EpdqPaymentProviderTest {
 
     @Mock
     private Client mockClient;
-    @Mock
-    private GatewayClient mockGatewayClient;
     @Mock
     GatewayAccountEntity mockGatewayAccountEntity;
     @Mock
@@ -194,6 +207,8 @@ public class EpdqPaymentProviderTest {
 
     @Test
     public void shouldVerifyNotificationSignature() {
+        when(mockGatewayAccountEntity.getCredentials()).thenReturn(Collections.singletonMap(CREDENTIALS_SHA_OUT_PASSPHRASE, "passphrase"));
+
         when(mockNotification.getPayload()).thenReturn(Optional.of(Arrays.asList(
             new BasicNameValuePair("key1", "value1"),
             new BasicNameValuePair( "SHASIGN", "signature")
@@ -202,11 +217,13 @@ public class EpdqPaymentProviderTest {
         when(mockSignatureGenerator.sign(Collections.singletonList(new BasicNameValuePair
             ("key1", "value1")), "passphrase")).thenReturn("signature");
 
-        assertThat(provider.verifyNotification(mockNotification, "passphrase"), is(true));
+        assertThat(provider.verifyNotification(mockNotification, mockGatewayAccountEntity), is(true));
     }
 
     @Test
     public void shouldVerifyNotificationSignatureIgnoringCase() {
+        when(mockGatewayAccountEntity.getCredentials()).thenReturn(Collections.singletonMap(CREDENTIALS_SHA_OUT_PASSPHRASE, "passphrase"));
+
         when(mockNotification.getPayload()).thenReturn(Optional.of(Arrays.asList(
             new BasicNameValuePair("key1", "value1"),
             new BasicNameValuePair( "SHASIGN", "SIGNATURE")
@@ -215,11 +232,13 @@ public class EpdqPaymentProviderTest {
         when(mockSignatureGenerator.sign(Collections.singletonList(new BasicNameValuePair
             ("key1", "value1")), "passphrase")).thenReturn("signature");
 
-        assertThat(provider.verifyNotification(mockNotification, "passphrase"), is(true));
+        assertThat(provider.verifyNotification(mockNotification, mockGatewayAccountEntity), is(true));
     }
 
     @Test
     public void shouldNotVerifyNotificationIfWrongSignature() {
+        when(mockGatewayAccountEntity.getCredentials()).thenReturn(Collections.singletonMap(CREDENTIALS_SHA_OUT_PASSPHRASE, "passphrase"));
+
         when(mockNotification.getPayload()).thenReturn(Optional.of(Arrays.asList(
             new BasicNameValuePair("key1", "value1"),
             new BasicNameValuePair( "SHASIGN", "signature")
@@ -228,14 +247,16 @@ public class EpdqPaymentProviderTest {
         when(mockSignatureGenerator.sign(Collections.singletonList(new BasicNameValuePair
             ("key1", "value1")), "passphrase")).thenReturn("wrong signature");
 
-        assertThat(provider.verifyNotification(mockNotification, "passphrase"), is(false));
+        assertThat(provider.verifyNotification(mockNotification, mockGatewayAccountEntity), is(false));
     }
 
     @Test
     public void shouldNotVerifyNotificationIfEmptyPayload() {
+        when(mockGatewayAccountEntity.getCredentials()).thenReturn(Collections.singletonMap(CREDENTIALS_SHA_OUT_PASSPHRASE, "passphrase"));
+
         when(mockNotification.getPayload()).thenReturn(Optional.empty());
 
-        assertThat(provider.verifyNotification(mockNotification, "passphrase"), is(false));
+        assertThat(provider.verifyNotification(mockNotification, mockGatewayAccountEntity), is(false));
     }
 
     @Test

@@ -7,6 +7,7 @@ import uk.gov.pay.connector.model.GatewayError;
 import uk.gov.pay.connector.model.Notification;
 import uk.gov.pay.connector.model.Notifications;
 import uk.gov.pay.connector.model.RefundGatewayRequest;
+import uk.gov.pay.connector.model.domain.GatewayAccountEntity;
 import uk.gov.pay.connector.model.gateway.Auth3dsResponseGatewayRequest;
 import uk.gov.pay.connector.model.gateway.AuthorisationGatewayRequest;
 import uk.gov.pay.connector.model.gateway.GatewayResponse;
@@ -96,7 +97,7 @@ public class SandboxPaymentProvider extends BasePaymentProvider<BaseResponse, St
     }
 
     @Override
-    public boolean verifyNotification(Notification notification, String passphrase) {
+    public boolean verifyNotification(Notification notification, GatewayAccountEntity gatewayAccountEntity) {
         return true;
     }
 

@@ -8,6 +8,7 @@ import uk.gov.pay.connector.model.CaptureGatewayRequest;
 import uk.gov.pay.connector.model.Notification;
 import uk.gov.pay.connector.model.Notifications;
 import uk.gov.pay.connector.model.RefundGatewayRequest;
+import uk.gov.pay.connector.model.domain.GatewayAccountEntity;
 import uk.gov.pay.connector.model.gateway.Auth3dsResponseGatewayRequest;
 import uk.gov.pay.connector.model.gateway.AuthorisationGatewayRequest;
 import uk.gov.pay.connector.model.gateway.GatewayResponse;
@@ -92,7 +93,7 @@ public class WorldpayPaymentProvider extends BasePaymentProvider<BaseResponse, S
     }
 
     @Override
-    public boolean verifyNotification(Notification<String> notification, String passphrase) {
+    public boolean verifyNotification(Notification<String> notification, GatewayAccountEntity gatewayAccountEntity) {
         return true;
     }
 

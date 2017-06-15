@@ -103,13 +103,13 @@ public class WorldpayPaymentProviderTest {
     @Mock
     private GatewayClient mockGatewayClient;
     @Mock
-    GatewayAccountEntity mockGatewayAccountEntity;
+    private GatewayAccountEntity mockGatewayAccountEntity;
     @Mock
-    MetricRegistry mockMetricRegistry;
+    private MetricRegistry mockMetricRegistry;
     @Mock
-    Histogram mockHistogram;
+    private Histogram mockHistogram;
     @Mock
-    Counter mockCounter;
+    private Counter mockCounter;
     @Mock
     private ClientFactory mockClientFactory;
 
@@ -162,7 +162,7 @@ public class WorldpayPaymentProviderTest {
 
     @Test
     public void shouldAlwaysVerifyNotification() {
-        Assert.assertThat(provider.verifyNotification(null, ""), is(true));
+        Assert.assertThat(provider.verifyNotification(null, mock(GatewayAccountEntity.class)), is(true));
     }
 
     @Test
@@ -425,7 +425,7 @@ public class WorldpayPaymentProviderTest {
 
     @Test
     public void shouldTreatAllNotificationsAsVerified() {
-        assertThat(provider.verifyNotification(mock(Notification.class), "a passphrase"), is(true));
+        assertThat(provider.verifyNotification(mock(Notification.class), mockGatewayAccountEntity), is(true));
     }
 
     private String notificationPayloadForTransaction(

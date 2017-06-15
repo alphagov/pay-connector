@@ -1,154 +1,112 @@
 package uk.gov.pay.connector.service;
 
 import com.google.common.collect.ImmutableList;
-import uk.gov.pay.connector.model.domain.DeferredStatusResolver;
+import uk.gov.pay.connector.model.ProviderStatusOnly;
+import uk.gov.pay.connector.model.ProviderStatusWithCurrentStatus;
+import uk.gov.pay.connector.model.StatusMapFromStatus;
+import uk.gov.pay.connector.model.domain.ChargeStatus;
 import uk.gov.pay.connector.model.domain.Status;
+import uk.gov.pay.connector.model.domain.RefundStatus;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Objects;
 import java.util.Optional;
 
-public class BaseStatusMapper<V> implements StatusMapper<V> {
+public class BaseStatusMapper<T> implements StatusMapper<T> {
 
-    public static class StatusMap<V> {
-        private V value;
-        private Optional<Status> status = Optional.empty();
-        private Optional<DeferredStatusResolver> deferredStatusResolver = Optional.empty();
+    public static class StatusMap<T> {
 
-        private StatusMap(V value) {
-            this.value = value;
+        private final StatusMapFromStatus<T> fromStatus;
+        private Status toStatus;
+
+        private StatusMap(ProviderStatusOnly<T> providerStatus) {
+            this.fromStatus = providerStatus;
         }
 
-        private StatusMap(V value, Status status) {
-            this.value = value;
-            this.status = Optional.ofNullable(status);
+        private StatusMap(StatusMapFromStatus<T> fromStatus, Status toStatus) {
+            this.fromStatus = Objects.requireNonNull(fromStatus);
+            this.toStatus = toStatus;
         }
 
-        private StatusMap(V value, DeferredStatusResolver deferredStatusResolver) {
-            this.value = value;
-            this.deferredStatusResolver = Optional.of(deferredStatusResolver);
+        public static <T> StatusMap of(StatusMapFromStatus<T> fromStatus, Status toStatus) {
+            return new StatusMap(fromStatus, toStatus);
         }
 
-        public static <V> StatusMap of(V value, Status status) {
-            return new StatusMap(value, status);
+        public static <T> StatusMap of(ProviderStatusOnly<T> providerStatusOnly) {
+            return new StatusMap<>(providerStatusOnly);
         }
 
-        public static <V> StatusMap of(V value) {
-            return new StatusMap<>(value);
+        public StatusMapFromStatus<T> getFromStatus() {
+            return fromStatus;
         }
 
-        public V getValue() {
-            return value;
-        }
-
-        public Optional<Status> getStatus() {
-            return status;
-        }
-
-        public Optional<DeferredStatusResolver> getDeferredStatusResolver() {
-          return deferredStatusResolver;
-        }
-
-        public static <V> StatusMap of(V value, DeferredStatusResolver deferredStatusResolver) {
-            return new StatusMap(value, deferredStatusResolver);
+        public Optional<Status> getToStatus() {
+            return Optional.ofNullable(toStatus);
         }
     }
 
-    public static class MappedStatus implements InterpretedStatus {
-        private Status status;
+    public static class Builder<T> {
+        private List<StatusMap<T>> validStatuses = new ArrayList<>();
 
-        public MappedStatus(Status status) {
-            this.status = status;
-        }
-
-        @Override
-        public boolean isMapped() {
-            return true;
-        }
-
-        public Optional<Status> get() {
-            return Optional.of(status);
-        }
-    }
-
-    public static class UnknownStatus implements InterpretedStatus {
-        @Override
-        public boolean isUnknown() {
-            return true;
-        }
-    }
-
-    public static class IgnoredStatus implements InterpretedStatus {
-        @Override
-        public boolean isIgnored() {
-            return true;
-        }
-    }
-
-    public static class DeferredStatus implements InterpretedStatus {
-        @Override
-        public boolean isDeferred() { return true; }
-
-        public DeferredStatusResolver getDeferredStatusResolver() {
-            return  getDeferredStatusResolver();
-        }
-    }
-
-    public static class Builder<V> {
-        private List<StatusMap> validStatuses = new ArrayList<>();
-
-        public Builder<V> map(V value, Status status) {
-            validStatuses.add(StatusMap.of(value, status));
+        public Builder<T> map(T providerStatus, ChargeStatus currentStatus, Status status) {
+            validStatuses.add(StatusMap.of(ProviderStatusWithCurrentStatus.of(providerStatus, currentStatus), status));
             return this;
         }
 
-        public Builder<V> ignore(V value) {
-            validStatuses.add(StatusMap.of(value));
+        public Builder<T> map(T providerStatus, Status status) {
+            validStatuses.add(StatusMap.of(ProviderStatusOnly.of(providerStatus), status));
             return this;
         }
 
-        public Builder<V> mapDeferred(V value, DeferredStatusResolver deferredStatusResolver) {
-            validStatuses.add(StatusMap.of(value, deferredStatusResolver));
+        public Builder<T> ignore(T providerStatus) {
+            validStatuses.add(StatusMap.of(ProviderStatusOnly.of(providerStatus)));
             return this;
         }
 
-        public BaseStatusMapper<V> build() {
+        public BaseStatusMapper<T> build() {
             return new BaseStatusMapper(ImmutableList.copyOf(validStatuses));
         }
     }
 
-    private final List<StatusMap<V>> validStatuses;
+    private final List<StatusMap<T>> validStatuses;
 
-    private BaseStatusMapper(List<StatusMap<V>> validStatuses) {
+    private BaseStatusMapper(List<StatusMap<T>> validStatuses) {
         this.validStatuses = validStatuses;
     }
 
-    public static <V> Builder<V> builder() {
-        return new Builder();
+    public static <T> Builder<T> builder() {
+        return new Builder<>();
     }
 
     @Override
-    public InterpretedStatus from(V value) {
-        Optional<StatusMap<V>> statusMap = validStatuses
+    public InterpretedStatus from(T providerStatus, ChargeStatus currentStatus) {
+        ProviderStatusWithCurrentStatus providerStatusWithCurrentStatus = ProviderStatusWithCurrentStatus.of(providerStatus, currentStatus);
+        Optional<StatusMap<T>> statusMap = validStatuses
                 .stream()
-                .filter(p -> p.getValue().equals(value))
+                .filter(validStatus -> validStatus.getFromStatus().equals(providerStatusWithCurrentStatus))
                 .findFirst();
 
         if (!statusMap.isPresent()) {
             return new UnknownStatus();
         }
 
-        Optional<Status> status = statusMap.flatMap(StatusMap::getStatus);
-        Optional<DeferredStatusResolver> deferredStatusResolver = statusMap.flatMap(StatusMap::getDeferredStatusResolver);
+        Optional<Status> statusMaybe = statusMap.flatMap(StatusMap::getToStatus);
 
-        if (!status.isPresent() && !deferredStatusResolver.isPresent()) {
+        if (!statusMaybe.isPresent()) {
             return new IgnoredStatus();
         }
 
-        if (statusMap.get().deferredStatusResolver.isPresent()) {
-            return new DeferredStatus();
+        Status status = statusMaybe.get();
+
+        if (status instanceof ChargeStatus) {
+            return new MappedChargeStatus((ChargeStatus) status);
         }
 
-        return new MappedStatus(status.get());
+        if (status instanceof RefundStatus) {
+            return new MappedRefundStatus((RefundStatus) status);
+        }
+
+        return new UnknownStatus();
     }
 }

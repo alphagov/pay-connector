@@ -1,26 +1,29 @@
 package uk.gov.pay.connector.service;
 
-import uk.gov.pay.connector.model.domain.Status;
-
-import java.util.Optional;
+import uk.gov.pay.connector.model.domain.ChargeStatus;
+import uk.gov.pay.connector.model.domain.RefundStatus;
 
 public interface InterpretedStatus {
 
-    default boolean isMapped() {
-        return false;
+    enum Type {
+        CHARGE_STATUS,
+        REFUND_STATUS,
+        UNKNOWN,
+        IGNORED
     }
 
-    default boolean isUnknown() {
-        return false;
+    Type getType();
+
+    default ChargeStatus getChargeStatus() {
+        throw new IllegalStateException("This object does not have a ChargeStatus");
     }
 
-    default boolean isIgnored() {
-        return false;
+    default RefundStatus getRefundStatus() {
+        throw new IllegalStateException("This object does not have a RefundStatus");
     }
 
-    default boolean isDeferred() { return false; }
-
-    default Optional<Status> get() {
-        return Optional.empty();
-    }
 }
+
+
+
+

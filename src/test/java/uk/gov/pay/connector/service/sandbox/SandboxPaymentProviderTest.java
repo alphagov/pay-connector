@@ -11,6 +11,7 @@ import uk.gov.pay.connector.model.GatewayError;
 import uk.gov.pay.connector.model.RefundGatewayRequest;
 import uk.gov.pay.connector.model.domain.AuthCardDetails;
 import uk.gov.pay.connector.model.domain.ChargeEntityFixture;
+import uk.gov.pay.connector.model.domain.GatewayAccountEntity;
 import uk.gov.pay.connector.model.domain.RefundEntityFixture;
 import uk.gov.pay.connector.model.gateway.AuthorisationGatewayRequest;
 import uk.gov.pay.connector.model.gateway.GatewayResponse;
@@ -26,6 +27,7 @@ import static org.hamcrest.CoreMatchers.nullValue;
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.core.Is.is;
 import static org.hamcrest.core.IsSame.sameInstance;
+import static org.mockito.Mockito.mock;
 import static uk.gov.pay.connector.model.ErrorType.GENERIC_GATEWAY_ERROR;
 
 public class SandboxPaymentProviderTest {
@@ -58,7 +60,7 @@ public class SandboxPaymentProviderTest {
 
     @Test
     public void shouldAlwaysVerifyNotification() {
-        Assert.assertThat(provider.verifyNotification(null, ""), is(true));
+        Assert.assertThat(provider.verifyNotification(null, mock(GatewayAccountEntity.class)), is(true));
     }
 
     @Test
