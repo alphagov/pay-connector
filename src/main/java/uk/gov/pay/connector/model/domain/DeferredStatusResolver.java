@@ -4,5 +4,5 @@ import java.util.Optional;
 
 @FunctionalInterface
 public interface DeferredStatusResolver {
-  public Optional<InternalExternalStatus> resolve(ChargeEntity chargeEntity);
+  public Optional<Status> resolve(ChargeEntity chargeEntity);
 }

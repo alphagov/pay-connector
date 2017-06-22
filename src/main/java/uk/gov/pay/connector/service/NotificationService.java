@@ -14,7 +14,7 @@ import uk.gov.pay.connector.model.Notifications;
 import uk.gov.pay.connector.model.domain.ChargeEntity;
 import uk.gov.pay.connector.model.domain.ChargeStatus;
 import uk.gov.pay.connector.model.domain.GatewayAccountEntity;
-import uk.gov.pay.connector.model.domain.InternalExternalStatus;
+import uk.gov.pay.connector.model.domain.Status;
 import uk.gov.pay.connector.model.domain.RefundEntity;
 import uk.gov.pay.connector.model.domain.RefundStatus;
 import uk.gov.pay.connector.service.transaction.NonTransactionalOperation;
@@ -138,7 +138,7 @@ public class NotificationService {
         }
 
         private void updateChargeStatusFromNotification(ExtendedNotification notification) {
-            Optional<InternalExternalStatus> newStatus =
+            Optional<Status> newStatus =
                 notification.getInterpretedStatus().isDeferred() ?
                     resolveDeferredInterpretedStatus(notification, (BaseStatusMapper.DeferredStatus) notification.getInterpretedStatus()) :
                     notification.getInterpretedStatus().get();
@@ -165,7 +165,7 @@ public class NotificationService {
             });
         }
 
-        private <T> Optional<InternalExternalStatus> resolveDeferredInterpretedStatus(ExtendedNotification<T> notification, BaseStatusMapper.DeferredStatus deferredStatus) {
+        private <T> Optional<Status> resolveDeferredInterpretedStatus(ExtendedNotification<T> notification, BaseStatusMapper.DeferredStatus deferredStatus) {
             Optional<ChargeEntity> optionalChargeEntity = chargeDao.findByProviderAndTransactionId(
                     paymentProvider.getPaymentGatewayName(), notification.getTransactionId());
             if (!optionalChargeEntity.isPresent()) {
@@ -177,7 +177,7 @@ public class NotificationService {
             return deferredStatus.getDeferredStatusResolver().resolve(optionalChargeEntity.get());
         }
 
-        private <T> void updateChargeStatus(ExtendedNotification<T> notification, InternalExternalStatus newStatus) {
+        private <T> void updateChargeStatus(ExtendedNotification<T> notification, Status newStatus) {
             Optional<ChargeEntity> optionalChargeEntity = chargeDao.findByProviderAndTransactionId(
                     paymentProvider.getPaymentGatewayName(), notification.getTransactionId());
             if (!optionalChargeEntity.isPresent()) {
@@ -209,7 +209,7 @@ public class NotificationService {
             chargeDao.mergeAndNotifyStatusHasChanged(chargeEntity, Optional.ofNullable(notification.getGatewayEventDate()));
         }
 
-        private <T> void updateRefundStatus(ExtendedNotification<T> notification, InternalExternalStatus newStatus) {
+        private <T> void updateRefundStatus(ExtendedNotification<T> notification, Status newStatus) {
             Optional<RefundEntity> optionalRefundEntity = refundDao.findByReference(notification.getReference());
             if (!optionalRefundEntity.isPresent()) {
                 logger.error(format("Notification with transaction_id=%s and reference=%s failed updating refund status to: %s. Unable to find refund entity.",

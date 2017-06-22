@@ -2,7 +2,7 @@ package uk.gov.pay.connector.service;
 
 import com.google.common.collect.ImmutableList;
 import uk.gov.pay.connector.model.domain.DeferredStatusResolver;
-import uk.gov.pay.connector.model.domain.InternalExternalStatus;
+import uk.gov.pay.connector.model.domain.Status;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -12,14 +12,14 @@ public class BaseStatusMapper<V> implements StatusMapper<V> {
 
     public static class StatusMap<V> {
         private V value;
-        private Optional<InternalExternalStatus> status = Optional.empty();
+        private Optional<Status> status = Optional.empty();
         private Optional<DeferredStatusResolver> deferredStatusResolver = Optional.empty();
 
         private StatusMap(V value) {
             this.value = value;
         }
 
-        private StatusMap(V value, InternalExternalStatus status) {
+        private StatusMap(V value, Status status) {
             this.value = value;
             this.status = Optional.ofNullable(status);
         }
@@ -29,7 +29,7 @@ public class BaseStatusMapper<V> implements StatusMapper<V> {
             this.deferredStatusResolver = Optional.of(deferredStatusResolver);
         }
 
-        public static <V> StatusMap of(V value, InternalExternalStatus status) {
+        public static <V> StatusMap of(V value, Status status) {
             return new StatusMap(value, status);
         }
 
@@ -41,7 +41,7 @@ public class BaseStatusMapper<V> implements StatusMapper<V> {
             return value;
         }
 
-        public Optional<InternalExternalStatus> getStatus() {
+        public Optional<Status> getStatus() {
             return status;
         }
 
@@ -55,9 +55,9 @@ public class BaseStatusMapper<V> implements StatusMapper<V> {
     }
 
     public static class MappedStatus implements InterpretedStatus {
-        private InternalExternalStatus status;
+        private Status status;
 
-        public MappedStatus(InternalExternalStatus status) {
+        public MappedStatus(Status status) {
             this.status = status;
         }
 
@@ -66,7 +66,7 @@ public class BaseStatusMapper<V> implements StatusMapper<V> {
             return true;
         }
 
-        public Optional<InternalExternalStatus> get() {
+        public Optional<Status> get() {
             return Optional.of(status);
         }
     }
@@ -97,7 +97,7 @@ public class BaseStatusMapper<V> implements StatusMapper<V> {
     public static class Builder<V> {
         private List<StatusMap> validStatuses = new ArrayList<>();
 
-        public Builder<V> map(V value, InternalExternalStatus status) {
+        public Builder<V> map(V value, Status status) {
             validStatuses.add(StatusMap.of(value, status));
             return this;
         }
@@ -138,7 +138,7 @@ public class BaseStatusMapper<V> implements StatusMapper<V> {
             return new UnknownStatus();
         }
 
-        Optional<InternalExternalStatus> status = statusMap.flatMap(StatusMap::getStatus);
+        Optional<Status> status = statusMap.flatMap(StatusMap::getStatus);
         Optional<DeferredStatusResolver> deferredStatusResolver = statusMap.flatMap(StatusMap::getDeferredStatusResolver);
 
         if (!status.isPresent() && !deferredStatusResolver.isPresent()) {

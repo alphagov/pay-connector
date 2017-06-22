@@ -5,7 +5,7 @@ import uk.gov.pay.connector.model.api.ExternalRefundStatus;
 
 import static uk.gov.pay.connector.model.api.ExternalRefundStatus.*;
 
-public enum RefundStatus implements InternalExternalStatus {
+public enum RefundStatus implements Status {
 
     CREATED("CREATED", EXTERNAL_SUBMITTED),
     REFUND_SUBMITTED("REFUND SUBMITTED", EXTERNAL_SUBMITTED),
