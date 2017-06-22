@@ -206,7 +206,7 @@ public class NotificationService {
                     gatewayAccount.getGatewayName(),
                     gatewayAccount.getType());
 
-            chargeDao.mergeAndNotifyStatusHasChanged(chargeEntity, Optional.of(notification.getGatewayEventDate()));
+            chargeDao.mergeAndNotifyStatusHasChanged(chargeEntity, Optional.ofNullable(notification.getGatewayEventDate()));
         }
 
         private <T> void updateRefundStatus(ExtendedNotification<T> notification, InternalExternalStatus newStatus) {
