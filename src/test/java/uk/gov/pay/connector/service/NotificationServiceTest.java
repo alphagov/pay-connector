@@ -16,12 +16,9 @@ import uk.gov.pay.connector.exception.InvalidStateTransitionException;
 import uk.gov.pay.connector.model.Notification;
 import uk.gov.pay.connector.model.Notifications;
 import uk.gov.pay.connector.model.domain.ChargeEntity;
-import uk.gov.pay.connector.model.domain.ChargeStatus;
 import uk.gov.pay.connector.model.domain.GatewayAccountEntity;
-import uk.gov.pay.connector.model.domain.InternalExternalStatus;
+import uk.gov.pay.connector.model.domain.Status;
 import uk.gov.pay.connector.model.domain.RefundEntity;
-import uk.gov.pay.connector.model.domain.RefundStatus;
-import uk.gov.pay.connector.service.BaseStatusMapper.MappedStatus;
 import uk.gov.pay.connector.service.transaction.TransactionFlow;
 import uk.gov.pay.connector.util.DnsUtils;
 
@@ -91,7 +88,7 @@ public class NotificationServiceTest {
                 .build();
     }
 
-    private StatusMapper createMockedStatusMapper(boolean isUnknownStatus, boolean isIgnoredStatus, InternalExternalStatus status) {
+    private StatusMapper createMockedStatusMapper(boolean isUnknownStatus, boolean isIgnoredStatus, Status status) {
         StatusMapper mockedStatusMapper = mock(StatusMapper.class);
         InterpretedStatus mockedStatus = mock(InterpretedStatus.class);
 

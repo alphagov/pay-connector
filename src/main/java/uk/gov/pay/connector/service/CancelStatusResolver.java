@@ -1,21 +1,17 @@
 package uk.gov.pay.connector.service;
 
 import static uk.gov.pay.connector.model.domain.ChargeStatus.SYSTEM_CANCELLED;
-import static uk.gov.pay.connector.model.domain.ChargeStatus.SYSTEM_CANCEL_SUBMITTED;
-import static uk.gov.pay.connector.model.domain.ChargeStatus.USER_CANCELLED;
-import static uk.gov.pay.connector.model.domain.ChargeStatus.USER_CANCEL_SUBMITTED;
 
 import java.util.Optional;
 import uk.gov.pay.connector.model.domain.ChargeEntity;
 import uk.gov.pay.connector.model.domain.ChargeStatus;
 import uk.gov.pay.connector.model.domain.DeferredStatusResolver;
-import uk.gov.pay.connector.model.domain.InternalExternalStatus;
-import uk.gov.pay.connector.service.StatusFlow;
+import uk.gov.pay.connector.model.domain.Status;
 
 public class CancelStatusResolver implements DeferredStatusResolver {
 
   @Override
-  public Optional<InternalExternalStatus> resolve(ChargeEntity charge) {
+  public Optional<Status> resolve(ChargeEntity charge) {
 
     ChargeStatus currentChargeStatus = ChargeStatus.fromString(charge.getStatus());
 

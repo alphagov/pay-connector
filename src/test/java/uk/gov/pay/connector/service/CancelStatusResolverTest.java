@@ -5,7 +5,7 @@ import org.junit.runner.RunWith;
 import org.mockito.runners.MockitoJUnitRunner;
 import uk.gov.pay.connector.model.domain.ChargeEntity;
 import uk.gov.pay.connector.model.domain.ChargeStatus;
-import uk.gov.pay.connector.model.domain.InternalExternalStatus;
+import uk.gov.pay.connector.model.domain.Status;
 
 import java.util.Optional;
 
@@ -29,7 +29,7 @@ public class CancelStatusResolverTest {
         ChargeEntity mockChargeEntity = mock(ChargeEntity.class);
         when(mockChargeEntity.getStatus()).thenReturn(ChargeStatus.USER_CANCEL_SUBMITTED.getValue());
 
-        Optional<InternalExternalStatus> result = cancelStatusResolver.resolve(mockChargeEntity);
+        Optional<Status> result = cancelStatusResolver.resolve(mockChargeEntity);
         assertTrue(result.isPresent());
 
         ChargeStatus chargeStatus = (ChargeStatus) result.get();
@@ -43,7 +43,7 @@ public class CancelStatusResolverTest {
         ChargeEntity mockChargeEntity = mock(ChargeEntity.class);
         when(mockChargeEntity.getStatus()).thenReturn(ChargeStatus.SYSTEM_CANCEL_SUBMITTED.getValue());
 
-        Optional<InternalExternalStatus> result = cancelStatusResolver.resolve(mockChargeEntity);
+        Optional<Status> result = cancelStatusResolver.resolve(mockChargeEntity);
         assertTrue(result.isPresent());
 
         ChargeStatus chargeStatus = (ChargeStatus) result.get();
@@ -58,7 +58,7 @@ public class CancelStatusResolverTest {
         ChargeEntity mockChargeEntity = mock(ChargeEntity.class);
         when(mockChargeEntity.getStatus()).thenReturn(ChargeStatus.EXPIRE_CANCEL_SUBMITTED.getValue());
 
-        Optional<InternalExternalStatus> result = cancelStatusResolver.resolve(mockChargeEntity);
+        Optional<Status> result = cancelStatusResolver.resolve(mockChargeEntity);
         assertTrue(result.isPresent());
 
         ChargeStatus chargeStatus = (ChargeStatus) result.get();
@@ -73,7 +73,7 @@ public class CancelStatusResolverTest {
         ChargeEntity mockChargeEntity = mock(ChargeEntity.class);
         when(mockChargeEntity.getStatus()).thenReturn(ChargeStatus.CREATED.getValue());
 
-        Optional<InternalExternalStatus> result = cancelStatusResolver.resolve(mockChargeEntity);
+        Optional<Status> result = cancelStatusResolver.resolve(mockChargeEntity);
         assertTrue(result.isPresent());
 
         ChargeStatus chargeStatus = (ChargeStatus) result.get();
