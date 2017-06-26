@@ -15,6 +15,7 @@ import java.util.Optional;
 
 import static uk.gov.pay.connector.model.domain.ChargeStatus.AUTHORISATION_READY;
 import static uk.gov.pay.connector.model.domain.ChargeStatus.ENTERING_CARD_DETAILS;
+import static uk.gov.pay.connector.model.domain.NumbersInStringsSanitizer.*;
 
 public class CardAuthoriseService extends CardAuthoriseBaseService<AuthCardDetails> {
 
@@ -87,9 +88,9 @@ public class CardAuthoriseService extends CardAuthoriseBaseService<AuthCardDetai
 
     private void appendCardDetails(ChargeEntity chargeEntity, AuthCardDetails authCardDetails) {
         CardDetailsEntity detailsEntity = new CardDetailsEntity();
-        detailsEntity.setCardBrand(authCardDetails.getCardBrand());
+        detailsEntity.setCardBrand(sanitize(authCardDetails.getCardBrand()));
         detailsEntity.setBillingAddress(new AddressEntity(authCardDetails.getAddress()));
-        detailsEntity.setCardHolderName(authCardDetails.getCardHolder());
+        detailsEntity.setCardHolderName(sanitize(authCardDetails.getCardHolder()));
         detailsEntity.setExpiryDate(authCardDetails.getEndDate());
         detailsEntity.setLastDigitsCardNumber(StringUtils.right(authCardDetails.getCardNo(), 4));
         chargeEntity.setCardDetails(detailsEntity);
