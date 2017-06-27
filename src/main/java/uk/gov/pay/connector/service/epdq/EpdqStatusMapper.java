@@ -10,10 +10,10 @@ import static uk.gov.pay.connector.model.domain.ChargeStatus.CAPTURED;
 
 public class EpdqStatusMapper {
 
-    static final String EPDQ_AUTHORISATION_REFUSED = "2";
-    static final String EPDQ_AUTHORISED = "5";
-    static final String EPDQ_AUTHORISED_CANCELLED = "6";
-    static final String EPDQ_PAYMENT_REQUESTED = "9";
+    public static final String EPDQ_AUTHORISATION_REFUSED = "2";
+    public static final String EPDQ_AUTHORISED = "5";
+    public static final String EPDQ_AUTHORISED_CANCELLED = "6";
+    public static final String EPDQ_PAYMENT_REQUESTED = "9";
 
     private static final BaseStatusMapper<String> STATUS_MAPPER =
             BaseStatusMapper
