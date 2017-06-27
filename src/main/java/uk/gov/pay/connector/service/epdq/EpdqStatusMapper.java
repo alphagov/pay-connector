@@ -17,17 +17,22 @@ import static uk.gov.pay.connector.service.StatusFlow.USER_CANCELLATION_FLOW;
 
 public class EpdqStatusMapper {
 
+    public static final String EPDQ_AUTHORISATION_REFUSED = "2";
+    public static final String EPDQ_AUTHORISED = "5";
+    public static final String EPDQ_AUTHORISED_CANCELLED = "6";
+    public static final String EPDQ_PAYMENT_REQUESTED = "9";
+
     private static final BaseStatusMapper<String> STATUS_MAPPER =
             BaseStatusMapper
                     .<String>builder()
-                    .map("2", AUTHORISATION_REJECTED)
-                    .map("5", AUTHORISATION_SUCCESS)
-                    .map("6", USER_CANCEL_SUBMITTED, USER_CANCELLATION_FLOW.getSuccessTerminalState())
-                    .map("6", SYSTEM_CANCEL_SUBMITTED, SYSTEM_CANCELLATION_FLOW.getSuccessTerminalState())
-                    .map("6", EXPIRE_CANCEL_SUBMITTED, EXPIRE_FLOW.getSuccessTerminalState())
-                    .map("6", CREATED, SYSTEM_CANCELLATION_FLOW.getSuccessTerminalState())
-                    .map("6", ENTERING_CARD_DETAILS, SYSTEM_CANCELLATION_FLOW.getSuccessTerminalState())
-                    .map("9", CAPTURED)
+                    .map(EPDQ_AUTHORISATION_REFUSED, AUTHORISATION_REJECTED)
+                    .map(EPDQ_AUTHORISED, AUTHORISATION_SUCCESS)
+                    .map(EPDQ_AUTHORISED_CANCELLED, USER_CANCEL_SUBMITTED, USER_CANCELLATION_FLOW.getSuccessTerminalState())
+                    .map(EPDQ_AUTHORISED_CANCELLED, SYSTEM_CANCEL_SUBMITTED, SYSTEM_CANCELLATION_FLOW.getSuccessTerminalState())
+                    .map(EPDQ_AUTHORISED_CANCELLED, EXPIRE_CANCEL_SUBMITTED, EXPIRE_FLOW.getSuccessTerminalState())
+                    .map(EPDQ_AUTHORISED_CANCELLED, CREATED, SYSTEM_CANCELLATION_FLOW.getSuccessTerminalState())
+                    .map(EPDQ_AUTHORISED_CANCELLED, ENTERING_CARD_DETAILS, SYSTEM_CANCELLATION_FLOW.getSuccessTerminalState())
+                    .map(EPDQ_PAYMENT_REQUESTED, CAPTURED)
                     .build();
 
     public static StatusMapper<String> get() {
