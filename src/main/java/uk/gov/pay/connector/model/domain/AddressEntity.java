@@ -3,6 +3,8 @@ package uk.gov.pay.connector.model.domain;
 import javax.persistence.Column;
 import javax.persistence.Embeddable;
 
+import static uk.gov.pay.connector.model.domain.NumbersInStringsSanitizer.*;
+
 @Embeddable
 public class AddressEntity {
 
@@ -24,12 +26,12 @@ public class AddressEntity {
     }
 
     public AddressEntity(Address address) {
-        this.line1 = address.getLine1();
-        this.line2 = address.getLine2();
-        this.postcode = address.getPostcode();
-        this.city = address.getCity();
-        this.county = address.getCounty();
-        this.country = address.getCountry();
+        this.line1 = sanitize(address.getLine1());
+        this.line2 = sanitize(address.getLine2());
+        this.postcode = sanitize(address.getPostcode());
+        this.city = sanitize(address.getCity());
+        this.county = sanitize(address.getCounty());
+        this.country = sanitize(address.getCountry());
     }
 
     public Address toAddress(){

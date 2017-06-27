@@ -68,6 +68,63 @@ public class CardAuthoriseResourceITest extends ChargingITestBase {
     }
 
     @Test
+    public void sanitizeCardDetails_shouldStoreSanitizedCardDetailsForAuthorisedCharge_forFieldsWithValuesContainingMoreThan10Numbers() throws Exception {
+
+        String sanitizedValue = "r-**-**-*  Ju&^****-**";
+        String valueWithMoreThan10CharactersAsNumbers = "r-12-34-5  Ju&^6501-76";
+        String cardHolderName = valueWithMoreThan10CharactersAsNumbers;
+        String addressLine1 = valueWithMoreThan10CharactersAsNumbers;
+        String addressLine2 = valueWithMoreThan10CharactersAsNumbers;
+        String city = valueWithMoreThan10CharactersAsNumbers;
+        String county = valueWithMoreThan10CharactersAsNumbers;
+        String postcode = valueWithMoreThan10CharactersAsNumbers;
+        String country = valueWithMoreThan10CharactersAsNumbers;
+        String cardBrand = valueWithMoreThan10CharactersAsNumbers;
+
+        String externalChargeId = shouldAuthoriseChargeFor(buildDetailedJsonAuthorisationDetailsFor("4444333322221111", "123", "11/30", cardBrand, cardHolderName, addressLine1, addressLine2, city, county, postcode, country));
+
+        Long chargeId = Long.valueOf(StringUtils.removeStart(externalChargeId, "charge-"));
+        Map<String, Object> chargeCardDetails = app.getDatabaseTestHelper().getChargeCardDetailsByChargeId(chargeId);
+        assertThat(chargeCardDetails, hasEntry("last_digits_card_number", "1111"));
+        assertThat(chargeCardDetails, hasEntry("address_county", sanitizedValue));
+        assertThat(chargeCardDetails, hasEntry("address_line1", sanitizedValue));
+        assertThat(chargeCardDetails, hasEntry("address_line2", sanitizedValue));
+        assertThat(chargeCardDetails, hasEntry("address_country", sanitizedValue));
+        assertThat(chargeCardDetails, hasEntry("address_city", sanitizedValue));
+        assertThat(chargeCardDetails, hasEntry("card_brand", sanitizedValue));
+        assertThat(chargeCardDetails, hasEntry("address_postcode", sanitizedValue));
+        assertThat(chargeCardDetails, hasEntry("cardholder_name", sanitizedValue));
+    }
+
+    @Test
+    public void sanitizeCardDetails_shouldNotStoreSanitizedCardDetailsForAuthorisedCharge_forFieldsWithValuesContainingRight10Numbers() throws Exception {
+
+        String valueWith10CharactersAsNumbers = "r-12-34-5  Ju&^6501-7m";
+        String cardHolderName = valueWith10CharactersAsNumbers;
+        String addressLine1 = valueWith10CharactersAsNumbers;
+        String addressLine2 = valueWith10CharactersAsNumbers;
+        String city = valueWith10CharactersAsNumbers;
+        String county = valueWith10CharactersAsNumbers;
+        String postcode = valueWith10CharactersAsNumbers;
+        String country = valueWith10CharactersAsNumbers;
+        String cardBrand = valueWith10CharactersAsNumbers;
+
+        String externalChargeId = shouldAuthoriseChargeFor(buildDetailedJsonAuthorisationDetailsFor("4444333322221111", "123", "11/30", cardBrand, cardHolderName, addressLine1, addressLine2, city, county, postcode, country));
+
+        Long chargeId = Long.valueOf(StringUtils.removeStart(externalChargeId, "charge-"));
+        Map<String, Object> chargeCardDetails = app.getDatabaseTestHelper().getChargeCardDetailsByChargeId(chargeId);
+        assertThat(chargeCardDetails, hasEntry("last_digits_card_number", "1111"));
+        assertThat(chargeCardDetails, hasEntry("address_county", valueWith10CharactersAsNumbers));
+        assertThat(chargeCardDetails, hasEntry("address_line1", valueWith10CharactersAsNumbers));
+        assertThat(chargeCardDetails, hasEntry("address_line2", valueWith10CharactersAsNumbers));
+        assertThat(chargeCardDetails, hasEntry("address_country", valueWith10CharactersAsNumbers));
+        assertThat(chargeCardDetails, hasEntry("address_city", valueWith10CharactersAsNumbers));
+        assertThat(chargeCardDetails, hasEntry("card_brand", valueWith10CharactersAsNumbers));
+        assertThat(chargeCardDetails, hasEntry("address_postcode", valueWith10CharactersAsNumbers));
+        assertThat(chargeCardDetails, hasEntry("cardholder_name", valueWith10CharactersAsNumbers));
+    }
+
+    @Test
     public void shouldNotAuthoriseCard_ForSpecificCardNumber1() throws Exception {
         String cardDetailsToReject = buildJsonAuthorisationDetailsFor("4000000000000002", "visa");
 

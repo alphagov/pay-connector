@@ -102,5 +102,4 @@ public class ChargeDaoCardDetailsITest extends DaoITestBase {
         assertThat(cardDetailsSaved, hasEntry("address_county", cardDetailsEntity.getBillingAddress().getCounty()));
         assertThat(cardDetailsSaved, hasEntry("address_country", cardDetailsEntity.getBillingAddress().getCountry()));
     }
-
 }

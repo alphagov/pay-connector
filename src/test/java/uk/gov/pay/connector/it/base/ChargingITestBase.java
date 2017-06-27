@@ -139,6 +139,10 @@ public class ChargingITestBase extends ChargingITestCommon{
         return buildJsonAuthorisationDetailsFor("Mr. Payment", cardNumber, cvc, expiryDate, cardBrand, "The Money Pool", null, "London", null, "DO11 4RS", "GB");
     }
 
+    protected String buildDetailedJsonAuthorisationDetailsFor(String cardNumber, String cvc, String expiryDate, String cardBrand, String cardHolderName, String addressLine1, String addressLine2, String city, String county, String postcode, String country) {
+        return buildJsonAuthorisationDetailsFor(cardHolderName, cardNumber, cvc, expiryDate, cardBrand, addressLine1, addressLine2, city, county, postcode, country);
+    }
+
     protected ValidatableResponse getCharge(String chargeId) {
         return connectorRestApi
                 .withChargeId(chargeId)

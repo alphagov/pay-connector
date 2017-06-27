@@ -68,7 +68,7 @@ public class ChargesApiResourceITest extends ChargingITestBase {
     private static final long AMOUNT = 6234L;
 
     private String returnUrl = "http://service.url/success-page/";
-    private String email = randomAlphanumeric(242) + "@example.com";
+    private String email = randomAlphabetic(242) + "@example.com";
 
     private RestAssuredClient createChargeApi = new RestAssuredClient(app, accountId);
     private RestAssuredClient getChargeApi = new RestAssuredClient(app, accountId);
@@ -181,9 +181,9 @@ public class ChargesApiResourceITest extends ChargingITestBase {
         app.getInstanceFromGuiceContainer(CardCaptureProcess.class).runCapture();
 
         getCharge(chargeId)
-            .body("settlement_summary.capture_submit_time", matchesPattern("^\\d{4}-\\d{2}-\\d{2}T\\d{2}:\\d{2}:\\d{2}.\\d{3}Z"))
-            .body("settlement_summary.capture_submit_time", isWithin(10, SECONDS))
-            .body("settlement_summary.captured_date", equalTo(expectedDayOfCapture))
+                .body("settlement_summary.capture_submit_time", matchesPattern("^\\d{4}-\\d{2}-\\d{2}T\\d{2}:\\d{2}:\\d{2}.\\d{3}Z"))
+                .body("settlement_summary.capture_submit_time", isWithin(10, SECONDS))
+                .body("settlement_summary.captured_date", equalTo(expectedDayOfCapture))
         ;
     }
 

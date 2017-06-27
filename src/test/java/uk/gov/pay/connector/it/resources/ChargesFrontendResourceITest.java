@@ -25,6 +25,7 @@ import static javax.ws.rs.HttpMethod.POST;
 import static javax.ws.rs.core.MediaType.APPLICATION_JSON;
 import static javax.ws.rs.core.Response.Status;
 import static javax.ws.rs.core.Response.Status.*;
+import static org.apache.commons.lang.RandomStringUtils.randomAlphabetic;
 import static org.apache.commons.lang.RandomStringUtils.randomAlphanumeric;
 import static org.hamcrest.Matchers.*;
 import static org.hamcrest.core.Is.is;
@@ -43,7 +44,7 @@ public class ChargesFrontendResourceITest {
     private String accountId = "72332423443245";
     private String description = "Test description";
     private String returnUrl = "http://whatever.com";
-    private String email = randomAlphanumeric(242) + "@example.com";
+    private String email = randomAlphabetic(242) + "@example.com";
     private String serviceName = "a cool service";
     private String analyticsId = "test-123";
     private String type = "test";
@@ -287,7 +288,7 @@ public class ChargesFrontendResourceITest {
     @Test
     public void patchValidEmailOnChargeWithReplaceOp_shouldReturnOk() {
         String chargeId = postToCreateACharge(expectedAmount);
-        String email = randomAlphanumeric(242) + "@example.com";
+        String email = randomAlphabetic(242) + "@example.com";
 
         String patchBody = createPatch("replace", "email", email);
 
@@ -298,6 +299,24 @@ public class ChargesFrontendResourceITest {
         response.statusCode(OK.getStatusCode())
                 .contentType(JSON)
                 .body("email", is(email));
+    }
+
+    @Test
+    public void sanitize_patchValidEmailOnChargeWithReplaceOp_shouldReturnOk_withSanitizedData() {
+
+        String chargeId = postToCreateACharge(expectedAmount);
+        String email = "r-12-34-5  Ju&^6501-76@example.com";
+        String sanitizedEmail = "r-**-**-*  Ju&^****-**@example.com";
+
+        String patchBody = createPatch("replace", "email", email);
+
+        ValidatableResponse response = connectorRestApi
+                .withChargeId(chargeId)
+                .patchCharge(patchBody);
+
+        response.statusCode(OK.getStatusCode())
+                .contentType(JSON)
+                .body("email", is(sanitizedEmail));
     }
 
     @Test

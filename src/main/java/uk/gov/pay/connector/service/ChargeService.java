@@ -27,6 +27,7 @@ import static javax.ws.rs.HttpMethod.POST;
 import static javax.ws.rs.core.MediaType.APPLICATION_FORM_URLENCODED;
 import static uk.gov.pay.connector.model.ChargeResponse.ChargeResponseBuilder;
 import static uk.gov.pay.connector.model.ChargeResponse.aChargeResponse;
+import static uk.gov.pay.connector.model.domain.NumbersInStringsSanitizer.*;
 import static uk.gov.pay.connector.resources.ApiPaths.CHARGE_API_PATH;
 import static uk.gov.pay.connector.resources.ApiPaths.REFUNDS_API_PATH;
 
@@ -92,7 +93,7 @@ public class ChargeService {
     public ChargeEntity updateCharge(ChargeEntity chargeEntity, PatchRequestBuilder.PatchRequest chargePatchRequest) {
         switch (chargePatchRequest.getPath()) {
             case ChargesApiResource.EMAIL_KEY:
-                chargeEntity.setEmail(chargePatchRequest.getValue());
+                chargeEntity.setEmail(sanitize(chargePatchRequest.getValue()));
         }
 
         chargeDao.merge(chargeEntity);
