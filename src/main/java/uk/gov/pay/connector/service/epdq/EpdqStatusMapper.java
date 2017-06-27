@@ -10,13 +10,18 @@ import static uk.gov.pay.connector.model.domain.ChargeStatus.CAPTURED;
 
 public class EpdqStatusMapper {
 
+    static final String EPDQ_AUTHORISATION_REFUSED = "2";
+    static final String EPDQ_AUTHORISED = "5";
+    static final String EPDQ_AUTHORISED_CANCELLED = "6";
+    static final String EPDQ_PAYMENT_REQUESTED = "9";
+
     private static final BaseStatusMapper<String> STATUS_MAPPER =
             BaseStatusMapper
                     .<String>builder()
-                    .map("2", AUTHORISATION_REJECTED)
-                    .map("5", AUTHORISATION_SUCCESS)
-                    .mapDeferred("6", new CancelStatusResolver())
-                    .map("9", CAPTURED)
+                    .map(EPDQ_AUTHORISATION_REFUSED, AUTHORISATION_REJECTED)
+                    .map(EPDQ_AUTHORISED, AUTHORISATION_SUCCESS)
+                    .mapDeferred(EPDQ_AUTHORISED_CANCELLED, new CancelStatusResolver())
+                    .map(EPDQ_PAYMENT_REQUESTED, CAPTURED)
                     .build();
 
     public static StatusMapper<String> get() {

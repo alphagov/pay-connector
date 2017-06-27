@@ -14,7 +14,7 @@ import uk.gov.pay.connector.model.domain.ChargeStatus;
 public class BaseStatusMapperTest {
 
   @Test
-  public void shouldStatusBeDeferredIfMappedAsDeferred()
+  public void statusShouldBeDeferredIfMappedAsDeferred()
   {
     CancelStatusResolver mockedCancelStatusResolver = mock(CancelStatusResolver.class);
     when(mockedCancelStatusResolver.resolve(any(ChargeEntity.class))).thenReturn(Optional.of(ChargeStatus.USER_CANCELLED));
