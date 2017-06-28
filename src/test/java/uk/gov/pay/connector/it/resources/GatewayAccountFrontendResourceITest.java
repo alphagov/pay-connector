@@ -34,7 +34,7 @@ public class GatewayAccountFrontendResourceITest extends GatewayAccountResourceT
             return new GatewayAccountPayload()
                     .withUsername("a-username")
                     .withPassword("a-password")
-                    .withMerchantId("a-mercahnt-id")
+                    .withMerchantId("a-merchant-id")
                     .withServiceName("a-service-name");
         }
 

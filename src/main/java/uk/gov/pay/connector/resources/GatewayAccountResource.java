@@ -70,6 +70,7 @@ public class GatewayAccountResource {
         providerCredentialFields = newHashMap();
         providerCredentialFields.put("worldpay", conf.getWorldpayConfig().getCredentials());
         providerCredentialFields.put("smartpay", conf.getSmartpayConfig().getCredentials());
+        providerCredentialFields.put("epdq", conf.getEpdqConfig().getCredentials());
     }
 
     @GET
