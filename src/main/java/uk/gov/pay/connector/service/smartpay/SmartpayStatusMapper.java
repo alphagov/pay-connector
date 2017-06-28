@@ -1,7 +1,6 @@
 package uk.gov.pay.connector.service.smartpay;
 
 import org.apache.commons.lang3.tuple.Pair;
-import uk.gov.pay.connector.service.BaseStatusMapper;
 import uk.gov.pay.connector.service.StatusMapper;
 
 import static uk.gov.pay.connector.model.domain.ChargeStatus.CAPTURED;
@@ -11,8 +10,8 @@ import static uk.gov.pay.connector.model.domain.RefundStatus.REFUND_ERROR;
 
 public class SmartpayStatusMapper {
 
-        private static final BaseStatusMapper<Pair<String, Boolean>> STATUS_MAPPER =
-                BaseStatusMapper
+        private static final StatusMapper<Pair<String, Boolean>> STATUS_MAPPER =
+                StatusMapper
                         .<Pair<String, Boolean>>builder()
                         .ignore(Pair.of("AUTHORISATION", true))
                         .ignore(Pair.of("AUTHORISATION", false))

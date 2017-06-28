@@ -3,7 +3,6 @@ package uk.gov.pay.connector.service.smartpay;
 import org.apache.commons.lang3.tuple.Pair;
 import org.junit.Test;
 import uk.gov.pay.connector.service.InterpretedStatus;
-import uk.gov.pay.connector.service.MappedChargeStatus;
 import uk.gov.pay.connector.service.MappedRefundStatus;
 
 import static org.hamcrest.core.Is.is;
@@ -23,7 +22,7 @@ public class SmartpayStatusMapperTest {
         InterpretedStatus status = SmartpayStatusMapper.get().from(value, CAPTURE_SUBMITTED);
 
         assertThat(status.getType(), is(InterpretedStatus.Type.CHARGE_STATUS));
-        assertThat(((MappedChargeStatus) status).getChargeStatus(), is(CAPTURED));
+        assertThat(status.getChargeStatus(), is(CAPTURED));
     }
 
     @Test
@@ -32,7 +31,7 @@ public class SmartpayStatusMapperTest {
         InterpretedStatus status = SmartpayStatusMapper.get().from(value, CAPTURE_SUBMITTED);
 
         assertThat(status.getType(), is(InterpretedStatus.Type.CHARGE_STATUS));
-        assertThat(((MappedChargeStatus) status).getChargeStatus(), is(CAPTURE_ERROR));
+        assertThat(status.getChargeStatus(), is(CAPTURE_ERROR));
     }
 
     @Test
@@ -50,7 +49,7 @@ public class SmartpayStatusMapperTest {
         InterpretedStatus status = SmartpayStatusMapper.get().from(value, CAPTURED);
 
         assertThat(status.getType(), is(InterpretedStatus.Type.REFUND_STATUS));
-        assertThat(((MappedRefundStatus) status).getRefundStatus(), is(REFUND_ERROR));
+        assertThat(status.getRefundStatus(), is(REFUND_ERROR));
     }
 
     @Test
@@ -59,7 +58,7 @@ public class SmartpayStatusMapperTest {
         InterpretedStatus status = SmartpayStatusMapper.get().from(value, CAPTURED);
 
         assertThat(status.getType(), is(InterpretedStatus.Type.REFUND_STATUS));
-        assertThat(((MappedRefundStatus) status).getRefundStatus(), is(REFUND_ERROR));
+        assertThat(status.getRefundStatus(), is(REFUND_ERROR));
     }
 
     @Test
@@ -68,7 +67,7 @@ public class SmartpayStatusMapperTest {
         InterpretedStatus status = SmartpayStatusMapper.get().from(value, CAPTURED);
 
         assertThat(status.getType(), is(InterpretedStatus.Type.REFUND_STATUS));
-        assertThat(((MappedRefundStatus) status).getRefundStatus(), is(REFUND_ERROR));
+        assertThat(status.getRefundStatus(), is(REFUND_ERROR));
     }
 
     @Test

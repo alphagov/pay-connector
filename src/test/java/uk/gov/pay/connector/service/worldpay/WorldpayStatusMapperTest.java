@@ -2,8 +2,6 @@ package uk.gov.pay.connector.service.worldpay;
 
 import org.junit.Test;
 import uk.gov.pay.connector.service.InterpretedStatus;
-import uk.gov.pay.connector.service.MappedChargeStatus;
-import uk.gov.pay.connector.service.MappedRefundStatus;
 
 import static org.hamcrest.core.Is.is;
 import static org.junit.Assert.assertThat;
@@ -19,7 +17,7 @@ public class WorldpayStatusMapperTest {
         InterpretedStatus status = WorldpayStatusMapper.get().from("CAPTURED", CAPTURE_SUBMITTED);
 
         assertThat(status.getType(), is(InterpretedStatus.Type.CHARGE_STATUS));
-        assertThat(((MappedChargeStatus) status).getChargeStatus(), is(CAPTURED));
+        assertThat(status.getChargeStatus(), is(CAPTURED));
     }
 
     @Test
@@ -27,7 +25,7 @@ public class WorldpayStatusMapperTest {
         InterpretedStatus status = WorldpayStatusMapper.get().from("REFUNDED", CAPTURED);
 
         assertThat(status.getType(), is(InterpretedStatus.Type.REFUND_STATUS));
-        assertThat(((MappedRefundStatus) status).getRefundStatus(), is(REFUNDED));
+        assertThat(status.getRefundStatus(), is(REFUNDED));
     }
 
     @Test
@@ -35,7 +33,7 @@ public class WorldpayStatusMapperTest {
         InterpretedStatus status = WorldpayStatusMapper.get().from("REFUNDED_BY_MERCHANT", CAPTURED);
 
         assertThat(status.getType(), is(InterpretedStatus.Type.REFUND_STATUS));
-        assertThat(((MappedRefundStatus) status).getRefundStatus(), is(REFUNDED));
+        assertThat(status.getRefundStatus(), is(REFUNDED));
     }
 
 

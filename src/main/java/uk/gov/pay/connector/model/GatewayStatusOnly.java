@@ -2,20 +2,20 @@ package uk.gov.pay.connector.model;
 
 import java.util.Objects;
 
-public class ProviderStatusOnly<T> implements StatusMapFromStatus<T> {
+public class GatewayStatusOnly<T> implements StatusMapFromStatus<T> {
 
     private final T status;
 
-    public static <T> ProviderStatusOnly of(T status) {
-        return new ProviderStatusOnly<>(status);
+    public static <T> GatewayStatusOnly of(T status) {
+        return new GatewayStatusOnly<>(status);
     }
 
-    private ProviderStatusOnly(T status) {
+    private GatewayStatusOnly(T status) {
         this.status = Objects.requireNonNull(status);
     }
 
     @Override
-    public T getProviderStatus() {
+    public T getGatewayStatus() {
         return status;
     }
 
@@ -30,7 +30,7 @@ public class ProviderStatusOnly<T> implements StatusMapFromStatus<T> {
         }
 
         StatusMapFromStatus<?> that = (StatusMapFromStatus<?>) other;
-        return this.getProviderStatus().equals(that.getProviderStatus());
+        return this.getGatewayStatus().equals(that.getGatewayStatus());
     }
 
     @Override
@@ -40,7 +40,7 @@ public class ProviderStatusOnly<T> implements StatusMapFromStatus<T> {
 
     @Override
     public String toString() {
-        return "ProviderStatusOnly{status=" + status + '}';
+        return "GatewayStatusOnly{status=" + status + '}';
     }
 
 }

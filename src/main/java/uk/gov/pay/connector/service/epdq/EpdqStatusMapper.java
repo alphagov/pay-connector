@@ -1,6 +1,5 @@
 package uk.gov.pay.connector.service.epdq;
 
-import uk.gov.pay.connector.service.BaseStatusMapper;
 import uk.gov.pay.connector.service.StatusMapper;
 
 import static uk.gov.pay.connector.model.domain.ChargeStatus.AUTHORISATION_REJECTED;
@@ -22,8 +21,8 @@ public class EpdqStatusMapper {
     public static final String EPDQ_AUTHORISED_CANCELLED = "6";
     public static final String EPDQ_PAYMENT_REQUESTED = "9";
 
-    private static final BaseStatusMapper<String> STATUS_MAPPER =
-            BaseStatusMapper
+    private static final StatusMapper<String> STATUS_MAPPER =
+            StatusMapper
                     .<String>builder()
                     .map(EPDQ_AUTHORISATION_REFUSED, AUTHORISATION_REJECTED)
                     .map(EPDQ_AUTHORISED, AUTHORISATION_SUCCESS)

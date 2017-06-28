@@ -16,14 +16,14 @@ import static uk.gov.pay.connector.model.domain.RefundStatus.REFUNDED;
 
 public class StatusMapperTest {
 
-    private final BaseStatusMapper<String> statusMapper =
-            BaseStatusMapper
+    private final StatusMapper<String> statusMapper =
+            StatusMapper
                     .<String>builder()
                     .ignore("IGNORED_STATUS")
-                    .map("HERE_WE_ONLY_CARE_ABOUT_THE_PROVIDER_STATUS", CAPTURED)
-                    .map("AGAIN_WE_ONLY_CARE_ABOUT_THE_PROVIDER_STATUS", REFUNDED)
-                    .map("HERE_WE_CARE_ABOUT_THE_PROVIDER_STATUS_AND_THE_CURRENT_STATUS", USER_CANCEL_SUBMITTED, USER_CANCELLED)
-                    .map("HERE_WE_CARE_ABOUT_THE_PROVIDER_STATUS_AND_THE_CURRENT_STATUS", SYSTEM_CANCEL_SUBMITTED, SYSTEM_CANCELLED)
+                    .map("HERE_WE_ONLY_CARE_ABOUT_THE_GATEWAY_STATUS", CAPTURED)
+                    .map("AGAIN_WE_ONLY_CARE_ABOUT_THE_GATEWAY_STATUS", REFUNDED)
+                    .map("HERE_WE_CARE_ABOUT_THE_GATEWAY_STATUS_AND_THE_CURRENT_STATUS", USER_CANCEL_SUBMITTED, USER_CANCELLED)
+                    .map("HERE_WE_CARE_ABOUT_THE_GATEWAY_STATUS_AND_THE_CURRENT_STATUS", SYSTEM_CANCEL_SUBMITTED, SYSTEM_CANCELLED)
                     .build();
 
     @Test
@@ -34,40 +34,40 @@ public class StatusMapperTest {
     }
 
     @Test
-    public void shouldMapProviderStatusOnlyToChargeStatus() {
-        InterpretedStatus mappedStatus = statusMapper.from("HERE_WE_ONLY_CARE_ABOUT_THE_PROVIDER_STATUS", CAPTURE_SUBMITTED);
+    public void shouldMapGatewayStatusOnlyToChargeStatus() {
+        InterpretedStatus mappedStatus = statusMapper.from("HERE_WE_ONLY_CARE_ABOUT_THE_GATEWAY_STATUS", CAPTURE_SUBMITTED);
 
         assertThat(mappedStatus.getType(), is(InterpretedStatus.Type.CHARGE_STATUS));
         assertThat(mappedStatus.getChargeStatus(), is(CAPTURED));
     }
 
     @Test
-    public void shouldMapProviderStatusOnlyToRefundStatus() {
-        InterpretedStatus mappedStatus = statusMapper.from("AGAIN_WE_ONLY_CARE_ABOUT_THE_PROVIDER_STATUS", CAPTURED);
+    public void shouldMapGatewayStatusOnlyToRefundStatus() {
+        InterpretedStatus mappedStatus = statusMapper.from("AGAIN_WE_ONLY_CARE_ABOUT_THE_GATEWAY_STATUS", CAPTURED);
 
         assertThat(mappedStatus.getType(), is(InterpretedStatus.Type.REFUND_STATUS));
         assertThat(mappedStatus.getRefundStatus(), is(REFUNDED));
     }
 
     @Test
-    public void shouldMapProviderStatusWithCurrentStatus() {
-        InterpretedStatus mappedStatus = statusMapper.from("HERE_WE_CARE_ABOUT_THE_PROVIDER_STATUS_AND_THE_CURRENT_STATUS", SYSTEM_CANCEL_SUBMITTED);
+    public void shouldMapGatewayStatusWithCurrentStatus() {
+        InterpretedStatus mappedStatus = statusMapper.from("HERE_WE_CARE_ABOUT_THE_GATEWAY_STATUS_AND_THE_CURRENT_STATUS", SYSTEM_CANCEL_SUBMITTED);
 
         assertThat(mappedStatus.getType(), is(InterpretedStatus.Type.CHARGE_STATUS));
         assertThat(mappedStatus.getChargeStatus(), is(SYSTEM_CANCELLED));
     }
 
     @Test
-    public void shouldNotMapProviderStatusWithCurrentStatusUnlessCurrentStatusMatches() {
-        InterpretedStatus mappedStatus = statusMapper.from("HERE_WE_CARE_ABOUT_THE_PROVIDER_STATUS_AND_THE_CURRENT_STATUS", AUTHORISATION_SUBMITTED);
+    public void shouldNotMapGatewayStatusWithCurrentStatusUnlessCurrentStatusMatches() {
+        InterpretedStatus mappedStatus = statusMapper.from("HERE_WE_CARE_ABOUT_THE_GATEWAY_STATUS_AND_THE_CURRENT_STATUS", AUTHORISATION_SUBMITTED);
 
         assertThat(mappedStatus.getType(), is(InterpretedStatus.Type.UNKNOWN));
     }
 
     @Test
     public void shouldKnowAboutUnknownUnknowns() {
-        BaseStatusMapper<String> statusMapper =
-                BaseStatusMapper
+        StatusMapper<String> statusMapper =
+                StatusMapper
                         .<String>builder()
                         .build();
 

@@ -2,7 +2,6 @@ package uk.gov.pay.connector.service.epdq;
 
 import org.junit.Test;
 import uk.gov.pay.connector.service.InterpretedStatus;
-import uk.gov.pay.connector.service.MappedChargeStatus;
 
 import static org.hamcrest.core.Is.is;
 import static org.junit.Assert.assertThat;
@@ -27,7 +26,7 @@ public class EpdqStatusMapperTest {
         InterpretedStatus status = EpdqStatusMapper.get().from("2", AUTHORISATION_SUBMITTED);
 
         assertThat(status.getType(), is(InterpretedStatus.Type.CHARGE_STATUS));
-        assertThat(((MappedChargeStatus) status).getChargeStatus(), is(AUTHORISATION_REJECTED));
+        assertThat(status.getChargeStatus(), is(AUTHORISATION_REJECTED));
     }
 
     @Test
@@ -35,7 +34,7 @@ public class EpdqStatusMapperTest {
         InterpretedStatus status = EpdqStatusMapper.get().from("5", AUTHORISATION_SUBMITTED);
 
         assertThat(status.getType(), is(InterpretedStatus.Type.CHARGE_STATUS));
-        assertThat(((MappedChargeStatus) status).getChargeStatus(), is(AUTHORISATION_SUCCESS));
+        assertThat(status.getChargeStatus(), is(AUTHORISATION_SUCCESS));
     }
 
     @Test
@@ -43,7 +42,7 @@ public class EpdqStatusMapperTest {
         InterpretedStatus status = EpdqStatusMapper.get().from("6", USER_CANCEL_SUBMITTED);
 
         assertThat(status.getType(), is(InterpretedStatus.Type.CHARGE_STATUS));
-        assertThat(((MappedChargeStatus) status).getChargeStatus(), is(USER_CANCELLATION_FLOW.getSuccessTerminalState()));
+        assertThat(status.getChargeStatus(), is(USER_CANCELLATION_FLOW.getSuccessTerminalState()));
     }
 
     @Test
@@ -51,7 +50,7 @@ public class EpdqStatusMapperTest {
         InterpretedStatus status = EpdqStatusMapper.get().from("6", SYSTEM_CANCEL_SUBMITTED);
 
         assertThat(status.getType(), is(InterpretedStatus.Type.CHARGE_STATUS));
-        assertThat(((MappedChargeStatus) status).getChargeStatus(), is(SYSTEM_CANCELLATION_FLOW.getSuccessTerminalState()));
+        assertThat(status.getChargeStatus(), is(SYSTEM_CANCELLATION_FLOW.getSuccessTerminalState()));
     }
 
     @Test
@@ -59,7 +58,7 @@ public class EpdqStatusMapperTest {
         InterpretedStatus status = EpdqStatusMapper.get().from("6", EXPIRE_CANCEL_SUBMITTED);
 
         assertThat(status.getType(), is(InterpretedStatus.Type.CHARGE_STATUS));
-        assertThat(((MappedChargeStatus) status).getChargeStatus(), is(EXPIRE_FLOW.getSuccessTerminalState()));
+        assertThat(status.getChargeStatus(), is(EXPIRE_FLOW.getSuccessTerminalState()));
     }
 
     @Test
@@ -67,7 +66,7 @@ public class EpdqStatusMapperTest {
         InterpretedStatus status = EpdqStatusMapper.get().from("6", CREATED);
 
         assertThat(status.getType(), is(InterpretedStatus.Type.CHARGE_STATUS));
-        assertThat(((MappedChargeStatus) status).getChargeStatus(), is(SYSTEM_CANCELLATION_FLOW.getSuccessTerminalState()));
+        assertThat(status.getChargeStatus(), is(SYSTEM_CANCELLATION_FLOW.getSuccessTerminalState()));
     }
 
     @Test
@@ -75,7 +74,7 @@ public class EpdqStatusMapperTest {
         InterpretedStatus status = EpdqStatusMapper.get().from("6", ENTERING_CARD_DETAILS);
 
         assertThat(status.getType(), is(InterpretedStatus.Type.CHARGE_STATUS));
-        assertThat(((MappedChargeStatus) status).getChargeStatus(), is(SYSTEM_CANCELLATION_FLOW.getSuccessTerminalState()));
+        assertThat(status.getChargeStatus(), is(SYSTEM_CANCELLATION_FLOW.getSuccessTerminalState()));
     }
 
     @Test
@@ -83,7 +82,7 @@ public class EpdqStatusMapperTest {
         InterpretedStatus status = EpdqStatusMapper.get().from("9", CAPTURE_SUBMITTED);
 
         assertThat(status.getType(), is(InterpretedStatus.Type.CHARGE_STATUS));
-        assertThat(((MappedChargeStatus) status).getChargeStatus(), is(CAPTURED));
+        assertThat(status.getChargeStatus(), is(CAPTURED));
     }
 
     @Test
