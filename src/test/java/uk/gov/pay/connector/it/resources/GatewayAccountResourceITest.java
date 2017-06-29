@@ -3,15 +3,18 @@ package uk.gov.pay.connector.it.resources;
 import com.google.common.collect.ImmutableMap;
 import com.jayway.restassured.http.ContentType;
 import com.jayway.restassured.response.ValidatableResponse;
-import org.hamcrest.Matchers;
 import org.hamcrest.core.Is;
 import org.junit.Test;
 import uk.gov.pay.connector.it.dao.DatabaseFixtures;
 
 import static com.jayway.restassured.http.ContentType.JSON;
 import static java.lang.String.format;
-import static javax.ws.rs.core.Response.Status.*;
-import static org.hamcrest.Matchers.*;
+import static javax.ws.rs.core.Response.Status.BAD_REQUEST;
+import static javax.ws.rs.core.Response.Status.NOT_FOUND;
+import static javax.ws.rs.core.Response.Status.OK;
+import static org.hamcrest.Matchers.hasSize;
+import static org.hamcrest.Matchers.is;
+import static org.hamcrest.Matchers.nullValue;
 import static uk.gov.pay.connector.model.domain.GatewayAccountEntity.Type.LIVE;
 import static uk.gov.pay.connector.model.domain.GatewayAccountEntity.Type.TEST;
 import static uk.gov.pay.connector.resources.ApiPaths.GATEWAY_ACCOUNTS_API_PATH;
@@ -236,7 +239,7 @@ public class GatewayAccountResourceITest extends GatewayAccountResourceTestBase 
     }
 
     @Test
-    public void createAccountShouldFailIfPaymentProviderIsNotSandboxOfWorldpay() throws Exception {
+    public void createAccountShouldFailIfPaymentProviderIsNotRecognised() throws Exception {
         String testProvider = "random";
         String payload = toJson(ImmutableMap.of("payment_provider", testProvider));
 
@@ -275,6 +278,11 @@ public class GatewayAccountResourceITest extends GatewayAccountResourceTestBase 
     @Test
     public void createAGatewayAccountForSmartpay() throws Exception {
         createAGatewayAccountFor("smartpay");
+    }
+
+    @Test
+    public void createAGatewayAccountForEpdq() throws Exception {
+        createAGatewayAccountFor("epdq");
     }
 
     @Test
