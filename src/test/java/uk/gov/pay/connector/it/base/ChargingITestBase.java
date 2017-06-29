@@ -173,10 +173,10 @@ public class ChargingITestBase extends ChargingITestCommon{
         return createNewChargeWith(CREATED, "");
     }
 
-    protected String createNewRefundWith(RefundStatus refundStatus, Long amount, Long chargeId, String transactionId) {
+    protected String createNewRefundWith(RefundStatus refundStatus, Long amount, Long chargeId, String reference) {
         long refundId = RandomUtils.nextInt();
         String externalRefundId = "refund-" + refundId;
-        app.getDatabaseTestHelper().addRefund(refundId, externalRefundId, transactionId, amount, refundStatus.getValue(), chargeId, ZonedDateTime.now());
+        app.getDatabaseTestHelper().addRefund(refundId, externalRefundId, reference, amount, refundStatus.getValue(), chargeId, ZonedDateTime.now());
         return externalRefundId;
     }
 

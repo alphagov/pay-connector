@@ -1,14 +1,15 @@
 package uk.gov.pay.connector.service;
 
-import com.google.common.collect.ImmutableList;
-import com.google.inject.Provider;
+import com.google.inject.persist.Transactional;
 import fj.data.Either;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import uk.gov.pay.connector.dao.ChargeDao;
 import uk.gov.pay.connector.dao.RefundDao;
 import uk.gov.pay.connector.exception.InvalidStateTransitionException;
-import uk.gov.pay.connector.model.ExtendedNotification;
+import uk.gov.pay.connector.model.EvaluatedChargeStatusNotification;
+import uk.gov.pay.connector.model.EvaluatedNotification;
+import uk.gov.pay.connector.model.EvaluatedRefundStatusNotification;
 import uk.gov.pay.connector.model.Notification;
 import uk.gov.pay.connector.model.Notifications;
 import uk.gov.pay.connector.model.domain.ChargeEntity;
@@ -16,24 +17,14 @@ import uk.gov.pay.connector.model.domain.ChargeStatus;
 import uk.gov.pay.connector.model.domain.GatewayAccountEntity;
 import uk.gov.pay.connector.model.domain.RefundEntity;
 import uk.gov.pay.connector.model.domain.RefundStatus;
-import uk.gov.pay.connector.service.transaction.NonTransactionalOperation;
-import uk.gov.pay.connector.service.transaction.TransactionContext;
-import uk.gov.pay.connector.service.transaction.TransactionFlow;
-import uk.gov.pay.connector.service.transaction.TransactionalOperation;
 import uk.gov.pay.connector.util.DnsUtils;
 
 import javax.inject.Inject;
-import java.util.ArrayList;
+import java.util.Collections;
 import java.util.List;
 import java.util.Optional;
-import java.util.function.Function;
-import java.util.function.Predicate;
-import java.util.stream.Collectors;
 
-import static java.lang.String.format;
 import static org.apache.commons.lang3.StringUtils.isBlank;
-import static org.apache.commons.lang3.StringUtils.isNotBlank;
-import static uk.gov.pay.connector.model.domain.GatewayAccount.CREDENTIALS_SHA_OUT_PASSPHRASE;
 
 public class NotificationService {
 
@@ -42,29 +33,22 @@ public class NotificationService {
     private final ChargeDao chargeDao;
     private final RefundDao refundDao;
     private final PaymentProviders paymentProviders;
-    private Provider<TransactionFlow> transactionFlowProvider;
     private final DnsUtils dnsUtils;
 
     @Inject
-    public NotificationService(
-            ChargeDao chargeDao,
-            RefundDao refundDao,
-            PaymentProviders paymentProviders,
-            Provider<TransactionFlow> transactionFlowProvider,
-            DnsUtils dnsUtils) {
+    public NotificationService(ChargeDao chargeDao, RefundDao refundDao, PaymentProviders paymentProviders, DnsUtils dnsUtils) {
         this.chargeDao = chargeDao;
         this.refundDao = refundDao;
         this.paymentProviders = paymentProviders;
-        this.transactionFlowProvider = transactionFlowProvider;
         this.dnsUtils = dnsUtils;
     }
 
-
+    @Transactional
     public boolean handleNotificationFor(String ipAddress, PaymentGatewayName paymentGatewayName, String payload) {
         PaymentProvider paymentProvider = paymentProviders.byName(paymentGatewayName);
         Handler handler = new Handler(paymentProvider);
         if (handler.hasSecuredEndpoint() && !handler.matchesIpWithDomain(ipAddress)) {
-            logger.error(format("received notification from domain different than '%s'", paymentProvider.getNotificationDomain()));
+            logger.error("{} notification received from domain not {}", paymentProvider.getPaymentGatewayName(), paymentProvider.getNotificationDomain());
             return false;
         }
         handler.execute(payload);
@@ -81,97 +65,123 @@ public class NotificationService {
         public boolean hasSecuredEndpoint() {
             return paymentProvider.isNotificationEndpointSecured();
         }
+
         public boolean matchesIpWithDomain(String ipAddress) {
             return (dnsUtils.ipMatchesDomain(ipAddress, paymentProvider.getNotificationDomain()));
         }
 
-        public void execute(String payload) {
-            transactionFlowProvider.get()
-                    .executeNext(prepare(payload))
-                    .executeNext(finish())
-                    .complete();
+        public <T> void execute(String payload) {
+            List<Notification<T>> notifications = parse(payload);
+            notifications.forEach(notification -> Optional.of(notification)
+                    .filter(this::verify)
+                    .flatMap(this::evaluate)
+                    .ifPresent(this::update));
         }
 
-        private <T> NonTransactionalOperation<TransactionContext, List<ExtendedNotification<T>>> prepare(String payload) {
-            return context -> {
+        private <T> List<Notification<T>> parse(String payload) {
+            logger.info("Parsing {} notification", paymentProvider.getPaymentGatewayName());
 
-                Either<String, Notifications<T>> notificationsMaybe = paymentProvider.parseNotification(payload);
+            Either<String, Notifications<T>> notificationsMaybe = paymentProvider.parseNotification(payload);
 
-                if (notificationsMaybe.isLeft()) {
-                    logger.error(format("Notification parsing failed: %s", notificationsMaybe.left().value()));
-                    return new ArrayList();
-                }
+            if (notificationsMaybe.isLeft()) {
+                logger.error("{} notification parsing failed: {}", paymentProvider.getPaymentGatewayName(), notificationsMaybe.left().value());
+                return Collections.emptyList();
+            }
 
-                ImmutableList<Notification<T>> notifications = notificationsMaybe.right().value().get();
-
-                logger.info("Handling notification from provider={}, notification={}", paymentProvider.getPaymentGatewayName(), notifications);
-
-                List<ExtendedNotification<T>> extendedNotifications = notifications.stream()
-                        .map(toExtendedNotification())
-                        .filter(isValid())
-                        .collect(Collectors.toList());
-
-                return extendedNotifications;
-            };
+            List<Notification<T>> notifications = notificationsMaybe.right().value().get();
+            logger.info("Parsed {} notification: {}", paymentProvider.getPaymentGatewayName(), notifications);
+            return notifications;
         }
 
-        private <T> TransactionalOperation<TransactionContext, Void> finish() {
-            return context -> {
-                List<ExtendedNotification<T>> notifications = context.get(ArrayList.class);
-                notifications.forEach(
-                        notification -> {
-                            if (!notification.getInternalStatus().isPresent()) {
-                                logger.info(format("Notification with status=%s, transaction_id=%s and reference=%s ignored.",
-                                        notification.getStatus(), notification.getTransactionId(), notification.getReference()));
-                                return;
-                            }
+        private <T> boolean verify(Notification<T> notification) {
+            logger.info("Verifying {} notification {}", paymentProvider.getPaymentGatewayName(), notification);
 
-                            Enum newStatus = notification.getInternalStatus().get();
+            if (isBlank(notification.getTransactionId())) {
+                logger.error("{} notification {} failed verification because it has no transaction ID", paymentProvider.getPaymentGatewayName(), notification);
+                return false;
+            }
 
-                            if (notification.isOfChargeType()) {
-                                updateChargeStatus(notification, newStatus);
-                                return;
-                            }
-
-                            if (notification.isOfRefundType()) {
-                                if (isBlank(notification.getReference())) {
-                                    logger.error(format("Notification with transaction_id=%s of type refund with no reference ignored.",
-                                            notification.getTransactionId()));
-                                    return;
-                                }
-                                updateRefundStatus(notification, newStatus);
-                                return;
-                            }
-
-                            logger.error(format("Notification with transaction_id=%s and status=%s is neither of type charge nor refund",
-                                    notification.getTransactionId(), notification.getInternalStatus()));
-                            return;
-                        });
-                return null;
-            };
+            return chargeDao.findByProviderAndTransactionId(paymentProvider.getPaymentGatewayName(), notification.getTransactionId())
+                    .map(charge -> {
+                        if (paymentProvider.verifyNotification(notification, charge.getGatewayAccount())) {
+                            return true;
+                        }
+                        logger.error("{} notification {} failed verification", paymentProvider.getPaymentGatewayName(), notification);
+                        return false;
+                    })
+                    .orElseGet(() -> {
+                        logger.error("{} notification {} could not be verified (associated charge entity not found)",
+                                paymentProvider.getPaymentGatewayName(), notification);
+                        return false;
+                    });
         }
 
-        private <T> void updateChargeStatus(ExtendedNotification<T> notification, Enum newStatus) {
-            Optional<ChargeEntity> optionalChargeEntity = chargeDao.findByProviderAndTransactionId(
-                    paymentProvider.getPaymentGatewayName(), notification.getTransactionId());
-            if (!optionalChargeEntity.isPresent()) {
-                logger.error(format("Notification with transaction_id=%s failed updating charge status to: %s. Unable to find charge entity.",
-                        notification.getTransactionId(), newStatus));
+        private <T> Optional<EvaluatedNotification<T>> evaluate(Notification<T> notification) {
+            logger.info("Evaluating {} notification {}", paymentProvider.getPaymentGatewayName(), notification);
+
+            return Optional.ofNullable(chargeDao.findByProviderAndTransactionId(paymentProvider.getPaymentGatewayName(), notification.getTransactionId())
+                    .map(charge -> {
+                        InterpretedStatus status = paymentProvider.getStatusMapper().from(notification.getStatus(), ChargeStatus.fromString(charge.getStatus()));
+                        switch (status.getType()) {
+                            case CHARGE_STATUS:
+                                return new EvaluatedChargeStatusNotification<>(notification, status.getChargeStatus());
+                            case REFUND_STATUS:
+                                return new EvaluatedRefundStatusNotification<>(notification, status.getRefundStatus());
+                            case IGNORED:
+                                logger.info("{} notification {} ignored", paymentProvider.getPaymentGatewayName(), notification);
+                                return null;
+                            case UNKNOWN:
+                            default:
+                                logger.error("{} notification {} unknown", paymentProvider.getPaymentGatewayName(), notification);
+                                return null;
+                        }
+                    }).orElseGet(() -> {
+                        logger.error("{} notification {} could not be evaluated (associated charge entity not found)",
+                                paymentProvider.getPaymentGatewayName(), notification);
+                        return null;
+                    }));
+        }
+
+        private <T> void update(EvaluatedNotification<T> notification) {
+            logger.info("Updating charge per {} notification {}", paymentProvider.getPaymentGatewayName(), notification);
+
+            if (notification.isOfChargeType()) {
+                updateChargeStatus((EvaluatedChargeStatusNotification) notification);
                 return;
             }
+
+            if (notification.isOfRefundType()) {
+                updateRefundStatus((EvaluatedRefundStatusNotification) notification);
+                return;
+            }
+
+            logger.error("{} notification {} could not be processed because it is of neither charge nor refund type",
+                    paymentProvider.getPaymentGatewayName(), notification);
+        }
+
+        private <T> void updateChargeStatus(EvaluatedChargeStatusNotification<T> notification) {
+            Optional<ChargeEntity> optionalChargeEntity = chargeDao.findByProviderAndTransactionId(paymentProvider.getPaymentGatewayName(), notification.getTransactionId());
+
+            if (!optionalChargeEntity.isPresent()) {
+                logger.error("{} notification {} could not be used to update charge (associated charge entity not found)",
+                        paymentProvider.getPaymentGatewayName(), notification);
+                return;
+            }
+
             ChargeEntity chargeEntity = optionalChargeEntity.get();
             String oldStatus = chargeEntity.getStatus();
+            ChargeStatus newStatus  = notification.getChargeStatus();
 
             try {
-                chargeEntity.setStatus((ChargeStatus) newStatus);
+                chargeEntity.setStatus(newStatus);
             } catch (InvalidStateTransitionException e) {
-                logger.error(format("Notification with transaction id=%s failed updating charge status to: %s. Error: %s",
-                        notification.getTransactionId(), newStatus, e.getMessage()));
+                logger.error("{} notification {} could not be used to update charge: {}", paymentProvider.getPaymentGatewayName(), notification, e.getMessage());
                 return;
             }
 
             GatewayAccountEntity gatewayAccount = chargeEntity.getGatewayAccount();
-            logger.info("Notification received. Updating charge - charge_external_id={}, status={}, status_to={}, transaction_id={}, account_id={}, provider={}, provider_type={}",
+            logger.info("Notification received. Updating charge - charge_external_id={}, status={}, status_to={}, transaction_id={}, account_id={}, "
+                            + "provider={}, provider_type={}",
                     chargeEntity.getExternalId(),
                     oldStatus,
                     newStatus,
@@ -180,23 +190,32 @@ public class NotificationService {
                     gatewayAccount.getGatewayName(),
                     gatewayAccount.getType());
 
-            chargeDao.mergeAndNotifyStatusHasChanged(chargeEntity, Optional.of(notification.getGatewayEventDate()));
+            chargeDao.mergeAndNotifyStatusHasChanged(chargeEntity, Optional.ofNullable(notification.getGatewayEventDate()));
         }
 
-        private <T> void updateRefundStatus(ExtendedNotification<T> notification, Enum newStatus) {
-            Optional<RefundEntity> optionalRefundEntity = refundDao.findByReference(notification.getReference());
-            if (!optionalRefundEntity.isPresent()) {
-                logger.error(format("Notification with transaction_id=%s and reference=%s failed updating refund status to: %s. Unable to find refund entity.",
-                        notification.getTransactionId(), notification.getReference(), newStatus));
+        private <T> void updateRefundStatus(EvaluatedRefundStatusNotification<T> notification) {
+            if (isBlank(notification.getReference())) {
+                logger.error("{} notification {} for refund could not be used to update charge (missing reference)",
+                        paymentProvider.getPaymentGatewayName(), notification);
                 return;
             }
+
+            Optional<RefundEntity> optionalRefundEntity = refundDao.findByReference(notification.getReference());
+            if (!optionalRefundEntity.isPresent()) {
+                logger.error("{} notification {} could not be used to update charge (associated charge entity not found)",
+                        paymentProvider.getPaymentGatewayName(), notification);
+                return;
+            }
+
             RefundEntity refundEntity = optionalRefundEntity.get();
             RefundStatus oldStatus = refundEntity.getStatus();
+            RefundStatus newStatus = notification.getRefundStatus();
 
-            refundEntity.setStatus((RefundStatus) newStatus);
+            refundEntity.setStatus(newStatus);
 
             GatewayAccountEntity gatewayAccount = refundEntity.getChargeEntity().getGatewayAccount();
-            logger.info("Notification received for refund. Updating refund - charge_external_id={}, refund_reference={}, transaction_id={}, status={}, status_to={}, account_id={}, provider={}, provider_type={}",
+            logger.info("Notification received for refund. Updating refund - charge_external_id={}, refund_reference={}, transaction_id={}, status={}, "
+                            + "status_to={}, account_id={}, provider={}, provider_type={}",
                     refundEntity.getChargeEntity().getExternalId(),
                     notification.getReference(),
                     notification.getTransactionId(),
@@ -207,51 +226,6 @@ public class NotificationService {
                     gatewayAccount.getType());
         }
 
-        private <T> Function<Notification<T>, ExtendedNotification<T>> toExtendedNotification() {
-            return notification ->
-                    ExtendedNotification.extend(notification, mapStatus(notification.getStatus()));
-        }
-
-        private <T> Predicate<ExtendedNotification<T>> isValid() {
-            return notification -> {
-                if (!isNotBlank(notification.getTransactionId())) {
-                    logger.error("{} notification with no transaction ID ignored.", paymentProvider.getPaymentGatewayName());
-                    return false;
-                }
-
-                if (!paymentProvider.verifyNotification(notification, getPassphrase(notification))) {
-                    logger.error("{} notification with transaction ID {} ignored because it could not be verified.", paymentProvider.getPaymentGatewayName(), notification.getTransactionId());
-                    return false;
-                }
-
-                return true;
-            };
-        }
-
-        private <T> Optional<Enum> mapStatus(T status) {
-            Status mappedStatus = paymentProvider.getStatusMapper().from(status);
-
-            if (mappedStatus.isUnknown()) {
-                logger.error(format("Notification with unknown status %s.", status));
-                return Optional.empty();
-            }
-
-            if (mappedStatus.isIgnored()) {
-                logger.info(format("Notification with ignored status %s.", status));
-                return Optional.empty();
-            }
-            return Optional.of(mappedStatus.get());
-        }
-
-        private String getPassphrase(ExtendedNotification notification) {
-            Optional<ChargeEntity> optionalChargeEntity = chargeDao.findByProviderAndTransactionId(
-                paymentProvider.getPaymentGatewayName(), notification.getTransactionId());
-            if (!optionalChargeEntity.isPresent()) {
-                logger.error(format("Notification with transaction_id=%s. Unable to find charge entity.", notification.getTransactionId()));
-                return null;
-            }
-
-            return optionalChargeEntity.get().getGatewayAccount().getCredentials().get(CREDENTIALS_SHA_OUT_PASSPHRASE);
-        }
     }
+
 }

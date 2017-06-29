@@ -86,7 +86,7 @@ public class SmartpayPaymentProviderTest {
     @Mock
     private ClientFactory mockClientFactory;
     @Mock
-    private GatewayClient mockGatewayClient;
+    private GatewayAccountEntity mockGatewayAccountEntity;
 
     @Before
     public void setup() throws Exception {
@@ -138,7 +138,7 @@ public class SmartpayPaymentProviderTest {
 
     @Test
     public void shouldAlwaysVerifyNotification() {
-        Assert.assertThat(provider.verifyNotification(null, ""), is(true));
+        Assert.assertThat(provider.verifyNotification(null, mock(GatewayAccountEntity.class)), is(true));
     }
 
     @Test
@@ -204,7 +204,7 @@ public class SmartpayPaymentProviderTest {
 
     @Test
     public void shouldTreatAllNotificationsAsVerified() {
-        assertThat(provider.verifyNotification(mock(Notification.class), "a passphrase"), is(true));
+        assertThat(provider.verifyNotification(mock(Notification.class), mockGatewayAccountEntity), is(true));
     }
 
     private GatewayAccountEntity aServiceAccount() {

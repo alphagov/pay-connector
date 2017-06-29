@@ -9,7 +9,7 @@ import java.util.stream.Collectors;
 import static java.util.Arrays.stream;
 import static uk.gov.pay.connector.model.api.ExternalChargeState.*;
 
-public enum ChargeStatus {
+public enum ChargeStatus implements Status {
     CREATED("CREATED", EXTERNAL_CREATED),
     ENTERING_CARD_DETAILS("ENTERING CARD DETAILS", EXTERNAL_STARTED),
     AUTHORISATION_READY("AUTHORISATION READY", EXTERNAL_STARTED),

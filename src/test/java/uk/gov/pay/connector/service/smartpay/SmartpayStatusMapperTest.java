@@ -2,12 +2,15 @@ package uk.gov.pay.connector.service.smartpay;
 
 import org.apache.commons.lang3.tuple.Pair;
 import org.junit.Test;
-import uk.gov.pay.connector.service.Status;
+import uk.gov.pay.connector.service.InterpretedStatus;
+import uk.gov.pay.connector.service.MappedRefundStatus;
 
 import static org.hamcrest.core.Is.is;
 import static org.junit.Assert.assertThat;
+import static uk.gov.pay.connector.model.domain.ChargeStatus.AUTHORISATION_SUCCESS;
 import static uk.gov.pay.connector.model.domain.ChargeStatus.CAPTURED;
 import static uk.gov.pay.connector.model.domain.ChargeStatus.CAPTURE_ERROR;
+import static uk.gov.pay.connector.model.domain.ChargeStatus.CAPTURE_SUBMITTED;
 import static uk.gov.pay.connector.model.domain.RefundStatus.REFUNDED;
 import static uk.gov.pay.connector.model.domain.RefundStatus.REFUND_ERROR;
 
@@ -16,85 +19,69 @@ public class SmartpayStatusMapperTest {
     @Test
     public void shouldReturnAStatusForCaptureTrue() throws Exception {
         Pair<String, Boolean> value = Pair.of("CAPTURE", true);
-        Status status = SmartpayStatusMapper.get().from(value);
+        InterpretedStatus status = SmartpayStatusMapper.get().from(value, CAPTURE_SUBMITTED);
 
-        assertThat(status.isMapped(), is(true));
-        assertThat(status.isIgnored(), is(false));
-        assertThat(status.isUnknown(), is(false));
-        assertThat(status.get(), is(CAPTURED));
+        assertThat(status.getType(), is(InterpretedStatus.Type.CHARGE_STATUS));
+        assertThat(status.getChargeStatus(), is(CAPTURED));
     }
 
     @Test
     public void shouldReturnAStatusForCaptureFalse() throws Exception {
         Pair<String, Boolean> value = Pair.of("CAPTURE", false);
-        Status status = SmartpayStatusMapper.get().from(value);
+        InterpretedStatus status = SmartpayStatusMapper.get().from(value, CAPTURE_SUBMITTED);
 
-        assertThat(status.isMapped(), is(true));
-        assertThat(status.isIgnored(), is(false));
-        assertThat(status.isUnknown(), is(false));
-        assertThat(status.get(), is(CAPTURE_ERROR));
+        assertThat(status.getType(), is(InterpretedStatus.Type.CHARGE_STATUS));
+        assertThat(status.getChargeStatus(), is(CAPTURE_ERROR));
     }
 
     @Test
     public void shouldReturnAStatusForRefundedTrue() throws Exception {
         Pair<String, Boolean> value = Pair.of("REFUND", true);
-        Status status = SmartpayStatusMapper.get().from(value);
+        InterpretedStatus status = SmartpayStatusMapper.get().from(value, CAPTURED);
 
-        assertThat(status.isMapped(), is(true));
-        assertThat(status.isIgnored(), is(false));
-        assertThat(status.isUnknown(), is(false));
-        assertThat(status.get(), is(REFUNDED));
+        assertThat(status.getType(), is(InterpretedStatus.Type.REFUND_STATUS));
+        assertThat(((MappedRefundStatus) status).getRefundStatus(), is(REFUNDED));
     }
 
     @Test
     public void shouldReturnAStatusForRefundedFalse() throws Exception {
         Pair<String, Boolean> value = Pair.of("REFUND", false);
-        Status status = SmartpayStatusMapper.get().from(value);
+        InterpretedStatus status = SmartpayStatusMapper.get().from(value, CAPTURED);
 
-        assertThat(status.isMapped(), is(true));
-        assertThat(status.isIgnored(), is(false));
-        assertThat(status.isUnknown(), is(false));
-        assertThat(status.get(), is(REFUND_ERROR));
+        assertThat(status.getType(), is(InterpretedStatus.Type.REFUND_STATUS));
+        assertThat(status.getRefundStatus(), is(REFUND_ERROR));
     }
 
     @Test
     public void shouldReturnAStatusForRefundFailedTrue() throws Exception {
         Pair<String, Boolean> value = Pair.of("REFUND_FAILED", true);
-        Status status = SmartpayStatusMapper.get().from(value);
+        InterpretedStatus status = SmartpayStatusMapper.get().from(value, CAPTURED);
 
-        assertThat(status.isMapped(), is(true));
-        assertThat(status.isIgnored(), is(false));
-        assertThat(status.isUnknown(), is(false));
-        assertThat(status.get(), is(REFUND_ERROR));
+        assertThat(status.getType(), is(InterpretedStatus.Type.REFUND_STATUS));
+        assertThat(status.getRefundStatus(), is(REFUND_ERROR));
     }
 
     @Test
     public void shouldReturnAStatusForRefundFailedFalse() throws Exception {
         Pair<String, Boolean> value = Pair.of("REFUND_FAILED", false);
-        Status status = SmartpayStatusMapper.get().from(value);
+        InterpretedStatus status = SmartpayStatusMapper.get().from(value, CAPTURED);
 
-        assertThat(status.isMapped(), is(true));
-        assertThat(status.isIgnored(), is(false));
-        assertThat(status.isUnknown(), is(false));
-        assertThat(status.get(), is(REFUND_ERROR));
+        assertThat(status.getType(), is(InterpretedStatus.Type.REFUND_STATUS));
+        assertThat(status.getRefundStatus(), is(REFUND_ERROR));
     }
 
     @Test
     public void shouldReturnEmptyWhenStatusIsUnknown() throws Exception {
-        Status status = SmartpayStatusMapper.get().from(Pair.of("UNKNOWN", true));
+        InterpretedStatus status = SmartpayStatusMapper.get().from(Pair.of("UNKNOWN", true), AUTHORISATION_SUCCESS);
 
-        assertThat(status.isMapped(), is(false));
-        assertThat(status.isIgnored(), is(false));
-        assertThat(status.isUnknown(), is(true));
+        assertThat(status.getType(), is(InterpretedStatus.Type.UNKNOWN));
     }
 
     @Test
     public void shouldReturnEmptyWhenStatusIsIgnored() throws Exception {
-        Status status = SmartpayStatusMapper.get().from(Pair.of("AUTHORISATION", true));
+        InterpretedStatus status = SmartpayStatusMapper.get().from(Pair.of("AUTHORISATION", true), AUTHORISATION_SUCCESS);
 
-        assertThat(status.isMapped(), is(false));
-        assertThat(status.isIgnored(), is(true));
-        assertThat(status.isUnknown(), is(false));
+        assertThat(status.getType(), is(InterpretedStatus.Type.IGNORED));
     }
 
 }

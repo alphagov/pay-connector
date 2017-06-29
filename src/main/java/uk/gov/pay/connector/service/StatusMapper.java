@@ -1,7 +1,111 @@
 package uk.gov.pay.connector.service;
 
-public interface StatusMapper<V> {
+import com.google.common.collect.ImmutableList;
+import uk.gov.pay.connector.model.GatewayStatusOnly;
+import uk.gov.pay.connector.model.GatewayStatusWithCurrentStatus;
+import uk.gov.pay.connector.model.StatusMapFromStatus;
+import uk.gov.pay.connector.model.domain.ChargeStatus;
+import uk.gov.pay.connector.model.domain.RefundStatus;
+import uk.gov.pay.connector.model.domain.Status;
 
-   Status from(V value);
+import java.util.ArrayList;
+import java.util.List;
+import java.util.Objects;
+import java.util.Optional;
 
+public class StatusMapper<T> {
+
+    public static class StatusMap<T> {
+
+        private final StatusMapFromStatus<T> fromStatus;
+        private Status toStatus;
+
+        private StatusMap(GatewayStatusOnly<T> gatewayStatus) {
+            this.fromStatus = gatewayStatus;
+        }
+
+        private StatusMap(StatusMapFromStatus<T> fromStatus, Status toStatus) {
+            this.fromStatus = Objects.requireNonNull(fromStatus);
+            this.toStatus = toStatus;
+        }
+
+        public static <T> StatusMap of(StatusMapFromStatus<T> fromStatus, Status toStatus) {
+            return new StatusMap(fromStatus, toStatus);
+        }
+
+        public static <T> StatusMap of(GatewayStatusOnly<T> gatewayStatusOnly) {
+            return new StatusMap<>(gatewayStatusOnly);
+        }
+
+        public StatusMapFromStatus<T> getFromStatus() {
+            return fromStatus;
+        }
+
+        public Optional<Status> getToStatus() {
+            return Optional.ofNullable(toStatus);
+        }
+    }
+
+    public static class Builder<T> {
+        private List<StatusMap<T>> validStatuses = new ArrayList<>();
+
+        public Builder<T> map(T gatewayStatus, ChargeStatus currentStatus, Status status) {
+            validStatuses.add(StatusMap.of(GatewayStatusWithCurrentStatus.of(gatewayStatus, currentStatus), status));
+            return this;
+        }
+
+        public Builder<T> map(T gatewayStatus, Status status) {
+            validStatuses.add(StatusMap.of(GatewayStatusOnly.of(gatewayStatus), status));
+            return this;
+        }
+
+        public Builder<T> ignore(T gatewayStatus) {
+            validStatuses.add(StatusMap.of(GatewayStatusOnly.of(gatewayStatus)));
+            return this;
+        }
+
+        public StatusMapper<T> build() {
+            return new StatusMapper(ImmutableList.copyOf(validStatuses));
+        }
+    }
+
+    private final List<StatusMap<T>> validStatuses;
+
+    private StatusMapper(List<StatusMap<T>> validStatuses) {
+        this.validStatuses = validStatuses;
+    }
+
+    public static <T> Builder<T> builder() {
+        return new Builder<>();
+    }
+
+    public InterpretedStatus from(T gatewayStatus, ChargeStatus currentStatus) {
+        GatewayStatusWithCurrentStatus gatewayStatusWithCurrentStatus = GatewayStatusWithCurrentStatus.of(gatewayStatus, currentStatus);
+        Optional<StatusMap<T>> statusMap = validStatuses
+                .stream()
+                .filter(validStatus -> validStatus.getFromStatus().equals(gatewayStatusWithCurrentStatus))
+                .findFirst();
+
+        if (!statusMap.isPresent()) {
+            return new UnknownStatus();
+        }
+
+        Optional<Status> statusMaybe = statusMap.flatMap(StatusMap::getToStatus);
+
+        if (!statusMaybe.isPresent()) {
+            return new IgnoredStatus();
+        }
+
+        Status status = statusMaybe.get();
+
+        if (status instanceof ChargeStatus) {
+            return new MappedChargeStatus((ChargeStatus) status);
+        }
+
+        if (status instanceof RefundStatus) {
+            return new MappedRefundStatus((RefundStatus) status);
+        }
+
+        return new UnknownStatus();
+    }
 }
