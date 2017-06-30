@@ -119,8 +119,16 @@ public class NotificationService {
         private <T> Optional<EvaluatedNotification<T>> evaluate(Notification<T> notification) {
             logger.info("Evaluating {} notification {}", paymentProvider.getPaymentGatewayName(), notification);
 
-            return Optional.ofNullable(chargeDao.findByProviderAndTransactionId(paymentProvider.getPaymentGatewayName(), notification.getTransactionId())
-                    .map(charge -> {
+            Optional<ChargeEntity> optionalChargeEntity = chargeDao.findByProviderAndTransactionId(paymentProvider.getPaymentGatewayName(),
+                    notification.getTransactionId());
+
+            if (!optionalChargeEntity.isPresent()) {
+                logger.error("{} notification {} could not be evaluated (associated charge entity not found)",
+                        paymentProvider.getPaymentGatewayName(), notification);
+                return Optional.empty();
+            }
+
+            return optionalChargeEntity.map(charge -> {
                         InterpretedStatus status = paymentProvider.getStatusMapper().from(notification.getStatus(), ChargeStatus.fromString(charge.getStatus()));
                         switch (status.getType()) {
                             case CHARGE_STATUS:
@@ -135,11 +143,7 @@ public class NotificationService {
                                 logger.error("{} notification {} unknown", paymentProvider.getPaymentGatewayName(), notification);
                                 return null;
                         }
-                    }).orElseGet(() -> {
-                        logger.error("{} notification {} could not be evaluated (associated charge entity not found)",
-                                paymentProvider.getPaymentGatewayName(), notification);
-                        return null;
-                    }));
+                    });
         }
 
         private <T> void update(EvaluatedNotification<T> notification) {
