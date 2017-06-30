@@ -56,7 +56,7 @@ epdq:
   urls:
     test: ${GDS_CONNECTOR_EPDQ_TEST_URL}
     live: ${GDS_CONNECTOR_EPDQ_LIVE_URL}
-  credentials: ['username','password','psp_id','sha_in_passphrase']
+  credentials: ['username','password','merchant_id','sha_in_passphrase','sha_out_passphrase']
 
   # The Jersey Client timeouts are set to the same values as for Worldpay initially until we gather more metrics
   # to be in a position to tweak more appropriately.
