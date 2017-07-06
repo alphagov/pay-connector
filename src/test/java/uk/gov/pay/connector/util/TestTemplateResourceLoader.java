@@ -95,7 +95,7 @@ public class TestTemplateResourceLoader {
     public static final String EPDQ_CANCEL_WAITING_RESPONSE = EPDQ_BASE_NAME + "/cancel-waiting-response.xml";
     public static final String EPDQ_CANCEL_ERROR_RESPONSE = EPDQ_BASE_NAME + "/cancel-error-response.xml";
 
-    public static final String EPDQ_CAPTURE_NOTIFICATION_TEMPLATE = EPDQ_BASE_NAME + "/notification-template.txt";
+    public static final String EPDQ_NOTIFICATION_TEMPLATE = EPDQ_BASE_NAME + "/notification-template.txt";
 
     static public String load(String location) {
         try {

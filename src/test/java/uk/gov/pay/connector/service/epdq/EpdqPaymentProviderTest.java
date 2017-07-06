@@ -72,7 +72,7 @@ import static uk.gov.pay.connector.util.TestTemplateResourceLoader.EPDQ_AUTHORIS
 import static uk.gov.pay.connector.util.TestTemplateResourceLoader.EPDQ_AUTHORISATION_SUCCESS_RESPONSE;
 import static uk.gov.pay.connector.util.TestTemplateResourceLoader.EPDQ_CANCEL_REQUEST;
 import static uk.gov.pay.connector.util.TestTemplateResourceLoader.EPDQ_CANCEL_SUCCESS_RESPONSE;
-import static uk.gov.pay.connector.util.TestTemplateResourceLoader.EPDQ_CAPTURE_NOTIFICATION_TEMPLATE;
+import static uk.gov.pay.connector.util.TestTemplateResourceLoader.EPDQ_NOTIFICATION_TEMPLATE;
 import static uk.gov.pay.connector.util.TestTemplateResourceLoader.EPDQ_CAPTURE_SUCCESS_RESPONSE;
 
 @RunWith(MockitoJUnitRunner.class)
@@ -414,7 +414,7 @@ public class EpdqPaymentProviderTest {
 
     private String notificationPayloadForTransaction( String orderId, String status, String payId, String shaSign)
         throws IOException {
-        return TestTemplateResourceLoader.load(EPDQ_CAPTURE_NOTIFICATION_TEMPLATE)
+        return TestTemplateResourceLoader.load(EPDQ_NOTIFICATION_TEMPLATE)
                 .replace("{{orderId}}", orderId)
                 .replace("{{status}}", status)
                 .replace("{{payId}}", payId)
