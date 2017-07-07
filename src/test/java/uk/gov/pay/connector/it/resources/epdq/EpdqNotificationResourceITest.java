@@ -24,7 +24,7 @@ import static uk.gov.pay.connector.model.domain.GatewayAccount.CREDENTIALS_SHA_O
 
 public class EpdqNotificationResourceITest extends ChargingITestBase {
 
-    private static final String RESPONSE_EXPECTED_BY_WORLDPAY = "[OK]";
+    private static final String RESPONSE_EXPECTED_BY_EPDQ = "[OK]";
     private static final String NOTIFICATION_PATH = "/v1/api/notifications/epdq";
 
     public EpdqNotificationResourceITest() {
@@ -32,16 +32,16 @@ public class EpdqNotificationResourceITest extends ChargingITestBase {
     }
 
     @Test
-    public void shouldHandleAWorldpayNotification() throws Exception {
+    public void shouldHandleANotification() throws Exception {
         String transactionId = "transaction-id";
         String chargeId = createNewChargeWith(CAPTURE_SUBMITTED, transactionId);
 
-        String response = notifyConnector(transactionId, "9")
+        String response = notifyConnector(transactionId, "9", getCredentials().get(CREDENTIALS_SHA_OUT_PASSPHRASE))
                 .statusCode(200)
                 .extract().body()
                 .asString();
 
-        assertThat(response, is(RESPONSE_EXPECTED_BY_WORLDPAY));
+        assertThat(response, is(RESPONSE_EXPECTED_BY_EPDQ));
 
         assertFrontendChargeStatusIs(chargeId, CAPTURED.getValue());
     }
@@ -51,12 +51,12 @@ public class EpdqNotificationResourceITest extends ChargingITestBase {
         String transactionId = "transaction-id";
         String chargeId = createNewChargeWith(CAPTURE_SUBMITTED, transactionId);
 
-        String response = notifyConnector(transactionId, "GARBAGE")
+        String response = notifyConnector(transactionId, "GARBAGE", getCredentials().get(CREDENTIALS_SHA_OUT_PASSPHRASE))
                 .statusCode(200)
                 .extract().body()
                 .asString();
 
-        assertThat(response, is(RESPONSE_EXPECTED_BY_WORLDPAY));
+        assertThat(response, is(RESPONSE_EXPECTED_BY_EPDQ));
 
         assertFrontendChargeStatusIs(chargeId, CAPTURE_SUBMITTED.getValue());
     }
@@ -65,7 +65,7 @@ public class EpdqNotificationResourceITest extends ChargingITestBase {
     public void shouldNotUpdateStatusToDatabaseIfGatewayAccountIsNotFound() throws Exception {
         String chargeId = createNewCharge(AUTHORISATION_SUCCESS);
 
-        notifyConnector("unknown-transation-id", "GARBAGE")
+        notifyConnector("unknown-transation-id", "GARBAGE", getCredentials().get(CREDENTIALS_SHA_OUT_PASSPHRASE))
                 .statusCode(200)
                 .extract().body()
                 .asString();
@@ -74,30 +74,45 @@ public class EpdqNotificationResourceITest extends ChargingITestBase {
     }
 
     @Test
+    public void shouldNotUpdateStatusToDatabaseIfShaSignatureIsIncorrect() throws Exception {
+        String transactionId = "transaction-id";
+        String chargeId = createNewChargeWith(CAPTURE_SUBMITTED, transactionId);
+
+        String response = notifyConnector(transactionId, "9", "Incorrect-sha-out-passphrase")
+                .statusCode(200)
+                .extract().body()
+                .asString();
+
+        assertThat(response, is(RESPONSE_EXPECTED_BY_EPDQ));
+
+        assertFrontendChargeStatusIs(chargeId, CAPTURE_SUBMITTED.getValue());
+    }
+
+    @Test
     public void shouldFailWhenUnexpectedContentType() throws Exception {
         given().port(app.getLocalPort())
-                .body(notificationPayloadForTransaction("any", "WHATEVER"))
+                .body(notificationPayloadForTransaction("any", "WHATEVER", getCredentials().get(CREDENTIALS_SHA_OUT_PASSPHRASE)))
                 .contentType(APPLICATION_JSON)
                 .post(NOTIFICATION_PATH)
                 .then()
                 .statusCode(415);
     }
 
-    private ValidatableResponse notifyConnector(String transactionId, String status) throws Exception {
+    private ValidatableResponse notifyConnector(String transactionId, String status, String shaOutPassphrase) throws Exception {
         return given().port(app.getLocalPort())
-                .body(notificationPayloadForTransaction(transactionId, status))
+                .body(notificationPayloadForTransaction(transactionId, status, shaOutPassphrase))
                 .contentType(APPLICATION_FORM_URLENCODED)
                 .post(NOTIFICATION_PATH)
                 .then();
     }
 
-    private String notificationPayloadForTransaction(String transactionId, String status) throws IOException {
+    private String notificationPayloadForTransaction(String transactionId, String status, String shaOutPassphrase) throws IOException {
         List<NameValuePair> payloadParameters = new ArrayList<>(Arrays.asList(
                 new BasicNameValuePair("orderID", "order-id"),
                 new BasicNameValuePair("STATUS", status),
                 new BasicNameValuePair("PAYID", transactionId)));
 
-        String signature = new EpdqSha512SignatureGenerator().sign(payloadParameters, getCredentials().get(CREDENTIALS_SHA_OUT_PASSPHRASE));
+        String signature = new EpdqSha512SignatureGenerator().sign(payloadParameters, shaOutPassphrase);
 
         payloadParameters.add(new BasicNameValuePair("SHASIGN", signature));
         return URLEncodedUtils.format(payloadParameters, StandardCharsets.UTF_8.toString());
