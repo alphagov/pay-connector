@@ -1,16 +1,6 @@
 # pay-connector
 The GOV.UK Pay Connector in Java (Dropwizard)
 
-## Config
-
-Important configurations.
-  
-  ```
-     worldpay:
-        url: <HTTP endpoint for worldpay payments>
-        username: <Worldpay merchantID | this will be removed when gateway accounts have the capability to store username/passwords >
-        password: <Worldpay merchat password for integration | this will be removed when gateway accounts have the capability to store username/passwords>
-  ```
   
 ## Environment Variables
 
@@ -111,6 +101,7 @@ $ java -jar target/pay-connector-0.1-SNAPSHOT-allinone.jar
 |[```/v1/api/accounts/{accountId}/charges```](docs/api_specification.md#get-v1apiaccountsaccountidcharges)                                  | GET    |  Searches transactions for this account `accountId` returns JSON or CSV as requested           |
 |[```/v1/api/notifications/worldpay```](docs/api_specification.md#post-v1apinotificationsworldpay)                                  | POST |  Handle charge update notifications from Worldpay.            |
 |[```/v1/api/notifications/smartpay```](docs/api_specification.md#post-v1apinotificationssmartpay)                                  | POST |  Handle charge update notifications from Smartpay.            |
+|[```/v1/api/notifications/epdq```](docs/api_specification.md#post-v1apinotificationsepdq)                                  | POST |  Handle charge update notifications from ePDQ.                |
 |[```/v1/api/accounts/{accountId}/charges/{chargeId}/cancel```](docs/api_specification.md#post-v1apiaccountsaccountidchargeschargeidcancel)  | POST    |  Cancels the charge with `chargeId` for account `accountId`           |
 |[```/v1/api/accounts/{accountId}/charges/{chargeId}/events```](docs/api_specification.md#post-v1apiaccountsaccountidchargeschargeidevents)  | GET     |  Retrieves all the transaction history for the given `chargeId` of account `accountId`           |
 |[```/v1/api/accounts/{accountId}/email-notification```](docs/api_specification.md#post-v1apiaccountsaccountidchargeschargeidcancel)  | POST    |  Updates an email notification template body for account `accountId`           |
