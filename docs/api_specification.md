@@ -1235,7 +1235,7 @@ POST /v1/api/notifications/worldpay
 Content-Type: text/xml
 
 ```
-See [src/test/resources/templates/worldpay/notification.xml](src/test/resources/templates/worldpay/notification.xml) for an example notification.
+See [src/test/resources/templates/worldpay/notification.xml](/src/test/resources/templates/worldpay/notification.xml) for an example notification.
 
 #### Request body description
 
@@ -1264,7 +1264,7 @@ POST /v1/api/notifications/smartpay
 Content-Type: application/json
 Authorization: Basic YWRtaW46cGFzc3dvcmQ=
 
-See [src/test/resources/templates/smartpay/notification-authorisation.json](src/test/resources/templates/smartpay/notification-authorisation.json) for an example notification.
+See [src/test/resources/templates/smartpay/notification-authorisation.json](/src/test/resources/templates/smartpay/notification-authorisation.json) for an example notification.
 ```
 
 ### Response example
@@ -1301,6 +1301,29 @@ Content-Type: application/json
 Content-Type: text/plain
 
 OK
+```
+
+## POST /v1/api/notifications/epdq
+
+This endpoint handles a notification from ePDQ.
+
+### Request example
+
+```
+POST /v1/api/notifications/epdq
+Content-Type: application/x-www-form-urlencoded
+
+```
+See [src/test/resources/templates/epdq/capture-notification.txt](/src/test/resources/templates/epdq/capture-notification.txt) for an example notification.
+
+
+### Response example
+
+```
+200 OK
+Content-Type: text/plain
+
+[OK]
 ```
 
 
