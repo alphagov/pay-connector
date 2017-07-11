@@ -33,21 +33,13 @@ import static io.dropwizard.testing.ConfigOverride.config;
 import static java.lang.String.format;
 import static javax.ws.rs.core.Response.Status.BAD_REQUEST;
 import static org.hamcrest.Matchers.is;
-import static uk.gov.pay.connector.model.domain.ChargeStatus.AUTHORISATION_SUCCESS;
-import static uk.gov.pay.connector.model.domain.ChargeStatus.CREATED;
-import static uk.gov.pay.connector.model.domain.ChargeStatus.ENTERING_CARD_DETAILS;
-import static uk.gov.pay.connector.model.domain.GatewayAccount.CREDENTIALS_MERCHANT_ID;
-import static uk.gov.pay.connector.model.domain.GatewayAccount.CREDENTIALS_PASSWORD;
-import static uk.gov.pay.connector.model.domain.GatewayAccount.CREDENTIALS_SHA_IN_PASSPHRASE;
-import static uk.gov.pay.connector.model.domain.GatewayAccount.CREDENTIALS_USERNAME;
-import static uk.gov.pay.connector.resources.ApiPaths.CHARGE_CANCEL_API_PATH;
-import static uk.gov.pay.connector.resources.ApiPaths.FRONTEND_CHARGE_3DS_AUTHORIZE_API_PATH;
-import static uk.gov.pay.connector.resources.ApiPaths.FRONTEND_CHARGE_AUTHORIZE_API_PATH;
-import static uk.gov.pay.connector.resources.ApiPaths.FRONTEND_CHARGE_CAPTURE_API_PATH;
+import static uk.gov.pay.connector.model.domain.ChargeStatus.*;
+import static uk.gov.pay.connector.model.domain.GatewayAccount.*;
+import static uk.gov.pay.connector.resources.ApiPaths.*;
 import static uk.gov.pay.connector.util.JsonEncoder.toJson;
 import static uk.gov.pay.connector.util.TransactionId.randomId;
 
-public class ChargingITestBase extends ChargingITestCommon{
+public class ChargingITestBase extends ChargingITestCommon {
     private RestAssuredClient connectorRestApi;
 
     private int port = PortFactory.findFreePort();
@@ -71,6 +63,7 @@ public class ChargingITestBase extends ChargingITestCommon{
 
     protected final String accountId;
     private final String paymentProvider;
+    private Map<String, String> credentials;
 
     public ChargingITestBase(String paymentProvider) {
         super(paymentProvider);
@@ -85,17 +78,22 @@ public class ChargingITestBase extends ChargingITestCommon{
         return app;
     }
 
+    public Map<String, String> getCredentials() {
+        return credentials;
+    }
+
     @Before
     public void setup() throws IOException {
         worldpay = new WorldpayMockClient();
         smartpay = new SmartpayMockClient();
         epdq = new EpdqMockClient();
 
-        Map<String, String> credentials = ImmutableMap.of(
+        credentials = ImmutableMap.of(
                 CREDENTIALS_MERCHANT_ID, "merchant-id",
                 CREDENTIALS_USERNAME, "test-user",
                 CREDENTIALS_PASSWORD, "test-password",
-            CREDENTIALS_SHA_IN_PASSPHRASE, "test-sha-passphrase"
+                CREDENTIALS_SHA_IN_PASSPHRASE, "test-sha-in-passphrase",
+                CREDENTIALS_SHA_OUT_PASSPHRASE, "test-sha-out-passphrase"
         );
         app.getDatabaseTestHelper().addGatewayAccount(accountId, paymentProvider, credentials);
     }
@@ -289,7 +287,7 @@ public class ChargingITestBase extends ChargingITestCommon{
             protected boolean matchesSafely(List<Map<String, Object>> chargeEvents) {
                 return chargeEvents.stream()
                         .anyMatch(chargeEvent ->
-                                chargeStatus.getValue().equals(chargeEvent.get("status"))
+                                        chargeStatus.getValue().equals(chargeEvent.get("status"))
                         );
             }
 

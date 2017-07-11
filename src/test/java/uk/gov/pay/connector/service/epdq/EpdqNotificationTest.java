@@ -9,7 +9,7 @@ import java.util.Arrays;
 
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.core.Is.is;
-import static uk.gov.pay.connector.util.TestTemplateResourceLoader.EPDQ_CAPTURE_NOTIFICATION_TEMPLATE;
+import static uk.gov.pay.connector.util.TestTemplateResourceLoader.EPDQ_NOTIFICATION_TEMPLATE;
 
 public class EpdqNotificationTest {
 
@@ -62,7 +62,7 @@ public class EpdqNotificationTest {
 
   private String notificationPayloadForTransaction(String orderId, String status, String payId, String shaSign)
       throws IOException {
-    return TestTemplateResourceLoader.load(EPDQ_CAPTURE_NOTIFICATION_TEMPLATE)
+    return TestTemplateResourceLoader.load(EPDQ_NOTIFICATION_TEMPLATE)
         .replace("{{orderId}}", orderId)
         .replace("{{status}}", status)
         .replace("{{payId}}", payId)
