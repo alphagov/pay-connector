@@ -39,6 +39,7 @@ public class ConnectorModule extends AbstractModule {
 
     private JpaPersistModule jpaModule(ConnectorConfiguration configuration) {
         DataSourceFactory dbConfig = configuration.getDataSourceFactory();
+
         final Properties properties = new Properties();
         properties.put("javax.persistence.jdbc.driver", dbConfig.getDriverClass());
         properties.put("javax.persistence.jdbc.url", dbConfig.getUrl());

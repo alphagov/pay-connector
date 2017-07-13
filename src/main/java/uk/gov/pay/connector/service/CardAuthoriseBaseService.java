@@ -1,5 +1,8 @@
 package uk.gov.pay.connector.service;
 
+import com.amazonaws.xray.AWSXRay;
+import com.amazonaws.xray.AWSXRayRecorder;
+import com.amazonaws.xray.entities.Segment;
 import io.dropwizard.setup.Environment;
 import org.apache.commons.lang3.tuple.Pair;
 import uk.gov.pay.connector.dao.ChargeDao;
@@ -21,26 +24,33 @@ import static uk.gov.pay.connector.service.CardExecutorService.ExecutionStatus;
 public abstract class CardAuthoriseBaseService<T extends AuthorisationDetails> extends CardService<BaseAuthoriseResponse> {
 
     private final CardExecutorService cardExecutorService;
+    private final AWSXRayRecorder recorder = AWSXRay.getGlobalRecorder();
+
 
     public CardAuthoriseBaseService(ChargeDao chargeDao, PaymentProviders providers, CardExecutorService cardExecutorService, Environment environment) {
         super(chargeDao, providers, environment);
         this.cardExecutorService = cardExecutorService;
     }
 
-
     public GatewayResponse doAuthorise(String chargeId, T gatewayAuthRequest) {
         return chargeDao.findByExternalId(chargeId).map(chargeEntity -> {
             Supplier<GatewayResponse> authorisationSupplier = () -> {
-                ChargeEntity preOperationResponse;
+                recorder.beginSegment("pay-connector");
+                //segment.putService("component","authorisation-request");
                 try {
-                    preOperationResponse = preOperation(chargeEntity);
-                } catch (OptimisticLockException e) {
-                    throw new ConflictRuntimeException(chargeEntity.getExternalId());
+                    ChargeEntity preOperationResponse;
+                    try {
+                        preOperationResponse = preOperation(chargeEntity);
+                    } catch (OptimisticLockException e) {
+                        throw new ConflictRuntimeException(chargeEntity.getExternalId());
+                    }
+
+                    GatewayResponse<BaseAuthoriseResponse> operationResponse = operation(preOperationResponse, gatewayAuthRequest);
+                    return postOperation(preOperationResponse, gatewayAuthRequest, operationResponse);
+
+                }finally {
+                    recorder.endSegment();
                 }
-
-                GatewayResponse<BaseAuthoriseResponse> operationResponse = operation(preOperationResponse, gatewayAuthRequest);
-
-                return postOperation(preOperationResponse, gatewayAuthRequest, operationResponse);
             };
 
             Pair<ExecutionStatus, GatewayResponse> executeResult = cardExecutorService.execute(authorisationSupplier);
