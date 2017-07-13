@@ -1,5 +1,9 @@
 package uk.gov.pay.connector.app;
 
+import com.amazonaws.xray.AWSXRay;
+import com.amazonaws.xray.AWSXRayRecorderBuilder;
+import com.amazonaws.xray.javax.servlet.AWSXRayServletFilter;
+import com.amazonaws.xray.strategy.sampling.LocalizedSamplingStrategy;
 import com.codahale.metrics.graphite.GraphiteReporter;
 import com.codahale.metrics.graphite.GraphiteSender;
 import com.codahale.metrics.graphite.GraphiteUDP;
@@ -47,6 +51,7 @@ import uk.gov.pay.connector.util.TrustingSSLSocketFactory;
 
 import javax.net.ssl.HttpsURLConnection;
 import javax.net.ssl.SSLSocketFactory;
+import java.net.URL;
 import java.util.concurrent.TimeUnit;
 
 import static java.util.EnumSet.of;
@@ -85,6 +90,7 @@ public class ConnectorApp extends Application<ConnectorConfiguration> {
         injector.getInstance(PersistenceServiceInitialiser.class);
 
         initialiseMetrics(configuration, environment);
+        initialiseXRay();
 
         environment.jersey().register(injector.getInstance(GatewayAccountResource.class));
         environment.jersey().register(injector.getInstance(ChargeEventsResource.class));
@@ -107,6 +113,9 @@ public class ConnectorApp extends Application<ConnectorConfiguration> {
 
         environment.servlets().addFilter("LoggingFilter", injector.getInstance(LoggingFilter.class))
                 .addMappingForUrlPatterns(of(REQUEST), true, "/v1/*");
+
+        environment.servlets().addFilter( "XRayFilter", new AWSXRayServletFilter("pay-connector"))
+                .addMappingForUrlPatterns(of(REQUEST), true, ApiPaths.API_VERSION_PATH + "/*");
 
         environment.healthChecks().register("ping", new Ping());
         environment.healthChecks().register("database", injector.getInstance(DatabaseHealthCheck.class));
@@ -139,6 +148,13 @@ public class ConnectorApp extends Application<ConnectorConfiguration> {
                 .build(graphiteUDP)
                 .start(GRAPHITE_SENDING_PERIOD_SECONDS, TimeUnit.SECONDS);
 
+    }
+
+    private void initialiseXRay(){
+        AWSXRayRecorderBuilder builder = AWSXRayRecorderBuilder.standard();
+        URL ruleFile = ConnectorApp.class.getResource("/sampling-rules.json");
+        builder.withSamplingStrategy(new LocalizedSamplingStrategy(ruleFile));
+        AWSXRay.setGlobalRecorder(builder.build());
     }
 
     public static void main(String[] args) throws Exception {
