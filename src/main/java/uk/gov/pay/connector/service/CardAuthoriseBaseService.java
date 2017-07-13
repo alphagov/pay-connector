@@ -1,5 +1,8 @@
 package uk.gov.pay.connector.service;
 
+import com.amazonaws.xray.AWSXRay;
+import com.amazonaws.xray.AWSXRayRecorder;
+import com.amazonaws.xray.entities.Segment;
 import io.dropwizard.setup.Environment;
 import org.apache.commons.lang3.tuple.Pair;
 import org.slf4j.Logger;
@@ -27,11 +30,14 @@ public abstract class CardAuthoriseBaseService<T extends AuthorisationDetails> e
     private static final Logger LOG = LoggerFactory.getLogger(CardAuthoriseBaseService.class);
 
     private final CardExecutorService cardExecutorService;
+    private final AWSXRayRecorder recorder = AWSXRay.getGlobalRecorder();
+
 
     public CardAuthoriseBaseService(ChargeDao chargeDao, ChargeEventDao chargeEventDao, PaymentProviders providers, CardExecutorService cardExecutorService, Environment environment, ChargeStatusUpdater chargeStatusUpdater) {
         super(chargeDao, chargeEventDao, providers, environment, chargeStatusUpdater);
         this.cardExecutorService = cardExecutorService;
     }
+
 
     public GatewayResponse doAuthorise(String chargeId, T gatewayAuthRequest) {
 
