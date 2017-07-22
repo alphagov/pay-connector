@@ -12,6 +12,7 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Objects;
 import java.util.Optional;
+import java.util.stream.Collectors;
 
 public class StatusMapper<T> {
 
@@ -79,11 +80,11 @@ public class StatusMapper<T> {
         return new Builder<>();
     }
 
-    public InterpretedStatus from(T gatewayStatus, ChargeStatus currentStatus) {
-        GatewayStatusWithCurrentStatus gatewayStatusWithCurrentStatus = GatewayStatusWithCurrentStatus.of(gatewayStatus, currentStatus);
-        Optional<StatusMap<T>> statusMap = validStatuses
+    private InterpretedStatus from(StatusMapFromStatus<T> gatewayStatus, List<StatusMap<T>> wantedValidStatuses) {
+
+        Optional<StatusMap<T>> statusMap = wantedValidStatuses
                 .stream()
-                .filter(validStatus -> validStatus.getFromStatus().equals(gatewayStatusWithCurrentStatus))
+                .filter(validStatus -> validStatus.getFromStatus().equals(gatewayStatus))
                 .findFirst();
 
         if (!statusMap.isPresent()) {
@@ -107,5 +108,17 @@ public class StatusMapper<T> {
         }
 
         return new UnknownStatus();
+    }
+
+    public InterpretedStatus from(T gatewayStatus, ChargeStatus currentStatus) {
+        return from(GatewayStatusWithCurrentStatus.of(gatewayStatus, currentStatus), validStatuses);
+    }
+
+    public InterpretedStatus from(T gatewayStatus) {
+        List<StatusMap<T>> gatewayStatusesOnly = this.validStatuses
+                .stream()
+                .filter(validStatus -> validStatus.getFromStatus() instanceof GatewayStatusOnly)
+                .collect(Collectors.toList());
+        return from(GatewayStatusOnly.of(gatewayStatus), gatewayStatusesOnly);
     }
 }

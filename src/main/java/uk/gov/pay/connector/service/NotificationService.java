@@ -96,6 +96,14 @@ public class NotificationService {
         private <T> boolean verify(Notification<T> notification) {
             logger.info("Verifying {} notification {}", paymentProvider.getPaymentGatewayName(), notification);
 
+            // If the notification is intended to be ignored, we abort immediately to avoid further complications.
+            // Depending on the payment provider and the type of the notification we may not always for instance have a
+            // transaction id, hence if we intend to ignore the notification it is safer to do it here.
+            if (paymentProvider.getStatusMapper().from(notification.getStatus()).getType() == InterpretedStatus.Type.IGNORED) {
+                logger.info("{} notification {} ignored", paymentProvider.getPaymentGatewayName(), notification);
+                return false;
+            }
+
             if (isBlank(notification.getTransactionId())) {
                 logger.error("{} notification {} failed verification because it has no transaction ID", paymentProvider.getPaymentGatewayName(), notification);
                 return false;
