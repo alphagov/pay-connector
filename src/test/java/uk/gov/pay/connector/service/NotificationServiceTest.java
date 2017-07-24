@@ -98,23 +98,27 @@ public class NotificationServiceTest {
                 MappedChargeStatus mockedMappedChargeStatus = mock(MappedChargeStatus.class);
                 when(mockedMappedChargeStatus.getType()).thenReturn(type);
                 when(mockedMappedChargeStatus.getChargeStatus()).thenReturn((ChargeStatus) status);
+                when(mockedStatusMapper.from(any())).thenReturn(mockedMappedChargeStatus);
                 when(mockedStatusMapper.from(any(), any(ChargeStatus.class))).thenReturn(mockedMappedChargeStatus);
                 return mockedStatusMapper;
             case REFUND_STATUS:
                 MappedRefundStatus mockedMappedRefundStatus = mock(MappedRefundStatus.class);
                 when(mockedMappedRefundStatus.getType()).thenReturn(type);
                 when(mockedMappedRefundStatus.getRefundStatus()).thenReturn((RefundStatus) status);
+                when(mockedStatusMapper.from(any())).thenReturn(mockedMappedRefundStatus);
                 when(mockedStatusMapper.from(any(), any(ChargeStatus.class))).thenReturn(mockedMappedRefundStatus);
                 return mockedStatusMapper;
             case IGNORED:
                 IgnoredStatus mockedIgnoredStatus = mock(IgnoredStatus.class);
                 when(mockedIgnoredStatus.getType()).thenReturn(type);
+                when(mockedStatusMapper.from(any())).thenReturn(mockedIgnoredStatus);
                 when(mockedStatusMapper.from(any(), any(ChargeStatus.class))).thenReturn(mockedIgnoredStatus);
                 return mockedStatusMapper;
             case UNKNOWN:
             default:
                 UnknownStatus mockedUnknownStatus = mock(UnknownStatus.class);
                 when(mockedUnknownStatus.getType()).thenReturn(type);
+                when(mockedStatusMapper.from(any())).thenReturn(mockedUnknownStatus);
                 when(mockedStatusMapper.from(any(), any(ChargeStatus.class))).thenReturn(mockedUnknownStatus);
                 return mockedStatusMapper;
         }

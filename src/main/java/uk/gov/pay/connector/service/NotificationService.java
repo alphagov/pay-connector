@@ -73,6 +73,7 @@ public class NotificationService {
         public <T> void execute(String payload) {
             List<Notification<T>> notifications = parse(payload);
             notifications.forEach(notification -> Optional.of(notification)
+                    .filter(this::ignoreEarly)
                     .filter(this::verify)
                     .flatMap(this::evaluate)
                     .ifPresent(this::update));
@@ -91,6 +92,21 @@ public class NotificationService {
             List<Notification<T>> notifications = notificationsMaybe.right().value().get();
             logger.info("Parsed {} notification: {}", paymentProvider.getPaymentGatewayName(), notifications);
             return notifications;
+        }
+
+        /**
+         * If the notification is intended to be ignored, we abort immediately to avoid further complications.
+         * Depending on the payment provider and the type of the notification we may not always for instance have a
+         * transaction id, hence if we intend to ignore the notification it is safer to do it here.
+         */
+        private <T> boolean ignoreEarly(Notification<T> notification) {
+
+            if (paymentProvider.getStatusMapper().from(notification.getStatus()).getType() == InterpretedStatus.Type.IGNORED) {
+                logger.info("{} notification {} ignored", paymentProvider.getPaymentGatewayName(), notification);
+                return false;
+            }
+
+            return true;
         }
 
         private <T> boolean verify(Notification<T> notification) {
