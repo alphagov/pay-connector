@@ -73,6 +73,7 @@ public class NotificationService {
         public <T> void execute(String payload) {
             List<Notification<T>> notifications = parse(payload);
             notifications.forEach(notification -> Optional.of(notification)
+                    .filter(this::ignoreEarly)
                     .filter(this::verify)
                     .flatMap(this::evaluate)
                     .ifPresent(this::update));
@@ -93,16 +94,23 @@ public class NotificationService {
             return notifications;
         }
 
-        private <T> boolean verify(Notification<T> notification) {
-            logger.info("Verifying {} notification {}", paymentProvider.getPaymentGatewayName(), notification);
+        /**
+         * If the notification is intended to be ignored, we abort immediately to avoid further complications.
+         * Depending on the payment provider and the type of the notification we may not always for instance have a
+         * transaction id, hence if we intend to ignore the notification it is safer to do it here.
+         */
+        private <T> boolean ignoreEarly(Notification<T> notification) {
 
-            // If the notification is intended to be ignored, we abort immediately to avoid further complications.
-            // Depending on the payment provider and the type of the notification we may not always for instance have a
-            // transaction id, hence if we intend to ignore the notification it is safer to do it here.
             if (paymentProvider.getStatusMapper().from(notification.getStatus()).getType() == InterpretedStatus.Type.IGNORED) {
                 logger.info("{} notification {} ignored", paymentProvider.getPaymentGatewayName(), notification);
                 return false;
             }
+
+            return true;
+        }
+
+        private <T> boolean verify(Notification<T> notification) {
+            logger.info("Verifying {} notification {}", paymentProvider.getPaymentGatewayName(), notification);
 
             if (isBlank(notification.getTransactionId())) {
                 logger.error("{} notification {} failed verification because it has no transaction ID", paymentProvider.getPaymentGatewayName(), notification);

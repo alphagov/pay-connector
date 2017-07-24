@@ -80,6 +80,18 @@ public class StatusMapper<T> {
         return new Builder<>();
     }
 
+    public InterpretedStatus from(T gatewayStatus, ChargeStatus currentStatus) {
+        return from(GatewayStatusWithCurrentStatus.of(gatewayStatus, currentStatus), validStatuses);
+    }
+
+    public InterpretedStatus from(T gatewayStatus) {
+        List<StatusMap<T>> gatewayStatusesOnly = this.validStatuses
+                .stream()
+                .filter(validStatus -> validStatus.getFromStatus() instanceof GatewayStatusOnly)
+                .collect(Collectors.toList());
+        return from(GatewayStatusOnly.of(gatewayStatus), gatewayStatusesOnly);
+    }
+
     private InterpretedStatus from(StatusMapFromStatus<T> gatewayStatus, List<StatusMap<T>> wantedValidStatuses) {
 
         Optional<StatusMap<T>> statusMap = wantedValidStatuses
@@ -108,17 +120,5 @@ public class StatusMapper<T> {
         }
 
         return new UnknownStatus();
-    }
-
-    public InterpretedStatus from(T gatewayStatus, ChargeStatus currentStatus) {
-        return from(GatewayStatusWithCurrentStatus.of(gatewayStatus, currentStatus), validStatuses);
-    }
-
-    public InterpretedStatus from(T gatewayStatus) {
-        List<StatusMap<T>> gatewayStatusesOnly = this.validStatuses
-                .stream()
-                .filter(validStatus -> validStatus.getFromStatus() instanceof GatewayStatusOnly)
-                .collect(Collectors.toList());
-        return from(GatewayStatusOnly.of(gatewayStatus), gatewayStatusesOnly);
     }
 }
