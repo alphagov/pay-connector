@@ -158,6 +158,9 @@ public class GatewayAccountResource {
         GatewayAccountEntity entity = new GatewayAccountEntity(provider, newHashMap(), type);
         logger.info("Setting the new account to accept all card types by default", provider, accountType);
         entity.setCardTypes(cardTypeDao.findAll());
+        if (node.has(SERVICE_NAME_FIELD_NAME)) {
+            entity.setServiceName(node.get(SERVICE_NAME_FIELD_NAME).textValue());
+        }
         if (node.has(DESCRIPTION_FIELD_NAME)) {
             entity.setDescription(node.get(DESCRIPTION_FIELD_NAME).textValue());
         }
@@ -173,6 +176,7 @@ public class GatewayAccountResource {
         account.put("gateway_account_id", String.valueOf(entity.getId()));
         account.put(PROVIDER_ACCOUNT_TYPE, entity.getType());
         account.put(DESCRIPTION_FIELD_NAME, entity.getDescription());
+        account.put(SERVICE_NAME_FIELD_NAME, entity.getServiceName());
         account.put(ANALYTICS_ID_FIELD_NAME, entity.getAnalyticsId());
 
         addSelfLink(newLocation, account);
