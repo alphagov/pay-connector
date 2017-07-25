@@ -202,15 +202,15 @@ public class GatewayAccountResourceITest extends GatewayAccountResourceTestBase 
     }
 
     @Test
-    public void createGatewayAccountWithDescriptionAndAnalyticsId() {
-        String payload = toJson(ImmutableMap.of("description", "desc", "analytics_id", "analytics-id"));
+    public void createGatewayAccountWithNameDescriptionAndAnalyticsId() {
+        String payload = toJson(ImmutableMap.of("service_name","my service name","description", "desc", "analytics_id", "analytics-id"));
         ValidatableResponse response = givenSetup()
                 .body(payload)
                 .post(ACCOUNTS_API_URL)
                 .then()
                 .statusCode(201);
 
-        assertCorrectCreateResponse(response, TEST, "desc", "analytics-id");
+        assertCorrectCreateResponse(response, TEST, "desc", "analytics-id", "my service name");
         assertGettingAccountReturnsProviderName(response, "sandbox", TEST);
     }
 

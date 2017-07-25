@@ -63,7 +63,7 @@ public class GatewayAccountResourceTestBase {
                 .statusCode(201)
                 .contentType(JSON);
 
-        assertCorrectCreateResponse(response, GatewayAccountEntity.Type.TEST, description, analyticsId);
+        assertCorrectCreateResponse(response, GatewayAccountEntity.Type.TEST, description, analyticsId, null);
         assertGettingAccountReturnsProviderName(response, testProvider, GatewayAccountEntity.Type.TEST);
         assertGatewayAccountCredentialsAreEmptyInDB(response);
         assertGatewayAccountCredentialsAreEmptyInDB(response);
@@ -86,9 +86,9 @@ public class GatewayAccountResourceTestBase {
     }
 
     void assertCorrectCreateResponse(ValidatableResponse response, GatewayAccountEntity.Type type) {
-        assertCorrectCreateResponse(response, type, null, null);
+        assertCorrectCreateResponse(response, type, null, null, null);
     }
-    void assertCorrectCreateResponse(ValidatableResponse response, GatewayAccountEntity.Type type, String description, String analyticsId) {
+    void assertCorrectCreateResponse(ValidatableResponse response, GatewayAccountEntity.Type type, String description, String analyticsId, String name) {
         String accountId = response.extract().path("gateway_account_id");
         String urlSlug = "api/accounts/" + accountId;
 
@@ -96,6 +96,7 @@ public class GatewayAccountResourceTestBase {
                 .body("gateway_account_id", containsString(accountId))
                 .body("type", is(type.toString()))
                 .body("description", is(description))
+                .body("service_name", is(name))
                 .body("analytics_id", is(analyticsId))
                 .body("links[0].href", containsString(urlSlug))
                 .body("links[0].rel", is("self"))
