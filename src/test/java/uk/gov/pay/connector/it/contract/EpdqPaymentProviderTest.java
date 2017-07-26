@@ -12,10 +12,8 @@ import org.junit.runner.RunWith;
 import org.mockito.runners.MockitoJUnitRunner;
 import uk.gov.pay.connector.model.CancelGatewayRequest;
 import uk.gov.pay.connector.model.CaptureGatewayRequest;
-import uk.gov.pay.connector.model.domain.Address;
-import uk.gov.pay.connector.model.domain.AuthCardDetails;
-import uk.gov.pay.connector.model.domain.ChargeEntity;
-import uk.gov.pay.connector.model.domain.GatewayAccountEntity;
+import uk.gov.pay.connector.model.RefundGatewayRequest;
+import uk.gov.pay.connector.model.domain.*;
 import uk.gov.pay.connector.model.gateway.AuthorisationGatewayRequest;
 import uk.gov.pay.connector.model.gateway.GatewayResponse;
 import uk.gov.pay.connector.service.GatewayClient;
@@ -47,7 +45,7 @@ import static uk.gov.pay.connector.model.domain.GatewayAccountEntity.Type.TEST;
 import static uk.gov.pay.connector.util.AuthUtils.buildAuthCardDetails;
 import static uk.gov.pay.connector.util.SystemUtils.envOrThrow;
 
-@Ignore("Ignoring as this test is failing in Jenkins because it's failing to locate the certificates - PP-1707")
+//@Ignore("Ignoring as this test is failing in Jenkins because it's failing to locate the certificates - PP-1707")
 @RunWith(MockitoJUnitRunner.class)
 public class EpdqPaymentProviderTest {
 
@@ -94,20 +92,66 @@ public class EpdqPaymentProviderTest {
     @Test
     public void shouldAuthoriseSuccessfully() throws Exception {
         PaymentProvider paymentProvider = getEpdqPaymentProvider();
-        testCardAuthorisation(paymentProvider, chargeEntity);
+        AuthorisationGatewayRequest request = buildAuthorisationRequest(chargeEntity);
+        GatewayResponse<EpdqAuthorisationResponse> response = paymentProvider.authorise(request);
+        assertTrue(response.isSuccessful());
     }
 
     @Test
     public void shouldCaptureSuccessfully() throws Exception {
         PaymentProvider paymentProvider = getEpdqPaymentProvider();
-        testCardCapture(paymentProvider, chargeEntity);
+        AuthorisationGatewayRequest request = buildAuthorisationRequest(chargeEntity);
+        GatewayResponse<EpdqAuthorisationResponse> response = paymentProvider.authorise(request);
+        assertTrue(response.isSuccessful());
+
+        GatewayResponse<EpdqAuthorisationResponse> authorisationResponse = response;
+
+        String transactionId = authorisationResponse.getBaseResponse().get().getTransactionId();
+        assertThat(is(transactionId, notNull()));
+        CaptureGatewayRequest captureRequest = buildCaptureRequest(chargeEntity, transactionId);
+        GatewayResponse<EpdqCaptureResponse> captureResponse = paymentProvider.capture(captureRequest);
+        assertTrue(captureResponse.isSuccessful());
     }
 
     @Test
     public void shouldCancelSuccessfully() throws Exception {
         PaymentProvider paymentProvider = getEpdqPaymentProvider();
-        testCardCancel(paymentProvider, chargeEntity);
+        AuthorisationGatewayRequest request = buildAuthorisationRequest(chargeEntity);
+        GatewayResponse<EpdqAuthorisationResponse> response = paymentProvider.authorise(request);
+        assertTrue(response.isSuccessful());
+
+        GatewayResponse<EpdqAuthorisationResponse> authorisationResponse = response;
+
+        String transactionId = authorisationResponse.getBaseResponse().get().getTransactionId();
+        assertThat(is(transactionId, notNull()));
+        CancelGatewayRequest cancelRequest = buildCancelRequest(chargeEntity, transactionId);
+        GatewayResponse<EpdqCaptureResponse> cancelResponse = paymentProvider.cancel(cancelRequest);
+        assertTrue(cancelResponse.isSuccessful());
     }
+
+    @Test
+    public void shouldCaptureAndRefund() throws Exception {
+        PaymentProvider paymentProvider = getEpdqPaymentProvider();
+
+        AuthorisationGatewayRequest request = buildAuthorisationRequest(chargeEntity);
+        GatewayResponse<EpdqAuthorisationResponse> response = paymentProvider.authorise(request);
+        assertTrue(response.isSuccessful());
+
+        GatewayResponse<EpdqAuthorisationResponse> authorisationResponse = response;
+
+        String transactionId = authorisationResponse.getBaseResponse().get().getTransactionId();
+        assertThat(is(transactionId, notNull()));
+        CaptureGatewayRequest captureRequest = buildCaptureRequest(chargeEntity, transactionId);
+        GatewayResponse<EpdqCaptureResponse> captureResponse = paymentProvider.capture(captureRequest);
+        assertTrue(captureResponse.isSuccessful());
+
+        RefundEntity refundEntity = new RefundEntity(chargeEntity, 1L);
+
+        GatewayResponse refundGatewayResponse = paymentProvider.refund(RefundGatewayRequest.valueOf(refundEntity));
+        assertTrue(refundGatewayResponse.isSuccessful());
+
+    }
+
 
     private PaymentProvider getEpdqPaymentProvider() throws Exception {
         Client client = TestClientFactory.createJerseyClient();
@@ -152,33 +196,5 @@ public class EpdqPaymentProviderTest {
         return CancelGatewayRequest.valueOf(chargeEntity);
     }
 
-    private GatewayResponse testCardAuthorisation(PaymentProvider paymentProvider, ChargeEntity chargeEntity) {
-        AuthorisationGatewayRequest request = buildAuthorisationRequest(chargeEntity);
-        GatewayResponse<EpdqAuthorisationResponse> response = paymentProvider.authorise(request);
-        assertTrue(response.isSuccessful());
 
-        return response;
-    }
-
-    private GatewayResponse testCardCapture(PaymentProvider paymentProvider, ChargeEntity chargeEntity) {
-        GatewayResponse<EpdqAuthorisationResponse> authorisationResponse = testCardAuthorisation(paymentProvider, chargeEntity);
-
-        String transactionId = authorisationResponse.getBaseResponse().get().getTransactionId();
-        assertThat(is(transactionId, notNull()));
-        CaptureGatewayRequest captureRequest = buildCaptureRequest(chargeEntity, transactionId);
-        GatewayResponse<EpdqCaptureResponse> captureResponse = paymentProvider.capture(captureRequest);
-        assertTrue(captureResponse.isSuccessful());
-
-        return authorisationResponse;
-    }
-
-    private void testCardCancel(PaymentProvider paymentProvider, ChargeEntity chargeEntity) {
-        GatewayResponse<EpdqAuthorisationResponse> authorisationResponse = testCardAuthorisation(paymentProvider, chargeEntity);
-
-        String transactionId = authorisationResponse.getBaseResponse().get().getTransactionId();
-        assertThat(is(transactionId, notNull()));
-        CancelGatewayRequest cancelRequest = buildCancelRequest(chargeEntity, transactionId);
-        GatewayResponse<EpdqCaptureResponse> cancelResponse = paymentProvider.cancel(cancelRequest);
-        assertTrue(cancelResponse.isSuccessful());
-    }
 }

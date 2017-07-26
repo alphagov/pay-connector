@@ -63,12 +63,14 @@ public class EpdqOrderRequestBuilder extends OrderRequestBuilder {
     public static final String AUTHORISE_OPERATION_TYPE = "RES";
     public static final String CAPTURE_OPERATION_TYPE = "SAS";
     public static final String CANCEL_OPERATION_TYPE = "DES";
+    public static final String REFUND_OPERATION_TYPE = "RFD"; // RFD=partial refund
 
     private static EpdqSignedPayloadDefinitionFactory signedPayloadDefinitionFactory = anEpdqSignedPayloadDefinitionFactory(new EpdqSha512SignatureGenerator());
 
     public static final PayloadBuilder AUTHORISE_ORDER_TEMPLATE_BUILDER = createPayloadBuilderForNewOrder();
     public static final PayloadBuilder CAPTURE_ORDER_TEMPLATE_BUILDER = createPayloadBuilderForMaintenanceOrder();
     public static final PayloadBuilder CANCEL_ORDER_TEMPLATE_BUILDER = createPayloadBuilderForMaintenanceOrder();
+    public static final PayloadBuilder REFUND_ORDER_TEMPLATE_BUILDER = createPayloadBuilderForMaintenanceOrder();
 
     private EpdqTemplateData epdqTemplateData;
 
@@ -92,6 +94,10 @@ public class EpdqOrderRequestBuilder extends OrderRequestBuilder {
 
     public static EpdqOrderRequestBuilder anEpdqCancelOrderRequestBuilder() {
         return new EpdqOrderRequestBuilder(new EpdqTemplateData(), CANCEL_ORDER_TEMPLATE_BUILDER, OrderRequestType.CANCEL, CANCEL_OPERATION_TYPE);
+    }
+
+    public static EpdqOrderRequestBuilder anEpdqRefundOrderRequestBuilder() {
+        return new EpdqOrderRequestBuilder(new EpdqTemplateData(), REFUND_ORDER_TEMPLATE_BUILDER, OrderRequestType.REFUND, REFUND_OPERATION_TYPE);
     }
 
     private EpdqOrderRequestBuilder(EpdqTemplateData epdqTemplateData, PayloadBuilder payloadBuilder, OrderRequestType orderRequestType, String operationType) {
