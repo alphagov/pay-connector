@@ -48,9 +48,7 @@ public class ChargingITestBase extends ChargingITestCommon {
     public DropwizardAppWithPostgresRule app = new DropwizardAppWithPostgresRule(
             config("worldpay.urls.test", "http://localhost:" + port + "/jsp/merchant/xml/paymentService.jsp"),
             config("smartpay.urls.test", "http://localhost:" + port + "/pal/servlet/soap/Payment"),
-            config("epdq.urls.test", "http://localhost:" + port + "/epdq"),
-            config("asynchronousCapture", "true"));
-
+            config("epdq.urls.test", "http://localhost:" + port + "/epdq"));
     @Rule
     public WireMockRule wireMockRule = new WireMockRule(port);
     protected static final long AMOUNT = 6234L;

@@ -75,13 +75,9 @@ public class CardResource {
     @Consumes(APPLICATION_JSON)
     @Produces(APPLICATION_JSON)
     public Response captureCharge(@PathParam("chargeId") String chargeId) {
-        if (configuration.isAsynchronousCapture()) {
-            logger.info("Capture of charge asynchronously [charge_external_id={}]", chargeId);
-            cardCaptureService.markChargeAsCaptureApproved(chargeId);
-            return ResponseUtil.noContentResponse();
-        }
-        logger.info("Capture of charge synchronously [charge_external_id={}]", chargeId);
-        return handleGatewayResponse(cardCaptureService.doCapture(chargeId));
+        logger.info("Capture of charge asynchronously [charge_external_id={}]", chargeId);
+        cardCaptureService.markChargeAsCaptureApproved(chargeId);
+        return ResponseUtil.noContentResponse();
     }
 
     @POST
