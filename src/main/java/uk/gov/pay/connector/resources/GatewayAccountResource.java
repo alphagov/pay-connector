@@ -157,7 +157,7 @@ public class GatewayAccountResource {
         logger.info("Creating new gateway account using the {} provider pointing to {}", provider, accountType);
         GatewayAccountEntity entity = new GatewayAccountEntity(provider, newHashMap(), type);
         logger.info("Setting the new account to accept all card types by default", provider, accountType);
-        entity.setCardTypes(cardTypeDao.findAll());
+        entity.setCardTypes(cardTypeDao.findAllNon3ds());
         if (node.has(SERVICE_NAME_FIELD_NAME)) {
             entity.setServiceName(node.get(SERVICE_NAME_FIELD_NAME).textValue());
         }

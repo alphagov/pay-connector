@@ -39,4 +39,13 @@ public class CardTypeDao extends JpaDao<CardTypeEntity> {
                 .setParameter("brand", brand)
                 .getResultList();
     }
+
+    public List<CardTypeEntity> findAllNon3ds() {
+        String query = "SELECT ct FROM CardTypeEntity ct " +
+                "WHERE ct.requires3ds = false ";
+
+        return entityManager.get()
+                .createQuery(query, CardTypeEntity.class)
+                .getResultList();
+    }
 }

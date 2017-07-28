@@ -155,15 +155,17 @@ public class GatewayAccountFrontendResourceITest extends GatewayAccountResourceT
                 .body("notificationCredentials.password", is(nullValue()));
     }
 
-    private void validateCardType(ValidatableResponse response, String brand, String label, String... type) {
+    private void validateNon3dsCardType(ValidatableResponse response, String brand, String label, String... type) {
         response
                 .body(format("card_types.find { it.brand == '%s' }.id", brand), is(notNullValue()))
                 .body(format("card_types.find { it.brand == '%s' }.label", brand), is(label))
+                .body(format("card_types.find { it.brand == '%s' }.requires3ds", brand), is(false))
                 .body(format("card_types.findAll { it.brand == '%s' }.type", brand), Matchers.hasItems(type));
     }
 
     @Test
-    public void shouldAcceptAllCardTypesForNewlyCreatedAccount() {
+    public void shouldAcceptAllCardTypesNotRequiring3DSForNewlyCreatedAccountAs3dsIsDisabledByDefault() {
+
         String accountId = createAGatewayAccountFor("worldpay");
         String frontendCardTypeUrl = ACCOUNTS_CARD_TYPE_FRONTEND_URL.replace("{accountId}", accountId);
         GatewayAccountPayload gatewayAccountPayload = GatewayAccountPayload.createDefault().withMerchantId("a-merchant-id");
@@ -173,15 +175,16 @@ public class GatewayAccountFrontendResourceITest extends GatewayAccountResourceT
                 .get(frontendCardTypeUrl)
                 .then()
                 .statusCode(200)
-                .body("containsKey('card_types')", is(true));
+                .body("containsKey('card_types')", is(true))
+                .body("card_types", hasSize(9));
 
-        validateCardType(response, "visa", "Visa", "DEBIT", "CREDIT");
-        validateCardType(response, "master-card", "Mastercard", "DEBIT", "CREDIT");
-        validateCardType(response, "american-express", "American Express", "CREDIT");
-        validateCardType(response, "diners-club", "Diners Club", "CREDIT");
-        validateCardType(response, "discover", "Discover", "CREDIT");
-        validateCardType(response, "jcb", "Jcb", "CREDIT");
-        validateCardType(response, "unionpay", "Union Pay", "CREDIT");
+        validateNon3dsCardType(response, "visa", "Visa", "DEBIT", "CREDIT");
+        validateNon3dsCardType(response, "master-card", "Mastercard", "DEBIT", "CREDIT");
+        validateNon3dsCardType(response, "american-express", "American Express", "CREDIT");
+        validateNon3dsCardType(response, "diners-club", "Diners Club", "CREDIT");
+        validateNon3dsCardType(response, "discover", "Discover", "CREDIT");
+        validateNon3dsCardType(response, "jcb", "Jcb", "CREDIT");
+        validateNon3dsCardType(response, "unionpay", "Union Pay", "CREDIT");
     }
 
     @Test

@@ -322,14 +322,15 @@ public class DatabaseTestHelper {
         );
     }
 
-    public void addCardType(UUID id, String label, String type, String brand) {
+    public void addCardType(UUID id, String label, String type, String brand, boolean requires3ds) {
         jdbi.withHandle(handle ->
                 handle
-                        .createStatement("INSERT INTO card_types(id, label, type, brand) VALUES (:id, :label, :type, :brand)")
+                        .createStatement("INSERT INTO card_types(id, label, type, brand, requires_3ds) VALUES (:id, :label, :type, :brand, :requires3ds)")
                         .bind("id", id)
                         .bind("label", label)
                         .bind("type", type)
                         .bind("brand", brand)
+                        .bind("requires3ds", requires3ds)
                         .execute()
         );
     }

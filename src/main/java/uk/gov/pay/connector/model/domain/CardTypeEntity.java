@@ -27,14 +27,14 @@ public class CardTypeEntity extends UuidAbstractEntity {
     @Enumerated(EnumType.STRING)
     private Type type;
 
+    @Column(name = "requires_3ds")
+    @JsonProperty
+    private boolean requires3ds;
+
     @Override
     @JsonIgnore
     public Long getVersion() {
         return super.getVersion();
-    }
-
-    public static CardTypeEntity aCardType() {
-        return new CardTypeEntity();
     }
 
     public static CardTypeEntity aCardType(UUID id) {
@@ -67,4 +67,11 @@ public class CardTypeEntity extends UuidAbstractEntity {
         this.type = type;
     }
 
+    public boolean isRequires3ds() {
+        return requires3ds;
+    }
+
+    public void setRequires3ds(boolean requires3ds) {
+        this.requires3ds = requires3ds;
+    }
 }

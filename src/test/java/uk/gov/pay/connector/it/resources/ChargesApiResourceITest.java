@@ -389,7 +389,7 @@ public class ChargesApiResourceITest extends ChargingITestBase {
         ChargeStatus chargeStatus = AUTHORISATION_SUCCESS;
         ZonedDateTime createdDate = ZonedDateTime.of(2016, 1, 26, 13, 45, 32, 123, ZoneId.of("UTC"));
         UUID card = UUID.randomUUID();
-        app.getDatabaseTestHelper().addCardType(card, "label", "type", "brand");
+        app.getDatabaseTestHelper().addCardType(card, "label", "type", "brand", false);
         app.getDatabaseTestHelper().addAcceptedCardType(Long.valueOf(accountId), card);
         app.getDatabaseTestHelper().addCharge(chargeId, externalChargeId, accountId, AMOUNT, chargeStatus, returnUrl, null, "My reference", createdDate);
         app.getDatabaseTestHelper().updateChargeCardDetails(chargeId, "VISA", "1234", "Mr. McPayment", "03/18", "line1", null, "postcode", "city", null, "country");
@@ -422,7 +422,7 @@ public class ChargesApiResourceITest extends ChargingITestBase {
         ChargeStatus chargeStatus = AUTHORISATION_SUCCESS;
         ZonedDateTime createdDate = ZonedDateTime.of(2016, 1, 26, 13, 45, 32, 123, ZoneId.of("UTC"));
         UUID card = UUID.randomUUID();
-        app.getDatabaseTestHelper().addCardType(card, "label", "type", "brand");
+        app.getDatabaseTestHelper().addCardType(card, "label", "type", "brand", false);
         app.getDatabaseTestHelper().addAcceptedCardType(Long.valueOf(accountId), card);
         app.getDatabaseTestHelper().addCharge(chargeId, externalChargeId, accountId, AMOUNT, chargeStatus, returnUrl, null, "My reference", createdDate);
         app.getDatabaseTestHelper().updateChargeCardDetails(chargeId, "visa", null, null, null, null, null, null, null, null, null);
