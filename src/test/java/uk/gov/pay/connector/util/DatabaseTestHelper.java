@@ -4,7 +4,7 @@ import com.google.gson.Gson;
 import org.apache.commons.lang3.RandomUtils;
 import org.postgresql.util.PGobject;
 import org.skife.jdbi.v2.DBI;
-import org.skife.jdbi.v2.util.StringMapper;
+import org.skife.jdbi.v2.util.StringColumnMapper;
 import uk.gov.pay.connector.model.domain.AuthCardDetails;
 import uk.gov.pay.connector.model.domain.ChargeStatus;
 import uk.gov.pay.connector.model.domain.GatewayAccountEntity;
@@ -51,10 +51,6 @@ public class DatabaseTestHelper {
 
     public void addGatewayAccount(String accountId, String paymentProvider) {
         addGatewayAccount(accountId, paymentProvider, null, "a cool service", TEST, null, null);
-    }
-
-    public void addGatewayAccount(String accountId, String paymentProvider, String serviceName) {
-        addGatewayAccount(accountId, paymentProvider, null, serviceName, TEST, null, null);
     }
 
     public void addGatewayAccount(String accountId, String paymentProvider, String description, String analyticsId) {
@@ -176,7 +172,7 @@ public class DatabaseTestHelper {
         return jdbi.withHandle(h ->
                 h.createQuery("SELECT secure_redirect_token from tokens WHERE charge_id = :charge_id ORDER BY id DESC")
                         .bind("charge_id", chargeId)
-                        .map(StringMapper.FIRST)
+                        .map(StringColumnMapper.INSTANCE)
                         .first()
         );
     }
@@ -241,7 +237,7 @@ public class DatabaseTestHelper {
         String chargeId = jdbi.withHandle(h ->
                 h.createQuery("SELECT id from charges WHERE external_id = :external_id")
                         .bind("external_id", externalChargeId)
-                        .map(StringMapper.FIRST)
+                        .map(StringColumnMapper.INSTANCE)
                         .first()
         );
 
@@ -253,7 +249,7 @@ public class DatabaseTestHelper {
         String jsonString = jdbi.withHandle(h ->
                 h.createQuery("SELECT credentials from gateway_accounts WHERE id = :gatewayAccountId")
                         .bind("gatewayAccountId", gatewayAccountId)
-                        .map(StringMapper.FIRST)
+                        .map(StringColumnMapper.INSTANCE)
                         .first()
         );
         return new Gson().fromJson(jsonString, Map.class);
@@ -263,7 +259,7 @@ public class DatabaseTestHelper {
         return jdbi.withHandle(h ->
                 h.createQuery("SELECT service_name from gateway_accounts WHERE id = :gatewayAccountId")
                         .bind("gatewayAccountId", gatewayAccountId)
-                        .map(StringMapper.FIRST)
+                        .map(StringColumnMapper.INSTANCE)
                         .first()
         );
     }
@@ -357,7 +353,7 @@ public class DatabaseTestHelper {
         return jdbi.withHandle(h ->
                 h.createQuery("SELECT status from charges WHERE id = :charge_id")
                         .bind("charge_id", chargeId)
-                        .map(StringMapper.FIRST)
+                        .map(StringColumnMapper.INSTANCE)
                         .first()
         );
     }
@@ -366,7 +362,7 @@ public class DatabaseTestHelper {
         return jdbi.withHandle(h ->
                 h.createQuery("SELECT card_brand from charges WHERE id = :charge_id")
                         .bind("charge_id", chargeId)
-                        .map(StringMapper.FIRST)
+                        .map(StringColumnMapper.INSTANCE)
                         .first()
         );
     }
@@ -421,8 +417,18 @@ public class DatabaseTestHelper {
         return jdbi.withHandle(h ->
                 h.createQuery("SELECT status from charge_events WHERE charge_id = (SELECT id from charges WHERE external_id=:external_id)")
                         .bind("external_id", externalChargeId)
-                        .map(StringMapper.FIRST)
+                        .map(StringColumnMapper.INSTANCE)
                         .list()
+        );
+    }
+
+    public String getCardTypeId(String brand, String type) {
+        return jdbi.withHandle(h ->
+                h.createQuery("SELECT id from card_types WHERE brand = :brand AND type = :type")
+                        .bind("brand", brand)
+                        .bind("type", type)
+                        .map(StringColumnMapper.INSTANCE)
+                        .first()
         );
     }
 }

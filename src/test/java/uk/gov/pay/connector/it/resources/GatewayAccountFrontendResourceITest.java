@@ -467,6 +467,25 @@ public class GatewayAccountFrontendResourceITest extends GatewayAccountResourceT
         assertTrue(acceptedCardTypes.size() == 0);
     }
 
+    @Test
+    public void updateAcceptedCardTypes_shouldFailWhenCardTypeRequires3ds_whenGatewayAccountDoesNotRequire3ds() {
+
+        DatabaseFixtures.TestCardType maestroCardType = databaseFixtures.aMaestroDebitCardType().insert();
+
+        DatabaseFixtures.TestAccount gatewayAccount = databaseFixtures
+                .aTestAccount()
+                .insert();
+
+        updateGatewayAccountCardTypesWith(gatewayAccount.getAccountId(), buildAcceptedCardTypesBody(maestroCardType))
+                .then()
+                .statusCode(409);
+
+        List<Map<String, Object>> acceptedCardTypes =
+                app.getDatabaseTestHelper().getAcceptedCardTypesByAccountId(gatewayAccount.getAccountId());
+
+        assertTrue(acceptedCardTypes.size() == 0);
+    }
+
     private Response updateGatewayAccountCredentialsWith(String accountId, Map<String, Object> credentials) {
         return givenSetup().accept(JSON)
                 .body(credentials)

@@ -16,6 +16,7 @@ import uk.gov.pay.connector.exception.CredentialsException;
 import uk.gov.pay.connector.model.domain.CardTypeEntity;
 import uk.gov.pay.connector.model.domain.GatewayAccountEntity;
 import uk.gov.pay.connector.model.domain.GatewayAccountResourceDTO;
+import uk.gov.pay.connector.model.domain.UuidAbstractEntity;
 import uk.gov.pay.connector.service.GatewayAccountNotificationCredentialsService;
 import uk.gov.pay.connector.service.PaymentGatewayName;
 
@@ -23,6 +24,7 @@ import javax.inject.Inject;
 import javax.ws.rs.*;
 import javax.ws.rs.core.Context;
 import javax.ws.rs.core.Response;
+import javax.ws.rs.core.Response.Status;
 import javax.ws.rs.core.UriInfo;
 import java.io.IOException;
 import java.net.URI;
@@ -93,7 +95,7 @@ public class GatewayAccountResource {
         logger.debug("Getting all gateway accounts");
         List<GatewayAccountResourceDTO> gatewayAccountResourceDTOList = gatewayDao.listAll();
         gatewayAccountResourceDTOList.forEach(account ->
-            account.addLink("self", buildUri(uriInfo, account.getAccountId()))
+                account.addLink("self", buildUri(uriInfo, account.getAccountId()))
         );
         return Response
                 .ok(ImmutableMap.of("accounts", gatewayAccountResourceDTOList))
@@ -265,27 +267,28 @@ public class GatewayAccountResource {
     @Produces(APPLICATION_JSON)
     @Transactional
     public Response updateGatewayAccountAcceptedCardTypes(@PathParam("accountId") Long gatewayAccountId, Map<String, List<UUID>> cardTypes) {
+
         if (!cardTypes.containsKey(CARD_TYPES_FIELD_NAME)) {
             return fieldsMissingResponse(Arrays.asList(CARD_TYPES_FIELD_NAME));
         }
 
         List<UUID> cardTypeIds = cardTypes.get(CARD_TYPES_FIELD_NAME);
 
-        List<String> cardTypeIdNotFound = cardTypeIds.stream()
-                .filter(cardTypeId -> !cardTypeDao.findById(cardTypeId).isPresent())
-                .map(UUID::toString)
-                .collect(Collectors.toList());
-
-        if (cardTypeIdNotFound.size() > 0) {
-            return badRequestResponse(format("CardType(s) referenced by id(s) '%s' not found", String.join(",", cardTypeIdNotFound)));
-        }
-
         List<CardTypeEntity> cardTypeEntities = cardTypeIds.stream()
-                .map(CardTypeEntity::aCardType)
+                .map(cardTypeDao::findById)
+                .filter(Optional::isPresent)
+                .map(Optional::get)
                 .collect(Collectors.toList());
+
+        if (cardTypeIds.size() != cardTypeEntities.size()) {
+            return badRequestResponse(format("CardType(s) referenced by id(s) '%s' not found", String.join(",", extractNotFoundCardTypeIds(cardTypeIds, cardTypeEntities))));
+        }
 
         return gatewayDao.findById(gatewayAccountId)
                 .map(gatewayAccount -> {
+                    if (!gatewayAccount.isRequires3ds() && hasAnyRequired3ds(cardTypeEntities)) {
+                        return Response.status(Status.CONFLICT).build();
+                    }
                     gatewayAccount.setCardTypes(cardTypeEntities);
                     return Response.ok().build();
                 })
@@ -293,12 +296,27 @@ public class GatewayAccountResource {
                         notFoundResponse(format("The gateway account id '%s' does not exist", gatewayAccountId)));
     }
 
+    private boolean hasAnyRequired3ds(List<CardTypeEntity> cardTypeEntities) {
+        return cardTypeEntities.stream().filter(CardTypeEntity::isRequires3ds).count() > 0;
+    }
+
+    private List<String> extractNotFoundCardTypeIds(List<UUID> cardTypeIds, List<CardTypeEntity> cardTypeEntities) {
+        List<UUID> foundIds = cardTypeEntities.stream()
+                .map(UuidAbstractEntity::getId)
+                .collect(Collectors.toList());
+
+        return cardTypeIds.stream()
+                .filter(cardTypeId -> !foundIds.contains(cardTypeId))
+                .map(UUID::toString)
+                .collect(Collectors.toList());
+    }
+
     @POST
     @Path(GATEWAY_ACCOUNTS_NOTIFICATION_CREDENTIALS)
     @Consumes(APPLICATION_JSON)
     @Produces(APPLICATION_JSON)
     @Transactional
-    public Response createOrUpdateGatewayAccountNotificationCredentials(@PathParam("accountId") Long gatewayAccountId, Map<String,String> notificationCredentials) {
+    public Response createOrUpdateGatewayAccountNotificationCredentials(@PathParam("accountId") Long gatewayAccountId, Map<String, String> notificationCredentials) {
         if (!notificationCredentials.containsKey(USERNAME_KEY)) {
             return fieldsMissingResponse(Collections.singletonList(USERNAME_KEY));
         }
@@ -313,7 +331,7 @@ public class GatewayAccountResource {
                         gatewayAccountNotificationCredentialsService.setCredentialsForAccount(notificationCredentials,
                                 gatewayAccountEntity);
                     } catch (CredentialsException e) {
-                        return badRequestResponse("Credentials update failure: "+ e.getMessage());
+                        return badRequestResponse("Credentials update failure: " + e.getMessage());
                     }
 
                     return Response.ok().build();
@@ -327,7 +345,7 @@ public class GatewayAccountResource {
     @Consumes(APPLICATION_JSON)
     @Produces(APPLICATION_JSON)
     @Transactional
-    public Response updateDescriptionAndOrAnalyticsID(@PathParam("accountId") Long gatewayAccountId, Map<String,String> payload) {
+    public Response updateDescriptionAndOrAnalyticsID(@PathParam("accountId") Long gatewayAccountId, Map<String, String> payload) {
         if (!payload.containsKey(DESCRIPTION_FIELD_NAME) && !payload.containsKey(ANALYTICS_ID_FIELD_NAME)) {
             return fieldsMissingResponse(Arrays.asList(DESCRIPTION_FIELD_NAME, ANALYTICS_ID_FIELD_NAME));
         }
