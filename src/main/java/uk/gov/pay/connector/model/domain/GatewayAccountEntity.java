@@ -214,4 +214,10 @@ public class GatewayAccountEntity extends AbstractEntity {
     public boolean hasEmailNotificationsEnabled() {
         return emailNotification != null && emailNotification.isEnabled();
     }
+
+    public boolean hasAnyAcceptedCardType3dsRequired() {
+        return cardTypes.stream()
+                .filter(CardTypeEntity::isRequires3ds)
+                .count() > 0;
+    }
 }

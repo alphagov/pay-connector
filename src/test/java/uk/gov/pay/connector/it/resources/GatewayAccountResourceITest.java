@@ -390,7 +390,6 @@ public class GatewayAccountResourceITest extends GatewayAccountResourceTestBase 
     }
 
     @Test
-    @Ignore
     public void shouldReturn409Conflict_Toggling3dsToFalse_WhenA3dsCardTypeIsAccepted() {
 
         String gatewayAccountId = createAGatewayAccountFor("worldpay", "desc", "id");

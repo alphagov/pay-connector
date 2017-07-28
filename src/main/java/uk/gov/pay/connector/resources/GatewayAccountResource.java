@@ -253,7 +253,11 @@ public class GatewayAccountResource {
         return gatewayDao.findById(gatewayAccountId)
                 .map(gatewayAccount ->
                         {
-                            gatewayAccount.setRequires3ds(Boolean.parseBoolean(gatewayAccountPayload.get(REQUIRES_3DS_FIELD_NAME)));
+                            boolean requires3ds = Boolean.parseBoolean(gatewayAccountPayload.get(REQUIRES_3DS_FIELD_NAME));
+                            if (!requires3ds && gatewayAccount.hasAnyAcceptedCardType3dsRequired()) {
+                                return Response.status(Status.CONFLICT).build();
+                            }
+                            gatewayAccount.setRequires3ds(requires3ds);
                             return Response.ok().build();
                         }
                 )
@@ -297,7 +301,9 @@ public class GatewayAccountResource {
     }
 
     private boolean hasAnyRequired3ds(List<CardTypeEntity> cardTypeEntities) {
-        return cardTypeEntities.stream().filter(CardTypeEntity::isRequires3ds).count() > 0;
+        return cardTypeEntities.stream()
+                .filter(CardTypeEntity::isRequires3ds)
+                .count() > 0;
     }
 
     private List<String> extractNotFoundCardTypeIds(List<UUID> cardTypeIds, List<CardTypeEntity> cardTypeEntities) {
