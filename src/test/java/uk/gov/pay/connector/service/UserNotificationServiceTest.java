@@ -15,6 +15,8 @@ import uk.gov.pay.connector.app.ExecutorServiceConfig;
 import uk.gov.pay.connector.app.NotifyConfiguration;
 import uk.gov.pay.connector.model.domain.ChargeEntity;
 import uk.gov.pay.connector.model.domain.ChargeEntityFixture;
+import uk.gov.pay.connector.model.domain.EmailNotificationEntity;
+import uk.gov.pay.connector.model.domain.GatewayAccountEntity;
 import uk.gov.service.notify.Notification;
 import uk.gov.service.notify.NotificationClient;
 import uk.gov.service.notify.NotificationClientException;
@@ -93,7 +95,7 @@ public class UserNotificationServiceTest {
         map.put("date", "1 January 2016 - 10:23:12");
         map.put("description", "This is a description");
         map.put("serviceName", "MyService");
-        map.put("customParagraph", "template body");
+        map.put("customParagraph", "^ template body");
         map.put("amount", "5.00");
 
         verify(mockNotifyClient).sendEmail(
@@ -200,5 +202,42 @@ public class UserNotificationServiceTest {
         verify(mockMetricRegistry).histogram("notify-operations.response_time");
         verify(mockHistogram).update(anyLong());
         verify(mockCounter).inc();
+    }
+
+    @Test
+    public void shouldSendBlankCustomParagraphIfNotSet() throws Exception {
+        when(mockConfig.getNotifyConfiguration().isEmailNotifyEnabled()).thenReturn(true);
+        when(mockNotifyClientProvider.get()).thenReturn(mockNotifyClient);
+        when(mockNotifyClient.sendEmail(any(), any(), any(), any())).thenReturn(mockNotificationCreatedResponse);
+        when(mockNotificationCreatedResponse.getNotificationId()).thenReturn(randomUUID());
+        when(mockMetricRegistry.histogram(anyString())).thenReturn(mockHistogram);
+        when(mockMetricRegistry.counter(anyString())).thenReturn(mockCounter);
+
+        ChargeEntity charge = ChargeEntityFixture.aValidChargeEntity()
+                .withCreatedDate(ZonedDateTime.of(2016, 1, 1, 10, 23, 12, 0, ZoneId.of("UTC")))
+                .build();
+        GatewayAccountEntity accountEntity = charge.getGatewayAccount();
+        EmailNotificationEntity emailNotificationEntity = new EmailNotificationEntity(accountEntity);
+        emailNotificationEntity.setTemplateBody(null);
+        accountEntity.setEmailNotification(emailNotificationEntity);
+
+        userNotificationService = new UserNotificationService(mockNotifyClientProvider, mockConfig, mockEnvironment);
+        Future<Optional<String>> idF = userNotificationService.notifyPaymentSuccessEmail(charge);
+        idF.get(1000, TimeUnit.SECONDS);
+
+        HashMap<String, String> map = new HashMap<>();
+
+        map.put("serviceReference", "This is a reference");
+        map.put("date", "1 January 2016 - 10:23:12");
+        map.put("description", "This is a description");
+        map.put("serviceName", "MyService");
+        map.put("customParagraph", "");
+        map.put("amount", "5.00");
+
+        verify(mockNotifyClient).sendEmail(
+                mockNotifyConfiguration.getEmailTemplateId(),
+                charge.getEmail(),
+                map, null
+        );
     }
 }
