@@ -23,6 +23,7 @@ import java.util.Optional;
 import java.util.concurrent.*;
 
 import static java.lang.Runtime.getRuntime;
+import static org.apache.commons.lang3.StringUtils.isBlank;
 
 
 public class UserNotificationService {
@@ -78,7 +79,7 @@ public class UserNotificationService {
         if (!emailNotifyGloballyEnabled) {
             logger.warn("Email notifications is disabled by configuration");
         }
-        if (emailNotifyGloballyEnabled && StringUtils.isBlank(emailTemplateId)) {
+        if (emailNotifyGloballyEnabled && isBlank(emailTemplateId)) {
             throw new RuntimeException("config property 'emailTemplateId' is missing or not set, which needs to point to the email template on the notify");
         }
     }
@@ -88,17 +89,14 @@ public class UserNotificationService {
         EmailNotificationEntity emailNotification = gatewayAccount
                 .getEmailNotification();
 
-        String customParagraph = emailNotification != null ?
-                emailNotification.getTemplateBody() :
-                "";
-
+        String customParagraph = emailNotification != null ? emailNotification.getTemplateBody() : "";
         HashMap<String, String> map = new HashMap<>();
 
         map.put("serviceReference", charge.getReference());
         map.put("date", DateTimeUtils.toUserFriendlyDate(charge.getCreatedDate()));
         map.put("amount", formatToPounds(charge.getAmount()));
         map.put("description", charge.getDescription());
-        map.put("customParagraph", StringUtils.defaultString(customParagraph));
+        map.put("customParagraph", isBlank(customParagraph) ? "" : "^ " + customParagraph);
         map.put("serviceName", StringUtils.defaultString(gatewayAccount.getServiceName()));
 
         return map;
