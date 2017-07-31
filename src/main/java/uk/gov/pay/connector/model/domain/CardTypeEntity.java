@@ -37,18 +37,12 @@ public class CardTypeEntity extends UuidAbstractEntity {
         return super.getVersion();
     }
 
-    public static CardTypeEntity aCardType(UUID id) {
-        CardTypeEntity cardTypeEntity = new CardTypeEntity();
-        cardTypeEntity.setId(id);
-        return cardTypeEntity;
-    }
-
     public String getBrand() {
         return brand;
     }
 
-    public void setBrand(String externalId) {
-        this.brand = externalId;
+    public void setBrand(String brand) {
+        this.brand = brand;
     }
 
     public String getLabel() {

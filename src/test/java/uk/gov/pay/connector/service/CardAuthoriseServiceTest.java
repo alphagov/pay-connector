@@ -15,9 +15,7 @@ import uk.gov.pay.connector.exception.ChargeNotFoundRuntimeException;
 import uk.gov.pay.connector.exception.ConflictRuntimeException;
 import uk.gov.pay.connector.exception.IllegalStateRuntimeException;
 import uk.gov.pay.connector.exception.OperationAlreadyInProgressRuntimeException;
-import uk.gov.pay.connector.model.domain.AuthCardDetails;
-import uk.gov.pay.connector.model.domain.ChargeEntity;
-import uk.gov.pay.connector.model.domain.ChargeStatus;
+import uk.gov.pay.connector.model.domain.*;
 import uk.gov.pay.connector.model.gateway.GatewayResponse;
 import uk.gov.pay.connector.model.gateway.GatewayResponse.GatewayResponseBuilder;
 import uk.gov.pay.connector.service.BaseAuthoriseResponse.AuthoriseStatus;
@@ -30,6 +28,7 @@ import java.util.Optional;
 import java.util.concurrent.Future;
 import java.util.function.Supplier;
 
+import static com.google.common.collect.Lists.newArrayList;
 import static java.lang.String.format;
 import static org.hamcrest.CoreMatchers.nullValue;
 import static org.hamcrest.MatcherAssert.assertThat;
@@ -70,7 +69,7 @@ public class CardAuthoriseServiceTest extends CardServiceTest {
         when(mockMetricRegistry.counter(anyString())).thenReturn(mockCounter);
         when(mockEnvironment.metrics()).thenReturn(mockMetricRegistry);
 
-        cardAuthorisationService = new CardAuthoriseService(mockedChargeDao, mockedProviders, mockExecutorService,
+        cardAuthorisationService = new CardAuthoriseService(mockedChargeDao, mockedCardTypeDao, mockedProviders, mockExecutorService,
                 auth3dsDetailsFactory, mockEnvironment);
     }
 
@@ -113,6 +112,39 @@ public class CardAuthoriseServiceTest extends CardServiceTest {
         assertThat(response.isSuccessful(), is(true));
         assertThat(reloadedCharge.getStatus(), is(AUTHORISATION_SUCCESS.toString()));
         assertThat(reloadedCharge.getGatewayTransactionId(), is(transactionId));
+    }
+
+    @Test(expected = ConflictRuntimeException.class)
+    public void shouldRespondAuthorisationFailedWhen3dsRequiredConflictingConfigurationOfCardTypeWithGatewayAccount() throws Exception {
+
+        AuthCardDetails authCardDetails = AuthUtils.aValidAuthorisationDetails();
+
+        GatewayAccountEntity gatewayAccountEntity = new GatewayAccountEntity();
+        CardTypeEntity cardTypeEntity = new CardTypeEntity();
+        cardTypeEntity.setRequires3ds(true);
+        cardTypeEntity.setBrand(authCardDetails.getCardBrand());
+        gatewayAccountEntity.setType(GatewayAccountEntity.Type.LIVE);
+        gatewayAccountEntity.setGatewayName("worldpay");
+        gatewayAccountEntity.setRequires3ds(false);
+
+        ChargeEntity charge = ChargeEntityFixture
+                .aValidChargeEntity()
+                .withGatewayAccountEntity(gatewayAccountEntity)
+                .withStatus(ENTERING_CARD_DETAILS)
+                .build();
+        ChargeEntity reloadedCharge = spy(charge);
+
+        when(mockedCardTypeDao.findByBrand(authCardDetails.getCardBrand())).thenReturn(newArrayList(cardTypeEntity));
+        when(mockedChargeDao.findByExternalId(charge.getExternalId())).thenReturn(Optional.of(charge));
+        when(mockedChargeDao.merge(charge)).thenReturn(reloadedCharge);
+        when(mockedChargeDao.mergeAndNotifyStatusHasChanged(reloadedCharge, Optional.empty())).thenReturn(reloadedCharge);
+
+        setupMockExecutorServiceMock();
+
+        GatewayResponse response = cardAuthorisationService.doAuthorise(charge.getExternalId(), authCardDetails);
+
+        assertThat(response.isSuccessful(), is(false));
+        assertThat(reloadedCharge.getStatus(), is(AUTHORISATION_ABORTED.toString()));
     }
 
     @Test
@@ -201,6 +233,7 @@ public class CardAuthoriseServiceTest extends CardServiceTest {
 
     @Test
     public void shouldRespondAuthorisationError() throws Exception {
+
         GatewayResponse response = anAuthorisationErrorResponse(charge, reloadedCharge);
 
         assertThat(response.isFailed(), is(true));
@@ -265,6 +298,7 @@ public class CardAuthoriseServiceTest extends CardServiceTest {
             assertThat(e.getResponse().getEntity(), is(expectedMessage));
         }
     }
+
     @Test(expected = ChargeNotFoundRuntimeException.class)
     public void shouldThrowAChargeNotFoundRuntimeExceptionWhenChargeDoesNotExist() {
         String chargeId = "jgk3erq5sv2i4cds6qqa9f1a8a";

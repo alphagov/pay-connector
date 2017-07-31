@@ -36,7 +36,7 @@ public class Card3dsResponseAuthService extends CardAuthoriseBaseService<Auth3ds
     }
 
     @Transactional
-    public ChargeEntity preOperation(ChargeEntity chargeEntity) {
+    public ChargeEntity preOperation(ChargeEntity chargeEntity, Auth3dsDetails auth3DsDetails) {
         chargeEntity = preOperation(chargeEntity, OperationType.AUTHORISATION_3DS, getLegalStates(), AUTHORISATION_3DS_READY);
         return chargeEntity;
     }

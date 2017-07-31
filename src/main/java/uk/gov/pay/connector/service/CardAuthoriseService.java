@@ -4,6 +4,7 @@ import com.google.common.collect.ImmutableList;
 import com.google.inject.persist.Transactional;
 import io.dropwizard.setup.Environment;
 import org.apache.commons.lang3.StringUtils;
+import uk.gov.pay.connector.dao.CardTypeDao;
 import uk.gov.pay.connector.dao.ChargeDao;
 import uk.gov.pay.connector.model.domain.*;
 import uk.gov.pay.connector.model.gateway.AuthorisationGatewayRequest;
@@ -12,31 +13,53 @@ import uk.gov.pay.connector.model.gateway.GatewayResponse;
 import javax.inject.Inject;
 import java.util.List;
 import java.util.Optional;
+import java.util.stream.Collectors;
 
 import static uk.gov.pay.connector.model.domain.ChargeStatus.AUTHORISATION_READY;
 import static uk.gov.pay.connector.model.domain.ChargeStatus.ENTERING_CARD_DETAILS;
-import static uk.gov.pay.connector.model.domain.NumbersInStringsSanitizer.*;
+import static uk.gov.pay.connector.model.domain.NumbersInStringsSanitizer.sanitize;
 
 public class CardAuthoriseService extends CardAuthoriseBaseService<AuthCardDetails> {
 
+    private CardTypeDao cardTypeDao;
     private final Auth3dsDetailsFactory auth3dsDetailsFactory;
 
     @Inject
     public CardAuthoriseService(ChargeDao chargeDao,
+                                CardTypeDao cardTypeDao,
                                 PaymentProviders providers,
                                 CardExecutorService cardExecutorService,
                                 Auth3dsDetailsFactory auth3dsDetailsFactory,
                                 Environment environment) {
         super(chargeDao, providers, cardExecutorService, environment);
-
+        this.cardTypeDao = cardTypeDao;
         this.auth3dsDetailsFactory = auth3dsDetailsFactory;
     }
 
     @Transactional
-    public ChargeEntity preOperation(ChargeEntity chargeEntity) {
-        chargeEntity = preOperation(chargeEntity, OperationType.AUTHORISATION, getLegalStates(), AUTHORISATION_READY);
-        getPaymentProviderFor(chargeEntity).generateTransactionId().ifPresent(chargeEntity::setGatewayTransactionId);
+    public ChargeEntity preOperation(ChargeEntity chargeEntity, AuthCardDetails authCardDetails) {
+
+        String cardBrand = authCardDetails.getCardBrand();
+        ChargeEntity reloadedCharge = chargeDao.merge(chargeEntity);
+
+        if (!reloadedCharge.getGatewayAccount().isRequires3ds() && cardBrandRequires3ds(cardBrand)) {
+            reloadedCharge.setStatus(ChargeStatus.AUTHORISATION_ABORTED);
+            logger.error("AuthCardDetails authorisation failed pre operation. Card brand requires 3ds but Gateway account has 3ds disabled - charge_external_id={}, operation_type={}, card_brand={}",
+                    chargeEntity.getExternalId(), OperationType.AUTHORISATION.getValue(), cardBrand);
+            chargeEntity = chargeDao.mergeAndNotifyStatusHasChanged(reloadedCharge, Optional.empty());
+        } else {
+            chargeEntity = preOperation(chargeEntity, OperationType.AUTHORISATION, getLegalStates(), AUTHORISATION_READY);
+            getPaymentProviderFor(chargeEntity).generateTransactionId().ifPresent(chargeEntity::setGatewayTransactionId);
+        }
+
         return chargeEntity;
+    }
+
+    private boolean cardBrandRequires3ds(String cardBrand) {
+        List<CardTypeEntity> cardTypes = cardTypeDao.findByBrand(cardBrand).stream()
+                .filter(cardTypeEntity -> cardTypeEntity.getBrand().equals(cardBrand))
+                .collect(Collectors.toList());
+        return cardTypes.stream().anyMatch(CardTypeEntity::isRequires3ds);
     }
 
     public GatewayResponse<BaseAuthoriseResponse> operation(ChargeEntity chargeEntity, AuthCardDetails authCardDetails) {

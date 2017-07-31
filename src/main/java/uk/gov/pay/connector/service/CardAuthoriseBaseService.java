@@ -27,13 +27,15 @@ public abstract class CardAuthoriseBaseService<T extends AuthorisationDetails> e
         this.cardExecutorService = cardExecutorService;
     }
 
-
     public GatewayResponse doAuthorise(String chargeId, T gatewayAuthRequest) {
         return chargeDao.findByExternalId(chargeId).map(chargeEntity -> {
             Supplier<GatewayResponse> authorisationSupplier = () -> {
                 ChargeEntity preOperationResponse;
                 try {
-                    preOperationResponse = preOperation(chargeEntity);
+                    preOperationResponse = preOperation(chargeEntity, gatewayAuthRequest);
+                    if (preOperationResponse.hasStatus(ChargeStatus.AUTHORISATION_ABORTED)) {
+                        throw new ConflictRuntimeException(chargeEntity.getExternalId(), "configuration mismatch");
+                    }
                 } catch (OptimisticLockException e) {
                     throw new ConflictRuntimeException(chargeEntity.getExternalId());
                 }
@@ -56,7 +58,7 @@ public abstract class CardAuthoriseBaseService<T extends AuthorisationDetails> e
         }).orElseThrow(() -> new ChargeNotFoundRuntimeException(chargeId));
     }
 
-    protected abstract ChargeEntity preOperation(ChargeEntity chargeEntity);
+    protected abstract ChargeEntity preOperation(ChargeEntity chargeEntity, T gatewayAuthRequest);
 
     protected abstract GatewayResponse postOperation(ChargeEntity preOperationResponse, T gatewayAuthRequest, GatewayResponse<BaseAuthoriseResponse> operationResponse);
 

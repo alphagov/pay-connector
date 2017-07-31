@@ -3,18 +3,18 @@ package uk.gov.pay.connector.model.domain;
 import com.fasterxml.jackson.annotation.JsonBackReference;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import com.fasterxml.jackson.annotation.JsonView;
-import org.apache.commons.lang3.StringUtils;
 
 import javax.persistence.*;
 import java.util.List;
 import java.util.Map;
 
+import static com.google.common.collect.Lists.newArrayList;
 import static com.google.common.collect.Maps.newHashMap;
 import static org.apache.commons.lang3.StringUtils.isNotBlank;
 
 @Entity
 @Table(name = "gateway_accounts")
-@SequenceGenerator(name="gateway_accounts_gateway_account_id_seq", sequenceName="gateway_accounts_gateway_account_id_seq", allocationSize=1)
+@SequenceGenerator(name = "gateway_accounts_gateway_account_id_seq", sequenceName = "gateway_accounts_gateway_account_id_seq", allocationSize = 1)
 public class GatewayAccountEntity extends AbstractEntity {
 
     public class Views {
@@ -26,6 +26,7 @@ public class GatewayAccountEntity extends AbstractEntity {
         TEST("test"), LIVE("live");
 
         private final String value;
+
         Type(String value) {
             this.value = value;
         }
@@ -35,7 +36,7 @@ public class GatewayAccountEntity extends AbstractEntity {
         }
 
         public static Type fromString(String type) {
-            for (Type typeEnum: Type.values()) {
+            for (Type typeEnum : Type.values()) {
                 if (typeEnum.toString().equalsIgnoreCase(type)) {
                     return typeEnum;
                 }
@@ -56,7 +57,7 @@ public class GatewayAccountEntity extends AbstractEntity {
 
     //TODO: Revisit this to map to a java.util.Map
     @Column(name = "credentials", columnDefinition = "json")
-    @Convert( converter = CredentialsConverter.class)
+    @Convert(converter = CredentialsConverter.class)
     private Map<String, String> credentials;
 
     @Column(name = "service_name")
@@ -72,10 +73,10 @@ public class GatewayAccountEntity extends AbstractEntity {
     private boolean requires3ds;
 
     @JsonBackReference
-    @OneToOne(mappedBy="accountEntity", cascade = CascadeType.PERSIST)
+    @OneToOne(mappedBy = "accountEntity", cascade = CascadeType.PERSIST)
     private EmailNotificationEntity emailNotification;
 
-    @OneToOne(mappedBy="accountEntity", cascade = CascadeType.PERSIST)
+    @OneToOne(mappedBy = "accountEntity", cascade = CascadeType.PERSIST)
     private NotificationCredentials notificationCredentials;
 
     @ManyToMany
@@ -84,7 +85,7 @@ public class GatewayAccountEntity extends AbstractEntity {
             joinColumns = @JoinColumn(name = "gateway_account_id", referencedColumnName = "id"),
             inverseJoinColumns = @JoinColumn(name = "card_type_id", referencedColumnName = "id")
     )
-    private List<CardTypeEntity> cardTypes;
+    private List<CardTypeEntity> cardTypes = newArrayList();
 
     public GatewayAccountEntity(String gatewayName, Map<String, String> credentials, Type type) {
         this.gatewayName = gatewayName;
@@ -204,7 +205,7 @@ public class GatewayAccountEntity extends AbstractEntity {
         if (isNotBlank(getAnalyticsId())) {
             account.put("analytics_id", getAnalyticsId());
         }
-        if (isNotBlank(getServiceName()))  {
+        if (isNotBlank(getServiceName())) {
             account.put("service_name", getServiceName());
         }
         account.put("toggle_3ds", String.valueOf(isRequires3ds()));
@@ -217,7 +218,6 @@ public class GatewayAccountEntity extends AbstractEntity {
 
     public boolean hasAnyAcceptedCardType3dsRequired() {
         return cardTypes.stream()
-                .filter(CardTypeEntity::isRequires3ds)
-                .count() > 0;
+                .anyMatch(CardTypeEntity::isRequires3ds);
     }
 }
