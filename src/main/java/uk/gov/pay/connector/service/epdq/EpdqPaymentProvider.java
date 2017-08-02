@@ -48,7 +48,7 @@ public class EpdqPaymentProvider extends BasePaymentProvider<BaseResponse, Strin
     private final SignatureGenerator signatureGenerator;
 
     /**
-     * Temporary poor man’s feature flag to stop people attempting refunds before we handle refund notifications
+     * Temporary feature flag to stop people attempting refunds before we handle refund notifications
      */
     private final boolean refundEnabled;
 

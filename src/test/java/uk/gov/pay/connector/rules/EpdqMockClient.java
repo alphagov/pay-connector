@@ -50,6 +50,14 @@ public class EpdqMockClient {
         paymentServiceResponse(ROUTE_FOR_MAINTENANCE_ORDER, TestTemplateResourceLoader.load(EPDQ_CANCEL_SUCCESS_RESPONSE));
     }
 
+    public void mockRefundSuccess() {
+        paymentServiceResponse(ROUTE_FOR_MAINTENANCE_ORDER, TestTemplateResourceLoader.load(EPDQ_REFUND_SUCCESS_RESPONSE));
+    }
+
+    public void mockRefundError() {
+        paymentServiceResponse(ROUTE_FOR_MAINTENANCE_ORDER, TestTemplateResourceLoader.load(EPDQ_REFUND_ERROR_RESPONSE));
+    }
+
     private void paymentServiceResponse(String route, String responseBody) {
         //FIXME - This mocking approach is very poor. Needs to be revisited. Story PP-900 created.
         stubFor(
