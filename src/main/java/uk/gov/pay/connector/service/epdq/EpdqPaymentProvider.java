@@ -37,9 +37,7 @@ import static uk.gov.pay.connector.model.domain.GatewayAccount.CREDENTIALS_SHA_I
 import static uk.gov.pay.connector.model.domain.GatewayAccount.CREDENTIALS_SHA_OUT_PASSPHRASE;
 import static uk.gov.pay.connector.model.domain.GatewayAccount.CREDENTIALS_USERNAME;
 import static uk.gov.pay.connector.service.epdq.EpdqNotification.SHASIGN;
-import static uk.gov.pay.connector.service.epdq.EpdqOrderRequestBuilder.anEpdqAuthoriseOrderRequestBuilder;
-import static uk.gov.pay.connector.service.epdq.EpdqOrderRequestBuilder.anEpdqCancelOrderRequestBuilder;
-import static uk.gov.pay.connector.service.epdq.EpdqOrderRequestBuilder.anEpdqCaptureOrderRequestBuilder;
+import static uk.gov.pay.connector.service.epdq.EpdqOrderRequestBuilder.*;
 
 
 public class EpdqPaymentProvider extends BasePaymentProvider<BaseResponse, String> {
@@ -49,9 +47,16 @@ public class EpdqPaymentProvider extends BasePaymentProvider<BaseResponse, Strin
 
     private final SignatureGenerator signatureGenerator;
 
-    public EpdqPaymentProvider(EnumMap<GatewayOperation, GatewayClient> clients, SignatureGenerator signatureGenerator) {
+    /**
+     * Temporary feature flag to stop people attempting refunds before we handle refund notifications
+     */
+    private final boolean refundEnabled;
+
+    public EpdqPaymentProvider(EnumMap<GatewayOperation, GatewayClient> clients, SignatureGenerator signatureGenerator,
+                               boolean refundEnabled) {
         super(clients);
         this.signatureGenerator = signatureGenerator;
+        this.refundEnabled = refundEnabled;
     }
 
     @Override
@@ -81,6 +86,9 @@ public class EpdqPaymentProvider extends BasePaymentProvider<BaseResponse, Strin
 
     @Override
     public GatewayResponse refund(RefundGatewayRequest request) {
+        if (refundEnabled) {
+            return sendReceive(ROUTE_FOR_MAINTENANCE_ORDER, request, buildRefundOrderFor(), EpdqRefundResponse.class, extractResponseIdentifier());
+        }
         throw new UnsupportedOperationException("Refund operation not supported.");
     }
 
@@ -171,6 +179,18 @@ public class EpdqPaymentProvider extends BasePaymentProvider<BaseResponse, Strin
                     CREDENTIALS_SHA_IN_PASSPHRASE))
                 .withMerchantCode(request.getGatewayAccount().getCredentials().get(CREDENTIALS_MERCHANT_ID))
                 .withTransactionId(request.getTransactionId())
+                .build();
+    }
+
+    private Function<RefundGatewayRequest, GatewayOrder> buildRefundOrderFor() {
+        return request -> anEpdqRefundOrderRequestBuilder()
+                .withUserId(request.getGatewayAccount().getCredentials().get(CREDENTIALS_USERNAME))
+                .withPassword(request.getGatewayAccount().getCredentials().get(CREDENTIALS_PASSWORD))
+                .withShaInPassphrase(request.getGatewayAccount().getCredentials().get(
+                        CREDENTIALS_SHA_IN_PASSPHRASE))
+                .withMerchantCode(request.getGatewayAccount().getCredentials().get(CREDENTIALS_MERCHANT_ID))
+                .withTransactionId(request.getTransactionId())
+                .withAmount(request.getAmount())
                 .build();
     }
 

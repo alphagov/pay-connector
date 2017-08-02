@@ -9,12 +9,8 @@ import uk.gov.pay.connector.util.AuthUtils;
 import uk.gov.pay.connector.util.TestTemplateResourceLoader;
 
 import static org.junit.Assert.assertEquals;
-import static uk.gov.pay.connector.service.epdq.EpdqOrderRequestBuilder.anEpdqAuthoriseOrderRequestBuilder;
-import static uk.gov.pay.connector.service.epdq.EpdqOrderRequestBuilder.anEpdqCancelOrderRequestBuilder;
-import static uk.gov.pay.connector.service.epdq.EpdqOrderRequestBuilder.anEpdqCaptureOrderRequestBuilder;
-import static uk.gov.pay.connector.util.TestTemplateResourceLoader.EPDQ_AUTHORISATION_REQUEST;
-import static uk.gov.pay.connector.util.TestTemplateResourceLoader.EPDQ_CANCEL_REQUEST;
-import static uk.gov.pay.connector.util.TestTemplateResourceLoader.EPDQ_CAPTURE_REQUEST;
+import static uk.gov.pay.connector.service.epdq.EpdqOrderRequestBuilder.*;
+import static uk.gov.pay.connector.util.TestTemplateResourceLoader.*;
 
 public class EpdqOrderRequestBuilderTest {
 
@@ -72,5 +68,21 @@ public class EpdqOrderRequestBuilderTest {
 
         assertEquals(TestTemplateResourceLoader.load(EPDQ_CANCEL_REQUEST), actualRequest.getPayload());
         assertEquals(OrderRequestType.CANCEL, actualRequest.getOrderRequestType());
+    }
+
+    @Test
+    public void shouldGenerateValidRefundOrderRequest() {
+
+        GatewayOrder gatewayOrder = anEpdqRefundOrderRequestBuilder()
+                .withPassword("password")
+                .withUserId("username")
+                .withShaInPassphrase("sha-passphrase")
+                .withMerchantCode("merchant-id")
+                .withTransactionId("payId")
+                .withAmount("400")
+                .build();
+
+        assertEquals(TestTemplateResourceLoader.load(EPDQ_REFUND_REQUEST), gatewayOrder.getPayload());
+        assertEquals(OrderRequestType.REFUND, gatewayOrder.getOrderRequestType());
     }
 }
