@@ -95,6 +95,12 @@ public class TestTemplateResourceLoader {
     public static final String EPDQ_CANCEL_WAITING_RESPONSE = EPDQ_BASE_NAME + "/cancel-waiting-response.xml";
     public static final String EPDQ_CANCEL_ERROR_RESPONSE = EPDQ_BASE_NAME + "/cancel-error-response.xml";
 
+    public static final String EPDQ_REFUND_REQUEST = EPDQ_BASE_NAME + "/refund-request.txt";
+    public static final String EPDQ_REFUND_SUCCESS_RESPONSE = EPDQ_BASE_NAME + "/refund-success-response.xml";
+    public static final String EPDQ_REFUND_ERROR_RESPONSE = EPDQ_BASE_NAME + "/refund-error-response.xml";
+
+    public static final String EPDQ_DELETE_SUCCESS_RESPONSE = EPDQ_BASE_NAME + "/delete-success-response.xml";
+
     public static final String EPDQ_NOTIFICATION_TEMPLATE = EPDQ_BASE_NAME + "/notification-template.txt";
 
     static public String load(String location) {

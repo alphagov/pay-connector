@@ -18,6 +18,7 @@ public class EpdqOrderRequestBuilder extends OrderRequestBuilder {
         private String password;
         private String userId;
         private String shaInPassphrase;
+        private String amount;
 
         public String getOperationType() {
             return operationType;
@@ -58,10 +59,20 @@ public class EpdqOrderRequestBuilder extends OrderRequestBuilder {
         public void setShaInPassphrase(String shaInPassphrase) {
             this.shaInPassphrase = shaInPassphrase;
         }
+
+        public String getAmount() {
+            return amount;
+        }
+
+        @Override
+        public void setAmount(String amount) {
+            this.amount = amount;
+        }
     }
 
     public static final String AUTHORISE_OPERATION_TYPE = "RES";
     public static final String CAPTURE_OPERATION_TYPE = "SAS";
+    public static final String REFUND_OPERATION_TYPE = "RFD";
     public static final String CANCEL_OPERATION_TYPE = "DES";
 
     private static EpdqSignedPayloadDefinitionFactory signedPayloadDefinitionFactory = anEpdqSignedPayloadDefinitionFactory(new EpdqSha512SignatureGenerator());
@@ -69,6 +80,7 @@ public class EpdqOrderRequestBuilder extends OrderRequestBuilder {
     public static final PayloadBuilder AUTHORISE_ORDER_TEMPLATE_BUILDER = createPayloadBuilderForNewOrder();
     public static final PayloadBuilder CAPTURE_ORDER_TEMPLATE_BUILDER = createPayloadBuilderForMaintenanceOrder();
     public static final PayloadBuilder CANCEL_ORDER_TEMPLATE_BUILDER = createPayloadBuilderForMaintenanceOrder();
+    public static final PayloadBuilder REFUND_ORDER_TEMPLATE_BUILDER = createPayloadBuilderForMaintenanceOrder();
 
     private EpdqTemplateData epdqTemplateData;
 
@@ -88,6 +100,10 @@ public class EpdqOrderRequestBuilder extends OrderRequestBuilder {
 
     public static EpdqOrderRequestBuilder anEpdqCaptureOrderRequestBuilder() {
         return new EpdqOrderRequestBuilder(new EpdqTemplateData(), CAPTURE_ORDER_TEMPLATE_BUILDER, OrderRequestType.CAPTURE, CAPTURE_OPERATION_TYPE);
+    }
+
+    public static EpdqOrderRequestBuilder anEpdqRefundOrderRequestBuilder() {
+        return new EpdqOrderRequestBuilder(new EpdqTemplateData(), REFUND_ORDER_TEMPLATE_BUILDER, OrderRequestType.REFUND, REFUND_OPERATION_TYPE);
     }
 
     public static EpdqOrderRequestBuilder anEpdqCancelOrderRequestBuilder() {
