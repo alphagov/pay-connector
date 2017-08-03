@@ -152,6 +152,14 @@ public class ChargingITestBase extends ChargingITestCommon {
                 .body("status", is(status));
     }
 
+    protected void assertRefundStatus(String chargeId, String refundId, String status, Integer amount) {
+        connectorRestApi.withChargeId(chargeId)
+                .withRefundId(refundId)
+                .getRefund()
+                .body("status", is(status))
+                .body("amount", is(amount));
+    }
+
     protected void assertApiStateIs(String chargeId, String stateString) {
         getCharge(chargeId).body("state.status", is(stateString));
     }
@@ -189,6 +197,11 @@ public class ChargingITestBase extends ChargingITestCommon {
         String externalChargeId = "charge-" + chargeId;
         app.getDatabaseTestHelper().addCharge(chargeId, externalChargeId, accountId, 6234L, status, "returnUrl", gatewayTransactionId);
         return externalChargeId;
+    }
+
+    protected void createNewRefund(RefundStatus status, long chargeId, String refundExternalId, String reference, long amount) {
+        long refundId = RandomUtils.nextInt();
+        app.getDatabaseTestHelper().addRefund(refundId, refundExternalId, reference, amount, status.name(), chargeId, ZonedDateTime.now());
     }
 
     protected RequestSpecification givenSetup() {
