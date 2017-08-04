@@ -20,14 +20,17 @@ public class RefundDao extends JpaDao<RefundEntity> {
         return super.findById(RefundEntity.class, id);
     }
 
-    public Optional<RefundEntity> findByReference(String reference) {
+    public Optional<RefundEntity> findByProviderAndReference(String provider, String reference) {
 
-        String query = "SELECT r FROM RefundEntity r " +
-                "WHERE r.reference = :reference";
+        String query = "SELECT refund FROM RefundEntity refund " +
+                "JOIN ChargeEntity charge ON refund.chargeEntity.id = charge.id " +
+                "JOIN GatewayAccountEntity gatewayAccount ON charge.gatewayAccount.id = gatewayAccount.id " +
+                "WHERE refund.reference = :reference AND gatewayAccount.gatewayName = :provider";
 
         return entityManager.get()
                 .createQuery(query, RefundEntity.class)
                 .setParameter("reference", reference)
+                .setParameter("provider", provider)
                 .getResultList().stream().findFirst();
     }
 }

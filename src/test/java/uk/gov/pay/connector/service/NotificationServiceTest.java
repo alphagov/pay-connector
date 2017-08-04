@@ -283,12 +283,12 @@ public class NotificationServiceTest {
         StatusMapper mockedStatusMapper = createMockedStatusMapper(InterpretedStatus.Type.REFUND_STATUS, REFUNDED);
         when(mockedPaymentProvider.getStatusMapper()).thenReturn(mockedStatusMapper);
 
-        when(mockedRefundDao.findByReference(reference))
+        when(mockedRefundDao.findByProviderAndReference(SANDBOX.getName(), reference))
                 .thenReturn(Optional.empty());
 
         notificationService.handleNotificationFor("", SANDBOX, "payload");
 
-        verify(mockedRefundDao).findByReference(reference);
+        verify(mockedRefundDao).findByProviderAndReference(SANDBOX.getName(), reference);
         verifyNoMoreInteractions(ignoreStubs(mockedChargeDao));
     }
 
@@ -327,13 +327,13 @@ public class NotificationServiceTest {
         RefundEntity mockedRefundEntity = mock(RefundEntity.class);
         GatewayAccountEntity mockedGatewayAccount = mock(GatewayAccountEntity.class);
 
-        when(mockedRefundDao.findByReference(reference)).thenReturn(Optional.of(mockedRefundEntity));
+        when(mockedRefundDao.findByProviderAndReference(SANDBOX.getName(), reference)).thenReturn(Optional.of(mockedRefundEntity));
         when(mockedRefundEntity.getChargeEntity()).thenReturn(mockedChargeEntity);
         when(mockedChargeEntity.getGatewayAccount()).thenReturn(mockedGatewayAccount);
 
         notificationService.handleNotificationFor("", SANDBOX, "payload");
 
-        verify(mockedRefundDao).findByReference(reference);
+        verify(mockedRefundDao).findByProviderAndReference(SANDBOX.getName(), reference);
         verify(mockedRefundEntity).setStatus(REFUNDED);
         verifyNoMoreInteractions(ignoreStubs(mockedChargeDao));
     }

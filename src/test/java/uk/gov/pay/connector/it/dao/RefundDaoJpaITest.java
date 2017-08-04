@@ -23,8 +23,10 @@ public class RefundDaoJpaITest extends DaoITestBase {
 
     private RefundDao refundDao;
 
+    private DatabaseFixtures.TestAccount sandboxAccount;
     private DatabaseFixtures.TestCharge chargeTestRecord;
     private DatabaseFixtures.TestRefund refundTestRecord;
+
 
     @Before
     public void setUp() throws Exception {
@@ -47,10 +49,11 @@ public class RefundDaoJpaITest extends DaoITestBase {
                 .aTestRefund()
                 .withTestCharge(testCharge);
 
-        testAccount.insert();
+        this.sandboxAccount = testAccount.insert();
         this.chargeTestRecord = testCharge.insert();
         this.refundTestRecord = testRefund.insert();
     }
+
 
     @Test
     public void findById_shouldFindRefund() {
@@ -76,8 +79,8 @@ public class RefundDaoJpaITest extends DaoITestBase {
     }
 
     @Test
-    public void findByReference_shouldFindRefund() {
-        Optional<RefundEntity> refundEntityOptional = refundDao.findByReference(refundTestRecord.getReference());
+    public void findByProviderAndReference_shouldFindRefund() {
+        Optional<RefundEntity> refundEntityOptional = refundDao.findByProviderAndReference(sandboxAccount.getPaymentProvider(), refundTestRecord.getReference());
 
         assertThat(refundEntityOptional.isPresent(), is(true));
 
@@ -94,9 +97,17 @@ public class RefundDaoJpaITest extends DaoITestBase {
     }
 
     @Test
-    public void findByReference_shouldNotFindRefund() {
+    public void findByProviderAndReference_shouldNotFindRefundIfProviderDoesNotMatch() {
+
+        Optional<RefundEntity> refundEntityOptional = refundDao.findByProviderAndReference("worldpay", refundTestRecord.getReference());
+
+        assertThat(refundEntityOptional, is(Optional.empty()));
+    }
+
+    @Test
+    public void findByProviderAndReference_shouldNotFindRefundIfReferenceDoesNotMatch() {
         String noExistingReference = "refund_0";
-        assertThat(refundDao.findByReference(noExistingReference).isPresent(), is(false));
+        assertThat(refundDao.findByProviderAndReference(sandboxAccount.getPaymentProvider(), noExistingReference).isPresent(), is(false));
     }
 
     @Test
