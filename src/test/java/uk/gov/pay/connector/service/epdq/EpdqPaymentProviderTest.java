@@ -66,9 +66,9 @@ import static uk.gov.pay.connector.util.TestTemplateResourceLoader.*;
 @RunWith(MockitoJUnitRunner.class)
 public class EpdqPaymentProviderTest {
 
-    private static final String NOTIFICATION_ORDER_ID = "2jhqgrb71f47ftq9u1t5c1143o";
     private static final String NOTIFICATION_STATUS = "9";
     private static final String NOTIFICATION_PAY_ID = "3020450409";
+    private static final String NOTIFICATION_PAY_ID_SUB = "2";
     private static final String NOTIFICATION_SHA_SIGN = "9537B9639F108CDF004459D8A690C598D97506CDF072C3926A60E39759A6402C5089161F6D7A8EA12BBC0FD6F899CE72D5A0C4ACC2913C56ACF6D01B034EEC32";
 
 
@@ -309,7 +309,7 @@ public class EpdqPaymentProviderTest {
     @Test
     public void parseNotification_shouldReturnNotificationsIfValidFormUrlEncoded() throws IOException  {
         Either<String, Notifications<String>> response =
-            provider.parseNotification(notificationPayloadForTransaction(NOTIFICATION_ORDER_ID, NOTIFICATION_STATUS, NOTIFICATION_PAY_ID, NOTIFICATION_SHA_SIGN));
+            provider.parseNotification(notificationPayloadForTransaction(NOTIFICATION_STATUS, NOTIFICATION_PAY_ID, NOTIFICATION_PAY_ID_SUB, NOTIFICATION_SHA_SIGN));
 
         assertThat(response.isRight(), is(true));
 
@@ -320,7 +320,7 @@ public class EpdqPaymentProviderTest {
         Notification<String> notification = notifications.get(0);
 
         assertThat(notification.getTransactionId(), is(NOTIFICATION_PAY_ID));
-        assertThat(notification.getReference(), is(NOTIFICATION_ORDER_ID));
+        assertThat(notification.getReference(), is(NOTIFICATION_PAY_ID + "/" + NOTIFICATION_PAY_ID_SUB));
         assertThat(notification.getStatus(), is(NOTIFICATION_STATUS));
         assertThat(notification.getGatewayEventDate(), IsNull.nullValue());
     }
@@ -504,12 +504,12 @@ public class EpdqPaymentProviderTest {
         return TestTemplateResourceLoader.load(EPDQ_DELETE_SUCCESS_RESPONSE);
     }
 
-    private String notificationPayloadForTransaction( String orderId, String status, String payId, String shaSign)
+    private String notificationPayloadForTransaction(String status, String payId, String payIdSub, String shaSign)
         throws IOException {
         return TestTemplateResourceLoader.load(EPDQ_NOTIFICATION_TEMPLATE)
-                .replace("{{orderId}}", orderId)
                 .replace("{{status}}", status)
                 .replace("{{payId}}", payId)
+                .replace("{{payIdSub}}", payIdSub)
                 .replace("{{shaSign}}", shaSign);
     }
 }

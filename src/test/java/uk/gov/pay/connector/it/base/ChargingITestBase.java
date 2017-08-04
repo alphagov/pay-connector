@@ -201,7 +201,7 @@ public class ChargingITestBase extends ChargingITestCommon {
 
     protected void createNewRefund(RefundStatus status, long chargeId, String refundExternalId, String reference, long amount) {
         long refundId = RandomUtils.nextInt();
-        app.getDatabaseTestHelper().addRefund(refundId, refundExternalId, reference, amount, status.name(), chargeId, ZonedDateTime.now());
+        app.getDatabaseTestHelper().addRefund(refundId, refundExternalId, reference, amount, status.getValue(), chargeId, ZonedDateTime.now());
     }
 
     protected RequestSpecification givenSetup() {

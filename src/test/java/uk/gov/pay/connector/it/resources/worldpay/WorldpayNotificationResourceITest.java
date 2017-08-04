@@ -3,7 +3,6 @@ package uk.gov.pay.connector.it.resources.worldpay;
 import com.jayway.restassured.response.ValidatableResponse;
 import org.junit.Test;
 import uk.gov.pay.connector.it.base.ChargingITestBase;
-import uk.gov.pay.connector.model.domain.RefundStatus;
 import uk.gov.pay.connector.util.DnsUtils;
 import uk.gov.pay.connector.util.TestTemplateResourceLoader;
 
@@ -18,6 +17,7 @@ import static org.junit.Assert.assertThat;
 import static uk.gov.pay.connector.model.domain.ChargeStatus.AUTHORISATION_SUCCESS;
 import static uk.gov.pay.connector.model.domain.ChargeStatus.CAPTURED;
 import static uk.gov.pay.connector.model.domain.ChargeStatus.CAPTURE_SUBMITTED;
+import static uk.gov.pay.connector.model.domain.RefundStatus.REFUND_SUBMITTED;
 import static uk.gov.pay.connector.util.TestTemplateResourceLoader.WORLDPAY_NOTIFICATION;
 
 public class WorldpayNotificationResourceITest extends ChargingITestBase {
@@ -183,7 +183,7 @@ public class WorldpayNotificationResourceITest extends ChargingITestBase {
     private String createNewChargeWithRefund(String transactionId, String refundExternalId, long refundAmount) {
         String externalChargeId = createNewChargeWith(CAPTURED, transactionId);
         String chargeId = externalChargeId.substring(externalChargeId.indexOf("-") + 1, externalChargeId.length());
-        createNewRefund(RefundStatus.CREATED, Long.valueOf(chargeId), refundExternalId, refundExternalId, refundAmount);
+        createNewRefund(REFUND_SUBMITTED, Long.valueOf(chargeId), refundExternalId, refundExternalId, refundAmount);
         return externalChargeId;
     }
 

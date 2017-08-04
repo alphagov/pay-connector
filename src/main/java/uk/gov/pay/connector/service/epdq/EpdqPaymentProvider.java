@@ -130,7 +130,7 @@ public class EpdqPaymentProvider extends BasePaymentProvider<BaseResponse, Strin
 
             builder.addNotificationFor(
                     epdqNotification.getTransactionId(),
-                    epdqNotification.getOrderId(),
+                    epdqNotification.getReference(),
                     epdqNotification.getStatus(),
                     null,
                     epdqNotification.getParams()

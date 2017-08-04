@@ -246,7 +246,7 @@ public class NotificationServiceTest {
     }
 
     @Test
-    public void shouldIgnoreNotificationWhenNoReference() {
+    public void shouldIgnoreRefundNotificationWhenNoReference() {
         Notifications<Pair<String, Boolean>> notifications = createNotificationFor(TRANSACTION_ID, null, Pair.of("REFUND", true));
         when(mockedPaymentProvider.parseNotification(any())).thenReturn(Either.right(notifications));
 

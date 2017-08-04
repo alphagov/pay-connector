@@ -15,6 +15,7 @@ import static uk.gov.pay.connector.model.domain.ChargeStatus.ENTERING_CARD_DETAI
 import static uk.gov.pay.connector.model.domain.ChargeStatus.EXPIRE_CANCEL_SUBMITTED;
 import static uk.gov.pay.connector.model.domain.ChargeStatus.SYSTEM_CANCEL_SUBMITTED;
 import static uk.gov.pay.connector.model.domain.ChargeStatus.USER_CANCEL_SUBMITTED;
+import static uk.gov.pay.connector.model.domain.RefundStatus.REFUNDED;
 import static uk.gov.pay.connector.service.StatusFlow.EXPIRE_FLOW;
 import static uk.gov.pay.connector.service.StatusFlow.SYSTEM_CANCELLATION_FLOW;
 import static uk.gov.pay.connector.service.StatusFlow.USER_CANCELLATION_FLOW;
@@ -83,6 +84,22 @@ public class EpdqStatusMapperTest {
 
         assertThat(status.getType(), is(InterpretedStatus.Type.CHARGE_STATUS));
         assertThat(status.getChargeStatus(), is(CAPTURED));
+    }
+
+    @Test
+    public void shouldReturnRefundedStatusFromValue8() {
+        InterpretedStatus status = EpdqStatusMapper.get().from("8", CAPTURED);
+
+        assertThat(status.getType(), is(InterpretedStatus.Type.REFUND_STATUS));
+        assertThat(status.getRefundStatus(), is(REFUNDED));
+    }
+
+    @Test
+    public void shouldReturnRefundedStatusFromValue7() {
+        InterpretedStatus status = EpdqStatusMapper.get().from("7", CAPTURE_SUBMITTED);
+
+        assertThat(status.getType(), is(InterpretedStatus.Type.REFUND_STATUS));
+        assertThat(status.getRefundStatus(), is(REFUNDED));
     }
 
     @Test
