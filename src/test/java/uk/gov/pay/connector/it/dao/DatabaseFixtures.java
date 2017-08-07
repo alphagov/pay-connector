@@ -75,6 +75,10 @@ public class DatabaseFixtures {
         return new TestChargeEvent();
     }
 
+    public TestCardType aMaestroDebitCardType() {
+        return new TestCardType().withLabel("Maestro").withType(Type.DEBIT).withBrand("maestro").withRequires3ds(true);
+    }
+
     public class TestChargeEvent {
         private long chargeId;
         private ChargeStatus chargeStatus;
@@ -507,6 +511,7 @@ public class DatabaseFixtures {
         String label = "Mastercard";
         Type type = Type.CREDIT;
         String brand = "mastercard-c";
+        boolean requires3DS;
 
         public TestCardType withCardTypeId(UUID id) {
             this.id = id;
@@ -528,8 +533,13 @@ public class DatabaseFixtures {
             return this;
         }
 
+        public TestCardType withRequires3ds(boolean requires3DS) {
+            this.requires3DS = requires3DS;
+            return this;
+        }
+
         public TestCardType insert() {
-            databaseTestHelper.addCardType(id, label, type.toString(), brand);
+            databaseTestHelper.addCardType(id, label, type.toString(), brand, requires3DS);
             return this;
         }
 
@@ -555,6 +565,10 @@ public class DatabaseFixtures {
 
         public String getBrand() {
             return brand;
+        }
+
+        public boolean getRequires3DS() {
+            return requires3DS;
         }
     }
 }

@@ -51,7 +51,7 @@ public class ChargeSearchParamsTest {
 
         assertThat(params.getChargeStatuses(), containsInAnyOrder(
                 USER_CANCEL_READY, USER_CANCEL_SUBMITTED, USER_CANCEL_ERROR, USER_CANCELLED, EXPIRE_CANCEL_READY, EXPIRE_CANCEL_SUBMITTED, EXPIRED, EXPIRE_CANCEL_FAILED,
-                AUTHORISATION_REJECTED, AUTHORISATION_CANCELLED));
-        assertEquals(10, params.getChargeStatuses().size());
+                AUTHORISATION_REJECTED, AUTHORISATION_CANCELLED, AUTHORISATION_ABORTED));
+        assertEquals(11, params.getChargeStatuses().size());
     }
 }

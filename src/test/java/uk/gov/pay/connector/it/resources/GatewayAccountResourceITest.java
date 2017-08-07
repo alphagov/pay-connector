@@ -4,14 +4,13 @@ import com.google.common.collect.ImmutableMap;
 import com.jayway.restassured.http.ContentType;
 import com.jayway.restassured.response.ValidatableResponse;
 import org.hamcrest.core.Is;
+import org.junit.Ignore;
 import org.junit.Test;
 import uk.gov.pay.connector.it.dao.DatabaseFixtures;
 
 import static com.jayway.restassured.http.ContentType.JSON;
 import static java.lang.String.format;
-import static javax.ws.rs.core.Response.Status.BAD_REQUEST;
-import static javax.ws.rs.core.Response.Status.NOT_FOUND;
-import static javax.ws.rs.core.Response.Status.OK;
+import static javax.ws.rs.core.Response.Status.*;
 import static org.hamcrest.Matchers.hasSize;
 import static org.hamcrest.Matchers.is;
 import static org.hamcrest.Matchers.nullValue;
@@ -203,7 +202,7 @@ public class GatewayAccountResourceITest extends GatewayAccountResourceTestBase 
 
     @Test
     public void createGatewayAccountWithNameDescriptionAndAnalyticsId() {
-        String payload = toJson(ImmutableMap.of("service_name","my service name","description", "desc", "analytics_id", "analytics-id"));
+        String payload = toJson(ImmutableMap.of("service_name", "my service name", "description", "desc", "analytics_id", "analytics-id"));
         ValidatableResponse response = givenSetup()
                 .body(payload)
                 .post(ACCOUNTS_API_URL)
@@ -388,6 +387,31 @@ public class GatewayAccountResourceITest extends GatewayAccountResourceTestBase 
                 .get("/v1/api/accounts/" + gatewayAccountId)
                 .then()
                 .body("toggle_3ds", is("false"));
+    }
+
+    @Test
+    public void shouldReturn409Conflict_Toggling3dsToFalse_WhenA3dsCardTypeIsAccepted() {
+
+        String gatewayAccountId = createAGatewayAccountFor("worldpay", "desc", "id");
+        String maestroCardTypeId = databaseTestHelper.getCardTypeId("maestro", "DEBIT");
+
+        givenSetup()
+                .body(toJson(ImmutableMap.of("toggle_3ds", true)))
+                .patch("/v1/frontend/accounts/" + gatewayAccountId + "/3ds-toggle")
+                .then()
+                .statusCode(OK.getStatusCode());
+
+        givenSetup().accept(JSON)
+                .body("{\"card_types\": [\"" + maestroCardTypeId + "\"]}")
+                .post(ACCOUNTS_FRONTEND_URL + gatewayAccountId + "/card-types")
+                .then()
+                .statusCode(OK.getStatusCode());
+
+        givenSetup()
+                .body(toJson(ImmutableMap.of("toggle_3ds", false)))
+                .patch("/v1/frontend/accounts/" + gatewayAccountId + "/3ds-toggle")
+                .then()
+                .statusCode(CONFLICT.getStatusCode());
     }
 
     @Test

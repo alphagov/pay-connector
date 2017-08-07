@@ -4,12 +4,14 @@ import org.junit.Before;
 import org.junit.Test;
 import uk.gov.pay.connector.dao.CardTypeDao;
 import uk.gov.pay.connector.model.domain.CardTypeEntity;
+import uk.gov.pay.connector.model.domain.CardTypeEntity.Type;
 
 import java.util.List;
 
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.core.Is.is;
 import static org.junit.Assert.assertNotNull;
+import static uk.gov.pay.connector.model.domain.CardTypeEntity.Type.*;
 
 public class CardTypeDaoJpaITest extends DaoITestBase {
 
@@ -33,10 +35,13 @@ public class CardTypeDaoJpaITest extends DaoITestBase {
         DatabaseFixtures.TestCardType visaCardDebitCardType = DatabaseFixtures
                 .withDatabaseTestHelper(databaseTestHelper)
                 .aVisaDebitCardType();
-
+        DatabaseFixtures.TestCardType maestroCardDebitCardType = DatabaseFixtures
+                .withDatabaseTestHelper(databaseTestHelper)
+                .aMaestroDebitCardType();
         masterCardCreditCardTypeTestRecord = masterCardCreditCardType.insert();
         masterCardDebitCardTypeTestRecord = masterCardDebitCardType.insert();
         visaCardDebitCardType.insert();
+        maestroCardDebitCardType.insert();
     }
 
     @Test
@@ -64,5 +69,37 @@ public class CardTypeDaoJpaITest extends DaoITestBase {
     public void findByBrand_shouldNotFindCardType() {
         String noExistingExternalId = "unknown-card-brand";
         assertThat(cardTypeDao.findByBrand(noExistingExternalId).size(), is(0));
+    }
+
+    @Test
+    public void findAllNon3ds_shouldFindCardTypes() {
+
+        List<CardTypeEntity> cardTypes = cardTypeDao.findAllNon3ds();
+
+        assertThat(cardTypes.size(), is(3));
+
+        CardTypeEntity firstCardType = cardTypes.get(0);
+        assertThat(firstCardType.getBrand(), is("mastercard"));
+        assertThat(firstCardType.getType(), is(CREDIT));
+
+        CardTypeEntity secondCardType = cardTypes.get(1);
+        assertThat(secondCardType.getBrand(), is("mastercard"));
+        assertThat(secondCardType.getType(), is(DEBIT));
+
+        CardTypeEntity thirdCardType = cardTypes.get(2);
+        assertThat(thirdCardType.getBrand(), is("visa"));
+    }
+
+    @Test
+    public void findAll_shouldFindCardTypes_includingTypesRequiring3ds() {
+
+        List<CardTypeEntity> cardTypes = cardTypeDao.findAll();
+
+        assertThat(cardTypes.size(), is(4));
+
+        CardTypeEntity fourthCardType = cardTypes.get(3);
+        assertThat(fourthCardType.getBrand(), is("maestro"));
+        assertThat(fourthCardType.getType(), is(DEBIT));
+        assertThat(fourthCardType.isRequires3ds(), is(true));
     }
 }

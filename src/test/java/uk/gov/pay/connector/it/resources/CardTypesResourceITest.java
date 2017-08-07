@@ -36,6 +36,7 @@ public class CardTypesResourceITest {
         this.mastercardCreditCardTypeTestRecord = DatabaseFixtures
                 .withDatabaseTestHelper(app.getDatabaseTestHelper())
                 .aMastercardCreditCardType()
+                .withRequires3ds(true)
                 .insert();
 
         connectorApi
@@ -44,6 +45,7 @@ public class CardTypesResourceITest {
                 .body("card_types[0].id", is(this.mastercardCreditCardTypeTestRecord.getId().toString()))
                 .body("card_types[0].brand", is(this.mastercardCreditCardTypeTestRecord.getBrand()))
                 .body("card_types[0].label", is(this.mastercardCreditCardTypeTestRecord.getLabel()))
+                .body("card_types[0].requires3ds", is(this.mastercardCreditCardTypeTestRecord.getRequires3DS()))
                 .body("card_types[0].type", is(this.mastercardCreditCardTypeTestRecord.getType().toString()));
     }
 }

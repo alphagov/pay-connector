@@ -7,7 +7,6 @@ import org.junit.Before;
 import org.junit.Rule;
 import uk.gov.pay.connector.it.dao.DatabaseFixtures;
 import uk.gov.pay.connector.model.domain.GatewayAccountEntity;
-import uk.gov.pay.connector.resources.ApiPaths;
 import uk.gov.pay.connector.rules.DropwizardAppWithPostgresRule;
 import uk.gov.pay.connector.util.DatabaseTestHelper;
 
@@ -29,7 +28,7 @@ public class GatewayAccountResourceTestBase {
 
     @Rule
     public DropwizardAppWithPostgresRule app = new DropwizardAppWithPostgresRule();
-    DatabaseFixtures databaseFixtures;
+    protected DatabaseFixtures databaseFixtures;
 
     @Before
     public void setUp() {
