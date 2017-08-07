@@ -561,6 +561,7 @@
             </column>
         </addColumn>
     </changeSet>
+
     <changeSet id="createIndex charges.status" author="">
         <createIndex indexName="idx_charges_status"
                      tableName="charges"
@@ -582,6 +583,22 @@
             <column name="label" value="Maestro"/>
             <column name="requires_3ds" value="true"/>
         </insert>
+    </changeSet>
+
+    <changeSet id="createIndex refunds.reference" author="">
+        <createIndex indexName="idx_refunds_reference"
+                     tableName="refunds"
+                     unique="false">
+            <column name="reference" type="text"/>
+        </createIndex>
+    </changeSet>
+
+    <changeSet id="createIndex gateway_accounts.payment_provider" author="">
+        <createIndex indexName="idx_gateway_accounts_payment_provider"
+                     tableName="gateway_accounts"
+                     unique="false">
+            <column name="payment_provider" type="varchar(255)"/>
+        </createIndex>
     </changeSet>
 
 </databaseChangeLog>
