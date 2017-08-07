@@ -14,16 +14,18 @@ abstract public class BasePaymentProvider<T extends BaseResponse, R> implements 
 
     protected boolean isNotificationEndpointSecured;
     protected String notificationDomain;
+    protected ExternalRefundAvailabilityCalculator externalRefundAvailabilityCalculator;
     protected EnumMap<GatewayOperation, GatewayClient> gatewayOperationClientMap;
 
-    public BasePaymentProvider(EnumMap<GatewayOperation, GatewayClient> clients) {
-        this(clients, false, null);
+    public BasePaymentProvider(EnumMap<GatewayOperation, GatewayClient> clients, ExternalRefundAvailabilityCalculator externalRefundAvailabilityCalculator) {
+        this(clients, false, null, externalRefundAvailabilityCalculator);
     }
 
-    public BasePaymentProvider(EnumMap<GatewayOperation, GatewayClient> operationClients, boolean isNotificationEndpointSecured, String notificationDomain) {
+    public BasePaymentProvider(EnumMap<GatewayOperation, GatewayClient> operationClients, boolean isNotificationEndpointSecured, String notificationDomain, ExternalRefundAvailabilityCalculator externalRefundAvailabilityCalculator) {
         this.gatewayOperationClientMap = operationClients;
         this.isNotificationEndpointSecured = isNotificationEndpointSecured;
         this.notificationDomain = notificationDomain;
+        this.externalRefundAvailabilityCalculator = externalRefundAvailabilityCalculator;
     }
 
     protected <U extends GatewayRequest> GatewayResponse sendReceive(U request, Function<U, GatewayOrder> order,

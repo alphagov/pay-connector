@@ -9,25 +9,32 @@ import uk.gov.pay.connector.dao.CardTypeDao;
 import uk.gov.pay.connector.dao.ChargeDao;
 import uk.gov.pay.connector.dao.TokenDao;
 import uk.gov.pay.connector.model.ChargeResponse;
-import uk.gov.pay.connector.model.api.ExternalChargeRefundAvailability;
 import uk.gov.pay.connector.model.builder.PatchRequestBuilder;
-import uk.gov.pay.connector.model.domain.*;
+import uk.gov.pay.connector.model.domain.CardTypeEntity;
+import uk.gov.pay.connector.model.domain.ChargeEntity;
+import uk.gov.pay.connector.model.domain.ChargeStatus;
+import uk.gov.pay.connector.model.domain.GatewayAccountEntity;
+import uk.gov.pay.connector.model.domain.PersistedCard;
+import uk.gov.pay.connector.model.domain.TokenEntity;
 import uk.gov.pay.connector.resources.ChargesApiResource;
 
 import javax.inject.Inject;
 import javax.ws.rs.core.UriBuilder;
 import javax.ws.rs.core.UriInfo;
 import java.net.URI;
-import java.time.LocalDate;
 import java.time.ZonedDateTime;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
+import java.util.Optional;
 
 import static javax.ws.rs.HttpMethod.GET;
 import static javax.ws.rs.HttpMethod.POST;
 import static javax.ws.rs.core.MediaType.APPLICATION_FORM_URLENCODED;
 import static uk.gov.pay.connector.model.ChargeResponse.ChargeResponseBuilder;
 import static uk.gov.pay.connector.model.ChargeResponse.aChargeResponse;
-import static uk.gov.pay.connector.model.domain.NumbersInStringsSanitizer.*;
+import static uk.gov.pay.connector.model.domain.NumbersInStringsSanitizer.sanitize;
 import static uk.gov.pay.connector.resources.ApiPaths.CHARGE_API_PATH;
 import static uk.gov.pay.connector.resources.ApiPaths.REFUNDS_API_PATH;
 
@@ -39,13 +46,15 @@ public class ChargeService {
     private CardTypeDao cardTypeDao;
     private TokenDao tokenDao;
     private LinksConfig linksConfig;
+    private PaymentProviders providers;
 
     @Inject
-    public ChargeService(TokenDao tokenDao, ChargeDao chargeDao, ConnectorConfiguration config, CardTypeDao cardTypeDao) {
+    public ChargeService(TokenDao tokenDao, ChargeDao chargeDao, ConnectorConfiguration config, CardTypeDao cardTypeDao, PaymentProviders providers) {
         this.tokenDao = tokenDao;
         this.chargeDao = chargeDao;
         this.cardTypeDao = cardTypeDao;
         this.linksConfig = config.getLinks();
+        this.providers = providers;
     }
 
     @Transactional
@@ -162,7 +171,7 @@ public class ChargeService {
 
     private ChargeResponse.RefundSummary buildRefundSummary(ChargeEntity charge) {
         ChargeResponse.RefundSummary refund = new ChargeResponse.RefundSummary();
-        refund.setStatus(ExternalChargeRefundAvailability.valueOf(charge).getStatus());
+        refund.setStatus(providers.byName(charge.getPaymentGatewayName()).getExternalChargeRefundAvailability(charge).getStatus());
         refund.setAmountSubmitted(charge.getRefundedAmount());
         refund.setAmountAvailable(charge.getTotalAmountToBeRefunded());
         return refund;

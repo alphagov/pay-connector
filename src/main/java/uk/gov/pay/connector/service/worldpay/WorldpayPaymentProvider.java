@@ -8,12 +8,15 @@ import uk.gov.pay.connector.model.CaptureGatewayRequest;
 import uk.gov.pay.connector.model.Notification;
 import uk.gov.pay.connector.model.Notifications;
 import uk.gov.pay.connector.model.RefundGatewayRequest;
+import uk.gov.pay.connector.model.api.ExternalChargeRefundAvailability;
+import uk.gov.pay.connector.model.domain.ChargeEntity;
 import uk.gov.pay.connector.model.domain.GatewayAccountEntity;
 import uk.gov.pay.connector.model.gateway.Auth3dsResponseGatewayRequest;
 import uk.gov.pay.connector.model.gateway.AuthorisationGatewayRequest;
 import uk.gov.pay.connector.model.gateway.GatewayResponse;
 import uk.gov.pay.connector.service.BasePaymentProvider;
 import uk.gov.pay.connector.service.BaseResponse;
+import uk.gov.pay.connector.service.ExternalRefundAvailabilityCalculator;
 import uk.gov.pay.connector.service.GatewayClient;
 import uk.gov.pay.connector.service.GatewayOperation;
 import uk.gov.pay.connector.service.GatewayOrder;
@@ -42,8 +45,9 @@ public class WorldpayPaymentProvider extends BasePaymentProvider<BaseResponse, S
 
     public static final String WORLDPAY_MACHINE_COOKIE_NAME = "machine";
 
-    public WorldpayPaymentProvider(EnumMap<GatewayOperation, GatewayClient> clients, boolean isNotificationEndpointSecured, String notificationDomain) {
-        super(clients, isNotificationEndpointSecured, notificationDomain);
+    public WorldpayPaymentProvider(EnumMap<GatewayOperation, GatewayClient> clients, boolean isNotificationEndpointSecured, String notificationDomain,
+                                   ExternalRefundAvailabilityCalculator externalRefundAvailabilityCalculator) {
+        super(clients, isNotificationEndpointSecured, notificationDomain, externalRefundAvailabilityCalculator);
     }
 
     @Override
@@ -95,6 +99,11 @@ public class WorldpayPaymentProvider extends BasePaymentProvider<BaseResponse, S
     @Override
     public boolean verifyNotification(Notification<String> notification, GatewayAccountEntity gatewayAccountEntity) {
         return true;
+    }
+
+    @Override
+    public ExternalChargeRefundAvailability getExternalChargeRefundAvailability(ChargeEntity chargeEntity) {
+        return externalRefundAvailabilityCalculator.calculate(chargeEntity);
     }
 
     @Override

@@ -7,6 +7,8 @@ import uk.gov.pay.connector.model.GatewayError;
 import uk.gov.pay.connector.model.Notification;
 import uk.gov.pay.connector.model.Notifications;
 import uk.gov.pay.connector.model.RefundGatewayRequest;
+import uk.gov.pay.connector.model.api.ExternalChargeRefundAvailability;
+import uk.gov.pay.connector.model.domain.ChargeEntity;
 import uk.gov.pay.connector.model.domain.GatewayAccountEntity;
 import uk.gov.pay.connector.model.gateway.Auth3dsResponseGatewayRequest;
 import uk.gov.pay.connector.model.gateway.AuthorisationGatewayRequest;
@@ -18,6 +20,7 @@ import uk.gov.pay.connector.service.BaseCaptureResponse;
 import uk.gov.pay.connector.service.BasePaymentProvider;
 import uk.gov.pay.connector.service.BaseRefundResponse;
 import uk.gov.pay.connector.service.BaseResponse;
+import uk.gov.pay.connector.service.ExternalRefundAvailabilityCalculator;
 import uk.gov.pay.connector.service.PaymentGatewayName;
 import uk.gov.pay.connector.service.StatusMapper;
 
@@ -33,8 +36,8 @@ import static uk.gov.pay.connector.service.sandbox.SandboxCardNumbers.isValidCar
 
 public class SandboxPaymentProvider extends BasePaymentProvider<BaseResponse, String> {
 
-    public SandboxPaymentProvider() {
-        super(null);
+    public SandboxPaymentProvider(ExternalRefundAvailabilityCalculator externalRefundAvailabilityCalculator) {
+        super(null, externalRefundAvailabilityCalculator);
     }
 
     @Override
@@ -114,6 +117,11 @@ public class SandboxPaymentProvider extends BasePaymentProvider<BaseResponse, St
     @Override
     public StatusMapper<String> getStatusMapper() {
         return SandboxStatusMapper.get();
+    }
+
+    @Override
+    public ExternalChargeRefundAvailability getExternalChargeRefundAvailability(ChargeEntity chargeEntity) {
+        return externalRefundAvailabilityCalculator.calculate(chargeEntity);
     }
 
     private GatewayResponse<BaseAuthoriseResponse> createGatewayBaseAuthoriseResponse(boolean isAuthorised) {

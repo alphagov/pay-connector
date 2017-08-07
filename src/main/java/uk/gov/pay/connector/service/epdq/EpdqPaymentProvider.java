@@ -8,12 +8,15 @@ import uk.gov.pay.connector.model.GatewayError;
 import uk.gov.pay.connector.model.Notification;
 import uk.gov.pay.connector.model.Notifications;
 import uk.gov.pay.connector.model.RefundGatewayRequest;
+import uk.gov.pay.connector.model.api.ExternalChargeRefundAvailability;
+import uk.gov.pay.connector.model.domain.ChargeEntity;
 import uk.gov.pay.connector.model.domain.GatewayAccountEntity;
 import uk.gov.pay.connector.model.gateway.Auth3dsResponseGatewayRequest;
 import uk.gov.pay.connector.model.gateway.AuthorisationGatewayRequest;
 import uk.gov.pay.connector.model.gateway.GatewayResponse;
 import uk.gov.pay.connector.service.BasePaymentProvider;
 import uk.gov.pay.connector.service.BaseResponse;
+import uk.gov.pay.connector.service.ExternalRefundAvailabilityCalculator;
 import uk.gov.pay.connector.service.GatewayClient;
 import uk.gov.pay.connector.service.GatewayOperation;
 import uk.gov.pay.connector.service.GatewayOrder;
@@ -37,7 +40,10 @@ import static uk.gov.pay.connector.model.domain.GatewayAccount.CREDENTIALS_SHA_I
 import static uk.gov.pay.connector.model.domain.GatewayAccount.CREDENTIALS_SHA_OUT_PASSPHRASE;
 import static uk.gov.pay.connector.model.domain.GatewayAccount.CREDENTIALS_USERNAME;
 import static uk.gov.pay.connector.service.epdq.EpdqNotification.SHASIGN;
-import static uk.gov.pay.connector.service.epdq.EpdqOrderRequestBuilder.*;
+import static uk.gov.pay.connector.service.epdq.EpdqOrderRequestBuilder.anEpdqAuthoriseOrderRequestBuilder;
+import static uk.gov.pay.connector.service.epdq.EpdqOrderRequestBuilder.anEpdqCancelOrderRequestBuilder;
+import static uk.gov.pay.connector.service.epdq.EpdqOrderRequestBuilder.anEpdqCaptureOrderRequestBuilder;
+import static uk.gov.pay.connector.service.epdq.EpdqOrderRequestBuilder.anEpdqRefundOrderRequestBuilder;
 
 
 public class EpdqPaymentProvider extends BasePaymentProvider<BaseResponse, String> {
@@ -53,8 +59,8 @@ public class EpdqPaymentProvider extends BasePaymentProvider<BaseResponse, Strin
     private final boolean refundEnabled;
 
     public EpdqPaymentProvider(EnumMap<GatewayOperation, GatewayClient> clients, SignatureGenerator signatureGenerator,
-                               boolean refundEnabled) {
-        super(clients);
+                               boolean refundEnabled, ExternalRefundAvailabilityCalculator externalRefundAvailabilityCalculator) {
+        super(clients, externalRefundAvailabilityCalculator);
         this.signatureGenerator = signatureGenerator;
         this.refundEnabled = refundEnabled;
     }
@@ -119,6 +125,11 @@ public class EpdqPaymentProvider extends BasePaymentProvider<BaseResponse, Strin
         String signature = signatureGenerator.sign(notificationParamsWithoutShaSign, gatewayAccountEntity.getCredentials().get(CREDENTIALS_SHA_OUT_PASSPHRASE));
 
         return getShaSignFromNotificationParams(notificationParams).equalsIgnoreCase(signature);
+    }
+
+    @Override
+    public ExternalChargeRefundAvailability getExternalChargeRefundAvailability(ChargeEntity chargeEntity) {
+        return externalRefundAvailabilityCalculator.calculate(chargeEntity);
     }
 
     @Override

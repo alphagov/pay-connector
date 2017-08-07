@@ -39,6 +39,8 @@ public class PaymentProviders<T extends BaseResponse> {
     private final GatewayClientFactory gatewayClientFactory;
     private final Environment environment;
     private final ConnectorConfiguration config;
+    private final ExternalRefundAvailabilityCalculator defaultExternalRefundAvailabilityCalculator = new DefaultExternalRefundAvailabilityCalculator();
+    private final ExternalRefundAvailabilityCalculator epdqExternalRefundAvailabilityCalculator = new EpdqExternalRefundAvailabilityCalculator();
 
     @Inject
     public PaymentProviders(ConnectorConfiguration config, GatewayClientFactory gatewayClientFactory, ObjectMapper objectMapper, Environment environment) {
@@ -48,7 +50,7 @@ public class PaymentProviders<T extends BaseResponse> {
 
         this.paymentProviders.put(WORLDPAY, createWorldpayProvider());
         this.paymentProviders.put(SMARTPAY, createSmartPayProvider(objectMapper));
-        this.paymentProviders.put(SANDBOX, new SandboxPaymentProvider());
+        this.paymentProviders.put(SANDBOX, new SandboxPaymentProvider(defaultExternalRefundAvailabilityCalculator));
         this.paymentProviders.put(EPDQ, createEpdqProvider());
     }
 
@@ -71,7 +73,7 @@ public class PaymentProviders<T extends BaseResponse> {
         WorldpayConfig worldpayConfig = config.getWorldpayConfig();
 
         return new WorldpayPaymentProvider(
-                gatewayClientEnumMap,worldpayConfig.isSecureNotificationEnabled(),worldpayConfig.getNotificationDomain());
+                gatewayClientEnumMap,worldpayConfig.isSecureNotificationEnabled(),worldpayConfig.getNotificationDomain(), defaultExternalRefundAvailabilityCalculator);
     }
 
     private PaymentProvider createSmartPayProvider(ObjectMapper objectMapper) {
@@ -85,7 +87,8 @@ public class PaymentProviders<T extends BaseResponse> {
 
         return new SmartpayPaymentProvider(
                 gatewayClients,
-                objectMapper
+                objectMapper,
+                defaultExternalRefundAvailabilityCalculator
         );
     }
 
@@ -98,7 +101,7 @@ public class PaymentProviders<T extends BaseResponse> {
                 .build();
 
         return new EpdqPaymentProvider(gatewayClientEnumMap, new EpdqSha512SignatureGenerator(),
-                config.isEpdqRefundsEnabled());
+                config.isEpdqRefundsEnabled(), epdqExternalRefundAvailabilityCalculator);
     }
 
     public PaymentProvider<T, ?> byName(PaymentGatewayName gateway) {

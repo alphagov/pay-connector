@@ -14,7 +14,6 @@ import uk.gov.pay.connector.dao.CardTypeDao;
 import uk.gov.pay.connector.dao.ChargeDao;
 import uk.gov.pay.connector.dao.TokenDao;
 import uk.gov.pay.connector.model.ChargeResponse;
-import uk.gov.pay.connector.model.api.ExternalChargeRefundAvailability;
 import uk.gov.pay.connector.model.domain.ChargeEntity;
 import uk.gov.pay.connector.model.domain.ChargeStatus;
 import uk.gov.pay.connector.model.domain.GatewayAccountEntity;
@@ -40,11 +39,20 @@ import static org.hamcrest.core.IsNull.notNullValue;
 import static org.hamcrest.core.IsNull.nullValue;
 import static org.junit.Assert.assertThat;
 import static org.mockito.ArgumentCaptor.forClass;
-import static org.mockito.Mockito.*;
+import static org.mockito.Mockito.any;
+import static org.mockito.Mockito.doAnswer;
+import static org.mockito.Mockito.inOrder;
+import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.never;
+import static org.mockito.Mockito.verify;
+import static org.mockito.Mockito.when;
 import static uk.gov.pay.connector.model.ChargeResponse.ChargeResponseBuilder;
 import static uk.gov.pay.connector.model.ChargeResponse.aChargeResponse;
+import static uk.gov.pay.connector.model.api.ExternalChargeRefundAvailability.EXTERNAL_AVAILABLE;
 import static uk.gov.pay.connector.model.domain.ChargeEntityFixture.aValidChargeEntity;
-import static uk.gov.pay.connector.model.domain.ChargeStatus.*;
+import static uk.gov.pay.connector.model.domain.ChargeStatus.CAPTURED;
+import static uk.gov.pay.connector.model.domain.ChargeStatus.CREATED;
+import static uk.gov.pay.connector.model.domain.ChargeStatus.ENTERING_CARD_DETAILS;
 import static uk.gov.pay.connector.model.domain.GatewayAccountEntity.Type.TEST;
 
 
@@ -65,6 +73,10 @@ public class ChargeServiceTest {
     private UriInfo mockedUriInfo;
     @Mock
     private LinksConfig mockedLinksConfig;
+    @Mock
+    private PaymentProviders mockedProviders;
+    @Mock
+    private PaymentProvider mockedPaymentProvider;
 
     private ChargeService service;
     private Map<String, String> chargeRequest = new HashMap<String, String>() {{
@@ -87,7 +99,10 @@ public class ChargeServiceTest {
                 .when(this.mockedUriInfo)
                 .getBaseUriBuilder();
 
-        service = new ChargeService(mockedTokenDao, mockedChargeDao, mockedConfig, mockedCardTypeDao);
+        when(mockedProviders.byName(any(PaymentGatewayName.class))).thenReturn(mockedPaymentProvider);
+        when(mockedPaymentProvider.getExternalChargeRefundAvailability(any(ChargeEntity.class))).thenReturn(EXTERNAL_AVAILABLE);
+
+        service = new ChargeService(mockedTokenDao, mockedChargeDao, mockedConfig, mockedCardTypeDao, mockedProviders);
     }
 
     @Test
@@ -298,7 +313,7 @@ public class ChargeServiceTest {
         ChargeResponse.RefundSummary refunds = new ChargeResponse.RefundSummary();
         refunds.setAmountAvailable(chargeEntity.getAmount());
         refunds.setAmountSubmitted(0L);
-        refunds.setStatus(ExternalChargeRefundAvailability.valueOf(chargeEntity).getStatus());
+        refunds.setStatus(EXTERNAL_AVAILABLE.getStatus());
 
         ChargeResponse.SettlementSummary settlement = new ChargeResponse.SettlementSummary();
         settlement.setCapturedTime(null);

@@ -11,12 +11,15 @@ import uk.gov.pay.connector.model.Notification;
 import uk.gov.pay.connector.model.Notifications;
 import uk.gov.pay.connector.model.Notifications.Builder;
 import uk.gov.pay.connector.model.RefundGatewayRequest;
+import uk.gov.pay.connector.model.api.ExternalChargeRefundAvailability;
+import uk.gov.pay.connector.model.domain.ChargeEntity;
 import uk.gov.pay.connector.model.domain.GatewayAccountEntity;
 import uk.gov.pay.connector.model.gateway.Auth3dsResponseGatewayRequest;
 import uk.gov.pay.connector.model.gateway.AuthorisationGatewayRequest;
 import uk.gov.pay.connector.model.gateway.GatewayResponse;
 import uk.gov.pay.connector.service.BasePaymentProvider;
 import uk.gov.pay.connector.service.BaseResponse;
+import uk.gov.pay.connector.service.ExternalRefundAvailabilityCalculator;
 import uk.gov.pay.connector.service.GatewayClient;
 import uk.gov.pay.connector.service.GatewayOperation;
 import uk.gov.pay.connector.service.GatewayOrder;
@@ -42,8 +45,9 @@ public class SmartpayPaymentProvider extends BasePaymentProvider<BaseResponse, P
 
     private final ObjectMapper objectMapper;
 
-    public SmartpayPaymentProvider(EnumMap<GatewayOperation, GatewayClient> clients, ObjectMapper objectMapper) {
-        super(clients);
+    public SmartpayPaymentProvider(EnumMap<GatewayOperation, GatewayClient> clients, ObjectMapper objectMapper,
+                                   ExternalRefundAvailabilityCalculator externalRefundAvailabilityCalculator) {
+        super(clients, externalRefundAvailabilityCalculator);
         this.objectMapper = objectMapper;
     }
 
@@ -127,6 +131,11 @@ public class SmartpayPaymentProvider extends BasePaymentProvider<BaseResponse, P
     @Override
     public StatusMapper<Pair<String, Boolean>> getStatusMapper() {
         return SmartpayStatusMapper.get();
+    }
+
+    @Override
+    public ExternalChargeRefundAvailability getExternalChargeRefundAvailability(ChargeEntity chargeEntity) {
+        return externalRefundAvailabilityCalculator.calculate(chargeEntity);
     }
 
     public static BiFunction<GatewayOrder, Invocation.Builder, Invocation.Builder> includeSessionIdentifier() {
