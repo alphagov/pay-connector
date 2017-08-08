@@ -58,6 +58,23 @@ public class ExternalChargeRefundAvailabilityGatewayAccountRefundsEnabledTest {
         assertEquals(EXTERNAL_PENDING, valueOf(aValidChargeEntity()
                 .withGatewayAccountEntity(gatewayAccount)
                 .withStatus(CAPTURE_SUBMITTED).build()));
+
+        assertEquals(EXTERNAL_PENDING, valueOf(aValidChargeEntity()
+                .withGatewayAccountEntity(gatewayAccount)
+                .withStatus(AUTHORISATION_3DS_REQUIRED).build()));
+        assertEquals(EXTERNAL_PENDING, valueOf(aValidChargeEntity()
+                .withGatewayAccountEntity(gatewayAccount)
+                .withStatus(AUTHORISATION_3DS_READY).build()));
+        assertEquals(EXTERNAL_PENDING, valueOf(aValidChargeEntity()
+                .withGatewayAccountEntity(gatewayAccount)
+                .withStatus(AUTHORISATION_SUBMITTED).build()));
+        assertEquals(EXTERNAL_PENDING, valueOf(aValidChargeEntity()
+                .withGatewayAccountEntity(gatewayAccount)
+                .withStatus(CAPTURE_APPROVED).build()));
+        assertEquals(EXTERNAL_PENDING, valueOf(aValidChargeEntity()
+                .withGatewayAccountEntity(gatewayAccount)
+                .withStatus(CAPTURE_APPROVED_RETRY).build()));
+
     }
 
     @Test
