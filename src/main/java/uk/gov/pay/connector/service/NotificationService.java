@@ -220,7 +220,7 @@ public class NotificationService {
                 return;
             }
 
-            Optional<RefundEntity> optionalRefundEntity = refundDao.findByReference(notification.getReference());
+            Optional<RefundEntity> optionalRefundEntity = refundDao.findByProviderAndReference(paymentProvider.getPaymentGatewayName(), notification.getReference());
             if (!optionalRefundEntity.isPresent()) {
                 logger.error("{} notification {} could not be used to update charge (associated charge entity not found)",
                         paymentProvider.getPaymentGatewayName(), notification);

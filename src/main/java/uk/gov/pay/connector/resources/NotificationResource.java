@@ -1,6 +1,5 @@
 package uk.gov.pay.connector.resources;
 
-import javax.ws.rs.core.MediaType;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import uk.gov.pay.connector.service.NotificationService;
@@ -8,15 +7,21 @@ import uk.gov.pay.connector.service.PaymentGatewayName;
 
 import javax.annotation.security.PermitAll;
 import javax.inject.Inject;
-import javax.ws.rs.*;
+import javax.ws.rs.Consumes;
+import javax.ws.rs.HeaderParam;
+import javax.ws.rs.POST;
+import javax.ws.rs.Path;
+import javax.ws.rs.Produces;
 import javax.ws.rs.core.Response;
 import java.io.IOException;
 
-import static javax.ws.rs.core.MediaType.*;
+import static javax.ws.rs.core.MediaType.APPLICATION_FORM_URLENCODED;
 import static javax.ws.rs.core.MediaType.APPLICATION_JSON;
-import static javax.ws.rs.core.MediaType.TEXT_PLAIN;
 import static javax.ws.rs.core.MediaType.TEXT_XML;
-import static uk.gov.pay.connector.resources.ApiPaths.*;
+import static uk.gov.pay.connector.resources.ApiPaths.NOTIFICATIONS_EPDQ_API_PATH;
+import static uk.gov.pay.connector.resources.ApiPaths.NOTIFICATIONS_SANDBOX_API_PATH;
+import static uk.gov.pay.connector.resources.ApiPaths.NOTIFICATIONS_SMARTPAY_API_PATH;
+import static uk.gov.pay.connector.resources.ApiPaths.NOTIFICATIONS_WORLDPAY_API_PATH;
 import static uk.gov.pay.connector.service.PaymentGatewayName.SMARTPAY;
 import static uk.gov.pay.connector.util.ResponseUtil.forbiddenErrorResponse;
 

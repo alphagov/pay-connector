@@ -14,7 +14,10 @@ import static javax.ws.rs.core.MediaType.APPLICATION_JSON;
 import static javax.ws.rs.core.MediaType.TEXT_XML;
 import static org.hamcrest.Matchers.is;
 import static org.junit.Assert.assertThat;
-import static uk.gov.pay.connector.model.domain.ChargeStatus.*;
+import static uk.gov.pay.connector.model.domain.ChargeStatus.AUTHORISATION_SUCCESS;
+import static uk.gov.pay.connector.model.domain.ChargeStatus.CAPTURED;
+import static uk.gov.pay.connector.model.domain.ChargeStatus.CAPTURE_SUBMITTED;
+import static uk.gov.pay.connector.model.domain.RefundStatus.REFUND_SUBMITTED;
 import static uk.gov.pay.connector.util.TestTemplateResourceLoader.WORLDPAY_NOTIFICATION;
 
 public class WorldpayNotificationResourceITest extends ChargingITestBase {
@@ -27,7 +30,7 @@ public class WorldpayNotificationResourceITest extends ChargingITestBase {
     }
 
     @Test
-    public void shouldHandleAWorldpayNotification() throws Exception {
+    public void shouldHandleAChargeNotification() throws Exception {
         String transactionId = "transaction-id";
         String chargeId = createNewChargeWith(CAPTURE_SUBMITTED, transactionId);
 
@@ -39,6 +42,24 @@ public class WorldpayNotificationResourceITest extends ChargingITestBase {
         assertThat(response, is(RESPONSE_EXPECTED_BY_WORLDPAY));
 
         assertFrontendChargeStatusIs(chargeId, CAPTURED.getValue());
+    }
+
+    @Test
+    public void shouldHandleARefundNotification() throws Exception {
+        String transactionId = "transaction-id";
+        String refundExternalId = "12345";
+        int refundAmount = 1000;
+
+        String externalChargeId = createNewChargeWithRefund(transactionId, refundExternalId, refundAmount);
+
+        String response = notifyConnector(transactionId, "REFUNDED", refundExternalId)
+                .statusCode(200)
+                .extract().body()
+                .asString();
+
+        assertThat(response, is(RESPONSE_EXPECTED_BY_WORLDPAY));
+        assertFrontendChargeStatusIs(externalChargeId, CAPTURED.getValue());
+        assertRefundStatus(externalChargeId, refundExternalId, "success", refundAmount);
     }
 
     @Test
@@ -127,10 +148,18 @@ public class WorldpayNotificationResourceITest extends ChargingITestBase {
     }
 
     private ValidatableResponse notifyConnector(String transactionId, String status) throws Exception {
+        return notifyConnector(notificationPayloadForTransaction(transactionId, status));
+    }
+
+    private ValidatableResponse notifyConnector(String transactionId, String status, String reference) throws Exception {
+        return notifyConnector(notificationPayloadForTransaction(transactionId, status, reference));
+    }
+
+    private ValidatableResponse notifyConnector(String payload) throws Exception {
         String validIp = new DnsUtils().dnsLookup("build.ci.pymnt.uk").get();
         String xForwardedForHeader = format("%s, %s", validIp, "8.8.8.8");
         return given().port(app.getLocalPort())
-                .body(notificationPayloadForTransaction(transactionId, status))
+                .body(payload)
                 .header("X-Forwarded-For", xForwardedForHeader)
                 .contentType(TEXT_XML)
                 .post(NOTIFICATION_PATH)
@@ -145,4 +174,17 @@ public class WorldpayNotificationResourceITest extends ChargingITestBase {
                 .replace("{{bookingDateMonth}}", "01")
                 .replace("{{bookingDateYear}}", "2017");
     }
+
+    private String notificationPayloadForTransaction(String transactionId, String status, String reference) throws IOException {
+        String payload = notificationPayloadForTransaction(transactionId, status);
+        return payload.replace("{{refund-ref}}", reference);
+    }
+
+    private String createNewChargeWithRefund(String transactionId, String refundExternalId, long refundAmount) {
+        String externalChargeId = createNewChargeWith(CAPTURED, transactionId);
+        String chargeId = externalChargeId.substring(externalChargeId.indexOf("-") + 1, externalChargeId.length());
+        createNewRefund(REFUND_SUBMITTED, Long.valueOf(chargeId), refundExternalId, refundExternalId, refundAmount);
+        return externalChargeId;
+    }
+
 }
