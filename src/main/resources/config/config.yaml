@@ -169,5 +169,5 @@ graphiteHost: ${METRICS_HOST:-localhost}
 graphitePort: ${METRICS_PORT:-8092}
 
 # Temporary feature flag to stop people attempting refunds before we handle refund notifications
-epdqRefundsEnabled: false
+epdqRefundsEnabled: ${EPDQ_REFUNDS_ENABLED:-false}
 
