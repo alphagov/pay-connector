@@ -1,5 +1,6 @@
 package uk.gov.pay.connector.model.domain;
 
+import org.eclipse.persistence.annotations.Customizer;
 import uk.gov.pay.connector.util.RandomIdGenerator;
 
 import javax.persistence.*;
@@ -11,6 +12,7 @@ import static org.apache.commons.lang3.StringUtils.equalsIgnoreCase;
 
 @Entity
 @Table(name = "refunds")
+@Customizer(HistoryCustomizer.class)
 @SequenceGenerator(name = "refunds_refund_id_seq", sequenceName = "refunds_refund_id_seq", allocationSize = 1)
 @Access(AccessType.FIELD)
 public class RefundEntity extends AbstractEntity {

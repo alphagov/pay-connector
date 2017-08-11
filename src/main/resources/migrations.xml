@@ -617,4 +617,19 @@
         </createIndex>
     </changeSet>
 
+    <changeSet id="build refunds_history table" author="">
+        <createTable tableName="refunds_history">
+            <column name="id" type="bigserial" autoIncrement="true" />
+            <column name="external_id" type="char(26)" />
+            <column name="amount" type="bigint" />
+            <column name="status" type="varchar(25)" />
+            <column name="charge_id" type="bigserial" />
+            <column name="created_date" type="timestamp without timezone" />
+            <column name="version" type="bigint" defaultValue="0" />
+            <column name="reference" type="text"/>
+            <column name="history_start_date" type="timestamp without timezone" />
+            <column name="history_end_date" type="timestamp without timezone" />
+        </createTable>
+    </changeSet>
+
 </databaseChangeLog>
