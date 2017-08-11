@@ -14,11 +14,21 @@ import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.mockito.Mock;
 import org.mockito.runners.MockitoJUnitRunner;
-import uk.gov.pay.connector.model.*;
-import uk.gov.pay.connector.model.domain.*;
+import uk.gov.pay.connector.model.CancelGatewayRequest;
+import uk.gov.pay.connector.model.CaptureGatewayRequest;
+import uk.gov.pay.connector.model.GatewayError;
+import uk.gov.pay.connector.model.Notification;
+import uk.gov.pay.connector.model.Notifications;
+import uk.gov.pay.connector.model.RefundGatewayRequest;
+import uk.gov.pay.connector.model.domain.Address;
+import uk.gov.pay.connector.model.domain.AuthCardDetails;
+import uk.gov.pay.connector.model.domain.ChargeEntity;
+import uk.gov.pay.connector.model.domain.GatewayAccountEntity;
+import uk.gov.pay.connector.model.domain.RefundEntity;
 import uk.gov.pay.connector.model.gateway.AuthorisationGatewayRequest;
 import uk.gov.pay.connector.model.gateway.GatewayResponse;
 import uk.gov.pay.connector.service.ClientFactory;
+import uk.gov.pay.connector.service.ExternalRefundAvailabilityCalculator;
 import uk.gov.pay.connector.service.GatewayClient;
 import uk.gov.pay.connector.service.GatewayClientFactory;
 import uk.gov.pay.connector.service.GatewayOperation;
@@ -52,6 +62,7 @@ import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 import static uk.gov.pay.connector.model.ErrorType.UNEXPECTED_STATUS_CODE_FROM_GATEWAY;
+import static uk.gov.pay.connector.model.api.ExternalChargeRefundAvailability.EXTERNAL_AVAILABLE;
 import static uk.gov.pay.connector.model.domain.Address.anAddress;
 import static uk.gov.pay.connector.model.domain.ChargeEntityFixture.aValidChargeEntity;
 import static uk.gov.pay.connector.model.domain.GatewayAccount.CREDENTIALS_MERCHANT_ID;
@@ -61,7 +72,18 @@ import static uk.gov.pay.connector.model.domain.GatewayAccount.CREDENTIALS_SHA_O
 import static uk.gov.pay.connector.model.domain.GatewayAccount.CREDENTIALS_USERNAME;
 import static uk.gov.pay.connector.model.domain.GatewayAccountEntity.Type.TEST;
 import static uk.gov.pay.connector.service.worldpay.WorldpayPaymentProvider.includeSessionIdentifier;
-import static uk.gov.pay.connector.util.TestTemplateResourceLoader.*;
+import static uk.gov.pay.connector.util.TestTemplateResourceLoader.EPDQ_AUTHORISATION_ERROR_RESPONSE;
+import static uk.gov.pay.connector.util.TestTemplateResourceLoader.EPDQ_AUTHORISATION_SUCCESS_RESPONSE;
+import static uk.gov.pay.connector.util.TestTemplateResourceLoader.EPDQ_CANCEL_ERROR_RESPONSE;
+import static uk.gov.pay.connector.util.TestTemplateResourceLoader.EPDQ_CANCEL_REQUEST;
+import static uk.gov.pay.connector.util.TestTemplateResourceLoader.EPDQ_CANCEL_SUCCESS_RESPONSE;
+import static uk.gov.pay.connector.util.TestTemplateResourceLoader.EPDQ_CAPTURE_ERROR_RESPONSE;
+import static uk.gov.pay.connector.util.TestTemplateResourceLoader.EPDQ_CAPTURE_SUCCESS_RESPONSE;
+import static uk.gov.pay.connector.util.TestTemplateResourceLoader.EPDQ_DELETE_SUCCESS_RESPONSE;
+import static uk.gov.pay.connector.util.TestTemplateResourceLoader.EPDQ_NOTIFICATION_TEMPLATE;
+import static uk.gov.pay.connector.util.TestTemplateResourceLoader.EPDQ_REFUND_ERROR_RESPONSE;
+import static uk.gov.pay.connector.util.TestTemplateResourceLoader.EPDQ_REFUND_REQUEST;
+import static uk.gov.pay.connector.util.TestTemplateResourceLoader.EPDQ_REFUND_SUCCESS_RESPONSE;
 
 @RunWith(MockitoJUnitRunner.class)
 public class EpdqPaymentProviderTest {
@@ -92,6 +114,8 @@ public class EpdqPaymentProviderTest {
     private ClientFactory mockClientFactory;
     @Mock
     private SignatureGenerator mockSignatureGenerator;
+    @Mock
+    private ExternalRefundAvailabilityCalculator mockExternalRefundAvailabilityCalculator;
 
     @Mock
     private Notification mockNotification;
@@ -126,7 +150,7 @@ public class EpdqPaymentProviderTest {
                 .refundClient(refundClient)
                 .build();
 
-        provider = new EpdqPaymentProvider(gatewayClients, mockSignatureGenerator, true);
+        provider = new EpdqPaymentProvider(gatewayClients, mockSignatureGenerator, true, mockExternalRefundAvailabilityCalculator);
     }
 
     @Test
@@ -327,8 +351,15 @@ public class EpdqPaymentProviderTest {
 
     @Test(expected = UnsupportedOperationException.class)
     public void shouldThrowExceptionIfRefundFeatureFlagDisabled() {
-        provider = new EpdqPaymentProvider(gatewayClients, mockSignatureGenerator, false);
+        provider = new EpdqPaymentProvider(gatewayClients, mockSignatureGenerator, false, mockExternalRefundAvailabilityCalculator);
         provider.refund(buildTestRefundRequest());
+    }
+
+    @Test
+    public void shouldReturnExternalRefundAvailability() {
+        ChargeEntity mockChargeEntity = mock(ChargeEntity.class);
+        when(mockExternalRefundAvailabilityCalculator.calculate(mockChargeEntity)).thenReturn(EXTERNAL_AVAILABLE);
+        assertThat(provider.getExternalChargeRefundAvailability(mockChargeEntity), is(EXTERNAL_AVAILABLE));
     }
 
     private GatewayAccountEntity buildTestGatewayAccountEntity() {

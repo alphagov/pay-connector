@@ -10,6 +10,7 @@ import com.google.common.io.Resources;
 import fj.data.Either;
 import org.apache.commons.lang3.tuple.Pair;
 import org.hamcrest.CoreMatchers;
+import org.hamcrest.MatcherAssert;
 import org.junit.Assert;
 import org.junit.Before;
 import org.junit.Test;
@@ -27,6 +28,7 @@ import uk.gov.pay.connector.model.domain.GatewayAccountEntity;
 import uk.gov.pay.connector.model.gateway.AuthorisationGatewayRequest;
 import uk.gov.pay.connector.model.gateway.GatewayResponse;
 import uk.gov.pay.connector.service.ClientFactory;
+import uk.gov.pay.connector.service.ExternalRefundAvailabilityCalculator;
 import uk.gov.pay.connector.service.GatewayClient;
 import uk.gov.pay.connector.service.GatewayClientFactory;
 import uk.gov.pay.connector.service.GatewayOperation;
@@ -62,6 +64,7 @@ import static org.mockito.Matchers.anyString;
 import static org.mockito.Matchers.eq;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
+import static uk.gov.pay.connector.model.api.ExternalChargeRefundAvailability.EXTERNAL_AVAILABLE;
 import static uk.gov.pay.connector.model.domain.Address.anAddress;
 import static uk.gov.pay.connector.model.domain.ChargeEntityFixture.aValidChargeEntity;
 import static uk.gov.pay.connector.model.domain.GatewayAccountEntity.Type.TEST;
@@ -87,6 +90,8 @@ public class SmartpayPaymentProviderTest {
     private ClientFactory mockClientFactory;
     @Mock
     private GatewayAccountEntity mockGatewayAccountEntity;
+    @Mock
+    private ExternalRefundAvailabilityCalculator mockExternalRefundAvailabilityCalculator;
 
     @Before
     public void setup() throws Exception {
@@ -118,7 +123,7 @@ public class SmartpayPaymentProviderTest {
                 .refundClient(refundClient)
                 .build();
 
-        provider = new SmartpayPaymentProvider(gatewayClients, new ObjectMapper());
+        provider = new SmartpayPaymentProvider(gatewayClients, new ObjectMapper(), mockExternalRefundAvailabilityCalculator);
     }
 
     @Test
@@ -205,6 +210,13 @@ public class SmartpayPaymentProviderTest {
     @Test
     public void shouldTreatAllNotificationsAsVerified() {
         assertThat(provider.verifyNotification(mock(Notification.class), mockGatewayAccountEntity), is(true));
+    }
+
+    @Test
+    public void shouldReturnExternalRefundAvailability() {
+        ChargeEntity mockChargeEntity = mock(ChargeEntity.class);
+        when(mockExternalRefundAvailabilityCalculator.calculate(mockChargeEntity)).thenReturn(EXTERNAL_AVAILABLE);
+        MatcherAssert.assertThat(provider.getExternalChargeRefundAvailability(mockChargeEntity), is(EXTERNAL_AVAILABLE));
     }
 
     private GatewayAccountEntity aServiceAccount() {

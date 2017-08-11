@@ -25,13 +25,21 @@ import uk.gov.pay.connector.service.smartpay.SmartpayRefundResponse;
 import uk.gov.pay.connector.service.transaction.TransactionFlow;
 import uk.gov.pay.connector.service.worldpay.WorldpayRefundResponse;
 
-import javax.ws.rs.core.UriInfo;
 import java.util.Optional;
 
 import static com.google.common.collect.Maps.newHashMap;
 import static org.hamcrest.core.Is.is;
-import static org.junit.Assert.*;
-import static org.mockito.Mockito.*;
+import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertThat;
+import static org.junit.Assert.fail;
+import static org.mockito.Mockito.any;
+import static org.mockito.Mockito.argThat;
+import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.spy;
+import static org.mockito.Mockito.verify;
+import static org.mockito.Mockito.verifyNoMoreInteractions;
+import static org.mockito.Mockito.when;
+import static uk.gov.pay.connector.model.api.ExternalChargeRefundAvailability.EXTERNAL_AVAILABLE;
 import static uk.gov.pay.connector.model.domain.ChargeEntityFixture.aValidChargeEntity;
 import static uk.gov.pay.connector.model.domain.ChargeStatus.AUTHORISATION_SUCCESS;
 import static uk.gov.pay.connector.model.domain.ChargeStatus.CAPTURED;
@@ -58,11 +66,11 @@ public class ChargeRefundServiceTest {
     private PaymentProviders mockProviders;
     @Mock
     private PaymentProvider mockProvider;
-    @Mock
-    private UriInfo mockUriInfo;
 
     @Before
     public void setUp() {
+        when(mockProviders.byName(any(PaymentGatewayName.class))).thenReturn(mockProvider);
+        when(mockProvider.getExternalChargeRefundAvailability(any(ChargeEntity.class))).thenReturn(EXTERNAL_AVAILABLE);
         chargeRefundService = new ChargeRefundService(mockChargeDao, mockRefundDao, mockProviders, TransactionFlow::new);
     }
 
@@ -126,12 +134,11 @@ public class ChargeRefundServiceTest {
         verify(mockChargeDao).findByExternalIdAndGatewayAccount(externalChargeId, accountId);
         verify(mockChargeDao).merge(charge);
         verify(mockRefundDao).persist(argThat(aRefundEntity(amount, charge)));
-        verify(mockProviders, times(1)).byName(WORLDPAY);
         verify(mockProvider).refund(argThat(aRefundRequestWith(charge, amount)));
         verify(mockRefundDao).merge(any(RefundEntity.class));
         verify(spiedRefundEntity).setStatus(RefundStatus.REFUND_SUBMITTED);
         verify(spiedRefundEntity).setReference(refundEntity.getExternalId());
-        verifyNoMoreInteractions(mockChargeDao, mockRefundDao, mockProviders, mockProvider);
+        verifyNoMoreInteractions(mockChargeDao, mockRefundDao);
     }
 
 
@@ -173,12 +180,11 @@ public class ChargeRefundServiceTest {
         verify(mockChargeDao).findByExternalIdAndGatewayAccount(externalChargeId, accountId);
         verify(mockChargeDao).merge(charge);
         verify(mockRefundDao).persist(argThat(aRefundEntity(amount, charge)));
-        verify(mockProviders, times(1)).byName(SMARTPAY);
         verify(mockProvider).refund(argThat(aRefundRequestWith(charge, amount)));
         verify(mockRefundDao).merge(any(RefundEntity.class));
         verify(spiedRefundEntity).setStatus(RefundStatus.REFUND_SUBMITTED);
         verify(spiedRefundEntity).setReference("refund-pspReference");
-        verifyNoMoreInteractions(mockChargeDao, mockRefundDao, mockProviders, mockProvider);
+        verifyNoMoreInteractions(mockChargeDao, mockRefundDao);
     }
 
     @Test
@@ -287,11 +293,10 @@ public class ChargeRefundServiceTest {
         verify(mockChargeDao).findByExternalIdAndGatewayAccount(externalChargeId, accountId);
         verify(mockChargeDao).merge(charge);
         verify(mockRefundDao).persist(argThat(aRefundEntity(amount, charge)));
-        verify(mockProviders, times(1)).byName(SANDBOX);
         verify(mockProvider).refund(argThat(aRefundRequestWith(charge, amount)));
         verify(mockRefundDao).merge(any(RefundEntity.class));
         verify(spiedRefundEntity).setStatus(RefundStatus.REFUNDED);
-        verifyNoMoreInteractions(mockChargeDao, mockRefundDao, mockProviders, mockProvider);
+        verifyNoMoreInteractions(mockChargeDao, mockRefundDao);
     }
 
     @Test
@@ -338,7 +343,7 @@ public class ChargeRefundServiceTest {
 
         verify(mockChargeDao).findByExternalIdAndGatewayAccount(externalChargeId, accountId);
         verify(mockChargeDao).merge(charge);
-        verifyNoMoreInteractions(mockChargeDao, mockRefundDao, mockProviders, mockProvider);
+        verifyNoMoreInteractions(mockChargeDao, mockRefundDao);
     }
 
     @Test
@@ -377,11 +382,10 @@ public class ChargeRefundServiceTest {
         verify(mockChargeDao).findByExternalIdAndGatewayAccount(externalChargeId, accountId);
         verify(mockChargeDao).merge(capturedCharge);
         verify(mockRefundDao).persist(argThat(aRefundEntity(amount, capturedCharge)));
-        verify(mockProviders, times(1)).byName(WORLDPAY);
         verify(mockProvider).refund(argThat(aRefundRequestWith(capturedCharge, amount)));
         verify(mockRefundDao).merge(any(RefundEntity.class));
         verify(spiedRefundEntity).setStatus(RefundStatus.REFUND_ERROR);
-        verifyNoMoreInteractions(mockChargeDao, mockRefundDao, mockProviders, mockProvider);
+        verifyNoMoreInteractions(mockChargeDao, mockRefundDao);
     }
 
 

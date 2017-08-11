@@ -30,6 +30,7 @@ import static org.hamcrest.text.MatchesPattern.matchesPattern;
 import static uk.gov.pay.connector.matcher.RefundsMatcher.aRefundMatching;
 import static uk.gov.pay.connector.matcher.ZoneDateTimeAsStringWithinMatcher.isWithin;
 import static uk.gov.pay.connector.model.domain.ChargeStatus.CAPTURED;
+import static uk.gov.pay.connector.model.domain.ChargeStatus.CAPTURE_SUBMITTED;
 import static uk.gov.pay.connector.model.domain.ChargeStatus.ENTERING_CARD_DETAILS;
 import static uk.gov.pay.connector.resources.ApiPaths.REFUNDS_API_PATH;
 import static uk.gov.pay.connector.resources.ApiPaths.REFUND_API_PATH;
@@ -128,7 +129,7 @@ public class WorldpayRefundITest extends ChargingITestBase {
                 .aTestCharge()
                 .withAmount(100L)
                 .withTestAccount(defaultTestAccount)
-                .withChargeStatus(ENTERING_CARD_DETAILS)
+                .withChargeStatus(CAPTURE_SUBMITTED)
                 .insert();
 
         Long refundAmount = 20L;

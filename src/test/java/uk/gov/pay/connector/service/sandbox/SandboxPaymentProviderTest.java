@@ -5,11 +5,15 @@ import org.junit.Before;
 import org.junit.Rule;
 import org.junit.Test;
 import org.junit.rules.ExpectedException;
+import org.junit.runner.RunWith;
+import org.mockito.Mock;
+import org.mockito.runners.MockitoJUnitRunner;
 import uk.gov.pay.connector.model.CancelGatewayRequest;
 import uk.gov.pay.connector.model.CaptureGatewayRequest;
 import uk.gov.pay.connector.model.GatewayError;
 import uk.gov.pay.connector.model.RefundGatewayRequest;
 import uk.gov.pay.connector.model.domain.AuthCardDetails;
+import uk.gov.pay.connector.model.domain.ChargeEntity;
 import uk.gov.pay.connector.model.domain.ChargeEntityFixture;
 import uk.gov.pay.connector.model.domain.GatewayAccountEntity;
 import uk.gov.pay.connector.model.domain.RefundEntityFixture;
@@ -20,6 +24,7 @@ import uk.gov.pay.connector.service.BaseAuthoriseResponse.AuthoriseStatus;
 import uk.gov.pay.connector.service.BaseCancelResponse;
 import uk.gov.pay.connector.service.BaseCaptureResponse;
 import uk.gov.pay.connector.service.BaseRefundResponse;
+import uk.gov.pay.connector.service.ExternalRefundAvailabilityCalculator;
 
 import static org.hamcrest.CoreMatchers.instanceOf;
 import static org.hamcrest.CoreMatchers.notNullValue;
@@ -28,18 +33,24 @@ import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.core.Is.is;
 import static org.hamcrest.core.IsSame.sameInstance;
 import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.when;
 import static uk.gov.pay.connector.model.ErrorType.GENERIC_GATEWAY_ERROR;
+import static uk.gov.pay.connector.model.api.ExternalChargeRefundAvailability.EXTERNAL_AVAILABLE;
 
+@RunWith(MockitoJUnitRunner.class)
 public class SandboxPaymentProviderTest {
 
     private SandboxPaymentProvider provider;
+
+    @Mock
+    private ExternalRefundAvailabilityCalculator mockExternalRefundAvailabilityCalculator;
 
     @Rule
     public ExpectedException expectedException = ExpectedException.none();
 
     @Before
     public void setup() {
-        provider = new SandboxPaymentProvider();
+        provider = new SandboxPaymentProvider(mockExternalRefundAvailabilityCalculator);
     }
 
     @Test
@@ -195,4 +206,12 @@ public class SandboxPaymentProviderTest {
         assertThat(refundResponse.getErrorCode(), is(nullValue()));
         assertThat(refundResponse.getErrorMessage(), is(nullValue()));
     }
+
+    @Test
+    public void shouldReturnExternalRefundAvailability() {
+        ChargeEntity mockChargeEntity = mock(ChargeEntity.class);
+        when(mockExternalRefundAvailabilityCalculator.calculate(mockChargeEntity)).thenReturn(EXTERNAL_AVAILABLE);
+        assertThat(provider.getExternalChargeRefundAvailability(mockChargeEntity), is(EXTERNAL_AVAILABLE));
+    }
+
 }

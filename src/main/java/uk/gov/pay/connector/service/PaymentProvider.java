@@ -6,6 +6,8 @@ import uk.gov.pay.connector.model.CaptureGatewayRequest;
 import uk.gov.pay.connector.model.Notification;
 import uk.gov.pay.connector.model.Notifications;
 import uk.gov.pay.connector.model.RefundGatewayRequest;
+import uk.gov.pay.connector.model.api.ExternalChargeRefundAvailability;
+import uk.gov.pay.connector.model.domain.ChargeEntity;
 import uk.gov.pay.connector.model.domain.GatewayAccountEntity;
 import uk.gov.pay.connector.model.gateway.Auth3dsResponseGatewayRequest;
 import uk.gov.pay.connector.model.gateway.AuthorisationGatewayRequest;
@@ -38,4 +40,6 @@ public interface PaymentProvider<T extends BaseResponse, R> {
     String getNotificationDomain();
 
     boolean verifyNotification(Notification<R> notification, GatewayAccountEntity gatewayAccountEntity);
+
+    ExternalChargeRefundAvailability getExternalChargeRefundAvailability(ChargeEntity chargeEntity);
 }

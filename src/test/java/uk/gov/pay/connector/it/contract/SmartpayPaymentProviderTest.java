@@ -15,9 +15,14 @@ import org.mockito.runners.MockitoJUnitRunner;
 import uk.gov.pay.connector.model.CancelGatewayRequest;
 import uk.gov.pay.connector.model.CaptureGatewayRequest;
 import uk.gov.pay.connector.model.RefundGatewayRequest;
-import uk.gov.pay.connector.model.domain.*;
+import uk.gov.pay.connector.model.domain.Address;
+import uk.gov.pay.connector.model.domain.AuthCardDetails;
+import uk.gov.pay.connector.model.domain.ChargeEntity;
+import uk.gov.pay.connector.model.domain.GatewayAccountEntity;
+import uk.gov.pay.connector.model.domain.RefundEntity;
 import uk.gov.pay.connector.model.gateway.AuthorisationGatewayRequest;
 import uk.gov.pay.connector.model.gateway.GatewayResponse;
+import uk.gov.pay.connector.service.DefaultExternalRefundAvailabilityCalculator;
 import uk.gov.pay.connector.service.GatewayClient;
 import uk.gov.pay.connector.service.GatewayOperation;
 import uk.gov.pay.connector.service.GatewayOperationClientBuilder;
@@ -38,7 +43,10 @@ import java.util.function.Consumer;
 import static org.hamcrest.CoreMatchers.not;
 import static org.hamcrest.CoreMatchers.nullValue;
 import static org.hamcrest.core.Is.is;
-import static org.junit.Assert.*;
+import static org.junit.Assert.assertFalse;
+import static org.junit.Assert.assertNotNull;
+import static org.junit.Assert.assertThat;
+import static org.junit.Assert.assertTrue;
 import static org.mockito.Matchers.anyString;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
@@ -46,7 +54,9 @@ import static uk.gov.pay.connector.model.domain.ChargeEntityFixture.aValidCharge
 import static uk.gov.pay.connector.model.domain.GatewayAccountEntity.Type.TEST;
 import static uk.gov.pay.connector.util.AuthUtils.buildAuthCardDetails;
 import static uk.gov.pay.connector.util.SystemUtils.envOrThrow;
-import static uk.gov.pay.connector.util.TestTemplateResourceLoader.*;
+import static uk.gov.pay.connector.util.TestTemplateResourceLoader.SMARTPAY_MULTIPLE_NOTIFICATIONS_DIFFERENT_DATES;
+import static uk.gov.pay.connector.util.TestTemplateResourceLoader.SMARTPAY_NOTIFICATION_CAPTURE;
+import static uk.gov.pay.connector.util.TestTemplateResourceLoader.SMARTPAY_NOTIFICATION_CAPTURE_WITH_UNKNOWN_STATUS;
 
 @Ignore("Ignoring as this test is failing in Jenkins because it's failing to locate the certificates - PP-1707")
 @RunWith(MockitoJUnitRunner.class)
@@ -59,6 +69,8 @@ public class SmartpayPaymentProviderTest {
     private MetricRegistry mockMetricRegistry;
     private Histogram mockHistogram;
     private Counter mockCounter;
+    private DefaultExternalRefundAvailabilityCalculator defaultExternalRefundAvailabilityCalculator = new DefaultExternalRefundAvailabilityCalculator();
+
 
     @Before
     public void setUpAndCheckThatSmartpayIsUp() throws IOException {
@@ -186,7 +198,7 @@ public class SmartpayPaymentProviderTest {
                 .cancelClient(gatewayClient)
                 .refundClient(gatewayClient)
                 .build();
-        return new SmartpayPaymentProvider(gatewayClients, new ObjectMapper());
+        return new SmartpayPaymentProvider(gatewayClients, new ObjectMapper(), defaultExternalRefundAvailabilityCalculator);
     }
 
     private String notificationPayloadForTransaction(String transactionId) throws IOException {

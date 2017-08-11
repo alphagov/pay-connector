@@ -27,6 +27,7 @@ import static org.hamcrest.core.AllOf.allOf;
 import static org.hamcrest.core.Is.is;
 import static uk.gov.pay.connector.matcher.RefundsMatcher.aRefundMatching;
 import static uk.gov.pay.connector.model.domain.ChargeStatus.CAPTURED;
+import static uk.gov.pay.connector.model.domain.ChargeStatus.CAPTURE_SUBMITTED;
 import static uk.gov.pay.connector.model.domain.ChargeStatus.ENTERING_CARD_DETAILS;
 import static uk.gov.pay.connector.resources.ApiPaths.REFUNDS_API_PATH;
 import static uk.gov.pay.connector.resources.ApiPaths.REFUND_API_PATH;
@@ -126,7 +127,7 @@ public class SmartpayRefundITest extends ChargingITestBase {
                 .aTestCharge()
                 .withAmount(100L)
                 .withTestAccount(defaultTestAccount)
-                .withChargeStatus(ENTERING_CARD_DETAILS)
+                .withChargeStatus(CAPTURE_SUBMITTED)
                 .insert();
 
         Long refundAmount = 20L;

@@ -15,14 +15,17 @@ import uk.gov.pay.connector.model.domain.GatewayAccountEntity;
 import uk.gov.pay.connector.model.domain.RefundEntity;
 import uk.gov.pay.connector.model.domain.RefundStatus;
 import uk.gov.pay.connector.model.gateway.GatewayResponse;
-import uk.gov.pay.connector.service.transaction.*;
+import uk.gov.pay.connector.service.transaction.NonTransactionalOperation;
+import uk.gov.pay.connector.service.transaction.PreTransactionalOperation;
+import uk.gov.pay.connector.service.transaction.TransactionContext;
+import uk.gov.pay.connector.service.transaction.TransactionFlow;
+import uk.gov.pay.connector.service.transaction.TransactionalOperation;
 
 import javax.inject.Inject;
 import java.util.Optional;
 
 import static uk.gov.pay.connector.exception.RefundException.ErrorCode.NOT_SUFFICIENT_AMOUNT_AVAILABLE;
 import static uk.gov.pay.connector.model.api.ExternalChargeRefundAvailability.EXTERNAL_AVAILABLE;
-import static uk.gov.pay.connector.model.api.ExternalChargeRefundAvailability.valueOf;
 import static uk.gov.pay.connector.model.domain.ChargeStatus.fromString;
 
 public class ChargeRefundService {
@@ -80,7 +83,7 @@ public class ChargeRefundService {
         return context -> {
 
             ChargeEntity reloadedCharge = chargeDao.merge(chargeEntity);
-            ExternalChargeRefundAvailability refundAvailability = valueOf(reloadedCharge);
+            ExternalChargeRefundAvailability refundAvailability = providers.byName(chargeEntity.getPaymentGatewayName()).getExternalChargeRefundAvailability(chargeEntity);
             GatewayAccountEntity gatewayAccount = reloadedCharge.getGatewayAccount();
             checkIfChargeIsRefundableOrTerminate(reloadedCharge, refundAvailability, gatewayAccount);
 
