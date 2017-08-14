@@ -64,7 +64,7 @@ public class ChargesFrontendResourceITest {
     }
 
     @Test
-    public void getChargeShouldIncludeExpectedLinksAndGatewayAccountButNotGatewayAccountId() throws Exception {
+    public void getChargeShouldIncludeExpectedLinksAndGatewayAccount() throws Exception {
 
         String chargeId = postToCreateACharge(expectedAmount);
         String expectedLocation = "https://localhost:" + app.getLocalPort() + "/v1/frontend/charges/" + chargeId;
@@ -420,7 +420,7 @@ public class ChargesFrontendResourceITest {
     private void validateGatewayAccount(ValidatableResponse response) {
         response
                 .body("containsKey('gateway_account')", is(true))
-                .body("gateway_account.containsKey('gateway_account_id')", is(false))
+                .body("gateway_account.gateway_account_id", is(Long.valueOf(accountId)))
                 .body("gateway_account.containsKey('credentials')", is(false))
                 .body("gateway_account.service_name", is(serviceName))
                 .body("gateway_account.payment_provider", is(paymentProvider))

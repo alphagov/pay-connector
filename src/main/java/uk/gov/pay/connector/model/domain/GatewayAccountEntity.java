@@ -95,7 +95,7 @@ public class GatewayAccountEntity extends AbstractEntity {
 
     @Override
     @JsonProperty("gateway_account_id")
-    @JsonView(Views.ApiView.class)
+    @JsonView({Views.ApiView.class, Views.FrontendView.class})
     public Long getId() {
         return super.getId();
     }
