@@ -3,7 +3,6 @@ package uk.gov.pay.connector.model.domain;
 import junit.framework.TestCase;
 import org.eclipse.persistence.descriptors.ClassDescriptor;
 import org.eclipse.persistence.history.HistoryPolicy;
-import org.eclipse.persistence.internal.helper.DatabaseTable;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.mockito.ArgumentCaptor;

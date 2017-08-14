@@ -4,11 +4,28 @@ import org.eclipse.persistence.annotations.Customizer;
 import uk.gov.pay.connector.util.RandomIdGenerator;
 
 import javax.persistence.*;
+import java.sql.Timestamp;
 import java.time.ZoneId;
 import java.time.ZonedDateTime;
 import java.util.Arrays;
 
 import static org.apache.commons.lang3.StringUtils.equalsIgnoreCase;
+
+@SqlResultSetMapping(
+        name = "RefundEntityHistoryMapping",
+        classes = @ConstructorResult(
+                targetClass = RefundHistory.class,
+                columns = {
+                        @ColumnResult(name = "id", type=Long.class),
+                        @ColumnResult(name = "external_id", type=String.class),
+                        @ColumnResult(name = "amount", type=Long.class),
+                        @ColumnResult(name = "status", type=String.class),
+                        @ColumnResult(name = "charge_id", type=Long.class),
+                        @ColumnResult(name = "created_date", type=Timestamp.class),
+                        @ColumnResult(name = "version", type=Long.class),
+                        @ColumnResult(name = "reference", type=String.class),
+                        @ColumnResult(name = "history_start_date", type=Timestamp.class),
+                        @ColumnResult(name = "history_end_date", type=Timestamp.class)}))
 
 @Entity
 @Table(name = "refunds")
@@ -85,6 +102,18 @@ public class RefundEntity extends AbstractEntity {
 
     public void setChargeEntity(ChargeEntity chargeEntity) {
         this.chargeEntity = chargeEntity;
+    }
+
+    public void setStatus(String status) {
+        this.status = status;
+    }
+
+    public void setExternalId(String externalId) {
+        this.externalId = externalId;
+    }
+
+    public void setCreatedDate(ZonedDateTime createdDate) {
+        this.createdDate = createdDate;
     }
 
     public boolean hasStatus(RefundStatus... status) {

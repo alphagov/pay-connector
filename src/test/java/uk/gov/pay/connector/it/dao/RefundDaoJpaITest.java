@@ -3,10 +3,7 @@ package uk.gov.pay.connector.it.dao;
 import org.junit.Before;
 import org.junit.Test;
 import uk.gov.pay.connector.dao.RefundDao;
-import uk.gov.pay.connector.model.domain.ChargeEntity;
-import uk.gov.pay.connector.model.domain.ChargeStatus;
-import uk.gov.pay.connector.model.domain.RefundEntity;
-import uk.gov.pay.connector.model.domain.RefundStatus;
+import uk.gov.pay.connector.model.domain.*;
 
 import java.util.List;
 import java.util.Map;
@@ -111,7 +108,7 @@ public class RefundDaoJpaITest extends DaoITestBase {
     }
 
     @Test
-    public void persist_shouldCreateARefund() {
+         public void persist_shouldCreateARefund() {
         ChargeEntity chargeEntity = new ChargeEntity();
         chargeEntity.setId(chargeTestRecord.getChargeId());
 
@@ -129,5 +126,32 @@ public class RefundDaoJpaITest extends DaoITestBase {
         assertThat(refundByIdFound, hasItems(aRefundMatching(refundEntity.getExternalId(), is("test-refund-entity"),
                 refundEntity.getChargeEntity().getId(), refundEntity.getAmount(), refundEntity.getStatus().getValue())));
         assertThat(refundByIdFound.get(0), hasEntry("created_date", java.sql.Timestamp.from(refundEntity.getCreatedDate().toInstant())));
+    }
+
+    @Test
+    public void persist_shouldSearchHistoryByChargeId() {
+        ChargeEntity chargeEntity = new ChargeEntity();
+        chargeEntity.setId(chargeTestRecord.getChargeId());
+
+        RefundEntity refundEntity = new RefundEntity(chargeEntity, 100L);
+        refundEntity.setStatus(RefundStatus.REFUND_SUBMITTED);
+        refundEntity.setReference("test-refund-entity");
+
+        refundDao.persist(refundEntity);
+        List<RefundHistory> refundHistoryList = refundDao.searchHistoryByChargeId(chargeEntity.getId());
+
+
+        assertThat(refundHistoryList.size(), is(1));
+
+        RefundHistory refundHistory = refundHistoryList.get(0);
+        assertThat(refundHistory.getId(), is(refundEntity.getId()));
+        assertThat(refundHistory.getExternalId(), is(refundEntity.getExternalId()));
+        assertThat(refundHistory.getAmount(), is(refundEntity.getAmount()));
+        assertThat(refundHistory.getStatus(), is(refundEntity.getStatus()));
+        assertNotNull(refundHistory.getChargeEntity());
+        assertThat(refundHistory.getChargeEntity().getId(), is(refundEntity.getChargeEntity().getId()));
+        assertThat(refundHistory.getCreatedDate(), is(refundEntity.getCreatedDate()));
+        assertThat(refundHistory.getVersion(), is(refundEntity.getVersion()));
+        assertThat(refundHistory.getReference(), is(refundEntity.getReference()));
     }
 }
