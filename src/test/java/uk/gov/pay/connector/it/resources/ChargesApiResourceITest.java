@@ -9,6 +9,7 @@ import uk.gov.pay.connector.it.base.ChargingITestBase;
 import uk.gov.pay.connector.it.dao.DatabaseFixtures;
 import uk.gov.pay.connector.model.domain.CardFixture;
 import uk.gov.pay.connector.model.domain.ChargeStatus;
+import uk.gov.pay.connector.model.domain.RefundStatus;
 import uk.gov.pay.connector.service.CardCaptureProcess;
 import uk.gov.pay.connector.util.DateTimeUtils;
 import uk.gov.pay.connector.util.RestAssuredClient;
@@ -491,6 +492,130 @@ public class ChargesApiResourceITest extends ChargingITestBase {
         );
         List<String> emails = collect(results, "email");
         assertThat(emails, contains(email, email));
+    }
+
+    @Test
+    public void shouldFilterChargesAndRefundTransactionsBasedOnFromAndToDates() throws Exception {
+        String paymentRef = "ref-payment";
+        String externalChargeId = addChargeAndCardDetails(CAPTURED, paymentRef, now().minusDays(1));
+
+        Long chargeID = Long.valueOf(externalChargeId.substring(6));
+        Long refundAmount = 9L;
+        String refundRef = "ref-3-refund";
+        createNewRefundWith(RefundStatus.REFUND_SUBMITTED, refundAmount,chargeID, refundRef);
+
+        ValidatableResponse response = getChargeApi
+                .withAccountId(accountId)
+                .withQueryParam("from_date", DateTimeUtils.toUTCDateTimeString(now().minusDays(2)))
+                .withQueryParam("to_date", DateTimeUtils.toUTCDateTimeString(now().plusDays(1)))
+                .withHeader(HttpHeaders.ACCEPT, APPLICATION_JSON)
+                .getTransactions()
+                .statusCode(OK.getStatusCode())
+                .contentType(JSON)
+                .body("results.size()", is(2))
+                //validate payment
+                .body("results[0].transaction_type", is("payment"))
+                .body("results[0].card_details.last_digits_card_number", notNullValue())
+                .body("results[0].email",notNullValue())
+                .body("results[0].amount", isNumber(AMOUNT))
+                .body("results[0].created_date", notNullValue())
+                .body("results[0].gateway_account_id", notNullValue())
+                .body("results[0].charge_id", is(chargeID))
+                .body("results[0].reference", is(paymentRef))
+                .body("results[0].state.finished", notNullValue())
+                .body("results[0].state.status", notNullValue())
+                .body("results[0].refund_summary.amount_submitted", isNumber(refundAmount))
+                //.body("results[1].refund_summary.amount_available", isNumber(AMOUNT))
+                //validate refund
+                .body("results[1].transaction_type", is("refund"))
+                .body("results[1].card_details.last_digits_card_number", notNullValue())
+                .body("results[1].email",notNullValue())
+                .body("results[1].amount", isNumber(0-refundAmount))
+                .body("results[1].created_date", notNullValue())
+                .body("results[1].gateway_account_id", notNullValue())//cant find that in the sample
+                .body("results[1].charge_id", is(chargeID))
+                .body("results[1].reference", is(refundRef))
+                .body("results[1].state.finished", is("refund"))
+                .body("results[1].state.status", is("success"))
+                ;
+
+    }
+
+    @Test
+    public void shouldFilterRefundTransactionsOnlyBasedOnFromAndToDates() throws Exception {
+
+        String paymentRef = "ref-payment";
+        String externalChargeId = addChargeAndCardDetails(CAPTURED, paymentRef, now().minusDays(1));
+
+        Long chargeID = Long.valueOf(externalChargeId.substring(6));
+        Long refundAmount = 9L;
+        String refundRef = "ref-3-refund";
+        createNewRefundWith(RefundStatus.REFUND_SUBMITTED, refundAmount,chargeID, refundRef);
+
+        ValidatableResponse response = getChargeApi
+                .withAccountId(accountId)
+                .withQueryParam("transaction_type", "refund")
+                .withQueryParam("from_date", DateTimeUtils.toUTCDateTimeString(now().minusDays(2)))
+                .withQueryParam("to_date", DateTimeUtils.toUTCDateTimeString(now().plusDays(1)))
+                .withHeader(HttpHeaders.ACCEPT, APPLICATION_JSON)
+                .getTransactions()
+                .statusCode(OK.getStatusCode())
+                .contentType(JSON)
+                .body("results.size()", is(1))
+                //validate refund
+                .body("results[0].transaction_type", is("refund"))
+                .body("results[0].card_details.last_digits_card_number", notNullValue())
+                .body("results[0].email",notNullValue())
+                .body("results[0].amount", isNumber(0-refundAmount))
+                .body("results[0].created_date", notNullValue())
+                .body("results[0].gateway_account_id", notNullValue())//cant find that in the sample
+                .body("results[0].charge_id", is(chargeID))
+                .body("results[0].reference", is(refundRef))
+                .body("results[0].state.finished", is("refund"))
+                .body("results[0].state.status", is("success"))
+
+                ;
+
+    }
+
+    @Test
+    public void shouldFilterPaymentTransactionsOnlyBasedOnFromAndToDates() throws Exception {
+
+        String paymentRef = "ref-payment";
+        String externalChargeId = addChargeAndCardDetails(CAPTURED, paymentRef, now().minusDays(1));
+
+        Long chargeID = Long.valueOf(externalChargeId.substring(6));
+        Long refundAmount = 9L;
+        String refundRef = "ref-3-refund";
+        createNewRefundWith(RefundStatus.REFUND_SUBMITTED, refundAmount,chargeID, refundRef);
+
+        ValidatableResponse response = getChargeApi
+                .withAccountId(accountId)
+                .withQueryParam("transaction_type", "payment")
+                .withQueryParam("from_date", DateTimeUtils.toUTCDateTimeString(now().minusDays(2)))
+                .withQueryParam("to_date", DateTimeUtils.toUTCDateTimeString(now().plusDays(1)))
+                .withHeader(HttpHeaders.ACCEPT, APPLICATION_JSON)
+                .getTransactions();
+        System.out.println("response.log().everything().toString() = " + response.log().everything().toString());
+
+        response.statusCode(OK.getStatusCode())
+                .contentType(JSON)
+                .body("results.size()", is(1))
+                //validate payment
+                .body("results[0].transaction_type", is("payment"))
+                .body("results[0].card_details.last_digits_card_number", notNullValue())
+                .body("results[0].email",notNullValue())
+                .body("results[0].amount", isNumber(AMOUNT))
+                .body("results[0].created_date", notNullValue())
+                .body("results[0].gateway_account_id", notNullValue())
+                .body("results[0].charge_id", is(chargeID))
+                .body("results[0].reference", is(paymentRef))
+                .body("results[0].state.finished", notNullValue())
+                .body("results[0].state.status", notNullValue())
+                .body("results[0].refund_summary.amount_submitted", isNumber(refundAmount))
+                //.body("results[0].refund_summary.amount_available", isNumber(AMOUNT))
+                ;
+
     }
 
     @Test
