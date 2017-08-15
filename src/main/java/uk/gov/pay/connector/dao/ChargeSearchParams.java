@@ -2,6 +2,7 @@ package uk.gov.pay.connector.dao;
 
 import uk.gov.pay.connector.model.api.ExternalChargeState;
 import uk.gov.pay.connector.model.domain.ChargeStatus;
+import uk.gov.pay.connector.model.domain.RefundStatus;
 
 import java.time.ZonedDateTime;
 import java.util.ArrayList;
@@ -13,6 +14,7 @@ import static org.apache.commons.lang3.StringUtils.isNotBlank;
 
 public class ChargeSearchParams {
 
+    private String transactionType;
     private Long gatewayAccountId;
     private String reference;
     private String email;
@@ -20,12 +22,19 @@ public class ChargeSearchParams {
     private ZonedDateTime toDate;
     private Long page;
     private Long displaySize;
-    private Set<ChargeStatus> chargeStatuses = new HashSet<>();
     private String externalChargeState;
+    private String externalRefundStatus;
+    private RefundStatus refundStatus;
     private String cardBrand;
+    private Set<ChargeStatus> chargeStatuses = new HashSet<>();
 
     public Long getGatewayAccountId() {
         return gatewayAccountId;
+    }
+
+    public ChargeSearchParams withTransactionType(String transactionType) {
+        this.transactionType = transactionType;
+        return this;
     }
 
     public ChargeSearchParams withGatewayAccountId(Long gatewayAccountId) {
@@ -46,9 +55,17 @@ public class ChargeSearchParams {
     public ChargeSearchParams withExternalChargeState(String state) {
         if (state != null) {
             this.externalChargeState = state;
-            for (ExternalChargeState externalState : parseState(state)) {
+            for (ExternalChargeState externalState : parseChargeState(state)) {
                 this.chargeStatuses.addAll(ChargeStatus.fromExternal(externalState));
             }
+        }
+        return this;
+    }
+
+    public ChargeSearchParams withExternalRefundState(String state) {
+        if (state != null) {
+            this.externalRefundStatus = state;
+            this.refundStatus = RefundStatus.fromString(state);
         }
         return this;
     }
@@ -122,7 +139,9 @@ public class ChargeSearchParams {
 
     public String buildQueryParams() {
         StringBuilder builder = new StringBuilder();
-
+        if (isNotBlank(transactionType)) {
+            builder.append("&transaction_type=" + transactionType);
+        }
         if (isNotBlank(reference))
             builder.append("&reference=" + reference);
         if (email != null)
@@ -136,7 +155,10 @@ public class ChargeSearchParams {
         if (displaySize != null)
             builder.append("&display_size=" + displaySize);
         if (isNotBlank(externalChargeState)) {
-            builder.append("&state=" + externalChargeState);
+            builder.append("&charge_state=" + externalChargeState);
+        }
+        if (isNotBlank(externalRefundStatus)) {
+            builder.append("&refund_status=" + externalRefundStatus);
         }
         if (isNotBlank(cardBrand)) {
             builder.append("&card_brand=" + cardBrand);
@@ -144,7 +166,7 @@ public class ChargeSearchParams {
         return builder.toString().replaceFirst("&", "");
     }
 
-    private List<ExternalChargeState> parseState(String state) {
+    private List<ExternalChargeState> parseChargeState(String state) {
         List<ExternalChargeState> externalStates = new ArrayList<>();
         if (isNotBlank(state)) {
             externalStates.addAll(ExternalChargeState.fromStatusString(state));

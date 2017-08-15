@@ -285,6 +285,7 @@ public class DatabaseFixtures {
 
     public class TestCharge {
         Long chargeId = RandomUtils.nextLong(1, 99999);
+        private String description = "Test description";
         String email = "alice.111@mail.fake";
         String externalChargeId = RandomIdGenerator.newId();
         long amount = 101L;
@@ -343,11 +344,21 @@ public class DatabaseFixtures {
             return this;
         }
 
+        public TestCharge withCardDetails(TestCardDetails testCardDetails) {
+            cardDetails = testCardDetails;
+            return this;
+        }
+
+        public TestCharge withDescription(String description) {
+            this.description = description;
+            return this;
+        }
+
         public TestCharge insert() {
             if (testAccount == null)
                 throw new IllegalStateException("Test Account must be provided.");
 
-            databaseTestHelper.addCharge(chargeId, externalChargeId, String.valueOf(testAccount.getAccountId()), amount, chargeStatus, returnUrl, transactionId, reference, createdDate, email);
+            databaseTestHelper.addCharge(chargeId, externalChargeId, String.valueOf(testAccount.getAccountId()), amount, chargeStatus, returnUrl, transactionId, reference, description, createdDate, email);
 
             if (cardDetails != null) {
                 cardDetails.update();
@@ -389,11 +400,6 @@ public class DatabaseFixtures {
 
         public ZonedDateTime getCreatedDate() {
             return createdDate;
-        }
-
-        public TestCharge withCardDetails(TestCardDetails testCardDetails) {
-            cardDetails = testCardDetails;
-            return this;
         }
     }
 
@@ -481,6 +487,11 @@ public class DatabaseFixtures {
 
         public TestCharge getTestCharge() {
             return testCharge;
+        }
+
+        public TestRefund withId(Long id) {
+            this.id = id;
+            return this;
         }
     }
 
