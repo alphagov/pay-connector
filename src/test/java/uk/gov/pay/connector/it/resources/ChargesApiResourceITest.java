@@ -495,7 +495,7 @@ public class ChargesApiResourceITest extends ChargingITestBase {
     }
 
     @Test
-    public void shouldFilterChargesAndRefundTransactionsBasedOnFromAndToDates() throws Exception {
+    public void shouldFilterGetChargesAPIPaymentAndRefundTransactionsBasedOnFromAndToDates() throws Exception {
         String paymentRef = "ref-payment";
         String externalChargeId = addChargeAndCardDetails(CAPTURED, paymentRef, now().minusDays(1));
 
@@ -522,8 +522,8 @@ public class ChargesApiResourceITest extends ChargingITestBase {
                 .body("results[0].gateway_account_id", notNullValue())
                 .body("results[0].charge_id", is(chargeID))
                 .body("results[0].reference", is(paymentRef))
-                .body("results[0].state.finished", notNullValue())
-                .body("results[0].state.status", notNullValue())
+                .body("results[0].state.finished", is(true))
+                .body("results[0].state.status", is("success"))
                 .body("results[0].refund_summary.amount_submitted", isNumber(refundAmount))
                 //.body("results[1].refund_summary.amount_available", isNumber(AMOUNT))
                 //validate refund
@@ -535,14 +535,13 @@ public class ChargesApiResourceITest extends ChargingITestBase {
                 .body("results[1].gateway_account_id", notNullValue())//cant find that in the sample
                 .body("results[1].charge_id", is(chargeID))
                 .body("results[1].reference", is(refundRef))
-                .body("results[1].state.finished", is("refund"))
+                .body("results[1].state.finished", is(true))
                 .body("results[1].state.status", is("success"))
                 ;
-
     }
 
     @Test
-    public void shouldFilterRefundTransactionsOnlyBasedOnFromAndToDates() throws Exception {
+    public void shouldFilterGetChargesAPIRefundTransactionsOnlyBasedOnFromAndToDates() throws Exception {
 
         String paymentRef = "ref-payment";
         String externalChargeId = addChargeAndCardDetails(CAPTURED, paymentRef, now().minusDays(1));
@@ -565,21 +564,20 @@ public class ChargesApiResourceITest extends ChargingITestBase {
                 //validate refund
                 .body("results[0].transaction_type", is("refund"))
                 .body("results[0].card_details.last_digits_card_number", notNullValue())
+                .body("results[0].card_details.card_brand", notNullValue())
                 .body("results[0].email",notNullValue())
                 .body("results[0].amount", isNumber(0-refundAmount))
                 .body("results[0].created_date", notNullValue())
-                .body("results[0].gateway_account_id", notNullValue())//cant find that in the sample
+                //.body("results[0].gateway_account_id", notNullValue())//cant find that in the sample
                 .body("results[0].charge_id", is(chargeID))
                 .body("results[0].reference", is(refundRef))
-                .body("results[0].state.finished", is("refund"))
+                .body("results[0].state.finished", is(true))
                 .body("results[0].state.status", is("success"))
-
                 ;
-
     }
 
     @Test
-    public void shouldFilterPaymentTransactionsOnlyBasedOnFromAndToDates() throws Exception {
+    public void shouldFilterGetChargesAPIPaymentTransactionsOnlyBasedOnFromAndToDates() throws Exception {
 
         String paymentRef = "ref-payment";
         String externalChargeId = addChargeAndCardDetails(CAPTURED, paymentRef, now().minusDays(1));
@@ -610,12 +608,12 @@ public class ChargesApiResourceITest extends ChargingITestBase {
                 .body("results[0].gateway_account_id", notNullValue())
                 .body("results[0].charge_id", is(chargeID))
                 .body("results[0].reference", is(paymentRef))
-                .body("results[0].state.finished", notNullValue())
-                .body("results[0].state.status", notNullValue())
+                .body("results[0].state.finished", is(true))
+                .body("results[0].state.status", is("success"))
                 .body("results[0].refund_summary.amount_submitted", isNumber(refundAmount))
-                //.body("results[0].refund_summary.amount_available", isNumber(AMOUNT))
+                //.body("result
+        // s[0].refund_summary.amount_available", isNumber(AMOUNT))
                 ;
-
     }
 
     @Test
