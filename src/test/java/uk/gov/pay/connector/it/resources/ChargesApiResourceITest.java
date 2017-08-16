@@ -594,7 +594,7 @@ public class ChargesApiResourceITest extends ChargingITestBase {
                 .withQueryParam("to_date", DateTimeUtils.toUTCDateTimeString(now().plusDays(1)))
                 .withHeader(HttpHeaders.ACCEPT, APPLICATION_JSON)
                 .getTransactions();
-        System.out.println("response.log().everything().toString() = " + response.log().everything().toString());
+//        System.out.println("response.log().everything().toString() = " + response.log().everything().toString());
 
         response.statusCode(OK.getStatusCode())
                 .contentType(JSON)
@@ -614,6 +614,61 @@ public class ChargesApiResourceITest extends ChargingITestBase {
                 //.body("result
         // s[0].refund_summary.amount_available", isNumber(AMOUNT))
                 ;
+    }
+
+    @Test
+    public void shouldReturn400WhenFilterUsingStatusAndNoTransactionTypeInCriteriaInGetChargesAPI() throws Exception {
+        addChargeAndCardDetails(AUTHORISATION_READY, "ref-2", now());
+        addChargeAndCardDetails(CAPTURED, "ref-3", now().minusDays(1));
+
+        ValidatableResponse response = getChargeApi
+                .withAccountId(accountId)
+                //.withQueryParam("transaction_type", "payment")
+                .withQueryParam("status", "success")
+                .withQueryParam("from_date", DateTimeUtils.toUTCDateTimeString(now().minusDays(2)))
+                .withQueryParam("to_date", DateTimeUtils.toUTCDateTimeString(now().plusDays(1)))
+                .withHeader(HttpHeaders.ACCEPT, APPLICATION_JSON)
+                .getTransactions();
+        response.statusCode(Status.BAD_REQUEST.getStatusCode());
+    }
+
+    @Test
+    public void shouldFilterUsingStatusAndTransactionTypeInCriteriaInGetChargesAPI() throws Exception {
+        String paymentRef = "ref-payment";
+        String externalChargeId = addChargeAndCardDetails(CAPTURED, paymentRef, now().minusDays(1));
+
+        Long chargeID = Long.valueOf(externalChargeId.substring(6));
+        Long refundAmount = 9L;
+        String refundRef = "ref-3-refund";
+        createNewRefundWith(RefundStatus.REFUND_SUBMITTED, refundAmount,chargeID, refundRef);
+
+        ValidatableResponse response = getChargeApi
+                .withAccountId(accountId)
+                .withQueryParam("transaction_type", "payment")
+                .withQueryParam("status", "success")
+                .withQueryParam("from_date", DateTimeUtils.toUTCDateTimeString(now().minusDays(2)))
+                .withQueryParam("to_date", DateTimeUtils.toUTCDateTimeString(now().plusDays(1)))
+                .withHeader(HttpHeaders.ACCEPT, APPLICATION_JSON)
+                .getTransactions();
+//        System.out.println("response.log().everything().toString() = " + response.log().everything().toString());
+        response.statusCode(OK.getStatusCode())
+                .contentType(JSON)
+                .body("results.size()", is(1))
+                //validate payment
+                .body("results[0].transaction_type", is("payment"))
+                .body("results[0].card_details.last_digits_card_number", notNullValue())
+                .body("results[0].email",notNullValue())
+                .body("results[0].amount", isNumber(AMOUNT))
+                .body("results[0].created_date", notNullValue())
+                .body("results[0].gateway_account_id", notNullValue())
+                .body("results[0].charge_id", is(chargeID))
+                .body("results[0].reference", is(paymentRef))
+                .body("results[0].state.finished", is(true))
+                .body("results[0].state.status", is("success"))
+                .body("results[0].refund_summary.amount_submitted", isNumber(refundAmount))
+        //.body("result
+        // s[0].refund_summary.amount_available", isNumber(AMOUNT))
+        ;
     }
 
     @Test
