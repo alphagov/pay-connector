@@ -35,6 +35,10 @@ public class DatabaseFixtures {
         return new TestCharge();
     }
 
+    public TestChargeEvent aTestChargeEvent() {
+        return new TestChargeEvent();
+    }
+
     public TestToken aTestToken() {
         return new TestToken();
     }
@@ -71,10 +75,6 @@ public class DatabaseFixtures {
         return  new TestCardDetails();
     }
 
-    public TestChargeEvent aTestChargeEvent() {
-        return new TestChargeEvent();
-    }
-
     public TestCardType aMaestroDebitCardType() {
         return new TestCardType().withLabel("Maestro").withType(Type.DEBIT).withBrand("maestro").withRequires3ds(true);
     }
@@ -83,6 +83,11 @@ public class DatabaseFixtures {
         private long chargeId;
         private ChargeStatus chargeStatus;
         private ZonedDateTime updated = ZonedDateTime.now();
+
+        public TestChargeEvent withTestCharge(TestCharge testCharge) {
+            this.chargeId = testCharge.getChargeId();
+            return this;
+        }
 
         public TestChargeEvent withChargeId(long chargeId) {
             this.chargeId = chargeId;
@@ -99,9 +104,21 @@ public class DatabaseFixtures {
             return this;
         }
 
-
-        public void insert() {
+        public TestChargeEvent insert() {
             databaseTestHelper.addEvent(chargeId, chargeStatus.getValue(), updated);
+            return this;
+        }
+
+        public long getChargeId() {
+            return chargeId;
+        }
+
+        public ChargeStatus getChargeStatus() {
+            return chargeStatus;
+        }
+
+        public ZonedDateTime getUpdated() {
+            return updated;
         }
     }
 
@@ -424,7 +441,11 @@ public class DatabaseFixtures {
         String reference = RandomIdGenerator.newId();
         long amount = 101L;
         RefundStatus status = CREATED;
+
         ZonedDateTime createdDate = ZonedDateTime.now(ZoneId.of("UTC"));
+
+        ZonedDateTime historyStartDate = ZonedDateTime.now(ZoneId.of("UTC"));
+        ZonedDateTime historyEndDate = ZonedDateTime.now(ZoneId.of("UTC"));
 
         TestCharge testCharge;
 
@@ -448,10 +469,27 @@ public class DatabaseFixtures {
             return this;
         }
 
+        public TestRefund withHistoryStartDate(ZonedDateTime historyStartDate) {
+            this.historyStartDate = historyStartDate;
+            return this;
+        }
+
+        public TestRefund withHistoryEndDate(ZonedDateTime historyEndDate) {
+            this.historyEndDate = historyEndDate;
+            return this;
+        }
+
         public TestRefund insert() {
             if (testCharge == null)
                 throw new IllegalStateException("Test charge must be provided.");
             databaseTestHelper.addRefund(id, externalRefundId, reference, amount, status.toString(), testCharge.getChargeId(), createdDate);
+            return this;
+        }
+
+        public TestRefund insertHistory() {
+            if (testCharge == null)
+                throw new IllegalStateException("Test charge must be provided.");
+            databaseTestHelper.addRefundHistory(id, externalRefundId, reference, amount, status.toString(), testCharge.getChargeId(), createdDate, historyStartDate, historyEndDate);
             return this;
         }
 
@@ -481,6 +519,14 @@ public class DatabaseFixtures {
 
         public TestCharge getTestCharge() {
             return testCharge;
+        }
+
+        public ZonedDateTime getHistoryStartDate() {
+            return historyStartDate;
+        }
+
+        public ZonedDateTime getHistoryEndDate() {
+            return historyEndDate;
         }
     }
 

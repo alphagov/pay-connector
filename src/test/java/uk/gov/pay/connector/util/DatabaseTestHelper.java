@@ -123,16 +123,35 @@ public class DatabaseTestHelper {
 
     public void addRefund(long id, String externalId, String reference, long amount, String status, Long chargeId, ZonedDateTime createdDate) {
         jdbi.withHandle(handle ->
-                handle
-                        .createStatement("INSERT INTO refunds(id, external_id, reference, amount, status, charge_id, created_date) VALUES (:id, :external_id, :reference, :amount, :status, :charge_id, :created_date)")
-                        .bind("id", id)
-                        .bind("external_id", externalId)
-                        .bind("reference", reference)
-                        .bind("amount", amount)
-                        .bind("status", status)
-                        .bind("charge_id", chargeId)
-                        .bind("created_date", Timestamp.from(createdDate.toInstant()))
-                        .execute()
+                        handle
+                                .createStatement("INSERT INTO refunds(id, external_id, reference, amount, status, charge_id, created_date) VALUES (:id, :external_id, :reference, :amount, :status, :charge_id, :created_date)")
+                                .bind("id", id)
+                                .bind("external_id", externalId)
+                                .bind("reference", reference)
+                                .bind("amount", amount)
+                                .bind("status", status)
+                                .bind("charge_id", chargeId)
+                                .bind("created_date", Timestamp.from(createdDate.toInstant()))
+                                .bind("version", 1)
+                                .execute()
+        );
+    }
+
+    public void addRefundHistory(long id, String externalId, String reference, long amount, String status, Long chargeId, ZonedDateTime createdDate, ZonedDateTime historyStartDate, ZonedDateTime historyEndDate) {
+        jdbi.withHandle(handle ->
+                        handle
+                                .createStatement("INSERT INTO refunds_history(id, external_id, reference, amount, status, charge_id, created_date, history_start_date, history_end_date) VALUES (:id, :external_id, :reference, :amount, :status, :charge_id, :created_date, :history_start_date, :history_end_date)")
+                                .bind("id", id)
+                                .bind("external_id", externalId)
+                                .bind("reference", reference)
+                                .bind("amount", amount)
+                                .bind("status", status)
+                                .bind("charge_id", chargeId)
+                                .bind("created_date", Timestamp.from(createdDate.toInstant()))
+                                .bind("history_start_date", Timestamp.from(historyStartDate.toInstant()))
+                                .bind("history_end_date", Timestamp.from(historyEndDate.toInstant()))
+                                .bind("version", 1)
+                                .execute()
         );
     }
 
