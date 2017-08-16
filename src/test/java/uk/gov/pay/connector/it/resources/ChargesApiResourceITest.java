@@ -553,7 +553,7 @@ public class ChargesApiResourceITest extends ChargingITestBase {
 
         ValidatableResponse response = getChargeApi
                 .withAccountId(accountId)
-                .withQueryParam("transaction_type", "refund")
+                .withQueryParam("transactionType", "refund")
                 .withQueryParam("from_date", DateTimeUtils.toUTCDateTimeString(now().minusDays(2)))
                 .withQueryParam("to_date", DateTimeUtils.toUTCDateTimeString(now().plusDays(1)))
                 .withHeader(HttpHeaders.ACCEPT, APPLICATION_JSON)
@@ -589,7 +589,7 @@ public class ChargesApiResourceITest extends ChargingITestBase {
 
         ValidatableResponse response = getChargeApi
                 .withAccountId(accountId)
-                .withQueryParam("transaction_type", "payment")
+                .withQueryParam("transactionType", "charge")
                 .withQueryParam("from_date", DateTimeUtils.toUTCDateTimeString(now().minusDays(2)))
                 .withQueryParam("to_date", DateTimeUtils.toUTCDateTimeString(now().plusDays(1)))
                 .withHeader(HttpHeaders.ACCEPT, APPLICATION_JSON)
@@ -599,7 +599,7 @@ public class ChargesApiResourceITest extends ChargingITestBase {
                 .contentType(JSON)
                 .body("results.size()", is(1))
                 //validate payment
-                .body("results[0].transaction_type", is("payment"))
+                .body("results[0].transaction_type", is("charge"))
                 .body("results[0].card_details.last_digits_card_number", notNullValue())
                 .body("results[0].email",notNullValue())
                 .body("results[0].amount", isNumber(AMOUNT))
@@ -639,7 +639,7 @@ public class ChargesApiResourceITest extends ChargingITestBase {
 
         ValidatableResponse response = getChargeApi
                 .withAccountId(accountId)
-                .withQueryParam("transaction_type", "payment")
+                .withQueryParam("transactionType", "charge")
                 .withQueryParam("status", "success")
                 .withQueryParam("from_date", DateTimeUtils.toUTCDateTimeString(now().minusDays(2)))
                 .withQueryParam("to_date", DateTimeUtils.toUTCDateTimeString(now().plusDays(1)))
