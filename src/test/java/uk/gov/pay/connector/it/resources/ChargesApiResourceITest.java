@@ -594,7 +594,6 @@ public class ChargesApiResourceITest extends ChargingITestBase {
                 .withQueryParam("to_date", DateTimeUtils.toUTCDateTimeString(now().plusDays(1)))
                 .withHeader(HttpHeaders.ACCEPT, APPLICATION_JSON)
                 .getTransactions();
-//        System.out.println("response.log().everything().toString() = " + response.log().everything().toString());
 
         response.statusCode(OK.getStatusCode())
                 .contentType(JSON)
@@ -610,10 +609,7 @@ public class ChargesApiResourceITest extends ChargingITestBase {
                 .body("results[0].reference", is(paymentRef))
                 .body("results[0].state.finished", is(true))
                 .body("results[0].state.status", is("success"))
-                .body("results[0].refund_summary.amount_submitted", isNumber(refundAmount))
-                //.body("result
-        // s[0].refund_summary.amount_available", isNumber(AMOUNT))
-                ;
+                .body("results[0].refund_summary.amount_submitted", isNumber(refundAmount));
     }
 
     @Test
@@ -623,7 +619,6 @@ public class ChargesApiResourceITest extends ChargingITestBase {
 
         ValidatableResponse response = getChargeApi
                 .withAccountId(accountId)
-                //.withQueryParam("transaction_type", "payment")
                 .withQueryParam("status", "success")
                 .withQueryParam("from_date", DateTimeUtils.toUTCDateTimeString(now().minusDays(2)))
                 .withQueryParam("to_date", DateTimeUtils.toUTCDateTimeString(now().plusDays(1)))
@@ -650,7 +645,6 @@ public class ChargesApiResourceITest extends ChargingITestBase {
                 .withQueryParam("to_date", DateTimeUtils.toUTCDateTimeString(now().plusDays(1)))
                 .withHeader(HttpHeaders.ACCEPT, APPLICATION_JSON)
                 .getTransactions();
-//        System.out.println("response.log().everything().toString() = " + response.log().everything().toString());
         response.statusCode(OK.getStatusCode())
                 .contentType(JSON)
                 .body("results.size()", is(1))
@@ -665,10 +659,7 @@ public class ChargesApiResourceITest extends ChargingITestBase {
                 .body("results[0].reference", is(paymentRef))
                 .body("results[0].state.finished", is(true))
                 .body("results[0].state.status", is("success"))
-                .body("results[0].refund_summary.amount_submitted", isNumber(refundAmount))
-        //.body("result
-        // s[0].refund_summary.amount_available", isNumber(AMOUNT))
-        ;
+                .body("results[0].refund_summary.amount_submitted", isNumber(refundAmount));
     }
 
     @Test
