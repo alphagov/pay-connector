@@ -632,4 +632,12 @@
         </createTable>
     </changeSet>
 
+    <changeSet id="createIndex refunds_history.charge_id" author="">
+        <createIndex indexName="idx_refunds_history_charge_id"
+                     tableName="refunds_history"
+                     unique="false">
+            <column name="charge_id" type="bigserial"/>
+        </createIndex>
+    </changeSet>
+
 </databaseChangeLog>
