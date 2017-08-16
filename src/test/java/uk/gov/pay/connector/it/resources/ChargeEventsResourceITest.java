@@ -171,8 +171,7 @@ public class ChargeEventsResourceITest {
                 .aTestAccount()
                 .withAccountId(Long.valueOf(accountId));
 
-        return
-                withDatabaseTestHelper(databaseTestHelper)
+        return withDatabaseTestHelper(databaseTestHelper)
                         .aTestCharge()
                         .withAmount(100L)
                         .withTestAccount(testAccount)
@@ -180,8 +179,7 @@ public class ChargeEventsResourceITest {
     }
 
     private DatabaseFixtures.TestChargeEvent createTestChargeEvent(DatabaseFixtures.TestCharge testCharge) {
-        return
-                withDatabaseTestHelper(databaseTestHelper)
+        return withDatabaseTestHelper(databaseTestHelper)
                         .aTestChargeEvent()
                         .withTestCharge(testCharge);
     }
