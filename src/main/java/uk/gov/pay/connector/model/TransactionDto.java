@@ -15,7 +15,16 @@ public class TransactionDto {
     private final String gatewayTransactionId;
     private final ZonedDateTime createdDate;
     private final String transactionType;
-    private final CardDetailsEntity cardDetails;
+    private final String cardBrand;
+    private final String cardHolderName;
+    private final String expiryDate;
+    private final String lastDigitsCardNumber;
+    private final String addressCity;
+    private final String addressCountry;
+    private final String addressCounty;
+    private final String addressLine1;
+    private final String addressLine2;
+    private final String addressPostcode;
     private final long amount;
 
     public TransactionDto(String transactionType, String externalId,
@@ -25,7 +34,7 @@ public class TransactionDto {
                           long gatewayAccountId,
                           String gatewayTransactionId,
                           ZonedDateTime createdDate,
-                          CardDetailsEntity cardDetails,
+                          String cardBrand, String cardHolderName, String expiryDate, String lastDigitsCardNumber, String addressCity, String addressCountry, String addressCounty, String addressLine1, String addressLine2, String addressPostcode,
                           long amount) {
         this.externalId = externalId;
         this.reference = reference;
@@ -36,12 +45,17 @@ public class TransactionDto {
         this.gatewayTransactionId = gatewayTransactionId;
         this.createdDate = createdDate;
         this.transactionType = transactionType;
-        this.cardDetails = cardDetails;
+        this.cardBrand = cardBrand;
+        this.cardHolderName = cardHolderName;
+        this.expiryDate = expiryDate;
+        this.lastDigitsCardNumber = lastDigitsCardNumber;
+        this.addressCity = addressCity;
+        this.addressCountry = addressCountry;
+        this.addressCounty = addressCounty;
+        this.addressLine1 = addressLine1;
+        this.addressLine2 = addressLine2;
+        this.addressPostcode = addressPostcode;
         this.amount = amount;
-    }
-
-    public String getTransactionType() {
-        return transactionType;
     }
 
     public String getExternalId() {
@@ -76,8 +90,48 @@ public class TransactionDto {
         return createdDate;
     }
 
-    public CardDetailsEntity getCardDetails() {
-        return cardDetails;
+    public String getTransactionType() {
+        return transactionType;
+    }
+
+    public String getCardBrand() {
+        return cardBrand;
+    }
+
+    public String getCardHolderName() {
+        return cardHolderName;
+    }
+
+    public String getExpiryDate() {
+        return expiryDate;
+    }
+
+    public String getLastDigitsCardNumber() {
+        return lastDigitsCardNumber;
+    }
+
+    public String getAddressCity() {
+        return addressCity;
+    }
+
+    public String getAddressCountry() {
+        return addressCountry;
+    }
+
+    public String getAddressCounty() {
+        return addressCounty;
+    }
+
+    public String getAddressLine1() {
+        return addressLine1;
+    }
+
+    public String getAddressLine2() {
+        return addressLine2;
+    }
+
+    public String getAddressPostcode() {
+        return addressPostcode;
     }
 
     public long getAmount() {

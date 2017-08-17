@@ -514,7 +514,7 @@ public class ChargesApiResourceITest extends ChargingITestBase {
                 .contentType(JSON)
                 .body("results.size()", is(2))
                 //validate payment
-                .body("results[0].transaction_type", is("payment"))
+                .body("results[0].transaction_type", is("charge"))
                 .body("results[0].card_details.last_digits_card_number", notNullValue())
                 .body("results[0].email",notNullValue())
                 .body("results[0].amount", isNumber(AMOUNT))
@@ -649,7 +649,7 @@ public class ChargesApiResourceITest extends ChargingITestBase {
                 .contentType(JSON)
                 .body("results.size()", is(1))
                 //validate payment
-                .body("results[0].transaction_type", is("payment"))
+                .body("results[0].transaction_type", is("charge"))
                 .body("results[0].card_details.last_digits_card_number", notNullValue())
                 .body("results[0].email",notNullValue())
                 .body("results[0].amount", isNumber(AMOUNT))

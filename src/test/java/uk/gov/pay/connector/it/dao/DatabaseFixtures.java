@@ -6,6 +6,7 @@ import uk.gov.pay.connector.model.domain.ChargeStatus;
 import uk.gov.pay.connector.model.domain.GatewayAccountEntity;
 import uk.gov.pay.connector.model.domain.RefundStatus;
 import uk.gov.pay.connector.util.DatabaseTestHelper;
+import uk.gov.pay.connector.util.DateTimeUtils;
 import uk.gov.pay.connector.util.RandomIdGenerator;
 
 import java.time.ZoneId;
@@ -451,6 +452,11 @@ public class DatabaseFixtures {
 
         public TestRefund withCreatedDate(ZonedDateTime createdDate) {
             this.createdDate = createdDate;
+            return this;
+        }
+
+        public TestRefund withRefundStatus(RefundStatus status) {
+            this.status = status;
             return this;
         }
 

@@ -117,8 +117,8 @@ database:
   minIdleTime: 1 minute
 
 jpa:
-  jpaLoggingLevel: WARNING
-  sqlLoggingLevel: WARNING
+  jpaLoggingLevel: FINE
+  sqlLoggingLevel: FINE
   ddlGenerationOutputMode: database
   queryResultsCache: false
   cacheSharedDefault: false
