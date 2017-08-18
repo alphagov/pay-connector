@@ -69,9 +69,6 @@ public class ConnectorConfiguration extends Configuration {
     @NotNull
     private String graphitePort;
 
-    @NotNull
-    private boolean epdqRefundsEnabled;
-
     @JsonProperty("database")
     public DataSourceFactory getDataSourceFactory() {
         return dataSourceFactory;
@@ -147,10 +144,6 @@ public class ConnectorConfiguration extends Configuration {
 
     public CaptureProcessConfig getCaptureProcessConfig() {
         return captureProcessConfig;
-    }
-
-    public boolean isEpdqRefundsEnabled() {
-        return epdqRefundsEnabled;
     }
 
 }

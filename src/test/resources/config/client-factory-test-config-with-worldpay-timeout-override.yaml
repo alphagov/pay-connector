@@ -135,5 +135,3 @@ notifyConfig:
 
 graphiteHost: ${METRICS_HOST:-localhost}
 graphitePort: ${METRICS_PORT:-8092}
-
-epdqRefundsEnabled: true
