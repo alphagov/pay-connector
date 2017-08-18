@@ -53,16 +53,10 @@ public class EpdqPaymentProvider extends BasePaymentProvider<BaseResponse, Strin
 
     private final SignatureGenerator signatureGenerator;
 
-    /**
-     * Temporary feature flag to stop people attempting refunds before we handle refund notifications
-     */
-    private final boolean refundEnabled;
-
     public EpdqPaymentProvider(EnumMap<GatewayOperation, GatewayClient> clients, SignatureGenerator signatureGenerator,
-                               boolean refundEnabled, ExternalRefundAvailabilityCalculator externalRefundAvailabilityCalculator) {
+                               ExternalRefundAvailabilityCalculator externalRefundAvailabilityCalculator) {
         super(clients, externalRefundAvailabilityCalculator);
         this.signatureGenerator = signatureGenerator;
-        this.refundEnabled = refundEnabled;
     }
 
     @Override
@@ -92,10 +86,7 @@ public class EpdqPaymentProvider extends BasePaymentProvider<BaseResponse, Strin
 
     @Override
     public GatewayResponse refund(RefundGatewayRequest request) {
-        if (refundEnabled) {
-            return sendReceive(ROUTE_FOR_MAINTENANCE_ORDER, request, buildRefundOrderFor(), EpdqRefundResponse.class, extractResponseIdentifier());
-        }
-        throw new UnsupportedOperationException("Refund operation not supported.");
+        return sendReceive(ROUTE_FOR_MAINTENANCE_ORDER, request, buildRefundOrderFor(), EpdqRefundResponse.class, extractResponseIdentifier());
     }
 
     @Override

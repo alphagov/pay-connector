@@ -150,7 +150,7 @@ public class EpdqPaymentProviderTest {
                 .refundClient(refundClient)
                 .build();
 
-        provider = new EpdqPaymentProvider(gatewayClients, mockSignatureGenerator, true, mockExternalRefundAvailabilityCalculator);
+        provider = new EpdqPaymentProvider(gatewayClients, mockSignatureGenerator, mockExternalRefundAvailabilityCalculator);
     }
 
     @Test
@@ -331,9 +331,9 @@ public class EpdqPaymentProviderTest {
     }
 
     @Test
-    public void parseNotification_shouldReturnNotificationsIfValidFormUrlEncoded() throws IOException  {
+    public void parseNotification_shouldReturnNotificationsIfValidFormUrlEncoded() throws IOException {
         Either<String, Notifications<String>> response =
-            provider.parseNotification(notificationPayloadForTransaction(NOTIFICATION_STATUS, NOTIFICATION_PAY_ID, NOTIFICATION_PAY_ID_SUB, NOTIFICATION_SHA_SIGN));
+                provider.parseNotification(notificationPayloadForTransaction(NOTIFICATION_STATUS, NOTIFICATION_PAY_ID, NOTIFICATION_PAY_ID_SUB, NOTIFICATION_SHA_SIGN));
 
         assertThat(response.isRight(), is(true));
 
@@ -348,13 +348,7 @@ public class EpdqPaymentProviderTest {
         assertThat(notification.getStatus(), is(NOTIFICATION_STATUS));
         assertThat(notification.getGatewayEventDate(), IsNull.nullValue());
     }
-
-    @Test(expected = UnsupportedOperationException.class)
-    public void shouldThrowExceptionIfRefundFeatureFlagDisabled() {
-        provider = new EpdqPaymentProvider(gatewayClients, mockSignatureGenerator, false, mockExternalRefundAvailabilityCalculator);
-        provider.refund(buildTestRefundRequest());
-    }
-
+    
     @Test
     public void shouldReturnExternalRefundAvailability() {
         ChargeEntity mockChargeEntity = mock(ChargeEntity.class);
