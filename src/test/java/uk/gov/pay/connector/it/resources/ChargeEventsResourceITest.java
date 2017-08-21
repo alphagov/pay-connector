@@ -22,8 +22,6 @@ import static uk.gov.pay.connector.model.domain.ChargeStatus.*;
 
 public class ChargeEventsResourceITest {
 
-    private static final String JSON_CHARGE_KEY = "charge_id";
-
     private DatabaseTestHelper databaseTestHelper;
 
     @Rule
@@ -141,10 +139,10 @@ public class ChargeEventsResourceITest {
                 .body("events[0]", new TransactionEventMatcher("PAYMENT", withState("created", "false"), "100", createdTestChargeEvent.getUpdated()))
                 .body("events[1]", new TransactionEventMatcher("PAYMENT", withState("started", "false"), "100", enteringCardDetailsTestChargeEvent.getUpdated()))
                 .body("events[2]", new TransactionEventMatcher("PAYMENT", withState("success", "true"), "100", captureApprovedTestChargeEvent.getUpdated()))
-                .body("events[3]", new TransactionEventMatcher("REFUND", withState("submitted", "false"), "10", createdTestRefund1.getHistoryStartDate()))
-                .body("events[4]", new TransactionEventMatcher("REFUND", withState("submitted", "false"), "90", createdTestRefund2.getHistoryStartDate()))
-                .body("events[5]", new TransactionEventMatcher("REFUND", withState("success", "true"), "90", refundedTestRefund2.getHistoryStartDate()))
-                .body("events[6]", new TransactionEventMatcher("REFUND", withState("success", "true"), "10", refundedTestRefund1.getHistoryStartDate()));
+                .body("events[3]", new TransactionEventMatcher("REFUND", withState("submitted", "false"), "10", createdTestRefund1.getHistoryStartDate(), createdTestRefund1.getReference()))
+                .body("events[4]", new TransactionEventMatcher("REFUND", withState("submitted", "false"), "90", createdTestRefund2.getHistoryStartDate(), createdTestRefund2.getReference()))
+                .body("events[5]", new TransactionEventMatcher("REFUND", withState("success", "true"), "90", refundedTestRefund2.getHistoryStartDate(), refundedTestRefund2.getReference()))
+                .body("events[6]", new TransactionEventMatcher("REFUND", withState("success", "true"), "10", refundedTestRefund1.getHistoryStartDate(), refundedTestRefund1.getReference()));
     }
 
     @Test

@@ -80,6 +80,7 @@ public class ChargeEventsResource {
                 .map(event -> new TransactionEvent(
                         REFUND,
                         event.getChargeEntity().getExternalId(),
+                        event.getReference(),
                         extractState(event.getStatus().toExternal()),
                         event.getAmount(),
                         event.getHistoryStartDate()

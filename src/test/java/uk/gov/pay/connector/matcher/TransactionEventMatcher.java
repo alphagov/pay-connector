@@ -38,18 +38,25 @@ public class TransactionEventMatcher extends TypeSafeMatcher<Map<String, Object>
         public String getMessage() {
             return message;
         }
+
     }
 
     private String type;
     private State state;
     private String amount;
     private String updated;
+    private final String refundReference;
 
-    public TransactionEventMatcher(String type, State state, String amount, ZonedDateTime updated) {
+    public TransactionEventMatcher(String type, State state, String amount, ZonedDateTime updated, String refundReference) {
         this.type = type;
         this.state = state;
         this.amount = amount;
         this.updated = DateTimeUtils.toUTCDateTimeString(updated);
+        this.refundReference = refundReference;
+    }
+
+    public TransactionEventMatcher(String type, State state, String amount, ZonedDateTime updated) {
+        this(type, state, amount, updated, null);
     }
 
     static public State withState(String status, String finished) {
@@ -63,6 +70,7 @@ public class TransactionEventMatcher extends TypeSafeMatcher<Map<String, Object>
     @Override
     public void describeTo(Description description) {
         description.appendText("{amount=").appendValue(amount).appendText(", ");
+        description.appendText("refund_reference=").appendValue(refundReference).appendText(", ");
         description.appendText("state={");
         description.appendText("finished=").appendValue(state.getFinished()).appendText(", ");
         description.appendText("status=").appendValue(state.getStatus()).appendText(", ");
@@ -86,6 +94,7 @@ public class TransactionEventMatcher extends TypeSafeMatcher<Map<String, Object>
         }
 
         return stateMatches &&
+                ObjectUtils.equals(record.get("refund_reference"), refundReference) &&
                 ObjectUtils.equals(record.get("type"), type) &&
                 ObjectUtils.equals(record.get("amount"), Integer.valueOf(amount)) &&
                 ObjectUtils.equals(record.get("updated"), updated);

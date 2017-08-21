@@ -88,6 +88,7 @@ public class TransactionEvent implements Comparable<TransactionEvent> {
 
     private final Type type;
     private String extChargeId;
+    private String extRefundReference;
     private State state;
     private Long amount;
     private ZonedDateTime updated;
@@ -100,9 +101,23 @@ public class TransactionEvent implements Comparable<TransactionEvent> {
         this.updated = updated;
     }
 
+    public TransactionEvent(Type type, String extChargeId, String extRefundReference, State state, Long amount, ZonedDateTime updated) {
+        this.type = type;
+        this.extRefundReference = extRefundReference;
+        this.extChargeId = extChargeId;
+        this.state = state;
+        this.amount = amount;
+        this.updated = updated;
+    }
+
     @JsonProperty("type")
     public Type getType() {
         return type;
+    }
+
+    @JsonProperty("refund_reference")
+    public String getRefundId() {
+        return extRefundReference;
     }
 
     @JsonIgnore
