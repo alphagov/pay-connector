@@ -285,6 +285,48 @@ public class AuthCardDetailsValidatorTest {
         assertTrue(AuthCardDetailsValidator.isWellFormatted(authCardDetails));
     }
 
+    @Test
+    public void validationFailsIfCardHolderContainsThreeDigitsPossiblySurroundedByWhitespace() {
+        AuthCardDetails authCardDetails = aValidAuthorisationDetails();
+        authCardDetails.setCardHolder(" \t 321 ");
+        assertFalse(AuthCardDetailsValidator.isWellFormatted(authCardDetails));
+    }
+
+    @Test
+    public void validationFailsIfCardHolderContainsFourDigitsPossiblySurroundedByWhitespace() {
+        AuthCardDetails authCardDetails = aValidAuthorisationDetails();
+        authCardDetails.setCardHolder(" 1234 \t");
+        assertFalse(AuthCardDetailsValidator.isWellFormatted(authCardDetails));
+    }
+
+    @Test
+    public void validationSucceedsIfCardHolderContainsThreeDigitsSurroundedByNonWhitespace() {
+        AuthCardDetails authCardDetails = aValidAuthorisationDetails();
+        authCardDetails.setCardHolder("Mr. 333");
+        assertTrue(AuthCardDetailsValidator.isWellFormatted(authCardDetails));
+    }
+
+    @Test
+    public void validationSucceedsIfCardHolderContainsFourDigitsSurroundedByNonWhitespace() {
+        AuthCardDetails authCardDetails = aValidAuthorisationDetails();
+        authCardDetails.setCardHolder("1234 Jr.");
+        assertTrue(AuthCardDetailsValidator.isWellFormatted(authCardDetails));
+    }
+
+    @Test
+    public void validationSucceedsIfCardHolderContainsTwoDigits() {
+        AuthCardDetails authCardDetails = aValidAuthorisationDetails();
+        authCardDetails.setCardHolder("22");
+        assertTrue(AuthCardDetailsValidator.isWellFormatted(authCardDetails));
+    }
+
+    @Test
+    public void validationSucceedsIfCardHolderContainsFiveDigits() {
+        AuthCardDetails authCardDetails = aValidAuthorisationDetails();
+        authCardDetails.setCardHolder("12345");
+        assertTrue(AuthCardDetailsValidator.isWellFormatted(authCardDetails));
+    }
+
     private AuthCardDetails buildAuthCardDetailsFor(String cardNo, String cvc, String expiry, String cardBrand) {
         return buildAuthCardDetailsFor(cardNo, cvc, expiry, cardBrand, goodAddress());
     }

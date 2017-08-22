@@ -11,6 +11,10 @@ import static org.apache.commons.lang3.StringUtils.isNotBlank;
 
 public class AuthCardDetailsValidator {
 
+    private static final Pattern TWELVE_TO_NINETEEN_DIGITS = compile("[0-9]{12,19}");
+    private static final Pattern THREE_TO_FOUR_DIGITS = compile("[0-9]{3,4}");
+    private static final Pattern THREE_TO_FOUR_DIGITS_POSSIBLY_SURROUNDED_BY_WHITESPACE = compile("\\s+[0-9]{3,4}\\s+");
+    private static final Pattern EXPIRY_DATE = compile("[0-9]{2}/[0-9]{2}");
     private static final Pattern CONTAINS_MORE_THAN_11_NOT_NECESSARILY_CONTIGUOUS_DIGITS = compile(".*([0-9].*){12,}");
 
     public static boolean isWellFormatted(AuthCardDetails authCardDetails) {
@@ -19,6 +23,7 @@ public class AuthCardDetailsValidator {
                 hasExpiryDateFormat(authCardDetails.getEndDate()) &&
                 hasAddress(authCardDetails.getAddress()) &&
                 hasCardBrand(authCardDetails.getCardBrand()) &&
+                unlikelyToBeCvc(authCardDetails.getCardHolder()) &&
                 unlikelyToContainACardNumber(authCardDetails.getCardHolder()) &&
                 unlikelyToContainACardNumber(authCardDetails.getCardBrand()) &&
                 unlikelyToContainACardNumber(authCardDetails.getAddress().getLine1()) &&
@@ -29,10 +34,6 @@ public class AuthCardDetailsValidator {
                 unlikelyToContainACardNumber(authCardDetails.getAddress().getCountry());
     }
 
-    private static boolean unlikelyToContainACardNumber(String field) {
-        return field == null || !CONTAINS_MORE_THAN_11_NOT_NECESSARILY_CONTIGUOUS_DIGITS.matcher(field).matches();
-    }
-
     private static boolean hasAddress(Address address) {
         return address != null &&
                 isNotBlank(address.getCity()) &&
@@ -41,19 +42,36 @@ public class AuthCardDetailsValidator {
                 isNotBlank(address.getCountry());
     }
 
-    private static boolean hasExpiryDateFormat(Object date) {
-        return date != null && date.toString().matches("[0-9]{2}/[0-9]{2}");
-    }
-
     private static boolean hasCardBrand(String cardBrand) {
         return isNoneBlank(cardBrand);
     }
 
-    private static boolean isValidCardNumberLength(Object number) {
-        return number != null && number.toString().matches("[0-9]{12,19}");
+    private static boolean isValidCardNumberLength(String number) {
+        return notNullAndMatches(TWELVE_TO_NINETEEN_DIGITS, number);
     }
 
-    private static boolean isBetween3To4Digits(Object number) {
-        return number != null && number.toString().matches("[0-9]{3,4}");
+    private static boolean isBetween3To4Digits(String number) {
+        return notNullAndMatches(THREE_TO_FOUR_DIGITS, number);
     }
+
+    private static boolean hasExpiryDateFormat(String date) {
+        return notNullAndMatches(EXPIRY_DATE, date);
+    }
+
+    private static boolean unlikelyToContainACardNumber(String field) {
+        return nullOrDoesNotMatch(CONTAINS_MORE_THAN_11_NOT_NECESSARILY_CONTIGUOUS_DIGITS, field);
+    }
+
+    private static boolean unlikelyToBeCvc(String field) {
+        return nullOrDoesNotMatch(THREE_TO_FOUR_DIGITS_POSSIBLY_SURROUNDED_BY_WHITESPACE, field);
+    }
+
+    private static boolean notNullAndMatches(Pattern regex, String string) {
+        return string != null && regex.matcher(string).matches();
+    }
+
+    private static boolean nullOrDoesNotMatch(Pattern regex, String string) {
+        return string == null || !regex.matcher(string).matches();
+    }
+
 }
