@@ -609,4 +609,12 @@
         </createIndex>
     </changeSet>
 
+    <changeSet id="createIndex refunds.created_date" author="">
+        <createIndex indexName="idx_refunds_created_date"
+                     tableName="refunds"
+                     unique="false">
+            <column name="created_date" />
+        </createIndex>
+    </changeSet>
+
 </databaseChangeLog>
