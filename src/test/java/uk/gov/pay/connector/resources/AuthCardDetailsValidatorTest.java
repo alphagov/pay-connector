@@ -6,7 +6,10 @@ import uk.gov.pay.connector.model.domain.AuthCardDetails;
 
 import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertTrue;
-import static uk.gov.pay.connector.util.AuthUtils.*;
+import static uk.gov.pay.connector.util.AuthUtils.aValidAuthorisationDetails;
+import static uk.gov.pay.connector.util.AuthUtils.addressFor;
+import static uk.gov.pay.connector.util.AuthUtils.buildAuthCardDetails;
+import static uk.gov.pay.connector.util.AuthUtils.goodAddress;
 
 public class AuthCardDetailsValidatorTest {
 
@@ -14,6 +17,8 @@ public class AuthCardDetailsValidatorTest {
     private String validCardNumber = "4242424242424242";
     private String validExpiryDate = "12/99";
     private String cardBrand = "card-brand";
+
+    private String sneakyCardNumber = "this12card3number4is5hidden6;7 89-0(1+2.";
 
     @Test
     public void validationSucceedForCorrectAuthorisationCardDetails() {
@@ -152,6 +157,132 @@ public class AuthCardDetailsValidatorTest {
         cardBrand = "card-brand";
         AuthCardDetails authCardDetails = buildAuthCardDetailsFor(validCVC, "1290", cardBrand, cardBrand, address);
         assertFalse(AuthCardDetailsValidator.isWellFormatted(authCardDetails));
+    }
+
+    @Test
+    public void validationFailsIfCardHolderContainsMoreThanElevenDigits() {
+        AuthCardDetails authCardDetails = aValidAuthorisationDetails();
+        authCardDetails.setCardHolder(sneakyCardNumber);
+        assertFalse(AuthCardDetailsValidator.isWellFormatted(authCardDetails));
+    }
+
+    @Test
+    public void validationSucceedsIfCardHolderContainsExactlyElevenDigits() {
+        AuthCardDetails authCardDetails = aValidAuthorisationDetails();
+        authCardDetails.setCardHolder("1 Mr John 123456789 Smith 0");
+        assertTrue(AuthCardDetailsValidator.isWellFormatted(authCardDetails));
+    }
+
+    @Test
+    public void validationFailsIfCardBrandContainsMoreThanElevenDigits() {
+        AuthCardDetails authCardDetails = aValidAuthorisationDetails();
+        authCardDetails.setCardBrand(sneakyCardNumber);
+        assertFalse(AuthCardDetailsValidator.isWellFormatted(authCardDetails));
+    }
+
+    @Test
+    public void validationSucceedsIfCardBrandContainsExactlyElevenDigits() {
+        AuthCardDetails authCardDetails = aValidAuthorisationDetails();
+        authCardDetails.setCardBrand("12345678901");
+        assertTrue(AuthCardDetailsValidator.isWellFormatted(authCardDetails));
+    }
+    
+    @Test
+    public void validationFailsIfAddressLine1ContainsMoreThanElevenDigits() {
+        AuthCardDetails authCardDetails = aValidAuthorisationDetails();
+        authCardDetails.getAddress().setLine1(sneakyCardNumber);
+        assertFalse(AuthCardDetailsValidator.isWellFormatted(authCardDetails));
+    }
+
+    @Test
+    public void validationSucceedIfAddressLine1ContainsExactlyElevenDigits() {
+        AuthCardDetails authCardDetails = aValidAuthorisationDetails();
+        authCardDetails.getAddress().setLine2("01234/5678 90th Street");
+        assertTrue(AuthCardDetailsValidator.isWellFormatted(authCardDetails));
+    }
+
+    @Test
+    public void validationFailsIfAddressLine2ContainsMoreThanElevenDigits() {
+        AuthCardDetails authCardDetails = aValidAuthorisationDetails();
+        authCardDetails.getAddress().setLine2(sneakyCardNumber);
+        assertFalse(AuthCardDetailsValidator.isWellFormatted(authCardDetails));
+    }
+
+    @Test
+    public void validationSucceedIfAddressLine2ContainsExactlyElevenDigits() {
+        AuthCardDetails authCardDetails = aValidAuthorisationDetails();
+        authCardDetails.getAddress().setLine2("01234/5678 90th Street");
+        assertTrue(AuthCardDetailsValidator.isWellFormatted(authCardDetails));
+    }
+
+    @Test
+    public void validationSucceedIfAddressLine2IsNull() {
+        AuthCardDetails authCardDetails = aValidAuthorisationDetails();
+        authCardDetails.getAddress().setLine2(null);
+        assertTrue(AuthCardDetailsValidator.isWellFormatted(authCardDetails));
+    }
+
+    @Test
+    public void validationFailsIfPostCodeContainsMoreThanElevenDigits() {
+        AuthCardDetails authCardDetails = aValidAuthorisationDetails();
+        authCardDetails.getAddress().setPostcode(sneakyCardNumber);
+        assertFalse(AuthCardDetailsValidator.isWellFormatted(authCardDetails));
+    }
+
+    @Test
+    public void validationSucceedsIfPostCodeContainsExactlyElevenDigits() {
+        AuthCardDetails authCardDetails = aValidAuthorisationDetails();
+        authCardDetails.getAddress().setPostcode("12N3446789M01");
+        assertTrue(AuthCardDetailsValidator.isWellFormatted(authCardDetails));
+    }
+
+    @Test
+    public void validationFailsIfCityContainsMoreThanElevenDigits() {
+        AuthCardDetails authCardDetails = aValidAuthorisationDetails();
+        authCardDetails.getAddress().setCity(sneakyCardNumber);
+        assertFalse(AuthCardDetailsValidator.isWellFormatted(authCardDetails));
+    }
+
+    @Test
+    public void validationSucceedsIfCityContainsExactlyElevenDigits() {
+        AuthCardDetails authCardDetails = aValidAuthorisationDetails();
+        authCardDetails.getAddress().setCity("12N3446789M01");
+        assertTrue(AuthCardDetailsValidator.isWellFormatted(authCardDetails));
+    }
+
+    @Test
+    public void validationFailsIfCountyMoreThanElevenDigits() {
+        AuthCardDetails authCardDetails = aValidAuthorisationDetails();
+        authCardDetails.getAddress().setCounty(sneakyCardNumber);
+        assertFalse(AuthCardDetailsValidator.isWellFormatted(authCardDetails));
+    }
+
+    @Test
+    public void validationSucceedsIfCountyContainsExactlyElevenDigits() {
+        AuthCardDetails authCardDetails = aValidAuthorisationDetails();
+        authCardDetails.getAddress().setCounty("12N3446789M01");
+        assertTrue(AuthCardDetailsValidator.isWellFormatted(authCardDetails));
+    }
+
+    @Test
+    public void validationSucceedsIfCountyIsNull() {
+        AuthCardDetails authCardDetails = aValidAuthorisationDetails();
+        authCardDetails.getAddress().setCounty(null);
+        assertTrue(AuthCardDetailsValidator.isWellFormatted(authCardDetails));
+    }
+
+    @Test
+    public void validationFailsIfCountryMoreThanElevenDigits() {
+        AuthCardDetails authCardDetails = aValidAuthorisationDetails();
+        authCardDetails.getAddress().setCountry(sneakyCardNumber);
+        assertFalse(AuthCardDetailsValidator.isWellFormatted(authCardDetails));
+    }
+
+    @Test
+    public void validationSucceedsIfCountryContainsExactlyElevenDigits() {
+        AuthCardDetails authCardDetails = aValidAuthorisationDetails();
+        authCardDetails.getAddress().setCountry("12N3446789M01");
+        assertTrue(AuthCardDetailsValidator.isWellFormatted(authCardDetails));
     }
 
     private AuthCardDetails buildAuthCardDetailsFor(String cardNo, String cvc, String expiry, String cardBrand) {
