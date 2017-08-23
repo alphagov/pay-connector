@@ -7,7 +7,13 @@ import org.apache.commons.lang3.StringUtils;
 import uk.gov.pay.connector.dao.CardTypeDao;
 import uk.gov.pay.connector.dao.ChargeDao;
 import uk.gov.pay.connector.model.GatewayError;
-import uk.gov.pay.connector.model.domain.*;
+import uk.gov.pay.connector.model.domain.AddressEntity;
+import uk.gov.pay.connector.model.domain.AuthCardDetails;
+import uk.gov.pay.connector.model.domain.CardDetailsEntity;
+import uk.gov.pay.connector.model.domain.CardTypeEntity;
+import uk.gov.pay.connector.model.domain.ChargeEntity;
+import uk.gov.pay.connector.model.domain.ChargeStatus;
+import uk.gov.pay.connector.model.domain.GatewayAccountEntity;
 import uk.gov.pay.connector.model.gateway.AuthorisationGatewayRequest;
 import uk.gov.pay.connector.model.gateway.GatewayResponse;
 
@@ -19,6 +25,7 @@ import java.util.stream.Collectors;
 import static uk.gov.pay.connector.model.domain.ChargeStatus.AUTHORISATION_ERROR;
 import static uk.gov.pay.connector.model.domain.ChargeStatus.AUTHORISATION_READY;
 import static uk.gov.pay.connector.model.domain.ChargeStatus.AUTHORISATION_TIMEOUT;
+import static uk.gov.pay.connector.model.domain.ChargeStatus.AUTHORISATION_UNEXPECTED_ERROR;
 import static uk.gov.pay.connector.model.domain.ChargeStatus.ENTERING_CARD_DETAILS;
 import static uk.gov.pay.connector.model.domain.NumbersInStringsSanitizer.sanitize;
 
@@ -116,12 +123,12 @@ public class CardAuthoriseService extends CardAuthoriseBaseService<AuthCardDetai
 
     private ChargeStatus mapError(GatewayError gatewayError) {
         switch (gatewayError.getErrorType()) {
-            case UNEXPECTED_STATUS_CODE_FROM_GATEWAY:
+            case GENERIC_GATEWAY_ERROR:
                 return AUTHORISATION_ERROR;
             case GATEWAY_CONNECTION_TIMEOUT_ERROR:
                 return AUTHORISATION_TIMEOUT;
             default:
-                return AUTHORISATION_ERROR;
+                return AUTHORISATION_UNEXPECTED_ERROR;
         }
     }
 

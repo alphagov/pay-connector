@@ -7,7 +7,15 @@ import java.util.List;
 import java.util.stream.Collectors;
 
 import static java.util.Arrays.stream;
-import static uk.gov.pay.connector.model.api.ExternalChargeState.*;
+import static uk.gov.pay.connector.model.api.ExternalChargeState.EXTERNAL_CANCELLED;
+import static uk.gov.pay.connector.model.api.ExternalChargeState.EXTERNAL_CREATED;
+import static uk.gov.pay.connector.model.api.ExternalChargeState.EXTERNAL_ERROR_GATEWAY;
+import static uk.gov.pay.connector.model.api.ExternalChargeState.EXTERNAL_FAILED_CANCELLED;
+import static uk.gov.pay.connector.model.api.ExternalChargeState.EXTERNAL_FAILED_EXPIRED;
+import static uk.gov.pay.connector.model.api.ExternalChargeState.EXTERNAL_FAILED_REJECTED;
+import static uk.gov.pay.connector.model.api.ExternalChargeState.EXTERNAL_STARTED;
+import static uk.gov.pay.connector.model.api.ExternalChargeState.EXTERNAL_SUBMITTED;
+import static uk.gov.pay.connector.model.api.ExternalChargeState.EXTERNAL_SUCCESS;
 
 public enum ChargeStatus implements Status {
     CREATED("CREATED", EXTERNAL_CREATED),
@@ -25,6 +33,7 @@ public enum ChargeStatus implements Status {
     AUTHORISATION_CANCELLED("AUTHORISATION CANCELLED", EXTERNAL_FAILED_REJECTED),
     AUTHORISATION_ERROR("AUTHORISATION ERROR", EXTERNAL_ERROR_GATEWAY),
     AUTHORISATION_TIMEOUT("AUTHORISATION TIMEOUT", EXTERNAL_ERROR_GATEWAY),
+    AUTHORISATION_UNEXPECTED_ERROR("AUTHORISATION UNEXPECTED ERROR", EXTERNAL_ERROR_GATEWAY),
 
     CAPTURE_APPROVED("CAPTURE APPROVED", EXTERNAL_SUCCESS),
     CAPTURE_APPROVED_RETRY("CAPTURE APPROVED RETRY", EXTERNAL_SUCCESS),

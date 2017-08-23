@@ -16,7 +16,12 @@ import uk.gov.pay.connector.exception.ConflictRuntimeException;
 import uk.gov.pay.connector.exception.IllegalStateRuntimeException;
 import uk.gov.pay.connector.exception.OperationAlreadyInProgressRuntimeException;
 import uk.gov.pay.connector.model.GatewayError;
-import uk.gov.pay.connector.model.domain.*;
+import uk.gov.pay.connector.model.domain.AuthCardDetails;
+import uk.gov.pay.connector.model.domain.CardTypeEntity;
+import uk.gov.pay.connector.model.domain.ChargeEntity;
+import uk.gov.pay.connector.model.domain.ChargeEntityFixture;
+import uk.gov.pay.connector.model.domain.ChargeStatus;
+import uk.gov.pay.connector.model.domain.GatewayAccountEntity;
 import uk.gov.pay.connector.model.gateway.GatewayResponse;
 import uk.gov.pay.connector.model.gateway.GatewayResponse.GatewayResponseBuilder;
 import uk.gov.pay.connector.service.BaseAuthoriseResponse.AuthoriseStatus;
@@ -38,9 +43,23 @@ import static org.hamcrest.core.Is.is;
 import static org.junit.Assert.assertNull;
 import static org.junit.Assert.fail;
 import static org.mockito.Matchers.any;
-import static org.mockito.Mockito.*;
+import static org.mockito.Mockito.anyString;
+import static org.mockito.Mockito.doAnswer;
+import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.spy;
+import static org.mockito.Mockito.verifyNoMoreInteractions;
+import static org.mockito.Mockito.when;
 import static uk.gov.pay.connector.model.GatewayError.gatewayConnectionTimeoutException;
-import static uk.gov.pay.connector.model.domain.ChargeStatus.*;
+import static uk.gov.pay.connector.model.GatewayError.malformedResponseReceivedFromGateway;
+import static uk.gov.pay.connector.model.domain.ChargeStatus.AUTHORISATION_3DS_REQUIRED;
+import static uk.gov.pay.connector.model.domain.ChargeStatus.AUTHORISATION_ABORTED;
+import static uk.gov.pay.connector.model.domain.ChargeStatus.AUTHORISATION_CANCELLED;
+import static uk.gov.pay.connector.model.domain.ChargeStatus.AUTHORISATION_ERROR;
+import static uk.gov.pay.connector.model.domain.ChargeStatus.AUTHORISATION_REJECTED;
+import static uk.gov.pay.connector.model.domain.ChargeStatus.AUTHORISATION_SUCCESS;
+import static uk.gov.pay.connector.model.domain.ChargeStatus.AUTHORISATION_TIMEOUT;
+import static uk.gov.pay.connector.model.domain.ChargeStatus.AUTHORISATION_UNEXPECTED_ERROR;
+import static uk.gov.pay.connector.model.domain.ChargeStatus.ENTERING_CARD_DETAILS;
 import static uk.gov.pay.connector.model.gateway.GatewayResponse.GatewayResponseBuilder.responseBuilder;
 import static uk.gov.pay.connector.service.CardExecutorService.ExecutionStatus.COMPLETED;
 import static uk.gov.pay.connector.service.CardExecutorService.ExecutionStatus.IN_PROGRESS;
@@ -364,6 +383,16 @@ public class CardAuthoriseServiceTest extends CardServiceTest {
 
         assertThat(response.isFailed(), is(true));
         assertThat(reloadedCharge.getStatus(), is(AUTHORISATION_TIMEOUT.toString()));
+        assertThat(reloadedCharge.getGatewayTransactionId(), is(nullValue()));
+    }
+
+    @Test
+    public void shouldRespondWithUnexpectedError(){
+        GatewayError gatewayError = malformedResponseReceivedFromGateway("Malformed response received");
+        GatewayResponse response = anAuthorisationErrorResponseWithGatewayError(charge, reloadedCharge, gatewayError);
+
+        assertThat(response.isFailed(), is(true));
+        assertThat(reloadedCharge.getStatus(), is(AUTHORISATION_UNEXPECTED_ERROR.toString()));
         assertThat(reloadedCharge.getGatewayTransactionId(), is(nullValue()));
     }
 

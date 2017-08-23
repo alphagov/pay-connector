@@ -36,6 +36,7 @@ import static org.junit.Assert.assertThat;
 import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
 import static uk.gov.pay.connector.model.domain.ChargeStatus.AUTHORISATION_ERROR;
+import static uk.gov.pay.connector.model.domain.ChargeStatus.AUTHORISATION_UNEXPECTED_ERROR;
 import static uk.gov.pay.connector.resources.ApiPaths.FRONTEND_CHARGE_AUTHORIZE_API_PATH;
 import static uk.gov.pay.connector.util.AuthUtils.aValidAuthorisationDetails;
 
@@ -91,7 +92,7 @@ public class GatewayAuthFailuresITest {
     }
 
     @Test
-    public void shouldFailAuthWhenUnexpectedResponseCodeFromGateway() throws Exception {
+    public void shouldFailAuthWhenUnexpectedHttpStatusCodeFromGateway() throws Exception {
         gatewayStub.respondWithUnexpectedResponseCodeWhenCardAuth();
 
         String errorMessage = "Unexpected Response Code From Gateway";
@@ -110,7 +111,7 @@ public class GatewayAuthFailuresITest {
 
         assertThatLastGatewayClientLoggingEventIs(
                 String.format("Gateway returned unexpected status code: 999, for gateway url=http://localhost:%s/pal/servlet/soap/Payment with type test", port));
-        assertThat(app.getDatabaseTestHelper().getChargeStatus(chargeTestRecord.getChargeId()), is(AUTHORISATION_ERROR.getValue()));
+        assertThat(app.getDatabaseTestHelper().getChargeStatus(chargeTestRecord.getChargeId()), is(AUTHORISATION_UNEXPECTED_ERROR.getValue()));
     }
 
     private void assertThatLastGatewayClientLoggingEventIs(String loggingEvent) {

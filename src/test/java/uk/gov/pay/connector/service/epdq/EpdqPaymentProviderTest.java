@@ -61,7 +61,7 @@ import static org.mockito.Mockito.eq;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
-import static uk.gov.pay.connector.model.ErrorType.UNEXPECTED_STATUS_CODE_FROM_GATEWAY;
+import static uk.gov.pay.connector.model.ErrorType.UNEXPECTED_HTTP_STATUS_CODE_FROM_GATEWAY;
 import static uk.gov.pay.connector.model.api.ExternalChargeRefundAvailability.EXTERNAL_AVAILABLE;
 import static uk.gov.pay.connector.model.domain.Address.anAddress;
 import static uk.gov.pay.connector.model.domain.ChargeEntityFixture.aValidChargeEntity;
@@ -186,7 +186,7 @@ public class EpdqPaymentProviderTest {
         GatewayResponse<EpdqAuthorisationResponse> response = provider.authorise(buildTestAuthorisationRequest());
         assertThat(response.isFailed(), is(true));
         assertThat(response.getGatewayError().isPresent(), is(true));
-        assertEquals(response.getGatewayError().get(), new GatewayError("Unexpected Response Code From Gateway", UNEXPECTED_STATUS_CODE_FROM_GATEWAY));
+        assertEquals(response.getGatewayError().get(), new GatewayError("Unexpected Response Code From Gateway", UNEXPECTED_HTTP_STATUS_CODE_FROM_GATEWAY));
     }
 
     @Test
@@ -212,7 +212,7 @@ public class EpdqPaymentProviderTest {
         GatewayResponse<EpdqCaptureResponse> response = provider.capture(buildTestCaptureRequest());
         assertThat(response.isFailed(), is(true));
         assertThat(response.getGatewayError().isPresent(), is(true));
-        assertEquals(response.getGatewayError().get(), new GatewayError("Unexpected Response Code From Gateway", UNEXPECTED_STATUS_CODE_FROM_GATEWAY));
+        assertEquals(response.getGatewayError().get(), new GatewayError("Unexpected Response Code From Gateway", UNEXPECTED_HTTP_STATUS_CODE_FROM_GATEWAY));
     }
 
     @Test
@@ -238,7 +238,7 @@ public class EpdqPaymentProviderTest {
         GatewayResponse<EpdqCaptureResponse> response = provider.cancel(buildTestCancelRequest());
         assertThat(response.isFailed(), is(true));
         assertThat(response.getGatewayError().isPresent(), is(true));
-        assertEquals(response.getGatewayError().get(), new GatewayError("Unexpected Response Code From Gateway", UNEXPECTED_STATUS_CODE_FROM_GATEWAY));
+        assertEquals(response.getGatewayError().get(), new GatewayError("Unexpected Response Code From Gateway", UNEXPECTED_HTTP_STATUS_CODE_FROM_GATEWAY));
     }
 
     @Test
@@ -273,7 +273,7 @@ public class EpdqPaymentProviderTest {
         GatewayResponse<EpdqRefundResponse> response = provider.refund(buildTestRefundRequest());
         assertThat(response.isFailed(), is(true));
         assertThat(response.getGatewayError().isPresent(), is(true));
-        assertEquals(response.getGatewayError().get(), new GatewayError("Unexpected Response Code From Gateway", UNEXPECTED_STATUS_CODE_FROM_GATEWAY));
+        assertEquals(response.getGatewayError().get(), new GatewayError("Unexpected Response Code From Gateway", UNEXPECTED_HTTP_STATUS_CODE_FROM_GATEWAY));
     }
 
     @Test

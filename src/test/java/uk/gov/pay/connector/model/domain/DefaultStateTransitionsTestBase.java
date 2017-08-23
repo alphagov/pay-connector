@@ -7,7 +7,37 @@ import java.util.Collection;
 import java.util.List;
 
 import static com.google.common.collect.ImmutableList.of;
-import static uk.gov.pay.connector.model.domain.ChargeStatus.*;
+import static uk.gov.pay.connector.model.domain.ChargeStatus.AUTHORISATION_3DS_READY;
+import static uk.gov.pay.connector.model.domain.ChargeStatus.AUTHORISATION_3DS_REQUIRED;
+import static uk.gov.pay.connector.model.domain.ChargeStatus.AUTHORISATION_ABORTED;
+import static uk.gov.pay.connector.model.domain.ChargeStatus.AUTHORISATION_CANCELLED;
+import static uk.gov.pay.connector.model.domain.ChargeStatus.AUTHORISATION_ERROR;
+import static uk.gov.pay.connector.model.domain.ChargeStatus.AUTHORISATION_READY;
+import static uk.gov.pay.connector.model.domain.ChargeStatus.AUTHORISATION_REJECTED;
+import static uk.gov.pay.connector.model.domain.ChargeStatus.AUTHORISATION_SUBMITTED;
+import static uk.gov.pay.connector.model.domain.ChargeStatus.AUTHORISATION_SUCCESS;
+import static uk.gov.pay.connector.model.domain.ChargeStatus.AUTHORISATION_TIMEOUT;
+import static uk.gov.pay.connector.model.domain.ChargeStatus.AUTHORISATION_UNEXPECTED_ERROR;
+import static uk.gov.pay.connector.model.domain.ChargeStatus.CAPTURED;
+import static uk.gov.pay.connector.model.domain.ChargeStatus.CAPTURE_APPROVED;
+import static uk.gov.pay.connector.model.domain.ChargeStatus.CAPTURE_APPROVED_RETRY;
+import static uk.gov.pay.connector.model.domain.ChargeStatus.CAPTURE_ERROR;
+import static uk.gov.pay.connector.model.domain.ChargeStatus.CAPTURE_READY;
+import static uk.gov.pay.connector.model.domain.ChargeStatus.CAPTURE_SUBMITTED;
+import static uk.gov.pay.connector.model.domain.ChargeStatus.CREATED;
+import static uk.gov.pay.connector.model.domain.ChargeStatus.ENTERING_CARD_DETAILS;
+import static uk.gov.pay.connector.model.domain.ChargeStatus.EXPIRED;
+import static uk.gov.pay.connector.model.domain.ChargeStatus.EXPIRE_CANCEL_FAILED;
+import static uk.gov.pay.connector.model.domain.ChargeStatus.EXPIRE_CANCEL_READY;
+import static uk.gov.pay.connector.model.domain.ChargeStatus.EXPIRE_CANCEL_SUBMITTED;
+import static uk.gov.pay.connector.model.domain.ChargeStatus.SYSTEM_CANCELLED;
+import static uk.gov.pay.connector.model.domain.ChargeStatus.SYSTEM_CANCEL_ERROR;
+import static uk.gov.pay.connector.model.domain.ChargeStatus.SYSTEM_CANCEL_READY;
+import static uk.gov.pay.connector.model.domain.ChargeStatus.SYSTEM_CANCEL_SUBMITTED;
+import static uk.gov.pay.connector.model.domain.ChargeStatus.USER_CANCELLED;
+import static uk.gov.pay.connector.model.domain.ChargeStatus.USER_CANCEL_ERROR;
+import static uk.gov.pay.connector.model.domain.ChargeStatus.USER_CANCEL_READY;
+import static uk.gov.pay.connector.model.domain.ChargeStatus.USER_CANCEL_SUBMITTED;
 
 public class DefaultStateTransitionsTestBase {
 
@@ -25,7 +55,8 @@ public class DefaultStateTransitionsTestBase {
 
         params.add(new Object[]{CREATED, of(ENTERING_CARD_DETAILS, SYSTEM_CANCELLED, EXPIRED)});
         params.add(new Object[]{ENTERING_CARD_DETAILS, of(AUTHORISATION_READY, AUTHORISATION_ABORTED, EXPIRED, USER_CANCELLED, SYSTEM_CANCELLED)});
-        params.add(new Object[]{AUTHORISATION_READY, of(AUTHORISATION_SUCCESS, AUTHORISATION_REJECTED, AUTHORISATION_ERROR, AUTHORISATION_TIMEOUT, AUTHORISATION_3DS_REQUIRED, AUTHORISATION_CANCELLED, AUTHORISATION_SUBMITTED)});
+        params.add(new Object[]{AUTHORISATION_READY, of(AUTHORISATION_SUCCESS, AUTHORISATION_REJECTED, AUTHORISATION_ERROR, AUTHORISATION_TIMEOUT, AUTHORISATION_UNEXPECTED_ERROR,
+                                    AUTHORISATION_3DS_REQUIRED, AUTHORISATION_CANCELLED, AUTHORISATION_SUBMITTED)});
         params.add(new Object[]{AUTHORISATION_SUBMITTED, of(AUTHORISATION_SUCCESS, AUTHORISATION_REJECTED, AUTHORISATION_ERROR, AUTHORISATION_3DS_REQUIRED)});
         params.add(new Object[]{AUTHORISATION_3DS_READY, of(AUTHORISATION_SUCCESS, AUTHORISATION_REJECTED, AUTHORISATION_ERROR, AUTHORISATION_CANCELLED)});
         params.add(new Object[]{AUTHORISATION_SUCCESS, of(CAPTURE_READY, SYSTEM_CANCEL_READY, USER_CANCEL_READY, EXPIRE_CANCEL_READY, CAPTURE_APPROVED)});
