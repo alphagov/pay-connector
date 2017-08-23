@@ -6,6 +6,7 @@ import io.dropwizard.setup.Environment;
 import org.apache.commons.lang3.StringUtils;
 import uk.gov.pay.connector.dao.CardTypeDao;
 import uk.gov.pay.connector.dao.ChargeDao;
+import uk.gov.pay.connector.model.GatewayError;
 import uk.gov.pay.connector.model.domain.*;
 import uk.gov.pay.connector.model.gateway.AuthorisationGatewayRequest;
 import uk.gov.pay.connector.model.gateway.GatewayResponse;
@@ -15,7 +16,9 @@ import java.util.List;
 import java.util.Optional;
 import java.util.stream.Collectors;
 
+import static uk.gov.pay.connector.model.domain.ChargeStatus.AUTHORISATION_ERROR;
 import static uk.gov.pay.connector.model.domain.ChargeStatus.AUTHORISATION_READY;
+import static uk.gov.pay.connector.model.domain.ChargeStatus.AUTHORISATION_TIMEOUT;
 import static uk.gov.pay.connector.model.domain.ChargeStatus.ENTERING_CARD_DETAILS;
 import static uk.gov.pay.connector.model.domain.NumbersInStringsSanitizer.sanitize;
 
@@ -79,9 +82,11 @@ public class CardAuthoriseService extends CardAuthoriseBaseService<AuthCardDetai
         ChargeEntity reloadedCharge = chargeDao.merge(chargeEntity);
 
         ChargeStatus status = operationResponse.getBaseResponse()
-                .map(BaseAuthoriseResponse::authoriseStatus)
-                .map(BaseAuthoriseResponse.AuthoriseStatus::getMappedChargeStatus)
-                .orElse(ChargeStatus.AUTHORISATION_ERROR);
+                            .map(BaseAuthoriseResponse::authoriseStatus)
+                            .map(BaseAuthoriseResponse.AuthoriseStatus::getMappedChargeStatus)
+                            .orElseGet(() -> operationResponse.getGatewayError()
+                                    .map(gatewayError -> mapError(gatewayError))
+                                    .orElse(ChargeStatus.AUTHORISATION_ERROR));
 
         String transactionId = operationResponse.getBaseResponse()
                 .map(BaseAuthoriseResponse::getTransactionId).orElse("");
@@ -107,6 +112,17 @@ public class CardAuthoriseService extends CardAuthoriseBaseService<AuthCardDetai
         appendCardDetails(reloadedCharge, authCardDetails);
         chargeDao.mergeAndNotifyStatusHasChanged(reloadedCharge, Optional.empty());
         return operationResponse;
+    }
+
+    private ChargeStatus mapError(GatewayError gatewayError) {
+        switch (gatewayError.getErrorType()) {
+            case UNEXPECTED_STATUS_CODE_FROM_GATEWAY:
+                return AUTHORISATION_ERROR;
+            case GATEWAY_CONNECTION_TIMEOUT_ERROR:
+                return AUTHORISATION_TIMEOUT;
+            default:
+                return AUTHORISATION_ERROR;
+        }
     }
 
     private void appendCardDetails(ChargeEntity chargeEntity, AuthCardDetails authCardDetails) {

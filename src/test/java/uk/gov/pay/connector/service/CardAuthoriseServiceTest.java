@@ -15,6 +15,7 @@ import uk.gov.pay.connector.exception.ChargeNotFoundRuntimeException;
 import uk.gov.pay.connector.exception.ConflictRuntimeException;
 import uk.gov.pay.connector.exception.IllegalStateRuntimeException;
 import uk.gov.pay.connector.exception.OperationAlreadyInProgressRuntimeException;
+import uk.gov.pay.connector.model.GatewayError;
 import uk.gov.pay.connector.model.domain.*;
 import uk.gov.pay.connector.model.gateway.GatewayResponse;
 import uk.gov.pay.connector.model.gateway.GatewayResponse.GatewayResponseBuilder;
@@ -38,6 +39,7 @@ import static org.junit.Assert.assertNull;
 import static org.junit.Assert.fail;
 import static org.mockito.Matchers.any;
 import static org.mockito.Mockito.*;
+import static uk.gov.pay.connector.model.GatewayError.gatewayConnectionTimeoutException;
 import static uk.gov.pay.connector.model.domain.ChargeStatus.*;
 import static uk.gov.pay.connector.model.gateway.GatewayResponse.GatewayResponseBuilder.responseBuilder;
 import static uk.gov.pay.connector.service.CardExecutorService.ExecutionStatus.COMPLETED;
@@ -90,6 +92,15 @@ public class CardAuthoriseServiceTest extends CardServiceTest {
                 .build();
         when(mockedPaymentProvider.authorise(any())).thenReturn(authorisationResponse);
     }
+
+    private void setupPaymentProviderMock(GatewayError gatewayError) {
+        GatewayResponseBuilder<WorldpayOrderStatusResponse> gatewayResponseBuilder = responseBuilder();
+        GatewayResponse authorisationResponse = gatewayResponseBuilder
+                .withGatewayError(gatewayError)
+                .build();
+        when(mockedPaymentProvider.authorise(any())).thenReturn(authorisationResponse);
+    }
+
 
     private void setupPaymentProviderMockFor3ds() {
         WorldpayOrderStatusResponse worldpayResponse = new WorldpayOrderStatusResponse();
@@ -234,7 +245,7 @@ public class CardAuthoriseServiceTest extends CardServiceTest {
     @Test
     public void shouldRespondAuthorisationError() throws Exception {
 
-        GatewayResponse response = anAuthorisationErrorResponse(charge, reloadedCharge);
+        GatewayResponse response = anAuthorisationErrorResponseWithCode(charge, reloadedCharge);
 
         assertThat(response.isFailed(), is(true));
         assertThat(reloadedCharge.getStatus(), is(AUTHORISATION_ERROR.toString()));
@@ -258,7 +269,7 @@ public class CardAuthoriseServiceTest extends CardServiceTest {
 
     @Test
     public void shouldStoreCardDetailsEvenIfInAuthorisationError() {
-        anAuthorisationErrorResponse(charge, reloadedCharge);
+        anAuthorisationErrorResponseWithCode(charge, reloadedCharge);
         assertThat(reloadedCharge.getCardDetails(), is(notNullValue()));
     }
 
@@ -278,7 +289,7 @@ public class CardAuthoriseServiceTest extends CardServiceTest {
 
     @Test
     public void shouldNotProviderSessionIdEvenIfInAuthorisationError() {
-        anAuthorisationErrorResponse(charge, reloadedCharge);
+        anAuthorisationErrorResponseWithCode(charge, reloadedCharge);
 
         assertThat(reloadedCharge.getCardDetails(), is(notNullValue()));
         assertNull(reloadedCharge.getProviderSessionId());
@@ -346,6 +357,16 @@ public class CardAuthoriseServiceTest extends CardServiceTest {
         verifyNoMoreInteractions(mockedChargeDao, mockedProviders);
     }
 
+    @Test
+    public void shouldRespondWithAuthTimeoutError(){
+        GatewayError gatewayError = gatewayConnectionTimeoutException("Connection timed out");
+        GatewayResponse response = anAuthorisationErrorResponseWithGatewayError(charge, reloadedCharge, gatewayError);
+
+        assertThat(response.isFailed(), is(true));
+        assertThat(reloadedCharge.getStatus(), is(AUTHORISATION_TIMEOUT.toString()));
+        assertThat(reloadedCharge.getGatewayTransactionId(), is(nullValue()));
+    }
+
     private GatewayResponse anAuthorisationRejectedResponse(ChargeEntity charge, ChargeEntity reloadedCharge) {
         return authorisationResponse(charge, reloadedCharge, AuthoriseStatus.REJECTED);
     }
@@ -409,7 +430,7 @@ public class CardAuthoriseServiceTest extends CardServiceTest {
         return cardAuthorisationService.doAuthorise(charge.getExternalId(), authCardDetails);
     }
 
-    private GatewayResponse anAuthorisationErrorResponse(ChargeEntity charge, ChargeEntity reloadedCharge) {
+    private GatewayResponse anAuthorisationErrorResponseWithCode(ChargeEntity charge, ChargeEntity reloadedCharge) {
         when(mockedChargeDao.findByExternalId(charge.getExternalId())).thenReturn(Optional.of(charge));
         when(mockedChargeDao.merge(charge)).thenReturn(reloadedCharge);
         when(mockedChargeDao.merge(reloadedCharge)).thenReturn(reloadedCharge);
@@ -418,6 +439,21 @@ public class CardAuthoriseServiceTest extends CardServiceTest {
         setupPaymentProviderMock(null, AuthoriseStatus.REJECTED, "error-code");
 
         when(mockedProviders.byName(charge.getPaymentGatewayName())).thenReturn(mockedPaymentProvider);
+        when(mockedPaymentProvider.generateTransactionId()).thenReturn(Optional.empty());
+
+        return cardAuthorisationService.doAuthorise(charge.getExternalId(), AuthUtils.aValidAuthorisationDetails());
+    }
+
+    private GatewayResponse anAuthorisationErrorResponseWithGatewayError(ChargeEntity charge, ChargeEntity reloadedCharge, GatewayError gatewayError) {
+        when(mockedChargeDao.findByExternalId(charge.getExternalId())).thenReturn(Optional.of(charge));
+        when(mockedChargeDao.merge(charge)).thenReturn(reloadedCharge);
+        when(mockedChargeDao.merge(reloadedCharge)).thenReturn(reloadedCharge);
+
+        setupMockExecutorServiceMock();
+        setupPaymentProviderMock(gatewayError);
+
+        when(mockedProviders.byName(charge.getPaymentGatewayName())).thenReturn(mockedPaymentProvider);
+        //TODO ?
         when(mockedPaymentProvider.generateTransactionId()).thenReturn(Optional.empty());
 
         return cardAuthorisationService.doAuthorise(charge.getExternalId(), AuthUtils.aValidAuthorisationDetails());
