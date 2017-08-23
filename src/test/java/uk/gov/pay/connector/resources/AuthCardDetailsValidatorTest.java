@@ -286,14 +286,28 @@ public class AuthCardDetailsValidatorTest {
     }
 
     @Test
-    public void validationFailsIfCardHolderContainsThreeDigitsPossiblySurroundedByWhitespace() {
+    public void validationFailsIfCardHolderIsThreeDigits() {
+        AuthCardDetails authCardDetails = aValidAuthorisationDetails();
+        authCardDetails.setCardHolder("555");
+        assertFalse(AuthCardDetailsValidator.isWellFormatted(authCardDetails));
+    }
+
+    @Test
+    public void validationFailsIfCardHolderIsFourDigits() {
+        AuthCardDetails authCardDetails = aValidAuthorisationDetails();
+        authCardDetails.setCardHolder("5678");
+        assertFalse(AuthCardDetailsValidator.isWellFormatted(authCardDetails));
+    }
+
+    @Test
+    public void validationFailsIfCardHolderIsThreeDigitsSurroundedByWhitespace() {
         AuthCardDetails authCardDetails = aValidAuthorisationDetails();
         authCardDetails.setCardHolder(" \t 321 ");
         assertFalse(AuthCardDetailsValidator.isWellFormatted(authCardDetails));
     }
 
     @Test
-    public void validationFailsIfCardHolderContainsFourDigitsPossiblySurroundedByWhitespace() {
+    public void validationFailsIfCardHolderIsFourDigitsSurroundedByWhitespace() {
         AuthCardDetails authCardDetails = aValidAuthorisationDetails();
         authCardDetails.setCardHolder(" 1234 \t");
         assertFalse(AuthCardDetailsValidator.isWellFormatted(authCardDetails));
@@ -302,7 +316,7 @@ public class AuthCardDetailsValidatorTest {
     @Test
     public void validationSucceedsIfCardHolderContainsThreeDigitsSurroundedByNonWhitespace() {
         AuthCardDetails authCardDetails = aValidAuthorisationDetails();
-        authCardDetails.setCardHolder("Mr. 333");
+        authCardDetails.setCardHolder("Ms 333");
         assertTrue(AuthCardDetailsValidator.isWellFormatted(authCardDetails));
     }
 
