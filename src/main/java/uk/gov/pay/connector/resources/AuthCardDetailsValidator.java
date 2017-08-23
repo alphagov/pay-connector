@@ -13,7 +13,7 @@ public class AuthCardDetailsValidator {
 
     private static final Pattern TWELVE_TO_NINETEEN_DIGITS = compile("[0-9]{12,19}");
     private static final Pattern THREE_TO_FOUR_DIGITS = compile("[0-9]{3,4}");
-    private static final Pattern THREE_TO_FOUR_DIGITS_POSSIBLY_SURROUNDED_BY_WHITESPACE = compile("\\s+[0-9]{3,4}\\s+");
+    private static final Pattern THREE_TO_FOUR_DIGITS_POSSIBLY_SURROUNDED_BY_WHITESPACE = compile("\\s*[0-9]{3,4}\\s*");
     private static final Pattern EXPIRY_DATE = compile("[0-9]{2}/[0-9]{2}");
     private static final Pattern CONTAINS_MORE_THAN_11_NOT_NECESSARILY_CONTIGUOUS_DIGITS = compile(".*([0-9].*){12,}");
 
