@@ -1,8 +1,13 @@
 package uk.gov.pay.connector.model.domain;
 
 import org.apache.commons.lang3.StringUtils;
+import uk.gov.pay.connector.model.api.ExternalChargeState;
 import uk.gov.pay.connector.model.api.ExternalRefundStatus;
 
+import java.util.List;
+import java.util.stream.Collectors;
+
+import static java.util.Arrays.stream;
 import static uk.gov.pay.connector.model.api.ExternalRefundStatus.*;
 
 public enum RefundStatus implements Status {
@@ -39,5 +44,9 @@ public enum RefundStatus implements Status {
             }
         }
         throw new IllegalArgumentException("Refund status not recognized: " + status);
+    }
+
+    public static List<RefundStatus> fromExternal(ExternalRefundStatus externalStatus) {
+        return stream(values()).filter(status -> status.toExternal().equals(externalStatus)).collect(Collectors.toList());
     }
 }

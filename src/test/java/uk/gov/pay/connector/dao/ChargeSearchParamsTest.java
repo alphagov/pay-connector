@@ -49,9 +49,9 @@ public class ChargeSearchParamsTest {
                 .withDisplaySize(5L)
                 .withExternalChargeState(ExternalChargeState.EXTERNAL_FAILED_CANCELLED.getStatus());
 
-        assertThat(params.getChargeStatuses(), containsInAnyOrder(
+        assertThat(params.getInternalChargeStatuses(), containsInAnyOrder(
                 USER_CANCEL_READY, USER_CANCEL_SUBMITTED, USER_CANCEL_ERROR, USER_CANCELLED, EXPIRE_CANCEL_READY, EXPIRE_CANCEL_SUBMITTED, EXPIRED, EXPIRE_CANCEL_FAILED,
                 AUTHORISATION_REJECTED, AUTHORISATION_CANCELLED, AUTHORISATION_ABORTED));
-        assertEquals(11, params.getChargeStatuses().size());
+        assertEquals(11, params.getInternalChargeStatuses().size());
     }
 }

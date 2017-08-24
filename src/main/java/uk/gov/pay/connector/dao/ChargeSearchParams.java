@@ -1,6 +1,7 @@
 package uk.gov.pay.connector.dao;
 
 import uk.gov.pay.connector.model.api.ExternalChargeState;
+import uk.gov.pay.connector.model.api.ExternalRefundStatus;
 import uk.gov.pay.connector.model.domain.ChargeStatus;
 import uk.gov.pay.connector.model.domain.RefundStatus;
 
@@ -9,7 +10,9 @@ import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
+import java.util.stream.Collectors;
 
+import static org.apache.commons.lang3.StringUtils.isBlank;
 import static org.apache.commons.lang3.StringUtils.isNotBlank;
 
 public class ChargeSearchParams {
@@ -22,11 +25,9 @@ public class ChargeSearchParams {
     private ZonedDateTime toDate;
     private Long page;
     private Long displaySize;
-    private String externalChargeState;
-    private String externalRefundStatus;
-    private RefundStatus refundStatus;
     private String cardBrand;
-    private Set<ChargeStatus> chargeStatuses = new HashSet<>();
+    private Set<ChargeStatus> internalChargeStatuses = new HashSet<>();
+    private Set<RefundStatus> internalRefundStatuses = new HashSet<>();
 
     public Long getGatewayAccountId() {
         return gatewayAccountId;
@@ -47,26 +48,65 @@ public class ChargeSearchParams {
         return this;
     }
 
-    public Set<ChargeStatus> getChargeStatuses() {
-        return chargeStatuses;
+    public Set<String> getExternalChargeStates() {
+        return this.internalChargeStatuses.stream()
+                .map(s -> s.toExternal().getStatus())
+                .collect(Collectors.toSet());
     }
 
+    public Set<String> getExternalRefundStates() {
+        return this.internalRefundStatuses.stream()
+                .map(s -> s.toExternal().getStatus())
+                .collect(Collectors.toSet());
+    }
+
+    public Set<ChargeStatus> getInternalChargeStatuses() {
+        return this.internalChargeStatuses;
+    }
+
+    public Set<RefundStatus> getInternalRefundStatuses() {
+        return this.internalRefundStatuses;
+    }
+
+    public ChargeSearchParams withExternalChargeStates(Set<String> state) {
+        state.stream().forEach(this::withExternalChargeState);
+        return this;
+    }
 
     public ChargeSearchParams withExternalChargeState(String state) {
         if (state != null) {
-            this.externalChargeState = state;
-            for (ExternalChargeState externalState : parseChargeState(state)) {
-                this.chargeStatuses.addAll(ChargeStatus.fromExternal(externalState));
-            }
+            this.internalChargeStatuses.addAll(
+                    parseChargeState(state).stream()
+                            .map(ChargeStatus::fromExternal)
+                            .flatMap(l -> l.stream())
+                            .collect(Collectors.toSet()));
         }
+        return this;
+    }
+
+    public ChargeSearchParams withInternalChargeStatuses(List<ChargeStatus> statuses) {
+        this.internalChargeStatuses.addAll(statuses);
+        return this;
+    }
+
+    public ChargeSearchParams withExternalRefundStates(Set<String> state) {
+        state.stream().forEach(this::withExternalRefundState);
         return this;
     }
 
     public ChargeSearchParams withExternalRefundState(String state) {
         if (state != null) {
-            this.externalRefundStatus = state;
-            this.refundStatus = RefundStatus.fromString(state);
+            this.internalRefundStatuses.addAll(
+                    parseRefundState(state).stream()
+                            .map(RefundStatus::fromExternal)
+                            .flatMap(l -> l.stream())
+                            .collect(Collectors.toSet()));
         }
+        return this;
+    }
+
+    public ChargeSearchParams withInternalRefundStatuses(List<RefundStatus> statuses) {
+        this.internalRefundStatuses.addAll(statuses);
         return this;
     }
 
@@ -128,11 +168,6 @@ public class ChargeSearchParams {
         return this;
     }
 
-    public ChargeSearchParams withInternalChargeStatuses(List<ChargeStatus> statuses) {
-        this.chargeStatuses = new HashSet<>(statuses);
-        return this;
-    }
-
     public String getCardBrand() {
         return cardBrand;
     }
@@ -154,12 +189,15 @@ public class ChargeSearchParams {
             builder.append("&page=" + page);
         if (displaySize != null)
             builder.append("&display_size=" + displaySize);
-        if (isNotBlank(externalChargeState)) {
-            builder.append("&charge_state=" + externalChargeState);
-        }
-        if (isNotBlank(externalRefundStatus)) {
-            builder.append("&refund_status=" + externalRefundStatus);
-        }
+
+        getExternalChargeStates().stream()
+                .findFirst()
+                .ifPresent(state -> builder.append("&charge_state=" + state));
+
+        getExternalRefundStates().stream()
+                .findFirst()
+                .ifPresent(state -> builder.append("&refund_state=" + state));
+
         if (isNotBlank(cardBrand)) {
             builder.append("&card_brand=" + cardBrand);
         }
@@ -167,10 +205,16 @@ public class ChargeSearchParams {
     }
 
     private List<ExternalChargeState> parseChargeState(String state) {
-        List<ExternalChargeState> externalStates = new ArrayList<>();
-        if (isNotBlank(state)) {
-            externalStates.addAll(ExternalChargeState.fromStatusString(state));
+        if (isBlank(state)) {
+            new ArrayList<>();
         }
-        return externalStates;
+        return ExternalChargeState.fromStatusString(state);
+    }
+
+    private List<ExternalRefundStatus> parseRefundState(String state) {
+        if (isBlank(state)) {
+            new ArrayList<>();
+        }
+        return ExternalRefundStatus.fromStatusString(state);
     }
 }

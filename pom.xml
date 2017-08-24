@@ -170,6 +170,11 @@
             <artifactId>commons-collections</artifactId>
             <version>3.2.2</version>
         </dependency>
+        <dependency>
+            <groupId>org.jooq</groupId>
+            <artifactId>jooq</artifactId>
+            <version>3.9.5</version>
+        </dependency>
         <!-- testing -->
         <dependency>
             <groupId>com.jayway.jsonpath</groupId>

@@ -7,7 +7,7 @@ import org.junit.Before;
 import org.junit.Test;
 import uk.gov.pay.connector.dao.ChargeSearchParams;
 import uk.gov.pay.connector.dao.TransactionDao;
-import uk.gov.pay.connector.model.TransactionDto;
+import uk.gov.pay.connector.model.domain.Transaction;
 import uk.gov.pay.connector.model.api.ExternalRefundStatus;
 import uk.gov.pay.connector.model.domain.ChargeEventEntity;
 import uk.gov.pay.connector.model.domain.ChargeStatus;
@@ -86,32 +86,28 @@ public class TransactionDaoITest extends DaoITestBase {
                 .withGatewayAccountId(defaultTestAccount.getAccountId());
 
         // when
-        List<TransactionDto> transactions = transactionDao.findAllBy(params);
+        List<Transaction> transactions = transactionDao.findAllBy(params);
 
         // then
         assertThat(transactions.size(), is(2));
 
-        TransactionDto transactionRefund = transactions.get(0);
+        Transaction transactionRefund = transactions.get(0);
         assertThat(transactionRefund.getTransactionType(), is("refund"));
         assertThat(transactionRefund.getAmount(), is(DEFAULT_TEST_REFUND_AMOUNT));
         assertThat(transactionRefund.getReference(), is(DEFAULT_TEST_CHARGE_REFERENCE));
         assertThat(transactionRefund.getDescription(), is(DEFAULT_TEST_CHARGE_DESCRIPTION));
         assertThat(transactionRefund.getStatus(), is(defaultTestRefund.getStatus().toString()));
         assertThat(transactionRefund.getCardBrand(), is(defaultTestCardDetails.getCardBrand()));
+        assertDateMatch(transactionRefund.getCreatedDate().toString());
 
-        // TODO Wtf!
-        //assertDateMatch(transactionRefund.getCreatedDate().toString());
-
-        TransactionDto transactionCharge = transactions.get(1);
+        Transaction transactionCharge = transactions.get(1);
         assertThat(transactionCharge.getTransactionType(), is("charge"));
         assertThat(transactionCharge.getAmount(), is(DEFAULT_TEST_CHARGE_AMOUNT));
         assertThat(transactionCharge.getReference(), is(DEFAULT_TEST_CHARGE_REFERENCE));
         assertThat(transactionCharge.getDescription(), is(DEFAULT_TEST_CHARGE_DESCRIPTION));
         assertThat(transactionCharge.getStatus(), is(defaultTestCharge.getChargeStatus().toString()));
         assertThat(transactionCharge.getCardBrand(), is(defaultTestCardDetails.getCardBrand()));
-
-        // TODO Wtf!
-        //assertDateMatch(transactionCharge.getCreatedDate().toString());
+        assertDateMatch(transactionCharge.getCreatedDate().toString());
     }
 
     @Test
@@ -119,10 +115,11 @@ public class TransactionDaoITest extends DaoITestBase {
 
         // given
         ChargeSearchParams params = new ChargeSearchParams()
+                .withGatewayAccountId(defaultTestAccount.getAccountId())
                 .withEmailLike(defaultTestCharge.getEmail());
 
         // when
-        List<TransactionDto> transactions = transactionDao.findAllBy(params);
+        List<Transaction> transactions = transactionDao.findAllBy(params);
 
         // then
         assertThat(transactions.size(), is(2));
@@ -137,10 +134,11 @@ public class TransactionDaoITest extends DaoITestBase {
     public void searchChargesByPartialEmailMatch() throws Exception {
         // given
         ChargeSearchParams params = new ChargeSearchParams()
+                .withGatewayAccountId(defaultTestAccount.getAccountId())
                 .withEmailLike("alice");
 
         // when
-        List<TransactionDto> transactions = transactionDao.findAllBy(params);
+        List<Transaction> transactions = transactionDao.findAllBy(params);
 
         // then
         assertThat(transactions.size(), is(2));
@@ -158,7 +156,7 @@ public class TransactionDaoITest extends DaoITestBase {
                 .withCardBrand(defaultTestCardDetails.getCardBrand());
 
         // when
-        List<TransactionDto> transactions = transactionDao.findAllBy(params);
+        List<Transaction> transactions = transactionDao.findAllBy(params);
 
         // then
         assertThat(transactions.size(), is(2));
@@ -205,7 +203,7 @@ public class TransactionDaoITest extends DaoITestBase {
                 .withGatewayAccountId(defaultTestAccount.getAccountId());
 
         // when
-        List<TransactionDto> transactions = transactionDao.findAllBy(params);
+        List<Transaction> transactions = transactionDao.findAllBy(params);
 
         // then
         assertThat(transactions.size(), is(6));
@@ -253,7 +251,7 @@ public class TransactionDaoITest extends DaoITestBase {
                 .withPage(1L)
                 .withDisplaySize(3L);
 
-        List<TransactionDto> transactions = transactionDao.findAllBy(params);
+        List<Transaction> transactions = transactionDao.findAllBy(params);
         // then
         assertThat(transactions.size(), is(3));
 
@@ -342,13 +340,13 @@ public class TransactionDaoITest extends DaoITestBase {
                 .withReferenceLike(defaultTestCharge.getReference());
 
         // when
-        List<TransactionDto> transactions = transactionDao.findAllBy(params);
+        List<Transaction> transactions = transactionDao.findAllBy(params);
 
         // then
         assertThat(transactions.size(), is(2));
 
-        TransactionDto refund = transactions.get(0);
-        TransactionDto charge = transactions.get(1);
+        Transaction refund = transactions.get(0);
+        Transaction charge = transactions.get(1);
 
         assertThat(refund.getTransactionType(), is("refund"));
         assertThat(charge.getTransactionType(), is("charge"));
@@ -373,7 +371,7 @@ public class TransactionDaoITest extends DaoITestBase {
                 .withReferenceLike(partialPaymentReference);
 
         // when
-        List<TransactionDto> transactions = transactionDao.findAllBy(params);
+        List<Transaction> transactions = transactionDao.findAllBy(params);
 
         // then
         assertThat(transactions.size(), is(3));
@@ -414,12 +412,12 @@ public class TransactionDaoITest extends DaoITestBase {
                 .withEmailLike("under_");
 
         // when
-        List<TransactionDto> transactions = transactionDao.findAllBy(params);
+        List<Transaction> transactions = transactionDao.findAllBy(params);
 
         // then
         assertThat(transactions.size(), is(1));
 
-        TransactionDto transaction = transactions.get(0);
+        Transaction transaction = transactions.get(0);
         assertThat(transaction.getReference(), is("under_score_ref"));
         assertThat(transaction.getEmail(), is("under_score@mail.com"));
     }
@@ -446,12 +444,12 @@ public class TransactionDaoITest extends DaoITestBase {
                 .withReferenceLike("percent%");
 
         // when
-        List<TransactionDto> transactions = transactionDao.findAllBy(params);
+        List<Transaction> transactions = transactionDao.findAllBy(params);
 
         // then
         assertThat(transactions.size(), is(1));
 
-        TransactionDto transaction = transactions.get(0);
+        Transaction transaction = transactions.get(0);
         assertThat(transaction.getReference(), is("percent%ref"));
     }
 
@@ -480,12 +478,12 @@ public class TransactionDaoITest extends DaoITestBase {
                 .withEmailLike("EMAIL-ID@mail.com");
 
         // when
-        List<TransactionDto> transactions = transactionDao.findAllBy(params);
+        List<Transaction> transactions = transactionDao.findAllBy(params);
 
         // then
         assertThat(transactions.size(), is(2));
 
-        TransactionDto transaction = transactions.get(0);
+        Transaction transaction = transactions.get(0);
         assertThat(transaction.getReference(), is("Case-inSENSITIVE-Ref"));
         assertThat(transaction.getEmail(), is("EMAIL-ID@MAIL.COM"));
 
@@ -500,7 +498,7 @@ public class TransactionDaoITest extends DaoITestBase {
         ChargeSearchParams params = new ChargeSearchParams()
                 .withReferenceLike("reference");
         // when passed in a simple reference string
-        List<TransactionDto> transactions = transactionDao.findAllBy(params);
+        List<Transaction> transactions = transactionDao.findAllBy(params);
         // then it fetches a single result
         assertThat(transactions.size(), is(1));
 
@@ -524,11 +522,11 @@ public class TransactionDaoITest extends DaoITestBase {
                 .withExternalChargeState(EXTERNAL_CREATED.getStatus());
 
         // when
-        List<TransactionDto> transactions = transactionDao.findAllBy(params);
+        List<Transaction> transactions = transactionDao.findAllBy(params);
 
         // then
         assertThat(transactions.size(), is(1));
-        TransactionDto charge = transactions.get(0);
+        Transaction charge = transactions.get(0);
 
         assertThat(charge.getAmount(), is(defaultTestCharge.getAmount()));
         assertThat(charge.getReference(), is(defaultTestCharge.getReference()));
@@ -550,12 +548,12 @@ public class TransactionDaoITest extends DaoITestBase {
                 .withToDate(ZonedDateTime.parse(TO_DATE));
 
         // when
-        List<TransactionDto> transactions = transactionDao.findAllBy(params);
+        List<Transaction> transactions = transactionDao.findAllBy(params);
 
         // then
         assertThat(transactions.size(), is(2));
 
-        TransactionDto transactionRefund = transactions.get(0);
+        Transaction transactionRefund = transactions.get(0);
         assertThat(transactionRefund.getAmount(), is(defaultTestRefund.getAmount()));
         assertThat(transactionRefund.getReference(), is(defaultTestCharge.getReference()));
         assertThat(transactionRefund.getDescription(), is(DEFAULT_TEST_CHARGE_DESCRIPTION));
@@ -563,7 +561,7 @@ public class TransactionDaoITest extends DaoITestBase {
         assertThat(transactionRefund.getCardBrand(), is(defaultTestCardDetails.getCardBrand()));
         assertDateMatch(transactionRefund.getCreatedDate().toString());
 
-        TransactionDto transactionCharge = transactions.get(0);
+        Transaction transactionCharge = transactions.get(0);
         assertThat(transactionCharge.getAmount(), is(defaultTestCharge.getAmount()));
         assertThat(transactionCharge.getReference(), is(defaultTestCharge.getReference()));
         assertThat(transactionCharge.getDescription(), is(DEFAULT_TEST_CHARGE_DESCRIPTION));
@@ -584,11 +582,11 @@ public class TransactionDaoITest extends DaoITestBase {
                 .withFromDate(ZonedDateTime.parse(FROM_DATE));
 
         // when
-        List<TransactionDto> transactions = transactionDao.findAllBy(params);
+        List<Transaction> transactions = transactionDao.findAllBy(params);
 
         // then
         assertThat(transactions.size(), is(1));
-        TransactionDto chargeTransaction = transactions.get(0);
+        Transaction chargeTransaction = transactions.get(0);
 
         assertThat(chargeTransaction.getAmount(), is(defaultTestCharge.getAmount()));
         assertThat(chargeTransaction.getReference(), is(defaultTestCharge.getReference()));
@@ -611,11 +609,11 @@ public class TransactionDaoITest extends DaoITestBase {
                 .withFromDate(ZonedDateTime.parse(FROM_DATE));
 
         // when
-        List<TransactionDto> transactions = transactionDao.findAllBy(params);
+        List<Transaction> transactions = transactionDao.findAllBy(params);
 
         // then
         assertThat(transactions.size(), is(1));
-        TransactionDto chargeTransaction = transactions.get(0);
+        Transaction chargeTransaction = transactions.get(0);
 
         assertThat(chargeTransaction.getAmount(), is(defaultTestRefund.getAmount()));
         assertThat(chargeTransaction.getReference(), is(defaultTestCharge.getReference()));
@@ -624,6 +622,73 @@ public class TransactionDaoITest extends DaoITestBase {
         assertThat(chargeTransaction.getCardBrand(), is(defaultTestCardDetails.getCardBrand()));
 
         assertDateMatch(chargeTransaction.getCreatedDate().toString());
+    }
+
+    @Test
+    public void searchChargesBySingleStatus() {
+        // given
+        DatabaseFixtures
+                .withDatabaseTestHelper(databaseTestHelper)
+                .aTestCharge()
+                .withTestAccount(defaultTestAccount)
+                .withChargeStatus(ENTERING_CARD_DETAILS)
+                .insert();
+
+        DatabaseFixtures
+                .withDatabaseTestHelper(databaseTestHelper)
+                .aTestCharge()
+                .withTestAccount(defaultTestAccount)
+                .withChargeStatus(AUTHORISATION_READY)
+                .insert();
+
+        ChargeSearchParams params = new ChargeSearchParams()
+                .withTransactionType("charge")
+                .withGatewayAccountId(defaultTestAccount.getAccountId())
+                .withExternalChargeState(EXTERNAL_STARTED.getStatus());
+
+        // when
+        List<Transaction> transactions = transactionDao.findAllBy(params);
+
+        // then
+        assertThat(transactions.size(), is(2));
+        assertThat(transactions.get(0).getTransactionType(), is("charge"));
+        assertThat(transactions.get(0).getStatus(), is(AUTHORISATION_READY.getValue()));
+        assertThat(transactions.get(1).getTransactionType(), is("charge"));
+        assertThat(transactions.get(1).getStatus(), is(ENTERING_CARD_DETAILS.getValue()));
+    }
+
+    @Test
+    public void searchChargesByMultipleStatuses() {
+        // given
+        DatabaseFixtures
+                .withDatabaseTestHelper(databaseTestHelper)
+                .aTestCharge()
+                .withTestAccount(defaultTestAccount)
+                .withChargeStatus(ENTERING_CARD_DETAILS)
+                .insert();
+
+        DatabaseFixtures
+                .withDatabaseTestHelper(databaseTestHelper)
+                .aTestCharge()
+                .withTestAccount(defaultTestAccount)
+                .withChargeStatus(AUTHORISATION_READY)
+                .insert();
+
+        ChargeSearchParams params = new ChargeSearchParams()
+                .withGatewayAccountId(defaultTestAccount.getAccountId())
+                .withTransactionType("charge")
+                .withExternalChargeState(EXTERNAL_STARTED.getStatus())
+                .withExternalChargeState(EXTERNAL_CREATED.getStatus());
+
+        // when
+        List<Transaction> transactions = transactionDao.findAllBy(params);
+
+        // then
+        assertThat(transactions.size(), is(2));
+        assertThat(transactions.get(0).getTransactionType(), is("charge"));
+        assertThat(transactions.get(0).getStatus(), is(AUTHORISATION_READY.getValue()));
+        assertThat(transactions.get(1).getTransactionType(), is("charge"));
+        assertThat(transactions.get(1).getStatus(), is(ENTERING_CARD_DETAILS.getValue()));
     }
 
     @Test
@@ -651,7 +716,7 @@ public class TransactionDaoITest extends DaoITestBase {
                 .withFromDate(ZonedDateTime.parse(FROM_DATE));
 
         // when
-        List<TransactionDto> transactions = transactionDao.findAllBy(params);
+        List<Transaction> transactions = transactionDao.findAllBy(params);
 
         // then
         assertThat(transactions.size(), is(2));
@@ -673,11 +738,11 @@ public class TransactionDaoITest extends DaoITestBase {
                 .withToDate(ZonedDateTime.parse(TO_DATE));
 
         // when
-        List<TransactionDto> transactions = transactionDao.findAllBy(params);
+        List<Transaction> transactions = transactionDao.findAllBy(params);
 
         // then
         assertThat(transactions.size(), is(1));
-        TransactionDto charge = transactions.get(0);
+        Transaction charge = transactions.get(0);
 
         assertThat(charge.getAmount(), is(defaultTestCharge.getAmount()));
         assertThat(charge.getReference(), is(defaultTestCharge.getReference()));
@@ -699,11 +764,11 @@ public class TransactionDaoITest extends DaoITestBase {
                 .withToDate(ZonedDateTime.parse(TO_DATE));
 
         // when
-        List<TransactionDto> transactions = transactionDao.findAllBy(params);
+        List<Transaction> transactions = transactionDao.findAllBy(params);
 
         // then
         assertThat(transactions.size(), is(1));
-        TransactionDto charge = transactions.get(0);
+        Transaction charge = transactions.get(0);
 
         assertThat(charge.getAmount(), is(defaultTestCharge.getAmount()));
         assertThat(charge.getReference(), is(defaultTestCharge.getReference()));
@@ -724,7 +789,7 @@ public class TransactionDaoITest extends DaoITestBase {
                 .withFromDate(ZonedDateTime.parse(TO_DATE));
 
         // when
-        List<TransactionDto> transactions = transactionDao.findAllBy(params);
+        List<Transaction> transactions = transactionDao.findAllBy(params);
 
         assertThat(transactions.size(), is(0));
     }
@@ -739,7 +804,7 @@ public class TransactionDaoITest extends DaoITestBase {
                 .withExternalChargeState(EXTERNAL_CREATED.getStatus())
                 .withToDate(ZonedDateTime.parse(FROM_DATE));
 
-        List<TransactionDto> transactions = transactionDao.findAllBy(params);
+        List<Transaction> transactions = transactionDao.findAllBy(params);
 
         assertThat(transactions.size(), is(0));
     }
