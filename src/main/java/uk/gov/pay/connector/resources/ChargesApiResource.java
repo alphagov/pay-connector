@@ -38,6 +38,8 @@ import static uk.gov.pay.connector.util.ResponseUtil.*;
 
 @Path("/")
 public class ChargesApiResource {
+    public static final String FEATURES_HEADER = "features";
+    public static final String FEATURE_REFUNDS_IN_TX_LIST = "REFUNDS_IN_TX_LIST";
     static final String AMOUNT_KEY = "amount";
     private static final String DESCRIPTION_KEY = "description";
     private static final String RETURN_URL_KEY = "return_url";
@@ -60,6 +62,7 @@ public class ChargesApiResource {
     private static final String ACCOUNT_ID = "accountId";
     private static final String PAGE = "page";
     private static final String DISPLAY_SIZE = "display_size";
+
 
     private static final Set<String> CHARGE_REQUEST_KEYS_THAT_MAY_HAVE_PII = Collections.singleton("description");
 
@@ -106,7 +109,7 @@ public class ChargesApiResource {
                                    @QueryParam(TO_DATE_KEY) String toDate,
                                    @QueryParam(PAGE) Long pageNumber,
                                    @QueryParam(DISPLAY_SIZE) Long displaySize,
-                                   @Context UriInfo uriInfo) {
+                                   @Context UriInfo uriInfo, @HeaderParam(FEATURES_HEADER) String features) {
 
         List<Pair<String, String>> inputDatePairMap = ImmutableList.of(Pair.of(FROM_DATE_KEY, fromDate), Pair.of(TO_DATE_KEY, toDate));
         List<Pair<String, Long>> nonNegativePairMap = ImmutableList.of(Pair.of(PAGE, pageNumber), Pair.of(DISPLAY_SIZE, displaySize));
@@ -125,7 +128,7 @@ public class ChargesApiResource {
                                         .withFromDate(parseDate(fromDate))
                                         .withToDate(parseDate(toDate))
                                         .withDisplaySize(displaySize != null ? displaySize : configuration.getTransactionsPaginationConfig().getDisplayPageSize())
-                                        .withPage(pageNumber != null ? pageNumber : 1), uriInfo)))); // always the first page if its missing
+                                        .withPage(pageNumber != null ? pageNumber : 1), uriInfo, Optional.ofNullable(features))))); // always the first page if its missing
     }
 
     @POST
@@ -194,7 +197,11 @@ public class ChargesApiResource {
                 : Optional.of(missing);
     }
 
-    private F<Boolean, Response> listCharges(ChargeSearchParams searchParams, UriInfo uriInfo) {
+    private F<Boolean, Response> listCharges(ChargeSearchParams searchParams, UriInfo uriInfo, Optional<String> features) {
+        if(isRefundsInResultListFeatureEnabledForRequest(features)){
+            return listChargesAndRefunds(searchParams, uriInfo);
+        }
+
         Long totalCount = chargeDao.getTotalFor(searchParams);
         Long size = searchParams.getDisplaySize();
         if (totalCount > 0 && size > 0) {
@@ -215,6 +222,38 @@ public class ChargesApiResource {
                         .withChargeResponses(chargesResponse)
                         .withTotalCount(totalCount)
                         .buildResponse();
+    }
+
+    //this needs to hook into the new DAOs/Services
+    private F<Boolean,Response> listChargesAndRefunds(ChargeSearchParams searchParams, UriInfo uriInfo) {
+        Long totalCount = chargeDao.getTotalFor(searchParams);
+        Long size = searchParams.getDisplaySize();
+        if (totalCount > 0 && size > 0) {
+            long lastPage = (totalCount + size - 1)/ size;
+            if (searchParams.getPage() > lastPage || searchParams.getPage() < 1) {
+                return success -> notFoundResponse("the requested page not found");
+            }
+        }
+
+        List<ChargeEntity> charges = chargeDao.findAllBy(searchParams);
+        List<ChargeResponse> chargesResponse =
+                charges.stream()
+                        .map(charge -> chargeService.buildChargeResponse(uriInfo, charge)
+                        ).collect(Collectors.toList());
+
+        return success ->
+                new ChargesPaginationResponseBuilder(searchParams, uriInfo)
+                        .withChargeResponses(chargesResponse)
+                        .withTotalCount(totalCount)
+                        .buildResponse();
+    }
+
+    private boolean isRefundsInResultListFeatureEnabledForRequest(Optional<String> features) {
+        if(features.isPresent() && features.get().contains(FEATURE_REFUNDS_IN_TX_LIST)){
+            return true;
+        }
+
+        return false;
     }
 
     private Optional<List<String>> checkInvalidSizeFields(Map<String, String> inputData) {
