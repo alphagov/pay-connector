@@ -4,6 +4,7 @@ import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableMap;
 import com.jayway.restassured.response.ValidatableResponse;
 import org.apache.commons.lang.math.RandomUtils;
+import org.apache.commons.lang3.StringUtils;
 import org.junit.Test;
 import uk.gov.pay.connector.it.base.ChargingITestBase;
 import uk.gov.pay.connector.it.dao.DatabaseFixtures;
@@ -46,11 +47,14 @@ import static uk.gov.pay.connector.matcher.ZoneDateTimeAsStringWithinMatcher.isW
 import static uk.gov.pay.connector.model.api.ExternalChargeState.EXTERNAL_SUBMITTED;
 import static uk.gov.pay.connector.model.domain.ChargeStatus.*;
 import static uk.gov.pay.connector.model.domain.ChargeStatus.CREATED;
+import static uk.gov.pay.connector.model.domain.RefundStatus.REFUND_SUBMITTED;
 import static uk.gov.pay.connector.resources.ApiPaths.CHARGES_API_PATH;
 import static uk.gov.pay.connector.resources.ApiPaths.CHARGE_API_PATH;
 import static uk.gov.pay.connector.util.DateTimeUtils.toUTCZonedDateTime;
 import static uk.gov.pay.connector.util.JsonEncoder.toJson;
 import static uk.gov.pay.connector.util.NumberMatcher.isNumber;
+import static uk.gov.pay.connector.resources.ChargesApiResource.FEATURES_HEADER;
+import static uk.gov.pay.connector.resources.ChargesApiResource.FEATURE_REFUNDS_IN_TX_LIST;
 
 public class ChargesApiResourceITest extends ChargingITestBase {
 
@@ -442,6 +446,60 @@ public class ChargesApiResourceITest extends ChargingITestBase {
                 .body("results[0].card_details.cardholder_name", nullValue())
                 .body("results[0].card_details.last_digits_card_number", nullValue())
                 .body("results[0].card_details.expiry_date", nullValue());
+    }
+
+    @Test
+    public void shouldFilterTransactionsBasedOnRefundsHeaderAndFromAndToDates() throws Exception {
+
+        addChargeAndCardDetails(CREATED, "ref-1", now());
+        addChargeAndCardDetails(AUTHORISATION_READY, "ref-2", now());
+        String externalChargeId = addChargeAndCardDetails(CAPTURED, "ref-3", now().minusDays(2));
+
+        Long chargeId = Long.parseLong(StringUtils.removeStart(externalChargeId, "charge"));
+        String externalRefundId = createNewRefundWith(REFUND_SUBMITTED, 10L, chargeId, "refund_ref");
+
+        ValidatableResponse response = getChargeApi
+                .withAccountId(accountId)
+                .withQueryParam("from_date", DateTimeUtils.toUTCDateTimeString(now().minusDays(1)))
+                .withQueryParam("to_date", DateTimeUtils.toUTCDateTimeString(now().plusDays(1)))
+                .withHeader(HttpHeaders.ACCEPT, APPLICATION_JSON)
+                .withHeader(FEATURES_HEADER, FEATURE_REFUNDS_IN_TX_LIST)
+                .getTransactions()
+                .statusCode(OK.getStatusCode())
+                .contentType(JSON)
+                .body("results.size()", is(3))
+                .body("results[0].settlement_summary.capture_submit_time", nullValue())
+                .body("results[0].settlement_summary.captured_time", nullValue())
+                .body("results[0].refund_summary.amount_submitted", is(0))
+                .body("results[0].refund_summary.amount_available", isNumber(AMOUNT))
+                .body("results[0].refund_summary.status", is("pending"))
+                .body("results[1].settlement_summary.capture_submit_time", nullValue())
+                .body("results[1].settlement_summary.captured_time", nullValue())
+                .body("results[1].refund_summary.amount_submitted", is(0))
+                .body("results[1].refund_summary.amount_available", isNumber(AMOUNT))
+                .body("results[1].refund_summary.status", is("pending"));
+
+
+        List<Map<String, Object>> results = response.extract().body().jsonPath().getList("results");
+        List<String> references = collect(results, "reference");
+        assertThat(references, containsInAnyOrder("ref-1", "ref-2"));
+        assertThat(references, not(contains("ref-3")));
+
+        // collect statuses from states
+        List<Object> statuses = results
+                .stream()
+                .map(result -> ((Map<Object, Object>) result.get("state")).get("status"))
+                .collect(Collectors.toList());
+
+        assertThat(statuses, containsInAnyOrder("created", "started"));
+        assertThat(statuses, not(contains("confirmed")));
+
+        List<String> createdDateStrings = collect(results, "created_date");
+        datesFrom(createdDateStrings).forEach(createdDate ->
+                assertThat(createdDate, is(within(1, DAYS, now())))
+        );
+        List<String> emails = collect(results, "email");
+        assertThat(emails, contains(email, email));
     }
 
     @Test
