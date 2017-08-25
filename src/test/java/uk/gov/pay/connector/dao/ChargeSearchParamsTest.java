@@ -23,7 +23,7 @@ public class ChargeSearchParamsTest {
             "&to_date=" + TO_DATE +
             "&page=%s" +
             "&display_size=%s" +
-            "&state=created" +
+            "&charge_state=created" +
             "&card_brand=visa";
 
     @Test

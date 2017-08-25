@@ -184,4 +184,8 @@ public class TransactionDao {
                 .map(s -> s.getValue())
                 .collect(Collectors.toSet());
     }
+
+    public Long getTotalFor(ChargeSearchParams params) {
+        return Long.valueOf(findAllBy( params).size());
+    }
 }
