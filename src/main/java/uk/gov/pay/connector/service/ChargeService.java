@@ -9,13 +9,9 @@ import uk.gov.pay.connector.dao.CardTypeDao;
 import uk.gov.pay.connector.dao.ChargeDao;
 import uk.gov.pay.connector.dao.TokenDao;
 import uk.gov.pay.connector.model.ChargeResponse;
+import uk.gov.pay.connector.model.api.ExternalChargeState;
 import uk.gov.pay.connector.model.builder.PatchRequestBuilder;
-import uk.gov.pay.connector.model.domain.CardTypeEntity;
-import uk.gov.pay.connector.model.domain.ChargeEntity;
-import uk.gov.pay.connector.model.domain.ChargeStatus;
-import uk.gov.pay.connector.model.domain.GatewayAccountEntity;
-import uk.gov.pay.connector.model.domain.PersistedCard;
-import uk.gov.pay.connector.model.domain.TokenEntity;
+import uk.gov.pay.connector.model.domain.*;
 import uk.gov.pay.connector.resources.ChargesApiResource;
 
 import javax.inject.Inject;
@@ -47,6 +43,27 @@ public class ChargeService {
     private TokenDao tokenDao;
     private LinksConfig linksConfig;
     private PaymentProviders providers;
+
+
+    //static refund status to Charge status for ChargeResponseBuilder
+    private static final Map<String,ExternalChargeState> refundStatusToChargeExternalStatusMAP = new HashMap<String, ExternalChargeState>(){{
+        put("REFUNDED",ChargeStatus.CAPTURED.toExternal());
+        put("REFUND",ChargeStatus.CAPTURED.toExternal());
+        put("CAPTURE",ChargeStatus.CAPTURED.toExternal());
+
+        put("SUBMITTED",ChargeStatus.AUTHORISATION_SUCCESS.toExternal());
+        put("AUTH",ChargeStatus.AUTHORISATION_SUCCESS.toExternal());
+
+        put("CANCELED",ChargeStatus.SYSTEM_CANCELLED.toExternal());
+        put("CANCEL",ChargeStatus.SYSTEM_CANCELLED.toExternal());
+        put("ERROR",ChargeStatus.AUTHORISATION_ERROR.toExternal());
+    }};
+
+    public enum TransactionType{
+        REFUND,
+        CHARGE
+    }
+
 
     @Inject
     public ChargeService(TokenDao tokenDao, ChargeDao chargeDao, ConnectorConfiguration config, CardTypeDao cardTypeDao, PaymentProviders providers) {
@@ -84,6 +101,16 @@ public class ChargeService {
         }
         return chargeResponseBuilder(uriInfo, chargeEntity).build();
     }
+
+    public ChargeResponse buildChargeResponse(UriInfo uriInfo, Transaction transaction) {
+        if (TransactionType.CHARGE.equals(transaction.getTransactionType()) && !ChargeStatus.fromString(transaction.getStatus()).toExternal().isFinished()) {
+            ChargeEntity charge = chargeDao.findByExternalId(transaction.getExternalId()).get();
+            return chargeResponseBuilder(uriInfo, charge, createNewChargeEntityToken(charge)).build();
+        }
+        return chargeResponseBuilder(uriInfo, transaction).build();
+    }
+
+
 
     @Transactional
     public List<ChargeEntity> updateStatus(List<ChargeEntity> chargeEntities, ChargeStatus status, Optional<ZonedDateTime> gatewayEventDate) {
@@ -134,6 +161,82 @@ public class ChargeService {
                 .map(CardTypeEntity::getLabel);
     }
 
+    private ChargeResponseBuilder chargeResponseBuilder(UriInfo uriInfo, Transaction transaction) {
+        String chargeId = transaction.getExternalId();
+
+        PersistedCard persistedCard = null;
+        if (transaction.getCardBrand() != null) {
+            persistedCard = new PersistedCard();
+            persistedCard.setLastDigitsCardNumber(transaction.getLastDigitsCardNumber());
+            persistedCard.setCardBrand(transaction.getCardBrand());
+
+            if(transaction.getAddressLine1() !=null) {
+                Address address = new Address();
+                address.setLine1(transaction.getAddressLine1());
+                address.setLine2(transaction.getAddressLine2());
+                address.setPostcode(transaction.getAddressPostcode());
+                address.setCity(transaction.getAddressCity());
+                address.setCounty(transaction.getAddressCounty());
+                address.setCountry(transaction.getAddressCountry());
+                persistedCard.setBillingAddress(address);
+            }
+
+            persistedCard.setExpiryDate(transaction.getExpiryDate());
+            persistedCard.setCardHolderName(transaction.getCardHolderName());
+
+            persistedCard.setCardBrand(findCardBrandLabel(transaction.getCardBrand()).orElse(""));
+        }
+
+        ChargeResponse.Auth3dsData auth3dsData = new ChargeResponse.Auth3dsData();
+
+        if(TransactionType.REFUND.toString().equalsIgnoreCase(transaction.getTransactionType()) ){//treat refunds
+            return aChargeResponse()
+                    .withTransactionType(transaction.getTransactionType())
+                    .withChargeId(chargeId)
+                    .withAmount(transaction.getAmount())
+                    .withReference(transaction.getReference())
+                    .withDescription(transaction.getDescription())
+                    .withState(mapRefundStatusToChargeStatusForResponse(transaction.getStatus()))
+                    .withGatewayTransactionId(transaction.getGatewayTransactionId())
+                    //.withProviderName(charge.getGatewayAccount().getGatewayName())
+                    .withCreatedDate(transaction.getCreatedDate())
+                    //.withReturnUrl(charge.getReturnUrl())
+                    .withEmail(transaction.getEmail())
+                    //.withRefunds(buildRefundSummary(charge))
+                    //.withSettlement(buildSettlementSummary(charge))
+                    .withCardDetails(persistedCard)
+                    .withAuth3dsData(auth3dsData)
+                    .withLink("self", GET, selfUriFor(uriInfo, transaction.getGatewayAccountId(), chargeId))
+                    .withLink("refunds", GET, refundsUriFor(uriInfo, transaction.getGatewayAccountId(), transaction.getExternalId()));
+        }else{
+            return aChargeResponse()
+                    .withTransactionType(transaction.getTransactionType())
+                    .withChargeId(chargeId)
+                    .withAmount(transaction.getAmount())
+                    .withReference(transaction.getReference())
+                    .withDescription(transaction.getDescription())
+                    .withState(ChargeStatus.fromString(transaction.getStatus()).toExternal())
+                    .withGatewayTransactionId(transaction.getGatewayTransactionId())
+                    //.withProviderName(transaction.getGatewayAccountId())
+                    .withCreatedDate(transaction.getCreatedDate())
+                    //.withReturnUrl(charge.getReturnUrl())
+                    .withEmail(transaction.getEmail())
+                    //.withRefunds(buildRefundSummary(charge))
+                    //.withSettlement(buildSettlementSummary(charge))
+                    .withCardDetails(persistedCard)
+                    .withAuth3dsData(auth3dsData)
+                    .withLink("self", GET, selfUriFor(uriInfo, transaction.getGatewayAccountId(), chargeId))
+                    .withLink("refunds", GET, refundsUriFor(uriInfo, transaction.getGatewayAccountId(), transaction.getExternalId()));
+        }
+    }
+
+    private ExternalChargeState mapRefundStatusToChargeStatusForResponse(String status) {
+        if(refundStatusToChargeExternalStatusMAP.containsKey(status)) {
+            return refundStatusToChargeExternalStatusMAP.get(status);
+        }
+
+        return refundStatusToChargeExternalStatusMAP.get("error");
+    }
 
     private ChargeResponseBuilder chargeResponseBuilder(UriInfo uriInfo, ChargeEntity charge) {
         String chargeId = charge.getExternalId();

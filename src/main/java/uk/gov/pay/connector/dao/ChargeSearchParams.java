@@ -74,7 +74,7 @@ public class ChargeSearchParams {
     }
 
     public ChargeSearchParams withExternalChargeState(String state) {
-        if (state != null) {
+        if (state != null && (!state.isEmpty())) {
             this.internalChargeStatuses.addAll(
                     parseChargeState(state).stream()
                             .map(ChargeStatus::fromExternal)

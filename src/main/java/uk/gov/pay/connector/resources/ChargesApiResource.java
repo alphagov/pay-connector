@@ -9,10 +9,12 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import uk.gov.pay.connector.app.ConnectorConfiguration;
 import uk.gov.pay.connector.dao.ChargeDao;
+import uk.gov.pay.connector.dao.TransactionDao;
 import uk.gov.pay.connector.dao.ChargeSearchParams;
 import uk.gov.pay.connector.dao.GatewayAccountDao;
 import uk.gov.pay.connector.model.ChargeResponse;
 import uk.gov.pay.connector.model.domain.ChargeEntity;
+import uk.gov.pay.connector.model.domain.Transaction;
 import uk.gov.pay.connector.service.ChargeExpiryService;
 import uk.gov.pay.connector.service.ChargeService;
 import uk.gov.pay.connector.util.ResponseUtil;
@@ -67,6 +69,7 @@ public class ChargesApiResource {
     private static final Set<String> CHARGE_REQUEST_KEYS_THAT_MAY_HAVE_PII = Collections.singleton("description");
 
     private final ChargeDao chargeDao;
+    private final TransactionDao transactionDao;
     private final GatewayAccountDao gatewayAccountDao;
     private final ChargeService chargeService;
     private final ConnectorConfiguration configuration;
@@ -78,10 +81,11 @@ public class ChargesApiResource {
     private static final Logger logger = LoggerFactory.getLogger(ChargesApiResource.class);
 
     @Inject
-    public ChargesApiResource(ChargeDao chargeDao, GatewayAccountDao gatewayAccountDao,
+    public ChargesApiResource(ChargeDao chargeDao, TransactionDao transactionDao, GatewayAccountDao gatewayAccountDao,
                               ChargeService chargeService, ChargeExpiryService chargeExpiryService,
                               ConnectorConfiguration configuration) {
         this.chargeDao = chargeDao;
+        this.transactionDao = transactionDao;
         this.gatewayAccountDao = gatewayAccountDao;
         this.chargeService = chargeService;
         this.chargeExpiryService = chargeExpiryService;
@@ -224,9 +228,9 @@ public class ChargesApiResource {
                         .buildResponse();
     }
 
-    //this needs to hook into the new DAOs/Services
+    //WIP this needs to hook into the new DAOs/Services
     private F<Boolean,Response> listChargesAndRefunds(ChargeSearchParams searchParams, UriInfo uriInfo) {
-        Long totalCount = chargeDao.getTotalFor(searchParams);
+        Long totalCount = transactionDao.getTotalFor(searchParams);
         Long size = searchParams.getDisplaySize();
         if (totalCount > 0 && size > 0) {
             long lastPage = (totalCount + size - 1)/ size;
@@ -235,15 +239,15 @@ public class ChargesApiResource {
             }
         }
 
-        List<ChargeEntity> charges = chargeDao.findAllBy(searchParams);
-        List<ChargeResponse> chargesResponse =
-                charges.stream()
-                        .map(charge -> chargeService.buildChargeResponse(uriInfo, charge)
+        List<Transaction> transactions = transactionDao.findAllBy(searchParams);
+        List<ChargeResponse> transactionsResponse =
+                transactions.stream()
+                        .map(transaction -> chargeService.buildChargeResponse(uriInfo, transaction)
                         ).collect(Collectors.toList());
 
         return success ->
                 new ChargesPaginationResponseBuilder(searchParams, uriInfo)
-                        .withChargeResponses(chargesResponse)
+                        .withChargeResponses(transactionsResponse)
                         .withTotalCount(totalCount)
                         .buildResponse();
     }

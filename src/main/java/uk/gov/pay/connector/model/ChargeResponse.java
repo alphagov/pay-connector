@@ -258,6 +258,9 @@ public class ChargeResponse {
         return DateTimeUtils.toUTCDateTimeString(createdDate);
     }
 
+    @JsonProperty("transaction_type")
+    private String transactionType;
+
     protected ChargeResponse(String chargeId, Long amount, ExternalChargeState state, String cardBrand, String gatewayTransactionId, String returnUrl, String email, String description, String reference, String providerName, ZonedDateTime createdDate, List<Map<String, Object>> dataLinks, RefundSummary refundSummary, SettlementSummary settlementSummary, PersistedCard cardDetails, Auth3dsData auth3dsData) {
         this.dataLinks = dataLinks;
         this.chargeId = chargeId;
