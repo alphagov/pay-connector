@@ -1,5 +1,6 @@
 package uk.gov.pay.connector.model.domain;
 
+import com.fasterxml.jackson.annotation.JsonIgnore;
 import org.eclipse.persistence.annotations.Customizer;
 import uk.gov.pay.connector.util.RandomIdGenerator;
 
@@ -16,23 +17,32 @@ import static org.apache.commons.lang3.StringUtils.equalsIgnoreCase;
         classes = @ConstructorResult(
                 targetClass = RefundHistory.class,
                 columns = {
-                        @ColumnResult(name = "id", type=Long.class),
-                        @ColumnResult(name = "external_id", type=String.class),
-                        @ColumnResult(name = "amount", type=Long.class),
-                        @ColumnResult(name = "status", type=String.class),
-                        @ColumnResult(name = "charge_id", type=Long.class),
-                        @ColumnResult(name = "created_date", type=Timestamp.class),
+                        @ColumnResult(name = "id", type = Long.class),
+                        @ColumnResult(name = "external_id", type = String.class),
+                        @ColumnResult(name = "amount", type = Long.class),
+                        @ColumnResult(name = "status", type = String.class),
+                        @ColumnResult(name = "charge_id", type = Long.class),
+                        @ColumnResult(name = "created_date", type = Timestamp.class),
                         @ColumnResult(name = "version", type=Long.class),
-                        @ColumnResult(name = "reference", type=String.class),
-                        @ColumnResult(name = "history_start_date", type=Timestamp.class),
-                        @ColumnResult(name = "history_end_date", type=Timestamp.class)}))
+                        @ColumnResult(name = "reference", type = String.class),
+                        @ColumnResult(name = "history_start_date", type = Timestamp.class),
+                        @ColumnResult(name = "history_end_date", type = Timestamp.class)}))
 
 @Entity
 @Table(name = "refunds")
 @Customizer(HistoryCustomizer.class)
-@SequenceGenerator(name = "refunds_refund_id_seq", sequenceName = "refunds_refund_id_seq", allocationSize = 1)
 @Access(AccessType.FIELD)
-public class RefundEntity extends AbstractEntity {
+public class RefundEntity {
+
+    @Id
+    @SequenceGenerator(name = "refundsSequence", sequenceName = "refunds_id_seq", allocationSize = 1)
+    @GeneratedValue(strategy = GenerationType.SEQUENCE, generator="refundsSequence")
+    @JsonIgnore
+    private Long id;
+
+    @Version
+    @Column(name = "version")
+    private Long version;
 
     @Column(name = "external_id")
     private String externalId;
@@ -45,7 +55,7 @@ public class RefundEntity extends AbstractEntity {
     private String status;
 
     @ManyToOne
-    @JoinColumn(name = "charge_id", updatable = false)
+    @JoinColumn(name = "charge_id")
     private ChargeEntity chargeEntity;
 
     @Column(name = "created_date")
@@ -100,7 +110,7 @@ public class RefundEntity extends AbstractEntity {
         this.status = status.getValue();
     }
 
-    public void setChargeEntity(ChargeEntity chargeEntity) {
+    protected void setChargeEntity(ChargeEntity chargeEntity) {
         this.chargeEntity = chargeEntity;
     }
 
@@ -120,4 +130,31 @@ public class RefundEntity extends AbstractEntity {
         return Arrays.stream(status).anyMatch(s -> equalsIgnoreCase(s.getValue(), getStatus().getValue()));
     }
 
+    public Long getId() {
+        return id;
+    }
+
+    public void setId(Long id) {
+        this.id = id;
+    }
+
+    public Long getVersion() {
+        return version;
+    }
+
+    public void setVersion(Long version) {
+        this.version = version;
+    }
+
+    @Override
+    public String toString() {
+        return "RefundEntity{" +
+                "externalId='" + externalId + '\'' +
+                ", reference='" + reference + '\'' +
+                ", amount=" + amount +
+                ", status='" + status + '\'' +
+                ", chargeEntity=" + chargeEntity +
+                ", createdDate=" + createdDate +
+                '}';
+    }
 }

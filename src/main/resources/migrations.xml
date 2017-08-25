@@ -619,7 +619,7 @@
 
     <changeSet id="build refunds_history table" author="">
         <createTable tableName="refunds_history">
-            <column name="id" type="bigserial" autoIncrement="true" />
+            <column name="id" type="bigserial"/>
             <column name="external_id" type="char(26)" />
             <column name="amount" type="bigint" />
             <column name="status" type="varchar(25)" />

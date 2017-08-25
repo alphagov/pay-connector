@@ -450,4 +450,11 @@ public class DatabaseTestHelper {
                         .first()
         );
     }
+
+    public List<Map<String, Object>> getRefundsHistoryByChargeId(Long chargeId) {
+        return jdbi.withHandle(h ->
+            h.createQuery("SELECT status FROM refunds_history WHERE charge_id = :chargeId")
+                    .bind("chargeId", chargeId).list()
+        );
+    }
 }
