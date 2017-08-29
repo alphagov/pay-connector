@@ -130,7 +130,6 @@ public class CardAuthoriseServiceTest extends CardServiceTest {
     @Test
     public void shouldRespondAuthorisationSuccess() throws Exception {
         AuthCardDetails authCardDetails = AuthUtils.aValidAuthorisationDetails();
-
         providerWillAuthorise();
 
         GatewayResponse response = cardAuthorisationService.doAuthorise(charge.getExternalId(), authCardDetails);
@@ -142,7 +141,6 @@ public class CardAuthoriseServiceTest extends CardServiceTest {
 
     @Test(expected = ConflictRuntimeException.class)
     public void shouldRespondAuthorisationFailedWhen3dsRequiredConflictingConfigurationOfCardTypeWithGatewayAccount() throws Exception {
-
         AuthCardDetails authCardDetails = AuthUtils.aValidAuthorisationDetails();
 
         GatewayAccountEntity gatewayAccountEntity = new GatewayAccountEntity();
@@ -209,12 +207,9 @@ public class CardAuthoriseServiceTest extends CardServiceTest {
     @Test
     public void shouldRetainGeneratedTransactionIdIfAuthorisationAborted() throws Exception {
         String generatedTransactionId = "generated-transaction-id";
-
         when(mockedProviders.byName(charge.getPaymentGatewayName())).thenReturn(mockedPaymentProvider);
         when(mockedPaymentProvider.generateTransactionId()).thenReturn(Optional.of(generatedTransactionId));
-
         mockExecutorServiceWillReturnCompletedResultWithSupplierReturnValue();
-
         when(mockedPaymentProvider.authorise(any())).thenThrow(RuntimeException.class);
 
         try {
@@ -350,26 +345,24 @@ public class CardAuthoriseServiceTest extends CardServiceTest {
     @Test(expected = OperationAlreadyInProgressRuntimeException.class)
     public void shouldThrowAnOperationAlreadyInProgressRuntimeExceptionWhenStatusIsAuthorisationReady() {
         ChargeEntity charge = createNewChargeWith(1L, ChargeStatus.AUTHORISATION_READY);
-
         when(mockedChargeDao.findByExternalId(charge.getExternalId())).thenReturn(Optional.of(charge));
         when(mockedChargeDao.merge(any())).thenReturn(charge);
-
         mockExecutorServiceWillReturnCompletedResultWithSupplierReturnValue();
 
         cardAuthorisationService.doAuthorise(charge.getExternalId(), AuthUtils.aValidAuthorisationDetails());
+
         verifyNoMoreInteractions(mockedChargeDao, mockedProviders);
     }
 
     @Test(expected = IllegalStateRuntimeException.class)
     public void shouldThrowAnIllegalStateRuntimeExceptionWhenInvalidStatus() throws Exception {
         ChargeEntity charge = createNewChargeWith(1L, ChargeStatus.CREATED);
-
         when(mockedChargeDao.findByExternalId(charge.getExternalId())).thenReturn(Optional.of(charge));
         when(mockedChargeDao.merge(any())).thenReturn(charge);
-
         mockExecutorServiceWillReturnCompletedResultWithSupplierReturnValue();
 
         cardAuthorisationService.doAuthorise(charge.getExternalId(), AuthUtils.aValidAuthorisationDetails());
+
         verifyNoMoreInteractions(mockedChargeDao, mockedProviders);
     }
 
@@ -377,10 +370,10 @@ public class CardAuthoriseServiceTest extends CardServiceTest {
     public void shouldThrowAConflictRuntimeException() throws Exception {
         when(mockedChargeDao.findByExternalId(charge.getExternalId())).thenReturn(Optional.of(charge));
         when(mockedChargeDao.merge(any())).thenThrow(new OptimisticLockException());
-
         mockExecutorServiceWillReturnCompletedResultWithSupplierReturnValue();
 
         cardAuthorisationService.doAuthorise(charge.getExternalId(), AuthUtils.aValidAuthorisationDetails());
+
         verifyNoMoreInteractions(mockedChargeDao, mockedProviders);
     }
 
