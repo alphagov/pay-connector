@@ -75,7 +75,7 @@ import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 import static uk.gov.pay.connector.model.ErrorType.GENERIC_GATEWAY_ERROR;
-import static uk.gov.pay.connector.model.ErrorType.UNEXPECTED_STATUS_CODE_FROM_GATEWAY;
+import static uk.gov.pay.connector.model.ErrorType.UNEXPECTED_HTTP_STATUS_CODE_FROM_GATEWAY;
 import static uk.gov.pay.connector.model.GatewayError.unexpectedStatusCodeFromGateway;
 import static uk.gov.pay.connector.model.api.ExternalChargeRefundAvailability.EXTERNAL_AVAILABLE;
 import static uk.gov.pay.connector.model.domain.Address.anAddress;
@@ -375,7 +375,7 @@ public class WorldpayPaymentProviderTest {
         assertThat(response.isFailed(), is(true));
         assertFalse(response.getSessionIdentifier().isPresent());
         assertThat(response.getGatewayError().isPresent(), is(true));
-        assertEquals(response.getGatewayError().get(), new GatewayError("Unexpected Response Code From Gateway", UNEXPECTED_STATUS_CODE_FROM_GATEWAY));
+        assertEquals(response.getGatewayError().get(), new GatewayError("Unexpected Response Code From Gateway", UNEXPECTED_HTTP_STATUS_CODE_FROM_GATEWAY));
     }
 
     @Test
@@ -394,7 +394,7 @@ public class WorldpayPaymentProviderTest {
         GatewayResponse<WorldpayCaptureResponse> response = provider.capture(getCaptureRequest());
         assertThat(response.isFailed(), is(true));
         assertThat(response.getGatewayError().isPresent(), is(true));
-        assertEquals(response.getGatewayError().get(), new GatewayError("Unexpected Response Code From Gateway", UNEXPECTED_STATUS_CODE_FROM_GATEWAY));
+        assertEquals(response.getGatewayError().get(), new GatewayError("Unexpected Response Code From Gateway", UNEXPECTED_HTTP_STATUS_CODE_FROM_GATEWAY));
     }
 
     @Test

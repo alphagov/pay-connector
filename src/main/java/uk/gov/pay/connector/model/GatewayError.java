@@ -16,7 +16,7 @@ public class GatewayError {
     }
 
     public static GatewayError unexpectedStatusCodeFromGateway(String msg) {
-        return new GatewayError(msg, UNEXPECTED_STATUS_CODE_FROM_GATEWAY);
+        return new GatewayError(msg, UNEXPECTED_HTTP_STATUS_CODE_FROM_GATEWAY);
     }
 
     public static GatewayError malformedResponseReceivedFromGateway(String msg) {

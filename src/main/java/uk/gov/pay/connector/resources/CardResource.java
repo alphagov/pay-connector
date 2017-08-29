@@ -96,7 +96,7 @@ public class CardResource {
 
     private Response handleError(GatewayError error) {
         switch (error.getErrorType()) {
-            case UNEXPECTED_STATUS_CODE_FROM_GATEWAY:
+            case UNEXPECTED_HTTP_STATUS_CODE_FROM_GATEWAY:
             case MALFORMED_RESPONSE_RECEIVED_FROM_GATEWAY:
             case GATEWAY_URL_DNS_ERROR:
             case GATEWAY_CONNECTION_TIMEOUT_ERROR:
