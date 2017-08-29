@@ -4,11 +4,12 @@ import com.google.inject.Provider;
 import com.google.inject.persist.Transactional;
 import uk.gov.pay.connector.model.domain.RefundEntity;
 import uk.gov.pay.connector.model.domain.RefundHistory;
+import uk.gov.pay.connector.model.domain.RefundStatus;
 
 import javax.inject.Inject;
 import javax.persistence.EntityManager;
+import java.util.List;
 import java.util.Optional;
-import java.util.*;
 
 @Transactional
 public class RefundDao extends JpaDao<RefundEntity> {
@@ -16,10 +17,6 @@ public class RefundDao extends JpaDao<RefundEntity> {
     @Inject
     public RefundDao(final Provider<EntityManager> entityManager) {
         super(entityManager);
-    }
-
-    public Optional<RefundEntity> findById(long id) {
-        return super.findById(RefundEntity.class, id);
     }
 
     public Optional<RefundEntity> findByProviderAndReference(String provider, String reference) {
@@ -40,11 +37,12 @@ public class RefundDao extends JpaDao<RefundEntity> {
 
         String query = "SELECT id, external_id, amount, status, charge_id, created_date, version, reference, history_start_date, history_end_date " +
                 "FROM refunds_history r " +
-                "WHERE charge_id = ?1";
+                "WHERE charge_id = ?1 AND status != ?2";
 
         return entityManager.get()
                 .createNativeQuery(query, "RefundEntityHistoryMapping")
                 .setParameter(1, chargeId)
+                .setParameter(2, RefundStatus.CREATED.getValue())
                 .getResultList();
     }
 }

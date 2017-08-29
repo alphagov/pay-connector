@@ -239,7 +239,6 @@ public class ClientFactoryTest {
             long expectedTimeout = authOverriddenTimeout + connectionOverheadInMillis;
 
             long actualDuration = endTime - startTime;
-            System.out.println(actualDuration);
 
             assertThat(actualDuration, lessThan(expectedTimeout));
         }

@@ -39,6 +39,10 @@ public class DatabaseFixtures {
         return new TestChargeEvent();
     }
 
+    public TestRefundHistory aTestRefundHistory(TestRefund refund) {
+        return new TestRefundHistory(refund);
+    }
+
     public TestToken aTestToken() {
         return new TestToken();
     }
@@ -71,12 +75,44 @@ public class DatabaseFixtures {
         return new TestEmailNotification();
     }
 
-    public  TestCardDetails validTestCardDetails() {
-        return  new TestCardDetails();
+    public TestCardDetails validTestCardDetails() {
+        return new TestCardDetails();
     }
 
     public TestCardType aMaestroDebitCardType() {
         return new TestCardType().withLabel("Maestro").withType(Type.DEBIT).withBrand("maestro").withRequires3ds(true);
+    }
+
+    public class TestRefundHistory {
+
+        private String externalId;
+        private long id;
+        private Long chargeId;
+        private long amount;
+        private ZonedDateTime createdDate;
+
+        TestRefundHistory(TestRefund testRefund) {
+            this.id = testRefund.getId();
+            this.chargeId = testRefund.getTestCharge().getChargeId();
+            this.externalId = testRefund.getExternalRefundId();
+            this.amount = testRefund.getAmount();
+            this.createdDate = testRefund.getCreatedDate();
+        }
+
+        public TestRefundHistory insert(RefundStatus status, ZonedDateTime historyStartDate, ZonedDateTime historyEndDate) {
+            databaseTestHelper.addRefundHistory(id, externalId, "", amount, status.toString(), chargeId, createdDate, historyStartDate, historyEndDate);
+            return this;
+        }
+
+        public TestRefundHistory insert(RefundStatus status, String reference, ZonedDateTime historyStartDate, ZonedDateTime historyEndDate) {
+            databaseTestHelper.addRefundHistory(id, externalId, reference, amount, status.toString(), chargeId, createdDate, historyStartDate, historyEndDate);
+            return this;
+        }
+
+        public TestRefundHistory insert(RefundStatus status, String reference, ZonedDateTime historyStartDate) {
+            databaseTestHelper.addRefundHistory(id, externalId, reference, amount, status.toString(), chargeId, createdDate, historyStartDate);
+            return this;
+        }
     }
 
     public class TestChargeEvent {
@@ -438,15 +474,10 @@ public class DatabaseFixtures {
     public class TestRefund {
         Long id = RandomUtils.nextLong(1, 99999);
         String externalRefundId = RandomIdGenerator.newId();
-        String reference = RandomIdGenerator.newId();
+        String reference;
         long amount = 101L;
         RefundStatus status = CREATED;
-
         ZonedDateTime createdDate = ZonedDateTime.now(ZoneId.of("UTC"));
-
-        ZonedDateTime historyStartDate = ZonedDateTime.now(ZoneId.of("UTC"));
-        ZonedDateTime historyEndDate = ZonedDateTime.now(ZoneId.of("UTC"));
-
         TestCharge testCharge;
 
         public TestRefund withTestCharge(TestCharge charge) {
@@ -464,18 +495,13 @@ public class DatabaseFixtures {
             return this;
         }
 
+        public TestRefund withReference(String reference) {
+            this.reference = reference;
+            return this;
+        }
+
         public TestRefund withCreatedDate(ZonedDateTime createdDate) {
             this.createdDate = createdDate;
-            return this;
-        }
-
-        public TestRefund withHistoryStartDate(ZonedDateTime historyStartDate) {
-            this.historyStartDate = historyStartDate;
-            return this;
-        }
-
-        public TestRefund withHistoryEndDate(ZonedDateTime historyEndDate) {
-            this.historyEndDate = historyEndDate;
             return this;
         }
 
@@ -486,12 +512,6 @@ public class DatabaseFixtures {
             return this;
         }
 
-        public TestRefund insertHistory() {
-            if (testCharge == null)
-                throw new IllegalStateException("Test charge must be provided.");
-            databaseTestHelper.addRefundHistory(id, externalRefundId, reference, amount, status.toString(), testCharge.getChargeId(), createdDate, historyStartDate, historyEndDate);
-            return this;
-        }
 
         public long getId() {
             return id;
@@ -519,14 +539,6 @@ public class DatabaseFixtures {
 
         public TestCharge getTestCharge() {
             return testCharge;
-        }
-
-        public ZonedDateTime getHistoryStartDate() {
-            return historyStartDate;
-        }
-
-        public ZonedDateTime getHistoryEndDate() {
-            return historyEndDate;
         }
     }
 

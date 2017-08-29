@@ -1,5 +1,6 @@
 package uk.gov.pay.connector.it.resources;
 
+import org.apache.commons.lang3.RandomStringUtils;
 import org.junit.Before;
 import org.junit.Rule;
 import org.junit.Test;
@@ -73,6 +74,7 @@ public class ChargeEventsResourceITest {
 
     @Test
     public void shouldGetAllEventsForAGivenChargeWithRefunds() throws Exception {
+
         ZonedDateTime createdDate = ZonedDateTime.now();
 
         DatabaseFixtures.TestCharge testCharge = createTestCharge().insert();
@@ -81,6 +83,7 @@ public class ChargeEventsResourceITest {
                 .withChargeStatus(CREATED).withDate(createdDate).insert();
         DatabaseFixtures.TestChargeEvent enteringCardDetailsTestChargeEvent = createTestChargeEvent(testCharge)
                 .withChargeStatus(ENTERING_CARD_DETAILS).withDate(createdDate.plusSeconds(1)).insert();
+
         createTestChargeEvent(testCharge)
                 .withChargeStatus(AUTHORISATION_READY).withDate(createdDate.plusSeconds(2)).insert();
         DatabaseFixtures.TestChargeEvent captureApprovedTestChargeEvent = createTestChargeEvent(testCharge)
@@ -92,45 +95,36 @@ public class ChargeEventsResourceITest {
         createTestChargeEvent(testCharge)
                 .withChargeStatus(CAPTURED).withDate(createdDate.plusSeconds(6)).insert();
 
-        DatabaseFixtures.TestRefund createdTestRefund1 = createTestRefund(testCharge)
+        String testReferenceRefund1 = RandomStringUtils.randomAlphanumeric(10);
+        String testReferenceRefund2 = RandomStringUtils.randomAlphanumeric(10);
+
+        ZonedDateTime refundTest1RefundedDate = createdDate.plusSeconds(9);
+        DatabaseFixtures.TestRefund refundedTestRefund1 = createTestRefund(testCharge)
                 .withAmount(10L)
-                .withType(RefundStatus.CREATED)
-                .withHistoryStartDate(createdDate.plusSeconds(7))
-                .insertHistory();
+                .withReference(testReferenceRefund1)
+                .withType(RefundStatus.REFUNDED)
+                .withCreatedDate(refundTest1RefundedDate)
+                .insert();
 
-        createTestRefund(testCharge)
-                .withAmount(10L)
-                .withType(RefundStatus.REFUND_SUBMITTED)
-                .withHistoryStartDate(createdDate.plusSeconds(8))
-                .insertHistory();
-
-        DatabaseFixtures.TestRefund createdTestRefund2 = createTestRefund(testCharge)
-                .withAmount(90L)
-                .withType(RefundStatus.CREATED)
-                .withHistoryStartDate(createdDate.plusSeconds(9))
-                .insertHistory();
-
-        createTestRefund(testCharge)
-                .withAmount(90L)
-                .withType(RefundStatus.REFUND_SUBMITTED)
-                .withHistoryStartDate(createdDate.plusSeconds(10))
-                .insertHistory();
-
+        ZonedDateTime refundTest2RefundedDate = createdDate.plusSeconds(12);
         DatabaseFixtures.TestRefund refundedTestRefund2 = createTestRefund(testCharge)
                 .withAmount(90L)
                 .withType(RefundStatus.REFUNDED)
-                .withCreatedDate(createdDate.plusSeconds(7))
-                .withHistoryStartDate(createdDate.plusSeconds(11))
-                .insert()
-                .insertHistory();
+                .withReference(testReferenceRefund2)
+                .withCreatedDate(refundTest2RefundedDate)
+                .insert();
 
-        DatabaseFixtures.TestRefund refundedTestRefund1 = createTestRefund(testCharge)
-                .withAmount(10L)
-                .withType(RefundStatus.REFUNDED)
-                .withCreatedDate(createdDate.plusSeconds(9))
-                .withHistoryStartDate(createdDate.plusSeconds(12))
-                .insert()
-                .insertHistory();
+        ZonedDateTime historyRefund1SubmittedStartDate = createdDate.plusSeconds(8);
+        createTestRefundHistory(refundedTestRefund1)
+                .insert(RefundStatus.CREATED, createdDate.plusSeconds(7), historyRefund1SubmittedStartDate)
+                .insert(RefundStatus.REFUND_SUBMITTED, testReferenceRefund1, historyRefund1SubmittedStartDate, refundTest1RefundedDate)
+                .insert(RefundStatus.REFUNDED, testReferenceRefund1, refundTest1RefundedDate);
+
+        ZonedDateTime historyRefund2SubmittedStartDate = createdDate.plusSeconds(11);
+        createTestRefundHistory(refundedTestRefund2)
+                .insert(RefundStatus.CREATED, createdDate.plusSeconds(10), historyRefund2SubmittedStartDate)
+                .insert(RefundStatus.REFUND_SUBMITTED, testReferenceRefund2, historyRefund2SubmittedStartDate, refundTest2RefundedDate)
+                .insert(RefundStatus.REFUNDED, testReferenceRefund2, refundTest2RefundedDate);
 
         connectorApi
                 .getEvents(testCharge.getExternalChargeId())
@@ -139,10 +133,10 @@ public class ChargeEventsResourceITest {
                 .body("events[0]", new TransactionEventMatcher("PAYMENT", withState("created", "false"), "100", createdTestChargeEvent.getUpdated()))
                 .body("events[1]", new TransactionEventMatcher("PAYMENT", withState("started", "false"), "100", enteringCardDetailsTestChargeEvent.getUpdated()))
                 .body("events[2]", new TransactionEventMatcher("PAYMENT", withState("success", "true"), "100", captureApprovedTestChargeEvent.getUpdated()))
-                .body("events[3]", new TransactionEventMatcher("REFUND", withState("submitted", "false"), "10", createdTestRefund1.getHistoryStartDate(), createdTestRefund1.getReference()))
-                .body("events[4]", new TransactionEventMatcher("REFUND", withState("submitted", "false"), "90", createdTestRefund2.getHistoryStartDate(), createdTestRefund2.getReference()))
-                .body("events[5]", new TransactionEventMatcher("REFUND", withState("success", "true"), "90", refundedTestRefund2.getHistoryStartDate(), refundedTestRefund2.getReference()))
-                .body("events[6]", new TransactionEventMatcher("REFUND", withState("success", "true"), "10", refundedTestRefund1.getHistoryStartDate(), refundedTestRefund1.getReference()));
+                .body("events[3]", new TransactionEventMatcher("REFUND", withState("submitted", "false"), "10", historyRefund1SubmittedStartDate, testReferenceRefund1))
+                .body("events[4]", new TransactionEventMatcher("REFUND", withState("success", "true"), "10", refundTest1RefundedDate, testReferenceRefund1))
+                .body("events[5]", new TransactionEventMatcher("REFUND", withState("submitted", "false"), "90", historyRefund2SubmittedStartDate, testReferenceRefund2))
+                .body("events[6]", new TransactionEventMatcher("REFUND", withState("success", "true"), "90", refundTest2RefundedDate, testReferenceRefund2));
     }
 
     @Test
@@ -180,6 +174,11 @@ public class ChargeEventsResourceITest {
         return withDatabaseTestHelper(databaseTestHelper)
                         .aTestChargeEvent()
                         .withTestCharge(testCharge);
+    }
+
+    private DatabaseFixtures.TestRefundHistory createTestRefundHistory(DatabaseFixtures.TestRefund testRefund) {
+        return withDatabaseTestHelper(databaseTestHelper)
+                .aTestRefundHistory(testRefund);
     }
 
     private DatabaseFixtures.TestRefund createTestRefund(DatabaseFixtures.TestCharge testCharge) {
