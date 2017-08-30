@@ -77,10 +77,6 @@ public class TransactionEvent implements Comparable<TransactionEvent> {
                 null);
     }
 
-    static public State newState(String status, boolean finished, String code, String message) {
-        return new State(status, finished, code, message);
-    }
-
     public enum Type {
         PAYMENT,
         REFUND
@@ -165,15 +161,17 @@ public class TransactionEvent implements Comparable<TransactionEvent> {
         TransactionEvent that = (TransactionEvent) o;
 
         if (type != that.type) return false;
+        if (extRefundReference != null ? !extRefundReference.equals(that.extRefundReference) : that.extRefundReference != null) return false;
         if (extChargeId != null ? !extChargeId.equals(that.extChargeId) : that.extChargeId != null) return false;
         if (state != null ? !state.equals(that.state) : that.state != null) return false;
         return !(amount != null ? !amount.equals(that.amount) : that.amount != null);
-
     }
+
 
     @Override
     public int hashCode() {
         int result = type != null ? type.hashCode() : 0;
+        result = 31 * result + (extRefundReference != null ? extRefundReference.hashCode() : 0);
         result = 31 * result + (extChargeId != null ? extChargeId.hashCode() : 0);
         result = 31 * result + (state != null ? state.hashCode() : 0);
         result = 31 * result + (amount != null ? amount.hashCode() : 0);
