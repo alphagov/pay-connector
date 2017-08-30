@@ -13,6 +13,7 @@ import uk.gov.pay.connector.dao.TransactionDao;
 import uk.gov.pay.connector.dao.ChargeSearchParams;
 import uk.gov.pay.connector.dao.GatewayAccountDao;
 import uk.gov.pay.connector.model.ChargeResponse;
+import uk.gov.pay.connector.model.TransactionResponse;
 import uk.gov.pay.connector.model.domain.ChargeEntity;
 import uk.gov.pay.connector.model.domain.Transaction;
 import uk.gov.pay.connector.service.ChargeExpiryService;
@@ -118,7 +119,7 @@ public class ChargesApiResource {
         List<Pair<String, String>> inputDatePairMap = ImmutableList.of(Pair.of(FROM_DATE_KEY, fromDate), Pair.of(TO_DATE_KEY, toDate));
         List<Pair<String, Long>> nonNegativePairMap = ImmutableList.of(Pair.of(PAGE, pageNumber), Pair.of(DISPLAY_SIZE, displaySize));
 
-        return ApiValidators
+        return  ApiValidators
                 .validateQueryParams(inputDatePairMap, nonNegativePairMap) //TODO - improvement, get the entire searchparam object into the validateQueryParams
                 .map(ResponseUtil::badRequestResponse)
                 .orElseGet(() -> reduce(validateGatewayAccountReference(gatewayAccountDao, accountId)
@@ -240,14 +241,14 @@ public class ChargesApiResource {
         }
 
         List<Transaction> transactions = transactionDao.findAllBy(searchParams);
-        List<ChargeResponse> transactionsResponse =
+        List<TransactionResponse> transactionsResponse =
                 transactions.stream()
-                        .map(transaction -> chargeService.buildChargeResponse(uriInfo, transaction)
+                        .map(transaction -> chargeService.buildTransactionResponse(uriInfo, transaction)
                         ).collect(Collectors.toList());
 
         return success ->
-                new ChargesPaginationResponseBuilder(searchParams, uriInfo)
-                        .withChargeResponses(transactionsResponse)
+                new TransactionsPaginationResponseBuilder(searchParams, uriInfo)
+                        .withTransactionResponses(transactionsResponse)
                         .withTotalCount(totalCount)
                         .buildResponse();
     }
