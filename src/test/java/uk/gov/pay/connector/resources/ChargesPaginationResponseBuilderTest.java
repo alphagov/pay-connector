@@ -47,9 +47,7 @@ public class ChargesPaginationResponseBuilderTest {
                 .buildResponse();
 
         // then
-        Object entity = response.getEntity();
-        System.out.println("entity = " + entity);
-        JsonAssert.with((String) entity)
+        JsonAssert.with((String) response.getEntity())
                 .assertThat("$.total", is(500))
                 .assertThat("$.count", is(0))
                 .assertThat("$.page", is(2))

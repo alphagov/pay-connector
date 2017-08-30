@@ -172,10 +172,9 @@ public class WorldpayPaymentProviderTest {
     @Test
     public void testRefundRequestContainsReference() {
         ChargeEntity chargeEntity = ChargeEntityFixture.aValidChargeEntity().build();
-        RefundEntity refundEntity = RefundEntityFixture.aValidRefundEntity().build();
+        RefundEntity refundEntity = RefundEntityFixture.aValidRefundEntity().withCharge(chargeEntity).build();
         chargeEntity.setGatewayTransactionId("transaction-id");
         chargeEntity.setGatewayAccount(mockGatewayAccountEntity);
-        refundEntity.setChargeEntity(chargeEntity);
 
         EnumMap<GatewayOperation, GatewayClient> gatewayClientEnumMap = GatewayOperationClientBuilder.builder()
                 .authClient(mockGatewayClient)
