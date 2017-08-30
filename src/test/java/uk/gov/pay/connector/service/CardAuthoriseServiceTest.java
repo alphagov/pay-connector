@@ -81,6 +81,7 @@ public class CardAuthoriseServiceTest extends CardServiceTest {
 
     private CardAuthoriseService cardAuthorisationService;
     private CardExecutorService mockExecutorService = mock(CardExecutorService.class);
+    private final String providerTransactionId = "transaction-id";
 
     @Before
     public void setUpCardAuthorisationService() {
@@ -94,22 +95,28 @@ public class CardAuthoriseServiceTest extends CardServiceTest {
                 auth3dsDetailsFactory, mockEnvironment);
     }
 
-    public void setupMockExecutorServiceMock() {
+    @Before
+    public void configureChargeDaoMock() {
+        when(mockedChargeDao.findByExternalId(charge.getExternalId())).thenReturn(Optional.of(charge));
+        when(mockedChargeDao.merge(charge)).thenReturn(reloadedCharge);
+        when(mockedChargeDao.merge(reloadedCharge)).thenReturn(reloadedCharge);
+    }
+
+    public void mockExecutorServiceWillReturnCompletedResultWithSupplierReturnValue() {
         doAnswer(invocation -> Pair.of(COMPLETED, ((Supplier) invocation.getArguments()[0]).get()))
                 .when(mockExecutorService).execute(any(Supplier.class));
     }
 
-    private void setupPaymentProviderMock(String transactionId, AuthoriseStatus authoriseStatus, String errorCode) {
+    private GatewayResponse mockAuthResponse(String providerTransactionId, AuthoriseStatus authoriseStatus, String errorCode) {
         WorldpayOrderStatusResponse worldpayResponse = mock(WorldpayOrderStatusResponse.class);
-        when(worldpayResponse.getTransactionId()).thenReturn(transactionId);
+        when(worldpayResponse.getTransactionId()).thenReturn(providerTransactionId);
         when(worldpayResponse.authoriseStatus()).thenReturn(authoriseStatus);
         when(worldpayResponse.getErrorCode()).thenReturn(errorCode);
         GatewayResponseBuilder<WorldpayOrderStatusResponse> gatewayResponseBuilder = responseBuilder();
-        GatewayResponse authorisationResponse = gatewayResponseBuilder
+        return gatewayResponseBuilder
                 .withResponse(worldpayResponse)
                 .withSessionIdentifier(SESSION_IDENTIFIER)
                 .build();
-        when(mockedPaymentProvider.authorise(any())).thenReturn(authorisationResponse);
     }
 
     private void setupPaymentProviderMock(GatewayError gatewayError) {
@@ -120,33 +127,20 @@ public class CardAuthoriseServiceTest extends CardServiceTest {
         when(mockedPaymentProvider.authorise(any())).thenReturn(authorisationResponse);
     }
 
-
-    private void setupPaymentProviderMockFor3ds() {
-        WorldpayOrderStatusResponse worldpayResponse = new WorldpayOrderStatusResponse();
-        worldpayResponse.set3dsPaRequest(PA_REQ_VALUE_FROM_PROVIDER);
-        worldpayResponse.set3dsIssuerUrl(ISSUER_URL_FROM_PROVIDER);
-        GatewayResponseBuilder<WorldpayOrderStatusResponse> gatewayResponseBuilder = responseBuilder();
-        GatewayResponse worldpay3dsResponse = gatewayResponseBuilder
-                .withResponse(worldpayResponse)
-                .build();
-        when(mockedPaymentProvider.authorise(any())).thenReturn(worldpay3dsResponse);
-    }
-
     @Test
     public void shouldRespondAuthorisationSuccess() throws Exception {
-        String transactionId = "transaction-id";
         AuthCardDetails authCardDetails = AuthUtils.aValidAuthorisationDetails();
+        providerWillAuthorise();
 
-        GatewayResponse response = anAuthorisationSuccessResponse(charge, reloadedCharge, transactionId, authCardDetails);
+        GatewayResponse response = cardAuthorisationService.doAuthorise(charge.getExternalId(), authCardDetails);
 
         assertThat(response.isSuccessful(), is(true));
         assertThat(reloadedCharge.getStatus(), is(AUTHORISATION_SUCCESS.toString()));
-        assertThat(reloadedCharge.getGatewayTransactionId(), is(transactionId));
+        assertThat(reloadedCharge.getGatewayTransactionId(), is(providerTransactionId));
     }
 
     @Test(expected = ConflictRuntimeException.class)
     public void shouldRespondAuthorisationFailedWhen3dsRequiredConflictingConfigurationOfCardTypeWithGatewayAccount() throws Exception {
-
         AuthCardDetails authCardDetails = AuthUtils.aValidAuthorisationDetails();
 
         GatewayAccountEntity gatewayAccountEntity = new GatewayAccountEntity();
@@ -169,7 +163,7 @@ public class CardAuthoriseServiceTest extends CardServiceTest {
         when(mockedChargeDao.merge(charge)).thenReturn(reloadedCharge);
         when(mockedChargeDao.mergeAndNotifyStatusHasChanged(reloadedCharge, Optional.empty())).thenReturn(reloadedCharge);
 
-        setupMockExecutorServiceMock();
+        mockExecutorServiceWillReturnCompletedResultWithSupplierReturnValue();
 
         GatewayResponse response = cardAuthorisationService.doAuthorise(charge.getExternalId(), authCardDetails);
 
@@ -179,14 +173,14 @@ public class CardAuthoriseServiceTest extends CardServiceTest {
 
     @Test
     public void shouldRespondWith3dsResponseFor3dsOrders() {
-        String transactionId = "transaction-id";
         AuthCardDetails authCardDetails = AuthUtils.aValidAuthorisationDetails();
+        providerWillRequire3ds();
 
-        GatewayResponse response = anAuthorisation3dsRequiredResponse(charge, reloadedCharge, transactionId, authCardDetails);
+        GatewayResponse response = cardAuthorisationService.doAuthorise(charge.getExternalId(), authCardDetails);
 
         assertThat(response.isSuccessful(), is(true));
         assertThat(reloadedCharge.getStatus(), is(AUTHORISATION_3DS_REQUIRED.toString()));
-        assertThat(reloadedCharge.getGatewayTransactionId(), is(transactionId));
+        assertThat(reloadedCharge.getGatewayTransactionId(), is(providerTransactionId));
         assertThat(reloadedCharge.get3dsDetails().getPaRequest(), is(PA_REQ_VALUE_FROM_PROVIDER));
         assertThat(reloadedCharge.get3dsDetails().getIssuerUrl(), is(ISSUER_URL_FROM_PROVIDER));
     }
@@ -196,12 +190,9 @@ public class CardAuthoriseServiceTest extends CardServiceTest {
         String generatedTransactionId = "generated-transaction-id";
         String providerTransactionId = "provider-transaction-id";
 
-        when(mockedChargeDao.findByExternalId(charge.getExternalId())).thenReturn(Optional.of(charge));
-        when(mockedChargeDao.merge(charge)).thenReturn(reloadedCharge);
-        when(mockedChargeDao.merge(reloadedCharge)).thenReturn(reloadedCharge);
-
-        setupMockExecutorServiceMock();
-        setupPaymentProviderMock(providerTransactionId, AuthoriseStatus.AUTHORISED, null);
+        mockExecutorServiceWillReturnCompletedResultWithSupplierReturnValue();
+        GatewayResponse authResponse = mockAuthResponse(providerTransactionId, AuthoriseStatus.AUTHORISED, null);
+        when(mockedPaymentProvider.authorise(any())).thenReturn(authResponse);
 
         when(mockedProviders.byName(charge.getPaymentGatewayName())).thenReturn(mockedPaymentProvider);
         when(mockedPaymentProvider.generateTransactionId()).thenReturn(Optional.of(generatedTransactionId));
@@ -216,16 +207,9 @@ public class CardAuthoriseServiceTest extends CardServiceTest {
     @Test
     public void shouldRetainGeneratedTransactionIdIfAuthorisationAborted() throws Exception {
         String generatedTransactionId = "generated-transaction-id";
-
-        when(mockedChargeDao.findByExternalId(charge.getExternalId())).thenReturn(Optional.of(charge));
-        when(mockedChargeDao.merge(charge)).thenReturn(reloadedCharge);
-        when(mockedChargeDao.merge(reloadedCharge)).thenReturn(reloadedCharge);
-
         when(mockedProviders.byName(charge.getPaymentGatewayName())).thenReturn(mockedPaymentProvider);
         when(mockedPaymentProvider.generateTransactionId()).thenReturn(Optional.of(generatedTransactionId));
-
-        setupMockExecutorServiceMock();
-
+        mockExecutorServiceWillReturnCompletedResultWithSupplierReturnValue();
         when(mockedPaymentProvider.authorise(any())).thenThrow(RuntimeException.class);
 
         try {
@@ -236,35 +220,37 @@ public class CardAuthoriseServiceTest extends CardServiceTest {
         }
     }
 
-
     @Test
     public void shouldRespondAuthorisationRejected() throws Exception {
-        String transactionId = "transaction-id";
-        ChargeEntity charge = createNewChargeWith(1L, ENTERING_CARD_DETAILS);
-        ChargeEntity reloadedCharge = spy(charge);
-        GatewayResponse response = anAuthorisationRejectedResponse(charge, reloadedCharge);
+        mockExecutorServiceWillReturnCompletedResultWithSupplierReturnValue();
+        GatewayResponse authResponse = mockAuthResponse(providerTransactionId, AuthoriseStatus.REJECTED, null);
+        providerWillRespondToAuthoriseWith(authResponse);
+
+        GatewayResponse response = cardAuthorisationService.doAuthorise(charge.getExternalId(), AuthUtils.aValidAuthorisationDetails());
 
         assertThat(response.isSuccessful(), is(true));
         assertThat(reloadedCharge.getStatus(), is(AUTHORISATION_REJECTED.toString()));
-        assertThat(reloadedCharge.getGatewayTransactionId(), is(transactionId));
+        assertThat(reloadedCharge.getGatewayTransactionId(), is(providerTransactionId));
     }
 
     @Test
     public void shouldRespondAuthorisationCancelled() throws Exception {
-        String transactionId = "transaction-id";
-        ChargeEntity charge = createNewChargeWith(1L, ENTERING_CARD_DETAILS);
-        ChargeEntity reloadedCharge = spy(charge);
-        GatewayResponse response = anAuthorisationCancelledResponse(charge, reloadedCharge);
+        mockExecutorServiceWillReturnCompletedResultWithSupplierReturnValue();
+        GatewayResponse authResponse = mockAuthResponse(providerTransactionId, AuthoriseStatus.CANCELLED, null);
+        providerWillRespondToAuthoriseWith(authResponse);
+
+        GatewayResponse response = cardAuthorisationService.doAuthorise(charge.getExternalId(), AuthUtils.aValidAuthorisationDetails());
 
         assertThat(response.isSuccessful(), is(true));
         assertThat(reloadedCharge.getStatus(), is(AUTHORISATION_CANCELLED.toString()));
-        assertThat(reloadedCharge.getGatewayTransactionId(), is(transactionId));
+        assertThat(reloadedCharge.getGatewayTransactionId(), is(providerTransactionId));
     }
 
     @Test
     public void shouldRespondAuthorisationError() throws Exception {
+        providerWillReject();
 
-        GatewayResponse response = anAuthorisationErrorResponseWithCode(charge, reloadedCharge);
+        GatewayResponse response = cardAuthorisationService.doAuthorise(charge.getExternalId(), AuthUtils.aValidAuthorisationDetails());
 
         assertThat(response.isFailed(), is(true));
         assertThat(reloadedCharge.getStatus(), is(AUTHORISATION_ERROR.toString()));
@@ -273,34 +259,51 @@ public class CardAuthoriseServiceTest extends CardServiceTest {
 
     @Test
     public void shouldStoreCardDetailsIfAuthorisationSuccess() {
-        String transactionId = "transaction-id";
         AuthCardDetails authCardDetails = AuthUtils.aValidAuthorisationDetails();
-        anAuthorisationSuccessResponse(charge, reloadedCharge, transactionId, authCardDetails);
+        providerWillAuthorise();
+
+        cardAuthorisationService.doAuthorise(charge.getExternalId(), authCardDetails);
 
         assertThat(reloadedCharge.getCardDetails(), is(notNullValue()));
     }
 
     @Test
     public void shouldStoreCardDetailsEvenIfAuthorisationRejected() {
-        anAuthorisationRejectedResponse(charge, reloadedCharge);
+        mockExecutorServiceWillReturnCompletedResultWithSupplierReturnValue();
+        GatewayResponse authResponse = mockAuthResponse(providerTransactionId, AuthoriseStatus.REJECTED, null);
+        providerWillRespondToAuthoriseWith(authResponse);
+
+        cardAuthorisationService.doAuthorise(charge.getExternalId(), AuthUtils.aValidAuthorisationDetails());
+
         assertThat(reloadedCharge.getCardDetails(), is(notNullValue()));
     }
 
     @Test
     public void shouldStoreCardDetailsEvenIfInAuthorisationError() {
-        anAuthorisationErrorResponseWithCode(charge, reloadedCharge);
+        providerWillReject();
+
+        cardAuthorisationService.doAuthorise(charge.getExternalId(), AuthUtils.aValidAuthorisationDetails());
+
         assertThat(reloadedCharge.getCardDetails(), is(notNullValue()));
     }
 
     @Test
     public void shouldStoreProviderSessionIdIfAuthorisationSuccess() {
-        anAuthorisationSuccessResponseWithTransaction(charge, reloadedCharge);
+        AuthCardDetails authCardDetails = AuthUtils.aValidAuthorisationDetails();
+        providerWillAuthorise();
+
+        cardAuthorisationService.doAuthorise(charge.getExternalId(), authCardDetails);
+
         assertThat(reloadedCharge.getProviderSessionId(), is(SESSION_IDENTIFIER));
     }
 
     @Test
     public void shouldStoreProviderSessionIdIfAuthorisationRejected() {
-        anAuthorisationRejectedResponse(charge, reloadedCharge);
+        mockExecutorServiceWillReturnCompletedResultWithSupplierReturnValue();
+        GatewayResponse authResponse = mockAuthResponse(providerTransactionId, AuthoriseStatus.REJECTED, null);
+        providerWillRespondToAuthoriseWith(authResponse);
+
+        cardAuthorisationService.doAuthorise(charge.getExternalId(), AuthUtils.aValidAuthorisationDetails());
 
         assertThat(reloadedCharge.getCardDetails(), is(notNullValue()));
         assertThat(reloadedCharge.getProviderSessionId(), is(SESSION_IDENTIFIER));
@@ -308,7 +311,9 @@ public class CardAuthoriseServiceTest extends CardServiceTest {
 
     @Test
     public void shouldNotProviderSessionIdEvenIfInAuthorisationError() {
-        anAuthorisationErrorResponseWithCode(charge, reloadedCharge);
+        providerWillReject();
+
+        cardAuthorisationService.doAuthorise(charge.getExternalId(), AuthUtils.aValidAuthorisationDetails());
 
         assertThat(reloadedCharge.getCardDetails(), is(notNullValue()));
         assertNull(reloadedCharge.getProviderSessionId());
@@ -316,8 +321,6 @@ public class CardAuthoriseServiceTest extends CardServiceTest {
 
     @Test
     public void authoriseShouldThrowAnOperationAlreadyInProgressRuntimeExceptionWhenTimeout() throws Exception {
-        when(mockedChargeDao.findByExternalId(charge.getExternalId())).thenReturn(Optional.of(charge));
-        when(mockedChargeDao.merge(any())).thenReturn(charge);
         when(mockExecutorService.execute(any())).thenReturn(Pair.of(IN_PROGRESS, null));
 
         try {
@@ -342,26 +345,24 @@ public class CardAuthoriseServiceTest extends CardServiceTest {
     @Test(expected = OperationAlreadyInProgressRuntimeException.class)
     public void shouldThrowAnOperationAlreadyInProgressRuntimeExceptionWhenStatusIsAuthorisationReady() {
         ChargeEntity charge = createNewChargeWith(1L, ChargeStatus.AUTHORISATION_READY);
-
         when(mockedChargeDao.findByExternalId(charge.getExternalId())).thenReturn(Optional.of(charge));
         when(mockedChargeDao.merge(any())).thenReturn(charge);
-
-        setupMockExecutorServiceMock();
+        mockExecutorServiceWillReturnCompletedResultWithSupplierReturnValue();
 
         cardAuthorisationService.doAuthorise(charge.getExternalId(), AuthUtils.aValidAuthorisationDetails());
+
         verifyNoMoreInteractions(mockedChargeDao, mockedProviders);
     }
 
     @Test(expected = IllegalStateRuntimeException.class)
     public void shouldThrowAnIllegalStateRuntimeExceptionWhenInvalidStatus() throws Exception {
         ChargeEntity charge = createNewChargeWith(1L, ChargeStatus.CREATED);
-
         when(mockedChargeDao.findByExternalId(charge.getExternalId())).thenReturn(Optional.of(charge));
         when(mockedChargeDao.merge(any())).thenReturn(charge);
-
-        setupMockExecutorServiceMock();
+        mockExecutorServiceWillReturnCompletedResultWithSupplierReturnValue();
 
         cardAuthorisationService.doAuthorise(charge.getExternalId(), AuthUtils.aValidAuthorisationDetails());
+
         verifyNoMoreInteractions(mockedChargeDao, mockedProviders);
     }
 
@@ -369,17 +370,19 @@ public class CardAuthoriseServiceTest extends CardServiceTest {
     public void shouldThrowAConflictRuntimeException() throws Exception {
         when(mockedChargeDao.findByExternalId(charge.getExternalId())).thenReturn(Optional.of(charge));
         when(mockedChargeDao.merge(any())).thenThrow(new OptimisticLockException());
-
-        setupMockExecutorServiceMock();
+        mockExecutorServiceWillReturnCompletedResultWithSupplierReturnValue();
 
         cardAuthorisationService.doAuthorise(charge.getExternalId(), AuthUtils.aValidAuthorisationDetails());
+
         verifyNoMoreInteractions(mockedChargeDao, mockedProviders);
     }
 
     @Test
-    public void shouldRespondWithAuthTimeoutError(){
+    public void shouldReportAuthorisationTimeout_whenProviderTimeout(){
         GatewayError gatewayError = gatewayConnectionTimeoutException("Connection timed out");
-        GatewayResponse response = anAuthorisationErrorResponseWithGatewayError(charge, reloadedCharge, gatewayError);
+        providerWillRespondWithError(gatewayError);
+
+        GatewayResponse response = cardAuthorisationService.doAuthorise(charge.getExternalId(), AuthUtils.aValidAuthorisationDetails());
 
         assertThat(response.isFailed(), is(true));
         assertThat(reloadedCharge.getStatus(), is(AUTHORISATION_TIMEOUT.toString()));
@@ -387,104 +390,57 @@ public class CardAuthoriseServiceTest extends CardServiceTest {
     }
 
     @Test
-    public void shouldRespondWithUnexpectedError(){
+    public void shouldReportUnexpectedError_whenProviderError() {
         GatewayError gatewayError = malformedResponseReceivedFromGateway("Malformed response received");
-        GatewayResponse response = anAuthorisationErrorResponseWithGatewayError(charge, reloadedCharge, gatewayError);
+        providerWillRespondWithError(gatewayError);
+
+        GatewayResponse response = cardAuthorisationService.doAuthorise(charge.getExternalId(), AuthUtils.aValidAuthorisationDetails());
 
         assertThat(response.isFailed(), is(true));
         assertThat(reloadedCharge.getStatus(), is(AUTHORISATION_UNEXPECTED_ERROR.toString()));
         assertThat(reloadedCharge.getGatewayTransactionId(), is(nullValue()));
     }
 
-    private GatewayResponse anAuthorisationRejectedResponse(ChargeEntity charge, ChargeEntity reloadedCharge) {
-        return authorisationResponse(charge, reloadedCharge, AuthoriseStatus.REJECTED);
-    }
-
-    private GatewayResponse anAuthorisationCancelledResponse(ChargeEntity charge, ChargeEntity reloadedCharge) {
-        return authorisationResponse(charge, reloadedCharge, AuthoriseStatus.CANCELLED);
-    }
-
-    private GatewayResponse authorisationResponse(ChargeEntity charge, ChargeEntity reloadedCharge, AuthoriseStatus authoriseStatus) {
-        String transactionId = "transaction-id";
-
-        when(mockedChargeDao.findByExternalId(charge.getExternalId())).thenReturn(Optional.of(charge));
-        when(mockedChargeDao.merge(charge)).thenReturn(reloadedCharge);
-        when(mockedChargeDao.merge(reloadedCharge)).thenReturn(reloadedCharge);
-
-        setupMockExecutorServiceMock();
-        setupPaymentProviderMock(transactionId, authoriseStatus, null);
+    private void providerWillRespondToAuthoriseWith(GatewayResponse value) {
+        when(mockedPaymentProvider.authorise(any())).thenReturn(value);
 
         when(mockedProviders.byName(charge.getPaymentGatewayName())).thenReturn(mockedPaymentProvider);
         when(mockedPaymentProvider.generateTransactionId()).thenReturn(Optional.empty());
-
-        return cardAuthorisationService.doAuthorise(charge.getExternalId(), AuthUtils.aValidAuthorisationDetails());
     }
 
-    private GatewayResponse anAuthorisationSuccessResponse(ChargeEntity charge, ChargeEntity reloadedCharge, String transactionId, AuthCardDetails authCardDetails) {
-        when(mockedChargeDao.findByExternalId(charge.getExternalId()))
-                .thenReturn(Optional.of(charge));
-        when(mockedChargeDao.merge(any()))
-                .thenReturn(reloadedCharge);
+    private void providerWillAuthorise() {
+        mockExecutorServiceWillReturnCompletedResultWithSupplierReturnValue();
+        GatewayResponse authResponse = mockAuthResponse(providerTransactionId, AuthoriseStatus.AUTHORISED, null);
+        providerWillRespondToAuthoriseWith(authResponse);
+    }
 
-        setupMockExecutorServiceMock();
-        setupPaymentProviderMock(transactionId, AuthoriseStatus.AUTHORISED, null);
+    private void providerWillRequire3ds() {
+        mockExecutorServiceWillReturnCompletedResultWithSupplierReturnValue();
+        WorldpayOrderStatusResponse worldpayResponse = new WorldpayOrderStatusResponse();
+        worldpayResponse.set3dsPaRequest(PA_REQ_VALUE_FROM_PROVIDER);
+        worldpayResponse.set3dsIssuerUrl(ISSUER_URL_FROM_PROVIDER);
+        GatewayResponseBuilder<WorldpayOrderStatusResponse> gatewayResponseBuilder = responseBuilder();
+        GatewayResponse worldpay3dsResponse = gatewayResponseBuilder
+                .withResponse(worldpayResponse)
+                .build();
+        when(mockedPaymentProvider.authorise(any())).thenReturn(worldpay3dsResponse);
 
         when(mockedProviders.byName(charge.getPaymentGatewayName())).thenReturn(mockedPaymentProvider);
-        when(mockedPaymentProvider.generateTransactionId()).thenReturn(Optional.empty());
-
-        return cardAuthorisationService.doAuthorise(charge.getExternalId(), authCardDetails);
+        when(mockedPaymentProvider.generateTransactionId()).thenReturn(Optional.of(providerTransactionId));
     }
 
-    private GatewayResponse anAuthorisationSuccessResponseWithTransaction(ChargeEntity charge, ChargeEntity reloadedCharge) {
-        String transactionId = "transaction-id";
-        AuthCardDetails authCardDetails = AuthUtils.aValidAuthorisationDetails();
-
-        return anAuthorisationSuccessResponse(charge, reloadedCharge, transactionId, authCardDetails);
+    private void providerWillReject() {
+        mockExecutorServiceWillReturnCompletedResultWithSupplierReturnValue();
+        GatewayResponse authResponse = mockAuthResponse(null, AuthoriseStatus.REJECTED, "error-code");
+        providerWillRespondToAuthoriseWith(authResponse);
     }
 
-
-    private GatewayResponse anAuthorisation3dsRequiredResponse(ChargeEntity charge, ChargeEntity reloadedCharge, String transactionId, AuthCardDetails authCardDetails) {
-
-        when(mockedChargeDao.findByExternalId(charge.getExternalId()))
-                .thenReturn(Optional.of(charge));
-        when(mockedChargeDao.merge(charge)).thenReturn(reloadedCharge);
-        when(mockedChargeDao.merge(reloadedCharge)).thenReturn(reloadedCharge);
-
-        setupMockExecutorServiceMock();
-        setupPaymentProviderMockFor3ds();
-
-        when(mockedProviders.byName(charge.getPaymentGatewayName())).thenReturn(mockedPaymentProvider);
-        when(mockedPaymentProvider.generateTransactionId()).thenReturn(Optional.of(transactionId));
-
-        return cardAuthorisationService.doAuthorise(charge.getExternalId(), authCardDetails);
-    }
-
-    private GatewayResponse anAuthorisationErrorResponseWithCode(ChargeEntity charge, ChargeEntity reloadedCharge) {
-        when(mockedChargeDao.findByExternalId(charge.getExternalId())).thenReturn(Optional.of(charge));
-        when(mockedChargeDao.merge(charge)).thenReturn(reloadedCharge);
-        when(mockedChargeDao.merge(reloadedCharge)).thenReturn(reloadedCharge);
-
-        setupMockExecutorServiceMock();
-        setupPaymentProviderMock(null, AuthoriseStatus.REJECTED, "error-code");
-
-        when(mockedProviders.byName(charge.getPaymentGatewayName())).thenReturn(mockedPaymentProvider);
-        when(mockedPaymentProvider.generateTransactionId()).thenReturn(Optional.empty());
-
-        return cardAuthorisationService.doAuthorise(charge.getExternalId(), AuthUtils.aValidAuthorisationDetails());
-    }
-
-    private GatewayResponse anAuthorisationErrorResponseWithGatewayError(ChargeEntity charge, ChargeEntity reloadedCharge, GatewayError gatewayError) {
-        when(mockedChargeDao.findByExternalId(charge.getExternalId())).thenReturn(Optional.of(charge));
-        when(mockedChargeDao.merge(charge)).thenReturn(reloadedCharge);
-        when(mockedChargeDao.merge(reloadedCharge)).thenReturn(reloadedCharge);
-
-        setupMockExecutorServiceMock();
+    private void providerWillRespondWithError(GatewayError gatewayError) {
+        mockExecutorServiceWillReturnCompletedResultWithSupplierReturnValue();
         setupPaymentProviderMock(gatewayError);
 
         when(mockedProviders.byName(charge.getPaymentGatewayName())).thenReturn(mockedPaymentProvider);
         //TODO ?
         when(mockedPaymentProvider.generateTransactionId()).thenReturn(Optional.empty());
-
-        return cardAuthorisationService.doAuthorise(charge.getExternalId(), AuthUtils.aValidAuthorisationDetails());
     }
 }
