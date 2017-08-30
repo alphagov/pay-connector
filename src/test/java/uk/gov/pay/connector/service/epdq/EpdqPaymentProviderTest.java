@@ -84,6 +84,8 @@ import static uk.gov.pay.connector.util.TestTemplateResourceLoader.EPDQ_NOTIFICA
 import static uk.gov.pay.connector.util.TestTemplateResourceLoader.EPDQ_REFUND_ERROR_RESPONSE;
 import static uk.gov.pay.connector.util.TestTemplateResourceLoader.EPDQ_REFUND_REQUEST;
 import static uk.gov.pay.connector.util.TestTemplateResourceLoader.EPDQ_REFUND_SUCCESS_RESPONSE;
+import static uk.gov.pay.connector.model.domain.RefundEntityFixture.userExternalId;
+
 
 @RunWith(MockitoJUnitRunner.class)
 public class EpdqPaymentProviderTest {
@@ -444,7 +446,7 @@ public class EpdqPaymentProviderTest {
     }
 
     private RefundGatewayRequest buildTestRefundRequest(ChargeEntity chargeEntity) {
-        return RefundGatewayRequest.valueOf(new RefundEntity(chargeEntity, chargeEntity.getAmount() - 100));
+        return RefundGatewayRequest.valueOf(new RefundEntity(chargeEntity, chargeEntity.getAmount() - 100, userExternalId));
     }
 
     private void assertEquals(GatewayError actual, GatewayError expected) {

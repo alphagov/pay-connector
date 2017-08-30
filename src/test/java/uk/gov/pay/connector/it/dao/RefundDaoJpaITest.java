@@ -1,6 +1,5 @@
 package uk.gov.pay.connector.it.dao;
 
-import org.apache.commons.lang3.RandomStringUtils;
 import org.junit.Before;
 import org.junit.Test;
 import uk.gov.pay.connector.dao.RefundDao;
@@ -17,6 +16,8 @@ import static org.hamcrest.Matchers.hasEntry;
 import static org.hamcrest.core.Is.is;
 import static org.junit.Assert.assertNotNull;
 import static uk.gov.pay.connector.matcher.RefundsMatcher.aRefundMatching;
+import static uk.gov.pay.connector.model.domain.RefundEntityFixture.userExternalId;
+
 
 public class RefundDaoJpaITest extends DaoITestBase {
 
@@ -115,7 +116,7 @@ public class RefundDaoJpaITest extends DaoITestBase {
         ChargeEntity chargeEntity = new ChargeEntity();
         chargeEntity.setId(chargeTestRecord.getChargeId());
 
-        RefundEntity refundEntity = new RefundEntity(chargeEntity, 100L);
+        RefundEntity refundEntity = new RefundEntity(chargeEntity, 100L, userExternalId);
         refundEntity.setStatus(RefundStatus.REFUND_SUBMITTED);
         refundEntity.setReference("test-refund-entity");
 
@@ -129,6 +130,7 @@ public class RefundDaoJpaITest extends DaoITestBase {
         assertThat(refundByIdFound, hasItems(aRefundMatching(refundEntity.getExternalId(), is("test-refund-entity"),
                 refundEntity.getChargeEntity().getId(), refundEntity.getAmount(), refundEntity.getStatus().getValue())));
         assertThat(refundByIdFound.get(0), hasEntry("created_date", java.sql.Timestamp.from(refundEntity.getCreatedDate().toInstant())));
+        assertThat(refundByIdFound.get(0), hasEntry("user_external_id", userExternalId));
     }
 
     @Test
@@ -136,7 +138,7 @@ public class RefundDaoJpaITest extends DaoITestBase {
         ChargeEntity chargeEntity = new ChargeEntity();
         chargeEntity.setId(chargeTestRecord.getChargeId());
 
-        RefundEntity refundEntity = new RefundEntity(chargeEntity, 100L);
+        RefundEntity refundEntity = new RefundEntity(chargeEntity, 100L, userExternalId);
         refundEntity.setStatus(RefundStatus.REFUND_SUBMITTED);
         refundEntity.setReference("test-refund-entity");
 
@@ -156,6 +158,8 @@ public class RefundDaoJpaITest extends DaoITestBase {
         assertThat(refundHistory.getCreatedDate(), is(refundEntity.getCreatedDate()));
         assertThat(refundHistory.getVersion(), is(refundEntity.getVersion()));
         assertThat(refundHistory.getReference(), is(refundEntity.getReference()));
+        assertThat(refundEntity.getUserExternalId(), is(userExternalId));
+        assertThat(refundHistory.getUserExternalId(), is(refundEntity.getUserExternalId()));
     }
 
     // CREATED to REFUND_SUBMITTED happens synchronously so not needed to return history for CREATED status
@@ -166,10 +170,10 @@ public class RefundDaoJpaITest extends DaoITestBase {
         ChargeEntity chargeEntity = new ChargeEntity();
         chargeEntity.setId(chargeTestRecord.getChargeId());
 
-        RefundEntity refundEntity1 = new RefundEntity(chargeEntity, 100L);
+        RefundEntity refundEntity1 = new RefundEntity(chargeEntity, 100L, userExternalId);
         refundEntity1.setStatus(RefundStatus.CREATED);
 
-        RefundEntity refundEntity = new RefundEntity(chargeEntity, 100L);
+        RefundEntity refundEntity = new RefundEntity(chargeEntity, 100L, userExternalId);
         refundEntity.setStatus(RefundStatus.REFUND_SUBMITTED);
         refundEntity.setReference("test-refund-entity");
 
@@ -188,5 +192,7 @@ public class RefundDaoJpaITest extends DaoITestBase {
         assertThat(refundHistory.getCreatedDate(), is(refundEntity.getCreatedDate()));
         assertThat(refundHistory.getVersion(), is(refundEntity.getVersion()));
         assertThat(refundHistory.getReference(), is(refundEntity.getReference()));
+        assertThat(userExternalId, is(refundEntity.getUserExternalId()));
+        assertThat(refundHistory.getUserExternalId(), is(refundEntity.getUserExternalId()));
     }
 }

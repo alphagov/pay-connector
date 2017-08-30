@@ -52,6 +52,7 @@ import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
 import static uk.gov.pay.connector.model.domain.ChargeEntityFixture.aValidChargeEntity;
 import static uk.gov.pay.connector.model.domain.GatewayAccountEntity.Type.TEST;
+import static uk.gov.pay.connector.model.domain.RefundEntityFixture.userExternalId;
 import static uk.gov.pay.connector.util.AuthUtils.buildAuthCardDetails;
 import static uk.gov.pay.connector.util.SystemUtils.envOrThrow;
 import static uk.gov.pay.connector.util.TestTemplateResourceLoader.SMARTPAY_MULTIPLE_NOTIFICATIONS_DIFFERENT_DATES;
@@ -172,7 +173,7 @@ public class SmartpayPaymentProviderTest {
         GatewayResponse<WorldpayCaptureResponse> captureGatewayResponse = smartpay.capture(CaptureGatewayRequest.valueOf(chargeEntity));
         assertTrue(captureGatewayResponse.isSuccessful());
 
-        RefundEntity refundEntity = new RefundEntity(chargeEntity, 1L);
+        RefundEntity refundEntity = new RefundEntity(chargeEntity, 1L, userExternalId);
         RefundGatewayRequest refundRequest = RefundGatewayRequest.valueOf(refundEntity);
         GatewayResponse refundResponse = smartpay.refund(refundRequest);
 

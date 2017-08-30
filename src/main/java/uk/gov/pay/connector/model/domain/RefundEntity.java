@@ -26,7 +26,9 @@ import static org.apache.commons.lang3.StringUtils.equalsIgnoreCase;
                         @ColumnResult(name = "version", type=Long.class),
                         @ColumnResult(name = "reference", type = String.class),
                         @ColumnResult(name = "history_start_date", type = Timestamp.class),
-                        @ColumnResult(name = "history_end_date", type = Timestamp.class)}))
+                        @ColumnResult(name = "history_end_date", type = Timestamp.class),
+                        @ColumnResult(name = "user_external_id", type = String.class)
+                }))
 
 @Entity
 @Table(name = "refunds")
@@ -58,6 +60,9 @@ public class RefundEntity {
     @JoinColumn(name = "charge_id")
     private ChargeEntity chargeEntity;
 
+    @Column(name = "user_external_id")
+    private String userExternalId;
+
     @Column(name = "created_date")
     @Convert(converter = UTCDateTimeConverter.class)
     private ZonedDateTime createdDate;
@@ -66,12 +71,13 @@ public class RefundEntity {
         //for jpa
     }
 
-    public RefundEntity(ChargeEntity chargeEntity, Long amount) {
+    public RefundEntity(ChargeEntity chargeEntity, Long amount, String userExternalId) {
         this.externalId = RandomIdGenerator.newId();
         this.chargeEntity = chargeEntity;
         this.amount = amount;
         setStatus(RefundStatus.CREATED);
         this.createdDate = ZonedDateTime.now(ZoneId.of("UTC"));
+        this.userExternalId = userExternalId;
     }
 
     public String getExternalId() {
@@ -146,6 +152,14 @@ public class RefundEntity {
         this.version = version;
     }
 
+    public String getUserExternalId() {
+        return userExternalId;
+    }
+
+    public void setUserExternalId(String userExternalId) {
+        this.userExternalId = userExternalId;
+    }
+
     @Override
     public String toString() {
         return "RefundEntity{" +
@@ -153,6 +167,7 @@ public class RefundEntity {
                 ", reference='" + reference + '\'' +
                 ", amount=" + amount +
                 ", status='" + status + '\'' +
+                ", userExternalId='" + userExternalId + '\'' +
                 ", chargeEntity=" + chargeEntity +
                 ", createdDate=" + createdDate +
                 '}';

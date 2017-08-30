@@ -9,13 +9,14 @@ public class RefundEntityFixture {
     private GatewayAccountEntity gatewayAccountEntity = ChargeEntityFixture.defaultGatewayAccountEntity();
     private ChargeEntity charge;
     private String reference = "reference";
+    public static String userExternalId = "AA213FD51B3801043FBC";
     public static RefundEntityFixture aValidRefundEntity() {
         return new RefundEntityFixture();
     }
 
     public RefundEntity build() {
         ChargeEntity chargeEntity = charge == null ? buildChargeEntity() : charge;
-        RefundEntity refundEntity = new RefundEntity(chargeEntity, amount);
+        RefundEntity refundEntity = new RefundEntity(chargeEntity, amount, userExternalId);
         refundEntity.setStatus(status);
         refundEntity.setReference(reference);
         return refundEntity;

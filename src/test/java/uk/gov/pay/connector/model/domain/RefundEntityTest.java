@@ -7,6 +7,7 @@ import static org.hamcrest.core.IsNull.nullValue;
 import static org.junit.Assert.*;
 import static uk.gov.pay.connector.model.domain.ChargeEntityFixture.aValidChargeEntity;
 import static uk.gov.pay.connector.model.domain.RefundEntityFixture.aValidRefundEntity;
+import static uk.gov.pay.connector.model.domain.RefundEntityFixture.userExternalId;
 import static uk.gov.pay.connector.model.domain.RefundStatus.*;
 
 public class RefundEntityTest {
@@ -16,13 +17,14 @@ public class RefundEntityTest {
         ChargeEntity chargeEntity = aValidChargeEntity().build();
         Long amount = 100L;
 
-        RefundEntity refundEntity = new RefundEntity(chargeEntity, amount);
+        RefundEntity refundEntity = new RefundEntity(chargeEntity, amount, userExternalId);
 
         assertNotNull(refundEntity.getExternalId());
         assertThat(refundEntity.getChargeEntity(), is(chargeEntity));
         assertThat(refundEntity.getReference(), is(nullValue()));
         assertThat(refundEntity.getAmount(), is(amount));
         assertThat(refundEntity.getStatus(), is(RefundStatus.CREATED));
+        assertThat(refundEntity.getUserExternalId(), is(userExternalId));
         assertNotNull(refundEntity.getCreatedDate());
     }
 

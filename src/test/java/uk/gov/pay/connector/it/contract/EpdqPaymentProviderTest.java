@@ -48,6 +48,7 @@ import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
 import static uk.gov.pay.connector.model.domain.ChargeEntityFixture.aValidChargeEntity;
 import static uk.gov.pay.connector.model.domain.GatewayAccountEntity.Type.TEST;
+import static uk.gov.pay.connector.model.domain.RefundEntityFixture.userExternalId;
 import static uk.gov.pay.connector.util.AuthUtils.buildAuthCardDetails;
 import static uk.gov.pay.connector.util.SystemUtils.envOrThrow;
 
@@ -189,7 +190,7 @@ public class EpdqPaymentProviderTest {
     }
 
     private static RefundGatewayRequest buildRefundRequest(ChargeEntity chargeEntity, Long refundAmount){
-        return RefundGatewayRequest.valueOf(new RefundEntity(chargeEntity, refundAmount));
+        return RefundGatewayRequest.valueOf(new RefundEntity(chargeEntity, refundAmount, userExternalId));
     }
 
     private static AuthCardDetails aValidEpdqCard() {

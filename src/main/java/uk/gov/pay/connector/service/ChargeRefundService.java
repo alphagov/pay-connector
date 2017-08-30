@@ -94,7 +94,7 @@ public class ChargeRefundService {
 
             RefundEntity refundEntity = completePrepareRefund(refundRequest, reloadedCharge);
 
-            logger.info("Card refund request sent - charge_external_id={}, status={}, amount={}, transaction_id={}, account_id={}, operation_type=Refund, amount_available_refund={}, amount_requested_refund={}, provider={}, provider_type={}",
+            logger.info("Card refund request sent - charge_external_id={}, status={}, amount={}, transaction_id={}, account_id={}, operation_type=Refund, amount_available_refund={}, amount_requested_refund={}, provider={}, provider_type={}, user_external_id={}",
                     chargeEntity.getExternalId(),
                     fromString(chargeEntity.getStatus()),
                     chargeEntity.getAmount(),
@@ -103,7 +103,8 @@ public class ChargeRefundService {
                     totalAmountToBeRefunded,
                     refundRequest.getAmount(),
                     gatewayAccount.getGatewayName(),
-                    gatewayAccount.getType());
+                    gatewayAccount.getType(),
+                    refundRequest.getUserExternalId());
 
             return refundEntity;
         };
@@ -137,7 +138,7 @@ public class ChargeRefundService {
     }
 
     private RefundEntity completePrepareRefund(RefundRequest refundRequest, ChargeEntity reloadedCharge) {
-        RefundEntity refundEntity = new RefundEntity(reloadedCharge, refundRequest.getAmount());
+        RefundEntity refundEntity = new RefundEntity(reloadedCharge, refundRequest.getAmount(), refundRequest.getUserExternalId());
         reloadedCharge.getRefunds().add(refundEntity);
         refundDao.persist(refundEntity);
         return refundEntity;
