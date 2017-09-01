@@ -16,6 +16,7 @@ import uk.gov.pay.connector.model.domain.ChargeEntity;
 import uk.gov.pay.connector.service.ChargeExpiryService;
 import uk.gov.pay.connector.service.ChargeService;
 import uk.gov.pay.connector.util.ResponseUtil;
+import com.google.common.base.Splitter;
 
 import javax.inject.Inject;
 import javax.ws.rs.*;
@@ -38,6 +39,10 @@ import static uk.gov.pay.connector.util.ResponseUtil.*;
 
 @Path("/")
 public class ChargesApiResource {
+    public static final String FEATURES_HEADER = "GOVUK-Pay-Features";
+    public static final String FEATURE_REFUNDS_IN_TX_LIST = "REFUNDS_IN_TX_LIST";
+    private static final Splitter FEATURES_STRING_SPLITTER = Splitter.on(',').trimResults().omitEmptyStrings();
+
     static final String AMOUNT_KEY = "amount";
     private static final String DESCRIPTION_KEY = "description";
     private static final String RETURN_URL_KEY = "return_url";
@@ -60,6 +65,7 @@ public class ChargesApiResource {
     private static final String ACCOUNT_ID = "accountId";
     private static final String PAGE = "page";
     private static final String DISPLAY_SIZE = "display_size";
+
 
     private static final Set<String> CHARGE_REQUEST_KEYS_THAT_MAY_HAVE_PII = Collections.singleton("description");
 
@@ -106,17 +112,19 @@ public class ChargesApiResource {
                                    @QueryParam(TO_DATE_KEY) String toDate,
                                    @QueryParam(PAGE) Long pageNumber,
                                    @QueryParam(DISPLAY_SIZE) Long displaySize,
-                                   @Context UriInfo uriInfo) {
+                                   @Context UriInfo uriInfo, @HeaderParam(FEATURES_HEADER) String features) {
 
         List<Pair<String, String>> inputDatePairMap = ImmutableList.of(Pair.of(FROM_DATE_KEY, fromDate), Pair.of(TO_DATE_KEY, toDate));
         List<Pair<String, Long>> nonNegativePairMap = ImmutableList.of(Pair.of(PAGE, pageNumber), Pair.of(DISPLAY_SIZE, displaySize));
+        List<String> userFeatures = Optional.ofNullable(features).map(FEATURES_STRING_SPLITTER::splitToList).orElseGet(Collections::emptyList);
+
 
         return ApiValidators
                 .validateQueryParams(inputDatePairMap, nonNegativePairMap) //TODO - improvement, get the entire searchparam object into the validateQueryParams
                 .map(ResponseUtil::badRequestResponse)
                 .orElseGet(() -> reduce(validateGatewayAccountReference(gatewayAccountDao, accountId)
                         .bimap(handleError,
-                                listCharges(new ChargeSearchParams()
+                                listTransactions(new ChargeSearchParams()
                                         .withGatewayAccountId(accountId)
                                         .withEmailLike(email)
                                         .withReferenceLike(reference)
@@ -125,7 +133,7 @@ public class ChargesApiResource {
                                         .withFromDate(parseDate(fromDate))
                                         .withToDate(parseDate(toDate))
                                         .withDisplaySize(displaySize != null ? displaySize : configuration.getTransactionsPaginationConfig().getDisplayPageSize())
-                                        .withPage(pageNumber != null ? pageNumber : 1), uriInfo)))); // always the first page if its missing
+                                        .withPage(pageNumber != null ? pageNumber : 1), uriInfo, userFeatures)))); // always the first page if its missing
     }
 
     @POST
@@ -194,6 +202,14 @@ public class ChargesApiResource {
                 : Optional.of(missing);
     }
 
+    private F<Boolean, Response> listTransactions(ChargeSearchParams searchParams, UriInfo uriInfo, List<String> userFeatures) {
+        if(userFeatures.contains(FEATURE_REFUNDS_IN_TX_LIST)){
+            return listChargesAndRefunds(searchParams, uriInfo);
+        }
+
+        return listCharges(searchParams, uriInfo);
+    }
+
     private F<Boolean, Response> listCharges(ChargeSearchParams searchParams, UriInfo uriInfo) {
         Long totalCount = chargeDao.getTotalFor(searchParams);
         Long size = searchParams.getDisplaySize();
@@ -215,6 +231,11 @@ public class ChargesApiResource {
                         .withChargeResponses(chargesResponse)
                         .withTotalCount(totalCount)
                         .buildResponse();
+    }
+
+    //this needs to hook into the new DAOs/Services
+    private F<Boolean,Response> listChargesAndRefunds(ChargeSearchParams searchParams, UriInfo uriInfo) {
+        return listCharges(searchParams, uriInfo);
     }
 
     private Optional<List<String>> checkInvalidSizeFields(Map<String, String> inputData) {

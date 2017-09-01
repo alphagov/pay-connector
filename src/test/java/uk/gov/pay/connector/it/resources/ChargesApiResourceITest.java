@@ -4,6 +4,8 @@ import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableMap;
 import com.jayway.restassured.response.ValidatableResponse;
 import org.apache.commons.lang.math.RandomUtils;
+import org.apache.commons.lang3.StringUtils;
+import org.junit.Ignore;
 import org.junit.Test;
 import uk.gov.pay.connector.it.base.ChargingITestBase;
 import uk.gov.pay.connector.it.dao.DatabaseFixtures;
@@ -45,11 +47,14 @@ import static uk.gov.pay.connector.matcher.ZoneDateTimeAsStringWithinMatcher.isW
 import static uk.gov.pay.connector.model.api.ExternalChargeState.EXTERNAL_SUBMITTED;
 import static uk.gov.pay.connector.model.domain.ChargeStatus.*;
 import static uk.gov.pay.connector.model.domain.ChargeStatus.CREATED;
+import static uk.gov.pay.connector.model.domain.RefundStatus.REFUND_SUBMITTED;
 import static uk.gov.pay.connector.resources.ApiPaths.CHARGES_API_PATH;
 import static uk.gov.pay.connector.resources.ApiPaths.CHARGE_API_PATH;
 import static uk.gov.pay.connector.util.DateTimeUtils.toUTCZonedDateTime;
 import static uk.gov.pay.connector.util.JsonEncoder.toJson;
 import static uk.gov.pay.connector.util.NumberMatcher.isNumber;
+import static uk.gov.pay.connector.resources.ChargesApiResource.FEATURES_HEADER;
+import static uk.gov.pay.connector.resources.ChargesApiResource.FEATURE_REFUNDS_IN_TX_LIST;
 
 public class ChargesApiResourceITest extends ChargingITestBase {
 
@@ -441,6 +446,33 @@ public class ChargesApiResourceITest extends ChargingITestBase {
                 .body("results[0].card_details.cardholder_name", nullValue())
                 .body("results[0].card_details.last_digits_card_number", nullValue())
                 .body("results[0].card_details.expiry_date", nullValue());
+    }
+
+    @Ignore //till new DAO (from PP-2515) is ready
+    @Test
+    public void shouldInterleaveChargesAndRefundsIfFeatureEnabled() throws Exception {
+
+        addChargeAndCardDetails(CREATED, "ref-1", now().minusDays(2));
+        String externalChargeId = addChargeAndCardDetails(CAPTURED, "ref-3", now().minusDays(1));
+        Long chargeId = Long.parseLong(StringUtils.removeStart(externalChargeId, "charge"));
+        createNewRefundWith(REFUND_SUBMITTED, 10L, chargeId, "refund_ref");
+        addChargeAndCardDetails(AUTHORISATION_READY, "ref-2", now());
+
+        ValidatableResponse response = getChargeApi
+                .withAccountId(accountId)
+                .withQueryParam("from_date", DateTimeUtils.toUTCDateTimeString(now().minusDays(1)))
+                .withQueryParam("to_date", DateTimeUtils.toUTCDateTimeString(now().plusDays(1)))
+                .withHeader(HttpHeaders.ACCEPT, APPLICATION_JSON)
+                .withHeader(FEATURES_HEADER, FEATURE_REFUNDS_IN_TX_LIST)
+                .getTransactions()
+                .statusCode(OK.getStatusCode())
+                .contentType(JSON)
+                .body("results.size()", is(3))
+                .body("results[0].transaction_type", is("charge"))
+                .body("results[1].transaction_type", is("refund"))
+                .body("results[2].transaction_type", is("charge")
+                );
+
     }
 
     @Test
