@@ -12,7 +12,6 @@ import org.junit.rules.ExpectedException;
 import uk.gov.pay.connector.dao.ChargeDao;
 import uk.gov.pay.connector.dao.ChargeSearchParams;
 import uk.gov.pay.connector.model.domain.*;
-import uk.gov.pay.connector.model.domain.ChargeStatus;
 import uk.gov.pay.connector.util.DateTimeUtils;
 
 import java.time.Duration;
@@ -235,7 +234,7 @@ public class ChargeDaoITest extends DaoITestBase {
         insertNewChargeWithId(500L, now().plusHours(5));
         ChargeSearchParams params = new ChargeSearchParams()
                 .withGatewayAccountId(defaultTestAccount.getAccountId())
-                .withExternalChargeState(EXTERNAL_CREATED.getStatus())
+                .withExternalState(EXTERNAL_CREATED.getStatus())
                 .withDisplaySize(2L);
 
         // when
@@ -445,7 +444,7 @@ public class ChargeDaoITest extends DaoITestBase {
         ChargeSearchParams params = new ChargeSearchParams()
                 .withGatewayAccountId(defaultTestAccount.getAccountId())
                 .withReferenceLike(defaultTestCharge.getReference())
-                .withExternalChargeState(EXTERNAL_CREATED.getStatus());
+                .withExternalState(EXTERNAL_CREATED.getStatus());
 
         // when
         List<ChargeEntity> charges = chargeDao.findAllBy(params);
@@ -471,7 +470,7 @@ public class ChargeDaoITest extends DaoITestBase {
         ChargeSearchParams params = new ChargeSearchParams()
                 .withGatewayAccountId(defaultTestAccount.getAccountId())
                 .withReferenceLike(defaultTestCharge.getReference())
-                .withExternalChargeState(EXTERNAL_CREATED.getStatus())
+                .withExternalState(EXTERNAL_CREATED.getStatus())
                 .withFromDate(ZonedDateTime.parse(FROM_DATE))
                 .withToDate(ZonedDateTime.parse(TO_DATE));
 
@@ -499,7 +498,7 @@ public class ChargeDaoITest extends DaoITestBase {
         ChargeSearchParams params = new ChargeSearchParams()
                 .withGatewayAccountId(defaultTestAccount.getAccountId())
                 .withReferenceLike(defaultTestCharge.getReference())
-                .withExternalChargeState(EXTERNAL_CREATED.getStatus())
+                .withExternalState(EXTERNAL_CREATED.getStatus())
                 .withFromDate(ZonedDateTime.parse(FROM_DATE));
 
         // when
@@ -543,7 +542,7 @@ public class ChargeDaoITest extends DaoITestBase {
         ChargeSearchParams params = new ChargeSearchParams()
                 .withGatewayAccountId(defaultTestAccount.getAccountId())
                 .withReferenceLike(defaultTestCharge.getReference())
-                .withExternalChargeState(EXTERNAL_STARTED.getStatus())
+                .withExternalState(EXTERNAL_STARTED.getStatus())
                 .withFromDate(ZonedDateTime.parse(FROM_DATE));
 
         // when
@@ -599,7 +598,7 @@ public class ChargeDaoITest extends DaoITestBase {
         ChargeSearchParams params = new ChargeSearchParams()
                 .withGatewayAccountId(defaultTestAccount.getAccountId())
                 .withReferenceLike(defaultTestCharge.getReference())
-                .withExternalChargeState(EXTERNAL_CREATED.getStatus())
+                .withExternalState(EXTERNAL_CREATED.getStatus())
                 .withCardBrand(defaultTestCardDetails.getCardBrand())
                 .withEmailLike(defaultTestCharge.getEmail())
                 .withFromDate(ZonedDateTime.parse(FROM_DATE))
@@ -629,7 +628,7 @@ public class ChargeDaoITest extends DaoITestBase {
         ChargeSearchParams params = new ChargeSearchParams()
                 .withGatewayAccountId(defaultTestAccount.getAccountId())
                 .withReferenceLike(defaultTestCharge.getReference())
-                .withExternalChargeState(EXTERNAL_CREATED.getStatus())
+                .withExternalState(EXTERNAL_CREATED.getStatus())
                 .withToDate(ZonedDateTime.parse(TO_DATE));
 
         // when
@@ -655,7 +654,7 @@ public class ChargeDaoITest extends DaoITestBase {
         ChargeSearchParams params = new ChargeSearchParams()
                 .withGatewayAccountId(defaultTestAccount.getAccountId())
                 .withReferenceLike(defaultTestCharge.getReference())
-                .withExternalChargeState(EXTERNAL_CREATED.getStatus())
+                .withExternalState(EXTERNAL_CREATED.getStatus())
                 .withFromDate(ZonedDateTime.parse(TO_DATE));
 
         // when
@@ -670,7 +669,7 @@ public class ChargeDaoITest extends DaoITestBase {
         ChargeSearchParams params = new ChargeSearchParams()
                 .withGatewayAccountId(defaultTestAccount.getAccountId())
                 .withReferenceLike(defaultTestCharge.getReference())
-                .withExternalChargeState(EXTERNAL_CREATED.getStatus())
+                .withExternalState(EXTERNAL_CREATED.getStatus())
                 .withToDate(ZonedDateTime.parse(FROM_DATE));
 
         List<ChargeEntity> charges = chargeDao.findAllBy(params);
