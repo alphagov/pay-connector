@@ -1348,7 +1348,8 @@ Submits a refund for a given `accountId` and `chargeId`
 POST /v1/api/accounts/1/charges/uqu4s24383qkod35rsb06gv3cn/refunds
 {
     "amount": 25000,
-    "refund_amount_available": 30000
+    "refund_amount_available": 30000,
+    "user_external_id": "AA213FD51B3801043FBC"
 }
 ```
 
@@ -1359,6 +1360,7 @@ POST /v1/api/accounts/1/charges/uqu4s24383qkod35rsb06gv3cn/refunds
 | ------------------------ |:--------:| ------------------------------------------------------- |
 | `amount`                 | Yes      | Amount to refund in pence                               |
 | `refund_amount_available`| Yes      | Total amount still available before issuing the refund  |
+| `user_external_id`       | No       | The ID of the user who issued the refund                |
 
 ### Refund created response
 
@@ -1370,6 +1372,7 @@ Content-Type: application/json
     "amount":3444,
     "created_date":"2016-10-05T14:15:34.096Z",
     "refund_id":"vijjk08adovg10gfqc46joem2l",
+    "user_external_id":"AA213FD51B3801043FBC",
     "status":"success",
     "_links":{
         "self":{"href":"https://connector.pymnt.localdomain/v1/api/accounts/1/charges/uqu4s24383qkod35rsb06gv3cn/refunds/vijjk08adovg10gfqc46joem2l"},
@@ -1386,6 +1389,7 @@ Content-Type: application/json
 | `amount`               | Amount of refund in pence                |
 | `status`               | Current status of the refund             |
 | `created_date`         | The creation date for this refund        |
+| `user_external_id`     | The ID of the user who issued the refund |
 | `_links.self`          | Link to this refund                      |
 | `_links.payment`       | Link to the payment this refund relates to|
 
@@ -1492,6 +1496,7 @@ Content-Type: application/json
                 "amount": 3444,
                 "created_date": "2016-10-05T14:15:34.096Z",
                 "refund_id": "vijjk08adovg10gfqc46joem2l",
+                "user_external_id":"AA213FD51B3801043FBC",
                 "status": "success"
             }
         ]
@@ -1516,6 +1521,7 @@ Content-Type: application/json
 | `_embedded.refunds.payment_id`               | The ID of this refund                    |
 | `_embedded.refunds.amount`          | The amount of refund                       |
 | `_embedded.refunds.status`               | Current status of the refund (submitted/success)             |
+| `_embedded.refunds.user_external_id`       | The ID of the user who issued the refund    |
 | `_embedded.refunds.created_date`           | Date when the refund was created    |
 | `_links.self`          | Link to this refund                      |
 | `_links.payment`       | Link to the payment this refund relates to|
@@ -1562,6 +1568,7 @@ Content-Type: application/json
     "amount": 3444,
     "created_date": "2016-10-05T14:15:34.096Z",
     "refund_id": "vijjk08adovg10gfqc46joem2l",
+    "user_external_id": "AA213FD51B3801043FBC",
     "status": "success"
 }
 ```
@@ -1572,6 +1579,7 @@ Content-Type: application/json
 | ---------------------- | ----------------------------------------- |
 | `refund_id`           | The ID of the created payment             |
 | `amount`          | The amount of refund                       |
+| `user_external_id`     | The ID of the user who issued the refund |
 | `status`               | Current status of the refund (submitted/success)             |
 | `created_date`           | Date when the refund was created    |
 | `_links.self`          | Link to this refund                      |

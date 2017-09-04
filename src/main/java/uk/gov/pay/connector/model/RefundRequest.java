@@ -10,11 +10,15 @@ public class RefundRequest {
     @JsonProperty("refund_amount_available")
     private long amountAvailableForRefund;
 
+    @JsonProperty("user_external_id")
+    private String userExternalId;
+
     public RefundRequest() {}
 
-    public RefundRequest(long amount, long amountAvailableForRefund) {
+    public RefundRequest(long amount, long amountAvailableForRefund, String userExternalId) {
         this.amount = amount;
         this.amountAvailableForRefund = amountAvailableForRefund;
+        this.userExternalId = userExternalId;
     }
 
     public long getAmount() {
@@ -25,4 +29,5 @@ public class RefundRequest {
         return amountAvailableForRefund;
     }
 
+    public String getUserExternalId() { return userExternalId; }
 }

@@ -640,4 +640,20 @@
         </createIndex>
     </changeSet>
 
+    <changeSet id="add user_external_id column to refunds table" author="">
+        <addColumn tableName="refunds">
+            <column name="user_external_id" type="text">
+                <constraints nullable="true"/>
+            </column>
+        </addColumn>
+    </changeSet>
+
+    <changeSet id="add user_external_id column to refunds_history table" author="">
+        <addColumn tableName="refunds_history">
+            <column name="user_external_id" type="text">
+                <constraints nullable="true"/>
+            </column>
+        </addColumn>
+    </changeSet>
+
 </databaseChangeLog>
