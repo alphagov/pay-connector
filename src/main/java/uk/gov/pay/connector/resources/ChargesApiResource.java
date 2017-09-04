@@ -15,8 +15,8 @@ import uk.gov.pay.connector.model.ChargeResponse;
 import uk.gov.pay.connector.model.domain.ChargeEntity;
 import uk.gov.pay.connector.service.ChargeExpiryService;
 import uk.gov.pay.connector.service.ChargeService;
+import uk.gov.pay.connector.service.search.SearchService;
 import uk.gov.pay.connector.util.ResponseUtil;
-import com.google.common.base.Splitter;
 
 import javax.inject.Inject;
 import javax.ws.rs.*;
@@ -29,35 +29,31 @@ import java.util.stream.Collectors;
 
 import static fj.data.Either.reduce;
 import static java.lang.String.format;
+import static java.util.Arrays.*;
 import static javax.ws.rs.core.MediaType.APPLICATION_JSON;
 import static javax.ws.rs.core.Response.created;
 import static org.apache.commons.lang3.StringUtils.isNotBlank;
+import static uk.gov.pay.connector.model.TransactionType.*;
 import static uk.gov.pay.connector.resources.ApiPaths.*;
 import static uk.gov.pay.connector.resources.ApiValidators.validateGatewayAccountReference;
 import static uk.gov.pay.connector.service.ChargeExpiryService.EXPIRABLE_STATUSES;
+import static uk.gov.pay.connector.service.search.SearchService.TYPE.CHARGE;
+import static uk.gov.pay.connector.service.search.SearchService.TYPE.TRANSACTION;
 import static uk.gov.pay.connector.util.ResponseUtil.*;
 
 @Path("/")
 public class ChargesApiResource {
-    public static final String FEATURES_HEADER = "GOVUK-Pay-Features";
-    public static final String FEATURE_REFUNDS_IN_TX_LIST = "REFUNDS_IN_TX_LIST";
-    private static final Splitter FEATURES_STRING_SPLITTER = Splitter.on(',').trimResults().omitEmptyStrings();
-
+    public static final String EMAIL_KEY = "email";
     static final String AMOUNT_KEY = "amount";
     private static final String DESCRIPTION_KEY = "description";
     private static final String RETURN_URL_KEY = "return_url";
     private static final String REFERENCE_KEY = "reference";
-    public static final String EMAIL_KEY = "email";
-    private static final String[] REQUIRED_FIELDS = {AMOUNT_KEY, DESCRIPTION_KEY, REFERENCE_KEY, RETURN_URL_KEY};
     static final Map<String, Integer> MAXIMUM_FIELDS_SIZE = ImmutableMap.of(
             DESCRIPTION_KEY, 255,
             REFERENCE_KEY, 255,
             EMAIL_KEY, 254
     );
-
-    static int MIN_AMOUNT = 1;
-    static int MAX_AMOUNT = 10000000;
-
+    private static final String[] REQUIRED_FIELDS = {AMOUNT_KEY, DESCRIPTION_KEY, REFERENCE_KEY, RETURN_URL_KEY};
     private static final String STATE_KEY = "state";
     private static final String CARD_BRAND_KEY = "card_brand";
     private static final String FROM_DATE_KEY = "from_date";
@@ -65,30 +61,38 @@ public class ChargesApiResource {
     private static final String ACCOUNT_ID = "accountId";
     private static final String PAGE = "page";
     private static final String DISPLAY_SIZE = "display_size";
-
-
     private static final Set<String> CHARGE_REQUEST_KEYS_THAT_MAY_HAVE_PII = Collections.singleton("description");
-
+    private static final int ONE_HOUR = 3600;
+    private static final String CHARGE_EXPIRY_WINDOW = "CHARGE_EXPIRY_WINDOW_SECONDS";
+    private static final Logger logger = LoggerFactory.getLogger(ChargesApiResource.class);
+    static int MIN_AMOUNT = 1;
+    static int MAX_AMOUNT = 10000000;
+    private static F<String, Response> handleError =
+            ResponseUtil::notFoundResponse;
     private final ChargeDao chargeDao;
     private final GatewayAccountDao gatewayAccountDao;
     private final ChargeService chargeService;
     private final ConnectorConfiguration configuration;
     private final ChargeExpiryService chargeExpiryService;
-
-    private static final int ONE_HOUR = 3600;
-    private static final String CHARGE_EXPIRY_WINDOW = "CHARGE_EXPIRY_WINDOW_SECONDS";
-
-    private static final Logger logger = LoggerFactory.getLogger(ChargesApiResource.class);
+    private SearchService searchService;
 
     @Inject
     public ChargesApiResource(ChargeDao chargeDao, GatewayAccountDao gatewayAccountDao,
-                              ChargeService chargeService, ChargeExpiryService chargeExpiryService,
-                              ConnectorConfiguration configuration) {
+                              ChargeService chargeService, SearchService searchService,
+                              ChargeExpiryService chargeExpiryService, ConnectorConfiguration configuration) {
         this.chargeDao = chargeDao;
         this.gatewayAccountDao = gatewayAccountDao;
         this.chargeService = chargeService;
+        this.searchService = searchService;
         this.chargeExpiryService = chargeExpiryService;
         this.configuration = configuration;
+    }
+
+    private static String stringifyChargeRequestWithoutPii(Map<String, String> map) {
+        return map.entrySet().stream()
+                .filter(entry -> !CHARGE_REQUEST_KEYS_THAT_MAY_HAVE_PII.contains(entry.getKey()))
+                .collect(Collectors.toMap(Map.Entry::getKey, Map.Entry::getValue))
+                .toString();
     }
 
     @GET
@@ -107,33 +111,47 @@ public class ChargesApiResource {
                                    @QueryParam(EMAIL_KEY) String email,
                                    @QueryParam(REFERENCE_KEY) String reference,
                                    @QueryParam(STATE_KEY) String state,
+                                   @QueryParam("payment_states") CommaDelimitedSetParameter paymentStates,
+                                   @QueryParam("refund_states") CommaDelimitedSetParameter refundStates,
                                    @QueryParam(CARD_BRAND_KEY) String cardBrand,
                                    @QueryParam(FROM_DATE_KEY) String fromDate,
                                    @QueryParam(TO_DATE_KEY) String toDate,
                                    @QueryParam(PAGE) Long pageNumber,
                                    @QueryParam(DISPLAY_SIZE) Long displaySize,
-                                   @Context UriInfo uriInfo, @HeaderParam(FEATURES_HEADER) String features) {
+                                   @HeaderParam("features") CommaDelimitedSetParameter features,
+                                   @Context UriInfo uriInfo) {
 
         List<Pair<String, String>> inputDatePairMap = ImmutableList.of(Pair.of(FROM_DATE_KEY, fromDate), Pair.of(TO_DATE_KEY, toDate));
         List<Pair<String, Long>> nonNegativePairMap = ImmutableList.of(Pair.of(PAGE, pageNumber), Pair.of(DISPLAY_SIZE, displaySize));
-        List<String> userFeatures = Optional.ofNullable(features).map(FEATURES_STRING_SPLITTER::splitToList).orElseGet(Collections::emptyList);
 
+        boolean isFeatureTransactionsEnabled = features != null && features.has("REFUNDS_IN_TX_LIST");
 
         return ApiValidators
                 .validateQueryParams(inputDatePairMap, nonNegativePairMap) //TODO - improvement, get the entire searchparam object into the validateQueryParams
                 .map(ResponseUtil::badRequestResponse)
-                .orElseGet(() -> reduce(validateGatewayAccountReference(gatewayAccountDao, accountId)
-                        .bimap(handleError,
-                                listTransactions(new ChargeSearchParams()
-                                        .withGatewayAccountId(accountId)
-                                        .withEmailLike(email)
-                                        .withReferenceLike(reference)
-                                        .withExternalChargeState(state)
-                                        .withCardBrand(cardBrand)
-                                        .withFromDate(parseDate(fromDate))
-                                        .withToDate(parseDate(toDate))
-                                        .withDisplaySize(displaySize != null ? displaySize : configuration.getTransactionsPaginationConfig().getDisplayPageSize())
-                                        .withPage(pageNumber != null ? pageNumber : 1), uriInfo, userFeatures)))); // always the first page if its missing
+                .orElseGet(() -> {
+                    ChargeSearchParams searchParams = new ChargeSearchParams()
+                            .withGatewayAccountId(accountId)
+                            .withEmailLike(email)
+                            .withReferenceLike(reference)
+                            .withCardBrand(cardBrand)
+                            .withFromDate(parseDate(fromDate))
+                            .withToDate(parseDate(toDate))
+                            .withDisplaySize(displaySize != null ? displaySize : configuration.getTransactionsPaginationConfig().getDisplayPageSize())
+                            .withPage(pageNumber != null ? pageNumber : 1);
+
+                    if (isFeatureTransactionsEnabled) {
+                        searchParams
+                                .withTransactionType(inferTransactionTypeFrom(paymentStates, refundStates))
+                                .addExternalChargeStates(paymentStates)
+                                .addExternalRefundStates(refundStates);
+                    } else {
+                        searchParams
+                                .withExternalState(state);
+                    }
+                    return reduce(validateGatewayAccountReference(gatewayAccountDao, accountId)
+                            .bimap(handleError, listCharges(searchParams, isFeatureTransactionsEnabled, uriInfo)));
+                }); // always the first page if its missing
     }
 
     @POST
@@ -193,7 +211,7 @@ public class ChargesApiResource {
     }
 
     private Optional<List<String>> checkMissingFields(Map<String, String> inputData) {
-        List<String> missing = Arrays.stream(REQUIRED_FIELDS)
+        List<String> missing = stream(REQUIRED_FIELDS)
                 .filter(field -> !inputData.containsKey(field))
                 .collect(Collectors.toList());
 
@@ -202,40 +220,11 @@ public class ChargesApiResource {
                 : Optional.of(missing);
     }
 
-    private F<Boolean, Response> listTransactions(ChargeSearchParams searchParams, UriInfo uriInfo, List<String> userFeatures) {
-        if(userFeatures.contains(FEATURE_REFUNDS_IN_TX_LIST)){
-            return listChargesAndRefunds(searchParams, uriInfo);
+    private F<Boolean, Response> listCharges(ChargeSearchParams searchParams, boolean isFeatureTransactionsEnabled, UriInfo uriInfo) {
+        if (isFeatureTransactionsEnabled) {
+            return success -> searchService.ofType(TRANSACTION).search(searchParams, uriInfo);
         }
-
-        return listCharges(searchParams, uriInfo);
-    }
-
-    private F<Boolean, Response> listCharges(ChargeSearchParams searchParams, UriInfo uriInfo) {
-        Long totalCount = chargeDao.getTotalFor(searchParams);
-        Long size = searchParams.getDisplaySize();
-        if (totalCount > 0 && size > 0) {
-            long lastPage = (totalCount + size - 1)/ size;
-            if (searchParams.getPage() > lastPage || searchParams.getPage() < 1) {
-                return success -> notFoundResponse("the requested page not found");
-            }
-        }
-
-        List<ChargeEntity> charges = chargeDao.findAllBy(searchParams);
-        List<ChargeResponse> chargesResponse =
-                charges.stream()
-                        .map(charge -> chargeService.buildChargeResponse(uriInfo, charge)
-                        ).collect(Collectors.toList());
-
-        return success ->
-                new ChargesPaginationResponseBuilder(searchParams, uriInfo)
-                        .withChargeResponses(chargesResponse)
-                        .withTotalCount(totalCount)
-                        .buildResponse();
-    }
-
-    //this needs to hook into the new DAOs/Services
-    private F<Boolean,Response> listChargesAndRefunds(ChargeSearchParams searchParams, UriInfo uriInfo) {
-        return listCharges(searchParams, uriInfo);
+        return success -> searchService.ofType(CHARGE).search(searchParams, uriInfo);
     }
 
     private Optional<List<String>> checkInvalidSizeFields(Map<String, String> inputData) {
@@ -253,14 +242,4 @@ public class ChargesApiResource {
         Optional<String> value = Optional.ofNullable(chargeRequest.get(fieldName));
         return !value.isPresent() || value.get().length() <= fieldSize; //already checked that mandatory fields are already there
     }
-
-    private static String stringifyChargeRequestWithoutPii(Map<String, String> map) {
-        return map.entrySet().stream()
-                .filter(entry -> !CHARGE_REQUEST_KEYS_THAT_MAY_HAVE_PII.contains(entry.getKey()))
-                .collect(Collectors.toMap(entry -> entry.getKey(), entry -> entry.getValue()))
-                .toString();
-    }
-
-    private static F<String, Response> handleError =
-            ResponseUtil::notFoundResponse;
 }

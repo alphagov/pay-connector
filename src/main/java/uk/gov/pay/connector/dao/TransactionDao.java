@@ -4,6 +4,7 @@ import com.google.inject.Inject;
 import com.google.inject.Provider;
 import org.jooq.*;
 import org.jooq.impl.DSL;
+import uk.gov.pay.connector.model.TransactionType;
 import uk.gov.pay.connector.model.domain.ChargeStatus;
 import uk.gov.pay.connector.model.domain.RefundStatus;
 import uk.gov.pay.connector.model.domain.Transaction;
@@ -34,7 +35,6 @@ public class TransactionDao {
     }
 
     public List<Transaction> findAllBy(Long gatewayAccountId, ChargeSearchParams params) {
-
         SelectSeekStep1 query = DSL
                 .select(field("transaction_type"),
                         field("charge_id"),
@@ -47,6 +47,7 @@ public class TransactionDao {
                         field("gateway_transaction_id"),
                         field("date_created"),
                         field("card_brand"),
+                        field("card_brand_label"),
                         field("cardholder_name"),
                         field("expiry_date"),
                         field("last_digits_card_number"),
@@ -68,7 +69,8 @@ public class TransactionDao {
         }
 
         // Extract the SQL statement from the jOOQ query:
-        Query result = entityManager.get().createNativeQuery(query.getSQL(), "TransactionMapping");
+        String sql = query.getSQL();
+        Query result = entityManager.get().createNativeQuery(sql, "TransactionMapping");
 
         // Extract the bind values from the jOOQ query:
         List<Object> values = query.getBindValues();
@@ -117,12 +119,12 @@ public class TransactionDao {
         Condition queryFiltersForCharges = queryFilters;
         Condition queryFiltersForRefunds = queryFilters;
 
-        if (isNotBlank(params.getTransactionType())) {
-            if (params.getTransactionType().equals("charge")) {
+        if (params.getTransactionType() != null) {
+            if (params.getTransactionType() == TransactionType.PAYMENT) {
                 queryFiltersForRefunds = queryFiltersForRefunds.and(
                         field("'refund'").eq("charge"));
             }
-            if (params.getTransactionType().equals("refund")) {
+            if (params.getTransactionType() == TransactionType.REFUND) {
                 queryFiltersForCharges = queryFiltersForCharges.and(
                         field("'charge'").eq("refund"));
 
@@ -161,6 +163,7 @@ public class TransactionDao {
                 field("c.gateway_transaction_id"),
                 field("c.created_date").as("date_created"),
                 field("c.card_brand"),
+                field("t.label").as("card_brand_label"),
                 field("c.cardholder_name"),
                 field("c.expiry_date"),
                 field("c.last_digits_card_number"),
@@ -171,7 +174,7 @@ public class TransactionDao {
                 field("c.address_line2"),
                 field("c.address_postcode"),
                 field("c.amount"))
-                .from(table("charges").as("c"))
+                .from(table("charges").as("c").leftJoin(selectDistinct().on(field("label")).from("card_types").asTable("t")).on("c.card_brand=t.brand"))
                 .where(queryFiltersForCharges);
 
         SelectConditionStep queryForRefunds = DSL.select(
@@ -186,6 +189,7 @@ public class TransactionDao {
                 field("c.gateway_transaction_id"),
                 field("r.created_date").as("date_created"),
                 field("c.card_brand"),
+                field("t.label").as("card_brand_label"),
                 field("c.cardholder_name"),
                 field("c.expiry_date"),
                 field("c.last_digits_card_number"),
@@ -196,7 +200,7 @@ public class TransactionDao {
                 field("c.address_line2"),
                 field("c.address_postcode"),
                 field("r.amount"))
-                .from(table("charges").as("c"))
+                .from(table("charges").as("c").leftJoin(selectDistinct().on(field("label")).from("card_types").asTable("t")).on("c.card_brand=t.brand"))
                 .join(table("refunds").as("r"))
                 .on(field("c.id").eq(field("r.charge_id")))
                 .where(queryFiltersForRefunds);
