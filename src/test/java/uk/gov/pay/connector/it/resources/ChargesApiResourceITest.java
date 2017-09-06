@@ -2,15 +2,16 @@ package uk.gov.pay.connector.it.resources;
 
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableMap;
+import com.jayway.restassured.response.ResponseBodyExtractionOptions;
 import com.jayway.restassured.response.ValidatableResponse;
 import org.apache.commons.lang.math.RandomUtils;
-import org.apache.commons.lang3.StringUtils;
 import org.junit.Ignore;
 import org.junit.Test;
 import uk.gov.pay.connector.it.base.ChargingITestBase;
 import uk.gov.pay.connector.it.dao.DatabaseFixtures;
 import uk.gov.pay.connector.model.domain.CardFixture;
 import uk.gov.pay.connector.model.domain.ChargeStatus;
+import uk.gov.pay.connector.model.domain.RefundStatus;
 import uk.gov.pay.connector.service.CardCaptureProcess;
 import uk.gov.pay.connector.util.DateTimeUtils;
 import uk.gov.pay.connector.util.RestAssuredClient;
@@ -31,9 +32,11 @@ import static com.jayway.restassured.http.ContentType.JSON;
 import static java.lang.String.format;
 import static java.time.ZonedDateTime.now;
 import static java.time.temporal.ChronoUnit.DAYS;
+import static java.time.temporal.ChronoUnit.HOURS;
 import static java.time.temporal.ChronoUnit.SECONDS;
 import static javax.ws.rs.core.MediaType.APPLICATION_JSON;
 import static javax.ws.rs.core.Response.Status.*;
+import static org.apache.commons.lang.math.RandomUtils.*;
 import static org.apache.commons.lang3.RandomStringUtils.randomAlphabetic;
 import static org.apache.commons.lang3.RandomStringUtils.randomAlphanumeric;
 import static org.exparity.hamcrest.date.ZonedDateTimeMatchers.within;
@@ -47,14 +50,11 @@ import static uk.gov.pay.connector.matcher.ZoneDateTimeAsStringWithinMatcher.isW
 import static uk.gov.pay.connector.model.api.ExternalChargeState.EXTERNAL_SUBMITTED;
 import static uk.gov.pay.connector.model.domain.ChargeStatus.*;
 import static uk.gov.pay.connector.model.domain.ChargeStatus.CREATED;
-import static uk.gov.pay.connector.model.domain.RefundStatus.REFUND_SUBMITTED;
 import static uk.gov.pay.connector.resources.ApiPaths.CHARGES_API_PATH;
 import static uk.gov.pay.connector.resources.ApiPaths.CHARGE_API_PATH;
 import static uk.gov.pay.connector.util.DateTimeUtils.toUTCZonedDateTime;
 import static uk.gov.pay.connector.util.JsonEncoder.toJson;
 import static uk.gov.pay.connector.util.NumberMatcher.isNumber;
-import static uk.gov.pay.connector.resources.ChargesApiResource.FEATURES_HEADER;
-import static uk.gov.pay.connector.resources.ChargesApiResource.FEATURE_REFUNDS_IN_TX_LIST;
 
 public class ChargesApiResourceITest extends ChargingITestBase {
 
@@ -306,7 +306,7 @@ public class ChargesApiResourceITest extends ChargingITestBase {
 
     @Test
     public void shouldGetCardDetails_ifStatusIsBeyondAuthorised() throws Exception {
-        long chargeId = RandomUtils.nextInt();
+        long chargeId = nextInt();
         String externalChargeId = "charge1";
 
         app.getDatabaseTestHelper().addCharge(chargeId, externalChargeId, accountId, AMOUNT, AUTHORISATION_SUCCESS, returnUrl, null);
@@ -326,7 +326,7 @@ public class ChargesApiResourceITest extends ChargingITestBase {
     @Test
     public void shouldFilterChargeStatusToReturnInProgressIfInternalStatusIsAuthorised() throws Exception {
 
-        long chargeId = RandomUtils.nextInt();
+        long chargeId = nextInt();
         String externalChargeId = "charge1";
 
         app.getDatabaseTestHelper().addCharge(chargeId, externalChargeId, accountId, AMOUNT, AUTHORISATION_SUCCESS, returnUrl, null);
@@ -345,7 +345,7 @@ public class ChargesApiResourceITest extends ChargingITestBase {
     @Test
     public void shouldReturnCardBrandLabelWhenChargeIsAuthorised() throws Exception {
 
-        long chargeId = RandomUtils.nextInt();
+        long chargeId = nextInt();
         String externalChargeId = "charge1";
 
         DatabaseFixtures.TestCardType testCardType = DatabaseFixtures
@@ -369,7 +369,7 @@ public class ChargesApiResourceITest extends ChargingITestBase {
     @Test
     public void shouldReturnEmptyCardBrandLabelWhenChargeIsAuthorisedAndBrandUnknown() throws Exception {
 
-        long chargeId = RandomUtils.nextInt();
+        long chargeId = nextInt();
         String externalChargeId = "charge1";
 
         app.getDatabaseTestHelper().addCharge(chargeId, externalChargeId, accountId, AMOUNT, AUTHORISATION_SUCCESS, returnUrl, null, "ref", null, email);
@@ -388,7 +388,7 @@ public class ChargesApiResourceITest extends ChargingITestBase {
     @Test
     public void shouldGetChargeTransactionsForJSONAcceptHeader() throws Exception {
 
-        long chargeId = RandomUtils.nextInt();
+        long chargeId = nextInt();
         String externalChargeId = "charge3";
 
         ChargeStatus chargeStatus = AUTHORISATION_SUCCESS;
@@ -421,7 +421,7 @@ public class ChargesApiResourceITest extends ChargingITestBase {
     @Test
     public void shouldGetChargeLegacyTransactions() throws Exception {
 
-        long chargeId = RandomUtils.nextInt();
+        long chargeId = nextInt();
         String externalChargeId = "charge3";
 
         ChargeStatus chargeStatus = AUTHORISATION_SUCCESS;
@@ -446,33 +446,6 @@ public class ChargesApiResourceITest extends ChargingITestBase {
                 .body("results[0].card_details.cardholder_name", nullValue())
                 .body("results[0].card_details.last_digits_card_number", nullValue())
                 .body("results[0].card_details.expiry_date", nullValue());
-    }
-
-    @Ignore //till new DAO (from PP-2515) is ready
-    @Test
-    public void shouldInterleaveChargesAndRefundsIfFeatureEnabled() throws Exception {
-
-        addChargeAndCardDetails(CREATED, "ref-1", now().minusDays(2));
-        String externalChargeId = addChargeAndCardDetails(CAPTURED, "ref-3", now().minusDays(1));
-        Long chargeId = Long.parseLong(StringUtils.removeStart(externalChargeId, "charge"));
-        createNewRefundWith(REFUND_SUBMITTED, 10L, chargeId, "refund_ref");
-        addChargeAndCardDetails(AUTHORISATION_READY, "ref-2", now());
-
-        ValidatableResponse response = getChargeApi
-                .withAccountId(accountId)
-                .withQueryParam("from_date", DateTimeUtils.toUTCDateTimeString(now().minusDays(1)))
-                .withQueryParam("to_date", DateTimeUtils.toUTCDateTimeString(now().plusDays(1)))
-                .withHeader(HttpHeaders.ACCEPT, APPLICATION_JSON)
-                .withHeader(FEATURES_HEADER, FEATURE_REFUNDS_IN_TX_LIST)
-                .getTransactions()
-                .statusCode(OK.getStatusCode())
-                .contentType(JSON)
-                .body("results.size()", is(3))
-                .body("results[0].transaction_type", is("charge"))
-                .body("results[1].transaction_type", is("refund"))
-                .body("results[2].transaction_type", is("charge")
-                );
-
     }
 
     @Test
@@ -503,7 +476,9 @@ public class ChargesApiResourceITest extends ChargingITestBase {
                 .body("results[1].refund_summary.status", is("pending"));
 
 
-        List<Map<String, Object>> results = response.extract().body().jsonPath().getList("results");
+        ResponseBodyExtractionOptions body = response.extract().body();
+        System.out.println("body.asString() = " + body.asString());
+        List<Map<String, Object>> results = body.jsonPath().getList("results");
         List<String> references = collect(results, "reference");
         assertThat(references, containsInAnyOrder("ref-1", "ref-2"));
         assertThat(references, not(contains("ref-3")));
@@ -972,7 +947,10 @@ public class ChargesApiResourceITest extends ChargingITestBase {
     }
 
     private String addChargeAndCardDetails(ChargeStatus status, String reference, ZonedDateTime fromDate, String cardBrand) {
-        long chargeId = RandomUtils.nextInt();
+        return addChargeAndCardDetails(nextLong(), status, reference, fromDate, cardBrand);
+    }
+
+    private String addChargeAndCardDetails(Long chargeId, ChargeStatus status, String reference, ZonedDateTime fromDate, String cardBrand) {
         String externalChargeId = "charge" + chargeId;
         ChargeStatus chargeStatus = status != null ? status : AUTHORISATION_SUCCESS;
         app.getDatabaseTestHelper().addCharge(chargeId, externalChargeId, accountId, AMOUNT, chargeStatus, returnUrl, null, reference, fromDate, email);

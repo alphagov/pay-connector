@@ -15,8 +15,8 @@ import uk.gov.pay.connector.model.ChargeResponse;
 import uk.gov.pay.connector.model.domain.ChargeEntity;
 import uk.gov.pay.connector.service.ChargeExpiryService;
 import uk.gov.pay.connector.service.ChargeService;
+import uk.gov.pay.connector.service.search.SearchService;
 import uk.gov.pay.connector.util.ResponseUtil;
-import com.google.common.base.Splitter;
 
 import javax.inject.Inject;
 import javax.ws.rs.*;
@@ -29,20 +29,20 @@ import java.util.stream.Collectors;
 
 import static fj.data.Either.reduce;
 import static java.lang.String.format;
+import static java.util.Arrays.*;
 import static javax.ws.rs.core.MediaType.APPLICATION_JSON;
 import static javax.ws.rs.core.Response.created;
 import static org.apache.commons.lang3.StringUtils.isNotBlank;
+import static uk.gov.pay.connector.model.TransactionType.*;
 import static uk.gov.pay.connector.resources.ApiPaths.*;
 import static uk.gov.pay.connector.resources.ApiValidators.validateGatewayAccountReference;
 import static uk.gov.pay.connector.service.ChargeExpiryService.EXPIRABLE_STATUSES;
+import static uk.gov.pay.connector.service.search.SearchService.TYPE.CHARGE;
+import static uk.gov.pay.connector.service.search.SearchService.TYPE.TRANSACTION;
 import static uk.gov.pay.connector.util.ResponseUtil.*;
 
 @Path("/")
 public class ChargesApiResource {
-    public static final String FEATURES_HEADER = "GOVUK-Pay-Features";
-    public static final String FEATURE_REFUNDS_IN_TX_LIST = "REFUNDS_IN_TX_LIST";
-    private static final Splitter FEATURES_STRING_SPLITTER = Splitter.on(',').trimResults().omitEmptyStrings();
-
     static final String AMOUNT_KEY = "amount";
     private static final String DESCRIPTION_KEY = "description";
     private static final String RETURN_URL_KEY = "return_url";
@@ -66,13 +66,13 @@ public class ChargesApiResource {
     private static final String PAGE = "page";
     private static final String DISPLAY_SIZE = "display_size";
 
-
     private static final Set<String> CHARGE_REQUEST_KEYS_THAT_MAY_HAVE_PII = Collections.singleton("description");
 
     private final ChargeDao chargeDao;
     private final GatewayAccountDao gatewayAccountDao;
     private final ChargeService chargeService;
     private final ConnectorConfiguration configuration;
+    private SearchService searchService;
     private final ChargeExpiryService chargeExpiryService;
 
     private static final int ONE_HOUR = 3600;
@@ -82,11 +82,12 @@ public class ChargesApiResource {
 
     @Inject
     public ChargesApiResource(ChargeDao chargeDao, GatewayAccountDao gatewayAccountDao,
-                              ChargeService chargeService, ChargeExpiryService chargeExpiryService,
-                              ConnectorConfiguration configuration) {
+                              ChargeService chargeService, SearchService searchService,
+                              ChargeExpiryService chargeExpiryService, ConnectorConfiguration configuration) {
         this.chargeDao = chargeDao;
         this.gatewayAccountDao = gatewayAccountDao;
         this.chargeService = chargeService;
+        this.searchService = searchService;
         this.chargeExpiryService = chargeExpiryService;
         this.configuration = configuration;
     }
@@ -107,33 +108,53 @@ public class ChargesApiResource {
                                    @QueryParam(EMAIL_KEY) String email,
                                    @QueryParam(REFERENCE_KEY) String reference,
                                    @QueryParam(STATE_KEY) String state,
+                                   @QueryParam("transaction_type") String transactionType,
+                                   @QueryParam("payment_states") String paymentStates,
+                                   @QueryParam("refund_states") String refundStates,
                                    @QueryParam(CARD_BRAND_KEY) String cardBrand,
                                    @QueryParam(FROM_DATE_KEY) String fromDate,
                                    @QueryParam(TO_DATE_KEY) String toDate,
                                    @QueryParam(PAGE) Long pageNumber,
                                    @QueryParam(DISPLAY_SIZE) Long displaySize,
-                                   @Context UriInfo uriInfo, @HeaderParam(FEATURES_HEADER) String features) {
+                                   @HeaderParam("features") String features,
+                                   @Context UriInfo uriInfo) {
 
         List<Pair<String, String>> inputDatePairMap = ImmutableList.of(Pair.of(FROM_DATE_KEY, fromDate), Pair.of(TO_DATE_KEY, toDate));
         List<Pair<String, Long>> nonNegativePairMap = ImmutableList.of(Pair.of(PAGE, pageNumber), Pair.of(DISPLAY_SIZE, displaySize));
-        List<String> userFeatures = Optional.ofNullable(features).map(FEATURES_STRING_SPLITTER::splitToList).orElseGet(Collections::emptyList);
+
+        boolean isFeatureTransactionsEnabled = isFeatureTransactionsWithRefundsEnabled(features);
 
 
         return ApiValidators
                 .validateQueryParams(inputDatePairMap, nonNegativePairMap) //TODO - improvement, get the entire searchparam object into the validateQueryParams
                 .map(ResponseUtil::badRequestResponse)
-                .orElseGet(() -> reduce(validateGatewayAccountReference(gatewayAccountDao, accountId)
-                        .bimap(handleError,
-                                listTransactions(new ChargeSearchParams()
-                                        .withGatewayAccountId(accountId)
-                                        .withEmailLike(email)
-                                        .withReferenceLike(reference)
-                                        .withExternalChargeState(state)
-                                        .withCardBrand(cardBrand)
-                                        .withFromDate(parseDate(fromDate))
-                                        .withToDate(parseDate(toDate))
-                                        .withDisplaySize(displaySize != null ? displaySize : configuration.getTransactionsPaginationConfig().getDisplayPageSize())
-                                        .withPage(pageNumber != null ? pageNumber : 1), uriInfo, userFeatures)))); // always the first page if its missing
+                .orElseGet(() -> {
+                    ChargeSearchParams searchParams = new ChargeSearchParams()
+                            .withGatewayAccountId(accountId)
+                            .withEmailLike(email)
+                            .withReferenceLike(reference)
+                            .withCardBrand(cardBrand)
+                            .withFromDate(parseDate(fromDate))
+                            .withToDate(parseDate(toDate))
+                            .withDisplaySize(displaySize != null ? displaySize : configuration.getTransactionsPaginationConfig().getDisplayPageSize())
+                            .withPage(pageNumber != null ? pageNumber : 1);
+
+                    if (isFeatureTransactionsEnabled) {
+                        searchParams
+                                .withTransactionType(valueFrom(transactionType))
+                                .addExternalChargeStates(paymentStates)
+                                .addExternalRefundStates(refundStates);
+                    } else {
+                        searchParams
+                                .withExternalState(state);
+                    }
+                    return reduce(validateGatewayAccountReference(gatewayAccountDao, accountId)
+                            .bimap(handleError, listCharges(searchParams, isFeatureTransactionsEnabled, uriInfo)));
+                }); // always the first page if its missing
+    }
+
+    private boolean isFeatureTransactionsWithRefundsEnabled(String features) {
+        return isNotBlank(features) && stream(features.split(",")).anyMatch("REFUNDS_IN_TX_LIST"::equals);
     }
 
     @POST
@@ -193,7 +214,7 @@ public class ChargesApiResource {
     }
 
     private Optional<List<String>> checkMissingFields(Map<String, String> inputData) {
-        List<String> missing = Arrays.stream(REQUIRED_FIELDS)
+        List<String> missing = stream(REQUIRED_FIELDS)
                 .filter(field -> !inputData.containsKey(field))
                 .collect(Collectors.toList());
 
@@ -202,40 +223,11 @@ public class ChargesApiResource {
                 : Optional.of(missing);
     }
 
-    private F<Boolean, Response> listTransactions(ChargeSearchParams searchParams, UriInfo uriInfo, List<String> userFeatures) {
-        if(userFeatures.contains(FEATURE_REFUNDS_IN_TX_LIST)){
-            return listChargesAndRefunds(searchParams, uriInfo);
+    private F<Boolean, Response> listCharges(ChargeSearchParams searchParams, boolean isFeatureTransactionsEnabled, UriInfo uriInfo) {
+        if (isFeatureTransactionsEnabled) {
+            return success -> searchService.ofType(TRANSACTION).search(searchParams, uriInfo);
         }
-
-        return listCharges(searchParams, uriInfo);
-    }
-
-    private F<Boolean, Response> listCharges(ChargeSearchParams searchParams, UriInfo uriInfo) {
-        Long totalCount = chargeDao.getTotalFor(searchParams);
-        Long size = searchParams.getDisplaySize();
-        if (totalCount > 0 && size > 0) {
-            long lastPage = (totalCount + size - 1)/ size;
-            if (searchParams.getPage() > lastPage || searchParams.getPage() < 1) {
-                return success -> notFoundResponse("the requested page not found");
-            }
-        }
-
-        List<ChargeEntity> charges = chargeDao.findAllBy(searchParams);
-        List<ChargeResponse> chargesResponse =
-                charges.stream()
-                        .map(charge -> chargeService.buildChargeResponse(uriInfo, charge)
-                        ).collect(Collectors.toList());
-
-        return success ->
-                new ChargesPaginationResponseBuilder(searchParams, uriInfo)
-                        .withChargeResponses(chargesResponse)
-                        .withTotalCount(totalCount)
-                        .buildResponse();
-    }
-
-    //this needs to hook into the new DAOs/Services
-    private F<Boolean,Response> listChargesAndRefunds(ChargeSearchParams searchParams, UriInfo uriInfo) {
-        return listCharges(searchParams, uriInfo);
+        return success -> searchService.ofType(CHARGE).search(searchParams, uriInfo);
     }
 
     private Optional<List<String>> checkInvalidSizeFields(Map<String, String> inputData) {

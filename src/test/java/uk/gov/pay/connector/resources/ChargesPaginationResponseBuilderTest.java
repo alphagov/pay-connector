@@ -6,6 +6,7 @@ import org.junit.runner.RunWith;
 import org.mockito.Mock;
 import org.mockito.runners.MockitoJUnitRunner;
 import uk.gov.pay.connector.dao.ChargeSearchParams;
+import uk.gov.pay.connector.model.api.ExternalChargeState;
 import uk.gov.pay.connector.model.domain.ChargeStatus;
 
 import javax.ws.rs.core.Response;
@@ -32,7 +33,7 @@ public class ChargesPaginationResponseBuilderTest {
         // given
         ChargeSearchParams searchParams = new ChargeSearchParams()
                 .withGatewayAccountId(1L)
-                .withInternalChargeStatuses(newArrayList(ChargeStatus.CAPTURED, ChargeStatus.AUTHORISATION_ERROR))
+                .withExternalState(ExternalChargeState.EXTERNAL_STARTED.getStatus())
                 .withDisplaySize(100L)
                 .withPage(2L);
 
@@ -51,11 +52,11 @@ public class ChargesPaginationResponseBuilderTest {
                 .assertThat("$.total", is(500))
                 .assertThat("$.count", is(0))
                 .assertThat("$.page", is(2))
-                .assertThat("$._links.next_page.href", is("http://app.com/v1/api/accounts/1/charges?page=3&display_size=100"))
-                .assertThat("$._links.prev_page.href", is("http://app.com/v1/api/accounts/1/charges?page=1&display_size=100"))
-                .assertThat("$._links.last_page.href", is("http://app.com/v1/api/accounts/1/charges?page=5&display_size=100"))
-                .assertThat("$._links.first_page.href", is("http://app.com/v1/api/accounts/1/charges?page=1&display_size=100"))
-                .assertThat("$._links.self.href", is("http://app.com/v1/api/accounts/1/charges?page=2&display_size=100"))
+                .assertThat("$._links.next_page.href", is("http://app.com/v1/api/accounts/1/charges?page=3&display_size=100&state=started"))
+                .assertThat("$._links.prev_page.href", is("http://app.com/v1/api/accounts/1/charges?page=1&display_size=100&state=started"))
+                .assertThat("$._links.last_page.href", is("http://app.com/v1/api/accounts/1/charges?page=5&display_size=100&state=started"))
+                .assertThat("$._links.first_page.href", is("http://app.com/v1/api/accounts/1/charges?page=1&display_size=100&state=started"))
+                .assertThat("$._links.self.href", is("http://app.com/v1/api/accounts/1/charges?page=2&display_size=100&state=started"))
                 .assertThat("$.results.*", hasSize(0));
     }
 }

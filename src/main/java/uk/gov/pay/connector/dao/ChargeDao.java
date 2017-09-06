@@ -89,7 +89,7 @@ public class ChargeDao extends JpaDao<ChargeEntity> {
     public List<ChargeEntity> findBeforeDateWithStatusIn(ZonedDateTime date, List<ChargeStatus> statuses) {
         ChargeSearchParams params = new ChargeSearchParams()
                 .withToDate(date)
-                .withInternalChargeStatuses(statuses);
+                .withInternalStates(statuses);
         return findAllBy(params);
     }
 
@@ -137,8 +137,8 @@ public class ChargeDao extends JpaDao<ChargeEntity> {
             predicates.add(likePredicate(cb, charge.get(REFERENCE), params.getReference()));
         if (StringUtils.isNotBlank(params.getEmail()))
             predicates.add(likePredicate(cb, charge.get(EMAIL), params.getEmail()));
-        if (params.getChargeStatuses() != null && !params.getChargeStatuses().isEmpty())
-            predicates.add(charge.get(STATUS).in(params.getChargeStatuses()));
+        if (params.getInternalStates() != null && !params.getInternalStates().isEmpty())
+            predicates.add(charge.get(STATUS).in(params.getInternalStates()));
         if (StringUtils.isNotBlank(params.getCardBrand()))
             predicates.add(charge.get(CARD_DETAILS).get("cardBrand").in(params.getCardBrand()));
         if (params.getFromDate() != null)

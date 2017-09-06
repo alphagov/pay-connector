@@ -73,6 +73,10 @@ public class DatabaseTestHelper {
         addCharge(chargeId, externalChargeId, accountId, amount, chargeStatus, returnUrl, transactionId, "Test description", reference, createdDate == null ? now() : createdDate, 1, email);
     }
 
+    public void addCharge(Long chargeId, String externalChargeId, String accountId, long amount, ChargeStatus chargeStatus, String returnUrl, String transactionId, String reference, String description, ZonedDateTime createdDate, String email) {
+        addCharge(chargeId, externalChargeId, accountId, amount, chargeStatus, returnUrl, transactionId, description, reference, createdDate == null ? now() : createdDate, 1, email);
+    }
+
     private void addCharge(
             Long chargeId,
             String externalChargeId,
