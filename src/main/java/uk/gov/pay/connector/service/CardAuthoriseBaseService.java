@@ -36,19 +36,27 @@ public abstract class CardAuthoriseBaseService<T extends AuthorisationDetails> e
     public GatewayResponse doAuthorise(String chargeId, T gatewayAuthRequest) {
         return chargeDao.findByExternalId(chargeId).map(chargeEntity -> {
             Supplier<GatewayResponse> authorisationSupplier = () -> {
+                recorder.beginSegment("pay-connector");
+                //segment.putService("component","authorisation-request");
                 ChargeEntity preOperationResponse;
                 try {
-                    preOperationResponse = preOperation(chargeEntity, gatewayAuthRequest);
-                    if (preOperationResponse.hasStatus(ChargeStatus.AUTHORISATION_ABORTED)) {
-                        throw new ConflictRuntimeException(chargeEntity.getExternalId(), "configuration mismatch");
+
+                    try {
+                        preOperationResponse = preOperation(chargeEntity, gatewayAuthRequest);
+                        if (preOperationResponse.hasStatus(ChargeStatus.AUTHORISATION_ABORTED)) {
+                            throw new ConflictRuntimeException(chargeEntity.getExternalId(), "configuration mismatch");
+                        }
+                    } catch (OptimisticLockException e) {
+                        throw new ConflictRuntimeException(chargeEntity.getExternalId());
                     }
-                } catch (OptimisticLockException e) {
-                    throw new ConflictRuntimeException(chargeEntity.getExternalId());
+
+                    GatewayResponse<BaseAuthoriseResponse> operationResponse = operation(preOperationResponse, gatewayAuthRequest);
+
+                    return postOperation(preOperationResponse, gatewayAuthRequest, operationResponse);
+
+                } finally {
+                    recorder.endSegment();
                 }
-
-                GatewayResponse<BaseAuthoriseResponse> operationResponse = operation(preOperationResponse, gatewayAuthRequest);
-
-                return postOperation(preOperationResponse, gatewayAuthRequest, operationResponse);
             };
 
             Pair<ExecutionStatus, GatewayResponse> executeResult = cardExecutorService.execute(authorisationSupplier);
