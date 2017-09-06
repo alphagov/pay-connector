@@ -42,18 +42,23 @@ public abstract class CardAuthoriseBaseService<T extends AuthorisationDetails> e
     public GatewayResponse doAuthorise(String chargeId, T gatewayAuthRequest) {
 
         Supplier authorisationSupplier = () -> {
+            recorder.beginSegment("pay-connector");
             ChargeEntity charge;
             try {
-                charge = preOperation(chargeId, gatewayAuthRequest);
-                if (charge.hasStatus(ChargeStatus.AUTHORISATION_ABORTED)) {
-                    throw new ConflictRuntimeException(chargeId, "configuration mismatch");
+                try {
+                    charge = preOperation(chargeId, gatewayAuthRequest);
+                    if (charge.hasStatus(ChargeStatus.AUTHORISATION_ABORTED)) {
+                        throw new ConflictRuntimeException(chargeId, "configuration mismatch");
+                    }
+                } catch (OptimisticLockException e) {
+                    LOG.info("OptimisticLockException in doAuthorise for charge external_id=" + chargeId);
+                    throw new ConflictRuntimeException(chargeId);
                 }
-            } catch (OptimisticLockException e) {
-                LOG.info("OptimisticLockException in doAuthorise for charge external_id=" + chargeId);
-                throw new ConflictRuntimeException(chargeId);
+                GatewayResponse<BaseAuthoriseResponse> operationResponse = operation(charge, gatewayAuthRequest);
+                return postOperation(chargeId, gatewayAuthRequest, operationResponse);
+            } finally {
+                recorder.endSegment();
             }
-             GatewayResponse<BaseAuthoriseResponse> operationResponse = operation(charge, gatewayAuthRequest);
-            return postOperation(chargeId, gatewayAuthRequest, operationResponse);
         };
 
         Pair<ExecutionStatus, GatewayResponse> executeResult = cardExecutorService.execute(authorisationSupplier);
