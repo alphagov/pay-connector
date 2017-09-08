@@ -2,11 +2,10 @@ package uk.gov.pay.connector.model.builder;
 
 import com.google.common.collect.ImmutableMap;
 import uk.gov.pay.connector.model.ChargeResponse;
-import uk.gov.pay.connector.model.api.ExternalChargeState;
+import uk.gov.pay.connector.model.api.ExternalTransactionState;
 import uk.gov.pay.connector.model.domain.PersistedCard;
 
 import java.net.URI;
-import java.time.ZonedDateTime;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
@@ -14,12 +13,12 @@ import java.util.Map;
 public abstract class AbstractChargeResponseBuilder<T extends AbstractChargeResponseBuilder<T, R>, R> {
     protected String chargeId;
     protected Long amount;
-    protected ExternalChargeState state;
+    protected ExternalTransactionState state;
     protected String cardBrand;
     protected String gatewayTransactionId;
     protected String returnUrl;
     protected String description;
-    protected ZonedDateTime createdDate;
+    protected String createdDate;
     protected List<Map<String, Object>> links = new ArrayList<>();
     protected String reference;
     protected String providerName;
@@ -41,13 +40,8 @@ public abstract class AbstractChargeResponseBuilder<T extends AbstractChargeResp
         return thisObject();
     }
 
-    public T withState(ExternalChargeState state) {
+    public T withState(ExternalTransactionState state) {
         this.state = state;
-        return thisObject();
-    }
-
-    public T withCardBrand(String cardBrand) {
-        this.cardBrand = cardBrand;
         return thisObject();
     }
 
@@ -76,7 +70,7 @@ public abstract class AbstractChargeResponseBuilder<T extends AbstractChargeResp
         return thisObject();
     }
 
-    public T withCreatedDate(ZonedDateTime createdDate) {
+    public T withCreatedDate(String createdDate) {
         this.createdDate = createdDate;
         return thisObject();
     }
@@ -90,7 +84,7 @@ public abstract class AbstractChargeResponseBuilder<T extends AbstractChargeResp
         return thisObject();
     }
 
-    public T withLink(String rel, String method, URI href, String type, Map<String,Object> params) {
+    public T withLink(String rel, String method, URI href, String type, Map<String, Object> params) {
         links.add(ImmutableMap.of(
                 "rel", rel,
                 "method", method,
@@ -117,7 +111,7 @@ public abstract class AbstractChargeResponseBuilder<T extends AbstractChargeResp
         return thisObject();
     }
 
-    public T withCardDetails(PersistedCard cardDetails){
+    public T withCardDetails(PersistedCard cardDetails) {
         this.cardDetails = cardDetails;
         return thisObject();
     }
