@@ -32,13 +32,7 @@ import static org.hamcrest.core.Is.is;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertThat;
 import static org.junit.Assert.fail;
-import static org.mockito.Mockito.any;
-import static org.mockito.Mockito.argThat;
-import static org.mockito.Mockito.mock;
-import static org.mockito.Mockito.spy;
-import static org.mockito.Mockito.verify;
-import static org.mockito.Mockito.verifyNoMoreInteractions;
-import static org.mockito.Mockito.when;
+import static org.mockito.Mockito.*;
 import static uk.gov.pay.connector.model.api.ExternalChargeRefundAvailability.EXTERNAL_AVAILABLE;
 import static uk.gov.pay.connector.model.domain.ChargeEntityFixture.aValidChargeEntity;
 import static uk.gov.pay.connector.model.domain.ChargeStatus.AUTHORISATION_SUCCESS;
@@ -138,7 +132,6 @@ public class ChargeRefundServiceTest {
         verify(spiedRefundEntity).setReference(refundEntity.getExternalId());
         verifyNoMoreInteractions(mockChargeDao, mockRefundDao);
     }
-
 
     @Test
     public void shouldRefundSuccessfully_forSmartpay() {
@@ -287,7 +280,7 @@ public class ChargeRefundServiceTest {
         verify(mockChargeDao).findByExternalIdAndGatewayAccount(externalChargeId, accountId);
         verify(mockRefundDao).persist(argThat(aRefundEntity(amount, charge)));
         verify(mockProvider).refund(argThat(aRefundRequestWith(charge, amount)));
-        verify(mockRefundDao).findById(any(Long.class));
+        verify(mockRefundDao, times(2)).findById(any(Long.class));
         verify(spiedRefundEntity).setStatus(RefundStatus.REFUNDED);
         verifyNoMoreInteractions(mockChargeDao, mockRefundDao);
     }

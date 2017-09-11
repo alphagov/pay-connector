@@ -66,11 +66,27 @@ public class ChargeRefundService {
     }
 
     public Optional<Response> doRefund(Long accountId, String chargeId, RefundRequest refundRequest) {
+
         return Optional.ofNullable(transactionFlowProvider.get()
                 .executeNext(prepareForRefund(providers, accountId, chargeId, refundRequest))
                 .executeNext(doGatewayRefund(providers))
-                .executeNext(finishRefund())
+                .executeNext(setAsSubmitted())
+                .executeNext(setSandboxAsRefunded())
                 .complete().get(Response.class));
+    }
+
+    private TransactionalOperation<TransactionContext, Response> setSandboxAsRefunded() {
+        return context -> {
+            Response response = context.get(Response.class);
+            RefundEntity refund = response.getRefundEntity();
+            if (refund.getChargeEntity().getPaymentGatewayName() == PaymentGatewayName.SANDBOX
+                    && refund.hasStatus(RefundStatus.REFUND_SUBMITTED)) {
+                RefundEntity refundEntity = refundDao.findById(refund.getId()).get();
+                refundEntity.setStatus(RefundStatus.REFUNDED);
+                response = new Response(response.getRefundGatewayResponse(), refundEntity);
+            }
+            return response;
+        };
     }
 
     private PreTransactionalOperation<TransactionContext, RefundEntity> prepareForRefund(PaymentProviders providers, Long accountId, String chargeId, RefundRequest refundRequest) {
@@ -111,14 +127,14 @@ public class ChargeRefundService {
         };
     }
 
-    private TransactionalOperation<TransactionContext, Response> finishRefund() {
+    private TransactionalOperation<TransactionContext, Response> setAsSubmitted() {
         return context -> {
             RefundEntity refundEntity = refundDao.findById(context.get(RefundEntity.class).getId()).get();
 
             GatewayResponse<BaseRefundResponse> gatewayResponse = context.get(GatewayResponse.class);
             ChargeEntity chargeEntity = refundEntity.getChargeEntity();
 
-            RefundStatus status = determineRefundStatus(gatewayResponse, chargeEntity);
+            RefundStatus status = gatewayResponse.isSuccessful() ? RefundStatus.REFUND_SUBMITTED : RefundStatus.REFUND_ERROR;
             String reference = getRefundReference(refundEntity, gatewayResponse);
 
             logger.info("Card refund response received -  transaction_id={}, charge_id={}, charge_external_id={}, refund_id={}, refund_external_id={}, refund_reference={}, refund_status={}, refund_amount={}",
@@ -198,21 +214,6 @@ public class ChargeRefundService {
          * no refund has not gone through and no reference returned(or needed) to be stored.
          */
         return "";
-    }
-
-    private RefundStatus determineRefundStatus(GatewayResponse<BaseRefundResponse> gatewayResponse, ChargeEntity chargeEntity) {
-        if (gatewayResponse.isSuccessful()) {
-            return refundFinishSuccessStatusOf(chargeEntity.getPaymentGatewayName());
-        }
-        return RefundStatus.REFUND_ERROR;
-    }
-
-    // TODO: this will be removed as part of PP-1063
-    private RefundStatus refundFinishSuccessStatusOf(PaymentGatewayName paymentGatewayName) {
-        if (paymentGatewayName == PaymentGatewayName.SANDBOX) {
-            return RefundStatus.REFUNDED;
-        }
-        return RefundStatus.REFUND_SUBMITTED;
     }
 
     public PaymentProvider<BaseRefundResponse, ?> getPaymentProviderFor(PaymentProviders providers, ChargeEntity chargeEntity) {
