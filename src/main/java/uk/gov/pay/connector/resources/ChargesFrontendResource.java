@@ -11,7 +11,6 @@ import uk.gov.pay.connector.model.ChargeResponse;
 import uk.gov.pay.connector.model.builder.PatchRequestBuilder;
 import uk.gov.pay.connector.model.domain.*;
 import uk.gov.pay.connector.service.ChargeService;
-import uk.gov.pay.connector.util.DateTimeUtils;
 
 import javax.inject.Inject;
 import javax.ws.rs.*;
@@ -19,6 +18,7 @@ import javax.ws.rs.core.Context;
 import javax.ws.rs.core.Response;
 import javax.ws.rs.core.UriInfo;
 import java.net.URI;
+import java.time.LocalDate;
 import java.time.ZonedDateTime;
 import java.util.Collections;
 import java.util.List;
@@ -172,7 +172,7 @@ public class ChargesFrontendResource {
                 .withAmount(charge.getAmount())
                 .withDescription(charge.getDescription())
                 .withGatewayTransactionId(charge.getGatewayTransactionId())
-                .withCreatedDate(DateTimeUtils.toUTCDateTimeString(charge.getCreatedDate()))
+                .withCreatedDate(charge.getCreatedDate())
                 .withReturnUrl(charge.getReturnUrl())
                 .withEmail(charge.getEmail())
                 .withChargeCardDetails(persistedCard)

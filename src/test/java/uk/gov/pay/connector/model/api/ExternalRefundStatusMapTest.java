@@ -18,16 +18,4 @@ public class ExternalRefundStatusMapTest {
         assertThat(ExternalRefundStatus.EXTERNAL_SUCCESS.getStatus(), is("success"));
         assertThat(ExternalRefundStatus.EXTERNAL_ERROR.getStatus(), is("error"));
     }
-
-    @Test(expected = IllegalArgumentException.class)
-    public void shouldThrowExceptionForUnrecognisedStatusLabelValue() {
-
-        ExternalRefundStatus.fromPublicStatusLabel("whatever");
-    }
-
-    @Test(expected = IllegalArgumentException.class)
-    public void shouldThrowExceptionForEmptyStatusLabelValue() {
-
-        ExternalRefundStatus.fromPublicStatusLabel("");
-    }
 }

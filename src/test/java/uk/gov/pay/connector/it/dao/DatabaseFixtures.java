@@ -197,7 +197,7 @@ public class DatabaseFixtures {
         private String expiryDate = "02/17";
         private TestAddress billingAddress = new TestAddress();
         private Long chargeId;
-        private String cardBrand = "visa";
+        private String cardBrand = "VISA";
 
         public TestCardDetails withLastDigitsOfCardNumber(String lastDigitsCardNumber) {
             this.lastDigitsCardNumber = lastDigitsCardNumber;

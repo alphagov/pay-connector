@@ -22,7 +22,6 @@ import java.time.ZonedDateTime;
                         @ColumnResult(name = "gateway_transaction_id", type = String.class),
                         @ColumnResult(name = "date_created", type = Timestamp.class),
                         @ColumnResult(name = "card_brand", type = String.class),
-                        @ColumnResult(name = "card_brand_label", type = String.class),
                         @ColumnResult(name = "cardholder_name", type = String.class),
                         @ColumnResult(name = "expiry_date", type = String.class),
                         @ColumnResult(name = "last_digits_card_number", type = String.class),
@@ -51,7 +50,6 @@ public class Transaction {
     @Id
     private String transactionType;
     private String cardBrand;
-    private String cardBrandLabel;
     private String cardHolderName;
     private String expiryDate;
     private String lastDigitsCardNumber;
@@ -77,7 +75,6 @@ public class Transaction {
                        String gatewayTransactionId,
                        Timestamp createdDate,
                        String cardBrand,
-                       String cardBrandLabel,
                        String cardHolderName,
                        String expiryDate,
                        String lastDigitsCardNumber,
@@ -99,7 +96,6 @@ public class Transaction {
         this.createdDate = new UTCDateTimeConverter().convertToEntityAttribute(createdDate);
         this.transactionType = transactionType;
         this.cardBrand = cardBrand;
-        this.cardBrandLabel = cardBrandLabel;
         this.cardHolderName = cardHolderName;
         this.expiryDate = expiryDate;
         this.lastDigitsCardNumber = lastDigitsCardNumber;
@@ -154,10 +150,6 @@ public class Transaction {
 
     public String getCardBrand() {
         return cardBrand;
-    }
-
-    public String getCardBrandLabel() {
-        return cardBrandLabel;
     }
 
     public String getCardHolderName() {

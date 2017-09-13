@@ -2,7 +2,6 @@ package uk.gov.pay.connector.model.domain;
 
 import org.apache.commons.lang3.StringUtils;
 import uk.gov.pay.connector.model.api.ExternalChargeState;
-import uk.gov.pay.connector.model.api.ExternalTransactionState;
 
 import java.util.List;
 import java.util.stream.Collectors;

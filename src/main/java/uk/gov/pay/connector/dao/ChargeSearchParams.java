@@ -1,21 +1,23 @@
 package uk.gov.pay.connector.dao;
 
-import uk.gov.pay.connector.model.TransactionType;
 import uk.gov.pay.connector.model.api.ExternalChargeState;
 import uk.gov.pay.connector.model.api.ExternalRefundStatus;
 import uk.gov.pay.connector.model.domain.ChargeStatus;
 import uk.gov.pay.connector.model.domain.RefundStatus;
-import uk.gov.pay.connector.resources.CommaDelimitedSetParameter;
 
 import java.time.ZonedDateTime;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.HashSet;
+import java.util.List;
+import java.util.Set;
 import java.util.stream.Collectors;
 
-import static org.apache.commons.lang3.StringUtils.*;
+import static org.apache.commons.lang3.StringUtils.isBlank;
+import static org.apache.commons.lang3.StringUtils.isNotBlank;
 
 public class ChargeSearchParams {
 
-    private TransactionType transactionType;
+    private String transactionType;
     private Long gatewayAccountId;
     private String reference;
     private String email;
@@ -24,7 +26,6 @@ public class ChargeSearchParams {
     private Long page;
     private Long displaySize;
     private String cardBrand;
-    private Set<ChargeStatus> internalStates = new HashSet<>();
     private Set<ChargeStatus> internalChargeStatuses = new HashSet<>();
     private Set<RefundStatus> internalRefundStatuses = new HashSet<>();
 
@@ -32,7 +33,7 @@ public class ChargeSearchParams {
         return gatewayAccountId;
     }
 
-    public ChargeSearchParams withTransactionType(TransactionType transactionType) {
+    public ChargeSearchParams withTransactionType(String transactionType) {
         this.transactionType = transactionType;
         return this;
     }
@@ -50,20 +51,12 @@ public class ChargeSearchParams {
     public Set<String> getExternalChargeStates() {
         return this.internalChargeStatuses.stream()
                 .map(s -> s.toExternal().getStatus())
-                .sorted()
-                .collect(Collectors.toSet());
-    }
-
-    public Set<String> getExternalStates() {
-        return this.internalStates.stream()
-                .map(s -> s.toExternal().getStatus())
                 .collect(Collectors.toSet());
     }
 
     public Set<String> getExternalRefundStates() {
         return this.internalRefundStatuses.stream()
                 .map(s -> s.toExternal().getStatus())
-                .sorted()
                 .collect(Collectors.toSet());
     }
 
@@ -71,56 +64,59 @@ public class ChargeSearchParams {
         return this.internalChargeStatuses;
     }
 
-    public Set<ChargeStatus> getInternalStates() {
-        return this.internalStates;
-    }
-
     public Set<RefundStatus> getInternalRefundStatuses() {
         return this.internalRefundStatuses;
     }
 
-    public ChargeSearchParams withExternalState(String state) {
+    public ChargeSearchParams withExternalChargeStates(Set<String> state) {
+        state.stream().forEach(this::withExternalChargeState);
+        return this;
+    }
+
+    public ChargeSearchParams withExternalChargeState(String state) {
         if (state != null) {
-            this.internalStates.addAll(
+            this.internalChargeStatuses.addAll(
                     parseChargeState(state).stream()
                             .map(ChargeStatus::fromExternal)
-                            .flatMap(Collection::stream)
+                            .flatMap(l -> l.stream())
                             .collect(Collectors.toSet()));
         }
         return this;
     }
 
-    public ChargeSearchParams addExternalChargeStates(CommaDelimitedSetParameter states) {
-        if (states != null) {
-            this.internalChargeStatuses.addAll(states.stream()
-                    .map(this::parseChargeState)
-                    .map(externalChargeStates -> externalChargeStates.stream().map(ChargeStatus::fromExternal)
-                            .flatMap(Collection::stream)
-                            .collect(Collectors.toSet()))
-                    .flatMap(Collection::stream)
-                    .collect(Collectors.toSet()));
+    public ChargeSearchParams withInternalChargeStatuses(List<ChargeStatus> statuses) {
+        this.internalChargeStatuses.addAll(statuses);
+        return this;
+    }
+
+    public ChargeSearchParams withExternalRefundStates(Set<String> state) {
+        state.stream().forEach(this::withExternalRefundState);
+        return this;
+    }
+
+    public ChargeSearchParams withExternalRefundState(String state) {
+        if (state != null) {
+            this.internalRefundStatuses.addAll(
+                    parseRefundState(state).stream()
+                            .map(RefundStatus::fromExternal)
+                            .flatMap(l -> l.stream())
+                            .collect(Collectors.toSet()));
         }
         return this;
     }
 
-    public ChargeSearchParams addExternalRefundStates(CommaDelimitedSetParameter states) {
-        if (states != null) {
-            this.internalRefundStatuses.addAll(states.stream()
-                    .map(ExternalRefundStatus::fromPublicStatusLabel)
-                    .flatMap(externalRefundStatus -> RefundStatus.fromExternal(externalRefundStatus).stream())
-                    .collect(Collectors.toSet()));
-        }
-        return this;
-    }
-
-    public ChargeSearchParams withInternalStates(List<ChargeStatus> statuses) {
-        this.internalStates.addAll(statuses);
+    public ChargeSearchParams withInternalRefundStatuses(List<RefundStatus> statuses) {
+        this.internalRefundStatuses.addAll(statuses);
         return this;
     }
 
     public ChargeSearchParams withCardBrand(String cardBrand) {
         this.cardBrand = cardBrand;
         return this;
+    }
+
+    public String getTransactionType() {
+        return transactionType;
     }
 
     public String getReference() {
@@ -182,54 +178,47 @@ public class ChargeSearchParams {
 
     public String buildQueryParams() {
         StringBuilder builder = new StringBuilder();
-        if (transactionType != null) {
-            builder.append("&transaction_type=").append(transactionType.getValue());
+        if (isNotBlank(transactionType)) {
+            builder.append("&transaction_type=" + transactionType);
         }
         if (isNotBlank(reference))
-            builder.append("&reference=").append(reference);
+            builder.append("&reference=" + reference);
         if (email != null)
-            builder.append("&email=").append(email);
+            builder.append("&email=" + email);
         if (fromDate != null)
-            builder.append("&from_date=").append(fromDate);
+            builder.append("&from_date=" + fromDate);
         if (toDate != null)
-            builder.append("&to_date=").append(toDate);
+            builder.append("&to_date=" + toDate);
         if (page != null)
-            builder.append("&page=").append(page);
+            builder.append("&page=" + page);
         if (displaySize != null)
-            builder.append("&display_size=").append(displaySize);
+            builder.append("&display_size=" + displaySize);
 
-        getExternalStates().stream()
+        getExternalChargeStates().stream()
                 .findFirst()
-                .ifPresent(state -> builder.append("&state=").append(state));
+                .ifPresent(state -> builder.append("&charge_state=" + state));
 
-        String paymentStates = getExternalChargeStates().stream()
-                .collect(Collectors.joining(","));
-
-        String refundStates = getExternalRefundStates().stream()
-                .collect(Collectors.joining(","));
-
-        if (isNotEmpty(paymentStates)) {
-            builder.append("&payment_states=").append(paymentStates);
-        }
-
-        if (isNotEmpty(refundStates)) {
-            builder.append("&refund_states=").append(refundStates);
-        }
+        getExternalRefundStates().stream()
+                .findFirst()
+                .ifPresent(state -> builder.append("&refund_state=" + state));
 
         if (isNotBlank(cardBrand)) {
-            builder.append("&card_brand=").append(cardBrand);
+            builder.append("&card_brand=" + cardBrand);
         }
         return builder.toString().replaceFirst("&", "");
     }
 
     private List<ExternalChargeState> parseChargeState(String state) {
         if (isBlank(state)) {
-            return new ArrayList<>();
+            new ArrayList<>();
         }
         return ExternalChargeState.fromStatusString(state);
     }
 
-    public TransactionType getTransactionType() {
-        return transactionType;
+    private List<ExternalRefundStatus> parseRefundState(String state) {
+        if (isBlank(state)) {
+            new ArrayList<>();
+        }
+        return ExternalRefundStatus.fromStatusString(state);
     }
 }
