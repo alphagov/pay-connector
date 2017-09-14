@@ -1,14 +1,27 @@
 package uk.gov.pay.connector.it.resources.worldpay;
 
+import com.google.common.collect.ImmutableMap;
+import com.jayway.restassured.response.ValidatableResponse;
+import org.apache.commons.lang3.tuple.Pair;
 import org.hamcrest.Matchers;
 import org.junit.Test;
 import uk.gov.pay.connector.it.base.ChargingITestBase;
 
+import java.util.ArrayList;
+import java.util.List;
+import java.util.Map;
+import java.util.concurrent.*;
+
+import static com.google.common.collect.Lists.newArrayList;
+import static com.google.common.collect.Maps.newHashMap;
 import static com.jayway.restassured.http.ContentType.JSON;
 import static javax.ws.rs.core.Response.Status.BAD_REQUEST;
+import static org.apache.commons.lang3.RandomStringUtils.randomAlphabetic;
 import static org.hamcrest.Matchers.is;
+import static org.junit.Assert.assertThat;
 import static uk.gov.pay.connector.model.api.ExternalChargeState.EXTERNAL_SUCCESS;
 import static uk.gov.pay.connector.model.domain.ChargeStatus.*;
+import static uk.gov.pay.connector.util.JsonEncoder.toJson;
 
 public class WorldpayCardResourceITest extends ChargingITestBase {
 
@@ -107,4 +120,97 @@ public class WorldpayCardResourceITest extends ChargingITestBase {
         assertFrontendChargeStatusIs(chargeId, AUTHORISATION_REJECTED.getValue());
     }
 
+    @Test
+    public void shouldAuthoriseChargesConcurrentlyGettingExpectedChargeStatus() throws Exception {
+
+        List<String> charges = newArrayList();
+        for (int i = 0; i < 500; i++) {
+            String externalId = createNewChargeWithNoTransactionId(ENTERING_CARD_DETAILS);
+            System.out.println("created charge with externalId = " + externalId);
+            charges.add(externalId);
+        }
+
+        ExecutorService executor = Executors.newFixedThreadPool(10);
+
+        List<Future<Pair<String, ValidatableResponse>>> futuresResponsesForAuth = new ArrayList<>();
+        //List<Future<Pair<String, ValidatableResponse>>> futuresResponsesForGet = new ArrayList<>();
+
+        worldpay.mockAuthorisationSuccess();
+
+        for (String charge : charges) {
+            futuresResponsesForAuth.add(executor.submit(anPatchAndAuthorisationCallableFor(charge)));
+            //futuresResponsesForGet.add(executor.submit(getChargeCallableFor(charge)));
+        }
+
+        Map<String, Integer> results = newHashMap();
+
+        for (Future<Pair<String, ValidatableResponse>> futureAuth : futuresResponsesForAuth) {
+            Pair<String, ValidatableResponse> pair = futureAuth.get();
+            int statusCode = pair.getRight().extract().statusCode();
+
+            results.put(pair.getLeft(), statusCode);
+
+            if(statusCode != 200) {
+                System.out.println("Madarfakaaaa = " + statusCode);
+            }
+            /*System.out.println("-------------------------------------------\n");
+            System.out.println("Charge     = " + pair.getLeft());
+            System.out.println("statusCode = " + statusCode);
+            System.out.println("-------------------------------------------\n");
+*/
+            //assertThat(statusCode, is(200));
+            //assertFrontendChargeStatusIs(pair.getLeft(), AUTHORISATION_SUCCESS.toString());
+        }
+
+       /* for (Future<Pair<String, ValidatableResponse>> futureGet : futuresResponsesForGet) {
+            int statusCode = futureGet.get().getRight().extract().statusCode();
+            assertThat(statusCode, is(200));
+        }*/
+
+
+        print(results);
+    }
+
+    private void print(Map<String, Integer> results) {
+        System.out.println("-----------------------------------------------------------------------");
+        System.out.println("results.size() = " + results.size());
+        for (Map.Entry<String, Integer> stringIntegerEntry : results.entrySet()) {
+            System.out.println(stringIntegerEntry.getKey() +" : "+ stringIntegerEntry.getValue());
+        }
+    }
+
+    private Callable<Pair<String, ValidatableResponse>> anPatchAndAuthorisationCallableFor(String externalChargeId) {
+        return () -> {
+
+            ValidatableResponse responseToPatch = connectorRestApi
+                    .withChargeId(externalChargeId)
+                    .patchCharge(createPatch("replace", "email", randomAlphabetic(10) + "@example.com"));
+            System.out.println("responseToPatch.extract().statusCode() = " + responseToPatch.extract().statusCode());
+
+            ValidatableResponse response = givenSetup()
+                    .body(validAuthorisationDetails)
+                    .post(authoriseChargeUrlFor(externalChargeId))
+                    .then();
+
+            return Pair.of(externalChargeId, response);
+        };
+    }
+
+    private Callable<Pair<String, ValidatableResponse>> pathChargeCallableFor(String externalChargeId) {
+        return () -> {
+            String email = randomAlphabetic(10) + "@example.com";
+            ValidatableResponse response = connectorRestApi
+                    .withChargeId(externalChargeId)
+                    .patchCharge(createPatch("replace", "email", email));
+            return Pair.of(externalChargeId, response);
+        };
+    }
+
+    private static String createPatch(String op, String path, String value) {
+        return toJson(ImmutableMap.of("op", op, "path", path, "value", value));
+    }
+
+    private Callable<Pair<String, ValidatableResponse>> getChargeCallableFor(String externalChargeId) {
+        return () -> Pair.of(externalChargeId, getCharge(externalChargeId));
+    }
 }

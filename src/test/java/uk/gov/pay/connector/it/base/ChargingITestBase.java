@@ -40,7 +40,7 @@ import static uk.gov.pay.connector.util.JsonEncoder.toJson;
 import static uk.gov.pay.connector.util.TransactionId.randomId;
 
 public class ChargingITestBase extends ChargingITestCommon {
-    private RestAssuredClient connectorRestApi;
+    protected RestAssuredClient connectorRestApi;
 
     private int port = PortFactory.findFreePort();
 
