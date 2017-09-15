@@ -479,6 +479,7 @@ public class DatabaseFixtures {
         RefundStatus status = CREATED;
         ZonedDateTime createdDate = ZonedDateTime.now(ZoneId.of("UTC"));
         TestCharge testCharge;
+        String submittedBy;
 
         public TestRefund withTestCharge(TestCharge charge) {
             this.testCharge = charge;
@@ -497,6 +498,11 @@ public class DatabaseFixtures {
 
         public TestRefund withReference(String reference) {
             this.reference = reference;
+            return this;
+        }
+
+        public TestRefund withSubmittedBy(String submittedBy) {
+            this.submittedBy = submittedBy;
             return this;
         }
 

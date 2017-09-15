@@ -104,6 +104,7 @@ public class ChargeEventsResourceITest {
                 .withReference(testReferenceRefund1)
                 .withType(RefundStatus.REFUNDED)
                 .withCreatedDate(refundTest1RefundedDate)
+                .withSubmittedBy("ABC123")
                 .insert();
 
         ZonedDateTime refundTest2RefundedDate = createdDate.plusSeconds(12);
@@ -133,10 +134,10 @@ public class ChargeEventsResourceITest {
                 .body("events[0]", new TransactionEventMatcher("PAYMENT", withState("created", "false"), "100", createdTestChargeEvent.getUpdated()))
                 .body("events[1]", new TransactionEventMatcher("PAYMENT", withState("started", "false"), "100", enteringCardDetailsTestChargeEvent.getUpdated()))
                 .body("events[2]", new TransactionEventMatcher("PAYMENT", withState("success", "true"), "100", captureApprovedTestChargeEvent.getUpdated()))
-                .body("events[3]", new TransactionEventMatcher("REFUND", withState("submitted", "false"), "10", historyRefund1SubmittedStartDate, testReferenceRefund1))
-                .body("events[4]", new TransactionEventMatcher("REFUND", withState("success", "true"), "10", refundTest1RefundedDate, testReferenceRefund1))
-                .body("events[5]", new TransactionEventMatcher("REFUND", withState("submitted", "false"), "90", historyRefund2SubmittedStartDate, testReferenceRefund2))
-                .body("events[6]", new TransactionEventMatcher("REFUND", withState("success", "true"), "90", refundTest2RefundedDate, testReferenceRefund2));
+                .body("events[3]", new TransactionEventMatcher("REFUND", withState("submitted", "false"), "10", historyRefund1SubmittedStartDate, testReferenceRefund1, null))
+                .body("events[4]", new TransactionEventMatcher("REFUND", withState("success", "true"), "10", refundTest1RefundedDate, testReferenceRefund1, null))
+                .body("events[5]", new TransactionEventMatcher("REFUND", withState("submitted", "false"), "90", historyRefund2SubmittedStartDate, testReferenceRefund2, null))
+                .body("events[6]", new TransactionEventMatcher("REFUND", withState("success", "true"), "90", refundTest2RefundedDate, testReferenceRefund2, null));
     }
 
     @Test
