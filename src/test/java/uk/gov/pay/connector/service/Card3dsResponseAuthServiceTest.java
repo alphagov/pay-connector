@@ -40,6 +40,7 @@ import static uk.gov.pay.connector.service.CardExecutorService.ExecutionStatus.I
 
 @RunWith(MockitoJUnitRunner.class)
 public class Card3dsResponseAuthServiceTest extends CardServiceTest {
+
     private static final String GENERATED_TRANSACTION_ID = "generated-transaction-id";
 
     private ChargeEntity charge = createNewChargeWith("worldpay", 1L, AUTHORISATION_3DS_REQUIRED, GENERATED_TRANSACTION_ID);

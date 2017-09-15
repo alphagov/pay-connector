@@ -3,7 +3,6 @@ package uk.gov.pay.connector.service;
 import io.dropwizard.setup.Environment;
 import org.apache.commons.lang3.tuple.Pair;
 import uk.gov.pay.connector.dao.ChargeDao;
-import uk.gov.pay.connector.exception.ChargeNotFoundRuntimeException;
 import uk.gov.pay.connector.exception.ConflictRuntimeException;
 import uk.gov.pay.connector.exception.GenericGatewayRuntimeException;
 import uk.gov.pay.connector.exception.OperationAlreadyInProgressRuntimeException;
@@ -28,37 +27,34 @@ public abstract class CardAuthoriseBaseService<T extends AuthorisationDetails> e
     }
 
     public GatewayResponse doAuthorise(String chargeId, T gatewayAuthRequest) {
-        return chargeDao.findByExternalId(chargeId).map(chargeEntity -> {
-            Supplier<GatewayResponse> authorisationSupplier = () -> {
-                ChargeEntity preOperationResponse;
-                try {
-                    preOperationResponse = preOperation(chargeEntity, gatewayAuthRequest);
-                    if (preOperationResponse.hasStatus(ChargeStatus.AUTHORISATION_ABORTED)) {
-                        throw new ConflictRuntimeException(chargeEntity.getExternalId(), "configuration mismatch");
-                    }
-                } catch (OptimisticLockException e) {
-                    throw new ConflictRuntimeException(chargeEntity.getExternalId());
+
+        Supplier authorisationSupplier = () -> {
+            ChargeEntity preOperationResponse;
+            try {
+                preOperationResponse = preOperation(chargeId, gatewayAuthRequest);
+                if (preOperationResponse.hasStatus(ChargeStatus.AUTHORISATION_ABORTED)) {
+                    throw new ConflictRuntimeException(chargeId, "configuration mismatch");
                 }
-
-                GatewayResponse<BaseAuthoriseResponse> operationResponse = operation(preOperationResponse, gatewayAuthRequest);
-
-                return postOperation(preOperationResponse, gatewayAuthRequest, operationResponse);
-            };
-
-            Pair<ExecutionStatus, GatewayResponse> executeResult = cardExecutorService.execute(authorisationSupplier);
-
-            switch (executeResult.getLeft()) {
-                case COMPLETED:
-                    return executeResult.getRight();
-                case IN_PROGRESS:
-                    throw new OperationAlreadyInProgressRuntimeException(OperationType.AUTHORISATION.getValue(), chargeId);
-                default:
-                    throw new GenericGatewayRuntimeException("Exception occurred while doing authorisation");
+            } catch (OptimisticLockException e) {
+                throw new ConflictRuntimeException(chargeId);
             }
-        }).orElseThrow(() -> new ChargeNotFoundRuntimeException(chargeId));
+             GatewayResponse<BaseAuthoriseResponse> operationResponse = operation(preOperationResponse, gatewayAuthRequest);
+            return postOperation(preOperationResponse, gatewayAuthRequest, operationResponse);
+        };
+
+        Pair<ExecutionStatus, GatewayResponse> executeResult = cardExecutorService.execute(authorisationSupplier);
+
+        switch (executeResult.getLeft()) {
+            case COMPLETED:
+                return executeResult.getRight();
+            case IN_PROGRESS:
+                throw new OperationAlreadyInProgressRuntimeException(OperationType.AUTHORISATION.getValue(), chargeId);
+            default:
+                throw new GenericGatewayRuntimeException("Exception occurred while doing authorisation");
+        }
     }
 
-    protected abstract ChargeEntity preOperation(ChargeEntity chargeEntity, T gatewayAuthRequest);
+    protected abstract ChargeEntity preOperation(String chargeId, T gatewayAuthRequest);
 
     protected abstract GatewayResponse postOperation(ChargeEntity preOperationResponse, T gatewayAuthRequest, GatewayResponse<BaseAuthoriseResponse> operationResponse);
 

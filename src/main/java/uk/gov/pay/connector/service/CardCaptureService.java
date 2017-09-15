@@ -47,6 +47,8 @@ public class CardCaptureService extends CardService implements TransactionalGate
     @Transactional
     @Override
     public ChargeEntity preOperation(ChargeEntity chargeEntity) {
+        //TODO PP-2626 As part of refactoring work. Merging operation is not done inside preOperation anymore. This will be (if possible) removed.
+        chargeDao.merge(chargeEntity);
         return preOperation(chargeEntity, CardService.OperationType.CAPTURE, legalStatuses, ChargeStatus.CAPTURE_READY);
     }
 

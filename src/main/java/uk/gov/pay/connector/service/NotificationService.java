@@ -1,22 +1,13 @@
 package uk.gov.pay.connector.service;
 
-import com.google.inject.persist.Transactional;
 import fj.data.Either;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import uk.gov.pay.connector.dao.ChargeDao;
 import uk.gov.pay.connector.dao.RefundDao;
 import uk.gov.pay.connector.exception.InvalidStateTransitionException;
-import uk.gov.pay.connector.model.EvaluatedChargeStatusNotification;
-import uk.gov.pay.connector.model.EvaluatedNotification;
-import uk.gov.pay.connector.model.EvaluatedRefundStatusNotification;
-import uk.gov.pay.connector.model.Notification;
-import uk.gov.pay.connector.model.Notifications;
-import uk.gov.pay.connector.model.domain.ChargeEntity;
-import uk.gov.pay.connector.model.domain.ChargeStatus;
-import uk.gov.pay.connector.model.domain.GatewayAccountEntity;
-import uk.gov.pay.connector.model.domain.RefundEntity;
-import uk.gov.pay.connector.model.domain.RefundStatus;
+import uk.gov.pay.connector.model.*;
+import uk.gov.pay.connector.model.domain.*;
 import uk.gov.pay.connector.util.DnsUtils;
 
 import javax.inject.Inject;
@@ -43,7 +34,6 @@ public class NotificationService {
         this.dnsUtils = dnsUtils;
     }
 
-    @Transactional
     public boolean handleNotificationFor(String ipAddress, PaymentGatewayName paymentGatewayName, String payload) {
         PaymentProvider paymentProvider = paymentProviders.byName(paymentGatewayName);
         Handler handler = new Handler(paymentProvider);
@@ -145,21 +135,21 @@ public class NotificationService {
             }
 
             return optionalChargeEntity.map(charge -> {
-                        InterpretedStatus status = paymentProvider.getStatusMapper().from(notification.getStatus(), ChargeStatus.fromString(charge.getStatus()));
-                        switch (status.getType()) {
-                            case CHARGE_STATUS:
-                                return new EvaluatedChargeStatusNotification<>(notification, status.getChargeStatus());
-                            case REFUND_STATUS:
-                                return new EvaluatedRefundStatusNotification<>(notification, status.getRefundStatus());
-                            case IGNORED:
-                                logger.info("{} notification {} ignored", paymentProvider.getPaymentGatewayName(), notification);
-                                return null;
-                            case UNKNOWN:
-                            default:
-                                logger.error("{} notification {} unknown", paymentProvider.getPaymentGatewayName(), notification);
-                                return null;
-                        }
-                    });
+                InterpretedStatus status = paymentProvider.getStatusMapper().from(notification.getStatus(), ChargeStatus.fromString(charge.getStatus()));
+                switch (status.getType()) {
+                    case CHARGE_STATUS:
+                        return new EvaluatedChargeStatusNotification<>(notification, status.getChargeStatus());
+                    case REFUND_STATUS:
+                        return new EvaluatedRefundStatusNotification<>(notification, status.getRefundStatus());
+                    case IGNORED:
+                        logger.info("{} notification {} ignored", paymentProvider.getPaymentGatewayName(), notification);
+                        return null;
+                    case UNKNOWN:
+                    default:
+                        logger.error("{} notification {} unknown", paymentProvider.getPaymentGatewayName(), notification);
+                        return null;
+                }
+            });
         }
 
         private <T> void update(EvaluatedNotification<T> notification) {
@@ -190,7 +180,7 @@ public class NotificationService {
 
             ChargeEntity chargeEntity = optionalChargeEntity.get();
             String oldStatus = chargeEntity.getStatus();
-            ChargeStatus newStatus  = notification.getChargeStatus();
+            ChargeStatus newStatus = notification.getChargeStatus();
 
             try {
                 chargeEntity.setStatus(newStatus);

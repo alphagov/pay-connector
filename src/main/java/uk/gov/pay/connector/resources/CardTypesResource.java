@@ -28,7 +28,6 @@ public class CardTypesResource {
     @GET
     @Path(CARD_TYPES_API_PATH)
     @Produces(APPLICATION_JSON)
-    @Transactional
     public Response getCardTypes() {
         return successResponseWithEntity(ImmutableMap.of(CARD_TYPES_FIELD_NAME, cardTypeDao.findAll()));
     }

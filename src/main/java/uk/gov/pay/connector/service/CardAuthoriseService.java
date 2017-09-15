@@ -6,14 +6,9 @@ import io.dropwizard.setup.Environment;
 import org.apache.commons.lang3.StringUtils;
 import uk.gov.pay.connector.dao.CardTypeDao;
 import uk.gov.pay.connector.dao.ChargeDao;
+import uk.gov.pay.connector.exception.ChargeNotFoundRuntimeException;
 import uk.gov.pay.connector.model.GatewayError;
-import uk.gov.pay.connector.model.domain.AddressEntity;
-import uk.gov.pay.connector.model.domain.AuthCardDetails;
-import uk.gov.pay.connector.model.domain.CardDetailsEntity;
-import uk.gov.pay.connector.model.domain.CardTypeEntity;
-import uk.gov.pay.connector.model.domain.ChargeEntity;
-import uk.gov.pay.connector.model.domain.ChargeStatus;
-import uk.gov.pay.connector.model.domain.GatewayAccountEntity;
+import uk.gov.pay.connector.model.domain.*;
 import uk.gov.pay.connector.model.gateway.AuthorisationGatewayRequest;
 import uk.gov.pay.connector.model.gateway.GatewayResponse;
 
@@ -22,11 +17,7 @@ import java.util.List;
 import java.util.Optional;
 import java.util.stream.Collectors;
 
-import static uk.gov.pay.connector.model.domain.ChargeStatus.AUTHORISATION_ERROR;
-import static uk.gov.pay.connector.model.domain.ChargeStatus.AUTHORISATION_READY;
-import static uk.gov.pay.connector.model.domain.ChargeStatus.AUTHORISATION_TIMEOUT;
-import static uk.gov.pay.connector.model.domain.ChargeStatus.AUTHORISATION_UNEXPECTED_ERROR;
-import static uk.gov.pay.connector.model.domain.ChargeStatus.ENTERING_CARD_DETAILS;
+import static uk.gov.pay.connector.model.domain.ChargeStatus.*;
 import static uk.gov.pay.connector.model.domain.NumbersInStringsSanitizer.sanitize;
 
 public class CardAuthoriseService extends CardAuthoriseBaseService<AuthCardDetails> {
@@ -47,22 +38,29 @@ public class CardAuthoriseService extends CardAuthoriseBaseService<AuthCardDetai
     }
 
     @Transactional
-    public ChargeEntity preOperation(ChargeEntity chargeEntity, AuthCardDetails authCardDetails) {
+    public ChargeEntity preOperation(String chargeId, AuthCardDetails authCardDetails) {
 
-        String cardBrand = authCardDetails.getCardBrand();
-        ChargeEntity reloadedCharge = chargeDao.merge(chargeEntity);
+        return chargeDao.findByExternalId(chargeId).map(chargeEntity -> {
 
-        if (!reloadedCharge.getGatewayAccount().isRequires3ds() && cardBrandRequires3ds(cardBrand)) {
-            reloadedCharge.setStatus(ChargeStatus.AUTHORISATION_ABORTED);
-            logger.error("AuthCardDetails authorisation failed pre operation. Card brand requires 3ds but Gateway account has 3ds disabled - charge_external_id={}, operation_type={}, card_brand={}",
-                    chargeEntity.getExternalId(), OperationType.AUTHORISATION.getValue(), cardBrand);
-            chargeEntity = chargeDao.mergeAndNotifyStatusHasChanged(reloadedCharge, Optional.empty());
-        } else {
-            chargeEntity = preOperation(chargeEntity, OperationType.AUTHORISATION, getLegalStates(), AUTHORISATION_READY);
-            getPaymentProviderFor(chargeEntity).generateTransactionId().ifPresent(chargeEntity::setGatewayTransactionId);
-        }
+            String cardBrand = authCardDetails.getCardBrand();
 
-        return chargeEntity;
+            if (!chargeEntity.getGatewayAccount().isRequires3ds() && cardBrandRequires3ds(cardBrand)) {
+
+                chargeEntity.setStatus(ChargeStatus.AUTHORISATION_ABORTED);
+
+                logger.error("AuthCardDetails authorisation failed pre operation. Card brand requires 3ds but Gateway account has 3ds disabled - charge_external_id={}, operation_type={}, card_brand={}",
+                        chargeEntity.getExternalId(), OperationType.AUTHORISATION.getValue(), cardBrand);
+
+                chargeDao.notifyStatusHasChanged(chargeEntity, Optional.empty());
+
+            } else {
+                chargeEntity = preOperation(chargeEntity, OperationType.AUTHORISATION, getLegalStates(), AUTHORISATION_READY);
+                getPaymentProviderFor(chargeEntity).generateTransactionId().ifPresent(chargeEntity::setGatewayTransactionId);
+            }
+
+            return chargeEntity;
+
+        }).orElseThrow(() -> new ChargeNotFoundRuntimeException(chargeId));
     }
 
     private boolean cardBrandRequires3ds(String cardBrand) {
@@ -86,14 +84,15 @@ public class CardAuthoriseService extends CardAuthoriseBaseService<AuthCardDetai
 
     @Transactional
     public GatewayResponse<BaseAuthoriseResponse> postOperation(ChargeEntity chargeEntity, AuthCardDetails authCardDetails, GatewayResponse<BaseAuthoriseResponse> operationResponse) {
+
         ChargeEntity reloadedCharge = chargeDao.merge(chargeEntity);
 
         ChargeStatus status = operationResponse.getBaseResponse()
-                            .map(BaseAuthoriseResponse::authoriseStatus)
-                            .map(BaseAuthoriseResponse.AuthoriseStatus::getMappedChargeStatus)
-                            .orElseGet(() -> operationResponse.getGatewayError()
-                                    .map(gatewayError -> mapError(gatewayError))
-                                    .orElse(ChargeStatus.AUTHORISATION_ERROR));
+                .map(BaseAuthoriseResponse::authoriseStatus)
+                .map(BaseAuthoriseResponse.AuthoriseStatus::getMappedChargeStatus)
+                .orElseGet(() -> operationResponse.getGatewayError()
+                        .map(gatewayError -> mapError(gatewayError))
+                        .orElse(ChargeStatus.AUTHORISATION_ERROR));
 
         String transactionId = operationResponse.getBaseResponse()
                 .map(BaseAuthoriseResponse::getTransactionId).orElse("");
@@ -117,7 +116,7 @@ public class CardAuthoriseService extends CardAuthoriseBaseService<AuthCardDetai
         }
 
         appendCardDetails(reloadedCharge, authCardDetails);
-        chargeDao.mergeAndNotifyStatusHasChanged(reloadedCharge, Optional.empty());
+        chargeDao.notifyStatusHasChanged(reloadedCharge, Optional.empty());
         return operationResponse;
     }
 
