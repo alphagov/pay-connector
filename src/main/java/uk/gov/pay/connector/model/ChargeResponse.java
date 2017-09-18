@@ -4,7 +4,6 @@ import com.fasterxml.jackson.annotation.JsonFormat;
 import com.fasterxml.jackson.annotation.JsonInclude;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import uk.gov.pay.connector.model.api.ExternalChargeState;
-import uk.gov.pay.connector.model.api.ExternalTransactionState;
 import uk.gov.pay.connector.model.builder.AbstractChargeResponseBuilder;
 import uk.gov.pay.connector.model.domain.PersistedCard;
 import uk.gov.pay.connector.util.DateTimeUtils;
@@ -203,7 +202,7 @@ public class ChargeResponse {
         }
     }
 
-    public static ChargeResponseBuilder aChargeResponseBuilder() {
+    public static ChargeResponseBuilder aChargeResponse() {
         return new ChargeResponseBuilder();
     }
 
@@ -217,7 +216,7 @@ public class ChargeResponse {
     private Long amount;
 
     @JsonProperty
-    private ExternalTransactionState state;
+    private ExternalChargeState state;
 
     @JsonProperty("card_brand")
     private String cardBrand;
@@ -240,8 +239,7 @@ public class ChargeResponse {
     @JsonProperty("payment_provider")
     private String providerName;
 
-    @JsonProperty("created_date")
-    private String createdDate;
+    private ZonedDateTime createdDate;
 
     @JsonProperty("refund_summary")
     private RefundSummary refundSummary;
@@ -255,7 +253,12 @@ public class ChargeResponse {
     @JsonProperty("card_details")
     protected PersistedCard cardDetails;
 
-    protected ChargeResponse(String chargeId, Long amount, ExternalTransactionState state, String cardBrand, String gatewayTransactionId, String returnUrl, String email, String description, String reference, String providerName, String createdDate, List<Map<String, Object>> dataLinks, RefundSummary refundSummary, SettlementSummary settlementSummary, PersistedCard cardDetails, Auth3dsData auth3dsData) {
+    @JsonProperty("created_date")
+    public String getCreatedDate() {
+        return DateTimeUtils.toUTCDateTimeString(createdDate);
+    }
+
+    protected ChargeResponse(String chargeId, Long amount, ExternalChargeState state, String cardBrand, String gatewayTransactionId, String returnUrl, String email, String description, String reference, String providerName, ZonedDateTime createdDate, List<Map<String, Object>> dataLinks, RefundSummary refundSummary, SettlementSummary settlementSummary, PersistedCard cardDetails, Auth3dsData auth3dsData) {
         this.dataLinks = dataLinks;
         this.chargeId = chargeId;
         this.amount = amount;
@@ -272,66 +275,6 @@ public class ChargeResponse {
         this.settlementSummary = settlementSummary;
         this.cardDetails = cardDetails;
         this.auth3dsData = auth3dsData;
-    }
-
-    public List<Map<String, Object>> getDataLinks() {
-        return dataLinks;
-    }
-
-    public String getChargeId() {
-        return chargeId;
-    }
-
-    public Long getAmount() {
-        return amount;
-    }
-
-    public ExternalTransactionState getState() {
-        return state;
-    }
-
-    public String getCardBrand() {
-        return cardBrand;
-    }
-
-    public String getGatewayTransactionId() {
-        return gatewayTransactionId;
-    }
-
-    public String getReturnUrl() {
-        return returnUrl;
-    }
-
-    public String getEmail() {
-        return email;
-    }
-
-    public String getDescription() {
-        return description;
-    }
-
-    public String getReference() {
-        return reference;
-    }
-
-    public String getProviderName() {
-        return providerName;
-    }
-
-    public RefundSummary getRefundSummary() {
-        return refundSummary;
-    }
-
-    public SettlementSummary getSettlementSummary() {
-        return settlementSummary;
-    }
-
-    public Auth3dsData getAuth3dsData() {
-        return auth3dsData;
-    }
-
-    public PersistedCard getCardDetails() {
-        return cardDetails;
     }
 
     public URI getLink(String rel) {
@@ -352,7 +295,7 @@ public class ChargeResponse {
         if (dataLinks != null ? !dataLinks.equals(that.dataLinks) : that.dataLinks != null) return false;
         if (chargeId != null ? !chargeId.equals(that.chargeId) : that.chargeId != null) return false;
         if (amount != null ? !amount.equals(that.amount) : that.amount != null) return false;
-        if (state != null ? !state.equals(that.state) : that.state != null) return false;
+        if (state != that.state) return false;
         if (cardBrand != null ? !cardBrand.equals(that.cardBrand) : that.cardBrand != null) return false;
         if (gatewayTransactionId != null ? !gatewayTransactionId.equals(that.gatewayTransactionId) : that.gatewayTransactionId != null)
             return false;
@@ -368,6 +311,7 @@ public class ChargeResponse {
             return false;
         if (auth3dsData != null ? !auth3dsData.equals(that.auth3dsData) : that.auth3dsData != null) return false;
         return cardDetails != null ? cardDetails.equals(that.cardDetails) : that.cardDetails == null;
+
     }
 
     @Override

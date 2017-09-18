@@ -3,12 +3,12 @@ package uk.gov.pay.connector.model;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import org.apache.commons.lang3.builder.ToStringBuilder;
 import uk.gov.pay.connector.model.api.ExternalChargeState;
-import uk.gov.pay.connector.model.api.ExternalTransactionState;
 import uk.gov.pay.connector.model.builder.AbstractChargeResponseBuilder;
 import uk.gov.pay.connector.model.domain.ChargeStatus;
 import uk.gov.pay.connector.model.domain.GatewayAccountEntity;
 import uk.gov.pay.connector.model.domain.PersistedCard;
 
+import java.time.ZonedDateTime;
 import java.util.List;
 import java.util.Map;
 
@@ -20,8 +20,7 @@ public class FrontendChargeResponse extends ChargeResponse {
 
         public FrontendChargeResponseBuilder withStatus(String status) {
             this.status = status;
-            ExternalChargeState externalChargeState = ChargeStatus.fromString(status).toExternal();
-            super.withState(new ExternalTransactionState(externalChargeState.getStatus(), externalChargeState.isFinished(), externalChargeState.getCode(), externalChargeState.getMessage()));
+            super.withState(ChargeStatus.fromString(status).toExternal());
             return this;
         }
 
@@ -58,9 +57,9 @@ public class FrontendChargeResponse extends ChargeResponse {
     @JsonProperty(value = "gateway_account")
     private GatewayAccountEntity gatewayAccount;
 
-    private FrontendChargeResponse(String chargeId, Long amount, ExternalTransactionState state, String cardBrand,
+    private FrontendChargeResponse(String chargeId, Long amount, ExternalChargeState state, String cardBrand,
                                    String gatewayTransactionId, String returnUrl, String email, String description,
-                                   String reference, String providerName, String createdDate,
+                                   String reference, String providerName, ZonedDateTime createdDate,
                                    List<Map<String, Object>> dataLinks, String status, RefundSummary refundSummary,
                                    SettlementSummary settlementSummary, PersistedCard chargeCardDetails, Auth3dsData auth3dsData,
                                    GatewayAccountEntity gatewayAccount) {
