@@ -47,9 +47,10 @@ public class CardCaptureService extends CardService implements TransactionalGate
     @Transactional
     @Override
     public ChargeEntity preOperation(ChargeEntity chargeEntity) {
-        //TODO PP-2626 As part of refactoring work. Merging operation is not done inside preOperation anymore. This will be (if possible) removed.
-        chargeDao.merge(chargeEntity);
-        return preOperation(chargeEntity, CardService.OperationType.CAPTURE, legalStatuses, ChargeStatus.CAPTURE_READY);
+        //TODO PP-2626 As part of refactoring work. Merging operation is not done inside preOperation anymore.
+        //TODO PP-2626 This will be (if possible) removed.
+        ChargeEntity reloadedCharge = chargeDao.merge(chargeEntity);
+        return preOperation(reloadedCharge, CardService.OperationType.CAPTURE, legalStatuses, ChargeStatus.CAPTURE_READY);
     }
 
     @Transactional
@@ -97,7 +98,7 @@ public class CardCaptureService extends CardService implements TransactionalGate
                 chargeEntity.getExternalId(), OperationType.CAPTURE.getValue(), transactionId, nextStatus);
 
         reloadedCharge.setStatus(nextStatus);
-        //update the charge with the new transaction id from gateway, if present.
+
         if (isBlank(transactionId)) {
             logger.warn("Card capture response received with no transaction id. - charge_external_id={}", reloadedCharge.getExternalId());
         }

@@ -1,5 +1,6 @@
 package uk.gov.pay.connector.service;
 
+import com.google.inject.persist.Transactional;
 import fj.data.Either;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -34,6 +35,7 @@ public class NotificationService {
         this.dnsUtils = dnsUtils;
     }
 
+    @Transactional
     public boolean handleNotificationFor(String ipAddress, PaymentGatewayName paymentGatewayName, String payload) {
         PaymentProvider paymentProvider = paymentProviders.byName(paymentGatewayName);
         Handler handler = new Handler(paymentProvider);
