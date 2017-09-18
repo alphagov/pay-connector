@@ -44,36 +44,38 @@ public class Card3dsResponseAuthService extends CardAuthoriseBaseService<Auth3ds
     }
 
     @Transactional
-    public GatewayResponse<BaseAuthoriseResponse> postOperation(ChargeEntity chargeEntity,
+    public GatewayResponse<BaseAuthoriseResponse> postOperation(String chargeId,
                                                                 Auth3dsDetails auth3DsDetails,
                                                                 GatewayResponse<BaseAuthoriseResponse> operationResponse) {
-        ChargeEntity reloadedCharge = chargeDao.merge(chargeEntity);
+        return chargeDao.findByExternalId(chargeId).map(chargeEntity -> {
 
-        ChargeStatus status = operationResponse.getBaseResponse()
-                .map(BaseAuthoriseResponse::authoriseStatus)
-                .map(BaseAuthoriseResponse.AuthoriseStatus::getMappedChargeStatus)
-                .orElse(ChargeStatus.AUTHORISATION_ERROR);
+            ChargeStatus status = operationResponse.getBaseResponse()
+                    .map(BaseAuthoriseResponse::authoriseStatus)
+                    .map(BaseAuthoriseResponse.AuthoriseStatus::getMappedChargeStatus)
+                    .orElse(ChargeStatus.AUTHORISATION_ERROR);
 
-        String transactionId = operationResponse.getBaseResponse()
-                .map(BaseAuthoriseResponse::getTransactionId).orElse("");
+            String transactionId = operationResponse.getBaseResponse()
+                    .map(BaseAuthoriseResponse::getTransactionId).orElse("");
 
-        logger.info("AuthCardDetails authorisation response received - charge_external_id={}, operation_type={}, transaction_id={}, status={}",
-                chargeEntity.getExternalId(), OperationType.AUTHORISATION_3DS.getValue(), transactionId, status);
+            logger.info("AuthCardDetails authorisation response received - charge_external_id={}, operation_type={}, transaction_id={}, status={}",
+                    chargeEntity.getExternalId(), OperationType.AUTHORISATION_3DS.getValue(), transactionId, status);
 
-        GatewayAccountEntity account = chargeEntity.getGatewayAccount();
+            GatewayAccountEntity account = chargeEntity.getGatewayAccount();
 
-        metricRegistry.counter(String.format("gateway-operations.%s.%s.%s.authorise-3ds.result.%s", account.getGatewayName(), account.getType(), account.getId(), status.toString())).inc();
+            metricRegistry.counter(String.format("gateway-operations.%s.%s.%s.authorise-3ds.result.%s", account.getGatewayName(), account.getType(), account.getId(), status.toString())).inc();
 
-        reloadedCharge.setStatus(status);
+            chargeEntity.setStatus(status);
 
-        if (StringUtils.isBlank(transactionId)) {
-            logger.warn("Auth3DSDetails authorisation response received with no transaction id. -  charge_external_id={}", reloadedCharge.getExternalId());
-        } else {
-            reloadedCharge.setGatewayTransactionId(transactionId);
-        }
+            if (StringUtils.isBlank(transactionId)) {
+                logger.warn("Auth3DSDetails authorisation response received with no transaction id. -  charge_external_id={}", chargeId);
+            } else {
+                chargeEntity.setGatewayTransactionId(transactionId);
+            }
 
-        chargeDao.mergeAndNotifyStatusHasChanged(reloadedCharge, Optional.empty());
-        return operationResponse;
+            chargeDao.mergeAndNotifyStatusHasChanged(chargeEntity, Optional.empty());
+            return operationResponse;
+
+        }).orElseThrow(() -> new ChargeNotFoundRuntimeException(chargeId));
     }
 
     @Override

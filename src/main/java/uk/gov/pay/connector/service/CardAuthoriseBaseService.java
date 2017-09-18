@@ -29,17 +29,17 @@ public abstract class CardAuthoriseBaseService<T extends AuthorisationDetails> e
     public GatewayResponse doAuthorise(String chargeId, T gatewayAuthRequest) {
 
         Supplier authorisationSupplier = () -> {
-            ChargeEntity preOperationResponse;
+            ChargeEntity charge;
             try {
-                preOperationResponse = preOperation(chargeId, gatewayAuthRequest);
-                if (preOperationResponse.hasStatus(ChargeStatus.AUTHORISATION_ABORTED)) {
+                charge = preOperation(chargeId, gatewayAuthRequest);
+                if (charge.hasStatus(ChargeStatus.AUTHORISATION_ABORTED)) {
                     throw new ConflictRuntimeException(chargeId, "configuration mismatch");
                 }
             } catch (OptimisticLockException e) {
                 throw new ConflictRuntimeException(chargeId);
             }
-             GatewayResponse<BaseAuthoriseResponse> operationResponse = operation(preOperationResponse, gatewayAuthRequest);
-            return postOperation(preOperationResponse, gatewayAuthRequest, operationResponse);
+             GatewayResponse<BaseAuthoriseResponse> operationResponse = operation(charge, gatewayAuthRequest);
+            return postOperation(chargeId, gatewayAuthRequest, operationResponse);
         };
 
         Pair<ExecutionStatus, GatewayResponse> executeResult = cardExecutorService.execute(authorisationSupplier);
@@ -56,9 +56,9 @@ public abstract class CardAuthoriseBaseService<T extends AuthorisationDetails> e
 
     protected abstract ChargeEntity preOperation(String chargeId, T gatewayAuthRequest);
 
-    protected abstract GatewayResponse postOperation(ChargeEntity preOperationResponse, T gatewayAuthRequest, GatewayResponse<BaseAuthoriseResponse> operationResponse);
+    protected abstract GatewayResponse postOperation(String chargeId, T gatewayAuthRequest, GatewayResponse<BaseAuthoriseResponse> operationResponse);
 
-    protected abstract GatewayResponse<BaseAuthoriseResponse> operation(ChargeEntity preOperationResponse, T gatewayAuthRequest);
+    protected abstract GatewayResponse<BaseAuthoriseResponse> operation(ChargeEntity charge, T gatewayAuthRequest);
 
     protected abstract List<ChargeStatus> getLegalStates();
 

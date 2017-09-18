@@ -83,41 +83,43 @@ public class CardAuthoriseService extends CardAuthoriseBaseService<AuthCardDetai
     }
 
     @Transactional
-    public GatewayResponse<BaseAuthoriseResponse> postOperation(ChargeEntity chargeEntity, AuthCardDetails authCardDetails, GatewayResponse<BaseAuthoriseResponse> operationResponse) {
+    public GatewayResponse<BaseAuthoriseResponse> postOperation(String chargeId, AuthCardDetails authCardDetails, GatewayResponse<BaseAuthoriseResponse> operationResponse) {
 
-        ChargeEntity reloadedCharge = chargeDao.merge(chargeEntity);
+        return chargeDao.findByExternalId(chargeId).map(chargeEntity -> {
 
-        ChargeStatus status = operationResponse.getBaseResponse()
-                .map(BaseAuthoriseResponse::authoriseStatus)
-                .map(BaseAuthoriseResponse.AuthoriseStatus::getMappedChargeStatus)
-                .orElseGet(() -> operationResponse.getGatewayError()
-                        .map(gatewayError -> mapError(gatewayError))
-                        .orElse(ChargeStatus.AUTHORISATION_ERROR));
+            ChargeStatus status = operationResponse.getBaseResponse()
+                    .map(BaseAuthoriseResponse::authoriseStatus)
+                    .map(BaseAuthoriseResponse.AuthoriseStatus::getMappedChargeStatus)
+                    .orElseGet(() -> operationResponse.getGatewayError()
+                            .map(gatewayError -> mapError(gatewayError))
+                            .orElse(ChargeStatus.AUTHORISATION_ERROR));
 
-        String transactionId = operationResponse.getBaseResponse()
-                .map(BaseAuthoriseResponse::getTransactionId).orElse("");
+            String transactionId = operationResponse.getBaseResponse()
+                    .map(BaseAuthoriseResponse::getTransactionId).orElse("");
 
-        operationResponse.getSessionIdentifier().ifPresent(reloadedCharge::setProviderSessionId);
+            operationResponse.getSessionIdentifier().ifPresent(chargeEntity::setProviderSessionId);
 
-        logger.info("AuthCardDetails authorisation response received - charge_external_id={}, operation_type={}, transaction_id={}, status={}",
-                chargeEntity.getExternalId(), OperationType.AUTHORISATION.getValue(), transactionId, status);
+            logger.info("AuthCardDetails authorisation response received - charge_external_id={}, operation_type={}, transaction_id={}, status={}",
+                    chargeEntity.getExternalId(), OperationType.AUTHORISATION.getValue(), transactionId, status);
 
-        GatewayAccountEntity account = chargeEntity.getGatewayAccount();
+            GatewayAccountEntity account = chargeEntity.getGatewayAccount();
 
-        metricRegistry.counter(String.format("gateway-operations.%s.%s.%s.authorise.result.%s", account.getGatewayName(), account.getType(), account.getId(), status.toString())).inc();
+            metricRegistry.counter(String.format("gateway-operations.%s.%s.%s.authorise.result.%s", account.getGatewayName(), account.getType(), account.getId(), status.toString())).inc();
 
-        reloadedCharge.setStatus(status);
-        operationResponse.getBaseResponse().ifPresent(response -> auth3dsDetailsFactory.create(response).ifPresent(reloadedCharge::set3dsDetails));
+            chargeEntity.setStatus(status);
+            operationResponse.getBaseResponse().ifPresent(response -> auth3dsDetailsFactory.create(response).ifPresent(chargeEntity::set3dsDetails));
 
-        if (StringUtils.isBlank(transactionId)) {
-            logger.warn("AuthCardDetails authorisation response received with no transaction id. -  charge_external_id={}", reloadedCharge.getExternalId());
-        } else {
-            reloadedCharge.setGatewayTransactionId(transactionId);
-        }
+            if (StringUtils.isBlank(transactionId)) {
+                logger.warn("AuthCardDetails authorisation response received with no transaction id. -  charge_external_id={}", chargeEntity.getExternalId());
+            } else {
+                chargeEntity.setGatewayTransactionId(transactionId);
+            }
 
-        appendCardDetails(reloadedCharge, authCardDetails);
-        chargeDao.notifyStatusHasChanged(reloadedCharge, Optional.empty());
-        return operationResponse;
+            appendCardDetails(chargeEntity, authCardDetails);
+            chargeDao.notifyStatusHasChanged(chargeEntity, Optional.empty());
+            return operationResponse;
+
+        }).orElseThrow(() -> new ChargeNotFoundRuntimeException(chargeId));
     }
 
     private ChargeStatus mapError(GatewayError gatewayError) {

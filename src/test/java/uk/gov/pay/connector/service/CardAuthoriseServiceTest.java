@@ -5,14 +5,10 @@ import com.codahale.metrics.MetricRegistry;
 import com.google.common.collect.ImmutableMap;
 import io.dropwizard.setup.Environment;
 import org.apache.commons.lang3.tuple.Pair;
-import org.hamcrest.Description;
-import org.hamcrest.TypeSafeMatcher;
 import org.junit.Before;
 import org.junit.Test;
 import org.junit.runner.RunWith;
-import org.mockito.ArgumentCaptor;
 import org.mockito.Mock;
-import org.mockito.internal.hamcrest.HamcrestArgumentMatcher;
 import org.mockito.runners.MockitoJUnitRunner;
 import uk.gov.pay.connector.exception.ChargeNotFoundRuntimeException;
 import uk.gov.pay.connector.exception.ConflictRuntimeException;
@@ -33,6 +29,7 @@ import java.util.function.Supplier;
 
 import static com.google.common.collect.Lists.newArrayList;
 import static java.lang.String.format;
+import static org.hamcrest.CoreMatchers.notNullValue;
 import static org.hamcrest.CoreMatchers.nullValue;
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.core.Is.is;
@@ -59,9 +56,6 @@ public class CardAuthoriseServiceTest extends CardServiceTest {
     private final ChargeEntity charge = createNewChargeWith(1L, ENTERING_CARD_DETAILS);
 
     @Mock
-    private ChargeEntity mockChargeReloadedInPostOperation;
-
-    @Mock
     private CardExecutorService mockExecutorService;
 
     private CardAuthoriseService cardAuthorisationService;
@@ -80,21 +74,6 @@ public class CardAuthoriseServiceTest extends CardServiceTest {
     @Before
     public void configureChargeDaoMock() {
         when(mockedChargeDao.findByExternalId(charge.getExternalId())).thenReturn(Optional.of(charge));
-        when(mockedChargeDao.merge(argThat(chargeWithStatus(charge.getExternalId(), AUTHORISATION_READY))))
-                .thenReturn(mockChargeReloadedInPostOperation);
-  }
-
-    private HamcrestArgumentMatcher<ChargeEntity> chargeWithStatus(String externalId, ChargeStatus status) {
-        return new HamcrestArgumentMatcher<>(new TypeSafeMatcher<ChargeEntity>() {
-            @Override
-            protected boolean matchesSafely(ChargeEntity chargeEntity) {
-                return chargeEntity.getExternalId().equals(externalId) && ChargeStatus.fromString(chargeEntity.getStatus()) == status;
-            }
-
-            @Override
-            public void describeTo(Description description) {
-            }
-        });
     }
 
     public void mockExecutorServiceWillReturnCompletedResultWithSupplierReturnValue() {
@@ -131,12 +110,12 @@ public class CardAuthoriseServiceTest extends CardServiceTest {
         assertThat(response.isSuccessful(), is(true));
         assertThat(response.getSessionIdentifier().get(), is(SESSION_IDENTIFIER));
 
-        verify(mockChargeReloadedInPostOperation).setProviderSessionId(SESSION_IDENTIFIER);
-        verify(mockChargeReloadedInPostOperation).setStatus(AUTHORISATION_SUCCESS);
-        verify(mockChargeReloadedInPostOperation).setGatewayTransactionId(TRANSACTION_ID);
-        verify(mockedChargeDao).notifyStatusHasChanged(mockChargeReloadedInPostOperation, Optional.empty());
-        verify(mockChargeReloadedInPostOperation, never()).set3dsDetails(any(Auth3dsDetailsEntity.class));
-        verify(mockChargeReloadedInPostOperation).setCardDetails(any(CardDetailsEntity.class));
+        assertThat(charge.getProviderSessionId(), is(SESSION_IDENTIFIER));
+        assertThat(charge.getStatus(), is(AUTHORISATION_SUCCESS.getValue()));
+        assertThat(charge.getGatewayTransactionId(), is(TRANSACTION_ID));
+        verify(mockedChargeDao).notifyStatusHasChanged(charge, Optional.empty());
+        assertThat(charge.get3dsDetails(), is(nullValue()));
+        assertThat(charge.getCardDetails(), is(notNullValue()));
     }
 
     @Test
@@ -154,33 +133,26 @@ public class CardAuthoriseServiceTest extends CardServiceTest {
         assertThat(response.isSuccessful(), is(true));
         assertThat(response.getSessionIdentifier().get(), is(SESSION_IDENTIFIER));
 
-        verify(mockChargeReloadedInPostOperation).setProviderSessionId(SESSION_IDENTIFIER);
-        verify(mockChargeReloadedInPostOperation).setStatus(AUTHORISATION_SUCCESS);
-        verify(mockChargeReloadedInPostOperation).setGatewayTransactionId(TRANSACTION_ID);
-        verify(mockedChargeDao).notifyStatusHasChanged(mockChargeReloadedInPostOperation, Optional.empty());
-        verify(mockChargeReloadedInPostOperation, never()).set3dsDetails(any(Auth3dsDetailsEntity.class));
+        assertThat(charge.getProviderSessionId(), is(SESSION_IDENTIFIER));
+        assertThat(charge.getStatus(), is(AUTHORISATION_SUCCESS.getValue()));
+        assertThat(charge.getGatewayTransactionId(), is(TRANSACTION_ID));
+        assertThat(charge.get3dsDetails(), is(nullValue()));
+        verify(mockedChargeDao).notifyStatusHasChanged(charge, Optional.empty());
     }
 
     @Test
     public void doAuthorise_shouldRespondWith3dsResponseFor3dsOrders() {
 
         providerWillRequire3ds();
-        ArgumentCaptor<Auth3dsDetailsEntity> auth3dsDetailsArgumentCaptor = ArgumentCaptor.forClass(Auth3dsDetailsEntity.class);
-
-        doNothing().when(mockChargeReloadedInPostOperation).set3dsDetails(any(Auth3dsDetailsEntity.class));
 
         GatewayResponse response = cardAuthorisationService.doAuthorise(charge.getExternalId(), aValidAuthorisationDetails());
 
         assertThat(response.isSuccessful(), is(true));
 
-        verify(mockChargeReloadedInPostOperation).setStatus(AUTHORISATION_3DS_REQUIRED);
-        verify(mockedChargeDao).notifyStatusHasChanged(mockChargeReloadedInPostOperation, Optional.empty());
-        verify(mockChargeReloadedInPostOperation).set3dsDetails(auth3dsDetailsArgumentCaptor.capture());
-
-        Auth3dsDetailsEntity auth3dsDetails = auth3dsDetailsArgumentCaptor.getValue();
-
-        assertThat(auth3dsDetails.getPaRequest(), is(PA_REQ_VALUE_FROM_PROVIDER));
-        assertThat(auth3dsDetails.getIssuerUrl(), is(ISSUER_URL_FROM_PROVIDER));
+        assertThat(charge.getStatus(), is(AUTHORISATION_3DS_REQUIRED.getValue()));
+        verify(mockedChargeDao).notifyStatusHasChanged(charge, Optional.empty());
+        assertThat(charge.get3dsDetails().getIssuerUrl(), is(ISSUER_URL_FROM_PROVIDER));
+        assertThat(charge.get3dsDetails().getPaRequest(), is(PA_REQ_VALUE_FROM_PROVIDER));
     }
 
     @Test
@@ -243,8 +215,8 @@ public class CardAuthoriseServiceTest extends CardServiceTest {
         GatewayResponse response = cardAuthorisationService.doAuthorise(charge.getExternalId(), aValidAuthorisationDetails());
 
         assertThat(response.isSuccessful(), is(true));
-        verify(mockChargeReloadedInPostOperation).setStatus(AUTHORISATION_REJECTED);
-        verify(mockChargeReloadedInPostOperation).setGatewayTransactionId(TRANSACTION_ID);
+        assertThat(charge.getStatus(), is(AUTHORISATION_REJECTED.getValue()));
+        assertThat(charge.getGatewayTransactionId(), is(TRANSACTION_ID));
     }
 
     @Test
@@ -257,8 +229,8 @@ public class CardAuthoriseServiceTest extends CardServiceTest {
         GatewayResponse response = cardAuthorisationService.doAuthorise(charge.getExternalId(), aValidAuthorisationDetails());
 
         assertThat(response.isSuccessful(), is(true));
-        verify(mockChargeReloadedInPostOperation).setStatus(AUTHORISATION_CANCELLED);
-        verify(mockChargeReloadedInPostOperation).setGatewayTransactionId(TRANSACTION_ID);
+        assertThat(charge.getStatus(), is(AUTHORISATION_CANCELLED.getValue()));
+        assertThat(charge.getGatewayTransactionId(), is(TRANSACTION_ID));
     }
 
     @Test
@@ -269,8 +241,8 @@ public class CardAuthoriseServiceTest extends CardServiceTest {
         GatewayResponse response = cardAuthorisationService.doAuthorise(charge.getExternalId(), aValidAuthorisationDetails());
 
         assertThat(response.isFailed(), is(true));
-        verify(mockChargeReloadedInPostOperation).setStatus(AUTHORISATION_ERROR);
-        verify(mockChargeReloadedInPostOperation, never()).setGatewayTransactionId(anyString());
+        assertThat(charge.getStatus(), is(AUTHORISATION_ERROR.getValue()));
+        assertThat(charge.getGatewayTransactionId(), is(nullValue()));
     }
 
     @Test
@@ -288,20 +260,14 @@ public class CardAuthoriseServiceTest extends CardServiceTest {
         String postcode = "W2 6YG";
         String country = "UK";
 
-        ArgumentCaptor<CardDetailsEntity> cardDetailsEntityArgument = ArgumentCaptor.forClass(CardDetailsEntity.class);
-
         AuthCardDetails authCardDetails = buildAuthCardDetails(cardholderName, cardNumber, cvc, expiryDate, cardBrand,
                 addressFor(addressLine1, addressLine2, city, postcode, county, country));
 
         providerWillAuthorise();
 
-        doNothing().when(mockChargeReloadedInPostOperation).setCardDetails(any(CardDetailsEntity.class));
-
         cardAuthorisationService.doAuthorise(charge.getExternalId(), authCardDetails);
 
-        verify(mockChargeReloadedInPostOperation).setCardDetails(cardDetailsEntityArgument.capture());
-
-        CardDetailsEntity cardDetails = cardDetailsEntityArgument.getValue();
+        CardDetailsEntity cardDetails = charge.getCardDetails();
         assertThat(cardDetails.getCardHolderName(), is(cardholderName));
         assertThat(cardDetails.getCardBrand(), is(cardBrand));
         assertThat(cardDetails.getExpiryDate(), is(expiryDate));
@@ -321,7 +287,7 @@ public class CardAuthoriseServiceTest extends CardServiceTest {
 
         cardAuthorisationService.doAuthorise(charge.getExternalId(), aValidAuthorisationDetails());
 
-        verify(mockChargeReloadedInPostOperation).setCardDetails(notNull(CardDetailsEntity.class));
+        assertThat(charge.getCardDetails(), is(notNullValue()));
     }
 
     @Test
@@ -331,7 +297,7 @@ public class CardAuthoriseServiceTest extends CardServiceTest {
 
         cardAuthorisationService.doAuthorise(charge.getExternalId(), aValidAuthorisationDetails());
 
-        verify(mockChargeReloadedInPostOperation).setCardDetails(notNull(CardDetailsEntity.class));
+        assertThat(charge.getCardDetails(), is(notNullValue()));
     }
 
     @Test
@@ -341,7 +307,7 @@ public class CardAuthoriseServiceTest extends CardServiceTest {
 
         cardAuthorisationService.doAuthorise(charge.getExternalId(), aValidAuthorisationDetails());
 
-        verify(mockChargeReloadedInPostOperation).setProviderSessionId(SESSION_IDENTIFIER);
+        assertThat(charge.getProviderSessionId(), is(SESSION_IDENTIFIER));
     }
 
     @Test
@@ -352,7 +318,6 @@ public class CardAuthoriseServiceTest extends CardServiceTest {
         cardAuthorisationService.doAuthorise(charge.getExternalId(), aValidAuthorisationDetails());
 
         assertThat(charge.getProviderSessionId(), is(nullValue()));
-        verify(mockChargeReloadedInPostOperation, never()).setProviderSessionId(anyString());
     }
 
     @Test
@@ -416,7 +381,7 @@ public class CardAuthoriseServiceTest extends CardServiceTest {
         GatewayResponse response = cardAuthorisationService.doAuthorise(charge.getExternalId(), aValidAuthorisationDetails());
 
         assertThat(response.isFailed(), is(true));
-        verify(mockChargeReloadedInPostOperation).setStatus(AUTHORISATION_TIMEOUT);
+        assertThat(charge.getStatus(), is(AUTHORISATION_TIMEOUT.getValue()));
     }
 
     @Test
@@ -428,7 +393,7 @@ public class CardAuthoriseServiceTest extends CardServiceTest {
         GatewayResponse response = cardAuthorisationService.doAuthorise(charge.getExternalId(), aValidAuthorisationDetails());
 
         assertThat(response.isFailed(), is(true));
-        verify(mockChargeReloadedInPostOperation).setStatus(AUTHORISATION_UNEXPECTED_ERROR);
+        assertThat(charge.getStatus(), is(AUTHORISATION_UNEXPECTED_ERROR.getValue()));
     }
 
     @Test(expected = ConflictRuntimeException.class)
