@@ -38,19 +38,15 @@ public class CardCaptureService extends CardService implements TransactionalGate
     }
 
     public GatewayResponse<BaseCaptureResponse> doCapture(String externalId) {
-        return chargeDao
-                .findByExternalId(externalId)
-                .map(TransactionalGatewayOperation.super::executeGatewayOperationFor)
-                .orElseThrow(() -> new ChargeNotFoundRuntimeException(externalId));
+        return executeGatewayOperationFor(externalId);
     }
 
     @Transactional
     @Override
-    public ChargeEntity preOperation(ChargeEntity chargeEntity) {
-        //TODO PP-2626 As part of refactoring work. Merging operation is not done inside preOperation anymore.
-        //TODO PP-2626 This will be (if possible) removed.
-        ChargeEntity reloadedCharge = chargeDao.merge(chargeEntity);
-        return preOperation(reloadedCharge, CardService.OperationType.CAPTURE, legalStatuses, ChargeStatus.CAPTURE_READY);
+    public ChargeEntity preOperation(String chargeId) {
+        return chargeDao.findByExternalId(chargeId)
+                .map(chargeEntity -> preOperation(chargeEntity, CardService.OperationType.CAPTURE, legalStatuses, ChargeStatus.CAPTURE_READY))
+                .orElseThrow(() -> new ChargeNotFoundRuntimeException(chargeId));
     }
 
     @Transactional
@@ -86,40 +82,43 @@ public class CardCaptureService extends CardService implements TransactionalGate
 
     @Transactional
     @Override
-    public GatewayResponse<BaseCaptureResponse> postOperation(ChargeEntity chargeEntity, GatewayResponse<BaseCaptureResponse> operationResponse) {
-        ChargeEntity reloadedCharge = chargeDao.merge(chargeEntity);
+    public GatewayResponse<BaseCaptureResponse> postOperation(String chargeId, GatewayResponse<BaseCaptureResponse> operationResponse) {
+        return chargeDao.findByExternalId(chargeId)
+                .map(chargeEntity -> {
 
-        ChargeStatus nextStatus = determineNextStatus(operationResponse);
+                    ChargeStatus nextStatus = determineNextStatus(operationResponse);
 
-        String transactionId = operationResponse.getBaseResponse()
-                .map(BaseCaptureResponse::getTransactionId).orElse("");
+                    String transactionId = operationResponse.getBaseResponse()
+                            .map(BaseCaptureResponse::getTransactionId).orElse("");
 
-        logger.info("Card capture response received - charge_external_id={}, operation_type={}, transaction_id={}, status={}",
-                chargeEntity.getExternalId(), OperationType.CAPTURE.getValue(), transactionId, nextStatus);
+                    logger.info("Card capture response received - charge_external_id={}, operation_type={}, transaction_id={}, status={}",
+                            chargeEntity.getExternalId(), OperationType.CAPTURE.getValue(), transactionId, nextStatus);
 
-        reloadedCharge.setStatus(nextStatus);
+                    chargeEntity.setStatus(nextStatus);
 
-        if (isBlank(transactionId)) {
-            logger.warn("Card capture response received with no transaction id. - charge_external_id={}", reloadedCharge.getExternalId());
-        }
+                    if (isBlank(transactionId)) {
+                        logger.warn("Card capture response received with no transaction id. - charge_external_id={}", chargeId);
+                    }
 
-        GatewayAccountEntity account = chargeEntity.getGatewayAccount();
+                    GatewayAccountEntity account = chargeEntity.getGatewayAccount();
 
-        metricRegistry.counter(String.format("gateway-operations.%s.%s.%s.capture.result.%s", account.getGatewayName(), account.getType(), account.getId(), nextStatus.toString())).inc();
+                    metricRegistry.counter(String.format("gateway-operations.%s.%s.%s.capture.result.%s", account.getGatewayName(), account.getType(), account.getId(), nextStatus.toString())).inc();
 
-        reloadedCharge = chargeDao.mergeAndNotifyStatusHasChanged(reloadedCharge, Optional.empty());
+                    chargeDao.notifyStatusHasChanged(chargeEntity, Optional.empty());
 
-        if (operationResponse.isSuccessful()) {
-            userNotificationService.notifyPaymentSuccessEmail(reloadedCharge);
-        }
+                    if (operationResponse.isSuccessful()) {
+                        userNotificationService.notifyPaymentSuccessEmail(chargeEntity);
+                    }
 
-        //for sandbox, immediately move from CAPTURE_SUBMITTED to CAPTURED, as there will be no external notification
-        if (chargeEntity.getPaymentGatewayName() == PaymentGatewayName.SANDBOX) {
-            reloadedCharge.setStatus(CAPTURED);
-            chargeDao.mergeAndNotifyStatusHasChanged(reloadedCharge, Optional.of(ZonedDateTime.now()));
-        }
+                    //for sandbox, immediately move from CAPTURE_SUBMITTED to CAPTURED, as there will be no external notification
+                    if (chargeEntity.getPaymentGatewayName() == PaymentGatewayName.SANDBOX) {
+                        chargeEntity.setStatus(CAPTURED);
+                        chargeDao.notifyStatusHasChanged(chargeEntity, Optional.of(ZonedDateTime.now()));
+                    }
 
-        return operationResponse;
+                    return operationResponse;
+                })
+                .orElseThrow(() -> new ChargeNotFoundRuntimeException(chargeId));
     }
 
     private ChargeStatus determineNextStatus(GatewayResponse<BaseCaptureResponse> operationResponse) {
