@@ -171,6 +171,7 @@ public class TransactionEvent implements Comparable<TransactionEvent> {
         if (extRefundReference != null ? !extRefundReference.equals(that.extRefundReference) : that.extRefundReference != null) return false;
         if (extChargeId != null ? !extChargeId.equals(that.extChargeId) : that.extChargeId != null) return false;
         if (state != null ? !state.equals(that.state) : that.state != null) return false;
+        if (userExternalId != null ? !userExternalId.equals(that.userExternalId) : that.userExternalId != null) return false;
         return !(amount != null ? !amount.equals(that.amount) : that.amount != null);
     }
 

@@ -23,6 +23,7 @@ import static uk.gov.pay.connector.model.domain.ChargeStatus.*;
 
 public class ChargeEventsResourceITest {
 
+    public static final String SUBMITTED_BY = "r378y387y8weriyi";
     private DatabaseTestHelper databaseTestHelper;
 
     @Rule
@@ -104,7 +105,7 @@ public class ChargeEventsResourceITest {
                 .withReference(testReferenceRefund1)
                 .withType(RefundStatus.REFUNDED)
                 .withCreatedDate(refundTest1RefundedDate)
-                .withSubmittedBy("ABC123")
+                .withSubmittedBy(SUBMITTED_BY)
                 .insert();
 
         ZonedDateTime refundTest2RefundedDate = createdDate.plusSeconds(12);
@@ -117,9 +118,9 @@ public class ChargeEventsResourceITest {
 
         ZonedDateTime historyRefund1SubmittedStartDate = createdDate.plusSeconds(8);
         createTestRefundHistory(refundedTestRefund1)
-                .insert(RefundStatus.CREATED, createdDate.plusSeconds(7), historyRefund1SubmittedStartDate)
-                .insert(RefundStatus.REFUND_SUBMITTED, testReferenceRefund1, historyRefund1SubmittedStartDate, refundTest1RefundedDate)
-                .insert(RefundStatus.REFUNDED, testReferenceRefund1, refundTest1RefundedDate);
+                .insert(RefundStatus.CREATED, createdDate.plusSeconds(7), historyRefund1SubmittedStartDate, SUBMITTED_BY)
+                .insert(RefundStatus.REFUND_SUBMITTED, testReferenceRefund1, historyRefund1SubmittedStartDate, refundTest1RefundedDate, SUBMITTED_BY)
+                .insert(RefundStatus.REFUNDED, testReferenceRefund1, refundTest1RefundedDate, SUBMITTED_BY);
 
         ZonedDateTime historyRefund2SubmittedStartDate = createdDate.plusSeconds(11);
         createTestRefundHistory(refundedTestRefund2)
@@ -134,8 +135,8 @@ public class ChargeEventsResourceITest {
                 .body("events[0]", new TransactionEventMatcher("PAYMENT", withState("created", "false"), "100", createdTestChargeEvent.getUpdated()))
                 .body("events[1]", new TransactionEventMatcher("PAYMENT", withState("started", "false"), "100", enteringCardDetailsTestChargeEvent.getUpdated()))
                 .body("events[2]", new TransactionEventMatcher("PAYMENT", withState("success", "true"), "100", captureApprovedTestChargeEvent.getUpdated()))
-                .body("events[3]", new TransactionEventMatcher("REFUND", withState("submitted", "false"), "10", historyRefund1SubmittedStartDate, testReferenceRefund1, null))
-                .body("events[4]", new TransactionEventMatcher("REFUND", withState("success", "true"), "10", refundTest1RefundedDate, testReferenceRefund1, null))
+                .body("events[3]", new TransactionEventMatcher("REFUND", withState("submitted", "false"), "10", historyRefund1SubmittedStartDate, testReferenceRefund1, SUBMITTED_BY))
+                .body("events[4]", new TransactionEventMatcher("REFUND", withState("success", "true"), "10", refundTest1RefundedDate, testReferenceRefund1, SUBMITTED_BY))
                 .body("events[5]", new TransactionEventMatcher("REFUND", withState("submitted", "false"), "90", historyRefund2SubmittedStartDate, testReferenceRefund2, null))
                 .body("events[6]", new TransactionEventMatcher("REFUND", withState("success", "true"), "90", refundTest2RefundedDate, testReferenceRefund2, null));
     }

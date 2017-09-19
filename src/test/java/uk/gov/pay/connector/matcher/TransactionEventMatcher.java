@@ -46,7 +46,7 @@ public class TransactionEventMatcher extends TypeSafeMatcher<Map<String, Object>
     private String amount;
     private String updated;
     private String refundReference;
-    private String submittedBy;
+    private String refundSubmittedBy;
 
     public TransactionEventMatcher(String type, State state, String amount, ZonedDateTime updated, String refundReference, String submittedBy) {
         this.type = type;
@@ -54,7 +54,7 @@ public class TransactionEventMatcher extends TypeSafeMatcher<Map<String, Object>
         this.amount = amount;
         this.updated = DateTimeUtils.toUTCDateTimeString(updated);
         this.refundReference = refundReference;
-        this.submittedBy = submittedBy;
+        this.refundSubmittedBy = submittedBy;
     }
 
     public TransactionEventMatcher(String type, State state, String amount, ZonedDateTime updated) {
@@ -73,7 +73,7 @@ public class TransactionEventMatcher extends TypeSafeMatcher<Map<String, Object>
     public void describeTo(Description description) {
         description.appendText("{amount=").appendValue(amount).appendText(", ");
         description.appendText("refund_reference=").appendValue(refundReference).appendText(", ");
-        description.appendText("submitted_by=").appendValue(submittedBy).appendText(", ");
+        description.appendText("submitted_by=").appendValue(refundSubmittedBy).appendText(", ");
         description.appendText("state={");
         description.appendText("finished=").appendValue(state.getFinished()).appendText(", ");
         description.appendText("status=").appendValue(state.getStatus()).appendText(", ");
@@ -100,6 +100,7 @@ public class TransactionEventMatcher extends TypeSafeMatcher<Map<String, Object>
                 ObjectUtils.equals(record.get("refund_reference"), refundReference) &&
                 ObjectUtils.equals(record.get("type"), type) &&
                 ObjectUtils.equals(record.get("amount"), Integer.valueOf(amount)) &&
-                ObjectUtils.equals(record.get("updated"), updated);
+                ObjectUtils.equals(record.get("updated"), updated) &&
+                ObjectUtils.equals(record.get("submitted_by"), refundSubmittedBy);
     }
 }
