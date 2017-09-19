@@ -86,7 +86,7 @@ captureProcessConfig:
   schedulerRandomIntervalMaximumInSeconds: ${CAPTURE_PROCESS_SCHEDULER_RANDOM_INTERVAL_MAXIMUM_SECONDS:-200}
   batchSize: 10
   retryFailuresEvery: 60 minutes
-  maximumRetries: ${CAPTURE_PROCESS_MAXIMUM_RETRIES:-24}
+  maximumRetries: ${CAPTURE_PROCESS_MAXIMUM_RETRIES:-48}
 
 transactionsPaginationServiceConfig:
   displayPageSize: ${TRANSACTION_LIST_DISPLAY_SIZE:-500}
