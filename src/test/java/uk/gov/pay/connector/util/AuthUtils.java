@@ -40,12 +40,17 @@ public class AuthUtils {
     }
 
     public static Address addressFor(String line1, String city, String postcode, String country) {
+        return addressFor(line1, line1, city, postcode, null, country);
+    }
+
+    public static Address addressFor(String line1, String line2, String city, String postcode, String county, String country) {
         Address address = Address.anAddress();
         address.setLine1(line1);
-        address.setLine2(line1);
+        address.setLine2(line2);
         address.setCity(city);
         address.setPostcode(postcode);
         address.setCountry(country);
+        address.setCounty(county);
         return address;
     }
 

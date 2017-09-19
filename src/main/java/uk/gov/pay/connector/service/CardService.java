@@ -47,7 +47,7 @@ public abstract class CardService<T extends BaseResponse> {
     }
 
     public ChargeEntity preOperation(ChargeEntity chargeEntity, OperationType operationType, List<ChargeStatus> legalStatuses, ChargeStatus lockingStatus) {
-        ChargeEntity reloadedCharge = chargeDao.merge(chargeEntity);
+
         GatewayAccountEntity gatewayAccount = chargeEntity.getGatewayAccount();
 
         logger.info("Card pre-operation - charge_external_id={}, charge_status={}, account_id={}, amount={}, operation_type={}, provider={}, provider_type={}, locking_status={}",
@@ -60,19 +60,21 @@ public abstract class CardService<T extends BaseResponse> {
                 gatewayAccount.getType(),
                 lockingStatus);
 
-        if (reloadedCharge.hasStatus(ChargeStatus.EXPIRED)) {
-            throw new ChargeExpiredRuntimeException(operationType.getValue(), reloadedCharge.getExternalId());
+        if (chargeEntity.hasStatus(ChargeStatus.EXPIRED)) {
+            throw new ChargeExpiredRuntimeException(operationType.getValue(), chargeEntity.getExternalId());
         }
-        if (!reloadedCharge.hasStatus(legalStatuses)) {
-            if (reloadedCharge.hasStatus(lockingStatus)) {
-                throw new OperationAlreadyInProgressRuntimeException(operationType.getValue(), reloadedCharge.getExternalId());
+
+        if (!chargeEntity.hasStatus(legalStatuses)) {
+            if (chargeEntity.hasStatus(lockingStatus)) {
+                throw new OperationAlreadyInProgressRuntimeException(operationType.getValue(), chargeEntity.getExternalId());
             }
             logger.error("Charge is not in a legal status to do the pre-operation - charge_external_id={}, status={}, legal_states={}",
-                    reloadedCharge.getExternalId(), reloadedCharge.getStatus(), getLegalStatusNames(legalStatuses));
-            throw new IllegalStateRuntimeException(reloadedCharge.getExternalId());
+                    chargeEntity.getExternalId(), chargeEntity.getStatus(), getLegalStatusNames(legalStatuses));
+            throw new IllegalStateRuntimeException(chargeEntity.getExternalId());
         }
-        reloadedCharge.setStatus(lockingStatus);
-        return reloadedCharge;
+
+        chargeEntity.setStatus(lockingStatus);
+        return chargeEntity;
     }
 
     private String getLegalStatusNames(List<ChargeStatus> legalStatuses) {

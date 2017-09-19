@@ -8,6 +8,7 @@ import uk.gov.pay.connector.model.domain.*;
 import static org.mockito.Mockito.mock;
 
 public abstract class CardServiceTest {
+
     protected final PaymentProvider mockedPaymentProvider = mock(PaymentProvider.class);
     protected PaymentProviders mockedProviders = mock(PaymentProviders.class);
     protected MetricRegistry mockMetricRegistry;

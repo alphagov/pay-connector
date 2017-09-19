@@ -29,7 +29,7 @@ public class ChargeDao extends JpaDao<ChargeEntity> {
     private static final String CARD_DETAILS = "cardDetails";
     private static final String REFERENCE = "reference";
     private static final String EMAIL = "email";
-    public static final String SQL_ESCAPE_SEQ = "\\\\";
+    private static final String SQL_ESCAPE_SEQ = "\\\\";
 
     private ChargeEventDao chargeEventDao;
 
@@ -66,7 +66,16 @@ public class ChargeDao extends JpaDao<ChargeEntity> {
     }
 
     public Optional<ChargeEntity> findByExternalIdAndGatewayAccount(String externalId, Long accountId) {
-        return findByExternalId(externalId).filter(charge -> charge.isAssociatedTo(accountId));
+
+        String query = "SELECT c FROM ChargeEntity c " +
+                "WHERE c.externalId = :externalId " +
+                "AND c.gatewayAccount.id = :accountId";
+
+        return entityManager.get()
+                .createQuery(query, ChargeEntity.class)
+                .setParameter("externalId", externalId)
+                .setParameter("accountId", accountId)
+                .getResultList().stream().findFirst();
     }
 
     public Optional<ChargeEntity> findByProviderAndTransactionId(String provider, String transactionId) {
@@ -127,6 +136,10 @@ public class ChargeDao extends JpaDao<ChargeEntity> {
         ChargeEntity mergedCharge = super.merge(chargeEntity);
         chargeEventDao.persist(ChargeEventEntity.from(chargeEntity, ChargeStatus.fromString(chargeEntity.getStatus()), ZonedDateTime.now(), gatewayEventDate));
         return mergedCharge;
+    }
+
+    public void notifyStatusHasChanged(ChargeEntity chargeEntity, Optional<ZonedDateTime> gatewayEventDate) {
+        chargeEventDao.persist(ChargeEventEntity.from(chargeEntity, ChargeStatus.fromString(chargeEntity.getStatus()), ZonedDateTime.now(), gatewayEventDate));
     }
 
     private List<Predicate> buildParamPredicates(ChargeSearchParams params, CriteriaBuilder cb, Root<ChargeEntity> charge) {
