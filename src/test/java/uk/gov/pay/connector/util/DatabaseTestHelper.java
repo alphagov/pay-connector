@@ -137,10 +137,27 @@ public class DatabaseTestHelper {
         );
     }
 
-    public void addRefundHistory(long id, String externalId, String reference, long amount, String status, Long chargeId, ZonedDateTime createdDate, ZonedDateTime historyStartDate, ZonedDateTime historyEndDate) {
+    public void addRefund(long id, String externalId, String reference, long amount, String status, Long chargeId, ZonedDateTime createdDate, String submittedByUserExternalId) {
         jdbi.withHandle(handle ->
                 handle
-                        .createStatement("INSERT INTO refunds_history(id, external_id, reference, amount, status, charge_id, created_date, history_start_date, history_end_date) VALUES (:id, :external_id, :reference, :amount, :status, :charge_id, :created_date, :history_start_date, :history_end_date)")
+                        .createStatement("INSERT INTO refunds(id, external_id, reference, amount, status, charge_id, created_date, user_external_id) VALUES (:id, :external_id, :reference, :amount, :status, :charge_id, :created_date, :user_external_id)")
+                        .bind("id", id)
+                        .bind("external_id", externalId)
+                        .bind("reference", reference)
+                        .bind("amount", amount)
+                        .bind("status", status)
+                        .bind("charge_id", chargeId)
+                        .bind("created_date", Timestamp.from(createdDate.toInstant()))
+                        .bind("user_external_id", submittedByUserExternalId)
+                        .bind("version", 1)
+                        .execute()
+        );
+    }
+
+    public void addRefundHistory(long id, String externalId, String reference, long amount, String status, Long chargeId, ZonedDateTime createdDate, ZonedDateTime historyStartDate, ZonedDateTime historyEndDate, String submittedByUserExternalId) {
+        jdbi.withHandle(handle ->
+                handle
+                        .createStatement("INSERT INTO refunds_history(id, external_id, reference, amount, status, charge_id, created_date, history_start_date, history_end_date, user_external_id) VALUES (:id, :external_id, :reference, :amount, :status, :charge_id, :created_date, :history_start_date, :history_end_date, :user_external_id)")
                         .bind("id", id)
                         .bind("external_id", externalId)
                         .bind("reference", reference)
@@ -150,15 +167,16 @@ public class DatabaseTestHelper {
                         .bind("created_date", Timestamp.from(createdDate.toInstant()))
                         .bind("history_start_date", Timestamp.from(historyStartDate.toInstant()))
                         .bind("history_end_date", Timestamp.from(historyEndDate.toInstant()))
+                        .bind("user_external_id", submittedByUserExternalId)
                         .bind("version", 1)
                         .execute()
         );
     }
 
-    public void addRefundHistory(long id, String externalId, String reference, long amount, String status, Long chargeId, ZonedDateTime createdDate, ZonedDateTime historyStartDate) {
+    public void addRefundHistory(long id, String externalId, String reference, long amount, String status, Long chargeId, ZonedDateTime createdDate, ZonedDateTime historyStartDate, String submittedByUserExternalId) {
         jdbi.withHandle(handle ->
                 handle
-                        .createStatement("INSERT INTO refunds_history(id, external_id, reference, amount, status, charge_id, created_date, history_start_date) VALUES (:id, :external_id, :reference, :amount, :status, :charge_id, :created_date, :history_start_date)")
+                        .createStatement("INSERT INTO refunds_history(id, external_id, reference, amount, status, charge_id, created_date, history_start_date, user_external_id) VALUES (:id, :external_id, :reference, :amount, :status, :charge_id, :created_date, :history_start_date, :user_external_id)")
                         .bind("id", id)
                         .bind("external_id", externalId)
                         .bind("reference", reference)
@@ -167,6 +185,7 @@ public class DatabaseTestHelper {
                         .bind("charge_id", chargeId)
                         .bind("created_date", Timestamp.from(createdDate.toInstant()))
                         .bind("history_start_date", Timestamp.from(historyStartDate.toInstant()))
+                        .bind("user_external_id", submittedByUserExternalId)
                         .bind("version", 1)
                         .execute()
         );

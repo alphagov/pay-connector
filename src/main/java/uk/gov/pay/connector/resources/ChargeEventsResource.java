@@ -83,7 +83,8 @@ public class ChargeEventsResource {
                         event.getReference(),
                         extractState(event.getStatus().toExternal()),
                         event.getAmount(),
-                        event.getHistoryStartDate()
+                        event.getHistoryStartDate(),
+                        event.getUserExternalId()
                 ))
                 .collect(toList());
     }
