@@ -175,7 +175,6 @@ public class ChargesApiResource {
     }
 
     private ZonedDateTime getExpiryDate() {
-        //default expiry window, can be overridden by env var
         int chargeExpiryWindowSeconds = ONE_HOUR;
         if (StringUtils.isNotBlank(System.getenv(CHARGE_EXPIRY_WINDOW))) {
             chargeExpiryWindowSeconds = Integer.parseInt(System.getenv(CHARGE_EXPIRY_WINDOW));
@@ -233,7 +232,6 @@ public class ChargesApiResource {
                         .buildResponse();
     }
 
-    //this needs to hook into the new DAOs/Services
     private F<Boolean,Response> listChargesAndRefunds(ChargeSearchParams searchParams, UriInfo uriInfo) {
         return listCharges(searchParams, uriInfo);
     }

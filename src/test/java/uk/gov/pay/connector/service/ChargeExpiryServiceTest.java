@@ -20,6 +20,8 @@ import uk.gov.pay.connector.service.transaction.TransactionFlow;
 import uk.gov.pay.connector.service.worldpay.WorldpayBaseResponse;
 
 import java.time.ZonedDateTime;
+import java.util.Optional;
+
 import uk.gov.pay.connector.service.worldpay.WorldpayCancelResponse;
 
 import static java.util.Collections.singletonList;
@@ -33,20 +35,19 @@ import static uk.gov.pay.connector.service.ChargeExpiryService.EXPIRABLE_STATUSE
 @RunWith(MockitoJUnitRunner.class)
 public class ChargeExpiryServiceTest {
 
-    ChargeExpiryService chargeExpiryService;
+    private ChargeExpiryService chargeExpiryService;
 
     @Mock
-    ChargeDao mockChargeDao;
+    private ChargeDao mockChargeDao;
 
     @Mock
-    PaymentProviders mockPaymentProviders;
+    private PaymentProviders mockPaymentProviders;
 
     @Mock
-    PaymentProvider mockPaymentProvider;
+    private PaymentProvider mockPaymentProvider;
 
     @Mock
-    WorldpayCancelResponse mockWorldpayCancelResponse;
-
+    private WorldpayCancelResponse mockWorldpayCancelResponse;
 
     @Before
     public void setup() {
@@ -69,7 +70,7 @@ public class ChargeExpiryServiceTest {
 
         when(mockWorldpayCancelResponse.cancelStatus()).thenReturn(CancelStatus.CANCELLED);
 
-        when(mockChargeDao.merge(chargeEntity)).thenReturn(chargeEntity);
+        when(mockChargeDao.findByExternalId(chargeEntity.getExternalId())).thenReturn(Optional.of(chargeEntity));
         when(mockPaymentProviders.byName(PaymentGatewayName.WORLDPAY)).thenReturn(mockPaymentProvider);
         when(mockPaymentProvider.cancel(any())).thenReturn(gatewayResponse);
         ArgumentCaptor<ChargeEntity> captor = ArgumentCaptor.forClass(ChargeEntity.class);
@@ -91,7 +92,7 @@ public class ChargeExpiryServiceTest {
 
         GatewayResponseBuilder<WorldpayBaseResponse> gatewayResponseBuilder = responseBuilder();
         GatewayResponse<WorldpayBaseResponse> gatewayResponse = gatewayResponseBuilder.withResponse(
-            mockWorldpayCancelResponse).build();
+                mockWorldpayCancelResponse).build();
         when(mockPaymentProviders.byName(PaymentGatewayName.WORLDPAY)).thenReturn(mockPaymentProvider);
         when(mockPaymentProvider.cancel(any())).thenReturn(gatewayResponse);
 
@@ -106,9 +107,8 @@ public class ChargeExpiryServiceTest {
                             .build();
                     ArgumentCaptor<ChargeEntity> captor = ArgumentCaptor.forClass(ChargeEntity.class);
 
-                    when(mockChargeDao.merge(chargeEntity)).thenReturn(chargeEntity);
-                    when(mockChargeDao.mergeAndNotifyStatusHasChanged(captor.capture(), any()))
-                            .thenAnswer(invocationOnMock -> invocationOnMock.getArguments()[0]);
+                    when(mockChargeDao.findByExternalId(chargeEntity.getExternalId())).thenReturn(Optional.of(chargeEntity));
+                    doNothing().when(mockChargeDao).notifyStatusHasChanged(captor.capture(), any());
 
                     chargeExpiryService.expire(singletonList(chargeEntity));
 
@@ -134,12 +134,11 @@ public class ChargeExpiryServiceTest {
                 .withGatewayError(mockGatewayError)
                 .build();
 
-        when(mockChargeDao.merge(chargeEntity)).thenReturn(chargeEntity);
+        when(mockChargeDao.findByExternalId(chargeEntity.getExternalId())).thenReturn(Optional.of(chargeEntity));
         when(mockPaymentProviders.byName(PaymentGatewayName.WORLDPAY)).thenReturn(mockPaymentProvider);
         when(mockPaymentProvider.cancel(any())).thenReturn(gatewayResponse);
         ArgumentCaptor<ChargeEntity> captor = ArgumentCaptor.forClass(ChargeEntity.class);
-        when(mockChargeDao.mergeAndNotifyStatusHasChanged(captor.capture(), any()))
-                .thenAnswer(invocationOnMock -> invocationOnMock.getArguments()[0]);
+        doNothing().when(mockChargeDao).notifyStatusHasChanged(captor.capture(), any());
 
         chargeExpiryService.expire(singletonList(chargeEntity));
 

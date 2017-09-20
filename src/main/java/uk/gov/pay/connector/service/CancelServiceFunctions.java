@@ -3,6 +3,7 @@ package uk.gov.pay.connector.service;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import uk.gov.pay.connector.dao.ChargeDao;
+import uk.gov.pay.connector.exception.ChargeNotFoundRuntimeException;
 import uk.gov.pay.connector.exception.ConflictRuntimeException;
 import uk.gov.pay.connector.exception.IllegalStateRuntimeException;
 import uk.gov.pay.connector.exception.OperationAlreadyInProgressRuntimeException;
@@ -32,34 +33,35 @@ class CancelServiceFunctions {
 
     private static final Logger logger = LoggerFactory.getLogger(CancelServiceFunctions.class);
 
-    static TransactionalOperation<TransactionContext, ChargeEntity> changeStatusTo(ChargeDao chargeDao, ChargeEntity chargeEntity, ChargeStatus targetStatus, Optional<ZonedDateTime> generationTime) {
-        return context -> {
-            logger.info("Charge status to update - charge_external_id={}, status={}, to_status={}",
-                    chargeEntity.getExternalId(), chargeEntity.getStatus(), targetStatus);
-            chargeEntity.setStatus(targetStatus);
-            return chargeDao.mergeAndNotifyStatusHasChanged(chargeEntity, generationTime);
-        };
+    static TransactionalOperation<TransactionContext, ChargeEntity> changeStatusTo(ChargeDao chargeDao, String chargeId, ChargeStatus targetStatus, Optional<ZonedDateTime> generationTime) {
+        return context -> chargeDao.findByExternalId(chargeId)
+                .map(chargeEntity -> {
+                    logger.info("Charge status to update - charge_external_id={}, status={}, to_status={}",
+                            chargeEntity.getExternalId(), chargeEntity.getStatus(), targetStatus);
+                    chargeEntity.setStatus(targetStatus);
+                    chargeDao.notifyStatusHasChanged(chargeEntity, generationTime);
+                    return chargeEntity;
+                })
+                .orElseThrow(() -> new ChargeNotFoundRuntimeException(chargeId));
     }
 
     static PreTransactionalOperation<TransactionContext, ChargeEntity> prepareForTerminate(ChargeDao chargeDao,
-                                                                                           ChargeEntity chargeEntity,
+                                                                                           String chargeId,
                                                                                            StatusFlow statusFlow) {
-        return context -> {
-            ChargeEntity reloadedCharge = chargeDao.merge(chargeEntity);
-
-            if (!reloadedCharge.hasStatus(statusFlow.getTerminatableStatuses())) {
-                if (reloadedCharge.hasStatus(statusFlow.getLockState())) {
-                    throw new OperationAlreadyInProgressRuntimeException(statusFlow.getName(), reloadedCharge.getExternalId());
-                } else if (reloadedCharge.hasStatus( ChargeStatus.AUTHORISATION_READY, AUTHORISATION_3DS_READY )) {
+        return context -> chargeDao.findByExternalId(chargeId).map(chargeEntity -> {
+            if (!chargeEntity.hasStatus(statusFlow.getTerminatableStatuses())) {
+                if (chargeEntity.hasStatus(statusFlow.getLockState())) {
+                    throw new OperationAlreadyInProgressRuntimeException(statusFlow.getName(), chargeId);
+                } else if (chargeEntity.hasStatus(ChargeStatus.AUTHORISATION_READY, AUTHORISATION_3DS_READY)) {
                     throw new ConflictRuntimeException(chargeEntity.getExternalId());
                 }
 
                 logger.error("Charge is not in one of the legal states. charge_external_id={}, status={}, legal_states={}",
-                        reloadedCharge.getExternalId(), reloadedCharge.getStatus(), getLegalStatusNames(statusFlow.getTerminatableStatuses()));
+                        chargeId, chargeEntity.getStatus(), getLegalStatusNames(statusFlow.getTerminatableStatuses()));
 
-                throw new IllegalStateRuntimeException(reloadedCharge.getExternalId());
+                throw new IllegalStateRuntimeException(chargeId);
             }
-            reloadedCharge.setStatus(statusFlow.getLockState());
+            chargeEntity.setStatus(statusFlow.getLockState());
             GatewayAccountEntity gatewayAccount = chargeEntity.getGatewayAccount();
 
             logger.info("Card cancel request sent - charge_external_id={}, charge_status={}, account_id={}, transaction_id={}, amount={}, operation_type={}, provider={}, provider_type={}, locking_status={}",
@@ -73,8 +75,9 @@ class CancelServiceFunctions {
                     gatewayAccount.getType(),
                     statusFlow.getLockState());
 
-            return chargeDao.mergeAndNotifyStatusHasChanged(reloadedCharge, Optional.empty());
-        };
+            chargeDao.notifyStatusHasChanged(chargeEntity, Optional.empty());
+            return chargeEntity;
+        }).orElseThrow(() -> new ChargeNotFoundRuntimeException(chargeId));
     }
 
     static NonTransactionalOperation<TransactionContext, GatewayResponse> doGatewayCancel(PaymentProviders providers) {
