@@ -18,6 +18,7 @@ import uk.gov.pay.connector.service.worldpay.WorldpayCancelResponse;
 import javax.inject.Inject;
 import java.util.List;
 import java.util.Optional;
+import java.util.function.Function;
 
 import static java.lang.String.format;
 import static uk.gov.pay.connector.model.GatewayError.baseError;
@@ -25,7 +26,6 @@ import static uk.gov.pay.connector.model.domain.ChargeStatus.AUTHORISATION_3DS_R
 import static uk.gov.pay.connector.model.domain.ChargeStatus.CREATED;
 import static uk.gov.pay.connector.model.domain.ChargeStatus.ENTERING_CARD_DETAILS;
 import static uk.gov.pay.connector.model.gateway.GatewayResponse.GatewayResponseBuilder.responseBuilder;
-import static uk.gov.pay.connector.service.BaseCancelResponse.CancelStatus.CANCELLED;
 import static uk.gov.pay.connector.service.CancelServiceFunctions.*;
 import static uk.gov.pay.connector.service.StatusFlow.SYSTEM_CANCELLATION_FLOW;
 import static uk.gov.pay.connector.service.StatusFlow.USER_CANCELLATION_FLOW;
@@ -54,36 +54,37 @@ public class ChargeCancelService {
 
     public Optional<GatewayResponse<BaseCancelResponse>> doSystemCancel(String chargeId, Long accountId) {
         return chargeDao.findByExternalIdAndGatewayAccount(chargeId, accountId)
-                .map(chargeEntity -> doCancel(chargeEntity, SYSTEM_CANCELLATION_FLOW))
+                .map(doCancel(chargeId, SYSTEM_CANCELLATION_FLOW))
                 .orElseThrow(() -> new ChargeNotFoundRuntimeException(chargeId));
     }
 
     public Optional<GatewayResponse<BaseCancelResponse>> doUserCancel(String chargeId) {
         return chargeDao.findByExternalId(chargeId)
-                .map(chargeEntity -> doCancel(chargeEntity, USER_CANCELLATION_FLOW))
+                .map(doCancel(chargeId, USER_CANCELLATION_FLOW))
                 .orElseThrow(() -> new ChargeNotFoundRuntimeException(chargeId));
     }
 
-    private Optional<GatewayResponse<BaseCancelResponse>> doCancel(ChargeEntity chargeEntity, StatusFlow statusFlow) {
-        if (chargeEntity.hasStatus(nonGatewayStatuses)) {
-            return Optional.of(nonGatewayCancel(chargeEntity, statusFlow));
-        } else {
-            return cancelChargeWithGatewayCleanup(chargeEntity, statusFlow);
-        }
+    private Function<ChargeEntity, Optional<GatewayResponse<BaseCancelResponse>>> doCancel(String chargeId, StatusFlow statusFlow) {
+        return chargeEntity -> {
+            if (chargeEntity.hasStatus(nonGatewayStatuses)) {
+                return Optional.of(nonGatewayCancel(chargeId, statusFlow));
+            } else {
+                return cancelChargeWithGatewayCleanup(chargeId, statusFlow);
+            }
+        };
     }
 
-    private Optional<GatewayResponse<BaseCancelResponse>> cancelChargeWithGatewayCleanup(ChargeEntity charge, StatusFlow statusFlow) {
+    private Optional<GatewayResponse<BaseCancelResponse>> cancelChargeWithGatewayCleanup(String chargeId, StatusFlow statusFlow) {
         return Optional.ofNullable(transactionFlowProvider.get()
-                .executeNext(prepareForTerminate(chargeDao, charge, statusFlow))
+                .executeNext(prepareForTerminate(chargeDao, chargeId, statusFlow))
                 .executeNext(doGatewayCancel(providers))
-                .executeNext(finishCancel(statusFlow))
+                .executeNext(finishCancel(chargeId, statusFlow))
                 .complete()
                 .get(GatewayResponse.class));
     }
 
-    private TransactionalOperation<TransactionContext, GatewayResponse<BaseCancelResponse>> finishCancel(StatusFlow statusFlow) {
-        return context -> {
-            ChargeEntity chargeEntity = context.get(ChargeEntity.class);
+    private TransactionalOperation<TransactionContext, GatewayResponse<BaseCancelResponse>> finishCancel(String chargeId, StatusFlow statusFlow) {
+        return context -> chargeDao.findByExternalId(chargeId).map(chargeEntity -> {
             GatewayResponse cancelResponse = context.get(GatewayResponse.class);
             ChargeStatus status = determineTerminalState(cancelResponse, statusFlow);
 
@@ -94,9 +95,9 @@ public class ChargeCancelService {
                     chargeEntity.getExternalId(), chargeEntity.getStatus(), status);
 
             chargeEntity.setStatus(status);
-            chargeDao.mergeAndNotifyStatusHasChanged(chargeEntity, Optional.empty());
+            chargeDao.notifyStatusHasChanged(chargeEntity, Optional.empty());
             return cancelResponse;
-        };
+        }).orElseThrow(() -> new ChargeNotFoundRuntimeException(chargeId));
     }
 
     private ChargeStatus determineTerminalState(GatewayResponse<BaseCancelResponse> cancelResponse, StatusFlow statusFlow) {
@@ -112,10 +113,10 @@ public class ChargeCancelService {
         }).orElse(statusFlow.getFailureTerminalState());
     }
 
-    private GatewayResponse<BaseCancelResponse> nonGatewayCancel(ChargeEntity chargeEntity, StatusFlow statusFlow) {
+    private GatewayResponse<BaseCancelResponse> nonGatewayCancel(String chargeId, StatusFlow statusFlow) {
         ChargeStatus completeStatus = statusFlow.getSuccessTerminalState();
         ChargeEntity processedCharge = transactionFlowProvider.get()
-                .executeNext(changeStatusTo(chargeDao, chargeEntity, completeStatus, Optional.empty()))
+                .executeNext(changeStatusTo(chargeDao, chargeId, completeStatus, Optional.empty()))
                 .complete()
                 .get(ChargeEntity.class);
         GatewayResponseBuilder<BaseCancelResponse> gatewayResponseBuilder = responseBuilder();

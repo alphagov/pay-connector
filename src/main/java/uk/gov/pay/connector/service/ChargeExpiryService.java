@@ -31,8 +31,8 @@ public class ChargeExpiryService {
 
     private final Logger logger = LoggerFactory.getLogger(getClass());
 
-    public static final String EXPIRY_SUCCESS = "expiry-success";
-    public static final String EXPIRY_FAILED = "expiry-failed";
+    private static final String EXPIRY_SUCCESS = "expiry-success";
+    private static final String EXPIRY_FAILED = "expiry-failed";
 
     public static final List<ChargeStatus> EXPIRABLE_STATUSES = ImmutableList.of(
             CREATED,
@@ -69,7 +69,7 @@ public class ChargeExpiryService {
     private int expireChargesWithCancellationNotRequired(List<ChargeEntity> nonAuthSuccessCharges) {
         List<ChargeEntity> processedEntities = nonAuthSuccessCharges
                 .stream().map(chargeEntity -> transactionFlowProvider.get()
-                        .executeNext(changeStatusTo(chargeDao, chargeEntity, EXPIRED, Optional.empty()))
+                        .executeNext(changeStatusTo(chargeDao, chargeEntity.getExternalId(), EXPIRED, Optional.empty()))
                         .complete()
                         .get(ChargeEntity.class))
                 .collect(Collectors.toList());
@@ -85,7 +85,7 @@ public class ChargeExpiryService {
 
         gatewayAuthorizedCharges.forEach(chargeEntity -> {
             ChargeEntity processedEntity = transactionFlowProvider.get()
-                    .executeNext(prepareForTerminate(chargeDao, chargeEntity, EXPIRE_FLOW))
+                    .executeNext(prepareForTerminate(chargeDao, chargeEntity.getExternalId(), EXPIRE_FLOW))
                     .executeNext(doGatewayCancel(providers))
                     .executeNext(finishExpireCancel())
                     .complete().get(ChargeEntity.class);

@@ -3,7 +3,6 @@ package uk.gov.pay.connector.resources;
 import com.google.common.collect.ImmutableMap;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import uk.gov.pay.connector.app.ConnectorConfiguration;
 import uk.gov.pay.connector.model.GatewayError;
 import uk.gov.pay.connector.model.domain.Auth3dsDetails;
 import uk.gov.pay.connector.model.domain.AuthCardDetails;
@@ -25,22 +24,20 @@ import static uk.gov.pay.connector.util.ResponseUtil.serviceErrorResponse;
 
 @Path("/")
 public class CardResource {
+
     private final Logger logger = LoggerFactory.getLogger(getClass());
     private final CardAuthoriseService cardAuthoriseService;
     private final Card3dsResponseAuthService card3dsResponseAuthService;
     private final CardCaptureService cardCaptureService;
     private final ChargeCancelService chargeCancelService;
-    private ConnectorConfiguration configuration;
 
     @Inject
     public CardResource(CardAuthoriseService cardAuthoriseService, Card3dsResponseAuthService card3dsResponseAuthService,
-                        CardCaptureService cardCaptureService, ChargeCancelService chargeCancelService,
-                        ConnectorConfiguration configuration) {
+                        CardCaptureService cardCaptureService, ChargeCancelService chargeCancelService) {
         this.cardAuthoriseService = cardAuthoriseService;
         this.card3dsResponseAuthService = card3dsResponseAuthService;
         this.cardCaptureService = cardCaptureService;
         this.chargeCancelService = chargeCancelService;
-        this.configuration = configuration;
     }
 
     @POST
@@ -110,9 +107,7 @@ public class CardResource {
     private Response handleGatewayCancelResponse(Optional<GatewayResponse<BaseCancelResponse>> responseMaybe, String chargeId) {
         if (responseMaybe.isPresent()) {
             Optional<GatewayError> error = responseMaybe.get().getGatewayError();
-            if (error.isPresent()) {
-                logger.error(error.get().getMessage());
-            }
+            error.ifPresent(gatewayError -> logger.error(gatewayError.getMessage()));
         } else {
             logger.error("Error during cancellation of charge {} - CancelService did not return a GatewayResponse", chargeId);
         }
@@ -128,12 +123,6 @@ public class CardResource {
                         .orElseGet(() -> ResponseUtil.serviceErrorResponse("InterpretedStatus not found for Gateway response")));
     }
 
-    private Response handleGatewayResponse(GatewayResponse<? extends BaseResponse> response) {
-        return response.getGatewayError()
-                .map(this::handleError)
-                .orElseGet(ResponseUtil::noContentResponse);
-    }
-
     private static boolean isAuthorisationSubmitted(GatewayResponse<BaseAuthoriseResponse> response) {
         return response.getBaseResponse()
                 .filter(baseResponse -> baseResponse.authoriseStatus() == AuthoriseStatus.SUBMITTED)
@@ -143,7 +132,7 @@ public class CardResource {
     private static boolean isAuthorisationDeclined(GatewayResponse<BaseAuthoriseResponse> response) {
         return response.getBaseResponse()
                 .filter(baseResponse -> baseResponse.authoriseStatus() == AuthoriseStatus.REJECTED ||
-                                        baseResponse.authoriseStatus() == AuthoriseStatus.ERROR)
+                        baseResponse.authoriseStatus() == AuthoriseStatus.ERROR)
                 .isPresent();
     }
 }
