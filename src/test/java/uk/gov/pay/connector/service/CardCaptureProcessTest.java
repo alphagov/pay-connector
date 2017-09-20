@@ -2,7 +2,6 @@ package uk.gov.pay.connector.service;
 
 import com.codahale.metrics.Counter;
 import com.codahale.metrics.Histogram;
-import com.codahale.metrics.Meter;
 import com.codahale.metrics.MetricRegistry;
 import io.dropwizard.setup.Environment;
 import org.junit.Before;
@@ -112,10 +111,12 @@ public class CardCaptureProcessTest {
 
     @Test
     public void shouldMarkCaptureAsErrorWhenChargeRetriesExceeded() {
+
+        String chargeId = "my-charge-1";
         ChargeEntity mockCharge1 = mock(ChargeEntity.class);
 
         when(mockChargeDao.findChargesForCapture(10, Duration.ofMinutes(60))).thenReturn(singletonList(mockCharge1));
-        when(mockCharge1.getExternalId()).thenReturn("my-charge-1");
+        when(mockCharge1.getExternalId()).thenReturn(chargeId);
         when(mockCharge1.getId()).thenReturn(1L);
 
 
@@ -123,6 +124,6 @@ public class CardCaptureProcessTest {
 
         cardCaptureProcess.runCapture();
 
-        verify(mockCardCaptureService).markChargeAsCaptureError(mockCharge1);
+        verify(mockCardCaptureService).markChargeAsCaptureError(chargeId);
     }
 }

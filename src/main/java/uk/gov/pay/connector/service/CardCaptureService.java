@@ -60,18 +60,19 @@ public class CardCaptureService extends CardService implements TransactionalGate
 
             logger.info("CAPTURE_APPROVED for charge [charge_external_id={}]", externalId);
             charge.setStatus(CAPTURE_APPROVED);
-            return chargeDao.mergeAndNotifyStatusHasChanged(charge, Optional.empty());
+            chargeDao.notifyStatusHasChanged(charge, Optional.empty());
+            return charge;
         }).orElseThrow(() -> new ChargeNotFoundRuntimeException(externalId));
     }
 
     @Transactional
-    public ChargeEntity markChargeAsCaptureError(ChargeEntity chargeEntity) {
+    public void markChargeAsCaptureError(String chargeId) {
         logger.error("CAPTURE_ERROR for charge [charge_external_id={}] - reached maximum number of capture attempts",
-                chargeEntity.getExternalId());
-
-        ChargeEntity reloadedCharge = chargeDao.merge(chargeEntity);
-        reloadedCharge.setStatus(CAPTURE_ERROR);
-        return chargeDao.mergeAndNotifyStatusHasChanged(reloadedCharge, Optional.empty());
+                chargeId);
+        chargeDao.findByExternalId(chargeId).ifPresent(chargeEntity -> {
+            chargeEntity.setStatus(CAPTURE_ERROR);
+            chargeDao.notifyStatusHasChanged(chargeEntity, Optional.empty());
+        });
     }
 
     @Override
