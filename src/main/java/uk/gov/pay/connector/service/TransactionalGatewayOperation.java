@@ -8,22 +8,20 @@ import javax.persistence.OptimisticLockException;
 
 interface TransactionalGatewayOperation<T extends BaseResponse> {
 
-    default GatewayResponse<T> executeGatewayOperationFor(ChargeEntity chargeEntity) {
-        ChargeEntity preOperationResponse;
+    default GatewayResponse<T> executeGatewayOperationFor(String chargeId) {
+        ChargeEntity charge;
         try {
-            preOperationResponse = preOperation(chargeEntity);
+            charge = preOperation(chargeId);
         } catch (OptimisticLockException e) {
-            throw new ConflictRuntimeException(chargeEntity.getExternalId());
+            throw new ConflictRuntimeException(chargeId);
         }
-
-        GatewayResponse<T> operationResponse = operation(preOperationResponse);
-
-        return postOperation(preOperationResponse, operationResponse);
+        GatewayResponse<T> operationResponse = operation(charge);
+        return postOperation(chargeId, operationResponse);
     }
 
-    ChargeEntity preOperation(ChargeEntity chargeEntity);
+    ChargeEntity preOperation(String chargeId);
 
     GatewayResponse<T> operation(ChargeEntity chargeEntity);
 
-    GatewayResponse<T> postOperation(ChargeEntity chargeEntity, GatewayResponse<T> operationResponse);
+    GatewayResponse<T> postOperation(String chargeId, GatewayResponse<T> operationResponse);
 }
