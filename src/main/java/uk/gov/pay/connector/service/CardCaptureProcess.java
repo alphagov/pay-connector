@@ -52,7 +52,7 @@ public class CardCaptureProcess {
                 if (shouldRetry(charge)) {
                     captureService.doCapture(charge.getExternalId());
                 } else {
-                    captureService.markChargeAsCaptureError(charge);
+                    captureService.markChargeAsCaptureError(charge.getExternalId());
                 }
             });
         } catch (Exception e) {

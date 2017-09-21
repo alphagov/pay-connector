@@ -9,6 +9,7 @@ import com.codahale.metrics.MetricRegistry;
 import io.dropwizard.setup.Environment;
 import org.hamcrest.BaseMatcher;
 import org.hamcrest.Description;
+import org.hamcrest.TypeSafeMatcher;
 import org.junit.Assert;
 import org.junit.Before;
 import org.junit.Rule;
@@ -16,6 +17,7 @@ import org.junit.Test;
 import org.junit.rules.ExpectedException;
 import org.junit.runner.RunWith;
 import org.mockito.*;
+import org.mockito.internal.hamcrest.HamcrestArgumentMatcher;
 import org.mockito.runners.MockitoJUnitRunner;
 import org.slf4j.LoggerFactory;
 import uk.gov.pay.connector.exception.ChargeNotFoundRuntimeException;
@@ -365,7 +367,7 @@ public class CardCaptureServiceTest extends CardServiceTest {
         ChargeEntity result = cardCaptureService.markChargeAsCaptureApproved(chargeEntity.getExternalId());
 
         verify(chargeEntity).setStatus(CAPTURE_APPROVED);
-        verify(mockedChargeDao).mergeAndNotifyStatusHasChanged(chargeEntity, Optional.empty());
+        verify(mockedChargeDao).notifyStatusHasChanged(argThat(chargeEntityHasStatus(CAPTURE_APPROVED)), eq(Optional.empty()));
         assertThat(result.getStatus(), is(CAPTURE_APPROVED.getValue()));
 
         verify(mockAppender).doAppend(loggingEventArgumentCaptor.capture());
@@ -374,19 +376,43 @@ public class CardCaptureServiceTest extends CardServiceTest {
     @Test
     public void markChargeAsCaptureError_shouldSetChargeStatusToCaptureErrorAndWriteChargeEvent() {
         ChargeEntity charge = createNewChargeWith("worldpay", 1L, CAPTURE_APPROVED_RETRY, "gatewayTxId");
-        ChargeEntity reloadedCharge = spy(charge);
-        when(mockedChargeDao.merge(charge)).thenReturn(reloadedCharge);
-        when(mockedChargeDao.mergeAndNotifyStatusHasChanged(reloadedCharge, Optional.empty())).thenReturn(reloadedCharge);
+        when(mockedChargeDao.findByExternalId(charge.getExternalId())).thenReturn(Optional.of(charge));
+        doNothing().when(mockedChargeDao).notifyStatusHasChanged(charge, Optional.empty());
 
-        ChargeEntity result = cardCaptureService.markChargeAsCaptureError(charge);
+        cardCaptureService.markChargeAsCaptureError(charge.getExternalId());
 
-        assertThat(result.getStatus(), is(CAPTURE_ERROR.getValue()));
-        verify(mockedChargeDao).mergeAndNotifyStatusHasChanged(reloadedCharge, Optional.empty());
+        verify(mockedChargeDao).notifyStatusHasChanged(argThat(chargeEntityHasStatus(CAPTURE_ERROR)), eq(Optional.empty()));
 
         verify(mockAppender).doAppend(loggingEventArgumentCaptor.capture());
 
         List<LoggingEvent> logStatement = loggingEventArgumentCaptor.getAllValues();
         String expectedLogMessage = String.format("CAPTURE_ERROR for charge [charge_external_id=%s] - reached maximum number of capture attempts", charge.getExternalId());
         Assert.assertThat(logStatement.get(0).getFormattedMessage(), is(expectedLogMessage));
+    }
+
+    @Test
+    public void markChargeAsCaptureError_shouldIgnore_whenChargeDoesNotExist() {
+
+        String externalId = "external-id";
+        when(mockedChargeDao.findByExternalId(externalId)).thenReturn(Optional.empty());
+
+        cardCaptureService.markChargeAsCaptureError(externalId);
+
+        verify(mockedChargeDao).findByExternalId(externalId);
+        verifyNoMoreInteractions(mockedChargeDao);
+    }
+
+    private HamcrestArgumentMatcher<ChargeEntity> chargeEntityHasStatus(ChargeStatus expectedStatus) {
+        return new HamcrestArgumentMatcher<>(new TypeSafeMatcher<ChargeEntity>() {
+            @Override
+            protected boolean matchesSafely(ChargeEntity chargeEntity) {
+                return chargeEntity.getStatus().equals(expectedStatus.getValue());
+            }
+
+            @Override
+            public void describeTo(Description description) {
+
+            }
+        });
     }
 }
