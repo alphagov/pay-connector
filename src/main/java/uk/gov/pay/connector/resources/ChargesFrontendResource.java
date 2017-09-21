@@ -89,15 +89,8 @@ public class ChargesFrontendResource {
             return badRequestResponse("Invalid patch parameters" + chargePatchMap.toString());
         }
 
-        Optional<ChargeEntity> maybeCharge = chargeDao.findByExternalId(chargeId);
-        logger.debug("charge from DB: " + maybeCharge);
-
-        return maybeCharge
-                .map(chargeEntity ->
-                        Response.ok(buildChargeResponse(
-                                uriInfo,
-                                chargeService.updateCharge(chargeEntity, chargePatchRequest))
-                        ).build())
+        return chargeService.updateCharge(chargeId, chargePatchRequest)
+                .map(chargeEntity -> Response.ok(buildChargeResponse(uriInfo, chargeEntity)).build())
                 .orElseGet(() -> responseWithChargeNotFound(chargeId));
     }
 

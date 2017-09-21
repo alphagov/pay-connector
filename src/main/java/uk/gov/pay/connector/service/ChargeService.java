@@ -103,14 +103,16 @@ public class ChargeService {
     }
 
     @Transactional
-    public ChargeEntity updateCharge(ChargeEntity chargeEntity, PatchRequestBuilder.PatchRequest chargePatchRequest) {
-        switch (chargePatchRequest.getPath()) {
-            case ChargesApiResource.EMAIL_KEY:
-                chargeEntity.setEmail(sanitize(chargePatchRequest.getValue()));
-        }
-
-        chargeDao.merge(chargeEntity);
-        return chargeEntity;
+    public Optional<ChargeEntity> updateCharge(String chargeId, PatchRequestBuilder.PatchRequest chargePatchRequest) {
+        return chargeDao.findByExternalId(chargeId)
+                .map(chargeEntity -> {
+                    switch (chargePatchRequest.getPath()) {
+                        case ChargesApiResource.EMAIL_KEY:
+                            chargeEntity.setEmail(sanitize(chargePatchRequest.getValue()));
+                    }
+                    return Optional.of(chargeEntity);
+                })
+                .orElseGet(Optional::empty);
     }
 
     private TokenEntity createNewChargeEntityToken(ChargeEntity chargeEntity) {
@@ -148,7 +150,7 @@ public class ChargeService {
         }
 
         ChargeResponse.Auth3dsData auth3dsData = null;
-        if(charge.get3dsDetails() != null) {
+        if (charge.get3dsDetails() != null) {
             auth3dsData = new ChargeResponse.Auth3dsData();
             auth3dsData.setPaRequest(charge.get3dsDetails().getPaRequest());
             auth3dsData.setIssuerUrl(charge.get3dsDetails().getIssuerUrl());
