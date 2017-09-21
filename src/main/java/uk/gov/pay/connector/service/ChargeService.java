@@ -7,13 +7,13 @@ import uk.gov.pay.connector.app.ConnectorConfiguration;
 import uk.gov.pay.connector.app.LinksConfig;
 import uk.gov.pay.connector.dao.CardTypeDao;
 import uk.gov.pay.connector.dao.ChargeDao;
+import uk.gov.pay.connector.dao.GatewayAccountDao;
 import uk.gov.pay.connector.dao.TokenDao;
 import uk.gov.pay.connector.model.ChargeResponse;
 import uk.gov.pay.connector.model.builder.PatchRequestBuilder;
 import uk.gov.pay.connector.model.domain.CardTypeEntity;
 import uk.gov.pay.connector.model.domain.ChargeEntity;
 import uk.gov.pay.connector.model.domain.ChargeStatus;
-import uk.gov.pay.connector.model.domain.GatewayAccountEntity;
 import uk.gov.pay.connector.model.domain.PersistedCard;
 import uk.gov.pay.connector.model.domain.TokenEntity;
 import uk.gov.pay.connector.resources.ChargesApiResource;
@@ -42,33 +42,37 @@ public class ChargeService {
 
     private static final Logger logger = LoggerFactory.getLogger(ChargeService.class);
 
-    private ChargeDao chargeDao;
-    private CardTypeDao cardTypeDao;
-    private TokenDao tokenDao;
-    private LinksConfig linksConfig;
-    private PaymentProviders providers;
+    private final ChargeDao chargeDao;
+    private final CardTypeDao cardTypeDao;
+    private final TokenDao tokenDao;
+    private final GatewayAccountDao gatewayAccountDao;
+    private final LinksConfig linksConfig;
+    private final PaymentProviders providers;
 
     @Inject
-    public ChargeService(TokenDao tokenDao, ChargeDao chargeDao, ConnectorConfiguration config, CardTypeDao cardTypeDao, PaymentProviders providers) {
+    public ChargeService(TokenDao tokenDao, ChargeDao chargeDao, CardTypeDao cardTypeDao, GatewayAccountDao gatewayAccountDao, ConnectorConfiguration config, PaymentProviders providers) {
         this.tokenDao = tokenDao;
         this.chargeDao = chargeDao;
         this.cardTypeDao = cardTypeDao;
+        this.gatewayAccountDao = gatewayAccountDao;
         this.linksConfig = config.getLinks();
         this.providers = providers;
     }
 
     @Transactional
-    public ChargeResponse create(Map<String, String> chargeRequest, GatewayAccountEntity gatewayAccount, UriInfo uriInfo) {
-        String email = chargeRequest.get("email") != null ? chargeRequest.get("email") : null;
-        ChargeEntity chargeEntity = new ChargeEntity(new Long(chargeRequest.get("amount")),
-                chargeRequest.get("return_url"),
-                chargeRequest.get("description"),
-                chargeRequest.get("reference"),
-                gatewayAccount,
-                email
-        );
-        chargeDao.persist(chargeEntity);
-        return chargeResponseBuilder(uriInfo, chargeEntity, createNewChargeEntityToken(chargeEntity)).build();
+    public Optional<ChargeResponse> create(Map<String, String> chargeRequest, Long accountId, UriInfo uriInfo) {
+        return gatewayAccountDao.findById(accountId).map(gatewayAccount -> {
+            String email = chargeRequest.get("email") != null ? chargeRequest.get("email") : null;
+            ChargeEntity chargeEntity = new ChargeEntity(new Long(chargeRequest.get("amount")),
+                    chargeRequest.get("return_url"),
+                    chargeRequest.get("description"),
+                    chargeRequest.get("reference"),
+                    gatewayAccount,
+                    email
+            );
+            chargeDao.persist(chargeEntity);
+            return Optional.of(chargeResponseBuilder(uriInfo, chargeEntity, createNewChargeEntityToken(chargeEntity)).build());
+        }).orElseGet(Optional::empty);
     }
 
     @Transactional
