@@ -142,7 +142,8 @@ public class ChargeExpiryService {
             logger.info("Charge status to update - charge_external_id={}, status={}, to_status={}",
                     chargeEntity.getExternalId(), chargeEntity.getStatus(), status);
             chargeEntity.setStatus(status);
-            return chargeDao.mergeAndNotifyStatusHasChanged(chargeEntity, Optional.empty());
+            chargeDao.notifyStatusHasChanged(chargeEntity, Optional.empty());
+            return chargeEntity;
         };
     }
 

@@ -305,7 +305,7 @@ public class NotificationServiceTest {
         verify(mockedChargeEntity).setStatus(CAPTURED);
 
         ArgumentCaptor<Optional> generatedTimeCaptor = ArgumentCaptor.forClass(Optional.class);
-        verify(mockedChargeDao).mergeAndNotifyStatusHasChanged(argThat(obj -> mockedChargeEntity.equals(obj)), generatedTimeCaptor.capture());
+        verify(mockedChargeDao).notifyStatusHasChanged(argThat(obj -> mockedChargeEntity.equals(obj)), generatedTimeCaptor.capture());
 
         assertTrue(ChronoUnit.SECONDS.between((ZonedDateTime) generatedTimeCaptor.getValue().get(), ZonedDateTime.now()) < 10);
 

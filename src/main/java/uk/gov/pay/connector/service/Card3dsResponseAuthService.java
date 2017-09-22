@@ -74,7 +74,7 @@ public class Card3dsResponseAuthService extends CardAuthoriseBaseService<Auth3ds
                 chargeEntity.setGatewayTransactionId(transactionId);
             }
 
-            chargeDao.mergeAndNotifyStatusHasChanged(chargeEntity, Optional.empty());
+            chargeDao.notifyStatusHasChanged(chargeEntity, Optional.empty());
             return operationResponse;
 
         }).orElseThrow(() -> new ChargeNotFoundRuntimeException(chargeId));

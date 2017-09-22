@@ -75,8 +75,7 @@ public class ChargeExpiryServiceTest {
         when(mockPaymentProvider.cancel(any())).thenReturn(gatewayResponse);
         ArgumentCaptor<ChargeEntity> captor = ArgumentCaptor.forClass(ChargeEntity.class);
         ArgumentCaptor<CancelGatewayRequest> cancelCaptor = ArgumentCaptor.forClass(CancelGatewayRequest.class);
-        when(mockChargeDao.mergeAndNotifyStatusHasChanged(captor.capture(), any()))
-                .thenAnswer(invocationOnMock -> invocationOnMock.getArguments()[0]);
+        doNothing().when(mockChargeDao).notifyStatusHasChanged(captor.capture(), any());
 
         chargeExpiryService.expire(singletonList(chargeEntity));
 

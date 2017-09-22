@@ -62,13 +62,12 @@ public class ChargeService {
     @Transactional
     public Optional<ChargeResponse> create(Map<String, String> chargeRequest, Long accountId, UriInfo uriInfo) {
         return gatewayAccountDao.findById(accountId).map(gatewayAccount -> {
-            String email = chargeRequest.get("email") != null ? chargeRequest.get("email") : null;
             ChargeEntity chargeEntity = new ChargeEntity(new Long(chargeRequest.get("amount")),
                     chargeRequest.get("return_url"),
                     chargeRequest.get("description"),
                     chargeRequest.get("reference"),
                     gatewayAccount,
-                    email
+                    chargeRequest.get("email")
             );
             chargeDao.persist(chargeEntity);
             return Optional.of(chargeResponseBuilder(uriInfo, chargeEntity, createNewChargeEntityToken(chargeEntity)).build());
@@ -87,19 +86,6 @@ public class ChargeService {
             return chargeResponseBuilder(uriInfo, chargeEntity, createNewChargeEntityToken(chargeEntity)).build();
         }
         return chargeResponseBuilder(uriInfo, chargeEntity).build();
-    }
-
-    @Transactional
-    public List<ChargeEntity> updateStatus(List<ChargeEntity> chargeEntities, ChargeStatus status, Optional<ZonedDateTime> gatewayEventDate) {
-        List<ChargeEntity> mergedCharges = new ArrayList<>();
-        chargeEntities.stream().forEach(chargeEntity -> {
-            logger.info("Charge status to update - charge_external_id={}, status={}, to_status={}",
-                    chargeEntity.getExternalId(), chargeEntity.getStatus(), status);
-            chargeEntity.setStatus(status);
-            ChargeEntity mergedEnt = chargeDao.mergeAndNotifyStatusHasChanged(chargeEntity, gatewayEventDate);
-            mergedCharges.add(mergedEnt);
-        });
-        return mergedCharges;
     }
 
     @Transactional

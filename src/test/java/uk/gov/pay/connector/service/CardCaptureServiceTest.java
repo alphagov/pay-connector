@@ -362,7 +362,7 @@ public class CardCaptureServiceTest extends CardServiceTest {
     public void markChargeAsCaptureApproved_shouldSetChargeStatusToCaptureApprovedAndWriteChargeEvent() {
         ChargeEntity chargeEntity = spy(createNewChargeWith("worldpay", 1L, AUTHORISATION_SUCCESS, "gatewayTxId"));
         when(mockedChargeDao.findByExternalId(chargeEntity.getExternalId())).thenReturn(Optional.of(chargeEntity));
-        when(mockedChargeDao.mergeAndNotifyStatusHasChanged(chargeEntity, Optional.empty())).thenReturn(chargeEntity);
+        doNothing().when(mockedChargeDao).notifyStatusHasChanged(chargeEntity, Optional.empty());
 
         ChargeEntity result = cardCaptureService.markChargeAsCaptureApproved(chargeEntity.getExternalId());
 

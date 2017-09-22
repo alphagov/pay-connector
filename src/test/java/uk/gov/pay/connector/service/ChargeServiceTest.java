@@ -294,25 +294,6 @@ public class ChargeServiceTest {
         assertThat(chargeForAccount.isPresent(), is(false));
     }
 
-    @Test
-    public void shouldUpdateChargeStatusForAllChargesWithTheGivenStatus() {
-        ChargeEntity chargeEntity1 = mock(ChargeEntity.class);
-        ChargeEntity chargeEntity2 = mock(ChargeEntity.class);
-
-        service.updateStatus(asList(chargeEntity1, chargeEntity2), ChargeStatus.ENTERING_CARD_DETAILS, Optional.empty());
-
-        InOrder inOrder = inOrder(chargeEntity1, chargeEntity2, mockedChargeDao);
-
-        inOrder.verify(chargeEntity1).setStatus(ChargeStatus.ENTERING_CARD_DETAILS);
-        inOrder.verify(mockedChargeDao).mergeAndNotifyStatusHasChanged(chargeEntity1, Optional.empty());
-
-        inOrder.verify(chargeEntity2).setStatus(ChargeStatus.ENTERING_CARD_DETAILS);
-        inOrder.verify(mockedChargeDao).mergeAndNotifyStatusHasChanged(chargeEntity2, Optional.empty());
-    }
-
-    /**
-     * TODO To create a matcher rather than using main src to build our assertions
-     */
     @Deprecated
     private ChargeResponseBuilder chargeResponseBuilderOf(ChargeEntity chargeEntity) throws URISyntaxException {
         ChargeResponse.RefundSummary refunds = new ChargeResponse.RefundSummary();

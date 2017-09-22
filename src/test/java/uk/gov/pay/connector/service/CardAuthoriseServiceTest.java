@@ -190,12 +190,9 @@ public class CardAuthoriseServiceTest extends CardServiceTest {
                 .withGatewayAccountEntity(gatewayAccountEntity)
                 .withStatus(ENTERING_CARD_DETAILS)
                 .build();
-        ChargeEntity reloadedCharge = spy(charge);
 
         when(mockedCardTypeDao.findByBrand(authCardDetails.getCardBrand())).thenReturn(newArrayList(cardTypeEntity));
         when(mockedChargeDao.findByExternalId(charge.getExternalId())).thenReturn(Optional.of(charge));
-        when(mockedChargeDao.merge(charge)).thenReturn(reloadedCharge);
-        when(mockedChargeDao.mergeAndNotifyStatusHasChanged(reloadedCharge, Optional.empty())).thenReturn(reloadedCharge);
 
         mockExecutorServiceWillReturnCompletedResultWithSupplierReturnValue();
 
@@ -204,6 +201,7 @@ public class CardAuthoriseServiceTest extends CardServiceTest {
             fail("Expected test to fail with ConflictRuntimeException due to configuration conflicting in 3ds requirements");
         } catch (ConflictRuntimeException e) {
             assertThat(charge.getStatus(), is(AUTHORISATION_ABORTED.toString()));
+            verify(mockedChargeDao).notifyStatusHasChanged(charge, Optional.empty());
         }
     }
 
