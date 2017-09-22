@@ -4,7 +4,6 @@ import com.google.inject.Provider;
 import com.google.inject.persist.Transactional;
 import org.apache.commons.lang3.StringUtils;
 import uk.gov.pay.connector.model.domain.ChargeEntity;
-import uk.gov.pay.connector.model.domain.ChargeEventEntity;
 import uk.gov.pay.connector.model.domain.ChargeStatus;
 
 import javax.inject.Inject;
@@ -31,12 +30,9 @@ public class ChargeDao extends JpaDao<ChargeEntity> {
     private static final String EMAIL = "email";
     private static final String SQL_ESCAPE_SEQ = "\\\\";
 
-    private ChargeEventDao chargeEventDao;
-
     @Inject
-    public ChargeDao(final Provider<EntityManager> entityManager, ChargeEventDao chargeEventDao) {
+    public ChargeDao(final Provider<EntityManager> entityManager) {
         super(entityManager);
-        this.chargeEventDao = chargeEventDao;
     }
 
     public Optional<ChargeEntity> findById(Long chargeId) {
@@ -90,11 +86,6 @@ public class ChargeDao extends JpaDao<ChargeEntity> {
                 .setParameter("provider", provider).getResultList().stream().findFirst();
     }
 
-    public void persist(ChargeEntity chargeEntity) {
-        super.persist(chargeEntity);
-        chargeEventDao.persist(ChargeEventEntity.from(chargeEntity, ChargeStatus.CREATED, chargeEntity.getCreatedDate(), Optional.empty()));
-    }
-
     public List<ChargeEntity> findBeforeDateWithStatusIn(ZonedDateTime date, List<ChargeStatus> statuses) {
         ChargeSearchParams params = new ChargeSearchParams()
                 .withToDate(date)
@@ -130,16 +121,6 @@ public class ChargeDao extends JpaDao<ChargeEntity> {
         cq.select(cb.count(charge));
         cq.where(predicates.toArray(new Predicate[]{}));
         return entityManager.get().createQuery(cq).getSingleResult();
-    }
-
-    public ChargeEntity mergeAndNotifyStatusHasChanged(ChargeEntity chargeEntity, Optional<ZonedDateTime> gatewayEventDate) {
-        ChargeEntity mergedCharge = super.merge(chargeEntity);
-        chargeEventDao.persist(ChargeEventEntity.from(chargeEntity, ChargeStatus.fromString(chargeEntity.getStatus()), ZonedDateTime.now(), gatewayEventDate));
-        return mergedCharge;
-    }
-
-    public void notifyStatusHasChanged(ChargeEntity chargeEntity, Optional<ZonedDateTime> gatewayEventDate) {
-        chargeEventDao.persist(ChargeEventEntity.from(chargeEntity, ChargeStatus.fromString(chargeEntity.getStatus()), ZonedDateTime.now(), gatewayEventDate));
     }
 
     private List<Predicate> buildParamPredicates(ChargeSearchParams params, CriteriaBuilder cb, Root<ChargeEntity> charge) {

@@ -5,6 +5,7 @@ import com.google.inject.Provider;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import uk.gov.pay.connector.dao.ChargeDao;
+import uk.gov.pay.connector.dao.ChargeEventDao;
 import uk.gov.pay.connector.exception.ChargeNotFoundRuntimeException;
 import uk.gov.pay.connector.model.domain.ChargeEntity;
 import uk.gov.pay.connector.model.domain.ChargeStatus;
@@ -41,15 +42,18 @@ public class ChargeCancelService {
     );
 
     private final ChargeDao chargeDao;
+    private final ChargeEventDao chargeEventDao;
     private final PaymentProviders providers;
     private final Provider<TransactionFlow> transactionFlowProvider;
 
 
     @Inject
     public ChargeCancelService(ChargeDao chargeDao,
+                               ChargeEventDao chargeEventDao,
                                PaymentProviders providers,
                                Provider<TransactionFlow> transactionFlowProvider) {
         this.chargeDao = chargeDao;
+        this.chargeEventDao = chargeEventDao;
         this.providers = providers;
         this.transactionFlowProvider = transactionFlowProvider;
     }
@@ -78,7 +82,7 @@ public class ChargeCancelService {
 
     private Optional<GatewayResponse<BaseCancelResponse>> cancelChargeWithGatewayCleanup(String chargeId, StatusFlow statusFlow) {
         return Optional.ofNullable(transactionFlowProvider.get()
-                .executeNext(prepareForTerminate(chargeDao, chargeId, statusFlow))
+                .executeNext(prepareForTerminate(chargeDao, chargeEventDao, chargeId, statusFlow))
                 .executeNext(doGatewayCancel(providers))
                 .executeNext(finishCancel(chargeId, statusFlow))
                 .complete()
@@ -96,7 +100,7 @@ public class ChargeCancelService {
                     cancelResponse, chargeEntity.getStatus(), status);
 
             chargeEntity.setStatus(status);
-            chargeDao.notifyStatusHasChanged(chargeEntity, Optional.empty());
+            chargeEventDao.persistChargeEventOf(chargeEntity, Optional.empty());
             return cancelResponse;
         }).orElseThrow(() -> new ChargeNotFoundRuntimeException(chargeId));
     }
@@ -117,7 +121,7 @@ public class ChargeCancelService {
     private GatewayResponse<BaseCancelResponse> nonGatewayCancel(String chargeId, StatusFlow statusFlow) {
         ChargeStatus completeStatus = statusFlow.getSuccessTerminalState();
         ChargeEntity processedCharge = transactionFlowProvider.get()
-                .executeNext(changeStatusTo(chargeDao, chargeId, completeStatus, Optional.empty()))
+                .executeNext(changeStatusTo(chargeDao, chargeEventDao, chargeId, completeStatus, Optional.empty()))
                 .complete()
                 .get(ChargeEntity.class);
         GatewayResponseBuilder<BaseCancelResponse> gatewayResponseBuilder = responseBuilder();

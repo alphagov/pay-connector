@@ -67,7 +67,7 @@ public class CardAuthoriseServiceTest extends CardServiceTest {
         Counter mockCounter = mock(Counter.class);
         when(mockMetricRegistry.counter(anyString())).thenReturn(mockCounter);
         when(mockEnvironment.metrics()).thenReturn(mockMetricRegistry);
-        cardAuthorisationService = new CardAuthoriseService(mockedChargeDao, mockedCardTypeDao, mockedProviders, mockExecutorService,
+        cardAuthorisationService = new CardAuthoriseService(mockedChargeDao, mockedChargeEventDao, mockedCardTypeDao, mockedProviders, mockExecutorService,
                 auth3dsDetailsFactory, mockEnvironment);
     }
 
@@ -113,7 +113,7 @@ public class CardAuthoriseServiceTest extends CardServiceTest {
         assertThat(charge.getProviderSessionId(), is(SESSION_IDENTIFIER));
         assertThat(charge.getStatus(), is(AUTHORISATION_SUCCESS.getValue()));
         assertThat(charge.getGatewayTransactionId(), is(TRANSACTION_ID));
-        verify(mockedChargeDao).notifyStatusHasChanged(charge, Optional.empty());
+        verify(mockedChargeEventDao).persistChargeEventOf(charge, Optional.empty());
         assertThat(charge.get3dsDetails(), is(nullValue()));
         assertThat(charge.getCardDetails(), is(notNullValue()));
     }
@@ -137,7 +137,7 @@ public class CardAuthoriseServiceTest extends CardServiceTest {
         assertThat(charge.getStatus(), is(AUTHORISATION_SUCCESS.getValue()));
         assertThat(charge.getGatewayTransactionId(), is(TRANSACTION_ID));
         assertThat(charge.get3dsDetails(), is(nullValue()));
-        verify(mockedChargeDao).notifyStatusHasChanged(charge, Optional.empty());
+        verify(mockedChargeEventDao).persistChargeEventOf(charge, Optional.empty());
     }
 
     @Test
@@ -150,7 +150,7 @@ public class CardAuthoriseServiceTest extends CardServiceTest {
         assertThat(response.isSuccessful(), is(true));
 
         assertThat(charge.getStatus(), is(AUTHORISATION_3DS_REQUIRED.getValue()));
-        verify(mockedChargeDao).notifyStatusHasChanged(charge, Optional.empty());
+        verify(mockedChargeEventDao).persistChargeEventOf(charge, Optional.empty());
         assertThat(charge.get3dsDetails().getIssuerUrl(), is(ISSUER_URL_FROM_PROVIDER));
         assertThat(charge.get3dsDetails().getPaRequest(), is(PA_REQ_VALUE_FROM_PROVIDER));
     }
@@ -201,7 +201,7 @@ public class CardAuthoriseServiceTest extends CardServiceTest {
             fail("Expected test to fail with ConflictRuntimeException due to configuration conflicting in 3ds requirements");
         } catch (ConflictRuntimeException e) {
             assertThat(charge.getStatus(), is(AUTHORISATION_ABORTED.toString()));
-            verify(mockedChargeDao).notifyStatusHasChanged(charge, Optional.empty());
+            verify(mockedChargeEventDao).persistChargeEventOf(charge, Optional.empty());
         }
     }
 

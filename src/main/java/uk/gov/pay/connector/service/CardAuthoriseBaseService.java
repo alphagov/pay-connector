@@ -3,6 +3,7 @@ package uk.gov.pay.connector.service;
 import io.dropwizard.setup.Environment;
 import org.apache.commons.lang3.tuple.Pair;
 import uk.gov.pay.connector.dao.ChargeDao;
+import uk.gov.pay.connector.dao.ChargeEventDao;
 import uk.gov.pay.connector.exception.ConflictRuntimeException;
 import uk.gov.pay.connector.exception.GenericGatewayRuntimeException;
 import uk.gov.pay.connector.exception.OperationAlreadyInProgressRuntimeException;
@@ -21,8 +22,8 @@ public abstract class CardAuthoriseBaseService<T extends AuthorisationDetails> e
 
     private final CardExecutorService cardExecutorService;
 
-    public CardAuthoriseBaseService(ChargeDao chargeDao, PaymentProviders providers, CardExecutorService cardExecutorService, Environment environment) {
-        super(chargeDao, providers, environment);
+    public CardAuthoriseBaseService(ChargeDao chargeDao, ChargeEventDao chargeEventDao, PaymentProviders providers, CardExecutorService cardExecutorService, Environment environment) {
+        super(chargeDao, chargeEventDao, providers, environment);
         this.cardExecutorService = cardExecutorService;
     }
 

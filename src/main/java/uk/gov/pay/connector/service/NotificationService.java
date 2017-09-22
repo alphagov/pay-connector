@@ -5,6 +5,7 @@ import fj.data.Either;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import uk.gov.pay.connector.dao.ChargeDao;
+import uk.gov.pay.connector.dao.ChargeEventDao;
 import uk.gov.pay.connector.dao.RefundDao;
 import uk.gov.pay.connector.exception.InvalidStateTransitionException;
 import uk.gov.pay.connector.model.*;
@@ -23,13 +24,15 @@ public class NotificationService {
     private final Logger logger = LoggerFactory.getLogger(getClass());
 
     private final ChargeDao chargeDao;
+    private final ChargeEventDao chargeEventDao;
     private final RefundDao refundDao;
     private final PaymentProviders paymentProviders;
     private final DnsUtils dnsUtils;
 
     @Inject
-    public NotificationService(ChargeDao chargeDao, RefundDao refundDao, PaymentProviders paymentProviders, DnsUtils dnsUtils) {
+    public NotificationService(ChargeDao chargeDao, ChargeEventDao chargeEventDao, RefundDao refundDao, PaymentProviders paymentProviders, DnsUtils dnsUtils) {
         this.chargeDao = chargeDao;
+        this.chargeEventDao = chargeEventDao;
         this.refundDao = refundDao;
         this.paymentProviders = paymentProviders;
         this.dnsUtils = dnsUtils;
@@ -202,7 +205,7 @@ public class NotificationService {
                     gatewayAccount.getGatewayName(),
                     gatewayAccount.getType());
 
-            chargeDao.notifyStatusHasChanged(chargeEntity, Optional.ofNullable(notification.getGatewayEventDate()));
+            chargeEventDao.persistChargeEventOf(chargeEntity, Optional.ofNullable(notification.getGatewayEventDate()));
         }
 
         private <T> void updateRefundStatus(EvaluatedRefundStatusNotification<T> notification) {

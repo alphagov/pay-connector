@@ -5,6 +5,7 @@ import io.dropwizard.setup.Environment;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import uk.gov.pay.connector.dao.ChargeDao;
+import uk.gov.pay.connector.dao.ChargeEventDao;
 import uk.gov.pay.connector.exception.ChargeExpiredRuntimeException;
 import uk.gov.pay.connector.exception.IllegalStateRuntimeException;
 import uk.gov.pay.connector.exception.OperationAlreadyInProgressRuntimeException;
@@ -19,6 +20,7 @@ import static uk.gov.pay.connector.model.domain.ChargeStatus.fromString;
 
 public abstract class CardService<T extends BaseResponse> {
     protected final ChargeDao chargeDao;
+    protected final ChargeEventDao  chargeEventDao;
     private final PaymentProviders providers;
     protected final Logger logger = LoggerFactory.getLogger(getClass());
     protected MetricRegistry metricRegistry;
@@ -40,8 +42,9 @@ public abstract class CardService<T extends BaseResponse> {
         }
     }
 
-    protected CardService(ChargeDao chargeDao, PaymentProviders providers, Environment environment) {
+    protected CardService(ChargeDao chargeDao, ChargeEventDao chargeEventDao, PaymentProviders providers, Environment environment) {
         this.chargeDao = chargeDao;
+        this.chargeEventDao = chargeEventDao;
         this.providers = providers;
         this.metricRegistry = environment.metrics();
     }

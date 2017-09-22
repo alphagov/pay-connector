@@ -6,6 +6,7 @@ import io.dropwizard.setup.Environment;
 import org.apache.commons.lang3.StringUtils;
 import uk.gov.pay.connector.dao.CardTypeDao;
 import uk.gov.pay.connector.dao.ChargeDao;
+import uk.gov.pay.connector.dao.ChargeEventDao;
 import uk.gov.pay.connector.exception.ChargeNotFoundRuntimeException;
 import uk.gov.pay.connector.model.GatewayError;
 import uk.gov.pay.connector.model.domain.AddressEntity;
@@ -37,12 +38,13 @@ public class CardAuthoriseService extends CardAuthoriseBaseService<AuthCardDetai
 
     @Inject
     public CardAuthoriseService(ChargeDao chargeDao,
+                                ChargeEventDao chargeEventDao,
                                 CardTypeDao cardTypeDao,
                                 PaymentProviders providers,
                                 CardExecutorService cardExecutorService,
                                 Auth3dsDetailsFactory auth3dsDetailsFactory,
                                 Environment environment) {
-        super(chargeDao, providers, cardExecutorService, environment);
+        super(chargeDao, chargeEventDao, providers, cardExecutorService, environment);
         this.cardTypeDao = cardTypeDao;
         this.auth3dsDetailsFactory = auth3dsDetailsFactory;
     }
@@ -61,7 +63,7 @@ public class CardAuthoriseService extends CardAuthoriseBaseService<AuthCardDetai
                 logger.error("AuthCardDetails authorisation failed pre operation. Card brand requires 3ds but Gateway account has 3ds disabled - charge_external_id={}, operation_type={}, card_brand={}",
                         chargeEntity.getExternalId(), OperationType.AUTHORISATION.getValue(), cardBrand);
 
-                chargeDao.notifyStatusHasChanged(chargeEntity, Optional.empty());
+                chargeEventDao.persistChargeEventOf(chargeEntity, Optional.empty());
 
             } else {
                 chargeEntity = preOperation(chargeEntity, OperationType.AUTHORISATION, getLegalStates(), AUTHORISATION_READY);
@@ -129,7 +131,7 @@ public class CardAuthoriseService extends CardAuthoriseBaseService<AuthCardDetai
             }
 
             appendCardDetails(chargeEntity, authCardDetails);
-            chargeDao.notifyStatusHasChanged(chargeEntity, Optional.empty());
+            chargeEventDao.persistChargeEventOf(chargeEntity, Optional.empty());
             return operationResponse;
 
         }).orElseThrow(() -> new ChargeNotFoundRuntimeException(chargeId));

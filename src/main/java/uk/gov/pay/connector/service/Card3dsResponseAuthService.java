@@ -5,6 +5,7 @@ import com.google.inject.persist.Transactional;
 import io.dropwizard.setup.Environment;
 import org.apache.commons.lang3.StringUtils;
 import uk.gov.pay.connector.dao.ChargeDao;
+import uk.gov.pay.connector.dao.ChargeEventDao;
 import uk.gov.pay.connector.exception.ChargeNotFoundRuntimeException;
 import uk.gov.pay.connector.model.domain.Auth3dsDetails;
 import uk.gov.pay.connector.model.domain.ChargeEntity;
@@ -22,13 +23,13 @@ import static uk.gov.pay.connector.model.domain.ChargeStatus.AUTHORISATION_3DS_R
 
 public class Card3dsResponseAuthService extends CardAuthoriseBaseService<Auth3dsDetails> {
 
-
     @Inject
     public Card3dsResponseAuthService(ChargeDao chargeDao,
+                                      ChargeEventDao chargeEventDao,
                                       PaymentProviders providers,
                                       CardExecutorService cardExecutorService,
                                       Environment environment) {
-        super(chargeDao, providers, cardExecutorService, environment);
+        super(chargeDao, chargeEventDao, providers, cardExecutorService, environment);
     }
 
     public GatewayResponse<BaseAuthoriseResponse> operation(ChargeEntity chargeEntity, Auth3dsDetails auth3DsDetails) {
@@ -74,7 +75,7 @@ public class Card3dsResponseAuthService extends CardAuthoriseBaseService<Auth3ds
                 chargeEntity.setGatewayTransactionId(transactionId);
             }
 
-            chargeDao.notifyStatusHasChanged(chargeEntity, Optional.empty());
+            chargeEventDao.persistChargeEventOf(chargeEntity, Optional.empty());
             return operationResponse;
 
         }).orElseThrow(() -> new ChargeNotFoundRuntimeException(chargeId));

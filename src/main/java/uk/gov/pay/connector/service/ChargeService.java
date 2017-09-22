@@ -1,14 +1,9 @@
 package uk.gov.pay.connector.service;
 
 import com.google.inject.persist.Transactional;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 import uk.gov.pay.connector.app.ConnectorConfiguration;
 import uk.gov.pay.connector.app.LinksConfig;
-import uk.gov.pay.connector.dao.CardTypeDao;
-import uk.gov.pay.connector.dao.ChargeDao;
-import uk.gov.pay.connector.dao.GatewayAccountDao;
-import uk.gov.pay.connector.dao.TokenDao;
+import uk.gov.pay.connector.dao.*;
 import uk.gov.pay.connector.model.ChargeResponse;
 import uk.gov.pay.connector.model.builder.PatchRequestBuilder;
 import uk.gov.pay.connector.model.domain.CardTypeEntity;
@@ -22,10 +17,7 @@ import javax.inject.Inject;
 import javax.ws.rs.core.UriBuilder;
 import javax.ws.rs.core.UriInfo;
 import java.net.URI;
-import java.time.ZonedDateTime;
-import java.util.ArrayList;
 import java.util.HashMap;
-import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 
@@ -40,9 +32,8 @@ import static uk.gov.pay.connector.resources.ApiPaths.REFUNDS_API_PATH;
 
 public class ChargeService {
 
-    private static final Logger logger = LoggerFactory.getLogger(ChargeService.class);
-
     private final ChargeDao chargeDao;
+    private final ChargeEventDao chargeEventDao;
     private final CardTypeDao cardTypeDao;
     private final TokenDao tokenDao;
     private final GatewayAccountDao gatewayAccountDao;
@@ -50,9 +41,10 @@ public class ChargeService {
     private final PaymentProviders providers;
 
     @Inject
-    public ChargeService(TokenDao tokenDao, ChargeDao chargeDao, CardTypeDao cardTypeDao, GatewayAccountDao gatewayAccountDao, ConnectorConfiguration config, PaymentProviders providers) {
+    public ChargeService(TokenDao tokenDao, ChargeDao chargeDao, ChargeEventDao chargeEventDao, CardTypeDao cardTypeDao, GatewayAccountDao gatewayAccountDao, ConnectorConfiguration config, PaymentProviders providers) {
         this.tokenDao = tokenDao;
         this.chargeDao = chargeDao;
+        this.chargeEventDao = chargeEventDao;
         this.cardTypeDao = cardTypeDao;
         this.gatewayAccountDao = gatewayAccountDao;
         this.linksConfig = config.getLinks();
@@ -70,6 +62,7 @@ public class ChargeService {
                     chargeRequest.get("email")
             );
             chargeDao.persist(chargeEntity);
+            chargeEventDao.persistChargeEventOf(chargeEntity, Optional.empty());
             return Optional.of(chargeResponseBuilder(uriInfo, chargeEntity, createNewChargeEntityToken(chargeEntity)).build());
         }).orElseGet(Optional::empty);
     }

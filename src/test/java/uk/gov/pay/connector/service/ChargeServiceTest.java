@@ -5,15 +5,11 @@ import org.junit.Before;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.mockito.ArgumentCaptor;
-import org.mockito.InOrder;
 import org.mockito.Mock;
 import org.mockito.runners.MockitoJUnitRunner;
 import uk.gov.pay.connector.app.ConnectorConfiguration;
 import uk.gov.pay.connector.app.LinksConfig;
-import uk.gov.pay.connector.dao.CardTypeDao;
-import uk.gov.pay.connector.dao.ChargeDao;
-import uk.gov.pay.connector.dao.GatewayAccountDao;
-import uk.gov.pay.connector.dao.TokenDao;
+import uk.gov.pay.connector.dao.*;
 import uk.gov.pay.connector.model.ChargeResponse;
 import uk.gov.pay.connector.model.domain.ChargeEntity;
 import uk.gov.pay.connector.model.domain.ChargeStatus;
@@ -30,7 +26,6 @@ import java.util.HashMap;
 import java.util.Map;
 import java.util.Optional;
 
-import static java.util.Arrays.asList;
 import static java.util.Collections.emptyMap;
 import static javax.ws.rs.HttpMethod.GET;
 import static javax.ws.rs.HttpMethod.POST;
@@ -42,7 +37,6 @@ import static org.junit.Assert.assertThat;
 import static org.mockito.ArgumentCaptor.forClass;
 import static org.mockito.Mockito.any;
 import static org.mockito.Mockito.doAnswer;
-import static org.mockito.Mockito.inOrder;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.verify;
@@ -66,6 +60,8 @@ public class ChargeServiceTest {
     private TokenDao mockedTokenDao;
     @Mock
     private ChargeDao mockedChargeDao;
+    @Mock
+    private ChargeEventDao mockedChargeEventDao;
     @Mock
     private GatewayAccountDao mockedGatewayAccountDao;
     @Mock
@@ -105,7 +101,7 @@ public class ChargeServiceTest {
         when(mockedProviders.byName(any(PaymentGatewayName.class))).thenReturn(mockedPaymentProvider);
         when(mockedPaymentProvider.getExternalChargeRefundAvailability(any(ChargeEntity.class))).thenReturn(EXTERNAL_AVAILABLE);
 
-        service = new ChargeService(mockedTokenDao, mockedChargeDao, mockedCardTypeDao, mockedGatewayAccountDao, mockedConfig, mockedProviders);
+        service = new ChargeService(mockedTokenDao, mockedChargeDao, mockedChargeEventDao, mockedCardTypeDao, mockedGatewayAccountDao, mockedConfig, mockedProviders);
     }
 
     @Test
@@ -166,6 +162,7 @@ public class ChargeServiceTest {
         }});
 
         assertThat(response, is(expectedChargeResponse.build()));
+        verify(mockedChargeEventDao).persistChargeEventOf(createdChargeEntity,Optional.empty());
     }
 
     @Test
