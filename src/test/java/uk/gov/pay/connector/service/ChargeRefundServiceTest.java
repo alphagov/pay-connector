@@ -118,12 +118,10 @@ public class ChargeRefundServiceTest {
         when(mockChargeDao.findByExternalIdAndGatewayAccount(externalChargeId, accountId))
                 .thenReturn(Optional.of(charge));
 
-        when(mockChargeDao.merge(charge)).thenReturn(charge);
-
         when(mockProviders.byName(WORLDPAY)).thenReturn(mockProvider);
         setupWorldpayMock(spiedRefundEntity.getExternalId(), null);
 
-        when(mockRefundDao.merge(any(RefundEntity.class))).thenReturn(spiedRefundEntity);
+        when(mockRefundDao.findById(any(Long.class))).thenReturn(Optional.of(spiedRefundEntity)); // Ids generated on persist
 
         ChargeRefundService.Response gatewayResponse = chargeRefundService.doRefund(accountId, externalChargeId, new RefundRequest(amount, charge.getAmount(), userExternalId)).get();
 
@@ -133,10 +131,9 @@ public class ChargeRefundServiceTest {
         assertThat(gatewayResponse.getRefundEntity(), is(spiedRefundEntity));
 
         verify(mockChargeDao).findByExternalIdAndGatewayAccount(externalChargeId, accountId);
-        verify(mockChargeDao).merge(charge);
         verify(mockRefundDao).persist(argThat(aRefundEntity(amount, charge)));
         verify(mockProvider).refund(argThat(aRefundRequestWith(charge, amount)));
-        verify(mockRefundDao).merge(any(RefundEntity.class));
+        verify(mockRefundDao).findById(any(Long.class));
         verify(spiedRefundEntity).setStatus(RefundStatus.REFUND_SUBMITTED);
         verify(spiedRefundEntity).setReference(refundEntity.getExternalId());
         verifyNoMoreInteractions(mockChargeDao, mockRefundDao);
@@ -169,7 +166,7 @@ public class ChargeRefundServiceTest {
         when(mockProviders.byName(SMARTPAY)).thenReturn(mockProvider);
         setupSmartpayMock("refund-pspReference", null);
 
-        when(mockRefundDao.merge(any(RefundEntity.class))).thenReturn(spiedRefundEntity);
+        when(mockRefundDao.findById(any(Long.class))).thenReturn(Optional.of(spiedRefundEntity));
 
         ChargeRefundService.Response gatewayResponse = chargeRefundService.doRefund(accountId, externalChargeId, new RefundRequest(amount, charge.getAmount(), userExternalId)).get();
 
@@ -179,10 +176,9 @@ public class ChargeRefundServiceTest {
         assertThat(gatewayResponse.getRefundEntity(), is(spiedRefundEntity));
 
         verify(mockChargeDao).findByExternalIdAndGatewayAccount(externalChargeId, accountId);
-        verify(mockChargeDao).merge(charge);
         verify(mockRefundDao).persist(argThat(aRefundEntity(amount, charge)));
         verify(mockProvider).refund(argThat(aRefundRequestWith(charge, amount)));
-        verify(mockRefundDao).merge(any(RefundEntity.class));
+        verify(mockRefundDao).findById(any(Long.class));
         verify(spiedRefundEntity).setStatus(RefundStatus.REFUND_SUBMITTED);
         verify(spiedRefundEntity).setReference("refund-pspReference");
         verifyNoMoreInteractions(mockChargeDao, mockRefundDao);
@@ -210,11 +206,10 @@ public class ChargeRefundServiceTest {
 
         when(mockChargeDao.findByExternalIdAndGatewayAccount(externalChargeId, accountId))
                 .thenReturn(Optional.of(charge));
-        when(mockChargeDao.merge(charge)).thenReturn(charge);
         when(mockProviders.byName(WORLDPAY)).thenReturn(mockProvider);
         setupWorldpayMock(providerReference, null);
 
-        when(mockRefundDao.merge(any(RefundEntity.class))).thenReturn(spiedRefundEntity);
+        when(mockRefundDao.findById(any(Long.class))).thenReturn(Optional.of(spiedRefundEntity));
 
         ChargeRefundService.Response gatewayResponse = chargeRefundService.doRefund(accountId, externalChargeId, new RefundRequest(amount, charge.getAmount(), userExternalId)).get();
         assertThat(gatewayResponse.getRefundGatewayResponse().isSuccessful(), is(true));
@@ -242,11 +237,11 @@ public class ChargeRefundServiceTest {
 
         when(mockChargeDao.findByExternalIdAndGatewayAccount(externalChargeId, accountId))
                 .thenReturn(Optional.of(charge));
-        when(mockChargeDao.merge(charge)).thenReturn(charge);
+
         when(mockProviders.byName(WORLDPAY)).thenReturn(mockProvider);
         setupWorldpayMock(null, "error-code");
 
-        when(mockRefundDao.merge(any(RefundEntity.class))).thenReturn(spiedRefundEntity);
+        when(mockRefundDao.findById(any(Long.class))).thenReturn(Optional.of(spiedRefundEntity));
 
         ChargeRefundService.Response gatewayResponse = chargeRefundService.doRefund(accountId, externalChargeId, new RefundRequest(amount, charge.getAmount(), userExternalId)).get();
         assertThat(gatewayResponse.getRefundGatewayResponse().isSuccessful(), is(false));
@@ -276,13 +271,11 @@ public class ChargeRefundServiceTest {
         when(mockChargeDao.findByExternalIdAndGatewayAccount(externalChargeId, accountId))
                 .thenReturn(Optional.of(charge));
 
-        when(mockChargeDao.merge(charge)).thenReturn(charge);
-
         when(mockProviders.byName(SANDBOX)).thenReturn(mockProvider);
 
         setupWorldpayMock(reference, null);
 
-        when(mockRefundDao.merge(any(RefundEntity.class))).thenReturn(spiedRefundEntity);
+        when(mockRefundDao.findById(any(Long.class))).thenReturn(Optional.of(spiedRefundEntity));
 
         ChargeRefundService.Response gatewayResponse = chargeRefundService.doRefund(accountId, externalChargeId, new RefundRequest(amount, charge.getAmount(), userExternalId)).get();
 
@@ -292,10 +285,9 @@ public class ChargeRefundServiceTest {
         assertThat(gatewayResponse.getRefundEntity(), is(spiedRefundEntity));
 
         verify(mockChargeDao).findByExternalIdAndGatewayAccount(externalChargeId, accountId);
-        verify(mockChargeDao).merge(charge);
         verify(mockRefundDao).persist(argThat(aRefundEntity(amount, charge)));
         verify(mockProvider).refund(argThat(aRefundRequestWith(charge, amount)));
-        verify(mockRefundDao).merge(any(RefundEntity.class));
+        verify(mockRefundDao).findById(any(Long.class));
         verify(spiedRefundEntity).setStatus(RefundStatus.REFUNDED);
         verifyNoMoreInteractions(mockChargeDao, mockRefundDao);
     }
@@ -333,7 +325,6 @@ public class ChargeRefundServiceTest {
 
         when(mockChargeDao.findByExternalIdAndGatewayAccount(externalChargeId, accountId))
                 .thenReturn(Optional.of(charge));
-        when(mockChargeDao.merge(charge)).thenReturn(charge);
 
         try {
             chargeRefundService.doRefund(accountId, externalChargeId, new RefundRequest(100L, 0, userExternalId));
@@ -343,7 +334,6 @@ public class ChargeRefundServiceTest {
         }
 
         verify(mockChargeDao).findByExternalIdAndGatewayAccount(externalChargeId, accountId);
-        verify(mockChargeDao).merge(charge);
         verifyNoMoreInteractions(mockChargeDao, mockRefundDao);
     }
 
@@ -367,12 +357,11 @@ public class ChargeRefundServiceTest {
 
         when(mockChargeDao.findByExternalIdAndGatewayAccount(externalChargeId, accountId))
                 .thenReturn(Optional.of(capturedCharge));
-        when(mockChargeDao.merge(capturedCharge)).thenReturn(capturedCharge);
         when(mockProviders.byName(WORLDPAY)).thenReturn(mockProvider);
 
         setupWorldpayMock(null, "error-code");
-        when(mockRefundDao.merge(any(RefundEntity.class))).thenReturn(spiedRefundEntity);
-        when(mockChargeDao.merge(capturedCharge)).thenReturn(capturedCharge);
+        when(mockRefundDao.findById(any(Long.class))).thenReturn(Optional.of(spiedRefundEntity));
+
         ChargeRefundService.Response gatewayResponse = chargeRefundService.doRefund(accountId, externalChargeId, new RefundRequest(amount, capturedCharge.getAmount(), userExternalId)).get();
 
         assertThat(gatewayResponse.getRefundGatewayResponse().isFailed(), is(true));
@@ -381,10 +370,9 @@ public class ChargeRefundServiceTest {
         assertThat(gatewayResponse.getRefundGatewayResponse().getGatewayError().get().getErrorType(), is(ErrorType.GENERIC_GATEWAY_ERROR));
 
         verify(mockChargeDao).findByExternalIdAndGatewayAccount(externalChargeId, accountId);
-        verify(mockChargeDao).merge(capturedCharge);
         verify(mockRefundDao).persist(argThat(aRefundEntity(amount, capturedCharge)));
         verify(mockProvider).refund(argThat(aRefundRequestWith(capturedCharge, amount)));
-        verify(mockRefundDao).merge(any(RefundEntity.class));
+        verify(mockRefundDao).findById(any(Long.class));
         verify(spiedRefundEntity).setStatus(RefundStatus.REFUND_ERROR);
         verifyNoMoreInteractions(mockChargeDao, mockRefundDao);
     }

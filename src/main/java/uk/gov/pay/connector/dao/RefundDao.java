@@ -2,6 +2,7 @@ package uk.gov.pay.connector.dao;
 
 import com.google.inject.Provider;
 import com.google.inject.persist.Transactional;
+import uk.gov.pay.connector.model.domain.ChargeEntity;
 import uk.gov.pay.connector.model.domain.RefundEntity;
 import uk.gov.pay.connector.model.domain.RefundHistory;
 import uk.gov.pay.connector.model.domain.RefundStatus;
@@ -17,6 +18,10 @@ public class RefundDao extends JpaDao<RefundEntity> {
     @Inject
     public RefundDao(final Provider<EntityManager> entityManager) {
         super(entityManager);
+    }
+
+    public Optional<RefundEntity> findById(Long refundId) {
+        return super.findById(RefundEntity.class, refundId);
     }
 
     public Optional<RefundEntity> findByProviderAndReference(String provider, String reference) {

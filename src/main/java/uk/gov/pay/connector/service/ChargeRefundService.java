@@ -66,33 +66,26 @@ public class ChargeRefundService {
     }
 
     public Optional<Response> doRefund(Long accountId, String chargeId, RefundRequest refundRequest) {
-        return chargeDao.findByExternalIdAndGatewayAccount(chargeId, accountId)
-                .map(chargeEntity -> refundWithGateway(chargeEntity, refundRequest))
-                .orElseThrow(() -> new ChargeNotFoundRuntimeException(chargeId));
-    }
-
-    private Optional<Response> refundWithGateway(ChargeEntity charge, RefundRequest refundRequest) {
         return Optional.ofNullable(transactionFlowProvider.get()
-                .executeNext(prepareForRefund(providers, charge, refundRequest))
+                .executeNext(prepareForRefund(providers, accountId, chargeId, refundRequest))
                 .executeNext(doGatewayRefund(providers))
                 .executeNext(finishRefund())
                 .complete().get(Response.class));
     }
 
-    private PreTransactionalOperation<TransactionContext, RefundEntity> prepareForRefund(PaymentProviders providers, ChargeEntity chargeEntity, RefundRequest refundRequest) {
-        return context -> {
+    private PreTransactionalOperation<TransactionContext, RefundEntity> prepareForRefund(PaymentProviders providers, Long accountId, String chargeId, RefundRequest refundRequest) {
+        return context -> chargeDao.findByExternalIdAndGatewayAccount(chargeId, accountId).map(chargeEntity -> {
 
-            ChargeEntity reloadedCharge = chargeDao.merge(chargeEntity);
             ExternalChargeRefundAvailability refundAvailability = providers.byName(chargeEntity.getPaymentGatewayName()).getExternalChargeRefundAvailability(chargeEntity);
-            GatewayAccountEntity gatewayAccount = reloadedCharge.getGatewayAccount();
-            checkIfChargeIsRefundableOrTerminate(reloadedCharge, refundAvailability, gatewayAccount);
+            GatewayAccountEntity gatewayAccount = chargeEntity.getGatewayAccount();
+            checkIfChargeIsRefundableOrTerminate(chargeEntity, refundAvailability, gatewayAccount);
 
-            long totalAmountToBeRefunded = reloadedCharge.getTotalAmountToBeRefunded();
-            checkIfRefundRequestIsInConflictOrTerminate(refundRequest, reloadedCharge, totalAmountToBeRefunded);
+            long totalAmountToBeRefunded = chargeEntity.getTotalAmountToBeRefunded();
+            checkIfRefundRequestIsInConflictOrTerminate(refundRequest, chargeEntity, totalAmountToBeRefunded);
 
-            checkIfRefundAmountWithinLimitOrTerminate(refundRequest, reloadedCharge, refundAvailability, gatewayAccount, totalAmountToBeRefunded);
+            checkIfRefundAmountWithinLimitOrTerminate(refundRequest, chargeEntity, refundAvailability, gatewayAccount, totalAmountToBeRefunded);
 
-            RefundEntity refundEntity = completePrepareRefund(refundRequest, reloadedCharge);
+            RefundEntity refundEntity = completePrepareRefund(refundRequest, chargeEntity);
 
             logger.info("Card refund request sent - charge_external_id={}, status={}, amount={}, transaction_id={}, account_id={}, operation_type=Refund, amount_available_refund={}, amount_requested_refund={}, provider={}, provider_type={}, user_external_id={}",
                     chargeEntity.getExternalId(),
@@ -107,7 +100,8 @@ public class ChargeRefundService {
                     refundRequest.getUserExternalId());
 
             return refundEntity;
-        };
+
+        }).orElseThrow(() -> new ChargeNotFoundRuntimeException(chargeId));
     }
 
     private NonTransactionalOperation<TransactionContext, GatewayResponse> doGatewayRefund(PaymentProviders providers) {
@@ -119,12 +113,13 @@ public class ChargeRefundService {
 
     private TransactionalOperation<TransactionContext, Response> finishRefund() {
         return context -> {
-            RefundEntity refundEntity = refundDao.merge(context.get(RefundEntity.class));
+            RefundEntity refundEntity = refundDao.findById(context.get(RefundEntity.class).getId()).get();
+
             GatewayResponse<BaseRefundResponse> gatewayResponse = context.get(GatewayResponse.class);
             ChargeEntity chargeEntity = refundEntity.getChargeEntity();
 
             RefundStatus status = determineRefundStatus(gatewayResponse, chargeEntity);
-            String reference = getRefundReference(refundEntity,gatewayResponse);
+            String reference = getRefundReference(refundEntity, gatewayResponse);
 
             logger.info("Card refund response received -  transaction_id={}, charge_id={}, charge_external_id={}, refund_id={}, refund_external_id={}, refund_reference={}, refund_status={}, refund_amount={}",
                     chargeEntity.getGatewayTransactionId(), chargeEntity.getId(), chargeEntity.getExternalId(), refundEntity.getId(), refundEntity.getExternalId(), reference, refundEntity.getStatus(), refundEntity.getAmount());
@@ -190,6 +185,7 @@ public class ChargeRefundService {
      * <p>Smartpay -> We get the pspReference returned by them. This will also be sent with the notification.</p>
      * <p>ePDQ -> We construct PAYID/PAYIDSUB and use that as the reference. PAYID and PAYIDSUB will be sent with the
      * notification.</p>
+     *
      * @see RefundGatewayRequest valueOf()
      */
     private String getRefundReference(RefundEntity refundEntity, GatewayResponse<BaseRefundResponse> gatewayResponse) {
