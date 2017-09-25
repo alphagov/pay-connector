@@ -73,6 +73,7 @@ public class ChargeRefundServiceTest {
         WorldpayRefundResponse worldpayResponse = mock(WorldpayRefundResponse.class);
         when(worldpayResponse.getReference()).thenReturn(Optional.ofNullable(reference));
         when(worldpayResponse.getErrorCode()).thenReturn(errorCode);
+        when(worldpayResponse.toString()).thenReturn("Randompay refund response (errorCode: " + errorCode + ")");
         GatewayResponseBuilder<WorldpayRefundResponse> gatewayResponseBuilder = responseBuilder();
         GatewayResponse refundResponse = gatewayResponseBuilder
                 .withResponse(worldpayResponse)
@@ -359,7 +360,8 @@ public class ChargeRefundServiceTest {
 
         assertThat(gatewayResponse.getRefundGatewayResponse().isFailed(), is(true));
         assertThat(gatewayResponse.getRefundGatewayResponse().getGatewayError().isPresent(), is(true));
-        assertThat(gatewayResponse.getRefundGatewayResponse().getGatewayError().get().getMessage(), is("[error-code]"));
+        assertThat(gatewayResponse.getRefundGatewayResponse().getGatewayError().get().getMessage(),
+                is("Randompay refund response (errorCode: error-code)"));
         assertThat(gatewayResponse.getRefundGatewayResponse().getGatewayError().get().getErrorType(), is(ErrorType.GENERIC_GATEWAY_ERROR));
 
         verify(mockChargeDao).findByExternalIdAndGatewayAccount(externalChargeId, accountId);

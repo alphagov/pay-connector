@@ -45,49 +45,7 @@ public class GatewayResponseTest {
     }
 
     @Test
-    public void shouldHandleAGatewayResponseWithAnErrorCode() {
-        GatewayError error = new GatewayError(
-                "[errorCode]",
-                GENERIC_GATEWAY_ERROR);
-
-        BaseResponse baseResponse = createBaseResponseWith("errorCode", null);
-        GatewayResponseBuilder<BaseResponse> gatewayResponseBuilder = responseBuilder();
-        GatewayResponse<BaseResponse> gatewayResponse = gatewayResponseBuilder
-                .withResponse(baseResponse)
-                .build();
-        assertThat(gatewayResponse.isFailed(), is(true));
-        assertThat(gatewayResponse.isSuccessful(), is(false));
-        assertThat(gatewayResponse.getBaseResponse().isPresent(), is(false));
-        assertThat(gatewayResponse.getGatewayError().isPresent(), is(true));
-        assertThat(gatewayResponse.getGatewayError().get().getMessage(), is(error.getMessage()));
-        assertThat(gatewayResponse.getGatewayError().get().getErrorType(), is(GENERIC_GATEWAY_ERROR));
-    }
-
-    @Test
-    public void shouldHandleAGatewayResponseWithAnErrorMessage() {
-        GatewayError error = new GatewayError(
-                "an error",
-                GENERIC_GATEWAY_ERROR);
-
-        BaseResponse baseResponse = createBaseResponseWith(null, "an error");
-        GatewayResponseBuilder<BaseResponse> gatewayResponseBuilder = responseBuilder();
-        GatewayResponse<BaseResponse> gatewayResponse = gatewayResponseBuilder
-                .withResponse(baseResponse)
-                .build();
-        assertThat(gatewayResponse.isFailed(), is(true));
-        assertThat(gatewayResponse.isSuccessful(), is(false));
-        assertThat(gatewayResponse.getBaseResponse().isPresent(), is(false));
-        assertThat(gatewayResponse.getGatewayError().isPresent(), is(true));
-        assertThat(gatewayResponse.getGatewayError().get().getMessage(), is(error.getMessage()));
-        assertThat(gatewayResponse.getGatewayError().get().getErrorType(), is(GENERIC_GATEWAY_ERROR));
-    }
-
-    @Test
     public void shouldHandleAGatewayResponseWithAnErrorCodeAndMessage() {
-        GatewayError error = new GatewayError(
-                "[123] oops, something went wrong",
-                GENERIC_GATEWAY_ERROR);
-
         BaseResponse baseResponse = createBaseResponseWith("123", "oops, something went wrong");
         GatewayResponseBuilder<BaseResponse> gatewayResponseBuilder = responseBuilder();
         GatewayResponse<BaseResponse> gatewayResponse = gatewayResponseBuilder
@@ -97,7 +55,8 @@ public class GatewayResponseTest {
         assertThat(gatewayResponse.isSuccessful(), is(false));
         assertThat(gatewayResponse.getBaseResponse().isPresent(), is(false));
         assertThat(gatewayResponse.getGatewayError().isPresent(), is(true));
-        assertThat(gatewayResponse.getGatewayError().get().getMessage(), is(error.getMessage()));
+        assertThat(gatewayResponse.getGatewayError().get().getMessage(),
+                is("Randompay something response (errorCode: 123, errorMessage: oops, something went wrong)"));
         assertThat(gatewayResponse.getGatewayError().get().getErrorType(), is(GENERIC_GATEWAY_ERROR));
     }
 
@@ -112,6 +71,11 @@ public class GatewayResponseTest {
             @Override
             public String getErrorMessage() {
                 return errorMessage;
+            }
+
+            @Override
+            public String toString() {
+                return "Randompay something response (errorCode: " + errorCode + ", errorMessage: " + errorMessage + ')';
             }
         };
     }

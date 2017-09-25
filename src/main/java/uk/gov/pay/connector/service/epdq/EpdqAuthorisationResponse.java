@@ -1,9 +1,11 @@
 package uk.gov.pay.connector.service.epdq;
 
+import org.apache.commons.lang3.StringUtils;
 import uk.gov.pay.connector.service.BaseAuthoriseResponse;
 
 import javax.xml.bind.annotation.XmlAttribute;
 import javax.xml.bind.annotation.XmlRootElement;
+import java.util.StringJoiner;
 
 @XmlRootElement(name = "ncresponse")
 public class EpdqAuthorisationResponse extends EpdqBaseResponse implements BaseAuthoriseResponse {
@@ -68,6 +70,24 @@ public class EpdqAuthorisationResponse extends EpdqBaseResponse implements BaseA
         if (hasError())
             return super.getErrorMessage();
         return null;
+    }
+
+    @Override
+    public String toString() {
+        StringJoiner joiner = new StringJoiner(", ", "ePDQ authorisation response (", ")");
+        if (StringUtils.isNotBlank(getTransactionId())) {
+            joiner.add("PAYID: " + getTransactionId());
+        }
+        if (StringUtils.isNotBlank(status)) {
+            joiner.add("STATUS: " + status);
+        }
+        if (StringUtils.isNotBlank(getErrorCode())) {
+            joiner.add("NCERROR: " + getErrorCode());
+        }
+        if (StringUtils.isNotBlank(getErrorMessage())) {
+            joiner.add("NCERRORPLUS: " + getErrorMessage());
+        }
+        return joiner.toString();
     }
 
 }

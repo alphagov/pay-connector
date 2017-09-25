@@ -23,4 +23,8 @@ abstract public class EpdqBaseResponse implements BaseResponse {
     public String getErrorMessage() {
         return trim(errorMessage);
     }
+
+    @Override
+    public abstract String toString();
+
 }

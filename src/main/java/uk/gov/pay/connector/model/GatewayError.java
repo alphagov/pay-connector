@@ -1,6 +1,11 @@
 package uk.gov.pay.connector.model;
 
-import static uk.gov.pay.connector.model.ErrorType.*;
+import static uk.gov.pay.connector.model.ErrorType.GATEWAY_CONNECTION_SOCKET_ERROR;
+import static uk.gov.pay.connector.model.ErrorType.GATEWAY_CONNECTION_TIMEOUT_ERROR;
+import static uk.gov.pay.connector.model.ErrorType.GATEWAY_URL_DNS_ERROR;
+import static uk.gov.pay.connector.model.ErrorType.GENERIC_GATEWAY_ERROR;
+import static uk.gov.pay.connector.model.ErrorType.MALFORMED_RESPONSE_RECEIVED_FROM_GATEWAY;
+import static uk.gov.pay.connector.model.ErrorType.UNEXPECTED_HTTP_STATUS_CODE_FROM_GATEWAY;
 
 public class GatewayError {
     private String message;
@@ -45,9 +50,6 @@ public class GatewayError {
 
     @Override
     public String toString() {
-        return "GatewayError{" +
-                "message='" + message + '\'' +
-                ", errorType=" + errorType +
-                '}';
+        return "Gateway error: " + message;
     }
 }

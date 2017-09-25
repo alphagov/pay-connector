@@ -137,10 +137,11 @@ public class ChargeRefundService {
             RefundStatus status = gatewayResponse.isSuccessful() ? RefundStatus.REFUND_SUBMITTED : RefundStatus.REFUND_ERROR;
             String reference = getRefundReference(refundEntity, gatewayResponse);
 
-            logger.info("Card refund response received -  transaction_id={}, charge_id={}, charge_external_id={}, refund_id={}, refund_external_id={}, refund_reference={}, refund_status={}, refund_amount={}",
-                    chargeEntity.getGatewayTransactionId(), chargeEntity.getId(), chargeEntity.getExternalId(), refundEntity.getId(), refundEntity.getExternalId(), reference, refundEntity.getStatus(), refundEntity.getAmount());
-            logger.info("Refund status to update - status={}, to_status={} for transaction_id={}, charge_id={}, charge_external_id={}, refund_id={}, refund_external_id={}, refund_reference={}, refund_status={}, refund_amount={}",
-                    refundEntity.getStatus(), status, chargeEntity.getGatewayTransactionId(), chargeEntity.getId(), chargeEntity.getExternalId(), refundEntity.getId(), refundEntity.getExternalId(), reference, refundEntity.getStatus(), refundEntity.getAmount());
+            logger.info("Refund {} ({} {}) for {} ({} {}) for {} ({}) — {} ∴ {} → {}",
+                    refundEntity.getExternalId(), chargeEntity.getPaymentGatewayName().getName(), refundEntity.getReference(),
+                    chargeEntity.getExternalId(), chargeEntity.getPaymentGatewayName().getName(), chargeEntity.getGatewayTransactionId(),
+                    chargeEntity.getGatewayAccount().getAnalyticsId(), chargeEntity.getGatewayAccount().getId(),
+                    gatewayResponse, refundEntity.getStatus(), status);
 
             refundEntity.setStatus(status);
             refundEntity.setReference(reference);

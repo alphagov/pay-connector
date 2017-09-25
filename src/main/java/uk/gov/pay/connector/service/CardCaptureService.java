@@ -18,7 +18,12 @@ import java.util.List;
 import java.util.Optional;
 
 import static org.apache.commons.lang3.StringUtils.isBlank;
-import static uk.gov.pay.connector.model.domain.ChargeStatus.*;
+import static uk.gov.pay.connector.model.domain.ChargeStatus.AUTHORISATION_SUCCESS;
+import static uk.gov.pay.connector.model.domain.ChargeStatus.CAPTURED;
+import static uk.gov.pay.connector.model.domain.ChargeStatus.CAPTURE_APPROVED;
+import static uk.gov.pay.connector.model.domain.ChargeStatus.CAPTURE_APPROVED_RETRY;
+import static uk.gov.pay.connector.model.domain.ChargeStatus.CAPTURE_ERROR;
+import static uk.gov.pay.connector.model.domain.ChargeStatus.CAPTURE_SUBMITTED;
 
 public class CardCaptureService extends CardService implements TransactionalGatewayOperation<BaseCaptureResponse> {
 
@@ -92,8 +97,10 @@ public class CardCaptureService extends CardService implements TransactionalGate
                     String transactionId = operationResponse.getBaseResponse()
                             .map(BaseCaptureResponse::getTransactionId).orElse("");
 
-                    logger.info("Card capture response received - charge_external_id={}, operation_type={}, transaction_id={}, status={}",
-                            chargeEntity.getExternalId(), OperationType.CAPTURE.getValue(), transactionId, nextStatus);
+                    logger.info("Capture for {} ({} {}) for {} ({}) — {} ∴ {} → {}",
+                            chargeEntity.getExternalId(), chargeEntity.getPaymentGatewayName().getName(), chargeEntity.getGatewayTransactionId(),
+                            chargeEntity.getGatewayAccount().getAnalyticsId(), chargeEntity.getGatewayAccount().getId(),
+                            operationResponse, chargeEntity.getStatus(), nextStatus);
 
                     chargeEntity.setStatus(nextStatus);
 

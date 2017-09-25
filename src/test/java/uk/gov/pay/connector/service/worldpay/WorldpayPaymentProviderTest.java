@@ -384,7 +384,7 @@ public class WorldpayPaymentProviderTest {
 
         assertThat(response.isFailed(), is(true));
         assertThat(response.getGatewayError().isPresent(), is(true));
-        assertEquals(response.getGatewayError().get(), new GatewayError("[5] Order has already been paid", GENERIC_GATEWAY_ERROR));
+        assertEquals(response.getGatewayError().get(), new GatewayError("Worldpay capture response (error code: 5, error: Order has already been paid)", GENERIC_GATEWAY_ERROR));
     }
 
     @Test
