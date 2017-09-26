@@ -46,7 +46,9 @@ public class ChargeDao extends JpaDao<ChargeEntity> {
     public Optional<ChargeEntity> findByExternalId(String externalId) {
 
         String query = "SELECT c FROM ChargeEntity c " +
-                "WHERE c.externalId = :externalId";
+                "JOIN PaymentRequestEntity p ON c.paymentRequest.id = p.id " +
+                "WHERE p.externalId = :externalId" +
+                "AND c.operation = 'CHARGE'";
 
         return entityManager.get()
                 .createQuery(query, ChargeEntity.class)
@@ -68,8 +70,9 @@ public class ChargeDao extends JpaDao<ChargeEntity> {
     public Optional<ChargeEntity> findByExternalIdAndGatewayAccount(String externalId, Long accountId) {
 
         String query = "SELECT c FROM ChargeEntity c " +
-                "WHERE c.externalId = :externalId " +
-                "AND c.gatewayAccount.id = :accountId";
+                "JOIN PaymentRequestEntity pr ON c.paymentRequestId = pr.id" +
+                "WHERE pr.externalId = :externalId " +
+                "AND pr.gatewayAccount.id = :accountId";
 
         return entityManager.get()
                 .createQuery(query, ChargeEntity.class)
@@ -81,8 +84,9 @@ public class ChargeDao extends JpaDao<ChargeEntity> {
     public Optional<ChargeEntity> findByProviderAndTransactionId(String provider, String transactionId) {
 
         String query = "SELECT c FROM ChargeEntity c " +
+                "JOIN PaymentRequestEntity pr ON c.paymentRequestId = pr.id" +
                 "WHERE c.gatewayTransactionId = :gatewayTransactionId " +
-                "AND c.gatewayAccount.gatewayName = :provider";
+                "AND pr.gatewayAccount.gatewayName = :provider";
 
         return entityManager.get()
                 .createQuery(query, ChargeEntity.class)

@@ -12,6 +12,9 @@ public class Auth3dsDetailsEntity {
     @Column(name = "issuer_url_3ds")
     private String issuerUrl;
 
+    @Column(name = "worldpay_provider_session_id")
+    private String providerSessionId;
+
     public String getPaRequest() {
         return paRequest;
     }

@@ -656,19 +656,119 @@
         </addColumn>
     </changeSet>
 
+    <changeSet id="build payment_requests table" author="">
+        <createTable tableName="payment_requests">
+            <column name="id" type="bigserial" autoIncrement="true">
+                <constraints primaryKey="true" nullable="false"/>
+            </column>
+            <column name="reference" type="varchar(255)">
+                <constraints nullable="false"/>
+            </column>
+            <column name="description" type="varchar(255)" defaultValue="">
+                <constraints nullable="false"/>
+            </column>
+            <column name="gateway_account_id" type="text">
+                <constraints nullable="false"/>
+            </column>
+            <column name="return_url" type="text">
+                <constraints nullable="false"/>
+            </column>
+            <column name="external_id" type="char(26)">
+                <constraints nullable="false"/>
+            </column>
+            <column name="created" type="timestamp without timezone" defaultValueComputed="(now() at time zone 'utc')">
+                <constraints nullable="false"/>
+            </column>
+        </createTable>
+    </changeSet>
+
+    <changeSet id="build card_details table" author="">
+        <createTable tableName="card_details">
+            <column name="id" type="bigserial" autoIncrement="true">
+                <constraints primaryKey="true" nullable="false"/>
+            </column>
+            <column name="payment_request_id" type="bigserial">
+                <constraints foreignKeyName="fk__card_details_payment_requests" unique="true" referencedTableName="payment_requests"
+                             referencedColumnNames="id" nullable="false"/>
+            </column>
+            <column name="email" type="varchar(254)">
+                <constraints nullable="false"/>
+            </column>
+            <column name="card_brand" type="text">
+                <constraints nullable="false"/>
+            </column>
+            <column name="last_digits_card_number" type="char(4)">
+                <constraints nullable="false"/>
+            </column>
+            <column name="cardholder_name" type="varchar(255)">
+                <constraints nullable="false"/>
+            </column>
+            <column name="expiry_date" type="varchar(6)">
+                <constraints nullable="false"/>
+            </column>
+            <column name="address_line1" type="varchar(255)">
+                <constraints nullable="false"/>
+            </column>
+            <column name="address_line2" type="varchar(255)"></column>
+            <column name="address_postcode" type="varchar(25)">
+                <constraints nullable="false"/>
+            </column>
+            <column name="address_city" type="varchar(255)">
+                <constraints nullable="false"/>
+            </column>
+            <column name="address_county" type="varchar(255)"></column>
+            <column name="address_country" type="varchar(255)">
+                <constraints nullable="false"/>
+            </column>
+            <column name="version" type="bigint" defaultValue="0"></column>
+        </createTable>
+    </changeSet>
+
     <changeSet id="add transactions table" author="">
         <createTable tableName="transactions">
             <column name="id" type="bigserial" autoIncrement="true">
                 <constraints primaryKey="true" nullable="false"/>
             </column>
-            <column name="charge_id" type="bigserial">
-                <constraints foreignKeyName="fk__charge_transactions" referencedTableName="charges"
-                             referencedColumnNames="charge_id" nullable="false"/>
+            <column name="payment_request_id" type="bigserial">
+                <constraints foreignKeyName="fk__payment_request_transactions" referencedTableName="payment_requests"
+                             referencedColumnNames="id" nullable="false"/>
             </column>
-            <column name="external_id" type="char(26)" />
-            <column name="amount" type="bigint" />
-            <column name="type" type="varchar(50)" />
+            <column name="amount" type="bigint">
+                <constraints nullable="false"/>
+            </column>
+            <column name="operation" type="varchar(50)">
+                <constraints nullable="false"/>
+            </column>
+            <column name="charge_gateway_id" type="text"></column>
+            <column name="refund_smartpay_pspreference" type="text"></column>
+            <column name="refund_epdq_payid" type="text"></column>
+            <column name="refund_epdq_payidsub" type="text"></column>
+            <column name="refund_external_id" type="char(26)">
+                <constraints nullable="false"/>
+            </column>
+            <column name="refund_user_external_id" type="text">
+                <constraints nullable="true"/>
+            </column>
             <column name="version" type="bigint" defaultValue="0" />
+        </createTable>
+    </changeSet>
+
+    <changeSet id="build auth_3ds table" author="">
+        <createTable tableName="auth_3ds">
+            <column name="id" type="bigserial" autoIncrement="true">
+                <constraints primaryKey="true" nullable="false"/>
+            </column>
+            <column name="transaction_id" type="bigserial">
+                <constraints foreignKeyName="fk__transactions_auth_3ds" unique="true" referencedTableName="transactions"
+                             referencedColumnNames="id" nullable="false"/>
+            </column>
+            <column name="pa_request" type="text">
+                <constraints nullable="false"/>
+            </column>
+            <column name="issuer_url" type="text">
+                <constraints nullable="false"/>
+            </column>
+            <column name="worldpay_cookie_value" type="text"></column>
         </createTable>
     </changeSet>
 
@@ -689,4 +789,5 @@
             </column>
         </createTable>
     </changeSet>
+
 </databaseChangeLog>
