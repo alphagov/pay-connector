@@ -148,9 +148,9 @@ public class ChargeRefundService {
         };
     }
 
-    private RefundEntity completePrepareRefund(RefundRequest refundRequest, ChargeEntity reloadedCharge) {
-        RefundEntity refundEntity = new RefundEntity(reloadedCharge, refundRequest.getAmount(), refundRequest.getUserExternalId());
-        reloadedCharge.getRefunds().add(refundEntity);
+    private RefundEntity completePrepareRefund(RefundRequest refundRequest, ChargeEntity charge) {
+        RefundEntity refundEntity = new RefundEntity(charge, refundRequest.getAmount(), refundRequest.getUserExternalId());
+        charge.getRefunds().add(refundEntity);
         refundDao.persist(refundEntity);
         return refundEntity;
     }

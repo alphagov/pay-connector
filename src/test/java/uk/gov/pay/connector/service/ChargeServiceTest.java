@@ -12,6 +12,7 @@ import uk.gov.pay.connector.app.ConnectorConfiguration;
 import uk.gov.pay.connector.app.LinksConfig;
 import uk.gov.pay.connector.dao.CardTypeDao;
 import uk.gov.pay.connector.dao.ChargeDao;
+import uk.gov.pay.connector.dao.GatewayAccountDao;
 import uk.gov.pay.connector.dao.TokenDao;
 import uk.gov.pay.connector.model.ChargeResponse;
 import uk.gov.pay.connector.model.domain.ChargeEntity;
@@ -66,6 +67,8 @@ public class ChargeServiceTest {
     @Mock
     private ChargeDao mockedChargeDao;
     @Mock
+    private GatewayAccountDao mockedGatewayAccountDao;
+    @Mock
     private CardTypeDao mockedCardTypeDao;
     @Mock
     private ConnectorConfiguration mockedConfig;
@@ -102,19 +105,21 @@ public class ChargeServiceTest {
         when(mockedProviders.byName(any(PaymentGatewayName.class))).thenReturn(mockedPaymentProvider);
         when(mockedPaymentProvider.getExternalChargeRefundAvailability(any(ChargeEntity.class))).thenReturn(EXTERNAL_AVAILABLE);
 
-        service = new ChargeService(mockedTokenDao, mockedChargeDao, mockedConfig, mockedCardTypeDao, mockedProviders);
+        service = new ChargeService(mockedTokenDao, mockedChargeDao, mockedCardTypeDao, mockedGatewayAccountDao, mockedConfig, mockedProviders);
     }
 
     @Test
     public void shouldCreateACharge() throws Exception {
 
         // Given - existing gateway account
+        long gatewayAccountId = 1L;
         GatewayAccountEntity gatewayAccount = new GatewayAccountEntity("sandbox", new HashMap<>(), TEST);
-        gatewayAccount.setId(1L);
+        gatewayAccount.setId(gatewayAccountId);
 
         // Given - persisting a ChargeEntity, it will be populated with an id
         long chargeEntityId = 12345L;
         final String[] externalChargeId = new String[1];
+        when(mockedGatewayAccountDao.findById(gatewayAccountId)).thenReturn(Optional.of(gatewayAccount));
         doAnswer(invocation -> {
             ChargeEntity chargeEntityBeingPersisted = (ChargeEntity) invocation.getArguments()[0];
             chargeEntityBeingPersisted.setId(chargeEntityId);
@@ -123,7 +128,7 @@ public class ChargeServiceTest {
         }).when(mockedChargeDao).persist(any(ChargeEntity.class));
 
         // When
-        ChargeResponse response = service.create(chargeRequest, gatewayAccount, mockedUriInfo);
+        ChargeResponse response = service.create(chargeRequest, gatewayAccountId, mockedUriInfo).get();
 
         // Then - a chargeEntity is created
         ArgumentCaptor<ChargeEntity> chargeEntityArgumentCaptor = forClass(ChargeEntity.class);
@@ -132,7 +137,7 @@ public class ChargeServiceTest {
         ChargeEntity createdChargeEntity = chargeEntityArgumentCaptor.getValue();
         assertThat(createdChargeEntity.getId(), is(chargeEntityId));
         assertThat(createdChargeEntity.getStatus(), is("CREATED"));
-        assertThat(createdChargeEntity.getGatewayAccount().getId(), is(1L));
+        assertThat(createdChargeEntity.getGatewayAccount().getId(), is(gatewayAccountId));
         assertThat(createdChargeEntity.getExternalId(), is(externalChargeId[0]));
         assertThat(createdChargeEntity.getGatewayAccount().getCredentials(), is(emptyMap()));
         assertThat(createdChargeEntity.getGatewayAccount().getGatewayName(), is("sandbox"));

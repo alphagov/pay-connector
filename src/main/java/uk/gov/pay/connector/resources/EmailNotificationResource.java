@@ -41,6 +41,7 @@ public class EmailNotificationResource {
     @GET
     @Path(GATEWAY_ACCOUNTS_API_EMAIL_NOTIFICATION)
     @Produces(APPLICATION_JSON)
+    @Transactional
     public Response getEmailNotificationText(@PathParam("accountId") Long gatewayAccountId) {
         logger.info("Getting email notification text for account id {}", gatewayAccountId);
 

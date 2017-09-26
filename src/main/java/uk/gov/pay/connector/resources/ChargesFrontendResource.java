@@ -2,6 +2,7 @@ package uk.gov.pay.connector.resources;
 
 import com.fasterxml.jackson.annotation.JsonView;
 import com.google.common.collect.ImmutableList;
+import com.google.inject.persist.Transactional;
 import io.dropwizard.jersey.PATCH;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -89,15 +90,8 @@ public class ChargesFrontendResource {
             return badRequestResponse("Invalid patch parameters" + chargePatchMap.toString());
         }
 
-        Optional<ChargeEntity> maybeCharge = chargeDao.findByExternalId(chargeId);
-        logger.debug("charge from DB: " + maybeCharge);
-
-        return maybeCharge
-                .map(chargeEntity ->
-                        Response.ok(buildChargeResponse(
-                                uriInfo,
-                                chargeService.updateCharge(chargeEntity, chargePatchRequest))
-                        ).build())
+        return chargeService.updateCharge(chargeId, chargePatchRequest)
+                .map(chargeEntity -> Response.ok(buildChargeResponse(uriInfo, chargeEntity)).build())
                 .orElseGet(() -> responseWithChargeNotFound(chargeId));
     }
 
@@ -105,6 +99,7 @@ public class ChargesFrontendResource {
     @Path(FRONTEND_CHARGE_STATUS_API_PATH)
     @Produces(APPLICATION_JSON)
     @JsonView(GatewayAccountEntity.Views.FrontendView.class)
+    @Transactional
     public Response updateChargeStatus(@PathParam("chargeId") String chargeId, Map newStatusMap) {
         if (invalidInput(newStatusMap)) {
             return fieldsMissingResponse(ImmutableList.of("new_status"));
@@ -129,7 +124,7 @@ public class ChargesFrontendResource {
                 .map(chargeEntity -> {
                     if (CURRENT_STATUSES_ALLOWING_UPDATE_TO_NEW_STATUS.contains(ChargeStatus.fromString(chargeEntity.getStatus()))) {
                         chargeEntity.setStatus(newChargeStatus);
-                        chargeDao.mergeAndNotifyStatusHasChanged(chargeEntity, generatedTime);
+                        chargeDao.notifyStatusHasChanged(chargeEntity, generatedTime);
                         return noContentResponse();
                     }
                     return badRequestResponse("charge with id: " + chargeId + " cant be updated to the new state: " + newChargeStatus.getValue());

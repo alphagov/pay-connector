@@ -1,5 +1,6 @@
 package uk.gov.pay.connector.resources;
 
+import com.google.common.base.Splitter;
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableMap;
 import fj.F;
@@ -16,7 +17,6 @@ import uk.gov.pay.connector.model.domain.ChargeEntity;
 import uk.gov.pay.connector.service.ChargeExpiryService;
 import uk.gov.pay.connector.service.ChargeService;
 import uk.gov.pay.connector.util.ResponseUtil;
-import com.google.common.base.Splitter;
 
 import javax.inject.Inject;
 import javax.ws.rs.*;
@@ -155,12 +155,10 @@ public class ChargesApiResource {
             return fieldsInvalidResponse(invalidFields.get());
         }
 
-        return gatewayAccountDao.findById(accountId).map(
-                gatewayAccountEntity -> {
-                    logger.info("Creating new charge - {}", stringifyChargeRequestWithoutPii(chargeRequest));
-                    ChargeResponse response = chargeService.create(chargeRequest, gatewayAccountEntity, uriInfo);
-                    return created(response.getLink("self")).entity(response).build();
-                })
+        logger.info("Creating new charge - {}", stringifyChargeRequestWithoutPii(chargeRequest));
+
+        return chargeService.create(chargeRequest, accountId, uriInfo)
+                .map(response -> created(response.getLink("self")).entity(response).build())
                 .orElseGet(() -> notFoundResponse("Unknown gateway account: " + accountId));
     }
 
@@ -202,7 +200,7 @@ public class ChargesApiResource {
     }
 
     private F<Boolean, Response> listTransactions(ChargeSearchParams searchParams, UriInfo uriInfo, List<String> userFeatures) {
-        if(userFeatures.contains(FEATURE_REFUNDS_IN_TX_LIST)){
+        if (userFeatures.contains(FEATURE_REFUNDS_IN_TX_LIST)) {
             return listChargesAndRefunds(searchParams, uriInfo);
         }
 
@@ -213,7 +211,7 @@ public class ChargesApiResource {
         Long totalCount = chargeDao.getTotalFor(searchParams);
         Long size = searchParams.getDisplaySize();
         if (totalCount > 0 && size > 0) {
-            long lastPage = (totalCount + size - 1)/ size;
+            long lastPage = (totalCount + size - 1) / size;
             if (searchParams.getPage() > lastPage || searchParams.getPage() < 1) {
                 return success -> notFoundResponse("the requested page not found");
             }
@@ -232,7 +230,7 @@ public class ChargesApiResource {
                         .buildResponse();
     }
 
-    private F<Boolean,Response> listChargesAndRefunds(ChargeSearchParams searchParams, UriInfo uriInfo) {
+    private F<Boolean, Response> listChargesAndRefunds(ChargeSearchParams searchParams, UriInfo uriInfo) {
         return listCharges(searchParams, uriInfo);
     }
 
