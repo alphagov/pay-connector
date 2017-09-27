@@ -3,9 +3,12 @@ package uk.gov.pay.connector.service;
 import com.google.common.collect.ImmutableList;
 import com.google.inject.persist.Transactional;
 import io.dropwizard.setup.Environment;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import uk.gov.pay.connector.dao.ChargeDao;
 import uk.gov.pay.connector.dao.ChargeEventDao;
 import uk.gov.pay.connector.exception.ChargeNotFoundRuntimeException;
+import uk.gov.pay.connector.exception.ConflictRuntimeException;
 import uk.gov.pay.connector.exception.IllegalStateRuntimeException;
 import uk.gov.pay.connector.model.CaptureGatewayRequest;
 import uk.gov.pay.connector.model.domain.ChargeEntity;
@@ -14,6 +17,7 @@ import uk.gov.pay.connector.model.domain.GatewayAccountEntity;
 import uk.gov.pay.connector.model.gateway.GatewayResponse;
 
 import javax.inject.Inject;
+import javax.persistence.OptimisticLockException;
 import java.time.ZonedDateTime;
 import java.util.List;
 import java.util.Optional;
@@ -28,6 +32,7 @@ import static uk.gov.pay.connector.model.domain.ChargeStatus.CAPTURE_SUBMITTED;
 
 public class CardCaptureService extends CardService implements TransactionalGatewayOperation<BaseCaptureResponse> {
 
+    private static final Logger LOG = LoggerFactory.getLogger(CardCaptureService.class);
     private static List<ChargeStatus> legalStatuses = ImmutableList.of(
             AUTHORISATION_SUCCESS,
             CAPTURE_APPROVED,
@@ -44,7 +49,15 @@ public class CardCaptureService extends CardService implements TransactionalGate
     }
 
     public GatewayResponse<BaseCaptureResponse> doCapture(String externalId) {
-        return executeGatewayOperationFor(externalId);
+        ChargeEntity charge;
+        try {
+            charge = preOperation(externalId);
+        } catch (OptimisticLockException e) {
+            LOG.info("OptimisticLockException in doCapture for charge external_id=" + externalId);
+            throw new ConflictRuntimeException(externalId);
+        }
+        GatewayResponse<BaseCaptureResponse> operationResponse = operation(charge);
+        return postOperation(externalId, operationResponse);
     }
 
     @Transactional
