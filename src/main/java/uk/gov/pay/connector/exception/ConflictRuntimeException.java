@@ -16,7 +16,7 @@ public class ConflictRuntimeException extends WebApplicationException {
         super(conflictErrorResponse(format("Operation for charge conflicting, %s", chargeId)));
     }
 
-    public ConflictRuntimeException(Exception exception) {
-        super(conflictErrorResponse(format("Operation in conflict, %s", exception.getMessage())));
+    public ConflictRuntimeException(String message, Exception exception) {
+        super(conflictErrorResponse(format("Operation in conflict, %s, %s", message, exception.getMessage())));
     }
 }
