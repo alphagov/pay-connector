@@ -94,7 +94,7 @@ public class ChargeCancelService {
             GatewayResponse cancelResponse = context.get(GatewayResponse.class);
             ChargeStatus status = determineTerminalState(cancelResponse, statusFlow);
 
-            logger.info("Cancel for {} ({} {}) for {} ({}) — {} ∴ {} → {}",
+            logger.info("Cancel for {} ({} {}) for {} ({}) - {} .'. {} -> {}",
                     chargeEntity.getExternalId(), chargeEntity.getPaymentGatewayName().getName(), chargeEntity.getGatewayTransactionId(),
                     chargeEntity.getGatewayAccount().getAnalyticsId(), chargeEntity.getGatewayAccount().getId(),
                     cancelResponse, chargeEntity.getStatus(), status);

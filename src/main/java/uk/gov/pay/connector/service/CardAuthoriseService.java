@@ -111,7 +111,7 @@ public class CardAuthoriseService extends CardAuthoriseBaseService<AuthCardDetai
 
             operationResponse.getSessionIdentifier().ifPresent(chargeEntity::setProviderSessionId);
 
-            logger.info("Authorisation for {} ({} {}) for {} ({}) — {} ∴ {} → {}",
+            logger.info("Authorisation for {} ({} {}) for {} ({}) - {} .'. {} -> {}",
                     chargeEntity.getExternalId(), chargeEntity.getPaymentGatewayName().getName(),
                     StringUtils.isNotBlank(transactionId) ? transactionId : "missing transaction ID",
                     chargeEntity.getGatewayAccount().getAnalyticsId(), chargeEntity.getGatewayAccount().getId(),

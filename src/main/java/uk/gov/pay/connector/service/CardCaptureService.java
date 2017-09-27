@@ -98,7 +98,7 @@ public class CardCaptureService extends CardService implements TransactionalGate
                     String transactionId = operationResponse.getBaseResponse()
                             .map(BaseCaptureResponse::getTransactionId).orElse("");
 
-                    logger.info("Capture for {} ({} {}) for {} ({}) — {} ∴ {} → {}",
+                    logger.info("Capture for {} ({} {}) for {} ({}) - {} .'. {} -> {}",
                             chargeEntity.getExternalId(), chargeEntity.getPaymentGatewayName().getName(), chargeEntity.getGatewayTransactionId(),
                             chargeEntity.getGatewayAccount().getAnalyticsId(), chargeEntity.getGatewayAccount().getId(),
                             operationResponse, chargeEntity.getStatus(), nextStatus);
