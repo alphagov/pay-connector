@@ -21,4 +21,7 @@ abstract public class WorldpayBaseResponse implements BaseResponse {
         return trim(errorMessage);
     }
 
+    @Override
+    public abstract String toString();
+
 }

@@ -1,9 +1,11 @@
 package uk.gov.pay.connector.service.epdq;
 
+import org.apache.commons.lang3.StringUtils;
 import uk.gov.pay.connector.service.BaseCancelResponse;
 
 import javax.xml.bind.annotation.XmlAttribute;
 import javax.xml.bind.annotation.XmlRootElement;
+import java.util.StringJoiner;
 
 @XmlRootElement(name = "ncresponse")
 public class EpdqCancelResponse extends EpdqBaseResponse implements BaseCancelResponse {
@@ -50,6 +52,24 @@ public class EpdqCancelResponse extends EpdqBaseResponse implements BaseCancelRe
         if (hasError())
             return super.getErrorMessage();
         return null;
+    }
+
+    @Override
+    public String toString() {
+        StringJoiner joiner = new StringJoiner(", ", "ePDQ cancel response (", ")");
+        if (StringUtils.isNotBlank(getTransactionId())) {
+            joiner.add("PAYID: " + getTransactionId());
+        }
+        if (StringUtils.isNotBlank(status)) {
+            joiner.add("STATUS: " + status);
+        }
+        if (StringUtils.isNotBlank(getErrorCode())) {
+            joiner.add("NCERROR: " + getErrorCode());
+        }
+        if (StringUtils.isNotBlank(getErrorMessage())) {
+            joiner.add("NCERRORPLUS: " + getErrorMessage());
+        }
+        return joiner.toString();
     }
 
 }

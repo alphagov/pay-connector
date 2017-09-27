@@ -1,9 +1,11 @@
 package uk.gov.pay.connector.service.worldpay;
 
+import org.apache.commons.lang3.StringUtils;
 import org.eclipse.persistence.oxm.annotations.XmlPath;
 import uk.gov.pay.connector.service.BaseCaptureResponse;
 
 import javax.xml.bind.annotation.XmlRootElement;
+import java.util.StringJoiner;
 
 @XmlRootElement(name = "paymentService")
 public class WorldpayCaptureResponse extends WorldpayBaseResponse implements BaseCaptureResponse {
@@ -15,4 +17,20 @@ public class WorldpayCaptureResponse extends WorldpayBaseResponse implements Bas
     public String getTransactionId() {
         return transactionId;
     }
+
+    @Override
+    public String toString() {
+        StringJoiner joiner = new StringJoiner(", ", "Worldpay capture response (", ")");
+        if (StringUtils.isNotBlank(getTransactionId())) {
+            joiner.add("orderCode: " + getTransactionId());
+        }
+        if (StringUtils.isNotBlank(getErrorCode())) {
+            joiner.add("error code: " + getErrorCode());
+        }
+        if (StringUtils.isNotBlank(getErrorMessage())) {
+            joiner.add("error: " + getErrorMessage());
+        }
+        return joiner.toString();
+    }
+
 }

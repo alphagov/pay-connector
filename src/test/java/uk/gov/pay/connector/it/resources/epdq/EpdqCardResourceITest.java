@@ -4,7 +4,11 @@ import org.hamcrest.Matchers;
 import org.junit.Test;
 import uk.gov.pay.connector.it.base.ChargingITestBase;
 
-import static uk.gov.pay.connector.model.domain.ChargeStatus.*;
+import static uk.gov.pay.connector.model.domain.ChargeStatus.AUTHORISATION_ERROR;
+import static uk.gov.pay.connector.model.domain.ChargeStatus.AUTHORISATION_REJECTED;
+import static uk.gov.pay.connector.model.domain.ChargeStatus.AUTHORISATION_SUBMITTED;
+import static uk.gov.pay.connector.model.domain.ChargeStatus.AUTHORISATION_SUCCESS;
+import static uk.gov.pay.connector.model.domain.ChargeStatus.ENTERING_CARD_DETAILS;
 
 public class EpdqCardResourceITest extends ChargingITestBase {
 
@@ -43,7 +47,9 @@ public class EpdqCardResourceITest extends ChargingITestBase {
     public void shouldNotAuthorise_whenTransactionIsInError() throws Exception {
         epdq.mockAuthorisationError();
 
-        String expectedErrorMessage = "[50001111] An error has occurred; please try again later. If you are the owner or the integrator of this website, please log into the  back office to see the details of the error.";
+        String expectedErrorMessage = "ePDQ authorisation response (PAYID: 0, STATUS: 0, NCERROR: 50001111, " +
+                "NCERRORPLUS: An error has occurred; please try again later. If you are the owner or the integrator " +
+                "of this website, please log into the  back office to see the details of the error.)";
         String expectedChargeStatus = AUTHORISATION_ERROR.getValue();
         shouldReturnErrorForAuthorisationDetailsWithMessage(authorisationDetails, expectedErrorMessage, expectedChargeStatus);
     }
@@ -52,7 +58,7 @@ public class EpdqCardResourceITest extends ChargingITestBase {
     public void shouldNotAuthorise_aTransactionInAnyOtherNonSupportedState() throws Exception {
         epdq.mockAuthorisationOther();
 
-        String expectedErrorMessage = "[0] !";
+        String expectedErrorMessage = "ePDQ authorisation response (PAYID: 3014644340, STATUS: 52, NCERROR: 0, NCERRORPLUS: !)";
         String expectedChargeStatus = AUTHORISATION_ERROR.getValue();
         shouldReturnErrorForAuthorisationDetailsWithMessage(authorisationDetails, expectedErrorMessage, expectedChargeStatus);
     }

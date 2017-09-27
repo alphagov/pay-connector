@@ -1,10 +1,12 @@
 package uk.gov.pay.connector.service.epdq;
 
+import org.apache.commons.lang3.StringUtils;
 import uk.gov.pay.connector.service.BaseRefundResponse;
 
 import javax.xml.bind.annotation.XmlAttribute;
 import javax.xml.bind.annotation.XmlRootElement;
 import java.util.Optional;
+import java.util.StringJoiner;
 
 import static com.google.common.base.Strings.isNullOrEmpty;
 
@@ -45,4 +47,26 @@ public class EpdqRefundResponse extends EpdqBaseResponse implements BaseRefundRe
         }
         return Optional.of(transactionId + "/" + payIdSub);
     }
+
+    @Override
+    public String toString() {
+        StringJoiner joiner = new StringJoiner(", ", "ePDQ refund response (", ")");
+        if (StringUtils.isNotBlank(transactionId)) {
+            joiner.add("PAYID: " + transactionId);
+        }
+        if (StringUtils.isNotBlank(payIdSub)) {
+            joiner.add("PAYIDSUB: " + payIdSub);
+        }
+        if (StringUtils.isNotBlank(status)) {
+            joiner.add("STATUS: " + status);
+        }
+        if (StringUtils.isNotBlank(getErrorCode())) {
+            joiner.add("NCERROR: " + getErrorCode());
+        }
+        if (StringUtils.isNotBlank(getErrorMessage())) {
+            joiner.add("NCERRORPLUS: " + getErrorMessage());
+        }
+        return joiner.toString();
+    }
+
 }

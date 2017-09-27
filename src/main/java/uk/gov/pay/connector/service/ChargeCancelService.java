@@ -26,7 +26,9 @@ import static uk.gov.pay.connector.model.domain.ChargeStatus.AUTHORISATION_3DS_R
 import static uk.gov.pay.connector.model.domain.ChargeStatus.CREATED;
 import static uk.gov.pay.connector.model.domain.ChargeStatus.ENTERING_CARD_DETAILS;
 import static uk.gov.pay.connector.model.gateway.GatewayResponse.GatewayResponseBuilder.responseBuilder;
-import static uk.gov.pay.connector.service.CancelServiceFunctions.*;
+import static uk.gov.pay.connector.service.CancelServiceFunctions.changeStatusTo;
+import static uk.gov.pay.connector.service.CancelServiceFunctions.doGatewayCancel;
+import static uk.gov.pay.connector.service.CancelServiceFunctions.prepareForTerminate;
 import static uk.gov.pay.connector.service.StatusFlow.SYSTEM_CANCELLATION_FLOW;
 import static uk.gov.pay.connector.service.StatusFlow.USER_CANCELLATION_FLOW;
 
@@ -88,11 +90,10 @@ public class ChargeCancelService {
             GatewayResponse cancelResponse = context.get(GatewayResponse.class);
             ChargeStatus status = determineTerminalState(cancelResponse, statusFlow);
 
-            logger.info("Card cancel response received - charge_external_id={}, transaction_id={}, status={}",
-                    chargeEntity.getExternalId(), chargeEntity.getGatewayTransactionId(), status);
-
-            logger.info("Charge status to update - charge_external_id={}, status={}, to_status={}",
-                    chargeEntity.getExternalId(), chargeEntity.getStatus(), status);
+            logger.info("Cancel for {} ({} {}) for {} ({}) — {} ∴ {} → {}",
+                    chargeEntity.getExternalId(), chargeEntity.getPaymentGatewayName().getName(), chargeEntity.getGatewayTransactionId(),
+                    chargeEntity.getGatewayAccount().getAnalyticsId(), chargeEntity.getGatewayAccount().getId(),
+                    cancelResponse, chargeEntity.getStatus(), status);
 
             chargeEntity.setStatus(status);
             chargeDao.notifyStatusHasChanged(chargeEntity, Optional.empty());

@@ -12,7 +12,6 @@ import java.util.Optional;
 import static fj.data.Either.left;
 import static fj.data.Either.right;
 import static java.lang.String.format;
-import static org.apache.commons.lang3.StringUtils.trim;
 import static uk.gov.pay.connector.model.GatewayError.baseError;
 
 public class GatewayResponse<T extends BaseResponse> {
@@ -73,6 +72,11 @@ public class GatewayResponse<T extends BaseResponse> {
         );
     }
 
+    @Override
+    public String toString() {
+        return response.either(GatewayError::toString, T::toString);
+    }
+
     static public <T extends BaseResponse> GatewayResponse<T> with(GatewayError gatewayError) {
         logger.error(format("Error received from gateway: %s", gatewayError));
         return new GatewayResponse<>(gatewayError);
@@ -114,10 +118,7 @@ public class GatewayResponse<T extends BaseResponse> {
             Optional<String> errorMessage = getErrorMessage(response);
 
             if (errorCode.isPresent() || errorMessage.isPresent()) {
-                StringBuilder sb = new StringBuilder();
-                errorCode.ifPresent(e -> sb.append(format("[%s] ", e)));
-                errorMessage.ifPresent(sb::append);
-                return new GatewayResponse<>(baseError(trim(sb.toString())));
+                return new GatewayResponse<>(baseError(response.toString()));
             }
 
             return new GatewayResponse<>(response, sessionIdentifier);
