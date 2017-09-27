@@ -10,6 +10,7 @@ import org.mockito.ArgumentCaptor;
 import org.mockito.Mock;
 import org.mockito.runners.MockitoJUnitRunner;
 import uk.gov.pay.connector.dao.ChargeDao;
+import uk.gov.pay.connector.dao.ChargeEventDao;
 import uk.gov.pay.connector.dao.RefundDao;
 import uk.gov.pay.connector.exception.InvalidStateTransitionException;
 import uk.gov.pay.connector.model.Notification;
@@ -60,6 +61,9 @@ public class NotificationServiceTest {
     private ChargeDao mockedChargeDao;
 
     @Mock
+    private ChargeEventDao mockedChargeEventDao;
+
+    @Mock
     private RefundDao mockedRefundDao;
 
     @Mock
@@ -81,7 +85,7 @@ public class NotificationServiceTest {
 
         when(mockedPaymentProvider.verifyNotification(any(Notification.class), any(GatewayAccountEntity.class))).thenReturn(true);
 
-        notificationService = new NotificationService(mockedChargeDao, mockedRefundDao, mockedPaymentProviders, mockDnsUtils);
+        notificationService = new NotificationService(mockedChargeDao, mockedChargeEventDao, mockedRefundDao, mockedPaymentProviders, mockDnsUtils);
     }
 
     private Notifications<Pair<String, Boolean>> createNotificationFor(String transactionId, String reference, Pair<String, Boolean> status) {
@@ -305,7 +309,7 @@ public class NotificationServiceTest {
         verify(mockedChargeEntity).setStatus(CAPTURED);
 
         ArgumentCaptor<Optional> generatedTimeCaptor = ArgumentCaptor.forClass(Optional.class);
-        verify(mockedChargeDao).mergeAndNotifyStatusHasChanged(argThat(obj -> mockedChargeEntity.equals(obj)), generatedTimeCaptor.capture());
+        verify(mockedChargeEventDao).persistChargeEventOf(argThat(obj -> mockedChargeEntity.equals(obj)), generatedTimeCaptor.capture());
 
         assertTrue(ChronoUnit.SECONDS.between((ZonedDateTime) generatedTimeCaptor.getValue().get(), ZonedDateTime.now()) < 10);
 

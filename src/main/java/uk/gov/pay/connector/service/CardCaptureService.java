@@ -4,6 +4,7 @@ import com.google.common.collect.ImmutableList;
 import com.google.inject.persist.Transactional;
 import io.dropwizard.setup.Environment;
 import uk.gov.pay.connector.dao.ChargeDao;
+import uk.gov.pay.connector.dao.ChargeEventDao;
 import uk.gov.pay.connector.exception.ChargeNotFoundRuntimeException;
 import uk.gov.pay.connector.exception.IllegalStateRuntimeException;
 import uk.gov.pay.connector.model.CaptureGatewayRequest;
@@ -37,8 +38,8 @@ public class CardCaptureService extends CardService implements TransactionalGate
 
 
     @Inject
-    public CardCaptureService(ChargeDao chargeDao, PaymentProviders providers, UserNotificationService userNotificationService, Environment environment) {
-        super(chargeDao, providers, environment);
+    public CardCaptureService(ChargeDao chargeDao, ChargeEventDao chargeEventDao, PaymentProviders providers, UserNotificationService userNotificationService, Environment environment) {
+        super(chargeDao, chargeEventDao, providers, environment);
         this.userNotificationService = userNotificationService;
     }
 
@@ -65,7 +66,7 @@ public class CardCaptureService extends CardService implements TransactionalGate
 
             logger.info("CAPTURE_APPROVED for charge [charge_external_id={}]", externalId);
             charge.setStatus(CAPTURE_APPROVED);
-            chargeDao.notifyStatusHasChanged(charge, Optional.empty());
+            chargeEventDao.persistChargeEventOf(charge, Optional.empty());
             return charge;
         }).orElseThrow(() -> new ChargeNotFoundRuntimeException(externalId));
     }
@@ -76,7 +77,7 @@ public class CardCaptureService extends CardService implements TransactionalGate
                 chargeId);
         chargeDao.findByExternalId(chargeId).ifPresent(chargeEntity -> {
             chargeEntity.setStatus(CAPTURE_ERROR);
-            chargeDao.notifyStatusHasChanged(chargeEntity, Optional.empty());
+            chargeEventDao.persistChargeEventOf(chargeEntity, Optional.empty());
         });
     }
 
@@ -112,7 +113,7 @@ public class CardCaptureService extends CardService implements TransactionalGate
 
                     metricRegistry.counter(String.format("gateway-operations.%s.%s.%s.capture.result.%s", account.getGatewayName(), account.getType(), account.getId(), nextStatus.toString())).inc();
 
-                    chargeDao.notifyStatusHasChanged(chargeEntity, Optional.empty());
+                    chargeEventDao.persistChargeEventOf(chargeEntity, Optional.empty());
 
                     if (operationResponse.isSuccessful()) {
                         userNotificationService.notifyPaymentSuccessEmail(chargeEntity);
@@ -121,7 +122,7 @@ public class CardCaptureService extends CardService implements TransactionalGate
                     //for sandbox, immediately move from CAPTURE_SUBMITTED to CAPTURED, as there will be no external notification
                     if (chargeEntity.getPaymentGatewayName() == PaymentGatewayName.SANDBOX) {
                         chargeEntity.setStatus(CAPTURED);
-                        chargeDao.notifyStatusHasChanged(chargeEntity, Optional.of(ZonedDateTime.now()));
+                        chargeEventDao.persistChargeEventOf(chargeEntity, Optional.of(ZonedDateTime.now()));
                     }
 
                     return operationResponse;

@@ -7,6 +7,8 @@ import org.apache.commons.lang3.tuple.Pair;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import uk.gov.pay.connector.dao.ChargeDao;
+import uk.gov.pay.connector.dao.ChargeEventDao;
+import uk.gov.pay.connector.exception.ChargeNotFoundRuntimeException;
 import uk.gov.pay.connector.model.domain.ChargeEntity;
 import uk.gov.pay.connector.model.domain.ChargeStatus;
 import uk.gov.pay.connector.model.gateway.GatewayResponse;
@@ -41,14 +43,17 @@ public class ChargeExpiryService {
             AUTHORISATION_SUCCESS);
 
     private final ChargeDao chargeDao;
+    private final ChargeEventDao chargeEventDao;
     private final PaymentProviders providers;
-    private Provider<TransactionFlow> transactionFlowProvider;
+    private final Provider<TransactionFlow> transactionFlowProvider;
 
     @Inject
     public ChargeExpiryService(ChargeDao chargeDao,
+                               ChargeEventDao chargeEventDao,
                                PaymentProviders providers,
                                Provider<TransactionFlow> transactionFlowProvider) {
         this.chargeDao = chargeDao;
+        this.chargeEventDao = chargeEventDao;
         this.providers = providers;
         this.transactionFlowProvider = transactionFlowProvider;
     }
@@ -69,7 +74,7 @@ public class ChargeExpiryService {
     private int expireChargesWithCancellationNotRequired(List<ChargeEntity> nonAuthSuccessCharges) {
         List<ChargeEntity> processedEntities = nonAuthSuccessCharges
                 .stream().map(chargeEntity -> transactionFlowProvider.get()
-                        .executeNext(changeStatusTo(chargeDao, chargeEntity.getExternalId(), EXPIRED, Optional.empty()))
+                        .executeNext(changeStatusTo(chargeDao, chargeEventDao, chargeEntity.getExternalId(), EXPIRED, Optional.empty()))
                         .complete()
                         .get(ChargeEntity.class))
                 .collect(Collectors.toList());
@@ -85,7 +90,7 @@ public class ChargeExpiryService {
 
         gatewayAuthorizedCharges.forEach(chargeEntity -> {
             ChargeEntity processedEntity = transactionFlowProvider.get()
-                    .executeNext(prepareForTerminate(chargeDao, chargeEntity.getExternalId(), EXPIRE_FLOW))
+                    .executeNext(prepareForTerminate(chargeDao, chargeEventDao, chargeEntity.getExternalId(), EXPIRE_FLOW))
                     .executeNext(doGatewayCancel(providers))
                     .executeNext(finishExpireCancel())
                     .complete().get(ChargeEntity.class);
@@ -117,32 +122,34 @@ public class ChargeExpiryService {
     }
 
     private ChargeStatus determineTerminalState(ChargeEntity chargeEntity, GatewayResponse<BaseCancelResponse> cancelResponse, StatusFlow statusFlow) {
+        if (!cancelResponse.isSuccessful()) {
+            logUnsuccessfulResponseReasons(chargeEntity, cancelResponse);
+        }
 
-      if (!cancelResponse.isSuccessful()) {
-        logUnsuccessfulResponseReasons(chargeEntity, cancelResponse);
-      }
-
-      return cancelResponse.getBaseResponse().map(response -> {
-          switch (response.cancelStatus()) {
-              case CANCELLED:
-                  return statusFlow.getSuccessTerminalState();
-              case SUBMITTED:
-                  return statusFlow.getSubmittedState();
-              default:
-                  return statusFlow.getFailureTerminalState();
-          }
-      }).orElse(statusFlow.getFailureTerminalState());
+        return cancelResponse.getBaseResponse().map(response -> {
+            switch (response.cancelStatus()) {
+                case CANCELLED:
+                    return statusFlow.getSuccessTerminalState();
+                case SUBMITTED:
+                    return statusFlow.getSubmittedState();
+                default:
+                    return statusFlow.getFailureTerminalState();
+            }
+        }).orElse(statusFlow.getFailureTerminalState());
     }
 
     private TransactionalOperation<TransactionContext, ChargeEntity> finishExpireCancel() {
         return context -> {
-            ChargeEntity chargeEntity = context.get(ChargeEntity.class);
-            GatewayResponse gatewayResponse = context.get(GatewayResponse.class);
-            ChargeStatus status = determineTerminalState(chargeEntity, gatewayResponse, EXPIRE_FLOW);
-            logger.info("Charge status to update - charge_external_id={}, status={}, to_status={}",
-                    chargeEntity.getExternalId(), chargeEntity.getStatus(), status);
-            chargeEntity.setStatus(status);
-            return chargeDao.mergeAndNotifyStatusHasChanged(chargeEntity, Optional.empty());
+            String externalId = context.get(ChargeEntity.class).getExternalId();
+            return chargeDao.findByExternalId(externalId).map(chargeEntity -> {
+                GatewayResponse gatewayResponse = context.get(GatewayResponse.class);
+                ChargeStatus status = determineTerminalState(chargeEntity, gatewayResponse, EXPIRE_FLOW);
+                logger.info("Charge status to update - charge_external_id={}, status={}, to_status={}",
+                        chargeEntity.getExternalId(), chargeEntity.getStatus(), status);
+                chargeEntity.setStatus(status);
+                chargeEventDao.persistChargeEventOf(chargeEntity, Optional.empty());
+                return chargeEntity;
+            }).orElseThrow(() -> new ChargeNotFoundRuntimeException(externalId));
         };
     }
 

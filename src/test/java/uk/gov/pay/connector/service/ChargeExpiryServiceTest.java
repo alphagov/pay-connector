@@ -7,6 +7,7 @@ import org.mockito.ArgumentCaptor;
 import org.mockito.Mock;
 import org.mockito.runners.MockitoJUnitRunner;
 import uk.gov.pay.connector.dao.ChargeDao;
+import uk.gov.pay.connector.dao.ChargeEventDao;
 import uk.gov.pay.connector.model.CancelGatewayRequest;
 import uk.gov.pay.connector.model.GatewayError;
 import uk.gov.pay.connector.model.domain.ChargeEntity;
@@ -41,6 +42,9 @@ public class ChargeExpiryServiceTest {
     private ChargeDao mockChargeDao;
 
     @Mock
+    private ChargeEventDao mockChargeEventDao;
+
+    @Mock
     private PaymentProviders mockPaymentProviders;
 
     @Mock
@@ -51,7 +55,7 @@ public class ChargeExpiryServiceTest {
 
     @Before
     public void setup() {
-        chargeExpiryService = new ChargeExpiryService(mockChargeDao, mockPaymentProviders, TransactionFlow::new);
+        chargeExpiryService = new ChargeExpiryService(mockChargeDao, mockChargeEventDao, mockPaymentProviders, TransactionFlow::new);
     }
 
     @Test
@@ -75,8 +79,7 @@ public class ChargeExpiryServiceTest {
         when(mockPaymentProvider.cancel(any())).thenReturn(gatewayResponse);
         ArgumentCaptor<ChargeEntity> captor = ArgumentCaptor.forClass(ChargeEntity.class);
         ArgumentCaptor<CancelGatewayRequest> cancelCaptor = ArgumentCaptor.forClass(CancelGatewayRequest.class);
-        when(mockChargeDao.mergeAndNotifyStatusHasChanged(captor.capture(), any()))
-                .thenAnswer(invocationOnMock -> invocationOnMock.getArguments()[0]);
+        doNothing().when(mockChargeEventDao).persistChargeEventOf(captor.capture(), any());
 
         chargeExpiryService.expire(singletonList(chargeEntity));
 
@@ -108,7 +111,7 @@ public class ChargeExpiryServiceTest {
                     ArgumentCaptor<ChargeEntity> captor = ArgumentCaptor.forClass(ChargeEntity.class);
 
                     when(mockChargeDao.findByExternalId(chargeEntity.getExternalId())).thenReturn(Optional.of(chargeEntity));
-                    doNothing().when(mockChargeDao).notifyStatusHasChanged(captor.capture(), any());
+                    doNothing().when(mockChargeEventDao).persistChargeEventOf(captor.capture(), any());
 
                     chargeExpiryService.expire(singletonList(chargeEntity));
 
@@ -138,7 +141,7 @@ public class ChargeExpiryServiceTest {
         when(mockPaymentProviders.byName(PaymentGatewayName.WORLDPAY)).thenReturn(mockPaymentProvider);
         when(mockPaymentProvider.cancel(any())).thenReturn(gatewayResponse);
         ArgumentCaptor<ChargeEntity> captor = ArgumentCaptor.forClass(ChargeEntity.class);
-        doNothing().when(mockChargeDao).notifyStatusHasChanged(captor.capture(), any());
+        doNothing().when(mockChargeEventDao).persistChargeEventOf(captor.capture(), any());
 
         chargeExpiryService.expire(singletonList(chargeEntity));
 

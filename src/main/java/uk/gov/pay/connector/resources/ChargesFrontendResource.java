@@ -8,6 +8,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import uk.gov.pay.connector.dao.CardTypeDao;
 import uk.gov.pay.connector.dao.ChargeDao;
+import uk.gov.pay.connector.dao.ChargeEventDao;
 import uk.gov.pay.connector.model.ChargeResponse;
 import uk.gov.pay.connector.model.builder.PatchRequestBuilder;
 import uk.gov.pay.connector.model.domain.*;
@@ -46,13 +47,15 @@ public class ChargesFrontendResource {
     private static final List<ChargeStatus> CURRENT_STATUSES_ALLOWING_UPDATE_TO_NEW_STATUS = newArrayList(CREATED, ENTERING_CARD_DETAILS);
     private final ChargeDao chargeDao;
     private final ChargeService chargeService;
-    private CardTypeDao cardTypeDao;
+    private final CardTypeDao cardTypeDao;
+    private final ChargeEventDao chargeEventDao;
 
     @Inject
-    public ChargesFrontendResource(ChargeDao chargeDao, ChargeService chargeService, CardTypeDao cardTypeDao) {
+    public ChargesFrontendResource(ChargeDao chargeDao, ChargeService chargeService, CardTypeDao cardTypeDao, ChargeEventDao chargeEventDao) {
         this.chargeDao = chargeDao;
         this.chargeService = chargeService;
         this.cardTypeDao = cardTypeDao;
+        this.chargeEventDao = chargeEventDao;
     }
 
     @GET
@@ -124,7 +127,7 @@ public class ChargesFrontendResource {
                 .map(chargeEntity -> {
                     if (CURRENT_STATUSES_ALLOWING_UPDATE_TO_NEW_STATUS.contains(ChargeStatus.fromString(chargeEntity.getStatus()))) {
                         chargeEntity.setStatus(newChargeStatus);
-                        chargeDao.notifyStatusHasChanged(chargeEntity, generatedTime);
+                        chargeEventDao.persistChargeEventOf(chargeEntity, generatedTime);
                         return noContentResponse();
                     }
                     return badRequestResponse("charge with id: " + chargeId + " cant be updated to the new state: " + newChargeStatus.getValue());

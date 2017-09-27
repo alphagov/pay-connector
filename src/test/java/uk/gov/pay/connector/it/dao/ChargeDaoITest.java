@@ -678,73 +678,12 @@ public class ChargeDaoITest extends DaoITestBase {
         assertThat(charges.size(), is(0));
     }
 
-    private Matcher<? super List<ChargeEventEntity>> shouldIncludeStatus(ChargeStatus... expectedStatuses) {
-        return new TypeSafeMatcher<List<ChargeEventEntity>>() {
-            @Override
-            protected boolean matchesSafely(List<ChargeEventEntity> chargeEvents) {
-                List<ChargeStatus> actualStatuses = chargeEvents.stream()
-                        .map(ChargeEventEntity::getStatus)
-                        .collect(toList());
-                return actualStatuses.containsAll(asList(expectedStatuses));
-            }
-
-            @Override
-            public void describeTo(Description description) {
-                description.appendText(String.format("does not contain [%s]", expectedStatuses));
-            }
-        };
-    }
-
     private void assertDateMatch(String createdDateString) {
         assertDateMatch(DateTimeUtils.toUTCZonedDateTime(createdDateString).get());
     }
 
     private void assertDateMatch(ZonedDateTime createdDateTime) {
         assertThat(createdDateTime, within(1, ChronoUnit.MINUTES, ZonedDateTime.now()));
-    }
-
-    @Test
-    public void shouldUpdateEventsWhenMergeWithChargeEntityWithNewStatus() {
-
-        Long chargeId = 56735L;
-        String externalChargeId = "charge456";
-
-        String transactionId = "345654";
-        String transactionId2 = "345655";
-        String transactionId3 = "345656";
-
-        DatabaseFixtures
-                .withDatabaseTestHelper(databaseTestHelper)
-                .aTestCharge()
-                .withTestAccount(defaultTestAccount)
-                .withChargeId(chargeId)
-                .withExternalChargeId(externalChargeId)
-                .withTransactionId(transactionId)
-                .insert();
-
-        Optional<ChargeEntity> charge = chargeDao.findById(chargeId);
-        ChargeEntity entity = charge.get();
-        entity.setStatus(ENTERING_CARD_DETAILS);
-
-        entity = chargeDao.mergeAndNotifyStatusHasChanged(entity, Optional.empty());
-
-        //move status to AUTHORISED 
-        entity.setStatus(AUTHORISATION_READY);
-        entity.setStatus(AUTHORISATION_SUCCESS);
-        entity.setGatewayTransactionId(transactionId2);
-        entity = chargeDao.mergeAndNotifyStatusHasChanged(entity, Optional.empty());
-
-        entity.setStatus(CAPTURE_READY);
-        entity.setGatewayTransactionId(transactionId3);
-        chargeDao.mergeAndNotifyStatusHasChanged(entity, Optional.empty());
-
-        List<ChargeEventEntity> events = chargeDao.findById(chargeId).get().getEvents();
-
-        assertThat(events, hasSize(3));
-        assertThat(events, shouldIncludeStatus(ENTERING_CARD_DETAILS));
-        assertThat(events, shouldIncludeStatus(AUTHORISATION_SUCCESS));
-        assertThat(events, shouldIncludeStatus(CAPTURE_READY));
-        assertDateMatch(events.get(0).getUpdated());
     }
 
     @Test

@@ -3,6 +3,7 @@ package uk.gov.pay.connector.service;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import uk.gov.pay.connector.dao.ChargeDao;
+import uk.gov.pay.connector.dao.ChargeEventDao;
 import uk.gov.pay.connector.exception.ChargeNotFoundRuntimeException;
 import uk.gov.pay.connector.exception.ConflictRuntimeException;
 import uk.gov.pay.connector.exception.IllegalStateRuntimeException;
@@ -33,19 +34,20 @@ class CancelServiceFunctions {
 
     private static final Logger logger = LoggerFactory.getLogger(CancelServiceFunctions.class);
 
-    static TransactionalOperation<TransactionContext, ChargeEntity> changeStatusTo(ChargeDao chargeDao, String chargeId, ChargeStatus targetStatus, Optional<ZonedDateTime> generationTime) {
+    static TransactionalOperation<TransactionContext, ChargeEntity> changeStatusTo(ChargeDao chargeDao, ChargeEventDao chargeEventDao, String chargeId, ChargeStatus targetStatus, Optional<ZonedDateTime> generationTime) {
         return context -> chargeDao.findByExternalId(chargeId)
                 .map(chargeEntity -> {
                     logger.info("Charge status to update - charge_external_id={}, status={}, to_status={}",
                             chargeEntity.getExternalId(), chargeEntity.getStatus(), targetStatus);
                     chargeEntity.setStatus(targetStatus);
-                    chargeDao.notifyStatusHasChanged(chargeEntity, generationTime);
+                    chargeEventDao.persistChargeEventOf(chargeEntity, generationTime);
                     return chargeEntity;
                 })
                 .orElseThrow(() -> new ChargeNotFoundRuntimeException(chargeId));
     }
 
     static PreTransactionalOperation<TransactionContext, ChargeEntity> prepareForTerminate(ChargeDao chargeDao,
+                                                                                           ChargeEventDao chargeEventDao,
                                                                                            String chargeId,
                                                                                            StatusFlow statusFlow) {
         return context -> chargeDao.findByExternalId(chargeId).map(chargeEntity -> {
@@ -75,7 +77,7 @@ class CancelServiceFunctions {
                     gatewayAccount.getType(),
                     statusFlow.getLockState());
 
-            chargeDao.notifyStatusHasChanged(chargeEntity, Optional.empty());
+            chargeEventDao.persistChargeEventOf(chargeEntity, Optional.empty());
             return chargeEntity;
         }).orElseThrow(() -> new ChargeNotFoundRuntimeException(chargeId));
     }
