@@ -2,6 +2,8 @@ package uk.gov.pay.connector.service;
 
 import io.dropwizard.setup.Environment;
 import org.apache.commons.lang3.tuple.Pair;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import uk.gov.pay.connector.dao.ChargeDao;
 import uk.gov.pay.connector.dao.ChargeEventDao;
 import uk.gov.pay.connector.exception.ConflictRuntimeException;
@@ -20,6 +22,8 @@ import static uk.gov.pay.connector.service.CardExecutorService.ExecutionStatus;
 
 public abstract class CardAuthoriseBaseService<T extends AuthorisationDetails> extends CardService<BaseAuthoriseResponse> {
 
+    private static final Logger LOG = LoggerFactory.getLogger(CardAuthoriseBaseService.class);
+
     private final CardExecutorService cardExecutorService;
 
     public CardAuthoriseBaseService(ChargeDao chargeDao, ChargeEventDao chargeEventDao, PaymentProviders providers, CardExecutorService cardExecutorService, Environment environment) {
@@ -37,6 +41,7 @@ public abstract class CardAuthoriseBaseService<T extends AuthorisationDetails> e
                     throw new ConflictRuntimeException(chargeId, "configuration mismatch");
                 }
             } catch (OptimisticLockException e) {
+                LOG.info("OptimisticLockException in doAuthorise for charge external_id=" + chargeId);
                 throw new ConflictRuntimeException(chargeId);
             }
              GatewayResponse<BaseAuthoriseResponse> operationResponse = operation(charge, gatewayAuthRequest);
