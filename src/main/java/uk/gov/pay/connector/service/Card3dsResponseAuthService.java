@@ -58,7 +58,7 @@ public class Card3dsResponseAuthService extends CardAuthoriseBaseService<Auth3ds
             String transactionId = operationResponse.getBaseResponse()
                     .map(BaseAuthoriseResponse::getTransactionId).orElse("");
 
-            logger.info("3DS response authorisation for {} ({} {}) for {} ({}) — {} ∴ {} → {}",
+            logger.info("3DS response authorisation for {} ({} {}) for {} ({}) - {} .'. {} -> {}",
                     chargeEntity.getExternalId(), chargeEntity.getPaymentGatewayName().getName(), chargeEntity.getGatewayTransactionId(),
                     chargeEntity.getGatewayAccount().getAnalyticsId(), chargeEntity.getGatewayAccount().getId(),
                     operationResponse, chargeEntity.getStatus(), status);
