@@ -74,7 +74,7 @@ public class TransactionFlow {
             execute(op);
             return this;
         } catch (OptimisticLockException e) {
-            throw new ConflictRuntimeException(e);
+            throw new ConflictRuntimeException("OptimisticLockException in TransactionFlow - PreTransactional operation", e);
         }
     }
 
