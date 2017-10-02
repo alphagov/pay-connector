@@ -355,6 +355,7 @@ public class DatabaseFixtures {
 
     public class TestCharge {
         Long chargeId = RandomUtils.nextLong(1, 99999);
+        private String description = "Test description";
         String email = "alice.111@mail.fake";
         String externalChargeId = RandomIdGenerator.newId();
         long amount = 101L;
@@ -413,11 +414,21 @@ public class DatabaseFixtures {
             return this;
         }
 
+        public TestCharge withCardDetails(TestCardDetails testCardDetails) {
+            cardDetails = testCardDetails;
+            return this;
+        }
+
+        public TestCharge withDescription(String description) {
+            this.description = description;
+            return this;
+        }
+
         public TestCharge insert() {
             if (testAccount == null)
                 throw new IllegalStateException("Test Account must be provided.");
 
-            databaseTestHelper.addCharge(chargeId, externalChargeId, String.valueOf(testAccount.getAccountId()), amount, chargeStatus, returnUrl, transactionId, reference, createdDate, email);
+            databaseTestHelper.addCharge(chargeId, externalChargeId, String.valueOf(testAccount.getAccountId()), amount, chargeStatus, returnUrl, transactionId, reference, description, createdDate, email);
 
             if (cardDetails != null) {
                 cardDetails.update();
@@ -461,9 +472,8 @@ public class DatabaseFixtures {
             return createdDate;
         }
 
-        public TestCharge withCardDetails(TestCardDetails testCardDetails) {
-            cardDetails = testCardDetails;
-            return this;
+        public String getDescription() {
+            return description;
         }
     }
 
@@ -528,6 +538,11 @@ public class DatabaseFixtures {
             return this;
         }
 
+        public TestRefund withRefundStatus(RefundStatus status) {
+            this.status = status;
+            return this;
+        }
+
         public TestRefund insert() {
             if (testCharge == null)
                 throw new IllegalStateException("Test charge must be provided.");
@@ -566,6 +581,11 @@ public class DatabaseFixtures {
 
         public String getSubmittedByUserExternalId() {
             return submittedByUserExternalId;
+        }
+
+        public TestRefund withId(Long id) {
+            this.id = id;
+            return this;
         }
     }
 
