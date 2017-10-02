@@ -25,8 +25,6 @@ public class TransactionDao {
 
     private enum QueryType {SELECT, COUNT}
 
-    public static final String SQL_ESCAPE_SEQ = "\\\\";
-
     private final Provider<EntityManager> entityManager;
     private final UTCDateTimeConverter utcDateTimeConverter;
 
@@ -105,7 +103,7 @@ public class TransactionDao {
 
         if (isNotBlank(params.getEmail())) {
             queryFilters = queryFilters.and(
-                    field("c.email").lower().like('%' + escape(params.getEmail().toLowerCase()) + '%'));
+                    field("c.email").lower().like(buildLikeClauseContaining(params.getEmail().toLowerCase())));
         }
 
         if (isNotBlank(params.getCardBrand())) {
@@ -115,7 +113,7 @@ public class TransactionDao {
 
         if (isNotBlank(params.getReference())) {
             queryFilters = queryFilters.and(
-                    field("c.reference").lower().like('%' + escape(params.getReference().toLowerCase()) + '%'));
+                    field("c.reference").lower().like(buildLikeClauseContaining(params.getReference().toLowerCase())));
         }
 
         Condition queryFiltersForCharges = queryFilters;
@@ -223,10 +221,11 @@ public class TransactionDao {
         return queryForCharges.unionAll(queryForRefunds);
     }
 
-    private String escape(String field) {
-        return field
-                .replaceAll("_", SQL_ESCAPE_SEQ + "_")
-                .replaceAll("%", SQL_ESCAPE_SEQ + "%");
+    private String buildLikeClauseContaining(String textToFind) {
+        String escapedLikeClause = textToFind
+                .replaceAll("_", "\\\\_")
+                .replaceAll("%", "\\\\%");
+        return '%' + escapedLikeClause + '%';
     }
 
     private Set<String> mapChargeStatuses(Set<ChargeStatus> status) {
