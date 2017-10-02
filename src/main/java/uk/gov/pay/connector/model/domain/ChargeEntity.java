@@ -177,10 +177,6 @@ public class ChargeEntity extends AbstractEntity {
         this.providerSessionId = providerSessionId;
     }
 
-    public boolean isAssociatedTo(Long accountId) {
-        return this.getGatewayAccount().getId().equals(accountId);
-    }
-
     public boolean hasStatus(ChargeStatus... status) {
         return Arrays.stream(status).anyMatch(s -> equalsIgnoreCase(s.getValue(), getStatus()));
     }
@@ -216,7 +212,7 @@ public class ChargeEntity extends AbstractEntity {
         return this.events.stream()
                 .filter(e -> e.getStatus().equals(CAPTURED))
                 .findFirst()
-                        // use updated for old CAPTURED events that do not have a generated time recorded
+                // use updated for old CAPTURED events that do not have a generated time recorded
                 .map(e -> e.getGatewayEventDate().orElse(e.getUpdated()))
                 .orElse(null);
     }

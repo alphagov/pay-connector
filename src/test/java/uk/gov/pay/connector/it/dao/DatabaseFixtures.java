@@ -214,7 +214,7 @@ public class DatabaseFixtures {
         private String expiryDate = "02/17";
         private TestAddress billingAddress = new TestAddress();
         private Long chargeId;
-        private String cardBrand = "VISA";
+        private String cardBrand = "visa";
 
         public TestCardDetails withLastDigitsOfCardNumber(String lastDigitsCardNumber) {
             this.lastDigitsCardNumber = lastDigitsCardNumber;
@@ -581,11 +581,6 @@ public class DatabaseFixtures {
 
         public String getSubmittedByUserExternalId() {
             return submittedByUserExternalId;
-        }
-
-        public TestRefund withId(Long id) {
-            this.id = id;
-            return this;
         }
     }
 
