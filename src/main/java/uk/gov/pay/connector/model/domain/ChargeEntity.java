@@ -177,10 +177,6 @@ public class ChargeEntity extends AbstractEntity {
         this.providerSessionId = providerSessionId;
     }
 
-    public boolean isAssociatedTo(Long accountId) {
-        return this.getGatewayAccount().getId().equals(accountId);
-    }
-
     public boolean hasStatus(ChargeStatus... status) {
         return Arrays.stream(status).anyMatch(s -> equalsIgnoreCase(s.getValue(), getStatus()));
     }
