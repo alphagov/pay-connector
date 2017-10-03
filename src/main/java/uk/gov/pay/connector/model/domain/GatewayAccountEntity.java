@@ -4,9 +4,12 @@ import com.fasterxml.jackson.annotation.JsonBackReference;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import com.fasterxml.jackson.annotation.JsonView;
 
+import java.util.ArrayList;
 import javax.persistence.*;
 import java.util.List;
 import java.util.Map;
+import uk.gov.pay.connector.model.spike.PaymentRequestEntity;
+import uk.gov.pay.connector.model.spike.TransactionEntity;
 
 import static com.google.common.collect.Lists.newArrayList;
 import static com.google.common.collect.Maps.newHashMap;
@@ -46,6 +49,9 @@ public class GatewayAccountEntity extends AbstractEntity {
     }
 
     public GatewayAccountEntity() {}
+
+    @OneToMany(mappedBy = "gatewayAccount", cascade = CascadeType.PERSIST)
+    private List<PaymentRequestEntity> paymentRequests = new ArrayList<>();
 
     //TODO: Should we rename the columns to be more consistent?
     @Column(name = "payment_provider")

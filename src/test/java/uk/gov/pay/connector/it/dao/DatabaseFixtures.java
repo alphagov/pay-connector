@@ -1,19 +1,25 @@
 package uk.gov.pay.connector.it.dao;
 
+import static uk.gov.pay.connector.model.domain.GatewayAccountEntity.Type.TEST;
+import static uk.gov.pay.connector.model.domain.RefundStatus.CREATED;
+
+import java.time.ZoneId;
+import java.time.ZonedDateTime;
+import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
+import java.util.UUID;
+import javax.persistence.Column;
 import org.apache.commons.lang3.RandomUtils;
 import uk.gov.pay.connector.model.domain.CardTypeEntity.Type;
 import uk.gov.pay.connector.model.domain.ChargeStatus;
 import uk.gov.pay.connector.model.domain.GatewayAccountEntity;
 import uk.gov.pay.connector.model.domain.RefundStatus;
+import uk.gov.pay.connector.model.spike.TransactionEntity.TransactionOperation;
+import uk.gov.pay.connector.model.spike.TransactionEventEntity.TransactionStatus;
 import uk.gov.pay.connector.util.DatabaseTestHelper;
 import uk.gov.pay.connector.util.RandomIdGenerator;
-
-import java.time.ZoneId;
-import java.time.ZonedDateTime;
-import java.util.*;
-
-import static uk.gov.pay.connector.model.domain.GatewayAccountEntity.Type.TEST;
-import static uk.gov.pay.connector.model.domain.RefundStatus.CREATED;
 
 public class DatabaseFixtures {
 
@@ -33,6 +39,18 @@ public class DatabaseFixtures {
 
     public TestCharge aTestCharge() {
         return new TestCharge();
+    }
+
+    public  TestChargeNew aTestChargeNew() {
+        return new TestChargeNew();
+    }
+    public TestRefundNew aTestRefundNew() {
+        return new TestRefundNew();
+    }
+
+
+    public TestPaymentRequest aTestPaymentRequest() {
+        return new TestPaymentRequest();
     }
 
     public TestChargeEvent aTestChargeEvent() {
@@ -263,7 +281,7 @@ public class DatabaseFixtures {
         }
 
         public TestCardDetails update() {
-            databaseTestHelper.updateChargeCardDetails(chargeId, cardBrand, lastDigitsCardNumber, cardHolderName, expiryDate, billingAddress.getLine1(), billingAddress.getLine2(), billingAddress.getPostcode(), billingAddress.getCity(), billingAddress.getCounty(), billingAddress.getCountry());
+            databaseTestHelper.updateChargeCardDetailsNew(chargeId, cardBrand, lastDigitsCardNumber, cardHolderName, expiryDate, billingAddress.getLine1(), billingAddress.getLine2(), billingAddress.getPostcode(), billingAddress.getCity(), billingAddress.getCounty(), billingAddress.getCountry());
             return this;
         }
 
@@ -353,6 +371,171 @@ public class DatabaseFixtures {
         }
     }
 
+    public class TestPaymentRequest {
+        long id = RandomUtils.nextLong(1, 99999);
+        long amount = 101L;
+        long gatewayAccountId = 102L;
+        String reference = "reference";
+        String description = "Test description";
+        String returnUrl = "return_url";
+        String externalId = "external_id";
+        ZonedDateTime createdDate = ZonedDateTime.now(ZoneId.of("UTC"));
+
+        public long getId() {
+            return id;
+        }
+
+        public TestPaymentRequest withGatewayAccountId(Long gatewayAccountId) {
+            this.gatewayAccountId = gatewayAccountId;
+            return this;
+        }
+
+        public TestPaymentRequest insert() {
+            databaseTestHelper.addPaymentRequest(id, reference, description, amount, gatewayAccountId,returnUrl, externalId, createdDate, 0);
+            return this;
+        }
+
+        public long getAmount() {
+            return amount;
+        }
+
+        public long getGatewayAccountId() {
+            return gatewayAccountId;
+        }
+
+        public String getReference() {
+            return reference;
+        }
+
+        public String getDescription() {
+            return description;
+        }
+
+        public String getReturnUrl() {
+            return returnUrl;
+        }
+
+        public String getExternalId() {
+            return externalId;
+        }
+
+        public TestPaymentRequest withDescription(String description) {
+            this.description = description;
+            return this;
+        }
+
+        public ZonedDateTime getCreatedDate() {
+            return createdDate;
+        }
+        public TestPaymentRequest withReference(String reference) {
+            this.reference = reference;
+            return this;
+        }
+
+        public TestPaymentRequest withExternalId(String externalId) {
+            this.externalId = externalId;
+            return this;
+        }
+    }
+    private abstract class TestTransaction {
+        Long transactionId = RandomUtils.nextLong(1, 99999);
+        TransactionStatus transactionStatus = TransactionStatus.CREATED;
+        long amount = 101L;
+        ZonedDateTime createdDate = ZonedDateTime.now(ZoneId.of("UTC"));
+        TransactionOperation operation = TransactionOperation.CHARGE;
+        TestPaymentRequest testPaymentRequest = new TestPaymentRequest();
+
+        public Long getTransactionId() {
+            return transactionId;
+        }
+
+        public TransactionStatus getTransactionStatus() {
+            return transactionStatus;
+        }
+
+        public long getAmount() {
+            return amount;
+        }
+
+        public ZonedDateTime getCreatedDate() {
+            return createdDate;
+        }
+
+        public TransactionOperation getOperation() {
+            return operation;
+        }
+
+        public TestPaymentRequest getPaymentRequest() {
+            return testPaymentRequest;
+        }
+    }
+
+    public class TestChargeNew extends TestTransaction {
+        String email = "aaa@bbb.com";
+        String gatewayTransactionId = "gateway_transaction_id";
+        TestCardDetails cardDetails;
+
+        public TestChargeNew withTestPaymentRequest(TestPaymentRequest testPaymentRequest) {
+            this.testPaymentRequest = testPaymentRequest;
+            return this;
+        }
+
+        public TestChargeNew insert() {
+            if (testPaymentRequest == null)
+                throw new IllegalStateException("Test PaymentRequest must be provided.");
+
+            databaseTestHelper.addChargeNew(transactionId, testPaymentRequest.id, amount, transactionStatus,
+                gatewayTransactionId, null, createdDate, 0, email);
+
+            if (cardDetails != null) {
+                cardDetails.update();
+            }
+            return this;
+        }
+
+        public String getReturnUrl() {
+            return this.testPaymentRequest.returnUrl;
+        }
+        public String getDescription() {
+            return this.testPaymentRequest.description;
+        }
+
+        public String getReference() {
+            return this.testPaymentRequest.reference;
+        }
+        public String getEmail() {
+            return email;
+        }
+
+        public String getGatewayTransactionId() {
+            return gatewayTransactionId;
+        }
+
+        public TestChargeNew withGatewayTransactionId(String chargeId) {
+            this.gatewayTransactionId = chargeId;
+            return this;
+        }
+        public TestChargeNew withTransactionId(long chargeId) {
+            this.transactionId = chargeId;
+            return this;
+        }
+
+        public TestChargeNew withCreatedDate(ZonedDateTime createdDate) {
+            this.createdDate = createdDate;
+            return this;
+        }
+
+        public TestChargeNew withEmail(String email) {
+            this.email = email;
+            return this;
+        }
+
+        public TestChargeNew withTransactionStatus(TransactionStatus transactionStatus) {
+            this.transactionStatus = transactionStatus;
+            return this;
+        }
+
+    }
     public class TestCharge {
         Long chargeId = RandomUtils.nextLong(1, 99999);
         String email = "alice.111@mail.fake";
@@ -488,6 +671,71 @@ public class DatabaseFixtures {
         }
     }
 
+    public class TestRefundNew extends TestTransaction {
+        private String smartpayPspReference = "smartpayPspRe1ference";
+        private String epdqPayId = "epdq1";
+        private String epdqPayIdSub = "epdq2";
+        private String refundedBy = "refundedby1";
+        private String externalId = "externalId";
+
+        public String getSmartpayPspReference() {
+            return smartpayPspReference;
+        }
+
+        public TestRefundNew withTestPaymentRequest(TestPaymentRequest testPaymentRequest) {
+            this.testPaymentRequest = testPaymentRequest;
+            return this;
+        }
+
+        public TestRefundNew withSmartpayPspReference(String smartpayPspReference) {
+            this.smartpayPspReference = smartpayPspReference;
+            return this;
+        }
+
+        public String getExternalId() {
+            return externalId;
+        }
+
+        public TestRefundNew withExternalId(String externalId) {
+            this.externalId = externalId;
+            return this;
+        }
+
+        public String getEpdqPayId() {
+            return epdqPayId;
+        }
+
+        public TestRefundNew withEpdqPayId(String epdqPayId) {
+            this.epdqPayId = epdqPayId;
+            return this;
+        }
+
+        public String getEpdqPayIdSub() {
+            return epdqPayIdSub;
+        }
+
+        public TestRefundNew withEpdqPayIdSub(String epdqPayIdSub) {
+            this.epdqPayIdSub = epdqPayIdSub;
+            return this;
+        }
+
+        public String getRefundedBy() {
+            return refundedBy;
+        }
+
+        public TestRefundNew withRefundedBy(String refundedBy) {
+            this.refundedBy = refundedBy;
+            return this;
+        }
+
+
+        public TestRefundNew insert() {
+            if (testPaymentRequest == null)
+                throw new IllegalStateException("Test payment request be provided.");
+            databaseTestHelper.addRefundNew(transactionId, testPaymentRequest.id, amount, transactionStatus, createdDate, externalId, smartpayPspReference, epdqPayId, epdqPayIdSub, refundedBy, 0);
+            return this;
+        }
+    }
     public class TestRefund {
         Long id = RandomUtils.nextLong(1, 99999);
         String externalRefundId = RandomIdGenerator.newId();

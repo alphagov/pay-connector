@@ -8,11 +8,15 @@ import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
+import uk.gov.pay.connector.model.domain.RefundStatus;
+import uk.gov.pay.connector.model.spike.TransactionEntity.TransactionOperation;
+import uk.gov.pay.connector.model.spike.TransactionEventEntity.TransactionStatus;
 
 import static org.apache.commons.lang3.StringUtils.isNotBlank;
 
 public class ChargeSearchParams {
 
+    private TransactionOperation transactionOperation;
     private Long gatewayAccountId;
     private String reference;
     private String email;
@@ -20,7 +24,9 @@ public class ChargeSearchParams {
     private ZonedDateTime toDate;
     private Long page;
     private Long displaySize;
-    private Set<ChargeStatus> chargeStatuses = new HashSet<>();
+    private Set<ChargeStatus> internalChargeStatuses = new HashSet<>();
+    private Set<TransactionStatus> internalTransactionStatuses = new HashSet<>();
+    private Set<RefundStatus> internalRefundStatuses = new HashSet<>();
     private String externalChargeState;
     private String cardBrand;
 
@@ -38,8 +44,21 @@ public class ChargeSearchParams {
         return this;
     }
 
-    public Set<ChargeStatus> getChargeStatuses() {
-        return chargeStatuses;
+    public TransactionOperation getTransactionOperation() {
+        return transactionOperation;
+    }
+
+    public ChargeSearchParams withTransactionOperation(TransactionOperation operation) {
+        this.transactionOperation = operation;
+        return this;
+    }
+
+
+    public Set<ChargeStatus> getInternalChargeStatuses() {
+        return internalChargeStatuses;
+    }
+    public Set<RefundStatus> getInternalRefundStatuses() {
+        return internalRefundStatuses;
     }
 
 
@@ -47,7 +66,7 @@ public class ChargeSearchParams {
         if (state != null) {
             this.externalChargeState = state;
             for (ExternalChargeState externalState : parseState(state)) {
-                this.chargeStatuses.addAll(ChargeStatus.fromExternal(externalState));
+                this.internalChargeStatuses.addAll(ChargeStatus.fromExternal(externalState));
             }
         }
         return this;
@@ -112,7 +131,7 @@ public class ChargeSearchParams {
     }
 
     public ChargeSearchParams withInternalChargeStatuses(List<ChargeStatus> statuses) {
-        this.chargeStatuses = new HashSet<>(statuses);
+        this.internalChargeStatuses = new HashSet<>(statuses);
         return this;
     }
 
@@ -122,7 +141,12 @@ public class ChargeSearchParams {
 
     public String buildQueryParams() {
         StringBuilder builder = new StringBuilder();
-
+//todo getValue
+        if (transactionOperation != null) {
+            builder.append("&transaction_type=").append(transactionOperation.toString());
+        } else {
+            builder.append("&transaction_type=").append("all");
+        }
         if (isNotBlank(reference))
             builder.append("&reference=" + reference);
         if (email != null)

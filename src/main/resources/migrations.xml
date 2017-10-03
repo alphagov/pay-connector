@@ -1,9 +1,9 @@
 <?xml version="1.0" encoding="UTF-8"?>
 
 <databaseChangeLog
-        xmlns="http://www.liquibase.org/xml/ns/dbchangelog"
-        xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
-        xsi:schemaLocation="http://www.liquibase.org/xml/ns/dbchangelog
+  xmlns="http://www.liquibase.org/xml/ns/dbchangelog"
+  xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+  xsi:schemaLocation="http://www.liquibase.org/xml/ns/dbchangelog
          http://www.liquibase.org/xml/ns/dbchangelog/dbchangelog-3.1.xsd">
 
     <changeSet id="build gateway table" author="">
@@ -50,7 +50,7 @@
             </column>
             <column name="gateway_account_id" type="bigserial">
                 <constraints foreignKeyName="fk__charges_gateway_accounts" referencedTableName="gateway_accounts"
-                             referencedColumnNames="gateway_account_id" nullable="false"/>
+                  referencedColumnNames="gateway_account_id" nullable="false"/>
             </column>
         </createTable>
     </changeSet>
@@ -86,7 +86,7 @@
             </column>
             <column name="charge_id" type="bigserial">
                 <constraints foreignKeyName="fk__charges_events" referencedTableName="charges"
-                             referencedColumnNames="charge_id" nullable="false"/>
+                  referencedColumnNames="charge_id" nullable="false"/>
             </column>
             <column name="status" type="text">
                 <constraints nullable="false"/>
@@ -100,7 +100,7 @@
     <changeSet id="add created date to charges table" author="">
         <addColumn tableName="charges">
             <column name="created_date" type="timestamp without timezone"
-                    defaultValueComputed="(now() at time zone 'utc')">
+              defaultValueComputed="(now() at time zone 'utc')">
                 <constraints nullable="false"/>
             </column>
         </addColumn>
@@ -108,16 +108,16 @@
 
     <changeSet id="rename 'gateway_accounts' primary key column" author="">
         <renameColumn columnDataType="bigserial"
-                      oldColumnName="gateway_account_id"
-                      newColumnName="id"
-                      tableName="gateway_accounts"/>
+          oldColumnName="gateway_account_id"
+          newColumnName="id"
+          tableName="gateway_accounts"/>
     </changeSet>
 
     <changeSet id="rename 'charges' primary key column" author="">
         <renameColumn columnDataType="bigserial"
-                      oldColumnName="charge_id"
-                      newColumnName="id"
-                      tableName="charges"/>
+          oldColumnName="charge_id"
+          newColumnName="id"
+          tableName="charges"/>
     </changeSet>
 
     <changeSet id="add version to charges table" author="">
@@ -168,29 +168,29 @@
 
     <changeSet id="add NotNullConstraint to charges.external_id" author="">
         <addNotNullConstraint columnName="external_id"
-                              tableName="charges"/>
+          tableName="charges"/>
     </changeSet>
 
     <changeSet id="createIndex charges.external_id" author="">
         <createIndex indexName="idx_charges_external_id"
-                     tableName="charges"
-                     unique="true">
+          tableName="charges"
+          unique="true">
             <column name="external_id" type="char(26)"/>
         </createIndex>
     </changeSet>
 
     <changeSet id="createIndex charges.reference" author="">
         <createIndex indexName="idx_charges_reference"
-                     tableName="charges"
-                     unique="false">
+          tableName="charges"
+          unique="false">
             <column name="reference"/>
         </createIndex>
     </changeSet>
 
     <changeSet id="createIndex charges.created_date" author="">
         <createIndex indexName="idx_charges_created_date"
-                     tableName="charges"
-                     unique="false">
+          tableName="charges"
+          unique="false">
             <column name="created_date"/>
         </createIndex>
     </changeSet>
@@ -249,14 +249,14 @@
         <createTable tableName="accepted_card_types">
             <column name="gateway_account_id" type="bigint">
                 <constraints primaryKey="true"
-                             foreignKeyName="fk__accepted_card_types_gateway_accounts"
-                             referencedTableName="gateway_accounts"
-                             referencedColumnNames="id" nullable="false"/>
+                  foreignKeyName="fk__accepted_card_types_gateway_accounts"
+                  referencedTableName="gateway_accounts"
+                  referencedColumnNames="id" nullable="false"/>
             </column>
             <column name="card_type_id" type="uuid">
                 <constraints primaryKey="true"
-                             foreignKeyName="fk__accepted_card_types_card_type" referencedTableName="card_types"
-                             referencedColumnNames="id" nullable="false"/>
+                  foreignKeyName="fk__accepted_card_types_card_type" referencedTableName="card_types"
+                  referencedColumnNames="id" nullable="false"/>
             </column>
             <column name="version" type="bigint" defaultValue="0">
                 <constraints nullable="false"/>
@@ -274,14 +274,14 @@
 
     <changeSet id="Seed database table card_types" author="">
         <loadData file="seed-data/card_types.csv"
-                  tableName="card_types">
+          tableName="card_types">
         </loadData>
     </changeSet>
 
     <changeSet id="update email column in charges table to 254 chars" author="">
         <modifyDataType columnName="email"
-                        newDataType="varchar(254)"
-                        tableName="charges"/>
+          newDataType="varchar(254)"
+          tableName="charges"/>
     </changeSet>
 
     <changeSet id="build email notifications table" author="">
@@ -291,9 +291,9 @@
             </column>
             <column name="account_id" type="bigserial">
                 <constraints nullable="false"
-                             foreignKeyName="fk__email_notifications_gateway_accounts"
-                             referencedTableName="gateway_accounts"
-                             referencedColumnNames="id"/>
+                  foreignKeyName="fk__email_notifications_gateway_accounts"
+                  referencedTableName="gateway_accounts"
+                  referencedColumnNames="id"/>
             </column>
             <column name="template_body" type="text">
                 <constraints nullable="false"/>
@@ -306,8 +306,8 @@
 
     <changeSet author="" id="drop not null constraint on email notifications table">
         <dropNotNullConstraint columnDataType="text"
-                               columnName="template_body"
-                               tableName="email_notifications"/>
+          columnName="template_body"
+          tableName="email_notifications"/>
     </changeSet>
 
     <changeSet id="add enabled column to email notifications table" author="">
@@ -332,10 +332,10 @@
             </column>
             <column name="charge_id" type="bigserial">
                 <constraints foreignKeyName="fk__refunds_charges" referencedTableName="charges"
-                             referencedColumnNames="id" nullable="false"/>
+                  referencedColumnNames="id" nullable="false"/>
             </column>
             <column name="created_date" type="timestamp without timezone"
-                    defaultValueComputed="(now() at time zone 'utc')">
+              defaultValueComputed="(now() at time zone 'utc')">
                 <constraints nullable="false"/>
             </column>
             <column name="version" type="bigint" defaultValue="0">
@@ -343,8 +343,8 @@
             </column>
         </createTable>
         <createIndex indexName="idx_refunds_external_id"
-                     tableName="refunds"
-                     unique="true">
+          tableName="refunds"
+          unique="true">
             <column name="external_id" type="char(26)"/>
         </createIndex>
     </changeSet>
@@ -364,7 +364,7 @@
             </column>
             <column name="charge_id" type="bigserial">
                 <constraints foreignKeyName="fk__confirmation_details_charges" unique="true" referencedTableName="charges"
-                             referencedColumnNames="id" nullable="false"/>
+                  referencedColumnNames="id" nullable="false"/>
             </column>
             <column name="last_digits_card_number" type="char(4)">
                 <constraints nullable="false"/>
@@ -406,8 +406,8 @@
             </column>
             <column name="account_id" type="bigint">
                 <constraints foreignKeyName="fk__notification_credentials_gateway_accounts"
-                             referencedTableName="gateway_accounts"
-                             referencedColumnNames="id" nullable="false"/>
+                  referencedTableName="gateway_accounts"
+                  referencedColumnNames="id" nullable="false"/>
             </column>
             <column name="username" type="varchar(25)">
                 <constraints nullable="false"/>
@@ -431,8 +431,8 @@
 
     <changeSet id="update password lenghth to 100 characters" author="">
         <modifyDataType columnName="password"
-                        newDataType="varchar(100)"
-                        tableName="notification_credentials"/>
+          newDataType="varchar(100)"
+          tableName="notification_credentials"/>
     </changeSet>
 
     <changeSet id="add analytics_id and description to gateway_accounts table" author="">
@@ -502,7 +502,7 @@
 
     <changeSet author="" id="dropTable-confirmation-details-table">
         <dropTable cascadeConstraints="true"
-                   tableName="confirmation_details"/>
+          tableName="confirmation_details"/>
     </changeSet>
 
     <changeSet id="add gateway event date time column to charge_events table" author="">
@@ -515,24 +515,24 @@
 
     <changeSet id="createIndex charge_events.charge_id" author="">
         <createIndex indexName="idx_charge_events_charge_id"
-                     tableName="charge_events"
-                     unique="false">
+          tableName="charge_events"
+          unique="false">
             <column name="charge_id" type="bigserial"/>
         </createIndex>
     </changeSet>
 
     <changeSet id="createIndex refunds.charge_id" author="">
         <createIndex indexName="idx_refunds_charge_id"
-                     tableName="refunds"
-                     unique="false">
+          tableName="refunds"
+          unique="false">
             <column name="charge_id" type="bigserial"/>
         </createIndex>
     </changeSet>
 
     <changeSet id="createIndex card_types.brand" author="">
         <createIndex indexName="idx_card_types_brand"
-                     tableName="card_types"
-                     unique="false">
+          tableName="card_types"
+          unique="false">
             <column name="brand" type="text"/>
         </createIndex>
     </changeSet>
@@ -564,8 +564,8 @@
 
     <changeSet id="createIndex charges.status" author="">
         <createIndex indexName="idx_charges_status"
-                     tableName="charges"
-                     unique="false">
+          tableName="charges"
+          unique="false">
             <column name="status" type="text"/>
         </createIndex>
     </changeSet>
@@ -587,32 +587,32 @@
 
     <changeSet id="createIndex refunds.reference" author="">
         <createIndex indexName="idx_refunds_reference"
-                     tableName="refunds"
-                     unique="false">
+          tableName="refunds"
+          unique="false">
             <column name="reference" type="text"/>
         </createIndex>
     </changeSet>
 
     <changeSet id="createIndex gateway_accounts.payment_provider" author="">
         <createIndex indexName="idx_gateway_accounts_payment_provider"
-                     tableName="gateway_accounts"
-                     unique="false">
+          tableName="gateway_accounts"
+          unique="false">
             <column name="payment_provider" type="varchar(255)"/>
         </createIndex>
     </changeSet>
 
     <changeSet id="createIndex charges.gateway_account_id" author="">
         <createIndex indexName="idx_charges_gateway_account_id"
-                     tableName="charges"
-                     unique="false">
+          tableName="charges"
+          unique="false">
             <column name="gateway_account_id" type="bigserial"/>
         </createIndex>
     </changeSet>
 
     <changeSet id="createIndex refunds.created_date" author="">
         <createIndex indexName="idx_refunds_created_date"
-                     tableName="refunds"
-                     unique="false">
+          tableName="refunds"
+          unique="false">
             <column name="created_date" />
         </createIndex>
     </changeSet>
@@ -634,8 +634,8 @@
 
     <changeSet id="createIndex refunds_history.charge_id" author="">
         <createIndex indexName="idx_refunds_history_charge_id"
-                     tableName="refunds_history"
-                     unique="false">
+          tableName="refunds_history"
+          unique="false">
             <column name="charge_id" type="bigserial"/>
         </createIndex>
     </changeSet>
@@ -667,7 +667,11 @@
             <column name="description" type="varchar(255)" defaultValue="">
                 <constraints nullable="false"/>
             </column>
-            <column name="gateway_account_id" type="text">
+            <column name="gateway_account_id" type="bigserial">
+                <constraints foreignKeyName="fk__payment_request_gateway_accounts" referencedTableName="gateway_accounts"
+                  referencedColumnNames="id" nullable="false"/>
+            </column>
+            <column name="amount" type="bigint">
                 <constraints nullable="false"/>
             </column>
             <column name="return_url" type="text">
@@ -676,48 +680,7 @@
             <column name="external_id" type="char(26)">
                 <constraints nullable="false"/>
             </column>
-            <column name="created" type="timestamp without timezone" defaultValueComputed="(now() at time zone 'utc')">
-                <constraints nullable="false"/>
-            </column>
-        </createTable>
-    </changeSet>
-
-    <changeSet id="build card_details table" author="">
-        <createTable tableName="card_details">
-            <column name="id" type="bigserial" autoIncrement="true">
-                <constraints primaryKey="true" nullable="false"/>
-            </column>
-            <column name="payment_request_id" type="bigserial">
-                <constraints foreignKeyName="fk__card_details_payment_requests" unique="true" referencedTableName="payment_requests"
-                             referencedColumnNames="id" nullable="false"/>
-            </column>
-            <column name="email" type="varchar(254)">
-                <constraints nullable="false"/>
-            </column>
-            <column name="card_brand" type="text">
-                <constraints nullable="false"/>
-            </column>
-            <column name="last_digits_card_number" type="char(4)">
-                <constraints nullable="false"/>
-            </column>
-            <column name="cardholder_name" type="varchar(255)">
-                <constraints nullable="false"/>
-            </column>
-            <column name="expiry_date" type="varchar(6)">
-                <constraints nullable="false"/>
-            </column>
-            <column name="address_line1" type="varchar(255)">
-                <constraints nullable="false"/>
-            </column>
-            <column name="address_line2" type="varchar(255)"></column>
-            <column name="address_postcode" type="varchar(25)">
-                <constraints nullable="false"/>
-            </column>
-            <column name="address_city" type="varchar(255)">
-                <constraints nullable="false"/>
-            </column>
-            <column name="address_county" type="varchar(255)"></column>
-            <column name="address_country" type="varchar(255)">
+            <column name="created_date" type="timestamp without timezone" defaultValueComputed="(now() at time zone 'utc')">
                 <constraints nullable="false"/>
             </column>
             <column name="version" type="bigint" defaultValue="0"></column>
@@ -731,7 +694,7 @@
             </column>
             <column name="payment_request_id" type="bigserial">
                 <constraints foreignKeyName="fk__payment_request_transactions" referencedTableName="payment_requests"
-                             referencedColumnNames="id" nullable="false"/>
+                  referencedColumnNames="id" nullable="false"/>
             </column>
             <column name="amount" type="bigint">
                 <constraints nullable="false"/>
@@ -739,55 +702,81 @@
             <column name="operation" type="varchar(50)">
                 <constraints nullable="false"/>
             </column>
+            <column name="status" type="text">
+                <constraints nullable="false"/>
+            </column>
+            <column name="charge_gateway_transaction_id" type="timestamp without timezone">
+                <constraints nullable="true"/>
+            </column>
+            <column name="charge_gateway_event_date" type="timestamp without timezone">
+                <constraints nullable="true"/>
+            </column>
             <column name="charge_gateway_id" type="text"></column>
             <column name="refund_smartpay_pspreference" type="text"></column>
             <column name="refund_epdq_payid" type="text"></column>
             <column name="refund_epdq_payidsub" type="text"></column>
-            <column name="refund_external_id" type="char(26)">
+            <column name="refund_external_id" type="char(26)"></column>
+            <column name="refunded_by" type="text"></column>
+            <column name="version" type="bigint" defaultValue="0" />
+            <column name="created_date" type="timestamp without timezone"
+              defaultValueComputed="(now() at time zone 'utc')">
                 <constraints nullable="false"/>
             </column>
-            <column name="refund_user_external_id" type="text">
+
+            <column name="charge_email" type="varchar(254)">
                 <constraints nullable="true"/>
             </column>
-            <column name="version" type="bigint" defaultValue="0" />
-        </createTable>
-    </changeSet>
+            <column name="card_brand" type="text">
+                <constraints nullable="true"/>
+            </column>
+            <column name="last_digits_card_number" type="char(4)">
+                <constraints nullable="true"/>
+            </column>
+            <column name="cardholder_name" type="varchar(255)">
+                <constraints nullable="true"/>
+            </column>
+            <column name="expiry_date" type="varchar(6)">
+                <constraints nullable="true"/>
+            </column>
+            <column name="address_line1" type="varchar(255)">
+                <constraints nullable="true"/>
+            </column>
+            <column name="address_line2" type="varchar(255)"></column>
+            <column name="address_postcode" type="varchar(25)">
+                <constraints nullable="true"/>
+            </column>
+            <column name="address_city" type="varchar(255)">
+                <constraints nullable="true"/>
+            </column>
+            <column name="address_county" type="varchar(255)"></column>
+            <column name="address_country" type="varchar(255)">
+                <constraints nullable="true"/>
+            </column>
 
-    <changeSet id="build auth_3ds table" author="">
-        <createTable tableName="auth_3ds">
-            <column name="id" type="bigserial" autoIncrement="true">
-                <constraints primaryKey="true" nullable="false"/>
-            </column>
-            <column name="transaction_id" type="bigserial">
-                <constraints foreignKeyName="fk__transactions_auth_3ds" unique="true" referencedTableName="transactions"
-                             referencedColumnNames="id" nullable="false"/>
-            </column>
             <column name="pa_request" type="text">
-                <constraints nullable="false"/>
+                <constraints nullable="true"/>
             </column>
             <column name="issuer_url" type="text">
-                <constraints nullable="false"/>
+                <constraints nullable="true"/>
             </column>
             <column name="worldpay_cookie_value" type="text"></column>
         </createTable>
     </changeSet>
-
-    <changeSet id="build events table" author="">
-        <createTable tableName="events">
+    <changeSet id="build transaction_events table" author="">
+        <createTable tableName="transaction_events">
             <column name="id" type="bigserial" autoIncrement="true">
                 <constraints primaryKey="true" nullable="false"/>
             </column>
             <column name="transaction_id" type="bigserial">
-                <constraints foreignKeyName="fk__transaction_events" referencedTableName="transactions"
-                             referencedColumnNames="id" nullable="false"/>
+                <constraints foreignKeyName="fk__transactions_events" referencedTableName="transactions"
+                  referencedColumnNames="id" nullable="false"/>
             </column>
             <column name="status" type="text">
                 <constraints nullable="false"/>
             </column>
-            <column name="created" type="timestamp without timezone" defaultValueComputed="(now() at time zone 'utc')">
+            <column name="updated" type="timestamp without timezone" defaultValueComputed="(now() at time zone 'utc')">
                 <constraints nullable="false"/>
             </column>
         </createTable>
     </changeSet>
-
 </databaseChangeLog>

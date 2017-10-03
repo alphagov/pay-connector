@@ -10,6 +10,7 @@ import uk.gov.pay.connector.dao.ChargeDao;
 import uk.gov.pay.connector.dao.ChargeEventDao;
 import uk.gov.pay.connector.dao.GatewayAccountDao;
 import uk.gov.pay.connector.dao.TokenDao;
+import uk.gov.pay.connector.dao.TransactionDao;
 
 public class GuicedTestEnvironment {
 
@@ -45,6 +46,7 @@ public class GuicedTestEnvironment {
             bind(ChargeEventDao.class).in(Singleton.class);
             bind(TokenDao.class).in(Singleton.class);
             bind(GatewayAccountDao.class).in(Singleton.class);
+            bind(TransactionDao.class).in(Singleton.class);
         }
     }
 }

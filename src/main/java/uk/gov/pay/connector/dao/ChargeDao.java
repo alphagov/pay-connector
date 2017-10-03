@@ -16,6 +16,7 @@ import java.time.ZonedDateTime;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
+import uk.gov.pay.connector.model.spike.TransactionEventEntity.TransactionStatus;
 
 import static uk.gov.pay.connector.model.domain.ChargeStatus.CAPTURE_APPROVED;
 import static uk.gov.pay.connector.model.domain.ChargeStatus.CAPTURE_APPROVED_RETRY;
@@ -154,8 +155,8 @@ public class ChargeDao extends JpaDao<ChargeEntity> {
             predicates.add(likePredicate(cb, charge.get(REFERENCE), params.getReference()));
         if (StringUtils.isNotBlank(params.getEmail()))
             predicates.add(likePredicate(cb, charge.get(EMAIL), params.getEmail()));
-        if (params.getChargeStatuses() != null && !params.getChargeStatuses().isEmpty())
-            predicates.add(charge.get(STATUS).in(params.getChargeStatuses()));
+        if (params.getInternalChargeStatuses() != null && !params.getInternalChargeStatuses().isEmpty())
+            predicates.add(charge.get(STATUS).in(params.getInternalChargeStatuses()));
         if (StringUtils.isNotBlank(params.getCardBrand()))
             predicates.add(charge.get(CARD_DETAILS).get("cardBrand").in(params.getCardBrand()));
         if (params.getFromDate() != null)

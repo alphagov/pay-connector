@@ -1,6 +1,15 @@
 package uk.gov.pay.connector.util;
 
+import static java.time.ZonedDateTime.now;
+import static uk.gov.pay.connector.model.domain.GatewayAccountEntity.Type.TEST;
+
 import com.google.gson.Gson;
+import java.sql.SQLException;
+import java.sql.Timestamp;
+import java.time.ZonedDateTime;
+import java.util.List;
+import java.util.Map;
+import java.util.UUID;
 import org.apache.commons.lang3.RandomUtils;
 import org.postgresql.util.PGobject;
 import org.skife.jdbi.v2.DBI;
@@ -8,16 +17,8 @@ import org.skife.jdbi.v2.util.StringColumnMapper;
 import uk.gov.pay.connector.model.domain.AuthCardDetails;
 import uk.gov.pay.connector.model.domain.ChargeStatus;
 import uk.gov.pay.connector.model.domain.GatewayAccountEntity;
-
-import java.sql.SQLException;
-import java.sql.Timestamp;
-import java.time.ZonedDateTime;
-import java.util.List;
-import java.util.Map;
-import java.util.UUID;
-
-import static java.time.ZonedDateTime.now;
-import static uk.gov.pay.connector.model.domain.GatewayAccountEntity.Type.TEST;
+import uk.gov.pay.connector.model.spike.TransactionEntity.TransactionOperation;
+import uk.gov.pay.connector.model.spike.TransactionEventEntity.TransactionStatus;
 
 public class DatabaseTestHelper {
 
@@ -121,6 +122,131 @@ public class DatabaseTestHelper {
         );
     }
 
+    public void addChargeNew(
+        Long chargeId,
+        Long paymentRequestId,
+        long amount,
+        TransactionStatus status,
+        String chargeGatewayId,
+        ZonedDateTime chargeGatewayEventDate,
+        ZonedDateTime createdDate,
+        long version,
+        String email
+    ) {
+        addTransaction(chargeId, paymentRequestId, amount, TransactionOperation.CHARGE,
+            status, email, chargeGatewayEventDate, chargeGatewayId, null, null, null, null, null, createdDate, version);
+    }
+    public void addRefundNew(
+        Long refundId,
+        Long paymentRequestId,
+        long amount,
+        TransactionStatus status,
+        ZonedDateTime createdDate,
+        String refundExternalId,
+        String refundSmartpayPspReference,
+        String refundEpdqPayId,
+        String refundEpdqPayIdSub,
+        String refundedBy,
+        long version
+    ) {
+        addTransaction(refundId, paymentRequestId, amount, TransactionOperation.REFUND,
+            status, null, null, null, refundExternalId, refundSmartpayPspReference, refundEpdqPayId, refundEpdqPayIdSub, refundedBy, createdDate, version);
+    }
+    private void addTransaction(
+        Long transactionId,
+        Long paymentRequestId,
+        Long amount,
+        TransactionOperation operation,
+        TransactionStatus status,
+        String email,
+        ZonedDateTime chargeGatewayEventDate,
+        String chargeGatewayId,
+        String refundExternalId,
+        String refundSmartpayPspReference,
+        String refundEpdqPayId,
+        String refundEpdqPayIdSub,
+        String refundedBy,
+        ZonedDateTime createdDate,
+        long version
+    ) {
+        jdbi.withHandle(h ->
+            h.update(
+                "INSERT INTO" +
+                    "    transactions(\n" +
+                    "        id,\n" +
+                    "        payment_request_id,\n" +
+                    "        amount,\n" +
+                    "        operation,\n" +
+                    "        status,\n" +
+                    "        charge_email,\n" +
+                    "        charge_gateway_event_date,\n" +
+                    "        charge_gateway_id,\n" +
+                    "        refund_external_id,\n" +
+                    "        refund_smartpay_pspreference,\n" +
+                    "        refund_epdq_payid,\n" +
+                    "        refund_epdq_payidsub,\n" +
+                    "        refunded_by,\n" +
+                    "        created_date,\n" +
+                    "        version\n" +
+                    "    )\n" +
+                    "   VALUES(?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)\n",
+                transactionId,
+                paymentRequestId,
+                amount,
+                operation.toString(),
+                status.getValue(),
+                email,
+                chargeGatewayEventDate,
+                chargeGatewayId,
+                refundExternalId,
+                refundSmartpayPspReference,
+                refundEpdqPayId,
+                refundEpdqPayIdSub,
+                refundedBy,
+                Timestamp.from(createdDate.toInstant()),
+                version
+            )
+        );
+    }
+
+    public void addPaymentRequest(
+        Long id,
+        String reference,
+        String description,
+        long amount,
+        Long gatewayAccountId,
+        String returnUrl,
+        String externalId,
+        ZonedDateTime createdDate,
+        long version
+    ) {
+        jdbi.withHandle(h ->
+            h.update(
+                "INSERT INTO" +
+                    "    payment_requests(\n" +
+                    "        id,\n" +
+                    "        reference,\n" +
+                    "        description,\n" +
+                    "        amount,\n" +
+                    "        gateway_account_id,\n" +
+                    "        return_url,\n" +
+                    "        external_id,\n" +
+                    "        created_date,\n" +
+                    "        version\n" +
+                    "    )\n" +
+                    "   VALUES(?, ?, ?, ?, ?, ?, ?, ?, ?)\n",
+                id,
+                reference,
+                description,
+                amount,
+                gatewayAccountId,
+                returnUrl,
+                externalId,
+                Timestamp.from(createdDate.toInstant()),
+                version
+            )
+        );
+    }
     public void addRefund(long id, String externalId, String reference, long amount, String status, Long chargeId, ZonedDateTime createdDate) {
         jdbi.withHandle(handle ->
                 handle
@@ -190,7 +316,25 @@ public class DatabaseTestHelper {
                         .execute()
         );
     }
-
+    public void updateChargeCardDetailsNew(Long transactionId, String cardBrand, String lastDigitsCardNumber, String cardHolderName, String expiryDate,
+        String line1, String line2, String postcode, String city, String county, String country) {
+        jdbi.withHandle(handle ->
+            handle
+                .createStatement("UPDATE transactions SET card_brand=:card_brand, last_digits_card_number=:last_digits_card_number, cardholder_name=:cardholder_name, expiry_date=:expiry_date, address_line1=:address_line1, address_line2=:address_line2, address_postcode=:address_postcode, address_city=:address_city, address_county=:address_county, address_country=:address_country WHERE id=:id")
+                .bind("id", transactionId)
+                .bind("card_brand", cardBrand)
+                .bind("last_digits_card_number", lastDigitsCardNumber)
+                .bind("cardholder_name", cardHolderName)
+                .bind("expiry_date", expiryDate)
+                .bind("address_line1", line1)
+                .bind("address_line2", line2)
+                .bind("address_postcode", postcode)
+                .bind("address_city", city)
+                .bind("address_county", county)
+                .bind("address_country", country)
+                .execute()
+        );
+    }
     public void updateChargeCardDetails(Long chargeId, String cardBrand, String lastDigitsCardNumber, String cardHolderName, String expiryDate,
                                         String line1, String line2, String postcode, String city, String county, String country) {
         jdbi.withHandle(handle ->
@@ -231,6 +375,17 @@ public class DatabaseTestHelper {
                         .first()
         );
     }
+
+    public List<Map<String, Object>> getRefundNew(long refundId) {
+        List<Map<String, Object>> ret = jdbi.withHandle(h ->
+            h.createQuery("SELECT refund_external_id, refund_smartpay_pspreference, refund_epdq_payid, refund_epdq_payidsub, amount, status, created_date, operation, payment_request_id, refunded_by " +
+                "FROM transactions " +
+                "WHERE id = :refund_id")
+                .bind("refund_id", refundId)
+                .list());
+        return ret;
+    }
+
 
     public List<Map<String, Object>> getRefund(long refundId) {
         List<Map<String, Object>> ret = jdbi.withHandle(h ->
