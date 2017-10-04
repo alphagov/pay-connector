@@ -128,6 +128,8 @@ public class SandboxPaymentProvider extends BasePaymentProvider<BaseResponse, St
         GatewayResponseBuilder<BaseAuthoriseResponse> gatewayResponseBuilder = responseBuilder();
         return gatewayResponseBuilder.withResponse(new BaseAuthoriseResponse() {
 
+            private final String transactionId = randomUUID().toString();
+
             @Override
             public AuthoriseStatus authoriseStatus() {
                 return isAuthorised ? AuthoriseStatus.AUTHORISED : AuthoriseStatus.REJECTED;
@@ -135,7 +137,7 @@ public class SandboxPaymentProvider extends BasePaymentProvider<BaseResponse, St
 
             @Override
             public String getTransactionId() {
-                return randomUUID().toString();
+                return transactionId;
             }
 
             @Override
@@ -157,12 +159,21 @@ public class SandboxPaymentProvider extends BasePaymentProvider<BaseResponse, St
             public String get3dsIssuerUrl() {
                 return null;
             }
+
+            @Override
+            public String toString() {
+                return "Sandbox authorisation response (transactionId: " + getTransactionId()
+                        + ", isAuthorised: " + isAuthorised + ')';
+            }
         }).build();
     }
 
     private GatewayResponse<BaseCancelResponse> createGatewayBaseCancelResponse() {
         GatewayResponseBuilder<BaseCancelResponse> gatewayResponseBuilder = responseBuilder();
         return gatewayResponseBuilder.withResponse(new BaseCancelResponse() {
+
+            private final String transactionId = randomUUID().toString();
+
             @Override
             public String getErrorCode() {
                 return null;
@@ -175,12 +186,17 @@ public class SandboxPaymentProvider extends BasePaymentProvider<BaseResponse, St
 
             @Override
             public String getTransactionId() {
-                return randomUUID().toString();
+                return transactionId;
             }
 
             @Override
             public CancelStatus cancelStatus() {
                 return CancelStatus.CANCELLED;
+            }
+
+            @Override
+            public String toString() {
+                return "Sandbox cancel response (transactionId: " + getTransactionId() + ')';
             }
         }).build();
     }
@@ -188,6 +204,9 @@ public class SandboxPaymentProvider extends BasePaymentProvider<BaseResponse, St
     private GatewayResponse<BaseCaptureResponse> createGatewayBaseCaptureResponse() {
         GatewayResponseBuilder<BaseCaptureResponse> gatewayResponseBuilder = responseBuilder();
         return gatewayResponseBuilder.withResponse(new BaseCaptureResponse() {
+
+            private final String transactionId = randomUUID().toString();
+
             @Override
             public String getErrorCode() {
                 return null;
@@ -200,7 +219,12 @@ public class SandboxPaymentProvider extends BasePaymentProvider<BaseResponse, St
 
             @Override
             public String getTransactionId() {
-                return randomUUID().toString();
+                return transactionId;
+            }
+
+            @Override
+            public String toString() {
+                return "Sandbox capture response (transactionId: " + getTransactionId() + ')';
             }
         }).build();
     }
@@ -221,6 +245,13 @@ public class SandboxPaymentProvider extends BasePaymentProvider<BaseResponse, St
             @Override
             public String getErrorMessage() {
                 return null;
+            }
+
+            @Override
+            public String toString() {
+                return getReference()
+                        .map(reference -> "Sandbox refund response (reference: " + reference + ')')
+                        .orElse("Sandbox refund response");
             }
         }).build();
     }
