@@ -656,4 +656,39 @@
         </addColumn>
     </changeSet>
 
+    <changeSet id="build payment_requests table" author="">
+        <createTable tableName="payment_requests">
+            <column name="id" type="bigserial" autoIncrement="true">
+                <constraints primaryKey="true" nullable="false"/>
+            </column>
+            <column name="amount" type="bigint">
+                <constraints nullable="false"/>
+            </column>
+            <column name="gateway_account_id" type="bigserial">
+                <constraints foreignKeyName="fk__payment_requests_gateway_accounts"
+                             referencedTableName="gateway_accounts"
+                             referencedColumnNames="id" nullable="false"/>
+            </column>
+            <column name="return_url" type="text">
+                <constraints nullable="false"/>
+            </column>
+            <column name="description" type="varchar(255)" defaultValue="">
+                <constraints nullable="false" unique="false"/>
+            </column>
+            <column name="reference" type="varchar(255)" defaultValue="">
+                <constraints nullable="false" unique="false"/>
+            </column>
+            <column name="created_date" type="timestamp without timezone"
+                    defaultValueComputed="(now() at time zone 'utc')">
+                <constraints nullable="false"/>
+            </column>
+            <column name="external_id" type="char(26)">
+                <constraints nullable="true" unique="true"/>
+            </column>
+            <column name="version" type="bigint" defaultValue="0">
+                <constraints nullable="false"/>
+            </column>
+        </createTable>
+    </changeSet>
+
 </databaseChangeLog>
