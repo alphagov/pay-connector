@@ -9,11 +9,7 @@ import uk.gov.pay.connector.model.api.ExternalChargeState;
 import uk.gov.pay.connector.model.api.ExternalTransactionState;
 import uk.gov.pay.connector.model.builder.AbstractChargeResponseBuilder;
 import uk.gov.pay.connector.model.builder.PatchRequestBuilder;
-import uk.gov.pay.connector.model.domain.CardTypeEntity;
-import uk.gov.pay.connector.model.domain.ChargeEntity;
-import uk.gov.pay.connector.model.domain.ChargeStatus;
-import uk.gov.pay.connector.model.domain.PersistedCard;
-import uk.gov.pay.connector.model.domain.TokenEntity;
+import uk.gov.pay.connector.model.domain.*;
 import uk.gov.pay.connector.resources.ChargesApiResource;
 import uk.gov.pay.connector.util.DateTimeUtils;
 
@@ -42,9 +38,10 @@ public class ChargeService {
     private final GatewayAccountDao gatewayAccountDao;
     private final LinksConfig linksConfig;
     private final PaymentProviders providers;
+    private final PaymentRequestDao paymentRequestDao;
 
     @Inject
-    public ChargeService(TokenDao tokenDao, ChargeDao chargeDao, ChargeEventDao chargeEventDao, CardTypeDao cardTypeDao, GatewayAccountDao gatewayAccountDao, ConnectorConfiguration config, PaymentProviders providers) {
+    public ChargeService(TokenDao tokenDao, ChargeDao chargeDao, ChargeEventDao chargeEventDao, CardTypeDao cardTypeDao, GatewayAccountDao gatewayAccountDao, ConnectorConfiguration config, PaymentProviders providers, PaymentRequestDao paymentRequestDao) {
         this.tokenDao = tokenDao;
         this.chargeDao = chargeDao;
         this.chargeEventDao = chargeEventDao;
@@ -52,6 +49,7 @@ public class ChargeService {
         this.gatewayAccountDao = gatewayAccountDao;
         this.linksConfig = config.getLinks();
         this.providers = providers;
+        this.paymentRequestDao = paymentRequestDao;
     }
 
     @Transactional
@@ -65,6 +63,10 @@ public class ChargeService {
                     chargeRequest.get("email")
             );
             chargeDao.persist(chargeEntity);
+
+            PaymentRequestEntity paymentRequestEntity = PaymentRequestEntity.from(chargeEntity);
+            paymentRequestDao.persist(paymentRequestEntity);
+
             chargeEventDao.persistChargeEventOf(chargeEntity, Optional.empty());
             return Optional.of(populateResponseBuilderWith(aChargeResponseBuilder(), uriInfo, chargeEntity).build());
         }).orElseGet(Optional::empty);

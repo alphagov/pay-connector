@@ -13,10 +13,7 @@ import uk.gov.pay.connector.dao.*;
 import uk.gov.pay.connector.model.ChargeResponse;
 import uk.gov.pay.connector.model.api.ExternalChargeState;
 import uk.gov.pay.connector.model.api.ExternalTransactionState;
-import uk.gov.pay.connector.model.domain.ChargeEntity;
-import uk.gov.pay.connector.model.domain.ChargeStatus;
-import uk.gov.pay.connector.model.domain.GatewayAccountEntity;
-import uk.gov.pay.connector.model.domain.TokenEntity;
+import uk.gov.pay.connector.model.domain.*;
 import uk.gov.pay.connector.util.DateTimeUtils;
 
 import javax.ws.rs.core.UriInfo;
@@ -38,19 +35,12 @@ import static org.hamcrest.core.IsNull.notNullValue;
 import static org.hamcrest.core.IsNull.nullValue;
 import static org.junit.Assert.assertThat;
 import static org.mockito.ArgumentCaptor.forClass;
-import static org.mockito.Mockito.any;
-import static org.mockito.Mockito.doAnswer;
-import static org.mockito.Mockito.mock;
-import static org.mockito.Mockito.never;
-import static org.mockito.Mockito.verify;
-import static org.mockito.Mockito.when;
+import static org.mockito.Mockito.*;
 import static uk.gov.pay.connector.model.ChargeResponse.ChargeResponseBuilder;
 import static uk.gov.pay.connector.model.ChargeResponse.aChargeResponseBuilder;
 import static uk.gov.pay.connector.model.api.ExternalChargeRefundAvailability.EXTERNAL_AVAILABLE;
 import static uk.gov.pay.connector.model.domain.ChargeEntityFixture.aValidChargeEntity;
-import static uk.gov.pay.connector.model.domain.ChargeStatus.CAPTURED;
-import static uk.gov.pay.connector.model.domain.ChargeStatus.CREATED;
-import static uk.gov.pay.connector.model.domain.ChargeStatus.ENTERING_CARD_DETAILS;
+import static uk.gov.pay.connector.model.domain.ChargeStatus.*;
 import static uk.gov.pay.connector.model.domain.GatewayAccountEntity.Type.TEST;
 
 
@@ -58,6 +48,16 @@ import static uk.gov.pay.connector.model.domain.GatewayAccountEntity.Type.TEST;
 public class ChargeServiceTest {
 
     private static final String SERVICE_HOST = "http://my-service";
+    private static final long GATEWAY_ACCOUNT_ID = 1L;
+    private static final long CHARGE_ENTITY_ID = 12345L;
+    private static final String[] EXTERNAL_CHARGE_ID = new String[1];
+
+    private static final Map<String, String> CHARGE_REQUEST = new HashMap<String, String>() {{
+        put("amount", "100");
+        put("return_url", "http://return-service.com");
+        put("description", "This is a description");
+        put("reference", "Pay reference");
+    }};
 
     @Mock
     private TokenDao mockedTokenDao;
@@ -79,17 +79,24 @@ public class ChargeServiceTest {
     private PaymentProviders mockedProviders;
     @Mock
     private PaymentProvider mockedPaymentProvider;
+    @Mock
+    private PaymentRequestDao mockedPaymentRequestDao;
 
     private ChargeService service;
-    private Map<String, String> chargeRequest = new HashMap<String, String>() {{
-        put("amount", "100");
-        put("return_url", "http://return-service.com");
-        put("description", "This is a description");
-        put("reference", "Pay reference");
-    }};
 
     @Before
     public void setUp() throws Exception {
+        GatewayAccountEntity gatewayAccount = new GatewayAccountEntity("sandbox", new HashMap<>(), TEST);
+        gatewayAccount.setId(GATEWAY_ACCOUNT_ID);
+
+        // Populate ChargeEntity with ID when persisting
+        when(mockedGatewayAccountDao.findById(GATEWAY_ACCOUNT_ID)).thenReturn(Optional.of(gatewayAccount));
+        doAnswer(invocation -> {
+            ChargeEntity chargeEntityBeingPersisted = (ChargeEntity) invocation.getArguments()[0];
+            chargeEntityBeingPersisted.setId(CHARGE_ENTITY_ID);
+            EXTERNAL_CHARGE_ID[0] = chargeEntityBeingPersisted.getExternalId();
+            return null;
+        }).when(mockedChargeDao).persist(any(ChargeEntity.class));
 
         when(mockedConfig.getLinks())
                 .thenReturn(mockedLinksConfig);
@@ -104,40 +111,21 @@ public class ChargeServiceTest {
         when(mockedProviders.byName(any(PaymentGatewayName.class))).thenReturn(mockedPaymentProvider);
         when(mockedPaymentProvider.getExternalChargeRefundAvailability(any(ChargeEntity.class))).thenReturn(EXTERNAL_AVAILABLE);
 
-        service = new ChargeService(mockedTokenDao, mockedChargeDao, mockedChargeEventDao, mockedCardTypeDao, mockedGatewayAccountDao, mockedConfig, mockedProviders);
+        service = new ChargeService(mockedTokenDao, mockedChargeDao, mockedChargeEventDao, mockedCardTypeDao, mockedGatewayAccountDao, mockedConfig, mockedProviders, mockedPaymentRequestDao);
     }
 
     @Test
     public void shouldCreateACharge() throws Exception {
+        service.create(CHARGE_REQUEST, GATEWAY_ACCOUNT_ID, mockedUriInfo);
 
-        // Given - existing gateway account
-        long gatewayAccountId = 1L;
-        GatewayAccountEntity gatewayAccount = new GatewayAccountEntity("sandbox", new HashMap<>(), TEST);
-        gatewayAccount.setId(gatewayAccountId);
-
-        // Given - persisting a ChargeEntity, it will be populated with an id
-        long chargeEntityId = 12345L;
-        final String[] externalChargeId = new String[1];
-        when(mockedGatewayAccountDao.findById(gatewayAccountId)).thenReturn(Optional.of(gatewayAccount));
-        doAnswer(invocation -> {
-            ChargeEntity chargeEntityBeingPersisted = (ChargeEntity) invocation.getArguments()[0];
-            chargeEntityBeingPersisted.setId(chargeEntityId);
-            externalChargeId[0] = chargeEntityBeingPersisted.getExternalId();
-            return null;
-        }).when(mockedChargeDao).persist(any(ChargeEntity.class));
-
-        // When
-        ChargeResponse response = service.create(chargeRequest, gatewayAccountId, mockedUriInfo).get();
-
-        // Then - a chargeEntity is created
         ArgumentCaptor<ChargeEntity> chargeEntityArgumentCaptor = forClass(ChargeEntity.class);
         verify(mockedChargeDao).persist(chargeEntityArgumentCaptor.capture());
 
         ChargeEntity createdChargeEntity = chargeEntityArgumentCaptor.getValue();
-        assertThat(createdChargeEntity.getId(), is(chargeEntityId));
+        assertThat(createdChargeEntity.getId(), is(CHARGE_ENTITY_ID));
         assertThat(createdChargeEntity.getStatus(), is("CREATED"));
-        assertThat(createdChargeEntity.getGatewayAccount().getId(), is(gatewayAccountId));
-        assertThat(createdChargeEntity.getExternalId(), is(externalChargeId[0]));
+        assertThat(createdChargeEntity.getGatewayAccount().getId(), is(GATEWAY_ACCOUNT_ID));
+        assertThat(createdChargeEntity.getExternalId(), is(EXTERNAL_CHARGE_ID[0]));
         assertThat(createdChargeEntity.getGatewayAccount().getCredentials(), is(emptyMap()));
         assertThat(createdChargeEntity.getGatewayAccount().getGatewayName(), is("sandbox"));
         assertThat(createdChargeEntity.getReference(), is("Pay reference"));
@@ -146,26 +134,64 @@ public class ChargeServiceTest {
         assertThat(createdChargeEntity.getGatewayTransactionId(), is(nullValue()));
         assertThat(createdChargeEntity.getCreatedDate(), is(ZonedDateTimeMatchers.within(3, ChronoUnit.SECONDS, ZonedDateTime.now(ZoneId.of("UTC")))));
 
-        // Then - a TokenEntity is created
+        verify(mockedChargeEventDao).persistChargeEventOf(createdChargeEntity,Optional.empty());
+    }
+
+    @Test
+    public void shouldCreateAPaymentRequest() throws Exception{
+        service.create(CHARGE_REQUEST, GATEWAY_ACCOUNT_ID, mockedUriInfo);
+
+        ArgumentCaptor<PaymentRequestEntity> paymentRequestEntityArgumentCaptor = forClass(PaymentRequestEntity.class);
+        verify(mockedPaymentRequestDao).persist(paymentRequestEntityArgumentCaptor.capture());
+
+        PaymentRequestEntity createdPaymentRequestEntity = paymentRequestEntityArgumentCaptor.getValue();
+        assertThat(createdPaymentRequestEntity.getGatewayAccount().getId(), is(GATEWAY_ACCOUNT_ID));
+        assertThat(createdPaymentRequestEntity.getExternalId(), is(EXTERNAL_CHARGE_ID[0]));
+        assertThat(createdPaymentRequestEntity.getGatewayAccount().getCredentials(), is(emptyMap()));
+        assertThat(createdPaymentRequestEntity.getGatewayAccount().getGatewayName(), is("sandbox"));
+        assertThat(createdPaymentRequestEntity.getReference(), is("Pay reference"));
+        assertThat(createdPaymentRequestEntity.getDescription(), is("This is a description"));
+        assertThat(createdPaymentRequestEntity.getAmount(), is(100L));
+        assertThat(createdPaymentRequestEntity.getReturnUrl(), is("http://return-service.com"));
+        assertThat(createdPaymentRequestEntity.getCreatedDate(), is(ZonedDateTimeMatchers.within(3, ChronoUnit.SECONDS, ZonedDateTime.now(ZoneId.of("UTC")))));
+    }
+
+    @Test
+    public void shouldCreateAToken() throws Exception{
+        service.create(CHARGE_REQUEST, GATEWAY_ACCOUNT_ID, mockedUriInfo);
+
         ArgumentCaptor<TokenEntity> tokenEntityArgumentCaptor = forClass(TokenEntity.class);
         verify(mockedTokenDao).persist(tokenEntityArgumentCaptor.capture());
 
         TokenEntity tokenEntity = tokenEntityArgumentCaptor.getValue();
-        assertThat(tokenEntity.getChargeEntity().getId(), is(createdChargeEntity.getId()));
+        assertThat(tokenEntity.getChargeEntity().getId(), is(CHARGE_ENTITY_ID));
         assertThat(tokenEntity.getToken(), is(notNullValue()));
+    }
+
+    @Test
+    public void shouldCreateAResponse() throws Exception{
+        ChargeResponse response = service.create(CHARGE_REQUEST, GATEWAY_ACCOUNT_ID, mockedUriInfo).get();
+
+        ArgumentCaptor<ChargeEntity> chargeEntityArgumentCaptor = forClass(ChargeEntity.class);
+        verify(mockedChargeDao).persist(chargeEntityArgumentCaptor.capture());
+
+        ArgumentCaptor<TokenEntity> tokenEntityArgumentCaptor = forClass(TokenEntity.class);
+        verify(mockedTokenDao).persist(tokenEntityArgumentCaptor.capture());
+
+        ChargeEntity createdChargeEntity = chargeEntityArgumentCaptor.getValue();
+        TokenEntity tokenEntity = tokenEntityArgumentCaptor.getValue();
 
         // Then - expected response is returned
         ChargeResponseBuilder expectedChargeResponse = chargeResponseBuilderOf(createdChargeEntity);
 
-        expectedChargeResponse.withLink("self", GET, new URI(SERVICE_HOST + "/v1/api/accounts/1/charges/" + externalChargeId[0]));
-        expectedChargeResponse.withLink("refunds", GET, new URI(SERVICE_HOST + "/v1/api/accounts/1/charges/" + createdChargeEntity.getExternalId() + "/refunds"));
+        expectedChargeResponse.withLink("self", GET, new URI(SERVICE_HOST + "/v1/api/accounts/1/charges/" + EXTERNAL_CHARGE_ID[0]));
+        expectedChargeResponse.withLink("refunds", GET, new URI(SERVICE_HOST + "/v1/api/accounts/1/charges/" + EXTERNAL_CHARGE_ID[0] + "/refunds"));
         expectedChargeResponse.withLink("next_url", GET, new URI("http://payments.com/secure/" + tokenEntity.getToken()));
         expectedChargeResponse.withLink("next_url_post", POST, new URI("http://payments.com/secure"), "application/x-www-form-urlencoded", new HashMap<String, Object>() {{
             put("chargeTokenId", tokenEntity.getToken());
         }});
 
         assertThat(response, is(expectedChargeResponse.build()));
-        verify(mockedChargeEventDao).persistChargeEventOf(createdChargeEntity,Optional.empty());
     }
 
     @Test
@@ -320,4 +346,5 @@ public class ChargeServiceTest {
                 .withSettlement(settlement)
                 .withReturnUrl(chargeEntity.getReturnUrl());
     }
+
 }
