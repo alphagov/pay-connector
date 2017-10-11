@@ -695,4 +695,54 @@
         <addNotNullConstraint columnName="external_id"
                               tableName="payment_requests"/>
     </changeSet>
+
+    <changeSet id="create table cardholder_data" author="">
+        <createTable tableName="cardholder_data">
+            <column name="id" type="bigserial" autoIncrement="true">
+                <constraints primaryKey="true" nullable="false"/>
+            </column>
+            <column name="payment_request_external_id" type="char(26)">
+                <constraints foreignKeyName="fk__cardholder_data_payment_requests"
+                             referencedTableName="payment_requests"
+                             referencedColumnNames="external_id" nullable="false"/>
+            </column>
+            <column name="card_brand" type="text">
+                <constraints nullable="false"/>
+            </column>
+            <column name="email" type="varchar(50)">
+                <constraints nullable="false"/>
+            </column>
+            <column name="last_digits_card_number" type="char(4)">
+                <constraints nullable="false"/>
+            </column>
+            <column name="cardholder_name" type="varchar(255)">
+                <constraints nullable="false"/>
+            </column>
+            <column name="expiry_date" type="varchar(6)">
+                <constraints nullable="false"/>
+            </column>
+            <column name="address_line1" type="varchar(255)">
+                <constraints nullable="false"/>
+            </column>
+            <column name="address_line2" type="varchar(255)">
+                <constraints nullable="true"/>
+            </column>
+            <column name="address_postcode" type="varchar(25)">
+                <constraints nullable="false"/>
+            </column>
+            <column name="address_city" type="varchar(255)">
+                <constraints nullable="false"/>
+            </column>
+            <column name="address_county" type="varchar(255)">
+                <constraints nullable="true"/>
+            </column>
+            <column name="address_country" type="varchar(255)">
+                <constraints nullable="false"/>
+            </column>
+            <column name="version" type="bigint" defaultValue="0">
+                <constraints nullable="false"/>
+            </column>
+        </createTable>
+    </changeSet>
+
 </databaseChangeLog>

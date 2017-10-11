@@ -5,17 +5,12 @@ import com.google.inject.persist.Transactional;
 import io.dropwizard.setup.Environment;
 import org.apache.commons.lang3.StringUtils;
 import uk.gov.pay.connector.dao.CardTypeDao;
+import uk.gov.pay.connector.dao.CardholderDataDao;
 import uk.gov.pay.connector.dao.ChargeDao;
 import uk.gov.pay.connector.dao.ChargeEventDao;
 import uk.gov.pay.connector.exception.ChargeNotFoundRuntimeException;
 import uk.gov.pay.connector.model.GatewayError;
-import uk.gov.pay.connector.model.domain.AddressEntity;
-import uk.gov.pay.connector.model.domain.AuthCardDetails;
-import uk.gov.pay.connector.model.domain.CardDetailsEntity;
-import uk.gov.pay.connector.model.domain.CardTypeEntity;
-import uk.gov.pay.connector.model.domain.ChargeEntity;
-import uk.gov.pay.connector.model.domain.ChargeStatus;
-import uk.gov.pay.connector.model.domain.GatewayAccountEntity;
+import uk.gov.pay.connector.model.domain.*;
 import uk.gov.pay.connector.model.gateway.AuthorisationGatewayRequest;
 import uk.gov.pay.connector.model.gateway.GatewayResponse;
 
@@ -33,19 +28,22 @@ import static uk.gov.pay.connector.model.domain.NumbersInStringsSanitizer.saniti
 
 public class CardAuthoriseService extends CardAuthoriseBaseService<AuthCardDetails> {
 
-    private CardTypeDao cardTypeDao;
+    private final CardTypeDao cardTypeDao;
+    private final CardholderDataDao cardholderDataDao;
     private final Auth3dsDetailsFactory auth3dsDetailsFactory;
 
     @Inject
     public CardAuthoriseService(ChargeDao chargeDao,
                                 ChargeEventDao chargeEventDao,
                                 CardTypeDao cardTypeDao,
+                                CardholderDataDao cardholderDataDao,
                                 PaymentProviders providers,
                                 CardExecutorService cardExecutorService,
                                 Auth3dsDetailsFactory auth3dsDetailsFactory,
                                 Environment environment) {
         super(chargeDao, chargeEventDao, providers, cardExecutorService, environment);
         this.cardTypeDao = cardTypeDao;
+        this.cardholderDataDao = cardholderDataDao;
         this.auth3dsDetailsFactory = auth3dsDetailsFactory;
     }
 
@@ -103,7 +101,7 @@ public class CardAuthoriseService extends CardAuthoriseBaseService<AuthCardDetai
                     .map(BaseAuthoriseResponse::authoriseStatus)
                     .map(BaseAuthoriseResponse.AuthoriseStatus::getMappedChargeStatus)
                     .orElseGet(() -> operationResponse.getGatewayError()
-                            .map(gatewayError -> mapError(gatewayError))
+                            .map(this::mapError)
                             .orElse(ChargeStatus.AUTHORISATION_ERROR));
 
             String transactionId = operationResponse.getBaseResponse()
@@ -130,8 +128,15 @@ public class CardAuthoriseService extends CardAuthoriseBaseService<AuthCardDetai
                 chargeEntity.setGatewayTransactionId(transactionId);
             }
 
-            appendCardDetails(chargeEntity, authCardDetails);
+            CardDetailsEntity detailsEntity = buildCardDetailsEntity(authCardDetails);
+            chargeEntity.setCardDetails(detailsEntity);
+            CardholderDataEntity cardholderDataEntity = CardholderDataEntity
+                    .from(detailsEntity, chargeEntity.getEmail(), chargeEntity.getExternalId());
+
             chargeEventDao.persistChargeEventOf(chargeEntity, Optional.empty());
+            cardholderDataDao.persist(cardholderDataEntity);
+            logger.info("Stored confirmation details for charge - charge_external_id={}",
+                    chargeEntity.getExternalId());
             return operationResponse;
 
         }).orElseThrow(() -> new ChargeNotFoundRuntimeException(chargeId));
@@ -148,14 +153,13 @@ public class CardAuthoriseService extends CardAuthoriseBaseService<AuthCardDetai
         }
     }
 
-    private void appendCardDetails(ChargeEntity chargeEntity, AuthCardDetails authCardDetails) {
+    private CardDetailsEntity buildCardDetailsEntity(AuthCardDetails authCardDetails) {
         CardDetailsEntity detailsEntity = new CardDetailsEntity();
         detailsEntity.setCardBrand(sanitize(authCardDetails.getCardBrand()));
         detailsEntity.setBillingAddress(new AddressEntity(authCardDetails.getAddress()));
         detailsEntity.setCardHolderName(sanitize(authCardDetails.getCardHolder()));
         detailsEntity.setExpiryDate(authCardDetails.getEndDate());
         detailsEntity.setLastDigitsCardNumber(StringUtils.right(authCardDetails.getCardNo(), 4));
-        chargeEntity.setCardDetails(detailsEntity);
-        logger.info("Stored confirmation details for charge - charge_external_id={}", chargeEntity.getExternalId());
+        return detailsEntity;
     }
 }

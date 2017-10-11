@@ -10,6 +10,7 @@ import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.mockito.Mock;
 import org.mockito.runners.MockitoJUnitRunner;
+import uk.gov.pay.connector.dao.CardholderDataDao;
 import uk.gov.pay.connector.exception.ChargeNotFoundRuntimeException;
 import uk.gov.pay.connector.exception.ConflictRuntimeException;
 import uk.gov.pay.connector.exception.IllegalStateRuntimeException;
@@ -58,16 +59,24 @@ public class CardAuthoriseServiceTest extends CardServiceTest {
     @Mock
     private CardExecutorService mockExecutorService;
 
+    @Mock
+    private CardholderDataDao mockCardholderDataDao;
+
+    @Mock
+    private Environment mockEnvironment;
+
+    @Mock
+    private Counter mockCounter;
+
     private CardAuthoriseService cardAuthorisationService;
 
     @Before
     public void setUpCardAuthorisationService() {
-        Environment mockEnvironment = mock(Environment.class);
         mockMetricRegistry = mock(MetricRegistry.class);
-        Counter mockCounter = mock(Counter.class);
         when(mockMetricRegistry.counter(anyString())).thenReturn(mockCounter);
         when(mockEnvironment.metrics()).thenReturn(mockMetricRegistry);
-        cardAuthorisationService = new CardAuthoriseService(mockedChargeDao, mockedChargeEventDao, mockedCardTypeDao, mockedProviders, mockExecutorService,
+        cardAuthorisationService = new CardAuthoriseService(mockedChargeDao, mockedChargeEventDao,
+                mockedCardTypeDao, mockCardholderDataDao, mockedProviders, mockExecutorService,
                 auth3dsDetailsFactory, mockEnvironment);
     }
 
@@ -276,6 +285,10 @@ public class CardAuthoriseServiceTest extends CardServiceTest {
         assertThat(cardDetails.getBillingAddress().getCity(), is(city));
         assertThat(cardDetails.getBillingAddress().getCountry(), is(country));
         assertThat(cardDetails.getBillingAddress().getCounty(), is(county));
+
+        CardholderDataEntity cardholderDataEntity = CardholderDataEntity
+                .from(cardDetails, charge.getEmail(), charge.getExternalId());
+        verify(mockCardholderDataDao).persist(cardholderDataEntity);
     }
 
     @Test
@@ -285,7 +298,12 @@ public class CardAuthoriseServiceTest extends CardServiceTest {
 
         cardAuthorisationService.doAuthorise(charge.getExternalId(), aValidAuthorisationDetails());
 
-        assertThat(charge.getCardDetails(), is(notNullValue()));
+        CardDetailsEntity cardDetails = charge.getCardDetails();
+        assertThat(cardDetails, is(notNullValue()));
+
+        CardholderDataEntity cardholderDataEntity = CardholderDataEntity
+                .from(cardDetails, charge.getEmail(), charge.getExternalId());
+        verify(mockCardholderDataDao).persist(cardholderDataEntity);
     }
 
     @Test
@@ -295,7 +313,12 @@ public class CardAuthoriseServiceTest extends CardServiceTest {
 
         cardAuthorisationService.doAuthorise(charge.getExternalId(), aValidAuthorisationDetails());
 
-        assertThat(charge.getCardDetails(), is(notNullValue()));
+        CardDetailsEntity cardDetails = charge.getCardDetails();
+        assertThat(cardDetails, is(notNullValue()));
+
+        CardholderDataEntity cardholderDataEntity = CardholderDataEntity
+                .from(cardDetails, charge.getEmail(), charge.getExternalId());
+        verify(mockCardholderDataDao).persist(cardholderDataEntity);
     }
 
     @Test
