@@ -5,7 +5,7 @@ import com.google.inject.persist.Transactional;
 import io.dropwizard.setup.Environment;
 import org.apache.commons.lang3.StringUtils;
 import uk.gov.pay.connector.dao.CardTypeDao;
-import uk.gov.pay.connector.dao.CardholderDataDao;
+import uk.gov.pay.connector.dao.CardDao;
 import uk.gov.pay.connector.dao.ChargeDao;
 import uk.gov.pay.connector.dao.ChargeEventDao;
 import uk.gov.pay.connector.exception.ChargeNotFoundRuntimeException;
@@ -29,21 +29,21 @@ import static uk.gov.pay.connector.model.domain.NumbersInStringsSanitizer.saniti
 public class CardAuthoriseService extends CardAuthoriseBaseService<AuthCardDetails> {
 
     private final CardTypeDao cardTypeDao;
-    private final CardholderDataDao cardholderDataDao;
+    private final CardDao cardDao;
     private final Auth3dsDetailsFactory auth3dsDetailsFactory;
 
     @Inject
     public CardAuthoriseService(ChargeDao chargeDao,
                                 ChargeEventDao chargeEventDao,
                                 CardTypeDao cardTypeDao,
-                                CardholderDataDao cardholderDataDao,
+                                CardDao cardDao,
                                 PaymentProviders providers,
                                 CardExecutorService cardExecutorService,
                                 Auth3dsDetailsFactory auth3dsDetailsFactory,
                                 Environment environment) {
         super(chargeDao, chargeEventDao, providers, cardExecutorService, environment);
         this.cardTypeDao = cardTypeDao;
-        this.cardholderDataDao = cardholderDataDao;
+        this.cardDao = cardDao;
         this.auth3dsDetailsFactory = auth3dsDetailsFactory;
     }
 
@@ -130,11 +130,11 @@ public class CardAuthoriseService extends CardAuthoriseBaseService<AuthCardDetai
 
             CardDetailsEntity detailsEntity = buildCardDetailsEntity(authCardDetails);
             chargeEntity.setCardDetails(detailsEntity);
-            CardholderDataEntity cardholderDataEntity = CardholderDataEntity
-                    .from(detailsEntity, chargeEntity.getEmail(), chargeEntity.getExternalId());
+            CardEntity cardEntity = CardEntity
+                    .from(detailsEntity, chargeEntity.getEmail(), chargeEntity.getId());
 
             chargeEventDao.persistChargeEventOf(chargeEntity, Optional.empty());
-            cardholderDataDao.persist(cardholderDataEntity);
+            cardDao.persist(cardEntity);
             logger.info("Stored confirmation details for charge - charge_external_id={}",
                     chargeEntity.getExternalId());
             return operationResponse;

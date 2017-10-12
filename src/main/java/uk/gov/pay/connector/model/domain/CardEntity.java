@@ -6,8 +6,8 @@ import javax.persistence.Entity;
 import javax.persistence.Table;
 
 @Entity
-@Table(name = "cardholder_data")
-public class CardholderDataEntity extends AbstractEntity {
+@Table(name = "cards")
+public class CardEntity extends AbstractEntity {
     @Column(name = "last_digits_card_number")
     private String lastDigitsCardNumber;
 
@@ -26,10 +26,10 @@ public class CardholderDataEntity extends AbstractEntity {
     @Column(name = "email")
     private String email;
 
-    @Column(name = "payment_request_external_id")
-    private String paymentRequestExternalId;
+    @Column(name = "charge_id")
+    private Long chargeId;
 
-    public CardholderDataEntity() {
+    public CardEntity() {
     }
 
     public String getLastDigitsCardNumber() {
@@ -77,7 +77,7 @@ public class CardholderDataEntity extends AbstractEntity {
         if (this == o) return true;
         if (o == null || getClass() != o.getClass()) return false;
 
-        CardholderDataEntity that = (CardholderDataEntity) o;
+        CardEntity that = (CardEntity) o;
 
         if (lastDigitsCardNumber != null ? !lastDigitsCardNumber.equals(that.lastDigitsCardNumber) : that.lastDigitsCardNumber != null)
             return false;
@@ -88,7 +88,7 @@ public class CardholderDataEntity extends AbstractEntity {
         if (cardBrand != null ? !cardBrand.equals(that.cardBrand) : that.cardBrand != null)
             return false;
         if (email != null ? !email.equals(that.email) : that.email != null) return false;
-        if (paymentRequestExternalId != null ? !paymentRequestExternalId.equals(that.paymentRequestExternalId) : that.paymentRequestExternalId != null)
+        if (chargeId != null ? !chargeId.equals(that.chargeId) : that.chargeId != null)
             return false;
         return billingAddress != null ? billingAddress.equals(that.billingAddress) : that.billingAddress == null;
     }
@@ -101,7 +101,7 @@ public class CardholderDataEntity extends AbstractEntity {
         result = 31 * result + (cardBrand != null ? cardBrand.hashCode() : 0);
         result = 31 * result + (billingAddress != null ? billingAddress.hashCode() : 0);
         result = 31 * result + (email != null ? email.hashCode() : 0);
-        result = 31 * result + (paymentRequestExternalId != null ? paymentRequestExternalId.hashCode() : 0);
+        result = 31 * result + (chargeId != null ? chargeId.hashCode() : 0);
         return result;
     }
 
@@ -113,24 +113,24 @@ public class CardholderDataEntity extends AbstractEntity {
         this.email = email;
     }
 
-    public static CardholderDataEntity from(CardDetailsEntity cardDetailsEntity, String email, String paymentRequestExternalId) {
-        CardholderDataEntity entity = new CardholderDataEntity();
+    public static CardEntity from(CardDetailsEntity cardDetailsEntity, String email, Long chargeId) {
+        CardEntity entity = new CardEntity();
         entity.setBillingAddress(cardDetailsEntity.getBillingAddress());
         entity.setCardBrand(cardDetailsEntity.getCardBrand());
         entity.setCardHolderName(cardDetailsEntity.getCardHolderName());
         entity.setExpiryDate(cardDetailsEntity.getExpiryDate());
         entity.setLastDigitsCardNumber(cardDetailsEntity.getLastDigitsCardNumber());
         entity.setEmail(email);
-        entity.setPaymentRequestExternalId(paymentRequestExternalId);
+        entity.setChargeId(chargeId);
 
         return entity;
     }
 
-    public String getPaymentRequestExternalId() {
-        return paymentRequestExternalId;
+    public Long getChargeId() {
+        return chargeId;
     }
 
-    public void setPaymentRequestExternalId(String paymentRequestExternalId) {
-        this.paymentRequestExternalId = paymentRequestExternalId;
+    public void setChargeId(Long chargeId) {
+        this.chargeId = chargeId;
     }
 }

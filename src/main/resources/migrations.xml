@@ -696,15 +696,15 @@
                               tableName="payment_requests"/>
     </changeSet>
 
-    <changeSet id="create table cardholder_data" author="">
-        <createTable tableName="cardholder_data">
+    <changeSet id="create table cards" author="">
+        <createTable tableName="cards">
             <column name="id" type="bigserial" autoIncrement="true">
                 <constraints primaryKey="true" nullable="false"/>
             </column>
-            <column name="payment_request_external_id" type="char(26)">
-                <constraints foreignKeyName="fk__cardholder_data_payment_requests"
-                             referencedTableName="payment_requests"
-                             referencedColumnNames="external_id" nullable="false"/>
+            <column name="charge_id" type="bigserial">
+                <constraints foreignKeyName="fk__cards_charges"
+                             referencedTableName="charges"
+                             referencedColumnNames="id" nullable="false"/>
             </column>
             <column name="card_brand" type="text">
                 <constraints nullable="false"/>

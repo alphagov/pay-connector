@@ -3,15 +3,15 @@ package uk.gov.pay.connector.dao;
 import com.google.inject.Inject;
 import com.google.inject.Provider;
 import com.google.inject.persist.Transactional;
-import uk.gov.pay.connector.model.domain.CardholderDataEntity;
+import uk.gov.pay.connector.model.domain.CardEntity;
 
 import javax.persistence.EntityManager;
 
 @Transactional
-public class CardholderDataDao extends JpaDao<CardholderDataEntity> {
+public class CardDao extends JpaDao<CardEntity> {
 
     @Inject
-    protected CardholderDataDao(Provider<EntityManager> entityManager) {
+    protected CardDao(Provider<EntityManager> entityManager) {
         super(entityManager);
     }
 
