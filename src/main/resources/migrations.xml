@@ -691,4 +691,8 @@
         </createTable>
     </changeSet>
 
+    <changeSet id="add NotNullConstraint to payment_requests.external_id" author="">
+        <addNotNullConstraint columnName="external_id"
+                              tableName="payment_requests"/>
+    </changeSet>
 </databaseChangeLog>
