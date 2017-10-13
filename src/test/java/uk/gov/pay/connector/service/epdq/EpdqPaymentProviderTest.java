@@ -71,6 +71,7 @@ import static uk.gov.pay.connector.model.domain.GatewayAccount.CREDENTIALS_SHA_I
 import static uk.gov.pay.connector.model.domain.GatewayAccount.CREDENTIALS_SHA_OUT_PASSPHRASE;
 import static uk.gov.pay.connector.model.domain.GatewayAccount.CREDENTIALS_USERNAME;
 import static uk.gov.pay.connector.model.domain.GatewayAccountEntity.Type.TEST;
+import static uk.gov.pay.connector.model.domain.RefundEntityFixture.userExternalId;
 import static uk.gov.pay.connector.service.worldpay.WorldpayPaymentProvider.includeSessionIdentifier;
 import static uk.gov.pay.connector.util.TestTemplateResourceLoader.EPDQ_AUTHORISATION_ERROR_RESPONSE;
 import static uk.gov.pay.connector.util.TestTemplateResourceLoader.EPDQ_AUTHORISATION_SUCCESS_RESPONSE;
@@ -84,7 +85,6 @@ import static uk.gov.pay.connector.util.TestTemplateResourceLoader.EPDQ_NOTIFICA
 import static uk.gov.pay.connector.util.TestTemplateResourceLoader.EPDQ_REFUND_ERROR_RESPONSE;
 import static uk.gov.pay.connector.util.TestTemplateResourceLoader.EPDQ_REFUND_REQUEST;
 import static uk.gov.pay.connector.util.TestTemplateResourceLoader.EPDQ_REFUND_SUCCESS_RESPONSE;
-import static uk.gov.pay.connector.model.domain.RefundEntityFixture.userExternalId;
 
 
 @RunWith(MockitoJUnitRunner.class)
@@ -423,11 +423,10 @@ public class EpdqPaymentProviderTest {
 
     private AuthCardDetails buildTestAuthCardDetails() {
         Address address = anAddress();
-        address.setLine1("123 My Street");
-        address.setLine2("This road");
-        address.setPostcode("SW8URR");
+        address.setLine1("41");
+        address.setLine2("Scala Street");
+        address.setPostcode("EC2A 1AE");
         address.setCity("London");
-        address.setCounty("London state");
         address.setCountry("GB");
 
         return AuthUtils.buildAuthCardDetails("Mr. Payment", "5555444433331111", "737", "08/18", "visa", address);
