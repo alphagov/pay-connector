@@ -745,4 +745,10 @@
         </createTable>
     </changeSet>
 
+    <changeSet id="update email column in cards table to 254 chars" author="">
+        <modifyDataType columnName="email"
+                        newDataType="varchar(254)"
+                        tableName="cards"/>
+    </changeSet>
+
 </databaseChangeLog>
