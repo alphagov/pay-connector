@@ -4,10 +4,7 @@ import com.google.common.collect.ImmutableList;
 import com.google.inject.persist.Transactional;
 import io.dropwizard.setup.Environment;
 import org.apache.commons.lang3.StringUtils;
-import uk.gov.pay.connector.dao.CardTypeDao;
-import uk.gov.pay.connector.dao.CardDao;
-import uk.gov.pay.connector.dao.ChargeDao;
-import uk.gov.pay.connector.dao.ChargeEventDao;
+import uk.gov.pay.connector.dao.*;
 import uk.gov.pay.connector.exception.ChargeNotFoundRuntimeException;
 import uk.gov.pay.connector.model.GatewayError;
 import uk.gov.pay.connector.model.domain.*;
@@ -31,6 +28,7 @@ public class CardAuthoriseService extends CardAuthoriseBaseService<AuthCardDetai
     private final CardTypeDao cardTypeDao;
     private final CardDao cardDao;
     private final Auth3dsDetailsFactory auth3dsDetailsFactory;
+    private final Card3dsDao card3dsDao;
 
     @Inject
     public CardAuthoriseService(ChargeDao chargeDao,
@@ -40,11 +38,13 @@ public class CardAuthoriseService extends CardAuthoriseBaseService<AuthCardDetai
                                 PaymentProviders providers,
                                 CardExecutorService cardExecutorService,
                                 Auth3dsDetailsFactory auth3dsDetailsFactory,
-                                Environment environment) {
+                                Environment environment,
+                                Card3dsDao card3dsDao) {
         super(chargeDao, chargeEventDao, providers, cardExecutorService, environment);
         this.cardTypeDao = cardTypeDao;
         this.cardDao = cardDao;
         this.auth3dsDetailsFactory = auth3dsDetailsFactory;
+        this.card3dsDao = card3dsDao;
     }
 
     @Transactional
@@ -135,6 +135,7 @@ public class CardAuthoriseService extends CardAuthoriseBaseService<AuthCardDetai
 
             chargeEventDao.persistChargeEventOf(chargeEntity, Optional.empty());
             cardDao.persist(cardEntity);
+            persistCard3ds(chargeEntity);
             logger.info("Stored confirmation details for charge - charge_external_id={}",
                     chargeEntity.getExternalId());
             return operationResponse;
@@ -161,5 +162,12 @@ public class CardAuthoriseService extends CardAuthoriseBaseService<AuthCardDetai
         detailsEntity.setExpiryDate(authCardDetails.getEndDate());
         detailsEntity.setLastDigitsCardNumber(StringUtils.right(authCardDetails.getCardNo(), 4));
         return detailsEntity;
+    }
+
+    private void persistCard3ds(ChargeEntity chargeEntity){
+        if(chargeEntity.get3dsDetails() != null) {
+            Card3dsEntity card3dsEntity = Card3dsEntity.from(chargeEntity);
+            card3dsDao.persist(card3dsEntity);
+        }
     }
 }

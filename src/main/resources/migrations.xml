@@ -745,6 +745,31 @@
         </createTable>
     </changeSet>
 
+    <changeSet id="create table card_3ds" author="">
+        <createTable tableName="card_3ds">
+            <column name="id" type="bigserial" autoIncrement="true">
+                <constraints primaryKey="true" nullable="false"/>
+            </column>
+            <column name="charge_id" type="bigserial">
+                <constraints foreignKeyName="fk__card_3ds_charges"
+                             referencedTableName="charges"
+                             referencedColumnNames="id" nullable="false"/>
+            </column>
+            <column name="pa_request" type="text">
+                <constraints nullable="false"/>
+            </column>
+            <column name="issuer_url" type="text">
+                <constraints nullable="false"/>
+            </column>
+            <column name="worldpay_machine_cookie" type="text">
+                <constraints nullable="true"/>
+            </column>
+            <column name="version" type="bigint" defaultValue="0">
+                <constraints nullable="false"/>
+            </column>
+        </createTable>
+    </changeSet>
+
     <changeSet id="update email column in cards table to 254 chars" author="">
         <modifyDataType columnName="email"
                         newDataType="varchar(254)"
