@@ -10,6 +10,7 @@ import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.mockito.Mock;
 import org.mockito.runners.MockitoJUnitRunner;
+import uk.gov.pay.connector.dao.Card3dsDao;
 import uk.gov.pay.connector.dao.CardDao;
 import uk.gov.pay.connector.exception.ChargeNotFoundRuntimeException;
 import uk.gov.pay.connector.exception.ConflictRuntimeException;
@@ -68,6 +69,9 @@ public class CardAuthoriseServiceTest extends CardServiceTest {
     @Mock
     private Counter mockCounter;
 
+    @Mock
+    private Card3dsDao mockCard3dsDao;
+
     private CardAuthoriseService cardAuthorisationService;
 
     @Before
@@ -77,7 +81,7 @@ public class CardAuthoriseServiceTest extends CardServiceTest {
         when(mockEnvironment.metrics()).thenReturn(mockMetricRegistry);
         cardAuthorisationService = new CardAuthoriseService(mockedChargeDao, mockedChargeEventDao,
                 mockedCardTypeDao, mockCardDao, mockedProviders, mockExecutorService,
-                auth3dsDetailsFactory, mockEnvironment);
+                auth3dsDetailsFactory, mockEnvironment, mockCard3dsDao);
     }
 
     @Before
@@ -152,7 +156,7 @@ public class CardAuthoriseServiceTest extends CardServiceTest {
     @Test
     public void doAuthorise_shouldRespondWith3dsResponseFor3dsOrders() {
 
-        providerWillRequire3ds();
+        providerWillRequire3ds(null);
 
         GatewayResponse response = cardAuthorisationService.doAuthorise(charge.getExternalId(), aValidAuthorisationDetails());
 
@@ -162,6 +166,36 @@ public class CardAuthoriseServiceTest extends CardServiceTest {
         verify(mockedChargeEventDao).persistChargeEventOf(charge, Optional.empty());
         assertThat(charge.get3dsDetails().getIssuerUrl(), is(ISSUER_URL_FROM_PROVIDER));
         assertThat(charge.get3dsDetails().getPaRequest(), is(PA_REQ_VALUE_FROM_PROVIDER));
+
+        Card3dsEntity card3dsEntity = new Card3dsEntity();
+        card3dsEntity.setChargeId(charge.getId());
+        card3dsEntity.setIssuerUrl(ISSUER_URL_FROM_PROVIDER);
+        card3dsEntity.setPaRequest(PA_REQ_VALUE_FROM_PROVIDER);
+
+        verify(mockCard3dsDao).persist(card3dsEntity);
+    }
+
+    @Test
+    public void doAuthorise_shouldRespondWith3dsResponseFor3dsOrdersWithWorldpayMachineCookie() {
+
+        providerWillRequire3ds(SESSION_IDENTIFIER);
+
+        GatewayResponse response = cardAuthorisationService.doAuthorise(charge.getExternalId(), aValidAuthorisationDetails());
+
+        assertThat(response.isSuccessful(), is(true));
+
+        assertThat(charge.getStatus(), is(AUTHORISATION_3DS_REQUIRED.getValue()));
+        verify(mockedChargeEventDao).persistChargeEventOf(charge, Optional.empty());
+        assertThat(charge.get3dsDetails().getIssuerUrl(), is(ISSUER_URL_FROM_PROVIDER));
+        assertThat(charge.get3dsDetails().getPaRequest(), is(PA_REQ_VALUE_FROM_PROVIDER));
+
+        Card3dsEntity card3dsEntity = new Card3dsEntity();
+        card3dsEntity.setChargeId(charge.getId());
+        card3dsEntity.setIssuerUrl(ISSUER_URL_FROM_PROVIDER);
+        card3dsEntity.setPaRequest(PA_REQ_VALUE_FROM_PROVIDER);
+        card3dsEntity.setWorldpayMachineCookie(SESSION_IDENTIFIER);
+
+        verify(mockCard3dsDao).persist(card3dsEntity);
     }
 
     @Test
@@ -449,13 +483,14 @@ public class CardAuthoriseServiceTest extends CardServiceTest {
         providerWillRespondToAuthoriseWith(authResponse);
     }
 
-    private void providerWillRequire3ds() {
+    private void providerWillRequire3ds(String sessionIdentifier) {
         mockExecutorServiceWillReturnCompletedResultWithSupplierReturnValue();
         WorldpayOrderStatusResponse worldpayResponse = new WorldpayOrderStatusResponse();
         worldpayResponse.set3dsPaRequest(PA_REQ_VALUE_FROM_PROVIDER);
         worldpayResponse.set3dsIssuerUrl(ISSUER_URL_FROM_PROVIDER);
         GatewayResponseBuilder<WorldpayOrderStatusResponse> gatewayResponseBuilder = responseBuilder();
         GatewayResponse worldpay3dsResponse = gatewayResponseBuilder
+                .withSessionIdentifier(sessionIdentifier)
                 .withResponse(worldpayResponse)
                 .build();
         when(mockedPaymentProvider.authorise(any())).thenReturn(worldpay3dsResponse);
