@@ -819,30 +819,67 @@
             charge_id
             )
             SELECT
-                ch.cardholder_name,
-                ch.card_brand,
-                ch.last_digits_card_number,
-                ch.expiry_date,
-                ch.address_line1,
-                ch.address_line2,
-                ch.address_postcode,
-                ch.address_city,
-                ch.address_county,
-                ch.address_country,
-                ch.id
+            ch.cardholder_name,
+            ch.card_brand,
+            ch.last_digits_card_number,
+            ch.expiry_date,
+            ch.address_line1,
+            ch.address_line2,
+            ch.address_postcode,
+            ch.address_city,
+            ch.address_county,
+            ch.address_country,
+            ch.id
             FROM charges ch
             LEFT JOIN cards c ON c.charge_id = ch.id
             WHERE c.charge_id IS NULL
             AND (
-                ch.cardholder_name IS NOT NULL OR
-                ch.card_brand IS NOT NULL OR
-                ch.last_digits_card_number IS NOT NULL OR
-                ch.expiry_date IS NOT NULL OR
-                ch.address_line1 IS NOT NULL OR
-                ch.address_postcode IS NOT NULL OR
-                ch.address_city IS NOT NULL OR
-                ch.address_country IS NOT NULL
+            ch.cardholder_name IS NOT NULL OR
+            ch.card_brand IS NOT NULL OR
+            ch.last_digits_card_number IS NOT NULL OR
+            ch.expiry_date IS NOT NULL OR
+            ch.address_line1 IS NOT NULL OR
+            ch.address_postcode IS NOT NULL OR
+            ch.address_city IS NOT NULL OR
+            ch.address_country IS NOT NULL
             );
+        </sql>
+    </changeSet>
+
+    <changeSet id="change payment_requests gateway_account_id to bigint" author="">
+        <modifyDataType tableName="payment_requests" columnName="gateway_account_id" newDataType="bigint"/>
+    </changeSet>
+
+    <changeSet id="createIndex payment_requests.external_id" author="">
+        <createIndex indexName="idx_payment_requests_external_id"
+                     tableName="payment_requests"
+                     unique="true">
+            <column name="external_id" type="char(26)"/>
+        </createIndex>
+    </changeSet>
+
+    <changeSet id="backfill payment_requests from charges" author="">
+        <sql>
+            INSERT INTO payment_requests (
+                amount,
+                return_url,
+                gateway_account_id,
+                description,
+                reference,
+                created_date,
+                external_id
+            )
+            SELECT
+                ch.amount,
+                ch.return_url,
+                ch.gateway_account_id,
+                ch.description,
+                ch.reference,
+                ch.created_date,
+                ch.external_id
+            FROM charges ch
+            LEFT JOIN payment_requests p ON p.external_id = ch.external_id
+            WHERE p.external_id IS NULL;
         </sql>
     </changeSet>
 </databaseChangeLog>
