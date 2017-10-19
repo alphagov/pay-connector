@@ -3,6 +3,7 @@ package uk.gov.pay.connector.model.domain;
 import org.apache.commons.lang3.StringUtils;
 import uk.gov.pay.connector.model.api.ExternalChargeState;
 
+import java.util.Arrays;
 import java.util.List;
 import java.util.stream.Collectors;
 
@@ -75,6 +76,10 @@ public enum ChargeStatus implements Status {
 
     public ExternalChargeState toExternal() {
         return externalStatus;
+    }
+
+    public static boolean isValid(String status) {
+        return Arrays.stream(values()).anyMatch(value -> StringUtils.equals(value.getValue(), status));
     }
 
     public static ChargeStatus fromString(String status) {

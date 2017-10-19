@@ -6,11 +6,9 @@ import io.dropwizard.setup.Environment;
 import org.apache.commons.lang3.StringUtils;
 import uk.gov.pay.connector.dao.ChargeDao;
 import uk.gov.pay.connector.dao.ChargeEventDao;
+import uk.gov.pay.connector.dao.PaymentRequestDao;
 import uk.gov.pay.connector.exception.ChargeNotFoundRuntimeException;
-import uk.gov.pay.connector.model.domain.Auth3dsDetails;
-import uk.gov.pay.connector.model.domain.ChargeEntity;
-import uk.gov.pay.connector.model.domain.ChargeStatus;
-import uk.gov.pay.connector.model.domain.GatewayAccountEntity;
+import uk.gov.pay.connector.model.domain.*;
 import uk.gov.pay.connector.model.gateway.Auth3dsResponseGatewayRequest;
 import uk.gov.pay.connector.model.gateway.GatewayResponse;
 
@@ -28,8 +26,8 @@ public class Card3dsResponseAuthService extends CardAuthoriseBaseService<Auth3ds
                                       ChargeEventDao chargeEventDao,
                                       PaymentProviders providers,
                                       CardExecutorService cardExecutorService,
-                                      Environment environment) {
-        super(chargeDao, chargeEventDao, providers, cardExecutorService, environment);
+                                      Environment environment, PaymentRequestDao paymentRequestDao) {
+        super(chargeDao, chargeEventDao, providers, cardExecutorService, environment, paymentRequestDao);
     }
 
     public GatewayResponse<BaseAuthoriseResponse> operation(ChargeEntity chargeEntity, Auth3dsDetails auth3DsDetails) {
@@ -68,11 +66,15 @@ public class Card3dsResponseAuthService extends CardAuthoriseBaseService<Auth3ds
             metricRegistry.counter(String.format("gateway-operations.%s.%s.%s.authorise-3ds.result.%s", account.getGatewayName(), account.getType(), account.getId(), status.toString())).inc();
 
             chargeEntity.setStatus(status);
+            Optional<PaymentRequestEntity> paymentRequestEntity = paymentRequestDao.updateChargeTransactionStatus(chargeEntity.getExternalId(), status);
 
             if (StringUtils.isBlank(transactionId)) {
                 logger.warn("Auth3DSDetails authorisation response received with no transaction id. -  charge_external_id={}", chargeId);
             } else {
                 chargeEntity.setGatewayTransactionId(transactionId);
+                paymentRequestEntity.ifPresent(paymentRequest -> {
+                    paymentRequest.getChargeTransaction().setGatewayTransactionId(transactionId);
+                });
             }
 
             chargeEventDao.persistChargeEventOf(chargeEntity, Optional.empty());

@@ -918,4 +918,38 @@
         </sql>
     </changeSet>
 
+    <changeSet id="create table transactions" author="">
+        <createTable tableName="transactions">
+            <column name="id" type="bigserial" autoIncrement="true">
+                <constraints primaryKey="true" nullable="false"/>
+            </column>
+            <column name="payment_request_id" type="bigint">
+                <constraints foreignKeyName="fk__payment_requests_id"
+                             referencedTableName="payment_requests"
+                             referencedColumnNames="id" nullable="false"/>
+            </column>
+            <column name="gateway_transaction_id" type="text">
+                <constraints nullable="true"/>
+            </column>
+            <column name="amount" type="bigint">
+                <constraints nullable="false"/>
+            </column>
+            <column name="refund_external_id" type="char(26)">
+                <constraints nullable="true"/>
+            </column>
+            <column name="status" type="text">
+                <constraints nullable="false"/>
+            </column>
+            <column name="user_external_id" type="varchar(32)">
+                <constraints nullable="true"/>
+            </column>
+            <column name="version" type="bigint" defaultValue="0">
+                <constraints nullable="false"/>
+            </column>
+            <column name="operation" type="text">
+                <constraints nullable="false"/>
+            </column>
+        </createTable>
+    </changeSet>
+
 </databaseChangeLog>
