@@ -776,4 +776,47 @@
                         tableName="cards"/>
     </changeSet>
 
+    <changeSet id="createIndex cards.charge_id" author="">
+        <createIndex indexName="idx_cards_charge_id"
+                     tableName="cards"
+                     unique="true">
+            <column name="charge_id" type="bigserial"/>
+        </createIndex>
+    </changeSet>
+
+    <changeSet id="backfill cards with data from charges" author="">
+        <sql>
+            INSERT INTO cards (
+                cardholder_name,
+                email,
+                card_brand,
+                last_digits_card_number,
+                expiry_date,
+                address_line1,
+                address_line2,
+                address_postcode,
+                address_city,
+                address_county,
+                address_country,
+                charge_id
+            )
+            SELECT
+                ch.cardholder_name,
+                ch.email,
+                ch.card_brand,
+                ch.last_digits_card_number,
+                ch.expiry_date,
+                ch.address_line1,
+                ch.address_line2,
+                ch.address_postcode,
+                ch.address_city,
+                ch.address_county,
+                ch.address_country,
+                ch.id
+            FROM charges ch
+            LEFT JOIN cards c ON c.charge_id = ch.id
+            WHERE c.charge_id IS NULL;
+        </sql>
+    </changeSet>
+
 </databaseChangeLog>
