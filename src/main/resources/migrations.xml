@@ -779,7 +779,7 @@
     <changeSet id="createIndex cards.charge_id" author="">
         <createIndex indexName="idx_cards_charge_id"
                      tableName="cards"
-                     unique="false">
+                     unique="true">
             <column name="charge_id" type="bigserial"/>
         </createIndex>
     </changeSet>
