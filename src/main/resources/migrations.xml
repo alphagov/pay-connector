@@ -776,4 +776,8 @@
                         tableName="cards"/>
     </changeSet>
 
+    <changeSet id="make email coumn in cards nullable" author="">
+        <dropNotNullConstraint tableName="cards" columnName="email"/>
+    </changeSet>
+
 </databaseChangeLog>
