@@ -783,4 +783,66 @@
     <changeSet id="drop email from cards table" author="">
         <dropColumn tableName="cards" columnName="email"/>
     </changeSet>
+
+    <changeSet id="createIndex cards.charge_id" author="">
+        <createIndex indexName="idx_cards_charge_id"
+                     tableName="cards"
+                     unique="true">
+            <column name="charge_id" type="bigserial"/>
+        </createIndex>
+    </changeSet>
+
+    <changeSet id="remove not nullable columns from cards" author="">
+        <modifyDataType tableName="cards" columnName="charge_id" newDataType="bigint"/>
+        <dropNotNullConstraint tableName="cards" columnName="cardholder_name"/>
+        <dropNotNullConstraint tableName="cards" columnName="last_digits_card_number"/>
+        <dropNotNullConstraint tableName="cards" columnName="expiry_date"/>
+        <dropNotNullConstraint tableName="cards" columnName="address_line1"/>
+        <dropNotNullConstraint tableName="cards" columnName="address_postcode"/>
+        <dropNotNullConstraint tableName="cards" columnName="address_city"/>
+        <dropNotNullConstraint tableName="cards" columnName="address_country"/>
+    </changeSet>
+
+    <changeSet id="backfill cards with data from charges" author="">
+        <sql>
+            INSERT INTO cards (
+            cardholder_name,
+            card_brand,
+            last_digits_card_number,
+            expiry_date,
+            address_line1,
+            address_line2,
+            address_postcode,
+            address_city,
+            address_county,
+            address_country,
+            charge_id
+            )
+            SELECT
+                ch.cardholder_name,
+                ch.card_brand,
+                ch.last_digits_card_number,
+                ch.expiry_date,
+                ch.address_line1,
+                ch.address_line2,
+                ch.address_postcode,
+                ch.address_city,
+                ch.address_county,
+                ch.address_country,
+                ch.id
+            FROM charges ch
+            LEFT JOIN cards c ON c.charge_id = ch.id
+            WHERE c.charge_id IS NULL
+            AND (
+                ch.cardholder_name IS NOT NULL OR
+                ch.card_brand IS NOT NULL OR
+                ch.last_digits_card_number IS NOT NULL OR
+                ch.expiry_date IS NOT NULL OR
+                ch.address_line1 IS NOT NULL OR
+                ch.address_postcode IS NOT NULL OR
+                ch.address_city IS NOT NULL OR
+                ch.address_country IS NOT NULL
+            );
+        </sql>
+    </changeSet>
 </databaseChangeLog>
