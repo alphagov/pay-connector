@@ -23,9 +23,6 @@ public class CardEntity extends AbstractEntity {
     @Embedded
     private AddressEntity billingAddress;
 
-    @Column(name = "email")
-    private String email;
-
     @Column(name = "charge_id")
     private Long chargeId;
 
@@ -87,7 +84,6 @@ public class CardEntity extends AbstractEntity {
             return false;
         if (cardBrand != null ? !cardBrand.equals(that.cardBrand) : that.cardBrand != null)
             return false;
-        if (email != null ? !email.equals(that.email) : that.email != null) return false;
         if (chargeId != null ? !chargeId.equals(that.chargeId) : that.chargeId != null)
             return false;
         return billingAddress != null ? billingAddress.equals(that.billingAddress) : that.billingAddress == null;
@@ -100,17 +96,8 @@ public class CardEntity extends AbstractEntity {
         result = 31 * result + (expiryDate != null ? expiryDate.hashCode() : 0);
         result = 31 * result + (cardBrand != null ? cardBrand.hashCode() : 0);
         result = 31 * result + (billingAddress != null ? billingAddress.hashCode() : 0);
-        result = 31 * result + (email != null ? email.hashCode() : 0);
         result = 31 * result + (chargeId != null ? chargeId.hashCode() : 0);
         return result;
-    }
-
-    public String getEmail() {
-        return email;
-    }
-
-    public void setEmail(String email) {
-        this.email = email;
     }
 
     public static CardEntity from(CardDetailsEntity cardDetailsEntity, String email, Long chargeId) {
@@ -120,7 +107,6 @@ public class CardEntity extends AbstractEntity {
         entity.setCardHolderName(cardDetailsEntity.getCardHolderName());
         entity.setExpiryDate(cardDetailsEntity.getExpiryDate());
         entity.setLastDigitsCardNumber(cardDetailsEntity.getLastDigitsCardNumber());
-        entity.setEmail(email);
         entity.setChargeId(chargeId);
 
         return entity;
