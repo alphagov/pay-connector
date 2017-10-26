@@ -780,4 +780,7 @@
         <dropNotNullConstraint tableName="cards" columnName="email"/>
     </changeSet>
 
+    <changeSet id="drop email from cards table" author="">
+        <dropColumn tableName="cards" columnName="email"/>
+    </changeSet>
 </databaseChangeLog>
