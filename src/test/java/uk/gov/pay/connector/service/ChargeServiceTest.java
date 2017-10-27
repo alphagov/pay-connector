@@ -14,6 +14,8 @@ import uk.gov.pay.connector.model.ChargeResponse;
 import uk.gov.pay.connector.model.api.ExternalChargeState;
 import uk.gov.pay.connector.model.api.ExternalTransactionState;
 import uk.gov.pay.connector.model.domain.*;
+import uk.gov.pay.connector.model.domain.transaction.TransactionEntity;
+import uk.gov.pay.connector.model.domain.transaction.TransactionOperation;
 import uk.gov.pay.connector.util.DateTimeUtils;
 
 import javax.ws.rs.core.UriInfo;
@@ -111,7 +113,9 @@ public class ChargeServiceTest {
         when(mockedProviders.byName(any(PaymentGatewayName.class))).thenReturn(mockedPaymentProvider);
         when(mockedPaymentProvider.getExternalChargeRefundAvailability(any(ChargeEntity.class))).thenReturn(EXTERNAL_AVAILABLE);
 
-        service = new ChargeService(mockedTokenDao, mockedChargeDao, mockedChargeEventDao, mockedCardTypeDao, mockedGatewayAccountDao, mockedConfig, mockedProviders, mockedPaymentRequestDao);
+        service = new ChargeService(mockedTokenDao, mockedChargeDao, mockedChargeEventDao,
+                mockedCardTypeDao, mockedGatewayAccountDao, mockedConfig, mockedProviders,
+                mockedPaymentRequestDao);
     }
 
     @Test
@@ -318,6 +322,47 @@ public class ChargeServiceTest {
         Optional<ChargeResponse> chargeForAccount = service.findChargeForAccount(externalChargeId, accountId, mockedUriInfo);
 
         assertThat(chargeForAccount.isPresent(), is(false));
+    }
+
+    @Test
+    public void whenCreatingCharge_shouldCreateTransactionEntity() throws Exception {
+        service.create(CHARGE_REQUEST, GATEWAY_ACCOUNT_ID, mockedUriInfo);
+
+        ArgumentCaptor<PaymentRequestEntity> argumentCaptor = forClass(PaymentRequestEntity.class);
+        verify(mockedPaymentRequestDao).persist(argumentCaptor.capture());
+
+        PaymentRequestEntity paymentRequestEntity = argumentCaptor.getValue();
+        assertThat(paymentRequestEntity.getTransactions().size(), is(1));
+        TransactionEntity transactionEntity = paymentRequestEntity.getTransactions().get(0);
+        assertThat(transactionEntity.getAmount(), is(100L));
+        assertThat(transactionEntity.getStatus(), is(ChargeStatus.CREATED));
+        assertThat(transactionEntity.getOperation(), is(TransactionOperation.CHARGE));
+        assertThat(transactionEntity.getRefundExternalId(), is(nullValue()));
+        assertThat(transactionEntity.getUserExternalId(), is(nullValue()));
+        assertThat(transactionEntity.getGatewayTransactionId(), is(nullValue()));
+    }
+
+    @Test
+    public void shouldUpdateTransactionStatus_whenUpdatingChargeStatus()  throws Exception {
+
+        service.create(CHARGE_REQUEST, GATEWAY_ACCOUNT_ID, mockedUriInfo);
+
+        ArgumentCaptor<ChargeEntity> chargeEntityArgumentCaptor = forClass(ChargeEntity.class);
+        verify(mockedChargeDao).persist(chargeEntityArgumentCaptor.capture());
+
+        ChargeEntity createdChargeEntity = chargeEntityArgumentCaptor.getValue();
+
+        when(mockedChargeDao.findByExternalId(anyString()))
+                .thenReturn(Optional.of(createdChargeEntity));
+
+        final PaymentRequestEntity paymentRequestEntity = PaymentRequestEntity.from(createdChargeEntity, TransactionEntity.from(createdChargeEntity));
+        when(mockedPaymentRequestDao.findByExternalId(anyString()))
+                .thenReturn(Optional.of(paymentRequestEntity));
+
+        service.updateStatus(createdChargeEntity.getExternalId(), ChargeStatus.ENTERING_CARD_DETAILS);
+
+        verify(mockedPaymentRequestDao)
+                .updateChargeTransactionStatus(paymentRequestEntity.getExternalId(), ChargeStatus.ENTERING_CARD_DETAILS);
     }
 
     @Deprecated

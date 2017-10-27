@@ -1,7 +1,14 @@
 package uk.gov.pay.connector.model.domain;
 
+import uk.gov.pay.connector.model.domain.transaction.TransactionEntity;
+import uk.gov.pay.connector.model.domain.transaction.TransactionOperation;
+
 import javax.persistence.*;
 import java.time.ZonedDateTime;
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.List;
+import java.util.function.Predicate;
 
 @Entity
 @Table(name = "payment_requests")
@@ -30,6 +37,9 @@ public class PaymentRequestEntity extends AbstractEntity {
 
     @Column(name = "external_id")
     private String externalId;
+
+    @OneToMany(mappedBy = "paymentRequest", cascade = CascadeType.ALL)
+    private List<TransactionEntity> transactions = new ArrayList<>();
 
     public PaymentRequestEntity() {
         // enjoy it JPA
@@ -91,7 +101,31 @@ public class PaymentRequestEntity extends AbstractEntity {
         this.externalId = externalId;
     }
 
-    public static PaymentRequestEntity from(ChargeEntity chargeEntity) {
+    public List<TransactionEntity> getTransactions() {
+        return Collections.unmodifiableList(transactions);
+    }
+
+    public void addTransaction(TransactionEntity transactionEntity) {
+        this.transactions.add(transactionEntity);
+        transactionEntity.setPaymentRequest(this);
+    }
+
+    public void setTransactions(List<TransactionEntity> transactions) {
+        this.transactions = transactions;
+        transactions.forEach(transactionEntity -> transactionEntity.setPaymentRequest(this));
+    }
+
+    public TransactionEntity getChargeTransaction() {
+        return transactions.stream().filter(byChargeTransactions()).findFirst().orElseThrow(
+                () -> new IllegalStateException("Payment Request has been initialised without a charge transaction")
+        );
+    }
+
+    private Predicate<TransactionEntity> byChargeTransactions() {
+        return transactionEntity -> transactionEntity.getOperation().equals(TransactionOperation.CHARGE);
+    }
+
+    public static PaymentRequestEntity from(ChargeEntity chargeEntity, TransactionEntity transactionEntity) {
         PaymentRequestEntity paymentEntity = new PaymentRequestEntity();
         paymentEntity.setAmount(chargeEntity.getAmount());
         paymentEntity.setCreatedDate(chargeEntity.getCreatedDate());
@@ -100,6 +134,7 @@ public class PaymentRequestEntity extends AbstractEntity {
         paymentEntity.setGatewayAccount(chargeEntity.getGatewayAccount());
         paymentEntity.setReference(chargeEntity.getReference());
         paymentEntity.setReturnUrl(chargeEntity.getReturnUrl());
+        paymentEntity.addTransaction(transactionEntity);
 
         return paymentEntity;
     }

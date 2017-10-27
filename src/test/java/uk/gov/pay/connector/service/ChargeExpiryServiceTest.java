@@ -8,6 +8,7 @@ import org.mockito.Mock;
 import org.mockito.runners.MockitoJUnitRunner;
 import uk.gov.pay.connector.dao.ChargeDao;
 import uk.gov.pay.connector.dao.ChargeEventDao;
+import uk.gov.pay.connector.dao.PaymentRequestDao;
 import uk.gov.pay.connector.model.CancelGatewayRequest;
 import uk.gov.pay.connector.model.GatewayError;
 import uk.gov.pay.connector.model.domain.ChargeEntity;
@@ -53,9 +54,12 @@ public class ChargeExpiryServiceTest {
     @Mock
     private WorldpayCancelResponse mockWorldpayCancelResponse;
 
+    @Mock
+    private PaymentRequestDao mockPaymentRequestDao;
+
     @Before
     public void setup() {
-        chargeExpiryService = new ChargeExpiryService(mockChargeDao, mockChargeEventDao, mockPaymentProviders, TransactionFlow::new);
+        chargeExpiryService = new ChargeExpiryService(mockChargeDao, mockChargeEventDao, mockPaymentProviders, TransactionFlow::new, mockPaymentRequestDao);
     }
 
     @Test
@@ -86,6 +90,7 @@ public class ChargeExpiryServiceTest {
         verify(mockPaymentProvider).cancel(cancelCaptor.capture());
         assertThat(cancelCaptor.getValue().getTransactionId(), is(chargeEntity.getGatewayTransactionId()));
         assertThat(chargeEntity.getStatus(), is(ChargeStatus.EXPIRED.getValue()));
+        verify(mockPaymentRequestDao).updateChargeTransactionStatus(chargeEntity.getExternalId(), ChargeStatus.EXPIRED);
     }
 
     @Test
@@ -117,6 +122,7 @@ public class ChargeExpiryServiceTest {
 
                     verify(mockPaymentProvider, never()).cancel(any());
                     assertThat(chargeEntity.getStatus(), is(ChargeStatus.EXPIRED.getValue()));
+                    verify(mockPaymentRequestDao).updateChargeTransactionStatus(chargeEntity.getExternalId(), ChargeStatus.EXPIRED);
                 });
     }
 
@@ -146,5 +152,6 @@ public class ChargeExpiryServiceTest {
         chargeExpiryService.expire(singletonList(chargeEntity));
 
         assertThat(chargeEntity.getStatus(), is(ChargeStatus.EXPIRE_CANCEL_FAILED.getValue()));
+        verify(mockPaymentRequestDao).updateChargeTransactionStatus(chargeEntity.getExternalId(), ChargeStatus.EXPIRE_CANCEL_FAILED);
     }
 }

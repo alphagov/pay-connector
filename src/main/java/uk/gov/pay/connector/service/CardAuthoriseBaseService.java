@@ -6,6 +6,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import uk.gov.pay.connector.dao.ChargeDao;
 import uk.gov.pay.connector.dao.ChargeEventDao;
+import uk.gov.pay.connector.dao.PaymentRequestDao;
 import uk.gov.pay.connector.exception.ConflictRuntimeException;
 import uk.gov.pay.connector.exception.GenericGatewayRuntimeException;
 import uk.gov.pay.connector.exception.OperationAlreadyInProgressRuntimeException;
@@ -26,8 +27,8 @@ public abstract class CardAuthoriseBaseService<T extends AuthorisationDetails> e
 
     private final CardExecutorService cardExecutorService;
 
-    public CardAuthoriseBaseService(ChargeDao chargeDao, ChargeEventDao chargeEventDao, PaymentProviders providers, CardExecutorService cardExecutorService, Environment environment) {
-        super(chargeDao, chargeEventDao, providers, environment);
+    public CardAuthoriseBaseService(ChargeDao chargeDao, ChargeEventDao chargeEventDao, PaymentProviders providers, CardExecutorService cardExecutorService, Environment environment, PaymentRequestDao paymentRequestDao) {
+        super(chargeDao, chargeEventDao, providers, environment, paymentRequestDao);
         this.cardExecutorService = cardExecutorService;
     }
 

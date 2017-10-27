@@ -71,7 +71,7 @@ public class CardCaptureServiceTest extends CardServiceTest {
         when(mockEnvironment.metrics()).thenReturn(mockMetricRegistry);
         when(mockMetricRegistry.counter(anyString())).thenReturn(mockCounter);
 
-        cardCaptureService = new CardCaptureService(mockedChargeDao, mockedChargeEventDao, mockedProviders, mockUserNotificationService, mockEnvironment);
+        cardCaptureService = new CardCaptureService(mockedChargeDao, mockedChargeEventDao, mockedProviders, mockUserNotificationService, mockEnvironment, mockPaymentRequestDao);
 
         Logger root = (Logger) LoggerFactory.getLogger(CardCaptureService.class);
         root.addAppender(mockAppender);
@@ -126,6 +126,8 @@ public class CardCaptureServiceTest extends CardServiceTest {
         ArgumentCaptor<ChargeEntity> chargeEntityCaptor = ArgumentCaptor.forClass(ChargeEntity.class);
 
         verify(mockedChargeEventDao).persistChargeEventOf(chargeEntityCaptor.capture(), eq(Optional.empty()));
+        verify(mockPaymentRequestDao).updateChargeTransactionStatus(charge.getExternalId(), CAPTURE_READY);
+        verify(mockPaymentRequestDao).updateChargeTransactionStatus(charge.getExternalId(), CAPTURE_SUBMITTED);
 
         assertThat(chargeEntityCaptor.getValue().getStatus(), is(CAPTURE_SUBMITTED.getValue()));
 
@@ -161,6 +163,10 @@ public class CardCaptureServiceTest extends CardServiceTest {
         // sandbox progresses from CAPTURE_SUBMITTED to CAPTURED, so two calls
         verify(mockedChargeEventDao, times(2)).persistChargeEventOf(chargeEntityCaptor.capture(), bookingDateCaptor.capture());
         assertThat(chargeEntityCaptor.getValue().getStatus(), is(CAPTURED.getValue()));
+
+        verify(mockPaymentRequestDao).updateChargeTransactionStatus(charge.getExternalId(), CAPTURE_READY);
+        verify(mockPaymentRequestDao).updateChargeTransactionStatus(charge.getExternalId(), CAPTURE_SUBMITTED);
+        verify(mockPaymentRequestDao).updateChargeTransactionStatus(charge.getExternalId(), CAPTURED);
 
         // only the CAPTURED has a bookingDate
         assertFalse(bookingDateCaptor.getAllValues().get(0).isPresent());
@@ -263,6 +269,8 @@ public class CardCaptureServiceTest extends CardServiceTest {
         inOrder.verify(chargeSpy).setStatus(CAPTURE_APPROVED_RETRY);
 
         verify(mockedChargeEventDao).persistChargeEventOf(chargeSpy, Optional.empty());
+        verify(mockPaymentRequestDao).updateChargeTransactionStatus(charge.getExternalId(), CAPTURE_READY);
+        verify(mockPaymentRequestDao).updateChargeTransactionStatus(charge.getExternalId(), CAPTURE_APPROVED_RETRY);
 
         // verify an email notification is not sent when an unsuccessful capture
         verifyZeroInteractions(mockUserNotificationService);
