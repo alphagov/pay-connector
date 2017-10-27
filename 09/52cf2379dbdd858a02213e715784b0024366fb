@@ -23,3 +23,5 @@ production-2.FAILED-257.status=failed
 production-2.tag=alpha_production-2-257
 
 production-2.alpha_production-2-257.date=2017-10-27:15:01:11
+
+production-2.alpha_production-2-257.status=success
