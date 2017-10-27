@@ -19,3 +19,5 @@ production-2.alpha_production-2-203.date=2017-08-11:14:16:51
 production-2.alpha_production-2-203.status=success
 
 release.tag=alpha_migration-1
+
+release.alpha_migration-1.date=2017-10-27:10:48:33
