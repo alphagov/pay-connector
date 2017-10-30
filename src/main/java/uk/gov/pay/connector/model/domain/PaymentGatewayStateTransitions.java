@@ -1,11 +1,9 @@
 package uk.gov.pay.connector.model.domain;
 
-import uk.gov.pay.connector.service.PaymentGatewayName;
-
-class PaymentGatewayStateTransitions {
+public class PaymentGatewayStateTransitions {
     private static StateTransitions defaultTransitions = new DefaultStateTransitions();
 
-    static StateTransitions stateTransitionsFor(PaymentGatewayName gatewayName) {
+    public static StateTransitions defaultTransitions() {
         return defaultTransitions;
     }
 }

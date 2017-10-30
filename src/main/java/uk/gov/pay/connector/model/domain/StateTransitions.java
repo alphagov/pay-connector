@@ -7,14 +7,14 @@ import java.util.Map;
 
 import static java.util.Collections.emptyList;
 
-abstract class StateTransitions {
+public abstract class StateTransitions {
     private Map<ChargeStatus, List<ChargeStatus>> transitionTable;
 
     StateTransitions(Map<ChargeStatus, List<ChargeStatus>> transitionTable) {
         this.transitionTable = transitionTable;
     }
 
-    boolean isValidTransition(ChargeStatus state, ChargeStatus targetState) {
+    public boolean isValidTransition(ChargeStatus state, ChargeStatus targetState) {
         return transitionTable.getOrDefault(state, emptyList()).contains(targetState);
     }
 
