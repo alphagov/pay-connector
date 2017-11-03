@@ -122,6 +122,11 @@ public class PaymentRequestEntity extends AbstractEntity {
         );
     }
 
+    //Remove this once transactions table has been backfilled and we will no longer need to set this.
+    public boolean hasChargeTransaction() {
+        return transactions.stream().anyMatch(byChargeTransactions());
+    }
+
     private Predicate<TransactionEntity> byChargeTransactions() {
         return transactionEntity -> transactionEntity.getOperation().equals(TransactionOperation.CHARGE);
     }
