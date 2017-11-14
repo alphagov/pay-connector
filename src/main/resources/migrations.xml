@@ -915,7 +915,7 @@
               SELECT ch.amount,ch.return_url,ch.gateway_account_id,ch.description,ch.reference,ch.created_date,ch.external_id
               FROM charges ch
               LEFT JOIN payment_requests p ON p.external_id = ch.external_id
-              WHERE p.external_id IS NULL and ch.id < 10000;
+              WHERE p.external_id IS NULL and ch.id > 0 and ch.id < 10000;
             ]]>
         </sql>
     </changeSet>
@@ -928,7 +928,7 @@
               SELECT ch.amount,ch.return_url,ch.gateway_account_id,ch.description,ch.reference,ch.created_date,ch.external_id
               FROM charges ch
               LEFT JOIN payment_requests p ON p.external_id = ch.external_id
-              WHERE p.external_id IS NULL and ch.id < 20000;
+              WHERE p.external_id IS NULL and ch.id > 10000 and ch.id < 20000;
             ]]>
         </sql>
     </changeSet>
@@ -941,7 +941,7 @@
               SELECT ch.amount,ch.return_url,ch.gateway_account_id,ch.description,ch.reference,ch.created_date,ch.external_id
               FROM charges ch
               LEFT JOIN payment_requests p ON p.external_id = ch.external_id
-              WHERE p.external_id IS NULL and ch.id < 30000;
+              WHERE p.external_id IS NULL and ch.id > 20000 and ch.id < 30000;
             ]]>
         </sql>
     </changeSet>
@@ -954,7 +954,7 @@
               SELECT ch.amount,ch.return_url,ch.gateway_account_id,ch.description,ch.reference,ch.created_date,ch.external_id
               FROM charges ch
               LEFT JOIN payment_requests p ON p.external_id = ch.external_id
-              WHERE p.external_id IS NULL and ch.id < 40000;
+              WHERE p.external_id IS NULL and ch.id > 30000 and ch.id < 40000;
             ]]>
         </sql>
     </changeSet>
@@ -967,7 +967,7 @@
               SELECT ch.amount,ch.return_url,ch.gateway_account_id,ch.description,ch.reference,ch.created_date,ch.external_id
               FROM charges ch
               LEFT JOIN payment_requests p ON p.external_id = ch.external_id
-              WHERE p.external_id IS NULL and ch.id < 50000;
+              WHERE p.external_id IS NULL and ch.id > 40000 and ch.id < 50000;
             ]]>
         </sql>
     </changeSet>
@@ -980,7 +980,7 @@
               SELECT ch.amount,ch.return_url,ch.gateway_account_id,ch.description,ch.reference,ch.created_date,ch.external_id
               FROM charges ch
               LEFT JOIN payment_requests p ON p.external_id = ch.external_id
-              WHERE p.external_id IS NULL and ch.id < 60000;
+              WHERE p.external_id IS NULL and ch.id > 50000 and ch.id < 60000;
             ]]>
         </sql>
     </changeSet>
@@ -993,7 +993,7 @@
               SELECT ch.amount,ch.return_url,ch.gateway_account_id,ch.description,ch.reference,ch.created_date,ch.external_id
               FROM charges ch
               LEFT JOIN payment_requests p ON p.external_id = ch.external_id
-              WHERE p.external_id IS NULL and ch.id < 70000;
+              WHERE p.external_id IS NULL and ch.id > 60000 and ch.id < 70000;
             ]]>
         </sql>
     </changeSet>
@@ -1006,7 +1006,7 @@
               SELECT ch.amount,ch.return_url,ch.gateway_account_id,ch.description,ch.reference,ch.created_date,ch.external_id
               FROM charges ch
               LEFT JOIN payment_requests p ON p.external_id = ch.external_id
-              WHERE p.external_id IS NULL and ch.id < 80000;
+              WHERE p.external_id IS NULL and ch.id > 70000 and ch.id < 80000;
             ]]>
         </sql>
     </changeSet>
@@ -1019,7 +1019,7 @@
               SELECT ch.amount,ch.return_url,ch.gateway_account_id,ch.description,ch.reference,ch.created_date,ch.external_id
               FROM charges ch
               LEFT JOIN payment_requests p ON p.external_id = ch.external_id
-              WHERE p.external_id IS NULL and ch.id < 90000;
+              WHERE p.external_id IS NULL and ch.id > 80000 and ch.id < 90000;
             ]]>
         </sql>
     </changeSet>
@@ -1032,7 +1032,7 @@
               SELECT ch.amount,ch.return_url,ch.gateway_account_id,ch.description,ch.reference,ch.created_date,ch.external_id
               FROM charges ch
               LEFT JOIN payment_requests p ON p.external_id = ch.external_id
-              WHERE p.external_id IS NULL and ch.id < 100000;
+              WHERE p.external_id IS NULL and ch.id > 90000 and ch.id < 100000;
             ]]>
         </sql>
     </changeSet>
@@ -1045,7 +1045,7 @@
               SELECT ch.amount,ch.return_url,ch.gateway_account_id,ch.description,ch.reference,ch.created_date,ch.external_id
               FROM charges ch
               LEFT JOIN payment_requests p ON p.external_id = ch.external_id
-              WHERE p.external_id IS NULL and ch.id < 110000;
+              WHERE p.external_id IS NULL and ch.id > 100000 and ch.id < 110000;
             ]]>
         </sql>
     </changeSet>
@@ -1058,7 +1058,7 @@
               SELECT ch.amount,ch.return_url,ch.gateway_account_id,ch.description,ch.reference,ch.created_date,ch.external_id
               FROM charges ch
               LEFT JOIN payment_requests p ON p.external_id = ch.external_id
-              WHERE p.external_id IS NULL and ch.id < 120000;
+              WHERE p.external_id IS NULL and ch.id > 110000 and ch.id < 120000;
             ]]>
         </sql>
     </changeSet>
@@ -1071,7 +1071,7 @@
               SELECT ch.amount,ch.return_url,ch.gateway_account_id,ch.description,ch.reference,ch.created_date,ch.external_id
               FROM charges ch
               LEFT JOIN payment_requests p ON p.external_id = ch.external_id
-              WHERE p.external_id IS NULL and ch.id < 130000;
+              WHERE p.external_id IS NULL and ch.id > 120000 and ch.id < 130000;
             ]]>
         </sql>
     </changeSet>
@@ -1084,7 +1084,7 @@
               SELECT ch.amount,ch.return_url,ch.gateway_account_id,ch.description,ch.reference,ch.created_date,ch.external_id
               FROM charges ch
               LEFT JOIN payment_requests p ON p.external_id = ch.external_id
-              WHERE p.external_id IS NULL and ch.id < 140000;
+              WHERE p.external_id IS NULL and ch.id > 130000 and ch.id < 140000;
             ]]>
         </sql>
     </changeSet>
@@ -1097,7 +1097,7 @@
               SELECT ch.amount,ch.return_url,ch.gateway_account_id,ch.description,ch.reference,ch.created_date,ch.external_id
               FROM charges ch
               LEFT JOIN payment_requests p ON p.external_id = ch.external_id
-              WHERE p.external_id IS NULL and ch.id < 150000;
+              WHERE p.external_id IS NULL and ch.id > 140000 and ch.id < 150000;
             ]]>
         </sql>
     </changeSet>
@@ -1110,7 +1110,7 @@
               SELECT ch.amount,ch.return_url,ch.gateway_account_id,ch.description,ch.reference,ch.created_date,ch.external_id
               FROM charges ch
               LEFT JOIN payment_requests p ON p.external_id = ch.external_id
-              WHERE p.external_id IS NULL and ch.id < 160000;
+              WHERE p.external_id IS NULL and ch.id > 150000 and ch.id < 160000;
             ]]>
         </sql>
     </changeSet>
@@ -1123,7 +1123,7 @@
               SELECT ch.amount,ch.return_url,ch.gateway_account_id,ch.description,ch.reference,ch.created_date,ch.external_id
               FROM charges ch
               LEFT JOIN payment_requests p ON p.external_id = ch.external_id
-              WHERE p.external_id IS NULL and ch.id < 170000;
+              WHERE p.external_id IS NULL and ch.id > 160000 and ch.id < 170000;
             ]]>
         </sql>
     </changeSet>
@@ -1136,7 +1136,7 @@
               SELECT ch.amount,ch.return_url,ch.gateway_account_id,ch.description,ch.reference,ch.created_date,ch.external_id
               FROM charges ch
               LEFT JOIN payment_requests p ON p.external_id = ch.external_id
-              WHERE p.external_id IS NULL and ch.id < 180000;
+              WHERE p.external_id IS NULL and ch.id > 170000 and ch.id < 180000;
             ]]>
         </sql>
     </changeSet>
@@ -1149,7 +1149,7 @@
               SELECT ch.amount,ch.return_url,ch.gateway_account_id,ch.description,ch.reference,ch.created_date,ch.external_id
               FROM charges ch
               LEFT JOIN payment_requests p ON p.external_id = ch.external_id
-              WHERE p.external_id IS NULL and ch.id < 190000;
+              WHERE p.external_id IS NULL and ch.id > 180000 and ch.id < 190000;
             ]]>
         </sql>
     </changeSet>
@@ -1162,7 +1162,7 @@
               SELECT ch.amount,ch.return_url,ch.gateway_account_id,ch.description,ch.reference,ch.created_date,ch.external_id
               FROM charges ch
               LEFT JOIN payment_requests p ON p.external_id = ch.external_id
-              WHERE p.external_id IS NULL and ch.id < 200000;
+              WHERE p.external_id IS NULL and ch.id > 190000 and ch.id < 200000;
             ]]>
         </sql>
     </changeSet>
@@ -1175,7 +1175,7 @@
               SELECT ch.amount,ch.return_url,ch.gateway_account_id,ch.description,ch.reference,ch.created_date,ch.external_id
               FROM charges ch
               LEFT JOIN payment_requests p ON p.external_id = ch.external_id
-              WHERE p.external_id IS NULL and ch.id < 210000;
+              WHERE p.external_id IS NULL and ch.id > 200000 and ch.id < 210000;
             ]]>
         </sql>
     </changeSet>
@@ -1188,7 +1188,7 @@
               SELECT ch.amount,ch.return_url,ch.gateway_account_id,ch.description,ch.reference,ch.created_date,ch.external_id
               FROM charges ch
               LEFT JOIN payment_requests p ON p.external_id = ch.external_id
-              WHERE p.external_id IS NULL and ch.id < 220000;
+              WHERE p.external_id IS NULL and ch.id > 210000 and ch.id < 220000;
             ]]>
         </sql>
     </changeSet>
@@ -1201,7 +1201,7 @@
               SELECT ch.amount,ch.return_url,ch.gateway_account_id,ch.description,ch.reference,ch.created_date,ch.external_id
               FROM charges ch
               LEFT JOIN payment_requests p ON p.external_id = ch.external_id
-              WHERE p.external_id IS NULL and ch.id < 230000;
+              WHERE p.external_id IS NULL and ch.id > 220000 and ch.id < 230000;
             ]]>
         </sql>
     </changeSet>
@@ -1214,7 +1214,7 @@
               SELECT ch.amount,ch.return_url,ch.gateway_account_id,ch.description,ch.reference,ch.created_date,ch.external_id
               FROM charges ch
               LEFT JOIN payment_requests p ON p.external_id = ch.external_id
-              WHERE p.external_id IS NULL and ch.id < 240000;
+              WHERE p.external_id IS NULL and ch.id > 230000 and ch.id < 240000;
             ]]>
         </sql>
     </changeSet>
@@ -1227,7 +1227,7 @@
               SELECT ch.amount,ch.return_url,ch.gateway_account_id,ch.description,ch.reference,ch.created_date,ch.external_id
               FROM charges ch
               LEFT JOIN payment_requests p ON p.external_id = ch.external_id
-              WHERE p.external_id IS NULL and ch.id < 250000;
+              WHERE p.external_id IS NULL and ch.id > 240000 and ch.id < 250000;
             ]]>
         </sql>
     </changeSet>
@@ -1240,7 +1240,7 @@
               SELECT ch.amount,ch.return_url,ch.gateway_account_id,ch.description,ch.reference,ch.created_date,ch.external_id
               FROM charges ch
               LEFT JOIN payment_requests p ON p.external_id = ch.external_id
-              WHERE p.external_id IS NULL and ch.id < 260000;
+              WHERE p.external_id IS NULL and ch.id > 250000 and ch.id < 260000;
             ]]>
         </sql>
     </changeSet>
@@ -1253,7 +1253,7 @@
               SELECT ch.amount,ch.return_url,ch.gateway_account_id,ch.description,ch.reference,ch.created_date,ch.external_id
               FROM charges ch
               LEFT JOIN payment_requests p ON p.external_id = ch.external_id
-              WHERE p.external_id IS NULL and ch.id < 270000;
+              WHERE p.external_id IS NULL and ch.id > 260000 and ch.id < 270000;
             ]]>
         </sql>
     </changeSet>
@@ -1266,7 +1266,7 @@
               SELECT ch.amount,ch.return_url,ch.gateway_account_id,ch.description,ch.reference,ch.created_date,ch.external_id
               FROM charges ch
               LEFT JOIN payment_requests p ON p.external_id = ch.external_id
-              WHERE p.external_id IS NULL and ch.id < 280000;
+              WHERE p.external_id IS NULL and ch.id > 270000 and ch.id < 280000;
             ]]>
         </sql>
     </changeSet>
@@ -1279,7 +1279,7 @@
               SELECT ch.amount,ch.return_url,ch.gateway_account_id,ch.description,ch.reference,ch.created_date,ch.external_id
               FROM charges ch
               LEFT JOIN payment_requests p ON p.external_id = ch.external_id
-              WHERE p.external_id IS NULL and ch.id < 290000;
+              WHERE p.external_id IS NULL and ch.id > 280000 and ch.id < 290000;
             ]]>
         </sql>
     </changeSet>
@@ -1292,7 +1292,7 @@
               SELECT ch.amount,ch.return_url,ch.gateway_account_id,ch.description,ch.reference,ch.created_date,ch.external_id
               FROM charges ch
               LEFT JOIN payment_requests p ON p.external_id = ch.external_id
-              WHERE p.external_id IS NULL and ch.id < 300000;
+              WHERE p.external_id IS NULL and ch.id > 290000 and ch.id < 300000;
             ]]>
         </sql>
     </changeSet>
@@ -1305,7 +1305,7 @@
               SELECT ch.amount,ch.return_url,ch.gateway_account_id,ch.description,ch.reference,ch.created_date,ch.external_id
               FROM charges ch
               LEFT JOIN payment_requests p ON p.external_id = ch.external_id
-              WHERE p.external_id IS NULL and ch.id < 310000;
+              WHERE p.external_id IS NULL and ch.id > 300000 and ch.id < 310000;
             ]]>
         </sql>
     </changeSet>
@@ -1318,7 +1318,7 @@
               SELECT ch.amount,ch.return_url,ch.gateway_account_id,ch.description,ch.reference,ch.created_date,ch.external_id
               FROM charges ch
               LEFT JOIN payment_requests p ON p.external_id = ch.external_id
-              WHERE p.external_id IS NULL and ch.id < 320000;
+              WHERE p.external_id IS NULL and ch.id > 310000 and ch.id < 320000;
             ]]>
         </sql>
     </changeSet>
@@ -1331,7 +1331,7 @@
               SELECT ch.amount,ch.return_url,ch.gateway_account_id,ch.description,ch.reference,ch.created_date,ch.external_id
               FROM charges ch
               LEFT JOIN payment_requests p ON p.external_id = ch.external_id
-              WHERE p.external_id IS NULL and ch.id < 330000;
+              WHERE p.external_id IS NULL and ch.id > 320000 and ch.id < 330000;
             ]]>
         </sql>
     </changeSet>
@@ -1344,7 +1344,7 @@
               SELECT ch.amount,ch.return_url,ch.gateway_account_id,ch.description,ch.reference,ch.created_date,ch.external_id
               FROM charges ch
               LEFT JOIN payment_requests p ON p.external_id = ch.external_id
-              WHERE p.external_id IS NULL and ch.id < 340000;
+              WHERE p.external_id IS NULL and ch.id > 330000 and ch.id < 340000;
             ]]>
         </sql>
     </changeSet>
@@ -1357,7 +1357,7 @@
               SELECT ch.amount,ch.return_url,ch.gateway_account_id,ch.description,ch.reference,ch.created_date,ch.external_id
               FROM charges ch
               LEFT JOIN payment_requests p ON p.external_id = ch.external_id
-              WHERE p.external_id IS NULL and ch.id < 350000;
+              WHERE p.external_id IS NULL and ch.id > 340000 and ch.id < 350000;
             ]]>
         </sql>
     </changeSet>
@@ -1370,7 +1370,7 @@
               SELECT ch.amount,ch.return_url,ch.gateway_account_id,ch.description,ch.reference,ch.created_date,ch.external_id
               FROM charges ch
               LEFT JOIN payment_requests p ON p.external_id = ch.external_id
-              WHERE p.external_id IS NULL and ch.id < 360000;
+              WHERE p.external_id IS NULL and ch.id > 350000 and ch.id < 360000;
             ]]>
         </sql>
     </changeSet>
@@ -1383,7 +1383,7 @@
               SELECT ch.amount,ch.return_url,ch.gateway_account_id,ch.description,ch.reference,ch.created_date,ch.external_id
               FROM charges ch
               LEFT JOIN payment_requests p ON p.external_id = ch.external_id
-              WHERE p.external_id IS NULL and ch.id < 370000;
+              WHERE p.external_id IS NULL and ch.id > 360000 and ch.id < 370000;
             ]]>
         </sql>
     </changeSet>
@@ -1396,7 +1396,7 @@
               SELECT ch.amount,ch.return_url,ch.gateway_account_id,ch.description,ch.reference,ch.created_date,ch.external_id
               FROM charges ch
               LEFT JOIN payment_requests p ON p.external_id = ch.external_id
-              WHERE p.external_id IS NULL and ch.id < 380000;
+              WHERE p.external_id IS NULL and ch.id > 370000 and ch.id < 380000;
             ]]>
         </sql>
     </changeSet>
@@ -1409,7 +1409,7 @@
               SELECT ch.amount,ch.return_url,ch.gateway_account_id,ch.description,ch.reference,ch.created_date,ch.external_id
               FROM charges ch
               LEFT JOIN payment_requests p ON p.external_id = ch.external_id
-              WHERE p.external_id IS NULL and ch.id < 390000;
+              WHERE p.external_id IS NULL and ch.id > 380000 and ch.id < 390000;
             ]]>
         </sql>
     </changeSet>
@@ -1422,7 +1422,7 @@
               SELECT ch.amount,ch.return_url,ch.gateway_account_id,ch.description,ch.reference,ch.created_date,ch.external_id
               FROM charges ch
               LEFT JOIN payment_requests p ON p.external_id = ch.external_id
-              WHERE p.external_id IS NULL and ch.id < 400000;
+              WHERE p.external_id IS NULL and ch.id > 390000 and ch.id < 400000;
             ]]>
         </sql>
     </changeSet>
@@ -1435,7 +1435,7 @@
               SELECT ch.amount,ch.return_url,ch.gateway_account_id,ch.description,ch.reference,ch.created_date,ch.external_id
               FROM charges ch
               LEFT JOIN payment_requests p ON p.external_id = ch.external_id
-              WHERE p.external_id IS NULL and ch.id < 410000;
+              WHERE p.external_id IS NULL and ch.id > 400000 and ch.id < 410000;
             ]]>
         </sql>
     </changeSet>
@@ -1448,7 +1448,7 @@
               SELECT ch.amount,ch.return_url,ch.gateway_account_id,ch.description,ch.reference,ch.created_date,ch.external_id
               FROM charges ch
               LEFT JOIN payment_requests p ON p.external_id = ch.external_id
-              WHERE p.external_id IS NULL and ch.id < 420000;
+              WHERE p.external_id IS NULL and ch.id > 410000 and ch.id < 420000;
             ]]>
         </sql>
     </changeSet>
@@ -1461,7 +1461,7 @@
               SELECT ch.amount,ch.return_url,ch.gateway_account_id,ch.description,ch.reference,ch.created_date,ch.external_id
               FROM charges ch
               LEFT JOIN payment_requests p ON p.external_id = ch.external_id
-              WHERE p.external_id IS NULL and ch.id < 430000;
+              WHERE p.external_id IS NULL and ch.id > 420000 and ch.id < 430000;
             ]]>
         </sql>
     </changeSet>
@@ -1474,7 +1474,7 @@
               SELECT ch.amount,ch.return_url,ch.gateway_account_id,ch.description,ch.reference,ch.created_date,ch.external_id
               FROM charges ch
               LEFT JOIN payment_requests p ON p.external_id = ch.external_id
-              WHERE p.external_id IS NULL and ch.id < 440000;
+              WHERE p.external_id IS NULL and ch.id > 430000 and ch.id < 440000;
             ]]>
         </sql>
     </changeSet>
@@ -1487,7 +1487,7 @@
               SELECT ch.amount,ch.return_url,ch.gateway_account_id,ch.description,ch.reference,ch.created_date,ch.external_id
               FROM charges ch
               LEFT JOIN payment_requests p ON p.external_id = ch.external_id
-              WHERE p.external_id IS NULL and ch.id < 450000;
+              WHERE p.external_id IS NULL and ch.id > 440000 and ch.id < 450000;
             ]]>
         </sql>
     </changeSet>
@@ -1500,7 +1500,7 @@
               SELECT ch.amount,ch.return_url,ch.gateway_account_id,ch.description,ch.reference,ch.created_date,ch.external_id
               FROM charges ch
               LEFT JOIN payment_requests p ON p.external_id = ch.external_id
-              WHERE p.external_id IS NULL and ch.id < 460000;
+              WHERE p.external_id IS NULL and ch.id > 450000 and ch.id < 460000;
             ]]>
         </sql>
     </changeSet>
@@ -1513,7 +1513,7 @@
               SELECT ch.amount,ch.return_url,ch.gateway_account_id,ch.description,ch.reference,ch.created_date,ch.external_id
               FROM charges ch
               LEFT JOIN payment_requests p ON p.external_id = ch.external_id
-              WHERE p.external_id IS NULL and ch.id < 470000;
+              WHERE p.external_id IS NULL and ch.id > 460000 and ch.id < 470000;
             ]]>
         </sql>
     </changeSet>
@@ -1526,7 +1526,7 @@
               SELECT ch.amount,ch.return_url,ch.gateway_account_id,ch.description,ch.reference,ch.created_date,ch.external_id
               FROM charges ch
               LEFT JOIN payment_requests p ON p.external_id = ch.external_id
-              WHERE p.external_id IS NULL and ch.id < 480000;
+              WHERE p.external_id IS NULL and ch.id > 470000 and ch.id < 480000;
             ]]>
         </sql>
     </changeSet>
@@ -1539,7 +1539,7 @@
               SELECT ch.amount,ch.return_url,ch.gateway_account_id,ch.description,ch.reference,ch.created_date,ch.external_id
               FROM charges ch
               LEFT JOIN payment_requests p ON p.external_id = ch.external_id
-              WHERE p.external_id IS NULL and ch.id < 490000;
+              WHERE p.external_id IS NULL and ch.id > 480000 and ch.id < 490000;
             ]]>
         </sql>
     </changeSet>
@@ -1552,7 +1552,7 @@
               SELECT ch.amount,ch.return_url,ch.gateway_account_id,ch.description,ch.reference,ch.created_date,ch.external_id
               FROM charges ch
               LEFT JOIN payment_requests p ON p.external_id = ch.external_id
-              WHERE p.external_id IS NULL and ch.id < 500000;
+              WHERE p.external_id IS NULL and ch.id > 490000 and ch.id < 500000;
             ]]>
         </sql>
     </changeSet>
@@ -1565,7 +1565,7 @@
               SELECT ch.amount,ch.return_url,ch.gateway_account_id,ch.description,ch.reference,ch.created_date,ch.external_id
               FROM charges ch
               LEFT JOIN payment_requests p ON p.external_id = ch.external_id
-              WHERE p.external_id IS NULL and ch.id < 510000;
+              WHERE p.external_id IS NULL and ch.id > 500000 and ch.id < 510000;
             ]]>
         </sql>
     </changeSet>
@@ -1578,7 +1578,7 @@
               SELECT ch.amount,ch.return_url,ch.gateway_account_id,ch.description,ch.reference,ch.created_date,ch.external_id
               FROM charges ch
               LEFT JOIN payment_requests p ON p.external_id = ch.external_id
-              WHERE p.external_id IS NULL and ch.id < 520000;
+              WHERE p.external_id IS NULL and ch.id > 510000 and ch.id < 520000;
             ]]>
         </sql>
     </changeSet>
@@ -1591,7 +1591,7 @@
               SELECT ch.amount,ch.return_url,ch.gateway_account_id,ch.description,ch.reference,ch.created_date,ch.external_id
               FROM charges ch
               LEFT JOIN payment_requests p ON p.external_id = ch.external_id
-              WHERE p.external_id IS NULL and ch.id < 530000;
+              WHERE p.external_id IS NULL and ch.id > 520000 and ch.id < 530000;
             ]]>
         </sql>
     </changeSet>
@@ -1604,7 +1604,7 @@
               SELECT ch.amount,ch.return_url,ch.gateway_account_id,ch.description,ch.reference,ch.created_date,ch.external_id
               FROM charges ch
               LEFT JOIN payment_requests p ON p.external_id = ch.external_id
-              WHERE p.external_id IS NULL and ch.id < 540000;
+              WHERE p.external_id IS NULL and ch.id > 530000 and ch.id < 540000;
             ]]>
         </sql>
     </changeSet>
@@ -1617,7 +1617,7 @@
               SELECT ch.amount,ch.return_url,ch.gateway_account_id,ch.description,ch.reference,ch.created_date,ch.external_id
               FROM charges ch
               LEFT JOIN payment_requests p ON p.external_id = ch.external_id
-              WHERE p.external_id IS NULL and ch.id < 550000;
+              WHERE p.external_id IS NULL and ch.id > 540000 and ch.id < 550000;
             ]]>
         </sql>
     </changeSet>
@@ -1630,7 +1630,7 @@
               SELECT ch.amount,ch.return_url,ch.gateway_account_id,ch.description,ch.reference,ch.created_date,ch.external_id
               FROM charges ch
               LEFT JOIN payment_requests p ON p.external_id = ch.external_id
-              WHERE p.external_id IS NULL and ch.id < 560000;
+              WHERE p.external_id IS NULL and ch.id > 550000 and ch.id < 560000;
             ]]>
         </sql>
     </changeSet>
@@ -1643,7 +1643,7 @@
               SELECT ch.amount,ch.return_url,ch.gateway_account_id,ch.description,ch.reference,ch.created_date,ch.external_id
               FROM charges ch
               LEFT JOIN payment_requests p ON p.external_id = ch.external_id
-              WHERE p.external_id IS NULL and ch.id < 570000;
+              WHERE p.external_id IS NULL and ch.id > 560000 and ch.id < 570000;
             ]]>
         </sql>
     </changeSet>
@@ -1656,7 +1656,7 @@
               SELECT ch.amount,ch.return_url,ch.gateway_account_id,ch.description,ch.reference,ch.created_date,ch.external_id
               FROM charges ch
               LEFT JOIN payment_requests p ON p.external_id = ch.external_id
-              WHERE p.external_id IS NULL and ch.id < 580000;
+              WHERE p.external_id IS NULL and ch.id > 570000 and ch.id < 580000;
             ]]>
         </sql>
     </changeSet>
@@ -1669,7 +1669,7 @@
               SELECT ch.amount,ch.return_url,ch.gateway_account_id,ch.description,ch.reference,ch.created_date,ch.external_id
               FROM charges ch
               LEFT JOIN payment_requests p ON p.external_id = ch.external_id
-              WHERE p.external_id IS NULL and ch.id < 590000;
+              WHERE p.external_id IS NULL and ch.id > 580000 and ch.id < 590000;
             ]]>
         </sql>
     </changeSet>
@@ -1682,7 +1682,7 @@
               SELECT ch.amount,ch.return_url,ch.gateway_account_id,ch.description,ch.reference,ch.created_date,ch.external_id
               FROM charges ch
               LEFT JOIN payment_requests p ON p.external_id = ch.external_id
-              WHERE p.external_id IS NULL and ch.id < 600000;
+              WHERE p.external_id IS NULL and ch.id > 590000 and ch.id < 600000;
             ]]>
         </sql>
     </changeSet>
@@ -1695,7 +1695,7 @@
               SELECT ch.amount,ch.return_url,ch.gateway_account_id,ch.description,ch.reference,ch.created_date,ch.external_id
               FROM charges ch
               LEFT JOIN payment_requests p ON p.external_id = ch.external_id
-              WHERE p.external_id IS NULL and ch.id < 610000;
+              WHERE p.external_id IS NULL and ch.id > 600000 and ch.id < 610000;
             ]]>
         </sql>
     </changeSet>
@@ -1708,7 +1708,7 @@
               SELECT ch.amount,ch.return_url,ch.gateway_account_id,ch.description,ch.reference,ch.created_date,ch.external_id
               FROM charges ch
               LEFT JOIN payment_requests p ON p.external_id = ch.external_id
-              WHERE p.external_id IS NULL and ch.id < 620000;
+              WHERE p.external_id IS NULL and ch.id > 610000 and ch.id < 620000;
             ]]>
         </sql>
     </changeSet>
@@ -1721,7 +1721,7 @@
               SELECT ch.amount,ch.return_url,ch.gateway_account_id,ch.description,ch.reference,ch.created_date,ch.external_id
               FROM charges ch
               LEFT JOIN payment_requests p ON p.external_id = ch.external_id
-              WHERE p.external_id IS NULL and ch.id < 630000;
+              WHERE p.external_id IS NULL and ch.id > 620000 and ch.id < 630000;
             ]]>
         </sql>
     </changeSet>
@@ -1734,7 +1734,7 @@
               SELECT ch.amount,ch.return_url,ch.gateway_account_id,ch.description,ch.reference,ch.created_date,ch.external_id
               FROM charges ch
               LEFT JOIN payment_requests p ON p.external_id = ch.external_id
-              WHERE p.external_id IS NULL and ch.id < 640000;
+              WHERE p.external_id IS NULL and ch.id > 630000 and ch.id < 640000;
             ]]>
         </sql>
     </changeSet>
@@ -1747,7 +1747,7 @@
               SELECT ch.amount,ch.return_url,ch.gateway_account_id,ch.description,ch.reference,ch.created_date,ch.external_id
               FROM charges ch
               LEFT JOIN payment_requests p ON p.external_id = ch.external_id
-              WHERE p.external_id IS NULL and ch.id < 650000;
+              WHERE p.external_id IS NULL and ch.id > 640000 and ch.id < 650000;
             ]]>
         </sql>
     </changeSet>
@@ -1760,7 +1760,7 @@
               SELECT ch.amount,ch.return_url,ch.gateway_account_id,ch.description,ch.reference,ch.created_date,ch.external_id
               FROM charges ch
               LEFT JOIN payment_requests p ON p.external_id = ch.external_id
-              WHERE p.external_id IS NULL and ch.id < 660000;
+              WHERE p.external_id IS NULL and ch.id > 650000 and ch.id < 660000;
             ]]>
         </sql>
     </changeSet>
@@ -1773,7 +1773,7 @@
               SELECT ch.amount,ch.return_url,ch.gateway_account_id,ch.description,ch.reference,ch.created_date,ch.external_id
               FROM charges ch
               LEFT JOIN payment_requests p ON p.external_id = ch.external_id
-              WHERE p.external_id IS NULL and ch.id < 670000;
+              WHERE p.external_id IS NULL and ch.id > 660000 and ch.id < 670000;
             ]]>
         </sql>
     </changeSet>
@@ -1786,7 +1786,7 @@
               SELECT ch.amount,ch.return_url,ch.gateway_account_id,ch.description,ch.reference,ch.created_date,ch.external_id
               FROM charges ch
               LEFT JOIN payment_requests p ON p.external_id = ch.external_id
-              WHERE p.external_id IS NULL and ch.id < 680000;
+              WHERE p.external_id IS NULL and ch.id > 670000 and ch.id < 680000;
             ]]>
         </sql>
     </changeSet>
@@ -1799,7 +1799,7 @@
               SELECT ch.amount,ch.return_url,ch.gateway_account_id,ch.description,ch.reference,ch.created_date,ch.external_id
               FROM charges ch
               LEFT JOIN payment_requests p ON p.external_id = ch.external_id
-              WHERE p.external_id IS NULL and ch.id < 690000;
+              WHERE p.external_id IS NULL and ch.id > 680000 and ch.id < 690000;
             ]]>
         </sql>
     </changeSet>
@@ -1812,7 +1812,7 @@
               SELECT ch.amount,ch.return_url,ch.gateway_account_id,ch.description,ch.reference,ch.created_date,ch.external_id
               FROM charges ch
               LEFT JOIN payment_requests p ON p.external_id = ch.external_id
-              WHERE p.external_id IS NULL and ch.id < 700000;
+              WHERE p.external_id IS NULL and ch.id > 690000 and ch.id < 700000;
             ]]>
         </sql>
     </changeSet>
@@ -1825,7 +1825,7 @@
               SELECT ch.amount,ch.return_url,ch.gateway_account_id,ch.description,ch.reference,ch.created_date,ch.external_id
               FROM charges ch
               LEFT JOIN payment_requests p ON p.external_id = ch.external_id
-              WHERE p.external_id IS NULL and ch.id < 710000;
+              WHERE p.external_id IS NULL and ch.id > 700000 and ch.id < 710000;
             ]]>
         </sql>
     </changeSet>
@@ -1838,7 +1838,7 @@
               SELECT ch.amount,ch.return_url,ch.gateway_account_id,ch.description,ch.reference,ch.created_date,ch.external_id
               FROM charges ch
               LEFT JOIN payment_requests p ON p.external_id = ch.external_id
-              WHERE p.external_id IS NULL and ch.id < 720000;
+              WHERE p.external_id IS NULL and ch.id > 710000 and ch.id < 720000;
             ]]>
         </sql>
     </changeSet>
@@ -1851,7 +1851,7 @@
               SELECT ch.amount,ch.return_url,ch.gateway_account_id,ch.description,ch.reference,ch.created_date,ch.external_id
               FROM charges ch
               LEFT JOIN payment_requests p ON p.external_id = ch.external_id
-              WHERE p.external_id IS NULL and ch.id < 730000;
+              WHERE p.external_id IS NULL and ch.id > 720000 and ch.id < 730000;
             ]]>
         </sql>
     </changeSet>
@@ -1864,7 +1864,7 @@
               SELECT ch.amount,ch.return_url,ch.gateway_account_id,ch.description,ch.reference,ch.created_date,ch.external_id
               FROM charges ch
               LEFT JOIN payment_requests p ON p.external_id = ch.external_id
-              WHERE p.external_id IS NULL and ch.id < 740000;
+              WHERE p.external_id IS NULL and ch.id > 730000 and ch.id < 740000;
             ]]>
         </sql>
     </changeSet>
@@ -1877,7 +1877,7 @@
               SELECT ch.amount,ch.return_url,ch.gateway_account_id,ch.description,ch.reference,ch.created_date,ch.external_id
               FROM charges ch
               LEFT JOIN payment_requests p ON p.external_id = ch.external_id
-              WHERE p.external_id IS NULL and ch.id < 750000;
+              WHERE p.external_id IS NULL and ch.id > 740000 and ch.id < 750000;
             ]]>
         </sql>
     </changeSet>
@@ -1890,7 +1890,7 @@
               SELECT ch.amount,ch.return_url,ch.gateway_account_id,ch.description,ch.reference,ch.created_date,ch.external_id
               FROM charges ch
               LEFT JOIN payment_requests p ON p.external_id = ch.external_id
-              WHERE p.external_id IS NULL and ch.id < 760000;
+              WHERE p.external_id IS NULL and ch.id > 750000 and ch.id < 760000;
             ]]>
         </sql>
     </changeSet>
@@ -1903,7 +1903,7 @@
               SELECT ch.amount,ch.return_url,ch.gateway_account_id,ch.description,ch.reference,ch.created_date,ch.external_id
               FROM charges ch
               LEFT JOIN payment_requests p ON p.external_id = ch.external_id
-              WHERE p.external_id IS NULL and ch.id < 770000;
+              WHERE p.external_id IS NULL and ch.id > 760000 and ch.id < 770000;
             ]]>
         </sql>
     </changeSet>
@@ -1916,7 +1916,7 @@
               SELECT ch.amount,ch.return_url,ch.gateway_account_id,ch.description,ch.reference,ch.created_date,ch.external_id
               FROM charges ch
               LEFT JOIN payment_requests p ON p.external_id = ch.external_id
-              WHERE p.external_id IS NULL and ch.id < 780000;
+              WHERE p.external_id IS NULL and ch.id > 770000 and ch.id < 780000;
             ]]>
         </sql>
     </changeSet>
@@ -1929,7 +1929,7 @@
               SELECT ch.amount,ch.return_url,ch.gateway_account_id,ch.description,ch.reference,ch.created_date,ch.external_id
               FROM charges ch
               LEFT JOIN payment_requests p ON p.external_id = ch.external_id
-              WHERE p.external_id IS NULL and ch.id < 790000;
+              WHERE p.external_id IS NULL and ch.id > 780000 and ch.id < 790000;
             ]]>
         </sql>
     </changeSet>
@@ -1942,7 +1942,7 @@
               SELECT ch.amount,ch.return_url,ch.gateway_account_id,ch.description,ch.reference,ch.created_date,ch.external_id
               FROM charges ch
               LEFT JOIN payment_requests p ON p.external_id = ch.external_id
-              WHERE p.external_id IS NULL and ch.id < 800000;
+              WHERE p.external_id IS NULL and ch.id > 790000 and ch.id < 800000;
             ]]>
         </sql>
     </changeSet>
@@ -1955,7 +1955,7 @@
               SELECT ch.amount,ch.return_url,ch.gateway_account_id,ch.description,ch.reference,ch.created_date,ch.external_id
               FROM charges ch
               LEFT JOIN payment_requests p ON p.external_id = ch.external_id
-              WHERE p.external_id IS NULL and ch.id < 810000;
+              WHERE p.external_id IS NULL and ch.id > 800000 and ch.id < 810000;
             ]]>
         </sql>
     </changeSet>
@@ -1968,7 +1968,7 @@
               SELECT ch.amount,ch.return_url,ch.gateway_account_id,ch.description,ch.reference,ch.created_date,ch.external_id
               FROM charges ch
               LEFT JOIN payment_requests p ON p.external_id = ch.external_id
-              WHERE p.external_id IS NULL and ch.id < 820000;
+              WHERE p.external_id IS NULL and ch.id > 810000 and ch.id < 820000;
             ]]>
         </sql>
     </changeSet>
@@ -1981,7 +1981,7 @@
               SELECT ch.amount,ch.return_url,ch.gateway_account_id,ch.description,ch.reference,ch.created_date,ch.external_id
               FROM charges ch
               LEFT JOIN payment_requests p ON p.external_id = ch.external_id
-              WHERE p.external_id IS NULL and ch.id < 830000;
+              WHERE p.external_id IS NULL and ch.id > 820000 and ch.id < 830000;
             ]]>
         </sql>
     </changeSet>
@@ -1994,7 +1994,7 @@
               SELECT ch.amount,ch.return_url,ch.gateway_account_id,ch.description,ch.reference,ch.created_date,ch.external_id
               FROM charges ch
               LEFT JOIN payment_requests p ON p.external_id = ch.external_id
-              WHERE p.external_id IS NULL and ch.id < 840000;
+              WHERE p.external_id IS NULL and ch.id > 830000 and ch.id < 840000;
             ]]>
         </sql>
     </changeSet>
@@ -2007,7 +2007,7 @@
               SELECT ch.amount,ch.return_url,ch.gateway_account_id,ch.description,ch.reference,ch.created_date,ch.external_id
               FROM charges ch
               LEFT JOIN payment_requests p ON p.external_id = ch.external_id
-              WHERE p.external_id IS NULL and ch.id < 850000;
+              WHERE p.external_id IS NULL and ch.id > 840000 and ch.id < 850000;
             ]]>
         </sql>
     </changeSet>
@@ -2020,7 +2020,7 @@
               SELECT ch.amount,ch.return_url,ch.gateway_account_id,ch.description,ch.reference,ch.created_date,ch.external_id
               FROM charges ch
               LEFT JOIN payment_requests p ON p.external_id = ch.external_id
-              WHERE p.external_id IS NULL and ch.id < 860000;
+              WHERE p.external_id IS NULL and ch.id > 850000 and ch.id < 860000;
             ]]>
         </sql>
     </changeSet>
@@ -2033,7 +2033,7 @@
               SELECT ch.amount,ch.return_url,ch.gateway_account_id,ch.description,ch.reference,ch.created_date,ch.external_id
               FROM charges ch
               LEFT JOIN payment_requests p ON p.external_id = ch.external_id
-              WHERE p.external_id IS NULL and ch.id < 870000;
+              WHERE p.external_id IS NULL and ch.id > 860000 and ch.id < 870000;
             ]]>
         </sql>
     </changeSet>
@@ -2046,7 +2046,7 @@
               SELECT ch.amount,ch.return_url,ch.gateway_account_id,ch.description,ch.reference,ch.created_date,ch.external_id
               FROM charges ch
               LEFT JOIN payment_requests p ON p.external_id = ch.external_id
-              WHERE p.external_id IS NULL and ch.id < 880000;
+              WHERE p.external_id IS NULL and ch.id > 870000 and ch.id < 880000;
             ]]>
         </sql>
     </changeSet>
@@ -2059,7 +2059,7 @@
               SELECT ch.amount,ch.return_url,ch.gateway_account_id,ch.description,ch.reference,ch.created_date,ch.external_id
               FROM charges ch
               LEFT JOIN payment_requests p ON p.external_id = ch.external_id
-              WHERE p.external_id IS NULL and ch.id < 890000;
+              WHERE p.external_id IS NULL and ch.id > 880000 and ch.id < 890000;
             ]]>
         </sql>
     </changeSet>
@@ -2072,7 +2072,7 @@
               SELECT ch.amount,ch.return_url,ch.gateway_account_id,ch.description,ch.reference,ch.created_date,ch.external_id
               FROM charges ch
               LEFT JOIN payment_requests p ON p.external_id = ch.external_id
-              WHERE p.external_id IS NULL and ch.id < 900000;
+              WHERE p.external_id IS NULL and ch.id > 890000 and ch.id < 900000;
             ]]>
         </sql>
     </changeSet>
@@ -2085,7 +2085,7 @@
               SELECT ch.amount,ch.return_url,ch.gateway_account_id,ch.description,ch.reference,ch.created_date,ch.external_id
               FROM charges ch
               LEFT JOIN payment_requests p ON p.external_id = ch.external_id
-              WHERE p.external_id IS NULL and ch.id < 910000;
+              WHERE p.external_id IS NULL and ch.id > 900000 and ch.id < 910000;
             ]]>
         </sql>
     </changeSet>
@@ -2098,7 +2098,7 @@
               SELECT ch.amount,ch.return_url,ch.gateway_account_id,ch.description,ch.reference,ch.created_date,ch.external_id
               FROM charges ch
               LEFT JOIN payment_requests p ON p.external_id = ch.external_id
-              WHERE p.external_id IS NULL and ch.id < 920000;
+              WHERE p.external_id IS NULL and ch.id > 910000 and ch.id < 920000;
             ]]>
         </sql>
     </changeSet>
@@ -2111,7 +2111,7 @@
               SELECT ch.amount,ch.return_url,ch.gateway_account_id,ch.description,ch.reference,ch.created_date,ch.external_id
               FROM charges ch
               LEFT JOIN payment_requests p ON p.external_id = ch.external_id
-              WHERE p.external_id IS NULL and ch.id < 930000;
+              WHERE p.external_id IS NULL and ch.id > 920000 and ch.id < 930000;
             ]]>
         </sql>
     </changeSet>
@@ -2124,7 +2124,7 @@
               SELECT ch.amount,ch.return_url,ch.gateway_account_id,ch.description,ch.reference,ch.created_date,ch.external_id
               FROM charges ch
               LEFT JOIN payment_requests p ON p.external_id = ch.external_id
-              WHERE p.external_id IS NULL and ch.id < 940000;
+              WHERE p.external_id IS NULL and ch.id > 930000 and ch.id < 940000;
             ]]>
         </sql>
     </changeSet>
@@ -2137,7 +2137,7 @@
               SELECT ch.amount,ch.return_url,ch.gateway_account_id,ch.description,ch.reference,ch.created_date,ch.external_id
               FROM charges ch
               LEFT JOIN payment_requests p ON p.external_id = ch.external_id
-              WHERE p.external_id IS NULL and ch.id < 950000;
+              WHERE p.external_id IS NULL and ch.id > 940000 and ch.id < 950000;
             ]]>
         </sql>
     </changeSet>
@@ -2150,7 +2150,7 @@
               SELECT ch.amount,ch.return_url,ch.gateway_account_id,ch.description,ch.reference,ch.created_date,ch.external_id
               FROM charges ch
               LEFT JOIN payment_requests p ON p.external_id = ch.external_id
-              WHERE p.external_id IS NULL and ch.id < 960000;
+              WHERE p.external_id IS NULL and ch.id > 950000 and ch.id < 960000;
             ]]>
         </sql>
     </changeSet>
@@ -2163,7 +2163,7 @@
               SELECT ch.amount,ch.return_url,ch.gateway_account_id,ch.description,ch.reference,ch.created_date,ch.external_id
               FROM charges ch
               LEFT JOIN payment_requests p ON p.external_id = ch.external_id
-              WHERE p.external_id IS NULL and ch.id < 970000;
+              WHERE p.external_id IS NULL and ch.id > 960000 and ch.id < 970000;
             ]]>
         </sql>
     </changeSet>
@@ -2176,7 +2176,7 @@
               SELECT ch.amount,ch.return_url,ch.gateway_account_id,ch.description,ch.reference,ch.created_date,ch.external_id
               FROM charges ch
               LEFT JOIN payment_requests p ON p.external_id = ch.external_id
-              WHERE p.external_id IS NULL and ch.id < 980000;
+              WHERE p.external_id IS NULL and ch.id > 970000 and ch.id < 980000;
             ]]>
         </sql>
     </changeSet>
@@ -2189,7 +2189,7 @@
               SELECT ch.amount,ch.return_url,ch.gateway_account_id,ch.description,ch.reference,ch.created_date,ch.external_id
               FROM charges ch
               LEFT JOIN payment_requests p ON p.external_id = ch.external_id
-              WHERE p.external_id IS NULL and ch.id < 990000;
+              WHERE p.external_id IS NULL and ch.id > 980000 and ch.id < 990000;
             ]]>
         </sql>
     </changeSet>
@@ -2202,9 +2202,10 @@
               SELECT ch.amount,ch.return_url,ch.gateway_account_id,ch.description,ch.reference,ch.created_date,ch.external_id
               FROM charges ch
               LEFT JOIN payment_requests p ON p.external_id = ch.external_id
-              WHERE p.external_id IS NULL and ch.id < 1000000;
+              WHERE p.external_id IS NULL and ch.id > 990000 and ch.id < 1000000;
             ]]>
         </sql>
     </changeSet>
+
 
 </databaseChangeLog>
