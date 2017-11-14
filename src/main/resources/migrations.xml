@@ -858,31 +858,6 @@
         </createIndex>
     </changeSet>
 
-    <changeSet id="backfill payment_requests from charges" author="">
-        <sql>
-            INSERT INTO payment_requests (
-                amount,
-                return_url,
-                gateway_account_id,
-                description,
-                reference,
-                created_date,
-                external_id
-            )
-            SELECT
-                ch.amount,
-                ch.return_url,
-                ch.gateway_account_id,
-                ch.description,
-                ch.reference,
-                ch.created_date,
-                ch.external_id
-            FROM charges ch
-            LEFT JOIN payment_requests p ON p.external_id = ch.external_id
-            WHERE p.external_id IS NULL;
-        </sql>
-    </changeSet>
-
     <changeSet id="change card_3ds.charge_id to bigint" author="">
         <modifyDataType tableName="card_3ds"
                         columnName="charge_id"
@@ -930,4 +905,1306 @@
             </column>
         </createTable>
     </changeSet>
+
+    <changeSet id="backfill payment_requests from charges up to id 10000" author="">
+        <sql>
+            <![CDATA[
+              INSERT INTO payment_requests (
+                  amount,return_url,gateway_account_id,description,reference,created_date,external_id
+              )
+              SELECT ch.amount,ch.return_url,ch.gateway_account_id,ch.description,ch.reference,ch.created_date,ch.external_id
+              FROM charges ch
+              LEFT JOIN payment_requests p ON p.external_id = ch.external_id
+              WHERE p.external_id IS NULL and ch.id < 10000;
+            ]]>
+        </sql>
+    </changeSet>
+    <changeSet id="backfill payment_requests from charges up to id 20000" author="">
+        <sql>
+            <![CDATA[
+              INSERT INTO payment_requests (
+                  amount,return_url,gateway_account_id,description,reference,created_date,external_id
+              )
+              SELECT ch.amount,ch.return_url,ch.gateway_account_id,ch.description,ch.reference,ch.created_date,ch.external_id
+              FROM charges ch
+              LEFT JOIN payment_requests p ON p.external_id = ch.external_id
+              WHERE p.external_id IS NULL and ch.id < 20000;
+            ]]>
+        </sql>
+    </changeSet>
+    <changeSet id="backfill payment_requests from charges up to id 30000" author="">
+        <sql>
+            <![CDATA[
+              INSERT INTO payment_requests (
+                  amount,return_url,gateway_account_id,description,reference,created_date,external_id
+              )
+              SELECT ch.amount,ch.return_url,ch.gateway_account_id,ch.description,ch.reference,ch.created_date,ch.external_id
+              FROM charges ch
+              LEFT JOIN payment_requests p ON p.external_id = ch.external_id
+              WHERE p.external_id IS NULL and ch.id < 30000;
+            ]]>
+        </sql>
+    </changeSet>
+    <changeSet id="backfill payment_requests from charges up to id 40000" author="">
+        <sql>
+            <![CDATA[
+              INSERT INTO payment_requests (
+                  amount,return_url,gateway_account_id,description,reference,created_date,external_id
+              )
+              SELECT ch.amount,ch.return_url,ch.gateway_account_id,ch.description,ch.reference,ch.created_date,ch.external_id
+              FROM charges ch
+              LEFT JOIN payment_requests p ON p.external_id = ch.external_id
+              WHERE p.external_id IS NULL and ch.id < 40000;
+            ]]>
+        </sql>
+    </changeSet>
+    <changeSet id="backfill payment_requests from charges up to id 50000" author="">
+        <sql>
+            <![CDATA[
+              INSERT INTO payment_requests (
+                  amount,return_url,gateway_account_id,description,reference,created_date,external_id
+              )
+              SELECT ch.amount,ch.return_url,ch.gateway_account_id,ch.description,ch.reference,ch.created_date,ch.external_id
+              FROM charges ch
+              LEFT JOIN payment_requests p ON p.external_id = ch.external_id
+              WHERE p.external_id IS NULL and ch.id < 50000;
+            ]]>
+        </sql>
+    </changeSet>
+    <changeSet id="backfill payment_requests from charges up to id 60000" author="">
+        <sql>
+            <![CDATA[
+              INSERT INTO payment_requests (
+                  amount,return_url,gateway_account_id,description,reference,created_date,external_id
+              )
+              SELECT ch.amount,ch.return_url,ch.gateway_account_id,ch.description,ch.reference,ch.created_date,ch.external_id
+              FROM charges ch
+              LEFT JOIN payment_requests p ON p.external_id = ch.external_id
+              WHERE p.external_id IS NULL and ch.id < 60000;
+            ]]>
+        </sql>
+    </changeSet>
+    <changeSet id="backfill payment_requests from charges up to id 70000" author="">
+        <sql>
+            <![CDATA[
+              INSERT INTO payment_requests (
+                  amount,return_url,gateway_account_id,description,reference,created_date,external_id
+              )
+              SELECT ch.amount,ch.return_url,ch.gateway_account_id,ch.description,ch.reference,ch.created_date,ch.external_id
+              FROM charges ch
+              LEFT JOIN payment_requests p ON p.external_id = ch.external_id
+              WHERE p.external_id IS NULL and ch.id < 70000;
+            ]]>
+        </sql>
+    </changeSet>
+    <changeSet id="backfill payment_requests from charges up to id 80000" author="">
+        <sql>
+            <![CDATA[
+              INSERT INTO payment_requests (
+                  amount,return_url,gateway_account_id,description,reference,created_date,external_id
+              )
+              SELECT ch.amount,ch.return_url,ch.gateway_account_id,ch.description,ch.reference,ch.created_date,ch.external_id
+              FROM charges ch
+              LEFT JOIN payment_requests p ON p.external_id = ch.external_id
+              WHERE p.external_id IS NULL and ch.id < 80000;
+            ]]>
+        </sql>
+    </changeSet>
+    <changeSet id="backfill payment_requests from charges up to id 90000" author="">
+        <sql>
+            <![CDATA[
+              INSERT INTO payment_requests (
+                  amount,return_url,gateway_account_id,description,reference,created_date,external_id
+              )
+              SELECT ch.amount,ch.return_url,ch.gateway_account_id,ch.description,ch.reference,ch.created_date,ch.external_id
+              FROM charges ch
+              LEFT JOIN payment_requests p ON p.external_id = ch.external_id
+              WHERE p.external_id IS NULL and ch.id < 90000;
+            ]]>
+        </sql>
+    </changeSet>
+    <changeSet id="backfill payment_requests from charges up to id 100000" author="">
+        <sql>
+            <![CDATA[
+              INSERT INTO payment_requests (
+                  amount,return_url,gateway_account_id,description,reference,created_date,external_id
+              )
+              SELECT ch.amount,ch.return_url,ch.gateway_account_id,ch.description,ch.reference,ch.created_date,ch.external_id
+              FROM charges ch
+              LEFT JOIN payment_requests p ON p.external_id = ch.external_id
+              WHERE p.external_id IS NULL and ch.id < 100000;
+            ]]>
+        </sql>
+    </changeSet>
+    <changeSet id="backfill payment_requests from charges up to id 110000" author="">
+        <sql>
+            <![CDATA[
+              INSERT INTO payment_requests (
+                  amount,return_url,gateway_account_id,description,reference,created_date,external_id
+              )
+              SELECT ch.amount,ch.return_url,ch.gateway_account_id,ch.description,ch.reference,ch.created_date,ch.external_id
+              FROM charges ch
+              LEFT JOIN payment_requests p ON p.external_id = ch.external_id
+              WHERE p.external_id IS NULL and ch.id < 110000;
+            ]]>
+        </sql>
+    </changeSet>
+    <changeSet id="backfill payment_requests from charges up to id 120000" author="">
+        <sql>
+            <![CDATA[
+              INSERT INTO payment_requests (
+                  amount,return_url,gateway_account_id,description,reference,created_date,external_id
+              )
+              SELECT ch.amount,ch.return_url,ch.gateway_account_id,ch.description,ch.reference,ch.created_date,ch.external_id
+              FROM charges ch
+              LEFT JOIN payment_requests p ON p.external_id = ch.external_id
+              WHERE p.external_id IS NULL and ch.id < 120000;
+            ]]>
+        </sql>
+    </changeSet>
+    <changeSet id="backfill payment_requests from charges up to id 130000" author="">
+        <sql>
+            <![CDATA[
+              INSERT INTO payment_requests (
+                  amount,return_url,gateway_account_id,description,reference,created_date,external_id
+              )
+              SELECT ch.amount,ch.return_url,ch.gateway_account_id,ch.description,ch.reference,ch.created_date,ch.external_id
+              FROM charges ch
+              LEFT JOIN payment_requests p ON p.external_id = ch.external_id
+              WHERE p.external_id IS NULL and ch.id < 130000;
+            ]]>
+        </sql>
+    </changeSet>
+    <changeSet id="backfill payment_requests from charges up to id 140000" author="">
+        <sql>
+            <![CDATA[
+              INSERT INTO payment_requests (
+                  amount,return_url,gateway_account_id,description,reference,created_date,external_id
+              )
+              SELECT ch.amount,ch.return_url,ch.gateway_account_id,ch.description,ch.reference,ch.created_date,ch.external_id
+              FROM charges ch
+              LEFT JOIN payment_requests p ON p.external_id = ch.external_id
+              WHERE p.external_id IS NULL and ch.id < 140000;
+            ]]>
+        </sql>
+    </changeSet>
+    <changeSet id="backfill payment_requests from charges up to id 150000" author="">
+        <sql>
+            <![CDATA[
+              INSERT INTO payment_requests (
+                  amount,return_url,gateway_account_id,description,reference,created_date,external_id
+              )
+              SELECT ch.amount,ch.return_url,ch.gateway_account_id,ch.description,ch.reference,ch.created_date,ch.external_id
+              FROM charges ch
+              LEFT JOIN payment_requests p ON p.external_id = ch.external_id
+              WHERE p.external_id IS NULL and ch.id < 150000;
+            ]]>
+        </sql>
+    </changeSet>
+    <changeSet id="backfill payment_requests from charges up to id 160000" author="">
+        <sql>
+            <![CDATA[
+              INSERT INTO payment_requests (
+                  amount,return_url,gateway_account_id,description,reference,created_date,external_id
+              )
+              SELECT ch.amount,ch.return_url,ch.gateway_account_id,ch.description,ch.reference,ch.created_date,ch.external_id
+              FROM charges ch
+              LEFT JOIN payment_requests p ON p.external_id = ch.external_id
+              WHERE p.external_id IS NULL and ch.id < 160000;
+            ]]>
+        </sql>
+    </changeSet>
+    <changeSet id="backfill payment_requests from charges up to id 170000" author="">
+        <sql>
+            <![CDATA[
+              INSERT INTO payment_requests (
+                  amount,return_url,gateway_account_id,description,reference,created_date,external_id
+              )
+              SELECT ch.amount,ch.return_url,ch.gateway_account_id,ch.description,ch.reference,ch.created_date,ch.external_id
+              FROM charges ch
+              LEFT JOIN payment_requests p ON p.external_id = ch.external_id
+              WHERE p.external_id IS NULL and ch.id < 170000;
+            ]]>
+        </sql>
+    </changeSet>
+    <changeSet id="backfill payment_requests from charges up to id 180000" author="">
+        <sql>
+            <![CDATA[
+              INSERT INTO payment_requests (
+                  amount,return_url,gateway_account_id,description,reference,created_date,external_id
+              )
+              SELECT ch.amount,ch.return_url,ch.gateway_account_id,ch.description,ch.reference,ch.created_date,ch.external_id
+              FROM charges ch
+              LEFT JOIN payment_requests p ON p.external_id = ch.external_id
+              WHERE p.external_id IS NULL and ch.id < 180000;
+            ]]>
+        </sql>
+    </changeSet>
+    <changeSet id="backfill payment_requests from charges up to id 190000" author="">
+        <sql>
+            <![CDATA[
+              INSERT INTO payment_requests (
+                  amount,return_url,gateway_account_id,description,reference,created_date,external_id
+              )
+              SELECT ch.amount,ch.return_url,ch.gateway_account_id,ch.description,ch.reference,ch.created_date,ch.external_id
+              FROM charges ch
+              LEFT JOIN payment_requests p ON p.external_id = ch.external_id
+              WHERE p.external_id IS NULL and ch.id < 190000;
+            ]]>
+        </sql>
+    </changeSet>
+    <changeSet id="backfill payment_requests from charges up to id 200000" author="">
+        <sql>
+            <![CDATA[
+              INSERT INTO payment_requests (
+                  amount,return_url,gateway_account_id,description,reference,created_date,external_id
+              )
+              SELECT ch.amount,ch.return_url,ch.gateway_account_id,ch.description,ch.reference,ch.created_date,ch.external_id
+              FROM charges ch
+              LEFT JOIN payment_requests p ON p.external_id = ch.external_id
+              WHERE p.external_id IS NULL and ch.id < 200000;
+            ]]>
+        </sql>
+    </changeSet>
+    <changeSet id="backfill payment_requests from charges up to id 210000" author="">
+        <sql>
+            <![CDATA[
+              INSERT INTO payment_requests (
+                  amount,return_url,gateway_account_id,description,reference,created_date,external_id
+              )
+              SELECT ch.amount,ch.return_url,ch.gateway_account_id,ch.description,ch.reference,ch.created_date,ch.external_id
+              FROM charges ch
+              LEFT JOIN payment_requests p ON p.external_id = ch.external_id
+              WHERE p.external_id IS NULL and ch.id < 210000;
+            ]]>
+        </sql>
+    </changeSet>
+    <changeSet id="backfill payment_requests from charges up to id 220000" author="">
+        <sql>
+            <![CDATA[
+              INSERT INTO payment_requests (
+                  amount,return_url,gateway_account_id,description,reference,created_date,external_id
+              )
+              SELECT ch.amount,ch.return_url,ch.gateway_account_id,ch.description,ch.reference,ch.created_date,ch.external_id
+              FROM charges ch
+              LEFT JOIN payment_requests p ON p.external_id = ch.external_id
+              WHERE p.external_id IS NULL and ch.id < 220000;
+            ]]>
+        </sql>
+    </changeSet>
+    <changeSet id="backfill payment_requests from charges up to id 230000" author="">
+        <sql>
+            <![CDATA[
+              INSERT INTO payment_requests (
+                  amount,return_url,gateway_account_id,description,reference,created_date,external_id
+              )
+              SELECT ch.amount,ch.return_url,ch.gateway_account_id,ch.description,ch.reference,ch.created_date,ch.external_id
+              FROM charges ch
+              LEFT JOIN payment_requests p ON p.external_id = ch.external_id
+              WHERE p.external_id IS NULL and ch.id < 230000;
+            ]]>
+        </sql>
+    </changeSet>
+    <changeSet id="backfill payment_requests from charges up to id 240000" author="">
+        <sql>
+            <![CDATA[
+              INSERT INTO payment_requests (
+                  amount,return_url,gateway_account_id,description,reference,created_date,external_id
+              )
+              SELECT ch.amount,ch.return_url,ch.gateway_account_id,ch.description,ch.reference,ch.created_date,ch.external_id
+              FROM charges ch
+              LEFT JOIN payment_requests p ON p.external_id = ch.external_id
+              WHERE p.external_id IS NULL and ch.id < 240000;
+            ]]>
+        </sql>
+    </changeSet>
+    <changeSet id="backfill payment_requests from charges up to id 250000" author="">
+        <sql>
+            <![CDATA[
+              INSERT INTO payment_requests (
+                  amount,return_url,gateway_account_id,description,reference,created_date,external_id
+              )
+              SELECT ch.amount,ch.return_url,ch.gateway_account_id,ch.description,ch.reference,ch.created_date,ch.external_id
+              FROM charges ch
+              LEFT JOIN payment_requests p ON p.external_id = ch.external_id
+              WHERE p.external_id IS NULL and ch.id < 250000;
+            ]]>
+        </sql>
+    </changeSet>
+    <changeSet id="backfill payment_requests from charges up to id 260000" author="">
+        <sql>
+            <![CDATA[
+              INSERT INTO payment_requests (
+                  amount,return_url,gateway_account_id,description,reference,created_date,external_id
+              )
+              SELECT ch.amount,ch.return_url,ch.gateway_account_id,ch.description,ch.reference,ch.created_date,ch.external_id
+              FROM charges ch
+              LEFT JOIN payment_requests p ON p.external_id = ch.external_id
+              WHERE p.external_id IS NULL and ch.id < 260000;
+            ]]>
+        </sql>
+    </changeSet>
+    <changeSet id="backfill payment_requests from charges up to id 270000" author="">
+        <sql>
+            <![CDATA[
+              INSERT INTO payment_requests (
+                  amount,return_url,gateway_account_id,description,reference,created_date,external_id
+              )
+              SELECT ch.amount,ch.return_url,ch.gateway_account_id,ch.description,ch.reference,ch.created_date,ch.external_id
+              FROM charges ch
+              LEFT JOIN payment_requests p ON p.external_id = ch.external_id
+              WHERE p.external_id IS NULL and ch.id < 270000;
+            ]]>
+        </sql>
+    </changeSet>
+    <changeSet id="backfill payment_requests from charges up to id 280000" author="">
+        <sql>
+            <![CDATA[
+              INSERT INTO payment_requests (
+                  amount,return_url,gateway_account_id,description,reference,created_date,external_id
+              )
+              SELECT ch.amount,ch.return_url,ch.gateway_account_id,ch.description,ch.reference,ch.created_date,ch.external_id
+              FROM charges ch
+              LEFT JOIN payment_requests p ON p.external_id = ch.external_id
+              WHERE p.external_id IS NULL and ch.id < 280000;
+            ]]>
+        </sql>
+    </changeSet>
+    <changeSet id="backfill payment_requests from charges up to id 290000" author="">
+        <sql>
+            <![CDATA[
+              INSERT INTO payment_requests (
+                  amount,return_url,gateway_account_id,description,reference,created_date,external_id
+              )
+              SELECT ch.amount,ch.return_url,ch.gateway_account_id,ch.description,ch.reference,ch.created_date,ch.external_id
+              FROM charges ch
+              LEFT JOIN payment_requests p ON p.external_id = ch.external_id
+              WHERE p.external_id IS NULL and ch.id < 290000;
+            ]]>
+        </sql>
+    </changeSet>
+    <changeSet id="backfill payment_requests from charges up to id 300000" author="">
+        <sql>
+            <![CDATA[
+              INSERT INTO payment_requests (
+                  amount,return_url,gateway_account_id,description,reference,created_date,external_id
+              )
+              SELECT ch.amount,ch.return_url,ch.gateway_account_id,ch.description,ch.reference,ch.created_date,ch.external_id
+              FROM charges ch
+              LEFT JOIN payment_requests p ON p.external_id = ch.external_id
+              WHERE p.external_id IS NULL and ch.id < 300000;
+            ]]>
+        </sql>
+    </changeSet>
+    <changeSet id="backfill payment_requests from charges up to id 310000" author="">
+        <sql>
+            <![CDATA[
+              INSERT INTO payment_requests (
+                  amount,return_url,gateway_account_id,description,reference,created_date,external_id
+              )
+              SELECT ch.amount,ch.return_url,ch.gateway_account_id,ch.description,ch.reference,ch.created_date,ch.external_id
+              FROM charges ch
+              LEFT JOIN payment_requests p ON p.external_id = ch.external_id
+              WHERE p.external_id IS NULL and ch.id < 310000;
+            ]]>
+        </sql>
+    </changeSet>
+    <changeSet id="backfill payment_requests from charges up to id 320000" author="">
+        <sql>
+            <![CDATA[
+              INSERT INTO payment_requests (
+                  amount,return_url,gateway_account_id,description,reference,created_date,external_id
+              )
+              SELECT ch.amount,ch.return_url,ch.gateway_account_id,ch.description,ch.reference,ch.created_date,ch.external_id
+              FROM charges ch
+              LEFT JOIN payment_requests p ON p.external_id = ch.external_id
+              WHERE p.external_id IS NULL and ch.id < 320000;
+            ]]>
+        </sql>
+    </changeSet>
+    <changeSet id="backfill payment_requests from charges up to id 330000" author="">
+        <sql>
+            <![CDATA[
+              INSERT INTO payment_requests (
+                  amount,return_url,gateway_account_id,description,reference,created_date,external_id
+              )
+              SELECT ch.amount,ch.return_url,ch.gateway_account_id,ch.description,ch.reference,ch.created_date,ch.external_id
+              FROM charges ch
+              LEFT JOIN payment_requests p ON p.external_id = ch.external_id
+              WHERE p.external_id IS NULL and ch.id < 330000;
+            ]]>
+        </sql>
+    </changeSet>
+    <changeSet id="backfill payment_requests from charges up to id 340000" author="">
+        <sql>
+            <![CDATA[
+              INSERT INTO payment_requests (
+                  amount,return_url,gateway_account_id,description,reference,created_date,external_id
+              )
+              SELECT ch.amount,ch.return_url,ch.gateway_account_id,ch.description,ch.reference,ch.created_date,ch.external_id
+              FROM charges ch
+              LEFT JOIN payment_requests p ON p.external_id = ch.external_id
+              WHERE p.external_id IS NULL and ch.id < 340000;
+            ]]>
+        </sql>
+    </changeSet>
+    <changeSet id="backfill payment_requests from charges up to id 350000" author="">
+        <sql>
+            <![CDATA[
+              INSERT INTO payment_requests (
+                  amount,return_url,gateway_account_id,description,reference,created_date,external_id
+              )
+              SELECT ch.amount,ch.return_url,ch.gateway_account_id,ch.description,ch.reference,ch.created_date,ch.external_id
+              FROM charges ch
+              LEFT JOIN payment_requests p ON p.external_id = ch.external_id
+              WHERE p.external_id IS NULL and ch.id < 350000;
+            ]]>
+        </sql>
+    </changeSet>
+    <changeSet id="backfill payment_requests from charges up to id 360000" author="">
+        <sql>
+            <![CDATA[
+              INSERT INTO payment_requests (
+                  amount,return_url,gateway_account_id,description,reference,created_date,external_id
+              )
+              SELECT ch.amount,ch.return_url,ch.gateway_account_id,ch.description,ch.reference,ch.created_date,ch.external_id
+              FROM charges ch
+              LEFT JOIN payment_requests p ON p.external_id = ch.external_id
+              WHERE p.external_id IS NULL and ch.id < 360000;
+            ]]>
+        </sql>
+    </changeSet>
+    <changeSet id="backfill payment_requests from charges up to id 370000" author="">
+        <sql>
+            <![CDATA[
+              INSERT INTO payment_requests (
+                  amount,return_url,gateway_account_id,description,reference,created_date,external_id
+              )
+              SELECT ch.amount,ch.return_url,ch.gateway_account_id,ch.description,ch.reference,ch.created_date,ch.external_id
+              FROM charges ch
+              LEFT JOIN payment_requests p ON p.external_id = ch.external_id
+              WHERE p.external_id IS NULL and ch.id < 370000;
+            ]]>
+        </sql>
+    </changeSet>
+    <changeSet id="backfill payment_requests from charges up to id 380000" author="">
+        <sql>
+            <![CDATA[
+              INSERT INTO payment_requests (
+                  amount,return_url,gateway_account_id,description,reference,created_date,external_id
+              )
+              SELECT ch.amount,ch.return_url,ch.gateway_account_id,ch.description,ch.reference,ch.created_date,ch.external_id
+              FROM charges ch
+              LEFT JOIN payment_requests p ON p.external_id = ch.external_id
+              WHERE p.external_id IS NULL and ch.id < 380000;
+            ]]>
+        </sql>
+    </changeSet>
+    <changeSet id="backfill payment_requests from charges up to id 390000" author="">
+        <sql>
+            <![CDATA[
+              INSERT INTO payment_requests (
+                  amount,return_url,gateway_account_id,description,reference,created_date,external_id
+              )
+              SELECT ch.amount,ch.return_url,ch.gateway_account_id,ch.description,ch.reference,ch.created_date,ch.external_id
+              FROM charges ch
+              LEFT JOIN payment_requests p ON p.external_id = ch.external_id
+              WHERE p.external_id IS NULL and ch.id < 390000;
+            ]]>
+        </sql>
+    </changeSet>
+    <changeSet id="backfill payment_requests from charges up to id 400000" author="">
+        <sql>
+            <![CDATA[
+              INSERT INTO payment_requests (
+                  amount,return_url,gateway_account_id,description,reference,created_date,external_id
+              )
+              SELECT ch.amount,ch.return_url,ch.gateway_account_id,ch.description,ch.reference,ch.created_date,ch.external_id
+              FROM charges ch
+              LEFT JOIN payment_requests p ON p.external_id = ch.external_id
+              WHERE p.external_id IS NULL and ch.id < 400000;
+            ]]>
+        </sql>
+    </changeSet>
+    <changeSet id="backfill payment_requests from charges up to id 410000" author="">
+        <sql>
+            <![CDATA[
+              INSERT INTO payment_requests (
+                  amount,return_url,gateway_account_id,description,reference,created_date,external_id
+              )
+              SELECT ch.amount,ch.return_url,ch.gateway_account_id,ch.description,ch.reference,ch.created_date,ch.external_id
+              FROM charges ch
+              LEFT JOIN payment_requests p ON p.external_id = ch.external_id
+              WHERE p.external_id IS NULL and ch.id < 410000;
+            ]]>
+        </sql>
+    </changeSet>
+    <changeSet id="backfill payment_requests from charges up to id 420000" author="">
+        <sql>
+            <![CDATA[
+              INSERT INTO payment_requests (
+                  amount,return_url,gateway_account_id,description,reference,created_date,external_id
+              )
+              SELECT ch.amount,ch.return_url,ch.gateway_account_id,ch.description,ch.reference,ch.created_date,ch.external_id
+              FROM charges ch
+              LEFT JOIN payment_requests p ON p.external_id = ch.external_id
+              WHERE p.external_id IS NULL and ch.id < 420000;
+            ]]>
+        </sql>
+    </changeSet>
+    <changeSet id="backfill payment_requests from charges up to id 430000" author="">
+        <sql>
+            <![CDATA[
+              INSERT INTO payment_requests (
+                  amount,return_url,gateway_account_id,description,reference,created_date,external_id
+              )
+              SELECT ch.amount,ch.return_url,ch.gateway_account_id,ch.description,ch.reference,ch.created_date,ch.external_id
+              FROM charges ch
+              LEFT JOIN payment_requests p ON p.external_id = ch.external_id
+              WHERE p.external_id IS NULL and ch.id < 430000;
+            ]]>
+        </sql>
+    </changeSet>
+    <changeSet id="backfill payment_requests from charges up to id 440000" author="">
+        <sql>
+            <![CDATA[
+              INSERT INTO payment_requests (
+                  amount,return_url,gateway_account_id,description,reference,created_date,external_id
+              )
+              SELECT ch.amount,ch.return_url,ch.gateway_account_id,ch.description,ch.reference,ch.created_date,ch.external_id
+              FROM charges ch
+              LEFT JOIN payment_requests p ON p.external_id = ch.external_id
+              WHERE p.external_id IS NULL and ch.id < 440000;
+            ]]>
+        </sql>
+    </changeSet>
+    <changeSet id="backfill payment_requests from charges up to id 450000" author="">
+        <sql>
+            <![CDATA[
+              INSERT INTO payment_requests (
+                  amount,return_url,gateway_account_id,description,reference,created_date,external_id
+              )
+              SELECT ch.amount,ch.return_url,ch.gateway_account_id,ch.description,ch.reference,ch.created_date,ch.external_id
+              FROM charges ch
+              LEFT JOIN payment_requests p ON p.external_id = ch.external_id
+              WHERE p.external_id IS NULL and ch.id < 450000;
+            ]]>
+        </sql>
+    </changeSet>
+    <changeSet id="backfill payment_requests from charges up to id 460000" author="">
+        <sql>
+            <![CDATA[
+              INSERT INTO payment_requests (
+                  amount,return_url,gateway_account_id,description,reference,created_date,external_id
+              )
+              SELECT ch.amount,ch.return_url,ch.gateway_account_id,ch.description,ch.reference,ch.created_date,ch.external_id
+              FROM charges ch
+              LEFT JOIN payment_requests p ON p.external_id = ch.external_id
+              WHERE p.external_id IS NULL and ch.id < 460000;
+            ]]>
+        </sql>
+    </changeSet>
+    <changeSet id="backfill payment_requests from charges up to id 470000" author="">
+        <sql>
+            <![CDATA[
+              INSERT INTO payment_requests (
+                  amount,return_url,gateway_account_id,description,reference,created_date,external_id
+              )
+              SELECT ch.amount,ch.return_url,ch.gateway_account_id,ch.description,ch.reference,ch.created_date,ch.external_id
+              FROM charges ch
+              LEFT JOIN payment_requests p ON p.external_id = ch.external_id
+              WHERE p.external_id IS NULL and ch.id < 470000;
+            ]]>
+        </sql>
+    </changeSet>
+    <changeSet id="backfill payment_requests from charges up to id 480000" author="">
+        <sql>
+            <![CDATA[
+              INSERT INTO payment_requests (
+                  amount,return_url,gateway_account_id,description,reference,created_date,external_id
+              )
+              SELECT ch.amount,ch.return_url,ch.gateway_account_id,ch.description,ch.reference,ch.created_date,ch.external_id
+              FROM charges ch
+              LEFT JOIN payment_requests p ON p.external_id = ch.external_id
+              WHERE p.external_id IS NULL and ch.id < 480000;
+            ]]>
+        </sql>
+    </changeSet>
+    <changeSet id="backfill payment_requests from charges up to id 490000" author="">
+        <sql>
+            <![CDATA[
+              INSERT INTO payment_requests (
+                  amount,return_url,gateway_account_id,description,reference,created_date,external_id
+              )
+              SELECT ch.amount,ch.return_url,ch.gateway_account_id,ch.description,ch.reference,ch.created_date,ch.external_id
+              FROM charges ch
+              LEFT JOIN payment_requests p ON p.external_id = ch.external_id
+              WHERE p.external_id IS NULL and ch.id < 490000;
+            ]]>
+        </sql>
+    </changeSet>
+    <changeSet id="backfill payment_requests from charges up to id 500000" author="">
+        <sql>
+            <![CDATA[
+              INSERT INTO payment_requests (
+                  amount,return_url,gateway_account_id,description,reference,created_date,external_id
+              )
+              SELECT ch.amount,ch.return_url,ch.gateway_account_id,ch.description,ch.reference,ch.created_date,ch.external_id
+              FROM charges ch
+              LEFT JOIN payment_requests p ON p.external_id = ch.external_id
+              WHERE p.external_id IS NULL and ch.id < 500000;
+            ]]>
+        </sql>
+    </changeSet>
+    <changeSet id="backfill payment_requests from charges up to id 510000" author="">
+        <sql>
+            <![CDATA[
+              INSERT INTO payment_requests (
+                  amount,return_url,gateway_account_id,description,reference,created_date,external_id
+              )
+              SELECT ch.amount,ch.return_url,ch.gateway_account_id,ch.description,ch.reference,ch.created_date,ch.external_id
+              FROM charges ch
+              LEFT JOIN payment_requests p ON p.external_id = ch.external_id
+              WHERE p.external_id IS NULL and ch.id < 510000;
+            ]]>
+        </sql>
+    </changeSet>
+    <changeSet id="backfill payment_requests from charges up to id 520000" author="">
+        <sql>
+            <![CDATA[
+              INSERT INTO payment_requests (
+                  amount,return_url,gateway_account_id,description,reference,created_date,external_id
+              )
+              SELECT ch.amount,ch.return_url,ch.gateway_account_id,ch.description,ch.reference,ch.created_date,ch.external_id
+              FROM charges ch
+              LEFT JOIN payment_requests p ON p.external_id = ch.external_id
+              WHERE p.external_id IS NULL and ch.id < 520000;
+            ]]>
+        </sql>
+    </changeSet>
+    <changeSet id="backfill payment_requests from charges up to id 530000" author="">
+        <sql>
+            <![CDATA[
+              INSERT INTO payment_requests (
+                  amount,return_url,gateway_account_id,description,reference,created_date,external_id
+              )
+              SELECT ch.amount,ch.return_url,ch.gateway_account_id,ch.description,ch.reference,ch.created_date,ch.external_id
+              FROM charges ch
+              LEFT JOIN payment_requests p ON p.external_id = ch.external_id
+              WHERE p.external_id IS NULL and ch.id < 530000;
+            ]]>
+        </sql>
+    </changeSet>
+    <changeSet id="backfill payment_requests from charges up to id 540000" author="">
+        <sql>
+            <![CDATA[
+              INSERT INTO payment_requests (
+                  amount,return_url,gateway_account_id,description,reference,created_date,external_id
+              )
+              SELECT ch.amount,ch.return_url,ch.gateway_account_id,ch.description,ch.reference,ch.created_date,ch.external_id
+              FROM charges ch
+              LEFT JOIN payment_requests p ON p.external_id = ch.external_id
+              WHERE p.external_id IS NULL and ch.id < 540000;
+            ]]>
+        </sql>
+    </changeSet>
+    <changeSet id="backfill payment_requests from charges up to id 550000" author="">
+        <sql>
+            <![CDATA[
+              INSERT INTO payment_requests (
+                  amount,return_url,gateway_account_id,description,reference,created_date,external_id
+              )
+              SELECT ch.amount,ch.return_url,ch.gateway_account_id,ch.description,ch.reference,ch.created_date,ch.external_id
+              FROM charges ch
+              LEFT JOIN payment_requests p ON p.external_id = ch.external_id
+              WHERE p.external_id IS NULL and ch.id < 550000;
+            ]]>
+        </sql>
+    </changeSet>
+    <changeSet id="backfill payment_requests from charges up to id 560000" author="">
+        <sql>
+            <![CDATA[
+              INSERT INTO payment_requests (
+                  amount,return_url,gateway_account_id,description,reference,created_date,external_id
+              )
+              SELECT ch.amount,ch.return_url,ch.gateway_account_id,ch.description,ch.reference,ch.created_date,ch.external_id
+              FROM charges ch
+              LEFT JOIN payment_requests p ON p.external_id = ch.external_id
+              WHERE p.external_id IS NULL and ch.id < 560000;
+            ]]>
+        </sql>
+    </changeSet>
+    <changeSet id="backfill payment_requests from charges up to id 570000" author="">
+        <sql>
+            <![CDATA[
+              INSERT INTO payment_requests (
+                  amount,return_url,gateway_account_id,description,reference,created_date,external_id
+              )
+              SELECT ch.amount,ch.return_url,ch.gateway_account_id,ch.description,ch.reference,ch.created_date,ch.external_id
+              FROM charges ch
+              LEFT JOIN payment_requests p ON p.external_id = ch.external_id
+              WHERE p.external_id IS NULL and ch.id < 570000;
+            ]]>
+        </sql>
+    </changeSet>
+    <changeSet id="backfill payment_requests from charges up to id 580000" author="">
+        <sql>
+            <![CDATA[
+              INSERT INTO payment_requests (
+                  amount,return_url,gateway_account_id,description,reference,created_date,external_id
+              )
+              SELECT ch.amount,ch.return_url,ch.gateway_account_id,ch.description,ch.reference,ch.created_date,ch.external_id
+              FROM charges ch
+              LEFT JOIN payment_requests p ON p.external_id = ch.external_id
+              WHERE p.external_id IS NULL and ch.id < 580000;
+            ]]>
+        </sql>
+    </changeSet>
+    <changeSet id="backfill payment_requests from charges up to id 590000" author="">
+        <sql>
+            <![CDATA[
+              INSERT INTO payment_requests (
+                  amount,return_url,gateway_account_id,description,reference,created_date,external_id
+              )
+              SELECT ch.amount,ch.return_url,ch.gateway_account_id,ch.description,ch.reference,ch.created_date,ch.external_id
+              FROM charges ch
+              LEFT JOIN payment_requests p ON p.external_id = ch.external_id
+              WHERE p.external_id IS NULL and ch.id < 590000;
+            ]]>
+        </sql>
+    </changeSet>
+    <changeSet id="backfill payment_requests from charges up to id 600000" author="">
+        <sql>
+            <![CDATA[
+              INSERT INTO payment_requests (
+                  amount,return_url,gateway_account_id,description,reference,created_date,external_id
+              )
+              SELECT ch.amount,ch.return_url,ch.gateway_account_id,ch.description,ch.reference,ch.created_date,ch.external_id
+              FROM charges ch
+              LEFT JOIN payment_requests p ON p.external_id = ch.external_id
+              WHERE p.external_id IS NULL and ch.id < 600000;
+            ]]>
+        </sql>
+    </changeSet>
+    <changeSet id="backfill payment_requests from charges up to id 610000" author="">
+        <sql>
+            <![CDATA[
+              INSERT INTO payment_requests (
+                  amount,return_url,gateway_account_id,description,reference,created_date,external_id
+              )
+              SELECT ch.amount,ch.return_url,ch.gateway_account_id,ch.description,ch.reference,ch.created_date,ch.external_id
+              FROM charges ch
+              LEFT JOIN payment_requests p ON p.external_id = ch.external_id
+              WHERE p.external_id IS NULL and ch.id < 610000;
+            ]]>
+        </sql>
+    </changeSet>
+    <changeSet id="backfill payment_requests from charges up to id 620000" author="">
+        <sql>
+            <![CDATA[
+              INSERT INTO payment_requests (
+                  amount,return_url,gateway_account_id,description,reference,created_date,external_id
+              )
+              SELECT ch.amount,ch.return_url,ch.gateway_account_id,ch.description,ch.reference,ch.created_date,ch.external_id
+              FROM charges ch
+              LEFT JOIN payment_requests p ON p.external_id = ch.external_id
+              WHERE p.external_id IS NULL and ch.id < 620000;
+            ]]>
+        </sql>
+    </changeSet>
+    <changeSet id="backfill payment_requests from charges up to id 630000" author="">
+        <sql>
+            <![CDATA[
+              INSERT INTO payment_requests (
+                  amount,return_url,gateway_account_id,description,reference,created_date,external_id
+              )
+              SELECT ch.amount,ch.return_url,ch.gateway_account_id,ch.description,ch.reference,ch.created_date,ch.external_id
+              FROM charges ch
+              LEFT JOIN payment_requests p ON p.external_id = ch.external_id
+              WHERE p.external_id IS NULL and ch.id < 630000;
+            ]]>
+        </sql>
+    </changeSet>
+    <changeSet id="backfill payment_requests from charges up to id 640000" author="">
+        <sql>
+            <![CDATA[
+              INSERT INTO payment_requests (
+                  amount,return_url,gateway_account_id,description,reference,created_date,external_id
+              )
+              SELECT ch.amount,ch.return_url,ch.gateway_account_id,ch.description,ch.reference,ch.created_date,ch.external_id
+              FROM charges ch
+              LEFT JOIN payment_requests p ON p.external_id = ch.external_id
+              WHERE p.external_id IS NULL and ch.id < 640000;
+            ]]>
+        </sql>
+    </changeSet>
+    <changeSet id="backfill payment_requests from charges up to id 650000" author="">
+        <sql>
+            <![CDATA[
+              INSERT INTO payment_requests (
+                  amount,return_url,gateway_account_id,description,reference,created_date,external_id
+              )
+              SELECT ch.amount,ch.return_url,ch.gateway_account_id,ch.description,ch.reference,ch.created_date,ch.external_id
+              FROM charges ch
+              LEFT JOIN payment_requests p ON p.external_id = ch.external_id
+              WHERE p.external_id IS NULL and ch.id < 650000;
+            ]]>
+        </sql>
+    </changeSet>
+    <changeSet id="backfill payment_requests from charges up to id 660000" author="">
+        <sql>
+            <![CDATA[
+              INSERT INTO payment_requests (
+                  amount,return_url,gateway_account_id,description,reference,created_date,external_id
+              )
+              SELECT ch.amount,ch.return_url,ch.gateway_account_id,ch.description,ch.reference,ch.created_date,ch.external_id
+              FROM charges ch
+              LEFT JOIN payment_requests p ON p.external_id = ch.external_id
+              WHERE p.external_id IS NULL and ch.id < 660000;
+            ]]>
+        </sql>
+    </changeSet>
+    <changeSet id="backfill payment_requests from charges up to id 670000" author="">
+        <sql>
+            <![CDATA[
+              INSERT INTO payment_requests (
+                  amount,return_url,gateway_account_id,description,reference,created_date,external_id
+              )
+              SELECT ch.amount,ch.return_url,ch.gateway_account_id,ch.description,ch.reference,ch.created_date,ch.external_id
+              FROM charges ch
+              LEFT JOIN payment_requests p ON p.external_id = ch.external_id
+              WHERE p.external_id IS NULL and ch.id < 670000;
+            ]]>
+        </sql>
+    </changeSet>
+    <changeSet id="backfill payment_requests from charges up to id 680000" author="">
+        <sql>
+            <![CDATA[
+              INSERT INTO payment_requests (
+                  amount,return_url,gateway_account_id,description,reference,created_date,external_id
+              )
+              SELECT ch.amount,ch.return_url,ch.gateway_account_id,ch.description,ch.reference,ch.created_date,ch.external_id
+              FROM charges ch
+              LEFT JOIN payment_requests p ON p.external_id = ch.external_id
+              WHERE p.external_id IS NULL and ch.id < 680000;
+            ]]>
+        </sql>
+    </changeSet>
+    <changeSet id="backfill payment_requests from charges up to id 690000" author="">
+        <sql>
+            <![CDATA[
+              INSERT INTO payment_requests (
+                  amount,return_url,gateway_account_id,description,reference,created_date,external_id
+              )
+              SELECT ch.amount,ch.return_url,ch.gateway_account_id,ch.description,ch.reference,ch.created_date,ch.external_id
+              FROM charges ch
+              LEFT JOIN payment_requests p ON p.external_id = ch.external_id
+              WHERE p.external_id IS NULL and ch.id < 690000;
+            ]]>
+        </sql>
+    </changeSet>
+    <changeSet id="backfill payment_requests from charges up to id 700000" author="">
+        <sql>
+            <![CDATA[
+              INSERT INTO payment_requests (
+                  amount,return_url,gateway_account_id,description,reference,created_date,external_id
+              )
+              SELECT ch.amount,ch.return_url,ch.gateway_account_id,ch.description,ch.reference,ch.created_date,ch.external_id
+              FROM charges ch
+              LEFT JOIN payment_requests p ON p.external_id = ch.external_id
+              WHERE p.external_id IS NULL and ch.id < 700000;
+            ]]>
+        </sql>
+    </changeSet>
+    <changeSet id="backfill payment_requests from charges up to id 710000" author="">
+        <sql>
+            <![CDATA[
+              INSERT INTO payment_requests (
+                  amount,return_url,gateway_account_id,description,reference,created_date,external_id
+              )
+              SELECT ch.amount,ch.return_url,ch.gateway_account_id,ch.description,ch.reference,ch.created_date,ch.external_id
+              FROM charges ch
+              LEFT JOIN payment_requests p ON p.external_id = ch.external_id
+              WHERE p.external_id IS NULL and ch.id < 710000;
+            ]]>
+        </sql>
+    </changeSet>
+    <changeSet id="backfill payment_requests from charges up to id 720000" author="">
+        <sql>
+            <![CDATA[
+              INSERT INTO payment_requests (
+                  amount,return_url,gateway_account_id,description,reference,created_date,external_id
+              )
+              SELECT ch.amount,ch.return_url,ch.gateway_account_id,ch.description,ch.reference,ch.created_date,ch.external_id
+              FROM charges ch
+              LEFT JOIN payment_requests p ON p.external_id = ch.external_id
+              WHERE p.external_id IS NULL and ch.id < 720000;
+            ]]>
+        </sql>
+    </changeSet>
+    <changeSet id="backfill payment_requests from charges up to id 730000" author="">
+        <sql>
+            <![CDATA[
+              INSERT INTO payment_requests (
+                  amount,return_url,gateway_account_id,description,reference,created_date,external_id
+              )
+              SELECT ch.amount,ch.return_url,ch.gateway_account_id,ch.description,ch.reference,ch.created_date,ch.external_id
+              FROM charges ch
+              LEFT JOIN payment_requests p ON p.external_id = ch.external_id
+              WHERE p.external_id IS NULL and ch.id < 730000;
+            ]]>
+        </sql>
+    </changeSet>
+    <changeSet id="backfill payment_requests from charges up to id 740000" author="">
+        <sql>
+            <![CDATA[
+              INSERT INTO payment_requests (
+                  amount,return_url,gateway_account_id,description,reference,created_date,external_id
+              )
+              SELECT ch.amount,ch.return_url,ch.gateway_account_id,ch.description,ch.reference,ch.created_date,ch.external_id
+              FROM charges ch
+              LEFT JOIN payment_requests p ON p.external_id = ch.external_id
+              WHERE p.external_id IS NULL and ch.id < 740000;
+            ]]>
+        </sql>
+    </changeSet>
+    <changeSet id="backfill payment_requests from charges up to id 750000" author="">
+        <sql>
+            <![CDATA[
+              INSERT INTO payment_requests (
+                  amount,return_url,gateway_account_id,description,reference,created_date,external_id
+              )
+              SELECT ch.amount,ch.return_url,ch.gateway_account_id,ch.description,ch.reference,ch.created_date,ch.external_id
+              FROM charges ch
+              LEFT JOIN payment_requests p ON p.external_id = ch.external_id
+              WHERE p.external_id IS NULL and ch.id < 750000;
+            ]]>
+        </sql>
+    </changeSet>
+    <changeSet id="backfill payment_requests from charges up to id 760000" author="">
+        <sql>
+            <![CDATA[
+              INSERT INTO payment_requests (
+                  amount,return_url,gateway_account_id,description,reference,created_date,external_id
+              )
+              SELECT ch.amount,ch.return_url,ch.gateway_account_id,ch.description,ch.reference,ch.created_date,ch.external_id
+              FROM charges ch
+              LEFT JOIN payment_requests p ON p.external_id = ch.external_id
+              WHERE p.external_id IS NULL and ch.id < 760000;
+            ]]>
+        </sql>
+    </changeSet>
+    <changeSet id="backfill payment_requests from charges up to id 770000" author="">
+        <sql>
+            <![CDATA[
+              INSERT INTO payment_requests (
+                  amount,return_url,gateway_account_id,description,reference,created_date,external_id
+              )
+              SELECT ch.amount,ch.return_url,ch.gateway_account_id,ch.description,ch.reference,ch.created_date,ch.external_id
+              FROM charges ch
+              LEFT JOIN payment_requests p ON p.external_id = ch.external_id
+              WHERE p.external_id IS NULL and ch.id < 770000;
+            ]]>
+        </sql>
+    </changeSet>
+    <changeSet id="backfill payment_requests from charges up to id 780000" author="">
+        <sql>
+            <![CDATA[
+              INSERT INTO payment_requests (
+                  amount,return_url,gateway_account_id,description,reference,created_date,external_id
+              )
+              SELECT ch.amount,ch.return_url,ch.gateway_account_id,ch.description,ch.reference,ch.created_date,ch.external_id
+              FROM charges ch
+              LEFT JOIN payment_requests p ON p.external_id = ch.external_id
+              WHERE p.external_id IS NULL and ch.id < 780000;
+            ]]>
+        </sql>
+    </changeSet>
+    <changeSet id="backfill payment_requests from charges up to id 790000" author="">
+        <sql>
+            <![CDATA[
+              INSERT INTO payment_requests (
+                  amount,return_url,gateway_account_id,description,reference,created_date,external_id
+              )
+              SELECT ch.amount,ch.return_url,ch.gateway_account_id,ch.description,ch.reference,ch.created_date,ch.external_id
+              FROM charges ch
+              LEFT JOIN payment_requests p ON p.external_id = ch.external_id
+              WHERE p.external_id IS NULL and ch.id < 790000;
+            ]]>
+        </sql>
+    </changeSet>
+    <changeSet id="backfill payment_requests from charges up to id 800000" author="">
+        <sql>
+            <![CDATA[
+              INSERT INTO payment_requests (
+                  amount,return_url,gateway_account_id,description,reference,created_date,external_id
+              )
+              SELECT ch.amount,ch.return_url,ch.gateway_account_id,ch.description,ch.reference,ch.created_date,ch.external_id
+              FROM charges ch
+              LEFT JOIN payment_requests p ON p.external_id = ch.external_id
+              WHERE p.external_id IS NULL and ch.id < 800000;
+            ]]>
+        </sql>
+    </changeSet>
+    <changeSet id="backfill payment_requests from charges up to id 810000" author="">
+        <sql>
+            <![CDATA[
+              INSERT INTO payment_requests (
+                  amount,return_url,gateway_account_id,description,reference,created_date,external_id
+              )
+              SELECT ch.amount,ch.return_url,ch.gateway_account_id,ch.description,ch.reference,ch.created_date,ch.external_id
+              FROM charges ch
+              LEFT JOIN payment_requests p ON p.external_id = ch.external_id
+              WHERE p.external_id IS NULL and ch.id < 810000;
+            ]]>
+        </sql>
+    </changeSet>
+    <changeSet id="backfill payment_requests from charges up to id 820000" author="">
+        <sql>
+            <![CDATA[
+              INSERT INTO payment_requests (
+                  amount,return_url,gateway_account_id,description,reference,created_date,external_id
+              )
+              SELECT ch.amount,ch.return_url,ch.gateway_account_id,ch.description,ch.reference,ch.created_date,ch.external_id
+              FROM charges ch
+              LEFT JOIN payment_requests p ON p.external_id = ch.external_id
+              WHERE p.external_id IS NULL and ch.id < 820000;
+            ]]>
+        </sql>
+    </changeSet>
+    <changeSet id="backfill payment_requests from charges up to id 830000" author="">
+        <sql>
+            <![CDATA[
+              INSERT INTO payment_requests (
+                  amount,return_url,gateway_account_id,description,reference,created_date,external_id
+              )
+              SELECT ch.amount,ch.return_url,ch.gateway_account_id,ch.description,ch.reference,ch.created_date,ch.external_id
+              FROM charges ch
+              LEFT JOIN payment_requests p ON p.external_id = ch.external_id
+              WHERE p.external_id IS NULL and ch.id < 830000;
+            ]]>
+        </sql>
+    </changeSet>
+    <changeSet id="backfill payment_requests from charges up to id 840000" author="">
+        <sql>
+            <![CDATA[
+              INSERT INTO payment_requests (
+                  amount,return_url,gateway_account_id,description,reference,created_date,external_id
+              )
+              SELECT ch.amount,ch.return_url,ch.gateway_account_id,ch.description,ch.reference,ch.created_date,ch.external_id
+              FROM charges ch
+              LEFT JOIN payment_requests p ON p.external_id = ch.external_id
+              WHERE p.external_id IS NULL and ch.id < 840000;
+            ]]>
+        </sql>
+    </changeSet>
+    <changeSet id="backfill payment_requests from charges up to id 850000" author="">
+        <sql>
+            <![CDATA[
+              INSERT INTO payment_requests (
+                  amount,return_url,gateway_account_id,description,reference,created_date,external_id
+              )
+              SELECT ch.amount,ch.return_url,ch.gateway_account_id,ch.description,ch.reference,ch.created_date,ch.external_id
+              FROM charges ch
+              LEFT JOIN payment_requests p ON p.external_id = ch.external_id
+              WHERE p.external_id IS NULL and ch.id < 850000;
+            ]]>
+        </sql>
+    </changeSet>
+    <changeSet id="backfill payment_requests from charges up to id 860000" author="">
+        <sql>
+            <![CDATA[
+              INSERT INTO payment_requests (
+                  amount,return_url,gateway_account_id,description,reference,created_date,external_id
+              )
+              SELECT ch.amount,ch.return_url,ch.gateway_account_id,ch.description,ch.reference,ch.created_date,ch.external_id
+              FROM charges ch
+              LEFT JOIN payment_requests p ON p.external_id = ch.external_id
+              WHERE p.external_id IS NULL and ch.id < 860000;
+            ]]>
+        </sql>
+    </changeSet>
+    <changeSet id="backfill payment_requests from charges up to id 870000" author="">
+        <sql>
+            <![CDATA[
+              INSERT INTO payment_requests (
+                  amount,return_url,gateway_account_id,description,reference,created_date,external_id
+              )
+              SELECT ch.amount,ch.return_url,ch.gateway_account_id,ch.description,ch.reference,ch.created_date,ch.external_id
+              FROM charges ch
+              LEFT JOIN payment_requests p ON p.external_id = ch.external_id
+              WHERE p.external_id IS NULL and ch.id < 870000;
+            ]]>
+        </sql>
+    </changeSet>
+    <changeSet id="backfill payment_requests from charges up to id 880000" author="">
+        <sql>
+            <![CDATA[
+              INSERT INTO payment_requests (
+                  amount,return_url,gateway_account_id,description,reference,created_date,external_id
+              )
+              SELECT ch.amount,ch.return_url,ch.gateway_account_id,ch.description,ch.reference,ch.created_date,ch.external_id
+              FROM charges ch
+              LEFT JOIN payment_requests p ON p.external_id = ch.external_id
+              WHERE p.external_id IS NULL and ch.id < 880000;
+            ]]>
+        </sql>
+    </changeSet>
+    <changeSet id="backfill payment_requests from charges up to id 890000" author="">
+        <sql>
+            <![CDATA[
+              INSERT INTO payment_requests (
+                  amount,return_url,gateway_account_id,description,reference,created_date,external_id
+              )
+              SELECT ch.amount,ch.return_url,ch.gateway_account_id,ch.description,ch.reference,ch.created_date,ch.external_id
+              FROM charges ch
+              LEFT JOIN payment_requests p ON p.external_id = ch.external_id
+              WHERE p.external_id IS NULL and ch.id < 890000;
+            ]]>
+        </sql>
+    </changeSet>
+    <changeSet id="backfill payment_requests from charges up to id 900000" author="">
+        <sql>
+            <![CDATA[
+              INSERT INTO payment_requests (
+                  amount,return_url,gateway_account_id,description,reference,created_date,external_id
+              )
+              SELECT ch.amount,ch.return_url,ch.gateway_account_id,ch.description,ch.reference,ch.created_date,ch.external_id
+              FROM charges ch
+              LEFT JOIN payment_requests p ON p.external_id = ch.external_id
+              WHERE p.external_id IS NULL and ch.id < 900000;
+            ]]>
+        </sql>
+    </changeSet>
+    <changeSet id="backfill payment_requests from charges up to id 910000" author="">
+        <sql>
+            <![CDATA[
+              INSERT INTO payment_requests (
+                  amount,return_url,gateway_account_id,description,reference,created_date,external_id
+              )
+              SELECT ch.amount,ch.return_url,ch.gateway_account_id,ch.description,ch.reference,ch.created_date,ch.external_id
+              FROM charges ch
+              LEFT JOIN payment_requests p ON p.external_id = ch.external_id
+              WHERE p.external_id IS NULL and ch.id < 910000;
+            ]]>
+        </sql>
+    </changeSet>
+    <changeSet id="backfill payment_requests from charges up to id 920000" author="">
+        <sql>
+            <![CDATA[
+              INSERT INTO payment_requests (
+                  amount,return_url,gateway_account_id,description,reference,created_date,external_id
+              )
+              SELECT ch.amount,ch.return_url,ch.gateway_account_id,ch.description,ch.reference,ch.created_date,ch.external_id
+              FROM charges ch
+              LEFT JOIN payment_requests p ON p.external_id = ch.external_id
+              WHERE p.external_id IS NULL and ch.id < 920000;
+            ]]>
+        </sql>
+    </changeSet>
+    <changeSet id="backfill payment_requests from charges up to id 930000" author="">
+        <sql>
+            <![CDATA[
+              INSERT INTO payment_requests (
+                  amount,return_url,gateway_account_id,description,reference,created_date,external_id
+              )
+              SELECT ch.amount,ch.return_url,ch.gateway_account_id,ch.description,ch.reference,ch.created_date,ch.external_id
+              FROM charges ch
+              LEFT JOIN payment_requests p ON p.external_id = ch.external_id
+              WHERE p.external_id IS NULL and ch.id < 930000;
+            ]]>
+        </sql>
+    </changeSet>
+    <changeSet id="backfill payment_requests from charges up to id 940000" author="">
+        <sql>
+            <![CDATA[
+              INSERT INTO payment_requests (
+                  amount,return_url,gateway_account_id,description,reference,created_date,external_id
+              )
+              SELECT ch.amount,ch.return_url,ch.gateway_account_id,ch.description,ch.reference,ch.created_date,ch.external_id
+              FROM charges ch
+              LEFT JOIN payment_requests p ON p.external_id = ch.external_id
+              WHERE p.external_id IS NULL and ch.id < 940000;
+            ]]>
+        </sql>
+    </changeSet>
+    <changeSet id="backfill payment_requests from charges up to id 950000" author="">
+        <sql>
+            <![CDATA[
+              INSERT INTO payment_requests (
+                  amount,return_url,gateway_account_id,description,reference,created_date,external_id
+              )
+              SELECT ch.amount,ch.return_url,ch.gateway_account_id,ch.description,ch.reference,ch.created_date,ch.external_id
+              FROM charges ch
+              LEFT JOIN payment_requests p ON p.external_id = ch.external_id
+              WHERE p.external_id IS NULL and ch.id < 950000;
+            ]]>
+        </sql>
+    </changeSet>
+    <changeSet id="backfill payment_requests from charges up to id 960000" author="">
+        <sql>
+            <![CDATA[
+              INSERT INTO payment_requests (
+                  amount,return_url,gateway_account_id,description,reference,created_date,external_id
+              )
+              SELECT ch.amount,ch.return_url,ch.gateway_account_id,ch.description,ch.reference,ch.created_date,ch.external_id
+              FROM charges ch
+              LEFT JOIN payment_requests p ON p.external_id = ch.external_id
+              WHERE p.external_id IS NULL and ch.id < 960000;
+            ]]>
+        </sql>
+    </changeSet>
+    <changeSet id="backfill payment_requests from charges up to id 970000" author="">
+        <sql>
+            <![CDATA[
+              INSERT INTO payment_requests (
+                  amount,return_url,gateway_account_id,description,reference,created_date,external_id
+              )
+              SELECT ch.amount,ch.return_url,ch.gateway_account_id,ch.description,ch.reference,ch.created_date,ch.external_id
+              FROM charges ch
+              LEFT JOIN payment_requests p ON p.external_id = ch.external_id
+              WHERE p.external_id IS NULL and ch.id < 970000;
+            ]]>
+        </sql>
+    </changeSet>
+    <changeSet id="backfill payment_requests from charges up to id 980000" author="">
+        <sql>
+            <![CDATA[
+              INSERT INTO payment_requests (
+                  amount,return_url,gateway_account_id,description,reference,created_date,external_id
+              )
+              SELECT ch.amount,ch.return_url,ch.gateway_account_id,ch.description,ch.reference,ch.created_date,ch.external_id
+              FROM charges ch
+              LEFT JOIN payment_requests p ON p.external_id = ch.external_id
+              WHERE p.external_id IS NULL and ch.id < 980000;
+            ]]>
+        </sql>
+    </changeSet>
+    <changeSet id="backfill payment_requests from charges up to id 990000" author="">
+        <sql>
+            <![CDATA[
+              INSERT INTO payment_requests (
+                  amount,return_url,gateway_account_id,description,reference,created_date,external_id
+              )
+              SELECT ch.amount,ch.return_url,ch.gateway_account_id,ch.description,ch.reference,ch.created_date,ch.external_id
+              FROM charges ch
+              LEFT JOIN payment_requests p ON p.external_id = ch.external_id
+              WHERE p.external_id IS NULL and ch.id < 990000;
+            ]]>
+        </sql>
+    </changeSet>
+    <changeSet id="backfill payment_requests from charges up to id 1000000" author="">
+        <sql>
+            <![CDATA[
+              INSERT INTO payment_requests (
+                  amount,return_url,gateway_account_id,description,reference,created_date,external_id
+              )
+              SELECT ch.amount,ch.return_url,ch.gateway_account_id,ch.description,ch.reference,ch.created_date,ch.external_id
+              FROM charges ch
+              LEFT JOIN payment_requests p ON p.external_id = ch.external_id
+              WHERE p.external_id IS NULL and ch.id < 1000000;
+            ]]>
+        </sql>
+    </changeSet>
+
 </databaseChangeLog>
