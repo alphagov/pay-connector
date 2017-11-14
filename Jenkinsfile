@@ -29,7 +29,7 @@ pipeline {
         }
       }
       steps {
-        sh 'docker pull govukpay/postgres:9.4.4'
+        sh 'docker pull govukpay/postgres:9.6.5'
         sh 'mvn clean package'
       }
     }
@@ -38,7 +38,7 @@ pipeline {
         branch 'master'
       }
       steps {
-        sh 'docker pull govukpay/postgres:9.4.4'
+        sh 'docker pull govukpay/postgres:9.6.5'
         sh 'mvn -Dmaven.test.skip=true clean package'
       }
     }
