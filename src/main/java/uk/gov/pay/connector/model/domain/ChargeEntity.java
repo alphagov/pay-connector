@@ -1,5 +1,7 @@
 package uk.gov.pay.connector.model.domain;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import uk.gov.pay.connector.exception.InvalidStateTransitionException;
 import uk.gov.pay.connector.model.api.ExternalChargeState;
 import uk.gov.pay.connector.service.PaymentGatewayName;
@@ -21,6 +23,7 @@ import static uk.gov.pay.connector.model.domain.PaymentGatewayStateTransitions.d
 @SequenceGenerator(name = "charges_charge_id_seq", sequenceName = "charges_charge_id_seq", allocationSize = 1)
 @Access(AccessType.FIELD)
 public class ChargeEntity extends AbstractEntity {
+    private final static Logger logger = LoggerFactory.getLogger(ChargeEntity.class);
 
     @Column(name = "external_id")
     private String externalId;
@@ -152,6 +155,11 @@ public class ChargeEntity extends AbstractEntity {
     public void setStatus(ChargeStatus targetStatus) throws InvalidStateTransitionException {
         if (defaultTransitions().isValidTransition(fromString(this.status), targetStatus)) {
             this.status = targetStatus.getValue();
+            logger.info(String.format("Changing charge status for externalId [%s] [%s]->[%s]",
+                    externalId,
+                    this.status,
+                    targetStatus.getValue())
+            );
         } else {
             throw new InvalidStateTransitionException(this.status, targetStatus.getValue());
         }

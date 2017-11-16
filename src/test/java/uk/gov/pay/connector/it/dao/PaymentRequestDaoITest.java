@@ -70,20 +70,6 @@ public class PaymentRequestDaoITest extends DaoITestBase {
         assertThat(byExternalId.get().getChargeTransaction().getStatus(), is(ChargeStatus.ENTERING_CARD_DETAILS));
     }
 
-    @Test(expected = InvalidStateTransitionException.class)
-    public void shouldThrowException_whenUpdatingToInvalidState() throws Exception {
-        ChargeStatus initialStatus = ChargeStatus.CREATED;
-        PaymentRequestEntity paymentRequestEntity = aValidPaymentRequestEntity()
-                .withGatewayAccountEntity(gatewayAccount)
-                .withTransactions(aChargeTransactionEntity().withStatus(initialStatus).build())
-                .build();
-
-        paymentRequestDao.persist(paymentRequestEntity);
-
-        statusUpdater.updateChargeTransactionStatus(paymentRequestEntity.getExternalId(),
-                 ChargeStatus.AUTHORISATION_READY);
-    }
-
     @Test
     public void shouldPersistMultipleTransactions() throws Exception {
         PaymentRequestEntity paymentRequestEntity = aValidPaymentRequestEntity()
