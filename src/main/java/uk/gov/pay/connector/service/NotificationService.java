@@ -6,7 +6,6 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import uk.gov.pay.connector.dao.ChargeDao;
 import uk.gov.pay.connector.dao.ChargeEventDao;
-import uk.gov.pay.connector.dao.PaymentRequestDao;
 import uk.gov.pay.connector.dao.RefundDao;
 import uk.gov.pay.connector.exception.InvalidStateTransitionException;
 import uk.gov.pay.connector.model.*;
@@ -29,16 +28,14 @@ public class NotificationService {
     private final RefundDao refundDao;
     private final PaymentProviders paymentProviders;
     private final DnsUtils dnsUtils;
-    private final StatusUpdater statusUpdater;
 
     @Inject
-    public NotificationService(ChargeDao chargeDao, ChargeEventDao chargeEventDao, RefundDao refundDao, PaymentProviders paymentProviders, DnsUtils dnsUtils, StatusUpdater statusUpdater) {
+    public NotificationService(ChargeDao chargeDao, ChargeEventDao chargeEventDao, RefundDao refundDao, PaymentProviders paymentProviders, DnsUtils dnsUtils) {
         this.chargeDao = chargeDao;
         this.chargeEventDao = chargeEventDao;
         this.refundDao = refundDao;
         this.paymentProviders = paymentProviders;
         this.dnsUtils = dnsUtils;
-        this.statusUpdater = statusUpdater;
     }
 
     @Transactional
@@ -209,7 +206,6 @@ public class NotificationService {
                     gatewayAccount.getType());
 
             chargeEventDao.persistChargeEventOf(chargeEntity, Optional.ofNullable(notification.getGatewayEventDate()));
-            statusUpdater.updateChargeTransactionStatus(chargeEntity.getExternalId(), newStatus);
         }
 
         private <T> void updateRefundStatus(EvaluatedRefundStatusNotification<T> notification) {

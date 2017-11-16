@@ -20,7 +20,6 @@ import java.util.stream.Collectors;
 import static org.apache.commons.lang3.StringUtils.isNotBlank;
 import static org.jooq.impl.DSL.*;
 
-@Deprecated // This will be removed once the new refunds functionality has been completed.
 @Transactional
 public class TransactionDao {
 

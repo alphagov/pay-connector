@@ -10,7 +10,6 @@ import uk.gov.pay.connector.model.api.ExternalTransactionState;
 import uk.gov.pay.connector.model.builder.AbstractChargeResponseBuilder;
 import uk.gov.pay.connector.model.builder.PatchRequestBuilder;
 import uk.gov.pay.connector.model.domain.*;
-import uk.gov.pay.connector.model.domain.transaction.ChargeTransactionEntity;
 import uk.gov.pay.connector.resources.ChargesApiResource;
 import uk.gov.pay.connector.util.DateTimeUtils;
 
@@ -19,24 +18,18 @@ import javax.ws.rs.core.UriBuilder;
 import javax.ws.rs.core.UriInfo;
 import java.net.URI;
 import java.util.HashMap;
-import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 
-import static com.google.common.collect.Lists.newArrayList;
 import static javax.ws.rs.HttpMethod.GET;
 import static javax.ws.rs.HttpMethod.POST;
 import static javax.ws.rs.core.MediaType.APPLICATION_FORM_URLENCODED;
 import static uk.gov.pay.connector.model.ChargeResponse.aChargeResponseBuilder;
-import static uk.gov.pay.connector.model.domain.ChargeStatus.CREATED;
-import static uk.gov.pay.connector.model.domain.ChargeStatus.ENTERING_CARD_DETAILS;
 import static uk.gov.pay.connector.model.domain.NumbersInStringsSanitizer.sanitize;
 import static uk.gov.pay.connector.resources.ApiPaths.CHARGE_API_PATH;
 import static uk.gov.pay.connector.resources.ApiPaths.REFUNDS_API_PATH;
 
 public class ChargeService {
-
-    private static final List<ChargeStatus> CURRENT_STATUSES_ALLOWING_UPDATE_TO_NEW_STATUS = newArrayList(CREATED, ENTERING_CARD_DETAILS);
 
     private final ChargeDao chargeDao;
     private final ChargeEventDao chargeEventDao;
@@ -46,14 +39,9 @@ public class ChargeService {
     private final LinksConfig linksConfig;
     private final PaymentProviders providers;
     private final PaymentRequestDao paymentRequestDao;
-    private final StatusUpdater statusUpdater;
 
     @Inject
-    public ChargeService(TokenDao tokenDao, ChargeDao chargeDao, ChargeEventDao chargeEventDao,
-                         CardTypeDao cardTypeDao, GatewayAccountDao gatewayAccountDao,
-                         ConnectorConfiguration config, PaymentProviders providers,
-                         PaymentRequestDao paymentRequestDao,
-                         StatusUpdater statusUpdater) {
+    public ChargeService(TokenDao tokenDao, ChargeDao chargeDao, ChargeEventDao chargeEventDao, CardTypeDao cardTypeDao, GatewayAccountDao gatewayAccountDao, ConnectorConfiguration config, PaymentProviders providers, PaymentRequestDao paymentRequestDao) {
         this.tokenDao = tokenDao;
         this.chargeDao = chargeDao;
         this.chargeEventDao = chargeEventDao;
@@ -62,7 +50,6 @@ public class ChargeService {
         this.linksConfig = config.getLinks();
         this.providers = providers;
         this.paymentRequestDao = paymentRequestDao;
-        this.statusUpdater = statusUpdater;
     }
 
     @Transactional
@@ -77,11 +64,8 @@ public class ChargeService {
             );
             chargeDao.persist(chargeEntity);
 
-            PaymentRequestEntity paymentRequestEntity =
-                    PaymentRequestEntity.from(chargeEntity, ChargeTransactionEntity.from(chargeEntity));
+            PaymentRequestEntity paymentRequestEntity = PaymentRequestEntity.from(chargeEntity);
             paymentRequestDao.persist(paymentRequestEntity);
-
-            //todo: create a TransactionEventEntity here in future stories
 
             chargeEventDao.persistChargeEventOf(chargeEntity, Optional.empty());
             return Optional.of(populateResponseBuilderWith(aChargeResponseBuilder(), uriInfo, chargeEntity).build());
@@ -106,21 +90,6 @@ public class ChargeService {
                     return Optional.of(chargeEntity);
                 })
                 .orElseGet(Optional::empty);
-    }
-
-    @Transactional
-    public Optional<ChargeEntity> updateFromInitialStatus(String externalId, ChargeStatus newChargeStatus) {
-        return chargeDao.findByExternalId(externalId)
-                .map(chargeEntity -> {
-                    final ChargeStatus oldChargeStatus = ChargeStatus.fromString(chargeEntity.getStatus());
-                    if (CURRENT_STATUSES_ALLOWING_UPDATE_TO_NEW_STATUS.contains(oldChargeStatus)) {
-                        chargeEntity.setStatus(newChargeStatus);
-                        chargeEventDao.persistChargeEventOf(chargeEntity, Optional.empty());
-                        statusUpdater.updateChargeTransactionStatus(externalId, newChargeStatus);
-                        return Optional.of(chargeEntity);
-                    }
-                    return Optional.<ChargeEntity>empty();
-                }).orElse(Optional.empty());
     }
 
     public <T extends AbstractChargeResponseBuilder<T, R>, R> AbstractChargeResponseBuilder<T, R> populateResponseBuilderWith(AbstractChargeResponseBuilder<T, R> responseBuilder, UriInfo uriInfo, ChargeEntity chargeEntity) {

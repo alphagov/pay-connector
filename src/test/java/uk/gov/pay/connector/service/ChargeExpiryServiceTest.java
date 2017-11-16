@@ -53,12 +53,9 @@ public class ChargeExpiryServiceTest {
     @Mock
     private WorldpayCancelResponse mockWorldpayCancelResponse;
 
-    @Mock
-    private StatusUpdater mockStatusUpdater;
-
     @Before
     public void setup() {
-        chargeExpiryService = new ChargeExpiryService(mockChargeDao, mockChargeEventDao, mockPaymentProviders, TransactionFlow::new, mockStatusUpdater);
+        chargeExpiryService = new ChargeExpiryService(mockChargeDao, mockChargeEventDao, mockPaymentProviders, TransactionFlow::new);
     }
 
     @Test
@@ -89,7 +86,6 @@ public class ChargeExpiryServiceTest {
         verify(mockPaymentProvider).cancel(cancelCaptor.capture());
         assertThat(cancelCaptor.getValue().getTransactionId(), is(chargeEntity.getGatewayTransactionId()));
         assertThat(chargeEntity.getStatus(), is(ChargeStatus.EXPIRED.getValue()));
-        verify(mockStatusUpdater).updateChargeTransactionStatus(chargeEntity.getExternalId(), ChargeStatus.EXPIRED);
     }
 
     @Test
@@ -121,7 +117,6 @@ public class ChargeExpiryServiceTest {
 
                     verify(mockPaymentProvider, never()).cancel(any());
                     assertThat(chargeEntity.getStatus(), is(ChargeStatus.EXPIRED.getValue()));
-                    verify(mockStatusUpdater).updateChargeTransactionStatus(chargeEntity.getExternalId(), ChargeStatus.EXPIRED);
                 });
     }
 
@@ -151,6 +146,5 @@ public class ChargeExpiryServiceTest {
         chargeExpiryService.expire(singletonList(chargeEntity));
 
         assertThat(chargeEntity.getStatus(), is(ChargeStatus.EXPIRE_CANCEL_FAILED.getValue()));
-        verify(mockStatusUpdater).updateChargeTransactionStatus(chargeEntity.getExternalId(), ChargeStatus.EXPIRE_CANCEL_FAILED);
     }
 }

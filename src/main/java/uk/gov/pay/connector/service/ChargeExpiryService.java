@@ -8,7 +8,6 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import uk.gov.pay.connector.dao.ChargeDao;
 import uk.gov.pay.connector.dao.ChargeEventDao;
-import uk.gov.pay.connector.dao.PaymentRequestDao;
 import uk.gov.pay.connector.exception.ChargeNotFoundRuntimeException;
 import uk.gov.pay.connector.model.domain.ChargeEntity;
 import uk.gov.pay.connector.model.domain.ChargeStatus;
@@ -47,19 +46,16 @@ public class ChargeExpiryService {
     private final ChargeEventDao chargeEventDao;
     private final PaymentProviders providers;
     private final Provider<TransactionFlow> transactionFlowProvider;
-    private final StatusUpdater statusUpdater;
 
     @Inject
     public ChargeExpiryService(ChargeDao chargeDao,
                                ChargeEventDao chargeEventDao,
                                PaymentProviders providers,
-                               Provider<TransactionFlow> transactionFlowProvider,
-                               StatusUpdater statusUpdater) {
+                               Provider<TransactionFlow> transactionFlowProvider) {
         this.chargeDao = chargeDao;
         this.chargeEventDao = chargeEventDao;
         this.providers = providers;
         this.transactionFlowProvider = transactionFlowProvider;
-        this.statusUpdater = statusUpdater;
     }
 
     public Map<String, Integer> expire(List<ChargeEntity> charges) {
@@ -78,7 +74,7 @@ public class ChargeExpiryService {
     private int expireChargesWithCancellationNotRequired(List<ChargeEntity> nonAuthSuccessCharges) {
         List<ChargeEntity> processedEntities = nonAuthSuccessCharges
                 .stream().map(chargeEntity -> transactionFlowProvider.get()
-                        .executeNext(changeStatusTo(chargeDao, chargeEventDao, chargeEntity.getExternalId(), EXPIRED, Optional.empty(), statusUpdater))
+                        .executeNext(changeStatusTo(chargeDao, chargeEventDao, chargeEntity.getExternalId(), EXPIRED, Optional.empty()))
                         .complete()
                         .get(ChargeEntity.class))
                 .collect(Collectors.toList());
@@ -94,7 +90,7 @@ public class ChargeExpiryService {
 
         gatewayAuthorizedCharges.forEach(chargeEntity -> {
             ChargeEntity processedEntity = transactionFlowProvider.get()
-                    .executeNext(prepareForTerminate(chargeDao, chargeEventDao, chargeEntity.getExternalId(), EXPIRE_FLOW, statusUpdater))
+                    .executeNext(prepareForTerminate(chargeDao, chargeEventDao, chargeEntity.getExternalId(), EXPIRE_FLOW))
                     .executeNext(doGatewayCancel(providers))
                     .executeNext(finishExpireCancel())
                     .complete().get(ChargeEntity.class);
@@ -152,7 +148,6 @@ public class ChargeExpiryService {
                         chargeEntity.getExternalId(), chargeEntity.getStatus(), status);
                 chargeEntity.setStatus(status);
                 chargeEventDao.persistChargeEventOf(chargeEntity, Optional.empty());
-                statusUpdater.updateChargeTransactionStatus(chargeEntity.getExternalId(), status);
                 return chargeEntity;
             }).orElseThrow(() -> new ChargeNotFoundRuntimeException(externalId));
         };
