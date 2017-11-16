@@ -2,11 +2,13 @@ package uk.gov.pay.connector.resources;
 
 import com.fasterxml.jackson.annotation.JsonView;
 import com.google.common.collect.ImmutableList;
+import com.google.inject.persist.Transactional;
 import io.dropwizard.jersey.PATCH;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import uk.gov.pay.connector.dao.CardTypeDao;
 import uk.gov.pay.connector.dao.ChargeDao;
+import uk.gov.pay.connector.dao.ChargeEventDao;
 import uk.gov.pay.connector.model.ChargeResponse;
 import uk.gov.pay.connector.model.builder.PatchRequestBuilder;
 import uk.gov.pay.connector.model.domain.*;
@@ -19,15 +21,19 @@ import javax.ws.rs.core.Context;
 import javax.ws.rs.core.Response;
 import javax.ws.rs.core.UriInfo;
 import java.net.URI;
+import java.time.ZonedDateTime;
 import java.util.Collections;
+import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 
+import static com.google.common.collect.Lists.newArrayList;
 import static javax.ws.rs.HttpMethod.GET;
 import static javax.ws.rs.HttpMethod.POST;
 import static javax.ws.rs.core.MediaType.APPLICATION_JSON;
 import static uk.gov.pay.connector.model.FrontendChargeResponse.aFrontendChargeResponse;
 import static uk.gov.pay.connector.model.builder.PatchRequestBuilder.aPatchRequestBuilder;
+import static uk.gov.pay.connector.model.domain.ChargeStatus.CREATED;
 import static uk.gov.pay.connector.model.domain.ChargeStatus.ENTERING_CARD_DETAILS;
 import static uk.gov.pay.connector.resources.ApiPaths.*;
 import static uk.gov.pay.connector.resources.ApiValidators.validateChargePatchParams;
@@ -38,16 +44,18 @@ import static uk.gov.pay.connector.util.ResponseUtil.*;
 public class ChargesFrontendResource {
 
     private static final Logger logger = LoggerFactory.getLogger(ChargesFrontendResource.class);
-    private static final String NEW_STATUS = "new_status";
+    private static final List<ChargeStatus> CURRENT_STATUSES_ALLOWING_UPDATE_TO_NEW_STATUS = newArrayList(CREATED, ENTERING_CARD_DETAILS);
     private final ChargeDao chargeDao;
     private final ChargeService chargeService;
     private final CardTypeDao cardTypeDao;
+    private final ChargeEventDao chargeEventDao;
 
     @Inject
-    public ChargesFrontendResource(ChargeDao chargeDao, ChargeService chargeService, CardTypeDao cardTypeDao) {
+    public ChargesFrontendResource(ChargeDao chargeDao, ChargeService chargeService, CardTypeDao cardTypeDao, ChargeEventDao chargeEventDao) {
         this.chargeDao = chargeDao;
         this.chargeService = chargeService;
         this.cardTypeDao = cardTypeDao;
+        this.chargeEventDao = chargeEventDao;
     }
 
     @GET
@@ -94,35 +102,36 @@ public class ChargesFrontendResource {
     @Path(FRONTEND_CHARGE_STATUS_API_PATH)
     @Produces(APPLICATION_JSON)
     @JsonView(GatewayAccountEntity.Views.FrontendView.class)
+    @Transactional
     public Response updateChargeStatus(@PathParam("chargeId") String chargeId, Map newStatusMap) {
         if (invalidInput(newStatusMap)) {
-            return fieldsMissingResponse(ImmutableList.of(NEW_STATUS));
+            return fieldsMissingResponse(ImmutableList.of("new_status"));
         }
-
-        ChargeStatus newChargeStatus;
         try {
-            newChargeStatus = ChargeStatus.fromString(newStatusMap.get(NEW_STATUS).toString());
+            return updateStatus(chargeId, ChargeStatus.fromString(newStatusMap.get("new_status").toString()), Optional.empty());
         } catch (IllegalArgumentException e) {
             logger.error(e.getMessage(), e);
             return badRequestResponse(e.getMessage());
         }
-
-        if (!isValidStateTransition(newChargeStatus)) {
-            return getInvalidStatusResponse(chargeId, newChargeStatus);
-        }
-
-        return chargeService.updateFromInitialStatus(chargeId, newChargeStatus)
-                .map(chargeEntity -> Response.noContent().build())
-                .orElseGet(() -> getInvalidStatusResponse(chargeId, newChargeStatus));
-    }
-
-    private Response getInvalidStatusResponse(String chargeId, ChargeStatus newChargeStatus) {
-        return badRequestResponse("charge with id: " + chargeId +
-                " cannot be updated to the new status: " + newChargeStatus.getValue());
     }
 
     private boolean invalidInput(Map newStatusMap) {
-        return newStatusMap == null || newStatusMap.get(NEW_STATUS) == null;
+        return newStatusMap == null || newStatusMap.get("new_status") == null;
+    }
+
+    private Response updateStatus(String chargeId, ChargeStatus newChargeStatus, Optional<ZonedDateTime> generatedTime) {
+        if (!isValidStateTransition(newChargeStatus)) {
+            return badRequestResponse("charge with id: " + chargeId + " cant be updated to the new state: " + newChargeStatus.getValue());
+        }
+        return chargeDao.findByExternalId(chargeId)
+                .map(chargeEntity -> {
+                    if (CURRENT_STATUSES_ALLOWING_UPDATE_TO_NEW_STATUS.contains(ChargeStatus.fromString(chargeEntity.getStatus()))) {
+                        chargeEntity.setStatus(newChargeStatus);
+                        chargeEventDao.persistChargeEventOf(chargeEntity, generatedTime);
+                        return noContentResponse();
+                    }
+                    return badRequestResponse("charge with id: " + chargeId + " cant be updated to the new state: " + newChargeStatus.getValue());
+                }).get();
     }
 
     private boolean isValidStateTransition(ChargeStatus newChargeStatus) {

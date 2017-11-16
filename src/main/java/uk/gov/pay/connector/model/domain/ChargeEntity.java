@@ -14,7 +14,7 @@ import java.util.List;
 
 import static org.apache.commons.lang3.StringUtils.equalsIgnoreCase;
 import static uk.gov.pay.connector.model.domain.ChargeStatus.*;
-import static uk.gov.pay.connector.model.domain.PaymentGatewayStateTransitions.defaultTransitions;
+import static uk.gov.pay.connector.model.domain.PaymentGatewayStateTransitions.stateTransitionsFor;
 
 @Entity
 @Table(name = "charges")
@@ -150,7 +150,7 @@ public class ChargeEntity extends AbstractEntity {
     }
 
     public void setStatus(ChargeStatus targetStatus) throws InvalidStateTransitionException {
-        if (defaultTransitions().isValidTransition(fromString(this.status), targetStatus)) {
+        if (stateTransitionsFor(getPaymentGatewayName()).isValidTransition(fromString(this.status), targetStatus)) {
             this.status = targetStatus.getValue();
         } else {
             throw new InvalidStateTransitionException(this.status, targetStatus.getValue());

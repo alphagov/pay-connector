@@ -4,7 +4,6 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import uk.gov.pay.connector.dao.ChargeDao;
 import uk.gov.pay.connector.dao.ChargeEventDao;
-import uk.gov.pay.connector.dao.PaymentRequestDao;
 import uk.gov.pay.connector.exception.ChargeNotFoundRuntimeException;
 import uk.gov.pay.connector.exception.ConflictRuntimeException;
 import uk.gov.pay.connector.exception.IllegalStateRuntimeException;
@@ -35,14 +34,13 @@ class CancelServiceFunctions {
 
     private static final Logger logger = LoggerFactory.getLogger(CancelServiceFunctions.class);
 
-    static TransactionalOperation<TransactionContext, ChargeEntity> changeStatusTo(ChargeDao chargeDao, ChargeEventDao chargeEventDao, String chargeId, ChargeStatus targetStatus, Optional<ZonedDateTime> generationTime, StatusUpdater statusUpdater) {
+    static TransactionalOperation<TransactionContext, ChargeEntity> changeStatusTo(ChargeDao chargeDao, ChargeEventDao chargeEventDao, String chargeId, ChargeStatus targetStatus, Optional<ZonedDateTime> generationTime) {
         return context -> chargeDao.findByExternalId(chargeId)
                 .map(chargeEntity -> {
                     logger.info("Charge status to update - charge_external_id={}, status={}, to_status={}",
                             chargeEntity.getExternalId(), chargeEntity.getStatus(), targetStatus);
                     chargeEntity.setStatus(targetStatus);
                     chargeEventDao.persistChargeEventOf(chargeEntity, generationTime);
-                    statusUpdater.updateChargeTransactionStatus(chargeEntity.getExternalId(), targetStatus);
                     return chargeEntity;
                 })
                 .orElseThrow(() -> new ChargeNotFoundRuntimeException(chargeId));
@@ -51,12 +49,10 @@ class CancelServiceFunctions {
     static PreTransactionalOperation<TransactionContext, ChargeEntity> prepareForTerminate(ChargeDao chargeDao,
                                                                                            ChargeEventDao chargeEventDao,
                                                                                            String chargeId,
-                                                                                           StatusFlow statusFlow,
-                                                                                           StatusUpdater statusUpdater) {
+                                                                                           StatusFlow statusFlow) {
         return context -> chargeDao.findByExternalId(chargeId).map(chargeEntity -> {
-            ChargeStatus newStatus = statusFlow.getLockState();
             if (!chargeEntity.hasStatus(statusFlow.getTerminatableStatuses())) {
-                if (chargeEntity.hasStatus(newStatus)) {
+                if (chargeEntity.hasStatus(statusFlow.getLockState())) {
                     throw new OperationAlreadyInProgressRuntimeException(statusFlow.getName(), chargeId);
                 } else if (chargeEntity.hasStatus(ChargeStatus.AUTHORISATION_READY, AUTHORISATION_3DS_READY)) {
                     throw new ConflictRuntimeException(chargeEntity.getExternalId());
@@ -67,8 +63,7 @@ class CancelServiceFunctions {
 
                 throw new IllegalStateRuntimeException(chargeId);
             }
-            chargeEntity.setStatus(newStatus);
-            statusUpdater.updateChargeTransactionStatus(chargeEntity.getExternalId(), newStatus);
+            chargeEntity.setStatus(statusFlow.getLockState());
             GatewayAccountEntity gatewayAccount = chargeEntity.getGatewayAccount();
 
             logger.info("Card cancel request sent - charge_external_id={}, charge_status={}, account_id={}, transaction_id={}, amount={}, operation_type={}, provider={}, provider_type={}, locking_status={}",
@@ -80,10 +75,9 @@ class CancelServiceFunctions {
                     OperationType.CANCELLATION.getValue(),
                     gatewayAccount.getGatewayName(),
                     gatewayAccount.getType(),
-                    newStatus);
+                    statusFlow.getLockState());
 
             chargeEventDao.persistChargeEventOf(chargeEntity, Optional.empty());
-
             return chargeEntity;
         }).orElseThrow(() -> new ChargeNotFoundRuntimeException(chargeId));
     }

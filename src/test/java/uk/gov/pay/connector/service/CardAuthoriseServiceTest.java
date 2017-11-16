@@ -8,7 +8,6 @@ import org.apache.commons.lang3.tuple.Pair;
 import org.junit.Before;
 import org.junit.Test;
 import org.junit.runner.RunWith;
-import org.mockito.InOrder;
 import org.mockito.Mock;
 import org.mockito.runners.MockitoJUnitRunner;
 import uk.gov.pay.connector.dao.Card3dsDao;
@@ -19,7 +18,6 @@ import uk.gov.pay.connector.exception.IllegalStateRuntimeException;
 import uk.gov.pay.connector.exception.OperationAlreadyInProgressRuntimeException;
 import uk.gov.pay.connector.model.GatewayError;
 import uk.gov.pay.connector.model.domain.*;
-import uk.gov.pay.connector.model.domain.transaction.ChargeTransactionEntity;
 import uk.gov.pay.connector.model.gateway.GatewayResponse;
 import uk.gov.pay.connector.model.gateway.GatewayResponse.GatewayResponseBuilder;
 import uk.gov.pay.connector.service.BaseAuthoriseResponse.AuthoriseStatus;
@@ -75,7 +73,6 @@ public class CardAuthoriseServiceTest extends CardServiceTest {
     private Card3dsDao mockCard3dsDao;
 
     private CardAuthoriseService cardAuthorisationService;
-    private PaymentRequestEntity paymentRequest;
 
     @Before
     public void setUpCardAuthorisationService() {
@@ -84,15 +81,12 @@ public class CardAuthoriseServiceTest extends CardServiceTest {
         when(mockEnvironment.metrics()).thenReturn(mockMetricRegistry);
         cardAuthorisationService = new CardAuthoriseService(mockedChargeDao, mockedChargeEventDao,
                 mockedCardTypeDao, mockCardDao, mockedProviders, mockExecutorService,
-                auth3dsDetailsFactory, mockEnvironment, mockCard3dsDao, mockPaymentRequestDao, mockStatusUpdater);
+                auth3dsDetailsFactory, mockEnvironment, mockCard3dsDao);
     }
 
     @Before
     public void configureChargeDaoMock() {
         when(mockedChargeDao.findByExternalId(charge.getExternalId())).thenReturn(Optional.of(charge));
-        paymentRequest = PaymentRequestEntity.from(charge, ChargeTransactionEntity.from(charge));
-        when(mockPaymentRequestDao.findByExternalId(charge.getExternalId())).thenReturn(Optional.of(paymentRequest));
-        when(mockPaymentRequestDao.findByExternalId(charge.getExternalId())).thenReturn(Optional.of(paymentRequest));
     }
 
     public void mockExecutorServiceWillReturnCompletedResultWithSupplierReturnValue() {
@@ -135,11 +129,6 @@ public class CardAuthoriseServiceTest extends CardServiceTest {
         verify(mockedChargeEventDao).persistChargeEventOf(charge, Optional.empty());
         assertThat(charge.get3dsDetails(), is(nullValue()));
         assertThat(charge.getCardDetails(), is(notNullValue()));
-        assertThat(paymentRequest.getChargeTransaction().getGatewayTransactionId(), is(TRANSACTION_ID));
-
-        InOrder inOrder = inOrder(mockStatusUpdater);
-        inOrder.verify(mockStatusUpdater).updateChargeTransactionStatus(charge.getExternalId(), AUTHORISATION_READY);
-        inOrder.verify(mockStatusUpdater).updateChargeTransactionStatus(charge.getExternalId(), AUTHORISATION_SUCCESS);
     }
 
     @Test
@@ -161,7 +150,6 @@ public class CardAuthoriseServiceTest extends CardServiceTest {
         assertThat(charge.getStatus(), is(AUTHORISATION_SUCCESS.getValue()));
         assertThat(charge.getGatewayTransactionId(), is(TRANSACTION_ID));
         assertThat(charge.get3dsDetails(), is(nullValue()));
-        assertThat(paymentRequest.getChargeTransaction().getGatewayTransactionId(), is(TRANSACTION_ID));
         verify(mockedChargeEventDao).persistChargeEventOf(charge, Optional.empty());
     }
 
@@ -224,7 +212,6 @@ public class CardAuthoriseServiceTest extends CardServiceTest {
             fail("Won’t get this far");
         } catch (RuntimeException e) {
             assertThat(charge.getGatewayTransactionId(), is(generatedTransactionId));
-            assertThat(paymentRequest.getChargeTransaction().getGatewayTransactionId(), is(generatedTransactionId));
         }
     }
 
@@ -271,7 +258,6 @@ public class CardAuthoriseServiceTest extends CardServiceTest {
         assertThat(response.isSuccessful(), is(true));
         assertThat(charge.getStatus(), is(AUTHORISATION_REJECTED.getValue()));
         assertThat(charge.getGatewayTransactionId(), is(TRANSACTION_ID));
-        assertThat(paymentRequest.getChargeTransaction().getGatewayTransactionId(), is(TRANSACTION_ID));
     }
 
     @Test
@@ -286,7 +272,6 @@ public class CardAuthoriseServiceTest extends CardServiceTest {
         assertThat(response.isSuccessful(), is(true));
         assertThat(charge.getStatus(), is(AUTHORISATION_CANCELLED.getValue()));
         assertThat(charge.getGatewayTransactionId(), is(TRANSACTION_ID));
-        assertThat(paymentRequest.getChargeTransaction().getGatewayTransactionId(), is(TRANSACTION_ID));
     }
 
     @Test
@@ -299,7 +284,6 @@ public class CardAuthoriseServiceTest extends CardServiceTest {
         assertThat(response.isFailed(), is(true));
         assertThat(charge.getStatus(), is(AUTHORISATION_ERROR.getValue()));
         assertThat(charge.getGatewayTransactionId(), is(nullValue()));
-        assertThat(paymentRequest.getChargeTransaction().getGatewayTransactionId(), is(nullValue()));
     }
 
     @Test
