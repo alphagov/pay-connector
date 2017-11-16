@@ -930,4 +930,8 @@
             </column>
         </createTable>
     </changeSet>
+
+    <changeSet id="delete all transactions after failed rolled back" author="">
+        <delete tableName="transactions" />
+    </changeSet>
 </databaseChangeLog>
