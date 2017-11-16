@@ -1,15 +1,18 @@
 package uk.gov.pay.connector.model.domain.transaction;
 
-import uk.gov.pay.connector.exception.InvalidStateTransitionException;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import uk.gov.pay.connector.model.domain.*;
 
 import javax.persistence.*;
 
+import static java.lang.String.format;
 import static uk.gov.pay.connector.model.domain.PaymentGatewayStateTransitions.defaultTransitions;
 
 @Entity
 @DiscriminatorValue(value = "CHARGE")
 public class ChargeTransactionEntity extends TransactionEntity<ChargeStatus> {
+    private static final Logger logger = LoggerFactory.getLogger(ChargeTransactionEntity.class);
 
     @Column(name = "gateway_transaction_id")
     private String gatewayTransactionId;
@@ -27,7 +30,14 @@ public class ChargeTransactionEntity extends TransactionEntity<ChargeStatus> {
 
     public void setStatus(ChargeStatus status) {
         if (this.status != null && !defaultTransitions().isValidTransition(this.status, status)) {
-            throw new InvalidStateTransitionException(this.status.getValue(), status.getValue());
+            logger.warn(
+                    format("Charge state transition [%s] -> [%s] not allowed for externalId [%s] transactionId [%s]",
+                            this.status.getValue(),
+                            status.getValue(),
+                            (getPaymentRequest() != null) ? getPaymentRequest().getExternalId() : "not set",
+                            getId()
+                    )
+            );
         }
         this.status = status;
     }

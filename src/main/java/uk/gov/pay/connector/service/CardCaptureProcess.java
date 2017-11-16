@@ -50,7 +50,12 @@ public class CardCaptureProcess {
 
             chargesToCapture.forEach((charge) -> {
                 if (shouldRetry(charge)) {
-                    captureService.doCapture(charge.getExternalId());
+                    try {
+                        captureService.doCapture(charge.getExternalId());
+                    } catch (Exception e) {
+                        logger.error("Exception when running capture for [" + charge.getExternalId() + "]", e);
+                        throw e;
+                    }
                 } else {
                     captureService.markChargeAsCaptureError(charge.getExternalId());
                 }
