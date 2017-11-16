@@ -84,21 +84,21 @@ public class DatabaseHealthCheck extends HealthCheck {
     }
 
     private void updateMetricData(Connection connection) {
-        try (Statement statement = connection.createStatement()) {
-            statement.execute("select * from pg_stat_database where datname='connector';");
-            try (ResultSet resultSet = statement.getResultSet()) {
-                resultSet.next();
-                for (String key : longDatabaseStatsMap.keySet()) {
-                    longDatabaseStatsMap.put(key, resultSet.getLong(key));
-                }
-                for (String key : doubleDatabaseStatsMap.keySet()) {
-                    doubleDatabaseStatsMap.put(key, resultSet.getDouble(key));
-                }
-            }
-            statsHealthy = 1;
-        } catch (SQLException e) {
-            statsHealthy = 0;
-        }
+//        try (Statement statement = connection.createStatement()) {
+//            statement.execute("select * from pg_stat_database where datname='connector' limit 1;");
+//            try (ResultSet resultSet = statement.getResultSet()) {
+//                resultSet.next();
+//                for (String key : longDatabaseStatsMap.keySet()) {
+//                    longDatabaseStatsMap.put(key, resultSet.getLong(key));
+//                }
+//                for (String key : doubleDatabaseStatsMap.keySet()) {
+//                    doubleDatabaseStatsMap.put(key, resultSet.getDouble(key));
+//                }
+//            }
+//            statsHealthy = 1;
+//        } catch (SQLException e) {
+//            statsHealthy = 0;
+//        }
 
     }
 
