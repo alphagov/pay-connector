@@ -930,4 +930,12 @@
             </column>
         </createTable>
     </changeSet>
+
+    <changeSet id="add notify settings column to gateway_accounts table" author="">
+        <addColumn tableName="gateway_accounts">
+            <column name="notify_settings" type="json">
+                <constraints nullable="true" unique="false"/>
+            </column>
+        </addColumn>
+    </changeSet>
 </databaseChangeLog>
