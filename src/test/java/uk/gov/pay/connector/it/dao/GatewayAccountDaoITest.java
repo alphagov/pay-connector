@@ -11,13 +11,25 @@ import uk.gov.pay.connector.model.domain.GatewayAccountResourceDTO;
 import uk.gov.pay.connector.model.domain.NotificationCredentials;
 
 import java.io.IOException;
-import java.util.*;
+import java.util.Arrays;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
+import java.util.Optional;
 
 import static java.util.Collections.emptyMap;
 import static org.hamcrest.CoreMatchers.allOf;
 import static org.hamcrest.MatcherAssert.assertThat;
-import static org.hamcrest.Matchers.*;
-import static org.junit.Assert.*;
+import static org.hamcrest.Matchers.contains;
+import static org.hamcrest.Matchers.containsInAnyOrder;
+import static org.hamcrest.Matchers.hasEntry;
+import static org.hamcrest.Matchers.hasProperty;
+import static org.hamcrest.Matchers.is;
+import static org.hamcrest.Matchers.notNullValue;
+import static org.hamcrest.Matchers.nullValue;
+import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertNotNull;
+import static org.junit.Assert.assertTrue;
 import static uk.gov.pay.connector.model.domain.GatewayAccountEntity.Type.TEST;
 
 public class GatewayAccountDaoITest extends DaoITestBase {
@@ -267,6 +279,29 @@ public class GatewayAccountDaoITest extends DaoITestBase {
         assertEquals("provider-3", gatewayAccounts.get(2).getPaymentProvider());
         assertThat(gatewayAccounts.get(1).getAccountId(), is(456L));
         assertThat(gatewayAccounts.get(2).getAccountId(), is(789L));
+    }
+
+    @Test
+    public void shouldSaveNotifySettings() throws Exception {
+        Long accountId = Long.valueOf("12345678");
+        String fuser = "fuser";
+        String notifyAPIToken = "a_token";
+        String notifyTemplateId = "a_template_id";
+
+        databaseTestHelper.addGatewayAccount(accountId.toString(), "provider-1", ImmutableMap.of("user", fuser, "password", "word"), "service-name-1", TEST, "description-1", "analytics-id-1");
+        Optional<GatewayAccountEntity> gatewayAccountOptional = gatewayAccountDao.findById(accountId);
+        assertThat(gatewayAccountOptional.isPresent(), is(true));
+        GatewayAccountEntity gatewayAccountEntity = gatewayAccountOptional.get();
+        assertThat(gatewayAccountEntity.getNotifySettings(), is(nullValue()));
+        Map<String, String> notifySettings = ImmutableMap.of("notify_api_token", notifyAPIToken, "notify_template_id", notifyTemplateId);
+        gatewayAccountEntity.setNotifySettings(notifySettings);
+        gatewayAccountDao.merge(gatewayAccountEntity);
+
+        notifySettings = databaseTestHelper.getNotifySettings(accountId);
+
+        assertThat(notifySettings.size(), is(2));
+        assertThat(notifySettings.get("notify_api_token"), is(notifyAPIToken));
+        assertThat(notifySettings.get("notify_template_id"), is(notifyTemplateId));
     }
 
     private DatabaseFixtures.TestCardType createMastercardCreditCardTypeRecord() {
