@@ -4,7 +4,6 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import uk.gov.pay.connector.dao.ChargeDao;
 import uk.gov.pay.connector.dao.ChargeEventDao;
-import uk.gov.pay.connector.dao.PaymentRequestDao;
 import uk.gov.pay.connector.exception.ChargeNotFoundRuntimeException;
 import uk.gov.pay.connector.exception.ConflictRuntimeException;
 import uk.gov.pay.connector.exception.IllegalStateRuntimeException;
@@ -35,14 +34,15 @@ class CancelServiceFunctions {
 
     private static final Logger logger = LoggerFactory.getLogger(CancelServiceFunctions.class);
 
-    static TransactionalOperation<TransactionContext, ChargeEntity> changeStatusTo(ChargeDao chargeDao, ChargeEventDao chargeEventDao, String chargeId, ChargeStatus targetStatus, Optional<ZonedDateTime> generationTime, StatusUpdater statusUpdater) {
+    static TransactionalOperation<TransactionContext, ChargeEntity> changeStatusTo(ChargeDao chargeDao, ChargeEventDao chargeEventDao, String chargeId, ChargeStatus targetStatus, Optional<ZonedDateTime> generationTimeOptional, StatusUpdater statusUpdater) {
         return context -> chargeDao.findByExternalId(chargeId)
                 .map(chargeEntity -> {
                     logger.info("Charge status to update - charge_external_id={}, status={}, to_status={}",
                             chargeEntity.getExternalId(), chargeEntity.getStatus(), targetStatus);
                     chargeEntity.setStatus(targetStatus);
-                    chargeEventDao.persistChargeEventOf(chargeEntity, generationTime);
-                    statusUpdater.updateChargeTransactionStatus(chargeEntity.getExternalId(), targetStatus);
+                    chargeEventDao.persistChargeEventOf(chargeEntity, generationTimeOptional);
+                    statusUpdater.updateChargeTransactionStatus(chargeEntity.getExternalId(), targetStatus, generationTimeOptional.orElse(null));
+
                     return chargeEntity;
                 })
                 .orElseThrow(() -> new ChargeNotFoundRuntimeException(chargeId));

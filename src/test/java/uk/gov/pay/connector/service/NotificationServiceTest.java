@@ -11,7 +11,6 @@ import org.mockito.Mock;
 import org.mockito.runners.MockitoJUnitRunner;
 import uk.gov.pay.connector.dao.ChargeDao;
 import uk.gov.pay.connector.dao.ChargeEventDao;
-import uk.gov.pay.connector.dao.PaymentRequestDao;
 import uk.gov.pay.connector.dao.RefundDao;
 import uk.gov.pay.connector.exception.InvalidStateTransitionException;
 import uk.gov.pay.connector.model.Notification;
@@ -316,7 +315,13 @@ public class NotificationServiceTest {
         verify(mockedChargeEventDao).persistChargeEventOf(argThat(obj -> mockedChargeEntity.equals(obj)), generatedTimeCaptor.capture());
 
         assertTrue(ChronoUnit.SECONDS.between((ZonedDateTime) generatedTimeCaptor.getValue().get(), ZonedDateTime.now()) < 10);
-        verify(mockedStatusUpdater).updateChargeTransactionStatus(mockedChargeEntity.getExternalId(), ChargeStatus.CAPTURED);
+        notifications.get().forEach(notification ->
+                verify(mockedStatusUpdater).updateChargeTransactionStatus(
+                        mockedChargeEntity.getExternalId(),
+                        ChargeStatus.CAPTURED,
+                        notification.getGatewayEventDate()
+                )
+        );
         verifyNoMoreInteractions(ignoreStubs(mockedChargeDao));
     }
 

@@ -33,6 +33,7 @@ import uk.gov.pay.connector.model.gateway.GatewayResponse.GatewayResponseBuilder
 import uk.gov.pay.connector.service.worldpay.WorldpayCaptureResponse;
 
 import javax.persistence.OptimisticLockException;
+import java.time.ZonedDateTime;
 import java.util.List;
 import java.util.Optional;
 
@@ -169,7 +170,7 @@ public class CardCaptureServiceTest extends CardServiceTest {
         InOrder inOrderVerifier = inOrder(mockStatusUpdater);
         inOrderVerifier.verify(mockStatusUpdater).updateChargeTransactionStatus(charge.getExternalId(), CAPTURE_READY);
         inOrderVerifier.verify(mockStatusUpdater).updateChargeTransactionStatus(charge.getExternalId(), CAPTURE_SUBMITTED);
-        inOrderVerifier.verify(mockStatusUpdater).updateChargeTransactionStatus(charge.getExternalId(), CAPTURED);
+        inOrderVerifier.verify(mockStatusUpdater).updateChargeTransactionStatus(eq(charge.getExternalId()), eq(CAPTURED), any(ZonedDateTime.class));
 
         // only the CAPTURED has a bookingDate
         assertFalse(bookingDateCaptor.getAllValues().get(0).isPresent());

@@ -10,7 +10,6 @@ import org.mockito.internal.hamcrest.HamcrestArgumentMatcher;
 import org.mockito.runners.MockitoJUnitRunner;
 import uk.gov.pay.connector.dao.ChargeDao;
 import uk.gov.pay.connector.dao.ChargeEventDao;
-import uk.gov.pay.connector.dao.PaymentRequestDao;
 import uk.gov.pay.connector.exception.ChargeNotFoundRuntimeException;
 import uk.gov.pay.connector.model.CancelGatewayRequest;
 import uk.gov.pay.connector.model.domain.ChargeEntity;
@@ -85,7 +84,7 @@ public class ChargeCancelServiceTest {
         assertThat(chargeEntity.getStatus(), is(SYSTEM_CANCELLED.getValue()));
 
         verify(mockChargeEventDao).persistChargeEventOf(chargeEntity, Optional.empty());
-        verify(mockStatusUpdater).updateChargeTransactionStatus(chargeEntity.getExternalId(), SYSTEM_CANCELLED);
+        verify(mockStatusUpdater).updateChargeTransactionStatus(chargeEntity.getExternalId(), SYSTEM_CANCELLED, null);
     }
 
     @Test
@@ -152,7 +151,7 @@ public class ChargeCancelServiceTest {
         assertThat(chargeEntity.getStatus(), is(USER_CANCELLED.getValue()));
 
         verify(mockChargeEventDao).persistChargeEventOf(chargeEntity, Optional.empty());
-        verify(mockStatusUpdater).updateChargeTransactionStatus(chargeEntity.getExternalId(), USER_CANCELLED);
+        verify(mockStatusUpdater).updateChargeTransactionStatus(chargeEntity.getExternalId(), USER_CANCELLED, null);
     }
 
     @Test

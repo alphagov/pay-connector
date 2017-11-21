@@ -121,7 +121,7 @@ public class ChargeExpiryServiceTest {
 
                     verify(mockPaymentProvider, never()).cancel(any());
                     assertThat(chargeEntity.getStatus(), is(ChargeStatus.EXPIRED.getValue()));
-                    verify(mockStatusUpdater).updateChargeTransactionStatus(chargeEntity.getExternalId(), ChargeStatus.EXPIRED);
+                    verify(mockStatusUpdater).updateChargeTransactionStatus(chargeEntity.getExternalId(), ChargeStatus.EXPIRED, null);
                 });
     }
 
