@@ -72,6 +72,10 @@ public class GatewayAccountEntity extends AbstractEntity {
     @Column(name = "requires_3ds")
     private boolean requires3ds;
 
+    @Column(name = "notify_settings", columnDefinition = "json")
+    @Convert(converter = JsonToMapConverter.class)
+    private Map<String, String> notifySettings;
+
     @JsonBackReference
     @OneToOne(mappedBy = "accountEntity", cascade = CascadeType.PERSIST)
     private EmailNotificationEntity emailNotification;
@@ -192,6 +196,14 @@ public class GatewayAccountEntity extends AbstractEntity {
 
     public void setType(Type type) {
         this.type = type;
+    }
+
+    public void setNotifySettings(Map<String, String> notifySettings){
+        this.notifySettings = notifySettings;
+    }
+
+    public Map<String, String> getNotifySettings() {
+        return notifySettings;
     }
 
     public Map<String, String> withoutCredentials() {

@@ -498,5 +498,15 @@ public class DatabaseTestHelper {
         );
     }
 
+    public Map<String, String> getNotifySettings(Long gatewayAccountId) {
+
+        String jsonString = jdbi.withHandle(h ->
+                h.createQuery("SELECT notify_settings from gateway_accounts WHERE id = :gatewayAccountId")
+                        .bind("gatewayAccountId", gatewayAccountId)
+                        .map(StringColumnMapper.INSTANCE)
+                        .first()
+        );
+        return new Gson().fromJson(jsonString, Map.class);
+    }
 
 }
