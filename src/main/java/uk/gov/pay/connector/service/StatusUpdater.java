@@ -24,13 +24,13 @@ public class StatusUpdater {
         paymentRequestDao.findByExternalId(externalId).ifPresent(paymentRequestEntity -> {
             if (paymentRequestEntity.hasChargeTransaction()) {
                 ChargeTransactionEntity chargeTransaction = paymentRequestEntity.getChargeTransaction();
-                chargeTransaction.setStatus(newChargeStatus);
                 logger.info(String.format("Changing transaction status for externalId [%s] transactionId [%s] [%s]->[%s]",
                         externalId,
                         chargeTransaction.getId(),
                         chargeTransaction.getStatus().getValue(),
                         newChargeStatus.getValue())
                 );
+                chargeTransaction.setStatus(newChargeStatus);
             } else {
                 logger.info(
                         String.format("Not updating transaction status for externalId [%s] to [%s] charge transaction not found",

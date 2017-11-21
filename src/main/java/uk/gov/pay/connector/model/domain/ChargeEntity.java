@@ -154,12 +154,12 @@ public class ChargeEntity extends AbstractEntity {
 
     public void setStatus(ChargeStatus targetStatus) throws InvalidStateTransitionException {
         if (defaultTransitions().isValidTransition(fromString(this.status), targetStatus)) {
-            this.status = targetStatus.getValue();
             logger.info(String.format("Changing charge status for externalId [%s] [%s]->[%s]",
                     externalId,
                     this.status,
                     targetStatus.getValue())
             );
+            this.status = targetStatus.getValue();
         } else {
             throw new InvalidStateTransitionException(this.status, targetStatus.getValue());
         }
