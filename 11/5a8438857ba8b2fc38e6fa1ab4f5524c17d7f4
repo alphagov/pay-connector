@@ -23,3 +23,5 @@ release.tag=alpha_production-2-migration-3
 release.alpha_production-2-migration-3.date=2017-11-21:14:33:54
 
 release.tag=alpha_test-12-migration-13
+
+release.alpha_test-12-migration-13.date=2017-11-21:17:33:16
