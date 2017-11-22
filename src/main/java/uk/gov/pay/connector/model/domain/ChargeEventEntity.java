@@ -2,14 +2,29 @@ package uk.gov.pay.connector.model.domain;
 
 import com.fasterxml.jackson.annotation.JsonIgnore;
 
-import javax.persistence.*;
+import javax.persistence.Column;
+import javax.persistence.Convert;
+import javax.persistence.Entity;
+import javax.persistence.GeneratedValue;
+import javax.persistence.GenerationType;
+import javax.persistence.Id;
+import javax.persistence.JoinColumn;
+import javax.persistence.ManyToOne;
+import javax.persistence.SequenceGenerator;
+import javax.persistence.Table;
 import java.time.ZonedDateTime;
 import java.util.Optional;
 
 @Entity
 @Table(name = "charge_events")
-@SequenceGenerator(name = "charge_events_charge_id_seq", sequenceName = "charge_events_charge_id_seq", allocationSize = 1)
-public class ChargeEventEntity extends AbstractEntity {
+@SequenceGenerator(name = "charge_events_id_seq",
+        sequenceName = "charge_events_id_seq", allocationSize = 1)
+public class ChargeEventEntity extends AbstractVersionedEntity {
+
+    @Id
+    @GeneratedValue(strategy = GenerationType.SEQUENCE, generator = "charge_events_id_seq")
+    @JsonIgnore
+    private Long id;
 
     @JsonIgnore
     @ManyToOne
@@ -34,6 +49,14 @@ public class ChargeEventEntity extends AbstractEntity {
         this.status = chargeStatus;
         this.gatewayEventDate = gatewayEventDate.orElse(null);
         this.updated = updated;
+    }
+
+    public Long getId() {
+        return id;
+    }
+
+    public void setId(Long id) {
+        this.id = id;
     }
 
     public ChargeStatus getStatus() {

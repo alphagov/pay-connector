@@ -1,12 +1,28 @@
 package uk.gov.pay.connector.model.domain;
 
-import javax.persistence.*;
+import com.fasterxml.jackson.annotation.JsonIgnore;
+
+import javax.persistence.Column;
+import javax.persistence.Entity;
+import javax.persistence.GeneratedValue;
+import javax.persistence.GenerationType;
+import javax.persistence.Id;
+import javax.persistence.JoinColumn;
+import javax.persistence.ManyToOne;
+import javax.persistence.SequenceGenerator;
+import javax.persistence.Table;
 import java.util.UUID;
 
 @Entity
 @Table(name = "tokens")
-@SequenceGenerator(name = "tokens_id_seq", sequenceName = "tokens_id_seq", allocationSize = 1)
-public class TokenEntity extends AbstractEntity {
+@SequenceGenerator(name = "tokens_id_seq",
+        sequenceName = "tokens_id_seq", allocationSize = 1)
+public class TokenEntity extends AbstractVersionedEntity {
+
+    @Id
+    @GeneratedValue(strategy = GenerationType.SEQUENCE, generator = "tokens_id_seq")
+    @JsonIgnore
+    private Long id;
 
     @Column(name = "secure_redirect_token")
     private String token;
@@ -23,6 +39,14 @@ public class TokenEntity extends AbstractEntity {
         tokenEntity.setChargeEntity(chargeEntity);
         tokenEntity.setToken(UUID.randomUUID().toString());
         return tokenEntity;
+    }
+
+    public Long getId() {
+        return id;
+    }
+
+    public void setId(Long id) {
+        this.id = id;
     }
 
     public String getToken() {

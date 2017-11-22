@@ -1,5 +1,6 @@
 package uk.gov.pay.connector.model.domain;
 
+import com.fasterxml.jackson.annotation.JsonIgnore;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import uk.gov.pay.connector.exception.InvalidStateTransitionException;
@@ -7,7 +8,22 @@ import uk.gov.pay.connector.model.api.ExternalChargeState;
 import uk.gov.pay.connector.service.PaymentGatewayName;
 import uk.gov.pay.connector.util.RandomIdGenerator;
 
-import javax.persistence.*;
+import javax.persistence.Access;
+import javax.persistence.AccessType;
+import javax.persistence.Column;
+import javax.persistence.Convert;
+import javax.persistence.Embedded;
+import javax.persistence.Entity;
+import javax.persistence.FetchType;
+import javax.persistence.GeneratedValue;
+import javax.persistence.GenerationType;
+import javax.persistence.Id;
+import javax.persistence.JoinColumn;
+import javax.persistence.ManyToOne;
+import javax.persistence.OneToMany;
+import javax.persistence.OrderBy;
+import javax.persistence.SequenceGenerator;
+import javax.persistence.Table;
 import java.time.ZoneId;
 import java.time.ZonedDateTime;
 import java.util.ArrayList;
@@ -15,15 +31,24 @@ import java.util.Arrays;
 import java.util.List;
 
 import static org.apache.commons.lang3.StringUtils.equalsIgnoreCase;
-import static uk.gov.pay.connector.model.domain.ChargeStatus.*;
+import static uk.gov.pay.connector.model.domain.ChargeStatus.CAPTURED;
+import static uk.gov.pay.connector.model.domain.ChargeStatus.CAPTURE_SUBMITTED;
+import static uk.gov.pay.connector.model.domain.ChargeStatus.CREATED;
+import static uk.gov.pay.connector.model.domain.ChargeStatus.fromString;
 import static uk.gov.pay.connector.model.domain.PaymentGatewayStateTransitions.defaultTransitions;
 
 @Entity
 @Table(name = "charges")
-@SequenceGenerator(name = "charges_charge_id_seq", sequenceName = "charges_charge_id_seq", allocationSize = 1)
 @Access(AccessType.FIELD)
-public class ChargeEntity extends AbstractEntity {
+@SequenceGenerator(name = "charges_charge_id_seq",
+        sequenceName = "charges_charge_id_seq", allocationSize = 1)
+public class ChargeEntity extends AbstractVersionedEntity {
     private final static Logger logger = LoggerFactory.getLogger(ChargeEntity.class);
+
+    @Id
+    @GeneratedValue(strategy = GenerationType.SEQUENCE, generator = "charges_charge_id_seq")
+    @JsonIgnore
+    private Long id;
 
     @Column(name = "external_id")
     private String externalId;
@@ -94,6 +119,14 @@ public class ChargeEntity extends AbstractEntity {
         this.createdDate = createdDate;
         this.externalId = RandomIdGenerator.newId();
         this.email = email;
+    }
+
+    public Long getId() {
+        return id;
+    }
+
+    public void setId(Long id) {
+        this.id = id;
     }
 
     public Long getAmount() {
