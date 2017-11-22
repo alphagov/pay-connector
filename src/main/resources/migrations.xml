@@ -938,4 +938,42 @@
             </column>
         </addColumn>
     </changeSet>
+
+    <changeSet id="create table transaction events" author="">
+        <createTable tableName="transaction_events">
+            <column name="id" type="bigserial" autoIncrement="true">
+                <constraints primaryKey="true" nullable="false"/>
+            </column>
+            <column name="transaction_id" type="bigint">
+                <constraints foreignKeyName="fk__transactions_id"
+                             referencedTableName="transactions"
+                             referencedColumnNames="id" nullable="false"/>
+            </column>
+            <column name="status" type="text">
+                <constraints nullable="false"/>
+            </column>
+            <column name="updated" type="timestamp without timezone"
+                    defaultValueComputed="(now() at time zone 'utc')">
+                <constraints nullable="false"/>
+            </column>
+            <column name="gateway_event_date" type="timestamp without timezone">
+                <constraints nullable="true"/>
+            </column>
+            <column name="version" type="bigint" defaultValue="0">
+                <constraints nullable="false"/>
+            </column>
+            <column name="operation" type="text">
+                <constraints nullable="false"/>
+            </column>
+        </createTable>
+    </changeSet>
+
+    <changeSet id="createIndex transaction_events.transaction_id" author="">
+        <createIndex indexName="idx_transaction_events_transaction_id"
+                     tableName="transaction_events"
+                     unique="false">
+            <column name="transaction_id"/>
+        </createIndex>
+    </changeSet>
+
 </databaseChangeLog>
