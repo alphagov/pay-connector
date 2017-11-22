@@ -2,18 +2,27 @@ package uk.gov.pay.connector.dao;
 
 import com.google.inject.Provider;
 import com.google.inject.persist.Transactional;
-import uk.gov.pay.connector.model.domain.ChargeEntity;
 import uk.gov.pay.connector.model.domain.RefundEntity;
 import uk.gov.pay.connector.model.domain.RefundHistory;
 import uk.gov.pay.connector.model.domain.RefundStatus;
 
 import javax.inject.Inject;
 import javax.persistence.EntityManager;
+import javax.persistence.criteria.CriteriaBuilder;
+import javax.persistence.criteria.CriteriaQuery;
+import javax.persistence.criteria.Root;
+import java.time.ZonedDateTime;
 import java.util.List;
 import java.util.Optional;
 
 @Transactional
 public class RefundDao extends JpaDao<RefundEntity> {
+
+    private static final String ID = "id";
+    private static final String STATUS = "status";
+    private static final String CREATED_DATE = "createdDate";
+    private static final String CHARGE_ENTITY = "chargeEntity";
+    private static final String GATEWAY_ACCOUNT = "gatewayAccount";
 
     @Inject
     public RefundDao(final Provider<EntityManager> entityManager) {
@@ -36,6 +45,22 @@ public class RefundDao extends JpaDao<RefundEntity> {
                 .setParameter("reference", reference)
                 .setParameter("provider", provider)
                 .getResultList().stream().findFirst();
+    }
+
+    public List<RefundEntity> findByAccountBetweenDatesWithStatusIn(Long gatewayAccountId,
+                                                                    ZonedDateTime from, ZonedDateTime to,
+                                                                    List<RefundStatus> statuses) {
+        CriteriaBuilder criteriaBuilder = entityManager.get().getCriteriaBuilder();
+        CriteriaQuery<RefundEntity> criteriaQuery = criteriaBuilder.createQuery(RefundEntity.class);
+        Root<RefundEntity> refund = criteriaQuery.from(RefundEntity.class);
+        criteriaQuery
+                .select(refund)
+                .where(
+                        criteriaBuilder.equal(refund.get(CHARGE_ENTITY).get(GATEWAY_ACCOUNT).get(ID), gatewayAccountId),
+                        criteriaBuilder.greaterThanOrEqualTo(refund.get(CREATED_DATE), from),
+                        criteriaBuilder.lessThan(refund.get(CREATED_DATE), to),
+                        refund.get(STATUS).in(statuses));
+        return entityManager.get().createQuery(criteriaQuery).getResultList();
     }
 
     public List<RefundHistory> searchHistoryByChargeId(Long chargeId) {
