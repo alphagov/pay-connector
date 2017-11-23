@@ -40,7 +40,7 @@ public final class ChargeTransactionEntityBuilder {
         ChargeTransactionEntity transactionEntity = new ChargeTransactionEntity();
         transactionEntity.setGatewayTransactionId(gatewayTransactionId);
         transactionEntity.setAmount(amount);
-        transactionEntity.setStatus(status);
+        transactionEntity.updateStatus(status);
         transactionEntity.setOperation(operation);
         return transactionEntity;
     }

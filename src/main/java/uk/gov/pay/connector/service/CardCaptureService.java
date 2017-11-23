@@ -139,8 +139,9 @@ public class CardCaptureService extends CardService implements TransactionalGate
                     //for sandbox, immediately move from CAPTURE_SUBMITTED to CAPTURED, as there will be no external notification
                     if (chargeEntity.getPaymentGatewayName() == PaymentGatewayName.SANDBOX) {
                         chargeEntity.setStatus(CAPTURED);
-                        chargeEventDao.persistChargeEventOf(chargeEntity, Optional.of(ZonedDateTime.now()));
-                        statusUpdater.updateChargeTransactionStatus(chargeEntity.getExternalId(), CAPTURED);
+                        ZonedDateTime gatewayEventTime = ZonedDateTime.now();
+                        chargeEventDao.persistChargeEventOf(chargeEntity, Optional.of(gatewayEventTime));
+                        statusUpdater.updateChargeTransactionStatus(chargeEntity.getExternalId(), CAPTURED, gatewayEventTime);
                     }
 
                     return operationResponse;

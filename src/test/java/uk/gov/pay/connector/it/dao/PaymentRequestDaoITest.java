@@ -1,13 +1,12 @@
 package uk.gov.pay.connector.it.dao;
 
-import org.hamcrest.core.IsNull;
 import org.junit.Before;
 import org.junit.Rule;
 import org.junit.Test;
 import org.junit.rules.ExpectedException;
 import uk.gov.pay.connector.dao.PaymentRequestDao;
-import uk.gov.pay.connector.exception.InvalidStateTransitionException;
 import uk.gov.pay.connector.model.domain.*;
+import uk.gov.pay.connector.model.domain.transaction.ChargeTransactionEntity;
 import uk.gov.pay.connector.service.StatusUpdater;
 
 import java.util.HashMap;
@@ -56,7 +55,7 @@ public class PaymentRequestDaoITest extends DaoITestBase {
     }
 
     @Test
-    public void shouldUpdateTransactionStatus() throws Exception {
+    public void shouldUpdateTransactionStatusAndAddEvent() throws Exception {
         PaymentRequestEntity paymentRequestEntity = aValidPaymentRequestEntity()
                 .withGatewayAccountEntity(gatewayAccount)
                 .build();
@@ -67,7 +66,12 @@ public class PaymentRequestDaoITest extends DaoITestBase {
         final Optional<PaymentRequestEntity> byExternalId =
                 paymentRequestDao.findByExternalId(paymentRequestEntity.getExternalId());
 
-        assertThat(byExternalId.get().getChargeTransaction().getStatus(), is(ChargeStatus.ENTERING_CARD_DETAILS));
+        assertThat(byExternalId.isPresent(), is(true));
+        ChargeTransactionEntity chargeTransaction = byExternalId.get().getChargeTransaction();
+        assertThat(chargeTransaction.getStatus(), is(ChargeStatus.ENTERING_CARD_DETAILS));
+        assertThat(chargeTransaction.getTransactionEvents().size(), is(2));
+        assertThat(chargeTransaction.getTransactionEvents().get(0).getStatus(), is(ChargeStatus.CREATED));
+        assertThat(chargeTransaction.getTransactionEvents().get(1).getStatus(), is(ChargeStatus.ENTERING_CARD_DETAILS));
     }
 
     @Test
