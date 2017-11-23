@@ -11,6 +11,11 @@ public class GatewayAccount {
     public static final String CREDENTIALS_PASSWORD = "password";
     public static final String CREDENTIALS_SHA_IN_PASSPHRASE = "sha_in_passphrase";
     public static final String CREDENTIALS_SHA_OUT_PASSPHRASE = "sha_out_passphrase";
+    public static final String FIELD_OPERATION = "op";
+    public static final String FIELD_OPERATION_PATH = "path";
+    public static final String FIELD_VALUES = "value";
+    public static final String FIELD_NOTIFY_API_TOKEN = "api_token";
+    public static final String FIELD_NOTIFY_TEMPLATE_ID = "template_id";
 
     private Long id;
     private String gatewayName;
