@@ -976,4 +976,25 @@
         </createIndex>
     </changeSet>
 
+    <changeSet id="backfill card_3ds table" author="">
+        <sql>
+            INSERT INTO card_3ds (
+                pa_request,
+                issuer_url,
+                worldpay_machine_cookie,
+                charge_id
+            )
+            SELECT
+                ch.pa_request_3ds,
+                ch.issuer_url_3ds,
+                ch.provider_session_id,
+                ch.id
+            FROM charges ch
+            LEFT JOIN card_3ds c ON c.charge_id = ch.id
+            WHERE c.charge_id IS NULL
+                AND ch.pa_request_3ds IS NOT NULL
+                AND ch.issuer_url_3ds IS NOT NULL;
+        </sql>
+    </changeSet>
+
 </databaseChangeLog>
