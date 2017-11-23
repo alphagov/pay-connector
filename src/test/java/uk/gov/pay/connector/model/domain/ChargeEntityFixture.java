@@ -1,5 +1,6 @@
 package uk.gov.pay.connector.model.domain;
 
+import com.google.common.collect.ImmutableMap;
 import uk.gov.pay.connector.util.RandomIdGenerator;
 
 import java.time.ZoneId;
@@ -123,6 +124,11 @@ public class ChargeEntityFixture {
 
     public ChargeEntityFixture withProviderSessionId(String providerSessionId) {
         this.providerSessionId = providerSessionId;
+        return this;
+    }
+
+    public ChargeEntityFixture withNotifySettings(ImmutableMap<String, String> notifySettings) {
+        this.gatewayAccountEntity.setNotifySettings(notifySettings);
         return this;
     }
 
