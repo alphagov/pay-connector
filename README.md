@@ -65,7 +65,7 @@ The command to run all the tests is:
 
 The [API Specification](docs/api_specification.md) provides more detail on the paths and operations including examples.
 
-### TASKS NAMESPACE
+### Tasks namespace
 
 | Path                          | Supported Methods | Description                        |
 | ----------------------------- | ----------------- | ---------------------------------- |
@@ -89,7 +89,7 @@ $ java -jar target/pay-connector-0.1-SNAPSHOT-allinone.jar
 * `render-state-transition-graph` - Outputs a representation of the connector state 
                                     transitions as a graphviz 'dot' file
 
-### API NAMESPACE
+### API namespace
 
 | Path                          | Supported Methods | Description                        |
 | ----------------------------- | ----------------- | ---------------------------------- |
@@ -111,8 +111,9 @@ $ java -jar target/pay-connector-0.1-SNAPSHOT-allinone.jar
 |[```/v1/api/accounts/{accountId}/charges/{chargeId}/refunds```](docs/api_specification.md#post-v1apiaccountschargesrefunds)  | POST   |  Submits a refund for a given charge `chargeId` and a given `accountId`           |
 |[```/v1/api/accounts/{accountId}/charges/{chargeId}/refunds```](docs/api_specification.md#get-v1apiaccountschargesrefunds)  | GET   |  Retrieves all refunds associated to a charge `chargeId` and a given `accountId`           |
 |[```/v1/api/accounts/{accountId}/charges/{chargeId}/refunds/{refundId}```](docs/api_specification.md#get-v1apiaccountschargesrefundsrefundid)  | GET   |  Retrieves a refund by `refundId` for a given charge `chargeId` and a given `accountId`           |
+|[```/v1/api/accounts/{accountId}/transactions-summary```](docs/api_specification.md#get-v1apiaccountsaccountidtransactions-summary-to-be-implemented)|GET|Retrieves payment summary totals for a given `accountId` (to be implemented)
 
-### FRONTEND NAMESPACE
+### Frontend namespace
 
 | Path                          | Supported Methods | Description                        |
 | ----------------------------- | ----------------- | ---------------------------------- |
