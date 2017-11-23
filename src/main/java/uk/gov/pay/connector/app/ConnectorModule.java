@@ -4,13 +4,14 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import com.google.inject.AbstractModule;
 import com.google.inject.Provides;
 import com.google.inject.Singleton;
+import com.google.inject.assistedinject.FactoryModuleBuilder;
 import com.google.inject.persist.jpa.JpaPersistModule;
 import io.dropwizard.db.DataSourceFactory;
 import io.dropwizard.setup.Environment;
 import uk.gov.pay.connector.model.builder.EntityBuilder;
 import uk.gov.pay.connector.service.CardExecutorService;
-import uk.gov.pay.connector.service.NotifyClientProvider;
 import uk.gov.pay.connector.service.PaymentProviders;
+import uk.gov.pay.connector.service.notify.NotifyClientFactoryProvider;
 import uk.gov.pay.connector.util.HashUtil;
 
 import java.util.Properties;
@@ -29,12 +30,12 @@ public class ConnectorModule extends AbstractModule {
         bind(ConnectorConfiguration.class).toInstance(configuration);
         bind(Environment.class).toInstance(environment);
         bind(CardExecutorService.class).in(Singleton.class);
-        bind(NotifyClientProvider.class).in(Singleton.class);
         bind(PaymentProviders.class).in(Singleton.class);
         bind(EntityBuilder.class);
         bind(HashUtil.class);
 
         install(jpaModule(configuration));
+        install(new FactoryModuleBuilder().build(NotifyClientFactoryProvider.class));
     }
 
     private JpaPersistModule jpaModule(ConnectorConfiguration configuration) {
