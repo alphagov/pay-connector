@@ -10,9 +10,9 @@ import uk.gov.pay.connector.app.ConnectorConfiguration;
 import uk.gov.pay.connector.model.domain.ChargeEntity;
 import uk.gov.pay.connector.model.domain.EmailNotificationEntity;
 import uk.gov.pay.connector.model.domain.GatewayAccountEntity;
+import uk.gov.pay.connector.service.notify.NotifyClientFactoryProvider;
 import uk.gov.pay.connector.util.DateTimeUtils;
 import uk.gov.service.notify.Notification;
-import uk.gov.service.notify.NotificationClient;
 import uk.gov.service.notify.NotificationClientException;
 import uk.gov.service.notify.SendEmailResponse;
 
@@ -31,15 +31,15 @@ public class UserNotificationService {
     private String emailTemplateId;
     private boolean emailNotifyGloballyEnabled;
     protected final Logger logger = LoggerFactory.getLogger(getClass());
-    private NotificationClient notificationClient;
+    private NotifyClientFactoryProvider notifyClientFactoryProvider;
     private ExecutorService executorService;
     private final MetricRegistry metricRegistry;
 
     @Inject
-    public UserNotificationService(NotifyClientProvider notifyClientProvider, ConnectorConfiguration configuration, Environment environment) {
+    public UserNotificationService(NotifyClientFactoryProvider notifyClientFactoryProvider, ConnectorConfiguration configuration, Environment environment) {
         readEmailConfig(configuration);
         if (emailNotifyGloballyEnabled) {
-            this.notificationClient = notifyClientProvider.get();
+            this.notifyClientFactoryProvider = notifyClientFactoryProvider;
             int numberOfThreads = configuration.getExecutorServiceConfig().getThreadsPerCpu() * getRuntime().availableProcessors();
             executorService = Executors.newFixedThreadPool(numberOfThreads);
         }
@@ -52,7 +52,8 @@ public class UserNotificationService {
             Stopwatch responseTimeStopwatch = Stopwatch.createStarted();
             return executorService.submit(() -> {
                 try {
-                    SendEmailResponse response = notificationClient.sendEmail(emailTemplateId, emailAddress, buildEmailPersonalisationFromCharge(chargeEntity), null);
+                    SendEmailResponse response = notifyClientFactoryProvider.clientFactory().getInstance()
+                            .sendEmail(emailTemplateId, emailAddress, buildEmailPersonalisationFromCharge(chargeEntity), null);
                     return Optional.of(response.getNotificationId().toString());
                 } catch (NotificationClientException e) {
                     logger.error("Failed to send confirmation email - charge_external_id=" + chargeEntity.getExternalId(), e);
@@ -68,7 +69,7 @@ public class UserNotificationService {
     }
 
     public String checkDeliveryStatus(String notificationId) throws NotificationClientException {
-        Notification notification = notificationClient.getNotificationById(notificationId);
+        Notification notification = notifyClientFactoryProvider.clientFactory().getInstance().getNotificationById(notificationId);
         return notification.getStatus();
     }
 
