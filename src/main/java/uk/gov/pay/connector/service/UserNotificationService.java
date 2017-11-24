@@ -4,21 +4,25 @@ import com.codahale.metrics.MetricRegistry;
 import com.google.common.base.Stopwatch;
 import io.dropwizard.setup.Environment;
 import org.apache.commons.lang3.StringUtils;
+import org.apache.commons.lang3.tuple.Pair;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import uk.gov.pay.connector.app.ConnectorConfiguration;
 import uk.gov.pay.connector.model.domain.ChargeEntity;
 import uk.gov.pay.connector.model.domain.EmailNotificationEntity;
 import uk.gov.pay.connector.model.domain.GatewayAccountEntity;
+import uk.gov.pay.connector.service.notify.NotifyClientFactory;
 import uk.gov.pay.connector.service.notify.NotifyClientFactoryProvider;
 import uk.gov.pay.connector.util.DateTimeUtils;
 import uk.gov.service.notify.Notification;
+import uk.gov.service.notify.NotificationClient;
 import uk.gov.service.notify.NotificationClientException;
 import uk.gov.service.notify.SendEmailResponse;
 
 import javax.inject.Inject;
 import java.math.BigDecimal;
 import java.util.HashMap;
+import java.util.Map;
 import java.util.Optional;
 import java.util.concurrent.*;
 
@@ -52,8 +56,9 @@ public class UserNotificationService {
             Stopwatch responseTimeStopwatch = Stopwatch.createStarted();
             return executorService.submit(() -> {
                 try {
-                    SendEmailResponse response = notifyClientFactoryProvider.clientFactory().getInstance()
-                            .sendEmail(emailTemplateId, emailAddress, buildEmailPersonalisationFromCharge(chargeEntity), null);
+                    Pair<NotificationClient, String> notifyClientSettings = getNotifyClientSettings(chargeEntity);
+                    SendEmailResponse response = notifyClientSettings.getLeft()
+                            .sendEmail(notifyClientSettings.getRight(), emailAddress, buildEmailPersonalisationFromCharge(chargeEntity), null);
                     return Optional.of(response.getNotificationId().toString());
                 } catch (NotificationClientException e) {
                     logger.error("Failed to send confirmation email - charge_external_id=" + chargeEntity.getExternalId(), e);
@@ -68,9 +73,19 @@ public class UserNotificationService {
         return CompletableFuture.completedFuture(Optional.empty());
     }
 
-    public String checkDeliveryStatus(String notificationId) throws NotificationClientException {
-        Notification notification = notifyClientFactoryProvider.clientFactory().getInstance().getNotificationById(notificationId);
-        return notification.getStatus();
+    private Pair<NotificationClient, String> getNotifyClientSettings(ChargeEntity chargeEntity) {
+        Map<String, String> notifySettings = chargeEntity.getGatewayAccount().getNotifySettings();
+        NotifyClientFactory notifyClientFactory = notifyClientFactoryProvider.clientFactory();
+        if (notifySettings != null
+                //TODO: replace with a constants when validator available
+                && !isBlank(notifySettings.get("api_token"))
+                && !isBlank(notifySettings.get("template_id"))) {
+
+            return Pair.of(
+                    notifyClientFactory.getInstance(notifySettings.get("api_token")),
+                    notifySettings.get("template_id"));
+        }
+        return Pair.of(notifyClientFactory.getInstance(), emailTemplateId);
     }
 
     private void readEmailConfig(ConnectorConfiguration configuration) {

@@ -27,6 +27,7 @@ import uk.gov.service.notify.SendEmailResponse;
 import java.time.ZoneId;
 import java.time.ZonedDateTime;
 import java.util.HashMap;
+import java.util.Map;
 import java.util.Optional;
 import java.util.concurrent.Future;
 import java.util.concurrent.TimeUnit;
@@ -107,25 +108,6 @@ public class UserNotificationServiceTest {
                 charge.getEmail(),
                 map, null
         );
-    }
-
-    @Test
-    public void testEmailSendingStatus() throws Exception {
-
-        when(mockNotifyClient.getNotificationById(any())).thenReturn(mockNotification);
-        when(mockNotifyClientFactoryProvider.clientFactory()).thenReturn(mockNotifyClientFactory);
-        when(mockNotifyClientFactory.getInstance()).thenReturn(mockNotifyClient);
-
-        userNotificationService = new UserNotificationService(mockNotifyClientFactoryProvider, mockConfig, mockEnvironment);
-        userNotificationService.checkDeliveryStatus("100");
-
-        ChargeEntity charge = ChargeEntityFixture.aValidChargeEntity()
-                .withCreatedDate(ZonedDateTime.of(2016, 1, 1, 1, 1, 0, 0, ZoneId.of("UTC")))
-                .build();
-        userNotificationService = new UserNotificationService(mockNotifyClientFactoryProvider, mockConfig, mockEnvironment);
-        userNotificationService.notifyPaymentSuccessEmail(charge);
-
-        verify(mockNotifyClient).getNotificationById("100");
     }
 
     @Test
@@ -249,5 +231,29 @@ public class UserNotificationServiceTest {
                 charge.getEmail(),
                 map, null
         );
+    }
+
+    @Test
+    public void shouldUse_customNonGovUkBrandedEmail_whenAccountConfiguredToCustomBranding() throws Exception {
+        when(mockConfig.getNotifyConfiguration().isEmailNotifyEnabled()).thenReturn(true);
+        when(mockNotifyClientFactoryProvider.clientFactory()).thenReturn(mockNotifyClientFactory);
+        when(mockNotifyClientFactory.getInstance(any())).thenReturn(mockNotifyClient);
+        when(mockNotifyClient.sendEmail(any(), any(), any(), any())).thenReturn(mockNotificationCreatedResponse);
+        when(mockNotificationCreatedResponse.getNotificationId()).thenReturn(randomUUID());
+        when(mockMetricRegistry.histogram(anyString())).thenReturn(mockHistogram);
+
+        ChargeEntity charge = ChargeEntityFixture.aValidChargeEntity()
+                .withCreatedDate(ZonedDateTime.of(2016, 1, 1, 10, 23, 12, 0, ZoneId.of("UTC")))
+                .withNotifySettings(ImmutableMap.of("api_token", "my-api-key", "template_id", "my-template-id"))
+                .build();
+
+        userNotificationService = new UserNotificationService(mockNotifyClientFactoryProvider, mockConfig, mockEnvironment);
+
+        Future<Optional<String>> idF = userNotificationService.notifyPaymentSuccessEmail(charge);
+        idF.get(1000, TimeUnit.SECONDS);
+
+        verify(mockNotifyClientFactory, times(1)).getInstance("my-api-key");
+        verify(mockNotifyClient, times(1)).sendEmail(eq("my-template-id"), anyString(), any(Map.class), any());
+
     }
 }
