@@ -13,31 +13,58 @@ import uk.gov.pay.connector.app.ConnectorConfiguration;
 import uk.gov.pay.connector.dao.CardTypeDao;
 import uk.gov.pay.connector.dao.GatewayAccountDao;
 import uk.gov.pay.connector.exception.CredentialsException;
+import uk.gov.pay.connector.model.NotifySettingsUpdateRequest;
 import uk.gov.pay.connector.model.domain.CardTypeEntity;
 import uk.gov.pay.connector.model.domain.GatewayAccountEntity;
 import uk.gov.pay.connector.model.domain.GatewayAccountResourceDTO;
 import uk.gov.pay.connector.model.domain.UuidAbstractEntity;
 import uk.gov.pay.connector.service.GatewayAccountNotificationCredentialsService;
+import uk.gov.pay.connector.service.GatewayAccountServicesFactory;
 import uk.gov.pay.connector.service.PaymentGatewayName;
 
 import javax.inject.Inject;
-import javax.ws.rs.*;
+import javax.ws.rs.Consumes;
+import javax.ws.rs.GET;
+import javax.ws.rs.POST;
+import javax.ws.rs.Path;
+import javax.ws.rs.PathParam;
+import javax.ws.rs.Produces;
 import javax.ws.rs.core.Context;
 import javax.ws.rs.core.Response;
 import javax.ws.rs.core.Response.Status;
 import javax.ws.rs.core.UriInfo;
 import java.io.IOException;
 import java.net.URI;
-import java.util.*;
+import java.util.Arrays;
+import java.util.Collections;
+import java.util.List;
+import java.util.Map;
+import java.util.Optional;
+import java.util.UUID;
 import java.util.stream.Collectors;
 
 import static com.google.common.collect.Maps.newHashMap;
 import static java.lang.String.format;
 import static javax.ws.rs.core.MediaType.APPLICATION_JSON;
+import static javax.ws.rs.core.Response.Status.BAD_REQUEST;
+import static javax.ws.rs.core.Response.Status.NOT_FOUND;
+import static javax.ws.rs.core.Response.Status.OK;
 import static uk.gov.pay.connector.model.domain.GatewayAccountEntity.Type;
 import static uk.gov.pay.connector.model.domain.GatewayAccountEntity.Type.TEST;
-import static uk.gov.pay.connector.resources.ApiPaths.*;
-import static uk.gov.pay.connector.util.ResponseUtil.*;
+import static uk.gov.pay.connector.resources.ApiPaths.FRONTEND_ACCOUNT_CARDTYPES_API_PATH;
+import static uk.gov.pay.connector.resources.ApiPaths.FRONTEND_ACCOUNT_CREDENTIALS_API_PATH;
+import static uk.gov.pay.connector.resources.ApiPaths.FRONTEND_ACCOUNT_SERVICENAME_API_PATH;
+import static uk.gov.pay.connector.resources.ApiPaths.FRONTEND_ACCOUNT_TOGGLE_3DS_API_PATH;
+import static uk.gov.pay.connector.resources.ApiPaths.FRONTEND_GATEWAY_ACCOUNT_API_PATH;
+import static uk.gov.pay.connector.resources.ApiPaths.GATEWAY_ACCOUNTS_API_PATH;
+import static uk.gov.pay.connector.resources.ApiPaths.GATEWAY_ACCOUNTS_DESCRIPTION_ANALYTICS_ID;
+import static uk.gov.pay.connector.resources.ApiPaths.GATEWAY_ACCOUNTS_NOTIFICATION_CREDENTIALS;
+import static uk.gov.pay.connector.resources.ApiPaths.GATEWAY_ACCOUNT_API_PATH;
+import static uk.gov.pay.connector.util.ResponseUtil.badRequestResponse;
+import static uk.gov.pay.connector.util.ResponseUtil.fieldsInvalidSizeResponse;
+import static uk.gov.pay.connector.util.ResponseUtil.fieldsMissingResponse;
+import static uk.gov.pay.connector.util.ResponseUtil.notFoundResponse;
+import static uk.gov.pay.connector.util.ResponseUtil.successResponseWithEntity;
 
 @Path("/")
 public class GatewayAccountResource {
@@ -61,14 +88,19 @@ public class GatewayAccountResource {
     private final CardTypeDao cardTypeDao;
     private final Map<String, List<String>> providerCredentialFields;
     private final GatewayAccountNotificationCredentialsService gatewayAccountNotificationCredentialsService;
+    private final GatewayAccountRequestValidator validator;
+    private final GatewayAccountServicesFactory gatewayAccountServicesFactory;
 
 
     @Inject
     public GatewayAccountResource(GatewayAccountDao gatewayDao, CardTypeDao cardTypeDao, ConnectorConfiguration conf,
-                                  GatewayAccountNotificationCredentialsService gatewayAccountNotificationCredentialsService) {
+                                  GatewayAccountNotificationCredentialsService gatewayAccountNotificationCredentialsService,
+                                  GatewayAccountRequestValidator validator, GatewayAccountServicesFactory gatewayAccountServicesFactory) {
         this.gatewayDao = gatewayDao;
         this.cardTypeDao = cardTypeDao;
         this.gatewayAccountNotificationCredentialsService = gatewayAccountNotificationCredentialsService;
+        this.validator = validator;
+        this.gatewayAccountServicesFactory = gatewayAccountServicesFactory;
         providerCredentialFields = newHashMap();
         providerCredentialFields.put("worldpay", conf.getWorldpayConfig().getCredentials());
         providerCredentialFields.put("smartpay", conf.getSmartpayConfig().getCredentials());
@@ -184,6 +216,20 @@ public class GatewayAccountResource {
         addSelfLink(newLocation, account);
 
         return Response.created(newLocation).entity(account).build();
+    }
+
+    @PATCH
+    @Path(GATEWAY_ACCOUNT_API_PATH)
+    @Consumes(APPLICATION_JSON)
+    @Produces(APPLICATION_JSON)
+    @Transactional
+    public Response patchGatewayAccount(@PathParam("accountId") Long gatewayAccountId, JsonNode payload) {
+        return validator.validatePatchRequest(payload)
+                .map(errors -> Response.status(BAD_REQUEST).entity(errors).build())
+                .orElseGet(() -> gatewayAccountServicesFactory.getNotifySettingsUpdateService()
+                        .update(gatewayAccountId, NotifySettingsUpdateRequest.from(payload))
+                        .map(gatewayAccountEntity -> Response.status(OK).build())
+                        .orElseGet(() -> Response.status(NOT_FOUND).build()));
     }
 
     @PATCH

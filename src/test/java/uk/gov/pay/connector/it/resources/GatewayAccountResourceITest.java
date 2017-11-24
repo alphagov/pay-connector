@@ -1,16 +1,19 @@
 package uk.gov.pay.connector.it.resources;
 
+import com.fasterxml.jackson.databind.ObjectMapper;
 import com.google.common.collect.ImmutableMap;
 import com.jayway.restassured.http.ContentType;
 import com.jayway.restassured.response.ValidatableResponse;
 import org.hamcrest.core.Is;
-import org.junit.Ignore;
 import org.junit.Test;
 import uk.gov.pay.connector.it.dao.DatabaseFixtures;
 
 import static com.jayway.restassured.http.ContentType.JSON;
 import static java.lang.String.format;
-import static javax.ws.rs.core.Response.Status.*;
+import static javax.ws.rs.core.Response.Status.BAD_REQUEST;
+import static javax.ws.rs.core.Response.Status.CONFLICT;
+import static javax.ws.rs.core.Response.Status.NOT_FOUND;
+import static javax.ws.rs.core.Response.Status.OK;
 import static org.hamcrest.Matchers.hasSize;
 import static org.hamcrest.Matchers.is;
 import static org.hamcrest.Matchers.nullValue;
@@ -436,4 +439,80 @@ public class GatewayAccountResourceITest extends GatewayAccountResourceTestBase 
                 .body("message", is("Credentials update failure: Invalid password length"));
     }
 
+    @Test
+    public void shouldReturn200_whenNotifySettingsIsUpdated() throws Exception{
+        String gatewayAccountId = createAGatewayAccountFor("worldpay");
+        String payload = new ObjectMapper().writeValueAsString(ImmutableMap.of("op", "replace",
+                "path", "notify_settings",
+                "value", ImmutableMap.of("api_token", "anapitoken",
+                "template_id", "atemplateid")));
+        givenSetup()
+                .body(payload)
+                .patch("/v1/api/accounts/" + gatewayAccountId)
+                .then()
+                .statusCode(OK.getStatusCode());
+    }
+
+    @Test
+    public void shouldReturn400_whenNotifySettingsIsUpdated_withWrongOp() throws Exception{
+        String gatewayAccountId = createAGatewayAccountFor("worldpay");
+        String payload = new ObjectMapper().writeValueAsString(ImmutableMap.of("op", "insert",
+                "path", "notify_settings",
+                "value", ImmutableMap.of("api_token", "anapitoken",
+                        "template_id", "atemplateid")));
+        givenSetup()
+                .body(payload)
+                .patch("/v1/api/accounts/" + gatewayAccountId)
+                .then()
+                .statusCode(BAD_REQUEST.getStatusCode());
+    }
+
+    @Test
+    public void shouldReturn404ForNotifySettings_whenGatewayAccountIsNonExistent() throws Exception{
+        String gatewayAccountId = "1000023";
+        String payload = new ObjectMapper().writeValueAsString(ImmutableMap.of("op", "replace",
+                "path", "notify_settings",
+                "value", ImmutableMap.of("api_token", "anapitoken",
+                        "template_id", "atemplateid")));
+        givenSetup()
+                .body(payload)
+                .patch("/v1/api/accounts/" + gatewayAccountId)
+                .then()
+                .statusCode(NOT_FOUND.getStatusCode());
+    }
+
+    @Test
+    public void shouldReturn200_whenNotifySettingsIsRemoved() throws Exception{
+        String gatewayAccountId = createAGatewayAccountFor("worldpay");
+        String payload = new ObjectMapper().writeValueAsString(ImmutableMap.of("op", "replace",
+                "path", "notify_settings",
+                "value", ImmutableMap.of("api_token", "anapitoken",
+                        "template_id", "atemplateid")));
+        givenSetup()
+                .body(payload)
+                .patch("/v1/api/accounts/" + gatewayAccountId)
+                .then()
+                .statusCode(OK.getStatusCode());
+
+        payload =  new ObjectMapper().writeValueAsString(ImmutableMap.of("op", "remove",
+                "path", "notify_settings"));
+
+        givenSetup()
+                .body(payload)
+                .patch("/v1/api/accounts/" + gatewayAccountId)
+                .then()
+                .statusCode(OK.getStatusCode());
+    }
+
+    @Test
+    public void shouldReturn400_whenNotifySettingsIsRemoved_withWrongPath() throws Exception{
+        String gatewayAccountId = createAGatewayAccountFor("worldpay");
+        String payload = new ObjectMapper().writeValueAsString(ImmutableMap.of("op", "insert",
+                "path", "notify_setting"));
+        givenSetup()
+                .body(payload)
+                .patch("/v1/api/accounts/" + gatewayAccountId)
+                .then()
+                .statusCode(BAD_REQUEST.getStatusCode());
+    }
 }

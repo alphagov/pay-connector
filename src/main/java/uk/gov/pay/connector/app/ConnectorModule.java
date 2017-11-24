@@ -11,6 +11,7 @@ import io.dropwizard.setup.Environment;
 import uk.gov.pay.connector.model.builder.EntityBuilder;
 import uk.gov.pay.connector.resources.GatewayAccountRequestValidator;
 import uk.gov.pay.connector.service.CardExecutorService;
+import uk.gov.pay.connector.service.GatewayAccountServicesFactory;
 import uk.gov.pay.connector.service.PaymentProviders;
 import uk.gov.pay.connector.service.notify.NotifyClientFactoryProvider;
 import uk.gov.pay.connector.util.HashUtil;
@@ -40,6 +41,7 @@ public class ConnectorModule extends AbstractModule {
 
         install(jpaModule(configuration));
         install(new FactoryModuleBuilder().build(NotifyClientFactoryProvider.class));
+        install(new FactoryModuleBuilder().build(GatewayAccountServicesFactory.class));
     }
 
     private JpaPersistModule jpaModule(ConnectorConfiguration configuration) {
