@@ -68,7 +68,7 @@ public class UserNotificationServiceTest {
 
     @Before
     public void setUp() {
-        when(mockConfig.getNotifyConfiguration()).thenReturn(mockNotifyConfiguration);
+        when(mockConfig.getNotifyConfig()).thenReturn(mockNotifyConfiguration);
         when(mockNotifyConfiguration.getEmailTemplateId()).thenReturn("some-template");
         when(mockNotifyConfiguration.isEmailNotifyEnabled()).thenReturn(true);
 
@@ -79,7 +79,7 @@ public class UserNotificationServiceTest {
 
     @Test
     public void shouldSendEmailIfEmailNotifyIsEnabled() throws Exception {
-        when(mockConfig.getNotifyConfiguration().isEmailNotifyEnabled()).thenReturn(true);
+        when(mockConfig.getNotifyConfig().isEmailNotifyEnabled()).thenReturn(true);
         when(mockNotifyClientFactoryProvider.clientFactory()).thenReturn(mockNotifyClientFactory);
         when(mockNotifyClientFactory.getInstance()).thenReturn(mockNotifyClient);
         when(mockNotifyClient.sendEmail(any(), any(), any(), any())).thenReturn(mockNotificationCreatedResponse);
@@ -197,7 +197,7 @@ public class UserNotificationServiceTest {
 
     @Test
     public void shouldSendBlankCustomParagraphIfNotSet() throws Exception {
-        when(mockConfig.getNotifyConfiguration().isEmailNotifyEnabled()).thenReturn(true);
+        when(mockConfig.getNotifyConfig().isEmailNotifyEnabled()).thenReturn(true);
         when(mockNotifyClientFactoryProvider.clientFactory()).thenReturn(mockNotifyClientFactory);
         when(mockNotifyClientFactory.getInstance()).thenReturn(mockNotifyClient);
         when(mockNotifyClient.sendEmail(any(), any(), any(), any())).thenReturn(mockNotificationCreatedResponse);
@@ -235,7 +235,7 @@ public class UserNotificationServiceTest {
 
     @Test
     public void shouldUse_customNonGovUkBrandedEmail_whenAccountConfiguredToCustomBranding() throws Exception {
-        when(mockConfig.getNotifyConfiguration().isEmailNotifyEnabled()).thenReturn(true);
+        when(mockConfig.getNotifyConfig().isEmailNotifyEnabled()).thenReturn(true);
         when(mockNotifyClientFactoryProvider.clientFactory()).thenReturn(mockNotifyClientFactory);
         when(mockNotifyClientFactory.getInstance(any())).thenReturn(mockNotifyClient);
         when(mockNotifyClient.sendEmail(any(), any(), any(), any())).thenReturn(mockNotificationCreatedResponse);

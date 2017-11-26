@@ -136,7 +136,7 @@ public class ChargesApiResource {
                             .withCardBrand(cardBrand)
                             .withFromDate(parseDate(fromDate))
                             .withToDate(parseDate(toDate))
-                            .withDisplaySize(displaySize != null ? displaySize : configuration.getTransactionsPaginationConfig().getDisplayPageSize())
+                            .withDisplaySize(displaySize != null ? displaySize : configuration.getTransactionsPaginationServiceConfig().getDisplayPageSize())
                             .withPage(pageNumber != null ? pageNumber : 1);
 
                     if (isFeatureTransactionsEnabled) {

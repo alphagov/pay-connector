@@ -14,7 +14,6 @@ import uk.gov.pay.connector.model.domain.GatewayAccountEntity;
 import uk.gov.pay.connector.service.notify.NotifyClientFactory;
 import uk.gov.pay.connector.service.notify.NotifyClientFactoryProvider;
 import uk.gov.pay.connector.util.DateTimeUtils;
-import uk.gov.service.notify.Notification;
 import uk.gov.service.notify.NotificationClient;
 import uk.gov.service.notify.NotificationClientException;
 import uk.gov.service.notify.SendEmailResponse;
@@ -89,8 +88,8 @@ public class UserNotificationService {
     }
 
     private void readEmailConfig(ConnectorConfiguration configuration) {
-        emailNotifyGloballyEnabled = configuration.getNotifyConfiguration().isEmailNotifyEnabled();
-        emailTemplateId = configuration.getNotifyConfiguration().getEmailTemplateId();
+        emailNotifyGloballyEnabled = configuration.getNotifyConfig().isEmailNotifyEnabled();
+        emailTemplateId = configuration.getNotifyConfig().getEmailTemplateId();
 
         if (!emailNotifyGloballyEnabled) {
             logger.warn("Email notifications is disabled by configuration");

@@ -137,8 +137,8 @@ public class ConnectorApp extends Application<ConnectorConfiguration> {
         SSLSocketFactory socketFactory = new TrustingSSLSocketFactory();
         HttpsURLConnection.setDefaultSSLSocketFactory(socketFactory);
 
-        System.setProperty("https.proxyHost", configuration.getClientConfiguration().getProxyConfiguration().getHost());
-        System.setProperty("https.proxyPort", configuration.getClientConfiguration().getProxyConfiguration().getPort().toString());
+        System.setProperty("https.proxyHost", configuration.getJerseyClientConfig().getProxyConfiguration().getHost());
+        System.setProperty("https.proxyPort", configuration.getJerseyClientConfig().getProxyConfiguration().getPort().toString());
     }
 
     private void setupSchedulers(ConnectorConfiguration configuration, Environment environment, Injector injector) {

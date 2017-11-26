@@ -12,7 +12,6 @@ import org.apache.http.conn.socket.ConnectionSocketFactory;
 import org.apache.http.conn.socket.PlainConnectionSocketFactory;
 import org.apache.http.conn.ssl.SSLConnectionSocketFactory;
 import org.apache.http.impl.conn.ManagedHttpClientConnectionFactory;
-import org.apache.http.impl.conn.PoolingHttpClientConnectionManager;
 import org.apache.http.impl.conn.SystemDefaultDnsResolver;
 import org.glassfish.jersey.SslConfigurator;
 import org.glassfish.jersey.apache.connector.ApacheClientProperties;
@@ -28,7 +27,7 @@ import javax.net.ssl.HostnameVerifier;
 import javax.ws.rs.client.Client;
 import java.util.concurrent.TimeUnit;
 
-import static java.lang.String.*;
+import static java.lang.String.format;
 
 public class ClientFactory {
     private final Environment environment;
@@ -41,7 +40,7 @@ public class ClientFactory {
     }
 
     public Client createWithDropwizardClient(PaymentGatewayName gateway, GatewayOperation operation, MetricRegistry metricRegistry) {
-        JerseyClientConfiguration clientConfiguration = conf.getClientConfiguration();
+        JerseyClientConfiguration clientConfiguration = conf.getJerseyClientConfig();
         JerseyClientBuilder defaultClientBuilder = new JerseyClientBuilder(environment)
                 .using(new ApacheConnectorProvider())
                 .using(clientConfiguration)

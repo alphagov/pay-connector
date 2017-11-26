@@ -16,7 +16,7 @@ public class NotifyClientFactory {
 
     @Inject
     public NotifyClientFactory(ConnectorConfiguration configuration) {
-        this.configuration = configuration.getNotifyConfiguration();
+        this.configuration = configuration.getNotifyConfig();
         this.sslContext = getSSLContext();
     }
 

@@ -118,15 +118,15 @@ public class ConnectorConfiguration extends Configuration {
         return executorServiceConfig;
     }
 
-    public TransactionsPaginationServiceConfig getTransactionsPaginationConfig() {
+    public TransactionsPaginationServiceConfig getTransactionsPaginationServiceConfig() {
         return transactionsPaginationServiceConfig;
     }
 
-    public NotifyConfiguration getNotifyConfiguration() {
+    public NotifyConfiguration getNotifyConfig() {
         return notifyConfig;
     }
 
-    public JerseyClientConfiguration getClientConfiguration() {
+    public JerseyClientConfiguration getJerseyClientConfig() {
         return jerseyClientConfig;
     }
 
