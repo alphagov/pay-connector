@@ -33,6 +33,8 @@ public interface ApiPaths {
     String REFUNDS_API_PATH = CHARGE_API_PATH + "/refunds";
     String REFUND_API_PATH = CHARGE_API_PATH + "/refunds/{refundId}";
 
+    String TRANSACTIONS_SUMMARY_API_PATH = API_VERSION_PATH + "/api/accounts/{accountId}/transactions-summary";
+
     String CARD_TYPES_API_PATH = API_VERSION_PATH + "/api/card-types";
 
     String NOTIFICATIONS_WORLDPAY_API_PATH = API_VERSION_PATH + "/api/notifications/worldpay";
