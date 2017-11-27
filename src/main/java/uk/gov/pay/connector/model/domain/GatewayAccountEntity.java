@@ -1,6 +1,7 @@
 package uk.gov.pay.connector.model.domain;
 
 import com.fasterxml.jackson.annotation.JsonBackReference;
+import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import com.fasterxml.jackson.annotation.JsonView;
 
@@ -14,8 +15,9 @@ import static org.apache.commons.lang3.StringUtils.isNotBlank;
 
 @Entity
 @Table(name = "gateway_accounts")
-@SequenceGenerator(name = "gateway_accounts_gateway_account_id_seq", sequenceName = "gateway_accounts_gateway_account_id_seq", allocationSize = 1)
-public class GatewayAccountEntity extends AbstractEntity {
+@SequenceGenerator(name = "gateway_accounts_gateway_account_id_seq",
+        sequenceName = "gateway_accounts_gateway_account_id_seq", allocationSize = 1)
+public class GatewayAccountEntity extends AbstractVersionedEntity {
 
     public class Views {
         public class ApiView { }
@@ -46,6 +48,11 @@ public class GatewayAccountEntity extends AbstractEntity {
     }
 
     public GatewayAccountEntity() {}
+
+    @Id
+    @GeneratedValue(strategy = GenerationType.SEQUENCE, generator = "gateway_accounts_gateway_account_id_seq")
+    @JsonIgnore
+    private Long id;
 
     //TODO: Should we rename the columns to be more consistent?
     @Column(name = "payment_provider")
@@ -97,11 +104,10 @@ public class GatewayAccountEntity extends AbstractEntity {
         this.type = type;
     }
 
-    @Override
     @JsonProperty("gateway_account_id")
     @JsonView({Views.ApiView.class, Views.FrontendView.class})
     public Long getId() {
-        return super.getId();
+        return this.id;
     }
 
     @JsonProperty("payment_provider")
@@ -208,7 +214,7 @@ public class GatewayAccountEntity extends AbstractEntity {
 
     public Map<String, String> withoutCredentials() {
         Map<String, String> account = newHashMap();
-        account.put("gateway_account_id", String.valueOf(super.getId()));
+        account.put("gateway_account_id", String.valueOf(getId()));
         account.put("payment_provider", getGatewayName());
         account.put("type", getType());
         if (isNotBlank(getDescription())) {
@@ -231,5 +237,9 @@ public class GatewayAccountEntity extends AbstractEntity {
     public boolean hasAnyAcceptedCardType3dsRequired() {
         return cardTypes.stream()
                 .anyMatch(CardTypeEntity::isRequires3ds);
+    }
+
+    public void setId(Long id) {
+        this.id = id;
     }
 }

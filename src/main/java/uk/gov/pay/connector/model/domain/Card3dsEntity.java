@@ -1,12 +1,26 @@
 package uk.gov.pay.connector.model.domain;
 
+import com.fasterxml.jackson.annotation.JsonIgnore;
+
 import javax.persistence.Column;
 import javax.persistence.Entity;
+import javax.persistence.GeneratedValue;
+import javax.persistence.GenerationType;
+import javax.persistence.Id;
+import javax.persistence.SequenceGenerator;
 import javax.persistence.Table;
+
 
 @Entity
 @Table(name = "card_3ds")
-public class Card3dsEntity extends AbstractEntity {
+@SequenceGenerator(name = "card_3ds_id_seq",
+        sequenceName = "card_3ds_id_seq", allocationSize = 1)
+public class Card3dsEntity extends AbstractVersionedEntity {
+
+    @Id
+    @GeneratedValue(strategy = GenerationType.SEQUENCE, generator = "card_3ds_id_seq")
+    @JsonIgnore
+    private Long id;
 
     @Column(name = "pa_request")
     private String paRequest;
@@ -21,6 +35,14 @@ public class Card3dsEntity extends AbstractEntity {
     private Long chargeId;
 
     public Card3dsEntity() {
+    }
+
+    public Long getId() {
+        return id;
+    }
+
+    public void setId(Long id) {
+        this.id = id;
     }
 
     public String getPaRequest() {

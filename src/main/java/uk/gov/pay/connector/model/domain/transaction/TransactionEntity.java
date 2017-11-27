@@ -1,6 +1,7 @@
 package uk.gov.pay.connector.model.domain.transaction;
 
-import uk.gov.pay.connector.model.domain.AbstractEntity;
+import com.fasterxml.jackson.annotation.JsonIgnore;
+import uk.gov.pay.connector.model.domain.AbstractVersionedEntity;
 import uk.gov.pay.connector.model.domain.PaymentRequestEntity;
 import uk.gov.pay.connector.model.domain.Status;
 
@@ -10,21 +11,35 @@ import javax.persistence.DiscriminatorColumn;
 import javax.persistence.Entity;
 import javax.persistence.EnumType;
 import javax.persistence.Enumerated;
+import javax.persistence.GeneratedValue;
+import javax.persistence.GenerationType;
+import javax.persistence.Id;
 import javax.persistence.Inheritance;
 import javax.persistence.InheritanceType;
 import javax.persistence.JoinColumn;
 import javax.persistence.ManyToOne;
+import javax.persistence.SequenceGenerator;
 import javax.persistence.OneToMany;
 import javax.persistence.Table;
 import java.time.ZonedDateTime;
 import java.util.ArrayList;
 import java.util.List;
 
+
 @Entity
 @Table(name = "transactions")
 @Inheritance(strategy = InheritanceType.SINGLE_TABLE)
 @DiscriminatorColumn(name = "operation")
-public abstract class TransactionEntity<E extends Status> extends AbstractEntity {
+@SequenceGenerator(name = "transactions_id_seq",
+        sequenceName = "transactions_id_seq",
+        allocationSize = 1)
+public abstract class TransactionEntity<E extends Status> extends AbstractVersionedEntity {
+
+    @Id
+    @GeneratedValue(strategy = GenerationType.SEQUENCE, generator = "transactions_id_seq")
+    @JsonIgnore
+    private Long id;
+
     @Column(name = "status")
     @Enumerated(EnumType.STRING)
     protected E status;
@@ -38,6 +53,14 @@ public abstract class TransactionEntity<E extends Status> extends AbstractEntity
     private PaymentRequestEntity paymentRequest;
     @OneToMany(mappedBy = "transaction", cascade = CascadeType.ALL)
     private List<TransactionEventEntity> transactionEvents = new ArrayList<>();
+
+    public Long getId() {
+        return id;
+    }
+
+    public void setId(Long id) {
+        this.id = id;
+    }
 
     public Long getAmount() {
         return amount;

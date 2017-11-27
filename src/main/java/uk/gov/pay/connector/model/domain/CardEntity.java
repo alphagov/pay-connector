@@ -1,13 +1,27 @@
 package uk.gov.pay.connector.model.domain;
 
+import com.fasterxml.jackson.annotation.JsonIgnore;
+
 import javax.persistence.Column;
 import javax.persistence.Embedded;
 import javax.persistence.Entity;
+import javax.persistence.GeneratedValue;
+import javax.persistence.GenerationType;
+import javax.persistence.Id;
+import javax.persistence.SequenceGenerator;
 import javax.persistence.Table;
 
 @Entity
 @Table(name = "cards")
-public class CardEntity extends AbstractEntity {
+@SequenceGenerator(name = "cards_id_seq",
+        sequenceName = "cards_id_seq", allocationSize = 1)
+public class CardEntity extends AbstractVersionedEntity {
+
+    @Id
+    @GeneratedValue(strategy = GenerationType.SEQUENCE, generator = "cards_id_seq")
+    @JsonIgnore
+    private Long id;
+
     @Column(name = "last_digits_card_number")
     private String lastDigitsCardNumber;
 
@@ -27,6 +41,14 @@ public class CardEntity extends AbstractEntity {
     private Long chargeId;
 
     public CardEntity() {
+    }
+
+    public Long getId() {
+        return id;
+    }
+
+    public void setId(Long id) {
+        this.id = id;
     }
 
     public String getLastDigitsCardNumber() {

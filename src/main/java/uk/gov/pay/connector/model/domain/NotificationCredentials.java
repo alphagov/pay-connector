@@ -1,15 +1,29 @@
 package uk.gov.pay.connector.model.domain;
 
 import com.fasterxml.jackson.annotation.JsonIgnore;
-import com.fasterxml.jackson.annotation.JsonManagedReference;
 import uk.gov.pay.connector.auth.BasicAuthUser;
 
-import javax.persistence.*;
+import javax.persistence.Column;
+import javax.persistence.Entity;
+import javax.persistence.GeneratedValue;
+import javax.persistence.GenerationType;
+import javax.persistence.Id;
+import javax.persistence.JoinColumn;
+import javax.persistence.OneToOne;
+import javax.persistence.SequenceGenerator;
+import javax.persistence.Table;
+
 
 @Entity
 @Table(name = "notification_credentials")
-@SequenceGenerator(name = "notification_credentials_id_seq", sequenceName = "notification_credentials_id_seq", allocationSize = 1)
-public class NotificationCredentials extends AbstractEntity {
+@SequenceGenerator(name = "notification_credentials_id_seq",
+        sequenceName = "notification_credentials_id_seq", allocationSize = 1)
+public class NotificationCredentials extends AbstractVersionedEntity {
+
+    @Id
+    @GeneratedValue(strategy = GenerationType.SEQUENCE, generator = "notification_credentials_id_seq")
+    @JsonIgnore
+    private Long id;
 
     @OneToOne
     @JoinColumn(name = "account_id", nullable = false)
@@ -28,6 +42,14 @@ public class NotificationCredentials extends AbstractEntity {
 
     public NotificationCredentials(GatewayAccountEntity accountEntity) {
         this.accountEntity = accountEntity;
+    }
+
+    public Long getId() {
+        return id;
+    }
+
+    public void setId(Long id) {
+        this.id = id;
     }
 
     public GatewayAccountEntity getAccountEntity() {

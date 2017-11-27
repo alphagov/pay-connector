@@ -34,17 +34,13 @@ import static org.apache.commons.lang3.StringUtils.equalsIgnoreCase;
 @Table(name = "refunds")
 @Customizer(HistoryCustomizer.class)
 @Access(AccessType.FIELD)
-public class RefundEntity {
+public class RefundEntity extends AbstractVersionedEntity {
 
     @Id
     @SequenceGenerator(name = "refundsSequence", sequenceName = "refunds_id_seq", allocationSize = 1)
     @GeneratedValue(strategy = GenerationType.SEQUENCE, generator="refundsSequence")
     @JsonIgnore
     private Long id;
-
-    @Version
-    @Column(name = "version")
-    private Long version;
 
     @Column(name = "external_id")
     private String externalId;
@@ -142,14 +138,6 @@ public class RefundEntity {
 
     public void setId(Long id) {
         this.id = id;
-    }
-
-    public Long getVersion() {
-        return version;
-    }
-
-    public void setVersion(Long version) {
-        this.version = version;
     }
 
     public String getUserExternalId() {
