@@ -10,7 +10,6 @@ import uk.gov.pay.connector.validations.RequestValidator;
 
 import java.util.Optional;
 
-import static junit.framework.TestCase.assertTrue;
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.hasItems;
 import static org.hamcrest.core.Is.is;
@@ -18,7 +17,7 @@ import static uk.gov.pay.connector.model.domain.GatewayAccount.FIELD_NOTIFY_API_
 import static uk.gov.pay.connector.model.domain.GatewayAccount.FIELD_NOTIFY_TEMPLATE_ID;
 import static uk.gov.pay.connector.model.domain.GatewayAccount.FIELD_OPERATION;
 import static uk.gov.pay.connector.model.domain.GatewayAccount.FIELD_OPERATION_PATH;
-import static uk.gov.pay.connector.model.domain.GatewayAccount.FIELD_VALUES;
+import static uk.gov.pay.connector.model.domain.GatewayAccount.FIELD_VALUE;
 
 public class GatewayAccountRequestValidatorTest {
 
@@ -52,7 +51,7 @@ public class GatewayAccountRequestValidatorTest {
         JsonNode jsonNode = new ObjectMapper()
                 .valueToTree(ImmutableMap.of(FIELD_OPERATION, "replace",
                         FIELD_OPERATION_PATH, "notify_settings",
-                        FIELD_VALUES, ImmutableMap.of("timbuktu", "anapitoken",
+                        FIELD_VALUE, ImmutableMap.of("timbuktu", "anapitoken",
                                 "colombo", "atemplateid")));
         Optional<Errors> optionalErrors = validator.validatePatchRequest(jsonNode);
 
@@ -77,7 +76,7 @@ public class GatewayAccountRequestValidatorTest {
         JsonNode jsonNode = new ObjectMapper()
                 .valueToTree(ImmutableMap.of(FIELD_OPERATION, "replace",
                 FIELD_OPERATION_PATH, "notify_settings",
-                FIELD_VALUES, ImmutableMap.of(FIELD_NOTIFY_API_TOKEN, "anapitoken",
+                        FIELD_VALUE, ImmutableMap.of(FIELD_NOTIFY_API_TOKEN, "anapitoken",
                                 FIELD_NOTIFY_TEMPLATE_ID, "atemplateid")));
         Optional<Errors> optionalErrors = validator.validatePatchRequest(jsonNode);
 
@@ -89,7 +88,7 @@ public class GatewayAccountRequestValidatorTest {
         JsonNode jsonNode = new ObjectMapper()
                 .valueToTree(ImmutableMap.of(FIELD_OPERATION, "delete",
                         FIELD_OPERATION_PATH, "notify_settings",
-                        FIELD_VALUES, ImmutableMap.of(FIELD_NOTIFY_API_TOKEN, "anapitoken",
+                        FIELD_VALUE, ImmutableMap.of(FIELD_NOTIFY_API_TOKEN, "anapitoken",
                                 FIELD_NOTIFY_TEMPLATE_ID, "atemplateid")));
         Optional<Errors> optionalErrors = validator.validatePatchRequest(jsonNode);
 
@@ -103,7 +102,7 @@ public class GatewayAccountRequestValidatorTest {
         JsonNode jsonNode = new ObjectMapper()
                 .valueToTree(ImmutableMap.of(FIELD_OPERATION, "remove",
                         FIELD_OPERATION_PATH, "notify_settings",
-                        FIELD_VALUES, ImmutableMap.of(FIELD_NOTIFY_API_TOKEN, "")));
+                        FIELD_VALUE, ImmutableMap.of(FIELD_NOTIFY_API_TOKEN, "")));
         Optional<Errors> optionalErrors = validator.validatePatchRequest(jsonNode);
 
         assertThat(optionalErrors.isPresent(), is(false));
