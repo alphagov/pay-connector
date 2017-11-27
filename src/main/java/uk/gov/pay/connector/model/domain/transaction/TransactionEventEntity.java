@@ -30,7 +30,7 @@ import java.time.ZonedDateTime;
 public abstract class TransactionEventEntity<E extends Status> extends AbstractVersionedEntity {
 
     @Id
-    @GeneratedValue(strategy = GenerationType.SEQUENCE, generator = "transactions_id_seq")
+    @GeneratedValue(strategy = GenerationType.SEQUENCE, generator = "transaction_events_id_seq")
     @JsonIgnore
     private Long id;
 
