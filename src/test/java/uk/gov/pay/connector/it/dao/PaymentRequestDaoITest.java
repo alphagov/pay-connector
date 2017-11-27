@@ -16,7 +16,7 @@ import static org.hamcrest.Matchers.is;
 import static org.hamcrest.Matchers.notNullValue;
 import static uk.gov.pay.connector.model.domain.GatewayAccountEntity.Type.TEST;
 import static uk.gov.pay.connector.model.domain.PaymentRequestEntityFixture.aValidPaymentRequestEntity;
-import static uk.gov.pay.connector.model.domain.ChargeTransactionEntityBuilder.aChargeTransactionEntity;
+import static uk.gov.pay.connector.model.domain.transaction.ChargeTransactionEntityBuilder.aChargeTransactionEntity;
 
 public class PaymentRequestDaoITest extends DaoITestBase {
     private DatabaseFixtures.TestAccount defaultTestAccount;

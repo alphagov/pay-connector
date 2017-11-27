@@ -22,14 +22,14 @@ public class StatusUpdater {
         this.paymentRequestDao = paymentRequestDao;
     }
 
-    public  void updateChargeTransactionStatus(String externalId, ChargeStatus newChargeStatus, ZonedDateTime gatewayEventTime) {
+    public void updateChargeTransactionStatus(String externalId, ChargeStatus newChargeStatus, ZonedDateTime gatewayEventTime) {
         updateChargeTransactionStatus(
                 externalId, newChargeStatus,
                 (chargeTransaction) -> chargeTransaction.updateStatus(newChargeStatus, gatewayEventTime)
         );
     }
 
-    public  void updateChargeTransactionStatus(String externalId, ChargeStatus newChargeStatus) {
+    public void updateChargeTransactionStatus(String externalId, ChargeStatus newChargeStatus) {
         updateChargeTransactionStatus(
                 externalId, newChargeStatus,
                 (chargeTransaction) -> chargeTransaction.updateStatus(newChargeStatus)
@@ -40,19 +40,17 @@ public class StatusUpdater {
         paymentRequestDao.findByExternalId(externalId).ifPresent(paymentRequestEntity -> {
             if (paymentRequestEntity.hasChargeTransaction()) {
                 ChargeTransactionEntity chargeTransaction = paymentRequestEntity.getChargeTransaction();
-                logger.info(String.format("Changing transaction status for externalId [%s] transactionId [%s] [%s]->[%s]",
+                logger.info("Changing transaction status for externalId [{}] transactionId [{}] [{}]->[{}]",
                         externalId,
-                        chargeTransaction.getId(),
+                        chargeTransaction.getGatewayTransactionId(),
                         chargeTransaction.getStatus().getValue(),
-                        newChargeStatus.getValue())
+                        newChargeStatus.getValue()
                 );
                 updateStatusFunction.accept(chargeTransaction);
             } else {
-                logger.info(
-                        String.format("Not updating transaction status for externalId [%s] to [%s] charge transaction not found",
-                                externalId,
-                                newChargeStatus.getValue()
-                        )
+                logger.info("Not updating transaction status for externalId [{}] to [{}] charge transaction not found",
+                        externalId,
+                        newChargeStatus.getValue()
                 );
             }
         });

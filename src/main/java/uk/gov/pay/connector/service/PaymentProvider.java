@@ -17,7 +17,7 @@ import java.util.Optional;
 
 public interface PaymentProvider<T extends BaseResponse, R> {
 
-    String getPaymentGatewayName();
+    PaymentGatewayName getPaymentGatewayName();
 
     StatusMapper getStatusMapper();
 

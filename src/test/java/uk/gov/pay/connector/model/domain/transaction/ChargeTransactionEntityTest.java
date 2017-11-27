@@ -18,7 +18,7 @@ public class ChargeTransactionEntityTest {
         assertThat(chargeTransactionEntity.getTransactionEvents().size(), is(0));
         chargeTransactionEntity.updateStatus(expectedStatus);
 
-        List<TransactionEventEntity> transactionEvents = chargeTransactionEntity.getTransactionEvents();
+        List<ChargeTransactionEventEntity> transactionEvents = chargeTransactionEntity.getTransactionEvents();
         assertThat(transactionEvents.size(), is(1));
         assertThat(transactionEvents.get(0).getStatus(), is(expectedStatus));
     }
@@ -32,7 +32,7 @@ public class ChargeTransactionEntityTest {
         ChargeStatus expectedStatus2 = ChargeStatus.ENTERING_CARD_DETAILS;
         chargeTransactionEntity.updateStatus(expectedStatus2);
 
-        List<TransactionEventEntity> transactionEvents = chargeTransactionEntity.getTransactionEvents();
+        List<ChargeTransactionEventEntity> transactionEvents = chargeTransactionEntity.getTransactionEvents();
         assertThat(transactionEvents.size(), is(2));
         assertThat(transactionEvents.get(0).getStatus(), is(expectedStatus1));
         assertThat(transactionEvents.get(1).getStatus(), is(expectedStatus2));
@@ -46,10 +46,9 @@ public class ChargeTransactionEntityTest {
         ZonedDateTime gatewayEventTime = ZonedDateTime.now();
         chargeTransactionEntity.updateStatus(expectedStatus, gatewayEventTime);
 
-        List<TransactionEventEntity> transactionEvents = chargeTransactionEntity.getTransactionEvents();
+        List<ChargeTransactionEventEntity> transactionEvents = chargeTransactionEntity.getTransactionEvents();
         assertThat(transactionEvents.size(), is(1));
         assertThat(transactionEvents.get(0).getStatus(), is(expectedStatus));
         assertThat(transactionEvents.get(0).getGatewayEventDate(), is(gatewayEventTime));
-
     }
 }

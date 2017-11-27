@@ -18,8 +18,8 @@ import javax.persistence.Inheritance;
 import javax.persistence.InheritanceType;
 import javax.persistence.JoinColumn;
 import javax.persistence.ManyToOne;
-import javax.persistence.SequenceGenerator;
 import javax.persistence.OneToMany;
+import javax.persistence.SequenceGenerator;
 import javax.persistence.Table;
 import java.time.ZonedDateTime;
 import java.util.ArrayList;
@@ -33,16 +33,11 @@ import java.util.List;
 @SequenceGenerator(name = "transactions_id_seq",
         sequenceName = "transactions_id_seq",
         allocationSize = 1)
-public abstract class TransactionEntity<E extends Status> extends AbstractVersionedEntity {
-
+public abstract class TransactionEntity<S extends Status, T extends TransactionEventEntity<S, T>> extends AbstractVersionedEntity {
     @Id
     @GeneratedValue(strategy = GenerationType.SEQUENCE, generator = "transactions_id_seq")
     @JsonIgnore
     private Long id;
-
-    @Column(name = "status")
-    @Enumerated(EnumType.STRING)
-    protected E status;
     @Column(name = "amount")
     private Long amount;
     @Column(name = "operation")
@@ -52,7 +47,11 @@ public abstract class TransactionEntity<E extends Status> extends AbstractVersio
     @JoinColumn(name = "payment_request_id", referencedColumnName = "id", updatable = false)
     private PaymentRequestEntity paymentRequest;
     @OneToMany(mappedBy = "transaction", cascade = CascadeType.ALL)
-    private List<TransactionEventEntity> transactionEvents = new ArrayList<>();
+    private List<T> transactionEvents = new ArrayList<>();
+
+    TransactionEntity(TransactionOperation operation) {
+        this.operation = operation;
+    }
 
     public Long getId() {
         return id;
@@ -82,25 +81,28 @@ public abstract class TransactionEntity<E extends Status> extends AbstractVersio
         return operation;
     }
 
-    public void setOperation(TransactionOperation operation) {
-        this.operation = operation;
-    }
+    public abstract S getStatus();
+    abstract void setStatus(S status);
 
-    public E getStatus() {
-        return status;
-    }
-
-    public List<TransactionEventEntity> getTransactionEvents() {
+    public List<T> getTransactionEvents() {
         return transactionEvents;
     }
 
-    protected void addTransactionEvent(TransactionEventEntity<E> transactionEvent, E newStatus) {
+    public final void updateStatus(S newStatus) {
+        updateStatus(newStatus, createNewTransactionEvent());
+    }
+
+    void updateStatus(S newStatus, T transactionEvent) {
+        setStatus(newStatus);
+        addTransactionEvent(transactionEvent, newStatus);
+    }
+
+    private void addTransactionEvent(T transactionEvent, S newStatus) {
         transactionEvent.setTransaction(this);
         transactionEvent.setStatus(newStatus);
         transactionEvent.setUpdated(ZonedDateTime.now());
         getTransactionEvents().add(transactionEvent);
     }
 
-    public abstract void updateStatus(E newStatus);
-    public abstract void updateStatus(E newStatus, ZonedDateTime gatewayEventTime);
+    protected abstract T createNewTransactionEvent();
 }

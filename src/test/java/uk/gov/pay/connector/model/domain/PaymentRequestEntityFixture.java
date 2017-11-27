@@ -10,6 +10,8 @@ import java.util.List;
 
 import static java.util.Arrays.asList;
 import static uk.gov.pay.connector.model.domain.ChargeEntityFixture.defaultGatewayAccountEntity;
+import static uk.gov.pay.connector.model.domain.transaction.ChargeTransactionEntityBuilder.aChargeTransactionEntity;
+import static uk.gov.pay.connector.model.domain.transaction.RefundTransactionEntityBuilder.aRefundTransactionEntity;
 
 public class PaymentRequestEntityFixture {
 
@@ -20,10 +22,15 @@ public class PaymentRequestEntityFixture {
     private String reference = "This is a reference";
     private GatewayAccountEntity gatewayAccountEntity = defaultGatewayAccountEntity();
     private ZonedDateTime createdDate = ZonedDateTime.now(ZoneId.of("UTC"));
-    private List<TransactionEntity> transactions = asList(ChargeTransactionEntityBuilder.aChargeTransactionEntity().build());
+    private List<TransactionEntity> transactions = asList(aChargeTransactionEntity().build());
 
     public static PaymentRequestEntityFixture aValidPaymentRequestEntity() {
         return new PaymentRequestEntityFixture();
+    }
+
+    public static PaymentRequestEntityFixture aValidPaymentRequestEntityWithRefund() {
+        return PaymentRequestEntityFixture.aValidPaymentRequestEntity()
+                .withTransactions(aChargeTransactionEntity().build(), aRefundTransactionEntity().build());
     }
 
     public PaymentRequestEntity build() {

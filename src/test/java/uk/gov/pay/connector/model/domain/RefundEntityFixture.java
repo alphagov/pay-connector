@@ -10,6 +10,8 @@ public class RefundEntityFixture {
     private ChargeEntity charge;
     private String reference = "reference";
     public static String userExternalId = "AA213FD51B3801043FBC";
+    private String externalId = "someExternalId";
+
     public static RefundEntityFixture aValidRefundEntity() {
         return new RefundEntityFixture();
     }
@@ -19,6 +21,7 @@ public class RefundEntityFixture {
         RefundEntity refundEntity = new RefundEntity(chargeEntity, amount, userExternalId);
         refundEntity.setStatus(status);
         refundEntity.setReference(reference);
+        refundEntity.setExternalId(externalId);
         return refundEntity;
     }
 
@@ -52,6 +55,11 @@ public class RefundEntityFixture {
 
     public RefundEntityFixture withCharge(ChargeEntity charge) {
         this.charge = charge;
+        return this;
+    }
+
+    public RefundEntityFixture withExternalId(String externalId) {
+        this.externalId = externalId;
         return this;
     }
 }

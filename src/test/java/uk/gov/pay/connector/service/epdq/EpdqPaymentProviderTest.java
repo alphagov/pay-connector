@@ -157,7 +157,7 @@ public class EpdqPaymentProviderTest {
 
     @Test
     public void shouldGetPaymentProviderName() {
-        assertThat(provider.getPaymentGatewayName(), is("epdq"));
+        assertThat(provider.getPaymentGatewayName().getName(), is("epdq"));
     }
 
     @Test

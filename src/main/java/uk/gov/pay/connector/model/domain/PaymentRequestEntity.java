@@ -2,8 +2,11 @@ package uk.gov.pay.connector.model.domain;
 
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import uk.gov.pay.connector.model.domain.transaction.ChargeTransactionEntity;
+import uk.gov.pay.connector.model.domain.transaction.ChargeTransactionEventEntity;
+import uk.gov.pay.connector.model.domain.transaction.RefundTransactionEntity;
 import uk.gov.pay.connector.model.domain.transaction.TransactionEntity;
 import uk.gov.pay.connector.model.domain.transaction.TransactionOperation;
+import uk.gov.pay.connector.service.CardService;
 
 import javax.persistence.Access;
 import javax.persistence.AccessType;
@@ -24,6 +27,10 @@ import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 import java.util.function.Predicate;
+import java.util.stream.Collectors;
+
+import static uk.gov.pay.connector.model.domain.transaction.TransactionOperation.CHARGE;
+import static uk.gov.pay.connector.model.domain.transaction.TransactionOperation.REFUND;
 
 @Entity
 @Table(name = "payment_requests")
@@ -141,23 +148,29 @@ public class PaymentRequestEntity extends AbstractVersionedEntity {
     }
 
     public void setTransactions(List<TransactionEntity> transactions) {
-        this.transactions = transactions;
-        transactions.forEach(transactionEntity -> transactionEntity.setPaymentRequest(this));
+        transactions.forEach(this::addTransaction);
     }
 
     public ChargeTransactionEntity getChargeTransaction() {
-        return (ChargeTransactionEntity)transactions.stream().filter(byChargeTransactions()).findFirst().orElseThrow(
+        return (ChargeTransactionEntity)transactions.stream().filter(byOperation(CHARGE)).findFirst().orElseThrow(
                 () -> new IllegalStateException("Payment Request has been initialised without a charge transaction")
         );
     }
 
-    //Remove this once transactions table has been backfilled and we will no longer need to set this.
-    public boolean hasChargeTransaction() {
-        return transactions.stream().anyMatch(byChargeTransactions());
+    public List<RefundTransactionEntity> getRefundTransactions() {
+        return transactions.stream()
+                .filter(byOperation(REFUND))
+                .map(RefundTransactionEntity.class::cast)
+                .collect(Collectors.toList());
     }
 
-    private Predicate<TransactionEntity> byChargeTransactions() {
-        return transactionEntity -> transactionEntity.getOperation().equals(TransactionOperation.CHARGE);
+    //Remove this once transactions table has been backfilled and we will no longer need to set this.
+    public boolean hasChargeTransaction() {
+        return transactions.stream().anyMatch(byOperation(CHARGE));
+    }
+
+    private Predicate<TransactionEntity> byOperation(TransactionOperation transactionOperation) {
+        return transactionEntity -> transactionEntity.getOperation().equals(transactionOperation);
     }
 
     public static PaymentRequestEntity from(ChargeEntity chargeEntity, ChargeTransactionEntity transactionEntity) {

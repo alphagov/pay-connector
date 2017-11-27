@@ -13,13 +13,27 @@ import static uk.gov.pay.connector.model.domain.PaymentGatewayStateTransitions.d
 
 @Entity
 @DiscriminatorValue(value = "CHARGE")
-public class ChargeTransactionEntity extends TransactionEntity<ChargeStatus> {
+public class ChargeTransactionEntity extends TransactionEntity<ChargeStatus, ChargeTransactionEventEntity> {
     private static final Logger logger = LoggerFactory.getLogger(ChargeTransactionEntity.class);
 
+    @Column(name = "status")
+    @Enumerated(EnumType.STRING)
+    protected ChargeStatus status;
     @Column(name = "gateway_transaction_id")
     private String gatewayTransactionId;
 
     public ChargeTransactionEntity() {
+        super(TransactionOperation.CHARGE);
+    }
+
+    @Override
+    public ChargeStatus getStatus() {
+        return status;
+    }
+
+    @Override
+    void setStatus(ChargeStatus status) {
+        this.status = status;
     }
 
     public String getGatewayTransactionId() {
@@ -31,16 +45,17 @@ public class ChargeTransactionEntity extends TransactionEntity<ChargeStatus> {
     }
 
     public void updateStatus(ChargeStatus newStatus, ZonedDateTime gatewayEventTime) {
-        ChargeTransactionEventEntity transactionEvent = new ChargeTransactionEventEntity();
+        ChargeTransactionEventEntity transactionEvent = createNewTransactionEvent();
         transactionEvent.setGatewayEventDate(gatewayEventTime);
         updateStatus(newStatus, transactionEvent);
     }
 
-    public void updateStatus(ChargeStatus newStatus) {
-        updateStatus(newStatus, new ChargeTransactionEventEntity());
+    @Override
+    protected ChargeTransactionEventEntity createNewTransactionEvent() {
+        return new ChargeTransactionEventEntity();
     }
 
-    private void updateStatus(ChargeStatus newStatus, ChargeTransactionEventEntity transactionEvent) {
+    void updateStatus(ChargeStatus newStatus, ChargeTransactionEventEntity transactionEvent) {
         if (this.status != null && !defaultTransitions().isValidTransition(this.status, newStatus)) {
             logger.warn(
                     format("Charge state transition [%s] -> [%s] not allowed for externalId [%s] transactionId [%s]",
@@ -51,8 +66,7 @@ public class ChargeTransactionEntity extends TransactionEntity<ChargeStatus> {
                     )
             );
         }
-        this.status = newStatus;
-        addTransactionEvent(transactionEvent, newStatus);
+        super.updateStatus(newStatus, transactionEvent);
     }
 
     public static ChargeTransactionEntity from(ChargeEntity chargeEntity) {
@@ -60,7 +74,6 @@ public class ChargeTransactionEntity extends TransactionEntity<ChargeStatus> {
         transactionEntity.setGatewayTransactionId(chargeEntity.getGatewayTransactionId());
         transactionEntity.setAmount(chargeEntity.getAmount());
         transactionEntity.updateStatus(ChargeStatus.fromString(chargeEntity.getStatus()));
-        transactionEntity.setOperation(TransactionOperation.CHARGE);
 
         return transactionEntity;
     }

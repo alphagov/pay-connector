@@ -19,14 +19,14 @@ import java.util.function.Predicate;
 
 import static org.hamcrest.CoreMatchers.nullValue;
 import static org.hamcrest.core.Is.is;
-import static org.junit.Assert.*;
+import static org.junit.Assert.assertThat;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.verifyNoMoreInteractions;
 import static org.mockito.Mockito.when;
 import static uk.gov.pay.connector.model.domain.ChargeStatus.CREATED;
 import static uk.gov.pay.connector.model.domain.ChargeStatus.ENTERING_CARD_DETAILS;
-import static uk.gov.pay.connector.model.domain.ChargeTransactionEntityBuilder.aChargeTransactionEntity;
+import static uk.gov.pay.connector.model.domain.transaction.ChargeTransactionEntityBuilder.aChargeTransactionEntity;
 
 @RunWith(MockitoJUnitRunner.class)
 public class StatusUpdaterTest {
@@ -84,10 +84,10 @@ public class StatusUpdaterTest {
 
         new StatusUpdater(mockPaymentRequestDao).updateChargeTransactionStatus(SOME_EXTERNAL_ID, ENTERING_CARD_DETAILS, null);
 
-        List<TransactionEventEntity> transactionEvents = paymentRequest.getChargeTransaction().getTransactionEvents();
+        List<ChargeTransactionEventEntity> transactionEvents = paymentRequest.getChargeTransaction().getTransactionEvents();
 
         assertThat(transactionEvents.stream().anyMatch(hasEventOfType(ENTERING_CARD_DETAILS)), is(true));
-        ChargeTransactionEventEntity enteringCardDetailsEvent = (ChargeTransactionEventEntity) transactionEvents.stream()
+        ChargeTransactionEventEntity enteringCardDetailsEvent = transactionEvents.stream()
                 .filter(hasEventOfType(ENTERING_CARD_DETAILS))
                 .findFirst()
                 .get();

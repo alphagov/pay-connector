@@ -78,17 +78,21 @@ public class NotificationServiceTest {
     @Mock
     private StatusUpdater mockedStatusUpdater;
 
+    @Mock
+    private RefundStatusUpdater mockedRefundUpdater;
+
     @Before
     public void setUp() {
-        when(mockedPaymentProvider.getPaymentGatewayName()).thenReturn(SANDBOX.getName());
+        when(mockedPaymentProvider.getPaymentGatewayName()).thenReturn(SANDBOX);
         when(mockedPaymentProviders.byName(SANDBOX)).thenReturn(mockedPaymentProvider);
         when(mockedChargeDao.findByProviderAndTransactionId(SANDBOX.getName(), TRANSACTION_ID)).thenReturn(Optional.of(mockedChargeEntity));
         when(mockedChargeEntity.getStatus()).thenReturn(ChargeStatus.CAPTURED.toString());
         when(mockedChargeEntity.getGatewayAccount().getCredentials().get(CREDENTIALS_SHA_OUT_PASSPHRASE)).thenReturn("a_passphrase");
+        when(mockedChargeEntity.getExternalId()).thenReturn("someExternalId");
 
         when(mockedPaymentProvider.verifyNotification(any(Notification.class), any(GatewayAccountEntity.class))).thenReturn(true);
 
-        notificationService = new NotificationService(mockedChargeDao, mockedChargeEventDao, mockedRefundDao, mockedPaymentProviders, mockDnsUtils, mockedStatusUpdater);
+        notificationService = new NotificationService(mockedChargeDao, mockedChargeEventDao, mockedRefundDao, mockedPaymentProviders, mockDnsUtils, mockedStatusUpdater, mockedRefundUpdater);
     }
 
     private Notifications<Pair<String, Boolean>> createNotificationFor(String transactionId, String reference, Pair<String, Boolean> status) {
@@ -336,6 +340,7 @@ public class NotificationServiceTest {
         when(mockedPaymentProvider.getStatusMapper()).thenReturn(mockedStatusMapper);
 
         when(mockedPaymentProvider.verifyNotification(any(), any())).thenReturn(true);
+        when(mockedPaymentProvider.getPaymentGatewayName()).thenReturn(SANDBOX);
 
         RefundEntity mockedRefundEntity = mock(RefundEntity.class);
         GatewayAccountEntity mockedGatewayAccount = mock(GatewayAccountEntity.class);
@@ -348,6 +353,7 @@ public class NotificationServiceTest {
 
         verify(mockedRefundDao).findByProviderAndReference(SANDBOX.getName(), reference);
         verify(mockedRefundEntity).setStatus(REFUNDED);
+        verify(mockedRefundUpdater).updateRefundTransactionStatus(SANDBOX, reference, RefundStatus.REFUNDED);
         verifyNoMoreInteractions(ignoreStubs(mockedChargeDao));
     }
 

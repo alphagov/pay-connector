@@ -60,8 +60,8 @@ public class EpdqPaymentProvider extends BasePaymentProvider<BaseResponse, Strin
     }
 
     @Override
-    public String getPaymentGatewayName() {
-        return PaymentGatewayName.EPDQ.getName();
+    public PaymentGatewayName getPaymentGatewayName() {
+        return PaymentGatewayName.EPDQ;
     }
 
     @Override
