@@ -1609,7 +1609,7 @@ Content-Type: application/json
 }
 ```
 -----------------------------------------------------------------------------------------------------------
-## GET /v1/api/accounts/{accountId}/transactions-summary (to be implemented)
+## GET /v1/api/accounts/{accountId}/transactions-summary
 
 Retrieves payment summary totals for a given `accountId`
 
