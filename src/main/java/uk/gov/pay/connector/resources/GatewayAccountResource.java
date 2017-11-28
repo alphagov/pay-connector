@@ -13,7 +13,7 @@ import uk.gov.pay.connector.app.ConnectorConfiguration;
 import uk.gov.pay.connector.dao.CardTypeDao;
 import uk.gov.pay.connector.dao.GatewayAccountDao;
 import uk.gov.pay.connector.exception.CredentialsException;
-import uk.gov.pay.connector.model.NotifySettingsUpdateRequest;
+import uk.gov.pay.connector.model.GatewayAccountRequest;
 import uk.gov.pay.connector.model.domain.CardTypeEntity;
 import uk.gov.pay.connector.model.domain.GatewayAccountEntity;
 import uk.gov.pay.connector.model.domain.GatewayAccountResourceDTO;
@@ -48,7 +48,6 @@ import static java.lang.String.format;
 import static javax.ws.rs.core.MediaType.APPLICATION_JSON;
 import static javax.ws.rs.core.Response.Status.BAD_REQUEST;
 import static javax.ws.rs.core.Response.Status.NOT_FOUND;
-import static javax.ws.rs.core.Response.Status.OK;
 import static uk.gov.pay.connector.model.domain.GatewayAccountEntity.Type;
 import static uk.gov.pay.connector.model.domain.GatewayAccountEntity.Type.TEST;
 import static uk.gov.pay.connector.resources.ApiPaths.FRONTEND_ACCOUNT_CARDTYPES_API_PATH;
@@ -226,9 +225,9 @@ public class GatewayAccountResource {
     public Response patchGatewayAccount(@PathParam("accountId") Long gatewayAccountId, JsonNode payload) {
         return validator.validatePatchRequest(payload)
                 .map(errors -> Response.status(BAD_REQUEST).entity(errors).build())
-                .orElseGet(() -> gatewayAccountServicesFactory.getNotifySettingsUpdateService()
-                        .update(gatewayAccountId, NotifySettingsUpdateRequest.from(payload))
-                        .map(gatewayAccountEntity -> Response.status(OK).build())
+                .orElseGet(() -> gatewayAccountServicesFactory.getUpdateService()
+                        .doPatch(gatewayAccountId, GatewayAccountRequest.from(payload))
+                        .map(gatewayAccount -> Response.ok().build())
                         .orElseGet(() -> Response.status(NOT_FOUND).build()));
     }
 

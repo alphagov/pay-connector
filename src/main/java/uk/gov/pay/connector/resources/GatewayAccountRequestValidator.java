@@ -25,7 +25,7 @@ public class GatewayAccountRequestValidator {
     private static final Map<String, List<String>> VALID_ATTRIBUTE_UPDATE_OPERATIONS = new HashMap<String, List<String>>() {{
         put(FIELD_OPERATION, asList("replace", "remove"));
     }};
-    private static final String FIELD_NOTIFY_SETTINGS = "notify_settings";
+    public static final String FIELD_NOTIFY_SETTINGS = "notify_settings";
 
     @Inject
     public GatewayAccountRequestValidator(RequestValidator requestValidator){
