@@ -8,7 +8,15 @@ import java.util.Map;
 
 import static com.jayway.restassured.RestAssured.given;
 import static com.jayway.restassured.http.ContentType.JSON;
-import static uk.gov.pay.connector.resources.ApiPaths.*;
+import static uk.gov.pay.connector.resources.ApiPaths.CARD_TYPES_API_PATH;
+import static uk.gov.pay.connector.resources.ApiPaths.CHARGES_API_PATH;
+import static uk.gov.pay.connector.resources.ApiPaths.CHARGES_EXPIRE_CHARGES_TASK_API_PATH;
+import static uk.gov.pay.connector.resources.ApiPaths.CHARGE_API_PATH;
+import static uk.gov.pay.connector.resources.ApiPaths.CHARGE_EVENTS_API_PATH;
+import static uk.gov.pay.connector.resources.ApiPaths.FRONTEND_CHARGE_API_PATH;
+import static uk.gov.pay.connector.resources.ApiPaths.FRONTEND_CHARGE_CANCEL_API_PATH;
+import static uk.gov.pay.connector.resources.ApiPaths.REFUND_API_PATH;
+import static uk.gov.pay.connector.resources.ApiPaths.TRANSACTIONS_SUMMARY_API_PATH;
 
 public class RestAssuredClient {
     private final DropwizardAppWithPostgresRule app;
@@ -155,6 +163,16 @@ public class RestAssuredClient {
     public ValidatableResponse getCardTypes() {
         String requestPath = CARD_TYPES_API_PATH;
         return given().port(app.getLocalPort())
+                .get(requestPath)
+                .then();
+    }
+
+    public ValidatableResponse getTransactionsSummary() {
+        String requestPath = TRANSACTIONS_SUMMARY_API_PATH
+                .replace("{accountId}", accountId);
+
+        return given().port(app.getLocalPort())
+                .queryParams(queryParams)
                 .get(requestPath)
                 .then();
     }

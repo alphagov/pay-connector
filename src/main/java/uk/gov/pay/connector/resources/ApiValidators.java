@@ -4,10 +4,9 @@ import fj.data.Either;
 import org.apache.commons.lang3.tuple.Pair;
 import uk.gov.pay.connector.dao.GatewayAccountDao;
 import uk.gov.pay.connector.model.builder.PatchRequestBuilder;
-import uk.gov.pay.connector.util.DateTimeUtils;
 
-import javax.mail.internet.AddressException;
-import javax.mail.internet.InternetAddress;
+import java.time.ZonedDateTime;
+import java.time.format.DateTimeParseException;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -19,7 +18,10 @@ import static fj.data.Either.left;
 import static fj.data.Either.right;
 import static java.lang.String.format;
 import static org.apache.commons.lang3.StringUtils.isNotBlank;
-import static uk.gov.pay.connector.resources.ChargesApiResource.*;
+import static uk.gov.pay.connector.resources.ChargesApiResource.EMAIL_KEY;
+import static uk.gov.pay.connector.resources.ChargesApiResource.MAXIMUM_FIELDS_SIZE;
+import static uk.gov.pay.connector.resources.ChargesApiResource.MAX_AMOUNT;
+import static uk.gov.pay.connector.resources.ChargesApiResource.MIN_AMOUNT;
 
 class ApiValidators {
 
@@ -59,7 +61,7 @@ class ApiValidators {
 
         dateParams.forEach(param -> {
             String dateString = param.getRight();
-            if (isNotBlank(dateString) && !DateTimeUtils.toUTCZonedDateTime(dateString).isPresent()) {
+            if (isNotBlank(dateString) && !parseZonedDateTime(dateString).isPresent()) {
                 invalidQueryParams.put(param.getLeft(), "query param '%s' not in correct format");
             }
         });
@@ -108,4 +110,43 @@ class ApiValidators {
 
         return !invalid;
     }
+
+    static Either<List<String>, Pair<ZonedDateTime, ZonedDateTime>> validateFromDateIsBeforeToDate(
+            String fromDateParamName, String fromDate, String toDateParamName, String toDate) {
+        List<String> errors = newArrayList();
+
+        Optional<ZonedDateTime> fromOptional = parseZonedDateTime(fromDate);
+        if (!fromOptional.isPresent()) {
+            errors.add("query param '" + fromDateParamName + "' not in correct format");
+        }
+
+        Optional<ZonedDateTime> toOptional = parseZonedDateTime(toDate);
+        if (!toOptional.isPresent()) {
+            errors.add("query param '" + toDateParamName + "' not in correct format");
+        }
+
+        if (fromOptional.isPresent() && toOptional.isPresent()) {
+            ZonedDateTime from = fromOptional.get();
+            ZonedDateTime to = toOptional.get();
+            if (to.isBefore(from)) {
+                errors.add("query param '" + toDateParamName + "' must be later than '" + fromDateParamName + "'");
+            } else {
+                return right(Pair.of(from, to));
+            }
+        }
+
+        return left(errors);
+    }
+
+    private static Optional<ZonedDateTime> parseZonedDateTime(String zdt) {
+        if (zdt == null) {
+            return Optional.empty();
+        }
+        try {
+            return Optional.of(ZonedDateTime.parse(zdt));
+        } catch (DateTimeParseException e) {
+            return Optional.empty();
+        }
+    }
+
 }
