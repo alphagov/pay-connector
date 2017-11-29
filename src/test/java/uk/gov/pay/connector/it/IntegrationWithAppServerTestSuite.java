@@ -1,10 +1,29 @@
-package uk.gov.pay.connector.it.resources;
+package uk.gov.pay.connector.it;
 
 import org.junit.ClassRule;
 import org.junit.runner.RunWith;
 import org.junit.runners.Suite;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import uk.gov.pay.connector.it.resources.CardAuthoriseResourceITest;
+import uk.gov.pay.connector.it.resources.CardCaptureResourceITest;
+import uk.gov.pay.connector.it.resources.CardTypesResourceITest;
+import uk.gov.pay.connector.it.resources.ChargeCancelFrontendResourceITest;
+import uk.gov.pay.connector.it.resources.ChargeCancelResourceITest;
+import uk.gov.pay.connector.it.resources.ChargeEventsResourceITest;
+import uk.gov.pay.connector.it.resources.ChargeExpiryResourceITest;
+import uk.gov.pay.connector.it.resources.ChargesApiResourceITest;
+import uk.gov.pay.connector.it.resources.ChargesFrontendResourceITest;
+import uk.gov.pay.connector.it.resources.DatabaseConnectionITest;
+import uk.gov.pay.connector.it.resources.EmailNotificationResourceITest;
+import uk.gov.pay.connector.it.resources.GatewayAccountFrontendResourceITest;
+import uk.gov.pay.connector.it.resources.GatewayAccountResourceITest;
+import uk.gov.pay.connector.it.resources.GatewayAccountResourceTestBase;
+import uk.gov.pay.connector.it.resources.HealthCheckResourceITest;
+import uk.gov.pay.connector.it.resources.SearchChargesByDateResourceITest;
+import uk.gov.pay.connector.it.resources.SecurityTokensResourceITest;
+import uk.gov.pay.connector.it.resources.TransactionsApiResourceITest;
+import uk.gov.pay.connector.it.resources.TransactionsSummaryResourceITest;
 import uk.gov.pay.connector.it.resources.epdq.EpdqCardResourceITest;
 import uk.gov.pay.connector.it.resources.epdq.EpdqChargeCancelResourceITest;
 import uk.gov.pay.connector.it.resources.epdq.EpdqNotificationResourceITest;
@@ -59,9 +78,9 @@ import static io.dropwizard.testing.ConfigOverride.config;
         TransactionsApiResourceITest.class,
         TransactionsSummaryResourceITest.class
 })
-public class IntegrationTestSuite {
+public class IntegrationWithAppServerTestSuite {
 
-    private static final Logger LOG = LoggerFactory.getLogger(IntegrationTestSuite.class);
+    private static final Logger LOG = LoggerFactory.getLogger(IntegrationWithAppServerTestSuite.class);
 
     private static int port = PortFactory.findFreePort();
 

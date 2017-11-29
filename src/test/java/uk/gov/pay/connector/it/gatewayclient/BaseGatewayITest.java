@@ -14,11 +14,12 @@ import org.mockito.Captor;
 import org.mockito.Mock;
 import org.mockito.runners.MockitoJUnitRunner;
 import org.slf4j.LoggerFactory;
+import uk.gov.pay.connector.it.IntegrationWithGuiceEmulatorTestSuite;
 import uk.gov.pay.connector.it.dao.DatabaseFixtures;
 import uk.gov.pay.connector.model.domain.ChargeStatus;
+import uk.gov.pay.connector.rules.GuiceAppWithPostgresRule;
 import uk.gov.pay.connector.service.GatewayClient;
 import uk.gov.pay.connector.util.DatabaseTestHelper;
-import uk.gov.pay.connector.util.PortFactory;
 
 import java.util.List;
 import java.util.Map;
@@ -32,6 +33,7 @@ import static uk.gov.pay.connector.model.domain.GatewayAccount.CREDENTIALS_USERN
 
 @RunWith(MockitoJUnitRunner.class)
 abstract public class BaseGatewayITest {
+
     private static final String TRANSACTION_ID = "7914440428682669";
     private static final Map<String, String> CREDENTIALS =
             ImmutableMap.of(
@@ -47,10 +49,11 @@ abstract public class BaseGatewayITest {
     @Captor
     private ArgumentCaptor<LoggingEvent> loggingEventArgumentCaptor;
 
-    protected int port = PortFactory.findFreePort();
+    //protected int port = PortFactory.findFreePort();
+    protected GuiceAppWithPostgresRule app = IntegrationWithGuiceEmulatorTestSuite.getApp();
 
     @Rule
-    public WireMockRule wireMockRule = new WireMockRule(port);
+    public WireMockRule wireMockRule = new WireMockRule(IntegrationWithGuiceEmulatorTestSuite.getExternalServicesPort());
 
     public DatabaseFixtures.TestCharge createTestCharge(DatabaseTestHelper databaseTestHelper) {
         DatabaseFixtures.TestAccount testAccount = DatabaseFixtures

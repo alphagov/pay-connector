@@ -2,7 +2,11 @@ package uk.gov.pay.connector.it.gatewayclient;
 
 import com.github.tomakehurst.wiremock.client.ResponseDefinitionBuilder;
 
-import static com.github.tomakehurst.wiremock.client.WireMock.*;
+import static com.github.tomakehurst.wiremock.client.WireMock.aResponse;
+import static com.github.tomakehurst.wiremock.client.WireMock.matching;
+import static com.github.tomakehurst.wiremock.client.WireMock.post;
+import static com.github.tomakehurst.wiremock.client.WireMock.stubFor;
+import static com.github.tomakehurst.wiremock.client.WireMock.urlPathEqualTo;
 import static java.lang.String.format;
 import static javax.ws.rs.core.HttpHeaders.CONTENT_TYPE;
 import static javax.ws.rs.core.MediaType.TEXT_XML;
@@ -29,7 +33,7 @@ public class GatewayStub {
     private static final int UNKNOWN_STATUS_CODE = 999;
     private final String transactionId;
 
-    public GatewayStub(String transactionId) {
+    public  GatewayStub(String transactionId) {
         this.transactionId = transactionId;
     }
 

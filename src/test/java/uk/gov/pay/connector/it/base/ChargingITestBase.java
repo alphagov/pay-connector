@@ -12,7 +12,7 @@ import org.hamcrest.Matchers;
 import org.hamcrest.TypeSafeMatcher;
 import org.junit.Before;
 import org.junit.Rule;
-import uk.gov.pay.connector.it.resources.IntegrationTestSuite;
+import uk.gov.pay.connector.it.IntegrationWithAppServerTestSuite;
 import uk.gov.pay.connector.it.resources.PostgresResetDatabaseRule;
 import uk.gov.pay.connector.model.domain.CardFixture;
 import uk.gov.pay.connector.model.domain.ChargeStatus;
@@ -31,13 +31,21 @@ import java.util.Map;
 
 import static com.jayway.restassured.RestAssured.given;
 import static com.jayway.restassured.http.ContentType.JSON;
-import static io.dropwizard.testing.ConfigOverride.config;
 import static java.lang.String.format;
 import static javax.ws.rs.core.Response.Status.BAD_REQUEST;
 import static org.hamcrest.Matchers.is;
-import static uk.gov.pay.connector.model.domain.ChargeStatus.*;
-import static uk.gov.pay.connector.model.domain.GatewayAccount.*;
-import static uk.gov.pay.connector.resources.ApiPaths.*;
+import static uk.gov.pay.connector.model.domain.ChargeStatus.AUTHORISATION_SUCCESS;
+import static uk.gov.pay.connector.model.domain.ChargeStatus.CREATED;
+import static uk.gov.pay.connector.model.domain.ChargeStatus.ENTERING_CARD_DETAILS;
+import static uk.gov.pay.connector.model.domain.GatewayAccount.CREDENTIALS_MERCHANT_ID;
+import static uk.gov.pay.connector.model.domain.GatewayAccount.CREDENTIALS_PASSWORD;
+import static uk.gov.pay.connector.model.domain.GatewayAccount.CREDENTIALS_SHA_IN_PASSPHRASE;
+import static uk.gov.pay.connector.model.domain.GatewayAccount.CREDENTIALS_SHA_OUT_PASSPHRASE;
+import static uk.gov.pay.connector.model.domain.GatewayAccount.CREDENTIALS_USERNAME;
+import static uk.gov.pay.connector.resources.ApiPaths.CHARGE_CANCEL_API_PATH;
+import static uk.gov.pay.connector.resources.ApiPaths.FRONTEND_CHARGE_3DS_AUTHORIZE_API_PATH;
+import static uk.gov.pay.connector.resources.ApiPaths.FRONTEND_CHARGE_AUTHORIZE_API_PATH;
+import static uk.gov.pay.connector.resources.ApiPaths.FRONTEND_CHARGE_CAPTURE_API_PATH;
 import static uk.gov.pay.connector.util.JsonEncoder.toJson;
 import static uk.gov.pay.connector.util.TransactionId.randomId;
 
@@ -47,7 +55,7 @@ public class ChargingITestBase extends ChargingITestCommon {
     private int port = PortFactory.findFreePort();
 
     //@Rule
-    public DropwizardAppWithPostgresRule app = IntegrationTestSuite.getApp();
+    protected DropwizardAppWithPostgresRule app = IntegrationWithAppServerTestSuite.getApp();
     //new DropwizardAppWithPostgresRule(
     //        config("worldpay.urls.test", "http://localhost:" + port + "/jsp/merchant/xml/paymentService.jsp"),
     //        config("smartpay.urls.test", "http://localhost:" + port + "/pal/servlet/soap/Payment"),

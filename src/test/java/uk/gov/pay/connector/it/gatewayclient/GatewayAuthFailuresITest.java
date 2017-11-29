@@ -35,13 +35,13 @@ import static org.hamcrest.Matchers.is;
 import static org.junit.Assert.assertThat;
 import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
-import static uk.gov.pay.connector.model.domain.ChargeStatus.AUTHORISATION_ERROR;
 import static uk.gov.pay.connector.model.domain.ChargeStatus.AUTHORISATION_UNEXPECTED_ERROR;
 import static uk.gov.pay.connector.resources.ApiPaths.FRONTEND_CHARGE_AUTHORIZE_API_PATH;
 import static uk.gov.pay.connector.util.AuthUtils.aValidAuthorisationDetails;
 
 @RunWith(MockitoJUnitRunner.class)
 public class GatewayAuthFailuresITest {
+
     private static final String TRANSACTION_ID = "7914440428682669";
     private static final Map<String, String> CREDENTIALS =
             ImmutableMap.of("username", "a-user", "password", "a-password", "merchant_id", "aMerchantCode");

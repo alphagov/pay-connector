@@ -10,7 +10,9 @@ import uk.gov.pay.connector.it.service.CardCaptureProcessBaseITest;
 import uk.gov.pay.connector.rules.WorldpayMockClient;
 import uk.gov.pay.connector.service.CardCaptureProcess;
 
-import static uk.gov.pay.connector.model.domain.ChargeStatus.*;
+import static uk.gov.pay.connector.model.domain.ChargeStatus.CAPTURED;
+import static uk.gov.pay.connector.model.domain.ChargeStatus.CAPTURE_APPROVED;
+import static uk.gov.pay.connector.model.domain.ChargeStatus.ENTERING_CARD_DETAILS;
 
 @RunWith(MockitoJUnitRunner.class)
 public class CardCaptureProcessITest extends CardCaptureProcessBaseITest {

@@ -1,20 +1,20 @@
 package uk.gov.pay.connector.it.logging;
 
-import static org.hamcrest.MatcherAssert.assertThat;
-import static org.hamcrest.Matchers.containsString;
-
 import ch.qos.logback.classic.Logger;
 import io.dropwizard.testing.DropwizardTestSupport;
 import io.dropwizard.testing.ResourceHelpers;
-import java.io.ByteArrayOutputStream;
-import java.io.PrintStream;
-import java.util.UUID;
 import org.junit.Test;
 import org.slf4j.LoggerFactory;
 import org.slf4j.MDC;
 import uk.gov.pay.connector.app.ConnectorApp;
 import uk.gov.pay.connector.app.ConnectorConfiguration;
 
+import java.io.ByteArrayOutputStream;
+import java.io.PrintStream;
+import java.util.UUID;
+
+import static org.hamcrest.MatcherAssert.assertThat;
+import static org.hamcrest.Matchers.containsString;
 import static uk.gov.pay.connector.filters.LoggingFilter.HEADER_REQUEST_ID;
 
 public class GeneralLoggingTest {

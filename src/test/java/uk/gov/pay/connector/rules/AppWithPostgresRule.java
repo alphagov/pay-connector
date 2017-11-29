@@ -24,7 +24,7 @@ import static io.dropwizard.testing.ConfigOverride.config;
 import static io.dropwizard.testing.ResourceHelpers.resourceFilePath;
 
 abstract public class AppWithPostgresRule implements TestRule {
-    private static final Logger logger = LoggerFactory.getLogger(AppWithPostgresRule.class);
+        private static final Logger logger = LoggerFactory.getLogger(AppWithPostgresRule.class);
 
     private final String configFilePath;
     private final PostgresDockerRule postgres;

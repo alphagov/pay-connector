@@ -1,11 +1,9 @@
 package uk.gov.pay.connector.it.resources;
 
 import org.junit.Before;
-import org.junit.Rule;
 import org.junit.Test;
 import uk.gov.pay.connector.it.base.ChargingITestBase;
 import uk.gov.pay.connector.it.dao.DatabaseFixtures;
-import uk.gov.pay.connector.rules.DropwizardAppWithPostgresRule;
 import uk.gov.pay.connector.util.RestAssuredClient;
 
 import static org.hamcrest.core.Is.is;

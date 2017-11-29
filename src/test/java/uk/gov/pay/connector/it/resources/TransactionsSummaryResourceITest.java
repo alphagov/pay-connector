@@ -1,10 +1,8 @@
 package uk.gov.pay.connector.it.resources;
 
-import org.junit.Rule;
 import org.junit.Test;
 import uk.gov.pay.connector.it.base.ChargingITestBase;
 import uk.gov.pay.connector.it.dao.DatabaseFixtures;
-import uk.gov.pay.connector.rules.DropwizardAppWithPostgresRule;
 import uk.gov.pay.connector.util.RestAssuredClient;
 
 import javax.ws.rs.core.Response;
@@ -32,9 +30,6 @@ public class TransactionsSummaryResourceITest extends ChargingITestBase {
     private static final ZonedDateTime AFTER_RANGE_1 = ZonedDateTime.parse("2017-11-27T15:00:00Z");
 
     private static final long GATEWAY_ACCOUNT_ID = 4815162342L;
-
-    @Rule
-    public DropwizardAppWithPostgresRule app = new DropwizardAppWithPostgresRule();
 
     private RestAssuredClient connectorApi = new RestAssuredClient(app, Long.toString(GATEWAY_ACCOUNT_ID));
 

@@ -6,7 +6,13 @@ import com.google.inject.Injector;
 import com.google.inject.Singleton;
 import com.google.inject.persist.PersistService;
 import com.google.inject.persist.jpa.JpaPersistModule;
-import uk.gov.pay.connector.dao.*;
+import uk.gov.pay.connector.dao.Card3dsDao;
+import uk.gov.pay.connector.dao.CardDao;
+import uk.gov.pay.connector.dao.ChargeDao;
+import uk.gov.pay.connector.dao.ChargeEventDao;
+import uk.gov.pay.connector.dao.GatewayAccountDao;
+import uk.gov.pay.connector.dao.PaymentRequestDao;
+import uk.gov.pay.connector.dao.TokenDao;
 
 public class GuicedTestEnvironment {
 

@@ -1,25 +1,16 @@
 package uk.gov.pay.connector.it.gatewayclient;
 
-import org.hamcrest.Matchers;
-import org.junit.Assert;
 import org.junit.Before;
-import org.junit.Rule;
-import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.mockito.runners.MockitoJUnitRunner;
-import uk.gov.pay.connector.it.dao.DatabaseFixtures;
-import uk.gov.pay.connector.rules.GuiceAppWithPostgresRule;
-import uk.gov.pay.connector.service.CardCaptureProcess;
-
-import static io.dropwizard.testing.ConfigOverride.config;
-import static uk.gov.pay.connector.model.domain.ChargeStatus.CAPTURE_APPROVED_RETRY;
 
 @RunWith(MockitoJUnitRunner.class)
 public class GatewayInvalidUrlITest extends BaseGatewayITest {
 
-    @Rule
-    public GuiceAppWithPostgresRule app = new GuiceAppWithPostgresRule(
-            config("smartpay.urls.test", "http://gobbledygook.invalid.url"));
+    //FIXME: Unit test for this I think should be enough
+    //@Rule
+    //public GuiceAppWithPostgresRule app = new GuiceAppWithPostgresRule(
+    //        config("smartpay.urls.test", "http://gobbledygook.invalid.url"));
 
 
     @Before
@@ -27,7 +18,7 @@ public class GatewayInvalidUrlITest extends BaseGatewayITest {
         setupLoggerMockAppender();
     }
 
-    @Test
+   /* @Test
     public void shouldFailCaptureWhenInvalidConnectorUrl() throws Exception {
         DatabaseFixtures.TestCharge testCharge = createTestCharge(app.getDatabaseTestHelper());
         setupGatewayStub().respondWithUnexpectedResponseCodeWhenCapture();
@@ -35,5 +26,5 @@ public class GatewayInvalidUrlITest extends BaseGatewayITest {
 
         assertThatLastGatewayClientLoggingEventIs("DNS resolution error for gateway url=http://gobbledygook.invalid.url");
         Assert.assertThat(app.getDatabaseTestHelper().getChargeStatus(testCharge.getChargeId()), Matchers.is(CAPTURE_APPROVED_RETRY.getValue()));
-    }
+    }*/
 }
