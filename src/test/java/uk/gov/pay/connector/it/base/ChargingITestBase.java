@@ -12,6 +12,8 @@ import org.hamcrest.Matchers;
 import org.hamcrest.TypeSafeMatcher;
 import org.junit.Before;
 import org.junit.Rule;
+import uk.gov.pay.connector.it.resources.IntegrationTestSuite;
+import uk.gov.pay.connector.it.resources.PostgresResetDatabaseRule;
 import uk.gov.pay.connector.model.domain.CardFixture;
 import uk.gov.pay.connector.model.domain.ChargeStatus;
 import uk.gov.pay.connector.model.domain.RefundStatus;
@@ -44,13 +46,19 @@ public class ChargingITestBase extends ChargingITestCommon {
 
     private int port = PortFactory.findFreePort();
 
-    @Rule
-    public DropwizardAppWithPostgresRule app = new DropwizardAppWithPostgresRule(
-            config("worldpay.urls.test", "http://localhost:" + port + "/jsp/merchant/xml/paymentService.jsp"),
-            config("smartpay.urls.test", "http://localhost:" + port + "/pal/servlet/soap/Payment"),
-            config("epdq.urls.test", "http://localhost:" + port + "/epdq"));
+    //@Rule
+    public DropwizardAppWithPostgresRule app = IntegrationTestSuite.getApp();
+    //new DropwizardAppWithPostgresRule(
+    //        config("worldpay.urls.test", "http://localhost:" + port + "/jsp/merchant/xml/paymentService.jsp"),
+    //        config("smartpay.urls.test", "http://localhost:" + port + "/pal/servlet/soap/Payment"),
+    //        config("epdq.urls.test", "http://localhost:" + port + "/epdq"));
+
     @Rule
     public WireMockRule wireMockRule = new WireMockRule(port);
+
+    @Rule
+    public PostgresResetDatabaseRule postgresResetDatabase = new PostgresResetDatabaseRule(app);
+
     protected static final long AMOUNT = 6234L;
 
     protected WorldpayMockClient worldpay;

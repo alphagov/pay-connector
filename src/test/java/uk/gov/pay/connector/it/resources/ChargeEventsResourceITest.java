@@ -4,6 +4,7 @@ import org.apache.commons.lang3.RandomStringUtils;
 import org.junit.Before;
 import org.junit.Rule;
 import org.junit.Test;
+import uk.gov.pay.connector.it.base.ChargingITestBase;
 import uk.gov.pay.connector.it.dao.DatabaseFixtures;
 import uk.gov.pay.connector.matcher.TransactionEventMatcher;
 import uk.gov.pay.connector.model.domain.RefundStatus;
@@ -21,16 +22,17 @@ import static uk.gov.pay.connector.it.dao.DatabaseFixtures.withDatabaseTestHelpe
 import static uk.gov.pay.connector.matcher.TransactionEventMatcher.withState;
 import static uk.gov.pay.connector.model.domain.ChargeStatus.*;
 
-public class ChargeEventsResourceITest {
+public class ChargeEventsResourceITest extends ChargingITestBase {
 
     public static final String SUBMITTED_BY = "r378y387y8weriyi";
     private DatabaseTestHelper databaseTestHelper;
 
-    @Rule
-    public DropwizardAppWithPostgresRule app = new DropwizardAppWithPostgresRule();
-
     private String accountId = "72332423443245";
     private RestAssuredClient connectorApi = new RestAssuredClient(app, accountId);
+
+    public ChargeEventsResourceITest() {
+        super("sandbox");
+    }
 
     @Before
     public void setUp() throws Exception {

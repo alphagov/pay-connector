@@ -5,6 +5,7 @@ import com.jayway.restassured.response.ValidatableResponse;
 import org.junit.Before;
 import org.junit.Rule;
 import org.junit.Test;
+import uk.gov.pay.connector.it.base.ChargingITestBase;
 import uk.gov.pay.connector.it.dao.DatabaseFixtures;
 import uk.gov.pay.connector.model.api.ExternalChargeState;
 import uk.gov.pay.connector.model.domain.ChargeStatus;
@@ -37,9 +38,7 @@ import static uk.gov.pay.connector.model.domain.ChargeStatus.CREATED;
 import static uk.gov.pay.connector.util.JsonEncoder.toJson;
 import static uk.gov.pay.connector.util.NumberMatcher.isNumber;
 
-public class ChargesFrontendResourceITest {
-    @Rule
-    public DropwizardAppWithPostgresRule app = new DropwizardAppWithPostgresRule();
+public class ChargesFrontendResourceITest extends ChargingITestBase {
 
     private String accountId = "72332423443245";
     private String description = "Test description";
@@ -52,6 +51,10 @@ public class ChargesFrontendResourceITest {
     private long expectedAmount = 6234L;
 
     private RestAssuredClient connectorRestApi = new RestAssuredClient(app, accountId);
+
+    public ChargesFrontendResourceITest() {
+        super("sandbox");
+    }
 
     @Before
     public void setupGatewayAccount() {

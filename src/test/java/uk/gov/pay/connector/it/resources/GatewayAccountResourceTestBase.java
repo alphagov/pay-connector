@@ -5,6 +5,7 @@ import com.jayway.restassured.response.ValidatableResponse;
 import com.jayway.restassured.specification.RequestSpecification;
 import org.junit.Before;
 import org.junit.Rule;
+import uk.gov.pay.connector.it.base.ChargingITestBase;
 import uk.gov.pay.connector.it.dao.DatabaseFixtures;
 import uk.gov.pay.connector.model.domain.GatewayAccountEntity;
 import uk.gov.pay.connector.rules.DropwizardAppWithPostgresRule;
@@ -20,7 +21,7 @@ import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.*;
 import static uk.gov.pay.connector.util.JsonEncoder.toJson;
 
-public class GatewayAccountResourceTestBase {
+public class GatewayAccountResourceTestBase extends ChargingITestBase {
 
     public static final String ACCOUNTS_API_URL = "/v1/api/accounts/";
     public static final String ACCOUNTS_FRONTEND_URL = "/v1/frontend/accounts/";
@@ -29,6 +30,10 @@ public class GatewayAccountResourceTestBase {
     @Rule
     public DropwizardAppWithPostgresRule app = new DropwizardAppWithPostgresRule();
     protected DatabaseFixtures databaseFixtures;
+
+    public GatewayAccountResourceTestBase() {
+        super("sandbox");
+    }
 
     @Before
     public void setUp() {
