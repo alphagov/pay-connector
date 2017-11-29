@@ -4,6 +4,7 @@ import org.apache.commons.lang.math.RandomUtils;
 import org.junit.Before;
 import org.junit.Rule;
 import org.junit.Test;
+import uk.gov.pay.connector.it.base.ChargingITestBase;
 import uk.gov.pay.connector.model.domain.ChargeStatus;
 import uk.gov.pay.connector.rules.DropwizardAppWithPostgresRule;
 import uk.gov.pay.connector.util.RestAssuredClient;
@@ -17,14 +18,16 @@ import static javax.ws.rs.core.MediaType.APPLICATION_JSON;
 import static javax.ws.rs.core.Response.Status.OK;
 import static org.hamcrest.Matchers.is;
 
-public class SearchChargesByDateResourceITest {
+public class SearchChargesByDateResourceITest extends ChargingITestBase {
 
     private static final int AMOUNT = 6234;
 
-    @Rule
-    public DropwizardAppWithPostgresRule app = new DropwizardAppWithPostgresRule();
     private String accountId = "72332423443245";
     private RestAssuredClient chargeApi = new RestAssuredClient(app, accountId);
+
+    public SearchChargesByDateResourceITest() {
+        super("sandbox");
+    }
 
     @Before
     public void setupGatewayAccount() {

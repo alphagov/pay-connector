@@ -1,17 +1,16 @@
 package uk.gov.pay.connector.it.resources;
 
-import org.junit.Ignore;
-import org.junit.Rule;
 import org.junit.Test;
-import uk.gov.pay.connector.rules.DropwizardAppWithPostgresRule;
+import uk.gov.pay.connector.it.base.ChargingITestBase;
 
 import static com.jayway.restassured.RestAssured.given;
 import static org.hamcrest.Matchers.is;
 
-public class DatabaseConnectionITest {
+public class DatabaseConnectionITest extends ChargingITestBase {
 
-    @Rule
-    public DropwizardAppWithPostgresRule app = new DropwizardAppWithPostgresRule();
+    public DatabaseConnectionITest() {
+        super("sandbox");
+    }
 
     @Test
     public void testDatabaseHealthcheckWhenDatabaseIsUp() {

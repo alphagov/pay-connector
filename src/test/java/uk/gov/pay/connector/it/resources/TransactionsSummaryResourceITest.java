@@ -1,9 +1,8 @@
 package uk.gov.pay.connector.it.resources;
 
-import org.junit.Rule;
 import org.junit.Test;
+import uk.gov.pay.connector.it.base.ChargingITestBase;
 import uk.gov.pay.connector.it.dao.DatabaseFixtures;
-import uk.gov.pay.connector.rules.DropwizardAppWithPostgresRule;
 import uk.gov.pay.connector.util.RestAssuredClient;
 
 import javax.ws.rs.core.Response;
@@ -17,7 +16,7 @@ import static uk.gov.pay.connector.model.domain.ChargeStatus.CAPTURE_APPROVED_RE
 import static uk.gov.pay.connector.model.domain.ChargeStatus.CAPTURE_SUBMITTED;
 import static uk.gov.pay.connector.model.domain.RefundStatus.REFUNDED;
 
-public class TransactionsSummaryResourceITest {
+public class TransactionsSummaryResourceITest extends ChargingITestBase {
 
     private static final String START_OF_RANGE = "2017-11-25T10:00:00Z";
     private static final String END_OF_RANGE = "2017-11-27T10:00:00Z";
@@ -32,10 +31,11 @@ public class TransactionsSummaryResourceITest {
 
     private static final long GATEWAY_ACCOUNT_ID = 4815162342L;
 
-    @Rule
-    public DropwizardAppWithPostgresRule app = new DropwizardAppWithPostgresRule();
-
     private RestAssuredClient connectorApi = new RestAssuredClient(app, Long.toString(GATEWAY_ACCOUNT_ID));
+
+    public TransactionsSummaryResourceITest() {
+        super("sandbox");
+    }
 
     @Test
     public void shouldGetSummaryContainingPaymentsAndRefundsWithinRange() {

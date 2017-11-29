@@ -30,6 +30,7 @@ public class PostgresContainer {
 
     private static final String DB_PASSWORD = "mysecretpassword";
     private static final String DB_USERNAME = "postgres";
+    private static final String DB_NAME = "connectorintegrationtests";
     private static final int DB_TIMEOUT_SEC = 15;
     private static final String GOVUK_POSTGRES_IMAGE = "govukpay/postgres:9.4.4";
     private static final String INTERNAL_PORT = "5432";
@@ -64,7 +65,15 @@ public class PostgresContainer {
         return DB_PASSWORD;
     }
 
+    public String getDatabaseName() {
+        return DB_NAME;
+    }
+
     public String getConnectionUrl() {
+        return getBaseConnectionUrl() + DB_NAME;
+    }
+
+    public String getBaseConnectionUrl() {
         return "jdbc:postgresql://" + host + ":" + port + "/";
     }
 
@@ -96,16 +105,25 @@ public class PostgresContainer {
         if (!succeeded) {
             throw new RuntimeException("Postgres did not start in " + DB_TIMEOUT_SEC + " seconds.");
         }
-        logger.info("Postgres docker container started in {}.", timer.elapsed(TimeUnit.MILLISECONDS));
-    }
-
-    private boolean checkPostgresConnection() throws IOException {
 
         Properties props = new Properties();
         props.setProperty("user", DB_USERNAME);
         props.setProperty("password", DB_PASSWORD);
+        try (Connection connection = DriverManager.getConnection("jdbc:postgresql://" + host + ":" + port + "/", props)) {
+            connection.createStatement().execute("CREATE DATABASE connectorintegrationtests WITH owner=postgres TEMPLATE postgres");
+            connection.createStatement().execute("GRANT ALL PRIVILEGES ON DATABASE connectorintegrationtests TO postgres");
+        } catch (Exception except) {
+            throw new RuntimeException("Postgres database creationg error");
+        }
 
-        try (Connection connection = DriverManager.getConnection(getConnectionUrl(), props)) {
+        logger.info("Postgres docker container started in {}.", timer.elapsed(TimeUnit.MILLISECONDS));
+    }
+
+    private boolean checkPostgresConnection() throws IOException {
+        Properties props = new Properties();
+        props.setProperty("user", DB_USERNAME);
+        props.setProperty("password", DB_PASSWORD);
+        try (Connection connection = DriverManager.getConnection("jdbc:postgresql://" + host + ":" + port + "/", props)) {
             return true;
         } catch (Exception except) {
             return false;

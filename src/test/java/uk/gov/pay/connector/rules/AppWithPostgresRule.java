@@ -15,6 +15,8 @@ import org.slf4j.LoggerFactory;
 import uk.gov.pay.connector.app.ConnectorConfiguration;
 import uk.gov.pay.connector.util.DatabaseTestHelper;
 
+import java.sql.Connection;
+import java.sql.DriverManager;
 import java.util.List;
 
 import static com.google.common.collect.Lists.newArrayList;
@@ -57,8 +59,9 @@ abstract public class AppWithPostgresRule implements TestRule {
         return rules.apply(new Statement() {
             @Override
             public void evaluate() throws Throwable {
-                logger.info("Clearing database.");
-                appRule.getApplication().run("db", "drop-all", "--confirm-delete-everything", configFilePath);
+                //logger.info("Clearing database.");
+                //appRule.getApplication().run("db", "drop-all", "--confirm-delete-everything", configFilePath);
+
                 appRule.getApplication().run("db", "migrate", configFilePath);
 
                 restoreDropwizardsLogging();
@@ -66,7 +69,23 @@ abstract public class AppWithPostgresRule implements TestRule {
                 DataSourceFactory dataSourceFactory = appRule.getConfiguration().getDataSourceFactory();
                 databaseTestHelper = new DatabaseTestHelper(new DBI(dataSourceFactory.getUrl(), dataSourceFactory.getUser(), dataSourceFactory.getPassword()));
 
+                // create template from database
+                Connection connection = null;
+                try {
+                    connection = DriverManager.getConnection(postgres.getConnectionBaseUrl(), postgres.getUsername(), postgres.getPassword());
+
+                    connection.createStatement().execute("SELECT pg_terminate_backend(pg_stat_activity.pid) FROM pg_stat_activity"
+                            + " WHERE pg_stat_activity.datname = 'connectorintegrationtests' AND pid <> pg_backend_pid()");
+
+                    connection.createStatement().execute("CREATE DATABASE templatedb WITH TEMPLATE connectorintegrationtests OWNER postgres");
+
+                } finally {
+                    if (connection != null)
+                        connection.close();
+                }
+
                 base.evaluate();
+
             }
         }, description);
     }

@@ -1,33 +1,35 @@
 package uk.gov.pay.connector.it.resources;
 
 import com.jayway.restassured.response.ValidatableResponse;
-import com.jayway.restassured.specification.RequestSpecification;
 import org.junit.Before;
 import org.junit.Rule;
 import org.junit.Test;
+import uk.gov.pay.connector.it.base.ChargingITestBase;
 import uk.gov.pay.connector.it.dao.DatabaseFixtures;
 import uk.gov.pay.connector.resources.SecurityTokensResource;
 import uk.gov.pay.connector.rules.DropwizardAppWithPostgresRule;
 
-import static com.jayway.restassured.RestAssured.given;
 import static com.jayway.restassured.http.ContentType.JSON;
 import static org.hamcrest.Matchers.is;
 import static org.hamcrest.Matchers.isEmptyOrNullString;
 import static uk.gov.pay.connector.model.domain.ChargeStatus.CREATED;
 
-public class SecurityTokensResourceITest {
+public class SecurityTokensResourceITest extends ChargingITestBase {
 
+    @Rule
+    public DropwizardAppWithPostgresRule app = new DropwizardAppWithPostgresRule();
     private DatabaseFixtures.TestAccount defaultTestAccount;
     private DatabaseFixtures.TestCharge defaultTestCharge;
     private DatabaseFixtures.TestToken defaultTestToken;
 
 
+    public SecurityTokensResourceITest() {
+        super("sandbox");
+    }
+
     private String tokensUrlFor(String id) {
         return SecurityTokensResource.CHARGE_TOKEN_PATH.replace("{chargeTokenId}", id);
     }
-
-    @Rule
-    public DropwizardAppWithPostgresRule app = new DropwizardAppWithPostgresRule();
 
     @Before
     public void setupGatewayAccount() {
@@ -81,11 +83,6 @@ public class SecurityTokensResourceITest {
                 .get(tokensUrlFor(secureRedirectToken) + "/charge")
                 .then()
                 .statusCode(expectedStatusCode)
-                .contentType(JSON);
-    }
-
-    private RequestSpecification givenSetup() {
-        return given().port(app.getLocalPort())
                 .contentType(JSON);
     }
 }
