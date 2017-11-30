@@ -35,6 +35,7 @@ import uk.gov.pay.connector.it.resources.worldpay.WorldpayChargeCancelResourceDr
 import uk.gov.pay.connector.it.resources.worldpay.WorldpayNotificationResourceDropwizardITest;
 import uk.gov.pay.connector.it.resources.worldpay.WorldpayRefundDropwizardITest;
 import uk.gov.pay.connector.rules.DropwizardAppWithPostgresRule;
+import uk.gov.pay.connector.rules.DropwizardAppWithPostgresTemplateRule;
 import uk.gov.pay.connector.util.PortFactory;
 
 import static io.dropwizard.testing.ConfigOverride.config;
@@ -74,17 +75,17 @@ import static io.dropwizard.testing.ConfigOverride.config;
         TransactionsApiResourceDropwizardITest.class,
         TransactionsSummaryResourceDropwizardITest.class
 })
-public class IntegrationWithAppServerTestSuite {
+public class IntegrationDropwizardITestSuite {
 
     private static int port = PortFactory.findFreePort();
 
     @ClassRule
-    public static DropwizardAppWithPostgresRule app = new DropwizardAppWithPostgresRule(
+    public static DropwizardAppWithPostgresTemplateRule app = new DropwizardAppWithPostgresTemplateRule(
             config("worldpay.urls.test", "http://localhost:" + port + "/jsp/merchant/xml/paymentService.jsp"),
             config("smartpay.urls.test", "http://localhost:" + port + "/pal/servlet/soap/Payment"),
             config("epdq.urls.test", "http://localhost:" + port + "/epdq"));
 
-    public static DropwizardAppWithPostgresRule getApp() {
+    public static DropwizardAppWithPostgresTemplateRule getApp() {
         return app;
     }
 }

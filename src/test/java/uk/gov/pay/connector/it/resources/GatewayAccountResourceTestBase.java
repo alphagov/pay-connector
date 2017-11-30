@@ -4,11 +4,12 @@ import com.google.common.collect.Maps;
 import com.jayway.restassured.response.ValidatableResponse;
 import com.jayway.restassured.specification.RequestSpecification;
 import org.junit.Before;
-import uk.gov.pay.connector.it.IntegrationWithAppServerTestSuite;
+import uk.gov.pay.connector.it.IntegrationDropwizardITestSuite;
 import uk.gov.pay.connector.it.base.ChargingITestBase;
 import uk.gov.pay.connector.it.dao.DatabaseFixtures;
 import uk.gov.pay.connector.model.domain.GatewayAccountEntity;
 import uk.gov.pay.connector.rules.DropwizardAppWithPostgresRule;
+import uk.gov.pay.connector.rules.DropwizardAppWithPostgresTemplateRule;
 import uk.gov.pay.connector.util.DatabaseTestHelper;
 
 import java.util.Arrays;
@@ -29,7 +30,7 @@ public class GatewayAccountResourceTestBase extends ChargingITestBase {
     public static final String ACCOUNTS_FRONTEND_URL = "/v1/frontend/accounts/";
     protected DatabaseTestHelper databaseTestHelper;
 
-    public DropwizardAppWithPostgresRule app = IntegrationWithAppServerTestSuite.getApp();
+    public DropwizardAppWithPostgresTemplateRule app = IntegrationDropwizardITestSuite.getApp();
 
     protected DatabaseFixtures databaseFixtures;
 

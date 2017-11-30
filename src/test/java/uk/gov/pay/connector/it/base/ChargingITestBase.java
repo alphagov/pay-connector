@@ -11,12 +11,14 @@ import org.hamcrest.Matchers;
 import org.hamcrest.TypeSafeMatcher;
 import org.junit.Before;
 import org.junit.Rule;
-import uk.gov.pay.connector.it.IntegrationWithAppServerTestSuite;
+import uk.gov.pay.connector.it.IntegrationDropwizardITestSuite;
 import uk.gov.pay.connector.it.resources.PostgresResetDatabaseRule;
 import uk.gov.pay.connector.model.domain.CardFixture;
 import uk.gov.pay.connector.model.domain.ChargeStatus;
 import uk.gov.pay.connector.model.domain.RefundStatus;
+import uk.gov.pay.connector.rules.AppWithPostgresRule;
 import uk.gov.pay.connector.rules.DropwizardAppWithPostgresRule;
+import uk.gov.pay.connector.rules.DropwizardAppWithPostgresTemplateRule;
 import uk.gov.pay.connector.rules.EpdqMockClient;
 import uk.gov.pay.connector.rules.SmartpayMockClient;
 import uk.gov.pay.connector.rules.WorldpayMockClient;
@@ -50,7 +52,7 @@ import static uk.gov.pay.connector.util.TransactionId.randomId;
 public class ChargingITestBase extends ChargingITestCommon {
 
     private RestAssuredClient connectorRestApi;
-    protected DropwizardAppWithPostgresRule app = IntegrationWithAppServerTestSuite.getApp();
+    protected AppWithPostgresRule app = IntegrationDropwizardITestSuite.getApp();
 
     @Rule
     public PostgresResetDatabaseRule postgresResetDatabase = new PostgresResetDatabaseRule(app);
@@ -76,7 +78,7 @@ public class ChargingITestBase extends ChargingITestCommon {
     }
 
     @Override
-    public DropwizardAppWithPostgresRule getApplication() {
+    public AppWithPostgresRule getApplication() {
         return app;
     }
 

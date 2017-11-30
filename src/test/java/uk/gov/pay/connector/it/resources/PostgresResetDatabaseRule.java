@@ -5,16 +5,16 @@ import org.apache.commons.lang3.StringUtils;
 import org.junit.rules.TestRule;
 import org.junit.runner.Description;
 import org.junit.runners.model.Statement;
-import uk.gov.pay.connector.rules.DropwizardAppWithPostgresRule;
+import uk.gov.pay.connector.rules.AppWithPostgresRule;
 
 import java.sql.Connection;
 import java.sql.DriverManager;
 
 public class PostgresResetDatabaseRule implements TestRule {
 
-    private final DropwizardAppWithPostgresRule app;
+    private final AppWithPostgresRule app;
 
-    public PostgresResetDatabaseRule(DropwizardAppWithPostgresRule app) {
+    public PostgresResetDatabaseRule(AppWithPostgresRule app) {
         this.app = app;
     }
 
