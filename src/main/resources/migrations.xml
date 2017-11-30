@@ -1005,4 +1005,41 @@
         </addColumn>
     </changeSet>
 
+    <changeSet id="backfill into transactions all charges that are in terminal states" author="">
+        <sql>
+            INSERT INTO transactions (
+                payment_request_id,
+                gateway_transaction_id,
+                amount,
+                status,
+                operation
+                )
+            SELECT
+                pr.id,
+                ch.gateway_transaction_id,
+                ch.amount,
+                ch.status,
+                'CHARGE'
+            FROM payment_requests pr
+            LEFT JOIN transactions t ON pr.id = t.payment_request_id AND t.operation='CHARGE'
+            JOIN charges ch ON pr.external_id = ch.external_id
+            WHERE t.id IS NULL AND ch.status IN (
+                'EXPIRED',
+                'EXPIRE CANCEL FAILED',
+                'AUTHORISATION ABORTED',
+                'AUTHORISATION CANCELLED',
+                'AUTHORISATION ERROR',
+                'AUTHORISATION UNEXPECTED ERROR',
+                'AUTHORISATION TIMEOUT',
+                'AUTHORISATION REJECTED',
+                'USER CANCELLED',
+                'USER CANCEL ERROR',
+                'CAPTURED',
+                'CAPTURE ERROR',
+                'SYSTEM CANCELLED',
+                'SYSTEM CANCEL ERROR'
+            );
+        </sql>
+    </changeSet>
+
 </databaseChangeLog>
