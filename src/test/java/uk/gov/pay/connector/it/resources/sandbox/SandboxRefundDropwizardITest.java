@@ -28,14 +28,14 @@ import static uk.gov.pay.connector.model.domain.ChargeStatus.CAPTURED;
 import static uk.gov.pay.connector.model.domain.ChargeStatus.ENTERING_CARD_DETAILS;
 import static uk.gov.pay.connector.resources.ApiPaths.REFUNDS_API_PATH;
 
-public class SandboxRefundITest extends ChargingITestBase {
+public class SandboxRefundDropwizardITest extends ChargingITestBase {
 
     private DatabaseFixtures.TestAccount defaultTestAccount;
     private DatabaseFixtures.TestCharge defaultTestCharge;
     private DatabaseTestHelper databaseTestHelper;
     private RestAssuredClient getChargeApi = new RestAssuredClient(app, accountId);
 
-    public SandboxRefundITest() {
+    public SandboxRefundDropwizardITest() {
         super("sandbox");
     }
 

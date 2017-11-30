@@ -20,7 +20,7 @@ import static org.hamcrest.collection.IsIterableContainingInAnyOrder.containsInA
 import static org.junit.Assert.assertTrue;
 import static uk.gov.pay.connector.model.domain.ChargeStatus.*;
 
-public class ChargeExpiryResourceITest extends ChargingITestBase {
+public class ChargeExpiryResourceDropwizardITest extends ChargingITestBase {
 
     private static final String JSON_CHARGE_KEY = "charge_id";
     private static final String JSON_STATE_KEY = "state.status";
@@ -29,7 +29,7 @@ public class ChargeExpiryResourceITest extends ChargingITestBase {
 
     private RestAssuredClient getChargeApi = new RestAssuredClient(app, accountId);
 
-    public ChargeExpiryResourceITest() {
+    public ChargeExpiryResourceDropwizardITest() {
         super(PROVIDER_NAME);
     }
 

@@ -25,9 +25,9 @@ import static org.junit.Assert.fail;
 import static uk.gov.pay.connector.model.domain.ChargeStatus.*;
 import static uk.gov.pay.connector.resources.ApiPaths.FRONTEND_CHARGE_API_PATH;
 
-public class CardAuthoriseResourceITest extends ChargingITestBase {
+public class CardAuthoriseResourceDropwizardITest extends ChargingITestBase {
 
-    public CardAuthoriseResourceITest() {
+    public CardAuthoriseResourceDropwizardITest() {
         super("sandbox");
     }
 

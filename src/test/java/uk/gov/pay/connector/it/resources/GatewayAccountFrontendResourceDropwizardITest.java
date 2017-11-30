@@ -21,7 +21,7 @@ import static org.hamcrest.core.Is.is;
 import static org.junit.Assert.assertThat;
 import static org.junit.Assert.assertTrue;
 
-public class GatewayAccountFrontendResourceITest extends GatewayAccountResourceTestBase {
+public class GatewayAccountFrontendResourceDropwizardITest extends GatewayAccountResourceTestBase {
     private static final String ACCOUNTS_CARD_TYPE_FRONTEND_URL = "v1/frontend/accounts/{accountId}/card-types";
 
     static class GatewayAccountPayload {

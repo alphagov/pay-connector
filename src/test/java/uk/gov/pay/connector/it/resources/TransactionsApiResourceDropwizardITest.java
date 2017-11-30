@@ -26,7 +26,7 @@ import static uk.gov.pay.connector.matcher.ZoneDateTimeAsStringWithinMatcher.isW
 import static uk.gov.pay.connector.model.domain.ChargeStatus.*;
 import static uk.gov.pay.connector.resources.ApiPaths.CHARGES_API_PATH;
 
-public class TransactionsApiResourceITest extends ChargingITestBase {
+public class TransactionsApiResourceDropwizardITest extends ChargingITestBase {
 
     private static final String PROVIDER_NAME = "sandbox";
 
@@ -35,7 +35,7 @@ public class TransactionsApiResourceITest extends ChargingITestBase {
     private String cardHolderName;
     private String expiryDate;
 
-    public TransactionsApiResourceITest() {
+    public TransactionsApiResourceDropwizardITest() {
         super(PROVIDER_NAME);
     }
 

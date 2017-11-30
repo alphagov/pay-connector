@@ -10,11 +10,11 @@ import static uk.gov.pay.connector.model.domain.ChargeStatus.AUTHORISATION_SUBMI
 import static uk.gov.pay.connector.model.domain.ChargeStatus.AUTHORISATION_SUCCESS;
 import static uk.gov.pay.connector.model.domain.ChargeStatus.ENTERING_CARD_DETAILS;
 
-public class EpdqCardResourceITest extends ChargingITestBase {
+public class EpdqCardResourceDropwizardITest extends ChargingITestBase {
 
     private String authorisationDetails = buildJsonAuthorisationDetailsFor("4444333322221111", "visa");
 
-    public EpdqCardResourceITest() {
+    public EpdqCardResourceDropwizardITest() {
         super("epdq");
     }
 

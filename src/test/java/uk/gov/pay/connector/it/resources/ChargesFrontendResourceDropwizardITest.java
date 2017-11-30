@@ -38,7 +38,7 @@ import static uk.gov.pay.connector.model.domain.ChargeStatus.CREATED;
 import static uk.gov.pay.connector.util.JsonEncoder.toJson;
 import static uk.gov.pay.connector.util.NumberMatcher.isNumber;
 
-public class ChargesFrontendResourceITest extends ChargingITestBase {
+public class ChargesFrontendResourceDropwizardITest extends ChargingITestBase {
 
     private String accountId = "72332423443245";
     private String description = "Test description";
@@ -52,7 +52,7 @@ public class ChargesFrontendResourceITest extends ChargingITestBase {
 
     private RestAssuredClient connectorRestApi = new RestAssuredClient(app, accountId);
 
-    public ChargesFrontendResourceITest() {
+    public ChargesFrontendResourceDropwizardITest() {
         super("sandbox");
     }
 

@@ -10,11 +10,11 @@ import static org.hamcrest.Matchers.is;
 import static uk.gov.pay.connector.model.api.ExternalChargeState.EXTERNAL_SUCCESS;
 import static uk.gov.pay.connector.model.domain.ChargeStatus.*;
 
-public class WorldpayCardResourceITest extends ChargingITestBase {
+public class WorldpayCardResourceDropwizardITest extends ChargingITestBase {
 
     private String validAuthorisationDetails = buildJsonAuthorisationDetailsFor("4444333322221111", "visa");
 
-    public WorldpayCardResourceITest() {
+    public WorldpayCardResourceDropwizardITest() {
         super("worldpay");
     }
 

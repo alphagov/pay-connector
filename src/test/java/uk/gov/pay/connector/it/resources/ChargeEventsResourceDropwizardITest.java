@@ -22,7 +22,7 @@ import static uk.gov.pay.connector.it.dao.DatabaseFixtures.withDatabaseTestHelpe
 import static uk.gov.pay.connector.matcher.TransactionEventMatcher.withState;
 import static uk.gov.pay.connector.model.domain.ChargeStatus.*;
 
-public class ChargeEventsResourceITest extends ChargingITestBase {
+public class ChargeEventsResourceDropwizardITest extends ChargingITestBase {
 
     public static final String SUBMITTED_BY = "r378y387y8weriyi";
     private DatabaseTestHelper databaseTestHelper;
@@ -30,7 +30,7 @@ public class ChargeEventsResourceITest extends ChargingITestBase {
     private String accountId = "72332423443245";
     private RestAssuredClient connectorApi = new RestAssuredClient(app, accountId);
 
-    public ChargeEventsResourceITest() {
+    public ChargeEventsResourceDropwizardITest() {
         super("sandbox");
     }
 

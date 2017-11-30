@@ -18,14 +18,14 @@ import static javax.ws.rs.core.MediaType.APPLICATION_JSON;
 import static javax.ws.rs.core.Response.Status.OK;
 import static org.hamcrest.Matchers.is;
 
-public class SearchChargesByDateResourceITest extends ChargingITestBase {
+public class SearchChargesByDateResourceDropwizardITest extends ChargingITestBase {
 
     private static final int AMOUNT = 6234;
 
     private String accountId = "72332423443245";
     private RestAssuredClient chargeApi = new RestAssuredClient(app, accountId);
 
-    public SearchChargesByDateResourceITest() {
+    public SearchChargesByDateResourceDropwizardITest() {
         super("sandbox");
     }
 

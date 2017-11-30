@@ -56,7 +56,7 @@ import static uk.gov.pay.connector.util.DateTimeUtils.toUTCZonedDateTime;
 import static uk.gov.pay.connector.util.JsonEncoder.toJson;
 import static uk.gov.pay.connector.util.NumberMatcher.isNumber;
 
-public class ChargesApiResourceITest extends ChargingITestBase {
+public class ChargesApiResourceDropwizardITest extends ChargingITestBase {
 
     private static final String FRONTEND_CARD_DETAILS_URL = "/secure";
     private static final String JSON_AMOUNT_KEY = "amount";
@@ -78,7 +78,7 @@ public class ChargesApiResourceITest extends ChargingITestBase {
     private RestAssuredClient createChargeApi = new RestAssuredClient(app, accountId);
     private RestAssuredClient getChargeApi = new RestAssuredClient(app, accountId);
 
-    public ChargesApiResourceITest() {
+    public ChargesApiResourceDropwizardITest() {
         super(PROVIDER_NAME);
     }
 

@@ -10,14 +10,14 @@ import uk.gov.pay.connector.util.RestAssuredClient;
 
 import static org.hamcrest.core.Is.is;
 
-public class CardTypesResourceITest extends ChargingITestBase {
+public class CardTypesResourceDropwizardITest extends ChargingITestBase {
 
     private String accountId = "66757943593456";
     private RestAssuredClient connectorApi = new RestAssuredClient(app, accountId);
 
     private DatabaseFixtures.TestCardType mastercardCreditCardTypeTestRecord;
 
-    public CardTypesResourceITest() {
+    public CardTypesResourceDropwizardITest() {
         super("sandbox");
     }
 

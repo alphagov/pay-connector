@@ -20,11 +20,11 @@ import static org.hamcrest.Matchers.*;
 import static uk.gov.pay.connector.model.domain.ChargeStatus.*;
 import static uk.gov.pay.connector.model.domain.ChargeStatus.CREATED;
 
-public class ChargeCancelResourceITest extends ChargingITestBase {
+public class ChargeCancelResourceDropwizardITest extends ChargingITestBase {
 
     private RestAssuredClient restApiCall;
 
-    public ChargeCancelResourceITest() {
+    public ChargeCancelResourceDropwizardITest() {
         super("worldpay");
     }
 

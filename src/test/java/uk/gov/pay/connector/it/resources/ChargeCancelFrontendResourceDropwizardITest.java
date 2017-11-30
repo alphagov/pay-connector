@@ -17,7 +17,7 @@ import static org.hamcrest.Matchers.hasItems;
 import static org.hamcrest.Matchers.is;
 import static uk.gov.pay.connector.model.domain.ChargeStatus.*;
 
-public class ChargeCancelFrontendResourceITest extends ChargingITestBase {
+public class ChargeCancelFrontendResourceDropwizardITest extends ChargingITestBase {
 
     private RestAssuredClient connectorRestApi;
     private RestAssuredClient restFrontendCall;
@@ -40,7 +40,7 @@ public class ChargeCancelFrontendResourceITest extends ChargingITestBase {
             USER_CANCELLED
     );
 
-    public ChargeCancelFrontendResourceITest() {
+    public ChargeCancelFrontendResourceDropwizardITest() {
         super("worldpay");
     }
 

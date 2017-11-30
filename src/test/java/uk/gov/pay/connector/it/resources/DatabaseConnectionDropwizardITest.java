@@ -6,9 +6,9 @@ import uk.gov.pay.connector.it.base.ChargingITestBase;
 import static com.jayway.restassured.RestAssured.given;
 import static org.hamcrest.Matchers.is;
 
-public class DatabaseConnectionITest extends ChargingITestBase {
+public class DatabaseConnectionDropwizardITest extends ChargingITestBase {
 
-    public DatabaseConnectionITest() {
+    public DatabaseConnectionDropwizardITest() {
         super("sandbox");
     }
 

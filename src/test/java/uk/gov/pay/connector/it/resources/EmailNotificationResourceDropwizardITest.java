@@ -13,7 +13,7 @@ import static org.hamcrest.core.Is.is;
 import static org.junit.Assert.assertThat;
 import static uk.gov.pay.connector.util.JsonEncoder.toJson;
 
-public class EmailNotificationResourceITest extends GatewayAccountResourceTestBase {
+public class EmailNotificationResourceDropwizardITest extends GatewayAccountResourceTestBase {
 
     @Test
     public void updateEmailNotification_shouldUpdateSuccessfullyIfEmailNotificationAlreadyExists() {

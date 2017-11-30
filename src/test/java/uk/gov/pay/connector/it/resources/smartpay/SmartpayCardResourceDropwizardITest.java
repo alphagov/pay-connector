@@ -14,11 +14,11 @@ import static org.junit.Assert.assertThat;
 import static uk.gov.pay.connector.model.api.ExternalChargeState.EXTERNAL_SUCCESS;
 import static uk.gov.pay.connector.model.domain.ChargeStatus.*;
 
-public class SmartpayCardResourceITest extends ChargingITestBase {
+public class SmartpayCardResourceDropwizardITest extends ChargingITestBase {
 
     private String validCardDetails = buildCardDetailsWith("737");
 
-    public SmartpayCardResourceITest() {
+    public SmartpayCardResourceDropwizardITest() {
         super("smartpay");
     }
 

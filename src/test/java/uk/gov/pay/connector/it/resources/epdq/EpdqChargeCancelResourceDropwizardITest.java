@@ -12,9 +12,9 @@ import static org.junit.Assert.assertThat;
 import static uk.gov.pay.connector.model.domain.ChargeStatus.AUTHORISATION_SUCCESS;
 import static uk.gov.pay.connector.model.domain.ChargeStatus.SYSTEM_CANCELLED;
 
-public class EpdqChargeCancelResourceITest extends ChargingITestBase {
+public class EpdqChargeCancelResourceDropwizardITest extends ChargingITestBase {
 
-    public EpdqChargeCancelResourceITest() {
+    public EpdqChargeCancelResourceDropwizardITest() {
         super("epdq");
     }
 

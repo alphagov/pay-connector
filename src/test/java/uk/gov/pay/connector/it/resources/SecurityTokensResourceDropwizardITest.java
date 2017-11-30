@@ -14,7 +14,7 @@ import static org.hamcrest.Matchers.is;
 import static org.hamcrest.Matchers.isEmptyOrNullString;
 import static uk.gov.pay.connector.model.domain.ChargeStatus.CREATED;
 
-public class SecurityTokensResourceITest extends ChargingITestBase {
+public class SecurityTokensResourceDropwizardITest extends ChargingITestBase {
 
     @Rule
     public DropwizardAppWithPostgresRule app = new DropwizardAppWithPostgresRule();
@@ -23,7 +23,7 @@ public class SecurityTokensResourceITest extends ChargingITestBase {
     private DatabaseFixtures.TestToken defaultTestToken;
 
 
-    public SecurityTokensResourceITest() {
+    public SecurityTokensResourceDropwizardITest() {
         super("sandbox");
     }
 

@@ -22,7 +22,7 @@ import static uk.gov.pay.connector.model.domain.GatewayAccountEntity.Type.TEST;
 import static uk.gov.pay.connector.resources.ApiPaths.GATEWAY_ACCOUNTS_API_PATH;
 import static uk.gov.pay.connector.util.JsonEncoder.toJson;
 
-public class GatewayAccountResourceITest extends GatewayAccountResourceTestBase {
+public class GatewayAccountResourceDropwizardITest extends GatewayAccountResourceTestBase {
     private DatabaseFixtures.TestAccount defaultTestAccount;
 
     @Test

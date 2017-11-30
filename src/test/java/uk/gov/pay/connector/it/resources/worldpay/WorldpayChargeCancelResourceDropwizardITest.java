@@ -5,9 +5,9 @@ import org.junit.Test;
 import uk.gov.pay.connector.it.base.ChargingITestBase;
 import uk.gov.pay.connector.model.domain.ChargeStatus;
 
-public class WorldpayChargeCancelResourceITest extends ChargingITestBase {
+public class WorldpayChargeCancelResourceDropwizardITest extends ChargingITestBase {
 
-    public WorldpayChargeCancelResourceITest() {
+    public WorldpayChargeCancelResourceDropwizardITest() {
         super("worldpay");
     }
 

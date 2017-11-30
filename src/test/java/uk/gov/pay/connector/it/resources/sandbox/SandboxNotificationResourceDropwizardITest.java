@@ -10,11 +10,11 @@ import static javax.ws.rs.core.MediaType.APPLICATION_JSON;
 import static org.hamcrest.Matchers.is;
 import static org.junit.Assert.assertThat;
 
-public class SandboxNotificationResourceITest extends ChargingITestBase {
+public class SandboxNotificationResourceDropwizardITest extends ChargingITestBase {
 
     private static final String NOTIFICATION_PATH = "/v1/api/notifications/sandbox";
 
-    public SandboxNotificationResourceITest() {
+    public SandboxNotificationResourceDropwizardITest() {
         super("sandbox");
     }
 

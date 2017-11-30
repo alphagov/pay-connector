@@ -28,12 +28,12 @@ import static uk.gov.pay.connector.util.JsonEncoder.toJson;
 import static uk.gov.pay.connector.util.TestTemplateResourceLoader.SMARTPAY_MULTIPLE_NOTIFICATIONS;
 import static uk.gov.pay.connector.util.TransactionId.randomId;
 
-public class SmartpayNotificationResourceWithAccountSpecificAuthITest extends ChargingITestBase {
+public class SmartpayNotificationResourceWithAccountSpecificAuthDropwizardITest extends ChargingITestBase {
 
     private static final String NOTIFICATION_PATH = "/v1/api/notifications/smartpay";
     private static final String RESPONSE_EXPECTED_BY_SMARTPAY = "[accepted]";
 
-    public SmartpayNotificationResourceWithAccountSpecificAuthITest() {
+    public SmartpayNotificationResourceWithAccountSpecificAuthDropwizardITest() {
         super("smartpay");
     }
 

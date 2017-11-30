@@ -16,7 +16,7 @@ import static uk.gov.pay.connector.model.domain.ChargeStatus.CAPTURE_APPROVED_RE
 import static uk.gov.pay.connector.model.domain.ChargeStatus.CAPTURE_SUBMITTED;
 import static uk.gov.pay.connector.model.domain.RefundStatus.REFUNDED;
 
-public class TransactionsSummaryResourceITest extends ChargingITestBase {
+public class TransactionsSummaryResourceDropwizardITest extends ChargingITestBase {
 
     private static final String START_OF_RANGE = "2017-11-25T10:00:00Z";
     private static final String END_OF_RANGE = "2017-11-27T10:00:00Z";
@@ -33,7 +33,7 @@ public class TransactionsSummaryResourceITest extends ChargingITestBase {
 
     private RestAssuredClient connectorApi = new RestAssuredClient(app, Long.toString(GATEWAY_ACCOUNT_ID));
 
-    public TransactionsSummaryResourceITest() {
+    public TransactionsSummaryResourceDropwizardITest() {
         super("sandbox");
     }
 

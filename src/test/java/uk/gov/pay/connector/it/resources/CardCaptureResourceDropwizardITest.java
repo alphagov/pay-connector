@@ -18,9 +18,9 @@ import static uk.gov.pay.connector.model.domain.ChargeStatus.CAPTURE_ERROR;
 import static uk.gov.pay.connector.model.domain.ChargeStatus.CAPTURE_READY;
 import static uk.gov.pay.connector.model.domain.ChargeStatus.EXPIRED;
 
-public class CardCaptureResourceITest extends ChargingITestBase {
+public class CardCaptureResourceDropwizardITest extends ChargingITestBase {
 
-    public CardCaptureResourceITest() {
+    public CardCaptureResourceDropwizardITest() {
         super("sandbox");
     }
 

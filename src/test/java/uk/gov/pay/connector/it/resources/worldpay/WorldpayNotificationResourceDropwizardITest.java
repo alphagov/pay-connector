@@ -20,12 +20,12 @@ import static uk.gov.pay.connector.model.domain.ChargeStatus.CAPTURE_SUBMITTED;
 import static uk.gov.pay.connector.model.domain.RefundStatus.REFUND_SUBMITTED;
 import static uk.gov.pay.connector.util.TestTemplateResourceLoader.WORLDPAY_NOTIFICATION;
 
-public class WorldpayNotificationResourceITest extends ChargingITestBase {
+public class WorldpayNotificationResourceDropwizardITest extends ChargingITestBase {
 
     private static final String RESPONSE_EXPECTED_BY_WORLDPAY = "[OK]";
     private static final String NOTIFICATION_PATH = "/v1/api/notifications/worldpay";
 
-    public WorldpayNotificationResourceITest() {
+    public WorldpayNotificationResourceDropwizardITest() {
         super("worldpay");
     }
 

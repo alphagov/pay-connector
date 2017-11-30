@@ -24,12 +24,12 @@ import static uk.gov.pay.connector.model.domain.ChargeStatus.CAPTURE_SUBMITTED;
 import static uk.gov.pay.connector.model.domain.GatewayAccount.CREDENTIALS_SHA_OUT_PASSPHRASE;
 import static uk.gov.pay.connector.model.domain.RefundStatus.REFUND_SUBMITTED;
 
-public class EpdqNotificationResourceITest extends ChargingITestBase {
+public class EpdqNotificationResourceDropwizardITest extends ChargingITestBase {
 
     private static final String RESPONSE_EXPECTED_BY_EPDQ = "[OK]";
     private static final String NOTIFICATION_PATH = "/v1/api/notifications/epdq";
 
-    public EpdqNotificationResourceITest() {
+    public EpdqNotificationResourceDropwizardITest() {
         super("epdq");
     }
 

@@ -5,7 +5,7 @@ import org.junit.Test;
 import static org.hamcrest.Matchers.is;
 import static uk.gov.pay.connector.resources.HealthCheckResource.HEALTHCHECK;
 
-public class HealthCheckResourceITest extends GatewayAccountResourceTestBase {
+public class HealthCheckResourceDropwizardITest extends GatewayAccountResourceTestBase {
 
     @Test
     public void checkHealthcheck_isHealthy() throws Exception {
