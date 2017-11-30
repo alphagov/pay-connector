@@ -997,4 +997,12 @@
         </sql>
     </changeSet>
 
+    <changeSet id="add row refund_reference to transactions" author="">
+        <addColumn tableName="transactions">
+            <column name="refund_reference" type="text">
+                <constraints nullable="true"/>
+            </column>
+        </addColumn>
+    </changeSet>
+
 </databaseChangeLog>
