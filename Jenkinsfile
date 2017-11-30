@@ -30,7 +30,7 @@ pipeline {
       }
       steps {
         sh 'docker pull govukpay/postgres:9.4.4'
-        sh 'mvn clean package'
+        sh 'mvn clean verify'
       }
     }
     stage('Maven Build Without Tests') {
