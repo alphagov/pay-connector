@@ -1,6 +1,5 @@
 package uk.gov.pay.connector.it.base;
 
-import com.github.tomakehurst.wiremock.junit.WireMockRule;
 import com.google.common.collect.ImmutableMap;
 import com.google.gson.JsonObject;
 import com.jayway.restassured.response.ValidatableResponse;
@@ -12,14 +11,17 @@ import org.hamcrest.Matchers;
 import org.hamcrest.TypeSafeMatcher;
 import org.junit.Before;
 import org.junit.Rule;
+import uk.gov.pay.connector.it.IntegrationDropwizardITestSuite;
+import uk.gov.pay.connector.it.resources.PostgresResetDatabaseRule;
 import uk.gov.pay.connector.model.domain.CardFixture;
 import uk.gov.pay.connector.model.domain.ChargeStatus;
 import uk.gov.pay.connector.model.domain.RefundStatus;
+import uk.gov.pay.connector.rules.AppWithPostgresRule;
 import uk.gov.pay.connector.rules.DropwizardAppWithPostgresRule;
+import uk.gov.pay.connector.rules.DropwizardAppWithPostgresTemplateRule;
 import uk.gov.pay.connector.rules.EpdqMockClient;
 import uk.gov.pay.connector.rules.SmartpayMockClient;
 import uk.gov.pay.connector.rules.WorldpayMockClient;
-import uk.gov.pay.connector.util.PortFactory;
 import uk.gov.pay.connector.util.RestAssuredClient;
 
 import java.io.IOException;
@@ -29,28 +31,32 @@ import java.util.Map;
 
 import static com.jayway.restassured.RestAssured.given;
 import static com.jayway.restassured.http.ContentType.JSON;
-import static io.dropwizard.testing.ConfigOverride.config;
 import static java.lang.String.format;
 import static javax.ws.rs.core.Response.Status.BAD_REQUEST;
 import static org.hamcrest.Matchers.is;
-import static uk.gov.pay.connector.model.domain.ChargeStatus.*;
-import static uk.gov.pay.connector.model.domain.GatewayAccount.*;
-import static uk.gov.pay.connector.resources.ApiPaths.*;
+import static uk.gov.pay.connector.model.domain.ChargeStatus.AUTHORISATION_SUCCESS;
+import static uk.gov.pay.connector.model.domain.ChargeStatus.CREATED;
+import static uk.gov.pay.connector.model.domain.ChargeStatus.ENTERING_CARD_DETAILS;
+import static uk.gov.pay.connector.model.domain.GatewayAccount.CREDENTIALS_MERCHANT_ID;
+import static uk.gov.pay.connector.model.domain.GatewayAccount.CREDENTIALS_PASSWORD;
+import static uk.gov.pay.connector.model.domain.GatewayAccount.CREDENTIALS_SHA_IN_PASSPHRASE;
+import static uk.gov.pay.connector.model.domain.GatewayAccount.CREDENTIALS_SHA_OUT_PASSPHRASE;
+import static uk.gov.pay.connector.model.domain.GatewayAccount.CREDENTIALS_USERNAME;
+import static uk.gov.pay.connector.resources.ApiPaths.CHARGE_CANCEL_API_PATH;
+import static uk.gov.pay.connector.resources.ApiPaths.FRONTEND_CHARGE_3DS_AUTHORIZE_API_PATH;
+import static uk.gov.pay.connector.resources.ApiPaths.FRONTEND_CHARGE_AUTHORIZE_API_PATH;
+import static uk.gov.pay.connector.resources.ApiPaths.FRONTEND_CHARGE_CAPTURE_API_PATH;
 import static uk.gov.pay.connector.util.JsonEncoder.toJson;
 import static uk.gov.pay.connector.util.TransactionId.randomId;
 
 public class ChargingITestBase extends ChargingITestCommon {
+
     private RestAssuredClient connectorRestApi;
-
-    private int port = PortFactory.findFreePort();
+    protected AppWithPostgresRule app = IntegrationDropwizardITestSuite.getApp();
 
     @Rule
-    public DropwizardAppWithPostgresRule app = new DropwizardAppWithPostgresRule(
-            config("worldpay.urls.test", "http://localhost:" + port + "/jsp/merchant/xml/paymentService.jsp"),
-            config("smartpay.urls.test", "http://localhost:" + port + "/pal/servlet/soap/Payment"),
-            config("epdq.urls.test", "http://localhost:" + port + "/epdq"));
-    @Rule
-    public WireMockRule wireMockRule = new WireMockRule(port);
+    public PostgresResetDatabaseRule postgresResetDatabase = new PostgresResetDatabaseRule(app);
+
     protected static final long AMOUNT = 6234L;
 
     protected WorldpayMockClient worldpay;
@@ -72,7 +78,7 @@ public class ChargingITestBase extends ChargingITestCommon {
     }
 
     @Override
-    public DropwizardAppWithPostgresRule getApplication() {
+    public AppWithPostgresRule getApplication() {
         return app;
     }
 

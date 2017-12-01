@@ -1,7 +1,7 @@
 package uk.gov.pay.connector.util;
 
 import com.jayway.restassured.response.ValidatableResponse;
-import uk.gov.pay.connector.rules.DropwizardAppWithPostgresRule;
+import uk.gov.pay.connector.rules.AppWithPostgresRule;
 
 import java.util.HashMap;
 import java.util.Map;
@@ -19,14 +19,14 @@ import static uk.gov.pay.connector.resources.ApiPaths.REFUND_API_PATH;
 import static uk.gov.pay.connector.resources.ApiPaths.TRANSACTIONS_SUMMARY_API_PATH;
 
 public class RestAssuredClient {
-    private final DropwizardAppWithPostgresRule app;
+    private final AppWithPostgresRule app;
     private String accountId;
     private String chargeId;
     private String refundId;
     private Map<String, String> queryParams;
     private Map<String, String> headers;
 
-    public RestAssuredClient(DropwizardAppWithPostgresRule app, String accountId) {
+    public RestAssuredClient(AppWithPostgresRule app, String accountId) {
         this.app = app;
         this.accountId = accountId;
         this.queryParams = new HashMap<>();

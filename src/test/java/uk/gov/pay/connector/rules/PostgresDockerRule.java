@@ -43,6 +43,10 @@ public class PostgresDockerRule implements TestRule {
         startPostgresIfNecessary();
     }
 
+    public String getConnectionBaseUrl(){
+       return container.getBaseConnectionUrl();
+    }
+
     public String getConnectionUrl() {
         return container.getConnectionUrl();
     }

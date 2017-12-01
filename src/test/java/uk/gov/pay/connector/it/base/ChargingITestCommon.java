@@ -12,6 +12,7 @@ import org.junit.Before;
 import uk.gov.pay.connector.model.domain.CardFixture;
 import uk.gov.pay.connector.model.domain.ChargeStatus;
 import uk.gov.pay.connector.model.domain.RefundStatus;
+import uk.gov.pay.connector.rules.AppWithPostgresRule;
 import uk.gov.pay.connector.rules.DropwizardAppWithPostgresRule;
 import uk.gov.pay.connector.rules.SmartpayMockClient;
 import uk.gov.pay.connector.rules.WorldpayMockClient;
@@ -49,7 +50,7 @@ abstract public class ChargingITestCommon {
         this.accountId = String.valueOf(RandomUtils.nextInt());
     }
 
-    abstract public DropwizardAppWithPostgresRule getApplication();
+    abstract public AppWithPostgresRule getApplication();
 
     public RestAssuredClient getConnectorRestApi() {
         if (connectorRestApi == null) {

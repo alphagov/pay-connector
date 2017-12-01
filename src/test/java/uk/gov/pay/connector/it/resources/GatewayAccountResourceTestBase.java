@@ -4,10 +4,12 @@ import com.google.common.collect.Maps;
 import com.jayway.restassured.response.ValidatableResponse;
 import com.jayway.restassured.specification.RequestSpecification;
 import org.junit.Before;
-import org.junit.Rule;
+import uk.gov.pay.connector.it.IntegrationDropwizardITestSuite;
+import uk.gov.pay.connector.it.base.ChargingITestBase;
 import uk.gov.pay.connector.it.dao.DatabaseFixtures;
 import uk.gov.pay.connector.model.domain.GatewayAccountEntity;
 import uk.gov.pay.connector.rules.DropwizardAppWithPostgresRule;
+import uk.gov.pay.connector.rules.DropwizardAppWithPostgresTemplateRule;
 import uk.gov.pay.connector.util.DatabaseTestHelper;
 
 import java.util.Arrays;
@@ -17,18 +19,24 @@ import java.util.Map;
 import static com.jayway.restassured.RestAssured.given;
 import static com.jayway.restassured.http.ContentType.JSON;
 import static org.hamcrest.MatcherAssert.assertThat;
-import static org.hamcrest.Matchers.*;
+import static org.hamcrest.Matchers.containsString;
+import static org.hamcrest.Matchers.is;
+import static org.hamcrest.Matchers.notNullValue;
 import static uk.gov.pay.connector.util.JsonEncoder.toJson;
 
-public class GatewayAccountResourceTestBase {
+public class GatewayAccountResourceTestBase extends ChargingITestBase {
 
     public static final String ACCOUNTS_API_URL = "/v1/api/accounts/";
     public static final String ACCOUNTS_FRONTEND_URL = "/v1/frontend/accounts/";
     protected DatabaseTestHelper databaseTestHelper;
 
-    @Rule
-    public DropwizardAppWithPostgresRule app = new DropwizardAppWithPostgresRule();
+    public DropwizardAppWithPostgresTemplateRule app = IntegrationDropwizardITestSuite.getApp();
+
     protected DatabaseFixtures databaseFixtures;
+
+    public GatewayAccountResourceTestBase() {
+        super("sandbox");
+    }
 
     @Before
     public void setUp() {
