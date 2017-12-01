@@ -1,5 +1,12 @@
 #!/usr/bin/env groovy
 
+node {
+  withCredentials([string(credentialsId: 'graphite_account_id', variable: 'HOSTED_GRAPHITE_ACCOUNT_ID'),
+                    string(credentialsId: 'graphite_api_key', variable: 'HOSTED_GRAPHITE_API_KEY')]) {
+                        sh 'echo $HOSTED_GRAPHITE_ACCOUNT_ID'
+                    }
+}
+
 pipeline {
   agent any
 
@@ -30,7 +37,14 @@ pipeline {
       }
       steps {
         sh 'docker pull govukpay/postgres:9.4.4'
-        sh 'mvn clean package'
+        sh '''
+             CONNECTOR_BUILD_START_TIME=$(date +%s)
+             echo $CONNECTOR_BUILD_START_TIME
+             echo ${HOSTED_GRAPHITE_API_KEY}
+             echo ${HOSTED_GRAPHITE_ACCOUNT_ID}
+             CONNECTOR_BUILD_ELAPSED_TIME=$(($(date +%s) - $CONNECTOR_BUILD_START_TIME))
+             echo "${HOSTED_GRAPHITE_API_KEY}.pipeline.connector.build.time $CONNECTOR_BUILD_ELAPSED_TIME" | nc "${HOSTED_GRAPHITE_ACCOUNT_ID}.carbon.hostedgraphite.com" 2003
+        '''
       }
     }
     stage('Maven Build Without Tests') {
