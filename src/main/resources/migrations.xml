@@ -1006,7 +1006,7 @@
     </changeSet>
 
     <changeSet id="backfill into transactions all charges that are in terminal states" author="">
-        <sql>
+        <sql stripComments="true">
             INSERT INTO transactions (
                 payment_request_id,
                 gateway_transaction_id,
@@ -1014,16 +1014,22 @@
                 status,
                 operation
                 )
-            SELECT
+                SELECT
                 pr.id,
                 ch.gateway_transaction_id,
                 ch.amount,
-                ch.status,
+                REPLACE(ch.status, ' ', '_'),
                 'CHARGE'
+            -- use all PaymentRequest
             FROM payment_requests pr
+            -- use all ChargeTransaction and fill missing one from PaymentRequest with null
             LEFT JOIN transactions t ON pr.id = t.payment_request_id AND t.operation='CHARGE'
+            -- use only Charge that has a PaymentRequest
             JOIN charges ch ON pr.external_id = ch.external_id
-            WHERE t.id IS NULL AND ch.status IN (
+            -- use only PaymentRequest that don't have a ChargeTransaction
+            WHERE t.id IS NULL
+            -- use only Charge in final states, to avoid those in transit
+            AND ch.status IN (
                 'EXPIRED',
                 'EXPIRE CANCEL FAILED',
                 'AUTHORISATION ABORTED',
