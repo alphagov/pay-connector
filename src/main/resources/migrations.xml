@@ -1048,4 +1048,32 @@
         </sql>
     </changeSet>
 
+    <changeSet id="backfill into transactions all charges that are NOT IN terminal states and that are before 2017-12-01" author="">
+        <sql stripComments="true">
+            INSERT INTO transactions (
+                payment_request_id,
+                gateway_transaction_id,
+                amount,
+                status,
+                operation
+            )
+            SELECT
+                pr.id,
+                ch.gateway_transaction_id,
+                ch.amount,
+                REPLACE(ch.status, ' ', '_'),
+                'CHARGE'
+                -- use all PaymentRequest
+                FROM payment_requests pr
+                -- use all ChargeTransaction and fill missing one from PaymentRequest with null
+                LEFT JOIN transactions t ON pr.id = t.payment_request_id AND t.operation='CHARGE'
+                -- use only Charge that has a PaymentRequest
+                JOIN charges ch ON pr.external_id = ch.external_id
+                -- use only PaymentRequest that don't have a ChargeTransaction
+                WHERE t.id IS NULL
+                -- use only Charge before 2017-12-01 because older ones should have been updated already
+                AND ch.created_date &lt; '2017-12-01 00:00:00';
+        </sql>
+    </changeSet>
+
 </databaseChangeLog>
