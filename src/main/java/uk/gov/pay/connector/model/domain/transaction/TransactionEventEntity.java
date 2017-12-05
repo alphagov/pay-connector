@@ -27,7 +27,7 @@ import java.time.ZonedDateTime;
 @SequenceGenerator(name = "transaction_events_id_seq",
         sequenceName = "transaction_events_id_seq",
         allocationSize = 1)
-public abstract class TransactionEventEntity<E extends Status> extends AbstractVersionedEntity {
+public abstract class TransactionEventEntity<S extends Status, T extends TransactionEventEntity<S, T>> extends AbstractVersionedEntity {
 
     @Id
     @GeneratedValue(strategy = GenerationType.SEQUENCE, generator = "transaction_events_id_seq")
@@ -36,15 +36,11 @@ public abstract class TransactionEventEntity<E extends Status> extends AbstractV
 
     @ManyToOne
     @JoinColumn(name = "transaction_id", referencedColumnName = "id", updatable = false)
-    private TransactionEntity<E> transaction;
+    private TransactionEntity<S, T> transaction;
 
     @Column(name = "updated")
     @Convert(converter = UTCDateTimeConverter.class)
     private ZonedDateTime updated;
-
-    @Column(name = "gateway_event_date")
-    @Convert(converter = UTCDateTimeConverter.class)
-    private ZonedDateTime gatewayEventDate;
 
     public Long getId() {
         return id;
@@ -54,11 +50,7 @@ public abstract class TransactionEventEntity<E extends Status> extends AbstractV
         this.id = id;
     }
 
-    public TransactionEntity<E> getTransaction() {
-        return transaction;
-    }
-
-    public void setTransaction(TransactionEntity<E> transaction) {
+    public void setTransaction(TransactionEntity<S, T> transaction) {
         this.transaction = transaction;
     }
 
@@ -70,14 +62,6 @@ public abstract class TransactionEventEntity<E extends Status> extends AbstractV
         this.updated = updated;
     }
 
-    public ZonedDateTime getGatewayEventDate() {
-        return gatewayEventDate;
-    }
-
-    public void setGatewayEventDate(ZonedDateTime gatewayEventDate) {
-        this.gatewayEventDate = gatewayEventDate;
-    }
-
-    public abstract void setStatus(E status);
-    public abstract E getStatus();
+    public abstract void setStatus(S status);
+    public abstract S getStatus();
 }

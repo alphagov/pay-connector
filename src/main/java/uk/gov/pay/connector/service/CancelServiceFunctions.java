@@ -34,14 +34,14 @@ class CancelServiceFunctions {
 
     private static final Logger logger = LoggerFactory.getLogger(CancelServiceFunctions.class);
 
-    static TransactionalOperation<TransactionContext, ChargeEntity> changeStatusTo(ChargeDao chargeDao, ChargeEventDao chargeEventDao, String chargeId, ChargeStatus targetStatus, Optional<ZonedDateTime> generationTimeOptional, StatusUpdater statusUpdater) {
+    static TransactionalOperation<TransactionContext, ChargeEntity> changeStatusTo(ChargeDao chargeDao, ChargeEventDao chargeEventDao, String chargeId, ChargeStatus targetStatus, Optional<ZonedDateTime> generationTimeOptional, ChargeStatusUpdater chargeStatusUpdater) {
         return context -> chargeDao.findByExternalId(chargeId)
                 .map(chargeEntity -> {
                     logger.info("Charge status to update - charge_external_id={}, status={}, to_status={}",
                             chargeEntity.getExternalId(), chargeEntity.getStatus(), targetStatus);
                     chargeEntity.setStatus(targetStatus);
                     chargeEventDao.persistChargeEventOf(chargeEntity, generationTimeOptional);
-                    statusUpdater.updateChargeTransactionStatus(chargeEntity.getExternalId(), targetStatus, generationTimeOptional.orElse(null));
+                    chargeStatusUpdater.updateChargeTransactionStatus(chargeEntity.getExternalId(), targetStatus, generationTimeOptional.orElse(null));
 
                     return chargeEntity;
                 })
@@ -52,7 +52,7 @@ class CancelServiceFunctions {
                                                                                            ChargeEventDao chargeEventDao,
                                                                                            String chargeId,
                                                                                            StatusFlow statusFlow,
-                                                                                           StatusUpdater statusUpdater) {
+                                                                                           ChargeStatusUpdater chargeStatusUpdater) {
         return context -> chargeDao.findByExternalId(chargeId).map(chargeEntity -> {
             ChargeStatus newStatus = statusFlow.getLockState();
             if (!chargeEntity.hasStatus(statusFlow.getTerminatableStatuses())) {
@@ -68,7 +68,7 @@ class CancelServiceFunctions {
                 throw new IllegalStateRuntimeException(chargeId);
             }
             chargeEntity.setStatus(newStatus);
-            statusUpdater.updateChargeTransactionStatus(chargeEntity.getExternalId(), newStatus);
+            chargeStatusUpdater.updateChargeTransactionStatus(chargeEntity.getExternalId(), newStatus);
             GatewayAccountEntity gatewayAccount = chargeEntity.getGatewayAccount();
 
             logger.info("Card cancel request sent - charge_external_id={}, charge_status={}, account_id={}, transaction_id={}, amount={}, operation_type={}, provider={}, provider_type={}, locking_status={}",

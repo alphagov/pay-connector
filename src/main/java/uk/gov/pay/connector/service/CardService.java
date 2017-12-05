@@ -24,7 +24,7 @@ public abstract class CardService<T extends BaseResponse> {
     private final PaymentProviders providers;
     protected final Logger logger = LoggerFactory.getLogger(getClass());
     protected MetricRegistry metricRegistry;
-    protected final StatusUpdater statusUpdater;
+    protected final ChargeStatusUpdater chargeStatusUpdater;
 
     public enum OperationType {
         CAPTURE("Capture"),
@@ -43,12 +43,12 @@ public abstract class CardService<T extends BaseResponse> {
         }
     }
 
-    protected CardService(ChargeDao chargeDao, ChargeEventDao chargeEventDao, PaymentProviders providers, Environment environment, StatusUpdater statusUpdater) {
+    protected CardService(ChargeDao chargeDao, ChargeEventDao chargeEventDao, PaymentProviders providers, Environment environment, ChargeStatusUpdater chargeStatusUpdater) {
         this.chargeDao = chargeDao;
         this.chargeEventDao = chargeEventDao;
         this.providers = providers;
         this.metricRegistry = environment.metrics();
-        this.statusUpdater = statusUpdater;
+        this.chargeStatusUpdater = chargeStatusUpdater;
     }
 
     public ChargeEntity preOperation(ChargeEntity chargeEntity, OperationType operationType, List<ChargeStatus> legalStatuses, ChargeStatus lockingStatus) {
@@ -79,7 +79,7 @@ public abstract class CardService<T extends BaseResponse> {
         }
 
         chargeEntity.setStatus(lockingStatus);
-        statusUpdater.updateChargeTransactionStatus(chargeEntity.getExternalId(), lockingStatus);
+        chargeStatusUpdater.updateChargeTransactionStatus(chargeEntity.getExternalId(), lockingStatus);
         return chargeEntity;
     }
 

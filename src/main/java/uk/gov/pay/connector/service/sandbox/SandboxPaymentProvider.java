@@ -70,8 +70,8 @@ public class SandboxPaymentProvider extends BasePaymentProvider<BaseResponse, St
     }
 
     @Override
-    public String getPaymentGatewayName() {
-        return PaymentGatewayName.SANDBOX.getName();
+    public PaymentGatewayName getPaymentGatewayName() {
+        return PaymentGatewayName.SANDBOX;
     }
 
     @Override

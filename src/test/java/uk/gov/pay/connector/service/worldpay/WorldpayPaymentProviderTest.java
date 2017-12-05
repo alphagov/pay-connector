@@ -150,7 +150,7 @@ public class WorldpayPaymentProviderTest {
 
     @Test
     public void shouldGetPaymentProviderName() {
-        Assert.assertThat(provider.getPaymentGatewayName(), is("worldpay"));
+        Assert.assertThat(provider.getPaymentGatewayName().getName(), is("worldpay"));
     }
 
     @Test

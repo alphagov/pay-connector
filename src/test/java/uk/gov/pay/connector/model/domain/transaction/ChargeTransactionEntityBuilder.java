@@ -1,13 +1,11 @@
-package uk.gov.pay.connector.model.domain;
+package uk.gov.pay.connector.model.domain.transaction;
 
-import uk.gov.pay.connector.model.domain.transaction.ChargeTransactionEntity;
-import uk.gov.pay.connector.model.domain.transaction.TransactionOperation;
+import uk.gov.pay.connector.model.domain.ChargeStatus;
 
 public final class ChargeTransactionEntityBuilder {
     private String gatewayTransactionId = "someGatewayTransactionId";
     private Long amount = 1234L;
     private ChargeStatus status = ChargeStatus.CREATED;
-    private TransactionOperation operation = TransactionOperation.CHARGE;
 
     private ChargeTransactionEntityBuilder() {
     }
@@ -31,17 +29,11 @@ public final class ChargeTransactionEntityBuilder {
         return this;
     }
 
-    public ChargeTransactionEntityBuilder withOperation(TransactionOperation operation) {
-        this.operation = operation;
-        return this;
-    }
-
     public ChargeTransactionEntity build() {
         ChargeTransactionEntity transactionEntity = new ChargeTransactionEntity();
         transactionEntity.setGatewayTransactionId(gatewayTransactionId);
         transactionEntity.setAmount(amount);
         transactionEntity.updateStatus(status);
-        transactionEntity.setOperation(operation);
         return transactionEntity;
     }
 }

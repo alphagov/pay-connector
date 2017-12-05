@@ -55,7 +55,7 @@ public class SandboxPaymentProviderTest {
 
     @Test
     public void getPaymentGatewayName_shouldGetExpectedName() {
-        Assert.assertThat(provider.getPaymentGatewayName(), is("sandbox"));
+        Assert.assertThat(provider.getPaymentGatewayName().getName(), is("sandbox"));
     }
 
     @Test

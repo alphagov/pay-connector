@@ -52,8 +52,8 @@ public class SmartpayPaymentProvider extends BasePaymentProvider<BaseResponse, P
     }
 
     @Override
-    public String getPaymentGatewayName() {
-        return PaymentGatewayName.SMARTPAY.getName();
+    public PaymentGatewayName getPaymentGatewayName() {
+        return PaymentGatewayName.SMARTPAY;
     }
 
     @Override

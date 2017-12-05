@@ -5,7 +5,11 @@ import uk.gov.pay.connector.dao.CardTypeDao;
 import uk.gov.pay.connector.dao.ChargeDao;
 import uk.gov.pay.connector.dao.ChargeEventDao;
 import uk.gov.pay.connector.dao.PaymentRequestDao;
-import uk.gov.pay.connector.model.domain.*;
+import uk.gov.pay.connector.model.domain.CardDetailsEntity;
+import uk.gov.pay.connector.model.domain.ChargeEntity;
+import uk.gov.pay.connector.model.domain.ChargeEntityFixture;
+import uk.gov.pay.connector.model.domain.ChargeStatus;
+import uk.gov.pay.connector.model.domain.GatewayAccountEntity;
 
 import static org.mockito.Mockito.mock;
 
@@ -18,7 +22,7 @@ public abstract class CardServiceTest {
     protected ChargeEventDao mockedChargeEventDao = mock(ChargeEventDao.class);
     protected CardTypeDao mockedCardTypeDao = mock(CardTypeDao.class);
     protected PaymentRequestDao mockPaymentRequestDao = mock(PaymentRequestDao.class);
-    protected StatusUpdater mockStatusUpdater = mock(StatusUpdater.class);
+    protected ChargeStatusUpdater mockChargeStatusUpdater = mock(ChargeStatusUpdater.class);
 
     protected ChargeEntity createNewChargeWith(Long chargeId, ChargeStatus status) {
         ChargeEntity entity = ChargeEntityFixture

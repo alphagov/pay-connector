@@ -51,8 +51,8 @@ public class WorldpayPaymentProvider extends BasePaymentProvider<BaseResponse, S
     }
 
     @Override
-    public String getPaymentGatewayName() {
-        return PaymentGatewayName.WORLDPAY.getName();
+    public PaymentGatewayName getPaymentGatewayName() {
+        return PaymentGatewayName.WORLDPAY;
     }
 
     @Override
