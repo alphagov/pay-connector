@@ -12,13 +12,13 @@ import java.time.ZonedDateTime;
 import java.util.function.Consumer;
 
 @Transactional
-public class StatusUpdater {
-    private static final Logger logger = LoggerFactory.getLogger(StatusUpdater.class);
+public class ChargeStatusUpdater {
+    private static final Logger logger = LoggerFactory.getLogger(ChargeStatusUpdater.class);
 
     private final PaymentRequestDao paymentRequestDao;
 
     @Inject
-    public StatusUpdater(PaymentRequestDao paymentRequestDao) {
+    public ChargeStatusUpdater(PaymentRequestDao paymentRequestDao) {
         this.paymentRequestDao = paymentRequestDao;
     }
 

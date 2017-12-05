@@ -16,7 +16,11 @@ import org.junit.Rule;
 import org.junit.Test;
 import org.junit.rules.ExpectedException;
 import org.junit.runner.RunWith;
-import org.mockito.*;
+import org.mockito.ArgumentCaptor;
+import org.mockito.Captor;
+import org.mockito.InOrder;
+import org.mockito.Mock;
+import org.mockito.Mockito;
 import org.mockito.internal.hamcrest.HamcrestArgumentMatcher;
 import org.mockito.runners.MockitoJUnitRunner;
 import org.slf4j.LoggerFactory;
@@ -44,8 +48,26 @@ import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.fail;
 import static org.mockito.Matchers.any;
-import static org.mockito.Mockito.*;
-import static uk.gov.pay.connector.model.domain.ChargeStatus.*;
+import static org.mockito.Mockito.anyString;
+import static org.mockito.Mockito.argThat;
+import static org.mockito.Mockito.doNothing;
+import static org.mockito.Mockito.eq;
+import static org.mockito.Mockito.inOrder;
+import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.never;
+import static org.mockito.Mockito.spy;
+import static org.mockito.Mockito.times;
+import static org.mockito.Mockito.verify;
+import static org.mockito.Mockito.verifyNoMoreInteractions;
+import static org.mockito.Mockito.verifyZeroInteractions;
+import static org.mockito.Mockito.when;
+import static uk.gov.pay.connector.model.domain.ChargeStatus.AUTHORISATION_SUCCESS;
+import static uk.gov.pay.connector.model.domain.ChargeStatus.CAPTURED;
+import static uk.gov.pay.connector.model.domain.ChargeStatus.CAPTURE_APPROVED;
+import static uk.gov.pay.connector.model.domain.ChargeStatus.CAPTURE_APPROVED_RETRY;
+import static uk.gov.pay.connector.model.domain.ChargeStatus.CAPTURE_ERROR;
+import static uk.gov.pay.connector.model.domain.ChargeStatus.CAPTURE_READY;
+import static uk.gov.pay.connector.model.domain.ChargeStatus.CAPTURE_SUBMITTED;
 import static uk.gov.pay.connector.model.gateway.GatewayResponse.GatewayResponseBuilder.responseBuilder;
 
 @RunWith(MockitoJUnitRunner.class)
@@ -72,7 +94,7 @@ public class CardCaptureServiceTest extends CardServiceTest {
         when(mockEnvironment.metrics()).thenReturn(mockMetricRegistry);
         when(mockMetricRegistry.counter(anyString())).thenReturn(mockCounter);
 
-        cardCaptureService = new CardCaptureService(mockedChargeDao, mockedChargeEventDao, mockedProviders, mockUserNotificationService, mockEnvironment, mockPaymentRequestDao, mockStatusUpdater);
+        cardCaptureService = new CardCaptureService(mockedChargeDao, mockedChargeEventDao, mockedProviders, mockUserNotificationService, mockEnvironment, mockPaymentRequestDao, mockChargeStatusUpdater);
 
         Logger root = (Logger) LoggerFactory.getLogger(CardCaptureService.class);
         root.addAppender(mockAppender);
@@ -128,9 +150,9 @@ public class CardCaptureServiceTest extends CardServiceTest {
 
         verify(mockedChargeEventDao).persistChargeEventOf(chargeEntityCaptor.capture(), eq(Optional.empty()));
 
-        InOrder inOrderVerifier = inOrder(mockStatusUpdater);
-        inOrderVerifier.verify(mockStatusUpdater).updateChargeTransactionStatus(charge.getExternalId(), CAPTURE_READY);
-        inOrderVerifier.verify(mockStatusUpdater).updateChargeTransactionStatus(charge.getExternalId(), CAPTURE_SUBMITTED);
+        InOrder inOrderVerifier = inOrder(mockChargeStatusUpdater);
+        inOrderVerifier.verify(mockChargeStatusUpdater).updateChargeTransactionStatus(charge.getExternalId(), CAPTURE_READY);
+        inOrderVerifier.verify(mockChargeStatusUpdater).updateChargeTransactionStatus(charge.getExternalId(), CAPTURE_SUBMITTED);
 
         assertThat(chargeEntityCaptor.getValue().getStatus(), is(CAPTURE_SUBMITTED.getValue()));
 
@@ -167,10 +189,10 @@ public class CardCaptureServiceTest extends CardServiceTest {
         verify(mockedChargeEventDao, times(2)).persistChargeEventOf(chargeEntityCaptor.capture(), bookingDateCaptor.capture());
         assertThat(chargeEntityCaptor.getValue().getStatus(), is(CAPTURED.getValue()));
 
-        InOrder inOrderVerifier = inOrder(mockStatusUpdater);
-        inOrderVerifier.verify(mockStatusUpdater).updateChargeTransactionStatus(charge.getExternalId(), CAPTURE_READY);
-        inOrderVerifier.verify(mockStatusUpdater).updateChargeTransactionStatus(charge.getExternalId(), CAPTURE_SUBMITTED);
-        inOrderVerifier.verify(mockStatusUpdater).updateChargeTransactionStatus(eq(charge.getExternalId()), eq(CAPTURED), any(ZonedDateTime.class));
+        InOrder inOrderVerifier = inOrder(mockChargeStatusUpdater);
+        inOrderVerifier.verify(mockChargeStatusUpdater).updateChargeTransactionStatus(charge.getExternalId(), CAPTURE_READY);
+        inOrderVerifier.verify(mockChargeStatusUpdater).updateChargeTransactionStatus(charge.getExternalId(), CAPTURE_SUBMITTED);
+        inOrderVerifier.verify(mockChargeStatusUpdater).updateChargeTransactionStatus(eq(charge.getExternalId()), eq(CAPTURED), any(ZonedDateTime.class));
 
         // only the CAPTURED has a bookingDate
         assertFalse(bookingDateCaptor.getAllValues().get(0).isPresent());
@@ -273,9 +295,9 @@ public class CardCaptureServiceTest extends CardServiceTest {
         inOrder.verify(chargeSpy).setStatus(CAPTURE_APPROVED_RETRY);
 
         verify(mockedChargeEventDao).persistChargeEventOf(chargeSpy, Optional.empty());
-        InOrder inOrderStatusUpdater = Mockito.inOrder(mockStatusUpdater);
-        inOrderStatusUpdater.verify(mockStatusUpdater).updateChargeTransactionStatus(charge.getExternalId(), CAPTURE_READY);
-        inOrderStatusUpdater.verify(mockStatusUpdater).updateChargeTransactionStatus(charge.getExternalId(), CAPTURE_APPROVED_RETRY);
+        InOrder inOrderStatusUpdater = Mockito.inOrder(mockChargeStatusUpdater);
+        inOrderStatusUpdater.verify(mockChargeStatusUpdater).updateChargeTransactionStatus(charge.getExternalId(), CAPTURE_READY);
+        inOrderStatusUpdater.verify(mockChargeStatusUpdater).updateChargeTransactionStatus(charge.getExternalId(), CAPTURE_APPROVED_RETRY);
 
         // verify an email notification is not sent when an unsuccessful capture
         verifyZeroInteractions(mockUserNotificationService);

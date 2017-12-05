@@ -4,10 +4,24 @@ import com.google.common.collect.ImmutableList;
 import com.google.inject.persist.Transactional;
 import io.dropwizard.setup.Environment;
 import org.apache.commons.lang3.StringUtils;
-import uk.gov.pay.connector.dao.*;
+import uk.gov.pay.connector.dao.Card3dsDao;
+import uk.gov.pay.connector.dao.CardDao;
+import uk.gov.pay.connector.dao.CardTypeDao;
+import uk.gov.pay.connector.dao.ChargeDao;
+import uk.gov.pay.connector.dao.ChargeEventDao;
+import uk.gov.pay.connector.dao.PaymentRequestDao;
 import uk.gov.pay.connector.exception.ChargeNotFoundRuntimeException;
 import uk.gov.pay.connector.model.GatewayError;
-import uk.gov.pay.connector.model.domain.*;
+import uk.gov.pay.connector.model.domain.AddressEntity;
+import uk.gov.pay.connector.model.domain.AuthCardDetails;
+import uk.gov.pay.connector.model.domain.Card3dsEntity;
+import uk.gov.pay.connector.model.domain.CardDetailsEntity;
+import uk.gov.pay.connector.model.domain.CardEntity;
+import uk.gov.pay.connector.model.domain.CardTypeEntity;
+import uk.gov.pay.connector.model.domain.ChargeEntity;
+import uk.gov.pay.connector.model.domain.ChargeStatus;
+import uk.gov.pay.connector.model.domain.GatewayAccountEntity;
+import uk.gov.pay.connector.model.domain.PaymentRequestEntity;
 import uk.gov.pay.connector.model.gateway.AuthorisationGatewayRequest;
 import uk.gov.pay.connector.model.gateway.GatewayResponse;
 
@@ -16,7 +30,12 @@ import java.util.List;
 import java.util.Optional;
 import java.util.stream.Collectors;
 
-import static uk.gov.pay.connector.model.domain.ChargeStatus.*;
+import static uk.gov.pay.connector.model.domain.ChargeStatus.AUTHORISATION_ABORTED;
+import static uk.gov.pay.connector.model.domain.ChargeStatus.AUTHORISATION_ERROR;
+import static uk.gov.pay.connector.model.domain.ChargeStatus.AUTHORISATION_READY;
+import static uk.gov.pay.connector.model.domain.ChargeStatus.AUTHORISATION_TIMEOUT;
+import static uk.gov.pay.connector.model.domain.ChargeStatus.AUTHORISATION_UNEXPECTED_ERROR;
+import static uk.gov.pay.connector.model.domain.ChargeStatus.ENTERING_CARD_DETAILS;
 import static uk.gov.pay.connector.model.domain.NumbersInStringsSanitizer.sanitize;
 
 public class CardAuthoriseService extends CardAuthoriseBaseService<AuthCardDetails> {
@@ -36,8 +55,8 @@ public class CardAuthoriseService extends CardAuthoriseBaseService<AuthCardDetai
                                 CardExecutorService cardExecutorService,
                                 Auth3dsDetailsFactory auth3dsDetailsFactory,
                                 Environment environment,
-                                Card3dsDao card3dsDao, PaymentRequestDao paymentRequestDao, StatusUpdater statusUpdater) {
-        super(chargeDao, chargeEventDao, providers, cardExecutorService, environment, statusUpdater);
+                                Card3dsDao card3dsDao, PaymentRequestDao paymentRequestDao, ChargeStatusUpdater chargeStatusUpdater) {
+        super(chargeDao, chargeEventDao, providers, cardExecutorService, environment, chargeStatusUpdater);
         this.cardTypeDao = cardTypeDao;
         this.cardDao = cardDao;
         this.auth3dsDetailsFactory = auth3dsDetailsFactory;
@@ -60,7 +79,7 @@ public class CardAuthoriseService extends CardAuthoriseBaseService<AuthCardDetai
                         chargeEntity.getExternalId(), OperationType.AUTHORISATION.getValue(), cardBrand);
 
                 chargeEventDao.persistChargeEventOf(chargeEntity, Optional.empty());
-                statusUpdater.updateChargeTransactionStatus(chargeEntity.getExternalId(), ChargeStatus.fromString(chargeEntity.getStatus()));
+                chargeStatusUpdater.updateChargeTransactionStatus(chargeEntity.getExternalId(), ChargeStatus.fromString(chargeEntity.getStatus()));
             } else {
                 preOperation(chargeEntity, OperationType.AUTHORISATION, getLegalStates(), AUTHORISATION_READY);
 
@@ -125,7 +144,7 @@ public class CardAuthoriseService extends CardAuthoriseBaseService<AuthCardDetai
             chargeEntity.setStatus(status);
             operationResponse.getBaseResponse().ifPresent(response -> auth3dsDetailsFactory.create(response).ifPresent(chargeEntity::set3dsDetails));
 
-            statusUpdater.updateChargeTransactionStatus(chargeEntity.getExternalId(), status);
+            chargeStatusUpdater.updateChargeTransactionStatus(chargeEntity.getExternalId(), status);
             Optional<PaymentRequestEntity> paymentRequestEntity = paymentRequestDao.findByExternalId(chargeEntity.getExternalId());
             if (StringUtils.isBlank(transactionId)) {
                 logger.warn("AuthCardDetails authorisation response received with no transaction id. -  charge_external_id={}", chargeEntity.getExternalId());

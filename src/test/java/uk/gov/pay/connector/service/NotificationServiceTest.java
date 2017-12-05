@@ -18,9 +18,9 @@ import uk.gov.pay.connector.model.Notifications;
 import uk.gov.pay.connector.model.domain.ChargeEntity;
 import uk.gov.pay.connector.model.domain.ChargeStatus;
 import uk.gov.pay.connector.model.domain.GatewayAccountEntity;
-import uk.gov.pay.connector.model.domain.Status;
 import uk.gov.pay.connector.model.domain.RefundEntity;
 import uk.gov.pay.connector.model.domain.RefundStatus;
+import uk.gov.pay.connector.model.domain.Status;
 import uk.gov.pay.connector.util.DnsUtils;
 
 import java.time.ZonedDateTime;
@@ -76,7 +76,7 @@ public class NotificationServiceTest {
     private ChargeEntity mockedChargeEntity;
 
     @Mock
-    private StatusUpdater mockedStatusUpdater;
+    private ChargeStatusUpdater mockedChargeStatusUpdater;
 
     @Mock
     private RefundStatusUpdater mockedRefundUpdater;
@@ -92,7 +92,7 @@ public class NotificationServiceTest {
 
         when(mockedPaymentProvider.verifyNotification(any(Notification.class), any(GatewayAccountEntity.class))).thenReturn(true);
 
-        notificationService = new NotificationService(mockedChargeDao, mockedChargeEventDao, mockedRefundDao, mockedPaymentProviders, mockDnsUtils, mockedStatusUpdater, mockedRefundUpdater);
+        notificationService = new NotificationService(mockedChargeDao, mockedChargeEventDao, mockedRefundDao, mockedPaymentProviders, mockDnsUtils, mockedChargeStatusUpdater, mockedRefundUpdater);
     }
 
     private Notifications<Pair<String, Boolean>> createNotificationFor(String transactionId, String reference, Pair<String, Boolean> status) {
@@ -320,7 +320,7 @@ public class NotificationServiceTest {
 
         assertTrue(ChronoUnit.SECONDS.between((ZonedDateTime) generatedTimeCaptor.getValue().get(), ZonedDateTime.now()) < 10);
         notifications.get().forEach(notification ->
-                verify(mockedStatusUpdater).updateChargeTransactionStatus(
+                verify(mockedChargeStatusUpdater).updateChargeTransactionStatus(
                         mockedChargeEntity.getExternalId(),
                         ChargeStatus.CAPTURED,
                         notification.getGatewayEventDate()

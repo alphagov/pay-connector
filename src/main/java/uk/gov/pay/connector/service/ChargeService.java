@@ -3,13 +3,23 @@ package uk.gov.pay.connector.service;
 import com.google.inject.persist.Transactional;
 import uk.gov.pay.connector.app.ConnectorConfiguration;
 import uk.gov.pay.connector.app.LinksConfig;
-import uk.gov.pay.connector.dao.*;
+import uk.gov.pay.connector.dao.CardTypeDao;
+import uk.gov.pay.connector.dao.ChargeDao;
+import uk.gov.pay.connector.dao.ChargeEventDao;
+import uk.gov.pay.connector.dao.GatewayAccountDao;
+import uk.gov.pay.connector.dao.PaymentRequestDao;
+import uk.gov.pay.connector.dao.TokenDao;
 import uk.gov.pay.connector.model.ChargeResponse;
 import uk.gov.pay.connector.model.api.ExternalChargeState;
 import uk.gov.pay.connector.model.api.ExternalTransactionState;
 import uk.gov.pay.connector.model.builder.AbstractChargeResponseBuilder;
 import uk.gov.pay.connector.model.builder.PatchRequestBuilder;
-import uk.gov.pay.connector.model.domain.*;
+import uk.gov.pay.connector.model.domain.CardTypeEntity;
+import uk.gov.pay.connector.model.domain.ChargeEntity;
+import uk.gov.pay.connector.model.domain.ChargeStatus;
+import uk.gov.pay.connector.model.domain.PaymentRequestEntity;
+import uk.gov.pay.connector.model.domain.PersistedCard;
+import uk.gov.pay.connector.model.domain.TokenEntity;
 import uk.gov.pay.connector.model.domain.transaction.ChargeTransactionEntity;
 import uk.gov.pay.connector.resources.ChargesApiResource;
 import uk.gov.pay.connector.util.DateTimeUtils;
@@ -46,14 +56,14 @@ public class ChargeService {
     private final LinksConfig linksConfig;
     private final PaymentProviders providers;
     private final PaymentRequestDao paymentRequestDao;
-    private final StatusUpdater statusUpdater;
+    private final ChargeStatusUpdater chargeStatusUpdater;
 
     @Inject
     public ChargeService(TokenDao tokenDao, ChargeDao chargeDao, ChargeEventDao chargeEventDao,
                          CardTypeDao cardTypeDao, GatewayAccountDao gatewayAccountDao,
                          ConnectorConfiguration config, PaymentProviders providers,
                          PaymentRequestDao paymentRequestDao,
-                         StatusUpdater statusUpdater) {
+                         ChargeStatusUpdater chargeStatusUpdater) {
         this.tokenDao = tokenDao;
         this.chargeDao = chargeDao;
         this.chargeEventDao = chargeEventDao;
@@ -62,7 +72,7 @@ public class ChargeService {
         this.linksConfig = config.getLinks();
         this.providers = providers;
         this.paymentRequestDao = paymentRequestDao;
-        this.statusUpdater = statusUpdater;
+        this.chargeStatusUpdater = chargeStatusUpdater;
     }
 
     @Transactional
@@ -116,7 +126,7 @@ public class ChargeService {
                     if (CURRENT_STATUSES_ALLOWING_UPDATE_TO_NEW_STATUS.contains(oldChargeStatus)) {
                         chargeEntity.setStatus(newChargeStatus);
                         chargeEventDao.persistChargeEventOf(chargeEntity, Optional.empty());
-                        statusUpdater.updateChargeTransactionStatus(externalId, newChargeStatus);
+                        chargeStatusUpdater.updateChargeTransactionStatus(externalId, newChargeStatus);
                         return Optional.of(chargeEntity);
                     }
                     return Optional.<ChargeEntity>empty();

@@ -13,8 +13,16 @@ import org.junit.runner.RunWith;
 import org.mockito.ArgumentCaptor;
 import org.mockito.internal.hamcrest.HamcrestArgumentMatcher;
 import org.mockito.runners.MockitoJUnitRunner;
-import uk.gov.pay.connector.exception.*;
-import uk.gov.pay.connector.model.domain.*;
+import uk.gov.pay.connector.exception.ChargeExpiredRuntimeException;
+import uk.gov.pay.connector.exception.ChargeNotFoundRuntimeException;
+import uk.gov.pay.connector.exception.ConflictRuntimeException;
+import uk.gov.pay.connector.exception.IllegalStateRuntimeException;
+import uk.gov.pay.connector.exception.OperationAlreadyInProgressRuntimeException;
+import uk.gov.pay.connector.model.domain.Auth3dsDetails;
+import uk.gov.pay.connector.model.domain.ChargeEntity;
+import uk.gov.pay.connector.model.domain.ChargeStatus;
+import uk.gov.pay.connector.model.domain.PaymentRequestEntity;
+import uk.gov.pay.connector.model.domain.PaymentRequestEntityFixture;
 import uk.gov.pay.connector.model.gateway.Auth3dsResponseGatewayRequest;
 import uk.gov.pay.connector.model.gateway.GatewayResponse;
 import uk.gov.pay.connector.model.gateway.GatewayResponse.GatewayResponseBuilder;
@@ -33,8 +41,17 @@ import static org.hamcrest.core.Is.is;
 import static org.junit.Assert.assertTrue;
 import static org.junit.Assert.fail;
 import static org.mockito.Matchers.any;
-import static org.mockito.Mockito.*;
-import static uk.gov.pay.connector.model.domain.ChargeStatus.*;
+import static org.mockito.Mockito.anyString;
+import static org.mockito.Mockito.doAnswer;
+import static org.mockito.Mockito.doThrow;
+import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.verify;
+import static org.mockito.Mockito.verifyNoMoreInteractions;
+import static org.mockito.Mockito.when;
+import static uk.gov.pay.connector.model.domain.ChargeStatus.AUTHORISATION_3DS_REQUIRED;
+import static uk.gov.pay.connector.model.domain.ChargeStatus.AUTHORISATION_CANCELLED;
+import static uk.gov.pay.connector.model.domain.ChargeStatus.AUTHORISATION_REJECTED;
+import static uk.gov.pay.connector.model.domain.ChargeStatus.AUTHORISATION_SUCCESS;
 import static uk.gov.pay.connector.model.gateway.GatewayResponse.GatewayResponseBuilder.responseBuilder;
 import static uk.gov.pay.connector.service.CardExecutorService.ExecutionStatus.COMPLETED;
 import static uk.gov.pay.connector.service.CardExecutorService.ExecutionStatus.IN_PROGRESS;
@@ -57,7 +74,7 @@ public class Card3dsResponseAuthServiceTest extends CardServiceTest {
         when(mockEnvironment.metrics()).thenReturn(mockMetricRegistry);
         when(mockMetricRegistry.counter(anyString())).thenReturn(mockCounter);
 
-        card3dsResponseAuthService = new Card3dsResponseAuthService(mockedChargeDao, mockedChargeEventDao, mockedProviders, mockExecutorService, mockEnvironment, mockPaymentRequestDao, mockStatusUpdater);
+        card3dsResponseAuthService = new Card3dsResponseAuthService(mockedChargeDao, mockedChargeEventDao, mockedProviders, mockExecutorService, mockEnvironment, mockPaymentRequestDao, mockChargeStatusUpdater);
         aValidPaymentRequestEntity = PaymentRequestEntityFixture.aValidPaymentRequestEntity().build();
     }
 
@@ -104,7 +121,7 @@ public class Card3dsResponseAuthServiceTest extends CardServiceTest {
         assertTrue(argumentCaptor.getValue().getTransactionId().isPresent());
         assertThat(argumentCaptor.getValue().getTransactionId().get(), is(GENERATED_TRANSACTION_ID));
 
-        verify(mockStatusUpdater).updateChargeTransactionStatus(charge.getExternalId(), AUTHORISATION_SUCCESS);
+        verify(mockChargeStatusUpdater).updateChargeTransactionStatus(charge.getExternalId(), AUTHORISATION_SUCCESS);
     }
 
     @Test
@@ -147,7 +164,7 @@ public class Card3dsResponseAuthServiceTest extends CardServiceTest {
 
         assertTrue(argumentCaptor.getValue().getProviderSessionId().isPresent());
         assertThat(argumentCaptor.getValue().getProviderSessionId().get(), is(providerSessionId));
-        verify(mockStatusUpdater).updateChargeTransactionStatus(charge.getExternalId(), AUTHORISATION_SUCCESS);
+        verify(mockChargeStatusUpdater).updateChargeTransactionStatus(charge.getExternalId(), AUTHORISATION_SUCCESS);
     }
 
     @Test
@@ -166,7 +183,7 @@ public class Card3dsResponseAuthServiceTest extends CardServiceTest {
         assertThat(aValidPaymentRequestEntity.getChargeTransaction().getGatewayTransactionId(), is(GENERATED_TRANSACTION_ID));
         assertTrue(argumentCaptor.getValue().getTransactionId().isPresent());
         assertThat(argumentCaptor.getValue().getTransactionId().get(), is(GENERATED_TRANSACTION_ID));
-        verify(mockStatusUpdater).updateChargeTransactionStatus(charge.getExternalId(), AUTHORISATION_REJECTED);
+        verify(mockChargeStatusUpdater).updateChargeTransactionStatus(charge.getExternalId(), AUTHORISATION_REJECTED);
     }
 
     @Test
@@ -185,7 +202,7 @@ public class Card3dsResponseAuthServiceTest extends CardServiceTest {
         assertThat(aValidPaymentRequestEntity.getChargeTransaction().getGatewayTransactionId(), is(GENERATED_TRANSACTION_ID));
         assertTrue(argumentCaptor.getValue().getTransactionId().isPresent());
         assertThat(argumentCaptor.getValue().getTransactionId().get(), is(GENERATED_TRANSACTION_ID));
-        verify(mockStatusUpdater).updateChargeTransactionStatus(charge.getExternalId(), AUTHORISATION_CANCELLED);
+        verify(mockChargeStatusUpdater).updateChargeTransactionStatus(charge.getExternalId(), AUTHORISATION_CANCELLED);
     }
 
     @Test

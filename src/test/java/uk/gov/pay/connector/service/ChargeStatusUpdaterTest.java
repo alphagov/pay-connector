@@ -29,7 +29,7 @@ import static uk.gov.pay.connector.model.domain.ChargeStatus.ENTERING_CARD_DETAI
 import static uk.gov.pay.connector.model.domain.transaction.ChargeTransactionEntityBuilder.aChargeTransactionEntity;
 
 @RunWith(MockitoJUnitRunner.class)
-public class StatusUpdaterTest {
+public class ChargeStatusUpdaterTest {
     private static final String SOME_EXTERNAL_ID = "someExternalId";
     @Mock
     private PaymentRequestDao mockPaymentRequestDao;
@@ -42,7 +42,7 @@ public class StatusUpdaterTest {
         when(mockPaymentRequestDao.findByExternalId(SOME_EXTERNAL_ID)).thenReturn(Optional.of(paymentRequest));
 
         ChargeStatus newChargeStatus = ENTERING_CARD_DETAILS;
-        new StatusUpdater(mockPaymentRequestDao).updateChargeTransactionStatus(SOME_EXTERNAL_ID, newChargeStatus);
+        new ChargeStatusUpdater(mockPaymentRequestDao).updateChargeTransactionStatus(SOME_EXTERNAL_ID, newChargeStatus);
 
         assertThat(paymentRequest.getChargeTransaction().getStatus(), is(newChargeStatus));
     }
@@ -53,7 +53,7 @@ public class StatusUpdaterTest {
         when(mockPaymentRequestDao.findByExternalId(SOME_EXTERNAL_ID)).thenReturn(Optional.of(paymentRequest));
         when(paymentRequest.hasChargeTransaction()).thenReturn(false);
 
-        new StatusUpdater(mockPaymentRequestDao).updateChargeTransactionStatus(SOME_EXTERNAL_ID, ENTERING_CARD_DETAILS);
+        new ChargeStatusUpdater(mockPaymentRequestDao).updateChargeTransactionStatus(SOME_EXTERNAL_ID, ENTERING_CARD_DETAILS);
 
         verify(paymentRequest).hasChargeTransaction();
         verifyNoMoreInteractions(paymentRequest);
@@ -70,7 +70,7 @@ public class StatusUpdaterTest {
 
         ChargeStatus newChargeStatus = ENTERING_CARD_DETAILS;
         ZonedDateTime gatewayEventTime = ZonedDateTime.now();
-        new StatusUpdater(mockPaymentRequestDao).updateChargeTransactionStatus(SOME_EXTERNAL_ID, newChargeStatus, gatewayEventTime);
+        new ChargeStatusUpdater(mockPaymentRequestDao).updateChargeTransactionStatus(SOME_EXTERNAL_ID, newChargeStatus, gatewayEventTime);
 
         verify(chargeTransaction).updateStatus(newChargeStatus, gatewayEventTime);
     }
@@ -82,7 +82,7 @@ public class StatusUpdaterTest {
                 .build();
         when(mockPaymentRequestDao.findByExternalId(SOME_EXTERNAL_ID)).thenReturn(Optional.of(paymentRequest));
 
-        new StatusUpdater(mockPaymentRequestDao).updateChargeTransactionStatus(SOME_EXTERNAL_ID, ENTERING_CARD_DETAILS, null);
+        new ChargeStatusUpdater(mockPaymentRequestDao).updateChargeTransactionStatus(SOME_EXTERNAL_ID, ENTERING_CARD_DETAILS, null);
 
         List<ChargeTransactionEventEntity> transactionEvents = paymentRequest.getChargeTransaction().getTransactionEvents();
 

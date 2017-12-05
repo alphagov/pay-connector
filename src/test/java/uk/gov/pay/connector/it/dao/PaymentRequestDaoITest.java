@@ -5,12 +5,15 @@ import org.junit.Rule;
 import org.junit.Test;
 import org.junit.rules.ExpectedException;
 import uk.gov.pay.connector.dao.PaymentRequestDao;
-import uk.gov.pay.connector.model.domain.*;
+import uk.gov.pay.connector.model.domain.ChargeStatus;
+import uk.gov.pay.connector.model.domain.GatewayAccountEntity;
+import uk.gov.pay.connector.model.domain.PaymentRequestEntity;
 import uk.gov.pay.connector.model.domain.transaction.ChargeTransactionEntity;
-import uk.gov.pay.connector.service.StatusUpdater;
+import uk.gov.pay.connector.service.ChargeStatusUpdater;
 
 import java.util.HashMap;
 import java.util.Optional;
+
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.is;
 import static org.hamcrest.Matchers.notNullValue;
@@ -21,7 +24,7 @@ import static uk.gov.pay.connector.model.domain.transaction.ChargeTransactionEnt
 public class PaymentRequestDaoITest extends DaoITestBase {
     private DatabaseFixtures.TestAccount defaultTestAccount;
     private PaymentRequestDao paymentRequestDao;
-    private StatusUpdater statusUpdater;
+    private ChargeStatusUpdater chargeStatusUpdater;
     @Rule
     public ExpectedException expectedEx = ExpectedException.none();
     private GatewayAccountEntity gatewayAccount;
@@ -30,7 +33,7 @@ public class PaymentRequestDaoITest extends DaoITestBase {
     @Before
     public void setUp() throws Exception {
         paymentRequestDao = env.getInstance(PaymentRequestDao.class);
-        statusUpdater = env.getInstance(StatusUpdater.class);
+        chargeStatusUpdater = env.getInstance(ChargeStatusUpdater.class);
         insertTestAccount();
 
         gatewayAccount = new GatewayAccountEntity(
@@ -62,7 +65,7 @@ public class PaymentRequestDaoITest extends DaoITestBase {
 
         paymentRequestDao.persist(paymentRequestEntity);
 
-        statusUpdater.updateChargeTransactionStatus(paymentRequestEntity.getExternalId(), ChargeStatus.ENTERING_CARD_DETAILS);
+        chargeStatusUpdater.updateChargeTransactionStatus(paymentRequestEntity.getExternalId(), ChargeStatus.ENTERING_CARD_DETAILS);
         final Optional<PaymentRequestEntity> byExternalId =
                 paymentRequestDao.findByExternalId(paymentRequestEntity.getExternalId());
 

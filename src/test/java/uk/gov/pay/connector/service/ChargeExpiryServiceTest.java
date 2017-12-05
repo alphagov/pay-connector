@@ -19,17 +19,20 @@ import uk.gov.pay.connector.model.gateway.GatewayResponse.GatewayResponseBuilder
 import uk.gov.pay.connector.service.BaseCancelResponse.CancelStatus;
 import uk.gov.pay.connector.service.transaction.TransactionFlow;
 import uk.gov.pay.connector.service.worldpay.WorldpayBaseResponse;
+import uk.gov.pay.connector.service.worldpay.WorldpayCancelResponse;
 
 import java.time.ZonedDateTime;
 import java.util.Optional;
-
-import uk.gov.pay.connector.service.worldpay.WorldpayCancelResponse;
 
 import static java.util.Collections.singletonList;
 import static org.hamcrest.core.Is.is;
 import static org.junit.Assert.assertThat;
 import static org.mockito.Matchers.any;
-import static org.mockito.Mockito.*;
+import static org.mockito.Mockito.doNothing;
+import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.never;
+import static org.mockito.Mockito.verify;
+import static org.mockito.Mockito.when;
 import static uk.gov.pay.connector.model.gateway.GatewayResponse.GatewayResponseBuilder.responseBuilder;
 import static uk.gov.pay.connector.service.ChargeExpiryService.EXPIRABLE_STATUSES;
 
@@ -54,11 +57,11 @@ public class ChargeExpiryServiceTest {
     private WorldpayCancelResponse mockWorldpayCancelResponse;
 
     @Mock
-    private StatusUpdater mockStatusUpdater;
+    private ChargeStatusUpdater mockChargeStatusUpdater;
 
     @Before
     public void setup() {
-        chargeExpiryService = new ChargeExpiryService(mockChargeDao, mockChargeEventDao, mockPaymentProviders, TransactionFlow::new, mockStatusUpdater);
+        chargeExpiryService = new ChargeExpiryService(mockChargeDao, mockChargeEventDao, mockPaymentProviders, TransactionFlow::new, mockChargeStatusUpdater);
     }
 
     @Test
@@ -89,7 +92,7 @@ public class ChargeExpiryServiceTest {
         verify(mockPaymentProvider).cancel(cancelCaptor.capture());
         assertThat(cancelCaptor.getValue().getTransactionId(), is(chargeEntity.getGatewayTransactionId()));
         assertThat(chargeEntity.getStatus(), is(ChargeStatus.EXPIRED.getValue()));
-        verify(mockStatusUpdater).updateChargeTransactionStatus(chargeEntity.getExternalId(), ChargeStatus.EXPIRED);
+        verify(mockChargeStatusUpdater).updateChargeTransactionStatus(chargeEntity.getExternalId(), ChargeStatus.EXPIRED);
     }
 
     @Test
@@ -121,7 +124,7 @@ public class ChargeExpiryServiceTest {
 
                     verify(mockPaymentProvider, never()).cancel(any());
                     assertThat(chargeEntity.getStatus(), is(ChargeStatus.EXPIRED.getValue()));
-                    verify(mockStatusUpdater).updateChargeTransactionStatus(chargeEntity.getExternalId(), ChargeStatus.EXPIRED, null);
+                    verify(mockChargeStatusUpdater).updateChargeTransactionStatus(chargeEntity.getExternalId(), ChargeStatus.EXPIRED, null);
                 });
     }
 
@@ -151,6 +154,6 @@ public class ChargeExpiryServiceTest {
         chargeExpiryService.expire(singletonList(chargeEntity));
 
         assertThat(chargeEntity.getStatus(), is(ChargeStatus.EXPIRE_CANCEL_FAILED.getValue()));
-        verify(mockStatusUpdater).updateChargeTransactionStatus(chargeEntity.getExternalId(), ChargeStatus.EXPIRE_CANCEL_FAILED);
+        verify(mockChargeStatusUpdater).updateChargeTransactionStatus(chargeEntity.getExternalId(), ChargeStatus.EXPIRE_CANCEL_FAILED);
     }
 }

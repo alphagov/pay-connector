@@ -8,8 +8,16 @@ import uk.gov.pay.connector.dao.ChargeDao;
 import uk.gov.pay.connector.dao.ChargeEventDao;
 import uk.gov.pay.connector.dao.RefundDao;
 import uk.gov.pay.connector.exception.InvalidStateTransitionException;
-import uk.gov.pay.connector.model.*;
-import uk.gov.pay.connector.model.domain.*;
+import uk.gov.pay.connector.model.EvaluatedChargeStatusNotification;
+import uk.gov.pay.connector.model.EvaluatedNotification;
+import uk.gov.pay.connector.model.EvaluatedRefundStatusNotification;
+import uk.gov.pay.connector.model.Notification;
+import uk.gov.pay.connector.model.Notifications;
+import uk.gov.pay.connector.model.domain.ChargeEntity;
+import uk.gov.pay.connector.model.domain.ChargeStatus;
+import uk.gov.pay.connector.model.domain.GatewayAccountEntity;
+import uk.gov.pay.connector.model.domain.RefundEntity;
+import uk.gov.pay.connector.model.domain.RefundStatus;
 import uk.gov.pay.connector.util.DnsUtils;
 
 import javax.inject.Inject;
@@ -28,17 +36,17 @@ public class NotificationService {
     private final RefundDao refundDao;
     private final PaymentProviders paymentProviders;
     private final DnsUtils dnsUtils;
-    private final StatusUpdater statusUpdater;
+    private final ChargeStatusUpdater chargeStatusUpdater;
     private final RefundStatusUpdater refundStatusUpdater;
 
     @Inject
-    public NotificationService(ChargeDao chargeDao, ChargeEventDao chargeEventDao, RefundDao refundDao, PaymentProviders paymentProviders, DnsUtils dnsUtils, StatusUpdater statusUpdater, RefundStatusUpdater refundStatusUpdater) {
+    public NotificationService(ChargeDao chargeDao, ChargeEventDao chargeEventDao, RefundDao refundDao, PaymentProviders paymentProviders, DnsUtils dnsUtils, ChargeStatusUpdater chargeStatusUpdater, RefundStatusUpdater refundStatusUpdater) {
         this.chargeDao = chargeDao;
         this.chargeEventDao = chargeEventDao;
         this.refundDao = refundDao;
         this.paymentProviders = paymentProviders;
         this.dnsUtils = dnsUtils;
-        this.statusUpdater = statusUpdater;
+        this.chargeStatusUpdater = chargeStatusUpdater;
         this.refundStatusUpdater = refundStatusUpdater;
     }
 
@@ -210,7 +218,7 @@ public class NotificationService {
                     gatewayAccount.getType());
 
             chargeEventDao.persistChargeEventOf(chargeEntity, Optional.ofNullable(notification.getGatewayEventDate()));
-            statusUpdater.updateChargeTransactionStatus(chargeEntity.getExternalId(), newStatus, notification.getGatewayEventDate());
+            chargeStatusUpdater.updateChargeTransactionStatus(chargeEntity.getExternalId(), newStatus, notification.getGatewayEventDate());
         }
 
         private <T> void updateRefundStatus(EvaluatedRefundStatusNotification<T> notification) {

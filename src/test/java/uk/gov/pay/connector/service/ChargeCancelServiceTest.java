@@ -21,10 +21,20 @@ import uk.gov.pay.connector.service.worldpay.WorldpayCancelResponse;
 import java.util.Optional;
 
 import static org.hamcrest.core.Is.is;
-import static org.junit.Assert.*;
-import static org.mockito.Mockito.*;
-import static uk.gov.pay.connector.model.domain.ChargeEntityFixture.*;
-import static uk.gov.pay.connector.model.domain.ChargeStatus.*;
+import static org.junit.Assert.assertThat;
+import static org.mockito.Mockito.any;
+import static org.mockito.Mockito.argThat;
+import static org.mockito.Mockito.atLeastOnce;
+import static org.mockito.Mockito.doNothing;
+import static org.mockito.Mockito.eq;
+import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.times;
+import static org.mockito.Mockito.verify;
+import static org.mockito.Mockito.verifyNoMoreInteractions;
+import static org.mockito.Mockito.when;
+import static uk.gov.pay.connector.model.domain.ChargeEntityFixture.aValidChargeEntity;
+import static uk.gov.pay.connector.model.domain.ChargeStatus.SYSTEM_CANCELLED;
+import static uk.gov.pay.connector.model.domain.ChargeStatus.USER_CANCELLED;
 import static uk.gov.pay.connector.model.gateway.GatewayResponse.GatewayResponseBuilder.responseBuilder;
 
 @RunWith(MockitoJUnitRunner.class)
@@ -57,11 +67,11 @@ public class ChargeCancelServiceTest {
     private PaymentProvider mockPaymentProvider;
 
     @Mock
-    private StatusUpdater mockStatusUpdater;
+    private ChargeStatusUpdater mockChargeStatusUpdater;
 
     @Before
     public void setup() {
-        chargeCancelService = new ChargeCancelService(mockChargeDao, mockChargeEventDao, mockPaymentProviders, TransactionFlow::new, mockStatusUpdater);
+        chargeCancelService = new ChargeCancelService(mockChargeDao, mockChargeEventDao, mockPaymentProviders, TransactionFlow::new, mockChargeStatusUpdater);
     }
 
     @Test
@@ -84,7 +94,7 @@ public class ChargeCancelServiceTest {
         assertThat(chargeEntity.getStatus(), is(SYSTEM_CANCELLED.getValue()));
 
         verify(mockChargeEventDao).persistChargeEventOf(chargeEntity, Optional.empty());
-        verify(mockStatusUpdater).updateChargeTransactionStatus(chargeEntity.getExternalId(), SYSTEM_CANCELLED, null);
+        verify(mockChargeStatusUpdater).updateChargeTransactionStatus(chargeEntity.getExternalId(), SYSTEM_CANCELLED, null);
     }
 
     @Test
@@ -118,7 +128,7 @@ public class ChargeCancelServiceTest {
         verify(mockChargeDao).findByExternalIdAndGatewayAccount(externalChargeId, gatewayAccountId);
         verify(mockChargeDao, times(2)).findByExternalId(externalChargeId);
         verify(mockChargeEventDao, atLeastOnce()).persistChargeEventOf(argThat(chargeEntityHasStatus(SYSTEM_CANCELLED)), eq(Optional.empty()));
-        verify(mockStatusUpdater).updateChargeTransactionStatus(chargeEntity.getExternalId(), SYSTEM_CANCELLED);
+        verify(mockChargeStatusUpdater).updateChargeTransactionStatus(chargeEntity.getExternalId(), SYSTEM_CANCELLED);
         verifyNoMoreInteractions(mockChargeDao);
     }
 
@@ -151,7 +161,7 @@ public class ChargeCancelServiceTest {
         assertThat(chargeEntity.getStatus(), is(USER_CANCELLED.getValue()));
 
         verify(mockChargeEventDao).persistChargeEventOf(chargeEntity, Optional.empty());
-        verify(mockStatusUpdater).updateChargeTransactionStatus(chargeEntity.getExternalId(), USER_CANCELLED, null);
+        verify(mockChargeStatusUpdater).updateChargeTransactionStatus(chargeEntity.getExternalId(), USER_CANCELLED, null);
     }
 
     @Test
@@ -182,7 +192,7 @@ public class ChargeCancelServiceTest {
 
         verify(mockChargeDao, times(3)).findByExternalId(externalChargeId);
         verify(mockChargeEventDao, atLeastOnce()).persistChargeEventOf(argThat(chargeEntityHasStatus(USER_CANCELLED)), eq(Optional.empty()));
-        verify(mockStatusUpdater).updateChargeTransactionStatus(chargeEntity.getExternalId(), USER_CANCELLED);
+        verify(mockChargeStatusUpdater).updateChargeTransactionStatus(chargeEntity.getExternalId(), USER_CANCELLED);
         verifyNoMoreInteractions(mockChargeDao);
     }
 
