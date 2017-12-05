@@ -1076,4 +1076,15 @@
         </sql>
     </changeSet>
 
+    <changeSet id="add transaction_id column to cards table" author="">
+        <addColumn tableName="cards">
+            <column name="transaction_id" type="bigint">
+                <constraints foreignKeyName="fk__transactions_id"
+                             referencedTableName="transactions"
+                             referencedColumnNames="id"
+                             nullable="true"/>
+            </column>
+        </addColumn>
+    </changeSet>
+
 </databaseChangeLog>
