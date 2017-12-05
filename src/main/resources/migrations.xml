@@ -1075,6 +1075,32 @@
                 AND ch.created_date &lt; '2017-12-01 00:00:00';
         </sql>
     </changeSet>
+    <changeSet
+            id="backfill into transactions all charges that resulted on 15-Nov-2017 during migration"
+            author="">
+        <sql stripComments="true">
+            UPDATE transactions t2 SET
+                status = a.status
+            FROM (
+                -- do an inner select to get only the ChargeTransaction from the required time frame
+                SELECT
+                    -- transform charge status into transaction status
+                    REPLACE(ch.status, ' ', '_') AS status,
+                    -- keep the id of ChargeTransaction for later matching when updating
+                    t.id AS id
+                -- use all PaymentRequest to map to Charge
+                FROM payment_requests pr
+                -- use ChargeTransaction only
+                JOIN transactions t ON pr.id = t.payment_request_id AND t.operation='CHARGE'
+                -- use Charge that maps to a PaymentRequest
+                JOIN charges ch ON pr.external_id = ch.external_id
+                -- use only Charge from 2017-11-15 between 3-4pm
+                WHERE ch.created_date &gt; '2017-11-15 15:00:00'
+                AND ch.created_date &lt; '2017-11-15 16:00:00') a
+            -- match ChargeTransaction for update
+            WHERE t2.id = a.id;
+        </sql>
+    </changeSet>
 
     <changeSet id="add transaction_id column to cards table" author="">
         <addColumn tableName="cards">
