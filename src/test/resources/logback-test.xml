@@ -1,0 +1,23 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<configuration>
+    <!--
+      This configuration is used by test code which
+      spins up before dropwizard has booted.
+
+      It should not affect production logging behaviours.
+
+      Use dropwizard's config.yaml to set that.
+    -->
+    <appender name="STDOUT" class="ch.qos.logback.core.ConsoleAppender">
+        <encoder class="ch.qos.logback.classic.encoder.PatternLayoutEncoder">
+            <pattern>
+                [TEST] %d{HH:mm:ss.SSS} [%thread] %-5level %logger{36} - %msg%n
+            </pattern>
+        </encoder>
+    </appender>
+
+    <root level="warn">
+        <appender-ref ref="STDOUT" />
+    </root>
+
+</configuration>
