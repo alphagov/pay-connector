@@ -8,6 +8,7 @@ import org.apache.commons.lang3.tuple.Pair;
 import org.junit.Before;
 import org.junit.Test;
 import org.junit.runner.RunWith;
+import org.mockito.ArgumentCaptor;
 import org.mockito.InOrder;
 import org.mockito.Mock;
 import org.mockito.runners.MockitoJUnitRunner;
@@ -363,8 +364,20 @@ public class CardAuthoriseServiceTest extends CardServiceTest {
         assertThat(cardDetails.getBillingAddress().getCountry(), is(country));
         assertThat(cardDetails.getBillingAddress().getCounty(), is(county));
 
-        CardEntity cardEntity = CardEntity.from(cardDetails, charge.getEmail(), charge.getId());
-        verify(mockCardDao).persist(cardEntity);
+        ArgumentCaptor<CardEntity> cardEntityArg = ArgumentCaptor.forClass(CardEntity.class);
+        verify(mockCardDao).persist(cardEntityArg.capture());
+
+        CardEntity card = cardEntityArg.getValue();
+        assertThat(card.getCardHolderName(), is(cardholderName));
+        assertThat(card.getCardBrand(), is(cardBrand));
+        assertThat(card.getExpiryDate(), is(expiryDate));
+        assertThat(card.getLastDigitsCardNumber(), is("4242"));
+        assertThat(card.getBillingAddress().getLine1(), is(addressLine1));
+        assertThat(card.getBillingAddress().getLine2(), is(addressLine2));
+        assertThat(card.getBillingAddress().getPostcode(), is(postcode));
+        assertThat(card.getBillingAddress().getCity(), is(city));
+        assertThat(card.getBillingAddress().getCountry(), is(country));
+        assertThat(card.getBillingAddress().getCounty(), is(county));
     }
 
     @Test
@@ -377,8 +390,7 @@ public class CardAuthoriseServiceTest extends CardServiceTest {
         CardDetailsEntity cardDetails = charge.getCardDetails();
         assertThat(cardDetails, is(notNullValue()));
 
-        CardEntity cardEntity = CardEntity.from(cardDetails, charge.getEmail(), charge.getId());
-        verify(mockCardDao).persist(cardEntity);
+        verify(mockCardDao).persist(any(CardEntity.class));
     }
 
     @Test
@@ -391,8 +403,7 @@ public class CardAuthoriseServiceTest extends CardServiceTest {
         CardDetailsEntity cardDetails = charge.getCardDetails();
         assertThat(cardDetails, is(notNullValue()));
 
-        CardEntity cardEntity = CardEntity.from(cardDetails, charge.getEmail(), charge.getId());
-        verify(mockCardDao).persist(cardEntity);
+        verify(mockCardDao).persist(any(CardEntity.class));
     }
 
     @Test
