@@ -9,7 +9,7 @@ import uk.gov.pay.connector.service.PaymentGatewayName;
 import javax.validation.Valid;
 import javax.validation.constraints.NotNull;
 
-public class ConnectorConfiguration extends Configuration {
+public class    ConnectorConfiguration extends Configuration {
 
     @Valid
     @NotNull

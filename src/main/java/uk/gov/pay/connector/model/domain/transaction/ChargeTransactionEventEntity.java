@@ -39,4 +39,9 @@ public class ChargeTransactionEventEntity extends TransactionEventEntity<ChargeS
     public void setGatewayEventDate(ZonedDateTime gatewayEventDate) {
         this.gatewayEventDate = gatewayEventDate;
     }
+
+    public ChargeTransactionEventEntity from() {
+        ChargeTransactionEventEntity event = new ChargeTransactionEventEntity();
+        return event;
+    }
 }

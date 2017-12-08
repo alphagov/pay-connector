@@ -56,7 +56,7 @@ public class RefundTransactionEntityTest {
 
         List<RefundTransactionEventEntity> transactionEvents = refundTransactionEntity.getTransactionEvents();
         assertThat(transactionEvents.size(), is(2));
-        assertThat(transactionEvents.get(0).getStatus(), is(expectedStatus1));
-        assertThat(transactionEvents.get(1).getStatus(), is(expectedStatus2));
+        assertThat(transactionEvents.get(0).getStatus(), is(expectedStatus2));
+        assertThat(transactionEvents.get(1).getStatus(), is(expectedStatus1));
     }
 }

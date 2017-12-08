@@ -73,8 +73,8 @@ public class PaymentRequestDaoITest extends DaoITestBase {
         ChargeTransactionEntity chargeTransaction = byExternalId.get().getChargeTransaction();
         assertThat(chargeTransaction.getStatus(), is(ChargeStatus.ENTERING_CARD_DETAILS));
         assertThat(chargeTransaction.getTransactionEvents().size(), is(2));
-        assertThat(chargeTransaction.getTransactionEvents().get(0).getStatus(), is(ChargeStatus.CREATED));
-        assertThat(chargeTransaction.getTransactionEvents().get(1).getStatus(), is(ChargeStatus.ENTERING_CARD_DETAILS));
+        assertThat(chargeTransaction.getTransactionEvents().get(0).getStatus(), is(ChargeStatus.ENTERING_CARD_DETAILS));
+        assertThat(chargeTransaction.getTransactionEvents().get(1).getStatus(), is(ChargeStatus.CREATED));
     }
 
     @Test
@@ -102,6 +102,22 @@ public class PaymentRequestDaoITest extends DaoITestBase {
         paymentRequestDao.persist(paymentRequestEntity);
 
         assertThat(paymentRequestEntity.getChargeTransaction().getId(), is(notNullValue()));
+    }
+
+    @Test
+    public void shouldReturnCorrectMaxId() {
+        PaymentRequestEntity paymentRequestEntity1 = aValidPaymentRequestEntity()
+                .withGatewayAccountEntity(gatewayAccount)
+                .build();
+
+        paymentRequestDao.persist(paymentRequestEntity1);
+        final PaymentRequestEntity paymentRequestEntity2 = aValidPaymentRequestEntity()
+                .withGatewayAccountEntity(gatewayAccount)
+                .build();
+        paymentRequestDao.persist(paymentRequestEntity2);
+
+        final Long maxId = paymentRequestDao.findMaxId();
+        assertThat(maxId, is(paymentRequestEntity2.getId()));
     }
 
     private void insertTestAccount() {

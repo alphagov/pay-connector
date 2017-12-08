@@ -1334,6 +1334,30 @@ public class ChargeDaoITest extends DaoITestBase {
 
     }
 
+    @Test
+    public void findByIdAndLimit(){
+        DatabaseFixtures
+                .withDatabaseTestHelper(databaseTestHelper)
+                .aTestCharge()
+                .withTestAccount(defaultTestAccount)
+                .withChargeId(101L)
+                .withExternalChargeId("ext-id1")
+                .withCreatedDate(now().minusHours(2))
+                .withChargeStatus(CAPTURE_APPROVED)
+                .insert();
+        DatabaseFixtures
+                .withDatabaseTestHelper(databaseTestHelper)
+                .aTestCharge()
+                .withTestAccount(defaultTestAccount)
+                .withChargeId(102L)
+                .withExternalChargeId("ext-id2")
+                .withCreatedDate(now().minusHours(2))
+                .withChargeStatus(CAPTURE_APPROVED_RETRY)
+                .insert();
+
+        assertThat(chargeDao.findByIdAndLimit(0L, 2).size(), is(2));
+    }
+
     private void insertTestAccount() {
         this.defaultTestAccount = DatabaseFixtures
                 .withDatabaseTestHelper(databaseTestHelper)

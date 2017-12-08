@@ -6,8 +6,17 @@ import uk.gov.pay.connector.model.domain.ChargeEntity;
 import uk.gov.pay.connector.model.domain.ChargeStatus;
 import uk.gov.pay.connector.model.domain.PaymentGatewayStateTransitions;
 
-import javax.persistence.*;
+import javax.persistence.CascadeType;
+import javax.persistence.Column;
+import javax.persistence.DiscriminatorValue;
+import javax.persistence.Entity;
+import javax.persistence.EnumType;
+import javax.persistence.Enumerated;
+import javax.persistence.OneToMany;
+import javax.persistence.OrderBy;
 import java.time.ZonedDateTime;
+import java.util.ArrayList;
+import java.util.List;
 
 import static java.lang.String.format;
 
@@ -21,6 +30,9 @@ public class ChargeTransactionEntity extends TransactionEntity<ChargeStatus, Cha
     protected ChargeStatus status;
     @Column(name = "gateway_transaction_id")
     private String gatewayTransactionId;
+    @OneToMany(mappedBy = "transaction", cascade = CascadeType.ALL)
+    @OrderBy("updated DESC")
+    private List<ChargeTransactionEventEntity> transactionEvents = new ArrayList<>();
 
     public ChargeTransactionEntity() {
         super(TransactionOperation.CHARGE);
@@ -55,6 +67,7 @@ public class ChargeTransactionEntity extends TransactionEntity<ChargeStatus, Cha
         return new ChargeTransactionEventEntity();
     }
 
+    @Override
     void updateStatus(ChargeStatus newStatus, ChargeTransactionEventEntity transactionEvent) {
         if (this.status != null && !PaymentGatewayStateTransitions.getInstance().isValidTransition(this.status, newStatus)) {
             logger.warn(
@@ -76,5 +89,9 @@ public class ChargeTransactionEntity extends TransactionEntity<ChargeStatus, Cha
         transactionEntity.updateStatus(ChargeStatus.fromString(chargeEntity.getStatus()));
 
         return transactionEntity;
+    }
+
+    public List<ChargeTransactionEventEntity> getTransactionEvents() {
+        return transactionEvents;
     }
 }

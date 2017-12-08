@@ -3,11 +3,16 @@ package uk.gov.pay.connector.model.domain.transaction;
 import uk.gov.pay.connector.model.domain.RefundEntity;
 import uk.gov.pay.connector.model.domain.RefundStatus;
 
+import javax.persistence.CascadeType;
 import javax.persistence.Column;
 import javax.persistence.DiscriminatorValue;
 import javax.persistence.Entity;
 import javax.persistence.EnumType;
 import javax.persistence.Enumerated;
+import javax.persistence.OneToMany;
+import javax.persistence.OrderBy;
+import java.util.ArrayList;
+import java.util.List;
 
 @Entity
 @DiscriminatorValue(value = "REFUND")
@@ -21,7 +26,9 @@ public class RefundTransactionEntity extends TransactionEntity<RefundStatus, Ref
     private String userExternalId;
     @Column(name = "refund_reference")
     private String refundReference;
-
+    @OneToMany(mappedBy = "transaction", cascade = CascadeType.ALL)
+    @OrderBy("updated DESC")
+    private List<RefundTransactionEventEntity> transactionEvents = new ArrayList<>();
 
     public RefundTransactionEntity() {
         super(TransactionOperation.REFUND);
@@ -74,5 +81,9 @@ public class RefundTransactionEntity extends TransactionEntity<RefundStatus, Ref
     @Override
     protected RefundTransactionEventEntity createNewTransactionEvent() {
         return new RefundTransactionEventEntity();
+    }
+
+    public List<RefundTransactionEventEntity> getTransactionEvents() {
+        return transactionEvents;
     }
 }
