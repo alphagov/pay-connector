@@ -1,7 +1,6 @@
 package uk.gov.pay.connector.model.domain;
 
 import com.fasterxml.jackson.annotation.JsonIgnore;
-import uk.gov.pay.connector.model.domain.transaction.ChargeTransactionEntity;
 
 import javax.persistence.Column;
 import javax.persistence.Embedded;
@@ -9,7 +8,6 @@ import javax.persistence.Entity;
 import javax.persistence.GeneratedValue;
 import javax.persistence.GenerationType;
 import javax.persistence.Id;
-import javax.persistence.JoinColumn;
 import javax.persistence.SequenceGenerator;
 import javax.persistence.Table;
 
@@ -39,8 +37,8 @@ public class CardEntity extends AbstractVersionedEntity {
     @Embedded
     private AddressEntity billingAddress;
 
-    @JoinColumn(name = "transaction_id", referencedColumnName = "id", updatable = false)
-    private ChargeTransactionEntity chargeTransactionEntity;
+    @Column(name = "charge_id")
+    private Long chargeId;
 
     public CardEntity() {
     }
@@ -93,24 +91,54 @@ public class CardEntity extends AbstractVersionedEntity {
         this.cardBrand = cardBrand;
     }
 
-    public ChargeTransactionEntity getChargeTransactionEntity() {
-        return chargeTransactionEntity;
+    @Override
+    public boolean equals(Object o) {
+        if (this == o) return true;
+        if (o == null || getClass() != o.getClass()) return false;
+
+        CardEntity that = (CardEntity) o;
+
+        if (lastDigitsCardNumber != null ? !lastDigitsCardNumber.equals(that.lastDigitsCardNumber) : that.lastDigitsCardNumber != null)
+            return false;
+        if (cardHolderName != null ? !cardHolderName.equals(that.cardHolderName) : that.cardHolderName != null)
+            return false;
+        if (expiryDate != null ? !expiryDate.equals(that.expiryDate) : that.expiryDate != null)
+            return false;
+        if (cardBrand != null ? !cardBrand.equals(that.cardBrand) : that.cardBrand != null)
+            return false;
+        if (chargeId != null ? !chargeId.equals(that.chargeId) : that.chargeId != null)
+            return false;
+        return billingAddress != null ? billingAddress.equals(that.billingAddress) : that.billingAddress == null;
     }
 
-    public void setChargeTransactionEntity(ChargeTransactionEntity chargeTransactionEntity) {
-        this.chargeTransactionEntity = chargeTransactionEntity;
+    @Override
+    public int hashCode() {
+        int result = lastDigitsCardNumber != null ? lastDigitsCardNumber.hashCode() : 0;
+        result = 31 * result + (cardHolderName != null ? cardHolderName.hashCode() : 0);
+        result = 31 * result + (expiryDate != null ? expiryDate.hashCode() : 0);
+        result = 31 * result + (cardBrand != null ? cardBrand.hashCode() : 0);
+        result = 31 * result + (billingAddress != null ? billingAddress.hashCode() : 0);
+        result = 31 * result + (chargeId != null ? chargeId.hashCode() : 0);
+        return result;
     }
 
-    public static CardEntity from(CardDetailsEntity cardDetailsEntity, ChargeTransactionEntity chargeTransactionEntity) {
+    public static CardEntity from(CardDetailsEntity cardDetailsEntity, String email, Long chargeId) {
         CardEntity entity = new CardEntity();
         entity.setBillingAddress(cardDetailsEntity.getBillingAddress());
         entity.setCardBrand(cardDetailsEntity.getCardBrand());
         entity.setCardHolderName(cardDetailsEntity.getCardHolderName());
         entity.setExpiryDate(cardDetailsEntity.getExpiryDate());
         entity.setLastDigitsCardNumber(cardDetailsEntity.getLastDigitsCardNumber());
-        entity.setChargeTransactionEntity(chargeTransactionEntity);
+        entity.setChargeId(chargeId);
 
         return entity;
     }
 
+    public Long getChargeId() {
+        return chargeId;
+    }
+
+    public void setChargeId(Long chargeId) {
+        this.chargeId = chargeId;
+    }
 }

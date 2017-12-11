@@ -154,15 +154,11 @@ public class CardAuthoriseService extends CardAuthoriseBaseService<AuthCardDetai
 
             CardDetailsEntity detailsEntity = buildCardDetailsEntity(authCardDetails);
             chargeEntity.setCardDetails(detailsEntity);
-
-            if (paymentRequestEntity.isPresent()) {
-                CardEntity cardEntity = CardEntity.from(detailsEntity, paymentRequestEntity.get().getChargeTransaction());
-                cardDao.persist(cardEntity);
-            } else {
-                logger.error("Cannot find payment request with external ID {} — this is a bug: the card details will not be saved in the cards table");
-            }
+            CardEntity cardEntity = CardEntity
+                    .from(detailsEntity, chargeEntity.getEmail(), chargeEntity.getId());
 
             chargeEventDao.persistChargeEventOf(chargeEntity, Optional.empty());
+            cardDao.persist(cardEntity);
             persistCard3ds(chargeEntity);
             logger.info("Stored confirmation details for charge - charge_external_id={}",
                     chargeEntity.getExternalId());
