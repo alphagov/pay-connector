@@ -1113,4 +1113,24 @@
         </addColumn>
     </changeSet>
 
+    <changeSet id="drop default value from charge_id column in cards table" author="">
+        <dropDefaultValue tableName="cards" columnName="charge_id"/>
+    </changeSet>
+
+    <changeSet id="drop cards_charge_id_seq sequence" author="">
+        <dropSequence sequenceName="cards_charge_id_seq"/>
+    </changeSet>
+
+    <changeSet id="drop charge_id index in cards table" author="">
+        <dropIndex tableName="cards" indexName="idx_cards_charge_id"/>
+    </changeSet>
+
+    <changeSet id="drop not null constraint on charge_id column in cards table" author="">
+        <dropNotNullConstraint tableName="cards" columnName="charge_id"/>
+    </changeSet>
+
+    <changeSet id="drop foreign key constraint that charge_id column in cards table references id column in charges" author="">
+        <dropForeignKeyConstraint baseTableName="cards" constraintName="fk__cards_charges"/>
+    </changeSet>
+
 </databaseChangeLog>
