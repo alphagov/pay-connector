@@ -1,8 +1,11 @@
 package uk.gov.pay.connector.model.domain;
 
 import org.junit.Test;
+import uk.gov.pay.connector.exception.InvalidStateTransitionException;
 
+import static org.hamcrest.core.Is.is;
 import static org.junit.Assert.assertFalse;
+import static org.junit.Assert.assertThat;
 import static org.junit.Assert.assertTrue;
 import static uk.gov.pay.connector.model.api.ExternalChargeState.*;
 import static uk.gov.pay.connector.model.domain.ChargeEntityFixture.aValidChargeEntity;
@@ -43,4 +46,18 @@ public class ChargeEntityTest {
         assertFalse(aValidChargeEntity().withStatus(ENTERING_CARD_DETAILS).build().hasExternalStatus(EXTERNAL_CREATED, EXTERNAL_SUCCESS));
     }
 
+    @Test
+    public void shouldAllowAValidStatusTransition() throws Exception {
+        ChargeEntity chargeCreated = ChargeEntityFixture.aValidChargeEntity()
+                .withStatus(CREATED).build();
+        chargeCreated.setStatus(ENTERING_CARD_DETAILS);
+        assertThat(chargeCreated.getStatus(), is(ENTERING_CARD_DETAILS.getValue()));
+    }
+
+    @Test(expected = InvalidStateTransitionException.class)
+    public void shouldRejectAnInvalidStatusTransition() throws Exception {
+        ChargeEntity chargeCreated = ChargeEntityFixture.aValidChargeEntity()
+                .withStatus(CREATED).build();
+        chargeCreated.setStatus(CAPTURED);
+    }
 }
