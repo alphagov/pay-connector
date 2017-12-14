@@ -8,22 +8,7 @@ import uk.gov.pay.connector.model.api.ExternalChargeState;
 import uk.gov.pay.connector.service.PaymentGatewayName;
 import uk.gov.pay.connector.util.RandomIdGenerator;
 
-import javax.persistence.Access;
-import javax.persistence.AccessType;
-import javax.persistence.Column;
-import javax.persistence.Convert;
-import javax.persistence.Embedded;
-import javax.persistence.Entity;
-import javax.persistence.FetchType;
-import javax.persistence.GeneratedValue;
-import javax.persistence.GenerationType;
-import javax.persistence.Id;
-import javax.persistence.JoinColumn;
-import javax.persistence.ManyToOne;
-import javax.persistence.OneToMany;
-import javax.persistence.OrderBy;
-import javax.persistence.SequenceGenerator;
-import javax.persistence.Table;
+import javax.persistence.*;
 import java.time.ZoneId;
 import java.time.ZonedDateTime;
 import java.util.ArrayList;
@@ -31,11 +16,8 @@ import java.util.Arrays;
 import java.util.List;
 
 import static org.apache.commons.lang3.StringUtils.equalsIgnoreCase;
-import static uk.gov.pay.connector.model.domain.ChargeStatus.CAPTURED;
-import static uk.gov.pay.connector.model.domain.ChargeStatus.CAPTURE_SUBMITTED;
-import static uk.gov.pay.connector.model.domain.ChargeStatus.CREATED;
-import static uk.gov.pay.connector.model.domain.ChargeStatus.fromString;
-import static uk.gov.pay.connector.model.domain.PaymentGatewayStateTransitions.defaultTransitions;
+import static uk.gov.pay.connector.model.domain.ChargeStatus.*;
+import static uk.gov.pay.connector.model.domain.PaymentGatewayStateTransitions.isValidTransition;
 
 @Entity
 @Table(name = "charges")
@@ -186,7 +168,7 @@ public class ChargeEntity extends AbstractVersionedEntity {
     }
 
     public void setStatus(ChargeStatus targetStatus) throws InvalidStateTransitionException {
-        if (defaultTransitions().isValidTransition(fromString(this.status), targetStatus)) {
+        if (isValidTransition(fromString(this.status), targetStatus)) {
             logger.info(String.format("Changing charge status for externalId [%s] [%s]->[%s]",
                     externalId,
                     this.status,
