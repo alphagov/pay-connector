@@ -35,7 +35,7 @@ import static uk.gov.pay.connector.model.domain.ChargeStatus.CAPTURED;
 import static uk.gov.pay.connector.model.domain.ChargeStatus.CAPTURE_SUBMITTED;
 import static uk.gov.pay.connector.model.domain.ChargeStatus.CREATED;
 import static uk.gov.pay.connector.model.domain.ChargeStatus.fromString;
-import static uk.gov.pay.connector.model.domain.PaymentGatewayStateTransitions.defaultTransitions;
+import static uk.gov.pay.connector.model.domain.PaymentGatewayStateTransitions.isValidTransition;
 
 @Entity
 @Table(name = "charges")
@@ -186,7 +186,7 @@ public class ChargeEntity extends AbstractVersionedEntity {
     }
 
     public void setStatus(ChargeStatus targetStatus) throws InvalidStateTransitionException {
-        if (defaultTransitions().isValidTransition(fromString(this.status), targetStatus)) {
+        if (isValidTransition(fromString(this.status), targetStatus)) {
             logger.info(String.format("Changing charge status for externalId [%s] [%s]->[%s]",
                     externalId,
                     this.status,

@@ -2,14 +2,14 @@ package uk.gov.pay.connector.model.domain.transaction;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import uk.gov.pay.connector.model.domain.*;
+import uk.gov.pay.connector.model.domain.ChargeEntity;
+import uk.gov.pay.connector.model.domain.ChargeStatus;
+import uk.gov.pay.connector.model.domain.PaymentGatewayStateTransitions;
 
 import javax.persistence.*;
-
 import java.time.ZonedDateTime;
 
 import static java.lang.String.format;
-import static uk.gov.pay.connector.model.domain.PaymentGatewayStateTransitions.defaultTransitions;
 
 @Entity
 @DiscriminatorValue(value = "CHARGE")
@@ -56,7 +56,7 @@ public class ChargeTransactionEntity extends TransactionEntity<ChargeStatus, Cha
     }
 
     void updateStatus(ChargeStatus newStatus, ChargeTransactionEventEntity transactionEvent) {
-        if (this.status != null && !defaultTransitions().isValidTransition(this.status, newStatus)) {
+        if (this.status != null && !PaymentGatewayStateTransitions.getInstance().isValidTransition(this.status, newStatus)) {
             logger.warn(
                     format("Charge state transition [%s] -> [%s] not allowed for externalId [%s] transactionId [%s]",
                             this.status.getValue(),
