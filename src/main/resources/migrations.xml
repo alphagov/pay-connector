@@ -1132,19 +1132,6 @@
     <changeSet id="drop foreign key constraint that charge_id column in cards table references id column in charges" author="">
         <dropForeignKeyConstraint baseTableName="cards" constraintName="fk__cards_charges"/>
     </changeSet>
-
-    <changeSet id="backfill transaction_id column in cards table" author="">
-        <sql stripComments="true">
-            UPDATE cards
-            SET transaction_id = transactions.id
-            FROM charges, payment_requests, transactions
-            WHERE cards.transaction_id IS NULL
-            AND charges.id = cards.charge_id
-            AND payment_requests.external_id = charges.external_id
-            AND transactions.payment_request_id = payment_requests.id
-            AND transactions.operation = 'CHARGE';
-        </sql>
-    </changeSet>
     
     <changeSet id="Backfill completed refunds into refund transactions" author="">
         <sql>
