@@ -105,6 +105,15 @@ public class EpdqPaymentProviderTest {
     }
 
     @Test
+    public void shouldAuthoriseSuccessfullyWhenCardholderNameContainsRightSingleQuotationMark() throws Exception {
+        PaymentProvider paymentProvider = getEpdqPaymentProvider();
+        String cardholderName = "John O’Connor"; // That’s a U+2019 RIGHT SINGLE QUOTATION MARK, not a U+0027 APOSTROPHE
+        AuthorisationGatewayRequest request = buildAuthorisationRequest(chargeEntity, cardholderName);
+        GatewayResponse<EpdqAuthorisationResponse> response = paymentProvider.authorise(request);
+        assertThat(response.isSuccessful(), is(true));
+    }
+
+    @Test
     public void shouldCaptureSuccessfully() throws Exception {
         PaymentProvider paymentProvider = getEpdqPaymentProvider();
         AuthorisationGatewayRequest request = buildAuthorisationRequest(chargeEntity);
@@ -170,6 +179,10 @@ public class EpdqPaymentProviderTest {
     }
 
     private static AuthorisationGatewayRequest buildAuthorisationRequest(ChargeEntity chargeEntity) {
+        return buildAuthorisationRequest(chargeEntity, "Mr. Payment");
+    }
+
+    private static AuthorisationGatewayRequest buildAuthorisationRequest(ChargeEntity chargeEntity, String cardholderName) {
         Address address = Address.anAddress();
         address.setLine1("41");
         address.setLine2("Scala Street");
@@ -179,6 +192,7 @@ public class EpdqPaymentProviderTest {
         address.setCountry("GB");
 
         AuthCardDetails authCardDetails = aValidEpdqCard();
+        authCardDetails.setCardHolder(cardholderName);
         authCardDetails.setAddress(address);
 
         return new AuthorisationGatewayRequest(chargeEntity, authCardDetails);
