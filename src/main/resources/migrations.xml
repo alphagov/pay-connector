@@ -1132,33 +1132,5 @@
     <changeSet id="drop foreign key constraint that charge_id column in cards table references id column in charges" author="">
         <dropForeignKeyConstraint baseTableName="cards" constraintName="fk__cards_charges"/>
     </changeSet>
-    
-    <changeSet id="Backfill completed refunds into refund transactions" author="">
-        <sql>
-            INSERT INTO TRANSACTIONS (
-                payment_request_id,
-                amount,
-                refund_external_id,
-                status,
-                user_external_id,
-                operation,
-                refund_reference
-            )
-            SELECT
-                pr.id,
-                r.amount,
-                r.external_id,
-                REPLACE(r.status, ' ', '_'),
-                r.user_external_id,
-                'REFUND',
-                r.reference
-            FROM refunds r
-            JOIN charges c ON r.charge_id=c.id
-            JOIN payment_requests pr ON c.external_id=pr.external_id
-            LEFT JOIN transactions t ON r.external_id=t.refund_external_id
-            WHERE r.status IN ('REFUND ERROR','REFUNDED')
-            AND t.refund_external_id IS NULL;
-        </sql>
-    </changeSet>
 
 </databaseChangeLog>
