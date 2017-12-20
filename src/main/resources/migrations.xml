@@ -1132,5 +1132,59 @@
     <changeSet id="drop foreign key constraint that charge_id column in cards table references id column in charges" author="">
         <dropForeignKeyConstraint baseTableName="cards" constraintName="fk__cards_charges"/>
     </changeSet>
+    
+    <changeSet id="add index to payment_request_id column on transactions table" runInTransaction="false" author="">
+        <sql>
+            CREATE INDEX CONCURRENTLY idx_transactions_payment_request_id ON transactions (payment_request_id);
+        </sql>
+    </changeSet>
+
+    <changeSet id="add index to gateway_transaction_id column on transactions table" runInTransaction="false" author="">
+        <sql>
+            CREATE INDEX CONCURRENTLY idx_transactions_gateway_transaction_id ON transactions (gateway_transaction_id);
+        </sql>
+    </changeSet>
+
+    <changeSet id="add index to refund_external_id column on transactions table" runInTransaction="false" author="">
+        <sql>
+            CREATE UNIQUE INDEX CONCURRENTLY idx_transactions_refund_external_id ON transactions (refund_external_id);
+        </sql>
+    </changeSet>
+
+    <changeSet id="add index to status column on transactions table" runInTransaction="false" author="">
+        <sql>
+            CREATE INDEX CONCURRENTLY idx_transactions_status ON transactions (status);
+        </sql>
+    </changeSet>
+
+    <changeSet id="add index to refund_reference column on transactions table" runInTransaction="false" author="">
+        <sql>
+            CREATE INDEX CONCURRENTLY idx_transactions_refund_reference ON transactions (refund_reference);
+        </sql>
+    </changeSet>
+
+    <changeSet id="add index to transaction_id column on cards table" runInTransaction="false" author="">
+        <sql>
+            CREATE UNIQUE INDEX CONCURRENTLY idx_cards_transaction_id ON cards (transaction_id);
+        </sql>
+    </changeSet>
+
+    <changeSet id="add index to gateway_account_id column on payment_requests table" runInTransaction="false" author="">
+        <sql>
+            CREATE INDEX CONCURRENTLY idx_payment_request_gateway_account_id ON payment_requests (gateway_account_id);
+        </sql>
+    </changeSet>
+
+    <changeSet id="add index to reference column on payment_requests table" runInTransaction="false" author="">
+        <sql>
+            CREATE INDEX CONCURRENTLY idx_payment_request_reference ON payment_requests (reference);
+        </sql>
+    </changeSet>
+    
+    <changeSet id="add index to pa_request column on card_3ds table" runInTransaction="false" author="">
+        <sql>
+            CREATE INDEX CONCURRENTLY idx_card_3ds_pa_request ON card_3ds (pa_request);
+        </sql>
+    </changeSet>
 
 </databaseChangeLog>
