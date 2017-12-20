@@ -40,7 +40,7 @@ public class RefundTransactionEntity extends TransactionEntity<RefundStatus, Ref
     }
 
     @Override
-    void setStatus(RefundStatus status) {
+    public void setStatus(RefundStatus status) {
         this.status = status;
     }
 

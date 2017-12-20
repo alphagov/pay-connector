@@ -662,4 +662,11 @@ public class DatabaseTestHelper {
                         .bind("transactionId", transactionId)
                         .list());
     }
+
+    public List<Map<String, Object>> getRefundTransaction(Long paymentRequestId) {
+        return jdbi.withHandle(h ->
+                h.createQuery("Select * from transactions where payment_request_id = :paymentRequestId and operation='REFUND' order by id asc")
+                        .bind("paymentRequestId", paymentRequestId)
+                        .list());
+    }
 }

@@ -16,19 +16,21 @@ import java.sql.Timestamp;
 import java.time.ZoneId;
 import java.time.ZonedDateTime;
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.concurrent.atomic.AtomicLong;
 
+import static java.util.Arrays.stream;
+import static java.util.stream.Collectors.toList;
 import static org.apache.commons.lang3.RandomStringUtils.randomAlphanumeric;
 import static org.hamcrest.CoreMatchers.is;
 import static org.hamcrest.MatcherAssert.assertThat;
+import static org.hamcrest.Matchers.containsInAnyOrder;
 import static uk.gov.pay.connector.model.domain.GatewayAccountEntity.Type.TEST;
 
 public class PaymentRequestWorkerITest extends TaskITestBase {
-    private static AtomicLong nextId = new AtomicLong(1);
+    private static AtomicLong nextId = new AtomicLong(10);
 
     private DatabaseFixtures.TestAccount defaultTestAccount;
 
@@ -165,6 +167,57 @@ public class PaymentRequestWorkerITest extends TaskITestBase {
         assertTransactionEventsFor(chargeTransactionId, ChargeStatus.ENTERING_CARD_DETAILS, ChargeStatus.CREATED);
     }
 
+    @Test
+    public void shouldCreateARefundTransactionForAPaymentRequestWithoutOneButARefundExists() throws Exception {
+        DatabaseFixtures.TestCharge testCharge = createCharge();
+        DatabaseFixtures.TestRefund testRefund = createRefund(testCharge);
+        Pair<Long, Long> ids = createPaymentRequest(testCharge);
+
+        worker.execute();
+
+        assertRefundTransactions(ids.getLeft(), testRefund);
+    }
+
+    @Test
+    public void shouldNotCreateAnotherRefundTransactionForAPaymentRequestWhereTheRefundTransactionAlreadyExists() throws Exception {
+        DatabaseFixtures.TestCharge testCharge = createCharge();
+        DatabaseFixtures.TestRefund testRefund = createRefund(testCharge);
+        Pair<Long, Long> ids = createPaymentRequest(testCharge);
+        List<Long> refundTransactionIds = addRefundTransactions(ids.getLeft(), testRefund);
+
+        worker.execute();
+
+        List<Map<String, Object>> refundTransactions = databaseTestHelper.getRefundTransaction(ids.getLeft());
+        assertThat(refundTransactions.size(), is(1));
+        Map<String, Object> refundTransaction = refundTransactions.get(0);
+        assertThat(refundTransaction.get("id"), is(refundTransactionIds.get(0)));
+    }
+
+    @Test
+    public void shouldCreateMultipleRefundTransactionForAPaymentRequestWithoutAnyButRefundsExists() throws Exception {
+        DatabaseFixtures.TestCharge testCharge = createCharge();
+        DatabaseFixtures.TestRefund testRefund1 = createRefund(testCharge);
+        DatabaseFixtures.TestRefund testRefund2 = createRefund(testCharge);
+        Pair<Long, Long> ids = createPaymentRequest(testCharge);
+
+        worker.execute();
+
+        assertRefundTransactions(ids.getLeft(), testRefund1, testRefund2);
+    }
+
+    @Test
+    public void shouldOnlyCreateMissingRefundTransactionForAPaymentRequestWithSomeTransactionsButRefundsExists() throws Exception {
+        DatabaseFixtures.TestCharge testCharge = createCharge();
+        DatabaseFixtures.TestRefund testRefund1 = createRefund(testCharge);
+        DatabaseFixtures.TestRefund testRefund2 = createRefund(testCharge);
+        Pair<Long, Long> ids = createPaymentRequest(testCharge);
+        addRefundTransactions(ids.getLeft(), testRefund1);
+
+        worker.execute();
+
+        assertRefundTransactions(ids.getLeft(), testRefund1, testRefund2);
+    }
+
     private DatabaseFixtures.TestCharge createCharge() {
         GatewayAccountEntity gatewayAccount = new GatewayAccountEntity(
                 defaultTestAccount.getPaymentProvider(), new HashMap<>(), TEST);
@@ -261,11 +314,11 @@ public class PaymentRequestWorkerITest extends TaskITestBase {
     }
 
     private void assertTransactionEventsFor(Long transactionId, RefundStatus... statuses) {
-        assertTransactionEventsFor(transactionId, Arrays.stream(statuses).map(Enum::name).toArray(String[]::new));
+        assertTransactionEventsFor(transactionId, stream(statuses).map(Enum::name).toArray(String[]::new));
     }
 
     private void assertTransactionEventsFor(Long transactionId, ChargeStatus... statuses) {
-        assertTransactionEventsFor(transactionId, Arrays.stream(statuses).map(Enum::name).toArray(String[]::new));
+        assertTransactionEventsFor(transactionId, stream(statuses).map(Enum::name).toArray(String[]::new));
     }
 
     private void assertTransactionEventsFor(Long transactionId, String... statuses) {
@@ -275,5 +328,13 @@ public class PaymentRequestWorkerITest extends TaskITestBase {
         for (int index = 0; index < statuses.length; index++) {
             assertThat(refundTransactionEvents.get(index).get("status"), is(statuses[index]));
         }
+    }
+
+    private void assertRefundTransactions(Long paymentRequestId, DatabaseFixtures.TestRefund... testRefunds) {
+        List<Map<String, Object>> refundTransactions = databaseTestHelper.getRefundTransaction(paymentRequestId);
+        assertThat(refundTransactions.size(), is(testRefunds.length));
+        List<String> refundReferences = refundTransactions.stream().map(refund -> (String)refund.get("refund_reference")).collect(toList());
+
+        assertThat(refundReferences, containsInAnyOrder(stream(testRefunds).map(DatabaseFixtures.TestRefund::getReference).toArray()));
     }
 }
