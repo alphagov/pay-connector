@@ -49,12 +49,11 @@ public class SmartpayNotificationService {
     }
 
     @Transactional
-    public boolean handleNotificationFor(String ipAddress, PaymentGatewayName paymentGatewayName, String payload) {
+    public void handleNotificationFor(String payload) {
         List<SmartpayNotification> notifications = parse(payload);
         for (SmartpayNotification notification : notifications) {
             handle(notification);
         }
-        return true;
     }
 
     private void handle(SmartpayNotification notification) {

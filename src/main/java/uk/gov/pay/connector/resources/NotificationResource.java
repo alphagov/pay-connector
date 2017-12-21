@@ -32,17 +32,14 @@ public class NotificationResource {
 
     private static final Logger logger = LoggerFactory.getLogger(NotificationResource.class);
 
-    private final SmartpayNotificationService notificationService;
     private final WorldpayNotificationService worldpayNotificationService;
     private final EpdqNotificationService epdqNotificationService;
     private final SmartpayNotificationService smartpayNotificationService;
 
     @Inject
-    public NotificationResource(SmartpayNotificationService notificationService,
-                                WorldpayNotificationService worldpayNotificationService,
+    public NotificationResource(WorldpayNotificationService worldpayNotificationService,
                                 EpdqNotificationService epdqNotificationService,
                                 SmartpayNotificationService smartpayNotificationService) {
-        this.notificationService = notificationService;
         this.worldpayNotificationService = worldpayNotificationService;
         this.epdqNotificationService = epdqNotificationService;
         this.smartpayNotificationService = smartpayNotificationService;
@@ -53,12 +50,8 @@ public class NotificationResource {
     @PermitAll
     @Path(NOTIFICATIONS_SMARTPAY_API_PATH)
     public Response authoriseSmartpayNotifications(String notification) throws IOException {
-        PaymentGatewayName paymentGatewayName = PaymentGatewayName.valueFrom("smartpay");
-        if (!smartpayNotificationService.handleNotificationFor("not-required", paymentGatewayName, notification)) {
-            logger.error("Rejected notification for ip '{}'", "not-required");
-            return forbiddenErrorResponse();
-        }
-        String response = getResponseFor(paymentGatewayName);
+        smartpayNotificationService.handleNotificationFor(notification);
+        String response = "[accepted]";
         logger.info("Responding to notification from provider={} with 200 {}", "smartpay", response);
         return Response.ok(response).build();
     }
@@ -95,7 +88,4 @@ public class NotificationResource {
         return Response.ok(response).build();
     }
 
-    private String getResponseFor(PaymentGatewayName provider) {
-        return provider == SMARTPAY ? "[accepted]" : "[OK]";
-    }
 }
