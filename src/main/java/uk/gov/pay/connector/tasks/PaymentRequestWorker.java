@@ -129,12 +129,12 @@ public class PaymentRequestWorker {
 
     private Predicate<RefundEntity> refundsWithNoRefundTransaction(PaymentRequestEntity paymentRequestEntity) {
         return refund -> paymentRequestEntity.getRefundTransactions().stream()
-                .noneMatch(refundTransaction -> refundTransaction.getRefundReference().equals(refund.getReference()));
+                .noneMatch(refundTransaction -> refundTransaction.getRefundExternalId().equals(refund.getExternalId()));
     }
 
     private Predicate<RefundHistory> filterForRefundTransaction(RefundTransactionEntity refundTransactionEntity) {
         return refundHistory ->
-                refundHistory.getReference().equals(refundTransactionEntity.getRefundReference());
+                refundHistory.getExternalId().equals(refundTransactionEntity.getRefundExternalId());
     }
 
     private void processChargeEvent(ChargeEventEntity chargeEvent, PaymentRequestEntity paymentRequestEntity) {
@@ -161,7 +161,7 @@ public class PaymentRequestWorker {
             logger.info("Adding refund event for [" + refundTransactionEntity.getId() + "] for status [" + refundHistory.getStatus() + "]");
             RefundTransactionEventEntity refundTransactionEventEntity = new RefundTransactionEventEntity();
             refundTransactionEventEntity.setStatus(refundHistory.getStatus());
-            refundTransactionEventEntity.setUpdated(refundHistory.getCreatedDate());
+            refundTransactionEventEntity.setUpdated(refundHistory.getHistoryStartDate());
             refundTransactionEntity.getTransactionEvents().add(refundTransactionEventEntity);
             refundTransactionEventEntity.setTransaction(refundTransactionEntity);
         } else {

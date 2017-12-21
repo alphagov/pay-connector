@@ -79,10 +79,6 @@ public abstract class TransactionEntity<S extends Status, T extends TransactionE
     public abstract S getStatus();
     abstract void setStatus(S status);
 
-//    public List<T> getTransactionEvents() {
-//        return transactionEvents;
-//    }
-
     public abstract List<T> getTransactionEvents();
 
     public final void updateStatus(S newStatus) {

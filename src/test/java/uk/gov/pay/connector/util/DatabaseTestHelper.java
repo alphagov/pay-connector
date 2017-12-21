@@ -633,24 +633,20 @@ public class DatabaseTestHelper {
     }
 
     public void addRefundTransactionEvent(Long transactionId, RefundStatus refundStatus, ZonedDateTime updated) {
-        jdbi.withHandle(h -> {
-            int update = h.update(
-                            "INSERT INTO transaction_events(" +
-                                    "transaction_id," +
-                                    "status," +
-                                    "updated," +
-                                    "operation" +
-                                    ")" +
-                                    "VALUES (" +
-                                    "?, ?, ?, 'REFUND'" +
-                                    ")",
-                            transactionId,
-                            refundStatus.name(),
-                            Timestamp.from(updated.toInstant())
-                    );
-            System.out.println("****************updated: " + update);
-                    return update;
-                }
+        jdbi.withHandle(h -> h.update(
+                        "INSERT INTO transaction_events(" +
+                                "transaction_id," +
+                                "status," +
+                                "updated," +
+                                "operation" +
+                                ")" +
+                                "VALUES (" +
+                                "?, ?, ?, 'REFUND'" +
+                                ")",
+                        transactionId,
+                        refundStatus.name(),
+                        Timestamp.from(updated.toInstant())
+                )
 
 
         );

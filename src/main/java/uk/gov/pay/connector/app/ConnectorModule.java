@@ -40,7 +40,6 @@ public class ConnectorModule extends AbstractModule {
         bind(RequestValidator.class);
         bind(GatewayAccountRequestValidator.class).in(Singleton.class);
         bind(PaymentRequestWorker.class);
-//        bind(MigrateTransactionEventsTask.class);
 
         install(jpaModule(configuration));
         install(new FactoryModuleBuilder().build(NotifyClientFactoryProvider.class));

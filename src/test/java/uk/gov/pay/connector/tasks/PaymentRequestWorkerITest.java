@@ -241,7 +241,7 @@ public class PaymentRequestWorkerITest extends TaskITestBase {
         DatabaseFixtures.TestRefund testRefund = DatabaseFixtures
                 .withDatabaseTestHelper(databaseTestHelper)
                 .aTestRefund()
-                .withReference(randomAlphanumeric(10))
+                .withReference(randomAlphanumeric(10).trim())
                 .withTestCharge(testCharge)
                 .insert();
 
@@ -333,8 +333,8 @@ public class PaymentRequestWorkerITest extends TaskITestBase {
     private void assertRefundTransactions(Long paymentRequestId, DatabaseFixtures.TestRefund... testRefunds) {
         List<Map<String, Object>> refundTransactions = databaseTestHelper.getRefundTransaction(paymentRequestId);
         assertThat(refundTransactions.size(), is(testRefunds.length));
-        List<String> refundReferences = refundTransactions.stream().map(refund -> (String)refund.get("refund_reference")).collect(toList());
+        List<String> refundReferences = refundTransactions.stream().map(refund -> (String)refund.get("refund_external_id")).collect(toList());
 
-        assertThat(refundReferences, containsInAnyOrder(stream(testRefunds).map(DatabaseFixtures.TestRefund::getReference).toArray()));
+        assertThat(refundReferences, containsInAnyOrder(stream(testRefunds).map(DatabaseFixtures.TestRefund::getExternalRefundId).toArray()));
     }
 }
