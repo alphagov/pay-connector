@@ -14,7 +14,7 @@ public class WorldpayStatusMapperTest {
 
     @Test
     public void shouldReturnAChargeStatus() throws Exception {
-        InterpretedStatus status = WorldpayStatusMapper.from("CAPTURED", CAPTURE_SUBMITTED);
+        InterpretedStatus status = WorldpayStatusMapper.from("CAPTURED");
 
         assertThat(status.getType(), is(InterpretedStatus.Type.CHARGE_STATUS));
         assertThat(status.getChargeStatus(), is(CAPTURED));
@@ -22,7 +22,7 @@ public class WorldpayStatusMapperTest {
 
     @Test
     public void shouldReturnARefundStatusFromRefunded() throws Exception {
-        InterpretedStatus status = WorldpayStatusMapper.from("REFUNDED", CAPTURED);
+        InterpretedStatus status = WorldpayStatusMapper.from("REFUNDED");
 
         assertThat(status.getType(), is(InterpretedStatus.Type.REFUND_STATUS));
         assertThat(status.getRefundStatus(), is(REFUNDED));
@@ -30,7 +30,7 @@ public class WorldpayStatusMapperTest {
 
     @Test
     public void shouldReturnARefundStatusFromRefundedByMerchant() throws Exception {
-        InterpretedStatus status = WorldpayStatusMapper.from("REFUNDED_BY_MERCHANT", CAPTURED);
+        InterpretedStatus status = WorldpayStatusMapper.from("REFUNDED_BY_MERCHANT");
 
         assertThat(status.getType(), is(InterpretedStatus.Type.REFUND_STATUS));
         assertThat(status.getRefundStatus(), is(REFUNDED));
@@ -39,14 +39,14 @@ public class WorldpayStatusMapperTest {
 
     @Test
     public void shouldReturnEmptyWhenStatusIsUnknown() throws Exception {
-        InterpretedStatus status = WorldpayStatusMapper.from("unknown", AUTHORISATION_SUCCESS);
+        InterpretedStatus status = WorldpayStatusMapper.from("unknown");
 
         assertThat(status.getType(), is(InterpretedStatus.Type.UNKNOWN));
     }
 
     @Test
     public void shouldReturnEmptyWhenStatusIsIgnored() throws Exception {
-        InterpretedStatus status = WorldpayStatusMapper.from("AUTHORISED", AUTHORISATION_SUCCESS);
+        InterpretedStatus status = WorldpayStatusMapper.from("AUTHORISED");
 
         assertThat(status.getType(), is(InterpretedStatus.Type.IGNORED));
     }

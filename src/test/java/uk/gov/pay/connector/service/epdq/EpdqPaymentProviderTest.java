@@ -120,7 +120,7 @@ public class EpdqPaymentProviderTest {
     private ExternalRefundAvailabilityCalculator mockExternalRefundAvailabilityCalculator;
 
     @Mock
-    private Notification mockNotification;
+    private EpdqNotification mockNotification;
 
     private Invocation.Builder mockClientInvocationBuilder;
 
@@ -282,10 +282,10 @@ public class EpdqPaymentProviderTest {
     public void shouldVerifyNotificationSignature() {
         when(mockGatewayAccountEntity.getCredentials()).thenReturn(Collections.singletonMap(CREDENTIALS_SHA_OUT_PASSPHRASE, "passphrase"));
 
-        when(mockNotification.getPayload()).thenReturn(Optional.of(Arrays.asList(
+        when(mockNotification.getParams()).thenReturn(Arrays.asList(
             new BasicNameValuePair("key1", "value1"),
             new BasicNameValuePair( "SHASIGN", "signature")
-        )));
+        ));
 
         when(mockSignatureGenerator.sign(Collections.singletonList(new BasicNameValuePair
             ("key1", "value1")), "passphrase")).thenReturn("signature");
@@ -297,10 +297,10 @@ public class EpdqPaymentProviderTest {
     public void shouldVerifyNotificationSignatureIgnoringCase() {
         when(mockGatewayAccountEntity.getCredentials()).thenReturn(Collections.singletonMap(CREDENTIALS_SHA_OUT_PASSPHRASE, "passphrase"));
 
-        when(mockNotification.getPayload()).thenReturn(Optional.of(Arrays.asList(
+        when(mockNotification.getParams()).thenReturn(Arrays.asList(
             new BasicNameValuePair("key1", "value1"),
             new BasicNameValuePair( "SHASIGN", "SIGNATURE")
-        )));
+        ));
 
         when(mockSignatureGenerator.sign(Collections.singletonList(new BasicNameValuePair
             ("key1", "value1")), "passphrase")).thenReturn("signature");
@@ -312,10 +312,10 @@ public class EpdqPaymentProviderTest {
     public void shouldNotVerifyNotificationIfWrongSignature() {
         when(mockGatewayAccountEntity.getCredentials()).thenReturn(Collections.singletonMap(CREDENTIALS_SHA_OUT_PASSPHRASE, "passphrase"));
 
-        when(mockNotification.getPayload()).thenReturn(Optional.of(Arrays.asList(
+        when(mockNotification.getParams()).thenReturn(Arrays.asList(
             new BasicNameValuePair("key1", "value1"),
             new BasicNameValuePair( "SHASIGN", "signature")
-        )));
+        ));
 
         when(mockSignatureGenerator.sign(Collections.singletonList(new BasicNameValuePair
             ("key1", "value1")), "passphrase")).thenReturn("wrong signature");
@@ -324,31 +324,13 @@ public class EpdqPaymentProviderTest {
     }
 
     @Test
-    public void shouldNotVerifyNotificationIfEmptyPayload() {
-        when(mockGatewayAccountEntity.getCredentials()).thenReturn(Collections.singletonMap(CREDENTIALS_SHA_OUT_PASSPHRASE, "passphrase"));
-
-        when(mockNotification.getPayload()).thenReturn(Optional.empty());
-
-        assertThat(provider.verifyNotification(mockNotification, mockGatewayAccountEntity), is(false));
-    }
-
-    @Test
-    public void parseNotification_shouldReturnNotificationsIfValidFormUrlEncoded() throws IOException {
-        Either<String, Notifications<String>> response =
+    public void parseNotification_shouldReturnNotificationsIfValidFormUrlEncoded() throws IOException, EpdqNotification.EpdqParseException {
+        EpdqNotification notification =
                 provider.parseNotification(notificationPayloadForTransaction(NOTIFICATION_STATUS, NOTIFICATION_PAY_ID, NOTIFICATION_PAY_ID_SUB, NOTIFICATION_SHA_SIGN));
-
-        assertThat(response.isRight(), is(true));
-
-        ImmutableList<Notification<String>> notifications = response.right().value().get();
-
-        assertThat(notifications.size(), is(1));
-
-        Notification<String> notification = notifications.get(0);
 
         assertThat(notification.getTransactionId(), is(NOTIFICATION_PAY_ID));
         assertThat(notification.getReference(), is(NOTIFICATION_PAY_ID + "/" + NOTIFICATION_PAY_ID_SUB));
         assertThat(notification.getStatus(), is(NOTIFICATION_STATUS));
-        assertThat(notification.getGatewayEventDate(), IsNull.nullValue());
     }
     
     @Test

@@ -29,7 +29,13 @@ public class EpdqNotification implements ChargeStatusRequest {
 
     private Optional<ChargeStatus> chargeStatus = Optional.empty();
 
-    public EpdqNotification(String payload) {
+    public class EpdqParseException extends Exception {
+        public EpdqParseException(String message) {
+            super(message);
+        }
+    }
+
+    public EpdqNotification(String payload) throws EpdqParseException {
         try {
             paramsList = URLEncodedUtils.parse(payload, StandardCharsets.UTF_8);
 
@@ -41,7 +47,7 @@ public class EpdqNotification implements ChargeStatusRequest {
             payIdSub = params.get(PAYIDSUB);
             shaSign = params.get(SHASIGN);
         } catch (Exception e) {
-            throw new IllegalArgumentException(
+            throw new EpdqParseException(
                     "Could not decode ePDQ notification payload as UTF-8 application/x-www-form-urlencoded");
         }
     }
@@ -87,4 +93,13 @@ public class EpdqNotification implements ChargeStatusRequest {
         this.chargeStatus = chargeStatus;
     }
 
+    @Override
+    public String toString() {
+        return "EpdqNotification{" +
+                "status='" + status + '\'' +
+                ", payId='" + payId + '\'' +
+                ", payIdSub='" + payIdSub + '\'' +
+                ", chargeStatus=" + chargeStatus +
+                '}';
+    }
 }

@@ -6,11 +6,14 @@ import uk.gov.pay.connector.model.CancelGatewayRequest;
 import uk.gov.pay.connector.model.CaptureGatewayRequest;
 import uk.gov.pay.connector.model.GatewayError;
 import uk.gov.pay.connector.model.GatewayRequest;
+import uk.gov.pay.connector.model.GatewayStatusOnly;
+import uk.gov.pay.connector.model.GatewayStatusWithCurrentStatus;
 import uk.gov.pay.connector.model.Notification;
 import uk.gov.pay.connector.model.Notifications;
 import uk.gov.pay.connector.model.RefundGatewayRequest;
 import uk.gov.pay.connector.model.api.ExternalChargeRefundAvailability;
 import uk.gov.pay.connector.model.domain.ChargeEntity;
+import uk.gov.pay.connector.model.domain.ChargeStatus;
 import uk.gov.pay.connector.model.domain.GatewayAccountEntity;
 import uk.gov.pay.connector.model.gateway.Auth3dsResponseGatewayRequest;
 import uk.gov.pay.connector.model.gateway.AuthorisationGatewayRequest;
@@ -22,6 +25,7 @@ import uk.gov.pay.connector.service.ExternalRefundAvailabilityCalculator;
 import uk.gov.pay.connector.service.GatewayClient;
 import uk.gov.pay.connector.service.GatewayOperation;
 import uk.gov.pay.connector.service.GatewayOrder;
+import uk.gov.pay.connector.service.InterpretedStatus;
 import uk.gov.pay.connector.service.PaymentGatewayName;
 import uk.gov.pay.connector.service.PaymentProviderNotificationHandler;
 import uk.gov.pay.connector.service.PaymentProviderOperations;
@@ -33,6 +37,7 @@ import java.util.List;
 import java.util.Optional;
 import java.util.function.BiFunction;
 import java.util.function.Function;
+import java.util.stream.Collectors;
 
 import static fj.data.Either.left;
 import static fj.data.Either.reduce;
@@ -51,7 +56,7 @@ import static uk.gov.pay.connector.service.epdq.EpdqOrderRequestBuilder.anEpdqCa
 import static uk.gov.pay.connector.service.epdq.EpdqOrderRequestBuilder.anEpdqRefundOrderRequestBuilder;
 
 
-public class EpdqPaymentProvider implements PaymentProviderOperations, PaymentProviderNotificationHandler<String> {
+public class EpdqPaymentProvider implements PaymentProviderOperations {
 
     public static final String ROUTE_FOR_NEW_ORDER = "orderdirect.asp";
     public static final String ROUTE_FOR_MAINTENANCE_ORDER = "maintenancedirect.asp";
@@ -99,21 +104,12 @@ public class EpdqPaymentProvider implements PaymentProviderOperations, PaymentPr
         return sendReceive(ROUTE_FOR_MAINTENANCE_ORDER, request, buildCancelOrderFor(), EpdqCancelResponse.class, extractResponseIdentifier());
     }
 
-    @Override
-    public Boolean isNotificationEndpointSecured() {
-        return false;
-    }
-
-    @Override
     public String getNotificationDomain() {
         return null;
     }
 
-    @Override
-    public boolean verifyNotification(Notification<String> notification, GatewayAccountEntity gatewayAccountEntity) {
-        if (!notification.getPayload().isPresent()) return false;
-
-        List<NameValuePair> notificationParams = notification.getPayload().get();
+    public boolean verifyNotification(EpdqNotification notification, GatewayAccountEntity gatewayAccountEntity) {
+        List<NameValuePair> notificationParams = notification.getParams();
 
         List<NameValuePair> notificationParamsWithoutShaSign = notificationParams.stream()
             .filter(param -> !param.getName().equalsIgnoreCase(SHASIGN)).collect(toList());
@@ -127,28 +123,16 @@ public class EpdqPaymentProvider implements PaymentProviderOperations, PaymentPr
         return externalRefundAvailabilityCalculator.calculate(chargeEntity);
     }
 
-    @Override
-    public Either<String, Notifications<String>> parseNotification(String payload) {
-        try {
-            Notifications.Builder<String> builder = Notifications.builder();
-
-            EpdqNotification epdqNotification = new EpdqNotification(payload);
-
-            builder.addNotificationFor(
-                    epdqNotification.getTransactionId(),
-                    epdqNotification.getReference(),
-                    epdqNotification.getStatus(),
-                    null,
-                    epdqNotification.getParams()
-            );
-            return right(builder.build());
-        } catch (Exception e) {
-            return left(e.getMessage());
-        }
+    public EpdqNotification parseNotification(String payload) throws EpdqNotification.EpdqParseException {
+        return new EpdqNotification(payload);
     }
 
-    public StatusMapper<String> getStatusMapper() {
-        return EpdqStatusMapper.get();
+    public InterpretedStatus from(String gatewayStatus, ChargeStatus currentStatus) {
+        return EpdqStatusMapper.from(gatewayStatus, currentStatus);
+    }
+
+    public InterpretedStatus from(String gatewayStatus) {
+        return EpdqStatusMapper.from(gatewayStatus);
     }
 
     private Function<AuthorisationGatewayRequest, GatewayOrder> buildAuthoriseOrderFor() {

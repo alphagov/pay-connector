@@ -19,7 +19,7 @@ public class EpdqNotificationTest {
     private static final String SHA_SIGN = "9537B9639F108CDF004459D8A690C598D97506CDF072C3926A60E39759A6402C5089161F6D7A8EA12BBC0FD6F899CE72D5A0C4ACC2913C56ACF6D01B034EEC32";
 
     @Test
-    public void shouldParsePayload() throws IOException {
+    public void shouldParsePayload() throws IOException, EpdqNotification.EpdqParseException {
         String payload = notificationPayloadForTransaction(STATUS, PAY_ID, PAY_ID_SUB, SHA_SIGN);
 
         EpdqNotification epdqNotification = new EpdqNotification(payload);
@@ -31,7 +31,7 @@ public class EpdqNotificationTest {
     }
 
     @Test
-    public void shouldHaveReferenceIfPayIdAndPaySubId() throws IOException {
+    public void shouldHaveReferenceIfPayIdAndPaySubId() throws IOException, EpdqNotification.EpdqParseException {
         String payload = notificationPayloadForTransaction(STATUS, PAY_ID, PAY_ID_SUB, SHA_SIGN);
 
         EpdqNotification epdqNotification = new EpdqNotification(payload);
@@ -40,7 +40,7 @@ public class EpdqNotificationTest {
     }
 
     @Test
-    public void shouldHaveNoReferenceIfNoPayId() throws IOException {
+    public void shouldHaveNoReferenceIfNoPayId() throws IOException, EpdqNotification.EpdqParseException {
         String payload = notificationPayloadForTransaction(STATUS, "", PAY_ID_SUB, SHA_SIGN);
 
         EpdqNotification epdqNotification = new EpdqNotification(payload);
@@ -49,7 +49,7 @@ public class EpdqNotificationTest {
     }
 
     @Test
-    public void shouldHaveNoReferenceIfNoPayIdSub() throws IOException {
+    public void shouldHaveNoReferenceIfNoPayIdSub() throws IOException, EpdqNotification.EpdqParseException {
         String payload = notificationPayloadForTransaction(STATUS, PAY_ID, "", SHA_SIGN);
 
         EpdqNotification epdqNotification = new EpdqNotification(payload);
@@ -57,13 +57,13 @@ public class EpdqNotificationTest {
         assertThat(epdqNotification.getReference(), is(""));
     }
 
-    @Test(expected = IllegalArgumentException.class)
-    public void shouldFailToParseMalformedPayload() throws IOException {
+    @Test(expected = EpdqNotification.EpdqParseException.class)
+    public void shouldFailToParseMalformedPayload() throws IOException, EpdqNotification.EpdqParseException {
         new EpdqNotification("malformed");
     }
 
     @Test
-    public void shouldReturnParams() throws IOException {
+    public void shouldReturnParams() throws IOException, EpdqNotification.EpdqParseException {
         String payload = notificationPayloadForTransaction(STATUS, PAY_ID, PAY_ID_SUB, SHA_SIGN);
 
         EpdqNotification epdqNotification = new EpdqNotification(payload);

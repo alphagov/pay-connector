@@ -1,6 +1,13 @@
 package uk.gov.pay.connector.service.epdq;
 
+import uk.gov.pay.connector.model.GatewayStatusOnly;
+import uk.gov.pay.connector.model.GatewayStatusWithCurrentStatus;
+import uk.gov.pay.connector.model.domain.ChargeStatus;
+import uk.gov.pay.connector.service.InterpretedStatus;
 import uk.gov.pay.connector.service.StatusMapper;
+
+import java.util.List;
+import java.util.stream.Collectors;
 
 import static uk.gov.pay.connector.model.domain.ChargeStatus.AUTHORISATION_REJECTED;
 import static uk.gov.pay.connector.model.domain.ChargeStatus.AUTHORISATION_SUCCESS;
@@ -46,7 +53,15 @@ public class EpdqStatusMapper {
                     .map(EPDQ_REFUND_DECLINED_BY_ACQUIRER, REFUND_ERROR)
                     .build();
 
-    public static StatusMapper<String> get() {
+    private static StatusMapper<String> get() {
         return STATUS_MAPPER;
+    }
+
+    public static InterpretedStatus from(String gatewayStatus, ChargeStatus currentStatus) {
+        return get().from(gatewayStatus, currentStatus);
+    }
+
+    public static InterpretedStatus from(String gatewayStatus) {
+        return get().from(gatewayStatus);
     }
 }
