@@ -3,9 +3,8 @@ package uk.gov.pay.connector.resources;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import uk.gov.pay.connector.service.NotificationService;
-import uk.gov.pay.connector.service.WorldpayNotificationService;
+import uk.gov.pay.connector.service.worldpay.WorldpayNotificationService;
 import uk.gov.pay.connector.service.PaymentGatewayName;
-import uk.gov.pay.connector.service.worldpay.WorldpayOrderStatusResponse;
 
 import javax.annotation.security.PermitAll;
 import javax.inject.Inject;
@@ -36,7 +35,8 @@ public class NotificationResource {
     private final WorldpayNotificationService worldpayNotificationService;
 
     @Inject
-    public NotificationResource(NotificationService notificationService, WorldpayNotificationService worldpayNotificationService) {
+    public NotificationResource(NotificationService notificationService,
+                                WorldpayNotificationService worldpayNotificationService) {
         this.notificationService = notificationService;
         this.worldpayNotificationService = worldpayNotificationService;
     }

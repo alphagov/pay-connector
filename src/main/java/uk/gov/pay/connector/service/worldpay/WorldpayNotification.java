@@ -1,16 +1,20 @@
 package uk.gov.pay.connector.service.worldpay;
 
+import org.apache.http.NameValuePair;
 import org.eclipse.persistence.oxm.annotations.XmlPath;
 import uk.gov.pay.connector.model.ChargeStatusRequest;
+import uk.gov.pay.connector.model.Notification;
 import uk.gov.pay.connector.model.domain.ChargeStatus;
 
 import javax.xml.bind.annotation.XmlRootElement;
 import java.time.LocalDate;
+import java.time.ZoneOffset;
 import java.time.ZonedDateTime;
+import java.util.List;
 import java.util.Optional;
 
 @XmlRootElement(name = "paymentService")
-public class WorldpayNotification implements ChargeStatusRequest {
+public class WorldpayNotification implements ChargeStatusRequest, Notification<String> {
 
     @XmlPath("@merchantCode")
     private String merchantCode;
@@ -53,6 +57,16 @@ public class WorldpayNotification implements ChargeStatusRequest {
         return status;
     }
 
+    @Override
+    public ZonedDateTime getGatewayEventDate() {
+        return getBookingDate().atStartOfDay(ZoneOffset.UTC);
+    }
+
+    @Override
+    public Optional<List<NameValuePair>> getPayload() {
+        return null;
+    }
+
     public String getMerchantCode() {
         return merchantCode;
     }
@@ -63,5 +77,19 @@ public class WorldpayNotification implements ChargeStatusRequest {
 
     public LocalDate getBookingDate() {
         return LocalDate.of(year, month, dayOfMonth);
+    }
+
+    @Override
+    public String toString() {
+        return "WorldpayNotification{" +
+                "merchantCode='" + merchantCode + '\'' +
+                ", status='" + status + '\'' +
+                ", dayOfMonth=" + dayOfMonth +
+                ", month=" + month +
+                ", year=" + year +
+                ", transactionId='" + transactionId + '\'' +
+                ", reference='" + reference + '\'' +
+                ", chargeStatus=" + chargeStatus +
+                '}';
     }
 }

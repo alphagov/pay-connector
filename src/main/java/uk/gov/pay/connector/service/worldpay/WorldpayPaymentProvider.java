@@ -25,6 +25,7 @@ import uk.gov.pay.connector.service.GatewayOrder;
 import uk.gov.pay.connector.service.PaymentGatewayName;
 import uk.gov.pay.connector.service.PaymentProviderOperations;
 import uk.gov.pay.connector.service.StatusMapper;
+import uk.gov.pay.connector.util.XMLUnmarshallerException;
 
 import javax.ws.rs.client.Invocation.Builder;
 import java.time.ZoneOffset;
@@ -106,26 +107,8 @@ public class WorldpayPaymentProvider implements PaymentProviderOperations {
         return externalRefundAvailabilityCalculator.calculate(chargeEntity);
     }
 
-    public Either<String, Notifications<String>> parseNotification(String payload) {
-        try {
-            Notifications.Builder<String> builder = Notifications.builder();
-            WorldpayNotification worldpayNotification = unmarshall(payload, WorldpayNotification.class);
-            builder.addNotificationFor(
-                worldpayNotification.getTransactionId(),
-                worldpayNotification.getReference(),
-                worldpayNotification.getStatus(),
-                worldpayNotification.getBookingDate().atStartOfDay(ZoneOffset.UTC),
-                    null
-            );
-
-            return right(builder.build());
-        } catch (Exception e) {
-            return left(e.getMessage());
-        }
-    }
-
-    public StatusMapper<String> getStatusMapper() {
-        return WorldpayStatusMapper.get();
+    public WorldpayNotification parseNotification(String payload) throws XMLUnmarshallerException {
+        return unmarshall(payload, WorldpayNotification.class);
     }
 
     public static BiFunction<GatewayOrder, Builder, Builder> includeSessionIdentifier() {

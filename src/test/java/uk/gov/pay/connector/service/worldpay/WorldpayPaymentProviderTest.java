@@ -3,9 +3,7 @@ package uk.gov.pay.connector.service.worldpay;
 import com.codahale.metrics.Counter;
 import com.codahale.metrics.Histogram;
 import com.codahale.metrics.MetricRegistry;
-import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableMap;
-import fj.data.Either;
 import org.junit.Assert;
 import org.junit.Before;
 import org.junit.Test;
@@ -17,7 +15,6 @@ import org.mockito.runners.MockitoJUnitRunner;
 import uk.gov.pay.connector.model.CaptureGatewayRequest;
 import uk.gov.pay.connector.model.GatewayError;
 import uk.gov.pay.connector.model.Notification;
-import uk.gov.pay.connector.model.Notifications;
 import uk.gov.pay.connector.model.OrderRequestType;
 import uk.gov.pay.connector.model.RefundGatewayRequest;
 import uk.gov.pay.connector.model.domain.Address;
@@ -41,6 +38,7 @@ import uk.gov.pay.connector.service.GatewayOrder;
 import uk.gov.pay.connector.service.PaymentGatewayName;
 import uk.gov.pay.connector.util.AuthUtils;
 import uk.gov.pay.connector.util.TestTemplateResourceLoader;
+import uk.gov.pay.connector.util.XMLUnmarshallerException;
 
 import javax.ws.rs.client.Client;
 import javax.ws.rs.client.Entity;
@@ -58,7 +56,6 @@ import static fj.data.Either.left;
 import static java.lang.String.format;
 import static org.custommonkey.xmlunit.XMLAssert.assertXMLEqual;
 import static org.hamcrest.CoreMatchers.instanceOf;
-import static org.hamcrest.CoreMatchers.startsWith;
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.core.Is.is;
 import static org.hamcrest.core.IsSame.sameInstance;
@@ -151,11 +148,6 @@ public class WorldpayPaymentProviderTest {
     @Test
     public void shouldGetPaymentProviderName() {
         Assert.assertThat(provider.getPaymentGatewayName().getName(), is("worldpay"));
-    }
-
-    @Test
-    public void shouldGetStatusMapper() {
-        Assert.assertThat(provider.getStatusMapper(), sameInstance(WorldpayStatusMapper.get()));
     }
 
     @Test
@@ -396,29 +388,20 @@ public class WorldpayPaymentProviderTest {
         assertEquals(response.getGatewayError().get(), new GatewayError("Unexpected Response Code From Gateway", UNEXPECTED_HTTP_STATUS_CODE_FROM_GATEWAY));
     }
 
-    @Test
-    public void parseNotification_shouldReturnErrorIfUnparseableXml() {
-        Either<String, Notifications<String>> response = provider.parseNotification("not valid xml");
-        assertThat(response.isLeft(), is(true));
-        assertThat(response.left().value(), startsWith("javax.xml.bind.UnmarshalException"));
+    @Test(expected = XMLUnmarshallerException.class)
+    public void parseNotification_shouldThrowErrorIfUnparseableXml() throws XMLUnmarshallerException {
+        provider.parseNotification("not valid xml");
     }
 
     @Test
-    public void parseNotification_shouldReturnNotificationsIfValidXml() throws IOException {
+    public void parseNotification_shouldReturnNotificationsIfValidXml() throws IOException, XMLUnmarshallerException {
         String transactionId = "transaction-id";
         String referenceId = "reference-id";
         String status = "CHARGED";
         String bookingDateDay = "10";
         String bookingDateMonth = "03";
         String bookingDateYear = "2017";
-        Either<String, Notifications<String>> response = provider.parseNotification(notificationPayloadForTransaction(transactionId, referenceId, status, bookingDateDay, bookingDateMonth, bookingDateYear));
-        assertThat(response.isRight(), is(true));
-
-        ImmutableList<Notification<String>> notifications = response.right().value().get();
-
-        assertThat(notifications.size(), is(1));
-
-        Notification<String> worldpayNotification = notifications.get(0);
+        WorldpayNotification worldpayNotification = provider.parseNotification(notificationPayloadForTransaction(transactionId, referenceId, status, bookingDateDay, bookingDateMonth, bookingDateYear));
 
         assertThat(worldpayNotification.getTransactionId(), is(transactionId));
         assertThat(worldpayNotification.getReference(), is(referenceId));
