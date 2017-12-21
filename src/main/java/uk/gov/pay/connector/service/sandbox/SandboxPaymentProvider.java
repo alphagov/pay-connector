@@ -4,6 +4,7 @@ import fj.data.Either;
 import uk.gov.pay.connector.model.CancelGatewayRequest;
 import uk.gov.pay.connector.model.CaptureGatewayRequest;
 import uk.gov.pay.connector.model.GatewayError;
+import uk.gov.pay.connector.model.GatewayRequest;
 import uk.gov.pay.connector.model.Notification;
 import uk.gov.pay.connector.model.Notifications;
 import uk.gov.pay.connector.model.RefundGatewayRequest;
@@ -17,15 +18,22 @@ import uk.gov.pay.connector.model.gateway.GatewayResponse.GatewayResponseBuilder
 import uk.gov.pay.connector.service.BaseAuthoriseResponse;
 import uk.gov.pay.connector.service.BaseCancelResponse;
 import uk.gov.pay.connector.service.BaseCaptureResponse;
-import uk.gov.pay.connector.service.BasePaymentProvider;
 import uk.gov.pay.connector.service.BaseRefundResponse;
 import uk.gov.pay.connector.service.BaseResponse;
 import uk.gov.pay.connector.service.ExternalRefundAvailabilityCalculator;
+import uk.gov.pay.connector.service.GatewayClient;
+import uk.gov.pay.connector.service.GatewayOperation;
+import uk.gov.pay.connector.service.GatewayOrder;
 import uk.gov.pay.connector.service.PaymentGatewayName;
+import uk.gov.pay.connector.service.PaymentProviderNotificationHandler;
+import uk.gov.pay.connector.service.PaymentProviderOperations;
 import uk.gov.pay.connector.service.StatusMapper;
 
+import java.util.EnumMap;
 import java.util.Optional;
+import java.util.function.Function;
 
+import static fj.data.Either.reduce;
 import static java.util.UUID.randomUUID;
 import static uk.gov.pay.connector.model.ErrorType.GENERIC_GATEWAY_ERROR;
 import static uk.gov.pay.connector.model.gateway.GatewayResponse.GatewayResponseBuilder.responseBuilder;
@@ -34,13 +42,20 @@ import static uk.gov.pay.connector.service.sandbox.SandboxCardNumbers.isErrorCar
 import static uk.gov.pay.connector.service.sandbox.SandboxCardNumbers.isRejectedCard;
 import static uk.gov.pay.connector.service.sandbox.SandboxCardNumbers.isValidCard;
 
-public class SandboxPaymentProvider extends BasePaymentProvider<BaseResponse, String> {
+public class SandboxPaymentProvider implements PaymentProviderOperations, PaymentProviderNotificationHandler<String> {
+
+    protected boolean isNotificationEndpointSecured;
+    protected String notificationDomain;
+    protected ExternalRefundAvailabilityCalculator externalRefundAvailabilityCalculator;
+    protected EnumMap<GatewayOperation, GatewayClient> gatewayOperationClientMap;
 
     public SandboxPaymentProvider(ExternalRefundAvailabilityCalculator externalRefundAvailabilityCalculator) {
-        super(null, externalRefundAvailabilityCalculator);
+        this.gatewayOperationClientMap = null;
+        this.isNotificationEndpointSecured = false;
+        this.notificationDomain = null;
+        this.externalRefundAvailabilityCalculator = externalRefundAvailabilityCalculator;
     }
 
-    @Override
     public GatewayResponse authorise(AuthorisationGatewayRequest request) {
         String cardNumber = request.getAuthCardDetails().getCardNo();
         GatewayResponseBuilder<BaseResponse> gatewayResponseBuilder = responseBuilder();
@@ -61,30 +76,25 @@ public class SandboxPaymentProvider extends BasePaymentProvider<BaseResponse, St
                 .build();
     }
 
-    @Override
-    public GatewayResponse<BaseResponse> authorise3dsResponse(Auth3dsResponseGatewayRequest request) {
-        GatewayResponseBuilder<BaseResponse> gatewayResponseBuilder = responseBuilder();
+    public GatewayResponse<BaseAuthoriseResponse> authorise3dsResponse(Auth3dsResponseGatewayRequest request) {
+        GatewayResponseBuilder<BaseAuthoriseResponse> gatewayResponseBuilder = responseBuilder();
         return gatewayResponseBuilder
                 .withGatewayError(new GatewayError("3D Secure not implemented for Sandbox", GENERIC_GATEWAY_ERROR))
                 .build();
     }
 
-    @Override
     public PaymentGatewayName getPaymentGatewayName() {
         return PaymentGatewayName.SANDBOX;
     }
 
-    @Override
     public Optional<String> generateTransactionId() {
         return Optional.of(randomUUID().toString());
     }
 
-    @Override
     public GatewayResponse capture(CaptureGatewayRequest request) {
         return createGatewayBaseCaptureResponse();
     }
 
-    @Override
     public GatewayResponse cancel(CancelGatewayRequest request) {
         return createGatewayBaseCancelResponse();
     }
@@ -104,7 +114,6 @@ public class SandboxPaymentProvider extends BasePaymentProvider<BaseResponse, St
         return true;
     }
 
-    @Override
     public GatewayResponse refund(RefundGatewayRequest request) {
         return createGatewayBaseRefundResponse(request);
     }
@@ -114,12 +123,10 @@ public class SandboxPaymentProvider extends BasePaymentProvider<BaseResponse, St
         throw new UnsupportedOperationException("Sandbox account does not support notifications");
     }
 
-    @Override
     public StatusMapper<String> getStatusMapper() {
         return SandboxStatusMapper.get();
     }
 
-    @Override
     public ExternalChargeRefundAvailability getExternalChargeRefundAvailability(ChargeEntity chargeEntity) {
         return externalRefundAvailabilityCalculator.calculate(chargeEntity);
     }
@@ -254,5 +261,47 @@ public class SandboxPaymentProvider extends BasePaymentProvider<BaseResponse, St
                         .orElse("Sandbox refund response");
             }
         }).build();
+    }
+
+    protected <U extends GatewayRequest> GatewayResponse sendReceive(U request, Function<U, GatewayOrder> order,
+                                                                     Class<? extends BaseResponse> clazz,
+                                                                     Function<GatewayClient.Response, Optional<String>> responseIdentifier) {
+
+        return sendReceive(null, request, order, clazz, responseIdentifier);
+    }
+
+    protected <U extends GatewayRequest> GatewayResponse sendReceive(String route, U request, Function<U, GatewayOrder> order,
+                                                                     Class<? extends BaseResponse> clazz,
+                                                                     Function<GatewayClient.Response, Optional<String>> responseIdentifier) {
+        GatewayClient gatewayClient = gatewayOperationClientMap.get(request.getRequestType());
+        return reduce(
+                gatewayClient
+                        .postRequestFor(route, request.getGatewayAccount(), order.apply(request))
+                        .bimap(
+                                GatewayResponse::with,
+                                r -> mapToResponse(r, clazz, responseIdentifier, gatewayClient)
+                        )
+        );
+    }
+
+    private GatewayResponse mapToResponse(GatewayClient.Response response,
+                                          Class<? extends BaseResponse> clazz,
+                                          Function<GatewayClient.Response, Optional<String>> responseIdentifier,
+                                          GatewayClient client) {
+        GatewayResponseBuilder<BaseResponse> responseBuilder = GatewayResponseBuilder.responseBuilder();
+
+        reduce(
+                client.unmarshallResponse(response, clazz)
+                        .bimap(
+                                responseBuilder::withGatewayError,
+                                responseBuilder::withResponse
+                        )
+        );
+
+        responseIdentifier.apply(response)
+                .ifPresent(responseBuilder::withSessionIdentifier);
+
+        return responseBuilder.build();
+
     }
 }

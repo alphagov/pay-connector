@@ -13,7 +13,6 @@ import uk.gov.pay.connector.service.worldpay.WorldpayPaymentProvider;
 import javax.inject.Inject;
 import javax.ws.rs.client.Invocation;
 import java.util.EnumMap;
-import java.util.Map;
 import java.util.function.BiFunction;
 
 import static jersey.repackaged.com.google.common.collect.Maps.newHashMap;
@@ -22,7 +21,6 @@ import static uk.gov.pay.connector.service.GatewayOperation.CANCEL;
 import static uk.gov.pay.connector.service.GatewayOperation.CAPTURE;
 import static uk.gov.pay.connector.service.GatewayOperation.REFUND;
 import static uk.gov.pay.connector.service.PaymentGatewayName.EPDQ;
-import static uk.gov.pay.connector.service.PaymentGatewayName.SANDBOX;
 import static uk.gov.pay.connector.service.PaymentGatewayName.SMARTPAY;
 import static uk.gov.pay.connector.service.PaymentGatewayName.WORLDPAY;
 
@@ -33,14 +31,17 @@ import static uk.gov.pay.connector.service.PaymentGatewayName.WORLDPAY;
  * - We are currently not sure of the state in Dropwizard's Jersey Client wrapper and if so this may lead to multi-threading issues
  * - Potential refactoring after a performance test
  */
-public class PaymentProviders<T extends BaseResponse> {
+public class PaymentProviders {
 
-    private final Map<PaymentGatewayName, PaymentProvider> paymentProviders = newHashMap();
     private final GatewayClientFactory gatewayClientFactory;
     private final Environment environment;
     private final ConnectorConfiguration config;
     private final ExternalRefundAvailabilityCalculator defaultExternalRefundAvailabilityCalculator = new DefaultExternalRefundAvailabilityCalculator();
     private final ExternalRefundAvailabilityCalculator epdqExternalRefundAvailabilityCalculator = new EpdqExternalRefundAvailabilityCalculator();
+    private final WorldpayPaymentProvider worldpayProvider;
+    private final SmartpayPaymentProvider smartPayProvider;
+    private final SandboxPaymentProvider sandboxProvider;
+    private final EpdqPaymentProvider epdqProvider;
 
     @Inject
     public PaymentProviders(ConnectorConfiguration config, GatewayClientFactory gatewayClientFactory, ObjectMapper objectMapper, Environment environment) {
@@ -48,10 +49,10 @@ public class PaymentProviders<T extends BaseResponse> {
         this.environment = environment;
         this.config = config;
 
-        this.paymentProviders.put(WORLDPAY, createWorldpayProvider());
-        this.paymentProviders.put(SMARTPAY, createSmartPayProvider(objectMapper));
-        this.paymentProviders.put(SANDBOX, new SandboxPaymentProvider(defaultExternalRefundAvailabilityCalculator));
-        this.paymentProviders.put(EPDQ, createEpdqProvider());
+        worldpayProvider = createWorldpayProvider();
+        smartPayProvider = createSmartPayProvider(objectMapper);
+        sandboxProvider = new SandboxPaymentProvider(defaultExternalRefundAvailabilityCalculator);
+        epdqProvider = createEpdqProvider();
     }
 
     private GatewayClient gatewayClientForOperation(PaymentGatewayName gateway,
@@ -62,7 +63,7 @@ public class PaymentProviders<T extends BaseResponse> {
         );
     }
 
-    private PaymentProvider createWorldpayProvider() {
+    private WorldpayPaymentProvider createWorldpayProvider() {
         EnumMap<GatewayOperation, GatewayClient> gatewayClientEnumMap = GatewayOperationClientBuilder.builder()
                 .authClient(gatewayClientForOperation(WORLDPAY, AUTHORISE, WorldpayPaymentProvider.includeSessionIdentifier()))
                 .cancelClient(gatewayClientForOperation(WORLDPAY, CANCEL, WorldpayPaymentProvider.includeSessionIdentifier()))
@@ -76,7 +77,7 @@ public class PaymentProviders<T extends BaseResponse> {
                 gatewayClientEnumMap,worldpayConfig.isSecureNotificationEnabled(),worldpayConfig.getNotificationDomain(), defaultExternalRefundAvailabilityCalculator);
     }
 
-    private PaymentProvider createSmartPayProvider(ObjectMapper objectMapper) {
+    private SmartpayPaymentProvider createSmartPayProvider(ObjectMapper objectMapper) {
         EnumMap<GatewayOperation, GatewayClient> gatewayClients = GatewayOperationClientBuilder
                 .builder()
                 .authClient(gatewayClientForOperation(SMARTPAY, AUTHORISE, SmartpayPaymentProvider.includeSessionIdentifier()))
@@ -92,7 +93,7 @@ public class PaymentProviders<T extends BaseResponse> {
         );
     }
 
-    private PaymentProvider createEpdqProvider() {
+    private EpdqPaymentProvider createEpdqProvider() {
         EnumMap<GatewayOperation, GatewayClient> gatewayClientEnumMap = GatewayOperationClientBuilder.builder()
                 .authClient(gatewayClientForOperation(EPDQ, AUTHORISE, EpdqPaymentProvider.includeSessionIdentifier()))
                 .cancelClient(gatewayClientForOperation(EPDQ, CANCEL, EpdqPaymentProvider.includeSessionIdentifier()))
@@ -103,7 +104,36 @@ public class PaymentProviders<T extends BaseResponse> {
         return new EpdqPaymentProvider(gatewayClientEnumMap, new EpdqSha512SignatureGenerator(), epdqExternalRefundAvailabilityCalculator);
     }
 
-    public PaymentProvider<T, ?> byName(PaymentGatewayName gateway) {
-        return paymentProviders.get(gateway);
+    public WorldpayPaymentProvider getWorldpayProvider() {
+        return worldpayProvider;
+    }
+
+    public <R> PaymentProviderNotificationHandler<R> notificationHandler(PaymentGatewayName gateway) {
+        switch(gateway) {
+            case SMARTPAY:
+                PaymentProviderNotificationHandler<R> s = (PaymentProviderNotificationHandler<R>) this.smartPayProvider;
+                return s;
+            case SANDBOX:
+                return (PaymentProviderNotificationHandler<R>) sandboxProvider;
+            case EPDQ:
+                return (PaymentProviderNotificationHandler<R>) epdqProvider;
+            case WORLDPAY:
+                return (PaymentProviderNotificationHandler<R>) worldpayProvider;
+            default:
+                throw new RuntimeException("Unknown PaymentGatewayName " + gateway.getName());
+        }
+    }
+
+    public PaymentProviderOperations byName(PaymentGatewayName gateway) {
+        switch(gateway) {
+            case SMARTPAY:
+                return smartPayProvider;
+            case SANDBOX:
+                return sandboxProvider;
+            case EPDQ:
+                return epdqProvider;
+            default:
+                throw new RuntimeException("Unknown PaymentGatewayName " + gateway.getName());
+        }
     }
 }

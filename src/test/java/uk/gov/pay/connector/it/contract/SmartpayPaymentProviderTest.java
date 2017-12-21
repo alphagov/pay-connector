@@ -26,7 +26,7 @@ import uk.gov.pay.connector.service.DefaultExternalRefundAvailabilityCalculator;
 import uk.gov.pay.connector.service.GatewayClient;
 import uk.gov.pay.connector.service.GatewayOperation;
 import uk.gov.pay.connector.service.GatewayOperationClientBuilder;
-import uk.gov.pay.connector.service.PaymentProvider;
+import uk.gov.pay.connector.service.PaymentProviderOperations;
 import uk.gov.pay.connector.service.smartpay.SmartpayAuthorisationResponse;
 import uk.gov.pay.connector.service.smartpay.SmartpayPaymentProvider;
 import uk.gov.pay.connector.service.worldpay.WorldpayCaptureResponse;
@@ -105,13 +105,13 @@ public class SmartpayPaymentProviderTest {
 
     @Test
     public void shouldSendSuccessfullyAnOrderForMerchant() throws Exception {
-        PaymentProvider paymentProvider = getSmartpayPaymentProvider();
+        PaymentProviderOperations paymentProvider = getSmartpayPaymentProvider();
         testCardAuthorisation(paymentProvider, chargeEntity);
     }
 
     @Test
     public void shouldFailRequestAuthorisationIfCredentialsAreNotCorrect() throws Exception {
-        PaymentProvider paymentProvider = getSmartpayPaymentProvider();
+        PaymentProviderOperations paymentProvider = getSmartpayPaymentProvider();
         GatewayAccountEntity accountWithInvalidCredentials = new GatewayAccountEntity();
         accountWithInvalidCredentials.setId(11L);
         accountWithInvalidCredentials.setGatewayName("smartpay");
@@ -132,7 +132,7 @@ public class SmartpayPaymentProviderTest {
 
     @Test
     public void shouldSuccessfullySendACaptureRequest() throws Exception {
-        PaymentProvider paymentProvider = getSmartpayPaymentProvider();
+        PaymentProviderOperations paymentProvider = getSmartpayPaymentProvider();
         GatewayResponse<SmartpayAuthorisationResponse> response = testCardAuthorisation(paymentProvider, chargeEntity);
 
         assertThat(response.getBaseResponse().isPresent(), CoreMatchers.is(true));
@@ -147,7 +147,7 @@ public class SmartpayPaymentProviderTest {
 
     @Test
     public void shouldSuccessfullySendACancelRequest() throws Exception {
-        PaymentProvider paymentProvider = getSmartpayPaymentProvider();
+        PaymentProviderOperations paymentProvider = getSmartpayPaymentProvider();
         GatewayResponse<SmartpayAuthorisationResponse> response = testCardAuthorisation(paymentProvider, chargeEntity);
 
         assertThat(response.getBaseResponse().isPresent(), CoreMatchers.is(true));
@@ -164,7 +164,7 @@ public class SmartpayPaymentProviderTest {
     @Test
     public void shouldRefundToAnExistingPaymentSuccessfully() throws Exception {
         AuthorisationGatewayRequest request = getCardAuthorisationRequest(chargeEntity);
-        PaymentProvider smartpay = getSmartpayPaymentProvider();
+        PaymentProviderOperations smartpay = getSmartpayPaymentProvider();
         GatewayResponse<SmartpayAuthorisationResponse> authoriseResponse = smartpay.authorise(request);
         assertTrue(authoriseResponse.isSuccessful());
 
@@ -181,7 +181,7 @@ public class SmartpayPaymentProviderTest {
 
     }
 
-    private GatewayResponse testCardAuthorisation(PaymentProvider paymentProvider, ChargeEntity chargeEntity) {
+    private GatewayResponse testCardAuthorisation(PaymentProviderOperations paymentProvider, ChargeEntity chargeEntity) {
         AuthorisationGatewayRequest request = getCardAuthorisationRequest(chargeEntity);
         GatewayResponse<SmartpayAuthorisationResponse> response = paymentProvider.authorise(request);
         assertTrue(response.isSuccessful());
@@ -189,7 +189,7 @@ public class SmartpayPaymentProviderTest {
         return response;
     }
 
-    private PaymentProvider getSmartpayPaymentProvider() throws Exception {
+    private PaymentProviderOperations getSmartpayPaymentProvider() throws Exception {
         Client client = TestClientFactory.createJerseyClient();
         GatewayClient gatewayClient = new GatewayClient(client, ImmutableMap.of(TEST.toString(), url),
             SmartpayPaymentProvider.includeSessionIdentifier(), mockMetricRegistry);

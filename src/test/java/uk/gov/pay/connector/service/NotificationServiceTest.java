@@ -70,7 +70,7 @@ public class NotificationServiceTest {
     private PaymentProviders mockedPaymentProviders;
 
     @Mock
-    private PaymentProvider mockedPaymentProvider;
+    private PaymentProviderNotificationHandler<Pair<String, Boolean>> mockedPaymentProvider;
 
     @Mock(answer = Answers.RETURNS_DEEP_STUBS)
     private ChargeEntity mockedChargeEntity;
@@ -84,7 +84,7 @@ public class NotificationServiceTest {
     @Before
     public void setUp() {
         when(mockedPaymentProvider.getPaymentGatewayName()).thenReturn(SANDBOX);
-        when(mockedPaymentProviders.byName(SANDBOX)).thenReturn(mockedPaymentProvider);
+        when(mockedPaymentProviders.<Pair<String, Boolean>>notificationHandler(SANDBOX)).thenReturn(mockedPaymentProvider);
         when(mockedChargeDao.findByProviderAndTransactionId(SANDBOX.getName(), TRANSACTION_ID)).thenReturn(Optional.of(mockedChargeEntity));
         when(mockedChargeEntity.getStatus()).thenReturn(ChargeStatus.CAPTURED.toString());
         when(mockedChargeEntity.getGatewayAccount().getCredentials().get(CREDENTIALS_SHA_OUT_PASSPHRASE)).thenReturn("a_passphrase");
@@ -359,7 +359,7 @@ public class NotificationServiceTest {
 
     @Test
     public void whenSecureNotificationEndpointIsEnabled_shouldRejectNotificationIfIpIsNotValid() throws Exception {
-        when(mockedPaymentProviders.byName(WORLDPAY)).thenReturn(mockedPaymentProvider);
+        when(mockedPaymentProviders.<Pair<String, Boolean>>notificationHandler(WORLDPAY)).thenReturn(mockedPaymentProvider);
         when(mockedPaymentProvider.isNotificationEndpointSecured()).thenReturn(true);
         when(mockedPaymentProvider.getNotificationDomain()).thenReturn("something.com");
         when(mockDnsUtils.reverseDnsLookup(anyString())).thenReturn(Optional.empty());
@@ -377,7 +377,7 @@ public class NotificationServiceTest {
 
         StatusMapper mockedStatusMapper = createMockedStatusMapper(InterpretedStatus.Type.CHARGE_STATUS, CAPTURED);
         when(mockedPaymentProvider.getStatusMapper()).thenReturn(mockedStatusMapper);
-        when(mockedPaymentProviders.byName(WORLDPAY)).thenReturn(mockedPaymentProvider);
+        when(mockedPaymentProviders.<Pair<String, Boolean>>notificationHandler(WORLDPAY)).thenReturn(mockedPaymentProvider);
 
         when(mockDnsUtils.ipMatchesDomain(ipAddress, domain)).thenReturn(true);
         when(mockedPaymentProvider.isNotificationEndpointSecured()).thenReturn(true);

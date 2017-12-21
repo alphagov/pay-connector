@@ -5,6 +5,7 @@ import org.apache.http.NameValuePair;
 import uk.gov.pay.connector.model.CancelGatewayRequest;
 import uk.gov.pay.connector.model.CaptureGatewayRequest;
 import uk.gov.pay.connector.model.GatewayError;
+import uk.gov.pay.connector.model.GatewayRequest;
 import uk.gov.pay.connector.model.Notification;
 import uk.gov.pay.connector.model.Notifications;
 import uk.gov.pay.connector.model.RefundGatewayRequest;
@@ -14,13 +15,16 @@ import uk.gov.pay.connector.model.domain.GatewayAccountEntity;
 import uk.gov.pay.connector.model.gateway.Auth3dsResponseGatewayRequest;
 import uk.gov.pay.connector.model.gateway.AuthorisationGatewayRequest;
 import uk.gov.pay.connector.model.gateway.GatewayResponse;
-import uk.gov.pay.connector.service.BasePaymentProvider;
+import uk.gov.pay.connector.service.BaseAuthoriseResponse;
+import uk.gov.pay.connector.service.BaseCaptureResponse;
 import uk.gov.pay.connector.service.BaseResponse;
 import uk.gov.pay.connector.service.ExternalRefundAvailabilityCalculator;
 import uk.gov.pay.connector.service.GatewayClient;
 import uk.gov.pay.connector.service.GatewayOperation;
 import uk.gov.pay.connector.service.GatewayOrder;
 import uk.gov.pay.connector.service.PaymentGatewayName;
+import uk.gov.pay.connector.service.PaymentProviderNotificationHandler;
+import uk.gov.pay.connector.service.PaymentProviderOperations;
 import uk.gov.pay.connector.service.StatusMapper;
 
 import javax.ws.rs.client.Invocation;
@@ -31,6 +35,7 @@ import java.util.function.BiFunction;
 import java.util.function.Function;
 
 import static fj.data.Either.left;
+import static fj.data.Either.reduce;
 import static fj.data.Either.right;
 import static java.util.stream.Collectors.toList;
 import static uk.gov.pay.connector.model.ErrorType.GENERIC_GATEWAY_ERROR;
@@ -46,50 +51,50 @@ import static uk.gov.pay.connector.service.epdq.EpdqOrderRequestBuilder.anEpdqCa
 import static uk.gov.pay.connector.service.epdq.EpdqOrderRequestBuilder.anEpdqRefundOrderRequestBuilder;
 
 
-public class EpdqPaymentProvider extends BasePaymentProvider<BaseResponse, String> {
+public class EpdqPaymentProvider implements PaymentProviderOperations, PaymentProviderNotificationHandler<String> {
 
     public static final String ROUTE_FOR_NEW_ORDER = "orderdirect.asp";
     public static final String ROUTE_FOR_MAINTENANCE_ORDER = "maintenancedirect.asp";
 
     private final SignatureGenerator signatureGenerator;
+    protected boolean isNotificationEndpointSecured;
+    protected String notificationDomain;
+    protected ExternalRefundAvailabilityCalculator externalRefundAvailabilityCalculator;
+    protected EnumMap<GatewayOperation, GatewayClient> gatewayOperationClientMap;
 
     public EpdqPaymentProvider(EnumMap<GatewayOperation, GatewayClient> clients, SignatureGenerator signatureGenerator,
                                ExternalRefundAvailabilityCalculator externalRefundAvailabilityCalculator) {
-        super(clients, externalRefundAvailabilityCalculator);
+        this.gatewayOperationClientMap = clients;
+        this.isNotificationEndpointSecured = false;
+        this.notificationDomain = null;
+        this.externalRefundAvailabilityCalculator = externalRefundAvailabilityCalculator;
         this.signatureGenerator = signatureGenerator;
     }
 
-    @Override
     public PaymentGatewayName getPaymentGatewayName() {
         return PaymentGatewayName.EPDQ;
     }
 
-    @Override
     public Optional<String> generateTransactionId() {
         return Optional.empty();
     }
 
-    @Override
-    public GatewayResponse authorise(AuthorisationGatewayRequest request) {
+    public GatewayResponse<EpdqAuthorisationResponse> authorise(AuthorisationGatewayRequest request) {
         return sendReceive(ROUTE_FOR_NEW_ORDER, request, buildAuthoriseOrderFor(), EpdqAuthorisationResponse.class, extractResponseIdentifier());
     }
 
-    @Override
-    public GatewayResponse<BaseResponse> authorise3dsResponse(Auth3dsResponseGatewayRequest request) {
+    public GatewayResponse<BaseAuthoriseResponse> authorise3dsResponse(Auth3dsResponseGatewayRequest request) {
         return GatewayResponse.with(new GatewayError("3D Secure not implemented for Epdq", GENERIC_GATEWAY_ERROR));
     }
 
-    @Override
-    public GatewayResponse capture(CaptureGatewayRequest request) {
+    public GatewayResponse<EpdqCaptureResponse> capture(CaptureGatewayRequest request) {
         return sendReceive(ROUTE_FOR_MAINTENANCE_ORDER, request, buildCaptureOrderFor(), EpdqCaptureResponse.class, extractResponseIdentifier());
     }
 
-    @Override
     public GatewayResponse refund(RefundGatewayRequest request) {
         return sendReceive(ROUTE_FOR_MAINTENANCE_ORDER, request, buildRefundOrderFor(), EpdqRefundResponse.class, extractResponseIdentifier());
     }
 
-    @Override
     public GatewayResponse cancel(CancelGatewayRequest request) {
         return sendReceive(ROUTE_FOR_MAINTENANCE_ORDER, request, buildCancelOrderFor(), EpdqCancelResponse.class, extractResponseIdentifier());
     }
@@ -118,7 +123,6 @@ public class EpdqPaymentProvider extends BasePaymentProvider<BaseResponse, Strin
         return getShaSignFromNotificationParams(notificationParams).equalsIgnoreCase(signature);
     }
 
-    @Override
     public ExternalChargeRefundAvailability getExternalChargeRefundAvailability(ChargeEntity chargeEntity) {
         return externalRefundAvailabilityCalculator.calculate(chargeEntity);
     }
@@ -143,7 +147,6 @@ public class EpdqPaymentProvider extends BasePaymentProvider<BaseResponse, Strin
         }
     }
 
-    @Override
     public StatusMapper<String> getStatusMapper() {
         return EpdqStatusMapper.get();
     }
@@ -213,5 +216,47 @@ public class EpdqPaymentProvider extends BasePaymentProvider<BaseResponse, Strin
             .findFirst()
             .map(param -> param.getValue())
             .orElse("");
+    }
+
+    protected <U extends GatewayRequest> GatewayResponse sendReceive(U request, Function<U, GatewayOrder> order,
+                                                                     Class<? extends BaseResponse> clazz,
+                                                                     Function<GatewayClient.Response, Optional<String>> responseIdentifier) {
+
+        return sendReceive(null, request, order, clazz, responseIdentifier);
+    }
+
+    protected <U extends GatewayRequest> GatewayResponse sendReceive(String route, U request, Function<U, GatewayOrder> order,
+                                                                     Class<? extends BaseResponse> clazz,
+                                                                     Function<GatewayClient.Response, Optional<String>> responseIdentifier) {
+        GatewayClient gatewayClient = gatewayOperationClientMap.get(request.getRequestType());
+        return reduce(
+                gatewayClient
+                        .postRequestFor(route, request.getGatewayAccount(), order.apply(request))
+                        .bimap(
+                                GatewayResponse::with,
+                                r -> mapToResponse(r, clazz, responseIdentifier, gatewayClient)
+                        )
+        );
+    }
+
+    private GatewayResponse mapToResponse(GatewayClient.Response response,
+                                          Class<? extends BaseResponse> clazz,
+                                          Function<GatewayClient.Response, Optional<String>> responseIdentifier,
+                                          GatewayClient client) {
+        GatewayResponse.GatewayResponseBuilder<BaseResponse> responseBuilder = GatewayResponse.GatewayResponseBuilder.responseBuilder();
+
+        reduce(
+                client.unmarshallResponse(response, clazz)
+                        .bimap(
+                                responseBuilder::withGatewayError,
+                                responseBuilder::withResponse
+                        )
+        );
+
+        responseIdentifier.apply(response)
+                .ifPresent(responseBuilder::withSessionIdentifier);
+
+        return responseBuilder.build();
+
     }
 }

@@ -96,7 +96,7 @@ public class ChargeServiceTest {
     @Mock
     private PaymentProviders mockedProviders;
     @Mock
-    private PaymentProvider mockedPaymentProvider;
+    private PaymentProviderOperations mockedPaymentProvider;
     @Mock
     private PaymentRequestDao mockedPaymentRequestDao;
     @Mock

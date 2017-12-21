@@ -6,7 +6,6 @@ import uk.gov.pay.connector.model.domain.transaction.ChargeTransactionEventEntit
 import uk.gov.pay.connector.model.domain.transaction.RefundTransactionEntity;
 import uk.gov.pay.connector.model.domain.transaction.TransactionEntity;
 import uk.gov.pay.connector.model.domain.transaction.TransactionOperation;
-import uk.gov.pay.connector.service.CardService;
 
 import javax.persistence.Access;
 import javax.persistence.AccessType;

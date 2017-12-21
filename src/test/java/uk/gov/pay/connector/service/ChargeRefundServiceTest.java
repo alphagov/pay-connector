@@ -72,7 +72,7 @@ public class ChargeRefundServiceTest {
     @Mock
     private PaymentProviders mockProviders;
     @Mock
-    private PaymentProvider mockProvider;
+    private PaymentProviderOperations mockProvider;
     @Mock
     private PaymentRequestDao mockPaymentRequestDao;
     @Mock

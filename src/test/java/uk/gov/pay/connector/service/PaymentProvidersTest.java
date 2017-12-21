@@ -96,7 +96,7 @@ public class PaymentProvidersTest {
 
     @Test
     public void shouldResolveWorldpayPaymentProvider() throws Exception {
-        PaymentProvider worldpay = providers.byName(PaymentGatewayName.WORLDPAY);
+        PaymentProvider worldpay = providers.getWorldpayProvider();
         assertThat(worldpay, is(instanceOf(WorldpayPaymentProvider.class)));
     }
 

@@ -51,7 +51,7 @@ public class ChargeExpiryServiceTest {
     private PaymentProviders mockPaymentProviders;
 
     @Mock
-    private PaymentProvider mockPaymentProvider;
+    private PaymentProviderOperations mockPaymentProvider;
 
     @Mock
     private WorldpayCancelResponse mockWorldpayCancelResponse;
@@ -82,7 +82,7 @@ public class ChargeExpiryServiceTest {
 
         when(mockChargeDao.findByExternalId(chargeEntity.getExternalId())).thenReturn(Optional.of(chargeEntity));
         when(mockPaymentProviders.byName(PaymentGatewayName.WORLDPAY)).thenReturn(mockPaymentProvider);
-        when(mockPaymentProvider.cancel(any())).thenReturn(gatewayResponse);
+        when(mockPaymentProvider.<BaseCancelResponse>cancel(any())).thenReturn(gatewayResponse);
         ArgumentCaptor<ChargeEntity> captor = ArgumentCaptor.forClass(ChargeEntity.class);
         ArgumentCaptor<CancelGatewayRequest> cancelCaptor = ArgumentCaptor.forClass(CancelGatewayRequest.class);
         doNothing().when(mockChargeEventDao).persistChargeEventOf(captor.capture(), any());
@@ -104,7 +104,7 @@ public class ChargeExpiryServiceTest {
         GatewayResponse<WorldpayBaseResponse> gatewayResponse = gatewayResponseBuilder.withResponse(
                 mockWorldpayCancelResponse).build();
         when(mockPaymentProviders.byName(PaymentGatewayName.WORLDPAY)).thenReturn(mockPaymentProvider);
-        when(mockPaymentProvider.cancel(any())).thenReturn(gatewayResponse);
+        when(mockPaymentProvider.<WorldpayBaseResponse>cancel(any())).thenReturn(gatewayResponse);
 
         EXPIRABLE_STATUSES.stream()
                 .filter(status -> status != ChargeStatus.AUTHORISATION_SUCCESS)
@@ -147,7 +147,7 @@ public class ChargeExpiryServiceTest {
 
         when(mockChargeDao.findByExternalId(chargeEntity.getExternalId())).thenReturn(Optional.of(chargeEntity));
         when(mockPaymentProviders.byName(PaymentGatewayName.WORLDPAY)).thenReturn(mockPaymentProvider);
-        when(mockPaymentProvider.cancel(any())).thenReturn(gatewayResponse);
+        when(mockPaymentProvider.<WorldpayBaseResponse>cancel(any())).thenReturn(gatewayResponse);
         ArgumentCaptor<ChargeEntity> captor = ArgumentCaptor.forClass(ChargeEntity.class);
         doNothing().when(mockChargeEventDao).persistChargeEventOf(captor.capture(), any());
 

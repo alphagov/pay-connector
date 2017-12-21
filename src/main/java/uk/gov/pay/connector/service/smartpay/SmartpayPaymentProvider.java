@@ -17,13 +17,16 @@ import uk.gov.pay.connector.model.domain.GatewayAccountEntity;
 import uk.gov.pay.connector.model.gateway.Auth3dsResponseGatewayRequest;
 import uk.gov.pay.connector.model.gateway.AuthorisationGatewayRequest;
 import uk.gov.pay.connector.model.gateway.GatewayResponse;
-import uk.gov.pay.connector.service.BasePaymentProvider;
+import uk.gov.pay.connector.service.BaseAuthoriseResponse;
+import uk.gov.pay.connector.service.BaseCaptureResponse;
 import uk.gov.pay.connector.service.BaseResponse;
 import uk.gov.pay.connector.service.ExternalRefundAvailabilityCalculator;
 import uk.gov.pay.connector.service.GatewayClient;
 import uk.gov.pay.connector.service.GatewayOperation;
 import uk.gov.pay.connector.service.GatewayOrder;
 import uk.gov.pay.connector.service.PaymentGatewayName;
+import uk.gov.pay.connector.service.PaymentProviderNotificationHandler;
+import uk.gov.pay.connector.service.PaymentProviderOperations;
 import uk.gov.pay.connector.service.StatusMapper;
 
 import javax.ws.rs.client.Invocation;
@@ -33,6 +36,7 @@ import java.util.function.BiFunction;
 import java.util.function.Function;
 
 import static fj.data.Either.left;
+import static fj.data.Either.reduce;
 import static fj.data.Either.right;
 import static uk.gov.pay.connector.model.ErrorType.GENERIC_GATEWAY_ERROR;
 import static uk.gov.pay.connector.model.domain.GatewayAccount.CREDENTIALS_MERCHANT_ID;
@@ -41,68 +45,64 @@ import static uk.gov.pay.connector.service.smartpay.SmartpayOrderRequestBuilder.
 import static uk.gov.pay.connector.service.smartpay.SmartpayOrderRequestBuilder.aSmartpayCaptureOrderRequestBuilder;
 import static uk.gov.pay.connector.service.smartpay.SmartpayOrderRequestBuilder.aSmartpayRefundOrderRequestBuilder;
 
-public class SmartpayPaymentProvider extends BasePaymentProvider<BaseResponse, Pair<String, Boolean>> {
+public class SmartpayPaymentProvider implements PaymentProviderOperations, PaymentProviderNotificationHandler<Pair<String, Boolean>> {
 
     private final ObjectMapper objectMapper;
+    protected boolean isNotificationEndpointSecured;
+    protected String notificationDomain;
+    protected ExternalRefundAvailabilityCalculator externalRefundAvailabilityCalculator;
+    protected EnumMap<GatewayOperation, GatewayClient> gatewayOperationClientMap;
 
     public SmartpayPaymentProvider(EnumMap<GatewayOperation, GatewayClient> clients, ObjectMapper objectMapper,
                                    ExternalRefundAvailabilityCalculator externalRefundAvailabilityCalculator) {
-        super(clients, externalRefundAvailabilityCalculator);
+        this.gatewayOperationClientMap = clients;
+        this.isNotificationEndpointSecured = false;
+        this.notificationDomain = null;
+        this.externalRefundAvailabilityCalculator = externalRefundAvailabilityCalculator;
         this.objectMapper = objectMapper;
     }
 
-    @Override
     public PaymentGatewayName getPaymentGatewayName() {
         return PaymentGatewayName.SMARTPAY;
     }
 
-    @Override
     public Optional<String> generateTransactionId() {
         return Optional.empty();
     }
 
-    @Override
-    public GatewayResponse authorise(AuthorisationGatewayRequest request) {
+    public GatewayResponse<SmartpayAuthorisationResponse> authorise(AuthorisationGatewayRequest request) {
         return sendReceive(request, buildAuthoriseOrderFor(), SmartpayAuthorisationResponse.class, extractResponseIdentifier());
     }
 
-    @Override
-    public GatewayResponse<BaseResponse> authorise3dsResponse(Auth3dsResponseGatewayRequest request) {
+    public GatewayResponse<BaseAuthoriseResponse> authorise3dsResponse(Auth3dsResponseGatewayRequest request) {
         return GatewayResponse.with(new GatewayError("3D Secure not implemented for SmartPay", GENERIC_GATEWAY_ERROR));
     }
 
-    @Override
-    public GatewayResponse capture(CaptureGatewayRequest request) {
+    public GatewayResponse<SmartpayCaptureResponse> capture(CaptureGatewayRequest request) {
         return sendReceive(request, buildCaptureOrderFor(), SmartpayCaptureResponse.class, extractResponseIdentifier());
     }
 
-    @Override
     public GatewayResponse refund(RefundGatewayRequest request) {
         return sendReceive(request, buildRefundOrderFor(), SmartpayRefundResponse.class, extractResponseIdentifier());
     }
 
-    @Override
     public GatewayResponse cancel(CancelGatewayRequest request) {
         return sendReceive(request, buildCancelOrderFor(), SmartpayCancelResponse.class, extractResponseIdentifier());
 
     }
 
-    @Override
     public Boolean isNotificationEndpointSecured() {
         return false;
     }
 
-    @Override
     public String getNotificationDomain() {
         return null;
     }
 
-    @Override
     public boolean verifyNotification(Notification<Pair<String, Boolean>> notification, GatewayAccountEntity gatewayAccountEntity) {
         return true;
     }
 
-    @Override
     public Either<String, Notifications<Pair<String, Boolean>>> parseNotification(String payload) {
         try {
             Builder<Pair<String, Boolean>> builder = Notifications.builder();
@@ -128,12 +128,10 @@ public class SmartpayPaymentProvider extends BasePaymentProvider<BaseResponse, P
         }
     }
 
-    @Override
     public StatusMapper<Pair<String, Boolean>> getStatusMapper() {
         return SmartpayStatusMapper.get();
     }
 
-    @Override
     public ExternalChargeRefundAvailability getExternalChargeRefundAvailability(ChargeEntity chargeEntity) {
         return externalRefundAvailabilityCalculator.calculate(chargeEntity);
     }
@@ -185,5 +183,47 @@ public class SmartpayPaymentProvider extends BasePaymentProvider<BaseResponse, P
             Optional<String> emptyResponseIdentifierForSmartpay = Optional.empty();
             return emptyResponseIdentifierForSmartpay;
         };
+    }
+
+    protected <U extends GatewayRequest> GatewayResponse sendReceive(U request, Function<U, GatewayOrder> order,
+                                                                     Class<? extends BaseResponse> clazz,
+                                                                     Function<GatewayClient.Response, Optional<String>> responseIdentifier) {
+
+        return sendReceive(null, request, order, clazz, responseIdentifier);
+    }
+
+    protected <U extends GatewayRequest> GatewayResponse sendReceive(String route, U request, Function<U, GatewayOrder> order,
+                                                                     Class<? extends BaseResponse> clazz,
+                                                                     Function<GatewayClient.Response, Optional<String>> responseIdentifier) {
+        GatewayClient gatewayClient = gatewayOperationClientMap.get(request.getRequestType());
+        return reduce(
+                gatewayClient
+                        .postRequestFor(route, request.getGatewayAccount(), order.apply(request))
+                        .bimap(
+                                GatewayResponse::with,
+                                r -> mapToResponse(r, clazz, responseIdentifier, gatewayClient)
+                        )
+        );
+    }
+
+    private GatewayResponse mapToResponse(GatewayClient.Response response,
+                                          Class<? extends BaseResponse> clazz,
+                                          Function<GatewayClient.Response, Optional<String>> responseIdentifier,
+                                          GatewayClient client) {
+        GatewayResponse.GatewayResponseBuilder<BaseResponse> responseBuilder = GatewayResponse.GatewayResponseBuilder.responseBuilder();
+
+        reduce(
+                client.unmarshallResponse(response, clazz)
+                        .bimap(
+                                responseBuilder::withGatewayError,
+                                responseBuilder::withResponse
+                        )
+        );
+
+        responseIdentifier.apply(response)
+                .ifPresent(responseBuilder::withSessionIdentifier);
+
+        return responseBuilder.build();
+
     }
 }

@@ -64,7 +64,7 @@ public class ChargeCancelServiceTest {
     private PaymentProviders mockPaymentProviders;
 
     @Mock
-    private PaymentProvider mockPaymentProvider;
+    private PaymentProviderOperations mockPaymentProvider;
 
     @Mock
     private ChargeStatusUpdater mockChargeStatusUpdater;

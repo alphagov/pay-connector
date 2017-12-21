@@ -172,7 +172,7 @@ public class SmartpayPaymentProviderTest {
                 .withGatewayAccountEntity(aServiceAccount())
                 .build();
 
-        GatewayResponse<WorldpayCaptureResponse> response = provider.capture(CaptureGatewayRequest.valueOf(chargeEntity));
+        GatewayResponse<SmartpayCaptureResponse> response = provider.capture(CaptureGatewayRequest.valueOf(chargeEntity));
         assertTrue(response.isSuccessful());
     }
 

@@ -15,7 +15,7 @@ import static org.mockito.Mockito.mock;
 
 public abstract class CardServiceTest {
 
-    protected final PaymentProvider mockedPaymentProvider = mock(PaymentProvider.class);
+    protected final PaymentProviderOperations mockedPaymentProvider = mock(PaymentProviderOperations.class);
     protected PaymentProviders mockedProviders = mock(PaymentProviders.class);
     protected MetricRegistry mockMetricRegistry;
     protected ChargeDao mockedChargeDao = mock(ChargeDao.class);
