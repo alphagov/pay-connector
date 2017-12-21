@@ -13,6 +13,7 @@ import uk.gov.pay.connector.model.Notifications.Builder;
 import uk.gov.pay.connector.model.RefundGatewayRequest;
 import uk.gov.pay.connector.model.api.ExternalChargeRefundAvailability;
 import uk.gov.pay.connector.model.domain.ChargeEntity;
+import uk.gov.pay.connector.model.domain.ChargeStatus;
 import uk.gov.pay.connector.model.domain.GatewayAccountEntity;
 import uk.gov.pay.connector.model.gateway.Auth3dsResponseGatewayRequest;
 import uk.gov.pay.connector.model.gateway.AuthorisationGatewayRequest;
@@ -24,13 +25,16 @@ import uk.gov.pay.connector.service.ExternalRefundAvailabilityCalculator;
 import uk.gov.pay.connector.service.GatewayClient;
 import uk.gov.pay.connector.service.GatewayOperation;
 import uk.gov.pay.connector.service.GatewayOrder;
+import uk.gov.pay.connector.service.InterpretedStatus;
 import uk.gov.pay.connector.service.PaymentGatewayName;
 import uk.gov.pay.connector.service.PaymentProviderNotificationHandler;
 import uk.gov.pay.connector.service.PaymentProviderOperations;
 import uk.gov.pay.connector.service.StatusMapper;
+import uk.gov.pay.connector.service.epdq.EpdqStatusMapper;
 
 import javax.ws.rs.client.Invocation;
 import java.util.EnumMap;
+import java.util.List;
 import java.util.Optional;
 import java.util.function.BiFunction;
 import java.util.function.Function;
@@ -45,7 +49,7 @@ import static uk.gov.pay.connector.service.smartpay.SmartpayOrderRequestBuilder.
 import static uk.gov.pay.connector.service.smartpay.SmartpayOrderRequestBuilder.aSmartpayCaptureOrderRequestBuilder;
 import static uk.gov.pay.connector.service.smartpay.SmartpayOrderRequestBuilder.aSmartpayRefundOrderRequestBuilder;
 
-public class SmartpayPaymentProvider implements PaymentProviderOperations, PaymentProviderNotificationHandler<Pair<String, Boolean>> {
+public class SmartpayPaymentProvider implements PaymentProviderOperations {
 
     private final ObjectMapper objectMapper;
     protected boolean isNotificationEndpointSecured;
@@ -91,45 +95,43 @@ public class SmartpayPaymentProvider implements PaymentProviderOperations, Payme
 
     }
 
-    public Boolean isNotificationEndpointSecured() {
-        return false;
-    }
-
     public String getNotificationDomain() {
         return null;
     }
 
-    public boolean verifyNotification(Notification<Pair<String, Boolean>> notification, GatewayAccountEntity gatewayAccountEntity) {
-        return true;
-    }
-
-    public Either<String, Notifications<Pair<String, Boolean>>> parseNotification(String payload) {
-        try {
-            Builder<Pair<String, Boolean>> builder = Notifications.builder();
-
-            objectMapper.readValue(payload, SmartpayNotificationList.class)
-                    .getNotifications()
-                    // TODO for authorisation notifications, this does the wrong thing
-                    // Transaction ID is pspReference, not originalReference as the code below assumes
-                    // https://www.barclaycard.co.uk/business/files/SmartPay_Notifications_Guide.pdf
-                    // We will set the transaction ID to blank, which makes the notification effectively useless
-                    // This is OK at the moment because we ignore authorisation notifications for Smartpay
-                    .forEach(notification -> builder.addNotificationFor(
-                            notification.getOriginalReference(),
-                            notification.getPspReference(),
-                            notification.getStatus(),
-                            notification.getEventDate(),
-                            null
-                    ));
-
-            return right(builder.build());
-        } catch (Exception e) {
-            return left(e.getMessage());
+    public static class SmartpayParseError extends Exception {
+        public SmartpayParseError(Throwable cause) {
+            super(cause);
         }
     }
 
-    public StatusMapper<Pair<String, Boolean>> getStatusMapper() {
-        return SmartpayStatusMapper.get();
+    public List<SmartpayNotification> parseNotification(String payload) throws SmartpayParseError {
+        try {
+            return objectMapper.readValue(payload, SmartpayNotificationList.class).getNotifications();
+//                    // TODO for authorisation notifications, this does the wrong thing
+//                    // Transaction ID is pspReference, not originalReference as the code below assumes
+//                    // https://www.barclaycard.co.uk/business/files/SmartPay_Notifications_Guide.pdf
+//                    // We will set the transaction ID to blank, which makes the notification effectively useless
+//                    // This is OK at the moment because we ignore authorisation notifications for Smartpay
+//                    .forEach(notification -> builder.addNotificationFor(
+//                            notification.getOriginalReference(),
+//                            notification.getPspReference(),
+//                            notification.getStatus(),
+//                            notification.getEventDate(),
+//                            null
+//                    ));
+
+        } catch (Exception e) {
+            throw new SmartpayParseError(e);
+        }
+    }
+
+    public InterpretedStatus from(Pair<String, Boolean> gatewayStatus, ChargeStatus currentStatus) {
+        return SmartpayStatusMapper.from(gatewayStatus, currentStatus);
+    }
+
+    public InterpretedStatus from(Pair<String, Boolean> gatewayStatus) {
+        return SmartpayStatusMapper.from(gatewayStatus);
     }
 
     public ExternalChargeRefundAvailability getExternalChargeRefundAvailability(ChargeEntity chargeEntity) {

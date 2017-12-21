@@ -52,7 +52,7 @@ public class NotificationServiceTest {
 
     private static final String TRANSACTION_ID = "transaction-id";
 
-    private NotificationService notificationService;
+    private SmartpayNotificationService notificationService;
 
     @Mock
     private DnsUtils mockDnsUtils;
@@ -92,7 +92,7 @@ public class NotificationServiceTest {
 
         when(mockedPaymentProvider.verifyNotification(any(Notification.class), any(GatewayAccountEntity.class))).thenReturn(true);
 
-        notificationService = new NotificationService(mockedChargeDao, mockedChargeEventDao, mockedRefundDao, mockedPaymentProviders, mockDnsUtils, mockedChargeStatusUpdater, mockedRefundUpdater);
+        notificationService = new SmartpayNotificationService(mockedChargeDao, mockedChargeEventDao, mockedRefundDao, mockedPaymentProviders, mockDnsUtils, mockedChargeStatusUpdater, mockedRefundUpdater);
     }
 
     private Notifications<Pair<String, Boolean>> createNotificationFor(String transactionId, String reference, Pair<String, Boolean> status) {

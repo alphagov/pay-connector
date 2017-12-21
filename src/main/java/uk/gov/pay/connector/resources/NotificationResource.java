@@ -3,7 +3,7 @@ package uk.gov.pay.connector.resources;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import uk.gov.pay.connector.service.EpdqNotificationService;
-import uk.gov.pay.connector.service.NotificationService;
+import uk.gov.pay.connector.service.SmartpayNotificationService;
 import uk.gov.pay.connector.service.worldpay.WorldpayNotificationService;
 import uk.gov.pay.connector.service.PaymentGatewayName;
 
@@ -32,17 +32,20 @@ public class NotificationResource {
 
     private static final Logger logger = LoggerFactory.getLogger(NotificationResource.class);
 
-    private final NotificationService notificationService;
+    private final SmartpayNotificationService notificationService;
     private final WorldpayNotificationService worldpayNotificationService;
     private final EpdqNotificationService epdqNotificationService;
+    private final SmartpayNotificationService smartpayNotificationService;
 
     @Inject
-    public NotificationResource(NotificationService notificationService,
+    public NotificationResource(SmartpayNotificationService notificationService,
                                 WorldpayNotificationService worldpayNotificationService,
-                                EpdqNotificationService epdqNotificationService) {
+                                EpdqNotificationService epdqNotificationService,
+                                SmartpayNotificationService smartpayNotificationService) {
         this.notificationService = notificationService;
         this.worldpayNotificationService = worldpayNotificationService;
         this.epdqNotificationService = epdqNotificationService;
+        this.smartpayNotificationService = smartpayNotificationService;
     }
 
     @POST
@@ -50,7 +53,14 @@ public class NotificationResource {
     @PermitAll
     @Path(NOTIFICATIONS_SMARTPAY_API_PATH)
     public Response authoriseSmartpayNotifications(String notification) throws IOException {
-        return handleNotification("not-required", "smartpay", notification);
+        PaymentGatewayName paymentGatewayName = PaymentGatewayName.valueFrom("smartpay");
+        if (!smartpayNotificationService.handleNotificationFor("not-required", paymentGatewayName, notification)) {
+            logger.error("Rejected notification for ip '{}'", "not-required");
+            return forbiddenErrorResponse();
+        }
+        String response = getResponseFor(paymentGatewayName);
+        logger.info("Responding to notification from provider={} with 200 {}", "smartpay", response);
+        return Response.ok(response).build();
     }
 
     @POST
@@ -82,17 +92,6 @@ public class NotificationResource {
         epdqNotificationService.handleNotificationFor(notification);
         String response = "[OK]";
         logger.info("Responding to notification from provider={} with 200 {}", "epdq", response);
-        return Response.ok(response).build();
-    }
-
-    private Response handleNotification(String ipAddress, String name, String notification) {
-        PaymentGatewayName paymentGatewayName = PaymentGatewayName.valueFrom(name);
-        if (!notificationService.handleNotificationFor(ipAddress, paymentGatewayName, notification)) {
-            logger.error("Rejected notification for ip '{}'", ipAddress);
-            return forbiddenErrorResponse();
-        }
-        String response = getResponseFor(paymentGatewayName);
-        logger.info("Responding to notification from provider={} with 200 {}", name, response);
         return Response.ok(response).build();
     }
 

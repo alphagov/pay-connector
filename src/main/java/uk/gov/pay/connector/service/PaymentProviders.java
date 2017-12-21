@@ -112,6 +112,10 @@ public class PaymentProviders {
         return epdqProvider;
     }
 
+    public SmartpayPaymentProvider getSmartPayProvider() {
+        return smartPayProvider;
+    }
+
     public <R> PaymentProviderNotificationHandler<R> notificationHandler(PaymentGatewayName gateway) {
         switch(gateway) {
             case SMARTPAY:

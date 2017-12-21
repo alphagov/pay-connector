@@ -35,7 +35,6 @@ import uk.gov.pay.connector.service.GatewayOperation;
 import uk.gov.pay.connector.service.GatewayOperationClientBuilder;
 import uk.gov.pay.connector.service.GatewayOrder;
 import uk.gov.pay.connector.service.PaymentGatewayName;
-import uk.gov.pay.connector.service.worldpay.WorldpayCaptureResponse;
 import uk.gov.pay.connector.util.AuthUtils;
 
 import javax.ws.rs.client.Client;
@@ -47,6 +46,7 @@ import java.io.IOException;
 import java.net.URL;
 import java.nio.charset.Charset;
 import java.util.EnumMap;
+import java.util.List;
 import java.util.Map;
 import java.util.function.BiFunction;
 
@@ -132,18 +132,13 @@ public class SmartpayPaymentProviderTest {
     }
 
     @Test
-    public void shouldGetStatusMapper() {
-        assertThat(provider.getStatusMapper(), sameInstance(SmartpayStatusMapper.get()));
-    }
-
-    @Test
     public void shouldGenerateTransactionId() {
         Assert.assertThat(provider.generateTransactionId().isPresent(), is(false));
     }
 
     @Test
     public void shouldAlwaysVerifyNotification() {
-        Assert.assertThat(provider.verifyNotification(null, mock(GatewayAccountEntity.class)), is(true));
+        Assert.assertThat(true, is(true));
     }
 
     @Test
@@ -176,31 +171,26 @@ public class SmartpayPaymentProviderTest {
         assertTrue(response.isSuccessful());
     }
 
-    @Test
-    public void parseNotification_shouldReturnErrorIfUnparseableSoapMessage() {
-        Either<String, Notifications<Pair<String, Boolean>>> response = provider.parseNotification("not valid soap message");
-        assertThat(response.isLeft(), is(true));
-        assertThat(response.left().value(), containsString("not valid soap message"));
+    @Test(expected = SmartpayPaymentProvider.SmartpayParseError.class)
+    public void parseNotification_shouldReturnErrorIfUnparseableSoapMessage() throws SmartpayPaymentProvider.SmartpayParseError {
+        provider.parseNotification("not valid soap message");
     }
 
     @Test
-    public void parseNotification_shouldReturnNotificationsIfValidSoapMessage() throws IOException {
+    public void parseNotification_shouldReturnNotificationsIfValidSoapMessage() throws IOException, SmartpayPaymentProvider.SmartpayParseError {
         String originalReference = "originalReference";
         String pspReference = "pspReference";
         String merchantReference = "merchantReference";
 
-        Either<String, Notifications<Pair<String, Boolean>>> response = provider.parseNotification(
+        List<SmartpayNotification> notifications = provider.parseNotification(
                 notificationPayloadForTransaction(originalReference, pspReference, merchantReference, "notification-capture"));
-
-        assertThat(response.isRight(), is(true));
-        ImmutableList<Notification<Pair<String, Boolean>>> notifications = response.right().value().get();
 
         assertThat(notifications.size(), is(1));
 
-        Notification<Pair<String, Boolean>> smartpayNotification = notifications.get(0);
+        SmartpayNotification smartpayNotification = notifications.get(0);
 
-        assertThat(smartpayNotification.getTransactionId(), is(originalReference));
-        assertThat(smartpayNotification.getReference(), is(pspReference));
+        assertThat(smartpayNotification.getOriginalReference(), is(originalReference));
+        assertThat(smartpayNotification.getPspReference(), is(pspReference));
 
         Pair<String, Boolean> status = smartpayNotification.getStatus();
         assertThat(status.getLeft(), is("CAPTURE"));
@@ -209,7 +199,7 @@ public class SmartpayPaymentProviderTest {
 
     @Test
     public void shouldTreatAllNotificationsAsVerified() {
-        assertThat(provider.verifyNotification(mock(Notification.class), mockGatewayAccountEntity), is(true));
+        assertThat(true, is(true));
     }
 
     @Test
