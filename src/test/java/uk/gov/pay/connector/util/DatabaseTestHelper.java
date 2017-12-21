@@ -652,6 +652,25 @@ public class DatabaseTestHelper {
         );
     }
 
+    public void addCard(Long cardId, Long chargeId, Long transactionId) {
+        jdbi.withHandle(h -> h.update(
+                "INSERT INTO cards(" +
+                        "id," +
+                        "charge_id," +
+                        "card_brand," +
+                        "transaction_id" +
+                        ")" +
+                        "VALUES (" +
+                        "?, ?, 'some_brand', ?" +
+                        ")",
+                cardId,
+                chargeId,
+                transactionId)
+        );
+
+
+    }
+
     public List<Map<String, Object>> loadTransactionEvents(Long transactionId) {
         return jdbi.withHandle(h ->
                 h.createQuery("Select * from transaction_events where transaction_id = :transactionId order by updated desc")
@@ -664,5 +683,12 @@ public class DatabaseTestHelper {
                 h.createQuery("Select * from transactions where payment_request_id = :paymentRequestId and operation='REFUND' order by id asc")
                         .bind("paymentRequestId", paymentRequestId)
                         .list());
+    }
+
+    public Map<String, Object> getCard(long cardId) {
+        return jdbi.withHandle(h ->
+                h.createQuery("Select * from cards where id = :cardId")
+                        .bind("cardId", cardId)
+                        .first());
     }
 }
