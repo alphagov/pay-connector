@@ -65,8 +65,22 @@ public class PaymentRequestWorker {
         MDC.put(HEADER_REQUEST_ID, "Backfill transactions " + RandomUtils.nextLong(0, 10000));
         logger.info("Running migration worker");
         Long maxId = paymentRequestDao.findMaxId();
-        for (long i = 1; i <= maxId; i++) {
-            updatePaymentRequest(i);
+        for (long paymentRequestId = 1; paymentRequestId <= maxId; paymentRequestId++) {
+            int retries = 0;
+            updatePaymentRequestWithRetry(paymentRequestId, retries);
+        }
+    }
+
+    private void updatePaymentRequestWithRetry(long paymentRequestId, long retries) {
+        try {
+            updatePaymentRequest(paymentRequestId);
+        } catch (Exception exc) {
+            if (retries < 3) {
+                logger.error("Problem migrating [" + paymentRequestId +"] " + exc.getMessage() + " retry count [" + retries + "]");
+                updatePaymentRequestWithRetry(paymentRequestId, retries + 1);
+            } else {
+                throw exc;
+            }
         }
     }
 
