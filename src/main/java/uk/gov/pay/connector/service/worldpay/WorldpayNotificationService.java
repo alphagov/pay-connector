@@ -33,7 +33,6 @@ public class WorldpayNotificationService {
     private final ChargeDao chargeDao;
     private final ChargeEventDao chargeEventDao;
     private final RefundDao refundDao;
-    private final PaymentProviders paymentProviders;
     private final DnsUtils dnsUtils;
     private final ChargeStatusUpdater chargeStatusUpdater;
     private final RefundStatusUpdater refundStatusUpdater;
@@ -41,11 +40,12 @@ public class WorldpayNotificationService {
     private final WorldpayPaymentProvider paymentProvider;
 
     @Inject
-    public WorldpayNotificationService(ChargeDao chargeDao, ChargeEventDao chargeEventDao, RefundDao refundDao, PaymentProviders paymentProviders, DnsUtils dnsUtils, ChargeStatusUpdater chargeStatusUpdater, RefundStatusUpdater refundStatusUpdater) {
+    public WorldpayNotificationService(ChargeDao chargeDao, ChargeEventDao chargeEventDao, RefundDao refundDao,
+                                       PaymentProviders paymentProviders, DnsUtils dnsUtils,
+                                       ChargeStatusUpdater chargeStatusUpdater, RefundStatusUpdater refundStatusUpdater) {
         this.chargeDao = chargeDao;
         this.chargeEventDao = chargeEventDao;
         this.refundDao = refundDao;
-        this.paymentProviders = paymentProviders;
         this.dnsUtils = dnsUtils;
         this.chargeStatusUpdater = chargeStatusUpdater;
         this.refundStatusUpdater = refundStatusUpdater;
