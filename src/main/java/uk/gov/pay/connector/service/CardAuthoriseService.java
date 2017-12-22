@@ -158,12 +158,12 @@ public class CardAuthoriseService extends CardAuthoriseBaseService<AuthCardDetai
             if (paymentRequestEntity.isPresent()) {
                 CardEntity cardEntity = CardEntity.from(detailsEntity, paymentRequestEntity.get().getChargeTransaction());
                 cardDao.persist(cardEntity);
+                persistCard3ds(chargeEntity, paymentRequestEntity.get());
             } else {
-                logger.error("Cannot find payment request with external ID {} — this is a bug: the card details will not be saved in the cards table");
+                logger.error("Cannot find payment request with external ID {} — this is a bug: the card and cards3ds details will not be saved in the cards and card_3ds tables");
             }
 
             chargeEventDao.persistChargeEventOf(chargeEntity, Optional.empty());
-            persistCard3ds(chargeEntity);
             logger.info("Stored confirmation details for charge - charge_external_id={}",
                     chargeEntity.getExternalId());
             return operationResponse;
@@ -192,9 +192,9 @@ public class CardAuthoriseService extends CardAuthoriseBaseService<AuthCardDetai
         return detailsEntity;
     }
 
-    private void persistCard3ds(ChargeEntity chargeEntity){
+    private void persistCard3ds(ChargeEntity chargeEntity, PaymentRequestEntity paymentRequestEntity){
         if(chargeEntity.get3dsDetails() != null) {
-            Card3dsEntity card3dsEntity = Card3dsEntity.from(chargeEntity);
+            Card3dsEntity card3dsEntity = Card3dsEntity.from(chargeEntity, paymentRequestEntity);
             card3dsDao.persist(card3dsEntity);
         }
     }

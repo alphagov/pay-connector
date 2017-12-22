@@ -6,9 +6,12 @@ import org.junit.Test;
 import org.junit.rules.ExpectedException;
 import uk.gov.pay.connector.dao.Card3dsDao;
 import uk.gov.pay.connector.dao.ChargeDao;
+import uk.gov.pay.connector.dao.PaymentRequestDao;
 import uk.gov.pay.connector.model.domain.Card3dsEntity;
 import uk.gov.pay.connector.model.domain.ChargeEntity;
 import uk.gov.pay.connector.model.domain.GatewayAccountEntity;
+import uk.gov.pay.connector.model.domain.PaymentRequestEntity;
+import uk.gov.pay.connector.model.domain.transaction.ChargeTransactionEntity;
 
 import java.util.HashMap;
 
@@ -21,6 +24,7 @@ import static uk.gov.pay.connector.model.domain.GatewayAccountEntity.Type.TEST;
 public class Card3dsDaoITest extends DaoITestBase {private DatabaseFixtures.TestAccount defaultTestAccount;
     private Card3dsDao card3dsDao;
     private ChargeDao chargeDao;
+    private PaymentRequestDao paymentRequestDao;
 
     @Rule
     public ExpectedException expectedEx = ExpectedException.none();
@@ -30,6 +34,8 @@ public class Card3dsDaoITest extends DaoITestBase {private DatabaseFixtures.Test
     public void setUp() throws Exception {
         card3dsDao = env.getInstance(Card3dsDao.class);
         chargeDao = env.getInstance(ChargeDao.class);
+        paymentRequestDao = env.getInstance(PaymentRequestDao.class);
+
         insertTestAccount();
     }
 
@@ -46,8 +52,11 @@ public class Card3dsDaoITest extends DaoITestBase {private DatabaseFixtures.Test
                 .build();
 
         chargeDao.persist(chargeEntity);
+        PaymentRequestEntity paymentRequest = PaymentRequestEntity.from(chargeEntity, ChargeTransactionEntity.from(chargeEntity));
+        paymentRequestDao.persist(paymentRequest);
 
-        Card3dsEntity card3dsEntity = Card3dsEntity.from(chargeEntity);
+
+        Card3dsEntity card3dsEntity = Card3dsEntity.from(chargeEntity, paymentRequest);
 
         card3dsDao.persist(card3dsEntity);
 
