@@ -56,7 +56,7 @@ public class Card3dsDaoITest extends DaoITestBase {private DatabaseFixtures.Test
         paymentRequestDao.persist(paymentRequest);
 
 
-        Card3dsEntity card3dsEntity = Card3dsEntity.from(chargeEntity, paymentRequest);
+        Card3dsEntity card3dsEntity = Card3dsEntity.from(chargeEntity);
 
         card3dsDao.persist(card3dsEntity);
 

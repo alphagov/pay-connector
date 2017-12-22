@@ -22,6 +22,7 @@ import uk.gov.pay.connector.model.domain.ChargeEntity;
 import uk.gov.pay.connector.model.domain.ChargeStatus;
 import uk.gov.pay.connector.model.domain.GatewayAccountEntity;
 import uk.gov.pay.connector.model.domain.PaymentRequestEntity;
+import uk.gov.pay.connector.model.domain.transaction.ChargeTransactionEntity;
 import uk.gov.pay.connector.model.gateway.AuthorisationGatewayRequest;
 import uk.gov.pay.connector.model.gateway.GatewayResponse;
 
@@ -158,7 +159,15 @@ public class CardAuthoriseService extends CardAuthoriseBaseService<AuthCardDetai
             if (paymentRequestEntity.isPresent()) {
                 CardEntity cardEntity = CardEntity.from(detailsEntity, paymentRequestEntity.get().getChargeTransaction());
                 cardDao.persist(cardEntity);
-                persistCard3ds(chargeEntity, paymentRequestEntity.get());
+
+                paymentRequestEntity.ifPresent(paymentRequest -> {
+                    ChargeTransactionEntity chargeTransaction = paymentRequest.getChargeTransaction();
+                    chargeTransaction.setCard(cardEntity);
+                    if(chargeEntity.get3dsDetails() != null) {
+                        Card3dsEntity card3dsEntity = Card3dsEntity.from(chargeEntity);
+                        chargeTransaction.setCard3ds(card3dsEntity);
+                    }
+                });
             } else {
                 logger.error("Cannot find payment request with external ID {} — this is a bug: the card and cards3ds details will not be saved in the cards and card_3ds tables");
             }
@@ -190,12 +199,5 @@ public class CardAuthoriseService extends CardAuthoriseBaseService<AuthCardDetai
         detailsEntity.setExpiryDate(authCardDetails.getEndDate());
         detailsEntity.setLastDigitsCardNumber(StringUtils.right(authCardDetails.getCardNo(), 4));
         return detailsEntity;
-    }
-
-    private void persistCard3ds(ChargeEntity chargeEntity, PaymentRequestEntity paymentRequestEntity){
-        if(chargeEntity.get3dsDetails() != null) {
-            Card3dsEntity card3dsEntity = Card3dsEntity.from(chargeEntity, paymentRequestEntity);
-            card3dsDao.persist(card3dsEntity);
-        }
     }
 }

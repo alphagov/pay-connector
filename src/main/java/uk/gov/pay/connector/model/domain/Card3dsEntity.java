@@ -9,6 +9,7 @@ import javax.persistence.GeneratedValue;
 import javax.persistence.GenerationType;
 import javax.persistence.Id;
 import javax.persistence.JoinColumn;
+import javax.persistence.OneToOne;
 import javax.persistence.SequenceGenerator;
 import javax.persistence.Table;
 
@@ -36,6 +37,7 @@ public class Card3dsEntity extends AbstractVersionedEntity {
     @Column(name = "charge_id")
     private Long chargeId;
 
+    @OneToOne
     @JoinColumn(name = "transaction_id", referencedColumnName = "id", updatable = true)
     private ChargeTransactionEntity chargeTransactionEntity;
 
@@ -90,10 +92,9 @@ public class Card3dsEntity extends AbstractVersionedEntity {
         this.chargeTransactionEntity = chargeTransactionEntity;
     }
 
-    public static Card3dsEntity from(ChargeEntity chargeEntity, PaymentRequestEntity paymentRequest) {
+    public static Card3dsEntity from(ChargeEntity chargeEntity) {
         Card3dsEntity entity = new Card3dsEntity();
         entity.setChargeId(chargeEntity.getId());
-        entity.setChargeTransactionEntity(paymentRequest.getChargeTransaction());
         entity.setIssuerUrl(chargeEntity.get3dsDetails().getIssuerUrl());
         entity.setPaRequest(chargeEntity.get3dsDetails().getPaRequest());
         entity.setWorldpayMachineCookie(chargeEntity.getProviderSessionId());

@@ -68,7 +68,7 @@ public class AddTransactionIdToCardsWorker {
     private void loadPaymentRequestAndAddToCard(CardEntity card, ChargeEntity charge) {
         paymentRequestDao.findByExternalId(charge.getExternalId()).ifPresent(paymentRequest -> {
                     ChargeTransactionEntity chargeTransaction = paymentRequest.getChargeTransaction();
-                    card.setChargeTransactionEntity(chargeTransaction);
+                    chargeTransaction.setCard(card);
 
                     logger.info("Adding charge transaction [" + chargeTransaction.getId() + "] to card [" + card.getId() + "]");
                 }

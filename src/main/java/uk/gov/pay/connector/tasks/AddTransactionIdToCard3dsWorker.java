@@ -68,7 +68,7 @@ public class AddTransactionIdToCard3dsWorker {
     private void loadPaymentRequestAndAddToCard(Card3dsEntity card3ds, ChargeEntity charge) {
         paymentRequestDao.findByExternalId(charge.getExternalId()).ifPresent(paymentRequest -> {
                     ChargeTransactionEntity chargeTransaction = paymentRequest.getChargeTransaction();
-                    card3ds.setChargeTransactionEntity(chargeTransaction);
+                    chargeTransaction.setCard3ds(card3ds);
 
                     logger.info("Adding charge transaction [" + chargeTransaction.getId() + "] to card3ds [" + card3ds.getId() + "]");
                 }

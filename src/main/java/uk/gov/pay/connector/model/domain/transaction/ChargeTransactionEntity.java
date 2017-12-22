@@ -2,6 +2,8 @@ package uk.gov.pay.connector.model.domain.transaction;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import uk.gov.pay.connector.model.domain.Card3dsEntity;
+import uk.gov.pay.connector.model.domain.CardEntity;
 import uk.gov.pay.connector.model.domain.ChargeEntity;
 import uk.gov.pay.connector.model.domain.ChargeStatus;
 import uk.gov.pay.connector.model.domain.PaymentGatewayStateTransitions;
@@ -13,6 +15,7 @@ import javax.persistence.Entity;
 import javax.persistence.EnumType;
 import javax.persistence.Enumerated;
 import javax.persistence.OneToMany;
+import javax.persistence.OneToOne;
 import javax.persistence.OrderBy;
 import java.time.ZonedDateTime;
 import java.util.ArrayList;
@@ -33,6 +36,10 @@ public class ChargeTransactionEntity extends TransactionEntity<ChargeStatus, Cha
     @OneToMany(mappedBy = "transaction", cascade = CascadeType.ALL)
     @OrderBy("updated DESC")
     private List<ChargeTransactionEventEntity> transactionEvents = new ArrayList<>();
+    @OneToOne(mappedBy = "chargeTransactionEntity", cascade = CascadeType.PERSIST)
+    private CardEntity card;
+    @OneToOne(mappedBy = "chargeTransactionEntity", cascade = CascadeType.PERSIST)
+    private Card3dsEntity card3ds;
 
     public ChargeTransactionEntity() {
         super(TransactionOperation.CHARGE);
@@ -54,6 +61,24 @@ public class ChargeTransactionEntity extends TransactionEntity<ChargeStatus, Cha
 
     public void setGatewayTransactionId(String gatewayTransactionId) {
         this.gatewayTransactionId = gatewayTransactionId;
+    }
+
+    public CardEntity getCard() {
+        return card;
+    }
+
+    public void setCard(CardEntity card) {
+        this.card = card;
+        card.setChargeTransactionEntity(this);
+    }
+
+    public Card3dsEntity getCard3ds() {
+        return card3ds;
+    }
+
+    public void setCard3ds(Card3dsEntity card3ds) {
+        this.card3ds = card3ds;
+        card3ds.setChargeTransactionEntity(this);
     }
 
     public void updateStatus(ChargeStatus newStatus, ZonedDateTime gatewayEventTime) {

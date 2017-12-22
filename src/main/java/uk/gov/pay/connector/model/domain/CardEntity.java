@@ -10,6 +10,7 @@ import javax.persistence.GeneratedValue;
 import javax.persistence.GenerationType;
 import javax.persistence.Id;
 import javax.persistence.JoinColumn;
+import javax.persistence.OneToOne;
 import javax.persistence.SequenceGenerator;
 import javax.persistence.Table;
 
@@ -39,6 +40,7 @@ public class CardEntity extends AbstractVersionedEntity {
     @Embedded
     private AddressEntity billingAddress;
 
+    @OneToOne
     @JoinColumn(name = "transaction_id", referencedColumnName = "id")
     private ChargeTransactionEntity chargeTransactionEntity;
 
