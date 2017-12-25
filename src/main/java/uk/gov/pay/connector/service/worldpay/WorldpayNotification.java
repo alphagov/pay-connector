@@ -3,7 +3,6 @@ package uk.gov.pay.connector.service.worldpay;
 import org.apache.http.NameValuePair;
 import org.eclipse.persistence.oxm.annotations.XmlPath;
 import uk.gov.pay.connector.model.ChargeStatusRequest;
-import uk.gov.pay.connector.model.Notification;
 import uk.gov.pay.connector.model.domain.ChargeStatus;
 
 import javax.xml.bind.annotation.XmlRootElement;
@@ -14,7 +13,18 @@ import java.util.List;
 import java.util.Optional;
 
 @XmlRootElement(name = "paymentService")
-public class WorldpayNotification implements ChargeStatusRequest, Notification<String> {
+public class WorldpayNotification implements ChargeStatusRequest {
+    public WorldpayNotification() {};
+
+    public WorldpayNotification(String merchantCode, String status, int dayOfMonth, int month, int year, String transactionId, String reference) {
+        this.merchantCode = merchantCode;
+        this.status = status;
+        this.dayOfMonth = dayOfMonth;
+        this.month = month;
+        this.year = year;
+        this.transactionId = transactionId;
+        this.reference = reference;
+    }
 
     @XmlPath("@merchantCode")
     private String merchantCode;
@@ -37,8 +47,6 @@ public class WorldpayNotification implements ChargeStatusRequest, Notification<S
     @XmlPath("notify/orderStatusEvent/journal/journalReference/@reference")
     private String reference;
 
-    private Optional<ChargeStatus> chargeStatus = Optional.empty();
-
     @Override
     public String getTransactionId() {
         return transactionId;
@@ -46,23 +54,17 @@ public class WorldpayNotification implements ChargeStatusRequest, Notification<S
 
     @Override
     public Optional<ChargeStatus> getChargeStatus() {
-        return chargeStatus;
-    }
-
-    public void setChargeStatus(Optional<ChargeStatus> chargeStatus) {
-        this.chargeStatus = chargeStatus;
+        return Optional.empty();
     }
 
     public String getStatus() {
         return status;
     }
 
-    @Override
     public ZonedDateTime getGatewayEventDate() {
         return getBookingDate().atStartOfDay(ZoneOffset.UTC);
     }
 
-    @Override
     public Optional<List<NameValuePair>> getPayload() {
         return null;
     }
@@ -89,7 +91,35 @@ public class WorldpayNotification implements ChargeStatusRequest, Notification<S
                 ", year=" + year +
                 ", transactionId='" + transactionId + '\'' +
                 ", reference='" + reference + '\'' +
-                ", chargeStatus=" + chargeStatus +
                 '}';
+    }
+
+    @Override
+    public boolean equals(Object o) {
+        if (this == o) return true;
+        if (o == null || getClass() != o.getClass()) return false;
+
+        WorldpayNotification that = (WorldpayNotification) o;
+
+        if (dayOfMonth != that.dayOfMonth) return false;
+        if (month != that.month) return false;
+        if (year != that.year) return false;
+        if (merchantCode != null ? !merchantCode.equals(that.merchantCode) : that.merchantCode != null) return false;
+        if (status != null ? !status.equals(that.status) : that.status != null) return false;
+        if (transactionId != null ? !transactionId.equals(that.transactionId) : that.transactionId != null)
+            return false;
+        return reference != null ? reference.equals(that.reference) : that.reference == null;
+    }
+
+    @Override
+    public int hashCode() {
+        int result = merchantCode != null ? merchantCode.hashCode() : 0;
+        result = 31 * result + (status != null ? status.hashCode() : 0);
+        result = 31 * result + dayOfMonth;
+        result = 31 * result + month;
+        result = 31 * result + year;
+        result = 31 * result + (transactionId != null ? transactionId.hashCode() : 0);
+        result = 31 * result + (reference != null ? reference.hashCode() : 0);
+        return result;
     }
 }

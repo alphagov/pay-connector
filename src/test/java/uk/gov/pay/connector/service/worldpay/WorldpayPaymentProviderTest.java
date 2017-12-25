@@ -4,6 +4,7 @@ import com.codahale.metrics.Counter;
 import com.codahale.metrics.Histogram;
 import com.codahale.metrics.MetricRegistry;
 import com.google.common.collect.ImmutableMap;
+import io.dropwizard.setup.Environment;
 import org.junit.Assert;
 import org.junit.Before;
 import org.junit.Test;
@@ -12,9 +13,9 @@ import org.mockito.ArgumentCaptor;
 import org.mockito.ArgumentMatcher;
 import org.mockito.Mock;
 import org.mockito.runners.MockitoJUnitRunner;
+import uk.gov.pay.connector.app.WorldpayConfig;
 import uk.gov.pay.connector.model.CaptureGatewayRequest;
 import uk.gov.pay.connector.model.GatewayError;
-import uk.gov.pay.connector.model.Notification;
 import uk.gov.pay.connector.model.OrderRequestType;
 import uk.gov.pay.connector.model.RefundGatewayRequest;
 import uk.gov.pay.connector.model.domain.Address;
@@ -39,6 +40,7 @@ import uk.gov.pay.connector.service.PaymentGatewayName;
 import uk.gov.pay.connector.util.AuthUtils;
 import uk.gov.pay.connector.util.TestTemplateResourceLoader;
 import uk.gov.pay.connector.util.XMLUnmarshallerException;
+import uk.gov.pay.connector.provider.worldpay.WorldpayPaymentProvider;
 
 import javax.ws.rs.client.Client;
 import javax.ws.rs.client.Entity;
@@ -58,7 +60,6 @@ import static org.custommonkey.xmlunit.XMLAssert.assertXMLEqual;
 import static org.hamcrest.CoreMatchers.instanceOf;
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.core.Is.is;
-import static org.hamcrest.core.IsSame.sameInstance;
 import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertTrue;
@@ -81,12 +82,12 @@ import static uk.gov.pay.connector.model.domain.GatewayAccount.CREDENTIALS_MERCH
 import static uk.gov.pay.connector.model.domain.GatewayAccount.CREDENTIALS_PASSWORD;
 import static uk.gov.pay.connector.model.domain.GatewayAccount.CREDENTIALS_USERNAME;
 import static uk.gov.pay.connector.model.domain.GatewayAccountEntity.Type.TEST;
-import static uk.gov.pay.connector.service.worldpay.WorldpayPaymentProvider.WORLDPAY_MACHINE_COOKIE_NAME;
-import static uk.gov.pay.connector.service.worldpay.WorldpayPaymentProvider.includeSessionIdentifier;
+import static uk.gov.pay.connector.provider.worldpay.WorldpayPaymentProvider.WORLDPAY_MACHINE_COOKIE_NAME;
 import static uk.gov.pay.connector.util.TestTemplateResourceLoader.WORLDPAY_NOTIFICATION;
 import static uk.gov.pay.connector.util.TestTemplateResourceLoader.WORLDPAY_VALID_3DS_RESPONSE_AUTH_WORLDPAY_REQUEST;
 import static uk.gov.pay.connector.util.TestTemplateResourceLoader.WORLDPAY_VALID_AUTHORISE_WORLDPAY_REQUEST_EXCLUDING_3DS;
 import static uk.gov.pay.connector.util.TestTemplateResourceLoader.WORLDPAY_VALID_AUTHORISE_WORLDPAY_REQUEST_INCLUDING_3DS;
+import static uk.gov.pay.connector.util.XMLUnmarshaller.unmarshall;
 
 @RunWith(MockitoJUnitRunner.class)
 public class WorldpayPaymentProviderTest {
@@ -113,6 +114,10 @@ public class WorldpayPaymentProviderTest {
     private ClientFactory mockClientFactory;
     @Mock
     private ExternalRefundAvailabilityCalculator externalRefundAvailabilityCalculator;
+    @Mock
+    private WorldpayConfig mockWorldpayConfig;
+    @Mock
+    private Environment mockEnvironment;
 
     @Before
     public void setup() throws Exception {
@@ -122,27 +127,10 @@ public class WorldpayPaymentProviderTest {
         when(mockMetricRegistry.counter(anyString())).thenReturn(mockCounter);
         when(mockClientFactory.createWithDropwizardClient(
                 eq(PaymentGatewayName.WORLDPAY), any(GatewayOperation.class), any(MetricRegistry.class))
-        )
-                .thenReturn(mockClient);
+            ).thenReturn(mockClient);
 
-        GatewayClient authClient = gatewayClientFactory.createGatewayClient(PaymentGatewayName.WORLDPAY, GatewayOperation.AUTHORISE,
-                urlMap, includeSessionIdentifier(), mockMetricRegistry);
-        GatewayClient cancelClient = gatewayClientFactory.createGatewayClient(PaymentGatewayName.WORLDPAY, GatewayOperation.CANCEL,
-                urlMap, includeSessionIdentifier(), mockMetricRegistry);
-        GatewayClient refundClient = gatewayClientFactory.createGatewayClient(PaymentGatewayName.WORLDPAY, GatewayOperation.REFUND,
-                urlMap, includeSessionIdentifier(), mockMetricRegistry);
-        GatewayClient captureClient = gatewayClientFactory.createGatewayClient(PaymentGatewayName.WORLDPAY, GatewayOperation.CAPTURE,
-                urlMap, includeSessionIdentifier(), mockMetricRegistry);
-
-        gatewayClients = GatewayOperationClientBuilder.builder()
-                .authClient(authClient)
-                .captureClient(captureClient)
-                .cancelClient(cancelClient)
-                .refundClient(refundClient)
-                .build();
-
-
-        provider = new WorldpayPaymentProvider(gatewayClients, false, null, externalRefundAvailabilityCalculator);
+        provider = new WorldpayPaymentProvider(mockWorldpayConfig, gatewayClientFactory,
+                externalRefundAvailabilityCalculator, mockEnvironment);
     }
 
     @Test
@@ -157,30 +145,18 @@ public class WorldpayPaymentProviderTest {
     }
 
     @Test
-    public void shouldAlwaysVerifyNotification() {
-        Assert.assertThat(provider.verifyNotification(null, mock(GatewayAccountEntity.class)), is(true));
-    }
-
-    @Test
     public void testRefundRequestContainsReference() {
         ChargeEntity chargeEntity = ChargeEntityFixture.aValidChargeEntity().build();
         RefundEntity refundEntity = RefundEntityFixture.aValidRefundEntity().withCharge(chargeEntity).build();
         chargeEntity.setGatewayTransactionId("transaction-id");
         chargeEntity.setGatewayAccount(mockGatewayAccountEntity);
 
-        EnumMap<GatewayOperation, GatewayClient> gatewayClientEnumMap = GatewayOperationClientBuilder.builder()
-                .authClient(mockGatewayClient)
-                .captureClient(mockGatewayClient)
-                .cancelClient(mockGatewayClient)
-                .refundClient(mockGatewayClient)
-                .build();
 
         Map<String, String> credentialsMap = ImmutableMap.of("merchant_id", "MERCHANTCODE");
         when(mockGatewayAccountEntity.getCredentials()).thenReturn(credentialsMap);
         when(mockGatewayClient.postRequestFor(isNull(String.class), any(GatewayAccountEntity.class), any(GatewayOrder.class))).thenReturn(left(unexpectedStatusCodeFromGateway("Unexpected Response Code From Gateway")));
 
-        WorldpayPaymentProvider worldpayPaymentProvider = new WorldpayPaymentProvider(gatewayClientEnumMap, false, null, externalRefundAvailabilityCalculator);
-        worldpayPaymentProvider.refund(RefundGatewayRequest.valueOf(refundEntity));
+        provider.refund(RefundGatewayRequest.valueOf(refundEntity));
 
         String expectedRefundRequest =
                 "<?xml version=\"1.0\" encoding=\"UTF-8\"?>\n" +
@@ -212,21 +188,12 @@ public class WorldpayPaymentProviderTest {
         chargeEntity.setGatewayTransactionId("transaction-id");
         chargeEntity.setGatewayAccount(mockGatewayAccountEntity);
 
-        EnumMap<GatewayOperation, GatewayClient> gatewayClientEnumMap = GatewayOperationClientBuilder.builder()
-                .authClient(mockGatewayClient)
-                .captureClient(mockGatewayClient)
-                .cancelClient(mockGatewayClient)
-                .refundClient(mockGatewayClient)
-                .build();
-
         Map<String, String> credentialsMap = ImmutableMap.of("merchant_id", "MERCHANTCODE");
         when(mockGatewayAccountEntity.getCredentials()).thenReturn(credentialsMap);
         when(mockGatewayAccountEntity.isRequires3ds()).thenReturn(false);
         when(mockGatewayClient.postRequestFor(isNull(String.class), any(GatewayAccountEntity.class), any(GatewayOrder.class))).thenReturn(left(unexpectedStatusCodeFromGateway("Unexpected Response Code From Gateway")));
 
-        WorldpayPaymentProvider worldpayPaymentProvider = new WorldpayPaymentProvider(gatewayClientEnumMap, false, null, externalRefundAvailabilityCalculator);
-
-        worldpayPaymentProvider.authorise(getCardAuthorisationRequest(chargeEntity));
+        provider.authorise(getCardAuthorisationRequest(chargeEntity));
 
         ArgumentCaptor<GatewayOrder> gatewayOrderArgumentCaptor = ArgumentCaptor.forClass(GatewayOrder.class);
 
@@ -261,9 +228,7 @@ public class WorldpayPaymentProviderTest {
         when(mockGatewayAccountEntity.isRequires3ds()).thenReturn(true);
         when(mockGatewayClient.postRequestFor(isNull(String.class), any(GatewayAccountEntity.class), any(GatewayOrder.class))).thenReturn(left(unexpectedStatusCodeFromGateway("Unexpected Response Code From Gateway")));
 
-        WorldpayPaymentProvider worldpayPaymentProvider = new WorldpayPaymentProvider(gatewayClientEnumMap, false, null, externalRefundAvailabilityCalculator);
-
-        worldpayPaymentProvider.authorise(getCardAuthorisationRequest(mockChargeEntity));
+        provider.authorise(getCardAuthorisationRequest(mockChargeEntity));
 
         ArgumentCaptor<GatewayOrder> gatewayOrderArgumentCaptor = ArgumentCaptor.forClass(GatewayOrder.class);
 
@@ -295,9 +260,7 @@ public class WorldpayPaymentProviderTest {
         when(mockGatewayAccountEntity.isRequires3ds()).thenReturn(true);
         when(mockGatewayClient.postRequestFor(isNull(String.class), any(GatewayAccountEntity.class), any(GatewayOrder.class))).thenReturn(left(unexpectedStatusCodeFromGateway("Unexpected Response Code From Gateway")));
 
-        WorldpayPaymentProvider worldpayPaymentProvider = new WorldpayPaymentProvider(gatewayClientEnumMap, false, null, externalRefundAvailabilityCalculator);
-
-        worldpayPaymentProvider.authorise3dsResponse(get3dsResponseGatewayRequest(mockChargeEntity));
+        provider.authorise3dsResponse(get3dsResponseGatewayRequest(mockChargeEntity));
 
         ArgumentCaptor<GatewayOrder> gatewayOrderArgumentCaptor = ArgumentCaptor.forClass(GatewayOrder.class);
 
@@ -331,9 +294,7 @@ public class WorldpayPaymentProviderTest {
         when(mockGatewayAccountEntity.isRequires3ds()).thenReturn(true);
         when(mockGatewayClient.postRequestFor(isNull(String.class), any(GatewayAccountEntity.class), any(GatewayOrder.class))).thenReturn(left(unexpectedStatusCodeFromGateway("Unexpected Response Code From Gateway")));
 
-        WorldpayPaymentProvider worldpayPaymentProvider = new WorldpayPaymentProvider(gatewayClientEnumMap, false, null, externalRefundAvailabilityCalculator);
-
-        worldpayPaymentProvider.authorise3dsResponse(get3dsResponseGatewayRequest(mockChargeEntity));
+        provider.authorise3dsResponse(get3dsResponseGatewayRequest(mockChargeEntity));
 
         ArgumentCaptor<GatewayOrder> gatewayOrderArgumentCaptor = ArgumentCaptor.forClass(GatewayOrder.class);
 
@@ -390,7 +351,7 @@ public class WorldpayPaymentProviderTest {
 
     @Test(expected = XMLUnmarshallerException.class)
     public void parseNotification_shouldThrowErrorIfUnparseableXml() throws XMLUnmarshallerException {
-        provider.parseNotification("not valid xml");
+        unmarshall("not valid xml", WorldpayNotification.class);
     }
 
     @Test
@@ -401,17 +362,12 @@ public class WorldpayPaymentProviderTest {
         String bookingDateDay = "10";
         String bookingDateMonth = "03";
         String bookingDateYear = "2017";
-        WorldpayNotification worldpayNotification = provider.parseNotification(notificationPayloadForTransaction(transactionId, referenceId, status, bookingDateDay, bookingDateMonth, bookingDateYear));
+        WorldpayNotification worldpayNotification = unmarshall(notificationPayloadForTransaction(transactionId, referenceId, status, bookingDateDay, bookingDateMonth, bookingDateYear), WorldpayNotification.class);
 
         assertThat(worldpayNotification.getTransactionId(), is(transactionId));
         assertThat(worldpayNotification.getReference(), is(referenceId));
         assertThat(worldpayNotification.getStatus(), is(status));
         assertThat(worldpayNotification.getGatewayEventDate(), is(ZonedDateTime.parse(format("%s-%s-%sT00:00Z", bookingDateYear, bookingDateMonth, bookingDateDay))));
-    }
-
-    @Test
-    public void shouldTreatAllNotificationsAsVerified() {
-        assertThat(provider.verifyNotification(mock(Notification.class), mockGatewayAccountEntity), is(true));
     }
 
     @Test

@@ -4,8 +4,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import uk.gov.pay.connector.service.EpdqNotificationService;
 import uk.gov.pay.connector.service.SmartpayNotificationService;
-import uk.gov.pay.connector.service.worldpay.WorldpayNotificationService;
-import uk.gov.pay.connector.service.PaymentGatewayName;
+import uk.gov.pay.connector.provider.worldpay.WorldpayNotificationService;
 
 import javax.annotation.security.PermitAll;
 import javax.inject.Inject;
@@ -24,7 +23,6 @@ import static uk.gov.pay.connector.resources.ApiPaths.NOTIFICATIONS_EPDQ_API_PAT
 import static uk.gov.pay.connector.resources.ApiPaths.NOTIFICATIONS_SANDBOX_API_PATH;
 import static uk.gov.pay.connector.resources.ApiPaths.NOTIFICATIONS_SMARTPAY_API_PATH;
 import static uk.gov.pay.connector.resources.ApiPaths.NOTIFICATIONS_WORLDPAY_API_PATH;
-import static uk.gov.pay.connector.service.PaymentGatewayName.SMARTPAY;
 import static uk.gov.pay.connector.util.ResponseUtil.forbiddenErrorResponse;
 
 @Path("/")

@@ -4,6 +4,7 @@ import com.google.common.io.Resources;
 
 import java.io.IOException;
 import java.nio.charset.Charset;
+import java.util.Map;
 
 public class TestTemplateResourceLoader {
     private static final String TEMPLATE_BASE_NAME = "templates";
@@ -111,4 +112,34 @@ public class TestTemplateResourceLoader {
         }
     }
 
+    static public String load(String location, Map<String, String> substitutions) {
+        String template = load(location);
+        for(Map.Entry<String, String> entry : substitutions.entrySet()) {
+            template = template.replace("{{" + entry.getKey() + "}}", entry.getValue());
+        }
+        return template;
+    }
+
+    public static String sampleWorldpayNotification(
+            String transactionId,
+            String referenceId,
+            String status) {
+        return sampleWorldpayNotification(transactionId, referenceId, status, "2017", "10", "22");
+    }
+
+    public static String sampleWorldpayNotification(
+            String transactionId,
+            String referenceId,
+            String status,
+            String bookingDateDay,
+            String bookingDateMonth,
+            String bookingDateYear) {
+        return load(WORLDPAY_NOTIFICATION)
+                .replace("{{transactionId}}", transactionId)
+                .replace("{{refund-ref}}", referenceId)
+                .replace("{{status}}", status)
+                .replace("{{bookingDateDay}}", bookingDateDay)
+                .replace("{{bookingDateMonth}}", bookingDateMonth)
+                .replace("{{bookingDateYear}}", bookingDateYear);
+    }
 }

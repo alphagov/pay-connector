@@ -25,7 +25,7 @@ import uk.gov.pay.connector.service.GatewayOperation;
 import uk.gov.pay.connector.service.GatewayOperationClientBuilder;
 import uk.gov.pay.connector.service.worldpay.WorldpayCaptureResponse;
 import uk.gov.pay.connector.service.worldpay.WorldpayOrderStatusResponse;
-import uk.gov.pay.connector.service.worldpay.WorldpayPaymentProvider;
+import uk.gov.pay.connector.provider.worldpay.WorldpayPaymentProvider;
 import uk.gov.pay.connector.util.AuthUtils;
 
 import javax.ws.rs.client.ClientBuilder;
@@ -247,7 +247,7 @@ public class WorldpayPaymentProviderTest {
         GatewayClient gatewayClient = new GatewayClient(
                 ClientBuilder.newClient(),
                 getWorldpayConfig().getUrls(),
-            WorldpayPaymentProvider.includeSessionIdentifier(),
+            WorldpayPaymentProvider::includeSessionIdentifier,
                 mockMetricRegistry
         );
         EnumMap<GatewayOperation, GatewayClient> gatewayClientEnumMap = GatewayOperationClientBuilder.builder()
@@ -256,7 +256,8 @@ public class WorldpayPaymentProviderTest {
                 .cancelClient(gatewayClient)
                 .refundClient(gatewayClient)
                 .build();
-        return new WorldpayPaymentProvider(gatewayClientEnumMap, false, null, defaultExternalRefundAvailabilityCalculator);
+//        return new WorldpayPaymentProvider();
+        return null;
     }
 
     private GatewayConfig getWorldpayConfig() {

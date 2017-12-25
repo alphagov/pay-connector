@@ -142,10 +142,10 @@ public class CardAuthoriseServiceTest extends CardServiceTest {
 
     private void setupPaymentProviderMock(GatewayError gatewayError) {
         GatewayResponseBuilder<WorldpayOrderStatusResponse> gatewayResponseBuilder = responseBuilder();
-        GatewayResponse authorisationResponse = gatewayResponseBuilder
+        GatewayResponse<WorldpayOrderStatusResponse> authorisationResponse = gatewayResponseBuilder
                 .withGatewayError(gatewayError)
                 .build();
-        when(mockedPaymentProvider.authorise(any())).thenReturn(authorisationResponse);
+        when(mockedPaymentProvider.<WorldpayOrderStatusResponse>authorise(any())).thenReturn(authorisationResponse);
     }
 
     @Test

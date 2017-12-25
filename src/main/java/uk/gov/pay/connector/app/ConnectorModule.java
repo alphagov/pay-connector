@@ -9,11 +9,15 @@ import com.google.inject.persist.jpa.JpaPersistModule;
 import io.dropwizard.db.DataSourceFactory;
 import io.dropwizard.setup.Environment;
 import uk.gov.pay.connector.model.builder.EntityBuilder;
+import uk.gov.pay.connector.provider.worldpay.WorldpayModule;
 import uk.gov.pay.connector.resources.GatewayAccountRequestValidator;
 import uk.gov.pay.connector.service.CardExecutorService;
+import uk.gov.pay.connector.service.DefaultExternalRefundAvailabilityCalculator;
+import uk.gov.pay.connector.service.ExternalRefundAvailabilityCalculator;
 import uk.gov.pay.connector.service.GatewayAccountServicesFactory;
 import uk.gov.pay.connector.service.PaymentProviders;
 import uk.gov.pay.connector.service.notify.NotifyClientFactoryProvider;
+import uk.gov.pay.connector.provider.worldpay.WorldpayPaymentProvider;
 import uk.gov.pay.connector.util.HashUtil;
 import uk.gov.pay.connector.validations.RequestValidator;
 
@@ -38,10 +42,12 @@ public class ConnectorModule extends AbstractModule {
         bind(HashUtil.class);
         bind(RequestValidator.class);
         bind(GatewayAccountRequestValidator.class).in(Singleton.class);
+        bind(ExternalRefundAvailabilityCalculator.class).to(DefaultExternalRefundAvailabilityCalculator.class);
 
         install(jpaModule(configuration));
         install(new FactoryModuleBuilder().build(NotifyClientFactoryProvider.class));
         install(new FactoryModuleBuilder().build(GatewayAccountServicesFactory.class));
+        install(new WorldpayModule());
     }
 
     private JpaPersistModule jpaModule(ConnectorConfiguration configuration) {

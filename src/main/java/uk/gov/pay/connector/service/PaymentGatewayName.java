@@ -35,4 +35,8 @@ public enum PaymentGatewayName {
         }
         throw new Unsupported("Unsupported Payment Gateway " + gatewayName);
     }
+
+    public String toString() {
+        return getName();
+    }
 }

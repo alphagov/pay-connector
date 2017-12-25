@@ -4,6 +4,7 @@ import org.junit.Test;
 import uk.gov.pay.connector.service.BaseAuthoriseResponse.AuthoriseStatus;
 import uk.gov.pay.connector.service.BaseCancelResponse;
 import uk.gov.pay.connector.service.worldpay.*;
+import uk.gov.pay.connector.service.worldpay.WorldpayNotification;
 
 import java.time.LocalDate;
 

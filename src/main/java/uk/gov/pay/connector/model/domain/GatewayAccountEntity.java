@@ -47,7 +47,8 @@ public class GatewayAccountEntity extends AbstractVersionedEntity {
         }
     }
 
-    public GatewayAccountEntity() {}
+    public GatewayAccountEntity() {
+    }
 
     @Id
     @GeneratedValue(strategy = GenerationType.SEQUENCE, generator = "gateway_accounts_gateway_account_id_seq")
@@ -136,6 +137,10 @@ public class GatewayAccountEntity extends AbstractVersionedEntity {
     @JsonView(value = {Views.ApiView.class, Views.FrontendView.class})
     public String getType() {
         return type.value;
+    }
+
+    public Type getTypeAsEnum() {
+        return type;
     }
 
     @JsonProperty("service_name")

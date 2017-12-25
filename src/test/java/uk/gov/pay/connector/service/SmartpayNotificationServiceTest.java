@@ -48,7 +48,7 @@ import static uk.gov.pay.connector.service.PaymentGatewayName.SANDBOX;
 import static uk.gov.pay.connector.service.PaymentGatewayName.WORLDPAY;
 
 @RunWith(MockitoJUnitRunner.class)
-public class NotificationServiceTest {
+public class SmartpayNotificationServiceTest {
 
     private static final String TRANSACTION_ID = "transaction-id";
 
@@ -140,7 +140,7 @@ public class NotificationServiceTest {
 
         when(mockedPaymentProvider.parseNotification(any())).thenReturn(Either.left("Error"));
 
-        notificationService.handleNotificationFor("", SANDBOX, "payload");
+        notificationService.handleNotificationFor("payload");
 
         verifyNoMoreInteractions(mockedChargeDao);
     }
@@ -154,7 +154,7 @@ public class NotificationServiceTest {
         StatusMapper mockedStatusMapper = createMockedStatusMapper(InterpretedStatus.Type.UNKNOWN, null);
         when(mockedPaymentProvider.getStatusMapper()).thenReturn(mockedStatusMapper);
 
-        notificationService.handleNotificationFor("", SANDBOX, "payload");
+        notificationService.handleNotificationFor("payload");
 
         verifyNoMoreInteractions(ignoreStubs(mockedChargeDao));
     }
@@ -167,7 +167,7 @@ public class NotificationServiceTest {
         StatusMapper mockedStatusMapper = createMockedStatusMapper(InterpretedStatus.Type.IGNORED, null);
         when(mockedPaymentProvider.getStatusMapper()).thenReturn(mockedStatusMapper);
 
-        notificationService.handleNotificationFor("", SANDBOX, "payload");
+        notificationService.handleNotificationFor("payload");
 
         verifyNoMoreInteractions(ignoreStubs(mockedChargeDao));
     }
@@ -181,7 +181,7 @@ public class NotificationServiceTest {
         StatusMapper mockedStatusMapper = createMockedStatusMapper(InterpretedStatus.Type.CHARGE_STATUS, CAPTURED);
         when(mockedPaymentProvider.getStatusMapper()).thenReturn(mockedStatusMapper);
 
-        notificationService.handleNotificationFor("", SANDBOX, "payload");
+        notificationService.handleNotificationFor("payload");
 
         verifyNoMoreInteractions(ignoreStubs(mockedChargeDao));
     }
@@ -196,7 +196,7 @@ public class NotificationServiceTest {
 
         when(mockedChargeDao.findByProviderAndTransactionId(SANDBOX.getName(), TRANSACTION_ID)).thenReturn(Optional.empty());
 
-        notificationService.handleNotificationFor("", SANDBOX, "payload");
+        notificationService.handleNotificationFor("payload");
 
         verifyNoMoreInteractions(ignoreStubs(mockedChargeDao));
     }
@@ -212,7 +212,7 @@ public class NotificationServiceTest {
         when(mockedChargeDao.findByProviderAndTransactionId(SANDBOX.getName(), TRANSACTION_ID)).thenReturn(Optional.of(mockedChargeEntity))
                 .thenReturn(Optional.empty());
 
-        notificationService.handleNotificationFor("", SANDBOX, "payload");
+        notificationService.handleNotificationFor("payload");
 
         verifyNoMoreInteractions(ignoreStubs(mockedChargeDao));
     }
@@ -228,7 +228,7 @@ public class NotificationServiceTest {
         when(mockedChargeDao.findByProviderAndTransactionId(SANDBOX.getName(), TRANSACTION_ID)).thenReturn(Optional.of(mockedChargeEntity))
                 .thenReturn(Optional.of(mockedChargeEntity)).thenReturn(Optional.empty());
 
-        notificationService.handleNotificationFor("", SANDBOX, "payload");
+        notificationService.handleNotificationFor("payload");
 
         verifyNoMoreInteractions(ignoreStubs(mockedChargeDao));
     }
@@ -249,7 +249,7 @@ public class NotificationServiceTest {
         doThrow(new InvalidStateTransitionException("AUTHORISATION SUCCESS", "CAPTURED"))
                 .when(mockedChargeEntity).setStatus(CAPTURED);
 
-        notificationService.handleNotificationFor("", SANDBOX, "payload");
+        notificationService.handleNotificationFor("payload");
 
         verify(mockedChargeEntity, atLeastOnce()).getStatus();
         verify(mockedChargeEntity).setStatus(CAPTURED);
@@ -264,7 +264,7 @@ public class NotificationServiceTest {
         StatusMapper mockedStatusMapper = createMockedStatusMapper(InterpretedStatus.Type.REFUND_STATUS, REFUNDED);
         when(mockedPaymentProvider.getStatusMapper()).thenReturn(mockedStatusMapper);
 
-        notificationService.handleNotificationFor("", SANDBOX, "payload");
+        notificationService.handleNotificationFor("payload");
 
         verifyNoMoreInteractions(ignoreStubs(mockedChargeDao));
     }
@@ -279,7 +279,7 @@ public class NotificationServiceTest {
 
         when(mockedPaymentProvider.verifyNotification(any(Notification.class), any(GatewayAccountEntity.class))).thenReturn(false);
 
-        notificationService.handleNotificationFor("", SANDBOX, "payload");
+        notificationService.handleNotificationFor("payload");
 
         verifyNoMoreInteractions(ignoreStubs(mockedChargeDao));
     }
@@ -297,7 +297,7 @@ public class NotificationServiceTest {
         when(mockedRefundDao.findByProviderAndReference(SANDBOX.getName(), reference))
                 .thenReturn(Optional.empty());
 
-        notificationService.handleNotificationFor("", SANDBOX, "payload");
+        notificationService.handleNotificationFor("payload");
 
         verify(mockedRefundDao).findByProviderAndReference(SANDBOX.getName(), reference);
         verifyNoMoreInteractions(ignoreStubs(mockedChargeDao));
@@ -311,7 +311,7 @@ public class NotificationServiceTest {
         StatusMapper mockedStatusMapper = createMockedStatusMapper(InterpretedStatus.Type.CHARGE_STATUS, CAPTURED);
         when(mockedPaymentProvider.getStatusMapper()).thenReturn(mockedStatusMapper);
 
-        notificationService.handleNotificationFor("", SANDBOX, "payload");
+        notificationService.handleNotificationFor("payload");
 
         verify(mockedChargeEntity).setStatus(CAPTURED);
 
@@ -349,7 +349,7 @@ public class NotificationServiceTest {
         when(mockedRefundEntity.getChargeEntity()).thenReturn(mockedChargeEntity);
         when(mockedChargeEntity.getGatewayAccount()).thenReturn(mockedGatewayAccount);
 
-        notificationService.handleNotificationFor("", SANDBOX, "payload");
+        notificationService.handleNotificationFor("payload");
 
         verify(mockedRefundDao).findByProviderAndReference(SANDBOX.getName(), reference);
         verify(mockedRefundEntity).setStatus(REFUNDED);
@@ -364,7 +364,7 @@ public class NotificationServiceTest {
         when(mockedPaymentProvider.getNotificationDomain()).thenReturn("something.com");
         when(mockDnsUtils.reverseDnsLookup(anyString())).thenReturn(Optional.empty());
 
-        assertThat(notificationService.handleNotificationFor("", WORLDPAY, "payload"), is(false));
+        assertThat(notificationService.handleNotificationFor("payload"), is(false));
         verifyZeroInteractions(mockedChargeDao);
     }
 
@@ -383,6 +383,6 @@ public class NotificationServiceTest {
         when(mockedPaymentProvider.isNotificationEndpointSecured()).thenReturn(true);
         when(mockedPaymentProvider.getNotificationDomain()).thenReturn(domain);
 
-        assertThat(notificationService.handleNotificationFor(ipAddress, WORLDPAY, "payload"), is(true));
+        assertThat(notificationService.handleNotificationFor("payload"), is(true));
     }
 }

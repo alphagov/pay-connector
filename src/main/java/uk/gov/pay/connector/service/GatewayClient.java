@@ -14,7 +14,6 @@ import javax.ws.rs.ProcessingException;
 import javax.ws.rs.client.Client;
 import javax.ws.rs.client.Entity;
 import javax.ws.rs.client.Invocation.Builder;
-import javax.ws.rs.core.MediaType;
 import java.net.SocketException;
 import java.net.SocketTimeoutException;
 import java.net.UnknownHostException;
@@ -39,24 +38,21 @@ public class GatewayClient {
     private final Client client;
     private final Map<String, String> gatewayUrlMap;
     private final MetricRegistry metricRegistry;
-    private final BiFunction<GatewayOrder, Builder, Builder> sessionIdentifier;
+    private final BiFunction<GatewayOrder, Builder, Builder> sessionIdentiferInjector;
 
     public GatewayClient(Client client, Map<String, String> gatewayUrlMap,
-        BiFunction<GatewayOrder, Builder, Builder> sessionIdentifier, MetricRegistry metricRegistry) {
+        BiFunction<GatewayOrder, Builder, Builder> sessionIdentiferInjector, MetricRegistry metricRegistry) {
         this.gatewayUrlMap = gatewayUrlMap;
         this.client = client;
         this.metricRegistry = metricRegistry;
-        this.sessionIdentifier = sessionIdentifier;
+        this.sessionIdentiferInjector = sessionIdentiferInjector;
     }
 
     public Either<GatewayError, GatewayClient.Response> postRequestFor(String route, GatewayAccountEntity account, GatewayOrder request) {
-        String metricsPrefix = String.format("gateway-operations.%s.%s.%s", account.getGatewayName(), account.getType(), request.getOrderRequestType());
+        String metricsPrefix = metrixPrefix(account, request);
         javax.ws.rs.core.Response response = null;
 
-        String gatewayUrl = gatewayUrlMap.get(account.getType());
-        if (route != null) {
-            gatewayUrl = String.format("%s/%s", gatewayUrl, route);
-        }
+        String gatewayUrl = gatewayUrl(route, account.getTypeAsEnum());
 
         Stopwatch responseTimeStopwatch = Stopwatch.createStarted();
         try {
@@ -67,7 +63,7 @@ public class GatewayClient {
                             account.getCredentials().get(CREDENTIALS_USERNAME),
                             account.getCredentials().get(CREDENTIALS_PASSWORD)));
 
-            response = sessionIdentifier.apply(request, requestBuilder)
+            response = sessionIdentiferInjector.apply(request, requestBuilder)
                     .post(Entity.entity(request.getPayload(), request.getMediaType()));
 
             int statusCode = response.getStatus();
@@ -80,23 +76,7 @@ public class GatewayClient {
                 return left(unexpectedStatusCodeFromGateway("Unexpected Response Code From Gateway"));
             }
         } catch (ProcessingException pe) {
-            incrementFailureCounter(metricRegistry, metricsPrefix);
-            if (pe.getCause() != null) {
-                if (pe.getCause() instanceof UnknownHostException) {
-                    logger.error(format("DNS resolution error for gateway url=%s", gatewayUrl), pe);
-                    return left(unknownHostException("Gateway Url DNS resolution error"));
-                }
-                if (pe.getCause() instanceof SocketTimeoutException) {
-                    logger.error(format("Connection timed out error for gateway url=%s", gatewayUrl), pe);
-                    return left(gatewayConnectionTimeoutException("Gateway connection timeout error"));
-                }
-                if (pe.getCause() instanceof SocketException) {
-                    logger.error(format("Socket Exception for gateway url=%s", gatewayUrl), pe);
-                    return left(gatewayConnectionSocketException("Gateway connection socket error"));
-                }
-            }
-            logger.error(format("Exception for gateway url=%s", gatewayUrl), pe);
-            return left(baseError(pe.getMessage()));
+            return handleProcessingException(metricsPrefix, gatewayUrl, pe);
         } catch (Exception e) {
             incrementFailureCounter(metricRegistry, metricsPrefix);
             logger.error(format("Exception for gateway url=%s", gatewayUrl), e);
@@ -108,6 +88,38 @@ public class GatewayClient {
                 response.close();
             }
         }
+    }
+
+    private String metrixPrefix(GatewayAccountEntity account, GatewayOrder request) {
+        return String.format("gateway-operations.%s.%s.%s", account.getGatewayName(), account.getType(), request.getOrderRequestType());
+    }
+
+    private String gatewayUrl(String route, GatewayAccountEntity.Type type) {
+        String gatewayUrl = gatewayUrlMap.get(type.toString());
+        if (route != null) {
+            gatewayUrl = String.format("%s/%s", gatewayUrl, route);
+        }
+        return gatewayUrl;
+    }
+
+    private Either<GatewayError, Response> handleProcessingException(String metricsPrefix, String gatewayUrl, ProcessingException pe) {
+        incrementFailureCounter(metricRegistry, metricsPrefix);
+        if (pe.getCause() != null) {
+            if (pe.getCause() instanceof UnknownHostException) {
+                logger.error(format("DNS resolution error for gateway url=%s", gatewayUrl), pe);
+                return left(unknownHostException("Gateway Url DNS resolution error"));
+            }
+            if (pe.getCause() instanceof SocketTimeoutException) {
+                logger.error(format("Connection timed out error for gateway url=%s", gatewayUrl), pe);
+                return left(gatewayConnectionTimeoutException("Gateway connection timeout error"));
+            }
+            if (pe.getCause() instanceof SocketException) {
+                logger.error(format("Socket Exception for gateway url=%s", gatewayUrl), pe);
+                return left(gatewayConnectionSocketException("Gateway connection socket error"));
+            }
+        }
+        logger.error(format("Exception for gateway url=%s", gatewayUrl), pe);
+        return left(baseError(pe.getMessage()));
     }
 
     public <T> Either<GatewayError, T> unmarshallResponse(GatewayClient.Response response, Class<T> clazz) {
