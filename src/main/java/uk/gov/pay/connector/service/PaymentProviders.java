@@ -46,6 +46,7 @@ public class PaymentProviders {
                             GatewayClientFactory gatewayClientFactory,
                             ObjectMapper objectMapper,
                             Environment environment,
+                            EpdqPaymentProvider epdqProvider,
                             WorldpayPaymentProvider worldpayProvider
     ) {
         this.gatewayClientFactory = gatewayClientFactory;
@@ -55,7 +56,7 @@ public class PaymentProviders {
         this.worldpayProvider = worldpayProvider;
         smartPayProvider = createSmartPayProvider(objectMapper);
         sandboxProvider = new SandboxPaymentProvider(defaultExternalRefundAvailabilityCalculator);
-        epdqProvider = createEpdqProvider();
+        this.epdqProvider = epdqProvider;
     }
 
     private GatewayClient gatewayClientForOperation(PaymentGatewayName gateway,
@@ -80,17 +81,6 @@ public class PaymentProviders {
                 objectMapper,
                 defaultExternalRefundAvailabilityCalculator
         );
-    }
-
-    private EpdqPaymentProvider createEpdqProvider() {
-        EnumMap<GatewayOperation, GatewayClient> gatewayClientEnumMap = GatewayOperationClientBuilder.builder()
-                .authClient(gatewayClientForOperation(EPDQ, AUTHORISE, EpdqPaymentProvider.includeSessionIdentifier()))
-                .cancelClient(gatewayClientForOperation(EPDQ, CANCEL, EpdqPaymentProvider.includeSessionIdentifier()))
-                .captureClient(gatewayClientForOperation(EPDQ, CAPTURE, EpdqPaymentProvider.includeSessionIdentifier()))
-                .refundClient(gatewayClientForOperation(EPDQ, REFUND, EpdqPaymentProvider.includeSessionIdentifier()))
-                .build();
-
-        return new EpdqPaymentProvider(gatewayClientEnumMap, new EpdqSha512SignatureGenerator(), epdqExternalRefundAvailabilityCalculator);
     }
 
     public WorldpayPaymentProvider getWorldpayProvider() {

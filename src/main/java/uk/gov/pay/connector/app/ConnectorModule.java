@@ -9,6 +9,7 @@ import com.google.inject.persist.jpa.JpaPersistModule;
 import io.dropwizard.db.DataSourceFactory;
 import io.dropwizard.setup.Environment;
 import uk.gov.pay.connector.model.builder.EntityBuilder;
+import uk.gov.pay.connector.provider.epdq.EpdqModule;
 import uk.gov.pay.connector.provider.worldpay.WorldpayModule;
 import uk.gov.pay.connector.resources.GatewayAccountRequestValidator;
 import uk.gov.pay.connector.service.CardExecutorService;
@@ -48,6 +49,7 @@ public class ConnectorModule extends AbstractModule {
         install(new FactoryModuleBuilder().build(NotifyClientFactoryProvider.class));
         install(new FactoryModuleBuilder().build(GatewayAccountServicesFactory.class));
         install(new WorldpayModule());
+        install(new EpdqModule());
     }
 
     private JpaPersistModule jpaModule(ConnectorConfiguration configuration) {

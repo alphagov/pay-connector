@@ -10,6 +10,8 @@ import org.junit.Ignore;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.mockito.runners.MockitoJUnitRunner;
+import uk.gov.pay.connector.app.GatewayConfig;
+import uk.gov.pay.connector.app.JerseyClientOverrides;
 import uk.gov.pay.connector.model.CancelGatewayRequest;
 import uk.gov.pay.connector.model.CaptureGatewayRequest;
 import uk.gov.pay.connector.model.RefundGatewayRequest;
@@ -35,6 +37,7 @@ import uk.gov.pay.connector.util.TestClientFactory;
 import javax.ws.rs.client.Client;
 import java.io.IOException;
 import java.net.URL;
+import java.util.Arrays;
 import java.util.EnumMap;
 import java.util.Map;
 
@@ -166,16 +169,26 @@ public class EpdqPaymentProviderTest {
     }
 
     private PaymentProviderOperations getEpdqPaymentProvider() throws Exception {
-        Client client = TestClientFactory.createJerseyClient();
-        GatewayClient gatewayClient = new GatewayClient(client, ImmutableMap.of(TEST.toString(), url),
-            EpdqPaymentProvider.includeSessionIdentifier(), mockMetricRegistry);
-        EnumMap<GatewayOperation, GatewayClient> gatewayClients = GatewayOperationClientBuilder.builder()
-                .authClient(gatewayClient)
-                .captureClient(gatewayClient)
-                .cancelClient(gatewayClient)
-                .refundClient(gatewayClient)
-                .build();
-        return new EpdqPaymentProvider(gatewayClients, new EpdqSha512SignatureGenerator(), new EpdqExternalRefundAvailabilityCalculator());
+//        Client client = TestClientFactory.createJerseyClient();
+//        GatewayClient gatewayClient = new GatewayClient(client, ImmutableMap.of(TEST.toString(), url),
+//            EpdqPaymentProvider.includeSessionIdentifier(), mockMetricRegistry);
+//        EnumMap<GatewayOperation, GatewayClient> gatewayClients = GatewayOperationClientBuilder.builder()
+//                .authClient(gatewayClient)
+//                .captureClient(gatewayClient)
+//                .cancelClient(gatewayClient)
+//                .refundClient(gatewayClient)
+//                .build();
+//        final ImmutableMap<String, String> urlMap = ImmutableMap.of(TEST.toString(), url);
+//        JerseyClientOverrides jerseyClientOverrides = new JerseyClientOverrides();
+//        final GatewayConfig gatewayConfig = new GatewayConfig(
+//                urlMap,
+//                Arrays.asList("username", "password", "merchant_id", "sha_in_passphrase", "sha_out_passphrase"),
+//                jerseyClientOverrides);
+//        return new EpdqPaymentProvider(
+//                gatewayClients,
+//                new EpdqSha512SignatureGenerator(),
+//                new EpdqExternalRefundAvailabilityCalculator());
+        return null;
     }
 
     private static AuthorisationGatewayRequest buildAuthorisationRequest(ChargeEntity chargeEntity) {
