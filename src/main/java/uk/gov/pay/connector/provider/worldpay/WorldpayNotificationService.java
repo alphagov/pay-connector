@@ -5,6 +5,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import uk.gov.pay.connector.dao.ChargeDao;
 import uk.gov.pay.connector.model.domain.ChargeEntity;
+import uk.gov.pay.connector.model.domain.RefundStatus;
 import uk.gov.pay.connector.service.PaymentGatewayName;
 import uk.gov.pay.connector.service.worldpay.WorldpayNotification;
 import uk.gov.pay.connector.util.DnsUtils;
@@ -80,14 +81,26 @@ public class WorldpayNotificationService {
             return true;
         }
 
-        if (chargeNotificationProcessor.willHandle(notification)) {
-            chargeNotificationProcessor.invoke(notification, optionalChargeEntity.get());
-        } else if (refundNotificationProcessor.willHandle(notification)) {
-            refundNotificationProcessor.invoke(notification, optionalChargeEntity.get());
+        if (isCaptureNotification(notification)) {
+            chargeNotificationProcessor.invoke(optionalChargeEntity.get(), notification.getTransactionId(), notification.getGatewayEventDate());
+        } else if (isRefundNotification(notification)) {
+            refundNotificationProcessor.invoke(getPaymentGatewayName(), newRefundStatus(notification), notification.getReference(), notification.getTransactionId());
         } else {
             logger.error("{} notification {} unknown", gatewayName(), notification);
         }
         return true;
+    }
+
+    private RefundStatus newRefundStatus(WorldpayNotification notification) {
+        return "REFUND_FAILED".equals(notification.getStatus()) ? RefundStatus.REFUND_ERROR : RefundStatus.REFUNDED;
+    }
+
+    private boolean isRefundNotification(WorldpayNotification notification) {
+        return Arrays.asList("REFUNDED", "REFUNDED_BY_MERCHANT", "REFUND_FAILED").contains(notification.getStatus());
+    }
+
+    private boolean isCaptureNotification(WorldpayNotification notification) {
+        return notification.getStatus().equals("CAPTURED");
     }
 
     private boolean isNotificationRejectedFromIpAddress(String ipAddress) {

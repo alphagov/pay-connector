@@ -29,34 +29,31 @@ class ChargeNotificationProcessor {
         this.chargeStatusUpdater = chargeStatusUpdater;
     }
 
-    public boolean willHandle(WorldpayNotification notification) {
-        return notification.getStatus().equals("CAPTURED");
-    }
-
-    private ChargeStatus newStatus() {
-        return CAPTURED;
-    }
-
     private PaymentGatewayName gatewayName() {
         return PaymentGatewayName.WORLDPAY;
     }
 
-    public void invoke(WorldpayNotification notification, ChargeEntity chargeEntity) {
-        ChargeStatus newStatus = newStatus();
-        String transactionId = notification.getTransactionId();
-        ZonedDateTime gatewayEventDate = notification.getGatewayEventDate();
+    public void invoke(ChargeEntity chargeEntity, String transactionId, ZonedDateTime gatewayEventDate) {
+        GatewayAccountEntity gatewayAccount = chargeEntity.getGatewayAccount();
         String oldStatus = chargeEntity.getStatus();
+        ChargeStatus newStatus = CAPTURED;
 
         try {
             chargeEntity.setStatus(newStatus);
         } catch (InvalidStateTransitionException e) {
-            logger.error("{} notification {} could not be used to update charge: {}", gatewayName(), transactionId, e.getMessage());
+            logger.error("{} ({}) notification '{}' could not be used to update charge: {}",
+                    gatewayAccount.getGatewayName(), gatewayAccount.getId(), transactionId, e.getMessage());
             return;
         }
 
-        GatewayAccountEntity gatewayAccount = chargeEntity.getGatewayAccount();
-        logger.info("Notification received. Updating charge - charge_external_id={}, status={}, status_to={}, transaction_id={}, account_id={}, "
-                        + "provider={}, provider_type={}",
+        logger.info("Notification received. Updating charge - " +
+                        "charge_external_id={}, " +
+                        "status={}, " +
+                        "status_to={}, " +
+                        "transaction_id={}, " +
+                        "account_id={}, " +
+                        "provider={}, " +
+                        "provider_type={}",
                 chargeEntity.getExternalId(),
                 oldStatus,
                 newStatus,

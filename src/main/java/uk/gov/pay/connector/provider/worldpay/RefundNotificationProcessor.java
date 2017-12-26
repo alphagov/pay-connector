@@ -5,7 +5,6 @@ import com.google.inject.Inject;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import uk.gov.pay.connector.dao.RefundDao;
-import uk.gov.pay.connector.model.domain.ChargeEntity;
 import uk.gov.pay.connector.model.domain.GatewayAccountEntity;
 import uk.gov.pay.connector.model.domain.RefundEntity;
 import uk.gov.pay.connector.model.domain.RefundStatus;
@@ -36,43 +35,33 @@ class RefundNotificationProcessor {
         this.refundStatusUpdater = refundStatusUpdater;
     }
 
-    public boolean willHandle(WorldpayNotification notification) {
-        return statusMap.containsKey(notification.getStatus());
-    }
-
-    public RefundStatus newStatus(WorldpayNotification notification) {
-        return statusMap.get(notification.getStatus());
-    }
-
-    public void invoke(WorldpayNotification notification, ChargeEntity chargeEntity) {
-        String reference = notification.getReference();
+    public void invoke(PaymentGatewayName gatewayName, RefundStatus newStatus, String reference, String transactionId) {
         if (isBlank(reference)) {
             logger.error("{} refund notification could not be used to update charge (missing reference)",
-                    gatewayName());
+                    gatewayName);
             return;
         }
 
-        Optional<RefundEntity> optionalRefundEntity = refundDao.findByProviderAndReference(gatewayName().getName(), reference);
+        Optional<RefundEntity> optionalRefundEntity = refundDao.findByProviderAndReference(gatewayName.getName(), reference);
         if (!optionalRefundEntity.isPresent()) {
             logger.error("{} notification '{}' could not be used to update refund (associated refund entity not found)",
-                    gatewayName(), reference);
+                    gatewayName, reference);
             return;
         }
 
         RefundEntity refundEntity = optionalRefundEntity.get();
         RefundStatus oldStatus = refundEntity.getStatus();
 
-        RefundStatus newStatus = newStatus(notification);
         refundEntity.setStatus(newStatus);
         refundStatusUpdater.updateRefundTransactionStatus(
-                gatewayName(), reference, newStatus
+                gatewayName, reference, newStatus
         );
         GatewayAccountEntity gatewayAccount = refundEntity.getChargeEntity().getGatewayAccount();
         logger.info("Notification received for refund. Updating refund - charge_external_id={}, refund_reference={}, transaction_id={}, status={}, "
                         + "status_to={}, account_id={}, provider={}, provider_type={}",
                 refundEntity.getChargeEntity().getExternalId(),
                 reference,
-                notification.getTransactionId(),
+                transactionId,
                 oldStatus,
                 newStatus,
                 gatewayAccount.getId(),
