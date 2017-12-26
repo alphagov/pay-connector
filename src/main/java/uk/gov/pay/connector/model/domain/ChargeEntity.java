@@ -137,6 +137,10 @@ public class ChargeEntity extends AbstractVersionedEntity {
         return status;
     }
 
+    public ChargeStatus getChargeStatus() {
+        return ChargeStatus.fromString(this.status);
+    }
+
     public String getGatewayTransactionId() {
         return gatewayTransactionId;
     }

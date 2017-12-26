@@ -18,9 +18,12 @@ import static javax.ws.rs.core.MediaType.APPLICATION_FORM_URLENCODED;
 import static javax.ws.rs.core.MediaType.APPLICATION_JSON;
 import static org.hamcrest.Matchers.is;
 import static org.junit.Assert.assertThat;
+import static uk.gov.pay.connector.model.domain.ChargeStatus.AUTHORISATION_SUBMITTED;
 import static uk.gov.pay.connector.model.domain.ChargeStatus.AUTHORISATION_SUCCESS;
 import static uk.gov.pay.connector.model.domain.ChargeStatus.CAPTURED;
 import static uk.gov.pay.connector.model.domain.ChargeStatus.CAPTURE_SUBMITTED;
+import static uk.gov.pay.connector.model.domain.ChargeStatus.USER_CANCELLED;
+import static uk.gov.pay.connector.model.domain.ChargeStatus.USER_CANCEL_SUBMITTED;
 import static uk.gov.pay.connector.model.domain.GatewayAccount.CREDENTIALS_SHA_OUT_PASSPHRASE;
 import static uk.gov.pay.connector.model.domain.RefundStatus.REFUND_SUBMITTED;
 
@@ -48,6 +51,48 @@ public class EpdqNotificationResourceITest extends ChargingITestBase {
         assertFrontendChargeStatusIs(chargeId, CAPTURED.getValue());
     }
 
+    @Test
+    public void shouldHandleAnAuthorisedNotification_whenChargeIsInAuthorisationSubmittedState() throws Exception {
+        String transactionId = "transaction-id";
+        String chargeId = createNewChargeWith(AUTHORISATION_SUBMITTED, transactionId);
+
+        String epdqAuthorisedNotificationCode = "5";
+        String response = notifyConnector(
+                transactionId,
+                "1",
+                epdqAuthorisedNotificationCode,
+                getCredentials().get(CREDENTIALS_SHA_OUT_PASSPHRASE)
+        )
+        .statusCode(200)
+        .extract().body()
+        .asString();
+
+        assertThat(response, is(RESPONSE_EXPECTED_BY_EPDQ));
+
+        assertFrontendChargeStatusIs(chargeId, AUTHORISATION_SUCCESS.getValue());
+    }
+
+
+    @Test
+    public void shouldHandleAnAuthorisedCancelledNotification_whenChargeIsInUserCancelSubmittedState() throws Exception {
+        String transactionId = "transaction-id";
+        String chargeId = createNewChargeWith(USER_CANCEL_SUBMITTED, transactionId);
+
+        String epdqAuthorisedCancelledNotificationCode = "6";
+        String response = notifyConnector(
+                transactionId,
+                "1",
+                epdqAuthorisedCancelledNotificationCode,
+                getCredentials().get(CREDENTIALS_SHA_OUT_PASSPHRASE)
+        )
+                .statusCode(200)
+                .extract().body()
+                .asString();
+
+        assertThat(response, is(RESPONSE_EXPECTED_BY_EPDQ));
+
+        assertFrontendChargeStatusIs(chargeId, USER_CANCELLED.getValue());
+    }
     @Test
     public void shouldHandleARefundNotification() throws Exception {
         String transactionId = "123456";

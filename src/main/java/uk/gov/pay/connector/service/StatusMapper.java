@@ -30,11 +30,11 @@ public class StatusMapper<T> {
             this.toStatus = toStatus;
         }
 
-        public static <T> StatusMap of(StatusMapFromStatus<T> fromStatus, Status toStatus) {
-            return new StatusMap(fromStatus, toStatus);
+        public static <T> StatusMap<T> of(StatusMapFromStatus<T> fromStatus, Status toStatus) {
+            return new StatusMap<T>(fromStatus, toStatus);
         }
 
-        public static <T> StatusMap of(GatewayStatusOnly<T> gatewayStatusOnly) {
+        public static <T> StatusMap<T> of(GatewayStatusOnly<T> gatewayStatusOnly) {
             return new StatusMap<>(gatewayStatusOnly);
         }
 
@@ -50,8 +50,8 @@ public class StatusMapper<T> {
     public static class Builder<T> {
         private List<StatusMap<T>> validStatuses = new ArrayList<>();
 
-        public Builder<T> map(T gatewayStatus, ChargeStatus currentStatus, Status status) {
-            validStatuses.add(StatusMap.of(GatewayStatusWithCurrentStatus.of(gatewayStatus, currentStatus), status));
+        public Builder<T> map(T gatewayStatus, ChargeStatus chargeStatus, Status toStatus) {
+            validStatuses.add(StatusMap.of(GatewayStatusWithCurrentStatus.of(gatewayStatus, chargeStatus), toStatus));
             return this;
         }
 
@@ -66,7 +66,7 @@ public class StatusMapper<T> {
         }
 
         public StatusMapper<T> build() {
-            return new StatusMapper(ImmutableList.copyOf(validStatuses));
+            return new StatusMapper<T>(ImmutableList.copyOf(validStatuses));
         }
     }
 
@@ -92,7 +92,7 @@ public class StatusMapper<T> {
         return from(GatewayStatusOnly.of(gatewayStatus), gatewayStatusesOnly);
     }
 
-    private InterpretedStatus from(StatusMapFromStatus<T> gatewayStatus, List<StatusMap<T>> wantedValidStatuses) {
+    private static <T> InterpretedStatus from(StatusMapFromStatus<T> gatewayStatus, List<StatusMap<T>> wantedValidStatuses) {
 
         Optional<StatusMap<T>> statusMap = wantedValidStatuses
                 .stream()

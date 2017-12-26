@@ -4,42 +4,49 @@ import com.google.inject.persist.Transactional;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import uk.gov.pay.connector.dao.ChargeDao;
-import uk.gov.pay.connector.dao.ChargeEventDao;
-import uk.gov.pay.connector.dao.RefundDao;
-import uk.gov.pay.connector.exception.InvalidStateTransitionException;
 import uk.gov.pay.connector.model.domain.ChargeEntity;
 import uk.gov.pay.connector.model.domain.ChargeStatus;
-import uk.gov.pay.connector.model.domain.GatewayAccountEntity;
-import uk.gov.pay.connector.model.domain.RefundEntity;
 import uk.gov.pay.connector.model.domain.RefundStatus;
+import uk.gov.pay.connector.provider.ChargeNotificationProcessor;
+import uk.gov.pay.connector.provider.RefundNotificationProcessor;
 import uk.gov.pay.connector.service.epdq.EpdqNotification;
+import uk.gov.pay.connector.service.epdq.EpdqNotification.StatusCode;
 import uk.gov.pay.connector.service.epdq.EpdqPaymentProvider;
-import uk.gov.pay.connector.util.DnsUtils;
 
 import javax.inject.Inject;
 import java.util.Optional;
+import java.util.function.Consumer;
 
 import static org.apache.commons.lang3.StringUtils.isBlank;
+import static uk.gov.pay.connector.model.domain.ChargeStatus.AUTHORISATION_REJECTED;
+import static uk.gov.pay.connector.model.domain.ChargeStatus.AUTHORISATION_SUCCESS;
+import static uk.gov.pay.connector.model.domain.ChargeStatus.CAPTURED;
+import static uk.gov.pay.connector.model.domain.RefundStatus.REFUNDED;
+import static uk.gov.pay.connector.model.domain.RefundStatus.REFUND_ERROR;
+import static uk.gov.pay.connector.service.StatusFlow.EXPIRE_FLOW;
+import static uk.gov.pay.connector.service.StatusFlow.SYSTEM_CANCELLATION_FLOW;
+import static uk.gov.pay.connector.service.StatusFlow.USER_CANCELLATION_FLOW;
 
 public class EpdqNotificationService {
 
     private final Logger logger = LoggerFactory.getLogger(getClass());
 
     private final ChargeDao chargeDao;
-    private final ChargeEventDao chargeEventDao;
-    private final RefundDao refundDao;
-    private final ChargeStatusUpdater chargeStatusUpdater;
-    private final RefundStatusUpdater refundStatusUpdater;
     private final EpdqPaymentProvider paymentProvider;
+    private final ChargeNotificationProcessor chargeNotificationProcessor;
+    private final RefundNotificationProcessor refundNotificationProcessor;
+    private final PaymentGatewayName paymentGatewayName;
 
     @Inject
-    public EpdqNotificationService(ChargeDao chargeDao, ChargeEventDao chargeEventDao, RefundDao refundDao, PaymentProviders paymentProviders, ChargeStatusUpdater chargeStatusUpdater, RefundStatusUpdater refundStatusUpdater) {
+    public EpdqNotificationService(ChargeDao chargeDao,
+                                   EpdqPaymentProvider paymentProvider,
+                                   ChargeNotificationProcessor chargeNotificationProcessor,
+                                   RefundNotificationProcessor refundNotificationProcessor) {
         this.chargeDao = chargeDao;
-        this.chargeEventDao = chargeEventDao;
-        this.refundDao = refundDao;
-        this.chargeStatusUpdater = chargeStatusUpdater;
-        this.refundStatusUpdater = refundStatusUpdater;
-        paymentProvider = paymentProviders.getEpdqProvider();
+        this.paymentProvider = paymentProvider;
+        this.paymentGatewayName = paymentProvider.getPaymentGatewayName();
+        this.chargeNotificationProcessor = chargeNotificationProcessor;
+        this.refundNotificationProcessor = refundNotificationProcessor;
     }
 
     @Transactional
@@ -48,16 +55,11 @@ public class EpdqNotificationService {
 
         EpdqNotification notification;
         try {
-            notification = paymentProvider.parseNotification(payload);
+            notification = new EpdqNotification(payload);
             logger.info("Parsed {} notification: {}", providerName(), notification.toString());
         }
         catch (EpdqNotification.EpdqParseException e) {
             logger.error("{} notification parsing failed: {}", providerName(), e.toString());
-            return;
-        }
-
-        if (shouldIgnore(notification)) {
-            logger.info("{} notification {} ignored", providerName(), notification);
             return;
         }
 
@@ -84,91 +86,65 @@ public class EpdqNotificationService {
 
         logger.info("Evaluating {} notification {}", providerName(), notification);
 
-        InterpretedStatus interpretedStatus = paymentProvider.from(notification.getStatus(), ChargeStatus.fromString(charge.getStatus()));
+        final Optional<ChargeStatus> newChargeStatus = newChargeStateForChargeNotification(notification.getStatus(), charge.getChargeStatus());
+        final Optional<RefundStatus> newRefundStatus = newRefundStateForRefundNotification(notification.getStatus());
 
-        if (interpretedStatus instanceof MappedChargeStatus) {
-            updateChargeStatus(notification, interpretedStatus.getChargeStatus());
-        } else if (interpretedStatus instanceof MappedRefundStatus) {
-            updateRefundStatus(notification, interpretedStatus.getRefundStatus());
-        } else {
-            logger.error("{} notification {} unknown", providerName(), notification);
+        if (newChargeStatus.isPresent()) {
+            chargeNotificationProcessor.invoke(notification.getTransactionId(), charge, newChargeStatus.get(), null);
+        } else if (newRefundStatus.isPresent()) {
+            refundNotificationProcessor.invoke(
+                PaymentGatewayName.EPDQ, newRefundStatus.get(), notification.getReference(), notification.getTransactionId()
+            );
         }
+    }
+
+    public static Optional<ChargeStatus> newChargeStateForChargeNotification(String notificationStatus, ChargeStatus chargeStatus) {
+        final StatusCode statusCode = StatusCode.byCode(notificationStatus);
+
+        switch(statusCode) {
+            case EPDQ_AUTHORISATION_REFUSED:
+                return Optional.of(AUTHORISATION_REJECTED);
+            case EPDQ_AUTHORISED:
+                return Optional.of(AUTHORISATION_SUCCESS);
+
+            case EPDQ_AUTHORISED_CANCELLED:
+                switch(chargeStatus) {
+                    case USER_CANCEL_SUBMITTED:
+                        return Optional.of(USER_CANCELLATION_FLOW.getSuccessTerminalState());
+
+                    case EXPIRE_CANCEL_SUBMITTED:
+                        return Optional.of(EXPIRE_FLOW.getSuccessTerminalState());
+
+                    case SYSTEM_CANCEL_SUBMITTED:
+                    case CREATED:
+                    case ENTERING_CARD_DETAILS:
+                        return Optional.of(SYSTEM_CANCELLATION_FLOW.getSuccessTerminalState());
+                }
+                break;
+
+            case EPDQ_PAYMENT_REQUESTED:
+                return Optional.of(CAPTURED);
+        }
+        return Optional.empty();
+    }
+
+    public static Optional<RefundStatus> newRefundStateForRefundNotification(String notificationStatus) {
+        final StatusCode statusCode = StatusCode.byCode(notificationStatus);
+
+        switch (statusCode) {
+            case EPDQ_REFUND:
+            case EPDQ_PAYMENT_DELETED:
+                return Optional.of(REFUNDED);
+
+            case EPDQ_REFUND_REFUSED:
+            case EPDQ_DELETION_REFUSED:
+            case EPDQ_REFUND_DECLINED_BY_ACQUIRER:
+                return Optional.of(REFUND_ERROR);
+        }
+        return Optional.empty();
     }
 
     private String providerName() {
-        return paymentProvider.getPaymentGatewayName().getName();
+        return paymentGatewayName.getName();
     }
-
-    private boolean shouldIgnore(EpdqNotification notification) {
-        return paymentProvider.from(notification.getStatus()).getType() == InterpretedStatus.Type.IGNORED;
-    }
-
-    private void updateChargeStatus(EpdqNotification notification, ChargeStatus newStatus) {
-        Optional<ChargeEntity> optionalChargeEntity = chargeDao.findByProviderAndTransactionId(providerName(), notification.getTransactionId());
-
-        if (!optionalChargeEntity.isPresent()) {
-            logger.error("{} notification {} could not be used to update charge (associated charge entity not found)",
-                    providerName(), notification);
-            return;
-        }
-
-        ChargeEntity chargeEntity = optionalChargeEntity.get();
-        String oldStatus = chargeEntity.getStatus();
-
-        try {
-            chargeEntity.setStatus(newStatus);
-        } catch (InvalidStateTransitionException e) {
-            logger.error("{} notification {} could not be used to update charge: {}", providerName(), notification, e.getMessage());
-            return;
-        }
-
-        GatewayAccountEntity gatewayAccount = chargeEntity.getGatewayAccount();
-        logger.info("Notification received. Updating charge - charge_external_id={}, status={}, status_to={}, transaction_id={}, account_id={}, "
-                        + "provider={}, provider_type={}",
-                chargeEntity.getExternalId(),
-                oldStatus,
-                newStatus,
-                notification.getTransactionId(),
-                gatewayAccount.getId(),
-                gatewayAccount.getGatewayName(),
-                gatewayAccount.getType());
-
-        chargeEventDao.persistChargeEventOf(chargeEntity, Optional.empty());
-        chargeStatusUpdater.updateChargeTransactionStatus(chargeEntity.getExternalId(), newStatus, null);
-    }
-
-    private void updateRefundStatus(EpdqNotification notification, RefundStatus newStatus) {
-        if (isBlank(notification.getReference())) {
-            logger.error("{} notification {} for refund could not be used to update charge (missing reference)",
-                    providerName(), notification);
-            return;
-        }
-
-        Optional<RefundEntity> optionalRefundEntity = refundDao.findByProviderAndReference(providerName(), notification.getReference());
-        if (!optionalRefundEntity.isPresent()) {
-            logger.error("{} notification {} could not be used to update charge (associated charge entity not found)",
-                    providerName(), notification);
-            return;
-        }
-
-        RefundEntity refundEntity = optionalRefundEntity.get();
-        RefundStatus oldStatus = refundEntity.getStatus();
-
-        refundEntity.setStatus(newStatus);
-        refundStatusUpdater.updateRefundTransactionStatus(
-                paymentProvider.getPaymentGatewayName(), notification.getReference(), newStatus
-        );
-        GatewayAccountEntity gatewayAccount = refundEntity.getChargeEntity().getGatewayAccount();
-        logger.info("Notification received for refund. Updating refund - charge_external_id={}, refund_reference={}, transaction_id={}, status={}, "
-                        + "status_to={}, account_id={}, provider={}, provider_type={}",
-                refundEntity.getChargeEntity().getExternalId(),
-                notification.getReference(),
-                notification.getTransactionId(),
-                oldStatus,
-                newStatus,
-                gatewayAccount.getId(),
-                gatewayAccount.getGatewayName(),
-                gatewayAccount.getType());
-    }
-
 }

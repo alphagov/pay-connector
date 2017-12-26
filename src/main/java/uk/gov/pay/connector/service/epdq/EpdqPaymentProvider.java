@@ -1,28 +1,20 @@
 package uk.gov.pay.connector.service.epdq;
 
-import fj.data.Either;
 import io.dropwizard.setup.Environment;
 import org.apache.http.NameValuePair;
 import uk.gov.pay.connector.app.GatewayConfig;
-import uk.gov.pay.connector.app.WorldpayConfig;
 import uk.gov.pay.connector.model.CancelGatewayRequest;
 import uk.gov.pay.connector.model.CaptureGatewayRequest;
 import uk.gov.pay.connector.model.GatewayError;
 import uk.gov.pay.connector.model.GatewayRequest;
-import uk.gov.pay.connector.model.GatewayStatusOnly;
-import uk.gov.pay.connector.model.GatewayStatusWithCurrentStatus;
-import uk.gov.pay.connector.model.Notification;
-import uk.gov.pay.connector.model.Notifications;
 import uk.gov.pay.connector.model.RefundGatewayRequest;
 import uk.gov.pay.connector.model.api.ExternalChargeRefundAvailability;
 import uk.gov.pay.connector.model.domain.ChargeEntity;
-import uk.gov.pay.connector.model.domain.ChargeStatus;
 import uk.gov.pay.connector.model.domain.GatewayAccountEntity;
 import uk.gov.pay.connector.model.gateway.Auth3dsResponseGatewayRequest;
 import uk.gov.pay.connector.model.gateway.AuthorisationGatewayRequest;
 import uk.gov.pay.connector.model.gateway.GatewayResponse;
 import uk.gov.pay.connector.service.BaseAuthoriseResponse;
-import uk.gov.pay.connector.service.BaseCaptureResponse;
 import uk.gov.pay.connector.service.BaseResponse;
 import uk.gov.pay.connector.service.ExternalRefundAvailabilityCalculator;
 import uk.gov.pay.connector.service.GatewayClient;
@@ -30,11 +22,8 @@ import uk.gov.pay.connector.service.GatewayClientFactory;
 import uk.gov.pay.connector.service.GatewayOperation;
 import uk.gov.pay.connector.service.GatewayOperationClientBuilder;
 import uk.gov.pay.connector.service.GatewayOrder;
-import uk.gov.pay.connector.service.InterpretedStatus;
 import uk.gov.pay.connector.service.PaymentGatewayName;
-import uk.gov.pay.connector.service.PaymentProviderNotificationHandler;
 import uk.gov.pay.connector.service.PaymentProviderOperations;
-import uk.gov.pay.connector.service.StatusMapper;
 
 import javax.inject.Inject;
 import javax.inject.Named;
@@ -44,11 +33,8 @@ import java.util.List;
 import java.util.Optional;
 import java.util.function.BiFunction;
 import java.util.function.Function;
-import java.util.stream.Collectors;
 
-import static fj.data.Either.left;
 import static fj.data.Either.reduce;
-import static fj.data.Either.right;
 import static java.util.stream.Collectors.toList;
 import static uk.gov.pay.connector.model.ErrorType.GENERIC_GATEWAY_ERROR;
 import static uk.gov.pay.connector.model.domain.GatewayAccount.CREDENTIALS_MERCHANT_ID;
@@ -148,18 +134,6 @@ public class EpdqPaymentProvider implements PaymentProviderOperations {
 
     public ExternalChargeRefundAvailability getExternalChargeRefundAvailability(ChargeEntity chargeEntity) {
         return externalRefundAvailabilityCalculator.calculate(chargeEntity);
-    }
-
-    public EpdqNotification parseNotification(String payload) throws EpdqNotification.EpdqParseException {
-        return new EpdqNotification(payload);
-    }
-
-    public InterpretedStatus from(String gatewayStatus, ChargeStatus currentStatus) {
-        return EpdqStatusMapper.from(gatewayStatus, currentStatus);
-    }
-
-    public InterpretedStatus from(String gatewayStatus) {
-        return EpdqStatusMapper.from(gatewayStatus);
     }
 
     private Function<AuthorisationGatewayRequest, GatewayOrder> buildAuthoriseOrderFor() {

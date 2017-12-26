@@ -1,4 +1,4 @@
-package uk.gov.pay.connector.provider.worldpay;
+package uk.gov.pay.connector.provider;
 
 import com.google.common.collect.ImmutableMap;
 import com.google.inject.Inject;
@@ -18,7 +18,7 @@ import static org.apache.commons.lang3.StringUtils.isBlank;
 import static uk.gov.pay.connector.model.domain.RefundStatus.REFUNDED;
 import static uk.gov.pay.connector.model.domain.RefundStatus.REFUND_ERROR;
 
-class RefundNotificationProcessor {
+public class RefundNotificationProcessor {
     private static ImmutableMap<String, RefundStatus> statusMap = ImmutableMap.<String, RefundStatus>builder()
             .put("REFUNDED", REFUNDED)
             .put("REFUNDED_BY_MERCHANT", REFUNDED)

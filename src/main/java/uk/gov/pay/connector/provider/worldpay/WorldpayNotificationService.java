@@ -6,6 +6,8 @@ import org.slf4j.LoggerFactory;
 import uk.gov.pay.connector.dao.ChargeDao;
 import uk.gov.pay.connector.model.domain.ChargeEntity;
 import uk.gov.pay.connector.model.domain.RefundStatus;
+import uk.gov.pay.connector.provider.ChargeNotificationProcessor;
+import uk.gov.pay.connector.provider.RefundNotificationProcessor;
 import uk.gov.pay.connector.service.PaymentGatewayName;
 import uk.gov.pay.connector.service.worldpay.WorldpayNotification;
 import uk.gov.pay.connector.util.DnsUtils;
@@ -17,6 +19,7 @@ import java.util.Arrays;
 import java.util.Optional;
 
 import static org.apache.commons.lang3.StringUtils.isBlank;
+import static uk.gov.pay.connector.model.domain.ChargeStatus.CAPTURED;
 
 public class WorldpayNotificationService {
 
@@ -82,7 +85,7 @@ public class WorldpayNotificationService {
         }
 
         if (isCaptureNotification(notification)) {
-            chargeNotificationProcessor.invoke(optionalChargeEntity.get(), notification.getTransactionId(), notification.getGatewayEventDate());
+            chargeNotificationProcessor.invoke(notification.getTransactionId(), optionalChargeEntity.get(), CAPTURED, notification.getGatewayEventDate());
         } else if (isRefundNotification(notification)) {
             refundNotificationProcessor.invoke(getPaymentGatewayName(), newRefundStatus(notification), notification.getReference(), notification.getTransactionId());
         } else {

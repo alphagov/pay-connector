@@ -7,6 +7,7 @@ import uk.gov.pay.connector.model.ChargeStatusRequest;
 import uk.gov.pay.connector.model.domain.ChargeStatus;
 
 import java.nio.charset.StandardCharsets;
+import java.util.Arrays;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
@@ -26,6 +27,37 @@ public class EpdqNotification implements ChargeStatusRequest {
     private final String payId;
     private final String payIdSub;
     private final String shaSign;
+
+    public enum StatusCode {
+        EPDQ_AUTHORISATION_REFUSED("2"),
+        EPDQ_AUTHORISED("5"),
+        EPDQ_AUTHORISED_CANCELLED("6"),
+        EPDQ_PAYMENT_DELETED("7"),
+        EPDQ_DELETION_REFUSED("73"),
+        EPDQ_REFUND("8"),
+        EPDQ_REFUND_REFUSED("83"),
+        EPDQ_PAYMENT_REQUESTED("9"),
+        EPDQ_REFUND_DECLINED_BY_ACQUIRER("94"),
+        UNKNOWN("");
+
+        public String getCode() {
+            return code;
+        }
+
+        public final String code;
+
+        StatusCode(final String code) {
+            this.code = code;
+        }
+
+        public static StatusCode byCode(String code) {
+            return Arrays.stream(StatusCode.values()).filter(c -> c.getCode().equals(code)).findFirst().orElse(UNKNOWN);
+        }
+
+        public String toString() {
+            return this.name();
+        }
+    }
 
     private Optional<ChargeStatus> chargeStatus = Optional.empty();
 
@@ -79,6 +111,18 @@ public class EpdqNotification implements ChargeStatusRequest {
         return status;
     }
 
+    public StatusCode getStatusCode() {
+        return StatusCode.byCode(status);
+    }
+
+    public String describeStatusCode() {
+        final String description = getStatusCode().name();
+        if (getStatusCode() == StatusCode.UNKNOWN) {
+            return description + " (" + status + ")";
+        };
+        return description;
+    }
+
     @Override
     public String getTransactionId() {
         return getPayId();
@@ -96,7 +140,8 @@ public class EpdqNotification implements ChargeStatusRequest {
     @Override
     public String toString() {
         return "EpdqNotification{" +
-                "status='" + status + '\'' +
+                "status='" + status + "' " +
+                "(" + describeStatusCode() + ")" +
                 ", payId='" + payId + '\'' +
                 ", payIdSub='" + payIdSub + '\'' +
                 ", chargeStatus=" + chargeStatus +

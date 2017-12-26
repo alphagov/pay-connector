@@ -8,6 +8,8 @@ import org.mockito.runners.MockitoJUnitRunner;
 import uk.gov.pay.connector.dao.ChargeDao;
 import uk.gov.pay.connector.model.domain.ChargeEntity;
 import uk.gov.pay.connector.model.domain.RefundStatus;
+import uk.gov.pay.connector.provider.ChargeNotificationProcessor;
+import uk.gov.pay.connector.provider.RefundNotificationProcessor;
 import uk.gov.pay.connector.service.worldpay.WorldpayNotification;
 import uk.gov.pay.connector.util.DnsUtils;
 
@@ -20,6 +22,7 @@ import static org.mockito.Matchers.any;
 import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
+import static uk.gov.pay.connector.model.domain.ChargeStatus.CAPTURED;
 import static uk.gov.pay.connector.service.PaymentGatewayName.WORLDPAY;
 import static uk.gov.pay.connector.util.TestTemplateResourceLoader.sampleWorldpayNotification;
 
@@ -72,7 +75,7 @@ public class WorldpayNotificationServiceTest {
                 transactionId,
                 referenceId
         );
-        verify(mockChargeNotificationProcessor).invoke(mockCharge, expectedNotification.getTransactionId(), expectedNotification.getGatewayEventDate());
+        verify(mockChargeNotificationProcessor).invoke(expectedNotification.getTransactionId(), mockCharge, CAPTURED, expectedNotification.getGatewayEventDate());
     }
 
     @Test
@@ -88,7 +91,7 @@ public class WorldpayNotificationServiceTest {
         final boolean result = notificationService.handleNotificationFor(ipAddress, payload);
         assertEquals(true, result);
 
-        verify(mockChargeNotificationProcessor, never()).invoke(any(), any(), any());
+        verify(mockChargeNotificationProcessor, never()).invoke(any(), any(), CAPTURED, any());
         verify(mockRefundNotificationProcessor).invoke(WORLDPAY, RefundStatus.REFUNDED, referenceId, transactionId);
     }
 
@@ -107,7 +110,7 @@ public class WorldpayNotificationServiceTest {
         final boolean result = notificationService.handleNotificationFor(ipAddress, payload);
         assertEquals(result, true);
 
-        verify(mockChargeNotificationProcessor, never()).invoke(any(), any(), any());
+        verify(mockChargeNotificationProcessor, never()).invoke(any(), any(), CAPTURED, any());
     }
 
     @Test
@@ -123,7 +126,7 @@ public class WorldpayNotificationServiceTest {
         final boolean result = notificationService.handleNotificationFor(ipAddress, payload);
         assertEquals(result, true);
 
-        verify(mockChargeNotificationProcessor, never()).invoke(any(), any(), any());
+        verify(mockChargeNotificationProcessor, never()).invoke(any(), any(), CAPTURED, any());
     }
 
     @Test
@@ -147,7 +150,7 @@ public class WorldpayNotificationServiceTest {
 
             assertEquals(true, notificationService.handleNotificationFor(ipAddress, payload));
 
-            verify(mockChargeNotificationProcessor, never()).invoke(any(), any(), any());
+            verify(mockChargeNotificationProcessor, never()).invoke(any(), any(), CAPTURED, any());
             verify(mockRefundNotificationProcessor, never()).invoke(any(), any(), any(), any());
         }
     }
@@ -168,7 +171,7 @@ public class WorldpayNotificationServiceTest {
         final boolean result = notificationService.handleNotificationFor(ipAddress, payload);
         assertEquals(false, result);
 
-        verify(mockChargeNotificationProcessor, never()).invoke(any(), any(), any());
+        verify(mockChargeNotificationProcessor, never()).invoke(any(), any(), CAPTURED, any());
         verify(mockRefundNotificationProcessor, never()).invoke(any(), any(), any(), any());
     }
 
@@ -179,7 +182,7 @@ public class WorldpayNotificationServiceTest {
         final boolean result = notificationService.handleNotificationFor(ipAddress, payload);
         assertEquals(true, result);
 
-        verify(mockChargeNotificationProcessor, never()).invoke(any(), any(), any());
+        verify(mockChargeNotificationProcessor, never()).invoke(any(), any(), CAPTURED, any());
         verify(mockRefundNotificationProcessor, never()).invoke(any(), any(), any(), any());
     }
 }

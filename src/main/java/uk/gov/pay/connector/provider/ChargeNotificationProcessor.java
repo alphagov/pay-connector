@@ -1,4 +1,4 @@
-package uk.gov.pay.connector.provider.worldpay;
+package uk.gov.pay.connector.provider;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -9,15 +9,12 @@ import uk.gov.pay.connector.model.domain.ChargeStatus;
 import uk.gov.pay.connector.model.domain.GatewayAccountEntity;
 import uk.gov.pay.connector.service.ChargeStatusUpdater;
 import uk.gov.pay.connector.service.PaymentGatewayName;
-import uk.gov.pay.connector.service.worldpay.WorldpayNotification;
 
 import javax.inject.Inject;
 import java.time.ZonedDateTime;
 import java.util.Optional;
 
-import static uk.gov.pay.connector.model.domain.ChargeStatus.CAPTURED;
-
-class ChargeNotificationProcessor {
+public class ChargeNotificationProcessor {
 
     private ChargeEventDao chargeEventDao;
     private ChargeStatusUpdater chargeStatusUpdater;
@@ -33,10 +30,9 @@ class ChargeNotificationProcessor {
         return PaymentGatewayName.WORLDPAY;
     }
 
-    public void invoke(ChargeEntity chargeEntity, String transactionId, ZonedDateTime gatewayEventDate) {
+    public void invoke(String transactionId, ChargeEntity chargeEntity, ChargeStatus newStatus, ZonedDateTime gatewayEventDate) {
         GatewayAccountEntity gatewayAccount = chargeEntity.getGatewayAccount();
         String oldStatus = chargeEntity.getStatus();
-        ChargeStatus newStatus = CAPTURED;
 
         try {
             chargeEntity.setStatus(newStatus);
