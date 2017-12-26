@@ -6,7 +6,7 @@ public class GatewayStatusOnly<T> implements StatusMapFromStatus<T> {
 
     private final T status;
 
-    public static <T> GatewayStatusOnly of(T status) {
+    public static <T> GatewayStatusOnly<T> of(T status) {
         return new GatewayStatusOnly<>(status);
     }
 

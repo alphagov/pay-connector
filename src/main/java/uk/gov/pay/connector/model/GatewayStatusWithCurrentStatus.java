@@ -10,7 +10,7 @@ public class GatewayStatusWithCurrentStatus<T> implements StatusMapFromStatus<T>
     private final T status;
     private final Status currentStatus;
 
-    public static <T> GatewayStatusWithCurrentStatus of(T status, ChargeStatus currentStatus) {
+    public static <T> GatewayStatusWithCurrentStatus<T> of(T status, ChargeStatus currentStatus) {
         return new GatewayStatusWithCurrentStatus<>(status, currentStatus);
     }
 
