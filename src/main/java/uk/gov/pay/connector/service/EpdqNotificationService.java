@@ -1,6 +1,7 @@
 package uk.gov.pay.connector.service;
 
 import com.google.inject.persist.Transactional;
+import org.apache.http.NameValuePair;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import uk.gov.pay.connector.dao.ChargeDao;
@@ -12,20 +13,24 @@ import uk.gov.pay.connector.provider.RefundNotificationProcessor;
 import uk.gov.pay.connector.service.epdq.EpdqNotification;
 import uk.gov.pay.connector.service.epdq.EpdqNotification.StatusCode;
 import uk.gov.pay.connector.service.epdq.EpdqPaymentProvider;
+import uk.gov.pay.connector.service.epdq.SignatureGenerator;
 
 import javax.inject.Inject;
+import java.util.List;
 import java.util.Optional;
-import java.util.function.Consumer;
+import java.util.stream.Collectors;
 
 import static org.apache.commons.lang3.StringUtils.isBlank;
 import static uk.gov.pay.connector.model.domain.ChargeStatus.AUTHORISATION_REJECTED;
 import static uk.gov.pay.connector.model.domain.ChargeStatus.AUTHORISATION_SUCCESS;
 import static uk.gov.pay.connector.model.domain.ChargeStatus.CAPTURED;
+import static uk.gov.pay.connector.model.domain.GatewayAccount.CREDENTIALS_SHA_OUT_PASSPHRASE;
 import static uk.gov.pay.connector.model.domain.RefundStatus.REFUNDED;
 import static uk.gov.pay.connector.model.domain.RefundStatus.REFUND_ERROR;
 import static uk.gov.pay.connector.service.StatusFlow.EXPIRE_FLOW;
 import static uk.gov.pay.connector.service.StatusFlow.SYSTEM_CANCELLATION_FLOW;
 import static uk.gov.pay.connector.service.StatusFlow.USER_CANCELLATION_FLOW;
+import static uk.gov.pay.connector.service.epdq.EpdqNotification.SHASIGN;
 
 public class EpdqNotificationService {
 
@@ -33,6 +38,7 @@ public class EpdqNotificationService {
 
     private final ChargeDao chargeDao;
     private final EpdqPaymentProvider paymentProvider;
+    private final SignatureGenerator signatureGenerator;
     private final ChargeNotificationProcessor chargeNotificationProcessor;
     private final RefundNotificationProcessor refundNotificationProcessor;
     private final PaymentGatewayName paymentGatewayName;
@@ -40,11 +46,13 @@ public class EpdqNotificationService {
     @Inject
     public EpdqNotificationService(ChargeDao chargeDao,
                                    EpdqPaymentProvider paymentProvider,
+                                   SignatureGenerator signatureGenerator,
                                    ChargeNotificationProcessor chargeNotificationProcessor,
                                    RefundNotificationProcessor refundNotificationProcessor) {
         this.chargeDao = chargeDao;
         this.paymentProvider = paymentProvider;
         this.paymentGatewayName = paymentProvider.getPaymentGatewayName();
+        this.signatureGenerator = signatureGenerator;
         this.chargeNotificationProcessor = chargeNotificationProcessor;
         this.refundNotificationProcessor = refundNotificationProcessor;
     }
@@ -79,8 +87,7 @@ public class EpdqNotificationService {
         }
 
         ChargeEntity charge = maybeCharge.get();
-        if (!paymentProvider.verifyNotification(notification, charge.getGatewayAccount())) {
-            logger.error("{} notification {} failed verification", providerName(), notification);
+        if (!verifyNotificationSignature(notification, charge)) {
             return;
         }
 
@@ -96,6 +103,40 @@ public class EpdqNotificationService {
                 PaymentGatewayName.EPDQ, newRefundStatus.get(), notification.getReference(), notification.getTransactionId()
             );
         }
+    }
+
+    private boolean verifyNotificationSignature(EpdqNotification notification, ChargeEntity charge) {
+        String actualSignature = signatureGenerator.sign(
+                getParams(notification, false),
+                getShaOutPassphrase(charge)
+        );
+
+        final String expectedShaSignature = getExpectedShaSignature(notification);
+        final boolean verified = actualSignature.equalsIgnoreCase(expectedShaSignature);
+        if (!verified) {
+            logger.error("{} notification {} failed verification. Actual signature [{}] expected [{}]",
+                    providerName(), notification, actualSignature, expectedShaSignature);
+        }
+        return verified;
+    }
+
+    private String getExpectedShaSignature(EpdqNotification notification) {
+        try {
+            return getParams(notification, true).get(0).getValue();
+        } catch (IndexOutOfBoundsException e) {
+            return "";
+        }
+    }
+
+    private List<NameValuePair> getParams(EpdqNotification notification, boolean withShaSignature) {
+        return notification.getParams()
+                .stream()
+                .collect(Collectors.partitioningBy(p -> p.getName().equalsIgnoreCase(SHASIGN)))
+                .get(withShaSignature);
+    }
+
+    private String getShaOutPassphrase(ChargeEntity charge) {
+        return charge.getGatewayAccount().getCredentials().get(CREDENTIALS_SHA_OUT_PASSPHRASE);
     }
 
     public static Optional<ChargeStatus> newChargeStateForChargeNotification(String notificationStatus, ChargeStatus chargeStatus) {

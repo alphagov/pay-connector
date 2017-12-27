@@ -1,7 +1,6 @@
 package uk.gov.pay.connector.service.epdq;
 
 import io.dropwizard.setup.Environment;
-import org.apache.http.NameValuePair;
 import uk.gov.pay.connector.app.GatewayConfig;
 import uk.gov.pay.connector.model.CancelGatewayRequest;
 import uk.gov.pay.connector.model.CaptureGatewayRequest;
@@ -10,11 +9,11 @@ import uk.gov.pay.connector.model.GatewayRequest;
 import uk.gov.pay.connector.model.RefundGatewayRequest;
 import uk.gov.pay.connector.model.api.ExternalChargeRefundAvailability;
 import uk.gov.pay.connector.model.domain.ChargeEntity;
-import uk.gov.pay.connector.model.domain.GatewayAccountEntity;
 import uk.gov.pay.connector.model.gateway.Auth3dsResponseGatewayRequest;
 import uk.gov.pay.connector.model.gateway.AuthorisationGatewayRequest;
 import uk.gov.pay.connector.model.gateway.GatewayResponse;
 import uk.gov.pay.connector.service.BaseAuthoriseResponse;
+import uk.gov.pay.connector.service.BaseCancelResponse;
 import uk.gov.pay.connector.service.BaseResponse;
 import uk.gov.pay.connector.service.ExternalRefundAvailabilityCalculator;
 import uk.gov.pay.connector.service.GatewayClient;
@@ -29,25 +28,21 @@ import javax.inject.Inject;
 import javax.inject.Named;
 import javax.ws.rs.client.Invocation;
 import java.util.EnumMap;
-import java.util.List;
 import java.util.Optional;
 import java.util.function.BiFunction;
 import java.util.function.Function;
 
 import static fj.data.Either.reduce;
-import static java.util.stream.Collectors.toList;
 import static uk.gov.pay.connector.model.ErrorType.GENERIC_GATEWAY_ERROR;
 import static uk.gov.pay.connector.model.domain.GatewayAccount.CREDENTIALS_MERCHANT_ID;
 import static uk.gov.pay.connector.model.domain.GatewayAccount.CREDENTIALS_PASSWORD;
 import static uk.gov.pay.connector.model.domain.GatewayAccount.CREDENTIALS_SHA_IN_PASSPHRASE;
-import static uk.gov.pay.connector.model.domain.GatewayAccount.CREDENTIALS_SHA_OUT_PASSPHRASE;
 import static uk.gov.pay.connector.model.domain.GatewayAccount.CREDENTIALS_USERNAME;
 import static uk.gov.pay.connector.service.GatewayOperation.AUTHORISE;
 import static uk.gov.pay.connector.service.GatewayOperation.CANCEL;
 import static uk.gov.pay.connector.service.GatewayOperation.CAPTURE;
 import static uk.gov.pay.connector.service.GatewayOperation.REFUND;
 import static uk.gov.pay.connector.service.PaymentGatewayName.EPDQ;
-import static uk.gov.pay.connector.service.epdq.EpdqNotification.SHASIGN;
 import static uk.gov.pay.connector.service.epdq.EpdqOrderRequestBuilder.anEpdqAuthoriseOrderRequestBuilder;
 import static uk.gov.pay.connector.service.epdq.EpdqOrderRequestBuilder.anEpdqCancelOrderRequestBuilder;
 import static uk.gov.pay.connector.service.epdq.EpdqOrderRequestBuilder.anEpdqCaptureOrderRequestBuilder;
@@ -59,12 +54,9 @@ public class EpdqPaymentProvider implements PaymentProviderOperations {
     public static final String ROUTE_FOR_NEW_ORDER = "orderdirect.asp";
     public static final String ROUTE_FOR_MAINTENANCE_ORDER = "maintenancedirect.asp";
 
-    private final SignatureGenerator signatureGenerator;
     private Environment environment;
     private GatewayConfig config;
     private GatewayClientFactory gatewayClientFactory;
-    protected final boolean isNotificationEndpointSecured = false;
-    protected final String notificationDomain = null;
     protected ExternalRefundAvailabilityCalculator externalRefundAvailabilityCalculator;
     protected EnumMap<GatewayOperation, GatewayClient> gatewayOperationClientMap;
 
@@ -73,13 +65,11 @@ public class EpdqPaymentProvider implements PaymentProviderOperations {
             @Named("EPDQ") GatewayConfig config,
             GatewayClientFactory gatewayClientFactory,
             ExternalRefundAvailabilityCalculator externalRefundAvailabilityCalculator,
-            SignatureGenerator signatureGenerator,
             Environment environment) {
 
         this.config = config;
         this.gatewayClientFactory = gatewayClientFactory;
         this.externalRefundAvailabilityCalculator = externalRefundAvailabilityCalculator;
-        this.signatureGenerator = signatureGenerator;
         this.environment = environment;
         this.gatewayOperationClientMap = GatewayOperationClientBuilder.builder()
                 .authClient(gatewayClientForOperation(EPDQ, AUTHORISE, EpdqPaymentProvider.includeSessionIdentifier()))
@@ -115,21 +105,6 @@ public class EpdqPaymentProvider implements PaymentProviderOperations {
 
     public GatewayResponse cancel(CancelGatewayRequest request) {
         return sendReceive(ROUTE_FOR_MAINTENANCE_ORDER, request, buildCancelOrderFor(), EpdqCancelResponse.class, extractResponseIdentifier());
-    }
-
-    public String getNotificationDomain() {
-        return null;
-    }
-
-    public boolean verifyNotification(EpdqNotification notification, GatewayAccountEntity gatewayAccountEntity) {
-        List<NameValuePair> notificationParams = notification.getParams();
-
-        List<NameValuePair> notificationParamsWithoutShaSign = notificationParams.stream()
-            .filter(param -> !param.getName().equalsIgnoreCase(SHASIGN)).collect(toList());
-
-        String signature = signatureGenerator.sign(notificationParamsWithoutShaSign, gatewayAccountEntity.getCredentials().get(CREDENTIALS_SHA_OUT_PASSPHRASE));
-
-        return getShaSignFromNotificationParams(notificationParams).equalsIgnoreCase(signature);
     }
 
     public ExternalChargeRefundAvailability getExternalChargeRefundAvailability(ChargeEntity chargeEntity) {
@@ -193,14 +168,6 @@ public class EpdqPaymentProvider implements PaymentProviderOperations {
 
     public static BiFunction<GatewayOrder, Invocation.Builder, Invocation.Builder> includeSessionIdentifier() {
         return (order, builder) -> builder;
-    }
-
-    private String getShaSignFromNotificationParams(List<NameValuePair> notificationParams) {
-        return notificationParams.stream()
-            .filter(param -> param.getName().equalsIgnoreCase(SHASIGN))
-            .findFirst()
-            .map(param -> param.getValue())
-            .orElse("");
     }
 
     protected <U extends GatewayRequest> GatewayResponse sendReceive(U request, Function<U, GatewayOrder> order,
