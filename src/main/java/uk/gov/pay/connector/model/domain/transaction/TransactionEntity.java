@@ -5,7 +5,6 @@ import uk.gov.pay.connector.model.domain.AbstractVersionedEntity;
 import uk.gov.pay.connector.model.domain.PaymentRequestEntity;
 import uk.gov.pay.connector.model.domain.Status;
 
-import javax.persistence.CascadeType;
 import javax.persistence.Column;
 import javax.persistence.DiscriminatorColumn;
 import javax.persistence.Entity;
@@ -18,11 +17,9 @@ import javax.persistence.Inheritance;
 import javax.persistence.InheritanceType;
 import javax.persistence.JoinColumn;
 import javax.persistence.ManyToOne;
-import javax.persistence.OneToMany;
 import javax.persistence.SequenceGenerator;
 import javax.persistence.Table;
 import java.time.ZonedDateTime;
-import java.util.ArrayList;
 import java.util.List;
 
 
@@ -46,8 +43,6 @@ public abstract class TransactionEntity<S extends Status, T extends TransactionE
     @ManyToOne
     @JoinColumn(name = "payment_request_id", referencedColumnName = "id", updatable = false)
     private PaymentRequestEntity paymentRequest;
-    @OneToMany(mappedBy = "transaction", cascade = CascadeType.ALL)
-    private List<T> transactionEvents = new ArrayList<>();
 
     TransactionEntity(TransactionOperation operation) {
         this.operation = operation;
@@ -84,9 +79,7 @@ public abstract class TransactionEntity<S extends Status, T extends TransactionE
     public abstract S getStatus();
     abstract void setStatus(S status);
 
-    public List<T> getTransactionEvents() {
-        return transactionEvents;
-    }
+    public abstract List<T> getTransactionEvents();
 
     public final void updateStatus(S newStatus) {
         updateStatus(newStatus, createNewTransactionEvent());
@@ -101,7 +94,7 @@ public abstract class TransactionEntity<S extends Status, T extends TransactionE
         transactionEvent.setTransaction(this);
         transactionEvent.setStatus(newStatus);
         transactionEvent.setUpdated(ZonedDateTime.now());
-        getTransactionEvents().add(transactionEvent);
+        getTransactionEvents().add(0, transactionEvent);
     }
 
     protected abstract T createNewTransactionEvent();

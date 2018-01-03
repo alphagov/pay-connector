@@ -8,6 +8,7 @@ import org.skife.jdbi.v2.util.StringColumnMapper;
 import uk.gov.pay.connector.model.domain.AuthCardDetails;
 import uk.gov.pay.connector.model.domain.ChargeStatus;
 import uk.gov.pay.connector.model.domain.GatewayAccountEntity;
+import uk.gov.pay.connector.model.domain.RefundStatus;
 
 import java.sql.SQLException;
 import java.sql.Timestamp;
@@ -472,6 +473,17 @@ public class DatabaseTestHelper {
         );
     }
 
+    public void addEventWithGatewayEventDate(Long chargeId, String chargeStatus, ZonedDateTime gatewayEventDate) {
+        addEventWithGatewayEventDate(chargeId, chargeStatus, gatewayEventDate, ZonedDateTime.now());
+    }
+
+    public void addEventWithGatewayEventDate(Long chargeId, String chargeStatus, ZonedDateTime gatewayEventDate, ZonedDateTime updated) {
+        jdbi.withHandle(
+                h -> h.update("INSERT INTO charge_events(charge_id,status,gateway_event_date,updated) values(?,?,?,?)",
+                        chargeId, chargeStatus, Timestamp.from(gatewayEventDate.toInstant()), Timestamp.from(updated.toInstant()))
+        );
+    }
+
     public List<String> getInternalEvents(String externalChargeId) {
         return jdbi.withHandle(h ->
                 h.createQuery("SELECT status from charge_events WHERE charge_id = (SELECT id from charges WHERE external_id=:external_id)")
@@ -509,4 +521,148 @@ public class DatabaseTestHelper {
         return new Gson().fromJson(jsonString, Map.class);
     }
 
+    public void addPaymentRequest(long id,
+                                  long amount,
+                                  long gatewaysAccountId,
+                                  String returnUrl,
+                                  String description,
+                                  String reference,
+                                  ZonedDateTime createdDate,
+                                  String externalId
+    ) {
+        jdbi.withHandle(h ->
+                h.update(
+                        "INSERT INTO payment_requests(" +
+                                "id," +
+                                "amount," +
+                                "gateway_account_id," +
+                                "return_url," +
+                                "description," +
+                                "reference," +
+                                "created_date," +
+                                "external_id" +
+                                ")" +
+                                "VALUES (" +
+                                "?, ?, ?, ?, ?, ?, ?, ?" +
+                                ")",
+                        id,
+                        amount,
+                        gatewaysAccountId,
+                        returnUrl,
+                        description,
+                        reference,
+                        Timestamp.from(createdDate.toInstant()),
+                        externalId
+                )
+        );
+    }
+
+    public void addChargeTransaction(
+            long transactionId,
+            String gatewayTransactionId,
+            Long amount,
+            ChargeStatus chargeStatus,
+            long paymentRequestId
+            ) {
+        jdbi.withHandle(h ->
+                h.update(
+                        "INSERT INTO transactions(" +
+                                "id," +
+                                "payment_request_id," +
+                                "gateway_transaction_id," +
+                                "amount," +
+                                "status," +
+                                "operation" +
+                                ")" +
+                                "VALUES (" +
+                                "?, ?, ?, ?, ?, 'CHARGE'" +
+                                ")",
+                        transactionId,
+                        paymentRequestId,
+                        gatewayTransactionId,
+                        amount,
+                        chargeStatus.name()
+                )
+        );
+    }
+
+    public void addRefundTransaction(Long id, Long paymentRequestId, Long amount, String refundExternalId, String userExternalId, RefundStatus status, String refundReference) {
+        jdbi.withHandle(h ->
+                h.update(
+                        "INSERT INTO transactions(" +
+                                "id," +
+                                "payment_request_id," +
+                                "amount," +
+                                "refund_external_id," +
+                                "user_external_id," +
+                                "status," +
+                                "refund_reference," +
+                                "operation" +
+                                ")" +
+                                "VALUES (" +
+                                "?, ?, ?, ?, ?, ?, ?, 'REFUND'" +
+                                ")",
+                        id,
+                        paymentRequestId,
+                        amount,
+                        refundExternalId,
+                        userExternalId,
+                        status.name(),
+                        refundReference
+                )
+        );
+    }
+
+    public void addChargeTransactionEvent(Long transactionId, ChargeStatus chargeStatus, ZonedDateTime updated) {
+        jdbi.withHandle(h ->
+                h.update(
+                        "INSERT INTO transaction_events(" +
+                                "transaction_id," +
+                                "status," +
+                                "updated," +
+                                "operation" +
+                                ")" +
+                                "VALUES (" +
+                                "?, ?, ?, 'CHARGE'" +
+                                ")",
+                        transactionId,
+                        chargeStatus.name(),
+                        Timestamp.from(updated.toInstant())
+                )
+        );
+    }
+
+    public void addRefundTransactionEvent(Long transactionId, RefundStatus refundStatus, ZonedDateTime updated) {
+        jdbi.withHandle(h -> h.update(
+                        "INSERT INTO transaction_events(" +
+                                "transaction_id," +
+                                "status," +
+                                "updated," +
+                                "operation" +
+                                ")" +
+                                "VALUES (" +
+                                "?, ?, ?, 'REFUND'" +
+                                ")",
+                        transactionId,
+                        refundStatus.name(),
+                        Timestamp.from(updated.toInstant())
+                )
+
+
+        );
+    }
+
+    public List<Map<String, Object>> loadTransactionEvents(Long transactionId) {
+        return jdbi.withHandle(h ->
+                h.createQuery("Select * from transaction_events where transaction_id = :transactionId order by updated desc")
+                        .bind("transactionId", transactionId)
+                        .list());
+    }
+
+    public List<Map<String, Object>> getRefundTransaction(Long paymentRequestId) {
+        return jdbi.withHandle(h ->
+                h.createQuery("Select * from transactions where payment_request_id = :paymentRequestId and operation='REFUND' order by id asc")
+                        .bind("paymentRequestId", paymentRequestId)
+                        .list());
+    }
 }

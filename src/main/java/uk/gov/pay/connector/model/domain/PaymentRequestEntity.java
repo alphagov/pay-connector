@@ -2,11 +2,9 @@ package uk.gov.pay.connector.model.domain;
 
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import uk.gov.pay.connector.model.domain.transaction.ChargeTransactionEntity;
-import uk.gov.pay.connector.model.domain.transaction.ChargeTransactionEventEntity;
 import uk.gov.pay.connector.model.domain.transaction.RefundTransactionEntity;
 import uk.gov.pay.connector.model.domain.transaction.TransactionEntity;
 import uk.gov.pay.connector.model.domain.transaction.TransactionOperation;
-import uk.gov.pay.connector.service.CardService;
 
 import javax.persistence.Access;
 import javax.persistence.AccessType;
@@ -20,6 +18,7 @@ import javax.persistence.Id;
 import javax.persistence.JoinColumn;
 import javax.persistence.ManyToOne;
 import javax.persistence.OneToMany;
+import javax.persistence.OrderBy;
 import javax.persistence.SequenceGenerator;
 import javax.persistence.Table;
 import java.time.ZonedDateTime;
@@ -68,6 +67,7 @@ public class PaymentRequestEntity extends AbstractVersionedEntity {
     private String externalId;
 
     @OneToMany(mappedBy = "paymentRequest", cascade = CascadeType.ALL)
+    @OrderBy("id ASC")
     private List<TransactionEntity> transactions = new ArrayList<>();
 
     public PaymentRequestEntity() {

@@ -9,7 +9,11 @@ import uk.gov.pay.connector.model.domain.ChargeStatus;
 import javax.inject.Inject;
 import javax.persistence.EntityManager;
 import javax.persistence.Query;
-import javax.persistence.criteria.*;
+import javax.persistence.criteria.CriteriaBuilder;
+import javax.persistence.criteria.CriteriaQuery;
+import javax.persistence.criteria.Path;
+import javax.persistence.criteria.Predicate;
+import javax.persistence.criteria.Root;
 import java.time.Duration;
 import java.time.ZonedDateTime;
 import java.util.ArrayList;
@@ -206,4 +210,12 @@ public class ChargeDao extends JpaDao<ChargeEntity> {
                 .setParameter("captureApprovedRetryStatus", CAPTURE_APPROVED_RETRY)
                 .getSingleResult()).intValue();
     }
+
+    public List<ChargeEntity> findByIdAndLimit(Long id, int limit) {
+            return entityManager.get()
+                    .createQuery("SELECT c FROM ChargeEntity c WHERE c.id > :id ORDER BY c.id", ChargeEntity.class)
+                    .setParameter("id", id)
+                    .setMaxResults(limit)
+                    .getResultList();
+        }
 }

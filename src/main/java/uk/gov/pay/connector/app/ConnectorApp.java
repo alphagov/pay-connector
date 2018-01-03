@@ -43,6 +43,7 @@ import uk.gov.pay.connector.resources.TransactionsSummaryResource;
 import uk.gov.pay.connector.service.Auth3dsDetailsFactory;
 import uk.gov.pay.connector.service.CaptureProcessScheduler;
 import uk.gov.pay.connector.service.CardCaptureProcess;
+import uk.gov.pay.connector.tasks.MigrateTransactionEventsTask;
 import uk.gov.pay.connector.util.DependentResourceWaitCommand;
 import uk.gov.pay.connector.util.TrustingSSLSocketFactory;
 
@@ -112,6 +113,8 @@ public class ConnectorApp extends Application<ConnectorConfiguration> {
         environment.healthChecks().register("ping", new Ping());
         environment.healthChecks().register("database", injector.getInstance(DatabaseHealthCheck.class));
         environment.healthChecks().register("cardExecutorService", injector.getInstance(CardExecutorServiceHealthCheck.class));
+
+        environment.admin().addTask(injector.getInstance(MigrateTransactionEventsTask.class));
 
         setGlobalProxies(configuration);
     }

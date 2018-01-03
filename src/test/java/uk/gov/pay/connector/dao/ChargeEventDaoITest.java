@@ -21,8 +21,10 @@ import static java.util.stream.Collectors.toList;
 import static org.exparity.hamcrest.date.ZonedDateTimeMatchers.within;
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.hasSize;
-import static org.junit.Assert.*;
-import static uk.gov.pay.connector.model.domain.ChargeStatus.*;
+import static uk.gov.pay.connector.model.domain.ChargeStatus.AUTHORISATION_READY;
+import static uk.gov.pay.connector.model.domain.ChargeStatus.AUTHORISATION_SUCCESS;
+import static uk.gov.pay.connector.model.domain.ChargeStatus.CAPTURE_READY;
+import static uk.gov.pay.connector.model.domain.ChargeStatus.ENTERING_CARD_DETAILS;
 
 public class ChargeEventDaoITest extends DaoITestBase {
 
@@ -30,6 +32,7 @@ public class ChargeEventDaoITest extends DaoITestBase {
     private ChargeEventDao chargeEventDao;
     private DatabaseFixtures.TestCardDetails defaultTestCardDetails;
     private DatabaseFixtures.TestAccount defaultTestAccount;
+
     @Before
     public void setUp() throws Exception {
         chargeDao = env.getInstance(ChargeDao.class);
