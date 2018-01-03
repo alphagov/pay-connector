@@ -61,11 +61,11 @@ public class PaymentRequestWorker {
      * for each smaller <code>id</code> it will fetch the entity and
      * process it
      */
-    public void execute() {
+    public void execute(Long startId) {
         MDC.put(HEADER_REQUEST_ID, "Backfill transactions " + RandomUtils.nextLong(0, 10000));
-        logger.info("Running migration worker");
         Long maxId = paymentRequestDao.findMaxId();
-        for (long paymentRequestId = 1; paymentRequestId <= maxId; paymentRequestId++) {
+        logger.info("Running migration worker from startId [" + startId + "] to maxId [" + maxId + "]");
+        for (long paymentRequestId = startId; paymentRequestId <= maxId; paymentRequestId++) {
             int retries = 0;
             updatePaymentRequestWithRetry(paymentRequestId, retries);
         }
@@ -85,6 +85,7 @@ public class PaymentRequestWorker {
     }
 
     //Needs to be public to put the transaction here
+    @SuppressWarnings("WeakerAccess")
     @Transactional
     public void updatePaymentRequest(long paymentRequestId) {
         logger.info("Migrating payment request [" + paymentRequestId + "]");

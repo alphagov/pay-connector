@@ -24,6 +24,11 @@ public class MigrateTransactionEventsTask extends Task {
 
     @Override
     public void execute(ImmutableMultimap<String, String> parameters, PrintWriter output) {
-        worker.execute();
+        String queryParam = "startId";
+        Long startId = 1L;
+        if (!parameters.isEmpty() && parameters.containsKey(queryParam)) {
+            startId = Long.valueOf(parameters.get(queryParam).asList().get(0));
+        }
+        worker.execute(startId);
     }
 }

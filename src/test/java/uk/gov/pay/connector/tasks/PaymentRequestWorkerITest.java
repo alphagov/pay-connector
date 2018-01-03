@@ -3,6 +3,7 @@ package uk.gov.pay.connector.tasks;
 import org.apache.commons.lang.math.RandomUtils;
 import org.apache.commons.lang3.tuple.ImmutablePair;
 import org.apache.commons.lang3.tuple.Pair;
+import org.hamcrest.collection.IsEmptyCollection;
 import org.junit.Before;
 import org.junit.Test;
 import uk.gov.pay.connector.it.dao.DatabaseFixtures;
@@ -49,9 +50,30 @@ public class PaymentRequestWorkerITest extends TaskITestBase {
 
         Pair<Long, Long> ids = createPaymentRequest(chargeEntity);
 
-        worker.execute();
+        worker.execute(1L);
 
         assertTransactionEventsFor(ids.getRight(), ChargeStatus.CREATED);
+    }
+
+    @Test
+    public void shouldMigrateChargeByGivenId() {
+        DatabaseFixtures.TestCharge chargeEntity1 = createCharge();
+        databaseTestHelper.addEvent(chargeEntity1.getChargeId(), chargeEntity1.getChargeStatus().getValue());
+
+        Pair<Long, Long> ids1 = createPaymentRequest(chargeEntity1);
+
+        DatabaseFixtures.TestCharge chargeEntity2 = createCharge();
+        databaseTestHelper.addEvent(chargeEntity2.getChargeId(), chargeEntity2.getChargeStatus().getValue());
+
+        Pair<Long, Long> ids2 = createPaymentRequest(chargeEntity2);
+
+        worker.execute(ids2.getLeft());
+
+        final List<Map<String, Object>> transactionEvents1 = databaseTestHelper.loadTransactionEvents(ids1.getRight());
+        assertThat(transactionEvents1, IsEmptyCollection.empty());
+
+        final List<Map<String, Object>> transactionEvents2 = databaseTestHelper.loadTransactionEvents(ids2.getRight());
+        assertThat(transactionEvents2.size(), is(1));
     }
 
     @Test
@@ -62,7 +84,7 @@ public class PaymentRequestWorkerITest extends TaskITestBase {
 
         Pair<Long, Long> ids = createPaymentRequest(chargeEntity);
 
-        worker.execute();
+        worker.execute(1L);
 
         List<Map<String, Object>> refundTransactionEvents = databaseTestHelper.loadTransactionEvents(ids.getRight());
         assertThat(refundTransactionEvents.size(), is(1));
@@ -78,7 +100,7 @@ public class PaymentRequestWorkerITest extends TaskITestBase {
 
         long chargeTransactionId = createPaymentRequest(testCharge).getRight();
 
-        worker.execute();
+        worker.execute(1L);
 
         assertTransactionEventsFor(chargeTransactionId, ChargeStatus.ENTERING_CARD_DETAILS, ChargeStatus.CREATED);
     }
@@ -93,14 +115,14 @@ public class PaymentRequestWorkerITest extends TaskITestBase {
         databaseTestHelper.addEvent(chargeEntity2.getChargeId(), chargeEntity2.getChargeStatus().getValue());
         long chargeTransactionId2 = createPaymentRequest(chargeEntity2).getRight();
 
-        worker.execute();
+        worker.execute(1L);
 
         assertTransactionEventsFor(chargeTransactionId1, ChargeStatus.CREATED);
         assertTransactionEventsFor(chargeTransactionId2, ChargeStatus.CREATED);
     }
 
     @Test
-    public void shouldCreateRefundTransactionEvents() throws InterruptedException {
+    public void shouldCreateRefundTransactionEvents() {
         DatabaseFixtures.TestCharge testCharge = createCharge();
         DatabaseFixtures.TestRefund testRefund = createRefund(testCharge);
         addRefundHistoryEvent(testRefund, RefundStatus.REFUND_SUBMITTED, testRefund.getCreatedDate().plusSeconds(1));
@@ -108,7 +130,7 @@ public class PaymentRequestWorkerITest extends TaskITestBase {
         long paymentRequestId = createPaymentRequest(testCharge).getLeft();
         List<Long> refundTransactionIds = addRefundTransactions(paymentRequestId, testRefund);
 
-        worker.execute();
+        worker.execute(1L);
 
         assertTransactionEventsFor(refundTransactionIds.get(0), RefundStatus.REFUNDED, RefundStatus.REFUND_SUBMITTED);
     }
@@ -127,7 +149,7 @@ public class PaymentRequestWorkerITest extends TaskITestBase {
         long paymentRequestId = createPaymentRequest(chargeEntity).getLeft();
         List<Long> refundTransactionIds = addRefundTransactions(paymentRequestId, testRefund1, testRefund2);
 
-        worker.execute();
+        worker.execute(1L);
 
         assertTransactionEventsFor(refundTransactionIds.get(0), RefundStatus.REFUNDED, RefundStatus.REFUND_SUBMITTED);
         assertTransactionEventsFor(refundTransactionIds.get(1), RefundStatus.REFUND_ERROR, RefundStatus.REFUND_SUBMITTED);
@@ -147,7 +169,7 @@ public class PaymentRequestWorkerITest extends TaskITestBase {
         databaseTestHelper.addChargeTransactionEvent(ids.getRight(), ChargeStatus.CAPTURED, ZonedDateTime.now());
         databaseTestHelper.addRefundTransactionEvent(refundTransactionId, RefundStatus.REFUND_SUBMITTED, ZonedDateTime.now().plusSeconds(10));
 
-        worker.execute();
+        worker.execute(1L);
 
         assertTransactionEventsFor(refundTransactionId, RefundStatus.REFUND_SUBMITTED, RefundStatus.REFUNDED);
     }
@@ -162,30 +184,30 @@ public class PaymentRequestWorkerITest extends TaskITestBase {
         Long chargeTransactionId = ids.getRight();
         databaseTestHelper.addChargeTransactionEvent(chargeTransactionId, ChargeStatus.ENTERING_CARD_DETAILS, ZonedDateTime.now());
 
-        worker.execute();
+        worker.execute(1L);
 
         assertTransactionEventsFor(chargeTransactionId, ChargeStatus.ENTERING_CARD_DETAILS, ChargeStatus.CREATED);
     }
 
     @Test
-    public void shouldCreateARefundTransactionForAPaymentRequestWithoutOneButARefundExists() throws Exception {
+    public void shouldCreateARefundTransactionForAPaymentRequestWithoutOneButARefundExists() {
         DatabaseFixtures.TestCharge testCharge = createCharge();
         DatabaseFixtures.TestRefund testRefund = createRefund(testCharge);
         Pair<Long, Long> ids = createPaymentRequest(testCharge);
 
-        worker.execute();
+        worker.execute(1L);
 
         assertRefundTransactions(ids.getLeft(), testRefund);
     }
 
     @Test
-    public void shouldNotCreateAnotherRefundTransactionForAPaymentRequestWhereTheRefundTransactionAlreadyExists() throws Exception {
+    public void shouldNotCreateAnotherRefundTransactionForAPaymentRequestWhereTheRefundTransactionAlreadyExists() {
         DatabaseFixtures.TestCharge testCharge = createCharge();
         DatabaseFixtures.TestRefund testRefund = createRefund(testCharge);
         Pair<Long, Long> ids = createPaymentRequest(testCharge);
         List<Long> refundTransactionIds = addRefundTransactions(ids.getLeft(), testRefund);
 
-        worker.execute();
+        worker.execute(1L);
 
         List<Map<String, Object>> refundTransactions = databaseTestHelper.getRefundTransaction(ids.getLeft());
         assertThat(refundTransactions.size(), is(1));
@@ -200,7 +222,7 @@ public class PaymentRequestWorkerITest extends TaskITestBase {
         DatabaseFixtures.TestRefund testRefund2 = createRefund(testCharge);
         Pair<Long, Long> ids = createPaymentRequest(testCharge);
 
-        worker.execute();
+        worker.execute(1L);
 
         assertRefundTransactions(ids.getLeft(), testRefund1, testRefund2);
     }
@@ -213,7 +235,7 @@ public class PaymentRequestWorkerITest extends TaskITestBase {
         Pair<Long, Long> ids = createPaymentRequest(testCharge);
         addRefundTransactions(ids.getLeft(), testRefund1);
 
-        worker.execute();
+        worker.execute(1L);
 
         assertRefundTransactions(ids.getLeft(), testRefund1, testRefund2);
     }
