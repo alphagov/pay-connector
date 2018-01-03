@@ -90,52 +90,6 @@ public class ChargeEventDaoITest extends DaoITestBase {
         assertDateMatch(events.get(0).getUpdated());
     }
 
-    @Test
-    public void findWithLimit() {
-        Long chargeId = 56735L;
-        String externalChargeId = "charge456";
-
-        String transactionId = "345654";
-        String transactionId2 = "345655";
-        String transactionId3 = "345656";
-
-        DatabaseFixtures
-                .withDatabaseTestHelper(databaseTestHelper)
-                .aTestCharge()
-                .withTestAccount(defaultTestAccount)
-                .withChargeId(chargeId)
-                .withExternalChargeId(externalChargeId)
-                .withTransactionId(transactionId)
-                .insert();
-
-        Optional<ChargeEntity> charge = chargeDao.findById(chargeId);
-        ChargeEntity entity = charge.get();
-        entity.setStatus(ENTERING_CARD_DETAILS);
-
-        chargeEventDao.persistChargeEventOf(entity, Optional.empty());
-
-        //move status to AUTHORISED
-        entity.setStatus(AUTHORISATION_READY);
-        entity.setStatus(AUTHORISATION_SUCCESS);
-        entity.setGatewayTransactionId(transactionId2);
-
-        chargeEventDao.persistChargeEventOf(entity, Optional.empty());
-
-        entity.setStatus(CAPTURE_READY);
-        entity.setGatewayTransactionId(transactionId3);
-
-        chargeEventDao.persistChargeEventOf(entity, Optional.empty());
-
-        final int limitSize = 10;
-        List<ChargeEventEntity> events = chargeEventDao.findWithLimit(limitSize);
-
-        assertThat(events, hasSize(3));
-        assertThat(events, shouldIncludeStatus(ENTERING_CARD_DETAILS));
-        assertThat(events, shouldIncludeStatus(AUTHORISATION_SUCCESS));
-        assertThat(events, shouldIncludeStatus(CAPTURE_READY));
-        assertDateMatch(events.get(0).getUpdated());
-    }
-
     private void assertDateMatch(ZonedDateTime createdDateTime) {
         assertThat(createdDateTime, within(1, ChronoUnit.MINUTES, ZonedDateTime.now()));
     }
