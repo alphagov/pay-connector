@@ -136,6 +136,19 @@ public class PaymentRequestWorkerITest extends TaskITestBase {
     }
 
     @Test
+    public void shouldCreateCreatedRefundTransactionEvents() {
+        DatabaseFixtures.TestCharge testCharge = createCharge();
+        DatabaseFixtures.TestRefund testRefund = createRefund(testCharge);
+        addRefundHistoryEvent(testRefund, RefundStatus.CREATED, testRefund.getCreatedDate().plusSeconds(1));
+        long paymentRequestId = createPaymentRequest(testCharge).getLeft();
+        List<Long> refundTransactionIds = addRefundTransactions(paymentRequestId, testRefund);
+
+        worker.execute(1L);
+
+        assertTransactionEventsFor(refundTransactionIds.get(0), RefundStatus.CREATED);
+    }
+
+    @Test
     public void shouldCreateRefundTransactionEventsWhenMultipleRefundsPerPaymentRequest() {
         DatabaseFixtures.TestCharge chargeEntity = createCharge();
         DatabaseFixtures.TestRefund testRefund1 = createRefund(chargeEntity);
