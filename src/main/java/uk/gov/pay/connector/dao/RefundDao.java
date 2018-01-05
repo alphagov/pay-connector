@@ -75,4 +75,16 @@ public class RefundDao extends JpaDao<RefundEntity> {
                 .setParameter(2, RefundStatus.CREATED.getValue())
                 .getResultList();
     }
+
+    public List<RefundHistory> searchAllHistoryByChargeId(Long chargeId) {
+
+        String query = "SELECT id, external_id, amount, status, charge_id, created_date, version, reference, history_start_date, history_end_date, user_external_id " +
+                "FROM refunds_history r " +
+                "WHERE charge_id = ?1";
+
+        return entityManager.get()
+                .createNativeQuery(query, "RefundEntityHistoryMapping")
+                .setParameter(1, chargeId)
+                .getResultList();
+    }
 }

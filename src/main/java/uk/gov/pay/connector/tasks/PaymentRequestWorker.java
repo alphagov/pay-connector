@@ -102,7 +102,7 @@ public class PaymentRequestWorker {
         charge.getEvents()
                 .forEach(chargeEventEntity -> processChargeEvent(chargeEventEntity, paymentRequestEntity));
 
-        List<RefundHistory> refunds = refundDao.searchHistoryByChargeId(charge.getId());
+        List<RefundHistory> refunds = refundDao.searchAllHistoryByChargeId(charge.getId());
 
         addMissingRefundTransactions(charge, paymentRequestEntity);
 
@@ -115,16 +115,16 @@ public class PaymentRequestWorker {
 
     private void addMissingRefundTransactions(ChargeEntity charge, PaymentRequestEntity paymentRequestEntity) {
         charge.getRefunds().stream().filter(refundsWithNoRefundTransaction(paymentRequestEntity)).forEach(refund -> {
-                logger.info("Adding missing RefundTransaction to [" + paymentRequestEntity.getId() + "] with reference [" + refund.getReference() + "]");
-                RefundTransactionEntity refundTransaction = new RefundTransactionEntity();
-                refundTransaction.setAmount(refund.getAmount());
-                refundTransaction.setStatus(refund.getStatus());
-                refundTransaction.setRefundExternalId(refund.getExternalId());
-                refundTransaction.setUserExternalId(refund.getUserExternalId());
-                refundTransaction.setRefundReference(refund.getReference());
+                    logger.info("Adding missing RefundTransaction to [" + paymentRequestEntity.getId() + "] with reference [" + refund.getReference() + "]");
+                    RefundTransactionEntity refundTransaction = new RefundTransactionEntity();
+                    refundTransaction.setAmount(refund.getAmount());
+                    refundTransaction.setStatus(refund.getStatus());
+                    refundTransaction.setRefundExternalId(refund.getExternalId());
+                    refundTransaction.setUserExternalId(refund.getUserExternalId());
+                    refundTransaction.setRefundReference(refund.getReference());
 
-                paymentRequestEntity.addTransaction(refundTransaction);
-            }
+                    paymentRequestEntity.addTransaction(refundTransaction);
+                }
         );
     }
 
@@ -143,7 +143,8 @@ public class PaymentRequestWorker {
         if (chargeTransaction.getTransactionEvents()
                 .stream()
                 .noneMatch(transactionEvent -> transactionEvent.getStatus().equals(chargeEvent.getStatus()))) {
-            logger.info("Adding charge event for [" + chargeTransaction.getId() + "] for status [" + chargeEvent.getStatus() + "]");
+            logger.info("Adding charge event for paymentRequest [" + paymentRequestEntity.getId() +
+                    "] transaction [" + chargeTransaction.getId() + "] status [" + chargeEvent.getStatus() + "]");
             ChargeTransactionEventEntity chargeTransactionEventEntity = new ChargeTransactionEventEntity();
             chargeTransactionEventEntity.setStatus(chargeEvent.getStatus());
             chargeTransactionEventEntity.setUpdated(chargeEvent.getUpdated());
@@ -151,22 +152,26 @@ public class PaymentRequestWorker {
             chargeTransaction.getTransactionEvents().add(chargeTransactionEventEntity);
             chargeTransactionEventEntity.setTransaction(chargeTransaction);
         } else {
-            logger.info("Not adding charge event for [" + chargeTransaction.getId() + "] for status [" + chargeEvent.getStatus() + "]");
+            logger.info("Not adding charge event for paymentRequest [" + paymentRequestEntity.getId() +
+                    "] transaction [" + chargeTransaction.getId() + "] status [" + chargeEvent.getStatus() + "]");
         }
     }
 
     private void processRefundEvent(RefundHistory refundHistory, RefundTransactionEntity refundTransactionEntity) {
+        Long paymentRequestId = refundTransactionEntity.getPaymentRequest().getId();
         if (refundTransactionEntity.getTransactionEvents()
                 .stream()
                 .noneMatch(refundEvent -> refundEvent.getStatus().equals(refundHistory.getStatus()))) {
-            logger.info("Adding refund event for [" + refundTransactionEntity.getId() + "] for status [" + refundHistory.getStatus() + "]");
+            logger.info("Adding refund event for paymentRequest [" + paymentRequestId + "] transaction [" +
+                    refundTransactionEntity.getId() + "] status [" + refundHistory.getStatus() + "]");
             RefundTransactionEventEntity refundTransactionEventEntity = new RefundTransactionEventEntity();
             refundTransactionEventEntity.setStatus(refundHistory.getStatus());
             refundTransactionEventEntity.setUpdated(refundHistory.getHistoryStartDate());
             refundTransactionEntity.getTransactionEvents().add(refundTransactionEventEntity);
             refundTransactionEventEntity.setTransaction(refundTransactionEntity);
         } else {
-            logger.info("Not adding refund event for [" + refundTransactionEntity.getId() + "] for status [" + refundHistory.getStatus() + "]");
+            logger.info("Not adding refund event for paymentRequest [" + paymentRequestId + "] transaction [" +
+                    refundTransactionEntity.getId() + "] status [" + refundHistory.getStatus() + "]");
         }
     }
 }
