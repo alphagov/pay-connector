@@ -14,6 +14,7 @@ import uk.gov.pay.connector.service.CardExecutorService;
 import uk.gov.pay.connector.service.GatewayAccountServicesFactory;
 import uk.gov.pay.connector.service.PaymentProviders;
 import uk.gov.pay.connector.service.notify.NotifyClientFactoryProvider;
+import uk.gov.pay.connector.tasks.AddTransactionIdToCardsWorker;
 import uk.gov.pay.connector.tasks.PaymentRequestWorker;
 import uk.gov.pay.connector.util.HashUtil;
 import uk.gov.pay.connector.validations.RequestValidator;
@@ -40,6 +41,7 @@ public class ConnectorModule extends AbstractModule {
         bind(RequestValidator.class);
         bind(GatewayAccountRequestValidator.class).in(Singleton.class);
         bind(PaymentRequestWorker.class);
+        bind(AddTransactionIdToCardsWorker.class);
 
         install(jpaModule(configuration));
         install(new FactoryModuleBuilder().build(NotifyClientFactoryProvider.class));

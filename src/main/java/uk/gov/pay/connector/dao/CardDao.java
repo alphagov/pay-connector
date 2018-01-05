@@ -15,4 +15,10 @@ public class CardDao extends JpaDao<CardEntity> {
         super(entityManager);
     }
 
+    public Long findMaxId() {
+        final Long singleResult = entityManager.get()
+                .createQuery("SELECT MAX(c.id) FROM CardEntity c", Long.class)
+                .getSingleResult();
+        return singleResult == null ? 0 : singleResult;
+    }
 }
