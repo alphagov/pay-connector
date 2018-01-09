@@ -14,4 +14,11 @@ public class Card3dsDao extends JpaDao<Card3dsEntity> {
     public Card3dsDao(Provider<EntityManager> entityManager) {
         super(entityManager);
     }
+
+    public Long findMaxId() {
+        final Long singleResult = entityManager.get()
+                .createQuery("SELECT MAX(c.id) FROM Card3dsEntity c", Long.class)
+                .getSingleResult();
+        return singleResult == null ? 0 : singleResult;
+    }
 }

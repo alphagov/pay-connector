@@ -5,10 +5,10 @@ import org.apache.commons.lang3.RandomUtils;
 import org.jboss.logging.MDC;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import uk.gov.pay.connector.dao.CardDao;
+import uk.gov.pay.connector.dao.Card3dsDao;
 import uk.gov.pay.connector.dao.ChargeDao;
 import uk.gov.pay.connector.dao.PaymentRequestDao;
-import uk.gov.pay.connector.model.domain.CardEntity;
+import uk.gov.pay.connector.model.domain.Card3dsEntity;
 import uk.gov.pay.connector.model.domain.ChargeEntity;
 import uk.gov.pay.connector.model.domain.transaction.ChargeTransactionEntity;
 
@@ -16,37 +16,37 @@ import javax.inject.Inject;
 
 import static uk.gov.pay.connector.filters.LoggingFilter.HEADER_REQUEST_ID;
 
-public class AddTransactionIdToCardsWorker {
+public class AddTransactionIdToCard3dsWorker {
     private final ChargeDao chargeDao;
     private final PaymentRequestDao paymentRequestDao;
-    private final CardDao cardDao;
+    private final Card3dsDao card3dsDao;
 
     protected final Logger logger = LoggerFactory.getLogger(getClass());
 
     @Inject
-    public AddTransactionIdToCardsWorker(ChargeDao chargeDao, PaymentRequestDao paymentRequestDao, CardDao cardDao) {
+    public AddTransactionIdToCard3dsWorker(ChargeDao chargeDao, PaymentRequestDao paymentRequestDao, Card3dsDao card3dsDao) {
         this.chargeDao = chargeDao;
         this.paymentRequestDao = paymentRequestDao;
-        this.cardDao = cardDao;
+        this.card3dsDao = card3dsDao;
     }
 
     public void execute(Long startId) {
         MDC.put(HEADER_REQUEST_ID, "Back fill transaction id on cards " + RandomUtils.nextLong(0, 10000));
         logger.info("Running migration worker");
-        Long maxId = cardDao.findMaxId();
-        for (long cardId = startId; cardId <= maxId; cardId++) {
+        Long maxId = card3dsDao.findMaxId();
+        for (long card3dsId = startId; card3dsId <= maxId; card3dsId++) {
             int retries = 0;
-            updateCardWithRetry(cardId, retries);
+            updateCard3dsWithRetry(card3dsId, retries);
         }
     }
 
-    private void updateCardWithRetry(long cardId, long retries) {
+    private void updateCard3dsWithRetry(long cardId, long retries) {
         try {
-            setChargeTransactionOnCard(cardId);
+            setChargeTransactionOnCard3ds(cardId);
         } catch (Exception exc) {
             if (retries < 3) {
                 logger.error("Problem migrating [" + cardId + "] " + exc.getMessage() + " retry count [" + retries + "]");
-                updateCardWithRetry(cardId, retries + 1);
+                updateCard3dsWithRetry(cardId, retries + 1);
             } else {
                 throw exc;
             }
@@ -54,23 +54,23 @@ public class AddTransactionIdToCardsWorker {
     }
 
     @Transactional
-    public void setChargeTransactionOnCard(long cardId) {
-        logger.info("Migrating card [" + cardId + "]");
+    public void setChargeTransactionOnCard3ds(long card3dsId) {
+        logger.info("Migrating card3ds [" + card3dsId + "]");
 
-        cardDao.findById(CardEntity.class, cardId)
+        card3dsDao.findById(Card3dsEntity.class, card3dsId)
                 .filter(card -> card.getChargeTransactionEntity() == null)
-                .ifPresent(card ->
-                        chargeDao.findById(card.getChargeId())
-                                .ifPresent(charge -> loadPaymentRequestAndAddToCard(card, charge))
+                .ifPresent(card3ds ->
+                        chargeDao.findById(card3ds.getChargeId())
+                                .ifPresent(charge -> loadPaymentRequestAndAddToCard(card3ds, charge))
                 );
     }
 
-    private void loadPaymentRequestAndAddToCard(CardEntity card, ChargeEntity charge) {
+    private void loadPaymentRequestAndAddToCard(Card3dsEntity card3ds, ChargeEntity charge) {
         paymentRequestDao.findByExternalId(charge.getExternalId()).ifPresent(paymentRequest -> {
                     ChargeTransactionEntity chargeTransaction = paymentRequest.getChargeTransaction();
-                    chargeTransaction.setCard(card);
+                    chargeTransaction.setCard3ds(card3ds);
 
-                    logger.info("Adding charge transaction [" + chargeTransaction.getId() + "] to card [" + card.getId() + "]");
+                    logger.info("Adding charge transaction [" + chargeTransaction.getId() + "] to card3ds [" + card3ds.getId() + "]");
                 }
         );
     }

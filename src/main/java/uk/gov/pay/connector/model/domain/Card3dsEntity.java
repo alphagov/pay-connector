@@ -1,12 +1,15 @@
 package uk.gov.pay.connector.model.domain;
 
 import com.fasterxml.jackson.annotation.JsonIgnore;
+import uk.gov.pay.connector.model.domain.transaction.ChargeTransactionEntity;
 
 import javax.persistence.Column;
 import javax.persistence.Entity;
 import javax.persistence.GeneratedValue;
 import javax.persistence.GenerationType;
 import javax.persistence.Id;
+import javax.persistence.JoinColumn;
+import javax.persistence.OneToOne;
 import javax.persistence.SequenceGenerator;
 import javax.persistence.Table;
 
@@ -33,6 +36,10 @@ public class Card3dsEntity extends AbstractVersionedEntity {
 
     @Column(name = "charge_id")
     private Long chargeId;
+
+    @OneToOne
+    @JoinColumn(name = "transaction_id", referencedColumnName = "id", updatable = true)
+    private ChargeTransactionEntity chargeTransactionEntity;
 
     public Card3dsEntity() {
     }
@@ -77,8 +84,15 @@ public class Card3dsEntity extends AbstractVersionedEntity {
         this.chargeId = chargeId;
     }
 
-    public static Card3dsEntity from(ChargeEntity chargeEntity) {
+    public ChargeTransactionEntity getChargeTransactionEntity() {
+        return chargeTransactionEntity;
+    }
 
+    public void setChargeTransactionEntity(ChargeTransactionEntity chargeTransactionEntity) {
+        this.chargeTransactionEntity = chargeTransactionEntity;
+    }
+
+    public static Card3dsEntity from(ChargeEntity chargeEntity) {
         Card3dsEntity entity = new Card3dsEntity();
         entity.setChargeId(chargeEntity.getId());
         entity.setIssuerUrl(chargeEntity.get3dsDetails().getIssuerUrl());

@@ -4,7 +4,6 @@ import com.google.common.collect.ImmutableList;
 import com.google.inject.persist.Transactional;
 import io.dropwizard.setup.Environment;
 import org.apache.commons.lang3.StringUtils;
-import uk.gov.pay.connector.dao.Card3dsDao;
 import uk.gov.pay.connector.dao.CardDao;
 import uk.gov.pay.connector.dao.CardTypeDao;
 import uk.gov.pay.connector.dao.ChargeDao;
@@ -22,6 +21,7 @@ import uk.gov.pay.connector.model.domain.ChargeEntity;
 import uk.gov.pay.connector.model.domain.ChargeStatus;
 import uk.gov.pay.connector.model.domain.GatewayAccountEntity;
 import uk.gov.pay.connector.model.domain.PaymentRequestEntity;
+import uk.gov.pay.connector.model.domain.transaction.ChargeTransactionEntity;
 import uk.gov.pay.connector.model.gateway.AuthorisationGatewayRequest;
 import uk.gov.pay.connector.model.gateway.GatewayResponse;
 
@@ -43,7 +43,6 @@ public class CardAuthoriseService extends CardAuthoriseBaseService<AuthCardDetai
     private final CardTypeDao cardTypeDao;
     private final CardDao cardDao;
     private final Auth3dsDetailsFactory auth3dsDetailsFactory;
-    private final Card3dsDao card3dsDao;
     private final PaymentRequestDao paymentRequestDao;
 
     @Inject
@@ -55,12 +54,11 @@ public class CardAuthoriseService extends CardAuthoriseBaseService<AuthCardDetai
                                 CardExecutorService cardExecutorService,
                                 Auth3dsDetailsFactory auth3dsDetailsFactory,
                                 Environment environment,
-                                Card3dsDao card3dsDao, PaymentRequestDao paymentRequestDao, ChargeStatusUpdater chargeStatusUpdater) {
+                                PaymentRequestDao paymentRequestDao, ChargeStatusUpdater chargeStatusUpdater) {
         super(chargeDao, chargeEventDao, providers, cardExecutorService, environment, chargeStatusUpdater);
         this.cardTypeDao = cardTypeDao;
         this.cardDao = cardDao;
         this.auth3dsDetailsFactory = auth3dsDetailsFactory;
-        this.card3dsDao = card3dsDao;
         this.paymentRequestDao = paymentRequestDao;
     }
 
@@ -158,12 +156,20 @@ public class CardAuthoriseService extends CardAuthoriseBaseService<AuthCardDetai
             if (paymentRequestEntity.isPresent()) {
                 CardEntity cardEntity = CardEntity.from(detailsEntity, paymentRequestEntity.get().getChargeTransaction());
                 cardDao.persist(cardEntity);
+
+                paymentRequestEntity.ifPresent(paymentRequest -> {
+                    ChargeTransactionEntity chargeTransaction = paymentRequest.getChargeTransaction();
+                    chargeTransaction.setCard(cardEntity);
+                    if(chargeEntity.get3dsDetails() != null) {
+                        Card3dsEntity card3dsEntity = Card3dsEntity.from(chargeEntity);
+                        chargeTransaction.setCard3ds(card3dsEntity);
+                    }
+                });
             } else {
-                logger.error("Cannot find payment request with external ID {} — this is a bug: the card details will not be saved in the cards table");
+                logger.error("Cannot find payment request with external ID {} — this is a bug: the card and cards3ds details will not be saved in the cards and card_3ds tables");
             }
 
             chargeEventDao.persistChargeEventOf(chargeEntity, Optional.empty());
-            persistCard3ds(chargeEntity);
             logger.info("Stored confirmation details for charge - charge_external_id={}",
                     chargeEntity.getExternalId());
             return operationResponse;
@@ -190,12 +196,5 @@ public class CardAuthoriseService extends CardAuthoriseBaseService<AuthCardDetai
         detailsEntity.setExpiryDate(authCardDetails.getEndDate());
         detailsEntity.setLastDigitsCardNumber(StringUtils.right(authCardDetails.getCardNo(), 4));
         return detailsEntity;
-    }
-
-    private void persistCard3ds(ChargeEntity chargeEntity){
-        if(chargeEntity.get3dsDetails() != null) {
-            Card3dsEntity card3dsEntity = Card3dsEntity.from(chargeEntity);
-            card3dsDao.persist(card3dsEntity);
-        }
     }
 }

@@ -667,8 +667,24 @@ public class DatabaseTestHelper {
                 chargeId,
                 transactionId)
         );
+    }
 
-
+    public void addCard3ds(Long cardId, Long chargeId, Long transactionId) {
+        jdbi.withHandle(h -> h.update(
+                "INSERT INTO card_3ds(" +
+                        "id," +
+                        "charge_id," +
+                        "transaction_id," +
+                        "pa_request," +
+                        "issuer_url" +
+                        ")" +
+                        "VALUES (" +
+                        "?, ?, ?, 'some_ps_request', 'some_issuer_url'" +
+                        ")",
+                cardId,
+                chargeId,
+                transactionId)
+        );
     }
 
     public List<Map<String, Object>> loadTransactionEvents(Long transactionId) {
@@ -689,6 +705,13 @@ public class DatabaseTestHelper {
         return jdbi.withHandle(h ->
                 h.createQuery("Select * from cards where id = :cardId")
                         .bind("cardId", cardId)
+                        .first());
+    }
+
+    public Map<String,Object> getCard3ds(long card3dsId) {
+        return jdbi.withHandle(h ->
+                h.createQuery("Select * from card_3ds where id = :card3dsId")
+                        .bind("card3dsId", card3dsId)
                         .first());
     }
 }

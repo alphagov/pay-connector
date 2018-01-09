@@ -12,7 +12,6 @@ import org.mockito.ArgumentCaptor;
 import org.mockito.InOrder;
 import org.mockito.Mock;
 import org.mockito.runners.MockitoJUnitRunner;
-import uk.gov.pay.connector.dao.Card3dsDao;
 import uk.gov.pay.connector.dao.CardDao;
 import uk.gov.pay.connector.exception.ChargeNotFoundRuntimeException;
 import uk.gov.pay.connector.exception.ConflictRuntimeException;
@@ -99,9 +98,6 @@ public class CardAuthoriseServiceTest extends CardServiceTest {
     @Mock
     private Counter mockCounter;
 
-    @Mock
-    private Card3dsDao mockCard3dsDao;
-
     private CardAuthoriseService cardAuthorisationService;
     private PaymentRequestEntity paymentRequest;
 
@@ -112,7 +108,7 @@ public class CardAuthoriseServiceTest extends CardServiceTest {
         when(mockEnvironment.metrics()).thenReturn(mockMetricRegistry);
         cardAuthorisationService = new CardAuthoriseService(mockedChargeDao, mockedChargeEventDao,
                 mockedCardTypeDao, mockCardDao, mockedProviders, mockExecutorService,
-                auth3dsDetailsFactory, mockEnvironment, mockCard3dsDao, mockPaymentRequestDao, mockChargeStatusUpdater);
+                auth3dsDetailsFactory, mockEnvironment, mockPaymentRequestDao, mockChargeStatusUpdater);
     }
 
     @Before
@@ -206,13 +202,9 @@ public class CardAuthoriseServiceTest extends CardServiceTest {
         verify(mockedChargeEventDao).persistChargeEventOf(charge, Optional.empty());
         assertThat(charge.get3dsDetails().getIssuerUrl(), is(ISSUER_URL_FROM_PROVIDER));
         assertThat(charge.get3dsDetails().getPaRequest(), is(PA_REQ_VALUE_FROM_PROVIDER));
-
-        Card3dsEntity card3dsEntity = new Card3dsEntity();
-        card3dsEntity.setChargeId(charge.getId());
-        card3dsEntity.setIssuerUrl(ISSUER_URL_FROM_PROVIDER);
-        card3dsEntity.setPaRequest(PA_REQ_VALUE_FROM_PROVIDER);
-
-        verify(mockCard3dsDao).persist(card3dsEntity);
+        Card3dsEntity card3ds = paymentRequest.getChargeTransaction().getCard3ds();
+        assertThat(card3ds.getIssuerUrl(), is(ISSUER_URL_FROM_PROVIDER));
+        assertThat(card3ds.getPaRequest(), is(PA_REQ_VALUE_FROM_PROVIDER));
     }
 
     @Test
@@ -229,13 +221,10 @@ public class CardAuthoriseServiceTest extends CardServiceTest {
         assertThat(charge.get3dsDetails().getIssuerUrl(), is(ISSUER_URL_FROM_PROVIDER));
         assertThat(charge.get3dsDetails().getPaRequest(), is(PA_REQ_VALUE_FROM_PROVIDER));
 
-        Card3dsEntity card3dsEntity = new Card3dsEntity();
-        card3dsEntity.setChargeId(charge.getId());
-        card3dsEntity.setIssuerUrl(ISSUER_URL_FROM_PROVIDER);
-        card3dsEntity.setPaRequest(PA_REQ_VALUE_FROM_PROVIDER);
-        card3dsEntity.setWorldpayMachineCookie(SESSION_IDENTIFIER);
-
-        verify(mockCard3dsDao).persist(card3dsEntity);
+        Card3dsEntity card3ds = paymentRequest.getChargeTransaction().getCard3ds();
+        assertThat(card3ds.getIssuerUrl(), is(ISSUER_URL_FROM_PROVIDER));
+        assertThat(card3ds.getPaRequest(), is(PA_REQ_VALUE_FROM_PROVIDER));
+        assertThat(card3ds.getWorldpayMachineCookie(), is(SESSION_IDENTIFIER));
     }
 
     @Test
