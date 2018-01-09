@@ -1187,4 +1187,10 @@
         </sql>
     </changeSet>
 
+    <changeSet id="drop index from pa_request column on card_3ds table" runInTransaction="false" author="">
+        <sql>
+            DROP INDEX CONCURRENTLY idx_card_3ds_pa_request;
+        </sql>
+    </changeSet>
+
 </databaseChangeLog>
