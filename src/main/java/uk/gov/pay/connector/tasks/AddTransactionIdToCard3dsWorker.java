@@ -30,11 +30,11 @@ public class AddTransactionIdToCard3dsWorker {
         this.card3dsDao = card3dsDao;
     }
 
-    public void execute() {
+    public void execute(Long startId) {
         MDC.put(HEADER_REQUEST_ID, "Back fill transaction id on cards " + RandomUtils.nextLong(0, 10000));
         logger.info("Running migration worker");
         Long maxId = card3dsDao.findMaxId();
-        for (long card3dsId = 1; card3dsId <= maxId; card3dsId++) {
+        for (long card3dsId = startId; card3dsId <= maxId; card3dsId++) {
             int retries = 0;
             updateCard3dsWithRetry(card3dsId, retries);
         }

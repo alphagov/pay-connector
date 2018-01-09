@@ -12,7 +12,6 @@ import org.mockito.ArgumentCaptor;
 import org.mockito.InOrder;
 import org.mockito.Mock;
 import org.mockito.runners.MockitoJUnitRunner;
-import uk.gov.pay.connector.dao.Card3dsDao;
 import uk.gov.pay.connector.dao.CardDao;
 import uk.gov.pay.connector.exception.ChargeNotFoundRuntimeException;
 import uk.gov.pay.connector.exception.ConflictRuntimeException;
@@ -99,9 +98,6 @@ public class CardAuthoriseServiceTest extends CardServiceTest {
     @Mock
     private Counter mockCounter;
 
-    @Mock
-    private Card3dsDao mockCard3dsDao;
-
     private CardAuthoriseService cardAuthorisationService;
     private PaymentRequestEntity paymentRequest;
 
@@ -112,7 +108,7 @@ public class CardAuthoriseServiceTest extends CardServiceTest {
         when(mockEnvironment.metrics()).thenReturn(mockMetricRegistry);
         cardAuthorisationService = new CardAuthoriseService(mockedChargeDao, mockedChargeEventDao,
                 mockedCardTypeDao, mockCardDao, mockedProviders, mockExecutorService,
-                auth3dsDetailsFactory, mockEnvironment, mockCard3dsDao, mockPaymentRequestDao, mockChargeStatusUpdater);
+                auth3dsDetailsFactory, mockEnvironment, mockPaymentRequestDao, mockChargeStatusUpdater);
     }
 
     @Before

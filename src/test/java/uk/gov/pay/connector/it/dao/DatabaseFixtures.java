@@ -508,7 +508,7 @@ public class DatabaseFixtures {
 
     public class TestRefund {
         Long id = RandomUtils.nextLong(1, 99999);
-        String externalRefundId = RandomIdGenerator.newId().trim();
+        String externalRefundId = RandomIdGenerator.newId();
         String reference;
         long amount = 101L;
         RefundStatus status = CREATED;

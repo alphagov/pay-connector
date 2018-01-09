@@ -4,7 +4,6 @@ import com.google.common.collect.ImmutableList;
 import com.google.inject.persist.Transactional;
 import io.dropwizard.setup.Environment;
 import org.apache.commons.lang3.StringUtils;
-import uk.gov.pay.connector.dao.Card3dsDao;
 import uk.gov.pay.connector.dao.CardDao;
 import uk.gov.pay.connector.dao.CardTypeDao;
 import uk.gov.pay.connector.dao.ChargeDao;
@@ -44,7 +43,6 @@ public class CardAuthoriseService extends CardAuthoriseBaseService<AuthCardDetai
     private final CardTypeDao cardTypeDao;
     private final CardDao cardDao;
     private final Auth3dsDetailsFactory auth3dsDetailsFactory;
-    private final Card3dsDao card3dsDao;
     private final PaymentRequestDao paymentRequestDao;
 
     @Inject
@@ -56,12 +54,11 @@ public class CardAuthoriseService extends CardAuthoriseBaseService<AuthCardDetai
                                 CardExecutorService cardExecutorService,
                                 Auth3dsDetailsFactory auth3dsDetailsFactory,
                                 Environment environment,
-                                Card3dsDao card3dsDao, PaymentRequestDao paymentRequestDao, ChargeStatusUpdater chargeStatusUpdater) {
+                                PaymentRequestDao paymentRequestDao, ChargeStatusUpdater chargeStatusUpdater) {
         super(chargeDao, chargeEventDao, providers, cardExecutorService, environment, chargeStatusUpdater);
         this.cardTypeDao = cardTypeDao;
         this.cardDao = cardDao;
         this.auth3dsDetailsFactory = auth3dsDetailsFactory;
-        this.card3dsDao = card3dsDao;
         this.paymentRequestDao = paymentRequestDao;
     }
 

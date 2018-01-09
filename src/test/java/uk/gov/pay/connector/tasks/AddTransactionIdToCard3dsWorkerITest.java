@@ -12,6 +12,7 @@ import java.util.Map;
 import java.util.concurrent.atomic.AtomicLong;
 
 import static org.hamcrest.CoreMatchers.is;
+import static org.hamcrest.CoreMatchers.nullValue;
 import static org.hamcrest.MatcherAssert.assertThat;
 
 public class AddTransactionIdToCard3dsWorkerITest extends TaskITestBase {
@@ -34,7 +35,7 @@ public class AddTransactionIdToCard3dsWorkerITest extends TaskITestBase {
         long cardId = nextId.getAndIncrement();
         databaseTestHelper.addCard3ds(cardId, testCharge.getChargeId(), null);
 
-        worker.execute();
+        worker.execute(1L);
 
         Map<String, Object> card = databaseTestHelper.getCard3ds(cardId);
         assertThat(card.get("transaction_id"), is(ids.getRight()));
@@ -49,11 +50,32 @@ public class AddTransactionIdToCard3dsWorkerITest extends TaskITestBase {
 
         Map<String, Object> originalCard = databaseTestHelper.getCard3ds(cardId);
 
-        worker.execute();
+        worker.execute(1L);
 
         Map<String, Object> card = databaseTestHelper.getCard3ds(cardId);
         assertThat(card.get("version"), is(originalCard.get("version")));
         assertThat(card.get("transaction_id"), is(ids.getRight()));
+    }
+
+    @Test
+    public void shouldOnlyAddTransactionIdToCard3dsAfterStartId() throws Exception {
+        DatabaseFixtures.TestCharge testCharge1 = addCharge();
+        Pair<Long, Long> ids1 = createPaymentRequest(testCharge1);
+        long cardId1 = nextId.getAndIncrement();
+        databaseTestHelper.addCard3ds(cardId1, testCharge1.getChargeId(), null);
+
+        DatabaseFixtures.TestCharge testCharge2 = addCharge();
+        Pair<Long, Long> ids2 = createPaymentRequest(testCharge2);
+        long cardId2 = nextId.getAndIncrement();
+        databaseTestHelper.addCard3ds(cardId2, testCharge2.getChargeId(), null);
+
+        worker.execute(cardId2);
+
+        Map<String, Object> card1 = databaseTestHelper.getCard3ds(cardId1);
+        assertThat(card1.get("transaction_id"), is(nullValue()));
+
+        Map<String, Object> card2 = databaseTestHelper.getCard3ds(cardId2);
+        assertThat(card2.get("transaction_id"), is(ids2.getRight()));
     }
 
     private DatabaseFixtures.TestCharge addCharge() {
