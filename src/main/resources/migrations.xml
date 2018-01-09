@@ -1193,4 +1193,15 @@
         </sql>
     </changeSet>
 
+    <changeSet id="add transaction_id column to card_3ds table" author="">
+        <addColumn tableName="card_3ds">
+            <column name="transaction_id" type="bigint">
+                <constraints foreignKeyName="fk__transactions_id"
+                             referencedTableName="transactions"
+                             referencedColumnNames="id"
+                             nullable="true"/>
+            </column>
+        </addColumn>
+    </changeSet>
+
 </databaseChangeLog>
