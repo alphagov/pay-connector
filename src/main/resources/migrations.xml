@@ -1204,4 +1204,11 @@
         </addColumn>
     </changeSet>
 
+
+    <changeSet id="add index to transaction_id column on card_3ds table" runInTransaction="false" author="">
+        <sql>
+            CREATE INDEX CONCURRENTLY idx_card_3ds_transaction_id ON card_3ds (transaction_id);
+        </sql>
+    </changeSet>
+
 </databaseChangeLog>
