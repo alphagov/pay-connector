@@ -1223,4 +1223,20 @@
         </addColumn>
     </changeSet>
 
+    <changeSet id="add constraint NOT NULL on card_3ds.transaction_id" author="">
+        <addNotNullConstraint tableName="card_3ds" columnName="transaction_id"/>
+    </changeSet>
+
+    <changeSet id="drop not null constraint on charge_id column in card_3ds table" author="">
+        <dropNotNullConstraint tableName="card_3ds" columnName="charge_id"/>
+    </changeSet>
+
+    <changeSet id="drop default value from charge_id column in card_3ds table" author="">
+        <dropDefaultValue tableName="card_3ds" columnName="charge_id"/>
+    </changeSet>
+
+    <changeSet id="drop card_3ds_charge_id_seq sequence" author="">
+        <dropSequence sequenceName="card_3ds_charge_id_seq"/>
+    </changeSet>
+
 </databaseChangeLog>
