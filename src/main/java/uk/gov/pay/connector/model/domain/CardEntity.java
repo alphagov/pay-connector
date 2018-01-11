@@ -44,10 +44,6 @@ public class CardEntity extends AbstractVersionedEntity {
     @JoinColumn(name = "transaction_id", referencedColumnName = "id")
     private ChargeTransactionEntity chargeTransactionEntity;
 
-    //Only needed for loading old data from database never set this in Java code
-    @Column(name = "charge_id")
-    private Long chargeId;
-
     public CardEntity() {
     }
 
@@ -105,10 +101,6 @@ public class CardEntity extends AbstractVersionedEntity {
 
     public void setChargeTransactionEntity(ChargeTransactionEntity chargeTransactionEntity) {
         this.chargeTransactionEntity = chargeTransactionEntity;
-    }
-
-    public Long getChargeId() {
-        return chargeId;
     }
 
     public static CardEntity from(CardDetailsEntity cardDetailsEntity, ChargeTransactionEntity chargeTransactionEntity) {
