@@ -1215,4 +1215,12 @@
                               tableName="cards"/>
     </changeSet>
 
+    <changeSet id="add column date_created to table transactions" author="">
+        <addColumn tableName="transactions">
+            <column name="date_created" type="timestamp without timezone">
+                <constraints nullable="true"/>
+            </column>
+        </addColumn>
+    </changeSet>
+
 </databaseChangeLog>
