@@ -23,3 +23,5 @@ production-2.FAILED-303.status=failed
 production-2.tag=alpha_production-2-303
 
 production-2.alpha_production-2-303.date=2018-01-15:12:30:01
+
+production-2.alpha_production-2-303.status=success
