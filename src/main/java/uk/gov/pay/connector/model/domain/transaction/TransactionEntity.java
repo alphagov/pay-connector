@@ -98,4 +98,8 @@ public abstract class TransactionEntity<S extends Status, T extends TransactionE
     }
 
     protected abstract T createNewTransactionEvent();
+
+    public abstract ZonedDateTime getCreatedDate();
+
+    public abstract void setCreatedDate(ZonedDateTime createdDate);
 }

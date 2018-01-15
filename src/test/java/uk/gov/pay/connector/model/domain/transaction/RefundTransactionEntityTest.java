@@ -30,6 +30,7 @@ public class RefundTransactionEntityTest {
         assertThat(transactionEntity.getRefundExternalId(), is(externalId));
         assertThat(transactionEntity.getUserExternalId(), is(RefundEntityFixture.userExternalId));
         assertThat(transactionEntity.getStatus(), is(RefundStatus.REFUND_ERROR));
+        assertThat(refundEntity.getCreatedDate(), is(transactionEntity.getCreatedDate()));
     }
 
     @Test

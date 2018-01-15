@@ -7,9 +7,11 @@ import uk.gov.pay.connector.model.domain.CardEntity;
 import uk.gov.pay.connector.model.domain.ChargeEntity;
 import uk.gov.pay.connector.model.domain.ChargeStatus;
 import uk.gov.pay.connector.model.domain.PaymentGatewayStateTransitions;
+import uk.gov.pay.connector.model.domain.UTCDateTimeConverter;
 
 import javax.persistence.CascadeType;
 import javax.persistence.Column;
+import javax.persistence.Convert;
 import javax.persistence.DiscriminatorValue;
 import javax.persistence.Entity;
 import javax.persistence.EnumType;
@@ -40,6 +42,9 @@ public class ChargeTransactionEntity extends TransactionEntity<ChargeStatus, Cha
     private CardEntity card;
     @OneToOne(mappedBy = "chargeTransactionEntity", cascade = CascadeType.PERSIST)
     private Card3dsEntity card3ds;
+    @Column(name = "created_date")
+    @Convert(converter = UTCDateTimeConverter.class)
+    private ZonedDateTime createdDate;
 
     public ChargeTransactionEntity() {
         super(TransactionOperation.CHARGE);
@@ -112,11 +117,22 @@ public class ChargeTransactionEntity extends TransactionEntity<ChargeStatus, Cha
         transactionEntity.setGatewayTransactionId(chargeEntity.getGatewayTransactionId());
         transactionEntity.setAmount(chargeEntity.getAmount());
         transactionEntity.updateStatus(ChargeStatus.fromString(chargeEntity.getStatus()));
+        transactionEntity.setCreatedDate(chargeEntity.getCreatedDate());
 
         return transactionEntity;
     }
 
     public List<ChargeTransactionEventEntity> getTransactionEvents() {
         return transactionEvents;
+    }
+
+    @Override
+    public ZonedDateTime getCreatedDate() {
+        return createdDate;
+    }
+
+    @Override
+    public void setCreatedDate(ZonedDateTime createdDate) {
+        this.createdDate = createdDate;
     }
 }
