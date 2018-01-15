@@ -19,3 +19,5 @@ production-2.tag=FAILED-303
 production-2.FAILED-303.date=
 
 production-2.FAILED-303.status=failed
+
+production-2.tag=alpha_production-2-303
