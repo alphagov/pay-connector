@@ -2,15 +2,18 @@ package uk.gov.pay.connector.model.domain.transaction;
 
 import uk.gov.pay.connector.model.domain.RefundEntity;
 import uk.gov.pay.connector.model.domain.RefundStatus;
+import uk.gov.pay.connector.model.domain.UTCDateTimeConverter;
 
 import javax.persistence.CascadeType;
 import javax.persistence.Column;
+import javax.persistence.Convert;
 import javax.persistence.DiscriminatorValue;
 import javax.persistence.Entity;
 import javax.persistence.EnumType;
 import javax.persistence.Enumerated;
 import javax.persistence.OneToMany;
 import javax.persistence.OrderBy;
+import java.time.ZonedDateTime;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -29,6 +32,9 @@ public class RefundTransactionEntity extends TransactionEntity<RefundStatus, Ref
     @OneToMany(mappedBy = "transaction", cascade = CascadeType.ALL)
     @OrderBy("updated DESC")
     private List<RefundTransactionEventEntity> transactionEvents = new ArrayList<>();
+    @Column(name = "created_date")
+    @Convert(converter = UTCDateTimeConverter.class)
+    private ZonedDateTime createdDate;
 
     public RefundTransactionEntity() {
         super(TransactionOperation.REFUND);
@@ -74,6 +80,7 @@ public class RefundTransactionEntity extends TransactionEntity<RefundStatus, Ref
         refundTransaction.setRefundExternalId(refundEntity.getExternalId());
         refundTransaction.setUserExternalId(refundEntity.getUserExternalId());
         refundTransaction.updateStatus(refundEntity.getStatus());
+        refundTransaction.setCreatedDate(refundEntity.getCreatedDate());
 
         return refundTransaction;
     }
@@ -85,5 +92,14 @@ public class RefundTransactionEntity extends TransactionEntity<RefundStatus, Ref
 
     public List<RefundTransactionEventEntity> getTransactionEvents() {
         return transactionEvents;
+    }
+
+    @Override
+    public ZonedDateTime getCreatedDate() {
+        return createdDate;
+    }
+    @Override
+    public void setCreatedDate(ZonedDateTime createdDate) {
+        this.createdDate = createdDate;
     }
 }
