@@ -44,6 +44,7 @@ import uk.gov.pay.connector.service.Auth3dsDetailsFactory;
 import uk.gov.pay.connector.service.CaptureProcessScheduler;
 import uk.gov.pay.connector.service.CardCaptureProcess;
 import uk.gov.pay.connector.tasks.MigrateAddTransactionIdToCard3dsTask;
+import uk.gov.pay.connector.tasks.MigrateCaptureApprovedRetryEventTask;
 import uk.gov.pay.connector.tasks.MigrateTransactionEventsTask;
 import uk.gov.pay.connector.util.DependentResourceWaitCommand;
 import uk.gov.pay.connector.util.TrustingSSLSocketFactory;
@@ -117,6 +118,7 @@ public class ConnectorApp extends Application<ConnectorConfiguration> {
 
         environment.admin().addTask(injector.getInstance(MigrateTransactionEventsTask.class));
         environment.admin().addTask(injector.getInstance(MigrateAddTransactionIdToCard3dsTask.class));
+        environment.admin().addTask(injector.getInstance(MigrateCaptureApprovedRetryEventTask.class));
 
         setGlobalProxies(configuration);
     }
