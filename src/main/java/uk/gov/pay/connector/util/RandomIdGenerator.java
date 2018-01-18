@@ -1,5 +1,7 @@
 package uk.gov.pay.connector.util;
 
+import org.apache.commons.lang3.StringUtils;
+
 import java.math.BigInteger;
 import java.security.SecureRandom;
 
@@ -19,6 +21,8 @@ public class RandomIdGenerator {
      * @return a random number in base32 (in string format)
      */
     public static String newId() {
-        return new BigInteger(130, RANDOM).toString(32);
+        String id = new BigInteger(130, RANDOM).toString(32);
+
+        return StringUtils.leftPad(id, 26, '0');
     }
 }

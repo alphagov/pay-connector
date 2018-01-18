@@ -29,7 +29,16 @@ public class RandomIdGeneratorTest {
         assertThat(randomIds.size(), is(100));
 
         // then 2. expects dictionary in Base32
-        randomIds.stream().forEach(id ->
+        randomIds.forEach(id ->
                 assertThat(containsAll(BASE32_DICTIONARY, asList(id.toCharArray())), is(true)));
+    }
+
+    @Test
+    public void shouldGenerateIdsOf26CharsInLength() throws Exception {
+        Set<String> randomIds = IntStream.range(0, 100)
+                .parallel()
+                .mapToObj(value -> newId()).collect(Collectors.toSet());
+
+        randomIds.forEach(id -> assertThat(id.length(), is(26)));
     }
 }
