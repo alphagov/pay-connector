@@ -694,7 +694,7 @@ public class DatabaseTestHelper {
                         .list());
     }
 
-    public List<Map<String, Object>> getRefundTransaction(Long paymentRequestId) {
+    public List<Map<String, Object>> getRefundTransactions(Long paymentRequestId) {
         return jdbi.withHandle(h ->
                 h.createQuery("Select * from transactions where payment_request_id = :paymentRequestId and operation='REFUND' order by id asc")
                         .bind("paymentRequestId", paymentRequestId)
@@ -713,5 +713,20 @@ public class DatabaseTestHelper {
                 h.createQuery("Select * from card_3ds where id = :card3dsId")
                         .bind("card3dsId", card3dsId)
                         .first());
+    }
+
+    public Map<String, Object> getChargeTransaction(Long paymentRequestId) {
+        List<Map<String, Object>> chargeTransactions = jdbi.withHandle(h ->
+                h.createQuery("Select * from transactions where payment_request_id = :paymentRequestId and operation='CHARGE' order by id asc")
+                        .bind("paymentRequestId", paymentRequestId)
+                        .list());
+
+        if (chargeTransactions.size() == 1) {
+            return chargeTransactions.get(0);
+
+        } else {
+            throw new IllegalStateException(
+                    "Found [" + chargeTransactions.size() + "] Charge Transactions for payment request id [" + paymentRequestId + "]");
+        }
     }
 }

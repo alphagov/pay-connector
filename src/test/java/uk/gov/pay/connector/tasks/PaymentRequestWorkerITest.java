@@ -222,7 +222,7 @@ public class PaymentRequestWorkerITest extends TaskITestBase {
 
         worker.execute(1L);
 
-        List<Map<String, Object>> refundTransactions = databaseTestHelper.getRefundTransaction(ids.getLeft());
+        List<Map<String, Object>> refundTransactions = databaseTestHelper.getRefundTransactions(ids.getLeft());
         assertThat(refundTransactions.size(), is(1));
         Map<String, Object> refundTransaction = refundTransactions.get(0);
         assertThat(refundTransaction.get("id"), is(refundTransactionIds.get(0)));
@@ -366,7 +366,7 @@ public class PaymentRequestWorkerITest extends TaskITestBase {
     }
 
     private void assertRefundTransactions(Long paymentRequestId, DatabaseFixtures.TestRefund... testRefunds) {
-        List<Map<String, Object>> refundTransactions = databaseTestHelper.getRefundTransaction(paymentRequestId);
+        List<Map<String, Object>> refundTransactions = databaseTestHelper.getRefundTransactions(paymentRequestId);
         assertThat(refundTransactions.size(), is(testRefunds.length));
         List<String> refundReferences = refundTransactions.stream().map(refund -> (String)refund.get("refund_external_id")).collect(toList());
 
