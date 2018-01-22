@@ -1239,4 +1239,8 @@
         <dropSequence sequenceName="card_3ds_charge_id_seq"/>
     </changeSet>
 
+    <changeSet id="drop charge_id from card_3ds table" author="">
+        <dropColumn tableName="card_3ds" columnName="charge_id"/>
+    </changeSet>
+
 </databaseChangeLog>
