@@ -1247,4 +1247,12 @@
         <dropColumn tableName="cards" columnName="charge_id"/>
     </changeSet>
 
+    <changeSet id="add column email to table transactions" author="">
+        <addColumn tableName="transactions">
+            <column name="email" type="varchar(254)">
+                <constraints nullable="true" unique="false"/>
+            </column>
+        </addColumn>
+    </changeSet>
+
 </databaseChangeLog>
