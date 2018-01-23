@@ -1132,7 +1132,7 @@
     <changeSet id="drop foreign key constraint that charge_id column in cards table references id column in charges" author="">
         <dropForeignKeyConstraint baseTableName="cards" constraintName="fk__cards_charges"/>
     </changeSet>
-    
+
     <changeSet id="add index to payment_request_id column on transactions table" runInTransaction="false" author="">
         <sql>
             CREATE INDEX CONCURRENTLY idx_transactions_payment_request_id ON transactions (payment_request_id);
@@ -1180,7 +1180,7 @@
             CREATE INDEX CONCURRENTLY idx_payment_request_reference ON payment_requests (reference);
         </sql>
     </changeSet>
-    
+
     <changeSet id="add index to pa_request column on card_3ds table" runInTransaction="false" author="">
         <sql>
             CREATE INDEX CONCURRENTLY idx_card_3ds_pa_request ON card_3ds (pa_request);
@@ -1241,6 +1241,10 @@
 
     <changeSet id="drop charge_id from card_3ds table" author="">
         <dropColumn tableName="card_3ds" columnName="charge_id"/>
+    </changeSet>
+
+    <changeSet id="drop charge_id from cards table" author="">
+        <dropColumn tableName="cards" columnName="charge_id"/>
     </changeSet>
 
 </databaseChangeLog>
