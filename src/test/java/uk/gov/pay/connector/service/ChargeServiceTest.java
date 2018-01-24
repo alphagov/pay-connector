@@ -1,5 +1,6 @@
 package uk.gov.pay.connector.service;
 
+import com.google.common.collect.ImmutableMap;
 import org.exparity.hamcrest.date.ZonedDateTimeMatchers;
 import org.junit.Before;
 import org.junit.Test;
@@ -18,7 +19,9 @@ import uk.gov.pay.connector.dao.TokenDao;
 import uk.gov.pay.connector.model.ChargeResponse;
 import uk.gov.pay.connector.model.api.ExternalChargeState;
 import uk.gov.pay.connector.model.api.ExternalTransactionState;
+import uk.gov.pay.connector.model.builder.PatchRequestBuilder;
 import uk.gov.pay.connector.model.domain.ChargeEntity;
+import uk.gov.pay.connector.model.domain.ChargeEntityFixture;
 import uk.gov.pay.connector.model.domain.ChargeStatus;
 import uk.gov.pay.connector.model.domain.GatewayAccountEntity;
 import uk.gov.pay.connector.model.domain.PaymentRequestEntity;
@@ -39,6 +42,7 @@ import java.util.Map;
 import java.util.Optional;
 
 import static java.util.Collections.emptyMap;
+import static java.util.Collections.singletonList;
 import static javax.ws.rs.HttpMethod.GET;
 import static javax.ws.rs.HttpMethod.POST;
 import static javax.ws.rs.core.UriBuilder.fromUri;
@@ -156,11 +160,11 @@ public class ChargeServiceTest {
         assertThat(createdChargeEntity.getGatewayTransactionId(), is(nullValue()));
         assertThat(createdChargeEntity.getCreatedDate(), is(ZonedDateTimeMatchers.within(3, ChronoUnit.SECONDS, ZonedDateTime.now(ZoneId.of("UTC")))));
 
-        verify(mockedChargeEventDao).persistChargeEventOf(createdChargeEntity,Optional.empty());
+        verify(mockedChargeEventDao).persistChargeEventOf(createdChargeEntity, Optional.empty());
     }
 
     @Test
-    public void shouldCreateAPaymentRequest() throws Exception{
+    public void shouldCreateAPaymentRequest() throws Exception {
         service.create(CHARGE_REQUEST, GATEWAY_ACCOUNT_ID, mockedUriInfo);
 
         ArgumentCaptor<PaymentRequestEntity> paymentRequestEntityArgumentCaptor = forClass(PaymentRequestEntity.class);
@@ -179,7 +183,38 @@ public class ChargeServiceTest {
     }
 
     @Test
-    public void shouldCreateAToken() throws Exception{
+    public void shouldUpdateEmailToChargeTransaction() {
+        ChargeEntity createdChargeEntity = ChargeEntityFixture.aValidChargeEntity().build();
+        final String chargeEntityExternalId = createdChargeEntity.getExternalId();
+        when(mockedChargeDao.findByExternalId(chargeEntityExternalId))
+                .thenReturn(Optional.of(createdChargeEntity));
+
+        final ChargeTransactionEntity chargeTransactionEntity = ChargeTransactionEntity.from(createdChargeEntity);
+        final PaymentRequestEntity paymentRequestEntity = PaymentRequestEntity.from(createdChargeEntity, chargeTransactionEntity);
+        when(mockedPaymentRequestDao.findByExternalId(chargeEntityExternalId))
+                .thenReturn(Optional.of(paymentRequestEntity));
+
+        final String expectedEmail = "test@examplecom";
+        PatchRequestBuilder.PatchRequest patchRequest = PatchRequestBuilder.aPatchRequestBuilder(
+                ImmutableMap.of(
+                        "op", "replace",
+                        "path", "email",
+                        "value", expectedEmail))
+                .withValidOps(singletonList("replace"))
+                .withValidPaths(singletonList("email"))
+                .build();
+
+        assertThat(paymentRequestEntity.getChargeTransaction().getEmail(), is(nullValue()));
+
+        service.updateCharge(chargeEntityExternalId, patchRequest);
+
+        verify(mockedPaymentRequestDao).findByExternalId(chargeEntityExternalId);
+        String emailFromTransaction = paymentRequestEntity.getChargeTransaction().getEmail();
+        assertThat(emailFromTransaction, is(expectedEmail));
+    }
+
+    @Test
+    public void shouldCreateAToken() throws Exception {
         service.create(CHARGE_REQUEST, GATEWAY_ACCOUNT_ID, mockedUriInfo);
 
         ArgumentCaptor<TokenEntity> tokenEntityArgumentCaptor = forClass(TokenEntity.class);
@@ -191,7 +226,7 @@ public class ChargeServiceTest {
     }
 
     @Test
-    public void shouldCreateAResponse() throws Exception{
+    public void shouldCreateAResponse() throws Exception {
         ChargeResponse response = service.create(CHARGE_REQUEST, GATEWAY_ACCOUNT_ID, mockedUriInfo).get();
 
         ArgumentCaptor<ChargeEntity> chargeEntityArgumentCaptor = forClass(ChargeEntity.class);
@@ -358,7 +393,7 @@ public class ChargeServiceTest {
     }
 
     @Test
-    public void shouldUpdateTransactionStatus_whenUpdatingChargeStatusFromInitialStatus()  throws Exception {
+    public void shouldUpdateTransactionStatus_whenUpdatingChargeStatusFromInitialStatus() throws Exception {
         service.create(CHARGE_REQUEST, GATEWAY_ACCOUNT_ID, mockedUriInfo);
 
         ArgumentCaptor<ChargeEntity> chargeEntityArgumentCaptor = forClass(ChargeEntity.class);
