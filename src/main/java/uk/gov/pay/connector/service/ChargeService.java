@@ -111,7 +111,11 @@ public class ChargeService {
                 .map(chargeEntity -> {
                     switch (chargePatchRequest.getPath()) {
                         case ChargesApiResource.EMAIL_KEY:
-                            chargeEntity.setEmail(sanitize(chargePatchRequest.getValue()));
+                            final String sanitizedEmail = sanitize(chargePatchRequest.getValue());
+                            chargeEntity.setEmail(sanitizedEmail);
+                            paymentRequestDao.findByExternalId(chargeId)
+                                    .ifPresent(paymentRequestEntity -> paymentRequestEntity
+                                            .getChargeTransaction().setEmail(sanitizedEmail));
                     }
                     return Optional.of(chargeEntity);
                 })

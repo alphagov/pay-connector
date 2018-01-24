@@ -45,6 +45,8 @@ public class ChargeTransactionEntity extends TransactionEntity<ChargeStatus, Cha
     @Column(name = "created_date")
     @Convert(converter = UTCDateTimeConverter.class)
     private ZonedDateTime createdDate;
+    @Column(name = "email")
+    private String email;
 
     public ChargeTransactionEntity() {
         super(TransactionOperation.CHARGE);
@@ -134,5 +136,13 @@ public class ChargeTransactionEntity extends TransactionEntity<ChargeStatus, Cha
     @Override
     public void setCreatedDate(ZonedDateTime createdDate) {
         this.createdDate = createdDate;
+    }
+
+    public String getEmail() {
+        return email;
+    }
+
+    public void setEmail(String email) {
+        this.email = email;
     }
 }
