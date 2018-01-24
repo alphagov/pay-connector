@@ -9,3 +9,5 @@ staging-2.alpha_staging-2-314.date=2018-01-24:10:04:24
 staging-2.alpha_staging-2-314.status=success
 
 production-2.tag=FAILED-314
+
+production-2.FAILED-314.date=
