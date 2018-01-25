@@ -6,13 +6,12 @@ import io.dropwizard.jersey.PATCH;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import uk.gov.pay.connector.dao.CardTypeDao;
-import uk.gov.pay.connector.dao.ChargeDao;
+import uk.gov.pay.connector.dao.PaymentRequestDao;
 import uk.gov.pay.connector.model.ChargeResponse;
 import uk.gov.pay.connector.model.builder.PatchRequestBuilder;
 import uk.gov.pay.connector.model.domain.Card3dsEntity;
 import uk.gov.pay.connector.model.domain.CardEntity;
 import uk.gov.pay.connector.model.domain.CardTypeEntity;
-import uk.gov.pay.connector.model.domain.ChargeEntity;
 import uk.gov.pay.connector.model.domain.ChargeStatus;
 import uk.gov.pay.connector.model.domain.GatewayAccountEntity;
 import uk.gov.pay.connector.model.domain.PaymentRequestEntity;
@@ -56,15 +55,15 @@ public class ChargesFrontendResource {
 
     private static final Logger logger = LoggerFactory.getLogger(ChargesFrontendResource.class);
     private static final String NEW_STATUS = "new_status";
-    private final ChargeDao chargeDao;
     private final ChargeService chargeService;
     private final CardTypeDao cardTypeDao;
+    private final PaymentRequestDao paymentRequestDao;
 
     @Inject
-    public ChargesFrontendResource(ChargeDao chargeDao, ChargeService chargeService, CardTypeDao cardTypeDao) {
-        this.chargeDao = chargeDao;
+    public ChargesFrontendResource(ChargeService chargeService, CardTypeDao cardTypeDao, PaymentRequestDao paymentRequestDao) {
         this.chargeService = chargeService;
         this.cardTypeDao = cardTypeDao;
+        this.paymentRequestDao = paymentRequestDao;
     }
 
     @GET
@@ -72,12 +71,9 @@ public class ChargesFrontendResource {
     @Produces(APPLICATION_JSON)
     @JsonView(GatewayAccountEntity.Views.FrontendView.class)
     public Response getCharge(@PathParam("chargeId") String chargeId, @Context UriInfo uriInfo) {
-
-        Optional<ChargeEntity> maybeCharge = chargeDao.findByExternalId(chargeId);
-        logger.debug("charge from DB: " + maybeCharge);
-
-        return maybeCharge
-                .map(charge -> Response.ok(buildChargeResponse(uriInfo, charge)).build())
+        Optional<PaymentRequestEntity> paymentRequestEntity = paymentRequestDao.findByExternalId(chargeId);
+        return paymentRequestEntity
+                .map(paymentRequest -> Response.ok(buildChargeResponse(uriInfo, paymentRequest)).build())
                 .orElseGet(() -> responseWithChargeNotFound(chargeId));
     }
 
@@ -155,38 +151,6 @@ public class ChargesFrontendResource {
                 .stream()
                 .findFirst()
                 .map(CardTypeEntity::getLabel);
-    }
-
-    private ChargeResponse buildChargeResponse(UriInfo uriInfo, ChargeEntity charge) {
-        String chargeId = charge.getExternalId();
-        PersistedCard persistedCard = null;
-        if (charge.getCardDetails() != null) {
-            persistedCard = charge.getCardDetails().toCard();
-            persistedCard.setCardBrand(findCardBrandLabel(charge.getCardDetails().getCardBrand()).orElse(""));
-        }
-
-        ChargeResponse.Auth3dsData auth3dsData = null;
-        if (charge.get3dsDetails() != null) {
-            auth3dsData = new ChargeResponse.Auth3dsData();
-            auth3dsData.setPaRequest(charge.get3dsDetails().getPaRequest());
-            auth3dsData.setIssuerUrl(charge.get3dsDetails().getIssuerUrl());
-        }
-
-        return aFrontendChargeResponse()
-                .withStatus(charge.getStatus())
-                .withChargeId(chargeId)
-                .withAmount(charge.getAmount())
-                .withDescription(charge.getDescription())
-                .withGatewayTransactionId(charge.getGatewayTransactionId())
-                .withCreatedDate(DateTimeUtils.toUTCDateTimeString(charge.getCreatedDate()))
-                .withReturnUrl(charge.getReturnUrl())
-                .withEmail(charge.getEmail())
-                .withChargeCardDetails(persistedCard)
-                .withAuth3dsData(auth3dsData)
-                .withGatewayAccount(charge.getGatewayAccount())
-                .withLink("self", GET, locationUriFor(FRONTEND_CHARGE_API_PATH, uriInfo, chargeId))
-                .withLink("cardAuth", POST, locationUriFor(FRONTEND_CHARGE_AUTHORIZE_API_PATH, uriInfo, chargeId))
-                .withLink("cardCapture", POST, locationUriFor(FRONTEND_CHARGE_CAPTURE_API_PATH, uriInfo, chargeId)).build();
     }
 
     private ChargeResponse buildChargeResponse(UriInfo uriInfo, PaymentRequestEntity paymentRequest) {

@@ -12,6 +12,7 @@ import org.hamcrest.Matchers;
 import org.hamcrest.TypeSafeMatcher;
 import org.junit.Before;
 import org.junit.Rule;
+import uk.gov.pay.connector.model.domain.AuthCardDetails;
 import uk.gov.pay.connector.model.domain.CardFixture;
 import uk.gov.pay.connector.model.domain.ChargeStatus;
 import uk.gov.pay.connector.model.domain.RefundStatus;
@@ -19,6 +20,7 @@ import uk.gov.pay.connector.rules.DropwizardAppWithPostgresRule;
 import uk.gov.pay.connector.rules.EpdqMockClient;
 import uk.gov.pay.connector.rules.SmartpayMockClient;
 import uk.gov.pay.connector.rules.WorldpayMockClient;
+import uk.gov.pay.connector.util.DatabaseTestHelper;
 import uk.gov.pay.connector.util.PortFactory;
 import uk.gov.pay.connector.util.RestAssuredClient;
 
@@ -31,11 +33,21 @@ import static com.jayway.restassured.RestAssured.given;
 import static com.jayway.restassured.http.ContentType.JSON;
 import static io.dropwizard.testing.ConfigOverride.config;
 import static java.lang.String.format;
+import static java.time.ZonedDateTime.now;
 import static javax.ws.rs.core.Response.Status.BAD_REQUEST;
 import static org.hamcrest.Matchers.is;
-import static uk.gov.pay.connector.model.domain.ChargeStatus.*;
-import static uk.gov.pay.connector.model.domain.GatewayAccount.*;
-import static uk.gov.pay.connector.resources.ApiPaths.*;
+import static uk.gov.pay.connector.model.domain.ChargeStatus.AUTHORISATION_SUCCESS;
+import static uk.gov.pay.connector.model.domain.ChargeStatus.CREATED;
+import static uk.gov.pay.connector.model.domain.ChargeStatus.ENTERING_CARD_DETAILS;
+import static uk.gov.pay.connector.model.domain.GatewayAccount.CREDENTIALS_MERCHANT_ID;
+import static uk.gov.pay.connector.model.domain.GatewayAccount.CREDENTIALS_PASSWORD;
+import static uk.gov.pay.connector.model.domain.GatewayAccount.CREDENTIALS_SHA_IN_PASSPHRASE;
+import static uk.gov.pay.connector.model.domain.GatewayAccount.CREDENTIALS_SHA_OUT_PASSPHRASE;
+import static uk.gov.pay.connector.model.domain.GatewayAccount.CREDENTIALS_USERNAME;
+import static uk.gov.pay.connector.resources.ApiPaths.CHARGE_CANCEL_API_PATH;
+import static uk.gov.pay.connector.resources.ApiPaths.FRONTEND_CHARGE_3DS_AUTHORIZE_API_PATH;
+import static uk.gov.pay.connector.resources.ApiPaths.FRONTEND_CHARGE_AUTHORIZE_API_PATH;
+import static uk.gov.pay.connector.resources.ApiPaths.FRONTEND_CHARGE_CAPTURE_API_PATH;
 import static uk.gov.pay.connector.util.JsonEncoder.toJson;
 import static uk.gov.pay.connector.util.TransactionId.randomId;
 
@@ -195,7 +207,14 @@ public class ChargingITestBase extends ChargingITestCommon {
     protected String createNewChargeWith(ChargeStatus status, String gatewayTransactionId) {
         long chargeId = RandomUtils.nextInt();
         String externalChargeId = "charge-" + chargeId;
-        app.getDatabaseTestHelper().addCharge(chargeId, externalChargeId, accountId, 6234L, status, "returnUrl", gatewayTransactionId);
+        long amount = 6234L;
+        String returnUrl = "returnUrl";
+        DatabaseTestHelper databaseTestHelper = app.getDatabaseTestHelper();
+        databaseTestHelper.addCharge(chargeId, externalChargeId, accountId, amount, status, returnUrl, gatewayTransactionId);
+
+        long paymentRequestId = RandomUtils.nextLong();
+        databaseTestHelper.addPaymentRequest(paymentRequestId, amount, Long.valueOf(accountId), returnUrl, "Test description", "test reference", now(), externalChargeId);
+        databaseTestHelper.addChargeTransaction(RandomUtils.nextLong(), gatewayTransactionId, amount, status, paymentRequestId);
         return externalChargeId;
     }
 
@@ -283,12 +302,22 @@ public class ChargingITestBase extends ChargingITestCommon {
         long chargeId = RandomUtils.nextInt();
         String externalChargeId = "charge" + chargeId;
         ChargeStatus chargeStatus = status != null ? status : AUTHORISATION_SUCCESS;
-        app.getDatabaseTestHelper().addCharge(chargeId, externalChargeId, accountId, AMOUNT, chargeStatus, "http://somereturn.gov.uk", gatewayTransactionId, reference, fromDate);
+        String returnUrl = "http://somereturn.gov.uk";
+        app.getDatabaseTestHelper().addCharge(chargeId, externalChargeId, accountId, AMOUNT, chargeStatus, returnUrl, gatewayTransactionId, reference, fromDate);
         app.getDatabaseTestHelper().addToken(chargeId, "tokenId");
         app.getDatabaseTestHelper().addEvent(chargeId, chargeStatus.getValue());
+        AuthCardDetails cardDetails = CardFixture.aValidCard().withCardNo("1234").build();
         app.getDatabaseTestHelper().updateChargeCardDetails(
                 chargeId,
-                CardFixture.aValidCard().withCardNo("1234").build());
+                cardDetails);
+
+        long paymentRequestId = RandomUtils.nextLong();
+        app.getDatabaseTestHelper().addPaymentRequest(paymentRequestId, AMOUNT, Long.valueOf(accountId), returnUrl, "Test description", reference, fromDate, externalChargeId);
+        long chargeTransactionId = RandomUtils.nextLong();
+        app.getDatabaseTestHelper().addChargeTransaction(chargeTransactionId, gatewayTransactionId, AMOUNT, status, paymentRequestId);
+        app.getDatabaseTestHelper().addChargeTransactionEvent(chargeTransactionId, chargeStatus, now());
+        app.getDatabaseTestHelper().addCard(RandomUtils.nextLong(), chargeTransactionId, cardDetails);
+
         return externalChargeId;
     }
 
