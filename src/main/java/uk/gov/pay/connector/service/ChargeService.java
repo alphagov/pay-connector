@@ -106,18 +106,19 @@ public class ChargeService {
     }
 
     @Transactional
-    public Optional<ChargeEntity> updateCharge(String chargeId, PatchRequestBuilder.PatchRequest chargePatchRequest) {
-        return chargeDao.findByExternalId(chargeId)
-                .map(chargeEntity -> {
+    public Optional<PaymentRequestEntity> updateEmail(String externalId, PatchRequestBuilder.PatchRequest chargePatchRequest) {
+        return paymentRequestDao.findByExternalId(externalId)
+                .map(paymentRequestEntity -> {
                     switch (chargePatchRequest.getPath()) {
                         case ChargesApiResource.EMAIL_KEY:
                             final String sanitizedEmail = sanitize(chargePatchRequest.getValue());
-                            chargeEntity.setEmail(sanitizedEmail);
-                            paymentRequestDao.findByExternalId(chargeId)
-                                    .ifPresent(paymentRequestEntity -> paymentRequestEntity
-                                            .getChargeTransaction().setEmail(sanitizedEmail));
+                            paymentRequestEntity.getChargeTransaction().setEmail(sanitizedEmail);
+
+                            chargeDao.findByExternalId(externalId).ifPresent(chargeEntity ->
+                                    chargeEntity.setEmail(sanitizedEmail)
+                            );
                     }
-                    return Optional.of(chargeEntity);
+                    return Optional.of(paymentRequestEntity);
                 })
                 .orElseGet(Optional::empty);
     }

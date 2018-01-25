@@ -5,6 +5,7 @@ import com.fasterxml.jackson.annotation.JsonInclude;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import uk.gov.pay.connector.model.api.ExternalTransactionState;
 import uk.gov.pay.connector.model.builder.AbstractChargeResponseBuilder;
+import uk.gov.pay.connector.model.domain.Card3dsEntity;
 import uk.gov.pay.connector.model.domain.PersistedCard;
 import uk.gov.pay.connector.util.DateTimeUtils;
 
@@ -185,6 +186,13 @@ public class ChargeResponse {
                     "paRequest='" + paRequest + '\'' +
                     ", issuerUrl='" + issuerUrl + '\'' +
                     '}';
+        }
+
+        public static Auth3dsData from(Card3dsEntity card3ds) {
+            Auth3dsData auth3dsData = new ChargeResponse.Auth3dsData();
+            auth3dsData.setPaRequest(card3ds.getPaRequest());
+            auth3dsData.setIssuerUrl(card3ds.getIssuerUrl());
+            return auth3dsData;
         }
     }
 
