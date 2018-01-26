@@ -12,6 +12,7 @@ import uk.gov.pay.connector.util.DateTimeUtils;
 
 import java.time.ZonedDateTime;
 import java.time.temporal.ChronoUnit;
+import java.util.Arrays;
 import java.util.List;
 
 import static java.time.ZonedDateTime.now;
@@ -19,7 +20,8 @@ import static org.exparity.hamcrest.date.ZonedDateTimeMatchers.within;
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.core.Is.is;
 import static uk.gov.pay.connector.it.dao.DatabaseFixtures.withDatabaseTestHelper;
-import static uk.gov.pay.connector.model.TransactionType.*;
+import static uk.gov.pay.connector.model.TransactionType.PAYMENT;
+import static uk.gov.pay.connector.model.TransactionType.REFUND;
 import static uk.gov.pay.connector.model.api.ExternalChargeState.EXTERNAL_CREATED;
 import static uk.gov.pay.connector.model.api.ExternalChargeState.EXTERNAL_STARTED;
 import static uk.gov.pay.connector.model.api.ExternalRefundStatus.EXTERNAL_SUBMITTED;
@@ -149,6 +151,39 @@ public class TransactionDaoITest extends DaoITestBase {
         assertThat(transactions.get(0).getTransactionType(), is("refund"));
         assertThat(transactions.get(1).getAmount(), is(testCharge.getAmount()));
         assertThat(transactions.get(1).getTransactionType(), is("charge"));
+    }
+
+    @Test
+    public void searchChargesByMultipleCardBrandOnly() throws Exception {
+
+        // given
+        String visa = "visa";
+        String masterCard = "master-card";
+        DatabaseFixtures.TestCharge testCharge1 = insertNewChargeWithId(1L, now().plusHours(1));
+        updateCardDetailsForCharge(testCharge1, visa);
+        DatabaseFixtures.TestRefund testRefund1 = insertNewRefundForCharge(testCharge1, 2L, now().plusHours(2));
+
+        DatabaseFixtures.TestCharge testCharge2 = insertNewChargeWithId(3L, now().plusHours(3));
+        updateCardDetailsForCharge(testCharge2, visa);
+        DatabaseFixtures.TestRefund testRefund2 = insertNewRefundForCharge(testCharge2, 4L, now().plusHours(4));
+
+        ChargeSearchParams params = new ChargeSearchParams()
+                .withCardBrands(Arrays.asList(visa, masterCard));
+
+        // when
+        List<Transaction> transactions = transactionDao.findAllBy(defaultTestAccount.getAccountId(), params);
+
+        // then
+        assertThat(transactions.size(), is(4));
+
+        assertThat(transactions.get(0).getAmount(), is(testRefund2.getAmount()));
+        assertThat(transactions.get(0).getTransactionType(), is("refund"));
+        assertThat(transactions.get(1).getAmount(), is(testCharge2.getAmount()));
+        assertThat(transactions.get(1).getTransactionType(), is("charge"));
+        assertThat(transactions.get(2).getAmount(), is(testRefund1.getAmount()));
+        assertThat(transactions.get(2).getTransactionType(), is("refund"));
+        assertThat(transactions.get(3).getAmount(), is(testCharge1.getAmount()));
+        assertThat(transactions.get(3).getTransactionType(), is("charge"));
     }
 
     @Test
@@ -1096,9 +1131,14 @@ public class TransactionDaoITest extends DaoITestBase {
     }
 
     private DatabaseFixtures.TestCardDetails updateCardDetailsForCharge(DatabaseFixtures.TestCharge charge) {
+        return updateCardDetailsForCharge(charge, "visa");
+    }
+
+    private DatabaseFixtures.TestCardDetails updateCardDetailsForCharge(DatabaseFixtures.TestCharge charge, String cardBrand) {
         return new DatabaseFixtures(databaseTestHelper)
                 .validTestCardDetails()
                 .withChargeId(charge.chargeId)
+                .withCardBrand(cardBrand)
                 .update();
     }
 

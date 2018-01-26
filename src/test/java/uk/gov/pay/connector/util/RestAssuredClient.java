@@ -1,9 +1,11 @@
 package uk.gov.pay.connector.util;
 
 import com.jayway.restassured.response.ValidatableResponse;
+import com.jayway.restassured.specification.RequestSpecification;
 import uk.gov.pay.connector.rules.DropwizardAppWithPostgresRule;
 
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 
 import static com.jayway.restassured.RestAssured.given;
@@ -23,7 +25,7 @@ public class RestAssuredClient {
     private String accountId;
     private String chargeId;
     private String refundId;
-    private Map<String, String> queryParams;
+    private Map<String, Object> queryParams;
     private Map<String, String> headers;
 
     public RestAssuredClient(DropwizardAppWithPostgresRule app, String accountId) {
@@ -48,9 +50,31 @@ public class RestAssuredClient {
         return this;
     }
 
+    public RestAssuredClient withQueryParams(String paramName, List<String> paramValues) {
+        this.queryParams.put(paramName, paramValues);
+        return this;
+    }
+
     public RestAssuredClient withHeader(String headerName, String headerValue) {
         this.headers.put(headerName, headerValue);
         return this;
+    }
+
+    //Need so was can set multiple values for a parameter e.g. foo=first&foo=second rather than foo=first,second
+    private RequestSpecification addQueryParams(RequestSpecification requestSpecification) {
+        RequestSpecification result = requestSpecification;
+        for (Map.Entry<String, Object> queryParamPair : queryParams.entrySet()) {
+            Object value = queryParamPair.getValue();
+            if (value instanceof List) {
+                for (Object collectionValue : (List)value) {
+                    result.queryParam(queryParamPair.getKey(), collectionValue);
+                }
+            } else {
+                result = result.queryParam(queryParamPair.getKey(), value);
+            }
+        }
+
+        return result;
     }
 
     public ValidatableResponse postCreateCharge(String postBody) {
@@ -115,9 +139,8 @@ public class RestAssuredClient {
     }
 
     public ValidatableResponse getTransactions() {
-        return given().port(app.getLocalPort())
-                .headers(headers)
-                .queryParams(queryParams)
+        return addQueryParams(given().port(app.getLocalPort())
+                .headers(headers))
                 .get(CHARGES_API_PATH.replace("{accountId}", accountId))
                 .then();
     }
@@ -171,8 +194,7 @@ public class RestAssuredClient {
         String requestPath = TRANSACTIONS_SUMMARY_API_PATH
                 .replace("{accountId}", accountId);
 
-        return given().port(app.getLocalPort())
-                .queryParams(queryParams)
+        return addQueryParams(given().port(app.getLocalPort()))
                 .get(requestPath)
                 .then();
     }

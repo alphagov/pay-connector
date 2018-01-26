@@ -5,15 +5,30 @@ import uk.gov.pay.connector.model.api.ExternalChargeState;
 import uk.gov.pay.connector.resources.CommaDelimitedSetParameter;
 
 import java.time.ZonedDateTime;
-import java.util.Arrays;
 
+import static java.util.Arrays.asList;
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.containsInAnyOrder;
 import static org.hamcrest.Matchers.hasSize;
 import static org.hamcrest.core.Is.is;
-import static uk.gov.pay.connector.model.TransactionType.*;
+import static uk.gov.pay.connector.model.TransactionType.PAYMENT;
 import static uk.gov.pay.connector.model.api.ExternalChargeState.EXTERNAL_CREATED;
-import static uk.gov.pay.connector.model.domain.ChargeStatus.*;
+import static uk.gov.pay.connector.model.domain.ChargeStatus.AUTHORISATION_ABORTED;
+import static uk.gov.pay.connector.model.domain.ChargeStatus.AUTHORISATION_CANCELLED;
+import static uk.gov.pay.connector.model.domain.ChargeStatus.AUTHORISATION_REJECTED;
+import static uk.gov.pay.connector.model.domain.ChargeStatus.CAPTURED;
+import static uk.gov.pay.connector.model.domain.ChargeStatus.CAPTURE_APPROVED;
+import static uk.gov.pay.connector.model.domain.ChargeStatus.CAPTURE_APPROVED_RETRY;
+import static uk.gov.pay.connector.model.domain.ChargeStatus.CAPTURE_READY;
+import static uk.gov.pay.connector.model.domain.ChargeStatus.CAPTURE_SUBMITTED;
+import static uk.gov.pay.connector.model.domain.ChargeStatus.EXPIRED;
+import static uk.gov.pay.connector.model.domain.ChargeStatus.EXPIRE_CANCEL_FAILED;
+import static uk.gov.pay.connector.model.domain.ChargeStatus.EXPIRE_CANCEL_READY;
+import static uk.gov.pay.connector.model.domain.ChargeStatus.EXPIRE_CANCEL_SUBMITTED;
+import static uk.gov.pay.connector.model.domain.ChargeStatus.USER_CANCELLED;
+import static uk.gov.pay.connector.model.domain.ChargeStatus.USER_CANCEL_ERROR;
+import static uk.gov.pay.connector.model.domain.ChargeStatus.USER_CANCEL_READY;
+import static uk.gov.pay.connector.model.domain.ChargeStatus.USER_CANCEL_SUBMITTED;
 
 public class ChargeSearchParamsTest {
 
@@ -65,7 +80,7 @@ public class ChargeSearchParamsTest {
 
         // So internal methods can call findAll with specific states of a charge
         ChargeSearchParams params = new ChargeSearchParams()
-                .withInternalStates(Arrays.asList(CAPTURED, USER_CANCELLED));
+                .withInternalStates(asList(CAPTURED, USER_CANCELLED));
 
         assertThat(params.getInternalStates(), hasSize(2));
         assertThat(params.getInternalStates(), containsInAnyOrder(CAPTURED, USER_CANCELLED));
@@ -84,14 +99,15 @@ public class ChargeSearchParamsTest {
                         "&display_size=5" +
                         "&payment_states=created" +
                         "&refund_states=submitted" +
-                        "&card_brand=visa";
+                        "&card_brand=visa" +
+                        "&card_brand=master-card";
 
         ChargeSearchParams params = new ChargeSearchParams()
                 .withDisplaySize(5L)
                 .withTransactionType(PAYMENT)
                 .addExternalChargeStates(new CommaDelimitedSetParameter("created"))
                 .addExternalRefundStates(new CommaDelimitedSetParameter("submitted"))
-                .withCardBrand("visa")
+                .withCardBrands(asList("visa", "master-card"))
                 .withGatewayAccountId(111L)
                 .withPage(2L)
                 .withReferenceLike("ref")
