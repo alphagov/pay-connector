@@ -3,7 +3,11 @@ package uk.gov.pay.connector.dao;
 import com.google.inject.Inject;
 import com.google.inject.Provider;
 import com.google.inject.persist.Transactional;
-import org.jooq.*;
+import org.jooq.Condition;
+import org.jooq.SelectConditionStep;
+import org.jooq.SelectJoinStep;
+import org.jooq.SelectOrderByStep;
+import org.jooq.SelectSeekStep1;
 import org.jooq.impl.DSL;
 import uk.gov.pay.connector.model.TransactionType;
 import uk.gov.pay.connector.model.domain.ChargeStatus;
@@ -18,7 +22,10 @@ import java.util.Set;
 import java.util.stream.Collectors;
 
 import static org.apache.commons.lang3.StringUtils.isNotBlank;
-import static org.jooq.impl.DSL.*;
+import static org.jooq.impl.DSL.count;
+import static org.jooq.impl.DSL.field;
+import static org.jooq.impl.DSL.selectDistinct;
+import static org.jooq.impl.DSL.table;
 
 @Deprecated // This will be removed once the new refunds functionality has been completed.
 @Transactional
@@ -107,9 +114,9 @@ public class TransactionDao {
                     field("c.email").lower().like(buildLikeClauseContaining(params.getEmail().toLowerCase())));
         }
 
-        if (isNotBlank(params.getCardBrand())) {
+        if (!params.getCardBrands().isEmpty()) {
             queryFilters = queryFilters.and(
-                    field("c.card_brand").in(params.getCardBrand()));
+                    field("c.card_brand").in(params.getCardBrands()));
         }
 
         if (isNotBlank(params.getReference())) {

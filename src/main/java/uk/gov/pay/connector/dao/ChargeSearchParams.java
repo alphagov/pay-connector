@@ -8,7 +8,12 @@ import uk.gov.pay.connector.model.domain.RefundStatus;
 import uk.gov.pay.connector.resources.CommaDelimitedSetParameter;
 
 import java.time.ZonedDateTime;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Collection;
+import java.util.Collections;
+import java.util.HashSet;
+import java.util.List;
+import java.util.Set;
 import java.util.stream.Collectors;
 
 import static org.apache.commons.lang3.StringUtils.isBlank;
@@ -25,7 +30,7 @@ public class ChargeSearchParams {
     private ZonedDateTime toDate;
     private Long page;
     private Long displaySize;
-    private String cardBrand;
+    private List<String> cardBrands = new ArrayList<>();
     private Set<ChargeStatus> internalStates = new HashSet<>();
     private Set<ChargeStatus> internalChargeStatuses = new HashSet<>();
     private Set<RefundStatus> internalRefundStatuses = new HashSet<>();
@@ -121,7 +126,12 @@ public class ChargeSearchParams {
     }
 
     public ChargeSearchParams withCardBrand(String cardBrand) {
-        this.cardBrand = cardBrand;
+        this.cardBrands = Collections.singletonList(cardBrand);
+        return this;
+    }
+
+    public ChargeSearchParams withCardBrands(List<String> cardBrands) {
+        this.cardBrands = cardBrands;
         return this;
     }
 
@@ -178,8 +188,8 @@ public class ChargeSearchParams {
         return this;
     }
 
-    public String getCardBrand() {
-        return cardBrand;
+    public List<String> getCardBrands() {
+        return cardBrands;
     }
 
     public String buildQueryParams() {
@@ -218,8 +228,8 @@ public class ChargeSearchParams {
             builder.append("&refund_states=").append(refundStates);
         }
 
-        if (isNotBlank(cardBrand)) {
-            builder.append("&card_brand=").append(cardBrand);
+        if (!cardBrands.isEmpty()) {
+            cardBrands.forEach(cardBrand -> builder.append("&card_brand=").append(cardBrand));
         }
         return builder.toString().replaceFirst("&", "");
     }
