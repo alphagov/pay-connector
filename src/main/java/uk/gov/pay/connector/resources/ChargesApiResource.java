@@ -150,7 +150,7 @@ public class ChargesApiResource {
                             .withGatewayAccountId(accountId)
                             .withEmailLike(email)
                             .withReferenceLike(reference)
-                            .withCardBrands(cardBrands)
+                            .withCardBrands(removeBlanks(cardBrands))
                             .withFromDate(parseDate(fromDate))
                             .withToDate(parseDate(toDate))
                             .withDisplaySize(displaySize != null ? displaySize : configuration.getTransactionsPaginationConfig().getDisplayPageSize())
@@ -168,6 +168,10 @@ public class ChargesApiResource {
                     return reduce(validateGatewayAccountReference(gatewayAccountDao, accountId)
                             .bimap(handleError, listCharges(searchParams, isFeatureTransactionsEnabled, uriInfo)));
                 }); // always the first page if its missing
+    }
+
+    private List<String> removeBlanks(List<String> cardBrands) {
+        return cardBrands.stream().filter(StringUtils::isNotBlank).collect(Collectors.toList());
     }
 
     @POST

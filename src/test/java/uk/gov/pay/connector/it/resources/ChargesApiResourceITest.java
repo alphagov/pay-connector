@@ -530,8 +530,8 @@ public class ChargesApiResourceITest extends ChargingITestBase {
         String searchedCardBrand = "visa";
 
         addChargeAndCardDetails(CREATED, "ref-1", now(), searchedCardBrand);
-        addChargeAndCardDetails(AUTHORISATION_READY, "ref-2", now(), "mastercard");
-        addChargeAndCardDetails(CAPTURED, "ref-3", now().minusDays(2), searchedCardBrand);
+        addChargeAndCardDetails(CREATED, "ref-2", now(), "master-card");
+        addChargeAndCardDetails(CREATED, "ref-3", now().minusDays(2), searchedCardBrand);
 
         getChargeApi
                 .withAccountId(accountId)
@@ -542,6 +542,23 @@ public class ChargesApiResourceITest extends ChargingITestBase {
                 .contentType(JSON)
                 .body("results.size()", is(2))
                 .body("results[0].card_details.card_brand", endsWith("Visa"))
+                .body("results[1].card_details.card_brand", endsWith("Visa"));
+    }
+
+    @Test
+    public void shouldFilterTransactionsByBlankCardBrand() throws Exception {
+        addChargeAndCardDetails(CREATED, "ref-1", now(), "visa");
+        addChargeAndCardDetails(CREATED, "ref-2", now(), "master-card");
+
+        getChargeApi
+                .withAccountId(accountId)
+                .withQueryParam("card_brand", "")
+                .withHeader(HttpHeaders.ACCEPT, APPLICATION_JSON)
+                .getTransactions()
+                .statusCode(OK.getStatusCode())
+                .contentType(JSON)
+                .body("results.size()", is(2))
+                .body("results[0].card_details.card_brand", endsWith("Mastercard"))
                 .body("results[1].card_details.card_brand", endsWith("Visa"));
     }
 
