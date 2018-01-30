@@ -1,5 +1,6 @@
 package uk.gov.pay.connector.service.search;
 
+import uk.gov.pay.connector.dao.CardTypeDao;
 import uk.gov.pay.connector.dao.ChargeSearchParams;
 import uk.gov.pay.connector.dao.TransactionDao;
 import uk.gov.pay.connector.model.ChargeResponse;
@@ -15,6 +16,7 @@ import uk.gov.pay.connector.util.DateTimeUtils;
 
 import javax.ws.rs.core.UriInfo;
 import java.util.List;
+import java.util.Map;
 
 import static javax.ws.rs.HttpMethod.GET;
 import static uk.gov.pay.connector.model.TransactionResponse.aTransactionResponseBuilder;
@@ -25,7 +27,8 @@ public class TransactionSearchStrategy extends AbstractSearchStrategy<Transactio
 
     private TransactionDao transactionDao;
 
-    public TransactionSearchStrategy(TransactionDao transactionDao) {
+    public TransactionSearchStrategy(TransactionDao transactionDao, CardTypeDao cardTypeDao) {
+        super(cardTypeDao);
         this.transactionDao = transactionDao;
     }
 
@@ -40,8 +43,7 @@ public class TransactionSearchStrategy extends AbstractSearchStrategy<Transactio
     }
 
     @Override
-    protected ChargeResponse buildResponse(UriInfo uriInfo, Transaction transaction) {
-
+    protected ChargeResponse buildResponse(UriInfo uriInfo, Transaction transaction, Map<String, String> cardBrandToLabel) {
         ExternalTransactionState externalTransactionState;
         if (TransactionType.REFUND.getValue().equals(transaction.getTransactionType())) {
             ExternalRefundStatus externalRefundStatus = RefundStatus.fromString(transaction.getStatus()).toExternal();

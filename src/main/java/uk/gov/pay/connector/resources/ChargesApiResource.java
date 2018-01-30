@@ -2,7 +2,6 @@ package uk.gov.pay.connector.resources;
 
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableMap;
-import fj.F;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.lang3.tuple.Pair;
 import org.slf4j.Logger;
@@ -14,6 +13,7 @@ import uk.gov.pay.connector.dao.GatewayAccountDao;
 import uk.gov.pay.connector.model.domain.ChargeEntity;
 import uk.gov.pay.connector.service.ChargeExpiryService;
 import uk.gov.pay.connector.service.ChargeService;
+import uk.gov.pay.connector.service.search.CommonSearchStrategy;
 import uk.gov.pay.connector.service.search.SearchService;
 import uk.gov.pay.connector.util.ResponseUtil;
 
@@ -36,7 +36,6 @@ import java.util.Optional;
 import java.util.Set;
 import java.util.stream.Collectors;
 
-import static fj.data.Either.reduce;
 import static java.lang.String.format;
 import static java.util.Arrays.stream;
 import static javax.ws.rs.core.MediaType.APPLICATION_JSON;
@@ -46,7 +45,7 @@ import static uk.gov.pay.connector.model.TransactionType.inferTransactionTypeFro
 import static uk.gov.pay.connector.resources.ApiPaths.CHARGES_API_PATH;
 import static uk.gov.pay.connector.resources.ApiPaths.CHARGES_EXPIRE_CHARGES_TASK_API_PATH;
 import static uk.gov.pay.connector.resources.ApiPaths.CHARGE_API_PATH;
-import static uk.gov.pay.connector.resources.ApiValidators.validateGatewayAccountReference;
+import static uk.gov.pay.connector.resources.ApiPaths.TRANSACTIONS_API_PATH;
 import static uk.gov.pay.connector.service.ChargeExpiryService.EXPIRABLE_STATUSES;
 import static uk.gov.pay.connector.service.search.SearchService.TYPE.CHARGE;
 import static uk.gov.pay.connector.service.search.SearchService.TYPE.TRANSACTION;
@@ -71,6 +70,8 @@ public class ChargesApiResource {
     );
     private static final String[] REQUIRED_FIELDS = {AMOUNT_KEY, DESCRIPTION_KEY, REFERENCE_KEY, RETURN_URL_KEY};
     private static final String STATE_KEY = "state";
+    private static final String PAYMENT_STATES_KEY = "payment_states";
+    private static final String REFUND_STATES_KEY = "refund_states";
     private static final String CARD_BRAND_KEY = "card_brand";
     private static final String FROM_DATE_KEY = "from_date";
     private static final String TO_DATE_KEY = "to_date";
@@ -83,25 +84,26 @@ public class ChargesApiResource {
     private static final Logger logger = LoggerFactory.getLogger(ChargesApiResource.class);
     static int MIN_AMOUNT = 1;
     static int MAX_AMOUNT = 10000000;
-    private static F<String, Response> handleError =
-            ResponseUtil::notFoundResponse;
     private final ChargeDao chargeDao;
     private final GatewayAccountDao gatewayAccountDao;
     private final ChargeService chargeService;
     private final ConnectorConfiguration configuration;
     private final ChargeExpiryService chargeExpiryService;
+    private final CommonSearchStrategy commonSearchStrategy;
     private SearchService searchService;
 
     @Inject
     public ChargesApiResource(ChargeDao chargeDao, GatewayAccountDao gatewayAccountDao,
                               ChargeService chargeService, SearchService searchService,
-                              ChargeExpiryService chargeExpiryService, ConnectorConfiguration configuration) {
+                              ChargeExpiryService chargeExpiryService, ConnectorConfiguration configuration,
+                              CommonSearchStrategy commonSearchStrategy) {
         this.chargeDao = chargeDao;
         this.gatewayAccountDao = gatewayAccountDao;
         this.chargeService = chargeService;
         this.searchService = searchService;
         this.chargeExpiryService = chargeExpiryService;
         this.configuration = configuration;
+        this.commonSearchStrategy = commonSearchStrategy;
     }
 
     private static String stringifyChargeRequestWithoutPii(Map<String, String> map) {
@@ -127,8 +129,8 @@ public class ChargesApiResource {
                                    @QueryParam(EMAIL_KEY) String email,
                                    @QueryParam(REFERENCE_KEY) String reference,
                                    @QueryParam(STATE_KEY) String state,
-                                   @QueryParam("payment_states") CommaDelimitedSetParameter paymentStates,
-                                   @QueryParam("refund_states") CommaDelimitedSetParameter refundStates,
+                                   @QueryParam(PAYMENT_STATES_KEY) CommaDelimitedSetParameter paymentStates,
+                                   @QueryParam(REFUND_STATES_KEY) CommaDelimitedSetParameter refundStates,
                                    @QueryParam(CARD_BRAND_KEY) List<String> cardBrands,
                                    @QueryParam(FROM_DATE_KEY) String fromDate,
                                    @QueryParam(TO_DATE_KEY) String toDate,
@@ -158,15 +160,63 @@ public class ChargesApiResource {
 
                     if (isFeatureTransactionsEnabled) {
                         searchParams
-                                .withTransactionType(inferTransactionTypeFrom(paymentStates, refundStates))
-                                .addExternalChargeStates(paymentStates)
-                                .addExternalRefundStates(refundStates);
+                                .withTransactionType(inferTransactionTypeFrom(toList(paymentStates), toList(refundStates)))
+                                .addExternalChargeStates(toList(paymentStates))
+                                .addExternalRefundStates(toList(refundStates));
                     } else {
-                        searchParams
-                                .withExternalState(state);
+                        searchParams.withExternalState(state);
                     }
-                    return reduce(validateGatewayAccountReference(gatewayAccountDao, accountId)
-                            .bimap(handleError, listCharges(searchParams, isFeatureTransactionsEnabled, uriInfo)));
+                    return gatewayAccountDao.findById(accountId)
+                            .map(gatewayAccount -> listCharges(searchParams, isFeatureTransactionsEnabled, uriInfo))
+                            .orElseGet(() -> notFoundResponse(format("account with id %s not found", accountId)));
+                }); // always the first page if its missing
+    }
+
+    private List<String> toList(CommaDelimitedSetParameter commaDelimitedSetParameter) {
+        if (commaDelimitedSetParameter != null) {
+            return commaDelimitedSetParameter.stream().collect(Collectors.toList());
+        }
+        return Collections.emptyList();
+    }
+
+    @GET
+    @Path(TRANSACTIONS_API_PATH)
+    @Produces(APPLICATION_JSON)
+    public Response getTransactionsJson(@PathParam(ACCOUNT_ID) Long accountId,
+                                        @QueryParam(EMAIL_KEY) String email,
+                                        @QueryParam(REFERENCE_KEY) String reference,
+                                        @QueryParam(PAYMENT_STATES_KEY) List<String> paymentStates,
+                                        @QueryParam(REFUND_STATES_KEY) List<String> refundStates,
+                                        @QueryParam(CARD_BRAND_KEY) List<String> cardBrands,
+                                        @QueryParam(FROM_DATE_KEY) String fromDate,
+                                        @QueryParam(TO_DATE_KEY) String toDate,
+                                        @QueryParam(PAGE) Long pageNumber,
+                                        @QueryParam(DISPLAY_SIZE) Long displaySize,
+                                        @Context UriInfo uriInfo) {
+        List<Pair<String, String>> inputDatePairMap = ImmutableList.of(Pair.of(FROM_DATE_KEY, fromDate), Pair.of(TO_DATE_KEY, toDate));
+        List<Pair<String, Long>> nonNegativePairMap = ImmutableList.of(Pair.of(PAGE, pageNumber), Pair.of(DISPLAY_SIZE, displaySize));
+
+        return ApiValidators
+                .validateQueryParams(inputDatePairMap, nonNegativePairMap) //TODO - improvement, get the entire searchparam object into the validateQueryParams
+                .map(ResponseUtil::badRequestResponse)
+                .orElseGet(() -> {
+                    ChargeSearchParams searchParams = new ChargeSearchParams()
+                            .withGatewayAccountId(accountId)
+                            .withEmailLike(email)
+                            .withReferenceLike(reference)
+                            .withCardBrands(removeBlanks(cardBrands))
+                            .withFromDate(parseDate(fromDate))
+                            .withToDate(parseDate(toDate))
+                            .withDisplaySize(displaySize != null ? displaySize : configuration.getTransactionsPaginationConfig().getDisplayPageSize())
+                            .withTransactionType(inferTransactionTypeFrom(paymentStates, refundStates))
+                            .addExternalChargeStates(paymentStates)
+                            .addExternalRefundStates(refundStates)
+                            .withPage(pageNumber != null ? pageNumber : 1);
+
+                    return gatewayAccountDao.findById(accountId)
+                            .map(gatewayAccount -> listTransactions(searchParams, uriInfo))
+                            .orElseGet(() -> notFoundResponse(format("account with id %s not found", accountId)));
+
                 }); // always the first page if its missing
     }
 
@@ -237,11 +287,32 @@ public class ChargesApiResource {
                 : Optional.of(missing);
     }
 
-    private F<Boolean, Response> listCharges(ChargeSearchParams searchParams, boolean isFeatureTransactionsEnabled,UriInfo uriInfo) {
-        if(isFeatureTransactionsEnabled){
-            return success -> searchService.ofType(TRANSACTION).search(searchParams, uriInfo);
+    private Response listCharges(ChargeSearchParams searchParams, boolean isFeatureTransactionsEnabled, UriInfo uriInfo) {
+        long startTime = System.nanoTime();
+        try {
+            if (isFeatureTransactionsEnabled) {
+                return searchService.ofType(TRANSACTION).search(searchParams, uriInfo);
+            }
+            return searchService.ofType(CHARGE).search(searchParams, uriInfo);
+        } finally {
+            long endTime = System.nanoTime();
+            logger.info("Charge Search - is feature transactions enabled [%s] took [%d] params [%s]",
+                    isFeatureTransactionsEnabled,
+                    (endTime - startTime) / 1000000000.0,
+                    searchParams.buildQueryParams());
         }
-        return success -> searchService.ofType(CHARGE).search(searchParams, uriInfo);
+    }
+
+    private Response listTransactions(ChargeSearchParams searchParams, UriInfo uriInfo) {
+        long startTime = System.nanoTime();
+        try {
+            return commonSearchStrategy.search(searchParams, uriInfo);
+        } finally {
+            long endTime = System.nanoTime();
+            logger.info("Transaction Search - took [%d] params [%s]",
+                    (endTime - startTime) / 1000000000.0,
+                    searchParams.buildQueryParams());
+        }
     }
 
     private Optional<List<String>> checkInvalidSizeFields(Map<String, String> inputData) {

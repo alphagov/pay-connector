@@ -25,6 +25,7 @@ public interface ApiPaths {
     String FRONTEND_ACCOUNT_CARDTYPES_API_PATH = API_VERSION_PATH + "/frontend/accounts/{accountId}/card-types";
 
     String CHARGES_API_PATH = API_VERSION_PATH +"/api/accounts/{accountId}/charges";
+    String TRANSACTIONS_API_PATH = API_VERSION_PATH +"/api/accounts/{accountId}/transactions";
     String CHARGE_API_PATH = API_VERSION_PATH +"/api/accounts/{accountId}/charges/{chargeId}";
     String CHARGE_CANCEL_API_PATH = API_VERSION_PATH +"/api/accounts/{accountId}/charges/{chargeId}/cancel";
     String CHARGE_EVENTS_API_PATH = API_VERSION_PATH +"/api/accounts/{accountId}/charges/{chargeId}/events";

@@ -125,7 +125,7 @@ public class ChargeResponse {
             result = 31 * result + (capturedTime != null ? capturedTime.hashCode() : 0);
             return result;
         }
-        
+
         @Override
         public String toString() {
             return "SettlementSummary{" +
@@ -167,7 +167,8 @@ public class ChargeResponse {
 
             Auth3dsData that = (Auth3dsData) o;
 
-            if (paRequest != null ? !paRequest.equals(that.paRequest) : that.paRequest != null) return false;
+            if (paRequest != null ? !paRequest.equals(that.paRequest) : that.paRequest != null)
+                return false;
             return issuerUrl != null ? issuerUrl.equals(that.issuerUrl) : that.issuerUrl == null;
 
         }
@@ -347,24 +348,33 @@ public class ChargeResponse {
 
         ChargeResponse that = (ChargeResponse) o;
 
-        if (dataLinks != null ? !dataLinks.equals(that.dataLinks) : that.dataLinks != null) return false;
-        if (chargeId != null ? !chargeId.equals(that.chargeId) : that.chargeId != null) return false;
+        if (dataLinks != null ? !dataLinks.equals(that.dataLinks) : that.dataLinks != null)
+            return false;
+        if (chargeId != null ? !chargeId.equals(that.chargeId) : that.chargeId != null)
+            return false;
         if (amount != null ? !amount.equals(that.amount) : that.amount != null) return false;
         if (state != null ? !state.equals(that.state) : that.state != null) return false;
-        if (cardBrand != null ? !cardBrand.equals(that.cardBrand) : that.cardBrand != null) return false;
+        if (cardBrand != null ? !cardBrand.equals(that.cardBrand) : that.cardBrand != null)
+            return false;
         if (gatewayTransactionId != null ? !gatewayTransactionId.equals(that.gatewayTransactionId) : that.gatewayTransactionId != null)
             return false;
-        if (returnUrl != null ? !returnUrl.equals(that.returnUrl) : that.returnUrl != null) return false;
+        if (returnUrl != null ? !returnUrl.equals(that.returnUrl) : that.returnUrl != null)
+            return false;
         if (email != null ? !email.equals(that.email) : that.email != null) return false;
-        if (description != null ? !description.equals(that.description) : that.description != null) return false;
-        if (reference != null ? !reference.equals(that.reference) : that.reference != null) return false;
-        if (providerName != null ? !providerName.equals(that.providerName) : that.providerName != null) return false;
-        if (createdDate != null ? !createdDate.equals(that.createdDate) : that.createdDate != null) return false;
+        if (description != null ? !description.equals(that.description) : that.description != null)
+            return false;
+        if (reference != null ? !reference.equals(that.reference) : that.reference != null)
+            return false;
+        if (providerName != null ? !providerName.equals(that.providerName) : that.providerName != null)
+            return false;
+        if (createdDate != null ? !createdDate.equals(that.createdDate) : that.createdDate != null)
+            return false;
         if (refundSummary != null ? !refundSummary.equals(that.refundSummary) : that.refundSummary != null)
             return false;
         if (settlementSummary != null ? !settlementSummary.equals(that.settlementSummary) : that.settlementSummary != null)
             return false;
-        if (auth3dsData != null ? !auth3dsData.equals(that.auth3dsData) : that.auth3dsData != null) return false;
+        if (auth3dsData != null ? !auth3dsData.equals(that.auth3dsData) : that.auth3dsData != null)
+            return false;
         return cardDetails != null ? cardDetails.equals(that.cardDetails) : that.cardDetails == null;
 
     }
