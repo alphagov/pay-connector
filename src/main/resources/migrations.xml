@@ -1255,4 +1255,18 @@
         </addColumn>
     </changeSet>
 
+    <changeSet id="add gateway_account_id to transactions table" author="">
+        <addColumn tableName="transactions">
+            <column name="gateway_account_id" type="bigint">
+                <constraints nullable="true" unique="false"/>
+            </column>
+        </addColumn>
+    </changeSet>
+
+    <changeSet id="createIndex transactions.gateway_account_id" author="" runInTransaction="false">
+        <sql>
+            CREATE INDEX CONCURRENTLY idx_transactions_gateway_account_id ON transactions (gateway_account_id);
+        </sql>
+    </changeSet>
+
 </databaseChangeLog>
