@@ -43,6 +43,10 @@ public abstract class TransactionEntity<S extends Status, T extends TransactionE
     @ManyToOne
     @JoinColumn(name = "payment_request_id", referencedColumnName = "id", updatable = false)
     private PaymentRequestEntity paymentRequest;
+    @Column(name = "gateway_account_id")
+    // This just needs to be set when we save the transaction. It is then used to optimise
+    // transaction search don't access in Java code.
+    private Long gatewayAccountId;
 
     TransactionEntity(TransactionOperation operation) {
         this.operation = operation;
@@ -70,6 +74,12 @@ public abstract class TransactionEntity<S extends Status, T extends TransactionE
 
     public void setPaymentRequest(PaymentRequestEntity paymentRequest) {
         this.paymentRequest = paymentRequest;
+        this.gatewayAccountId = paymentRequest.getGatewayAccount().getId();
+    }
+
+    //todo remove this once we have back filled the gatewayAccountId.
+    public void setGatewayAccountId(Long gatewayAccountId) {
+        this.gatewayAccountId = gatewayAccountId;
     }
 
     public TransactionOperation getOperation() {
