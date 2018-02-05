@@ -84,7 +84,7 @@ public class SmartpayOrderRequestBuilderTest {
     public void shouldGenerateValidAuthoriseOrderRequestForAddressWithOptionalFieldsMissing() throws Exception {
 
         Address address = Address.anAddress();
-        address.setLine1("41");
+        address.setLine1("41 Acacia Avenue");
         address.setCity("London");
         address.setPostcode("EC2A 1AE");
         address.setCountry("GB");
