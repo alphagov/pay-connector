@@ -44,6 +44,7 @@ import uk.gov.pay.connector.service.Auth3dsDetailsFactory;
 import uk.gov.pay.connector.service.CaptureProcessScheduler;
 import uk.gov.pay.connector.service.CardCaptureProcess;
 import uk.gov.pay.connector.tasks.BackfillCreatedDateOnTransactionsTask;
+import uk.gov.pay.connector.tasks.BackfillGatewayAccountIdOnTransactionsTask;
 import uk.gov.pay.connector.tasks.MigrateCaptureApprovedRetryEventTask;
 import uk.gov.pay.connector.tasks.MigrateEmailTask;
 import uk.gov.pay.connector.tasks.MigrateTransactionEventsTask;
@@ -119,6 +120,7 @@ public class ConnectorApp extends Application<ConnectorConfiguration> {
 
         environment.admin().addTask(injector.getInstance(MigrateTransactionEventsTask.class));
         environment.admin().addTask(injector.getInstance(BackfillCreatedDateOnTransactionsTask.class));
+        environment.admin().addTask(injector.getInstance(BackfillGatewayAccountIdOnTransactionsTask.class));
         environment.admin().addTask(injector.getInstance(MigrateCaptureApprovedRetryEventTask.class));
         environment.admin().addTask(injector.getInstance(MigrateEmailTask.class));
 

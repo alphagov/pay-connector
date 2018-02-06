@@ -20,6 +20,9 @@ public class PaymentRequestEntityTest {
         expectedChargeTransaction = new ChargeTransactionEntity();
 
         paymentRequestEntity = new PaymentRequestEntity();
+        GatewayAccountEntity gatewayAccount = new GatewayAccountEntity();
+        gatewayAccount.setId(1L);
+        paymentRequestEntity.setGatewayAccount(gatewayAccount);
         paymentRequestEntity.addTransaction(expectedChargeTransaction);
     }
 
