@@ -171,15 +171,6 @@ public class ChargeService {
                 .withLink("self", GET, selfUriFor(uriInfo, chargeEntity.getGatewayAccount().getId(), chargeId))
                 .withLink("refunds", GET, refundsUriFor(uriInfo, chargeEntity.getGatewayAccount().getId(), chargeEntity.getExternalId()));
 
-        if (!ChargeStatus.fromString(chargeEntity.getStatus()).toExternal().isFinished()) {
-            TokenEntity token = createNewChargeEntityToken(chargeEntity);
-            return reponseBuilder
-                    .withLink("next_url", GET, nextUrl(token.getToken()))
-                    .withLink("next_url_post", POST, nextUrl(), APPLICATION_FORM_URLENCODED, new HashMap<String, Object>() {{
-                        put("chargeTokenId", token.getToken());
-                    }});
-        }
-
         return reponseBuilder;
     }
 

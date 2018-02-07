@@ -214,39 +214,20 @@ public class ChargeServiceTest {
     }
 
     @Test
-    public void shouldCreateAToken() throws Exception {
-        service.create(CHARGE_REQUEST, GATEWAY_ACCOUNT_ID, mockedUriInfo);
-
-        ArgumentCaptor<TokenEntity> tokenEntityArgumentCaptor = forClass(TokenEntity.class);
-        verify(mockedTokenDao).persist(tokenEntityArgumentCaptor.capture());
-
-        TokenEntity tokenEntity = tokenEntityArgumentCaptor.getValue();
-        assertThat(tokenEntity.getChargeEntity().getId(), is(CHARGE_ENTITY_ID));
-        assertThat(tokenEntity.getToken(), is(notNullValue()));
-    }
-
-    @Test
     public void shouldCreateAResponse() throws Exception {
         ChargeResponse response = service.create(CHARGE_REQUEST, GATEWAY_ACCOUNT_ID, mockedUriInfo).get();
 
         ArgumentCaptor<ChargeEntity> chargeEntityArgumentCaptor = forClass(ChargeEntity.class);
         verify(mockedChargeDao).persist(chargeEntityArgumentCaptor.capture());
 
-        ArgumentCaptor<TokenEntity> tokenEntityArgumentCaptor = forClass(TokenEntity.class);
-        verify(mockedTokenDao).persist(tokenEntityArgumentCaptor.capture());
 
         ChargeEntity createdChargeEntity = chargeEntityArgumentCaptor.getValue();
-        TokenEntity tokenEntity = tokenEntityArgumentCaptor.getValue();
 
         // Then - expected response is returned
         ChargeResponseBuilder expectedChargeResponse = chargeResponseBuilderOf(createdChargeEntity);
 
         expectedChargeResponse.withLink("self", GET, new URI(SERVICE_HOST + "/v1/api/accounts/1/charges/" + EXTERNAL_CHARGE_ID[0]));
         expectedChargeResponse.withLink("refunds", GET, new URI(SERVICE_HOST + "/v1/api/accounts/1/charges/" + EXTERNAL_CHARGE_ID[0] + "/refunds"));
-        expectedChargeResponse.withLink("next_url", GET, new URI("http://payments.com/secure/" + tokenEntity.getToken()));
-        expectedChargeResponse.withLink("next_url_post", POST, new URI("http://payments.com/secure"), "application/x-www-form-urlencoded", new HashMap<String, Object>() {{
-            put("chargeTokenId", tokenEntity.getToken());
-        }});
 
         assertThat(response, is(expectedChargeResponse.build()));
     }
@@ -273,20 +254,9 @@ public class ChargeServiceTest {
 
         Optional<ChargeResponse> chargeResponseForAccount = service.findChargeForAccount(externalId, accountId, mockedUriInfo);
 
-        ArgumentCaptor<TokenEntity> tokenEntityArgumentCaptor = ArgumentCaptor.forClass(TokenEntity.class);
-        verify(mockedTokenDao).persist(tokenEntityArgumentCaptor.capture());
-
-        TokenEntity tokenEntity = tokenEntityArgumentCaptor.getValue();
-        assertThat(tokenEntity.getChargeEntity().getId(), is(newCharge.getId()));
-        assertThat(tokenEntity.getToken(), is(notNullValue()));
-
         ChargeResponseBuilder expectedChargeResponse = chargeResponseBuilderOf(chargeEntity.get());
         expectedChargeResponse.withLink("self", GET, new URI(SERVICE_HOST + "/v1/api/accounts/1/charges/" + externalId));
         expectedChargeResponse.withLink("refunds", GET, new URI(SERVICE_HOST + "/v1/api/accounts/1/charges/" + externalId + "/refunds"));
-        expectedChargeResponse.withLink("next_url", GET, new URI("http://payments.com/secure/" + tokenEntity.getToken()));
-        expectedChargeResponse.withLink("next_url_post", POST, new URI("http://payments.com/secure"), "application/x-www-form-urlencoded", new HashMap<String, Object>() {{
-            put("chargeTokenId", tokenEntity.getToken());
-        }});
 
         assertThat(chargeResponseForAccount.get(), is(expectedChargeResponse.build()));
     }
@@ -314,19 +284,10 @@ public class ChargeServiceTest {
         Optional<ChargeResponse> chargeResponseForAccount = service.findChargeForAccount(externalId, accountId, mockedUriInfo);
 
         ArgumentCaptor<TokenEntity> tokenEntityArgumentCaptor = ArgumentCaptor.forClass(TokenEntity.class);
-        verify(mockedTokenDao).persist(tokenEntityArgumentCaptor.capture());
-
-        TokenEntity tokenEntity = tokenEntityArgumentCaptor.getValue();
-        assertThat(tokenEntity.getChargeEntity().getId(), is(newCharge.getId()));
-        assertThat(tokenEntity.getToken(), is(notNullValue()));
 
         ChargeResponseBuilder expectedChargeResponse = chargeResponseBuilderOf(chargeEntity.get());
         expectedChargeResponse.withLink("self", GET, new URI(SERVICE_HOST + "/v1/api/accounts/1/charges/" + externalId));
         expectedChargeResponse.withLink("refunds", GET, new URI(SERVICE_HOST + "/v1/api/accounts/1/charges/" + externalId + "/refunds"));
-        expectedChargeResponse.withLink("next_url", GET, new URI("http://payments.com/secure/" + tokenEntity.getToken()));
-        expectedChargeResponse.withLink("next_url_post", POST, new URI("http://payments.com/secure"), "application/x-www-form-urlencoded", new HashMap<String, Object>() {{
-            put("chargeTokenId", tokenEntity.getToken());
-        }});
 
         assertThat(chargeResponseForAccount.get(), is(expectedChargeResponse.build()));
 
