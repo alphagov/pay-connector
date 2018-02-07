@@ -130,17 +130,10 @@ public class ChargesApiResourceITest extends ChargingITestBase {
         String documentLocation = expectedChargeLocationFor(accountId, externalChargeId);
         String chargeTokenId = app.getDatabaseTestHelper().getChargeTokenByExternalChargeId(externalChargeId);
 
-        String hrefNextUrl = "http://Frontend" + FRONTEND_CARD_DETAILS_URL + "/" + chargeTokenId;
-        String hrefNextUrlPost = "http://Frontend" + FRONTEND_CARD_DETAILS_URL;
-
         response.header("Location", is(documentLocation))
-                .body("links", hasSize(4))
+                .body("links", hasSize(2))
                 .body("links", containsLink("self", "GET", documentLocation))
-                .body("links", containsLink("refunds", "GET", documentLocation + "/refunds"))
-                .body("links", containsLink("next_url", "GET", hrefNextUrl))
-                .body("links", containsLink("next_url_post", "POST", hrefNextUrlPost, "application/x-www-form-urlencoded", new HashMap<String, Object>() {{
-                    put("chargeTokenId", chargeTokenId);
-                }}));
+                .body("links", containsLink("refunds", "GET", documentLocation + "/refunds"));
 
         ValidatableResponse getChargeResponse = getChargeApi
                 .withAccountId(accountId)
@@ -170,14 +163,9 @@ public class ChargesApiResourceITest extends ChargingITestBase {
         String newHrefNextUrl = "http://Frontend" + FRONTEND_CARD_DETAILS_URL + "/" + newChargeTokenId;
 
         getChargeResponse
-                .body("links", hasSize(4))
+                .body("links", hasSize(2))
                 .body("links", containsLink("self", "GET", documentLocation))
-                .body("links", containsLink("refunds", "GET", documentLocation + "/refunds"))
-                .body("links", containsLink("next_url", "GET", newHrefNextUrl))
-                .body("links", containsLink("next_url_post", "POST", hrefNextUrlPost, "application/x-www-form-urlencoded", new HashMap<String, Object>() {{
-                    put("chargeTokenId", newChargeTokenId);
-                }}));
-
+                .body("links", containsLink("refunds", "GET", documentLocation + "/refunds"));
     }
 
     @Test
