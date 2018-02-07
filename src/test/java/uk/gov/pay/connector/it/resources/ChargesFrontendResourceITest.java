@@ -2,17 +2,23 @@ package uk.gov.pay.connector.it.resources;
 
 import com.google.common.collect.ImmutableMap;
 import com.jayway.restassured.response.ValidatableResponse;
+import org.apache.commons.lang.math.RandomUtils;
+import org.apache.commons.lang3.tuple.ImmutablePair;
+import org.apache.commons.lang3.tuple.Pair;
 import org.junit.Before;
 import org.junit.Rule;
 import org.junit.Test;
 import uk.gov.pay.connector.it.dao.DatabaseFixtures;
 import uk.gov.pay.connector.model.api.ExternalChargeState;
+import uk.gov.pay.connector.model.domain.Address;
+import uk.gov.pay.connector.model.domain.AuthCardDetails;
 import uk.gov.pay.connector.model.domain.ChargeStatus;
 import uk.gov.pay.connector.rules.DropwizardAppWithPostgresRule;
 import uk.gov.pay.connector.util.RandomIdGenerator;
 import uk.gov.pay.connector.util.RestAssuredClient;
 
 import javax.ws.rs.core.HttpHeaders;
+import java.time.ZonedDateTime;
 import java.util.List;
 
 import static com.jayway.restassured.http.ContentType.JSON;
@@ -24,16 +30,29 @@ import static javax.ws.rs.HttpMethod.GET;
 import static javax.ws.rs.HttpMethod.POST;
 import static javax.ws.rs.core.MediaType.APPLICATION_JSON;
 import static javax.ws.rs.core.Response.Status;
-import static javax.ws.rs.core.Response.Status.*;
+import static javax.ws.rs.core.Response.Status.BAD_REQUEST;
+import static javax.ws.rs.core.Response.Status.NOT_FOUND;
+import static javax.ws.rs.core.Response.Status.NO_CONTENT;
+import static javax.ws.rs.core.Response.Status.OK;
 import static org.apache.commons.lang.RandomStringUtils.randomAlphabetic;
 import static org.apache.commons.lang.RandomStringUtils.randomAlphanumeric;
-import static org.hamcrest.Matchers.*;
+import static org.hamcrest.Matchers.hasSize;
+import static org.hamcrest.Matchers.isEmptyOrNullString;
+import static org.hamcrest.Matchers.notNullValue;
+import static org.hamcrest.Matchers.nullValue;
 import static org.hamcrest.core.Is.is;
 import static org.hamcrest.text.MatchesPattern.matchesPattern;
 import static uk.gov.pay.connector.matcher.ResponseContainsLinkMatcher.containsLink;
 import static uk.gov.pay.connector.matcher.ZoneDateTimeAsStringWithinMatcher.isWithin;
-import static uk.gov.pay.connector.model.domain.ChargeStatus.*;
+import static uk.gov.pay.connector.model.domain.AuthCardDetails.anAuthCardDetails;
+import static uk.gov.pay.connector.model.domain.ChargeStatus.AUTHORISATION_3DS_REQUIRED;
+import static uk.gov.pay.connector.model.domain.ChargeStatus.AUTHORISATION_READY;
+import static uk.gov.pay.connector.model.domain.ChargeStatus.AUTHORISATION_REJECTED;
+import static uk.gov.pay.connector.model.domain.ChargeStatus.AUTHORISATION_SUCCESS;
+import static uk.gov.pay.connector.model.domain.ChargeStatus.CAPTURED;
+import static uk.gov.pay.connector.model.domain.ChargeStatus.CAPTURE_SUBMITTED;
 import static uk.gov.pay.connector.model.domain.ChargeStatus.CREATED;
+import static uk.gov.pay.connector.model.domain.ChargeStatus.ENTERING_CARD_DETAILS;
 import static uk.gov.pay.connector.util.JsonEncoder.toJson;
 import static uk.gov.pay.connector.util.NumberMatcher.isNumber;
 
@@ -82,13 +101,8 @@ public class ChargesFrontendResourceITest {
         String externalChargeId = RandomIdGenerator.newId();
         Long chargeId = 123456L;
 
-        DatabaseFixtures.TestCardType testCardType = DatabaseFixtures
-                .withDatabaseTestHelper(app.getDatabaseTestHelper())
-                .aMastercardCreditCardType()
-                .insert();
+        setupChargeAndPaymentRequest(chargeId, externalChargeId, AUTHORISATION_SUCCESS);
 
-        app.getDatabaseTestHelper().addCharge(chargeId, externalChargeId, accountId, expectedAmount, AUTHORISATION_SUCCESS, returnUrl, null, "ref", null, email);
-        app.getDatabaseTestHelper().updateChargeCardDetails(chargeId, testCardType.getBrand(), "1234", "Mr. McPayment", "03/18", "line1", null, "postcode", "city", null, "country");
         validateGetCharge(expectedAmount, externalChargeId, AUTHORISATION_SUCCESS);
     }
 
@@ -97,8 +111,8 @@ public class ChargesFrontendResourceITest {
         String externalChargeId = RandomIdGenerator.newId();
         Long chargeId = 123456L;
 
-        app.getDatabaseTestHelper().addCharge(chargeId, externalChargeId, accountId, expectedAmount, AUTHORISATION_SUCCESS, returnUrl, null, "ref", null, email);
-        app.getDatabaseTestHelper().updateChargeCardDetails(chargeId, "unknown", "1234", "Mr. McPayment", "03/18", "line1", null, "postcode", "city", null, "country");
+        setupChargeAndPaymentRequest(chargeId, externalChargeId, AUTHORISATION_SUCCESS);
+
         validateGetCharge(expectedAmount, externalChargeId, AUTHORISATION_SUCCESS);
     }
 
@@ -109,9 +123,10 @@ public class ChargesFrontendResourceITest {
         String issuerUrl = "https://issuer.example.com/3ds";
         String paRequest = "test-pa-request";
 
-        app.getDatabaseTestHelper().addCharge(chargeId, externalChargeId, accountId, expectedAmount, AUTHORISATION_3DS_REQUIRED, returnUrl, null, "ref", null, email);
-        app.getDatabaseTestHelper().updateChargeCardDetails(chargeId, "unknown", "1234", "Mr. McPayment", "03/18", "line1", null, "postcode", "city", null, "country");
+        Pair<Long, Long> ids = setupChargeAndPaymentRequest(chargeId, externalChargeId, AUTHORISATION_3DS_REQUIRED);
         app.getDatabaseTestHelper().updateCharge3dsDetails(chargeId, issuerUrl, paRequest);
+
+        app.getDatabaseTestHelper().addCard3ds(ids.getRight(), ids.getLeft(), paRequest, issuerUrl);
 
         connectorRestApi
                 .withChargeId(externalChargeId)
@@ -377,9 +392,9 @@ public class ChargesFrontendResourceITest {
                 .put("description", description)
                 .put("amount", expectedAmount)
                 .put("gateway_account_id", accountId)
-                .put("return_url", returnUrl)
-                .put("email", email).build());
+                .put("return_url", returnUrl).build());
 
+        //No longer check for email as it is not set when we create a PaymentRequest as this feature was not being used
         ValidatableResponse response = connectorRestApi
                 .withAccountId(accountId)
                 .postCreateCharge(postBody)
@@ -389,7 +404,6 @@ public class ChargesFrontendResourceITest {
                 .body("description", is(description))
                 .body("amount", isNumber(expectedAmount))
                 .body("return_url", is(returnUrl))
-                .body("email", is(email))
                 .body("created_date", is(notNullValue()))
                 .contentType(JSON);
 
@@ -408,7 +422,6 @@ public class ChargesFrontendResourceITest {
                 .body("amount", isNumber(expectedAmount))
                 .body("status", is(chargeStatus.getValue()))
                 .body("return_url", is(returnUrl))
-                .body("email", is(email))
                 .body("created_date", is(notNullValue()))
                 .body("created_date", matchesPattern("^\\d{4}-\\d{2}-\\d{2}T\\d{2}:\\d{2}:\\d{2}.\\d{3}Z"))
                 .body("created_date", isWithin(10, SECONDS));
@@ -466,5 +479,47 @@ public class ChargesFrontendResourceITest {
     private static String createPatch(String op, String path, String value) {
         return toJson(ImmutableMap.of("op", op, "path", path, "value", value));
 
+    }
+
+    private Pair<Long, Long> setupChargeAndPaymentRequest(Long chargeId, String externalChargeId, ChargeStatus status) {
+        app.getDatabaseTestHelper().addCharge(chargeId, externalChargeId, accountId, expectedAmount, status, returnUrl, null, "ref", null, email);
+        String cardBrand = "unknown";
+        String lastDigitsCardNumber = "1234";
+        String cardHolderName = "Mr. McPayment";
+        String expiryDate = "03/18";
+        String addressLine1 = "line1";
+        String addressLine2 = null;
+        String postcode = "postcode";
+        String city = "city";
+        String county = null;
+        String country = "country";
+
+        Address address = new Address();
+        address.setLine1(addressLine1);
+        address.setLine2(addressLine2);
+        address.setPostcode(postcode);
+        address.setCity(city);
+        address.setCounty(county);
+        address.setCountry(country);
+
+        app.getDatabaseTestHelper().updateChargeCardDetails(chargeId, cardBrand, lastDigitsCardNumber, cardHolderName,
+                expiryDate, addressLine1, addressLine2, postcode, city, county, country);
+
+        long paymentRequestId = RandomUtils.nextLong();
+        app.getDatabaseTestHelper().addPaymentRequest(paymentRequestId, expectedAmount, Long.valueOf(accountId), returnUrl,
+                "Test description", "ref", ZonedDateTime.now(), externalChargeId);
+        long chargeTransactionId = RandomUtils.nextLong();
+        app.getDatabaseTestHelper().addChargeTransaction(chargeTransactionId, null, expectedAmount, status, paymentRequestId);
+        AuthCardDetails cardDetails = anAuthCardDetails();
+        cardDetails.setCardBrand(cardBrand);
+        cardDetails.setCardNo(lastDigitsCardNumber);
+        cardDetails.setCardHolder(cardHolderName);
+        cardDetails.setEndDate(expiryDate);
+        cardDetails.setAddress(address);
+
+        long cardId = RandomUtils.nextLong();
+        app.getDatabaseTestHelper().addCard(cardId, chargeTransactionId, cardDetails);
+
+        return new ImmutablePair<>(chargeTransactionId, cardId);
     }
 }

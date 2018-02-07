@@ -62,4 +62,16 @@ public class PersistedCard {
     public void setCardBrand(String cardBrand) {
         this.cardBrand = cardBrand;
     }
+
+    public static PersistedCard from(CardEntity cardEntity, String cardBrand) {
+            PersistedCard card = new PersistedCard();
+            card.setLastDigitsCardNumber(cardEntity.getLastDigitsCardNumber());
+            card.setCardBrand(cardEntity.getCardBrand());
+            card.setBillingAddress(cardEntity.getBillingAddress() != null ? cardEntity.getBillingAddress().toAddress() : null);
+            card.setExpiryDate(cardEntity.getExpiryDate());
+            card.setCardHolderName(cardEntity.getCardHolderName());
+            card.setCardBrand(cardBrand);
+
+            return card;
+    }
 }

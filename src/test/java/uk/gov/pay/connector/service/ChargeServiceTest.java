@@ -206,7 +206,7 @@ public class ChargeServiceTest {
 
         assertThat(paymentRequestEntity.getChargeTransaction().getEmail(), is(nullValue()));
 
-        service.updateCharge(chargeEntityExternalId, patchRequest);
+        service.updateEmail(chargeEntityExternalId, patchRequest);
 
         verify(mockedPaymentRequestDao).findByExternalId(chargeEntityExternalId);
         String emailFromTransaction = paymentRequestEntity.getChargeTransaction().getEmail();
