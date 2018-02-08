@@ -13,8 +13,8 @@ import uk.gov.pay.connector.dao.GatewayAccountDao;
 import uk.gov.pay.connector.model.domain.ChargeEntity;
 import uk.gov.pay.connector.service.ChargeExpiryService;
 import uk.gov.pay.connector.service.ChargeService;
-import uk.gov.pay.connector.service.search.CommonSearchStrategy;
 import uk.gov.pay.connector.service.search.SearchService;
+import uk.gov.pay.connector.service.search.TransactionSearchStrategy;
 import uk.gov.pay.connector.util.ResponseUtil;
 
 import javax.inject.Inject;
@@ -89,21 +89,21 @@ public class ChargesApiResource {
     private final ChargeService chargeService;
     private final ConnectorConfiguration configuration;
     private final ChargeExpiryService chargeExpiryService;
-    private final CommonSearchStrategy commonSearchStrategy;
+    private final TransactionSearchStrategy transactionSearchStrategy;
     private SearchService searchService;
 
     @Inject
     public ChargesApiResource(ChargeDao chargeDao, GatewayAccountDao gatewayAccountDao,
                               ChargeService chargeService, SearchService searchService,
                               ChargeExpiryService chargeExpiryService, ConnectorConfiguration configuration,
-                              CommonSearchStrategy commonSearchStrategy) {
+                              TransactionSearchStrategy transactionSearchStrategy) {
         this.chargeDao = chargeDao;
         this.gatewayAccountDao = gatewayAccountDao;
         this.chargeService = chargeService;
         this.searchService = searchService;
         this.chargeExpiryService = chargeExpiryService;
         this.configuration = configuration;
-        this.commonSearchStrategy = commonSearchStrategy;
+        this.transactionSearchStrategy = transactionSearchStrategy;
     }
 
     private static String stringifyChargeRequestWithoutPii(Map<String, String> map) {
@@ -306,7 +306,7 @@ public class ChargesApiResource {
     private Response listTransactions(ChargeSearchParams searchParams, UriInfo uriInfo) {
         long startTime = System.nanoTime();
         try {
-            return commonSearchStrategy.search(searchParams, uriInfo);
+            return transactionSearchStrategy.search(searchParams, uriInfo);
         } finally {
             long endTime = System.nanoTime();
             logger.info("Transaction Search - took [%d] params [%s]",
