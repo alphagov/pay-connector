@@ -556,13 +556,37 @@ public class DatabaseTestHelper {
                 )
         );
     }
+    public void addChargeTransaction(
+            long transactionId,
+            String gatewayTransactionId,
+            Long gatewayAccountId,
+            Long amount,
+            ChargeStatus chargeStatus,
+            long paymentRequestId
+    ) {
+        addChargeTransaction(transactionId, gatewayTransactionId, gatewayAccountId, amount, chargeStatus, paymentRequestId, ZonedDateTime.now(), "some@email.com");
+    }
 
+    @Deprecated // Use the addChargeTransaction above that sets the gatewayAccountId
     public void addChargeTransaction(
             long transactionId,
             String gatewayTransactionId,
             Long amount,
             ChargeStatus chargeStatus,
             long paymentRequestId
+    ) {
+        addChargeTransaction(transactionId, gatewayTransactionId, null, amount, chargeStatus, paymentRequestId, ZonedDateTime.now(), "some@email.com");
+    }
+
+    public void addChargeTransaction(
+            long transactionId,
+            String gatewayTransactionId,
+            Long gatewayAccountId,
+            Long amount,
+            ChargeStatus chargeStatus,
+            long paymentRequestId,
+            ZonedDateTime dateCreated,
+            String email
             ) {
         jdbi.withHandle(h ->
                 h.update(
@@ -570,18 +594,24 @@ public class DatabaseTestHelper {
                                 "id," +
                                 "payment_request_id," +
                                 "gateway_transaction_id," +
+                                "gateway_account_id," +
                                 "amount," +
                                 "status," +
-                                "operation" +
+                                "operation, " +
+                                "created_date," +
+                                "email" +
                                 ")" +
                                 "VALUES (" +
-                                "?, ?, ?, ?, ?, 'CHARGE'" +
+                                "?, ?, ?, ?, ?, ?, 'CHARGE', ?, ?" +
                                 ")",
                         transactionId,
                         paymentRequestId,
                         gatewayTransactionId,
+                        gatewayAccountId,
                         amount,
-                        chargeStatus.name()
+                        chargeStatus.name(),
+                        Timestamp.from(dateCreated.toInstant()),
+                        email
                 )
         );
     }
@@ -665,6 +695,22 @@ public class DatabaseTestHelper {
                         ")",
                 cardId,
                 chargeId,
+                transactionId)
+        );
+    }
+
+    public void addCard(Long cardId, String cardBrand, Long transactionId) {
+        jdbi.withHandle(h -> h.update(
+                "INSERT INTO cards(" +
+                        "id," +
+                        "card_brand," +
+                        "transaction_id" +
+                        ")" +
+                        "VALUES (" +
+                        "?, ?, ?" +
+                        ")",
+                cardId,
+                cardBrand,
                 transactionId)
         );
     }

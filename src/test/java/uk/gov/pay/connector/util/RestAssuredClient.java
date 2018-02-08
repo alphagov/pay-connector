@@ -18,6 +18,7 @@ import static uk.gov.pay.connector.resources.ApiPaths.CHARGE_EVENTS_API_PATH;
 import static uk.gov.pay.connector.resources.ApiPaths.FRONTEND_CHARGE_API_PATH;
 import static uk.gov.pay.connector.resources.ApiPaths.FRONTEND_CHARGE_CANCEL_API_PATH;
 import static uk.gov.pay.connector.resources.ApiPaths.REFUND_API_PATH;
+import static uk.gov.pay.connector.resources.ApiPaths.TRANSACTIONS_API_PATH;
 import static uk.gov.pay.connector.resources.ApiPaths.TRANSACTIONS_SUMMARY_API_PATH;
 
 public class RestAssuredClient {
@@ -142,6 +143,13 @@ public class RestAssuredClient {
         return addQueryParams(given().port(app.getLocalPort())
                 .headers(headers))
                 .get(CHARGES_API_PATH.replace("{accountId}", accountId))
+                .then();
+    }
+
+    public ValidatableResponse getTransactionsAPI() {
+        return addQueryParams(given().port(app.getLocalPort())
+                .headers(headers))
+                .get(TRANSACTIONS_API_PATH.replace("{accountId}", accountId))
                 .then();
     }
 

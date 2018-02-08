@@ -19,7 +19,7 @@ public class PaymentRequestEntityFixture {
     private Long amount = 500L;
     private String returnUrl = "http://return.com";
     private String description = "This is a description";
-    private String reference = "This is a reference";
+    private String reference = RandomIdGenerator.newId();
     private GatewayAccountEntity gatewayAccountEntity = defaultGatewayAccountEntity();
     private ZonedDateTime createdDate = ZonedDateTime.now(ZoneId.of("UTC"));
     private List<TransactionEntity> transactions = asList(aChargeTransactionEntity().build());
@@ -54,6 +54,21 @@ public class PaymentRequestEntityFixture {
 
     public PaymentRequestEntityFixture withTransactions(TransactionEntity... transactions) {
         this.transactions = Arrays.asList(transactions);
+        return this;
+    }
+
+    public PaymentRequestEntityFixture withReference(String reference) {
+        this.reference = reference;
+        return this;
+    }
+
+    public PaymentRequestEntityFixture withCreatedDate(ZonedDateTime createdDate) {
+        this.createdDate = createdDate;
+        return this;
+    }
+
+    public PaymentRequestEntityFixture withAmount(long amount) {
+        this.amount = amount;
         return this;
     }
 }

@@ -1,6 +1,6 @@
 package uk.gov.pay.connector.model;
 
-import uk.gov.pay.connector.resources.CommaDelimitedSetParameter;
+import java.util.List;
 
 public enum TransactionType {
     PAYMENT("payment"), REFUND("refund");
@@ -11,7 +11,7 @@ public enum TransactionType {
         this.value = value;
     }
 
-    public static TransactionType inferTransactionTypeFrom(CommaDelimitedSetParameter paymentStates, CommaDelimitedSetParameter refundStates) {
+    public static TransactionType inferTransactionTypeFrom(List<String> paymentStates, List<String> refundStates) {
 
         TransactionType transactionType = null;
         boolean hasSpecifiedPaymentStates = paymentStates != null && !paymentStates.isEmpty();

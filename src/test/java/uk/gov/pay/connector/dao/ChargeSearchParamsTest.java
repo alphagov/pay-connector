@@ -2,11 +2,11 @@ package uk.gov.pay.connector.dao;
 
 import org.junit.Test;
 import uk.gov.pay.connector.model.api.ExternalChargeState;
-import uk.gov.pay.connector.resources.CommaDelimitedSetParameter;
 
 import java.time.ZonedDateTime;
 
 import static java.util.Arrays.asList;
+import static java.util.Collections.singletonList;
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.containsInAnyOrder;
 import static org.hamcrest.Matchers.hasSize;
@@ -105,8 +105,8 @@ public class ChargeSearchParamsTest {
         ChargeSearchParams params = new ChargeSearchParams()
                 .withDisplaySize(5L)
                 .withTransactionType(PAYMENT)
-                .addExternalChargeStates(new CommaDelimitedSetParameter("created"))
-                .addExternalRefundStates(new CommaDelimitedSetParameter("submitted"))
+                .addExternalChargeStates(singletonList("created"))
+                .addExternalRefundStates(singletonList("submitted"))
                 .withCardBrands(asList("visa", "master-card"))
                 .withGatewayAccountId(111L)
                 .withPage(2L)
@@ -129,8 +129,8 @@ public class ChargeSearchParamsTest {
                         "&refund_states=success";
 
         ChargeSearchParams params = new ChargeSearchParams()
-                .addExternalChargeStates(new CommaDelimitedSetParameter("success"))
-                .addExternalRefundStates(new CommaDelimitedSetParameter("success"))
+                .addExternalChargeStates(singletonList("success"))
+                .addExternalRefundStates(singletonList("success"))
                 .withGatewayAccountId(111L)
                 .withPage(2L)
                 .withReferenceLike("ref")
@@ -145,8 +145,8 @@ public class ChargeSearchParamsTest {
         String expectedQueryString = "payment_states=success,failed";
 
         ChargeSearchParams params = new ChargeSearchParams()
-                .addExternalChargeStates(new CommaDelimitedSetParameter("success"))
-                .addExternalChargeStates(new CommaDelimitedSetParameter("failed"))
+                .addExternalChargeStates(singletonList("success"))
+                .addExternalChargeStates(singletonList("failed"))
                 .withGatewayAccountId(111L);
 
         assertThat(params.buildQueryParams(), is(expectedQueryString));
@@ -161,7 +161,7 @@ public class ChargeSearchParamsTest {
     public void getInternalChargeStatuses_transactionsSearch_shouldPopulateAllInternalChargeStates_FromExternalFailedState() {
 
         ChargeSearchParams params = new ChargeSearchParams()
-                .addExternalChargeStates(new CommaDelimitedSetParameter(ExternalChargeState.EXTERNAL_FAILED_CANCELLED.getStatus()));
+                .addExternalChargeStates(singletonList(ExternalChargeState.EXTERNAL_FAILED_CANCELLED.getStatus()));
 
         assertThat(params.buildQueryParams(), is("payment_states=failed"));
         assertThat(params.getInternalChargeStatuses(),  hasSize(11));
@@ -169,18 +169,4 @@ public class ChargeSearchParamsTest {
                 USER_CANCEL_READY, USER_CANCEL_SUBMITTED, USER_CANCEL_ERROR, USER_CANCELLED, EXPIRE_CANCEL_READY, EXPIRE_CANCEL_SUBMITTED, EXPIRED, EXPIRE_CANCEL_FAILED,
                 AUTHORISATION_REJECTED, AUTHORISATION_CANCELLED, AUTHORISATION_ABORTED));
     }
-
-    @Test
-    public void getStates_shouldReturnEmpty_whenParsingEmptyStates() {
-
-        ChargeSearchParams params = new ChargeSearchParams()
-                .withExternalState(" ")
-                .addExternalChargeStates(new CommaDelimitedSetParameter(" "))
-                .addExternalRefundStates(new CommaDelimitedSetParameter(" "));
-
-        assertThat(params.getInternalStates(), hasSize(0));
-        assertThat(params.getInternalChargeStatuses(),  hasSize(0));
-        assertThat(params.getInternalRefundStatuses(),  hasSize(0));
-    }
-
 }

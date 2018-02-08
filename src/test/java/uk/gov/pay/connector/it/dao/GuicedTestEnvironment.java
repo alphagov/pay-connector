@@ -44,6 +44,7 @@ public class GuicedTestEnvironment {
             bind(GatewayAccountDao.class).in(Singleton.class);
             bind(PaymentRequestDao.class).in(Singleton.class);
             bind(CardDao.class).in(Singleton.class);
+            bind(NewTransactionDao.class).in(Singleton.class);
         }
     }
 }

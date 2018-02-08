@@ -4,8 +4,10 @@ import com.fasterxml.jackson.annotation.JsonIgnore;
 import uk.gov.pay.connector.model.domain.AbstractVersionedEntity;
 import uk.gov.pay.connector.model.domain.PaymentRequestEntity;
 import uk.gov.pay.connector.model.domain.Status;
+import uk.gov.pay.connector.model.domain.UTCDateTimeConverter;
 
 import javax.persistence.Column;
+import javax.persistence.Convert;
 import javax.persistence.DiscriminatorColumn;
 import javax.persistence.Entity;
 import javax.persistence.EnumType;
@@ -43,6 +45,9 @@ public abstract class TransactionEntity<S extends Status, T extends TransactionE
     @ManyToOne
     @JoinColumn(name = "payment_request_id", referencedColumnName = "id", updatable = false)
     private PaymentRequestEntity paymentRequest;
+    @Column(name = "created_date")
+    @Convert(converter = UTCDateTimeConverter.class)
+    private ZonedDateTime createdDate;
     @Column(name = "gateway_account_id")
     // This just needs to be set when we save the transaction. It is then used to optimise
     // transaction search don't access in Java code.
@@ -107,9 +112,13 @@ public abstract class TransactionEntity<S extends Status, T extends TransactionE
         getTransactionEvents().add(0, transactionEvent);
     }
 
+    public ZonedDateTime getCreatedDate() {
+        return createdDate;
+    }
+
+    public void setCreatedDate(ZonedDateTime createdDate) {
+        this.createdDate = createdDate;
+    }
+
     protected abstract T createNewTransactionEvent();
-
-    public abstract ZonedDateTime getCreatedDate();
-
-    public abstract void setCreatedDate(ZonedDateTime createdDate);
 }

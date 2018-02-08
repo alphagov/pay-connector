@@ -5,7 +5,6 @@ import uk.gov.pay.connector.model.api.ExternalChargeState;
 import uk.gov.pay.connector.model.api.ExternalRefundStatus;
 import uk.gov.pay.connector.model.domain.ChargeStatus;
 import uk.gov.pay.connector.model.domain.RefundStatus;
-import uk.gov.pay.connector.resources.CommaDelimitedSetParameter;
 
 import java.time.ZonedDateTime;
 import java.util.ArrayList;
@@ -97,7 +96,7 @@ public class ChargeSearchParams {
         return this;
     }
 
-    public ChargeSearchParams addExternalChargeStates(CommaDelimitedSetParameter states) {
+    public ChargeSearchParams addExternalChargeStates(List<String> states) {
         if (states != null) {
             this.internalChargeStatuses.addAll(states.stream()
                     .map(this::parseChargeState)
@@ -110,7 +109,7 @@ public class ChargeSearchParams {
         return this;
     }
 
-    public ChargeSearchParams addExternalRefundStates(CommaDelimitedSetParameter states) {
+    public ChargeSearchParams addExternalRefundStates(List<String> states) {
         if (states != null) {
             this.internalRefundStatuses.addAll(states.stream()
                     .map(ExternalRefundStatus::fromPublicStatusLabel)

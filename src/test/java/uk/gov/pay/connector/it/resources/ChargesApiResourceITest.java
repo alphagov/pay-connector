@@ -404,12 +404,18 @@ public class ChargesApiResourceITest extends ChargingITestBase {
         ChargeStatus chargeStatus = AUTHORISATION_SUCCESS;
         ZonedDateTime createdDate = ZonedDateTime.of(2016, 1, 26, 13, 45, 32, 123, ZoneId.of("UTC"));
         UUID card = UUID.randomUUID();
-        app.getDatabaseTestHelper().addCardType(card, "label", "type", "brand", false);
+        app.getDatabaseTestHelper().addCardType(card, "label", "CREDIT", "brand", false);
         app.getDatabaseTestHelper().addAcceptedCardType(Long.valueOf(accountId), card);
         app.getDatabaseTestHelper().addCharge(chargeId, externalChargeId, accountId, AMOUNT, chargeStatus, returnUrl, null, "My reference", createdDate);
         app.getDatabaseTestHelper().updateChargeCardDetails(chargeId, "VISA", "1234", "Mr. McPayment", "03/18", "line1", null, "postcode", "city", null, "country");
         app.getDatabaseTestHelper().addToken(chargeId, "tokenId");
         app.getDatabaseTestHelper().addEvent(chargeId, chargeStatus.getValue());
+
+        String description = "Test description";
+        app.getDatabaseTestHelper().addPaymentRequest(chargeId, AMOUNT, Long.valueOf(accountId), returnUrl, description, "My reference", createdDate, externalChargeId);
+        app.getDatabaseTestHelper().addChargeTransaction(chargeId, null, Long.valueOf(accountId), AMOUNT, chargeStatus, chargeId, createdDate, email);
+        app.getDatabaseTestHelper().addCard(chargeId, "VISA", chargeId);
+
         getChargeApi
                 .withAccountId(accountId)
                 .withHeader(HttpHeaders.ACCEPT, APPLICATION_JSON)
@@ -423,7 +429,7 @@ public class ChargesApiResourceITest extends ChargingITestBase {
                 .body("results[0].gateway_account", nullValue())
                 .body("results[0].reference", is("My reference"))
                 .body("results[0].return_url", is(returnUrl))
-                .body("results[0].description", is("Test description"))
+                .body("results[0].description", is(description))
                 .body("results[0].created_date", is("2016-01-26T13:45:32Z"))
                 .body("results[0].payment_provider", is(PROVIDER_NAME));
     }
@@ -437,12 +443,17 @@ public class ChargesApiResourceITest extends ChargingITestBase {
         ChargeStatus chargeStatus = AUTHORISATION_SUCCESS;
         ZonedDateTime createdDate = ZonedDateTime.of(2016, 1, 26, 13, 45, 32, 123, ZoneId.of("UTC"));
         UUID card = UUID.randomUUID();
-        app.getDatabaseTestHelper().addCardType(card, "label", "type", "brand", false);
+        app.getDatabaseTestHelper().addCardType(card, "label", "CREDIT", "brand", false);
         app.getDatabaseTestHelper().addAcceptedCardType(Long.valueOf(accountId), card);
         app.getDatabaseTestHelper().addCharge(chargeId, externalChargeId, accountId, AMOUNT, chargeStatus, returnUrl, null, "My reference", createdDate);
         app.getDatabaseTestHelper().updateChargeCardDetails(chargeId, "visa", null, null, null, null, null, null, null, null, null);
         app.getDatabaseTestHelper().addToken(chargeId, "tokenId");
         app.getDatabaseTestHelper().addEvent(chargeId, chargeStatus.getValue());
+
+        app.getDatabaseTestHelper().addPaymentRequest(chargeId, AMOUNT, Long.valueOf(accountId), returnUrl, "Test description", "My reference", createdDate, externalChargeId);
+        app.getDatabaseTestHelper().addChargeTransaction(chargeId, null, Long.valueOf(accountId), AMOUNT, chargeStatus, chargeId, createdDate, email);
+        app.getDatabaseTestHelper().addCard(chargeId, "visa", chargeId);
+
         getChargeApi
                 .withAccountId(accountId)
                 .withHeader(HttpHeaders.ACCEPT, APPLICATION_JSON)
@@ -1001,6 +1012,10 @@ public class ChargesApiResourceITest extends ChargingITestBase {
         app.getDatabaseTestHelper().addToken(chargeId, "tokenId");
         app.getDatabaseTestHelper().addEvent(chargeId, chargeStatus.getValue());
         app.getDatabaseTestHelper().updateChargeCardDetails(chargeId, cardBrand, "1234", "Mr. McPayment", "03/18", "line1", null, "postcode", "city", null, "country");
+        app.getDatabaseTestHelper().addPaymentRequest(chargeId, AMOUNT, Long.valueOf(accountId), returnUrl, "some description", reference, fromDate, externalChargeId);
+        app.getDatabaseTestHelper().addChargeTransaction(chargeId, null, Long.valueOf(accountId), AMOUNT, chargeStatus, chargeId, fromDate, email);
+        app.getDatabaseTestHelper().addCard(chargeId, cardBrand, chargeId);
+
         return externalChargeId;
     }
 
