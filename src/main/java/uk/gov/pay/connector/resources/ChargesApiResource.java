@@ -296,7 +296,7 @@ public class ChargesApiResource {
             return searchService.ofType(CHARGE).search(searchParams, uriInfo);
         } finally {
             long endTime = System.nanoTime();
-            logger.info("Charge Search - is feature transactions enabled [%s] took [%d] params [%s]",
+            logger.info("Charge Search - is feature transactions enabled [{}] took [{}] params [{}]",
                     isFeatureTransactionsEnabled,
                     (endTime - startTime) / 1000000000.0,
                     searchParams.buildQueryParams());
@@ -309,7 +309,7 @@ public class ChargesApiResource {
             return transactionSearchStrategy.search(searchParams, uriInfo);
         } finally {
             long endTime = System.nanoTime();
-            logger.info("Transaction Search - took [%d] params [%s]",
+            logger.info("Transaction Search - took [{}] params [{}]",
                     (endTime - startTime) / 1000000000.0,
                     searchParams.buildQueryParams());
         }
