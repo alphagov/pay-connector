@@ -3,1152 +3,701 @@ package uk.gov.pay.connector.it.dao;
 import org.junit.Before;
 import org.junit.Test;
 import uk.gov.pay.connector.dao.ChargeSearchParams;
+import uk.gov.pay.connector.dao.PaymentRequestDao;
 import uk.gov.pay.connector.dao.TransactionDao;
+import uk.gov.pay.connector.model.TransactionType;
+import uk.gov.pay.connector.model.domain.CardEntity;
 import uk.gov.pay.connector.model.domain.ChargeStatus;
+import uk.gov.pay.connector.model.domain.GatewayAccountEntity;
+import uk.gov.pay.connector.model.domain.PaymentRequestEntity;
 import uk.gov.pay.connector.model.domain.RefundStatus;
-import uk.gov.pay.connector.model.domain.Transaction;
-import uk.gov.pay.connector.util.DateTimeUtils;
+import uk.gov.pay.connector.model.domain.transaction.RefundTransactionEntity;
+import uk.gov.pay.connector.model.domain.transaction.TransactionEntity;
+import uk.gov.pay.connector.model.domain.transaction.TransactionOperation;
 
 import java.time.ZonedDateTime;
-import java.time.temporal.ChronoUnit;
-import java.util.Arrays;
+import java.util.HashMap;
 import java.util.List;
 
-import static java.time.ZonedDateTime.now;
+import static java.util.Arrays.asList;
 import static java.util.Collections.singletonList;
-import static org.exparity.hamcrest.date.ZonedDateTimeMatchers.within;
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.core.Is.is;
-import static uk.gov.pay.connector.it.dao.DatabaseFixtures.withDatabaseTestHelper;
-import static uk.gov.pay.connector.model.TransactionType.PAYMENT;
 import static uk.gov.pay.connector.model.TransactionType.REFUND;
-import static uk.gov.pay.connector.model.api.ExternalChargeState.EXTERNAL_CREATED;
-import static uk.gov.pay.connector.model.api.ExternalChargeState.EXTERNAL_STARTED;
-import static uk.gov.pay.connector.model.api.ExternalRefundStatus.EXTERNAL_SUBMITTED;
-import static uk.gov.pay.connector.model.api.ExternalRefundStatus.EXTERNAL_SUCCESS;
-import static uk.gov.pay.connector.model.domain.ChargeStatus.AUTHORISATION_READY;
-import static uk.gov.pay.connector.model.domain.ChargeStatus.ENTERING_CARD_DETAILS;
-import static uk.gov.pay.connector.model.domain.RefundStatus.CREATED;
-import static uk.gov.pay.connector.model.domain.RefundStatus.REFUNDED;
+import static uk.gov.pay.connector.model.domain.CardEntityBuilder.aCardEntity;
+import static uk.gov.pay.connector.model.domain.GatewayAccountEntity.Type.TEST;
+import static uk.gov.pay.connector.model.domain.PaymentRequestEntityFixture.aValidPaymentRequestEntity;
+import static uk.gov.pay.connector.model.domain.PaymentRequestEntityFixture.aValidPaymentRequestEntityWithRefund;
+import static uk.gov.pay.connector.model.domain.transaction.ChargeTransactionEntityBuilder.aChargeTransactionEntity;
 
 public class TransactionDaoITest extends DaoITestBase {
-
-    private static final String FROM_DATE = "2016-01-01T01:00:00Z";
-    private static final String TO_DATE = "2026-01-08T01:00:00Z";
-    private static final String DEFAULT_TEST_CHARGE_DESCRIPTION = "Charge description";
-    private static final String DEFAULT_TEST_CHARGE_REFERENCE = "Council tax thing";
-
-    private TransactionDao transactionDao;
     private DatabaseFixtures.TestAccount defaultTestAccount;
+    private GatewayAccountEntity gatewayAccount;
+    private PaymentRequestDao paymentRequestDao;
+    private TransactionDao transactionDao;
 
     @Before
-    public void setupAccountWithOneChargeAndRefundForTheCharge() {
+    public void setUp() {
+        paymentRequestDao = env.getInstance(PaymentRequestDao.class);
         transactionDao = env.getInstance(TransactionDao.class);
 
-        defaultTestAccount =
-                withDatabaseTestHelper(databaseTestHelper)
-                        .aTestAccount()
-                        .insert();
+        insertTestAccount();
+
+        gatewayAccount = new GatewayAccountEntity(
+                defaultTestAccount.getPaymentProvider(), new HashMap<>(), TEST);
+        gatewayAccount.setId(defaultTestAccount.getAccountId());
     }
 
     @Test
-    public void searchChargesByGatewayAccountIdOnly() throws Exception {
+    public void shouldReturnTransactions_byGatewayAccountId() {
+        paymentRequestDao.persist(aValidPaymentRequestEntity()
+                .withGatewayAccountEntity(gatewayAccount).build());
+        paymentRequestDao.persist(aValidPaymentRequestEntity()
+                .withGatewayAccountEntity(gatewayAccount).build());
 
-        // given
-        DatabaseFixtures.TestCharge testCharge = insertNewChargeWithId(1L, now());
-        DatabaseFixtures.TestCardDetails testCardDetails = updateCardDetailsForCharge(testCharge);
-        DatabaseFixtures.TestRefund testRefund = insertNewRefundForCharge(testCharge, 2L, now().plusSeconds(1));
+        ChargeSearchParams searchParams = new ChargeSearchParams();
+        final Long expectedId = gatewayAccount.getId();
+        searchParams.withGatewayAccountId(expectedId);
 
-        ChargeSearchParams params = new ChargeSearchParams();
-
-        // when
-        List<Transaction> transactions = transactionDao.findAllBy(defaultTestAccount.getAccountId(), params);
-
-        // then
-        assertThat(transactions.size(), is(2));
-
-        Transaction transactionRefund = transactions.get(0);
-        assertThat(transactionRefund.getTransactionType(), is("refund"));
-        assertThat(transactionRefund.getChargeId(), is(testCharge.getChargeId()));
-        assertThat(transactionRefund.getAmount(), is(testRefund.getAmount()));
-        assertThat(transactionRefund.getReference(), is(testCharge.getReference()));
-        assertThat(transactionRefund.getDescription(), is(testCharge.getDescription()));
-        assertThat(transactionRefund.getStatus(), is(testRefund.getStatus().toString()));
-        assertThat(transactionRefund.getCardBrand(), is(testCardDetails.getCardBrand()));
-        assertThat(transactionRefund.getCardBrandLabel(), is("Visa")); // read from card types table which is populated by the card_types.csv seed data
-        assertDateMatch(transactionRefund.getCreatedDate().toString());
-
-        Transaction transactionCharge = transactions.get(1);
-        assertThat(transactionCharge.getTransactionType(), is("charge"));
-        assertThat(transactionCharge.getChargeId(), is(testCharge.getChargeId()));
-        assertThat(transactionCharge.getAmount(), is(testCharge.getAmount()));
-        assertThat(transactionCharge.getReference(), is(testCharge.getReference()));
-        assertThat(transactionCharge.getDescription(), is(testCharge.getDescription()));
-        assertThat(transactionCharge.getStatus(), is(testCharge.getChargeStatus().toString()));
-        assertThat(transactionCharge.getCardBrand(), is(testCardDetails.getCardBrand()));
-        assertDateMatch(transactionCharge.getCreatedDate().toString());
+        final List<TransactionEntity> entityList = transactionDao.search(searchParams);
+        assertThat(entityList.size(), is(2));
+        assertThat(entityList.get(0).getPaymentRequest().getGatewayAccount().getId(), is(expectedId));
+        assertThat(entityList.get(1).getPaymentRequest().getGatewayAccount().getId(), is(expectedId));
     }
 
     @Test
-    public void searchChargesByFullEmailMatch() throws Exception {
+    public void shouldCountTransactions_byGatewayAccountId() {
+        paymentRequestDao.persist(aValidPaymentRequestEntity()
+                .withGatewayAccountEntity(gatewayAccount).build());
+        paymentRequestDao.persist(aValidPaymentRequestEntity()
+                .withGatewayAccountEntity(gatewayAccount).build());
 
-        // given
-        DatabaseFixtures.TestCharge testCharge = insertNewChargeWithId(1L, now().plusHours(1));
-        DatabaseFixtures.TestRefund testRefund = insertNewRefundForCharge(testCharge, 2L, now().plusHours(2));
-        ChargeSearchParams params = new ChargeSearchParams()
-                .withEmailLike(testCharge.getEmail());
+        ChargeSearchParams searchParams = new ChargeSearchParams();
+        final Long expectedId = gatewayAccount.getId();
+        searchParams.withGatewayAccountId(expectedId);
 
-        // when
-        List<Transaction> transactions = transactionDao.findAllBy(defaultTestAccount.getAccountId(), params);
-
-        // then
-        assertThat(transactions.size(), is(2));
-
-        assertThat(transactions.get(0).getAmount(), is(testRefund.getAmount()));
-        assertThat(transactions.get(0).getTransactionType(), is("refund"));
-        assertThat(transactions.get(1).getAmount(), is(testCharge.getAmount()));
-        assertThat(transactions.get(1).getTransactionType(), is("charge"));
+        final Long total = transactionDao.getTotal(searchParams);
+        assertThat(total, is(2L));
     }
 
     @Test
-    public void searchChargesByPartialEmailMatch() throws Exception {
+    public void shouldCountTransactions_GetMoreThanDisplaySize() {
+        paymentRequestDao.persist(aValidPaymentRequestEntity()
+                .withGatewayAccountEntity(gatewayAccount).build());
+        paymentRequestDao.persist(aValidPaymentRequestEntity()
+                .withGatewayAccountEntity(gatewayAccount).build());
 
-        // given
-        DatabaseFixtures.TestCharge testCharge = insertNewChargeWithId(1L, now().plusHours(1));
-        DatabaseFixtures.TestRefund testRefund = insertNewRefundForCharge(testCharge, 2L, now().plusHours(2));
-        ChargeSearchParams params = new ChargeSearchParams()
-                .withEmailLike("alice");
+        ChargeSearchParams searchParams = new ChargeSearchParams();
+        final Long expectedId = gatewayAccount.getId();
+        searchParams.withGatewayAccountId(expectedId);
+        searchParams.withDisplaySize(1L);
 
-        // when
-        List<Transaction> transactions = transactionDao.findAllBy(defaultTestAccount.getAccountId(), params);
-
-        // then
-        assertThat(transactions.size(), is(2));
-
-        assertThat(transactions.get(0).getAmount(), is(testRefund.getAmount()));
-        assertThat(transactions.get(0).getTransactionType(), is("refund"));
-        assertThat(transactions.get(1).getAmount(), is(testCharge.getAmount()));
-        assertThat(transactions.get(1).getTransactionType(), is("charge"));
+        final Long total = transactionDao.getTotal(searchParams);
+        assertThat(total, is(2L));
     }
 
     @Test
-    public void searchChargesByCardBrandOnly() throws Exception {
+    public void shouldCountTransactions_IncludesBeforeCurrentPage() {
+        paymentRequestDao.persist(aValidPaymentRequestEntity()
+                .withGatewayAccountEntity(gatewayAccount).build());
+        paymentRequestDao.persist(aValidPaymentRequestEntity()
+                .withGatewayAccountEntity(gatewayAccount).build());
 
-        // given
-        DatabaseFixtures.TestCharge testCharge = insertNewChargeWithId(1L, now().plusHours(1));
-        DatabaseFixtures.TestCardDetails testCardDetails = updateCardDetailsForCharge(testCharge);
-        DatabaseFixtures.TestRefund testRefund = insertNewRefundForCharge(testCharge, 2L, now().plusHours(2));
-        ChargeSearchParams params = new ChargeSearchParams()
-                .withCardBrand(testCardDetails.getCardBrand());
+        ChargeSearchParams searchParams = new ChargeSearchParams();
+        final Long expectedId = gatewayAccount.getId();
+        searchParams.withGatewayAccountId(expectedId);
+        searchParams.withDisplaySize(1L);
+        searchParams.withPage(2L);
 
-        // when
-        List<Transaction> transactions = transactionDao.findAllBy(defaultTestAccount.getAccountId(), params);
-
-        // then
-        assertThat(transactions.size(), is(2));
-
-        assertThat(transactions.get(0).getAmount(), is(testRefund.getAmount()));
-        assertThat(transactions.get(0).getTransactionType(), is("refund"));
-        assertThat(transactions.get(1).getAmount(), is(testCharge.getAmount()));
-        assertThat(transactions.get(1).getTransactionType(), is("charge"));
+        final Long total = transactionDao.getTotal(searchParams);
+        assertThat(total, is(2L));
     }
 
     @Test
-    public void searchChargesByMultipleCardBrandOnly() throws Exception {
+    public void shouldReturnTransactions_byGatewayAccountId_whenMultipleGatewayAccountsExist() {
+        final PaymentRequestEntity paymentRequestEntity = aValidPaymentRequestEntity()
+                .withGatewayAccountEntity(gatewayAccount).build();
+        paymentRequestDao.persist(paymentRequestEntity);
 
-        // given
-        String visa = "visa";
-        String masterCard = "master-card";
-        DatabaseFixtures.TestCharge testCharge1 = insertNewChargeWithId(1L, now().plusHours(1));
-        updateCardDetailsForCharge(testCharge1, visa);
-        DatabaseFixtures.TestRefund testRefund1 = insertNewRefundForCharge(testCharge1, 2L, now().plusHours(2));
+        DatabaseFixtures.TestAccount defaultTestAccount2 = DatabaseFixtures
+                .withDatabaseTestHelper(databaseTestHelper).aTestAccount().insert();
+        GatewayAccountEntity gatewayAccount2 = new GatewayAccountEntity(
+                defaultTestAccount2.getPaymentProvider(), new HashMap<>(), TEST);
+        gatewayAccount2.setId(defaultTestAccount2.getAccountId());
 
-        DatabaseFixtures.TestCharge testCharge2 = insertNewChargeWithId(3L, now().plusHours(3));
-        updateCardDetailsForCharge(testCharge2, visa);
-        DatabaseFixtures.TestRefund testRefund2 = insertNewRefundForCharge(testCharge2, 4L, now().plusHours(4));
+        paymentRequestDao.persist(aValidPaymentRequestEntity()
+                .withGatewayAccountEntity(gatewayAccount2).build());
 
-        ChargeSearchParams params = new ChargeSearchParams()
-                .withCardBrands(Arrays.asList(visa, masterCard));
+        ChargeSearchParams searchParams = new ChargeSearchParams();
+        final Long expectedId = gatewayAccount.getId();
+        searchParams.withGatewayAccountId(expectedId);
 
-        // when
-        List<Transaction> transactions = transactionDao.findAllBy(defaultTestAccount.getAccountId(), params);
-
-        // then
-        assertThat(transactions.size(), is(4));
-
-        assertThat(transactions.get(0).getAmount(), is(testRefund2.getAmount()));
-        assertThat(transactions.get(0).getTransactionType(), is("refund"));
-        assertThat(transactions.get(1).getAmount(), is(testCharge2.getAmount()));
-        assertThat(transactions.get(1).getTransactionType(), is("charge"));
-        assertThat(transactions.get(2).getAmount(), is(testRefund1.getAmount()));
-        assertThat(transactions.get(2).getTransactionType(), is("refund"));
-        assertThat(transactions.get(3).getAmount(), is(testCharge1.getAmount()));
-        assertThat(transactions.get(3).getTransactionType(), is("charge"));
+        assertTransactionByExternalId(paymentRequestEntity.getExternalId(), transactionDao.search(searchParams));
     }
 
     @Test
-    public void searchChargesWithDefaultSizeAndPage_shouldGetChargesInCreationDateOrder() throws Exception {
+    public void shouldReturnTransactions_byEmail_whenMultipleTransactionsWithDifferentEmails() {
+        PaymentRequestEntity paymentRequestEntity1 = aValidPaymentRequestEntity()
+                .withGatewayAccountEntity(gatewayAccount)
+                .build();
 
-        // given
-        DatabaseFixtures.TestCharge charge1 = insertNewChargeWithId(1L, now().plusHours(1));
-        insertNewRefundForCharge(charge1, 2L, now().plusHours(2));
-        DatabaseFixtures.TestCharge charge2 = insertNewChargeWithId(3L, now().plusHours(3));
-        insertNewRefundForCharge(charge2, 4L, now().plusHours(4));
-        insertNewRefundForCharge(charge2, 5L, now().plusHours(5));
-        DatabaseFixtures.TestCharge charge3 = insertNewChargeWithId(6L, now().plusHours(6));
+        final String expectedEmail = "abc@example.com";
+        paymentRequestEntity1.getChargeTransaction().setEmail(expectedEmail);
+        paymentRequestDao.persist(paymentRequestEntity1);
 
-        ChargeSearchParams params = new ChargeSearchParams();
+        final PaymentRequestEntity paymentRequestEntity2 = aValidPaymentRequestEntity()
+                .withGatewayAccountEntity(gatewayAccount).build();
+        paymentRequestEntity2.getChargeTransaction().setEmail("zzz@example.com");
+        paymentRequestDao.persist(paymentRequestEntity2);
 
-        // when
-        List<Transaction> transactions = transactionDao.findAllBy(defaultTestAccount.getAccountId(), params);
+        ChargeSearchParams searchParams = createSearchParams();
+        searchParams.withEmailLike(expectedEmail);
 
-        // then
-        assertThat(transactions.size(), is(6));
-        assertThat(transactions.get(0).getExternalId(), is(charge3.getExternalChargeId()));
-        assertThat(transactions.get(0).getTransactionType(), is("charge"));
-        assertThat(transactions.get(0).getAmount(), is(6L));
-
-        assertThat(transactions.get(1).getExternalId(), is(charge2.getExternalChargeId()));
-        assertThat(transactions.get(1).getTransactionType(), is("refund"));
-        assertThat(transactions.get(1).getAmount(), is(5L));
-
-        assertThat(transactions.get(2).getExternalId(), is(charge2.getExternalChargeId()));
-        assertThat(transactions.get(2).getTransactionType(), is("refund"));
-        assertThat(transactions.get(2).getAmount(), is(4L));
-
-        assertThat(transactions.get(3).getExternalId(), is(charge2.getExternalChargeId()));
-        assertThat(transactions.get(3).getTransactionType(), is("charge"));
-        assertThat(transactions.get(3).getAmount(), is(3L));
-
-        assertThat(transactions.get(4).getExternalId(), is(charge1.getExternalChargeId()));
-        assertThat(transactions.get(4).getTransactionType(), is("refund"));
-        assertThat(transactions.get(4).getAmount(), is(2L));
-
-        assertThat(transactions.get(5).getExternalId(), is(charge1.getExternalChargeId()));
-        assertThat(transactions.get(5).getTransactionType(), is("charge"));
-        assertThat(transactions.get(5).getAmount(), is(1L));
+        assertTransactionByExternalId(paymentRequestEntity1.getExternalId(), transactionDao.search(searchParams));
     }
 
     @Test
-    public void searchChargesWithSizeAndPageSetShouldGetTransactionsInCreationDateOrder() throws Exception {
+    public void shouldReturnTransactions_byEmailWithDifferentCasing() {
+        PaymentRequestEntity paymentRequestEntity = aValidPaymentRequestEntity()
+                .withGatewayAccountEntity(gatewayAccount)
+                .build();
 
-        // given
-        DatabaseFixtures.TestCharge charge1 = insertNewChargeWithId(1L, now().plusHours(1));
-        insertNewRefundForCharge(charge1, 2L, now().plusHours(2));
-        DatabaseFixtures.TestCharge charge2 = insertNewChargeWithId(3L, now().plusHours(3));
-        insertNewRefundForCharge(charge2, 4L, now().plusHours(4));
-        insertNewRefundForCharge(charge2, 5L, now().plusHours(5));
-        DatabaseFixtures.TestCharge charge3 = insertNewChargeWithId(6L, now().plusHours(6));
-        DatabaseFixtures.TestCharge charge4 = insertNewChargeWithId(6L, now().plusHours(7));
-        insertNewRefundForCharge(charge3, 5L, now().plusHours(8));
+        final String expectedEmail = "Abc@example.com";
+        paymentRequestEntity.getChargeTransaction().setEmail(expectedEmail);
+        paymentRequestDao.persist(paymentRequestEntity);
 
-        // when
-        ChargeSearchParams params = new ChargeSearchParams()
-                .withPage(1L)
-                .withDisplaySize(3L);
+        ChargeSearchParams searchParams = createSearchParams();
+        searchParams.withEmailLike(expectedEmail.toLowerCase());
 
-        List<Transaction> transactions = transactionDao.findAllBy(defaultTestAccount.getAccountId(), params);
-        // then
-        assertThat(transactions.size(), is(3));
-
-        assertThat(transactions.get(0).getExternalId(), is(charge3.getExternalChargeId()));
-        assertThat(transactions.get(0).getTransactionType(), is("refund"));
-
-        assertThat(transactions.get(1).getExternalId(), is(charge4.getExternalChargeId()));
-        assertThat(transactions.get(1).getTransactionType(), is("charge"));
-
-        assertThat(transactions.get(2).getExternalId(), is(charge3.getExternalChargeId()));
-        assertThat(transactions.get(2).getTransactionType(), is("charge"));
-
-        // when
-        params = new ChargeSearchParams()
-                .withGatewayAccountId(defaultTestAccount.getAccountId())
-                .withPage(2L)
-                .withDisplaySize(3L);
-
-        transactions = transactionDao.findAllBy(defaultTestAccount.getAccountId(), params);
-
-        // then
-        assertThat(transactions.size(), is(3));
-
-        assertThat(transactions.get(0).getExternalId(), is(charge2.getExternalChargeId()));
-        assertThat(transactions.get(0).getTransactionType(), is("refund"));
-        assertThat(transactions.get(0).getAmount(), is(5L));
-
-        assertThat(transactions.get(1).getExternalId(), is(charge2.getExternalChargeId()));
-        assertThat(transactions.get(1).getTransactionType(), is("refund"));
-        assertThat(transactions.get(1).getAmount(), is(4L));
-
-        assertThat(transactions.get(2).getExternalId(), is(charge2.getExternalChargeId()));
-        assertThat(transactions.get(2).getTransactionType(), is("charge"));
-
-        // when
-        params = new ChargeSearchParams()
-                .withGatewayAccountId(defaultTestAccount.getAccountId())
-                .withPage(3L)
-                .withDisplaySize(3L);
-
-        transactions = transactionDao.findAllBy(defaultTestAccount.getAccountId(), params);
-
-        // then
-        assertThat(transactions.size(), is(2));
-
-        assertThat(transactions.get(0).getExternalId(), is(charge1.getExternalChargeId()));
-        assertThat(transactions.get(0).getTransactionType(), is("refund"));
-
-        assertThat(transactions.get(1).getExternalId(), is(charge1.getExternalChargeId()));
-        assertThat(transactions.get(1).getTransactionType(), is("charge"));
+        assertTransactionByExternalId(paymentRequestEntity.getExternalId(), transactionDao.search(searchParams));
     }
 
     @Test
-    public void shouldGetExpectedTotalCount() {
+    public void shouldReturnTransactions_byEmailWithLowCaseInDb() {
+        PaymentRequestEntity paymentRequestEntity1 = aValidPaymentRequestEntity()
+                .withGatewayAccountEntity(gatewayAccount)
+                .build();
 
-        // given
-        DatabaseFixtures.TestCharge charge1 = insertNewChargeWithId(1L, now().plusHours(1));
-        insertNewRefundForCharge(charge1, 2L, now().plusHours(2));
-        DatabaseFixtures.TestCharge charge2 = insertNewChargeWithId(3L, now().plusHours(3));
-        insertNewRefundForCharge(charge2, 4L, now().plusHours(4));
-        insertNewRefundForCharge(charge2, 5L, now().plusHours(5));
-        DatabaseFixtures.TestCharge charge3 = insertNewChargeWithId(6L, now().plusHours(6));
-        insertNewChargeWithId(6L, now().plusHours(7));
-        insertNewRefundForCharge(charge3, 5L, now().plusHours(8));
+        final String expectedEmail = "abc@example.com";
+        paymentRequestEntity1.getChargeTransaction().setEmail(expectedEmail);
+        paymentRequestDao.persist(paymentRequestEntity1);
 
-        ChargeSearchParams params = new ChargeSearchParams()
-                .withPage(1L)
-                .withDisplaySize(2L);
+        ChargeSearchParams searchParams = createSearchParams();
+        searchParams.withEmailLike(expectedEmail.toUpperCase());
 
-        // when
-        Long count = transactionDao.getTotalFor(defaultTestAccount.getAccountId(), params);
-
-        // then
-        assertThat("total count for transactions matches", count, is(8L));
-
+        assertTransactionByExternalId(paymentRequestEntity1.getExternalId(), transactionDao.search(searchParams));
     }
 
     @Test
-    public void searchChargesByFullReferenceOnly() throws Exception {
+    public void shouldReturnTransactions_byEmailWithPartialMatch() {
+        PaymentRequestEntity paymentRequestEntity = aValidPaymentRequestEntity()
+                .withGatewayAccountEntity(gatewayAccount)
+                .build();
 
-        // given
-        DatabaseFixtures.TestCharge testCharge = insertNewChargeWithId(1L, now().plusHours(1));
-        insertNewRefundForCharge(testCharge, 2L, now().plusHours(2));
-        ChargeSearchParams params = new ChargeSearchParams()
-                .withReferenceLike(testCharge.getReference());
+        final String expectedEmail = "abc@example.com";
+        paymentRequestEntity.getChargeTransaction().setEmail(expectedEmail);
+        paymentRequestDao.persist(paymentRequestEntity);
 
-        // when
-        List<Transaction> transactions = transactionDao.findAllBy(defaultTestAccount.getAccountId(), params);
+        ChargeSearchParams searchParams = createSearchParams();
+        searchParams.withEmailLike("abc");
 
-        // then
-        assertThat(transactions.size(), is(2));
-
-        Transaction refund = transactions.get(0);
-        Transaction charge = transactions.get(1);
-
-        assertThat(refund.getExternalId(), is(testCharge.getExternalChargeId()));
-        assertThat(refund.getTransactionType(), is("refund"));
-        assertThat(charge.getExternalId(), is(testCharge.getExternalChargeId()));
-        assertThat(charge.getTransactionType(), is("charge"));
+        assertTransactionByExternalId(paymentRequestEntity.getExternalId(), transactionDao.search(searchParams));
     }
 
     @Test
-    public void searchChargesByPartialReferenceOnly() throws Exception {
+    public void shouldReturnRefundTransactions_byEmailWithPartialMatch() {
+        PaymentRequestEntity paymentRequestEntity = aValidPaymentRequestEntityWithRefund()
+                .withGatewayAccountEntity(gatewayAccount)
+                .build();
 
-        // given
-        DatabaseFixtures.TestCharge testCharge = insertNewChargeWithId(1L, now().plusHours(1));
-        insertNewRefundForCharge(testCharge, 2L, now().plusHours(2));
+        final String expectedEmail = "abc@example.com";
+        paymentRequestEntity.getChargeTransaction().setEmail(expectedEmail);
+        paymentRequestDao.persist(paymentRequestEntity);
 
-        String partialPaymentReference = "Council Tax";
+        ChargeSearchParams searchParams = createSearchParams();
+        searchParams.withEmailLike("abc");
+        searchParams.withTransactionType(REFUND);
 
-        DatabaseFixtures.TestCharge partialReferenceCharge =
-                withDatabaseTestHelper(databaseTestHelper)
-                        .aTestCharge()
-                        .withReference(partialPaymentReference + " whatever")
-                        .withTestAccount(defaultTestAccount)
-                        .withCreatedDate(now().plusHours(3))
-                        .insert();
-
-        ChargeSearchParams params = new ChargeSearchParams()
-                .withReferenceLike(partialPaymentReference);
-
-        // when
-        List<Transaction> transactions = transactionDao.findAllBy(defaultTestAccount.getAccountId(), params);
-
-        // then
-        assertThat(transactions.size(), is(3));
-        assertThat(transactions.get(0).getExternalId(), is(partialReferenceCharge.getExternalChargeId()));
-        assertThat(transactions.get(0).getReference(), is(partialReferenceCharge.getReference()));
-        assertThat(transactions.get(0).getTransactionType(), is("charge"));
-
-        assertThat(transactions.get(1).getExternalId(), is(testCharge.getExternalChargeId()));
-        assertThat(transactions.get(1).getTransactionType(), is("refund"));
-
-        assertThat(transactions.get(2).getExternalId(), is(testCharge.getExternalChargeId()));
-        assertThat(transactions.get(2).getReference(), is(testCharge.getReference()));
-        assertThat(transactions.get(2).getTransactionType(), is("charge"));
+        assertTransactionByExternalId(paymentRequestEntity.getExternalId(), transactionDao.search(searchParams));
     }
 
     @Test
-    public void searchChargesByReferenceAndEmail_with_under_score() throws Exception {
-        // since '_' have special meaning in like queries of postgres this was resulting in undesired results
-        withDatabaseTestHelper(databaseTestHelper)
-                .aTestCharge()
-                .withTestAccount(defaultTestAccount)
-                .withReference("under_score_ref")
-                .withEmail("under_score@mail.com")
-                .insert();
+    public void shouldReturnTransactions_byEmailWithUnderscore() {
+        PaymentRequestEntity paymentRequestEntity1 = aValidPaymentRequestEntity()
+                .withGatewayAccountEntity(gatewayAccount)
+                .build();
 
-        withDatabaseTestHelper(databaseTestHelper)
-                .aTestCharge()
-                .withTestAccount(defaultTestAccount)
-                .withReference("understand")
-                .withEmail("undertaker@mail.com")
-                .insert();
+        final String expectedEmail = "a_c@example.com";
+        paymentRequestEntity1.getChargeTransaction().setEmail(expectedEmail);
+        paymentRequestDao.persist(paymentRequestEntity1);
 
-        ChargeSearchParams params = new ChargeSearchParams()
-                .withReferenceLike("under_")
-                .withEmailLike("under_");
+        final PaymentRequestEntity paymentRequestEntity2 = aValidPaymentRequestEntity()
+                .withGatewayAccountEntity(gatewayAccount).build();
+        paymentRequestEntity2.getChargeTransaction().setEmail("abc@example.com");
+        paymentRequestDao.persist(paymentRequestEntity2);
 
-        // when
-        List<Transaction> transactions = transactionDao.findAllBy(defaultTestAccount.getAccountId(), params);
+        ChargeSearchParams searchParams = createSearchParams();
+        searchParams.withEmailLike(expectedEmail);
 
-        // then
-        assertThat(transactions.size(), is(1));
-
-        Transaction transaction = transactions.get(0);
-        assertThat(transaction.getReference(), is("under_score_ref"));
-        assertThat(transaction.getEmail(), is("under_score@mail.com"));
+        assertTransactionByExternalId(paymentRequestEntity1.getExternalId(), transactionDao.search(searchParams));
     }
 
     @Test
-    public void searchChargesByReferenceWithPercentSign() throws Exception {
-        // since '%' have special meaning in like queries of postgres this was resulting in undesired results
-        withDatabaseTestHelper(databaseTestHelper)
-                .aTestCharge()
-                .withTestAccount(defaultTestAccount)
-                .withReference("percent%ref")
-                .insert();
+    public void shouldReturnTransactions_byEmailWithPercent() {
+        PaymentRequestEntity paymentRequestEntity1 = aValidPaymentRequestEntity()
+                .withGatewayAccountEntity(gatewayAccount)
+                .build();
 
-        withDatabaseTestHelper(databaseTestHelper)
-                .aTestCharge()
-                .withTestAccount(defaultTestAccount)
-                .withReference("percentref")
-                .insert();
+        final String expectedEmail = "a%c@example.com";
+        paymentRequestEntity1.getChargeTransaction().setEmail(expectedEmail);
+        paymentRequestDao.persist(paymentRequestEntity1);
 
-        ChargeSearchParams params = new ChargeSearchParams()
-                .withReferenceLike("percent%");
+        final PaymentRequestEntity paymentRequestEntity2 = aValidPaymentRequestEntity()
+                .withGatewayAccountEntity(gatewayAccount).build();
+        paymentRequestEntity2.getChargeTransaction().setEmail("abc@example.com");
+        paymentRequestDao.persist(paymentRequestEntity2);
 
-        // when
-        List<Transaction> transactions = transactionDao.findAllBy(defaultTestAccount.getAccountId(), params);
+        ChargeSearchParams searchParams = createSearchParams();
+        searchParams.withEmailLike(expectedEmail);
 
-        // then
-        assertThat(transactions.size(), is(1));
-
-        Transaction transaction = transactions.get(0);
-        assertThat(transaction.getReference(), is("percent%ref"));
+        assertTransactionByExternalId(paymentRequestEntity1.getExternalId(), transactionDao.search(searchParams));
     }
 
     @Test
-    public void searchTransactionByReferenceAndEmailShouldBeCaseInsensitive() throws Exception {
-        // fix that the reference and email searches should be case insensitive
-        withDatabaseTestHelper(databaseTestHelper)
-                .aTestCharge()
-                .withTestAccount(defaultTestAccount)
-                .withEmail("email-id@mail.com")
-                .withReference("case-Insensitive-ref")
-                .insert();
+    public void shouldReturnTransactions_byReference() {
+        final String expectedReference = "some random reference";
+        PaymentRequestEntity paymentRequestEntity = aValidPaymentRequestEntity()
+                .withGatewayAccountEntity(gatewayAccount)
+                .withReference(expectedReference)
+                .build();
 
-        withDatabaseTestHelper(databaseTestHelper)
-                .aTestCharge()
-                .withTestAccount(defaultTestAccount)
-                .withEmail("EMAIL-ID@MAIL.COM")
-                .withReference("Case-inSENSITIVE-Ref")
-                .insert();
+        paymentRequestDao.persist(paymentRequestEntity);
 
-        ChargeSearchParams params = new ChargeSearchParams()
-                .withReferenceLike("cASe-insEnsiTIve")
-                .withEmailLike("EMAIL-ID@mail.com");
+        paymentRequestDao.persist(aValidPaymentRequestEntity()
+                .withGatewayAccountEntity(gatewayAccount).build());
 
-        // when
-        List<Transaction> transactions = transactionDao.findAllBy(defaultTestAccount.getAccountId(), params);
+        ChargeSearchParams searchParams = createSearchParams();
+        searchParams.withReferenceLike(expectedReference);
 
-        // then
-        assertThat(transactions.size(), is(2));
-
-        Transaction transaction = transactions.get(0);
-        assertThat(transaction.getReference(), is("Case-inSENSITIVE-Ref"));
-        assertThat(transaction.getEmail(), is("EMAIL-ID@MAIL.COM"));
-
-        transaction = transactions.get(1);
-        assertThat(transaction.getReference(), is("case-Insensitive-ref"));
-        assertThat(transaction.getEmail(), is("email-id@mail.com"));
+        assertTransactionByExternalId(paymentRequestEntity.getExternalId(), transactionDao.search(searchParams));
     }
 
     @Test
-    public void aBasicTestAgainstSqlInjection() throws Exception {
-        // given
-        withDatabaseTestHelper(databaseTestHelper)
-                .aTestCharge()
-                .withTestAccount(defaultTestAccount)
-                .withReference("Test reference")
-                .insert();
-        ChargeSearchParams params = new ChargeSearchParams()
-                .withReferenceLike("reference");
-        // when passed in a simple reference string
-        List<Transaction> transactions = transactionDao.findAllBy(defaultTestAccount.getAccountId(), params);
-        // then it fetches a single result
-        assertThat(transactions.size(), is(1));
+    public void shouldReturnTransactions_byReferenceWithUnderscore() {
+        final String expectedReference = "a_cedkdkwd";
 
-        // when passed in a non existent reference with an sql injected string
-        String sqlInjectionReferenceString = "reffff%' or 1=1 or c.reference like '%1";
-        params = new ChargeSearchParams()
-                .withReferenceLike(sqlInjectionReferenceString);
-        transactions = transactionDao.findAllBy(defaultTestAccount.getAccountId(), params);
-        // then it fetches no result
-        // with a typical sql injection vulnerable query doing this should fetch all results
-        assertThat(transactions.size(), is(0));
-    }
+        PaymentRequestEntity paymentRequestEntity1 = aValidPaymentRequestEntity()
+                .withGatewayAccountEntity(gatewayAccount)
+                .withReference(expectedReference)
+                .build();
 
+        paymentRequestDao.persist(paymentRequestEntity1);
 
-    @Test
-    public void searchTransactionByReferenceAndLegacyStatusOnly() throws Exception {
-        // given
-        DatabaseFixtures.TestCharge testCharge = insertNewChargeWithId(1L, now());
-        DatabaseFixtures.TestCardDetails testCardDetails = updateCardDetailsForCharge(testCharge);
-        DatabaseFixtures.TestRefund testRefund = insertNewRefundForCharge(testCharge, 2L, now().plusSeconds(1));
+        final PaymentRequestEntity paymentRequestEntity2 = aValidPaymentRequestEntity()
+                .withGatewayAccountEntity(gatewayAccount).withReference("abcedkdkwd").build();
+        paymentRequestDao.persist(paymentRequestEntity2);
 
-        ChargeSearchParams params = new ChargeSearchParams()
-                .withReferenceLike(testCharge.getReference())
-                .addExternalChargeStates(singletonList(EXTERNAL_CREATED.getStatus()));
+        ChargeSearchParams searchParams = createSearchParams();
+        searchParams.withReferenceLike(expectedReference);
 
-        // when
-        List<Transaction> transactions = transactionDao.findAllBy(defaultTestAccount.getAccountId(), params);
-
-        // then
-        assertThat(transactions.size(), is(2));
-        Transaction refund = transactions.get(0);
-        Transaction charge = transactions.get(1);
-
-        assertThat(charge.getTransactionType(), is("charge"));
-        assertThat(charge.getChargeId(), is(testCharge.getChargeId()));
-        assertThat(charge.getAmount(), is(testCharge.getAmount()));
-        assertThat(charge.getReference(), is(testCharge.getReference()));
-        assertThat(charge.getDescription(), is(testCharge.getDescription()));
-        assertThat(charge.getStatus(), is(testCharge.getChargeStatus().toString()));
-        assertThat(charge.getCardBrand(), is(testCardDetails.getCardBrand()));
-
-        assertDateMatch(charge.getCreatedDate().toString());
-
-        assertThat(refund.getTransactionType(), is("refund"));
-        assertThat(refund.getChargeId(), is(testCharge.getChargeId()));
-        assertThat(refund.getAmount(), is(testRefund.getAmount()));
-        assertThat(refund.getReference(), is(testCharge.getReference()));
-        assertThat(refund.getDescription(), is(testCharge.getDescription()));
-        assertThat(refund.getStatus(), is(testRefund.getStatus().toString()));
-        assertThat(refund.getCardBrand(), is(testCardDetails.getCardBrand()));
-
-        assertDateMatch(refund.getCreatedDate().toString());
+        assertTransactionByExternalId(paymentRequestEntity1.getExternalId(), transactionDao.search(searchParams));
     }
 
     @Test
-    public void searchTransactionByReferenceAndStatusAndFromDateAndToDate() throws Exception {
+    public void shouldReturnTransactions_byReferenceWithPercent() {
+        final String expectedReference = "a%cedkdkwd";
 
-        // given
-        DatabaseFixtures.TestCharge testCharge = insertNewChargeWithId(1L, now());
-        DatabaseFixtures.TestCardDetails testCardDetails = updateCardDetailsForCharge(testCharge);
-        DatabaseFixtures.TestRefund testRefund = insertNewRefundForCharge(testCharge, 2L, now().plusSeconds(1));
+        PaymentRequestEntity paymentRequestEntity1 = aValidPaymentRequestEntity()
+                .withGatewayAccountEntity(gatewayAccount)
+                .withReference(expectedReference)
+                .build();
 
-        ChargeSearchParams params = new ChargeSearchParams()
-                .withReferenceLike(testCharge.getReference())
-                .addExternalChargeStates(singletonList(EXTERNAL_CREATED.getStatus()))
-                .withFromDate(ZonedDateTime.parse(FROM_DATE))
-                .withToDate(ZonedDateTime.parse(TO_DATE));
+        paymentRequestDao.persist(paymentRequestEntity1);
 
-        // when
-        List<Transaction> transactions = transactionDao.findAllBy(defaultTestAccount.getAccountId(), params);
+        final PaymentRequestEntity paymentRequestEntity2 = aValidPaymentRequestEntity()
+                .withGatewayAccountEntity(gatewayAccount)
+                .withReference("abcedkdkwd")
+                .build();
+        paymentRequestDao.persist(paymentRequestEntity2);
 
-        // then
-        assertThat(transactions.size(), is(2));
+        ChargeSearchParams searchParams = createSearchParams();
+        searchParams.withReferenceLike(expectedReference);
 
-        Transaction transactionRefund = transactions.get(0);
-        assertThat(transactionRefund.getTransactionType(), is("refund"));
-        assertThat(transactionRefund.getChargeId(), is(testCharge.getChargeId()));
-        assertThat(transactionRefund.getAmount(), is(testRefund.getAmount()));
-        assertThat(transactionRefund.getReference(), is(testCharge.getReference()));
-        assertThat(transactionRefund.getDescription(), is(testCharge.getDescription()));
-        assertThat(transactionRefund.getStatus(), is(testRefund.getStatus().toString()));
-        assertThat(transactionRefund.getCardBrand(), is(testCardDetails.getCardBrand()));
-        assertDateMatch(transactionRefund.getCreatedDate().toString());
-
-        Transaction transactionCharge = transactions.get(1);
-        assertThat(transactionCharge.getTransactionType(), is("charge"));
-        assertThat(transactionCharge.getChargeId(), is(testCharge.getChargeId()));
-        assertThat(transactionCharge.getAmount(), is(testCharge.getAmount()));
-        assertThat(transactionCharge.getReference(), is(testCharge.getReference()));
-        assertThat(transactionCharge.getDescription(), is(testCharge.getDescription()));
-        assertThat(transactionCharge.getStatus(), is(testCharge.getChargeStatus().toString()));
-        assertThat(transactionCharge.getCardBrand(), is(testCardDetails.getCardBrand()));
-        assertDateMatch(transactionCharge.getCreatedDate().toString());
+        assertTransactionByExternalId(paymentRequestEntity1.getExternalId(), transactionDao.search(searchParams));
     }
 
     @Test
-    public void searchChargeByReferenceAndStatusAndFromDate() throws Exception {
+    public void shouldReturnTransactions_byReferenceWithUppercase() {
+        final String expectedReference = "ABCEdkdkwd";
 
-        // given
-        DatabaseFixtures.TestCharge testCharge = insertNewChargeWithId(1L, now());
-        DatabaseFixtures.TestCardDetails testCardDetails = updateCardDetailsForCharge(testCharge);
-        insertNewRefundForCharge(testCharge, 2L, now().plusSeconds(2));
+        PaymentRequestEntity paymentRequestEntity = aValidPaymentRequestEntity()
+                .withGatewayAccountEntity(gatewayAccount)
+                .withReference(expectedReference)
+                .build();
 
-        ChargeSearchParams params = new ChargeSearchParams()
-                .withTransactionType(PAYMENT)
-                .withReferenceLike(testCharge.getReference())
-                .addExternalChargeStates(singletonList(EXTERNAL_CREATED.getStatus()))
-                .withFromDate(ZonedDateTime.parse(FROM_DATE));
+        paymentRequestDao.persist(paymentRequestEntity);
 
-        // when
-        List<Transaction> transactions = transactionDao.findAllBy(defaultTestAccount.getAccountId(), params);
+        ChargeSearchParams searchParams = createSearchParams();
+        searchParams.withReferenceLike(expectedReference);
 
-        // then
-        assertThat(transactions.size(), is(1));
-
-        Transaction transactionCharge = transactions.get(0);
-        assertThat(transactionCharge.getTransactionType(), is("charge"));
-        assertThat(transactionCharge.getChargeId(), is(testCharge.getChargeId()));
-        assertThat(transactionCharge.getAmount(), is(testCharge.getAmount()));
-        assertThat(transactionCharge.getReference(), is(testCharge.getReference()));
-        assertThat(transactionCharge.getDescription(), is(testCharge.getDescription()));
-        assertThat(transactionCharge.getStatus(), is(testCharge.getChargeStatus().toString()));
-        assertThat(transactionCharge.getCardBrand(), is(testCardDetails.getCardBrand()));
-        assertDateMatch(transactionCharge.getCreatedDate().toString());
+        assertTransactionByExternalId(paymentRequestEntity.getExternalId(), transactionDao.search(searchParams));
     }
 
     @Test
-    public void searchRefundByReferenceAndRefundStatusAndFromDate() throws Exception {
+    public void shouldReturnTransactions_byReferenceWithUppercaseInRequest() {
+        final String expectedReference = "dkdkwd";
 
-        // given
-        DatabaseFixtures.TestCharge testCharge = insertNewChargeWithId(1L, now());
-        DatabaseFixtures.TestCardDetails testCardDetails = updateCardDetailsForCharge(testCharge);
-        DatabaseFixtures.TestRefund testRefund = insertNewRefundForCharge(testCharge, 2L, now().plusSeconds(2));
+        PaymentRequestEntity paymentRequestEntity = aValidPaymentRequestEntity()
+                .withGatewayAccountEntity(gatewayAccount)
+                .withReference(expectedReference)
+                .build();
 
-        ChargeSearchParams params = new ChargeSearchParams()
-                .withTransactionType(REFUND)
-                .withReferenceLike(testCharge.getReference())
-                .addExternalRefundStates(singletonList(EXTERNAL_SUBMITTED.getStatus()))
-                .withFromDate(ZonedDateTime.parse(FROM_DATE));
+        paymentRequestDao.persist(paymentRequestEntity);
 
-        // when
-        List<Transaction> transactions = transactionDao.findAllBy(defaultTestAccount.getAccountId(), params);
+        ChargeSearchParams searchParams = createSearchParams();
+        searchParams.withReferenceLike(expectedReference.toUpperCase());
 
-        // then
-        assertThat(transactions.size(), is(1));
-        Transaction refundTransaction = transactions.get(0);
-
-        assertThat(refundTransaction.getTransactionType(), is("refund"));
-        assertThat(refundTransaction.getChargeId(), is(testCharge.getChargeId()));
-        assertThat(refundTransaction.getAmount(), is(testRefund.getAmount()));
-        assertThat(refundTransaction.getReference(), is(testCharge.getReference()));
-        assertThat(refundTransaction.getDescription(), is(testCharge.getDescription()));
-        assertThat(refundTransaction.getStatus(), is(testRefund.getStatus().toString()));
-        assertThat(refundTransaction.getCardBrand(), is(testCardDetails.getCardBrand()));
-        assertDateMatch(refundTransaction.getCreatedDate().toString());
+        assertTransactionByExternalId(paymentRequestEntity.getExternalId(), transactionDao.search(searchParams));
     }
 
     @Test
-    public void searchBySingleChargeStatus() {
+    public void shouldReturnTransactions_byFromDate() {
+        final ZonedDateTime paymentDate = ZonedDateTime.now().minusMinutes(10);
 
-        // given
-        DatabaseFixtures.TestCharge charge1 =
-                withDatabaseTestHelper(databaseTestHelper)
-                        .aTestCharge()
-                        .withTestAccount(defaultTestAccount)
-                        .withChargeStatus(ChargeStatus.CREATED)
-                        .withCreatedDate(now())
-                        .insert();
+        final PaymentRequestEntity paymentRequestEntity = aValidPaymentRequestEntity()
+                .withGatewayAccountEntity(gatewayAccount)
+                .build();
+        paymentRequestEntity.getChargeTransaction().setCreatedDate(paymentDate);
+        final String expectedExternalId = paymentRequestEntity.getExternalId();
+        paymentRequestDao.persist(paymentRequestEntity);
 
-        DatabaseFixtures.TestCharge charge2 =
-                withDatabaseTestHelper(databaseTestHelper)
-                        .aTestCharge()
-                        .withTestAccount(defaultTestAccount)
-                        .withChargeStatus(ENTERING_CARD_DETAILS)
-                        .withCreatedDate(now().plusMinutes(1))
-                        .insert();
+        final PaymentRequestEntity paymentRequestEntity2 = aValidPaymentRequestEntity()
+                .withGatewayAccountEntity(gatewayAccount)
+                .build();
+        paymentRequestEntity2.getChargeTransaction().setCreatedDate(paymentDate.minusMinutes(5));
+        paymentRequestDao.persist(paymentRequestEntity2);
 
+        ChargeSearchParams searchParams = createSearchParams();
+        searchParams.withFromDate(paymentDate);
 
-        withDatabaseTestHelper(databaseTestHelper)
-                .aTestCharge()
-                .withTestAccount(defaultTestAccount)
-                .withChargeStatus(AUTHORISATION_READY)
-                .withCreatedDate(now().plusMinutes(2))
-                .insert();
-
-        withDatabaseTestHelper(databaseTestHelper)
-                .aTestRefund()
-                .withRefundStatus(CREATED)
-                .withTestCharge(charge1)
-                .withCreatedDate(now().plusMinutes(3))
-                .insert();
-
-        withDatabaseTestHelper(databaseTestHelper)
-                .aTestRefund()
-                .withRefundStatus(REFUNDED)
-                .withTestCharge(charge2)
-                .withCreatedDate(now().plusMinutes(4))
-                .insert();
-
-        ChargeSearchParams params = new ChargeSearchParams()
-                .addExternalChargeStates(singletonList(EXTERNAL_STARTED.getStatus()));
-
-        // when
-        List<Transaction> transactions = transactionDao.findAllBy(defaultTestAccount.getAccountId(), params);
-
-        // then
-        assertThat(transactions.size(), is(4));
-        assertThat(transactions.get(0).getTransactionType(), is("refund"));
-        assertThat(transactions.get(0).getStatus(), is(RefundStatus.REFUNDED.getValue()));
-        assertThat(transactions.get(1).getTransactionType(), is("refund"));
-        assertThat(transactions.get(1).getStatus(), is(RefundStatus.CREATED.getValue()));
-        assertThat(transactions.get(2).getTransactionType(), is("charge"));
-        assertThat(transactions.get(2).getStatus(), is(AUTHORISATION_READY.getValue()));
-        assertThat(transactions.get(3).getTransactionType(), is("charge"));
-        assertThat(transactions.get(3).getStatus(), is(ENTERING_CARD_DETAILS.getValue()));
+        assertTransactionByExternalId(expectedExternalId, transactionDao.search(searchParams));
     }
 
     @Test
-    public void searchByMultipleChargeStatuses() {
+    public void shouldReturnTransactions_byToDate() {
+        final ZonedDateTime paymentDate = ZonedDateTime.now().minusMinutes(10);
 
-        // given
-        DatabaseFixtures.TestCharge charge1 =
-                withDatabaseTestHelper(databaseTestHelper)
-                        .aTestCharge()
-                        .withTestAccount(defaultTestAccount)
-                        .withChargeStatus(ChargeStatus.CREATED)
-                        .withCreatedDate(now())
-                        .insert();
+        final PaymentRequestEntity paymentRequestEntity = aValidPaymentRequestEntity()
+                .withGatewayAccountEntity(gatewayAccount)
+                .build();
+        paymentRequestEntity.getChargeTransaction().setCreatedDate(paymentDate);
+        final String expectedExternalId = paymentRequestEntity.getExternalId();
+        paymentRequestDao.persist(paymentRequestEntity);
 
-        DatabaseFixtures.TestCharge charge2 =
-                withDatabaseTestHelper(databaseTestHelper)
-                        .aTestCharge()
-                        .withTestAccount(defaultTestAccount)
-                        .withChargeStatus(ENTERING_CARD_DETAILS)
-                        .withCreatedDate(now().plusMinutes(1))
-                        .insert();
+        final PaymentRequestEntity paymentRequestEntity2 = aValidPaymentRequestEntity()
+                .withGatewayAccountEntity(gatewayAccount)
+                .build();
+        paymentRequestEntity2.getChargeTransaction().setCreatedDate(paymentDate.plusMinutes(5));
+        paymentRequestDao.persist(paymentRequestEntity2);
 
+        ChargeSearchParams searchParams = createSearchParams();
+        searchParams.withToDate(paymentDate.plusMinutes(1));
 
-        withDatabaseTestHelper(databaseTestHelper)
-                .aTestCharge()
-                .withTestAccount(defaultTestAccount)
-                .withChargeStatus(AUTHORISATION_READY)
-                .withCreatedDate(now().plusMinutes(2))
-                .insert();
-
-        withDatabaseTestHelper(databaseTestHelper)
-                .aTestRefund()
-                .withRefundStatus(CREATED)
-                .withTestCharge(charge1)
-                .withCreatedDate(now().plusMinutes(3))
-                .insert();
-
-        withDatabaseTestHelper(databaseTestHelper)
-                .aTestRefund()
-                .withRefundStatus(REFUNDED)
-                .withTestCharge(charge2)
-                .withCreatedDate(now().plusMinutes(4))
-                .insert();
-
-        ChargeSearchParams params = new ChargeSearchParams()
-                .addExternalChargeStates(singletonList(EXTERNAL_STARTED.getStatus()))
-                .addExternalChargeStates(singletonList(EXTERNAL_CREATED.getStatus()));
-
-        // when
-        List<Transaction> transactions = transactionDao.findAllBy(defaultTestAccount.getAccountId(), params);
-
-        // then
-        assertThat(transactions.size(), is(5));
-        assertThat(transactions.get(0).getTransactionType(), is("refund"));
-        assertThat(transactions.get(0).getStatus(), is(RefundStatus.REFUNDED.getValue()));
-        assertThat(transactions.get(1).getTransactionType(), is("refund"));
-        assertThat(transactions.get(1).getStatus(), is(RefundStatus.CREATED.getValue()));
-        assertThat(transactions.get(2).getTransactionType(), is("charge"));
-        assertThat(transactions.get(2).getStatus(), is(AUTHORISATION_READY.getValue()));
-        assertThat(transactions.get(3).getTransactionType(), is("charge"));
-        assertThat(transactions.get(3).getStatus(), is(ENTERING_CARD_DETAILS.getValue()));
-        assertThat(transactions.get(4).getTransactionType(), is("charge"));
-        assertThat(transactions.get(4).getStatus(), is(ChargeStatus.CREATED.getValue()));
+        assertTransactionByExternalId(expectedExternalId, transactionDao.search(searchParams));
     }
 
     @Test
-    public void searchBySingleChargeStatusAndTransactionType() {
-        // given
-        DatabaseFixtures.TestCharge charge1 =
-                withDatabaseTestHelper(databaseTestHelper)
-                        .aTestCharge()
-                        .withTestAccount(defaultTestAccount)
-                        .withChargeStatus(ChargeStatus.CREATED)
-                        .withCreatedDate(now())
-                        .insert();
+    public void shouldReturnRefundTransactions_byTransactionType() {
+        final PaymentRequestEntity paymentRequestEntity = aValidPaymentRequestEntityWithRefund()
+                .withGatewayAccountEntity(gatewayAccount)
+                .build();
+        final String expectedExternalId = paymentRequestEntity.getRefundTransactions().get(0).getRefundExternalId();
+        paymentRequestDao.persist(paymentRequestEntity);
 
-        DatabaseFixtures.TestCharge charge2 =
-                withDatabaseTestHelper(databaseTestHelper)
-                        .aTestCharge()
-                        .withTestAccount(defaultTestAccount)
-                        .withChargeStatus(ENTERING_CARD_DETAILS)
-                        .withCreatedDate(now().plusMinutes(1))
-                        .insert();
+        ChargeSearchParams searchParams = createSearchParams();
+        searchParams.withTransactionType(REFUND);
 
-
-        withDatabaseTestHelper(databaseTestHelper)
-                .aTestCharge()
-                .withTestAccount(defaultTestAccount)
-                .withChargeStatus(AUTHORISATION_READY)
-                .withCreatedDate(now().plusMinutes(2))
-                .insert();
-
-        withDatabaseTestHelper(databaseTestHelper)
-                .aTestRefund()
-                .withRefundStatus(CREATED)
-                .withTestCharge(charge1)
-                .withCreatedDate(now().plusMinutes(3))
-                .insert();
-
-        withDatabaseTestHelper(databaseTestHelper)
-                .aTestRefund()
-                .withRefundStatus(REFUNDED)
-                .withTestCharge(charge2)
-                .withCreatedDate(now().plusMinutes(4))
-                .insert();
-
-        ChargeSearchParams params = new ChargeSearchParams()
-                .withTransactionType(PAYMENT)
-                .addExternalChargeStates(singletonList(EXTERNAL_STARTED.getStatus()));
-
-        // when
-        List<Transaction> transactions = transactionDao.findAllBy(defaultTestAccount.getAccountId(), params);
-
-        // then
-        assertThat(transactions.size(), is(2));
-        assertThat(transactions.get(0).getTransactionType(), is("charge"));
-        assertThat(transactions.get(0).getStatus(), is(AUTHORISATION_READY.getValue()));
-        assertThat(transactions.get(1).getTransactionType(), is("charge"));
-        assertThat(transactions.get(1).getStatus(), is(ENTERING_CARD_DETAILS.getValue()));
+        final List<TransactionEntity> searchResult = transactionDao.search(searchParams);
+        assertIsTransactionOperation(searchResult, TransactionOperation.REFUND);
+        final String actualExternalId = ((RefundTransactionEntity) searchResult.get(0)).getRefundExternalId();
+        assertThat(actualExternalId, is(expectedExternalId));
     }
 
     @Test
-    public void searchBySingleRefundStatus() {
+    public void shouldReturnChargeTransactions_byTransactionType() {
+        final PaymentRequestEntity paymentRequestEntity = aValidPaymentRequestEntityWithRefund()
+                .withGatewayAccountEntity(gatewayAccount)
+                .build();
+        paymentRequestDao.persist(paymentRequestEntity);
+        final long chargeTransactionId = paymentRequestEntity.getChargeTransaction().getId();
 
-        // given
-        DatabaseFixtures.TestCharge charge1 =
-                withDatabaseTestHelper(databaseTestHelper)
-                        .aTestCharge()
-                        .withTestAccount(defaultTestAccount)
-                        .withChargeStatus(ChargeStatus.CREATED)
-                        .withCreatedDate(now())
-                        .insert();
+        ChargeSearchParams searchParams = createSearchParams();
+        searchParams.withTransactionType(TransactionType.PAYMENT);
 
-        DatabaseFixtures.TestCharge charge2 =
-                withDatabaseTestHelper(databaseTestHelper)
-                        .aTestCharge()
-                        .withTestAccount(defaultTestAccount)
-                        .withChargeStatus(ENTERING_CARD_DETAILS)
-                        .withCreatedDate(now().plusMinutes(1))
-                        .insert();
+        final List<TransactionEntity> searchResult = transactionDao.search(searchParams);
+        assertIsTransactionOperation(searchResult, TransactionOperation.CHARGE);
+        final long actualChargeTransactionId = searchResult.get(0).getId();
+        assertThat(actualChargeTransactionId, is(chargeTransactionId));
+    }
 
-
-        withDatabaseTestHelper(databaseTestHelper)
-                .aTestCharge()
-                .withTestAccount(defaultTestAccount)
-                .withChargeStatus(AUTHORISATION_READY)
-                .withCreatedDate(now().plusMinutes(2))
-                .insert();
-
-        withDatabaseTestHelper(databaseTestHelper)
-                .aTestRefund()
-                .withRefundStatus(CREATED)
-                .withTestCharge(charge1)
-                .withCreatedDate(now().plusMinutes(3))
-                .insert();
-
-        withDatabaseTestHelper(databaseTestHelper)
-                .aTestRefund()
-                .withRefundStatus(REFUNDED)
-                .withTestCharge(charge2)
-                .withCreatedDate(now().plusMinutes(4))
-                .insert();
-
-        ChargeSearchParams params = new ChargeSearchParams()
-                .addExternalRefundStates(singletonList(EXTERNAL_SUCCESS.getStatus()));
-
-        // when
-        List<Transaction> transactions = transactionDao.findAllBy(defaultTestAccount.getAccountId(), params);
-
-        // then
-        assertThat(transactions.size(), is(4));
-        assertThat(transactions.get(0).getTransactionType(), is("refund"));
-        assertThat(transactions.get(0).getStatus(), is(RefundStatus.REFUNDED.getValue()));
-        assertThat(transactions.get(1).getTransactionType(), is("charge"));
-        assertThat(transactions.get(1).getStatus(), is(AUTHORISATION_READY.getValue()));
-        assertThat(transactions.get(2).getTransactionType(), is("charge"));
-        assertThat(transactions.get(2).getStatus(), is(ENTERING_CARD_DETAILS.getValue()));
-        assertThat(transactions.get(3).getTransactionType(), is("charge"));
-        assertThat(transactions.get(3).getStatus(), is(ChargeStatus.CREATED.getValue()));
+    private void assertIsTransactionOperation(List<TransactionEntity> searchResult, TransactionOperation charge) {
+        assertThat(searchResult.size(), is(1));
+        assertThat(searchResult.get(0).getOperation(), is(charge));
     }
 
     @Test
-    public void searchByMultipleRefundStatus() {
+    public void shouldReturnTransactions_byCardBrand() {
+        final String cardBrand = "visa";
+        final PaymentRequestEntity paymentRequestEntity = persistPaymentRequestForCardBrand(cardBrand);
+        persistPaymentRequestForCardBrand("mastercard");
 
-        // given
-        DatabaseFixtures.TestCharge charge1 =
-                withDatabaseTestHelper(databaseTestHelper)
-                        .aTestCharge()
-                        .withTestAccount(defaultTestAccount)
-                        .withChargeStatus(ChargeStatus.CREATED)
-                        .withCreatedDate(now())
-                        .insert();
+        final Long chargeTransactionId = paymentRequestEntity.getChargeTransaction().getId();
+        final Long refundTransactionId = paymentRequestEntity.getRefundTransactions().get(0).getId();
 
-        DatabaseFixtures.TestCharge charge2 =
-                withDatabaseTestHelper(databaseTestHelper)
-                        .aTestCharge()
-                        .withTestAccount(defaultTestAccount)
-                        .withChargeStatus(ENTERING_CARD_DETAILS)
-                        .withCreatedDate(now().plusMinutes(1))
-                        .insert();
+        ChargeSearchParams searchParams = createSearchParams();
+        searchParams.withCardBrand(cardBrand);
 
-
-        withDatabaseTestHelper(databaseTestHelper)
-                .aTestCharge()
-                .withTestAccount(defaultTestAccount)
-                .withChargeStatus(AUTHORISATION_READY)
-                .withCreatedDate(now().plusMinutes(2))
-                .insert();
-
-        withDatabaseTestHelper(databaseTestHelper)
-                .aTestRefund()
-                .withRefundStatus(CREATED)
-                .withTestCharge(charge1)
-                .withCreatedDate(now().plusMinutes(3))
-                .insert();
-
-        withDatabaseTestHelper(databaseTestHelper)
-                .aTestRefund()
-                .withRefundStatus(REFUNDED)
-                .withTestCharge(charge2)
-                .withCreatedDate(now().plusMinutes(4))
-                .insert();
-
-        ChargeSearchParams params = new ChargeSearchParams()
-                .addExternalRefundStates(singletonList(EXTERNAL_SUBMITTED.getStatus()))
-                .addExternalRefundStates(singletonList(EXTERNAL_SUCCESS.getStatus()));
-
-        // when
-        List<Transaction> transactions = transactionDao.findAllBy(defaultTestAccount.getAccountId(), params);
-
-        // then
-        assertThat(transactions.size(), is(5));
-        assertThat(transactions.get(0).getTransactionType(), is("refund"));
-        assertThat(transactions.get(0).getStatus(), is(RefundStatus.REFUNDED.getValue()));
-        assertThat(transactions.get(1).getTransactionType(), is("refund"));
-        assertThat(transactions.get(1).getStatus(), is(RefundStatus.CREATED.getValue()));
-        assertThat(transactions.get(2).getTransactionType(), is("charge"));
-        assertThat(transactions.get(2).getStatus(), is(AUTHORISATION_READY.getValue()));
-        assertThat(transactions.get(3).getTransactionType(), is("charge"));
-        assertThat(transactions.get(3).getStatus(), is(ENTERING_CARD_DETAILS.getValue()));
-        assertThat(transactions.get(4).getTransactionType(), is("charge"));
-        assertThat(transactions.get(4).getStatus(), is(ChargeStatus.CREATED.getValue()));
+        final List<TransactionEntity> searchResult = transactionDao.search(searchParams);
+        assertThat(searchResult.size(), is(2));
+        assertThat(searchResult.get(0).getId(), is(refundTransactionId));
+        assertThat(searchResult.get(1).getId(), is(chargeTransactionId));
     }
 
     @Test
-    public void searchBySingleRefundStatusAndTransactionType() {
+    public void shouldReturnTransactions_byMultipleCardBrand() {
+        final String visaCardBrand = "visa";
+        final PaymentRequestEntity visaPaymentRequestEntity = persistPaymentRequestForCardBrand(visaCardBrand);
+        final String mastercardCardBrand = "master-card";
+        final PaymentRequestEntity mastercardPaymentRequestEntity = persistPaymentRequestForCardBrand(mastercardCardBrand);
+        persistPaymentRequestForCardBrand("anotherCardBrand");
 
-        // given
-        DatabaseFixtures.TestCharge charge1 =
-                withDatabaseTestHelper(databaseTestHelper)
-                        .aTestCharge()
-                        .withTestAccount(defaultTestAccount)
-                        .withChargeStatus(ChargeStatus.CREATED)
-                        .withCreatedDate(now())
-                        .insert();
+        final Long visaChargeTransactionId = visaPaymentRequestEntity.getChargeTransaction().getId();
+        final Long visaRefundTransactionId = visaPaymentRequestEntity.getRefundTransactions().get(0).getId();
+        final Long mastercardChargeTransactionId = mastercardPaymentRequestEntity.getChargeTransaction().getId();
+        final Long mastercardRefundTransactionId = mastercardPaymentRequestEntity.getRefundTransactions().get(0).getId();
 
-        DatabaseFixtures.TestCharge charge2 =
-                withDatabaseTestHelper(databaseTestHelper)
-                        .aTestCharge()
-                        .withTestAccount(defaultTestAccount)
-                        .withChargeStatus(ENTERING_CARD_DETAILS)
-                        .withCreatedDate(now().plusMinutes(1))
-                        .insert();
+        ChargeSearchParams searchParams = createSearchParams();
+        searchParams.withCardBrands(asList(visaCardBrand, mastercardCardBrand));
 
-
-        withDatabaseTestHelper(databaseTestHelper)
-                .aTestCharge()
-                .withTestAccount(defaultTestAccount)
-                .withChargeStatus(AUTHORISATION_READY)
-                .withCreatedDate(now().plusMinutes(2))
-                .insert();
-
-        withDatabaseTestHelper(databaseTestHelper)
-                .aTestRefund()
-                .withRefundStatus(CREATED)
-                .withTestCharge(charge1)
-                .withCreatedDate(now().plusMinutes(3))
-                .insert();
-
-        withDatabaseTestHelper(databaseTestHelper)
-                .aTestRefund()
-                .withRefundStatus(REFUNDED)
-                .withTestCharge(charge2)
-                .withCreatedDate(now().plusMinutes(4))
-                .insert();
-        ChargeSearchParams params = new ChargeSearchParams()
-                .withTransactionType(REFUND)
-                .addExternalRefundStates(singletonList(EXTERNAL_SUCCESS.getStatus()));
-
-        // when
-        List<Transaction> transactions = transactionDao.findAllBy(defaultTestAccount.getAccountId(), params);
-
-        // then
-        assertThat(transactions.size(), is(1));
-        assertThat(transactions.get(0).getTransactionType(), is("refund"));
-        assertThat(transactions.get(0).getStatus(), is(RefundStatus.REFUNDED.getValue()));
+        final List<TransactionEntity> searchResult = transactionDao.search(searchParams);
+        assertThat(searchResult.size(), is(4));
+        assertThat(searchResult.get(0).getId(), is(mastercardRefundTransactionId));
+        assertThat(searchResult.get(1).getId(), is(mastercardChargeTransactionId));
+        assertThat(searchResult.get(2).getId(), is(visaRefundTransactionId));
+        assertThat(searchResult.get(3).getId(), is(visaChargeTransactionId));
     }
 
     @Test
-    public void searchChargeByReferenceAndStatusAndEmailAndCardBrandAndFromDateAndToDate() throws Exception {
-        // given
-        DatabaseFixtures.TestCharge testCharge = insertNewChargeWithId(1L, now());
-        DatabaseFixtures.TestCardDetails testCardDetails = updateCardDetailsForCharge(testCharge);
-        insertNewRefundForCharge(testCharge, 2L, now().plusSeconds(2));
+    public void shouldReturnTransactions_byStatus() {
+        final ChargeStatus chargeStatus = ChargeStatus.CAPTURED;
+        final PaymentRequestEntity paymentRequestEntity =
+                persistPaymentRequestForStatus(chargeStatus, RefundStatus.REFUNDED);
 
-        ChargeSearchParams params = new ChargeSearchParams()
-                .withTransactionType(PAYMENT)
-                .withReferenceLike(testCharge.getReference())
-                .addExternalChargeStates(singletonList(EXTERNAL_CREATED.getStatus()))
-                .withCardBrand(testCardDetails.getCardBrand())
-                .withEmailLike(testCharge.getEmail())
-                .withFromDate(ZonedDateTime.parse(FROM_DATE))
-                .withToDate(ZonedDateTime.parse(TO_DATE));
+        final Long chargeTransactionId = paymentRequestEntity.getChargeTransaction().getId();
 
-        // when
-        List<Transaction> transactions = transactionDao.findAllBy(defaultTestAccount.getAccountId(), params);
+        ChargeSearchParams searchParams = createSearchParams();
+        searchParams.withExternalState(chargeStatus.toExternal().getStatus());
 
-        // then
-        assertThat(transactions.size(), is(1));
-        Transaction charge = transactions.get(0);
-
-        assertThat(charge.getTransactionType(), is("charge"));
-        assertThat(charge.getChargeId(), is(testCharge.getChargeId()));
-        assertThat(charge.getAmount(), is(testCharge.getAmount()));
-        assertThat(charge.getReference(), is(testCharge.getReference()));
-        assertThat(charge.getDescription(), is(testCharge.getDescription()));
-        assertThat(charge.getStatus(), is(testCharge.getChargeStatus().toString()));
-        assertThat(charge.getCardBrand(), is(testCardDetails.getCardBrand()));
-        assertDateMatch(charge.getCreatedDate().toString());
+        assertTransactionById(chargeTransactionId, transactionDao.search(searchParams));
     }
 
     @Test
-    public void searchChargeByReferenceAndStatusAndToDate() throws Exception {
+    public void shouldReturnTransactions_byChargeStatus() {
+        final ChargeStatus chargeStatus = ChargeStatus.CAPTURED;
+        final PaymentRequestEntity paymentRequestEntity =
+                persistPaymentRequestForStatus(chargeStatus, RefundStatus.REFUNDED);
 
-        // given
-        DatabaseFixtures.TestCharge testCharge = insertNewChargeWithId(1L, now());
-        DatabaseFixtures.TestCardDetails testCardDetails = updateCardDetailsForCharge(testCharge);
-        insertNewRefundForCharge(testCharge, 2L, now().plusSeconds(2));
+        final Long chargeTransactionId = paymentRequestEntity.getChargeTransaction().getId();
 
-        ChargeSearchParams params = new ChargeSearchParams()
-                .withTransactionType(PAYMENT)
-                .withReferenceLike(testCharge.getReference())
-                .addExternalChargeStates(singletonList(EXTERNAL_CREATED.getStatus()))
-                .withToDate(ZonedDateTime.parse(TO_DATE));
+        ChargeSearchParams searchParams = createSearchParams();
+        searchParams.addExternalChargeStates(singletonList(chargeStatus.toExternal().getStatus()));
 
-        // when
-        List<Transaction> transactions = transactionDao.findAllBy(defaultTestAccount.getAccountId(), params);
-
-        // then
-        assertThat(transactions.size(), is(1));
-        Transaction charge = transactions.get(0);
-
-        assertThat(charge.getTransactionType(), is("charge"));
-        assertThat(charge.getChargeId(), is(testCharge.getChargeId()));
-        assertThat(charge.getAmount(), is(testCharge.getAmount()));
-        assertThat(charge.getReference(), is(testCharge.getReference()));
-        assertThat(charge.getDescription(), is(DEFAULT_TEST_CHARGE_DESCRIPTION));
-        assertThat(charge.getStatus(), is(testCharge.getChargeStatus().toString()));
-        assertThat(charge.getCardBrand(), is(testCardDetails.getCardBrand()));
-
-        assertDateMatch(charge.getCreatedDate().toString());
+        assertTransactionById(chargeTransactionId, transactionDao.search(searchParams));
     }
 
     @Test
-    public void searchTransactionByReferenceAndStatusAndFromDate_ShouldReturnZeroIfDateIsNotInRange() throws Exception {
+    public void shouldReturnTransactions_byRefundStatus() {
+        final RefundStatus refundStatus = RefundStatus.REFUNDED;
+        final PaymentRequestEntity paymentRequestEntity =
+                persistPaymentRequestForStatus(ChargeStatus.CAPTURED, refundStatus);
 
-        // given
-        DatabaseFixtures.TestCharge testCharge = insertNewChargeWithId(1L, now().plusHours(1));
-        insertNewRefundForCharge(testCharge, 2L, now().plusHours(2));
+        final Long refundTransactionId = paymentRequestEntity.getRefundTransactions().get(0).getId();
 
-        ChargeSearchParams params = new ChargeSearchParams()
-                .withReferenceLike(testCharge.getReference())
-                .addExternalChargeStates(singletonList(EXTERNAL_CREATED.getStatus()))
-                .withFromDate(ZonedDateTime.parse(TO_DATE));
+        ChargeSearchParams searchParams = createSearchParams();
+        searchParams.addExternalRefundStates(singletonList(refundStatus.toExternal().getStatus()));
 
-        // when
-        List<Transaction> transactions = transactionDao.findAllBy(defaultTestAccount.getAccountId(), params);
-
-        // then
-        assertThat(transactions.size(), is(0));
+        assertTransactionById(refundTransactionId, transactionDao.search(searchParams));
     }
 
     @Test
-    public void searchTransactionByReferenceAndStatusAndToDate_ShouldReturnZeroIfToDateIsNotInRange() throws Exception {
+    public void shouldReturnTransactions_byMultipleStatues() {
+        final ChargeStatus chargeStatus = ChargeStatus.CAPTURED;
+        final RefundStatus refundStatus = RefundStatus.REFUNDED;
+        final PaymentRequestEntity paymentRequestEntity =
+                persistPaymentRequestForStatus(chargeStatus, refundStatus);
 
-        // given
-        DatabaseFixtures.TestCharge testCharge = insertNewChargeWithId(1L, now().plusHours(1));
-        insertNewRefundForCharge(testCharge, 2L, now().plusHours(2));
+        final Long chargeTransactionId = paymentRequestEntity.getChargeTransaction().getId();
+        final Long refundTransactionId = paymentRequestEntity.getRefundTransactions().get(0).getId();
 
-        ChargeSearchParams params = new ChargeSearchParams()
-                .withReferenceLike(testCharge.getReference())
-                .addExternalChargeStates(singletonList(EXTERNAL_CREATED.getStatus()))
-                .withToDate(ZonedDateTime.parse(FROM_DATE));
+        ChargeSearchParams searchParams = createSearchParams();
+        searchParams.addExternalChargeStates(singletonList(
+                chargeStatus.toExternal().getStatus()
+        ));
+        searchParams.addExternalRefundStates(singletonList(
+                refundStatus.toExternal().getStatus())
+        );
 
-        // when
-        List<Transaction> transactions = transactionDao.findAllBy(defaultTestAccount.getAccountId(), params);
-
-        // then
-        assertThat(transactions.size(), is(0));
+        final List<TransactionEntity> searchResult = transactionDao.search(searchParams);
+        assertThat(searchResult.size(), is(2));
+        assertThat(searchResult.get(0).getId(), is(refundTransactionId));
+        assertThat(searchResult.get(1).getId(), is(chargeTransactionId));
     }
 
-    private void assertDateMatch(String createdDateString) {
-        assertDateMatch(DateTimeUtils.toUTCZonedDateTime(createdDateString).get());
+    @Test
+    public void shouldReturnTransactions_byDisplaySize() {
+        final PaymentRequestEntity paymentRequestEntity = aValidPaymentRequestEntityWithRefund()
+                .withGatewayAccountEntity(gatewayAccount).build();
+        paymentRequestDao.persist(paymentRequestEntity);
+        paymentRequestDao.persist(aValidPaymentRequestEntityWithRefund()
+                .withGatewayAccountEntity(gatewayAccount).build());
+        paymentRequestDao.persist(aValidPaymentRequestEntityWithRefund()
+                .withGatewayAccountEntity(gatewayAccount).build());
+
+        ChargeSearchParams searchParams = createSearchParams();
+        searchParams.withPage(2L);
+        searchParams.withDisplaySize(4L);
+
+        final List<TransactionEntity> searchResult = transactionDao.search(searchParams);
+        assertThat(searchResult.size(), is(2));
+        final Long refundId = paymentRequestEntity.getRefundTransactions().get(0).getId();
+        assertThat(searchResult.get(0).getId(), is(refundId));
+        final Long chargeId = paymentRequestEntity.getChargeTransaction().getId();
+        assertThat(searchResult.get(1).getId(), is(chargeId));
     }
 
-    private void assertDateMatch(ZonedDateTime createdDateTime) {
-        assertThat(createdDateTime, within(1, ChronoUnit.MINUTES, ZonedDateTime.now()));
+    @Test
+    public void shouldReturnTransactions_AllParametersSet() throws Exception {
+        String ref = "ref1";
+        String email = "foo@foo.com";
+        String cardBrand = "visa";
+
+        ZonedDateTime createdTime = ZonedDateTime.now();
+        PaymentRequestEntity paymentRequestEntity = aValidPaymentRequestEntity()
+                .withReference(ref)
+                .withTransactions(aChargeTransactionEntity()
+                        .withEmail(email)
+                        .withCard(aCardEntity()
+                                .withCardBrand(cardBrand)
+                                .build())
+                        .withCreatedDate(createdTime)
+                        .withStatus(ChargeStatus.CREATED)
+                        .build())
+                .withGatewayAccountEntity(gatewayAccount).build();
+        paymentRequestDao.persist(paymentRequestEntity);
+        paymentRequestDao.persist(aValidPaymentRequestEntity()
+                .withGatewayAccountEntity(gatewayAccount).build());
+
+        ChargeSearchParams searchParams = new ChargeSearchParams();
+        final Long expectedId = gatewayAccount.getId();
+        searchParams.withGatewayAccountId(expectedId);
+        searchParams.withReferenceLike(ref);
+        searchParams.withEmailLike(email);
+        searchParams.withCardBrand(cardBrand);
+        searchParams.withFromDate(createdTime.minusSeconds(5));
+        searchParams.withToDate(createdTime.plusSeconds(5));
+        searchParams.withTransactionType(TransactionType.PAYMENT);
+        searchParams.addExternalChargeStates(singletonList(ChargeStatus.CREATED.toExternal().getStatus()));
+        searchParams.addExternalRefundStates(singletonList(RefundStatus.CREATED.toExternal().getStatus()));
+
+        final List<TransactionEntity> searchResult = transactionDao.search(searchParams);
+        assertThat(searchResult.size(), is(1));
+        final Long refundId = paymentRequestEntity.getChargeTransaction().getId();
+        assertThat(searchResult.get(0).getId(), is(refundId));
     }
 
-    private DatabaseFixtures.TestCharge insertNewChargeWithId(long amount, ZonedDateTime creationDate) {
-        return
-                withDatabaseTestHelper(databaseTestHelper)
-                        .aTestCharge()
-                        .withDescription(DEFAULT_TEST_CHARGE_DESCRIPTION)
-                        .withReference(DEFAULT_TEST_CHARGE_REFERENCE)
-                        .withAmount(amount)
-                        .withTestAccount(defaultTestAccount)
-                        .withCreatedDate(creationDate)
-                        .insert();
+    @Test
+    public void shouldCountTransactions_AllParametersSet() throws Exception {
+        String ref = "ref1";
+        String email = "foo@foo.com";
+        String cardBrand = "visa";
+
+        ZonedDateTime createdTime = ZonedDateTime.now();
+        paymentRequestDao.persist(aValidPaymentRequestEntity()
+                .withReference(ref)
+                .withTransactions(aChargeTransactionEntity()
+                        .withEmail(email)
+                        .withCard(aCardEntity()
+                                .withCardBrand(cardBrand)
+                                .build())
+                        .withCreatedDate(createdTime)
+                        .withStatus(ChargeStatus.CREATED)
+                        .build())
+                .withGatewayAccountEntity(gatewayAccount).build());
+        paymentRequestDao.persist(aValidPaymentRequestEntity()
+                .withGatewayAccountEntity(gatewayAccount).build());
+
+        ChargeSearchParams searchParams = new ChargeSearchParams();
+        final Long expectedId = gatewayAccount.getId();
+        searchParams.withGatewayAccountId(expectedId);
+        searchParams.withReferenceLike(ref);
+        searchParams.withEmailLike(email);
+        searchParams.withCardBrand(cardBrand);
+        searchParams.withFromDate(createdTime.minusSeconds(5));
+        searchParams.withToDate(createdTime.plusSeconds(5));
+        searchParams.withTransactionType(TransactionType.PAYMENT);
+        searchParams.addExternalChargeStates(singletonList(ChargeStatus.CREATED.toExternal().getStatus()));
+        searchParams.addExternalRefundStates(singletonList(RefundStatus.CREATED.toExternal().getStatus()));
+
+        final Long total = transactionDao.getTotal(searchParams);
+        assertThat(total, is(1L));
     }
 
-    private DatabaseFixtures.TestCardDetails updateCardDetailsForCharge(DatabaseFixtures.TestCharge charge) {
-        return updateCardDetailsForCharge(charge, "visa");
+    private ChargeSearchParams createSearchParams() {
+        ChargeSearchParams searchParams = new ChargeSearchParams();
+        searchParams.withGatewayAccountId(gatewayAccount.getId());
+        return searchParams;
     }
 
-    private DatabaseFixtures.TestCardDetails updateCardDetailsForCharge(DatabaseFixtures.TestCharge charge, String cardBrand) {
-        return new DatabaseFixtures(databaseTestHelper)
-                .validTestCardDetails()
-                .withChargeId(charge.chargeId)
+    private PaymentRequestEntity persistPaymentRequestForStatus(ChargeStatus chargeStatus, RefundStatus refundStatus) {
+        PaymentRequestEntity paymentRequestEntity = aValidPaymentRequestEntityWithRefund()
+                .withGatewayAccountEntity(gatewayAccount)
+                .build();
+
+        paymentRequestEntity.getChargeTransaction().updateStatus(chargeStatus);
+        paymentRequestEntity.getRefundTransactions().get(0).updateStatus(refundStatus);
+        paymentRequestDao.persist(paymentRequestEntity);
+
+        return paymentRequestEntity;
+    }
+
+    private PaymentRequestEntity persistPaymentRequestForCardBrand(String cardBrand) {
+        PaymentRequestEntity paymentRequestEntity = aValidPaymentRequestEntityWithRefund()
+                .withGatewayAccountEntity(gatewayAccount)
+                .build();
+        final CardEntity card = aCardEntity()
                 .withCardBrand(cardBrand)
-                .update();
+                .build();
+        paymentRequestEntity.getChargeTransaction().setCard(card);
+        paymentRequestDao.persist(paymentRequestEntity);
+
+        return paymentRequestEntity;
     }
 
-    private DatabaseFixtures.TestRefund insertNewRefundForCharge(DatabaseFixtures.TestCharge charge, long amount, ZonedDateTime creationDate) {
-        return
-                withDatabaseTestHelper(databaseTestHelper)
-                        .aTestRefund()
-                        .withAmount(amount)
-                        .withTestCharge(charge)
-                        .withCreatedDate(creationDate)
-                        .insert();
+    private void assertTransactionByExternalId(String expectedExternalId, List<TransactionEntity> searchResult) {
+        assertThat(searchResult.size(), is(1));
+        final String actualExternalId = searchResult.get(0).getPaymentRequest().getExternalId();
+        assertThat(actualExternalId, is(expectedExternalId));
+    }
+
+    private void assertTransactionById(Long expectedId, List<TransactionEntity> searchResult) {
+        assertThat(searchResult.size(), is(1));
+        assertThat(searchResult.get(0).getId(), is(expectedId));
+    }
+
+    private void insertTestAccount() {
+        this.defaultTestAccount = DatabaseFixtures
+                .withDatabaseTestHelper(databaseTestHelper)
+                .aTestAccount()
+                .insert();
     }
 }
