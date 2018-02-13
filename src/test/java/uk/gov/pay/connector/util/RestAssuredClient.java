@@ -153,6 +153,13 @@ public class RestAssuredClient {
                 .then();
     }
 
+    public ValidatableResponse getExperimentalAPI() {
+        return addQueryParams(given().port(app.getLocalPort())
+                .headers(headers))
+                .get(TRANSACTIONS_API_PATH.replace("{accountId}", accountId) + "/new")
+                .then();
+    }
+
     public ValidatableResponse getEvents(String chargeId) {
         String requestPath = CHARGE_EVENTS_API_PATH
                 .replace("{accountId}", accountId)
