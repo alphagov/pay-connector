@@ -1275,4 +1275,10 @@
         </sql>
     </changeSet>
 
+    <changeSet id="createIndex transactions.operation" author="" runInTransaction="false">
+        <sql>
+            CREATE INDEX CONCURRENTLY idx_transactions_operation ON transactions (operation);
+        </sql>
+    </changeSet>
+
 </databaseChangeLog>
