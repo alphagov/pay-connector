@@ -19,3 +19,5 @@ staging-2.tag=FAILED-326
 staging-2.FAILED-326.date=
 
 staging-2.FAILED-326.status=failed
+
+release.tag=alpha_release-327
