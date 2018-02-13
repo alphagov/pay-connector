@@ -13,6 +13,7 @@ import uk.gov.pay.connector.dao.GatewayAccountDao;
 import uk.gov.pay.connector.model.domain.ChargeEntity;
 import uk.gov.pay.connector.service.ChargeExpiryService;
 import uk.gov.pay.connector.service.ChargeService;
+import uk.gov.pay.connector.service.search.ExperimentalSearchStrategy;
 import uk.gov.pay.connector.service.search.SearchService;
 import uk.gov.pay.connector.service.search.TransactionSearchStrategy;
 import uk.gov.pay.connector.util.ResponseUtil;
@@ -42,6 +43,7 @@ import static javax.ws.rs.core.MediaType.APPLICATION_JSON;
 import static javax.ws.rs.core.Response.created;
 import static org.apache.commons.lang3.StringUtils.isNotBlank;
 import static uk.gov.pay.connector.model.TransactionType.inferTransactionTypeFrom;
+import static uk.gov.pay.connector.resources.ApiPaths.API_VERSION_PATH;
 import static uk.gov.pay.connector.resources.ApiPaths.CHARGES_API_PATH;
 import static uk.gov.pay.connector.resources.ApiPaths.CHARGES_EXPIRE_CHARGES_TASK_API_PATH;
 import static uk.gov.pay.connector.resources.ApiPaths.CHARGE_API_PATH;
@@ -91,12 +93,13 @@ public class ChargesApiResource {
     private final ChargeExpiryService chargeExpiryService;
     private final TransactionSearchStrategy transactionSearchStrategy;
     private SearchService searchService;
+    private final ExperimentalSearchStrategy experimentalSearchStrategy;
 
     @Inject
     public ChargesApiResource(ChargeDao chargeDao, GatewayAccountDao gatewayAccountDao,
                               ChargeService chargeService, SearchService searchService,
                               ChargeExpiryService chargeExpiryService, ConnectorConfiguration configuration,
-                              TransactionSearchStrategy transactionSearchStrategy) {
+                              TransactionSearchStrategy transactionSearchStrategy, ExperimentalSearchStrategy experimentalSearchStrategy) {
         this.chargeDao = chargeDao;
         this.gatewayAccountDao = gatewayAccountDao;
         this.chargeService = chargeService;
@@ -104,6 +107,7 @@ public class ChargesApiResource {
         this.chargeExpiryService = chargeExpiryService;
         this.configuration = configuration;
         this.transactionSearchStrategy = transactionSearchStrategy;
+        this.experimentalSearchStrategy = experimentalSearchStrategy;
     }
 
     private static String stringifyChargeRequestWithoutPii(Map<String, String> map) {
@@ -220,6 +224,48 @@ public class ChargesApiResource {
                 }); // always the first page if its missing
     }
 
+    @GET
+    @Path(API_VERSION_PATH +"/api/accounts/{accountId}/transactions/new")
+    @Produces(APPLICATION_JSON)
+    public Response getNewTransactionsJson(@PathParam(ACCOUNT_ID) Long accountId,
+                                        @QueryParam(EMAIL_KEY) String email,
+                                        @QueryParam(REFERENCE_KEY) String reference,
+                                        @QueryParam(PAYMENT_STATES_KEY) List<String> paymentStates,
+                                        @QueryParam(REFUND_STATES_KEY) List<String> refundStates,
+                                        @QueryParam(CARD_BRAND_KEY) List<String> cardBrands,
+                                        @QueryParam(FROM_DATE_KEY) String fromDate,
+                                        @QueryParam(TO_DATE_KEY) String toDate,
+                                        @QueryParam(PAGE) Long pageNumber,
+                                        @QueryParam(DISPLAY_SIZE) Long displaySize,
+                                        @Context UriInfo uriInfo) {
+        List<Pair<String, String>> inputDatePairMap = ImmutableList.of(Pair.of(FROM_DATE_KEY, fromDate), Pair.of(TO_DATE_KEY, toDate));
+        List<Pair<String, Long>> nonNegativePairMap = ImmutableList.of(Pair.of(PAGE, pageNumber), Pair.of(DISPLAY_SIZE, displaySize));
+
+        return ApiValidators
+                .validateQueryParams(inputDatePairMap, nonNegativePairMap) //TODO - improvement, get the entire searchparam object into the validateQueryParams
+                .map(ResponseUtil::badRequestResponse)
+                .orElseGet(() -> {
+                    ChargeSearchParams searchParams = new ChargeSearchParams()
+                            .withGatewayAccountId(accountId)
+                            .withEmailLike(email)
+                            .withReferenceLike(reference)
+                            .withCardBrands(removeBlanks(cardBrands))
+                            .withFromDate(parseDate(fromDate))
+                            .withToDate(parseDate(toDate))
+                            .withDisplaySize(displaySize != null ? displaySize : configuration.getTransactionsPaginationConfig().getDisplayPageSize())
+                            .withTransactionType(inferTransactionTypeFrom(paymentStates, refundStates))
+                            .addExternalChargeStates(paymentStates)
+                            .addExternalRefundStates(refundStates)
+                            .withPage(pageNumber != null ? pageNumber : 1);
+
+                    return gatewayAccountDao.findById(accountId)
+                            .map(gatewayAccount -> listNewTransactions(searchParams, uriInfo))
+                            .orElseGet(() -> notFoundResponse(format("account with id %s not found", accountId)));
+
+                }); // always the first page if its missing
+    }
+
+
     private List<String> removeBlanks(List<String> cardBrands) {
         return cardBrands.stream().filter(StringUtils::isNotBlank).collect(Collectors.toList());
     }
@@ -307,6 +353,19 @@ public class ChargesApiResource {
         long startTime = System.nanoTime();
         try {
             return transactionSearchStrategy.search(searchParams, uriInfo);
+        } finally {
+            long endTime = System.nanoTime();
+            logger.info("Transaction Search - took [{}] params [{}]",
+                    (endTime - startTime) / 1000000000.0,
+                    searchParams.buildQueryParams());
+        }
+    }
+
+
+    private Response listNewTransactions(ChargeSearchParams searchParams, UriInfo uriInfo) {
+        long startTime = System.nanoTime();
+        try {
+            return experimentalSearchStrategy.search(searchParams, uriInfo);
         } finally {
             long endTime = System.nanoTime();
             logger.info("Transaction Search - took [{}] params [{}]",
