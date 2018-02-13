@@ -381,6 +381,23 @@ public class ChargesApiResourceGetChargesJsonITest extends ChargingITestBase {
         assertBadRequestForNegativePageDisplaySize();
     }
 
+    @Test
+    public void shouldSearchTransactionsWithExperimentalSearch() throws Exception {
+        String searchedCardBrand = "visa";
+
+        addChargeAndCardDetails(CREATED, "ref-1", now(), searchedCardBrand);
+        addChargeAndCardDetails(CREATED, "ref-2", now(), "master-card");
+        addChargeAndCardDetails(CREATED, "ref-3", now().minusDays(2), searchedCardBrand);
+
+        getChargeApi
+                .withAccountId(accountId)
+                .withHeader(HttpHeaders.ACCEPT, APPLICATION_JSON)
+                .getExperimentalAPI()
+                .statusCode(OK.getStatusCode())
+                .contentType(JSON)
+                .body("results.size()", is(3));
+    }
+
     private List<ZonedDateTime> datesFrom(List<String> createdDateStrings) {
         List<ZonedDateTime> dateTimes = newArrayList();
         createdDateStrings.forEach(aDateString -> dateTimes.add(toUTCZonedDateTime(aDateString).get()));
