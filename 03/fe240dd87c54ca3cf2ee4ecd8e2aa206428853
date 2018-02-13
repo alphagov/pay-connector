@@ -21,3 +21,5 @@ staging-2.FAILED-326.date=
 staging-2.FAILED-326.status=failed
 
 release.tag=alpha_release-327
+
+release.alpha_release-327.date=2018-02-13:13:59:12
