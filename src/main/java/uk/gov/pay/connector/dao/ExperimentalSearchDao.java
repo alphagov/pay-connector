@@ -57,14 +57,17 @@ public class ExperimentalSearchDao extends JpaDao<Transaction> {
                         "JOIN gateway_accounts g ON t.gateway_account_id = g.id " +
                         "LEFT JOIN cards c ON t2.id = c.transaction_id " +
                         "WHERE t.gateway_account_id = ?gatewayAccountId " +
-                        "ORDER BY t.created_date DESC");
+                        "ORDER BY t.created_date DESC " +
+                        "LIMIT ?limit " +
+                        "OFFSET ?offset");
 
         Query typedQuery = entityManager.get().createNativeQuery(query.toString(), "TransactionMapping");
         typedQuery.setParameter("gatewayAccountId", params.getGatewayAccountId());
         if (params.getPage() != null && params.getDisplaySize() != null) {
             final long displaySize = params.getDisplaySize().intValue();
             long offset = (params.getPage() - 1) * displaySize;
-            typedQuery = typedQuery.setFirstResult((int) offset).setMaxResults((int) displaySize);
+            typedQuery.setParameter("offset", offset);
+            typedQuery.setParameter("limit", displaySize);
         }
 
         return (List<Transaction>) typedQuery.getResultList();
