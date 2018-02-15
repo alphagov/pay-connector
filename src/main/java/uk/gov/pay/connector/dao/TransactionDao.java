@@ -5,6 +5,7 @@ import com.google.inject.Provider;
 import com.google.inject.persist.Transactional;
 import uk.gov.pay.connector.model.TransactionType;
 import uk.gov.pay.connector.model.domain.ChargeStatus;
+import uk.gov.pay.connector.model.domain.Transaction;
 import uk.gov.pay.connector.model.domain.UTCDateTimeConverter;
 import uk.gov.pay.connector.model.domain.transaction.TransactionEntity;
 import uk.gov.pay.connector.model.domain.transaction.TransactionOperation;
@@ -32,37 +33,76 @@ public class TransactionDao extends JpaDao<TransactionEntity> {
         this.utcDateTimeConverter = utcDateTimeConverter;
     }
 
-    public List<TransactionEntity> search(ChargeSearchParams params) {
+    public List<Transaction> search(ChargeSearchParams params) {
+        String queryStart =
+                "SELECT " +
+                        "t.operation AS transaction_type, " +
+                        "t.id AS charge_id, " +
+                        "p.external_id AS external_id, " +
+                        "p.reference AS reference, " +
+                        "p.description AS description, " +
+                        "t.status AS status, " +
+                        "t2.email AS email, " +
+                        "p.gateway_account_id AS gateway_account_id," +
+                        "t2.gateway_transaction_id AS gateway_transaction_id, " +
+                        "t.created_date AS date_created, " +
+                        "c.card_brand AS card_brand, " +
+                        "'CHANGE_ME' AS card_brand_label, " +
+                        "c.cardholder_name AS cardholder_name, " +
+                        "c.expiry_date AS expiry_date, " +
+                        "c.last_digits_card_number AS last_digits_card_number, " +
+                        "c.address_city AS address_city, " +
+                        "c.address_country AS address_country, " +
+                        "c.address_county AS address_county, " +
+                        "c.address_line1 AS address_line1, " +
+                        "c.address_line2 AS address_line2, " +
+                        "c.address_postcode AS address_postcode, " +
+                        "p.amount AS amount " +
+                        "FROM transactions t JOIN transactions t2 ON t.payment_request_id = t2.payment_request_id AND t2.operation = 'CHARGE' " +
+                        "JOIN payment_requests p ON t.payment_request_id = p.id " +
+                        "JOIN gateway_accounts g ON t.gateway_account_id = g.id " +
+                        "LEFT JOIN cards c ON t2.id = c.transaction_id ";
 
         List<String> statuses = getStatuses(params);
-        StringBuilder query = buildQueryString("SELECT t.* FROM transactions t ", params, statuses);
+        StringBuilder queryBuilder = buildQueryString(queryStart, params, statuses);
 
-        query.append(" ORDER BY t.created_date DESC");
+        String query = queryBuilder.append("ORDER BY t.created_date DESC LIMIT ?limit OFFSET ?offset").toString();
 
-        Query typedQuery = entityManager.get().createNativeQuery(query.toString(), TransactionEntity.class);
+        Query typedQuery = entityManager.get().createNativeQuery(query, "TransactionMapping");
+        typedQuery.setParameter("gatewayAccountId", params.getGatewayAccountId());
         typedQuery = setParams(typedQuery, params, statuses);
-        typedQuery = addPagination(params, typedQuery);
 
-        return (List<TransactionEntity>) typedQuery.getResultList();
+        setPagination(params, typedQuery);
+
+        return (List<Transaction>) typedQuery.getResultList();
+    }
+
+    private void setPagination(ChargeSearchParams params, Query typedQuery) {
+        final long displaySize = params.getDisplaySize().intValue();
+        long offset = (params.getPage() - 1) * displaySize;
+        typedQuery.setParameter("offset", offset);
+        typedQuery.setParameter("limit", displaySize);
     }
 
     public long getTotal(ChargeSearchParams params) {
         List<String> statuses = getStatuses(params);
-        StringBuilder query = buildQueryString("SELECT count(t.*) FROM transactions t ", params, statuses);
+        StringBuilder queryPrefix = new StringBuilder("SELECT count(t.*) FROM transactions t ");
+
+        if (isNotEmpty(params.getReference())) {
+            queryPrefix.append("JOIN payment_requests p ON t.payment_request_id = p.id ");
+        }
+        if (isNotEmpty(params.getEmail()) || !params.getCardBrands().isEmpty()) {
+            queryPrefix.append("JOIN transactions t2 ON t.payment_request_id = t2.payment_request_id AND t2.operation = 'CHARGE' ");
+        }
+        if (!params.getCardBrands().isEmpty()) {
+            queryPrefix.append("LEFT JOIN cards c ON t2.id = c.transaction_id ");
+        }
+        StringBuilder query = buildQueryString(queryPrefix.toString(), params, statuses);
 
         Query typedQuery = entityManager.get().createNativeQuery(query.toString());
         typedQuery = setParams(typedQuery, params, statuses);
 
         return (Long) typedQuery.getSingleResult();
-    }
-
-    private Query addPagination(ChargeSearchParams params, Query typedQuery) {
-        if (params.getPage() != null && params.getDisplaySize() != null) {
-            final long displaySize = params.getDisplaySize().intValue();
-            long offset = (params.getPage() - 1) * displaySize;
-            typedQuery = typedQuery.setFirstResult((int) offset).setMaxResults((int) displaySize);
-        }
-        return typedQuery;
     }
 
     private List<String> getStatuses(ChargeSearchParams params) {
@@ -115,25 +155,14 @@ public class TransactionDao extends JpaDao<TransactionEntity> {
 
     private StringBuilder buildQueryString(String queryString, ChargeSearchParams params, List<String> statuses) {
         StringBuilder query = new StringBuilder(queryString);
-        if (isNotEmpty(params.getReference())) {
-            query.append("JOIN payment_requests p ON t.payment_request_id = p.id ");
-        }
-        if (isNotEmpty(params.getEmail()) || !params.getCardBrands().isEmpty()) {
-            query.append("JOIN transactions t2 ON t.payment_request_id = t2.payment_request_id AND t2.operation = 'CHARGE' ");
-        }
-        if (!params.getCardBrands().isEmpty()) {
-            query.append("LEFT JOIN cards c ON t2.id = c.transaction_id ");
-        }
-
         query.append("WHERE t.gateway_account_id = ?gatewayAccountId ");
-
         // here add the optional params
         if (isNotEmpty(params.getEmail())) {
-            query.append("AND LOWER(t2.email) LIKE ?email ");
+            query.append("AND t2.email ILIKE ?email ");
         }
 
         if (isNotEmpty(params.getReference())) {
-            query.append("AND LOWER(p.reference) LIKE ?reference ");
+            query.append("AND p.reference ILIKE ?reference ");
         }
 
         if (params.getFromDate() != null) {
