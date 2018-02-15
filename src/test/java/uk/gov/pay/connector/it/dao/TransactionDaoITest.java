@@ -11,8 +11,7 @@ import uk.gov.pay.connector.model.domain.ChargeStatus;
 import uk.gov.pay.connector.model.domain.GatewayAccountEntity;
 import uk.gov.pay.connector.model.domain.PaymentRequestEntity;
 import uk.gov.pay.connector.model.domain.RefundStatus;
-import uk.gov.pay.connector.model.domain.transaction.RefundTransactionEntity;
-import uk.gov.pay.connector.model.domain.transaction.TransactionEntity;
+import uk.gov.pay.connector.model.domain.Transaction;
 import uk.gov.pay.connector.model.domain.transaction.TransactionOperation;
 
 import java.time.ZonedDateTime;
@@ -55,14 +54,13 @@ public class TransactionDaoITest extends DaoITestBase {
         paymentRequestDao.persist(aValidPaymentRequestEntity()
                 .withGatewayAccountEntity(gatewayAccount).build());
 
-        ChargeSearchParams searchParams = new ChargeSearchParams();
-        final Long expectedId = gatewayAccount.getId();
-        searchParams.withGatewayAccountId(expectedId);
+        ChargeSearchParams searchParams = createSearchParams();
+        Long expectedId = searchParams.getGatewayAccountId();
 
-        final List<TransactionEntity> entityList = transactionDao.search(searchParams);
+        final List<Transaction> entityList = transactionDao.search(searchParams);
         assertThat(entityList.size(), is(2));
-        assertThat(entityList.get(0).getPaymentRequest().getGatewayAccount().getId(), is(expectedId));
-        assertThat(entityList.get(1).getPaymentRequest().getGatewayAccount().getId(), is(expectedId));
+        assertThat(entityList.get(0).getGatewayAccountId(), is(expectedId));
+        assertThat(entityList.get(1).getGatewayAccountId(), is(expectedId));
     }
 
     @Test
@@ -128,9 +126,7 @@ public class TransactionDaoITest extends DaoITestBase {
         paymentRequestDao.persist(aValidPaymentRequestEntity()
                 .withGatewayAccountEntity(gatewayAccount2).build());
 
-        ChargeSearchParams searchParams = new ChargeSearchParams();
-        final Long expectedId = gatewayAccount.getId();
-        searchParams.withGatewayAccountId(expectedId);
+        ChargeSearchParams searchParams = createSearchParams();
 
         assertTransactionByExternalId(paymentRequestEntity.getExternalId(), transactionDao.search(searchParams));
     }
@@ -411,16 +407,15 @@ public class TransactionDaoITest extends DaoITestBase {
         final PaymentRequestEntity paymentRequestEntity = aValidPaymentRequestEntityWithRefund()
                 .withGatewayAccountEntity(gatewayAccount)
                 .build();
-        final String expectedExternalId = paymentRequestEntity.getRefundTransactions().get(0).getRefundExternalId();
+        final String externalId = paymentRequestEntity.getExternalId();
         paymentRequestDao.persist(paymentRequestEntity);
 
         ChargeSearchParams searchParams = createSearchParams();
         searchParams.withTransactionType(REFUND);
 
-        final List<TransactionEntity> searchResult = transactionDao.search(searchParams);
+        final List<Transaction> searchResult = transactionDao.search(searchParams);
         assertIsTransactionOperation(searchResult, TransactionOperation.REFUND);
-        final String actualExternalId = ((RefundTransactionEntity) searchResult.get(0)).getRefundExternalId();
-        assertThat(actualExternalId, is(expectedExternalId));
+        assertThat(searchResult.get(0).getExternalId(), is(externalId));
     }
 
     @Test
@@ -434,15 +429,15 @@ public class TransactionDaoITest extends DaoITestBase {
         ChargeSearchParams searchParams = createSearchParams();
         searchParams.withTransactionType(TransactionType.PAYMENT);
 
-        final List<TransactionEntity> searchResult = transactionDao.search(searchParams);
+        final List<Transaction> searchResult = transactionDao.search(searchParams);
         assertIsTransactionOperation(searchResult, TransactionOperation.CHARGE);
-        final long actualChargeTransactionId = searchResult.get(0).getId();
+        final long actualChargeTransactionId = searchResult.get(0).getChargeId();
         assertThat(actualChargeTransactionId, is(chargeTransactionId));
     }
 
-    private void assertIsTransactionOperation(List<TransactionEntity> searchResult, TransactionOperation charge) {
+    private void assertIsTransactionOperation(List<Transaction> searchResult, TransactionOperation transactionOperation) {
         assertThat(searchResult.size(), is(1));
-        assertThat(searchResult.get(0).getOperation(), is(charge));
+        assertThat(searchResult.get(0).getTransactionType(), is(transactionOperation.name()));
     }
 
     @Test
@@ -457,10 +452,10 @@ public class TransactionDaoITest extends DaoITestBase {
         ChargeSearchParams searchParams = createSearchParams();
         searchParams.withCardBrand(cardBrand);
 
-        final List<TransactionEntity> searchResult = transactionDao.search(searchParams);
+        final List<Transaction> searchResult = transactionDao.search(searchParams);
         assertThat(searchResult.size(), is(2));
-        assertThat(searchResult.get(0).getId(), is(refundTransactionId));
-        assertThat(searchResult.get(1).getId(), is(chargeTransactionId));
+        assertThat(searchResult.get(0).getChargeId(), is(refundTransactionId));
+        assertThat(searchResult.get(1).getChargeId(), is(chargeTransactionId));
     }
 
     @Test
@@ -479,12 +474,12 @@ public class TransactionDaoITest extends DaoITestBase {
         ChargeSearchParams searchParams = createSearchParams();
         searchParams.withCardBrands(asList(visaCardBrand, mastercardCardBrand));
 
-        final List<TransactionEntity> searchResult = transactionDao.search(searchParams);
+        final List<Transaction> searchResult = transactionDao.search(searchParams);
         assertThat(searchResult.size(), is(4));
-        assertThat(searchResult.get(0).getId(), is(mastercardRefundTransactionId));
-        assertThat(searchResult.get(1).getId(), is(mastercardChargeTransactionId));
-        assertThat(searchResult.get(2).getId(), is(visaRefundTransactionId));
-        assertThat(searchResult.get(3).getId(), is(visaChargeTransactionId));
+        assertThat(searchResult.get(0).getChargeId(), is(mastercardRefundTransactionId));
+        assertThat(searchResult.get(1).getChargeId(), is(mastercardChargeTransactionId));
+        assertThat(searchResult.get(2).getChargeId(), is(visaRefundTransactionId));
+        assertThat(searchResult.get(3).getChargeId(), is(visaChargeTransactionId));
     }
 
     @Test
@@ -547,10 +542,10 @@ public class TransactionDaoITest extends DaoITestBase {
                 refundStatus.toExternal().getStatus())
         );
 
-        final List<TransactionEntity> searchResult = transactionDao.search(searchParams);
+        final List<Transaction> searchResult = transactionDao.search(searchParams);
         assertThat(searchResult.size(), is(2));
-        assertThat(searchResult.get(0).getId(), is(refundTransactionId));
-        assertThat(searchResult.get(1).getId(), is(chargeTransactionId));
+        assertThat(searchResult.get(0).getChargeId(), is(refundTransactionId));
+        assertThat(searchResult.get(1).getChargeId(), is(chargeTransactionId));
     }
 
     @Test
@@ -567,12 +562,12 @@ public class TransactionDaoITest extends DaoITestBase {
         searchParams.withPage(2L);
         searchParams.withDisplaySize(4L);
 
-        final List<TransactionEntity> searchResult = transactionDao.search(searchParams);
+        final List<Transaction> searchResult = transactionDao.search(searchParams);
         assertThat(searchResult.size(), is(2));
         final Long refundId = paymentRequestEntity.getRefundTransactions().get(0).getId();
-        assertThat(searchResult.get(0).getId(), is(refundId));
+        assertThat(searchResult.get(0).getChargeId(), is(refundId));
         final Long chargeId = paymentRequestEntity.getChargeTransaction().getId();
-        assertThat(searchResult.get(1).getId(), is(chargeId));
+        assertThat(searchResult.get(1).getChargeId(), is(chargeId));
     }
 
     @Test
@@ -597,9 +592,7 @@ public class TransactionDaoITest extends DaoITestBase {
         paymentRequestDao.persist(aValidPaymentRequestEntity()
                 .withGatewayAccountEntity(gatewayAccount).build());
 
-        ChargeSearchParams searchParams = new ChargeSearchParams();
-        final Long expectedId = gatewayAccount.getId();
-        searchParams.withGatewayAccountId(expectedId);
+        ChargeSearchParams searchParams = createSearchParams();
         searchParams.withReferenceLike(ref);
         searchParams.withEmailLike(email);
         searchParams.withCardBrand(cardBrand);
@@ -609,10 +602,10 @@ public class TransactionDaoITest extends DaoITestBase {
         searchParams.addExternalChargeStates(singletonList(ChargeStatus.CREATED.toExternal().getStatus()));
         searchParams.addExternalRefundStates(singletonList(RefundStatus.CREATED.toExternal().getStatus()));
 
-        final List<TransactionEntity> searchResult = transactionDao.search(searchParams);
+        final List<Transaction> searchResult = transactionDao.search(searchParams);
         assertThat(searchResult.size(), is(1));
         final Long refundId = paymentRequestEntity.getChargeTransaction().getId();
-        assertThat(searchResult.get(0).getId(), is(refundId));
+        assertThat(searchResult.get(0).getChargeId(), is(refundId));
     }
 
     @Test
@@ -636,9 +629,7 @@ public class TransactionDaoITest extends DaoITestBase {
         paymentRequestDao.persist(aValidPaymentRequestEntity()
                 .withGatewayAccountEntity(gatewayAccount).build());
 
-        ChargeSearchParams searchParams = new ChargeSearchParams();
-        final Long expectedId = gatewayAccount.getId();
-        searchParams.withGatewayAccountId(expectedId);
+        ChargeSearchParams searchParams = createSearchParams();
         searchParams.withReferenceLike(ref);
         searchParams.withEmailLike(email);
         searchParams.withCardBrand(cardBrand);
@@ -655,6 +646,8 @@ public class TransactionDaoITest extends DaoITestBase {
     private ChargeSearchParams createSearchParams() {
         ChargeSearchParams searchParams = new ChargeSearchParams();
         searchParams.withGatewayAccountId(gatewayAccount.getId());
+        searchParams.withPage(1L);
+        searchParams.withDisplaySize(500L);
         return searchParams;
     }
 
@@ -683,15 +676,15 @@ public class TransactionDaoITest extends DaoITestBase {
         return paymentRequestEntity;
     }
 
-    private void assertTransactionByExternalId(String expectedExternalId, List<TransactionEntity> searchResult) {
+    private void assertTransactionByExternalId(String expectedExternalId, List<Transaction> searchResult) {
         assertThat(searchResult.size(), is(1));
-        final String actualExternalId = searchResult.get(0).getPaymentRequest().getExternalId();
+        final String actualExternalId = searchResult.get(0).getExternalId();
         assertThat(actualExternalId, is(expectedExternalId));
     }
 
-    private void assertTransactionById(Long expectedId, List<TransactionEntity> searchResult) {
+    private void assertTransactionById(Long expectedId, List<Transaction> searchResult) {
         assertThat(searchResult.size(), is(1));
-        assertThat(searchResult.get(0).getId(), is(expectedId));
+        assertThat(searchResult.get(0).getChargeId(), is(expectedId));
     }
 
     private void insertTestAccount() {

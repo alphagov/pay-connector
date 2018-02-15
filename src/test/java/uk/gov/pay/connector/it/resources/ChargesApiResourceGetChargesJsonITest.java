@@ -107,10 +107,8 @@ public class ChargesApiResourceGetChargesJsonITest extends ChargingITestBase {
                 .body("results[0].card_details", notNullValue())
                 .body("results[0].gateway_account", nullValue())
                 .body("results[0].reference", is("My reference"))
-                .body("results[0].return_url", is(returnUrl))
                 .body("results[0].description", is(description))
-                .body("results[0].created_date", is("2016-01-26T13:45:32Z"))
-                .body("results[0].payment_provider", is(PROVIDER_NAME));
+                .body("results[0].created_date", is("2016-01-26T13:45:32Z"));
     }
 
     @Test
@@ -379,23 +377,6 @@ public class ChargesApiResourceGetChargesJsonITest extends ChargingITestBase {
         assertResultsAndNoNextLinksWhenOnLastPage();
         assert404WhenRequestingInvalidPage();
         assertBadRequestForNegativePageDisplaySize();
-    }
-
-    @Test
-    public void shouldSearchTransactionsWithExperimentalSearch() throws Exception {
-        String searchedCardBrand = "visa";
-
-        addChargeAndCardDetails(CREATED, "ref-1", now(), searchedCardBrand);
-        addChargeAndCardDetails(CREATED, "ref-2", now(), "master-card");
-        addChargeAndCardDetails(CREATED, "ref-3", now().minusDays(2), searchedCardBrand);
-
-        getChargeApi
-                .withAccountId(accountId)
-                .withHeader(HttpHeaders.ACCEPT, APPLICATION_JSON)
-                .getExperimentalAPI()
-                .statusCode(OK.getStatusCode())
-                .contentType(JSON)
-                .body("results.size()", is(3));
     }
 
     private List<ZonedDateTime> datesFrom(List<String> createdDateStrings) {
