@@ -39,9 +39,8 @@ public class RefundTransactionEntity extends TransactionEntity<RefundStatus, Ref
         return status;
     }
 
-    // make this package protected after removing PaymentRequestWorker
     @Override
-    public void setStatus(RefundStatus status) {
+    void setStatus(RefundStatus status) {
         this.status = status;
     }
 
