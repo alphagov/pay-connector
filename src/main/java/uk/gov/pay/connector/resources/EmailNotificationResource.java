@@ -18,7 +18,6 @@ import java.util.Map;
 import static java.lang.String.format;
 import static javax.ws.rs.core.MediaType.APPLICATION_JSON;
 import static uk.gov.pay.connector.model.builder.PatchRequestBuilder.aPatchRequestBuilder;
-import static uk.gov.pay.connector.resources.ApiPaths.GATEWAY_ACCOUNTS_API_EMAIL_NOTIFICATION;
 import static uk.gov.pay.connector.util.ResponseUtil.*;
 
 @Path("/")
@@ -39,7 +38,7 @@ public class EmailNotificationResource {
     }
 
     @GET
-    @Path(GATEWAY_ACCOUNTS_API_EMAIL_NOTIFICATION)
+    @Path("/v1/api/accounts/{accountId}/email-notification")
     @Produces(APPLICATION_JSON)
     @Transactional
     public Response getEmailNotificationText(@PathParam("accountId") Long gatewayAccountId) {
@@ -54,7 +53,7 @@ public class EmailNotificationResource {
     }
 
     @POST
-    @Path(GATEWAY_ACCOUNTS_API_EMAIL_NOTIFICATION)
+    @Path("/v1/api/accounts/{accountId}/email-notification")
     @Consumes(APPLICATION_JSON)
     @Produces(APPLICATION_JSON)
     @Transactional
@@ -77,7 +76,7 @@ public class EmailNotificationResource {
     }
 
     @PATCH
-    @Path(GATEWAY_ACCOUNTS_API_EMAIL_NOTIFICATION)
+    @Path("/v1/api/accounts/{accountId}/email-notification")
     @Consumes(APPLICATION_JSON)
     @Produces(APPLICATION_JSON)
     @Transactional

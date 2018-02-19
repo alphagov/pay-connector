@@ -24,7 +24,6 @@ import static javax.ws.rs.core.Response.ok;
 import static uk.gov.pay.connector.model.TransactionEvent.Type.PAYMENT;
 import static uk.gov.pay.connector.model.TransactionEvent.Type.REFUND;
 import static uk.gov.pay.connector.model.TransactionEvent.extractState;
-import static uk.gov.pay.connector.resources.ApiPaths.CHARGE_EVENTS_API_PATH;
 import static uk.gov.pay.connector.util.ResponseUtil.responseWithChargeNotFound;
 
 @Path("/")
@@ -39,7 +38,7 @@ public class ChargeEventsResource {
     }
 
     @GET
-    @Path(CHARGE_EVENTS_API_PATH)
+    @Path("/v1/api/accounts/{accountId}/charges/{chargeId}/events")
     @Produces(APPLICATION_JSON)
     public Response getEvents(@PathParam("accountId") Long accountId, @PathParam("chargeId") String chargeId) {
 

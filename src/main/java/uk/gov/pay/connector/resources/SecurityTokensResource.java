@@ -19,8 +19,6 @@ import static uk.gov.pay.connector.util.ResponseUtil.*;
 
 @Path("/")
 public class SecurityTokensResource {
-    public static final String CHARGE_TOKEN_PATH = "/v1/frontend/tokens/{chargeTokenId}";
-    public static final String GET_CHARGE_BY_TOKEN_PATH = CHARGE_TOKEN_PATH+ "/charge";
 
     private final Logger logger = LoggerFactory.getLogger(SecurityTokensResource.class);
     private final TokenDao tokenDao;
@@ -33,7 +31,7 @@ public class SecurityTokensResource {
     }
 
     @GET
-    @Path(GET_CHARGE_BY_TOKEN_PATH)
+    @Path("/v1/frontend/tokens/{chargeTokenId}/charge")
     @Produces(APPLICATION_JSON)
     @JsonView(GatewayAccountEntity.Views.FrontendView.class)
     public Response getChargeForToken(@PathParam("chargeTokenId") String chargeTokenId) {
@@ -45,7 +43,7 @@ public class SecurityTokensResource {
     }
 
     @DELETE
-    @Path(CHARGE_TOKEN_PATH)
+    @Path("/v1/frontend/tokens/{chargeTokenId}")
     @Transactional
     public Response deleteToken(@PathParam("chargeTokenId") String chargeTokenId) {
         logger.debug("delete({})", chargeTokenId);

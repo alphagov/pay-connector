@@ -26,7 +26,6 @@ import static uk.gov.pay.connector.matcher.RefundsMatcher.aRefundMatching;
 import static uk.gov.pay.connector.matcher.ZoneDateTimeAsStringWithinMatcher.isWithin;
 import static uk.gov.pay.connector.model.domain.ChargeStatus.CAPTURED;
 import static uk.gov.pay.connector.model.domain.ChargeStatus.ENTERING_CARD_DETAILS;
-import static uk.gov.pay.connector.resources.ApiPaths.REFUNDS_API_PATH;
 
 public class SandboxRefundITest extends ChargingITestBase {
 
@@ -254,7 +253,7 @@ public class SandboxRefundITest extends ChargingITestBase {
                 .body(refundPayload)
                 .accept(ContentType.JSON)
                 .contentType(ContentType.JSON)
-                .post(REFUNDS_API_PATH
+                .post("/v1/api/accounts/{accountId}/charges/{chargeId}/refunds"
                         .replace("{accountId}", accountId)
                         .replace("{chargeId}", chargeId))
                 .then();

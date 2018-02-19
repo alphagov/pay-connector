@@ -46,8 +46,6 @@ import static uk.gov.pay.connector.model.domain.ChargeStatus.AUTHORISATION_READY
 import static uk.gov.pay.connector.model.domain.ChargeStatus.AUTHORISATION_SUCCESS;
 import static uk.gov.pay.connector.model.domain.ChargeStatus.CAPTURED;
 import static uk.gov.pay.connector.model.domain.ChargeStatus.CREATED;
-import static uk.gov.pay.connector.resources.ApiPaths.CHARGES_API_PATH;
-import static uk.gov.pay.connector.resources.ApiPaths.TRANSACTIONS_API_PATH;
 import static uk.gov.pay.connector.util.DateTimeUtils.toUTCZonedDateTime;
 
 public class ChargesApiResourceGetChargesJsonITest extends ChargingITestBase {
@@ -215,7 +213,7 @@ public class ChargesApiResourceGetChargesJsonITest extends ChargingITestBase {
 
         ValidatableResponse response = given().port(app.getLocalPort())
                 .header(new Header(HttpHeaders.ACCEPT, APPLICATION_JSON))
-                .get(TRANSACTIONS_API_PATH.replace("{accountId}", accountId))
+                .get("/v1/api/accounts/{accountId}/transactions".replace("{accountId}", accountId))
                 .then()
                 .statusCode(OK.getStatusCode())
                 .contentType(JSON)
@@ -592,7 +590,7 @@ public class ChargesApiResourceGetChargesJsonITest extends ChargingITestBase {
 
     private String expectedChargesLocationFor(String accountId, String queryParams) {
         return "https://localhost:" + app.getLocalPort()
-                + CHARGES_API_PATH.replace("{accountId}", accountId)
+                + "/v1/api/accounts/{accountId}/charges".replace("{accountId}", accountId)
                 + queryParams;
     }
 }

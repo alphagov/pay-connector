@@ -23,7 +23,6 @@ import static org.hamcrest.Matchers.hasEntry;
 import static org.hamcrest.Matchers.is;
 import static org.junit.Assert.fail;
 import static uk.gov.pay.connector.model.domain.ChargeStatus.*;
-import static uk.gov.pay.connector.resources.ApiPaths.FRONTEND_CHARGE_API_PATH;
 
 public class CardAuthoriseResourceITest extends ChargingITestBase {
 
@@ -320,7 +319,7 @@ public class CardAuthoriseResourceITest extends ChargingITestBase {
         assertFrontendChargeStatusIs(charge2, AUTHORISATION_SUCCESS.getValue());
 
         givenSetup()
-                .get(FRONTEND_CHARGE_API_PATH.replace("{chargeId}", charge1))
+                .get("/v1/frontend/charges/{chargeId}".replace("{chargeId}", charge1))
                 .then()
                 .statusCode(200)
                 .contentType(JSON)
@@ -335,7 +334,7 @@ public class CardAuthoriseResourceITest extends ChargingITestBase {
                 .body("card_details.billing_address.country.", is("GB"));
 
         givenSetup()
-                .get(FRONTEND_CHARGE_API_PATH.replace("{chargeId}", charge2))
+                .get("/v1/frontend/charges/{chargeId}".replace("{chargeId}", charge2))
                 .then()
                 .statusCode(200)
                 .contentType(JSON)

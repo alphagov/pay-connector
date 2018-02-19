@@ -9,9 +9,6 @@ import java.net.URI;
 import java.util.List;
 import java.util.stream.Collectors;
 
-import static uk.gov.pay.connector.resources.ApiPaths.CHARGE_API_PATH;
-import static uk.gov.pay.connector.resources.ApiPaths.REFUNDS_API_PATH;
-
 public class RefundsResponse extends HalResourceResponse {
 
     private RefundsResponse(HalRepresentation.HalRepresentationBuilder refundHalRepresentation, URI location) {
@@ -24,11 +21,11 @@ public class RefundsResponse extends HalResourceResponse {
         String externalChargeId = chargeEntity.getExternalId();
 
         URI selfLink = uriInfo.getBaseUriBuilder()
-                .path(REFUNDS_API_PATH)
+                .path("/v1/api/accounts/{accountId}/charges/{chargeId}/refunds")
                 .build(accountId, externalChargeId);
 
         URI paymentLink = uriInfo.getBaseUriBuilder()
-                .path(CHARGE_API_PATH)
+                .path("/v1/api/accounts/{accountId}/charges/{chargeId}")
                 .build(accountId, externalChargeId);
 
         List<HalResource> refunds = chargeEntity.getRefunds().stream()

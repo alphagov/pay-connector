@@ -19,7 +19,6 @@ import static org.hamcrest.Matchers.is;
 import static org.hamcrest.Matchers.nullValue;
 import static uk.gov.pay.connector.model.domain.GatewayAccountEntity.Type.LIVE;
 import static uk.gov.pay.connector.model.domain.GatewayAccountEntity.Type.TEST;
-import static uk.gov.pay.connector.resources.ApiPaths.GATEWAY_ACCOUNTS_API_PATH;
 import static uk.gov.pay.connector.util.JsonEncoder.toJson;
 
 public class GatewayAccountResourceITest extends GatewayAccountResourceTestBase {
@@ -140,7 +139,7 @@ public class GatewayAccountResourceITest extends GatewayAccountResourceTestBase 
 
         // assert properties are there
         givenSetup()
-                .get(GATEWAY_ACCOUNTS_API_PATH)
+                .get("/v1/api/accounts")
                 .then()
                 .statusCode(200)
                 .body("accounts", hasSize(4))
@@ -171,7 +170,7 @@ public class GatewayAccountResourceITest extends GatewayAccountResourceTestBase 
     @Test
     public void shouldReturnEmptyCollectionOfAccountsWhenNoneFound() {
         givenSetup()
-                .get(GATEWAY_ACCOUNTS_API_PATH)
+                .get("/v1/api/accounts")
                 .then()
                 .statusCode(200)
                 .body("accounts", hasSize(0));

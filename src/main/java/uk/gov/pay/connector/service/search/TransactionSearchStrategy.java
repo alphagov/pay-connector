@@ -22,8 +22,6 @@ import java.util.List;
 import java.util.Map;
 
 import static javax.ws.rs.HttpMethod.GET;
-import static uk.gov.pay.connector.resources.ApiPaths.CHARGE_API_PATH;
-import static uk.gov.pay.connector.resources.ApiPaths.REFUNDS_API_PATH;
 
 public class TransactionSearchStrategy extends AbstractSearchStrategy<Transaction> {
 
@@ -77,10 +75,10 @@ public class TransactionSearchStrategy extends AbstractSearchStrategy<Transactio
                 .withCardDetails(cardDetails)
                 .withTransactionType(transactionType.getValue())
                 .withLink("self", GET, uriInfo.getBaseUriBuilder()
-                        .path(CHARGE_API_PATH)
+                        .path("/v1/api/accounts/{accountId}/charges/{chargeId}")
                         .build(transaction.getGatewayAccountId(), transaction.getExternalId()))
                 .withLink("refunds", GET, uriInfo.getBaseUriBuilder()
-                        .path(REFUNDS_API_PATH)
+                        .path("/v1/api/accounts/{accountId}/charges/{chargeId}/refunds")
                         .build(transaction.getGatewayAccountId(), transaction.getExternalId()))
                 .build();
     }

@@ -10,16 +10,6 @@ import java.util.Map;
 
 import static com.jayway.restassured.RestAssured.given;
 import static com.jayway.restassured.http.ContentType.JSON;
-import static uk.gov.pay.connector.resources.ApiPaths.CARD_TYPES_API_PATH;
-import static uk.gov.pay.connector.resources.ApiPaths.CHARGES_API_PATH;
-import static uk.gov.pay.connector.resources.ApiPaths.CHARGES_EXPIRE_CHARGES_TASK_API_PATH;
-import static uk.gov.pay.connector.resources.ApiPaths.CHARGE_API_PATH;
-import static uk.gov.pay.connector.resources.ApiPaths.CHARGE_EVENTS_API_PATH;
-import static uk.gov.pay.connector.resources.ApiPaths.FRONTEND_CHARGE_API_PATH;
-import static uk.gov.pay.connector.resources.ApiPaths.FRONTEND_CHARGE_CANCEL_API_PATH;
-import static uk.gov.pay.connector.resources.ApiPaths.REFUND_API_PATH;
-import static uk.gov.pay.connector.resources.ApiPaths.TRANSACTIONS_API_PATH;
-import static uk.gov.pay.connector.resources.ApiPaths.TRANSACTIONS_SUMMARY_API_PATH;
 
 public class RestAssuredClient {
     private final DropwizardAppWithPostgresRule app;
@@ -79,7 +69,7 @@ public class RestAssuredClient {
     }
 
     public ValidatableResponse postCreateCharge(String postBody) {
-        String requestPath = CHARGES_API_PATH
+        String requestPath = "/v1/api/accounts/{accountId}/charges"
                 .replace("{accountId}", accountId);
 
         return given().port(app.getLocalPort())
@@ -90,7 +80,7 @@ public class RestAssuredClient {
     }
 
     public ValidatableResponse getCharge() {
-        String requestPath = CHARGE_API_PATH
+        String requestPath = "/v1/api/accounts/{accountId}/charges/{chargeId}"
                 .replace("{accountId}", accountId)
                 .replace("{chargeId}", chargeId);
 
@@ -101,12 +91,12 @@ public class RestAssuredClient {
 
     public ValidatableResponse postChargeExpiryTask() {
         return given().port(app.getLocalPort())
-                .post(CHARGES_EXPIRE_CHARGES_TASK_API_PATH)
+                .post("/v1/tasks/expired-charges-sweep")
                 .then();
     }
 
     public ValidatableResponse putChargeStatus(String putBody) {
-        String requestPath = FRONTEND_CHARGE_API_PATH
+        String requestPath = "/v1/frontend/charges/{chargeId}"
                 .replace("{accountId}", accountId)
                 .replace("{chargeId}", chargeId)
                 + "/status";
@@ -118,7 +108,7 @@ public class RestAssuredClient {
     }
 
     public ValidatableResponse patchCharge(String patchBody) {
-        String requestPath = FRONTEND_CHARGE_API_PATH
+        String requestPath = "/v1/frontend/charges/{chargeId}"
                 .replace("{accountId}", accountId)
                 .replace("{chargeId}", chargeId);
 
@@ -130,7 +120,7 @@ public class RestAssuredClient {
     }
 
     public ValidatableResponse postChargeCancellation() {
-        String requestPath = CHARGE_API_PATH
+        String requestPath = "/v1/api/accounts/{accountId}/charges/{chargeId}"
                 .replace("{accountId}", accountId)
                 .replace("{chargeId}", chargeId)
                 + "/cancel";
@@ -142,19 +132,19 @@ public class RestAssuredClient {
     public ValidatableResponse getTransactions() {
         return addQueryParams(given().port(app.getLocalPort())
                 .headers(headers))
-                .get(CHARGES_API_PATH.replace("{accountId}", accountId))
+                .get("/v1/api/accounts/{accountId}/charges".replace("{accountId}", accountId))
                 .then();
     }
 
     public ValidatableResponse getTransactionsAPI() {
         return addQueryParams(given().port(app.getLocalPort())
                 .headers(headers))
-                .get(TRANSACTIONS_API_PATH.replace("{accountId}", accountId))
+                .get("/v1/api/accounts/{accountId}/transactions".replace("{accountId}", accountId))
                 .then();
     }
 
     public ValidatableResponse getEvents(String chargeId) {
-        String requestPath = CHARGE_EVENTS_API_PATH
+        String requestPath = "/v1/api/accounts/{accountId}/charges/{chargeId}/events"
                 .replace("{accountId}", accountId)
                 .replace("{chargeId}", chargeId);
         return given().port(app.getLocalPort())
@@ -163,7 +153,7 @@ public class RestAssuredClient {
     }
 
     public ValidatableResponse getFrontendCharge() {
-        String requestPath = FRONTEND_CHARGE_API_PATH
+        String requestPath = "/v1/frontend/charges/{chargeId}"
                 .replace("{chargeId}", chargeId);
         return given()
                 .port(app.getLocalPort())
@@ -172,7 +162,7 @@ public class RestAssuredClient {
     }
 
     public ValidatableResponse getRefund() {
-        String requestPath = REFUND_API_PATH
+        String requestPath = "/v1/api/accounts/{accountId}/charges/{chargeId}/refunds/{refundId}"
                 .replace("{accountId}", accountId)
                 .replace("{chargeId}", chargeId)
                 .replace("{refundId}", refundId);
@@ -183,7 +173,7 @@ public class RestAssuredClient {
     }
 
     public ValidatableResponse postFrontendChargeCancellation() {
-        String requestPath = FRONTEND_CHARGE_CANCEL_API_PATH
+        String requestPath = "/v1/frontend/charges/{chargeId}/cancel"
                 .replace("{accountId}", accountId)
                 .replace("{chargeId}", chargeId);
         return given().port(app.getLocalPort())
@@ -192,14 +182,14 @@ public class RestAssuredClient {
     }
 
     public ValidatableResponse getCardTypes() {
-        String requestPath = CARD_TYPES_API_PATH;
+        String requestPath = "/v1/api/card-types";
         return given().port(app.getLocalPort())
                 .get(requestPath)
                 .then();
     }
 
     public ValidatableResponse getTransactionsSummary() {
-        String requestPath = TRANSACTIONS_SUMMARY_API_PATH
+        String requestPath = "/v1/api/accounts/{accountId}/transactions-summary"
                 .replace("{accountId}", accountId);
 
         return addQueryParams(given().port(app.getLocalPort()))

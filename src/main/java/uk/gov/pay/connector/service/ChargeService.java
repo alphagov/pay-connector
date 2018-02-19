@@ -41,8 +41,6 @@ import static uk.gov.pay.connector.model.ChargeResponse.aChargeResponseBuilder;
 import static uk.gov.pay.connector.model.domain.ChargeStatus.CREATED;
 import static uk.gov.pay.connector.model.domain.ChargeStatus.ENTERING_CARD_DETAILS;
 import static uk.gov.pay.connector.model.domain.NumbersInStringsSanitizer.sanitize;
-import static uk.gov.pay.connector.resources.ApiPaths.CHARGE_API_PATH;
-import static uk.gov.pay.connector.resources.ApiPaths.REFUNDS_API_PATH;
 
 public class ChargeService {
 
@@ -219,13 +217,13 @@ public class ChargeService {
 
     private URI selfUriFor(UriInfo uriInfo, Long accountId, String chargeId) {
         return uriInfo.getBaseUriBuilder()
-                .path(CHARGE_API_PATH)
+                .path("/v1/api/accounts/{accountId}/charges/{chargeId}")
                 .build(accountId, chargeId);
     }
 
     private URI refundsUriFor(UriInfo uriInfo, Long accountId, String chargeId) {
         return uriInfo.getBaseUriBuilder()
-                .path(REFUNDS_API_PATH)
+                .path("/v1/api/accounts/{accountId}/charges/{chargeId}/refunds")
                 .build(accountId, chargeId);
     }
 
