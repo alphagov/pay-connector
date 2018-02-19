@@ -74,9 +74,10 @@ pipeline {
       when {
         branch 'master'
       }
-      steps {
-        deploy("connector", "test", null, true)
-      }
+       steps {
+          deploy("connector", "test", null, false, false)
+          deployEcs("connector", "test", null, true, true)
+       }
     }
   }
 }
