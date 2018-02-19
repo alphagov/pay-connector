@@ -24,8 +24,6 @@ import java.util.Optional;
 import static java.lang.String.format;
 import static javax.ws.rs.core.MediaType.APPLICATION_JSON;
 import static uk.gov.pay.connector.exception.RefundException.ErrorCode.NOT_SUFFICIENT_AMOUNT_AVAILABLE;
-import static uk.gov.pay.connector.resources.ApiPaths.REFUNDS_API_PATH;
-import static uk.gov.pay.connector.resources.ApiPaths.REFUND_API_PATH;
 import static uk.gov.pay.connector.resources.ChargesApiResource.MAX_AMOUNT;
 import static uk.gov.pay.connector.resources.ChargesApiResource.MIN_AMOUNT;
 import static uk.gov.pay.connector.util.ResponseUtil.*;
@@ -44,7 +42,7 @@ public class ChargeRefundsResource {
     }
 
     @POST
-    @Path(REFUNDS_API_PATH)
+    @Path("/v1/api/accounts/{accountId}/charges/{chargeId}/refunds")
     @Consumes(APPLICATION_JSON)
     @Produces(APPLICATION_JSON)
     public Response submitRefund(@PathParam("accountId") Long accountId, @PathParam("chargeId") String chargeId, RefundRequest refundRequest, @Context UriInfo uriInfo) {
@@ -77,7 +75,7 @@ public class ChargeRefundsResource {
     }
 
     @GET
-    @Path(REFUND_API_PATH)
+    @Path("/v1/api/accounts/{accountId}/charges/{chargeId}/refunds/{refundId}")
     @Produces(APPLICATION_JSON)
     public Response getRefund(@PathParam("accountId") Long accountId, @PathParam("chargeId") String chargeId, @PathParam("refundId") String refundId, @Context UriInfo uriInfo) {
         return chargeDao.findByExternalIdAndGatewayAccount(chargeId, accountId)
@@ -86,7 +84,7 @@ public class ChargeRefundsResource {
     }
 
     @GET
-    @Path(REFUNDS_API_PATH)
+    @Path("/v1/api/accounts/{accountId}/charges/{chargeId}/refunds")
     @Produces(APPLICATION_JSON)
     public Response getRefunds(@PathParam("accountId") Long accountId, @PathParam("chargeId") String chargeId, @Context UriInfo uriInfo) {
         return chargeDao.findByExternalIdAndGatewayAccount(chargeId, accountId)

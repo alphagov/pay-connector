@@ -5,7 +5,6 @@ import com.fasterxml.jackson.core.JsonProcessingException;
 import com.google.common.collect.ImmutableMap;
 import com.google.inject.Inject;
 import io.dropwizard.setup.Environment;
-import org.apache.commons.lang3.StringUtils;
 
 import javax.ws.rs.GET;
 import javax.ws.rs.Path;
@@ -21,7 +20,6 @@ import static org.apache.commons.lang3.StringUtils.isBlank;
 
 @Path("/")
 public class HealthCheckResource {
-    public static final String HEALTHCHECK = "healthcheck";
     public static final String HEALTHY = "healthy";
     public static final String MESSAGE = "message";
 
@@ -33,7 +31,7 @@ public class HealthCheckResource {
     }
 
     @GET
-    @Path(HEALTHCHECK)
+    @Path("healthcheck")
     @Produces(APPLICATION_JSON)
     public Response healthCheck() throws JsonProcessingException {
         SortedMap<String, HealthCheck.Result> results = environment.healthChecks().runHealthChecks();

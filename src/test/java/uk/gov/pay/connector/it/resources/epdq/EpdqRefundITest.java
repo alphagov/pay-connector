@@ -36,8 +36,6 @@ import static uk.gov.pay.connector.matcher.RefundsMatcher.aRefundMatching;
 import static uk.gov.pay.connector.model.domain.ChargeStatus.CAPTURED;
 import static uk.gov.pay.connector.model.domain.ChargeStatus.CAPTURE_SUBMITTED;
 import static uk.gov.pay.connector.model.domain.ChargeStatus.ENTERING_CARD_DETAILS;
-import static uk.gov.pay.connector.resources.ApiPaths.REFUNDS_API_PATH;
-import static uk.gov.pay.connector.resources.ApiPaths.REFUND_API_PATH;
 
 public class EpdqRefundITest extends ChargingITestBase {
 
@@ -406,7 +404,7 @@ public class EpdqRefundITest extends ChargingITestBase {
                 .body(refundPayload)
                 .accept(ContentType.JSON)
                 .contentType(ContentType.JSON)
-                .post(REFUNDS_API_PATH
+                .post("/v1/api/accounts/{accountId}/charges/{chargeId}/refunds"
                         .replace("{accountId}", accountId)
                         .replace("{chargeId}", chargeId))
                 .then();
@@ -416,7 +414,7 @@ public class EpdqRefundITest extends ChargingITestBase {
         return givenSetup()
                 .accept(ContentType.JSON)
                 .contentType(ContentType.JSON)
-                .get(REFUNDS_API_PATH
+                .get("/v1/api/accounts/{accountId}/charges/{chargeId}/refunds"
                         .replace("{accountId}", accountId.toString())
                         .replace("{chargeId}", chargeId))
                 .then();
@@ -426,7 +424,7 @@ public class EpdqRefundITest extends ChargingITestBase {
         return givenSetup()
                 .accept(ContentType.JSON)
                 .contentType(ContentType.JSON)
-                .get(REFUND_API_PATH
+                .get("/v1/api/accounts/{accountId}/charges/{chargeId}/refunds/{refundId}"
                         .replace("{accountId}", accountId.toString())
                         .replace("{chargeId}", chargeId)
                         .replace("{refundId}", refundId))

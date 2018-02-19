@@ -27,7 +27,6 @@ import java.util.List;
 import static fj.data.Either.reduce;
 import static java.util.stream.Collectors.toList;
 import static javax.ws.rs.core.MediaType.APPLICATION_JSON;
-import static uk.gov.pay.connector.resources.ApiPaths.TRANSACTIONS_SUMMARY_API_PATH;
 import static uk.gov.pay.connector.resources.ApiValidators.validateFromDateIsBeforeToDate;
 import static uk.gov.pay.connector.resources.ApiValidators.validateGatewayAccountReference;
 
@@ -58,7 +57,7 @@ public class TransactionsSummaryResource {
     }
 
     @GET
-    @Path(TRANSACTIONS_SUMMARY_API_PATH)
+    @Path("/v1/api/accounts/{accountId}/transactions-summary")
     @Produces(APPLICATION_JSON)
     public Response getPaymentsSummary(@PathParam(ACCOUNT_ID) Long gatewayAccountId,
                                        @QueryParam(FROM_DATE) String fromDate,

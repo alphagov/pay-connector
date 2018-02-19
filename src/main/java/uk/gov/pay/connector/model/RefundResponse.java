@@ -7,9 +7,6 @@ import uk.gov.pay.connector.util.DateTimeUtils;
 import javax.ws.rs.core.UriInfo;
 import java.net.URI;
 
-import static uk.gov.pay.connector.resources.ApiPaths.CHARGE_API_PATH;
-import static uk.gov.pay.connector.resources.ApiPaths.REFUND_API_PATH;
-
 public class RefundResponse extends HalResourceResponse {
 
     private RefundResponse(HalRepresentation.HalRepresentationBuilder refundHalRepresentation, URI location) {
@@ -23,11 +20,11 @@ public class RefundResponse extends HalResourceResponse {
         String externalRefundId = refundEntity.getExternalId();
 
         URI selfLink = uriInfo.getBaseUriBuilder()
-                .path(REFUND_API_PATH)
+                .path("/v1/api/accounts/{accountId}/charges/{chargeId}/refunds/{refundId}")
                 .build(accountId, externalChargeId, externalRefundId);
 
         URI paymentLink = uriInfo.getBaseUriBuilder()
-                .path(CHARGE_API_PATH)
+                .path("/v1/api/accounts/{accountId}/charges/{chargeId}")
                 .build(accountId, externalChargeId);
 
         return new RefundResponse(HalRepresentation.builder()

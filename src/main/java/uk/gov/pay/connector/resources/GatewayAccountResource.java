@@ -50,15 +50,6 @@ import static javax.ws.rs.core.Response.Status.BAD_REQUEST;
 import static javax.ws.rs.core.Response.Status.NOT_FOUND;
 import static uk.gov.pay.connector.model.domain.GatewayAccountEntity.Type;
 import static uk.gov.pay.connector.model.domain.GatewayAccountEntity.Type.TEST;
-import static uk.gov.pay.connector.resources.ApiPaths.FRONTEND_ACCOUNT_CARDTYPES_API_PATH;
-import static uk.gov.pay.connector.resources.ApiPaths.FRONTEND_ACCOUNT_CREDENTIALS_API_PATH;
-import static uk.gov.pay.connector.resources.ApiPaths.FRONTEND_ACCOUNT_SERVICENAME_API_PATH;
-import static uk.gov.pay.connector.resources.ApiPaths.FRONTEND_ACCOUNT_TOGGLE_3DS_API_PATH;
-import static uk.gov.pay.connector.resources.ApiPaths.FRONTEND_GATEWAY_ACCOUNT_API_PATH;
-import static uk.gov.pay.connector.resources.ApiPaths.GATEWAY_ACCOUNTS_API_PATH;
-import static uk.gov.pay.connector.resources.ApiPaths.GATEWAY_ACCOUNTS_DESCRIPTION_ANALYTICS_ID;
-import static uk.gov.pay.connector.resources.ApiPaths.GATEWAY_ACCOUNTS_NOTIFICATION_CREDENTIALS;
-import static uk.gov.pay.connector.resources.ApiPaths.GATEWAY_ACCOUNT_API_PATH;
 import static uk.gov.pay.connector.util.ResponseUtil.badRequestResponse;
 import static uk.gov.pay.connector.util.ResponseUtil.fieldsInvalidSizeResponse;
 import static uk.gov.pay.connector.util.ResponseUtil.fieldsMissingResponse;
@@ -107,7 +98,7 @@ public class GatewayAccountResource {
     }
 
     @GET
-    @Path(GATEWAY_ACCOUNT_API_PATH)
+    @Path("/v1/api/accounts/{accountId}")
     @Produces(APPLICATION_JSON)
     @JsonView(GatewayAccountEntity.Views.ApiView.class)
     public Response getGatewayAccount(@PathParam("accountId") Long accountId) {
@@ -120,7 +111,7 @@ public class GatewayAccountResource {
     }
 
     @GET
-    @Path(GATEWAY_ACCOUNTS_API_PATH)
+    @Path("/v1/api/accounts")
     @Produces(APPLICATION_JSON)
     public Response getGatewayAccounts(@Context UriInfo uriInfo) {
         logger.debug("Getting all gateway accounts");
@@ -135,12 +126,12 @@ public class GatewayAccountResource {
 
     private URI buildUri(UriInfo uriInfo, long accountId) {
         return uriInfo.getBaseUriBuilder()
-                .path(GATEWAY_ACCOUNT_API_PATH)
+                .path("/v1/api/accounts/{accountId}")
                 .build(accountId);
     }
 
     @GET
-    @Path(FRONTEND_GATEWAY_ACCOUNT_API_PATH)
+    @Path("/v1/frontend/accounts/{accountId}")
     @Produces(APPLICATION_JSON)
     @JsonView(GatewayAccountEntity.Views.ApiView.class)
     public Response getGatewayAccountWithCredentials(@PathParam("accountId") Long gatewayAccountId) throws IOException {
@@ -155,7 +146,7 @@ public class GatewayAccountResource {
     }
 
     @GET
-    @Path(FRONTEND_ACCOUNT_CARDTYPES_API_PATH)
+    @Path("/v1/frontend/accounts/{accountId}/card-types")
     @Consumes(APPLICATION_JSON)
     @Produces(APPLICATION_JSON)
     @JsonView(GatewayAccountEntity.Views.ApiView.class)
@@ -169,7 +160,7 @@ public class GatewayAccountResource {
     }
 
     @POST
-    @Path(GATEWAY_ACCOUNTS_API_PATH)
+    @Path("/v1/api/accounts")
     @Consumes(APPLICATION_JSON)
     @Produces(APPLICATION_JSON)
     public Response createNewGatewayAccount(JsonNode node, @Context UriInfo uriInfo) {
@@ -218,7 +209,7 @@ public class GatewayAccountResource {
     }
 
     @PATCH
-    @Path(GATEWAY_ACCOUNT_API_PATH)
+    @Path("/v1/api/accounts/{accountId}")
     @Consumes(APPLICATION_JSON)
     @Produces(APPLICATION_JSON)
     @Transactional
@@ -232,7 +223,7 @@ public class GatewayAccountResource {
     }
 
     @PATCH
-    @Path(FRONTEND_ACCOUNT_CREDENTIALS_API_PATH)
+    @Path("/v1/frontend/accounts/{accountId}/credentials")
     @Consumes(APPLICATION_JSON)
     @Produces(APPLICATION_JSON)
     @Transactional
@@ -260,7 +251,7 @@ public class GatewayAccountResource {
     }
 
     @PATCH
-    @Path(FRONTEND_ACCOUNT_SERVICENAME_API_PATH)
+    @Path("/v1/frontend/accounts/{accountId}/servicename")
     @Consumes(APPLICATION_JSON)
     @Produces(APPLICATION_JSON)
     @Transactional
@@ -286,7 +277,7 @@ public class GatewayAccountResource {
     }
 
     @PATCH
-    @Path(FRONTEND_ACCOUNT_TOGGLE_3DS_API_PATH)
+    @Path("/v1/frontend/accounts/{accountId}/3ds-toggle")
     @Consumes(APPLICATION_JSON)
     @Produces(APPLICATION_JSON)
     @Transactional
@@ -311,7 +302,7 @@ public class GatewayAccountResource {
     }
 
     @POST
-    @Path(FRONTEND_ACCOUNT_CARDTYPES_API_PATH)
+    @Path("/v1/frontend/accounts/{accountId}/card-types")
     @Consumes(APPLICATION_JSON)
     @Produces(APPLICATION_JSON)
     @Transactional
@@ -363,7 +354,7 @@ public class GatewayAccountResource {
     }
 
     @POST
-    @Path(GATEWAY_ACCOUNTS_NOTIFICATION_CREDENTIALS)
+    @Path("/v1/api/accounts/{accountId}/notification-credentials")
     @Consumes(APPLICATION_JSON)
     @Produces(APPLICATION_JSON)
     @Transactional
@@ -392,7 +383,7 @@ public class GatewayAccountResource {
     }
 
     @PATCH
-    @Path(GATEWAY_ACCOUNTS_DESCRIPTION_ANALYTICS_ID)
+    @Path("/v1/api/accounts/{accountId}/description-analytics-id")
     @Consumes(APPLICATION_JSON)
     @Produces(APPLICATION_JSON)
     @Transactional

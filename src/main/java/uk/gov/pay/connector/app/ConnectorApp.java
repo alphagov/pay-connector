@@ -27,7 +27,6 @@ import uk.gov.pay.connector.filters.SchemeRewriteFilter;
 import uk.gov.pay.connector.healthcheck.CardExecutorServiceHealthCheck;
 import uk.gov.pay.connector.healthcheck.DatabaseHealthCheck;
 import uk.gov.pay.connector.healthcheck.Ping;
-import uk.gov.pay.connector.resources.ApiPaths;
 import uk.gov.pay.connector.resources.CardResource;
 import uk.gov.pay.connector.resources.CardTypesResource;
 import uk.gov.pay.connector.resources.ChargeEventsResource;
@@ -107,7 +106,7 @@ public class ConnectorApp extends Application<ConnectorConfiguration> {
         setupSmartpayBasicAuth(environment, injector.getInstance(SmartpayAccountSpecificAuthenticator.class));
 
         environment.servlets().addFilter("LoggingFilter", injector.getInstance(LoggingFilter.class))
-                .addMappingForUrlPatterns(of(REQUEST), true, ApiPaths.API_VERSION_PATH + "/*");
+                .addMappingForUrlPatterns(of(REQUEST), true, "/v1/*");
 
         environment.healthChecks().register("ping", new Ping());
         environment.healthChecks().register("database", injector.getInstance(DatabaseHealthCheck.class));

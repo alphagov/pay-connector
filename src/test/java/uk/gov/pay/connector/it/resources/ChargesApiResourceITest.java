@@ -60,8 +60,6 @@ import static uk.gov.pay.connector.model.domain.ChargeStatus.AUTHORISATION_SUCCE
 import static uk.gov.pay.connector.model.domain.ChargeStatus.CAPTURED;
 import static uk.gov.pay.connector.model.domain.ChargeStatus.CREATED;
 import static uk.gov.pay.connector.model.domain.ChargeStatus.EXPIRED;
-import static uk.gov.pay.connector.resources.ApiPaths.CHARGES_API_PATH;
-import static uk.gov.pay.connector.resources.ApiPaths.CHARGE_API_PATH;
 import static uk.gov.pay.connector.util.DateTimeUtils.toUTCZonedDateTime;
 import static uk.gov.pay.connector.util.JsonEncoder.toJson;
 import static uk.gov.pay.connector.util.NumberMatcher.isNumber;
@@ -1024,14 +1022,14 @@ public class ChargesApiResourceITest extends ChargingITestBase {
     }
 
     private String expectedChargeLocationFor(String accountId, String chargeId) {
-        return "https://localhost:" + app.getLocalPort() + CHARGE_API_PATH
+        return "https://localhost:" + app.getLocalPort() + "/v1/api/accounts/{accountId}/charges/{chargeId}"
                 .replace("{accountId}", accountId)
                 .replace("{chargeId}", chargeId);
     }
 
     private String expectedChargesLocationFor(String accountId, String queryParams) {
         return "https://localhost:" + app.getLocalPort()
-                + CHARGES_API_PATH.replace("{accountId}", accountId)
+                + "/v1/api/accounts/{accountId}/charges".replace("{accountId}", accountId)
                 + queryParams;
     }
 }

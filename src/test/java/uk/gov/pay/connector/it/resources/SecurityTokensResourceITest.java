@@ -6,7 +6,6 @@ import org.junit.Before;
 import org.junit.Rule;
 import org.junit.Test;
 import uk.gov.pay.connector.it.dao.DatabaseFixtures;
-import uk.gov.pay.connector.resources.SecurityTokensResource;
 import uk.gov.pay.connector.rules.DropwizardAppWithPostgresRule;
 
 import static com.jayway.restassured.RestAssured.given;
@@ -23,7 +22,7 @@ public class SecurityTokensResourceITest {
 
 
     private String tokensUrlFor(String id) {
-        return SecurityTokensResource.CHARGE_TOKEN_PATH.replace("{chargeTokenId}", id);
+        return "/v1/frontend/tokens/{chargeTokenId}".replace("{chargeTokenId}", id);
     }
 
     @Rule

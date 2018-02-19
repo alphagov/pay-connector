@@ -42,10 +42,6 @@ import static javax.ws.rs.core.MediaType.APPLICATION_JSON;
 import static javax.ws.rs.core.Response.created;
 import static org.apache.commons.lang3.StringUtils.isNotBlank;
 import static uk.gov.pay.connector.model.TransactionType.inferTransactionTypeFrom;
-import static uk.gov.pay.connector.resources.ApiPaths.CHARGES_API_PATH;
-import static uk.gov.pay.connector.resources.ApiPaths.CHARGES_EXPIRE_CHARGES_TASK_API_PATH;
-import static uk.gov.pay.connector.resources.ApiPaths.CHARGE_API_PATH;
-import static uk.gov.pay.connector.resources.ApiPaths.TRANSACTIONS_API_PATH;
 import static uk.gov.pay.connector.service.ChargeExpiryService.EXPIRABLE_STATUSES;
 import static uk.gov.pay.connector.service.search.SearchService.TYPE.CHARGE;
 import static uk.gov.pay.connector.service.search.SearchService.TYPE.TRANSACTION;
@@ -114,7 +110,7 @@ public class ChargesApiResource {
     }
 
     @GET
-    @Path(CHARGE_API_PATH)
+    @Path("/v1/api/accounts/{accountId}/charges/{chargeId}")
     @Produces(APPLICATION_JSON)
     public Response getCharge(@PathParam(ACCOUNT_ID) Long accountId, @PathParam("chargeId") String chargeId, @Context UriInfo uriInfo) {
         return chargeService.findChargeForAccount(chargeId, accountId, uriInfo)
@@ -123,7 +119,7 @@ public class ChargesApiResource {
     }
 
     @GET
-    @Path(CHARGES_API_PATH)
+    @Path("/v1/api/accounts/{accountId}/charges")
     @Produces(APPLICATION_JSON)
     public Response getChargesJson(@PathParam(ACCOUNT_ID) Long accountId,
                                    @QueryParam(EMAIL_KEY) String email,
@@ -180,7 +176,7 @@ public class ChargesApiResource {
     }
 
     @GET
-    @Path(TRANSACTIONS_API_PATH)
+    @Path("/v1/api/accounts/{accountId}/transactions")
     @Produces(APPLICATION_JSON)
     public Response getTransactionsJson(@PathParam(ACCOUNT_ID) Long accountId,
                                         @QueryParam(EMAIL_KEY) String email,
@@ -225,7 +221,7 @@ public class ChargesApiResource {
     }
 
     @POST
-    @Path(CHARGES_API_PATH)
+    @Path("/v1/api/accounts/{accountId}/charges")
     @Produces(APPLICATION_JSON)
     public Response createNewCharge(@PathParam(ACCOUNT_ID) Long accountId, Map<String, String> chargeRequest, @Context UriInfo uriInfo) {
         Optional<List<String>> missingFields = checkMissingFields(chargeRequest);
@@ -251,7 +247,7 @@ public class ChargesApiResource {
     }
 
     @POST
-    @Path(CHARGES_EXPIRE_CHARGES_TASK_API_PATH)
+    @Path("/v1/tasks/expired-charges-sweep")
     @Produces(APPLICATION_JSON)
     public Response expireCharges(@Context UriInfo uriInfo) {
         List<ChargeEntity> charges = chargeDao.findBeforeDateWithStatusIn(getExpiryDate(), EXPIRABLE_STATUSES);

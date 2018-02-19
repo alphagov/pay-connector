@@ -35,9 +35,7 @@ import static org.hamcrest.Matchers.is;
 import static org.junit.Assert.assertThat;
 import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
-import static uk.gov.pay.connector.model.domain.ChargeStatus.AUTHORISATION_ERROR;
 import static uk.gov.pay.connector.model.domain.ChargeStatus.AUTHORISATION_UNEXPECTED_ERROR;
-import static uk.gov.pay.connector.resources.ApiPaths.FRONTEND_CHARGE_AUTHORIZE_API_PATH;
 import static uk.gov.pay.connector.util.AuthUtils.aValidAuthorisationDetails;
 
 @RunWith(MockitoJUnitRunner.class)
@@ -96,7 +94,7 @@ public class GatewayAuthFailuresITest {
         gatewayStub.respondWithUnexpectedResponseCodeWhenCardAuth();
 
         String errorMessage = "Unexpected Response Code From Gateway";
-        String cardAuthUrl = FRONTEND_CHARGE_AUTHORIZE_API_PATH.replace("{chargeId}", chargeTestRecord.getExternalChargeId());
+        String cardAuthUrl = "/v1/frontend/charges/{chargeId}/cards".replace("{chargeId}", chargeTestRecord.getExternalChargeId());
 
         given().config(RestAssured.config().connectionConfig(connectionConfig().closeIdleConnectionsAfterEachResponse()))
                 .port(app.getLocalPort())

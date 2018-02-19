@@ -29,7 +29,6 @@ import static javax.ws.rs.core.MediaType.APPLICATION_JSON;
 import static uk.gov.pay.connector.model.FrontendChargeResponse.aFrontendChargeResponse;
 import static uk.gov.pay.connector.model.builder.PatchRequestBuilder.aPatchRequestBuilder;
 import static uk.gov.pay.connector.model.domain.ChargeStatus.ENTERING_CARD_DETAILS;
-import static uk.gov.pay.connector.resources.ApiPaths.*;
 import static uk.gov.pay.connector.resources.ApiValidators.validateChargePatchParams;
 import static uk.gov.pay.connector.resources.ChargesApiResource.EMAIL_KEY;
 import static uk.gov.pay.connector.util.ResponseUtil.*;
@@ -51,7 +50,7 @@ public class ChargesFrontendResource {
     }
 
     @GET
-    @Path(FRONTEND_CHARGE_API_PATH)
+    @Path("/v1/frontend/charges/{chargeId}")
     @Produces(APPLICATION_JSON)
     @JsonView(GatewayAccountEntity.Views.FrontendView.class)
     public Response getCharge(@PathParam("chargeId") String chargeId, @Context UriInfo uriInfo) {
@@ -65,7 +64,7 @@ public class ChargesFrontendResource {
     }
 
     @PATCH
-    @Path(FRONTEND_CHARGE_API_PATH)
+    @Path("/v1/frontend/charges/{chargeId}")
     @Produces(APPLICATION_JSON)
     @JsonView(GatewayAccountEntity.Views.FrontendView.class)
     public Response patchCharge(@PathParam("chargeId") String chargeId, Map<String, String> chargePatchMap, @Context UriInfo uriInfo) {
@@ -91,7 +90,7 @@ public class ChargesFrontendResource {
     }
 
     @PUT
-    @Path(FRONTEND_CHARGE_STATUS_API_PATH)
+    @Path("/v1/frontend/charges/{chargeId}/status")
     @Produces(APPLICATION_JSON)
     @JsonView(GatewayAccountEntity.Views.FrontendView.class)
     public Response updateChargeStatus(@PathParam("chargeId") String chargeId, Map newStatusMap) {
@@ -167,9 +166,9 @@ public class ChargesFrontendResource {
                 .withChargeCardDetails(persistedCard)
                 .withAuth3dsData(auth3dsData)
                 .withGatewayAccount(charge.getGatewayAccount())
-                .withLink("self", GET, locationUriFor(FRONTEND_CHARGE_API_PATH, uriInfo, chargeId))
-                .withLink("cardAuth", POST, locationUriFor(FRONTEND_CHARGE_AUTHORIZE_API_PATH, uriInfo, chargeId))
-                .withLink("cardCapture", POST, locationUriFor(FRONTEND_CHARGE_CAPTURE_API_PATH, uriInfo, chargeId)).build();
+                .withLink("self", GET, locationUriFor("/v1/frontend/charges/{chargeId}", uriInfo, chargeId))
+                .withLink("cardAuth", POST, locationUriFor("/v1/frontend/charges/{chargeId}/cards", uriInfo, chargeId))
+                .withLink("cardCapture", POST, locationUriFor("/v1/frontend/charges/{chargeId}/capture", uriInfo, chargeId)).build();
     }
 
     private URI locationUriFor(String path, UriInfo uriInfo, String chargeId) {

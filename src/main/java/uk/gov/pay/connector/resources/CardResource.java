@@ -17,7 +17,6 @@ import javax.ws.rs.core.Response;
 import java.util.Optional;
 
 import static javax.ws.rs.core.MediaType.APPLICATION_JSON;
-import static uk.gov.pay.connector.resources.ApiPaths.*;
 import static uk.gov.pay.connector.resources.AuthCardDetailsValidator.isWellFormatted;
 import static uk.gov.pay.connector.util.ResponseUtil.badRequestResponse;
 import static uk.gov.pay.connector.util.ResponseUtil.serviceErrorResponse;
@@ -41,7 +40,7 @@ public class CardResource {
     }
 
     @POST
-    @Path(FRONTEND_CHARGE_AUTHORIZE_API_PATH)
+    @Path("/v1/frontend/charges/{chargeId}/cards")
     @Consumes(APPLICATION_JSON)
     @Produces(APPLICATION_JSON)
     public Response authoriseCharge(@PathParam("chargeId") String chargeId, AuthCardDetails authCardDetails) {
@@ -59,7 +58,7 @@ public class CardResource {
     }
 
     @POST
-    @Path(FRONTEND_CHARGE_3DS_AUTHORIZE_API_PATH)
+    @Path("/v1/frontend/charges/{chargeId}/3ds")
     @Consumes(APPLICATION_JSON)
     @Produces(APPLICATION_JSON)
     public Response authorise3dsCharge(@PathParam("chargeId") String chargeId, Auth3dsDetails auth3DsDetails) {
@@ -68,7 +67,7 @@ public class CardResource {
     }
 
     @POST
-    @Path(FRONTEND_CHARGE_CAPTURE_API_PATH)
+    @Path("/v1/frontend/charges/{chargeId}/capture")
     @Consumes(APPLICATION_JSON)
     @Produces(APPLICATION_JSON)
     public Response captureCharge(@PathParam("chargeId") String chargeId) {
@@ -78,14 +77,14 @@ public class CardResource {
     }
 
     @POST
-    @Path(CHARGE_CANCEL_API_PATH)
+    @Path("/v1/api/accounts/{accountId}/charges/{chargeId}/cancel")
     @Produces(APPLICATION_JSON)
     public Response cancelCharge(@PathParam("accountId") Long accountId, @PathParam("chargeId") String chargeId) {
         return handleGatewayCancelResponse(chargeCancelService.doSystemCancel(chargeId, accountId), chargeId);
     }
 
     @POST
-    @Path(FRONTEND_CHARGE_CANCEL_API_PATH)
+    @Path("/v1/frontend/charges/{chargeId}/cancel")
     @Produces(APPLICATION_JSON)
     public Response userCancelCharge(@PathParam("chargeId") String chargeId) {
         return handleGatewayCancelResponse(chargeCancelService.doUserCancel(chargeId), chargeId);

@@ -3,14 +3,13 @@ package uk.gov.pay.connector.it.resources;
 import org.junit.Test;
 
 import static org.hamcrest.Matchers.is;
-import static uk.gov.pay.connector.resources.HealthCheckResource.HEALTHCHECK;
 
 public class HealthCheckResourceITest extends GatewayAccountResourceTestBase {
 
     @Test
     public void checkHealthcheck_isHealthy() throws Exception {
         givenSetup()
-                .get(HEALTHCHECK)
+                .get("healthcheck")
                 .then()
                 .statusCode(200)
                 .body("ping.healthy", is(true))
@@ -23,7 +22,7 @@ public class HealthCheckResourceITest extends GatewayAccountResourceTestBase {
     public void checkHealthcheck_isUnhealthy() throws Exception {
         app.stopPostgres();
         givenSetup()
-                .get(HEALTHCHECK)
+                .get("healthcheck")
                 .then()
                 .statusCode(503)
                 .body("ping.healthy", is(true))

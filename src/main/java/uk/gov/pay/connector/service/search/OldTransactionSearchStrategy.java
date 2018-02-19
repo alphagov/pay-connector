@@ -20,8 +20,6 @@ import java.util.Map;
 
 import static javax.ws.rs.HttpMethod.GET;
 import static uk.gov.pay.connector.model.TransactionResponse.aTransactionResponseBuilder;
-import static uk.gov.pay.connector.resources.ApiPaths.CHARGE_API_PATH;
-import static uk.gov.pay.connector.resources.ApiPaths.REFUNDS_API_PATH;
 
 @Deprecated // This will be removed once the new refunds functionality has been completed.
 public class OldTransactionSearchStrategy extends AbstractSearchStrategy<Transaction> implements SearchStrategy {
@@ -72,10 +70,10 @@ public class OldTransactionSearchStrategy extends AbstractSearchStrategy<Transac
                 .withEmail(transaction.getEmail())
                 .withGatewayTransactionId(transaction.getGatewayTransactionId())
                 .withLink("self", GET, uriInfo.getBaseUriBuilder()
-                        .path(CHARGE_API_PATH)
+                        .path("/v1/api/accounts/{accountId}/charges/{chargeId}")
                         .build(transaction.getGatewayAccountId(), transaction.getExternalId()))
                 .withLink("refunds", GET, uriInfo.getBaseUriBuilder()
-                        .path(REFUNDS_API_PATH)
+                        .path("/v1/api/accounts/{accountId}/charges/{chargeId}/refunds")
                         .build(transaction.getGatewayAccountId(), transaction.getExternalId()))
                 .build();
     }

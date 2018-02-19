@@ -1,7 +1,6 @@
 package uk.gov.pay.connector.resources;
 
 import com.google.common.collect.ImmutableMap;
-import com.google.inject.persist.Transactional;
 import uk.gov.pay.connector.dao.CardTypeDao;
 
 import javax.inject.Inject;
@@ -11,7 +10,6 @@ import javax.ws.rs.Produces;
 import javax.ws.rs.core.Response;
 
 import static javax.ws.rs.core.MediaType.APPLICATION_JSON;
-import static uk.gov.pay.connector.resources.ApiPaths.CARD_TYPES_API_PATH;
 import static uk.gov.pay.connector.util.ResponseUtil.successResponseWithEntity;
 
 @Path("/")
@@ -26,7 +24,7 @@ public class CardTypesResource {
     }
 
     @GET
-    @Path(CARD_TYPES_API_PATH)
+    @Path("/v1/api/card-types")
     @Produces(APPLICATION_JSON)
     public Response getCardTypes() {
         return successResponseWithEntity(ImmutableMap.of(CARD_TYPES_FIELD_NAME, cardTypeDao.findAll()));
