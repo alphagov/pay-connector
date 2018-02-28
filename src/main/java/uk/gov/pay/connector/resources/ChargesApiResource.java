@@ -1,5 +1,6 @@
 package uk.gov.pay.connector.resources;
 
+import com.codahale.metrics.annotation.Timed;
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableMap;
 import org.apache.commons.lang3.StringUtils;
@@ -105,6 +106,7 @@ public class ChargesApiResource {
 
     @GET
     @Path("/v1/api/accounts/{accountId}/charges")
+    @Timed
     @Produces(APPLICATION_JSON)
     public Response getChargesJson(@PathParam(ACCOUNT_ID) Long accountId,
                                    @QueryParam(EMAIL_KEY) String email,
@@ -155,6 +157,7 @@ public class ChargesApiResource {
 
     @GET
     @Path("/v2/api/accounts/{accountId}/charges")
+    @Timed
     @Produces(APPLICATION_JSON)
     public Response getChargesJsonV2(@PathParam(ACCOUNT_ID) Long accountId,
                                    @QueryParam(EMAIL_KEY) String email,
@@ -205,6 +208,7 @@ public class ChargesApiResource {
 
     @GET
     @Path("/v1/api/accounts/{accountId}/transactions")
+    @Timed
     @Produces(APPLICATION_JSON)
     public Response getTransactionsJson(@PathParam(ACCOUNT_ID) Long accountId,
                                         @QueryParam(EMAIL_KEY) String email,
