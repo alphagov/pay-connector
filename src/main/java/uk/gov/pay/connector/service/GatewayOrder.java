@@ -1,8 +1,8 @@
 package uk.gov.pay.connector.service;
 
-import javax.ws.rs.core.MediaType;
 import uk.gov.pay.connector.model.OrderRequestType;
 
+import javax.ws.rs.core.MediaType;
 import java.util.Optional;
 
 public class GatewayOrder {

@@ -31,22 +31,32 @@ public class EpdqPayloadDefinitionForNewOrder implements PayloadDefinition<EpdqT
 
         // Keep this list in alphabetical order
         return newParameterBuilder()
+                .add("ACCEPTURL", "http://example.com/accept")
                 .add(AMOUNT_KEY, templateData.getAmount())
                 .add(CARD_NO_KEY, templateData.getAuthCardDetails().getCardNo())
                 .add(CARDHOLDER_NAME_KEY, templateData.getAuthCardDetails().getCardHolder())
+                .add("COMPLUS", "returnedToPostSaleRequest")
                 .add(CURRENCY_KEY, "GBP")
                 .add(CVC_KEY, templateData.getAuthCardDetails().getCvc())
+                .add("DECLINEURL", "http://example.com/decline")
+                .add("EXCEPTIONURL", "http://example.com/exception")
                 .add(EXPIRY_DATE_KEY, templateData.getAuthCardDetails().getEndDate())
+                .add("FLAG3D", "Y")
+                .add("HTTP_ACCEPT", "Accept: */*")
+                .add("HTTP_USER_AGENT", "User-Agent: Mozilla/4.0 (compatible; MSIE 6.0; Windows NT 5.0)")
+                .add("LANGUAGE", "en_US")
                 .add(OPERATION_KEY, templateData.getOperationType())
                 .add(ORDER_ID_KEY, templateData.getOrderId())
                 .add(OWNER_ADDRESS_KEY, concatAddressLines(templateData.getAuthCardDetails().getAddress().getLine1(),
-                                templateData.getAuthCardDetails().getAddress().getLine2()))
+                        templateData.getAuthCardDetails().getAddress().getLine2()))
                 .add(OWNER_COUNTRY_CODE_KEY, templateData.getAuthCardDetails().getAddress().getCountry())
                 .add(OWNER_TOWN_KEY, templateData.getAuthCardDetails().getAddress().getCity())
                 .add(OWNER_ZIP_KEY, templateData.getAuthCardDetails().getAddress().getPostcode())
+                .add("PARAMPLUS", "misparams")
                 .add(PSPID_KEY, templateData.getMerchantCode())
                 .add(PSWD_KEY, templateData.getPassword())
                 .add(USERID_KEY, templateData.getUserId())
+                .add("WIN3DS", "MAINW")
                 .build();
     }
 

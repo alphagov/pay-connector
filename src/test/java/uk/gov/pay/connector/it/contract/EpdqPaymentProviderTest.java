@@ -6,7 +6,6 @@ import com.codahale.metrics.MetricRegistry;
 import com.google.common.collect.ImmutableMap;
 import org.junit.Assume;
 import org.junit.Before;
-import org.junit.Ignore;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.mockito.runners.MockitoJUnitRunner;
@@ -52,7 +51,7 @@ import static uk.gov.pay.connector.model.domain.RefundEntityFixture.userExternal
 import static uk.gov.pay.connector.util.AuthUtils.buildAuthCardDetails;
 import static uk.gov.pay.connector.util.SystemUtils.envOrThrow;
 
-@Ignore("Ignoring as this test is failing in Jenkins because it's failing to locate the certificates - PP-1707")
+//@Ignore("Ignoring as this test is failing in Jenkins because it's failing to locate the certificates - PP-1707")
 @RunWith(MockitoJUnitRunner.class)
 public class EpdqPaymentProviderTest {
 
@@ -208,7 +207,7 @@ public class EpdqPaymentProviderTest {
     }
 
     private static AuthCardDetails aValidEpdqCard() {
-        String validSandboxCard = "5555444433331111";
+        String validSandboxCard = "4000000000000002";
         return buildAuthCardDetails(validSandboxCard, "737", "08/18", "visa");
     }
 
