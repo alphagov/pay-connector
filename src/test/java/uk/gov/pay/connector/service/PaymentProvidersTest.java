@@ -12,6 +12,7 @@ import org.mockito.Mock;
 import org.mockito.runners.MockitoJUnitRunner;
 import uk.gov.pay.connector.app.ConnectorConfiguration;
 import uk.gov.pay.connector.app.GatewayConfig;
+import uk.gov.pay.connector.app.LinksConfig;
 import uk.gov.pay.connector.app.WorldpayConfig;
 import uk.gov.pay.connector.service.epdq.EpdqPaymentProvider;
 import uk.gov.pay.connector.service.sandbox.SandboxPaymentProvider;
@@ -48,6 +49,9 @@ public class PaymentProvidersTest {
     ConnectorConfiguration config;
 
     @Mock
+    LinksConfig linksConfig;
+
+    @Mock
     WorldpayConfig worldpayConfig;
 
     @Mock
@@ -80,6 +84,8 @@ public class PaymentProvidersTest {
         when(config.getGatewayConfigFor(PaymentGatewayName.WORLDPAY)).thenReturn(worldpayConfig);
         when(config.getGatewayConfigFor(PaymentGatewayName.SMARTPAY)).thenReturn(smartpayConfig);
         when(config.getGatewayConfigFor(EPDQ)).thenReturn(epdqConfig);
+        when(config.getLinks()).thenReturn(linksConfig);
+        when(linksConfig.getFrontendUrl()).thenReturn("http://frontendUrl");
         when(worldpayConfig.getUrls()).thenReturn(worldpayUrlMap);
         when(smartpayConfig.getUrls()).thenReturn(smartpayUrlMap);
         when(epdqConfig.getUrls()).thenReturn(epdqUrlMap);
