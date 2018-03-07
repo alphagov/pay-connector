@@ -452,6 +452,14 @@ public class DatabaseTestHelper {
         );
     }
 
+    public void enable3dsForGatewayAccount(long accountId) {
+        jdbi.withHandle(handle ->
+                handle.createStatement("UPDATE gateway_accounts set requires_3ds=true WHERE id=:gatewayAccountId")
+                        .bind("gatewayAccountId", accountId)
+                        .execute()
+        );
+    }
+
     public void addNotificationCredentialsFor(long accountId, String username, String password) {
         jdbi.withHandle(handle ->
                 handle.createStatement("INSERT INTO notification_credentials(account_id, username, password, version) VALUES (:accountId, :username, :password, 1)")
@@ -520,7 +528,6 @@ public class DatabaseTestHelper {
         );
         return new Gson().fromJson(jsonString, Map.class);
     }
-
     public void addPaymentRequest(long id,
                                   long amount,
                                   long gatewaysAccountId,
@@ -556,6 +563,7 @@ public class DatabaseTestHelper {
                 )
         );
     }
+
     public void addChargeTransaction(
             long transactionId,
             String gatewayTransactionId,
