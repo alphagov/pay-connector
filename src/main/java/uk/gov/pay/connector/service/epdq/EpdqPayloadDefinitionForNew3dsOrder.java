@@ -29,22 +29,23 @@ public class EpdqPayloadDefinitionForNew3dsOrder implements PayloadDefinition<Ep
     @Override
     public ImmutableList<NameValuePair> extract(EpdqTemplateData templateData) {
 
+        String epdqCallbackUrl = String.format("%s/card_details/%s/3ds_required_in", templateData.getFrontendUrl(), templateData.getOrderId());
         // Keep this list in alphabetical order
         return newParameterBuilder()
-                .add("ACCEPTURL", "http://example.com/accept")
+                .add("ACCEPTURL", epdqCallbackUrl)
                 .add(AMOUNT_KEY, templateData.getAmount())
                 .add(CARD_NO_KEY, templateData.getAuthCardDetails().getCardNo())
                 .add(CARDHOLDER_NAME_KEY, templateData.getAuthCardDetails().getCardHolder())
-                .add("COMPLUS", "returnedToPostSaleRequest")
+                .add("COMPLUS", "")
                 .add(CURRENCY_KEY, "GBP")
                 .add(CVC_KEY, templateData.getAuthCardDetails().getCvc())
-                .add("DECLINEURL", "http://example.com/decline")
-                .add("EXCEPTIONURL", "http://example.com/exception")
+                .add("DECLINEURL", epdqCallbackUrl + "/decline")
+                .add("EXCEPTIONURL", epdqCallbackUrl + "/exception")
                 .add(EXPIRY_DATE_KEY, templateData.getAuthCardDetails().getEndDate())
                 .add("FLAG3D", "Y")
-                .add("HTTP_ACCEPT", "Accept: */*")
-                .add("HTTP_USER_AGENT", "User-Agent: Mozilla/4.0 (compatible; MSIE 6.0; Windows NT 5.0)")
-                .add("LANGUAGE", "en_UK")
+                .add("HTTP_ACCEPT", templateData.getAuthCardDetails().getAcceptHeader())
+                .add("HTTP_USER_AGENT", templateData.getAuthCardDetails().getUserAgentHeader())
+                .add("LANGUAGE", "en_GB")
                 .add(OPERATION_KEY, templateData.getOperationType())
                 .add(ORDER_ID_KEY, templateData.getOrderId())
                 .add(OWNER_ADDRESS_KEY, concatAddressLines(templateData.getAuthCardDetails().getAddress().getLine1(),
@@ -52,7 +53,7 @@ public class EpdqPayloadDefinitionForNew3dsOrder implements PayloadDefinition<Ep
                 .add(OWNER_COUNTRY_CODE_KEY, templateData.getAuthCardDetails().getAddress().getCountry())
                 .add(OWNER_TOWN_KEY, templateData.getAuthCardDetails().getAddress().getCity())
                 .add(OWNER_ZIP_KEY, templateData.getAuthCardDetails().getAddress().getPostcode())
-                .add("PARAMPLUS", "misparams")
+                .add("PARAMPLUS", "")
                 .add(PSPID_KEY, templateData.getMerchantCode())
                 .add(PSWD_KEY, templateData.getPassword())
                 .add(USERID_KEY, templateData.getUserId())

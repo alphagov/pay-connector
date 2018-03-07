@@ -20,6 +20,7 @@ public class EpdqOrderRequestBuilder extends OrderRequestBuilder {
         private String userId;
         private String shaInPassphrase;
         private String amount;
+        private String frontendUrl;
 
         public String getOperationType() {
             return operationType;
@@ -69,6 +70,14 @@ public class EpdqOrderRequestBuilder extends OrderRequestBuilder {
         public void setAmount(String amount) {
             this.amount = amount;
         }
+
+        public void setFrontendUrl(String frontendUrl) {
+            this.frontendUrl = frontendUrl;
+        }
+
+        public String getFrontendUrl() {
+            return frontendUrl;
+        }
     }
 
     public static final String AUTHORISE_OPERATION_TYPE = "RES";
@@ -107,8 +116,10 @@ public class EpdqOrderRequestBuilder extends OrderRequestBuilder {
         return new EpdqOrderRequestBuilder(new EpdqTemplateData(), AUTHORISE_ORDER_TEMPLATE_BUILDER, OrderRequestType.AUTHORISE, AUTHORISE_OPERATION_TYPE);
     }
 
-    public static EpdqOrderRequestBuilder anEpdq3DsAuthoriseOrderRequestBuilder() {
-        return new EpdqOrderRequestBuilder(new EpdqTemplateData(), AUTHORISE_3DS_ORDER_TEMPLATE_BUILDER, OrderRequestType.AUTHORISE, AUTHORISE_OPERATION_TYPE);
+    public static EpdqOrderRequestBuilder anEpdq3DsAuthoriseOrderRequestBuilder(String frontendUrl) {
+        EpdqTemplateData epdqTemplateData = new EpdqTemplateData();
+        epdqTemplateData.setFrontendUrl(frontendUrl);
+        return new EpdqOrderRequestBuilder(epdqTemplateData, AUTHORISE_3DS_ORDER_TEMPLATE_BUILDER, OrderRequestType.AUTHORISE, AUTHORISE_OPERATION_TYPE);
     }
 
     public static EpdqOrderRequestBuilder anEpdqCaptureOrderRequestBuilder() {
