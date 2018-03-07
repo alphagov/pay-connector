@@ -4,6 +4,7 @@ import org.apache.commons.lang3.StringUtils;
 import uk.gov.pay.connector.service.BaseAuthoriseResponse;
 
 import javax.xml.bind.annotation.XmlAttribute;
+import javax.xml.bind.annotation.XmlElement;
 import javax.xml.bind.annotation.XmlRootElement;
 import java.util.StringJoiner;
 
@@ -21,6 +22,9 @@ public class EpdqAuthorisationResponse extends EpdqBaseResponse implements BaseA
 
     @XmlAttribute(name = "PAYID")
     private String transactionId;
+
+    @XmlElement(name = "HTML_ANSWER")
+    private String htmlAnswer;
 
     @Override
     public AuthoriseStatus authoriseStatus() {
@@ -60,6 +64,10 @@ public class EpdqAuthorisationResponse extends EpdqBaseResponse implements BaseA
     @Override
     public String getTransactionId() {
         return transactionId;
+    }
+
+    public String getHtmlAnswer() {
+        return htmlAnswer;
     }
 
     @Override

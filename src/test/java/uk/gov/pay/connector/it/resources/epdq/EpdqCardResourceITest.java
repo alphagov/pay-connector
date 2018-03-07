@@ -1,14 +1,11 @@
 package uk.gov.pay.connector.it.resources.epdq;
 
+import com.jayway.restassured.response.ValidatableResponse;
 import org.hamcrest.Matchers;
 import org.junit.Test;
 import uk.gov.pay.connector.it.base.ChargingITestBase;
 
-import static uk.gov.pay.connector.model.domain.ChargeStatus.AUTHORISATION_ERROR;
-import static uk.gov.pay.connector.model.domain.ChargeStatus.AUTHORISATION_REJECTED;
-import static uk.gov.pay.connector.model.domain.ChargeStatus.AUTHORISATION_SUBMITTED;
-import static uk.gov.pay.connector.model.domain.ChargeStatus.AUTHORISATION_SUCCESS;
-import static uk.gov.pay.connector.model.domain.ChargeStatus.ENTERING_CARD_DETAILS;
+import static uk.gov.pay.connector.model.domain.ChargeStatus.*;
 
 public class EpdqCardResourceITest extends ChargingITestBase {
 
@@ -32,6 +29,24 @@ public class EpdqCardResourceITest extends ChargingITestBase {
                 .statusCode(200);
 
         assertFrontendChargeStatusIs(chargeId, AUTHORISATION_SUCCESS.toString());
+    }
+
+    @Test
+    public void shouldSuccessfully_authorise3ds() throws Exception {
+        app.getDatabaseTestHelper().enable3dsForGatewayAccount(Long.parseLong(accountId));
+        String chargeId = createNewChargeWithNoTransactionId(ENTERING_CARD_DETAILS);
+        epdq.mockAuthorisation3dsSuccess();
+
+        ValidatableResponse response = givenSetup()
+                .body(authorisationDetails)
+                .post(authoriseChargeUrlFor(chargeId))
+                .then();
+
+        response
+                .body("status", Matchers.is(AUTHORISATION_3DS_REQUIRED.toString()))
+                .statusCode(200);
+
+        assertFrontendChargeStatusIs(chargeId, AUTHORISATION_3DS_REQUIRED.toString());
     }
 
     @Test
