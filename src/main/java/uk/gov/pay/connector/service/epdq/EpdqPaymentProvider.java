@@ -44,6 +44,7 @@ import static uk.gov.pay.connector.service.epdq.EpdqOrderRequestBuilder.anEpdqAu
 import static uk.gov.pay.connector.service.epdq.EpdqOrderRequestBuilder.anEpdqCancelOrderRequestBuilder;
 import static uk.gov.pay.connector.service.epdq.EpdqOrderRequestBuilder.anEpdqCaptureOrderRequestBuilder;
 import static uk.gov.pay.connector.service.epdq.EpdqOrderRequestBuilder.anEpdqRefundOrderRequestBuilder;
+import static uk.gov.pay.connector.service.epdq.EpdqOrderRequestBuilder.anEpdq3DsAuthoriseOrderRequestBuilder;
 
 
 public class EpdqPaymentProvider extends BasePaymentProvider<BaseResponse, String> {
@@ -149,17 +150,33 @@ public class EpdqPaymentProvider extends BasePaymentProvider<BaseResponse, Strin
     }
 
     private Function<AuthorisationGatewayRequest, GatewayOrder> buildAuthoriseOrderFor() {
-        return request -> anEpdqAuthoriseOrderRequestBuilder()
-                .withOrderId(request.getChargeExternalId())
-                .withPassword(request.getGatewayAccount().getCredentials().get(CREDENTIALS_PASSWORD))
-                .withShaInPassphrase(request.getGatewayAccount().getCredentials().get(
-                    CREDENTIALS_SHA_IN_PASSPHRASE))
-                .withUserId(request.getGatewayAccount().getCredentials().get(CREDENTIALS_USERNAME))
-                .withMerchantCode(request.getGatewayAccount().getCredentials().get(CREDENTIALS_MERCHANT_ID))
-                .withDescription(request.getDescription())
-                .withAmount(request.getAmount())
-                .withAuthorisationDetails(request.getAuthCardDetails())
-                .build();
+        return request -> {
+            if (request.getGatewayAccount().isRequires3ds()) {
+                return anEpdq3DsAuthoriseOrderRequestBuilder()
+                        .withOrderId(request.getChargeExternalId())
+                        .withPassword(request.getGatewayAccount().getCredentials().get(CREDENTIALS_PASSWORD))
+                        .withShaInPassphrase(request.getGatewayAccount().getCredentials().get(
+                                CREDENTIALS_SHA_IN_PASSPHRASE))
+                        .withUserId(request.getGatewayAccount().getCredentials().get(CREDENTIALS_USERNAME))
+                        .withMerchantCode(request.getGatewayAccount().getCredentials().get(CREDENTIALS_MERCHANT_ID))
+                        .withDescription(request.getDescription())
+                        .withAmount(request.getAmount())
+                        .withAuthorisationDetails(request.getAuthCardDetails())
+                        .build();
+            } else {
+                return anEpdqAuthoriseOrderRequestBuilder()
+                        .withOrderId(request.getChargeExternalId())
+                        .withPassword(request.getGatewayAccount().getCredentials().get(CREDENTIALS_PASSWORD))
+                        .withShaInPassphrase(request.getGatewayAccount().getCredentials().get(
+                                CREDENTIALS_SHA_IN_PASSPHRASE))
+                        .withUserId(request.getGatewayAccount().getCredentials().get(CREDENTIALS_USERNAME))
+                        .withMerchantCode(request.getGatewayAccount().getCredentials().get(CREDENTIALS_MERCHANT_ID))
+                        .withDescription(request.getDescription())
+                        .withAmount(request.getAmount())
+                        .withAuthorisationDetails(request.getAuthCardDetails())
+                        .build();
+            }
+        };
     }
 
     private Function<CaptureGatewayRequest, GatewayOrder> buildCaptureOrderFor() {
