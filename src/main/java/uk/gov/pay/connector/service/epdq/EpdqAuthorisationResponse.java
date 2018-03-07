@@ -11,6 +11,7 @@ import java.util.StringJoiner;
 public class EpdqAuthorisationResponse extends EpdqBaseResponse implements BaseAuthoriseResponse {
 
     private static final String AUTHORISED = "5";
+    private static final String WAITING_3DS = "46";
     private static final String WAITING_EXTERNAL = "50";
     private static final String WAITING = "51";
     private static final String REJECTED = "2";
@@ -36,6 +37,9 @@ public class EpdqAuthorisationResponse extends EpdqBaseResponse implements BaseA
             return AuthoriseStatus.REJECTED;
         }
 
+        if(WAITING_3DS.equals(status)) {
+            return AuthoriseStatus.REQUIRES_3DS;
+        }
         return AuthoriseStatus.ERROR;
     }
 
@@ -70,6 +74,10 @@ public class EpdqAuthorisationResponse extends EpdqBaseResponse implements BaseA
         if (hasError())
             return super.getErrorMessage();
         return null;
+    }
+
+    public String getStatus() {
+        return status;
     }
 
     @Override

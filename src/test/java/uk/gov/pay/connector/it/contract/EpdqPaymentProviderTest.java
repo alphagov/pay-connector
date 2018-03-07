@@ -5,7 +5,6 @@ import com.codahale.metrics.Histogram;
 import com.codahale.metrics.MetricRegistry;
 import com.google.common.collect.ImmutableMap;
 import org.junit.Assume;
-import org.junit.Before;
 import org.junit.Ignore;
 import org.junit.Test;
 import org.junit.runner.RunWith;
@@ -66,8 +65,7 @@ public class EpdqPaymentProviderTest {
     private Histogram mockHistogram;
     private Counter mockCounter;
 
-    @Before
-    public void setUpAndCheckThatEpdqIsUp() {
+    private void setUpAndCheckThatEpdqIsUp(boolean require3ds) {
         try {
             new URL(url).openConnection().connect();
             Map<String, String> validEpdqCredentials = ImmutableMap.of(
@@ -80,6 +78,7 @@ public class EpdqPaymentProviderTest {
             validGatewayAccount.setGatewayName("epdq");
             validGatewayAccount.setCredentials(validEpdqCredentials);
             validGatewayAccount.setType(TEST);
+            validGatewayAccount.setRequires3ds(require3ds);
 
             chargeEntity = aValidChargeEntity()
                     .withGatewayAccountEntity(validGatewayAccount)
@@ -98,6 +97,7 @@ public class EpdqPaymentProviderTest {
 
     @Test
     public void shouldAuthoriseSuccessfully() throws Exception {
+        setUpAndCheckThatEpdqIsUp(false);
         PaymentProvider paymentProvider = getEpdqPaymentProvider();
         AuthorisationGatewayRequest request = buildAuthorisationRequest(chargeEntity);
         GatewayResponse<EpdqAuthorisationResponse> response = paymentProvider.authorise(request);
@@ -105,7 +105,18 @@ public class EpdqPaymentProviderTest {
     }
 
     @Test
+    public void shouldAuthoriseWith3dsOnSuccessfully() throws Exception {
+        setUpAndCheckThatEpdqIsUp(true);
+        PaymentProvider paymentProvider = getEpdqPaymentProvider();
+        AuthorisationGatewayRequest request = buildAuthorisationRequest(chargeEntity);
+        GatewayResponse<EpdqAuthorisationResponse> response = paymentProvider.authorise(request);
+        assertThat(response.isSuccessful(), is(true));
+        assertThat(response.getBaseResponse().get().getStatus(), is("46"));
+    }
+
+    @Test
     public void shouldAuthoriseSuccessfullyWhenCardholderNameContainsRightSingleQuotationMark() throws Exception {
+        setUpAndCheckThatEpdqIsUp(false);
         PaymentProvider paymentProvider = getEpdqPaymentProvider();
         String cardholderName = "John O’Connor"; // That’s a U+2019 RIGHT SINGLE QUOTATION MARK, not a U+0027 APOSTROPHE
         AuthorisationGatewayRequest request = buildAuthorisationRequest(chargeEntity, cardholderName);
@@ -115,6 +126,7 @@ public class EpdqPaymentProviderTest {
 
     @Test
     public void shouldCaptureSuccessfully() throws Exception {
+        setUpAndCheckThatEpdqIsUp(false);
         PaymentProvider paymentProvider = getEpdqPaymentProvider();
         AuthorisationGatewayRequest request = buildAuthorisationRequest(chargeEntity);
         GatewayResponse<EpdqAuthorisationResponse> response = paymentProvider.authorise(request);
@@ -131,6 +143,7 @@ public class EpdqPaymentProviderTest {
 
     @Test
     public void shouldCancelSuccessfully() throws Exception {
+        setUpAndCheckThatEpdqIsUp(false);
         PaymentProvider paymentProvider = getEpdqPaymentProvider();
         AuthorisationGatewayRequest request = buildAuthorisationRequest(chargeEntity);
         GatewayResponse<EpdqAuthorisationResponse> response = paymentProvider.authorise(request);
@@ -147,6 +160,7 @@ public class EpdqPaymentProviderTest {
 
     @Test
     public void shouldRefundSuccessfully() throws Exception {
+        setUpAndCheckThatEpdqIsUp(false);
         PaymentProvider paymentProvider = getEpdqPaymentProvider();
         AuthorisationGatewayRequest request = buildAuthorisationRequest(chargeEntity);
         GatewayResponse<EpdqAuthorisationResponse> response = paymentProvider.authorise(request);
@@ -208,7 +222,7 @@ public class EpdqPaymentProviderTest {
     }
 
     private static AuthCardDetails aValidEpdqCard() {
-        String validSandboxCard = "5555444433331111";
+        String validSandboxCard = "4000000000000002";
         return buildAuthCardDetails(validSandboxCard, "737", "08/18", "visa");
     }
 
