@@ -28,8 +28,19 @@ pipeline {
         }
       }
       steps {
-        sh 'docker pull govukpay/postgres:9.4.4'
-        sh 'mvn clean package'
+        script {
+          def long stepBuildTime = System.currentTimeMillis()
+
+          sh 'docker pull govukpay/postgres:9.4.4'
+          sh 'mvn clean package'
+
+          postSuccessfulMetrics("connector.maven-build", stepBuildTime)
+        }
+      }
+      post {
+        failure {
+          postMetric("connector.maven-build.failure", 1, "new")
+        }
       }
     }
     stage('Maven Build Without Tests') {
@@ -44,9 +55,14 @@ pipeline {
     stage('Docker Build') {
       steps {
         script {
-          buildApp{
+          buildAppWithMetrics {
             app = "connector"
           }
+        }
+      }
+      post {
+        failure {
+          postMetric("connector.docker-build.failure", 1, "new")
         }
       }
     }
@@ -64,9 +80,14 @@ pipeline {
     stage('Docker Tag') {
       steps {
         script {
-          dockerTag {
+          dockerTagWithMetrics {
             app = "connector"
           }
+        }
+      }
+      post {
+        failure {
+          postMetric("connector.docker-tag.failure", 1, "new")
         }
       }
     }
@@ -78,6 +99,14 @@ pipeline {
           deploy("connector", "test", null, false, false)
           deployEcs("connector", "test", null, true, true)
        }
+    }
+  }
+  post {
+    failure {
+      postMetric("connector.failure", 1, "new")
+    }
+    success {
+      postSuccessfulMetrics("connector")
     }
   }
 }
