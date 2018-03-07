@@ -53,11 +53,13 @@ public class EpdqPaymentProvider extends BasePaymentProvider<BaseResponse, Strin
     public static final String ROUTE_FOR_MAINTENANCE_ORDER = "maintenancedirect.asp";
 
     private final SignatureGenerator signatureGenerator;
+    private final String frontendUrl;
 
     public EpdqPaymentProvider(EnumMap<GatewayOperation, GatewayClient> clients, SignatureGenerator signatureGenerator,
-                               ExternalRefundAvailabilityCalculator externalRefundAvailabilityCalculator) {
+                               ExternalRefundAvailabilityCalculator externalRefundAvailabilityCalculator, String frontendUrl) {
         super(clients, externalRefundAvailabilityCalculator);
         this.signatureGenerator = signatureGenerator;
+        this.frontendUrl = frontendUrl;
     }
 
     @Override
@@ -72,7 +74,7 @@ public class EpdqPaymentProvider extends BasePaymentProvider<BaseResponse, Strin
 
     @Override
     public GatewayResponse authorise(AuthorisationGatewayRequest request) {
-        return sendReceive(ROUTE_FOR_NEW_ORDER, request, buildAuthoriseOrderFor(), EpdqAuthorisationResponse.class, extractResponseIdentifier());
+        return sendReceive(ROUTE_FOR_NEW_ORDER, request, buildAuthoriseOrderFor(frontendUrl), EpdqAuthorisationResponse.class, extractResponseIdentifier());
     }
 
     @Override
@@ -112,7 +114,7 @@ public class EpdqPaymentProvider extends BasePaymentProvider<BaseResponse, Strin
         List<NameValuePair> notificationParams = notification.getPayload().get();
 
         List<NameValuePair> notificationParamsWithoutShaSign = notificationParams.stream()
-            .filter(param -> !param.getName().equalsIgnoreCase(SHASIGN)).collect(toList());
+                .filter(param -> !param.getName().equalsIgnoreCase(SHASIGN)).collect(toList());
 
         String signature = signatureGenerator.sign(notificationParamsWithoutShaSign, gatewayAccountEntity.getCredentials().get(CREDENTIALS_SHA_OUT_PASSPHRASE));
 
@@ -149,33 +151,24 @@ public class EpdqPaymentProvider extends BasePaymentProvider<BaseResponse, Strin
         return EpdqStatusMapper.get();
     }
 
-    private Function<AuthorisationGatewayRequest, GatewayOrder> buildAuthoriseOrderFor() {
+    private Function<AuthorisationGatewayRequest, GatewayOrder> buildAuthoriseOrderFor(String frontendUrl) {
         return request -> {
+            EpdqOrderRequestBuilder epdqOrderRequestBuilder = anEpdqAuthoriseOrderRequestBuilder();
             if (request.getGatewayAccount().isRequires3ds()) {
-                return anEpdq3DsAuthoriseOrderRequestBuilder()
-                        .withOrderId(request.getChargeExternalId())
-                        .withPassword(request.getGatewayAccount().getCredentials().get(CREDENTIALS_PASSWORD))
-                        .withShaInPassphrase(request.getGatewayAccount().getCredentials().get(
-                                CREDENTIALS_SHA_IN_PASSPHRASE))
-                        .withUserId(request.getGatewayAccount().getCredentials().get(CREDENTIALS_USERNAME))
-                        .withMerchantCode(request.getGatewayAccount().getCredentials().get(CREDENTIALS_MERCHANT_ID))
-                        .withDescription(request.getDescription())
-                        .withAmount(request.getAmount())
-                        .withAuthorisationDetails(request.getAuthCardDetails())
-                        .build();
-            } else {
-                return anEpdqAuthoriseOrderRequestBuilder()
-                        .withOrderId(request.getChargeExternalId())
-                        .withPassword(request.getGatewayAccount().getCredentials().get(CREDENTIALS_PASSWORD))
-                        .withShaInPassphrase(request.getGatewayAccount().getCredentials().get(
-                                CREDENTIALS_SHA_IN_PASSPHRASE))
-                        .withUserId(request.getGatewayAccount().getCredentials().get(CREDENTIALS_USERNAME))
-                        .withMerchantCode(request.getGatewayAccount().getCredentials().get(CREDENTIALS_MERCHANT_ID))
-                        .withDescription(request.getDescription())
-                        .withAmount(request.getAmount())
-                        .withAuthorisationDetails(request.getAuthCardDetails())
-                        .build();
+                epdqOrderRequestBuilder = anEpdq3DsAuthoriseOrderRequestBuilder(frontendUrl);
+
             }
+            return epdqOrderRequestBuilder
+                    .withOrderId(request.getChargeExternalId())
+                    .withPassword(request.getGatewayAccount().getCredentials().get(CREDENTIALS_PASSWORD))
+                    .withShaInPassphrase(request.getGatewayAccount().getCredentials().get(
+                            CREDENTIALS_SHA_IN_PASSPHRASE))
+                    .withUserId(request.getGatewayAccount().getCredentials().get(CREDENTIALS_USERNAME))
+                    .withMerchantCode(request.getGatewayAccount().getCredentials().get(CREDENTIALS_MERCHANT_ID))
+                    .withDescription(request.getDescription())
+                    .withAmount(request.getAmount())
+                    .withAuthorisationDetails(request.getAuthCardDetails())
+                    .build();
         };
     }
 
@@ -184,7 +177,7 @@ public class EpdqPaymentProvider extends BasePaymentProvider<BaseResponse, Strin
                 .withUserId(request.getGatewayAccount().getCredentials().get(CREDENTIALS_USERNAME))
                 .withPassword(request.getGatewayAccount().getCredentials().get(CREDENTIALS_PASSWORD))
                 .withShaInPassphrase(request.getGatewayAccount().getCredentials().get(
-                    CREDENTIALS_SHA_IN_PASSPHRASE))
+                        CREDENTIALS_SHA_IN_PASSPHRASE))
                 .withMerchantCode(request.getGatewayAccount().getCredentials().get(CREDENTIALS_MERCHANT_ID))
                 .withTransactionId(request.getTransactionId())
                 .build();
@@ -195,7 +188,7 @@ public class EpdqPaymentProvider extends BasePaymentProvider<BaseResponse, Strin
                 .withUserId(request.getGatewayAccount().getCredentials().get(CREDENTIALS_USERNAME))
                 .withPassword(request.getGatewayAccount().getCredentials().get(CREDENTIALS_PASSWORD))
                 .withShaInPassphrase(request.getGatewayAccount().getCredentials().get(
-                    CREDENTIALS_SHA_IN_PASSPHRASE))
+                        CREDENTIALS_SHA_IN_PASSPHRASE))
                 .withMerchantCode(request.getGatewayAccount().getCredentials().get(CREDENTIALS_MERCHANT_ID))
                 .withTransactionId(request.getTransactionId())
                 .build();
@@ -226,9 +219,9 @@ public class EpdqPaymentProvider extends BasePaymentProvider<BaseResponse, Strin
 
     private String getShaSignFromNotificationParams(List<NameValuePair> notificationParams) {
         return notificationParams.stream()
-            .filter(param -> param.getName().equalsIgnoreCase(SHASIGN))
-            .findFirst()
-            .map(param -> param.getValue())
-            .orElse("");
+                .filter(param -> param.getName().equalsIgnoreCase(SHASIGN))
+                .findFirst()
+                .map(param -> param.getValue())
+                .orElse("");
     }
 }

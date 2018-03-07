@@ -189,7 +189,7 @@ public class EpdqPaymentProviderTest {
                 .cancelClient(gatewayClient)
                 .refundClient(gatewayClient)
                 .build();
-        return new EpdqPaymentProvider(gatewayClients, new EpdqSha512SignatureGenerator(), new EpdqExternalRefundAvailabilityCalculator());
+        return new EpdqPaymentProvider(gatewayClients, new EpdqSha512SignatureGenerator(), new EpdqExternalRefundAvailabilityCalculator(), "http://frontendUrl");
     }
 
     private static AuthorisationGatewayRequest buildAuthorisationRequest(ChargeEntity chargeEntity) {

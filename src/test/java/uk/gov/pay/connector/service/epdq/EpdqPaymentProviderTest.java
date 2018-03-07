@@ -73,18 +73,7 @@ import static uk.gov.pay.connector.model.domain.GatewayAccount.CREDENTIALS_USERN
 import static uk.gov.pay.connector.model.domain.GatewayAccountEntity.Type.TEST;
 import static uk.gov.pay.connector.model.domain.RefundEntityFixture.userExternalId;
 import static uk.gov.pay.connector.service.worldpay.WorldpayPaymentProvider.includeSessionIdentifier;
-import static uk.gov.pay.connector.util.TestTemplateResourceLoader.EPDQ_AUTHORISATION_ERROR_RESPONSE;
-import static uk.gov.pay.connector.util.TestTemplateResourceLoader.EPDQ_AUTHORISATION_SUCCESS_RESPONSE;
-import static uk.gov.pay.connector.util.TestTemplateResourceLoader.EPDQ_CANCEL_ERROR_RESPONSE;
-import static uk.gov.pay.connector.util.TestTemplateResourceLoader.EPDQ_CANCEL_REQUEST;
-import static uk.gov.pay.connector.util.TestTemplateResourceLoader.EPDQ_CANCEL_SUCCESS_RESPONSE;
-import static uk.gov.pay.connector.util.TestTemplateResourceLoader.EPDQ_CAPTURE_ERROR_RESPONSE;
-import static uk.gov.pay.connector.util.TestTemplateResourceLoader.EPDQ_CAPTURE_SUCCESS_RESPONSE;
-import static uk.gov.pay.connector.util.TestTemplateResourceLoader.EPDQ_DELETE_SUCCESS_RESPONSE;
-import static uk.gov.pay.connector.util.TestTemplateResourceLoader.EPDQ_NOTIFICATION_TEMPLATE;
-import static uk.gov.pay.connector.util.TestTemplateResourceLoader.EPDQ_REFUND_ERROR_RESPONSE;
-import static uk.gov.pay.connector.util.TestTemplateResourceLoader.EPDQ_REFUND_REQUEST;
-import static uk.gov.pay.connector.util.TestTemplateResourceLoader.EPDQ_REFUND_SUCCESS_RESPONSE;
+import static uk.gov.pay.connector.util.TestTemplateResourceLoader.*;
 
 
 @RunWith(MockitoJUnitRunner.class)
@@ -152,7 +141,7 @@ public class EpdqPaymentProviderTest {
                 .refundClient(refundClient)
                 .build();
 
-        provider = new EpdqPaymentProvider(gatewayClients, mockSignatureGenerator, mockExternalRefundAvailabilityCalculator);
+        provider = new EpdqPaymentProvider(gatewayClients, mockSignatureGenerator, mockExternalRefundAvailabilityCalculator, "http://frontendUrl");
     }
 
     @Test
@@ -172,6 +161,16 @@ public class EpdqPaymentProviderTest {
         verifyPaymentProviderRequest(successAuthRequest());
         assertTrue(response.isSuccessful());
         assertThat(response.getBaseResponse().get().getTransactionId(), is("3014644340"));
+    }
+
+    @Test
+    public void shouldAuthorise3DRequest() {
+        when(mockGatewayAccountEntity.isRequires3ds()).thenReturn(true);
+        mockPaymentProviderResponse(200, successAuth3dResponse());
+        GatewayResponse<EpdqAuthorisationResponse> response = provider.authorise(buildTestAuthorisationRequest());
+        verifyPaymentProviderRequest(successAuthRequest());
+        assertTrue(response.isSuccessful());
+        assertThat(response.getBaseResponse().get().getStatus(),is("46"));
     }
 
     @Test
@@ -484,6 +483,10 @@ public class EpdqPaymentProviderTest {
 
     private String successAuthResponse() {
         return TestTemplateResourceLoader.load(EPDQ_AUTHORISATION_SUCCESS_RESPONSE);
+    }
+
+    private String successAuth3dResponse() {
+        return TestTemplateResourceLoader.load(EPDQ_AUTHORISATION_SUCCESS_3D_RESPONSE);
     }
 
     private String errorAuthResponse() {
