@@ -4,7 +4,6 @@ import org.junit.Before;
 import org.junit.Rule;
 import org.junit.Test;
 import org.junit.rules.ExpectedException;
-import uk.gov.pay.connector.dao.ChargeDao;
 import uk.gov.pay.connector.dao.TokenDao;
 import uk.gov.pay.connector.model.domain.ChargeEntity;
 import uk.gov.pay.connector.model.domain.TokenEntity;
@@ -20,17 +19,13 @@ public class TokenDaoJpaITest extends DaoITestBase {
     @Rule
     public ExpectedException expectedException = ExpectedException.none();
     private TokenDao tokenDao;
-    private ChargeDao chargeDao;
 
-    private DatabaseFixtures.TestAccount defaultTestAccount;
     private DatabaseFixtures.TestCharge defaultTestCharge;
 
     @Before
     public void setUp() throws Exception {
         tokenDao = env.getInstance(TokenDao.class);
-        chargeDao = env.getInstance(ChargeDao.class);
-
-        this.defaultTestAccount = DatabaseFixtures
+        DatabaseFixtures.TestAccount defaultTestAccount = DatabaseFixtures
                 .withDatabaseTestHelper(databaseTestHelper)
                 .aTestAccount()
                 .insert();

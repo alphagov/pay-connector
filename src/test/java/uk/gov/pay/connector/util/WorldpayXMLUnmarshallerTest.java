@@ -3,7 +3,11 @@ package uk.gov.pay.connector.util;
 import org.junit.Test;
 import uk.gov.pay.connector.service.BaseAuthoriseResponse.AuthoriseStatus;
 import uk.gov.pay.connector.service.BaseCancelResponse;
-import uk.gov.pay.connector.service.worldpay.*;
+import uk.gov.pay.connector.service.worldpay.WorldpayCancelResponse;
+import uk.gov.pay.connector.service.worldpay.WorldpayCaptureResponse;
+import uk.gov.pay.connector.service.worldpay.WorldpayNotification;
+import uk.gov.pay.connector.service.worldpay.WorldpayOrderStatusResponse;
+import uk.gov.pay.connector.service.worldpay.WorldpayRefundResponse;
 
 import java.time.LocalDate;
 
@@ -12,7 +16,18 @@ import static org.hamcrest.core.IsNull.notNullValue;
 import static org.hamcrest.core.IsNull.nullValue;
 import static org.junit.Assert.assertNull;
 import static org.junit.Assert.assertThat;
-import static uk.gov.pay.connector.util.TestTemplateResourceLoader.*;
+import static uk.gov.pay.connector.util.TestTemplateResourceLoader.WORLDPAY_3DS_RESPONSE;
+import static uk.gov.pay.connector.util.TestTemplateResourceLoader.WORLDPAY_AUTHORISATION_CANCELLED_RESPONSE;
+import static uk.gov.pay.connector.util.TestTemplateResourceLoader.WORLDPAY_AUTHORISATION_ERROR_RESPONSE;
+import static uk.gov.pay.connector.util.TestTemplateResourceLoader.WORLDPAY_AUTHORISATION_FAILED_RESPONSE;
+import static uk.gov.pay.connector.util.TestTemplateResourceLoader.WORLDPAY_AUTHORISATION_SUCCESS_RESPONSE;
+import static uk.gov.pay.connector.util.TestTemplateResourceLoader.WORLDPAY_CANCEL_ERROR_RESPONSE;
+import static uk.gov.pay.connector.util.TestTemplateResourceLoader.WORLDPAY_CANCEL_SUCCESS_RESPONSE;
+import static uk.gov.pay.connector.util.TestTemplateResourceLoader.WORLDPAY_CAPTURE_ERROR_RESPONSE;
+import static uk.gov.pay.connector.util.TestTemplateResourceLoader.WORLDPAY_CAPTURE_SUCCESS_RESPONSE;
+import static uk.gov.pay.connector.util.TestTemplateResourceLoader.WORLDPAY_NOTIFICATION;
+import static uk.gov.pay.connector.util.TestTemplateResourceLoader.WORLDPAY_REFUND_ERROR_RESPONSE;
+import static uk.gov.pay.connector.util.TestTemplateResourceLoader.WORLDPAY_REFUND_SUCCESS_RESPONSE;
 
 public class WorldpayXMLUnmarshallerTest {
 
@@ -99,8 +114,9 @@ public class WorldpayXMLUnmarshallerTest {
         assertNull(response.getErrorCode());
         assertNull(response.getErrorMessage());
 
-        assertThat(response.get3dsPaRequest(), is("eJxVUsFuwjAM/ZWK80aSUgpFJogNpHEo2hjTzl"));
-        assertThat(response.get3dsIssuerUrl(), is("https://secure-test.worldpay.com/jsp/test/shopper/ThreeDResponseSimulator.jsp"));
+        assertThat(response.getAuth3dsDetails().isPresent(), is(true));
+        assertThat(response.getAuth3dsDetails().get().paRequest, is("eJxVUsFuwjAM/ZWK80aSUgpFJogNpHEo2hjTzl"));
+        assertThat(response.getAuth3dsDetails().get().issuerUrl, is("https://secure-test.worldpay.com/jsp/test/shopper/ThreeDResponseSimulator.jsp"));
 
         assertThat(response.authoriseStatus(), is(AuthoriseStatus.REQUIRES_3DS));
     }

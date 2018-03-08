@@ -12,6 +12,7 @@ import uk.gov.pay.connector.dao.PaymentRequestDao;
 import uk.gov.pay.connector.exception.ChargeNotFoundRuntimeException;
 import uk.gov.pay.connector.model.GatewayError;
 import uk.gov.pay.connector.model.domain.AddressEntity;
+import uk.gov.pay.connector.model.domain.Auth3dsDetailsEntity;
 import uk.gov.pay.connector.model.domain.AuthCardDetails;
 import uk.gov.pay.connector.model.domain.Card3dsEntity;
 import uk.gov.pay.connector.model.domain.CardDetailsEntity;
@@ -42,7 +43,6 @@ public class CardAuthoriseService extends CardAuthoriseBaseService<AuthCardDetai
 
     private final CardTypeDao cardTypeDao;
     private final CardDao cardDao;
-    private final Auth3dsDetailsFactory auth3dsDetailsFactory;
     private final PaymentRequestDao paymentRequestDao;
 
     @Inject
@@ -52,13 +52,11 @@ public class CardAuthoriseService extends CardAuthoriseBaseService<AuthCardDetai
                                 CardDao cardDao,
                                 PaymentProviders providers,
                                 CardExecutorService cardExecutorService,
-                                Auth3dsDetailsFactory auth3dsDetailsFactory,
                                 Environment environment,
                                 PaymentRequestDao paymentRequestDao, ChargeStatusUpdater chargeStatusUpdater) {
         super(chargeDao, chargeEventDao, providers, cardExecutorService, environment, chargeStatusUpdater);
         this.cardTypeDao = cardTypeDao;
         this.cardDao = cardDao;
-        this.auth3dsDetailsFactory = auth3dsDetailsFactory;
         this.paymentRequestDao = paymentRequestDao;
     }
 
@@ -140,7 +138,10 @@ public class CardAuthoriseService extends CardAuthoriseBaseService<AuthCardDetai
             metricRegistry.counter(String.format("gateway-operations.%s.%s.%s.authorise.result.%s", account.getGatewayName(), account.getType(), account.getId(), status.toString())).inc();
 
             chargeEntity.setStatus(status);
-            operationResponse.getBaseResponse().ifPresent(response -> auth3dsDetailsFactory.create(response).ifPresent(chargeEntity::set3dsDetails));
+            operationResponse.getBaseResponse().ifPresent(response ->
+                    response.getAuth3dsDetails().map(Auth3dsDetailsEntity::new)
+                            .ifPresent(chargeEntity::set3dsDetails)
+            );
 
             chargeStatusUpdater.updateChargeTransactionStatus(chargeEntity.getExternalId(), status);
             Optional<PaymentRequestEntity> paymentRequestEntity = paymentRequestDao.findByExternalId(chargeEntity.getExternalId());

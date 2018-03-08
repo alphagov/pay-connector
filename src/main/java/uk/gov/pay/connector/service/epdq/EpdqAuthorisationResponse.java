@@ -1,11 +1,13 @@
 package uk.gov.pay.connector.service.epdq;
 
 import org.apache.commons.lang3.StringUtils;
+import uk.gov.pay.connector.model.Auth3dsDetailsDTO;
 import uk.gov.pay.connector.service.BaseAuthoriseResponse;
 
 import javax.xml.bind.annotation.XmlAttribute;
 import javax.xml.bind.annotation.XmlElement;
 import javax.xml.bind.annotation.XmlRootElement;
+import java.util.Optional;
 import java.util.StringJoiner;
 
 @XmlRootElement(name = "ncresponse")
@@ -48,13 +50,11 @@ public class EpdqAuthorisationResponse extends EpdqBaseResponse implements BaseA
     }
 
     @Override
-    public String get3dsPaRequest() {
-        return null;
-    }
-
-    @Override
-    public String get3dsIssuerUrl() {
-        return null;
+    public Optional<Auth3dsDetailsDTO> getAuth3dsDetails() {
+        if (htmlAnswer != null) {
+            return Optional.of(new Auth3dsDetailsDTO(null, null, htmlAnswer));
+        }
+        return Optional.empty();
     }
 
     private boolean hasError() {

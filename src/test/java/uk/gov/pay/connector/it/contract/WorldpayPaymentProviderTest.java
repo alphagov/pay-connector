@@ -122,8 +122,9 @@ public class WorldpayPaymentProviderTest {
         assertTrue(response.getBaseResponse().isPresent());
         assertTrue(response.getSessionIdentifier().isPresent());
         response.getBaseResponse().ifPresent(res -> {
-            assertThat(res.get3dsPaRequest(), is(notNullValue()));
-            assertThat(res.get3dsIssuerUrl(), is(notNullValue()));
+            assertThat(res.getAuth3dsDetails().isPresent(), is(true));
+            assertThat(res.getAuth3dsDetails().get().paRequest, is(notNullValue()));
+            assertThat(res.getAuth3dsDetails().get().issuerUrl, is(notNullValue()));
         });
     }
 
