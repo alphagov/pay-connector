@@ -1281,4 +1281,25 @@
         </sql>
     </changeSet>
 
+    <changeSet id="add html_out_3ds to charges table" author="">
+        <addColumn tableName="charges">
+            <column name="html_out_3ds" type="text">
+                <constraints nullable="true"/>
+            </column>
+        </addColumn>
+    </changeSet>
+
+    <changeSet id="add html_out to card_3ds table" author="">
+        <addColumn tableName="card_3ds">
+            <column name="html_out" type="text">
+                <constraints nullable="true"/>
+            </column>
+        </addColumn>
+    </changeSet>
+
+    <changeSet id="make pa_request and issuer_url nullable on card_3ds" author="">
+        <dropNotNullConstraint columnName="pa_request" tableName="card_3ds"/>
+        <dropNotNullConstraint columnName="issuer_url" tableName="card_3ds"/>
+    </changeSet>
+
 </databaseChangeLog>
