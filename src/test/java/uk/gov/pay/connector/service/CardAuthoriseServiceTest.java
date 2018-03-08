@@ -32,8 +32,12 @@ import uk.gov.pay.connector.model.domain.transaction.ChargeTransactionEntity;
 import uk.gov.pay.connector.model.gateway.GatewayResponse;
 import uk.gov.pay.connector.model.gateway.GatewayResponse.GatewayResponseBuilder;
 import uk.gov.pay.connector.service.BaseAuthoriseResponse.AuthoriseStatus;
+import uk.gov.pay.connector.service.epdq.EpdqAuthorisationResponse;
 import uk.gov.pay.connector.service.worldpay.WorldpayOrderStatusResponse;
 import uk.gov.pay.connector.util.AuthUtils;
+import uk.gov.pay.connector.util.TestTemplateResourceLoader;
+import uk.gov.pay.connector.util.XMLUnmarshaller;
+import uk.gov.pay.connector.util.XMLUnmarshallerException;
 
 import javax.persistence.OptimisticLockException;
 import java.util.Map;
@@ -74,6 +78,7 @@ import static uk.gov.pay.connector.service.CardExecutorService.ExecutionStatus.I
 import static uk.gov.pay.connector.util.AuthUtils.aValidAuthorisationDetails;
 import static uk.gov.pay.connector.util.AuthUtils.addressFor;
 import static uk.gov.pay.connector.util.AuthUtils.buildAuthCardDetails;
+import static uk.gov.pay.connector.util.TestTemplateResourceLoader.EPDQ_AUTHORISATION_SUCCESS_3D_RESPONSE;
 
 @RunWith(MockitoJUnitRunner.class)
 public class CardAuthoriseServiceTest extends CardServiceTest {
@@ -83,7 +88,6 @@ public class CardAuthoriseServiceTest extends CardServiceTest {
     private static final String SESSION_IDENTIFIER = "session-identifier";
     private static final String TRANSACTION_ID = "transaction-id";
 
-    private final Auth3dsDetailsFactory auth3dsDetailsFactory = new Auth3dsDetailsFactory();
     private final ChargeEntity charge = createNewChargeWith(1L, ENTERING_CARD_DETAILS);
 
     @Mock
@@ -108,7 +112,7 @@ public class CardAuthoriseServiceTest extends CardServiceTest {
         when(mockEnvironment.metrics()).thenReturn(mockMetricRegistry);
         cardAuthorisationService = new CardAuthoriseService(mockedChargeDao, mockedChargeEventDao,
                 mockedCardTypeDao, mockCardDao, mockedProviders, mockExecutorService,
-                auth3dsDetailsFactory, mockEnvironment, mockPaymentRequestDao, mockChargeStatusUpdater);
+                mockEnvironment, mockPaymentRequestDao, mockChargeStatusUpdater);
     }
 
     @Before
@@ -129,6 +133,7 @@ public class CardAuthoriseServiceTest extends CardServiceTest {
         when(worldpayResponse.getTransactionId()).thenReturn(TRANSACTION_ID);
         when(worldpayResponse.authoriseStatus()).thenReturn(authoriseStatus);
         when(worldpayResponse.getErrorCode()).thenReturn(errorCode);
+        when(worldpayResponse.getAuth3dsDetails()).thenReturn(Optional.empty());
         GatewayResponseBuilder<WorldpayOrderStatusResponse> gatewayResponseBuilder = responseBuilder();
         return gatewayResponseBuilder
                 .withResponse(worldpayResponse)
@@ -205,6 +210,25 @@ public class CardAuthoriseServiceTest extends CardServiceTest {
         Card3dsEntity card3ds = paymentRequest.getChargeTransaction().getCard3ds();
         assertThat(card3ds.getIssuerUrl(), is(ISSUER_URL_FROM_PROVIDER));
         assertThat(card3ds.getPaRequest(), is(PA_REQ_VALUE_FROM_PROVIDER));
+        assertThat(card3ds.getHtmlOut(), is(nullValue()));
+    }
+
+    @Test
+    public void doAuthorise_shouldRespondWith3dsResponseForEpdq3dsOrders() throws XMLUnmarshallerException {
+
+        providerWillRequireEpdq3ds();
+
+        GatewayResponse response = cardAuthorisationService.doAuthorise(charge.getExternalId(), aValidAuthorisationDetails());
+
+        assertThat(response.isSuccessful(), is(true));
+
+        assertThat(charge.getStatus(), is(AUTHORISATION_3DS_REQUIRED.getValue()));
+        verify(mockedChargeEventDao).persistChargeEventOf(charge, Optional.empty());
+        assertThat(charge.get3dsDetails().getHtmlOut(), is(notNullValue()));
+        Card3dsEntity card3ds = paymentRequest.getChargeTransaction().getCard3ds();
+        assertThat(card3ds.getIssuerUrl(), is(nullValue()));
+        assertThat(card3ds.getPaRequest(), is(nullValue()));
+        assertThat(card3ds.getHtmlOut(), is(notNullValue()));
     }
 
     @Test
@@ -537,6 +561,21 @@ public class CardAuthoriseServiceTest extends CardServiceTest {
                 .withResponse(worldpayResponse)
                 .build();
         when(mockedPaymentProvider.authorise(any())).thenReturn(worldpay3dsResponse);
+
+        when(mockedProviders.byName(charge.getPaymentGatewayName())).thenReturn(mockedPaymentProvider);
+        when(mockedPaymentProvider.generateTransactionId()).thenReturn(Optional.of(TRANSACTION_ID));
+    }
+
+    private void providerWillRequireEpdq3ds() throws XMLUnmarshallerException {
+        mockExecutorServiceWillReturnCompletedResultWithSupplierReturnValue();
+        String successPayload = TestTemplateResourceLoader.load(EPDQ_AUTHORISATION_SUCCESS_3D_RESPONSE);
+        EpdqAuthorisationResponse epdqResponse = XMLUnmarshaller.unmarshall(successPayload, EpdqAuthorisationResponse.class);
+
+        GatewayResponseBuilder<EpdqAuthorisationResponse> gatewayResponseBuilder = responseBuilder();
+        GatewayResponse epdq3dsResponse = gatewayResponseBuilder
+                .withResponse(epdqResponse)
+                .build();
+        when(mockedPaymentProvider.authorise(any())).thenReturn(epdq3dsResponse);
 
         when(mockedProviders.byName(charge.getPaymentGatewayName())).thenReturn(mockedPaymentProvider);
         when(mockedPaymentProvider.generateTransactionId()).thenReturn(Optional.of(TRANSACTION_ID));

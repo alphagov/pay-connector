@@ -1,6 +1,7 @@
 package uk.gov.pay.connector.service.sandbox;
 
 import fj.data.Either;
+import uk.gov.pay.connector.model.Auth3dsDetailsDTO;
 import uk.gov.pay.connector.model.CancelGatewayRequest;
 import uk.gov.pay.connector.model.CaptureGatewayRequest;
 import uk.gov.pay.connector.model.GatewayError;
@@ -151,13 +152,8 @@ public class SandboxPaymentProvider extends BasePaymentProvider<BaseResponse, St
             }
 
             @Override
-            public String get3dsPaRequest() {
-                return null;
-            }
-
-            @Override
-            public String get3dsIssuerUrl() {
-                return null;
+            public Optional<Auth3dsDetailsDTO> getAuth3dsDetails() {
+                return Optional.empty();
             }
 
             @Override

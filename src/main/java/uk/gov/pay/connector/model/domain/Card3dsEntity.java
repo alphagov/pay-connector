@@ -12,7 +12,6 @@ import javax.persistence.JoinColumn;
 import javax.persistence.OneToOne;
 import javax.persistence.SequenceGenerator;
 import javax.persistence.Table;
-import java.util.Objects;
 
 
 @Entity
@@ -34,6 +33,9 @@ public class Card3dsEntity extends AbstractVersionedEntity {
 
     @Column(name = "worldpay_machine_cookie")
     private String worldpayMachineCookie;
+
+    @Column(name="html_out")
+    private String htmlOut;
 
     @OneToOne
     @JoinColumn(name = "transaction_id", referencedColumnName = "id", updatable = true)
@@ -82,11 +84,20 @@ public class Card3dsEntity extends AbstractVersionedEntity {
         this.chargeTransactionEntity = chargeTransactionEntity;
     }
 
+    public String getHtmlOut() {
+        return htmlOut;
+    }
+
+    public void setHtmlOut(String htmlOut) {
+        this.htmlOut = htmlOut;
+    }
+
     public static Card3dsEntity from(ChargeEntity chargeEntity) {
         Card3dsEntity entity = new Card3dsEntity();
         entity.setIssuerUrl(chargeEntity.get3dsDetails().getIssuerUrl());
         entity.setPaRequest(chargeEntity.get3dsDetails().getPaRequest());
         entity.setWorldpayMachineCookie(chargeEntity.getProviderSessionId());
+        entity.setHtmlOut(chargeEntity.get3dsDetails().getHtmlOut());
 
         return entity;
     }
@@ -95,17 +106,26 @@ public class Card3dsEntity extends AbstractVersionedEntity {
     public boolean equals(Object o) {
         if (this == o) return true;
         if (o == null || getClass() != o.getClass()) return false;
-        final Card3dsEntity that = (Card3dsEntity) o;
-        return Objects.equals(paRequest, that.paRequest) &&
-                Objects.equals(issuerUrl, that.issuerUrl) &&
-                Objects.equals(worldpayMachineCookie, that.worldpayMachineCookie);
+
+        Card3dsEntity that = (Card3dsEntity) o;
+
+        if (id != null ? !id.equals(that.id) : that.id != null) return false;
+        if (paRequest != null ? !paRequest.equals(that.paRequest) : that.paRequest != null) return false;
+        if (issuerUrl != null ? !issuerUrl.equals(that.issuerUrl) : that.issuerUrl != null) return false;
+        if (worldpayMachineCookie != null ? !worldpayMachineCookie.equals(that.worldpayMachineCookie) : that.worldpayMachineCookie != null)
+            return false;
+        if (htmlOut != null ? !htmlOut.equals(that.htmlOut) : that.htmlOut != null) return false;
+        return chargeTransactionEntity != null ? chargeTransactionEntity.equals(that.chargeTransactionEntity) : that.chargeTransactionEntity == null;
     }
 
     @Override
     public int hashCode() {
-        int result = paRequest.hashCode();
-        result = 31 * result + issuerUrl.hashCode();
+        int result = id != null ? id.hashCode() : 0;
+        result = 31 * result + (paRequest != null ? paRequest.hashCode() : 0);
+        result = 31 * result + (issuerUrl != null ? issuerUrl.hashCode() : 0);
         result = 31 * result + (worldpayMachineCookie != null ? worldpayMachineCookie.hashCode() : 0);
+        result = 31 * result + (htmlOut != null ? htmlOut.hashCode() : 0);
+        result = 31 * result + (chargeTransactionEntity != null ? chargeTransactionEntity.hashCode() : 0);
         return result;
     }
 }
