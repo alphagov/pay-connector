@@ -2,6 +2,7 @@ package uk.gov.pay.connector.service.epdq;
 
 import org.apache.commons.lang3.StringUtils;
 import uk.gov.pay.connector.model.EpdqParamsFor3DSecure;
+import uk.gov.pay.connector.model.domain.Auth3dsDetails;
 import uk.gov.pay.connector.service.BaseAuthoriseResponse;
 
 import javax.xml.bind.annotation.XmlAttribute;
@@ -18,6 +19,18 @@ public class EpdqAuthorisationResponse extends EpdqBaseResponse implements BaseA
     private static final String WAITING_EXTERNAL = "50";
     private static final String WAITING = "51";
     private static final String REJECTED = "2";
+
+    public static EpdqAuthorisationResponse createPost3dsResponseFor(Auth3dsDetails.Auth3DResult threeDsResult) {
+        EpdqAuthorisationResponse response = new EpdqAuthorisationResponse();
+        if (threeDsResult == null || Auth3dsDetails.Auth3DResult.ERROR.equals(threeDsResult)) {
+            response.status = "ERROR";
+        } else if (Auth3dsDetails.Auth3DResult.AUTHORISED.equals(threeDsResult)) {
+            response.status = AUTHORISED;
+        } else if (Auth3dsDetails.Auth3DResult.DECLINED.equals(threeDsResult)) {
+            response.status = REJECTED;
+        }
+        return response;
+    }
 
     private String status;
     private String htmlAnswer;

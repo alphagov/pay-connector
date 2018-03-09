@@ -20,6 +20,7 @@ import javax.inject.Inject;
 import java.util.List;
 import java.util.Optional;
 
+import static org.apache.commons.lang3.StringUtils.isBlank;
 import static uk.gov.pay.connector.model.domain.ChargeStatus.AUTHORISATION_3DS_READY;
 import static uk.gov.pay.connector.model.domain.ChargeStatus.AUTHORISATION_3DS_REQUIRED;
 
@@ -75,12 +76,9 @@ public class Card3dsResponseAuthService extends CardAuthoriseBaseService<Auth3ds
             chargeStatusUpdater.updateChargeTransactionStatus(chargeEntity.getExternalId(), status);
             Optional<PaymentRequestEntity> paymentRequestEntity = paymentRequestDao.findByExternalId(chargeEntity.getExternalId());
 
-            if (StringUtils.isBlank(transactionId)) {
-                logger.warn("Auth3DSDetails authorisation response received with no transaction id. -  charge_external_id={}", chargeId);
-            } else {
+            if (!isBlank(transactionId)) {
                 setGatewayTransactionId(chargeEntity, transactionId, paymentRequestEntity);
             }
-
             chargeEventDao.persistChargeEventOf(chargeEntity, Optional.empty());
             return operationResponse;
 
