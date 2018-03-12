@@ -106,7 +106,13 @@ pipeline {
       postMetric("connector.failure", 1, "new")
     }
     success {
-      postSuccessfulMetrics("connector")
+      script {
+        if (env.BRANCH_NAME == 'master') {
+          postSuccessfulMetrics("selfservice.master")
+        } else {
+          postSuccessfulMetrics("selfservice.PR")
+        }
+      }
     }
   }
 }
