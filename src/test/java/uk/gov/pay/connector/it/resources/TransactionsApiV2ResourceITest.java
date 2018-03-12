@@ -228,7 +228,7 @@ public class TransactionsApiV2ResourceITest extends ChargingITestBase {
 
     private String expectedChargesLocationFor(String accountId, String queryParams) {
         return "https://localhost:" + app.getLocalPort()
-                + "/v1/api/accounts/{accountId}/charges".replace("{accountId}", accountId)
+                + "/v2/api/accounts/{accountId}/charges".replace("{accountId}", accountId)
                 + queryParams;
     }
 }

@@ -84,7 +84,7 @@ public class ChargesPaginationResponseBuilder {
 
     private URI uriWithParams(String params) {
         return uriInfo.getBaseUriBuilder()
-                .path("/v1/api/accounts/{accountId}/charges")
+                .path(uriInfo.getPath())
                 .replaceQuery(params)
                 .build(searchParams.getGatewayAccountId());
     }

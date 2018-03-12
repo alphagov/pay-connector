@@ -7,7 +7,6 @@ import org.mockito.Mock;
 import org.mockito.runners.MockitoJUnitRunner;
 import uk.gov.pay.connector.dao.ChargeSearchParams;
 import uk.gov.pay.connector.model.api.ExternalChargeState;
-import uk.gov.pay.connector.model.domain.ChargeStatus;
 
 import javax.ws.rs.core.Response;
 import javax.ws.rs.core.UriBuilder;
@@ -40,6 +39,8 @@ public class ChargesPaginationResponseBuilderTest {
         when(mockUriInfo.getBaseUriBuilder()).thenReturn(UriBuilder.fromUri("http://app.com"),
                 UriBuilder.fromUri("http://app.com"), UriBuilder.fromUri("http://app.com"),
                 UriBuilder.fromUri("http://app.com"), UriBuilder.fromUri("http://app.com"));
+
+        when(mockUriInfo.getPath()).thenReturn("/v1/api/accounts/1/charges");
 
         // when
         Response response = new ChargesPaginationResponseBuilder(searchParams, mockUriInfo)
