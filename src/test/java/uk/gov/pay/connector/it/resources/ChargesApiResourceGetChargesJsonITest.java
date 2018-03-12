@@ -590,7 +590,7 @@ public class ChargesApiResourceGetChargesJsonITest extends ChargingITestBase {
 
     private String expectedChargesLocationFor(String accountId, String queryParams) {
         return "https://localhost:" + app.getLocalPort()
-                + "/v1/api/accounts/{accountId}/charges".replace("{accountId}", accountId)
+                + "/v1/api/accounts/{accountId}/transactions".replace("{accountId}", accountId)
                 + queryParams;
     }
 }
