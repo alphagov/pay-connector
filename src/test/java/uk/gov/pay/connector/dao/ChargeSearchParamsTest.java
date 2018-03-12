@@ -25,6 +25,10 @@ import static uk.gov.pay.connector.model.domain.ChargeStatus.EXPIRED;
 import static uk.gov.pay.connector.model.domain.ChargeStatus.EXPIRE_CANCEL_FAILED;
 import static uk.gov.pay.connector.model.domain.ChargeStatus.EXPIRE_CANCEL_READY;
 import static uk.gov.pay.connector.model.domain.ChargeStatus.EXPIRE_CANCEL_SUBMITTED;
+import static uk.gov.pay.connector.model.domain.ChargeStatus.SYSTEM_CANCELLED;
+import static uk.gov.pay.connector.model.domain.ChargeStatus.SYSTEM_CANCEL_ERROR;
+import static uk.gov.pay.connector.model.domain.ChargeStatus.SYSTEM_CANCEL_READY;
+import static uk.gov.pay.connector.model.domain.ChargeStatus.SYSTEM_CANCEL_SUBMITTED;
 import static uk.gov.pay.connector.model.domain.ChargeStatus.USER_CANCELLED;
 import static uk.gov.pay.connector.model.domain.ChargeStatus.USER_CANCEL_ERROR;
 import static uk.gov.pay.connector.model.domain.ChargeStatus.USER_CANCEL_READY;
@@ -154,6 +158,26 @@ public class ChargeSearchParamsTest {
         assertThat(params.getInternalChargeStatuses(), containsInAnyOrder(
                 USER_CANCEL_READY, USER_CANCEL_SUBMITTED, USER_CANCEL_ERROR, USER_CANCELLED, EXPIRE_CANCEL_READY, EXPIRE_CANCEL_SUBMITTED, EXPIRED, EXPIRE_CANCEL_FAILED,
                 AUTHORISATION_REJECTED, AUTHORISATION_CANCELLED, AUTHORISATION_ABORTED, CAPTURE_APPROVED, CAPTURE_APPROVED_RETRY, CAPTURE_READY, CAPTURED, CAPTURE_SUBMITTED));
+
+    }
+
+    @Test
+    public void getInternalChargeStatuses_transactionsSearch_MultipleChargeStatesV2() {
+
+        String expectedQueryString = "payment_states=timedout,declined,cancelled";
+
+        ChargeSearchParams params = new ChargeSearchParams()
+                .addExternalChargeStatesV2(singletonList("declined"))
+                .addExternalChargeStatesV2(singletonList("timedout"))
+                .addExternalChargeStatesV2(singletonList("cancelled"))
+                .withGatewayAccountId(111L);
+
+        assertThat(params.buildQueryParams(), is(expectedQueryString));
+        assertThat(params.getInternalChargeStatuses(),  hasSize(15));
+        assertThat(params.getInternalChargeStatuses(), containsInAnyOrder(
+                USER_CANCEL_READY, USER_CANCEL_SUBMITTED, USER_CANCEL_ERROR, USER_CANCELLED, EXPIRE_CANCEL_READY, EXPIRE_CANCEL_SUBMITTED, EXPIRED, EXPIRE_CANCEL_FAILED,
+                AUTHORISATION_REJECTED, AUTHORISATION_CANCELLED, AUTHORISATION_ABORTED, SYSTEM_CANCEL_ERROR, SYSTEM_CANCEL_READY, SYSTEM_CANCEL_SUBMITTED, SYSTEM_CANCELLED
+        ));
 
     }
 

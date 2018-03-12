@@ -31,6 +31,8 @@ public class ChargeSearchParams {
     private Long displaySize;
     private List<String> cardBrands = new ArrayList<>();
     private Set<ChargeStatus> internalStates = new HashSet<>();
+    private Set<String> externalChargeStates = new HashSet<>();
+    private Set<String> externalRefundStates = new HashSet<>();
     private Set<ChargeStatus> internalChargeStatuses = new HashSet<>();
     private Set<RefundStatus> internalRefundStatuses = new HashSet<>();
 
@@ -98,6 +100,7 @@ public class ChargeSearchParams {
 
     public ChargeSearchParams addExternalChargeStates(List<String> states) {
         if (states != null) {
+            this.externalChargeStates.addAll(states);
             this.internalChargeStatuses.addAll(states.stream()
                     .map(this::parseChargeState)
                     .map(externalChargeStates -> externalChargeStates.stream().map(ChargeStatus::fromExternal)
@@ -109,8 +112,23 @@ public class ChargeSearchParams {
         return this;
     }
 
+    public ChargeSearchParams addExternalChargeStatesV2(List<String> states) {
+        if (states != null) {
+            this.externalChargeStates.addAll(states);
+            this.internalChargeStatuses.addAll(states.stream()
+                    .map(this::parseChargeStateV2)
+                    .map(externalChargeStates -> externalChargeStates.stream().map(ChargeStatus::fromExternal)
+                            .flatMap(Collection::stream)
+                            .collect(Collectors.toSet()))
+                    .flatMap(Collection::stream)
+                    .collect(Collectors.toSet()));
+        }
+        return this;
+    }
+
     public ChargeSearchParams addExternalRefundStates(List<String> states) {
         if (states != null) {
+            this.externalRefundStates.addAll(states);
             this.internalRefundStatuses.addAll(states.stream()
                     .map(ExternalRefundStatus::fromPublicStatusLabel)
                     .flatMap(externalRefundStatus -> RefundStatus.fromExternal(externalRefundStatus).stream())
@@ -213,10 +231,10 @@ public class ChargeSearchParams {
                 .findFirst()
                 .ifPresent(state -> builder.append("&state=").append(state));
 
-        String paymentStates = getExternalChargeStates().stream()
+        String paymentStates = this.externalChargeStates.stream()
                 .collect(Collectors.joining(","));
 
-        String refundStates = getExternalRefundStates().stream()
+        String refundStates = this.externalRefundStates.stream()
                 .collect(Collectors.joining(","));
 
         if (isNotEmpty(paymentStates)) {
@@ -238,6 +256,13 @@ public class ChargeSearchParams {
             return new ArrayList<>();
         }
         return ExternalChargeState.fromStatusString(state);
+    }
+
+    private List<ExternalChargeState> parseChargeStateV2(String state) {
+        if (isBlank(state)) {
+            return new ArrayList<>();
+        }
+        return ExternalChargeState.fromStatusStringV2(state);
     }
 
     public TransactionType getTransactionType() {
