@@ -111,7 +111,7 @@ public class TransactionsApiV2ResourceITest extends ChargingITestBase {
                 .body("results[0].description", is("Test description"))
                 .body("results[0].reference", is("ref-3-que"))
                 .body("results[0].state.finished", is(true))
-                .body("results[0].state.status", is("failed"))
+                .body("results[0].state.status", is("timedout"))
                 .body("results[0].state.code", is("P0020"))
                 .body("results[0].state.message", is("Payment expired"))
                 .body("results[0].card_details.card_brand", is(nullValue()))
