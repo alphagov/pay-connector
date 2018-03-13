@@ -70,6 +70,14 @@ public class EpdqAuthorisationResponse extends EpdqBaseResponse implements BaseA
         return htmlAnswer;
     }
 
+    public void setHtmlAnswer(String htmlAnswer) {
+        this.htmlAnswer = htmlAnswer;
+    }
+
+    public void setStatus(String status) {
+        this.status = status;
+    }
+
     @Override
     public String getErrorCode() {
         if (hasError())
@@ -105,5 +113,4 @@ public class EpdqAuthorisationResponse extends EpdqBaseResponse implements BaseA
         }
         return joiner.toString();
     }
-
 }

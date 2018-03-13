@@ -197,7 +197,7 @@ public class CardAuthoriseServiceTest extends CardServiceTest {
     @Test
     public void doAuthorise_shouldRespondWith3dsResponseFor3dsOrders() {
 
-        providerWillRequire3ds(null);
+        worldpayProviderWillRequire3ds(null);
 
         GatewayResponse response = cardAuthorisationService.doAuthorise(charge.getExternalId(), aValidAuthorisationDetails());
 
@@ -214,27 +214,25 @@ public class CardAuthoriseServiceTest extends CardServiceTest {
     }
 
     @Test
-    public void doAuthorise_shouldRespondWith3dsResponseForEpdq3dsOrders() throws XMLUnmarshallerException {
-
-        providerWillRequireEpdq3ds();
+    public void doAuthorise_shouldRespondWith3dsResponseForEpdq3dsOrders() {
+        epdqProviderWillRequire3ds();
 
         GatewayResponse response = cardAuthorisationService.doAuthorise(charge.getExternalId(), aValidAuthorisationDetails());
 
         assertThat(response.isSuccessful(), is(true));
-
         assertThat(charge.getStatus(), is(AUTHORISATION_3DS_REQUIRED.getValue()));
         verify(mockedChargeEventDao).persistChargeEventOf(charge, Optional.empty());
         assertThat(charge.get3dsDetails().getHtmlOut(), is(notNullValue()));
         Card3dsEntity card3ds = paymentRequest.getChargeTransaction().getCard3ds();
         assertThat(card3ds.getIssuerUrl(), is(nullValue()));
         assertThat(card3ds.getPaRequest(), is(nullValue()));
-        assertThat(card3ds.getHtmlOut(), is(notNullValue()));
+        assertThat(card3ds.getHtmlOut(), is("Base64encodedHtmlForm"));
     }
 
     @Test
     public void doAuthorise_shouldRespondWith3dsResponseFor3dsOrdersWithWorldpayMachineCookie() {
 
-        providerWillRequire3ds(SESSION_IDENTIFIER);
+        worldpayProviderWillRequire3ds(SESSION_IDENTIFIER);
 
         GatewayResponse response = cardAuthorisationService.doAuthorise(charge.getExternalId(), aValidAuthorisationDetails());
 
@@ -550,7 +548,7 @@ public class CardAuthoriseServiceTest extends CardServiceTest {
         providerWillRespondToAuthoriseWith(authResponse);
     }
 
-    private void providerWillRequire3ds(String sessionIdentifier) {
+    private void worldpayProviderWillRequire3ds(String sessionIdentifier) {
         mockExecutorServiceWillReturnCompletedResultWithSupplierReturnValue();
         WorldpayOrderStatusResponse worldpayResponse = new WorldpayOrderStatusResponse();
         worldpayResponse.set3dsPaRequest(PA_REQ_VALUE_FROM_PROVIDER);
@@ -566,10 +564,11 @@ public class CardAuthoriseServiceTest extends CardServiceTest {
         when(mockedPaymentProvider.generateTransactionId()).thenReturn(Optional.of(TRANSACTION_ID));
     }
 
-    private void providerWillRequireEpdq3ds() throws XMLUnmarshallerException {
+    private void epdqProviderWillRequire3ds() {
         mockExecutorServiceWillReturnCompletedResultWithSupplierReturnValue();
-        String successPayload = TestTemplateResourceLoader.load(EPDQ_AUTHORISATION_SUCCESS_3D_RESPONSE);
-        EpdqAuthorisationResponse epdqResponse = XMLUnmarshaller.unmarshall(successPayload, EpdqAuthorisationResponse.class);
+        EpdqAuthorisationResponse epdqResponse = new EpdqAuthorisationResponse();
+        epdqResponse.setHtmlAnswer("Base64encodedHtmlForm");
+        epdqResponse.setStatus("46");
 
         GatewayResponseBuilder<EpdqAuthorisationResponse> gatewayResponseBuilder = responseBuilder();
         GatewayResponse epdq3dsResponse = gatewayResponseBuilder
