@@ -23,7 +23,10 @@ import static org.hamcrest.Matchers.nullValue;
 import static org.hamcrest.core.Is.is;
 import static org.hamcrest.text.MatchesPattern.matchesPattern;
 import static uk.gov.pay.connector.matcher.ZoneDateTimeAsStringWithinMatcher.isWithin;
-import static uk.gov.pay.connector.model.domain.ChargeStatus.*;
+import static uk.gov.pay.connector.model.domain.ChargeStatus.AUTHORISATION_SUCCESS;
+import static uk.gov.pay.connector.model.domain.ChargeStatus.CAPTURED;
+import static uk.gov.pay.connector.model.domain.ChargeStatus.CREATED;
+import static uk.gov.pay.connector.model.domain.ChargeStatus.EXPIRED;
 
 /**
  * This is effectively a copy of TransactionsApiResourceITest pointing to V2 resource
@@ -73,7 +76,7 @@ public class TransactionsApiV2ResourceITest extends ChargingITestBase {
 
         String transactionIdCharge1 = "transaction-id-ref-3-que";
         String transactionIdCharge2 = "transaction-id-ref-3";
-        String externalChargeId1 = addChargeAndCardDetails(nextLong(), CREATED, "ref-3-que", transactionIdCharge1, now(), "", returnUrl, email);
+        String externalChargeId1 = addChargeAndCardDetails(nextLong(), EXPIRED, "ref-3-que", transactionIdCharge1, now(), "", returnUrl, email);
         addChargeAndCardDetails(nextLong(), CAPTURED, "ref-7", "transaction-id-ref-7", now(), "master-card", returnUrl, email);
         String externalChargeId2 = addChargeAndCardDetails(chargeId2, CAPTURED, "ref-3", transactionIdCharge2, now().minusDays(2), "visa", returnUrl, email);
 
@@ -85,7 +88,7 @@ public class TransactionsApiV2ResourceITest extends ChargingITestBase {
                 .withQueryParam("reference", "ref-3")
                 .withQueryParam("page", "1")
                 .withQueryParam("display_size", "2")
-                .withQueryParam("payment_states", "success,created")
+                .withQueryParam("payment_states", "success,timedout")
                 .withQueryParam("refund_states", "submitted")
                 .withHeader(HttpHeaders.ACCEPT, APPLICATION_JSON)
                 .getTransactionsV2()
@@ -95,11 +98,11 @@ public class TransactionsApiV2ResourceITest extends ChargingITestBase {
                 .body("total", is(3))
                 .body("count", is(2))
                 .body("page", is(1))
-                .body("_links.next_page.href", is(expectedChargesLocationFor(accountId, "?reference=ref-3&page=2&display_size=2&payment_states=created%2Csuccess&refund_states=submitted")))
+                .body("_links.next_page.href", is(expectedChargesLocationFor(accountId, "?reference=ref-3&page=2&display_size=2&payment_states=timedout%2Csuccess&refund_states=submitted")))
                 .body("_links.prev_page", isEmptyOrNullString())
-                .body("_links.first_page.href", is(expectedChargesLocationFor(accountId, "?reference=ref-3&page=1&display_size=2&payment_states=created%2Csuccess&refund_states=submitted")))
-                .body("_links.last_page.href", is(expectedChargesLocationFor(accountId, "?reference=ref-3&page=2&display_size=2&payment_states=created%2Csuccess&refund_states=submitted")))
-                .body("_links.self.href", is(expectedChargesLocationFor(accountId, "?reference=ref-3&page=1&display_size=2&payment_states=created%2Csuccess&refund_states=submitted")))
+                .body("_links.first_page.href", is(expectedChargesLocationFor(accountId, "?reference=ref-3&page=1&display_size=2&payment_states=timedout%2Csuccess&refund_states=submitted")))
+                .body("_links.last_page.href", is(expectedChargesLocationFor(accountId, "?reference=ref-3&page=2&display_size=2&payment_states=timedout%2Csuccess&refund_states=submitted")))
+                .body("_links.self.href", is(expectedChargesLocationFor(accountId, "?reference=ref-3&page=1&display_size=2&payment_states=timedout%2Csuccess&refund_states=submitted")))
 
                 .body("results[0].transaction_type", is("charge"))
                 .body("results[0].gateway_transaction_id", is(transactionIdCharge1))
@@ -107,10 +110,10 @@ public class TransactionsApiV2ResourceITest extends ChargingITestBase {
                 .body("results[0].amount", is(6234))
                 .body("results[0].description", is("Test description"))
                 .body("results[0].reference", is("ref-3-que"))
-                .body("results[0].state.finished", is(false))
-                .body("results[0].state.status", is("created"))
-                .body("results[0].state.code", is(isEmptyOrNullString()))
-                .body("results[0].state.message", is(isEmptyOrNullString()))
+                .body("results[0].state.finished", is(true))
+                .body("results[0].state.status", is("failed"))
+                .body("results[0].state.code", is("P0020"))
+                .body("results[0].state.message", is("Payment expired"))
                 .body("results[0].card_details.card_brand", is(nullValue()))
                 .body("results[0].card_details.cardholder_name", is(cardHolderName))
                 .body("results[0].card_details.expiry_date", is(expiryDate))

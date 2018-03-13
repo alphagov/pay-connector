@@ -23,7 +23,9 @@ import static org.hamcrest.Matchers.nullValue;
 import static org.hamcrest.core.Is.is;
 import static org.hamcrest.text.MatchesPattern.matchesPattern;
 import static uk.gov.pay.connector.matcher.ZoneDateTimeAsStringWithinMatcher.isWithin;
-import static uk.gov.pay.connector.model.domain.ChargeStatus.*;
+import static uk.gov.pay.connector.model.domain.ChargeStatus.AUTHORISATION_SUCCESS;
+import static uk.gov.pay.connector.model.domain.ChargeStatus.CAPTURED;
+import static uk.gov.pay.connector.model.domain.ChargeStatus.CREATED;
 
 public class TransactionsApiResourceITest extends ChargingITestBase {
 
@@ -92,11 +94,11 @@ public class TransactionsApiResourceITest extends ChargingITestBase {
                 .body("total", is(3))
                 .body("count", is(2))
                 .body("page", is(1))
-                .body("_links.next_page.href", is(expectedChargesLocationFor(accountId, "?reference=ref-3&page=2&display_size=2&payment_states=created%2Csuccess&refund_states=submitted")))
+                .body("_links.next_page.href", is(expectedChargesLocationFor(accountId, "?reference=ref-3&page=2&display_size=2&payment_states=success%2Ccreated&refund_states=submitted")))
                 .body("_links.prev_page", isEmptyOrNullString())
-                .body("_links.first_page.href", is(expectedChargesLocationFor(accountId, "?reference=ref-3&page=1&display_size=2&payment_states=created%2Csuccess&refund_states=submitted")))
-                .body("_links.last_page.href", is(expectedChargesLocationFor(accountId, "?reference=ref-3&page=2&display_size=2&payment_states=created%2Csuccess&refund_states=submitted")))
-                .body("_links.self.href", is(expectedChargesLocationFor(accountId, "?reference=ref-3&page=1&display_size=2&payment_states=created%2Csuccess&refund_states=submitted")))
+                .body("_links.first_page.href", is(expectedChargesLocationFor(accountId, "?reference=ref-3&page=1&display_size=2&payment_states=success%2Ccreated&refund_states=submitted")))
+                .body("_links.last_page.href", is(expectedChargesLocationFor(accountId, "?reference=ref-3&page=2&display_size=2&payment_states=success%2Ccreated&refund_states=submitted")))
+                .body("_links.self.href", is(expectedChargesLocationFor(accountId, "?reference=ref-3&page=1&display_size=2&payment_states=success%2Ccreated&refund_states=submitted")))
 
                 .body("results[0].transaction_type", is("charge"))
                 .body("results[0].gateway_transaction_id", is(transactionIdCharge1))
