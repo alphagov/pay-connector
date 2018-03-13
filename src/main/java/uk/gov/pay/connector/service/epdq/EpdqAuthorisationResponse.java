@@ -1,7 +1,7 @@
 package uk.gov.pay.connector.service.epdq;
 
 import org.apache.commons.lang3.StringUtils;
-import uk.gov.pay.connector.model.Auth3dsDetailsDTO;
+import uk.gov.pay.connector.model.EpdqParamsFor3DSecure;
 import uk.gov.pay.connector.service.BaseAuthoriseResponse;
 
 import javax.xml.bind.annotation.XmlAttribute;
@@ -19,14 +19,11 @@ public class EpdqAuthorisationResponse extends EpdqBaseResponse implements BaseA
     private static final String WAITING = "51";
     private static final String REJECTED = "2";
 
-    @XmlAttribute(name = "STATUS")
     private String status;
+    private String htmlAnswer;
 
     @XmlAttribute(name = "PAYID")
     private String transactionId;
-
-    @XmlElement(name = "HTML_ANSWER")
-    private String htmlAnswer;
 
     @Override
     public AuthoriseStatus authoriseStatus() {
@@ -43,16 +40,16 @@ public class EpdqAuthorisationResponse extends EpdqBaseResponse implements BaseA
             return AuthoriseStatus.REJECTED;
         }
 
-        if(WAITING_3DS.equals(status)) {
+        if (WAITING_3DS.equals(status)) {
             return AuthoriseStatus.REQUIRES_3DS;
         }
         return AuthoriseStatus.ERROR;
     }
 
     @Override
-    public Optional<Auth3dsDetailsDTO> getAuth3dsDetails() {
+    public Optional<EpdqParamsFor3DSecure> getAuth3dsDetails() {
         if (htmlAnswer != null) {
-            return Optional.of(new Auth3dsDetailsDTO(null, null, htmlAnswer));
+            return Optional.of(new EpdqParamsFor3DSecure(htmlAnswer));
         }
         return Optional.empty();
     }
@@ -70,10 +67,12 @@ public class EpdqAuthorisationResponse extends EpdqBaseResponse implements BaseA
         return htmlAnswer;
     }
 
+    @XmlElement(name = "HTML_ANSWER")
     public void setHtmlAnswer(String htmlAnswer) {
         this.htmlAnswer = htmlAnswer;
     }
 
+    @XmlAttribute(name = "STATUS")
     public void setStatus(String status) {
         this.status = status;
     }

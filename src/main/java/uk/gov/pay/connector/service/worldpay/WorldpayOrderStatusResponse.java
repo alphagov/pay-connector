@@ -2,7 +2,7 @@ package uk.gov.pay.connector.service.worldpay;
 
 import org.apache.commons.lang3.StringUtils;
 import org.eclipse.persistence.oxm.annotations.XmlPath;
-import uk.gov.pay.connector.model.Auth3dsDetailsDTO;
+import uk.gov.pay.connector.model.WorldpayParamsFor3DSecure;
 import uk.gov.pay.connector.service.BaseAuthoriseResponse;
 import uk.gov.pay.connector.service.BaseCancelResponse;
 import uk.gov.pay.connector.service.BaseInquiryResponse;
@@ -122,9 +122,9 @@ public class WorldpayOrderStatusResponse implements BaseAuthoriseResponse, BaseC
         return trim(errorMessage);
     }
 
-    public Optional<Auth3dsDetailsDTO> getAuth3dsDetails() {
+    public Optional<WorldpayParamsFor3DSecure> getAuth3dsDetails() {
         if (issuerUrl != null && paRequest != null) {
-            return Optional.of(new Auth3dsDetailsDTO(issuerUrl, paRequest, null));
+            return Optional.of(new WorldpayParamsFor3DSecure(issuerUrl, paRequest));
         }
         return Optional.empty();
     }

@@ -1,7 +1,5 @@
 package uk.gov.pay.connector.model.domain;
 
-import uk.gov.pay.connector.model.Auth3dsDetailsDTO;
-
 import javax.persistence.Column;
 import javax.persistence.Embeddable;
 
@@ -16,15 +14,6 @@ public class Auth3dsDetailsEntity {
 
     @Column(name = "html_out_3ds")
     private String htmlOut;
-
-    // needed for JPA
-    public Auth3dsDetailsEntity(){}
-
-    public Auth3dsDetailsEntity(Auth3dsDetailsDTO auth3dsDetails) {
-        this.issuerUrl =auth3dsDetails.issuerUrl;
-        this.paRequest = auth3dsDetails.paRequest;
-        this.htmlOut = auth3dsDetails.htmlOut;
-    }
 
     public String getPaRequest() {
         return paRequest;
