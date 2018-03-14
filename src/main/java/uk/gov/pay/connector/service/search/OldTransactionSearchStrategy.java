@@ -49,7 +49,7 @@ public class OldTransactionSearchStrategy extends AbstractSearchStrategy<Transac
             externalTransactionState = new ExternalTransactionState(externalRefundStatus.getStatus(), externalRefundStatus.isFinished());
         } else {
             ExternalChargeState externalChargeState = ChargeStatus.fromString(transaction.getStatus()).toExternal();
-            externalTransactionState = new ExternalTransactionState(externalChargeState.getStatus(), externalChargeState.isFinished(), externalChargeState.getCode(), externalChargeState.getMessage());
+            externalTransactionState = new ExternalTransactionState(externalChargeState.getStatusV2(), externalChargeState.isFinished(), externalChargeState.getCode(), externalChargeState.getMessage());
         }
 
         PersistedCard cardDetails = new PersistedCard();
