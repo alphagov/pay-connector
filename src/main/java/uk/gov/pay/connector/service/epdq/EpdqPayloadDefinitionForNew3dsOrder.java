@@ -8,44 +8,39 @@ import uk.gov.pay.connector.util.templates.PayloadDefinition;
 import static uk.gov.pay.connector.service.epdq.EpdqOrderRequestBuilder.EpdqTemplateData;
 import static uk.gov.pay.connector.service.epdq.EpdqPayloadDefinition.newParameterBuilder;
 
-public class EpdqPayloadDefinitionForNew3dsOrder implements PayloadDefinition<EpdqTemplateData> {
+public class EpdqPayloadDefinitionForNew3dsOrder extends EpdqPayloadDefinitionForNewOrder implements PayloadDefinition<EpdqTemplateData> {
 
-    final static String AMOUNT_KEY = "AMOUNT";
-    final static String CARD_NO_KEY = "CARDNO";
-    final static String CARDHOLDER_NAME_KEY = "CN";
-    final static String CURRENCY_KEY = "CURRENCY";
-    final static String CVC_KEY = "CVC";
-    final static String EXPIRY_DATE_KEY = "ED";
-    final static String OPERATION_KEY = "OPERATION";
-    final static String ORDER_ID_KEY = "ORDERID";
-    final static String OWNER_ADDRESS_KEY = "OWNERADDRESS";
-    final static String OWNER_COUNTRY_CODE_KEY = "OWNERCTY";
-    final static String OWNER_TOWN_KEY = "OWNERTOWN";
-    final static String OWNER_ZIP_KEY = "OWNERZIP";
-    final static String PSPID_KEY = "PSPID";
-    final static String PSWD_KEY = "PSWD";
-    final static String USERID_KEY = "USERID";
+    static final String ACCEPTURL_KEY = "ACCEPTURL";
+    static final String COMPLUS_KEY = "COMPLUS";
+    static final String DECLINEURL_KEY = "DECLINEURL";
+    static final String EXCEPTIONURL_KEY = "EXCEPTIONURL";
+    static final String FLAG3D_KEY = "FLAG3D";
+    static final String HTTPACCEPT_URL = "HTTP_ACCEPT";
+    static final String HTTPUSER_AGENT_URL = "HTTP_USER_AGENT";
+    static final String LANGUAGE_URL = "LANGUAGE";
+    static final String PARAMPLUS_URL = "PARAMPLUS";
+    static final String WIN3DS_URL = "WIN3DS";
 
     @Override
     public ImmutableList<NameValuePair> extract(EpdqTemplateData templateData) {
 
-        String epdqCallbackUrl = String.format("%s/card_details/%s/3ds_required_in", templateData.getFrontendUrl(), templateData.getOrderId());
+        String frontend3dsIncomingUrl = String.format("%s/card_details/%s/3ds_required_in", templateData.getFrontendUrl(), templateData.getOrderId());
         // Keep this list in alphabetical order
         return newParameterBuilder()
-                .add("ACCEPTURL", epdqCallbackUrl)
+                .add(ACCEPTURL_KEY, frontend3dsIncomingUrl)
                 .add(AMOUNT_KEY, templateData.getAmount())
                 .add(CARD_NO_KEY, templateData.getAuthCardDetails().getCardNo())
                 .add(CARDHOLDER_NAME_KEY, templateData.getAuthCardDetails().getCardHolder())
-                .add("COMPLUS", "")
+                .add(COMPLUS_KEY, "")
                 .add(CURRENCY_KEY, "GBP")
                 .add(CVC_KEY, templateData.getAuthCardDetails().getCvc())
-                .add("DECLINEURL", epdqCallbackUrl + "/decline")
-                .add("EXCEPTIONURL", epdqCallbackUrl + "/exception")
+                .add(DECLINEURL_KEY, frontend3dsIncomingUrl + "/decline")
+                .add(EXCEPTIONURL_KEY, frontend3dsIncomingUrl + "/error")
                 .add(EXPIRY_DATE_KEY, templateData.getAuthCardDetails().getEndDate())
-                .add("FLAG3D", "Y")
-                .add("HTTP_ACCEPT", templateData.getAuthCardDetails().getAcceptHeader())
-                .add("HTTP_USER_AGENT", templateData.getAuthCardDetails().getUserAgentHeader())
-                .add("LANGUAGE", "en_GB")
+                .add(FLAG3D_KEY, "Y")
+                .add(HTTPACCEPT_URL, templateData.getAuthCardDetails().getAcceptHeader())
+                .add(HTTPUSER_AGENT_URL, templateData.getAuthCardDetails().getUserAgentHeader())
+                .add(LANGUAGE_URL, "en_GB")
                 .add(OPERATION_KEY, templateData.getOperationType())
                 .add(ORDER_ID_KEY, templateData.getOrderId())
                 .add(OWNER_ADDRESS_KEY, concatAddressLines(templateData.getAuthCardDetails().getAddress().getLine1(),
@@ -53,11 +48,11 @@ public class EpdqPayloadDefinitionForNew3dsOrder implements PayloadDefinition<Ep
                 .add(OWNER_COUNTRY_CODE_KEY, templateData.getAuthCardDetails().getAddress().getCountry())
                 .add(OWNER_TOWN_KEY, templateData.getAuthCardDetails().getAddress().getCity())
                 .add(OWNER_ZIP_KEY, templateData.getAuthCardDetails().getAddress().getPostcode())
-                .add("PARAMPLUS", "")
+                .add(PARAMPLUS_URL, "")
                 .add(PSPID_KEY, templateData.getMerchantCode())
                 .add(PSWD_KEY, templateData.getPassword())
                 .add(USERID_KEY, templateData.getUserId())
-                .add("WIN3DS", "MAINW")
+                .add(WIN3DS_URL, "MAINW")
                 .build();
     }
 

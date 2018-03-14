@@ -91,10 +91,6 @@ public class EpdqAuthorisationResponse extends EpdqBaseResponse implements BaseA
         return null;
     }
 
-    public String getStatus() {
-        return status;
-    }
-
     @Override
     public String toString() {
         StringJoiner joiner = new StringJoiner(", ", "ePDQ authorisation response (", ")");

@@ -5,7 +5,12 @@ import org.hamcrest.Matchers;
 import org.junit.Test;
 import uk.gov.pay.connector.it.base.ChargingITestBase;
 
-import static uk.gov.pay.connector.model.domain.ChargeStatus.*;
+import static uk.gov.pay.connector.model.domain.ChargeStatus.AUTHORISATION_3DS_REQUIRED;
+import static uk.gov.pay.connector.model.domain.ChargeStatus.AUTHORISATION_ERROR;
+import static uk.gov.pay.connector.model.domain.ChargeStatus.AUTHORISATION_REJECTED;
+import static uk.gov.pay.connector.model.domain.ChargeStatus.AUTHORISATION_SUBMITTED;
+import static uk.gov.pay.connector.model.domain.ChargeStatus.AUTHORISATION_SUCCESS;
+import static uk.gov.pay.connector.model.domain.ChargeStatus.ENTERING_CARD_DETAILS;
 
 public class EpdqCardResourceITest extends ChargingITestBase {
 

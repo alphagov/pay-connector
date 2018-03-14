@@ -229,7 +229,7 @@ public class WorldpayPaymentProviderTest {
 
         Map<String, String> credentialsMap = ImmutableMap.of("merchant_id", "MERCHANTCODE");
         when(mockGatewayAccountEntity.getCredentials()).thenReturn(credentialsMap);
-        when(mockGatewayAccountEntity.isRequires3ds()).thenReturn(false);
+        when(mockGatewayAccountEntity.requires3ds()).thenReturn(false);
         when(mockGatewayClient.postRequestFor(isNull(String.class), any(GatewayAccountEntity.class), any(GatewayOrder.class))).thenReturn(left(unexpectedStatusCodeFromGateway("Unexpected Response Code From Gateway")));
 
         WorldpayPaymentProvider worldpayPaymentProvider = new WorldpayPaymentProvider(gatewayClientEnumMap, false, null, externalRefundAvailabilityCalculator);
@@ -266,7 +266,7 @@ public class WorldpayPaymentProviderTest {
 
         Map<String, String> credentialsMap = ImmutableMap.of("merchant_id", "MERCHANTCODE");
         when(mockGatewayAccountEntity.getCredentials()).thenReturn(credentialsMap);
-        when(mockGatewayAccountEntity.isRequires3ds()).thenReturn(true);
+        when(mockGatewayAccountEntity.requires3ds()).thenReturn(true);
         when(mockGatewayClient.postRequestFor(isNull(String.class), any(GatewayAccountEntity.class), any(GatewayOrder.class))).thenReturn(left(unexpectedStatusCodeFromGateway("Unexpected Response Code From Gateway")));
 
         WorldpayPaymentProvider worldpayPaymentProvider = new WorldpayPaymentProvider(gatewayClientEnumMap, false, null, externalRefundAvailabilityCalculator);
@@ -300,7 +300,7 @@ public class WorldpayPaymentProviderTest {
 
         Map<String, String> credentialsMap = ImmutableMap.of("merchant_id", "MERCHANTCODE");
         when(mockGatewayAccountEntity.getCredentials()).thenReturn(credentialsMap);
-        when(mockGatewayAccountEntity.isRequires3ds()).thenReturn(true);
+        when(mockGatewayAccountEntity.requires3ds()).thenReturn(true);
         when(mockGatewayClient.postRequestFor(isNull(String.class), any(GatewayAccountEntity.class), any(GatewayOrder.class))).thenReturn(left(unexpectedStatusCodeFromGateway("Unexpected Response Code From Gateway")));
 
         WorldpayPaymentProvider worldpayPaymentProvider = new WorldpayPaymentProvider(gatewayClientEnumMap, false, null, externalRefundAvailabilityCalculator);
@@ -336,7 +336,7 @@ public class WorldpayPaymentProviderTest {
 
         Map<String, String> credentialsMap = ImmutableMap.of("merchant_id", "MERCHANTCODE");
         when(mockGatewayAccountEntity.getCredentials()).thenReturn(credentialsMap);
-        when(mockGatewayAccountEntity.isRequires3ds()).thenReturn(true);
+        when(mockGatewayAccountEntity.requires3ds()).thenReturn(true);
         when(mockGatewayClient.postRequestFor(isNull(String.class), any(GatewayAccountEntity.class), any(GatewayOrder.class))).thenReturn(left(unexpectedStatusCodeFromGateway("Unexpected Response Code From Gateway")));
 
         WorldpayPaymentProvider worldpayPaymentProvider = new WorldpayPaymentProvider(gatewayClientEnumMap, false, null, externalRefundAvailabilityCalculator);
