@@ -39,7 +39,7 @@ pipeline {
       }
       post {
         failure {
-          postMetric("connector.maven-build.failure", 1, "new")
+          postMetric("connector.maven-build.failure", 1)
         }
       }
     }
@@ -62,7 +62,7 @@ pipeline {
       }
       post {
         failure {
-          postMetric("connector.docker-build.failure", 1, "new")
+          postMetric("connector.docker-build.failure", 1)
         }
       }
     }
@@ -87,7 +87,7 @@ pipeline {
       }
       post {
         failure {
-          postMetric("connector.docker-tag.failure", 1, "new")
+          postMetric("connector.docker-tag.failure", 1)
         }
       }
     }
@@ -96,17 +96,16 @@ pipeline {
         branch 'master'
       }
        steps {
-          deploy("connector", "test", null, false, false)
           deployEcs("connector", "test", null, true, true)
        }
     }
   }
   post {
     failure {
-      postMetric("connector.failure", 1, "new")
+      postMetric(appendBranchSuffix("connector") + ".failure", 1)
     }
     success {
-      postSuccessfulMetrics("connector")
+      postSuccessfulMetrics(appendBranchSuffix("connector"))
     }
   }
 }
