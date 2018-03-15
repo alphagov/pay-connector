@@ -135,6 +135,7 @@ public class ChargeResponse {
         }
     }
 
+    @JsonInclude(Include.NON_NULL)
     @JsonFormat(shape = JsonFormat.Shape.OBJECT)
     public static class Auth3dsData {
 
@@ -143,6 +144,9 @@ public class ChargeResponse {
 
         @JsonProperty("issuerUrl")
         private String issuerUrl;
+
+        @JsonProperty("htmlOut")
+        private String htmlOut;
 
         public String getPaRequest() {
             return paRequest;
@@ -160,6 +164,14 @@ public class ChargeResponse {
             this.issuerUrl = issuerUrl;
         }
 
+        public String getHtmlOut() {
+            return htmlOut;
+        }
+
+        public void setHtmlOut(String htmlOut) {
+            this.htmlOut = htmlOut;
+        }
+
         @Override
         public boolean equals(Object o) {
             if (this == o) return true;
@@ -167,16 +179,16 @@ public class ChargeResponse {
 
             Auth3dsData that = (Auth3dsData) o;
 
-            if (paRequest != null ? !paRequest.equals(that.paRequest) : that.paRequest != null)
-                return false;
-            return issuerUrl != null ? issuerUrl.equals(that.issuerUrl) : that.issuerUrl == null;
-
+            if (paRequest != null ? !paRequest.equals(that.paRequest) : that.paRequest != null) return false;
+            if (issuerUrl != null ? !issuerUrl.equals(that.issuerUrl) : that.issuerUrl != null) return false;
+            return htmlOut != null ? htmlOut.equals(that.htmlOut) : that.htmlOut == null;
         }
 
         @Override
         public int hashCode() {
             int result = paRequest != null ? paRequest.hashCode() : 0;
             result = 31 * result + (issuerUrl != null ? issuerUrl.hashCode() : 0);
+            result = 31 * result + (htmlOut != null ? htmlOut.hashCode() : 0);
             return result;
         }
 
@@ -185,6 +197,7 @@ public class ChargeResponse {
             return "Auth3dsData{" +
                     "paRequest='" + paRequest + '\'' +
                     ", issuerUrl='" + issuerUrl + '\'' +
+                    ", htmlOut='" + htmlOut + '\'' +
                     '}';
         }
     }

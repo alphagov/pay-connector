@@ -100,7 +100,7 @@ public class PaymentProviders<T extends BaseResponse> {
                 .refundClient(gatewayClientForOperation(EPDQ, REFUND, EpdqPaymentProvider.includeSessionIdentifier()))
                 .build();
 
-        return new EpdqPaymentProvider(gatewayClientEnumMap, new EpdqSha512SignatureGenerator(), epdqExternalRefundAvailabilityCalculator);
+        return new EpdqPaymentProvider(gatewayClientEnumMap, new EpdqSha512SignatureGenerator(), epdqExternalRefundAvailabilityCalculator, config.getLinks().getFrontendUrl());
     }
 
     public PaymentProvider<T, ?> byName(PaymentGatewayName gateway) {

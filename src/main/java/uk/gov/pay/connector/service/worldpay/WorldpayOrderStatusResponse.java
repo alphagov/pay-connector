@@ -2,11 +2,13 @@ package uk.gov.pay.connector.service.worldpay;
 
 import org.apache.commons.lang3.StringUtils;
 import org.eclipse.persistence.oxm.annotations.XmlPath;
+import uk.gov.pay.connector.model.WorldpayParamsFor3DSecure;
 import uk.gov.pay.connector.service.BaseAuthoriseResponse;
 import uk.gov.pay.connector.service.BaseCancelResponse;
 import uk.gov.pay.connector.service.BaseInquiryResponse;
 
 import javax.xml.bind.annotation.XmlRootElement;
+import java.util.Optional;
 import java.util.StringJoiner;
 
 import static org.apache.commons.lang3.StringUtils.trim;
@@ -120,14 +122,11 @@ public class WorldpayOrderStatusResponse implements BaseAuthoriseResponse, BaseC
         return trim(errorMessage);
     }
 
-    @Override
-    public String get3dsPaRequest() {
-        return paRequest;
-    }
-
-    @Override
-    public String get3dsIssuerUrl() {
-        return issuerUrl;
+    public Optional<WorldpayParamsFor3DSecure> getAuth3dsDetails() {
+        if (issuerUrl != null && paRequest != null) {
+            return Optional.of(new WorldpayParamsFor3DSecure(issuerUrl, paRequest));
+        }
+        return Optional.empty();
     }
 
     @Override
@@ -145,8 +144,11 @@ public class WorldpayOrderStatusResponse implements BaseAuthoriseResponse, BaseC
         if (StringUtils.isNotBlank(getRefusedReturnCodeDescription())) {
             joiner.add("ISO8583ReturnCode description: " + getRefusedReturnCodeDescription());
         }
-        if (StringUtils.isNotBlank(get3dsIssuerUrl())) {
-            joiner.add("issuerURL: " + get3dsIssuerUrl());
+        if (StringUtils.isNotBlank(issuerUrl)) {
+            joiner.add("issuerURL: " + issuerUrl);
+        }
+        if (StringUtils.isNotBlank(paRequest)) {
+            joiner.add("paRequest: " + paRequest);
         }
         if (StringUtils.isNotBlank(getErrorCode())) {
             joiner.add("error code: " + getErrorCode());

@@ -326,7 +326,7 @@ public class GatewayAccountResource {
 
         return gatewayDao.findById(gatewayAccountId)
                 .map(gatewayAccount -> {
-                    if (!gatewayAccount.isRequires3ds() && hasAnyRequired3ds(cardTypeEntities)) {
+                    if (!gatewayAccount.requires3ds() && hasAnyRequired3ds(cardTypeEntities)) {
                         return Response.status(Status.CONFLICT).build();
                     }
                     gatewayAccount.setCardTypes(cardTypeEntities);

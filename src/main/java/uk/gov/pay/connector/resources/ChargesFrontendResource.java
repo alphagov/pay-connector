@@ -9,12 +9,20 @@ import uk.gov.pay.connector.dao.CardTypeDao;
 import uk.gov.pay.connector.dao.ChargeDao;
 import uk.gov.pay.connector.model.ChargeResponse;
 import uk.gov.pay.connector.model.builder.PatchRequestBuilder;
-import uk.gov.pay.connector.model.domain.*;
+import uk.gov.pay.connector.model.domain.CardTypeEntity;
+import uk.gov.pay.connector.model.domain.ChargeEntity;
+import uk.gov.pay.connector.model.domain.ChargeStatus;
+import uk.gov.pay.connector.model.domain.GatewayAccountEntity;
+import uk.gov.pay.connector.model.domain.PersistedCard;
 import uk.gov.pay.connector.service.ChargeService;
 import uk.gov.pay.connector.util.DateTimeUtils;
 
 import javax.inject.Inject;
-import javax.ws.rs.*;
+import javax.ws.rs.GET;
+import javax.ws.rs.PUT;
+import javax.ws.rs.Path;
+import javax.ws.rs.PathParam;
+import javax.ws.rs.Produces;
 import javax.ws.rs.core.Context;
 import javax.ws.rs.core.Response;
 import javax.ws.rs.core.UriInfo;
@@ -31,7 +39,9 @@ import static uk.gov.pay.connector.model.builder.PatchRequestBuilder.aPatchReque
 import static uk.gov.pay.connector.model.domain.ChargeStatus.ENTERING_CARD_DETAILS;
 import static uk.gov.pay.connector.resources.ApiValidators.validateChargePatchParams;
 import static uk.gov.pay.connector.resources.ChargesApiResource.EMAIL_KEY;
-import static uk.gov.pay.connector.util.ResponseUtil.*;
+import static uk.gov.pay.connector.util.ResponseUtil.badRequestResponse;
+import static uk.gov.pay.connector.util.ResponseUtil.fieldsMissingResponse;
+import static uk.gov.pay.connector.util.ResponseUtil.responseWithChargeNotFound;
 
 @Path("/")
 public class ChargesFrontendResource {
@@ -152,6 +162,7 @@ public class ChargesFrontendResource {
             auth3dsData = new ChargeResponse.Auth3dsData();
             auth3dsData.setPaRequest(charge.get3dsDetails().getPaRequest());
             auth3dsData.setIssuerUrl(charge.get3dsDetails().getIssuerUrl());
+            auth3dsData.setHtmlOut(charge.get3dsDetails().getHtmlOut());
         }
 
         return aFrontendChargeResponse()

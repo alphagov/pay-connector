@@ -1,6 +1,9 @@
 package uk.gov.pay.connector.service;
 
+import uk.gov.pay.connector.model.GatewayParamsFor3DSecure;
 import uk.gov.pay.connector.model.domain.ChargeStatus;
+
+import java.util.Optional;
 
 public interface BaseAuthoriseResponse extends BaseResponse {
 
@@ -8,9 +11,7 @@ public interface BaseAuthoriseResponse extends BaseResponse {
 
     AuthoriseStatus authoriseStatus();
 
-    String get3dsPaRequest();
-
-    String get3dsIssuerUrl();
+    Optional<? extends GatewayParamsFor3DSecure> getAuth3dsDetails();
 
     enum AuthoriseStatus {
         SUBMITTED(ChargeStatus.AUTHORISATION_SUBMITTED),

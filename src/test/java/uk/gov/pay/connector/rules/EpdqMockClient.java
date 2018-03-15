@@ -18,6 +18,10 @@ public class EpdqMockClient {
         paymentServiceResponse(ROUTE_FOR_NEW_ORDER, TestTemplateResourceLoader.load(EPDQ_AUTHORISATION_SUCCESS_RESPONSE));
     }
 
+    public void mockAuthorisation3dsSuccess() {
+        paymentServiceResponse(ROUTE_FOR_NEW_ORDER, TestTemplateResourceLoader.load(EPDQ_AUTHORISATION_SUCCESS_3D_RESPONSE));
+    }
+
     public void mockAuthorisationFailure() {
         paymentServiceResponse(ROUTE_FOR_NEW_ORDER, TestTemplateResourceLoader.load(EPDQ_AUTHORISATION_FAILED_RESPONSE));
     }

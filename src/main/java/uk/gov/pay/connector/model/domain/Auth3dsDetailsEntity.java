@@ -12,6 +12,9 @@ public class Auth3dsDetailsEntity {
     @Column(name = "issuer_url_3ds")
     private String issuerUrl;
 
+    @Column(name = "html_out_3ds")
+    private String htmlOut;
+
     public String getPaRequest() {
         return paRequest;
     }
@@ -26,5 +29,13 @@ public class Auth3dsDetailsEntity {
 
     public void setIssuerUrl(String issuerUrl) {
         this.issuerUrl = issuerUrl;
+    }
+
+    public String getHtmlOut() {
+        return htmlOut;
+    }
+
+    public void setHtmlOut(String htmlOut) {
+        this.htmlOut = htmlOut;
     }
 }

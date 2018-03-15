@@ -1,22 +1,26 @@
 package uk.gov.pay.connector.service.epdq;
 
 import org.apache.commons.lang3.StringUtils;
+import uk.gov.pay.connector.model.EpdqParamsFor3DSecure;
 import uk.gov.pay.connector.service.BaseAuthoriseResponse;
 
 import javax.xml.bind.annotation.XmlAttribute;
+import javax.xml.bind.annotation.XmlElement;
 import javax.xml.bind.annotation.XmlRootElement;
+import java.util.Optional;
 import java.util.StringJoiner;
 
 @XmlRootElement(name = "ncresponse")
 public class EpdqAuthorisationResponse extends EpdqBaseResponse implements BaseAuthoriseResponse {
 
     private static final String AUTHORISED = "5";
+    private static final String WAITING_3DS = "46";
     private static final String WAITING_EXTERNAL = "50";
     private static final String WAITING = "51";
     private static final String REJECTED = "2";
 
-    @XmlAttribute(name = "STATUS")
     private String status;
+    private String htmlAnswer;
 
     @XmlAttribute(name = "PAYID")
     private String transactionId;
@@ -36,17 +40,18 @@ public class EpdqAuthorisationResponse extends EpdqBaseResponse implements BaseA
             return AuthoriseStatus.REJECTED;
         }
 
+        if (WAITING_3DS.equals(status)) {
+            return AuthoriseStatus.REQUIRES_3DS;
+        }
         return AuthoriseStatus.ERROR;
     }
 
     @Override
-    public String get3dsPaRequest() {
-        return null;
-    }
-
-    @Override
-    public String get3dsIssuerUrl() {
-        return null;
+    public Optional<EpdqParamsFor3DSecure> getAuth3dsDetails() {
+        if (htmlAnswer != null) {
+            return Optional.of(new EpdqParamsFor3DSecure(htmlAnswer));
+        }
+        return Optional.empty();
     }
 
     private boolean hasError() {
@@ -56,6 +61,20 @@ public class EpdqAuthorisationResponse extends EpdqBaseResponse implements BaseA
     @Override
     public String getTransactionId() {
         return transactionId;
+    }
+
+    public String getHtmlAnswer() {
+        return htmlAnswer;
+    }
+
+    @XmlElement(name = "HTML_ANSWER")
+    public void setHtmlAnswer(String htmlAnswer) {
+        this.htmlAnswer = htmlAnswer;
+    }
+
+    @XmlAttribute(name = "STATUS")
+    public void setStatus(String status) {
+        this.status = status;
     }
 
     @Override
@@ -89,5 +108,4 @@ public class EpdqAuthorisationResponse extends EpdqBaseResponse implements BaseA
         }
         return joiner.toString();
     }
-
 }

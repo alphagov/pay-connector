@@ -216,13 +216,14 @@ public class DatabaseTestHelper {
         );
     }
 
-    public void updateCharge3dsDetails(Long chargeId, String issuerUrl, String paRequest) {
+    public void updateCharge3dsDetails(Long chargeId, String issuerUrl, String paRequest, String htmlOut) {
         jdbi.withHandle(handle ->
                 handle
-                        .createStatement("UPDATE charges SET pa_request_3ds=:pa_request_3ds, issuer_url_3ds=:issuer_url_3ds WHERE id=:id")
+                        .createStatement("UPDATE charges SET pa_request_3ds=:pa_request_3ds, issuer_url_3ds=:issuer_url_3ds, html_out_3ds=:html_out_3ds WHERE id=:id")
                         .bind("id", chargeId)
                         .bind("pa_request_3ds", paRequest)
                         .bind("issuer_url_3ds", issuerUrl)
+                        .bind("html_out_3ds", htmlOut)
                         .execute()
         );
     }
@@ -452,6 +453,14 @@ public class DatabaseTestHelper {
         );
     }
 
+    public void enable3dsForGatewayAccount(long accountId) {
+        jdbi.withHandle(handle ->
+                handle.createStatement("UPDATE gateway_accounts set requires_3ds=true WHERE id=:gatewayAccountId")
+                        .bind("gatewayAccountId", accountId)
+                        .execute()
+        );
+    }
+
     public void addNotificationCredentialsFor(long accountId, String username, String password) {
         jdbi.withHandle(handle ->
                 handle.createStatement("INSERT INTO notification_credentials(account_id, username, password, version) VALUES (:accountId, :username, :password, 1)")
@@ -520,7 +529,6 @@ public class DatabaseTestHelper {
         );
         return new Gson().fromJson(jsonString, Map.class);
     }
-
     public void addPaymentRequest(long id,
                                   long amount,
                                   long gatewaysAccountId,
@@ -556,6 +564,7 @@ public class DatabaseTestHelper {
                 )
         );
     }
+
     public void addChargeTransaction(
             long transactionId,
             String gatewayTransactionId,

@@ -2,9 +2,11 @@ package uk.gov.pay.connector.service.smartpay;
 
 import org.apache.commons.lang3.StringUtils;
 import org.eclipse.persistence.oxm.annotations.XmlPath;
+import uk.gov.pay.connector.model.GatewayParamsFor3DSecure;
 import uk.gov.pay.connector.service.BaseAuthoriseResponse;
 
 import javax.xml.bind.annotation.XmlRootElement;
+import java.util.Optional;
 import java.util.StringJoiner;
 
 @XmlRootElement(name = "Envelope", namespace = "http://schemas.xmlsoap.org/soap/envelope/")
@@ -28,18 +30,13 @@ public class SmartpayAuthorisationResponse extends SmartpayBaseResponse implemen
     }
 
     @Override
+    public Optional<GatewayParamsFor3DSecure> getAuth3dsDetails() {
+        return Optional.empty();
+    }
+
+    @Override
     public String getTransactionId() {
         return pspReference;
-    }
-
-    @Override
-    public String get3dsPaRequest() {
-        return null;
-    }
-
-    @Override
-    public String get3dsIssuerUrl() {
-        return null;
     }
 
     @Override

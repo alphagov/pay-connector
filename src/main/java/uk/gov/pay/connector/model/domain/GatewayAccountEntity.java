@@ -160,7 +160,7 @@ public class GatewayAccountEntity extends AbstractVersionedEntity {
         return notificationCredentials;
     }
 
-    public boolean isRequires3ds() {
+    public boolean requires3ds() {
         return requires3ds;
     }
 
@@ -226,7 +226,7 @@ public class GatewayAccountEntity extends AbstractVersionedEntity {
         if (isNotBlank(getServiceName())) {
             account.put("service_name", getServiceName());
         }
-        account.put("toggle_3ds", String.valueOf(isRequires3ds()));
+        account.put("toggle_3ds", String.valueOf(requires3ds()));
         return account;
     }
 
