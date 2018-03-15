@@ -2,12 +2,12 @@ package uk.gov.pay.connector.model;
 
 import uk.gov.pay.connector.model.domain.Auth3dsDetailsEntity;
 
-public class WorldpayParamsFor3DSecure implements GatewayParamsFor3DSecure {
+public class WorldpayParamsFor3ds implements GatewayParamsFor3ds {
 
-    public final String issuerUrl;
-    public final String paRequest;
+    private final String issuerUrl;
+    private final String paRequest;
 
-    public WorldpayParamsFor3DSecure(String issuerUrl, String paRequest) {
+    public WorldpayParamsFor3ds(String issuerUrl, String paRequest) {
         this.issuerUrl = issuerUrl;
         this.paRequest = paRequest;
     }

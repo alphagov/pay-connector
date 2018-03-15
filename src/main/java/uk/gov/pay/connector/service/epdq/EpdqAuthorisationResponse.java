@@ -1,7 +1,7 @@
 package uk.gov.pay.connector.service.epdq;
 
 import org.apache.commons.lang3.StringUtils;
-import uk.gov.pay.connector.model.EpdqParamsFor3DSecure;
+import uk.gov.pay.connector.model.EpdqParamsFor3ds;
 import uk.gov.pay.connector.model.domain.Auth3dsDetails;
 import uk.gov.pay.connector.service.BaseAuthoriseResponse;
 
@@ -44,8 +44,7 @@ public class EpdqAuthorisationResponse extends EpdqBaseResponse implements BaseA
             return AuthoriseStatus.AUTHORISED;
         }
 
-        if (WAITING_EXTERNAL.equals(status) ||
-                WAITING.equals(status)) {
+        if (WAITING_EXTERNAL.equals(status) || WAITING.equals(status)) {
             return AuthoriseStatus.SUBMITTED;
         }
 
@@ -60,9 +59,9 @@ public class EpdqAuthorisationResponse extends EpdqBaseResponse implements BaseA
     }
 
     @Override
-    public Optional<EpdqParamsFor3DSecure> getAuth3dsDetails() {
+    public Optional<EpdqParamsFor3ds> getAuth3dsDetails() {
         if (htmlAnswer != null) {
-            return Optional.of(new EpdqParamsFor3DSecure(htmlAnswer));
+            return Optional.of(new EpdqParamsFor3ds(htmlAnswer));
         }
         return Optional.empty();
     }

@@ -11,7 +11,7 @@ import uk.gov.pay.connector.dao.ChargeEventDao;
 import uk.gov.pay.connector.dao.PaymentRequestDao;
 import uk.gov.pay.connector.exception.ChargeNotFoundRuntimeException;
 import uk.gov.pay.connector.model.GatewayError;
-import uk.gov.pay.connector.model.GatewayParamsFor3DSecure;
+import uk.gov.pay.connector.model.GatewayParamsFor3ds;
 import uk.gov.pay.connector.model.domain.AddressEntity;
 import uk.gov.pay.connector.model.domain.AuthCardDetails;
 import uk.gov.pay.connector.model.domain.Card3dsEntity;
@@ -139,7 +139,7 @@ public class CardAuthoriseService extends CardAuthoriseBaseService<AuthCardDetai
 
             chargeEntity.setStatus(status);
             operationResponse.getBaseResponse().ifPresent(response ->
-                    response.getAuth3dsDetails().map(GatewayParamsFor3DSecure::toAuth3dsDetailsEntity)
+                    response.getAuth3dsDetails().map(GatewayParamsFor3ds::toAuth3dsDetailsEntity)
                             .ifPresent(chargeEntity::set3dsDetails)
             );
 

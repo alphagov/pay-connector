@@ -1,16 +1,15 @@
 package uk.gov.pay.connector.it.resources.epdq;
 
-import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.google.common.collect.ImmutableMap;
 import com.jayway.restassured.response.ValidatableResponse;
-import org.hamcrest.Matchers;
 import org.junit.Test;
 import uk.gov.pay.connector.it.base.ChargingITestBase;
 import uk.gov.pay.connector.util.RandomIdGenerator;
 
 import java.util.Map;
 
+import static org.hamcrest.Matchers.is;
 import static uk.gov.pay.connector.model.domain.ChargeStatus.AUTHORISATION_3DS_REQUIRED;
 import static uk.gov.pay.connector.model.domain.ChargeStatus.AUTHORISATION_ERROR;
 import static uk.gov.pay.connector.model.domain.ChargeStatus.AUTHORISATION_REJECTED;
@@ -36,7 +35,7 @@ public class EpdqCardResourceITest extends ChargingITestBase {
                 .body(authorisationDetails)
                 .post(authoriseChargeUrlFor(chargeId))
                 .then()
-                .body("status", Matchers.is(AUTHORISATION_SUCCESS.toString()))
+                .body("status", is(AUTHORISATION_SUCCESS.toString()))
                 .statusCode(200);
 
         assertFrontendChargeStatusIs(chargeId, AUTHORISATION_SUCCESS.toString());
@@ -54,7 +53,7 @@ public class EpdqCardResourceITest extends ChargingITestBase {
                 .then();
 
         response
-                .body("status", Matchers.is(AUTHORISATION_3DS_REQUIRED.toString()))
+                .body("status", is(AUTHORISATION_3DS_REQUIRED.toString()))
                 .statusCode(200);
 
         assertFrontendChargeStatusIs(chargeId, AUTHORISATION_3DS_REQUIRED.toString());
