@@ -178,7 +178,7 @@ public class EpdqPaymentProviderTest {
 
     @Test
     public void shouldAuthorise3dsRequest() {
-        when(mockGatewayAccountEntity.requires3ds()).thenReturn(true);
+        when(mockGatewayAccountEntity.isRequires3ds()).thenReturn(true);
         mockPaymentProviderResponse(200, successAuth3dResponse());
         GatewayResponse<EpdqAuthorisationResponse> response = provider.authorise(buildTestAuthorisationRequest());
         verifyPaymentProviderRequest(successAuthRequest());

@@ -154,7 +154,7 @@ public class EpdqPaymentProvider extends BasePaymentProvider<BaseResponse, Strin
     private Function<AuthorisationGatewayRequest, GatewayOrder> buildAuthoriseOrderFor(String frontendUrl) {
         return request -> {
             EpdqOrderRequestBuilder epdqOrderRequestBuilder =
-                    request.getGatewayAccount().requires3ds() ?
+                    request.getGatewayAccount().isRequires3ds() ?
                             anEpdq3DsAuthoriseOrderRequestBuilder(frontendUrl) :
                             anEpdqAuthoriseOrderRequestBuilder();
 

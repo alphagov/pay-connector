@@ -67,7 +67,7 @@ public class CardAuthoriseService extends CardAuthoriseBaseService<AuthCardDetai
 
             String cardBrand = authCardDetails.getCardBrand();
 
-            if (!chargeEntity.getGatewayAccount().requires3ds() && cardBrandRequires3ds(cardBrand)) {
+            if (!chargeEntity.getGatewayAccount().isRequires3ds() && cardBrandRequires3ds(cardBrand)) {
 
                 chargeEntity.setStatus(AUTHORISATION_ABORTED);
 
