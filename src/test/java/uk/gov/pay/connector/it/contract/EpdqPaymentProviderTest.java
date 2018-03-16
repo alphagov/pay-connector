@@ -13,12 +13,15 @@ import uk.gov.pay.connector.model.CancelGatewayRequest;
 import uk.gov.pay.connector.model.CaptureGatewayRequest;
 import uk.gov.pay.connector.model.RefundGatewayRequest;
 import uk.gov.pay.connector.model.domain.Address;
+import uk.gov.pay.connector.model.domain.Auth3dsDetails;
 import uk.gov.pay.connector.model.domain.AuthCardDetails;
 import uk.gov.pay.connector.model.domain.ChargeEntity;
 import uk.gov.pay.connector.model.domain.GatewayAccountEntity;
 import uk.gov.pay.connector.model.domain.RefundEntity;
+import uk.gov.pay.connector.model.gateway.Auth3dsResponseGatewayRequest;
 import uk.gov.pay.connector.model.gateway.AuthorisationGatewayRequest;
 import uk.gov.pay.connector.model.gateway.GatewayResponse;
+import uk.gov.pay.connector.service.BaseAuthoriseResponse;
 import uk.gov.pay.connector.service.EpdqExternalRefundAvailabilityCalculator;
 import uk.gov.pay.connector.service.GatewayClient;
 import uk.gov.pay.connector.service.GatewayOperation;
@@ -83,6 +86,20 @@ public class EpdqPaymentProviderTest {
         GatewayResponse<EpdqAuthorisationResponse> response = paymentProvider.authorise(request);
         assertThat(response.isSuccessful(), is(true));
         assertThat(response.getBaseResponse().get().authoriseStatus(), is(REQUIRES_3DS));
+    }
+
+    @Test
+    public void shouldCheckAuthorisationStatusSuccessfully() {
+        setUpAndCheckThatEpdqIsUp();
+        PaymentProvider paymentProvider = getEpdqPaymentProvider();
+        AuthorisationGatewayRequest request = buildAuthorisationRequest(chargeEntity);
+        GatewayResponse<EpdqAuthorisationResponse> response = paymentProvider.authorise(request);
+        assertThat(response.isSuccessful(), is(true));
+        assertThat(response.getBaseResponse().get().authoriseStatus(), is(BaseAuthoriseResponse.AuthoriseStatus.AUTHORISED));
+
+        GatewayResponse<EpdqAuthorisationResponse> queryResponse = paymentProvider.authorise3dsResponse(buildQueryRequest(chargeEntity, Auth3dsDetails.Auth3dsResult.AUTHORISED.name()));
+        assertThat(queryResponse.isSuccessful(), is(true));
+        assertThat(response.getBaseResponse().get().authoriseStatus(), is(BaseAuthoriseResponse.AuthoriseStatus.AUTHORISED));
     }
 
     @Test
@@ -153,18 +170,24 @@ public class EpdqPaymentProviderTest {
     private PaymentProvider getEpdqPaymentProvider() {
         Client client = TestClientFactory.createJerseyClient();
         GatewayClient gatewayClient = new GatewayClient(client, ImmutableMap.of(TEST.toString(), url),
-            EpdqPaymentProvider.includeSessionIdentifier(), mockMetricRegistry);
+                EpdqPaymentProvider.includeSessionIdentifier(), mockMetricRegistry);
         EnumMap<GatewayOperation, GatewayClient> gatewayClients = GatewayOperationClientBuilder.builder()
                 .authClient(gatewayClient)
                 .captureClient(gatewayClient)
                 .cancelClient(gatewayClient)
                 .refundClient(gatewayClient)
                 .build();
-        return new EpdqPaymentProvider(gatewayClients, new EpdqSha512SignatureGenerator(), new EpdqExternalRefundAvailabilityCalculator(), "http://frontendUrl");
+        return new EpdqPaymentProvider(gatewayClients, new EpdqSha512SignatureGenerator(), new EpdqExternalRefundAvailabilityCalculator(), "http://frontendUrl", mockMetricRegistry);
     }
 
     private static AuthorisationGatewayRequest buildAuthorisationRequest(ChargeEntity chargeEntity) {
         return buildAuthorisationRequest(chargeEntity, "Mr. Payment");
+    }
+
+    private static Auth3dsResponseGatewayRequest buildQueryRequest(ChargeEntity chargeEntity, String auth3DResult) {
+        Auth3dsDetails auth3DsDetails = new Auth3dsDetails();
+        auth3DsDetails.setAuth3dsResult(auth3DResult);
+        return new Auth3dsResponseGatewayRequest(chargeEntity, auth3DsDetails);
     }
 
     private static AuthorisationGatewayRequest buildAuthorisationRequest(ChargeEntity chargeEntity, String cardholderName) {
@@ -226,7 +249,7 @@ public class EpdqPaymentProviderTest {
         return CaptureGatewayRequest.valueOf(chargeEntity);
     }
 
-    private static RefundGatewayRequest buildRefundRequest(ChargeEntity chargeEntity, Long refundAmount){
+    private static RefundGatewayRequest buildRefundRequest(ChargeEntity chargeEntity, Long refundAmount) {
         return RefundGatewayRequest.valueOf(new RefundEntity(chargeEntity, refundAmount, userExternalId));
     }
 

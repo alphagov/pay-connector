@@ -1,5 +1,6 @@
 package uk.gov.pay.connector.service.epdq;
 
+import com.google.common.collect.ImmutableMap;
 import org.apache.commons.lang3.StringUtils;
 import uk.gov.pay.connector.model.EpdqParamsFor3ds;
 import uk.gov.pay.connector.model.domain.Auth3dsDetails;
@@ -8,6 +9,7 @@ import uk.gov.pay.connector.service.BaseAuthoriseResponse;
 import javax.xml.bind.annotation.XmlAttribute;
 import javax.xml.bind.annotation.XmlElement;
 import javax.xml.bind.annotation.XmlRootElement;
+import java.util.Map;
 import java.util.Optional;
 import java.util.StringJoiner;
 
@@ -20,17 +22,10 @@ public class EpdqAuthorisationResponse extends EpdqBaseResponse implements BaseA
     private static final String WAITING = "51";
     private static final String REJECTED = "2";
 
-    public static EpdqAuthorisationResponse createPost3dsResponseFor(Auth3dsDetails.Auth3dsResult threeDsResult) {
-        EpdqAuthorisationResponse response = new EpdqAuthorisationResponse();
-        if (Auth3dsDetails.Auth3dsResult.AUTHORISED.equals(threeDsResult)) {
-            response.status = AUTHORISED;
-        } else if (Auth3dsDetails.Auth3dsResult.DECLINED.equals(threeDsResult)) {
-            response.status = REJECTED;
-        } else {
-            response.status = "ERROR";
-        }
-        return response;
-    }
+    private static final Map<Auth3dsDetails.Auth3dsResult, String> statusTo3dsResultMapping = ImmutableMap.of(
+            Auth3dsDetails.Auth3dsResult.AUTHORISED, AUTHORISED,
+            Auth3dsDetails.Auth3dsResult.DECLINED, REJECTED,
+            Auth3dsDetails.Auth3dsResult.ERROR, "ERROR");
 
     private String status;
     private String htmlAnswer;
@@ -87,6 +82,10 @@ public class EpdqAuthorisationResponse extends EpdqBaseResponse implements BaseA
     @XmlAttribute(name = "STATUS")
     public void setStatus(String status) {
         this.status = status;
+    }
+
+    public void setStatusFromAuth3dsResult(Auth3dsDetails.Auth3dsResult result) {
+        this.status = statusTo3dsResultMapping.get(result);
     }
 
     @Override
