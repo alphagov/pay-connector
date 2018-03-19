@@ -122,7 +122,7 @@ public class WorldpayOrderStatusResponse implements BaseAuthoriseResponse, BaseC
         return trim(errorMessage);
     }
 
-    public Optional<WorldpayParamsFor3ds> getAuth3dsDetails() {
+    public Optional<WorldpayParamsFor3ds> getGatewayParamsFor3ds() {
         if (issuerUrl != null && paRequest != null) {
             return Optional.of(new WorldpayParamsFor3ds(issuerUrl, paRequest));
         }

@@ -79,7 +79,7 @@ public class EpdqPaymentProvider extends BasePaymentProvider<BaseResponse, Strin
     @Override
     public GatewayResponse<BaseResponse> authorise3dsResponse(Auth3dsResponseGatewayRequest request) {
         return responseBuilder()
-                .withResponse(EpdqAuthorisationResponse.createPost3dsResponseFor(request.getAuth3DsDetails().getAuth3DResult())).build();
+                .withResponse(EpdqAuthorisationResponse.createPost3dsResponseFor(request.getAuth3DsDetails().getAuth3DsResult())).build();
     }
 
     @Override

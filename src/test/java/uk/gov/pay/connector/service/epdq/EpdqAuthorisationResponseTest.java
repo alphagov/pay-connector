@@ -5,25 +5,25 @@ import uk.gov.pay.connector.model.domain.Auth3dsDetails;
 import uk.gov.pay.connector.service.BaseAuthoriseResponse;
 
 import static org.hamcrest.core.Is.is;
-import static org.junit.Assert.*;
+import static org.junit.Assert.assertThat;
 
 public class EpdqAuthorisationResponseTest {
 
     @Test
     public void shouldMapToAuthorisedSuccess_fromAuthorisedAuth3DResult() {
-        EpdqAuthorisationResponse response = EpdqAuthorisationResponse.createPost3dsResponseFor(Auth3dsDetails.Auth3DResult.AUTHORISED);
+        EpdqAuthorisationResponse response = EpdqAuthorisationResponse.createPost3dsResponseFor(Auth3dsDetails.Auth3dsResult.AUTHORISED);
         assertThat(response.authoriseStatus(),is(BaseAuthoriseResponse.AuthoriseStatus.AUTHORISED));
     }
 
     @Test
     public void shouldMapToAuthorisedRejected_fromDeclinedAuth3DResult() {
-        EpdqAuthorisationResponse response = EpdqAuthorisationResponse.createPost3dsResponseFor(Auth3dsDetails.Auth3DResult.DECLINED);
+        EpdqAuthorisationResponse response = EpdqAuthorisationResponse.createPost3dsResponseFor(Auth3dsDetails.Auth3dsResult.DECLINED);
         assertThat(response.authoriseStatus(),is(BaseAuthoriseResponse.AuthoriseStatus.REJECTED));
     }
 
     @Test
     public void shouldMapToAuthorisedError_fromErrorAuth3DResult() {
-        EpdqAuthorisationResponse response = EpdqAuthorisationResponse.createPost3dsResponseFor(Auth3dsDetails.Auth3DResult.ERROR);
+        EpdqAuthorisationResponse response = EpdqAuthorisationResponse.createPost3dsResponseFor(Auth3dsDetails.Auth3dsResult.ERROR);
         assertThat(response.authoriseStatus(),is(BaseAuthoriseResponse.AuthoriseStatus.ERROR));
     }
 

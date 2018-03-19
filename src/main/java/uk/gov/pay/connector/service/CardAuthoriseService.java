@@ -139,7 +139,7 @@ public class CardAuthoriseService extends CardAuthoriseBaseService<AuthCardDetai
 
             chargeEntity.setStatus(status);
             operationResponse.getBaseResponse().ifPresent(response ->
-                    response.getAuth3dsDetails().map(GatewayParamsFor3ds::toAuth3dsDetailsEntity)
+                    response.getGatewayParamsFor3ds().map(GatewayParamsFor3ds::toAuth3dsDetailsEntity)
                             .ifPresent(chargeEntity::set3dsDetails)
             );
 

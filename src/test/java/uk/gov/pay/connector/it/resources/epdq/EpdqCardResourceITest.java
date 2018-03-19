@@ -10,6 +10,7 @@ import uk.gov.pay.connector.util.RandomIdGenerator;
 import java.util.Map;
 
 import static org.hamcrest.Matchers.is;
+import static uk.gov.pay.connector.model.domain.Auth3dsDetails.Auth3dsResult.AUTHORISED;
 import static uk.gov.pay.connector.model.domain.ChargeStatus.AUTHORISATION_3DS_REQUIRED;
 import static uk.gov.pay.connector.model.domain.ChargeStatus.AUTHORISATION_ERROR;
 import static uk.gov.pay.connector.model.domain.ChargeStatus.AUTHORISATION_REJECTED;
@@ -42,7 +43,7 @@ public class EpdqCardResourceITest extends ChargingITestBase {
     }
 
     @Test
-    public void shouldSuccessfully_authoriseForAChargeRequiring3ds() {
+    public void shouldAuthorise_whenRequires3dsAnd3dsAuthenticationSuccessful() {
         app.getDatabaseTestHelper().enable3dsForGatewayAccount(Long.parseLong(accountId));
         String chargeId = createNewChargeWithNoTransactionId(ENTERING_CARD_DETAILS);
         epdq.mockAuthorisation3dsSuccess();
@@ -64,7 +65,7 @@ public class EpdqCardResourceITest extends ChargingITestBase {
         app.getDatabaseTestHelper().enable3dsForGatewayAccount(Long.parseLong(accountId));
         String chargeId = createNewChargeWith(AUTHORISATION_3DS_REQUIRED, RandomIdGenerator.newId());
 
-        Map<String, String> payload = ImmutableMap.of("auth_3d_result", "AUTHORISED");
+        Map<String, String> payload = ImmutableMap.of("auth_3ds_result", AUTHORISED.name());
 
         givenSetup()
                 .body(new ObjectMapper().writeValueAsString(payload))

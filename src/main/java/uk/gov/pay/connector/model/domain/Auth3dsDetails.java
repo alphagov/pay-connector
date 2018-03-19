@@ -4,13 +4,13 @@ import com.fasterxml.jackson.annotation.JsonProperty;
 
 public class Auth3dsDetails implements AuthorisationDetails {
 
-    public enum Auth3DResult {
+    public enum Auth3dsResult {
         AUTHORISED, DECLINED, ERROR
     }
 
     private String paResponse;
 
-    private Auth3DResult auth3DResult;
+    private Auth3dsResult auth3DsResult;
 
     @JsonProperty("pa_response")
     public void setPaResponse(String paResponse) {
@@ -21,12 +21,12 @@ public class Auth3dsDetails implements AuthorisationDetails {
             return paResponse;
         }
 
-    public Auth3DResult getAuth3DResult() {
-        return auth3DResult;
+    public Auth3dsResult getAuth3DsResult() {
+        return auth3DsResult;
     }
 
-    @JsonProperty("auth_3d_result")
-    public void setAuth3DResult(String auth3DResult) {
-        this.auth3DResult = auth3DResult == null ? null : Auth3DResult.valueOf(auth3DResult);
+    @JsonProperty("auth_3ds_result")
+    public void setAuth3dsResult(String auth3dsResult) {
+        this.auth3DsResult = auth3dsResult == null ? Auth3dsResult.ERROR : Auth3dsResult.valueOf(auth3dsResult);
     }
 }

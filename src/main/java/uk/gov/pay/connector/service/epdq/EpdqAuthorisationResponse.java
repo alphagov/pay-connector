@@ -20,14 +20,14 @@ public class EpdqAuthorisationResponse extends EpdqBaseResponse implements BaseA
     private static final String WAITING = "51";
     private static final String REJECTED = "2";
 
-    public static EpdqAuthorisationResponse createPost3dsResponseFor(Auth3dsDetails.Auth3DResult threeDsResult) {
+    public static EpdqAuthorisationResponse createPost3dsResponseFor(Auth3dsDetails.Auth3dsResult threeDsResult) {
         EpdqAuthorisationResponse response = new EpdqAuthorisationResponse();
-        if (threeDsResult == null || Auth3dsDetails.Auth3DResult.ERROR.equals(threeDsResult)) {
-            response.status = "ERROR";
-        } else if (Auth3dsDetails.Auth3DResult.AUTHORISED.equals(threeDsResult)) {
+        if (Auth3dsDetails.Auth3dsResult.AUTHORISED.equals(threeDsResult)) {
             response.status = AUTHORISED;
-        } else if (Auth3dsDetails.Auth3DResult.DECLINED.equals(threeDsResult)) {
+        } else if (Auth3dsDetails.Auth3dsResult.DECLINED.equals(threeDsResult)) {
             response.status = REJECTED;
+        } else {
+            response.status = "ERROR";
         }
         return response;
     }
@@ -59,7 +59,7 @@ public class EpdqAuthorisationResponse extends EpdqBaseResponse implements BaseA
     }
 
     @Override
-    public Optional<EpdqParamsFor3ds> getAuth3dsDetails() {
+    public Optional<EpdqParamsFor3ds> getGatewayParamsFor3ds() {
         if (htmlAnswer != null) {
             return Optional.of(new EpdqParamsFor3ds(htmlAnswer));
         }

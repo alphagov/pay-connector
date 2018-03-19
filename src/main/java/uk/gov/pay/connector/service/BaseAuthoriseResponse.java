@@ -11,7 +11,7 @@ public interface BaseAuthoriseResponse extends BaseResponse {
 
     AuthoriseStatus authoriseStatus();
 
-    Optional<? extends GatewayParamsFor3ds> getAuth3dsDetails();
+    Optional<? extends GatewayParamsFor3ds> getGatewayParamsFor3ds();
 
     enum AuthoriseStatus {
         SUBMITTED(ChargeStatus.AUTHORISATION_SUBMITTED),

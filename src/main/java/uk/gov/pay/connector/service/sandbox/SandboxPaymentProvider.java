@@ -152,7 +152,7 @@ public class SandboxPaymentProvider extends BasePaymentProvider<BaseResponse, St
             }
 
             @Override
-            public Optional<GatewayParamsFor3ds> getAuth3dsDetails() {
+            public Optional<GatewayParamsFor3ds> getGatewayParamsFor3ds() {
                 return Optional.empty();
             }
 
