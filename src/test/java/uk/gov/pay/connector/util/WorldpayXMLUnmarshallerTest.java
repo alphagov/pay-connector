@@ -114,9 +114,9 @@ public class WorldpayXMLUnmarshallerTest {
         assertNull(response.getErrorCode());
         assertNull(response.getErrorMessage());
 
-        assertThat(response.getAuth3dsDetails().isPresent(), is(true));
-        assertThat(response.getAuth3dsDetails().get().paRequest, is("eJxVUsFuwjAM/ZWK80aSUgpFJogNpHEo2hjTzl"));
-        assertThat(response.getAuth3dsDetails().get().issuerUrl, is("https://secure-test.worldpay.com/jsp/test/shopper/ThreeDResponseSimulator.jsp"));
+        assertThat(response.getGatewayParamsFor3ds().isPresent(), is(true));
+        assertThat(response.getGatewayParamsFor3ds().get().toAuth3dsDetailsEntity().getPaRequest(), is("eJxVUsFuwjAM/ZWK80aSUgpFJogNpHEo2hjTzl"));
+        assertThat(response.getGatewayParamsFor3ds().get().toAuth3dsDetailsEntity().getIssuerUrl(), is("https://secure-test.worldpay.com/jsp/test/shopper/ThreeDResponseSimulator.jsp"));
 
         assertThat(response.authoriseStatus(), is(AuthoriseStatus.REQUIRES_3DS));
     }

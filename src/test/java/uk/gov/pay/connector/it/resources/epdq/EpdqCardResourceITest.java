@@ -1,10 +1,16 @@
 package uk.gov.pay.connector.it.resources.epdq;
 
+import com.fasterxml.jackson.databind.ObjectMapper;
+import com.google.common.collect.ImmutableMap;
 import com.jayway.restassured.response.ValidatableResponse;
-import org.hamcrest.Matchers;
 import org.junit.Test;
 import uk.gov.pay.connector.it.base.ChargingITestBase;
+import uk.gov.pay.connector.util.RandomIdGenerator;
 
+import java.util.Map;
+
+import static org.hamcrest.Matchers.is;
+import static uk.gov.pay.connector.model.domain.Auth3dsDetails.Auth3dsResult.AUTHORISED;
 import static uk.gov.pay.connector.model.domain.ChargeStatus.AUTHORISATION_3DS_REQUIRED;
 import static uk.gov.pay.connector.model.domain.ChargeStatus.AUTHORISATION_ERROR;
 import static uk.gov.pay.connector.model.domain.ChargeStatus.AUTHORISATION_REJECTED;
@@ -30,14 +36,14 @@ public class EpdqCardResourceITest extends ChargingITestBase {
                 .body(authorisationDetails)
                 .post(authoriseChargeUrlFor(chargeId))
                 .then()
-                .body("status", Matchers.is(AUTHORISATION_SUCCESS.toString()))
+                .body("status", is(AUTHORISATION_SUCCESS.toString()))
                 .statusCode(200);
 
         assertFrontendChargeStatusIs(chargeId, AUTHORISATION_SUCCESS.toString());
     }
 
     @Test
-    public void shouldSuccessfully_authorise3ds() throws Exception {
+    public void shouldAuthorise_whenRequires3dsAnd3dsAuthenticationSuccessful() {
         app.getDatabaseTestHelper().enable3dsForGatewayAccount(Long.parseLong(accountId));
         String chargeId = createNewChargeWithNoTransactionId(ENTERING_CARD_DETAILS);
         epdq.mockAuthorisation3dsSuccess();
@@ -48,10 +54,26 @@ public class EpdqCardResourceITest extends ChargingITestBase {
                 .then();
 
         response
-                .body("status", Matchers.is(AUTHORISATION_3DS_REQUIRED.toString()))
+                .body("status", is(AUTHORISATION_3DS_REQUIRED.toString()))
                 .statusCode(200);
 
         assertFrontendChargeStatusIs(chargeId, AUTHORISATION_3DS_REQUIRED.toString());
+    }
+
+    @Test
+    public void shouldSuccessfully_authorise3ds() throws Exception {
+        app.getDatabaseTestHelper().enable3dsForGatewayAccount(Long.parseLong(accountId));
+        String chargeId = createNewChargeWith(AUTHORISATION_3DS_REQUIRED, RandomIdGenerator.newId());
+
+        Map<String, String> payload = ImmutableMap.of("auth_3ds_result", AUTHORISED.name());
+
+        givenSetup()
+                .body(new ObjectMapper().writeValueAsString(payload))
+                .post(authorise3dsChargeUrlFor(chargeId))
+                .then()
+                .statusCode(200);
+
+        assertFrontendChargeStatusIs(chargeId, AUTHORISATION_SUCCESS.getValue());
     }
 
     @Test

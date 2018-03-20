@@ -4,7 +4,7 @@ import fj.data.Either;
 import uk.gov.pay.connector.model.CancelGatewayRequest;
 import uk.gov.pay.connector.model.CaptureGatewayRequest;
 import uk.gov.pay.connector.model.GatewayError;
-import uk.gov.pay.connector.model.GatewayParamsFor3DSecure;
+import uk.gov.pay.connector.model.GatewayParamsFor3ds;
 import uk.gov.pay.connector.model.Notification;
 import uk.gov.pay.connector.model.Notifications;
 import uk.gov.pay.connector.model.RefundGatewayRequest;
@@ -152,7 +152,7 @@ public class SandboxPaymentProvider extends BasePaymentProvider<BaseResponse, St
             }
 
             @Override
-            public Optional<GatewayParamsFor3DSecure> getAuth3dsDetails() {
+            public Optional<GatewayParamsFor3ds> getGatewayParamsFor3ds() {
                 return Optional.empty();
             }
 

@@ -2,11 +2,11 @@ package uk.gov.pay.connector.model;
 
 import uk.gov.pay.connector.model.domain.Auth3dsDetailsEntity;
 
-public class EpdqParamsFor3DSecure implements GatewayParamsFor3DSecure {
+public class EpdqParamsFor3ds implements GatewayParamsFor3ds {
 
-    public final String htmlOut;
+    private final String htmlOut;
 
-    public EpdqParamsFor3DSecure(String htmlOut) {
+    public EpdqParamsFor3ds(String htmlOut) {
         this.htmlOut = htmlOut;
     }
 

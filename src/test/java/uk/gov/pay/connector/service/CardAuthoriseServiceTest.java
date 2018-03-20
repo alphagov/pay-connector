@@ -35,9 +35,6 @@ import uk.gov.pay.connector.service.BaseAuthoriseResponse.AuthoriseStatus;
 import uk.gov.pay.connector.service.epdq.EpdqAuthorisationResponse;
 import uk.gov.pay.connector.service.worldpay.WorldpayOrderStatusResponse;
 import uk.gov.pay.connector.util.AuthUtils;
-import uk.gov.pay.connector.util.TestTemplateResourceLoader;
-import uk.gov.pay.connector.util.XMLUnmarshaller;
-import uk.gov.pay.connector.util.XMLUnmarshallerException;
 
 import javax.persistence.OptimisticLockException;
 import java.util.Map;
@@ -78,7 +75,6 @@ import static uk.gov.pay.connector.service.CardExecutorService.ExecutionStatus.I
 import static uk.gov.pay.connector.util.AuthUtils.aValidAuthorisationDetails;
 import static uk.gov.pay.connector.util.AuthUtils.addressFor;
 import static uk.gov.pay.connector.util.AuthUtils.buildAuthCardDetails;
-import static uk.gov.pay.connector.util.TestTemplateResourceLoader.EPDQ_AUTHORISATION_SUCCESS_3D_RESPONSE;
 
 @RunWith(MockitoJUnitRunner.class)
 public class CardAuthoriseServiceTest extends CardServiceTest {
@@ -133,7 +129,7 @@ public class CardAuthoriseServiceTest extends CardServiceTest {
         when(worldpayResponse.getTransactionId()).thenReturn(TRANSACTION_ID);
         when(worldpayResponse.authoriseStatus()).thenReturn(authoriseStatus);
         when(worldpayResponse.getErrorCode()).thenReturn(errorCode);
-        when(worldpayResponse.getAuth3dsDetails()).thenReturn(Optional.empty());
+        when(worldpayResponse.getGatewayParamsFor3ds()).thenReturn(Optional.empty());
         GatewayResponseBuilder<WorldpayOrderStatusResponse> gatewayResponseBuilder = responseBuilder();
         return gatewayResponseBuilder
                 .withResponse(worldpayResponse)

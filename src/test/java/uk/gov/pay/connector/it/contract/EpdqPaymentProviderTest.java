@@ -231,8 +231,8 @@ public class EpdqPaymentProviderTest {
     }
 
     private static AuthCardDetails aValidEpdqCard() {
-        String validSandboxCard = "4000000000000002";
-        return buildAuthCardDetails(validSandboxCard, "737", "08/18", "visa");
+        String validEpdqCard = "4000000000000002";
+        return buildAuthCardDetails(validEpdqCard, "737", "08/18", "visa");
     }
 
     private CancelGatewayRequest buildCancelRequest(ChargeEntity chargeEntity, String transactionId) {

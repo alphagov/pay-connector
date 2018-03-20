@@ -4,7 +4,6 @@ import fj.data.Either;
 import org.apache.http.NameValuePair;
 import uk.gov.pay.connector.model.CancelGatewayRequest;
 import uk.gov.pay.connector.model.CaptureGatewayRequest;
-import uk.gov.pay.connector.model.GatewayError;
 import uk.gov.pay.connector.model.Notification;
 import uk.gov.pay.connector.model.Notifications;
 import uk.gov.pay.connector.model.RefundGatewayRequest;
@@ -33,18 +32,18 @@ import java.util.function.Function;
 import static fj.data.Either.left;
 import static fj.data.Either.right;
 import static java.util.stream.Collectors.toList;
-import static uk.gov.pay.connector.model.ErrorType.GENERIC_GATEWAY_ERROR;
 import static uk.gov.pay.connector.model.domain.GatewayAccount.CREDENTIALS_MERCHANT_ID;
 import static uk.gov.pay.connector.model.domain.GatewayAccount.CREDENTIALS_PASSWORD;
 import static uk.gov.pay.connector.model.domain.GatewayAccount.CREDENTIALS_SHA_IN_PASSPHRASE;
 import static uk.gov.pay.connector.model.domain.GatewayAccount.CREDENTIALS_SHA_OUT_PASSPHRASE;
 import static uk.gov.pay.connector.model.domain.GatewayAccount.CREDENTIALS_USERNAME;
+import static uk.gov.pay.connector.model.gateway.GatewayResponse.GatewayResponseBuilder.responseBuilder;
 import static uk.gov.pay.connector.service.epdq.EpdqNotification.SHASIGN;
+import static uk.gov.pay.connector.service.epdq.EpdqOrderRequestBuilder.anEpdq3DsAuthoriseOrderRequestBuilder;
 import static uk.gov.pay.connector.service.epdq.EpdqOrderRequestBuilder.anEpdqAuthoriseOrderRequestBuilder;
 import static uk.gov.pay.connector.service.epdq.EpdqOrderRequestBuilder.anEpdqCancelOrderRequestBuilder;
 import static uk.gov.pay.connector.service.epdq.EpdqOrderRequestBuilder.anEpdqCaptureOrderRequestBuilder;
 import static uk.gov.pay.connector.service.epdq.EpdqOrderRequestBuilder.anEpdqRefundOrderRequestBuilder;
-import static uk.gov.pay.connector.service.epdq.EpdqOrderRequestBuilder.anEpdq3DsAuthoriseOrderRequestBuilder;
 
 
 public class EpdqPaymentProvider extends BasePaymentProvider<BaseResponse, String> {
@@ -79,7 +78,8 @@ public class EpdqPaymentProvider extends BasePaymentProvider<BaseResponse, Strin
 
     @Override
     public GatewayResponse<BaseResponse> authorise3dsResponse(Auth3dsResponseGatewayRequest request) {
-        return GatewayResponse.with(new GatewayError("3D Secure not implemented for Epdq", GENERIC_GATEWAY_ERROR));
+        return responseBuilder()
+                .withResponse(EpdqAuthorisationResponse.createPost3dsResponseFor(request.getAuth3DsDetails().getAuth3DsResult())).build();
     }
 
     @Override

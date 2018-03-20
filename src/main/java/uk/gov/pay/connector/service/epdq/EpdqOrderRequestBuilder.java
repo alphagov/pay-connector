@@ -20,7 +20,7 @@ public class EpdqOrderRequestBuilder extends OrderRequestBuilder {
         private String userId;
         private String shaInPassphrase;
         private String amount;
-        private String frontendUrl;
+        private String frontendBaseUrl;
 
         public String getOperationType() {
             return operationType;
@@ -72,11 +72,11 @@ public class EpdqOrderRequestBuilder extends OrderRequestBuilder {
         }
 
         public void setFrontendUrl(String frontendUrl) {
-            this.frontendUrl = frontendUrl;
+            this.frontendBaseUrl = frontendUrl;
         }
 
         public String getFrontendUrl() {
-            return frontendUrl;
+            return frontendBaseUrl;
         }
     }
 
