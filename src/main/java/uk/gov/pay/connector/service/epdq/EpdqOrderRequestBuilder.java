@@ -90,12 +90,18 @@ public class EpdqOrderRequestBuilder extends OrderRequestBuilder {
     private static EpdqSignedPayloadDefinitionFactory signedPayloadDefinitionFactory = anEpdqSignedPayloadDefinitionFactory(new EpdqSha512SignatureGenerator());
 
     public static final PayloadBuilder AUTHORISE_ORDER_TEMPLATE_BUILDER = createPayloadBuilderForNewOrder();
+    public static final PayloadBuilder QUERY_ORDER_TEMPLATE_BUILDER = createPayloadBuilderForQueryOrder();
     public static final PayloadBuilder AUTHORISE_3DS_ORDER_TEMPLATE_BUILDER = createPayloadBuilderForNew3dsOrder();
     public static final PayloadBuilder CAPTURE_ORDER_TEMPLATE_BUILDER = createPayloadBuilderForMaintenanceOrder();
     public static final PayloadBuilder CANCEL_ORDER_TEMPLATE_BUILDER = createPayloadBuilderForMaintenanceOrder();
     public static final PayloadBuilder REFUND_ORDER_TEMPLATE_BUILDER = createPayloadBuilderForMaintenanceOrder();
 
     private EpdqTemplateData epdqTemplateData;
+
+    private static PayloadBuilder createPayloadBuilderForQueryOrder() {
+        PayloadDefinition payloadDefinition = signedPayloadDefinitionFactory.create(new EpdqPayloadDefinitionForQueryOrder());
+        return new FormUrlEncodedStringBuilder(payloadDefinition, WINDOWS_1252);
+    }
 
     private static PayloadBuilder createPayloadBuilderForNewOrder() {
         PayloadDefinition payloadDefinition = signedPayloadDefinitionFactory.create(new EpdqPayloadDefinitionForNewOrder());
@@ -114,6 +120,10 @@ public class EpdqOrderRequestBuilder extends OrderRequestBuilder {
 
     public static EpdqOrderRequestBuilder anEpdqAuthoriseOrderRequestBuilder() {
         return new EpdqOrderRequestBuilder(new EpdqTemplateData(), AUTHORISE_ORDER_TEMPLATE_BUILDER, OrderRequestType.AUTHORISE, AUTHORISE_OPERATION_TYPE);
+    }
+
+    public static EpdqOrderRequestBuilder anEpdqQueryOrderRequestBuilder() {
+        return new EpdqOrderRequestBuilder(new EpdqTemplateData(), QUERY_ORDER_TEMPLATE_BUILDER, OrderRequestType.AUTHORISE, AUTHORISE_OPERATION_TYPE);
     }
 
     public static EpdqOrderRequestBuilder anEpdq3DsAuthoriseOrderRequestBuilder(String frontendUrl) {

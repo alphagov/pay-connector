@@ -7,6 +7,7 @@ import static javax.ws.rs.core.HttpHeaders.CONTENT_TYPE;
 import static javax.ws.rs.core.MediaType.TEXT_XML;
 import static uk.gov.pay.connector.service.epdq.EpdqPaymentProvider.ROUTE_FOR_MAINTENANCE_ORDER;
 import static uk.gov.pay.connector.service.epdq.EpdqPaymentProvider.ROUTE_FOR_NEW_ORDER;
+import static uk.gov.pay.connector.service.epdq.EpdqPaymentProvider.ROUTE_FOR_QUERY_ORDER;
 import static uk.gov.pay.connector.util.TestTemplateResourceLoader.*;
 
 public class EpdqMockClient {
@@ -16,6 +17,10 @@ public class EpdqMockClient {
 
     public void mockAuthorisationSuccess() {
         paymentServiceResponse(ROUTE_FOR_NEW_ORDER, TestTemplateResourceLoader.load(EPDQ_AUTHORISATION_SUCCESS_RESPONSE));
+    }
+
+    public void mockAuthorisationQuerySuccess() {
+        paymentServiceResponse(ROUTE_FOR_QUERY_ORDER, TestTemplateResourceLoader.load(EPDQ_AUTHORISATION_SUCCESS_RESPONSE));
     }
 
     public void mockAuthorisation3dsSuccess() {

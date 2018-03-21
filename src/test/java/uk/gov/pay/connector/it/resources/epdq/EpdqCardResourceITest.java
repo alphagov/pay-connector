@@ -64,6 +64,7 @@ public class EpdqCardResourceITest extends ChargingITestBase {
     public void shouldSuccessfully_authorise3ds() throws Exception {
         app.getDatabaseTestHelper().enable3dsForGatewayAccount(Long.parseLong(accountId));
         String chargeId = createNewChargeWith(AUTHORISATION_3DS_REQUIRED, RandomIdGenerator.newId());
+        epdq.mockAuthorisationQuerySuccess();
 
         Map<String, String> payload = ImmutableMap.of("auth_3ds_result", AUTHORISED.name());
 

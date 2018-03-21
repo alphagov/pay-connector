@@ -24,7 +24,7 @@ public class EpdqPayloadDefinitionForNew3dsOrder extends EpdqPayloadDefinitionFo
     @Override
     public ImmutableList<NameValuePair> extract(EpdqTemplateData templateData) {
 
-        String frontend3dsIncomingUrl = String.format("%s/card_details/%s/3ds_required_in", templateData.getFrontendUrl(), templateData.getOrderId());
+        String frontend3dsIncomingUrl = String.format("%s/card_details/%s/3ds_required_in/epdq", templateData.getFrontendUrl(), templateData.getOrderId());
         // Keep this list in alphabetical order
         return newParameterBuilder()
                 .add(ACCEPTURL_KEY, frontend3dsIncomingUrl)
@@ -34,8 +34,8 @@ public class EpdqPayloadDefinitionForNew3dsOrder extends EpdqPayloadDefinitionFo
                 .add(COMPLUS_KEY, "")
                 .add(CURRENCY_KEY, "GBP")
                 .add(CVC_KEY, templateData.getAuthCardDetails().getCvc())
-                .add(DECLINEURL_KEY, frontend3dsIncomingUrl + "/decline")
-                .add(EXCEPTIONURL_KEY, frontend3dsIncomingUrl + "/error")
+                .add(DECLINEURL_KEY, frontend3dsIncomingUrl + "?status=declined")
+                .add(EXCEPTIONURL_KEY, frontend3dsIncomingUrl + "?status=error")
                 .add(EXPIRY_DATE_KEY, templateData.getAuthCardDetails().getEndDate())
                 .add(FLAG3D_KEY, "Y")
                 .add(HTTPACCEPT_URL, templateData.getAuthCardDetails().getAcceptHeader())
