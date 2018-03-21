@@ -13,3 +13,5 @@ production-2.tag=FAILED-350
 production-2.FAILED-350.date=
 
 production-2.FAILED-350.status=failed
+
+production-2.tag=alpha_production-2-350
