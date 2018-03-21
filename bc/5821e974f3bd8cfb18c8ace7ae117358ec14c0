@@ -17,3 +17,5 @@ production-2.FAILED-350.status=failed
 production-2.tag=alpha_production-2-350
 
 production-2.alpha_production-2-350.date=2018-03-21:16:01:58
+
+production-2.alpha_production-2-350.status=success
