@@ -122,48 +122,39 @@ pipeline {
         }
       }
     }
-        stage('Deploy') {
+    stage('Deploy') {
+      when {
+        branch 'master'
+      }
+      steps {
+        deployEcs("connector")
+      }
+    }
+    stage('Smoke Tests') {
+      when { branch 'master' }
+      steps { runCardSmokeTest() }
+    }
+    stage('Complete') {
+      failFast true
+      parallel {
+        stage('Tag Build') {
           when {
             branch 'master'
           }
           steps {
-            deployEcs("connector")
+            tagDeployment("connector")
           }
         }
-        stage('Smoke Tests') {
-          failFast true
-          parallel {
-            stage('Card Smoke Test') {
-              when { branch 'master' }
-              steps { runCardSmokeTest() }
-            }
-            stage('Product Smoke Test') {
-              when { branch 'master' }
-              steps { runProductsSmokeTest() }
-            }
+        stage('Trigger Deploy Notification') {
+          when {
+            branch 'master'
+          }
+          steps {
+            triggerGraphiteDeployEvent("connector")
           }
         }
-        stage('Complete') {
-          failFast true
-          parallel {
-            stage('Tag Build') {
-              when {
-                branch 'master'
-              }
-              steps {
-                tagDeployment("connector")
-              }
-            }
-            stage('Trigger Deploy Notification') {
-              when {
-                branch 'master'
-              }
-              steps {
-                triggerGraphiteDeployEvent("connector")
-              }
-            }
-          }
-        }
+      }
+    }
   }
   post {
     failure {
