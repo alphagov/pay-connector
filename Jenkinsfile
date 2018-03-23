@@ -127,7 +127,7 @@ pipeline {
             branch 'master'
           }
           steps {
-            deployEcs("connector", "test", null, false, false, "dummy", false)
+            deployEcs("connector")
           }
         }
         stage('Smoke Tests') {
