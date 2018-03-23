@@ -15,6 +15,7 @@ public class SmartpayAuthorisationResponse extends SmartpayBaseResponse implemen
 
     private static final String AUTHORISED = "Authorised";
     private static final String REDIRECT_SHOPPER = "RedirectShopper";
+    private static final String REFUSED = "Refused";
 
     @XmlPath("soap:Body/ns1:authoriseResponse/ns1:paymentResult/ns1:resultCode/text()")
     private String result;
@@ -37,13 +38,18 @@ public class SmartpayAuthorisationResponse extends SmartpayBaseResponse implemen
 
     @Override
     public AuthoriseStatus authoriseStatus() {
+        if (result == null) {
+            return AuthoriseStatus.ERROR;
+        }
         switch (result) {
             case AUTHORISED:
                 return AuthoriseStatus.AUTHORISED;
             case REDIRECT_SHOPPER:
                 return AuthoriseStatus.REQUIRES_3DS;
-            default:
+            case REFUSED:
                 return AuthoriseStatus.REJECTED;
+            default:
+                return AuthoriseStatus.ERROR;
         }
     }
 
