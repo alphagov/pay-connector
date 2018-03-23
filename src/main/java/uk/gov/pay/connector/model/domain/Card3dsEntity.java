@@ -12,6 +12,7 @@ import javax.persistence.JoinColumn;
 import javax.persistence.OneToOne;
 import javax.persistence.SequenceGenerator;
 import javax.persistence.Table;
+import java.util.Objects;
 
 
 @Entity
@@ -31,11 +32,16 @@ public class Card3dsEntity extends AbstractVersionedEntity {
     @Column(name = "issuer_url")
     private String issuerUrl;
 
+    //TODO: rename this column to provider_session_id if we decide to continue with this table in the longer run.
+     // For now this column is Worldpay specific. And this table is currently kept only for backward compatibility with the transaction table changes.
     @Column(name = "worldpay_machine_cookie")
-    private String worldpayMachineCookie;
+    private String providerSessionId;
 
     @Column(name="html_out")
     private String htmlOut;
+
+    @Column(name="md")
+    private String md;
 
     @OneToOne
     @JoinColumn(name = "transaction_id", referencedColumnName = "id", updatable = true)
@@ -68,12 +74,12 @@ public class Card3dsEntity extends AbstractVersionedEntity {
         this.issuerUrl = issuerUrl;
     }
 
-    public String getWorldpayMachineCookie() {
-        return worldpayMachineCookie;
+    public String getProviderSessionId() {
+        return providerSessionId;
     }
 
-    public void setWorldpayMachineCookie(String worldpayMachineCookie) {
-        this.worldpayMachineCookie = worldpayMachineCookie;
+    public void setProviderSessionId(String providerSessionId) {
+        this.providerSessionId = providerSessionId;
     }
 
     public ChargeTransactionEntity getChargeTransactionEntity() {
@@ -92,13 +98,21 @@ public class Card3dsEntity extends AbstractVersionedEntity {
         this.htmlOut = htmlOut;
     }
 
+    public String getMd() {
+        return md;
+    }
+
+    public void setMd(String md) {
+        this.md = md;
+    }
+
     public static Card3dsEntity from(ChargeEntity chargeEntity) {
         Card3dsEntity entity = new Card3dsEntity();
         entity.setIssuerUrl(chargeEntity.get3dsDetails().getIssuerUrl());
         entity.setPaRequest(chargeEntity.get3dsDetails().getPaRequest());
-        entity.setWorldpayMachineCookie(chargeEntity.getProviderSessionId());
+        entity.setProviderSessionId(chargeEntity.getProviderSessionId());
         entity.setHtmlOut(chargeEntity.get3dsDetails().getHtmlOut());
-
+        entity.setMd(chargeEntity.get3dsDetails().getMd());
         return entity;
     }
 
@@ -106,26 +120,19 @@ public class Card3dsEntity extends AbstractVersionedEntity {
     public boolean equals(Object o) {
         if (this == o) return true;
         if (o == null || getClass() != o.getClass()) return false;
-
         Card3dsEntity that = (Card3dsEntity) o;
-
-        if (id != null ? !id.equals(that.id) : that.id != null) return false;
-        if (paRequest != null ? !paRequest.equals(that.paRequest) : that.paRequest != null) return false;
-        if (issuerUrl != null ? !issuerUrl.equals(that.issuerUrl) : that.issuerUrl != null) return false;
-        if (worldpayMachineCookie != null ? !worldpayMachineCookie.equals(that.worldpayMachineCookie) : that.worldpayMachineCookie != null)
-            return false;
-        if (htmlOut != null ? !htmlOut.equals(that.htmlOut) : that.htmlOut != null) return false;
-        return chargeTransactionEntity != null ? chargeTransactionEntity.equals(that.chargeTransactionEntity) : that.chargeTransactionEntity == null;
+        return Objects.equals(id, that.id) &&
+                Objects.equals(paRequest, that.paRequest) &&
+                Objects.equals(issuerUrl, that.issuerUrl) &&
+                Objects.equals(providerSessionId, that.providerSessionId) &&
+                Objects.equals(htmlOut, that.htmlOut) &&
+                Objects.equals(md, that.md) &&
+                Objects.equals(chargeTransactionEntity, that.chargeTransactionEntity);
     }
 
     @Override
     public int hashCode() {
-        int result = id != null ? id.hashCode() : 0;
-        result = 31 * result + (paRequest != null ? paRequest.hashCode() : 0);
-        result = 31 * result + (issuerUrl != null ? issuerUrl.hashCode() : 0);
-        result = 31 * result + (worldpayMachineCookie != null ? worldpayMachineCookie.hashCode() : 0);
-        result = 31 * result + (htmlOut != null ? htmlOut.hashCode() : 0);
-        result = 31 * result + (chargeTransactionEntity != null ? chargeTransactionEntity.hashCode() : 0);
-        return result;
+
+        return Objects.hash(id, paRequest, issuerUrl, providerSessionId, htmlOut, md, chargeTransactionEntity);
     }
 }

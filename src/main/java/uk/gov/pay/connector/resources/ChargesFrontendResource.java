@@ -163,6 +163,7 @@ public class ChargesFrontendResource {
             auth3dsData.setPaRequest(charge.get3dsDetails().getPaRequest());
             auth3dsData.setIssuerUrl(charge.get3dsDetails().getIssuerUrl());
             auth3dsData.setHtmlOut(charge.get3dsDetails().getHtmlOut());
+            auth3dsData.setMd(charge.get3dsDetails().getMd());
         }
 
         return aFrontendChargeResponse()

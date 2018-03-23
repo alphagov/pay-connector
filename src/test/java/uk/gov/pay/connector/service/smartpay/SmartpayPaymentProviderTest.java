@@ -37,6 +37,7 @@ import uk.gov.pay.connector.service.GatewayOrder;
 import uk.gov.pay.connector.service.PaymentGatewayName;
 import uk.gov.pay.connector.service.worldpay.WorldpayCaptureResponse;
 import uk.gov.pay.connector.util.AuthUtils;
+import uk.gov.pay.connector.util.TestTemplateResourceLoader;
 
 import javax.ws.rs.client.Client;
 import javax.ws.rs.client.Entity;
@@ -68,6 +69,10 @@ import static uk.gov.pay.connector.model.api.ExternalChargeRefundAvailability.EX
 import static uk.gov.pay.connector.model.domain.Address.anAddress;
 import static uk.gov.pay.connector.model.domain.ChargeEntityFixture.aValidChargeEntity;
 import static uk.gov.pay.connector.model.domain.GatewayAccountEntity.Type.TEST;
+import static uk.gov.pay.connector.service.BaseAuthoriseResponse.AuthoriseStatus.REQUIRES_3DS;
+import static uk.gov.pay.connector.util.TestTemplateResourceLoader.SMARTPAY_AUTHORISATION_3DS_REQUIRED_RESPONSE;
+import static uk.gov.pay.connector.util.TestTemplateResourceLoader.SMARTPAY_AUTHORISATION_SUCCESS_RESPONSE;
+import static uk.gov.pay.connector.util.TestTemplateResourceLoader.SMARTPAY_CAPTURE_SUCCESS_RESPONSE;
 
 @RunWith(MockitoJUnitRunner.class)
 public class SmartpayPaymentProviderTest {
@@ -99,10 +104,8 @@ public class SmartpayPaymentProviderTest {
 
         when(mockMetricRegistry.histogram(anyString())).thenReturn(mockHistogram);
         when(mockMetricRegistry.counter(anyString())).thenReturn(mockCounter);
-        when(mockClientFactory.createWithDropwizardClient(
-                eq(PaymentGatewayName.SMARTPAY), any(GatewayOperation.class), any(MetricRegistry.class))
-        )
-        .thenReturn(mockClient);
+        when(mockClientFactory.createWithDropwizardClient(eq(PaymentGatewayName.SMARTPAY), any(GatewayOperation.class), any(MetricRegistry.class)))
+                .thenReturn(mockClient);
 
         mockSmartpaySuccessfulOrderSubmitResponse();
 
@@ -160,11 +163,33 @@ public class SmartpayPaymentProviderTest {
         assertTrue(response.isSuccessful());
         assertThat(response.getBaseResponse().isPresent(), CoreMatchers.is(true));
         String transactionId = response.getBaseResponse().get().getPspReference();
-        assertThat(transactionId, CoreMatchers.is(not(nullValue())));
+        assertThat(transactionId, is(not(nullValue())));
     }
 
     @Test
-    public void shouldCaptureAPaymentSuccessfully() throws Exception {
+    public void shouldRequire3dsFor3dsRequiredMerchant() throws Exception {
+        AuthCardDetails authCardDetails = getValidTestCard();
+        GatewayAccountEntity gatewayAccountEntity = aServiceAccount();
+        gatewayAccountEntity.setRequires3ds(true);
+        ChargeEntity chargeEntity = aValidChargeEntity()
+                .withGatewayAccountEntity(gatewayAccountEntity)
+                .build();
+        mockSmartpay3dsRequiredOrderSubmitResponse();
+
+        GatewayResponse<SmartpayAuthorisationResponse> response = provider.authorise(new AuthorisationGatewayRequest(chargeEntity, authCardDetails));
+
+        assertTrue(response.isSuccessful());
+        assertThat(response.getBaseResponse().isPresent(), is(true));
+        SmartpayAuthorisationResponse smartpayAuthorisationResponse = response.getBaseResponse().get();
+        assertThat(smartpayAuthorisationResponse.authoriseStatus(), is(REQUIRES_3DS));
+        assertThat(smartpayAuthorisationResponse.getMd(), is(not(nullValue())));
+        assertThat(smartpayAuthorisationResponse.getIssuerUrl(), is(not(nullValue())));
+        assertThat(smartpayAuthorisationResponse.getPaRequest(), is(not(nullValue())));
+
+    }
+
+    @Test
+    public void shouldCaptureAPaymentSuccessfully() {
 
         mockSmartpaySuccessfulCaptureResponse();
 
@@ -237,6 +262,14 @@ public class SmartpayPaymentProviderTest {
         mockSmartpayResponse(200, successAuthoriseResponse());
     }
 
+    private void mockSmartpay3dsRequiredOrderSubmitResponse() {
+        mockSmartpayResponse(200, successAuthorise3dsrequiredResponse());
+    }
+
+    private String successAuthorise3dsrequiredResponse() {
+        return TestTemplateResourceLoader.load(SMARTPAY_AUTHORISATION_3DS_REQUIRED_RESPONSE).replace("{{pspReference}}", "12345678");
+    }
+
     private void mockSmartpaySuccessfulCaptureResponse() {
         mockSmartpayResponse(200, successCaptureResponse());
     }
@@ -257,40 +290,11 @@ public class SmartpayPaymentProviderTest {
     }
 
     private String successAuthoriseResponse() {
-        return "<soap:Envelope xmlns:soap=\"http://schemas.xmlsoap.org/soap/envelope/\"\n" +
-                "               xmlns:xsi=\"http://www.w3.org/2001/XMLSchema-instance\">\n" +
-                "    <soap:Body>\n" +
-                "        <ns1:authoriseResponse xmlns:ns1=\"http://payment.services.adyen.com\">\n" +
-                "            <ns1:paymentResult>\n" +
-                "                <additionalData xmlns=\"http://payment.services.adyen.com\" xsi:nil=\"true\"/>\n" +
-                "                <authCode xmlns=\"http://payment.services.adyen.com\">87802</authCode>\n" +
-                "                <dccAmount xmlns=\"http://payment.services.adyen.com\" xsi:nil=\"true\"/>\n" +
-                "                <dccSignature xmlns=\"http://payment.services.adyen.com\" xsi:nil=\"true\"/>\n" +
-                "                <fraudResult xmlns=\"http://payment.services.adyen.com\" xsi:nil=\"true\"/>\n" +
-                "                <issuerUrl xmlns=\"http://payment.services.adyen.com\" xsi:nil=\"true\"/>\n" +
-                "                <md xmlns=\"http://payment.services.adyen.com\" xsi:nil=\"true\"/>\n" +
-                "                <paRequest xmlns=\"http://payment.services.adyen.com\" xsi:nil=\"true\"/>\n" +
-                "                <pspReference xmlns=\"http://payment.services.adyen.com\">12345678</pspReference>\n" +
-                "                <refusalReason xmlns=\"http://payment.services.adyen.com\" xsi:nil=\"true\"/>\n" +
-                "                <resultCode xmlns=\"http://payment.services.adyen.com\">Authorised</resultCode>\n" +
-                "            </ns1:paymentResult>\n" +
-                "        </ns1:authoriseResponse>\n" +
-                "    </soap:Body>\n" +
-                "</soap:Envelope>";
+        return TestTemplateResourceLoader.load(SMARTPAY_AUTHORISATION_SUCCESS_RESPONSE).replace("{{pspReference}}", "12345678");
     }
 
     private String successCaptureResponse() {
-        return "<ns0:Envelope xmlns:ns0=\"http://schemas.xmlsoap.org/soap/envelope/\" xmlns:ns1=\"http://payment.services.adyen.com\" xmlns:xsi=\"http://www.w3.org/2001/XMLSchema-instance\">\n" +
-                "    <ns0:Body>\n" +
-                "        <ns1:captureResponse>\n" +
-                "            <ns1:captureResult>\n" +
-                "                <ns1:additionalData xsi:nil=\"true\" />\n" +
-                "                <ns1:pspReference>8614440510830227</ns1:pspReference>\n" +
-                "                <ns1:response>[capture-received]</ns1:response>\n" +
-                "            </ns1:captureResult>\n" +
-                "        </ns1:captureResponse>\n" +
-                "    </ns0:Body>\n" +
-                "</ns0:Envelope>";
+        return TestTemplateResourceLoader.load(SMARTPAY_CAPTURE_SUCCESS_RESPONSE).replace("{{pspReference}}", "8614440510830227");
     }
 
     private AuthCardDetails getValidTestCard() {

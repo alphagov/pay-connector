@@ -20,6 +20,7 @@ public class SmartpayOrderRequestBuilder extends OrderRequestBuilder {
     }
 
     public static final TemplateBuilder AUTHORISE_ORDER_TEMPLATE_BUILDER = new TemplateBuilder("/smartpay/SmartpayAuthoriseOrderTemplate.xml");
+    public static final TemplateBuilder AUTHORISE_3DS_ORDER_TEMPLATE_BUILDER = new TemplateBuilder("/smartpay/SmartpayAuthorise3dsOrderTemplate.xml");
     public static final TemplateBuilder CAPTURE_ORDER_TEMPLATE_BUILDER = new TemplateBuilder("/smartpay/SmartpayCaptureOrderTemplate.xml");
     public static final TemplateBuilder CANCEL_ORDER_TEMPLATE_BUILDER = new TemplateBuilder("/smartpay/SmartpayCancelOrderTemplate.xml");
     public static final TemplateBuilder REFUND_ORDER_TEMPLATE_BUILDER = new TemplateBuilder("/smartpay/SmartpayRefundOrderTemplate.xml");
@@ -28,6 +29,10 @@ public class SmartpayOrderRequestBuilder extends OrderRequestBuilder {
 
     public static SmartpayOrderRequestBuilder aSmartpayAuthoriseOrderRequestBuilder() {
         return new SmartpayOrderRequestBuilder(new SmartpayTemplateData(), AUTHORISE_ORDER_TEMPLATE_BUILDER, OrderRequestType.AUTHORISE);
+    }
+
+    public static SmartpayOrderRequestBuilder aSmartpayAuthorise3dsOrderRequestBuilder() {
+        return new SmartpayOrderRequestBuilder(new SmartpayTemplateData(), AUTHORISE_3DS_ORDER_TEMPLATE_BUILDER, OrderRequestType.AUTHORISE_3DS);
     }
 
     public static SmartpayOrderRequestBuilder aSmartpayCaptureOrderRequestBuilder() {

@@ -36,6 +36,7 @@ import static fj.data.Either.left;
 import static fj.data.Either.right;
 import static uk.gov.pay.connector.model.ErrorType.GENERIC_GATEWAY_ERROR;
 import static uk.gov.pay.connector.model.domain.GatewayAccount.CREDENTIALS_MERCHANT_ID;
+import static uk.gov.pay.connector.service.smartpay.SmartpayOrderRequestBuilder.aSmartpayAuthorise3dsOrderRequestBuilder;
 import static uk.gov.pay.connector.service.smartpay.SmartpayOrderRequestBuilder.aSmartpayAuthoriseOrderRequestBuilder;
 import static uk.gov.pay.connector.service.smartpay.SmartpayOrderRequestBuilder.aSmartpayCancelOrderRequestBuilder;
 import static uk.gov.pay.connector.service.smartpay.SmartpayOrderRequestBuilder.aSmartpayCaptureOrderRequestBuilder;
@@ -143,13 +144,18 @@ public class SmartpayPaymentProvider extends BasePaymentProvider<BaseResponse, P
     }
 
     private Function<AuthorisationGatewayRequest, GatewayOrder> buildAuthoriseOrderFor() {
-        return request -> aSmartpayAuthoriseOrderRequestBuilder()
-                .withMerchantCode(getMerchantCode(request))
-                .withPaymentPlatformReference(request.getChargeExternalId())
-                .withDescription(request.getDescription())
-                .withAmount(request.getAmount())
-                .withAuthorisationDetails(request.getAuthCardDetails())
-                .build();
+        return request -> {
+            SmartpayOrderRequestBuilder smartpayOrderRequestBuilder = request.getGatewayAccount().isRequires3ds() ?
+                    aSmartpayAuthorise3dsOrderRequestBuilder() : aSmartpayAuthoriseOrderRequestBuilder();
+
+            return smartpayOrderRequestBuilder
+                    .withMerchantCode(getMerchantCode(request))
+                    .withPaymentPlatformReference(request.getChargeExternalId())
+                    .withDescription(request.getDescription())
+                    .withAmount(request.getAmount())
+                    .withAuthorisationDetails(request.getAuthCardDetails())
+                    .build();
+        };
     }
 
     private Function<CaptureGatewayRequest, GatewayOrder> buildCaptureOrderFor() {

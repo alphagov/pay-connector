@@ -1,6 +1,7 @@
 package uk.gov.pay.connector.it.resources.smartpay;
 
 import com.jayway.restassured.http.ContentType;
+import com.jayway.restassured.response.ValidatableResponse;
 import org.apache.commons.lang3.StringUtils;
 import org.junit.Test;
 import uk.gov.pay.connector.it.base.ChargingITestBase;
@@ -10,6 +11,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.UUID;
 
+import static org.hamcrest.Matchers.is;
 import static org.junit.Assert.assertThat;
 import static uk.gov.pay.connector.model.api.ExternalChargeState.EXTERNAL_SUCCESS;
 import static uk.gov.pay.connector.model.domain.ChargeStatus.*;
@@ -41,12 +43,29 @@ public class SmartpayCardResourceITest extends ChargingITestBase {
     @Test
     public void shouldNotAuthorise_ASmartpayErrorCard() throws Exception {
         String cardWithWrongCVC = buildCardDetailsWith("999");
-
         smartpay.mockAuthorisationFailure();
 
         String expectedErrorMessage = "This transaction was declined.";
         String expectedChargeStatus = AUTHORISATION_REJECTED.getValue();
         shouldReturnErrorForAuthorisationDetailsWithMessage(cardWithWrongCVC, expectedErrorMessage, expectedChargeStatus);
+    }
+
+    @Test
+    public void shouldAuthorise_whenRequires3dsAnd3dsAuthenticationSuccessful() {
+        app.getDatabaseTestHelper().enable3dsForGatewayAccount(Long.parseLong(accountId));
+        String chargeId = createNewChargeWithNoTransactionId(ENTERING_CARD_DETAILS);
+        smartpay.mockAuthorisation3dsRequired();
+
+        ValidatableResponse response = givenSetup()
+                .body(validCardDetails)
+                .post(authoriseChargeUrlFor(chargeId))
+                .then();
+
+        response
+                .body("status", is(AUTHORISATION_3DS_REQUIRED.toString()))
+                .statusCode(200);
+
+        assertFrontendChargeStatusIs(chargeId, AUTHORISATION_3DS_REQUIRED.toString());
     }
 
     @Test

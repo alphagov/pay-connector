@@ -242,7 +242,7 @@ public class CardAuthoriseServiceTest extends CardServiceTest {
         Card3dsEntity card3ds = paymentRequest.getChargeTransaction().getCard3ds();
         assertThat(card3ds.getIssuerUrl(), is(ISSUER_URL_FROM_PROVIDER));
         assertThat(card3ds.getPaRequest(), is(PA_REQ_VALUE_FROM_PROVIDER));
-        assertThat(card3ds.getWorldpayMachineCookie(), is(SESSION_IDENTIFIER));
+        assertThat(card3ds.getProviderSessionId(), is(SESSION_IDENTIFIER));
     }
 
     @Test
