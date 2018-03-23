@@ -129,7 +129,7 @@ public class EpdqOrderRequestBuilder extends OrderRequestBuilder {
     public static EpdqOrderRequestBuilder anEpdq3DsAuthoriseOrderRequestBuilder(String frontendUrl) {
         EpdqTemplateData epdqTemplateData = new EpdqTemplateData();
         epdqTemplateData.setFrontendUrl(frontendUrl);
-        return new EpdqOrderRequestBuilder(epdqTemplateData, AUTHORISE_3DS_ORDER_TEMPLATE_BUILDER, OrderRequestType.AUTHORISE, AUTHORISE_OPERATION_TYPE);
+        return new EpdqOrderRequestBuilder(epdqTemplateData, AUTHORISE_3DS_ORDER_TEMPLATE_BUILDER, OrderRequestType.AUTHORISE_3DS, AUTHORISE_OPERATION_TYPE);
     }
 
     public static EpdqOrderRequestBuilder anEpdqCaptureOrderRequestBuilder() {
