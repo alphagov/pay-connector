@@ -111,13 +111,11 @@ public class SmartpayPaymentProviderTest {
         testCardAuthorisation(paymentProvider, chargeEntity);
     }
 
-    @Ignore
     @Test
-    //TODO: fix this before merging
     public void shouldSendA3dsOrderForMerchantSuccessfully() throws Exception {
         gatewayAccountEntity.setRequires3ds(true);
         PaymentProvider paymentProvider = getSmartpayPaymentProvider();
-        AuthorisationGatewayRequest request = getCardAuthorisationRequest(chargeEntity);
+        AuthorisationGatewayRequest request = getCard3dsAuthorisationRequest(chargeEntity);
         GatewayResponse<SmartpayAuthorisationResponse> response = paymentProvider.authorise(request);
         assertTrue(response.isSuccessful());
         assertThat(response.getBaseResponse().get().getIssuerUrl(), is(notNullValue()));
@@ -243,6 +241,20 @@ public class SmartpayPaymentProviderTest {
 
         AuthCardDetails authCardDetails = aValidSmartpayCard();
         authCardDetails.setAddress(address);
+        return new AuthorisationGatewayRequest(chargeEntity, authCardDetails);
+    }
+
+    public static AuthorisationGatewayRequest getCard3dsAuthorisationRequest(ChargeEntity chargeEntity) {
+        Address address = Address.anAddress();
+        address.setLine1("6-60");
+        address.setLine2("Simon Carmiggeltstraat");
+        address.setCity("Amsterdam");
+        address.setCounty("NH");
+        address.setPostcode("1011DJ");
+        address.setCountry("NL");
+
+        AuthCardDetails authCardDetails = aValidSmartpay3dsCard();
+        authCardDetails.setAddress(address);
         authCardDetails.setAcceptHeader("text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8");
         authCardDetails.setUserAgentHeader("Mozilla/5.0 (X11; U; Linux i686; en-US; rv:1.9) Gecko/2008052912 Firefox/3.0");
 
@@ -252,6 +264,11 @@ public class SmartpayPaymentProviderTest {
     public static AuthCardDetails aValidSmartpayCard() {
         String validSandboxCard = "5555444433331111";
         return buildAuthCardDetails(validSandboxCard, "737", "08/18", "visa");
+    }
+
+    public static AuthCardDetails aValidSmartpay3dsCard() {
+        String validSandboxCard = "5212345678901234";
+        return buildAuthCardDetails(validSandboxCard, "737", "08/18", "master");
     }
 
     @SuppressWarnings("unchecked")
