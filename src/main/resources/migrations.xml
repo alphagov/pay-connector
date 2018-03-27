@@ -1302,4 +1302,19 @@
         <dropNotNullConstraint columnName="issuer_url" tableName="card_3ds"/>
     </changeSet>
 
+    <changeSet id="add md_3ds to charges table" author="">
+        <addColumn tableName="charges">
+            <column name="md_3ds" type="text">
+                <constraints nullable="true"/>
+            </column>
+        </addColumn>
+    </changeSet>
+
+    <changeSet id="add md to card_3ds table" author="">
+        <addColumn tableName="card_3ds">
+            <column name="md" type="text">
+                <constraints nullable="true"/>
+            </column>
+        </addColumn>
+    </changeSet>
 </databaseChangeLog>
