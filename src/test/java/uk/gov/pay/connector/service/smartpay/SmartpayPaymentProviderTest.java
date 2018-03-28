@@ -22,9 +22,11 @@ import uk.gov.pay.connector.model.CaptureGatewayRequest;
 import uk.gov.pay.connector.model.Notification;
 import uk.gov.pay.connector.model.Notifications;
 import uk.gov.pay.connector.model.domain.Address;
+import uk.gov.pay.connector.model.domain.Auth3dsDetails;
 import uk.gov.pay.connector.model.domain.AuthCardDetails;
 import uk.gov.pay.connector.model.domain.ChargeEntity;
 import uk.gov.pay.connector.model.domain.GatewayAccountEntity;
+import uk.gov.pay.connector.model.gateway.Auth3dsResponseGatewayRequest;
 import uk.gov.pay.connector.model.gateway.AuthorisationGatewayRequest;
 import uk.gov.pay.connector.model.gateway.GatewayResponse;
 import uk.gov.pay.connector.service.ClientFactory;
@@ -69,6 +71,7 @@ import static uk.gov.pay.connector.model.api.ExternalChargeRefundAvailability.EX
 import static uk.gov.pay.connector.model.domain.Address.anAddress;
 import static uk.gov.pay.connector.model.domain.ChargeEntityFixture.aValidChargeEntity;
 import static uk.gov.pay.connector.model.domain.GatewayAccountEntity.Type.TEST;
+import static uk.gov.pay.connector.service.BaseAuthoriseResponse.AuthoriseStatus.AUTHORISED;
 import static uk.gov.pay.connector.service.BaseAuthoriseResponse.AuthoriseStatus.REQUIRES_3DS;
 import static uk.gov.pay.connector.util.TestTemplateResourceLoader.SMARTPAY_AUTHORISATION_3DS_REQUIRED_RESPONSE;
 import static uk.gov.pay.connector.util.TestTemplateResourceLoader.SMARTPAY_AUTHORISATION_SUCCESS_RESPONSE;
@@ -186,6 +189,25 @@ public class SmartpayPaymentProviderTest {
         assertThat(smartpayAuthorisationResponse.getIssuerUrl(), is(not(nullValue())));
         assertThat(smartpayAuthorisationResponse.getPaRequest(), is(not(nullValue())));
 
+    }
+
+    @Test
+    public void shouldSuccess3DSAuthorisation() {
+        GatewayAccountEntity gatewayAccountEntity = aServiceAccount();
+        gatewayAccountEntity.setRequires3ds(true);
+        ChargeEntity chargeEntity = aValidChargeEntity()
+                .withGatewayAccountEntity(gatewayAccountEntity)
+                .build();
+        Auth3dsDetails auth3dsDetails = AuthUtils.buildAuth3dsDetails();
+        auth3dsDetails.setMd("Some smart text here");
+
+        GatewayResponse<SmartpayAuthorisationResponse> response = provider.authorise3dsResponse(new Auth3dsResponseGatewayRequest(chargeEntity, auth3dsDetails));
+
+        assertTrue(response.isSuccessful());
+        assertThat(response.getBaseResponse().isPresent(), is(true));
+        SmartpayAuthorisationResponse smartpayAuthorisationResponse = response.getBaseResponse().get();
+        assertThat(smartpayAuthorisationResponse.authoriseStatus(), is(AUTHORISED));
+        assertThat(smartpayAuthorisationResponse.getPspReference(), is(not(nullValue())));
     }
 
     @Test

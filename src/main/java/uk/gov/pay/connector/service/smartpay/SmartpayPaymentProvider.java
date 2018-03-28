@@ -5,7 +5,6 @@ import fj.data.Either;
 import org.apache.commons.lang3.tuple.Pair;
 import uk.gov.pay.connector.model.CancelGatewayRequest;
 import uk.gov.pay.connector.model.CaptureGatewayRequest;
-import uk.gov.pay.connector.model.GatewayError;
 import uk.gov.pay.connector.model.GatewayRequest;
 import uk.gov.pay.connector.model.Notification;
 import uk.gov.pay.connector.model.Notifications;
@@ -34,8 +33,8 @@ import java.util.function.Function;
 
 import static fj.data.Either.left;
 import static fj.data.Either.right;
-import static uk.gov.pay.connector.model.ErrorType.GENERIC_GATEWAY_ERROR;
 import static uk.gov.pay.connector.model.domain.GatewayAccount.CREDENTIALS_MERCHANT_ID;
+import static uk.gov.pay.connector.service.smartpay.SmartpayOrderRequestBuilder.aSmartpay3dsRequiredOrderRequestBuilder;
 import static uk.gov.pay.connector.service.smartpay.SmartpayOrderRequestBuilder.aSmartpayAuthorise3dsOrderRequestBuilder;
 import static uk.gov.pay.connector.service.smartpay.SmartpayOrderRequestBuilder.aSmartpayAuthoriseOrderRequestBuilder;
 import static uk.gov.pay.connector.service.smartpay.SmartpayOrderRequestBuilder.aSmartpayCancelOrderRequestBuilder;
@@ -68,8 +67,8 @@ public class SmartpayPaymentProvider extends BasePaymentProvider<BaseResponse, P
     }
 
     @Override
-    public GatewayResponse<BaseResponse> authorise3dsResponse(Auth3dsResponseGatewayRequest request) {
-        return GatewayResponse.with(new GatewayError("3D Secure not implemented for SmartPay", GENERIC_GATEWAY_ERROR));
+    public GatewayResponse authorise3dsResponse(Auth3dsResponseGatewayRequest request) {
+        return sendReceive(request, build3dsResponseAuthOrderFor(), SmartpayAuthorisationResponse.class, extractResponseIdentifier());
     }
 
     @Override
@@ -146,7 +145,7 @@ public class SmartpayPaymentProvider extends BasePaymentProvider<BaseResponse, P
     private Function<AuthorisationGatewayRequest, GatewayOrder> buildAuthoriseOrderFor() {
         return request -> {
             SmartpayOrderRequestBuilder smartpayOrderRequestBuilder = request.getGatewayAccount().isRequires3ds() ?
-                    aSmartpayAuthorise3dsOrderRequestBuilder() : aSmartpayAuthoriseOrderRequestBuilder();
+                    aSmartpay3dsRequiredOrderRequestBuilder() : aSmartpayAuthoriseOrderRequestBuilder();
 
             return smartpayOrderRequestBuilder
                     .withMerchantCode(getMerchantCode(request))
@@ -156,6 +155,14 @@ public class SmartpayPaymentProvider extends BasePaymentProvider<BaseResponse, P
                     .withAuthorisationDetails(request.getAuthCardDetails())
                     .build();
         };
+    }
+
+    private Function<Auth3dsResponseGatewayRequest, GatewayOrder> build3dsResponseAuthOrderFor() {
+        return request -> aSmartpayAuthorise3dsOrderRequestBuilder()
+                .withPaResponse(request.getAuth3DsDetails().getPaResponse())
+                .withMd(request.getAuth3DsDetails().getMd())
+                .withMerchantCode(getMerchantCode(request))
+                .build();
     }
 
     private Function<CaptureGatewayRequest, GatewayOrder> buildCaptureOrderFor() {
