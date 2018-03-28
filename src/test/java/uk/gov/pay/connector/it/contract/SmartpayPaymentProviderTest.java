@@ -41,6 +41,7 @@ import java.util.Map;
 import java.util.function.Consumer;
 
 import static org.hamcrest.CoreMatchers.not;
+import static org.hamcrest.CoreMatchers.notNullValue;
 import static org.hamcrest.CoreMatchers.nullValue;
 import static org.hamcrest.core.Is.is;
 import static org.junit.Assert.assertFalse;
@@ -67,6 +68,7 @@ public class SmartpayPaymentProviderTest {
     private String username;
     private String password;
     private ChargeEntity chargeEntity;
+    private GatewayAccountEntity gatewayAccountEntity;
     private MetricRegistry mockMetricRegistry;
     private Histogram mockHistogram;
     private Counter mockCounter;
@@ -87,14 +89,14 @@ public class SmartpayPaymentProviderTest {
                 "merchant_id", "DCOTest",
                 "username", username,
                 "password", password);
-        GatewayAccountEntity validGatewayAccount = new GatewayAccountEntity();
-        validGatewayAccount.setId(123L);
-        validGatewayAccount.setGatewayName("smartpay");
-        validGatewayAccount.setCredentials(validSmartPayCredentials);
-        validGatewayAccount.setType(TEST);
+        gatewayAccountEntity = new GatewayAccountEntity();
+        gatewayAccountEntity.setId(123L);
+        gatewayAccountEntity.setGatewayName("smartpay");
+        gatewayAccountEntity.setCredentials(validSmartPayCredentials);
+        gatewayAccountEntity.setType(TEST);
 
         chargeEntity = aValidChargeEntity()
-                .withGatewayAccountEntity(validGatewayAccount).build();
+                .withGatewayAccountEntity(gatewayAccountEntity).build();
 
         mockMetricRegistry = mock(MetricRegistry.class);
         mockHistogram = mock(Histogram.class);
@@ -107,6 +109,18 @@ public class SmartpayPaymentProviderTest {
     public void shouldSendSuccessfullyAnOrderForMerchant() throws Exception {
         PaymentProvider paymentProvider = getSmartpayPaymentProvider();
         testCardAuthorisation(paymentProvider, chargeEntity);
+    }
+
+    @Test
+    public void shouldSendA3dsOrderForMerchantSuccessfully() throws Exception {
+        gatewayAccountEntity.setRequires3ds(true);
+        PaymentProvider paymentProvider = getSmartpayPaymentProvider();
+        AuthorisationGatewayRequest request = getCard3dsAuthorisationRequest(chargeEntity);
+        GatewayResponse<SmartpayAuthorisationResponse> response = paymentProvider.authorise(request);
+        assertTrue(response.isSuccessful());
+        assertThat(response.getBaseResponse().get().getIssuerUrl(), is(notNullValue()));
+        assertThat(response.getBaseResponse().get().getMd(), is(notNullValue()));
+        assertThat(response.getBaseResponse().get().getPaRequest(), is(notNullValue()));
     }
 
     @Test
@@ -192,7 +206,7 @@ public class SmartpayPaymentProviderTest {
     private PaymentProvider getSmartpayPaymentProvider() throws Exception {
         Client client = TestClientFactory.createJerseyClient();
         GatewayClient gatewayClient = new GatewayClient(client, ImmutableMap.of(TEST.toString(), url),
-            SmartpayPaymentProvider.includeSessionIdentifier(), mockMetricRegistry);
+                SmartpayPaymentProvider.includeSessionIdentifier(), mockMetricRegistry);
         EnumMap<GatewayOperation, GatewayClient> gatewayClients = GatewayOperationClientBuilder.builder()
                 .authClient(gatewayClient)
                 .captureClient(gatewayClient)
@@ -227,6 +241,22 @@ public class SmartpayPaymentProviderTest {
 
         AuthCardDetails authCardDetails = aValidSmartpayCard();
         authCardDetails.setAddress(address);
+        return new AuthorisationGatewayRequest(chargeEntity, authCardDetails);
+    }
+
+    public static AuthorisationGatewayRequest getCard3dsAuthorisationRequest(ChargeEntity chargeEntity) {
+        Address address = Address.anAddress();
+        address.setLine1("6-60");
+        address.setLine2("Simon Carmiggeltstraat");
+        address.setCity("Amsterdam");
+        address.setCounty("NH");
+        address.setPostcode("1011DJ");
+        address.setCountry("NL");
+
+        AuthCardDetails authCardDetails = aValidSmartpay3dsCard();
+        authCardDetails.setAddress(address);
+        authCardDetails.setAcceptHeader("text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8");
+        authCardDetails.setUserAgentHeader("Mozilla/5.0 (X11; U; Linux i686; en-US; rv:1.9) Gecko/2008052912 Firefox/3.0");
 
         return new AuthorisationGatewayRequest(chargeEntity, authCardDetails);
     }
@@ -234,6 +264,11 @@ public class SmartpayPaymentProviderTest {
     public static AuthCardDetails aValidSmartpayCard() {
         String validSandboxCard = "5555444433331111";
         return buildAuthCardDetails(validSandboxCard, "737", "08/18", "visa");
+    }
+
+    public static AuthCardDetails aValidSmartpay3dsCard() {
+        String validSandboxCard = "5212345678901234";
+        return buildAuthCardDetails(validSandboxCard, "737", "08/18", "master");
     }
 
     @SuppressWarnings("unchecked")

@@ -20,6 +20,12 @@ public class SmartpayMockClient {
         mockAuthorisationWithTransactionId(randomUUID().toString());
     }
 
+    public void mockAuthorisation3dsRequired() {
+        String authoriseResponse = TestTemplateResourceLoader.load(SMARTPAY_AUTHORISATION_3DS_REQUIRED_RESPONSE)
+                .replace("{{pspReference}}", randomUUID().toString());
+        paymentServiceResponse(authoriseResponse);
+    }
+
     public void mockAuthorisationFailure() {
         String authoriseResponse = TestTemplateResourceLoader.load(SMARTPAY_AUTHORISATION_FAILED_RESPONSE);
         paymentServiceResponse(authoriseResponse);

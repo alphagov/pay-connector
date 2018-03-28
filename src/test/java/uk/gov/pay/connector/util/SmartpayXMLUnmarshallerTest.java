@@ -46,7 +46,7 @@ public class SmartpayXMLUnmarshallerTest {
         String errorPayload = TestTemplateResourceLoader.load(SMARTPAY_AUTHORISATION_ERROR_RESPONSE);
         SmartpayAuthorisationResponse response = XMLUnmarshaller.unmarshall(errorPayload, SmartpayAuthorisationResponse.class);
 
-        assertThat(response.authoriseStatus(), is(AuthoriseStatus.REJECTED));
+        assertThat(response.authoriseStatus(), is(AuthoriseStatus.ERROR));
         assertThat(response.getTransactionId(), nullValue());
 
         assertThat(response.getErrorCode(), is("soap:Server"));

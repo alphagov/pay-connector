@@ -13,6 +13,7 @@ import java.time.ZonedDateTime;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
+import java.util.Objects;
 
 import static com.fasterxml.jackson.annotation.JsonInclude.Include;
 
@@ -148,6 +149,9 @@ public class ChargeResponse {
         @JsonProperty("htmlOut")
         private String htmlOut;
 
+        @JsonProperty("md")
+        private String md;
+
         public String getPaRequest() {
             return paRequest;
         }
@@ -172,24 +176,28 @@ public class ChargeResponse {
             this.htmlOut = htmlOut;
         }
 
+        public void setMd(String md) {
+            this.md = md;
+        }
+
+        public String getMd() {
+            return md;
+        }
+
         @Override
         public boolean equals(Object o) {
             if (this == o) return true;
             if (o == null || getClass() != o.getClass()) return false;
-
             Auth3dsData that = (Auth3dsData) o;
-
-            if (paRequest != null ? !paRequest.equals(that.paRequest) : that.paRequest != null) return false;
-            if (issuerUrl != null ? !issuerUrl.equals(that.issuerUrl) : that.issuerUrl != null) return false;
-            return htmlOut != null ? htmlOut.equals(that.htmlOut) : that.htmlOut == null;
+            return Objects.equals(paRequest, that.paRequest) &&
+                    Objects.equals(issuerUrl, that.issuerUrl) &&
+                    Objects.equals(htmlOut, that.htmlOut) &&
+                    Objects.equals(md, that.md);
         }
 
         @Override
         public int hashCode() {
-            int result = paRequest != null ? paRequest.hashCode() : 0;
-            result = 31 * result + (issuerUrl != null ? issuerUrl.hashCode() : 0);
-            result = 31 * result + (htmlOut != null ? htmlOut.hashCode() : 0);
-            return result;
+            return Objects.hash(paRequest, issuerUrl, htmlOut, md);
         }
 
         @Override
@@ -198,6 +206,7 @@ public class ChargeResponse {
                     "paRequest='" + paRequest + '\'' +
                     ", issuerUrl='" + issuerUrl + '\'' +
                     ", htmlOut='" + htmlOut + '\'' +
+                    ", md='" + md + '\'' +
                     '}';
         }
     }

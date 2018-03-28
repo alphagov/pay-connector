@@ -15,6 +15,9 @@ public class Auth3dsDetailsEntity {
     @Column(name = "html_out_3ds")
     private String htmlOut;
 
+    @Column(name = "md_3ds")
+    private String md;
+
     public String getPaRequest() {
         return paRequest;
     }
@@ -37,5 +40,13 @@ public class Auth3dsDetailsEntity {
 
     public void setHtmlOut(String htmlOut) {
         this.htmlOut = htmlOut;
+    }
+
+    public void setMd(String md) {
+        this.md = md;
+    }
+
+    public String getMd() {
+        return md;
     }
 }
