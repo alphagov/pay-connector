@@ -1,0 +1,50 @@
+<?xml version="1.0"?>
+<soap:Envelope
+        xmlns:soap="http://schemas.xmlsoap.org/soap/envelope/"
+        xmlns:ns1="http://payment.services.adyen.com"
+        xmlns:ns2="http://common.services.adyen.com"
+        xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance">
+    <soap:Body>
+        <ns1:authorise>
+            <ns1:paymentRequest>
+                <ns1:additionalData>
+                    <ns2:entry>
+                        <ns2:key xsi:type="xsd:string">executeThreeD</ns2:key>
+                        <ns2:value xsi:type="xsd:string">true</ns2:value>
+                    </ns2:entry>
+                </ns1:additionalData>
+                <ns1:browserInfo>
+                    <ns2:acceptHeader>${authCardDetails.acceptHeader?xml}</ns2:acceptHeader>
+                    <ns2:userAgent>${authCardDetails.userAgentHeader?xml}</ns2:userAgent>
+                </ns1:browserInfo>
+                <ns1:amount>
+                    <ns2:currency>GBP</ns2:currency>
+                    <ns2:value>${amount}</ns2:value>
+                </ns1:amount>
+                <ns1:card>
+                    <ns1:cvc>${authCardDetails.cvc}</ns1:cvc>
+                    <ns1:expiryMonth>${authCardDetails.endDate?split('/')?first}</ns1:expiryMonth>
+                    <ns1:expiryYear>20${authCardDetails.endDate?split('/')?last}</ns1:expiryYear>
+                    <ns1:holderName>${authCardDetails.cardHolder?xml}</ns1:holderName>
+                    <ns1:number>${authCardDetails.cardNo}</ns1:number>
+                    <ns1:billingAddress>
+                        <ns2:houseNumberOrName>${authCardDetails.address.line1?xml}</ns2:houseNumberOrName>
+                        <ns2:street><#if authCardDetails.address.line2?has_content>${authCardDetails.address.line2?xml}<
+                            #else>N/A
+                        </#if>
+                    </ns2:street>
+                    <ns2:postalCode>${authCardDetails.address.postcode?xml}</ns2:postalCode>
+                    <ns2:stateOrProvince><#if authCardDetails.address.county??>${authCardDetails.address.county?xml}
+                    </#if>
+                </ns2:stateOrProvince>
+                <ns2:city>${authCardDetails.address.city?xml}</ns2:city>
+                <ns2:country>${authCardDetails.address.country?xml}</ns2:country>
+            </ns1:billingAddress>
+        </ns1:card>
+        <ns1:merchantAccount>${merchantCode}</ns1:merchantAccount>
+        <ns1:reference>${paymentPlatformReference?xml}</ns1:reference>
+        <ns1:shopperReference>${description?xml}</ns1:shopperReference>
+    </ns1:paymentRequest>
+</ns1:authorise>
+        </soap:Body>
+        </soap:Envelope>

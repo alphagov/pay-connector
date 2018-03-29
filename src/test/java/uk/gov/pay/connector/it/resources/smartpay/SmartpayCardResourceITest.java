@@ -1,5 +1,8 @@
 package uk.gov.pay.connector.it.resources.smartpay;
 
+import com.fasterxml.jackson.core.JsonProcessingException;
+import com.fasterxml.jackson.databind.ObjectMapper;
+import com.google.common.collect.ImmutableMap;
 import com.jayway.restassured.http.ContentType;
 import com.jayway.restassured.response.ValidatableResponse;
 import org.apache.commons.lang3.StringUtils;
@@ -14,7 +17,11 @@ import java.util.UUID;
 import static org.hamcrest.Matchers.is;
 import static org.junit.Assert.assertThat;
 import static uk.gov.pay.connector.model.api.ExternalChargeState.EXTERNAL_SUCCESS;
-import static uk.gov.pay.connector.model.domain.ChargeStatus.*;
+import static uk.gov.pay.connector.model.domain.ChargeStatus.AUTHORISATION_3DS_REQUIRED;
+import static uk.gov.pay.connector.model.domain.ChargeStatus.AUTHORISATION_REJECTED;
+import static uk.gov.pay.connector.model.domain.ChargeStatus.AUTHORISATION_SUCCESS;
+import static uk.gov.pay.connector.model.domain.ChargeStatus.CAPTURE_APPROVED;
+import static uk.gov.pay.connector.model.domain.ChargeStatus.ENTERING_CARD_DETAILS;
 
 public class SmartpayCardResourceITest extends ChargingITestBase {
 
@@ -66,6 +73,36 @@ public class SmartpayCardResourceITest extends ChargingITestBase {
                 .statusCode(200);
 
         assertFrontendChargeStatusIs(chargeId, AUTHORISATION_3DS_REQUIRED.toString());
+    }
+
+    @Test
+    public void shouldSuccessWhenAuth3dsRequiredAndAuthorisationSuccess() throws JsonProcessingException {
+        app.getDatabaseTestHelper().enable3dsForGatewayAccount(Long.parseLong(accountId));
+        String chargeId = createNewChargeWithNoTransactionId(AUTHORISATION_3DS_REQUIRED);
+        smartpay.mockAuthorisationSuccess();
+
+        givenSetup()
+                .body(new ObjectMapper().writeValueAsString(get3dsPayload()))
+                .post(authorise3dsChargeUrlFor(chargeId))
+                .then()
+                .statusCode(200);
+
+        assertFrontendChargeStatusIs(chargeId, AUTHORISATION_SUCCESS.getValue());
+    }
+
+    @Test
+    public void shouldFailWhenAuth3dsRequiredAndAuthorisationFailure() throws JsonProcessingException {
+        app.getDatabaseTestHelper().enable3dsForGatewayAccount(Long.parseLong(accountId));
+        String chargeId = createNewChargeWithNoTransactionId(AUTHORISATION_3DS_REQUIRED);
+        smartpay.mockAuthorisationFailure();
+
+        givenSetup()
+                .body(new ObjectMapper().writeValueAsString(get3dsPayload()))
+                .post(authorise3dsChargeUrlFor(chargeId))
+                .then()
+                .statusCode(400);
+
+        assertFrontendChargeStatusIs(chargeId, AUTHORISATION_REJECTED.getValue());
     }
 
     @Test
@@ -136,5 +173,12 @@ public class SmartpayCardResourceITest extends ChargingITestBase {
                 "The Money Pool", "line 2",
                 "London",
                 null, "DO11 4RS", "GB");
+    }
+
+    private static ImmutableMap<String, String> get3dsPayload() {
+        return ImmutableMap.of(
+                "pa_response", "some pa response",
+                "md", "some md text"
+        );
     }
 }

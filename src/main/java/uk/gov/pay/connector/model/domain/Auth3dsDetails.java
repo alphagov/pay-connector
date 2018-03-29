@@ -12,6 +12,8 @@ public class Auth3dsDetails implements AuthorisationDetails {
 
     private Auth3dsResult auth3DsResult;
 
+    private String md;
+
     @JsonProperty("pa_response")
     public void setPaResponse(String paResponse) {
             this.paResponse = paResponse;
@@ -28,5 +30,14 @@ public class Auth3dsDetails implements AuthorisationDetails {
     @JsonProperty("auth_3ds_result")
     public void setAuth3dsResult(String auth3dsResult) {
         this.auth3DsResult = auth3dsResult == null ? Auth3dsResult.ERROR : Auth3dsResult.valueOf(auth3dsResult);
+    }
+
+    @JsonProperty("md")
+    public void setMd(String md) {
+        this.md = md;
+    }
+
+    public String getMd() {
+        return this.md;
     }
 }
