@@ -16,7 +16,6 @@ WORKDIR /app
 ADD target/*.yaml .
 ADD target/pay-*-allinone.jar .
 ADD docker-startup.sh .
-ADD docker-startup-with-db-migration.sh .
 ADD run-with-chamber.sh .
 
 CMD bash ./docker-startup.sh
