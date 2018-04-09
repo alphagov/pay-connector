@@ -2,6 +2,7 @@ package uk.gov.pay.connector.resources;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import uk.gov.pay.connector.notification.worldpay.WorldpayNotificationService;
 import uk.gov.pay.connector.service.NotificationService;
 import uk.gov.pay.connector.service.PaymentGatewayName;
 
@@ -27,10 +28,13 @@ public class NotificationResource {
     private static final Logger logger = LoggerFactory.getLogger(NotificationResource.class);
 
     private final NotificationService notificationService;
+    private final WorldpayNotificationService worldpayNotificationService;
 
     @Inject
-    public NotificationResource(NotificationService notificationService) {
+    public NotificationResource(NotificationService notificationService,
+                                final WorldpayNotificationService worldpayNotificationService) {
         this.notificationService = notificationService;
+        this.worldpayNotificationService = worldpayNotificationService;
     }
 
     @POST
@@ -53,7 +57,14 @@ public class NotificationResource {
     @Path("/v1/api/notifications/worldpay")
     @Produces({TEXT_XML, APPLICATION_JSON})
     public Response authoriseWorldpayNotifications(String notification, @HeaderParam("X-Forwarded-For") String ipAddress) throws IOException {
-        return handleNotification(ipAddress, "worldpay", notification);
+//        return handleNotification(ipAddress, "worldpay", notification);
+        if (!worldpayNotificationService.handleNotificationFor(ipAddress, notification)) {
+            logger.error("Rejected notification for ip '{}'", ipAddress);
+            return forbiddenErrorResponse();
+        }
+        String response = "[OK]";
+        logger.info("Responding to notification from provider={} with 200 {}", "worldpay", response);
+        return Response.ok(response).build();
     }
 
     @POST

@@ -3,12 +3,11 @@ package uk.gov.pay.connector.service;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import io.dropwizard.setup.Environment;
 import uk.gov.pay.connector.app.ConnectorConfiguration;
-import uk.gov.pay.connector.app.WorldpayConfig;
+import uk.gov.pay.connector.notification.worldpay.WorldpayPaymentProvider;
 import uk.gov.pay.connector.service.epdq.EpdqPaymentProvider;
 import uk.gov.pay.connector.service.epdq.EpdqSha512SignatureGenerator;
 import uk.gov.pay.connector.service.sandbox.SandboxPaymentProvider;
 import uk.gov.pay.connector.service.smartpay.SmartpayPaymentProvider;
-import uk.gov.pay.connector.service.worldpay.WorldpayPaymentProvider;
 
 import javax.inject.Inject;
 import javax.ws.rs.client.Invocation;
@@ -24,7 +23,6 @@ import static uk.gov.pay.connector.service.GatewayOperation.REFUND;
 import static uk.gov.pay.connector.service.PaymentGatewayName.EPDQ;
 import static uk.gov.pay.connector.service.PaymentGatewayName.SANDBOX;
 import static uk.gov.pay.connector.service.PaymentGatewayName.SMARTPAY;
-import static uk.gov.pay.connector.service.PaymentGatewayName.WORLDPAY;
 
 /**
  * TODO: Currently, the usage of this class at runtime is a single instance instantiated by ConnectorApp.
@@ -41,14 +39,20 @@ public class PaymentProviders<T extends BaseResponse> {
     private final ConnectorConfiguration config;
     private final ExternalRefundAvailabilityCalculator defaultExternalRefundAvailabilityCalculator = new DefaultExternalRefundAvailabilityCalculator();
     private final ExternalRefundAvailabilityCalculator epdqExternalRefundAvailabilityCalculator = new EpdqExternalRefundAvailabilityCalculator();
+    private final WorldpayPaymentProvider worldpayPaymentProvider;
 
     @Inject
-    public PaymentProviders(ConnectorConfiguration config, GatewayClientFactory gatewayClientFactory, ObjectMapper objectMapper, Environment environment) {
+    public PaymentProviders(ConnectorConfiguration config,
+                            GatewayClientFactory gatewayClientFactory,
+                            ObjectMapper objectMapper,
+                            Environment environment,
+                            WorldpayPaymentProvider worldpayPaymentProvider) {
         this.gatewayClientFactory = gatewayClientFactory;
         this.environment = environment;
         this.config = config;
+        this.worldpayPaymentProvider = worldpayPaymentProvider;
 
-        this.paymentProviders.put(WORLDPAY, createWorldpayProvider());
+//        this.paymentProviders.put(WORLDPAY, createWorldpayProvider());
         this.paymentProviders.put(SMARTPAY, createSmartPayProvider(objectMapper));
         this.paymentProviders.put(SANDBOX, new SandboxPaymentProvider(defaultExternalRefundAvailabilityCalculator));
         this.paymentProviders.put(EPDQ, createEpdqProvider());
@@ -62,19 +66,19 @@ public class PaymentProviders<T extends BaseResponse> {
         );
     }
 
-    private PaymentProvider createWorldpayProvider() {
-        EnumMap<GatewayOperation, GatewayClient> gatewayClientEnumMap = GatewayOperationClientBuilder.builder()
-                .authClient(gatewayClientForOperation(WORLDPAY, AUTHORISE, WorldpayPaymentProvider.includeSessionIdentifier()))
-                .cancelClient(gatewayClientForOperation(WORLDPAY, CANCEL, WorldpayPaymentProvider.includeSessionIdentifier()))
-                .captureClient(gatewayClientForOperation(WORLDPAY, CAPTURE, WorldpayPaymentProvider.includeSessionIdentifier()))
-                .refundClient(gatewayClientForOperation(WORLDPAY, REFUND, WorldpayPaymentProvider.includeSessionIdentifier()))
-                .build();
-
-        WorldpayConfig worldpayConfig = config.getWorldpayConfig();
-
-        return new WorldpayPaymentProvider(
-                gatewayClientEnumMap,worldpayConfig.isSecureNotificationEnabled(),worldpayConfig.getNotificationDomain(), defaultExternalRefundAvailabilityCalculator);
-    }
+//    private PaymentProvider createWorldpayProvider() {
+//        EnumMap<GatewayOperation, GatewayClient> gatewayClientEnumMap = GatewayOperationClientBuilder.builder()
+//                .authClient(gatewayClientForOperation(WORLDPAY, AUTHORISE, WorldpayPaymentProvider.includeSessionIdentifier()))
+//                .cancelClient(gatewayClientForOperation(WORLDPAY, CANCEL, WorldpayPaymentProvider.includeSessionIdentifier()))
+//                .captureClient(gatewayClientForOperation(WORLDPAY, CAPTURE, WorldpayPaymentProvider.includeSessionIdentifier()))
+//                .refundClient(gatewayClientForOperation(WORLDPAY, REFUND, WorldpayPaymentProvider.includeSessionIdentifier()))
+//                .build();
+//
+//        WorldpayConfig worldpayConfig = config.getWorldpayConfig();
+//
+//        return new WorldpayPaymentProvider(
+//                gatewayClientEnumMap,worldpayConfig.isSecureNotificationEnabled(),worldpayConfig.getNotificationDomain(), defaultExternalRefundAvailabilityCalculator);
+//    }
 
     private PaymentProvider createSmartPayProvider(ObjectMapper objectMapper) {
         EnumMap<GatewayOperation, GatewayClient> gatewayClients = GatewayOperationClientBuilder

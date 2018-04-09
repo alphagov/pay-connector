@@ -116,4 +116,27 @@ public class TestTemplateResourceLoader {
         }
     }
 
+    public static String sampleWorldpayNotification(
+            String transactionId,
+            String referenceId,
+            String status) {
+        return sampleWorldpayNotification(transactionId, referenceId, status, "2017", "10", "22");
+    }
+
+    public static String sampleWorldpayNotification(
+            String transactionId,
+            String referenceId,
+            String status,
+            String bookingDateDay,
+            String bookingDateMonth,
+            String bookingDateYear) {
+        return load(WORLDPAY_NOTIFICATION)
+                .replace("{{transactionId}}", transactionId)
+                .replace("{{refund-ref}}", referenceId)
+                .replace("{{status}}", status)
+                .replace("{{bookingDateDay}}", bookingDateDay)
+                .replace("{{bookingDateMonth}}", bookingDateMonth)
+                .replace("{{bookingDateYear}}", bookingDateYear);
+    }
+
 }
