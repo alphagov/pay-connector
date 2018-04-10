@@ -765,7 +765,7 @@ public class ChargesApiResourceITest extends ChargingITestBase {
     @Test
     public void shouldGetSuccessAndFailedResponseForExpiryChargeTask() {
         //create charge
-        String extChargeId = addChargeAndCardDetails(CREATED, "ref", ZonedDateTime.now().minusHours(1));
+        String extChargeId = addChargeAndCardDetails(CREATED, "ref", ZonedDateTime.now().minusMinutes(90));
 
         // run expiry task
         getChargeApi
@@ -789,7 +789,7 @@ public class ChargesApiResourceITest extends ChargingITestBase {
 
     @Test
     public void shouldGetSuccessResponseForExpiryChargeTaskFor3dsRequiredPayments() {
-        String extChargeId = addChargeAndCardDetails(ChargeStatus.AUTHORISATION_3DS_REQUIRED, "ref", ZonedDateTime.now().minusHours(1));
+        String extChargeId = addChargeAndCardDetails(ChargeStatus.AUTHORISATION_3DS_REQUIRED, "ref", ZonedDateTime.now().minusMinutes(90));
 
         getChargeApi
                 .postChargeExpiryTask()

@@ -76,7 +76,7 @@ public class ChargesApiResource {
     private static final String PAGE = "page";
     private static final String DISPLAY_SIZE = "display_size";
     private static final Set<String> CHARGE_REQUEST_KEYS_THAT_MAY_HAVE_PII = Collections.singleton("description");
-    private static final int ONE_HOUR = 3600;
+    private static final int ONE_HOUR_AND_A_HALF = 5400;
     private static final String CHARGE_EXPIRY_WINDOW = "CHARGE_EXPIRY_WINDOW_SECONDS";
     private static final Logger logger = LoggerFactory.getLogger(ChargesApiResource.class);
     static int MIN_AMOUNT = 1;
@@ -304,7 +304,7 @@ public class ChargesApiResource {
     }
 
     private ZonedDateTime getExpiryDate() {
-        int chargeExpiryWindowSeconds = ONE_HOUR;
+        int chargeExpiryWindowSeconds = ONE_HOUR_AND_A_HALF;
         if (StringUtils.isNotBlank(System.getenv(CHARGE_EXPIRY_WINDOW))) {
             chargeExpiryWindowSeconds = Integer.parseInt(System.getenv(CHARGE_EXPIRY_WINDOW));
         }
