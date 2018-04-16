@@ -5,3 +5,5 @@ release.alpha_release-358.date=2018-04-11:09:22:01
 staging-2.tag=FAILED-358
 
 staging-2.FAILED-358.date=
+
+staging-2.FAILED-358.status=failed
