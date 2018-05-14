@@ -203,8 +203,7 @@ public class ChargeResponse {
         @Override
         public String toString() {
             return "Auth3dsData{" +
-                    "paRequest='" + paRequest + '\'' +
-                    ", issuerUrl='" + issuerUrl + '\'' +
+                    "issuerUrl='" + issuerUrl + '\'' +
                     ", htmlOut='" + htmlOut + '\'' +
                     ", md='" + md + '\'' +
                     '}';
