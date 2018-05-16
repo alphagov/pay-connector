@@ -147,9 +147,6 @@ public class WorldpayOrderStatusResponse implements BaseAuthoriseResponse, BaseC
         if (StringUtils.isNotBlank(issuerUrl)) {
             joiner.add("issuerURL: " + issuerUrl);
         }
-        if (StringUtils.isNotBlank(paRequest)) {
-            joiner.add("paRequest: " + paRequest);
-        }
         if (StringUtils.isNotBlank(getErrorCode())) {
             joiner.add("error code: " + getErrorCode());
         }
