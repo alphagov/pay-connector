@@ -242,4 +242,8 @@ public class GatewayAccountEntity extends AbstractVersionedEntity {
     public void setId(Long id) {
         this.id = id;
     }
+    
+    public boolean isLive() {
+        return Type.LIVE.equals(type);
+    }
 }

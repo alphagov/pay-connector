@@ -1,6 +1,8 @@
 package uk.gov.pay.connector.service;
 
 import com.google.inject.persist.Transactional;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import uk.gov.pay.connector.app.ConnectorConfiguration;
 import uk.gov.pay.connector.app.LinksConfig;
 import uk.gov.pay.connector.dao.CardTypeDao;
@@ -43,7 +45,8 @@ import static uk.gov.pay.connector.model.domain.ChargeStatus.ENTERING_CARD_DETAI
 import static uk.gov.pay.connector.model.domain.NumbersInStringsSanitizer.sanitize;
 
 public class ChargeService {
-
+    private static final Logger logger = LoggerFactory.getLogger(ChargeService.class);
+    
     private static final List<ChargeStatus> CURRENT_STATUSES_ALLOWING_UPDATE_TO_NEW_STATUS = newArrayList(CREATED, ENTERING_CARD_DETAILS);
 
     private final ChargeDao chargeDao;
@@ -76,6 +79,11 @@ public class ChargeService {
     @Transactional
     public Optional<ChargeResponse> create(Map<String, String> chargeRequest, Long accountId, UriInfo uriInfo) {
         return gatewayAccountDao.findById(accountId).map(gatewayAccount -> {
+            
+            if (gatewayAccount.isLive() && !chargeRequest.get("return_url").startsWith("https://")) {
+                logger.info(String.format("Gateway account %d is LIVE, but is configured to use a non-https return_url", accountId));
+            }
+            
             ChargeEntity chargeEntity = new ChargeEntity(new Long(chargeRequest.get("amount")),
                     chargeRequest.get("return_url"),
                     chargeRequest.get("description"),
