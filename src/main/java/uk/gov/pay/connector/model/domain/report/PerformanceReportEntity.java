@@ -1,11 +1,13 @@
 package uk.gov.pay.connector.model.domain.report;
 
+import java.math.BigDecimal;
+
 public class PerformanceReportEntity {
     private final long totalVolume;
-    private final long totalAmount;
-    private final double averageAmount;
+    private final BigDecimal totalAmount;
+    private final BigDecimal averageAmount;
 
-    public PerformanceReportEntity(long totalVolume, long totalAmount, double averageAmount) {
+    public PerformanceReportEntity(long totalVolume, BigDecimal totalAmount, BigDecimal averageAmount) {
         this.totalVolume = totalVolume;
         this.totalAmount = totalAmount;
         this.averageAmount = averageAmount;
@@ -15,11 +17,11 @@ public class PerformanceReportEntity {
         return totalVolume;
     }
 
-    public long getTotalAmount() {
+    public BigDecimal getTotalAmount() {
         return totalAmount;
     }
 
-    public double getAverageAmount() {
+    public BigDecimal getAverageAmount() {
         return averageAmount;
     }
 }
