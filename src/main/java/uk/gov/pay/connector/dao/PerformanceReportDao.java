@@ -5,6 +5,7 @@ import com.google.inject.persist.Transactional;
 import org.apache.commons.lang3.StringUtils;
 import uk.gov.pay.connector.model.domain.report.PerformanceReportEntity;
 import static uk.gov.pay.connector.model.domain.ChargeStatus.CAPTURED;
+import static uk.gov.pay.connector.model.domain.GatewayAccountEntity.Type.LIVE;
 
 import javax.inject.Inject;
 import javax.persistence.EntityManager;
@@ -29,8 +30,14 @@ public class PerformanceReportDao extends JpaDao<PerformanceReportEntity> {
 
     public PerformanceReportEntity aggregateNumberAndValueOfPayments() {
             return (PerformanceReportEntity) entityManager.get()
-                    .createQuery("SELECT NEW uk.gov.pay.connector.model.domain.report.PerformanceReportEntity(COUNT(c.amount), SUM(c.amount), AVG(c.amount)) FROM ChargeEntity c WHERE c.status = :status")
+                    .createQuery("SELECT NEW uk.gov.pay.connector.model.domain.report.PerformanceReportEntity(COUNT(c.amount), SUM(c.amount), AVG(c.amount))"
+                                + " FROM ChargeEntity c"
+                                + " WHERE c.status = :status"
+                                + " AND   c.gateway_account_id IN"
+                                + " (SELECT id FROM gateway_accounts as g WHERE g.type = :type)"
+                                )
                     .setParameter("status", CAPTURED.toString())
+                    .setParameter("type", LIVE.toString())
                     .setMaxResults(1)
                     .getSingleResult();
     }
