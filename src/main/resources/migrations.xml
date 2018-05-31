@@ -1317,4 +1317,15 @@
             </column>
         </addColumn>
     </changeSet>
+
+    <changeSet id="increase width of notification_credentials username, password columns" author="">
+        <modifyDataType
+            tableName="notification_credentials"
+            columnName="username"
+            newDataType="varchar(255)"/>
+        <modifyDataType
+            tableName="notification_credentials"
+            columnName="password"
+            newDataType="varchar(255)"/>
+    </changeSet>
 </databaseChangeLog>
