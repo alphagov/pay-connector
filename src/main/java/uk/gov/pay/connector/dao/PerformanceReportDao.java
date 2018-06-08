@@ -5,6 +5,7 @@ import com.google.inject.Provider;
 import com.google.inject.persist.Transactional;
 import org.apache.commons.lang3.StringUtils;
 import uk.gov.pay.connector.model.domain.report.PerformanceReportEntity;
+import uk.gov.pay.connector.model.domain.report.GatewayAccountPerformanceReportEntity;
 import static uk.gov.pay.connector.model.domain.ChargeStatus.CAPTURED;
 import static uk.gov.pay.connector.model.domain.GatewayAccountEntity.Type.LIVE;
 
@@ -48,5 +49,29 @@ public class PerformanceReportDao extends JpaDao<PerformanceReportEntity> {
       .setParameter("status", CAPTURED.toString())
       .setParameter("type", LIVE)
       .getSingleResult();
+  }
+
+  public List<GatewayAccountPerformanceReportEntity> aggregateNumberAndValueOfPaymentsByGatewayAccount() {
+    return entityManager
+      .get()
+      .createQuery(
+        "SELECT new uk.gov.pay.connector.model.domain.report.GatewayAccountPerformanceReportEntity("
+        + "   COALESCE(COUNT(c.amount), 0),"
+        + "   COALESCE(SUM(c.amount),   0),"
+        + "   COALESCE(AVG(c.amount),   0),"
+        + "   COALESCE(MIN(c.amount),   0),"
+        + "   COALESCE(MAX(c.amount),   0),"
+        + "   g.id"
+        + " )"
+        + " FROM ChargeEntity c"
+        + " JOIN GatewayAccountEntity g"
+        + " ON c.gatewayAccount.id = g.id"
+        + " WHERE c.status = :status"
+        + " AND   g.type = :type"
+        + " GROUP BY g.id"
+      )
+      .setParameter("status", CAPTURED.toString())
+      .setParameter("type", LIVE)
+      .getResultList();
   }
 }
