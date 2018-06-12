@@ -112,6 +112,8 @@ $ java -jar target/pay-connector-0.1-SNAPSHOT-allinone.jar
 |[```/v1/api/accounts/{accountId}/charges/{chargeId}/refunds```](docs/api_specification.md#get-v1apiaccountschargesrefunds)  | GET   |  Retrieves all refunds associated to a charge `chargeId` and a given `accountId`           |
 |[```/v1/api/accounts/{accountId}/charges/{chargeId}/refunds/{refundId}```](docs/api_specification.md#get-v1apiaccountschargesrefundsrefundid)  | GET   |  Retrieves a refund by `refundId` for a given charge `chargeId` and a given `accountId`           |
 |[```/v1/api/accounts/{accountId}/transactions-summary```](docs/api_specification.md#get-v1apiaccountsaccountidtransactions-summary)|GET|Retrieves payment summary totals for a given `accountId`
+|[```/v1/api/reports/performance-report```](docs/api_specification.md#get-v1apireportsperformance-report)|GET|Retrieves performance summary |
+|[```/v1/api/reports/gateway-account-performance-report```](docs/api_specification.md#get-v1apireportsgateway-account-performance-report)|GET|Retrieves performance summary segmented by gateway account |
 
 ### Frontend namespace
 

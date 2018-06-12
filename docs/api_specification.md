@@ -1656,3 +1656,86 @@ Content-Type: application/json
 | `net_income`          | X              | Total value of successful payments minus total value of refunds (`total_in_pence`) |
 | `count`               |                | Total number of successful payments or refunded payments                           |
 | `total_in_pence`      | X              | Total value of successful payments, refunds or net income (pence)                  |
+
+-----------------------------------------------------------------------------------------------------------
+## GET /v1/api/reports/performance-report
+
+Retrieves performance summary
+
+### Request query param description
+
+This endpoint doesn't accept any parameters
+
+### Request example
+
+```
+GET /v1/api/reports/performance-report
+```
+
+### Response example
+
+```
+HTTP/1.1 200 OK
+Content-Type: application/json
+
+{
+
+  "total_volume": 12345,
+  "total_amount": 12345,
+  "average_amount": 1
+}
+```
+
+### Response field description
+
+| Field            | Always present | Description                           |
+| -----------------|:--------------:| --------------------------------------|
+| `total_volume`   | X              | Count of successful payments          |
+| `total_amount`   | X              | Sum of successful payments            |
+| `average_amount` | X              | Average value of successful payments  |
+
+-----------------------------------------------------------------------------------------------------------
+## GET /v1/api/reports/gateway-account-performance-report
+
+Retrieves performance summary segmented by gateway account
+
+### Request query param description
+
+This endpoint doesn't accept any parameters
+
+### Request example
+
+```
+GET /v1/api/reports/gateway-account-performance-report
+```
+
+### Response example
+
+```
+HTTP/1.1 200 OK
+Content-Type: application/json
+
+{
+  "1": {
+    "total_volume": 100,
+    "total_amount": 1000,
+    "average_amount": 10,
+    "min_amount": 1,
+    "max_amount": 9
+  }
+}
+```
+
+### Response field description
+
+The following fields are present for each gateway account returned.
+
+| Field            | Always present | Description                              |
+| -----------------|:--------------:| -----------------------------------------|
+| `total_volume`   | X              | Count of successful payments             |
+| `total_amount`   | X              | Sum of successful payments               |
+| `average_amount` | X              | Average value of successful payments     |
+| `min_amount`     | X              | Minimum value of all successful payments |
+| `max_amount`     | X              | Maximum value of all successful payment  |
+
+This endpoint will not return any statistics for any account that has not conducted a live payment.
