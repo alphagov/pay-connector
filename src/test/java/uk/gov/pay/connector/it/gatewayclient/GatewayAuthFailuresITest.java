@@ -93,7 +93,7 @@ public class GatewayAuthFailuresITest {
     public void shouldFailAuthWhenUnexpectedHttpStatusCodeFromGateway() throws Exception {
         gatewayStub.respondWithUnexpectedResponseCodeWhenCardAuth();
 
-        String errorMessage = "Unexpected Response Code From Gateway";
+        String errorMessage = "Unexpected HTTP status code 999 from gateway";
         String cardAuthUrl = "/v1/frontend/charges/{chargeId}/cards".replace("{chargeId}", chargeTestRecord.getExternalChargeId());
 
         given().config(RestAssured.config().connectionConfig(connectionConfig().closeIdleConnectionsAfterEachResponse()))

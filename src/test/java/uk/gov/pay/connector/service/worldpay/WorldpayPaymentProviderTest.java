@@ -185,7 +185,8 @@ public class WorldpayPaymentProviderTest {
 
         Map<String, String> credentialsMap = ImmutableMap.of("merchant_id", "MERCHANTCODE");
         when(mockGatewayAccountEntity.getCredentials()).thenReturn(credentialsMap);
-        when(mockGatewayClient.postRequestFor(isNull(String.class), any(GatewayAccountEntity.class), any(GatewayOrder.class))).thenReturn(left(unexpectedStatusCodeFromGateway("Unexpected Response Code From Gateway")));
+        when(mockGatewayClient.postRequestFor(isNull(String.class), any(GatewayAccountEntity.class), any(GatewayOrder.class)))
+                .thenReturn(left(unexpectedStatusCodeFromGateway("Unexpected HTTP status code 400 from gateway")));
 
         WorldpayPaymentProvider worldpayPaymentProvider = new WorldpayPaymentProvider(gatewayClientEnumMap, false, null, externalRefundAvailabilityCalculator);
         worldpayPaymentProvider.refund(RefundGatewayRequest.valueOf(refundEntity));
@@ -230,7 +231,8 @@ public class WorldpayPaymentProviderTest {
         Map<String, String> credentialsMap = ImmutableMap.of("merchant_id", "MERCHANTCODE");
         when(mockGatewayAccountEntity.getCredentials()).thenReturn(credentialsMap);
         when(mockGatewayAccountEntity.isRequires3ds()).thenReturn(false);
-        when(mockGatewayClient.postRequestFor(isNull(String.class), any(GatewayAccountEntity.class), any(GatewayOrder.class))).thenReturn(left(unexpectedStatusCodeFromGateway("Unexpected Response Code From Gateway")));
+        when(mockGatewayClient.postRequestFor(isNull(String.class), any(GatewayAccountEntity.class), any(GatewayOrder.class)))
+                .thenReturn(left(unexpectedStatusCodeFromGateway("Unexpected HTTP status code 400 from gateway")));
 
         WorldpayPaymentProvider worldpayPaymentProvider = new WorldpayPaymentProvider(gatewayClientEnumMap, false, null, externalRefundAvailabilityCalculator);
 
@@ -267,7 +269,8 @@ public class WorldpayPaymentProviderTest {
         Map<String, String> credentialsMap = ImmutableMap.of("merchant_id", "MERCHANTCODE");
         when(mockGatewayAccountEntity.getCredentials()).thenReturn(credentialsMap);
         when(mockGatewayAccountEntity.isRequires3ds()).thenReturn(true);
-        when(mockGatewayClient.postRequestFor(isNull(String.class), any(GatewayAccountEntity.class), any(GatewayOrder.class))).thenReturn(left(unexpectedStatusCodeFromGateway("Unexpected Response Code From Gateway")));
+        when(mockGatewayClient.postRequestFor(isNull(String.class), any(GatewayAccountEntity.class), any(GatewayOrder.class)))
+                .thenReturn(left(unexpectedStatusCodeFromGateway("Unexpected HTTP status code 400 from gateway")));
 
         WorldpayPaymentProvider worldpayPaymentProvider = new WorldpayPaymentProvider(gatewayClientEnumMap, false, null, externalRefundAvailabilityCalculator);
 
@@ -301,7 +304,8 @@ public class WorldpayPaymentProviderTest {
         Map<String, String> credentialsMap = ImmutableMap.of("merchant_id", "MERCHANTCODE");
         when(mockGatewayAccountEntity.getCredentials()).thenReturn(credentialsMap);
         when(mockGatewayAccountEntity.isRequires3ds()).thenReturn(true);
-        when(mockGatewayClient.postRequestFor(isNull(String.class), any(GatewayAccountEntity.class), any(GatewayOrder.class))).thenReturn(left(unexpectedStatusCodeFromGateway("Unexpected Response Code From Gateway")));
+        when(mockGatewayClient.postRequestFor(isNull(String.class), any(GatewayAccountEntity.class), any(GatewayOrder.class)))
+                .thenReturn(left(unexpectedStatusCodeFromGateway("Unexpected HTTP status code 401 from gateway")));
 
         WorldpayPaymentProvider worldpayPaymentProvider = new WorldpayPaymentProvider(gatewayClientEnumMap, false, null, externalRefundAvailabilityCalculator);
 
@@ -337,7 +341,8 @@ public class WorldpayPaymentProviderTest {
         Map<String, String> credentialsMap = ImmutableMap.of("merchant_id", "MERCHANTCODE");
         when(mockGatewayAccountEntity.getCredentials()).thenReturn(credentialsMap);
         when(mockGatewayAccountEntity.isRequires3ds()).thenReturn(true);
-        when(mockGatewayClient.postRequestFor(isNull(String.class), any(GatewayAccountEntity.class), any(GatewayOrder.class))).thenReturn(left(unexpectedStatusCodeFromGateway("Unexpected Response Code From Gateway")));
+        when(mockGatewayClient.postRequestFor(isNull(String.class), any(GatewayAccountEntity.class), any(GatewayOrder.class)))
+                .thenReturn(left(unexpectedStatusCodeFromGateway("Unexpected HTTP status code 400 from gateway")));
 
         WorldpayPaymentProvider worldpayPaymentProvider = new WorldpayPaymentProvider(gatewayClientEnumMap, false, null, externalRefundAvailabilityCalculator);
 
@@ -374,7 +379,8 @@ public class WorldpayPaymentProviderTest {
         assertThat(response.isFailed(), is(true));
         assertFalse(response.getSessionIdentifier().isPresent());
         assertThat(response.getGatewayError().isPresent(), is(true));
-        assertEquals(response.getGatewayError().get(), new GatewayError("Unexpected Response Code From Gateway", UNEXPECTED_HTTP_STATUS_CODE_FROM_GATEWAY));
+        assertEquals(response.getGatewayError().get(), new GatewayError("Unexpected HTTP status code 401 from gateway",
+                UNEXPECTED_HTTP_STATUS_CODE_FROM_GATEWAY));
     }
 
     @Test
@@ -393,7 +399,8 @@ public class WorldpayPaymentProviderTest {
         GatewayResponse<WorldpayCaptureResponse> response = provider.capture(getCaptureRequest());
         assertThat(response.isFailed(), is(true));
         assertThat(response.getGatewayError().isPresent(), is(true));
-        assertEquals(response.getGatewayError().get(), new GatewayError("Unexpected Response Code From Gateway", UNEXPECTED_HTTP_STATUS_CODE_FROM_GATEWAY));
+        assertEquals(response.getGatewayError().get(), new GatewayError("Unexpected HTTP status code 400 from gateway",
+                UNEXPECTED_HTTP_STATUS_CODE_FROM_GATEWAY));
     }
 
     @Test
