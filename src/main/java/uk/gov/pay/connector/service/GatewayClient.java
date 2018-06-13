@@ -77,7 +77,7 @@ public class GatewayClient {
             } else {
                 logger.error("Gateway returned unexpected status code: {}, for gateway url={} with type {}", statusCode, gatewayUrl, account.getType());
                 incrementFailureCounter(metricRegistry, metricsPrefix);
-                return left(unexpectedStatusCodeFromGateway("Unexpected Response Code From Gateway"));
+                return left(unexpectedStatusCodeFromGateway("Unexpected HTTP status code " + statusCode + " from gateway"));
             }
         } catch (ProcessingException pe) {
             incrementFailureCounter(metricRegistry, metricsPrefix);

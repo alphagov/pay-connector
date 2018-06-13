@@ -64,7 +64,8 @@ public class EpdqPaymentProviderTest extends BaseEpdqPaymentProviderTest {
         GatewayResponse<EpdqAuthorisationResponse> response = provider.authorise(buildTestAuthorisationRequest());
         assertThat(response.isFailed(), is(true));
         assertThat(response.getGatewayError().isPresent(), is(true));
-        assertEquals(response.getGatewayError().get(), new GatewayError("Unexpected Response Code From Gateway", UNEXPECTED_HTTP_STATUS_CODE_FROM_GATEWAY));
+        assertEquals(response.getGatewayError().get(), new GatewayError("Unexpected HTTP status code 400 from gateway",
+                UNEXPECTED_HTTP_STATUS_CODE_FROM_GATEWAY));
     }
 
     @Test
@@ -90,7 +91,8 @@ public class EpdqPaymentProviderTest extends BaseEpdqPaymentProviderTest {
         GatewayResponse<EpdqCaptureResponse> response = provider.capture(buildTestCaptureRequest());
         assertThat(response.isFailed(), is(true));
         assertThat(response.getGatewayError().isPresent(), is(true));
-        assertEquals(response.getGatewayError().get(), new GatewayError("Unexpected Response Code From Gateway", UNEXPECTED_HTTP_STATUS_CODE_FROM_GATEWAY));
+        assertEquals(response.getGatewayError().get(), new GatewayError("Unexpected HTTP status code 400 from gateway",
+                UNEXPECTED_HTTP_STATUS_CODE_FROM_GATEWAY));
     }
 
     @Test
@@ -116,7 +118,8 @@ public class EpdqPaymentProviderTest extends BaseEpdqPaymentProviderTest {
         GatewayResponse<EpdqCaptureResponse> response = provider.cancel(buildTestCancelRequest());
         assertThat(response.isFailed(), is(true));
         assertThat(response.getGatewayError().isPresent(), is(true));
-        assertEquals(response.getGatewayError().get(), new GatewayError("Unexpected Response Code From Gateway", UNEXPECTED_HTTP_STATUS_CODE_FROM_GATEWAY));
+        assertEquals(response.getGatewayError().get(), new GatewayError("Unexpected HTTP status code 400 from gateway",
+                UNEXPECTED_HTTP_STATUS_CODE_FROM_GATEWAY));
     }
 
     @Test
@@ -151,7 +154,8 @@ public class EpdqPaymentProviderTest extends BaseEpdqPaymentProviderTest {
         GatewayResponse<EpdqRefundResponse> response = provider.refund(buildTestRefundRequest());
         assertThat(response.isFailed(), is(true));
         assertThat(response.getGatewayError().isPresent(), is(true));
-        assertEquals(response.getGatewayError().get(), new GatewayError("Unexpected Response Code From Gateway", UNEXPECTED_HTTP_STATUS_CODE_FROM_GATEWAY));
+        assertEquals(response.getGatewayError().get(), new GatewayError("Unexpected HTTP status code 400 from gateway",
+                UNEXPECTED_HTTP_STATUS_CODE_FROM_GATEWAY));
     }
 
     @Test
