@@ -126,6 +126,12 @@ public class DatabaseTestHelper {
         );
     }
 
+    public void deleteAllChargesOnAccount(long accountId) {
+        jdbi.withHandle(handle ->
+                handle.createStatement("DELETE FROM charges where gateway_account_id = :accountId")
+                        .bind("accountId", accountId).execute());
+    }
+    
     public void addRefund(long id, String externalId, String reference, long amount, String status, Long chargeId, ZonedDateTime createdDate) {
         jdbi.withHandle(handle ->
                 handle
