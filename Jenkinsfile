@@ -121,6 +121,15 @@ pipeline {
       when { branch 'master' }
       steps { runCardSmokeTest() }
     }
+    stage('Pact Tag') {
+      when {
+        branch 'master'
+      }
+      steps {
+        echo 'Tagging provider pact with "test"'
+        tagPact("connector", gitCommit(), "test")
+      }
+    }
     stage('Complete') {
       failFast true
       parallel {
