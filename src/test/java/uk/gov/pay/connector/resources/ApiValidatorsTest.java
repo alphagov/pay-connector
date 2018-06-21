@@ -8,6 +8,7 @@ import uk.gov.pay.connector.model.builder.PatchRequestBuilder;
 
 import java.time.ZonedDateTime;
 import java.util.List;
+import java.util.Optional;
 
 import static java.util.Collections.singletonList;
 import static org.apache.commons.lang.RandomStringUtils.randomAlphanumeric;
@@ -15,6 +16,7 @@ import static org.hamcrest.core.Is.is;
 import static org.junit.Assert.assertThat;
 import static uk.gov.pay.connector.resources.ApiValidators.validateChargePatchParams;
 import static uk.gov.pay.connector.resources.ApiValidators.validateFromDateIsBeforeToDate;
+import static uk.gov.pay.connector.resources.ApiValidators.parseZonedDateTime;
 
 public class ApiValidatorsTest {
 
@@ -100,4 +102,16 @@ public class ApiValidatorsTest {
         assertThat(result.left().value().get(0), is("query param 'to_date' not in correct format"));
     }
 
+    @Test
+    public void parseZonedDateTimeParsesZonedDateTimes() {
+        String rawDate = "2018-06-20T00:00:00Z";
+        Optional<ZonedDateTime> maybeDate = parseZonedDateTime(rawDate);
+
+        assert(maybeDate.isPresent());
+
+        ZonedDateTime date = maybeDate.get();
+        assertThat(date.getDayOfMonth(), is(20));
+        assertThat(date.getMonthValue(), is(06));
+        assertThat(date.getYear(),       is(2018));
+    }
 }

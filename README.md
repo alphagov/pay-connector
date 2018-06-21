@@ -114,6 +114,7 @@ $ java -jar target/pay-connector-0.1-SNAPSHOT-allinone.jar
 |[```/v1/api/accounts/{accountId}/transactions-summary```](docs/api_specification.md#get-v1apiaccountsaccountidtransactions-summary)|GET|Retrieves payment summary totals for a given `accountId`
 |[```/v1/api/reports/performance-report```](docs/api_specification.md#get-v1apireportsperformance-report)|GET|Retrieves performance summary |
 |[```/v1/api/reports/gateway-account-performance-report```](docs/api_specification.md#get-v1apireportsgateway-account-performance-report)|GET|Retrieves performance summary segmented by gateway account |
+|[```/v1/api/reports/daily-performance-report```](docs/api_specification.md#get-v1apireportsdaily-performance-report)|GET|Retrieves performance summary for a given day |
 
 ### Frontend namespace
 
