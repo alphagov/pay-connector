@@ -10,7 +10,6 @@ import uk.gov.pay.connector.model.domain.report.PerformanceReportEntity;
 import uk.gov.pay.connector.model.domain.report.GatewayAccountPerformanceReportEntity;
 import static uk.gov.pay.connector.model.domain.ChargeStatus.CAPTURED;
 import static uk.gov.pay.connector.model.domain.GatewayAccountEntity.Type.LIVE;
-import static uk.gov.pay.connector.model.domain.GatewayAccountEntity.Type.TEST;
 
 import javax.inject.Inject;
 import javax.persistence.EntityManager;
@@ -98,7 +97,7 @@ public class PerformanceReportDao extends JpaDao<PerformanceReportEntity> {
         + " AND   c.createdDate BETWEEN :startDate AND :endDate"
       )
       .setParameter("status", CAPTURED.toString())
-      .setParameter("type", TEST)
+      .setParameter("type", LIVE)
       .setParameter("startDate", startDate)
       .setParameter("endDate", endDate)
       .getSingleResult();
