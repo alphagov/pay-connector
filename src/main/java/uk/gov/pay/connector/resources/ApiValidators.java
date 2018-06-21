@@ -5,6 +5,7 @@ import org.apache.commons.lang3.tuple.Pair;
 import uk.gov.pay.connector.dao.GatewayAccountDao;
 import uk.gov.pay.connector.model.builder.PatchRequestBuilder;
 
+import java.time.format.DateTimeFormatter;
 import java.time.ZonedDateTime;
 import java.time.format.DateTimeParseException;
 import java.util.HashMap;
@@ -138,7 +139,7 @@ class ApiValidators {
         return left(errors);
     }
 
-    private static Optional<ZonedDateTime> parseZonedDateTime(String zdt) {
+    static Optional<ZonedDateTime> parseZonedDateTime(String zdt) {
         if (zdt == null) {
             return Optional.empty();
         }
@@ -148,5 +149,4 @@ class ApiValidators {
             return Optional.empty();
         }
     }
-
 }
