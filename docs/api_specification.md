@@ -1739,3 +1739,42 @@ The following fields are present for each gateway account returned.
 | `max_amount`     | X              | Maximum value of all successful payment  |
 
 This endpoint will not return any statistics for any account that has not conducted a live payment.
+
+## GET /v1/api/reports/daily-performance-report
+
+Retrieves performance summary scoped by day
+
+### Request query param description
+
+| Field       | Always present | Description                                |
+| ------------|:--------------:| ------------------------------------------ |
+| `date`      | X              | Date for which report should be generated  |
+
+
+### Request example
+
+```
+GET /v1/api/reports/daily-performance-report?date=2018-06-21T00:00:00Z
+```
+
+### Response example
+
+```
+HTTP/1.1 200 OK
+Content-Type: application/json
+
+{
+
+  "total_volume": 12345,
+  "total_amount": 12345,
+  "average_amount": 1
+}
+```
+
+### Response field description
+
+| Field            | Always present | Description                           |
+| -----------------|:--------------:| --------------------------------------|
+| `total_volume`   | X              | Count of successful payments          |
+| `total_amount`   | X              | Sum of successful payments            |
+| `average_amount` | X              | Average value of successful payments  |
