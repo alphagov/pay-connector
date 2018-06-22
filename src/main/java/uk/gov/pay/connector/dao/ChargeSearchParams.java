@@ -1,6 +1,7 @@
 package uk.gov.pay.connector.dao;
 
 import uk.gov.pay.connector.model.TransactionType;
+
 import uk.gov.pay.connector.model.api.ExternalChargeState;
 import uk.gov.pay.connector.model.api.ExternalRefundStatus;
 import uk.gov.pay.connector.model.domain.ChargeStatus;
@@ -210,14 +211,27 @@ public class ChargeSearchParams {
     }
 
     public String buildQueryParams() {
+        return this.buildQueryParams(false);
+    }
+
+    public String buildQueryParamsWithPiiRedaction () {
+        return this.buildQueryParams(true);
+    }
+
+    private String buildQueryParams(boolean redactPii) {
         StringBuilder builder = new StringBuilder();
         if (transactionType != null) {
             builder.append("&transaction_type=").append(transactionType.getValue());
         }
         if (isNotBlank(reference))
             builder.append("&reference=").append(reference);
-        if (email != null)
-            builder.append("&email=").append(email);
+        if (email != null) {
+            if (redactPii) {
+                builder.append("&email=*****");
+            } else {
+                builder.append("&email=").append(email);
+            }
+        }
         if (fromDate != null)
             builder.append("&from_date=").append(fromDate);
         if (toDate != null)
