@@ -67,6 +67,34 @@ public class ChargeSearchParamsTest {
     }
 
     @Test
+    public void buildQueryParamsWithPiiRedaction_chargeSearch_withAllParameters() throws Exception {
+
+        String expectedQueryString =
+                "reference=ref" +
+                        "&email=*****" +
+                        "&from_date=2012-06-30T12:30:40Z[UTC]" +
+                        "&to_date=2012-07-30T12:30:40Z[UTC]" +
+                        "&page=2" +
+                        "&display_size=5" +
+                        "&state=created" +
+                        "&card_brand=visa";
+
+        ChargeSearchParams params = new ChargeSearchParams()
+                .withDisplaySize(5L)
+                .withExternalState(EXTERNAL_CREATED.getStatus())
+                .withCardBrand("visa")
+                .withGatewayAccountId(111L)
+                .withPage(2L)
+                .withReferenceLike("ref")
+                .withEmailLike("user")
+                .withFromDate(ZonedDateTime.parse("2012-06-30T12:30:40Z[UTC]"))
+                .withToDate(ZonedDateTime.parse("2012-07-30T12:30:40Z[UTC]"));
+
+        assertThat(params.buildQueryParamsWithPiiRedaction(), is(expectedQueryString));
+    }
+
+
+    @Test
     public void getInternalStates_chargeSearch_shouldPopulateAllInternalChargeStates_FromExternalFailedState() {
 
         ChargeSearchParams params = new ChargeSearchParams()

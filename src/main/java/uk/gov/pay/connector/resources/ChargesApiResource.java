@@ -342,7 +342,7 @@ public class ChargesApiResource {
             logger.info("Charge Search - is feature transactions enabled [{}] took [{}] params [{}]",
                     isFeatureTransactionsEnabled,
                     (endTime - startTime) / 1000000000.0,
-                    searchParams.buildQueryParams());
+                    searchParams.buildQueryParamsWithPiiRedaction());
         }
     }
 
@@ -354,7 +354,7 @@ public class ChargesApiResource {
             long endTime = System.nanoTime();
             logger.info("Transaction Search - took [{}] params [{}]",
                     (endTime - startTime) / 1000000000.0,
-                    searchParams.buildQueryParams());
+                    searchParams.buildQueryParamsWithPiiRedaction());
         }
     }
 
