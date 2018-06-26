@@ -5,6 +5,7 @@ server:
   adminConnectors:
     - type: http
       port: ${ADMIN_PORT:-0}
+  enableThreadNameFilter: false
 
 logging:
     level: INFO
