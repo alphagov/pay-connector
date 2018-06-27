@@ -17,6 +17,8 @@ import uk.gov.pay.connector.util.DatabaseTestHelper;
 
 import java.time.ZoneId;
 import java.time.ZonedDateTime;
+import java.util.Map;
+import java.util.concurrent.ThreadLocalRandom;
 
 @RunWith(PayPactRunner.class)
 @Provider("connector")
@@ -49,7 +51,7 @@ public class TransactionsApiContractTest {
 
     private void setUpCharges(int numberOfCharges, String accountID, ZonedDateTime createdDate){
         for (int i = 0; i < numberOfCharges; i++) {
-            Long chargeId = Integer.toUnsignedLong(i);
+            Long chargeId = ThreadLocalRandom.current().nextLong(100, 100000);
             dbHelper.addCharge(chargeId, Long.toString(chargeId), accountID, 100L, ChargeStatus.CREATED,"aReturnUrl","aTransactionId", "aReference", createdDate, "test@test.com@");
             dbHelper.updateChargeCardDetails(chargeId, "visa", "0001", "aName", "08/23", "aFirstAddress", "aSecondLine", "aPostCode", "aCity", "aCounty", "aCountry");
         }
@@ -91,4 +93,9 @@ public class TransactionsApiContractTest {
 
     @State({"default", "Card types exist in the database"})
     public void defaultCase() { }
+
+    @State("a gateway account with external id exists")
+    public void createGatewayAccount(Map<String, String> params) {
+        dbHelper.addGatewayAccount(params.get("gateway_account_id"), "sandbox");
+    }
 }
