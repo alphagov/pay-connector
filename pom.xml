@@ -10,7 +10,7 @@
         <jpa.version>2.6.4</jpa.version>
         <guice.version>4.1.0</guice.version>
         <docker-client.version>8.9.2</docker-client.version>
-        <jackson.version>2.9.4</jackson.version>
+        <jackson.version>2.9.6</jackson.version>
     </properties>
     <repositories>
         <repository>
