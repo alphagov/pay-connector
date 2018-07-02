@@ -1,6 +1,7 @@
 package uk.gov.pay.connector.model.domain;
 
 import com.google.common.collect.ImmutableMap;
+import uk.gov.pay.connector.model.ServicePaymentReference;
 import uk.gov.pay.connector.util.RandomIdGenerator;
 
 import java.time.ZoneId;
@@ -19,7 +20,7 @@ public class ChargeEntityFixture {
     private String returnUrl = "http://return.com";
     private String email = "test@email.com";
     private String description = "This is a description";
-    private String reference = "This is a reference";
+    private ServicePaymentReference reference = ServicePaymentReference.of("This is a reference");
     private ChargeStatus status = ChargeStatus.CREATED;
     private GatewayAccountEntity gatewayAccountEntity = defaultGatewayAccountEntity();
     private String transactionId;
@@ -87,7 +88,7 @@ public class ChargeEntityFixture {
         return this;
     }
 
-    public ChargeEntityFixture withReference(String reference) {
+    public ChargeEntityFixture withReference(ServicePaymentReference reference) {
         this.reference = reference;
         return this;
     }

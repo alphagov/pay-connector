@@ -4,6 +4,7 @@ import org.junit.Before;
 import org.junit.Test;
 import uk.gov.pay.connector.dao.ChargeSearchParams;
 import uk.gov.pay.connector.dao.OldTransactionDao;
+import uk.gov.pay.connector.model.ServicePaymentReference;
 import uk.gov.pay.connector.model.domain.ChargeStatus;
 import uk.gov.pay.connector.model.domain.RefundStatus;
 import uk.gov.pay.connector.model.domain.Transaction;
@@ -356,12 +357,12 @@ public class OldTransactionDaoITest extends DaoITestBase {
         DatabaseFixtures.TestCharge testCharge = insertNewChargeWithId(1L, now().plusHours(1));
         insertNewRefundForCharge(testCharge, 2L, now().plusHours(2));
 
-        String partialPaymentReference = "Council Tax";
+        ServicePaymentReference partialPaymentReference = ServicePaymentReference.of("Council Tax");
 
         DatabaseFixtures.TestCharge partialReferenceCharge =
                 withDatabaseTestHelper(databaseTestHelper)
                         .aTestCharge()
-                        .withReference(partialPaymentReference + " whatever")
+                        .withReference(ServicePaymentReference.of(partialPaymentReference.toString() + " whatever"))
                         .withTestAccount(defaultTestAccount)
                         .withCreatedDate(now().plusHours(3))
                         .insert();
@@ -387,24 +388,24 @@ public class OldTransactionDaoITest extends DaoITestBase {
     }
 
     @Test
-    public void searchChargesByReferenceAndEmail_with_under_score() throws Exception {
+    public void searchChargesByReferenceAndEmail_with_under_score() {
         // since '_' have special meaning in like queries of postgres this was resulting in undesired results
         withDatabaseTestHelper(databaseTestHelper)
                 .aTestCharge()
                 .withTestAccount(defaultTestAccount)
-                .withReference("under_score_ref")
+                .withReference(ServicePaymentReference.of("under_score_ref"))
                 .withEmail("under_score@mail.com")
                 .insert();
 
         withDatabaseTestHelper(databaseTestHelper)
                 .aTestCharge()
                 .withTestAccount(defaultTestAccount)
-                .withReference("understand")
+                .withReference(ServicePaymentReference.of("understand"))
                 .withEmail("undertaker@mail.com")
                 .insert();
 
         ChargeSearchParams params = new ChargeSearchParams()
-                .withReferenceLike("under_")
+                .withReferenceLike(ServicePaymentReference.of("under_"))
                 .withEmailLike("under_");
 
         // when
@@ -414,7 +415,7 @@ public class OldTransactionDaoITest extends DaoITestBase {
         assertThat(transactions.size(), is(1));
 
         Transaction transaction = transactions.get(0);
-        assertThat(transaction.getReference(), is("under_score_ref"));
+        assertThat(transaction.getReference(), is(ServicePaymentReference.of("under_score_ref")));
         assertThat(transaction.getEmail(), is("under_score@mail.com"));
     }
 
@@ -424,17 +425,17 @@ public class OldTransactionDaoITest extends DaoITestBase {
         withDatabaseTestHelper(databaseTestHelper)
                 .aTestCharge()
                 .withTestAccount(defaultTestAccount)
-                .withReference("percent%ref")
+                .withReference(ServicePaymentReference.of("percent%ref"))
                 .insert();
 
         withDatabaseTestHelper(databaseTestHelper)
                 .aTestCharge()
                 .withTestAccount(defaultTestAccount)
-                .withReference("percentref")
+                .withReference(ServicePaymentReference.of("percentref"))
                 .insert();
 
         ChargeSearchParams params = new ChargeSearchParams()
-                .withReferenceLike("percent%");
+                .withReferenceLike(ServicePaymentReference.of("percent%"));
 
         // when
         List<Transaction> transactions = oldTransactionDao.findAllBy(defaultTestAccount.getAccountId(), params);
@@ -443,7 +444,7 @@ public class OldTransactionDaoITest extends DaoITestBase {
         assertThat(transactions.size(), is(1));
 
         Transaction transaction = transactions.get(0);
-        assertThat(transaction.getReference(), is("percent%ref"));
+        assertThat(transaction.getReference(), is(ServicePaymentReference.of("percent%ref")));
     }
 
     @Test
@@ -453,18 +454,18 @@ public class OldTransactionDaoITest extends DaoITestBase {
                 .aTestCharge()
                 .withTestAccount(defaultTestAccount)
                 .withEmail("email-id@mail.com")
-                .withReference("case-Insensitive-ref")
+                .withReference(ServicePaymentReference.of("case-Insensitive-ref"))
                 .insert();
 
         withDatabaseTestHelper(databaseTestHelper)
                 .aTestCharge()
                 .withTestAccount(defaultTestAccount)
                 .withEmail("EMAIL-ID@MAIL.COM")
-                .withReference("Case-inSENSITIVE-Ref")
+                .withReference(ServicePaymentReference.of("Case-inSENSITIVE-Ref"))
                 .insert();
 
         ChargeSearchParams params = new ChargeSearchParams()
-                .withReferenceLike("cASe-insEnsiTIve")
+                .withReferenceLike(ServicePaymentReference.of("cASe-insEnsiTIve"))
                 .withEmailLike("EMAIL-ID@mail.com");
 
         // when
@@ -474,11 +475,11 @@ public class OldTransactionDaoITest extends DaoITestBase {
         assertThat(transactions.size(), is(2));
 
         Transaction transaction = transactions.get(0);
-        assertThat(transaction.getReference(), is("Case-inSENSITIVE-Ref"));
+        assertThat(transaction.getReference(), is(ServicePaymentReference.of("Case-inSENSITIVE-Ref")));
         assertThat(transaction.getEmail(), is("EMAIL-ID@MAIL.COM"));
 
         transaction = transactions.get(1);
-        assertThat(transaction.getReference(), is("case-Insensitive-ref"));
+        assertThat(transaction.getReference(), is(ServicePaymentReference.of("case-Insensitive-ref")));
         assertThat(transaction.getEmail(), is("email-id@mail.com"));
     }
 
@@ -488,10 +489,10 @@ public class OldTransactionDaoITest extends DaoITestBase {
         withDatabaseTestHelper(databaseTestHelper)
                 .aTestCharge()
                 .withTestAccount(defaultTestAccount)
-                .withReference("Test reference")
+                .withReference(ServicePaymentReference.of("Test reference"))
                 .insert();
         ChargeSearchParams params = new ChargeSearchParams()
-                .withReferenceLike("reference");
+                .withReferenceLike(ServicePaymentReference.of("reference"));
         // when passed in a simple reference string
         List<Transaction> transactions = oldTransactionDao.findAllBy(defaultTestAccount.getAccountId(), params);
         // then it fetches a single result
@@ -500,7 +501,7 @@ public class OldTransactionDaoITest extends DaoITestBase {
         // when passed in a non existent reference with an sql injected string
         String sqlInjectionReferenceString = "reffff%' or 1=1 or c.reference like '%1";
         params = new ChargeSearchParams()
-                .withReferenceLike(sqlInjectionReferenceString);
+                .withReferenceLike(ServicePaymentReference.of(sqlInjectionReferenceString));
         transactions = oldTransactionDao.findAllBy(defaultTestAccount.getAccountId(), params);
         // then it fetches no result
         // with a typical sql injection vulnerable query doing this should fetch all results
@@ -1123,7 +1124,7 @@ public class OldTransactionDaoITest extends DaoITestBase {
                 withDatabaseTestHelper(databaseTestHelper)
                         .aTestCharge()
                         .withDescription(DEFAULT_TEST_CHARGE_DESCRIPTION)
-                        .withReference(DEFAULT_TEST_CHARGE_REFERENCE)
+                        .withReference(ServicePaymentReference.of(DEFAULT_TEST_CHARGE_REFERENCE))
                         .withAmount(amount)
                         .withTestAccount(defaultTestAccount)
                         .withCreatedDate(creationDate)

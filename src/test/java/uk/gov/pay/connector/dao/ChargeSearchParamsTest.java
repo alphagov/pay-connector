@@ -1,6 +1,7 @@
 package uk.gov.pay.connector.dao;
 
 import org.junit.Test;
+import uk.gov.pay.connector.model.ServicePaymentReference;
 import uk.gov.pay.connector.model.api.ExternalChargeState;
 
 import java.time.ZonedDateTime;
@@ -55,7 +56,7 @@ public class ChargeSearchParamsTest {
                 .withCardBrand("visa")
                 .withGatewayAccountId(111L)
                 .withPage(2L)
-                .withReferenceLike("ref")
+                .withReferenceLike(ServicePaymentReference.of("ref"))
                 .withEmailLike("user")
                 .withFromDate(ZonedDateTime.parse("2012-06-30T12:30:40Z[UTC]"))
                 .withToDate(ZonedDateTime.parse("2012-07-30T12:30:40Z[UTC]"));
@@ -85,7 +86,7 @@ public class ChargeSearchParamsTest {
                 .withCardBrand("visa")
                 .withGatewayAccountId(111L)
                 .withPage(2L)
-                .withReferenceLike("ref")
+                .withReferenceLike(ServicePaymentReference.of("ref"))
                 .withEmailLike("user")
                 .withFromDate(ZonedDateTime.parse("2012-06-30T12:30:40Z[UTC]"))
                 .withToDate(ZonedDateTime.parse("2012-07-30T12:30:40Z[UTC]"));
@@ -142,7 +143,7 @@ public class ChargeSearchParamsTest {
                 .withCardBrands(asList("visa", "master-card"))
                 .withGatewayAccountId(111L)
                 .withPage(2L)
-                .withReferenceLike("ref")
+                .withReferenceLike(ServicePaymentReference.of("ref"))
                 .withEmailLike("user@example.com")
                 .withFromDate(ZonedDateTime.parse("2012-06-30T12:30:40Z[UTC]"))
                 .withToDate(ZonedDateTime.parse("2012-07-30T12:30:40Z[UTC]"));
@@ -165,7 +166,7 @@ public class ChargeSearchParamsTest {
                 .addExternalRefundStates(singletonList("success"))
                 .withGatewayAccountId(111L)
                 .withPage(2L)
-                .withReferenceLike("ref")
+                .withReferenceLike(ServicePaymentReference.of("ref"))
                 .withEmailLike("user@example.com");
 
         assertThat(params.buildQueryParams(), is(expectedQueryString));

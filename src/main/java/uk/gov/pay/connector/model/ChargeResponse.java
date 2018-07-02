@@ -3,6 +3,8 @@ package uk.gov.pay.connector.model;
 import com.fasterxml.jackson.annotation.JsonFormat;
 import com.fasterxml.jackson.annotation.JsonInclude;
 import com.fasterxml.jackson.annotation.JsonProperty;
+import com.fasterxml.jackson.databind.annotation.JsonSerialize;
+import com.fasterxml.jackson.databind.ser.std.ToStringSerializer;
 import uk.gov.pay.connector.model.api.ExternalTransactionState;
 import uk.gov.pay.connector.model.builder.AbstractChargeResponseBuilder;
 import uk.gov.pay.connector.model.domain.PersistedCard;
@@ -255,7 +257,8 @@ public class ChargeResponse {
     private String description;
 
     @JsonProperty
-    private String reference;
+    @JsonSerialize(using = ToStringSerializer.class)
+    private ServicePaymentReference reference;
 
     @JsonProperty("payment_provider")
     private String providerName;
@@ -275,7 +278,10 @@ public class ChargeResponse {
     @JsonProperty("card_details")
     protected PersistedCard cardDetails;
 
-    protected ChargeResponse(String chargeId, Long amount, ExternalTransactionState state, String cardBrand, String gatewayTransactionId, String returnUrl, String email, String description, String reference, String providerName, String createdDate, List<Map<String, Object>> dataLinks, RefundSummary refundSummary, SettlementSummary settlementSummary, PersistedCard cardDetails, Auth3dsData auth3dsData) {
+    protected ChargeResponse(String chargeId, Long amount, ExternalTransactionState state, String cardBrand, String gatewayTransactionId, String returnUrl,
+                             String email, String description, ServicePaymentReference reference, String providerName, String createdDate,
+                             List<Map<String, Object>> dataLinks, RefundSummary refundSummary, SettlementSummary settlementSummary, PersistedCard cardDetails,
+                             Auth3dsData auth3dsData) {
         this.dataLinks = dataLinks;
         this.chargeId = chargeId;
         this.amount = amount;
@@ -330,7 +336,7 @@ public class ChargeResponse {
         return description;
     }
 
-    public String getReference() {
+    public ServicePaymentReference getReference() {
         return reference;
     }
 

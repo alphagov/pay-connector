@@ -17,6 +17,7 @@ import uk.gov.pay.connector.dao.GatewayAccountDao;
 import uk.gov.pay.connector.dao.PaymentRequestDao;
 import uk.gov.pay.connector.dao.TokenDao;
 import uk.gov.pay.connector.model.ChargeResponse;
+import uk.gov.pay.connector.model.ServicePaymentReference;
 import uk.gov.pay.connector.model.api.ExternalChargeState;
 import uk.gov.pay.connector.model.api.ExternalTransactionState;
 import uk.gov.pay.connector.model.builder.PatchRequestBuilder;
@@ -154,7 +155,7 @@ public class ChargeServiceTest {
         assertThat(createdChargeEntity.getExternalId(), is(EXTERNAL_CHARGE_ID[0]));
         assertThat(createdChargeEntity.getGatewayAccount().getCredentials(), is(emptyMap()));
         assertThat(createdChargeEntity.getGatewayAccount().getGatewayName(), is("sandbox"));
-        assertThat(createdChargeEntity.getReference(), is("Pay reference"));
+        assertThat(createdChargeEntity.getReference(), is(ServicePaymentReference.of("Pay reference")));
         assertThat(createdChargeEntity.getDescription(), is("This is a description"));
         assertThat(createdChargeEntity.getAmount(), is(100L));
         assertThat(createdChargeEntity.getGatewayTransactionId(), is(nullValue()));
@@ -175,7 +176,7 @@ public class ChargeServiceTest {
         assertThat(createdPaymentRequestEntity.getExternalId(), is(EXTERNAL_CHARGE_ID[0]));
         assertThat(createdPaymentRequestEntity.getGatewayAccount().getCredentials(), is(emptyMap()));
         assertThat(createdPaymentRequestEntity.getGatewayAccount().getGatewayName(), is("sandbox"));
-        assertThat(createdPaymentRequestEntity.getReference(), is("Pay reference"));
+        assertThat(createdPaymentRequestEntity.getReference(), is(ServicePaymentReference.of("Pay reference")));
         assertThat(createdPaymentRequestEntity.getDescription(), is("This is a description"));
         assertThat(createdPaymentRequestEntity.getAmount(), is(100L));
         assertThat(createdPaymentRequestEntity.getReturnUrl(), is("http://return-service.com"));

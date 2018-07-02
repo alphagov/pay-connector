@@ -1,7 +1,7 @@
 package uk.gov.pay.connector.dao;
 
+import uk.gov.pay.connector.model.ServicePaymentReference;
 import uk.gov.pay.connector.model.TransactionType;
-
 import uk.gov.pay.connector.model.api.ExternalChargeState;
 import uk.gov.pay.connector.model.api.ExternalRefundStatus;
 import uk.gov.pay.connector.model.domain.ChargeStatus;
@@ -24,7 +24,7 @@ public class ChargeSearchParams {
 
     private TransactionType transactionType;
     private Long gatewayAccountId;
-    private String reference;
+    private ServicePaymentReference reference;
     private String email;
     private ZonedDateTime fromDate;
     private ZonedDateTime toDate;
@@ -153,7 +153,7 @@ public class ChargeSearchParams {
         return this;
     }
 
-    public String getReference() {
+    public ServicePaymentReference getReference() {
         return reference;
     }
 
@@ -161,7 +161,7 @@ public class ChargeSearchParams {
         return email;
     }
 
-    public ChargeSearchParams withReferenceLike(String reference) {
+    public ChargeSearchParams withReferenceLike(ServicePaymentReference reference) {
         this.reference = reference;
         return this;
     }
@@ -223,7 +223,7 @@ public class ChargeSearchParams {
         if (transactionType != null) {
             builder.append("&transaction_type=").append(transactionType.getValue());
         }
-        if (isNotBlank(reference))
+        if (reference != null && isNotBlank(reference.toString()))
             builder.append("&reference=").append(reference);
         if (email != null) {
             if (redactPii) {

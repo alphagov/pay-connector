@@ -1,8 +1,13 @@
 package uk.gov.pay.connector.model.domain;
 
 import org.eclipse.persistence.annotations.ReadOnly;
+import uk.gov.pay.connector.model.ServicePaymentReference;
 
-import javax.persistence.*;
+import javax.persistence.ColumnResult;
+import javax.persistence.ConstructorResult;
+import javax.persistence.Entity;
+import javax.persistence.Id;
+import javax.persistence.SqlResultSetMapping;
 import java.sql.Timestamp;
 import java.time.ZonedDateTime;
 
@@ -120,8 +125,8 @@ public class Transaction {
         return externalId;
     }
 
-    public String getReference() {
-        return reference;
+    public ServicePaymentReference getReference() {
+        return ServicePaymentReference.of(reference);
     }
 
     public String getDescription() {

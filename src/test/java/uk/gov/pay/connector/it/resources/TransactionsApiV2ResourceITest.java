@@ -3,6 +3,7 @@ package uk.gov.pay.connector.it.resources;
 import org.apache.commons.lang.math.RandomUtils;
 import org.junit.Test;
 import uk.gov.pay.connector.it.base.ChargingITestBase;
+import uk.gov.pay.connector.model.ServicePaymentReference;
 import uk.gov.pay.connector.model.domain.ChargeStatus;
 import uk.gov.pay.connector.model.domain.RefundStatus;
 import uk.gov.pay.connector.util.RestAssuredClient;
@@ -76,9 +77,12 @@ public class TransactionsApiV2ResourceITest extends ChargingITestBase {
 
         String transactionIdCharge1 = "transaction-id-ref-3-que";
         String transactionIdCharge2 = "transaction-id-ref-3";
-        String externalChargeId1 = addChargeAndCardDetails(nextLong(), EXPIRED, "ref-3-que", transactionIdCharge1, now(), "", returnUrl, email);
-        addChargeAndCardDetails(nextLong(), CAPTURED, "ref-7", "transaction-id-ref-7", now(), "master-card", returnUrl, email);
-        String externalChargeId2 = addChargeAndCardDetails(chargeId2, CAPTURED, "ref-3", transactionIdCharge2, now().minusDays(2), "visa", returnUrl, email);
+        String externalChargeId1 = addChargeAndCardDetails(nextLong(), EXPIRED, ServicePaymentReference.of("ref-3-que"), transactionIdCharge1, now(),
+                "", returnUrl, email);
+        addChargeAndCardDetails(nextLong(), CAPTURED, ServicePaymentReference.of("ref-7"), "transaction-id-ref-7", now(),
+                "master-card", returnUrl, email);
+        String externalChargeId2 = addChargeAndCardDetails(chargeId2, CAPTURED, ServicePaymentReference.of("ref-3"), transactionIdCharge2, now().minusDays(2),
+                "visa", returnUrl, email);
 
         app.getDatabaseTestHelper().addRefund(RandomUtils.nextInt(), randomAlphanumeric(10), "refund-1-provider-reference", 1L, RefundStatus.REFUND_SUBMITTED.getValue(), chargeId2, now().minusHours(2));
         app.getDatabaseTestHelper().addRefund(RandomUtils.nextInt(), randomAlphanumeric(10), "refund-2-provider-reference", 2L, RefundStatus.REFUNDED.getValue(), chargeId2, now().minusHours(3));
@@ -149,11 +153,13 @@ public class TransactionsApiV2ResourceITest extends ChargingITestBase {
 
         String transactionIdCharge2 = "transaction-id-ref-3";
         String transactionIdCharge1 = "transaction-id-ref-3-que";
-        String referenceCharge1 = "ref-3-que";
-        String referenceCharge2 = "ref-3";
+        ServicePaymentReference referenceCharge1 = ServicePaymentReference.of("ref-3-que");
+        ServicePaymentReference referenceCharge2 = ServicePaymentReference.of("ref-3");
         String externalChargeId1 = addChargeAndCardDetails(nextLong(), CREATED, referenceCharge1, transactionIdCharge1, now(), "", returnUrl, email);
-        addChargeAndCardDetails(nextLong(), CAPTURED, "ref-7", "transaction-id-ref-7", now(), "master-card", returnUrl, email);
-        String externalChargeId2 = addChargeAndCardDetails(chargeId2, CAPTURED, referenceCharge2, transactionIdCharge2, now().minusDays(2), "visa", returnUrl, email);
+        addChargeAndCardDetails(nextLong(), CAPTURED, ServicePaymentReference.of("ref-7"), "transaction-id-ref-7", now(), "master-card",
+                returnUrl, email);
+        String externalChargeId2 = addChargeAndCardDetails(chargeId2, CAPTURED, referenceCharge2, transactionIdCharge2, now().minusDays(2), "visa",
+                returnUrl, email);
 
         app.getDatabaseTestHelper().addRefund(RandomUtils.nextInt(), randomAlphanumeric(10), "refund-1-provider-reference", 1L, RefundStatus.REFUND_SUBMITTED.getValue(), chargeId2, now().minusHours(2));
         app.getDatabaseTestHelper().addRefund(RandomUtils.nextInt(), randomAlphanumeric(10), "refund-2-provider-reference", 2L, RefundStatus.REFUNDED.getValue(), chargeId2, now().minusHours(3));
@@ -175,11 +181,11 @@ public class TransactionsApiV2ResourceITest extends ChargingITestBase {
                 .body("results[0].transaction_type", is("charge"))
                 .body("results[0].gateway_transaction_id", is(transactionIdCharge1))
                 .body("results[0].charge_id", is(externalChargeId1))
-                .body("results[0].reference", is(referenceCharge1))
+                .body("results[0].reference", is(referenceCharge1.toString()))
                 .body("results[1].transaction_type", is("charge"))
                 .body("results[1].gateway_transaction_id", is(transactionIdCharge2))
                 .body("results[1].charge_id", is(externalChargeId2))
-                .body("results[1].reference", is(referenceCharge2));
+                .body("results[1].reference", is(referenceCharge2.toString()));
     }
 
     @Test
@@ -190,9 +196,12 @@ public class TransactionsApiV2ResourceITest extends ChargingITestBase {
         long chargeId2 = nextLong();
 
         String transactionIdCharge2 = "transaction-id-ref-3";
-        addChargeAndCardDetails(nextLong(), CREATED, "ref-3-que", "transaction-id-ref-3-que", now(), "", returnUrl, email);
-        addChargeAndCardDetails(nextLong(), CAPTURED, "ref-7", "transaction-id-ref-7", now(), "master-card", returnUrl, email);
-        String externalChargeId2 = addChargeAndCardDetails(chargeId2, CAPTURED, "ref-3", transactionIdCharge2, now().minusDays(2), "visa", returnUrl, email);
+        addChargeAndCardDetails(nextLong(), CREATED, ServicePaymentReference.of("ref-3-que"), "transaction-id-ref-3-que", now(), "",
+                returnUrl, email);
+        addChargeAndCardDetails(nextLong(), CAPTURED, ServicePaymentReference.of("ref-7"), "transaction-id-ref-7", now(), "master-card",
+                returnUrl, email);
+        String externalChargeId2 = addChargeAndCardDetails(chargeId2, CAPTURED, ServicePaymentReference.of("ref-3"), transactionIdCharge2, now().minusDays(2),
+                "visa", returnUrl, email);
 
         app.getDatabaseTestHelper().addRefund(RandomUtils.nextInt(), randomAlphanumeric(10), "refund-1-provider-reference", 1L, RefundStatus.REFUND_SUBMITTED.getValue(), chargeId2, now().minusHours(2));
         app.getDatabaseTestHelper().addRefund(RandomUtils.nextInt(), randomAlphanumeric(10), "refund-2-provider-reference", 2L, RefundStatus.REFUNDED.getValue(), chargeId2, now().minusHours(3));
@@ -216,7 +225,8 @@ public class TransactionsApiV2ResourceITest extends ChargingITestBase {
                 .body("results[0].charge_id", is(externalChargeId2));
     }
 
-    private String addChargeAndCardDetails(Long chargeId, ChargeStatus status, String reference, String transactionId, ZonedDateTime fromDate, String cardBrand, String returnUrl, String email) {
+    private String addChargeAndCardDetails(Long chargeId, ChargeStatus status, ServicePaymentReference reference, String transactionId, ZonedDateTime fromDate,
+                                           String cardBrand, String returnUrl, String email) {
         String externalChargeId = "charge" + chargeId;
         ChargeStatus chargeStatus = status != null ? status : AUTHORISATION_SUCCESS;
         app.getDatabaseTestHelper().addCharge(chargeId, externalChargeId, accountId, AMOUNT, chargeStatus, returnUrl, transactionId, reference, fromDate, email);

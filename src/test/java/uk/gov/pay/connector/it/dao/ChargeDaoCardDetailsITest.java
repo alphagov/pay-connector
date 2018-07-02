@@ -4,7 +4,13 @@ import org.junit.Before;
 import org.junit.Test;
 import uk.gov.pay.connector.dao.ChargeDao;
 import uk.gov.pay.connector.dao.GatewayAccountDao;
-import uk.gov.pay.connector.model.domain.*;
+import uk.gov.pay.connector.model.ServicePaymentReference;
+import uk.gov.pay.connector.model.domain.Address;
+import uk.gov.pay.connector.model.domain.AddressEntity;
+import uk.gov.pay.connector.model.domain.CardDetailsEntity;
+import uk.gov.pay.connector.model.domain.ChargeEntity;
+import uk.gov.pay.connector.model.domain.ChargeStatus;
+import uk.gov.pay.connector.model.domain.GatewayAccountEntity;
 
 import java.util.HashMap;
 import java.util.Map;
@@ -81,7 +87,8 @@ public class ChargeDaoCardDetailsITest extends DaoITestBase {
         gatewayAccountDao.persist(testAccount);
 
         Address billingAddress = aValidAddress().build();
-        ChargeEntity chargeEntity = new ChargeEntity(2323L, "returnUrl", "description", "ref", testAccount, "email@email.com");
+        ChargeEntity chargeEntity = new ChargeEntity(2323L, "returnUrl", "description", 
+                ServicePaymentReference.of("ref"), testAccount, "email@email.com");
         CardDetailsEntity cardDetailsEntity = new CardDetailsEntity();
         cardDetailsEntity.setCardBrand("VISA");
         cardDetailsEntity.setBillingAddress(new AddressEntity(billingAddress));

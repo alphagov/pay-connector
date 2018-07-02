@@ -60,7 +60,7 @@ public class FrontendChargeResponse extends ChargeResponse {
 
     private FrontendChargeResponse(String chargeId, Long amount, ExternalTransactionState state, String cardBrand,
                                    String gatewayTransactionId, String returnUrl, String email, String description,
-                                   String reference, String providerName, String createdDate,
+                                   ServicePaymentReference reference, String providerName, String createdDate,
                                    List<Map<String, Object>> dataLinks, String status, RefundSummary refundSummary,
                                    SettlementSummary settlementSummary, PersistedCard chargeCardDetails, Auth3dsData auth3dsData,
                                    GatewayAccountEntity gatewayAccount) {

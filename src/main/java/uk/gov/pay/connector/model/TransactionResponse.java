@@ -41,7 +41,7 @@ public class TransactionResponse extends ChargeResponse {
 
     protected TransactionResponse(String transactionType, String chargeId, Long amount, ExternalTransactionState state,
                                   String cardBrand, String gatewayTransactionId, String returnUrl, String email,
-                                  String description, String reference, String providerName, String createdDate,
+                                  String description, ServicePaymentReference reference, String providerName, String createdDate,
                                   List<Map<String, Object>> dataLinks, RefundSummary refundSummary,
                                   SettlementSummary settlementSummary, PersistedCard cardDetails, Auth3dsData auth3dsData) {
         super(chargeId, amount, state, cardBrand, gatewayTransactionId, returnUrl, email, description, reference,

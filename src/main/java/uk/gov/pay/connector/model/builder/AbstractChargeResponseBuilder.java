@@ -2,6 +2,7 @@ package uk.gov.pay.connector.model.builder;
 
 import com.google.common.collect.ImmutableMap;
 import uk.gov.pay.connector.model.ChargeResponse;
+import uk.gov.pay.connector.model.ServicePaymentReference;
 import uk.gov.pay.connector.model.api.ExternalTransactionState;
 import uk.gov.pay.connector.model.domain.PersistedCard;
 
@@ -20,7 +21,7 @@ public abstract class AbstractChargeResponseBuilder<T extends AbstractChargeResp
     protected String description;
     protected String createdDate;
     protected List<Map<String, Object>> links = new ArrayList<>();
-    protected String reference;
+    protected ServicePaymentReference reference;
     protected String providerName;
     protected String email;
     protected ChargeResponse.RefundSummary refundSummary;
@@ -65,7 +66,7 @@ public abstract class AbstractChargeResponseBuilder<T extends AbstractChargeResp
         return thisObject();
     }
 
-    public T withReference(String reference) {
+    public T withReference(ServicePaymentReference reference) {
         this.reference = reference;
         return thisObject();
     }

@@ -5,6 +5,7 @@ import com.jayway.restassured.response.Header;
 import com.jayway.restassured.response.ValidatableResponse;
 import org.junit.Test;
 import uk.gov.pay.connector.it.base.ChargingITestBase;
+import uk.gov.pay.connector.model.ServicePaymentReference;
 import uk.gov.pay.connector.model.domain.ChargeStatus;
 import uk.gov.pay.connector.util.DateTimeUtils;
 import uk.gov.pay.connector.util.RestAssuredClient;
@@ -83,13 +84,15 @@ public class ChargesApiResourceGetChargesJsonITest extends ChargingITestBase {
         UUID card = UUID.randomUUID();
         app.getDatabaseTestHelper().addCardType(card, "label", "CREDIT", "brand", false);
         app.getDatabaseTestHelper().addAcceptedCardType(Long.valueOf(accountId), card);
-        app.getDatabaseTestHelper().addCharge(chargeId, externalChargeId, accountId, AMOUNT, chargeStatus, returnUrl, null, "My reference", createdDate);
+        app.getDatabaseTestHelper().addCharge(chargeId, externalChargeId, accountId, AMOUNT, chargeStatus, returnUrl, null,
+                ServicePaymentReference.of("My reference"), createdDate);
         app.getDatabaseTestHelper().updateChargeCardDetails(chargeId, "VISA", "1234", "Mr. McPayment", "03/18", "line1", null, "postcode", "city", null, "country");
         app.getDatabaseTestHelper().addToken(chargeId, "tokenId");
         app.getDatabaseTestHelper().addEvent(chargeId, chargeStatus.getValue());
 
         String description = "Test description";
-        app.getDatabaseTestHelper().addPaymentRequest(chargeId, AMOUNT, Long.valueOf(accountId), returnUrl, description, "My reference", createdDate, externalChargeId);
+        app.getDatabaseTestHelper().addPaymentRequest(chargeId, AMOUNT, Long.valueOf(accountId), returnUrl, description,
+                ServicePaymentReference.of("My reference"), createdDate, externalChargeId);
         app.getDatabaseTestHelper().addChargeTransaction(chargeId, null, Long.valueOf(accountId), AMOUNT, chargeStatus, chargeId, createdDate, email);
         app.getDatabaseTestHelper().addCard(chargeId, "VISA", chargeId);
 
@@ -120,12 +123,15 @@ public class ChargesApiResourceGetChargesJsonITest extends ChargingITestBase {
         UUID card = UUID.randomUUID();
         app.getDatabaseTestHelper().addCardType(card, "label", "CREDIT", "brand", false);
         app.getDatabaseTestHelper().addAcceptedCardType(Long.valueOf(accountId), card);
-        app.getDatabaseTestHelper().addCharge(chargeId, externalChargeId, accountId, AMOUNT, chargeStatus, returnUrl, null, "My reference", createdDate);
-        app.getDatabaseTestHelper().updateChargeCardDetails(chargeId, "visa", null, null, null, null, null, null, null, null, null);
+        app.getDatabaseTestHelper().addCharge(chargeId, externalChargeId, accountId, AMOUNT, chargeStatus, returnUrl, null,
+                ServicePaymentReference.of("My reference"), createdDate);
+        app.getDatabaseTestHelper().updateChargeCardDetails(chargeId, "visa", null, null, null,
+                null, null, null, null, null, null);
         app.getDatabaseTestHelper().addToken(chargeId, "tokenId");
         app.getDatabaseTestHelper().addEvent(chargeId, chargeStatus.getValue());
 
-        app.getDatabaseTestHelper().addPaymentRequest(chargeId, AMOUNT, Long.valueOf(accountId), returnUrl, "Test description", "My reference", createdDate, externalChargeId);
+        app.getDatabaseTestHelper().addPaymentRequest(chargeId, AMOUNT, Long.valueOf(accountId), returnUrl, "Test description",
+                ServicePaymentReference.of("My reference"), createdDate, externalChargeId);
         app.getDatabaseTestHelper().addChargeTransaction(chargeId, null, Long.valueOf(accountId), AMOUNT, chargeStatus, chargeId, createdDate, email);
         app.getDatabaseTestHelper().addCard(chargeId, "visa", chargeId);
 
@@ -148,9 +154,9 @@ public class ChargesApiResourceGetChargesJsonITest extends ChargingITestBase {
     public void shouldFilterTransactionsByCardBrand() throws Exception {
         String searchedCardBrand = "visa";
 
-        addChargeAndCardDetails(CREATED, "ref-1", now(), searchedCardBrand);
-        addChargeAndCardDetails(CREATED, "ref-2", now(), "master-card");
-        addChargeAndCardDetails(CREATED, "ref-3", now().minusDays(2), searchedCardBrand);
+        addChargeAndCardDetails(CREATED, ServicePaymentReference.of("ref-1"), now(), searchedCardBrand);
+        addChargeAndCardDetails(CREATED, ServicePaymentReference.of("ref-2"), now(), "master-card");
+        addChargeAndCardDetails(CREATED, ServicePaymentReference.of("ref-3"), now().minusDays(2), searchedCardBrand);
 
         getChargeApi
                 .withAccountId(accountId)
@@ -165,9 +171,9 @@ public class ChargesApiResourceGetChargesJsonITest extends ChargingITestBase {
     }
 
     @Test
-    public void shouldFilterTransactionsByBlankCardBrand() throws Exception {
-        addChargeAndCardDetails(CREATED, "ref-1", now(), "visa");
-        addChargeAndCardDetails(CREATED, "ref-2", now(), "master-card");
+    public void shouldFilterTransactionsByBlankCardBrand() {
+        addChargeAndCardDetails(CREATED, ServicePaymentReference.of("ref-1"), now(), "visa");
+        addChargeAndCardDetails(CREATED, ServicePaymentReference.of("ref-2"), now(), "master-card");
 
         getChargeApi
                 .withAccountId(accountId)
@@ -186,9 +192,9 @@ public class ChargesApiResourceGetChargesJsonITest extends ChargingITestBase {
         String visa = "visa";
         String mastercard = "master-card";
 
-        addChargeAndCardDetails(CREATED, "ref-1", now(), visa);
-        addChargeAndCardDetails(AUTHORISATION_READY, "ref-2", now().minusHours(1), mastercard);
-        addChargeAndCardDetails(CAPTURED, "ref-3", now().minusDays(2), "american-express");
+        addChargeAndCardDetails(CREATED, ServicePaymentReference.of("ref-1"), now(), visa);
+        addChargeAndCardDetails(AUTHORISATION_READY, ServicePaymentReference.of("ref-2"), now().minusHours(1), mastercard);
+        addChargeAndCardDetails(CAPTURED, ServicePaymentReference.of("ref-3"), now().minusDays(2), "american-express");
 
         getChargeApi
                 .withQueryParams("card_brand", asList(visa, mastercard))
@@ -203,11 +209,11 @@ public class ChargesApiResourceGetChargesJsonITest extends ChargingITestBase {
 
     @Test
     public void shouldGetAllTransactionsForDefault_page_1_size_100_inCreationDateOrder2() {
-        String id_1 = addChargeAndCardDetails(CREATED, "ref-1", now());
-        String id_2 = addChargeAndCardDetails(AUTHORISATION_READY, "ref-2", now().plusHours(1));
-        String id_3 = addChargeAndCardDetails(CREATED, "ref-3", now().plusHours(2));
-        String id_4 = addChargeAndCardDetails(CREATED, "ref-4", now().plusHours(3));
-        String id_5 = addChargeAndCardDetails(CREATED, "ref-5", now().plusHours(4));
+        String id_1 = addChargeAndCardDetails(CREATED, ServicePaymentReference.of("ref-1"), now());
+        String id_2 = addChargeAndCardDetails(AUTHORISATION_READY, ServicePaymentReference.of("ref-2"), now().plusHours(1));
+        String id_3 = addChargeAndCardDetails(CREATED, ServicePaymentReference.of("ref-3"), now().plusHours(2));
+        String id_4 = addChargeAndCardDetails(CREATED, ServicePaymentReference.of("ref-4"), now().plusHours(3));
+        String id_5 = addChargeAndCardDetails(CREATED, ServicePaymentReference.of("ref-5"), now().plusHours(4));
 
         int expectedTotalRows = 5;
 
@@ -227,11 +233,11 @@ public class ChargesApiResourceGetChargesJsonITest extends ChargingITestBase {
 
     @Test
     public void shouldGetTransactionsForPageAndSizeParams_inCreationDateOrder2() throws Exception {
-        String id_1 = addChargeAndCardDetails(CREATED, "ref-1", now());
-        String id_2 = addChargeAndCardDetails(CREATED, "ref-2", now().plusHours(1));
-        String id_3 = addChargeAndCardDetails(CREATED, "ref-3", now().plusHours(2));
-        String id_4 = addChargeAndCardDetails(CREATED, "ref-4", now().plusHours(3));
-        String id_5 = addChargeAndCardDetails(CREATED, "ref-5", now().plusHours(4));
+        String id_1 = addChargeAndCardDetails(CREATED, ServicePaymentReference.of("ref-1"), now());
+        String id_2 = addChargeAndCardDetails(CREATED, ServicePaymentReference.of("ref-2"), now().plusHours(1));
+        String id_3 = addChargeAndCardDetails(CREATED, ServicePaymentReference.of("ref-3"), now().plusHours(2));
+        String id_4 = addChargeAndCardDetails(CREATED, ServicePaymentReference.of("ref-4"), now().plusHours(3));
+        String id_5 = addChargeAndCardDetails(CREATED, ServicePaymentReference.of("ref-5"), now().plusHours(4));
         int expectedTotalRows = 5;
 
         ValidatableResponse response = getChargeApi
@@ -305,9 +311,9 @@ public class ChargesApiResourceGetChargesJsonITest extends ChargingITestBase {
     @Test
     public void shouldFilterTransactionsBasedOnFromAndToDates() {
 
-        addChargeAndCardDetails(CREATED, "ref-1", now());
-        addChargeAndCardDetails(AUTHORISATION_READY, "ref-2", now());
-        addChargeAndCardDetails(CAPTURED, "ref-3", now().minusDays(2));
+        addChargeAndCardDetails(CREATED, ServicePaymentReference.of("ref-1"), now());
+        addChargeAndCardDetails(AUTHORISATION_READY, ServicePaymentReference.of("ref-2"), now());
+        addChargeAndCardDetails(CAPTURED, ServicePaymentReference.of("ref-3"), now().minusDays(2));
 
         ValidatableResponse response = getChargeApi
                 .withAccountId(accountId)
@@ -344,9 +350,9 @@ public class ChargesApiResourceGetChargesJsonITest extends ChargingITestBase {
     @Test
     public void shouldFilterTransactionsByEmail() throws Exception {
 
-        addChargeAndCardDetails(CREATED, "ref-1", now());
-        addChargeAndCardDetails(AUTHORISATION_READY, "ref-2", now());
-        addChargeAndCardDetails(CAPTURED, "ref-3", now().minusDays(2));
+        addChargeAndCardDetails(CREATED, ServicePaymentReference.of("ref-1"), now());
+        addChargeAndCardDetails(AUTHORISATION_READY, ServicePaymentReference.of("ref-2"), now());
+        addChargeAndCardDetails(CAPTURED, ServicePaymentReference.of("ref-3"), now().minusDays(2));
 
         getChargeApi
                 .withAccountId(accountId)
@@ -360,12 +366,12 @@ public class ChargesApiResourceGetChargesJsonITest extends ChargingITestBase {
     }
 
     @Test
-    public void shouldShowTotalCountResultsAndHalLinksForCharges() throws Exception {
-        addChargeAndCardDetails(CREATED, "ref-1", now());
-        addChargeAndCardDetails(AUTHORISATION_READY, "ref-2", now().minusDays(1));
-        addChargeAndCardDetails(CAPTURED, "ref-3", now().minusDays(2));
-        addChargeAndCardDetails(CAPTURED, "ref-4", now().minusDays(3));
-        addChargeAndCardDetails(CAPTURED, "ref-5", now().minusDays(4));
+    public void shouldShowTotalCountResultsAndHalLinksForCharges() {
+        addChargeAndCardDetails(CREATED, ServicePaymentReference.of("ref-1"), now());
+        addChargeAndCardDetails(AUTHORISATION_READY, ServicePaymentReference.of("ref-2"), now().minusDays(1));
+        addChargeAndCardDetails(CAPTURED, ServicePaymentReference.of("ref-3"), now().minusDays(2));
+        addChargeAndCardDetails(CAPTURED, ServicePaymentReference.of("ref-4"), now().minusDays(3));
+        addChargeAndCardDetails(CAPTURED, ServicePaymentReference.of("ref-5"), now().minusDays(4));
 
         assertNavigationLinksWhenNoResultFound();
         assertResultsWhenPageAndDisplaySizeNotSet();
@@ -383,11 +389,11 @@ public class ChargesApiResourceGetChargesJsonITest extends ChargingITestBase {
         return dateTimes;
     }
 
-    private String addChargeAndCardDetails(ChargeStatus status, String reference, ZonedDateTime fromDate, String cardBrand) {
+    private String addChargeAndCardDetails(ChargeStatus status, ServicePaymentReference reference, ZonedDateTime fromDate, String cardBrand) {
         return addChargeAndCardDetails(nextLong(), status, reference, fromDate, cardBrand);
     }
 
-    private String addChargeAndCardDetails(Long chargeId, ChargeStatus status, String reference, ZonedDateTime fromDate, String cardBrand) {
+    private String addChargeAndCardDetails(Long chargeId, ChargeStatus status, ServicePaymentReference reference, ZonedDateTime fromDate, String cardBrand) {
         String externalChargeId = "charge" + chargeId;
         ChargeStatus chargeStatus = status != null ? status : AUTHORISATION_SUCCESS;
         app.getDatabaseTestHelper().addCharge(chargeId, externalChargeId, accountId, AMOUNT, chargeStatus, RETURN_URL, null, reference, fromDate, EMAIL);
@@ -405,7 +411,7 @@ public class ChargesApiResourceGetChargesJsonITest extends ChargingITestBase {
         return results.stream().map(result -> result.get(field).toString()).collect(Collectors.toList());
     }
 
-    private String addChargeAndCardDetails(ChargeStatus status, String reference, ZonedDateTime fromDate) {
+    private String addChargeAndCardDetails(ChargeStatus status, ServicePaymentReference reference, ZonedDateTime fromDate) {
         return addChargeAndCardDetails(status, reference, fromDate, "");
     }
 

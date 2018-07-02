@@ -8,6 +8,7 @@ import org.junit.Test;
 import org.junit.rules.ExpectedException;
 import uk.gov.pay.connector.dao.ChargeDao;
 import uk.gov.pay.connector.dao.ChargeSearchParams;
+import uk.gov.pay.connector.model.ServicePaymentReference;
 import uk.gov.pay.connector.model.domain.ChargeEntity;
 import uk.gov.pay.connector.model.domain.ChargeStatus;
 import uk.gov.pay.connector.model.domain.GatewayAccountEntity;
@@ -286,7 +287,7 @@ public class ChargeDaoITest extends DaoITestBase {
     public void searchChargesByPartialReferenceOnly() throws Exception {
         // given
         insertTestCharge();
-        String paymentReference = "Council Tax Payment reference 2";
+        ServicePaymentReference paymentReference = ServicePaymentReference.of("Council Tax Payment reference 2");
         Long chargeId = System.currentTimeMillis();
         String externalChargeId = "chargeabc";
 
@@ -303,7 +304,7 @@ public class ChargeDaoITest extends DaoITestBase {
         String reference = "reference";
         ChargeSearchParams params = new ChargeSearchParams()
                 .withGatewayAccountId(defaultTestAccount.getAccountId())
-                .withReferenceLike(reference);
+                .withReferenceLike(ServicePaymentReference.of(reference));
 
         // when
         List<ChargeEntity> charges = chargeDao.findAllBy(params);
@@ -324,13 +325,13 @@ public class ChargeDaoITest extends DaoITestBase {
     }
 
     @Test
-    public void searchChargesByReferenceAndEmail_with_under_score() throws Exception {
+    public void searchChargesByReferenceAndEmail_with_under_score() {
         // since '_' have special meaning in like queries of postgres this was resulting in undesired results
         DatabaseFixtures
                 .withDatabaseTestHelper(databaseTestHelper)
                 .aTestCharge()
                 .withTestAccount(defaultTestAccount)
-                .withReference("under_score_ref")
+                .withReference(ServicePaymentReference.of("under_score_ref"))
                 .withEmail("under_score@mail.com")
                 .insert();
 
@@ -338,13 +339,13 @@ public class ChargeDaoITest extends DaoITestBase {
                 .withDatabaseTestHelper(databaseTestHelper)
                 .aTestCharge()
                 .withTestAccount(defaultTestAccount)
-                .withReference("understand")
+                .withReference(ServicePaymentReference.of("understand"))
                 .withEmail("undertaker@mail.com")
                 .insert();
 
         ChargeSearchParams params = new ChargeSearchParams()
                 .withGatewayAccountId(defaultTestAccount.getAccountId())
-                .withReferenceLike("under_")
+                .withReferenceLike(ServicePaymentReference.of("under_"))
                 .withEmailLike("under_");
 
         // when
@@ -354,7 +355,7 @@ public class ChargeDaoITest extends DaoITestBase {
         assertThat(charges.size(), is(1));
 
         ChargeEntity charge = charges.get(0);
-        assertThat(charge.getReference(), is("under_score_ref"));
+        assertThat(charge.getReference(), is(ServicePaymentReference.of("under_score_ref")));
         assertThat(charge.getEmail(), is("under_score@mail.com"));
     }
 
@@ -365,19 +366,19 @@ public class ChargeDaoITest extends DaoITestBase {
                 .withDatabaseTestHelper(databaseTestHelper)
                 .aTestCharge()
                 .withTestAccount(defaultTestAccount)
-                .withReference("percent%ref")
+                .withReference(ServicePaymentReference.of("percent%ref"))
                 .insert();
 
         DatabaseFixtures
                 .withDatabaseTestHelper(databaseTestHelper)
                 .aTestCharge()
                 .withTestAccount(defaultTestAccount)
-                .withReference("percentref")
+                .withReference(ServicePaymentReference.of("percentref"))
                 .insert();
 
         ChargeSearchParams params = new ChargeSearchParams()
                 .withGatewayAccountId(defaultTestAccount.getAccountId())
-                .withReferenceLike("percent%");
+                .withReferenceLike(ServicePaymentReference.of("percent%"));
 
         // when
         List<ChargeEntity> charges = chargeDao.findAllBy(params);
@@ -386,18 +387,18 @@ public class ChargeDaoITest extends DaoITestBase {
         assertThat(charges.size(), is(1));
 
         ChargeEntity charge = charges.get(0);
-        assertThat(charge.getReference(), is("percent%ref"));
+        assertThat(charge.getReference(), is(ServicePaymentReference.of("percent%ref")));
     }
 
     @Test
-    public void searchChargesByReferenceAndEmailShouldBeCaseInsensitive() throws Exception {
+    public void searchChargesByReferenceAndEmailShouldBeCaseInsensitive() {
         // fix that the reference and email searches should be case insensitive
         DatabaseFixtures
                 .withDatabaseTestHelper(databaseTestHelper)
                 .aTestCharge()
                 .withTestAccount(defaultTestAccount)
                 .withEmail("email-id@mail.com")
-                .withReference("case-Insensitive-ref")
+                .withReference(ServicePaymentReference.of("case-Insensitive-ref"))
                 .insert();
 
         DatabaseFixtures
@@ -405,12 +406,12 @@ public class ChargeDaoITest extends DaoITestBase {
                 .aTestCharge()
                 .withTestAccount(defaultTestAccount)
                 .withEmail("EMAIL-ID@MAIL.COM")
-                .withReference("Case-inSENSITIVE-Ref")
+                .withReference(ServicePaymentReference.of("Case-inSENSITIVE-Ref"))
                 .insert();
 
         ChargeSearchParams params = new ChargeSearchParams()
                 .withGatewayAccountId(defaultTestAccount.getAccountId())
-                .withReferenceLike("cASe-insEnsiTIve")
+                .withReferenceLike(ServicePaymentReference.of("cASe-insEnsiTIve"))
                 .withEmailLike("EMAIL-ID@mail.com");
 
         // when
@@ -420,11 +421,11 @@ public class ChargeDaoITest extends DaoITestBase {
         assertThat(charges.size(), is(2));
 
         ChargeEntity charge = charges.get(0);
-        assertThat(charge.getReference(), is("Case-inSENSITIVE-Ref"));
+        assertThat(charge.getReference(), is(ServicePaymentReference.of("Case-inSENSITIVE-Ref")));
         assertThat(charge.getEmail(), is("EMAIL-ID@MAIL.COM"));
 
         charge = charges.get(1);
-        assertThat(charge.getReference(), is("case-Insensitive-ref"));
+        assertThat(charge.getReference(), is(ServicePaymentReference.of("case-Insensitive-ref")));
         assertThat(charge.getEmail(), is("email-id@mail.com"));
     }
 
@@ -433,14 +434,14 @@ public class ChargeDaoITest extends DaoITestBase {
         // given
         insertTestCharge();
         ChargeSearchParams params = new ChargeSearchParams()
-                .withReferenceLike("reference");
+                .withReferenceLike(ServicePaymentReference.of("reference"));
         // when passed in a simple reference string
         List<ChargeEntity> charges = chargeDao.findAllBy(params);
         // then it fetches a single result
         assertThat(charges.size(), is(1));
 
         // when passed in a non existent reference with an sql injected string
-        String sqlInjectionReferenceString = "reffff%' or 1=1 or c.reference like '%1";
+        ServicePaymentReference sqlInjectionReferenceString = ServicePaymentReference.of("reffff%' or 1=1 or c.reference like '%1");
         params = new ChargeSearchParams()
                 .withReferenceLike(sqlInjectionReferenceString);
         charges = chargeDao.findAllBy(params);
@@ -726,7 +727,7 @@ public class ChargeDaoITest extends DaoITestBase {
 
         GatewayAccountEntity gatewayAccount = new GatewayAccountEntity(defaultTestAccount.getPaymentProvider(), new HashMap<>(), TEST);
         gatewayAccount.setId(defaultTestAccount.getAccountId());
-        chargeDao.persist(aValidChargeEntity().withReference(RandomStringUtils.randomAlphanumeric(255)).build());
+        chargeDao.persist(aValidChargeEntity().withReference(ServicePaymentReference.of(RandomStringUtils.randomAlphanumeric(255))).build());
     }
 
     @Test
