@@ -10,8 +10,8 @@ public class ServicePaymentReference {
         this.servicePaymentReference = Objects.requireNonNull(servicePaymentReference);
     }
 
-    public static ServicePaymentReference of(String providerMandateReference) {
-        return new ServicePaymentReference(providerMandateReference);
+    public static ServicePaymentReference of(String servicePaymentReference) {
+        return new ServicePaymentReference(servicePaymentReference);
     }
 
     @Override
