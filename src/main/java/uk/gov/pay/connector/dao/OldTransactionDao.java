@@ -119,9 +119,9 @@ public class OldTransactionDao {
                     field("c.card_brand").in(params.getCardBrands()));
         }
 
-        if (isNotBlank(params.getReference())) {
+        if (params.getReference() != null && isNotBlank(params.getReference().toString())) {
             queryFilters = queryFilters.and(
-                    field("c.reference").lower().like(buildLikeClauseContaining(params.getReference().toLowerCase())));
+                    field("c.reference").lower().like(buildLikeClauseContaining(params.getReference().toString().toLowerCase())));
         }
 
         Condition queryFiltersForCharges = queryFilters;

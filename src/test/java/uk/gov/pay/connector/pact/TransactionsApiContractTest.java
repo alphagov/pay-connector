@@ -11,6 +11,7 @@ import org.junit.BeforeClass;
 import org.junit.ClassRule;
 import org.junit.runner.RunWith;
 import uk.gov.pay.commons.testing.pact.providers.PayPactRunner;
+import uk.gov.pay.connector.model.ServicePaymentReference;
 import uk.gov.pay.connector.model.domain.ChargeStatus;
 import uk.gov.pay.connector.rules.DropwizardAppWithPostgresRule;
 import uk.gov.pay.connector.util.DatabaseTestHelper;
@@ -52,8 +53,10 @@ public class TransactionsApiContractTest {
     private void setUpCharges(int numberOfCharges, String accountID, ZonedDateTime createdDate){
         for (int i = 0; i < numberOfCharges; i++) {
             Long chargeId = ThreadLocalRandom.current().nextLong(100, 100000);
-            dbHelper.addCharge(chargeId, Long.toString(chargeId), accountID, 100L, ChargeStatus.CREATED,"aReturnUrl","aTransactionId", "aReference", createdDate, "test@test.com@");
-            dbHelper.updateChargeCardDetails(chargeId, "visa", "0001", "aName", "08/23", "aFirstAddress", "aSecondLine", "aPostCode", "aCity", "aCounty", "aCountry");
+            dbHelper.addCharge(chargeId, Long.toString(chargeId), accountID, 100L, ChargeStatus.CREATED,"aReturnUrl",
+                    "aTransactionId", ServicePaymentReference.of("aReference"), createdDate, "test@test.com@");
+            dbHelper.updateChargeCardDetails(chargeId, "visa", "0001", "aName", "08/23",
+                    "aFirstAddress", "aSecondLine", "aPostCode", "aCity", "aCounty", "aCountry");
         }
     }
 

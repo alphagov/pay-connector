@@ -1,6 +1,7 @@
 package uk.gov.pay.connector.it.dao;
 
 import org.apache.commons.lang3.RandomUtils;
+import uk.gov.pay.connector.model.ServicePaymentReference;
 import uk.gov.pay.connector.model.domain.CardTypeEntity.Type;
 import uk.gov.pay.connector.model.domain.ChargeStatus;
 import uk.gov.pay.connector.model.domain.GatewayAccountEntity;
@@ -366,7 +367,7 @@ public class DatabaseFixtures {
         ChargeStatus chargeStatus = ChargeStatus.CREATED;
         String returnUrl = "http://service.com/success-page";
         String transactionId;
-        String reference = "Test reference";
+        ServicePaymentReference reference = ServicePaymentReference.of("Test reference");
 
         ZonedDateTime createdDate = ZonedDateTime.now(ZoneId.of("UTC"));
 
@@ -388,7 +389,7 @@ public class DatabaseFixtures {
             return this;
         }
 
-        public TestCharge withReference(String reference) {
+        public TestCharge withReference(ServicePaymentReference reference) {
             this.reference = reference;
             return this;
         }
@@ -432,7 +433,8 @@ public class DatabaseFixtures {
             if (testAccount == null)
                 throw new IllegalStateException("Test Account must be provided.");
 
-            databaseTestHelper.addCharge(chargeId, externalChargeId, String.valueOf(testAccount.getAccountId()), amount, chargeStatus, returnUrl, transactionId, reference, description, createdDate, email);
+            databaseTestHelper.addCharge(chargeId, externalChargeId, String.valueOf(testAccount.getAccountId()), amount, chargeStatus, returnUrl, transactionId,
+                    reference, description, createdDate, email);
 
             if (cardDetails != null) {
                 cardDetails.update();
@@ -464,7 +466,7 @@ public class DatabaseFixtures {
             return transactionId;
         }
 
-        public String getReference() {
+        public ServicePaymentReference getReference() {
             return reference;
         }
 

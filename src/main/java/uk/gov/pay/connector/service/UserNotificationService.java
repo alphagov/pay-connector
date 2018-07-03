@@ -14,7 +14,6 @@ import uk.gov.pay.connector.model.domain.GatewayAccountEntity;
 import uk.gov.pay.connector.service.notify.NotifyClientFactory;
 import uk.gov.pay.connector.service.notify.NotifyClientFactoryProvider;
 import uk.gov.pay.connector.util.DateTimeUtils;
-import uk.gov.service.notify.Notification;
 import uk.gov.service.notify.NotificationClient;
 import uk.gov.service.notify.NotificationClientException;
 import uk.gov.service.notify.SendEmailResponse;
@@ -24,7 +23,11 @@ import java.math.BigDecimal;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.Optional;
-import java.util.concurrent.*;
+import java.util.concurrent.CompletableFuture;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
+import java.util.concurrent.Future;
+import java.util.concurrent.TimeUnit;
 
 import static java.lang.Runtime.getRuntime;
 import static org.apache.commons.lang3.StringUtils.isBlank;
@@ -108,7 +111,7 @@ public class UserNotificationService {
         String customParagraph = emailNotification != null ? emailNotification.getTemplateBody() : "";
         HashMap<String, String> map = new HashMap<>();
 
-        map.put("serviceReference", charge.getReference());
+        map.put("serviceReference", charge.getReference().toString());
         map.put("date", DateTimeUtils.toUserFriendlyDate(charge.getCreatedDate()));
         map.put("amount", formatToPounds(charge.getAmount()));
         map.put("description", charge.getDescription());

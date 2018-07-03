@@ -12,6 +12,7 @@ import uk.gov.pay.connector.dao.GatewayAccountDao;
 import uk.gov.pay.connector.dao.PaymentRequestDao;
 import uk.gov.pay.connector.dao.TokenDao;
 import uk.gov.pay.connector.model.ChargeResponse;
+import uk.gov.pay.connector.model.ServicePaymentReference;
 import uk.gov.pay.connector.model.api.ExternalChargeState;
 import uk.gov.pay.connector.model.api.ExternalTransactionState;
 import uk.gov.pay.connector.model.builder.AbstractChargeResponseBuilder;
@@ -87,7 +88,7 @@ public class ChargeService {
             ChargeEntity chargeEntity = new ChargeEntity(new Long(chargeRequest.get("amount")),
                     chargeRequest.get("return_url"),
                     chargeRequest.get("description"),
-                    chargeRequest.get("reference"),
+                    ServicePaymentReference.of(chargeRequest.get("reference")),
                     gatewayAccount,
                     chargeRequest.get("email")
             );

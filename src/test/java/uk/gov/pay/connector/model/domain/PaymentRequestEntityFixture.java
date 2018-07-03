@@ -1,5 +1,6 @@
 package uk.gov.pay.connector.model.domain;
 
+import uk.gov.pay.connector.model.ServicePaymentReference;
 import uk.gov.pay.connector.model.domain.transaction.TransactionEntity;
 import uk.gov.pay.connector.util.RandomIdGenerator;
 
@@ -19,7 +20,7 @@ public class PaymentRequestEntityFixture {
     private Long amount = 500L;
     private String returnUrl = "http://return.com";
     private String description = "This is a description";
-    private String reference = RandomIdGenerator.newId();
+    private ServicePaymentReference reference = ServicePaymentReference.of(RandomIdGenerator.newId());
     private GatewayAccountEntity gatewayAccountEntity = defaultGatewayAccountEntity();
     private ZonedDateTime createdDate = ZonedDateTime.now(ZoneId.of("UTC"));
     private List<TransactionEntity> transactions = asList(aChargeTransactionEntity().build());
@@ -57,7 +58,7 @@ public class PaymentRequestEntityFixture {
         return this;
     }
 
-    public PaymentRequestEntityFixture withReference(String reference) {
+    public PaymentRequestEntityFixture withReference(ServicePaymentReference reference) {
         this.reference = reference;
         return this;
     }

@@ -4,6 +4,7 @@ import org.apache.commons.lang.math.RandomUtils;
 import org.junit.Before;
 import org.junit.Rule;
 import org.junit.Test;
+import uk.gov.pay.connector.model.ServicePaymentReference;
 import uk.gov.pay.connector.model.domain.ChargeStatus;
 import uk.gov.pay.connector.rules.DropwizardAppWithPostgresRule;
 import uk.gov.pay.connector.util.RestAssuredClient;
@@ -211,7 +212,8 @@ public class SearchChargesByDateResourceITest {
         long chargeId = RandomUtils.nextInt();
         String externalChargeId = "charge" + chargeId;
         ChargeStatus chargeStatus = ChargeStatus.CREATED;
-        app.getDatabaseTestHelper().addCharge(chargeId, externalChargeId, accountId, AMOUNT, chargeStatus, "http://return.com/1", null, "reference", createdDate);
+        app.getDatabaseTestHelper().addCharge(chargeId, externalChargeId, accountId, AMOUNT, chargeStatus, "http://return.com/1", null,
+                ServicePaymentReference.of("reference"), createdDate);
         app.getDatabaseTestHelper().addToken(chargeId, "tokenId");
         app.getDatabaseTestHelper().addEvent(chargeId, chargeStatus.getValue());
         return externalChargeId;

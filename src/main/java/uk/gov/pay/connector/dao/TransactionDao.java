@@ -88,7 +88,7 @@ public class TransactionDao extends JpaDao<TransactionEntity> {
         List<String> statuses = getStatuses(params);
         StringBuilder queryPrefix = new StringBuilder("SELECT count(t.*) FROM transactions t ");
 
-        if (isNotEmpty(params.getReference())) {
+        if (params.getReference() != null && isNotEmpty(params.getReference().toString())) {
             queryPrefix.append("JOIN payment_requests p ON t.payment_request_id = p.id ");
         }
         if (isNotEmpty(params.getEmail()) || !params.getCardBrands().isEmpty()) {
@@ -127,8 +127,8 @@ public class TransactionDao extends JpaDao<TransactionEntity> {
             typedQuery.setParameter("email", "%" + formattedEmail + "%");
         }
 
-        if (isNotEmpty(params.getReference())) {
-            typedQuery.setParameter("reference", "%" + getEscapedString(params.getReference()) + "%");
+        if (params.getReference() != null && isNotEmpty(params.getReference().toString())) {
+            typedQuery.setParameter("reference", "%" + getEscapedString(params.getReference().toString()) + "%");
         }
 
         if (params.getFromDate() != null) {
@@ -161,7 +161,7 @@ public class TransactionDao extends JpaDao<TransactionEntity> {
             query.append("AND t2.email ILIKE ?email ");
         }
 
-        if (isNotEmpty(params.getReference())) {
+        if (params.getReference() != null && isNotEmpty(params.getReference().toString())) {
             query.append("AND p.reference ILIKE ?reference ");
         }
 

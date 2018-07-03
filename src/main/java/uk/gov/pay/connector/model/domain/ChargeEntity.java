@@ -1,9 +1,12 @@
 package uk.gov.pay.connector.model.domain;
 
 import com.fasterxml.jackson.annotation.JsonIgnore;
+import com.fasterxml.jackson.databind.annotation.JsonSerialize;
+import com.fasterxml.jackson.databind.ser.std.ToStringSerializer;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import uk.gov.pay.connector.exception.InvalidStateTransitionException;
+import uk.gov.pay.connector.model.ServicePaymentReference;
 import uk.gov.pay.connector.model.api.ExternalChargeState;
 import uk.gov.pay.connector.service.PaymentGatewayName;
 import uk.gov.pay.connector.util.RandomIdGenerator;
@@ -90,7 +93,9 @@ public class ChargeEntity extends AbstractVersionedEntity {
     private String description;
 
     @Column(name = "reference")
-    private String reference;
+    @Convert(converter = ServicePaymentReferenceConverter.class)
+    @JsonSerialize(using = ToStringSerializer.class)
+    private ServicePaymentReference reference;
 
     @Column(name = "provider_session_id")
     private String providerSessionId;
@@ -103,12 +108,13 @@ public class ChargeEntity extends AbstractVersionedEntity {
         //for jpa
     }
 
-    public ChargeEntity(Long amount, String returnUrl, String description, String reference, GatewayAccountEntity gatewayAccount, String email) {
+    public ChargeEntity(Long amount, String returnUrl, String description, ServicePaymentReference reference,
+                        GatewayAccountEntity gatewayAccount, String email) {
         this(amount, CREATED, returnUrl, description, reference, gatewayAccount, email, ZonedDateTime.now(ZoneId.of("UTC")));
     }
 
     //for fixture
-    ChargeEntity(Long amount, ChargeStatus status, String returnUrl, String description, String reference,
+    ChargeEntity(Long amount, ChargeStatus status, String returnUrl, String description, ServicePaymentReference reference,
                  GatewayAccountEntity gatewayAccount, String email, ZonedDateTime createdDate) {
         this.amount = amount;
         this.status = status.getValue();
@@ -153,7 +159,7 @@ public class ChargeEntity extends AbstractVersionedEntity {
         return description;
     }
 
-    public String getReference() {
+    public ServicePaymentReference getReference() {
         return reference;
     }
 

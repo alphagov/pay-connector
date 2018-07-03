@@ -12,6 +12,7 @@ import org.hamcrest.Matchers;
 import org.hamcrest.TypeSafeMatcher;
 import org.junit.Before;
 import org.junit.Rule;
+import uk.gov.pay.connector.model.ServicePaymentReference;
 import uk.gov.pay.connector.model.domain.CardFixture;
 import uk.gov.pay.connector.model.domain.ChargeStatus;
 import uk.gov.pay.connector.model.domain.RefundStatus;
@@ -289,7 +290,8 @@ public class ChargingITestBase extends ChargingITestCommon {
         long chargeId = RandomUtils.nextInt();
         String externalChargeId = "charge" + chargeId;
         ChargeStatus chargeStatus = status != null ? status : AUTHORISATION_SUCCESS;
-        app.getDatabaseTestHelper().addCharge(chargeId, externalChargeId, accountId, AMOUNT, chargeStatus, "http://somereturn.gov.uk", gatewayTransactionId, reference, fromDate);
+        app.getDatabaseTestHelper().addCharge(chargeId, externalChargeId, accountId, AMOUNT, chargeStatus, "http://somereturn.gov.uk",
+                gatewayTransactionId, ServicePaymentReference.of(reference), fromDate);
         app.getDatabaseTestHelper().addToken(chargeId, "tokenId");
         app.getDatabaseTestHelper().addEvent(chargeId, chargeStatus.getValue());
         app.getDatabaseTestHelper().updateChargeCardDetails(

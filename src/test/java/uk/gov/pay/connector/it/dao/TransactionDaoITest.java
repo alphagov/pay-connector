@@ -5,6 +5,7 @@ import org.junit.Test;
 import uk.gov.pay.connector.dao.ChargeSearchParams;
 import uk.gov.pay.connector.dao.PaymentRequestDao;
 import uk.gov.pay.connector.dao.TransactionDao;
+import uk.gov.pay.connector.model.ServicePaymentReference;
 import uk.gov.pay.connector.model.TransactionType;
 import uk.gov.pay.connector.model.domain.CardEntity;
 import uk.gov.pay.connector.model.domain.ChargeStatus;
@@ -261,7 +262,7 @@ public class TransactionDaoITest extends DaoITestBase {
 
     @Test
     public void shouldReturnTransactions_byReference() {
-        final String expectedReference = "some random reference";
+        final ServicePaymentReference expectedReference = ServicePaymentReference.of("some random reference");
         PaymentRequestEntity paymentRequestEntity = aValidPaymentRequestEntity()
                 .withGatewayAccountEntity(gatewayAccount)
                 .withReference(expectedReference)
@@ -280,7 +281,7 @@ public class TransactionDaoITest extends DaoITestBase {
 
     @Test
     public void shouldReturnTransactions_byReferenceWithUnderscore() {
-        final String expectedReference = "a_cedkdkwd";
+        final ServicePaymentReference expectedReference = ServicePaymentReference.of("a_cedkdkwd");
 
         PaymentRequestEntity paymentRequestEntity1 = aValidPaymentRequestEntity()
                 .withGatewayAccountEntity(gatewayAccount)
@@ -290,7 +291,7 @@ public class TransactionDaoITest extends DaoITestBase {
         paymentRequestDao.persist(paymentRequestEntity1);
 
         final PaymentRequestEntity paymentRequestEntity2 = aValidPaymentRequestEntity()
-                .withGatewayAccountEntity(gatewayAccount).withReference("abcedkdkwd").build();
+                .withGatewayAccountEntity(gatewayAccount).withReference(ServicePaymentReference.of("abcedkdkwd")).build();
         paymentRequestDao.persist(paymentRequestEntity2);
 
         ChargeSearchParams searchParams = createSearchParams();
@@ -301,7 +302,7 @@ public class TransactionDaoITest extends DaoITestBase {
 
     @Test
     public void shouldReturnTransactions_byReferenceWithPercent() {
-        final String expectedReference = "a%cedkdkwd";
+        final ServicePaymentReference expectedReference = ServicePaymentReference.of("a%cedkdkwd");
 
         PaymentRequestEntity paymentRequestEntity1 = aValidPaymentRequestEntity()
                 .withGatewayAccountEntity(gatewayAccount)
@@ -312,7 +313,7 @@ public class TransactionDaoITest extends DaoITestBase {
 
         final PaymentRequestEntity paymentRequestEntity2 = aValidPaymentRequestEntity()
                 .withGatewayAccountEntity(gatewayAccount)
-                .withReference("abcedkdkwd")
+                .withReference(ServicePaymentReference.of("abcedkdkwd"))
                 .build();
         paymentRequestDao.persist(paymentRequestEntity2);
 
@@ -324,7 +325,7 @@ public class TransactionDaoITest extends DaoITestBase {
 
     @Test
     public void shouldReturnTransactions_byReferenceWithUppercase() {
-        final String expectedReference = "ABCEdkdkwd";
+        final ServicePaymentReference expectedReference = ServicePaymentReference.of("ABCEdkdkwd");
 
         PaymentRequestEntity paymentRequestEntity = aValidPaymentRequestEntity()
                 .withGatewayAccountEntity(gatewayAccount)
@@ -341,7 +342,7 @@ public class TransactionDaoITest extends DaoITestBase {
 
     @Test
     public void shouldReturnTransactions_byReferenceWithUppercaseInRequest() {
-        final String expectedReference = "dkdkwd";
+        final ServicePaymentReference expectedReference = ServicePaymentReference.of("dkdkwd");
 
         PaymentRequestEntity paymentRequestEntity = aValidPaymentRequestEntity()
                 .withGatewayAccountEntity(gatewayAccount)
@@ -351,7 +352,7 @@ public class TransactionDaoITest extends DaoITestBase {
         paymentRequestDao.persist(paymentRequestEntity);
 
         ChargeSearchParams searchParams = createSearchParams();
-        searchParams.withReferenceLike(expectedReference.toUpperCase());
+        searchParams.withReferenceLike(ServicePaymentReference.of(expectedReference.toString().toUpperCase()));
 
         assertTransactionByExternalId(paymentRequestEntity.getExternalId(), transactionDao.search(searchParams));
     }
@@ -571,8 +572,8 @@ public class TransactionDaoITest extends DaoITestBase {
     }
 
     @Test
-    public void shouldReturnTransactions_AllParametersSet() throws Exception {
-        String ref = "ref1";
+    public void shouldReturnTransactions_AllParametersSet() {
+        ServicePaymentReference ref = ServicePaymentReference.of("ref1");
         String email = "foo@foo.com";
         String cardBrand = "visa";
 
@@ -610,7 +611,7 @@ public class TransactionDaoITest extends DaoITestBase {
 
     @Test
     public void shouldCountTransactions_AllParametersSet() throws Exception {
-        String ref = "ref1";
+        ServicePaymentReference ref = ServicePaymentReference.of("ref1");
         String email = "foo@foo.com";
         String cardBrand = "visa";
 

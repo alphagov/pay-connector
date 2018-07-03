@@ -5,6 +5,7 @@ import org.apache.commons.lang3.RandomUtils;
 import org.postgresql.util.PGobject;
 import org.skife.jdbi.v2.DBI;
 import org.skife.jdbi.v2.util.StringColumnMapper;
+import uk.gov.pay.connector.model.ServicePaymentReference;
 import uk.gov.pay.connector.model.domain.AuthCardDetails;
 import uk.gov.pay.connector.model.domain.ChargeStatus;
 import uk.gov.pay.connector.model.domain.GatewayAccountEntity;
@@ -58,24 +59,33 @@ public class DatabaseTestHelper {
         addGatewayAccount(accountId, paymentProvider, null, "a cool service", TEST, description, analyticsId);
     }
 
-    public void addCharge(Long chargeId, String externalChargeId, String gatewayAccountId, long amount, ChargeStatus status, String returnUrl, String transactionId) {
-        addCharge(chargeId, externalChargeId, gatewayAccountId, amount, status, returnUrl, transactionId, "Test description", "Test reference", now(), 1, "email@fake.com");
+    public void addCharge(Long chargeId, String externalChargeId, String gatewayAccountId, long amount, ChargeStatus status, String returnUrl,
+                          String transactionId) {
+        addCharge(chargeId, externalChargeId, gatewayAccountId, amount, status, returnUrl, transactionId, "Test description",
+                ServicePaymentReference.of("Test reference"), now(), 1, "email@fake.com");
     }
 
     public void addCharge(String externalChargeId, String gatewayAccountId, long amount, ChargeStatus status, String returnUrl, String transactionId) {
-        addCharge((long) RandomUtils.nextInt(1, 9999999), externalChargeId, gatewayAccountId, amount, status, returnUrl, transactionId, "Test description", "Test reference", now(), 1, null);
+        addCharge((long) RandomUtils.nextInt(1, 9999999), externalChargeId, gatewayAccountId, amount, status, returnUrl, transactionId,
+                "Test description", ServicePaymentReference.of("Test reference"), now(), 1, null);
     }
 
-    public void addCharge(Long chargeId, String externalChargeId, String accountId, long amount, ChargeStatus chargeStatus, String returnUrl, String transactionId, String reference, ZonedDateTime createdDate) {
-        addCharge(chargeId, externalChargeId, accountId, amount, chargeStatus, returnUrl, transactionId, "Test description", reference, createdDate == null ? now() : createdDate, 1, null);
+    public void addCharge(Long chargeId, String externalChargeId, String accountId, long amount, ChargeStatus chargeStatus, String returnUrl,
+                          String transactionId, ServicePaymentReference reference, ZonedDateTime createdDate) {
+        addCharge(chargeId, externalChargeId, accountId, amount, chargeStatus, returnUrl, transactionId, "Test description", reference,
+                createdDate == null ? now() : createdDate, 1, null);
     }
 
-    public void addCharge(Long chargeId, String externalChargeId, String accountId, long amount, ChargeStatus chargeStatus, String returnUrl, String transactionId, String reference, ZonedDateTime createdDate, String email) {
-        addCharge(chargeId, externalChargeId, accountId, amount, chargeStatus, returnUrl, transactionId, "Test description", reference, createdDate == null ? now() : createdDate, 1, email);
+    public void addCharge(Long chargeId, String externalChargeId, String accountId, long amount, ChargeStatus chargeStatus, String returnUrl,
+                          String transactionId, ServicePaymentReference reference, ZonedDateTime createdDate, String email) {
+        addCharge(chargeId, externalChargeId, accountId, amount, chargeStatus, returnUrl, transactionId, "Test description", reference,
+                createdDate == null ? now() : createdDate, 1, email);
     }
 
-    public void addCharge(Long chargeId, String externalChargeId, String accountId, long amount, ChargeStatus chargeStatus, String returnUrl, String transactionId, String reference, String description, ZonedDateTime createdDate, String email) {
-        addCharge(chargeId, externalChargeId, accountId, amount, chargeStatus, returnUrl, transactionId, description, reference, createdDate == null ? now() : createdDate, 1, email);
+    public void addCharge(Long chargeId, String externalChargeId, String accountId, long amount, ChargeStatus chargeStatus, String returnUrl,
+                          String transactionId, ServicePaymentReference reference, String description, ZonedDateTime createdDate, String email) {
+        addCharge(chargeId, externalChargeId, accountId, amount, chargeStatus, returnUrl, transactionId, description, reference,
+                createdDate == null ? now() : createdDate, 1, email);
     }
 
     private void addCharge(
@@ -87,7 +97,7 @@ public class DatabaseTestHelper {
             String returnUrl,
             String transactionId,
             String description,
-            String reference,
+            ServicePaymentReference reference,
             ZonedDateTime createdDate,
             long version,
             String email
@@ -119,7 +129,7 @@ public class DatabaseTestHelper {
                         transactionId,
                         description,
                         Timestamp.from(createdDate.toInstant()),
-                        reference,
+                        reference.toString(),
                         version,
                         email
                 )
@@ -540,7 +550,7 @@ public class DatabaseTestHelper {
                                   long gatewaysAccountId,
                                   String returnUrl,
                                   String description,
-                                  String reference,
+                                  ServicePaymentReference reference,
                                   ZonedDateTime createdDate,
                                   String externalId
     ) {
@@ -564,7 +574,7 @@ public class DatabaseTestHelper {
                         gatewaysAccountId,
                         returnUrl,
                         description,
-                        reference,
+                        reference.toString(),
                         Timestamp.from(createdDate.toInstant()),
                         externalId
                 )

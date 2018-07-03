@@ -1,6 +1,7 @@
 package uk.gov.pay.connector.model.domain;
 
 import com.fasterxml.jackson.annotation.JsonIgnore;
+import uk.gov.pay.connector.model.ServicePaymentReference;
 import uk.gov.pay.connector.model.domain.transaction.ChargeTransactionEntity;
 import uk.gov.pay.connector.model.domain.transaction.RefundTransactionEntity;
 import uk.gov.pay.connector.model.domain.transaction.TransactionEntity;
@@ -57,7 +58,8 @@ public class PaymentRequestEntity extends AbstractVersionedEntity {
     private String description;
 
     @Column(name = "reference")
-    private String reference;
+    @Convert(converter = ServicePaymentReferenceConverter.class)
+    private ServicePaymentReference reference;
 
     @Column(name = "created_date")
     @Convert(converter = UTCDateTimeConverter.class)
@@ -114,11 +116,11 @@ public class PaymentRequestEntity extends AbstractVersionedEntity {
         this.description = description;
     }
 
-    public String getReference() {
+    public ServicePaymentReference getReference() {
         return reference;
     }
 
-    public void setReference(String reference) {
+    public void setReference(ServicePaymentReference reference) {
         this.reference = reference;
     }
 
