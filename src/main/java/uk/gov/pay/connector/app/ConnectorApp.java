@@ -23,7 +23,7 @@ import org.glassfish.jersey.server.filter.RolesAllowedDynamicFeature;
 import uk.gov.pay.connector.auth.BasicAuthUser;
 import uk.gov.pay.connector.auth.SmartpayAccountSpecificAuthenticator;
 import uk.gov.pay.connector.command.RenderStateTransitionGraphCommand;
-import uk.gov.pay.connector.events.EventSubscribeService;
+import uk.gov.pay.connector.cqrs.EventSubscribeService;
 import uk.gov.pay.connector.filters.LoggingFilter;
 import uk.gov.pay.connector.filters.SchemeRewriteFilter;
 import uk.gov.pay.connector.healthcheck.CardExecutorServiceHealthCheck;

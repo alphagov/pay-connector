@@ -38,7 +38,7 @@ public class ChargeEventsResource {
     }
 
     @GET
-    @Path("/v1/api/accounts/{accountId}/charges/{chargeId}/events")
+    @Path("/v1/api/accounts/{accountId}/charges/{chargeId}/cqrs")
     @Produces(APPLICATION_JSON)
     public Response getEvents(@PathParam("accountId") Long accountId, @PathParam("chargeId") String chargeId) {
 
@@ -58,7 +58,7 @@ public class ChargeEventsResource {
 
         ImmutableMap<String, Object> responsePayload = ImmutableMap.of(
                 "charge_id", chargeEntity.getExternalId(),
-                "events", removeDuplicates(allTransactionEvents));
+                "cqrs", removeDuplicates(allTransactionEvents));
         return ok().entity(responsePayload).build();
     }
 

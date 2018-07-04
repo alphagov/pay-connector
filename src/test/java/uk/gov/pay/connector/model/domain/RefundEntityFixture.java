@@ -1,6 +1,6 @@
 package uk.gov.pay.connector.model.domain;
 
-import uk.gov.pay.connector.events.EventCommandHandler;
+import uk.gov.pay.connector.cqrs.EventCommandHandler;
 
 import static org.mockito.Mockito.mock;
 import static uk.gov.pay.connector.model.domain.ChargeEntityFixture.aValidChargeEntity;

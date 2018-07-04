@@ -5,7 +5,7 @@ import org.hamcrest.Matcher;
 import org.hamcrest.TypeSafeMatcher;
 import org.junit.Before;
 import org.junit.Test;
-import uk.gov.pay.connector.events.EventCommandHandler;
+import uk.gov.pay.connector.cqrs.EventCommandHandler;
 import uk.gov.pay.connector.it.dao.DaoITestBase;
 import uk.gov.pay.connector.it.dao.DatabaseFixtures;
 import uk.gov.pay.connector.model.domain.ChargeEntity;

@@ -12,7 +12,7 @@ import org.mockito.runners.MockitoJUnitRunner;
 import uk.gov.pay.connector.dao.ChargeDao;
 import uk.gov.pay.connector.dao.ChargeEventDao;
 import uk.gov.pay.connector.dao.RefundDao;
-import uk.gov.pay.connector.events.EventCommandHandler;
+import uk.gov.pay.connector.cqrs.EventCommandHandler;
 import uk.gov.pay.connector.exception.InvalidStateTransitionException;
 import uk.gov.pay.connector.model.Notification;
 import uk.gov.pay.connector.model.Notifications;

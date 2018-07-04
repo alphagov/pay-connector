@@ -151,7 +151,7 @@ public class RestAssuredClient {
     }
 
     public ValidatableResponse getEvents(String chargeId) {
-        String requestPath = "/v1/api/accounts/{accountId}/charges/{chargeId}/events"
+        String requestPath = "/v1/api/accounts/{accountId}/charges/{chargeId}/cqrs"
                 .replace("{accountId}", accountId)
                 .replace("{chargeId}", chargeId);
         return given().port(app.getLocalPort())

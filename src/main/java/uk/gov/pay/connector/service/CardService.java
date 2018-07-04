@@ -6,7 +6,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import uk.gov.pay.connector.dao.ChargeDao;
 import uk.gov.pay.connector.dao.ChargeEventDao;
-import uk.gov.pay.connector.events.EventCommandHandler;
+import uk.gov.pay.connector.cqrs.EventCommandHandler;
 import uk.gov.pay.connector.exception.ChargeExpiredRuntimeException;
 import uk.gov.pay.connector.exception.IllegalStateRuntimeException;
 import uk.gov.pay.connector.exception.OperationAlreadyInProgressRuntimeException;

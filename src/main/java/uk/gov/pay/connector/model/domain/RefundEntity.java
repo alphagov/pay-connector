@@ -2,7 +2,7 @@ package uk.gov.pay.connector.model.domain;
 
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import org.eclipse.persistence.annotations.Customizer;
-import uk.gov.pay.connector.events.EventCommandHandler;
+import uk.gov.pay.connector.cqrs.EventCommandHandler;
 import uk.gov.pay.connector.util.RandomIdGenerator;
 
 import javax.persistence.*;

@@ -1,4 +1,4 @@
-package uk.gov.pay.connector.events;
+package uk.gov.pay.connector.cqrs;
 
 import com.google.common.eventbus.EventBus;
 import uk.gov.pay.connector.model.api.ExternalChargeState;

@@ -11,7 +11,7 @@ import uk.gov.pay.connector.dao.ChargeEventDao;
 import uk.gov.pay.connector.dao.GatewayAccountDao;
 import uk.gov.pay.connector.dao.PaymentRequestDao;
 import uk.gov.pay.connector.dao.TokenDao;
-import uk.gov.pay.connector.events.EventCommandHandler;
+import uk.gov.pay.connector.cqrs.EventCommandHandler;
 import uk.gov.pay.connector.model.ChargeResponse;
 import uk.gov.pay.connector.model.api.ExternalChargeState;
 import uk.gov.pay.connector.model.api.ExternalTransactionState;

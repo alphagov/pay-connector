@@ -2,7 +2,7 @@ package uk.gov.pay.connector.dao;
 
 import com.google.inject.Provider;
 import com.google.inject.persist.Transactional;
-import uk.gov.pay.connector.events.RefundedEvent;
+import uk.gov.pay.connector.cqrs.RefundedEvent;
 
 import javax.inject.Inject;
 import javax.persistence.EntityManager;

@@ -1,4 +1,4 @@
-package uk.gov.pay.connector.events;
+package uk.gov.pay.connector.cqrs;
 
 import uk.gov.pay.connector.model.domain.UTCDateTimeConverter;
 
@@ -12,10 +12,10 @@ import javax.persistence.Table;
 import java.time.ZonedDateTime;
 
 @Entity
-@Table(name = "successful_charge_events")
+@Table(name = "refunded_events")
 @Access(AccessType.FIELD)
-public class SuccessfulChargeEvent {
-
+public class RefundedEvent {
+    
     @Column(name = "gateway_account_id")
     private Long gatewayAccountId;
 
@@ -30,10 +30,10 @@ public class SuccessfulChargeEvent {
     @Column(name = "external_id")
     private String externalId;
 
-    public SuccessfulChargeEvent() {//for jpa
+    public RefundedEvent() { //for jpa
     }
 
-    public SuccessfulChargeEvent(Long gatewayAccountId, ZonedDateTime createdDate, Long amount, String externalId) {
+    public RefundedEvent(Long gatewayAccountId, ZonedDateTime createdDate, Long amount, String externalId) {
         this.gatewayAccountId = gatewayAccountId;
         this.createdDate = createdDate;
         this.amount = amount;

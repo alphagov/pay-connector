@@ -3,7 +3,7 @@ package uk.gov.pay.connector.model.domain;
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import uk.gov.pay.connector.events.EventCommandHandler;
+import uk.gov.pay.connector.cqrs.EventCommandHandler;
 import uk.gov.pay.connector.exception.InvalidStateTransitionException;
 import uk.gov.pay.connector.model.api.ExternalChargeState;
 import uk.gov.pay.connector.service.PaymentGatewayName;
@@ -255,7 +255,7 @@ public class ChargeEntity extends AbstractVersionedEntity {
         return this.events.stream()
                 .filter(e -> e.getStatus().equals(CAPTURED))
                 .findFirst()
-                // use updated for old CAPTURED events that do not have a generated time recorded
+                // use updated for old CAPTURED cqrs that do not have a generated time recorded
                 .map(e -> e.getGatewayEventDate().orElse(e.getUpdated()))
                 .orElse(null);
     }

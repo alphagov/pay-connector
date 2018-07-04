@@ -2,7 +2,7 @@ package uk.gov.pay.connector.model.domain;
 
 import org.junit.Test;
 import org.mockito.Mock;
-import uk.gov.pay.connector.events.EventCommandHandler;
+import uk.gov.pay.connector.cqrs.EventCommandHandler;
 import uk.gov.pay.connector.exception.InvalidStateTransitionException;
 
 import static org.hamcrest.core.Is.is;

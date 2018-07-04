@@ -11,7 +11,7 @@ import org.mockito.runners.MockitoJUnitRunner;
 import uk.gov.pay.connector.dao.ChargeDao;
 import uk.gov.pay.connector.dao.PaymentRequestDao;
 import uk.gov.pay.connector.dao.RefundDao;
-import uk.gov.pay.connector.events.EventCommandHandler;
+import uk.gov.pay.connector.cqrs.EventCommandHandler;
 import uk.gov.pay.connector.exception.ChargeNotFoundRuntimeException;
 import uk.gov.pay.connector.exception.RefundException;
 import uk.gov.pay.connector.model.ErrorType;

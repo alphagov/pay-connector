@@ -4,7 +4,7 @@ import com.google.common.collect.Lists;
 import org.junit.Before;
 import org.junit.Test;
 import uk.gov.pay.connector.dao.RefundDao;
-import uk.gov.pay.connector.events.EventCommandHandler;
+import uk.gov.pay.connector.cqrs.EventCommandHandler;
 import uk.gov.pay.connector.model.domain.ChargeEntity;
 import uk.gov.pay.connector.model.domain.ChargeStatus;
 import uk.gov.pay.connector.model.domain.RefundEntity;

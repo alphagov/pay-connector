@@ -1,4 +1,4 @@
-package uk.gov.pay.connector.events;
+package uk.gov.pay.connector.cqrs;
 
 import com.google.common.eventbus.Subscribe;
 import uk.gov.pay.connector.dao.RefundedEventDao;
