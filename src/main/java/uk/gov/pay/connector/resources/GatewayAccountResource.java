@@ -1,5 +1,6 @@
 package uk.gov.pay.connector.resources;
 
+import com.google.common.base.Splitter;
 import com.fasterxml.jackson.annotation.JsonView;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
@@ -24,10 +25,12 @@ import uk.gov.pay.connector.service.PaymentGatewayName;
 
 import javax.inject.Inject;
 import javax.ws.rs.Consumes;
+import javax.ws.rs.DefaultValue;
 import javax.ws.rs.GET;
 import javax.ws.rs.POST;
 import javax.ws.rs.Path;
 import javax.ws.rs.PathParam;
+import javax.ws.rs.QueryParam;
 import javax.ws.rs.Produces;
 import javax.ws.rs.core.Context;
 import javax.ws.rs.core.Response;
@@ -38,6 +41,7 @@ import java.net.URI;
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
+import java.util.ArrayList;
 import java.util.Map;
 import java.util.Optional;
 import java.util.UUID;
@@ -60,6 +64,7 @@ import static uk.gov.pay.connector.util.ResponseUtil.successResponseWithEntity;
 public class GatewayAccountResource {
 
     private static final Logger logger = LoggerFactory.getLogger(GatewayAccountResource.class);
+    private static final Splitter COMMA_SEPARATOR = Splitter.on(',').trimResults().omitEmptyStrings();
 
     private static final String DESCRIPTION_FIELD_NAME = "description";
     private static final String ANALYTICS_ID_FIELD_NAME = "analytics_id";
@@ -72,7 +77,6 @@ public class GatewayAccountResource {
     private static final String PAYMENT_PROVIDER_KEY = "payment_provider";
     private static final String USERNAME_KEY = "username";
     private static final String PASSWORD_KEY = "password";
-
 
     private final GatewayAccountDao gatewayDao;
     private final CardTypeDao cardTypeDao;
@@ -110,18 +114,64 @@ public class GatewayAccountResource {
 
     }
 
+    // This private method, instead of using a regex Path is due to, as far as
+    // I can tell, the binding of @POST causing /v1/api/accounts to 405, thus
+    // we have to explicitly define /v1/api/accounts with @GET
+    // As such, split out the common functionality in a private method and call
+    // it twice for each explicitly defined resource
+    private Response getGatewayAccounts(
+      String accountIdsArg,
+      UriInfo uriInfo
+    ) {
+      logger.debug("Parsing {} to filter all gateway accounts.", accountIdsArg);
+      List<Long> accountIds;
+
+      try{
+        accountIds = COMMA_SEPARATOR.splitToList(accountIdsArg)
+          .stream()
+          .map(accountIdStr -> Long.parseLong(accountIdStr))
+          .collect(Collectors.toList());
+      } catch (NumberFormatException e) {
+        return badRequestResponse(format("Could not parse accountIds %s as Longs.", accountIdsArg));
+      }
+
+      List<GatewayAccountResourceDTO> gatewayAccountResourceDTOList;
+
+      if (accountIds.isEmpty()) {
+        gatewayAccountResourceDTOList = gatewayDao.listAll();
+      } else {
+        gatewayAccountResourceDTOList = gatewayDao.list(accountIds);
+      }
+
+      logger.debug("Getting gateway accounts {}.", accountIdsArg);
+
+      gatewayAccountResourceDTOList.forEach(account -> {
+        account.addLink("self", buildUri(uriInfo, account.getAccountId()));
+      });
+
+      return Response
+        .ok(ImmutableMap.of("accounts", gatewayAccountResourceDTOList))
+        .build();
+    }
+
     @GET
     @Path("/v1/api/accounts")
     @Produces(APPLICATION_JSON)
-    public Response getGatewayAccounts(@Context UriInfo uriInfo) {
-        logger.debug("Getting all gateway accounts");
-        List<GatewayAccountResourceDTO> gatewayAccountResourceDTOList = gatewayDao.listAll();
-        gatewayAccountResourceDTOList.forEach(account ->
-                account.addLink("self", buildUri(uriInfo, account.getAccountId()))
-        );
-        return Response
-                .ok(ImmutableMap.of("accounts", gatewayAccountResourceDTOList))
-                .build();
+    public Response getApiGatewayAccounts(
+        @DefaultValue("") @QueryParam("accountIds") String accountIdsArg,
+        @Context UriInfo uriInfo
+    ) {
+      return getGatewayAccounts(accountIdsArg, uriInfo);
+    }
+
+    @GET
+    @Path("/v1/frontend/accounts")
+    @Produces(APPLICATION_JSON)
+    public Response getFrontendGatewayAccounts(
+        @DefaultValue("") @QueryParam("accountIds") String accountIdsArg,
+        @Context UriInfo uriInfo
+    ) {
+      return getGatewayAccounts(accountIdsArg, uriInfo);
     }
 
     private URI buildUri(UriInfo uriInfo, long accountId) {
