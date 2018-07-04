@@ -1,6 +1,7 @@
 package uk.gov.pay.connector.resources;
 
 import org.apache.commons.lang3.tuple.Pair;
+import uk.gov.pay.connector.cqrs.TransactionsSummaryQuery;
 import uk.gov.pay.connector.dao.ChargeDao;
 import uk.gov.pay.connector.dao.GatewayAccountDao;
 import uk.gov.pay.connector.dao.RefundDao;
@@ -48,6 +49,7 @@ public class TransactionsSummaryResource {
     private final GatewayAccountDao gatewayAccountDao;
     private final ChargeDao chargeDao;
     private final RefundDao refundDao;
+    private TransactionsSummaryQuery transactionsSummaryQuery;
 
     @Inject
     public TransactionsSummaryResource(GatewayAccountDao gatewayAccountDao, ChargeDao chargeDao, RefundDao refundDao) {
@@ -56,6 +58,16 @@ public class TransactionsSummaryResource {
         this.refundDao = refundDao;
     }
 
+    @GET
+    @Path("/v1/api/accounts/{accountId}/transactions-summary-cqrs")
+    @Produces(APPLICATION_JSON)
+    public Response getPaymentsSummaryCqrs(@PathParam(ACCOUNT_ID) Long gatewayAccountId,
+                                       @QueryParam(FROM_DATE) String fromDate,
+                                       @QueryParam(TO_DATE) String toDate) {
+
+        return Response.ok(transactionsSummaryQuery.execute(gatewayAccountId, fromDate, toDate)).build();
+    }
+    
     @GET
     @Path("/v1/api/accounts/{accountId}/transactions-summary")
     @Produces(APPLICATION_JSON)
