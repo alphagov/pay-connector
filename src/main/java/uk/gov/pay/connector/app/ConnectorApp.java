@@ -3,6 +3,7 @@ package uk.gov.pay.connector.app;
 import com.codahale.metrics.graphite.GraphiteReporter;
 import com.codahale.metrics.graphite.GraphiteSender;
 import com.codahale.metrics.graphite.GraphiteUDP;
+import com.google.common.eventbus.EventBus;
 import com.google.inject.Guice;
 import com.google.inject.Injector;
 import com.google.inject.Module;
@@ -22,6 +23,7 @@ import org.glassfish.jersey.server.filter.RolesAllowedDynamicFeature;
 import uk.gov.pay.connector.auth.BasicAuthUser;
 import uk.gov.pay.connector.auth.SmartpayAccountSpecificAuthenticator;
 import uk.gov.pay.connector.command.RenderStateTransitionGraphCommand;
+import uk.gov.pay.connector.events.EventSubscribeService;
 import uk.gov.pay.connector.filters.LoggingFilter;
 import uk.gov.pay.connector.filters.SchemeRewriteFilter;
 import uk.gov.pay.connector.healthcheck.CardExecutorServiceHealthCheck;
@@ -100,6 +102,10 @@ public class ConnectorApp extends Application<ConnectorConfiguration> {
         environment.jersey().register(injector.getInstance(EmailNotificationResource.class));
         environment.jersey().register(injector.getInstance(SchemeRewriteFilter.class));
         environment.jersey().register(injector.getInstance(PerformanceReportResource.class));
+
+        EventSubscribeService eventSubscribeService = injector.getInstance(EventSubscribeService.class);
+        EventBus eventBus = injector.getInstance(EventBus.class);
+        eventBus.register(eventSubscribeService);
 
         setupSchedulers(configuration, environment, injector);
 

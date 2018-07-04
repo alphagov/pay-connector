@@ -9,6 +9,7 @@ import uk.gov.pay.connector.dao.CardTypeDao;
 import uk.gov.pay.connector.dao.ChargeDao;
 import uk.gov.pay.connector.dao.ChargeEventDao;
 import uk.gov.pay.connector.dao.PaymentRequestDao;
+import uk.gov.pay.connector.events.EventCommandHandler;
 import uk.gov.pay.connector.exception.ChargeNotFoundRuntimeException;
 import uk.gov.pay.connector.model.GatewayError;
 import uk.gov.pay.connector.model.GatewayParamsFor3ds;
@@ -44,6 +45,7 @@ public class CardAuthoriseService extends CardAuthoriseBaseService<AuthCardDetai
     private final CardTypeDao cardTypeDao;
     private final CardDao cardDao;
     private final PaymentRequestDao paymentRequestDao;
+    private EventCommandHandler eventCommandHandler;
 
     @Inject
     public CardAuthoriseService(ChargeDao chargeDao,
@@ -53,11 +55,14 @@ public class CardAuthoriseService extends CardAuthoriseBaseService<AuthCardDetai
                                 PaymentProviders providers,
                                 CardExecutorService cardExecutorService,
                                 Environment environment,
-                                PaymentRequestDao paymentRequestDao, ChargeStatusUpdater chargeStatusUpdater) {
-        super(chargeDao, chargeEventDao, providers, cardExecutorService, environment, chargeStatusUpdater);
+                                PaymentRequestDao paymentRequestDao,
+                                ChargeStatusUpdater chargeStatusUpdater,
+                                EventCommandHandler eventCommandHandler) {
+        super(chargeDao, chargeEventDao, providers, cardExecutorService, environment, chargeStatusUpdater, eventCommandHandler);
         this.cardTypeDao = cardTypeDao;
         this.cardDao = cardDao;
         this.paymentRequestDao = paymentRequestDao;
+        this.eventCommandHandler = eventCommandHandler;
     }
 
     @Transactional
@@ -69,7 +74,7 @@ public class CardAuthoriseService extends CardAuthoriseBaseService<AuthCardDetai
 
             if (!chargeEntity.getGatewayAccount().isRequires3ds() && cardBrandRequires3ds(cardBrand)) {
 
-                chargeEntity.setStatus(AUTHORISATION_ABORTED);
+                chargeEntity.setStatus(AUTHORISATION_ABORTED, eventCommandHandler);
 
                 logger.error("AuthCardDetails authorisation failed pre operation. Card brand requires 3ds but Gateway account has 3ds disabled - charge_external_id={}, operation_type={}, card_brand={}",
                         chargeEntity.getExternalId(), OperationType.AUTHORISATION.getValue(), cardBrand);
@@ -137,7 +142,7 @@ public class CardAuthoriseService extends CardAuthoriseBaseService<AuthCardDetai
 
             metricRegistry.counter(String.format("gateway-operations.%s.%s.%s.authorise.result.%s", account.getGatewayName(), account.getType(), account.getId(), status.toString())).inc();
 
-            chargeEntity.setStatus(status);
+            chargeEntity.setStatus(status, eventCommandHandler);
             operationResponse.getBaseResponse().ifPresent(response ->
                     response.getGatewayParamsFor3ds().map(GatewayParamsFor3ds::toAuth3dsDetailsEntity)
                             .ifPresent(chargeEntity::set3dsDetails)

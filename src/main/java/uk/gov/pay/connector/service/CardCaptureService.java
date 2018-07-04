@@ -7,7 +7,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import uk.gov.pay.connector.dao.ChargeDao;
 import uk.gov.pay.connector.dao.ChargeEventDao;
-import uk.gov.pay.connector.dao.PaymentRequestDao;
+import uk.gov.pay.connector.events.EventCommandHandler;
 import uk.gov.pay.connector.exception.ChargeNotFoundRuntimeException;
 import uk.gov.pay.connector.exception.ConflictRuntimeException;
 import uk.gov.pay.connector.exception.IllegalStateRuntimeException;
@@ -41,12 +41,19 @@ public class CardCaptureService extends CardService implements TransactionalGate
     );
 
     private final UserNotificationService userNotificationService;
-
-
+    private final EventCommandHandler eventCommandHandler;
+    
     @Inject
-    public CardCaptureService(ChargeDao chargeDao, ChargeEventDao chargeEventDao, PaymentProviders providers, UserNotificationService userNotificationService, Environment environment, PaymentRequestDao paymentRequestDao, ChargeStatusUpdater chargeStatusUpdater) {
-        super(chargeDao, chargeEventDao, providers, environment, chargeStatusUpdater);
+    public CardCaptureService(ChargeDao chargeDao,
+                              ChargeEventDao chargeEventDao,
+                              PaymentProviders providers,
+                              UserNotificationService userNotificationService,
+                              Environment environment,
+                              ChargeStatusUpdater chargeStatusUpdater,
+                              EventCommandHandler eventCommandHandler) {
+        super(chargeDao, chargeEventDao, providers, environment, chargeStatusUpdater, eventCommandHandler);
         this.userNotificationService = userNotificationService;
+        this.eventCommandHandler = eventCommandHandler;
     }
 
     public GatewayResponse<BaseCaptureResponse> doCapture(String externalId) {
@@ -79,7 +86,7 @@ public class CardCaptureService extends CardService implements TransactionalGate
             }
 
             logger.info("CAPTURE_APPROVED for charge [charge_external_id={}]", externalId);
-            charge.setStatus(CAPTURE_APPROVED);
+            charge.setStatus(CAPTURE_APPROVED, eventCommandHandler);
             chargeEventDao.persistChargeEventOf(charge, Optional.empty());
             chargeStatusUpdater.updateChargeTransactionStatus(charge.getExternalId(), CAPTURE_APPROVED);
             return charge;
@@ -91,7 +98,7 @@ public class CardCaptureService extends CardService implements TransactionalGate
         logger.error("CAPTURE_ERROR for charge [charge_external_id={}] - reached maximum number of capture attempts",
                 chargeId);
         chargeDao.findByExternalId(chargeId).ifPresent(chargeEntity -> {
-            chargeEntity.setStatus(CAPTURE_ERROR);
+            chargeEntity.setStatus(CAPTURE_ERROR, eventCommandHandler);
             chargeEventDao.persistChargeEventOf(chargeEntity, Optional.empty());
             chargeStatusUpdater.updateChargeTransactionStatus(chargeEntity.getExternalId(), CAPTURE_ERROR);
         });
@@ -119,7 +126,7 @@ public class CardCaptureService extends CardService implements TransactionalGate
                             chargeEntity.getGatewayAccount().getAnalyticsId(), chargeEntity.getGatewayAccount().getId(),
                             operationResponse, chargeEntity.getStatus(), nextStatus);
 
-                    chargeEntity.setStatus(nextStatus);
+                    chargeEntity.setStatus(nextStatus, eventCommandHandler);
 
                     if (isBlank(transactionId)) {
                         logger.warn("Card capture response received with no transaction id. - charge_external_id={}", chargeId);
@@ -138,7 +145,7 @@ public class CardCaptureService extends CardService implements TransactionalGate
 
                     //for sandbox, immediately move from CAPTURE_SUBMITTED to CAPTURED, as there will be no external notification
                     if (chargeEntity.getPaymentGatewayName() == PaymentGatewayName.SANDBOX) {
-                        chargeEntity.setStatus(CAPTURED);
+                        chargeEntity.setStatus(CAPTURED, eventCommandHandler);
                         ZonedDateTime gatewayEventTime = ZonedDateTime.now();
                         chargeEventDao.persistChargeEventOf(chargeEntity, Optional.of(gatewayEventTime));
                         chargeStatusUpdater.updateChargeTransactionStatus(chargeEntity.getExternalId(), CAPTURED, gatewayEventTime);

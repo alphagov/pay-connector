@@ -8,6 +8,7 @@ import org.mockito.Mock;
 import org.mockito.runners.MockitoJUnitRunner;
 import uk.gov.pay.connector.dao.ChargeDao;
 import uk.gov.pay.connector.dao.ChargeEventDao;
+import uk.gov.pay.connector.events.EventCommandHandler;
 import uk.gov.pay.connector.model.CancelGatewayRequest;
 import uk.gov.pay.connector.model.GatewayError;
 import uk.gov.pay.connector.model.domain.ChargeEntity;
@@ -58,10 +59,13 @@ public class ChargeExpiryServiceTest {
 
     @Mock
     private ChargeStatusUpdater mockChargeStatusUpdater;
+    
+    @Mock
+    private EventCommandHandler eventCommandHandler;
 
     @Before
     public void setup() {
-        chargeExpiryService = new ChargeExpiryService(mockChargeDao, mockChargeEventDao, mockPaymentProviders, TransactionFlow::new, mockChargeStatusUpdater);
+        chargeExpiryService = new ChargeExpiryService(mockChargeDao, mockChargeEventDao, mockPaymentProviders, TransactionFlow::new, mockChargeStatusUpdater, eventCommandHandler);
     }
 
     @Test

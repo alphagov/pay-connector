@@ -6,6 +6,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import uk.gov.pay.connector.dao.ChargeDao;
 import uk.gov.pay.connector.dao.ChargeEventDao;
+import uk.gov.pay.connector.events.EventCommandHandler;
 import uk.gov.pay.connector.exception.ChargeExpiredRuntimeException;
 import uk.gov.pay.connector.exception.IllegalStateRuntimeException;
 import uk.gov.pay.connector.exception.OperationAlreadyInProgressRuntimeException;
@@ -25,6 +26,7 @@ public abstract class CardService<T extends BaseResponse> {
     protected final Logger logger = LoggerFactory.getLogger(getClass());
     protected MetricRegistry metricRegistry;
     protected final ChargeStatusUpdater chargeStatusUpdater;
+    private EventCommandHandler eventCommandHandler;
 
     public enum OperationType {
         CAPTURE("Capture"),
@@ -43,12 +45,18 @@ public abstract class CardService<T extends BaseResponse> {
         }
     }
 
-    protected CardService(ChargeDao chargeDao, ChargeEventDao chargeEventDao, PaymentProviders providers, Environment environment, ChargeStatusUpdater chargeStatusUpdater) {
+    protected CardService(ChargeDao chargeDao,
+                          ChargeEventDao chargeEventDao,
+                          PaymentProviders providers,
+                          Environment environment,
+                          ChargeStatusUpdater chargeStatusUpdater,
+                          EventCommandHandler eventCommandHandler) {
         this.chargeDao = chargeDao;
         this.chargeEventDao = chargeEventDao;
         this.providers = providers;
         this.metricRegistry = environment.metrics();
         this.chargeStatusUpdater = chargeStatusUpdater;
+        this.eventCommandHandler = eventCommandHandler;
     }
 
     public ChargeEntity preOperation(ChargeEntity chargeEntity, OperationType operationType, List<ChargeStatus> legalStatuses, ChargeStatus lockingStatus) {
@@ -78,7 +86,7 @@ public abstract class CardService<T extends BaseResponse> {
             throw new IllegalStateRuntimeException(chargeEntity.getExternalId());
         }
 
-        chargeEntity.setStatus(lockingStatus);
+        chargeEntity.setStatus(lockingStatus, eventCommandHandler);
         chargeStatusUpdater.updateChargeTransactionStatus(chargeEntity.getExternalId(), lockingStatus);
         return chargeEntity;
     }

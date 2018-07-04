@@ -5,6 +5,7 @@ import org.hamcrest.Matcher;
 import org.hamcrest.TypeSafeMatcher;
 import org.junit.Before;
 import org.junit.Test;
+import uk.gov.pay.connector.events.EventCommandHandler;
 import uk.gov.pay.connector.it.dao.DaoITestBase;
 import uk.gov.pay.connector.it.dao.DatabaseFixtures;
 import uk.gov.pay.connector.model.domain.ChargeEntity;
@@ -21,6 +22,7 @@ import static java.util.stream.Collectors.toList;
 import static org.exparity.hamcrest.date.ZonedDateTimeMatchers.within;
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.hasSize;
+import static org.mockito.Mockito.mock;
 import static uk.gov.pay.connector.model.domain.ChargeStatus.AUTHORISATION_READY;
 import static uk.gov.pay.connector.model.domain.ChargeStatus.AUTHORISATION_SUCCESS;
 import static uk.gov.pay.connector.model.domain.ChargeStatus.CAPTURE_READY;
@@ -32,6 +34,7 @@ public class ChargeEventDaoITest extends DaoITestBase {
     private ChargeEventDao chargeEventDao;
     private DatabaseFixtures.TestCardDetails defaultTestCardDetails;
     private DatabaseFixtures.TestAccount defaultTestAccount;
+    private EventCommandHandler eventCommandHandler = mock(EventCommandHandler.class);
 
     @Before
     public void setUp() throws Exception {
@@ -65,18 +68,18 @@ public class ChargeEventDaoITest extends DaoITestBase {
 
         Optional<ChargeEntity> charge = chargeDao.findById(chargeId);
         ChargeEntity entity = charge.get();
-        entity.setStatus(ENTERING_CARD_DETAILS);
+        entity.setStatus(ENTERING_CARD_DETAILS, eventCommandHandler);
 
         chargeEventDao.persistChargeEventOf(entity, Optional.empty());
 
         //move status to AUTHORISED
-        entity.setStatus(AUTHORISATION_READY);
-        entity.setStatus(AUTHORISATION_SUCCESS);
+        entity.setStatus(AUTHORISATION_READY, eventCommandHandler);
+        entity.setStatus(AUTHORISATION_SUCCESS, eventCommandHandler);
         entity.setGatewayTransactionId(transactionId2);
 
         chargeEventDao.persistChargeEventOf(entity, Optional.empty());
 
-        entity.setStatus(CAPTURE_READY);
+        entity.setStatus(CAPTURE_READY, eventCommandHandler);
         entity.setGatewayTransactionId(transactionId3);
 
         chargeEventDao.persistChargeEventOf(entity, Optional.empty());

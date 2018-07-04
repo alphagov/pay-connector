@@ -108,7 +108,7 @@ public class CardAuthoriseServiceTest extends CardServiceTest {
         when(mockEnvironment.metrics()).thenReturn(mockMetricRegistry);
         cardAuthorisationService = new CardAuthoriseService(mockedChargeDao, mockedChargeEventDao,
                 mockedCardTypeDao, mockCardDao, mockedProviders, mockExecutorService,
-                mockEnvironment, mockPaymentRequestDao, mockChargeStatusUpdater);
+                mockEnvironment, mockPaymentRequestDao, mockChargeStatusUpdater, eventCommandHandler);
     }
 
     @Before

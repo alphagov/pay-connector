@@ -94,7 +94,7 @@ public class CardCaptureServiceTest extends CardServiceTest {
         when(mockEnvironment.metrics()).thenReturn(mockMetricRegistry);
         when(mockMetricRegistry.counter(anyString())).thenReturn(mockCounter);
 
-        cardCaptureService = new CardCaptureService(mockedChargeDao, mockedChargeEventDao, mockedProviders, mockUserNotificationService, mockEnvironment, mockPaymentRequestDao, mockChargeStatusUpdater);
+        cardCaptureService = new CardCaptureService(mockedChargeDao, mockedChargeEventDao, mockedProviders, mockUserNotificationService, mockEnvironment, mockChargeStatusUpdater, eventCommandHandler);
 
         Logger root = (Logger) LoggerFactory.getLogger(CardCaptureService.class);
         root.addAppender(mockAppender);
@@ -143,8 +143,8 @@ public class CardCaptureServiceTest extends CardServiceTest {
 
         assertThat(response.isSuccessful(), is(true));
         InOrder inOrder = Mockito.inOrder(chargeSpy);
-        inOrder.verify(chargeSpy).setStatus(CAPTURE_READY);
-        inOrder.verify(chargeSpy).setStatus(CAPTURE_SUBMITTED);
+        inOrder.verify(chargeSpy).setStatus(CAPTURE_READY, eventCommandHandler);
+        inOrder.verify(chargeSpy).setStatus(CAPTURE_SUBMITTED, eventCommandHandler);
 
         ArgumentCaptor<ChargeEntity> chargeEntityCaptor = ArgumentCaptor.forClass(ChargeEntity.class);
 
@@ -178,9 +178,9 @@ public class CardCaptureServiceTest extends CardServiceTest {
 
         assertThat(response.isSuccessful(), is(true));
         InOrder inOrder = Mockito.inOrder(chargeSpy);
-        inOrder.verify(chargeSpy).setStatus(CAPTURE_READY);
-        inOrder.verify(chargeSpy).setStatus(CAPTURE_SUBMITTED);
-        inOrder.verify(chargeSpy).setStatus(CAPTURED);
+        inOrder.verify(chargeSpy).setStatus(CAPTURE_READY, eventCommandHandler);
+        inOrder.verify(chargeSpy).setStatus(CAPTURE_SUBMITTED, eventCommandHandler);
+        inOrder.verify(chargeSpy).setStatus(CAPTURED, eventCommandHandler);
 
         ArgumentCaptor<ChargeEntity> chargeEntityCaptor = ArgumentCaptor.forClass(ChargeEntity.class);
         ArgumentCaptor<Optional> bookingDateCaptor = ArgumentCaptor.forClass(Optional.class);
@@ -291,8 +291,8 @@ public class CardCaptureServiceTest extends CardServiceTest {
         assertThat(response.isFailed(), is(true));
 
         InOrder inOrder = Mockito.inOrder(chargeSpy);
-        inOrder.verify(chargeSpy).setStatus(CAPTURE_READY);
-        inOrder.verify(chargeSpy).setStatus(CAPTURE_APPROVED_RETRY);
+        inOrder.verify(chargeSpy).setStatus(CAPTURE_READY, eventCommandHandler);
+        inOrder.verify(chargeSpy).setStatus(CAPTURE_APPROVED_RETRY, eventCommandHandler);
 
         verify(mockedChargeEventDao).persistChargeEventOf(chargeSpy, Optional.empty());
         InOrder inOrderStatusUpdater = Mockito.inOrder(mockChargeStatusUpdater);
@@ -387,7 +387,7 @@ public class CardCaptureServiceTest extends CardServiceTest {
         }
 
         verify(mockedChargeDao).findByExternalId(chargeEntity.getExternalId());
-        verify(chargeEntity, never()).setStatus(any());
+        verify(chargeEntity, never()).setStatus(any(), eventCommandHandler);
         verify(mockAppender).doAppend(loggingEventArgumentCaptor.capture());
 
         verifyNoMoreInteractions(mockedChargeDao);
@@ -401,7 +401,7 @@ public class CardCaptureServiceTest extends CardServiceTest {
 
         ChargeEntity result = cardCaptureService.markChargeAsCaptureApproved(chargeEntity.getExternalId());
 
-        verify(chargeEntity).setStatus(CAPTURE_APPROVED);
+        verify(chargeEntity).setStatus(CAPTURE_APPROVED, eventCommandHandler);
         verify(mockedChargeEventDao).persistChargeEventOf(argThat(chargeEntityHasStatus(CAPTURE_APPROVED)), eq(Optional.empty()));
         assertThat(result.getStatus(), is(CAPTURE_APPROVED.getValue()));
 

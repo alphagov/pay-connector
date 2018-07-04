@@ -74,7 +74,7 @@ public class Card3dsResponseAuthServiceTest extends CardServiceTest {
         when(mockEnvironment.metrics()).thenReturn(mockMetricRegistry);
         when(mockMetricRegistry.counter(anyString())).thenReturn(mockCounter);
 
-        card3dsResponseAuthService = new Card3dsResponseAuthService(mockedChargeDao, mockedChargeEventDao, mockedProviders, mockExecutorService, mockEnvironment, mockPaymentRequestDao, mockChargeStatusUpdater);
+        card3dsResponseAuthService = new Card3dsResponseAuthService(mockedChargeDao, mockedChargeEventDao, mockedProviders, mockExecutorService, mockEnvironment, mockPaymentRequestDao, mockChargeStatusUpdater, eventCommandHandler);
         aValidPaymentRequestEntity = PaymentRequestEntityFixture.aValidPaymentRequestEntity().build();
     }
 

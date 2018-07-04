@@ -1328,4 +1328,21 @@
             columnName="password"
             newDataType="varchar(255)"/>
     </changeSet>
+
+    <changeSet id="build successful charges table" author="">
+        <createTable tableName="successful_charges">
+            <column name="gateway_account_id" type="bigserial">
+                <constraints nullable="false"/>
+            </column>
+            <column name="created_date" type="timestamp without timezone">
+                <constraints nullable="false"/>
+            </column>
+            <column name="amount" type="bigint">
+                <constraints nullable="false"/>
+            </column>
+            <column name="external_id" type="char(26)">
+                <constraints nullable="false" unique="true" primaryKey="true" />
+            </column>
+        </createTable>
+    </changeSet>
 </databaseChangeLog>

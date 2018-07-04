@@ -1,6 +1,8 @@
 package uk.gov.pay.connector.model.domain;
 
 import org.junit.Test;
+import org.mockito.Mock;
+import uk.gov.pay.connector.events.EventCommandHandler;
 import uk.gov.pay.connector.exception.InvalidStateTransitionException;
 
 import static org.hamcrest.core.Is.is;
@@ -17,6 +19,9 @@ import static uk.gov.pay.connector.model.domain.ChargeStatus.CREATED;
 import static uk.gov.pay.connector.model.domain.ChargeStatus.ENTERING_CARD_DETAILS;
 
 public class ChargeEntityTest {
+    
+    @Mock
+    EventCommandHandler eventCommandHandler;
 
     @Test
     public void shouldHaveTheGivenStatus() {
@@ -55,7 +60,7 @@ public class ChargeEntityTest {
     public void shouldAllowAValidStatusTransition() throws Exception {
         ChargeEntity chargeCreated = ChargeEntityFixture.aValidChargeEntity()
                 .withStatus(CREATED).build();
-        chargeCreated.setStatus(ENTERING_CARD_DETAILS);
+        chargeCreated.setStatus(ENTERING_CARD_DETAILS, eventCommandHandler);
         assertThat(chargeCreated.getStatus(), is(ENTERING_CARD_DETAILS.getValue()));
     }
 
@@ -63,6 +68,6 @@ public class ChargeEntityTest {
     public void shouldRejectAnInvalidStatusTransition() throws Exception {
         ChargeEntity chargeCreated = ChargeEntityFixture.aValidChargeEntity()
                 .withStatus(CREATED).build();
-        chargeCreated.setStatus(CAPTURED);
+        chargeCreated.setStatus(CAPTURED, eventCommandHandler);
     }
 }

@@ -4,6 +4,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import uk.gov.pay.connector.dao.ChargeDao;
 import uk.gov.pay.connector.dao.ChargeEventDao;
+import uk.gov.pay.connector.events.EventCommandHandler;
 import uk.gov.pay.connector.exception.ChargeNotFoundRuntimeException;
 import uk.gov.pay.connector.exception.ConflictRuntimeException;
 import uk.gov.pay.connector.exception.IllegalStateRuntimeException;
@@ -34,12 +35,18 @@ class CancelServiceFunctions {
 
     private static final Logger logger = LoggerFactory.getLogger(CancelServiceFunctions.class);
 
-    static TransactionalOperation<TransactionContext, ChargeEntity> changeStatusTo(ChargeDao chargeDao, ChargeEventDao chargeEventDao, String chargeId, ChargeStatus targetStatus, Optional<ZonedDateTime> generationTimeOptional, ChargeStatusUpdater chargeStatusUpdater) {
+    static TransactionalOperation<TransactionContext, ChargeEntity> changeStatusTo(ChargeDao chargeDao,
+                                                                                   ChargeEventDao chargeEventDao,
+                                                                                   String chargeId,
+                                                                                   ChargeStatus targetStatus,
+                                                                                   Optional<ZonedDateTime> generationTimeOptional,
+                                                                                   ChargeStatusUpdater chargeStatusUpdater,
+                                                                                   EventCommandHandler eventCommandHandler) {
         return context -> chargeDao.findByExternalId(chargeId)
                 .map(chargeEntity -> {
                     logger.info("Charge status to update - charge_external_id={}, status={}, to_status={}",
                             chargeEntity.getExternalId(), chargeEntity.getStatus(), targetStatus);
-                    chargeEntity.setStatus(targetStatus);
+                    chargeEntity.setStatus(targetStatus, eventCommandHandler);
                     chargeEventDao.persistChargeEventOf(chargeEntity, generationTimeOptional);
                     chargeStatusUpdater.updateChargeTransactionStatus(chargeEntity.getExternalId(), targetStatus, generationTimeOptional.orElse(null));
 
@@ -52,7 +59,8 @@ class CancelServiceFunctions {
                                                                                            ChargeEventDao chargeEventDao,
                                                                                            String chargeId,
                                                                                            StatusFlow statusFlow,
-                                                                                           ChargeStatusUpdater chargeStatusUpdater) {
+                                                                                           ChargeStatusUpdater chargeStatusUpdater,
+                                                                                           EventCommandHandler eventCommandHandler) {
         return context -> chargeDao.findByExternalId(chargeId).map(chargeEntity -> {
             ChargeStatus newStatus = statusFlow.getLockState();
             if (!chargeEntity.hasStatus(statusFlow.getTerminatableStatuses())) {
@@ -67,7 +75,7 @@ class CancelServiceFunctions {
 
                 throw new IllegalStateRuntimeException(chargeId);
             }
-            chargeEntity.setStatus(newStatus);
+            chargeEntity.setStatus(newStatus, eventCommandHandler);
             chargeStatusUpdater.updateChargeTransactionStatus(chargeEntity.getExternalId(), newStatus);
             GatewayAccountEntity gatewayAccount = chargeEntity.getGatewayAccount();
 

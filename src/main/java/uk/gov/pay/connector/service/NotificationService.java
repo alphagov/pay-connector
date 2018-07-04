@@ -7,6 +7,7 @@ import org.slf4j.LoggerFactory;
 import uk.gov.pay.connector.dao.ChargeDao;
 import uk.gov.pay.connector.dao.ChargeEventDao;
 import uk.gov.pay.connector.dao.RefundDao;
+import uk.gov.pay.connector.events.EventCommandHandler;
 import uk.gov.pay.connector.exception.InvalidStateTransitionException;
 import uk.gov.pay.connector.model.EvaluatedChargeStatusNotification;
 import uk.gov.pay.connector.model.EvaluatedNotification;
@@ -38,9 +39,17 @@ public class NotificationService {
     private final DnsUtils dnsUtils;
     private final ChargeStatusUpdater chargeStatusUpdater;
     private final RefundStatusUpdater refundStatusUpdater;
+    private EventCommandHandler eventCommandHandler;
 
     @Inject
-    public NotificationService(ChargeDao chargeDao, ChargeEventDao chargeEventDao, RefundDao refundDao, PaymentProviders paymentProviders, DnsUtils dnsUtils, ChargeStatusUpdater chargeStatusUpdater, RefundStatusUpdater refundStatusUpdater) {
+    public NotificationService(ChargeDao chargeDao,
+                               ChargeEventDao chargeEventDao,
+                               RefundDao refundDao,
+                               PaymentProviders paymentProviders,
+                               DnsUtils dnsUtils,
+                               ChargeStatusUpdater chargeStatusUpdater,
+                               RefundStatusUpdater refundStatusUpdater,
+                               EventCommandHandler eventCommandHandler) {
         this.chargeDao = chargeDao;
         this.chargeEventDao = chargeEventDao;
         this.refundDao = refundDao;
@@ -48,6 +57,7 @@ public class NotificationService {
         this.dnsUtils = dnsUtils;
         this.chargeStatusUpdater = chargeStatusUpdater;
         this.refundStatusUpdater = refundStatusUpdater;
+        this.eventCommandHandler = eventCommandHandler;
     }
 
     @Transactional
@@ -200,7 +210,7 @@ public class NotificationService {
             ChargeStatus newStatus = notification.getChargeStatus();
 
             try {
-                chargeEntity.setStatus(newStatus);
+                chargeEntity.setStatus(newStatus, eventCommandHandler);
             } catch (InvalidStateTransitionException e) {
                 logger.error("{} notification {} could not be used to update charge: {}", paymentProvider.getPaymentGatewayName().getName(), notification, e.getMessage());
                 return;

@@ -1,6 +1,7 @@
 package uk.gov.pay.connector.app;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
+import com.google.common.eventbus.EventBus;
 import com.google.inject.AbstractModule;
 import com.google.inject.Provides;
 import com.google.inject.Singleton;
@@ -69,6 +70,12 @@ public class ConnectorModule extends AbstractModule {
     @Provides
     public ObjectMapper provideObjectMapper() {
         return environment.getObjectMapper();
+    }
+    
+    @Provides
+    @Singleton
+    public EventBus eventBus() {
+        return new EventBus();
     }
 
 }

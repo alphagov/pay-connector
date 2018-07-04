@@ -8,6 +8,7 @@ import org.junit.Test;
 import org.junit.rules.ExpectedException;
 import uk.gov.pay.connector.dao.ChargeDao;
 import uk.gov.pay.connector.dao.ChargeSearchParams;
+import uk.gov.pay.connector.events.EventCommandHandler;
 import uk.gov.pay.connector.model.domain.ChargeEntity;
 import uk.gov.pay.connector.model.domain.ChargeStatus;
 import uk.gov.pay.connector.model.domain.GatewayAccountEntity;
@@ -34,6 +35,7 @@ import static org.hamcrest.Matchers.notNullValue;
 import static org.hamcrest.Matchers.nullValue;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertNotNull;
+import static org.mockito.Mockito.mock;
 import static uk.gov.pay.connector.model.api.ExternalChargeState.EXTERNAL_CREATED;
 import static uk.gov.pay.connector.model.api.ExternalChargeState.EXTERNAL_STARTED;
 import static uk.gov.pay.connector.model.domain.ChargeEntityFixture.aValidChargeEntity;
@@ -66,6 +68,7 @@ public class ChargeDaoITest extends DaoITestBase {
     private DatabaseFixtures.TestRefund defaultTestRefund;
     private DatabaseFixtures.TestCharge defaultTestCharge;
     private DatabaseFixtures.TestCardDetails defaultTestCardDetails;
+    private EventCommandHandler eventPublishingService = mock(EventCommandHandler.class);
 
     @Before
     public void setUp() throws Exception {
@@ -716,7 +719,7 @@ public class ChargeDaoITest extends DaoITestBase {
 
         Optional<ChargeEntity> charge = chargeDao.findById(chargeId);
         ChargeEntity entity = charge.get();
-        entity.setStatus(ENTERING_CARD_DETAILS);
+        entity.setStatus(ENTERING_CARD_DETAILS, eventPublishingService);
 
     }
 

@@ -11,6 +11,7 @@ import uk.gov.pay.connector.dao.ChargeEventDao;
 import uk.gov.pay.connector.dao.GatewayAccountDao;
 import uk.gov.pay.connector.dao.PaymentRequestDao;
 import uk.gov.pay.connector.dao.TokenDao;
+import uk.gov.pay.connector.events.EventCommandHandler;
 import uk.gov.pay.connector.model.ChargeResponse;
 import uk.gov.pay.connector.model.api.ExternalChargeState;
 import uk.gov.pay.connector.model.api.ExternalTransactionState;
@@ -58,13 +59,15 @@ public class ChargeService {
     private final PaymentProviders providers;
     private final PaymentRequestDao paymentRequestDao;
     private final ChargeStatusUpdater chargeStatusUpdater;
+    private EventCommandHandler eventCommandHandler;
 
     @Inject
     public ChargeService(TokenDao tokenDao, ChargeDao chargeDao, ChargeEventDao chargeEventDao,
                          CardTypeDao cardTypeDao, GatewayAccountDao gatewayAccountDao,
                          ConnectorConfiguration config, PaymentProviders providers,
                          PaymentRequestDao paymentRequestDao,
-                         ChargeStatusUpdater chargeStatusUpdater) {
+                         ChargeStatusUpdater chargeStatusUpdater,
+                         EventCommandHandler eventCommandHandler) {
         this.tokenDao = tokenDao;
         this.chargeDao = chargeDao;
         this.chargeEventDao = chargeEventDao;
@@ -74,6 +77,7 @@ public class ChargeService {
         this.providers = providers;
         this.paymentRequestDao = paymentRequestDao;
         this.chargeStatusUpdater = chargeStatusUpdater;
+        this.eventCommandHandler = eventCommandHandler;
     }
 
     @Transactional
@@ -134,7 +138,7 @@ public class ChargeService {
                 .map(chargeEntity -> {
                     final ChargeStatus oldChargeStatus = ChargeStatus.fromString(chargeEntity.getStatus());
                     if (CURRENT_STATUSES_ALLOWING_UPDATE_TO_NEW_STATUS.contains(oldChargeStatus)) {
-                        chargeEntity.setStatus(newChargeStatus);
+                        chargeEntity.setStatus(newChargeStatus, eventCommandHandler);
                         chargeEventDao.persistChargeEventOf(chargeEntity, Optional.empty());
                         chargeStatusUpdater.updateChargeTransactionStatus(externalId, newChargeStatus);
                         return Optional.of(chargeEntity);

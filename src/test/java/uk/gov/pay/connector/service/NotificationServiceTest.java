@@ -12,6 +12,7 @@ import org.mockito.runners.MockitoJUnitRunner;
 import uk.gov.pay.connector.dao.ChargeDao;
 import uk.gov.pay.connector.dao.ChargeEventDao;
 import uk.gov.pay.connector.dao.RefundDao;
+import uk.gov.pay.connector.events.EventCommandHandler;
 import uk.gov.pay.connector.exception.InvalidStateTransitionException;
 import uk.gov.pay.connector.model.Notification;
 import uk.gov.pay.connector.model.Notifications;
@@ -80,6 +81,9 @@ public class NotificationServiceTest {
 
     @Mock
     private RefundStatusUpdater mockedRefundUpdater;
+    
+    @Mock
+    private EventCommandHandler eventCommandHandler;
 
     @Before
     public void setUp() {
@@ -92,7 +96,7 @@ public class NotificationServiceTest {
 
         when(mockedPaymentProvider.verifyNotification(any(Notification.class), any(GatewayAccountEntity.class))).thenReturn(true);
 
-        notificationService = new NotificationService(mockedChargeDao, mockedChargeEventDao, mockedRefundDao, mockedPaymentProviders, mockDnsUtils, mockedChargeStatusUpdater, mockedRefundUpdater);
+        notificationService = new NotificationService(mockedChargeDao, mockedChargeEventDao, mockedRefundDao, mockedPaymentProviders, mockDnsUtils, mockedChargeStatusUpdater, mockedRefundUpdater, eventCommandHandler);
     }
 
     private Notifications<Pair<String, Boolean>> createNotificationFor(String transactionId, String reference, Pair<String, Boolean> status) {
@@ -247,12 +251,12 @@ public class NotificationServiceTest {
                 .thenReturn(Optional.of(mockedChargeEntity));
 
         doThrow(new InvalidStateTransitionException("AUTHORISATION SUCCESS", "CAPTURED"))
-                .when(mockedChargeEntity).setStatus(CAPTURED);
+                .when(mockedChargeEntity).setStatus(CAPTURED, eventCommandHandler);
 
         notificationService.handleNotificationFor("", SANDBOX, "payload");
 
         verify(mockedChargeEntity, atLeastOnce()).getStatus();
-        verify(mockedChargeEntity).setStatus(CAPTURED);
+        verify(mockedChargeEntity).setStatus(CAPTURED, eventCommandHandler);
         verifyNoMoreInteractions(ignoreStubs(mockedChargeDao));
     }
 
@@ -313,7 +317,7 @@ public class NotificationServiceTest {
 
         notificationService.handleNotificationFor("", SANDBOX, "payload");
 
-        verify(mockedChargeEntity).setStatus(CAPTURED);
+        verify(mockedChargeEntity).setStatus(CAPTURED, eventCommandHandler);
 
         ArgumentCaptor<Optional> generatedTimeCaptor = ArgumentCaptor.forClass(Optional.class);
         verify(mockedChargeEventDao).persistChargeEventOf(argThat(obj -> mockedChargeEntity.equals(obj)), generatedTimeCaptor.capture());

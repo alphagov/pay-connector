@@ -3,6 +3,7 @@ package uk.gov.pay.connector.model.domain;
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import uk.gov.pay.connector.events.EventCommandHandler;
 import uk.gov.pay.connector.exception.InvalidStateTransitionException;
 import uk.gov.pay.connector.model.api.ExternalChargeState;
 import uk.gov.pay.connector.service.PaymentGatewayName;
@@ -185,7 +186,7 @@ public class ChargeEntity extends AbstractVersionedEntity {
         this.externalId = externalId;
     }
 
-    public void setStatus(ChargeStatus targetStatus) throws InvalidStateTransitionException {
+    public void setStatus(ChargeStatus targetStatus, EventCommandHandler eventCommandHandler) throws InvalidStateTransitionException {
         if (isValidTransition(fromString(this.status), targetStatus)) {
             logger.info(String.format("Changing charge status for externalId [%s] [%s]->[%s]",
                     externalId,
@@ -193,6 +194,7 @@ public class ChargeEntity extends AbstractVersionedEntity {
                     targetStatus.getValue())
             );
             this.status = targetStatus.getValue();
+            eventCommandHandler.handleSuccessfulChargeEvent(this);
         } else {
             throw new InvalidStateTransitionException(this.status, targetStatus.getValue());
         }
