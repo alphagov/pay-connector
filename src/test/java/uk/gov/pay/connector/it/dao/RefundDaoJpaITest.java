@@ -4,6 +4,7 @@ import com.google.common.collect.Lists;
 import org.junit.Before;
 import org.junit.Test;
 import uk.gov.pay.connector.dao.RefundDao;
+import uk.gov.pay.connector.events.EventCommandHandler;
 import uk.gov.pay.connector.model.domain.ChargeEntity;
 import uk.gov.pay.connector.model.domain.ChargeStatus;
 import uk.gov.pay.connector.model.domain.RefundEntity;
@@ -22,6 +23,7 @@ import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.hasEntry;
 import static org.hamcrest.core.Is.is;
 import static org.junit.Assert.assertNotNull;
+import static org.mockito.Mockito.mock;
 import static uk.gov.pay.connector.matcher.RefundsMatcher.aRefundMatching;
 import static uk.gov.pay.connector.model.domain.RefundEntityFixture.userExternalId;
 import static uk.gov.pay.connector.model.domain.RefundStatus.CREATED;
@@ -37,7 +39,7 @@ public class RefundDaoJpaITest extends DaoITestBase {
     private DatabaseFixtures.TestAccount sandboxAccount;
     private DatabaseFixtures.TestCharge chargeTestRecord;
     private DatabaseFixtures.TestRefund refundTestRecord;
-
+    EventCommandHandler eventCommandHandler = mock(EventCommandHandler.class);
 
     @Before
     public void setUp() throws Exception {
@@ -239,7 +241,7 @@ public class RefundDaoJpaITest extends DaoITestBase {
         chargeEntity.setId(chargeTestRecord.getChargeId());
 
         RefundEntity refundEntity = new RefundEntity(chargeEntity, 100L, userExternalId);
-        refundEntity.setStatus(REFUND_SUBMITTED);
+        refundEntity.setStatus(REFUND_SUBMITTED, eventCommandHandler);
         refundEntity.setReference("test-refund-entity");
 
         refundDao.persist(refundEntity);
@@ -261,7 +263,7 @@ public class RefundDaoJpaITest extends DaoITestBase {
         chargeEntity.setId(chargeTestRecord.getChargeId());
 
         RefundEntity refundEntity = new RefundEntity(chargeEntity, 100L, userExternalId);
-        refundEntity.setStatus(REFUND_SUBMITTED);
+        refundEntity.setStatus(REFUND_SUBMITTED, eventCommandHandler);
         refundEntity.setReference("test-refund-entity");
 
         refundDao.persist(refundEntity);
@@ -293,10 +295,10 @@ public class RefundDaoJpaITest extends DaoITestBase {
         chargeEntity.setId(chargeTestRecord.getChargeId());
 
         RefundEntity refundEntity1 = new RefundEntity(chargeEntity, 100L, userExternalId);
-        refundEntity1.setStatus(CREATED);
+        refundEntity1.setStatus(CREATED, eventCommandHandler);
 
         RefundEntity refundEntity = new RefundEntity(chargeEntity, 100L, userExternalId);
-        refundEntity.setStatus(REFUND_SUBMITTED);
+        refundEntity.setStatus(REFUND_SUBMITTED, eventCommandHandler);
         refundEntity.setReference("test-refund-entity");
 
         refundDao.persist(refundEntity);

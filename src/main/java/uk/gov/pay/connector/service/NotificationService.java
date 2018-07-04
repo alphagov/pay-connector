@@ -249,7 +249,7 @@ public class NotificationService {
             RefundStatus oldStatus = refundEntity.getStatus();
             RefundStatus newStatus = notification.getRefundStatus();
 
-            refundEntity.setStatus(newStatus);
+            refundEntity.setStatus(newStatus, eventCommandHandler);
             refundStatusUpdater.updateRefundTransactionStatus(
                     paymentProvider.getPaymentGatewayName(), notification.getReference(), newStatus
             );

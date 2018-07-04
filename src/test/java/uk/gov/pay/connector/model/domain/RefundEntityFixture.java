@@ -1,5 +1,8 @@
 package uk.gov.pay.connector.model.domain;
 
+import uk.gov.pay.connector.events.EventCommandHandler;
+
+import static org.mockito.Mockito.mock;
 import static uk.gov.pay.connector.model.domain.ChargeEntityFixture.aValidChargeEntity;
 
 public class RefundEntityFixture {
@@ -19,7 +22,7 @@ public class RefundEntityFixture {
     public RefundEntity build() {
         ChargeEntity chargeEntity = charge == null ? buildChargeEntity() : charge;
         RefundEntity refundEntity = new RefundEntity(chargeEntity, amount, userExternalId);
-        refundEntity.setStatus(status);
+        refundEntity.setStatus(status, mock(EventCommandHandler.class));
         refundEntity.setReference(reference);
         refundEntity.setExternalId(externalId);
         return refundEntity;

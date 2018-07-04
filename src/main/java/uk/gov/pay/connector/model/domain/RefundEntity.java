@@ -2,6 +2,7 @@ package uk.gov.pay.connector.model.domain;
 
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import org.eclipse.persistence.annotations.Customizer;
+import uk.gov.pay.connector.events.EventCommandHandler;
 import uk.gov.pay.connector.util.RandomIdGenerator;
 
 import javax.persistence.*;
@@ -71,7 +72,7 @@ public class RefundEntity extends AbstractVersionedEntity {
         this.externalId = RandomIdGenerator.newId();
         this.chargeEntity = chargeEntity;
         this.amount = amount;
-        setStatus(RefundStatus.CREATED);
+        this.status = RefundStatus.CREATED.getValue();
         this.createdDate = ZonedDateTime.now(ZoneId.of("UTC"));
         this.userExternalId = userExternalId;
     }
@@ -108,8 +109,9 @@ public class RefundEntity extends AbstractVersionedEntity {
         this.amount = amount;
     }
 
-    public void setStatus(RefundStatus status) {
+    public void setStatus(RefundStatus status, EventCommandHandler eventCommandHandler) {
         this.status = status.getValue();
+        eventCommandHandler.handleRefundEvent(this);
     }
 
     protected void setChargeEntity(ChargeEntity chargeEntity) {

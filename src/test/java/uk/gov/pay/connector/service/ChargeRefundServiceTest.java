@@ -11,6 +11,7 @@ import org.mockito.runners.MockitoJUnitRunner;
 import uk.gov.pay.connector.dao.ChargeDao;
 import uk.gov.pay.connector.dao.PaymentRequestDao;
 import uk.gov.pay.connector.dao.RefundDao;
+import uk.gov.pay.connector.events.EventCommandHandler;
 import uk.gov.pay.connector.exception.ChargeNotFoundRuntimeException;
 import uk.gov.pay.connector.exception.RefundException;
 import uk.gov.pay.connector.model.ErrorType;
@@ -79,6 +80,8 @@ public class ChargeRefundServiceTest {
     private ChargeStatusUpdater mockChargeStatusUpdater;
     @Mock
     private RefundStatusUpdater mockRefundStatusUpdater;
+    @Mock
+    EventCommandHandler eventCommandHandler;
 
     @Before
     public void setUp() {
@@ -86,7 +89,7 @@ public class ChargeRefundServiceTest {
         when(mockProvider.getExternalChargeRefundAvailability(any(ChargeEntity.class))).thenReturn(EXTERNAL_AVAILABLE);
         chargeRefundService = new ChargeRefundService(
                 mockChargeDao, mockRefundDao, mockProviders, TransactionFlow::new, mockPaymentRequestDao,
-                mockRefundStatusUpdater
+                mockRefundStatusUpdater, eventCommandHandler
         );
     }
 
@@ -155,7 +158,7 @@ public class ChargeRefundServiceTest {
         verify(mockRefundDao).persist(argThat(aRefundEntity(amount, charge)));
         verify(mockProvider).refund(argThat(aRefundRequestWith(charge, amount)));
         verify(mockRefundDao).findById(any(Long.class));
-        verify(spiedRefundEntity).setStatus(RefundStatus.REFUND_SUBMITTED);
+        verify(spiedRefundEntity).setStatus(RefundStatus.REFUND_SUBMITTED, eventCommandHandler);
         verify(spiedRefundEntity).setReference(refundEntity.getExternalId());
         verify(mockRefundStatusUpdater).setReferenceAndUpdateTransactionStatus(
                 refundEntity.getExternalId(),
@@ -211,7 +214,7 @@ public class ChargeRefundServiceTest {
         verify(mockRefundDao).persist(argThat(aRefundEntity(amount, charge)));
         verify(mockProvider).refund(argThat(aRefundRequestWith(charge, amount)));
         verify(mockRefundDao).findById(any(Long.class));
-        verify(spiedRefundEntity).setStatus(RefundStatus.REFUND_SUBMITTED);
+        verify(spiedRefundEntity).setStatus(RefundStatus.REFUND_SUBMITTED, eventCommandHandler);
         verify(spiedRefundEntity).setReference(reference);
         verify(mockRefundStatusUpdater).setReferenceAndUpdateTransactionStatus(
                 refundExternalId, reference, RefundStatus.REFUND_SUBMITTED
@@ -348,7 +351,7 @@ public class ChargeRefundServiceTest {
         verify(mockRefundDao).persist(argThat(aRefundEntity(amount, charge)));
         verify(mockProvider).refund(argThat(aRefundRequestWith(charge, amount)));
         verify(mockRefundDao, times(2)).findById(any(Long.class));
-        verify(spiedRefundEntity).setStatus(RefundStatus.REFUNDED);
+        verify(spiedRefundEntity).setStatus(RefundStatus.REFUNDED, eventCommandHandler);
         verify(mockRefundStatusUpdater).updateRefundTransactionStatus(
                 SANDBOX,
                 spiedRefundEntity.getReference(),
@@ -449,7 +452,7 @@ public class ChargeRefundServiceTest {
         verify(mockRefundDao).persist(argThat(aRefundEntity(amount, capturedCharge)));
         verify(mockProvider).refund(argThat(aRefundRequestWith(capturedCharge, amount)));
         verify(mockRefundDao).findById(any(Long.class));
-        verify(spiedRefundEntity).setStatus(RefundStatus.REFUND_ERROR);
+        verify(spiedRefundEntity).setStatus(RefundStatus.REFUND_ERROR, eventCommandHandler);
         verify(mockRefundStatusUpdater).setReferenceAndUpdateTransactionStatus(
                 refundExternalId,
                 "",

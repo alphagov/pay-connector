@@ -356,7 +356,7 @@ public class NotificationServiceTest {
         notificationService.handleNotificationFor("", SANDBOX, "payload");
 
         verify(mockedRefundDao).findByProviderAndReference(SANDBOX.getName(), reference);
-        verify(mockedRefundEntity).setStatus(REFUNDED);
+        verify(mockedRefundEntity).setStatus(REFUNDED, eventCommandHandler);
         verify(mockedRefundUpdater).updateRefundTransactionStatus(SANDBOX, reference, RefundStatus.REFUNDED);
         verifyNoMoreInteractions(ignoreStubs(mockedChargeDao));
     }

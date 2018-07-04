@@ -7,6 +7,7 @@ import org.slf4j.LoggerFactory;
 import uk.gov.pay.connector.dao.ChargeDao;
 import uk.gov.pay.connector.dao.PaymentRequestDao;
 import uk.gov.pay.connector.dao.RefundDao;
+import uk.gov.pay.connector.events.EventCommandHandler;
 import uk.gov.pay.connector.exception.ChargeNotFoundRuntimeException;
 import uk.gov.pay.connector.exception.RefundException;
 import uk.gov.pay.connector.model.RefundGatewayRequest;
@@ -62,17 +63,19 @@ public class ChargeRefundService {
     private final PaymentProviders providers;
     private final Provider<TransactionFlow> transactionFlowProvider;
     private final RefundStatusUpdater refundStatusUpdater;
+    private EventCommandHandler eventCommandHandler;
 
     @Inject
     public ChargeRefundService(ChargeDao chargeDao, RefundDao refundDao, PaymentProviders providers,
                                Provider<TransactionFlow> transactionFlowProvider, PaymentRequestDao paymentRequestDao,
-                               RefundStatusUpdater refundStatusUpdater) {
+                               RefundStatusUpdater refundStatusUpdater, EventCommandHandler eventCommandHandler) {
         this.chargeDao = chargeDao;
         this.refundDao = refundDao;
         this.providers = providers;
         this.transactionFlowProvider = transactionFlowProvider;
         this.paymentRequestDao = paymentRequestDao;
         this.refundStatusUpdater = refundStatusUpdater;
+        this.eventCommandHandler = eventCommandHandler;
     }
 
     public Optional<Response> doRefund(Long accountId, String chargeId, RefundRequest refundRequest) {
@@ -92,7 +95,7 @@ public class ChargeRefundService {
             if (refund.getChargeEntity().getPaymentGatewayName() == PaymentGatewayName.SANDBOX
                     && refund.hasStatus(RefundStatus.REFUND_SUBMITTED)) {
                 RefundEntity refundEntity = refundDao.findById(refund.getId()).get();
-                refundEntity.setStatus(REFUNDED);
+                refundEntity.setStatus(REFUNDED, eventCommandHandler);
                 refundStatusUpdater.updateRefundTransactionStatus(PaymentGatewayName.SANDBOX, refund.getReference(), REFUNDED);
                 response = new Response(response.getRefundGatewayResponse(), refundEntity);
             }
@@ -154,7 +157,7 @@ public class ChargeRefundService {
                     chargeEntity.getGatewayAccount().getAnalyticsId(), chargeEntity.getGatewayAccount().getId(),
                     gatewayResponse, refundEntity.getStatus(), status);
 
-            refundEntity.setStatus(status);
+            refundEntity.setStatus(status, eventCommandHandler);
             refundEntity.setReference(reference);
             refundStatusUpdater.setReferenceAndUpdateTransactionStatus(refundEntity.getExternalId(), reference, status);
 

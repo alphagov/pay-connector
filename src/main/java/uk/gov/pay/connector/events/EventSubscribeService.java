@@ -1,23 +1,32 @@
 package uk.gov.pay.connector.events;
 
 import com.google.common.eventbus.Subscribe;
+import uk.gov.pay.connector.dao.RefundedEventDao;
 import uk.gov.pay.connector.dao.SuccessfulChargeEventDao;
 
 import javax.inject.Inject;
 import java.util.Optional;
-import java.util.function.Consumer;
 
 public class EventSubscribeService {
     
-    private final SuccessfulChargeEventDao dao;
+    private final SuccessfulChargeEventDao successfulChargeEventDao;
+    private final RefundedEventDao refundedEventDao;
 
     @Inject
-    public EventSubscribeService(SuccessfulChargeEventDao dao) {
-        this.dao = dao;
+    public EventSubscribeService(SuccessfulChargeEventDao successfulChargeEventDao, RefundedEventDao refundedEventDao) {
+        this.successfulChargeEventDao = successfulChargeEventDao;
+        this.refundedEventDao = refundedEventDao;
     }
 
     @Subscribe
     public void onEvent(SuccessfulChargeEvent event) {
-        dao.findById(SuccessfulChargeEvent.class, event.getExternalId()).ifPresent(successfulChargeEvent -> dao.persist(successfulChargeEvent));
+        Optional<SuccessfulChargeEvent> result = successfulChargeEventDao.findById(SuccessfulChargeEvent.class, event.getExternalId());
+        if (!result.isPresent()) successfulChargeEventDao.persist(event);
+    }
+    
+    @Subscribe
+    public void onEvent(RefundedEvent event) {
+        Optional<RefundedEvent> result = refundedEventDao.findById(RefundedEvent.class, event.getExternalId());
+        if (!result.isPresent()) refundedEventDao.persist(event);
     }
 }
