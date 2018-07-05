@@ -25,7 +25,7 @@ public class GatewayAccountDao extends JpaDao<GatewayAccountEntity> {
 
     @Override
     public void persist(final GatewayAccountEntity account) {
-        entityManager.get().persist(account);                                                                                                                                                                                                                                                                                                                                                                                                           
+        entityManager.get().persist(account);
         account.setEmailNotification(new EmailNotificationEntity(account));
     }
 
@@ -38,6 +38,20 @@ public class GatewayAccountDao extends JpaDao<GatewayAccountEntity> {
                 .createQuery(query, GatewayAccountEntity.class)
                 .setParameter("username", username)
                 .getResultList().stream().findFirst();
+    }
+
+    public List<GatewayAccountResourceDTO> list(List<Long> accountIds) {
+        String query = "SELECT NEW uk.gov.pay.connector.model.domain.GatewayAccountResourceDTO"
+                       + " (gae.id, gae.gatewayName, gae.type, gae.description, gae.serviceName, gae.analyticsId)"
+                       + " FROM GatewayAccountEntity gae"
+                       + " WHERE gae.id IN :accountIds"
+                       + " ORDER BY gae.id";
+
+        return entityManager
+                .get()
+                .createQuery(query, GatewayAccountResourceDTO.class)
+                .setParameter("accountIds", accountIds)
+                .getResultList();
     }
 
     public List<GatewayAccountResourceDTO> listAll() {

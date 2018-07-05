@@ -282,6 +282,98 @@ public class GatewayAccountDaoITest extends DaoITestBase {
     }
 
     @Test
+    public void shouldListASubsetOfAccountsSingle() throws Exception {
+        databaseTestHelper.addGatewayAccount(
+          "123",
+          "provider-1",
+          ImmutableMap.of(
+            "user", "fuser",
+            "password", "word"
+          ),
+          "service-name-1",
+          TEST,
+          "description-1",
+          "analytics-id-1"
+        );
+
+        databaseTestHelper.addGatewayAccount(
+          "456",
+          "provider-2",
+          null,
+          "service-name-2",
+          TEST,
+          "description-2",
+          "analytics-id-2"
+        );
+
+        List<Long> accountIds = Arrays.asList(456L);
+        List<GatewayAccountResourceDTO> gatewayAccounts = gatewayAccountDao.list(accountIds);
+
+        assertEquals(1, gatewayAccounts.size());
+        assertThat(gatewayAccounts.get(0).getAccountId(), is(456L));
+        assertEquals("provider-2", gatewayAccounts.get(0).getPaymentProvider());
+        assertEquals("description-2", gatewayAccounts.get(0).getDescription());
+        assertEquals("service-name-2", gatewayAccounts.get(0).getServiceName());
+        assertEquals(TEST.toString(), gatewayAccounts.get(0).getType());
+        assertEquals("analytics-id-2", gatewayAccounts.get(0).getAnalyticsId());
+    }
+
+    @Test
+    public void shouldListASubsetOfAccountsMultiple() throws Exception {
+        databaseTestHelper.addGatewayAccount(
+          "123",
+          "provider-1",
+          ImmutableMap.of(
+            "user", "fuser",
+            "password", "word"
+          ),
+          "service-name-1",
+          TEST,
+          "description-1",
+          "analytics-id-1"
+        );
+
+        databaseTestHelper.addGatewayAccount(
+          "456",
+          "provider-2",
+          null,
+          "service-name-2",
+          TEST,
+          "description-2",
+          "analytics-id-2"
+        );
+
+        databaseTestHelper.addGatewayAccount(
+          "789",
+          "provider-3",
+          null,
+          "service-name-3",
+          TEST,
+          "description-3",
+          "analytics-id-3"
+        );
+
+        List<Long> accountIds = Arrays.asList(456L, 789L);
+        List<GatewayAccountResourceDTO> gatewayAccounts = gatewayAccountDao.list(accountIds);
+
+        assertEquals(2, gatewayAccounts.size());
+
+        assertThat(gatewayAccounts.get(0).getAccountId(), is(456L));
+        assertEquals("provider-2", gatewayAccounts.get(0).getPaymentProvider());
+        assertEquals("description-2", gatewayAccounts.get(0).getDescription());
+        assertEquals("service-name-2", gatewayAccounts.get(0).getServiceName());
+        assertEquals(TEST.toString(), gatewayAccounts.get(0).getType());
+        assertEquals("analytics-id-2", gatewayAccounts.get(0).getAnalyticsId());
+
+        assertThat(gatewayAccounts.get(1).getAccountId(), is(789L));
+        assertEquals("provider-3", gatewayAccounts.get(1).getPaymentProvider());
+        assertEquals("description-3", gatewayAccounts.get(1).getDescription());
+        assertEquals("service-name-3", gatewayAccounts.get(1).getServiceName());
+        assertEquals(TEST.toString(), gatewayAccounts.get(1).getType());
+        assertEquals("analytics-id-3", gatewayAccounts.get(1).getAnalyticsId());
+    }
+
+    @Test
     public void shouldSaveNotifySettings() throws Exception {
         Long accountId = Long.valueOf("12345678");
         String fuser = "fuser";
