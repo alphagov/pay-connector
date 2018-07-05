@@ -5,6 +5,7 @@ import uk.gov.pay.connector.dao.SuccessfulChargeEventDao;
 import uk.gov.pay.connector.model.TransactionsSummaryResponse;
 
 import javax.inject.Inject;
+import java.time.ZonedDateTime;
 import java.util.List;
 
 public class TransactionsSummaryQuery {
@@ -18,7 +19,7 @@ public class TransactionsSummaryQuery {
         this.refundedEventDao = refundedEventDao;
     }
 
-    public TransactionsSummaryResponse execute(Long gatewayAccountId, String fromDate, String toDate) {
+    public TransactionsSummaryResponse execute(Long gatewayAccountId, ZonedDateTime fromDate, ZonedDateTime toDate) {
         List<SuccessfulChargeEvent> successfulPayments = successfulChargeEventDao.find(gatewayAccountId, fromDate, toDate);
         long paymentsValue = successfulPayments.stream().mapToLong(e -> e.getAmount()).sum();
         List<RefundedEvent> refundedEvents = refundedEventDao.find(gatewayAccountId, fromDate, toDate);

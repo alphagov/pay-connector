@@ -15,6 +15,7 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.UUID;
+import java.util.concurrent.atomic.AtomicLong;
 
 import static uk.gov.pay.connector.model.domain.GatewayAccountEntity.Type.TEST;
 import static uk.gov.pay.connector.model.domain.RefundStatus.CREATED;
@@ -85,6 +86,14 @@ public class DatabaseFixtures {
 
     public TestCardType aMaestroDebitCardType() {
         return new TestCardType().withLabel("Maestro").withType(Type.DEBIT).withBrand("maestro").withRequires3ds(true);
+    }
+
+    public TestSuccessfulChargeEvent aSuccessfulChargeEvent() {
+        return new TestSuccessfulChargeEvent();
+    }
+
+    public TestRefundedEvent aRefundedEvent() {
+        return new TestRefundedEvent();
     }
 
     public class TestRefundHistory {
@@ -356,9 +365,77 @@ public class DatabaseFixtures {
             return this;
         }
     }
+    
+    public class TestSuccessfulChargeEvent {
 
+        private long gatewayAccountId;
+        private ZonedDateTime createdDate;
+        private String externalChargeId;
+        private long amount;
+
+        public TestSuccessfulChargeEvent withAccountGatewayId(long gatewayAccountId) {
+            this.gatewayAccountId = gatewayAccountId;
+            return this;
+        }
+
+        public TestSuccessfulChargeEvent withCreatedDate(ZonedDateTime createdDate) {
+            this.createdDate = createdDate;
+            return this;
+        }
+
+        public TestSuccessfulChargeEvent withExternalChargeId(String externalChargeId) {
+            this.externalChargeId = externalChargeId;
+            return this;
+        }
+
+        public TestSuccessfulChargeEvent insert() {
+            databaseTestHelper.addSuccessfulChargeEvent(gatewayAccountId, createdDate, externalChargeId, amount);
+            return this;
+        }
+
+        public TestSuccessfulChargeEvent withAmount(long amount) {
+            this.amount = amount;
+            return this;
+        }
+    }
+
+    public class TestRefundedEvent {
+
+        private long gatewayAccountId;
+        private ZonedDateTime createdDate;
+        private String externalChargeId;
+        private long amount;
+
+        public TestRefundedEvent withAccountGatewayId(long gatewayAccountId) {
+            this.gatewayAccountId = gatewayAccountId;
+            return this;
+        }
+
+        public TestRefundedEvent withCreatedDate(ZonedDateTime createdDate) {
+            this.createdDate = createdDate;
+            return this;
+        }
+
+        public TestRefundedEvent withExternalChargeId(String externalChargeId) {
+            this.externalChargeId = externalChargeId;
+            return this;
+        }
+
+        public TestRefundedEvent insert() {
+            databaseTestHelper.addRefundedEvent(gatewayAccountId, createdDate, externalChargeId, amount);
+            return this;
+        }
+
+        public TestRefundedEvent withAmount(long amount) {
+            this.amount = amount;
+            return this;
+        }
+    }
+
+    static final AtomicLong initialChargeId = new AtomicLong(1L);
+    
     public class TestCharge {
-        Long chargeId = RandomUtils.nextLong(1, 99999);
+        Long chargeId = initialChargeId.getAndIncrement();
         private String description = "Test description";
         String email = "alice.111@mail.fake";
         String externalChargeId = RandomIdGenerator.newId();
@@ -506,8 +583,10 @@ public class DatabaseFixtures {
         }
     }
 
+    static final AtomicLong refundId = new AtomicLong(1L);
+    
     public class TestRefund {
-        Long id = RandomUtils.nextLong(1, 99999);
+        Long id = refundId.getAndIncrement();
         String externalRefundId = RandomIdGenerator.newId();
         String reference;
         long amount = 101L;

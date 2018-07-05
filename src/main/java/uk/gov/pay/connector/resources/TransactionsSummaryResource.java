@@ -49,13 +49,14 @@ public class TransactionsSummaryResource {
     private final GatewayAccountDao gatewayAccountDao;
     private final ChargeDao chargeDao;
     private final RefundDao refundDao;
-    private TransactionsSummaryQuery transactionsSummaryQuery;
+    private final TransactionsSummaryQuery transactionsSummaryQuery;
 
     @Inject
-    public TransactionsSummaryResource(GatewayAccountDao gatewayAccountDao, ChargeDao chargeDao, RefundDao refundDao) {
+    public TransactionsSummaryResource(GatewayAccountDao gatewayAccountDao, ChargeDao chargeDao, RefundDao refundDao, TransactionsSummaryQuery transactionsSummaryQuery) {
         this.gatewayAccountDao = gatewayAccountDao;
         this.chargeDao = chargeDao;
         this.refundDao = refundDao;
+        this.transactionsSummaryQuery = transactionsSummaryQuery;
     }
 
     @GET
@@ -65,7 +66,7 @@ public class TransactionsSummaryResource {
                                        @QueryParam(FROM_DATE) String fromDate,
                                        @QueryParam(TO_DATE) String toDate) {
 
-        return Response.ok(transactionsSummaryQuery.execute(gatewayAccountId, fromDate, toDate)).build();
+        return Response.ok(transactionsSummaryQuery.execute(gatewayAccountId, ZonedDateTime.parse(fromDate), ZonedDateTime.parse(toDate))).build();
     }
     
     @GET

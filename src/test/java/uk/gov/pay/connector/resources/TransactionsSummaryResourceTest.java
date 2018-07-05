@@ -87,7 +87,7 @@ public class TransactionsSummaryResourceTest {
         given(mockGatewayAccountDao.findById(GATEWAY_ACCOUNT_ID)).willReturn(Optional.of(mock(GatewayAccountEntity.class)));
 
 
-        resource = new TransactionsSummaryResource(mockGatewayAccountDao, mockChargeDao, mockRefundDao);
+        resource = new TransactionsSummaryResource(mockGatewayAccountDao, mockChargeDao, mockRefundDao, null);
     }
 
     @Test

@@ -790,4 +790,40 @@ public class DatabaseTestHelper {
                     "Found [" + chargeTransactions.size() + "] Charge Transactions for payment request id [" + paymentRequestId + "]");
         }
     }
+
+    public void addSuccessfulChargeEvent(long gatewayAccountId, ZonedDateTime createdDate, String externalChargeId, long amount) {
+        jdbi.withHandle(h -> h.update(
+                "INSERT INTO successful_charge_events(" +
+                        "gateway_account_id," +
+                        "created_date," +
+                        "amount," +
+                        "external_id" +
+                        ")" +
+                        "VALUES (" +
+                        "?, ?, ?, ?" +
+                        ")",
+                gatewayAccountId,
+                Timestamp.from(createdDate.toInstant()),
+                amount,
+                externalChargeId)
+        );
+    }
+
+    public void addRefundedEvent(long gatewayAccountId, ZonedDateTime createdDate, String externalChargeId, long amount) {
+        jdbi.withHandle(h -> h.update(
+                "INSERT INTO refunded_events(" +
+                        "gateway_account_id," +
+                        "created_date," +
+                        "amount," +
+                        "external_id" +
+                        ")" +
+                        "VALUES (" +
+                        "?, ?, ?, ?" +
+                        ")",
+                gatewayAccountId,
+                Timestamp.from(createdDate.toInstant()),
+                amount,
+                externalChargeId)
+        );
+    }
 }

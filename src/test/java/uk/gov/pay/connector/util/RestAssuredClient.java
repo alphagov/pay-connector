@@ -208,4 +208,12 @@ public class RestAssuredClient {
         this.refundId = refundId;
         return this;
     }
+
+    public ValidatableResponse getTransactionsSummaryByCqrs() {
+        String requestPath = "/v1/api/accounts/{accountId}/transactions-summary-cqrs"
+                .replace("{accountId}", accountId);
+        return addQueryParams(given().port(app.getLocalPort()))
+                .get(requestPath)
+                .then();
+    }
 }

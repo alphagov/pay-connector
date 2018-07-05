@@ -11,6 +11,7 @@ import javax.persistence.criteria.CriteriaBuilder;
 import javax.persistence.criteria.CriteriaQuery;
 import javax.persistence.criteria.Predicate;
 import javax.persistence.criteria.Root;
+import java.time.ZonedDateTime;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -22,7 +23,7 @@ public class RefundedEventDao extends JpaDao<RefundedEvent> {
         super(entityManager);
     }
 
-    public List<RefundedEvent> find(Long gatewayAccountId, String fromDate, String toDate) {
+    public List<RefundedEvent> find(Long gatewayAccountId, ZonedDateTime fromDate, ZonedDateTime toDate) {
         CriteriaBuilder cb = entityManager.get().getCriteriaBuilder();
         CriteriaQuery<RefundedEvent> cq = cb.createQuery(RefundedEvent.class);
         Root<RefundedEvent> refund = cq.from(RefundedEvent.class);

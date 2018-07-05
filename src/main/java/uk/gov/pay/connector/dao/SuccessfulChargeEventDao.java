@@ -11,6 +11,7 @@ import javax.persistence.criteria.CriteriaBuilder;
 import javax.persistence.criteria.CriteriaQuery;
 import javax.persistence.criteria.Predicate;
 import javax.persistence.criteria.Root;
+import java.time.ZonedDateTime;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -22,7 +23,7 @@ public class SuccessfulChargeEventDao extends JpaDao<SuccessfulChargeEvent> {
         super(entityManager);
     }
 
-    public List<SuccessfulChargeEvent> find(Long gatewayAccountId, String fromDate, String toDate) {
+    public List<SuccessfulChargeEvent> find(Long gatewayAccountId, ZonedDateTime fromDate, ZonedDateTime toDate) {
         CriteriaBuilder cb = entityManager.get().getCriteriaBuilder();
         CriteriaQuery<SuccessfulChargeEvent> cq = cb.createQuery(SuccessfulChargeEvent.class);
         Root<SuccessfulChargeEvent> charge = cq.from(SuccessfulChargeEvent.class);

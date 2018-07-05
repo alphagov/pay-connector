@@ -1346,7 +1346,7 @@
         </createTable>
         <createIndex indexName="idx_successful_charge_events_gateway_account_id"
                      tableName="successful_charge_events"
-                     unique="true">
+                     unique="false">
             <column name="gateway_account_id" type="char(26)"/>
         </createIndex>
         <createIndex indexName="idx_successful_charge_events_created_date"
@@ -1373,7 +1373,7 @@
         </createTable>
         <createIndex indexName="idx_refunded_events_gateway_account_id"
                      tableName="refunded_events"
-                     unique="true">
+                     unique="false">
             <column name="gateway_account_id" type="char(26)"/>
         </createIndex>
         <createIndex indexName="idx_refunded_events_created_date"
