@@ -121,7 +121,7 @@ public class ChargesApiResourceITest extends ChargingITestBase {
                 .body("refund_summary.status", is("pending"))
                 .body("settlement_summary.capture_submit_time", nullValue())
                 .body("settlement_summary.captured_time", nullValue())
-                .body("created_date", matchesPattern("^\\d{4}-\\d{2}-\\d{2}T\\d{2}:\\d{2}:\\d{2}.\\d{3}Z"))
+                .body("created_date", matchesPattern("^\\d{4}-\\d{2}-\\d{2}T\\d{2}:\\d{2}:\\d{2}(.\\d{1,3})?Z"))
                 .body("created_date", isWithin(10, SECONDS))
                 .contentType(JSON);
 
@@ -195,7 +195,7 @@ public class ChargesApiResourceITest extends ChargingITestBase {
         app.getInstanceFromGuiceContainer(CardCaptureProcess.class).runCapture();
 
         getCharge(chargeId)
-                .body("settlement_summary.capture_submit_time", matchesPattern("^\\d{4}-\\d{2}-\\d{2}T\\d{2}:\\d{2}:\\d{2}.\\d{3}Z"))
+                .body("settlement_summary.capture_submit_time", matchesPattern("^\\d{4}-\\d{2}-\\d{2}T\\d{2}:\\d{2}:\\d{2}(.\\d{1,3})?Z"))
                 .body("settlement_summary.capture_submit_time", isWithin(10, SECONDS))
                 .body("settlement_summary.captured_date", equalTo(expectedDayOfCapture))
         ;
@@ -225,7 +225,7 @@ public class ChargesApiResourceITest extends ChargingITestBase {
                 .body(JSON_RETURN_URL_KEY, is(returnUrl))
                 .body("containsKey('card_details')", is(false))
                 .body("containsKey('gateway_account')", is(false))
-                .body("created_date", matchesPattern("^\\d{4}-\\d{2}-\\d{2}T\\d{2}:\\d{2}:\\d{2}.\\d{3}Z"))
+                .body("created_date", matchesPattern("^\\d{4}-\\d{2}-\\d{2}T\\d{2}:\\d{2}:\\d{2}(.\\d{1,3})?Z"))
                 .body("created_date", isWithin(10, SECONDS))
                 .contentType(JSON);
 

@@ -265,7 +265,7 @@ public class SandboxRefundITest extends ChargingITestBase {
                 .body("refund_id", is(notNullValue()))
                 .body("amount", is(refundAmount.intValue()))
                 .body("status", is("success"))
-                .body("created_date", matchesPattern("^\\d{4}-\\d{2}-\\d{2}T\\d{2}:\\d{2}:\\d{2}.\\d{3}Z"))
+                .body("created_date", matchesPattern("^\\d{4}-\\d{2}-\\d{2}T\\d{2}:\\d{2}:\\d{2}(.\\d{1,3})?Z"))
                 .body("created_date", isWithin(10, SECONDS));
 
         String paymentUrl = format("https://localhost:%s/v1/api/accounts/%s/charges/%s",
