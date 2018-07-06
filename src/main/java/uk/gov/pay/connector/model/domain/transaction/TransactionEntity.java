@@ -52,6 +52,9 @@ public abstract class TransactionEntity<S extends Status, T extends TransactionE
     // This just needs to be set when we save the transaction. It is then used to optimise
     // transaction search don't access in Java code.
     private Long gatewayAccountId;
+    @Column(name = "user_external_id")
+    // This is the user external id of whoever issued a refund.
+    private String userExternalId;
 
     TransactionEntity(TransactionOperation operation) {
         this.operation = operation;

@@ -28,6 +28,8 @@ public class ChargeResponse {
 
         @JsonProperty("status")
         private String status;
+        @JsonProperty("user_external_id")
+        private String userExternalId;
         @JsonProperty("amount_available")
         private Long amountAvailable;
         @JsonProperty("amount_submitted")
@@ -45,6 +47,14 @@ public class ChargeResponse {
             this.amountSubmitted = amountSubmitted;
         }
 
+        public String getUserExternalId() {
+            return userExternalId;
+        }
+
+        public void setUserExternalId(String userExternalId) {
+            this.userExternalId = userExternalId;
+        }
+
         public Long getAmountAvailable() {
             return amountAvailable;
         }
@@ -59,21 +69,36 @@ public class ChargeResponse {
 
         @Override
         public boolean equals(Object o) {
-            if (this == o) return true;
-            if (o == null || getClass() != o.getClass()) return false;
+            if (this == o) {
+                return true;
+            }
+            if (o == null || getClass() != o.getClass()) {
+                return false;
+            }
 
             RefundSummary that = (RefundSummary) o;
 
-            if (!status.equals(that.status)) return false;
-            if (!amountAvailable.equals(that.amountAvailable)) return false;
-            return amountSubmitted.equals(that.amountSubmitted);
+            if (!status.equals(that.status)) {
+                return false;
+            }
+            if (userExternalId != null ? !userExternalId.equals(that.userExternalId)
+                    : that.userExternalId != null) {
+                return false;
+            }
+            if (amountAvailable != null ? !amountAvailable.equals(that.amountAvailable)
+                    : that.amountAvailable != null) {
+                return false;
+            }
+            return amountSubmitted != null ? amountSubmitted.equals(that.amountSubmitted)
+                    : that.amountSubmitted == null;
         }
 
         @Override
         public int hashCode() {
             int result = status.hashCode();
-            result = 31 * result + amountAvailable.hashCode();
-            result = 31 * result + amountSubmitted.hashCode();
+            result = 31 * result + (userExternalId != null ? userExternalId.hashCode() : 0);
+            result = 31 * result + (amountAvailable != null ? amountAvailable.hashCode() : 0);
+            result = 31 * result + (amountSubmitted != null ? amountSubmitted.hashCode() : 0);
             return result;
         }
 
@@ -81,6 +106,7 @@ public class ChargeResponse {
         public String toString() {
             return "RefundSummary{" +
                     "status='" + status + '\'' +
+                    "userExternalId='" + userExternalId + '\'' +
                     ", amountAvailable=" + amountAvailable +
                     ", amountSubmitted=" + amountSubmitted +
                     '}';
