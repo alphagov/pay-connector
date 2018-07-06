@@ -52,6 +52,7 @@ public class LoggingFilterTest {
     public void setup() {
         loggingFilter = new LoggingFilter();
         Logger root = (Logger) LoggerFactory.getLogger(LoggingFilter.class);
+        root.setLevel(Level.INFO);
         mockAppender = mockAppender();
         root.addAppender(mockAppender);
     }

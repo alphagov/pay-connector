@@ -1,5 +1,6 @@
 package uk.gov.pay.connector.it.gatewayclient;
 
+import ch.qos.logback.classic.Level;
 import ch.qos.logback.classic.Logger;
 import ch.qos.logback.classic.spi.ILoggingEvent;
 import ch.qos.logback.classic.spi.LoggingEvent;
@@ -86,6 +87,7 @@ public class GatewayAuthFailuresITest {
         this.chargeTestRecord = testCharge.insert();
 
         Logger root = (Logger) LoggerFactory.getLogger(GatewayClient.class);
+        root.setLevel(Level.INFO);
         root.addAppender(mockAppender);
     }
 

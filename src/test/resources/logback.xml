@@ -2,6 +2,6 @@
   <logger name="liquibase" level="WARN" />
   <logger name="org.apache.http" level="WARN" />
   <logger name="com.spotify" level="WARN" />
-  <logger name="uk.gov.pay." level="INFO" />
+  <logger name="uk.gov.pay." level="WARN" />
   <root level="WARN"/>
 </configuration>
