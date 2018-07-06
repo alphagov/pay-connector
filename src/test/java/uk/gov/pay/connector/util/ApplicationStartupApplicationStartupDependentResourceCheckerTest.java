@@ -44,6 +44,7 @@ public class ApplicationStartupApplicationStartupDependentResourceCheckerTest {
     public void setup() {
         Logger root = (Logger) LoggerFactory.getLogger(ApplicationStartupDependentResourceChecker.class);
         mockAppender = mockAppender();
+        root.setLevel(Level.INFO);
         root.addAppender(mockAppender);
     }
 
