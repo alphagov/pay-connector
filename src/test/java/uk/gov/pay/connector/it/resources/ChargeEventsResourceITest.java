@@ -67,10 +67,10 @@ public class ChargeEventsResourceITest {
         connectorApi
                 .getEvents(testCharge.getExternalChargeId())
                 .body("charge_id", is(testCharge.getExternalChargeId()))
-                .body("cqrs.size()", equalTo(3))
-                .body("cqrs[0]", new TransactionEventMatcher("PAYMENT", withState("created", "false"), "100", createdTestChargeEvent.getUpdated()))
-                .body("cqrs[1]", new TransactionEventMatcher("PAYMENT", withState("started", "false"), "100", enteringCardDetailsTestChargeEvent.getUpdated()))
-                .body("cqrs[2]", new TransactionEventMatcher("PAYMENT", withState("success", "true"), "100", captureApprovedTestChargeEvent.getUpdated()));
+                .body("events.size()", equalTo(3))
+                .body("events[0]", new TransactionEventMatcher("PAYMENT", withState("created", "false"), "100", createdTestChargeEvent.getUpdated()))
+                .body("events[1]", new TransactionEventMatcher("PAYMENT", withState("started", "false"), "100", enteringCardDetailsTestChargeEvent.getUpdated()))
+                .body("events[2]", new TransactionEventMatcher("PAYMENT", withState("success", "true"), "100", captureApprovedTestChargeEvent.getUpdated()));
     }
 
     @Test
@@ -131,14 +131,14 @@ public class ChargeEventsResourceITest {
         connectorApi
                 .getEvents(testCharge.getExternalChargeId())
                 .body("charge_id", is(testCharge.getExternalChargeId()))
-                .body("cqrs.size()", equalTo(7))
-                .body("cqrs[0]", new TransactionEventMatcher("PAYMENT", withState("created", "false"), "100", createdTestChargeEvent.getUpdated()))
-                .body("cqrs[1]", new TransactionEventMatcher("PAYMENT", withState("started", "false"), "100", enteringCardDetailsTestChargeEvent.getUpdated()))
-                .body("cqrs[2]", new TransactionEventMatcher("PAYMENT", withState("success", "true"), "100", captureApprovedTestChargeEvent.getUpdated()))
-                .body("cqrs[3]", new TransactionEventMatcher("REFUND", withState("submitted", "false"), "10", historyRefund1SubmittedStartDate, testReferenceRefund1, SUBMITTED_BY))
-                .body("cqrs[4]", new TransactionEventMatcher("REFUND", withState("success", "true"), "10", refundTest1RefundedDate, testReferenceRefund1, SUBMITTED_BY))
-                .body("cqrs[5]", new TransactionEventMatcher("REFUND", withState("submitted", "false"), "90", historyRefund2SubmittedStartDate, testReferenceRefund2, null))
-                .body("cqrs[6]", new TransactionEventMatcher("REFUND", withState("success", "true"), "90", refundTest2RefundedDate, testReferenceRefund2, null));
+                .body("events.size()", equalTo(7))
+                .body("events[0]", new TransactionEventMatcher("PAYMENT", withState("created", "false"), "100", createdTestChargeEvent.getUpdated()))
+                .body("events[1]", new TransactionEventMatcher("PAYMENT", withState("started", "false"), "100", enteringCardDetailsTestChargeEvent.getUpdated()))
+                .body("events[2]", new TransactionEventMatcher("PAYMENT", withState("success", "true"), "100", captureApprovedTestChargeEvent.getUpdated()))
+                .body("events[3]", new TransactionEventMatcher("REFUND", withState("submitted", "false"), "10", historyRefund1SubmittedStartDate, testReferenceRefund1, SUBMITTED_BY))
+                .body("events[4]", new TransactionEventMatcher("REFUND", withState("success", "true"), "10", refundTest1RefundedDate, testReferenceRefund1, SUBMITTED_BY))
+                .body("events[5]", new TransactionEventMatcher("REFUND", withState("submitted", "false"), "90", historyRefund2SubmittedStartDate, testReferenceRefund2, null))
+                .body("events[6]", new TransactionEventMatcher("REFUND", withState("success", "true"), "90", refundTest2RefundedDate, testReferenceRefund2, null));
     }
 
     @Test
