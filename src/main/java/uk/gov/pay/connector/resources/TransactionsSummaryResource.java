@@ -1,6 +1,8 @@
 package uk.gov.pay.connector.resources;
 
 import org.apache.commons.lang3.tuple.Pair;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import uk.gov.pay.connector.cqrs.TransactionsSummaryQuery;
 import uk.gov.pay.connector.dao.ChargeDao;
 import uk.gov.pay.connector.dao.GatewayAccountDao;
@@ -34,6 +36,8 @@ import static uk.gov.pay.connector.resources.ApiValidators.validateGatewayAccoun
 @Path("/")
 public class TransactionsSummaryResource {
 
+    private static final Logger LOG = LoggerFactory.getLogger(TransactionsSummaryResource.class);
+    
     private static final String ACCOUNT_ID = "accountId";
     private static final String FROM_DATE = "from_date";
     private static final String TO_DATE = "to_date";
@@ -66,6 +70,7 @@ public class TransactionsSummaryResource {
                                        @QueryParam(FROM_DATE) String fromDate,
                                        @QueryParam(TO_DATE) String toDate) {
 
+        LOG.info("Getting transactions by CQRS");
         return Response.ok(transactionsSummaryQuery.execute(gatewayAccountId, ZonedDateTime.parse(fromDate), ZonedDateTime.parse(toDate))).build();
     }
     
@@ -75,6 +80,8 @@ public class TransactionsSummaryResource {
     public Response getPaymentsSummary(@PathParam(ACCOUNT_ID) Long gatewayAccountId,
                                        @QueryParam(FROM_DATE) String fromDate,
                                        @QueryParam(TO_DATE) String toDate) {
+        
+        LOG.info("Getting transactions by CRUD");
         return reduce(validateGatewayAccountReference(gatewayAccountDao, gatewayAccountId)
                 .bimap(ResponseUtil::notFoundResponse,
                         success -> reduce(validateFromDateIsBeforeToDate(FROM_DATE, fromDate, TO_DATE, toDate)
