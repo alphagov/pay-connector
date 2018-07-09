@@ -31,6 +31,7 @@ import java.time.ZonedDateTime;
                         @ColumnResult(name = "cardholder_name", type = String.class),
                         @ColumnResult(name = "expiry_date", type = String.class),
                         @ColumnResult(name = "last_digits_card_number", type = String.class),
+                        @ColumnResult(name = "user_external_id", type = String.class),
                         @ColumnResult(name = "address_city", type = String.class),
                         @ColumnResult(name = "address_country", type = String.class),
                         @ColumnResult(name = "address_county", type = String.class),
@@ -60,6 +61,7 @@ public class Transaction {
     private String cardHolderName;
     private String expiryDate;
     private String lastDigitsCardNumber;
+    private String userExternalId;
     private String addressCity;
     private String addressCountry;
     private String addressCounty;
@@ -86,6 +88,7 @@ public class Transaction {
                        String cardHolderName,
                        String expiryDate,
                        String lastDigitsCardNumber,
+                       String userExternalId,
                        String addressCity,
                        String addressCountry,
                        String addressCounty,
@@ -104,6 +107,7 @@ public class Transaction {
         this.createdDate = new UTCDateTimeConverter().convertToEntityAttribute(createdDate);
         this.transactionType = transactionType;
         this.cardBrand = cardBrand;
+        this.userExternalId = userExternalId;
         this.cardBrandLabel = cardBrandLabel;
         this.cardHolderName = cardHolderName;
         this.expiryDate = expiryDate;
@@ -203,5 +207,9 @@ public class Transaction {
 
     public long getAmount() {
         return amount;
+    }
+
+    public String getUserExternalId() {
+        return userExternalId;
     }
 }
