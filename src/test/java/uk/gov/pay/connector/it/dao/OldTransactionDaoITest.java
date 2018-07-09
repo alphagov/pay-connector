@@ -19,6 +19,7 @@ import static java.time.ZonedDateTime.now;
 import static java.util.Collections.singletonList;
 import static org.exparity.hamcrest.date.ZonedDateTimeMatchers.within;
 import static org.hamcrest.MatcherAssert.assertThat;
+import static org.hamcrest.Matchers.nullValue;
 import static org.hamcrest.core.Is.is;
 import static uk.gov.pay.connector.it.dao.DatabaseFixtures.withDatabaseTestHelper;
 import static uk.gov.pay.connector.model.TransactionType.PAYMENT;
@@ -38,7 +39,7 @@ public class OldTransactionDaoITest extends DaoITestBase {
     private static final String TO_DATE = "2026-01-08T01:00:00Z";
     private static final String DEFAULT_TEST_CHARGE_DESCRIPTION = "Charge description";
     private static final String DEFAULT_TEST_CHARGE_REFERENCE = "Council tax thing";
-
+    private static final String REFUND_USER_EXTERNAL_ID = "user";
     private OldTransactionDao oldTransactionDao;
     private DatabaseFixtures.TestAccount defaultTestAccount;
 
@@ -53,12 +54,12 @@ public class OldTransactionDaoITest extends DaoITestBase {
     }
 
     @Test
-    public void searchChargesByGatewayAccountIdOnly() throws Exception {
+    public void searchChargesByGatewayAccountIdOnly()  {
 
         // given
         DatabaseFixtures.TestCharge testCharge = insertNewChargeWithId(1L, now());
         DatabaseFixtures.TestCardDetails testCardDetails = updateCardDetailsForCharge(testCharge);
-        DatabaseFixtures.TestRefund testRefund = insertNewRefundForCharge(testCharge, 2L, now().plusSeconds(1));
+        DatabaseFixtures.TestRefund testRefund = insertNewRefundForCharge(testCharge, REFUND_USER_EXTERNAL_ID, 2L, now().plusSeconds(1));
 
         ChargeSearchParams params = new ChargeSearchParams();
 
@@ -76,6 +77,7 @@ public class OldTransactionDaoITest extends DaoITestBase {
         assertThat(transactionRefund.getDescription(), is(testCharge.getDescription()));
         assertThat(transactionRefund.getStatus(), is(testRefund.getStatus().toString()));
         assertThat(transactionRefund.getCardBrand(), is(testCardDetails.getCardBrand()));
+        assertThat(transactionRefund.getUserExternalId(), is(REFUND_USER_EXTERNAL_ID));
         assertThat(transactionRefund.getCardBrandLabel(), is("Visa")); // read from card types table which is populated by the card_types.csv seed data
         assertDateMatch(transactionRefund.getCreatedDate().toString());
 
@@ -87,15 +89,16 @@ public class OldTransactionDaoITest extends DaoITestBase {
         assertThat(transactionCharge.getDescription(), is(testCharge.getDescription()));
         assertThat(transactionCharge.getStatus(), is(testCharge.getChargeStatus().toString()));
         assertThat(transactionCharge.getCardBrand(), is(testCardDetails.getCardBrand()));
+        assertThat(transactionCharge.getUserExternalId(), is(nullValue()));
         assertDateMatch(transactionCharge.getCreatedDate().toString());
     }
 
     @Test
-    public void searchChargesByFullEmailMatch() throws Exception {
+    public void searchChargesByFullEmailMatch()  {
 
         // given
         DatabaseFixtures.TestCharge testCharge = insertNewChargeWithId(1L, now().plusHours(1));
-        DatabaseFixtures.TestRefund testRefund = insertNewRefundForCharge(testCharge, 2L, now().plusHours(2));
+        DatabaseFixtures.TestRefund testRefund = insertNewRefundForCharge(testCharge, REFUND_USER_EXTERNAL_ID,2L, now().plusHours(2));
         ChargeSearchParams params = new ChargeSearchParams()
                 .withEmailLike(testCharge.getEmail());
 
@@ -107,16 +110,18 @@ public class OldTransactionDaoITest extends DaoITestBase {
 
         assertThat(transactions.get(0).getAmount(), is(testRefund.getAmount()));
         assertThat(transactions.get(0).getTransactionType(), is("refund"));
+        assertThat(transactions.get(0).getUserExternalId(), is(REFUND_USER_EXTERNAL_ID));
         assertThat(transactions.get(1).getAmount(), is(testCharge.getAmount()));
         assertThat(transactions.get(1).getTransactionType(), is("charge"));
+        assertThat(transactions.get(1).getUserExternalId(), is(nullValue()));
     }
 
     @Test
-    public void searchChargesByPartialEmailMatch() throws Exception {
+    public void searchChargesByPartialEmailMatch()  {
 
         // given
         DatabaseFixtures.TestCharge testCharge = insertNewChargeWithId(1L, now().plusHours(1));
-        DatabaseFixtures.TestRefund testRefund = insertNewRefundForCharge(testCharge, 2L, now().plusHours(2));
+        DatabaseFixtures.TestRefund testRefund = insertNewRefundForCharge(testCharge, REFUND_USER_EXTERNAL_ID,2L, now().plusHours(2));
         ChargeSearchParams params = new ChargeSearchParams()
                 .withEmailLike("alice");
 
@@ -128,17 +133,19 @@ public class OldTransactionDaoITest extends DaoITestBase {
 
         assertThat(transactions.get(0).getAmount(), is(testRefund.getAmount()));
         assertThat(transactions.get(0).getTransactionType(), is("refund"));
+        assertThat(transactions.get(0).getUserExternalId(), is(REFUND_USER_EXTERNAL_ID));
         assertThat(transactions.get(1).getAmount(), is(testCharge.getAmount()));
         assertThat(transactions.get(1).getTransactionType(), is("charge"));
+        assertThat(transactions.get(1).getUserExternalId(), is(nullValue()));
     }
 
     @Test
-    public void searchChargesByCardBrandOnly() throws Exception {
+    public void searchChargesByCardBrandOnly()  {
 
         // given
         DatabaseFixtures.TestCharge testCharge = insertNewChargeWithId(1L, now().plusHours(1));
         DatabaseFixtures.TestCardDetails testCardDetails = updateCardDetailsForCharge(testCharge);
-        DatabaseFixtures.TestRefund testRefund = insertNewRefundForCharge(testCharge, 2L, now().plusHours(2));
+        DatabaseFixtures.TestRefund testRefund = insertNewRefundForCharge(testCharge, REFUND_USER_EXTERNAL_ID,2L, now().plusHours(2));
         ChargeSearchParams params = new ChargeSearchParams()
                 .withCardBrand(testCardDetails.getCardBrand());
 
@@ -150,23 +157,25 @@ public class OldTransactionDaoITest extends DaoITestBase {
 
         assertThat(transactions.get(0).getAmount(), is(testRefund.getAmount()));
         assertThat(transactions.get(0).getTransactionType(), is("refund"));
+        assertThat(transactions.get(0).getUserExternalId(), is(REFUND_USER_EXTERNAL_ID));
         assertThat(transactions.get(1).getAmount(), is(testCharge.getAmount()));
         assertThat(transactions.get(1).getTransactionType(), is("charge"));
+        assertThat(transactions.get(1).getUserExternalId(), is(nullValue()));
     }
 
     @Test
-    public void searchChargesByMultipleCardBrandOnly() throws Exception {
+    public void searchChargesByMultipleCardBrandOnly()  {
 
         // given
         String visa = "visa";
         String masterCard = "master-card";
         DatabaseFixtures.TestCharge testCharge1 = insertNewChargeWithId(1L, now().plusHours(1));
         updateCardDetailsForCharge(testCharge1, visa);
-        DatabaseFixtures.TestRefund testRefund1 = insertNewRefundForCharge(testCharge1, 2L, now().plusHours(2));
+        DatabaseFixtures.TestRefund testRefund1 = insertNewRefundForCharge(testCharge1, REFUND_USER_EXTERNAL_ID,2L, now().plusHours(2));
 
         DatabaseFixtures.TestCharge testCharge2 = insertNewChargeWithId(3L, now().plusHours(3));
         updateCardDetailsForCharge(testCharge2, visa);
-        DatabaseFixtures.TestRefund testRefund2 = insertNewRefundForCharge(testCharge2, 4L, now().plusHours(4));
+        DatabaseFixtures.TestRefund testRefund2 = insertNewRefundForCharge(testCharge2, REFUND_USER_EXTERNAL_ID,4L, now().plusHours(4));
 
         ChargeSearchParams params = new ChargeSearchParams()
                 .withCardBrands(Arrays.asList(visa, masterCard));
@@ -179,23 +188,27 @@ public class OldTransactionDaoITest extends DaoITestBase {
 
         assertThat(transactions.get(0).getAmount(), is(testRefund2.getAmount()));
         assertThat(transactions.get(0).getTransactionType(), is("refund"));
+        assertThat(transactions.get(0).getUserExternalId(), is(REFUND_USER_EXTERNAL_ID));
         assertThat(transactions.get(1).getAmount(), is(testCharge2.getAmount()));
         assertThat(transactions.get(1).getTransactionType(), is("charge"));
+        assertThat(transactions.get(1).getUserExternalId(), is(nullValue()));
         assertThat(transactions.get(2).getAmount(), is(testRefund1.getAmount()));
         assertThat(transactions.get(2).getTransactionType(), is("refund"));
+        assertThat(transactions.get(2).getUserExternalId(), is(REFUND_USER_EXTERNAL_ID));
         assertThat(transactions.get(3).getAmount(), is(testCharge1.getAmount()));
         assertThat(transactions.get(3).getTransactionType(), is("charge"));
+        assertThat(transactions.get(3).getUserExternalId(), is(nullValue()));
     }
 
     @Test
-    public void searchChargesWithDefaultSizeAndPage_shouldGetChargesInCreationDateOrder() throws Exception {
+    public void searchChargesWithDefaultSizeAndPage_shouldGetChargesInCreationDateOrder()  {
 
         // given
         DatabaseFixtures.TestCharge charge1 = insertNewChargeWithId(1L, now().plusHours(1));
-        insertNewRefundForCharge(charge1, 2L, now().plusHours(2));
+        insertNewRefundForCharge(charge1, REFUND_USER_EXTERNAL_ID,2L, now().plusHours(2));
         DatabaseFixtures.TestCharge charge2 = insertNewChargeWithId(3L, now().plusHours(3));
-        insertNewRefundForCharge(charge2, 4L, now().plusHours(4));
-        insertNewRefundForCharge(charge2, 5L, now().plusHours(5));
+        insertNewRefundForCharge(charge2, REFUND_USER_EXTERNAL_ID,4L, now().plusHours(4));
+        insertNewRefundForCharge(charge2, REFUND_USER_EXTERNAL_ID,5L, now().plusHours(5));
         DatabaseFixtures.TestCharge charge3 = insertNewChargeWithId(6L, now().plusHours(6));
 
         ChargeSearchParams params = new ChargeSearchParams();
@@ -208,40 +221,46 @@ public class OldTransactionDaoITest extends DaoITestBase {
         assertThat(transactions.get(0).getExternalId(), is(charge3.getExternalChargeId()));
         assertThat(transactions.get(0).getTransactionType(), is("charge"));
         assertThat(transactions.get(0).getAmount(), is(6L));
+        assertThat(transactions.get(0).getUserExternalId(), is(nullValue()));
 
         assertThat(transactions.get(1).getExternalId(), is(charge2.getExternalChargeId()));
         assertThat(transactions.get(1).getTransactionType(), is("refund"));
         assertThat(transactions.get(1).getAmount(), is(5L));
+        assertThat(transactions.get(1).getUserExternalId(), is(REFUND_USER_EXTERNAL_ID));
 
         assertThat(transactions.get(2).getExternalId(), is(charge2.getExternalChargeId()));
         assertThat(transactions.get(2).getTransactionType(), is("refund"));
         assertThat(transactions.get(2).getAmount(), is(4L));
+        assertThat(transactions.get(2).getUserExternalId(), is(REFUND_USER_EXTERNAL_ID));
 
         assertThat(transactions.get(3).getExternalId(), is(charge2.getExternalChargeId()));
         assertThat(transactions.get(3).getTransactionType(), is("charge"));
         assertThat(transactions.get(3).getAmount(), is(3L));
-
+        assertThat(transactions.get(3).getUserExternalId(), is(nullValue()));
+        
         assertThat(transactions.get(4).getExternalId(), is(charge1.getExternalChargeId()));
         assertThat(transactions.get(4).getTransactionType(), is("refund"));
         assertThat(transactions.get(4).getAmount(), is(2L));
-
+        assertThat(transactions.get(4).getUserExternalId(), is(REFUND_USER_EXTERNAL_ID));
+        
         assertThat(transactions.get(5).getExternalId(), is(charge1.getExternalChargeId()));
         assertThat(transactions.get(5).getTransactionType(), is("charge"));
         assertThat(transactions.get(5).getAmount(), is(1L));
+        assertThat(transactions.get(5).getUserExternalId(), is(nullValue()));
     }
 
     @Test
-    public void searchChargesWithSizeAndPageSetShouldGetTransactionsInCreationDateOrder() throws Exception {
+    public void searchChargesWithSizeAndPageSetShouldGetTransactionsInCreationDateOrder()  {
 
         // given
         DatabaseFixtures.TestCharge charge1 = insertNewChargeWithId(1L, now().plusHours(1));
-        insertNewRefundForCharge(charge1, 2L, now().plusHours(2));
+        insertNewRefundForCharge(charge1, REFUND_USER_EXTERNAL_ID,2L, now().plusHours(2));
         DatabaseFixtures.TestCharge charge2 = insertNewChargeWithId(3L, now().plusHours(3));
-        insertNewRefundForCharge(charge2, 4L, now().plusHours(4));
-        insertNewRefundForCharge(charge2, 5L, now().plusHours(5));
+        insertNewRefundForCharge(charge2, REFUND_USER_EXTERNAL_ID,4L, now().plusHours(4));
+        insertNewRefundForCharge(charge2, REFUND_USER_EXTERNAL_ID,5L, now().plusHours(5));
         DatabaseFixtures.TestCharge charge3 = insertNewChargeWithId(6L, now().plusHours(6));
         DatabaseFixtures.TestCharge charge4 = insertNewChargeWithId(6L, now().plusHours(7));
-        insertNewRefundForCharge(charge3, 5L, now().plusHours(8));
+        insertNewRefundForCharge(charge3, REFUND_USER_EXTERNAL_ID,5L, now().plusHours(8));
 
         // when
         ChargeSearchParams params = new ChargeSearchParams()
@@ -254,12 +273,15 @@ public class OldTransactionDaoITest extends DaoITestBase {
 
         assertThat(transactions.get(0).getExternalId(), is(charge3.getExternalChargeId()));
         assertThat(transactions.get(0).getTransactionType(), is("refund"));
+        assertThat(transactions.get(0).getUserExternalId(), is(REFUND_USER_EXTERNAL_ID));
 
         assertThat(transactions.get(1).getExternalId(), is(charge4.getExternalChargeId()));
         assertThat(transactions.get(1).getTransactionType(), is("charge"));
+        assertThat(transactions.get(1).getUserExternalId(), is(nullValue()));
 
         assertThat(transactions.get(2).getExternalId(), is(charge3.getExternalChargeId()));
         assertThat(transactions.get(2).getTransactionType(), is("charge"));
+        assertThat(transactions.get(2).getUserExternalId(), is(nullValue()));
 
         // when
         params = new ChargeSearchParams()
@@ -275,13 +297,17 @@ public class OldTransactionDaoITest extends DaoITestBase {
         assertThat(transactions.get(0).getExternalId(), is(charge2.getExternalChargeId()));
         assertThat(transactions.get(0).getTransactionType(), is("refund"));
         assertThat(transactions.get(0).getAmount(), is(5L));
+        assertThat(transactions.get(0).getUserExternalId(), is(REFUND_USER_EXTERNAL_ID));
 
         assertThat(transactions.get(1).getExternalId(), is(charge2.getExternalChargeId()));
         assertThat(transactions.get(1).getTransactionType(), is("refund"));
         assertThat(transactions.get(1).getAmount(), is(4L));
+        assertThat(transactions.get(1).getUserExternalId(), is(REFUND_USER_EXTERNAL_ID));
 
         assertThat(transactions.get(2).getExternalId(), is(charge2.getExternalChargeId()));
         assertThat(transactions.get(2).getTransactionType(), is("charge"));
+        assertThat(transactions.get(2).getUserExternalId(), is(nullValue()));
+
 
         // when
         params = new ChargeSearchParams()
@@ -296,9 +322,12 @@ public class OldTransactionDaoITest extends DaoITestBase {
 
         assertThat(transactions.get(0).getExternalId(), is(charge1.getExternalChargeId()));
         assertThat(transactions.get(0).getTransactionType(), is("refund"));
+        assertThat(transactions.get(0).getUserExternalId(), is(REFUND_USER_EXTERNAL_ID));
 
         assertThat(transactions.get(1).getExternalId(), is(charge1.getExternalChargeId()));
         assertThat(transactions.get(1).getTransactionType(), is("charge"));
+        assertThat(transactions.get(1).getUserExternalId(), is(nullValue()));
+
     }
 
     @Test
@@ -306,13 +335,13 @@ public class OldTransactionDaoITest extends DaoITestBase {
 
         // given
         DatabaseFixtures.TestCharge charge1 = insertNewChargeWithId(1L, now().plusHours(1));
-        insertNewRefundForCharge(charge1, 2L, now().plusHours(2));
+        insertNewRefundForCharge(charge1, REFUND_USER_EXTERNAL_ID,2L, now().plusHours(2));
         DatabaseFixtures.TestCharge charge2 = insertNewChargeWithId(3L, now().plusHours(3));
-        insertNewRefundForCharge(charge2, 4L, now().plusHours(4));
-        insertNewRefundForCharge(charge2, 5L, now().plusHours(5));
+        insertNewRefundForCharge(charge2, REFUND_USER_EXTERNAL_ID,4L, now().plusHours(4));
+        insertNewRefundForCharge(charge2, REFUND_USER_EXTERNAL_ID,5L, now().plusHours(5));
         DatabaseFixtures.TestCharge charge3 = insertNewChargeWithId(6L, now().plusHours(6));
         insertNewChargeWithId(6L, now().plusHours(7));
-        insertNewRefundForCharge(charge3, 5L, now().plusHours(8));
+        insertNewRefundForCharge(charge3, REFUND_USER_EXTERNAL_ID,5L, now().plusHours(8));
 
         ChargeSearchParams params = new ChargeSearchParams()
                 .withPage(1L)
@@ -327,11 +356,11 @@ public class OldTransactionDaoITest extends DaoITestBase {
     }
 
     @Test
-    public void searchChargesByFullReferenceOnly() throws Exception {
+    public void searchChargesByFullReferenceOnly()  {
 
         // given
         DatabaseFixtures.TestCharge testCharge = insertNewChargeWithId(1L, now().plusHours(1));
-        insertNewRefundForCharge(testCharge, 2L, now().plusHours(2));
+        insertNewRefundForCharge(testCharge, REFUND_USER_EXTERNAL_ID,2L, now().plusHours(2));
         ChargeSearchParams params = new ChargeSearchParams()
                 .withReferenceLike(testCharge.getReference());
 
@@ -346,16 +375,18 @@ public class OldTransactionDaoITest extends DaoITestBase {
 
         assertThat(refund.getExternalId(), is(testCharge.getExternalChargeId()));
         assertThat(refund.getTransactionType(), is("refund"));
+        assertThat(refund.getUserExternalId(), is(REFUND_USER_EXTERNAL_ID));
         assertThat(charge.getExternalId(), is(testCharge.getExternalChargeId()));
         assertThat(charge.getTransactionType(), is("charge"));
+        assertThat(charge.getUserExternalId(), is(nullValue()));
     }
 
     @Test
-    public void searchChargesByPartialReferenceOnly() throws Exception {
+    public void searchChargesByPartialReferenceOnly()  {
 
         // given
         DatabaseFixtures.TestCharge testCharge = insertNewChargeWithId(1L, now().plusHours(1));
-        insertNewRefundForCharge(testCharge, 2L, now().plusHours(2));
+        insertNewRefundForCharge(testCharge, REFUND_USER_EXTERNAL_ID,2L, now().plusHours(2));
 
         ServicePaymentReference partialPaymentReference = ServicePaymentReference.of("Council Tax");
 
@@ -378,13 +409,17 @@ public class OldTransactionDaoITest extends DaoITestBase {
         assertThat(transactions.get(0).getExternalId(), is(partialReferenceCharge.getExternalChargeId()));
         assertThat(transactions.get(0).getReference(), is(partialReferenceCharge.getReference()));
         assertThat(transactions.get(0).getTransactionType(), is("charge"));
+        assertThat(transactions.get(0).getUserExternalId(), is(nullValue()));
 
         assertThat(transactions.get(1).getExternalId(), is(testCharge.getExternalChargeId()));
         assertThat(transactions.get(1).getTransactionType(), is("refund"));
+        assertThat(transactions.get(1).getUserExternalId(), is(REFUND_USER_EXTERNAL_ID));
 
         assertThat(transactions.get(2).getExternalId(), is(testCharge.getExternalChargeId()));
         assertThat(transactions.get(2).getReference(), is(testCharge.getReference()));
         assertThat(transactions.get(2).getTransactionType(), is("charge"));
+        assertThat(transactions.get(2).getUserExternalId(), is(nullValue()));
+
     }
 
     @Test
@@ -420,7 +455,7 @@ public class OldTransactionDaoITest extends DaoITestBase {
     }
 
     @Test
-    public void searchChargesByReferenceWithPercentSign() throws Exception {
+    public void searchChargesByReferenceWithPercentSign()  {
         // since '%' have special meaning in like queries of postgres this was resulting in undesired results
         withDatabaseTestHelper(databaseTestHelper)
                 .aTestCharge()
@@ -448,7 +483,7 @@ public class OldTransactionDaoITest extends DaoITestBase {
     }
 
     @Test
-    public void searchTransactionByReferenceAndEmailShouldBeCaseInsensitive() throws Exception {
+    public void searchTransactionByReferenceAndEmailShouldBeCaseInsensitive()  {
         // fix that the reference and email searches should be case insensitive
         withDatabaseTestHelper(databaseTestHelper)
                 .aTestCharge()
@@ -484,7 +519,7 @@ public class OldTransactionDaoITest extends DaoITestBase {
     }
 
     @Test
-    public void aBasicTestAgainstSqlInjection() throws Exception {
+    public void aBasicTestAgainstSqlInjection()  {
         // given
         withDatabaseTestHelper(databaseTestHelper)
                 .aTestCharge()
@@ -510,11 +545,11 @@ public class OldTransactionDaoITest extends DaoITestBase {
 
 
     @Test
-    public void searchTransactionByReferenceAndLegacyStatusOnly() throws Exception {
+    public void searchTransactionByReferenceAndLegacyStatusOnly()  {
         // given
         DatabaseFixtures.TestCharge testCharge = insertNewChargeWithId(1L, now());
         DatabaseFixtures.TestCardDetails testCardDetails = updateCardDetailsForCharge(testCharge);
-        DatabaseFixtures.TestRefund testRefund = insertNewRefundForCharge(testCharge, 2L, now().plusSeconds(1));
+        DatabaseFixtures.TestRefund testRefund = insertNewRefundForCharge(testCharge, REFUND_USER_EXTERNAL_ID,2L, now().plusSeconds(1));
 
         ChargeSearchParams params = new ChargeSearchParams()
                 .withReferenceLike(testCharge.getReference())
@@ -550,12 +585,12 @@ public class OldTransactionDaoITest extends DaoITestBase {
     }
 
     @Test
-    public void searchTransactionByReferenceAndStatusAndFromDateAndToDate() throws Exception {
+    public void searchTransactionByReferenceAndStatusAndFromDateAndToDate()  {
 
         // given
         DatabaseFixtures.TestCharge testCharge = insertNewChargeWithId(1L, now());
         DatabaseFixtures.TestCardDetails testCardDetails = updateCardDetailsForCharge(testCharge);
-        DatabaseFixtures.TestRefund testRefund = insertNewRefundForCharge(testCharge, 2L, now().plusSeconds(1));
+        DatabaseFixtures.TestRefund testRefund = insertNewRefundForCharge(testCharge, REFUND_USER_EXTERNAL_ID,2L, now().plusSeconds(1));
 
         ChargeSearchParams params = new ChargeSearchParams()
                 .withReferenceLike(testCharge.getReference())
@@ -591,12 +626,12 @@ public class OldTransactionDaoITest extends DaoITestBase {
     }
 
     @Test
-    public void searchChargeByReferenceAndStatusAndFromDate() throws Exception {
+    public void searchChargeByReferenceAndStatusAndFromDate()  {
 
         // given
         DatabaseFixtures.TestCharge testCharge = insertNewChargeWithId(1L, now());
         DatabaseFixtures.TestCardDetails testCardDetails = updateCardDetailsForCharge(testCharge);
-        insertNewRefundForCharge(testCharge, 2L, now().plusSeconds(2));
+        insertNewRefundForCharge(testCharge, REFUND_USER_EXTERNAL_ID,2L, now().plusSeconds(2));
 
         ChargeSearchParams params = new ChargeSearchParams()
                 .withTransactionType(PAYMENT)
@@ -622,12 +657,12 @@ public class OldTransactionDaoITest extends DaoITestBase {
     }
 
     @Test
-    public void searchRefundByReferenceAndRefundStatusAndFromDate() throws Exception {
+    public void searchRefundByReferenceAndRefundStatusAndFromDate()  {
 
         // given
         DatabaseFixtures.TestCharge testCharge = insertNewChargeWithId(1L, now());
         DatabaseFixtures.TestCardDetails testCardDetails = updateCardDetailsForCharge(testCharge);
-        DatabaseFixtures.TestRefund testRefund = insertNewRefundForCharge(testCharge, 2L, now().plusSeconds(2));
+        DatabaseFixtures.TestRefund testRefund = insertNewRefundForCharge(testCharge, REFUND_USER_EXTERNAL_ID,2L, now().plusSeconds(2));
 
         ChargeSearchParams params = new ChargeSearchParams()
                 .withTransactionType(REFUND)
@@ -1009,11 +1044,11 @@ public class OldTransactionDaoITest extends DaoITestBase {
     }
 
     @Test
-    public void searchChargeByReferenceAndStatusAndEmailAndCardBrandAndFromDateAndToDate() throws Exception {
+    public void searchChargeByReferenceAndStatusAndEmailAndCardBrandAndFromDateAndToDate()  {
         // given
         DatabaseFixtures.TestCharge testCharge = insertNewChargeWithId(1L, now());
         DatabaseFixtures.TestCardDetails testCardDetails = updateCardDetailsForCharge(testCharge);
-        insertNewRefundForCharge(testCharge, 2L, now().plusSeconds(2));
+        insertNewRefundForCharge(testCharge, REFUND_USER_EXTERNAL_ID, 2L, now().plusSeconds(2));
 
         ChargeSearchParams params = new ChargeSearchParams()
                 .withTransactionType(PAYMENT)
@@ -1038,16 +1073,17 @@ public class OldTransactionDaoITest extends DaoITestBase {
         assertThat(charge.getDescription(), is(testCharge.getDescription()));
         assertThat(charge.getStatus(), is(testCharge.getChargeStatus().toString()));
         assertThat(charge.getCardBrand(), is(testCardDetails.getCardBrand()));
+        assertThat(charge.getUserExternalId(), is(nullValue()));
         assertDateMatch(charge.getCreatedDate().toString());
     }
 
     @Test
-    public void searchChargeByReferenceAndStatusAndToDate() throws Exception {
+    public void searchChargeByReferenceAndStatusAndToDate()  {
 
         // given
         DatabaseFixtures.TestCharge testCharge = insertNewChargeWithId(1L, now());
         DatabaseFixtures.TestCardDetails testCardDetails = updateCardDetailsForCharge(testCharge);
-        insertNewRefundForCharge(testCharge, 2L, now().plusSeconds(2));
+        insertNewRefundForCharge(testCharge, REFUND_USER_EXTERNAL_ID, 2L, now().plusSeconds(2));
 
         ChargeSearchParams params = new ChargeSearchParams()
                 .withTransactionType(PAYMENT)
@@ -1069,16 +1105,17 @@ public class OldTransactionDaoITest extends DaoITestBase {
         assertThat(charge.getDescription(), is(DEFAULT_TEST_CHARGE_DESCRIPTION));
         assertThat(charge.getStatus(), is(testCharge.getChargeStatus().toString()));
         assertThat(charge.getCardBrand(), is(testCardDetails.getCardBrand()));
+        assertThat(charge.getUserExternalId(), is(nullValue()));
 
         assertDateMatch(charge.getCreatedDate().toString());
     }
 
     @Test
-    public void searchTransactionByReferenceAndStatusAndFromDate_ShouldReturnZeroIfDateIsNotInRange() throws Exception {
+    public void searchTransactionByReferenceAndStatusAndFromDate_ShouldReturnZeroIfDateIsNotInRange()  {
 
         // given
         DatabaseFixtures.TestCharge testCharge = insertNewChargeWithId(1L, now().plusHours(1));
-        insertNewRefundForCharge(testCharge, 2L, now().plusHours(2));
+        insertNewRefundForCharge(testCharge, REFUND_USER_EXTERNAL_ID, 2L, now().plusHours(2));
 
         ChargeSearchParams params = new ChargeSearchParams()
                 .withReferenceLike(testCharge.getReference())
@@ -1093,11 +1130,11 @@ public class OldTransactionDaoITest extends DaoITestBase {
     }
 
     @Test
-    public void searchTransactionByReferenceAndStatusAndToDate_ShouldReturnZeroIfToDateIsNotInRange() throws Exception {
+    public void searchTransactionByReferenceAndStatusAndToDate_ShouldReturnZeroIfToDateIsNotInRange()  {
 
         // given
         DatabaseFixtures.TestCharge testCharge = insertNewChargeWithId(1L, now().plusHours(1));
-        insertNewRefundForCharge(testCharge, 2L, now().plusHours(2));
+        insertNewRefundForCharge(testCharge, REFUND_USER_EXTERNAL_ID, 2L, now().plusHours(2));
 
         ChargeSearchParams params = new ChargeSearchParams()
                 .withReferenceLike(testCharge.getReference())
@@ -1143,13 +1180,14 @@ public class OldTransactionDaoITest extends DaoITestBase {
                 .update();
     }
 
-    private DatabaseFixtures.TestRefund insertNewRefundForCharge(DatabaseFixtures.TestCharge charge, long amount, ZonedDateTime creationDate) {
+    private DatabaseFixtures.TestRefund insertNewRefundForCharge(DatabaseFixtures.TestCharge charge, String userExternalId, long amount, ZonedDateTime creationDate) {
         return
                 withDatabaseTestHelper(databaseTestHelper)
                         .aTestRefund()
                         .withAmount(amount)
                         .withTestCharge(charge)
                         .withCreatedDate(creationDate)
+                        .withSubmittedBy(userExternalId)
                         .insert();
     }
 }

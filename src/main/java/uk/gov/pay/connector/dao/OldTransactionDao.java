@@ -24,6 +24,7 @@ import java.util.stream.Collectors;
 import static org.apache.commons.lang3.StringUtils.isNotBlank;
 import static org.jooq.impl.DSL.count;
 import static org.jooq.impl.DSL.field;
+import static org.jooq.impl.DSL.inline;
 import static org.jooq.impl.DSL.selectDistinct;
 import static org.jooq.impl.DSL.table;
 
@@ -59,6 +60,7 @@ public class OldTransactionDao {
                         field("cardholder_name"),
                         field("expiry_date"),
                         field("last_digits_card_number"),
+                        field("user_external_id"),
                         field("address_city"),
                         field("address_country"),
                         field("address_county"),
@@ -168,6 +170,7 @@ public class OldTransactionDao {
                 field("c.status"),
                 field("c.email"),
                 field("c.gateway_account_id"),
+                inline((String) null).as("user_external_id"),
                 field("c.gateway_transaction_id"),
                 field("c.created_date").as("date_created"),
                 field("c.card_brand"),
@@ -194,6 +197,7 @@ public class OldTransactionDao {
                 field("r.status"),
                 field("c.email"),
                 field("c.gateway_account_id"),
+                field("r.user_external_id").as("user_external_id"),
                 field("c.gateway_transaction_id"),
                 field("r.created_date").as("date_created"),
                 field("c.card_brand"),
