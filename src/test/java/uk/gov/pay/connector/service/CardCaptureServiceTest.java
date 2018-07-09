@@ -1,5 +1,6 @@
 package uk.gov.pay.connector.service;
 
+import ch.qos.logback.classic.Level;
 import ch.qos.logback.classic.Logger;
 import ch.qos.logback.classic.spi.ILoggingEvent;
 import ch.qos.logback.classic.spi.LoggingEvent;
@@ -97,6 +98,7 @@ public class CardCaptureServiceTest extends CardServiceTest {
         cardCaptureService = new CardCaptureService(mockedChargeDao, mockedChargeEventDao, mockedProviders, mockUserNotificationService, mockEnvironment, mockPaymentRequestDao, mockChargeStatusUpdater);
 
         Logger root = (Logger) LoggerFactory.getLogger(CardCaptureService.class);
+        root.setLevel(Level.INFO);
         root.addAppender(mockAppender);
     }
 
