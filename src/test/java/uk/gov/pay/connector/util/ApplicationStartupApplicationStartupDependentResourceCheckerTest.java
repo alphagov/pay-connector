@@ -1,5 +1,6 @@
 package uk.gov.pay.connector.util;
 
+import ch.qos.logback.classic.Level;
 import ch.qos.logback.classic.Logger;
 import ch.qos.logback.classic.spi.ILoggingEvent;
 import ch.qos.logback.classic.spi.LoggingEvent;
@@ -44,6 +45,7 @@ public class ApplicationStartupApplicationStartupDependentResourceCheckerTest {
     public void setup() {
         Logger root = (Logger) LoggerFactory.getLogger(ApplicationStartupDependentResourceChecker.class);
         mockAppender = mockAppender();
+        root.setLevel(Level.INFO);
         root.addAppender(mockAppender);
     }
 

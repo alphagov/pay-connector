@@ -1,5 +1,6 @@
 package uk.gov.pay.connector.filters;
 
+import ch.qos.logback.classic.Level;
 import ch.qos.logback.classic.Logger;
 import ch.qos.logback.classic.spi.ILoggingEvent;
 import ch.qos.logback.classic.spi.LoggingEvent;
@@ -52,6 +53,7 @@ public class RestClientLoggingFilterTest {
         loggingFilter = new RestClientLoggingFilter();
         Logger root = (Logger) LoggerFactory.getLogger(RestClientLoggingFilter.class);
         mockAppender = mock(Appender.class);
+        root.setLevel(Level.INFO);
         root.addAppender(mockAppender);
     }
 
