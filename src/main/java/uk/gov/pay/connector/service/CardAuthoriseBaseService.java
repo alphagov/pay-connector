@@ -40,33 +40,10 @@ public abstract class CardAuthoriseBaseService<T extends AuthorisationDetails> e
 
 
     public GatewayResponse doAuthorise(String chargeId, T gatewayAuthRequest) {
-        return chargeDao.findByExternalId(chargeId).map(chargeEntity -> {
-            Supplier<GatewayResponse> authorisationSupplier = () -> {
-                recorder.beginSegment("pay-connector");
-                //segment.putService("component","authorisation-request");
-                ChargeEntity preOperationResponse;
-                try {
-
-                    try {
-                        preOperationResponse = preOperation(chargeEntity, gatewayAuthRequest);
-                        if (preOperationResponse.hasStatus(ChargeStatus.AUTHORISATION_ABORTED)) {
-                            throw new ConflictRuntimeException(chargeEntity.getExternalId(), "configuration mismatch");
-                        }
-                    } catch (OptimisticLockException e) {
-                        throw new ConflictRuntimeException(chargeEntity.getExternalId());
-                    }
-
-                    GatewayResponse<BaseAuthoriseResponse> operationResponse = operation(preOperationResponse, gatewayAuthRequest);
-
-                    return postOperation(preOperationResponse, gatewayAuthRequest, operationResponse);
-
-                } finally {
-                    recorder.endSegment();
-                }
-            };
-
         Supplier authorisationSupplier = () -> {
             ChargeEntity charge;
+	    recorder.beginSegment("pay-connector");
+
             try {
                 charge = preOperation(chargeId, gatewayAuthRequest);
                 if (charge.hasStatus(ChargeStatus.AUTHORISATION_ABORTED)) {
@@ -75,8 +52,11 @@ public abstract class CardAuthoriseBaseService<T extends AuthorisationDetails> e
             } catch (OptimisticLockException e) {
                 LOG.info("OptimisticLockException in doAuthorise for charge external_id=" + chargeId);
                 throw new ConflictRuntimeException(chargeId);
+            } finally {
+                recorder.endSegment();
             }
-             GatewayResponse<BaseAuthoriseResponse> operationResponse = operation(charge, gatewayAuthRequest);
+
+            GatewayResponse<BaseAuthoriseResponse> operationResponse = operation(charge, gatewayAuthRequest);
             return postOperation(chargeId, gatewayAuthRequest, operationResponse);
         };
 
