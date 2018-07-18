@@ -116,7 +116,7 @@ public class ConnectorApp extends Application<ConnectorConfiguration> {
                 .addMappingForUrlPatterns(of(REQUEST), true, "/v1/*");
 
         environment.servlets().addFilter("XRayFilter", new AWSXRayServletFilter("pay-connector"))
-		.addMappingForUrlPatterns(of(REQUEST), true, "/v1/*");
+                .addMappingForUrlPatterns(of(REQUEST), true, "/v1/*");
 
         environment.healthChecks().register("ping", new Ping());
         environment.healthChecks().register("database", injector.getInstance(DatabaseHealthCheck.class));
@@ -152,8 +152,8 @@ public class ConnectorApp extends Application<ConnectorConfiguration> {
     }
 
     private void initialiseXRay(){
-	AWSXRayRecorderBuilder builder = AWSXRayRecorderBuilder.standard().withPlugin(new ECSPlugin());
-        URL ruleFile = ConnectorApp.class.getResource("/sampling-rules.json");
+	    AWSXRayRecorderBuilder builder = AWSXRayRecorderBuilder.standard().withPlugin(new ECSPlugin());
+        URL ruleFile = ConnectorApp.class.getResource("/aws-xray-sampling-rules.json");
         builder.withSamplingStrategy(new LocalizedSamplingStrategy(ruleFile));
         AWSXRay.setGlobalRecorder(builder.build());
     }
