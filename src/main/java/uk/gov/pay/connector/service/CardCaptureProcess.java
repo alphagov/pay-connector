@@ -56,7 +56,6 @@ public class CardCaptureProcess {
                         captureService.doCapture(charge.getExternalId());
                     } catch (Exception e) {
                         logger.error("Exception when running capture for [" + charge.getExternalId() + "]", e);
-                        throw e;
                     }
                 } else {
                     captureService.markChargeAsCaptureError(charge.getExternalId());
