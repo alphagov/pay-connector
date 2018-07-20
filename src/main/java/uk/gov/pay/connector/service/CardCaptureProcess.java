@@ -12,6 +12,7 @@ import uk.gov.pay.connector.dao.ChargeDao;
 import uk.gov.pay.connector.model.domain.ChargeEntity;
 
 import javax.inject.Inject;
+import java.util.Collections;
 import java.util.List;
 import java.util.concurrent.TimeUnit;
 
@@ -48,6 +49,7 @@ public class CardCaptureProcess {
                 logger.info("Capturing : " + chargesToCapture.size() + " of " + queueSize + " charges");
             }
 
+            Collections.shuffle(chargesToCapture);
             chargesToCapture.forEach((charge) -> {
                 if (shouldRetry(charge)) {
                     try {
