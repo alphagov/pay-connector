@@ -6,11 +6,13 @@ import com.google.common.base.Stopwatch;
 import io.dropwizard.setup.Environment;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.slf4j.MDC;
 import uk.gov.pay.connector.app.CaptureProcessConfig;
 import uk.gov.pay.connector.app.ConnectorConfiguration;
 import uk.gov.pay.connector.dao.ChargeDao;
 import uk.gov.pay.connector.exception.ConflictRuntimeException;
 import uk.gov.pay.connector.model.domain.ChargeEntity;
+import uk.gov.pay.connector.util.RandomIdGenerator;
 
 import javax.inject.Inject;
 import java.util.Collections;
@@ -18,6 +20,7 @@ import java.util.List;
 import java.util.concurrent.TimeUnit;
 
 import static java.lang.String.format;
+import static uk.gov.pay.connector.filters.LoggingFilter.HEADER_REQUEST_ID;
 
 public class CardCaptureProcess {
 
@@ -40,6 +43,8 @@ public class CardCaptureProcess {
     }
 
     public void runCapture() {
+        MDC.put(HEADER_REQUEST_ID, format("runCapture-%s", RandomIdGenerator.newId()));
+
         Stopwatch responseTimeStopwatch = Stopwatch.createStarted();
         long captured = 0, skipped = 0, error = 0, total = 0;
 
@@ -78,6 +83,7 @@ public class CardCaptureProcess {
             metricRegistry.histogram("gateway-operations.capture-process.running_time").update(responseTimeStopwatch.elapsed(TimeUnit.MILLISECONDS));
             logger.info(format("Capture complete [captured=%d] [skipped=%d] [capture_error=%d] [total=%d]", captured, skipped, error, queueSize));
         }
+        MDC.remove(HEADER_REQUEST_ID);
     }
 
     private boolean shouldRetry(ChargeEntity charge) {
