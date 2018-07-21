@@ -9,6 +9,7 @@ import org.slf4j.LoggerFactory;
 import uk.gov.pay.connector.app.CaptureProcessConfig;
 import uk.gov.pay.connector.app.ConnectorConfiguration;
 import uk.gov.pay.connector.dao.ChargeDao;
+import uk.gov.pay.connector.exception.ConflictRuntimeException;
 import uk.gov.pay.connector.model.domain.ChargeEntity;
 
 import javax.inject.Inject;
@@ -54,8 +55,8 @@ public class CardCaptureProcess {
                 if (shouldRetry(charge)) {
                     try {
                         captureService.doCapture(charge.getExternalId());
-                    } catch (Exception e) {
-                        logger.error("Exception when running capture for [" + charge.getExternalId() + "]", e);
+                    } catch (ConflictRuntimeException e) {
+                        logger.info("Another process has already attempted to capture [chargeId=" + charge.getExternalId() + "]. Skipping.");
                     }
                 } else {
                     captureService.markChargeAsCaptureError(charge.getExternalId());
