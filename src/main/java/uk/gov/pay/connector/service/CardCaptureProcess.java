@@ -17,6 +17,8 @@ import java.util.Collections;
 import java.util.List;
 import java.util.concurrent.TimeUnit;
 
+import static java.lang.String.format;
+
 public class CardCaptureProcess {
 
     private final Logger logger = LoggerFactory.getLogger(getClass());
@@ -39,6 +41,8 @@ public class CardCaptureProcess {
 
     public void runCapture() {
         Stopwatch responseTimeStopwatch = Stopwatch.createStarted();
+        long captured = 0, skipped = 0, error = 0, total = 0;
+
         try {
             queueSize = chargeDao.countChargesForCapture();
 
@@ -51,22 +55,28 @@ public class CardCaptureProcess {
             }
 
             Collections.shuffle(chargesToCapture);
-            chargesToCapture.forEach((charge) -> {
+            for (ChargeEntity charge : chargesToCapture) {
+                total++;
                 if (shouldRetry(charge)) {
                     try {
+                        logger.info(format("Capturing [%d of %d] [chargeId=%s]", total, queueSize, charge.getExternalId()));
                         captureService.doCapture(charge.getExternalId());
+                        captured++;
                     } catch (ConflictRuntimeException e) {
                         logger.info("Another process has already attempted to capture [chargeId=" + charge.getExternalId() + "]. Skipping.");
+                        skipped++;
                     }
                 } else {
                     captureService.markChargeAsCaptureError(charge.getExternalId());
+                    error++;
                 }
-            });
+            }
         } catch (Exception e) {
-            logger.error("Exception when running capture", e);
+            logger.error(format("Exception [%s] when running capture at charge [%d of %d]", total, queueSize), e.getMessage(), e);
         } finally {
             responseTimeStopwatch.stop();
             metricRegistry.histogram("gateway-operations.capture-process.running_time").update(responseTimeStopwatch.elapsed(TimeUnit.MILLISECONDS));
+            logger.info(format("Capture complete [captured=%d] [skipped=%d] [capture_error=%d] [total=%d]", captured, skipped, error, queueSize));
         }
     }
 
