@@ -1328,4 +1328,17 @@
             columnName="password"
             newDataType="varchar(255)"/>
     </changeSet>
+
+    <changeSet id="add index to charges.gateway_transaction_id" runInTransaction="false" author="">
+        <sql>
+            CREATE INDEX CONCURRENTLY idx_charges_gateway_transaction_id ON charges (gateway_transaction_id);
+        </sql>
+    </changeSet>
+
+    <changeSet id="add index to tokens.secure_redirect_token" runInTransaction="false" author="">
+        <sql>
+            CREATE INDEX CONCURRENTLY idx_tokens_secure_redirect_token ON tokens (secure_redirect_token);
+        </sql>
+    </changeSet>
+    
 </databaseChangeLog>
