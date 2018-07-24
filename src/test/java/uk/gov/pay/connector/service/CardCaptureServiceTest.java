@@ -95,7 +95,8 @@ public class CardCaptureServiceTest extends CardServiceTest {
         when(mockEnvironment.metrics()).thenReturn(mockMetricRegistry);
         when(mockMetricRegistry.counter(anyString())).thenReturn(mockCounter);
 
-        cardCaptureService = new CardCaptureService(mockedChargeDao, mockedChargeEventDao, mockedProviders, mockUserNotificationService, mockEnvironment, mockPaymentRequestDao, mockChargeStatusUpdater);
+        cardCaptureService = new CardCaptureService(mockedChargeDao, mockedChargeEventDao, mockedProviders, mockUserNotificationService,
+                mockEnvironment, mockChargeStatusUpdater);
 
         Logger root = (Logger) LoggerFactory.getLogger(CardCaptureService.class);
         root.setLevel(Level.INFO);

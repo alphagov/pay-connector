@@ -73,13 +73,8 @@ public abstract class CardAuthoriseBaseService<T extends AuthorisationDetails> e
         }
     }
 
-    protected void setGatewayTransactionId(ChargeEntity chargeEntity, String transactionId, Optional<PaymentRequestEntity> paymentRequestEntity) {
+    protected void setGatewayTransactionId(ChargeEntity chargeEntity, String transactionId) {
         chargeEntity.setGatewayTransactionId(transactionId);
-        paymentRequestEntity.ifPresent(paymentRequest -> {
-            if (paymentRequest.hasChargeTransaction()) {
-                paymentRequest.getChargeTransaction().setGatewayTransactionId(transactionId);
-            }
-        });
     }
 
     protected abstract ChargeEntity preOperation(String chargeId, T gatewayAuthRequest);

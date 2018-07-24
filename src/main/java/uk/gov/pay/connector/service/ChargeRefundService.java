@@ -5,7 +5,6 @@ import com.google.inject.persist.Transactional;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import uk.gov.pay.connector.dao.ChargeDao;
-import uk.gov.pay.connector.dao.PaymentRequestDao;
 import uk.gov.pay.connector.dao.RefundDao;
 import uk.gov.pay.connector.exception.ChargeNotFoundRuntimeException;
 import uk.gov.pay.connector.exception.RefundException;
@@ -58,20 +57,18 @@ public class ChargeRefundService {
 
     private final ChargeDao chargeDao;
     private final RefundDao refundDao;
-    private final PaymentRequestDao paymentRequestDao;
     private final PaymentProviders providers;
     private final Provider<TransactionFlow> transactionFlowProvider;
     private final RefundStatusUpdater refundStatusUpdater;
 
     @Inject
     public ChargeRefundService(ChargeDao chargeDao, RefundDao refundDao, PaymentProviders providers,
-                               Provider<TransactionFlow> transactionFlowProvider, PaymentRequestDao paymentRequestDao,
+                               Provider<TransactionFlow> transactionFlowProvider, 
                                RefundStatusUpdater refundStatusUpdater) {
         this.chargeDao = chargeDao;
         this.refundDao = refundDao;
         this.providers = providers;
         this.transactionFlowProvider = transactionFlowProvider;
-        this.paymentRequestDao = paymentRequestDao;
         this.refundStatusUpdater = refundStatusUpdater;
     }
 
@@ -167,10 +164,7 @@ public class ChargeRefundService {
         RefundEntity refundEntity = new RefundEntity(charge, refundRequest.getAmount(), refundRequest.getUserExternalId());
         charge.getRefunds().add(refundEntity);
         refundDao.persist(refundEntity);
-
-        Optional<PaymentRequestEntity> paymentRequestOptional = paymentRequestDao.findByExternalId(charge.getExternalId());
-        paymentRequestOptional.ifPresent(paymentRequest -> paymentRequest.addTransaction(RefundTransactionEntity.from(refundEntity)));
-
+        
         return refundEntity;
     }
 

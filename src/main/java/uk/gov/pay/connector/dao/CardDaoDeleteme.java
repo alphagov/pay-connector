@@ -8,10 +8,10 @@ import uk.gov.pay.connector.model.domain.CardEntity;
 import javax.persistence.EntityManager;
 
 @Transactional
-public class CardDao extends JpaDao<CardEntity> {
+public class CardDaoDeleteme extends JpaDao<CardEntity> {
 
     @Inject
-    protected CardDao(Provider<EntityManager> entityManager) {
+    protected CardDaoDeleteme(Provider<EntityManager> entityManager) {
         super(entityManager);
     }
 

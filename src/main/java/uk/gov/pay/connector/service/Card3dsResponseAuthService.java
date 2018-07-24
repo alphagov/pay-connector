@@ -3,16 +3,13 @@ package uk.gov.pay.connector.service;
 import com.google.common.collect.ImmutableList;
 import com.google.inject.persist.Transactional;
 import io.dropwizard.setup.Environment;
-import org.apache.commons.lang3.StringUtils;
 import uk.gov.pay.connector.dao.ChargeDao;
 import uk.gov.pay.connector.dao.ChargeEventDao;
-import uk.gov.pay.connector.dao.PaymentRequestDao;
 import uk.gov.pay.connector.exception.ChargeNotFoundRuntimeException;
 import uk.gov.pay.connector.model.domain.Auth3dsDetails;
 import uk.gov.pay.connector.model.domain.ChargeEntity;
 import uk.gov.pay.connector.model.domain.ChargeStatus;
 import uk.gov.pay.connector.model.domain.GatewayAccountEntity;
-import uk.gov.pay.connector.model.domain.PaymentRequestEntity;
 import uk.gov.pay.connector.model.gateway.Auth3dsResponseGatewayRequest;
 import uk.gov.pay.connector.model.gateway.GatewayResponse;
 
@@ -25,16 +22,15 @@ import static uk.gov.pay.connector.model.domain.ChargeStatus.AUTHORISATION_3DS_R
 import static uk.gov.pay.connector.model.domain.ChargeStatus.AUTHORISATION_3DS_REQUIRED;
 
 public class Card3dsResponseAuthService extends CardAuthoriseBaseService<Auth3dsDetails> {
-    private final PaymentRequestDao paymentRequestDao;
 
     @Inject
     public Card3dsResponseAuthService(ChargeDao chargeDao,
                                       ChargeEventDao chargeEventDao,
                                       PaymentProviders providers,
                                       CardExecutorService cardExecutorService,
-                                      Environment environment, PaymentRequestDao paymentRequestDao, ChargeStatusUpdater chargeStatusUpdater) {
+                                      Environment environment, 
+                                      ChargeStatusUpdater chargeStatusUpdater) {
         super(chargeDao, chargeEventDao, providers, cardExecutorService, environment, chargeStatusUpdater);
-        this.paymentRequestDao = paymentRequestDao;
     }
 
     public GatewayResponse<BaseAuthoriseResponse> operation(ChargeEntity chargeEntity, Auth3dsDetails auth3DsDetails) {
@@ -74,10 +70,9 @@ public class Card3dsResponseAuthService extends CardAuthoriseBaseService<Auth3ds
 
             chargeEntity.setStatus(status);
             chargeStatusUpdater.updateChargeTransactionStatus(chargeEntity.getExternalId(), status);
-            Optional<PaymentRequestEntity> paymentRequestEntity = paymentRequestDao.findByExternalId(chargeEntity.getExternalId());
 
             if (!isBlank(transactionId)) {
-                setGatewayTransactionId(chargeEntity, transactionId, paymentRequestEntity);
+                setGatewayTransactionId(chargeEntity, transactionId);
             }
             chargeEventDao.persistChargeEventOf(chargeEntity, Optional.empty());
             return operationResponse;

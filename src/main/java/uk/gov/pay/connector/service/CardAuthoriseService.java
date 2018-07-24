@@ -4,25 +4,20 @@ import com.google.common.collect.ImmutableList;
 import com.google.inject.persist.Transactional;
 import io.dropwizard.setup.Environment;
 import org.apache.commons.lang3.StringUtils;
-import uk.gov.pay.connector.dao.CardDao;
+import uk.gov.pay.connector.dao.CardDaoDeleteme;
 import uk.gov.pay.connector.dao.CardTypeDao;
 import uk.gov.pay.connector.dao.ChargeDao;
 import uk.gov.pay.connector.dao.ChargeEventDao;
-import uk.gov.pay.connector.dao.PaymentRequestDao;
 import uk.gov.pay.connector.exception.ChargeNotFoundRuntimeException;
 import uk.gov.pay.connector.model.GatewayError;
 import uk.gov.pay.connector.model.GatewayParamsFor3ds;
 import uk.gov.pay.connector.model.domain.AddressEntity;
 import uk.gov.pay.connector.model.domain.AuthCardDetails;
-import uk.gov.pay.connector.model.domain.Card3dsEntity;
 import uk.gov.pay.connector.model.domain.CardDetailsEntity;
-import uk.gov.pay.connector.model.domain.CardEntity;
 import uk.gov.pay.connector.model.domain.CardTypeEntity;
 import uk.gov.pay.connector.model.domain.ChargeEntity;
 import uk.gov.pay.connector.model.domain.ChargeStatus;
 import uk.gov.pay.connector.model.domain.GatewayAccountEntity;
-import uk.gov.pay.connector.model.domain.PaymentRequestEntity;
-import uk.gov.pay.connector.model.domain.transaction.ChargeTransactionEntity;
 import uk.gov.pay.connector.model.gateway.AuthorisationGatewayRequest;
 import uk.gov.pay.connector.model.gateway.GatewayResponse;
 
@@ -42,22 +37,20 @@ import static uk.gov.pay.connector.model.domain.NumbersInStringsSanitizer.saniti
 public class CardAuthoriseService extends CardAuthoriseBaseService<AuthCardDetails> {
 
     private final CardTypeDao cardTypeDao;
-    private final CardDao cardDao;
-    private final PaymentRequestDao paymentRequestDao;
+    private final CardDaoDeleteme cardDao;
 
     @Inject
     public CardAuthoriseService(ChargeDao chargeDao,
                                 ChargeEventDao chargeEventDao,
                                 CardTypeDao cardTypeDao,
-                                CardDao cardDao,
+                                CardDaoDeleteme cardDao,
                                 PaymentProviders providers,
                                 CardExecutorService cardExecutorService,
                                 Environment environment,
-                                PaymentRequestDao paymentRequestDao, ChargeStatusUpdater chargeStatusUpdater) {
+                                ChargeStatusUpdater chargeStatusUpdater) {
         super(chargeDao, chargeEventDao, providers, cardExecutorService, environment, chargeStatusUpdater);
         this.cardTypeDao = cardTypeDao;
         this.cardDao = cardDao;
-        this.paymentRequestDao = paymentRequestDao;
     }
 
     @Transactional
@@ -79,10 +72,8 @@ public class CardAuthoriseService extends CardAuthoriseBaseService<AuthCardDetai
             } else {
                 preOperation(chargeEntity, OperationType.AUTHORISATION, getLegalStates(), AUTHORISATION_READY);
 
-                Optional<PaymentRequestEntity> paymentRequestEntity = paymentRequestDao.findByExternalId(chargeEntity.getExternalId());
-
                 getPaymentProviderFor(chargeEntity).generateTransactionId().ifPresent(transactionIdValue -> {
-                    setGatewayTransactionId(chargeEntity, transactionIdValue, paymentRequestEntity);
+                    setGatewayTransactionId(chargeEntity, transactionIdValue);
                 });
             }
 
@@ -144,32 +135,15 @@ public class CardAuthoriseService extends CardAuthoriseBaseService<AuthCardDetai
             );
 
             chargeStatusUpdater.updateChargeTransactionStatus(chargeEntity.getExternalId(), status);
-            Optional<PaymentRequestEntity> paymentRequestEntity = paymentRequestDao.findByExternalId(chargeEntity.getExternalId());
             if (StringUtils.isBlank(transactionId)) {
                 logger.warn("AuthCardDetails authorisation response received with no transaction id. -  charge_external_id={}", chargeEntity.getExternalId());
             } else {
-                setGatewayTransactionId(chargeEntity, transactionId, paymentRequestEntity);
+                setGatewayTransactionId(chargeEntity, transactionId);
             }
 
             CardDetailsEntity detailsEntity = buildCardDetailsEntity(authCardDetails);
             chargeEntity.setCardDetails(detailsEntity);
-
-            if (paymentRequestEntity.isPresent()) {
-                CardEntity cardEntity = CardEntity.from(detailsEntity, paymentRequestEntity.get().getChargeTransaction());
-                cardDao.persist(cardEntity);
-
-                paymentRequestEntity.ifPresent(paymentRequest -> {
-                    ChargeTransactionEntity chargeTransaction = paymentRequest.getChargeTransaction();
-                    chargeTransaction.setCard(cardEntity);
-                    if(chargeEntity.get3dsDetails() != null) {
-                        Card3dsEntity card3dsEntity = Card3dsEntity.from(chargeEntity);
-                        chargeTransaction.setCard3ds(card3dsEntity);
-                    }
-                });
-            } else {
-                logger.error("Cannot find payment request with external ID {} — this is a bug: the card and cards3ds details will not be saved in the cards and card_3ds tables");
-            }
-
+            
             chargeEventDao.persistChargeEventOf(chargeEntity, Optional.empty());
             logger.info("Stored confirmation details for charge - charge_external_id={}",
                     chargeEntity.getExternalId());

@@ -9,7 +9,6 @@ import uk.gov.pay.connector.dao.CardTypeDao;
 import uk.gov.pay.connector.dao.ChargeDao;
 import uk.gov.pay.connector.dao.ChargeEventDao;
 import uk.gov.pay.connector.dao.GatewayAccountDao;
-import uk.gov.pay.connector.dao.PaymentRequestDao;
 import uk.gov.pay.connector.dao.TokenDao;
 import uk.gov.pay.connector.model.ChargeResponse;
 import uk.gov.pay.connector.model.ServicePaymentReference;
@@ -20,10 +19,8 @@ import uk.gov.pay.connector.model.builder.PatchRequestBuilder;
 import uk.gov.pay.connector.model.domain.CardTypeEntity;
 import uk.gov.pay.connector.model.domain.ChargeEntity;
 import uk.gov.pay.connector.model.domain.ChargeStatus;
-import uk.gov.pay.connector.model.domain.PaymentRequestEntity;
 import uk.gov.pay.connector.model.domain.PersistedCard;
 import uk.gov.pay.connector.model.domain.TokenEntity;
-import uk.gov.pay.connector.model.domain.transaction.ChargeTransactionEntity;
 import uk.gov.pay.connector.resources.ChargesApiResource;
 import uk.gov.pay.connector.util.DateTimeUtils;
 
@@ -57,14 +54,12 @@ public class ChargeService {
     private final GatewayAccountDao gatewayAccountDao;
     private final LinksConfig linksConfig;
     private final PaymentProviders providers;
-    private final PaymentRequestDao paymentRequestDao;
     private final ChargeStatusUpdater chargeStatusUpdater;
 
     @Inject
     public ChargeService(TokenDao tokenDao, ChargeDao chargeDao, ChargeEventDao chargeEventDao,
                          CardTypeDao cardTypeDao, GatewayAccountDao gatewayAccountDao,
                          ConnectorConfiguration config, PaymentProviders providers,
-                         PaymentRequestDao paymentRequestDao,
                          ChargeStatusUpdater chargeStatusUpdater) {
         this.tokenDao = tokenDao;
         this.chargeDao = chargeDao;
@@ -73,7 +68,6 @@ public class ChargeService {
         this.gatewayAccountDao = gatewayAccountDao;
         this.linksConfig = config.getLinks();
         this.providers = providers;
-        this.paymentRequestDao = paymentRequestDao;
         this.chargeStatusUpdater = chargeStatusUpdater;
     }
 
@@ -93,12 +87,6 @@ public class ChargeService {
                     chargeRequest.get("email")
             );
             chargeDao.persist(chargeEntity);
-
-            PaymentRequestEntity paymentRequestEntity =
-                    PaymentRequestEntity.from(chargeEntity, ChargeTransactionEntity.from(chargeEntity));
-            paymentRequestDao.persist(paymentRequestEntity);
-
-            //todo: create a TransactionEventEntity here in future stories
 
             chargeEventDao.persistChargeEventOf(chargeEntity, Optional.empty());
             return Optional.of(populateResponseBuilderWith(aChargeResponseBuilder(), uriInfo, chargeEntity).build());
@@ -120,9 +108,6 @@ public class ChargeService {
                         case ChargesApiResource.EMAIL_KEY:
                             final String sanitizedEmail = sanitize(chargePatchRequest.getValue());
                             chargeEntity.setEmail(sanitizedEmail);
-                            paymentRequestDao.findByExternalId(chargeId)
-                                    .ifPresent(paymentRequestEntity -> paymentRequestEntity
-                                            .getChargeTransaction().setEmail(sanitizedEmail));
                     }
                     return Optional.of(chargeEntity);
                 })
