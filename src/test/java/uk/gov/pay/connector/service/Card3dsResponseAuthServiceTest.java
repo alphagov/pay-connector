@@ -64,7 +64,6 @@ public class Card3dsResponseAuthServiceTest extends CardServiceTest {
     private ChargeEntity charge = createNewChargeWith("worldpay", 1L, AUTHORISATION_3DS_REQUIRED, GENERATED_TRANSACTION_ID);
     private Card3dsResponseAuthService card3dsResponseAuthService;
     private CardExecutorService mockExecutorService = mock(CardExecutorService.class);
-    private PaymentRequestEntity aValidPaymentRequestEntity;
 
     @Before
     public void setUpCardAuthorisationService() {
@@ -74,8 +73,8 @@ public class Card3dsResponseAuthServiceTest extends CardServiceTest {
         when(mockEnvironment.metrics()).thenReturn(mockMetricRegistry);
         when(mockMetricRegistry.counter(anyString())).thenReturn(mockCounter);
 
-        card3dsResponseAuthService = new Card3dsResponseAuthService(mockedChargeDao, mockedChargeEventDao, mockedProviders, mockExecutorService, mockEnvironment, mockPaymentRequestDao, mockChargeStatusUpdater);
-        aValidPaymentRequestEntity = PaymentRequestEntityFixture.aValidPaymentRequestEntity().build();
+        card3dsResponseAuthService = new Card3dsResponseAuthService(mockedChargeDao, mockedChargeEventDao, mockedProviders, mockExecutorService, mockEnvironment, 
+                 mockChargeStatusUpdater);
     }
 
     public void setupMockExecutorServiceMock() {
@@ -108,16 +107,12 @@ public class Card3dsResponseAuthServiceTest extends CardServiceTest {
         setupPaymentProviderMock(charge.getGatewayTransactionId(), AuthoriseStatus.AUTHORISED, null, argumentCaptor);
 
         when(mockedProviders.byName(charge.getPaymentGatewayName())).thenReturn(mockedPaymentProvider);
-        when(mockPaymentRequestDao.findByExternalId(charge.getExternalId()))
-                .thenReturn(Optional.of(aValidPaymentRequestEntity));
-
 
         GatewayResponse response = card3dsResponseAuthService.doAuthorise(charge.getExternalId(), auth3dsDetails);
 
         assertThat(response.isSuccessful(), is(true));
         assertThat(charge.getStatus(), is(AUTHORISATION_SUCCESS.getValue()));
         assertThat(charge.getGatewayTransactionId(), is(GENERATED_TRANSACTION_ID));
-        assertThat(aValidPaymentRequestEntity.getChargeTransaction().getGatewayTransactionId(), is(GENERATED_TRANSACTION_ID));
         assertTrue(argumentCaptor.getValue().getTransactionId().isPresent());
         assertThat(argumentCaptor.getValue().getTransactionId().get(), is(GENERATED_TRANSACTION_ID));
 
@@ -157,8 +152,6 @@ public class Card3dsResponseAuthServiceTest extends CardServiceTest {
         setupPaymentProviderMock(charge.getGatewayTransactionId(), AuthoriseStatus.AUTHORISED, null, argumentCaptor);
 
         when(mockedProviders.byName(charge.getPaymentGatewayName())).thenReturn(mockedPaymentProvider);
-        when(mockPaymentRequestDao.findByExternalId(charge.getExternalId()))
-                .thenReturn(Optional.of(aValidPaymentRequestEntity));
 
         card3dsResponseAuthService.doAuthorise(charge.getExternalId(), auth3dsDetails);
 
@@ -171,8 +164,6 @@ public class Card3dsResponseAuthServiceTest extends CardServiceTest {
     public void shouldRespondAuthorisationRejected() throws Exception {
         ChargeEntity charge = createNewChargeWith("worldpay", 1L, AUTHORISATION_3DS_REQUIRED, GENERATED_TRANSACTION_ID);
         ArgumentCaptor<Auth3dsResponseGatewayRequest> argumentCaptor = ArgumentCaptor.forClass(Auth3dsResponseGatewayRequest.class);
-        when(mockPaymentRequestDao.findByExternalId(charge.getExternalId()))
-                .thenReturn(Optional.of(aValidPaymentRequestEntity));
 
         GatewayResponse response = anAuthorisationRejectedResponse(charge, charge.getGatewayTransactionId(), argumentCaptor);
 
@@ -180,7 +171,6 @@ public class Card3dsResponseAuthServiceTest extends CardServiceTest {
 
         assertThat(charge.getStatus(), is(AUTHORISATION_REJECTED.getValue()));
         assertThat(charge.getGatewayTransactionId(), is(GENERATED_TRANSACTION_ID));
-        assertThat(aValidPaymentRequestEntity.getChargeTransaction().getGatewayTransactionId(), is(GENERATED_TRANSACTION_ID));
         assertTrue(argumentCaptor.getValue().getTransactionId().isPresent());
         assertThat(argumentCaptor.getValue().getTransactionId().get(), is(GENERATED_TRANSACTION_ID));
         verify(mockChargeStatusUpdater).updateChargeTransactionStatus(charge.getExternalId(), AUTHORISATION_REJECTED);
@@ -191,15 +181,11 @@ public class Card3dsResponseAuthServiceTest extends CardServiceTest {
         ChargeEntity charge = createNewChargeWith("worldpay", 1L, AUTHORISATION_3DS_REQUIRED, GENERATED_TRANSACTION_ID);
         ArgumentCaptor<Auth3dsResponseGatewayRequest> argumentCaptor = ArgumentCaptor.forClass(Auth3dsResponseGatewayRequest.class);
 
-        when(mockPaymentRequestDao.findByExternalId(charge.getExternalId()))
-                .thenReturn(Optional.of(aValidPaymentRequestEntity));
-
         GatewayResponse response = anAuthorisationCancelledResponse(charge, charge.getGatewayTransactionId(), argumentCaptor);
 
         assertThat(response.isSuccessful(), is(true));
         assertThat(charge.getStatus(), is(AUTHORISATION_CANCELLED.getValue()));
         assertThat(charge.getGatewayTransactionId(), is(GENERATED_TRANSACTION_ID));
-        assertThat(aValidPaymentRequestEntity.getChargeTransaction().getGatewayTransactionId(), is(GENERATED_TRANSACTION_ID));
         assertTrue(argumentCaptor.getValue().getTransactionId().isPresent());
         assertThat(argumentCaptor.getValue().getTransactionId().get(), is(GENERATED_TRANSACTION_ID));
         verify(mockChargeStatusUpdater).updateChargeTransactionStatus(charge.getExternalId(), AUTHORISATION_CANCELLED);
