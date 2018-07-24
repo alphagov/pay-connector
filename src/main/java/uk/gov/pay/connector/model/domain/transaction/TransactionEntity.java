@@ -32,7 +32,7 @@ import java.util.List;
 @SequenceGenerator(name = "transactions_id_seq",
         sequenceName = "transactions_id_seq",
         allocationSize = 1)
-public abstract class TransactionEntity<S extends Status, T extends TransactionEventEntity<S, T>> extends AbstractVersionedEntity {
+public abstract class TransactionEntity<S extends Status> extends AbstractVersionedEntity {
     @Id
     @GeneratedValue(strategy = GenerationType.SEQUENCE, generator = "transactions_id_seq")
     @JsonIgnore
@@ -97,22 +97,8 @@ public abstract class TransactionEntity<S extends Status, T extends TransactionE
     public abstract S getStatus();
     abstract void setStatus(S status);
 
-    public abstract List<T> getTransactionEvents();
-
-    public final void updateStatus(S newStatus) {
-        updateStatus(newStatus, createNewTransactionEvent());
-    }
-
-    void updateStatus(S newStatus, T transactionEvent) {
+    public void updateStatus(S newStatus) {
         setStatus(newStatus);
-        addTransactionEvent(transactionEvent, newStatus);
-    }
-
-    private void addTransactionEvent(T transactionEvent, S newStatus) {
-        transactionEvent.setTransaction(this);
-        transactionEvent.setStatus(newStatus);
-        transactionEvent.setUpdated(ZonedDateTime.now());
-        getTransactionEvents().add(0, transactionEvent);
     }
 
     public ZonedDateTime getCreatedDate() {
@@ -123,5 +109,4 @@ public abstract class TransactionEntity<S extends Status, T extends TransactionE
         this.createdDate = createdDate;
     }
 
-    protected abstract T createNewTransactionEvent();
 }

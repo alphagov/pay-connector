@@ -23,7 +23,7 @@ import static java.lang.String.format;
 
 @Entity
 @DiscriminatorValue(value = "CHARGE")
-public class ChargeTransactionEntity extends TransactionEntity<ChargeStatus, ChargeTransactionEventEntity> {
+public class ChargeTransactionEntity extends TransactionEntity<ChargeStatus> {
     private static final Logger logger = LoggerFactory.getLogger(ChargeTransactionEntity.class);
 
     @Column(name = "status")
@@ -33,7 +33,6 @@ public class ChargeTransactionEntity extends TransactionEntity<ChargeStatus, Cha
     private String gatewayTransactionId;
     @OneToMany(mappedBy = "transaction", cascade = CascadeType.ALL)
     @OrderBy("updated DESC")
-    private List<ChargeTransactionEventEntity> transactionEvents = new ArrayList<>();
     @Column(name = "email")
     private String email;
 
@@ -60,18 +59,11 @@ public class ChargeTransactionEntity extends TransactionEntity<ChargeStatus, Cha
     }
 
     public void updateStatus(ChargeStatus newStatus, ZonedDateTime gatewayEventTime) {
-        ChargeTransactionEventEntity transactionEvent = createNewTransactionEvent();
-        transactionEvent.setGatewayEventDate(gatewayEventTime);
-        updateStatus(newStatus, transactionEvent);
+        updateStatus(newStatus);
     }
 
     @Override
-    protected ChargeTransactionEventEntity createNewTransactionEvent() {
-        return new ChargeTransactionEventEntity();
-    }
-
-    @Override
-    void updateStatus(ChargeStatus newStatus, ChargeTransactionEventEntity transactionEvent) {
+    public void updateStatus(ChargeStatus newStatus) {
         if (this.status != null && !PaymentGatewayStateTransitions.getInstance().isValidTransition(this.status, newStatus)) {
             logger.warn(
                     format("Charge state transition [%s] -> [%s] not allowed for externalId [%s] transactionId [%s]",
@@ -82,7 +74,7 @@ public class ChargeTransactionEntity extends TransactionEntity<ChargeStatus, Cha
                     )
             );
         }
-        super.updateStatus(newStatus, transactionEvent);
+        super.updateStatus(newStatus);
     }
 
     public static ChargeTransactionEntity from(ChargeEntity chargeEntity) {
@@ -95,9 +87,6 @@ public class ChargeTransactionEntity extends TransactionEntity<ChargeStatus, Cha
         return transactionEntity;
     }
 
-    public List<ChargeTransactionEventEntity> getTransactionEvents() {
-        return transactionEvents;
-    }
 
     public String getEmail() {
         return email;
