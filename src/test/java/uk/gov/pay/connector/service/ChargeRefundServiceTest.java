@@ -57,16 +57,13 @@ public class ChargeRefundServiceTest {
     private PaymentProviders mockProviders;
     @Mock
     private PaymentProvider mockProvider;
-    @Mock
-    private RefundStatusUpdater mockRefundStatusUpdater;
 
     @Before
     public void setUp() {
         when(mockProviders.byName(any(PaymentGatewayName.class))).thenReturn(mockProvider);
         when(mockProvider.getExternalChargeRefundAvailability(any(ChargeEntity.class))).thenReturn(EXTERNAL_AVAILABLE);
         chargeRefundService = new ChargeRefundService(
-                mockChargeDao, mockRefundDao, mockProviders, TransactionFlow::new,
-                mockRefundStatusUpdater
+                mockChargeDao, mockRefundDao, mockProviders, TransactionFlow::new
         );
     }
 
@@ -133,11 +130,7 @@ public class ChargeRefundServiceTest {
         verify(mockRefundDao).findById(any(Long.class));
         verify(spiedRefundEntity).setStatus(RefundStatus.REFUND_SUBMITTED);
         verify(spiedRefundEntity).setReference(refundEntity.getExternalId());
-        verify(mockRefundStatusUpdater).setReferenceAndUpdateTransactionStatus(
-                refundEntity.getExternalId(),
-                refundEntity.getExternalId(),
-                RefundStatus.REFUND_SUBMITTED
-        );
+
         verifyNoMoreInteractions(mockChargeDao, mockRefundDao);
     }
 
@@ -184,9 +177,7 @@ public class ChargeRefundServiceTest {
         verify(mockRefundDao).findById(any(Long.class));
         verify(spiedRefundEntity).setStatus(RefundStatus.REFUND_SUBMITTED);
         verify(spiedRefundEntity).setReference(reference);
-        verify(mockRefundStatusUpdater).setReferenceAndUpdateTransactionStatus(
-                refundExternalId, reference, RefundStatus.REFUND_SUBMITTED
-        );
+
         verifyNoMoreInteractions(mockChargeDao, mockRefundDao);
     }
 
@@ -224,11 +215,7 @@ public class ChargeRefundServiceTest {
         assertThat(gatewayResponse.getRefundGatewayResponse().isSuccessful(), is(true));
         assertThat(gatewayResponse.getRefundEntity(), is(spiedRefundEntity));
         verify(spiedRefundEntity).setReference(providerReference);
-        verify(mockRefundStatusUpdater).setReferenceAndUpdateTransactionStatus(
-                refundExternalId,
-                providerReference,
-                RefundStatus.REFUND_SUBMITTED
-        );
+        
     }
 
     @Test
@@ -264,11 +251,7 @@ public class ChargeRefundServiceTest {
         assertThat(gatewayResponse.getRefundGatewayResponse().isSuccessful(), is(false));
         assertThat(gatewayResponse.getRefundEntity(), is(spiedRefundEntity));
         verify(spiedRefundEntity).setReference("");
-        verify(mockRefundStatusUpdater).setReferenceAndUpdateTransactionStatus(
-                refundExternalId,
-                "",
-                RefundStatus.REFUND_ERROR
-        );
+       
     }
 
     @Test
@@ -312,11 +295,7 @@ public class ChargeRefundServiceTest {
         verify(mockProvider).refund(argThat(aRefundRequestWith(charge, amount)));
         verify(mockRefundDao, times(2)).findById(any(Long.class));
         verify(spiedRefundEntity).setStatus(RefundStatus.REFUNDED);
-        verify(mockRefundStatusUpdater).updateRefundTransactionStatus(
-                SANDBOX,
-                spiedRefundEntity.getReference(),
-                RefundStatus.REFUNDED
-        );
+        
         verifyNoMoreInteractions(mockChargeDao, mockRefundDao);
     }
 
@@ -411,11 +390,7 @@ public class ChargeRefundServiceTest {
         verify(mockProvider).refund(argThat(aRefundRequestWith(capturedCharge, amount)));
         verify(mockRefundDao).findById(any(Long.class));
         verify(spiedRefundEntity).setStatus(RefundStatus.REFUND_ERROR);
-        verify(mockRefundStatusUpdater).setReferenceAndUpdateTransactionStatus(
-                refundExternalId,
-                "",
-                RefundStatus.REFUND_ERROR
-        );
+       
         verifyNoMoreInteractions(mockChargeDao, mockRefundDao);
     }
 
