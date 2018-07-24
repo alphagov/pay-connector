@@ -115,7 +115,7 @@ public class ConnectorApp extends Application<ConnectorConfiguration> {
                 .addMappingForUrlPatterns(of(REQUEST), true, "/v1/*");
 
         environment.servlets().addFilter( "XRayFilter", new AWSXRayServletFilter("pay-connector"))
-                .addMappingForUrlPatterns(of(REQUEST), true, ApiPaths.API_VERSION_PATH + "/*");
+                .addMappingForUrlPatterns(of(REQUEST), true, "/v1/*");
 
         environment.healthChecks().register("ping", new Ping());
         environment.healthChecks().register("database", injector.getInstance(DatabaseHealthCheck.class));
