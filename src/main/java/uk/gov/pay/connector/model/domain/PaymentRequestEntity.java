@@ -2,10 +2,6 @@ package uk.gov.pay.connector.model.domain;
 
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import uk.gov.pay.connector.model.ServicePaymentReference;
-import uk.gov.pay.connector.model.domain.transaction.ChargeTransactionEntity;
-import uk.gov.pay.connector.model.domain.transaction.RefundTransactionEntity;
-import uk.gov.pay.connector.model.domain.transaction.TransactionEntity;
-import uk.gov.pay.connector.model.domain.transaction.TransactionOperation;
 
 import javax.persistence.Access;
 import javax.persistence.AccessType;
@@ -29,8 +25,6 @@ import java.util.List;
 import java.util.function.Predicate;
 import java.util.stream.Collectors;
 
-import static uk.gov.pay.connector.model.domain.transaction.TransactionOperation.CHARGE;
-import static uk.gov.pay.connector.model.domain.transaction.TransactionOperation.REFUND;
 
 @Entity
 @Table(name = "payment_requests")
@@ -67,10 +61,6 @@ public class PaymentRequestEntity extends AbstractVersionedEntity {
 
     @Column(name = "external_id")
     private String externalId;
-
-    @OneToMany(mappedBy = "paymentRequest", cascade = CascadeType.ALL)
-    @OrderBy("id ASC")
-    private List<TransactionEntity> transactions = new ArrayList<>();
 
     public PaymentRequestEntity() {
         // enjoy it JPA
@@ -140,42 +130,8 @@ public class PaymentRequestEntity extends AbstractVersionedEntity {
         this.externalId = externalId;
     }
 
-    public List<TransactionEntity> getTransactions() {
-        return Collections.unmodifiableList(transactions);
-    }
 
-    public void addTransaction(TransactionEntity transactionEntity) {
-        this.transactions.add(transactionEntity);
-        transactionEntity.setPaymentRequest(this);
-    }
-
-    public void setTransactions(List<TransactionEntity> transactions) {
-        transactions.forEach(this::addTransaction);
-    }
-
-    public ChargeTransactionEntity getChargeTransaction() {
-        return (ChargeTransactionEntity)transactions.stream().filter(byOperation(CHARGE)).findFirst().orElseThrow(
-                () -> new IllegalStateException("Payment Request has been initialised without a charge transaction")
-        );
-    }
-
-    public List<RefundTransactionEntity> getRefundTransactions() {
-        return transactions.stream()
-                .filter(byOperation(REFUND))
-                .map(RefundTransactionEntity.class::cast)
-                .collect(Collectors.toList());
-    }
-
-    //Remove this once transactions table has been backfilled and we will no longer need to set this.
-    public boolean hasChargeTransaction() {
-        return transactions.stream().anyMatch(byOperation(CHARGE));
-    }
-
-    private Predicate<TransactionEntity> byOperation(TransactionOperation transactionOperation) {
-        return transactionEntity -> transactionEntity.getOperation().equals(transactionOperation);
-    }
-
-    public static PaymentRequestEntity from(ChargeEntity chargeEntity, ChargeTransactionEntity transactionEntity) {
+    public static PaymentRequestEntity from(ChargeEntity chargeEntity) {
         PaymentRequestEntity paymentEntity = new PaymentRequestEntity();
         paymentEntity.setAmount(chargeEntity.getAmount());
         paymentEntity.setCreatedDate(chargeEntity.getCreatedDate());
@@ -184,7 +140,6 @@ public class PaymentRequestEntity extends AbstractVersionedEntity {
         paymentEntity.setGatewayAccount(chargeEntity.getGatewayAccount());
         paymentEntity.setReference(chargeEntity.getReference());
         paymentEntity.setReturnUrl(chargeEntity.getReturnUrl());
-        paymentEntity.addTransaction(transactionEntity);
 
         return paymentEntity;
     }

@@ -42,7 +42,6 @@ public class GuicedTestEnvironment {
             bind(ChargeEventDao.class).in(Singleton.class);
             bind(TokenDao.class).in(Singleton.class);
             bind(GatewayAccountDao.class).in(Singleton.class);
-            bind(TransactionDao.class).in(Singleton.class);
         }
     }
 }

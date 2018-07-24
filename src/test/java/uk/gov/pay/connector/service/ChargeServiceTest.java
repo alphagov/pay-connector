@@ -17,7 +17,6 @@ import uk.gov.pay.connector.model.api.ExternalChargeState;
 import uk.gov.pay.connector.model.api.ExternalTransactionState;
 import uk.gov.pay.connector.model.builder.PatchRequestBuilder;
 import uk.gov.pay.connector.model.domain.*;
-import uk.gov.pay.connector.model.domain.transaction.ChargeTransactionEntity;
 import uk.gov.pay.connector.util.DateTimeUtils;
 
 import javax.ws.rs.core.UriInfo;
@@ -150,8 +149,6 @@ public class ChargeServiceTest {
         final String chargeEntityExternalId = createdChargeEntity.getExternalId();
         when(mockedChargeDao.findByExternalId(chargeEntityExternalId))
                 .thenReturn(Optional.of(createdChargeEntity));
-
-        final ChargeTransactionEntity chargeTransactionEntity = ChargeTransactionEntity.from(createdChargeEntity);
 
         final String expectedEmail = "test@examplecom";
         PatchRequestBuilder.PatchRequest patchRequest = PatchRequestBuilder.aPatchRequestBuilder(

@@ -4,7 +4,6 @@ import com.google.inject.persist.Transactional;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import uk.gov.pay.connector.model.domain.ChargeStatus;
-import uk.gov.pay.connector.model.domain.transaction.ChargeTransactionEntity;
 
 import javax.inject.Inject;
 import java.time.ZonedDateTime;
@@ -24,6 +23,5 @@ public class ChargeStatusUpdater {
     public void updateChargeTransactionStatus(String externalId, ChargeStatus newChargeStatus) {
     }
 
-    private void updateChargeTransactionStatus(String externalId, ChargeStatus newChargeStatus, Consumer<ChargeTransactionEntity> updateStatusFunction) {
-    }
+
 }
