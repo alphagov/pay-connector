@@ -4,7 +4,6 @@ import com.google.common.collect.ImmutableList;
 import com.google.inject.persist.Transactional;
 import io.dropwizard.setup.Environment;
 import org.apache.commons.lang3.StringUtils;
-import uk.gov.pay.connector.dao.CardDaoDeleteme;
 import uk.gov.pay.connector.dao.CardTypeDao;
 import uk.gov.pay.connector.dao.ChargeDao;
 import uk.gov.pay.connector.dao.ChargeEventDao;
@@ -37,20 +36,17 @@ import static uk.gov.pay.connector.model.domain.NumbersInStringsSanitizer.saniti
 public class CardAuthoriseService extends CardAuthoriseBaseService<AuthCardDetails> {
 
     private final CardTypeDao cardTypeDao;
-    private final CardDaoDeleteme cardDao;
 
     @Inject
     public CardAuthoriseService(ChargeDao chargeDao,
                                 ChargeEventDao chargeEventDao,
                                 CardTypeDao cardTypeDao,
-                                CardDaoDeleteme cardDao,
                                 PaymentProviders providers,
                                 CardExecutorService cardExecutorService,
                                 Environment environment,
                                 ChargeStatusUpdater chargeStatusUpdater) {
         super(chargeDao, chargeEventDao, providers, cardExecutorService, environment, chargeStatusUpdater);
         this.cardTypeDao = cardTypeDao;
-        this.cardDao = cardDao;
     }
 
     @Transactional
