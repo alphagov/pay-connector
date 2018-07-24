@@ -1,6 +1,5 @@
 package uk.gov.pay.connector.model.domain.transaction;
 
-import uk.gov.pay.connector.model.domain.CardEntity;
 import uk.gov.pay.connector.model.domain.ChargeStatus;
 
 import java.time.ZoneId;
@@ -12,7 +11,6 @@ public final class ChargeTransactionEntityBuilder {
     private ChargeStatus status = ChargeStatus.CREATED;
     private String email = "email@example.com";
     private ZonedDateTime createdDate = ZonedDateTime.now(ZoneId.of("UTC"));
-    private CardEntity card;
 
     private ChargeTransactionEntityBuilder() {
     }
@@ -46,11 +44,6 @@ public final class ChargeTransactionEntityBuilder {
         return this;
     }
 
-    public ChargeTransactionEntityBuilder withCard(CardEntity card) {
-        this.card = card;
-        return this;
-    }
-
     public ChargeTransactionEntity build() {
         ChargeTransactionEntity transactionEntity = new ChargeTransactionEntity();
         transactionEntity.setGatewayTransactionId(gatewayTransactionId);
@@ -58,9 +51,6 @@ public final class ChargeTransactionEntityBuilder {
         transactionEntity.updateStatus(status);
         transactionEntity.setEmail(email);
         transactionEntity.setCreatedDate(createdDate);
-        if (card != null) {
-            transactionEntity.setCard(card);
-        }
         return transactionEntity;
     }
 }

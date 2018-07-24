@@ -7,7 +7,6 @@ import uk.gov.pay.connector.dao.PaymentRequestDao;
 import uk.gov.pay.connector.dao.TransactionDao;
 import uk.gov.pay.connector.model.ServicePaymentReference;
 import uk.gov.pay.connector.model.TransactionType;
-import uk.gov.pay.connector.model.domain.CardEntity;
 import uk.gov.pay.connector.model.domain.ChargeStatus;
 import uk.gov.pay.connector.model.domain.GatewayAccountEntity;
 import uk.gov.pay.connector.model.domain.PaymentRequestEntity;
@@ -24,7 +23,6 @@ import static java.util.Collections.singletonList;
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.core.Is.is;
 import static uk.gov.pay.connector.model.TransactionType.REFUND;
-import static uk.gov.pay.connector.model.domain.CardEntityBuilder.aCardEntity;
 import static uk.gov.pay.connector.model.domain.GatewayAccountEntity.Type.TEST;
 import static uk.gov.pay.connector.model.domain.PaymentRequestEntityFixture.aValidPaymentRequestEntity;
 import static uk.gov.pay.connector.model.domain.PaymentRequestEntityFixture.aValidPaymentRequestEntityWithRefund;
@@ -442,48 +440,6 @@ public class TransactionDaoITest extends DaoITestBase {
     }
 
     @Test
-    public void shouldReturnTransactions_byCardBrand() {
-        final String cardBrand = "visa";
-        final PaymentRequestEntity paymentRequestEntity = persistPaymentRequestForCardBrand(cardBrand);
-        persistPaymentRequestForCardBrand("mastercard");
-
-        final Long chargeTransactionId = paymentRequestEntity.getChargeTransaction().getId();
-        final Long refundTransactionId = paymentRequestEntity.getRefundTransactions().get(0).getId();
-
-        ChargeSearchParams searchParams = createSearchParams();
-        searchParams.withCardBrand(cardBrand);
-
-        final List<Transaction> searchResult = transactionDao.search(searchParams);
-        assertThat(searchResult.size(), is(2));
-        assertThat(searchResult.get(0).getChargeId(), is(refundTransactionId));
-        assertThat(searchResult.get(1).getChargeId(), is(chargeTransactionId));
-    }
-
-    @Test
-    public void shouldReturnTransactions_byMultipleCardBrand() {
-        final String visaCardBrand = "visa";
-        final PaymentRequestEntity visaPaymentRequestEntity = persistPaymentRequestForCardBrand(visaCardBrand);
-        final String mastercardCardBrand = "master-card";
-        final PaymentRequestEntity mastercardPaymentRequestEntity = persistPaymentRequestForCardBrand(mastercardCardBrand);
-        persistPaymentRequestForCardBrand("anotherCardBrand");
-
-        final Long visaChargeTransactionId = visaPaymentRequestEntity.getChargeTransaction().getId();
-        final Long visaRefundTransactionId = visaPaymentRequestEntity.getRefundTransactions().get(0).getId();
-        final Long mastercardChargeTransactionId = mastercardPaymentRequestEntity.getChargeTransaction().getId();
-        final Long mastercardRefundTransactionId = mastercardPaymentRequestEntity.getRefundTransactions().get(0).getId();
-
-        ChargeSearchParams searchParams = createSearchParams();
-        searchParams.withCardBrands(asList(visaCardBrand, mastercardCardBrand));
-
-        final List<Transaction> searchResult = transactionDao.search(searchParams);
-        assertThat(searchResult.size(), is(4));
-        assertThat(searchResult.get(0).getChargeId(), is(mastercardRefundTransactionId));
-        assertThat(searchResult.get(1).getChargeId(), is(mastercardChargeTransactionId));
-        assertThat(searchResult.get(2).getChargeId(), is(visaRefundTransactionId));
-        assertThat(searchResult.get(3).getChargeId(), is(visaChargeTransactionId));
-    }
-
-    @Test
     public void shouldReturnTransactions_byStatus() {
         final ChargeStatus chargeStatus = ChargeStatus.CAPTURED;
         final PaymentRequestEntity paymentRequestEntity =
@@ -570,79 +526,7 @@ public class TransactionDaoITest extends DaoITestBase {
         final Long chargeId = paymentRequestEntity.getChargeTransaction().getId();
         assertThat(searchResult.get(1).getChargeId(), is(chargeId));
     }
-
-    @Test
-    public void shouldReturnTransactions_AllParametersSet() {
-        ServicePaymentReference ref = ServicePaymentReference.of("ref1");
-        String email = "foo@foo.com";
-        String cardBrand = "visa";
-
-        ZonedDateTime createdTime = ZonedDateTime.now();
-        PaymentRequestEntity paymentRequestEntity = aValidPaymentRequestEntity()
-                .withReference(ref)
-                .withTransactions(aChargeTransactionEntity()
-                        .withEmail(email)
-                        .withCard(aCardEntity()
-                                .withCardBrand(cardBrand)
-                                .build())
-                        .withCreatedDate(createdTime)
-                        .withStatus(ChargeStatus.CREATED)
-                        .build())
-                .withGatewayAccountEntity(gatewayAccount).build();
-        paymentRequestDao.persist(paymentRequestEntity);
-        paymentRequestDao.persist(aValidPaymentRequestEntity()
-                .withGatewayAccountEntity(gatewayAccount).build());
-
-        ChargeSearchParams searchParams = createSearchParams();
-        searchParams.withReferenceLike(ref);
-        searchParams.withEmailLike(email);
-        searchParams.withCardBrand(cardBrand);
-        searchParams.withFromDate(createdTime.minusSeconds(5));
-        searchParams.withToDate(createdTime.plusSeconds(5));
-        searchParams.withTransactionType(TransactionType.PAYMENT);
-        searchParams.addExternalChargeStates(singletonList(ChargeStatus.CREATED.toExternal().getStatus()));
-        searchParams.addExternalRefundStates(singletonList(RefundStatus.CREATED.toExternal().getStatus()));
-
-        final List<Transaction> searchResult = transactionDao.search(searchParams);
-        assertThat(searchResult.size(), is(1));
-        final Long refundId = paymentRequestEntity.getChargeTransaction().getId();
-        assertThat(searchResult.get(0).getChargeId(), is(refundId));
-    }
-
-    @Test
-    public void shouldCountTransactions_AllParametersSet() throws Exception {
-        ServicePaymentReference ref = ServicePaymentReference.of("ref1");
-        String email = "foo@foo.com";
-        String cardBrand = "visa";
-
-        ZonedDateTime createdTime = ZonedDateTime.now();
-        paymentRequestDao.persist(aValidPaymentRequestEntity()
-                .withReference(ref)
-                .withTransactions(aChargeTransactionEntity()
-                        .withEmail(email)
-                        .withCard(aCardEntity()
-                                .withCardBrand(cardBrand)
-                                .build())
-                        .withCreatedDate(createdTime)
-                        .withStatus(ChargeStatus.CREATED)
-                        .build())
-                .withGatewayAccountEntity(gatewayAccount).build());
-        paymentRequestDao.persist(aValidPaymentRequestEntity()
-                .withGatewayAccountEntity(gatewayAccount).build());
-
-        ChargeSearchParams searchParams = createSearchParams();
-        searchParams.withReferenceLike(ref);
-        searchParams.withEmailLike(email);
-        searchParams.withCardBrand(cardBrand);
-        searchParams.withFromDate(createdTime.minusSeconds(5));
-        searchParams.withToDate(createdTime.plusSeconds(5));
-        searchParams.withTransactionType(TransactionType.PAYMENT);
-        searchParams.addExternalChargeStates(singletonList(ChargeStatus.CREATED.toExternal().getStatus()));
-        searchParams.addExternalRefundStates(singletonList(RefundStatus.CREATED.toExternal().getStatus()));
-
-        final Long total = transactionDao.getTotal(searchParams);
-        assertThat(total, is(1L));
-    }
+    
 
     private ChargeSearchParams createSearchParams() {
         ChargeSearchParams searchParams = new ChargeSearchParams();
@@ -668,10 +552,7 @@ public class TransactionDaoITest extends DaoITestBase {
         PaymentRequestEntity paymentRequestEntity = aValidPaymentRequestEntityWithRefund()
                 .withGatewayAccountEntity(gatewayAccount)
                 .build();
-        final CardEntity card = aCardEntity()
-                .withCardBrand(cardBrand)
-                .build();
-        paymentRequestEntity.getChargeTransaction().setCard(card);
+       
         paymentRequestDao.persist(paymentRequestEntity);
 
         return paymentRequestEntity;
