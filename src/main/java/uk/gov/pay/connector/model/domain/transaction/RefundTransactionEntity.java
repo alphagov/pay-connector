@@ -16,7 +16,7 @@ import java.util.List;
 
 @Entity
 @DiscriminatorValue(value = "REFUND")
-public class RefundTransactionEntity extends TransactionEntity<RefundStatus, RefundTransactionEventEntity> {
+public class RefundTransactionEntity extends TransactionEntity<RefundStatus> {
     @Column(name = "status")
     @Enumerated(EnumType.STRING)
     protected RefundStatus status;
@@ -26,9 +26,6 @@ public class RefundTransactionEntity extends TransactionEntity<RefundStatus, Ref
     private String userExternalId;
     @Column(name = "refund_reference")
     private String refundReference;
-    @OneToMany(mappedBy = "transaction", cascade = CascadeType.ALL)
-    @OrderBy("updated DESC")
-    private List<RefundTransactionEventEntity> transactionEvents = new ArrayList<>();
 
     public RefundTransactionEntity() {
         super(TransactionOperation.REFUND);
@@ -79,12 +76,4 @@ public class RefundTransactionEntity extends TransactionEntity<RefundStatus, Ref
         return refundTransaction;
     }
 
-    @Override
-    protected RefundTransactionEventEntity createNewTransactionEvent() {
-        return new RefundTransactionEventEntity();
-    }
-
-    public List<RefundTransactionEventEntity> getTransactionEvents() {
-        return transactionEvents;
-    }
 }
