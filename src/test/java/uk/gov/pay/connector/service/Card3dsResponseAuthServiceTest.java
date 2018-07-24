@@ -21,8 +21,6 @@ import uk.gov.pay.connector.exception.OperationAlreadyInProgressRuntimeException
 import uk.gov.pay.connector.model.domain.Auth3dsDetails;
 import uk.gov.pay.connector.model.domain.ChargeEntity;
 import uk.gov.pay.connector.model.domain.ChargeStatus;
-import uk.gov.pay.connector.model.domain.PaymentRequestEntity;
-import uk.gov.pay.connector.model.domain.PaymentRequestEntityFixture;
 import uk.gov.pay.connector.model.gateway.Auth3dsResponseGatewayRequest;
 import uk.gov.pay.connector.model.gateway.GatewayResponse;
 import uk.gov.pay.connector.model.gateway.GatewayResponse.GatewayResponseBuilder;
