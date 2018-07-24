@@ -28,7 +28,6 @@ import static org.jooq.impl.DSL.inline;
 import static org.jooq.impl.DSL.selectDistinct;
 import static org.jooq.impl.DSL.table;
 
-@Deprecated // This will be removed once the new refunds functionality has been completed.
 @Transactional
 public class OldTransactionDao {
 

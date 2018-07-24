@@ -2,7 +2,6 @@ package uk.gov.pay.connector.model.domain.transaction;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import uk.gov.pay.connector.model.domain.Card3dsEntity;
 import uk.gov.pay.connector.model.domain.CardEntity;
 import uk.gov.pay.connector.model.domain.ChargeEntity;
 import uk.gov.pay.connector.model.domain.ChargeStatus;
@@ -38,8 +37,6 @@ public class ChargeTransactionEntity extends TransactionEntity<ChargeStatus, Cha
     private List<ChargeTransactionEventEntity> transactionEvents = new ArrayList<>();
     @OneToOne(mappedBy = "chargeTransactionEntity", cascade = CascadeType.PERSIST)
     private CardEntity card;
-    @OneToOne(mappedBy = "chargeTransactionEntity", cascade = CascadeType.PERSIST)
-    private Card3dsEntity card3ds;
     @Column(name = "email")
     private String email;
 
@@ -73,15 +70,6 @@ public class ChargeTransactionEntity extends TransactionEntity<ChargeStatus, Cha
     public void setCard(CardEntity card) {
         this.card = card;
         card.setChargeTransactionEntity(this);
-    }
-
-    public Card3dsEntity getCard3ds() {
-        return card3ds;
-    }
-
-    public void setCard3ds(Card3dsEntity card3ds) {
-        this.card3ds = card3ds;
-        card3ds.setChargeTransactionEntity(this);
     }
 
     public void updateStatus(ChargeStatus newStatus, ZonedDateTime gatewayEventTime) {
