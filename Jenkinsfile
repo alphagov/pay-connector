@@ -33,7 +33,7 @@ pipeline {
         script {
           def long stepBuildTime = System.currentTimeMillis()
 
-          sh 'docker pull govukpay/postgres:9.4.4'
+          sh 'docker pull govukpay/postgres:9.6.6'
           sh 'mvn clean package'
 
           postSuccessfulMetrics("connector.maven-build", stepBuildTime)
@@ -50,7 +50,7 @@ pipeline {
         branch 'master'
       }
       steps {
-        sh 'docker pull govukpay/postgres:9.4.4'
+        sh 'docker pull govukpay/postgres:9.6.6'
         sh 'mvn -Dmaven.test.skip=true clean package'
       }
     }
