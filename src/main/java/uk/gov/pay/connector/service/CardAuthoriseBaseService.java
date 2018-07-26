@@ -1,8 +1,8 @@
 package uk.gov.pay.connector.service;
 
-import com.amazonaws.xray.AWSXRay;
-import com.amazonaws.xray.AWSXRayRecorder;
-import com.amazonaws.xray.entities.Segment;
+//import com.amazonaws.xray.AWSXRay;
+//import com.amazonaws.xray.AWSXRayRecorder;
+//import com.amazonaws.xray.entities.Segment;
 import io.dropwizard.setup.Environment;
 import org.apache.commons.lang3.tuple.Pair;
 import org.slf4j.Logger;
@@ -30,7 +30,7 @@ public abstract class CardAuthoriseBaseService<T extends AuthorisationDetails> e
     private static final Logger LOG = LoggerFactory.getLogger(CardAuthoriseBaseService.class);
 
     private final CardExecutorService cardExecutorService;
-    private final AWSXRayRecorder recorder = AWSXRay.getGlobalRecorder();
+    //private final AWSXRayRecorder recorder = AWSXRay.getGlobalRecorder();
 
 
     public CardAuthoriseBaseService(ChargeDao chargeDao, ChargeEventDao chargeEventDao, PaymentProviders providers, CardExecutorService cardExecutorService, Environment environment, ChargeStatusUpdater chargeStatusUpdater) {
@@ -42,7 +42,7 @@ public abstract class CardAuthoriseBaseService<T extends AuthorisationDetails> e
     public GatewayResponse doAuthorise(String chargeId, T gatewayAuthRequest) {
 
         Supplier authorisationSupplier = () -> {
-            recorder.beginSegment("pay-connector");
+            //recorder.beginSegment("pay-connector");
             ChargeEntity charge;
             try {
                 try {
@@ -57,7 +57,7 @@ public abstract class CardAuthoriseBaseService<T extends AuthorisationDetails> e
                 GatewayResponse<BaseAuthoriseResponse> operationResponse = operation(charge, gatewayAuthRequest);
                 return postOperation(chargeId, gatewayAuthRequest, operationResponse);
             } finally {
-                recorder.endSegment();
+                //recorder.endSegment();
             }
         };
 

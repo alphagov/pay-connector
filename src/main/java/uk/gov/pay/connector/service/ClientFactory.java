@@ -55,7 +55,7 @@ public class ClientFactory {
         }
 
         Client client = defaultClientBuilder.build(gateway.getName());
-        client.register(RestClientLoggingFilter.class).register(XRayHttpClientFilter.class);
+        // client.register(RestClientLoggingFilter.class).register(XRayHttpClientFilter.class);
         return client;
     }
 

@@ -114,7 +114,7 @@ public class ConnectorApp extends Application<ConnectorConfiguration> {
         environment.servlets().addFilter("LoggingFilter", injector.getInstance(LoggingFilter.class))
                 .addMappingForUrlPatterns(of(REQUEST), true, "/v1/*");
 
-        environment.servlets().addFilter( "XRayFilter", new AWSXRayServletFilter("pay-connector"))
+        environment.servlets().addFilter("XRayFilter", new AWSXRayServletFilter("pay-connector"))
                 .addMappingForUrlPatterns(of(REQUEST), true, "/v1/*");
 
         environment.healthChecks().register("ping", new Ping());
