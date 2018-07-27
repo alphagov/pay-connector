@@ -20,7 +20,6 @@ public abstract class CardServiceTest {
     protected ChargeDao mockedChargeDao = mock(ChargeDao.class);
     protected ChargeEventDao mockedChargeEventDao = mock(ChargeEventDao.class);
     protected CardTypeDao mockedCardTypeDao = mock(CardTypeDao.class);
-    protected ChargeStatusUpdater mockChargeStatusUpdater = mock(ChargeStatusUpdater.class);
 
     protected ChargeEntity createNewChargeWith(Long chargeId, ChargeStatus status) {
         ChargeEntity entity = ChargeEntityFixture

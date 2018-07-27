@@ -43,9 +43,8 @@ public class CardAuthoriseService extends CardAuthoriseBaseService<AuthCardDetai
                                 CardTypeDao cardTypeDao,
                                 PaymentProviders providers,
                                 CardExecutorService cardExecutorService,
-                                Environment environment,
-                                ChargeStatusUpdater chargeStatusUpdater) {
-        super(chargeDao, chargeEventDao, providers, cardExecutorService, environment, chargeStatusUpdater);
+                                Environment environment) {
+        super(chargeDao, chargeEventDao, providers, cardExecutorService, environment);
         this.cardTypeDao = cardTypeDao;
     }
 
@@ -64,7 +63,6 @@ public class CardAuthoriseService extends CardAuthoriseBaseService<AuthCardDetai
                         chargeEntity.getExternalId(), OperationType.AUTHORISATION.getValue(), cardBrand);
 
                 chargeEventDao.persistChargeEventOf(chargeEntity, Optional.empty());
-                chargeStatusUpdater.updateChargeTransactionStatus(chargeEntity.getExternalId(), ChargeStatus.fromString(chargeEntity.getStatus()));
             } else {
                 preOperation(chargeEntity, OperationType.AUTHORISATION, getLegalStates(), AUTHORISATION_READY);
 
@@ -130,7 +128,6 @@ public class CardAuthoriseService extends CardAuthoriseBaseService<AuthCardDetai
                             .ifPresent(chargeEntity::set3dsDetails)
             );
 
-            chargeStatusUpdater.updateChargeTransactionStatus(chargeEntity.getExternalId(), status);
             if (StringUtils.isBlank(transactionId)) {
                 logger.warn("AuthCardDetails authorisation response received with no transaction id. -  charge_external_id={}", chargeEntity.getExternalId());
             } else {

@@ -66,12 +66,9 @@ public class ChargeCancelServiceTest {
     @Mock
     private PaymentProvider mockPaymentProvider;
 
-    @Mock
-    private ChargeStatusUpdater mockChargeStatusUpdater;
-
     @Before
     public void setup() {
-        chargeCancelService = new ChargeCancelService(mockChargeDao, mockChargeEventDao, mockPaymentProviders, TransactionFlow::new, mockChargeStatusUpdater);
+        chargeCancelService = new ChargeCancelService(mockChargeDao, mockChargeEventDao, mockPaymentProviders, TransactionFlow::new);
     }
 
     @Test
@@ -94,7 +91,6 @@ public class ChargeCancelServiceTest {
         assertThat(chargeEntity.getStatus(), is(SYSTEM_CANCELLED.getValue()));
 
         verify(mockChargeEventDao).persistChargeEventOf(chargeEntity, Optional.empty());
-        verify(mockChargeStatusUpdater).updateChargeTransactionStatus(chargeEntity.getExternalId(), SYSTEM_CANCELLED, null);
     }
 
     @Test
@@ -128,7 +124,7 @@ public class ChargeCancelServiceTest {
         verify(mockChargeDao).findByExternalIdAndGatewayAccount(externalChargeId, gatewayAccountId);
         verify(mockChargeDao, times(2)).findByExternalId(externalChargeId);
         verify(mockChargeEventDao, atLeastOnce()).persistChargeEventOf(argThat(chargeEntityHasStatus(SYSTEM_CANCELLED)), eq(Optional.empty()));
-        verify(mockChargeStatusUpdater).updateChargeTransactionStatus(chargeEntity.getExternalId(), SYSTEM_CANCELLED);
+
         verifyNoMoreInteractions(mockChargeDao);
     }
 
@@ -161,7 +157,6 @@ public class ChargeCancelServiceTest {
         assertThat(chargeEntity.getStatus(), is(USER_CANCELLED.getValue()));
 
         verify(mockChargeEventDao).persistChargeEventOf(chargeEntity, Optional.empty());
-        verify(mockChargeStatusUpdater).updateChargeTransactionStatus(chargeEntity.getExternalId(), USER_CANCELLED, null);
     }
 
     @Test
@@ -192,7 +187,7 @@ public class ChargeCancelServiceTest {
 
         verify(mockChargeDao, times(3)).findByExternalId(externalChargeId);
         verify(mockChargeEventDao, atLeastOnce()).persistChargeEventOf(argThat(chargeEntityHasStatus(USER_CANCELLED)), eq(Optional.empty()));
-        verify(mockChargeStatusUpdater).updateChargeTransactionStatus(chargeEntity.getExternalId(), USER_CANCELLED);
+
         verifyNoMoreInteractions(mockChargeDao);
     }
 

@@ -98,7 +98,7 @@ public class CardAuthoriseServiceTest extends CardServiceTest {
         when(mockEnvironment.metrics()).thenReturn(mockMetricRegistry);
         cardAuthorisationService = new CardAuthoriseService(mockedChargeDao, mockedChargeEventDao,
                 mockedCardTypeDao, mockedProviders, mockExecutorService,
-                mockEnvironment, mockChargeStatusUpdater);
+                mockEnvironment);
     }
 
     @Before
@@ -148,9 +148,6 @@ public class CardAuthoriseServiceTest extends CardServiceTest {
         assertThat(charge.get3dsDetails(), is(nullValue()));
         assertThat(charge.getCardDetails(), is(notNullValue()));
 
-        InOrder inOrder = inOrder(mockChargeStatusUpdater);
-        inOrder.verify(mockChargeStatusUpdater).updateChargeTransactionStatus(charge.getExternalId(), AUTHORISATION_READY);
-        inOrder.verify(mockChargeStatusUpdater).updateChargeTransactionStatus(charge.getExternalId(), AUTHORISATION_SUCCESS);
     }
 
     @Test

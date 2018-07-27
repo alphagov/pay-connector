@@ -36,16 +36,14 @@ public class NotificationService {
     private final RefundDao refundDao;
     private final PaymentProviders paymentProviders;
     private final DnsUtils dnsUtils;
-    private final ChargeStatusUpdater chargeStatusUpdater;
 
     @Inject
-    public NotificationService(ChargeDao chargeDao, ChargeEventDao chargeEventDao, RefundDao refundDao, PaymentProviders paymentProviders, DnsUtils dnsUtils, ChargeStatusUpdater chargeStatusUpdater) {
+    public NotificationService(ChargeDao chargeDao, ChargeEventDao chargeEventDao, RefundDao refundDao, PaymentProviders paymentProviders, DnsUtils dnsUtils) {
         this.chargeDao = chargeDao;
         this.chargeEventDao = chargeEventDao;
         this.refundDao = refundDao;
         this.paymentProviders = paymentProviders;
         this.dnsUtils = dnsUtils;
-        this.chargeStatusUpdater = chargeStatusUpdater;
     }
 
     @Transactional
@@ -216,7 +214,6 @@ public class NotificationService {
                     gatewayAccount.getType());
 
             chargeEventDao.persistChargeEventOf(chargeEntity, Optional.ofNullable(notification.getGatewayEventDate()));
-            chargeStatusUpdater.updateChargeTransactionStatus(chargeEntity.getExternalId(), newStatus, notification.getGatewayEventDate());
         }
 
         private <T> void updateRefundStatus(EvaluatedRefundStatusNotification<T> notification) {

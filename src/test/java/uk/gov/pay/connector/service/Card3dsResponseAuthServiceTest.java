@@ -71,8 +71,7 @@ public class Card3dsResponseAuthServiceTest extends CardServiceTest {
         when(mockEnvironment.metrics()).thenReturn(mockMetricRegistry);
         when(mockMetricRegistry.counter(anyString())).thenReturn(mockCounter);
 
-        card3dsResponseAuthService = new Card3dsResponseAuthService(mockedChargeDao, mockedChargeEventDao, mockedProviders, mockExecutorService, mockEnvironment, 
-                 mockChargeStatusUpdater);
+        card3dsResponseAuthService = new Card3dsResponseAuthService(mockedChargeDao, mockedChargeEventDao, mockedProviders, mockExecutorService, mockEnvironment);
     }
 
     public void setupMockExecutorServiceMock() {
@@ -114,7 +113,6 @@ public class Card3dsResponseAuthServiceTest extends CardServiceTest {
         assertTrue(argumentCaptor.getValue().getTransactionId().isPresent());
         assertThat(argumentCaptor.getValue().getTransactionId().get(), is(GENERATED_TRANSACTION_ID));
 
-        verify(mockChargeStatusUpdater).updateChargeTransactionStatus(charge.getExternalId(), AUTHORISATION_SUCCESS);
     }
 
     @Test
@@ -155,7 +153,6 @@ public class Card3dsResponseAuthServiceTest extends CardServiceTest {
 
         assertTrue(argumentCaptor.getValue().getProviderSessionId().isPresent());
         assertThat(argumentCaptor.getValue().getProviderSessionId().get(), is(providerSessionId));
-        verify(mockChargeStatusUpdater).updateChargeTransactionStatus(charge.getExternalId(), AUTHORISATION_SUCCESS);
     }
 
     @Test
@@ -171,7 +168,6 @@ public class Card3dsResponseAuthServiceTest extends CardServiceTest {
         assertThat(charge.getGatewayTransactionId(), is(GENERATED_TRANSACTION_ID));
         assertTrue(argumentCaptor.getValue().getTransactionId().isPresent());
         assertThat(argumentCaptor.getValue().getTransactionId().get(), is(GENERATED_TRANSACTION_ID));
-        verify(mockChargeStatusUpdater).updateChargeTransactionStatus(charge.getExternalId(), AUTHORISATION_REJECTED);
     }
 
     @Test
@@ -186,7 +182,6 @@ public class Card3dsResponseAuthServiceTest extends CardServiceTest {
         assertThat(charge.getGatewayTransactionId(), is(GENERATED_TRANSACTION_ID));
         assertTrue(argumentCaptor.getValue().getTransactionId().isPresent());
         assertThat(argumentCaptor.getValue().getTransactionId().get(), is(GENERATED_TRANSACTION_ID));
-        verify(mockChargeStatusUpdater).updateChargeTransactionStatus(charge.getExternalId(), AUTHORISATION_CANCELLED);
     }
 
     @Test
