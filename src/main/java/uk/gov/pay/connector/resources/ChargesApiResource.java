@@ -15,8 +15,8 @@ import uk.gov.pay.connector.model.ServicePaymentReference;
 import uk.gov.pay.connector.model.domain.ChargeEntity;
 import uk.gov.pay.connector.service.ChargeExpiryService;
 import uk.gov.pay.connector.service.ChargeService;
-import uk.gov.pay.connector.service.search.SearchService;
 import uk.gov.pay.connector.service.search.TransactionSearchStrategy;
+import uk.gov.pay.connector.service.search.SearchService;
 import uk.gov.pay.connector.util.ResponseUtil;
 
 import javax.inject.Inject;
