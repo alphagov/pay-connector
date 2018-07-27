@@ -28,9 +28,8 @@ public class Card3dsResponseAuthService extends CardAuthoriseBaseService<Auth3ds
                                       ChargeEventDao chargeEventDao,
                                       PaymentProviders providers,
                                       CardExecutorService cardExecutorService,
-                                      Environment environment, 
-                                      ChargeStatusUpdater chargeStatusUpdater) {
-        super(chargeDao, chargeEventDao, providers, cardExecutorService, environment, chargeStatusUpdater);
+                                      Environment environment) {
+        super(chargeDao, chargeEventDao, providers, cardExecutorService, environment);
     }
 
     public GatewayResponse<BaseAuthoriseResponse> operation(ChargeEntity chargeEntity, Auth3dsDetails auth3DsDetails) {
@@ -69,7 +68,6 @@ public class Card3dsResponseAuthService extends CardAuthoriseBaseService<Auth3ds
             metricRegistry.counter(String.format("gateway-operations.%s.%s.%s.authorise-3ds.result.%s", account.getGatewayName(), account.getType(), account.getId(), status.toString())).inc();
 
             chargeEntity.setStatus(status);
-            chargeStatusUpdater.updateChargeTransactionStatus(chargeEntity.getExternalId(), status);
 
             if (!isBlank(transactionId)) {
                 setGatewayTransactionId(chargeEntity, transactionId);

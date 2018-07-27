@@ -10,7 +10,11 @@ import org.mockito.Mock;
 import org.mockito.runners.MockitoJUnitRunner;
 import uk.gov.pay.connector.app.ConnectorConfiguration;
 import uk.gov.pay.connector.app.LinksConfig;
-import uk.gov.pay.connector.dao.*;
+import uk.gov.pay.connector.dao.CardTypeDao;
+import uk.gov.pay.connector.dao.ChargeDao;
+import uk.gov.pay.connector.dao.ChargeEventDao;
+import uk.gov.pay.connector.dao.GatewayAccountDao;
+import uk.gov.pay.connector.dao.TokenDao;
 import uk.gov.pay.connector.model.ChargeResponse;
 import uk.gov.pay.connector.model.ServicePaymentReference;
 import uk.gov.pay.connector.model.api.ExternalChargeState;
@@ -39,12 +43,18 @@ import static org.hamcrest.core.IsNull.notNullValue;
 import static org.hamcrest.core.IsNull.nullValue;
 import static org.junit.Assert.assertThat;
 import static org.mockito.ArgumentCaptor.forClass;
-import static org.mockito.Mockito.*;
+import static org.mockito.Matchers.any;
+import static org.mockito.Mockito.doAnswer;
+import static org.mockito.Mockito.never;
+import static org.mockito.Mockito.verify;
+import static org.mockito.Mockito.when;
 import static uk.gov.pay.connector.model.ChargeResponse.ChargeResponseBuilder;
 import static uk.gov.pay.connector.model.ChargeResponse.aChargeResponseBuilder;
 import static uk.gov.pay.connector.model.api.ExternalChargeRefundAvailability.EXTERNAL_AVAILABLE;
 import static uk.gov.pay.connector.model.domain.ChargeEntityFixture.aValidChargeEntity;
-import static uk.gov.pay.connector.model.domain.ChargeStatus.*;
+import static uk.gov.pay.connector.model.domain.ChargeStatus.CAPTURED;
+import static uk.gov.pay.connector.model.domain.ChargeStatus.CREATED;
+import static uk.gov.pay.connector.model.domain.ChargeStatus.ENTERING_CARD_DETAILS;
 import static uk.gov.pay.connector.model.domain.GatewayAccountEntity.Type.TEST;
 
 
@@ -83,8 +93,6 @@ public class ChargeServiceTest {
     private PaymentProviders mockedProviders;
     @Mock
     private PaymentProvider mockedPaymentProvider;
-    @Mock
-    private ChargeStatusUpdater mockedChargeStatusUpdater;
 
     private ChargeService service;
 
@@ -116,8 +124,7 @@ public class ChargeServiceTest {
         when(mockedPaymentProvider.getExternalChargeRefundAvailability(any(ChargeEntity.class))).thenReturn(EXTERNAL_AVAILABLE);
 
         service = new ChargeService(mockedTokenDao, mockedChargeDao, mockedChargeEventDao,
-                mockedCardTypeDao, mockedGatewayAccountDao, mockedConfig, mockedProviders,
-                 mockedChargeStatusUpdater);
+                mockedCardTypeDao, mockedGatewayAccountDao, mockedConfig, mockedProviders);
     }
 
     @Test
@@ -144,7 +151,7 @@ public class ChargeServiceTest {
     }
 
     @Test
-    public void shouldUpdateEmailToChargeTransaction() {
+    public void shouldUpdateEmailToCharge() {
         ChargeEntity createdChargeEntity = ChargeEntityFixture.aValidChargeEntity().build();
         final String chargeEntityExternalId = createdChargeEntity.getExternalId();
         when(mockedChargeDao.findByExternalId(chargeEntityExternalId))
@@ -342,7 +349,7 @@ public class ChargeServiceTest {
                 .thenReturn(Optional.of(createdChargeEntity));
 
 
-        service.updateFromInitialStatus(createdChargeEntity.getExternalId(), ChargeStatus.ENTERING_CARD_DETAILS);
+        service.updateFromInitialStatus(createdChargeEntity.getExternalId(), ENTERING_CARD_DETAILS);
 
     }
 

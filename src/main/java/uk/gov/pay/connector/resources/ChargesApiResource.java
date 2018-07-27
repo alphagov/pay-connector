@@ -20,12 +20,22 @@ import uk.gov.pay.connector.service.search.SearchService;
 import uk.gov.pay.connector.util.ResponseUtil;
 
 import javax.inject.Inject;
-import javax.ws.rs.*;
+import javax.ws.rs.GET;
+import javax.ws.rs.HeaderParam;
+import javax.ws.rs.POST;
+import javax.ws.rs.Path;
+import javax.ws.rs.PathParam;
+import javax.ws.rs.Produces;
+import javax.ws.rs.QueryParam;
 import javax.ws.rs.core.Context;
 import javax.ws.rs.core.Response;
 import javax.ws.rs.core.UriInfo;
 import java.time.ZonedDateTime;
-import java.util.*;
+import java.util.Collections;
+import java.util.List;
+import java.util.Map;
+import java.util.Optional;
+import java.util.Set;
 import java.util.stream.Collectors;
 
 import static java.lang.String.format;
@@ -37,7 +47,12 @@ import static uk.gov.pay.connector.model.TransactionType.inferTransactionTypeFro
 import static uk.gov.pay.connector.service.ChargeExpiryService.EXPIRABLE_STATUSES;
 import static uk.gov.pay.connector.service.search.SearchService.TYPE.CHARGE;
 import static uk.gov.pay.connector.service.search.SearchService.TYPE.TRANSACTION;
-import static uk.gov.pay.connector.util.ResponseUtil.*;
+import static uk.gov.pay.connector.util.ResponseUtil.fieldsInvalidResponse;
+import static uk.gov.pay.connector.util.ResponseUtil.fieldsInvalidSizeResponse;
+import static uk.gov.pay.connector.util.ResponseUtil.fieldsMissingResponse;
+import static uk.gov.pay.connector.util.ResponseUtil.notFoundResponse;
+import static uk.gov.pay.connector.util.ResponseUtil.responseWithChargeNotFound;
+import static uk.gov.pay.connector.util.ResponseUtil.successResponseWithEntity;
 
 @Path("/")
 public class ChargesApiResource {

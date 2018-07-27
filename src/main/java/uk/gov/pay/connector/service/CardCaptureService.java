@@ -43,8 +43,8 @@ public class CardCaptureService extends CardService implements TransactionalGate
 
 
     @Inject
-    public CardCaptureService(ChargeDao chargeDao, ChargeEventDao chargeEventDao, PaymentProviders providers, UserNotificationService userNotificationService, Environment environment, ChargeStatusUpdater chargeStatusUpdater) {
-        super(chargeDao, chargeEventDao, providers, environment, chargeStatusUpdater);
+    public CardCaptureService(ChargeDao chargeDao, ChargeEventDao chargeEventDao, PaymentProviders providers, UserNotificationService userNotificationService, Environment environment) {
+        super(chargeDao, chargeEventDao, providers, environment);
         this.userNotificationService = userNotificationService;
     }
 
@@ -80,7 +80,6 @@ public class CardCaptureService extends CardService implements TransactionalGate
             logger.info("CAPTURE_APPROVED for charge [charge_external_id={}]", externalId);
             charge.setStatus(CAPTURE_APPROVED);
             chargeEventDao.persistChargeEventOf(charge, Optional.empty());
-            chargeStatusUpdater.updateChargeTransactionStatus(charge.getExternalId(), CAPTURE_APPROVED);
             return charge;
         }).orElseThrow(() -> new ChargeNotFoundRuntimeException(externalId));
     }
@@ -92,7 +91,6 @@ public class CardCaptureService extends CardService implements TransactionalGate
         chargeDao.findByExternalId(chargeId).ifPresent(chargeEntity -> {
             chargeEntity.setStatus(CAPTURE_ERROR);
             chargeEventDao.persistChargeEventOf(chargeEntity, Optional.empty());
-            chargeStatusUpdater.updateChargeTransactionStatus(chargeEntity.getExternalId(), CAPTURE_ERROR);
         });
     }
 
@@ -129,7 +127,6 @@ public class CardCaptureService extends CardService implements TransactionalGate
                     metricRegistry.counter(String.format("gateway-operations.%s.%s.%s.capture.result.%s", account.getGatewayName(), account.getType(), account.getId(), nextStatus.toString())).inc();
 
                     chargeEventDao.persistChargeEventOf(chargeEntity, Optional.empty());
-                    chargeStatusUpdater.updateChargeTransactionStatus(chargeEntity.getExternalId(), nextStatus);
 
                     if (operationResponse.isSuccessful()) {
                         userNotificationService.notifyPaymentSuccessEmail(chargeEntity);
@@ -140,7 +137,6 @@ public class CardCaptureService extends CardService implements TransactionalGate
                         chargeEntity.setStatus(CAPTURED);
                         ZonedDateTime gatewayEventTime = ZonedDateTime.now();
                         chargeEventDao.persistChargeEventOf(chargeEntity, Optional.of(gatewayEventTime));
-                        chargeStatusUpdater.updateChargeTransactionStatus(chargeEntity.getExternalId(), CAPTURED, gatewayEventTime);
                     }
 
                     return operationResponse;

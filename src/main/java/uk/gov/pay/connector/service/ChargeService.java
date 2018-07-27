@@ -54,13 +54,11 @@ public class ChargeService {
     private final GatewayAccountDao gatewayAccountDao;
     private final LinksConfig linksConfig;
     private final PaymentProviders providers;
-    private final ChargeStatusUpdater chargeStatusUpdater;
 
     @Inject
     public ChargeService(TokenDao tokenDao, ChargeDao chargeDao, ChargeEventDao chargeEventDao,
                          CardTypeDao cardTypeDao, GatewayAccountDao gatewayAccountDao,
-                         ConnectorConfiguration config, PaymentProviders providers,
-                         ChargeStatusUpdater chargeStatusUpdater) {
+                         ConnectorConfiguration config, PaymentProviders providers) {
         this.tokenDao = tokenDao;
         this.chargeDao = chargeDao;
         this.chargeEventDao = chargeEventDao;
@@ -68,7 +66,6 @@ public class ChargeService {
         this.gatewayAccountDao = gatewayAccountDao;
         this.linksConfig = config.getLinks();
         this.providers = providers;
-        this.chargeStatusUpdater = chargeStatusUpdater;
     }
 
     @Transactional
@@ -122,7 +119,6 @@ public class ChargeService {
                     if (CURRENT_STATUSES_ALLOWING_UPDATE_TO_NEW_STATUS.contains(oldChargeStatus)) {
                         chargeEntity.setStatus(newChargeStatus);
                         chargeEventDao.persistChargeEventOf(chargeEntity, Optional.empty());
-                        chargeStatusUpdater.updateChargeTransactionStatus(externalId, newChargeStatus);
                         return Optional.of(chargeEntity);
                     }
                     return Optional.<ChargeEntity>empty();

@@ -32,8 +32,8 @@ public abstract class CardAuthoriseBaseService<T extends AuthorisationDetails> e
     //private final AWSXRayRecorder recorder = AWSXRay.getGlobalRecorder();
 
 
-    public CardAuthoriseBaseService(ChargeDao chargeDao, ChargeEventDao chargeEventDao, PaymentProviders providers, CardExecutorService cardExecutorService, Environment environment, ChargeStatusUpdater chargeStatusUpdater) {
-        super(chargeDao, chargeEventDao, providers, environment, chargeStatusUpdater);
+    public CardAuthoriseBaseService(ChargeDao chargeDao, ChargeEventDao chargeEventDao, PaymentProviders providers, CardExecutorService cardExecutorService, Environment environment) {
+        super(chargeDao, chargeEventDao, providers, environment);
         this.cardExecutorService = cardExecutorService;
     }
 
