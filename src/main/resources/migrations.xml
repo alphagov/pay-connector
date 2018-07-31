@@ -1354,4 +1354,10 @@
         </sql>
     </changeSet>
 
+    <changeSet id="add trigram index to refunds.reference" runInTransaction="false" author="">
+        <sql>
+            CREATE INDEX CONCURRENTLY idx_refunds_reference_gin_idx  ON refunds USING GIN (reference gin_trgm_ops);
+        </sql>
+    </changeSet>
+
 </databaseChangeLog>
