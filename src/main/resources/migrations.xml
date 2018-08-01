@@ -1360,4 +1360,15 @@
         </sql>
     </changeSet>
 
+    <changeSet id="add index to status column on refunds table" runInTransaction="false" author="">
+        <sql>
+            CREATE INDEX CONCURRENTLY idx_refunds_status ON refunds (status);
+        </sql>
+    </changeSet>
+
+    <changeSet id="Drop trigram index to refunds.reference" runInTransaction="false" author="">
+        <sql>
+            DROP INDEX idx_refunds_reference_gin_idx;
+        </sql>
+    </changeSet>
 </databaseChangeLog>
