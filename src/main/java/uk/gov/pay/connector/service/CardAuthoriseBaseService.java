@@ -1,5 +1,8 @@
 package uk.gov.pay.connector.service;
 
+//import com.amazonaws.xray.AWSXRay;
+//import com.amazonaws.xray.AWSXRayRecorder;
+//import com.amazonaws.xray.entities.Segment;
 import io.dropwizard.setup.Environment;
 import org.apache.commons.lang3.tuple.Pair;
 import org.slf4j.Logger;
@@ -26,27 +29,35 @@ public abstract class CardAuthoriseBaseService<T extends AuthorisationDetails> e
     private static final Logger LOG = LoggerFactory.getLogger(CardAuthoriseBaseService.class);
 
     private final CardExecutorService cardExecutorService;
+    //private final AWSXRayRecorder recorder = AWSXRay.getGlobalRecorder();
+
 
     public CardAuthoriseBaseService(ChargeDao chargeDao, ChargeEventDao chargeEventDao, PaymentProviders providers, CardExecutorService cardExecutorService, Environment environment) {
         super(chargeDao, chargeEventDao, providers, environment);
         this.cardExecutorService = cardExecutorService;
     }
 
+
     public GatewayResponse doAuthorise(String chargeId, T gatewayAuthRequest) {
 
         Supplier authorisationSupplier = () -> {
+            //recorder.beginSegment("pay-connector");
             ChargeEntity charge;
             try {
-                charge = preOperation(chargeId, gatewayAuthRequest);
-                if (charge.hasStatus(ChargeStatus.AUTHORISATION_ABORTED)) {
-                    throw new ConflictRuntimeException(chargeId, "configuration mismatch");
+                try {
+                    charge = preOperation(chargeId, gatewayAuthRequest);
+                    if (charge.hasStatus(ChargeStatus.AUTHORISATION_ABORTED)) {
+                        throw new ConflictRuntimeException(chargeId, "configuration mismatch");
+                    }
+                } catch (OptimisticLockException e) {
+                    LOG.info("OptimisticLockException in doAuthorise for charge external_id=" + chargeId);
+                    throw new ConflictRuntimeException(chargeId);
                 }
-            } catch (OptimisticLockException e) {
-                LOG.info("OptimisticLockException in doAuthorise for charge external_id=" + chargeId);
-                throw new ConflictRuntimeException(chargeId);
+                GatewayResponse<BaseAuthoriseResponse> operationResponse = operation(charge, gatewayAuthRequest);
+                return postOperation(chargeId, gatewayAuthRequest, operationResponse);
+            } finally {
+                //recorder.endSegment();
             }
-             GatewayResponse<BaseAuthoriseResponse> operationResponse = operation(charge, gatewayAuthRequest);
-            return postOperation(chargeId, gatewayAuthRequest, operationResponse);
         };
 
         Pair<ExecutionStatus, GatewayResponse> executeResult = cardExecutorService.execute(authorisationSupplier);
