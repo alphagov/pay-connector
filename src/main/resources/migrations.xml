@@ -1371,4 +1371,29 @@
             DROP INDEX idx_refunds_reference_gin_idx;
         </sql>
     </changeSet>
+
+    <changeSet id="add trigram index to lowered charges.email " runInTransaction="false" author="">
+        <sql>
+            CREATE INDEX CONCURRENTLY idx_lower_charges_email_gin_idx ON charges USING GIN (lower(email) gin_trgm_ops);
+        </sql>
+    </changeSet>
+
+    <changeSet id="add trigram index to lowered charges.reference" runInTransaction="false" author="">
+        <sql>
+            CREATE INDEX CONCURRENTLY idx_lower_charges_reference_gin_idx  ON charges USING GIN (lower(reference) gin_trgm_ops);
+        </sql>
+    </changeSet>
+
+    <changeSet id="Drop trigram index to charges.reference" runInTransaction="false" author="">
+        <sql>
+            DROP INDEX idx_charges_references_gin_idx;
+        </sql>
+    </changeSet>
+
+    <changeSet id="Drop trigram index to charges.email" runInTransaction="false" author="">
+        <sql>
+            DROP INDEX idx_charges_email_gin_idx;
+        </sql>
+    </changeSet>
+
 </databaseChangeLog>
