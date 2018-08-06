@@ -138,6 +138,10 @@ public class ChargesApiResource {
                                    @HeaderParam("features") CommaDelimitedSetParameter features,
                                    @Context UriInfo uriInfo) {
 
+        logger.info("Payments search request - [ {} ]",
+                format("reference:%s, email: %s, status: %s, card_brand %s, fromDate: %s, toDate: %s, page: %s, display_size: %s, account_id: %s, payment_states: %s, refund_states: %s",
+                        reference, email, state, cardBrands, fromDate, toDate, pageNumber, displaySize, accountId, paymentStates, refundStates));
+        
         List<Pair<String, String>> inputDatePairMap = ImmutableList.of(Pair.of(FROM_DATE_KEY, fromDate), Pair.of(TO_DATE_KEY, toDate));
         List<Pair<String, Long>> nonNegativePairMap = ImmutableList.of(Pair.of(PAGE, pageNumber), Pair.of(DISPLAY_SIZE, displaySize));
 
