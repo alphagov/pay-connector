@@ -3,6 +3,7 @@ package uk.gov.pay.connector.app;
 import com.amazonaws.xray.AWSXRay;
 import com.amazonaws.xray.AWSXRayRecorderBuilder;
 import com.amazonaws.xray.javax.servlet.AWSXRayServletFilter;
+import com.amazonaws.xray.plugins.ECSPlugin;
 import com.amazonaws.xray.strategy.sampling.LocalizedSamplingStrategy;
 import com.codahale.metrics.graphite.GraphiteReporter;
 import com.codahale.metrics.graphite.GraphiteSender;
@@ -151,7 +152,7 @@ public class ConnectorApp extends Application<ConnectorConfiguration> {
     }
 
     private void initialiseXRay(){
-        AWSXRayRecorderBuilder builder = AWSXRayRecorderBuilder.standard();
+        AWSXRayRecorderBuilder builder = AWSXRayRecorderBuilder.standard().withPlugin(new ECSPlugin());
         URL ruleFile = ConnectorApp.class.getResource("/sampling-rules.json");
         builder.withSamplingStrategy(new LocalizedSamplingStrategy(ruleFile));
         AWSXRay.setGlobalRecorder(builder.build());
