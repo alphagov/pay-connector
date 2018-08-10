@@ -1396,4 +1396,24 @@
         </sql>
     </changeSet>
 
+    <changeSet id="Add language column to charges table" author="">
+        <addColumn tableName="charges">
+            <column name="language" type="char(2)"/>
+        </addColumn>
+    </changeSet>
+
+    <changeSet id="Add default value to language column" author="">
+        <addDefaultValue tableName="charges"
+                         columnName="language"
+                         defaultValue="en"
+        />
+    </changeSet>
+
+    <changeSet id="Update language column to default value" author="">
+        <update tableName="charges">
+            <column name="language" value="en"/>
+            <where>language IS NULL</where>
+        </update>
+    </changeSet>
+
 </databaseChangeLog>
