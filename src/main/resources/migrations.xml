@@ -1398,7 +1398,7 @@
 
     <changeSet id="Add language column to charges table" author="">
         <addColumn tableName="charges">
-            <column name="language" type="char(2)"/>
+            <column name="language" type="varchar(2)"/>
         </addColumn>
     </changeSet>
 
