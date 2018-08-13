@@ -12,6 +12,7 @@ import uk.gov.pay.connector.app.ConnectorConfiguration;
 import uk.gov.pay.connector.dao.ChargeDao;
 import uk.gov.pay.connector.exception.ConflictRuntimeException;
 import uk.gov.pay.connector.model.domain.ChargeEntity;
+import uk.gov.pay.connector.model.gateway.GatewayResponse;
 import uk.gov.pay.connector.util.RandomIdGenerator;
 
 import javax.inject.Inject;
@@ -46,10 +47,10 @@ public class CardCaptureProcess {
         MDC.put(HEADER_REQUEST_ID, format("runCapture-%s", RandomIdGenerator.newId()));
 
         Stopwatch responseTimeStopwatch = Stopwatch.createStarted();
-        long captured = 0, skipped = 0, error = 0, total = 0;
+        long captured = 0, skipped = 0, error = 0, failedCapture = 0, total = 0;
 
         try {
-            queueSize = chargeDao.countChargesForCapture();
+            queueSize = chargeDao.countChargesForCapture(captureConfig.getRetryFailuresEveryAsJavaDuration());
 
             updateQueueSizeMetric(queueSize);
 
@@ -65,8 +66,14 @@ public class CardCaptureProcess {
                 if (shouldRetry(charge)) {
                     try {
                         logger.info(format("Capturing [%d of %d] [chargeId=%s]", total, queueSize, charge.getExternalId()));
-                        captureService.doCapture(charge.getExternalId());
-                        captured++;
+                        GatewayResponse gatewayResponse = captureService.doCapture(charge.getExternalId());
+                        if (gatewayResponse.isSuccessful()) {
+                            captured++;
+                        } else {
+                            logger.info(format("Failed to capture [chargeId=%s] due to: %s", charge.getExternalId(), 
+                                    gatewayResponse.getGatewayError().orElse("No error message received.")));
+                            failedCapture++;
+                        }
                     } catch (ConflictRuntimeException e) {
                         logger.info("Another process has already attempted to capture [chargeId=" + charge.getExternalId() + "]. Skipping.");
                         skipped++;
@@ -81,7 +88,7 @@ public class CardCaptureProcess {
         } finally {
             responseTimeStopwatch.stop();
             metricRegistry.histogram("gateway-operations.capture-process.running_time").update(responseTimeStopwatch.elapsed(TimeUnit.MILLISECONDS));
-            logger.info(format("Capture complete [captured=%d] [skipped=%d] [capture_error=%d] [total=%d]", captured, skipped, error, queueSize));
+            logger.info(format("Capture complete [captured=%d] [skipped=%d] [capture_error=%d] [failed_capture=%d] [total=%d]", captured, skipped, error, failedCapture, queueSize));
         }
         MDC.remove(HEADER_REQUEST_ID);
     }

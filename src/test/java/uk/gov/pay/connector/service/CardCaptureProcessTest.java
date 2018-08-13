@@ -7,12 +7,14 @@ import io.dropwizard.setup.Environment;
 import org.junit.Before;
 import org.junit.Test;
 import org.junit.runner.RunWith;
+import org.mockito.Matchers;
 import org.mockito.Mock;
 import org.mockito.runners.MockitoJUnitRunner;
 import uk.gov.pay.connector.app.CaptureProcessConfig;
 import uk.gov.pay.connector.app.ConnectorConfiguration;
 import uk.gov.pay.connector.dao.ChargeDao;
 import uk.gov.pay.connector.model.domain.ChargeEntity;
+import uk.gov.pay.connector.model.gateway.GatewayResponse;
 
 import java.time.Duration;
 
@@ -40,6 +42,9 @@ public class CardCaptureProcessTest {
     @Mock
     private ConnectorConfiguration mockConnectorConfiguration;
 
+    @Mock
+    GatewayResponse mockGatewayResponse;
+
     @Before
     public void setup() {
         MetricRegistry mockMetricRegistry = mock(MetricRegistry.class);
@@ -55,6 +60,8 @@ public class CardCaptureProcessTest {
         when(mockCaptureConfiguration.getMaximumRetries()).thenReturn(MAXIMUM_RETRIES);
         when(mockConnectorConfiguration.getCaptureProcessConfig()).thenReturn(mockCaptureConfiguration);
         cardCaptureProcess = new CardCaptureProcess(mockEnvironment, mockChargeDao, mockCardCaptureService, mockConnectorConfiguration);
+        when(mockGatewayResponse.isSuccessful()).thenReturn(true);
+        when(mockCardCaptureService.doCapture(anyString())).thenReturn(mockGatewayResponse);
     }
 
     @Test
@@ -66,7 +73,7 @@ public class CardCaptureProcessTest {
 
     @Test
     public void shouldRecordTheQueueSizeOnEveryRun() {
-        when(mockChargeDao.countChargesForCapture()).thenReturn(15);
+        when(mockChargeDao.countChargesForCapture(Matchers.any(Duration.class))).thenReturn(15);
 
         cardCaptureProcess.runCapture();
 
