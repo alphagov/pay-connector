@@ -66,7 +66,12 @@ public class CardCaptureProcess {
                     try {
                         logger.info(format("Capturing [%d of %d] [chargeId=%s]", total, queueSize, charge.getExternalId()));
                         captureService.doCapture(charge.getExternalId());
-                        captured++;
+                        // DID IT ACTUALLY CAPTURE?
+                        if (yes) {
+                            captured++;
+                        } else {
+                            retry++;
+                        }
                     } catch (ConflictRuntimeException e) {
                         logger.info("Another process has already attempted to capture [chargeId=" + charge.getExternalId() + "]. Skipping.");
                         skipped++;
@@ -81,7 +86,7 @@ public class CardCaptureProcess {
         } finally {
             responseTimeStopwatch.stop();
             metricRegistry.histogram("gateway-operations.capture-process.running_time").update(responseTimeStopwatch.elapsed(TimeUnit.MILLISECONDS));
-            logger.info(format("Capture complete [captured=%d] [skipped=%d] [capture_error=%d] [total=%d]", captured, skipped, error, queueSize));
+            logger.info(format("Capture complete [captured=%d] [skipped=%d] [capture_error=%d] [retry=%d] [total=%d]", captured, skipped, error, queueSize));
         }
         MDC.remove(HEADER_REQUEST_ID);
     }

@@ -169,6 +169,12 @@ public class ChargeDao extends JpaDao<ChargeEntity> {
 
     public int countChargesForCapture() {
         String query = "SELECT count(c) FROM ChargeEntity c WHERE c.status=:captureApprovedStatus OR c.status=:captureApprovedRetryStatus";
+        "AND NOT EXISTS (" +
+                "  SELECT ce FROM ChargeEventEntity ce WHERE " +
+                "    ce.chargeEntity = c AND " +
+                "    ce.status = :eventStatus AND " +
+                "    ce.updated >= :cutoffDate " +
+                ") " +
 
         Number count = (Number) entityManager.get()
                 .createQuery(query)
