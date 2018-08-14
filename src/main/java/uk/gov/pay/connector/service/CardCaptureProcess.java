@@ -1,6 +1,5 @@
 package uk.gov.pay.connector.service;
 
-import com.codahale.metrics.Counter;
 import com.codahale.metrics.MetricRegistry;
 import com.google.common.base.Stopwatch;
 import io.dropwizard.setup.Environment;
@@ -30,8 +29,8 @@ public class CardCaptureProcess {
     private final CardCaptureService captureService;
     private final MetricRegistry metricRegistry;
     private final CaptureProcessConfig captureConfig;
-    private volatile long queueSize;
-    private final Counter queueSizeMetric;
+    private volatile int queueSize;
+    private volatile int waitingQueueSize;
 
     @Inject
     public CardCaptureProcess(Environment environment, ChargeDao chargeDao, CardCaptureService cardCaptureService, ConnectorConfiguration connectorConfiguration) {
@@ -39,8 +38,8 @@ public class CardCaptureProcess {
         this.captureService = cardCaptureService;
         this.captureConfig = connectorConfiguration.getCaptureProcessConfig();
         metricRegistry = environment.metrics();
-
-        queueSizeMetric = metricRegistry.counter("gateway-operations.capture-process.queue-size");
+        metricRegistry.gauge("gateway-operations.capture-process.queue-size", () -> () -> queueSize);
+        metricRegistry.gauge("gateway-operations.capture-process.waiting-queue-size", () -> () -> waitingQueueSize);
     }
 
     public void runCapture() {
@@ -51,13 +50,12 @@ public class CardCaptureProcess {
 
         try {
             queueSize = chargeDao.countChargesForCapture(captureConfig.getRetryFailuresEveryAsJavaDuration());
-
-            updateQueueSizeMetric(queueSize);
+            waitingQueueSize = chargeDao.countChargesAwaitingCaptureRetry(captureConfig.getRetryFailuresEveryAsJavaDuration());
 
             List<ChargeEntity> chargesToCapture = chargeDao.findChargesForCapture(captureConfig.getBatchSize(), captureConfig.getRetryFailuresEveryAsJavaDuration());
 
             if (chargesToCapture.size() > 0) {
-                logger.info("Capturing : " + chargesToCapture.size() + " of " + queueSize + " charges");
+                logger.info("Capturing : " + chargesToCapture.size() + " of " + waitingQueueSize + " charges");
             }
 
             Collections.shuffle(chargesToCapture);
@@ -65,7 +63,7 @@ public class CardCaptureProcess {
                 total++;
                 if (shouldRetry(charge)) {
                     try {
-                        logger.info(format("Capturing [%d of %d] [chargeId=%s]", total, queueSize, charge.getExternalId()));
+                        logger.info(format("Capturing [%d of %d] [chargeId=%s]", total, chargesToCapture.size(), charge.getExternalId()));
                         GatewayResponse gatewayResponse = captureService.doCapture(charge.getExternalId());
                         if (gatewayResponse.isSuccessful()) {
                             captured++;
@@ -97,13 +95,12 @@ public class CardCaptureProcess {
         return chargeDao.countCaptureRetriesForCharge(charge.getId()) < captureConfig.getMaximumRetries();
     }
 
-    private void updateQueueSizeMetric(long newQueueSize) {
-        // Counters do not provide a set method to record a spot value, thus we need this workaround.
-        long currentQueueSizeCounter = queueSizeMetric.getCount();
-        queueSizeMetric.inc(newQueueSize - currentQueueSizeCounter); // if input<0, we get decrease
+
+    public int getQueueSize() {
+        return queueSize;
     }
 
-    public long getQueueSize() {
-        return queueSize;
+    public int getWaitingQueueSize() {
+        return waitingQueueSize;
     }
 }

@@ -1,12 +1,14 @@
 package uk.gov.pay.connector.service;
 
 import com.codahale.metrics.Counter;
+import com.codahale.metrics.Gauge;
 import com.codahale.metrics.Histogram;
 import com.codahale.metrics.MetricRegistry;
 import io.dropwizard.setup.Environment;
 import org.junit.Before;
 import org.junit.Test;
 import org.junit.runner.RunWith;
+import org.mockito.ArgumentCaptor;
 import org.mockito.Matchers;
 import org.mockito.Mock;
 import org.mockito.runners.MockitoJUnitRunner;
@@ -17,12 +19,19 @@ import uk.gov.pay.connector.model.domain.ChargeEntity;
 import uk.gov.pay.connector.model.gateway.GatewayResponse;
 
 import java.time.Duration;
+import java.util.List;
+import java.util.stream.Collectors;
 
 import static java.util.Arrays.asList;
 import static java.util.Collections.singletonList;
-import static org.junit.Assert.assertEquals;
+import static org.hamcrest.MatcherAssert.assertThat;
+import static org.hamcrest.Matchers.is;
 import static org.mockito.Matchers.anyString;
-import static org.mockito.Mockito.*;
+import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.never;
+import static org.mockito.Mockito.times;
+import static org.mockito.Mockito.verify;
+import static org.mockito.Mockito.when;
 
 @RunWith(MockitoJUnitRunner.class)
 public class CardCaptureProcessTest {
@@ -44,10 +53,12 @@ public class CardCaptureProcessTest {
 
     @Mock
     GatewayResponse mockGatewayResponse;
+    
+    @Mock
+    MetricRegistry mockMetricRegistry;
 
     @Before
     public void setup() {
-        MetricRegistry mockMetricRegistry = mock(MetricRegistry.class);
         Histogram mockHistogram = mock(Histogram.class);
         CaptureProcessConfig mockCaptureConfiguration = mock(CaptureProcessConfig.class);
 
@@ -77,7 +88,39 @@ public class CardCaptureProcessTest {
 
         cardCaptureProcess.runCapture();
 
-        assertEquals(cardCaptureProcess.getQueueSize(), 15);
+        assertThat(cardCaptureProcess.getQueueSize(), is(15));
+    }
+
+
+    @Test
+    public void shouldRegisterGaugesForChargesQueue_AndReturnCorrectSizes() {
+        when(mockChargeDao.countChargesForCapture(Matchers.any(Duration.class))).thenReturn(15);
+        when(mockChargeDao.countChargesAwaitingCaptureRetry(Matchers.any(Duration.class))).thenReturn(10);
+        cardCaptureProcess.runCapture();
+        ArgumentCaptor<MetricRegistry.MetricSupplier> argumentCaptor = ArgumentCaptor.forClass(MetricRegistry.MetricSupplier.class);
+
+        verify(mockMetricRegistry, times(2))
+                .gauge(Matchers.anyString(), argumentCaptor.capture());
+
+        List<Gauge<Integer>> gauges = argumentCaptor.getAllValues()
+                .stream()
+                .map(a -> (Gauge<Integer>)a.newMetric())
+                .collect(Collectors.toList());
+
+        Gauge<Integer> queueSizeGauge = gauges.get(0);
+        assertThat(queueSizeGauge.getValue(), is(15));
+
+        Gauge<Integer> waitingQueueSizeGauge = gauges.get(1);
+        assertThat(waitingQueueSizeGauge.getValue(), is(10));
+    }
+
+    @Test
+    public void shouldRecordTheWaitingQueueSizeOnEveryRun() {
+        when(mockChargeDao.countChargesAwaitingCaptureRetry(Matchers.any(Duration.class))).thenReturn(15);
+
+        cardCaptureProcess.runCapture();
+
+        assertThat(cardCaptureProcess.getWaitingQueueSize(), is(15));
     }
 
     @Test
