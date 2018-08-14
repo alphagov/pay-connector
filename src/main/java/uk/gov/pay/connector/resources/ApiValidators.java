@@ -5,7 +5,6 @@ import org.apache.commons.lang3.tuple.Pair;
 import uk.gov.pay.connector.dao.GatewayAccountDao;
 import uk.gov.pay.connector.model.builder.PatchRequestBuilder;
 
-import java.time.format.DateTimeFormatter;
 import java.time.ZonedDateTime;
 import java.time.format.DateTimeParseException;
 import java.util.HashMap;
@@ -19,7 +18,9 @@ import static fj.data.Either.left;
 import static fj.data.Either.right;
 import static java.lang.String.format;
 import static org.apache.commons.lang3.StringUtils.isNotBlank;
+import static uk.gov.pay.connector.resources.ChargesApiResource.AMOUNT_KEY;
 import static uk.gov.pay.connector.resources.ChargesApiResource.EMAIL_KEY;
+import static uk.gov.pay.connector.resources.ChargesApiResource.LANGUAGE_KEY;
 import static uk.gov.pay.connector.resources.ChargesApiResource.MAXIMUM_FIELDS_SIZE;
 import static uk.gov.pay.connector.resources.ChargesApiResource.MAX_AMOUNT;
 import static uk.gov.pay.connector.resources.ChargesApiResource.MIN_AMOUNT;
@@ -27,32 +28,50 @@ import static uk.gov.pay.connector.resources.ChargesApiResource.MIN_AMOUNT;
 class ApiValidators {
 
     private enum ChargeParamValidator {
-        EMAIL(EMAIL_KEY){
+        EMAIL(EMAIL_KEY) {
+            @Override
             boolean validate(String email) {
                 return email.length() <= MAXIMUM_FIELDS_SIZE.get(EMAIL_KEY);
             }
         },
-        AMOUNT(ChargesApiResource.AMOUNT_KEY){
+
+        AMOUNT(AMOUNT_KEY) {
             @Override
             boolean validate(String amount) {
                 Integer amountValue = Integer.valueOf(amount);
                 return MIN_AMOUNT <= amountValue && MAX_AMOUNT >= amountValue;
             }
+        },
+
+        LANGUAGE(LANGUAGE_KEY) {
+            @Override
+            boolean validate(String iso639AlphaTwoCode) {
+                return "en".equals(iso639AlphaTwoCode) || "cy".equals(iso639AlphaTwoCode);
+            }
         };
+
         private final String type;
-        ChargeParamValidator(String type){this.type = type;}
-        @Override public String toString(){return type;}
+
+        ChargeParamValidator(String type) {
+            this.type = type;
+        }
+
+        @Override
+        public String toString() {
+            return type;
+        }
 
         abstract boolean validate(String candidate);
 
         private static final Map<String, ChargeParamValidator> stringToEnum = new HashMap<>();
-        static{
-            for(ChargeParamValidator val: values()){
+
+        static {
+            for (ChargeParamValidator val : values()) {
                 stringToEnum.put(val.toString(), val);
             }
         }
 
-        public static Optional<ChargeParamValidator> fromString(String type){
+        public static Optional<ChargeParamValidator> fromString(String type) {
             return Optional.ofNullable(stringToEnum.get(type));
         }
     }
@@ -106,8 +125,8 @@ class ApiValidators {
 
     static boolean validateChargePatchParams(PatchRequestBuilder.PatchRequest chargePatchRequest) {
         boolean invalid = ChargeParamValidator.fromString(chargePatchRequest.getPath())
-                        .map(validator -> !validator.validate(chargePatchRequest.getValue()))
-                        .orElse(false);
+                .map(validator -> !validator.validate(chargePatchRequest.getValue()))
+                .orElse(false);
 
         return !invalid;
     }

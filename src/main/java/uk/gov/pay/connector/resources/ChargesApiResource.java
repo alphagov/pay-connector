@@ -15,8 +15,8 @@ import uk.gov.pay.connector.model.ServicePaymentReference;
 import uk.gov.pay.connector.model.domain.ChargeEntity;
 import uk.gov.pay.connector.service.ChargeExpiryService;
 import uk.gov.pay.connector.service.ChargeService;
-import uk.gov.pay.connector.service.search.TransactionSearchStrategy;
 import uk.gov.pay.connector.service.search.SearchService;
+import uk.gov.pay.connector.service.search.TransactionSearchStrategy;
 import uk.gov.pay.connector.util.ResponseUtil;
 
 import javax.inject.Inject;
@@ -58,6 +58,7 @@ import static uk.gov.pay.connector.util.ResponseUtil.successResponseWithEntity;
 public class ChargesApiResource {
     public static final String EMAIL_KEY = "email";
     static final String AMOUNT_KEY = "amount";
+    static final String LANGUAGE_KEY = "language";
     private static final String DESCRIPTION_KEY = "description";
     private static final String RETURN_URL_KEY = "return_url";
     private static final String REFERENCE_KEY = "reference";
@@ -81,7 +82,7 @@ public class ChargesApiResource {
     private static final String CHARGE_EXPIRY_WINDOW = "CHARGE_EXPIRY_WINDOW_SECONDS";
     private static final Logger logger = LoggerFactory.getLogger(ChargesApiResource.class);
     static int MIN_AMOUNT = 1;
-    static int MAX_AMOUNT = 10000000;
+    static int MAX_AMOUNT = 10_000_000;
     private final ChargeDao chargeDao;
     private final GatewayAccountDao gatewayAccountDao;
     private final ChargeService chargeService;
@@ -176,16 +177,16 @@ public class ChargesApiResource {
     @Timed
     @Produces(APPLICATION_JSON)
     public Response getChargesJsonV2(@PathParam(ACCOUNT_ID) Long accountId,
-                                   @QueryParam(EMAIL_KEY) String email,
-                                   @QueryParam(REFERENCE_KEY) String reference,
-                                   @QueryParam(PAYMENT_STATES_KEY) CommaDelimitedSetParameter paymentStates,
-                                   @QueryParam(REFUND_STATES_KEY) CommaDelimitedSetParameter refundStates,
-                                   @QueryParam(CARD_BRAND_KEY) List<String> cardBrands,
-                                   @QueryParam(FROM_DATE_KEY) String fromDate,
-                                   @QueryParam(TO_DATE_KEY) String toDate,
-                                   @QueryParam(PAGE) Long pageNumber,
-                                   @QueryParam(DISPLAY_SIZE) Long displaySize,
-                                   @Context UriInfo uriInfo) {
+                                     @QueryParam(EMAIL_KEY) String email,
+                                     @QueryParam(REFERENCE_KEY) String reference,
+                                     @QueryParam(PAYMENT_STATES_KEY) CommaDelimitedSetParameter paymentStates,
+                                     @QueryParam(REFUND_STATES_KEY) CommaDelimitedSetParameter refundStates,
+                                     @QueryParam(CARD_BRAND_KEY) List<String> cardBrands,
+                                     @QueryParam(FROM_DATE_KEY) String fromDate,
+                                     @QueryParam(TO_DATE_KEY) String toDate,
+                                     @QueryParam(PAGE) Long pageNumber,
+                                     @QueryParam(DISPLAY_SIZE) Long displaySize,
+                                     @Context UriInfo uriInfo) {
 
         List<Pair<String, String>> inputDatePairMap = ImmutableList.of(Pair.of(FROM_DATE_KEY, fromDate), Pair.of(TO_DATE_KEY, toDate));
         List<Pair<String, Long>> nonNegativePairMap = ImmutableList.of(Pair.of(PAGE, pageNumber), Pair.of(DISPLAY_SIZE, displaySize));
