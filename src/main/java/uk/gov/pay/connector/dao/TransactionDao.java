@@ -66,7 +66,8 @@ public class TransactionDao {
                         field("address_line1"),
                         field("address_line2"),
                         field("address_postcode"),
-                        field("amount"))
+                        field("amount"),
+                        field("language"))
                 .from(buildQueryFor(gatewayAccountId, QueryType.SELECT, params))
                 .orderBy(field("date_created").desc());
 
@@ -183,7 +184,8 @@ public class TransactionDao {
                 field("c.address_line1"),
                 field("c.address_line2"),
                 field("c.address_postcode"),
-                field("c.amount"))
+                field("c.amount"),
+                field("c.language"))
                 .from(table("charges").as("c").leftJoin(selectDistinct().on(field("label")).from("card_types").asTable("t")).on("c.card_brand=t.brand"))
                 .where(queryFiltersForCharges);
 
@@ -210,7 +212,8 @@ public class TransactionDao {
                 field("c.address_line1"),
                 field("c.address_line2"),
                 field("c.address_postcode"),
-                field("r.amount"))
+                field("r.amount"),
+                field("c.language"))
                 .from(table("charges").as("c").leftJoin(selectDistinct().on(field("label")).from("card_types").asTable("t")).on("c.card_brand=t.brand"))
                 .join(table("refunds").as("r"))
                 .on(field("c.id").eq(field("r.charge_id")))

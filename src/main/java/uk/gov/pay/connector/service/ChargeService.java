@@ -158,6 +158,7 @@ public class ChargeService {
                 .withCreatedDate(DateTimeUtils.toUTCDateTimeString(chargeEntity.getCreatedDate()))
                 .withReturnUrl(chargeEntity.getReturnUrl())
                 .withEmail(chargeEntity.getEmail())
+                .withLanguage(chargeEntity.getLanguage())
                 .withRefunds(buildRefundSummary(chargeEntity))
                 .withSettlement(buildSettlementSummary(chargeEntity))
                 .withCardDetails(persistedCard)

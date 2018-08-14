@@ -397,7 +397,8 @@ public class ChargeServiceTest {
                 .withEmail(chargeEntity.getEmail())
                 .withRefunds(refunds)
                 .withSettlement(settlement)
-                .withReturnUrl(chargeEntity.getReturnUrl());
+                .withReturnUrl(chargeEntity.getReturnUrl())
+                .withLanguage(chargeEntity.getLanguage());
     }
 
 }

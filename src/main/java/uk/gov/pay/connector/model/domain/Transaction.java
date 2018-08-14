@@ -38,7 +38,8 @@ import java.time.ZonedDateTime;
                         @ColumnResult(name = "address_line1", type = String.class),
                         @ColumnResult(name = "address_line2", type = String.class),
                         @ColumnResult(name = "address_postcode", type = String.class),
-                        @ColumnResult(name = "amount", type = Long.class)}))
+                        @ColumnResult(name = "amount", type = Long.class),
+                        @ColumnResult(name = "language", type = String.class)}))
 @Entity
 @ReadOnly
 public class Transaction {
@@ -53,6 +54,7 @@ public class Transaction {
     private long gatewayAccountId;
     private String gatewayTransactionId;
     private ZonedDateTime createdDate;
+    private SupportedLanguage language;
 
     @Id
     private String transactionType;
@@ -95,8 +97,9 @@ public class Transaction {
                        String addressLine1,
                        String addressLine2,
                        String addressPostcode,
-                       long amount) {
-        this.chargeId= chargeId;
+                       long amount,
+                       String language) {
+        this.chargeId = chargeId;
         this.externalId = externalId;
         this.reference = reference;
         this.description = description;
@@ -119,6 +122,7 @@ public class Transaction {
         this.addressLine2 = addressLine2;
         this.addressPostcode = addressPostcode;
         this.amount = amount;
+        this.language = SupportedLanguage.fromIso639AlphaTwoCode(language);
     }
 
     public Long getChargeId() {
@@ -207,6 +211,10 @@ public class Transaction {
 
     public long getAmount() {
         return amount;
+    }
+
+    public SupportedLanguage getLanguage() {
+        return language;
     }
 
     public String getUserExternalId() {
