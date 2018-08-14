@@ -20,7 +20,12 @@ import uk.gov.pay.connector.model.ServicePaymentReference;
 import uk.gov.pay.connector.model.api.ExternalChargeState;
 import uk.gov.pay.connector.model.api.ExternalTransactionState;
 import uk.gov.pay.connector.model.builder.PatchRequestBuilder;
-import uk.gov.pay.connector.model.domain.*;
+import uk.gov.pay.connector.model.domain.ChargeEntity;
+import uk.gov.pay.connector.model.domain.ChargeEntityFixture;
+import uk.gov.pay.connector.model.domain.ChargeStatus;
+import uk.gov.pay.connector.model.domain.GatewayAccountEntity;
+import uk.gov.pay.connector.model.domain.SupportedLanguage;
+import uk.gov.pay.connector.model.domain.TokenEntity;
 import uk.gov.pay.connector.util.DateTimeUtils;
 
 import javax.ws.rs.core.UriInfo;
@@ -128,7 +133,7 @@ public class ChargeServiceTest {
     }
 
     @Test
-    public void shouldCreateACharge() throws Exception {
+    public void shouldCreateAChargeWithDefaultLanguage() {
         service.create(CHARGE_REQUEST, GATEWAY_ACCOUNT_ID, mockedUriInfo);
 
         ArgumentCaptor<ChargeEntity> chargeEntityArgumentCaptor = forClass(ChargeEntity.class);
@@ -146,8 +151,23 @@ public class ChargeServiceTest {
         assertThat(createdChargeEntity.getAmount(), is(100L));
         assertThat(createdChargeEntity.getGatewayTransactionId(), is(nullValue()));
         assertThat(createdChargeEntity.getCreatedDate(), is(ZonedDateTimeMatchers.within(3, ChronoUnit.SECONDS, ZonedDateTime.now(ZoneId.of("UTC")))));
+        assertThat(createdChargeEntity.getLanguage(), is(SupportedLanguage.ENGLISH));
 
         verify(mockedChargeEventDao).persistChargeEventOf(createdChargeEntity, Optional.empty());
+    }
+
+    @Test
+    public void shouldCreateAChargeWithNonDefaultLanguage() {
+        Map<String, String> chargeRequestWithWelshLanguage = new HashMap<>(CHARGE_REQUEST);
+        chargeRequestWithWelshLanguage.put("language", "cy");
+
+        service.create(chargeRequestWithWelshLanguage, GATEWAY_ACCOUNT_ID, mockedUriInfo);
+
+        ArgumentCaptor<ChargeEntity> chargeEntityArgumentCaptor = forClass(ChargeEntity.class);
+        verify(mockedChargeDao).persist(chargeEntityArgumentCaptor.capture());
+        ChargeEntity createdChargeEntity = chargeEntityArgumentCaptor.getValue();
+
+        assertThat(createdChargeEntity.getLanguage(), is(SupportedLanguage.WELSH));
     }
 
     @Test

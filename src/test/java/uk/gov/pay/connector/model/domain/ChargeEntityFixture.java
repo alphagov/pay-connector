@@ -30,20 +30,21 @@ public class ChargeEntityFixture {
     private String paRequest;
     private String issuerUrl;
     private String providerSessionId;
+    private SupportedLanguage language = SupportedLanguage.ENGLISH;
 
     public static ChargeEntityFixture aValidChargeEntity() {
         return new ChargeEntityFixture();
     }
 
     public ChargeEntity build() {
-        ChargeEntity chargeEntity = new ChargeEntity(amount, status ,returnUrl, description, reference, gatewayAccountEntity, email, createdDate);
+        ChargeEntity chargeEntity = new ChargeEntity(amount, status, returnUrl, description, reference, gatewayAccountEntity, email, createdDate, language);
         chargeEntity.setId(id);
         chargeEntity.setExternalId(externalId);
         chargeEntity.setGatewayTransactionId(transactionId);
         chargeEntity.getEvents().addAll(events);
         chargeEntity.getRefunds().addAll(refunds);
         chargeEntity.setProviderSessionId(providerSessionId);
-        if(paRequest != null && issuerUrl != null) {
+        if (paRequest != null && issuerUrl != null) {
             Auth3dsDetailsEntity auth3dsDetailsEntity = new Auth3dsDetailsEntity();
             auth3dsDetailsEntity.setIssuerUrl(issuerUrl);
             auth3dsDetailsEntity.setPaRequest(paRequest);
