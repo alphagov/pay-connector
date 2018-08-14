@@ -1296,8 +1296,25 @@ public class ChargeDaoITest extends DaoITestBase {
                 .withCreatedDate(now().minusHours(2))
                 .withChargeStatus(CAPTURE_APPROVED_RETRY)
                 .insert();
+        DatabaseFixtures
+                .withDatabaseTestHelper(databaseTestHelper)
+                .aTestCharge()
+                .withTestAccount(defaultTestAccount)
+                .withChargeId(103L)
+                .withExternalChargeId("ext-id3")
+                .withCreatedDate(now())
+                .withChargeStatus(CAPTURE_APPROVED_RETRY)
+                .insert();
+        DatabaseFixtures
+                .withDatabaseTestHelper(databaseTestHelper)
+                .aTestChargeEvent()
+                .withChargeId(103L)
+                .withDate(now())
+                .withChargeStatus(CAPTURE_APPROVED_RETRY)
+                .insert();
 
-        assertThat(chargeDao.countChargesForCapture(), is(2));
+        assertThat(chargeDao.countChargesForCapture(Duration.ofHours(1)), is(2));
+        assertThat(chargeDao.countChargesAwaitingCaptureRetry(Duration.ofHours(1)), is(1));
     }
 
     @Test
