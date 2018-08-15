@@ -2,12 +2,12 @@ package uk.gov.pay.connector.it.dao;
 
 import org.junit.Before;
 import org.junit.Test;
+import uk.gov.pay.commons.model.SupportedLanguage;
 import uk.gov.pay.connector.dao.ChargeSearchParams;
 import uk.gov.pay.connector.dao.TransactionDao;
 import uk.gov.pay.connector.model.ServicePaymentReference;
 import uk.gov.pay.connector.model.domain.ChargeStatus;
 import uk.gov.pay.connector.model.domain.RefundStatus;
-import uk.gov.pay.connector.model.domain.SupportedLanguage;
 import uk.gov.pay.connector.model.domain.Transaction;
 import uk.gov.pay.connector.util.DateTimeUtils;
 

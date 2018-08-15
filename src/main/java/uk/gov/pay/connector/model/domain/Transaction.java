@@ -1,6 +1,7 @@
 package uk.gov.pay.connector.model.domain;
 
 import org.eclipse.persistence.annotations.ReadOnly;
+import uk.gov.pay.commons.model.SupportedLanguage;
 import uk.gov.pay.connector.model.ServicePaymentReference;
 
 import javax.persistence.ColumnResult;

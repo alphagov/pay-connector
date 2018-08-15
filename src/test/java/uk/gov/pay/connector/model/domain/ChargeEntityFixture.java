@@ -1,6 +1,7 @@
 package uk.gov.pay.connector.model.domain;
 
 import com.google.common.collect.ImmutableMap;
+import uk.gov.pay.commons.model.SupportedLanguage;
 import uk.gov.pay.connector.model.ServicePaymentReference;
 import uk.gov.pay.connector.util.RandomIdGenerator;
 

@@ -2,13 +2,13 @@ package uk.gov.pay.connector.model;
 
 import com.fasterxml.jackson.annotation.JsonProperty;
 import org.apache.commons.lang3.builder.ToStringBuilder;
+import uk.gov.pay.commons.model.SupportedLanguage;
 import uk.gov.pay.connector.model.api.ExternalChargeState;
 import uk.gov.pay.connector.model.api.ExternalTransactionState;
 import uk.gov.pay.connector.model.builder.AbstractChargeResponseBuilder;
 import uk.gov.pay.connector.model.domain.ChargeStatus;
 import uk.gov.pay.connector.model.domain.GatewayAccountEntity;
 import uk.gov.pay.connector.model.domain.PersistedCard;
-import uk.gov.pay.connector.model.domain.SupportedLanguage;
 
 import java.util.List;
 import java.util.Map;
