@@ -4,9 +4,11 @@ import fj.data.Either;
 import org.apache.commons.lang3.tuple.Pair;
 import uk.gov.pay.connector.dao.GatewayAccountDao;
 import uk.gov.pay.connector.model.builder.PatchRequestBuilder;
+import uk.gov.pay.connector.model.domain.SupportedLanguage;
 
 import java.time.ZonedDateTime;
 import java.time.format.DateTimeParseException;
+import java.util.Arrays;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -46,7 +48,8 @@ class ApiValidators {
         LANGUAGE(LANGUAGE_KEY) {
             @Override
             boolean validate(String iso639AlphaTwoCode) {
-                return "en".equals(iso639AlphaTwoCode) || "cy".equals(iso639AlphaTwoCode);
+                return Arrays.stream(SupportedLanguage.values())
+                        .anyMatch(supportedLanguage -> supportedLanguage.toString().equals(iso639AlphaTwoCode));
             }
         };
 
