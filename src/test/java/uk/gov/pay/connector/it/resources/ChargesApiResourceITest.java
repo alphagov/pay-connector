@@ -78,6 +78,7 @@ public class ChargesApiResourceITest extends ChargingITestBase {
     private static final String JSON_MESSAGE_KEY = "message";
     private static final String JSON_EMAIL_KEY = "email";
     private static final String JSON_PROVIDER_KEY = "payment_provider";
+    private static final String JSON_LANGUAGE_KEY = "language";
     private static final String PROVIDER_NAME = "sandbox";
     private static final long AMOUNT = 6234L;
 
@@ -92,8 +93,7 @@ public class ChargesApiResourceITest extends ChargingITestBase {
     }
 
     @Test
-    public void makeChargeAndRetrieveAmount() throws Exception {
-
+    public void makeChargeAndRetrieveAmount() {
         String expectedReference = "Test reference";
         String expectedDescription = "Test description";
         String postBody = toJson(ImmutableMap.builder()
@@ -102,7 +102,10 @@ public class ChargesApiResourceITest extends ChargingITestBase {
                 .put(JSON_DESCRIPTION_KEY, expectedDescription)
                 .put(JSON_GATEWAY_ACC_KEY, accountId)
                 .put(JSON_RETURN_URL_KEY, returnUrl)
-                .put(JSON_EMAIL_KEY, email).build());
+                .put(JSON_EMAIL_KEY, email)
+                .put(JSON_LANGUAGE_KEY, "cy")
+                .build()
+        );
 
         ValidatableResponse response = createChargeApi
                 .postCreateCharge(postBody)
@@ -114,6 +117,7 @@ public class ChargesApiResourceITest extends ChargingITestBase {
                 .body(JSON_PROVIDER_KEY, is(PROVIDER_NAME))
                 .body(JSON_RETURN_URL_KEY, is(returnUrl))
                 .body(JSON_EMAIL_KEY, is(email))
+                .body(JSON_LANGUAGE_KEY, is("cy"))
                 .body("containsKey('card_details')", is(false))
                 .body("containsKey('gateway_account')", is(false))
                 .body("refund_summary.amount_submitted", is(0))
@@ -154,6 +158,7 @@ public class ChargesApiResourceITest extends ChargingITestBase {
                 .body(JSON_STATE_KEY, is(CREATED.toExternal().getStatus()))
                 .body(JSON_RETURN_URL_KEY, is(returnUrl))
                 .body(JSON_EMAIL_KEY, is(email))
+                .body(JSON_LANGUAGE_KEY, is("cy"))
                 .body("containsKey('card_details')", is(false))
                 .body("containsKey('gateway_account')", is(false))
                 .body("settlement_summary.capture_submit_time", nullValue())
@@ -177,6 +182,35 @@ public class ChargesApiResourceITest extends ChargingITestBase {
                     put("chargeTokenId", newChargeTokenId);
                 }}));
 
+    }
+
+    @Test
+    public void makeChargeWithNoExplicitLanguageDefaultsToEnglish() {
+        String postBody = toJson(ImmutableMap.builder()
+                .put(JSON_AMOUNT_KEY, AMOUNT)
+                .put(JSON_REFERENCE_KEY, "Test reference")
+                .put(JSON_DESCRIPTION_KEY, "Test description")
+                .put(JSON_GATEWAY_ACC_KEY, accountId)
+                .put(JSON_RETURN_URL_KEY, returnUrl)
+                .put(JSON_EMAIL_KEY, email)
+                .build()
+        );
+
+        ValidatableResponse response = createChargeApi
+                .postCreateCharge(postBody)
+                .statusCode(Status.CREATED.getStatusCode())
+                .body(JSON_LANGUAGE_KEY, is("en"))
+                .contentType(JSON);
+
+        String externalChargeId = response.extract().path(JSON_CHARGE_KEY);
+
+        getChargeApi
+                .withAccountId(accountId)
+                .withChargeId(externalChargeId)
+                .getCharge()
+                .statusCode(OK.getStatusCode())
+                .contentType(JSON)
+                .body(JSON_LANGUAGE_KEY, is("en"));
     }
 
     @Test
@@ -306,6 +340,24 @@ public class ChargesApiResourceITest extends ChargingITestBase {
                 .put(JSON_GATEWAY_ACC_KEY, accountId)
                 .put(JSON_RETURN_URL_KEY, returnUrl)
                 .put(JSON_EMAIL_KEY, email).build());
+
+        createChargeApi
+                .postCreateCharge(postBody)
+                .statusCode(Status.BAD_REQUEST.getStatusCode());
+    }
+
+    @Test
+    public void shouldReturn400WhenLanguageNotSupported() {
+        String postBody = toJson(ImmutableMap.builder()
+                .put(JSON_AMOUNT_KEY, AMOUNT)
+                .put(JSON_REFERENCE_KEY, "Test reference")
+                .put(JSON_DESCRIPTION_KEY, "Test description")
+                .put(JSON_GATEWAY_ACC_KEY, accountId)
+                .put(JSON_RETURN_URL_KEY, returnUrl)
+                .put(JSON_EMAIL_KEY, email)
+                .put(JSON_LANGUAGE_KEY, "not a supported language")
+                .build()
+        );
 
         createChargeApi
                 .postCreateCharge(postBody)
