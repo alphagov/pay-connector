@@ -8,6 +8,7 @@ import com.fasterxml.jackson.databind.ser.std.ToStringSerializer;
 import uk.gov.pay.connector.model.api.ExternalTransactionState;
 import uk.gov.pay.connector.model.builder.AbstractChargeResponseBuilder;
 import uk.gov.pay.connector.model.domain.PersistedCard;
+import uk.gov.pay.connector.model.domain.SupportedLanguage;
 import uk.gov.pay.connector.util.DateTimeUtils;
 
 import java.net.URI;
@@ -247,7 +248,8 @@ public class ChargeResponse {
         @Override
         public ChargeResponse build() {
             return new ChargeResponse(chargeId, amount, state, cardBrand, gatewayTransactionId, returnUrl, email,
-                    description, reference, providerName, createdDate, links, refundSummary, settlementSummary, cardDetails, auth3dsData);
+                    description, reference, providerName, createdDate, links, refundSummary, settlementSummary,
+                    cardDetails, auth3dsData, language);
         }
     }
 
@@ -304,10 +306,14 @@ public class ChargeResponse {
     @JsonProperty("card_details")
     protected PersistedCard cardDetails;
 
+    @JsonProperty
+    @JsonSerialize(using = ToStringSerializer.class)
+    private SupportedLanguage language;
+
     protected ChargeResponse(String chargeId, Long amount, ExternalTransactionState state, String cardBrand, String gatewayTransactionId, String returnUrl,
                              String email, String description, ServicePaymentReference reference, String providerName, String createdDate,
                              List<Map<String, Object>> dataLinks, RefundSummary refundSummary, SettlementSummary settlementSummary, PersistedCard cardDetails,
-                             Auth3dsData auth3dsData) {
+                             Auth3dsData auth3dsData, SupportedLanguage language) {
         this.dataLinks = dataLinks;
         this.chargeId = chargeId;
         this.amount = amount;
@@ -324,6 +330,7 @@ public class ChargeResponse {
         this.settlementSummary = settlementSummary;
         this.cardDetails = cardDetails;
         this.auth3dsData = auth3dsData;
+        this.language = language;
     }
 
     public List<Map<String, Object>> getDataLinks() {
@@ -386,6 +393,10 @@ public class ChargeResponse {
         return cardDetails;
     }
 
+    public SupportedLanguage getLanguage() {
+        return language;
+    }
+
     public URI getLink(String rel) {
         return dataLinks.stream()
                 .filter(map -> rel.equals(map.get("rel")))
@@ -428,8 +439,9 @@ public class ChargeResponse {
             return false;
         if (auth3dsData != null ? !auth3dsData.equals(that.auth3dsData) : that.auth3dsData != null)
             return false;
-        return cardDetails != null ? cardDetails.equals(that.cardDetails) : that.cardDetails == null;
-
+        if (cardDetails != null ? !cardDetails.equals(that.cardDetails) : that.cardDetails != null)
+            return false;
+        return language.equals(that.language);
     }
 
     @Override
@@ -450,6 +462,7 @@ public class ChargeResponse {
         result = 31 * result + (settlementSummary != null ? settlementSummary.hashCode() : 0);
         result = 31 * result + (auth3dsData != null ? auth3dsData.hashCode() : 0);
         result = 31 * result + (cardDetails != null ? cardDetails.hashCode() : 0);
+        result = 31 * result + language.hashCode();
         return result;
     }
 
@@ -470,6 +483,7 @@ public class ChargeResponse {
                 ", refundSummary=" + refundSummary +
                 ", settlementSummary=" + settlementSummary +
                 ", auth3dsData=" + auth3dsData +
+                ", language=" + language +
                 '}';
     }
 

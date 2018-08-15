@@ -10,6 +10,7 @@ import uk.gov.pay.connector.model.domain.AuthCardDetails;
 import uk.gov.pay.connector.model.domain.ChargeStatus;
 import uk.gov.pay.connector.model.domain.GatewayAccountEntity;
 import uk.gov.pay.connector.model.domain.RefundStatus;
+import uk.gov.pay.connector.model.domain.SupportedLanguage;
 
 import java.sql.SQLException;
 import java.sql.Timestamp;
@@ -62,30 +63,43 @@ public class DatabaseTestHelper {
     public void addCharge(Long chargeId, String externalChargeId, String gatewayAccountId, long amount, ChargeStatus status, String returnUrl,
                           String transactionId) {
         addCharge(chargeId, externalChargeId, gatewayAccountId, amount, status, returnUrl, transactionId, "Test description",
-                ServicePaymentReference.of("Test reference"), now(), 1, "email@fake.com");
+                ServicePaymentReference.of("Test reference"), now(), 1, "email@fake.test", SupportedLanguage.ENGLISH);
     }
 
     public void addCharge(String externalChargeId, String gatewayAccountId, long amount, ChargeStatus status, String returnUrl, String transactionId) {
         addCharge((long) RandomUtils.nextInt(1, 9999999), externalChargeId, gatewayAccountId, amount, status, returnUrl, transactionId,
-                "Test description", ServicePaymentReference.of("Test reference"), now(), 1, null);
+                "Test description", ServicePaymentReference.of("Test reference"), now(), 1, null, SupportedLanguage.ENGLISH);
     }
 
     public void addCharge(Long chargeId, String externalChargeId, String accountId, long amount, ChargeStatus chargeStatus, String returnUrl,
                           String transactionId, ServicePaymentReference reference, ZonedDateTime createdDate) {
         addCharge(chargeId, externalChargeId, accountId, amount, chargeStatus, returnUrl, transactionId, "Test description", reference,
-                createdDate == null ? now() : createdDate, 1, null);
+                createdDate == null ? now() : createdDate, 1, null, SupportedLanguage.ENGLISH);
+    }
+
+    public void addCharge(Long chargeId, String externalChargeId, String accountId, long amount, ChargeStatus chargeStatus, String returnUrl,
+                          String transactionId, ServicePaymentReference reference, ZonedDateTime createdDate, SupportedLanguage language) {
+        addCharge(chargeId, externalChargeId, accountId, amount, chargeStatus, returnUrl, transactionId, "Test description", reference,
+                createdDate == null ? now() : createdDate, 1, null, language);
     }
 
     public void addCharge(Long chargeId, String externalChargeId, String accountId, long amount, ChargeStatus chargeStatus, String returnUrl,
                           String transactionId, ServicePaymentReference reference, ZonedDateTime createdDate, String email) {
         addCharge(chargeId, externalChargeId, accountId, amount, chargeStatus, returnUrl, transactionId, "Test description", reference,
-                createdDate == null ? now() : createdDate, 1, email);
+                createdDate == null ? now() : createdDate, 1, email, SupportedLanguage.ENGLISH);
     }
 
     public void addCharge(Long chargeId, String externalChargeId, String accountId, long amount, ChargeStatus chargeStatus, String returnUrl,
                           String transactionId, ServicePaymentReference reference, String description, ZonedDateTime createdDate, String email) {
         addCharge(chargeId, externalChargeId, accountId, amount, chargeStatus, returnUrl, transactionId, description, reference,
-                createdDate == null ? now() : createdDate, 1, email);
+                createdDate == null ? now() : createdDate, 1, email, SupportedLanguage.ENGLISH);
+    }
+
+    public void addCharge(Long chargeId, String externalChargeId, String accountId, long amount, ChargeStatus chargeStatus, String returnUrl,
+                          String transactionId, ServicePaymentReference reference, String description, ZonedDateTime createdDate, String email,
+                          SupportedLanguage language) {
+        addCharge(chargeId, externalChargeId, accountId, amount, chargeStatus, returnUrl, transactionId, description, reference,
+                createdDate == null ? now() : createdDate, 1, email, language);
     }
 
     private void addCharge(
@@ -100,7 +114,8 @@ public class DatabaseTestHelper {
             ServicePaymentReference reference,
             ZonedDateTime createdDate,
             long version,
-            String email
+            String email,
+            SupportedLanguage language
     ) {
         jdbi.withHandle(h ->
                 h.update(
@@ -117,9 +132,10 @@ public class DatabaseTestHelper {
                                 "        created_date,\n" +
                                 "        reference,\n" +
                                 "        version,\n" +
-                                "        email\n" +
+                                "        email,\n" +
+                                "        language\n" +
                                 "    )\n" +
-                                "   VALUES(?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)\n",
+                                "   VALUES(?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)\n",
                         chargeId,
                         externalChargeId,
                         amount,
@@ -131,7 +147,8 @@ public class DatabaseTestHelper {
                         Timestamp.from(createdDate.toInstant()),
                         reference.toString(),
                         version,
-                        email
+                        email,
+                        language.toString()
                 )
         );
     }
@@ -141,7 +158,7 @@ public class DatabaseTestHelper {
                 handle.createStatement("DELETE FROM charges where gateway_account_id = :accountId")
                         .bind("accountId", accountId).execute());
     }
-    
+
     public void addRefund(long id, String externalId, String reference, long amount, String status, Long chargeId, ZonedDateTime createdDate) {
         jdbi.withHandle(handle ->
                 handle
@@ -545,6 +562,7 @@ public class DatabaseTestHelper {
         );
         return new Gson().fromJson(jsonString, Map.class);
     }
+
     public void addPaymentRequest(long id,
                                   long amount,
                                   long gatewaysAccountId,
@@ -612,7 +630,7 @@ public class DatabaseTestHelper {
             long paymentRequestId,
             ZonedDateTime dateCreated,
             String email
-            ) {
+    ) {
         jdbi.withHandle(h ->
                 h.update(
                         "INSERT INTO transactions(" +
@@ -779,7 +797,7 @@ public class DatabaseTestHelper {
                         .first());
     }
 
-    public Map<String,Object> getCard3ds(long card3dsId) {
+    public Map<String, Object> getCard3ds(long card3dsId) {
         return jdbi.withHandle(h ->
                 h.createQuery("Select * from card_3ds where id = :card3dsId")
                         .bind("card3dsId", card3dsId)

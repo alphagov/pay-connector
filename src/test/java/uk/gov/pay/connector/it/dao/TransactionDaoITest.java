@@ -7,6 +7,7 @@ import uk.gov.pay.connector.dao.TransactionDao;
 import uk.gov.pay.connector.model.ServicePaymentReference;
 import uk.gov.pay.connector.model.domain.ChargeStatus;
 import uk.gov.pay.connector.model.domain.RefundStatus;
+import uk.gov.pay.connector.model.domain.SupportedLanguage;
 import uk.gov.pay.connector.model.domain.Transaction;
 import uk.gov.pay.connector.util.DateTimeUtils;
 
@@ -79,6 +80,7 @@ public class TransactionDaoITest extends DaoITestBase {
         assertThat(transactionRefund.getCardBrand(), is(testCardDetails.getCardBrand()));
         assertThat(transactionRefund.getUserExternalId(), is(REFUND_USER_EXTERNAL_ID));
         assertThat(transactionRefund.getCardBrandLabel(), is("Visa")); // read from card types table which is populated by the card_types.csv seed data
+        assertThat(transactionRefund.getLanguage(), is(testCharge.getLanguage()));
         assertDateMatch(transactionRefund.getCreatedDate().toString());
 
         Transaction transactionCharge = transactions.get(1);
@@ -90,6 +92,7 @@ public class TransactionDaoITest extends DaoITestBase {
         assertThat(transactionCharge.getStatus(), is(testCharge.getChargeStatus().toString()));
         assertThat(transactionCharge.getCardBrand(), is(testCardDetails.getCardBrand()));
         assertThat(transactionCharge.getUserExternalId(), is(nullValue()));
+        assertThat(transactionCharge.getLanguage(), is(testCharge.getLanguage()));
         assertDateMatch(transactionCharge.getCreatedDate().toString());
     }
 
@@ -429,14 +432,14 @@ public class TransactionDaoITest extends DaoITestBase {
                 .aTestCharge()
                 .withTestAccount(defaultTestAccount)
                 .withReference(ServicePaymentReference.of("under_score_ref"))
-                .withEmail("under_score@mail.com")
+                .withEmail("under_score@mail.test")
                 .insert();
 
         withDatabaseTestHelper(databaseTestHelper)
                 .aTestCharge()
                 .withTestAccount(defaultTestAccount)
                 .withReference(ServicePaymentReference.of("understand"))
-                .withEmail("undertaker@mail.com")
+                .withEmail("undertaker@mail.test")
                 .insert();
 
         ChargeSearchParams params = new ChargeSearchParams()
@@ -451,7 +454,7 @@ public class TransactionDaoITest extends DaoITestBase {
 
         Transaction transaction = transactions.get(0);
         assertThat(transaction.getReference(), is(ServicePaymentReference.of("under_score_ref")));
-        assertThat(transaction.getEmail(), is("under_score@mail.com"));
+        assertThat(transaction.getEmail(), is("under_score@mail.test"));
     }
 
     @Test
@@ -488,20 +491,20 @@ public class TransactionDaoITest extends DaoITestBase {
         withDatabaseTestHelper(databaseTestHelper)
                 .aTestCharge()
                 .withTestAccount(defaultTestAccount)
-                .withEmail("email-id@mail.com")
+                .withEmail("email-id@mail.test")
                 .withReference(ServicePaymentReference.of("case-Insensitive-ref"))
                 .insert();
 
         withDatabaseTestHelper(databaseTestHelper)
                 .aTestCharge()
                 .withTestAccount(defaultTestAccount)
-                .withEmail("EMAIL-ID@MAIL.COM")
+                .withEmail("EMAIL-ID@MAIL.TEST")
                 .withReference(ServicePaymentReference.of("Case-inSENSITIVE-Ref"))
                 .insert();
 
         ChargeSearchParams params = new ChargeSearchParams()
                 .withReferenceLike(ServicePaymentReference.of("cASe-insEnsiTIve"))
-                .withEmailLike("EMAIL-ID@mail.com");
+                .withEmailLike("EMAIL-ID@mail.test");
 
         // when
         List<Transaction> transactions = transactionDao.findAllBy(defaultTestAccount.getAccountId(), params);
@@ -511,11 +514,11 @@ public class TransactionDaoITest extends DaoITestBase {
 
         Transaction transaction = transactions.get(0);
         assertThat(transaction.getReference(), is(ServicePaymentReference.of("Case-inSENSITIVE-Ref")));
-        assertThat(transaction.getEmail(), is("EMAIL-ID@MAIL.COM"));
+        assertThat(transaction.getEmail(), is("EMAIL-ID@MAIL.TEST"));
 
         transaction = transactions.get(1);
         assertThat(transaction.getReference(), is(ServicePaymentReference.of("case-Insensitive-ref")));
-        assertThat(transaction.getEmail(), is("email-id@mail.com"));
+        assertThat(transaction.getEmail(), is("email-id@mail.test"));
     }
 
     @Test
@@ -1165,6 +1168,7 @@ public class TransactionDaoITest extends DaoITestBase {
                         .withAmount(amount)
                         .withTestAccount(defaultTestAccount)
                         .withCreatedDate(creationDate)
+                        .withLanguage(SupportedLanguage.ENGLISH)
                         .insert();
     }
 

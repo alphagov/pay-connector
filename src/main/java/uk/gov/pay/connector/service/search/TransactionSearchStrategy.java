@@ -1,9 +1,5 @@
 package uk.gov.pay.connector.service.search;
 
-import java.util.List;
-import java.util.Map;
-import javax.ws.rs.core.UriInfo;
-
 import com.google.inject.Inject;
 import uk.gov.pay.connector.dao.CardTypeDao;
 import uk.gov.pay.connector.dao.ChargeSearchParams;
@@ -21,6 +17,10 @@ import uk.gov.pay.connector.model.domain.RefundStatus;
 import uk.gov.pay.connector.model.domain.Transaction;
 import uk.gov.pay.connector.util.DateTimeUtils;
 
+import javax.ws.rs.core.UriInfo;
+import java.util.List;
+import java.util.Map;
+
 import static javax.ws.rs.HttpMethod.GET;
 import static uk.gov.pay.connector.model.TransactionResponse.aTransactionResponseBuilder;
 
@@ -31,7 +31,7 @@ public class TransactionSearchStrategy extends AbstractSearchStrategy<Transactio
     @Inject
     public TransactionSearchStrategy(TransactionDao transactionDao, CardTypeDao cardTypeDao) {
         super(cardTypeDao);
-        this.transactionDao=transactionDao;
+        this.transactionDao = transactionDao;
     }
 
     @Override
@@ -74,6 +74,7 @@ public class TransactionSearchStrategy extends AbstractSearchStrategy<Transactio
                 .withReference(transaction.getReference())
                 .withEmail(transaction.getEmail())
                 .withGatewayTransactionId(transaction.getGatewayTransactionId())
+                .withLanguage(transaction.getLanguage())
                 .withLink("self", GET, uriInfo.getBaseUriBuilder()
                         .path("/v1/api/accounts/{accountId}/charges/{chargeId}")
                         .build(transaction.getGatewayAccountId(), transaction.getExternalId()))

@@ -410,6 +410,7 @@ public class ChargesFrontendResourceITest {
                 .body("return_url", is(returnUrl))
                 .body("email", is(email))
                 .body("created_date", is(notNullValue()))
+                .body("language", is("en"))
                 .contentType(JSON);
 
         return response.extract().path("charge_id");
@@ -430,7 +431,8 @@ public class ChargesFrontendResourceITest {
                 .body("email", is(email))
                 .body("created_date", is(notNullValue()))
                 .body("created_date", matchesPattern("^\\d{4}-\\d{2}-\\d{2}T\\d{2}:\\d{2}:\\d{1,3}.\\d{0,3}Z"))
-                .body("created_date", isWithin(10, SECONDS));
+                .body("created_date", isWithin(10, SECONDS))
+                .body("language", is("en"));
         validateGatewayAccount(response);
         validateCardDetails(response, chargeStatus);
         return response;
