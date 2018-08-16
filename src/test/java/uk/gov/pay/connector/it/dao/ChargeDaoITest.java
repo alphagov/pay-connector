@@ -1313,7 +1313,7 @@ public class ChargeDaoITest extends DaoITestBase {
                 .withChargeStatus(CAPTURE_APPROVED_RETRY)
                 .insert();
 
-        assertThat(chargeDao.countChargesForCapture(Duration.ofHours(1)), is(2));
+        assertThat(chargeDao.countChargesForImmediateCapture(Duration.ofHours(1)), is(2));
         assertThat(chargeDao.countChargesAwaitingCaptureRetry(Duration.ofHours(1)), is(1));
     }
 

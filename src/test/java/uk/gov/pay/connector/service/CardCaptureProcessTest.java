@@ -56,11 +56,13 @@ public class CardCaptureProcessTest {
     
     @Mock
     MetricRegistry mockMetricRegistry;
+    
+    @Mock
+    CaptureProcessConfig mockCaptureConfiguration = mock(CaptureProcessConfig.class);
 
     @Before
     public void setup() {
         Histogram mockHistogram = mock(Histogram.class);
-        CaptureProcessConfig mockCaptureConfiguration = mock(CaptureProcessConfig.class);
 
         when(mockMetricRegistry.histogram(anyString())).thenReturn(mockHistogram);
         Counter mockCounter = mock(Counter.class);
@@ -84,17 +86,19 @@ public class CardCaptureProcessTest {
 
     @Test
     public void shouldRecordTheQueueSizeOnEveryRun() {
-        when(mockChargeDao.countChargesForCapture(Matchers.any(Duration.class))).thenReturn(15);
-
+        when(mockCaptureConfiguration.getBatchSize()).thenReturn(0);
+        when(mockChargeDao.countChargesForImmediateCapture(Matchers.any(Duration.class))).thenReturn(15);
+        
         cardCaptureProcess.runCapture();
 
-        assertThat(cardCaptureProcess.getQueueSize(), is(15));
+        assertThat(cardCaptureProcess.getImmediateCaptureQueueSize(), is(15));
     }
 
 
     @Test
     public void shouldRegisterGaugesForChargesQueue_AndReturnCorrectSizes() {
-        when(mockChargeDao.countChargesForCapture(Matchers.any(Duration.class))).thenReturn(15);
+        when(mockCaptureConfiguration.getBatchSize()).thenReturn(0);
+        when(mockChargeDao.countChargesForImmediateCapture(Matchers.any(Duration.class))).thenReturn(15);
         when(mockChargeDao.countChargesAwaitingCaptureRetry(Matchers.any(Duration.class))).thenReturn(10);
         cardCaptureProcess.runCapture();
         ArgumentCaptor<MetricRegistry.MetricSupplier> argumentCaptor = ArgumentCaptor.forClass(MetricRegistry.MetricSupplier.class);
@@ -120,7 +124,7 @@ public class CardCaptureProcessTest {
 
         cardCaptureProcess.runCapture();
 
-        assertThat(cardCaptureProcess.getWaitingQueueSize(), is(15));
+        assertThat(cardCaptureProcess.getWaitingCaptureQueueSize(), is(15));
     }
 
     @Test
