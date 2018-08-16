@@ -4,10 +4,10 @@ import com.google.common.collect.ImmutableList;
 import com.jayway.restassured.response.Header;
 import com.jayway.restassured.response.ValidatableResponse;
 import org.junit.Test;
+import uk.gov.pay.commons.model.SupportedLanguage;
 import uk.gov.pay.connector.it.base.ChargingITestBase;
 import uk.gov.pay.connector.model.ServicePaymentReference;
 import uk.gov.pay.connector.model.domain.ChargeStatus;
-import uk.gov.pay.connector.model.domain.SupportedLanguage;
 import uk.gov.pay.connector.util.DateTimeUtils;
 import uk.gov.pay.connector.util.RestAssuredClient;
 

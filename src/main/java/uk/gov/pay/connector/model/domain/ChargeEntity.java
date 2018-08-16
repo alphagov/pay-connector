@@ -5,6 +5,8 @@ import com.fasterxml.jackson.databind.annotation.JsonSerialize;
 import com.fasterxml.jackson.databind.ser.std.ToStringSerializer;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import uk.gov.pay.commons.model.SupportedLanguage;
+import uk.gov.pay.commons.model.SupportedLanguageJpaConverter;
 import uk.gov.pay.connector.exception.InvalidStateTransitionException;
 import uk.gov.pay.connector.model.ServicePaymentReference;
 import uk.gov.pay.connector.model.api.ExternalChargeState;
@@ -105,7 +107,7 @@ public class ChargeEntity extends AbstractVersionedEntity {
     private ZonedDateTime createdDate;
 
     @Column(name = "language", nullable = false)
-    @Convert(converter = SupportedLanguageConverter.class)
+    @Convert(converter = SupportedLanguageJpaConverter.class)
     private SupportedLanguage language;
 
     public ChargeEntity() {
