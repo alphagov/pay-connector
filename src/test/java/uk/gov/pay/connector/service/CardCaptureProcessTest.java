@@ -91,7 +91,7 @@ public class CardCaptureProcessTest {
         
         cardCaptureProcess.runCapture();
 
-        assertThat(cardCaptureProcess.getImmediateCaptureQueueSize(), is(15));
+        assertThat(cardCaptureProcess.getReadyCaptureQueueSize(), is(15));
     }
 
 
