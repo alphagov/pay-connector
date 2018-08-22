@@ -29,7 +29,7 @@ public class CardCaptureProcess {
     private final CardCaptureService captureService;
     private final MetricRegistry metricRegistry;
     private final CaptureProcessConfig captureConfig;
-    private volatile int immediateCaptureQueueSize;
+    private volatile int readyCaptureQueueSize;
     private volatile int waitingCaptureQueueSize;
 
     @Inject
@@ -38,8 +38,8 @@ public class CardCaptureProcess {
         this.captureService = cardCaptureService;
         this.captureConfig = connectorConfiguration.getCaptureProcessConfig();
         metricRegistry = environment.metrics();
-        metricRegistry.gauge("gateway-operations.capture-process.queue-size", () -> () -> immediateCaptureQueueSize);
-        metricRegistry.gauge("gateway-operations.capture-process.waiting-queue-size", () -> () -> waitingCaptureQueueSize);
+        metricRegistry.gauge("gateway-operations.capture-process.queue-size.ready_capture_queue_size", () -> () -> readyCaptureQueueSize);
+        metricRegistry.gauge("gateway-operations.capture-process.queue-size.waiting_capture_queue_size", () -> () -> waitingCaptureQueueSize);
     }
 
     public void runCapture() {
@@ -56,13 +56,13 @@ public class CardCaptureProcess {
             chargesToCaptureSize = chargesToCapture.size();
             
             if (chargesToCaptureSize < captureConfig.getBatchSize()) {
-                immediateCaptureQueueSize = chargesToCaptureSize;
+                readyCaptureQueueSize = chargesToCaptureSize;
             } else {
-                immediateCaptureQueueSize = chargeDao.countChargesForImmediateCapture(captureConfig.getRetryFailuresEveryAsJavaDuration());
+                readyCaptureQueueSize = chargeDao.countChargesForImmediateCapture(captureConfig.getRetryFailuresEveryAsJavaDuration());
             }
             
             if (chargesToCaptureSize > 0) {
-                logger.info("Capturing : " + chargesToCaptureSize + " of " + waitingCaptureQueueSize + immediateCaptureQueueSize + " charges");
+                logger.info("Capturing : " + chargesToCaptureSize + " of " + waitingCaptureQueueSize + readyCaptureQueueSize + " charges");
             }
 
             Collections.shuffle(chargesToCapture);
@@ -93,7 +93,7 @@ public class CardCaptureProcess {
         } finally {
             responseTimeStopwatch.stop();
             metricRegistry.histogram("gateway-operations.capture-process.running_time").update(responseTimeStopwatch.elapsed(TimeUnit.MILLISECONDS));
-            logger.info(format("Capture complete [captured=%d] [skipped=%d] [capture_error=%d] [failed_capture=%d] [total=%d]", captured, skipped, error, failedCapture, immediateCaptureQueueSize));
+            logger.info(format("Capture complete [captured=%d] [skipped=%d] [capture_error=%d] [failed_capture=%d] [total=%d]", captured, skipped, error, failedCapture, readyCaptureQueueSize));
         }
         MDC.remove(HEADER_REQUEST_ID);
     }
@@ -103,8 +103,8 @@ public class CardCaptureProcess {
     }
 
 
-    public int getImmediateCaptureQueueSize() {
-        return immediateCaptureQueueSize;
+    public int getReadyCaptureQueueSize() {
+        return readyCaptureQueueSize;
     }
 
     public int getWaitingCaptureQueueSize() {
