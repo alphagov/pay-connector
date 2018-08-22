@@ -515,17 +515,6 @@ public class DatabaseTestHelper {
         );
     }
 
-    public void addEventWithGatewayEventDate(Long chargeId, String chargeStatus, ZonedDateTime gatewayEventDate) {
-        addEventWithGatewayEventDate(chargeId, chargeStatus, gatewayEventDate, ZonedDateTime.now());
-    }
-
-    public void addEventWithGatewayEventDate(Long chargeId, String chargeStatus, ZonedDateTime gatewayEventDate, ZonedDateTime updated) {
-        jdbi.withHandle(
-                h -> h.update("INSERT INTO charge_events(charge_id,status,gateway_event_date,updated) values(?,?,?,?)",
-                        chargeId, chargeStatus, Timestamp.from(gatewayEventDate.toInstant()), Timestamp.from(updated.toInstant()))
-        );
-    }
-
     public List<String> getInternalEvents(String externalChargeId) {
         return jdbi.withHandle(h ->
                 h.createQuery("SELECT status from charge_events WHERE charge_id = (SELECT id from charges WHERE external_id=:external_id)")
@@ -599,17 +588,6 @@ public class DatabaseTestHelper {
         );
     }
 
-    public void addChargeTransaction(
-            long transactionId,
-            String gatewayTransactionId,
-            Long gatewayAccountId,
-            Long amount,
-            ChargeStatus chargeStatus,
-            long paymentRequestId
-    ) {
-        addChargeTransaction(transactionId, gatewayTransactionId, gatewayAccountId, amount, chargeStatus, paymentRequestId, ZonedDateTime.now(), "some@email.com");
-    }
-
     @Deprecated // Use the addChargeTransaction above that sets the gatewayAccountId
     public void addChargeTransaction(
             long transactionId,
@@ -659,89 +637,6 @@ public class DatabaseTestHelper {
         );
     }
 
-    public void addRefundTransaction(Long id, Long paymentRequestId, Long amount, String refundExternalId, String userExternalId, RefundStatus status, String refundReference) {
-        jdbi.withHandle(h ->
-                h.update(
-                        "INSERT INTO transactions(" +
-                                "id," +
-                                "payment_request_id," +
-                                "amount," +
-                                "refund_external_id," +
-                                "user_external_id," +
-                                "status," +
-                                "refund_reference," +
-                                "operation" +
-                                ")" +
-                                "VALUES (" +
-                                "?, ?, ?, ?, ?, ?, ?, 'REFUND'" +
-                                ")",
-                        id,
-                        paymentRequestId,
-                        amount,
-                        refundExternalId,
-                        userExternalId,
-                        status.name(),
-                        refundReference
-                )
-        );
-    }
-
-    public void addChargeTransactionEvent(Long transactionId, ChargeStatus chargeStatus, ZonedDateTime updated) {
-        jdbi.withHandle(h ->
-                h.update(
-                        "INSERT INTO transaction_events(" +
-                                "transaction_id," +
-                                "status," +
-                                "updated," +
-                                "operation" +
-                                ")" +
-                                "VALUES (" +
-                                "?, ?, ?, 'CHARGE'" +
-                                ")",
-                        transactionId,
-                        chargeStatus.name(),
-                        Timestamp.from(updated.toInstant())
-                )
-        );
-    }
-
-    public void addRefundTransactionEvent(Long transactionId, RefundStatus refundStatus, ZonedDateTime updated) {
-        jdbi.withHandle(h -> h.update(
-                        "INSERT INTO transaction_events(" +
-                                "transaction_id," +
-                                "status," +
-                                "updated," +
-                                "operation" +
-                                ")" +
-                                "VALUES (" +
-                                "?, ?, ?, 'REFUND'" +
-                                ")",
-                        transactionId,
-                        refundStatus.name(),
-                        Timestamp.from(updated.toInstant())
-                )
-
-
-        );
-    }
-
-    public void addCard(Long cardId, Long chargeId, Long transactionId) {
-        jdbi.withHandle(h -> h.update(
-                "INSERT INTO cards(" +
-                        "id," +
-                        "charge_id," +
-                        "card_brand," +
-                        "transaction_id" +
-                        ")" +
-                        "VALUES (" +
-                        "?, ?, 'some_brand', ?" +
-                        ")",
-                cardId,
-                chargeId,
-                transactionId)
-        );
-    }
-
     public void addCard(Long cardId, String cardBrand, Long transactionId) {
         jdbi.withHandle(h -> h.update(
                 "INSERT INTO cards(" +
@@ -758,64 +653,7 @@ public class DatabaseTestHelper {
         );
     }
 
-    public void addCard3ds(Long cardId, Long chargeId, Long transactionId) {
-        jdbi.withHandle(h -> h.update(
-                "INSERT INTO card_3ds(" +
-                        "id," +
-                        "charge_id," +
-                        "transaction_id," +
-                        "pa_request," +
-                        "issuer_url" +
-                        ")" +
-                        "VALUES (" +
-                        "?, ?, ?, 'some_ps_request', 'some_issuer_url'" +
-                        ")",
-                cardId,
-                chargeId,
-                transactionId)
-        );
-    }
-
-    public List<Map<String, Object>> loadTransactionEvents(Long transactionId) {
-        return jdbi.withHandle(h ->
-                h.createQuery("Select * from transaction_events where transaction_id = :transactionId order by updated desc")
-                        .bind("transactionId", transactionId)
-                        .list());
-    }
-
-    public List<Map<String, Object>> getRefundTransactions(Long paymentRequestId) {
-        return jdbi.withHandle(h ->
-                h.createQuery("Select * from transactions where payment_request_id = :paymentRequestId and operation='REFUND' order by id asc")
-                        .bind("paymentRequestId", paymentRequestId)
-                        .list());
-    }
-
-    public Map<String, Object> getCard(long cardId) {
-        return jdbi.withHandle(h ->
-                h.createQuery("Select * from cards where id = :cardId")
-                        .bind("cardId", cardId)
-                        .first());
-    }
-
-    public Map<String, Object> getCard3ds(long card3dsId) {
-        return jdbi.withHandle(h ->
-                h.createQuery("Select * from card_3ds where id = :card3dsId")
-                        .bind("card3dsId", card3dsId)
-                        .first());
-    }
-
-    public Map<String, Object> getChargeTransaction(Long paymentRequestId) {
-        List<Map<String, Object>> chargeTransactions = jdbi.withHandle(h ->
-                h.createQuery("Select * from transactions where payment_request_id = :paymentRequestId and operation='CHARGE' order by id asc")
-                        .bind("paymentRequestId", paymentRequestId)
-                        .list());
-
-        if (chargeTransactions.size() == 1) {
-            return chargeTransactions.get(0);
-
-        } else {
-            throw new IllegalStateException(
-                    "Found [" + chargeTransactions.size() + "] Charge Transactions for payment request id [" + paymentRequestId + "]");
-        }
+    public void truncateAllData() {
+        jdbi.withHandle(h -> h.createStatement("TRUNCATE TABLE gateway_accounts CASCADE").execute());
     }
 }
