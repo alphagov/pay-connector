@@ -62,7 +62,7 @@ public class CardCaptureProcess {
             }
             
             if (chargesToCaptureSize > 0) {
-                logger.info("Capturing : " + chargesToCaptureSize + " of " + waitingCaptureQueueSize + readyCaptureQueueSize + " charges");
+                logger.info("Capturing : " + chargesToCaptureSize + " of " + (waitingCaptureQueueSize + readyCaptureQueueSize) + " charges");
             }
 
             Collections.shuffle(chargesToCapture);
