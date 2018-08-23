@@ -7,6 +7,7 @@ import au.com.dius.pact.provider.junit.loader.PactBrokerAuth;
 import au.com.dius.pact.provider.junit.target.HttpTarget;
 import au.com.dius.pact.provider.junit.target.Target;
 import au.com.dius.pact.provider.junit.target.TestTarget;
+import org.junit.Before;
 import org.junit.BeforeClass;
 import org.junit.ClassRule;
 import org.junit.runner.RunWith;
@@ -23,7 +24,7 @@ import java.util.concurrent.ThreadLocalRandom;
 
 @RunWith(PayPactRunner.class)
 @Provider("connector")
-@PactBroker(protocol = "https", host = "pact-broker-test.cloudapps.digital", port = "443", tags = {"${PACT_CONSUMER_TAG}"},
+@PactBroker(protocol = "https", host = "pact-broker-test.cloudapps.digital", port = "443", tags = {"master", "test", "staging", "production"},
         authentication = @PactBrokerAuth(username = "${PACT_BROKER_USERNAME}", password = "${PACT_BROKER_PASSWORD}"))
 public class TransactionsApiContractTest {
 
@@ -40,6 +41,11 @@ public class TransactionsApiContractTest {
     public static void setUp() {
         target = new HttpTarget(app.getLocalPort());
         dbHelper = app.getDatabaseTestHelper();
+    }
+    
+    @Before
+    public void refreshDatabase() {
+        dbHelper.truncateAllData();
     }
 
     private void setUpGatewayAccount(long accountId) {
