@@ -161,6 +161,7 @@ public class ChargeDao extends JpaDao<ChargeEntity> {
 
     private Predicate likePredicate(CriteriaBuilder cb, Path<String> expression, String element) {
         String escapedReference = element
+                .replaceAll("\\\\", SQL_ESCAPE_SEQ + "\\\\")
                 .replaceAll("_", SQL_ESCAPE_SEQ + "_")
                 .replaceAll("%", SQL_ESCAPE_SEQ + "%");
 

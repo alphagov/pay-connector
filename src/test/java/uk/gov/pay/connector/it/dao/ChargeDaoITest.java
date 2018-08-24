@@ -391,6 +391,37 @@ public class ChargeDaoITest extends DaoITestBase {
     }
 
     @Test
+    public void searchChargesByReferenceWithBackslash() {
+        // since '\' is an escape character in postgres (and java) this was resulting in undesired results
+        DatabaseFixtures
+                .withDatabaseTestHelper(databaseTestHelper)
+                .aTestCharge()
+                .withTestAccount(defaultTestAccount)
+                .withReference(ServicePaymentReference.of("backslash\\ref"))
+                .insert();
+
+        DatabaseFixtures
+                .withDatabaseTestHelper(databaseTestHelper)
+                .aTestCharge()
+                .withTestAccount(defaultTestAccount)
+                .withReference(ServicePaymentReference.of("backslashref"))
+                .insert();
+
+        ChargeSearchParams params = new ChargeSearchParams()
+                .withGatewayAccountId(defaultTestAccount.getAccountId())
+                .withReferenceLike(ServicePaymentReference.of("backslash\\ref"));
+
+        // when
+        List<ChargeEntity> charges = chargeDao.findAllBy(params);
+
+        // then
+        assertThat(charges.size(), is(1));
+
+        ChargeEntity charge = charges.get(0);
+        assertThat(charge.getReference(), is(ServicePaymentReference.of("backslash\\ref")));
+    }
+    
+    @Test
     public void searchChargesByReferenceAndEmailShouldBeCaseInsensitive() {
         // fix that the reference and email searches should be case insensitive
         DatabaseFixtures

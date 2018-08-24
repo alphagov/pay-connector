@@ -237,6 +237,7 @@ public class TransactionDao {
 
     private String buildLikeClauseContaining(String textToFind) {
         String escapedLikeClause = textToFind
+                .replaceAll("\\\\", "\\\\\\\\")
                 .replaceAll("_", "\\\\_")
                 .replaceAll("%", "\\\\%");
         return '%' + escapedLikeClause + '%';
