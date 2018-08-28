@@ -60,7 +60,7 @@ public class CaptureProcessScheduler implements Managed {
                 cardCaptureProcess.runCapture();
             } catch (Exception e) {
                 logger.error("Unexpected error running capture operations", e);
-            }finally {
+            } finally {
                 recorder.endSegment();
             }
         }, initialDelayInSeconds, interval, TimeUnit.SECONDS);

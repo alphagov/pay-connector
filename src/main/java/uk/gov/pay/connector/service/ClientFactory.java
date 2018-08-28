@@ -17,10 +17,10 @@ import org.glassfish.jersey.SslConfigurator;
 import org.glassfish.jersey.apache.connector.ApacheClientProperties;
 import org.glassfish.jersey.apache.connector.ApacheConnectorProvider;
 import org.glassfish.jersey.client.ClientProperties;
+import uk.gov.pay.commons.utils.xray.XRayHttpClientFilter;
 import uk.gov.pay.connector.app.ConnectorConfiguration;
 import uk.gov.pay.connector.app.OperationOverrides;
 import uk.gov.pay.connector.filters.RestClientLoggingFilter;
-import uk.gov.pay.connector.filters.XRayHttpClientFilter;
 import uk.gov.pay.connector.util.TrustStoreLoader;
 
 import javax.inject.Inject;
