@@ -5,6 +5,8 @@ import com.fasterxml.jackson.databind.annotation.JsonSerialize;
 import com.fasterxml.jackson.databind.ser.std.ToStringSerializer;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import uk.gov.pay.commons.model.SupportedLanguage;
+import uk.gov.pay.commons.model.SupportedLanguageJpaConverter;
 import uk.gov.pay.connector.exception.InvalidStateTransitionException;
 import uk.gov.pay.connector.model.ServicePaymentReference;
 import uk.gov.pay.connector.model.api.ExternalChargeState;
@@ -104,18 +106,22 @@ public class ChargeEntity extends AbstractVersionedEntity {
     @Convert(converter = UTCDateTimeConverter.class)
     private ZonedDateTime createdDate;
 
+    @Column(name = "language", nullable = false)
+    @Convert(converter = SupportedLanguageJpaConverter.class)
+    private SupportedLanguage language;
+
     public ChargeEntity() {
         //for jpa
     }
 
     public ChargeEntity(Long amount, String returnUrl, String description, ServicePaymentReference reference,
-                        GatewayAccountEntity gatewayAccount, String email) {
-        this(amount, CREATED, returnUrl, description, reference, gatewayAccount, email, ZonedDateTime.now(ZoneId.of("UTC")));
+                        GatewayAccountEntity gatewayAccount, String email, SupportedLanguage language) {
+        this(amount, CREATED, returnUrl, description, reference, gatewayAccount, email, ZonedDateTime.now(ZoneId.of("UTC")), language);
     }
 
     //for fixture
     ChargeEntity(Long amount, ChargeStatus status, String returnUrl, String description, ServicePaymentReference reference,
-                 GatewayAccountEntity gatewayAccount, String email, ZonedDateTime createdDate) {
+                 GatewayAccountEntity gatewayAccount, String email, ZonedDateTime createdDate, SupportedLanguage language) {
         this.amount = amount;
         this.status = status.getValue();
         this.returnUrl = returnUrl;
@@ -125,6 +131,7 @@ public class ChargeEntity extends AbstractVersionedEntity {
         this.createdDate = createdDate;
         this.externalId = RandomIdGenerator.newId();
         this.email = email;
+        this.language = language;
     }
 
     public Long getId() {
@@ -282,5 +289,13 @@ public class ChargeEntity extends AbstractVersionedEntity {
 
     public void set3dsDetails(Auth3dsDetailsEntity auth3dsDetails) {
         this.auth3dsDetails = auth3dsDetails;
+    }
+
+    public SupportedLanguage getLanguage() {
+        return language;
+    }
+
+    public void setLanguage(SupportedLanguage language) {
+        this.language = language;
     }
 }

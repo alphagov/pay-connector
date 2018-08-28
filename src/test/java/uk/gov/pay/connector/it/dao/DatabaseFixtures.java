@@ -1,6 +1,7 @@
 package uk.gov.pay.connector.it.dao;
 
 import org.apache.commons.lang3.RandomUtils;
+import uk.gov.pay.commons.model.SupportedLanguage;
 import uk.gov.pay.connector.model.ServicePaymentReference;
 import uk.gov.pay.connector.model.domain.CardTypeEntity.Type;
 import uk.gov.pay.connector.model.domain.ChargeStatus;
@@ -361,13 +362,14 @@ public class DatabaseFixtures {
     public class TestCharge {
         Long chargeId = RandomUtils.nextLong(1, 99999);
         private String description = "Test description";
-        String email = "alice.111@mail.fake";
+        String email = "alice.111@mail.test";
         String externalChargeId = RandomIdGenerator.newId();
         long amount = 101L;
         ChargeStatus chargeStatus = ChargeStatus.CREATED;
         String returnUrl = "http://service.com/success-page";
         String transactionId;
         ServicePaymentReference reference = ServicePaymentReference.of("Test reference");
+        SupportedLanguage language = SupportedLanguage.ENGLISH;
 
         ZonedDateTime createdDate = ZonedDateTime.now(ZoneId.of("UTC"));
 
@@ -428,13 +430,18 @@ public class DatabaseFixtures {
             this.description = description;
             return this;
         }
+        
+        public TestCharge withLanguage(SupportedLanguage language) {
+            this.language = language;
+            return this;
+        }
 
         public TestCharge insert() {
             if (testAccount == null)
                 throw new IllegalStateException("Test Account must be provided.");
 
             databaseTestHelper.addCharge(chargeId, externalChargeId, String.valueOf(testAccount.getAccountId()), amount, chargeStatus, returnUrl, transactionId,
-                    reference, description, createdDate, email);
+                    reference, description, createdDate, email, language);
 
             if (cardDetails != null) {
                 cardDetails.update();
@@ -480,6 +487,10 @@ public class DatabaseFixtures {
 
         public String getDescription() {
             return description;
+        }
+        
+        public SupportedLanguage getLanguage() {
+            return language;
         }
 
         public TestAccount getTestAccount() {

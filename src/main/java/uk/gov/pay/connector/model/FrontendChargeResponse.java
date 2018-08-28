@@ -2,6 +2,7 @@ package uk.gov.pay.connector.model;
 
 import com.fasterxml.jackson.annotation.JsonProperty;
 import org.apache.commons.lang3.builder.ToStringBuilder;
+import uk.gov.pay.commons.model.SupportedLanguage;
 import uk.gov.pay.connector.model.api.ExternalChargeState;
 import uk.gov.pay.connector.model.api.ExternalTransactionState;
 import uk.gov.pay.connector.model.builder.AbstractChargeResponseBuilder;
@@ -44,7 +45,7 @@ public class FrontendChargeResponse extends ChargeResponse {
         public FrontendChargeResponse build() {
             return new FrontendChargeResponse(chargeId, amount, state, cardBrand, gatewayTransactionId, returnUrl,
                     email, description, reference, providerName, createdDate, links, status, refundSummary,
-                    settlementSummary, persistedCard, auth3dsData, gatewayAccount);
+                    settlementSummary, persistedCard, auth3dsData, gatewayAccount, language);
         }
     }
 
@@ -62,10 +63,12 @@ public class FrontendChargeResponse extends ChargeResponse {
                                    String gatewayTransactionId, String returnUrl, String email, String description,
                                    ServicePaymentReference reference, String providerName, String createdDate,
                                    List<Map<String, Object>> dataLinks, String status, RefundSummary refundSummary,
-                                   SettlementSummary settlementSummary, PersistedCard chargeCardDetails, Auth3dsData auth3dsData,
-                                   GatewayAccountEntity gatewayAccount) {
+                                   SettlementSummary settlementSummary, PersistedCard chargeCardDetails,
+                                   Auth3dsData auth3dsData, GatewayAccountEntity gatewayAccount,
+                                   SupportedLanguage language) {
         super(chargeId, amount, state, cardBrand, gatewayTransactionId, returnUrl, email, description, reference,
-                providerName, createdDate, dataLinks, refundSummary, settlementSummary, chargeCardDetails, auth3dsData);
+                providerName, createdDate, dataLinks, refundSummary, settlementSummary, chargeCardDetails, auth3dsData,
+                language);
         this.status = status;
         this.gatewayAccount = gatewayAccount;
     }

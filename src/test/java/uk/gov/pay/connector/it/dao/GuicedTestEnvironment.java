@@ -6,13 +6,7 @@ import com.google.inject.Injector;
 import com.google.inject.Singleton;
 import com.google.inject.persist.PersistService;
 import com.google.inject.persist.jpa.JpaPersistModule;
-import uk.gov.pay.connector.dao.CardDao;
-import uk.gov.pay.connector.dao.ChargeDao;
-import uk.gov.pay.connector.dao.ChargeEventDao;
-import uk.gov.pay.connector.dao.GatewayAccountDao;
-import uk.gov.pay.connector.dao.PaymentRequestDao;
-import uk.gov.pay.connector.dao.TokenDao;
-import uk.gov.pay.connector.dao.TransactionDao;
+import uk.gov.pay.connector.dao.*;
 
 public class GuicedTestEnvironment {
 
@@ -48,9 +42,6 @@ public class GuicedTestEnvironment {
             bind(ChargeEventDao.class).in(Singleton.class);
             bind(TokenDao.class).in(Singleton.class);
             bind(GatewayAccountDao.class).in(Singleton.class);
-            bind(PaymentRequestDao.class).in(Singleton.class);
-            bind(CardDao.class).in(Singleton.class);
-            bind(TransactionDao.class).in(Singleton.class);
         }
     }
 }

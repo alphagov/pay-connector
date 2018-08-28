@@ -1,6 +1,7 @@
 package uk.gov.pay.connector.model.builder;
 
 import com.google.common.collect.ImmutableMap;
+import uk.gov.pay.commons.model.SupportedLanguage;
 import uk.gov.pay.connector.model.ChargeResponse;
 import uk.gov.pay.connector.model.ServicePaymentReference;
 import uk.gov.pay.connector.model.api.ExternalTransactionState;
@@ -28,6 +29,7 @@ public abstract class AbstractChargeResponseBuilder<T extends AbstractChargeResp
     protected ChargeResponse.SettlementSummary settlementSummary;
     protected PersistedCard cardDetails;
     protected ChargeResponse.Auth3dsData auth3dsData;
+    protected SupportedLanguage language;
 
     protected abstract T thisObject();
 
@@ -119,6 +121,11 @@ public abstract class AbstractChargeResponseBuilder<T extends AbstractChargeResp
 
     public T withAuth3dsData(ChargeResponse.Auth3dsData auth3dsData) {
         this.auth3dsData = auth3dsData;
+        return thisObject();
+    }
+
+    public T withLanguage(SupportedLanguage language) {
+        this.language = language;
         return thisObject();
     }
 

@@ -75,12 +75,6 @@ public class NotificationServiceTest {
     @Mock(answer = Answers.RETURNS_DEEP_STUBS)
     private ChargeEntity mockedChargeEntity;
 
-    @Mock
-    private ChargeStatusUpdater mockedChargeStatusUpdater;
-
-    @Mock
-    private RefundStatusUpdater mockedRefundUpdater;
-
     @Before
     public void setUp() {
         when(mockedPaymentProvider.getPaymentGatewayName()).thenReturn(SANDBOX);
@@ -92,7 +86,7 @@ public class NotificationServiceTest {
 
         when(mockedPaymentProvider.verifyNotification(any(Notification.class), any(GatewayAccountEntity.class))).thenReturn(true);
 
-        notificationService = new NotificationService(mockedChargeDao, mockedChargeEventDao, mockedRefundDao, mockedPaymentProviders, mockDnsUtils, mockedChargeStatusUpdater, mockedRefundUpdater);
+        notificationService = new NotificationService(mockedChargeDao, mockedChargeEventDao, mockedRefundDao, mockedPaymentProviders, mockDnsUtils);
     }
 
     private Notifications<Pair<String, Boolean>> createNotificationFor(String transactionId, String reference, Pair<String, Boolean> status) {
@@ -319,13 +313,7 @@ public class NotificationServiceTest {
         verify(mockedChargeEventDao).persistChargeEventOf(argThat(obj -> mockedChargeEntity.equals(obj)), generatedTimeCaptor.capture());
 
         assertTrue(ChronoUnit.SECONDS.between((ZonedDateTime) generatedTimeCaptor.getValue().get(), ZonedDateTime.now()) < 10);
-        notifications.get().forEach(notification ->
-                verify(mockedChargeStatusUpdater).updateChargeTransactionStatus(
-                        mockedChargeEntity.getExternalId(),
-                        ChargeStatus.CAPTURED,
-                        notification.getGatewayEventDate()
-                )
-        );
+       
         verifyNoMoreInteractions(ignoreStubs(mockedChargeDao));
     }
 
@@ -353,7 +341,6 @@ public class NotificationServiceTest {
 
         verify(mockedRefundDao).findByProviderAndReference(SANDBOX.getName(), reference);
         verify(mockedRefundEntity).setStatus(REFUNDED);
-        verify(mockedRefundUpdater).updateRefundTransactionStatus(SANDBOX, reference, RefundStatus.REFUNDED);
         verifyNoMoreInteractions(ignoreStubs(mockedChargeDao));
     }
 

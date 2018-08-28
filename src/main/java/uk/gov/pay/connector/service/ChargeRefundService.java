@@ -5,7 +5,6 @@ import com.google.inject.persist.Transactional;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import uk.gov.pay.connector.dao.ChargeDao;
-import uk.gov.pay.connector.dao.PaymentRequestDao;
 import uk.gov.pay.connector.dao.RefundDao;
 import uk.gov.pay.connector.exception.ChargeNotFoundRuntimeException;
 import uk.gov.pay.connector.exception.RefundException;
@@ -14,10 +13,8 @@ import uk.gov.pay.connector.model.RefundRequest;
 import uk.gov.pay.connector.model.api.ExternalChargeRefundAvailability;
 import uk.gov.pay.connector.model.domain.ChargeEntity;
 import uk.gov.pay.connector.model.domain.GatewayAccountEntity;
-import uk.gov.pay.connector.model.domain.PaymentRequestEntity;
 import uk.gov.pay.connector.model.domain.RefundEntity;
 import uk.gov.pay.connector.model.domain.RefundStatus;
-import uk.gov.pay.connector.model.domain.transaction.RefundTransactionEntity;
 import uk.gov.pay.connector.model.gateway.GatewayResponse;
 import uk.gov.pay.connector.service.transaction.NonTransactionalOperation;
 import uk.gov.pay.connector.service.transaction.PreTransactionalOperation;
@@ -58,21 +55,17 @@ public class ChargeRefundService {
 
     private final ChargeDao chargeDao;
     private final RefundDao refundDao;
-    private final PaymentRequestDao paymentRequestDao;
     private final PaymentProviders providers;
     private final Provider<TransactionFlow> transactionFlowProvider;
-    private final RefundStatusUpdater refundStatusUpdater;
 
     @Inject
     public ChargeRefundService(ChargeDao chargeDao, RefundDao refundDao, PaymentProviders providers,
-                               Provider<TransactionFlow> transactionFlowProvider, PaymentRequestDao paymentRequestDao,
-                               RefundStatusUpdater refundStatusUpdater) {
+                               Provider<TransactionFlow> transactionFlowProvider
+                               ) {
         this.chargeDao = chargeDao;
         this.refundDao = refundDao;
         this.providers = providers;
         this.transactionFlowProvider = transactionFlowProvider;
-        this.paymentRequestDao = paymentRequestDao;
-        this.refundStatusUpdater = refundStatusUpdater;
     }
 
     public Optional<Response> doRefund(Long accountId, String chargeId, RefundRequest refundRequest) {
@@ -93,7 +86,6 @@ public class ChargeRefundService {
                     && refund.hasStatus(RefundStatus.REFUND_SUBMITTED)) {
                 RefundEntity refundEntity = refundDao.findById(refund.getId()).get();
                 refundEntity.setStatus(REFUNDED);
-                refundStatusUpdater.updateRefundTransactionStatus(PaymentGatewayName.SANDBOX, refund.getReference(), REFUNDED);
                 response = new Response(response.getRefundGatewayResponse(), refundEntity);
             }
             return response;
@@ -156,7 +148,6 @@ public class ChargeRefundService {
 
             refundEntity.setStatus(status);
             refundEntity.setReference(reference);
-            refundStatusUpdater.setReferenceAndUpdateTransactionStatus(refundEntity.getExternalId(), reference, status);
 
             return new Response(gatewayResponse, refundEntity);
         };
@@ -167,10 +158,7 @@ public class ChargeRefundService {
         RefundEntity refundEntity = new RefundEntity(charge, refundRequest.getAmount(), refundRequest.getUserExternalId());
         charge.getRefunds().add(refundEntity);
         refundDao.persist(refundEntity);
-
-        Optional<PaymentRequestEntity> paymentRequestOptional = paymentRequestDao.findByExternalId(charge.getExternalId());
-        paymentRequestOptional.ifPresent(paymentRequest -> paymentRequest.addTransaction(RefundTransactionEntity.from(refundEntity)));
-
+        
         return refundEntity;
     }
 

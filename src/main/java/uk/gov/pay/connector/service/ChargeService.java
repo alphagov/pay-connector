@@ -3,13 +3,13 @@ package uk.gov.pay.connector.service;
 import com.google.inject.persist.Transactional;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import uk.gov.pay.commons.model.SupportedLanguage;
 import uk.gov.pay.connector.app.ConnectorConfiguration;
 import uk.gov.pay.connector.app.LinksConfig;
 import uk.gov.pay.connector.dao.CardTypeDao;
 import uk.gov.pay.connector.dao.ChargeDao;
 import uk.gov.pay.connector.dao.ChargeEventDao;
 import uk.gov.pay.connector.dao.GatewayAccountDao;
-import uk.gov.pay.connector.dao.PaymentRequestDao;
 import uk.gov.pay.connector.dao.TokenDao;
 import uk.gov.pay.connector.model.ChargeResponse;
 import uk.gov.pay.connector.model.ServicePaymentReference;
@@ -20,10 +20,8 @@ import uk.gov.pay.connector.model.builder.PatchRequestBuilder;
 import uk.gov.pay.connector.model.domain.CardTypeEntity;
 import uk.gov.pay.connector.model.domain.ChargeEntity;
 import uk.gov.pay.connector.model.domain.ChargeStatus;
-import uk.gov.pay.connector.model.domain.PaymentRequestEntity;
 import uk.gov.pay.connector.model.domain.PersistedCard;
 import uk.gov.pay.connector.model.domain.TokenEntity;
-import uk.gov.pay.connector.model.domain.transaction.ChargeTransactionEntity;
 import uk.gov.pay.connector.resources.ChargesApiResource;
 import uk.gov.pay.connector.util.DateTimeUtils;
 
@@ -47,7 +45,7 @@ import static uk.gov.pay.connector.model.domain.NumbersInStringsSanitizer.saniti
 
 public class ChargeService {
     private static final Logger logger = LoggerFactory.getLogger(ChargeService.class);
-    
+
     private static final List<ChargeStatus> CURRENT_STATUSES_ALLOWING_UPDATE_TO_NEW_STATUS = newArrayList(CREATED, ENTERING_CARD_DETAILS);
 
     private final ChargeDao chargeDao;
@@ -57,15 +55,11 @@ public class ChargeService {
     private final GatewayAccountDao gatewayAccountDao;
     private final LinksConfig linksConfig;
     private final PaymentProviders providers;
-    private final PaymentRequestDao paymentRequestDao;
-    private final ChargeStatusUpdater chargeStatusUpdater;
 
     @Inject
     public ChargeService(TokenDao tokenDao, ChargeDao chargeDao, ChargeEventDao chargeEventDao,
                          CardTypeDao cardTypeDao, GatewayAccountDao gatewayAccountDao,
-                         ConnectorConfiguration config, PaymentProviders providers,
-                         PaymentRequestDao paymentRequestDao,
-                         ChargeStatusUpdater chargeStatusUpdater) {
+                         ConnectorConfiguration config, PaymentProviders providers) {
         this.tokenDao = tokenDao;
         this.chargeDao = chargeDao;
         this.chargeEventDao = chargeEventDao;
@@ -73,32 +67,29 @@ public class ChargeService {
         this.gatewayAccountDao = gatewayAccountDao;
         this.linksConfig = config.getLinks();
         this.providers = providers;
-        this.paymentRequestDao = paymentRequestDao;
-        this.chargeStatusUpdater = chargeStatusUpdater;
     }
 
     @Transactional
     public Optional<ChargeResponse> create(Map<String, String> chargeRequest, Long accountId, UriInfo uriInfo) {
         return gatewayAccountDao.findById(accountId).map(gatewayAccount -> {
-            
+
             if (gatewayAccount.isLive() && !chargeRequest.get("return_url").startsWith("https://")) {
                 logger.info(String.format("Gateway account %d is LIVE, but is configured to use a non-https return_url", accountId));
             }
-            
+
+            String chargeRequestLanguage = chargeRequest.get("language");
+            SupportedLanguage language = chargeRequestLanguage != null
+                    ? SupportedLanguage.fromIso639AlphaTwoCode(chargeRequestLanguage)
+                    : SupportedLanguage.ENGLISH;
+
             ChargeEntity chargeEntity = new ChargeEntity(new Long(chargeRequest.get("amount")),
                     chargeRequest.get("return_url"),
                     chargeRequest.get("description"),
                     ServicePaymentReference.of(chargeRequest.get("reference")),
                     gatewayAccount,
-                    chargeRequest.get("email")
-            );
+                    chargeRequest.get("email"),
+                    language);
             chargeDao.persist(chargeEntity);
-
-            PaymentRequestEntity paymentRequestEntity =
-                    PaymentRequestEntity.from(chargeEntity, ChargeTransactionEntity.from(chargeEntity));
-            paymentRequestDao.persist(paymentRequestEntity);
-
-            //todo: create a TransactionEventEntity here in future stories
 
             chargeEventDao.persistChargeEventOf(chargeEntity, Optional.empty());
             return Optional.of(populateResponseBuilderWith(aChargeResponseBuilder(), uriInfo, chargeEntity).build());
@@ -120,9 +111,6 @@ public class ChargeService {
                         case ChargesApiResource.EMAIL_KEY:
                             final String sanitizedEmail = sanitize(chargePatchRequest.getValue());
                             chargeEntity.setEmail(sanitizedEmail);
-                            paymentRequestDao.findByExternalId(chargeId)
-                                    .ifPresent(paymentRequestEntity -> paymentRequestEntity
-                                            .getChargeTransaction().setEmail(sanitizedEmail));
                     }
                     return Optional.of(chargeEntity);
                 })
@@ -137,7 +125,6 @@ public class ChargeService {
                     if (CURRENT_STATUSES_ALLOWING_UPDATE_TO_NEW_STATUS.contains(oldChargeStatus)) {
                         chargeEntity.setStatus(newChargeStatus);
                         chargeEventDao.persistChargeEventOf(chargeEntity, Optional.empty());
-                        chargeStatusUpdater.updateChargeTransactionStatus(externalId, newChargeStatus);
                         return Optional.of(chargeEntity);
                     }
                     return Optional.<ChargeEntity>empty();
@@ -171,6 +158,7 @@ public class ChargeService {
                 .withCreatedDate(DateTimeUtils.toUTCDateTimeString(chargeEntity.getCreatedDate()))
                 .withReturnUrl(chargeEntity.getReturnUrl())
                 .withEmail(chargeEntity.getEmail())
+                .withLanguage(chargeEntity.getLanguage())
                 .withRefunds(buildRefundSummary(chargeEntity))
                 .withSettlement(buildSettlementSummary(chargeEntity))
                 .withCardDetails(persistedCard)

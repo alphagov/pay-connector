@@ -33,9 +33,9 @@ pipeline {
         script {
           def long stepBuildTime = System.currentTimeMillis()
 
-          sh 'docker pull govukpay/postgres:9.4.4'
+          sh 'docker pull govukpay/postgres:9.6.6'
           sh 'mvn clean package'
-
+          runProviderContractTests()
           postSuccessfulMetrics("connector.maven-build", stepBuildTime)
         }
       }
@@ -45,13 +45,14 @@ pipeline {
         }
       }
     }
-    stage('Maven Build Without Tests') {
+    stage('Maven Build Without Unit Tests') {
       when {
         branch 'master'
       }
       steps {
-        sh 'docker pull govukpay/postgres:9.4.4'
+        sh 'docker pull govukpay/postgres:9.6.6'
         sh 'mvn -Dmaven.test.skip=true clean package'
+        runProviderContractTests()
       }
     }
     stage('Docker Build') {

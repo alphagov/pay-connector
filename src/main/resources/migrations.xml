@@ -1328,4 +1328,92 @@
             columnName="password"
             newDataType="varchar(255)"/>
     </changeSet>
+
+    <changeSet id="add index to charges.gateway_transaction_id" runInTransaction="false" author="">
+        <sql>
+            CREATE INDEX CONCURRENTLY idx_charges_gateway_transaction_id ON charges (gateway_transaction_id);
+        </sql>
+    </changeSet>
+
+    <changeSet id="add index to tokens.secure_redirect_token" runInTransaction="false" author="">
+        <sql>
+            CREATE INDEX CONCURRENTLY idx_tokens_secure_redirect_token ON tokens (secure_redirect_token);
+        </sql>
+    </changeSet>
+
+    <changeSet id="add trigram index to charges.reference" runInTransaction="false" author="">
+        <sql>
+            CREATE INDEX CONCURRENTLY idx_charges_references_gin_idx  ON charges USING GIN (reference gin_trgm_ops);
+        </sql>
+    </changeSet>
+
+
+    <changeSet id="add trigram index to charges.email" runInTransaction="false" author="">
+        <sql>
+            CREATE INDEX CONCURRENTLY idx_charges_email_gin_idx ON charges USING GIN (email gin_trgm_ops);
+        </sql>
+    </changeSet>
+
+    <changeSet id="add trigram index to refunds.reference" runInTransaction="false" author="">
+        <sql>
+            CREATE INDEX CONCURRENTLY idx_refunds_reference_gin_idx  ON refunds USING GIN (reference gin_trgm_ops);
+        </sql>
+    </changeSet>
+
+    <changeSet id="add index to status column on refunds table" runInTransaction="false" author="">
+        <sql>
+            CREATE INDEX CONCURRENTLY idx_refunds_status ON refunds (status);
+        </sql>
+    </changeSet>
+
+    <changeSet id="Drop trigram index to refunds.reference" runInTransaction="false" author="">
+        <sql>
+            DROP INDEX idx_refunds_reference_gin_idx;
+        </sql>
+    </changeSet>
+
+    <changeSet id="add trigram index to lowered charges.email " runInTransaction="false" author="">
+        <sql>
+            CREATE INDEX CONCURRENTLY idx_lower_charges_email_gin_idx ON charges USING GIN (lower(email) gin_trgm_ops);
+        </sql>
+    </changeSet>
+
+    <changeSet id="add trigram index to lowered charges.reference" runInTransaction="false" author="">
+        <sql>
+            CREATE INDEX CONCURRENTLY idx_lower_charges_reference_gin_idx  ON charges USING GIN (lower(reference) gin_trgm_ops);
+        </sql>
+    </changeSet>
+
+    <changeSet id="Drop trigram index to charges.reference" runInTransaction="false" author="">
+        <sql>
+            DROP INDEX idx_charges_references_gin_idx;
+        </sql>
+    </changeSet>
+
+    <changeSet id="Drop trigram index to charges.email" runInTransaction="false" author="">
+        <sql>
+            DROP INDEX idx_charges_email_gin_idx;
+        </sql>
+    </changeSet>
+
+    <changeSet id="Add language column to charges table" author="">
+        <addColumn tableName="charges">
+            <column name="language" type="varchar(2)"/>
+        </addColumn>
+    </changeSet>
+
+    <changeSet id="Add default value to language column" author="">
+        <addDefaultValue tableName="charges"
+                         columnName="language"
+                         defaultValue="en"
+        />
+    </changeSet>
+
+    <changeSet id="Update language column to default value" author="">
+        <update tableName="charges">
+            <column name="language" value="en"/>
+            <where>language IS NULL</where>
+        </update>
+    </changeSet>
+
 </databaseChangeLog>

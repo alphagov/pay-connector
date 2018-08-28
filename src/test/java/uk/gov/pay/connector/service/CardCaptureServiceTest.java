@@ -95,7 +95,8 @@ public class CardCaptureServiceTest extends CardServiceTest {
         when(mockEnvironment.metrics()).thenReturn(mockMetricRegistry);
         when(mockMetricRegistry.counter(anyString())).thenReturn(mockCounter);
 
-        cardCaptureService = new CardCaptureService(mockedChargeDao, mockedChargeEventDao, mockedProviders, mockUserNotificationService, mockEnvironment, mockPaymentRequestDao, mockChargeStatusUpdater);
+        cardCaptureService = new CardCaptureService(mockedChargeDao, mockedChargeEventDao, mockedProviders, mockUserNotificationService,
+                mockEnvironment);
 
         Logger root = (Logger) LoggerFactory.getLogger(CardCaptureService.class);
         root.setLevel(Level.INFO);
@@ -152,10 +153,6 @@ public class CardCaptureServiceTest extends CardServiceTest {
 
         verify(mockedChargeEventDao).persistChargeEventOf(chargeEntityCaptor.capture(), eq(Optional.empty()));
 
-        InOrder inOrderVerifier = inOrder(mockChargeStatusUpdater);
-        inOrderVerifier.verify(mockChargeStatusUpdater).updateChargeTransactionStatus(charge.getExternalId(), CAPTURE_READY);
-        inOrderVerifier.verify(mockChargeStatusUpdater).updateChargeTransactionStatus(charge.getExternalId(), CAPTURE_SUBMITTED);
-
         assertThat(chargeEntityCaptor.getValue().getStatus(), is(CAPTURE_SUBMITTED.getValue()));
 
         ArgumentCaptor<CaptureGatewayRequest> request = ArgumentCaptor.forClass(CaptureGatewayRequest.class);
@@ -190,11 +187,6 @@ public class CardCaptureServiceTest extends CardServiceTest {
         // sandbox progresses from CAPTURE_SUBMITTED to CAPTURED, so two calls
         verify(mockedChargeEventDao, times(2)).persistChargeEventOf(chargeEntityCaptor.capture(), bookingDateCaptor.capture());
         assertThat(chargeEntityCaptor.getValue().getStatus(), is(CAPTURED.getValue()));
-
-        InOrder inOrderVerifier = inOrder(mockChargeStatusUpdater);
-        inOrderVerifier.verify(mockChargeStatusUpdater).updateChargeTransactionStatus(charge.getExternalId(), CAPTURE_READY);
-        inOrderVerifier.verify(mockChargeStatusUpdater).updateChargeTransactionStatus(charge.getExternalId(), CAPTURE_SUBMITTED);
-        inOrderVerifier.verify(mockChargeStatusUpdater).updateChargeTransactionStatus(eq(charge.getExternalId()), eq(CAPTURED), any(ZonedDateTime.class));
 
         // only the CAPTURED has a bookingDate
         assertFalse(bookingDateCaptor.getAllValues().get(0).isPresent());
@@ -297,9 +289,6 @@ public class CardCaptureServiceTest extends CardServiceTest {
         inOrder.verify(chargeSpy).setStatus(CAPTURE_APPROVED_RETRY);
 
         verify(mockedChargeEventDao).persistChargeEventOf(chargeSpy, Optional.empty());
-        InOrder inOrderStatusUpdater = Mockito.inOrder(mockChargeStatusUpdater);
-        inOrderStatusUpdater.verify(mockChargeStatusUpdater).updateChargeTransactionStatus(charge.getExternalId(), CAPTURE_READY);
-        inOrderStatusUpdater.verify(mockChargeStatusUpdater).updateChargeTransactionStatus(charge.getExternalId(), CAPTURE_APPROVED_RETRY);
 
         // verify an email notification is not sent when an unsuccessful capture
         verifyZeroInteractions(mockUserNotificationService);

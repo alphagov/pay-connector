@@ -5,12 +5,13 @@
     <version>0.1-SNAPSHOT</version>
     <artifactId>pay-connector</artifactId>
     <properties>
-        <dropwizard.version>1.2.8</dropwizard.version>
+        <dropwizard.version>1.3.5</dropwizard.version>
         <wiremock.version>1.57</wiremock.version>
         <jpa.version>2.6.4</jpa.version>
         <guice.version>4.1.0</guice.version>
         <docker-client.version>8.9.2</docker-client.version>
-        <jackson.version>2.9.4</jackson.version>
+        <jackson.version>2.9.6</jackson.version>
+        <pay-java-commons.version>1.0.0-7</pay-java-commons.version>
     </properties>
     <repositories>
         <repository>
@@ -30,37 +31,16 @@
             <url>https://dl.bintray.com/govuk-pay/pay-java-commons</url>
         </repository>
     </repositories>
-    <dependencyManagement>
-        <dependencies>
-            <dependency>
-                <groupId>com.amazonaws</groupId>
-                <artifactId>aws-xray-recorder-sdk-bom</artifactId>
-                <version>1.3.1</version>
-                <type>pom</type>
-                <scope>import</scope>
-            </dependency>
-        </dependencies>
-    </dependencyManagement>
     <dependencies>
         <dependency>
-            <groupId>com.amazonaws</groupId>
-            <artifactId>aws-xray-recorder-sdk-core</artifactId>
+            <groupId>uk.gov.pay</groupId>
+            <artifactId>utils</artifactId>
+            <version>${pay-java-commons.version}</version>
         </dependency>
         <dependency>
-            <groupId>com.amazonaws</groupId>
-            <artifactId>aws-xray-recorder-sdk-apache-http</artifactId>
-        </dependency>
-        <dependency>
-            <groupId>com.amazonaws</groupId>
-            <artifactId>aws-xray-recorder-sdk-aws-sdk</artifactId>
-        </dependency>
-        <dependency>
-            <groupId>com.amazonaws</groupId>
-            <artifactId>aws-xray-recorder-sdk-aws-sdk-instrumentor</artifactId>
-        </dependency>
-        <dependency>
-            <groupId>com.amazonaws</groupId>
-            <artifactId>aws-xray-recorder-sdk-sql-postgres</artifactId>
+            <groupId>uk.gov.pay</groupId>
+            <artifactId>model</artifactId>
+            <version>${pay-java-commons.version}</version>
         </dependency>
         <dependency>
             <groupId>io.dropwizard</groupId>
@@ -386,7 +366,7 @@
         <dependency>
             <groupId>uk.gov.pay</groupId>
             <artifactId>testing</artifactId>
-            <version>1.0.0-4</version>
+            <version>${pay-java-commons.version}</version>
             <scope>test</scope>
         </dependency>
         <dependency>

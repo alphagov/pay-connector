@@ -24,6 +24,7 @@ import io.dropwizard.migrations.MigrationsBundle;
 import io.dropwizard.setup.Bootstrap;
 import io.dropwizard.setup.Environment;
 import org.glassfish.jersey.server.filter.RolesAllowedDynamicFeature;
+import uk.gov.pay.commons.utils.xray.Xray;
 import uk.gov.pay.connector.auth.BasicAuthUser;
 import uk.gov.pay.connector.auth.SmartpayAccountSpecificAuthenticator;
 import uk.gov.pay.connector.command.RenderStateTransitionGraphCommand;
@@ -123,6 +124,8 @@ public class ConnectorApp extends Application<ConnectorConfiguration> {
         environment.healthChecks().register("cardExecutorService", injector.getInstance(CardExecutorServiceHealthCheck.class));
 
         setGlobalProxies(configuration);
+
+        Xray.init(environment, "pay-connector","/v1/*");
     }
 
     private Injector createInjector(Environment environment, Module module) {

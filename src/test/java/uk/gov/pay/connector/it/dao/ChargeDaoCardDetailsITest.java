@@ -2,6 +2,7 @@ package uk.gov.pay.connector.it.dao;
 
 import org.junit.Before;
 import org.junit.Test;
+import uk.gov.pay.commons.model.SupportedLanguage;
 import uk.gov.pay.connector.dao.ChargeDao;
 import uk.gov.pay.connector.dao.GatewayAccountDao;
 import uk.gov.pay.connector.model.ServicePaymentReference;
@@ -87,8 +88,8 @@ public class ChargeDaoCardDetailsITest extends DaoITestBase {
         gatewayAccountDao.persist(testAccount);
 
         Address billingAddress = aValidAddress().build();
-        ChargeEntity chargeEntity = new ChargeEntity(2323L, "returnUrl", "description", 
-                ServicePaymentReference.of("ref"), testAccount, "email@email.com");
+        ChargeEntity chargeEntity = new ChargeEntity(2323L, "returnUrl", "description",
+                ServicePaymentReference.of("ref"), testAccount, "email@email.test", SupportedLanguage.ENGLISH);
         CardDetailsEntity cardDetailsEntity = new CardDetailsEntity();
         cardDetailsEntity.setCardBrand("VISA");
         cardDetailsEntity.setBillingAddress(new AddressEntity(billingAddress));

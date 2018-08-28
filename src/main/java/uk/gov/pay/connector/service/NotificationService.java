@@ -36,18 +36,14 @@ public class NotificationService {
     private final RefundDao refundDao;
     private final PaymentProviders paymentProviders;
     private final DnsUtils dnsUtils;
-    private final ChargeStatusUpdater chargeStatusUpdater;
-    private final RefundStatusUpdater refundStatusUpdater;
 
     @Inject
-    public NotificationService(ChargeDao chargeDao, ChargeEventDao chargeEventDao, RefundDao refundDao, PaymentProviders paymentProviders, DnsUtils dnsUtils, ChargeStatusUpdater chargeStatusUpdater, RefundStatusUpdater refundStatusUpdater) {
+    public NotificationService(ChargeDao chargeDao, ChargeEventDao chargeEventDao, RefundDao refundDao, PaymentProviders paymentProviders, DnsUtils dnsUtils) {
         this.chargeDao = chargeDao;
         this.chargeEventDao = chargeEventDao;
         this.refundDao = refundDao;
         this.paymentProviders = paymentProviders;
         this.dnsUtils = dnsUtils;
-        this.chargeStatusUpdater = chargeStatusUpdater;
-        this.refundStatusUpdater = refundStatusUpdater;
     }
 
     @Transactional
@@ -218,7 +214,6 @@ public class NotificationService {
                     gatewayAccount.getType());
 
             chargeEventDao.persistChargeEventOf(chargeEntity, Optional.ofNullable(notification.getGatewayEventDate()));
-            chargeStatusUpdater.updateChargeTransactionStatus(chargeEntity.getExternalId(), newStatus, notification.getGatewayEventDate());
         }
 
         private <T> void updateRefundStatus(EvaluatedRefundStatusNotification<T> notification) {
@@ -240,9 +235,7 @@ public class NotificationService {
             RefundStatus newStatus = notification.getRefundStatus();
 
             refundEntity.setStatus(newStatus);
-            refundStatusUpdater.updateRefundTransactionStatus(
-                    paymentProvider.getPaymentGatewayName(), notification.getReference(), newStatus
-            );
+            
             GatewayAccountEntity gatewayAccount = refundEntity.getChargeEntity().getGatewayAccount();
             logger.info("Notification received for refund. Updating refund - charge_external_id={}, refund_reference={}, transaction_id={}, status={}, "
                             + "status_to={}, account_id={}, provider={}, provider_type={}",

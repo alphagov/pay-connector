@@ -1,208 +1,257 @@
 package uk.gov.pay.connector.dao;
 
-import com.google.common.collect.Streams;
+import com.google.inject.Inject;
 import com.google.inject.Provider;
 import com.google.inject.persist.Transactional;
+import org.jooq.Condition;
+import org.jooq.SelectConditionStep;
+import org.jooq.SelectJoinStep;
+import org.jooq.SelectOrderByStep;
+import org.jooq.SelectSeekStep1;
+import org.jooq.impl.DSL;
 import uk.gov.pay.connector.model.TransactionType;
 import uk.gov.pay.connector.model.domain.ChargeStatus;
+import uk.gov.pay.connector.model.domain.RefundStatus;
 import uk.gov.pay.connector.model.domain.Transaction;
 import uk.gov.pay.connector.model.domain.UTCDateTimeConverter;
-import uk.gov.pay.connector.model.domain.transaction.TransactionEntity;
-import uk.gov.pay.connector.model.domain.transaction.TransactionOperation;
 
-import javax.inject.Inject;
 import javax.persistence.EntityManager;
 import javax.persistence.Query;
-import java.sql.Timestamp;
 import java.util.List;
 import java.util.Set;
 import java.util.stream.Collectors;
-import java.util.stream.Stream;
 
-import static java.util.stream.Collectors.toList;
-import static org.apache.commons.lang3.StringUtils.isNotEmpty;
+import static org.apache.commons.lang3.StringUtils.isNotBlank;
+import static org.jooq.impl.DSL.count;
+import static org.jooq.impl.DSL.field;
+import static org.jooq.impl.DSL.inline;
+import static org.jooq.impl.DSL.selectDistinct;
+import static org.jooq.impl.DSL.table;
 
 @Transactional
-public class TransactionDao extends JpaDao<TransactionEntity> {
+public class TransactionDao {
 
+    private enum QueryType {SELECT, COUNT}
+
+    private final Provider<EntityManager> entityManager;
     private final UTCDateTimeConverter utcDateTimeConverter;
 
     @Inject
-    protected TransactionDao(Provider<EntityManager> entityManager, UTCDateTimeConverter utcDateTimeConverter) {
-        super(entityManager);
+    public TransactionDao(Provider<EntityManager> entityManager, UTCDateTimeConverter utcDateTimeConverter) {
+        this.entityManager = entityManager;
         this.utcDateTimeConverter = utcDateTimeConverter;
     }
 
-    public List<Transaction> search(ChargeSearchParams params) {
-        String queryStart =
-                "SELECT " +
-                        "t.operation AS transaction_type, " +
-                        "t.id AS charge_id, " +
-                        "p.external_id AS external_id, " +
-                        "p.reference AS reference, " +
-                        "p.description AS description, " +
-                        "t.status AS status, " +
-                        "t2.email AS email, " +
-                        "p.gateway_account_id AS gateway_account_id," +
-                        "t2.gateway_transaction_id AS gateway_transaction_id, " +
-                        "t.created_date AS date_created, " +
-                        "c.card_brand AS card_brand, " +
-                        "'CHANGE_ME' AS card_brand_label, " +
-                        "c.cardholder_name AS cardholder_name, " +
-                        "c.expiry_date AS expiry_date, " +
-                        "c.last_digits_card_number AS last_digits_card_number, " +
-                        "c.address_city AS address_city, " +
-                        "c.address_country AS address_country, " +
-                        "c.address_county AS address_county, " +
-                        "c.address_line1 AS address_line1, " +
-                        "c.address_line2 AS address_line2, " +
-                        "c.address_postcode AS address_postcode, " +
-                        "p.amount AS amount " +
-                        "FROM transactions t JOIN transactions t2 ON t.payment_request_id = t2.payment_request_id AND t2.operation = 'CHARGE' " +
-                        "JOIN payment_requests p ON t.payment_request_id = p.id " +
-                        "JOIN gateway_accounts g ON t.gateway_account_id = g.id " +
-                        "LEFT JOIN cards c ON t2.id = c.transaction_id ";
+    public List<Transaction> findAllBy(Long gatewayAccountId, ChargeSearchParams params) {
+        SelectSeekStep1 query = DSL
+                .select(field("transaction_type"),
+                        field("charge_id"),
+                        field("external_id"),
+                        field("reference"),
+                        field("description"),
+                        field("status"),
+                        field("email"),
+                        field("gateway_account_id"),
+                        field("gateway_transaction_id"),
+                        field("date_created"),
+                        field("card_brand"),
+                        field("card_brand_label"),
+                        field("cardholder_name"),
+                        field("expiry_date"),
+                        field("last_digits_card_number"),
+                        field("user_external_id"),
+                        field("address_city"),
+                        field("address_country"),
+                        field("address_county"),
+                        field("address_line1"),
+                        field("address_line2"),
+                        field("address_postcode"),
+                        field("amount"),
+                        field("language"))
+                .from(buildQueryFor(gatewayAccountId, QueryType.SELECT, params))
+                .orderBy(field("date_created").desc());
 
-        List<String> statuses = getStatuses(params);
-        StringBuilder queryBuilder = buildQueryString(queryStart, params, statuses);
+        if (params.getPage() != null && params.getDisplaySize() != null) {
+            int offset = Long.valueOf((params.getPage() - 1) * params.getDisplaySize()).intValue();
+            int limit = params.getDisplaySize().intValue();
 
-        String query = queryBuilder.append("ORDER BY t.created_date DESC LIMIT ?limit OFFSET ?offset").toString();
+            query.offset(offset).limit(limit);
+        }
 
-        Query typedQuery = entityManager.get().createNativeQuery(query, "TransactionMapping");
-        typedQuery.setParameter("gatewayAccountId", params.getGatewayAccountId());
-        typedQuery = setParams(typedQuery, params, statuses);
+        // Extract the SQL statement from the jOOQ query:
+        String sql = query.getSQL();
+        Query result = entityManager.get().createNativeQuery(sql, "TransactionMapping");
 
-        setPagination(params, typedQuery);
+        // Extract the bind values from the jOOQ query:
+        List<Object> values = query.getBindValues();
+        for (int i = 0; i < values.size(); i++) {
+            result.setParameter(i + 1, values.get(i));
+        }
 
-        return (List<Transaction>) typedQuery.getResultList();
+        return result.getResultList();
     }
 
-    private void setPagination(ChargeSearchParams params, Query typedQuery) {
-        final long displaySize = params.getDisplaySize().intValue();
-        long offset = (params.getPage() - 1) * displaySize;
-        typedQuery.setParameter("offset", offset);
-        typedQuery.setParameter("limit", displaySize);
+    public Long getTotalFor(Long gatewayAccountId, ChargeSearchParams params) {
+        SelectJoinStep query = DSL
+                .select(count())
+                .from(buildQueryFor(gatewayAccountId, QueryType.COUNT, params));
+
+        // Extract the SQL statement from the jOOQ query:
+        Query result = entityManager.get().createNativeQuery(query.getSQL());
+
+        // Extract the bind values from the jOOQ query:
+        List<Object> values = query.getBindValues();
+        for (int i = 0; i < values.size(); i++) {
+            result.setParameter(i + 1, values.get(i));
+        }
+
+        return (long) result.getSingleResult();
     }
 
-    public long getTotal(ChargeSearchParams params) {
-        List<String> statuses = getStatuses(params);
-        StringBuilder queryPrefix = new StringBuilder("SELECT count(t.*) FROM transactions t ");
+    private SelectOrderByStep buildQueryFor(Long gatewayAccountId, QueryType queryType, ChargeSearchParams params) {
+        Condition queryFilters = field("c.gateway_account_id").eq(gatewayAccountId);
 
-        if (params.getReference() != null && isNotEmpty(params.getReference().toString())) {
-            queryPrefix.append("JOIN payment_requests p ON t.payment_request_id = p.id ");
+        if (isNotBlank(params.getEmail())) {
+            queryFilters = queryFilters.and(
+                    field("c.email").lower().like(buildLikeClauseContaining(params.getEmail().toLowerCase())));
         }
-        if (isNotEmpty(params.getEmail()) || !params.getCardBrands().isEmpty()) {
-            queryPrefix.append("JOIN transactions t2 ON t.payment_request_id = t2.payment_request_id AND t2.operation = 'CHARGE' ");
-        }
+
         if (!params.getCardBrands().isEmpty()) {
-            queryPrefix.append("LEFT JOIN cards c ON t2.id = c.transaction_id ");
-        }
-        StringBuilder query = buildQueryString(queryPrefix.toString(), params, statuses);
-
-        Query typedQuery = entityManager.get().createNativeQuery(query.toString());
-        typedQuery = setParams(typedQuery, params, statuses);
-
-        return (Long) typedQuery.getSingleResult();
-    }
-
-    private List<String> getStatuses(ChargeSearchParams params) {
-        Set<ChargeStatus> internalStates = params.getInternalStates();
-
-        Set<ChargeStatus> internalChargeStatuses = params.getInternalChargeStatuses();
-        List<String> statuses = Stream.concat(internalStates.stream(), internalChargeStatuses.stream())
-                .map(Enum::name)
-                .collect(toList());
-        statuses.addAll(params.getInternalRefundStatuses().stream()
-                .map(Enum::name)
-                .collect(toList()));
-        return statuses;
-    }
-
-    private Query setParams(Query typedQuery, ChargeSearchParams params, List<String> statuses) {
-        typedQuery.setParameter("gatewayAccountId", params.getGatewayAccountId());
-
-        // here add the values for the optional params
-        if (isNotEmpty(params.getEmail())) {
-            String formattedEmail = getEscapedString(params.getEmail());
-            typedQuery.setParameter("email", "%" + formattedEmail + "%");
+            queryFilters = queryFilters.and(
+                    field("c.card_brand").in(params.getCardBrands()));
         }
 
-        if (params.getReference() != null && isNotEmpty(params.getReference().toString())) {
-            typedQuery.setParameter("reference", "%" + getEscapedString(params.getReference().toString()) + "%");
+        if (params.getReference() != null && isNotBlank(params.getReference().toString())) {
+            queryFilters = queryFilters.and(
+                    field("c.reference").lower().like(buildLikeClauseContaining(params.getReference().toString().toLowerCase())));
         }
 
-        if (params.getFromDate() != null) {
-            final Timestamp databaseFormatted = utcDateTimeConverter.convertToDatabaseColumn(params.getFromDate());
-            typedQuery.setParameter("createdDate", databaseFormatted);
-        }
-
-        if (params.getToDate() != null) {
-            final Timestamp databaseFormatted = utcDateTimeConverter.convertToDatabaseColumn(params.getToDate());
-            typedQuery.setParameter("toDate", databaseFormatted);
-        }
+        Condition queryFiltersForCharges = queryFilters;
+        Condition queryFiltersForRefunds = queryFilters;
 
         if (params.getTransactionType() != null) {
-            TransactionOperation operation = params.getTransactionType().equals(TransactionType.PAYMENT) ?
-                    TransactionOperation.CHARGE : TransactionOperation.REFUND;
-            typedQuery.setParameter("operation", operation.name());
-        }
+            if (params.getTransactionType() == TransactionType.PAYMENT) {
+                queryFiltersForRefunds = queryFiltersForRefunds.and(
+                        field("'refund'").eq("charge"));
+            }
+            if (params.getTransactionType() == TransactionType.REFUND) {
+                queryFiltersForCharges = queryFiltersForCharges.and(
+                        field("'charge'").eq("refund"));
 
-        addInParameters(typedQuery, params.getCardBrands(), "cardBrand");
-        addInParameters(typedQuery, statuses, "status");
-
-        return typedQuery;
-    }
-
-    private StringBuilder buildQueryString(String queryString, ChargeSearchParams params, List<String> statuses) {
-        StringBuilder query = new StringBuilder(queryString);
-        query.append("WHERE t.gateway_account_id = ?gatewayAccountId ");
-        // here add the optional params
-        if (isNotEmpty(params.getEmail())) {
-            query.append("AND t2.email ILIKE ?email ");
-        }
-
-        if (params.getReference() != null && isNotEmpty(params.getReference().toString())) {
-            query.append("AND p.reference ILIKE ?reference ");
-        }
-
-        if (params.getFromDate() != null) {
-            query.append("AND t.created_date >= ?createdDate ");
-        }
-
-        if (params.getToDate() != null) {
-            query.append("AND t.created_date < ?toDate ");
-        }
-
-        if (params.getTransactionType() != null) {
-            query.append("AND t.operation = ?operation ");
-        }
-
-        addInToQueryString(query, params.getCardBrands(), "cardBrand", "c.card_brand");
-        addInToQueryString(query, statuses, "status", "t.status");
-        return query;
-    }
-
-    //Had to add as EclipseLink addParameter cannot work out lists.
-    private void addInToQueryString(StringBuilder query, List<?> values, String parameterName, String tableColumnName) {
-        if (!values.isEmpty()) {
-            final String arguments = Streams.mapWithIndex(values.stream(), (status, counter) -> "?" + parameterName + counter)
-                    .collect(Collectors.joining(","));
-            query.append("AND ").append(tableColumnName).append(" IN (").append(arguments).append(") ");
-        }
-    }
-
-    //Had to add as EclipseLink addParameter cannot work out lists.
-    private void addInParameters(Query typedQuery, List<String> values, String parameterName) {
-        if (!values.isEmpty()) {
-            for (int counter = 0; counter < values.size(); counter++) {
-                typedQuery.setParameter(parameterName + counter, values.get(counter));
             }
         }
+        if (params.getFromDate() != null) {
+            queryFiltersForCharges = queryFiltersForCharges.and(
+                    field("c.created_date").greaterOrEqual(utcDateTimeConverter.convertToDatabaseColumn(params.getFromDate())));
+            queryFiltersForRefunds = queryFiltersForRefunds.and(
+                    field("r.created_date").greaterOrEqual(utcDateTimeConverter.convertToDatabaseColumn(params.getFromDate())));
+        }
+        if (params.getToDate() != null) {
+            queryFiltersForCharges = queryFiltersForCharges.and(
+                    field("c.created_date").lessThan(utcDateTimeConverter.convertToDatabaseColumn(params.getToDate())));
+            queryFiltersForRefunds = queryFiltersForRefunds.and(
+                    field("r.created_date").lessThan(utcDateTimeConverter.convertToDatabaseColumn(params.getToDate())));
+        }
+        if (params.getExternalChargeStates() != null && !params.getExternalChargeStates().isEmpty()) {
+            queryFiltersForCharges = queryFiltersForCharges.and(
+                    field("c.status").in(mapChargeStatuses(params.getInternalChargeStatuses())));
+        }
+        if (params.getExternalRefundStates() != null && !params.getExternalRefundStates().isEmpty()) {
+            queryFiltersForRefunds = queryFiltersForRefunds.and(
+                    field("r.status").in(mapRefundStatuses(params.getInternalRefundStatuses())));
+        }
+
+        SelectConditionStep queryForCharges = DSL.select(
+                field("'charge'").as("transaction_type"),
+                field("c.id").as("charge_id"),
+                field("c.external_id"),
+                field("c.reference"),
+                field("c.description"),
+                field("c.status"),
+                field("c.email"),
+                field("c.gateway_account_id"),
+                inline((String) null).as("user_external_id"),
+                field("c.gateway_transaction_id"),
+                field("c.created_date").as("date_created"),
+                field("c.card_brand"),
+                field("t.label").as("card_brand_label"),
+                field("c.cardholder_name"),
+                field("c.expiry_date"),
+                field("c.last_digits_card_number"),
+                field("c.address_city"),
+                field("c.address_country"),
+                field("c.address_county"),
+                field("c.address_line1"),
+                field("c.address_line2"),
+                field("c.address_postcode"),
+                field("c.amount"),
+                field("c.language"))
+                .from(table("charges").as("c").leftJoin(selectDistinct().on(field("label")).from("card_types").asTable("t")).on("c.card_brand=t.brand"))
+                .where(queryFiltersForCharges);
+
+        SelectConditionStep queryForRefunds = DSL.select(
+                field("'refund'").as("transaction_type"),
+                field("c.id").as("charge_id"),
+                field("c.external_id"),
+                field("c.reference"),
+                field("c.description"),
+                field("r.status"),
+                field("c.email"),
+                field("c.gateway_account_id"),
+                field("r.user_external_id").as("user_external_id"),
+                field("c.gateway_transaction_id"),
+                field("r.created_date").as("date_created"),
+                field("c.card_brand"),
+                field("t.label").as("card_brand_label"),
+                field("c.cardholder_name"),
+                field("c.expiry_date"),
+                field("c.last_digits_card_number"),
+                field("c.address_city"),
+                field("c.address_country"),
+                field("c.address_county"),
+                field("c.address_line1"),
+                field("c.address_line2"),
+                field("c.address_postcode"),
+                field("r.amount"),
+                field("c.language"))
+                .from(table("charges").as("c").leftJoin(selectDistinct().on(field("label")).from("card_types").asTable("t")).on("c.card_brand=t.brand"))
+                .join(table("refunds").as("r"))
+                .on(field("c.id").eq(field("r.charge_id")))
+                .where(queryFiltersForRefunds);
+
+        if (queryType == QueryType.SELECT) {
+            queryForCharges.orderBy(field("c.created_date").desc());
+            queryForRefunds.orderBy(field("r.created_date").desc());
+
+            if (params.getPage() != null && params.getDisplaySize() != null) {
+                int offset = Long.valueOf((params.getPage() - 1) * params.getDisplaySize()).intValue();
+                int limit = params.getDisplaySize().intValue();
+
+                queryForCharges.limit(offset + limit);
+                queryForRefunds.limit(offset + limit);
+            }
+        }
+
+        return queryForCharges.unionAll(queryForRefunds);
     }
 
-    private String getEscapedString(String inputString) {
-        return inputString.toLowerCase()
+    private String buildLikeClauseContaining(String textToFind) {
+        String escapedLikeClause = textToFind
+                .replaceAll("\\\\", "\\\\\\\\")
                 .replaceAll("_", "\\\\_")
                 .replaceAll("%", "\\\\%");
+        return '%' + escapedLikeClause + '%';
+    }
+
+    private Set<String> mapChargeStatuses(Set<ChargeStatus> status) {
+        return status.stream()
+                .map(s -> s.getValue())
+                .collect(Collectors.toSet());
+    }
+
+    private Set<String> mapRefundStatuses(Set<RefundStatus> status) {
+        return status.stream()
+                .map(s -> s.getValue())
+                .collect(Collectors.toSet());
     }
 }

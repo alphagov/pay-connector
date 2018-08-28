@@ -1,6 +1,7 @@
 package uk.gov.pay.connector.model;
 
 import com.fasterxml.jackson.annotation.JsonProperty;
+import uk.gov.pay.commons.model.SupportedLanguage;
 import uk.gov.pay.connector.model.api.ExternalTransactionState;
 import uk.gov.pay.connector.model.builder.AbstractChargeResponseBuilder;
 import uk.gov.pay.connector.model.domain.PersistedCard;
@@ -26,8 +27,9 @@ public class TransactionResponse extends ChargeResponse {
 
         @Override
         public TransactionResponse build() {
-            return new TransactionResponse(transactionType, chargeId, amount, state, cardBrand, gatewayTransactionId, returnUrl, email,
-                    description, reference, providerName, createdDate, links, refundSummary, settlementSummary, cardDetails, auth3dsData);
+            return new TransactionResponse(transactionType, chargeId, amount, state, cardBrand, gatewayTransactionId,
+                    returnUrl, email, description, reference, providerName, createdDate, links, refundSummary,
+                    settlementSummary, cardDetails, auth3dsData, language);
         }
 
     }
@@ -41,11 +43,12 @@ public class TransactionResponse extends ChargeResponse {
 
     protected TransactionResponse(String transactionType, String chargeId, Long amount, ExternalTransactionState state,
                                   String cardBrand, String gatewayTransactionId, String returnUrl, String email,
-                                  String description, ServicePaymentReference reference, String providerName, String createdDate,
-                                  List<Map<String, Object>> dataLinks, RefundSummary refundSummary,
-                                  SettlementSummary settlementSummary, PersistedCard cardDetails, Auth3dsData auth3dsData) {
+                                  String description, ServicePaymentReference reference, String providerName,
+                                  String createdDate, List<Map<String, Object>> dataLinks, RefundSummary refundSummary,
+                                  SettlementSummary settlementSummary, PersistedCard cardDetails,
+                                  Auth3dsData auth3dsData, SupportedLanguage language) {
         super(chargeId, amount, state, cardBrand, gatewayTransactionId, returnUrl, email, description, reference,
-                providerName, createdDate, dataLinks, refundSummary, settlementSummary, cardDetails, auth3dsData);
+                providerName, createdDate, dataLinks, refundSummary, settlementSummary, cardDetails, auth3dsData, language);
         this.transactionType = transactionType;
     }
 

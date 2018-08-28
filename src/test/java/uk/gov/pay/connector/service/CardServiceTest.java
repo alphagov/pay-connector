@@ -4,7 +4,6 @@ import com.codahale.metrics.MetricRegistry;
 import uk.gov.pay.connector.dao.CardTypeDao;
 import uk.gov.pay.connector.dao.ChargeDao;
 import uk.gov.pay.connector.dao.ChargeEventDao;
-import uk.gov.pay.connector.dao.PaymentRequestDao;
 import uk.gov.pay.connector.model.domain.CardDetailsEntity;
 import uk.gov.pay.connector.model.domain.ChargeEntity;
 import uk.gov.pay.connector.model.domain.ChargeEntityFixture;
@@ -21,8 +20,6 @@ public abstract class CardServiceTest {
     protected ChargeDao mockedChargeDao = mock(ChargeDao.class);
     protected ChargeEventDao mockedChargeEventDao = mock(ChargeEventDao.class);
     protected CardTypeDao mockedCardTypeDao = mock(CardTypeDao.class);
-    protected PaymentRequestDao mockPaymentRequestDao = mock(PaymentRequestDao.class);
-    protected ChargeStatusUpdater mockChargeStatusUpdater = mock(ChargeStatusUpdater.class);
 
     protected ChargeEntity createNewChargeWith(Long chargeId, ChargeStatus status) {
         ChargeEntity entity = ChargeEntityFixture
