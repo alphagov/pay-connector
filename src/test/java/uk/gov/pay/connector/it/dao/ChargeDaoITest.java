@@ -152,18 +152,24 @@ public class ChargeDaoITest extends DaoITestBase {
 
         // then
         assertThat(charges.size(), is(1));
-        assertCharge("visa", testCharge, charges.get(0));
+        ChargeEntity charge = charges.get(0);
+        assertCharge("visa", testCharge, charge);
+        assertThat(charge.getCardDetails().getCardHolderName(), is(testCharge.cardDetails.getCardHolderName()));
+        assertThat(charge.getCardDetails().getLastDigitsCardNumber(), is(testCharge.cardDetails.getLastDigitsCardNumber()));
     }
 
     @Test
     public void searchChargesByPartialCardHolderNameMatch() {
         // given
+        String cardHolderName = "Mr. McPayment";
         Long chargeId = 12L;
         TestCharge testCharge = DatabaseFixtures
                 .withDatabaseTestHelper(databaseTestHelper)
                 .aTestCharge()
                 .withTestAccount(defaultTestAccount)
-                .withCardDetails(defaultTestCardDetails.withChargeId(chargeId))
+                .withCardDetails(defaultTestCardDetails
+                        .withChargeId(chargeId)
+                        .withCardHolderName(cardHolderName))
                 .withChargeId(chargeId)
                 .insert();
         ChargeSearchParams params = new ChargeSearchParams()
@@ -174,18 +180,26 @@ public class ChargeDaoITest extends DaoITestBase {
 
         // then
         assertThat(charges.size(), is(1));
-        assertCharge("visa", testCharge, charges.get(0));
+        ChargeEntity charge = charges.get(0);
+        assertCharge("visa", testCharge, charge);
+        assertThat(charge.getCardDetails().getCardHolderName(), is(cardHolderName));
+        assertThat(charge.getCardDetails().getLastDigitsCardNumber(), is(testCharge.cardDetails.getLastDigitsCardNumber()));
     }
 
     @Test
     public void searchChargesByFullLastFourDigits() {
         // given
+        String cardHolderName = "Mr. McPayment";
+        String lastDigits = "4321";
         Long chargeId = 12L;
         TestCharge testCharge = DatabaseFixtures
                 .withDatabaseTestHelper(databaseTestHelper)
                 .aTestCharge()
                 .withTestAccount(defaultTestAccount)
-                .withCardDetails(defaultTestCardDetails.withChargeId(chargeId))
+                .withCardDetails(defaultTestCardDetails
+                        .withChargeId(chargeId)
+                        .withCardHolderName(cardHolderName)
+                        .withLastDigitsOfCardNumber(lastDigits))
                 .withChargeId(chargeId)
                 .insert();
         ChargeSearchParams params = new ChargeSearchParams()
@@ -196,22 +210,28 @@ public class ChargeDaoITest extends DaoITestBase {
 
         // then
         assertThat(charges.size(), is(1));
-        assertCharge("visa", testCharge, charges.get(0));
+        ChargeEntity charge = charges.get(0);
+        assertCharge("visa", testCharge, charge);
+        assertThat(charge.getCardDetails().getCardHolderName(), is(cardHolderName));
+        assertThat(charge.getCardDetails().getLastDigitsCardNumber(), is(lastDigits));
     }
 
     @Test
     public void shouldNotMatchChargesByPartialLastFourDigits() {
         // given
+        String lastDigits = "4321";
         Long chargeId = 12L;
         DatabaseFixtures
                 .withDatabaseTestHelper(databaseTestHelper)
                 .aTestCharge()
                 .withTestAccount(defaultTestAccount)
-                .withCardDetails(defaultTestCardDetails.withChargeId(chargeId))
+                .withCardDetails(defaultTestCardDetails
+                        .withChargeId(chargeId)
+                .withLastDigitsOfCardNumber(lastDigits))
                 .withChargeId(chargeId)
                 .insert();
         ChargeSearchParams params = new ChargeSearchParams()
-                .withLastDigitsCardNumber(LastDigitsCardNumber.of("123"));
+                .withLastDigitsCardNumber(LastDigitsCardNumber.of("432"));
 
         // when
         List<ChargeEntity> charges = chargeDao.findAllBy(params);

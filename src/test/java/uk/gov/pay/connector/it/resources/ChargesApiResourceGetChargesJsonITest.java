@@ -382,7 +382,8 @@ public class ChargesApiResourceGetChargesJsonITest extends ChargingITestBase {
                 .statusCode(OK.getStatusCode())
                 .contentType(JSON)
                 .body("results.size()", is(3))
-                .body("results[0].card_details.cardholder_name", is("Mr. McPayment"));
+                .body("results[0].card_details.cardholder_name", is("Mr. McPayment"))
+                .body("results[0].card_details.last_digits_card_number", is("1234"));
     }
     
     @Test
