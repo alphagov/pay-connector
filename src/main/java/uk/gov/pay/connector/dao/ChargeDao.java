@@ -140,6 +140,10 @@ public class ChargeDao extends JpaDao<ChargeEntity> {
 
     private List<Predicate> buildParamPredicates(ChargeSearchParams params, CriteriaBuilder cb, Root<ChargeEntity> charge) {
         List<Predicate> predicates = new ArrayList<>();
+        if (params.getCardHolderName() != null && StringUtils.isNotBlank(params.getCardHolderName().toString()))
+            predicates.add(likePredicate(cb, charge.get(CARD_DETAILS).get("cardHolderName"), params.getCardHolderName().toString().toLowerCase()));
+        if (params.getLastDigitsCardNumber() != null && StringUtils.isNotBlank(params.getLastDigitsCardNumber().toString()))
+            predicates.add(cb.equal(charge.get(CARD_DETAILS).get("lastDigitsCardNumber"), params.getLastDigitsCardNumber().toString()));
         if (params.getGatewayAccountId() != null)
             predicates.add(cb.equal(charge.get(GATEWAY_ACCOUNT).get("id"), params.getGatewayAccountId()));
         if (params.getReference() != null && StringUtils.isNotBlank(params.getReference().toString()))

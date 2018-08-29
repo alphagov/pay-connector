@@ -76,7 +76,7 @@ public class ChargesApiResourceGetChargesJsonITest extends ChargingITestBase {
     }
 
     @Test
-    public void shouldGetChargeTransactionsForJSONAcceptHeader() throws Exception {
+    public void shouldGetChargeTransactionsForJSONAcceptHeader() {
         long chargeId = nextInt();
         String externalChargeId = "charge3";
 
@@ -115,7 +115,7 @@ public class ChargesApiResourceGetChargesJsonITest extends ChargingITestBase {
     }
 
     @Test
-    public void shouldGetChargeLegacyTransactions() throws Exception {
+    public void shouldGetChargeLegacyTransactions() {
 
         long chargeId = nextInt();
         String externalChargeId = "charge3";
@@ -153,7 +153,7 @@ public class ChargesApiResourceGetChargesJsonITest extends ChargingITestBase {
     }
 
     @Test
-    public void shouldFilterTransactionsByCardBrand() throws Exception {
+    public void shouldFilterTransactionsByCardBrand() {
         String searchedCardBrand = "visa";
 
         addChargeAndCardDetails(CREATED, ServicePaymentReference.of("ref-1"), now(), searchedCardBrand);
@@ -234,7 +234,7 @@ public class ChargesApiResourceGetChargesJsonITest extends ChargingITestBase {
     }
 
     @Test
-    public void shouldGetTransactionsForPageAndSizeParams_inCreationDateOrder2() throws Exception {
+    public void shouldGetTransactionsForPageAndSizeParams_inCreationDateOrder2() {
         String id_1 = addChargeAndCardDetails(CREATED, ServicePaymentReference.of("ref-1"), now());
         String id_2 = addChargeAndCardDetails(CREATED, ServicePaymentReference.of("ref-2"), now().plusHours(1));
         String id_3 = addChargeAndCardDetails(CREATED, ServicePaymentReference.of("ref-3"), now().plusHours(2));
@@ -350,7 +350,7 @@ public class ChargesApiResourceGetChargesJsonITest extends ChargingITestBase {
     }
 
     @Test
-    public void shouldFilterTransactionsByEmail() throws Exception {
+    public void shouldFilterTransactionsByEmail() {
 
         addChargeAndCardDetails(CREATED, ServicePaymentReference.of("ref-1"), now());
         addChargeAndCardDetails(AUTHORISATION_READY, ServicePaymentReference.of("ref-2"), now());
@@ -367,6 +367,24 @@ public class ChargesApiResourceGetChargesJsonITest extends ChargingITestBase {
                 .body("results[0].email", endsWith("example.com"));
     }
 
+    @Test
+    public void shouldFilterTransactionsByCardHolderName() {
+
+        addChargeAndCardDetails(CREATED, ServicePaymentReference.of("ref-1"), now());
+        addChargeAndCardDetails(AUTHORISATION_READY, ServicePaymentReference.of("ref-2"), now());
+        addChargeAndCardDetails(CAPTURED, ServicePaymentReference.of("ref-3"), now().minusDays(2));
+
+        getChargeApi
+                .withAccountId(accountId)
+                .withQueryParam("cardholder_name", "McPayment")
+                .withHeader(HttpHeaders.ACCEPT, APPLICATION_JSON)
+                .getTransactionsAPI()
+                .statusCode(OK.getStatusCode())
+                .contentType(JSON)
+                .body("results.size()", is(3))
+                .body("results[0].card_details.cardholder_name", is("Mr. McPayment"));
+    }
+    
     @Test
     public void shouldShowTotalCountResultsAndHalLinksForCharges() {
         addChargeAndCardDetails(CREATED, ServicePaymentReference.of("ref-1"), now());
@@ -584,7 +602,7 @@ public class ChargesApiResourceGetChargesJsonITest extends ChargingITestBase {
                 "query param 'display_size' should be a non zero positive integer",
                 "query param 'page' should be a non zero positive integer");
 
-        ValidatableResponse response = getChargeApi
+        getChargeApi
                 .withAccountId(accountId)
                 .withQueryParam("reference", "ref")
                 .withQueryParam("page", "-1")
