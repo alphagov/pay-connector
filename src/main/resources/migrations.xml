@@ -1416,4 +1416,10 @@
         </update>
     </changeSet>
 
+    <changeSet id="add trigram index to lowered charges.cardholder_name" runInTransaction="false" author="">
+        <sql>
+            CREATE INDEX CONCURRENTLY idx_lower_charges_cardholder_name_gin_idx  ON charges USING GIN (lower(cardholder_name) gin_trgm_ops);
+        </sql>
+    </changeSet>
+
 </databaseChangeLog>
