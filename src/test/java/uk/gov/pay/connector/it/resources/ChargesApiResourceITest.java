@@ -236,7 +236,7 @@ public class ChargesApiResourceITest extends ChargingITestBase {
     }
 
     @Test
-    public void makeChargeNoEmailField_shouldReturnOK() throws Exception {
+    public void makeChargeNoEmailField_shouldReturnOK() {
         String expectedReference = "Test reference";
         String expectedDescription = "Test description";
         String postBody = toJson(ImmutableMap.builder()
@@ -366,7 +366,7 @@ public class ChargesApiResourceITest extends ChargingITestBase {
     }
 
     @Test
-    public void shouldGetCardDetails_ifStatusIsBeyondAuthorised() throws Exception {
+    public void shouldGetCardDetails_ifStatusIsBeyondAuthorised() {
         long chargeId = nextInt();
         String externalChargeId = "charge1";
 
@@ -385,7 +385,7 @@ public class ChargesApiResourceITest extends ChargingITestBase {
     }
 
     @Test
-    public void shouldFilterChargeStatusToReturnInProgressIfInternalStatusIsAuthorised() throws Exception {
+    public void shouldFilterChargeStatusToReturnInProgressIfInternalStatusIsAuthorised() {
 
         long chargeId = nextInt();
         String externalChargeId = "charge1";
@@ -404,7 +404,7 @@ public class ChargesApiResourceITest extends ChargingITestBase {
     }
 
     @Test
-    public void shouldReturnCardBrandLabelWhenChargeIsAuthorised() throws Exception {
+    public void shouldReturnCardBrandLabelWhenChargeIsAuthorised() {
 
         long chargeId = nextInt();
         String externalChargeId = "charge1";
@@ -430,7 +430,7 @@ public class ChargesApiResourceITest extends ChargingITestBase {
     }
 
     @Test
-    public void shouldReturnEmptyCardBrandLabelWhenChargeIsAuthorisedAndBrandUnknown() throws Exception {
+    public void shouldReturnEmptyCardBrandLabelWhenChargeIsAuthorisedAndBrandUnknown() {
 
         long chargeId = nextInt();
         String externalChargeId = "charge1";
@@ -451,7 +451,7 @@ public class ChargesApiResourceITest extends ChargingITestBase {
     }
 
     @Test
-    public void shouldGetChargeTransactionsForJSONAcceptHeader() throws Exception {
+    public void shouldGetChargeTransactionsForJSONAcceptHeader() {
 
         long chargeId = nextInt();
         String externalChargeId = "charge3";
@@ -494,7 +494,7 @@ public class ChargesApiResourceITest extends ChargingITestBase {
     }
 
     @Test
-    public void shouldGetChargeLegacyTransactions() throws Exception {
+    public void shouldGetChargeLegacyTransactions() {
 
         long chargeId = nextInt();
         String externalChargeId = "charge3";
@@ -533,7 +533,7 @@ public class ChargesApiResourceITest extends ChargingITestBase {
     }
 
     @Test
-    public void shouldFilterTransactionsBasedOnFromAndToDates() throws Exception {
+    public void shouldFilterTransactionsBasedOnFromAndToDates() {
 
         addChargeAndCardDetails(CREATED, ServicePaymentReference.of("ref-1"), now());
         addChargeAndCardDetails(AUTHORISATION_READY, ServicePaymentReference.of("ref-2"), now());
@@ -582,13 +582,13 @@ public class ChargesApiResourceITest extends ChargingITestBase {
     }
 
     @Test
-    public void shouldFilterTransactionsByEmail() throws Exception {
+    public void shouldFilterTransactionsByEmail() {
 
         addChargeAndCardDetails(CREATED, ServicePaymentReference.of("ref-1"), now());
         addChargeAndCardDetails(AUTHORISATION_READY, ServicePaymentReference.of("ref-2"), now());
         addChargeAndCardDetails(CAPTURED, ServicePaymentReference.of("ref-3"), now().minusDays(2));
 
-        ValidatableResponse response = getChargeApi
+        getChargeApi
                 .withAccountId(accountId)
                 .withQueryParam("email", "@example.com")
                 .withHeader(HttpHeaders.ACCEPT, APPLICATION_JSON)
@@ -599,6 +599,42 @@ public class ChargesApiResourceITest extends ChargingITestBase {
                 .body("results[0].email", endsWith("example.com"));
     }
 
+    @Test
+    public void shouldFilterTransactionsByCardHolderName() {
+        
+        addChargeAndCardDetails(CREATED, ServicePaymentReference.of("ref-1"), now());
+        addChargeAndCardDetails(AUTHORISATION_READY, ServicePaymentReference.of("ref-2"), now());
+        addChargeAndCardDetails(CAPTURED, ServicePaymentReference.of("ref-3"), now().minusDays(2));
+
+        getChargeApi
+                .withAccountId(accountId)
+                .withQueryParam("cardholder_name", "McPayment")
+                .withHeader(HttpHeaders.ACCEPT, APPLICATION_JSON)
+                .getTransactions()
+                .statusCode(OK.getStatusCode())
+                .contentType(JSON)
+                .body("results.size()", is(3))
+                .body("results[0].card_details.cardholder_name", is("Mr. McPayment"));
+    }
+
+    @Test
+    public void shouldFilterTransactionsByLastDigitsCardNumber() {
+        
+        addChargeAndCardDetails(CREATED, ServicePaymentReference.of("ref-1"), now());
+        addChargeAndCardDetails(AUTHORISATION_READY, ServicePaymentReference.of("ref-2"), now());
+        addChargeAndCardDetails(CAPTURED, ServicePaymentReference.of("ref-3"), now().minusDays(2));
+
+        getChargeApi
+                .withAccountId(accountId)
+                .withQueryParam("last_digits_card_number", "1234")
+                .withHeader(HttpHeaders.ACCEPT, APPLICATION_JSON)
+                .getTransactions()
+                .statusCode(OK.getStatusCode())
+                .contentType(JSON)
+                .body("results.size()", is(3))
+                .body("results[0].card_details.last_digits_card_number", is("1234"));
+    }
+    
     @Test
     public void shouldFilterTransactionsByCardBrand() {
         String searchedCardBrand = "visa";
@@ -637,7 +673,7 @@ public class ChargesApiResourceITest extends ChargingITestBase {
     }
 
     @Test
-    public void shouldFilterTransactionsByMultipleCardBrand() throws Exception {
+    public void shouldFilterTransactionsByMultipleCardBrand() {
         String visa = "visa";
         String mastercard = "master-card";
 
@@ -675,7 +711,7 @@ public class ChargesApiResourceITest extends ChargingITestBase {
     }
 
     @Test
-    public void shouldShowValidationsForDateAndPageDisplaySize() throws Exception {
+    public void shouldShowValidationsForDateAndPageDisplaySize() {
         ImmutableList<String> expectedList = ImmutableList.of(
                 "query param 'from_date' not in correct format",
                 "query param 'to_date' not in correct format",
@@ -696,7 +732,7 @@ public class ChargesApiResourceITest extends ChargingITestBase {
     }
 
     @Test
-    public void shouldGetAllTransactionsForDefault_page_1_size_100_inCreationDateOrder() throws Exception {
+    public void shouldGetAllTransactionsForDefault_page_1_size_100_inCreationDateOrder() {
         String id_1 = addChargeAndCardDetails(CREATED, ServicePaymentReference.of("ref-1"), now());
         String id_2 = addChargeAndCardDetails(AUTHORISATION_READY, ServicePaymentReference.of("ref-2"), now().plusHours(1));
         String id_3 = addChargeAndCardDetails(CREATED, ServicePaymentReference.of("ref-3"), now().plusHours(2));
@@ -717,7 +753,7 @@ public class ChargesApiResourceITest extends ChargingITestBase {
     }
 
     @Test
-    public void shouldGetTransactionsForPageAndSizeParams_inCreationDateOrder() throws Exception {
+    public void shouldGetTransactionsForPageAndSizeParams_inCreationDateOrder() {
         String id_1 = addChargeAndCardDetails(CREATED, ServicePaymentReference.of("ref-1"), now());
         String id_2 = addChargeAndCardDetails(CREATED, ServicePaymentReference.of("ref-2"), now().plusHours(1));
         String id_3 = addChargeAndCardDetails(CREATED, ServicePaymentReference.of("ref-3"), now().plusHours(2));
@@ -768,7 +804,7 @@ public class ChargesApiResourceITest extends ChargingITestBase {
     }
 
     @Test
-    public void cannotMakeChargeForMissingGatewayAccount() throws Exception {
+    public void cannotMakeChargeForMissingGatewayAccount() {
         String missingGatewayAccount = "1234123";
         String postBody = toJson(ImmutableMap.of(
                 JSON_AMOUNT_KEY, AMOUNT,
@@ -788,7 +824,7 @@ public class ChargesApiResourceITest extends ChargingITestBase {
     }
 
     @Test
-    public void cannotMakeChargeForInvalidSizeOfFields() throws Exception {
+    public void cannotMakeChargeForInvalidSizeOfFields() {
         String postBody = toJson(ImmutableMap.builder()
                 .put(JSON_AMOUNT_KEY, AMOUNT)
                 .put(JSON_REFERENCE_KEY, randomAlphabetic(256))
@@ -806,7 +842,7 @@ public class ChargesApiResourceITest extends ChargingITestBase {
     }
 
     @Test
-    public void cannotMakeChargeForMissingFields() throws Exception {
+    public void cannotMakeChargeForMissingFields() {
         createChargeApi.postCreateCharge("{}")
                 .statusCode(BAD_REQUEST.getStatusCode())
                 .contentType(JSON)
@@ -816,7 +852,7 @@ public class ChargesApiResourceITest extends ChargingITestBase {
     }
 
     @Test
-    public void cannotGetCharge_WhenInvalidChargeId() throws Exception {
+    public void cannotGetCharge_WhenInvalidChargeId() {
         String chargeId = "23235124";
         getChargeApi
                 .withAccountId(accountId)
@@ -893,7 +929,7 @@ public class ChargesApiResourceITest extends ChargingITestBase {
                 "query param 'display_size' should be a non zero positive integer",
                 "query param 'page' should be a non zero positive integer");
 
-        ValidatableResponse response = getChargeApi
+        getChargeApi
                 .withAccountId(accountId)
                 .withQueryParam("reference", "ref")
                 .withQueryParam("page", "-1")
@@ -972,7 +1008,7 @@ public class ChargesApiResourceITest extends ChargingITestBase {
                 .body("_links.self.href", is(expectedChargesLocationFor(accountId, "?reference=junk-yard&page=1&display_size=500")));
 
         List<Map<String, Object>> results = response.extract().body().jsonPath().getList("results");
-        List<String> references = collect(results, "reference");
+        collect(results, "reference");
         assertTrue(results.isEmpty());
     }
 

@@ -376,6 +376,10 @@ public class DatabaseFixtures {
         TestAccount testAccount;
         TestCardDetails cardDetails;
 
+        public TestCardDetails getCardDetails() {
+            return cardDetails;
+        }
+
         public TestCharge withTestAccount(TestAccount account) {
             this.testAccount = account;
             return this;

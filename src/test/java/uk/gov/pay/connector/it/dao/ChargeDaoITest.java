@@ -8,6 +8,9 @@ import org.junit.Test;
 import org.junit.rules.ExpectedException;
 import uk.gov.pay.connector.dao.ChargeDao;
 import uk.gov.pay.connector.dao.ChargeSearchParams;
+import uk.gov.pay.connector.it.dao.DatabaseFixtures.TestCharge;
+import uk.gov.pay.connector.model.CardHolderName;
+import uk.gov.pay.connector.model.LastDigitsCardNumber;
 import uk.gov.pay.connector.model.ServicePaymentReference;
 import uk.gov.pay.connector.model.domain.ChargeEntity;
 import uk.gov.pay.connector.model.domain.ChargeStatus;
@@ -69,14 +72,14 @@ public class ChargeDaoITest extends DaoITestBase {
     private DatabaseFixtures.TestCardDetails defaultTestCardDetails;
 
     @Before
-    public void setUp() throws Exception {
+    public void setUp() {
         chargeDao = env.getInstance(ChargeDao.class);
         defaultTestCardDetails = new DatabaseFixtures(databaseTestHelper).validTestCardDetails();
         insertTestAccount();
     }
 
     @Test
-    public void searchChargesByGatewayAccountIdOnly() throws Exception {
+    public void searchChargesByGatewayAccountIdOnly() {
         // given
         insertTestCharge();
         ChargeSearchParams params = new ChargeSearchParams()
@@ -99,7 +102,7 @@ public class ChargeDaoITest extends DaoITestBase {
     }
 
     @Test
-    public void searchChargesByFullEmailMatch() throws Exception {
+    public void searchChargesByFullEmailMatch() {
         // given
         insertTestCharge();
         ChargeSearchParams params = new ChargeSearchParams()
@@ -115,7 +118,7 @@ public class ChargeDaoITest extends DaoITestBase {
     }
 
     @Test
-    public void searchChargesByPartialEmailMatch() throws Exception {
+    public void searchChargesByPartialEmailMatch() {
         // given
         insertTestCharge();
         ChargeSearchParams params = new ChargeSearchParams()
@@ -131,7 +134,114 @@ public class ChargeDaoITest extends DaoITestBase {
     }
 
     @Test
-    public void searchChargesByCardBrandOnly() throws Exception {
+    public void searchChargesByFullCardHolderNameMatch() {
+        // given
+        Long chargeId = 12L;
+        TestCharge testCharge = DatabaseFixtures
+                .withDatabaseTestHelper(databaseTestHelper)
+                .aTestCharge()
+                .withTestAccount(defaultTestAccount)
+                .withCardDetails(defaultTestCardDetails.withChargeId(chargeId))
+                .withChargeId(chargeId)
+                .insert();
+        ChargeSearchParams params = new ChargeSearchParams()
+                .withCardHolderNameLike(CardHolderName.of(testCharge.cardDetails.getCardHolderName()));
+
+        // when
+        List<ChargeEntity> charges = chargeDao.findAllBy(params);
+
+        // then
+        assertThat(charges.size(), is(1));
+        ChargeEntity charge = charges.get(0);
+        assertCharge("visa", testCharge, charge);
+        assertThat(charge.getCardDetails().getCardHolderName(), is(testCharge.cardDetails.getCardHolderName()));
+        assertThat(charge.getCardDetails().getLastDigitsCardNumber(), is(testCharge.cardDetails.getLastDigitsCardNumber()));
+    }
+
+    @Test
+    public void searchChargesByPartialCardHolderNameMatch() {
+        // given
+        String cardHolderName = "Mr. McPayment";
+        Long chargeId = 12L;
+        TestCharge testCharge = DatabaseFixtures
+                .withDatabaseTestHelper(databaseTestHelper)
+                .aTestCharge()
+                .withTestAccount(defaultTestAccount)
+                .withCardDetails(defaultTestCardDetails
+                        .withChargeId(chargeId)
+                        .withCardHolderName(cardHolderName))
+                .withChargeId(chargeId)
+                .insert();
+        ChargeSearchParams params = new ChargeSearchParams()
+                .withCardHolderNameLike(CardHolderName.of("pay"));
+
+        // when
+        List<ChargeEntity> charges = chargeDao.findAllBy(params);
+
+        // then
+        assertThat(charges.size(), is(1));
+        ChargeEntity charge = charges.get(0);
+        assertCharge("visa", testCharge, charge);
+        assertThat(charge.getCardDetails().getCardHolderName(), is(cardHolderName));
+        assertThat(charge.getCardDetails().getLastDigitsCardNumber(), is(testCharge.cardDetails.getLastDigitsCardNumber()));
+    }
+
+    @Test
+    public void searchChargesByFullLastFourDigits() {
+        // given
+        String cardHolderName = "Mr. McPayment";
+        String lastDigits = "4321";
+        Long chargeId = 12L;
+        TestCharge testCharge = DatabaseFixtures
+                .withDatabaseTestHelper(databaseTestHelper)
+                .aTestCharge()
+                .withTestAccount(defaultTestAccount)
+                .withCardDetails(defaultTestCardDetails
+                        .withChargeId(chargeId)
+                        .withCardHolderName(cardHolderName)
+                        .withLastDigitsOfCardNumber(lastDigits))
+                .withChargeId(chargeId)
+                .insert();
+        ChargeSearchParams params = new ChargeSearchParams()
+                .withLastDigitsCardNumber(LastDigitsCardNumber.of(testCharge.cardDetails.getLastDigitsCardNumber()));
+
+        // when
+        List<ChargeEntity> charges = chargeDao.findAllBy(params);
+
+        // then
+        assertThat(charges.size(), is(1));
+        ChargeEntity charge = charges.get(0);
+        assertCharge("visa", testCharge, charge);
+        assertThat(charge.getCardDetails().getCardHolderName(), is(cardHolderName));
+        assertThat(charge.getCardDetails().getLastDigitsCardNumber(), is(lastDigits));
+    }
+
+    @Test
+    public void shouldNotMatchChargesByPartialLastFourDigits() {
+        // given
+        String lastDigits = "4321";
+        Long chargeId = 12L;
+        DatabaseFixtures
+                .withDatabaseTestHelper(databaseTestHelper)
+                .aTestCharge()
+                .withTestAccount(defaultTestAccount)
+                .withCardDetails(defaultTestCardDetails
+                        .withChargeId(chargeId)
+                .withLastDigitsOfCardNumber(lastDigits))
+                .withChargeId(chargeId)
+                .insert();
+        ChargeSearchParams params = new ChargeSearchParams()
+                .withLastDigitsCardNumber(LastDigitsCardNumber.of("432"));
+
+        // when
+        List<ChargeEntity> charges = chargeDao.findAllBy(params);
+
+        // then
+        assertThat(charges.size(), is(0));
+    }
+    
+    @Test
+    public void searchChargesByCardBrandOnly() {
         // given
         insertTestCharge();
         ChargeSearchParams params = new ChargeSearchParams()
@@ -147,7 +257,7 @@ public class ChargeDaoITest extends DaoITestBase {
     }
 
     @Test
-    public void searchChargesByMultipleCardBrandOnly() throws Exception {
+    public void searchChargesByMultipleCardBrandOnly() {
         // given
         String visa = "visa";
         String masterCard = "master-card";
@@ -168,7 +278,7 @@ public class ChargeDaoITest extends DaoITestBase {
     }
 
     @Test
-    public void searchChargesWithDefaultSizeAndPage_shouldGetChargesInCreationDateOrder() throws Exception {
+    public void searchChargesWithDefaultSizeAndPage_shouldGetChargesInCreationDateOrder() {
         // given
         insertNewChargeWithId(700L, now().plusHours(1));
         insertNewChargeWithId(800L, now().plusHours(2));
@@ -191,7 +301,7 @@ public class ChargeDaoITest extends DaoITestBase {
     }
 
     @Test
-    public void searchChargesWithSizeAndPageSetshouldGetChargesInCreationDateOrder() throws Exception {
+    public void searchChargesWithSizeAndPageSetshouldGetChargesInCreationDateOrder() {
         // given
         insertNewChargeWithId(900L, now().plusHours(1));
         insertNewChargeWithId(800L, now().plusHours(2));
@@ -259,7 +369,7 @@ public class ChargeDaoITest extends DaoITestBase {
     }
 
     @Test
-    public void searchChargesByFullReferenceOnly() throws Exception {
+    public void searchChargesByFullReferenceOnly() {
         // given
         insertTestCharge();
         ChargeSearchParams params = new ChargeSearchParams()
@@ -284,7 +394,7 @@ public class ChargeDaoITest extends DaoITestBase {
     }
 
     @Test
-    public void searchChargesByPartialReferenceOnly() throws Exception {
+    public void searchChargesByPartialReferenceOnly() {
         // given
         insertTestCharge();
         ServicePaymentReference paymentReference = ServicePaymentReference.of("Council Tax Payment reference 2");
@@ -360,7 +470,7 @@ public class ChargeDaoITest extends DaoITestBase {
     }
 
     @Test
-    public void searchChargesByReferenceWithPercentSign() throws Exception {
+    public void searchChargesByReferenceWithPercentSign() {
         // since '%' have special meaning in like queries of postgres this was resulting in undesired results
         DatabaseFixtures
                 .withDatabaseTestHelper(databaseTestHelper)
@@ -461,7 +571,7 @@ public class ChargeDaoITest extends DaoITestBase {
     }
 
     @Test
-    public void aBasicTestAgainstSqlInjection() throws Exception {
+    public void aBasicTestAgainstSqlInjection() {
         // given
         insertTestCharge();
         ChargeSearchParams params = new ChargeSearchParams()
@@ -483,7 +593,7 @@ public class ChargeDaoITest extends DaoITestBase {
 
 
     @Test
-    public void searchChargeByReferenceAndLegacyStatusOnly() throws Exception {
+    public void searchChargeByReferenceAndLegacyStatusOnly() {
         // given
         insertTestCharge();
         ChargeSearchParams params = new ChargeSearchParams()
@@ -508,7 +618,7 @@ public class ChargeDaoITest extends DaoITestBase {
     }
 
     @Test
-    public void searchChargeByReferenceAndStatusAndFromDateAndToDate() throws Exception {
+    public void searchChargeByReferenceAndStatusAndFromDateAndToDate() {
 
         // given
         insertTestCharge();
@@ -536,7 +646,7 @@ public class ChargeDaoITest extends DaoITestBase {
     }
 
     @Test
-    public void searchChargeByReferenceAndStatusAndFromDate() throws Exception {
+    public void searchChargeByReferenceAndStatusAndFromDate() {
 
         // given
         insertTestCharge();
@@ -637,7 +747,7 @@ public class ChargeDaoITest extends DaoITestBase {
     }
 
     @Test
-    public void searchChargeByReferenceAndStatusAndEmailAndCardBrandAndFromDateAndToDate() throws Exception {
+    public void searchChargeByReferenceAndStatusAndEmailAndCardBrandAndFromDateAndToDate() {
         // given
         insertTestCharge();
         ChargeSearchParams params = new ChargeSearchParams()
@@ -666,7 +776,7 @@ public class ChargeDaoITest extends DaoITestBase {
     }
 
     @Test
-    public void searchChargeByReferenceAndStatusAndToDate() throws Exception {
+    public void searchChargeByReferenceAndStatusAndToDate() {
 
         // given
         insertTestCharge();
@@ -693,7 +803,7 @@ public class ChargeDaoITest extends DaoITestBase {
     }
 
     @Test
-    public void searchChargeByReferenceAndStatusAndFromDate_ShouldReturnZeroIfDateIsNotInRange() throws Exception {
+    public void searchChargeByReferenceAndStatusAndFromDate_ShouldReturnZeroIfDateIsNotInRange() {
         insertTestCharge();
 
         ChargeSearchParams params = new ChargeSearchParams()
@@ -709,7 +819,7 @@ public class ChargeDaoITest extends DaoITestBase {
     }
 
     @Test
-    public void searchChargeByReferenceAndStatusAndToDate_ShouldReturnZeroIfToDateIsNotInRange() throws Exception {
+    public void searchChargeByReferenceAndStatusAndToDate_ShouldReturnZeroIfToDateIsNotInRange() {
         insertTestCharge();
         ChargeSearchParams params = new ChargeSearchParams()
                 .withGatewayAccountId(defaultTestAccount.getAccountId())
@@ -731,7 +841,7 @@ public class ChargeDaoITest extends DaoITestBase {
     }
 
     @Test
-    public void chargeEvents_shouldRecordTransactionIdWithEachStatusChange() throws Exception {
+    public void chargeEvents_shouldRecordTransactionIdWithEachStatusChange() {
         Long chargeId = 56735L;
         String externalChargeId = "charge456";
 
@@ -753,7 +863,7 @@ public class ChargeDaoITest extends DaoITestBase {
     }
 
     @Test
-    public void invalidSizeOfReference() throws Exception {
+    public void invalidSizeOfReference() {
         expectedEx.expect(RuntimeException.class);
 
         GatewayAccountEntity gatewayAccount = new GatewayAccountEntity(defaultTestAccount.getPaymentProvider(), new HashMap<>(), TEST);
@@ -944,7 +1054,7 @@ public class ChargeDaoITest extends DaoITestBase {
     }
 
     @Test
-    public void findById_shouldFindChargeEntity() throws Exception {
+    public void findById_shouldFindChargeEntity() {
 
         // given
         insertTestCharge();
@@ -988,7 +1098,7 @@ public class ChargeDaoITest extends DaoITestBase {
     }
 
     @Test
-    public void testFindByDate_status_findsValidChargeForStatus() throws Exception {
+    public void testFindByDate_status_findsValidChargeForStatus() {
         DatabaseFixtures
                 .withDatabaseTestHelper(databaseTestHelper)
                 .aTestCharge()
@@ -1007,7 +1117,7 @@ public class ChargeDaoITest extends DaoITestBase {
     }
 
     @Test
-    public void testFindByDateStatus_findsNoneForValidStatus() throws Exception {
+    public void testFindByDateStatus_findsNoneForValidStatus() {
         DatabaseFixtures
                 .withDatabaseTestHelper(databaseTestHelper)
                 .aTestCharge()
@@ -1025,7 +1135,7 @@ public class ChargeDaoITest extends DaoITestBase {
     }
 
     @Test
-    public void testFindByDateStatus_findsNoneForExpiredDate() throws Exception {
+    public void testFindByDateStatus_findsNoneForExpiredDate() {
         DatabaseFixtures
                 .withDatabaseTestHelper(databaseTestHelper)
                 .aTestCharge()
@@ -1176,7 +1286,7 @@ public class ChargeDaoITest extends DaoITestBase {
     }
 
     @Test
-    public void findChargesForCapture_shouldReturnChargesInCaptureApprovedState() throws Exception {
+    public void findChargesForCapture_shouldReturnChargesInCaptureApprovedState() {
         final long chargeId1 = 101L;
 
         DatabaseFixtures
@@ -1234,7 +1344,7 @@ public class ChargeDaoITest extends DaoITestBase {
     }
 
     @Test
-    public void findChargesForCapture_shouldNotReturnAChargeForWhichCaptureHasBeenAttemptedRecently() throws Exception {
+    public void findChargesForCapture_shouldNotReturnAChargeForWhichCaptureHasBeenAttemptedRecently() {
         final long chargeId1 = 101L;
         final long chargeId2 = 102L;
 
@@ -1308,7 +1418,7 @@ public class ChargeDaoITest extends DaoITestBase {
     }
 
     @Test
-    public void countChargesForCapture_shouldReturnNumberOfChargesInCaptureApprovedState() throws Exception {
+    public void countChargesForCapture_shouldReturnNumberOfChargesInCaptureApprovedState() {
         DatabaseFixtures
                 .withDatabaseTestHelper(databaseTestHelper)
                 .aTestCharge()
@@ -1349,7 +1459,7 @@ public class ChargeDaoITest extends DaoITestBase {
     }
 
     @Test
-    public void countCaptureRetriesForCharge_shouldReturnNumberOfRetries() throws Exception {
+    public void countCaptureRetriesForCharge_shouldReturnNumberOfRetries() {
         long chargeId = 101L;
 
         DatabaseFixtures

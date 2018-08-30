@@ -111,6 +111,11 @@ public class TransactionDao {
     private SelectOrderByStep buildQueryFor(Long gatewayAccountId, QueryType queryType, ChargeSearchParams params) {
         Condition queryFilters = field("c.gateway_account_id").eq(gatewayAccountId);
 
+        if (params.getCardHolderName() != null && isNotBlank(params.getCardHolderName().toString())) {
+            queryFilters = queryFilters.and(
+                    field("c.cardholder_name").lower().like(buildLikeClauseContaining(params.getCardHolderName().toString().toLowerCase())));
+        }
+        
         if (isNotBlank(params.getEmail())) {
             queryFilters = queryFilters.and(
                     field("c.email").lower().like(buildLikeClauseContaining(params.getEmail().toLowerCase())));
@@ -245,13 +250,13 @@ public class TransactionDao {
 
     private Set<String> mapChargeStatuses(Set<ChargeStatus> status) {
         return status.stream()
-                .map(s -> s.getValue())
+                .map(ChargeStatus::getValue)
                 .collect(Collectors.toSet());
     }
 
     private Set<String> mapRefundStatuses(Set<RefundStatus> status) {
         return status.stream()
-                .map(s -> s.getValue())
+                .map(RefundStatus::getValue)
                 .collect(Collectors.toSet());
     }
 }
