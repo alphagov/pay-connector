@@ -56,7 +56,10 @@ public abstract class CardAuthoriseBaseService<T extends AuthorisationDetails> e
             }
 
             GatewayResponse<BaseAuthoriseResponse> operationResponse = operation(charge, gatewayAuthRequest);
-            return postOperation(chargeId, gatewayAuthRequest, operationResponse);
+            recorder.beginSegment("pay-connector");
+            GatewayResponse r = postOperation(chargeId, gatewayAuthRequest, operationResponse);
+            recorder.endSegment();
+            return r;
         };
 
         Pair<ExecutionStatus, GatewayResponse> executeResult = cardExecutorService.execute(authorisationSupplier);

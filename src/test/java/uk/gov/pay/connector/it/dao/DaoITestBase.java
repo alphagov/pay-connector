@@ -21,7 +21,7 @@ public class DaoITestBase {
     public PostgresDockerRule postgres;
 
     protected DatabaseTestHelper databaseTestHelper;
-    protected JpaPersistModule jpaModule;
+    private JpaPersistModule jpaModule;
     protected GuicedTestEnvironment env;
 
     public DaoITestBase() {
