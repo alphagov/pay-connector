@@ -11,6 +11,8 @@ import uk.gov.pay.connector.app.ConnectorConfiguration;
 import uk.gov.pay.connector.dao.ChargeDao;
 import uk.gov.pay.connector.dao.ChargeSearchParams;
 import uk.gov.pay.connector.dao.GatewayAccountDao;
+import uk.gov.pay.connector.model.CardHolderName;
+import uk.gov.pay.connector.model.LastDigitsCardNumber;
 import uk.gov.pay.connector.model.ServicePaymentReference;
 import uk.gov.pay.connector.model.domain.ChargeEntity;
 import uk.gov.pay.connector.service.ChargeExpiryService;
@@ -62,6 +64,8 @@ public class ChargesApiResource {
     private static final String DESCRIPTION_KEY = "description";
     private static final String RETURN_URL_KEY = "return_url";
     private static final String REFERENCE_KEY = "reference";
+    private static final String CARDHOLDER_NAME_KEY = "cardholder_name";
+    public static final String LAST_DIGITS_CARD_NUMBER_KEY = "last_digits_card_number";
     static final Map<String, Integer> MAXIMUM_FIELDS_SIZE = ImmutableMap.of(
             DESCRIPTION_KEY, 255,
             REFERENCE_KEY, 255,
@@ -128,6 +132,8 @@ public class ChargesApiResource {
     public Response getChargesJson(@PathParam(ACCOUNT_ID) Long accountId,
                                    @QueryParam(EMAIL_KEY) String email,
                                    @QueryParam(REFERENCE_KEY) String reference,
+                                   @QueryParam(CARDHOLDER_NAME_KEY) String cardHolderName,
+                                   @QueryParam(LAST_DIGITS_CARD_NUMBER_KEY) String lastDigitsCardNumber,
                                    @QueryParam(STATE_KEY) String state,
                                    @QueryParam(PAYMENT_STATES_KEY) CommaDelimitedSetParameter paymentStates,
                                    @QueryParam(REFUND_STATES_KEY) CommaDelimitedSetParameter refundStates,
@@ -151,6 +157,9 @@ public class ChargesApiResource {
                     ChargeSearchParams searchParams = new ChargeSearchParams()
                             .withGatewayAccountId(accountId)
                             .withEmailLike(email)
+                            .withCardHolderNameLike(cardHolderName != null ? CardHolderName.of(cardHolderName) : null)
+                            .withLastDigitsCardNumber(lastDigitsCardNumber != null ? LastDigitsCardNumber
+                                    .of(lastDigitsCardNumber) : null)
                             .withReferenceLike(reference != null ? ServicePaymentReference.of(reference) : null)
                             .withCardBrands(removeBlanks(cardBrands))
                             .withFromDate(parseDate(fromDate))
@@ -179,6 +188,7 @@ public class ChargesApiResource {
     public Response getChargesJsonV2(@PathParam(ACCOUNT_ID) Long accountId,
                                      @QueryParam(EMAIL_KEY) String email,
                                      @QueryParam(REFERENCE_KEY) String reference,
+                                     @QueryParam(CARDHOLDER_NAME_KEY) String cardHolderName,
                                      @QueryParam(PAYMENT_STATES_KEY) CommaDelimitedSetParameter paymentStates,
                                      @QueryParam(REFUND_STATES_KEY) CommaDelimitedSetParameter refundStates,
                                      @QueryParam(CARD_BRAND_KEY) List<String> cardBrands,
@@ -200,6 +210,7 @@ public class ChargesApiResource {
                     ChargeSearchParams searchParams = new ChargeSearchParams()
                             .withGatewayAccountId(accountId)
                             .withEmailLike(email)
+                            .withCardHolderNameLike(cardHolderName != null ? CardHolderName.of(cardHolderName) : null)
                             .withReferenceLike(reference != null ? ServicePaymentReference.of(reference) : null)
                             .withCardBrands(removeBlanks(cardBrands))
                             .withFromDate(parseDate(fromDate))

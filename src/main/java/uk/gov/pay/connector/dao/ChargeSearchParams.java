@@ -1,12 +1,5 @@
 package uk.gov.pay.connector.dao;
 
-import uk.gov.pay.connector.model.ServicePaymentReference;
-import uk.gov.pay.connector.model.TransactionType;
-import uk.gov.pay.connector.model.api.ExternalChargeState;
-import uk.gov.pay.connector.model.api.ExternalRefundStatus;
-import uk.gov.pay.connector.model.domain.ChargeStatus;
-import uk.gov.pay.connector.model.domain.RefundStatus;
-
 import java.time.ZonedDateTime;
 import java.util.ArrayList;
 import java.util.Collection;
@@ -15,6 +8,14 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
 import java.util.stream.Collectors;
+import uk.gov.pay.connector.model.CardHolderName;
+import uk.gov.pay.connector.model.LastDigitsCardNumber;
+import uk.gov.pay.connector.model.ServicePaymentReference;
+import uk.gov.pay.connector.model.TransactionType;
+import uk.gov.pay.connector.model.api.ExternalChargeState;
+import uk.gov.pay.connector.model.api.ExternalRefundStatus;
+import uk.gov.pay.connector.model.domain.ChargeStatus;
+import uk.gov.pay.connector.model.domain.RefundStatus;
 
 import static org.apache.commons.lang3.StringUtils.isBlank;
 import static org.apache.commons.lang3.StringUtils.isNotBlank;
@@ -23,6 +24,8 @@ import static org.apache.commons.lang3.StringUtils.isNotEmpty;
 public class ChargeSearchParams {
 
     private TransactionType transactionType;
+    private LastDigitsCardNumber lastDigitsCardNumber;
+    private CardHolderName cardHolderName;
     private Long gatewayAccountId;
     private ServicePaymentReference reference;
     private String email;
@@ -56,6 +59,16 @@ public class ChargeSearchParams {
         return this;
     }
 
+    public ChargeSearchParams withLastDigitsCardNumber(LastDigitsCardNumber lastDigitsCardNumber) {
+        this.lastDigitsCardNumber = lastDigitsCardNumber;
+        return this;
+    }
+
+    public ChargeSearchParams withCardHolderNameLike(CardHolderName cardHolderName) {
+        this.cardHolderName = cardHolderName;
+        return this;
+    }
+    
     public Set<String> getExternalChargeStates() {
         return this.internalChargeStatuses.stream()
                 .map(s -> s.toExternal().getStatus())
@@ -74,6 +87,14 @@ public class ChargeSearchParams {
                 .map(s -> s.toExternal().getStatus())
                 .sorted()
                 .collect(Collectors.toSet());
+    }
+
+    public LastDigitsCardNumber getLastDigitsCardNumber() {
+        return lastDigitsCardNumber;
+    }
+
+    public CardHolderName getCardHolderName() {
+        return cardHolderName;
     }
 
     public Set<ChargeStatus> getInternalChargeStatuses() {

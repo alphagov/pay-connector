@@ -5,6 +5,10 @@ import org.junit.Test;
 import uk.gov.pay.commons.model.SupportedLanguage;
 import uk.gov.pay.connector.dao.ChargeSearchParams;
 import uk.gov.pay.connector.dao.TransactionDao;
+import uk.gov.pay.connector.it.dao.DatabaseFixtures.TestCardDetails;
+import uk.gov.pay.connector.it.dao.DatabaseFixtures.TestCharge;
+import uk.gov.pay.connector.model.CardHolderName;
+import uk.gov.pay.connector.model.LastDigitsCardNumber;
 import uk.gov.pay.connector.model.ServicePaymentReference;
 import uk.gov.pay.connector.model.domain.ChargeStatus;
 import uk.gov.pay.connector.model.domain.RefundStatus;
@@ -425,6 +429,78 @@ public class TransactionDaoITest extends DaoITestBase {
 
     }
 
+    @Test
+    public void shouldSearchChargesByFullCardHolderName()  {
+
+        // given
+        String cardHolderName = "Mr Cardholder Bla";
+
+        TestCharge testCharge = withDatabaseTestHelper(databaseTestHelper)
+                .aTestCharge()
+                .withTestAccount(defaultTestAccount);
+        DatabaseFixtures.TestCardDetails testCardDetails = new DatabaseFixtures(databaseTestHelper)
+                .validTestCardDetails()
+                .withCardHolderName(cardHolderName)
+                .withChargeId(testCharge.chargeId)
+                .update();
+        testCharge.withCardDetails(testCardDetails).insert();
+        insertNewRefundForCharge(testCharge, REFUND_USER_EXTERNAL_ID,2L, now().plusHours(2));
+        ChargeSearchParams params = new ChargeSearchParams()
+                .withCardHolderNameLike(CardHolderName.of(cardHolderName));
+
+        // when
+        List<Transaction> transactions = transactionDao.findAllBy(defaultTestAccount.getAccountId(), params);
+
+        // then
+        assertThat(transactions.size(), is(2));
+
+        Transaction refund = transactions.get(0);
+        Transaction charge = transactions.get(1);
+
+        assertThat(refund.getExternalId(), is(testCharge.getExternalChargeId()));
+        assertThat(refund.getTransactionType(), is("refund"));
+        assertThat(refund.getCardHolderName(), is(cardHolderName));
+        assertThat(charge.getExternalId(), is(testCharge.getExternalChargeId()));
+        assertThat(charge.getTransactionType(), is("charge"));
+        assertThat(charge.getCardHolderName(), is(cardHolderName));
+    }
+
+    @Test
+    public void shouldSearchChargesByPartialCardHolderName()  {
+
+        // given
+        String fullCardHolderName = "Mr Cardholder Bla";
+
+        TestCharge testCharge = withDatabaseTestHelper(databaseTestHelper)
+                .aTestCharge()
+                .withTestAccount(defaultTestAccount);
+        DatabaseFixtures.TestCardDetails testCardDetails = new DatabaseFixtures(databaseTestHelper)
+                .validTestCardDetails()
+                .withCardHolderName(fullCardHolderName)
+                .withChargeId(testCharge.chargeId)
+                .update();
+        testCharge.withCardDetails(testCardDetails).insert();
+        insertNewRefundForCharge(testCharge, REFUND_USER_EXTERNAL_ID,2L, now().plusHours(2));
+        ChargeSearchParams params = new ChargeSearchParams()
+                .withCardHolderNameLike(CardHolderName.of("bla"));
+
+        // when
+        List<Transaction> transactions = transactionDao.findAllBy(defaultTestAccount.getAccountId(), params);
+
+        // then
+        assertThat(transactions.size(), is(2));
+
+        Transaction refund = transactions.get(0);
+        Transaction charge = transactions.get(1);
+
+        assertThat(refund.getExternalId(), is(testCharge.getExternalChargeId()));
+        assertThat(refund.getTransactionType(), is("refund"));
+        assertThat(refund.getCardHolderName(), is(fullCardHolderName));
+        assertThat(charge.getExternalId(), is(testCharge.getExternalChargeId()));
+        assertThat(charge.getTransactionType(), is("charge"));
+        assertThat(charge.getCardHolderName(), is(fullCardHolderName));
+    }
+    
     @Test
     public void searchChargesByReferenceAndEmail_with_under_score() {
         // since '_' have special meaning in like queries of postgres this was resulting in undesired results
