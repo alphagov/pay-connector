@@ -3,7 +3,6 @@ package uk.gov.pay.connector.util;
 import org.eclipse.persistence.config.SessionCustomizer;
 import org.eclipse.persistence.sessions.DatabaseLogin;
 import org.eclipse.persistence.sessions.Session;
-import uk.gov.pay.commons.utils.xray.XRaySessionProfiler;
 
 public class ConnectorSessionCustomiser implements SessionCustomizer {
 
@@ -15,7 +14,7 @@ public class ConnectorSessionCustomiser implements SessionCustomizer {
         DatabaseLogin datasourceLogin = (DatabaseLogin) session.getDatasourceLogin();
         datasourceLogin.setQueryRetryAttemptCount(QUERY_RETRY_ATTEMPT_COUNT_ZERO_BASED_INDEX);
         datasourceLogin.setDelayBetweenConnectionAttempts(DELAY_BETWEEN_CONNECTION_ATTEMPTS_MILLIS);
-        session.setProfiler(new XRaySessionProfiler());
+        session.setProfiler(new uk.gov.pay.commons.utils.xray.XRaySessionProfiler());
     }
 }
 

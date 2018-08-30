@@ -1,8 +1,5 @@
 package uk.gov.pay.connector.service;
 
-import com.amazonaws.xray.AWSXRay;
-import com.amazonaws.xray.AWSXRayRecorder;
-import com.amazonaws.xray.entities.Segment;
 import io.dropwizard.setup.Environment;
 import org.apache.commons.lang3.tuple.Pair;
 import org.slf4j.Logger;
@@ -19,7 +16,6 @@ import uk.gov.pay.connector.model.gateway.GatewayResponse;
 
 import javax.persistence.OptimisticLockException;
 import java.util.List;
-import java.util.Optional;
 import java.util.function.Supplier;
 
 import static uk.gov.pay.connector.service.CardExecutorService.ExecutionStatus;
@@ -29,7 +25,6 @@ public abstract class CardAuthoriseBaseService<T extends AuthorisationDetails> e
     private static final Logger LOG = LoggerFactory.getLogger(CardAuthoriseBaseService.class);
 
     private final CardExecutorService cardExecutorService;
-    private final AWSXRayRecorder recorder = AWSXRay.getGlobalRecorder();
 
 
     public CardAuthoriseBaseService(ChargeDao chargeDao, ChargeEventDao chargeEventDao, PaymentProviders providers, CardExecutorService cardExecutorService, Environment environment) {
@@ -41,7 +36,6 @@ public abstract class CardAuthoriseBaseService<T extends AuthorisationDetails> e
     public GatewayResponse doAuthorise(String chargeId, T gatewayAuthRequest) {
         Supplier authorisationSupplier = () -> {
             ChargeEntity charge;
-	    recorder.beginSegment("pay-connector");
 
             try {
                 charge = preOperation(chargeId, gatewayAuthRequest);
@@ -51,15 +45,10 @@ public abstract class CardAuthoriseBaseService<T extends AuthorisationDetails> e
             } catch (OptimisticLockException e) {
                 LOG.info("OptimisticLockException in doAuthorise for charge external_id=" + chargeId);
                 throw new ConflictRuntimeException(chargeId);
-            } finally {
-                recorder.endSegment();
-            }
+            } 
 
             GatewayResponse<BaseAuthoriseResponse> operationResponse = operation(charge, gatewayAuthRequest);
-            recorder.beginSegment("pay-connector");
-            GatewayResponse r = postOperation(chargeId, gatewayAuthRequest, operationResponse);
-            recorder.endSegment();
-            return r;
+            return postOperation(chargeId, gatewayAuthRequest, operationResponse);
         };
 
         Pair<ExecutionStatus, GatewayResponse> executeResult = cardExecutorService.execute(authorisationSupplier);

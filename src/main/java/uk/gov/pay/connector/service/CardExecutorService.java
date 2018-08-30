@@ -1,5 +1,6 @@
 package uk.gov.pay.connector.service;
 
+import com.amazonaws.xray.AWSXRay;
 import com.codahale.metrics.MetricRegistry;
 import com.google.common.util.concurrent.ThreadFactoryBuilder;
 import com.google.inject.Inject;
@@ -77,13 +78,18 @@ public class CardExecutorService<T> {
         final long startTime = System.currentTimeMillis();
 
         Future<T> futureObject = executor.submit(() -> {
+            AWSXRay.beginSegment("pay-connector");
             long totalWaitTime = System.currentTimeMillis() - startTime;
             logger.debug("Card operation task spent {} ms in queue", totalWaitTime);
             if (totalWaitTime > QUEUE_WAIT_WARN_THRESHOLD_MILLIS) {
                 logger.warn("CardExecutor Service delay - queue_wait_time={}", totalWaitTime);
             }
             metricRegistry.histogram("card-executor.delay").update(totalWaitTime);
-            return task.call();
+            try {
+                return task.call();
+            } finally {
+                AWSXRay.endSegment();
+            }
         });
 
         try {
