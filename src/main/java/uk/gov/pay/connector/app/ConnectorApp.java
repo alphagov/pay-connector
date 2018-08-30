@@ -1,6 +1,5 @@
 package uk.gov.pay.connector.app;
 
-import com.amazonaws.xray.javax.servlet.AWSXRayServletFilter;
 import com.codahale.metrics.graphite.GraphiteReporter;
 import com.codahale.metrics.graphite.GraphiteSender;
 import com.codahale.metrics.graphite.GraphiteUDP;

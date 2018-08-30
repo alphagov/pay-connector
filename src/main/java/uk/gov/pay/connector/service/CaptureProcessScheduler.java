@@ -1,9 +1,6 @@
 package uk.gov.pay.connector.service;
 
 import com.amazonaws.xray.AWSXRay;
-import com.amazonaws.xray.AWSXRayRecorder;
-import com.amazonaws.xray.entities.Segment;
-import com.amazonaws.xray.entities.Subsegment;
 import io.dropwizard.lifecycle.Managed;
 import io.dropwizard.setup.Environment;
 import org.slf4j.Logger;
@@ -17,7 +14,6 @@ import java.util.concurrent.TimeUnit;
 
 public class CaptureProcessScheduler implements Managed {
     final Logger logger = LoggerFactory.getLogger(CaptureProcessScheduler.class);
-    private final AWSXRayRecorder recorder = AWSXRay.getGlobalRecorder();
 
     static final String CAPTURE_PROCESS_SCHEDULER_NAME = "capture-process";
     static final int SCHEDULER_THREADS = 1;
@@ -56,12 +52,12 @@ public class CaptureProcessScheduler implements Managed {
 
         scheduledExecutorService.scheduleAtFixedRate(() -> {
             try {
-                recorder.beginSegment("pay-connector");
+                AWSXRay.beginSegment("pay-connector");
                 cardCaptureProcess.runCapture();
             } catch (Exception e) {
                 logger.error("Unexpected error running capture operations", e);
             } finally {
-                recorder.endSegment();
+                AWSXRay.endSegment();
             }
         }, initialDelayInSeconds, interval, TimeUnit.SECONDS);
     }

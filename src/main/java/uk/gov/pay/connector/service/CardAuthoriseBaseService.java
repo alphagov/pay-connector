@@ -26,12 +26,10 @@ public abstract class CardAuthoriseBaseService<T extends AuthorisationDetails> e
 
     private final CardExecutorService cardExecutorService;
 
-
     public CardAuthoriseBaseService(ChargeDao chargeDao, ChargeEventDao chargeEventDao, PaymentProviders providers, CardExecutorService cardExecutorService, Environment environment) {
         super(chargeDao, chargeEventDao, providers, environment);
         this.cardExecutorService = cardExecutorService;
     }
-
 
     public GatewayResponse doAuthorise(String chargeId, T gatewayAuthRequest) {
         Supplier authorisationSupplier = () -> {
