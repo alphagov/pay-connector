@@ -1422,4 +1422,24 @@
         </sql>
     </changeSet>
 
+    <changeSet id="Add delayed_capture column to charges table" author="">
+        <addColumn tableName="charges">
+            <column name="delayed_capture" type="boolean"/>
+        </addColumn>
+    </changeSet>
+
+    <changeSet id="Add default value to delayed_capture column" author="">
+        <addDefaultValue tableName="charges"
+                         columnName="delayed_capture"
+                         defaultValue='false'
+        />
+    </changeSet>
+
+    <changeSet id="Update delayed_capture column to default value" author="">
+        <update tableName="charges">
+            <column name="delayed_capture" value='false'/>
+            <where>delayed_capture IS NULL</where>
+        </update>
+    </changeSet>
+
 </databaseChangeLog>
