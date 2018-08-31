@@ -109,19 +109,22 @@ public class ChargeEntity extends AbstractVersionedEntity {
     @Column(name = "language", nullable = false)
     @Convert(converter = SupportedLanguageJpaConverter.class)
     private SupportedLanguage language;
+    
+    @Column(name = "delayed_capture")
+    private boolean delayedCapture;
 
     public ChargeEntity() {
         //for jpa
     }
 
     public ChargeEntity(Long amount, String returnUrl, String description, ServicePaymentReference reference,
-                        GatewayAccountEntity gatewayAccount, String email, SupportedLanguage language) {
-        this(amount, CREATED, returnUrl, description, reference, gatewayAccount, email, ZonedDateTime.now(ZoneId.of("UTC")), language);
+                        GatewayAccountEntity gatewayAccount, String email, SupportedLanguage language, boolean delayedCapture) {
+        this(amount, CREATED, returnUrl, description, reference, gatewayAccount, email, ZonedDateTime.now(ZoneId.of("UTC")), language, delayedCapture);
     }
 
     //for fixture
     ChargeEntity(Long amount, ChargeStatus status, String returnUrl, String description, ServicePaymentReference reference,
-                 GatewayAccountEntity gatewayAccount, String email, ZonedDateTime createdDate, SupportedLanguage language) {
+                 GatewayAccountEntity gatewayAccount, String email, ZonedDateTime createdDate, SupportedLanguage language, boolean delayedCapture) {
         this.amount = amount;
         this.status = status.getValue();
         this.returnUrl = returnUrl;
@@ -132,6 +135,7 @@ public class ChargeEntity extends AbstractVersionedEntity {
         this.externalId = RandomIdGenerator.newId();
         this.email = email;
         this.language = language;
+        this.delayedCapture = delayedCapture;
     }
 
     public Long getId() {
@@ -298,4 +302,13 @@ public class ChargeEntity extends AbstractVersionedEntity {
     public void setLanguage(SupportedLanguage language) {
         this.language = language;
     }
+
+    public boolean isDelayedCapture() {
+        return delayedCapture;
+    }
+
+    public void setDelayedCapture(boolean delayedCapture) {
+        this.delayedCapture = delayedCapture;
+    }
+
 }

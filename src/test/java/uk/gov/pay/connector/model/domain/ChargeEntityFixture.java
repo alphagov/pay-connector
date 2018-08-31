@@ -32,13 +32,15 @@ public class ChargeEntityFixture {
     private String issuerUrl;
     private String providerSessionId;
     private SupportedLanguage language = SupportedLanguage.ENGLISH;
+    private boolean delayedCapture = false;
 
     public static ChargeEntityFixture aValidChargeEntity() {
         return new ChargeEntityFixture();
     }
 
     public ChargeEntity build() {
-        ChargeEntity chargeEntity = new ChargeEntity(amount, status, returnUrl, description, reference, gatewayAccountEntity, email, createdDate, language);
+        ChargeEntity chargeEntity = new ChargeEntity(amount, status, returnUrl, description, reference,
+                gatewayAccountEntity, email, createdDate, language, delayedCapture);
         chargeEntity.setId(id);
         chargeEntity.setExternalId(externalId);
         chargeEntity.setGatewayTransactionId(transactionId);
