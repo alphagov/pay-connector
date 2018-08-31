@@ -15,7 +15,6 @@ public class ConnectorSessionCustomiser implements SessionCustomizer {
         DatabaseLogin datasourceLogin = (DatabaseLogin) session.getDatasourceLogin();
         datasourceLogin.setQueryRetryAttemptCount(QUERY_RETRY_ATTEMPT_COUNT_ZERO_BASED_INDEX);
         datasourceLogin.setDelayBetweenConnectionAttempts(DELAY_BETWEEN_CONNECTION_ATTEMPTS_MILLIS);
-        session.setProfiler(new XRaySessionProfiler());
     }
 }
 
