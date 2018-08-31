@@ -38,8 +38,8 @@ public class TransactionsApiV2ResourceITest extends ChargingITestBase {
     private static final String PROVIDER_NAME = "sandbox";
 
     private RestAssuredClient getChargeApi = new RestAssuredClient(app, accountId);
-    private String lastDigitsCardNumber;
-    private String cardHolderName;
+    private String lastDigitsCardNumber = "1234";
+    private String cardHolderName = "Mr. McPayment";
     private String expiryDate;
 
     public TransactionsApiV2ResourceITest() {
@@ -188,6 +188,53 @@ public class TransactionsApiV2ResourceITest extends ChargingITestBase {
                 .body("results[1].reference", is(referenceCharge2.toString()));
     }
 
+        @Test
+    public void shouldFilterTransactionsByCardHolderName() {
+        String cardHolderName = "Mr. PayMcPayment";
+        addChargeAndCardDetails(nextLong(), CREATED, ServicePaymentReference.of("ref-1"), "ref", now(), "", "http://service.url/success-page/", "aaa@bbb.test", cardHolderName, "1234");
+        addChargeAndCardDetails(nextLong(), AUTHORISATION_SUCCESS, ServicePaymentReference.of("ref-1"), "ref", now(), "", "http://service.url/success-page/", "aaa@bbb.test", cardHolderName, "1234");
+        getChargeApi
+                .withAccountId(accountId)
+                .withQueryParam("cardholder_name", "PayMc")
+                .withHeader(HttpHeaders.ACCEPT, APPLICATION_JSON)
+                .getTransactionsV2()
+                .statusCode(OK.getStatusCode())
+                .contentType(JSON)
+                .body("results.size()", is(2))
+                .body("results[0].card_details.cardholder_name", is(cardHolderName))
+                .body("results[0].card_details.last_digits_card_number", is("1234"));
+    }
+
+    @Test
+    public void searchChargesByFullLastFourDigits() {
+        String lastFourDigits = "3943";
+        addChargeAndCardDetails(nextLong(), CREATED, ServicePaymentReference.of("ref-1"), "ref", now(), "", "http://service.url/success-page/", "aaa@bbb.test", cardHolderName, lastFourDigits);
+        addChargeAndCardDetails(nextLong(), AUTHORISATION_SUCCESS, ServicePaymentReference.of("ref-1"), "ref", now(), "", "http://service.url/success-page/", "aaa@bbb.test", cardHolderName, lastFourDigits);
+        
+        getChargeApi
+                .withAccountId(accountId)
+                .withQueryParam("last_digits_card_number", "3943")
+                .withHeader(HttpHeaders.ACCEPT, APPLICATION_JSON)
+                .getTransactionsV2()
+                .statusCode(OK.getStatusCode())
+                .contentType(JSON)
+                .body("results.size()", is(2))
+                .body("results[0].card_details.cardholder_name", is("Mr. McPayment"))
+                .body("results[0].card_details.last_digits_card_number", is("3943"));
+    }
+
+    @Test
+    public void shouldNotMatchChargesByPartialLastFourDigits() {
+        getChargeApi
+                .withAccountId(accountId)
+                .withQueryParam("last_digits_card_number", "12")
+                .withHeader(HttpHeaders.ACCEPT, APPLICATION_JSON)
+                .getTransactionsV2()
+                .statusCode(OK.getStatusCode())
+                .contentType(JSON)
+                .body("results.size()", is(0));
+    }
+    
     @Test
     public void shouldGetExpectedChargeWhenOnlySpecifiedRefundStates() {
 
@@ -232,8 +279,19 @@ public class TransactionsApiV2ResourceITest extends ChargingITestBase {
         app.getDatabaseTestHelper().addCharge(chargeId, externalChargeId, accountId, AMOUNT, chargeStatus, returnUrl, transactionId, reference, fromDate, email);
         app.getDatabaseTestHelper().addToken(chargeId, "tokenId");
         app.getDatabaseTestHelper().addEvent(chargeId, chargeStatus.getValue());
-        lastDigitsCardNumber = "1234";
-        cardHolderName = "Mr. McPayment";
+        expiryDate = "03/18";
+        app.getDatabaseTestHelper().updateChargeCardDetails(chargeId, cardBrand, lastDigitsCardNumber, cardHolderName, expiryDate, "line1", null, "postcode", "city", null, "country");
+        return externalChargeId;
+    }
+    
+    private String addChargeAndCardDetails(Long chargeId, ChargeStatus status, ServicePaymentReference reference, String transactionId, ZonedDateTime fromDate,
+                                           String cardBrand, String returnUrl, String email,
+                                           String cardHolderName, String lastDigitsCardNumber) {
+        String externalChargeId = "charge" + chargeId;
+        ChargeStatus chargeStatus = status != null ? status : AUTHORISATION_SUCCESS;
+        app.getDatabaseTestHelper().addCharge(chargeId, externalChargeId, accountId, AMOUNT, chargeStatus, returnUrl, transactionId, reference, fromDate, email);
+        app.getDatabaseTestHelper().addToken(chargeId, "tokenId");
+        app.getDatabaseTestHelper().addEvent(chargeId, chargeStatus.getValue());
         expiryDate = "03/18";
         app.getDatabaseTestHelper().updateChargeCardDetails(chargeId, cardBrand, lastDigitsCardNumber, cardHolderName, expiryDate, "line1", null, "postcode", "city", null, "country");
         return externalChargeId;

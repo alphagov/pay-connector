@@ -369,11 +369,11 @@ public class ChargesApiResourceGetChargesJsonITest extends ChargingITestBase {
 
     @Test
     public void shouldFilterTransactionsByCardHolderName() {
-
         addChargeAndCardDetails(CREATED, ServicePaymentReference.of("ref-1"), now());
         addChargeAndCardDetails(AUTHORISATION_READY, ServicePaymentReference.of("ref-2"), now());
         addChargeAndCardDetails(CAPTURED, ServicePaymentReference.of("ref-3"), now().minusDays(2));
 
+        
         getChargeApi
                 .withAccountId(accountId)
                 .withQueryParam("cardholder_name", "McPayment")
@@ -384,6 +384,42 @@ public class ChargesApiResourceGetChargesJsonITest extends ChargingITestBase {
                 .body("results.size()", is(3))
                 .body("results[0].card_details.cardholder_name", is("Mr. McPayment"))
                 .body("results[0].card_details.last_digits_card_number", is("1234"));
+    }
+
+    @Test
+    public void searchChargesByFullLastFourDigits() {
+        addChargeAndCardDetails(CREATED, ServicePaymentReference.of("ref-1"), now());
+        addChargeAndCardDetails(AUTHORISATION_READY, ServicePaymentReference.of("ref-2"), now());
+        addChargeAndCardDetails(CAPTURED, ServicePaymentReference.of("ref-3"), now().minusDays(2));
+
+
+        getChargeApi
+                .withAccountId(accountId)
+                .withQueryParam("last_digits_card_number", "1234")
+                .withHeader(HttpHeaders.ACCEPT, APPLICATION_JSON)
+                .getTransactionsAPI()
+                .statusCode(OK.getStatusCode())
+                .contentType(JSON)
+                .body("results.size()", is(3))
+                .body("results[0].card_details.cardholder_name", is("Mr. McPayment"))
+                .body("results[0].card_details.last_digits_card_number", is("1234"));
+    }
+
+    @Test
+    public void shouldNotMatchChargesByPartialLastFourDigits() {
+        addChargeAndCardDetails(CREATED, ServicePaymentReference.of("ref-1"), now());
+        addChargeAndCardDetails(AUTHORISATION_READY, ServicePaymentReference.of("ref-2"), now());
+        addChargeAndCardDetails(CAPTURED, ServicePaymentReference.of("ref-3"), now().minusDays(2));
+
+
+        getChargeApi
+                .withAccountId(accountId)
+                .withQueryParam("last_digits_card_number", "12")
+                .withHeader(HttpHeaders.ACCEPT, APPLICATION_JSON)
+                .getTransactionsAPI()
+                .statusCode(OK.getStatusCode())
+                .contentType(JSON)
+                .body("results.size()", is(0));
     }
     
     @Test
