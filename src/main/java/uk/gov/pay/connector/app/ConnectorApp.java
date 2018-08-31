@@ -159,8 +159,8 @@ public class ConnectorApp extends Application<ConnectorConfiguration> {
     }
 
     private void setupSchedulers(ConnectorConfiguration configuration, Environment environment, Injector injector) {
-        XrayUtils xrayUtils = new XrayUtils(false);
-        CaptureProcessScheduler captureProcessScheduler = new CaptureProcessScheduler(configuration, environment, injector.getInstance(CardCaptureProcess.class), xrayUtils);
+        CaptureProcessScheduler captureProcessScheduler = new CaptureProcessScheduler(configuration, 
+                environment, injector.getInstance(CardCaptureProcess.class), injector.getInstance(XrayUtils.class));
         environment.lifecycle().manage(captureProcessScheduler);
     }
 }

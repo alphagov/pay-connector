@@ -44,6 +44,8 @@ public class CaptureProcessSchedulerTest {
     ScheduledExecutorService scheduledExecutorService;
 
     ScheduledExecutorServiceBuilder scheduledExecutorServiceBuilder;
+    
+    XrayUtils xrayUtils = new XrayUtils(false);
 
     @Before
     public void setup() {
@@ -62,7 +64,7 @@ public class CaptureProcessSchedulerTest {
 
     @Test
     public void shouldSetupScheduledExecutorService() {
-        new CaptureProcessScheduler(null, environment, cardCaptureProcess, new XrayUtils(false));
+        new CaptureProcessScheduler(null, environment, cardCaptureProcess, xrayUtils);
 
         verify(lifecycleEnvironment).scheduledExecutorService(CAPTURE_PROCESS_SCHEDULER_NAME);
         verify(scheduledExecutorServiceBuilder).threads(SCHEDULER_THREADS);
@@ -71,7 +73,7 @@ public class CaptureProcessSchedulerTest {
 
     @Test
     public void shouldScheduleCaptureProcessWithDefaultSchedulingConfiguration() {
-        CaptureProcessScheduler captureProcessScheduler = new CaptureProcessScheduler(null, environment, cardCaptureProcess, new XrayUtils(false));
+        CaptureProcessScheduler captureProcessScheduler = new CaptureProcessScheduler(null, environment, cardCaptureProcess, xrayUtils);
         captureProcessScheduler.start();
 
         ArgumentCaptor<Long> delay = ArgumentCaptor.forClass(Long.class);
@@ -88,7 +90,7 @@ public class CaptureProcessSchedulerTest {
 
         ConnectorConfiguration mockConnectorConfiguration = mockConnectorConfigurationWith(initialDelayInSeconds, randomIntervalMinimumInSeconds, randomIntervalMaximumInSeconds);
 
-        CaptureProcessScheduler captureProcessScheduler = new CaptureProcessScheduler(mockConnectorConfiguration, environment, cardCaptureProcess, new XrayUtils(false));
+        CaptureProcessScheduler captureProcessScheduler = new CaptureProcessScheduler(mockConnectorConfiguration, environment, cardCaptureProcess, xrayUtils);
         captureProcessScheduler.start();
 
         ArgumentCaptor<Long> delay = ArgumentCaptor.forClass(Long.class);
@@ -105,7 +107,7 @@ public class CaptureProcessSchedulerTest {
 
         ConnectorConfiguration mockConnectorConfiguration = mockConnectorConfigurationWith(initialDelayInSeconds, randomIntervalMinimumInSeconds, randomIntervalMaximumInSeconds);
 
-        CaptureProcessScheduler captureProcessScheduler = new CaptureProcessScheduler(mockConnectorConfiguration, environment, cardCaptureProcess, new XrayUtils(false));
+        CaptureProcessScheduler captureProcessScheduler = new CaptureProcessScheduler(mockConnectorConfiguration, environment, cardCaptureProcess, xrayUtils);
         captureProcessScheduler.start();
 
         ArgumentCaptor<Long> delay = ArgumentCaptor.forClass(Long.class);
@@ -116,7 +118,7 @@ public class CaptureProcessSchedulerTest {
 
     @Test
     public void shouldShutdownScheduledExecutorServiceWhenStopped() {
-        CaptureProcessScheduler captureProcessScheduler = new CaptureProcessScheduler(null, environment, cardCaptureProcess, new XrayUtils(false));
+        CaptureProcessScheduler captureProcessScheduler = new CaptureProcessScheduler(null, environment, cardCaptureProcess, xrayUtils);
         captureProcessScheduler.stop();
 
         verify(scheduledExecutorService).shutdown();
