@@ -189,6 +189,7 @@ public class ChargesApiResource {
                                      @QueryParam(EMAIL_KEY) String email,
                                      @QueryParam(REFERENCE_KEY) String reference,
                                      @QueryParam(CARDHOLDER_NAME_KEY) String cardHolderName,
+                                     @QueryParam(LAST_DIGITS_CARD_NUMBER_KEY) String lastDigitsCardNumber,
                                      @QueryParam(PAYMENT_STATES_KEY) CommaDelimitedSetParameter paymentStates,
                                      @QueryParam(REFUND_STATES_KEY) CommaDelimitedSetParameter refundStates,
                                      @QueryParam(CARD_BRAND_KEY) List<String> cardBrands,
@@ -211,6 +212,7 @@ public class ChargesApiResource {
                             .withGatewayAccountId(accountId)
                             .withEmailLike(email)
                             .withCardHolderNameLike(cardHolderName != null ? CardHolderName.of(cardHolderName) : null)
+                            .withLastDigitsCardNumber(lastDigitsCardNumber != null ? LastDigitsCardNumber.of(lastDigitsCardNumber) : null)
                             .withReferenceLike(reference != null ? ServicePaymentReference.of(reference) : null)
                             .withCardBrands(removeBlanks(cardBrands))
                             .withFromDate(parseDate(fromDate))
@@ -241,6 +243,8 @@ public class ChargesApiResource {
     public Response getTransactionsJson(@PathParam(ACCOUNT_ID) Long accountId,
                                         @QueryParam(EMAIL_KEY) String email,
                                         @QueryParam(REFERENCE_KEY) String reference,
+                                        @QueryParam(CARDHOLDER_NAME_KEY) String cardHolderName,
+                                        @QueryParam(LAST_DIGITS_CARD_NUMBER_KEY) String lastDigitsCardNumber,
                                         @QueryParam(PAYMENT_STATES_KEY) List<String> paymentStates,
                                         @QueryParam(REFUND_STATES_KEY) List<String> refundStates,
                                         @QueryParam(CARD_BRAND_KEY) List<String> cardBrands,
@@ -259,6 +263,8 @@ public class ChargesApiResource {
                     ChargeSearchParams searchParams = new ChargeSearchParams()
                             .withGatewayAccountId(accountId)
                             .withEmailLike(email)
+                            .withCardHolderNameLike(cardHolderName != null ? CardHolderName.of(cardHolderName) : null)
+                            .withLastDigitsCardNumber(lastDigitsCardNumber != null ? LastDigitsCardNumber.of(lastDigitsCardNumber) : null)
                             .withReferenceLike(reference != null ? ServicePaymentReference.of(reference) : null)
                             .withCardBrands(removeBlanks(cardBrands))
                             .withFromDate(parseDate(fromDate))

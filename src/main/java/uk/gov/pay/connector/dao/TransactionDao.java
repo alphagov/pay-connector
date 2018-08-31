@@ -115,6 +115,11 @@ public class TransactionDao {
             queryFilters = queryFilters.and(
                     field("c.cardholder_name").lower().like(buildLikeClauseContaining(params.getCardHolderName().toString().toLowerCase())));
         }
+
+        if (params.getLastDigitsCardNumber() != null && isNotBlank(params.getLastDigitsCardNumber().toString())) {
+            queryFilters = queryFilters.and(
+                    field("c.last_digits_card_number").eq(params.getLastDigitsCardNumber().toString()));
+        }
         
         if (isNotBlank(params.getEmail())) {
             queryFilters = queryFilters.and(
