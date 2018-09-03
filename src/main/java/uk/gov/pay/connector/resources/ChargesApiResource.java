@@ -61,6 +61,7 @@ public class ChargesApiResource {
     public static final String EMAIL_KEY = "email";
     static final String AMOUNT_KEY = "amount";
     static final String LANGUAGE_KEY = "language";
+    static final String DELAYED_CAPTURE_KEY = "delayed_capture";
     private static final String DESCRIPTION_KEY = "description";
     private static final String RETURN_URL_KEY = "return_url";
     private static final String REFERENCE_KEY = "reference";

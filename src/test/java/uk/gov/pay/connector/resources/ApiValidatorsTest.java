@@ -24,6 +24,7 @@ import static uk.gov.pay.connector.resources.ApiValidators.validateChargeParams;
 import static uk.gov.pay.connector.resources.ApiValidators.validateChargePatchParams;
 import static uk.gov.pay.connector.resources.ApiValidators.validateFromDateIsBeforeToDate;
 import static uk.gov.pay.connector.resources.ChargesApiResource.AMOUNT_KEY;
+import static uk.gov.pay.connector.resources.ChargesApiResource.DELAYED_CAPTURE_KEY;
 import static uk.gov.pay.connector.resources.ChargesApiResource.EMAIL_KEY;
 import static uk.gov.pay.connector.resources.ChargesApiResource.LANGUAGE_KEY;
 import static uk.gov.pay.connector.resources.ChargesApiResource.MAX_AMOUNT;
@@ -169,6 +170,16 @@ public class ApiValidatorsTest {
     }
 
     @Test
+    public void validateChargeParams_shouldRejectAmount_whenNotParsableAsLong() {
+        Map<String, String> inputData = new HashMap<>();
+        inputData.put(AMOUNT_KEY, "this is not a number");
+
+        Optional<List<String>> result = validateChargeParams(inputData);
+
+        assertThat(result, is(Optional.of(Collections.singletonList(AMOUNT_KEY))));
+    }
+
+    @Test
     public void validateChargeParams_shouldAcceptLanguage_whenEn() {
         Map<String, String> inputData = new HashMap<>();
         inputData.put(LANGUAGE_KEY, "en");
@@ -218,6 +229,36 @@ public class ApiValidatorsTest {
         assertThat(result, is(Optional.of(Collections.singletonList("language"))));
     }
 
+    @Test
+    public void validateChargeParams_shouldAcceptDelayedCapture_whenTrue() {
+        Map<String, String> inputData = new HashMap<>();
+        inputData.put(DELAYED_CAPTURE_KEY, "true");
+
+        Optional<List<String>> result = validateChargeParams(inputData);
+
+        assertThat(result, is(Optional.empty()));
+    }
+
+    @Test
+    public void validateChargeParams_shouldAcceptDelayedCapture_whenFalse() {
+        Map<String, String> inputData = new HashMap<>();
+        inputData.put(DELAYED_CAPTURE_KEY, "false");
+
+        Optional<List<String>> result = validateChargeParams(inputData);
+
+        assertThat(result, is(Optional.empty()));
+    }
+
+    @Test
+    public void validateChargeParams_shouldAcceptDelayedCapture_whenNotTrueOrFalse() {
+        Map<String, String> inputData = new HashMap<>();
+        inputData.put(DELAYED_CAPTURE_KEY, "maybe");
+
+        Optional<List<String>> result = validateChargeParams(inputData);
+
+        assertThat(result, is(Optional.of(Collections.singletonList("delayed_capture"))));
+    }
+    
     @Test
     public void validateChargeParams_shouldRejectEmailAndAmount_whenBothInvalid() {
         Map<String, String> inputData = new HashMap<>();

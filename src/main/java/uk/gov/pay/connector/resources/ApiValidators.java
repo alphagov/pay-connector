@@ -24,6 +24,7 @@ import static uk.gov.pay.connector.resources.ChargesApiResource.AMOUNT_KEY;
 import static uk.gov.pay.connector.resources.ChargesApiResource.EMAIL_KEY;
 import static uk.gov.pay.connector.resources.ChargesApiResource.LANGUAGE_KEY;
 import static uk.gov.pay.connector.resources.ChargesApiResource.MAXIMUM_FIELDS_SIZE;
+import static uk.gov.pay.connector.resources.ChargesApiResource.DELAYED_CAPTURE_KEY;
 import static uk.gov.pay.connector.resources.ChargesApiResource.MAX_AMOUNT;
 import static uk.gov.pay.connector.resources.ChargesApiResource.MIN_AMOUNT;
 
@@ -40,8 +41,20 @@ class ApiValidators {
         AMOUNT(AMOUNT_KEY) {
             @Override
             boolean validate(String amount) {
-                Integer amountValue = Integer.valueOf(amount);
+                Integer amountValue;
+                try {
+                    amountValue  = Integer.valueOf(amount);
+                } catch (NumberFormatException e) {
+                    return false;
+                }
                 return MIN_AMOUNT <= amountValue && MAX_AMOUNT >= amountValue;
+            }
+        },
+        
+        DELAYED_CAPTURE(DELAYED_CAPTURE_KEY) {
+            @Override
+            boolean validate(String delayedCapture) {
+                return Boolean.TRUE.toString().equals(delayedCapture) || Boolean.FALSE.toString().equals(delayedCapture);
             }
         },
 
