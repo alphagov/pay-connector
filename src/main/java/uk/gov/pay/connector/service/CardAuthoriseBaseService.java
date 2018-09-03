@@ -16,7 +16,6 @@ import uk.gov.pay.connector.model.gateway.GatewayResponse;
 
 import javax.persistence.OptimisticLockException;
 import java.util.List;
-import java.util.Optional;
 import java.util.function.Supplier;
 
 import static uk.gov.pay.connector.service.CardExecutorService.ExecutionStatus;
@@ -33,9 +32,9 @@ public abstract class CardAuthoriseBaseService<T extends AuthorisationDetails> e
     }
 
     public GatewayResponse doAuthorise(String chargeId, T gatewayAuthRequest) {
-
         Supplier authorisationSupplier = () -> {
             ChargeEntity charge;
+
             try {
                 charge = preOperation(chargeId, gatewayAuthRequest);
                 if (charge.hasStatus(ChargeStatus.AUTHORISATION_ABORTED)) {
@@ -44,8 +43,9 @@ public abstract class CardAuthoriseBaseService<T extends AuthorisationDetails> e
             } catch (OptimisticLockException e) {
                 LOG.info("OptimisticLockException in doAuthorise for charge external_id=" + chargeId);
                 throw new ConflictRuntimeException(chargeId);
-            }
-             GatewayResponse<BaseAuthoriseResponse> operationResponse = operation(charge, gatewayAuthRequest);
+            } 
+
+            GatewayResponse<BaseAuthoriseResponse> operationResponse = operation(charge, gatewayAuthRequest);
             return postOperation(chargeId, gatewayAuthRequest, operationResponse);
         };
 

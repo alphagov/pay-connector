@@ -6,6 +6,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import uk.gov.pay.connector.app.CaptureProcessConfig;
 import uk.gov.pay.connector.app.ConnectorConfiguration;
+import uk.gov.pay.connector.util.XrayUtils;
 
 import java.util.Random;
 import java.util.concurrent.ScheduledExecutorService;
@@ -26,10 +27,15 @@ public class CaptureProcessScheduler implements Managed {
     private long randomIntervalMaximumInSeconds = RANDOM_INTERVAL_MAXIMUM_IN_SECONDS;
 
     private final CardCaptureProcess cardCaptureProcess;
-    ScheduledExecutorService scheduledExecutorService;
+    private final ScheduledExecutorService scheduledExecutorService;
+    private final XrayUtils xrayUtils;
 
-    public CaptureProcessScheduler(ConnectorConfiguration configuration, Environment environment, CardCaptureProcess cardCaptureProcess) {
+    public CaptureProcessScheduler(ConnectorConfiguration configuration, 
+                                   Environment environment, 
+                                   CardCaptureProcess cardCaptureProcess,
+                                   XrayUtils xrayUtils) {
         this.cardCaptureProcess = cardCaptureProcess;
+        this.xrayUtils = xrayUtils;
 
         if ((configuration != null) && (configuration.getCaptureProcessConfig() != null)) {
             CaptureProcessConfig captureProcessConfig = configuration.getCaptureProcessConfig();
@@ -51,9 +57,12 @@ public class CaptureProcessScheduler implements Managed {
 
         scheduledExecutorService.scheduleAtFixedRate(() -> {
             try {
+                xrayUtils.beginSegment();
                 cardCaptureProcess.runCapture();
             } catch (Exception e) {
                 logger.error("Unexpected error running capture operations", e);
+            } finally {
+                xrayUtils.endSegment();
             }
         }, initialDelayInSeconds, interval, TimeUnit.SECONDS);
     }

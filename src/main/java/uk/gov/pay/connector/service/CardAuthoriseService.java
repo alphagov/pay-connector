@@ -136,7 +136,7 @@ public class CardAuthoriseService extends CardAuthoriseBaseService<AuthCardDetai
 
             CardDetailsEntity detailsEntity = buildCardDetailsEntity(authCardDetails);
             chargeEntity.setCardDetails(detailsEntity);
-            
+
             chargeEventDao.persistChargeEventOf(chargeEntity, Optional.empty());
             logger.info("Stored confirmation details for charge - charge_external_id={}",
                     chargeEntity.getExternalId());

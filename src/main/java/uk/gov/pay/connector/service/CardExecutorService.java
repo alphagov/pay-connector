@@ -7,15 +7,25 @@ import io.dropwizard.setup.Environment;
 import org.apache.commons.lang3.tuple.Pair;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import uk.gov.pay.connector.app.ExecutorServiceConfig;
 import uk.gov.pay.connector.app.ConnectorConfiguration;
+import uk.gov.pay.connector.app.ExecutorServiceConfig;
+import uk.gov.pay.connector.util.XrayUtils;
 
 import javax.ws.rs.WebApplicationException;
-import java.util.concurrent.*;
+import java.util.concurrent.Callable;
+import java.util.concurrent.ExecutionException;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
+import java.util.concurrent.Future;
+import java.util.concurrent.ThreadFactory;
+import java.util.concurrent.TimeUnit;
+import java.util.concurrent.TimeoutException;
 import java.util.function.Supplier;
 
 import static java.lang.Runtime.getRuntime;
-import static uk.gov.pay.connector.service.CardExecutorService.ExecutionStatus.*;
+import static uk.gov.pay.connector.service.CardExecutorService.ExecutionStatus.COMPLETED;
+import static uk.gov.pay.connector.service.CardExecutorService.ExecutionStatus.FAILED;
+import static uk.gov.pay.connector.service.CardExecutorService.ExecutionStatus.IN_PROGRESS;
 
 // this service runs the supplied function in a new Thread
 public class CardExecutorService<T> {
@@ -26,6 +36,7 @@ public class CardExecutorService<T> {
 
     private ExecutorServiceConfig config;
     private ExecutorService executor;
+    private XrayUtils xrayUtils;
 
     public enum ExecutionStatus {
         COMPLETED,
@@ -34,7 +45,7 @@ public class CardExecutorService<T> {
     }
 
     @Inject
-    public CardExecutorService(ConnectorConfiguration configuration, Environment environment) {
+    public CardExecutorService(ConnectorConfiguration configuration, Environment environment, XrayUtils xrayUtils) {
         final ThreadFactory threadFactory = new ThreadFactoryBuilder()
                 .setNameFormat("CardExecutorService-%d")
                 .build();
@@ -42,6 +53,7 @@ public class CardExecutorService<T> {
         this.config = configuration.getExecutorServiceConfig();
         int numberOfThreads = config.getThreadsPerCpu() * getRuntime().availableProcessors();
         this.executor = Executors.newFixedThreadPool(numberOfThreads, threadFactory);
+        this.xrayUtils = xrayUtils;
         addShutdownHook();
     }
 
@@ -77,13 +89,18 @@ public class CardExecutorService<T> {
         final long startTime = System.currentTimeMillis();
 
         Future<T> futureObject = executor.submit(() -> {
+            xrayUtils.beginSegment();
             long totalWaitTime = System.currentTimeMillis() - startTime;
             logger.debug("Card operation task spent {} ms in queue", totalWaitTime);
             if (totalWaitTime > QUEUE_WAIT_WARN_THRESHOLD_MILLIS) {
                 logger.warn("CardExecutor Service delay - queue_wait_time={}", totalWaitTime);
             }
             metricRegistry.histogram("card-executor.delay").update(totalWaitTime);
-            return task.call();
+            try {
+                return task.call();
+            } finally {
+                xrayUtils.endSegment();
+            }
         });
 
         try {

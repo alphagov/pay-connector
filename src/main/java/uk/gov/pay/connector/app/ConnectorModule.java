@@ -15,6 +15,7 @@ import uk.gov.pay.connector.service.GatewayAccountServicesFactory;
 import uk.gov.pay.connector.service.PaymentProviders;
 import uk.gov.pay.connector.service.notify.NotifyClientFactoryProvider;
 import uk.gov.pay.connector.util.HashUtil;
+import uk.gov.pay.connector.util.XrayUtils;
 import uk.gov.pay.connector.validations.RequestValidator;
 
 import java.util.Properties;
@@ -46,6 +47,7 @@ public class ConnectorModule extends AbstractModule {
 
     private JpaPersistModule jpaModule(ConnectorConfiguration configuration) {
         DataSourceFactory dbConfig = configuration.getDataSourceFactory();
+
         final Properties properties = new Properties();
         properties.put("javax.persistence.jdbc.driver", dbConfig.getDriverClass());
         properties.put("javax.persistence.jdbc.url", dbConfig.getUrl());
@@ -58,7 +60,12 @@ public class ConnectorModule extends AbstractModule {
         properties.put("eclipselink.query-results-cache", jpaConfiguration.getCacheSharedDefault());
         properties.put("eclipselink.cache.shared.default", jpaConfiguration.getCacheSharedDefault());
         properties.put("eclipselink.ddl-generation.output-mode", jpaConfiguration.getDdlGenerationOutputMode());
-        properties.put("eclipselink.session.customizer", "uk.gov.pay.connector.util.ConnectorSessionCustomiser");
+        
+        if (configuration.isXrayEnabled()) {
+            properties.put("eclipselink.session.customizer", "uk.gov.pay.connector.util.ConnectorSessionCustomiserWithXrayProfiling");
+        } else {
+            properties.put("eclipselink.session.customizer", "uk.gov.pay.connector.util.ConnectorSessionCustomiser");
+        }
 
         final JpaPersistModule jpaModule = new JpaPersistModule("ConnectorUnit");
         jpaModule.properties(properties);
@@ -71,4 +78,9 @@ public class ConnectorModule extends AbstractModule {
         return environment.getObjectMapper();
     }
 
+    @Provides
+    @Singleton
+    public XrayUtils xrayUtils(ConnectorConfiguration connectorConfiguration) {
+        return new XrayUtils(connectorConfiguration.isXrayEnabled());
+    }
 }

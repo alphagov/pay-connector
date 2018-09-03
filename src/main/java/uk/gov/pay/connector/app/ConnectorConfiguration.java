@@ -68,6 +68,9 @@ public class    ConnectorConfiguration extends Configuration {
 
     @NotNull
     private String graphitePort;
+    
+    @NotNull
+    private Boolean xrayEnabled;
 
     @JsonProperty("database")
     public DataSourceFactory getDataSourceFactory() {
@@ -146,4 +149,7 @@ public class    ConnectorConfiguration extends Configuration {
         return captureProcessConfig;
     }
 
+    public Boolean isXrayEnabled() {
+        return xrayEnabled;
+    }
 }

@@ -105,7 +105,7 @@ public class ClientFactoryTest {
     }
 
     @Test
-    public void anHttpRequestShouldTimeOut_whenCustomJerseyReadTimeoutIsConfigured() throws Exception {
+    public void anHttpRequestShouldTimeOut_whenCustomJerseyReadTimeoutIsConfigured() {
         app = new DropwizardTestSupport<>(ConnectorApp.class,
                 ResourceHelpers.resourceFilePath("config/client-factory-test-config.yaml"));
         app.before();
@@ -177,7 +177,7 @@ public class ClientFactoryTest {
     }
 
     @Test
-    public void shouldUseGatewaySpecificReadTimeoutOverride_whenSpecified() throws Exception {
+    public void shouldUseGatewaySpecificReadTimeoutOverride_whenSpecified() {
         app = new DropwizardTestSupport<>(ConnectorApp.class,
                 ResourceHelpers.resourceFilePath("config/client-factory-test-config-with-worldpay-timeout-override.yaml"));
         app.before();
@@ -200,7 +200,7 @@ public class ClientFactoryTest {
     }
 
     @Test
-    public void shouldUseGatewaySpecificReadTimeoutOverrideForSmartpay_whenSpecified() throws Exception {
+    public void shouldUseGatewaySpecificReadTimeoutOverrideForSmartpay_whenSpecified() {
         app = new DropwizardTestSupport<>(ConnectorApp.class,
                 ResourceHelpers.resourceFilePath("config/client-factory-test-config-with-smartpay-timeout-override.yaml"));
         app.before();

@@ -45,6 +45,7 @@ import uk.gov.pay.connector.service.CaptureProcessScheduler;
 import uk.gov.pay.connector.service.CardCaptureProcess;
 import uk.gov.pay.connector.util.DependentResourceWaitCommand;
 import uk.gov.pay.connector.util.TrustingSSLSocketFactory;
+import uk.gov.pay.connector.util.XrayUtils;
 
 import javax.net.ssl.HttpsURLConnection;
 import javax.net.ssl.SSLSocketFactory;
@@ -108,14 +109,15 @@ public class ConnectorApp extends Application<ConnectorConfiguration> {
 
         environment.servlets().addFilter("LoggingFilter", injector.getInstance(LoggingFilter.class))
                 .addMappingForUrlPatterns(of(REQUEST), true, "/v1/*");
-
+        
         environment.healthChecks().register("ping", new Ping());
         environment.healthChecks().register("database", injector.getInstance(DatabaseHealthCheck.class));
         environment.healthChecks().register("cardExecutorService", injector.getInstance(CardExecutorServiceHealthCheck.class));
 
         setGlobalProxies(configuration);
 
-        Xray.init(environment, "pay-connector","/v1/*");
+        if (configuration.isXrayEnabled())
+            Xray.init(environment, "pay-connector","/v1/*");
     }
 
     private Injector createInjector(Environment environment, Module module) {
@@ -157,7 +159,8 @@ public class ConnectorApp extends Application<ConnectorConfiguration> {
     }
 
     private void setupSchedulers(ConnectorConfiguration configuration, Environment environment, Injector injector) {
-        CaptureProcessScheduler captureProcessScheduler = new CaptureProcessScheduler(configuration, environment, injector.getInstance(CardCaptureProcess.class));
+        CaptureProcessScheduler captureProcessScheduler = new CaptureProcessScheduler(configuration, 
+                environment, injector.getInstance(CardCaptureProcess.class), injector.getInstance(XrayUtils.class));
         environment.lifecycle().manage(captureProcessScheduler);
     }
 }

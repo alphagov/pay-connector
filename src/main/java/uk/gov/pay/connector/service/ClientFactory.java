@@ -12,12 +12,12 @@ import org.apache.http.conn.socket.ConnectionSocketFactory;
 import org.apache.http.conn.socket.PlainConnectionSocketFactory;
 import org.apache.http.conn.ssl.SSLConnectionSocketFactory;
 import org.apache.http.impl.conn.ManagedHttpClientConnectionFactory;
-import org.apache.http.impl.conn.PoolingHttpClientConnectionManager;
 import org.apache.http.impl.conn.SystemDefaultDnsResolver;
 import org.glassfish.jersey.SslConfigurator;
 import org.glassfish.jersey.apache.connector.ApacheClientProperties;
 import org.glassfish.jersey.apache.connector.ApacheConnectorProvider;
 import org.glassfish.jersey.client.ClientProperties;
+import uk.gov.pay.commons.utils.xray.XRayHttpClientFilter;
 import uk.gov.pay.connector.app.ConnectorConfiguration;
 import uk.gov.pay.connector.app.OperationOverrides;
 import uk.gov.pay.connector.filters.RestClientLoggingFilter;
@@ -56,6 +56,9 @@ public class ClientFactory {
 
         Client client = defaultClientBuilder.build(gateway.getName());
         client.register(RestClientLoggingFilter.class);
+        
+        if (conf.isXrayEnabled()) client.register(XRayHttpClientFilter.class);
+        
         return client;
     }
 
