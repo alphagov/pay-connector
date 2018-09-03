@@ -1,8 +1,12 @@
 package uk.gov.pay.connector.util;
 
 import com.amazonaws.xray.AWSXRay;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 public class XrayUtils {
+
+    private final Logger LOGGER = LoggerFactory.getLogger(XrayUtils.class);
 
     private final boolean xrayEnabled;
     private final String segmentName;
@@ -13,12 +17,22 @@ public class XrayUtils {
     }
 
     public void beginSegment() {
-        if (xrayEnabled) 
-            AWSXRay.beginSegment(segmentName);
+        if (xrayEnabled) {
+            try {
+                AWSXRay.beginSegment(segmentName);
+            } catch (Exception e) {
+                LOGGER.error("An error occurred beginning an x-ray segment.", e);
+            }
+        }
     }
 
     public void endSegment() {
-        if (xrayEnabled)
-            AWSXRay.endSegment();
+        if (xrayEnabled) {
+            try {
+                AWSXRay.endSegment();
+            } catch (Exception e) {
+                LOGGER.error("An error occurred ending an x-ray segment.", e);
+            }
+        }
     }
 }
