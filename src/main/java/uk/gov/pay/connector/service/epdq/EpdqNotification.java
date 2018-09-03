@@ -6,7 +6,7 @@ import org.apache.http.client.utils.URLEncodedUtils;
 import uk.gov.pay.connector.model.ChargeStatusRequest;
 import uk.gov.pay.connector.model.domain.ChargeStatus;
 
-import java.nio.charset.StandardCharsets;
+import java.nio.charset.Charset;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
@@ -31,7 +31,7 @@ public class EpdqNotification implements ChargeStatusRequest {
 
     public EpdqNotification(String payload) {
         try {
-            paramsList = URLEncodedUtils.parse(payload, StandardCharsets.UTF_8);
+            paramsList = URLEncodedUtils.parse(payload, Charset.forName("windows-1252"));
 
             Map<String, String> params = paramsList.stream()
                     .collect(toMap(NameValuePair::getName, NameValuePair::getValue));
