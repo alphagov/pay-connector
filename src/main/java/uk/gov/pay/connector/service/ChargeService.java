@@ -88,7 +88,8 @@ public class ChargeService {
                     ServicePaymentReference.of(chargeRequest.get("reference")),
                     gatewayAccount,
                     chargeRequest.get("email"),
-                    language);
+                    language,
+                    Boolean.valueOf(chargeRequest.getOrDefault("delayed_capture", "false")));
             chargeDao.persist(chargeEntity);
 
             chargeEventDao.persistChargeEventOf(chargeEntity, Optional.empty());

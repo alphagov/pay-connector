@@ -89,7 +89,8 @@ public class ChargeDaoCardDetailsITest extends DaoITestBase {
 
         Address billingAddress = aValidAddress().build();
         ChargeEntity chargeEntity = new ChargeEntity(2323L, "returnUrl", "description",
-                ServicePaymentReference.of("ref"), testAccount, "email@email.test", SupportedLanguage.ENGLISH);
+                ServicePaymentReference.of("ref"), testAccount, "email@email.test", SupportedLanguage.ENGLISH,
+                false);
         CardDetailsEntity cardDetailsEntity = new CardDetailsEntity();
         cardDetailsEntity.setCardBrand("VISA");
         cardDetailsEntity.setBillingAddress(new AddressEntity(billingAddress));

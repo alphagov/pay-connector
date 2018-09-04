@@ -133,7 +133,7 @@ public class ChargeServiceTest {
     }
 
     @Test
-    public void shouldCreateAChargeWithDefaultLanguage() {
+    public void shouldCreateAChargeWithDefaultLanguageAndDefaultDelayedCapture() {
         service.create(CHARGE_REQUEST, GATEWAY_ACCOUNT_ID, mockedUriInfo);
 
         ArgumentCaptor<ChargeEntity> chargeEntityArgumentCaptor = forClass(ChargeEntity.class);
@@ -152,8 +152,29 @@ public class ChargeServiceTest {
         assertThat(createdChargeEntity.getGatewayTransactionId(), is(nullValue()));
         assertThat(createdChargeEntity.getCreatedDate(), is(ZonedDateTimeMatchers.within(3, ChronoUnit.SECONDS, ZonedDateTime.now(ZoneId.of("UTC")))));
         assertThat(createdChargeEntity.getLanguage(), is(SupportedLanguage.ENGLISH));
+        assertThat(createdChargeEntity.isDelayedCapture(), is(false));
 
         verify(mockedChargeEventDao).persistChargeEventOf(createdChargeEntity, Optional.empty());
+    }
+
+    @Test
+    public void shouldCreateAChargeWithDelayedCaptureTrue() {
+        Map<String, String> chargeRequestWithDelayedCapture = new HashMap<>(CHARGE_REQUEST);
+        chargeRequestWithDelayedCapture.put("delayed_capture", "true");
+        service.create(chargeRequestWithDelayedCapture, GATEWAY_ACCOUNT_ID, mockedUriInfo);
+
+        ArgumentCaptor<ChargeEntity> chargeEntityArgumentCaptor = forClass(ChargeEntity.class);
+        verify(mockedChargeDao).persist(chargeEntityArgumentCaptor.capture());
+    }
+
+    @Test
+    public void shouldCreateAChargeWithDelayedCaptureFalse() {
+        Map<String, String> chargeRequestWithoutDelayedCapture = new HashMap<>(CHARGE_REQUEST);
+        chargeRequestWithoutDelayedCapture.put("delayed_capture", "false");
+        service.create(chargeRequestWithoutDelayedCapture, GATEWAY_ACCOUNT_ID, mockedUriInfo);
+
+        ArgumentCaptor<ChargeEntity> chargeEntityArgumentCaptor = forClass(ChargeEntity.class);
+        verify(mockedChargeDao).persist(chargeEntityArgumentCaptor.capture());
     }
 
     @Test
