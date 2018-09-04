@@ -72,7 +72,7 @@ public class CardResource {
     @Produces(APPLICATION_JSON)
     public Response captureCharge(@PathParam("chargeId") String chargeId) {
         logger.info("Capture of charge asynchronously [charge_external_id={}]", chargeId);
-        cardCaptureService.markChargeAsCaptureApproved(chargeId);
+        cardCaptureService.markChargeAsEligibleForCapture(chargeId);
         return ResponseUtil.noContentResponse();
     }
 

@@ -25,7 +25,6 @@ import java.util.stream.Collectors;
 import static com.google.common.collect.Lists.newArrayList;
 import static uk.gov.pay.connector.model.domain.ChargeStatus.AUTHORISATION_3DS_REQUIRED;
 import static uk.gov.pay.connector.model.domain.ChargeStatus.AUTHORISATION_SUCCESS;
-import static uk.gov.pay.connector.model.domain.ChargeStatus.AWAITING_CAPTURE_REQUEST;
 import static uk.gov.pay.connector.model.domain.ChargeStatus.CREATED;
 import static uk.gov.pay.connector.model.domain.ChargeStatus.ENTERING_CARD_DETAILS;
 import static uk.gov.pay.connector.model.domain.ChargeStatus.EXPIRED;
@@ -46,8 +45,7 @@ public class ChargeExpiryService {
             CREATED,
             ENTERING_CARD_DETAILS,
             AUTHORISATION_3DS_REQUIRED,
-            AUTHORISATION_SUCCESS,
-            AWAITING_CAPTURE_REQUEST);
+            AUTHORISATION_SUCCESS);
 
     private final ChargeDao chargeDao;
     private final ChargeEventDao chargeEventDao;

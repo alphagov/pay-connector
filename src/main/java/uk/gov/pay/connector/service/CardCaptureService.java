@@ -14,6 +14,7 @@ import uk.gov.pay.connector.model.CaptureGatewayRequest;
 import uk.gov.pay.connector.model.domain.ChargeEntity;
 import uk.gov.pay.connector.model.domain.ChargeStatus;
 import uk.gov.pay.connector.model.domain.GatewayAccountEntity;
+import uk.gov.pay.connector.model.domain.PaymentGatewayStateTransitions;
 import uk.gov.pay.connector.model.gateway.GatewayResponse;
 
 import javax.inject.Inject;
@@ -29,6 +30,7 @@ import static uk.gov.pay.connector.model.domain.ChargeStatus.CAPTURE_APPROVED;
 import static uk.gov.pay.connector.model.domain.ChargeStatus.CAPTURE_APPROVED_RETRY;
 import static uk.gov.pay.connector.model.domain.ChargeStatus.CAPTURE_ERROR;
 import static uk.gov.pay.connector.model.domain.ChargeStatus.CAPTURE_SUBMITTED;
+import static uk.gov.pay.connector.model.domain.PaymentGatewayStateTransitions.isValidTransition;
 
 public class CardCaptureService extends CardService implements TransactionalGatewayOperation<BaseCaptureResponse> {
 
@@ -69,16 +71,23 @@ public class CardCaptureService extends CardService implements TransactionalGate
     }
 
     @Transactional
-    public ChargeEntity markChargeAsCaptureApproved(String externalId) {
+    public ChargeEntity markChargeAsEligibleForCapture(String externalId) {
         return chargeDao.findByExternalId(externalId).map(charge -> {
-            if (!AUTHORISATION_SUCCESS.getValue().equals(charge.getStatus())) {
-                logger.error("Charge is not in the expect state of AUTHORISATION_SUCCESS to be marked as CAPTURE_APPROVED [charge_external_id={}, charge_status={}]",
-                        charge.getExternalId(), charge.getStatus());
+
+            ChargeStatus targetStatus = ChargeStatus.CAPTURE_APPROVED;
+            if (charge.isDelayedCapture()){
+                targetStatus = ChargeStatus.AWAITING_CAPTURE_REQUEST;
+            }
+
+            ChargeStatus currentChargeStatus = ChargeStatus.fromString(charge.getStatus());
+            if (!isValidTransition(currentChargeStatus, targetStatus)) {
+                logger.error("Charge with state " + currentChargeStatus + " cannot proceed to " + targetStatus +
+                                " [charge_external_id={}, charge_status={}]", charge.getExternalId(), currentChargeStatus);
                 throw new IllegalStateRuntimeException(charge.getExternalId());
             }
 
-            logger.info("CAPTURE_APPROVED for charge [charge_external_id={}]", externalId);
-            charge.setStatus(CAPTURE_APPROVED);
+            logger.info( targetStatus + " for charge [charge_external_id={}]", externalId);
+            charge.setStatus(targetStatus);
             chargeEventDao.persistChargeEventOf(charge, Optional.empty());
             return charge;
         }).orElseThrow(() -> new ChargeNotFoundRuntimeException(externalId));
