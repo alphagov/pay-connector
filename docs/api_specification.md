@@ -305,43 +305,82 @@ Content-Type: application/json
 
 {
     "amount": 5000,
+    "description": "The payment description (shown to the user on the payment pages)",
+    "reference": "The reference issued by the government service for this payment",
     "gateway_account_id": "10",
-    "return_url": "http://example.service/return_from_payments"
+    "return_url": "http://example.service.gov.uk/return_from_payments"
 }
 ```
 
 #### Request body description
 
-| Field                    | required | Description                               |
-| ------------------------ |:--------:| ----------------------------------------- |
-| `amount`                 | X | The amount (in minor units) of the charge       |
-| `description`            | X | The payment description       |
-| `reference`              | X | There reference issued by the government service for this payment       |
-| `gateway_account_id`     | X | The gateway account to use for this charge |
-| `return_url`             | X | The url to return the user to after the payment process has completed.|
+| Field                    | required | Description                                                                            |
+| ------------------------ |:---------:| --------------------------------------------------------------------------------------|
+| `amount`                 | X         | The amount (in minor units) of the charge                                             |
+| `description`            | X         | The payment description (shown to the user on the payment pages)                      |
+| `reference`              | X         | The reference issued by the government service for this payment                       |
+| `gateway_account_id`     | X         | The gateway account to use for this charge                                            |
+| `return_url`             | X         | The url to return the user to after the payment process has completed                 |
+| `language`               |           | A supported ISO-639-1 language code e.g. `"cy"` — defaults to `"en"` if not specified |
+| `delayed_capture`        |           | Whether the payment requires an explicit request to capture — defaults to false       |
 
 ### Response example
 
 ```
 201 Created
 Content-Type: application/json
-Location: http://connector.service/v1/api/charges/1
+Location: http://connector.service.example/v1/api/charges/1
 
 {
-    "charge_id": "1",
-    "description": "Breathing licence",
-    "reference": "Ref-1234",
-    "links": [{
-            "href": "http://connector.service/v1/api/charges/1",
-            "rel" : "self",
-            "method" : "GET"
-        }, 
+    "amount": 5000,
+    "state": {
+        "finished": false,
+        "status": "created"
+    },
+    "description": "The payment description (shown to the user on the payment pages)",
+    "reference": "The reference issued by the government service for this payment",
+    "language": "en",
+    "links": [
         {
-            "href": "http://frontend/charges/1",
-            "rel" : "next_url",
-            "method" : "GET"
+            "rel": "self",
+            "method": "GET",
+            "href": "https://connector.service.example/v1/api/accounts/1/charges/d1onfdh8qptnclbs8q7f5ldles"
+        },
+        {
+            "rel": "refunds",
+            "method": "GET",
+            "href": "https://connector.service.example/v1/api/accounts/1/charges/d1onfdh8qptnclbs8q7f5ldles/refunds"
+        },
+        {
+            "rel": "next_url",
+            "method": "GET",
+            "href": "https://frontend.service.example/secure/c4a2aaf7-c388-432d-a09b-fe0b669cd070"
+        },
+        {
+            "rel": "next_url_post",
+            "method": "POST",
+            "href": "https://frontend.pymnt.localdomain/secure",
+            "type": "application/x-www-form-urlencoded",
+            "params": {
+                "chargeTokenId": "c4a2aaf7-c388-432d-a09b-fe0b669cd070"
+            }
         }
-      ]
+    ],
+    "charge_id": "d1onfdh8qptnclbs8q7f5ldles",
+    "return_url": "http://example.service.gov.uk/return_from_payments",
+    "payment_provider": "sandbox",
+    "created_date": "2018-09-04T09:48:24.099Z",
+    "refund_summary": {
+        "status": "pending",
+        "user_external_id": null,
+        "amount_available": 5000,
+        "amount_submitted": 0
+    },
+    "settlement_summary": {
+        "capture_submit_time": null,
+        "captured_date": null
+    },
+    "delayed_capture": false
 }
 ```
 
@@ -433,30 +472,32 @@ Content-Type: application/json
 
 #### Response field description
 
-| Field                    | always present | Description                               |
-| ------------------------ |:--------:| ----------------------------------------- |
-| `results`                | X | List of payments       |
-| `charge_id`              | X | The unique identifier for this charge       |
-| `amount`                 | X | The amount of this charge       |
-| `description`            | X | The payment description       
-| `reference`              | X | There reference issued by the government service for this payment       |
-| `gateway_account_id`     | X | The ID of the gateway account to use with this charge       |
-| `gateway_transaction_id` | X | The gateway transaction reference associated to this charge       |
-| `status`                 | X | The current external status of the charge       |
-| `card_brand`             |   | The brand label of the card                 |
-| `card_details.card_brand`      |           | The card brand used for this payment                    |
-| `card_details.cardholder_name` |           | The card card holder name of this payment               |
-| `card_details.expiry_date`     |           | The expiry date of this card                            |
-| `card_details.last_digits_card_number`  |  | The last 4 digits of this card                          |
-| `card_details.billing_address.line1`    |  | The line 1 of the billing address                       |
-| `card_details.billing_address.line2`    |  | The line 2 of the billing address                       |
-| `card_details.billing_address.postcode` |  | The postcode of the billing address                     |
-| `card_details.billing_address.city`     |  | The city of the billing address                         |
-| `card_details.billing_address.country`  |  | The country of the billing address                      |
-| `payment_provider`       | X | The gateway provider used by this transaction                         |
-| `return_url`             | X | The url to return the user to after the payment process has completed.|
-| `refund_summary`         | X | Provides a refund summary of the total refund amount still available and how much has already been refunded, plus a refund status|
-| `settlement_summary`         | X | Provides a settlement summary of the charge containing date and time of capture, if present.|
+| Field                    | always present | Description                                                                                                          |
+| ------------------------ |:--------:| ---------------------------------------------------------------------------------------------------------------------------|
+| `results`                | X | List of payments                                                                                                                  |
+| `charge_id`              | X | The unique identifier for this charge                                                                                             |
+| `amount`                 | X | The amount of this charge                                                                                                         |
+| `description`            | X | The payment description                                                                                                           |
+| `reference`              | X | There reference issued by the government service for this payment                                                                 |
+| `gateway_account_id`     | X | The ID of the gateway account to use with this charge                                                                             |
+| `gateway_transaction_id` | X | The gateway transaction reference associated to this charge                                                                       |
+| `status`                 | X | The current external status of the charge                                                                                         |
+| `language`               | X | The ISO-639-1 code representing the language of the payment e.g. `"en"`                                                           |
+| `delayed_capture`        | X | Whether the payment requires or required an explicit request to capture                                                           |
+| `card_brand`             |   | The brand label of the card                                                                                                       |
+| `card_details.card_brand`      |           | The card brand used for this payment                                                                                |
+| `card_details.cardholder_name` |           | The card card holder name of this payment                                                                           |
+| `card_details.expiry_date`     |           | The expiry date of this card                                                                                        |
+| `card_details.last_digits_card_number`  |  | The last 4 digits of this card                                                                                      |
+| `card_details.billing_address.line1`    |  | The line 1 of the billing address                                                                                   |
+| `card_details.billing_address.line2`    |  | The line 2 of the billing address                                                                                   |
+| `card_details.billing_address.postcode` |  | The postcode of the billing address                                                                                 |
+| `card_details.billing_address.city`     |  | The city of the billing address                                                                                     |
+| `card_details.billing_address.country`  |  | The country of the billing address                                                                                  |
+| `payment_provider`       | X | The gateway provider used by this transaction                                                                                     |
+| `return_url`             | X | The url to return the user to after the payment process has completed                                                             |
+| `refund_summary`         | X | Provides a refund summary of the total refund amount still available and how much has already been refunded, plus a refund status |
+| `settlement_summary`     | X | Provides a settlement summary of the charge containing date and time of capture, if present.                                      |
 
 -----------------------------------------------------------------------------------------------------------
 
@@ -895,6 +936,8 @@ Content-Type: application/json
     "amount": 5000,
     "status": "CREATED",
     "card_brand": "Visa",
+    "language": "en",
+    "delayed_capture": false,
     "links": [{
                 "href": "http://connector.service/v1/frontend/charges/1",
                 "rel" : "self",
@@ -915,11 +958,13 @@ Content-Type: application/json
 
 #### Response field description
 
-| Field                    | always present | Description                         |
-| ------------------------ |:--------:| ----------------------------------------- |
-| `amount`                 | X | The amount (in minor units) of the charge       |
-| `status`                 | X | The current (internal) status of the charge |
-| `card_brand`              |   | The brand label of the card                 |
+| Field                    | always present | Description                                                |
+| ------------------------ |:--------:| ---------------------------------------------------------------- |
+| `amount`                 | X | The amount (in minor units) of the charge                               |
+| `status`                 | X | The current (internal) status of the charge                             |
+| `card_brand`             |   | The brand label of the card                                             |
+| `language`               | X | The ISO-639-1 code representing the language of the payment e.g. `"en"` |
+| `delayed_capture`        | X | Whether the payment requires or required an explicit request to capture |
 
 -----------------------------------------------------------------------------------------------------------
 
