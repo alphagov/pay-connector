@@ -160,6 +160,7 @@ public class ChargeService {
                 .withReturnUrl(chargeEntity.getReturnUrl())
                 .withEmail(chargeEntity.getEmail())
                 .withLanguage(chargeEntity.getLanguage())
+                .withDelayedCapture(chargeEntity.isDelayedCapture())
                 .withRefunds(buildRefundSummary(chargeEntity))
                 .withSettlement(buildSettlementSummary(chargeEntity))
                 .withCardDetails(persistedCard)

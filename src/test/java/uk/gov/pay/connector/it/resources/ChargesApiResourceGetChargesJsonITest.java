@@ -86,7 +86,7 @@ public class ChargesApiResourceGetChargesJsonITest extends ChargingITestBase {
         app.getDatabaseTestHelper().addCardType(card, "label", "CREDIT", "brand", false);
         app.getDatabaseTestHelper().addAcceptedCardType(Long.valueOf(accountId), card);
         app.getDatabaseTestHelper().addCharge(chargeId, externalChargeId, accountId, AMOUNT, chargeStatus, returnUrl, null,
-                ServicePaymentReference.of("My reference"), createdDate, SupportedLanguage.WELSH);
+                ServicePaymentReference.of("My reference"), createdDate, SupportedLanguage.WELSH, true);
         app.getDatabaseTestHelper().updateChargeCardDetails(chargeId, "VISA", "1234", "Mr. McPayment", "03/18", "line1", null, "postcode", "city", null, "country");
         app.getDatabaseTestHelper().addToken(chargeId, "tokenId");
         app.getDatabaseTestHelper().addEvent(chargeId, chargeStatus.getValue());
@@ -111,7 +111,8 @@ public class ChargesApiResourceGetChargesJsonITest extends ChargingITestBase {
                 .body("results[0].reference", is("My reference"))
                 .body("results[0].description", is(description))
                 .body("results[0].created_date", is("2016-01-26T13:45:32Z"))
-                .body("results[0].language", is(SupportedLanguage.WELSH.toString()));
+                .body("results[0].language", is(SupportedLanguage.WELSH.toString()))
+                .body("results[0].delayed_capture", is(true));
     }
 
     @Test

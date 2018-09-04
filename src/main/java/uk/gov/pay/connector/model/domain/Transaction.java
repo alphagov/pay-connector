@@ -40,7 +40,8 @@ import java.time.ZonedDateTime;
                         @ColumnResult(name = "address_line2", type = String.class),
                         @ColumnResult(name = "address_postcode", type = String.class),
                         @ColumnResult(name = "amount", type = Long.class),
-                        @ColumnResult(name = "language", type = String.class)}))
+                        @ColumnResult(name = "language", type = String.class),
+                        @ColumnResult(name = "delayed_capture", type = Boolean.class)}))
 @Entity
 @ReadOnly
 public class Transaction {
@@ -56,6 +57,7 @@ public class Transaction {
     private String gatewayTransactionId;
     private ZonedDateTime createdDate;
     private SupportedLanguage language;
+    private boolean delayedCapture;
 
     @Id
     private String transactionType;
@@ -99,7 +101,8 @@ public class Transaction {
                        String addressLine2,
                        String addressPostcode,
                        long amount,
-                       String language) {
+                       String language,
+                       boolean delayedCapture) {
         this.chargeId = chargeId;
         this.externalId = externalId;
         this.reference = reference;
@@ -124,6 +127,7 @@ public class Transaction {
         this.addressPostcode = addressPostcode;
         this.amount = amount;
         this.language = SupportedLanguage.fromIso639AlphaTwoCode(language);
+        this.delayedCapture = delayedCapture;
     }
 
     public Long getChargeId() {
@@ -216,6 +220,10 @@ public class Transaction {
 
     public SupportedLanguage getLanguage() {
         return language;
+    }
+    
+    public boolean isDelayedCapture() {
+        return delayedCapture;
     }
 
     public String getUserExternalId() {

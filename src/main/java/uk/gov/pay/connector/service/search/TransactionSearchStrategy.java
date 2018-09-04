@@ -75,6 +75,7 @@ public class TransactionSearchStrategy extends AbstractSearchStrategy<Transactio
                 .withEmail(transaction.getEmail())
                 .withGatewayTransactionId(transaction.getGatewayTransactionId())
                 .withLanguage(transaction.getLanguage())
+                .withDelayedCapture(transaction.isDelayedCapture())
                 .withLink("self", GET, uriInfo.getBaseUriBuilder()
                         .path("/v1/api/accounts/{accountId}/charges/{chargeId}")
                         .build(transaction.getGatewayAccountId(), transaction.getExternalId()))

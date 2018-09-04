@@ -370,6 +370,7 @@ public class DatabaseFixtures {
         String transactionId;
         ServicePaymentReference reference = ServicePaymentReference.of("Test reference");
         SupportedLanguage language = SupportedLanguage.ENGLISH;
+        boolean delayedCapture = false;
 
         ZonedDateTime createdDate = ZonedDateTime.now(ZoneId.of("UTC"));
 
@@ -439,7 +440,12 @@ public class DatabaseFixtures {
             this.language = language;
             return this;
         }
-
+        
+        public TestCharge withDelayedCapture(boolean delayedCapture) {
+            this.delayedCapture = delayedCapture;
+            return this;
+        }
+        
         public TestCharge insert() {
             if (testAccount == null)
                 throw new IllegalStateException("Test Account must be provided.");
@@ -495,6 +501,10 @@ public class DatabaseFixtures {
         
         public SupportedLanguage getLanguage() {
             return language;
+        }
+        
+        public boolean isDelayedCapture() {
+            return delayedCapture;
         }
 
         public TestAccount getTestAccount() {

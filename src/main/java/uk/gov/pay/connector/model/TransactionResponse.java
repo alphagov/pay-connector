@@ -29,7 +29,7 @@ public class TransactionResponse extends ChargeResponse {
         public TransactionResponse build() {
             return new TransactionResponse(transactionType, chargeId, amount, state, cardBrand, gatewayTransactionId,
                     returnUrl, email, description, reference, providerName, createdDate, links, refundSummary,
-                    settlementSummary, cardDetails, auth3dsData, language);
+                    settlementSummary, cardDetails, auth3dsData, language, delayedCapture);
         }
 
     }
@@ -46,9 +46,9 @@ public class TransactionResponse extends ChargeResponse {
                                   String description, ServicePaymentReference reference, String providerName,
                                   String createdDate, List<Map<String, Object>> dataLinks, RefundSummary refundSummary,
                                   SettlementSummary settlementSummary, PersistedCard cardDetails,
-                                  Auth3dsData auth3dsData, SupportedLanguage language) {
+                                  Auth3dsData auth3dsData, SupportedLanguage language, boolean delayedCapture) {
         super(chargeId, amount, state, cardBrand, gatewayTransactionId, returnUrl, email, description, reference,
-                providerName, createdDate, dataLinks, refundSummary, settlementSummary, cardDetails, auth3dsData, language);
+                providerName, createdDate, dataLinks, refundSummary, settlementSummary, cardDetails, auth3dsData, language, delayedCapture);
         this.transactionType = transactionType;
     }
 

@@ -84,6 +84,7 @@ public class TransactionDaoITest extends DaoITestBase {
         assertThat(transactionRefund.getUserExternalId(), is(REFUND_USER_EXTERNAL_ID));
         assertThat(transactionRefund.getCardBrandLabel(), is("Visa")); // read from card types table which is populated by the card_types.csv seed data
         assertThat(transactionRefund.getLanguage(), is(testCharge.getLanguage()));
+        assertThat(transactionRefund.isDelayedCapture(), is(testCharge.isDelayedCapture()));
         assertDateMatch(transactionRefund.getCreatedDate().toString());
 
         Transaction transactionCharge = transactions.get(1);
@@ -96,6 +97,7 @@ public class TransactionDaoITest extends DaoITestBase {
         assertThat(transactionCharge.getCardBrand(), is(testCardDetails.getCardBrand()));
         assertThat(transactionCharge.getUserExternalId(), is(nullValue()));
         assertThat(transactionCharge.getLanguage(), is(testCharge.getLanguage()));
+        assertThat(transactionCharge.isDelayedCapture(), is(testCharge.isDelayedCapture()));
         assertDateMatch(transactionCharge.getCreatedDate().toString());
     }
 
