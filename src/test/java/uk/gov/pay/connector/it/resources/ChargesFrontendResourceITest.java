@@ -82,7 +82,7 @@ public class ChargesFrontendResourceITest {
         String chargeId = postToCreateACharge(expectedAmount);
         String expectedLocation = "https://localhost:" + app.getLocalPort() + "/v1/frontend/charges/" + chargeId;
 
-        validateGetCharge(expectedAmount, chargeId, CREATED)
+        validateGetCharge(expectedAmount, chargeId, CREATED, true)
                 .body("links", hasSize(3))
                 .body("links", containsLink("self", GET, expectedLocation))
                 .body("links", containsLink("cardAuth", POST, expectedLocation + "/cards"))
@@ -104,7 +104,7 @@ public class ChargesFrontendResourceITest {
                 ServicePaymentReference.of("ref"), null, email);
         app.getDatabaseTestHelper().updateChargeCardDetails(chargeId, testCardType.getBrand(), "1234", "Mr. McPayment",
                 "03/18", "line1", null, "postcode", "city", null, "country");
-        validateGetCharge(expectedAmount, externalChargeId, AUTHORISATION_SUCCESS);
+        validateGetCharge(expectedAmount, externalChargeId, AUTHORISATION_SUCCESS, false);
     }
 
     @Test
@@ -116,7 +116,7 @@ public class ChargesFrontendResourceITest {
                 ServicePaymentReference.of("ref"), null, email);
         app.getDatabaseTestHelper().updateChargeCardDetails(chargeId, "unknown", "1234", "Mr. McPayment",
                 "03/18", "line1", null, "postcode", "city", null, "country");
-        validateGetCharge(expectedAmount, externalChargeId, AUTHORISATION_SUCCESS);
+        validateGetCharge(expectedAmount, externalChargeId, AUTHORISATION_SUCCESS, false);
     }
 
     @Test
@@ -154,7 +154,7 @@ public class ChargesFrontendResourceITest {
                 .statusCode(NO_CONTENT.getStatusCode())
                 .body(isEmptyOrNullString());
 
-        validateGetCharge(expectedAmount, chargeId, ENTERING_CARD_DETAILS);
+        validateGetCharge(expectedAmount, chargeId, ENTERING_CARD_DETAILS, true);
     }
 
     @Test
@@ -169,7 +169,7 @@ public class ChargesFrontendResourceITest {
                 .body(is("{\"message\":\"Field(s) missing: [new_status]\"}"));
 
         //charge status should remain CREATED
-        validateGetCharge(expectedAmount, chargeId, CREATED);
+        validateGetCharge(expectedAmount, chargeId, CREATED, true);
     }
 
     @Test
@@ -185,7 +185,7 @@ public class ChargesFrontendResourceITest {
                 .body(is("{\"message\":\"charge status not recognized: junk\"}"));
 
         //charge status should remain CREATED
-        validateGetCharge(expectedAmount, chargeId, CREATED);
+        validateGetCharge(expectedAmount, chargeId, CREATED, true);
     }
 
     @Test
@@ -397,7 +397,8 @@ public class ChargesFrontendResourceITest {
                 .put("amount", expectedAmount)
                 .put("gateway_account_id", accountId)
                 .put("return_url", returnUrl)
-                .put("email", email).build());
+                .put("email", email)
+                .put("delayed_capture", true).build());
 
         ValidatableResponse response = connectorRestApi
                 .withAccountId(accountId)
@@ -411,12 +412,14 @@ public class ChargesFrontendResourceITest {
                 .body("email", is(email))
                 .body("created_date", is(notNullValue()))
                 .body("language", is("en"))
+                .body("delayed_capture", is(true))
                 .contentType(JSON);
 
         return response.extract().path("charge_id");
     }
 
-    private ValidatableResponse validateGetCharge(long expectedAmount, String chargeId, ChargeStatus chargeStatus) {
+    private ValidatableResponse validateGetCharge(long expectedAmount, String chargeId, ChargeStatus chargeStatus,
+                                                  boolean delayedCapture) {
         ValidatableResponse response = connectorRestApi
                 .withChargeId(chargeId)
                 .getFrontendCharge()
@@ -432,7 +435,8 @@ public class ChargesFrontendResourceITest {
                 .body("created_date", is(notNullValue()))
                 .body("created_date", matchesPattern("^\\d{4}-\\d{2}-\\d{2}T\\d{2}:\\d{2}:\\d{1,3}.\\d{0,3}Z"))
                 .body("created_date", isWithin(10, SECONDS))
-                .body("language", is("en"));
+                .body("language", is("en"))
+                .body("delayed_capture", is(delayedCapture));
         validateGatewayAccount(response);
         validateCardDetails(response, chargeStatus);
         return response;

@@ -10,7 +10,6 @@ import uk.gov.pay.connector.model.ServicePaymentReference;
 import uk.gov.pay.connector.model.domain.AuthCardDetails;
 import uk.gov.pay.connector.model.domain.ChargeStatus;
 import uk.gov.pay.connector.model.domain.GatewayAccountEntity;
-import uk.gov.pay.connector.model.domain.RefundStatus;
 
 import java.sql.SQLException;
 import java.sql.Timestamp;
@@ -63,43 +62,44 @@ public class DatabaseTestHelper {
     public void addCharge(Long chargeId, String externalChargeId, String gatewayAccountId, long amount, ChargeStatus status, String returnUrl,
                           String transactionId) {
         addCharge(chargeId, externalChargeId, gatewayAccountId, amount, status, returnUrl, transactionId, "Test description",
-                ServicePaymentReference.of("Test reference"), now(), 1, "email@fake.test", SupportedLanguage.ENGLISH);
+                ServicePaymentReference.of("Test reference"), now(), 1, "email@fake.test", SupportedLanguage.ENGLISH, false);
     }
 
     public void addCharge(String externalChargeId, String gatewayAccountId, long amount, ChargeStatus status, String returnUrl, String transactionId) {
         addCharge((long) RandomUtils.nextInt(1, 9999999), externalChargeId, gatewayAccountId, amount, status, returnUrl, transactionId,
-                "Test description", ServicePaymentReference.of("Test reference"), now(), 1, null, SupportedLanguage.ENGLISH);
+                "Test description", ServicePaymentReference.of("Test reference"), now(), 1, null, SupportedLanguage.ENGLISH, false);
     }
 
     public void addCharge(Long chargeId, String externalChargeId, String accountId, long amount, ChargeStatus chargeStatus, String returnUrl,
                           String transactionId, ServicePaymentReference reference, ZonedDateTime createdDate) {
         addCharge(chargeId, externalChargeId, accountId, amount, chargeStatus, returnUrl, transactionId, "Test description", reference,
-                createdDate == null ? now() : createdDate, 1, null, SupportedLanguage.ENGLISH);
+                createdDate == null ? now() : createdDate, 1, null, SupportedLanguage.ENGLISH, false);
     }
 
     public void addCharge(Long chargeId, String externalChargeId, String accountId, long amount, ChargeStatus chargeStatus, String returnUrl,
-                          String transactionId, ServicePaymentReference reference, ZonedDateTime createdDate, SupportedLanguage language) {
+                          String transactionId, ServicePaymentReference reference, ZonedDateTime createdDate, SupportedLanguage language,
+                          boolean delayedCapture) {
         addCharge(chargeId, externalChargeId, accountId, amount, chargeStatus, returnUrl, transactionId, "Test description", reference,
-                createdDate == null ? now() : createdDate, 1, null, language);
+                createdDate == null ? now() : createdDate, 1, null, language, delayedCapture);
     }
 
     public void addCharge(Long chargeId, String externalChargeId, String accountId, long amount, ChargeStatus chargeStatus, String returnUrl,
                           String transactionId, ServicePaymentReference reference, ZonedDateTime createdDate, String email) {
         addCharge(chargeId, externalChargeId, accountId, amount, chargeStatus, returnUrl, transactionId, "Test description", reference,
-                createdDate == null ? now() : createdDate, 1, email, SupportedLanguage.ENGLISH);
+                createdDate == null ? now() : createdDate, 1, email, SupportedLanguage.ENGLISH, false);
     }
 
     public void addCharge(Long chargeId, String externalChargeId, String accountId, long amount, ChargeStatus chargeStatus, String returnUrl,
                           String transactionId, ServicePaymentReference reference, String description, ZonedDateTime createdDate, String email) {
         addCharge(chargeId, externalChargeId, accountId, amount, chargeStatus, returnUrl, transactionId, description, reference,
-                createdDate == null ? now() : createdDate, 1, email, SupportedLanguage.ENGLISH);
+                createdDate == null ? now() : createdDate, 1, email, SupportedLanguage.ENGLISH, false);
     }
 
     public void addCharge(Long chargeId, String externalChargeId, String accountId, long amount, ChargeStatus chargeStatus, String returnUrl,
                           String transactionId, ServicePaymentReference reference, String description, ZonedDateTime createdDate, String email,
                           SupportedLanguage language) {
         addCharge(chargeId, externalChargeId, accountId, amount, chargeStatus, returnUrl, transactionId, description, reference,
-                createdDate == null ? now() : createdDate, 1, email, language);
+                createdDate == null ? now() : createdDate, 1, email, language, false);
     }
 
     private void addCharge(
@@ -115,7 +115,8 @@ public class DatabaseTestHelper {
             ZonedDateTime createdDate,
             long version,
             String email,
-            SupportedLanguage language
+            SupportedLanguage language,
+            boolean delayedCapture
     ) {
         jdbi.withHandle(h ->
                 h.update(
@@ -133,9 +134,10 @@ public class DatabaseTestHelper {
                                 "        reference,\n" +
                                 "        version,\n" +
                                 "        email,\n" +
-                                "        language\n" +
+                                "        language,\n" +
+                                "        delayed_capture\n" +
                                 "    )\n" +
-                                "   VALUES(?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)\n",
+                                "   VALUES(?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)\n",
                         chargeId,
                         externalChargeId,
                         amount,
@@ -148,7 +150,8 @@ public class DatabaseTestHelper {
                         reference.toString(),
                         version,
                         email,
-                        language.toString()
+                        language.toString(),
+                        delayedCapture
                 )
         );
     }

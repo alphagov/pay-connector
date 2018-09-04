@@ -30,6 +30,7 @@ public abstract class AbstractChargeResponseBuilder<T extends AbstractChargeResp
     protected PersistedCard cardDetails;
     protected ChargeResponse.Auth3dsData auth3dsData;
     protected SupportedLanguage language;
+    protected boolean delayedCapture;
 
     protected abstract T thisObject();
 
@@ -126,6 +127,11 @@ public abstract class AbstractChargeResponseBuilder<T extends AbstractChargeResp
 
     public T withLanguage(SupportedLanguage language) {
         this.language = language;
+        return thisObject();
+    }
+    
+    public T withDelayedCapture(boolean delayedCapture) {
+        this.delayedCapture = delayedCapture;
         return thisObject();
     }
 

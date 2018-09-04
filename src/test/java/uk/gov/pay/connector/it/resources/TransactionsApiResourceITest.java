@@ -120,6 +120,7 @@ public class TransactionsApiResourceITest extends ChargingITestBase {
                 .body("results[0].card_details.last_digits_card_number", is(lastDigitsCardNumber))
                 .body("results[0].created_date", matchesPattern("^\\d{4}-\\d{2}-\\d{2}T\\d{2}:\\d{2}:\\d{2}(.\\d{1,3})?Z"))
                 .body("results[0].created_date", isWithin(3, HOURS)) // The refund CREATED is the most recent
+                .body("results[0].delayed_capture", is(false))
 
                 .body("results[1].transaction_type", is("refund"))
                 .body("results[1].gateway_transaction_id", is(transactionIdCharge2))
@@ -137,7 +138,8 @@ public class TransactionsApiResourceITest extends ChargingITestBase {
                 .body("results[1].card_details.expiry_date", is(expiryDate))
                 .body("results[1].card_details.last_digits_card_number", is(lastDigitsCardNumber))
                 .body("results[1].created_date", matchesPattern("^\\d{4}-\\d{2}-\\d{2}T\\d{2}:\\d{2}:\\d{2}(.\\d{1,3})?Z"))
-                .body("results[1].created_date", isWithin(3, HOURS)); // The refund CREATED is the most recent
+                .body("results[1].created_date", isWithin(3, HOURS))
+                .body("results[0].delayed_capture", is(false));
     }
 
     @Test

@@ -249,7 +249,7 @@ public class ChargeResponse {
         public ChargeResponse build() {
             return new ChargeResponse(chargeId, amount, state, cardBrand, gatewayTransactionId, returnUrl, email,
                     description, reference, providerName, createdDate, links, refundSummary, settlementSummary,
-                    cardDetails, auth3dsData, language);
+                    cardDetails, auth3dsData, language, delayedCapture);
         }
     }
 
@@ -309,11 +309,15 @@ public class ChargeResponse {
     @JsonProperty
     @JsonSerialize(using = ToStringSerializer.class)
     private SupportedLanguage language;
+    
+    @JsonProperty("delayed_capture")
+    private boolean delayedCapture;
+    
 
     protected ChargeResponse(String chargeId, Long amount, ExternalTransactionState state, String cardBrand, String gatewayTransactionId, String returnUrl,
                              String email, String description, ServicePaymentReference reference, String providerName, String createdDate,
                              List<Map<String, Object>> dataLinks, RefundSummary refundSummary, SettlementSummary settlementSummary, PersistedCard cardDetails,
-                             Auth3dsData auth3dsData, SupportedLanguage language) {
+                             Auth3dsData auth3dsData, SupportedLanguage language, boolean delayedCapture) {
         this.dataLinks = dataLinks;
         this.chargeId = chargeId;
         this.amount = amount;
@@ -331,6 +335,7 @@ public class ChargeResponse {
         this.cardDetails = cardDetails;
         this.auth3dsData = auth3dsData;
         this.language = language;
+        this.delayedCapture = delayedCapture;
     }
 
     public List<Map<String, Object>> getDataLinks() {
@@ -396,6 +401,10 @@ public class ChargeResponse {
     public SupportedLanguage getLanguage() {
         return language;
     }
+    
+    public boolean getDelayedCapture() {
+        return delayedCapture;
+    }
 
     public URI getLink(String rel) {
         return dataLinks.stream()
@@ -409,61 +418,32 @@ public class ChargeResponse {
     public boolean equals(Object o) {
         if (this == o) return true;
         if (o == null || getClass() != o.getClass()) return false;
-
         ChargeResponse that = (ChargeResponse) o;
-
-        if (dataLinks != null ? !dataLinks.equals(that.dataLinks) : that.dataLinks != null)
-            return false;
-        if (chargeId != null ? !chargeId.equals(that.chargeId) : that.chargeId != null)
-            return false;
-        if (amount != null ? !amount.equals(that.amount) : that.amount != null) return false;
-        if (state != null ? !state.equals(that.state) : that.state != null) return false;
-        if (cardBrand != null ? !cardBrand.equals(that.cardBrand) : that.cardBrand != null)
-            return false;
-        if (gatewayTransactionId != null ? !gatewayTransactionId.equals(that.gatewayTransactionId) : that.gatewayTransactionId != null)
-            return false;
-        if (returnUrl != null ? !returnUrl.equals(that.returnUrl) : that.returnUrl != null)
-            return false;
-        if (email != null ? !email.equals(that.email) : that.email != null) return false;
-        if (description != null ? !description.equals(that.description) : that.description != null)
-            return false;
-        if (reference != null ? !reference.equals(that.reference) : that.reference != null)
-            return false;
-        if (providerName != null ? !providerName.equals(that.providerName) : that.providerName != null)
-            return false;
-        if (createdDate != null ? !createdDate.equals(that.createdDate) : that.createdDate != null)
-            return false;
-        if (refundSummary != null ? !refundSummary.equals(that.refundSummary) : that.refundSummary != null)
-            return false;
-        if (settlementSummary != null ? !settlementSummary.equals(that.settlementSummary) : that.settlementSummary != null)
-            return false;
-        if (auth3dsData != null ? !auth3dsData.equals(that.auth3dsData) : that.auth3dsData != null)
-            return false;
-        if (cardDetails != null ? !cardDetails.equals(that.cardDetails) : that.cardDetails != null)
-            return false;
-        return language.equals(that.language);
+        return delayedCapture == that.delayedCapture &&
+                Objects.equals(dataLinks, that.dataLinks) &&
+                Objects.equals(chargeId, that.chargeId) &&
+                Objects.equals(amount, that.amount) &&
+                Objects.equals(state, that.state) &&
+                Objects.equals(cardBrand, that.cardBrand) &&
+                Objects.equals(gatewayTransactionId, that.gatewayTransactionId) &&
+                Objects.equals(returnUrl, that.returnUrl) &&
+                Objects.equals(email, that.email) &&
+                Objects.equals(description, that.description) &&
+                Objects.equals(reference, that.reference) &&
+                Objects.equals(providerName, that.providerName) &&
+                Objects.equals(createdDate, that.createdDate) &&
+                Objects.equals(refundSummary, that.refundSummary) &&
+                Objects.equals(settlementSummary, that.settlementSummary) &&
+                Objects.equals(auth3dsData, that.auth3dsData) &&
+                Objects.equals(cardDetails, that.cardDetails) &&
+                language == that.language;
     }
 
     @Override
     public int hashCode() {
-        int result = dataLinks != null ? dataLinks.hashCode() : 0;
-        result = 31 * result + (chargeId != null ? chargeId.hashCode() : 0);
-        result = 31 * result + (amount != null ? amount.hashCode() : 0);
-        result = 31 * result + (state != null ? state.hashCode() : 0);
-        result = 31 * result + (cardBrand != null ? cardBrand.hashCode() : 0);
-        result = 31 * result + (gatewayTransactionId != null ? gatewayTransactionId.hashCode() : 0);
-        result = 31 * result + (returnUrl != null ? returnUrl.hashCode() : 0);
-        result = 31 * result + (email != null ? email.hashCode() : 0);
-        result = 31 * result + (description != null ? description.hashCode() : 0);
-        result = 31 * result + (reference != null ? reference.hashCode() : 0);
-        result = 31 * result + (providerName != null ? providerName.hashCode() : 0);
-        result = 31 * result + (createdDate != null ? createdDate.hashCode() : 0);
-        result = 31 * result + (refundSummary != null ? refundSummary.hashCode() : 0);
-        result = 31 * result + (settlementSummary != null ? settlementSummary.hashCode() : 0);
-        result = 31 * result + (auth3dsData != null ? auth3dsData.hashCode() : 0);
-        result = 31 * result + (cardDetails != null ? cardDetails.hashCode() : 0);
-        result = 31 * result + language.hashCode();
-        return result;
+        return Objects.hash(dataLinks, chargeId, amount, state, cardBrand, gatewayTransactionId, returnUrl, email,
+                description, reference, providerName, createdDate, refundSummary, settlementSummary, auth3dsData,
+                cardDetails, language, delayedCapture);
     }
 
     @Override
@@ -484,6 +464,7 @@ public class ChargeResponse {
                 ", settlementSummary=" + settlementSummary +
                 ", auth3dsData=" + auth3dsData +
                 ", language=" + language +
+                ", delayedCapture=" + delayedCapture +
                 '}';
     }
 

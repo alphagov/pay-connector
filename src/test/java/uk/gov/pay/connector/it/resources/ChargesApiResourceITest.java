@@ -79,6 +79,7 @@ public class ChargesApiResourceITest extends ChargingITestBase {
     private static final String JSON_EMAIL_KEY = "email";
     private static final String JSON_PROVIDER_KEY = "payment_provider";
     private static final String JSON_LANGUAGE_KEY = "language";
+    private static final String JSON_DELAYED_CAPTURE_KEY = "delayed_capture";
     private static final String PROVIDER_NAME = "sandbox";
     private static final long AMOUNT = 6234L;
 
@@ -118,6 +119,7 @@ public class ChargesApiResourceITest extends ChargingITestBase {
                 .body(JSON_RETURN_URL_KEY, is(returnUrl))
                 .body(JSON_EMAIL_KEY, is(email))
                 .body(JSON_LANGUAGE_KEY, is("cy"))
+                .body(JSON_DELAYED_CAPTURE_KEY, is(false))
                 .body("containsKey('card_details')", is(false))
                 .body("containsKey('gateway_account')", is(false))
                 .body("refund_summary.amount_submitted", is(0))
@@ -159,6 +161,7 @@ public class ChargesApiResourceITest extends ChargingITestBase {
                 .body(JSON_RETURN_URL_KEY, is(returnUrl))
                 .body(JSON_EMAIL_KEY, is(email))
                 .body(JSON_LANGUAGE_KEY, is("cy"))
+                .body(JSON_DELAYED_CAPTURE_KEY, is(false))
                 .body("containsKey('card_details')", is(false))
                 .body("containsKey('gateway_account')", is(false))
                 .body("settlement_summary.capture_submit_time", nullValue())

@@ -45,7 +45,7 @@ public class FrontendChargeResponse extends ChargeResponse {
         public FrontendChargeResponse build() {
             return new FrontendChargeResponse(chargeId, amount, state, cardBrand, gatewayTransactionId, returnUrl,
                     email, description, reference, providerName, createdDate, links, status, refundSummary,
-                    settlementSummary, persistedCard, auth3dsData, gatewayAccount, language);
+                    settlementSummary, persistedCard, auth3dsData, gatewayAccount, language, delayedCapture);
         }
     }
 
@@ -65,10 +65,10 @@ public class FrontendChargeResponse extends ChargeResponse {
                                    List<Map<String, Object>> dataLinks, String status, RefundSummary refundSummary,
                                    SettlementSummary settlementSummary, PersistedCard chargeCardDetails,
                                    Auth3dsData auth3dsData, GatewayAccountEntity gatewayAccount,
-                                   SupportedLanguage language) {
+                                   SupportedLanguage language, boolean delayedCapture) {
         super(chargeId, amount, state, cardBrand, gatewayTransactionId, returnUrl, email, description, reference,
                 providerName, createdDate, dataLinks, refundSummary, settlementSummary, chargeCardDetails, auth3dsData,
-                language);
+                language, delayedCapture);
         this.status = status;
         this.gatewayAccount = gatewayAccount;
     }
