@@ -19,6 +19,7 @@ import static uk.gov.pay.connector.model.domain.ChargeStatus.AUTHORISATION_SUBMI
 import static uk.gov.pay.connector.model.domain.ChargeStatus.AUTHORISATION_SUCCESS;
 import static uk.gov.pay.connector.model.domain.ChargeStatus.AUTHORISATION_TIMEOUT;
 import static uk.gov.pay.connector.model.domain.ChargeStatus.AUTHORISATION_UNEXPECTED_ERROR;
+import static uk.gov.pay.connector.model.domain.ChargeStatus.AWAITING_CAPTURE_REQUEST;
 import static uk.gov.pay.connector.model.domain.ChargeStatus.CAPTURED;
 import static uk.gov.pay.connector.model.domain.ChargeStatus.CAPTURE_APPROVED;
 import static uk.gov.pay.connector.model.domain.ChargeStatus.CAPTURE_APPROVED_RETRY;
@@ -96,6 +97,10 @@ public class PaymentGatewayStateTransitions {
         graph.putEdgeValue(AUTHORISATION_SUCCESS, SYSTEM_CANCEL_READY, "");
         graph.putEdgeValue(AUTHORISATION_SUCCESS, USER_CANCEL_READY, "");
         graph.putEdgeValue(AUTHORISATION_SUCCESS, EXPIRE_CANCEL_READY, "");
+        graph.putEdgeValue(AUTHORISATION_SUCCESS, AWAITING_CAPTURE_REQUEST, "");
+        graph.putEdgeValue(AWAITING_CAPTURE_REQUEST, CAPTURE_APPROVED, "");
+        graph.putEdgeValue(AWAITING_CAPTURE_REQUEST, SYSTEM_CANCEL_READY, "");
+        graph.putEdgeValue(AWAITING_CAPTURE_REQUEST, EXPIRE_CANCEL_READY, "");
         graph.putEdgeValue(CAPTURE_APPROVED, CAPTURE_READY, "");
         graph.putEdgeValue(CAPTURE_APPROVED, CAPTURE_ERROR, "");
         graph.putEdgeValue(CAPTURE_APPROVED_RETRY, CAPTURE_READY, "");

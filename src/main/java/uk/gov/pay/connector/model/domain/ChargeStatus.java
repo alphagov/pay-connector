@@ -3,7 +3,6 @@ package uk.gov.pay.connector.model.domain;
 import org.apache.commons.lang3.StringUtils;
 import uk.gov.pay.connector.model.api.ExternalChargeState;
 
-import java.util.Arrays;
 import java.util.List;
 import java.util.stream.Collectors;
 
@@ -35,6 +34,8 @@ public enum ChargeStatus implements Status {
     AUTHORISATION_ERROR("AUTHORISATION ERROR", EXTERNAL_ERROR_GATEWAY),
     AUTHORISATION_TIMEOUT("AUTHORISATION TIMEOUT", EXTERNAL_ERROR_GATEWAY),
     AUTHORISATION_UNEXPECTED_ERROR("AUTHORISATION UNEXPECTED ERROR", EXTERNAL_ERROR_GATEWAY),
+
+    AWAITING_CAPTURE_REQUEST("AWAITING CAPTURE REQUEST", EXTERNAL_SUBMITTED),
 
     CAPTURE_APPROVED("CAPTURE APPROVED", EXTERNAL_SUCCESS),
     CAPTURE_APPROVED_RETRY("CAPTURE APPROVED RETRY", EXTERNAL_SUCCESS),
