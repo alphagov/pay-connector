@@ -35,7 +35,6 @@ pipeline {
 
           sh 'docker pull govukpay/postgres:9.6.6'
           sh 'mvn clean package -DskipTests'
-          runProviderContractTests()
           postSuccessfulMetrics("connector.maven-build", stepBuildTime)
         }
       }
@@ -83,17 +82,6 @@ pipeline {
                 runCardPaymentsE2E("connector")
             }
         }
-         stage('ZAP Tests') {
-            when {
-                anyOf {
-                  branch 'master'
-                  environment name: 'RUN_ZAP_ON_PR', value: 'true'
-                }
-            }
-            steps {
-                runZap("connector")
-            }
-         }
       }
     }
     stage('Docker Tag') {
