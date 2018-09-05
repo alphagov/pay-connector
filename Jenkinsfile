@@ -34,7 +34,7 @@ pipeline {
           def long stepBuildTime = System.currentTimeMillis()
 
           sh 'docker pull govukpay/postgres:9.6.6'
-          sh 'mvn clean package'
+          sh 'mvn clean package -DskipTests'
           runProviderContractTests()
           postSuccessfulMetrics("connector.maven-build", stepBuildTime)
         }

@@ -26,7 +26,6 @@ import uk.gov.pay.connector.command.RenderStateTransitionGraphCommand;
 import uk.gov.pay.connector.filters.LoggingFilter;
 import uk.gov.pay.connector.filters.SchemeRewriteFilter;
 import uk.gov.pay.connector.healthcheck.CardExecutorServiceHealthCheck;
-import uk.gov.pay.connector.healthcheck.DatabaseHealthCheck;
 import uk.gov.pay.connector.healthcheck.Ping;
 import uk.gov.pay.connector.resources.CardResource;
 import uk.gov.pay.connector.resources.CardTypesResource;
@@ -111,7 +110,6 @@ public class ConnectorApp extends Application<ConnectorConfiguration> {
                 .addMappingForUrlPatterns(of(REQUEST), true, "/v1/*");
         
         environment.healthChecks().register("ping", new Ping());
-        environment.healthChecks().register("database", injector.getInstance(DatabaseHealthCheck.class));
         environment.healthChecks().register("cardExecutorService", injector.getInstance(CardExecutorServiceHealthCheck.class));
 
         setGlobalProxies(configuration);
