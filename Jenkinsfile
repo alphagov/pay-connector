@@ -115,6 +115,7 @@ pipeline {
         branch 'master'
       }
       steps {
+        checkPactCompatibility("connector", gitCommit(), "test")
         deployEcs("connector")
       }
     }
