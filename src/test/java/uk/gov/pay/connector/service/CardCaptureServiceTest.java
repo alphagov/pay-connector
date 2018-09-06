@@ -38,7 +38,6 @@ import uk.gov.pay.connector.model.gateway.GatewayResponse.GatewayResponseBuilder
 import uk.gov.pay.connector.service.worldpay.WorldpayCaptureResponse;
 
 import javax.persistence.OptimisticLockException;
-import java.time.ZonedDateTime;
 import java.util.List;
 import java.util.Optional;
 
@@ -53,7 +52,6 @@ import static org.mockito.Mockito.anyString;
 import static org.mockito.Mockito.argThat;
 import static org.mockito.Mockito.doNothing;
 import static org.mockito.Mockito.eq;
-import static org.mockito.Mockito.inOrder;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.spy;
@@ -63,6 +61,7 @@ import static org.mockito.Mockito.verifyNoMoreInteractions;
 import static org.mockito.Mockito.verifyZeroInteractions;
 import static org.mockito.Mockito.when;
 import static uk.gov.pay.connector.model.domain.ChargeStatus.AUTHORISATION_SUCCESS;
+import static uk.gov.pay.connector.model.domain.ChargeStatus.AWAITING_CAPTURE_REQUEST;
 import static uk.gov.pay.connector.model.domain.ChargeStatus.CAPTURED;
 import static uk.gov.pay.connector.model.domain.ChargeStatus.CAPTURE_APPROVED;
 import static uk.gov.pay.connector.model.domain.ChargeStatus.CAPTURE_APPROVED_RETRY;
@@ -355,7 +354,7 @@ public class CardCaptureServiceTest extends CardServiceTest {
         when(mockedChargeDao.findByExternalId(nonExistingChargeExternalId)).thenReturn(Optional.empty());
 
         try {
-            cardCaptureService.markChargeAsCaptureApproved(nonExistingChargeExternalId);
+            cardCaptureService.markChargeAsEligibleForCapture(nonExistingChargeExternalId);
             fail("expecting ChargeNotFoundRuntimeException");
         } catch (ChargeNotFoundRuntimeException e) {
             // ignore
@@ -371,7 +370,7 @@ public class CardCaptureServiceTest extends CardServiceTest {
         when(mockedChargeDao.findByExternalId(chargeEntity.getExternalId())).thenReturn(Optional.of(chargeEntity));
 
         try {
-            cardCaptureService.markChargeAsCaptureApproved(chargeEntity.getExternalId());
+            cardCaptureService.markChargeAsEligibleForCapture(chargeEntity.getExternalId());
             fail("expecting IllegalStateRuntimeException");
         } catch (IllegalStateRuntimeException e) {
             // ignore
@@ -390,11 +389,27 @@ public class CardCaptureServiceTest extends CardServiceTest {
         when(mockedChargeDao.findByExternalId(chargeEntity.getExternalId())).thenReturn(Optional.of(chargeEntity));
         doNothing().when(mockedChargeEventDao).persistChargeEventOf(chargeEntity, Optional.empty());
 
-        ChargeEntity result = cardCaptureService.markChargeAsCaptureApproved(chargeEntity.getExternalId());
+        ChargeEntity result = cardCaptureService.markChargeAsEligibleForCapture(chargeEntity.getExternalId());
 
         verify(chargeEntity).setStatus(CAPTURE_APPROVED);
         verify(mockedChargeEventDao).persistChargeEventOf(argThat(chargeEntityHasStatus(CAPTURE_APPROVED)), eq(Optional.empty()));
         assertThat(result.getStatus(), is(CAPTURE_APPROVED.getValue()));
+
+        verify(mockAppender).doAppend(loggingEventArgumentCaptor.capture());
+    }
+
+    @Test
+    public void markChargeAsCaptureApproved_shouldSetChargeStatusToAwaitingCaptureRequestWhenDelayedCapture() {
+        ChargeEntity chargeEntity = spy(createNewChargeWith("worldpay", 1L, AUTHORISATION_SUCCESS, "gatewayTxId"));
+        chargeEntity.setDelayedCapture(true);
+        when(mockedChargeDao.findByExternalId(chargeEntity.getExternalId())).thenReturn(Optional.of(chargeEntity));
+        doNothing().when(mockedChargeEventDao).persistChargeEventOf(chargeEntity, Optional.empty());
+
+        ChargeEntity result = cardCaptureService.markChargeAsEligibleForCapture(chargeEntity.getExternalId());
+
+        verify(chargeEntity).setStatus(AWAITING_CAPTURE_REQUEST);
+        verify(mockedChargeEventDao).persistChargeEventOf(argThat(chargeEntityHasStatus(AWAITING_CAPTURE_REQUEST)), eq(Optional.empty()));
+        assertThat(result.getStatus(), is(AWAITING_CAPTURE_REQUEST.getValue()));
 
         verify(mockAppender).doAppend(loggingEventArgumentCaptor.capture());
     }

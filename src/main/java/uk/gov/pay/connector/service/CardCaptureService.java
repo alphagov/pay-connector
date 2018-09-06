@@ -29,6 +29,7 @@ import static uk.gov.pay.connector.model.domain.ChargeStatus.CAPTURE_APPROVED;
 import static uk.gov.pay.connector.model.domain.ChargeStatus.CAPTURE_APPROVED_RETRY;
 import static uk.gov.pay.connector.model.domain.ChargeStatus.CAPTURE_ERROR;
 import static uk.gov.pay.connector.model.domain.ChargeStatus.CAPTURE_SUBMITTED;
+import static uk.gov.pay.connector.model.domain.PaymentGatewayStateTransitions.isValidTransition;
 
 public class CardCaptureService extends CardService implements TransactionalGatewayOperation<BaseCaptureResponse> {
 
@@ -53,7 +54,7 @@ public class CardCaptureService extends CardService implements TransactionalGate
         try {
             charge = preOperation(externalId);
         } catch (OptimisticLockException e) {
-            LOG.info("OptimisticLockException in doCapture for charge external_id=" + externalId);
+            LOG.info("OptimisticLockException in doCapture for charge external_id={}", externalId);
             throw new ConflictRuntimeException(externalId);
         }
         GatewayResponse<BaseCaptureResponse> operationResponse = operation(charge);
@@ -69,16 +70,20 @@ public class CardCaptureService extends CardService implements TransactionalGate
     }
 
     @Transactional
-    public ChargeEntity markChargeAsCaptureApproved(String externalId) {
+    public ChargeEntity markChargeAsEligibleForCapture(String externalId) {
         return chargeDao.findByExternalId(externalId).map(charge -> {
-            if (!AUTHORISATION_SUCCESS.getValue().equals(charge.getStatus())) {
-                logger.error("Charge is not in the expect state of AUTHORISATION_SUCCESS to be marked as CAPTURE_APPROVED [charge_external_id={}, charge_status={}]",
-                        charge.getExternalId(), charge.getStatus());
+
+            ChargeStatus targetStatus = charge.isDelayedCapture() ? ChargeStatus.AWAITING_CAPTURE_REQUEST : ChargeStatus.CAPTURE_APPROVED;
+
+            ChargeStatus currentChargeStatus = ChargeStatus.fromString(charge.getStatus());
+            if (!isValidTransition(currentChargeStatus, targetStatus)) {
+                LOG.error("Charge with state " + currentChargeStatus + " cannot proceed to " + targetStatus +
+                        " [charge_external_id={}, charge_status={}]", charge.getExternalId(), currentChargeStatus);
                 throw new IllegalStateRuntimeException(charge.getExternalId());
             }
 
-            logger.info("CAPTURE_APPROVED for charge [charge_external_id={}]", externalId);
-            charge.setStatus(CAPTURE_APPROVED);
+            LOG.info("{} for charge [charge_external_id={}]", targetStatus, externalId);
+            charge.setStatus(targetStatus);
             chargeEventDao.persistChargeEventOf(charge, Optional.empty());
             return charge;
         }).orElseThrow(() -> new ChargeNotFoundRuntimeException(externalId));
@@ -86,7 +91,7 @@ public class CardCaptureService extends CardService implements TransactionalGate
 
     @Transactional
     public void markChargeAsCaptureError(String chargeId) {
-        logger.error("CAPTURE_ERROR for charge [charge_external_id={}] - reached maximum number of capture attempts",
+        LOG.error("CAPTURE_ERROR for charge [charge_external_id={}] - reached maximum number of capture attempts",
                 chargeId);
         chargeDao.findByExternalId(chargeId).ifPresent(chargeEntity -> {
             chargeEntity.setStatus(CAPTURE_ERROR);
@@ -111,7 +116,7 @@ public class CardCaptureService extends CardService implements TransactionalGate
                     String transactionId = operationResponse.getBaseResponse()
                             .map(BaseCaptureResponse::getTransactionId).orElse("");
 
-                    logger.info("Capture for {} ({} {}) for {} ({}) - {} .'. {} -> {}",
+                    LOG.info("Capture for {} ({} {}) for {} ({}) - {} .'. {} -> {}",
                             chargeEntity.getExternalId(), chargeEntity.getPaymentGatewayName().getName(), chargeEntity.getGatewayTransactionId(),
                             chargeEntity.getGatewayAccount().getAnalyticsId(), chargeEntity.getGatewayAccount().getId(),
                             operationResponse, chargeEntity.getStatus(), nextStatus);
@@ -119,7 +124,7 @@ public class CardCaptureService extends CardService implements TransactionalGate
                     chargeEntity.setStatus(nextStatus);
 
                     if (isBlank(transactionId)) {
-                        logger.warn("Card capture response received with no transaction id. - charge_external_id={}", chargeId);
+                        LOG.warn("Card capture response received with no transaction id. - charge_external_id={}", chargeId);
                     }
 
                     GatewayAccountEntity account = chargeEntity.getGatewayAccount();
