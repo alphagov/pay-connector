@@ -42,7 +42,7 @@ public abstract class AbstractSearchStrategy<T> implements SearchStrategy {
                         ).collect(Collectors.toList());
 
         return new ChargesPaginationResponseBuilder(searchParams, uriInfo)
-                .withChargeResponses(chargesResponse)
+                .withResponses(chargesResponse)
                 .withTotalCount(totalCount)
                 .buildResponse();
     }

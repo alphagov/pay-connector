@@ -44,7 +44,7 @@ public class ChargesPaginationResponseBuilderTest {
 
         // when
         Response response = new ChargesPaginationResponseBuilder(searchParams, mockUriInfo)
-                .withChargeResponses(newArrayList())
+                .withResponses(newArrayList())
                 .withTotalCount(500L)
                 .buildResponse();
 

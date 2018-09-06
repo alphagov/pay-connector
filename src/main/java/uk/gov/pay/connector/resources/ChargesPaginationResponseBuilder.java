@@ -2,7 +2,6 @@ package uk.gov.pay.connector.resources;
 
 import black.door.hate.HalRepresentation;
 import uk.gov.pay.connector.dao.ChargeSearchParams;
-import uk.gov.pay.connector.model.ChargeResponse;
 
 import javax.ws.rs.core.Response;
 import javax.ws.rs.core.UriInfo;
@@ -11,12 +10,11 @@ import java.util.List;
 
 import static javax.ws.rs.core.Response.ok;
 
-public class ChargesPaginationResponseBuilder {
+public class ChargesPaginationResponseBuilder<T>{
 
     private ChargeSearchParams searchParams;
     private UriInfo uriInfo;
-    private List<ChargeResponse> chargeResponses;
-
+    private List<T> chargeResponses;
     private Long totalCount;
     private Long selfPageNum;
     private URI selfLink;
@@ -32,7 +30,7 @@ public class ChargesPaginationResponseBuilder {
         selfLink = uriWithParams(searchParams.buildQueryParams());
     }
 
-    public ChargesPaginationResponseBuilder withChargeResponses(List<ChargeResponse> chargeResponses) {
+    public ChargesPaginationResponseBuilder withResponses(List<T> chargeResponses) {
         this.chargeResponses = chargeResponses;
         return this;
     }
