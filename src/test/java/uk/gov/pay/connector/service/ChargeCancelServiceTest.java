@@ -15,6 +15,8 @@ import uk.gov.pay.connector.model.CancelGatewayRequest;
 import uk.gov.pay.connector.model.domain.ChargeEntity;
 import uk.gov.pay.connector.model.domain.ChargeStatus;
 import uk.gov.pay.connector.model.gateway.GatewayResponse;
+import uk.gov.pay.connector.service.epdq.EpdqCancelResponse;
+import uk.gov.pay.connector.service.smartpay.SmartpayCancelResponse;
 import uk.gov.pay.connector.service.transaction.TransactionFlow;
 import uk.gov.pay.connector.service.worldpay.WorldpayCancelResponse;
 
@@ -199,6 +201,111 @@ public class ChargeCancelServiceTest {
         when(mockChargeDao.findByExternalId(externalChargeId)).thenReturn(Optional.empty());
 
         chargeCancelService.doUserCancel(externalChargeId);
+    }
+
+    @Test
+    public void doSystemCancel_shouldCancelWorldPayCharge_withStatus_awaitingCaptureRequest() {
+
+        String externalChargeId = "external-charge-id";
+        Long gatewayAccountId = 123L;
+        ChargeEntity chargeEntity = aValidChargeEntity()
+                .withExternalId(externalChargeId)
+                .withTransactionId("transaction-id")
+                .withStatus(ChargeStatus.AWAITING_CAPTURE_REQUEST)
+                .build();
+
+        WorldpayCancelResponse worldpayResponse = mock(WorldpayCancelResponse.class);
+        when(worldpayResponse.cancelStatus()).thenReturn(BaseCancelResponse.CancelStatus.CANCELLED);
+        GatewayResponse.GatewayResponseBuilder<WorldpayCancelResponse> gatewayResponseBuilder = responseBuilder();
+        GatewayResponse cancelResponse = gatewayResponseBuilder.withResponse(worldpayResponse).build();
+
+        when(mockChargeDao.findByExternalIdAndGatewayAccount(externalChargeId, gatewayAccountId)).thenReturn(Optional.of(chargeEntity));
+        when(mockChargeDao.findByExternalId(externalChargeId)).thenReturn(Optional.of(chargeEntity));
+        doNothing().when(mockChargeEventDao).persistChargeEventOf(any(ChargeEntity.class), eq(Optional.empty()));
+        when(mockPaymentProviders.byName(chargeEntity.getPaymentGatewayName())).thenReturn(mockPaymentProvider);
+        when(mockPaymentProvider.cancel(argThat(aCancelGatewayRequestMatching(chargeEntity)))).thenReturn(cancelResponse);
+
+        Optional<GatewayResponse<BaseCancelResponse>> response = chargeCancelService.doSystemCancel(externalChargeId, gatewayAccountId);
+
+        assertThat(response.isPresent(), is(true));
+        assertThat(response.get().isSuccessful(), is(true));
+        assertThat(chargeEntity.getStatus(), is(SYSTEM_CANCELLED.getValue()));
+
+        verify(mockChargeDao).findByExternalIdAndGatewayAccount(externalChargeId, gatewayAccountId);
+        verify(mockChargeDao, times(2)).findByExternalId(externalChargeId);
+        verify(mockChargeEventDao, atLeastOnce()).persistChargeEventOf(argThat(chargeEntityHasStatus(SYSTEM_CANCELLED)), eq(Optional.empty()));
+
+        verifyNoMoreInteractions(mockChargeDao);
+    }
+
+    @Test
+    public void doSystemCancel_shouldCancelSmartPayCharge_withStatus_awaitingCaptureRequest() {
+
+        String externalChargeId = "external-charge-id";
+        Long gatewayAccountId = 123L;
+        ChargeEntity chargeEntity = aValidChargeEntity()
+                .withExternalId(externalChargeId)
+                .withTransactionId("transaction-id")
+                .withStatus(ChargeStatus.AWAITING_CAPTURE_REQUEST)
+                .build();
+
+        SmartpayCancelResponse smartpayCancelResponse = mock(SmartpayCancelResponse.class);
+        when(smartpayCancelResponse.cancelStatus()).thenReturn(BaseCancelResponse.CancelStatus.CANCELLED);
+        GatewayResponse.GatewayResponseBuilder<SmartpayCancelResponse> gatewayResponseBuilder = responseBuilder();
+        GatewayResponse cancelResponse = gatewayResponseBuilder.withResponse(smartpayCancelResponse).build();
+
+        when(mockChargeDao.findByExternalIdAndGatewayAccount(externalChargeId, gatewayAccountId)).thenReturn(Optional.of(chargeEntity));
+        when(mockChargeDao.findByExternalId(externalChargeId)).thenReturn(Optional.of(chargeEntity));
+        doNothing().when(mockChargeEventDao).persistChargeEventOf(any(ChargeEntity.class), eq(Optional.empty()));
+        when(mockPaymentProviders.byName(chargeEntity.getPaymentGatewayName())).thenReturn(mockPaymentProvider);
+        when(mockPaymentProvider.cancel(argThat(aCancelGatewayRequestMatching(chargeEntity)))).thenReturn(cancelResponse);
+
+        Optional<GatewayResponse<BaseCancelResponse>> response = chargeCancelService.doSystemCancel(externalChargeId, gatewayAccountId);
+
+        assertThat(response.isPresent(), is(true));
+        assertThat(response.get().isSuccessful(), is(true));
+        assertThat(chargeEntity.getStatus(), is(SYSTEM_CANCELLED.getValue()));
+
+        verify(mockChargeDao).findByExternalIdAndGatewayAccount(externalChargeId, gatewayAccountId);
+        verify(mockChargeDao, times(2)).findByExternalId(externalChargeId);
+        verify(mockChargeEventDao, atLeastOnce()).persistChargeEventOf(argThat(chargeEntityHasStatus(SYSTEM_CANCELLED)), eq(Optional.empty()));
+
+        verifyNoMoreInteractions(mockChargeDao);
+    }
+
+    @Test
+    public void doSystemCancel_shouldCancelEPDQCharge_withStatus_awaitingCaptureRequest() {
+
+        String externalChargeId = "external-charge-id";
+        Long gatewayAccountId = 123L;
+        ChargeEntity chargeEntity = aValidChargeEntity()
+                .withExternalId(externalChargeId)
+                .withTransactionId("transaction-id")
+                .withStatus(ChargeStatus.AWAITING_CAPTURE_REQUEST)
+                .build();
+
+        EpdqCancelResponse epdqCancelResponse = mock(EpdqCancelResponse.class);
+        when(epdqCancelResponse.cancelStatus()).thenReturn(BaseCancelResponse.CancelStatus.CANCELLED);
+        GatewayResponse.GatewayResponseBuilder<EpdqCancelResponse> gatewayResponseBuilder = responseBuilder();
+        GatewayResponse cancelResponse = gatewayResponseBuilder.withResponse(epdqCancelResponse).build();
+
+        when(mockChargeDao.findByExternalIdAndGatewayAccount(externalChargeId, gatewayAccountId)).thenReturn(Optional.of(chargeEntity));
+        when(mockChargeDao.findByExternalId(externalChargeId)).thenReturn(Optional.of(chargeEntity));
+        doNothing().when(mockChargeEventDao).persistChargeEventOf(any(ChargeEntity.class), eq(Optional.empty()));
+        when(mockPaymentProviders.byName(chargeEntity.getPaymentGatewayName())).thenReturn(mockPaymentProvider);
+        when(mockPaymentProvider.cancel(argThat(aCancelGatewayRequestMatching(chargeEntity)))).thenReturn(cancelResponse);
+
+        Optional<GatewayResponse<BaseCancelResponse>> response = chargeCancelService.doSystemCancel(externalChargeId, gatewayAccountId);
+
+        assertThat(response.isPresent(), is(true));
+        assertThat(response.get().isSuccessful(), is(true));
+        assertThat(chargeEntity.getStatus(), is(SYSTEM_CANCELLED.getValue()));
+
+        verify(mockChargeDao).findByExternalIdAndGatewayAccount(externalChargeId, gatewayAccountId);
+        verify(mockChargeDao, times(2)).findByExternalId(externalChargeId);
+        verify(mockChargeEventDao, atLeastOnce()).persistChargeEventOf(argThat(chargeEntityHasStatus(SYSTEM_CANCELLED)), eq(Optional.empty()));
+
+        verifyNoMoreInteractions(mockChargeDao);
     }
 
     private HamcrestArgumentMatcher<ChargeEntity> chargeEntityHasStatus(ChargeStatus expectedStatus) {
