@@ -19,8 +19,8 @@ public class CaptureProcessScheduler implements Managed {
     static final int SCHEDULER_THREADS = 1;
 
     static final long INITIAL_DELAY_IN_SECONDS = 20L;
-    static final long RANDOM_INTERVAL_MINIMUM_IN_SECONDS = 150L;
-    static final long RANDOM_INTERVAL_MAXIMUM_IN_SECONDS = 200L;
+    static final long RANDOM_INTERVAL_MINIMUM_IN_SECONDS = 10L;
+    static final long RANDOM_INTERVAL_MAXIMUM_IN_SECONDS = 20L;
 
     private long initialDelayInSeconds = INITIAL_DELAY_IN_SECONDS;
     private long randomIntervalMinimumInSeconds = RANDOM_INTERVAL_MINIMUM_IN_SECONDS;
