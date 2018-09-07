@@ -37,7 +37,8 @@ public class StatusFlow {
             ImmutableList.of(
                     CREATED,
                     ENTERING_CARD_DETAILS,
-                    AUTHORISATION_SUCCESS
+                    AUTHORISATION_SUCCESS,
+                    AWAITING_CAPTURE_REQUEST
             ),
             EXPIRE_CANCEL_READY,
             EXPIRED,

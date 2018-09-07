@@ -35,6 +35,7 @@ import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 import static uk.gov.pay.connector.model.gateway.GatewayResponse.GatewayResponseBuilder.responseBuilder;
 import static uk.gov.pay.connector.service.ChargeExpiryService.EXPIRABLE_STATUSES;
+import static uk.gov.pay.connector.service.ChargeExpiryService.GATEWAY_CANCELLABLE_STATUSES;
 
 @RunWith(MockitoJUnitRunner.class)
 public class ChargeExpiryServiceTest {
@@ -103,7 +104,7 @@ public class ChargeExpiryServiceTest {
         when(mockPaymentProvider.cancel(any())).thenReturn(gatewayResponse);
 
         EXPIRABLE_STATUSES.stream()
-                .filter(status -> status != ChargeStatus.AUTHORISATION_SUCCESS)
+                .filter(status -> !GATEWAY_CANCELLABLE_STATUSES.contains(status))
                 .forEach(status -> {
                     ChargeEntity chargeEntity = ChargeEntityFixture.aValidChargeEntity()
                             .withAmount(200L)
@@ -149,5 +150,35 @@ public class ChargeExpiryServiceTest {
         chargeExpiryService.expire(singletonList(chargeEntity));
 
         assertThat(chargeEntity.getStatus(), is(ChargeStatus.EXPIRE_CANCEL_FAILED.getValue()));
+    }
+
+    @Test
+    public void shouldExpireChargesWithStatus_awaitingCaptureRequest_byCallingProviderToCancel() {
+        GatewayAccountEntity gatewayAccount = ChargeEntityFixture.defaultGatewayAccountEntity();
+        gatewayAccount.setGatewayName("worldpay");
+        ChargeEntity chargeEntity = ChargeEntityFixture.aValidChargeEntity()
+                .withAmount(200L)
+                .withCreatedDate(ZonedDateTime.now())
+                .withStatus(ChargeStatus.AWAITING_CAPTURE_REQUEST)
+                .withGatewayAccountEntity(gatewayAccount)
+                .build();
+
+        GatewayResponseBuilder<BaseCancelResponse> gatewayResponseBuilder = responseBuilder();
+        GatewayResponse<BaseCancelResponse> gatewayResponse = gatewayResponseBuilder.withResponse(mockWorldpayCancelResponse).build();
+
+        when(mockWorldpayCancelResponse.cancelStatus()).thenReturn(CancelStatus.CANCELLED);
+
+        when(mockChargeDao.findByExternalId(chargeEntity.getExternalId())).thenReturn(Optional.of(chargeEntity));
+        when(mockPaymentProviders.byName(PaymentGatewayName.WORLDPAY)).thenReturn(mockPaymentProvider);
+        when(mockPaymentProvider.cancel(any())).thenReturn(gatewayResponse);
+        ArgumentCaptor<ChargeEntity> captor = ArgumentCaptor.forClass(ChargeEntity.class);
+        ArgumentCaptor<CancelGatewayRequest> cancelCaptor = ArgumentCaptor.forClass(CancelGatewayRequest.class);
+        doNothing().when(mockChargeEventDao).persistChargeEventOf(captor.capture(), any());
+
+        chargeExpiryService.expire(singletonList(chargeEntity));
+
+        verify(mockPaymentProvider).cancel(cancelCaptor.capture());
+        assertThat(cancelCaptor.getValue().getTransactionId(), is(chargeEntity.getGatewayTransactionId()));
+        assertThat(chargeEntity.getStatus(), is(ChargeStatus.EXPIRED.getValue()));
     }
 }

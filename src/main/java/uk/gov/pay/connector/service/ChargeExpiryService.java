@@ -17,6 +17,7 @@ import uk.gov.pay.connector.service.transaction.TransactionFlow;
 import uk.gov.pay.connector.service.transaction.TransactionalOperation;
 
 import javax.inject.Inject;
+import java.util.Arrays;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
@@ -25,6 +26,7 @@ import java.util.stream.Collectors;
 import static com.google.common.collect.Lists.newArrayList;
 import static uk.gov.pay.connector.model.domain.ChargeStatus.AUTHORISATION_3DS_REQUIRED;
 import static uk.gov.pay.connector.model.domain.ChargeStatus.AUTHORISATION_SUCCESS;
+import static uk.gov.pay.connector.model.domain.ChargeStatus.AWAITING_CAPTURE_REQUEST;
 import static uk.gov.pay.connector.model.domain.ChargeStatus.CREATED;
 import static uk.gov.pay.connector.model.domain.ChargeStatus.ENTERING_CARD_DETAILS;
 import static uk.gov.pay.connector.model.domain.ChargeStatus.EXPIRED;
@@ -45,12 +47,17 @@ public class ChargeExpiryService {
             CREATED,
             ENTERING_CARD_DETAILS,
             AUTHORISATION_3DS_REQUIRED,
-            AUTHORISATION_SUCCESS);
+            AUTHORISATION_SUCCESS,
+            AWAITING_CAPTURE_REQUEST);
 
     private final ChargeDao chargeDao;
     private final ChargeEventDao chargeEventDao;
     private final PaymentProviders providers;
     private final Provider<TransactionFlow> transactionFlowProvider;
+    static final List<ChargeStatus> GATEWAY_CANCELLABLE_STATUSES = Arrays.asList(
+            AUTHORISATION_SUCCESS,
+            AWAITING_CAPTURE_REQUEST
+    );
 
     @Inject
     public ChargeExpiryService(ChargeDao chargeDao,
@@ -67,7 +74,8 @@ public class ChargeExpiryService {
         Map<Boolean, List<ChargeEntity>> chargesToProcessExpiry = charges
                 .stream()
                 .collect(Collectors.partitioningBy(chargeEntity ->
-                        ChargeStatus.AUTHORISATION_SUCCESS.getValue().equals(chargeEntity.getStatus())));
+                        GATEWAY_CANCELLABLE_STATUSES.contains(ChargeStatus.fromString(chargeEntity.getStatus())))
+                );
 
         int expiredSuccess = expireChargesWithCancellationNotRequired(chargesToProcessExpiry.get(Boolean.FALSE));
         Pair<Integer, Integer> expireWithCancellationResult = expireChargesWithGatewayCancellation(chargesToProcessExpiry.get(Boolean.TRUE));
