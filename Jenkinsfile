@@ -72,6 +72,11 @@ pipeline {
     stage('Tests') {
       failFast true
       parallel {
+        stage('Provider Contract Tests') {
+            steps {
+                runProviderContractTests()
+            }
+        }
         stage('Card Payment End-to-End Tests') {
             when {
                 anyOf {
