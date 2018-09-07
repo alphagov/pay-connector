@@ -56,14 +56,18 @@ public class TransactionsApiContractTest {
         }
     }
 
-    private void setUpCharges(int numberOfCharges, String accountID, ZonedDateTime createdDate){
+    private void setUpCharges(int numberOfCharges, String accountId, ZonedDateTime createdDate){
         for (int i = 0; i < numberOfCharges; i++) {
             Long chargeId = ThreadLocalRandom.current().nextLong(100, 100000);
-            dbHelper.addCharge(chargeId, Long.toString(chargeId), accountID, 100L, ChargeStatus.CREATED,"aReturnUrl",
-                    "aTransactionId", ServicePaymentReference.of("aReference"), createdDate, "test@test.com@");
-            dbHelper.updateChargeCardDetails(chargeId, "visa", "0001", "aName", "08/23",
-                    "aFirstAddress", "aSecondLine", "aPostCode", "aCity", "aCounty", "aCountry");
+            setUpSingleCharge(accountId, chargeId, Long.toString(chargeId), createdDate, false);
         }
+    }
+
+    private void setUpSingleCharge(String accountId, Long chargeId, String chargeExternalId, ZonedDateTime createdDate, boolean delayedCapture){
+        dbHelper.addCharge(chargeId, chargeExternalId, accountId, 100L, ChargeStatus.CREATED,"aReturnUrl",
+                chargeExternalId, ServicePaymentReference.of("aReference"), createdDate, "test@test.com", delayedCapture);
+        dbHelper.updateChargeCardDetails(chargeId, "visa", "0001", "aName", "08/23", 
+                "aFirstAddress", "aSecondLine", "aPostCode", "aCity", "aCounty", "aCountry");
     }
 
     @State("User 666 exists in the database")
@@ -106,5 +110,14 @@ public class TransactionsApiContractTest {
     @State("a gateway account with external id exists")
     public void createGatewayAccount(Map<String, String> params) {
         dbHelper.addGatewayAccount(params.get("gateway_account_id"), "sandbox");
+    }
+
+    @State("a charge with delayed capture true exists")
+    public void createChargeWithDelayedCaptureTrue(Map<String, String> params) {
+        String gatewayAccountId = params.get("gateway_account_id");
+        Long chargeId = ThreadLocalRandom.current().nextLong(100, 100000);
+        String chargeExternalId = params.get("charge_id");
+        setUpGatewayAccount(Long.valueOf(gatewayAccountId));
+        setUpSingleCharge(gatewayAccountId, chargeId, chargeExternalId, ZonedDateTime.of(2018,5,14,1,1,1,1,ZoneId.systemDefault()), true);
     }
 }
