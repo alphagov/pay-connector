@@ -2,11 +2,15 @@ package uk.gov.pay.connector.it.resources.epdq;
 
 import com.google.common.collect.Lists;
 import com.jayway.restassured.response.ValidatableResponse;
+import junitparams.JUnitParamsRunner;
+import junitparams.Parameters;
 import org.apache.http.NameValuePair;
 import org.apache.http.client.utils.URLEncodedUtils;
 import org.apache.http.message.BasicNameValuePair;
 import org.junit.Test;
+import org.junit.runner.RunWith;
 import uk.gov.pay.connector.it.base.ChargingITestBase;
+import uk.gov.pay.connector.model.domain.ChargeStatus;
 import uk.gov.pay.connector.service.epdq.EpdqSha512SignatureGenerator;
 
 import java.io.IOException;
@@ -24,6 +28,7 @@ import static uk.gov.pay.connector.model.domain.ChargeStatus.CAPTURE_SUBMITTED;
 import static uk.gov.pay.connector.model.domain.GatewayAccount.CREDENTIALS_SHA_OUT_PASSPHRASE;
 import static uk.gov.pay.connector.model.domain.RefundStatus.REFUND_SUBMITTED;
 
+@RunWith(JUnitParamsRunner.class)
 public class EpdqNotificationResourceITest extends ChargingITestBase {
 
     private static final String RESPONSE_EXPECTED_BY_EPDQ = "[OK]";
@@ -34,9 +39,14 @@ public class EpdqNotificationResourceITest extends ChargingITestBase {
     }
 
     @Test
-    public void shouldHandleAChargeNotification() throws Exception {
+    @Parameters({
+            "CAPTURE_READY",
+            "CAPTURE_SUBMITTED",
+            "CAPTURE_APPROVED_RETRY"
+    })
+    public void shouldHandleACaptureNotification(ChargeStatus chargeStatus) throws Exception {
         String transactionId = "transaction-id";
-        String chargeId = createNewChargeWith(CAPTURE_SUBMITTED, transactionId);
+        String chargeId = createNewChargeWith(chargeStatus, transactionId);
 
         String response = notifyConnector(transactionId, "1", "9", getCredentials().get(CREDENTIALS_SHA_OUT_PASSPHRASE))
                 .statusCode(200)

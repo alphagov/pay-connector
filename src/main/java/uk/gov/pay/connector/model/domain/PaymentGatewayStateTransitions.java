@@ -110,6 +110,7 @@ public class PaymentGatewayStateTransitions {
         graph.putEdgeValue(CAPTURE_READY, CAPTURE_SUBMITTED, "");
         graph.putEdgeValue(CAPTURE_READY, CAPTURE_ERROR, "");
         graph.putEdgeValue(CAPTURE_READY, CAPTURE_APPROVED_RETRY, "");
+        graph.putEdgeValue(CAPTURE_READY, CAPTURED, "received CAPTURED notification while about to retry");
         graph.putEdgeValue(CAPTURE_SUBMITTED, CAPTURED, "");
         graph.putEdgeValue(EXPIRE_CANCEL_READY, EXPIRE_CANCEL_SUBMITTED, "");
         graph.putEdgeValue(EXPIRE_CANCEL_READY, EXPIRE_CANCEL_FAILED, "");
