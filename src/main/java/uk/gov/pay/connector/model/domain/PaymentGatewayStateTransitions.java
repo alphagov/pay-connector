@@ -102,8 +102,6 @@ public class PaymentGatewayStateTransitions {
         graph.putEdgeValue(AWAITING_CAPTURE_REQUEST, CAPTURE_APPROVED, "");
         graph.putEdgeValue(AWAITING_CAPTURE_REQUEST, SYSTEM_CANCEL_READY, "");
         graph.putEdgeValue(AWAITING_CAPTURE_REQUEST, EXPIRE_CANCEL_READY, "");
-        graph.putEdgeValue(AWAITING_CAPTURE_REQUEST, EXPIRED, "ChargeExpiryService");
-        graph.putEdgeValue(AWAITING_CAPTURE_REQUEST, SYSTEM_CANCELLED, "");
 
         graph.putEdgeValue(CAPTURE_APPROVED, CAPTURE_READY, "");
         graph.putEdgeValue(CAPTURE_APPROVED, CAPTURE_ERROR, "");
