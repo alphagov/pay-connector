@@ -157,6 +157,8 @@ database:
 
   # the minimum amount of time an connection must sit idle in the pool before it is eligible for eviction
   minIdleTime: 1 minute
+  properties:
+    tcpKeepAlive: true
 
 jpa:
   jpaLoggingLevel: ${JPA_LOG_LEVEL:-WARNING}
