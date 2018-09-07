@@ -58,6 +58,7 @@ import static uk.gov.pay.connector.matcher.ZoneDateTimeAsStringWithinMatcher.isW
 import static uk.gov.pay.connector.model.api.ExternalChargeState.EXTERNAL_SUBMITTED;
 import static uk.gov.pay.connector.model.domain.ChargeStatus.AUTHORISATION_READY;
 import static uk.gov.pay.connector.model.domain.ChargeStatus.AUTHORISATION_SUCCESS;
+import static uk.gov.pay.connector.model.domain.ChargeStatus.AWAITING_CAPTURE_REQUEST;
 import static uk.gov.pay.connector.model.domain.ChargeStatus.CAPTURED;
 import static uk.gov.pay.connector.model.domain.ChargeStatus.CREATED;
 import static uk.gov.pay.connector.model.domain.ChargeStatus.EXPIRED;
@@ -903,6 +904,32 @@ public class ChargesApiResourceITest extends ChargingITestBase {
                 .body("expiry-success", is(1))
                 .body("expiry-failed", is(0));
 
+        getChargeApi
+                .withAccountId(accountId)
+                .withChargeId(extChargeId)
+                .getCharge()
+                .statusCode(OK.getStatusCode())
+                .contentType(JSON)
+                .body(JSON_CHARGE_KEY, is(extChargeId))
+                .body(JSON_STATE_KEY, is(EXPIRED.toExternal().getStatus()));
+
+    }
+
+    @Test
+    public void shouldGetSuccessForExpiryChargeTask_withStatus_awaitingCaptureRequest() {
+        //create charge
+        String extChargeId = addChargeAndCardDetails(AWAITING_CAPTURE_REQUEST, 
+                ServicePaymentReference.of("ref"), ZonedDateTime.now().minusMinutes(90));
+
+        // run expiry task
+        getChargeApi
+                .postChargeExpiryTask()
+                .statusCode(OK.getStatusCode())
+                .contentType(JSON)
+                .body("expiry-success", is(1))
+                .body("expiry-failed", is(0));
+
+        // get the charge back and assert its status is expired
         getChargeApi
                 .withAccountId(accountId)
                 .withChargeId(extChargeId)

@@ -23,7 +23,6 @@ import uk.gov.pay.connector.rules.WorldpayMockClient;
 import uk.gov.pay.connector.util.PortFactory;
 import uk.gov.pay.connector.util.RestAssuredClient;
 
-import java.io.IOException;
 import java.time.ZonedDateTime;
 import java.util.List;
 import java.util.Map;
@@ -45,9 +44,16 @@ import static uk.gov.pay.connector.model.domain.GatewayAccount.CREDENTIALS_USERN
 import static uk.gov.pay.connector.util.JsonEncoder.toJson;
 import static uk.gov.pay.connector.util.TransactionId.randomId;
 
-public class ChargingITestBase extends ChargingITestCommon {
-    protected RestAssuredClient connectorRestApi;
+public class ChargingITestBase {
 
+    protected RestAssuredClient connectorRestApi;
+    protected static final long AMOUNT = 6234L;
+    protected WorldpayMockClient worldpay;
+    protected SmartpayMockClient smartpay;
+    protected EpdqMockClient epdq;
+    protected final String accountId;
+    private final String paymentProvider;
+    private Map<String, String> credentials;
     private int port = PortFactory.findFreePort();
 
     @Rule
@@ -55,40 +61,19 @@ public class ChargingITestBase extends ChargingITestCommon {
             config("worldpay.urls.test", "http://localhost:" + port + "/jsp/merchant/xml/paymentService.jsp"),
             config("smartpay.urls.test", "http://localhost:" + port + "/pal/servlet/soap/Payment"),
             config("epdq.urls.test", "http://localhost:" + port + "/epdq")
-            );
+    );
     @Rule
     public WireMockRule wireMockRule = new WireMockRule(port);
-    protected static final long AMOUNT = 6234L;
-
-    protected WorldpayMockClient worldpay;
-
-    protected SmartpayMockClient smartpay;
-
-    protected EpdqMockClient epdq;
-
-    protected final String accountId;
-    private final String paymentProvider;
-    private Map<String, String> credentials;
 
     public ChargingITestBase(String paymentProvider) {
-        super(paymentProvider);
         this.paymentProvider = paymentProvider;
         this.accountId = String.valueOf(RandomUtils.nextInt());
 
         connectorRestApi = new RestAssuredClient(app, accountId);
     }
 
-    @Override
-    public DropwizardAppWithPostgresRule getApplication() {
-        return app;
-    }
-
-    public Map<String, String> getCredentials() {
-        return credentials;
-    }
-
     @Before
-    public void setup() throws IOException {
+    public void setup() {
         worldpay = new WorldpayMockClient();
         smartpay = new SmartpayMockClient();
         epdq = new EpdqMockClient();
@@ -103,7 +88,11 @@ public class ChargingITestBase extends ChargingITestCommon {
         app.getDatabaseTestHelper().addGatewayAccount(accountId, paymentProvider, credentials);
     }
 
-    protected String authorisationDetailsWithMinimalAddress(String cardNumber, String cardBrand) {
+    public Map<String, String> getCredentials() {
+        return credentials;
+    }
+
+    protected static String authorisationDetailsWithMinimalAddress(String cardNumber, String cardBrand) {
         JsonObject addressObject = new JsonObject();
 
         addressObject.addProperty("line1", "The Money Pool");
@@ -123,26 +112,26 @@ public class ChargingITestBase extends ChargingITestCommon {
         return toJson(authorisationDetails);
     }
 
-    protected String buildJsonAuthorisationDetailsFor(String cardNumber, String cardBrand) {
+    protected static String buildJsonAuthorisationDetailsFor(String cardNumber, String cardBrand) {
         return buildJsonAuthorisationDetailsFor(cardNumber, "123", "11/99", cardBrand);
     }
 
-    protected String buildJsonWithPaResponse() {
+    protected static String buildJsonWithPaResponse() {
         JsonObject auth3dsDetails = new JsonObject();
         auth3dsDetails.addProperty("pa_response", "this-is-a-test-pa-response");
 
         return auth3dsDetails.toString();
     }
 
-    protected String buildJsonAuthorisationDetailsFor(String cardHolderName, String cardNumber, String cardBrand) {
+    protected static String buildJsonAuthorisationDetailsFor(String cardHolderName, String cardNumber, String cardBrand) {
         return buildJsonAuthorisationDetailsFor(cardHolderName, cardNumber, "123", "11/99", cardBrand, "The Money Pool", null, "London", null, "DO11 4RS", "GB");
     }
 
-    protected String buildJsonAuthorisationDetailsFor(String cardNumber, String cvc, String expiryDate, String cardBrand) {
+    protected static String buildJsonAuthorisationDetailsFor(String cardNumber, String cvc, String expiryDate, String cardBrand) {
         return buildJsonAuthorisationDetailsFor("Mr. Payment", cardNumber, cvc, expiryDate, cardBrand, "The Money Pool", null, "London", null, "DO11 4RS", "GB");
     }
 
-    protected String buildDetailedJsonAuthorisationDetailsFor(String cardNumber, String cvc, String expiryDate, String cardBrand, String cardHolderName, String addressLine1, String addressLine2, String city, String county, String postcode, String country) {
+    protected static String buildDetailedJsonAuthorisationDetailsFor(String cardNumber, String cvc, String expiryDate, String cardBrand, String cardHolderName, String addressLine1, String addressLine2, String city, String county, String postcode, String country) {
         return buildJsonAuthorisationDetailsFor(cardHolderName, cardNumber, cvc, expiryDate, cardBrand, addressLine1, addressLine2, city, county, postcode, country);
     }
 
@@ -178,7 +167,6 @@ public class ChargingITestBase extends ChargingITestCommon {
                 CardFixture.aValidCard().withCardNo("1234").build());
         return externalChargeId;
     }
-
 
     protected String createNewCharge() {
         return createNewChargeWith(CREATED, "");
@@ -216,7 +204,7 @@ public class ChargingITestBase extends ChargingITestCommon {
                 .contentType(JSON);
     }
 
-    protected String buildJsonAuthorisationDetailsWithFullAddress() {
+    protected static String buildJsonAuthorisationDetailsWithFullAddress() {
         return buildJsonAuthorisationDetailsFor(
                 "Scrooge McDuck",
                 "4242424242424242",
@@ -232,7 +220,7 @@ public class ChargingITestBase extends ChargingITestCommon {
         );
     }
 
-    protected String buildJsonAuthorisationDetailsFor(String cardHolderName, String cardNumber, String cvc, String expiryDate, String cardBrand,
+    protected static String buildJsonAuthorisationDetailsFor(String cardHolderName, String cardNumber, String cvc, String expiryDate, String cardBrand,
                                                       String line1, String line2, String city, String county, String postCode, String countryCode) {
         JsonObject addressObject = new JsonObject();
 
@@ -270,19 +258,19 @@ public class ChargingITestBase extends ChargingITestCommon {
         assertFrontendChargeStatusIs(chargeId, status);
     }
 
-    protected String authoriseChargeUrlFor(String chargeId) {
+    protected static String authoriseChargeUrlFor(String chargeId) {
         return "/v1/frontend/charges/{chargeId}/cards".replace("{chargeId}", chargeId);
     }
 
-    protected String authorise3dsChargeUrlFor(String chargeId) {
+    protected static String authorise3dsChargeUrlFor(String chargeId) {
         return "/v1/frontend/charges/{chargeId}/3ds".replace("{chargeId}", chargeId);
     }
 
-    protected String captureChargeUrlFor(String chargeId) {
+    protected static String captureChargeUrlFor(String chargeId) {
         return "/v1/frontend/charges/{chargeId}/capture".replace("{chargeId}", chargeId);
     }
 
-    protected String cancelChargeUrlFor(String accountId, String chargeId) {
+    protected static String cancelChargeUrlFor(String accountId, String chargeId) {
         return "/v1/api/accounts/{accountId}/charges/{chargeId}/cancel".replace("{accountId}", accountId).replace("{chargeId}", chargeId);
     }
 
@@ -306,7 +294,7 @@ public class ChargingITestBase extends ChargingITestCommon {
             protected boolean matchesSafely(List<Map<String, Object>> chargeEvents) {
                 return chargeEvents.stream()
                         .anyMatch(chargeEvent ->
-                                        chargeStatus.getValue().equals(chargeEvent.get("status"))
+                                chargeStatus.getValue().equals(chargeEvent.get("status"))
                         );
             }
 

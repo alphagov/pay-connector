@@ -25,6 +25,7 @@ import java.util.Optional;
 import java.util.stream.Collectors;
 
 import static uk.gov.pay.connector.model.domain.ChargeStatus.AUTHORISATION_3DS_READY;
+import static uk.gov.pay.connector.model.domain.ChargeStatus.AUTHORISATION_READY;
 import static uk.gov.pay.connector.model.domain.ChargeStatus.fromString;
 
 /**
@@ -56,7 +57,7 @@ class CancelServiceFunctions {
             if (!chargeEntity.hasStatus(statusFlow.getTerminatableStatuses())) {
                 if (chargeEntity.hasStatus(newStatus)) {
                     throw new OperationAlreadyInProgressRuntimeException(statusFlow.getName(), chargeId);
-                } else if (chargeEntity.hasStatus(ChargeStatus.AUTHORISATION_READY, AUTHORISATION_3DS_READY)) {
+                } else if (chargeEntity.hasStatus(AUTHORISATION_READY, AUTHORISATION_3DS_READY)) {
                     throw new ConflictRuntimeException(chargeEntity.getExternalId());
                 }
 

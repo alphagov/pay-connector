@@ -74,7 +74,6 @@ public class PaymentGatewayStateTransitions {
         graph.putEdgeValue(ENTERING_CARD_DETAILS, AUTHORISATION_ABORTED, "");
         graph.putEdgeValue(ENTERING_CARD_DETAILS, USER_CANCELLED, "user clicked cancel");
         graph.putEdgeValue(ENTERING_CARD_DETAILS, SYSTEM_CANCELLED, "");
-        graph.putEdgeValue(AWAITING_CAPTURE_REQUEST, SYSTEM_CANCELLED, "");
         graph.putEdgeValue(AUTHORISATION_READY, AUTHORISATION_SUCCESS, "Gateway response: AUTHORISED");
         graph.putEdgeValue(AUTHORISATION_READY, AUTHORISATION_REJECTED, "Gateway response: REJECTED");
         graph.putEdgeValue(AUTHORISATION_READY, AUTHORISATION_ERROR, "Gateway error");
@@ -99,9 +98,11 @@ public class PaymentGatewayStateTransitions {
         graph.putEdgeValue(AUTHORISATION_SUCCESS, USER_CANCEL_READY, "");
         graph.putEdgeValue(AUTHORISATION_SUCCESS, EXPIRE_CANCEL_READY, "");
         graph.putEdgeValue(AUTHORISATION_SUCCESS, AWAITING_CAPTURE_REQUEST, "");
+
         graph.putEdgeValue(AWAITING_CAPTURE_REQUEST, CAPTURE_APPROVED, "");
         graph.putEdgeValue(AWAITING_CAPTURE_REQUEST, SYSTEM_CANCEL_READY, "");
         graph.putEdgeValue(AWAITING_CAPTURE_REQUEST, EXPIRE_CANCEL_READY, "");
+
         graph.putEdgeValue(CAPTURE_APPROVED, CAPTURE_READY, "");
         graph.putEdgeValue(CAPTURE_APPROVED, CAPTURE_ERROR, "");
         graph.putEdgeValue(CAPTURE_APPROVED_RETRY, CAPTURE_READY, "");
@@ -142,7 +143,7 @@ public class PaymentGatewayStateTransitions {
                         edge.nodeU(),
                         edge.nodeV(),
                         graph.edgeValue(edge.nodeU(), edge.nodeV()
-                    )))
+                        )))
                 .collect(Collectors.toSet());
     }
 

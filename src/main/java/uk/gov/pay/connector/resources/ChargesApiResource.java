@@ -318,7 +318,7 @@ public class ChargesApiResource {
     @Produces(APPLICATION_JSON)
     public Response expireCharges(@Context UriInfo uriInfo) {
         List<ChargeEntity> charges = chargeDao.findBeforeDateWithStatusIn(getExpiryDate(), EXPIRABLE_STATUSES);
-        logger.info(format("Charges found for expiry - number_of_charges=%s, since_date=%s", charges.size(), getExpiryDate()));
+        logger.info("Charges found for expiry - number_of_charges={}, since_date={}", charges.size(), getExpiryDate());
         Map<String, Integer> resultMap = chargeExpiryService.expire(charges);
         return successResponseWithEntity(resultMap);
     }
