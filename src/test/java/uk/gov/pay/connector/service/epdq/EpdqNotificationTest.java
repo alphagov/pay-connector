@@ -91,13 +91,13 @@ public class EpdqNotificationTest {
 
     @Test
     public void shouldDecodeNotificationsAccordingToTheRightEpdqCharset() {
-        String cardHolderName = "mr payment%92"; //encoded value for ’ (single quote)
+        String cardHolderName = "Mr O%92Payment"; // %92 is encoded value for ’ (right single quotation mark)
         String payload = notificationPayloadForTransaction(cardHolderName, STATUS, PAY_ID, PAY_ID_SUB, SHA_SIGN);
 
         EpdqNotification epdqNotification = new EpdqNotification(payload);
 
         assertThat(epdqNotification.getParams(), hasItem(
-                new BasicNameValuePair("CN", "mr payment’")));
+                new BasicNameValuePair("CN", "Mr O’Payment")));
     }
     
     private String notificationPayloadForTransaction(String cardHolderName, String status, String payId, String payIdSub, String shaSign)

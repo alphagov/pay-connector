@@ -29,6 +29,7 @@ import uk.gov.pay.connector.service.PaymentGatewayName;
 import uk.gov.pay.connector.service.StatusMapper;
 
 import javax.ws.rs.client.Invocation;
+import java.nio.charset.Charset;
 import java.util.EnumMap;
 import java.util.List;
 import java.util.Optional;
@@ -55,13 +56,23 @@ import static uk.gov.pay.connector.service.epdq.EpdqOrderRequestBuilder.anEpdqCa
 import static uk.gov.pay.connector.service.epdq.EpdqOrderRequestBuilder.anEpdqQueryOrderRequestBuilder;
 import static uk.gov.pay.connector.service.epdq.EpdqOrderRequestBuilder.anEpdqRefundOrderRequestBuilder;
 
-
 public class EpdqPaymentProvider extends BasePaymentProvider<BaseResponse, String> {
+
+    private static final Logger LOGGER = LoggerFactory.getLogger(EpdqPaymentProvider.class);
 
     public static final String ROUTE_FOR_NEW_ORDER = "orderdirect.asp";
     public static final String ROUTE_FOR_MAINTENANCE_ORDER = "maintenancedirect.asp";
     public static final String ROUTE_FOR_QUERY_ORDER = "querydirect.asp";
-    private static final Logger LOGGER = LoggerFactory.getLogger(EpdqPaymentProvider.class);
+
+    /**
+     * ePDQ have never confirmed that they use Windows-1252 to decode
+     * application/x-www-form-urlencoded payloads sent by us to them and use
+     * Windows-1252 to encode application/x-www-form-urlencoded notification
+     * payloads sent from them to us but experimentation — and specifically the
+     * fact that ’ (that’s U+2019 right single quotation mark in Unicode
+     * parlance) seems to encode to %92 — makes us believe that they do
+     */
+    static final Charset EPDQ_APPLICATION_X_WWW_FORM_URLENCODED_CHARSET = Charset.forName("windows-1252");
 
     private final SignatureGenerator signatureGenerator;
     private final String frontendUrl;

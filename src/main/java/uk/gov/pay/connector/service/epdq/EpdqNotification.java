@@ -6,12 +6,12 @@ import org.apache.http.client.utils.URLEncodedUtils;
 import uk.gov.pay.connector.model.ChargeStatusRequest;
 import uk.gov.pay.connector.model.domain.ChargeStatus;
 
-import java.nio.charset.Charset;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 
 import static java.util.stream.Collectors.toMap;
+import static uk.gov.pay.connector.service.epdq.EpdqPaymentProvider.EPDQ_APPLICATION_X_WWW_FORM_URLENCODED_CHARSET;
 
 public class EpdqNotification implements ChargeStatusRequest {
 
@@ -31,7 +31,7 @@ public class EpdqNotification implements ChargeStatusRequest {
 
     public EpdqNotification(String payload) {
         try {
-            paramsList = URLEncodedUtils.parse(payload, Charset.forName("windows-1252"));
+            paramsList = URLEncodedUtils.parse(payload, EPDQ_APPLICATION_X_WWW_FORM_URLENCODED_CHARSET);
 
             Map<String, String> params = paramsList.stream()
                     .collect(toMap(NameValuePair::getName, NameValuePair::getValue));
@@ -41,8 +41,8 @@ public class EpdqNotification implements ChargeStatusRequest {
             payIdSub = params.get(PAYIDSUB);
             shaSign = params.get(SHASIGN);
         } catch (Exception e) {
-            throw new IllegalArgumentException(
-                    "Could not decode ePDQ notification payload as UTF-8 application/x-www-form-urlencoded");
+            throw new IllegalArgumentException("Could not decode ePDQ notification payload as "
+                    + EPDQ_APPLICATION_X_WWW_FORM_URLENCODED_CHARSET.name() + " application/x-www-form-urlencoded");
         }
     }
 
