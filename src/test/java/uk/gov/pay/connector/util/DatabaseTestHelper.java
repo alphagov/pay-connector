@@ -102,6 +102,12 @@ public class DatabaseTestHelper {
                 createdDate == null ? now() : createdDate, 1, email, language, false);
     }
 
+    public void addCharge(Long chargeId, String externalChargeId, String accountId, long amount, ChargeStatus chargeStatus, String returnUrl,
+                          String transactionId, ServicePaymentReference reference, ZonedDateTime createdDate, String email, boolean delayedCapture) {
+        addCharge(chargeId, externalChargeId, accountId, amount, chargeStatus, returnUrl, transactionId, "Test description", reference,
+                createdDate == null ? now() : createdDate, 1, email, SupportedLanguage.ENGLISH, delayedCapture);
+    }
+
     private void addCharge(
             Long chargeId,
             String externalChargeId,
