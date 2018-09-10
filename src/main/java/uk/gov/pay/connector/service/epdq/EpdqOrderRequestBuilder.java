@@ -8,8 +8,8 @@ import uk.gov.pay.connector.util.templates.PayloadBuilder;
 import uk.gov.pay.connector.util.templates.PayloadDefinition;
 
 import javax.ws.rs.core.MediaType;
-import java.nio.charset.Charset;
 
+import static uk.gov.pay.connector.service.epdq.EpdqPaymentProvider.EPDQ_APPLICATION_X_WWW_FORM_URLENCODED_CHARSET;
 import static uk.gov.pay.connector.service.epdq.EpdqSignedPayloadDefinition.EpdqSignedPayloadDefinitionFactory.anEpdqSignedPayloadDefinitionFactory;
 
 public class EpdqOrderRequestBuilder extends OrderRequestBuilder {
@@ -85,8 +85,6 @@ public class EpdqOrderRequestBuilder extends OrderRequestBuilder {
     public static final String REFUND_OPERATION_TYPE = "RFD";
     public static final String CANCEL_OPERATION_TYPE = "DES";
 
-    private static final Charset WINDOWS_1252 = Charset.forName("windows-1252");
-
     private static EpdqSignedPayloadDefinitionFactory signedPayloadDefinitionFactory = anEpdqSignedPayloadDefinitionFactory(new EpdqSha512SignatureGenerator());
 
     public static final PayloadBuilder AUTHORISE_ORDER_TEMPLATE_BUILDER = createPayloadBuilderForNewOrder();
@@ -100,22 +98,22 @@ public class EpdqOrderRequestBuilder extends OrderRequestBuilder {
 
     private static PayloadBuilder createPayloadBuilderForQueryOrder() {
         PayloadDefinition payloadDefinition = signedPayloadDefinitionFactory.create(new EpdqPayloadDefinitionForQueryOrder());
-        return new FormUrlEncodedStringBuilder(payloadDefinition, WINDOWS_1252);
+        return new FormUrlEncodedStringBuilder(payloadDefinition, EPDQ_APPLICATION_X_WWW_FORM_URLENCODED_CHARSET);
     }
 
     private static PayloadBuilder createPayloadBuilderForNewOrder() {
         PayloadDefinition payloadDefinition = signedPayloadDefinitionFactory.create(new EpdqPayloadDefinitionForNewOrder());
-        return new FormUrlEncodedStringBuilder(payloadDefinition, WINDOWS_1252);
+        return new FormUrlEncodedStringBuilder(payloadDefinition, EPDQ_APPLICATION_X_WWW_FORM_URLENCODED_CHARSET);
     }
 
     private static PayloadBuilder createPayloadBuilderForNew3dsOrder() {
         PayloadDefinition payloadDefinition = signedPayloadDefinitionFactory.create(new EpdqPayloadDefinitionForNew3dsOrder());
-        return new FormUrlEncodedStringBuilder(payloadDefinition, WINDOWS_1252);
+        return new FormUrlEncodedStringBuilder(payloadDefinition, EPDQ_APPLICATION_X_WWW_FORM_URLENCODED_CHARSET);
     }
 
     private static PayloadBuilder createPayloadBuilderForMaintenanceOrder() {
         PayloadDefinition payloadDefinition = signedPayloadDefinitionFactory.create(new EpdqPayloadDefinitionForMaintenanceOrder());
-        return new FormUrlEncodedStringBuilder(payloadDefinition, WINDOWS_1252);
+        return new FormUrlEncodedStringBuilder(payloadDefinition, EPDQ_APPLICATION_X_WWW_FORM_URLENCODED_CHARSET);
     }
 
     public static EpdqOrderRequestBuilder anEpdqAuthoriseOrderRequestBuilder() {
