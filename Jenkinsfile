@@ -35,7 +35,7 @@ pipeline {
 
           sh 'docker pull govukpay/postgres:9.6.6'
           sh 'mvn clean package'
-          runProviderContractTests()
+//          runProviderContractTests()
           postSuccessfulMetrics("connector.maven-build", stepBuildTime)
         }
       }
