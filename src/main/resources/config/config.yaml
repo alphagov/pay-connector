@@ -1,7 +1,11 @@
 server:
+  minThreads: 500
+  maxThreads: 2048
   applicationConnectors:
     - type: http
       port: ${PORT:-0}
+      acceptorThreads: 128
+      selectorThreads: 256
   adminConnectors:
     - type: http
       port: ${ADMIN_PORT:-0}
