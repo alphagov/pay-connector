@@ -15,10 +15,10 @@ import static uk.gov.pay.connector.service.epdq.EpdqPaymentProvider.EPDQ_APPLICA
 
 public class EpdqNotification implements ChargeStatusRequest {
 
-    public static final String SHASIGN = "SHASIGN";
-    public static final String PAYID = "PAYID";
-    public static final String PAYIDSUB = "PAYIDSUB";
-    public static final String STATUS = "STATUS";
+    static final String SHASIGN_KEY = "SHASIGN";
+    private static final String PAYID_KEY = "PAYID";
+    private static final String PAYIDSUB_KEY = "PAYIDSUB";
+    private static final String STATUS_KEY = "STATUS";
 
     private final List<NameValuePair> paramsList;
 
@@ -36,10 +36,10 @@ public class EpdqNotification implements ChargeStatusRequest {
             Map<String, String> params = paramsList.stream()
                     .collect(toMap(NameValuePair::getName, NameValuePair::getValue));
 
-            status = params.get(STATUS);
-            payId = params.get(PAYID);
-            payIdSub = params.get(PAYIDSUB);
-            shaSign = params.get(SHASIGN);
+            status = params.get(STATUS_KEY);
+            payId = params.get(PAYID_KEY);
+            payIdSub = params.get(PAYIDSUB_KEY);
+            shaSign = params.get(SHASIGN_KEY);
         } catch (Exception e) {
             throw new IllegalArgumentException("Could not decode ePDQ notification payload as "
                     + EPDQ_APPLICATION_X_WWW_FORM_URLENCODED_CHARSET.name() + " application/x-www-form-urlencoded");

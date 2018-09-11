@@ -49,7 +49,7 @@ public class EpdqPayloadDefinitionForMaintenanceOrderTest {
         BasicNameValuePair merchantCode = new BasicNameValuePair(PSPID_KEY, "Merchant-code");
         BasicNameValuePair password = new BasicNameValuePair(PSWD_KEY, "Password");
         BasicNameValuePair userId = new BasicNameValuePair(USERID_KEY, "User-id");
-        BasicNameValuePair amount = new BasicNameValuePair(AMOUNT, "400");
+        BasicNameValuePair amount = new BasicNameValuePair(AMOUNT_KEY, "400");
 
 
         assertThat(extractPairs, contains(amount, operationValue, transactionId, merchantCode, password, userId));

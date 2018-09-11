@@ -48,7 +48,7 @@ import static uk.gov.pay.connector.model.domain.GatewayAccount.CREDENTIALS_USERN
 import static uk.gov.pay.connector.service.BaseAuthoriseResponse.AuthoriseStatus.AUTHORISED;
 import static uk.gov.pay.connector.service.BaseAuthoriseResponse.AuthoriseStatus.ERROR;
 import static uk.gov.pay.connector.service.BaseAuthoriseResponse.AuthoriseStatus.REJECTED;
-import static uk.gov.pay.connector.service.epdq.EpdqNotification.SHASIGN;
+import static uk.gov.pay.connector.service.epdq.EpdqNotification.SHASIGN_KEY;
 import static uk.gov.pay.connector.service.epdq.EpdqOrderRequestBuilder.anEpdq3DsAuthoriseOrderRequestBuilder;
 import static uk.gov.pay.connector.service.epdq.EpdqOrderRequestBuilder.anEpdqAuthoriseOrderRequestBuilder;
 import static uk.gov.pay.connector.service.epdq.EpdqOrderRequestBuilder.anEpdqCancelOrderRequestBuilder;
@@ -156,7 +156,7 @@ public class EpdqPaymentProvider extends BasePaymentProvider<BaseResponse, Strin
         List<NameValuePair> notificationParams = notification.getPayload().get();
 
         List<NameValuePair> notificationParamsWithoutShaSign = notificationParams.stream()
-                .filter(param -> !param.getName().equalsIgnoreCase(SHASIGN)).collect(toList());
+                .filter(param -> !param.getName().equalsIgnoreCase(SHASIGN_KEY)).collect(toList());
 
         String signature = signatureGenerator.sign(notificationParamsWithoutShaSign, gatewayAccountEntity.getCredentials().get(CREDENTIALS_SHA_OUT_PASSPHRASE));
 
@@ -300,9 +300,9 @@ public class EpdqPaymentProvider extends BasePaymentProvider<BaseResponse, Strin
 
     private String getShaSignFromNotificationParams(List<NameValuePair> notificationParams) {
         return notificationParams.stream()
-                .filter(param -> param.getName().equalsIgnoreCase(SHASIGN))
+                .filter(param -> param.getName().equalsIgnoreCase(SHASIGN_KEY))
                 .findFirst()
-                .map(param -> param.getValue())
+                .map(NameValuePair::getValue)
                 .orElse("");
     }
 }

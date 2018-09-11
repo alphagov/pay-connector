@@ -7,13 +7,13 @@ import uk.gov.pay.connector.util.templates.PayloadDefinition;
 
 import static org.apache.commons.lang3.StringUtils.isEmpty;
 
-abstract public class EpdqPayloadDefinition implements PayloadDefinition {
+abstract class EpdqPayloadDefinition implements PayloadDefinition {
 
-    static public ParameterBuilder newParameterBuilder() {
+    static ParameterBuilder newParameterBuilder() {
         return new ParameterBuilder();
     }
 
-    static public class ParameterBuilder {
+    public static class ParameterBuilder {
 
         private ImmutableList.Builder<NameValuePair> parameters = new ImmutableList.Builder<>();
 
