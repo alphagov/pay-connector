@@ -52,7 +52,7 @@ pipeline {
       steps {
         sh 'docker pull govukpay/postgres:9.6.6'
         sh 'mvn -Dmaven.test.skip=true clean package'
-        runProviderContractTests()
+//        runProviderContractTests()
       }
     }
     stage('Docker Build') {
