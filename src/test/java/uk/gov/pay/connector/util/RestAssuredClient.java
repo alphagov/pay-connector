@@ -208,4 +208,13 @@ public class RestAssuredClient {
         this.refundId = refundId;
         return this;
     }
+
+    public ValidatableResponse postMarkChargeAsCaptureApproved() {
+        final String path = "/v1/api/accounts/{accountId}/charges/{chargeId}/capture"
+                .replace("{accountId}", accountId)
+                .replace("{chargeId}", chargeId);
+        return given().port(app.getLocalPort())
+                .post(path)
+                .then();
+    }
 }

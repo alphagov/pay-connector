@@ -33,7 +33,9 @@ import static java.time.temporal.ChronoUnit.SECONDS;
 import static java.util.Arrays.asList;
 import static javax.ws.rs.core.MediaType.APPLICATION_JSON;
 import static javax.ws.rs.core.Response.Status.BAD_REQUEST;
+import static javax.ws.rs.core.Response.Status.CONFLICT;
 import static javax.ws.rs.core.Response.Status.NOT_FOUND;
+import static javax.ws.rs.core.Response.Status.NO_CONTENT;
 import static javax.ws.rs.core.Response.Status.OK;
 import static org.apache.commons.lang.math.RandomUtils.nextInt;
 import static org.apache.commons.lang.math.RandomUtils.nextLong;
@@ -60,6 +62,7 @@ import static uk.gov.pay.connector.model.domain.ChargeStatus.AUTHORISATION_READY
 import static uk.gov.pay.connector.model.domain.ChargeStatus.AUTHORISATION_SUCCESS;
 import static uk.gov.pay.connector.model.domain.ChargeStatus.AWAITING_CAPTURE_REQUEST;
 import static uk.gov.pay.connector.model.domain.ChargeStatus.CAPTURED;
+import static uk.gov.pay.connector.model.domain.ChargeStatus.CAPTURE_APPROVED;
 import static uk.gov.pay.connector.model.domain.ChargeStatus.CREATED;
 import static uk.gov.pay.connector.model.domain.ChargeStatus.EXPIRED;
 import static uk.gov.pay.connector.util.DateTimeUtils.toUTCZonedDateTime;
@@ -605,7 +608,7 @@ public class ChargesApiResourceITest extends ChargingITestBase {
 
     @Test
     public void shouldFilterTransactionsByCardHolderName() {
-        
+
         addChargeAndCardDetails(CREATED, ServicePaymentReference.of("ref-1"), now());
         addChargeAndCardDetails(AUTHORISATION_READY, ServicePaymentReference.of("ref-2"), now());
         addChargeAndCardDetails(CAPTURED, ServicePaymentReference.of("ref-3"), now().minusDays(2));
@@ -623,7 +626,7 @@ public class ChargesApiResourceITest extends ChargingITestBase {
 
     @Test
     public void shouldFilterTransactionsByLastDigitsCardNumber() {
-        
+
         addChargeAndCardDetails(CREATED, ServicePaymentReference.of("ref-1"), now());
         addChargeAndCardDetails(AUTHORISATION_READY, ServicePaymentReference.of("ref-2"), now());
         addChargeAndCardDetails(CAPTURED, ServicePaymentReference.of("ref-3"), now().minusDays(2));
@@ -638,7 +641,7 @@ public class ChargesApiResourceITest extends ChargingITestBase {
                 .body("results.size()", is(3))
                 .body("results[0].card_details.last_digits_card_number", is("1234"));
     }
-    
+
     @Test
     public void shouldFilterTransactionsByCardBrand() {
         String searchedCardBrand = "visa";
@@ -918,7 +921,7 @@ public class ChargesApiResourceITest extends ChargingITestBase {
     @Test
     public void shouldGetSuccessForExpiryChargeTask_withStatus_awaitingCaptureRequest() {
         //create charge
-        String extChargeId = addChargeAndCardDetails(AWAITING_CAPTURE_REQUEST, 
+        String extChargeId = addChargeAndCardDetails(AWAITING_CAPTURE_REQUEST,
                 ServicePaymentReference.of("ref"), ZonedDateTime.now().minusMinutes(90));
 
         // run expiry task
@@ -939,6 +942,82 @@ public class ChargesApiResourceITest extends ChargingITestBase {
                 .body(JSON_CHARGE_KEY, is(extChargeId))
                 .body(JSON_STATE_KEY, is(EXPIRED.toExternal().getStatus()));
 
+    }
+
+    @Test
+    public void shouldGetNoContentForMarkChargeAsCaptureApproved_withStatus_awaitingCaptureRequest() {
+        //create charge
+        String extChargeId = addChargeAndCardDetails(AWAITING_CAPTURE_REQUEST,
+                ServicePaymentReference.of("ref"), ZonedDateTime.now().minusMinutes(90));
+
+        getChargeApi
+                .withAccountId(accountId)
+                .withChargeId(extChargeId)
+                .postMarkChargeAsCaptureApproved()
+                .statusCode(NO_CONTENT.getStatusCode());
+
+        // get the charge back and assert its status is expired
+        getChargeApi
+                .withAccountId(accountId)
+                .withChargeId(extChargeId)
+                .getCharge()
+                .statusCode(OK.getStatusCode())
+                .contentType(JSON)
+                .body(JSON_CHARGE_KEY, is(extChargeId))
+                .body(JSON_STATE_KEY, is(CAPTURE_APPROVED.toExternal().getStatus()));
+
+    }
+
+    @Test
+    public void shouldGetNoContentForMarkChargeAsCaptureApproved_withStatus_captureApproved() {
+        //create charge
+        String extChargeId = addChargeAndCardDetails(CAPTURE_APPROVED,
+                ServicePaymentReference.of("ref"), ZonedDateTime.now().minusMinutes(90));
+
+        getChargeApi
+                .withAccountId(accountId)
+                .withChargeId(extChargeId)
+                .postMarkChargeAsCaptureApproved()
+                .statusCode(NO_CONTENT.getStatusCode());
+
+        // get the charge back and assert its status is expired
+        getChargeApi
+                .withAccountId(accountId)
+                .withChargeId(extChargeId)
+                .getCharge()
+                .statusCode(OK.getStatusCode())
+                .contentType(JSON)
+                .body(JSON_CHARGE_KEY, is(extChargeId))
+                .body(JSON_STATE_KEY, is(CAPTURE_APPROVED.toExternal().getStatus()));
+
+    }
+
+    @Test
+    public void shouldGetNotFoundFor_markChargeAsCaptureApproved_whenNoChargeExists() {
+
+        getChargeApi
+                .withAccountId(accountId)
+                .withChargeId("i-do-not-exist")
+                .postMarkChargeAsCaptureApproved()
+                .statusCode(NOT_FOUND.getStatusCode())
+                .contentType(JSON)
+                .body(JSON_MESSAGE_KEY, is("Charge with id [i-do-not-exist] not found."));
+    }
+
+    @Test
+    public void shouldGetConflictExceptionFor_markChargeAsCaptureApproved_whenNoChargeExists() {
+        //create charge
+        String extChargeId = addChargeAndCardDetails(EXPIRED,
+                ServicePaymentReference.of("ref"), ZonedDateTime.now().minusMinutes(90));
+
+        final String expectedErrorMessage = format("Operation for charge conflicting, %s, attempt to perform delayed capture on charge not in AWAITING CAPTURE REQUEST state.", extChargeId);
+        getChargeApi
+                .withAccountId(accountId)
+                .withChargeId(extChargeId)
+                .postMarkChargeAsCaptureApproved()
+                .statusCode(CONFLICT.getStatusCode())
+                .contentType(JSON)
+                .body(JSON_MESSAGE_KEY, is(expectedErrorMessage));
     }
 
     private void assert404WhenRequestingInvalidPage() {

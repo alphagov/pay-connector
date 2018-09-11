@@ -7,13 +7,24 @@ import uk.gov.pay.connector.model.GatewayError;
 import uk.gov.pay.connector.model.domain.Auth3dsDetails;
 import uk.gov.pay.connector.model.domain.AuthCardDetails;
 import uk.gov.pay.connector.model.gateway.GatewayResponse;
-import uk.gov.pay.connector.service.*;
+import uk.gov.pay.connector.service.BaseAuthoriseResponse;
 import uk.gov.pay.connector.service.BaseAuthoriseResponse.AuthoriseStatus;
+import uk.gov.pay.connector.service.BaseCancelResponse;
+import uk.gov.pay.connector.service.Card3dsResponseAuthService;
+import uk.gov.pay.connector.service.CardAuthoriseService;
+import uk.gov.pay.connector.service.CardCaptureService;
+import uk.gov.pay.connector.service.ChargeCancelService;
 import uk.gov.pay.connector.util.ResponseUtil;
 
 import javax.inject.Inject;
-import javax.ws.rs.*;
+import javax.ws.rs.Consumes;
+import javax.ws.rs.POST;
+import javax.ws.rs.Path;
+import javax.ws.rs.PathParam;
+import javax.ws.rs.Produces;
+import javax.ws.rs.core.Context;
 import javax.ws.rs.core.Response;
+import javax.ws.rs.core.UriInfo;
 import java.util.Optional;
 
 import static javax.ws.rs.core.MediaType.APPLICATION_JSON;
@@ -73,6 +84,17 @@ public class CardResource {
     public Response captureCharge(@PathParam("chargeId") String chargeId) {
         logger.info("Capture of charge asynchronously [charge_external_id={}]", chargeId);
         cardCaptureService.markChargeAsEligibleForCapture(chargeId);
+        return ResponseUtil.noContentResponse();
+    }
+
+    @POST
+    @Path("/v1/api/accounts/{accountId}/charges/{chargeId}/capture")
+    @Produces(APPLICATION_JSON)
+    public Response markChargeAsCaptureApproved(@PathParam("accountId") Long accountId,
+                                  @PathParam("chargeId") String chargeId,
+                                  @Context UriInfo uriInfo) {
+        logger.info("Mark charge as CAPTURE APPROVED [charge_external_id={}]", chargeId);
+        cardCaptureService.markChargeAsCaptureApproved(chargeId);
         return ResponseUtil.noContentResponse();
     }
 
