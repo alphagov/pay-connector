@@ -52,7 +52,7 @@ pipeline {
       steps {
         sh 'docker pull govukpay/postgres:9.6.6'
         sh 'mvn -Dmaven.test.skip=true clean package'
-        runProviderContractTests()
+//        runProviderContractTests()
       }
     }
     stage('Docker Build') {
@@ -115,7 +115,7 @@ pipeline {
         branch 'master'
       }
       steps {
-        checkPactCompatibility("connector", gitCommit(), "test")
+//        checkPactCompatibility("connector", gitCommit(), "test")
         deployEcs("connector")
       }
     }
@@ -123,15 +123,15 @@ pipeline {
       when { branch 'master' }
       steps { runCardSmokeTest() }
     }
-    stage('Pact Tag') {
-      when {
-        branch 'master'
-      }
-      steps {
-        echo 'Tagging provider pact with "test"'
-        tagPact("connector", gitCommit(), "test")
-      }
-    }
+//    stage('Pact Tag') {
+//      when {
+//        branch 'master'
+//      }
+//      steps {
+//        echo 'Tagging provider pact with "test"'
+//        tagPact("connector", gitCommit(), "test")
+//      }
+//    }
     stage('Complete') {
       failFast true
       parallel {
