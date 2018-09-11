@@ -24,7 +24,7 @@ import java.util.concurrent.ThreadLocalRandom;
 
 @RunWith(PayPactRunner.class)
 @Provider("connector")
-@PactBroker(protocol = "https", host = "pact-broker-test.cloudapps.digital", port = "443", tags = {"master", "test", "staging", "production"},
+@PactBroker(protocol = "https", host = "pact-broker-test.cloudapps.digital", port = "443", tags = {"${PACT_CONSUMER_TAG}", "test", "staging", "production"},
         authentication = @PactBrokerAuth(username = "${PACT_BROKER_USERNAME}", password = "${PACT_BROKER_PASSWORD}"))
 public class TransactionsApiContractTest {
 
