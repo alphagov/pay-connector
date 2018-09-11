@@ -1,4 +1,5 @@
 server:
+  maxThreads: 2048
   applicationConnectors:
     - type: http
       port: ${PORT:-0}
