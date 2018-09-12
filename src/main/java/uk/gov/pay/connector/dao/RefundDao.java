@@ -18,6 +18,10 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
 
+import static com.google.common.collect.Lists.newArrayList;
+import static uk.gov.pay.connector.model.domain.RefundStatus.REFUNDED;
+import static uk.gov.pay.connector.model.domain.RefundStatus.REFUND_SUBMITTED;
+
 
 @Transactional
 public class RefundDao extends JpaDao<RefundEntity> {
@@ -132,6 +136,7 @@ public class RefundDao extends JpaDao<RefundEntity> {
         Root<RefundEntity> refund = cq.from(RefundEntity.class);
 
         List<Predicate> predicates = buildParamPredicates(params, cb, refund);
+        predicates.add(refund.get(STATUS).in(newArrayList(REFUND_SUBMITTED, REFUNDED)));
         cq.select(refund)
                 .where(predicates.toArray(new Predicate[]{}))
                 .orderBy(cb.desc(refund.get(CREATED_DATE)));

@@ -1,7 +1,7 @@
 package uk.gov.pay.connector.model.builder;
 
 import com.google.common.collect.ImmutableMap;
-import uk.gov.pay.connector.model.ChargeResponse;
+import uk.gov.pay.connector.model.domain.RefundEntity;
 
 import java.net.URI;
 import java.util.ArrayList;
@@ -10,9 +10,12 @@ import java.util.Map;
 
 public abstract class AbstractRefundsResponseBuilder<T extends AbstractRefundsResponseBuilder<T, R>, R> {
     protected String createdDate;
-    protected List<Map<String, Object>> links = new ArrayList<>();
-    protected ChargeResponse.RefundSummary refundSummary;
+    protected List<Map<String, Object>> dataLinks = new ArrayList<>();
     protected String refundId;
+    protected RefundEntity refundEntity;
+    protected String status;
+    protected String extChargeId;
+    protected Long amountSubmitted;
 
     protected abstract T thisObject();
 
@@ -20,14 +23,29 @@ public abstract class AbstractRefundsResponseBuilder<T extends AbstractRefundsRe
         this.refundId = refundId;
         return thisObject();
     }
-    
+
     public T withCreatedDate(String createdDate) {
         this.createdDate = createdDate;
         return thisObject();
     }
 
+    public T withStatus(String status) {
+        this.status = status;
+        return thisObject();
+    }
+
+    public T withChargeId(String extChargeId) {
+        this.extChargeId = extChargeId;
+        return thisObject();
+    }
+
+    public T withAmountSubmitted(Long amountSubmitted) {
+        this.amountSubmitted = amountSubmitted;
+        return thisObject();
+    }
+
     public T withLink(String rel, String method, URI href) {
-        links.add(ImmutableMap.of(
+        dataLinks.add(ImmutableMap.of(
                 "rel", rel,
                 "method", method,
                 "href", href
@@ -35,22 +53,6 @@ public abstract class AbstractRefundsResponseBuilder<T extends AbstractRefundsRe
         return thisObject();
     }
 
-    public T withLink(String rel, String method, URI href, String type, Map<String, Object> params) {
-        links.add(ImmutableMap.of(
-                "rel", rel,
-                "method", method,
-                "href", href,
-                "type", type,
-                "params", params
-        ));
-
-        return thisObject();
-    }
-
-    public T withRefunds(ChargeResponse.RefundSummary refundSummary) {
-        this.refundSummary = refundSummary;
-        return thisObject();
-    }
-
     public abstract R build();
+
 }

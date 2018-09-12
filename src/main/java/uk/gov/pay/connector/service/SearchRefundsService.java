@@ -4,9 +4,7 @@ import com.google.common.collect.ImmutableList;
 import org.apache.commons.lang3.tuple.Pair;
 import uk.gov.pay.connector.dao.ChargeSearchParams;
 import uk.gov.pay.connector.dao.RefundDao;
-import uk.gov.pay.connector.model.ChargeResponse;
 import uk.gov.pay.connector.model.SearchRefundsResponse;
-import uk.gov.pay.connector.model.domain.ChargeEntity;
 import uk.gov.pay.connector.model.domain.RefundEntity;
 import uk.gov.pay.connector.resources.ChargesPaginationResponseBuilder;
 import uk.gov.pay.connector.util.DateTimeUtils;
@@ -24,18 +22,17 @@ import java.util.stream.Collectors;
 
 import static com.google.common.collect.Lists.newArrayList;
 import static javax.ws.rs.HttpMethod.GET;
-import static uk.gov.pay.connector.model.SearchRefundsResponse.aAllRefundsResponseBuilder;
+import static uk.gov.pay.connector.model.SearchRefundsResponse.anAllRefundsResponseBuilder;
 import static uk.gov.pay.connector.util.ResponseUtil.notFoundResponse;
 
 public class SearchRefundsService {
 
+    private static final Long MAX_DISPLAY_SIZE = 500L;
     private RefundDao refundDao;
-    private final PaymentProviders providers;
 
     @Inject
-    public SearchRefundsService(RefundDao refundDao, PaymentProviders providers) {
+    public SearchRefundsService(RefundDao refundDao) {
         this.refundDao = refundDao;
-        this.providers = providers;
     }
 
     public Response getAllRefunds(UriInfo uriInfo, Long accountId, Long pageNumber, Long displaySize) {
@@ -48,7 +45,8 @@ public class SearchRefundsService {
                 .orElseGet(() -> {
                     ChargeSearchParams searchParams = new ChargeSearchParams()
                             .withGatewayAccountId(accountId)
-                            .withDisplaySize(displaySize != null ? displaySize : 0)
+                            .withDisplaySize(displaySize == null ? MAX_DISPLAY_SIZE :
+                                    (displaySize > MAX_DISPLAY_SIZE) ? MAX_DISPLAY_SIZE : displaySize)
                             .withPage(pageNumber != null ? pageNumber : 1);
                     return search(searchParams, uriInfo);
                 });
@@ -65,6 +63,7 @@ public class SearchRefundsService {
         }
 
         List<RefundEntity> refunds = refundDao.findAllBy(searchParams);
+        
         List<SearchRefundsResponse> refundResponses =
                 refunds.stream()
                         .map(refund -> buildResponse(uriInfo, refund))
@@ -73,38 +72,32 @@ public class SearchRefundsService {
         return new ChargesPaginationResponseBuilder(searchParams, uriInfo)
                 .withResponses(refundResponses)
                 .withTotalCount(totalCount)
-                .buildResponse();
+                .buildSearchRefundsResponse();
     }
     
     private SearchRefundsResponse buildResponse(UriInfo uriInfo, RefundEntity refundEntity){
-        return populateResponseBuilderWith(aAllRefundsResponseBuilder(), uriInfo, refundEntity).build();
+        return populateResponseBuilderWith(anAllRefundsResponseBuilder(), uriInfo, refundEntity).build();
     }
 
     private SearchRefundsResponse.SearchRefundsResponseBuilder populateResponseBuilderWith(
             SearchRefundsResponse.SearchRefundsResponseBuilder responseBuilder, 
             UriInfo uriInfo, RefundEntity refundEntity) {
 
-        Long accountId = refundEntity.getChargeEntity().getGatewayAccount().getId();
-       return responseBuilder
+        return responseBuilder
                 .withRefundId(refundEntity.getExternalId())
-                .withRefunds(buildRefundSummary(refundEntity))
                 .withCreatedDate(DateTimeUtils.toUTCDateTimeString(refundEntity.getCreatedDate()))
-                .withLink("self", GET, selfLinkFor(uriInfo, accountId));
-    }
-                
-    private URI selfLinkFor(UriInfo uriInfo, Long accountId) {
-    return uriInfo.getBaseUriBuilder()
-            .path("/v1/api/accounts/{accountId}/refunds")
-            .build(accountId);
+                .withStatus(String.valueOf(refundEntity.getStatus()))
+                .withChargeId(refundEntity.getChargeEntity().getExternalId())
+                .withAmountSubmitted(refundEntity.getChargeEntity().getAmount())
+                .withLink("payment_url", GET, paymentLinkFor(uriInfo, refundEntity.getChargeEntity().getExternalId()));
     }
 
-    private ChargeResponse.RefundSummary buildRefundSummary(RefundEntity refundEntity) {
-        ChargeEntity chargeEntity = refundEntity.getChargeEntity();
-        ChargeResponse.RefundSummary refund = new ChargeResponse.RefundSummary();
-        refund.setStatus(providers.byName(chargeEntity.getPaymentGatewayName()).getExternalChargeRefundAvailability(chargeEntity).getStatus());
-        refund.setAmountSubmitted(chargeEntity.getRefundedAmount());
-        refund.setAmountAvailable(chargeEntity.getTotalAmountToBeRefunded());
-        return refund;
+    private URI paymentLinkFor(UriInfo uriInfo, String externalId) {
+        String targetPath = "/v1/payments/{externalId}".replace("{externalId}",externalId);
+        return uriInfo
+                .getBaseUriBuilder()
+                .replacePath(targetPath)
+                .build();
     }
 
     private static Optional<List> validateQueryParams(List<Pair<String, Long>> nonNegativePairMap) {

@@ -124,14 +124,14 @@ public class RefundDaoJpaITest extends DaoITestBase {
     @Test 
     public void findAllBy_shouldFindAllRefundsByQueryParamsWithAccountId() {
         ChargeSearchParams chargeSearchParams = new ChargeSearchParams().withGatewayAccountId(sandboxAccount.getAccountId());
-        addAnotherRefundToAccount();
-        addAnotherRefundToAccount();
+        addSuccessfulRefundsToAccount();
+        addSuccessfulRefundsToAccount();
         
         List<RefundEntity> refunds = refundDao.findAllBy(chargeSearchParams);
-        assertThat(refunds.size(), is(3));
+        assertThat(refunds.size(), is(2));
     }
 
-    private void addAnotherRefundToAccount() {
+    private void addSuccessfulRefundsToAccount() {
         DatabaseFixtures
                 .withDatabaseTestHelper(databaseTestHelper)
                 .aTestRefund()

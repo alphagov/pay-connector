@@ -1,11 +1,11 @@
 package uk.gov.pay.connector.model;
 
 import com.fasterxml.jackson.annotation.JsonFormat;
+import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonInclude;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import uk.gov.pay.connector.model.builder.AbstractRefundsResponseBuilder;
 
-import java.net.URI;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
@@ -24,33 +24,50 @@ public class SearchRefundsResponse {
 
         @Override
         public SearchRefundsResponse build() {
-            return new SearchRefundsResponse(refundId, refundSummary, createdDate, links);
+            return new SearchRefundsResponse(
+                    refundId,
+                    createdDate,
+                    status,
+                    extChargeId,
+                    amountSubmitted,
+                    dataLinks
+            );
         }
     }
 
-    public static SearchRefundsResponseBuilder aAllRefundsResponseBuilder() {
+    public static SearchRefundsResponseBuilder anAllRefundsResponseBuilder() {
         return new SearchRefundsResponseBuilder();
     }
 
     @JsonProperty("refund_id")
     private String refundId;
-    
-    @JsonProperty("refund_summary")
-    private ChargeResponse.RefundSummary refundSummary;
-    
+
     @JsonProperty("created_date")
     private String createdDate;
 
-    @JsonProperty("links")
-    private List<Map<String, Object>> dataLinks = new ArrayList<>();
-    
-    
+    @JsonProperty("status")
+    private String status;
 
-    protected SearchRefundsResponse(String refundId, ChargeResponse.RefundSummary refundSummary,
-                                    String createdDate, List<Map<String, Object>> dataLinks) {
-        this.refundId= refundId;
-        this.refundSummary = refundSummary;
+    @JsonIgnore
+    private String extChargeId;
+
+    @JsonProperty("amount_submitted")
+    private Long amountSubmitted;
+
+    @JsonProperty("_links")
+    private List<Map<String, Object>> dataLinks = new ArrayList<>();
+
+    protected SearchRefundsResponse(String refundId,
+                                    String createdDate,
+                                    String status,
+                                    String extChargeId,
+                                    Long amountSubmitted,
+                                    List<Map<String, Object>> dataLinks) {
+        this.refundId = refundId;
         this.createdDate = createdDate;
+        this.status = status;
+        this.extChargeId = extChargeId;
+        this.amountSubmitted = amountSubmitted;
         this.dataLinks = dataLinks;
     }
 
@@ -58,16 +75,21 @@ public class SearchRefundsResponse {
         return refundId;
     }
 
-    public ChargeResponse.RefundSummary getRefundSummary() {
-        return refundSummary;
+
+    public String getCreatedDate() {
+        return createdDate;
     }
 
-    public URI getLink(String rel) {
-        return dataLinks.stream()
-                .filter(map -> rel.equals(map.get("rel")))
-                .findFirst()
-                .map(link -> (URI) link.get("href"))
-                .get();
+    public String getStatus() {
+        return status;
+    }
+
+    public String getChargeId() {
+        return extChargeId;
+    }
+
+    public Long getAmountSubmitted() {
+        return amountSubmitted;
     }
 
     public List<Map<String, Object>> getDataLinks() {
@@ -83,11 +105,17 @@ public class SearchRefundsResponse {
 
         if (refundId != null ? !refundId.equals(that.refundId) : that.refundId != null)
             return false;
-        if (dataLinks != null ? !dataLinks.equals(that.dataLinks) : that.dataLinks != null)
-            return false;
         if (createdDate != null ? !createdDate.equals(that.createdDate) : that.createdDate != null)
             return false;
-        return (refundSummary != null ? !refundSummary.equals(that.refundSummary) : that.refundSummary != null); 
+        if (!status.equals(that.status)) {
+            return false;
+        }
+        if (extChargeId != null ? !extChargeId.equals(that.extChargeId) : that.extChargeId != null)
+            return false;
+        if (dataLinks != null ? !dataLinks.equals(that.dataLinks) : that.dataLinks != null)
+            return false;
+        return amountSubmitted != null ? amountSubmitted.equals(that.amountSubmitted)
+                : that.amountSubmitted == null;
     }
 
     @Override
@@ -95,7 +123,10 @@ public class SearchRefundsResponse {
         int result = dataLinks != null ? dataLinks.hashCode() : 0;
         result = 31 * result + (refundId != null ? refundId.hashCode() : 0);
         result = 31 * result + (createdDate != null ? createdDate.hashCode() : 0);
-        result = 31 * result + (refundSummary != null ? refundSummary.hashCode() : 0);
+        result = 31 * result + (status != null ? status.hashCode() : 0);
+        result = 31 * result + (extChargeId != null ? extChargeId.hashCode() : 0);
+        result = 31 * result + (amountSubmitted != null ? amountSubmitted.hashCode() : 0);
+        result = 31 * result + (dataLinks != null ? dataLinks.hashCode() : 0);
         return result;
     }
 
@@ -104,8 +135,9 @@ public class SearchRefundsResponse {
         // Some services put PII in the description, so don’t include it in the stringification
         return "SearchRefundsResponse{" +
                 " refundId='" + refundId + '\'' +
-                ", refundSummary=" + refundSummary +
                 ", createdDate=" + createdDate +
+                ", status=" + status +
+                ", amountSubmitted=" + amountSubmitted +
                 ", dataLinks=" + dataLinks +
                 '}';
     }

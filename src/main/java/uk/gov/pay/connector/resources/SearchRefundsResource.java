@@ -2,6 +2,7 @@ package uk.gov.pay.connector.resources;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import uk.gov.pay.connector.dao.GatewayAccountDao;
 import uk.gov.pay.connector.service.SearchRefundsService;
 
 import javax.inject.Inject;
@@ -14,7 +15,9 @@ import javax.ws.rs.core.Context;
 import javax.ws.rs.core.Response;
 import javax.ws.rs.core.UriInfo;
 
+import static java.lang.String.format;
 import static javax.ws.rs.core.MediaType.APPLICATION_JSON;
+import static uk.gov.pay.connector.util.ResponseUtil.notFoundResponse;
 
 @Path("/")
 public class SearchRefundsResource {
@@ -24,20 +27,29 @@ public class SearchRefundsResource {
     private final String DISPLAY_SIZE = "display_size";
     private final String ACCOUNT_ID = "accountId";
     private final SearchRefundsService searchRefundsService;
+    private final GatewayAccountDao gatewayAccountDao;
 
     @Inject
-    public SearchRefundsResource(SearchRefundsService searchRefundsService)  {
+    public SearchRefundsResource(SearchRefundsService searchRefundsService, GatewayAccountDao gatewayAccountDao) {
         this.searchRefundsService = searchRefundsService;
+        this.gatewayAccountDao = gatewayAccountDao;
     }
-    
+
     @GET
-    @Path("/v1/api/accounts/{accountId}/refunds")
+    @Path("/v1/refunds/account/{accountId}")
     @Produces(APPLICATION_JSON)
     public Response getRefundsByAccountId(@PathParam(ACCOUNT_ID) Long accountId,
                                           @QueryParam(PAGE) Long pageNumber,
                                           @QueryParam(DISPLAY_SIZE) Long displaySize,
                                           @Context UriInfo uriInfo) {
         logger.info("Getting all refunds for account id {}", accountId);
-        return searchRefundsService.getAllRefunds(uriInfo, accountId, pageNumber, displaySize);
+        if (gatewayAccountDao.findById(accountId).isPresent()) {
+            return searchRefundsService.getAllRefunds(
+                    uriInfo, 
+                    accountId, 
+                    pageNumber, 
+                    displaySize); 
+        }
+        return notFoundResponse(format("Gateway with id %s does not exist", accountId));
     }
 }

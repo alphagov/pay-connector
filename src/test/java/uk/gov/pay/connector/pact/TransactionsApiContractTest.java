@@ -14,6 +14,7 @@ import org.junit.runner.RunWith;
 import uk.gov.pay.commons.testing.pact.providers.PayPactRunner;
 import uk.gov.pay.connector.model.ServicePaymentReference;
 import uk.gov.pay.connector.model.domain.ChargeStatus;
+import uk.gov.pay.connector.model.domain.RefundStatus;
 import uk.gov.pay.connector.rules.DropwizardAppWithPostgresRule;
 import uk.gov.pay.connector.util.DatabaseTestHelper;
 
@@ -69,9 +70,22 @@ public class TransactionsApiContractTest {
         dbHelper.updateChargeCardDetails(chargeId, "visa", lastDigitsCardNumber, firstDigitsCardNumber, cardHolderName, "08/23",
                 "aFirstAddress", "aSecondLine", "aPostCode", "aCity", "aCounty", "aCountry");
     }
-    
+
     private void setUpSingleCharge(String accountId, Long chargeId, String chargeExternalId, ChargeStatus chargeStatus, ZonedDateTime createdDate, boolean delayedCapture) {
         setUpSingleCharge(accountId, chargeId, chargeExternalId, chargeStatus, createdDate, delayedCapture, "aName", "0001", "123456");
+    }
+
+    private void setUpChargeAndRefunds(int numberOfRefunds, String accountID) {
+        Long chargeId = ThreadLocalRandom.current().nextLong(100, 100000);
+        dbHelper.addCharge(chargeId, Long.toString(chargeId), accountID, 100L, ChargeStatus.CREATED, "aReturnUrl",
+                "aTransactionId", ServicePaymentReference.of("aReference"), ZonedDateTime.now().minusHours(12), "test@test.com@");
+
+        for (int i = 0; i < numberOfRefunds; i++) {
+            Long refundId = ThreadLocalRandom.current().nextLong(100, 100000);
+
+            dbHelper.addRefund(refundId, String.valueOf(refundId), "reference", 1L, RefundStatus.REFUNDED.getValue(),
+                    chargeId, ZonedDateTime.now().minusHours(11));
+        }
     }
 
     @State("User 666 exists in the database")
@@ -145,5 +159,19 @@ public class TransactionsApiContractTest {
         String firstDigitsCardNumber = params.get("first_digits_card_number");
         setUpGatewayAccount(Long.valueOf(gatewayAccountId));
         setUpSingleCharge(gatewayAccountId, chargeId, chargeExternalId, ChargeStatus.CREATED, ZonedDateTime.parse("2018-09-22T10:13:16.067Z"), true, cardHolderName, lastDigitsCardNumber, firstDigitsCardNumber);
+    }
+
+    @State("Refunds exist")
+    public void refundsExist(Map<String, String> params) {
+        Long accountId = Long.valueOf(params.get("account_id"));
+        setUpGatewayAccount(accountId);
+        setUpChargeAndRefunds(2, params.get("account_id"));
+    }
+
+    @State("Account exists")
+    public void accountExists(Map<String, String> params) {
+        Long accountId = Long.valueOf(params.get("account_id"));
+        setUpGatewayAccount(accountId);
+        setUpCharges(1, params.get("account_id"), ZonedDateTime.now().minusHours(12));
     }
 }

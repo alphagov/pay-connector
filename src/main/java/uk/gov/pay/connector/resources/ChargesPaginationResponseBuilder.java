@@ -10,7 +10,7 @@ import java.util.List;
 
 import static javax.ws.rs.core.Response.ok;
 
-public class ChargesPaginationResponseBuilder<T>{
+public class ChargesPaginationResponseBuilder<T> {
 
     private ChargeSearchParams searchParams;
     private UriInfo uriInfo;
@@ -57,6 +57,19 @@ public class ChargesPaginationResponseBuilder<T>{
         addLinkNotNull(halRepresentationBuilder, "prev_page", prevLink);
         addLinkNotNull(halRepresentationBuilder, "next_page", nextLink);
 
+        return ok(halRepresentationBuilder.build().toString()).build();
+    }
+
+    public Response buildSearchRefundsResponse() {
+        Long size = searchParams.getDisplaySize();
+        long lastPage = totalCount > 0 ? (totalCount + size - 1) / size : 1;
+        buildLinks(lastPage);
+
+        HalRepresentation.HalRepresentationBuilder halRepresentationBuilder = HalRepresentation.builder()
+                .addProperty("results", chargeResponses)
+                .addProperty("count", chargeResponses.size())
+                .addProperty("total", totalCount)
+                .addProperty("page", selfPageNum);
         return ok(halRepresentationBuilder.build().toString()).build();
     }
 
