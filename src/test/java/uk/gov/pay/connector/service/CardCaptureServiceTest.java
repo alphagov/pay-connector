@@ -8,7 +8,6 @@ import ch.qos.logback.core.Appender;
 import com.codahale.metrics.Counter;
 import com.codahale.metrics.MetricRegistry;
 import io.dropwizard.setup.Environment;
-import org.hamcrest.BaseMatcher;
 import org.hamcrest.Description;
 import org.hamcrest.TypeSafeMatcher;
 import org.junit.Assert;
@@ -44,7 +43,6 @@ import java.util.Optional;
 import static junit.framework.TestCase.assertTrue;
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.core.Is.is;
-import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.fail;
 import static org.mockito.Matchers.any;
@@ -117,18 +115,6 @@ public class CardCaptureServiceTest extends CardServiceTest {
         GatewayResponse captureResponse = gatewayResponseBuilder
                 .withGatewayError(GatewayError.baseError("something went wrong")).build();
         when(mockedPaymentProvider.capture(any())).thenReturn(captureResponse);
-    }
-
-    class EmptyOptionalMatcher extends BaseMatcher<Optional<?>> {
-        @Override
-        public boolean matches(Object item) {
-            return !((Optional) item).isPresent();
-        }
-
-        @Override
-        public void describeTo(Description description) {
-            description.appendText("An empty optional");
-        }
     }
 
     @Test
@@ -226,7 +212,7 @@ public class CardCaptureServiceTest extends CardServiceTest {
                 .thenReturn(charge);
         exception.expect(OperationAlreadyInProgressRuntimeException.class);
         cardCaptureService.doCapture(charge.getExternalId());
-        assertEquals(charge.getStatus(), is(ChargeStatus.CAPTURE_READY.getValue()));
+        assertThat(charge.getStatus(), is(ChargeStatus.CAPTURE_READY.getValue()));
         // verify an email notification is not sent when an unsuccessful capture
         verifyZeroInteractions(mockUserNotificationService);
     }
@@ -242,7 +228,7 @@ public class CardCaptureServiceTest extends CardServiceTest {
 
         exception.expect(IllegalStateRuntimeException.class);
         cardCaptureService.doCapture(charge.getExternalId());
-        assertEquals(charge.getStatus(), is(ChargeStatus.CREATED.getValue()));
+        assertThat(charge.getStatus(), is(ChargeStatus.CREATED.getValue()));
         // verify an email notification is not sent when an unsuccessful capture
         verifyZeroInteractions(mockUserNotificationService);
     }
@@ -264,7 +250,7 @@ public class CardCaptureServiceTest extends CardServiceTest {
                 .thenThrow(new OptimisticLockException());
         exception.expect(ConflictRuntimeException.class);
         cardCaptureService.doCapture(charge.getExternalId());
-        assertEquals(charge.getStatus(), is(ChargeStatus.CREATED.getValue()));
+        assertThat(charge.getStatus(), is(ChargeStatus.CREATED.getValue()));
         // verify an email notification is not sent when an unsuccessful capture
         verifyZeroInteractions(mockUserNotificationService);
     }
@@ -296,56 +282,17 @@ public class CardCaptureServiceTest extends CardServiceTest {
 
     @Test
     public void doCapture_shouldBeAbleToCapture_whenChargeHasAuthorisationSuccessStatus() {
-        String gatewayTxId = "theTxId";
-        ChargeEntity charge = createNewChargeWith("worldpay", 1L, AUTHORISATION_SUCCESS, gatewayTxId);
-        ChargeEntity chargeSpy = spy(charge);
-        mockChargeDaoOperations(chargeSpy);
-        worldpayWillRespondWithSuccess(gatewayTxId, null);
-        when(mockedProviders.byName(charge.getPaymentGatewayName())).thenReturn(mockedPaymentProvider);
-
-        GatewayResponse response = cardCaptureService.doCapture(charge.getExternalId());
-        assertThat(response.isSuccessful(), is(true));
-
-        ArgumentCaptor<ChargeEntity> chargeEntityCaptor = ArgumentCaptor.forClass(ChargeEntity.class);
-        verify(mockedChargeEventDao).persistChargeEventOf(chargeEntityCaptor.capture(), eq(Optional.empty()));
-        assertThat(chargeEntityCaptor.getValue().getStatus(), is(CAPTURE_SUBMITTED.getValue()));
-        verify(mockedPaymentProvider, times(1)).capture(any());
+        doCapture_shouldCapture_whenChargeInStatus(AUTHORISATION_SUCCESS);
     }
 
     @Test
     public void doCapture_shouldBeAbleToCapture_whenChargeIsInCaptureApprovedStatus() {
-        String gatewayTxId = "theTxId";
-        ChargeEntity charge = createNewChargeWith("worldpay", 1L, CAPTURE_APPROVED, gatewayTxId);
-        ChargeEntity chargeSpy = spy(charge);
-        mockChargeDaoOperations(chargeSpy);
-        worldpayWillRespondWithSuccess(gatewayTxId, null);
-        when(mockedProviders.byName(charge.getPaymentGatewayName())).thenReturn(mockedPaymentProvider);
-
-        GatewayResponse response = cardCaptureService.doCapture(charge.getExternalId());
-        assertThat(response.isSuccessful(), is(true));
-
-        ArgumentCaptor<ChargeEntity> chargeEntityCaptor = ArgumentCaptor.forClass(ChargeEntity.class);
-        verify(mockedChargeEventDao).persistChargeEventOf(chargeEntityCaptor.capture(), eq(Optional.empty()));
-        assertThat(chargeEntityCaptor.getValue().getStatus(), is(CAPTURE_SUBMITTED.getValue()));
-        verify(mockedPaymentProvider, times(1)).capture(any());
+        doCapture_shouldCapture_whenChargeInStatus(CAPTURE_APPROVED);
     }
 
     @Test
     public void doCapture_shouldBeAbleToCapture_whenChargeHasCaptureApprovedRetryStatus() {
-        String gatewayTxId = "theTxId";
-        ChargeEntity charge = createNewChargeWith("worldpay", 1L, CAPTURE_APPROVED_RETRY, gatewayTxId);
-        ChargeEntity chargeSpy = spy(charge);
-        mockChargeDaoOperations(chargeSpy);
-        worldpayWillRespondWithSuccess(gatewayTxId, null);
-        when(mockedProviders.byName(charge.getPaymentGatewayName())).thenReturn(mockedPaymentProvider);
-
-        GatewayResponse response = cardCaptureService.doCapture(charge.getExternalId());
-        assertThat(response.isSuccessful(), is(true));
-
-        ArgumentCaptor<ChargeEntity> chargeEntityCaptor = ArgumentCaptor.forClass(ChargeEntity.class);
-        verify(mockedChargeEventDao).persistChargeEventOf(chargeEntityCaptor.capture(), eq(Optional.empty()));
-        assertThat(chargeEntityCaptor.getValue().getStatus(), is(CAPTURE_SUBMITTED.getValue()));
-        verify(mockedPaymentProvider, times(1)).capture(any());
+        doCapture_shouldCapture_whenChargeInStatus(CAPTURE_APPROVED_RETRY);
     }
 
     @Test
@@ -480,6 +427,7 @@ public class CardCaptureServiceTest extends CardServiceTest {
 
         verify(mockedChargeDao).findByExternalId(externalId);
         verifyNoMoreInteractions(mockedChargeDao);
+        verify(mockedChargeEventDao, never()).persistChargeEventOf(any(), any());
     }
 
     @Test
@@ -491,7 +439,26 @@ public class CardCaptureServiceTest extends CardServiceTest {
         exception.expect(ConflictRuntimeException.class);
         cardCaptureService.markChargeAsCaptureApproved(externalId);
 
+        verify(mockedChargeDao).findByExternalId(externalId);
+        verifyNoMoreInteractions(mockedChargeDao);
         verify(mockedChargeEventDao, never()).persistChargeEventOf(any(), any());
+    }
+
+    private void doCapture_shouldCapture_whenChargeInStatus(ChargeStatus chargeStatus) {
+        String gatewayTxId = "theTxId";
+        ChargeEntity charge = createNewChargeWith("worldpay", 1L, chargeStatus, gatewayTxId);
+        ChargeEntity chargeSpy = spy(charge);
+        mockChargeDaoOperations(chargeSpy);
+        worldpayWillRespondWithSuccess(gatewayTxId, null);
+        when(mockedProviders.byName(charge.getPaymentGatewayName())).thenReturn(mockedPaymentProvider);
+
+        GatewayResponse response = cardCaptureService.doCapture(charge.getExternalId());
+        assertThat(response.isSuccessful(), is(true));
+
+        ArgumentCaptor<ChargeEntity> chargeEntityCaptor = ArgumentCaptor.forClass(ChargeEntity.class);
+        verify(mockedChargeEventDao).persistChargeEventOf(chargeEntityCaptor.capture(), eq(Optional.empty()));
+        assertThat(chargeEntityCaptor.getValue().getStatus(), is(CAPTURE_SUBMITTED.getValue()));
+        verify(mockedPaymentProvider, times(1)).capture(any());
     }
 
     private HamcrestArgumentMatcher<ChargeEntity> chargeEntityHasStatus(ChargeStatus expectedStatus) {

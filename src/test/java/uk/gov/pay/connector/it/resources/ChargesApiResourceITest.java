@@ -1022,7 +1022,7 @@ public class ChargesApiResourceITest extends ChargingITestBase {
 
     private void assert404WhenRequestingInvalidPage() {
         // when 5 charges are there, page is 10, display-size is 2
-        ValidatableResponse response = getChargeApi
+        getChargeApi
                 .withAccountId(accountId)
                 .withQueryParam("reference", "ref")
                 .withQueryParam("page", "10")
@@ -1201,7 +1201,7 @@ public class ChargesApiResourceITest extends ChargingITestBase {
 
     private List<ZonedDateTime> datesFrom(List<String> createdDateStrings) {
         List<ZonedDateTime> dateTimes = newArrayList();
-        createdDateStrings.stream().forEach(aDateString -> dateTimes.add(toUTCZonedDateTime(aDateString).get()));
+        createdDateStrings.forEach(aDateString -> dateTimes.add(toUTCZonedDateTime(aDateString).get()));
         return dateTimes;
     }
 

@@ -86,7 +86,6 @@ public class CardCaptureService extends CardService implements TransactionalGate
     @Transactional
     public ChargeEntity markChargeAsEligibleForCapture(String externalId) {
         return chargeDao.findByExternalId(externalId).map(charge -> {
-
             ChargeStatus targetStatus = charge.isDelayedCapture() ? AWAITING_CAPTURE_REQUEST : CAPTURE_APPROVED;
 
             ChargeStatus currentChargeStatus = fromString(charge.getStatus());
@@ -96,10 +95,7 @@ public class CardCaptureService extends CardService implements TransactionalGate
                 throw new IllegalStateRuntimeException(charge.getExternalId());
             }
 
-            LOG.info("{} for charge [charge_external_id={}]", targetStatus, externalId);
-            charge.setStatus(targetStatus);
-            chargeEventDao.persistChargeEventOf(charge, Optional.empty());
-            return charge;
+            return changeChargeStatus(charge, targetStatus);
         }).orElseThrow(() -> new ChargeNotFoundRuntimeException(externalId));
     }
 
@@ -133,10 +129,7 @@ public class CardCaptureService extends CardService implements TransactionalGate
                         format("attempt to perform delayed capture on charge not in %s state.", AWAITING_CAPTURE_REQUEST));
             }
 
-            LOG.info("{} for charge [charge_external_id={}]", targetStatus, externalId);
-            charge.setStatus(targetStatus);
-            chargeEventDao.persistChargeEventOf(charge, Optional.empty());
-            return charge;
+            return changeChargeStatus(charge, targetStatus);
         }).orElseThrow(() -> new ChargeNotFoundRuntimeException(externalId));
     }
 
@@ -198,5 +191,12 @@ public class CardCaptureService extends CardService implements TransactionalGate
                     .map(timeoutError -> CAPTURE_APPROVED_RETRY)
                     .orElse(CAPTURE_ERROR);
         }
+    }
+
+    private ChargeEntity changeChargeStatus(ChargeEntity charge, ChargeStatus targetStatus) {
+        LOG.info("{} for charge [charge_external_id={}]", targetStatus, charge.getExternalId());
+        charge.setStatus(targetStatus);
+        chargeEventDao.persistChargeEventOf(charge, Optional.empty());
+        return charge;
     }
 }

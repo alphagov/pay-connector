@@ -25,7 +25,6 @@ import javax.ws.rs.Produces;
 import javax.ws.rs.core.Context;
 import javax.ws.rs.core.Response;
 import javax.ws.rs.core.UriInfo;
-import java.util.Optional;
 
 import static javax.ws.rs.core.MediaType.APPLICATION_JSON;
 import static uk.gov.pay.connector.resources.AuthCardDetailsValidator.isWellFormatted;
@@ -91,8 +90,8 @@ public class CardResource {
     @Path("/v1/api/accounts/{accountId}/charges/{chargeId}/capture")
     @Produces(APPLICATION_JSON)
     public Response markChargeAsCaptureApproved(@PathParam("accountId") Long accountId,
-                                  @PathParam("chargeId") String chargeId,
-                                  @Context UriInfo uriInfo) {
+                                                @PathParam("chargeId") String chargeId,
+                                                @Context UriInfo uriInfo) {
         logger.info("Mark charge as CAPTURE APPROVED [charge_external_id={}]", chargeId);
         cardCaptureService.markChargeAsCaptureApproved(chargeId);
         return ResponseUtil.noContentResponse();
@@ -102,14 +101,23 @@ public class CardResource {
     @Path("/v1/api/accounts/{accountId}/charges/{chargeId}/cancel")
     @Produces(APPLICATION_JSON)
     public Response cancelCharge(@PathParam("accountId") Long accountId, @PathParam("chargeId") String chargeId) {
-        return handleGatewayCancelResponse(chargeCancelService.doSystemCancel(chargeId, accountId), chargeId);
+        return chargeCancelService.doSystemCancel(chargeId, accountId)
+                .map(this::handleGatewayCancelResponse)
+                .orElseGet(() -> handleMissingGatewayResponse(chargeId));
     }
 
     @POST
     @Path("/v1/frontend/charges/{chargeId}/cancel")
     @Produces(APPLICATION_JSON)
     public Response userCancelCharge(@PathParam("chargeId") String chargeId) {
-        return handleGatewayCancelResponse(chargeCancelService.doUserCancel(chargeId), chargeId);
+        return chargeCancelService.doUserCancel(chargeId)
+                .map(this::handleGatewayCancelResponse)
+                .orElseGet(() -> handleMissingGatewayResponse(chargeId));
+    }
+
+    private Response handleMissingGatewayResponse(String chargeId) {
+        logger.error("Error during cancellation of charge {} - CancelService did not return a GatewayResponse", chargeId);
+        return ResponseUtil.noContentResponse();
     }
 
     private Response handleError(GatewayError error) {
@@ -120,19 +128,13 @@ public class CardResource {
             case GATEWAY_CONNECTION_TIMEOUT_ERROR:
             case GATEWAY_CONNECTION_SOCKET_ERROR:
                 return serviceErrorResponse(error.getMessage());
+            default:
+                return badRequestResponse(error.getMessage());
         }
-
-        return badRequestResponse(error.getMessage());
     }
 
-    private Response handleGatewayCancelResponse(Optional<GatewayResponse<BaseCancelResponse>> responseMaybe, String chargeId) {
-        if (responseMaybe.isPresent()) {
-            Optional<GatewayError> error = responseMaybe.get().getGatewayError();
-            error.ifPresent(gatewayError -> logger.error(gatewayError.getMessage()));
-        } else {
-            logger.error("Error during cancellation of charge {} - CancelService did not return a GatewayResponse", chargeId);
-        }
-
+    private Response handleGatewayCancelResponse(GatewayResponse<BaseCancelResponse> responseMaybe) {
+        responseMaybe.getGatewayError().ifPresent(gatewayError -> logger.error(gatewayError.getMessage()));
         return ResponseUtil.noContentResponse();
     }
 
