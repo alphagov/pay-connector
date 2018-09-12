@@ -57,6 +57,7 @@ import static uk.gov.pay.connector.model.ChargeResponse.ChargeResponseBuilder;
 import static uk.gov.pay.connector.model.ChargeResponse.aChargeResponseBuilder;
 import static uk.gov.pay.connector.model.api.ExternalChargeRefundAvailability.EXTERNAL_AVAILABLE;
 import static uk.gov.pay.connector.model.domain.ChargeEntityFixture.aValidChargeEntity;
+import static uk.gov.pay.connector.model.domain.ChargeStatus.AWAITING_CAPTURE_REQUEST;
 import static uk.gov.pay.connector.model.domain.ChargeStatus.CAPTURED;
 import static uk.gov.pay.connector.model.domain.ChargeStatus.CREATED;
 import static uk.gov.pay.connector.model.domain.ChargeStatus.ENTERING_CARD_DETAILS;
@@ -253,46 +254,15 @@ public class ChargeServiceTest {
 
     @Test
     public void shouldFindChargeForChargeIdAndAccountIdWithNextUrlWhenChargeStatusIsCreated() throws Exception {
-
-        Long chargeId = 101L;
-        Long accountId = 10L;
-
-        GatewayAccountEntity gatewayAccount = new GatewayAccountEntity("sandbox", new HashMap<>(), TEST);
-        gatewayAccount.setId(1L);
-
-        ChargeEntity newCharge = aValidChargeEntity()
-                .withId(chargeId)
-                .withGatewayAccountEntity(gatewayAccount)
-                .withStatus(CREATED)
-                .build();
-
-        Optional<ChargeEntity> chargeEntity = Optional.of(newCharge);
-
-        String externalId = newCharge.getExternalId();
-        when(mockedChargeDao.findByExternalIdAndGatewayAccount(externalId, accountId)).thenReturn(chargeEntity);
-
-        Optional<ChargeResponse> chargeResponseForAccount = service.findChargeForAccount(externalId, accountId, mockedUriInfo);
-
-        ArgumentCaptor<TokenEntity> tokenEntityArgumentCaptor = ArgumentCaptor.forClass(TokenEntity.class);
-        verify(mockedTokenDao).persist(tokenEntityArgumentCaptor.capture());
-
-        TokenEntity tokenEntity = tokenEntityArgumentCaptor.getValue();
-        assertThat(tokenEntity.getChargeEntity().getId(), is(newCharge.getId()));
-        assertThat(tokenEntity.getToken(), is(notNullValue()));
-
-        ChargeResponseBuilder expectedChargeResponse = chargeResponseBuilderOf(chargeEntity.get());
-        expectedChargeResponse.withLink("self", GET, new URI(SERVICE_HOST + "/v1/api/accounts/1/charges/" + externalId));
-        expectedChargeResponse.withLink("refunds", GET, new URI(SERVICE_HOST + "/v1/api/accounts/1/charges/" + externalId + "/refunds"));
-        expectedChargeResponse.withLink("next_url", GET, new URI("http://payments.com/secure/" + tokenEntity.getToken()));
-        expectedChargeResponse.withLink("next_url_post", POST, new URI("http://payments.com/secure"), "application/x-www-form-urlencoded", new HashMap<String, Object>() {{
-            put("chargeTokenId", tokenEntity.getToken());
-        }});
-
-        assertThat(chargeResponseForAccount.get(), is(expectedChargeResponse.build()));
+        shouldFindChargeForChargeIdAndAccountIdWithNextUrlWhenChargeStatusIs(CREATED);
     }
 
     @Test
     public void shouldFindChargeForChargeIdAndAccountIdWithNextUrlWhenChargeStatusIsInProgress() throws Exception {
+        shouldFindChargeForChargeIdAndAccountIdWithNextUrlWhenChargeStatusIs(ENTERING_CARD_DETAILS);
+    }
+
+    private void shouldFindChargeForChargeIdAndAccountIdWithNextUrlWhenChargeStatusIs(ChargeStatus status) throws Exception {
 
         Long chargeId = 101L;
         Long accountId = 10L;
@@ -303,7 +273,7 @@ public class ChargeServiceTest {
         ChargeEntity newCharge = aValidChargeEntity()
                 .withId(chargeId)
                 .withGatewayAccountEntity(gatewayAccount)
-                .withStatus(ENTERING_CARD_DETAILS)
+                .withStatus(status)
                 .build();
 
         Optional<ChargeEntity> chargeEntity = Optional.of(newCharge);
@@ -329,12 +299,19 @@ public class ChargeServiceTest {
         }});
 
         assertThat(chargeResponseForAccount.get(), is(expectedChargeResponse.build()));
-
     }
 
     @Test
     public void shouldFindChargeForChargeIdAndAccountIdWithoutNextUrlWhenChargeCannotBeResumed() throws Exception {
+        shouldFindChargeForChargeIdAndAccountIdWithoutNextUrlWhenChargeStatusIs(CAPTURED);
+    }
 
+    @Test
+    public void shouldFindChargeForChargeIdAndAccountIdWithoutNextUrlWhenChargeStatusAwaitingCaptureRequest() throws Exception {
+        shouldFindChargeForChargeIdAndAccountIdWithoutNextUrlWhenChargeStatusIs(AWAITING_CAPTURE_REQUEST);
+    }
+    
+    private void shouldFindChargeForChargeIdAndAccountIdWithoutNextUrlWhenChargeStatusIs(ChargeStatus status) throws Exception {
         Long chargeId = 101L;
         Long accountId = 10L;
 
@@ -344,7 +321,7 @@ public class ChargeServiceTest {
         ChargeEntity newCharge = aValidChargeEntity()
                 .withId(chargeId)
                 .withGatewayAccountEntity(gatewayAccount)
-                .withStatus(CAPTURED)
+                .withStatus(status)
                 .build();
 
         Optional<ChargeEntity> chargeEntity = Optional.of(newCharge);
