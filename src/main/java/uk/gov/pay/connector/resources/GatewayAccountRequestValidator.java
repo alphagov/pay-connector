@@ -2,13 +2,14 @@ package uk.gov.pay.connector.resources;
 
 import com.fasterxml.jackson.databind.JsonNode;
 import com.google.inject.Inject;
-import uk.gov.pay.connector.util.Errors;
+import uk.gov.pay.connector.exception.ValidationException;
 import uk.gov.pay.connector.validations.RequestValidator;
 
+import java.util.Arrays;
+import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
-import java.util.Optional;
 
 import static java.lang.String.format;
 import static java.util.Arrays.asList;
@@ -26,39 +27,46 @@ public class GatewayAccountRequestValidator {
         put(FIELD_OPERATION, asList("replace", "remove"));
     }};
     public static final String FIELD_NOTIFY_SETTINGS = "notify_settings";
-
+    public static final String FIELD_EMAIL_COLLECTION_MODE = "email_collection_mode";
+    private static final List<String> VALID_PATHS = Arrays.asList(FIELD_NOTIFY_SETTINGS, FIELD_EMAIL_COLLECTION_MODE);
     @Inject
     public GatewayAccountRequestValidator(RequestValidator requestValidator){
         this.requestValidator = requestValidator;
     }
 
-    public Optional<Errors> validatePatchRequest(JsonNode payload){
-        Optional<List<String>> pathCheck = requestValidator.checkIfExistsOrEmpty(payload,
+    void validatePatchRequest(JsonNode payload){
+        List<String> pathCheck = requestValidator.checkIfExistsOrEmpty(payload,
                 FIELD_OPERATION, FIELD_OPERATION_PATH);
-        if(pathCheck.isPresent()){
-            return pathCheck.map(Errors::from);
+        if(!pathCheck.isEmpty()){
+            throw new ValidationException(pathCheck);
         }
-        if(!payload.findValue(FIELD_OPERATION_PATH).asText().equals(FIELD_NOTIFY_SETTINGS)) {
-            return Optional.of(Errors.from(format("Operation [%s] not supported for path [%s]",
+        String operation = payload.findValue(FIELD_OPERATION_PATH).asText();
+        if(!VALID_PATHS.contains(operation)) {
+            throw new ValidationException(Collections.singletonList(format("Operation [%s] not supported for path [%s]",
                     FIELD_OPERATION,
                     payload.findValue(FIELD_OPERATION_PATH).asText())));
         }
-        return validateNotifySettingsRequest(payload).map(Errors::from);
-
+        if (operation.equalsIgnoreCase(FIELD_NOTIFY_SETTINGS)) {
+            validateNotifySettingsRequest(payload);
+        }
     }
 
-    private Optional<List<String>> validateNotifySettingsRequest(JsonNode payload){
+    private void validateNotifySettingsRequest(JsonNode payload){
         String op = payload.get(FIELD_OPERATION).asText();
         if (!VALID_ATTRIBUTE_UPDATE_OPERATIONS.get(FIELD_OPERATION).contains(op)) {
-            return Optional.of(asList(format("Operation [%s] is not valid for path [%s]", op, FIELD_OPERATION)));
+            throw new ValidationException(Collections.singletonList(format("Operation [%s] is not valid for path [%s]", op, FIELD_OPERATION)));
         }
-        if(op.equals("remove")) {
-            return Optional.empty();
+        if (!op.equalsIgnoreCase("remove")) {
+            JsonNode valueNode = payload.get(FIELD_VALUE);
+            if(null == valueNode) {
+                throw new ValidationException(Collections.singletonList(format("Field [%s] is required", FIELD_VALUE)));
+            }
+
+            //todo PP-4111 add FIELD_NOTIFY_REFUND_ISSUED_TEMPLATE_ID when selfservice is merged
+            List<String> missingMandatoryFields = requestValidator.checkIfExistsOrEmpty(valueNode, FIELD_NOTIFY_API_TOKEN, FIELD_NOTIFY_TEMPLATE_ID);
+            if (!missingMandatoryFields.isEmpty()) {
+                throw new ValidationException(missingMandatoryFields);
+            }
         }
-        JsonNode valueNode = payload.get(FIELD_VALUE);
-        if(null == valueNode) {
-            return Optional.of(asList(format("Field [%s] is required", FIELD_VALUE)));
-        }
-        return requestValidator.checkIfExistsOrEmpty(valueNode, FIELD_NOTIFY_API_TOKEN, FIELD_NOTIFY_TEMPLATE_ID);
     }
 }

@@ -170,6 +170,7 @@ jpa:
 notifyConfig:
   apiKey: ${NOTIFY_API_KEY:-api_key-pay-notify-service-id-pay-notify-secret-needs-to-be-32-chars-fsghdngfhmhfkrgsfs}
   emailTemplateId: ${NOTIFY_PAYMENT_RECEIPT_EMAIL_TEMPLATE_ID}
+  refundIssuedEmailTemplateId: ${NOTIFY_REFUND_ISSUED_EMAIL_TEMPLATE_ID}
   notificationBaseURL: ${NOTIFY_BASE_URL:-https://api.notifications.service.gov.uk}
   emailNotifyEnabled: ${NOTIFY_EMAIL_ENABLED:-false}
 

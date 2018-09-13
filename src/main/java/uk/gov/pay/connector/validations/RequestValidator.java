@@ -6,7 +6,6 @@ import com.fasterxml.jackson.databind.node.NullNode;
 import com.google.common.collect.ImmutableList;
 
 import java.util.List;
-import java.util.Optional;
 import java.util.function.Function;
 
 import static com.google.common.collect.Lists.newArrayList;
@@ -16,15 +15,15 @@ import static org.apache.commons.lang3.math.NumberUtils.isDigits;
 
 public class RequestValidator {
 
-    public Optional<List<String>> checkIsNumeric(JsonNode payload, String... fieldNames) {
+    public List<String> checkIsNumeric(JsonNode payload, String... fieldNames) {
         return applyCheck(payload, isNotNumeric(), fieldNames, "Field [%s] must be a number");
     }
 
-    public Optional<List<String>> checkIfExistsOrEmpty(JsonNode payload, String... fieldNames) {
+    public List<String> checkIfExistsOrEmpty(JsonNode payload, String... fieldNames) {
         return applyCheck(payload, notExistOrEmpty(), fieldNames, "Field [%s] is required");
     }
 
-    public Optional<List<String>> checkMaxLength(JsonNode payload, int maxLength, String... fieldNames) {
+    public List<String> checkMaxLength(JsonNode payload, int maxLength, String... fieldNames) {
         return applyCheck(payload, exceedsMaxLength(maxLength), fieldNames, "Field [%s] must have a maximum length of " + maxLength + " characters");
     }
 
@@ -32,14 +31,14 @@ public class RequestValidator {
         return jsonNode -> jsonNode.asText().length() > maxLength;
     }
 
-    public Optional<List<String>> applyCheck(JsonNode payload, Function<JsonNode, Boolean> check, String[] fieldNames, String errorMessage) {
+    private List<String> applyCheck(JsonNode payload, Function<JsonNode, Boolean> check, String[] fieldNames, String errorMessage) {
         List<String> errors = newArrayList();
         for (String fieldName : fieldNames) {
             if (check.apply(payload.get(fieldName))) {
                 errors.add(format(errorMessage, fieldName));
             }
         }
-        return errors.size() > 0 ? Optional.of(errors) : Optional.empty();
+        return errors;
     }
 
     public Function<JsonNode, Boolean> notExistOrEmpty() {
@@ -70,7 +69,7 @@ public class RequestValidator {
 
     private static Function<JsonNode, Boolean> isNullValue() {
         return jsonElement -> (
-                jsonElement == null || jsonElement instanceof NullNode
+                jsonElement == null || jsonElement.isNull()
         );
     }
 

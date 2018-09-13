@@ -1,5 +1,8 @@
 package uk.gov.pay.connector.model.domain;
 
+import java.time.ZoneId;
+import java.time.ZonedDateTime;
+
 import static uk.gov.pay.connector.model.domain.ChargeEntityFixture.aValidChargeEntity;
 
 public class RefundEntityFixture {
@@ -11,6 +14,7 @@ public class RefundEntityFixture {
     private String reference = "reference";
     public static String userExternalId = "AA213FD51B3801043FBC";
     private String externalId = "someExternalId";
+    private ZonedDateTime createdDate = ZonedDateTime.now(ZoneId.of("UTC"));
 
     public static RefundEntityFixture aValidRefundEntity() {
         return new RefundEntityFixture();
@@ -23,6 +27,7 @@ public class RefundEntityFixture {
         refundEntity.setReference(reference);
         refundEntity.setExternalId(externalId);
         refundEntity.setUserExternalId(userExternalId);
+        refundEntity.setCreatedDate(createdDate);
         return refundEntity;
     }
 
@@ -31,6 +36,11 @@ public class RefundEntityFixture {
         return this;
     }
 
+    public RefundEntityFixture withCreatedDate(ZonedDateTime createdDate) {
+        this.createdDate = createdDate;
+        return this;
+    }
+    
     public RefundEntityFixture withAmount(Long amount) {
         this.amount = amount;
         return this;

@@ -44,10 +44,6 @@ public class GatewayAccountResourceTestBase {
                 .contentType(JSON);
     }
 
-    RequestSpecification givenAdminSetup() {
-        return given().port(app.getAdminPort()).contentType(JSON);
-    }
-
     //TODO remove this after complete migration
     String createAGatewayAccountFor(String testProvider) {
         return createAGatewayAccountFor(testProvider, null, null);
