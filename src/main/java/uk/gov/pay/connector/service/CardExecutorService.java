@@ -62,20 +62,18 @@ public class CardExecutorService<T> {
     }
 
     private void addShutdownHook() {
-        Runtime.getRuntime().addShutdownHook(new Thread() {
-            public void run() {
-                String className = CardExecutorService.class.getSimpleName();
-                logger.info("Shutting down " + className);
-                executor.shutdown();
-                logger.info("Awaiting for " + className + " threads to terminate");
-                try {
-                    executor.awaitTermination(1, TimeUnit.SECONDS);
-                } catch (InterruptedException e) {
-                    logger.error("Error while waiting for " + className + " threads to terminate");
-                }
-                executor.shutdownNow();
+        Runtime.getRuntime().addShutdownHook(new Thread(() -> {
+            String className = CardExecutorService.class.getSimpleName();
+            logger.info("Shutting down {}", className);
+            executor.shutdown();
+            logger.info("Awaiting for {} threads to terminate", className);
+            try {
+                executor.awaitTermination(1, TimeUnit.SECONDS);
+            } catch (InterruptedException e) {
+                logger.error("Error while waiting for {} threads to terminate", className);
             }
-        });
+            executor.shutdownNow();
+        }));
     }
 
     public ExecutorService getExecutor() {

@@ -54,15 +54,15 @@ public class CardCaptureProcess {
             List<ChargeEntity> chargesToCapture = chargeDao.findChargesForCapture(captureConfig.getBatchSize(),
                     captureConfig.getRetryFailuresEveryAsJavaDuration());
             chargesToCaptureSize = chargesToCapture.size();
-            
+
             if (chargesToCaptureSize < captureConfig.getBatchSize()) {
                 readyCaptureQueueSize = chargesToCaptureSize;
             } else {
                 readyCaptureQueueSize = chargeDao.countChargesForImmediateCapture(captureConfig.getRetryFailuresEveryAsJavaDuration());
             }
-            
+
             if (chargesToCaptureSize > 0) {
-                logger.info("Capturing : " + chargesToCaptureSize + " of " + (waitingCaptureQueueSize + readyCaptureQueueSize) + " charges");
+                logger.info("Capturing: {} of {} charges", chargesToCaptureSize, (waitingCaptureQueueSize + readyCaptureQueueSize));
             }
 
             Collections.shuffle(chargesToCapture);
@@ -70,17 +70,17 @@ public class CardCaptureProcess {
                 total++;
                 if (shouldRetry(charge)) {
                     try {
-                        logger.info(format("Capturing [%d of %d] [chargeId=%s]", total, chargesToCaptureSize, charge.getExternalId()));
+                        logger.info("Capturing [{} of {}] [chargeId={}]", total, chargesToCaptureSize, charge.getExternalId());
                         GatewayResponse gatewayResponse = captureService.doCapture(charge.getExternalId());
                         if (gatewayResponse.isSuccessful()) {
                             captured++;
                         } else {
-                            logger.info(format("Failed to capture [chargeId=%s] due to: %s", charge.getExternalId(), 
-                                    gatewayResponse.getGatewayError().orElse("No error message received.")));
+                            logger.info("Failed to capture [chargeId={}] due to: {}", charge.getExternalId(),
+                                    gatewayResponse.getGatewayError().orElse("No error message received."));
                             failedCapture++;
                         }
                     } catch (ConflictRuntimeException e) {
-                        logger.info("Another process has already attempted to capture [chargeId=" + charge.getExternalId() + "]. Skipping.");
+                        logger.info("Another process has already attempted to capture [chargeId={}]. Skipping.", charge.getExternalId());
                         skipped++;
                     }
                 } else {
@@ -89,11 +89,12 @@ public class CardCaptureProcess {
                 }
             }
         } catch (Exception e) {
-            logger.error(format("Exception [%s] when running capture at charge [%d of %d]", total, chargesToCaptureSize), e.getMessage(), e);
+            logger.error("Exception [{}] when running capture at charge [{} of {}]", e.getMessage(), total, chargesToCaptureSize, e);
         } finally {
             responseTimeStopwatch.stop();
             metricRegistry.histogram("gateway-operations.capture-process.running_time").update(responseTimeStopwatch.elapsed(TimeUnit.MILLISECONDS));
-            logger.info(format("Capture complete [captured=%d] [skipped=%d] [capture_error=%d] [failed_capture=%d] [total=%d]", captured, skipped, error, failedCapture, readyCaptureQueueSize));
+            logger.info("Capture complete [captured={}] [skipped={}] [capture_error={}] [failed_capture={}] [total={}]",
+                    captured, skipped, error, failedCapture, readyCaptureQueueSize);
         }
         MDC.remove(HEADER_REQUEST_ID);
     }
@@ -102,12 +103,11 @@ public class CardCaptureProcess {
         return chargeDao.countCaptureRetriesForCharge(charge.getId()) < captureConfig.getMaximumRetries();
     }
 
-
-    public int getReadyCaptureQueueSize() {
+    int getReadyCaptureQueueSize() {
         return readyCaptureQueueSize;
     }
 
-    public int getWaitingCaptureQueueSize() {
+    int getWaitingCaptureQueueSize() {
         return waitingCaptureQueueSize;
     }
 }

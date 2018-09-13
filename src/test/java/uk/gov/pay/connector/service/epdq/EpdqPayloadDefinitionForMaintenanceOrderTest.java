@@ -6,13 +6,18 @@ import org.apache.http.message.BasicNameValuePair;
 import org.junit.Test;
 
 import static org.hamcrest.collection.IsIterableContainingInOrder.contains;
-import static org.junit.Assert.*;
-import static uk.gov.pay.connector.service.epdq.EpdqPayloadDefinitionForMaintenanceOrder.*;
+import static org.junit.Assert.assertThat;
+import static uk.gov.pay.connector.service.epdq.EpdqPayloadDefinitionForMaintenanceOrder.AMOUNT_KEY;
+import static uk.gov.pay.connector.service.epdq.EpdqPayloadDefinitionForMaintenanceOrder.OPERATION_KEY;
+import static uk.gov.pay.connector.service.epdq.EpdqPayloadDefinitionForMaintenanceOrder.PAYID_KEY;
+import static uk.gov.pay.connector.service.epdq.EpdqPayloadDefinitionForMaintenanceOrder.PSPID_KEY;
+import static uk.gov.pay.connector.service.epdq.EpdqPayloadDefinitionForMaintenanceOrder.PSWD_KEY;
+import static uk.gov.pay.connector.service.epdq.EpdqPayloadDefinitionForMaintenanceOrder.USERID_KEY;
 
 public class EpdqPayloadDefinitionForMaintenanceOrderTest {
 
     @Test
-    public void testBaseValuePairs(){
+    public void testBaseValuePairs() {
         EpdqOrderRequestBuilder.EpdqTemplateData templateData = new EpdqOrderRequestBuilder.EpdqTemplateData();
         templateData.setOperationType("Operation-value");
         templateData.setTransactionId("Transaction-id");
@@ -33,7 +38,7 @@ public class EpdqPayloadDefinitionForMaintenanceOrderTest {
     }
 
     @Test
-    public void testBaseValuePairsWithAmount(){
+    public void testBaseValuePairsWithAmount() {
         EpdqOrderRequestBuilder.EpdqTemplateData templateData = new EpdqOrderRequestBuilder.EpdqTemplateData();
         templateData.setOperationType("Operation-value");
         templateData.setTransactionId("Transaction-id");
@@ -49,7 +54,7 @@ public class EpdqPayloadDefinitionForMaintenanceOrderTest {
         BasicNameValuePair merchantCode = new BasicNameValuePair(PSPID_KEY, "Merchant-code");
         BasicNameValuePair password = new BasicNameValuePair(PSWD_KEY, "Password");
         BasicNameValuePair userId = new BasicNameValuePair(USERID_KEY, "User-id");
-        BasicNameValuePair amount = new BasicNameValuePair(AMOUNT, "400");
+        BasicNameValuePair amount = new BasicNameValuePair(AMOUNT_KEY, "400");
 
 
         assertThat(extractPairs, contains(amount, operationValue, transactionId, merchantCode, password, userId));

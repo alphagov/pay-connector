@@ -6,7 +6,7 @@ import javax.xml.bind.annotation.XmlAttribute;
 
 import static org.apache.commons.lang3.StringUtils.trim;
 
-abstract public class EpdqBaseResponse implements BaseResponse {
+public abstract class EpdqBaseResponse implements BaseResponse {
 
     @XmlAttribute(name = "NCERROR")
     private String errorCode;

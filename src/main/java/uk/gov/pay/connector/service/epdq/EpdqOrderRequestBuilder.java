@@ -13,7 +13,7 @@ import static uk.gov.pay.connector.service.epdq.EpdqPaymentProvider.EPDQ_APPLICA
 import static uk.gov.pay.connector.service.epdq.EpdqSignedPayloadDefinition.EpdqSignedPayloadDefinitionFactory.anEpdqSignedPayloadDefinitionFactory;
 
 public class EpdqOrderRequestBuilder extends OrderRequestBuilder {
-    static public class EpdqTemplateData extends OrderRequestBuilder.TemplateData {
+    public static class EpdqTemplateData extends OrderRequestBuilder.TemplateData {
         private String operationType;
         private String orderId;
         private String password;
@@ -62,6 +62,7 @@ public class EpdqOrderRequestBuilder extends OrderRequestBuilder {
             this.shaInPassphrase = shaInPassphrase;
         }
 
+        @Override
         public String getAmount() {
             return amount;
         }
@@ -80,19 +81,19 @@ public class EpdqOrderRequestBuilder extends OrderRequestBuilder {
         }
     }
 
-    public static final String AUTHORISE_OPERATION_TYPE = "RES";
-    public static final String CAPTURE_OPERATION_TYPE = "SAS";
-    public static final String REFUND_OPERATION_TYPE = "RFD";
-    public static final String CANCEL_OPERATION_TYPE = "DES";
+    private static final String AUTHORISE_OPERATION_TYPE = "RES";
+    private static final String CAPTURE_OPERATION_TYPE = "SAS";
+    private static final String REFUND_OPERATION_TYPE = "RFD";
+    private static final String CANCEL_OPERATION_TYPE = "DES";
 
     private static EpdqSignedPayloadDefinitionFactory signedPayloadDefinitionFactory = anEpdqSignedPayloadDefinitionFactory(new EpdqSha512SignatureGenerator());
 
-    public static final PayloadBuilder AUTHORISE_ORDER_TEMPLATE_BUILDER = createPayloadBuilderForNewOrder();
-    public static final PayloadBuilder QUERY_ORDER_TEMPLATE_BUILDER = createPayloadBuilderForQueryOrder();
-    public static final PayloadBuilder AUTHORISE_3DS_ORDER_TEMPLATE_BUILDER = createPayloadBuilderForNew3dsOrder();
-    public static final PayloadBuilder CAPTURE_ORDER_TEMPLATE_BUILDER = createPayloadBuilderForMaintenanceOrder();
-    public static final PayloadBuilder CANCEL_ORDER_TEMPLATE_BUILDER = createPayloadBuilderForMaintenanceOrder();
-    public static final PayloadBuilder REFUND_ORDER_TEMPLATE_BUILDER = createPayloadBuilderForMaintenanceOrder();
+    private static final PayloadBuilder AUTHORISE_ORDER_TEMPLATE_BUILDER = createPayloadBuilderForNewOrder();
+    private static final PayloadBuilder QUERY_ORDER_TEMPLATE_BUILDER = createPayloadBuilderForQueryOrder();
+    private static final PayloadBuilder AUTHORISE_3DS_ORDER_TEMPLATE_BUILDER = createPayloadBuilderForNew3dsOrder();
+    private static final PayloadBuilder CAPTURE_ORDER_TEMPLATE_BUILDER = createPayloadBuilderForMaintenanceOrder();
+    private static final PayloadBuilder CANCEL_ORDER_TEMPLATE_BUILDER = createPayloadBuilderForMaintenanceOrder();
+    private static final PayloadBuilder REFUND_ORDER_TEMPLATE_BUILDER = createPayloadBuilderForMaintenanceOrder();
 
     private EpdqTemplateData epdqTemplateData;
 

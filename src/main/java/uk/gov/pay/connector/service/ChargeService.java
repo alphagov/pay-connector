@@ -108,10 +108,8 @@ public class ChargeService {
     public Optional<ChargeEntity> updateCharge(String chargeId, PatchRequestBuilder.PatchRequest chargePatchRequest) {
         return chargeDao.findByExternalId(chargeId)
                 .map(chargeEntity -> {
-                    switch (chargePatchRequest.getPath()) {
-                        case ChargesApiResource.EMAIL_KEY:
-                            final String sanitizedEmail = sanitize(chargePatchRequest.getValue());
-                            chargeEntity.setEmail(sanitizedEmail);
+                    if (chargePatchRequest.getPath().equals(ChargesApiResource.EMAIL_KEY)) {
+                        chargeEntity.setEmail(sanitize(chargePatchRequest.getValue()));
                     }
                     return Optional.of(chargeEntity);
                 })
@@ -170,11 +168,12 @@ public class ChargeService {
 
         if (!ChargeStatus.fromString(chargeEntity.getStatus()).toExternal().isFinished()) {
             TokenEntity token = createNewChargeEntityToken(chargeEntity);
+            Map<String, Object> params = new HashMap<>();
+            params.put("chargeTokenId", token.getToken());
+
             return reponseBuilder
                     .withLink("next_url", GET, nextUrl(token.getToken()))
-                    .withLink("next_url_post", POST, nextUrl(), APPLICATION_FORM_URLENCODED, new HashMap<String, Object>() {{
-                        put("chargeTokenId", token.getToken());
-                    }});
+                    .withLink("next_url_post", POST, nextUrl(), APPLICATION_FORM_URLENCODED, params);
         }
 
         return reponseBuilder;

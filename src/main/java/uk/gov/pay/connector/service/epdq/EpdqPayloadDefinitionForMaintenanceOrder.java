@@ -9,12 +9,12 @@ import static uk.gov.pay.connector.service.epdq.EpdqPayloadDefinition.newParamet
 
 public class EpdqPayloadDefinitionForMaintenanceOrder implements PayloadDefinition<EpdqTemplateData> {
 
-    final static String AMOUNT = "AMOUNT";
-    final static String OPERATION_KEY = "OPERATION";
-    final static String PAYID_KEY = "PAYID";
-    final static String PSPID_KEY = "PSPID";
-    final static String PSWD_KEY = "PSWD";
-    final static String USERID_KEY = "USERID";
+    static final String AMOUNT_KEY = "AMOUNT";
+    static final String OPERATION_KEY = "OPERATION";
+    static final String PAYID_KEY = "PAYID";
+    static final String PSPID_KEY = "PSPID";
+    static final String PSWD_KEY = "PSWD";
+    static final String USERID_KEY = "USERID";
 
     @Override
     public ImmutableList<NameValuePair> extract(EpdqTemplateData templateData) {
@@ -23,7 +23,7 @@ public class EpdqPayloadDefinitionForMaintenanceOrder implements PayloadDefiniti
         EpdqPayloadDefinition.ParameterBuilder parameterBuilder = newParameterBuilder();
         String amount = templateData.getAmount();
         if (amount != null) {
-            parameterBuilder.add(AMOUNT, amount);
+            parameterBuilder.add(AMOUNT_KEY, amount);
         }
         return parameterBuilder.add(OPERATION_KEY, templateData.getOperationType())
                 .add(PAYID_KEY, templateData.getTransactionId())
