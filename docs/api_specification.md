@@ -1064,6 +1064,48 @@ Content-Type: application/json
     "message": "Cannot capture a charge with status AUTHORISATION REJECTED."
 }
 ```
+
+-----------------------------------------------------------------------------------------------------------
+
+## POST /v1/api/accounts/{accountId}/charges/{chargeId}/capture
+
+* This endpoint should be called to capture a delayed capture charge. The charge needs to have been previously marked as 
+`AWAITING CAPTURE REQUEST` for this call to succeed.
+
+* When a charge is in any of the states `CAPTURED, CAPTURE APPROVED, CAPTURE APPROVED RETRY, CAPTURE READY,
+ CAPTURE SUBMITTED` then nothing happens and the response will be a 204.
+
+* When a charge is in a status that cannot transition (eg. none of the above) then we return 409
+
+* When a charge doesn't exist then we return 404
+
+### Request example
+
+```
+POST /v1/api/accounts/1/charges/abc/capture
+Content-Type: application/json
+```
+
+#### The request body is empty
+
+
+### Response example
+
+#### Authorisation success
+
+```
+204 No content
+Content-Type: application/json
+```
+#### Error
+```
+404 Not Found
+Content-Type: application/json
+
+{
+    "message": "Charge with id [abc] not found."
+}
+```
 -----------------------------------------------------------------------------------------------------------
 ## GET /v1/frontend/charges?gatewayAccountId={gatewayAccountId}
 

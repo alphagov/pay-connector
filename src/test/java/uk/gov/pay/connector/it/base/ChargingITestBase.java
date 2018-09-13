@@ -221,7 +221,7 @@ public class ChargingITestBase {
     }
 
     protected static String buildJsonAuthorisationDetailsFor(String cardHolderName, String cardNumber, String cvc, String expiryDate, String cardBrand,
-                                                      String line1, String line2, String city, String county, String postCode, String countryCode) {
+                                                             String line1, String line2, String city, String county, String postCode, String countryCode) {
         JsonObject addressObject = new JsonObject();
 
         addressObject.addProperty("line1", line1);

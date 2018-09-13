@@ -31,7 +31,7 @@ public abstract class CardAuthoriseBaseService<T extends AuthorisationDetails> e
         this.cardExecutorService = cardExecutorService;
     }
 
-    public GatewayResponse doAuthorise(String chargeId, T gatewayAuthRequest) {
+    public GatewayResponse<BaseAuthoriseResponse> doAuthorise(String chargeId, T gatewayAuthRequest) {
         Supplier authorisationSupplier = () -> {
             ChargeEntity charge;
 
@@ -41,9 +41,9 @@ public abstract class CardAuthoriseBaseService<T extends AuthorisationDetails> e
                     throw new ConflictRuntimeException(chargeId, "configuration mismatch");
                 }
             } catch (OptimisticLockException e) {
-                LOG.info("OptimisticLockException in doAuthorise for charge external_id=" + chargeId);
+                LOG.info("OptimisticLockException in doAuthorise for charge external_id={}", chargeId);
                 throw new ConflictRuntimeException(chargeId);
-            } 
+            }
 
             GatewayResponse<BaseAuthoriseResponse> operationResponse = operation(charge, gatewayAuthRequest);
             return postOperation(chargeId, gatewayAuthRequest, operationResponse);
