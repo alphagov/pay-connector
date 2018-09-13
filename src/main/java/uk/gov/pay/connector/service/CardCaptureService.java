@@ -19,11 +19,8 @@ import uk.gov.pay.connector.model.gateway.GatewayResponse;
 import javax.inject.Inject;
 import javax.persistence.OptimisticLockException;
 import java.time.ZonedDateTime;
-import java.util.Arrays;
-import java.util.HashSet;
 import java.util.List;
 import java.util.Optional;
-import java.util.Set;
 
 import static java.lang.String.format;
 import static org.apache.commons.lang3.StringUtils.isBlank;
@@ -41,18 +38,18 @@ import static uk.gov.pay.connector.model.domain.PaymentGatewayStateTransitions.i
 public class CardCaptureService extends CardService implements TransactionalGatewayOperation<BaseCaptureResponse> {
 
     private static final Logger LOG = LoggerFactory.getLogger(CardCaptureService.class);
-    private static List<ChargeStatus> legalStatuses = ImmutableList.of(
+    private static final List<ChargeStatus> LEGAL_STATUSES = ImmutableList.of(
             AUTHORISATION_SUCCESS,
             CAPTURE_APPROVED,
             CAPTURE_APPROVED_RETRY
     );
-    private static final Set<ChargeStatus> IGNORABLE_CAPTURE_STATES = new HashSet<>(Arrays.asList(
+    private static final List<ChargeStatus> IGNORABLE_CAPTURE_STATES = ImmutableList.of(
             CAPTURE_APPROVED,
             CAPTURE_APPROVED_RETRY,
             CAPTURE_READY,
             CAPTURE_SUBMITTED,
             CAPTURED
-    ));
+    );
 
     private final UserNotificationService userNotificationService;
 
@@ -79,7 +76,7 @@ public class CardCaptureService extends CardService implements TransactionalGate
     @Override
     public ChargeEntity preOperation(String chargeId) {
         return chargeDao.findByExternalId(chargeId)
-                .map(chargeEntity -> preOperation(chargeEntity, CardService.OperationType.CAPTURE, legalStatuses, CAPTURE_READY))
+                .map(chargeEntity -> preOperation(chargeEntity, CardService.OperationType.CAPTURE, LEGAL_STATUSES, CAPTURE_READY))
                 .orElseThrow(() -> new ChargeNotFoundRuntimeException(chargeId));
     }
 
@@ -115,7 +112,7 @@ public class CardCaptureService extends CardService implements TransactionalGate
 
             ChargeStatus currentStatus = fromString(charge.getStatus());
 
-            if (IGNORABLE_CAPTURE_STATES.contains(currentStatus)) {
+            if (charge.hasStatus(IGNORABLE_CAPTURE_STATES)) {
                 LOG.info("Skipping charge [charge_external_id={}] with status [{}] from marking as CAPTURE APPROVED", currentStatus, externalId);
                 return charge;
             }
