@@ -17,7 +17,9 @@ import java.util.Map;
 import static com.jayway.restassured.RestAssured.given;
 import static com.jayway.restassured.http.ContentType.JSON;
 import static org.hamcrest.MatcherAssert.assertThat;
-import static org.hamcrest.Matchers.*;
+import static org.hamcrest.Matchers.containsString;
+import static org.hamcrest.Matchers.is;
+import static org.hamcrest.Matchers.notNullValue;
 import static uk.gov.pay.connector.util.JsonEncoder.toJson;
 
 public class GatewayAccountResourceTestBase {
@@ -39,10 +41,6 @@ public class GatewayAccountResourceTestBase {
     protected RequestSpecification givenSetup() {
         return given().port(app.getLocalPort())
                 .contentType(JSON);
-    }
-
-    RequestSpecification givenAdminSetup() {
-        return given().port(app.getAdminPort()).contentType(JSON);
     }
 
     //TODO remove this after complete migration

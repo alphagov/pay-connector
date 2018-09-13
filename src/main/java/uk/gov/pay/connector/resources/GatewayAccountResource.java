@@ -1,9 +1,9 @@
 package uk.gov.pay.connector.resources;
 
-import com.google.common.base.Splitter;
 import com.fasterxml.jackson.annotation.JsonView;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import com.google.common.base.Splitter;
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableMap;
 import com.google.inject.persist.Transactional;
@@ -16,6 +16,8 @@ import uk.gov.pay.connector.dao.GatewayAccountDao;
 import uk.gov.pay.connector.exception.CredentialsException;
 import uk.gov.pay.connector.model.GatewayAccountRequest;
 import uk.gov.pay.connector.model.domain.CardTypeEntity;
+import uk.gov.pay.connector.model.domain.EmailNotificationEntity;
+import uk.gov.pay.connector.model.domain.EmailNotificationType;
 import uk.gov.pay.connector.model.domain.GatewayAccountEntity;
 import uk.gov.pay.connector.model.domain.GatewayAccountResourceDTO;
 import uk.gov.pay.connector.model.domain.UuidAbstractEntity;
@@ -30,8 +32,8 @@ import javax.ws.rs.GET;
 import javax.ws.rs.POST;
 import javax.ws.rs.Path;
 import javax.ws.rs.PathParam;
-import javax.ws.rs.QueryParam;
 import javax.ws.rs.Produces;
+import javax.ws.rs.QueryParam;
 import javax.ws.rs.core.Context;
 import javax.ws.rs.core.Response;
 import javax.ws.rs.core.Response.Status;
@@ -41,7 +43,6 @@ import java.net.URI;
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
-import java.util.ArrayList;
 import java.util.Map;
 import java.util.Optional;
 import java.util.UUID;
@@ -129,7 +130,7 @@ public class GatewayAccountResource {
       try{
         accountIds = COMMA_SEPARATOR.splitToList(accountIdsArg)
           .stream()
-          .map(accountIdStr -> Long.parseLong(accountIdStr))
+          .map(Long::parseLong)
           .collect(Collectors.toList());
       } catch (NumberFormatException e) {
         return badRequestResponse(format("Could not parse accountIds %s as Longs.", accountIdsArg));
@@ -230,6 +231,7 @@ public class GatewayAccountResource {
 
         logger.info("Creating new gateway account using the {} provider pointing to {}", provider, accountType);
         GatewayAccountEntity entity = new GatewayAccountEntity(provider, newHashMap(), type);
+
         logger.info("Setting the new account to accept all card types by default", provider, accountType);
         entity.setCardTypes(cardTypeDao.findAllNon3ds());
         if (node.has(SERVICE_NAME_FIELD_NAME)) {
@@ -241,6 +243,9 @@ public class GatewayAccountResource {
         if (node.has(ANALYTICS_ID_FIELD_NAME)) {
             entity.setAnalyticsId(node.get(ANALYTICS_ID_FIELD_NAME).textValue());
         }
+        
+        entity.addNotification(EmailNotificationType.CONFIRMATION, new EmailNotificationEntity(entity));
+        entity.addNotification(EmailNotificationType.REFUND, new EmailNotificationEntity(entity));
         gatewayDao.persist(entity);
         URI newLocation = uriInfo.
                 getBaseUriBuilder().

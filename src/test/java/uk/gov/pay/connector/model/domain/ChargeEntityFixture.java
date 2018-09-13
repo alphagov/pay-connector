@@ -143,7 +143,7 @@ public class ChargeEntityFixture {
         accountEntity.setServiceName("MyService");
         EmailNotificationEntity emailNotificationEntity = new EmailNotificationEntity(accountEntity);
         emailNotificationEntity.setTemplateBody("template body");
-        accountEntity.setEmailNotification(emailNotificationEntity);
+        accountEntity.addNotification(EmailNotificationType.CONFIRMATION, emailNotificationEntity);
         return accountEntity;
     }
 }

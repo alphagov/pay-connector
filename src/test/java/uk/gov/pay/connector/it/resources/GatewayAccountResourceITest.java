@@ -25,7 +25,7 @@ public class GatewayAccountResourceITest extends GatewayAccountResourceTestBase 
     private DatabaseFixtures.TestAccount defaultTestAccount;
 
     @Test
-    public void getAccountShouldReturn404IfAccountIdIsUnknown() throws Exception {
+    public void getAccountShouldReturn404IfAccountIdIsUnknown() {
         String unknownAccountId = "92348739";
         givenSetup()
                 .get(ACCOUNTS_API_URL + unknownAccountId)
@@ -34,7 +34,7 @@ public class GatewayAccountResourceITest extends GatewayAccountResourceTestBase 
     }
 
     @Test
-    public void getAccountShouldNotReturnCredentials() throws Exception {
+    public void getAccountShouldNotReturnCredentials() {
         String gatewayAccountId = createAGatewayAccountFor("worldpay");
         givenSetup()
                 .get(ACCOUNTS_API_URL + gatewayAccountId)
@@ -44,7 +44,7 @@ public class GatewayAccountResourceITest extends GatewayAccountResourceTestBase 
     }
 
     @Test
-    public void getAccountShouldNotReturnCardTypes() throws Exception {
+    public void getAccountShouldNotReturnCardTypes() {
         String gatewayAccountId = createAGatewayAccountFor("worldpay");
         givenSetup()
                 .get(ACCOUNTS_API_URL + gatewayAccountId)
@@ -54,7 +54,7 @@ public class GatewayAccountResourceITest extends GatewayAccountResourceTestBase 
     }
 
     @Test
-    public void getAccountShouldReturnDescriptionAndAnalyticsId() throws Exception {
+    public void getAccountShouldReturnDescriptionAndAnalyticsId() {
         String gatewayAccountId = createAGatewayAccountFor("worldpay", "desc", "id");
         givenSetup()
                 .get(ACCOUNTS_API_URL + gatewayAccountId)
@@ -65,7 +65,7 @@ public class GatewayAccountResourceITest extends GatewayAccountResourceTestBase 
     }
 
     @Test
-    public void getAccountShouldReturnAnalyticsId() throws Exception {
+    public void getAccountShouldReturnAnalyticsId() {
         String gatewayAccountId = createAGatewayAccountFor("worldpay", null, "id");
         givenSetup()
                 .get(ACCOUNTS_API_URL + gatewayAccountId)
@@ -76,7 +76,7 @@ public class GatewayAccountResourceITest extends GatewayAccountResourceTestBase 
     }
 
     @Test
-    public void getAccountShouldReturnDescription() throws Exception {
+    public void getAccountShouldReturnDescription() {
         String gatewayAccountId = createAGatewayAccountFor("worldpay", "desc", null);
         givenSetup()
                 .get(ACCOUNTS_API_URL + gatewayAccountId)
@@ -102,6 +102,11 @@ public class GatewayAccountResourceITest extends GatewayAccountResourceTestBase 
                 .body("type", is(TEST.toString()))
                 .body("description", is("a description"))
                 .body("analytics_id", is("an analytics id"))
+                .body("email_collection_mode", is("MANDATORY"))
+                .body("email_notifications.CONFIRMATION.template_body", is("Lorem ipsum dolor sit amet, consectetur adipiscing elit."))
+                .body("email_notifications.CONFIRMATION.enabled", is(true))
+                .body("email_notifications.REFUND.template_body", is("Lorem ipsum dolor sit amet, consectetur adipiscing elit."))
+                .body("email_notifications.REFUND.enabled", is(true))
                 .body("service_name", is("service_name"));
     }
 
@@ -177,7 +182,7 @@ public class GatewayAccountResourceITest extends GatewayAccountResourceTestBase 
     }
 
     @Test
-    public void createGatewayAccountWithoutPaymentProviderDefaultsToSandbox() throws Exception {
+    public void createGatewayAccountWithoutPaymentProviderDefaultsToSandbox() {
         String payload = toJson(ImmutableMap.of("name", "test account"));
         ValidatableResponse response = givenSetup()
                 .body(payload)
@@ -254,7 +259,7 @@ public class GatewayAccountResourceITest extends GatewayAccountResourceTestBase 
     }
 
     @Test
-    public void getAccountShouldReturn404IfAccountIdIsNotNumeric() throws Exception {
+    public void getAccountShouldReturn404IfAccountIdIsNotNumeric() {
         String unknownAccountId = "92348739wsx673hdg";
 
         givenSetup()
@@ -267,22 +272,22 @@ public class GatewayAccountResourceITest extends GatewayAccountResourceTestBase 
     }
 
     @Test
-    public void createAGatewayAccountForSandbox() throws Exception {
+    public void createAGatewayAccountForSandbox() {
         createAGatewayAccountFor("sandbox");
     }
 
     @Test
-    public void createAGatewayAccountForWorldpay() throws Exception {
+    public void createAGatewayAccountForWorldpay() {
         createAGatewayAccountFor("worldpay");
     }
 
     @Test
-    public void createAGatewayAccountForSmartpay() throws Exception {
+    public void createAGatewayAccountForSmartpay() {
         createAGatewayAccountFor("smartpay");
     }
 
     @Test
-    public void createAGatewayAccountForEpdq() throws Exception {
+    public void createAGatewayAccountForEpdq() {
         createAGatewayAccountFor("epdq");
     }
 

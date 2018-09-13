@@ -10,6 +10,7 @@ import org.slf4j.LoggerFactory;
 import uk.gov.pay.connector.app.ConnectorConfiguration;
 import uk.gov.pay.connector.model.domain.ChargeEntity;
 import uk.gov.pay.connector.model.domain.EmailNotificationEntity;
+import uk.gov.pay.connector.model.domain.EmailNotificationType;
 import uk.gov.pay.connector.model.domain.GatewayAccountEntity;
 import uk.gov.pay.connector.service.notify.NotifyClientFactory;
 import uk.gov.pay.connector.service.notify.NotifyClientFactoryProvider;
@@ -54,7 +55,11 @@ public class UserNotificationService {
     }
 
     public Future<Optional<String>> notifyPaymentSuccessEmail(ChargeEntity chargeEntity) {
-        if (emailNotifyGloballyEnabled && chargeEntity.getGatewayAccount().hasEmailNotificationsEnabled()) {
+        Boolean isConfirmationEmailEnabled = chargeEntity.getGatewayAccount().
+                getEmailNotifications()
+                .get(EmailNotificationType.CONFIRMATION)
+                .isEnabled();
+        if (emailNotifyGloballyEnabled && isConfirmationEmailEnabled) {
             String emailAddress = chargeEntity.getEmail();
             Stopwatch responseTimeStopwatch = Stopwatch.createStarted();
             return executorService.submit(() -> {
@@ -106,7 +111,7 @@ public class UserNotificationService {
     private HashMap<String, String> buildEmailPersonalisationFromCharge(ChargeEntity charge) {
         GatewayAccountEntity gatewayAccount = charge.getGatewayAccount();
         EmailNotificationEntity emailNotification = gatewayAccount
-                .getEmailNotification();
+                .getEmailNotifications().get(EmailNotificationType.CONFIRMATION);
 
         String customParagraph = emailNotification != null ? emailNotification.getTemplateBody() : "";
         HashMap<String, String> map = new HashMap<>();

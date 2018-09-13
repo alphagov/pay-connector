@@ -16,6 +16,7 @@ import uk.gov.pay.connector.app.NotifyConfiguration;
 import uk.gov.pay.connector.model.domain.ChargeEntity;
 import uk.gov.pay.connector.model.domain.ChargeEntityFixture;
 import uk.gov.pay.connector.model.domain.EmailNotificationEntity;
+import uk.gov.pay.connector.model.domain.EmailNotificationType;
 import uk.gov.pay.connector.model.domain.GatewayAccountEntity;
 import uk.gov.pay.connector.service.notify.NotifyClientFactory;
 import uk.gov.pay.connector.service.notify.NotifyClientFactoryProvider;
@@ -36,7 +37,15 @@ import static java.util.UUID.randomUUID;
 import static junit.framework.TestCase.fail;
 import static org.junit.Assert.assertEquals;
 import static org.mockito.Matchers.any;
-import static org.mockito.Mockito.*;
+import static org.mockito.Mockito.anyLong;
+import static org.mockito.Mockito.anyString;
+import static org.mockito.Mockito.eq;
+import static org.mockito.Mockito.reset;
+import static org.mockito.Mockito.times;
+import static org.mockito.Mockito.verify;
+import static org.mockito.Mockito.verifyNoMoreInteractions;
+import static org.mockito.Mockito.verifyZeroInteractions;
+import static org.mockito.Mockito.when;
 
 @RunWith(MockitoJUnitRunner.class)
 public class UserNotificationServiceTest {
@@ -111,7 +120,7 @@ public class UserNotificationServiceTest {
     }
 
     @Test
-    public void testEmailSendingThrowsExceptionForMissingTemplate() throws Exception {
+    public void testEmailSendingThrowsExceptionForMissingTemplate() {
         try {
             reset(mockNotifyConfiguration);
             when(mockNotifyConfiguration.isEmailNotifyEnabled()).thenReturn(true);
@@ -138,7 +147,7 @@ public class UserNotificationServiceTest {
     }
 
     @Test
-    public void whenEmailNotificationsAreDisabledForService_emailShouldNotBeSent() throws Exception {
+    public void whenConfirmationEmailNotificationsAreDisabledForService_emailShouldNotBeSent() throws Exception {
         when(mockNotifyConfiguration.isEmailNotifyEnabled()).thenReturn(true);
         when(mockNotifyClientFactoryProvider.clientFactory()).thenReturn(mockNotifyClientFactory);
         when(mockNotifyClientFactory.getInstance()).thenReturn(mockNotifyClient);
@@ -146,7 +155,10 @@ public class UserNotificationServiceTest {
         when(mockNotificationCreatedResponse.getNotificationId()).thenReturn(randomUUID());
 
         ChargeEntity chargeEntity = ChargeEntityFixture.aValidChargeEntity().build();
-        chargeEntity.getGatewayAccount().getEmailNotification().setEnabled(false);
+        chargeEntity.getGatewayAccount()
+                .getEmailNotifications()
+                .get(EmailNotificationType.CONFIRMATION)
+                .setEnabled(false);
 
         userNotificationService = new UserNotificationService(mockNotifyClientFactoryProvider, mockConfig, mockEnvironment);
         userNotificationService.notifyPaymentSuccessEmail(chargeEntity);
@@ -196,7 +208,7 @@ public class UserNotificationServiceTest {
     }
 
     @Test
-    public void shouldSendBlankCustomParagraphIfNotSet() throws Exception {
+    public void shouldSendBlankCustomParagraphIfNotSetInConfirmationEmail() throws Exception {
         when(mockConfig.getNotifyConfiguration().isEmailNotifyEnabled()).thenReturn(true);
         when(mockNotifyClientFactoryProvider.clientFactory()).thenReturn(mockNotifyClientFactory);
         when(mockNotifyClientFactory.getInstance()).thenReturn(mockNotifyClient);
@@ -211,7 +223,7 @@ public class UserNotificationServiceTest {
         GatewayAccountEntity accountEntity = charge.getGatewayAccount();
         EmailNotificationEntity emailNotificationEntity = new EmailNotificationEntity(accountEntity);
         emailNotificationEntity.setTemplateBody(null);
-        accountEntity.setEmailNotification(emailNotificationEntity);
+        accountEntity.addNotification(EmailNotificationType.CONFIRMATION, emailNotificationEntity);
 
         userNotificationService = new UserNotificationService(mockNotifyClientFactoryProvider, mockConfig, mockEnvironment);
         Future<Optional<String>> idF = userNotificationService.notifyPaymentSuccessEmail(charge);

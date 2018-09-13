@@ -9,6 +9,7 @@ import uk.gov.pay.commons.model.SupportedLanguage;
 import uk.gov.pay.connector.model.ServicePaymentReference;
 import uk.gov.pay.connector.model.domain.AuthCardDetails;
 import uk.gov.pay.connector.model.domain.ChargeStatus;
+import uk.gov.pay.connector.model.domain.EmailNotificationType;
 import uk.gov.pay.connector.model.domain.GatewayAccountEntity;
 
 import java.sql.SQLException;
@@ -326,10 +327,19 @@ public class DatabaseTestHelper {
         return ret;
     }
 
-    public Map<String, Object> getEmailNotificationByAccountId(Long accountId) {
+    public Map<String, Object> getConfirmationEmailNotificationByAccountId(Long accountId) {
 
         return jdbi.withHandle(h ->
-                h.createQuery("SELECT template_body, enabled from email_notifications WHERE account_id = :account_id ORDER BY id DESC")
+                h.createQuery("SELECT template_body, enabled from email_notifications WHERE account_id = :account_id AND type = 'CONFIRMATION'")
+                        .bind("account_id", accountId)
+                        .first()
+        );
+    }
+
+    public Map<String, Object> getRefundEmailNotificationByAccountId(Long accountId) {
+        
+        return jdbi.withHandle(h ->
+                h.createQuery("SELECT template_body, enabled from email_notifications WHERE account_id = :account_id AND type = 'REFUND'")
                         .bind("account_id", accountId)
                         .first()
         );
@@ -399,24 +409,26 @@ public class DatabaseTestHelper {
         );
     }
 
-    public void addEmailNotification(Long accountId, String templateBody, boolean enabled) {
+    public void addEmailNotification(Long accountId, String templateBody, boolean enabled, EmailNotificationType type) {
         jdbi.withHandle(handle ->
                 handle
-                        .createStatement("INSERT INTO email_notifications(account_id, template_body, enabled) VALUES (:account_id, :templateBody, :enabled)")
+                        .createStatement("INSERT INTO email_notifications(account_id, template_body, enabled, type) VALUES (:account_id, :templateBody, :enabled, :type)")
                         .bind("account_id", accountId)
                         .bind("templateBody", templateBody)
                         .bind("enabled", enabled)
+                        .bind("type", type)
                         .execute()
         );
     }
 
-    public void updateEmailNotification(Long accountId, String templateBody, boolean enabled) {
+    public void updateEmailNotification(Long accountId, String templateBody, boolean enabled, EmailNotificationType type) {
         jdbi.withHandle(handle ->
                 handle
-                        .createStatement("UPDATE email_notifications SET template_body= :templateBody, enabled= :enabled WHERE account_id=:account_id")
+                        .createStatement("UPDATE email_notifications SET template_body= :templateBody, enabled= :enabled WHERE account_id=:account_id AND type = :type")
                         .bind("account_id", accountId)
                         .bind("enabled", enabled)
                         .bind("templateBody", templateBody)
+                        .bind("type", type.toString())
                         .execute()
         );
     }

@@ -34,7 +34,7 @@ import static uk.gov.pay.connector.resources.ChargesApiResource.MIN_AMOUNT;
 public class ApiValidatorsTest {
 
     @Test
-    public void shouldValidateEmailLength_WhenPatchingAnEmail() throws Exception {
+    public void shouldValidateEmailLength_WhenPatchingAnEmail() {
 
         PatchRequestBuilder.PatchRequest request = PatchRequestBuilder.aPatchRequestBuilder(
                 ImmutableMap.of(
@@ -48,7 +48,7 @@ public class ApiValidatorsTest {
     }
 
     @Test
-    public void shouldInvalidateEmailLength_WhenPatchingAnEmail() throws Exception {
+    public void shouldInvalidateEmailLength_WhenPatchingAnEmail() {
 
         PatchRequestBuilder.PatchRequest request = PatchRequestBuilder.aPatchRequestBuilder(
                 ImmutableMap.of(
