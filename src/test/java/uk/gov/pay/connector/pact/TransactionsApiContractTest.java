@@ -59,12 +59,12 @@ public class TransactionsApiContractTest {
     private void setUpCharges(int numberOfCharges, String accountId, ZonedDateTime createdDate) {
         for (int i = 0; i < numberOfCharges; i++) {
             Long chargeId = ThreadLocalRandom.current().nextLong(100, 100000);
-            setUpSingleCharge(accountId, chargeId, Long.toString(chargeId), createdDate, false);
+            setUpSingleCharge(accountId, chargeId, Long.toString(chargeId), ChargeStatus.CREATED, createdDate, false);
         }
     }
 
-    private void setUpSingleCharge(String accountId, Long chargeId, String chargeExternalId, ZonedDateTime createdDate, boolean delayedCapture) {
-        dbHelper.addCharge(chargeId, chargeExternalId, accountId, 100L, ChargeStatus.CREATED, "aReturnUrl",
+    private void setUpSingleCharge(String accountId, Long chargeId, String chargeExternalId, ChargeStatus chargeStatus, ZonedDateTime createdDate, boolean delayedCapture) {
+        dbHelper.addCharge(chargeId, chargeExternalId, accountId, 100L, chargeStatus, "aReturnUrl",
                 chargeExternalId, ServicePaymentReference.of("aReference"), createdDate, "test@test.com", delayedCapture);
         dbHelper.updateChargeCardDetails(chargeId, "visa", "0001", "aName", "08/23",
                 "aFirstAddress", "aSecondLine", "aPostCode", "aCity", "aCounty", "aCountry");
@@ -119,6 +119,15 @@ public class TransactionsApiContractTest {
         Long chargeId = ThreadLocalRandom.current().nextLong(100, 100000);
         String chargeExternalId = params.get("charge_id");
         setUpGatewayAccount(Long.valueOf(gatewayAccountId));
-        setUpSingleCharge(gatewayAccountId, chargeId, chargeExternalId, ZonedDateTime.now(), true);
+        setUpSingleCharge(gatewayAccountId, chargeId, chargeExternalId, ChargeStatus.CREATED, ZonedDateTime.now(), true);
+    }
+
+    @State("a charge with delayed capture true and awaiting capture request status exists")
+    public void createChargeWithDelayedCaptureTrueAndAwaitingCaptureRequestStatus(Map<String, String> params) {
+        String gatewayAccountId = params.get("gateway_account_id");
+        Long chargeId = ThreadLocalRandom.current().nextLong(100, 100000);
+        String chargeExternalId = params.get("charge_id");
+        setUpGatewayAccount(Long.valueOf(gatewayAccountId));
+        setUpSingleCharge(gatewayAccountId, chargeId, chargeExternalId, ChargeStatus.AWAITING_CAPTURE_REQUEST, ZonedDateTime.now(), true);
     }
 }
