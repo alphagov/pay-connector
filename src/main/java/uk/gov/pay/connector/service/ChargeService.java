@@ -166,7 +166,8 @@ public class ChargeService {
                 .withLink("self", GET, selfUriFor(uriInfo, chargeEntity.getGatewayAccount().getId(), chargeId))
                 .withLink("refunds", GET, refundsUriFor(uriInfo, chargeEntity.getGatewayAccount().getId(), chargeEntity.getExternalId()));
 
-        if (!ChargeStatus.fromString(chargeEntity.getStatus()).toExternal().isFinished()) {
+        ChargeStatus chargeStatus = ChargeStatus.fromString(chargeEntity.getStatus());
+        if (!chargeStatus.toExternal().isFinished() && !chargeStatus.equals(ChargeStatus.AWAITING_CAPTURE_REQUEST)) {
             TokenEntity token = createNewChargeEntityToken(chargeEntity);
             Map<String, Object> params = new HashMap<>();
             params.put("chargeTokenId", token.getToken());
