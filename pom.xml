@@ -11,7 +11,7 @@
         <guice.version>4.1.0</guice.version>
         <docker-client.version>8.9.2</docker-client.version>
         <jackson.version>2.9.6</jackson.version>
-        <pay-java-commons.version>1.0.0-7bc143b9ea2caf1b5d6f39a281691d7a02d57bb4</pay-java-commons.version>
+        <pay-java-commons.version>1.0.0-a6b07e0c4c5e19e38c19ea7b181592a1c4f07a2f</pay-java-commons.version>
     </properties>
     <repositories>
         <repository>

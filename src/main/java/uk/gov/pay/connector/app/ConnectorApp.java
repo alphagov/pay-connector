@@ -49,6 +49,7 @@ import uk.gov.pay.connector.util.XrayUtils;
 
 import javax.net.ssl.HttpsURLConnection;
 import javax.net.ssl.SSLSocketFactory;
+import java.util.Optional;
 import java.util.concurrent.TimeUnit;
 
 import static java.util.EnumSet.of;
@@ -117,7 +118,7 @@ public class ConnectorApp extends Application<ConnectorConfiguration> {
         setGlobalProxies(configuration);
 
         if (configuration.isXrayEnabled())
-            Xray.init(environment, "pay-connector","/v1/*");
+            Xray.init(environment, "pay-connector", Optional.empty(),"/v1/*");
     }
 
     private Injector createInjector(Environment environment, Module module) {
