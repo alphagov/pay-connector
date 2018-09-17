@@ -231,6 +231,10 @@ public class GatewayAccountEntity extends AbstractVersionedEntity {
         this.notifySettings = notifySettings;
     }
 
+    public void setEmailCollectionMode(EmailCollectionMode emailCollectionMode) {
+        this.emailCollectionMode = emailCollectionMode;
+    }
+
     public Map<String, String> getNotifySettings() {
         return notifySettings;
     }

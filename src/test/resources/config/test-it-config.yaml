@@ -122,6 +122,7 @@ jpa:
 
 notifyConfig:
   emailTemplateId: test-template-id
+  refundIssuedEmailTemplateId: test-template-id-2
   apiKey: ${NOTIFY_API_KEY:-pay-notify-api-key}
   notificationBaseURL: https://stubs.pymnt.localdomain
   emailNotifyEnabled: false

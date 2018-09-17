@@ -25,12 +25,12 @@ public class EmailNotificationResourceITest extends GatewayAccountResourceTestBa
 
         String templateBody = "lorem ipsum";
         givenSetup().accept(JSON)
-                .body(ImmutableMap.of(EmailNotificationResource.EMAIL_NOTIFICATION_TEMPLATE_BODY, templateBody))
+                .body(ImmutableMap.of(EmailNotificationResource.EMAIL_NOTIFICATION_TEMPLATE_BODY_OLD, templateBody))
                 .post(ACCOUNTS_API_URL + testAccount.getAccountId() + "/email-notification")
                 .then()
                 .statusCode(200);
 
-        Map<String, Object> emailNotification = app.getDatabaseTestHelper().getConfirmationEmailNotificationByAccountId(testAccount.getAccountId());
+        Map<String, Object> emailNotification = app.getDatabaseTestHelper().getEmailForAccountAndType(testAccount.getAccountId(), EmailNotificationType.PAYMENT_CONFIRMED);
         assertThat(emailNotification.get("template_body"), is(templateBody));
         assertThat(emailNotification.get("enabled"), is(true));
     }
@@ -44,12 +44,12 @@ public class EmailNotificationResourceITest extends GatewayAccountResourceTestBa
 
         String templateBody = "lorem ipsum";
         givenSetup().accept(JSON)
-                .body(ImmutableMap.of(EmailNotificationResource.EMAIL_NOTIFICATION_TEMPLATE_BODY, templateBody))
+                .body(ImmutableMap.of(EmailNotificationResource.EMAIL_NOTIFICATION_TEMPLATE_BODY_OLD, templateBody))
                 .post(ACCOUNTS_API_URL + testAccount.getAccountId() + "/email-notification")
                 .then()
                 .statusCode(200);
 
-        Map<String, Object> emailNotification = app.getDatabaseTestHelper().getConfirmationEmailNotificationByAccountId(testAccount.getAccountId());
+        Map<String, Object> emailNotification = app.getDatabaseTestHelper().getEmailForAccountAndType(testAccount.getAccountId(), EmailNotificationType.PAYMENT_CONFIRMED);
         assertThat(emailNotification.get("template_body"), is(templateBody));
         assertThat(emailNotification.get("enabled"), is(true));
     }
@@ -66,7 +66,7 @@ public class EmailNotificationResourceITest extends GatewayAccountResourceTestBa
                 .then()
                 .statusCode(200);
 
-        Map<String, Object> emailNotification = app.getDatabaseTestHelper().getConfirmationEmailNotificationByAccountId(testAccount.getAccountId());
+        Map<String, Object> emailNotification = app.getDatabaseTestHelper().getEmailForAccountAndType(testAccount.getAccountId(), EmailNotificationType.PAYMENT_CONFIRMED);
         assertThat(emailNotification.get("enabled"), is(true));
     }
 
@@ -90,7 +90,7 @@ public class EmailNotificationResourceITest extends GatewayAccountResourceTestBa
         String templateBody = "lorem ipsum";
 
         givenSetup().accept(JSON)
-                .body(ImmutableMap.of(EmailNotificationResource.EMAIL_NOTIFICATION_TEMPLATE_BODY, templateBody))
+                .body(ImmutableMap.of(EmailNotificationResource.EMAIL_NOTIFICATION_TEMPLATE_BODY_OLD, templateBody))
                 .post(ACCOUNTS_API_URL + nonExistingAccountId + "/email-notification")
                 .then()
                 .statusCode(404)
@@ -109,11 +109,11 @@ public class EmailNotificationResourceITest extends GatewayAccountResourceTestBa
                 .then()
                 .statusCode(200);
 
-        Map<String, Object> emailNotification = app.getDatabaseTestHelper().getConfirmationEmailNotificationByAccountId(testAccount.getAccountId());
+        Map<String, Object> emailNotification = app.getDatabaseTestHelper().getEmailForAccountAndType(testAccount.getAccountId(), EmailNotificationType.PAYMENT_CONFIRMED);
         assertThat(emailNotification.get("enabled"), is(false));
     }
 
-    // PP-4111 Old endpoint
+    // PP-4111 Old test (using the old patch path)
     @Test
     public void patchEnableNotification_shouldUpdateSuccessfully() {
         DatabaseFixtures.TestAccount testAccount = databaseFixtures
@@ -126,25 +126,8 @@ public class EmailNotificationResourceITest extends GatewayAccountResourceTestBa
                 .then()
                 .statusCode(200);
 
-        Map<String, Object> emailNotification = app.getDatabaseTestHelper().getConfirmationEmailNotificationByAccountId(testAccount.getAccountId());
+        Map<String, Object> emailNotification = app.getDatabaseTestHelper().getEmailForAccountAndType(testAccount.getAccountId(), EmailNotificationType.PAYMENT_CONFIRMED);
         assertThat(emailNotification.get("enabled"), is(false));
-    }
-
-    @Test
-    public void patchEmailBody_shouldUpdateSuccessfully() {
-        DatabaseFixtures.TestAccount testAccount = databaseFixtures
-                .aTestAccount()
-                .insert();
-        String newTemplateBody = "not anymore";
-
-        givenSetup().accept(JSON)
-                .body(getPatchRequestBody("replace", EmailNotificationResource.EMAIL_NOTIFICATION_TEMPLATE_BODY, newTemplateBody))
-                .patch(ACCOUNTS_API_URL + testAccount.getAccountId() + "/email-notification")
-                .then()
-                .statusCode(200);
-
-        Map<String, Object> emailNotification = app.getDatabaseTestHelper().getConfirmationEmailNotificationByAccountId(testAccount.getAccountId());
-        assertThat(emailNotification.get("template_body"), is(newTemplateBody));
     }
 
     @Test
@@ -154,13 +137,13 @@ public class EmailNotificationResourceITest extends GatewayAccountResourceTestBa
                 .insert();
 
         givenSetup().accept(JSON)
-                .body(getPatchRequestBody("replace", EmailNotificationResource.EMAIL_NOTIFICATION_ENABLED, true))
-                .patch(ACCOUNTS_API_URL + testAccount.getAccountId() + "/email-notification/refund")
+                .body(getPatchRequestBody("replace", "/refund_issued/enabled", true))
+                .patch(ACCOUNTS_API_URL + testAccount.getAccountId() + "/email-notification")
                 .then()
                 .statusCode(200);
 
-        Map<String, Object> confirmationEmail = app.getDatabaseTestHelper().getConfirmationEmailNotificationByAccountId(testAccount.getAccountId());
-        Map<String, Object> refundEmail = app.getDatabaseTestHelper().getRefundEmailNotificationByAccountId(testAccount.getAccountId());
+        Map<String, Object> confirmationEmail = app.getDatabaseTestHelper().getEmailForAccountAndType(testAccount.getAccountId(), EmailNotificationType.PAYMENT_CONFIRMED);
+        Map<String, Object> refundEmail = app.getDatabaseTestHelper().getEmailForAccountAndType(testAccount.getAccountId(), EmailNotificationType.REFUND_ISSUED);
         assertThat(confirmationEmail.get("enabled"), is(true));
         assertThat(refundEmail.get("enabled"), is(true));
     }
@@ -172,13 +155,13 @@ public class EmailNotificationResourceITest extends GatewayAccountResourceTestBa
                 .insert();
 
         givenSetup().accept(JSON)
-                .body(getPatchRequestBody("replace", EmailNotificationResource.EMAIL_NOTIFICATION_ENABLED, false))
-                .patch(ACCOUNTS_API_URL + testAccount.getAccountId() + "/email-notification/confirmation")
+                .body(getPatchRequestBody("replace", "/payment_confirmed/enabled", false))
+                .patch(ACCOUNTS_API_URL + testAccount.getAccountId() + "/email-notification")
                 .then()
                 .statusCode(200);
 
-        Map<String, Object> confirmationEmail = app.getDatabaseTestHelper().getConfirmationEmailNotificationByAccountId(testAccount.getAccountId());
-        Map<String, Object> refundEmail = app.getDatabaseTestHelper().getRefundEmailNotificationByAccountId(testAccount.getAccountId());
+        Map<String, Object> confirmationEmail = app.getDatabaseTestHelper().getEmailForAccountAndType(testAccount.getAccountId(), EmailNotificationType.PAYMENT_CONFIRMED);
+        Map<String, Object> refundEmail = app.getDatabaseTestHelper().getEmailForAccountAndType(testAccount.getAccountId(), EmailNotificationType.REFUND_ISSUED);
         assertThat(confirmationEmail.get("enabled"), is(false));
         assertThat(refundEmail.get("enabled"), is(true));
     }
@@ -191,13 +174,13 @@ public class EmailNotificationResourceITest extends GatewayAccountResourceTestBa
         String newTemplateBody = "new value";
 
         givenSetup().accept(JSON)
-                .body(getPatchRequestBody("replace", EmailNotificationResource.EMAIL_NOTIFICATION_TEMPLATE_BODY, newTemplateBody))
-                .patch(ACCOUNTS_API_URL + testAccount.getAccountId() + "/email-notification/refund")
+                .body(getPatchRequestBody("replace", "/refund_issued/template_body", newTemplateBody))
+                .patch(ACCOUNTS_API_URL + testAccount.getAccountId() + "/email-notification")
                 .then()
                 .statusCode(200);
 
-        Map<String, Object> confirmationEmail = app.getDatabaseTestHelper().getConfirmationEmailNotificationByAccountId(testAccount.getAccountId());
-        Map<String, Object> refundEmail = app.getDatabaseTestHelper().getRefundEmailNotificationByAccountId(testAccount.getAccountId());
+        Map<String, Object> confirmationEmail = app.getDatabaseTestHelper().getEmailForAccountAndType(testAccount.getAccountId(), EmailNotificationType.PAYMENT_CONFIRMED);
+        Map<String, Object> refundEmail = app.getDatabaseTestHelper().getEmailForAccountAndType(testAccount.getAccountId(), EmailNotificationType.REFUND_ISSUED);
         assertThat(confirmationEmail.get("template_body"), is("Lorem ipsum dolor sit amet, consectetur adipiscing elit."));
         assertThat(refundEmail.get("template_body"), is(newTemplateBody));
     }
@@ -210,13 +193,14 @@ public class EmailNotificationResourceITest extends GatewayAccountResourceTestBa
         String newTemplateBody = "new value";
 
         givenSetup().accept(JSON)
-                .body(getPatchRequestBody("replace", EmailNotificationResource.EMAIL_NOTIFICATION_TEMPLATE_BODY, newTemplateBody))
-                .patch(ACCOUNTS_API_URL + testAccount.getAccountId() + "/email-notification/confirmation")
+                .body(getPatchRequestBody("replace",                       
+                        "/payment_confirmed/template_body", newTemplateBody))
+                .patch(ACCOUNTS_API_URL + testAccount.getAccountId() + "/email-notification")
                 .then()
                 .statusCode(200);
 
-        Map<String, Object> confirmationEmail = app.getDatabaseTestHelper().getConfirmationEmailNotificationByAccountId(testAccount.getAccountId());
-        Map<String, Object> refundEmail = app.getDatabaseTestHelper().getRefundEmailNotificationByAccountId(testAccount.getAccountId());
+        Map<String, Object> confirmationEmail = app.getDatabaseTestHelper().getEmailForAccountAndType(testAccount.getAccountId(), EmailNotificationType.PAYMENT_CONFIRMED);
+        Map<String, Object> refundEmail = app.getDatabaseTestHelper().getEmailForAccountAndType(testAccount.getAccountId(), EmailNotificationType.REFUND_ISSUED);
         assertThat(confirmationEmail.get("template_body"), is(newTemplateBody));
         assertThat(refundEmail.get("template_body"), is("Lorem ipsum dolor sit amet, consectetur adipiscing elit."));
     }
@@ -230,13 +214,13 @@ public class EmailNotificationResourceITest extends GatewayAccountResourceTestBa
         String newTemplateBody = "new value";
 
         givenSetup().accept(JSON)
-                .body(getPatchRequestBody("replace", EmailNotificationResource.EMAIL_NOTIFICATION_TEMPLATE_BODY, newTemplateBody))
-                .patch(ACCOUNTS_API_URL + testAccount.getAccountId() + "/email-notification/confirmation")
+                .body(getPatchRequestBody("replace", "/payment_confirmed/template_body", newTemplateBody))
+                .patch(ACCOUNTS_API_URL + testAccount.getAccountId() + "/email-notification")
                 .then()
                 .statusCode(200);
 
-        Map<String, Object> confirmationEmail = app.getDatabaseTestHelper().getConfirmationEmailNotificationByAccountId(testAccount.getAccountId());
-        Map<String, Object> refundEmail = app.getDatabaseTestHelper().getRefundEmailNotificationByAccountId(testAccount.getAccountId());
+        Map<String, Object> confirmationEmail = app.getDatabaseTestHelper().getEmailForAccountAndType(testAccount.getAccountId(), EmailNotificationType.PAYMENT_CONFIRMED);
+        Map<String, Object> refundEmail = app.getDatabaseTestHelper().getEmailForAccountAndType(testAccount.getAccountId(), EmailNotificationType.REFUND_ISSUED);
         assertThat(confirmationEmail.get("template_body"), is(newTemplateBody));
         assertThat(refundEmail, is(nullValue()));
     }
@@ -248,13 +232,13 @@ public class EmailNotificationResourceITest extends GatewayAccountResourceTestBa
                 .withEmailNotifications(new HashMap<>())
                 .insert();
         givenSetup().accept(JSON)
-                .body(getPatchRequestBody("replace", EmailNotificationResource.EMAIL_NOTIFICATION_ENABLED, false))
-                .patch(ACCOUNTS_API_URL + testAccount.getAccountId() + "/email-notification/refund")
+                .body(getPatchRequestBody("replace","/refund_issued/enabled", false))
+                .patch(ACCOUNTS_API_URL + testAccount.getAccountId() + "/email-notification")
                 .then()
                 .statusCode(200);
 
-        Map<String, Object> confirmationEmail = app.getDatabaseTestHelper().getConfirmationEmailNotificationByAccountId(testAccount.getAccountId());
-        Map<String, Object> refundEmail = app.getDatabaseTestHelper().getRefundEmailNotificationByAccountId(testAccount.getAccountId());
+        Map<String, Object> confirmationEmail = app.getDatabaseTestHelper().getEmailForAccountAndType(testAccount.getAccountId(), EmailNotificationType.PAYMENT_CONFIRMED);
+        Map<String, Object> refundEmail = app.getDatabaseTestHelper().getEmailForAccountAndType(testAccount.getAccountId(), EmailNotificationType.REFUND_ISSUED);
         assertThat(confirmationEmail, is(nullValue()));
         assertThat(refundEmail.get("enabled"), is(false));
     }
@@ -266,7 +250,7 @@ public class EmailNotificationResourceITest extends GatewayAccountResourceTestBa
                 .insert();
 
         String templateBody = "lorem ipsum";
-        app.getDatabaseTestHelper().updateEmailNotification(testAccount.getAccountId(), templateBody, true, EmailNotificationType.CONFIRMATION);
+        app.getDatabaseTestHelper().updateEmailNotification(testAccount.getAccountId(), templateBody, true, EmailNotificationType.PAYMENT_CONFIRMED);
 
         givenSetup()
                 .accept(JSON)

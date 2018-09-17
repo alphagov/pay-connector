@@ -7,6 +7,7 @@ import org.slf4j.LoggerFactory;
 public class NotifyConfiguration extends Configuration {
 
     private String emailTemplateId;
+    private String refundIssuedEmailTemplateId;
     private String apiKey;
     private String notificationBaseURL;
     private boolean emailNotifyEnabled;
@@ -27,5 +28,9 @@ public class NotifyConfiguration extends Configuration {
 
     public boolean isEmailNotifyEnabled() {
         return emailNotifyEnabled;
+    }
+
+    public String getRefundIssuedEmailTemplateId() {
+        return refundIssuedEmailTemplateId;
     }
 }

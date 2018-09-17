@@ -12,6 +12,7 @@ import static com.jayway.restassured.http.ContentType.JSON;
 import static java.lang.String.format;
 import static javax.ws.rs.core.Response.Status.BAD_REQUEST;
 import static javax.ws.rs.core.Response.Status.CONFLICT;
+import static javax.ws.rs.core.Response.Status.INTERNAL_SERVER_ERROR;
 import static javax.ws.rs.core.Response.Status.NOT_FOUND;
 import static javax.ws.rs.core.Response.Status.OK;
 import static org.hamcrest.Matchers.hasSize;
@@ -103,10 +104,10 @@ public class GatewayAccountResourceITest extends GatewayAccountResourceTestBase 
                 .body("description", is("a description"))
                 .body("analytics_id", is("an analytics id"))
                 .body("email_collection_mode", is("MANDATORY"))
-                .body("email_notifications.CONFIRMATION.template_body", is("Lorem ipsum dolor sit amet, consectetur adipiscing elit."))
-                .body("email_notifications.CONFIRMATION.enabled", is(true))
-                .body("email_notifications.REFUND.template_body", is("Lorem ipsum dolor sit amet, consectetur adipiscing elit."))
-                .body("email_notifications.REFUND.enabled", is(true))
+                .body("email_notifications.PAYMENT_CONFIRMED.template_body", is("Lorem ipsum dolor sit amet, consectetur adipiscing elit."))
+                .body("email_notifications.PAYMENT_CONFIRMED.enabled", is(true))
+                .body("email_notifications.REFUND_ISSUED.template_body", is("Lorem ipsum dolor sit amet, consectetur adipiscing elit."))
+                .body("email_notifications.REFUND_ISSUED.enabled", is(true))
                 .body("service_name", is("service_name"));
     }
 
@@ -468,7 +469,34 @@ public class GatewayAccountResourceITest extends GatewayAccountResourceTestBase 
                 .body(payload)
                 .patch("/v1/api/accounts/" + gatewayAccountId)
                 .then()
-                .statusCode(BAD_REQUEST.getStatusCode());
+                .statusCode(BAD_REQUEST.getStatusCode())
+                .body("errors", is("[Operation [insert] is not valid for path [op]"));
+    }
+
+    @Test
+    public void shouldReturn200_whenEmailCollectionModeIsUpdated() throws Exception{
+        String gatewayAccountId = createAGatewayAccountFor("worldpay");
+        String payload = new ObjectMapper().writeValueAsString(ImmutableMap.of("op", "replace",
+                "path", "email_collection_mode",
+                "value", "OFF"));
+        givenSetup()
+                .body(payload)
+                .patch("/v1/api/accounts/" + gatewayAccountId)
+                .then()
+                .statusCode(OK.getStatusCode());
+    }
+
+    @Test
+    public void shouldReturn500_whenEmailCollectionModeIsUpdated_withWrongValue() throws Exception{
+        String gatewayAccountId = createAGatewayAccountFor("worldpay");
+        String payload = new ObjectMapper().writeValueAsString(ImmutableMap.of("op", "replace",
+                "path", "email_collection_mode",
+                "value", "nope"));
+        givenSetup()
+                .body(payload)
+                .patch("/v1/api/accounts/" + gatewayAccountId)
+                .then()
+                .statusCode(INTERNAL_SERVER_ERROR.getStatusCode());
     }
 
     @Test

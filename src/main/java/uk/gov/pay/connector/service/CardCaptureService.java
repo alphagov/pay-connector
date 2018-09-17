@@ -165,7 +165,7 @@ public class CardCaptureService extends CardService implements TransactionalGate
                     chargeEventDao.persistChargeEventOf(chargeEntity, Optional.empty());
 
                     if (operationResponse.isSuccessful()) {
-                        userNotificationService.notifyPaymentSuccessEmail(chargeEntity);
+                        userNotificationService.sendPaymentConfirmedEmail(chargeEntity);
                     }
 
                     //for sandbox, immediately move from CAPTURE_SUBMITTED to CAPTURED, as there will be no external notification

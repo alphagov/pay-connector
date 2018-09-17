@@ -14,7 +14,7 @@ import uk.gov.pay.connector.app.ConnectorConfiguration;
 import uk.gov.pay.connector.dao.CardTypeDao;
 import uk.gov.pay.connector.dao.GatewayAccountDao;
 import uk.gov.pay.connector.exception.CredentialsException;
-import uk.gov.pay.connector.model.GatewayAccountRequest;
+import uk.gov.pay.connector.model.PatchRequest;
 import uk.gov.pay.connector.model.domain.CardTypeEntity;
 import uk.gov.pay.connector.model.domain.EmailNotificationEntity;
 import uk.gov.pay.connector.model.domain.EmailNotificationType;
@@ -51,7 +51,6 @@ import java.util.stream.Collectors;
 import static com.google.common.collect.Maps.newHashMap;
 import static java.lang.String.format;
 import static javax.ws.rs.core.MediaType.APPLICATION_JSON;
-import static javax.ws.rs.core.Response.Status.BAD_REQUEST;
 import static javax.ws.rs.core.Response.Status.NOT_FOUND;
 import static uk.gov.pay.connector.model.domain.GatewayAccountEntity.Type;
 import static uk.gov.pay.connector.model.domain.GatewayAccountEntity.Type.TEST;
@@ -244,8 +243,8 @@ public class GatewayAccountResource {
             entity.setAnalyticsId(node.get(ANALYTICS_ID_FIELD_NAME).textValue());
         }
         
-        entity.addNotification(EmailNotificationType.CONFIRMATION, new EmailNotificationEntity(entity));
-        entity.addNotification(EmailNotificationType.REFUND, new EmailNotificationEntity(entity));
+        entity.addNotification(EmailNotificationType.PAYMENT_CONFIRMED, new EmailNotificationEntity(entity));
+        entity.addNotification(EmailNotificationType.REFUND_ISSUED, new EmailNotificationEntity(entity));
         gatewayDao.persist(entity);
         URI newLocation = uriInfo.
                 getBaseUriBuilder().
@@ -268,13 +267,13 @@ public class GatewayAccountResource {
     @Consumes(APPLICATION_JSON)
     @Produces(APPLICATION_JSON)
     @Transactional
-    public Response patchGatewayAccount(@PathParam("accountId") Long gatewayAccountId, JsonNode payload) {
-        return validator.validatePatchRequest(payload)
-                .map(errors -> Response.status(BAD_REQUEST).entity(errors).build())
-                .orElseGet(() -> gatewayAccountServicesFactory.getUpdateService()
-                        .doPatch(gatewayAccountId, GatewayAccountRequest.from(payload))
+    public Response patchGatewayAccount(@PathParam("accountId") Long gatewayAccountId, JsonNode payload) { 
+        validator.validatePatchRequest(payload);
+        
+        return gatewayAccountServicesFactory.getUpdateService()
+                        .doPatch(gatewayAccountId, PatchRequest.from(payload))
                         .map(gatewayAccount -> Response.ok().build())
-                        .orElseGet(() -> Response.status(NOT_FOUND).build()));
+                        .orElseGet(() -> Response.status(NOT_FOUND).build());
     }
 
     @PATCH

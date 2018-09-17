@@ -12,6 +12,7 @@ import uk.gov.pay.connector.model.domain.ChargeEntity;
 import uk.gov.pay.connector.model.domain.EmailNotificationEntity;
 import uk.gov.pay.connector.model.domain.EmailNotificationType;
 import uk.gov.pay.connector.model.domain.GatewayAccountEntity;
+import uk.gov.pay.connector.model.domain.RefundEntity;
 import uk.gov.pay.connector.service.notify.NotifyClientFactory;
 import uk.gov.pay.connector.service.notify.NotifyClientFactoryProvider;
 import uk.gov.pay.connector.util.DateTimeUtils;
@@ -32,11 +33,13 @@ import java.util.concurrent.TimeUnit;
 
 import static java.lang.Runtime.getRuntime;
 import static org.apache.commons.lang3.StringUtils.isBlank;
+import static org.apache.commons.lang3.StringUtils.isNotBlank;
 
 
 public class UserNotificationService {
 
-    private String emailTemplateId;
+    private String confirmationEmailTemplateId;
+    private String refundIssuedEmailTemplateId;
     private boolean emailNotifyGloballyEnabled;
     protected final Logger logger = LoggerFactory.getLogger(getClass());
     private NotifyClientFactoryProvider notifyClientFactoryProvider;
@@ -54,19 +57,28 @@ public class UserNotificationService {
         this.metricRegistry = environment.metrics();
     }
 
-    public Future<Optional<String>> notifyPaymentSuccessEmail(ChargeEntity chargeEntity) {
-        Boolean isConfirmationEmailEnabled = chargeEntity.getGatewayAccount().
+    public Future<Optional<String>> sendRefundIssuedEmail(RefundEntity refundEntity) {
+        return sendEmail(EmailNotificationType.REFUND_ISSUED, refundEntity.getChargeEntity(), buildRefundEmailPersonalisationFrom(refundEntity));
+    }
+
+    public Future<Optional<String>> sendPaymentConfirmedEmail(ChargeEntity chargeEntity) {
+        return sendEmail(EmailNotificationType.PAYMENT_CONFIRMED, chargeEntity, buildConfirmationEmailPersonalisationFrom(chargeEntity));
+    }
+
+    private Future<Optional<String>> sendEmail(EmailNotificationType emailNotificationType, ChargeEntity chargeEntity, HashMap<String, String> personalisation) {
+        Boolean isEmailEnabled = Optional.ofNullable(chargeEntity.getGatewayAccount().
                 getEmailNotifications()
-                .get(EmailNotificationType.CONFIRMATION)
-                .isEnabled();
-        if (emailNotifyGloballyEnabled && isConfirmationEmailEnabled) {
+                .get(emailNotificationType))
+                .map(EmailNotificationEntity::isEnabled)
+                .orElse(false);
+        if (emailNotifyGloballyEnabled && isEmailEnabled) {
             String emailAddress = chargeEntity.getEmail();
             Stopwatch responseTimeStopwatch = Stopwatch.createStarted();
             return executorService.submit(() -> {
                 try {
-                    Pair<NotificationClient, String> notifyClientSettings = getNotifyClientSettings(chargeEntity);
+                    Pair<NotificationClient, String> notifyClientSettings = getNotifyClientSettings(emailNotificationType, chargeEntity);
                     SendEmailResponse response = notifyClientSettings.getLeft()
-                            .sendEmail(notifyClientSettings.getRight(), emailAddress, buildEmailPersonalisationFromCharge(chargeEntity), null);
+                            .sendEmail(notifyClientSettings.getRight(), emailAddress, personalisation, null);
                     return Optional.of(response.getNotificationId().toString());
                 } catch (NotificationClientException e) {
                     logger.error("Failed to send confirmation email - charge_external_id=" + chargeEntity.getExternalId(), e);
@@ -81,37 +93,59 @@ public class UserNotificationService {
         return CompletableFuture.completedFuture(Optional.empty());
     }
 
-    private Pair<NotificationClient, String> getNotifyClientSettings(ChargeEntity chargeEntity) {
+    private String getCustomTemplate(EmailNotificationType type, Map<String, String > notifySettings){
+        if (notifySettings == null) {
+            return null;
+        }
+        switch (type) {
+            case REFUND_ISSUED:
+                return notifySettings.get("refund_issued_template_id");
+            case PAYMENT_CONFIRMED:
+                return notifySettings.get("template_id");
+            default:
+                return null;
+        }
+    }
+
+    private Pair<NotificationClient, String> getNotifyClientSettings(EmailNotificationType emailNotificationType, ChargeEntity chargeEntity) {
         Map<String, String> notifySettings = chargeEntity.getGatewayAccount().getNotifySettings();
         NotifyClientFactory notifyClientFactory = notifyClientFactoryProvider.clientFactory();
-        if (notifySettings != null
-                //TODO: replace with a constants when validator available
-                && !isBlank(notifySettings.get("api_token"))
-                && !isBlank(notifySettings.get("template_id"))) {
-
+        String customTemplateId = getCustomTemplate(emailNotificationType, notifySettings);
+        if (isNotBlank(customTemplateId)) {
             return Pair.of(
                     notifyClientFactory.getInstance(notifySettings.get("api_token")),
-                    notifySettings.get("template_id"));
+                    customTemplateId);
         }
-        return Pair.of(notifyClientFactory.getInstance(), emailTemplateId);
+        return Pair.of(notifyClientFactory.getInstance(), getTemplateIdFor(emailNotificationType));
     }
 
     private void readEmailConfig(ConnectorConfiguration configuration) {
         emailNotifyGloballyEnabled = configuration.getNotifyConfiguration().isEmailNotifyEnabled();
-        emailTemplateId = configuration.getNotifyConfiguration().getEmailTemplateId();
+        confirmationEmailTemplateId = configuration.getNotifyConfiguration().getEmailTemplateId();
+        refundIssuedEmailTemplateId = configuration.getNotifyConfiguration().getRefundIssuedEmailTemplateId();
 
         if (!emailNotifyGloballyEnabled) {
             logger.warn("Email notifications is disabled by configuration");
         }
-        if (emailNotifyGloballyEnabled && isBlank(emailTemplateId)) {
-            throw new RuntimeException("config property 'emailTemplateId' is missing or not set, which needs to point to the email template on the notify");
+        if (emailNotifyGloballyEnabled && (isBlank(confirmationEmailTemplateId) || isBlank(refundIssuedEmailTemplateId))) {
+            throw new RuntimeException("Check notify config, need to set 'emailTemplateId' (payment confirmation email) and 'refundIssuedEmailTemplateId' properties");
         }
     }
 
-    private HashMap<String, String> buildEmailPersonalisationFromCharge(ChargeEntity charge) {
+    private String getTemplateIdFor(EmailNotificationType type) {
+        switch (type){
+            case REFUND_ISSUED:
+                return refundIssuedEmailTemplateId;
+            case PAYMENT_CONFIRMED:
+                return confirmationEmailTemplateId;
+        }
+        return null;
+    }
+
+    private HashMap<String, String> buildConfirmationEmailPersonalisationFrom(ChargeEntity charge) {
         GatewayAccountEntity gatewayAccount = charge.getGatewayAccount();
         EmailNotificationEntity emailNotification = gatewayAccount
-                .getEmailNotifications().get(EmailNotificationType.CONFIRMATION);
+                .getEmailNotifications().get(EmailNotificationType.PAYMENT_CONFIRMED);
 
         String customParagraph = emailNotification != null ? emailNotification.getTemplateBody() : "";
         HashMap<String, String> map = new HashMap<>();
@@ -122,6 +156,18 @@ public class UserNotificationService {
         map.put("description", charge.getDescription());
         map.put("customParagraph", isBlank(customParagraph) ? "" : "^ " + customParagraph);
         map.put("serviceName", StringUtils.defaultString(gatewayAccount.getServiceName()));
+
+        return map;
+    }
+
+    private HashMap<String, String> buildRefundEmailPersonalisationFrom(RefundEntity refundEntity) {
+        ChargeEntity chargeEntity = refundEntity.getChargeEntity();
+        HashMap<String, String> map = new HashMap<>();
+
+        map.put("serviceReference", chargeEntity.getReference().toString());
+        map.put("date", DateTimeUtils.toUserFriendlyDate(refundEntity.getCreatedDate()));
+        map.put("amount", formatToPounds(refundEntity.getAmount()));
+        map.put("description", chargeEntity.getDescription());
 
         return map;
     }

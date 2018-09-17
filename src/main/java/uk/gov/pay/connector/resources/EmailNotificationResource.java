@@ -2,6 +2,7 @@ package uk.gov.pay.connector.resources;
 
 import com.google.inject.persist.Transactional;
 import io.dropwizard.jersey.PATCH;
+import org.apache.commons.lang3.tuple.Pair;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import uk.gov.pay.connector.dao.EmailNotificationsDao;
@@ -18,8 +19,10 @@ import javax.ws.rs.Path;
 import javax.ws.rs.PathParam;
 import javax.ws.rs.Produces;
 import javax.ws.rs.core.Response;
+import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
+import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 
@@ -35,7 +38,9 @@ public class EmailNotificationResource {
 
     private static final Logger logger = LoggerFactory.getLogger(EmailNotificationResource.class);
 
-    public static final String EMAIL_NOTIFICATION_TEMPLATE_BODY = "custom-email-text";
+    // PP-4111 remove this after selfservice is merged
+    public static final String EMAIL_NOTIFICATION_TEMPLATE_BODY_OLD = "custom-email-text";
+    public static final String EMAIL_NOTIFICATION_TEMPLATE_BODY = "template_body";
     public static final String EMAIL_NOTIFICATION_ENABLED = "enabled";
 
     private final EmailNotificationsDao emailNotificationsDao;
@@ -71,18 +76,18 @@ public class EmailNotificationResource {
     @Produces(APPLICATION_JSON)
     @Transactional
     public Response updateEmailNotification(@PathParam("accountId") Long gatewayAccountId, Map<String, String> payload) {
-        if (!payload.containsKey(EMAIL_NOTIFICATION_TEMPLATE_BODY)) {
-            return fieldsMissingResponse(Collections.singletonList(EMAIL_NOTIFICATION_TEMPLATE_BODY));
+        if (!payload.containsKey(EMAIL_NOTIFICATION_TEMPLATE_BODY_OLD)) {
+            return fieldsMissingResponse(Collections.singletonList(EMAIL_NOTIFICATION_TEMPLATE_BODY_OLD));
         }
 
         return gatewayDao.findById(gatewayAccountId)
                 .map(gatewayAccount ->
                         emailNotificationsDao.findByAccountId(gatewayAccountId).map(emailNotificationEntity -> {
-                            emailNotificationEntity.setTemplateBody(payload.get(EMAIL_NOTIFICATION_TEMPLATE_BODY));
+                            emailNotificationEntity.setTemplateBody(payload.get(EMAIL_NOTIFICATION_TEMPLATE_BODY_OLD));
                             return Response.ok().build();
                         }).orElseGet(() -> {
-                            gatewayAccount.addNotification(EmailNotificationType.CONFIRMATION,
-                                    new EmailNotificationEntity(gatewayAccount, payload.get(EMAIL_NOTIFICATION_TEMPLATE_BODY)));
+                            gatewayAccount.addNotification(EmailNotificationType.PAYMENT_CONFIRMED,
+                                    new EmailNotificationEntity(gatewayAccount, payload.get(EMAIL_NOTIFICATION_TEMPLATE_BODY_OLD)));
                             return Response.ok().build();
                         }))
                 .orElseGet(() -> notFoundResponse(format("The gateway account id '%s' does not exist", gatewayAccountId)));
@@ -96,26 +101,14 @@ public class EmailNotificationResource {
     @Produces(APPLICATION_JSON)
     @Transactional
     public Response oldEnableEmailNotification(@PathParam("accountId") Long gatewayAccountId, Map<String, String> emailPatchMap) {
-        return patch(gatewayAccountId, EmailNotificationType.CONFIRMATION, emailPatchMap);
-    }
-
-    @PATCH
-    @Path("/v1/api/accounts/{accountId}/email-notification/{notificationType}")
-    @Consumes(APPLICATION_JSON)
-    @Produces(APPLICATION_JSON)
-    @Transactional
-    public Response enableEmailNotification(@PathParam("accountId") Long gatewayAccountId, @PathParam("notificationType") EmailNotificationType emailNotificationType, Map<String, String> emailPatchMaps) {
-        return patch(gatewayAccountId, emailNotificationType, emailPatchMaps);
-    }
-
-    @Transactional
-    private Response patch(Long gatewayAccountId, EmailNotificationType type, Map<String, String> emailPatchMap) {
         PatchRequestBuilder.PatchRequest emailPatchRequest;
-
         try {
             emailPatchRequest = aPatchRequestBuilder(emailPatchMap)
                     .withValidOps(Collections.singletonList("replace"))
-                    .withValidPaths(Arrays.asList(EMAIL_NOTIFICATION_ENABLED, EMAIL_NOTIFICATION_TEMPLATE_BODY))
+                    .withValidPaths(
+                            buildValidPaths(
+                                    Arrays.asList(EmailNotificationType.PAYMENT_CONFIRMED.toString(), EmailNotificationType.REFUND_ISSUED.toString()),
+                                    Arrays.asList(EMAIL_NOTIFICATION_ENABLED, EMAIL_NOTIFICATION_TEMPLATE_BODY)))
                     .build();
         } catch (IllegalArgumentException e) {
             logger.error(e.getMessage(), e);
@@ -124,6 +117,8 @@ public class EmailNotificationResource {
 
         return gatewayDao.findById(gatewayAccountId)
                 .map(gatewayAccount -> {
+                    Pair<EmailNotificationType, String> patchInfo = getNotificationTypeFromPath(emailPatchRequest);
+                    EmailNotificationType type = patchInfo.getLeft();
                     EmailNotificationEntity notificationEntity = Optional.ofNullable(gatewayAccount.getEmailNotifications().get(type))
                             .orElseGet(() -> {
                                 //PP-4111 we are not going to backfill and add refund notifications for existing gateway accounts, so this is unfortunately needed
@@ -131,22 +126,40 @@ public class EmailNotificationResource {
                                 gatewayAccount.addNotification(type, emailNotificationEntity);
                                 return  emailNotificationEntity;
                             });
-                    patch(notificationEntity, emailPatchRequest);
+                    patch(notificationEntity, patchInfo.getRight(), emailPatchRequest);
                     return Response.ok().build();
                 })
                 .orElseGet(() -> notFoundResponse(format("The gateway account id '%s' does not exist", gatewayAccountId)));
     }
-    
-    private void patch(EmailNotificationEntity emailNotificationEntity, PatchRequestBuilder.PatchRequest emailPatchRequest) {
-        switch (emailPatchRequest.getPath()) {
+
+    private Pair<EmailNotificationType, String> getNotificationTypeFromPath(PatchRequestBuilder.PatchRequest emailPatchRequest) {
+        String[] paths = emailPatchRequest.getPath().split("/");
+        // PP-4111 remove after selfservice is merged
+        if (paths.length < 2) {
+            return Pair.of(EmailNotificationType.PAYMENT_CONFIRMED, "enabled");
+        }
+        return Pair.of(EmailNotificationType.fromString(paths[1]), paths[2]);
+
+    }
+    private void patch(EmailNotificationEntity emailNotificationEntity, String attribute, PatchRequestBuilder.PatchRequest emailPatchRequest) {
+        switch (attribute) {
             case EMAIL_NOTIFICATION_ENABLED:
                 emailNotificationEntity.setEnabled(Boolean.parseBoolean(emailPatchRequest.getValue()));
                 break;
+            case EMAIL_NOTIFICATION_TEMPLATE_BODY_OLD:
             case EMAIL_NOTIFICATION_TEMPLATE_BODY:
                 emailNotificationEntity.setTemplateBody(emailPatchRequest.getValue());
                 break;
         }
     }
-    
-    
+
+    private List<String> buildValidPaths(List<String> resources, List<String> attributes) {
+        List<String> result = new ArrayList<>();
+        resources.forEach(res -> attributes.forEach(att -> result.add("/" + res.toLowerCase() + "/" + att)));
+        // PP-4111 remove this after selfservice is merged, backward compatible
+        result.add(EMAIL_NOTIFICATION_ENABLED);
+        return result;
+    }
+
+
 }

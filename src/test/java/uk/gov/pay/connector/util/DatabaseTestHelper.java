@@ -327,20 +327,12 @@ public class DatabaseTestHelper {
         return ret;
     }
 
-    public Map<String, Object> getConfirmationEmailNotificationByAccountId(Long accountId) {
+    public Map<String, Object> getEmailForAccountAndType(Long accountId, EmailNotificationType type) {
 
         return jdbi.withHandle(h ->
-                h.createQuery("SELECT template_body, enabled from email_notifications WHERE account_id = :account_id AND type = 'CONFIRMATION'")
+                h.createQuery("SELECT template_body, enabled from email_notifications WHERE account_id = :account_id AND type = :type")
                         .bind("account_id", accountId)
-                        .first()
-        );
-    }
-
-    public Map<String, Object> getRefundEmailNotificationByAccountId(Long accountId) {
-        
-        return jdbi.withHandle(h ->
-                h.createQuery("SELECT template_body, enabled from email_notifications WHERE account_id = :account_id AND type = 'REFUND'")
-                        .bind("account_id", accountId)
+                        .bind("type", type)
                         .first()
         );
     }

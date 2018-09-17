@@ -291,8 +291,8 @@ public class DatabaseFixtures {
         private EmailCollectionMode emailCollectionMode = EmailCollectionMode.OPTIONAL;
         private Map<EmailNotificationType, TestEmailNotification> emailNotifications =
                 ImmutableMap.of(
-                        EmailNotificationType.CONFIRMATION, new TestEmailNotification(),
-                        EmailNotificationType.REFUND, new TestEmailNotification()
+                        EmailNotificationType.PAYMENT_CONFIRMED, new TestEmailNotification(),
+                        EmailNotificationType.REFUND_ISSUED, new TestEmailNotification()
                 );
         private GatewayAccountEntity.Type type = TEST;
         private List<TestCardType> cardTypes = new ArrayList<>();

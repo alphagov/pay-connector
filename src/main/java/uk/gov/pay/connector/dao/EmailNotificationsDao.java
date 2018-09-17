@@ -22,7 +22,7 @@ public class EmailNotificationsDao extends JpaDao<EmailNotificationEntity> {
         return entityManager.get()
                 .createQuery("SELECT e FROM EmailNotificationEntity e WHERE e.accountEntity.id = :accountId AND e.type = :type", EmailNotificationEntity.class)
                 .setParameter("accountId", accountId)
-                .setParameter("type", EmailNotificationType.CONFIRMATION)
+                .setParameter("type", EmailNotificationType.PAYMENT_CONFIRMED)
                 .getResultList()
                 .stream()
                 .findFirst();

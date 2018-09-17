@@ -6,8 +6,6 @@ import org.junit.Before;
 import org.junit.Test;
 import uk.gov.pay.connector.dao.GatewayAccountDao;
 import uk.gov.pay.connector.model.domain.CardTypeEntity;
-import uk.gov.pay.connector.model.domain.EmailNotificationEntity;
-import uk.gov.pay.connector.model.domain.EmailNotificationType;
 import uk.gov.pay.connector.model.domain.GatewayAccountEntity;
 import uk.gov.pay.connector.model.domain.GatewayAccountResourceDTO;
 import uk.gov.pay.connector.model.domain.NotificationCredentials;
@@ -65,13 +63,10 @@ public class GatewayAccountDaoITest extends DaoITestBase {
         gatewayAccountDao.persist(account);
 
         assertThat(account.getId(), is(notNullValue()));
-        assertThat(account.getEmailNotifications().isEmpty(), is(false));
+        assertThat(account.getEmailNotifications().isEmpty(), is(true));
         assertThat(account.getDescription(), is(nullValue()));
         assertThat(account.getAnalyticsId(), is(nullValue()));
         assertThat(account.getNotificationCredentials(), is(nullValue()));
-        EmailNotificationEntity confirmationEmail = account.getEmailNotifications().get(EmailNotificationType.CONFIRMATION);
-        assertThat(confirmationEmail.getAccountEntity().getId(), is(account.getId()));
-        assertThat(confirmationEmail.isEnabled(), is(true));
 
         databaseTestHelper.getAccountCredentials(account.getId());
 
@@ -392,11 +387,11 @@ public class GatewayAccountDaoITest extends DaoITestBase {
         gatewayAccountEntity.setNotifySettings(notifySettings);
         gatewayAccountDao.merge(gatewayAccountEntity);
 
-        notifySettings = databaseTestHelper.getNotifySettings(accountId);
+        Map<String, String> storedNotifySettings = databaseTestHelper.getNotifySettings(accountId);
 
-        assertThat(notifySettings.size(), is(2));
-        assertThat(notifySettings.get("notify_api_token"), is(notifyAPIToken));
-        assertThat(notifySettings.get("notify_template_id"), is(notifyTemplateId));
+        assertThat(storedNotifySettings.size(), is(2));
+        assertThat(storedNotifySettings.get("notify_api_token"), is(notifyAPIToken));
+        assertThat(storedNotifySettings.get("notify_template_id"), is(notifyTemplateId));
     }
 
     private DatabaseFixtures.TestCardType createMastercardCreditCardTypeRecord() {

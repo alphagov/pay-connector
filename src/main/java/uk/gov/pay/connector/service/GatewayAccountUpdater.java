@@ -2,25 +2,30 @@ package uk.gov.pay.connector.service;
 
 import com.google.inject.persist.Transactional;
 import uk.gov.pay.connector.dao.GatewayAccountDao;
-import uk.gov.pay.connector.model.GatewayAccountRequest;
+import uk.gov.pay.connector.model.PatchRequest;
+import uk.gov.pay.connector.model.domain.EmailCollectionMode;
 import uk.gov.pay.connector.model.domain.GatewayAccount;
 import uk.gov.pay.connector.model.domain.GatewayAccountEntity;
 
 import javax.inject.Inject;
 import java.util.HashMap;
-import java.util.Optional;
 import java.util.Map;
+import java.util.Optional;
 import java.util.function.BiConsumer;
 
+import static uk.gov.pay.connector.resources.GatewayAccountRequestValidator.FIELD_EMAIL_COLLECTION_MODE;
 import static uk.gov.pay.connector.resources.GatewayAccountRequestValidator.FIELD_NOTIFY_SETTINGS;
 
 public class GatewayAccountUpdater {
 
     private final GatewayAccountDao gatewayAccountDao;
 
-    private final Map<String, BiConsumer<GatewayAccountRequest, GatewayAccountEntity>> attributeUpdater =
-            new HashMap<String, BiConsumer<GatewayAccountRequest, GatewayAccountEntity>>() {{
-                put(FIELD_NOTIFY_SETTINGS, updateNotifySettings());
+    private final Map<String, BiConsumer<PatchRequest, GatewayAccountEntity>> attributeUpdater =
+            new HashMap<String, BiConsumer<PatchRequest, GatewayAccountEntity>>() {{
+                put(FIELD_NOTIFY_SETTINGS, 
+                        (gatewayAccountRequest, gatewayAccountEntity) -> gatewayAccountEntity.setNotifySettings(gatewayAccountRequest.valueAsObject()));
+                put(FIELD_EMAIL_COLLECTION_MODE,
+                        (gatewayAccountRequest, gatewayAccountEntity) -> gatewayAccountEntity.setEmailCollectionMode(EmailCollectionMode.fromString(gatewayAccountRequest.valueAsString())));
             }};
 
     @Inject
@@ -29,7 +34,7 @@ public class GatewayAccountUpdater {
     }
 
     @Transactional
-    public Optional<GatewayAccount> doPatch(Long gatewayAccountId, GatewayAccountRequest gatewayAccountRequest) {
+    public Optional<GatewayAccount> doPatch(Long gatewayAccountId, PatchRequest gatewayAccountRequest) {
         return gatewayAccountDao.findById(gatewayAccountId)
                 .flatMap(gatewayAccountEntity -> {
                     attributeUpdater.get(gatewayAccountRequest.getPath())
@@ -37,11 +42,5 @@ public class GatewayAccountUpdater {
                     gatewayAccountDao.merge(gatewayAccountEntity);
                     return Optional.of(GatewayAccount.valueOf(gatewayAccountEntity));
                 });
-    }
-
-    private BiConsumer<GatewayAccountRequest,GatewayAccountEntity> updateNotifySettings() {
-        return (gatewayAccountRequest, gatewayAccountEntity) -> {
-            gatewayAccountEntity.setNotifySettings(gatewayAccountRequest.valueAsObject());
-        };
     }
 }
