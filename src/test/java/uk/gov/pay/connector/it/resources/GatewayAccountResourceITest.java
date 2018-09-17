@@ -12,6 +12,7 @@ import static com.jayway.restassured.http.ContentType.JSON;
 import static java.lang.String.format;
 import static javax.ws.rs.core.Response.Status.BAD_REQUEST;
 import static javax.ws.rs.core.Response.Status.CONFLICT;
+import static javax.ws.rs.core.Response.Status.INTERNAL_SERVER_ERROR;
 import static javax.ws.rs.core.Response.Status.NOT_FOUND;
 import static javax.ws.rs.core.Response.Status.OK;
 import static org.hamcrest.Matchers.hasSize;
@@ -25,7 +26,7 @@ public class GatewayAccountResourceITest extends GatewayAccountResourceTestBase 
     private DatabaseFixtures.TestAccount defaultTestAccount;
 
     @Test
-    public void getAccountShouldReturn404IfAccountIdIsUnknown() throws Exception {
+    public void getAccountShouldReturn404IfAccountIdIsUnknown() {
         String unknownAccountId = "92348739";
         givenSetup()
                 .get(ACCOUNTS_API_URL + unknownAccountId)
@@ -34,7 +35,7 @@ public class GatewayAccountResourceITest extends GatewayAccountResourceTestBase 
     }
 
     @Test
-    public void getAccountShouldNotReturnCredentials() throws Exception {
+    public void getAccountShouldNotReturnCredentials() {
         String gatewayAccountId = createAGatewayAccountFor("worldpay");
         givenSetup()
                 .get(ACCOUNTS_API_URL + gatewayAccountId)
@@ -44,7 +45,7 @@ public class GatewayAccountResourceITest extends GatewayAccountResourceTestBase 
     }
 
     @Test
-    public void getAccountShouldNotReturnCardTypes() throws Exception {
+    public void getAccountShouldNotReturnCardTypes() {
         String gatewayAccountId = createAGatewayAccountFor("worldpay");
         givenSetup()
                 .get(ACCOUNTS_API_URL + gatewayAccountId)
@@ -54,7 +55,7 @@ public class GatewayAccountResourceITest extends GatewayAccountResourceTestBase 
     }
 
     @Test
-    public void getAccountShouldReturnDescriptionAndAnalyticsId() throws Exception {
+    public void getAccountShouldReturnDescriptionAndAnalyticsId() {
         String gatewayAccountId = createAGatewayAccountFor("worldpay", "desc", "id");
         givenSetup()
                 .get(ACCOUNTS_API_URL + gatewayAccountId)
@@ -65,7 +66,7 @@ public class GatewayAccountResourceITest extends GatewayAccountResourceTestBase 
     }
 
     @Test
-    public void getAccountShouldReturnAnalyticsId() throws Exception {
+    public void getAccountShouldReturnAnalyticsId() {
         String gatewayAccountId = createAGatewayAccountFor("worldpay", null, "id");
         givenSetup()
                 .get(ACCOUNTS_API_URL + gatewayAccountId)
@@ -76,7 +77,7 @@ public class GatewayAccountResourceITest extends GatewayAccountResourceTestBase 
     }
 
     @Test
-    public void getAccountShouldReturnDescription() throws Exception {
+    public void getAccountShouldReturnDescription() {
         String gatewayAccountId = createAGatewayAccountFor("worldpay", "desc", null);
         givenSetup()
                 .get(ACCOUNTS_API_URL + gatewayAccountId)
@@ -102,6 +103,11 @@ public class GatewayAccountResourceITest extends GatewayAccountResourceTestBase 
                 .body("type", is(TEST.toString()))
                 .body("description", is("a description"))
                 .body("analytics_id", is("an analytics id"))
+                .body("email_collection_mode", is("MANDATORY"))
+                .body("email_notifications.PAYMENT_CONFIRMED.template_body", is("Lorem ipsum dolor sit amet, consectetur adipiscing elit."))
+                .body("email_notifications.PAYMENT_CONFIRMED.enabled", is(true))
+                .body("email_notifications.REFUND_ISSUED.template_body", is("Lorem ipsum dolor sit amet, consectetur adipiscing elit."))
+                .body("email_notifications.REFUND_ISSUED.enabled", is(true))
                 .body("service_name", is("service_name"));
     }
 
@@ -177,7 +183,7 @@ public class GatewayAccountResourceITest extends GatewayAccountResourceTestBase 
     }
 
     @Test
-    public void createGatewayAccountWithoutPaymentProviderDefaultsToSandbox() throws Exception {
+    public void createGatewayAccountWithoutPaymentProviderDefaultsToSandbox() {
         String payload = toJson(ImmutableMap.of("name", "test account"));
         ValidatableResponse response = givenSetup()
                 .body(payload)
@@ -254,7 +260,7 @@ public class GatewayAccountResourceITest extends GatewayAccountResourceTestBase 
     }
 
     @Test
-    public void getAccountShouldReturn404IfAccountIdIsNotNumeric() throws Exception {
+    public void getAccountShouldReturn404IfAccountIdIsNotNumeric() {
         String unknownAccountId = "92348739wsx673hdg";
 
         givenSetup()
@@ -267,22 +273,22 @@ public class GatewayAccountResourceITest extends GatewayAccountResourceTestBase 
     }
 
     @Test
-    public void createAGatewayAccountForSandbox() throws Exception {
+    public void createAGatewayAccountForSandbox() {
         createAGatewayAccountFor("sandbox");
     }
 
     @Test
-    public void createAGatewayAccountForWorldpay() throws Exception {
+    public void createAGatewayAccountForWorldpay() {
         createAGatewayAccountFor("worldpay");
     }
 
     @Test
-    public void createAGatewayAccountForSmartpay() throws Exception {
+    public void createAGatewayAccountForSmartpay() {
         createAGatewayAccountFor("smartpay");
     }
 
     @Test
-    public void createAGatewayAccountForEpdq() throws Exception {
+    public void createAGatewayAccountForEpdq() {
         createAGatewayAccountFor("epdq");
     }
 
@@ -463,7 +469,34 @@ public class GatewayAccountResourceITest extends GatewayAccountResourceTestBase 
                 .body(payload)
                 .patch("/v1/api/accounts/" + gatewayAccountId)
                 .then()
-                .statusCode(BAD_REQUEST.getStatusCode());
+                .statusCode(BAD_REQUEST.getStatusCode())
+                .body("errors", is("[Operation [insert] is not valid for path [op]"));
+    }
+
+    @Test
+    public void shouldReturn200_whenEmailCollectionModeIsUpdated() throws Exception{
+        String gatewayAccountId = createAGatewayAccountFor("worldpay");
+        String payload = new ObjectMapper().writeValueAsString(ImmutableMap.of("op", "replace",
+                "path", "email_collection_mode",
+                "value", "OFF"));
+        givenSetup()
+                .body(payload)
+                .patch("/v1/api/accounts/" + gatewayAccountId)
+                .then()
+                .statusCode(OK.getStatusCode());
+    }
+
+    @Test
+    public void shouldReturn500_whenEmailCollectionModeIsUpdated_withWrongValue() throws Exception{
+        String gatewayAccountId = createAGatewayAccountFor("worldpay");
+        String payload = new ObjectMapper().writeValueAsString(ImmutableMap.of("op", "replace",
+                "path", "email_collection_mode",
+                "value", "nope"));
+        givenSetup()
+                .body(payload)
+                .patch("/v1/api/accounts/" + gatewayAccountId)
+                .then()
+                .statusCode(INTERNAL_SERVER_ERROR.getStatusCode());
     }
 
     @Test

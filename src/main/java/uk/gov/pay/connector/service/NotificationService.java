@@ -36,14 +36,16 @@ public class NotificationService {
     private final RefundDao refundDao;
     private final PaymentProviders paymentProviders;
     private final DnsUtils dnsUtils;
+    private UserNotificationService userNotificationService;
 
     @Inject
-    public NotificationService(ChargeDao chargeDao, ChargeEventDao chargeEventDao, RefundDao refundDao, PaymentProviders paymentProviders, DnsUtils dnsUtils) {
+    public NotificationService(ChargeDao chargeDao, ChargeEventDao chargeEventDao, RefundDao refundDao, PaymentProviders paymentProviders, DnsUtils dnsUtils, UserNotificationService userNotificationService) {
         this.chargeDao = chargeDao;
         this.chargeEventDao = chargeEventDao;
         this.refundDao = refundDao;
         this.paymentProviders = paymentProviders;
         this.dnsUtils = dnsUtils;
+        this.userNotificationService = userNotificationService;
     }
 
     @Transactional
@@ -236,6 +238,9 @@ public class NotificationService {
 
             refundEntity.setStatus(newStatus);
             
+            if (newStatus.equals(RefundStatus.REFUNDED)) {
+                userNotificationService.sendRefundIssuedEmail(refundEntity);
+            }
             GatewayAccountEntity gatewayAccount = refundEntity.getChargeEntity().getGatewayAccount();
             logger.info("Notification received for refund. Updating refund - charge_external_id={}, refund_reference={}, transaction_id={}, status={}, "
                             + "status_to={}, account_id={}, provider={}, provider_type={}",

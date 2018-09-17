@@ -146,7 +146,7 @@ public class CardCaptureServiceTest extends CardServiceTest {
         assertThat(request.getValue().getTransactionId(), is(gatewayTxId));
 
         // verify an email notification is sent for a successful capture
-        verify(mockUserNotificationService).notifyPaymentSuccessEmail(chargeSpy);
+        verify(mockUserNotificationService).sendPaymentConfirmedEmail(chargeSpy);
     }
 
     @Test
@@ -183,7 +183,7 @@ public class CardCaptureServiceTest extends CardServiceTest {
         assertThat(request.getValue().getTransactionId(), is(gatewayTxId));
 
         // verify an email notification is sent for a successful capture
-        verify(mockUserNotificationService).notifyPaymentSuccessEmail(chargeSpy);
+        verify(mockUserNotificationService).sendPaymentConfirmedEmail(chargeSpy);
     }
 
     private void mockChargeDaoOperations(ChargeEntity charge) {

@@ -1,9 +1,9 @@
 package uk.gov.pay.connector.resources;
 
-import com.google.common.base.Splitter;
 import com.fasterxml.jackson.annotation.JsonView;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import com.google.common.base.Splitter;
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableMap;
 import com.google.inject.persist.Transactional;
@@ -14,8 +14,10 @@ import uk.gov.pay.connector.app.ConnectorConfiguration;
 import uk.gov.pay.connector.dao.CardTypeDao;
 import uk.gov.pay.connector.dao.GatewayAccountDao;
 import uk.gov.pay.connector.exception.CredentialsException;
-import uk.gov.pay.connector.model.GatewayAccountRequest;
+import uk.gov.pay.connector.model.PatchRequest;
 import uk.gov.pay.connector.model.domain.CardTypeEntity;
+import uk.gov.pay.connector.model.domain.EmailNotificationEntity;
+import uk.gov.pay.connector.model.domain.EmailNotificationType;
 import uk.gov.pay.connector.model.domain.GatewayAccountEntity;
 import uk.gov.pay.connector.model.domain.GatewayAccountResourceDTO;
 import uk.gov.pay.connector.model.domain.UuidAbstractEntity;
@@ -30,8 +32,8 @@ import javax.ws.rs.GET;
 import javax.ws.rs.POST;
 import javax.ws.rs.Path;
 import javax.ws.rs.PathParam;
-import javax.ws.rs.QueryParam;
 import javax.ws.rs.Produces;
+import javax.ws.rs.QueryParam;
 import javax.ws.rs.core.Context;
 import javax.ws.rs.core.Response;
 import javax.ws.rs.core.Response.Status;
@@ -41,7 +43,6 @@ import java.net.URI;
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
-import java.util.ArrayList;
 import java.util.Map;
 import java.util.Optional;
 import java.util.UUID;
@@ -50,7 +51,6 @@ import java.util.stream.Collectors;
 import static com.google.common.collect.Maps.newHashMap;
 import static java.lang.String.format;
 import static javax.ws.rs.core.MediaType.APPLICATION_JSON;
-import static javax.ws.rs.core.Response.Status.BAD_REQUEST;
 import static javax.ws.rs.core.Response.Status.NOT_FOUND;
 import static uk.gov.pay.connector.model.domain.GatewayAccountEntity.Type;
 import static uk.gov.pay.connector.model.domain.GatewayAccountEntity.Type.TEST;
@@ -129,7 +129,7 @@ public class GatewayAccountResource {
       try{
         accountIds = COMMA_SEPARATOR.splitToList(accountIdsArg)
           .stream()
-          .map(accountIdStr -> Long.parseLong(accountIdStr))
+          .map(Long::parseLong)
           .collect(Collectors.toList());
       } catch (NumberFormatException e) {
         return badRequestResponse(format("Could not parse accountIds %s as Longs.", accountIdsArg));
@@ -230,6 +230,7 @@ public class GatewayAccountResource {
 
         logger.info("Creating new gateway account using the {} provider pointing to {}", provider, accountType);
         GatewayAccountEntity entity = new GatewayAccountEntity(provider, newHashMap(), type);
+
         logger.info("Setting the new account to accept all card types by default", provider, accountType);
         entity.setCardTypes(cardTypeDao.findAllNon3ds());
         if (node.has(SERVICE_NAME_FIELD_NAME)) {
@@ -241,6 +242,9 @@ public class GatewayAccountResource {
         if (node.has(ANALYTICS_ID_FIELD_NAME)) {
             entity.setAnalyticsId(node.get(ANALYTICS_ID_FIELD_NAME).textValue());
         }
+        
+        entity.addNotification(EmailNotificationType.PAYMENT_CONFIRMED, new EmailNotificationEntity(entity));
+        entity.addNotification(EmailNotificationType.REFUND_ISSUED, new EmailNotificationEntity(entity));
         gatewayDao.persist(entity);
         URI newLocation = uriInfo.
                 getBaseUriBuilder().
@@ -263,13 +267,13 @@ public class GatewayAccountResource {
     @Consumes(APPLICATION_JSON)
     @Produces(APPLICATION_JSON)
     @Transactional
-    public Response patchGatewayAccount(@PathParam("accountId") Long gatewayAccountId, JsonNode payload) {
-        return validator.validatePatchRequest(payload)
-                .map(errors -> Response.status(BAD_REQUEST).entity(errors).build())
-                .orElseGet(() -> gatewayAccountServicesFactory.getUpdateService()
-                        .doPatch(gatewayAccountId, GatewayAccountRequest.from(payload))
+    public Response patchGatewayAccount(@PathParam("accountId") Long gatewayAccountId, JsonNode payload) { 
+        validator.validatePatchRequest(payload);
+        
+        return gatewayAccountServicesFactory.getUpdateService()
+                        .doPatch(gatewayAccountId, PatchRequest.from(payload))
                         .map(gatewayAccount -> Response.ok().build())
-                        .orElseGet(() -> Response.status(NOT_FOUND).build()));
+                        .orElseGet(() -> Response.status(NOT_FOUND).build());
     }
 
     @PATCH

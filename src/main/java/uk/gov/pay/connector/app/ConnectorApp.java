@@ -23,6 +23,7 @@ import uk.gov.pay.commons.utils.xray.Xray;
 import uk.gov.pay.connector.auth.BasicAuthUser;
 import uk.gov.pay.connector.auth.SmartpayAccountSpecificAuthenticator;
 import uk.gov.pay.connector.command.RenderStateTransitionGraphCommand;
+import uk.gov.pay.connector.exception.ValidationExceptionMapper;
 import uk.gov.pay.connector.filters.LoggingFilter;
 import uk.gov.pay.connector.filters.SchemeRewriteFilter;
 import uk.gov.pay.connector.healthcheck.CardExecutorServiceHealthCheck;
@@ -82,13 +83,13 @@ public class ConnectorApp extends Application<ConnectorConfiguration> {
     }
 
     @Override
-    public void run(ConnectorConfiguration configuration, Environment environment) throws Exception {
+    public void run(ConnectorConfiguration configuration, Environment environment) {
         final Injector injector = createInjector(environment, new ConnectorModule(configuration, environment));
 
         injector.getInstance(PersistenceServiceInitialiser.class);
 
         initialiseMetrics(configuration, environment);
-
+        environment.jersey().register(new ValidationExceptionMapper());
         environment.jersey().register(injector.getInstance(GatewayAccountResource.class));
         environment.jersey().register(injector.getInstance(ChargeEventsResource.class));
         environment.jersey().register(injector.getInstance(SecurityTokensResource.class));

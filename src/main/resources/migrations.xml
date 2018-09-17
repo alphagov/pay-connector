@@ -1442,4 +1442,36 @@
         </update>
     </changeSet>
 
+    <changeSet id="add type column to email notifications table" author="">
+        <addColumn tableName="email_notifications">
+            <column name="type" type="VARCHAR(36)" >
+                <constraints nullable="true" unique="false"/>
+            </column>
+        </addColumn>
+    </changeSet>
+
+    <changeSet id="backfill existing notifications with CONFIRMATION value" author="">
+        <sql>
+            UPDATE email_notifications SET type = 'CONFIRMATION';
+        </sql>
+    </changeSet>
+
+    <changeSet id="add email_collection_mode column to gateway accounts table" author="">
+        <addColumn tableName="gateway_accounts">
+            <column name="email_collection_mode" type="VARCHAR(36)">
+                <constraints nullable="true" unique="false"/>
+            </column>
+        </addColumn>
+    </changeSet>
+
+    <changeSet id="add default value to email_collection_mode in gateway accounts table" author="">
+        <addDefaultValue tableName="gateway_accounts" columnName="email_collection_mode" defaultValue="MANDATORY"/>
+    </changeSet>
+
+    <changeSet id="backfill existing gateway accounts with MANDATORY default value" author="">
+        <sql>
+            UPDATE gateway_accounts SET email_collection_mode = 'MANDATORY';
+        </sql>
+    </changeSet>
+    
 </databaseChangeLog>
