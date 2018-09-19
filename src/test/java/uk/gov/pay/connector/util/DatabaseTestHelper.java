@@ -267,14 +267,15 @@ public class DatabaseTestHelper {
         );
     }
 
-    public void updateChargeCardDetails(Long chargeId, String cardBrand, String lastDigitsCardNumber, String cardHolderName, String expiryDate,
+    public void updateChargeCardDetails(Long chargeId, String cardBrand, String lastDigitsCardNumber, String firstDigitsCardNumber, String cardHolderName, String expiryDate,
                                         String line1, String line2, String postcode, String city, String county, String country) {
         jdbi.withHandle(handle ->
                 handle
-                        .createStatement("UPDATE charges SET card_brand=:card_brand, last_digits_card_number=:last_digits_card_number, cardholder_name=:cardholder_name, expiry_date=:expiry_date, address_line1=:address_line1, address_line2=:address_line2, address_postcode=:address_postcode, address_city=:address_city, address_county=:address_county, address_country=:address_country WHERE id=:id")
+                        .createStatement("UPDATE charges SET card_brand=:card_brand, last_digits_card_number=:last_digits_card_number, first_digits_card_number=:first_digits_card_number, cardholder_name=:cardholder_name, expiry_date=:expiry_date, address_line1=:address_line1, address_line2=:address_line2, address_postcode=:address_postcode, address_city=:address_city, address_county=:address_county, address_country=:address_country WHERE id=:id")
                         .bind("id", chargeId)
                         .bind("card_brand", cardBrand)
                         .bind("last_digits_card_number", lastDigitsCardNumber)
+                        .bind("first_digits_card_number", firstDigitsCardNumber)
                         .bind("cardholder_name", cardHolderName)
                         .bind("expiry_date", expiryDate)
                         .bind("address_line1", line1)
@@ -340,14 +341,14 @@ public class DatabaseTestHelper {
     }
 
     public void updateChargeCardDetails(Long chargeId, AuthCardDetails authCardDetails) {
-        updateChargeCardDetails(chargeId, authCardDetails.getCardBrand(), authCardDetails.getCardNo(), authCardDetails.getCardHolder(), authCardDetails.getEndDate(),
+        updateChargeCardDetails(chargeId, authCardDetails.getCardBrand(), authCardDetails.getCardNo(), authCardDetails.getCardNo(), authCardDetails.getCardHolder(), authCardDetails.getEndDate(),
                 authCardDetails.getAddress().getLine1(), authCardDetails.getAddress().getLine2(), authCardDetails.getAddress().getPostcode(),
                 authCardDetails.getAddress().getCity(), authCardDetails.getAddress().getCounty(), authCardDetails.getAddress().getCountry());
     }
 
     public Map<String, Object> getChargeCardDetails(long chargeId) {
         Map<String, Object> ret = jdbi.withHandle(h ->
-                h.createQuery("SELECT id, last_digits_card_number, cardholder_name, expiry_date, address_line1, address_line2, address_postcode, address_city, address_county, address_country " +
+                h.createQuery("SELECT id, last_digits_card_number, first_digits_card_number, cardholder_name, expiry_date, address_line1, address_line2, address_postcode, address_city, address_county, address_country " +
                         "FROM charges " +
                         "WHERE id = :charge_id")
                         .bind("charge_id", chargeId)

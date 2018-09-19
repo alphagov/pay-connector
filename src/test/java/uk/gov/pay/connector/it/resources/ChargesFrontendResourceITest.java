@@ -104,7 +104,7 @@ public class ChargesFrontendResourceITest {
 
         app.getDatabaseTestHelper().addCharge(chargeId, externalChargeId, accountId, expectedAmount, AUTHORISATION_SUCCESS, returnUrl, null,
                 ServicePaymentReference.of("ref"), null, email);
-        app.getDatabaseTestHelper().updateChargeCardDetails(chargeId, testCardType.getBrand(), "1234", "Mr. McPayment",
+        app.getDatabaseTestHelper().updateChargeCardDetails(chargeId, testCardType.getBrand(), "1234", "123456", "Mr. McPayment",
                 "03/18", "line1", null, "postcode", "city", null, "country");
         validateGetCharge(expectedAmount, externalChargeId, AUTHORISATION_SUCCESS, false);
     }
@@ -116,7 +116,7 @@ public class ChargesFrontendResourceITest {
 
         app.getDatabaseTestHelper().addCharge(chargeId, externalChargeId, accountId, expectedAmount, AUTHORISATION_SUCCESS, returnUrl, null,
                 ServicePaymentReference.of("ref"), null, email);
-        app.getDatabaseTestHelper().updateChargeCardDetails(chargeId, "unknown", "1234", "Mr. McPayment",
+        app.getDatabaseTestHelper().updateChargeCardDetails(chargeId, "unknown", "1234", "123456", "Mr. McPayment",
                 "03/18", "line1", null, "postcode", "city", null, "country");
         validateGetCharge(expectedAmount, externalChargeId, AUTHORISATION_SUCCESS, false);
     }
@@ -130,7 +130,7 @@ public class ChargesFrontendResourceITest {
 
         app.getDatabaseTestHelper().addCharge(chargeId, externalChargeId, accountId, expectedAmount, AUTHORISATION_3DS_REQUIRED, returnUrl, null,
                 ServicePaymentReference.of("ref"), null, email);
-        app.getDatabaseTestHelper().updateChargeCardDetails(chargeId, "unknown", "1234", "Mr. McPayment",
+        app.getDatabaseTestHelper().updateChargeCardDetails(chargeId, "unknown", "1234", "123456", "Mr. McPayment",
                 "03/18", "line1", null, "postcode", "city", null, "country");
         app.getDatabaseTestHelper().updateCharge3dsDetails(chargeId, issuerUrl, paRequest, null);
 
@@ -472,6 +472,7 @@ public class ChargesFrontendResourceITest {
                     .body("card_details", is(notNullValue()))
                     .body("card_details.charge_id", is(nullValue()))
                     .body("card_details.last_digits_card_number", is("1234"))
+                    .body("card_details.first_digits_card_number", is("123456"))
                     .body("card_details.cardholder_name", is("Mr. McPayment"))
                     .body("card_details.expiry_date", is("03/18"))
                     .body("card_details.billing_address", is(notNullValue()))

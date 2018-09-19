@@ -11,6 +11,9 @@ public class PersistedCard {
     @JsonProperty("last_digits_card_number")
     private String lastDigitsCardNumber;
 
+    @JsonProperty("first_digits_card_number")
+    private String firstDigitsCardNumber;
+
     @JsonProperty("cardholder_name")
     private String cardHolderName;
 
@@ -27,8 +30,16 @@ public class PersistedCard {
         return lastDigitsCardNumber;
     }
 
+    public String getFirstDigitsCardNumber() {
+        return firstDigitsCardNumber;
+    }
+
     public void setLastDigitsCardNumber(String lastDigitsCardNumber) {
         this.lastDigitsCardNumber = lastDigitsCardNumber;
+    }
+
+    public void setFirstDigitsCardNumber(String firstDigitsCardNumber) {
+        this.firstDigitsCardNumber = firstDigitsCardNumber;
     }
 
     public String getCardHolderName() {

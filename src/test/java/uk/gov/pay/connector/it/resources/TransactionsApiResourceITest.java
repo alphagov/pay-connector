@@ -34,6 +34,7 @@ public class TransactionsApiResourceITest extends ChargingITestBase {
 
     private RestAssuredClient getChargeApi = new RestAssuredClient(app, accountId);
     private String lastDigitsCardNumber;
+    private String firstDigitsCardNumber;
     private String cardHolderName;
     private String expiryDate;
 
@@ -232,9 +233,10 @@ public class TransactionsApiResourceITest extends ChargingITestBase {
         app.getDatabaseTestHelper().addToken(chargeId, "tokenId");
         app.getDatabaseTestHelper().addEvent(chargeId, chargeStatus.getValue());
         lastDigitsCardNumber = "1234";
+        firstDigitsCardNumber = "123456";
         cardHolderName = "Mr. McPayment";
         expiryDate = "03/18";
-        app.getDatabaseTestHelper().updateChargeCardDetails(chargeId, cardBrand, lastDigitsCardNumber, cardHolderName, expiryDate, "line1", null,
+        app.getDatabaseTestHelper().updateChargeCardDetails(chargeId, cardBrand, lastDigitsCardNumber, firstDigitsCardNumber, cardHolderName, expiryDate, "line1", null,
                 "postcode", "city", null, "country");
         return externalChargeId;
     }

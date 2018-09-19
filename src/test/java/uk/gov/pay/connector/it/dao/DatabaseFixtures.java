@@ -216,6 +216,7 @@ public class DatabaseFixtures {
 
     public class TestCardDetails {
         private String lastDigitsCardNumber = "1234";
+        private String firstDigitsCardNumber = "123456";
         private String cardHolderName = "Mr. Pay McPayment";
         private String expiryDate = "02/17";
         private TestAddress billingAddress = new TestAddress();
@@ -224,6 +225,11 @@ public class DatabaseFixtures {
 
         public TestCardDetails withLastDigitsOfCardNumber(String lastDigitsCardNumber) {
             this.lastDigitsCardNumber = lastDigitsCardNumber;
+            return this;
+        }
+
+        public TestCardDetails withFirstLastDigitsOfCardNumber(String firstDigitsCardNumber) {
+            this.firstDigitsCardNumber = firstDigitsCardNumber;
             return this;
         }
 
@@ -256,6 +262,10 @@ public class DatabaseFixtures {
             return lastDigitsCardNumber;
         }
 
+        public String getFirstLastDigitsCardNumber() {
+            return firstDigitsCardNumber;
+        }
+
         public String getCardHolderName() {
             return cardHolderName;
         }
@@ -269,7 +279,7 @@ public class DatabaseFixtures {
         }
 
         public TestCardDetails update() {
-            databaseTestHelper.updateChargeCardDetails(chargeId, cardBrand, lastDigitsCardNumber, cardHolderName, expiryDate, billingAddress.getLine1(), billingAddress.getLine2(), billingAddress.getPostcode(), billingAddress.getCity(), billingAddress.getCounty(), billingAddress.getCountry());
+            databaseTestHelper.updateChargeCardDetails(chargeId, cardBrand, lastDigitsCardNumber, firstDigitsCardNumber,cardHolderName, expiryDate, billingAddress.getLine1(), billingAddress.getLine2(), billingAddress.getPostcode(), billingAddress.getCity(), billingAddress.getCounty(), billingAddress.getCountry());
             return this;
         }
 

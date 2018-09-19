@@ -5,6 +5,8 @@ import org.junit.Test;
 import uk.gov.pay.commons.model.SupportedLanguage;
 import uk.gov.pay.connector.dao.ChargeDao;
 import uk.gov.pay.connector.dao.GatewayAccountDao;
+import uk.gov.pay.connector.model.FirstDigitsCardNumber;
+import uk.gov.pay.connector.model.LastDigitsCardNumber;
 import uk.gov.pay.connector.model.ServicePaymentReference;
 import uk.gov.pay.connector.model.domain.Address;
 import uk.gov.pay.connector.model.domain.AddressEntity;
@@ -19,6 +21,7 @@ import java.util.Optional;
 
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.hasEntry;
+import static org.hamcrest.Matchers.nullValue;
 import static org.hamcrest.core.Is.is;
 import static org.junit.Assert.assertNotNull;
 import static uk.gov.pay.connector.model.domain.AddressFixture.aValidAddress;
@@ -30,23 +33,17 @@ public class ChargeDaoCardDetailsITest extends DaoITestBase {
     private GatewayAccountDao gatewayAccountDao;
 
     @Before
-    public void setUp() throws Exception {
+    public void setUp()  {
         chargeDao = env.getInstance(ChargeDao.class);
         gatewayAccountDao = env.getInstance(GatewayAccountDao.class);
 
     }
 
-    private DatabaseFixtures.TestCardDetails createCardDetailsForChargeWithId(long chargeId) {
+    private void createChargeWithIdAndDetails(long chargeId, DatabaseFixtures.TestCardDetails testCardDetails) {
         DatabaseFixtures.TestAccount testAccountFixture = DatabaseFixtures
                 .withDatabaseTestHelper(databaseTestHelper)
                 .aTestAccount();
         testAccountFixture.insert();
-
-        DatabaseFixtures.TestCardDetails testCardDetails = DatabaseFixtures
-                .withDatabaseTestHelper(databaseTestHelper)
-                .aTestCardDetails()
-                .withChargeId(chargeId);
-
         DatabaseFixtures.TestCharge testCharge = DatabaseFixtures
                 .withDatabaseTestHelper(databaseTestHelper)
                 .aTestCharge()
@@ -54,8 +51,15 @@ public class ChargeDaoCardDetailsITest extends DaoITestBase {
                 .withCardDetails(testCardDetails)
                 .withTestAccount(testAccountFixture)
                 .withChargeStatus(ChargeStatus.CAPTURE_SUBMITTED);
-
         testCharge.insert();
+    }
+    
+    private DatabaseFixtures.TestCardDetails createCardDetailsForChargeWithId(long chargeId) {
+        DatabaseFixtures.TestCardDetails testCardDetails = DatabaseFixtures
+                .withDatabaseTestHelper(databaseTestHelper)
+                .aTestCardDetails()
+                .withChargeId(chargeId);
+        createChargeWithIdAndDetails(chargeId, testCardDetails);
         return testCardDetails;
     }
 
@@ -72,6 +76,35 @@ public class ChargeDaoCardDetailsITest extends DaoITestBase {
 
         assertThat(cardDetailsEntity.getCardHolderName(), is(testCardDetails.getCardHolderName()));
         assertThat(cardDetailsEntity.getLastDigitsCardNumber(), is(testCardDetails.getLastDigitsCardNumber()));
+        assertThat(cardDetailsEntity.getFirstDigitsCardNumber(), is(testCardDetails.getFirstLastDigitsCardNumber()));
+        assertThat(cardDetailsEntity.getExpiryDate(), is(testCardDetails.getExpiryDate()));
+        assertNotNull(cardDetailsEntity.getBillingAddress());
+        assertThat(cardDetailsEntity.getBillingAddress().getLine1(), is(testCardDetails.getBillingAddress().getLine1()));
+        assertThat(cardDetailsEntity.getBillingAddress().getLine2(), is(testCardDetails.getBillingAddress().getLine2()));
+        assertThat(cardDetailsEntity.getBillingAddress().getPostcode(), is(testCardDetails.getBillingAddress().getPostcode()));
+        assertThat(cardDetailsEntity.getBillingAddress().getCity(), is(testCardDetails.getBillingAddress().getCity()));
+        assertThat(cardDetailsEntity.getBillingAddress().getCounty(), is(testCardDetails.getBillingAddress().getCounty()));
+        assertThat(cardDetailsEntity.getBillingAddress().getCountry(), is(testCardDetails.getBillingAddress().getCountry()));
+    }
+
+    @Test
+    public void findById_shouldFindCardDetailsIfCardDigitsAreNotPresent() {
+        long chargeId = 123L;
+        DatabaseFixtures.TestCardDetails testCardDetails = DatabaseFixtures
+                .withDatabaseTestHelper(databaseTestHelper)
+                .aTestCardDetails()
+                .withFirstLastDigitsOfCardNumber(null)
+                .withLastDigitsOfCardNumber(null)
+                .withChargeId(chargeId);
+        createChargeWithIdAndDetails(chargeId, testCardDetails);
+        Optional<ChargeEntity> chargeDaoOptional = chargeDao.findById(chargeId);
+        assertThat(chargeDaoOptional.isPresent(), is(true));
+
+        CardDetailsEntity cardDetailsEntity = chargeDaoOptional.get().getCardDetails();
+
+        assertThat(cardDetailsEntity.getCardHolderName(), is(testCardDetails.getCardHolderName()));
+        assertThat(cardDetailsEntity.getLastDigitsCardNumber(), is(nullValue()));
+        assertThat(cardDetailsEntity.getFirstDigitsCardNumber(), is(nullValue()));
         assertThat(cardDetailsEntity.getExpiryDate(), is(testCardDetails.getExpiryDate()));
         assertNotNull(cardDetailsEntity.getBillingAddress());
         assertThat(cardDetailsEntity.getBillingAddress().getLine1(), is(testCardDetails.getBillingAddress().getLine1()));
@@ -91,17 +124,13 @@ public class ChargeDaoCardDetailsITest extends DaoITestBase {
         ChargeEntity chargeEntity = new ChargeEntity(2323L, "returnUrl", "description",
                 ServicePaymentReference.of("ref"), testAccount, "email@email.test", SupportedLanguage.ENGLISH,
                 false);
-        CardDetailsEntity cardDetailsEntity = new CardDetailsEntity();
-        cardDetailsEntity.setCardBrand("VISA");
-        cardDetailsEntity.setBillingAddress(new AddressEntity(billingAddress));
-        cardDetailsEntity.setCardHolderName("Mr. Pay Mc Payment");
-        cardDetailsEntity.setExpiryDate("03/09");
-        cardDetailsEntity.setLastDigitsCardNumber("1258");
+        CardDetailsEntity cardDetailsEntity = new CardDetailsEntity(FirstDigitsCardNumber.of("123456"),LastDigitsCardNumber.of("1258"), "Mr. Pay Mc Payment", "03/09", "VISA", new AddressEntity(billingAddress));
         chargeEntity.setCardDetails(cardDetailsEntity);
         chargeDao.persist(chargeEntity);
 
         Map<String, Object> cardDetailsSaved = databaseTestHelper.getChargeCardDetails(chargeEntity.getId());
-        assertThat(cardDetailsSaved, hasEntry("last_digits_card_number", cardDetailsEntity.getLastDigitsCardNumber()));
+        assertThat(cardDetailsSaved, hasEntry("last_digits_card_number", "1258"));
+        assertThat(cardDetailsSaved, hasEntry("first_digits_card_number", "123456"));
         assertThat(cardDetailsSaved, hasEntry("cardholder_name", cardDetailsEntity.getCardHolderName()));
         assertThat(cardDetailsSaved, hasEntry("expiry_date", cardDetailsEntity.getExpiryDate()));
         assertThat(cardDetailsSaved, hasEntry("address_line1", cardDetailsEntity.getBillingAddress().getLine1()));

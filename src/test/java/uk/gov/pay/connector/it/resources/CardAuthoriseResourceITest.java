@@ -22,7 +22,13 @@ import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.hasEntry;
 import static org.hamcrest.Matchers.is;
 import static org.junit.Assert.fail;
-import static uk.gov.pay.connector.model.domain.ChargeStatus.*;
+import static uk.gov.pay.connector.model.domain.ChargeStatus.AUTHORISATION_ERROR;
+import static uk.gov.pay.connector.model.domain.ChargeStatus.AUTHORISATION_READY;
+import static uk.gov.pay.connector.model.domain.ChargeStatus.AUTHORISATION_REJECTED;
+import static uk.gov.pay.connector.model.domain.ChargeStatus.AUTHORISATION_SUCCESS;
+import static uk.gov.pay.connector.model.domain.ChargeStatus.CREATED;
+import static uk.gov.pay.connector.model.domain.ChargeStatus.ENTERING_CARD_DETAILS;
+import static uk.gov.pay.connector.model.domain.ChargeStatus.EXPIRED;
 
 public class CardAuthoriseResourceITest extends ChargingITestBase {
 
@@ -45,19 +51,19 @@ public class CardAuthoriseResourceITest extends ChargingITestBase {
     private String validCardDetails = buildJsonAuthorisationDetailsFor(VALID_SANDBOX_CARD_LIST[0], "visa");
 
     @Test
-    public void shouldAuthoriseCharge_ForValidCards() throws Exception {
+    public void shouldAuthoriseCharge_ForValidCards() {
         for (String cardNo : VALID_SANDBOX_CARD_LIST) {
             shouldAuthoriseChargeFor(buildJsonAuthorisationDetailsFor(cardNo, "visa"));
         }
     }
 
     @Test
-    public void shouldAuthoriseCharge_ForAValidAmericanExpress() throws Exception {
+    public void shouldAuthoriseCharge_ForAValidAmericanExpress() {
         shouldAuthoriseChargeFor(buildJsonAuthorisationDetailsFor("371449635398431", "1234", "11/99", "american-express"));
     }
 
     @Test
-    public void shouldStoreCardDetailsForAuthorisedCharge() throws Exception {
+    public void shouldStoreCardDetailsForAuthorisedCharge() {
         String cardBrand = "visa";
         String externalChargeId = shouldAuthoriseChargeFor(buildJsonAuthorisationDetailsFor("4444333322221111", cardBrand));
         Long chargeId = Long.valueOf(StringUtils.removeStart(externalChargeId, "charge-"));
@@ -67,8 +73,7 @@ public class CardAuthoriseResourceITest extends ChargingITestBase {
     }
 
     @Test
-    public void sanitizeCardDetails_shouldStoreSanitizedCardDetailsForAuthorisedCharge_forFieldsWithValuesContainingMoreThan10Numbers() throws Exception {
-
+    public void sanitizeCardDetails_shouldStoreSanitizedCardDetailsForAuthorisedCharge_forFieldsWithValuesContainingMoreThan10Numbers() { 
         String sanitizedValue = "r-**-**-*  Ju&^****-**";
         String valueWithMoreThan10CharactersAsNumbers = "r-12-34-5  Ju&^6501-76";
         String cardHolderName = valueWithMoreThan10CharactersAsNumbers;
@@ -208,7 +213,7 @@ public class CardAuthoriseResourceITest extends ChargingITestBase {
         assertFrontendChargeStatusIs(chargeId, CREATED.getValue());
     }
 
-    private String shouldAuthoriseChargeFor(String cardDetails) throws Exception {
+    private String shouldAuthoriseChargeFor(String cardDetails) {
         String chargeId = createNewChargeWithNoTransactionId(ENTERING_CARD_DETAILS);
 
         givenSetup()
@@ -222,14 +227,14 @@ public class CardAuthoriseResourceITest extends ChargingITestBase {
     }
 
     @Test
-    public void shouldReturnAuthError_IfChargeExpired() throws Exception {
+    public void shouldReturnAuthError_IfChargeExpired() {
         String chargeId = createNewChargeWithNoTransactionId(EXPIRED);
         authoriseAndVerifyFor(chargeId, validCardDetails, format("Authorisation for charge failed as already expired, %s", chargeId), 400);
         assertFrontendChargeStatusIs(chargeId, EXPIRED.getValue());
     }
 
     @Test
-    public void shouldReturn404IfChargeDoesNotExist_ForAuthorise() throws Exception {
+    public void shouldReturn404IfChargeDoesNotExist_ForAuthorise() {
         String unknownId = "61234569847520367";
         givenSetup()
                 .body(validCardDetails)
@@ -241,7 +246,7 @@ public class CardAuthoriseResourceITest extends ChargingITestBase {
     }
 
     @Test
-    public void shouldReturnErrorWithoutChangingChargeState_IfOriginalStateIsNotEnteringCardDetails() throws Exception {
+    public void shouldReturnErrorWithoutChangingChargeState_IfOriginalStateIsNotEnteringCardDetails() {
         String chargeId = createNewChargeWithNoTransactionId(AUTHORISATION_SUCCESS);
 
         assertFrontendChargeStatusIs(chargeId, AUTHORISATION_SUCCESS.getValue());
@@ -265,7 +270,7 @@ public class CardAuthoriseResourceITest extends ChargingITestBase {
     }
 
     @Test
-    public void shouldReturnErrorAndDoNotUpdateChargeStatus_IfAuthorisationAlreadyInProgress() throws Exception {
+    public void shouldReturnErrorAndDoNotUpdateChargeStatus_IfAuthorisationAlreadyInProgress() {
         String chargeId = createNewChargeWithNoTransactionId(AUTHORISATION_READY);
         String message = format("Authorisation for charge already in progress, %s", chargeId);
         authoriseAndVerifyFor(chargeId, validCardDetails, message, 202);
@@ -273,7 +278,7 @@ public class CardAuthoriseResourceITest extends ChargingITestBase {
     }
 
     @Test
-    public void shouldSaveExpectedCardDetailsFromMultipleRequests() throws Exception {
+    public void shouldSaveExpectedCardDetailsFromMultipleRequests() throws InterruptedException {
 
         String charge1 = createNewChargeWithNoTransactionId(ENTERING_CARD_DETAILS);
         String charge2 = createNewChargeWithNoTransactionId(ENTERING_CARD_DETAILS);

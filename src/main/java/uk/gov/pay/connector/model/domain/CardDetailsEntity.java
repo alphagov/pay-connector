@@ -1,6 +1,8 @@
 package uk.gov.pay.connector.model.domain;
 
 import com.fasterxml.jackson.annotation.JsonProperty;
+import uk.gov.pay.connector.model.FirstDigitsCardNumber;
+import uk.gov.pay.connector.model.LastDigitsCardNumber;
 
 import javax.persistence.Column;
 import javax.persistence.Embeddable;
@@ -9,6 +11,10 @@ import javax.persistence.Embedded;
 @Embeddable
 public class CardDetailsEntity {
 
+    @Column(name = "first_digits_card_number")
+    @JsonProperty("first_digits_card_number")
+    private String firstDigitsCardNumber;
+    
     @Column(name = "last_digits_card_number")
     @JsonProperty("last_digits_card_number")
     private String lastDigitsCardNumber;
@@ -31,9 +37,19 @@ public class CardDetailsEntity {
     public CardDetailsEntity() {
     }
 
+    public CardDetailsEntity(FirstDigitsCardNumber firstDigitsCardNumber, LastDigitsCardNumber lastDigitsCardNumber, String cardHolderName, String expiryDate, String cardBrand, AddressEntity billingAddress) {
+        this.lastDigitsCardNumber = lastDigitsCardNumber.toString();
+        this.firstDigitsCardNumber = firstDigitsCardNumber.toString();
+        this.cardHolderName = cardHolderName;
+        this.expiryDate = expiryDate;
+        this.cardBrand = cardBrand;
+        this.billingAddress = billingAddress;
+    }
+
     public PersistedCard toCard() {
         PersistedCard card = new PersistedCard();
         card.setLastDigitsCardNumber(lastDigitsCardNumber);
+        card.setFirstDigitsCardNumber(firstDigitsCardNumber);
         card.setCardBrand(cardBrand);
         card.setBillingAddress(billingAddress != null ? billingAddress.toAddress() : null);
         card.setExpiryDate(expiryDate);
@@ -44,9 +60,17 @@ public class CardDetailsEntity {
     public String getLastDigitsCardNumber() {
         return lastDigitsCardNumber;
     }
+    
+    public String getFirstDigitsCardNumber() {
+        return firstDigitsCardNumber;
+    }
 
-    public void setLastDigitsCardNumber(String lastDigitsCardNumber) {
-        this.lastDigitsCardNumber = lastDigitsCardNumber;
+    public void setLastDigitsCardNumber(LastDigitsCardNumber lastDigitsCardNumber) {
+        this.lastDigitsCardNumber = lastDigitsCardNumber.toString();
+    }
+
+    public void setFirstDigitsCardNumber(FirstDigitsCardNumber firstDigitsCardNumber) {
+        this.firstDigitsCardNumber = firstDigitsCardNumber.toString();
     }
 
     public String getCardHolderName() {
@@ -90,6 +114,8 @@ public class CardDetailsEntity {
 
         if (lastDigitsCardNumber != null ? !lastDigitsCardNumber.equals(that.lastDigitsCardNumber) : that.lastDigitsCardNumber != null)
             return false;
+        if (firstDigitsCardNumber != null ? !firstDigitsCardNumber.equals(that.firstDigitsCardNumber) : that.firstDigitsCardNumber != null)
+            return false;
         if (cardHolderName != null ? !cardHolderName.equals(that.cardHolderName) : that.cardHolderName != null)
             return false;
         if (expiryDate != null ? !expiryDate.equals(that.expiryDate) : that.expiryDate != null) return false;
@@ -101,6 +127,7 @@ public class CardDetailsEntity {
     @Override
     public int hashCode() {
         int result = lastDigitsCardNumber != null ? lastDigitsCardNumber.hashCode() : 0;
+        result = 31 * result + (firstDigitsCardNumber != null ? firstDigitsCardNumber.hashCode() : 0);
         result = 31 * result + (cardHolderName != null ? cardHolderName.hashCode() : 0);
         result = 31 * result + (expiryDate != null ? expiryDate.hashCode() : 0);
         result = 31 * result + (cardBrand != null ? cardBrand.hashCode() : 0);

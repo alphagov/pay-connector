@@ -62,6 +62,7 @@ public class ChargeCancelResourceITest extends ChargingITestBase {
         assertThat(cardDetails, is(notNullValue()));
         assertThat(cardDetails.get("card_brand"), is(notNullValue()));
         assertThat(cardDetails.get("last_digits_card_number"), is(notNullValue()));
+        assertThat(cardDetails.get("first_digits_card_number"), is(notNullValue()));
         assertThat(cardDetails.get("expiry_date"), is(notNullValue()));
         assertThat(cardDetails.get("cardholder_name"), is(notNullValue()));
         assertThat(cardDetails.get("address_line1"), is(notNullValue()));
