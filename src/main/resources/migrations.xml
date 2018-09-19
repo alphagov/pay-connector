@@ -1513,5 +1513,24 @@
             UPDATE gateway_accounts SET email_collection_mode = 'MANDATORY';
         </sql>
     </changeSet>
-    
+
+    <changeSet id="add first digits card number columns to charges table" author="">
+        <addColumn tableName="charges">
+            <column name="first_digits_card_number" type="VARCHAR(6)">
+                <constraints nullable="true" unique="false"/>
+            </column>
+        </addColumn>
+    </changeSet>
+
+    <changeSet id="add trigram index to charges.last_digits_card_number" runInTransaction="false" author="">
+        <sql>
+            CREATE INDEX CONCURRENTLY idx_last_digits_card_number_idx ON charges(last_digits_card_number);
+        </sql>
+    </changeSet>
+
+    <changeSet id="add trigram index to charges.first_digits_card_number" runInTransaction="false" author="">
+        <sql>
+            CREATE INDEX CONCURRENTLY idx_first_digits_card_number_idx ON charges(first_digits_card_number);
+        </sql>
+    </changeSet>
 </databaseChangeLog>
