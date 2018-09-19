@@ -287,7 +287,8 @@ public class DatabaseFixtures {
         private String analyticsId = "an analytics id";
         private GatewayAccountEntity.Type type = TEST;
         private List<TestCardType> cardTypes = new ArrayList<>();
-
+        private long corporateCreditCardSurchargeAmount;
+        private long corporateDebitCardSurchargeAmount;
 
         public long getAccountId() {
             return accountId;
@@ -311,6 +312,14 @@ public class DatabaseFixtures {
 
         public String getAnalyticsId() {
             return analyticsId;
+        }
+
+        public long getCorporateCreditCardSurchargeAmount() {
+            return corporateCreditCardSurchargeAmount;
+        }
+
+        public long getCorporateDebitCardSurchargeAmount() {
+            return corporateDebitCardSurchargeAmount;
         }
 
         public TestAccount withAccountId(long accountId) {
@@ -343,6 +352,16 @@ public class DatabaseFixtures {
             return this;
         }
 
+        public TestAccount withCorporateCreditCardSurchargeAmount(long corporateCreditCardSurchargeAmount) {
+            this.corporateCreditCardSurchargeAmount = corporateCreditCardSurchargeAmount;
+            return this;
+        }
+
+        public TestAccount withCorporateDebitCardSurchargeAmount(long corporateDebitCardSurchargeAmount) {
+            this.corporateDebitCardSurchargeAmount = corporateDebitCardSurchargeAmount;
+            return this;
+        }
+
         public TestAccount insert() {
             databaseTestHelper.addGatewayAccount(
                     String.valueOf(accountId),
@@ -351,7 +370,9 @@ public class DatabaseFixtures {
                     serviceName,
                     type,
                     description,
-                    analyticsId);
+                    analyticsId,
+                    corporateCreditCardSurchargeAmount,
+                    corporateDebitCardSurchargeAmount);
             for (TestCardType cardType : cardTypes) {
                 databaseTestHelper.addAcceptedCardType(this.getAccountId(), cardType.getId());
             }
@@ -435,17 +456,17 @@ public class DatabaseFixtures {
             this.description = description;
             return this;
         }
-        
+
         public TestCharge withLanguage(SupportedLanguage language) {
             this.language = language;
             return this;
         }
-        
+
         public TestCharge withDelayedCapture(boolean delayedCapture) {
             this.delayedCapture = delayedCapture;
             return this;
         }
-        
+
         public TestCharge insert() {
             if (testAccount == null)
                 throw new IllegalStateException("Test Account must be provided.");
@@ -498,11 +519,11 @@ public class DatabaseFixtures {
         public String getDescription() {
             return description;
         }
-        
+
         public SupportedLanguage getLanguage() {
             return language;
         }
-        
+
         public boolean isDelayedCapture() {
             return delayedCapture;
         }

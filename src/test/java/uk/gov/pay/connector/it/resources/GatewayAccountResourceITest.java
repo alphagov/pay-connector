@@ -25,7 +25,7 @@ public class GatewayAccountResourceITest extends GatewayAccountResourceTestBase 
     private DatabaseFixtures.TestAccount defaultTestAccount;
 
     @Test
-    public void getAccountShouldReturn404IfAccountIdIsUnknown() throws Exception {
+    public void getAccountShouldReturn404IfAccountIdIsUnknown() {
         String unknownAccountId = "92348739";
         givenSetup()
                 .get(ACCOUNTS_API_URL + unknownAccountId)
@@ -34,7 +34,7 @@ public class GatewayAccountResourceITest extends GatewayAccountResourceTestBase 
     }
 
     @Test
-    public void getAccountShouldNotReturnCredentials() throws Exception {
+    public void getAccountShouldNotReturnCredentials() {
         String gatewayAccountId = createAGatewayAccountFor("worldpay");
         givenSetup()
                 .get(ACCOUNTS_API_URL + gatewayAccountId)
@@ -44,7 +44,7 @@ public class GatewayAccountResourceITest extends GatewayAccountResourceTestBase 
     }
 
     @Test
-    public void getAccountShouldNotReturnCardTypes() throws Exception {
+    public void getAccountShouldNotReturnCardTypes() {
         String gatewayAccountId = createAGatewayAccountFor("worldpay");
         givenSetup()
                 .get(ACCOUNTS_API_URL + gatewayAccountId)
@@ -54,7 +54,7 @@ public class GatewayAccountResourceITest extends GatewayAccountResourceTestBase 
     }
 
     @Test
-    public void getAccountShouldReturnDescriptionAndAnalyticsId() throws Exception {
+    public void getAccountShouldReturnDescriptionAndAnalyticsId() {
         String gatewayAccountId = createAGatewayAccountFor("worldpay", "desc", "id");
         givenSetup()
                 .get(ACCOUNTS_API_URL + gatewayAccountId)
@@ -65,7 +65,7 @@ public class GatewayAccountResourceITest extends GatewayAccountResourceTestBase 
     }
 
     @Test
-    public void getAccountShouldReturnAnalyticsId() throws Exception {
+    public void getAccountShouldReturnAnalyticsId() {
         String gatewayAccountId = createAGatewayAccountFor("worldpay", null, "id");
         givenSetup()
                 .get(ACCOUNTS_API_URL + gatewayAccountId)
@@ -76,7 +76,7 @@ public class GatewayAccountResourceITest extends GatewayAccountResourceTestBase 
     }
 
     @Test
-    public void getAccountShouldReturnDescription() throws Exception {
+    public void getAccountShouldReturnDescription() {
         String gatewayAccountId = createAGatewayAccountFor("worldpay", "desc", null);
         givenSetup()
                 .get(ACCOUNTS_API_URL + gatewayAccountId)
@@ -84,6 +84,25 @@ public class GatewayAccountResourceITest extends GatewayAccountResourceTestBase 
                 .statusCode(200)
                 .body("analytics_id", is(nullValue()))
                 .body("description", is("desc"));
+    }
+
+    @Test
+    public void getAccountShouldReturnCorporateCreditCardSurchargeAmountAndCorporateDebitCardSurchargeAmount() {
+        int corporateCreditCardSurchargeAmount = 250;
+        int corporateDebitCardSurchargeAmount = 50;
+        this.defaultTestAccount = DatabaseFixtures
+                .withDatabaseTestHelper(databaseTestHelper)
+                .aTestAccount()
+                .withCorporateCreditCardSurchargeAmount(corporateCreditCardSurchargeAmount)
+                .withCorporateDebitCardSurchargeAmount(corporateDebitCardSurchargeAmount)
+                .insert();
+
+        givenSetup()
+                .get(ACCOUNTS_API_URL + defaultTestAccount.getAccountId())
+                .then()
+                .statusCode(200)
+                .body("corporate_credit_card_surcharge_amount", is(corporateCreditCardSurchargeAmount))
+                .body("corporate_debit_card_surcharge_amount", is(corporateDebitCardSurchargeAmount));
     }
 
     @Test
@@ -102,7 +121,9 @@ public class GatewayAccountResourceITest extends GatewayAccountResourceTestBase 
                 .body("type", is(TEST.toString()))
                 .body("description", is("a description"))
                 .body("analytics_id", is("an analytics id"))
-                .body("service_name", is("service_name"));
+                .body("service_name", is("service_name"))
+                .body("corporate_credit_card_surcharge_amount", is(0))
+                .body("corporate_debit_card_surcharge_amount", is(0));
     }
 
     @Test
@@ -149,6 +170,8 @@ public class GatewayAccountResourceITest extends GatewayAccountResourceTestBase 
                 .body("accounts[0].description", is("a description"))
                 .body("accounts[0].service_name", is("service_name"))
                 .body("accounts[0].analytics_id", is("an analytics id"))
+                .body("accounts[0].corporate_credit_card_surcharge_amount", is(0))
+                .body("accounts[0].corporate_debit_card_surcharge_amount", is(0))
                 .body("accounts[0]._links.self.href", is("https://localhost:" + app.getLocalPort() + ACCOUNTS_API_URL + 100))
                 // and credentials should be missing
                 .body("accounts[0].credentials", nullValue())
@@ -159,6 +182,8 @@ public class GatewayAccountResourceITest extends GatewayAccountResourceTestBase 
                 .body("accounts[2].description", is("a description"))
                 .body("accounts[2].service_name", is("service_name"))
                 .body("accounts[2].analytics_id", is("an analytics id"))
+                .body("accounts[2].corporate_credit_card_surcharge_amount", is(0))
+                .body("accounts[2].corporate_debit_card_surcharge_amount", is(0))
                 .body("accounts[2]._links.self.href", is("https://localhost:" + app.getLocalPort() + ACCOUNTS_API_URL + 300))
                 // and credentials should be missing
                 .body("accounts[2].credentials", nullValue())
@@ -177,7 +202,7 @@ public class GatewayAccountResourceITest extends GatewayAccountResourceTestBase 
     }
 
     @Test
-    public void createGatewayAccountWithoutPaymentProviderDefaultsToSandbox() throws Exception {
+    public void createGatewayAccountWithoutPaymentProviderDefaultsToSandbox() {
         String payload = toJson(ImmutableMap.of("name", "test account"));
         ValidatableResponse response = givenSetup()
                 .body(payload)
@@ -240,7 +265,7 @@ public class GatewayAccountResourceITest extends GatewayAccountResourceTestBase 
     }
 
     @Test
-    public void createAccountShouldFailIfPaymentProviderIsNotRecognised() throws Exception {
+    public void createAccountShouldFailIfPaymentProviderIsNotRecognised() {
         String testProvider = "random";
         String payload = toJson(ImmutableMap.of("payment_provider", testProvider));
 
@@ -254,7 +279,7 @@ public class GatewayAccountResourceITest extends GatewayAccountResourceTestBase 
     }
 
     @Test
-    public void getAccountShouldReturn404IfAccountIdIsNotNumeric() throws Exception {
+    public void getAccountShouldReturn404IfAccountIdIsNotNumeric() {
         String unknownAccountId = "92348739wsx673hdg";
 
         givenSetup()
@@ -267,22 +292,22 @@ public class GatewayAccountResourceITest extends GatewayAccountResourceTestBase 
     }
 
     @Test
-    public void createAGatewayAccountForSandbox() throws Exception {
+    public void createAGatewayAccountForSandbox() {
         createAGatewayAccountFor("sandbox");
     }
 
     @Test
-    public void createAGatewayAccountForWorldpay() throws Exception {
+    public void createAGatewayAccountForWorldpay() {
         createAGatewayAccountFor("worldpay");
     }
 
     @Test
-    public void createAGatewayAccountForSmartpay() throws Exception {
+    public void createAGatewayAccountForSmartpay() {
         createAGatewayAccountFor("smartpay");
     }
 
     @Test
-    public void createAGatewayAccountForEpdq() throws Exception {
+    public void createAGatewayAccountForEpdq() {
         createAGatewayAccountFor("epdq");
     }
 
@@ -393,7 +418,6 @@ public class GatewayAccountResourceITest extends GatewayAccountResourceTestBase 
 
     @Test
     public void shouldReturn409Conflict_Toggling3dsToFalse_WhenA3dsCardTypeIsAccepted() {
-
         String gatewayAccountId = createAGatewayAccountFor("worldpay", "desc", "id");
         String maestroCardTypeId = databaseTestHelper.getCardTypeId("maestro", "DEBIT");
 
@@ -439,12 +463,12 @@ public class GatewayAccountResourceITest extends GatewayAccountResourceTestBase 
     }
 
     @Test
-    public void shouldReturn200_whenNotifySettingsIsUpdated() throws Exception{
+    public void shouldReturn200_whenNotifySettingsIsUpdated() throws Exception {
         String gatewayAccountId = createAGatewayAccountFor("worldpay");
         String payload = new ObjectMapper().writeValueAsString(ImmutableMap.of("op", "replace",
                 "path", "notify_settings",
                 "value", ImmutableMap.of("api_token", "anapitoken",
-                "template_id", "atemplateid")));
+                        "template_id", "atemplateid")));
         givenSetup()
                 .body(payload)
                 .patch("/v1/api/accounts/" + gatewayAccountId)
@@ -453,7 +477,7 @@ public class GatewayAccountResourceITest extends GatewayAccountResourceTestBase 
     }
 
     @Test
-    public void shouldReturn400_whenNotifySettingsIsUpdated_withWrongOp() throws Exception{
+    public void shouldReturn400_whenNotifySettingsIsUpdated_withWrongOp() throws Exception {
         String gatewayAccountId = createAGatewayAccountFor("worldpay");
         String payload = new ObjectMapper().writeValueAsString(ImmutableMap.of("op", "insert",
                 "path", "notify_settings",
@@ -467,7 +491,7 @@ public class GatewayAccountResourceITest extends GatewayAccountResourceTestBase 
     }
 
     @Test
-    public void shouldReturn404ForNotifySettings_whenGatewayAccountIsNonExistent() throws Exception{
+    public void shouldReturn404ForNotifySettings_whenGatewayAccountIsNonExistent() throws Exception {
         String gatewayAccountId = "1000023";
         String payload = new ObjectMapper().writeValueAsString(ImmutableMap.of("op", "replace",
                 "path", "notify_settings",
@@ -481,7 +505,7 @@ public class GatewayAccountResourceITest extends GatewayAccountResourceTestBase 
     }
 
     @Test
-    public void shouldReturn200_whenNotifySettingsIsRemoved() throws Exception{
+    public void shouldReturn200_whenNotifySettingsIsRemoved() throws Exception {
         String gatewayAccountId = createAGatewayAccountFor("worldpay");
         String payload = new ObjectMapper().writeValueAsString(ImmutableMap.of("op", "replace",
                 "path", "notify_settings",
@@ -493,7 +517,7 @@ public class GatewayAccountResourceITest extends GatewayAccountResourceTestBase 
                 .then()
                 .statusCode(OK.getStatusCode());
 
-        payload =  new ObjectMapper().writeValueAsString(ImmutableMap.of("op", "remove",
+        payload = new ObjectMapper().writeValueAsString(ImmutableMap.of("op", "remove",
                 "path", "notify_settings"));
 
         givenSetup()
@@ -504,7 +528,7 @@ public class GatewayAccountResourceITest extends GatewayAccountResourceTestBase 
     }
 
     @Test
-    public void shouldReturn400_whenNotifySettingsIsRemoved_withWrongPath() throws Exception{
+    public void shouldReturn400_whenNotifySettingsIsRemoved_withWrongPath() throws Exception {
         String gatewayAccountId = createAGatewayAccountFor("worldpay");
         String payload = new ObjectMapper().writeValueAsString(ImmutableMap.of("op", "insert",
                 "path", "notify_setting"));
