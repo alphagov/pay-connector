@@ -30,7 +30,7 @@ public class FirstDigitsCardNumber {
 
     @Override
     public String toString() {
-        return String.valueOf(firstDigitsCardNumber);
+        return firstDigitsCardNumber;
     }
 
 }
