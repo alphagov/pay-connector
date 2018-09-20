@@ -69,6 +69,7 @@ public class CardAuthoriseResourceITest extends ChargingITestBase {
         Long chargeId = Long.valueOf(StringUtils.removeStart(externalChargeId, "charge-"));
         Map<String, Object> chargeCardDetails = app.getDatabaseTestHelper().getChargeCardDetailsByChargeId(chargeId);
         assertThat(chargeCardDetails, hasEntry("last_digits_card_number", "1111"));
+        assertThat(chargeCardDetails, hasEntry("first_digits_card_number", "444433"));
         assertThat(app.getDatabaseTestHelper().getChargeCardBrand(chargeId), is(cardBrand));
     }
 
@@ -90,6 +91,7 @@ public class CardAuthoriseResourceITest extends ChargingITestBase {
         Long chargeId = Long.valueOf(StringUtils.removeStart(externalChargeId, "charge-"));
         Map<String, Object> chargeCardDetails = app.getDatabaseTestHelper().getChargeCardDetailsByChargeId(chargeId);
         assertThat(chargeCardDetails, hasEntry("last_digits_card_number", "1111"));
+        assertThat(chargeCardDetails, hasEntry("first_digits_card_number", "444433"));
         assertThat(chargeCardDetails, hasEntry("address_county", sanitizedValue));
         assertThat(chargeCardDetails, hasEntry("address_line1", sanitizedValue));
         assertThat(chargeCardDetails, hasEntry("address_line2", sanitizedValue));
@@ -118,6 +120,7 @@ public class CardAuthoriseResourceITest extends ChargingITestBase {
         Long chargeId = Long.valueOf(StringUtils.removeStart(externalChargeId, "charge-"));
         Map<String, Object> chargeCardDetails = app.getDatabaseTestHelper().getChargeCardDetailsByChargeId(chargeId);
         assertThat(chargeCardDetails, hasEntry("last_digits_card_number", "1111"));
+        assertThat(chargeCardDetails, hasEntry("first_digits_card_number", "444433"));
         assertThat(chargeCardDetails, hasEntry("address_county", valueWith10CharactersAsNumbers));
         assertThat(chargeCardDetails, hasEntry("address_line1", valueWith10CharactersAsNumbers));
         assertThat(chargeCardDetails, hasEntry("address_line2", valueWith10CharactersAsNumbers));
@@ -329,6 +332,7 @@ public class CardAuthoriseResourceITest extends ChargingITestBase {
                 .statusCode(200)
                 .contentType(JSON)
                 .body("card_details.last_digits_card_number", is("4242"))
+                .body("card_details.first_digits_card_number", is("424242"))
                 .body("card_details.cardholder_name", is("Charge1 Name"))
                 .body("card_details.expiry_date", is("10/99"))
                 .body("card_details.billing_address.line1.", is("Charge1 Line1"))
@@ -344,6 +348,7 @@ public class CardAuthoriseResourceITest extends ChargingITestBase {
                 .statusCode(200)
                 .contentType(JSON)
                 .body("card_details.last_digits_card_number", is("1111"))
+                .body("card_details.first_digits_card_number", is("444433"))
                 .body("card_details.cardholder_name", is("Charge2 Name"))
                 .body("card_details.expiry_date", is("11/99"))
                 .body("card_details.billing_address.line1.", is("Charge2 Line1"))
