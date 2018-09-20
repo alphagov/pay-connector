@@ -32,6 +32,7 @@ import java.time.ZonedDateTime;
                         @ColumnResult(name = "cardholder_name", type = String.class),
                         @ColumnResult(name = "expiry_date", type = String.class),
                         @ColumnResult(name = "last_digits_card_number", type = String.class),
+                        @ColumnResult(name = "first_digits_card_number", type = String.class),
                         @ColumnResult(name = "user_external_id", type = String.class),
                         @ColumnResult(name = "address_city", type = String.class),
                         @ColumnResult(name = "address_country", type = String.class),
@@ -66,6 +67,7 @@ public class Transaction {
     private String cardHolderName;
     private String expiryDate;
     private String lastDigitsCardNumber;
+    private String firstDigitsCardNumber;
     private String userExternalId;
     private String addressCity;
     private String addressCountry;
@@ -93,6 +95,7 @@ public class Transaction {
                        String cardHolderName,
                        String expiryDate,
                        String lastDigitsCardNumber,
+                       String firstDigitsCardNumber,
                        String userExternalId,
                        String addressCity,
                        String addressCountry,
@@ -119,6 +122,7 @@ public class Transaction {
         this.cardHolderName = cardHolderName;
         this.expiryDate = expiryDate;
         this.lastDigitsCardNumber = lastDigitsCardNumber;
+        this.firstDigitsCardNumber = firstDigitsCardNumber;
         this.addressCity = addressCity;
         this.addressCountry = addressCountry;
         this.addressCounty = addressCounty;
@@ -188,6 +192,9 @@ public class Transaction {
 
     public String getLastDigitsCardNumber() {
         return lastDigitsCardNumber;
+    }
+    public String getFirstDigitsCardNumber() {
+        return firstDigitsCardNumber;
     }
 
     public String getAddressCity() {

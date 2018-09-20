@@ -7,6 +7,7 @@ import uk.gov.pay.connector.dao.ChargeSearchParams;
 import uk.gov.pay.connector.dao.TransactionDao;
 import uk.gov.pay.connector.it.dao.DatabaseFixtures.TestCharge;
 import uk.gov.pay.connector.model.CardHolderName;
+import uk.gov.pay.connector.model.FirstDigitsCardNumber;
 import uk.gov.pay.connector.model.LastDigitsCardNumber;
 import uk.gov.pay.connector.model.ServicePaymentReference;
 import uk.gov.pay.connector.model.domain.ChargeStatus;
@@ -560,6 +561,66 @@ public class TransactionDaoITest extends DaoITestBase {
         // then
         assertThat(transactions.size(), is(0));
     }
+
+    @Test
+    public void shouldSearchTransactionsByFullFirstSixDigitsCardNumber()  {
+
+        // given
+        String firstDigitsCardNumber = "161145";
+
+        TestCharge testCharge = withDatabaseTestHelper(databaseTestHelper)
+                .aTestCharge()
+                .withTestAccount(defaultTestAccount);
+        DatabaseFixtures.TestCardDetails testCardDetails = new DatabaseFixtures(databaseTestHelper)
+                .validTestCardDetails()
+                .withFirstDigitsOfCardNumber(firstDigitsCardNumber)
+                .withChargeId(testCharge.chargeId)
+                .update();
+        testCharge.withCardDetails(testCardDetails).insert();
+        insertNewRefundForCharge(testCharge, REFUND_USER_EXTERNAL_ID,2L, now().plusHours(2));
+        ChargeSearchParams params = new ChargeSearchParams()
+                .withFirstDigitsCardNumber(FirstDigitsCardNumber.of(firstDigitsCardNumber));
+
+        // when
+        List<Transaction> transactions = transactionDao.findAllBy(defaultTestAccount.getAccountId(), params);
+
+        // then
+        assertThat(transactions.size(), is(2));
+
+        Transaction refund = transactions.get(0);
+        Transaction charge = transactions.get(1);
+
+        assertThat(refund.getExternalId(), is(testCharge.getExternalChargeId()));
+        assertThat(refund.getTransactionType(), is("refund"));
+        assertThat(refund.getFirstDigitsCardNumber(), is(firstDigitsCardNumber));
+        assertThat(charge.getExternalId(), is(testCharge.getExternalChargeId()));
+        assertThat(charge.getTransactionType(), is("charge"));
+        assertThat(charge.getFirstDigitsCardNumber(), is(firstDigitsCardNumber));
+    }
+
+    @Test
+    public void shouldNotMatchTransactionsByPartialFirstFourDigitsCardNumber() {
+        // given
+        String firstDigitsCardNumber = "483321";
+        TestCharge testCharge = withDatabaseTestHelper(databaseTestHelper)
+                .aTestCharge()
+                .withTestAccount(defaultTestAccount);
+        DatabaseFixtures.TestCardDetails testCardDetails = new DatabaseFixtures(databaseTestHelper)
+                .validTestCardDetails()
+                .withFirstDigitsOfCardNumber(firstDigitsCardNumber)
+                .withChargeId(testCharge.chargeId)
+                .update();
+        testCharge.withCardDetails(testCardDetails).insert();
+        ChargeSearchParams params = new ChargeSearchParams()
+                .withFirstDigitsCardNumber(FirstDigitsCardNumber.of("432"));
+
+        // when
+        List<Transaction> transactions = transactionDao.findAllBy(defaultTestAccount.getAccountId(), params);
+
+        // then
+        assertThat(transactions.size(), is(0));
+    }
+    
     @Test
     public void searchChargesByReferenceAndEmail_with_under_score() {
         // since '_' have special meaning in like queries of postgres this was resulting in undesired results

@@ -10,6 +10,7 @@ import uk.gov.pay.connector.dao.ChargeDao;
 import uk.gov.pay.connector.dao.ChargeSearchParams;
 import uk.gov.pay.connector.it.dao.DatabaseFixtures.TestCharge;
 import uk.gov.pay.connector.model.CardHolderName;
+import uk.gov.pay.connector.model.FirstDigitsCardNumber;
 import uk.gov.pay.connector.model.LastDigitsCardNumber;
 import uk.gov.pay.connector.model.ServicePaymentReference;
 import uk.gov.pay.connector.model.domain.ChargeEntity;
@@ -203,7 +204,7 @@ public class ChargeDaoITest extends DaoITestBase {
                 .withChargeId(chargeId)
                 .insert();
         ChargeSearchParams params = new ChargeSearchParams()
-                .withLastDigitsCardNumber(LastDigitsCardNumber.of(testCharge.cardDetails.getLastDigitsCardNumber()));
+                .withLastDigitsCardNumber(LastDigitsCardNumber.of(lastDigits));
 
         // when
         List<ChargeEntity> charges = chargeDao.findAllBy(params);
@@ -214,6 +215,36 @@ public class ChargeDaoITest extends DaoITestBase {
         assertCharge("visa", testCharge, charge);
         assertThat(charge.getCardDetails().getCardHolderName(), is(cardHolderName));
         assertThat(charge.getCardDetails().getLastDigitsCardNumber(), is(lastDigits));
+    }
+
+    @Test
+    public void searchChargesByFullFirstSixDigits() {
+        // given
+        String cardHolderName = "Mr. McPayment";
+        String firstSixDigits = "654321";
+        Long chargeId = 12L;
+        TestCharge testCharge = DatabaseFixtures
+                .withDatabaseTestHelper(databaseTestHelper)
+                .aTestCharge()
+                .withTestAccount(defaultTestAccount)
+                .withCardDetails(defaultTestCardDetails
+                        .withChargeId(chargeId)
+                        .withCardHolderName(cardHolderName)
+                        .withFirstDigitsOfCardNumber(firstSixDigits))
+                .withChargeId(chargeId)
+                .insert();
+        ChargeSearchParams params = new ChargeSearchParams()
+                .withFirstDigitsCardNumber(FirstDigitsCardNumber.of(firstSixDigits));
+
+        // when
+        List<ChargeEntity> charges = chargeDao.findAllBy(params);
+
+        // then
+        assertThat(charges.size(), is(1));
+        ChargeEntity charge = charges.get(0);
+        assertCharge("visa", testCharge, charge);
+        assertThat(charge.getCardDetails().getCardHolderName(), is(cardHolderName));
+        assertThat(charge.getCardDetails().getFirstDigitsCardNumber(), is(firstSixDigits));
     }
 
     @Test
@@ -232,6 +263,30 @@ public class ChargeDaoITest extends DaoITestBase {
                 .insert();
         ChargeSearchParams params = new ChargeSearchParams()
                 .withLastDigitsCardNumber(LastDigitsCardNumber.of("432"));
+
+        // when
+        List<ChargeEntity> charges = chargeDao.findAllBy(params);
+
+        // then
+        assertThat(charges.size(), is(0));
+    }
+
+    @Test
+    public void shouldNotMatchChargesByPartialFirstSixDigits() {
+        // given
+        String firstSixDigits = "534321";
+        Long chargeId = 12L;
+        DatabaseFixtures
+                .withDatabaseTestHelper(databaseTestHelper)
+                .aTestCharge()
+                .withTestAccount(defaultTestAccount)
+                .withCardDetails(defaultTestCardDetails
+                        .withChargeId(chargeId)
+                        .withFirstDigitsOfCardNumber(firstSixDigits))
+                .withChargeId(chargeId)
+                .insert();
+        ChargeSearchParams params = new ChargeSearchParams()
+                .withFirstDigitsCardNumber(FirstDigitsCardNumber.of("534"));
 
         // when
         List<ChargeEntity> charges = chargeDao.findAllBy(params);

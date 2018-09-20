@@ -144,6 +144,8 @@ public class ChargeDao extends JpaDao<ChargeEntity> {
             predicates.add(likePredicate(cb, charge.get(CARD_DETAILS).get("cardHolderName"), params.getCardHolderName().toString()));
         if (params.getLastDigitsCardNumber() != null && StringUtils.isNotBlank(params.getLastDigitsCardNumber().toString()))
             predicates.add(cb.equal(charge.get(CARD_DETAILS).get("lastDigitsCardNumber"), params.getLastDigitsCardNumber().toString()));
+        if (params.getFirstDigitsCardNumber() != null && StringUtils.isNotBlank(params.getFirstDigitsCardNumber().toString()))
+            predicates.add(cb.equal(charge.get(CARD_DETAILS).get("firstDigitsCardNumber"), params.getFirstDigitsCardNumber().toString()));
         if (params.getGatewayAccountId() != null)
             predicates.add(cb.equal(charge.get(GATEWAY_ACCOUNT).get("id"), params.getGatewayAccountId()));
         if (params.getReference() != null && StringUtils.isNotBlank(params.getReference().toString()))

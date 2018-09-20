@@ -1,6 +1,8 @@
 package uk.gov.pay.connector.dao;
 
 import org.junit.Test;
+import uk.gov.pay.connector.model.FirstDigitsCardNumber;
+import uk.gov.pay.connector.model.LastDigitsCardNumber;
 import uk.gov.pay.connector.model.ServicePaymentReference;
 import uk.gov.pay.connector.model.api.ExternalChargeState;
 
@@ -38,7 +40,7 @@ import static uk.gov.pay.connector.model.domain.ChargeStatus.USER_CANCEL_SUBMITT
 public class ChargeSearchParamsTest {
 
     @Test
-    public void buildQueryParams_chargeSearch_withAllParameters() throws Exception {
+    public void buildQueryParams_chargeSearch_withAllParameters() {
 
         String expectedQueryString =
                 "reference=ref" +
@@ -48,7 +50,10 @@ public class ChargeSearchParamsTest {
                         "&page=2" +
                         "&display_size=5" +
                         "&state=created" +
+                        "&first_digits_card_number=123456" +
+                        "&last_digits_card_number=1234" +
                         "&card_brand=visa";
+          
 
         ChargeSearchParams params = new ChargeSearchParams()
                 .withDisplaySize(5L)
@@ -56,6 +61,8 @@ public class ChargeSearchParamsTest {
                 .withCardBrand("visa")
                 .withGatewayAccountId(111L)
                 .withPage(2L)
+                .withLastDigitsCardNumber(LastDigitsCardNumber.of("1234"))
+                .withFirstDigitsCardNumber(FirstDigitsCardNumber.of("123456"))
                 .withReferenceLike(ServicePaymentReference.of("ref"))
                 .withEmailLike("user")
                 .withFromDate(ZonedDateTime.parse("2012-06-30T12:30:40Z[UTC]"))
@@ -68,7 +75,7 @@ public class ChargeSearchParamsTest {
     }
 
     @Test
-    public void buildQueryParamsWithPiiRedaction_chargeSearch_withAllParameters() throws Exception {
+    public void buildQueryParamsWithPiiRedaction_chargeSearch_withAllParameters()  {
 
         String expectedQueryString =
                 "reference=ref" +
@@ -120,7 +127,7 @@ public class ChargeSearchParamsTest {
     }
 
     @Test
-    public void buildQueryParams_transactionsSearch_withAllParameters() throws Exception {
+    public void buildQueryParams_transactionsSearch_withAllParameters()  {
 
         String expectedQueryString =
                 "transaction_type=payment" +
@@ -132,12 +139,16 @@ public class ChargeSearchParamsTest {
                         "&display_size=5" +
                         "&payment_states=created" +
                         "&refund_states=submitted" +
+                        "&first_digits_card_number=695943" +
+                        "&last_digits_card_number=6749" +
                         "&card_brand=visa" +
                         "&card_brand=master-card";
 
         ChargeSearchParams params = new ChargeSearchParams()
                 .withDisplaySize(5L)
                 .withTransactionType(PAYMENT)
+                .withFirstDigitsCardNumber(FirstDigitsCardNumber.of("695943"))
+                .withLastDigitsCardNumber(LastDigitsCardNumber.of("6749"))
                 .addExternalChargeStates(singletonList("created"))
                 .addExternalRefundStates(singletonList("submitted"))
                 .withCardBrands(asList("visa", "master-card"))
@@ -152,7 +163,7 @@ public class ChargeSearchParamsTest {
     }
 
     @Test
-    public void buildQueryParams_transactionsSearch_withNonTransactionType_andStateForChargeAndRefund() throws Exception {
+    public void buildQueryParams_transactionsSearch_withNonTransactionType_andStateForChargeAndRefund()  {
 
         String expectedQueryString =
                 "reference=ref" +

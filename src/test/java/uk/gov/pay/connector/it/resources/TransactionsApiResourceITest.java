@@ -119,6 +119,7 @@ public class TransactionsApiResourceITest extends ChargingITestBase {
                 .body("results[0].card_details.cardholder_name", is(cardHolderName))
                 .body("results[0].card_details.expiry_date", is(expiryDate))
                 .body("results[0].card_details.last_digits_card_number", is(lastDigitsCardNumber))
+                .body("results[0].card_details.first_digits_card_number", is(firstDigitsCardNumber))
                 .body("results[0].created_date", matchesPattern("^\\d{4}-\\d{2}-\\d{2}T\\d{2}:\\d{2}:\\d{2}(.\\d{1,3})?Z"))
                 .body("results[0].created_date", isWithin(3, HOURS)) // The refund CREATED is the most recent
                 .body("results[0].delayed_capture", is(false))

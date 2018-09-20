@@ -150,6 +150,7 @@ public class ChargesApiResourceGetChargesJsonITest extends ChargingITestBase {
                 .body("results[0].card_details.card_brand", is("Visa"))
                 .body("results[0].card_details.cardholder_name", nullValue())
                 .body("results[0].card_details.last_digits_card_number", nullValue())
+                .body("results[0].card_details.first_digits_card_number", nullValue())
                 .body("results[0].card_details.expiry_date", nullValue());
     }
 
@@ -388,7 +389,7 @@ public class ChargesApiResourceGetChargesJsonITest extends ChargingITestBase {
     }
 
     @Test
-    public void searchChargesByFullLastFourDigits() {
+    public void shouldSearchChargesByFullLastFourDigits() {
         addChargeAndCardDetails(CREATED, ServicePaymentReference.of("ref-1"), now());
         addChargeAndCardDetails(AUTHORISATION_READY, ServicePaymentReference.of("ref-2"), now());
         addChargeAndCardDetails(CAPTURED, ServicePaymentReference.of("ref-3"), now().minusDays(2));
@@ -421,6 +422,61 @@ public class ChargesApiResourceGetChargesJsonITest extends ChargingITestBase {
                 .statusCode(OK.getStatusCode())
                 .contentType(JSON)
                 .body("results.size()", is(0));
+    }
+
+    @Test
+    public void shouldSearchChargesByFullFirstSixDigits() {
+        addChargeAndCardDetails(CREATED, ServicePaymentReference.of("ref-1"), now());
+        addChargeAndCardDetails(AUTHORISATION_READY, ServicePaymentReference.of("ref-2"), now());
+        addChargeAndCardDetails(CAPTURED, ServicePaymentReference.of("ref-3"), now().minusDays(2));
+
+
+        getChargeApi
+                .withAccountId(accountId)
+                .withQueryParam("first_digits_card_number", "123456")
+                .withHeader(HttpHeaders.ACCEPT, APPLICATION_JSON)
+                .getTransactionsAPI()
+                .statusCode(OK.getStatusCode())
+                .contentType(JSON)
+                .body("results.size()", is(3))
+                .body("results[0].card_details.cardholder_name", is("Mr. McPayment"))
+                .body("results[0].card_details.first_digits_card_number", is("123456"));
+    }
+
+    @Test
+    public void shouldNotMatchChargesByPartialFirstSixDigits() {
+        addChargeAndCardDetails(CREATED, ServicePaymentReference.of("ref-1"), now());
+        addChargeAndCardDetails(AUTHORISATION_READY, ServicePaymentReference.of("ref-2"), now());
+        addChargeAndCardDetails(CAPTURED, ServicePaymentReference.of("ref-3"), now().minusDays(2));
+
+
+        getChargeApi
+                .withAccountId(accountId)
+                .withQueryParam("first_digits_card_number", "1234")
+                .withHeader(HttpHeaders.ACCEPT, APPLICATION_JSON)
+                .getTransactionsAPI()
+                .statusCode(OK.getStatusCode())
+                .contentType(JSON)
+                .body("results.size()", is(0));
+    }
+
+    @Test
+    public void shouldIgnoreFirstSixDigitsFilterIfBlank() {
+        addChargeAndCardDetails(CREATED, ServicePaymentReference.of("ref-1"), now());
+        addChargeAndCardDetails(AUTHORISATION_READY, ServicePaymentReference.of("ref-2"), now());
+        addChargeAndCardDetails(CAPTURED, ServicePaymentReference.of("ref-3"), now().minusDays(2));
+
+
+        getChargeApi
+                .withAccountId(accountId)
+                .withQueryParam("first_digits_card_number", "")
+                .withHeader(HttpHeaders.ACCEPT, APPLICATION_JSON)
+                .getTransactionsAPI()
+                .statusCode(OK.getStatusCode())
+                .contentType(JSON)
+                .body("results.size()", is(3))
+                .body("results[0].card_details.cardholder_name", is("Mr. McPayment"))
+                .body("results[0].card_details.first_digits_card_number", is("123456"));
     }
     
     @Test

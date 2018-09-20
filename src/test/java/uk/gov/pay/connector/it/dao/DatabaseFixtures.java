@@ -228,7 +228,7 @@ public class DatabaseFixtures {
             return this;
         }
 
-        public TestCardDetails withFirstLastDigitsOfCardNumber(String firstDigitsCardNumber) {
+        public TestCardDetails withFirstDigitsOfCardNumber(String firstDigitsCardNumber) {
             this.firstDigitsCardNumber = firstDigitsCardNumber;
             return this;
         }
@@ -262,7 +262,7 @@ public class DatabaseFixtures {
             return lastDigitsCardNumber;
         }
 
-        public String getFirstLastDigitsCardNumber() {
+        public String getFirstDigitsCardNumber() {
             return firstDigitsCardNumber;
         }
 

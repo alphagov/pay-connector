@@ -378,7 +378,7 @@ public class ChargesApiResourceITest extends ChargingITestBase {
         String externalChargeId = "charge1";
 
         app.getDatabaseTestHelper().addCharge(chargeId, externalChargeId, accountId, AMOUNT, AUTHORISATION_SUCCESS, returnUrl, null);
-        app.getDatabaseTestHelper().updateChargeCardDetails(chargeId, CardFixture.aValidCard().withCardNo("1234").build());
+        app.getDatabaseTestHelper().updateChargeCardDetails(chargeId, CardFixture.aValidCard().withCardNo("12345678").build());
         app.getDatabaseTestHelper().addToken(chargeId, "tokenId");
 
         getChargeApi
@@ -388,7 +388,8 @@ public class ChargesApiResourceITest extends ChargingITestBase {
                 .statusCode(OK.getStatusCode())
                 .contentType(JSON)
                 .body("card_details", is(notNullValue()))
-                .body("card_details.last_digits_card_number", is("1234"));
+                .body("card_details.last_digits_card_number", is("5678"))
+                .body("card_details.first_digits_card_number", is("123456"));
     }
 
     @Test
@@ -626,6 +627,24 @@ public class ChargesApiResourceITest extends ChargingITestBase {
     }
 
     @Test
+    public void shouldFilterTransactionsByFirstDigitsCardNumber() {
+
+        addChargeAndCardDetails(CREATED, ServicePaymentReference.of("ref-1"), now());
+        addChargeAndCardDetails(AUTHORISATION_READY, ServicePaymentReference.of("ref-2"), now());
+        addChargeAndCardDetails(CAPTURED, ServicePaymentReference.of("ref-3"), now().minusDays(2));
+
+        getChargeApi
+                .withAccountId(accountId)
+                .withQueryParam("first_digits_card_number", "123456")
+                .withHeader(HttpHeaders.ACCEPT, APPLICATION_JSON)
+                .getTransactions()
+                .statusCode(OK.getStatusCode())
+                .contentType(JSON)
+                .body("results.size()", is(3))
+                .body("results[0].card_details.first_digits_card_number", is("123456"));
+    }
+
+    @Test
     public void shouldFilterTransactionsByLastDigitsCardNumber() {
 
         addChargeAndCardDetails(CREATED, ServicePaymentReference.of("ref-1"), now());
@@ -641,6 +660,24 @@ public class ChargesApiResourceITest extends ChargingITestBase {
                 .contentType(JSON)
                 .body("results.size()", is(3))
                 .body("results[0].card_details.last_digits_card_number", is("1234"));
+    }
+
+    @Test
+    public void shouldIgnoreFirstDigitsCardNumberIfBlank() {
+
+        addChargeAndCardDetails(CREATED, ServicePaymentReference.of("ref-1"), now());
+        addChargeAndCardDetails(AUTHORISATION_READY, ServicePaymentReference.of("ref-2"), now());
+        addChargeAndCardDetails(CAPTURED, ServicePaymentReference.of("ref-3"), now().minusDays(2));
+
+        getChargeApi
+                .withAccountId(accountId)
+                .withQueryParam("first_digits_card_number", "")
+                .withHeader(HttpHeaders.ACCEPT, APPLICATION_JSON)
+                .getTransactions()
+                .statusCode(OK.getStatusCode())
+                .contentType(JSON)
+                .body("results.size()", is(3))
+                .body("results[0].card_details.first_digits_card_number", is("123456"));
     }
 
     @Test

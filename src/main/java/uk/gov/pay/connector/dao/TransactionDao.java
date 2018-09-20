@@ -59,6 +59,7 @@ public class TransactionDao {
                         field("cardholder_name"),
                         field("expiry_date"),
                         field("last_digits_card_number"),
+                        field("first_digits_card_number"),
                         field("user_external_id"),
                         field("address_city"),
                         field("address_country"),
@@ -120,6 +121,11 @@ public class TransactionDao {
         if (params.getLastDigitsCardNumber() != null && isNotBlank(params.getLastDigitsCardNumber().toString())) {
             queryFilters = queryFilters.and(
                     field("c.last_digits_card_number").eq(params.getLastDigitsCardNumber().toString()));
+        }
+
+        if (params.getFirstDigitsCardNumber() != null && isNotBlank(params.getFirstDigitsCardNumber().toString())) {
+            queryFilters = queryFilters.and(
+                    field("c.first_digits_card_number").eq(params.getFirstDigitsCardNumber().toString()));
         }
         
         if (isNotBlank(params.getEmail())) {
@@ -189,6 +195,7 @@ public class TransactionDao {
                 field("c.cardholder_name"),
                 field("c.expiry_date"),
                 field("c.last_digits_card_number"),
+                field("c.first_digits_card_number"),
                 field("c.address_city"),
                 field("c.address_country"),
                 field("c.address_county"),
@@ -218,6 +225,7 @@ public class TransactionDao {
                 field("c.cardholder_name"),
                 field("c.expiry_date"),
                 field("c.last_digits_card_number"),
+                field("c.first_digits_card_number"),
                 field("c.address_city"),
                 field("c.address_country"),
                 field("c.address_county"),
