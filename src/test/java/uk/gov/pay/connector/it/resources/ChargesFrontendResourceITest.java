@@ -63,6 +63,8 @@ public class ChargesFrontendResourceITest {
     private String type = "test";
     private String paymentProvider = "sandbox";
     private long expectedAmount = 6234L;
+    private long corporateCreditCardSurchargeAmount = 213L;
+    private long corporateDebitCardSurchargeAmount = 57L;
 
     private RestAssuredClient connectorRestApi = new RestAssuredClient(app, accountId);
 
@@ -71,13 +73,14 @@ public class ChargesFrontendResourceITest {
         DatabaseFixtures databaseFixtures = DatabaseFixtures.withDatabaseTestHelper(app.getDatabaseTestHelper());
         DatabaseFixtures.TestCardType mastercard = databaseFixtures.aMastercardDebitCardType().insert();
         DatabaseFixtures.TestCardType visa = databaseFixtures.aVisaCreditCardType().insert();
-        app.getDatabaseTestHelper().addGatewayAccount(accountId, paymentProvider, description, analyticsId);
+        app.getDatabaseTestHelper().addGatewayAccount(accountId, paymentProvider, description, analyticsId,
+                corporateCreditCardSurchargeAmount, corporateDebitCardSurchargeAmount);
         app.getDatabaseTestHelper().addAcceptedCardType(Long.valueOf(accountId), mastercard.getId());
         app.getDatabaseTestHelper().addAcceptedCardType(Long.valueOf(accountId), visa.getId());
     }
 
     @Test
-    public void getChargeShouldIncludeExpectedLinksAndGatewayAccount() throws Exception {
+    public void getChargeShouldIncludeExpectedLinksAndGatewayAccount() {
 
         String chargeId = postToCreateACharge(expectedAmount);
         String expectedLocation = "https://localhost:" + app.getLocalPort() + "/v1/frontend/charges/" + chargeId;
@@ -89,9 +92,8 @@ public class ChargesFrontendResourceITest {
                 .body("links", containsLink("cardCapture", POST, expectedLocation + "/capture")).extract().response();
     }
 
-
     @Test
-    public void shouldReturnInternalChargeStatusIfStatusIsAuthorised() throws Exception {
+    public void shouldReturnInternalChargeStatusIfStatusIsAuthorised() {
         String externalChargeId = RandomIdGenerator.newId();
         Long chargeId = 123456L;
 
@@ -108,7 +110,7 @@ public class ChargesFrontendResourceITest {
     }
 
     @Test
-    public void shouldReturnEmptyCardBrandLabelIfStatusIsAuthorisedAndBrandUnknown() throws Exception {
+    public void shouldReturnEmptyCardBrandLabelIfStatusIsAuthorisedAndBrandUnknown() {
         String externalChargeId = RandomIdGenerator.newId();
         Long chargeId = 123456L;
 
@@ -189,7 +191,7 @@ public class ChargesFrontendResourceITest {
     }
 
     @Test
-    public void cannotGetCharge_WhenInvalidChargeId() throws Exception {
+    public void cannotGetCharge_WhenInvalidChargeId() {
         String chargeId = "23235124";
         connectorRestApi
                 .withChargeId(chargeId)
@@ -451,6 +453,8 @@ public class ChargesFrontendResourceITest {
                 .body("gateway_account.payment_provider", is(paymentProvider))
                 .body("gateway_account.type", is(type))
                 .body("gateway_account.analytics_id", is(analyticsId))
+                .body("gateway_account.corporate_credit_card_surcharge_amount", isNumber(corporateCreditCardSurchargeAmount))
+                .body("gateway_account.corporate_debit_card_surcharge_amount", isNumber(corporateDebitCardSurchargeAmount))
                 .body("gateway_account.card_types", is(notNullValue()))
                 .body("gateway_account.card_types[0].id", is(notNullValue()))
                 .body("gateway_account.card_types[0].label", is("MasterCard"))
