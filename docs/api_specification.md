@@ -35,7 +35,7 @@ Content-Type: application/json
     "payment_provider": "sandbox",
     "description": "This is an account for the GOV.UK Pay team",
     "analytics_id": "PAY-GA-123",
-    "type: "test"
+    "type": "test"
 }
 ```
 
@@ -102,20 +102,24 @@ Content-Type: application/json
     "type": "live",
     "description": "Sample Service",
     "analytics_id": "some identifier",
-    "service_name": "service name"
+    "service_name": "service name",
+    "corporate_credit_card_surcharge_amount": 250,
+    "corporate_debit_card_surcharge_amount": 50
 }
 ```
 
 #### Response field description
 
-| Field                    | always present | Description                               |
-| ------------------------ |:--------:| ----------------------------------------- |
-| `gateway_account_id`      | X | The account Id        |
-| `type`                    | X | Account type for this provider (test/live)|
-| `payment_provider`        | X | The payment provider for which this account is created.       |
-| `description`             | X | An internal description to identify the gateway account. The default value is `null`.      |
-| `analytics_id`            | X | An identifier used to identify the service in Google Analytics. The default value is `null`.      |
-| `service_name`            |   | The service name that is saved for this account, present if not empty.      |
+| Field                                              | always present   | Description                                                                                       |
+| -------------------------------------------------- | ---------------- | ------------------------------------------------------------------------------------------------- |
+| `gateway_account_id`                               | X                | The account Id                                                                                    |
+| `type`                                             | X                | Account type for this provider (test/live)                                                        |
+| `payment_provider`                                 | X                | The payment provider for which this account is created.                                           |
+| `description`                                      | X                | An internal description to identify the gateway account. The default value is `null`.             |
+| `analytics_id`                                     | X                | An identifier used to identify the service in Google Analytics. The default value is `null`.      |
+| `service_name`                                     |                  | The service name that is saved for this account, present if not empty.                            |
+| `corporate_credit_card_surcharge_amount`           | X                | A corporate credit card surcharge amount in pence. The default value is `0`.                      |
+| `corporate_debit_card_surcharge_amount`            | X                | A corporate debit card surcharge amount in pence. The default value is `0`.                       |
 
 ---------------------------------------------------------------------------------------------------------------
 ## GET /v1/api/accounts
@@ -142,6 +146,8 @@ Content-Type: application/json
       "payment_provider": "sandbox",
       "service_name": "service_name",
       "analytics_id": "an analytics id",
+      "corporate_credit_card_surcharge_amount": 0,
+      "corporate_debit_card_surcharge_amount": 0,
       "_links": {
         "self": {
           "href": "http://connector.service/v1/api/accounts/100"
@@ -155,6 +161,8 @@ Content-Type: application/json
       "payment_provider": "sandbox",
       "service_name": "service_name",
       "analytics_id": "an analytics id",
+      "corporate_credit_card_surcharge_amount": 250,
+      "corporate_debit_card_surcharge_amount": 0,
       "_links": {
         "self": {
           "href": "http://connector.service/v1/api/accounts/200"
@@ -167,6 +175,8 @@ Content-Type: application/json
       "gateway_account_id": 400,
       "payment_provider": "worldpay",
       "analytics_id": "an analytics id",
+      "corporate_credit_card_surcharge_amount": 0,
+      "corporate_debit_card_surcharge_amount": 0,
       "_links": {
         "self": {
           "href": "http://connector.service/v1/api/accounts/400"
@@ -179,18 +189,20 @@ Content-Type: application/json
 
 #### Response field description
 
-| Field                    | always present | Description                               |
-| ------------------------ |:--------:| ----------------------------------------- |
-| `accounts`                | X | The collection of accounts        |
-| `gateway_account_id`      | X | The account Id        |
-| `type`                    | X | Account type for this provider (test/live)|
-| `payment_provider`        | X | The payment provider for which this account is created.       |
-| `description`             | X | An internal description to identify the gateway account. The default value is `null`.      |
-| `analytics_id`            | X | An identifier used to identify the service in Google Analytics. The default value is `null`.      |
-| `service_name`            |   | The service name that is saved for this account, present if not empty.      |
-| `_links.self`             | X | A self link to get this account resource by account-id.      |
-------------------------------------------------------------------------------------------------
+| Field                                              | always present     | Description                                                                                       |
+| -------------------------------------------------- | ------------------ | ------------------------------------------------------------------------------------------------- |
+| `accounts`                                         | X                  | The collection of accounts.                                                                       |
+| `gateway_account_id`                               | X                  | The account Id.                                                                                   |
+| `type`                                             | X                  | Account type for this provider (test/live).                                                       |
+| `payment_provider`                                 | X                  | The payment provider for which this account is created.                                           |
+| `description`                                      | X                  | An internal description to identify the gateway account. The default value is `null`.             |
+| `analytics_id`                                     | X                  | An identifier used to identify the service in Google Analytics. The default value is `null`.      |
+| `service_name`                                     |                    | The service name that is saved for this account, present if not empty.                            |
+| `corporate_credit_card_surcharge_amount`           | X                  | A corporate credit card surcharge amount in pence. The default value is `0`.                      |
+| `corporate_debit_card_surcharge_amount`            | X                  | A corporate debit card surcharge amount in pence. The default value is `0`.                       |
+| `_links.self`                                      | X                  | A self link to get this account resource by account-id.                                           |
 
+---------------------------------------------------------------------------------------------------------------
 ## GET /v1/api/accounts/{accountId}/charges/{chargeId}
 
 Find a charge by ID for a given account. It does a check to see if the charge belongs to the given account. This endpoint is very similar to [```/v1/frontend/charges/{chargeId}```](#get-v1frontendchargeschargeid)
@@ -840,6 +852,8 @@ Content-Type: application/json
     "gateway_account_id": "111222333",
     "description": "Sample Service",
     "analytics_id": "some identifier",
+    "corporate_credit_card_surcharge_amount": 0,
+    "corporate_debit_card_surcharge_amount": 0,
     "credentials: {
       "username:" "Username"
     }
@@ -848,15 +862,17 @@ Content-Type: application/json
 
 #### Response field description
 
-| Field                    | always present | Description                               |
-| ------------------------ |:--------:| ----------------------------------------- |
-| `gateway_account_id`     | X | The account Id        |
-| `payment_provider`       | X | The payment provider for which this account is created.       |
-| `credentials`            | X | The payment provider credentials. Password is not returned. The default value is the empty JSON document {}      |
-| `description`            | X | An internal description to identify the gateway account. The default value is `null`.      |
-| `analytics_id`           | X | An identifier used to identify the service in Google Analytics. The default value is `null`.      |
------------------------------------------------------------------------------------------------------------
+| Field                                              | always present | Description                                                                                                       |
+| -------------------------------------------------- | -------------- | ----------------------------------------------------------------------------------------------------------------- |
+| `gateway_account_id`                               | X              | The account Id.                                                                                                   |
+| `payment_provider`                                 | X              | The payment provider for which this account is created.                                                           |
+| `credentials`                                      | X              | The payment provider credentials. Password is not returned. The default value is the empty JSON document {}.      |
+| `description`                                      | X              | An internal description to identify the gateway account. The default value is `null`.                             |
+| `analytics_id`                                     | X              | An identifier used to identify the service in Google Analytics. The default value is `null`.                      |
+| `corporate_credit_card_surcharge_amount`           | X              | A corporate credit card surcharge amount in pence. The default value is `0`.                                      |
+| `corporate_debit_card_surcharge_amount`            | X              | A corporate debit card surcharge amount in pence. The default value is `0`.                                       |
 
+-----------------------------------------------------------------------------------------------------------
 ## PUT /v1/frontend/accounts/{accountId}
    
 

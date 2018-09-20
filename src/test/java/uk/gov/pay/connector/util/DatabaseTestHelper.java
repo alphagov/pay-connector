@@ -29,7 +29,15 @@ public class DatabaseTestHelper {
         this.jdbi = jdbi;
     }
 
-    public void addGatewayAccount(String accountId, String paymentGateway, Map<String, String> credentials, String serviceName, GatewayAccountEntity.Type providerUrlType, String description, String analyticsId) {
+    public void addGatewayAccount(String accountId,
+                                  String paymentGateway,
+                                  Map<String, String> credentials,
+                                  String serviceName,
+                                  GatewayAccountEntity.Type providerUrlType,
+                                  String description,
+                                  String analyticsId,
+                                  long corporateCreditCardSurchargeAmount,
+                                  long corporateDebitCardSurchargeAmount) {
         try {
             PGobject jsonObject = new PGobject();
             jsonObject.setType("json");
@@ -39,8 +47,25 @@ public class DatabaseTestHelper {
                 jsonObject.setValue(new Gson().toJson(credentials));
             }
             jdbi.withHandle(h ->
-                    h.update("INSERT INTO gateway_accounts(id, payment_provider, credentials, service_name, type, description, analytics_id) VALUES(?, ?, ?, ?, ?, ?, ?)",
-                            Long.valueOf(accountId), paymentGateway, jsonObject, serviceName, providerUrlType, description, analyticsId)
+                    h.update("INSERT INTO gateway_accounts (id,\n" +
+                                    "                              payment_provider,\n" +
+                                    "                              credentials,\n" +
+                                    "                              service_name,\n" +
+                                    "                              type,\n" +
+                                    "                              description,\n" +
+                                    "                              analytics_id,\n" +
+                                    "                              corporate_credit_card_surcharge_amount,\n" +
+                                    "                              corporate_debit_card_surcharge_amount)\n" +
+                                    "VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)",
+                            Long.valueOf(accountId),
+                            paymentGateway,
+                            jsonObject,
+                            serviceName,
+                            providerUrlType,
+                            description,
+                            analyticsId,
+                            corporateCreditCardSurchargeAmount,
+                            corporateDebitCardSurchargeAmount)
             );
         } catch (SQLException e) {
             throw new RuntimeException(e);
@@ -48,15 +73,15 @@ public class DatabaseTestHelper {
     }
 
     public void addGatewayAccount(String accountId, String paymentProvider, Map<String, String> credentials) {
-        addGatewayAccount(accountId, paymentProvider, credentials, null, TEST, null, null);
+        addGatewayAccount(accountId, paymentProvider, credentials, null, TEST, null, null, 0, 0);
     }
 
     public void addGatewayAccount(String accountId, String paymentProvider) {
-        addGatewayAccount(accountId, paymentProvider, null, "a cool service", TEST, null, null);
+        addGatewayAccount(accountId, paymentProvider, null, "a cool service", TEST, null, null, 0, 0);
     }
 
     public void addGatewayAccount(String accountId, String paymentProvider, String description, String analyticsId) {
-        addGatewayAccount(accountId, paymentProvider, null, "a cool service", TEST, description, analyticsId);
+        addGatewayAccount(accountId, paymentProvider, null, "a cool service", TEST, description, analyticsId, 0, 0);
     }
 
     public void addCharge(Long chargeId, String externalChargeId, String gatewayAccountId, long amount, ChargeStatus status, String returnUrl,
@@ -491,6 +516,24 @@ public class DatabaseTestHelper {
                 handle.createStatement("UPDATE gateway_accounts set service_name=:serviceName WHERE id=:gatewayAccountId")
                         .bind("gatewayAccountId", accountId)
                         .bind("serviceName", serviceName)
+                        .execute()
+        );
+    }
+
+    public void updateCorporateCreditCardSurchargeAmountFor(long accountId, long corporateCreditCardSurchargeAmount) {
+        jdbi.withHandle(handle ->
+                handle.createStatement("UPDATE gateway_accounts set corporate_credit_card_surcharge_amount=:corporateCreditCardSurchargeAmount WHERE id=:gatewayAccountId")
+                        .bind("gatewayAccountId", accountId)
+                        .bind("corporateCreditCardSurchargeAmount", corporateCreditCardSurchargeAmount)
+                        .execute()
+        );
+    }
+
+    public void updateCorporateDebitCardSurchargeAmountFor(long accountId, long corporateDebitCardSurchargeAmount) {
+        jdbi.withHandle(handle ->
+                handle.createStatement("UPDATE gateway_accounts set corporate_debit_card_surcharge_amount=:corporateDebitCardSurchargeAmount WHERE id=:gatewayAccountId")
+                        .bind("gatewayAccountId", accountId)
+                        .bind("corporateDebitCardSurchargeAmount", corporateDebitCardSurchargeAmount)
                         .execute()
         );
     }

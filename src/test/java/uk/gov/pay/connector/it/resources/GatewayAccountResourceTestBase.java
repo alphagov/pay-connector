@@ -17,7 +17,10 @@ import java.util.Map;
 import static com.jayway.restassured.RestAssured.given;
 import static com.jayway.restassured.http.ContentType.JSON;
 import static org.hamcrest.MatcherAssert.assertThat;
-import static org.hamcrest.Matchers.*;
+import static org.hamcrest.Matchers.containsString;
+import static org.hamcrest.Matchers.is;
+import static org.hamcrest.Matchers.notNullValue;
+import static org.hamcrest.Matchers.nullValue;
 import static uk.gov.pay.connector.util.JsonEncoder.toJson;
 
 public class GatewayAccountResourceTestBase {
@@ -47,7 +50,7 @@ public class GatewayAccountResourceTestBase {
 
     //TODO remove this after complete migration
     String createAGatewayAccountFor(String testProvider) {
-       return createAGatewayAccountFor(testProvider, null, null);
+        return createAGatewayAccountFor(testProvider, null, null);
     }
 
     String createAGatewayAccountFor(String testProvider, String description, String analyticsId) {
@@ -57,7 +60,7 @@ public class GatewayAccountResourceTestBase {
             payload.put("description", description);
         }
         if (analyticsId != null) {
-            payload.put( "analytics_id", analyticsId);
+            payload.put("analytics_id", analyticsId);
         }
         ValidatableResponse response = givenSetup()
                 .body(toJson(payload))
@@ -73,6 +76,7 @@ public class GatewayAccountResourceTestBase {
         assertGatewayAccountCredentialsAreEmptyInDB(response);
         return response.extract().path("gateway_account_id");
     }
+
     void assertGettingAccountReturnsProviderName(ValidatableResponse response, String providerName, GatewayAccountEntity.Type providerUrlType) {
         givenSetup()
                 .get(response.extract().header("Location").replace("https", "http")) //Scheme on links back are forced to be https
@@ -91,6 +95,7 @@ public class GatewayAccountResourceTestBase {
     void assertCorrectCreateResponse(ValidatableResponse response, GatewayAccountEntity.Type type) {
         assertCorrectCreateResponse(response, type, null, null, null);
     }
+
     void assertCorrectCreateResponse(ValidatableResponse response, GatewayAccountEntity.Type type, String description, String analyticsId, String name) {
         String accountId = response.extract().path("gateway_account_id");
         String urlSlug = "api/accounts/" + accountId;
@@ -101,10 +106,13 @@ public class GatewayAccountResourceTestBase {
                 .body("description", is(description))
                 .body("service_name", is(name))
                 .body("analytics_id", is(analyticsId))
+                .body("corporate_credit_card_surcharge_amount", is(nullValue()))
+                .body("corporate_debit_card_surcharge_amount", is(nullValue()))
                 .body("links[0].href", containsString(urlSlug))
                 .body("links[0].rel", is("self"))
                 .body("links[0].method", is("GET"));
     }
+
     private void assertGatewayAccountCredentialsAreEmptyInDB(ValidatableResponse response) {
         String gateway_account_id = response.extract().path("gateway_account_id");
         Map<String, String> accountCredentials = app.getDatabaseTestHelper().getAccountCredentials(Long.valueOf(gateway_account_id));

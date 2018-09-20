@@ -10,7 +10,6 @@ import uk.gov.pay.connector.model.domain.GatewayAccountEntity;
 import uk.gov.pay.connector.model.domain.GatewayAccountResourceDTO;
 import uk.gov.pay.connector.model.domain.NotificationCredentials;
 
-import java.io.IOException;
 import java.util.Arrays;
 import java.util.HashMap;
 import java.util.List;
@@ -38,13 +37,13 @@ public class GatewayAccountDaoITest extends DaoITestBase {
     private DatabaseFixtures databaseFixtures;
 
     @Before
-    public void setUp() throws Exception {
+    public void setUp() {
         gatewayAccountDao = env.getInstance(GatewayAccountDao.class);
         databaseFixtures = DatabaseFixtures.withDatabaseTestHelper(databaseTestHelper);
     }
 
     @Test
-    public void persist_shouldCreateAnAccount() throws Exception {
+    public void persist_shouldCreateAnAccount() {
         DatabaseFixtures.TestCardType mastercardCreditCardTypeRecord = createMastercardCreditCardTypeRecord();
         DatabaseFixtures.TestCardType visaDebitCardTypeRecord = createVisaDebitCardTypeRecord();
         createAccountRecord(mastercardCreditCardTypeRecord, visaDebitCardTypeRecord);
@@ -69,6 +68,8 @@ public class GatewayAccountDaoITest extends DaoITestBase {
         assertThat(account.getEmailNotification().getAccountEntity().getId(), is(account.getId()));
         assertThat(account.getEmailNotification().isEnabled(), is(true));
         assertThat(account.getNotificationCredentials(), is(nullValue()));
+        assertThat(account.getCorporateCreditCardSurchargeAmount(), is(0L));
+        assertThat(account.getCorporateDebitCardSurchargeAmount(), is(0L));
 
         databaseTestHelper.getAccountCredentials(account.getId());
 
@@ -87,12 +88,12 @@ public class GatewayAccountDaoITest extends DaoITestBase {
     }
 
     @Test
-    public void findById_shouldNotFindANonexistentGatewayAccount() throws Exception {
+    public void findById_shouldNotFindANonexistentGatewayAccount() {
         assertThat(gatewayAccountDao.findById(GatewayAccountEntity.class, 1234L).isPresent(), is(false));
     }
 
     @Test
-    public void findById_shouldFindGatewayAccount() throws Exception {
+    public void findById_shouldFindGatewayAccount() {
         DatabaseFixtures.TestCardType mastercardCreditCardTypeRecord = createMastercardCreditCardTypeRecord();
         DatabaseFixtures.TestCardType visaDebitCardTypeRecord = createVisaDebitCardTypeRecord();
         DatabaseFixtures.TestAccount accountRecord = createAccountRecord(mastercardCreditCardTypeRecord, visaDebitCardTypeRecord);
@@ -108,6 +109,8 @@ public class GatewayAccountDaoITest extends DaoITestBase {
         assertThat(gatewayAccount.getServiceName(), is(accountRecord.getServiceName()));
         assertThat(gatewayAccount.getDescription(), is(accountRecord.getDescription()));
         assertThat(gatewayAccount.getAnalyticsId(), is(accountRecord.getAnalyticsId()));
+        assertThat(gatewayAccount.getCorporateCreditCardSurchargeAmount(), is(accountRecord.getCorporateCreditCardSurchargeAmount()));
+        assertThat(gatewayAccount.getCorporateDebitCardSurchargeAmount(), is(accountRecord.getCorporateDebitCardSurchargeAmount()));
         assertThat(gatewayAccount.getCardTypes(), contains(
                 allOf(
                         hasProperty("id", is(Matchers.notNullValue())),
@@ -123,7 +126,7 @@ public class GatewayAccountDaoITest extends DaoITestBase {
     }
 
     @Test
-    public void findById_shouldUpdateAccountCardTypes() throws Exception {
+    public void findById_shouldUpdateAccountCardTypes() {
         DatabaseFixtures.TestCardType mastercardCreditCardTypeRecord = createMastercardCreditCardTypeRecord();
         DatabaseFixtures.TestCardType visaCreditCardTypeRecord = createVisaCreditCardTypeRecord();
         DatabaseFixtures.TestCardType visaDebitCardTypeRecord = createVisaDebitCardTypeRecord();
@@ -160,7 +163,7 @@ public class GatewayAccountDaoITest extends DaoITestBase {
     }
 
     @Test
-    public void findById_shouldUpdateEmptyCredentials() throws IOException {
+    public void findById_shouldUpdateEmptyCredentials() {
         String paymentProvider = "test provider";
         Long accountId = 888L;
         databaseTestHelper.addGatewayAccount(accountId.toString(), paymentProvider);
@@ -184,7 +187,7 @@ public class GatewayAccountDaoITest extends DaoITestBase {
     }
 
     @Test
-    public void findById_shouldUpdateAndRetrieveCredentialsWithSpecialCharacters() throws Exception {
+    public void findById_shouldUpdateAndRetrieveCredentialsWithSpecialCharacters() {
         String paymentProvider = "test provider";
         String accountId = "333";
         databaseTestHelper.addGatewayAccount(accountId, paymentProvider);
@@ -206,7 +209,7 @@ public class GatewayAccountDaoITest extends DaoITestBase {
     }
 
     @Test
-    public void findById_shouldFindAccountInfoByIdWhenFindingByIdReturningGatewayAccount() throws Exception {
+    public void findById_shouldFindAccountInfoByIdWhenFindingByIdReturningGatewayAccount() {
         String paymentProvider = "test provider";
         String accountId = "12345";
         databaseTestHelper.addGatewayAccount(accountId, paymentProvider);
@@ -260,10 +263,34 @@ public class GatewayAccountDaoITest extends DaoITestBase {
     }
 
     @Test
-    public void shouldListAllAccounts() throws Exception {
-        databaseTestHelper.addGatewayAccount("123", "provider-1", ImmutableMap.of("user", "fuser", "password", "word"), "service-name-1", TEST, "description-1", "analytics-id-1");
-        databaseTestHelper.addGatewayAccount("456", "provider-2", null, "service-name-2", TEST, "description-2", "analytics-id-2");
-        databaseTestHelper.addGatewayAccount("789", "provider-3", null, "service-name-3", GatewayAccountEntity.Type.LIVE, "description-3", "analytics-id-3");
+    public void shouldListAllAccounts() {
+        databaseTestHelper.addGatewayAccount("123",
+                "provider-1",
+                ImmutableMap.of("user", "fuser", "password", "word"),
+                "service-name-1",
+                TEST,
+                "description-1",
+                "analytics-id-1",
+                250,
+                50);
+        databaseTestHelper.addGatewayAccount("456",
+                "provider-2",
+                null,
+                "service-name-2",
+                TEST,
+                "description-2",
+                "analytics-id-2",
+                0,
+                0);
+        databaseTestHelper.addGatewayAccount("789",
+                "provider-3",
+                null,
+                "service-name-3",
+                GatewayAccountEntity.Type.LIVE,
+                "description-3",
+                "analytics-id-3",
+                0,
+                0);
 
         List<GatewayAccountResourceDTO> gatewayAccounts = gatewayAccountDao.listAll();
 
@@ -274,36 +301,46 @@ public class GatewayAccountDaoITest extends DaoITestBase {
         assertEquals("service-name-1", gatewayAccounts.get(0).getServiceName());
         assertEquals(TEST.toString(), gatewayAccounts.get(0).getType());
         assertEquals("analytics-id-1", gatewayAccounts.get(0).getAnalyticsId());
+        assertEquals(250L, gatewayAccounts.get(0).getCorporateCreditCardSurchargeAmount());
+        assertEquals(50L, gatewayAccounts.get(0).getCorporateDebitCardSurchargeAmount());
 
         assertEquals("provider-2", gatewayAccounts.get(1).getPaymentProvider());
         assertEquals("provider-3", gatewayAccounts.get(2).getPaymentProvider());
+        assertEquals(0L, gatewayAccounts.get(1).getCorporateCreditCardSurchargeAmount());
+        assertEquals(0L, gatewayAccounts.get(1).getCorporateDebitCardSurchargeAmount());
+        assertEquals(0L, gatewayAccounts.get(2).getCorporateCreditCardSurchargeAmount());
+        assertEquals(0L, gatewayAccounts.get(2).getCorporateDebitCardSurchargeAmount());
         assertThat(gatewayAccounts.get(1).getAccountId(), is(456L));
         assertThat(gatewayAccounts.get(2).getAccountId(), is(789L));
     }
 
     @Test
-    public void shouldListASubsetOfAccountsSingle() throws Exception {
+    public void shouldListASubsetOfAccountsSingle() {
         databaseTestHelper.addGatewayAccount(
-          "123",
-          "provider-1",
-          ImmutableMap.of(
-            "user", "fuser",
-            "password", "word"
-          ),
-          "service-name-1",
-          TEST,
-          "description-1",
-          "analytics-id-1"
+                "123",
+                "provider-1",
+                ImmutableMap.of(
+                        "user", "fuser",
+                        "password", "word"
+                ),
+                "service-name-1",
+                TEST,
+                "description-1",
+                "analytics-id-1",
+                0,
+                0
         );
 
         databaseTestHelper.addGatewayAccount(
-          "456",
-          "provider-2",
-          null,
-          "service-name-2",
-          TEST,
-          "description-2",
-          "analytics-id-2"
+                "456",
+                "provider-2",
+                null,
+                "service-name-2",
+                TEST,
+                "description-2",
+                "analytics-id-2",
+                0,
+                0
         );
 
         List<Long> accountIds = Arrays.asList(456L);
@@ -319,38 +356,44 @@ public class GatewayAccountDaoITest extends DaoITestBase {
     }
 
     @Test
-    public void shouldListASubsetOfAccountsMultiple() throws Exception {
+    public void shouldListASubsetOfAccountsMultiple() {
         databaseTestHelper.addGatewayAccount(
-          "123",
-          "provider-1",
-          ImmutableMap.of(
-            "user", "fuser",
-            "password", "word"
-          ),
-          "service-name-1",
-          TEST,
-          "description-1",
-          "analytics-id-1"
+                "123",
+                "provider-1",
+                ImmutableMap.of(
+                        "user", "fuser",
+                        "password", "word"
+                ),
+                "service-name-1",
+                TEST,
+                "description-1",
+                "analytics-id-1",
+                0,
+                0
         );
 
         databaseTestHelper.addGatewayAccount(
-          "456",
-          "provider-2",
-          null,
-          "service-name-2",
-          TEST,
-          "description-2",
-          "analytics-id-2"
+                "456",
+                "provider-2",
+                null,
+                "service-name-2",
+                TEST,
+                "description-2",
+                "analytics-id-2",
+                250,
+                50
         );
 
         databaseTestHelper.addGatewayAccount(
-          "789",
-          "provider-3",
-          null,
-          "service-name-3",
-          TEST,
-          "description-3",
-          "analytics-id-3"
+                "789",
+                "provider-3",
+                null,
+                "service-name-3",
+                TEST,
+                "description-3",
+                "analytics-id-3",
+                0,
+                0
         );
 
         List<Long> accountIds = Arrays.asList(456L, 789L);
@@ -364,6 +407,8 @@ public class GatewayAccountDaoITest extends DaoITestBase {
         assertEquals("service-name-2", gatewayAccounts.get(0).getServiceName());
         assertEquals(TEST.toString(), gatewayAccounts.get(0).getType());
         assertEquals("analytics-id-2", gatewayAccounts.get(0).getAnalyticsId());
+        assertEquals(250L, gatewayAccounts.get(0).getCorporateCreditCardSurchargeAmount());
+        assertEquals(50L, gatewayAccounts.get(0).getCorporateDebitCardSurchargeAmount());
 
         assertThat(gatewayAccounts.get(1).getAccountId(), is(789L));
         assertEquals("provider-3", gatewayAccounts.get(1).getPaymentProvider());
@@ -371,16 +416,27 @@ public class GatewayAccountDaoITest extends DaoITestBase {
         assertEquals("service-name-3", gatewayAccounts.get(1).getServiceName());
         assertEquals(TEST.toString(), gatewayAccounts.get(1).getType());
         assertEquals("analytics-id-3", gatewayAccounts.get(1).getAnalyticsId());
+        assertEquals(0L, gatewayAccounts.get(1).getCorporateCreditCardSurchargeAmount());
+        assertEquals(0L, gatewayAccounts.get(1).getCorporateDebitCardSurchargeAmount());
     }
 
     @Test
-    public void shouldSaveNotifySettings() throws Exception {
+    public void shouldSaveNotifySettings() {
         Long accountId = Long.valueOf("12345678");
         String fuser = "fuser";
         String notifyAPIToken = "a_token";
         String notifyTemplateId = "a_template_id";
 
-        databaseTestHelper.addGatewayAccount(accountId.toString(), "provider-1", ImmutableMap.of("user", fuser, "password", "word"), "service-name-1", TEST, "description-1", "analytics-id-1");
+        databaseTestHelper.addGatewayAccount(
+                accountId.toString(),
+                "provider-1",
+                ImmutableMap.of("user", fuser, "password", "word"),
+                "service-name-1",
+                TEST,
+                "description-1",
+                "analytics-id-1",
+                0,
+                0);
         Optional<GatewayAccountEntity> gatewayAccountOptional = gatewayAccountDao.findById(accountId);
         assertThat(gatewayAccountOptional.isPresent(), is(true));
         GatewayAccountEntity gatewayAccountEntity = gatewayAccountOptional.get();

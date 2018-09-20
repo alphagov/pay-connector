@@ -42,7 +42,7 @@ public class GatewayAccountDao extends JpaDao<GatewayAccountEntity> {
 
     public List<GatewayAccountResourceDTO> list(List<Long> accountIds) {
         String query = "SELECT NEW uk.gov.pay.connector.model.domain.GatewayAccountResourceDTO"
-                       + " (gae.id, gae.gatewayName, gae.type, gae.description, gae.serviceName, gae.analyticsId)"
+                       + " (gae.id, gae.gatewayName, gae.type, gae.description, gae.serviceName, gae.analyticsId, gae.corporateCreditCardSurchargeAmount, gae.corporateDebitCardSurchargeAmount)"
                        + " FROM GatewayAccountEntity gae"
                        + " WHERE gae.id IN :accountIds"
                        + " ORDER BY gae.id";
@@ -56,7 +56,7 @@ public class GatewayAccountDao extends JpaDao<GatewayAccountEntity> {
 
     public List<GatewayAccountResourceDTO> listAll() {
         String query = "SELECT NEW uk.gov.pay.connector.model.domain.GatewayAccountResourceDTO" +
-                "(gae.id, gae.gatewayName, gae.type, gae.description, gae.serviceName, gae.analyticsId) " +
+                "(gae.id, gae.gatewayName, gae.type, gae.description, gae.serviceName, gae.analyticsId, gae.corporateCreditCardSurchargeAmount, gae.corporateDebitCardSurchargeAmount) " +
                 "FROM GatewayAccountEntity gae order by gae.id";
 
         return entityManager

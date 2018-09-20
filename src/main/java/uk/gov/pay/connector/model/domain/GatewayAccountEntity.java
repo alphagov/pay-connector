@@ -5,7 +5,21 @@ import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import com.fasterxml.jackson.annotation.JsonView;
 
-import javax.persistence.*;
+import javax.persistence.CascadeType;
+import javax.persistence.Column;
+import javax.persistence.Convert;
+import javax.persistence.Entity;
+import javax.persistence.EnumType;
+import javax.persistence.Enumerated;
+import javax.persistence.GeneratedValue;
+import javax.persistence.GenerationType;
+import javax.persistence.Id;
+import javax.persistence.JoinColumn;
+import javax.persistence.JoinTable;
+import javax.persistence.ManyToMany;
+import javax.persistence.OneToOne;
+import javax.persistence.SequenceGenerator;
+import javax.persistence.Table;
 import java.util.List;
 import java.util.Map;
 
@@ -20,8 +34,11 @@ import static org.apache.commons.lang3.StringUtils.isNotBlank;
 public class GatewayAccountEntity extends AbstractVersionedEntity {
 
     public class Views {
-        public class ApiView { }
-        public class FrontendView {}
+        public class ApiView {
+        }
+
+        public class FrontendView {
+        }
     }
 
     public enum Type {
@@ -47,7 +64,8 @@ public class GatewayAccountEntity extends AbstractVersionedEntity {
         }
     }
 
-    public GatewayAccountEntity() {}
+    public GatewayAccountEntity() {
+    }
 
     @Id
     @GeneratedValue(strategy = GenerationType.SEQUENCE, generator = "gateway_accounts_gateway_account_id_seq")
@@ -78,6 +96,12 @@ public class GatewayAccountEntity extends AbstractVersionedEntity {
 
     @Column(name = "requires_3ds")
     private boolean requires3ds;
+
+    @Column(name = "corporate_credit_card_surcharge_amount")
+    private long corporateCreditCardSurchargeAmount;
+
+    @Column(name = "corporate_debit_card_surcharge_amount")
+    private long corporateDebitCardSurchargeAmount;
 
     @Column(name = "notify_settings", columnDefinition = "json")
     @Convert(converter = JsonToMapConverter.class)
@@ -164,6 +188,18 @@ public class GatewayAccountEntity extends AbstractVersionedEntity {
         return requires3ds;
     }
 
+    @JsonView(Views.ApiView.class)
+    @JsonProperty("corporate_credit_card_surcharge_amount")
+    public long getCorporateCreditCardSurchargeAmount() {
+        return corporateCreditCardSurchargeAmount;
+    }
+
+    @JsonView(Views.ApiView.class)
+    @JsonProperty("corporate_debit_card_surcharge_amount")
+    public long getCorporateDebitCardSurchargeAmount() {
+        return corporateDebitCardSurchargeAmount;
+    }
+
     public void setNotificationCredentials(NotificationCredentials notificationCredentials) {
         this.notificationCredentials = notificationCredentials;
     }
@@ -204,7 +240,7 @@ public class GatewayAccountEntity extends AbstractVersionedEntity {
         this.type = type;
     }
 
-    public void setNotifySettings(Map<String, String> notifySettings){
+    public void setNotifySettings(Map<String, String> notifySettings) {
         this.notifySettings = notifySettings;
     }
 
@@ -212,8 +248,8 @@ public class GatewayAccountEntity extends AbstractVersionedEntity {
         return notifySettings;
     }
 
-    public Map<String, String> withoutCredentials() {
-        Map<String, String> account = newHashMap();
+    public Map<String, Object> withoutCredentials() {
+        Map<String, Object> account = newHashMap();
         account.put("gateway_account_id", String.valueOf(getId()));
         account.put("payment_provider", getGatewayName());
         account.put("type", getType());
@@ -227,6 +263,8 @@ public class GatewayAccountEntity extends AbstractVersionedEntity {
             account.put("service_name", getServiceName());
         }
         account.put("toggle_3ds", String.valueOf(isRequires3ds()));
+        account.put("corporate_credit_card_surcharge_amount", getCorporateCreditCardSurchargeAmount());
+        account.put("corporate_debit_card_surcharge_amount", getCorporateDebitCardSurchargeAmount());
         return account;
     }
 
@@ -242,8 +280,9 @@ public class GatewayAccountEntity extends AbstractVersionedEntity {
     public void setId(Long id) {
         this.id = id;
     }
-    
+
     public boolean isLive() {
         return Type.LIVE.equals(type);
     }
+
 }

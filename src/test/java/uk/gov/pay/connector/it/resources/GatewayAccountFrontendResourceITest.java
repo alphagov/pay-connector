@@ -9,14 +9,23 @@ import org.hamcrest.Matchers;
 import org.junit.Test;
 import uk.gov.pay.connector.it.dao.DatabaseFixtures;
 
-import java.util.*;
+import java.util.Arrays;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
+import java.util.UUID;
 import java.util.stream.Collectors;
 
 import static com.jayway.restassured.http.ContentType.JSON;
 import static java.lang.String.format;
 import static java.lang.String.join;
 import static javax.ws.rs.core.Response.Status.NOT_FOUND;
-import static org.hamcrest.Matchers.*;
+import static org.hamcrest.Matchers.allOf;
+import static org.hamcrest.Matchers.containsInAnyOrder;
+import static org.hamcrest.Matchers.hasEntry;
+import static org.hamcrest.Matchers.hasSize;
+import static org.hamcrest.Matchers.notNullValue;
+import static org.hamcrest.Matchers.nullValue;
 import static org.hamcrest.core.Is.is;
 import static org.junit.Assert.assertThat;
 import static org.junit.Assert.assertTrue;
@@ -110,6 +119,8 @@ public class GatewayAccountFrontendResourceITest extends GatewayAccountResourceT
         GatewayAccountPayload gatewayAccountPayload = GatewayAccountPayload.createDefault().withMerchantId("a-merchant-id");
         app.getDatabaseTestHelper().updateCredentialsFor(Long.valueOf(accountId), gson.toJson(gatewayAccountPayload.getCredentials()));
         app.getDatabaseTestHelper().updateServiceNameFor(Long.valueOf(accountId), gatewayAccountPayload.getServiceName());
+        app.getDatabaseTestHelper().updateCorporateCreditCardSurchargeAmountFor(Long.valueOf(accountId), 250);
+        app.getDatabaseTestHelper().updateCorporateDebitCardSurchargeAmountFor(Long.valueOf(accountId), 50);
 
         givenSetup().accept(JSON)
                 .get(ACCOUNTS_FRONTEND_URL + accountId)
@@ -122,7 +133,9 @@ public class GatewayAccountFrontendResourceITest extends GatewayAccountResourceT
                 .body("credentials.merchant_id", is(gatewayAccountPayload.getMerchantId()))
                 .body("description", is(nullValue()))
                 .body("analytics_id", is(nullValue()))
-                .body("service_name", is(gatewayAccountPayload.getServiceName()));
+                .body("service_name", is(gatewayAccountPayload.getServiceName()))
+                .body("corporate_credit_card_surcharge_amount", is(250))
+                .body("corporate_debit_card_surcharge_amount", is(50));
     }
 
     @Test
@@ -155,6 +168,29 @@ public class GatewayAccountFrontendResourceITest extends GatewayAccountResourceT
                 .body("notificationCredentials.password", is(nullValue()));
     }
 
+    @Test
+    public void shouldFilterGetGatewayAccountForExistingAccount() {
+        String accountId = createAGatewayAccountFor("worldpay");
+        GatewayAccountPayload gatewayAccountPayload = GatewayAccountPayload.createDefault().withMerchantId("a-merchant-id");
+        app.getDatabaseTestHelper().updateCredentialsFor(Long.valueOf(accountId), gson.toJson(gatewayAccountPayload.getCredentials()));
+        app.getDatabaseTestHelper().updateServiceNameFor(Long.valueOf(accountId), gatewayAccountPayload.getServiceName());
+        app.getDatabaseTestHelper().updateCorporateCreditCardSurchargeAmountFor(Long.valueOf(accountId), 250);
+        app.getDatabaseTestHelper().updateCorporateDebitCardSurchargeAmountFor(Long.valueOf(accountId), 50);
+
+        givenSetup().accept(JSON)
+                .get("/v1/frontend/accounts?accountIds=" + accountId)
+                .then()
+                .statusCode(200)
+                .body("accounts", hasSize(1))
+                .body("accounts[0].payment_provider", is("worldpay"))
+                .body("accounts[0].gateway_account_id", is(Integer.parseInt(accountId)))
+                .body("accounts[0].description", is(nullValue()))
+                .body("accounts[0].analytics_id", is(nullValue()))
+                .body("accounts[0].service_name", is(gatewayAccountPayload.getServiceName()))
+                .body("accounts[0].corporate_credit_card_surcharge_amount", is(250))
+                .body("accounts[0].corporate_debit_card_surcharge_amount", is(50));
+    }
+
     private void validateNon3dsCardType(ValidatableResponse response, String brand, String label, String... type) {
         response
                 .body(format("card_types.find { it.brand == '%s' }.id", brand), is(notNullValue()))
@@ -165,7 +201,6 @@ public class GatewayAccountFrontendResourceITest extends GatewayAccountResourceT
 
     @Test
     public void shouldAcceptAllCardTypesNotRequiring3DSForNewlyCreatedAccountAs3dsIsDisabledByDefault() {
-
         String accountId = createAGatewayAccountFor("worldpay");
         String frontendCardTypeUrl = ACCOUNTS_CARD_TYPE_FRONTEND_URL.replace("{accountId}", accountId);
         GatewayAccountPayload gatewayAccountPayload = GatewayAccountPayload.createDefault().withMerchantId("a-merchant-id");
@@ -511,4 +546,5 @@ public class GatewayAccountFrontendResourceITest extends GatewayAccountResourceT
 
         return format("{\"card_types\": [%s]}", join(",", cardTypeIds));
     }
+
 }

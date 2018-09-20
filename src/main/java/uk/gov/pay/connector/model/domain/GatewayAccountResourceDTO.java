@@ -9,7 +9,6 @@ import java.util.HashMap;
 import java.util.Map;
 
 import static com.fasterxml.jackson.annotation.JsonInclude.Include.NON_NULL;
-import static com.google.common.collect.Maps.newHashMap;
 
 @JsonInclude(NON_NULL)
 public class GatewayAccountResourceDTO {
@@ -30,18 +29,34 @@ public class GatewayAccountResourceDTO {
     @JsonProperty("analytics_id")
     private String analyticsId;
 
+    @JsonProperty("corporate_credit_card_surcharge_amount")
+    private long corporateCreditCardSurchargeAmount;
+
+    @JsonProperty("corporate_debit_card_surcharge_amount")
+    private long corporateDebitCardSurchargeAmount;
+
     @JsonProperty("_links")
     private Map<String, Map<String, URI>> links = new HashMap<>();
 
-    public GatewayAccountResourceDTO() {}
+    public GatewayAccountResourceDTO() {
+    }
 
-    public GatewayAccountResourceDTO(long accountId, String paymentProvider, GatewayAccountEntity.Type type, String description, String serviceName, String analyticsId) {
+    public GatewayAccountResourceDTO(long accountId,
+                                     String paymentProvider,
+                                     GatewayAccountEntity.Type type,
+                                     String description,
+                                     String serviceName,
+                                     String analyticsId,
+                                     long corporateCreditCardSurchargeAmount,
+                                     long corporateDebitCardSurchargeAmount) {
         this.accountId = accountId;
         this.paymentProvider = paymentProvider;
         this.type = type;
         this.description = description;
         this.serviceName = serviceName;
         this.analyticsId = analyticsId;
+        this.corporateCreditCardSurchargeAmount = corporateCreditCardSurchargeAmount;
+        this.corporateDebitCardSurchargeAmount = corporateDebitCardSurchargeAmount;
     }
 
     public long getAccountId() {
@@ -66,6 +81,14 @@ public class GatewayAccountResourceDTO {
 
     public String getAnalyticsId() {
         return analyticsId;
+    }
+
+    public long getCorporateCreditCardSurchargeAmount() {
+        return corporateCreditCardSurchargeAmount;
+    }
+
+    public long getCorporateDebitCardSurchargeAmount() {
+        return corporateDebitCardSurchargeAmount;
     }
 
     public Map<String, Map<String, URI>> getLinks() {
