@@ -191,7 +191,7 @@ public class ChargeDaoITest extends DaoITestBase {
     public void searchChargesByFullLastFourDigits() {
         // given
         String cardHolderName = "Mr. McPayment";
-        String lastDigits = "4321";
+        LastDigitsCardNumber lastDigits = LastDigitsCardNumber.of("4321");
         Long chargeId = 12L;
         TestCharge testCharge = DatabaseFixtures
                 .withDatabaseTestHelper(databaseTestHelper)
@@ -200,11 +200,11 @@ public class ChargeDaoITest extends DaoITestBase {
                 .withCardDetails(defaultTestCardDetails
                         .withChargeId(chargeId)
                         .withCardHolderName(cardHolderName)
-                        .withLastDigitsOfCardNumber(lastDigits))
+                        .withLastDigitsOfCardNumber(lastDigits.toString()))
                 .withChargeId(chargeId)
                 .insert();
         ChargeSearchParams params = new ChargeSearchParams()
-                .withLastDigitsCardNumber(LastDigitsCardNumber.of(lastDigits));
+                .withLastDigitsCardNumber(lastDigits);
 
         // when
         List<ChargeEntity> charges = chargeDao.findAllBy(params);
@@ -221,7 +221,7 @@ public class ChargeDaoITest extends DaoITestBase {
     public void searchChargesByFullFirstSixDigits() {
         // given
         String cardHolderName = "Mr. McPayment";
-        String firstSixDigits = "654321";
+        FirstDigitsCardNumber firstSixDigits = FirstDigitsCardNumber.of("654321");
         Long chargeId = 12L;
         TestCharge testCharge = DatabaseFixtures
                 .withDatabaseTestHelper(databaseTestHelper)
@@ -230,11 +230,11 @@ public class ChargeDaoITest extends DaoITestBase {
                 .withCardDetails(defaultTestCardDetails
                         .withChargeId(chargeId)
                         .withCardHolderName(cardHolderName)
-                        .withFirstDigitsOfCardNumber(firstSixDigits))
+                        .withFirstDigitsOfCardNumber(firstSixDigits.toString()))
                 .withChargeId(chargeId)
                 .insert();
         ChargeSearchParams params = new ChargeSearchParams()
-                .withFirstDigitsCardNumber(FirstDigitsCardNumber.of(firstSixDigits));
+                .withFirstDigitsCardNumber(firstSixDigits);
 
         // when
         List<ChargeEntity> charges = chargeDao.findAllBy(params);
@@ -245,54 +245,6 @@ public class ChargeDaoITest extends DaoITestBase {
         assertCharge("visa", testCharge, charge);
         assertThat(charge.getCardDetails().getCardHolderName(), is(cardHolderName));
         assertThat(charge.getCardDetails().getFirstDigitsCardNumber(), is(firstSixDigits));
-    }
-
-    @Test
-    public void shouldNotMatchChargesByPartialLastFourDigits() {
-        // given
-        String lastDigits = "4321";
-        Long chargeId = 12L;
-        DatabaseFixtures
-                .withDatabaseTestHelper(databaseTestHelper)
-                .aTestCharge()
-                .withTestAccount(defaultTestAccount)
-                .withCardDetails(defaultTestCardDetails
-                        .withChargeId(chargeId)
-                .withLastDigitsOfCardNumber(lastDigits))
-                .withChargeId(chargeId)
-                .insert();
-        ChargeSearchParams params = new ChargeSearchParams()
-                .withLastDigitsCardNumber(LastDigitsCardNumber.of("432"));
-
-        // when
-        List<ChargeEntity> charges = chargeDao.findAllBy(params);
-
-        // then
-        assertThat(charges.size(), is(0));
-    }
-
-    @Test
-    public void shouldNotMatchChargesByPartialFirstSixDigits() {
-        // given
-        String firstSixDigits = "534321";
-        Long chargeId = 12L;
-        DatabaseFixtures
-                .withDatabaseTestHelper(databaseTestHelper)
-                .aTestCharge()
-                .withTestAccount(defaultTestAccount)
-                .withCardDetails(defaultTestCardDetails
-                        .withChargeId(chargeId)
-                        .withFirstDigitsOfCardNumber(firstSixDigits))
-                .withChargeId(chargeId)
-                .insert();
-        ChargeSearchParams params = new ChargeSearchParams()
-                .withFirstDigitsCardNumber(FirstDigitsCardNumber.of("534"));
-
-        // when
-        List<ChargeEntity> charges = chargeDao.findAllBy(params);
-
-        // then
-        assertThat(charges.size(), is(0));
     }
     
     @Test

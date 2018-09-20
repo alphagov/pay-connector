@@ -9,8 +9,10 @@ import org.jooq.SelectJoinStep;
 import org.jooq.SelectOrderByStep;
 import org.jooq.SelectSeekStep1;
 import org.jooq.impl.DSL;
+import uk.gov.pay.connector.model.LastDigitsCardNumber;
 import uk.gov.pay.connector.model.TransactionType;
 import uk.gov.pay.connector.model.domain.ChargeStatus;
+import uk.gov.pay.connector.model.domain.LastDigitsCardNumberConverter;
 import uk.gov.pay.connector.model.domain.RefundStatus;
 import uk.gov.pay.connector.model.domain.Transaction;
 import uk.gov.pay.connector.model.domain.UTCDateTimeConverter;
@@ -35,11 +37,13 @@ public class TransactionDao {
 
     private final Provider<EntityManager> entityManager;
     private final UTCDateTimeConverter utcDateTimeConverter;
+    private final LastDigitsCardNumberConverter lastDigitsCardNumberConverter;
 
     @Inject
-    public TransactionDao(Provider<EntityManager> entityManager, UTCDateTimeConverter utcDateTimeConverter) {
+    public TransactionDao(Provider<EntityManager> entityManager, UTCDateTimeConverter utcDateTimeConverter, LastDigitsCardNumberConverter lastDigitsCardNumberConverter) {
         this.entityManager = entityManager;
         this.utcDateTimeConverter = utcDateTimeConverter;
+        this.lastDigitsCardNumberConverter = lastDigitsCardNumberConverter;
     }
 
     public List<Transaction> findAllBy(Long gatewayAccountId, ChargeSearchParams params) {
@@ -118,12 +122,12 @@ public class TransactionDao {
                     field("c.cardholder_name").lower().like(buildLikeClauseContaining(params.getCardHolderName().toString().toLowerCase())));
         }
 
-        if (params.getLastDigitsCardNumber() != null && isNotBlank(params.getLastDigitsCardNumber().toString())) {
+        if (params.getLastDigitsCardNumber() != null) { 
             queryFilters = queryFilters.and(
-                    field("c.last_digits_card_number").eq(params.getLastDigitsCardNumber().toString()));
+                    field("c.last_digits_card_number").eq(lastDigitsCardNumberConverter.convertToDatabaseColumn(params.getLastDigitsCardNumber())));
         }
 
-        if (params.getFirstDigitsCardNumber() != null && isNotBlank(params.getFirstDigitsCardNumber().toString())) {
+        if (params.getFirstDigitsCardNumber() != null && isNotBlank(params.getFirstDigitsCardNumber().toString())) { 
             queryFilters = queryFilters.and(
                     field("c.first_digits_card_number").eq(params.getFirstDigitsCardNumber().toString()));
         }

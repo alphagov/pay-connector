@@ -645,6 +645,42 @@ public class ChargesApiResourceITest extends ChargingITestBase {
     }
 
     @Test
+    public void shouldIgnoreFirstDigitsCardNumberIfBlank() {
+
+        addChargeAndCardDetails(CREATED, ServicePaymentReference.of("ref-1"), now());
+        addChargeAndCardDetails(AUTHORISATION_READY, ServicePaymentReference.of("ref-2"), now());
+        addChargeAndCardDetails(CAPTURED, ServicePaymentReference.of("ref-3"), now().minusDays(2));
+
+        getChargeApi
+                .withAccountId(accountId)
+                .withQueryParam("first_digits_card_number", "")
+                .withHeader(HttpHeaders.ACCEPT, APPLICATION_JSON)
+                .getTransactions()
+                .statusCode(OK.getStatusCode())
+                .contentType(JSON)
+                .body("results.size()", is(3))
+                .body("results[0].card_details.first_digits_card_number", is("123456"));
+    }
+
+    @Test
+    public void shouldIgnoreFirstDigitsCardNumberIfPartial() {
+
+        addChargeAndCardDetails(CREATED, ServicePaymentReference.of("ref-1"), now());
+        addChargeAndCardDetails(AUTHORISATION_READY, ServicePaymentReference.of("ref-2"), now());
+        addChargeAndCardDetails(CAPTURED, ServicePaymentReference.of("ref-3"), now().minusDays(2));
+
+        getChargeApi
+                .withAccountId(accountId)
+                .withQueryParam("first_digits_card_number", "12")
+                .withHeader(HttpHeaders.ACCEPT, APPLICATION_JSON)
+                .getTransactions()
+                .statusCode(OK.getStatusCode())
+                .contentType(JSON)
+                .body("results.size()", is(3))
+                .body("results[0].card_details.first_digits_card_number", is("123456"));
+    }
+
+    @Test
     public void shouldFilterTransactionsByLastDigitsCardNumber() {
 
         addChargeAndCardDetails(CREATED, ServicePaymentReference.of("ref-1"), now());
@@ -663,7 +699,7 @@ public class ChargesApiResourceITest extends ChargingITestBase {
     }
 
     @Test
-    public void shouldIgnoreFirstDigitsCardNumberIfBlank() {
+    public void shouldIgnoreLastDigitsCardNumberIfBlank() {
 
         addChargeAndCardDetails(CREATED, ServicePaymentReference.of("ref-1"), now());
         addChargeAndCardDetails(AUTHORISATION_READY, ServicePaymentReference.of("ref-2"), now());
@@ -671,7 +707,25 @@ public class ChargesApiResourceITest extends ChargingITestBase {
 
         getChargeApi
                 .withAccountId(accountId)
-                .withQueryParam("first_digits_card_number", "")
+                .withQueryParam("last_digits_card_number", "")
+                .withHeader(HttpHeaders.ACCEPT, APPLICATION_JSON)
+                .getTransactions()
+                .statusCode(OK.getStatusCode())
+                .contentType(JSON)
+                .body("results.size()", is(3))
+                .body("results[0].card_details.last_digits_card_number", is("1234"));
+    }
+
+    @Test
+    public void shouldIgnoreLastDigitsCardNumberIfPartial() {
+
+        addChargeAndCardDetails(CREATED, ServicePaymentReference.of("ref-1"), now());
+        addChargeAndCardDetails(AUTHORISATION_READY, ServicePaymentReference.of("ref-2"), now());
+        addChargeAndCardDetails(CAPTURED, ServicePaymentReference.of("ref-3"), now().minusDays(2));
+
+        getChargeApi
+                .withAccountId(accountId)
+                .withQueryParam("first_digits_card_number", "12")
                 .withHeader(HttpHeaders.ACCEPT, APPLICATION_JSON)
                 .getTransactions()
                 .statusCode(OK.getStatusCode())
@@ -679,7 +733,7 @@ public class ChargesApiResourceITest extends ChargingITestBase {
                 .body("results.size()", is(3))
                 .body("results[0].card_details.first_digits_card_number", is("123456"));
     }
-
+    
     @Test
     public void shouldFilterTransactionsByCardBrand() {
         String searchedCardBrand = "visa";

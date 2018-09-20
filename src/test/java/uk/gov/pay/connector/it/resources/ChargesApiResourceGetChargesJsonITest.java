@@ -408,7 +408,7 @@ public class ChargesApiResourceGetChargesJsonITest extends ChargingITestBase {
     }
 
     @Test
-    public void shouldNotMatchChargesByPartialLastFourDigits() {
+    public void shouldIgnorePartialLastFourDigitsSearches() {
         addChargeAndCardDetails(CREATED, ServicePaymentReference.of("ref-1"), now());
         addChargeAndCardDetails(AUTHORISATION_READY, ServicePaymentReference.of("ref-2"), now());
         addChargeAndCardDetails(CAPTURED, ServicePaymentReference.of("ref-3"), now().minusDays(2));
@@ -421,7 +421,9 @@ public class ChargesApiResourceGetChargesJsonITest extends ChargingITestBase {
                 .getTransactionsAPI()
                 .statusCode(OK.getStatusCode())
                 .contentType(JSON)
-                .body("results.size()", is(0));
+                .body("results.size()", is(3))
+                .body("results[0].card_details.cardholder_name", is("Mr. McPayment"))
+                .body("results[0].card_details.last_digits_card_number", is("1234"));
     }
 
     @Test
@@ -444,7 +446,7 @@ public class ChargesApiResourceGetChargesJsonITest extends ChargingITestBase {
     }
 
     @Test
-    public void shouldNotMatchChargesByPartialFirstSixDigits() {
+    public void shouldIgnorePartialFirstSixDigitsSearches() {
         addChargeAndCardDetails(CREATED, ServicePaymentReference.of("ref-1"), now());
         addChargeAndCardDetails(AUTHORISATION_READY, ServicePaymentReference.of("ref-2"), now());
         addChargeAndCardDetails(CAPTURED, ServicePaymentReference.of("ref-3"), now().minusDays(2));
@@ -457,7 +459,9 @@ public class ChargesApiResourceGetChargesJsonITest extends ChargingITestBase {
                 .getTransactionsAPI()
                 .statusCode(OK.getStatusCode())
                 .contentType(JSON)
-                .body("results.size()", is(0));
+                .body("results.size()", is(3))
+                .body("results[0].card_details.cardholder_name", is("Mr. McPayment"))
+                .body("results[0].card_details.first_digits_card_number", is("123456"));
     }
 
     @Test

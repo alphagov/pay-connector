@@ -2,10 +2,13 @@ package uk.gov.pay.connector.model.domain;
 
 import org.eclipse.persistence.annotations.ReadOnly;
 import uk.gov.pay.commons.model.SupportedLanguage;
+import uk.gov.pay.connector.model.FirstDigitsCardNumber;
+import uk.gov.pay.connector.model.LastDigitsCardNumber;
 import uk.gov.pay.connector.model.ServicePaymentReference;
 
 import javax.persistence.ColumnResult;
 import javax.persistence.ConstructorResult;
+import javax.persistence.Convert;
 import javax.persistence.Entity;
 import javax.persistence.Id;
 import javax.persistence.SqlResultSetMapping;
@@ -66,8 +69,10 @@ public class Transaction {
     private String cardBrandLabel;
     private String cardHolderName;
     private String expiryDate;
-    private String lastDigitsCardNumber;
-    private String firstDigitsCardNumber;
+    @Convert(converter = LastDigitsCardNumberConverter.class)
+    private LastDigitsCardNumber lastDigitsCardNumber;
+    @Convert(converter = FirstDigitsCardNumberConverter.class)
+    private FirstDigitsCardNumber firstDigitsCardNumber;
     private String userExternalId;
     private String addressCity;
     private String addressCountry;
@@ -121,8 +126,8 @@ public class Transaction {
         this.cardBrandLabel = cardBrandLabel;
         this.cardHolderName = cardHolderName;
         this.expiryDate = expiryDate;
-        this.lastDigitsCardNumber = lastDigitsCardNumber;
-        this.firstDigitsCardNumber = firstDigitsCardNumber;
+        this.lastDigitsCardNumber = new LastDigitsCardNumberConverter().convertToEntityAttribute(lastDigitsCardNumber);
+        this.firstDigitsCardNumber = new FirstDigitsCardNumberConverter().convertToEntityAttribute(firstDigitsCardNumber);
         this.addressCity = addressCity;
         this.addressCountry = addressCountry;
         this.addressCounty = addressCounty;
@@ -190,10 +195,10 @@ public class Transaction {
         return expiryDate;
     }
 
-    public String getLastDigitsCardNumber() {
+    public LastDigitsCardNumber getLastDigitsCardNumber() {
         return lastDigitsCardNumber;
     }
-    public String getFirstDigitsCardNumber() {
+    public FirstDigitsCardNumber getFirstDigitsCardNumber() {
         return firstDigitsCardNumber;
     }
 

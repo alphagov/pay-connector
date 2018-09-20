@@ -507,20 +507,20 @@ public class TransactionDaoITest extends DaoITestBase {
     public void shouldSearchTransactionsByFullLastFourDigitsCardNumber()  {
 
         // given
-        String lastDigitsCardNumber = "1611";
+        LastDigitsCardNumber lastDigitsCardNumber = LastDigitsCardNumber.of("1611");
 
         TestCharge testCharge = withDatabaseTestHelper(databaseTestHelper)
                 .aTestCharge()
                 .withTestAccount(defaultTestAccount);
         DatabaseFixtures.TestCardDetails testCardDetails = new DatabaseFixtures(databaseTestHelper)
                 .validTestCardDetails()
-                .withLastDigitsOfCardNumber(lastDigitsCardNumber)
+                .withLastDigitsOfCardNumber(lastDigitsCardNumber.toString())
                 .withChargeId(testCharge.chargeId)
                 .update();
         testCharge.withCardDetails(testCardDetails).insert();
         insertNewRefundForCharge(testCharge, REFUND_USER_EXTERNAL_ID,2L, now().plusHours(2));
         ChargeSearchParams params = new ChargeSearchParams()
-                .withLastDigitsCardNumber(LastDigitsCardNumber.of(lastDigitsCardNumber));
+                .withLastDigitsCardNumber(lastDigitsCardNumber);
 
         // when
         List<Transaction> transactions = transactionDao.findAllBy(defaultTestAccount.getAccountId(), params);
@@ -540,46 +540,23 @@ public class TransactionDaoITest extends DaoITestBase {
     }
 
     @Test
-    public void shouldNotMatchTransactionsByPartialLastFourDigitsCardNumber() {
-        // given
-        String lastDigitsCardNumber = "4321";
-        TestCharge testCharge = withDatabaseTestHelper(databaseTestHelper)
-                .aTestCharge()
-                .withTestAccount(defaultTestAccount);
-        DatabaseFixtures.TestCardDetails testCardDetails = new DatabaseFixtures(databaseTestHelper)
-                .validTestCardDetails()
-                .withLastDigitsOfCardNumber(lastDigitsCardNumber)
-                .withChargeId(testCharge.chargeId)
-                .update();
-        testCharge.withCardDetails(testCardDetails).insert();
-        ChargeSearchParams params = new ChargeSearchParams()
-                .withLastDigitsCardNumber(LastDigitsCardNumber.of("432"));
-
-        // when
-        List<Transaction> transactions = transactionDao.findAllBy(defaultTestAccount.getAccountId(), params);
-
-        // then
-        assertThat(transactions.size(), is(0));
-    }
-
-    @Test
     public void shouldSearchTransactionsByFullFirstSixDigitsCardNumber()  {
 
         // given
-        String firstDigitsCardNumber = "161145";
+        FirstDigitsCardNumber firstDigitsCardNumber = FirstDigitsCardNumber.of("161145");
 
         TestCharge testCharge = withDatabaseTestHelper(databaseTestHelper)
                 .aTestCharge()
                 .withTestAccount(defaultTestAccount);
         DatabaseFixtures.TestCardDetails testCardDetails = new DatabaseFixtures(databaseTestHelper)
                 .validTestCardDetails()
-                .withFirstDigitsOfCardNumber(firstDigitsCardNumber)
+                .withFirstDigitsOfCardNumber(firstDigitsCardNumber.toString())
                 .withChargeId(testCharge.chargeId)
                 .update();
         testCharge.withCardDetails(testCardDetails).insert();
         insertNewRefundForCharge(testCharge, REFUND_USER_EXTERNAL_ID,2L, now().plusHours(2));
         ChargeSearchParams params = new ChargeSearchParams()
-                .withFirstDigitsCardNumber(FirstDigitsCardNumber.of(firstDigitsCardNumber));
+                .withFirstDigitsCardNumber(firstDigitsCardNumber);
 
         // when
         List<Transaction> transactions = transactionDao.findAllBy(defaultTestAccount.getAccountId(), params);
@@ -596,29 +573,6 @@ public class TransactionDaoITest extends DaoITestBase {
         assertThat(charge.getExternalId(), is(testCharge.getExternalChargeId()));
         assertThat(charge.getTransactionType(), is("charge"));
         assertThat(charge.getFirstDigitsCardNumber(), is(firstDigitsCardNumber));
-    }
-
-    @Test
-    public void shouldNotMatchTransactionsByPartialFirstFourDigitsCardNumber() {
-        // given
-        String firstDigitsCardNumber = "483321";
-        TestCharge testCharge = withDatabaseTestHelper(databaseTestHelper)
-                .aTestCharge()
-                .withTestAccount(defaultTestAccount);
-        DatabaseFixtures.TestCardDetails testCardDetails = new DatabaseFixtures(databaseTestHelper)
-                .validTestCardDetails()
-                .withFirstDigitsOfCardNumber(firstDigitsCardNumber)
-                .withChargeId(testCharge.chargeId)
-                .update();
-        testCharge.withCardDetails(testCardDetails).insert();
-        ChargeSearchParams params = new ChargeSearchParams()
-                .withFirstDigitsCardNumber(FirstDigitsCardNumber.of("432"));
-
-        // when
-        List<Transaction> transactions = transactionDao.findAllBy(defaultTestAccount.getAccountId(), params);
-
-        // then
-        assertThat(transactions.size(), is(0));
     }
     
     @Test
