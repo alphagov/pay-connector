@@ -188,13 +188,13 @@ public class GatewayAccountEntity extends AbstractVersionedEntity {
         return requires3ds;
     }
 
-    @JsonView(Views.ApiView.class)
+    @JsonView(value = {Views.ApiView.class, Views.FrontendView.class})
     @JsonProperty("corporate_credit_card_surcharge_amount")
     public long getCorporateCreditCardSurchargeAmount() {
         return corporateCreditCardSurchargeAmount;
     }
 
-    @JsonView(Views.ApiView.class)
+    @JsonView(value = {Views.ApiView.class, Views.FrontendView.class})
     @JsonProperty("corporate_debit_card_surcharge_amount")
     public long getCorporateDebitCardSurchargeAmount() {
         return corporateDebitCardSurchargeAmount;
