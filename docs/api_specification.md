@@ -53,7 +53,7 @@ Content-Type: application/json
 ```
 201 OK
 Content-Type: application/json
-Location: http://connector.service/v1/api/accounts/1
+Location: https://connector.example.com/v1/api/accounts/1
 
 {
     "gateway_account_id": "1",
@@ -61,7 +61,7 @@ Location: http://connector.service/v1/api/accounts/1
     "description": "This is an account for the GOV.UK Pay team",
     "analytics_id": "PAY-GA-123",
     "links": [{
-        "href": "http://connector.service/v1/api/accounts/1",
+        "href": "https://connector.example.com/v1/api/accounts/1",
         "rel" : "self",
         "method" : "GET"
     }]
@@ -150,7 +150,7 @@ Content-Type: application/json
       "corporate_debit_card_surcharge_amount": 0,
       "_links": {
         "self": {
-          "href": "http://connector.service/v1/api/accounts/100"
+          "href": "https://connector.example.com/v1/api/accounts/100"
         }
       }
     },
@@ -165,7 +165,7 @@ Content-Type: application/json
       "corporate_debit_card_surcharge_amount": 0,
       "_links": {
         "self": {
-          "href": "http://connector.service/v1/api/accounts/200"
+          "href": "https://connector.example.com/v1/api/accounts/200"
         }
       }
     },
@@ -179,7 +179,7 @@ Content-Type: application/json
       "corporate_debit_card_surcharge_amount": 0,
       "_links": {
         "self": {
-          "href": "http://connector.service/v1/api/accounts/400"
+          "href": "https://connector.example.com/v1/api/accounts/400"
         }
       }
     }
@@ -246,7 +246,7 @@ Content-Type: application/json
             "expiry_date": "12/19",
             "last_digits_card_number": "4242"
     },
-    "return_url": "http://example.service/return_from_payments",
+    "return_url": "https://govservice.example.com/return_from_payments",
     "refund_summary": {
             "amount_available": 5000,
             "amount_submitted": 0,
@@ -260,15 +260,15 @@ Content-Type: application/json
         {
             "rel": "self",
             "method": "GET",
-            "href": "http://connector.service/v1/api/charges/1"
+            "href": "https://connector.example.com/v1/api/charges/1"
         },
         {
             "rel": "next_url",
             "method": "GET",
-            "href": "http://frontend/charges/1?chargeTokenId=82347"
+            "href": "https://frontend.example.com/charges/1?chargeTokenId=82347"
         },
         {
-            "href": "https://connector.service/v1/api/accounts/1/charges/uqu4s24383qkod35rsb06gv3cn/refunds",
+            "href": "https://connector.example.com//v1/api/accounts/1/charges/uqu4s24383qkod35rsb06gv3cn/refunds",
             "method": "GET",
             "rel": "refunds"
         }
@@ -320,7 +320,7 @@ Content-Type: application/json
     "description": "The payment description (shown to the user on the payment pages)",
     "reference": "The reference issued by the government service for this payment",
     "gateway_account_id": "10",
-    "return_url": "http://example.service.gov.uk/return_from_payments"
+    "return_url": "https://govservice.example.com/return_from_payments"
 }
 ```
 
@@ -341,7 +341,7 @@ Content-Type: application/json
 ```
 201 Created
 Content-Type: application/json
-Location: http://connector.service.example/v1/api/charges/1
+Location: https://connector.example.com/v1/api/charges/1
 
 {
     "amount": 5000,
@@ -356,22 +356,22 @@ Location: http://connector.service.example/v1/api/charges/1
         {
             "rel": "self",
             "method": "GET",
-            "href": "https://connector.service.example/v1/api/accounts/1/charges/d1onfdh8qptnclbs8q7f5ldles"
+            "href": "https://connector.example.com/v1/api/accounts/1/charges/d1onfdh8qptnclbs8q7f5ldles"
         },
         {
             "rel": "refunds",
             "method": "GET",
-            "href": "https://connector.service.example/v1/api/accounts/1/charges/d1onfdh8qptnclbs8q7f5ldles/refunds"
+            "href": "https://connector.example.com/v1/api/accounts/1/charges/d1onfdh8qptnclbs8q7f5ldles/refunds"
         },
         {
             "rel": "next_url",
             "method": "GET",
-            "href": "https://frontend.service.example/secure/c4a2aaf7-c388-432d-a09b-fe0b669cd070"
+            "href": "https://frontend.example.com/.example/secure/c4a2aaf7-c388-432d-a09b-fe0b669cd070"
         },
         {
             "rel": "next_url_post",
             "method": "POST",
-            "href": "https://frontend.pymnt.localdomain/secure",
+            "href": "https://frontend.example.com/secure",
             "type": "application/x-www-form-urlencoded",
             "params": {
                 "chargeTokenId": "c4a2aaf7-c388-432d-a09b-fe0b669cd070"
@@ -379,7 +379,7 @@ Location: http://connector.service.example/v1/api/charges/1
         }
     ],
     "charge_id": "d1onfdh8qptnclbs8q7f5ldles",
-    "return_url": "http://example.service.gov.uk/return_from_payments",
+    "return_url": "https://govservice.example.com/return_from_payments",
     "payment_provider": "sandbox",
     "created_date": "2018-09-04T09:48:24.099Z",
     "refund_summary": {
@@ -456,15 +456,15 @@ Content-Type: application/json
             "last_digits_card_number": "4242"
         },
         "payment_provider": "sandbox",
-        "return_url": "http://example.service/return_from_payments",
+        "return_url": "https://govservice.example.com/return_from_payments",
         "links": [
             {
-                "href": "https://connector.pymnt.localdomain/v1/api/accounts/1/charges/uqu4s24383qkod35rsb06gv3cn",
+                "href": "https://connector.example.com/v1/api/accounts/1/charges/uqu4s24383qkod35rsb06gv3cn",
                 "method": "GET",
                 "rel": "self"
             },
             {
-                "href": "https://connector.pymnt.localdomain/v1/api/accounts/1/charges/uqu4s24383qkod35rsb06gv3cn/refunds",
+                "href": "https://connector.example.com/v1/api/accounts/1/charges/uqu4s24383qkod35rsb06gv3cn/refunds",
                 "method": "GET",
                 "rel": "refunds"
             }
@@ -950,37 +950,142 @@ Content-Type: application/json
 
 {
     "amount": 5000,
-    "status": "CREATED",
-    "card_brand": "Visa",
+    "state": {
+        "finished": true,
+        "status": "success"
+    },
+    "description": "Payment description",
     "language": "en",
+    "status": "CAPTURED",
+    "links": [
+        {
+            "rel": "self",
+            "method": "GET",
+            "href": "https://connector.example.com/v1/frontend/charges/tps417v9td3qpmisi71dhvtb7b"
+        },
+        {
+            "rel": "cardAuth",
+            "method": "POST",
+            "href": "https://connector.example.com/v1/frontend/charges/tps417v9td3qpmisi71dhvtb7b/cards"
+        },
+        {
+            "rel": "cardCapture",
+            "method": "POST",
+            "href": "https://connector.example.com/v1/frontend/charges/tps417v9td3qpmisi71dhvtb7b/capture"
+        }
+    ],
+    "charge_id": "tps417v9td3qpmisi71dhvtb7b",
+    "gateway_transaction_id": "6dc944c2-0e20-4ad3-af89-8b2c30bbd2a2",
+    "return_url": "https://govservice.example.com/return/fe10ff90badbade0e798b70eb2f94369/Payment-reference",
+    "email": "user@example.com",
+    "created_date": "2018-09-21T08:42:38.230Z",
+    "card_details": {
+        "last_digits_card_number": "4242",
+        "cardholder_name": "Mr. Payment",
+        "expiry_date": "10/20",
+        "billing_address": {
+            "line1": "123 Street",
+            "line2": "",
+            "postcode": "ABCD EFG",
+            "city": "London",
+            "county": null,
+            "country": "GB"
+        },
+        "card_brand": "Visa"
+    },
     "delayed_capture": false,
-    "links": [{
-                "href": "http://connector.service/v1/frontend/charges/1",
-                "rel" : "self",
-                "method" : "GET"
+    "gateway_account": {
+        "version": 1,
+        "requires3ds": false,
+        "notifySettings": null,
+        "live": false,
+        "gateway_account_id": 1,
+        "payment_provider": "sandbox",
+        "type": "test",
+        "service_name": "local Pay test",
+        "analytics_id": null,
+        "corporate_credit_card_surcharge_amount": 0,
+        "corporate_debit_card_surcharge_amount": 0,
+        "card_types": [
+            {
+                "id": "79404bb9-31fb-4ad6-xxxx-789c3b044059",
+                "brand": "visa",
+                "label": "Visa",
+                "type": "DEBIT",
+                "requires3ds": false
             },
             {
-                "rel": "cardAuth",
-                "method": "POST",
-                "href": "http://connector.service/v1/frontend/charges/1/cards"
+                "id": "77b1c923-8ef7-42cc-xxxx-78f8c8f96980",
+                "brand": "visa",
+                "label": "Visa",
+                "type": "CREDIT",
+                "requires3ds": false
             },
             {
-                "rel": "cardCapture",
-                "method": "POST",
-                "href": "http://connector.service/v1/frontend/charges/1/capture"
-            }],
+                "id": "69193ce2-6c07-44d7-xxxx-37debfb83907",
+                "brand": "master-card",
+                "label": "Mastercard",
+                "type": "DEBIT",
+                "requires3ds": false
+            },
+            {
+                "id": "f91037af-3b10-4bc6-xxxx-d3ec3d30a8aa",
+                "brand": "master-card",
+                "label": "Mastercard",
+                "type": "CREDIT",
+                "requires3ds": false
+            },
+            {
+                "id": "39f11dde-abd3-475a-xxxx-55a431beb592",
+                "brand": "american-express",
+                "label": "American Express",
+                "type": "CREDIT",
+                "requires3ds": false
+            },
+            {
+                "id": "74c8fa04-0831-49da-xxxx-b6a6f1a82fca",
+                "brand": "diners-club",
+                "label": "Diners Club",
+                "type": "CREDIT",
+                "requires3ds": false
+            },
+            {
+                "id": "de8fb0cd-9fa7-47c8-xxxx-06e1acdefd83",
+                "brand": "discover",
+                "label": "Discover",
+                "type": "CREDIT",
+                "requires3ds": false
+            },
+            {
+                "id": "07eaeb25-d268-4c34-xxxx-81c8e9528d1c",
+                "brand": "jcb",
+                "label": "Jcb",
+                "type": "CREDIT",
+                "requires3ds": false
+            },
+            {
+                "id": "b8ed6f05-674f-4b75-xxxx-07c2a38d1df4",
+                "brand": "unionpay",
+                "label": "Union Pay",
+                "type": "CREDIT",
+                "requires3ds": false
+            }
+        ]
+    }
 }
 ```
 
 #### Response field description
 
-| Field                    | always present | Description                                                |
-| ------------------------ |:--------:| ---------------------------------------------------------------- |
-| `amount`                 | X | The amount (in minor units) of the charge                               |
-| `status`                 | X | The current (internal) status of the charge                             |
-| `card_brand`             |   | The brand label of the card                                             |
-| `language`               | X | The ISO-639-1 code representing the language of the payment e.g. `"en"` |
-| `delayed_capture`        | X | Whether the payment requires or required an explicit request to capture |
+| Field                                              | always present             | Description                                                                     |
+| -------------------------------------------------- | -------------------------- | ------------------------------------------------------------------------------- |
+| `amount`                                           | X                          | The amount (in minor units) of the charge.                                      |
+| `status`                                           | X                          | The current (internal) status of the charge.                                    |
+| `card_brand`                                       |                            | The brand label of the card.                                                    |
+| `language`                                         | X                          | The ISO-639-1 code representing the language of the payment e.g. `"en"`.        |
+| `delayed_capture`                                  | X                          | Whether the payment requires or required an explicit request to capture.        |
+| `corporate_credit_card_surcharge_amount`           | X                          | A corporate credit card surcharge amount in pence. The default value is `0`.    |
+| `corporate_debit_card_surcharge_amount`            | X                          | A corporate debit card surcharge amount in pence. The default value is `0`.     |
 
 -----------------------------------------------------------------------------------------------------------
 
@@ -1122,69 +1227,6 @@ Content-Type: application/json
     "message": "Charge with id [abc] not found."
 }
 ```
------------------------------------------------------------------------------------------------------------
-## GET /v1/frontend/charges?gatewayAccountId={gatewayAccountId}
-
-List all the transactions for a given gateway account sorted by ChargeID
-
-### Request example
-
-```
-GET /v1/frontend/charges?gatewayAccountId=1223445
-```
-
-### Response for the success path
-
-```
-HTTP/1.1 200 OK
-Content-Type: application/json
-
-{
-    "results": [
-        {
-            "amount": 500,            
-            "charge_id": "10002",
-            "gateway_transaction_id": null,
-            "status": "AUTHORISATION REJECTED"
-        },
-        {
-            "amount": 100,            
-            "charge_id": "10001",
-            "gateway_transaction_id": "transaction-id-1",
-            "status": "AUTHORISATION SUCCESS"
-        }
-    ]
-}
-```
-
-### Response for the failure path
-
-```
-HTTP/1.1 400 Bad Request
-Content-Type: application/json
-
-{
-    "message": "invalid gateway account reference f7h4f7hg4"
-}
-```
-
-#### Request query param description
-| Field                    | always present | Description                               |
-| ------------------------ |:--------:| ----------------------------------------- |
-| `gatewayAccountId`               | X | Gateway Account Id of which the transactions must be received.    |
-
-
-#### Response field description
-
-| Field                    | always present | Description                               |
-| ------------------------ |:--------:| ----------------------------------------- |
-| `result`               | X | JSON Array of which each element represents a transaction row.       |
-|                        |   | Element structure:                         |
-|                        |   | `amount`: Transaction amount in pence      |
-|                        |   | `charge_id`: GDS charge reference          |
-|                        |   | `gateway_transaction_id`: payment gateway reference for this charge          |
-|                        |   | `status`: Current status of the charge          |
-
 -----------------------------------------------------------------------------------------------------------
 ## GET /v1/frontend/tokens/{chargeTokenId}/charge
 
@@ -1478,8 +1520,8 @@ Content-Type: application/json
     "user_external_id":"AA213FD51B3801043FBC",
     "status":"success",
     "_links":{
-        "self":{"href":"https://connector.pymnt.localdomain/v1/api/accounts/1/charges/uqu4s24383qkod35rsb06gv3cn/refunds/vijjk08adovg10gfqc46joem2l"},
-        "payment":{"href":"https://connector.pymnt.localdomain/v1/api/accounts/1/charges/uqu4s24383qkod35rsb06gv3cn"}
+        "self":{"href":"https://connector.example.com/v1/api/accounts/1/charges/uqu4s24383qkod35rsb06gv3cn/refunds/vijjk08adovg10gfqc46joem2l"},
+        "payment":{"href":"https://connector.example.com/v1/api/accounts/1/charges/uqu4s24383qkod35rsb06gv3cn"}
     }
 }
 ```
@@ -1590,10 +1632,10 @@ Content-Type: application/json
             {
                 "_links": {
                     "payment": {
-                        "href": "https://connector.pymnt.localdomain/v1/api/accounts/1/charges/uqu4s24383qkod35rsb06gv3cn"
+                        "href": "https://connector.example.com/v1/api/accounts/1/charges/uqu4s24383qkod35rsb06gv3cn"
                     },
                     "self": {
-                        "href": "https://connector.pymnt.localdomain/v1/api/accounts/1/charges/uqu4s24383qkod35rsb06gv3cn/refunds/vijjk08adovg10gfqc46joem2l"
+                        "href": "https://connector.example.com/v1/api/accounts/1/charges/uqu4s24383qkod35rsb06gv3cn/refunds/vijjk08adovg10gfqc46joem2l"
                     }
                 },
                 "amount": 3444,
@@ -1606,10 +1648,10 @@ Content-Type: application/json
     },
     "_links": {
         "payment": {
-            "href": "https://connector.pymnt.localdomain/v1/api/accounts/1/charges/uqu4s24383qkod35rsb06gv3cn"
+            "href": "https://connector.example.com/v1/api/accounts/1/charges/uqu4s24383qkod35rsb06gv3cn"
         },
         "self": {
-            "href": "https://connector.pymnt.localdomain/v1/api/accounts/1/charges/uqu4s24383qkod35rsb06gv3cn/refunds"
+            "href": "https://connector.example.com/v1/api/accounts/1/charges/uqu4s24383qkod35rsb06gv3cn/refunds"
         }
     },
     "payment_id": "uqu4s24383qkod35rsb06gv3cn"
@@ -1662,10 +1704,10 @@ Content-Type: application/json
 {
     "_links": {
             "payment": {
-                "href": "https://connector.pymnt.localdomain/v1/api/accounts/2/charges/uqu4s24383qkod35rsb06gv3cn"
+                "href": "https://connector.example.com/v1/api/accounts/2/charges/uqu4s24383qkod35rsb06gv3cn"
             },
             "self": {
-                "href": "https://connector.pymnt.localdomain/v1/api/accounts/2/charges/uqu4s24383qkod35rsb06gv3cn/refunds/vijjk08adovg10gfqc46joem2l"
+                "href": "https://connector.example.com/v1/api/accounts/2/charges/uqu4s24383qkod35rsb06gv3cn/refunds/vijjk08adovg10gfqc46joem2l"
             }
         },
     "amount": 3444,
