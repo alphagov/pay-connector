@@ -8,7 +8,6 @@ import org.apache.commons.lang3.tuple.Pair;
 import org.junit.Before;
 import org.junit.Test;
 import org.junit.runner.RunWith;
-import org.mockito.InOrder;
 import org.mockito.Mock;
 import org.mockito.runners.MockitoJUnitRunner;
 import uk.gov.pay.connector.exception.ChargeNotFoundRuntimeException;
@@ -46,7 +45,6 @@ import static org.mockito.Matchers.any;
 import static org.mockito.Mockito.anyString;
 import static org.mockito.Mockito.doAnswer;
 import static org.mockito.Mockito.doThrow;
-import static org.mockito.Mockito.inOrder;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.verifyNoMoreInteractions;
@@ -57,7 +55,6 @@ import static uk.gov.pay.connector.model.domain.ChargeStatus.AUTHORISATION_3DS_R
 import static uk.gov.pay.connector.model.domain.ChargeStatus.AUTHORISATION_ABORTED;
 import static uk.gov.pay.connector.model.domain.ChargeStatus.AUTHORISATION_CANCELLED;
 import static uk.gov.pay.connector.model.domain.ChargeStatus.AUTHORISATION_ERROR;
-import static uk.gov.pay.connector.model.domain.ChargeStatus.AUTHORISATION_READY;
 import static uk.gov.pay.connector.model.domain.ChargeStatus.AUTHORISATION_REJECTED;
 import static uk.gov.pay.connector.model.domain.ChargeStatus.AUTHORISATION_SUCCESS;
 import static uk.gov.pay.connector.model.domain.ChargeStatus.AUTHORISATION_TIMEOUT;
@@ -133,7 +130,7 @@ public class CardAuthoriseServiceTest extends CardServiceTest {
     }
 
     @Test
-    public void doAuthorise_shouldRespondAuthorisationSuccess() throws Exception {
+    public void doAuthorise_shouldRespondAuthorisationSuccess() {
 
         providerWillAuthorise();
         GatewayResponse response = cardAuthorisationService.doAuthorise(charge.getExternalId(), aValidAuthorisationDetails());
@@ -151,7 +148,7 @@ public class CardAuthoriseServiceTest extends CardServiceTest {
     }
 
     @Test
-    public void doAuthorise_shouldRespondAuthorisationSuccess_overridingGeneratedTransactionId() throws Exception {
+    public void doAuthorise_shouldRespondAuthorisationSuccess_overridingGeneratedTransactionId() {
 
         providerWillAuthorise();
 
@@ -215,7 +212,7 @@ public class CardAuthoriseServiceTest extends CardServiceTest {
     }
 
     @Test
-    public void doAuthorise_shouldRetainGeneratedTransactionId_WhenProviderAuthorisationFails() throws Exception {
+    public void doAuthorise_shouldRetainGeneratedTransactionId_WhenProviderAuthorisationFails() {
 
         String generatedTransactionId = "generated-transaction-id";
         when(mockedProviders.byName(charge.getPaymentGatewayName())).thenReturn(mockedPaymentProvider);
@@ -232,7 +229,7 @@ public class CardAuthoriseServiceTest extends CardServiceTest {
     }
 
     @Test
-    public void doAuthorise_shouldRespondAuthorisationFailed_When3dsRequiredConflictingConfigurationOfCardTypeWithGatewayAccount() throws Exception {
+    public void doAuthorise_shouldRespondAuthorisationFailed_When3dsRequiredConflictingConfigurationOfCardTypeWithGatewayAccount() {
 
         AuthCardDetails authCardDetails = aValidAuthorisationDetails();
 
@@ -265,7 +262,7 @@ public class CardAuthoriseServiceTest extends CardServiceTest {
     }
 
     @Test
-    public void doAuthorise_shouldRespondAuthorisationRejected_whenProviderAuthorisationIsRejected() throws Exception {
+    public void doAuthorise_shouldRespondAuthorisationRejected_whenProviderAuthorisationIsRejected() {
 
         providerWillReject();
 
@@ -277,7 +274,7 @@ public class CardAuthoriseServiceTest extends CardServiceTest {
     }
 
     @Test
-    public void doAuthorise_shouldRespondAuthorisationCancelled_whenProviderAuthorisationIsCancelled() throws Exception {
+    public void doAuthorise_shouldRespondAuthorisationCancelled_whenProviderAuthorisationIsCancelled() {
 
         mockExecutorServiceWillReturnCompletedResultWithSupplierReturnValue();
         GatewayResponse authResponse = mockAuthResponse(TRANSACTION_ID, AuthoriseStatus.CANCELLED, null);
@@ -291,7 +288,7 @@ public class CardAuthoriseServiceTest extends CardServiceTest {
     }
 
     @Test
-    public void shouldRespondAuthorisationError() throws Exception {
+    public void shouldRespondAuthorisationError() {
 
         providerWillError();
 
@@ -329,6 +326,7 @@ public class CardAuthoriseServiceTest extends CardServiceTest {
         assertThat(cardDetails.getCardBrand(), is(cardBrand));
         assertThat(cardDetails.getExpiryDate(), is(expiryDate));
         assertThat(cardDetails.getLastDigitsCardNumber(), is("4242"));
+        assertThat(cardDetails.getFirstDigitsCardNumber(), is("424242"));
         assertThat(cardDetails.getBillingAddress().getLine1(), is(addressLine1));
         assertThat(cardDetails.getBillingAddress().getLine2(), is(addressLine2));
         assertThat(cardDetails.getBillingAddress().getPostcode(), is(postcode));
@@ -380,7 +378,7 @@ public class CardAuthoriseServiceTest extends CardServiceTest {
     }
 
     @Test
-    public void doAuthorise_shouldThrowAnOperationAlreadyInProgressRuntimeException_whenTimeout() throws Exception {
+    public void doAuthorise_shouldThrowAnOperationAlreadyInProgressRuntimeException_whenTimeout() {
 
         when(mockExecutorService.execute(any())).thenReturn(Pair.of(IN_PROGRESS, null));
 
@@ -420,7 +418,7 @@ public class CardAuthoriseServiceTest extends CardServiceTest {
     }
 
     @Test(expected = IllegalStateRuntimeException.class)
-    public void doAuthorise_shouldThrowAnIllegalStateRuntimeException_whenInvalidStatus() throws Exception {
+    public void doAuthorise_shouldThrowAnIllegalStateRuntimeException_whenInvalidStatus() {
 
         ChargeEntity charge = createNewChargeWith(1L, ChargeStatus.CREATED);
         when(mockedChargeDao.findByExternalId(charge.getExternalId())).thenReturn(Optional.of(charge));
@@ -456,7 +454,7 @@ public class CardAuthoriseServiceTest extends CardServiceTest {
     }
 
     @Test(expected = ConflictRuntimeException.class)
-    public void doAuthorise_shouldThrowAConflictRuntimeException_whenOptimisticLockExceptionIsThrownInPreAuthorise() throws Exception {
+    public void doAuthorise_shouldThrowAConflictRuntimeException_whenOptimisticLockExceptionIsThrownInPreAuthorise() {
 
         providerWillAuthorise();
 

@@ -34,7 +34,7 @@ public class ChargeCancelResourceITest extends ChargingITestBase {
     }
 
     @Test
-    public void shouldRespond204WithNoLockingEvent_IfCancelledBeforeAuth() throws Exception {
+    public void shouldRespond204WithNoLockingEvent_IfCancelledBeforeAuth() {
 
         asList(CREATED, ENTERING_CARD_DETAILS).forEach(status -> {
             String chargeId = addCharge(status, "ref", ZonedDateTime.now().minusHours(1), "irrelavant");
@@ -47,7 +47,7 @@ public class ChargeCancelResourceITest extends ChargingITestBase {
     }
 
     @Test
-    public void shouldPreserveCardDetailsIfCancelled() throws Exception {
+    public void shouldPreserveCardDetailsIfCancelled() {
         String externalChargeId = addCharge(ChargeStatus.AUTHORISATION_SUCCESS, "ref", ZonedDateTime.now().minusHours(1), "irrelavant");
         Long chargeId = Long.valueOf(StringUtils.removeStart(externalChargeId, "charge"));
 
@@ -62,6 +62,7 @@ public class ChargeCancelResourceITest extends ChargingITestBase {
         assertThat(cardDetails, is(notNullValue()));
         assertThat(cardDetails.get("card_brand"), is(notNullValue()));
         assertThat(cardDetails.get("last_digits_card_number"), is(notNullValue()));
+        assertThat(cardDetails.get("first_digits_card_number"), is(notNullValue()));
         assertThat(cardDetails.get("expiry_date"), is(notNullValue()));
         assertThat(cardDetails.get("cardholder_name"), is(notNullValue()));
         assertThat(cardDetails.get("address_line1"), is(notNullValue()));

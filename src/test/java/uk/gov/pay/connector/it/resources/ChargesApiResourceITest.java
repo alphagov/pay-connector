@@ -422,7 +422,7 @@ public class ChargesApiResourceITest extends ChargingITestBase {
                 .insert();
         app.getDatabaseTestHelper().addCharge(chargeId, externalChargeId, accountId, AMOUNT, AUTHORISATION_SUCCESS, returnUrl, null,
                 ServicePaymentReference.of("ref"), null, email);
-        app.getDatabaseTestHelper().updateChargeCardDetails(chargeId, testCardType.getBrand(), "1234", "Mr. McPayment",
+        app.getDatabaseTestHelper().updateChargeCardDetails(chargeId, testCardType.getBrand(), "1234", "123456", "Mr. McPayment",
                 "03/18", "line1", null, "postcode", "city", null, "country");
 
         app.getDatabaseTestHelper().addToken(chargeId, "tokenId");
@@ -444,7 +444,7 @@ public class ChargesApiResourceITest extends ChargingITestBase {
 
         app.getDatabaseTestHelper().addCharge(chargeId, externalChargeId, accountId, AMOUNT, AUTHORISATION_SUCCESS, returnUrl, null,
                 ServicePaymentReference.of("ref"), null, email);
-        app.getDatabaseTestHelper().updateChargeCardDetails(chargeId, "unknown-brand", "1234", "Mr. McPayment",
+        app.getDatabaseTestHelper().updateChargeCardDetails(chargeId, "unknown-brand", "1234", "123456", "Mr. McPayment",
                 "03/18", "line1", null, "postcode", "city", null, "country");
         app.getDatabaseTestHelper().addToken(chargeId, "tokenId");
 
@@ -470,7 +470,7 @@ public class ChargesApiResourceITest extends ChargingITestBase {
         app.getDatabaseTestHelper().addAcceptedCardType(Long.valueOf(accountId), card);
         app.getDatabaseTestHelper().addCharge(chargeId, externalChargeId, accountId, AMOUNT, chargeStatus, returnUrl, null,
                 ServicePaymentReference.of("My reference"), createdDate);
-        app.getDatabaseTestHelper().updateChargeCardDetails(chargeId, "VISA", "1234", "Mr. McPayment",
+        app.getDatabaseTestHelper().updateChargeCardDetails(chargeId, "VISA", "1234", "123456", "Mr. McPayment",
                 "03/18", "line1", null, "postcode", "city", null, "country");
         app.getDatabaseTestHelper().addToken(chargeId, "tokenId");
         app.getDatabaseTestHelper().addEvent(chargeId, chargeStatus.getValue());
@@ -513,7 +513,7 @@ public class ChargesApiResourceITest extends ChargingITestBase {
         app.getDatabaseTestHelper().addAcceptedCardType(Long.valueOf(accountId), card);
         app.getDatabaseTestHelper().addCharge(chargeId, externalChargeId, accountId, AMOUNT, chargeStatus, returnUrl, null,
                 ServicePaymentReference.of("My reference"), createdDate);
-        app.getDatabaseTestHelper().updateChargeCardDetails(chargeId, "visa", null, null, null,
+        app.getDatabaseTestHelper().updateChargeCardDetails(chargeId, "visa", null, null, null, null,
                 null, null, null, null, null, null);
         app.getDatabaseTestHelper().addToken(chargeId, "tokenId");
         app.getDatabaseTestHelper().addEvent(chargeId, chargeStatus.getValue());
@@ -536,6 +536,7 @@ public class ChargesApiResourceITest extends ChargingITestBase {
                 .body("results[0].card_details.card_brand", is("Visa"))
                 .body("results[0].card_details.cardholder_name", nullValue())
                 .body("results[0].card_details.last_digits_card_number", nullValue())
+                .body("results[0].card_details.first_digits_card_number", nullValue())
                 .body("results[0].card_details.expiry_date", nullValue());
     }
 
@@ -1220,7 +1221,7 @@ public class ChargesApiResourceITest extends ChargingITestBase {
         app.getDatabaseTestHelper().addCharge(chargeId, externalChargeId, accountId, AMOUNT, chargeStatus, returnUrl, null, reference, fromDate, email);
         app.getDatabaseTestHelper().addToken(chargeId, "tokenId");
         app.getDatabaseTestHelper().addEvent(chargeId, chargeStatus.getValue());
-        app.getDatabaseTestHelper().updateChargeCardDetails(chargeId, cardBrand, "1234", "Mr. McPayment", "03/18", "line1", null, "postcode", "city", null, "country");
+        app.getDatabaseTestHelper().updateChargeCardDetails(chargeId, cardBrand, "1234", "123456", "Mr. McPayment", "03/18", "line1", null, "postcode", "city", null, "country");
         app.getDatabaseTestHelper().addPaymentRequest(chargeId, AMOUNT, Long.valueOf(accountId), returnUrl, "some description", reference, fromDate, externalChargeId);
         app.getDatabaseTestHelper().addChargeTransaction(chargeId, null, Long.valueOf(accountId), AMOUNT, chargeStatus, chargeId, fromDate, email);
         app.getDatabaseTestHelper().addCard(chargeId, cardBrand, chargeId);

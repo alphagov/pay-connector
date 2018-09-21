@@ -66,7 +66,7 @@ public class TransactionsApiContractTest {
     private void setUpSingleCharge(String accountId, Long chargeId, String chargeExternalId, ChargeStatus chargeStatus, ZonedDateTime createdDate, boolean delayedCapture) {
         dbHelper.addCharge(chargeId, chargeExternalId, accountId, 100L, chargeStatus, "aReturnUrl",
                 chargeExternalId, ServicePaymentReference.of("aReference"), createdDate, "test@test.com", delayedCapture);
-        dbHelper.updateChargeCardDetails(chargeId, "visa", "0001", "aName", "08/23",
+        dbHelper.updateChargeCardDetails(chargeId, "visa", "0001", "123456", "aName", "08/23",
                 "aFirstAddress", "aSecondLine", "aPostCode", "aCity", "aCounty", "aCountry");
     }
 
