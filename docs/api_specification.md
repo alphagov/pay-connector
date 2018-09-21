@@ -53,7 +53,7 @@ Content-Type: application/json
 ```
 201 OK
 Content-Type: application/json
-Location: http://connector.service/v1/api/accounts/1
+Location: https://connector.example.com/v1/api/accounts/1
 
 {
     "gateway_account_id": "1",
@@ -61,7 +61,7 @@ Location: http://connector.service/v1/api/accounts/1
     "description": "This is an account for the GOV.UK Pay team",
     "analytics_id": "PAY-GA-123",
     "links": [{
-        "href": "http://connector.service/v1/api/accounts/1",
+        "href": "https://connector.example.com/v1/api/accounts/1",
         "rel" : "self",
         "method" : "GET"
     }]
@@ -150,7 +150,7 @@ Content-Type: application/json
       "corporate_debit_card_surcharge_amount": 0,
       "_links": {
         "self": {
-          "href": "http://connector.service/v1/api/accounts/100"
+          "href": "https://connector.example.com/v1/api/accounts/100"
         }
       }
     },
@@ -165,7 +165,7 @@ Content-Type: application/json
       "corporate_debit_card_surcharge_amount": 0,
       "_links": {
         "self": {
-          "href": "http://connector.service/v1/api/accounts/200"
+          "href": "https://connector.example.com/v1/api/accounts/200"
         }
       }
     },
@@ -179,7 +179,7 @@ Content-Type: application/json
       "corporate_debit_card_surcharge_amount": 0,
       "_links": {
         "self": {
-          "href": "http://connector.service/v1/api/accounts/400"
+          "href": "https://connector.example.com/v1/api/accounts/400"
         }
       }
     }
@@ -246,7 +246,7 @@ Content-Type: application/json
             "expiry_date": "12/19",
             "last_digits_card_number": "4242"
     },
-    "return_url": "http://example.service/return_from_payments",
+    "return_url": "https://govservice.example.com/return_from_payments",
     "refund_summary": {
             "amount_available": 5000,
             "amount_submitted": 0,
@@ -260,15 +260,15 @@ Content-Type: application/json
         {
             "rel": "self",
             "method": "GET",
-            "href": "http://connector.service/v1/api/charges/1"
+            "href": "https://connector.example.com/v1/api/charges/1"
         },
         {
             "rel": "next_url",
             "method": "GET",
-            "href": "http://frontend/charges/1?chargeTokenId=82347"
+            "href": "https://frontend.example.com/charges/1?chargeTokenId=82347"
         },
         {
-            "href": "https://connector.service/v1/api/accounts/1/charges/uqu4s24383qkod35rsb06gv3cn/refunds",
+            "href": "https://connector.example.com//v1/api/accounts/1/charges/uqu4s24383qkod35rsb06gv3cn/refunds",
             "method": "GET",
             "rel": "refunds"
         }
@@ -320,7 +320,7 @@ Content-Type: application/json
     "description": "The payment description (shown to the user on the payment pages)",
     "reference": "The reference issued by the government service for this payment",
     "gateway_account_id": "10",
-    "return_url": "http://example.service.gov.uk/return_from_payments"
+    "return_url": "https://govservice.example.com/return_from_payments"
 }
 ```
 
@@ -341,7 +341,7 @@ Content-Type: application/json
 ```
 201 Created
 Content-Type: application/json
-Location: http://connector.service.example/v1/api/charges/1
+Location: https://connector.example.com/v1/api/charges/1
 
 {
     "amount": 5000,
@@ -356,22 +356,22 @@ Location: http://connector.service.example/v1/api/charges/1
         {
             "rel": "self",
             "method": "GET",
-            "href": "https://connector.service.example/v1/api/accounts/1/charges/d1onfdh8qptnclbs8q7f5ldles"
+            "href": "https://connector.example.com/v1/api/accounts/1/charges/d1onfdh8qptnclbs8q7f5ldles"
         },
         {
             "rel": "refunds",
             "method": "GET",
-            "href": "https://connector.service.example/v1/api/accounts/1/charges/d1onfdh8qptnclbs8q7f5ldles/refunds"
+            "href": "https://connector.example.com/v1/api/accounts/1/charges/d1onfdh8qptnclbs8q7f5ldles/refunds"
         },
         {
             "rel": "next_url",
             "method": "GET",
-            "href": "https://frontend.service.example/secure/c4a2aaf7-c388-432d-a09b-fe0b669cd070"
+            "href": "https://frontend.example.com/.example/secure/c4a2aaf7-c388-432d-a09b-fe0b669cd070"
         },
         {
             "rel": "next_url_post",
             "method": "POST",
-            "href": "https://frontend.pymnt.localdomain/secure",
+            "href": "https://frontend.example.com/secure",
             "type": "application/x-www-form-urlencoded",
             "params": {
                 "chargeTokenId": "c4a2aaf7-c388-432d-a09b-fe0b669cd070"
@@ -379,7 +379,7 @@ Location: http://connector.service.example/v1/api/charges/1
         }
     ],
     "charge_id": "d1onfdh8qptnclbs8q7f5ldles",
-    "return_url": "http://example.service.gov.uk/return_from_payments",
+    "return_url": "https://govservice.example.com/return_from_payments",
     "payment_provider": "sandbox",
     "created_date": "2018-09-04T09:48:24.099Z",
     "refund_summary": {
@@ -456,15 +456,15 @@ Content-Type: application/json
             "last_digits_card_number": "4242"
         },
         "payment_provider": "sandbox",
-        "return_url": "http://example.service/return_from_payments",
+        "return_url": "https://govservice.example.com/return_from_payments",
         "links": [
             {
-                "href": "https://connector.pymnt.localdomain/v1/api/accounts/1/charges/uqu4s24383qkod35rsb06gv3cn",
+                "href": "https://connector.example.com/v1/api/accounts/1/charges/uqu4s24383qkod35rsb06gv3cn",
                 "method": "GET",
                 "rel": "self"
             },
             {
-                "href": "https://connector.pymnt.localdomain/v1/api/accounts/1/charges/uqu4s24383qkod35rsb06gv3cn/refunds",
+                "href": "https://connector.example.com/v1/api/accounts/1/charges/uqu4s24383qkod35rsb06gv3cn/refunds",
                 "method": "GET",
                 "rel": "refunds"
             }
@@ -976,7 +976,7 @@ Content-Type: application/json
     ],
     "charge_id": "tps417v9td3qpmisi71dhvtb7b",
     "gateway_transaction_id": "6dc944c2-0e20-4ad3-af89-8b2c30bbd2a2",
-    "return_url": "https://www.example.com/return/fe10ff90badbade0e798b70eb2f94369/Payment-reference",
+    "return_url": "https://govservice.example.com/return/fe10ff90badbade0e798b70eb2f94369/Payment-reference",
     "email": "user@example.com",
     "created_date": "2018-09-21T08:42:38.230Z",
     "card_details": {
@@ -1520,8 +1520,8 @@ Content-Type: application/json
     "user_external_id":"AA213FD51B3801043FBC",
     "status":"success",
     "_links":{
-        "self":{"href":"https://connector.pymnt.localdomain/v1/api/accounts/1/charges/uqu4s24383qkod35rsb06gv3cn/refunds/vijjk08adovg10gfqc46joem2l"},
-        "payment":{"href":"https://connector.pymnt.localdomain/v1/api/accounts/1/charges/uqu4s24383qkod35rsb06gv3cn"}
+        "self":{"href":"https://connector.example.com/v1/api/accounts/1/charges/uqu4s24383qkod35rsb06gv3cn/refunds/vijjk08adovg10gfqc46joem2l"},
+        "payment":{"href":"https://connector.example.com/v1/api/accounts/1/charges/uqu4s24383qkod35rsb06gv3cn"}
     }
 }
 ```
@@ -1632,10 +1632,10 @@ Content-Type: application/json
             {
                 "_links": {
                     "payment": {
-                        "href": "https://connector.pymnt.localdomain/v1/api/accounts/1/charges/uqu4s24383qkod35rsb06gv3cn"
+                        "href": "https://connector.example.com/v1/api/accounts/1/charges/uqu4s24383qkod35rsb06gv3cn"
                     },
                     "self": {
-                        "href": "https://connector.pymnt.localdomain/v1/api/accounts/1/charges/uqu4s24383qkod35rsb06gv3cn/refunds/vijjk08adovg10gfqc46joem2l"
+                        "href": "https://connector.example.com/v1/api/accounts/1/charges/uqu4s24383qkod35rsb06gv3cn/refunds/vijjk08adovg10gfqc46joem2l"
                     }
                 },
                 "amount": 3444,
@@ -1648,10 +1648,10 @@ Content-Type: application/json
     },
     "_links": {
         "payment": {
-            "href": "https://connector.pymnt.localdomain/v1/api/accounts/1/charges/uqu4s24383qkod35rsb06gv3cn"
+            "href": "https://connector.example.com/v1/api/accounts/1/charges/uqu4s24383qkod35rsb06gv3cn"
         },
         "self": {
-            "href": "https://connector.pymnt.localdomain/v1/api/accounts/1/charges/uqu4s24383qkod35rsb06gv3cn/refunds"
+            "href": "https://connector.example.com/v1/api/accounts/1/charges/uqu4s24383qkod35rsb06gv3cn/refunds"
         }
     },
     "payment_id": "uqu4s24383qkod35rsb06gv3cn"
@@ -1704,10 +1704,10 @@ Content-Type: application/json
 {
     "_links": {
             "payment": {
-                "href": "https://connector.pymnt.localdomain/v1/api/accounts/2/charges/uqu4s24383qkod35rsb06gv3cn"
+                "href": "https://connector.example.com/v1/api/accounts/2/charges/uqu4s24383qkod35rsb06gv3cn"
             },
             "self": {
-                "href": "https://connector.pymnt.localdomain/v1/api/accounts/2/charges/uqu4s24383qkod35rsb06gv3cn/refunds/vijjk08adovg10gfqc46joem2l"
+                "href": "https://connector.example.com/v1/api/accounts/2/charges/uqu4s24383qkod35rsb06gv3cn/refunds/vijjk08adovg10gfqc46joem2l"
             }
         },
     "amount": 3444,
