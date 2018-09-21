@@ -950,37 +950,142 @@ Content-Type: application/json
 
 {
     "amount": 5000,
-    "status": "CREATED",
-    "card_brand": "Visa",
+    "state": {
+        "finished": true,
+        "status": "success"
+    },
+    "description": "Payment description",
     "language": "en",
+    "status": "CAPTURED",
+    "links": [
+        {
+            "rel": "self",
+            "method": "GET",
+            "href": "https://connector.example.com/v1/frontend/charges/tps417v9td3qpmisi71dhvtb7b"
+        },
+        {
+            "rel": "cardAuth",
+            "method": "POST",
+            "href": "https://connector.example.com/v1/frontend/charges/tps417v9td3qpmisi71dhvtb7b/cards"
+        },
+        {
+            "rel": "cardCapture",
+            "method": "POST",
+            "href": "https://connector.example.com/v1/frontend/charges/tps417v9td3qpmisi71dhvtb7b/capture"
+        }
+    ],
+    "charge_id": "tps417v9td3qpmisi71dhvtb7b",
+    "gateway_transaction_id": "6dc944c2-0e20-4ad3-af89-8b2c30bbd2a2",
+    "return_url": "https://www.example.com/return/fe10ff90badbade0e798b70eb2f94369/Payment-reference",
+    "email": "user@example.com",
+    "created_date": "2018-09-21T08:42:38.230Z",
+    "card_details": {
+        "last_digits_card_number": "4242",
+        "cardholder_name": "Mr. Payment",
+        "expiry_date": "10/20",
+        "billing_address": {
+            "line1": "123 Street",
+            "line2": "",
+            "postcode": "ABCD EFG",
+            "city": "London",
+            "county": null,
+            "country": "GB"
+        },
+        "card_brand": "Visa"
+    },
     "delayed_capture": false,
-    "links": [{
-                "href": "http://connector.service/v1/frontend/charges/1",
-                "rel" : "self",
-                "method" : "GET"
+    "gateway_account": {
+        "version": 1,
+        "requires3ds": false,
+        "notifySettings": null,
+        "live": false,
+        "gateway_account_id": 1,
+        "payment_provider": "sandbox",
+        "type": "test",
+        "service_name": "local Pay test",
+        "analytics_id": null,
+        "corporate_credit_card_surcharge_amount": 0,
+        "corporate_debit_card_surcharge_amount": 0,
+        "card_types": [
+            {
+                "id": "79404bb9-31fb-4ad6-xxxx-789c3b044059",
+                "brand": "visa",
+                "label": "Visa",
+                "type": "DEBIT",
+                "requires3ds": false
             },
             {
-                "rel": "cardAuth",
-                "method": "POST",
-                "href": "http://connector.service/v1/frontend/charges/1/cards"
+                "id": "77b1c923-8ef7-42cc-xxxx-78f8c8f96980",
+                "brand": "visa",
+                "label": "Visa",
+                "type": "CREDIT",
+                "requires3ds": false
             },
             {
-                "rel": "cardCapture",
-                "method": "POST",
-                "href": "http://connector.service/v1/frontend/charges/1/capture"
-            }],
+                "id": "69193ce2-6c07-44d7-xxxx-37debfb83907",
+                "brand": "master-card",
+                "label": "Mastercard",
+                "type": "DEBIT",
+                "requires3ds": false
+            },
+            {
+                "id": "f91037af-3b10-4bc6-xxxx-d3ec3d30a8aa",
+                "brand": "master-card",
+                "label": "Mastercard",
+                "type": "CREDIT",
+                "requires3ds": false
+            },
+            {
+                "id": "39f11dde-abd3-475a-xxxx-55a431beb592",
+                "brand": "american-express",
+                "label": "American Express",
+                "type": "CREDIT",
+                "requires3ds": false
+            },
+            {
+                "id": "74c8fa04-0831-49da-xxxx-b6a6f1a82fca",
+                "brand": "diners-club",
+                "label": "Diners Club",
+                "type": "CREDIT",
+                "requires3ds": false
+            },
+            {
+                "id": "de8fb0cd-9fa7-47c8-xxxx-06e1acdefd83",
+                "brand": "discover",
+                "label": "Discover",
+                "type": "CREDIT",
+                "requires3ds": false
+            },
+            {
+                "id": "07eaeb25-d268-4c34-xxxx-81c8e9528d1c",
+                "brand": "jcb",
+                "label": "Jcb",
+                "type": "CREDIT",
+                "requires3ds": false
+            },
+            {
+                "id": "b8ed6f05-674f-4b75-xxxx-07c2a38d1df4",
+                "brand": "unionpay",
+                "label": "Union Pay",
+                "type": "CREDIT",
+                "requires3ds": false
+            }
+        ]
+    }
 }
 ```
 
 #### Response field description
 
-| Field                    | always present | Description                                                |
-| ------------------------ |:--------:| ---------------------------------------------------------------- |
-| `amount`                 | X | The amount (in minor units) of the charge                               |
-| `status`                 | X | The current (internal) status of the charge                             |
-| `card_brand`             |   | The brand label of the card                                             |
-| `language`               | X | The ISO-639-1 code representing the language of the payment e.g. `"en"` |
-| `delayed_capture`        | X | Whether the payment requires or required an explicit request to capture |
+| Field                                              | always present             | Description                                                                     |
+| -------------------------------------------------- | -------------------------- | ------------------------------------------------------------------------------- |
+| `amount`                                           | X                          | The amount (in minor units) of the charge.                                      |
+| `status`                                           | X                          | The current (internal) status of the charge.                                    |
+| `card_brand`                                       |                            | The brand label of the card.                                                    |
+| `language`                                         | X                          | The ISO-639-1 code representing the language of the payment e.g. `"en"`.        |
+| `delayed_capture`                                  | X                          | Whether the payment requires or required an explicit request to capture.        |
+| `corporate_credit_card_surcharge_amount`           | X                          | A corporate credit card surcharge amount in pence. The default value is `0`.    |
+| `corporate_debit_card_surcharge_amount`            | X                          | A corporate debit card surcharge amount in pence. The default value is `0`.     |
 
 -----------------------------------------------------------------------------------------------------------
 
@@ -1122,69 +1227,6 @@ Content-Type: application/json
     "message": "Charge with id [abc] not found."
 }
 ```
------------------------------------------------------------------------------------------------------------
-## GET /v1/frontend/charges?gatewayAccountId={gatewayAccountId}
-
-List all the transactions for a given gateway account sorted by ChargeID
-
-### Request example
-
-```
-GET /v1/frontend/charges?gatewayAccountId=1223445
-```
-
-### Response for the success path
-
-```
-HTTP/1.1 200 OK
-Content-Type: application/json
-
-{
-    "results": [
-        {
-            "amount": 500,            
-            "charge_id": "10002",
-            "gateway_transaction_id": null,
-            "status": "AUTHORISATION REJECTED"
-        },
-        {
-            "amount": 100,            
-            "charge_id": "10001",
-            "gateway_transaction_id": "transaction-id-1",
-            "status": "AUTHORISATION SUCCESS"
-        }
-    ]
-}
-```
-
-### Response for the failure path
-
-```
-HTTP/1.1 400 Bad Request
-Content-Type: application/json
-
-{
-    "message": "invalid gateway account reference f7h4f7hg4"
-}
-```
-
-#### Request query param description
-| Field                    | always present | Description                               |
-| ------------------------ |:--------:| ----------------------------------------- |
-| `gatewayAccountId`               | X | Gateway Account Id of which the transactions must be received.    |
-
-
-#### Response field description
-
-| Field                    | always present | Description                               |
-| ------------------------ |:--------:| ----------------------------------------- |
-| `result`               | X | JSON Array of which each element represents a transaction row.       |
-|                        |   | Element structure:                         |
-|                        |   | `amount`: Transaction amount in pence      |
-|                        |   | `charge_id`: GDS charge reference          |
-|                        |   | `gateway_transaction_id`: payment gateway reference for this charge          |
-|                        |   | `status`: Current status of the charge          |
-
 -----------------------------------------------------------------------------------------------------------
 ## GET /v1/frontend/tokens/{chargeTokenId}/charge
 
