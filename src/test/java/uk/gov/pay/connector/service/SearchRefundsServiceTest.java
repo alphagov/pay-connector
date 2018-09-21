@@ -1,6 +1,7 @@
 package uk.gov.pay.connector.service;
 
 import com.google.common.collect.ImmutableMap;
+import com.jayway.jsonassert.JsonAssert;
 import org.junit.Before;
 import org.junit.Rule;
 import org.junit.Test;
@@ -10,42 +11,39 @@ import org.mockito.Mock;
 import org.mockito.runners.MockitoJUnitRunner;
 import uk.gov.pay.connector.dao.ChargeSearchParams;
 import uk.gov.pay.connector.dao.RefundDao;
-import uk.gov.pay.connector.model.SearchRefundsResponse;
+import uk.gov.pay.connector.model.domain.ChargeEntity;
 import uk.gov.pay.connector.model.domain.GatewayAccountEntity;
 import uk.gov.pay.connector.model.domain.RefundEntity;
 import uk.gov.pay.connector.model.domain.RefundStatus;
-import uk.gov.pay.connector.resources.ChargesPaginationResponseBuilder;
-import uk.gov.pay.connector.util.DateTimeUtils;
 
 import javax.ws.rs.core.Response;
-import javax.ws.rs.core.UriBuilder;
 import javax.ws.rs.core.UriInfo;
-import java.net.URI;
-import java.net.URISyntaxException;
-import java.util.Arrays;
-import java.util.Collections;
+import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
 import static java.util.Arrays.asList;
-import static javax.ws.rs.HttpMethod.GET;
 import static javax.ws.rs.core.Response.Status.NOT_FOUND;
+import static javax.ws.rs.core.UriBuilder.fromUri;
 import static org.hamcrest.CoreMatchers.is;
+import static org.hamcrest.Matchers.hasSize;
 import static org.junit.Assert.assertThat;
-import static org.mockito.BDDMockito.given;
 import static org.mockito.Matchers.any;
 import static org.mockito.Mockito.when;
-import static uk.gov.pay.connector.model.SearchRefundsResponse.anAllRefundsResponseBuilder;
+import static uk.gov.pay.connector.model.domain.ChargeEntityFixture.aValidChargeEntity;
 import static uk.gov.pay.connector.model.domain.GatewayAccountEntity.Type.TEST;
 import static uk.gov.pay.connector.model.domain.RefundEntityFixture.aValidRefundEntity;
 
 @RunWith(MockitoJUnitRunner.class)
 public class SearchRefundsServiceTest {
+    private static final long ACCOUNT_ID = 1L;
+    private SearchRefundsService searchRefundsService;
+    private GatewayAccountEntity gatewayAccount;
+    private String extChargeId;
 
     @Rule
     public ExpectedException thrown = ExpectedException.none();
-    private static final long GATEWAY_ACCOUNT_ID = 1L;
 
     @Mock
     private RefundDao refundDao;
@@ -53,13 +51,11 @@ public class SearchRefundsServiceTest {
     @Mock
     private UriInfo uriInfo;
 
-    private SearchRefundsService searchRefundsService;
-
     @Before
     public void setUp() {
-        GatewayAccountEntity gatewayAccount = new GatewayAccountEntity("sandbox", new HashMap<>(), TEST);
-        gatewayAccount.setId(GATEWAY_ACCOUNT_ID);
-
+        extChargeId = "someExternalId";
+        gatewayAccount = new GatewayAccountEntity("sandbox", new HashMap<>(), TEST);
+        gatewayAccount.setId(ACCOUNT_ID);
         searchRefundsService = new SearchRefundsService(refundDao);
     }
 
@@ -84,125 +80,21 @@ public class SearchRefundsServiceTest {
     }
 
     @Test
-    public void getAllRefunds_shouldReturnRefundsWhenRefundsExist() throws URISyntaxException {
-        Long accountId = 1L;
-        Long total = 2L;
-        Long pageNumber = 1L;
-        Long displaySize = 1L;
-        String userExternalId = "7v9ou841qn7jibls7ee0cb6t9j";
-
-        GatewayAccountEntity gatewayAccount = new GatewayAccountEntity(
-                "sandbox", new HashMap<>(), TEST);
-        gatewayAccount.setId(accountId);
-
-        List<RefundEntity> refundEntities = Arrays.asList(
-                aValidRefundEntity()
-                        .withExternalId("someExternalId")
-                        .withGatewayAccountEntity(gatewayAccount)
-                        .withStatus(RefundStatus.REFUNDED)
-                        .withAmount(500L)
-                        .withUserExternalId(userExternalId)
-                        .build(),
-                aValidRefundEntity()
-                        .withExternalId("someExternalId")
-                        .withGatewayAccountEntity(gatewayAccount)
-                        .withStatus(RefundStatus.REFUNDED)
-                        .withAmount(500L)
-                        .withUserExternalId(userExternalId)
-                        .build()
-        );
-
-        ChargeSearchParams searchParams = new ChargeSearchParams()
-                .withGatewayAccountId(accountId)
-                .withDisplaySize(displaySize)
-                .withPage(pageNumber);
-
-        given(refundDao.getTotalFor(any(ChargeSearchParams.class))).willReturn(Long.valueOf(refundEntities.size()));
-        given(refundDao.findAllBy(any(ChargeSearchParams.class))).willReturn(refundEntities);
-
-        when(uriInfo.getBaseUriBuilder()).thenReturn(UriBuilder.fromUri("http://app.com/"));
-        when(uriInfo.getPath()).thenReturn("");
-
-        Response response = searchRefundsService.getAllRefunds(uriInfo, 1L, pageNumber, displaySize);
-
-        RefundEntity refundEntity1 = refundEntities.get(0);
-        RefundEntity refundEntity2 = refundEntities.get(1);
-
-        List<SearchRefundsResponse> expectedRefunds =
-                asList(
-                        anAllRefundsResponseBuilder()
-                                .withRefundId(refundEntity1.getExternalId())
-                                .withCreatedDate(DateTimeUtils.toUTCDateTimeString(refundEntity1.getCreatedDate()))
-                                .withStatus(String.valueOf(refundEntity1.getStatus()))
-                                .withChargeId(refundEntity1.getChargeEntity().getExternalId())
-                                .withAmountSubmitted(refundEntity1.getAmount())
-                                .withLink("payment_url", GET, new URI("http://app.com/v1/payments/" +
-                                        refundEntity1.getChargeEntity().getExternalId()))
-                                .build(),
-                        anAllRefundsResponseBuilder()
-                                .withRefundId(refundEntity2.getExternalId())
-                                .withCreatedDate(DateTimeUtils.toUTCDateTimeString(refundEntity2.getCreatedDate()))
-                                .withStatus(String.valueOf(refundEntity2.getStatus()))
-                                .withChargeId(refundEntity2.getChargeEntity().getExternalId())
-                                .withAmountSubmitted(refundEntity2.getAmount())
-                                .withLink("payment_url", GET, new URI("http://app.com/v1/payments/" +
-                                        refundEntity2.getChargeEntity().getExternalId()))
-                                .build());
-
-        Response expectedResponse = new ChargesPaginationResponseBuilder<SearchRefundsResponse>(searchParams, uriInfo)
-                .withResponses(expectedRefunds)
-                .withTotalCount(total)
-                .buildSearchRefundsResponse();
-
-
-        String actualResponse = (String) response.getEntity();
-        boolean firstRefundHasPaymentUrl = actualResponse
-                .contains("http://app.com/v1/payments/" + refundEntity1.getChargeEntity().getExternalId());
-        boolean secondRefundHasPaymentUrl = actualResponse
-                .contains("http://app.com/v1/payments/" + refundEntity1.getChargeEntity().getExternalId());
-
-        assertThat(firstRefundHasPaymentUrl, is(true));
-        assertThat(secondRefundHasPaymentUrl, is(true));
-        assertThat(response.getEntity(), is(expectedResponse.getEntity()));
-        assertThat(response.getEntity(), is(expectedResponse.getEntity()));
-    }
-
-    @Test
     public void getAllRefunds_shouldReturnPageNotFoundResponseWhenQueryParamPageExceedsMax() {
-        Long accountId = 1L;
         Long pageNumber = 2L;
         Long displaySize = 20L;
-        String userExternalId = "7v9ou841qn7jibls7ee0cb6t9j";
+        List<RefundEntity> refundEntities = getRefundEntity(1, gatewayAccount);
 
-        GatewayAccountEntity gatewayAccount = new GatewayAccountEntity(
-                "sandbox", new HashMap<>(), TEST);
-        gatewayAccount.setId(accountId);
+        when(refundDao.getTotalFor(any(ChargeSearchParams.class))).thenReturn(Long.valueOf(refundEntities.size()));
+        when(refundDao.findAllBy(any(ChargeSearchParams.class))).thenReturn(refundEntities);
 
-        List<RefundEntity> refundEntities = Collections.singletonList(
-                aValidRefundEntity()
-                        .withExternalId("someExternalId")
-                        .withGatewayAccountEntity(gatewayAccount)
-                        .withStatus(RefundStatus.REFUNDED)
-                        .withAmount(500L)
-                        .withUserExternalId(userExternalId)
-                        .build()
-        );
-
-        given(refundDao.getTotalFor(any(ChargeSearchParams.class))).willReturn(Long.valueOf(refundEntities.size()));
-        given(refundDao.findAllBy(any(ChargeSearchParams.class))).willReturn(refundEntities);
-
-        when(uriInfo.getBaseUriBuilder()).thenReturn(UriBuilder.fromUri("http://app.com/"));
-        when(uriInfo.getPath()).thenReturn("");
-
-        Response response = searchRefundsService.getAllRefunds(uriInfo, 1L, pageNumber, displaySize);
+        Response response = searchRefundsService.getAllRefunds(uriInfo, ACCOUNT_ID, pageNumber, displaySize);
 
         ImmutableMap<String, Object> actualResponse = (ImmutableMap<String, Object>) response.getEntity();
-
         Response.StatusType statusType = response.getStatusInfo();
         int statusCode = response.getStatus();
         ImmutableMap<String, String> expectedMessage = ImmutableMap.of(
                 "message", "the requested page not found");
-
         assertThat(statusType, is(NOT_FOUND));
         assertThat(statusCode, is(NOT_FOUND.getStatusCode()));
         assertThat(actualResponse, is(expectedMessage));
@@ -210,6 +102,85 @@ public class SearchRefundsServiceTest {
 
     @Test
     public void shouldReturnDefaultDisplayWhenQueryParamDisplayExceedsMax() {
+        Long EXCEED_DISPLAY_SIZE = 600L;
+        Long pageNumber = 1L;
+        List<RefundEntity> refundEntities = getRefundEntity(1, gatewayAccount);
 
+        when(refundDao.getTotalFor(any(ChargeSearchParams.class))).thenReturn(EXCEED_DISPLAY_SIZE);
+        when(refundDao.findAllBy(any(ChargeSearchParams.class))).thenReturn(refundEntities);
+        when(uriInfo.getBaseUriBuilder()).thenReturn(fromUri("http://app.com/"));
+        when(uriInfo.getPath()).thenReturn("/v1/refunds/account/" + refundEntities.get(0).getChargeEntity().getGatewayAccount().getId());
+        when(uriInfo.getBaseUri()).thenReturn(fromUri("http://app.com/").build());
+
+        Response response = searchRefundsService.getAllRefunds(uriInfo, ACCOUNT_ID, pageNumber, EXCEED_DISPLAY_SIZE);
+
+        String body = (String) response.getEntity();
+
+        JsonAssert.with(body)
+                .assertThat("$.results.*", hasSize(1))
+                .assertThat("$.total", is(600))
+                .assertThat("$.count", is(1))
+                .assertThat("$.page", is(1))
+                .assertThat("$._links.self.href", is("http://app.com/v1/refunds/account/" +
+                        ACCOUNT_ID + "?page=" + pageNumber + "&display_size=500"))
+
+                .assertThat("$.results[0].links[0].rel", is("self"))
+                .assertThat("$.results[0].links[0].href", is("http://app.com/v1/refunds/account/{accountId}"
+                        .replace("{accountId}", String.valueOf(ACCOUNT_ID))))
+
+                .assertThat("$.results[0].links[1].rel", is("payment_url"))
+                .assertThat("$.results[0].links[1].href", is("http://app.com/v1/payments/{chargeId}"
+                        .replace("{chargeId}", extChargeId)));
+    }
+
+    @Test
+    public void getAllRefunds_shouldReturnRefundsWhenRefundsExist() {
+        Long pageNumber = 1L;
+        Long displaySize = 3L;
+        List<RefundEntity> refundEntities = getRefundEntity(3, gatewayAccount);
+
+        when(refundDao.getTotalFor(any(ChargeSearchParams.class))).thenReturn(displaySize);
+        when(refundDao.findAllBy(any(ChargeSearchParams.class))).thenReturn(refundEntities);
+        when(uriInfo.getBaseUriBuilder()).thenReturn(fromUri("http://app.com/"));
+        when(uriInfo.getPath()).thenReturn("/v1/refunds/account/" + refundEntities.get(0).getChargeEntity().getGatewayAccount().getId());
+        when(uriInfo.getBaseUri()).thenReturn(fromUri("http://app.com/").build());
+
+        Response response = searchRefundsService.getAllRefunds(uriInfo, ACCOUNT_ID, pageNumber, displaySize);
+
+        String body = (String) response.getEntity();
+
+        JsonAssert.with(body)
+                .assertThat("$.results.*", hasSize(3))
+                .assertThat("$.total", is(3))
+                .assertThat("$.count", is(3))
+                .assertThat("$.page", is(1))
+                .assertThat("$._links.self.href", is("http://app.com/v1/refunds/account/" +
+                        ACCOUNT_ID + "?page=" + pageNumber + "&display_size=" + displaySize))
+
+                .assertThat("$.results[0].links[0].rel", is("self"))
+                .assertThat("$.results[0].links[0].href", is("http://app.com/v1/refunds/account/{accountId}"
+                        .replace("{accountId}", String.valueOf(ACCOUNT_ID))))
+
+                .assertThat("$.results[0].links[1].rel", is("payment_url"))
+                .assertThat("$.results[0].links[1].href", is("http://app.com/v1/payments/{chargeId}"
+                        .replace("{chargeId}", extChargeId)));
+    }
+
+    private List<RefundEntity> getRefundEntity(int numOfRefunds, GatewayAccountEntity gatewayAccount) {
+        String extChargeId = "someExternalId";
+        ChargeEntity chargeEntity = aValidChargeEntity().withExternalId(extChargeId).build();
+        List<RefundEntity> refundEntities = new ArrayList<>();
+        for (int i = 0; i < numOfRefunds; i++) {
+            RefundEntity refundEntity = aValidRefundEntity()
+                    .withExternalId(chargeEntity.getExternalId())
+                    .withCharge(chargeEntity)
+                    .withGatewayAccountEntity(gatewayAccount)
+                    .withStatus(RefundStatus.REFUNDED)
+                    .withAmount(500L)
+                    .withUserExternalId("7v9ou841qn7jibls7ee0cb6t9j")
+                    .build();
+            refundEntities.add(refundEntity);
+        }
+        return refundEntities;
     }
 }

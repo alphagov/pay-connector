@@ -12,6 +12,7 @@ import uk.gov.pay.connector.util.ResponseUtil;
 
 import javax.inject.Inject;
 import javax.ws.rs.core.Response;
+import javax.ws.rs.core.UriBuilder;
 import javax.ws.rs.core.UriInfo;
 import java.net.URI;
 import java.util.HashMap;
@@ -45,13 +46,17 @@ public class SearchRefundsService {
                 .orElseGet(() -> {
                     ChargeSearchParams searchParams = new ChargeSearchParams()
                             .withGatewayAccountId(accountId)
-                            .withDisplaySize(displaySize == null ? MAX_DISPLAY_SIZE :
-                                    (displaySize > MAX_DISPLAY_SIZE) ? MAX_DISPLAY_SIZE : displaySize)
+                            .withDisplaySize(calculateDisplaySize(displaySize))
                             .withPage(pageNumber != null ? pageNumber : 1);
                     return search(searchParams, uriInfo);
                 });
     }
-    
+
+    private Long calculateDisplaySize(Long displaySize) {
+        return displaySize == null ? MAX_DISPLAY_SIZE :
+                (displaySize > MAX_DISPLAY_SIZE) ? MAX_DISPLAY_SIZE : displaySize;
+    }
+
     private Response search(ChargeSearchParams searchParams, UriInfo uriInfo) {
         Long totalCount = refundDao.getTotalFor(searchParams);
         Long size = searchParams.getDisplaySize();
@@ -72,7 +77,7 @@ public class SearchRefundsService {
         return new ChargesPaginationResponseBuilder(searchParams, uriInfo)
                 .withResponses(refundResponses)
                 .withTotalCount(totalCount)
-                .buildSearchRefundsResponse();
+                .buildResponse();
     }
     
     private SearchRefundsResponse buildResponse(UriInfo uriInfo, RefundEntity refundEntity){
@@ -82,21 +87,30 @@ public class SearchRefundsService {
     private SearchRefundsResponse.SearchRefundsResponseBuilder populateResponseBuilderWith(
             SearchRefundsResponse.SearchRefundsResponseBuilder responseBuilder, 
             UriInfo uriInfo, RefundEntity refundEntity) {
-
+        Long accountId = refundEntity.getChargeEntity().getGatewayAccount().getId();
         return responseBuilder
                 .withRefundId(refundEntity.getExternalId())
                 .withCreatedDate(DateTimeUtils.toUTCDateTimeString(refundEntity.getCreatedDate()))
                 .withStatus(String.valueOf(refundEntity.getStatus()))
                 .withChargeId(refundEntity.getChargeEntity().getExternalId())
                 .withAmountSubmitted(refundEntity.getChargeEntity().getAmount())
+                .withLink("self", GET, selfUriFor(uriInfo, accountId))
                 .withLink("payment_url", GET, paymentLinkFor(uriInfo, refundEntity.getChargeEntity().getExternalId()));
     }
 
     private URI paymentLinkFor(UriInfo uriInfo, String externalId) {
-        String targetPath = "/v1/payments/{externalId}".replace("{externalId}",externalId);
-        return uriInfo
-                .getBaseUriBuilder()
-                .replacePath(targetPath)
+        String targetPath = "/v1/payments/{externalId}"
+                .replace("{externalId}",externalId);
+        return UriBuilder.fromUri(uriInfo.getBaseUri())
+                .path(targetPath)
+                .build();
+    }
+
+    private URI selfUriFor(UriInfo uriInfo, Long accountId) {
+        String targetPath = "/v1/refunds/account/{accountId}"
+                .replace("{accountId}", String.valueOf(accountId));
+        return UriBuilder.fromUri(uriInfo.getBaseUri())
+                .path(targetPath)
                 .build();
     }
 

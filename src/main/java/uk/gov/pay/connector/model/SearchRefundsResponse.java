@@ -1,7 +1,6 @@
 package uk.gov.pay.connector.model;
 
 import com.fasterxml.jackson.annotation.JsonFormat;
-import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonInclude;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import uk.gov.pay.connector.model.builder.AbstractRefundsResponseBuilder;
@@ -48,13 +47,14 @@ public class SearchRefundsResponse {
     @JsonProperty("status")
     private String status;
 
-    @JsonIgnore
+    @JsonProperty("charge_id")
+
     private String extChargeId;
 
     @JsonProperty("amount_submitted")
     private Long amountSubmitted;
 
-    @JsonProperty("_links")
+    @JsonProperty("links")
     private List<Map<String, Object>> dataLinks = new ArrayList<>();
 
     protected SearchRefundsResponse(String refundId,

@@ -14,7 +14,7 @@ public class ChargesPaginationResponseBuilder<T> {
 
     private ChargeSearchParams searchParams;
     private UriInfo uriInfo;
-    private List<T> chargeResponses;
+    private List<T> responses;
     private Long totalCount;
     private Long selfPageNum;
     private URI selfLink;
@@ -30,8 +30,8 @@ public class ChargesPaginationResponseBuilder<T> {
         selfLink = uriWithParams(searchParams.buildQueryParams());
     }
 
-    public ChargesPaginationResponseBuilder withResponses(List<T> chargeResponses) {
-        this.chargeResponses = chargeResponses;
+    public ChargesPaginationResponseBuilder withResponses(List<T> responses) {
+        this.responses = responses;
         return this;
     }
 
@@ -46,8 +46,8 @@ public class ChargesPaginationResponseBuilder<T> {
         buildLinks(lastPage);
 
         HalRepresentation.HalRepresentationBuilder halRepresentationBuilder = HalRepresentation.builder()
-                .addProperty("results", chargeResponses)
-                .addProperty("count", chargeResponses.size())
+                .addProperty("results", responses)
+                .addProperty("count", responses.size())
                 .addProperty("total", totalCount)
                 .addProperty("page", selfPageNum)
                 .addLink("self", selfLink)
@@ -59,20 +59,7 @@ public class ChargesPaginationResponseBuilder<T> {
 
         return ok(halRepresentationBuilder.build().toString()).build();
     }
-
-    public Response buildSearchRefundsResponse() {
-        Long size = searchParams.getDisplaySize();
-        long lastPage = totalCount > 0 ? (totalCount + size - 1) / size : 1;
-        buildLinks(lastPage);
-
-        HalRepresentation.HalRepresentationBuilder halRepresentationBuilder = HalRepresentation.builder()
-                .addProperty("results", chargeResponses)
-                .addProperty("count", chargeResponses.size())
-                .addProperty("total", totalCount)
-                .addProperty("page", selfPageNum);
-        return ok(halRepresentationBuilder.build().toString()).build();
-    }
-
+    
     private void addLinkNotNull(HalRepresentation.HalRepresentationBuilder halRepresentationBuilder, String name, URI uri) {
         if (uri != null) {
             halRepresentationBuilder.addLink(name, uri);
