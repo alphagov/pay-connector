@@ -1,10 +1,13 @@
 package uk.gov.pay.connector.model.domain;
 
 import com.fasterxml.jackson.annotation.JsonProperty;
+import com.fasterxml.jackson.databind.annotation.JsonSerialize;
+import com.fasterxml.jackson.databind.ser.std.ToStringSerializer;
 import uk.gov.pay.connector.model.FirstDigitsCardNumber;
 import uk.gov.pay.connector.model.LastDigitsCardNumber;
 
 import javax.persistence.Column;
+import javax.persistence.Convert;
 import javax.persistence.Embeddable;
 import javax.persistence.Embedded;
 
@@ -13,11 +16,15 @@ public class CardDetailsEntity {
 
     @Column(name = "first_digits_card_number")
     @JsonProperty("first_digits_card_number")
-    private String firstDigitsCardNumber;
+    @Convert(converter = FirstDigitsCardNumberConverter.class)
+    @JsonSerialize(using = ToStringSerializer.class)
+    private FirstDigitsCardNumber firstDigitsCardNumber;
     
     @Column(name = "last_digits_card_number")
     @JsonProperty("last_digits_card_number")
-    private String lastDigitsCardNumber;
+    @Convert(converter = LastDigitsCardNumberConverter.class)
+    @JsonSerialize(using = ToStringSerializer.class)
+    private LastDigitsCardNumber lastDigitsCardNumber;
 
     @Column(name = "cardholder_name")
     @JsonProperty("cardholder_name")
@@ -38,8 +45,8 @@ public class CardDetailsEntity {
     }
 
     public CardDetailsEntity(FirstDigitsCardNumber firstDigitsCardNumber, LastDigitsCardNumber lastDigitsCardNumber, String cardHolderName, String expiryDate, String cardBrand, AddressEntity billingAddress) {
-        this.lastDigitsCardNumber = lastDigitsCardNumber.toString();
-        this.firstDigitsCardNumber = firstDigitsCardNumber.toString();
+        this.lastDigitsCardNumber = lastDigitsCardNumber;
+        this.firstDigitsCardNumber = firstDigitsCardNumber;
         this.cardHolderName = cardHolderName;
         this.expiryDate = expiryDate;
         this.cardBrand = cardBrand;
@@ -57,20 +64,20 @@ public class CardDetailsEntity {
         return card;
     }
 
-    public String getLastDigitsCardNumber() {
+    public LastDigitsCardNumber getLastDigitsCardNumber() {
         return lastDigitsCardNumber;
     }
     
-    public String getFirstDigitsCardNumber() {
+    public FirstDigitsCardNumber getFirstDigitsCardNumber() {
         return firstDigitsCardNumber;
     }
 
     public void setLastDigitsCardNumber(LastDigitsCardNumber lastDigitsCardNumber) {
-        this.lastDigitsCardNumber = lastDigitsCardNumber.toString();
+        this.lastDigitsCardNumber = lastDigitsCardNumber;
     }
 
     public void setFirstDigitsCardNumber(FirstDigitsCardNumber firstDigitsCardNumber) {
-        this.firstDigitsCardNumber = firstDigitsCardNumber.toString();
+        this.firstDigitsCardNumber = firstDigitsCardNumber;
     }
 
     public String getCardHolderName() {

@@ -24,7 +24,7 @@ public class ChargesPaginationResponseBuilderTest {
     private UriInfo mockUriInfo;
 
     @Test
-    public void shouldBuildChargesPaginationWithExpectedHalResponseLinks() throws Exception {
+    public void shouldBuildChargesPaginationWithExpectedHalResponseLinks(){
 
         // Only tests hal properties and _links,
         // pending work to convert charge responses in _embedded entities.

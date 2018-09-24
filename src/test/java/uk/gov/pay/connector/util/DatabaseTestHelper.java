@@ -2,6 +2,7 @@ package uk.gov.pay.connector.util;
 
 import com.google.gson.Gson;
 import org.apache.commons.lang3.RandomUtils;
+import org.apache.commons.lang3.StringUtils;
 import org.postgresql.util.PGobject;
 import org.skife.jdbi.v2.DBI;
 import org.skife.jdbi.v2.util.StringColumnMapper;
@@ -341,7 +342,7 @@ public class DatabaseTestHelper {
     }
 
     public void updateChargeCardDetails(Long chargeId, AuthCardDetails authCardDetails) {
-        updateChargeCardDetails(chargeId, authCardDetails.getCardBrand(), authCardDetails.getCardNo(), authCardDetails.getCardNo(), authCardDetails.getCardHolder(), authCardDetails.getEndDate(),
+        updateChargeCardDetails(chargeId, authCardDetails.getCardBrand(), StringUtils.right(authCardDetails.getCardNo(), 4), StringUtils.left(authCardDetails.getCardNo(), 6), authCardDetails.getCardHolder(), authCardDetails.getEndDate(),
                 authCardDetails.getAddress().getLine1(), authCardDetails.getAddress().getLine2(), authCardDetails.getAddress().getPostcode(),
                 authCardDetails.getAddress().getCity(), authCardDetails.getAddress().getCounty(), authCardDetails.getAddress().getCountry());
     }

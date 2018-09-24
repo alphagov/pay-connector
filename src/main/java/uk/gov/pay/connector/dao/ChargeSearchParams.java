@@ -1,5 +1,15 @@
 package uk.gov.pay.connector.dao;
 
+import uk.gov.pay.connector.model.CardHolderName;
+import uk.gov.pay.connector.model.FirstDigitsCardNumber;
+import uk.gov.pay.connector.model.LastDigitsCardNumber;
+import uk.gov.pay.connector.model.ServicePaymentReference;
+import uk.gov.pay.connector.model.TransactionType;
+import uk.gov.pay.connector.model.api.ExternalChargeState;
+import uk.gov.pay.connector.model.api.ExternalRefundStatus;
+import uk.gov.pay.connector.model.domain.ChargeStatus;
+import uk.gov.pay.connector.model.domain.RefundStatus;
+
 import java.time.ZonedDateTime;
 import java.util.ArrayList;
 import java.util.Collection;
@@ -8,14 +18,6 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
 import java.util.stream.Collectors;
-import uk.gov.pay.connector.model.CardHolderName;
-import uk.gov.pay.connector.model.LastDigitsCardNumber;
-import uk.gov.pay.connector.model.ServicePaymentReference;
-import uk.gov.pay.connector.model.TransactionType;
-import uk.gov.pay.connector.model.api.ExternalChargeState;
-import uk.gov.pay.connector.model.api.ExternalRefundStatus;
-import uk.gov.pay.connector.model.domain.ChargeStatus;
-import uk.gov.pay.connector.model.domain.RefundStatus;
 
 import static org.apache.commons.lang3.StringUtils.isBlank;
 import static org.apache.commons.lang3.StringUtils.isNotBlank;
@@ -25,6 +27,7 @@ public class ChargeSearchParams {
 
     private TransactionType transactionType;
     private LastDigitsCardNumber lastDigitsCardNumber;
+    private FirstDigitsCardNumber firstDigitsCardNumber;
     private CardHolderName cardHolderName;
     private Long gatewayAccountId;
     private ServicePaymentReference reference;
@@ -64,6 +67,11 @@ public class ChargeSearchParams {
         return this;
     }
 
+    public ChargeSearchParams withFirstDigitsCardNumber(FirstDigitsCardNumber withFirstDigitsCardNumber) {
+        this.firstDigitsCardNumber = withFirstDigitsCardNumber;
+        return this;
+    }
+
     public ChargeSearchParams withCardHolderNameLike(CardHolderName cardHolderName) {
         this.cardHolderName = cardHolderName;
         return this;
@@ -91,6 +99,10 @@ public class ChargeSearchParams {
 
     public LastDigitsCardNumber getLastDigitsCardNumber() {
         return lastDigitsCardNumber;
+    }
+
+    public FirstDigitsCardNumber getFirstDigitsCardNumber() {
+        return firstDigitsCardNumber;
     }
 
     public CardHolderName getCardHolderName() {
@@ -260,8 +272,7 @@ public class ChargeSearchParams {
         if (page != null)
             builder.append("&page=").append(page);
         if (displaySize != null)
-            builder.append("&display_size=").append(displaySize);
-
+            builder.append("&display_size=").append(displaySize); 
         getExternalStates().stream()
                 .findFirst()
                 .ifPresent(state -> builder.append("&state=").append(state));
@@ -279,7 +290,10 @@ public class ChargeSearchParams {
         if (isNotEmpty(refundStates)) {
             builder.append("&refund_states=").append(refundStates);
         }
-
+        if (firstDigitsCardNumber != null)
+            builder.append("&first_digits_card_number=").append(firstDigitsCardNumber);
+        if (lastDigitsCardNumber != null) 
+            builder.append("&last_digits_card_number=").append(lastDigitsCardNumber);
         if (!cardBrands.isEmpty()) {
             cardBrands.forEach(cardBrand -> builder.append("&card_brand=").append(cardBrand));
         }

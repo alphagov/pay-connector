@@ -3,16 +3,22 @@ package uk.gov.pay.connector.model.domain;
 import com.fasterxml.jackson.annotation.JsonFormat;
 import com.fasterxml.jackson.annotation.JsonInclude;
 import com.fasterxml.jackson.annotation.JsonProperty;
+import com.fasterxml.jackson.databind.annotation.JsonSerialize;
+import com.fasterxml.jackson.databind.ser.std.ToStringSerializer;
+import uk.gov.pay.connector.model.FirstDigitsCardNumber;
+import uk.gov.pay.connector.model.LastDigitsCardNumber;
 
 @JsonInclude(JsonInclude.Include.NON_NULL)
 @JsonFormat(shape = JsonFormat.Shape.OBJECT)
 public class PersistedCard {
 
     @JsonProperty("last_digits_card_number")
-    private String lastDigitsCardNumber;
+    @JsonSerialize(using = ToStringSerializer.class)
+    private LastDigitsCardNumber lastDigitsCardNumber;
 
     @JsonProperty("first_digits_card_number")
-    private String firstDigitsCardNumber;
+    @JsonSerialize(using = ToStringSerializer.class)
+    private FirstDigitsCardNumber firstDigitsCardNumber;
 
     @JsonProperty("cardholder_name")
     private String cardHolderName;
@@ -26,19 +32,19 @@ public class PersistedCard {
     @JsonProperty("card_brand")
     private String cardBrand;
 
-    public String getLastDigitsCardNumber() {
+    public LastDigitsCardNumber getLastDigitsCardNumber() {
         return lastDigitsCardNumber;
     }
 
-    public String getFirstDigitsCardNumber() {
+    public FirstDigitsCardNumber getFirstDigitsCardNumber() {
         return firstDigitsCardNumber;
     }
 
-    public void setLastDigitsCardNumber(String lastDigitsCardNumber) {
+    public void setLastDigitsCardNumber(LastDigitsCardNumber lastDigitsCardNumber) {
         this.lastDigitsCardNumber = lastDigitsCardNumber;
     }
 
-    public void setFirstDigitsCardNumber(String firstDigitsCardNumber) {
+    public void setFirstDigitsCardNumber(FirstDigitsCardNumber firstDigitsCardNumber) {
         this.firstDigitsCardNumber = firstDigitsCardNumber;
     }
 

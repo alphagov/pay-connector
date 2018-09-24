@@ -164,7 +164,7 @@ public class ChargingITestBase {
         String externalChargeId = createNewChargeWithNoTransactionId(AUTHORISATION_SUCCESS);
         app.getDatabaseTestHelper().updateChargeCardDetails(
                 Long.parseLong(externalChargeId.replace("charge-", "")),
-                CardFixture.aValidCard().withCardNo("1234").build());
+                CardFixture.aValidCard().withCardNo("123456").build());
         return externalChargeId;
     }
 
@@ -284,7 +284,7 @@ public class ChargingITestBase {
         app.getDatabaseTestHelper().addEvent(chargeId, chargeStatus.getValue());
         app.getDatabaseTestHelper().updateChargeCardDetails(
                 chargeId,
-                CardFixture.aValidCard().withCardNo("1234").build());
+                CardFixture.aValidCard().withCardNo("123456").build());
         return externalChargeId;
     }
 

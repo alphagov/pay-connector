@@ -62,6 +62,7 @@ public class TransactionSearchStrategy extends AbstractSearchStrategy<Transactio
         cardDetails.setCardHolderName(transaction.getCardHolderName());
         cardDetails.setExpiryDate(transaction.getExpiryDate());
         cardDetails.setLastDigitsCardNumber(transaction.getLastDigitsCardNumber());
+        cardDetails.setFirstDigitsCardNumber(transaction.getFirstDigitsCardNumber());
 
         TransactionResponseBuilder transactionResponseBuilder = aTransactionResponseBuilder()
                 .withTransactionType(transaction.getTransactionType())

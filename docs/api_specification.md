@@ -244,7 +244,8 @@ Content-Type: application/json
             "card_brand": "Visa",
             "cardholder_name": "TEST",
             "expiry_date": "12/19",
-            "last_digits_card_number": "4242"
+            "last_digits_card_number": "4242",
+            "first_digits_card_number": "424242",
     },
     "return_url": "https://govservice.example.com/return_from_payments",
     "refund_summary": {
@@ -292,6 +293,7 @@ Content-Type: application/json
 | `card_details.cardholder_name` |           | The card card holder name of this payment               |
 | `card_details.expiry_date`     |           | The expiry date of this card                            |
 | `card_details.last_digits_card_number`  |  | The last 4 digits of this card                          |
+| `card_details.first_digits_card_number`  |  | The first 6 digits of this card                          |
 | `card_details.billing_address.line1`    |  | The line 1 of the billing address                       |
 | `card_details.billing_address.line2`    |  | The line 2 of the billing address                       |
 | `card_details.billing_address.postcode` |  | The postcode of the billing address                     |
@@ -453,7 +455,8 @@ Content-Type: application/json
             "card_brand": "Visa",
             "cardholder_name": "TEST",
             "expiry_date": "12/19",
-            "last_digits_card_number": "4242"
+            "last_digits_card_number": "4242",
+            "first_digits_card_number": "424242"
         },
         "payment_provider": "sandbox",
         "return_url": "https://govservice.example.com/return_from_payments",
@@ -501,6 +504,7 @@ Content-Type: application/json
 | `card_details.cardholder_name` |           | The card card holder name of this payment                                                                           |
 | `card_details.expiry_date`     |           | The expiry date of this card                                                                                        |
 | `card_details.last_digits_card_number`  |  | The last 4 digits of this card                                                                                      |
+| `card_details.first_digits_card_number`  |  | The first 6 digits of this card                                                                                      |
 | `card_details.billing_address.line1`    |  | The line 1 of the billing address                                                                                   |
 | `card_details.billing_address.line2`    |  | The line 2 of the billing address                                                                                   |
 | `card_details.billing_address.postcode` |  | The postcode of the billing address                                                                                 |

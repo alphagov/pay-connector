@@ -325,8 +325,8 @@ public class CardAuthoriseServiceTest extends CardServiceTest {
         assertThat(cardDetails.getCardHolderName(), is(cardholderName));
         assertThat(cardDetails.getCardBrand(), is(cardBrand));
         assertThat(cardDetails.getExpiryDate(), is(expiryDate));
-        assertThat(cardDetails.getLastDigitsCardNumber(), is("4242"));
-        assertThat(cardDetails.getFirstDigitsCardNumber(), is("424242"));
+        assertThat(cardDetails.getLastDigitsCardNumber().toString(), is("4242"));
+        assertThat(cardDetails.getFirstDigitsCardNumber().toString(), is("424242"));
         assertThat(cardDetails.getBillingAddress().getLine1(), is(addressLine1));
         assertThat(cardDetails.getBillingAddress().getLine2(), is(addressLine2));
         assertThat(cardDetails.getBillingAddress().getPostcode(), is(postcode));

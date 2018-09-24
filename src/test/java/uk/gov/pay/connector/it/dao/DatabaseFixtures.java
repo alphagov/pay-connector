@@ -2,6 +2,8 @@ package uk.gov.pay.connector.it.dao;
 
 import org.apache.commons.lang3.RandomUtils;
 import uk.gov.pay.commons.model.SupportedLanguage;
+import uk.gov.pay.connector.model.FirstDigitsCardNumber;
+import uk.gov.pay.connector.model.LastDigitsCardNumber;
 import uk.gov.pay.connector.model.ServicePaymentReference;
 import uk.gov.pay.connector.model.domain.CardTypeEntity.Type;
 import uk.gov.pay.connector.model.domain.ChargeStatus;
@@ -9,6 +11,7 @@ import uk.gov.pay.connector.model.domain.GatewayAccountEntity;
 import uk.gov.pay.connector.model.domain.RefundStatus;
 import uk.gov.pay.connector.util.DatabaseTestHelper;
 import uk.gov.pay.connector.util.RandomIdGenerator;
+import unfiltered.response.link.Last;
 
 import java.time.ZoneId;
 import java.time.ZonedDateTime;
@@ -215,8 +218,8 @@ public class DatabaseFixtures {
     }
 
     public class TestCardDetails {
-        private String lastDigitsCardNumber = "1234";
-        private String firstDigitsCardNumber = "123456";
+        private LastDigitsCardNumber lastDigitsCardNumber = LastDigitsCardNumber.of("1234");
+        private FirstDigitsCardNumber firstDigitsCardNumber = FirstDigitsCardNumber.of("123456");
         private String cardHolderName = "Mr. Pay McPayment";
         private String expiryDate = "02/17";
         private TestAddress billingAddress = new TestAddress();
@@ -224,12 +227,12 @@ public class DatabaseFixtures {
         private String cardBrand = "visa";
 
         public TestCardDetails withLastDigitsOfCardNumber(String lastDigitsCardNumber) {
-            this.lastDigitsCardNumber = lastDigitsCardNumber;
+            this.lastDigitsCardNumber = LastDigitsCardNumber.ofNullable(lastDigitsCardNumber);
             return this;
         }
 
-        public TestCardDetails withFirstLastDigitsOfCardNumber(String firstDigitsCardNumber) {
-            this.firstDigitsCardNumber = firstDigitsCardNumber;
+        public TestCardDetails withFirstDigitsOfCardNumber(String firstDigitsCardNumber) {
+            this.firstDigitsCardNumber = FirstDigitsCardNumber.ofNullable(firstDigitsCardNumber);
             return this;
         }
 
@@ -258,11 +261,11 @@ public class DatabaseFixtures {
             return this;
         }
 
-        public String getLastDigitsCardNumber() {
+        public LastDigitsCardNumber getLastDigitsCardNumber() {
             return lastDigitsCardNumber;
         }
 
-        public String getFirstLastDigitsCardNumber() {
+        public FirstDigitsCardNumber getFirstDigitsCardNumber() {
             return firstDigitsCardNumber;
         }
 
@@ -279,7 +282,7 @@ public class DatabaseFixtures {
         }
 
         public TestCardDetails update() {
-            databaseTestHelper.updateChargeCardDetails(chargeId, cardBrand, lastDigitsCardNumber, firstDigitsCardNumber, cardHolderName, expiryDate, billingAddress.getLine1(), billingAddress.getLine2(), billingAddress.getPostcode(), billingAddress.getCity(), billingAddress.getCounty(), billingAddress.getCountry());
+            databaseTestHelper.updateChargeCardDetails(chargeId, cardBrand, lastDigitsCardNumber == null ? null : lastDigitsCardNumber.toString(), firstDigitsCardNumber == null ? null : firstDigitsCardNumber.toString(), cardHolderName, expiryDate, billingAddress.getLine1(), billingAddress.getLine2(), billingAddress.getPostcode(), billingAddress.getCity(), billingAddress.getCounty(), billingAddress.getCountry());
             return this;
         }
 

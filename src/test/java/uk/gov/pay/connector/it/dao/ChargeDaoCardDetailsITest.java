@@ -76,7 +76,7 @@ public class ChargeDaoCardDetailsITest extends DaoITestBase {
 
         assertThat(cardDetailsEntity.getCardHolderName(), is(testCardDetails.getCardHolderName()));
         assertThat(cardDetailsEntity.getLastDigitsCardNumber(), is(testCardDetails.getLastDigitsCardNumber()));
-        assertThat(cardDetailsEntity.getFirstDigitsCardNumber(), is(testCardDetails.getFirstLastDigitsCardNumber()));
+        assertThat(cardDetailsEntity.getFirstDigitsCardNumber(), is(testCardDetails.getFirstDigitsCardNumber()));
         assertThat(cardDetailsEntity.getExpiryDate(), is(testCardDetails.getExpiryDate()));
         assertNotNull(cardDetailsEntity.getBillingAddress());
         assertThat(cardDetailsEntity.getBillingAddress().getLine1(), is(testCardDetails.getBillingAddress().getLine1()));
@@ -93,7 +93,7 @@ public class ChargeDaoCardDetailsITest extends DaoITestBase {
         DatabaseFixtures.TestCardDetails testCardDetails = DatabaseFixtures
                 .withDatabaseTestHelper(databaseTestHelper)
                 .aTestCardDetails()
-                .withFirstLastDigitsOfCardNumber(null)
+                .withFirstDigitsOfCardNumber(null)
                 .withLastDigitsOfCardNumber(null)
                 .withChargeId(chargeId);
         createChargeWithIdAndDetails(chargeId, testCardDetails);

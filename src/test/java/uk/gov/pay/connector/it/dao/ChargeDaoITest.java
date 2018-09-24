@@ -10,6 +10,7 @@ import uk.gov.pay.connector.dao.ChargeDao;
 import uk.gov.pay.connector.dao.ChargeSearchParams;
 import uk.gov.pay.connector.it.dao.DatabaseFixtures.TestCharge;
 import uk.gov.pay.connector.model.CardHolderName;
+import uk.gov.pay.connector.model.FirstDigitsCardNumber;
 import uk.gov.pay.connector.model.LastDigitsCardNumber;
 import uk.gov.pay.connector.model.ServicePaymentReference;
 import uk.gov.pay.connector.model.domain.ChargeEntity;
@@ -190,7 +191,7 @@ public class ChargeDaoITest extends DaoITestBase {
     public void searchChargesByFullLastFourDigits() {
         // given
         String cardHolderName = "Mr. McPayment";
-        String lastDigits = "4321";
+        LastDigitsCardNumber lastDigits = LastDigitsCardNumber.of("4321");
         Long chargeId = 12L;
         TestCharge testCharge = DatabaseFixtures
                 .withDatabaseTestHelper(databaseTestHelper)
@@ -199,11 +200,11 @@ public class ChargeDaoITest extends DaoITestBase {
                 .withCardDetails(defaultTestCardDetails
                         .withChargeId(chargeId)
                         .withCardHolderName(cardHolderName)
-                        .withLastDigitsOfCardNumber(lastDigits))
+                        .withLastDigitsOfCardNumber(lastDigits.toString()))
                 .withChargeId(chargeId)
                 .insert();
         ChargeSearchParams params = new ChargeSearchParams()
-                .withLastDigitsCardNumber(LastDigitsCardNumber.of(testCharge.cardDetails.getLastDigitsCardNumber()));
+                .withLastDigitsCardNumber(lastDigits);
 
         // when
         List<ChargeEntity> charges = chargeDao.findAllBy(params);
@@ -217,27 +218,33 @@ public class ChargeDaoITest extends DaoITestBase {
     }
 
     @Test
-    public void shouldNotMatchChargesByPartialLastFourDigits() {
+    public void searchChargesByFullFirstSixDigits() {
         // given
-        String lastDigits = "4321";
+        String cardHolderName = "Mr. McPayment";
+        FirstDigitsCardNumber firstSixDigits = FirstDigitsCardNumber.of("654321");
         Long chargeId = 12L;
-        DatabaseFixtures
+        TestCharge testCharge = DatabaseFixtures
                 .withDatabaseTestHelper(databaseTestHelper)
                 .aTestCharge()
                 .withTestAccount(defaultTestAccount)
                 .withCardDetails(defaultTestCardDetails
                         .withChargeId(chargeId)
-                .withLastDigitsOfCardNumber(lastDigits))
+                        .withCardHolderName(cardHolderName)
+                        .withFirstDigitsOfCardNumber(firstSixDigits.toString()))
                 .withChargeId(chargeId)
                 .insert();
         ChargeSearchParams params = new ChargeSearchParams()
-                .withLastDigitsCardNumber(LastDigitsCardNumber.of("432"));
+                .withFirstDigitsCardNumber(firstSixDigits);
 
         // when
         List<ChargeEntity> charges = chargeDao.findAllBy(params);
 
         // then
-        assertThat(charges.size(), is(0));
+        assertThat(charges.size(), is(1));
+        ChargeEntity charge = charges.get(0);
+        assertCharge("visa", testCharge, charge);
+        assertThat(charge.getCardDetails().getCardHolderName(), is(cardHolderName));
+        assertThat(charge.getCardDetails().getFirstDigitsCardNumber(), is(firstSixDigits));
     }
     
     @Test
