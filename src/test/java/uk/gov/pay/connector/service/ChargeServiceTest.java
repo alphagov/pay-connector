@@ -154,6 +154,7 @@ public class ChargeServiceTest {
         assertThat(createdChargeEntity.getCreatedDate(), is(ZonedDateTimeMatchers.within(3, ChronoUnit.SECONDS, ZonedDateTime.now(ZoneId.of("UTC")))));
         assertThat(createdChargeEntity.getLanguage(), is(SupportedLanguage.ENGLISH));
         assertThat(createdChargeEntity.isDelayedCapture(), is(false));
+        assertThat(createdChargeEntity.getCorporateSurcharge(), is(nullValue()));
 
         verify(mockedChargeEventDao).persistChargeEventOf(createdChargeEntity, Optional.empty());
     }

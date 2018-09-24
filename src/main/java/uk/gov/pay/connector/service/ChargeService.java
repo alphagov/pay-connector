@@ -89,7 +89,8 @@ public class ChargeService {
                     gatewayAccount,
                     chargeRequest.get("email"),
                     language,
-                    Boolean.valueOf(chargeRequest.getOrDefault("delayed_capture", "false")));
+                    Boolean.valueOf(chargeRequest.getOrDefault("delayed_capture", "false")),
+                    null); //TODO add logic
             chargeDao.persist(chargeEntity);
 
             chargeEventDao.persistChargeEventOf(chargeEntity, Optional.empty());
